@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.13 1999/11/19 20:41:19 thorpej Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.13.8.1 2002/06/23 17:50:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -119,7 +119,7 @@ struct	arccom {
 };
 
 #ifdef _KERNEL
-u_int8_t arcbroadcastaddr;
+extern u_int8_t arcbroadcastaddr;
 extern int arc_ipmtu;	/* XXX new ip only, no RFC 1051! */
 
 void	arc_ifattach __P((struct ifnet *, u_int8_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.7.2.4 2002/02/11 20:09:40 jdolecek Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.7.2.5 2002/06/23 17:46:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.7.2.4 2002/02/11 20:09:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.7.2.5 2002/06/23 17:46:03 jdolecek Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -428,7 +428,8 @@ hpcfb_cnattach(struct hpcfb_fbconf *fbconf)
 	hpcfb_console_wsscreen.nrows = hpcfb_console_dc.dc_rows;
 	hpcfb_console_wsscreen.ncols = hpcfb_console_dc.dc_cols;
 	hpcfb_console_wsscreen.capabilities = hpcfb_console_dc.dc_rinfo.ri_caps;
-	hpcfb_alloc_attr(&hpcfb_console_dc, 7, 0, 0, &defattr);
+	hpcfb_alloc_attr(&hpcfb_console_dc,
+			 WSCOL_WHITE, WSCOL_BLACK, 0, &defattr);
 	wsdisplay_cnattach(&hpcfb_console_wsscreen, &hpcfb_console_dc,
 	    0, 0, defattr);
 	hpcfbconsole = 1;
@@ -458,14 +459,25 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 #else
 	ri->ri_flg = RI_CURSOR;
 #endif
-	if (fbconf->hf_order_flags & HPCFB_REVORDER_BYTE) {
+	switch (ri->ri_depth) {
+	case 8:
+		if (32 <= fbconf->hf_pack_width &&
+		    (fbconf->hf_order_flags & HPCFB_REVORDER_BYTE) &&
+		    (fbconf->hf_order_flags & HPCFB_REVORDER_WORD)) {
+			ri->ri_flg |= RI_BSWAP;
+		}
+		break;
+	default:
+		if (fbconf->hf_order_flags & HPCFB_REVORDER_BYTE) {
 #if BYTE_ORDER == BIG_ENDIAN
-		ri->ri_flg |= RI_BSWAP;
+			ri->ri_flg |= RI_BSWAP;
 #endif
-	} else {
+		} else {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		ri->ri_flg |= RI_BSWAP;
+			ri->ri_flg |= RI_BSWAP;
 #endif
+		}
+		break;
 	}
 
 	if (rasops_init(ri, HPCFB_MAX_ROW, HPCFB_MAX_COLUMN)) {
@@ -608,7 +620,7 @@ hpcfb_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	}
 
-	return (ENOTTY); /* Inappropriate ioctl for device */
+	return (EPASSTHROUGH); /* Inappropriate ioctl for device */
 }
 
 paddr_t
@@ -742,7 +754,7 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*curxp = 0;
 	*curyp = 0;
 	*cookiep = dc; 
-	hpcfb_alloc_attr(*cookiep, 7, 0, 0, attrp);
+	hpcfb_alloc_attr(*cookiep, WSCOL_WHITE, WSCOL_BLACK, 0, attrp);
 	DPRINTF(("%s(%d): hpcfb_alloc_screen(): 0x%p\n",
 	    __FILE__, __LINE__, dc));
 

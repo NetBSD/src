@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.19.8.1 2002/01/10 19:57:03 thorpej Exp $	*/
+/*	$NetBSD: ppb.c,v 1.19.8.2 2002/06/23 17:48:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.19.8.1 2002/01/10 19:57:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.19.8.2 2002/06/23 17:48:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,11 +42,17 @@ __KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.19.8.1 2002/01/10 19:57:03 thorpej Exp $")
 #include <dev/pci/pcivar.h>
 #include <dev/pci/ppbreg.h>
 
+struct ppb_softc {
+	struct device sc_dev;		/* generic device glue */
+	pci_chipset_tag_t sc_pc;	/* our PCI chipset... */
+	pcitag_t sc_tag;		/* ...and tag. */
+};
+
 int	ppbmatch __P((struct device *, struct cfdata *, void *));
 void	ppbattach __P((struct device *, struct device *, void *));
 
 struct cfattach ppb_ca = {
-	sizeof(struct device), ppbmatch, ppbattach
+	sizeof(struct ppb_softc), ppbmatch, ppbattach
 };
 
 int	ppbprint __P((void *, const char *pnp));
@@ -76,6 +82,7 @@ ppbattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct ppb_softc *sc = (void *) self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
@@ -84,6 +91,9 @@ ppbattach(parent, self, aux)
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+
+	sc->sc_pc = pc;
+	sc->sc_tag = pa->pa_tag;
 
 	busdata = pci_conf_read(pc, pa->pa_tag, PPB_REG_BUSINFO);
 
@@ -118,6 +128,7 @@ ppbattach(parent, self, aux)
 	pba.pba_pc = pc;
 	pba.pba_flags = pa->pa_flags & ~PCI_FLAGS_MRM_OKAY;
 	pba.pba_bus = PPB_BUSINFO_SECONDARY(busdata);
+	pba.pba_bridgetag = &sc->sc_tag;
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;
 

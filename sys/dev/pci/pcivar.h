@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.46.2.2 2002/01/10 19:57:03 thorpej Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.46.2.3 2002/06/23 17:48:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -50,6 +50,7 @@
  */
 typedef u_int32_t pcireg_t;		/* configuration space register XXX */
 struct pcibus_attach_args;
+struct pci_softc;
 
 #ifdef _KERNEL
 /*
@@ -69,6 +70,12 @@ struct pcibus_attach_args {
 	int		pba_flags;	/* flags; see below */
 
 	int		pba_bus;	/* PCI bus number */
+
+	/*
+	 * Pointer to the pcitag of our parent bridge.  If there is no
+	 * parent bridge, then we assume we are a root bus.
+	 */
+	pcitag_t	*pba_bridgetag;
 
 	/*
 	 * Interrupt swizzling information.  These fields
@@ -106,6 +113,7 @@ struct pci_attach_args {
 	pcitag_t	pa_intrtag;	/* intr. appears to come from here */
 	pci_intr_pin_t	pa_intrpin;	/* intr. appears on this pin */
 	pci_intr_line_t	pa_intrline;	/* intr. routing information */
+	pci_intr_pin_t  pa_rawintrpin; 	/* unswizzled pin */
 };
 
 /*
@@ -140,9 +148,10 @@ struct pci_quirkdata {
 struct pci_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_iot, sc_memt;
-	bus_dma_tag_t sc_dmat; 
-	pci_chipset_tag_t sc_pc; 
+	bus_dma_tag_t sc_dmat;
+	pci_chipset_tag_t sc_pc;
 	int sc_bus, sc_maxndevs;
+	pcitag_t *sc_bridgetag;
 	u_int sc_intrswiz;
 	pcitag_t sc_intrtag;
 	int sc_flags;
@@ -169,6 +178,7 @@ extern struct cfdriver pci_cd;
  * Configuration space access and utility functions.  (Note that most,
  * e.g. make_tag, conf_read, conf_write are declared by pci_machdep.h.)
  */
+int	pci_mapreg_probe __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t *));
 pcireg_t pci_mapreg_type __P((pci_chipset_tag_t, pcitag_t, int));
 int	pci_mapreg_info __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t,
 	    bus_addr_t *, bus_size_t *, int *));
@@ -182,6 +192,10 @@ int pci_get_capability __P((pci_chipset_tag_t, pcitag_t, int,
 /*
  * Helper functions for autoconfiguration.
  */
+int	pci_enumerate_bus_generic(struct pci_softc *,
+	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
+int	pci_probe_device(struct pci_softc *, pcitag_t tag,
+	    int (*)(struct pci_attach_args *), struct pci_attach_args *);
 void	pci_devinfo __P((pcireg_t, pcireg_t, int, char *));
 void	pci_conf_print __P((pci_chipset_tag_t, pcitag_t,
 	    void (*)(pci_chipset_tag_t, pcitag_t, const pcireg_t *)));

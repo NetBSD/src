@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.44.4.3 2002/01/10 20:04:59 thorpej Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.44.4.4 2002/06/23 17:52:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.44.4.3 2002/01/10 20:04:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.44.4.4 2002/06/23 17:52:06 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -63,7 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.44.4.3 2002/01/10 20:04:59 thorpej E
 
 static ufs_daddr_t ffs_alloccg __P((struct inode *, int, ufs_daddr_t, int));
 static ufs_daddr_t ffs_alloccgblk __P((struct inode *, struct buf *, ufs_daddr_t));
+#ifdef XXXUBC
 static ufs_daddr_t ffs_clusteralloc __P((struct inode *, int, ufs_daddr_t, int));
+#endif
 static ino_t ffs_dirpref __P((struct inode *));
 static ufs_daddr_t ffs_fragextend __P((struct inode *, int, long, int, int));
 static void ffs_fserr __P((struct fs *, u_int, char *));
@@ -73,7 +75,9 @@ static ufs_daddr_t ffs_nodealloccg __P((struct inode *, int, ufs_daddr_t, int));
 static ufs_daddr_t ffs_mapsearch __P((struct fs *, struct cg *,
 				      ufs_daddr_t, int));
 #if defined(DIAGNOSTIC) || defined(DEBUG)
+#ifdef XXXUBC
 static int ffs_checkblk __P((struct inode *, ufs_daddr_t, long size));
+#endif
 #endif
 
 /* if 1, changes in optimalization strategy are logged */
@@ -391,10 +395,12 @@ nospace:
  * Note that the error return is not reflected back to the user. Rather
  * the previous block allocation will be used.
  */
+#ifdef XXXUBC
 #ifdef DEBUG
 #include <sys/sysctl.h>
 int prtrealloc = 0;
 struct ctldebug debug15 = { "prtrealloc", &prtrealloc };
+#endif
 #endif
 
 int doasyncfree = 1;
@@ -403,6 +409,7 @@ int
 ffs_reallocblks(v)
 	void *v;
 {
+#ifdef XXXUBC
 	struct vop_reallocblks_args /* {
 		struct vnode *a_vp;
 		struct cluster_save *a_buflist;
@@ -416,10 +423,12 @@ ffs_reallocblks(v)
 	ufs_daddr_t start_lbn, end_lbn, soff, newblk, blkno;
 	struct indir start_ap[NIADDR + 1], end_ap[NIADDR + 1], *idp;
 	int i, len, start_lvl, end_lvl, pref, ssize;
+#endif /* XXXUBC */
 
 	/* XXXUBC don't reallocblks for now */
 	return ENOSPC;
 
+#ifdef XXXUBC
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	fs = ip->i_fs;
@@ -603,6 +612,7 @@ fail:
 	if (sbap != &ip->i_ffs_db[0])
 		brelse(sbp);
 	return (ENOSPC);
+#endif /* XXXUBC */
 }
 
 /*
@@ -755,7 +765,7 @@ ffs_dirpref(pip)
 	minifree = avgifree - fs->fs_ipg / 4;
 	if (minifree < 0)
 		minifree = 0;
-	minbfree = avgbfree - fs->fs_fpg / fs->fs_frag / 4;
+	minbfree = avgbfree - fragstoblks(fs, fs->fs_fpg) / 4;
 	if (minbfree < 0)
 		minbfree = 0;
 	cgsize = fs->fs_fsize * fs->fs_fpg;
@@ -1245,6 +1255,7 @@ gotit:
 	return (blkno);
 }
 
+#ifdef XXXUBC
 /*
  * Determine whether a cluster can be allocated.
  *
@@ -1357,6 +1368,7 @@ fail:
 	brelse(bp);
 	return (0);
 }
+#endif /* XXXUBC */
 
 /*
  * Determine whether an inode can be allocated.
@@ -1558,6 +1570,7 @@ ffs_blkfree(ip, bno, size)
 }
 
 #if defined(DIAGNOSTIC) || defined(DEBUG)
+#ifdef XXXUBC
 /*
  * Verify allocation of a block or fragment. Returns true if block or
  * fragment is allocated, false if it is free.
@@ -1607,6 +1620,7 @@ ffs_checkblk(ip, bno, size)
 	brelse(bp);
 	return (!free);
 }
+#endif /* XXXUBC */
 #endif /* DIAGNOSTIC */
 
 /*
@@ -1726,14 +1740,14 @@ ffs_mapsearch(fs, cgp, bpref, allocsiz)
 	loc = scanc((u_int)len,
 		(const u_char *)&cg_blksfree(cgp, needswap)[start],
 		(const u_char *)fragtbl[fs->fs_frag],
-		(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
+		(1 << (allocsiz - 1 + (fs->fs_frag & (NBBY - 1)))));
 	if (loc == 0) {
 		len = start + 1;
 		start = 0;
 		loc = scanc((u_int)len,
 			(const u_char *)&cg_blksfree(cgp, needswap)[0],
 			(const u_char *)fragtbl[fs->fs_frag],
-			(1 << (allocsiz - 1 + (fs->fs_frag % NBBY))));
+			(1 << (allocsiz - 1 + (fs->fs_frag & (NBBY - 1)))));
 		if (loc == 0) {
 			printf("start = %d, len = %d, fs = %s\n",
 			    ostart, olen, fs->fs_fsmnt);

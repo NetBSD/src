@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.7.2.2 2002/03/16 16:00:41 jdolecek Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.7.2.3 2002/06/23 17:44:50 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.7.2.2 2002/03/16 16:00:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.7.2.3 2002/06/23 17:44:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,9 +134,9 @@ svr4_32_sys_wait(p, v, retval)
 	SCARG(&w4, options) = 0;
 
 	if (SCARG(uap, status) == NULL) {
-		caddr_t sg = stackgap_init(p->p_emul);
+		caddr_t sg = stackgap_init(p, 0);
 
-		SCARG(&w4, status) = stackgap_alloc(&sg, sz);
+		SCARG(&w4, status) = stackgap_alloc(p, &sg, sz);
 	}
 	else
 		SCARG(&w4, status) = (int *)(u_long)SCARG(uap, status);
@@ -152,11 +152,11 @@ svr4_32_sys_wait(p, v, retval)
 	if (WIFSIGNALED(st)) {
 		sig = WTERMSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			st = (st & ~0177) | native_to_svr4_sig[sig];
+			st = (st & ~0177) | native_to_svr4_signo[sig];
 	} else if (WIFSTOPPED(st)) {
 		sig = WSTOPSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			st = (st & ~0xff00) | (native_to_svr4_sig[sig] << 8);
+			st = (st & ~0xff00) | (native_to_svr4_signo[sig] << 8);
 	}
 
 	/*
@@ -212,7 +212,7 @@ svr4_32_sys_execve(p, v, retval)
 	struct sys_execve_args ap;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
 	SCARG(&ap, path) = (const char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ap, path));
@@ -607,7 +607,7 @@ svr4_32_mknod(p, retval, path, mode, dev)
 	svr4_32_mode_t mode;
 	svr4_32_dev_t dev;
 {
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_CREAT(p, &sg, path);
 
@@ -863,8 +863,8 @@ svr4_32_sys_times(p, v, retval)
 	struct rusage		 r;
 	struct sys_getrusage_args 	 ga;
 
-	caddr_t sg = stackgap_init(p->p_emul);
-	ru = stackgap_alloc(&sg, sizeof(struct rusage));
+	caddr_t sg = stackgap_init(p, 0);
+	ru = stackgap_alloc(p, &sg, sizeof(struct rusage));
 
 	SCARG(&ga, who) = RUSAGE_SELF;
 	SCARG(&ga, rusage) = ru;
@@ -917,9 +917,9 @@ svr4_32_sys_ulimit(p, v, retval)
 			int error;
 			struct sys_setrlimit_args srl;
 			struct rlimit krl;
-			caddr_t sg = stackgap_init(p->p_emul);
+			caddr_t sg = stackgap_init(p, 0);
 			struct rlimit *url = (struct rlimit *) 
-				stackgap_alloc(&sg, sizeof *url);
+				stackgap_alloc(p, &sg, sizeof *url);
 
 			krl.rlim_cur = SCARG(uap, newlimit) * 512;
 			krl.rlim_max = p->p_rlimit[RLIMIT_FSIZE].rlim_max;
@@ -1172,7 +1172,7 @@ svr4_32_setinfo(p, st, si)
 	} else if (WIFSTOPPED(st)) {
 		sig = WSTOPSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			i.si_status = native_to_svr4_sig[sig];
+			i.si_status = native_to_svr4_signo[sig];
 
 		if (i.si_status == SVR4_SIGCONT)
 			i.si_code = SVR4_CLD_CONTINUED;
@@ -1181,7 +1181,7 @@ svr4_32_setinfo(p, st, si)
 	} else {
 		sig = WTERMSIG(st);
 		if (sig >= 0 && sig < NSIG)
-			i.si_status = native_to_svr4_sig[sig];
+			i.si_status = native_to_svr4_signo[sig];
 
 		if (WCOREDUMP(st))
 			i.si_code = SVR4_CLD_DUMPED;
@@ -1397,8 +1397,8 @@ svr4_32_sys_statvfs(p, v, retval)
 {
 	struct svr4_32_sys_statvfs_args *uap = v;
 	struct sys_statfs_args	fs_args;
-	caddr_t sg = stackgap_init(p->p_emul);
-	struct statfs *fs = stackgap_alloc(&sg, sizeof(struct statfs));
+	caddr_t sg = stackgap_init(p, 0);
+	struct statfs *fs = stackgap_alloc(p, &sg, sizeof(struct statfs));
 	struct statfs bfs;
 	struct svr4_32_statvfs sfs;
 	int error;
@@ -1427,8 +1427,8 @@ svr4_32_sys_fstatvfs(p, v, retval)
 {
 	struct svr4_32_sys_fstatvfs_args *uap = v;
 	struct sys_fstatfs_args	fs_args;
-	caddr_t sg = stackgap_init(p->p_emul);
-	struct statfs *fs = stackgap_alloc(&sg, sizeof(struct statfs));
+	caddr_t sg = stackgap_init(p, 0);
+	struct statfs *fs = stackgap_alloc(p, &sg, sizeof(struct statfs));
 	struct statfs bfs;
 	struct svr4_32_statvfs sfs;
 	int error;
@@ -1456,8 +1456,8 @@ svr4_32_sys_statvfs64(p, v, retval)
 {
 	struct svr4_32_sys_statvfs64_args *uap = v;
 	struct sys_statfs_args	fs_args;
-	caddr_t sg = stackgap_init(p->p_emul);
-	struct statfs *fs = stackgap_alloc(&sg, sizeof(struct statfs));
+	caddr_t sg = stackgap_init(p, 0);
+	struct statfs *fs = stackgap_alloc(p, &sg, sizeof(struct statfs));
 	struct statfs bfs;
 	struct svr4_32_statvfs64 sfs;
 	int error;
@@ -1486,8 +1486,8 @@ svr4_32_sys_fstatvfs64(p, v, retval)
 {
 	struct svr4_32_sys_fstatvfs64_args *uap = v;
 	struct sys_fstatfs_args	fs_args;
-	caddr_t sg = stackgap_init(p->p_emul);
-	struct statfs *fs = stackgap_alloc(&sg, sizeof(struct statfs));
+	caddr_t sg = stackgap_init(p, 0);
+	struct statfs *fs = stackgap_alloc(p, &sg, sizeof(struct statfs));
 	struct statfs bfs;
 	struct svr4_32_statvfs64 sfs;
 	int error;
@@ -1517,10 +1517,10 @@ svr4_32_sys_alarm(p, v, retval)
 	int error;
         struct itimerval *ntp, *otp, tp;
 	struct sys_setitimer_args sa;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
-        ntp = stackgap_alloc(&sg, sizeof(struct itimerval));
-        otp = stackgap_alloc(&sg, sizeof(struct itimerval));
+        ntp = stackgap_alloc(p, &sg, sizeof(struct itimerval));
+        otp = stackgap_alloc(p, &sg, sizeof(struct itimerval));
 
         timerclear(&tp.it_interval);
         tp.it_value.tv_sec = SCARG(uap, sec);

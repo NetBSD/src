@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.11.4.3 2001/09/08 02:33:53 thorpej Exp $	*/
+/*	$NetBSD: select.h,v 1.11.4.4 2002/06/23 17:51:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,6 +38,7 @@
 #ifndef _SYS_SELECT_H_
 #define	_SYS_SELECT_H_
 
+#include <sys/types.h>
 #include <sys/event.h>		/* for struct klist */
 
 /*

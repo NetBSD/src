@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.2.4.3 2002/03/16 16:00:27 jdolecek Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.2.4.4 2002/06/23 17:43:54 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.2.4.3 2002/03/16 16:00:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.2.4.4 2002/06/23 17:43:54 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -66,7 +66,7 @@ irix_sys_getmountid(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(irix_mountid_t *) buf;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	struct ucred *cred = crget();
 	struct vnode *vp;
 	int error = 0;

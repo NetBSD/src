@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.39.4.1 2002/01/10 19:59:19 thorpej Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.39.4.2 2002/06/23 17:49:20 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -488,6 +488,12 @@
 #define KB_ES			0x0b00
 #define KB_HU			0x0c00
 #define	KB_PL			0x0d00
+#define KB_RU			0x0e00
+#define KB_SG			0x0f00
+#define KB_SF			0x1000
+#define KB_PT			0x1100
+#define KB_UA			0x1200
+#define KB_BE			0x1300
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
@@ -511,7 +517,13 @@
 	{ KB_NO,	"no" }, \
 	{ KB_ES,	"es" }, \
 	{ KB_HU,	"hu" },	\
-	{ KB_PL,	"pl" }
+	{ KB_PL,	"pl" }, \
+	{ KB_RU,        "ru" }, \
+	{ KB_SG,        "sg" }, \
+	{ KB_SF,        "sf" }, \
+	{ KB_PT,        "pt" }, \
+	{ KB_UA,        "ua" }, \
+	{ KB_BE,        "be" }
 
 #define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \

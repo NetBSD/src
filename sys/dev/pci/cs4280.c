@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.16.2.1 2002/01/10 19:56:29 thorpej Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.16.2.2 2002/06/23 17:47:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.16.2.1 2002/01/10 19:56:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.16.2.2 2002/06/23 17:47:34 jdolecek Exp $");
 
 #include "midi.h"
 
@@ -733,7 +733,7 @@ cs4280_trigger_output(addr, start, end, blksize, intr, arg, param)
 	}
 	if (DMAADDR(p) % sc->dma_align != 0 ) {
 		printf("cs4280_trigger_output: DMAADDR(p)=0x%lx does not start"
-		       "4kB align\n", DMAADDR(p));
+		       "4kB align\n", (ulong)DMAADDR(p));
 		return EINVAL;
 	}
 
@@ -817,7 +817,7 @@ cs4280_trigger_input(addr, start, end, blksize, intr, arg, param)
 	}
 	if (DMAADDR(p) % sc->dma_align != 0) {
 		printf("cs4280_trigger_input: DMAADDR(p)=0x%lx does not start"
-		       "4kB align\n", DMAADDR(p));
+		       "4kB align\n", (ulong)DMAADDR(p));
 		return EINVAL;
 	}
 

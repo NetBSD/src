@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.5.2.1 2002/01/10 19:57:30 thorpej Exp $	*/
+/*	$NetBSD: oak.c,v 1.5.2.2 2002/06/23 17:48:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.5.2.1 2002/01/10 19:57:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oak.c,v 1.5.2.2 2002/06/23 17:48:28 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -124,7 +124,7 @@ oak_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
-	if (matchpodule(pa, MANUFACTURER_OAK, PODULE_OAK_SCSI, -1))
+	if (pa->pa_product == PODULE_OAK_SCSI)
 		return 1;
 
 	/* PowerROM */
@@ -146,7 +146,9 @@ oak_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct oak_softc *sc = (struct oak_softc *)self;
 	struct podulebus_attach_args *pa = aux;
+#ifndef NCR5380_USE_BUS_SPACE
 	u_char *iobase;
+#endif
 	char hi_option[sizeof(sc->sc_ncr5380.sc_dev.dv_xname) + 8];
 
 	sc->sc_ncr5380.sc_flags |= NCR5380_FORCE_POLLING;

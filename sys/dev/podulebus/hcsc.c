@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.7.2.1 2002/01/10 19:57:29 thorpej Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.7.2.2 2002/06/23 17:48:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.7.2.1 2002/01/10 19:57:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.7.2.2 2002/06/23 17:48:27 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -156,7 +156,9 @@ hcsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hcsc_softc *sc = (struct hcsc_softc *)self;
 	struct podulebus_attach_args *pa = aux;
+#ifndef NCR5380_USE_BUS_SPACE
 	u_char *iobase;
+#endif
 	char hi_option[sizeof(sc->sc_ncr5380.sc_dev.dv_xname) + 8];
 
 	sc->sc_ncr5380.sc_min_dma_len = 0;

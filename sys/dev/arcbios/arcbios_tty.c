@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.1.2.2 2002/01/10 19:53:38 thorpej Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.1.2.3 2002/06/23 17:45:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.1.2.2 2002/01/10 19:53:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.1.2.3 2002/06/23 17:45:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -146,13 +146,9 @@ arcbios_ttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
-		return (error);
-
-	return (ENOTTY);
+	return (ttioctl(tp, cmd, data, flag, p));
 }
 
 int

@@ -1,0 +1,28 @@
+#	$NetBSD: files.nfs,v 1.1.8.2 2002/06/23 17:51:46 jdolecek Exp $
+
+deffs	fs_nfs.h		NFS
+
+defflag opt_nfs_boot.h		NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
+				NFS_BOOT_GATEWAY NFS_BOOT_TCP
+
+defparam opt_nfs_boot.h		NFS_BOOT_BOOTP_REQFILE NFS_BOOT_OPTIONS
+				NFS_BOOT_RWSIZE
+
+defflag opt_nfs.h		NFS_V2_ONLY
+
+defflag				NFSSERVER
+
+file	nfs/krpc_subr.c		nfs 
+file	nfs/nfs_bio.c		nfs 
+file	nfs/nfs_boot.c		nfs 
+file	nfs/nfs_bootdhcp.c	nfs & (nfs_boot_bootp | nfs_boot_dhcp)
+file	nfs/nfs_bootparam.c	nfs & nfs_boot_bootparam
+file	nfs/nfs_node.c		nfs   
+file	nfs/nfs_nqlease.c	nfsserver | nfs
+file	nfs/nfs_serv.c		nfsserver
+file	nfs/nfs_socket.c	nfsserver | nfs
+file	nfs/nfs_srvcache.c	nfsserver
+file	nfs/nfs_subs.c		nfsserver | nfs
+file	nfs/nfs_syscalls.c	nfsserver | nfs
+file	nfs/nfs_vfsops.c	nfs  
+file	nfs/nfs_vnops.c		nfs  

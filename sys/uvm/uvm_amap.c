@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.32.2.3 2002/03/16 16:02:27 jdolecek Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.32.2.4 2002/06/23 17:52:15 jdolecek Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.32.2.3 2002/03/16 16:02:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.32.2.4 2002/06/23 17:52:15 jdolecek Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -959,7 +959,17 @@ amap_pp_adjref(amap, curslot, slotlen, adjval)
 		}
 		prevlcv = lcv;
 	}
-	pp_getreflen(ppref, prevlcv, &prevref, &prevlen);
+	if (lcv != 0)
+		pp_getreflen(ppref, prevlcv, &prevref, &prevlen);
+	else {
+		/* Ensure that the "prevref == ref" test below always
+		 * fails, since we're starting from the beginning of
+		 * the ppref array; that is, there is no previous
+		 * chunk.  
+		 */
+		prevref = -1;
+		prevlen = 0;
+	}
 
 	/*
 	 * now adjust reference counts in range.  merge the first

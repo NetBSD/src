@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.9 2000/09/22 16:55:04 itojun Exp $	*/
+/*	$NetBSD: keydb.h,v 1.9.4.1 2002/06/23 17:51:42 jdolecek Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
 /*
@@ -139,8 +139,12 @@ struct key_cb {
 };
 
 /* secpolicy */
+struct secpolicy;
+struct secpolicyindex;
 extern struct secpolicy *keydb_newsecpolicy __P((void));
 extern void keydb_delsecpolicy __P((struct secpolicy *));
+extern int keydb_setsecpolicyindex
+	__P((struct secpolicy *, struct secpolicyindex *));
 /* secashead */
 extern struct secashead *keydb_newsecashead __P((void));
 extern void keydb_delsecashead __P((struct secashead *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmmeter.h,v 1.15 1999/03/24 05:51:29 mrg Exp $	*/
+/*	$NetBSD: vmmeter.h,v 1.15.22.1 2002/06/23 17:52:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -56,9 +56,6 @@ struct vmtotal
 	int32_t	t_armshr;	/* active shared real memory */
 	int32_t	t_free;		/* free memory pages */
 };
-#ifdef _KERNEL
-struct	vmtotal total;
-#endif
 
 /*
  * Optional instrumentation.

@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.11.4.2 2002/03/16 16:01:31 jdolecek Exp $ */
+/*	$NetBSD: stp4020.c,v 1.11.4.3 2002/06/23 17:48:42 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.11.4.2 2002/03/16 16:01:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.11.4.3 2002/06/23 17:48:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,6 @@ static int	stp4020_iointr	__P((void *));
 static int	stp4020_statintr __P((void *));
 static void	stp4020_map_window(struct stp4020_socket *h, int win, int speed);
 static void	stp4020_calc_speed(int bus_speed, int ns, int *length, int *delay);
-static int	dummy_splraise(int ipl);
 
 struct cfattach nell_ca = {
 	sizeof(struct stp4020_softc), stp4020match, stp4020attach
@@ -327,7 +326,7 @@ stp4020attach(parent, self, aux)
 				 sa->sa_reg[i].sbr_slot,
 				 sa->sa_reg[i].sbr_offset,
 				 sa->sa_reg[i].sbr_size,
-				 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
+				 0, &bh) != 0) {
 			printf("%s: attach: cannot map registers\n",
 				self->dv_xname);
 			return;
@@ -480,7 +479,7 @@ stp4020_event_thread(arg)
 			(void)tsleep(&sc->events, PWAIT, "pcicev", 0);
 			continue;
 		}
-		SIMPLEQ_REMOVE_HEAD(&sc->events, e, se_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->events, se_q);
 		splx(s);
 
 		n = e->se_sock;
@@ -612,40 +611,12 @@ stp4020_statintr(arg)
 	return (r);
 }
 
-static int
-dummy_splraise(int ipl)
-{
-	switch(ipl) {
-	case IPL_SOFTCLOCK:
-		return splsoftclock();
-	case IPL_BIO:
-		return splbio();
-	case IPL_NET:
-		return splnet();
-	case IPL_SOFTSERIAL:
-		return splserial();	/* XXX ? */
-	case IPL_TTY:
-		return spltty();
-	case IPL_IMP:
-		return splhigh();	/* XXX ? */
-	case IPL_AUDIO:
-		return splaudio();
-	case IPL_CLOCK:
-		return splclock();
-	case IPL_SERIAL:
-		return splserial();
-	case IPL_HIGH:
-		return splhigh();
-	}
-	panic("illegal pcmcia interrupt level");
-}
-
 int
 stp4020_iointr(arg)
 	void *arg;
 {
 	struct stp4020_softc *sc = arg;
-	int i, r = 0, s;
+	int i, r = 0;
 
 	/*
 	 * Check each socket for pending requests.
@@ -661,6 +632,7 @@ stp4020_iointr(arg)
 			/* we can not deny this is ours, no matter what the
 			   card driver says. */
 			r = 1;
+
 			/* ack interrupt */
 			stp4020_wr_sockctl(h, STP4020_ISR0_IDX, v);
 
@@ -672,9 +644,15 @@ stp4020_iointr(arg)
 			}
 			/* Call card handler, if any */
 			if (h->intrhandler != NULL) {
-				s = dummy_splraise(h->ipl);
+				/*
+				 * Called without handling of it's requested
+				 * protection level (h->ipl), since we have
+				 * no general queuing mechanism available
+				 * right now and we know for sure we are
+				 * running at a higher protection level
+				 * right now.
+				 */
 				(*h->intrhandler)(h->intrarg);
-				splx(s);
 			}
 		}
 

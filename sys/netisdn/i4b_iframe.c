@@ -27,7 +27,7 @@
  *	i4b_iframe.c - i frame handling routines
  *	------------------------------------------
  *
- *	$Id: i4b_iframe.c,v 1.3.2.1 2002/01/10 20:03:35 thorpej Exp $ 
+ *	$Id: i4b_iframe.c,v 1.3.2.2 2002/06/23 17:51:25 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_iframe.c,v 1.3.2.1 2002/01/10 20:03:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_iframe.c,v 1.3.2.2 2002/06/23 17:51:25 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -67,11 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_iframe.c,v 1.3.2.1 2002/01/10 20:03:35 thorpej E
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
-
-#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
 
 /*---------------------------------------------------------------------------*
@@ -79,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_iframe.c,v 1.3.2.1 2002/01/10 20:03:35 thorpej E
  *	implements the routine "I COMMAND" Q.921 03/93 pp 68 and pp 77
  *---------------------------------------------------------------------------*/
 void
-i4b_rxd_i_frame(l2_softc_t *l2sc, struct mbuf *m)
+i4b_rxd_i_frame(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
 	u_char *ptr = m->m_data;
 	int nr;
@@ -109,7 +108,7 @@ i4b_rxd_i_frame(l2_softc_t *l2sc, struct mbuf *m)
 	ns = GETINS(*(ptr + OFF_INS));
 	p = GETIP(*(ptr + OFF_INR));
 	
-	i4b_rxd_ack(l2sc, nr);		/* last packet ack */
+	i4b_rxd_ack(l2sc, drv, nr);		/* last packet ack */
 
 	if(l2sc->own_busy)		/* own receiver busy ? */
 	{	
@@ -133,7 +132,7 @@ i4b_rxd_i_frame(l2_softc_t *l2sc, struct mbuf *m)
 
 			l2sc->iframe_sent = 0;	/* reset i acked already */
 
-			i4b_dl_data_ind(l2sc->bri, m);	/* pass data up */
+			i4b_dl_data_ind(drv, m);	/* pass data up */
 
 			if(!l2sc->iframe_sent)
 			{

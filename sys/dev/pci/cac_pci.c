@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.10.4.2 2002/02/11 20:09:56 jdolecek Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.10.4.3 2002/06/23 17:47:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.10.4.2 2002/02/11 20:09:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.10.4.3 2002/06/23 17:47:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ struct cac_pci_product {
 	u_short	cp_product;
 } static const cac_pci_product[] = {
 	{ PCI_VENDOR_COMPAQ,	PCI_PRODUCT_COMPAQ_SMART2P },
-	{ PCI_VENDOR_DEC,	PCI_PRODUCT_DEC_CPQ42XX },
+	{ PCI_VENDOR_DEC,	PCI_PRODUCT_DEC_21554 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_1510 },
 };
 

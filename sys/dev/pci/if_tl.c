@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.42.2.4 2002/03/16 16:01:14 jdolecek Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.42.2.5 2002/06/23 17:47:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.42.2.4 2002/03/16 16:01:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.42.2.5 2002/06/23 17:47:44 jdolecek Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -299,7 +299,7 @@ tl_pci_attach(parent, self, aux)
 	sc->tl_product = tp;
 
 	/*
-	 * Map the card space. Fisrt we have to find the I/O and MEM
+	 * Map the card space. First we have to find the I/O and MEM
 	 * registers. I/O is supposed to be at 0x10, MEM at 0x14, 
 	 * but some boards (Compaq Netflex 3/P PCI) seem to have it reversed.
 	 * The ThunderLAN manual is not consistent about this either (there
@@ -415,7 +415,7 @@ tl_pci_attach(parent, self, aux)
 	}
 	/*
 	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
-	 * doing do could allow DMA to corrupt kernel memory during the
+	 * doing 
 	 * reboot before the driver initializes.
 	 */
 	(void) shutdownhook_establish(tl_shutdown, ifp);

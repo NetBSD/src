@@ -37,7 +37,7 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Teles S0/16 and clones
  *	=================================================================
  *
- *	$Id: isic_isa_tel_s016.c,v 1.2.6.1 2002/01/10 19:55:34 thorpej Exp $ 
+ *	$Id: isic_isa_tel_s016.c,v 1.2.6.2 2002/06/23 17:47:04 jdolecek Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
@@ -50,7 +50,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s016.c,v 1.2.6.1 2002/01/10 19:55:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s016.c,v 1.2.6.2 2002/06/23 17:47:04 jdolecek Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_TEL_S0_16
@@ -89,21 +89,23 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s016.c,v 1.2.6.1 2002/01/10 19:55:34 th
 #include <netisdn/i4b_ioctl.h>
 #endif
 
+#include <netisdn/i4b_global.h>
+#include <netisdn/i4b_debug.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
+#include <netisdn/i4b_mbuf.h>
+
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
 
-#include <netisdn/i4b_global.h>
-#include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_mbuf.h>
-
 static u_char intr_no[] = { 1, 1, 0, 2, 4, 6, 1, 1, 1, 0, 8, 10, 12, 1, 1, 14 };
 
 #ifndef __FreeBSD__
-static u_int8_t tels016_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void tels016_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void tels016_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void tels016_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
+static u_int8_t tels016_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
+static void tels016_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
+static void tels016_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
+static void tels016_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
 #endif
 
 /*---------------------------------------------------------------------------*
@@ -124,7 +126,7 @@ tels016_write_reg(u_char *base, u_int i, u_int v)
 static const bus_size_t offset[] = { 0x100, 0x180, 0x1c0 };
 
 static void
-tels016_write_reg(struct l1_softc *sc,	int what, bus_size_t offs, u_int8_t data)
+tels016_write_reg(struct isic_softc *sc,	int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[1].t;
 	bus_space_handle_t h = sc->sc_maps[1].h;
@@ -153,7 +155,7 @@ tels016_read_reg(u_char *base, u_int i)
 #else
 
 static u_int8_t
-tels016_read_reg(struct l1_softc *sc,	int what, bus_size_t offs)
+tels016_read_reg(struct isic_softc *sc,	int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[1].t;
 	bus_space_handle_t h = sc->sc_maps[1].h;
@@ -182,7 +184,7 @@ tels016_memcpyb(void *to, const void *from, size_t len)
 #else
 
 static void
-tels016_write_fifo(struct l1_softc *sc, int what, const void *data, size_t size)
+tels016_write_fifo(struct isic_softc *sc, int what, const void *data, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[1].t;
 	bus_space_handle_t h = sc->sc_maps[1].h;
@@ -190,7 +192,7 @@ tels016_write_fifo(struct l1_softc *sc, int what, const void *data, size_t size)
 }
 
 static void
-tels016_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+tels016_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[1].t;
 	bus_space_handle_t h = sc->sc_maps[1].h;
@@ -205,7 +207,7 @@ tels016_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
 int
 isic_probe_s016(struct isa_device *dev)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	u_char byte;
 
 	/* check max unit range */
@@ -360,12 +362,12 @@ int
 #ifdef __FreeBSD__
 isic_attach_s016(struct isa_device *dev)
 #else
-isic_attach_s016(struct l1_softc *sc)
+isic_attach_s016(struct isic_softc *sc)
 #endif
 {
 
 #ifdef __FreeBSD__
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 #endif
 
 	u_long irq;

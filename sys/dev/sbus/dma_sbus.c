@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.5.4.3 2002/03/16 16:01:29 jdolecek Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.5.4.4 2002/06/23 17:48:38 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.5.4.3 2002/03/16 16:01:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.5.4.4 2002/06/23 17:48:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,6 @@ dmaattach_sbus(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct dma_softc *dsc = (void *)self;
 	struct lsi64854_softc *sc = &dsc->sc_lsi64854;
-	bus_space_handle_t bh;
 	bus_space_tag_t sbt;
 	int sbusburst, burst;
 	int node;
@@ -165,16 +164,16 @@ dmaattach_sbus(parent, self, aux)
 	sc->sc_dmatag = sa->sa_dmatag;
 
 	/* Map registers */
-	if (sa->sa_npromvaddrs != 0)
-		sc->sc_regs = (bus_space_handle_t)sa->sa_promvaddrs[0];
-	else {
+	if (sa->sa_npromvaddrs) {
+		sbus_promaddr_to_handle(sa->sa_bustag,
+			sa->sa_promvaddrs[0], &sc->sc_regs);
+	} else {
 		if (sbus_bus_map(sa->sa_bustag,
-				 sa->sa_slot, sa->sa_offset, sa->sa_size,
-				 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
+			sa->sa_slot, sa->sa_offset, sa->sa_size,
+			0, &sc->sc_regs) != 0) {
 			printf("%s: cannot map registers\n", self->dv_xname);
 			return;
 		}
-		sc->sc_regs = bh;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.20 2001/05/30 11:37:29 mrg Exp $
+	$NetBSD: syscalls.master,v 1.20.2.1 2002/06/23 17:44:34 jdolecek Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -124,11 +124,7 @@
 52	COMPAT_13	{ int sys_sigpending(void); } sigpending13
 53	COMPAT_13	{ int netbsd32_sigaltstack13(const netbsd32_sigaltstack13p_t nss, netbsd32_sigaltstack13p_t oss); }
 54	STD		{ int netbsd32_ioctl(int fd, netbsd32_u_long com, ... netbsd32_voidp data); }
-#ifdef COMPAT_12
 55	COMPAT_12	{ int netbsd32_reboot(int opt); }
-#else
-55	OBSOL		oreboot
-#endif
 56	STD		{ int netbsd32_revoke(const netbsd32_charp path); }
 57	STD		{ int netbsd32_symlink(const netbsd32_charp path, const netbsd32_charp link); }
 58	STD		{ int netbsd32_readlink(const netbsd32_charp path, netbsd32_charp buf, netbsd32_size_t count); }
@@ -269,23 +265,20 @@
 166	UNIMPL
 167	UNIMPL
 168	UNIMPL
-; XXX more generally, never on machines where sizeof(netbsd32_voidp ) != sizeof(int)
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-169	STD		{ int netbsd32_compat_10_sys_semsys(int which, int a2, int a3, int a4, int a5); } osemsys
+#if defined(SYSVSEM) || !defined(_KERNEL)
+169	COMPAT_10	{ int netbsd32_sys_semsys(int which, int a2, int a3, int a4, int a5); } osemsys
 #else
-169	EXCL		1.0 semsys
+169	EXCL		netbsd32_sys_semsys
 #endif
-; XXX more generally, never on machines where sizeof(netbsd32_voidp ) != sizeof(int)
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-170	STD		{ int netbsd32_compat_10_sys_msgsys(int which, int a2, int a3, int a4, int a5, int a6); } omsgsys
+#if defined(SYSVMSG) || !defined(_KERNEL)
+170	COMPAT_10	{ int netbsd32_sys_msgsys(int which, int a2, int a3, int a4, int a5, int a6); } omsgsys
 #else
-170	EXCL		1.0 msgsys
+170	EXCL		netbsd32_sys_msgsys
 #endif
-; XXX more generally, never on machines where sizeof(netbsd32_voidp ) != sizeof(int)
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
-171	STD		{ int netbsd32_compat_10_sys_shmsys(int which, int a2, int a3, int a4); } oshmsys
+#if defined(SYSVSHM) || !defined(_KERNEL)
+171	COMPAT_10	{ int netbsd32_sys_shmsys(int which, int a2, int a3, int a4); } oshmsys
 #else
-171	EXCL		1.0 shmsys
+171	EXCL		netbsd32_sys_shmsys
 #endif
 172	UNIMPL
 173	STD		{ netbsd32_ssize_t netbsd32_pread(int fd, netbsd32_voidp buf, netbsd32_size_t nbyte, int pad, off_t offset); }

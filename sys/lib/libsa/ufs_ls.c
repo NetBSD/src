@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.1 1999/04/14 11:32:50 drochner Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.1.18.1 2002/06/23 17:49:53 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -93,7 +93,7 @@ ufs_ls(path)
 			if (dp->d_ino != (ino_t) 0) {
 				char           *t;
 
-				if ((dp->d_namlen > MAXNAMLEN + 1) ||
+				if (/* (dp->d_namlen > MAXNAMLEN + 1) || */
 				    (dp->d_type >
 				      sizeof(typestr) / sizeof(char *) - 1) ||
 				    !(t = typestr[dp->d_type])) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.21.2.1 2002/01/10 20:04:06 thorpej Exp $	*/
+/*	$NetBSD: ns.c,v 1.21.2.2 2002/06/23 17:51:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.21.2.1 2002/01/10 20:04:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.21.2.2 2002/06/23 17:51:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: ns.c,v 1.21.2.1 2002/01/10 20:04:06 thorpej Exp $");
 
 struct ns_ifaddrhead ns_ifaddr;
 int ns_interfaces;
-extern struct sockaddr_ns ns_netmask, ns_hostmask;
 
 /*
  * Generic internet control operations (ioctl's).

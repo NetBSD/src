@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.4.2.2 2002/03/16 16:02:17 jdolecek Exp $ 
+ *	$Id: i4b_q931.c,v 1.4.2.3 2002/06/23 17:51:31 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.4.2.2 2002/03/16 16:02:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.4.2.3 2002/06/23 17:51:31 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -81,10 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.4.2.2 2002/03/16 16:02:17 jdolecek Ex
 
 unsigned int i4b_l3_debug = L3_DEBUG_DEFAULT;
 
-call_desc_t call_desc[N_CALL_DESC];	/* call descriptor array */
-ctrl_desc_t ctrl_desc[MAX_CONTROLLERS];	/* controller description array */
-int utoc_tab[MAX_CONTROLLERS];		/* unit to controller conversion */
-
 /* protocol independent causes -> Q.931 causes */
 
 unsigned char cause_tab_q931[CAUSE_I4B_MAX] = {
@@ -119,7 +115,7 @@ setup_cr(call_desc_t *cd, unsigned char cr)
 void
 i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 {
-	call_desc_t *cd;
+	call_desc_t *cd = NULL;
 	int codeset = CODESET_0;
 	int old_codeset = CODESET_0;
 	int shift_flag = UNSHIFTED;
@@ -155,7 +151,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 	msg_ptr++;
 	msg_len--;
 	
-	if(crlen != 0)
+	if (crlen != 0)
 	{
 		crval += *msg_ptr & 0x7f;
 		crflag = (*msg_ptr >> 7) & 0x01;
@@ -179,19 +175,22 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 
 	/* find or allocate calldescriptor */
 
-	if((cd = cd_by_unitcr(bri, crval,
+	if((cd = cd_by_bricr(bri, crval,
 			crflag == CRF_DEST ? CRF_ORIG : CRF_DEST)) == NULL)
 	{
 		if(*msg_ptr == SETUP)
 		{
+			struct isdn_l3_driver *drv = isdn_find_l3_by_bri(bri);
+
 			/* get and init new calldescriptor */
 
 			cd = reserve_cd();	/* cdid filled in */
 			cd->bri = bri;
+			cd->l3drv = drv;
 			cd->cr = crval;		
 			cd->crflag = CRF_DEST;	/* we are the dest side */
-			cd->ilt = NULL;		/* reset link tab ptrs */
-			cd->dlt = NULL;
+			cd->l4_driver = NULL;		/* reset link tab ptrs */
+			cd->l4_driver_softc = NULL;
 		}
 		else
 		{
@@ -209,7 +208,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 
 	/* decode and handle message type */
 	
-	i4b_decode_q931_message(bri, cd, *msg_ptr);
+	i4b_decode_q931_message(cd, *msg_ptr);
 	msg_ptr++;
 	msg_len--;
 	
@@ -242,7 +241,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 		switch(codeset)
 		{
 			case CODESET_0:
-				offset = i4b_decode_q931_cs0_ie(bri, cd, msg_len, msg_ptr);
+				offset = i4b_decode_q931_cs0_ie(cd, msg_len, msg_ptr);
 				msg_len -= offset;
 				msg_ptr += offset;
 				break;
@@ -269,7 +268,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
  *	decode and process one Q.931 codeset 0 information element
  *---------------------------------------------------------------------------*/
 int
-i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
+i4b_decode_q931_cs0_ie(call_desc_t *cd, int msg_len, u_char *msg_ptr)
 {
 	int i, j;
 	char *p;
@@ -345,6 +344,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 			}
 			else
 			{
+				int old_chanid = cd->channelid;
 				switch(msg_ptr[2] & 0x03)
 				{
 					case IE_CHAN_ID_NO:
@@ -364,15 +364,21 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 
 				NDBGL3(L3_P_MSG, "IEI_CHANNELID - channel %d, exclusive = %d", cd->channelid, cd->channelexcl);
 
-				/* if this is a setup message, reserve channel */
-				
-				if(cd->event == EV_SETUP)
+				/* if this is the first time we know the real channel,
+				 * reserve it */
+				if (old_chanid != cd->channelid)
 				{
 					if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 					{
-						if (i4b_l2_channel_get_state(unit, cd->channelid) == BCH_ST_FREE)
-							i4b_l2_channel_set_state(unit, cd->channelid, BCH_ST_RSVD);
-						else
+						struct isdn_l3_driver *d = cd->l3drv;
+						
+						if (i4b_l2_channel_get_state(d, cd->channelid) == BCH_ST_FREE) {
+							if (d != NULL) {
+								d->bch_state[cd->channelid] = BCH_ST_RSVD;
+								update_controller_leds(d);
+							}
+							i4b_l2_channel_set_state(d, cd->channelid, BCH_ST_RSVD);
+						} else
 							NDBGL3(L3_P_ERR, "IE ChannelID, Channel NOT free!!");
 					}
 					else if(cd->channelid == CHAN_NO)
@@ -438,6 +444,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 			break;
 
 		case IEI_CALLINGPN:	/* calling party no */
+			cd->type_plan = msg_ptr[2] & 0x7f;
 			if(msg_ptr[2] & 0x80) /* no presentation/screening indicator ? */
 			{
 				memcpy(cd->src_telno, &msg_ptr[3], min(TELNO_MAX, msg_ptr[1]-1));
@@ -457,6 +464,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 	
 		case IEI_CALLINGPS:	/* calling party subaddress */
 			NDBGL3(L3_P_MSG, "IEI_CALLINGPS");
+			memcpy(cd->src_subaddr, &msg_ptr[1], min(SUBADDR_MAX, msg_ptr[1]-1));
 			break;
 			
 		case IEI_CALLEDPN:	/* called party number */
@@ -467,6 +475,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 	
 		case IEI_CALLEDPS:	/* called party subaddress */
 			NDBGL3(L3_P_MSG, "IEI_CALLEDPS");
+			memcpy(cd->dest_subaddr, &msg_ptr[1], min(SUBADDR_MAX, msg_ptr[1]-1));
 			break;
 
 		case IEI_REDIRNO:	/* redirecting number */
@@ -526,7 +535,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
  *	decode and process one Q.931 codeset 0 information element
  *---------------------------------------------------------------------------*/
 void
-i4b_decode_q931_message(int unit, call_desc_t *cd, u_char message_type)
+i4b_decode_q931_message(call_desc_t *cd, u_char message_type)
 {
 	char *m = NULL;
 	
@@ -699,12 +708,12 @@ i4b_decode_q931_message(int unit, call_desc_t *cd, u_char message_type)
 			break;
 			
 		default:
-			NDBGL3(L3_P_ERR, "unit %d, cr = 0x%02x, msg = 0x%02x", unit, cd->cr, message_type);
+			NDBGL3(L3_P_ERR, "bri %d, cr = 0x%02x, msg = 0x%02x", cd->bri, cd->cr, message_type);
 			break;
 	}
 	if(m)
 	{
-		NDBGL3(L3_PRIM, "%s: unit %d, cr = 0x%02x\n", m, unit, cd->cr);
+		NDBGL3(L3_PRIM, "%s: bri %d, cr = 0x%02x\n", m, cd->bri, cd->cr);
 	}
 }
 

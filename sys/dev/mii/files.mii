@@ -1,8 +1,12 @@
-#	$NetBSD: files.mii,v 1.22.2.4 2002/01/10 19:56:13 thorpej Exp $
-
-file	dev/mii/mii.c				mii
+#	$NetBSD: files.mii,v 1.22.2.5 2002/06/23 17:47:22 jdolecek Exp $
 
 defflag	opt_mii.h	MIIVERBOSE
+
+define	mii		{[phy = -1]}
+file	dev/mii/mii.c				mii
+
+define	mii_bitbang
+file	dev/mii/mii_bitbang.c			mii_bitbang
 
 define	mii_phy
 file	dev/mii/mii_physubr.c			mii_phy
@@ -66,7 +70,7 @@ device	exphy: mii_phy, ukphy_subr
 attach	exphy at mii
 file	dev/mii/exphy.c				exphy
 
-device	lxtphy: mii_phy
+device	lxtphy: mii_phy, ukphy_subr
 attach	lxtphy at mii
 file	dev/mii/lxtphy.c			lxtphy
 
@@ -93,6 +97,10 @@ file	dev/mii/dmphy.c				dmphy
 device	pnaphy: mii_phy
 attach	pnaphy at mii
 file	dev/mii/pnaphy.c			pnaphy
+
+device	urlphy: mii_phy
+attach	urlphy at mii
+file	dev/mii/urlphy.c			urlphy
 
 device	ukphy: mii_phy, ukphy_subr
 attach	ukphy at mii

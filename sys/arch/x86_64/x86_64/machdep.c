@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.2 2002/01/10 19:50:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.3 2002/06/23 17:43:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
-void	init_x86_64 __P((paddr_t));
+void	init_x86_64 __P((vaddr_t));
 
 /*
  * Machine-dependent startup code
@@ -487,22 +487,23 @@ sendsig(catcher, sig, mask, code)
 		sp = ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
 					  p->p_sigctx.ps_sigstk.ss_size);
 	else
-		sp = (caddr_t)tf->tf_rsp;
+		sp = (caddr_t)tf->tf_rsp - 128;
 	/*
 	 * Round down the stackpointer to a multiple of 16 for
 	 * fxsave and the ABI.
 	 */
 	sp = (char *)((unsigned long)sp & ~15);
+	fp = (struct sigframe *)sp - 1;
+
 	if (p->p_md.md_flags & MDP_USEDFPU) {
-		frame.sf_fpp = &frame.sf_fp;
-		memcpy(frame.sf_fpp, &p->p_addr->u_pcb.pcb_savefpu,	
+		frame.sf_sc.sc_fpstate = &fp->sf_fp;
+		memcpy(&frame.sf_fp, &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave,
 		    sizeof (struct fxsave64));
 		tocopy = sizeof (struct sigframe);
 	} else {
-		frame.sf_fpp = NULL;
+		frame.sf_sc.sc_fpstate = NULL;
 		tocopy = sizeof (struct sigframe) - sizeof (struct fxsave64);
 	}
-	fp = (struct sigframe *)sp - 1;
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = sig;
@@ -517,7 +518,7 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_es = tf->tf_es;
 	frame.sf_sc.sc_ds = tf->tf_ds;
 #endif
-	frame.sf_sc.sc_eflags = tf->tf_eflags;
+	frame.sf_sc.sc_rflags = tf->tf_rflags;
 	frame.sf_sc.sc_r15 = tf->tf_r15;
 	frame.sf_sc.sc_r14 = tf->tf_r14;
 	frame.sf_sc.sc_r13 = tf->tf_r13;
@@ -558,15 +559,15 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
+#if 0
 	__asm("movl %0,%%gs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
 	__asm("movl %0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
-#if 0
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 #endif
 	tf->tf_rip = (u_int64_t)p->p_sigctx.ps_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_rsp = (u_int64_t)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
@@ -614,8 +615,8 @@ sys___sigreturn14(p, v, retval)
 	 * automatically and generate a trap on violations.  We handle
 	 * the trap, rather than doing all of the checking here.
 	 */
-	if (((context.sc_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(context.sc_cs, context.sc_eflags))
+	if (((context.sc_rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(context.sc_cs, context.sc_rflags))
 		return (EINVAL);
 
 	/* %fs and %gs were restored by the trampoline. */
@@ -623,7 +624,7 @@ sys___sigreturn14(p, v, retval)
 	tf->tf_es = context.sc_es;
 	tf->tf_ds = context.sc_ds;
 #endif
-	tf->tf_eflags = context.sc_eflags;
+	tf->tf_rflags = context.sc_rflags;
 	tf->tf_rdi = context.sc_rdi;
 	tf->tf_rsi = context.sc_rsi;
 	tf->tf_rbp = context.sc_rbp;
@@ -635,6 +636,15 @@ sys___sigreturn14(p, v, retval)
 	tf->tf_cs = context.sc_cs;
 	tf->tf_rsp = context.sc_rsp;
 	tf->tf_ss = context.sc_ss;
+
+	/* Restore (possibly fixed up) FP state and force it to be reloaded */
+	if (p->p_md.md_flags & MDP_USEDFPU) {
+		if (copyin(context.sc_fpstate,
+		    &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave,
+		    sizeof (struct fxsave64)) != 0)
+			return EFAULT;
+		fpudiscard(p);
+	}
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
@@ -982,25 +992,29 @@ setregs(p, pack, stack)
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
-	pcb->pcb_savefpu.fx_fcw = __NetBSD_NPXCW__;
+	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
+	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
+	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
+
+	p->p_flag &= ~P_32;
 
 	tf = p->p_md.md_regs;
+#if 0
 	__asm("movl %0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
 	__asm("movl %0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
-#if 0
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 #endif
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
-	tf->tf_rbx = (u_int64_t)PS_STRINGS;
+	tf->tf_rbx = (u_int64_t)p->p_psstr;
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;
 	tf->tf_rip = pack->ep_entry;
 	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
-	tf->tf_eflags = PSL_USERSET;
+	tf->tf_rflags = PSL_USERSET;
 	tf->tf_rsp = stack;
 	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
 }
@@ -1087,7 +1101,9 @@ set_sys_segment(sd, base, limit, type, dpl, gran)
 #define	IDTVEC(name)	__CONCAT(X, name)
 typedef void (vector) __P((void));
 extern vector IDTVEC(syscall);
+extern vector IDTVEC(syscall32);
 extern vector IDTVEC(osyscall);
+extern vector IDTVEC(oosyscall);
 extern vector *IDTVEC(exceptions)[];
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
@@ -1130,7 +1146,7 @@ init_x86_64(first_avail)
 	 * Call pmap initialization to make new kernel address space.
 	 * We must do this before loading pages into the VM system.
 	 */
-	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
+	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
 
 	/*
 	 * Check to see if we have a memory map from the BIOS (passed
@@ -1320,7 +1336,7 @@ init_x86_64(first_avail)
 
 		if (avail_start >= seg_start && avail_start < seg_end) {
 			if (seg_start != 0)
-				panic("init)x86_64: memory doesn't start at 0");
+				panic("init_x86_64: memory doesn't start at 0");
 			seg_start = avail_start;
 			if (seg_start == seg_end)
 				continue;
@@ -1445,6 +1461,8 @@ init_x86_64(first_avail)
 			    "in last cluster (%ld used)\n", reqsz, sz);
 	}
 
+	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
+
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
 	pmap_enter(pmap_kernel(), idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
@@ -1473,7 +1491,7 @@ init_x86_64(first_avail)
 
 	/* make ldt gates and memory segments */
 	setgate((struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
-	    &IDTVEC(osyscall), 0, SDT_SYS386CGT, SEL_UPL);
+	    &IDTVEC(oosyscall), 0, SDT_SYS386CGT, SEL_UPL);
 
 	*(struct mem_segment_descriptor *)(ldtstore + LUCODE_SEL) =
 	    *GDT_ADDR_MEM(GUCODE_SEL);
@@ -1516,7 +1534,20 @@ init_x86_64(first_avail)
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL);
 
 	/* new-style interrupt gate for syscalls */
-	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL);
+	setgate(&idt[128], &IDTVEC(osyscall), 0, SDT_SYS386TGT, SEL_UPL);
+
+	/* syscall/sysret instruction setup */
+
+	wrmsr(MSR_STAR,
+	    ((uint64_t)GSEL(GCODE_SEL, SEL_KPL) << 32) |
+	    ((uint64_t)LSEL(LSYSRETBASE_SEL, SEL_UPL) << 48));
+	wrmsr(MSR_LSTAR, (uint64_t)IDTVEC(syscall));
+	wrmsr(MSR_CSTAR, (uint64_t)IDTVEC(syscall32));
+	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C);
+
+	wrmsr(MSR_FSBASE, 0);
+	wrmsr(MSR_GSBASE, (u_int64_t)&cpu_info_store);
+	wrmsr(MSR_KERNELGSBASE, 0);
 
 	setregion(&region, gdtstore, DYNSEL_START - 1);
 	lgdt(&region);

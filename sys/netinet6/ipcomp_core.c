@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_core.c,v 1.16.4.1 2002/01/10 20:03:23 thorpej Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.16.4.2 2002/06/23 17:51:18 jdolecek Exp $	*/
 /*	$KAME: ipcomp_core.c,v 1.25 2001/07/26 06:53:17 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.16.4.1 2002/01/10 20:03:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_core.c,v 1.16.4.2 2002/06/23 17:51:18 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -249,14 +249,17 @@ do { \
 			MOREBLOCK();
 		}
 
-		zerror = mode ? inflate(&zs, Z_FINISH)
+		zerror = mode ? inflate(&zs, Z_SYNC_FLUSH)
 			      : deflate(&zs, Z_FINISH);
 
 		if (zerror == Z_STREAM_END)
 			break;
-		else if (zerror == Z_OK)
-			; /* once more. */
-		else {
+		else if (zerror == Z_OK) {
+			if (mode && zs.avail_out != 0)
+				goto terminate;
+			else
+				; /* once more. */
+		} else {
 			if (zs.msg) {
 				ipseclog((LOG_ERR, "ipcomp_%scompress: "
 				    "%sflate(Z_FINISH): %s\n",

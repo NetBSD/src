@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.42.4.2 2002/01/10 19:56:55 thorpej Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.42.4.3 2002/06/23 17:47:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.42.4.2 2002/01/10 19:56:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.42.4.3 2002/06/23 17:47:52 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -149,12 +149,14 @@ const struct pci_class pci_subclass_communications[] = {
 	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	},
 	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	},
 	{ "modem",		PCI_SUBCLASS_COMMUNICATIONS_MODEM,	},
+	{ "GPIB",		PCI_SUBCLASS_COMMUNICATIONS_GPIB,	},
+	{ "smartcard",		PCI_SUBCLASS_COMMUNICATIONS_SMARTCARD,	},
 	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	},
 	{ 0 },
 };
 
 const struct pci_class pci_subclass_system[] = {
-	{ "8259 PIC",		PCI_SUBCLASS_SYSTEM_PIC,		},
+	{ "interrupt",		PCI_SUBCLASS_SYSTEM_PIC,		},
 	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
 	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
 	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,		},
@@ -209,6 +211,8 @@ const struct pci_class pci_subclass_wireless[] = {
 	{ "IrDA",		PCI_SUBCLASS_WIRELESS_IRDA,		},
 	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR,	},
 	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,		},
+	{ "bluetooth",		PCI_SUBCLASS_WIRELESS_BLUETOOTH,	},
+	{ "broadband",		PCI_SUBCLASS_WIRELESS_BROADBAND,	},
 	{ "miscellaneous",	PCI_SUBCLASS_WIRELESS_MISC,		},
 	{ 0 },
 };
@@ -236,6 +240,8 @@ const struct pci_class pci_subclass_crypto[] = {
 const struct pci_class pci_subclass_dasp[] = {
 	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,			},
 	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,		},
+	{ "synchronization",	PCI_SUBCLASS_DASP_SYNC,			},
+	{ "management",		PCI_SUBCLASS_DASP_MGMT,			},
 	{ "miscellaneous",	PCI_SUBCLASS_DASP_MISC,			},
 	{ 0 },
 };
@@ -1196,11 +1202,11 @@ pci_conf_print(
 		    hdrtype);
 	printf("\n");
 
-#ifdef _KERNEL
 	/* device-dependent header */
 	printf("  Device-dependent header:\n");
 	pci_conf_print_regs(regs, endoff, 256);
 	printf("\n");
+#ifdef _KERNEL
 	if (printfn)
 		(*printfn)(pc, tag, regs);
 	else

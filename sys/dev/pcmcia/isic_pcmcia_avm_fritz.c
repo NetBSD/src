@@ -33,7 +33,7 @@
  *	Fritz!Card pcmcia specific routines for isic driver
  *	---------------------------------------------------
  *
- *	$Id: isic_pcmcia_avm_fritz.c,v 1.2.6.1 2002/01/10 19:57:22 thorpej Exp $ 
+ *	$Id: isic_pcmcia_avm_fritz.c,v 1.2.6.2 2002/06/23 17:48:19 jdolecek Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.2.6.1 2002/01/10 19:57:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.2.6.2 2002/06/23 17:48:19 jdolecek Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_AVM_A1
@@ -79,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.2.6.1 2002/01/10 19:57:2
 #else
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #endif
@@ -91,10 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.2.6.1 2002/01/10 19:57:2
 #include <dev/pcmcia/isic_pcmcia.h>
 
 /* PCMCIA support routines */
-static u_int8_t avma1_pcmcia_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void avma1_pcmcia_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void avma1_pcmcia_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void avma1_pcmcia_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
+static u_int8_t avma1_pcmcia_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
+static void avma1_pcmcia_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
+static void avma1_pcmcia_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
+static void avma1_pcmcia_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
 #endif
 
 /*---------------------------------------------------------------------------*
@@ -160,7 +162,7 @@ static u_int8_t what_map[] = {
 	0xE0-0x20	/* ISIC_WHAT_HSCXB */
 };
 static void
-avma1_pcmcia_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+avma1_pcmcia_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -181,7 +183,7 @@ avma1_pcmcia_write_fifo(void *base, const void *buf, size_t len)
 }
 #else
 static void
-avma1_pcmcia_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+avma1_pcmcia_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -203,7 +205,7 @@ avma1_pcmcia_write_reg(u_char *base, u_int offset, u_int v)
 }
 #else
 static void
-avma1_pcmcia_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+avma1_pcmcia_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -225,7 +227,7 @@ avma1_pcmcia_read_reg(u_char *base, u_int offset)
 }
 #else
 static u_int8_t
-avma1_pcmcia_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+avma1_pcmcia_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -243,7 +245,7 @@ avma1_pcmcia_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 int
 isic_probe_avma1_pcmcia(struct isa_device *dev)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	u_char byte;
 	int i;
 	u_int cardinfo;
@@ -325,10 +327,6 @@ isic_probe_avma1_pcmcia(struct isa_device *dev)
 
 	sc->readfifo  = avma1_pcmcia_read_fifo;
 	sc->writefifo = avma1_pcmcia_write_fifo;
-
-	/* setup card type */
-
-	sc->sc_cardtyp = CARD_TYPEP_PCFRITZ;
 
 	/* setup IOM bus type */
 	
@@ -414,17 +412,10 @@ isic_attach_fritzpcmcia(struct isa_device *dev)
 
 #else
 
-/*
- * XXX - one time only! Some of this has to go into an enable
- * function, with apropriate counterpart in disable, so a card
- * could be removed an inserted again. But never mind for now,
- * this won't work anyway for several reasons (both in NetBSD
- * and in I4B).
- */
 int
-isic_attach_fritzpcmcia(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
+isic_attach_fritzpcmcia(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
 {
-	struct l1_softc *sc = &psc->sc_isic;
+	struct isic_softc *sc = &psc->sc_isic;
 	bus_space_tag_t t;
 	bus_space_handle_t h;
 	int i;
@@ -457,7 +448,6 @@ isic_attach_fritzpcmcia(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry 
 
 	/* Setup bus space maps */
 	sc->sc_num_mappings = 1;
-	sc->sc_cardtyp = CARD_TYPEP_PCFRITZ;
 	MALLOC_MAPS(sc);
 
 	/* Copy our handles/tags to the MI maps */
@@ -475,10 +465,6 @@ isic_attach_fritzpcmcia(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry 
 
 	sc->readfifo = avma1_pcmcia_read_fifo;
 	sc->writefifo = avma1_pcmcia_write_fifo;
-
-	/* setup card type */
-
-	sc->sc_cardtyp = CARD_TYPEP_PCFRITZ;
 
 	/* setup IOM bus type */
 	

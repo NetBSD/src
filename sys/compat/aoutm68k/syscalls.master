@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 2001/05/30 11:37:22 mrg Exp $
+	$NetBSD: syscalls.master,v 1.6.2.1 2002/06/23 17:43:42 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -526,21 +526,21 @@
 167	UNIMPL
 168	UNIMPL
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
-#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 169	NOARGS		{ int compat_10_sys_semsys(int which, int a2, int a3, \
 			    int a4, int a5); } osemsys
 #else
 169	EXCL		1.0 semsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
-#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 170	NOARGS		{ int compat_10_sys_msgsys(int which, int a2, int a3, \
 			    int a4, int a5, int a6); } omsgsys
 #else
 170	EXCL		1.0 msgsys
 #endif
 ; XXX more generally, never on machines where sizeof(void *) != sizeof(int)
-#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 171	NOARGS		{ int compat_10_sys_shmsys(int which, int a2, int a3, \
 			    int a4); } oshmsys
 #else

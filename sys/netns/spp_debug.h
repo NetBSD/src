@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.h,v 1.6 2001/06/19 07:37:17 jdolecek Exp $	*/
+/*	$NetBSD: spp_debug.h,v 1.6.2.1 2002/06/23 17:51:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -54,6 +54,10 @@ struct	spp_debug {
 #ifdef SANAMES
 const char	* const sanames[] =
     { "input", "output", "user", "respond", "drop" };
+#endif
+
+#ifdef _KERNEL
+extern int sppconsdebug;
 #endif
 
 #define	SPP_NDEBUG 100

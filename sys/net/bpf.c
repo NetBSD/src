@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.61.2.3 2002/01/10 20:01:56 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.61.2.4 2002/06/23 17:50:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.61.2.3 2002/01/10 20:01:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.61.2.4 2002/06/23 17:50:20 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -79,6 +79,10 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.61.2.3 2002/01/10 20:01:56 thorpej Exp $")
 
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
+
+#if defined(_KERNEL_OPT)
+#include "bpf.h"
+#endif
 
 #ifndef BPF_BUFSIZE
 # define BPF_BUFSIZE 8192		/* 4096 too small for FDDI frames */
@@ -988,8 +992,10 @@ bpf_ifname(ifp, ifr)
 /*
  * Support for poll() system call
  *
- * Return true iff the specific operation will not block indefinitely.
- * Otherwise, return false but make a note that a selnotify() must be done.
+ * Return true iff the specific operation will not block indefinitely - with
+ * the assumption that it is safe to positively acknowledge a request for the
+ * ability to write to the BPF device.
+ * Otherwise, return false but make a note that a selwakeup() must be done.
  */
 int
 bpfpoll(dev, events, p)
@@ -998,13 +1004,14 @@ bpfpoll(dev, events, p)
 	struct proc *p;
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
-	int revents = 0;
 	int s = splnet();
+	int revents;
 
-	/*
-	 * An imitation of the FIONREAD ioctl code.
-	 */
+	revents = events & (POLLOUT | POLLWRNORM);
 	if (events & (POLLIN | POLLRDNORM)) {
+		/*
+		 * An imitation of the FIONREAD ioctl code.
+		 */
 		if (d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0))
 			revents |= events & (POLLIN | POLLRDNORM);
 		else

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60.4.2 2002/01/10 20:00:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.60.4.3 2002/06/23 17:49:44 jdolecek Exp $
 
 LIB=	kern
 NOPIC=	# defined
@@ -37,7 +37,7 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 
 # Other stuff
 SRCS+=	__cmsg_alignbytes.c inet_addr.c intoa.c md4c.c md5c.c sha1.c pmatch.c
-SRCS+=	_que.c
+SRCS+=	_que.c arc4random.c
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.1 2001/06/19 00:21:18 fvdl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.1.2.1 2002/06/23 17:43:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -142,7 +142,6 @@ x86_64_set_ldt(p, args, retval)
 	int error, i, n;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
-	int fsslot, gsslot;
 	struct x86_64_set_ldt_args ua;
 	union descriptor desc;
 
@@ -208,8 +207,6 @@ x86_64_set_ldt(p, args, retval)
 
 	if (pcb == curpcb)
 		savectx(curpcb);
-	fsslot = IDXSEL(pcb->pcb_fs);
-	gsslot = IDXSEL(pcb->pcb_gs);
 	error = 0;
 
 	/* Check descriptors for access violations. */
@@ -234,9 +231,6 @@ x86_64_set_ldt(p, args, retval)
 			     (gdt[IDXSEL(desc.gd.gd_selector)].sd.sd_dpl !=
 				 SEL_UPL)))
 				return (EACCES);
-			/* Can't replace in use descriptor with gate. */
-			if (n == fsslot || n == gsslot)
-				return (EBUSY);
 			break;
 		case SDT_MEMEC:
 		case SDT_MEMEAC:
@@ -270,10 +264,6 @@ x86_64_set_ldt(p, args, retval)
 			/* Only user (ring-3) descriptors may be present. */
 			if (desc.sd.sd_dpl != SEL_UPL)
 				return (EACCES);
-		} else {
-			/* Must be "present" if in use. */
-			if (n == fsslot || n == gsslot)
-				return (EBUSY);
 		}
 	}
 
@@ -313,9 +303,9 @@ x86_64_iopl(p, args, retval)
 		return error;
 
 	if (ua.iopl)
-		tf->tf_eflags |= PSL_IOPL;
+		tf->tf_rflags |= PSL_IOPL;
 	else
-		tf->tf_eflags &= ~PSL_IOPL;
+		tf->tf_rflags &= ~PSL_IOPL;
 
 	return 0;
 }

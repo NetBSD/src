@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.10.6.1 2002/01/10 20:03:09 thorpej Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.10.6.2 2002/06/23 17:51:07 jdolecek Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.10.6.1 2002/01/10 20:03:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.10.6.2 2002/06/23 17:51:07 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -352,7 +352,7 @@ esp_output(m, nexthdrp, md, isr, af)
 		m->m_pkthdr.len += esphlen;
 		esp = mtod(md, struct esp *);
 	}
-	
+
 	nxt = *nexthdrp;
 	*nexthdrp = IPPROTO_ESP;
 	switch (af) {
@@ -420,7 +420,7 @@ esp_output(m, nexthdrp, md, isr, af)
 	/* ESP packet, including nxthdr field, must be length of 4n */
 	if (padbound < 4)
 		padbound = 4;
-	
+
 	extendsiz = padbound - (plen % padbound);
 	if (extendsiz == 1)
 		extendsiz = padbound + 1;

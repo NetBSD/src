@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.1.4.2 2002/03/16 16:02:01 jdolecek Exp $
+#	$NetBSD: Makefile.common,v 1.1.4.3 2002/06/23 17:49:56 jdolecek Exp $
 
 .include "../Makefile.inc"
 
@@ -6,7 +6,7 @@
 
 CPPFLAGS+= -DCOMPAT_SVR4${USE_32} -DSYSVSEM -DSYSVMSG -DSYSVSHM \
 		-DSVR4_COMPAT_SOLARIS2
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE \
-		-I. -I${S}
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_KERNEL -D_LKM \
+		-D_LOCORE -I. -I${S}
 
 KMOD=	compat_svr4${USE_32}

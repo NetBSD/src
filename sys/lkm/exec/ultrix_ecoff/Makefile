@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.6.1 2002/01/10 20:01:11 thorpej Exp $
+#	$NetBSD: Makefile,v 1.1.6.2 2002/06/23 17:50:06 jdolecek Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/ultrix
 
-CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_ECOFF
+CPPFLAGS+=	-nostdinc -D_KERNEL -DEXEC_ECOFF
 
 KMOD=	exec_ultrix_ecoff
 

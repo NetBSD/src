@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.13.4.1 2002/01/10 19:51:13 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.13.4.2 2002/06/23 17:43:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.13.4.1 2002/01/10 19:51:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.13.4.2 2002/06/23 17:43:49 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,76 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.13.4.1 2002/01/10 19:51:13 thorpe
 #define ibcs2_sigismember(s, n)	(*(s) & ibcs2_sigmask(n))
 #define ibcs2_sigaddset(s, n)	(*(s) |= ibcs2_sigmask(n))
 
-int const native_to_ibcs2_sig[NSIG] = {
-	0,			/* 0 */
-	IBCS2_SIGHUP,		/* 1 */
-	IBCS2_SIGINT,		/* 2 */
-	IBCS2_SIGQUIT,		/* 3 */
-	IBCS2_SIGILL,		/* 4 */
-	IBCS2_SIGTRAP,		/* 5 */
-	IBCS2_SIGABRT,		/* 6 */
-	IBCS2_SIGEMT,		/* 7 */
-	IBCS2_SIGFPE,		/* 8 */
-	IBCS2_SIGKILL,		/* 9 */
-	IBCS2_SIGBUS,		/* 10 */
-	IBCS2_SIGSEGV,		/* 11 */
-	IBCS2_SIGSYS,		/* 12 */
-	IBCS2_SIGPIPE,		/* 13 */
-	IBCS2_SIGALRM,		/* 14 */
-	IBCS2_SIGTERM,		/* 15 */
-	0,			/* 16 - SIGURG */
-	IBCS2_SIGSTOP,		/* 17 */
-	IBCS2_SIGTSTP,		/* 18 */
-	IBCS2_SIGCONT,		/* 19 */
-	IBCS2_SIGCLD,		/* 20 */
-	IBCS2_SIGTTIN,		/* 21 */
-	IBCS2_SIGTTOU,		/* 22 */
-	IBCS2_SIGPOLL,		/* 23 */
-	IBCS2_SIGXCPU,		/* 24 */
-	IBCS2_SIGXFSZ,		/* 25 */
-	IBCS2_SIGVTALRM,	/* 26 */
-	IBCS2_SIGPROF,		/* 27 */
-	IBCS2_SIGWINCH,		/* 28 */
-	0,			/* 29 - SIGINFO */
-	IBCS2_SIGUSR1,		/* 30 */
-	IBCS2_SIGUSR2,		/* 31 */
-	IBCS2_SIGPWR,		/* 32 */
-};
-
-int const ibcs2_to_native_sig[IBCS2_NSIG] = {
-	0,			/* 0 */
-	SIGHUP,			/* 1 */
-	SIGINT,			/* 2 */
-	SIGQUIT,		/* 3 */
-	SIGILL,			/* 4 */
-	SIGTRAP,		/* 5 */
-	SIGABRT,		/* 6 */
-	SIGEMT,			/* 7 */
-	SIGFPE,			/* 8 */
-	SIGKILL,		/* 9 */
-	SIGBUS,			/* 10 */
-	SIGSEGV,		/* 11 */
-	SIGSYS,			/* 12 */
-	SIGPIPE,		/* 13 */
-	SIGALRM,		/* 14 */
-	SIGTERM,		/* 15 */
-	SIGUSR1,		/* 16 */
-	SIGUSR2,		/* 17 */
-	SIGCHLD,		/* 18 */
-	SIGPWR,			/* 19 */
-	SIGWINCH,		/* 20 */
-	0,			/* 21 - SIGPHONE */
-	SIGIO,			/* 22 */
-	SIGSTOP,		/* 23 */
-	SIGTSTP,		/* 24 */
-	SIGCONT,		/* 25 */
-	SIGTTIN,		/* 26 */
-	SIGTTOU,		/* 27 */
-	SIGVTALRM,		/* 28 */
-	SIGPROF,		/* 29 */
-	SIGXCPU,		/* 30 */
-	SIGXFSZ,		/* 31 */
-};
+extern const int native_to_ibcs2_signo[];
+extern const int ibcs2_to_native_signo[];
 
 void ibcs2_to_native_sigaction __P((const struct ibcs2_sigaction *, struct sigaction *));
 void native_to_ibcs2_sigaction __P((const struct sigaction *, struct ibcs2_sigaction *));
@@ -140,7 +72,7 @@ ibcs2_to_native_sigset(iss, bss)
 	sigemptyset(bss);
 	for (i = 1; i < IBCS2_NSIG; i++) {
 		if (ibcs2_sigismember(iss, i)) {
-			newsig = ibcs2_to_native_sig[i];
+			newsig = ibcs2_to_native_signo[i];
 			if (newsig)
 				sigaddset(bss, newsig);
 		}
@@ -157,7 +89,7 @@ native_to_ibcs2_sigset(bss, iss)
 	ibcs2_sigemptyset(iss);
 	for (i = 1; i < NSIG; i++) {
 		if (sigismember(bss, i)) {
-			newsig = native_to_ibcs2_sig[i];
+			newsig = native_to_ibcs2_signo[i];
 			if (newsig)
 				ibcs2_sigaddset(iss, newsig);
 		}
@@ -265,7 +197,7 @@ ibcs2_sys_sigaction(p, v, retval)
 			return (error);
 		ibcs2_to_native_sigaction(&nisa, &nbsa);
 	}
-	error = sigaction1(p, ibcs2_to_native_sig[SCARG(uap, signum)],
+	error = sigaction1(p, ibcs2_to_native_signo[SCARG(uap, signum)],
 	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
 	if (error)
 		return (error);
@@ -321,7 +253,7 @@ ibcs2_sys_sigsys(p, v, retval)
 		syscallarg(int) sig;
 		syscallarg(ibcs2_sig_t) fp;
 	} */ *uap = v;
-	int signum = ibcs2_to_native_sig[IBCS2_SIGNO(SCARG(uap, sig))];
+	int signum = ibcs2_to_native_signo[IBCS2_SIGNO(SCARG(uap, sig))];
 	struct sigaction nbsa, obsa;
 	sigset_t ss;
 	int error;
@@ -484,6 +416,6 @@ ibcs2_sys_kill(p, v, retval)
 	struct sys_kill_args ka;
 
 	SCARG(&ka, pid) = SCARG(uap, pid);
-	SCARG(&ka, signum) = ibcs2_to_native_sig[SCARG(uap, signo)];
+	SCARG(&ka, signum) = ibcs2_to_native_signo[SCARG(uap, signo)];
 	return sys_kill(p, &ka, retval);
 }

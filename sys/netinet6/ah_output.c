@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.14.4.1 2002/01/10 20:03:07 thorpej Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.14.4.2 2002/06/23 17:51:06 jdolecek Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.14.4.1 2002/01/10 20:03:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.14.4.2 2002/06/23 17:51:06 jdolecek Exp $");
 
 #include "opt_inet.h"
 
@@ -331,7 +331,7 @@ ah_hdrlen(sav)
 {
 	const struct ah_algorithm *algo;
 	int plen, ahlen;
-	
+
 	algo = ah_algorithm_lookup(sav->alg_auth);
 	if (!algo)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.2 2001/06/19 01:40:42 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.2.2.1 2002/06/23 17:43:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,12 +81,6 @@
 
 /*****************************************************************************/
 
-/*
- * XXX traditional CPP's evaluation semantics make this necessary.
- * XXX (__CONCAT() would be evaluated incorrectly)
- */
-#define	IDTVEC(name)	ALIGN_TEXT; .globl X/**/name; X/**/name:
-
 #define	TRAP(a)		pushq $(a) ; jmp _C_LABEL(alltraps)
 #define	ZTRAP(a)	pushq $0 ; TRAP(a)
 
@@ -135,7 +129,9 @@ IDTVEC(trap10)
 IDTVEC(trap11)
 	ZTRAP(T_ALIGNFLT)
 IDTVEC(trap12)
+	ZTRAP(T_MCA)
 IDTVEC(trap13)
+	ZTRAP(T_XMM)
 IDTVEC(trap14)
 IDTVEC(trap15)
 IDTVEC(trap16)
@@ -148,7 +144,7 @@ IDTVEC(trap1c)
 IDTVEC(trap1d)
 IDTVEC(trap1e)
 IDTVEC(trap1f)
-	/* 18 - 31 reserved for future exp */
+	/* 20 - 31 reserved for future exp */
 	ZTRAP(T_RESERVED)
 
 IDTVEC(exceptions)
@@ -220,6 +216,7 @@ calltrap:
 	INTRFASTEXIT
 3:	sti
 	movabsq	$4f,%rdi
+	xorq	%rax,%rax
 	call	_C_LABEL(printf)
 #ifdef DDB
 	int	$3
@@ -229,35 +226,127 @@ calltrap:
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
 
+IDTVEC(syscall32)
+	sysret		/* go away please */
+
+/*
+ * syscall insn entry. This currently isn't much faster, but
+ * it can be made faster in the future.
+ */
+IDTVEC(syscall)
+	swapgs
+	movq	%r15,CPUVAR(SCRATCH)
+	movq	_C_LABEL(curpcb)(%rip),%r15
+	movq	PCB_RSP0(%r15),%r15
+	xchgq	%r15,%rsp
+	sti
+
+	/*
+	 * XXX don't need this whole frame, split of the
+	 * syscall frame and trapframe is needed.
+	 * First, leave some room for the trapno, error,
+	 * ss:rsp, etc, so that all GP registers can be
+	 * saved. Then, fill in the rest.
+	 */
+	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))
+	pushq	%r15
+	subq	$(TF_RSP-TF_TRAPNO),%rsp
+	movq	CPUVAR(SCRATCH),%r15
+	INTR_SAVEARGS
+	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
+	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
+	movq	%rcx,TF_RIP(%rsp)
+	movq	$2,TF_ERR(%rsp)
+	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
+
+#ifdef DIAGNOSTIC
+	movl	_C_LABEL(cpl)(%rip),%ebx
+#endif /* DIAGNOSTIC */
+
+	movq    _C_LABEL(curproc)(%rip),%r15
+	movq	%rsp,P_MD_REGS(%r15)	# save pointer to frame
+	call	*P_MD_SYSCALL(%r15)
+1:	/* Check for ASTs on exit to user mode. */
+	cli
+	cmpb	$0,_C_LABEL(astpending)(%rip)
+	je	2f
+	/* Always returning to user mode here. */
+	movb	$0,_C_LABEL(astpending)(%rip)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	call	_C_LABEL(trap)
+	jmp	1b
+2:
+	sti
+syscall_return:
+#ifdef DIAGNOSTIC
+	cmpl	_C_LABEL(cpl)(%rip),%ebx
+	jne	3f
+#endif
+	INTR_RESTOREARGS
+	addq	$16,%rsp
+	popq	%rcx	/* return rip */
+	addq	$8,%rsp
+	popq	%r11	/* flags as set by sysret insn */
+	swapgs
+	cli
+	movq	(%rsp),%rsp
+	sysretq
+
+#ifdef DIAGNOSTIC
+3:	movabsq	$4f, %rdi
+	xorq	%rax,%rax
+	call	_C_LABEL(printf)
+#ifdef DDB
+	int	$3
+#endif /* DDB */
+	movl	%ebx,_C_LABEL(cpl)(%rip)
+	jmp	1b
+4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
+#endif
+
+
+NENTRY(proc_trampoline)
+	movq	%r13,%rdi
+	call	*%r12
+	INTRFASTEXIT
+	/* NOTREACHED */
+
+NENTRY(child_trampoline)
+	movq	%r13,%rdi
+	call	*%r12
+	jmp	syscall_return
 
 /*
  * Old call gate entry for syscall. XXXfvdl: only needed if we're
  * going to support running old NetBSD or ibcs2 binaries, etc,
  * on NetBSD/x86_64.
  */
-IDTVEC(osyscall)
-	/* Set eflags in trap frame. */
+IDTVEC(oosyscall)
+	/* Set rflags in trap frame. */
 	pushfq
 	popq	8(%rsp)
 	pushq	$7		# size of instruction for restart
-	jmp	syscall1
+	jmp	osyscall1
 
 /*
- * Trap gate entry for syscall
- * XXX convert to using syscall/sysret.
- * XXXfvdl Pushing all of the intr frame is overkill.
+ * Trap gate entry for int $80 syscall
+ * XXX should only be used for 32bit binaries, check for this.
  */
-IDTVEC(syscall)
+IDTVEC(osyscall)
 	pushq	$2		# size of instruction for restart
-syscall1:
+osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	movq	_C_LABEL(curproc)(%rip),%rdx	# get pointer to curproc
 #ifdef DIAGNOSTIC
 	movl	_C_LABEL(cpl)(%rip),%ebx
 #endif /* DIAGNOSTIC */
+	testl	$P_32,P_FLAG(%rdx)
+	je	1f		# not a 32bit process, go away please
 	movq	%rsp,P_MD_REGS(%rdx)	# save pointer to frame
 	call	*P_MD_SYSCALL(%rdx)
+_C_LABEL(osyscall_return):
 2:	/* Check for ASTs on exit to user mode. */
 	cli
 	cmpb	$0,_C_LABEL(astpending)(%rip)
@@ -272,7 +361,7 @@ syscall1:
 1:	INTRFASTEXIT
 #else /* DIAGNOSTIC */
 1:	cmpl	_C_LABEL(cpl)(%rip),%ebx
-	jne	3f
+	jne 3f
 	INTRFASTEXIT
 3:	sti
 	movabsq	$4f, %rdi
@@ -343,6 +432,7 @@ syscall1:
  */
 
 	.globl	_C_LABEL(isa_strayintr)
+	.globl	_C_LABEL(osyscall_return)
 
 /*
  * Normal vectors.
@@ -363,15 +453,42 @@ syscall1:
 
 #define MY_COUNT _C_LABEL(uvmexp)
 
+#ifdef __STDC__
+#define XINTR(irq_num)		Xintr ## irq_num
+#define XHOLD(irq_num)		Xhold ## irq_num
+#define XSTRAY(irq_num)		Xstray ## irq_num
+#else
 #define	XINTR(irq_num)		Xintr/**/irq_num
 #define	XHOLD(irq_num)		Xhold/**/irq_num
 #define	XSTRAY(irq_num)		Xstray/**/irq_num
+#endif
+
+#ifdef __STDC__
+#define XRESUME_VEC(irq_num)                                            \
+	ALIGN_TEXT; .globl Xresume ## irq_num; Xresume ## irq_num:
+#define XRECURSE_VEC(irq_num)                                           \
+	ALIGN_TEXT; .globl Xrecurse ## irq_num; Xrecurse ## irq_num:
+#define XSTRAY_VEC(irq_num)                                             \
+	ALIGN_TEXT; .globl Xstray ## irq_num; Xstray ## irq_num:
+#define XHOLD_VEC(irq_num)                                              \
+	ALIGN_TEXT; .globl Xhold ## irq_num; Xhold ## irq_num:
+#else
+#define XRESUME_VEC(irq_num)                                            \
+ 	ALIGN_TEXT; .globl Xresume/**/irq_num; Xresume/**/irq_num:
+#define XRECURSE_VEC(irq_num)                                           \
+ 	ALIGN_TEXT; .globl Xrecurse/**/irq_num; Xrecurse/**/irq_num:
+#define XSTRAY_VEC(irq_num)                                             \
+	ALIGN_TEXT; .globl Xstray/**/irq_num; Xstray/**/irq_num:
+#define XHOLD_VEC(irq_num)                                              \
+	ALIGN_TEXT; .globl Xhold/**/irq_num; Xhold/**/irq_num:
+#endif /* __STDC__ */
+
 
 #define	INTR(irq_num, icu, ack) \
-IDTVEC(resume/**/irq_num)						;\
+XRESUME_VEC(irq_num)							;\
 	cli								;\
 	jmp	1f							;\
-IDTVEC(recurse/**/irq_num)						;\
+XRECURSE_VEC(irq_num)							;\
 	movq	%rsp,%r10						;\
 	movl	%ss,%r11d						;\
 	pushq	%r11							;\
@@ -404,7 +521,7 @@ XINTR(irq_num):								;\
 	jz	XSTRAY(irq_num)		/* no handlers; we're stray */	;\
 	STRAY_INITIALIZE		/* nobody claimed it yet */	;\
 	leaq	_C_LABEL(intrcnt)(%rip),%rdi				;\
-	incl	(4*(irq_num))(%rdi)	/* XXX */			;\
+	incq	(8*(irq_num))(%rdi)	/* XXX */			;\
 7:	movq	IH_ARG(%rbx),%rdi	/* get handler arg */		;\
 	testq	%rdi,%rdi						;\
 	jnz	4f							;\
@@ -418,13 +535,13 @@ XINTR(irq_num):								;\
 	STRAY_TEST			/* see if it's a stray */	;\
 5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
-IDTVEC(stray/**/irq_num)						;\
+XSTRAY_VEC(irq_num)							;\
 	movq	$irq_num,%rdi						;\
 	call	_C_LABEL(isa_strayintr)					;\
 	leaq	_C_LABEL(strayintrcnt)(%rip),%rdi			;\
-	incl	(4*(irq_num))(%rdi)					;\
+	incq	(8*(irq_num))(%rdi)					;\
 	jmp	5b							;\
-IDTVEC(hold/**/irq_num)							;\
+XHOLD_VEC(irq_num)							;\
 	leaq	_C_LABEL(ipending)(%rip),%rdi				;\
 	orb	$IRQ_BIT(irq_num),IRQ_BYTE(irq_num)(%rdi)		;\
 	INTRFASTEXIT
@@ -534,11 +651,11 @@ _C_LABEL(eintrnames):
 	.align 64
 
 _C_LABEL(intrcnt):
-	.long	0, 0, 0, 0, 0, 0, 0, 0
-	.long	0, 0, 0, 0, 0, 0, 0, 0
+	.quad	0, 0, 0, 0, 0, 0, 0, 0
+	.quad	0, 0, 0, 0, 0, 0, 0, 0
 _C_LABEL(strayintrcnt):
-	.long	0, 0, 0, 0, 0, 0, 0, 0
-	.long	0, 0, 0, 0, 0, 0, 0, 0
+	.quad	0, 0, 0, 0, 0, 0, 0, 0
+	.quad	0, 0, 0, 0, 0, 0, 0, 0
 _C_LABEL(eintrcnt):
 
 	.text

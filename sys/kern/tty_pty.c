@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.56.2.3 2002/03/16 16:01:52 jdolecek Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.56.2.4 2002/06/23 17:49:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.56.2.3 2002/03/16 16:01:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.56.2.4 2002/06/23 17:49:39 jdolecek Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -817,16 +817,16 @@ ptyioctl(dev, cmd, data, flag, p)
 				return (EINVAL);
 			if (!ISSET(tp->t_lflag, NOFLSH))
 				ttyflush(tp, FREAD|FWRITE);
-			pgsignal(tp->t_pgrp, sig, 1);
 			if ((sig == SIGINFO) &&
 			    (!ISSET(tp->t_lflag, NOKERNINFO)))
 				ttyinfo(tp);
+			pgsignal(tp->t_pgrp, sig, 1);
 			return(0);
 		}
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error < 0)
+	if (error == EPASSTHROUGH)
 		 error = ttioctl(tp, cmd, data, flag, p);
-	if (error < 0) {
+	if (error == EPASSTHROUGH) {
 		if (pti->pt_flags & PF_UCNTL &&
 		    (cmd & ~0xff) == UIOCCMD(0)) {
 			if (cmd & 0xff) {
@@ -835,7 +835,6 @@ ptyioctl(dev, cmd, data, flag, p)
 			}
 			return (0);
 		}
-		error = ENOTTY;
 	}
 	/*
 	 * If external processing and packet mode send ioctl packet.

@@ -1,41 +1,45 @@
-/*
- * Copyright (c) 1998, 1999, 2001 Martin Husemann <martin@duskware.de>
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Martin Husemann <martin@netbsd.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *---------------------------------------------------------------------------
- *
- *	i4b_itk_ix1.c - ITK ix1 micro passive card driver for isdn4bsd
- *	--------------------------------------------------------------
- *
- *	$Id: isic_isa_itk_ix1.c,v 1.4.2.1 2002/01/10 19:55:33 thorpej Exp $
- *
- *      last edit-date: [Fri Jan  5 12:31:50 2001]
- *
- *	mh - created
- *	mh - fixed FreeBSD problems reported by Kevin Sheehan
- *	mh - added probe routine
- *
- *---------------------------------------------------------------------------
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.4.2.2 2002/06/23 17:47:04 jdolecek Exp $");
+
+#include "opt_isicisa.h"
+
+/*
  * The ITK ix1 micro ISDN card is an ISA card with one region
  * of four io ports mapped and a fixed irq all jumpered on the card.
  * Access to the board is straight forward and simmilar to
@@ -62,12 +66,7 @@
  * If the probe fails for your card use "options ITK_PROBE_DEBUG" to get
  * additional debug output.
  *
- *---------------------------------------------------------------------------*/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.4.2.1 2002/01/10 19:55:33 thorpej Exp $");
-
-#include "opt_isicisa.h"
+ */
 
 #ifdef ISICISA_ITKIX1
 
@@ -100,8 +99,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.4.2.1 2002/01/10 19:55:33 tho
 #include <machine/i4b_debug.h>
 #include <machine/i4b_ioctl.h>
 #else
+#include <netisdn/i4b_global.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #endif
 
 #include <dev/ic/isic_l1.h>
@@ -134,10 +136,10 @@ static void itkix1_write_reg(u_char *base, u_int offset, u_int v);
 static u_char itkix1_read_reg(u_char *base, u_int offset);
 #else
 /* NetBSD/OpenBSD version */
-static void itkix1_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size);
-static void itkix1_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size);
-static void itkix1_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data);
-static u_int8_t itkix1_read_reg(struct l1_softc *sc, int what, bus_size_t offs);
+static void itkix1_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size);
+static void itkix1_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size);
+static void itkix1_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static u_int8_t itkix1_read_reg(struct isic_softc *sc, int what, bus_size_t offs);
 #endif
 
 /*
@@ -235,7 +237,7 @@ isic_probe_itkix1(struct isic_attach_args *ia)
 int
 isic_attach_itkix1(struct isa_device *dev)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	u_int8_t hv1, hv2;
 
 	sc->sc_irq = dev->id_irq;
@@ -289,7 +291,7 @@ isic_attach_itkix1(struct isa_device *dev)
 
 #else
 
-int isic_attach_itkix1(struct l1_softc *sc)
+int isic_attach_itkix1(struct isic_softc *sc)
 {
 	u_int8_t hv1, hv2;
 
@@ -354,7 +356,7 @@ itkix1_read_fifo(void *buf, const void *base, size_t len)
 }
 #else
 static void
-itkix1_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+itkix1_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -396,7 +398,7 @@ itkix1_write_fifo(void *base, const void *buf, size_t len)
 	}
 }
 #else
-static void itkix1_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+static void itkix1_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -438,7 +440,7 @@ itkix1_write_reg(u_char *base, u_int offset, u_int v)
 	}
 }
 #else
-static void itkix1_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+static void itkix1_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -477,7 +479,7 @@ itkix1_read_reg(u_char *base, u_int offset)
 	}
 }
 #else
-static u_int8_t itkix1_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+static u_int8_t itkix1_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;

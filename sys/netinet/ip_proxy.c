@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.23.4.2 2002/02/11 20:10:37 jdolecek Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.23.4.3 2002/06/23 17:50:56 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1997-2002 by Darren Reed.
@@ -9,16 +9,18 @@
 # define	_KERNEL
 #endif
 
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
-#if !defined(__FreeBSD_version)  
-# include <sys/ioctl.h>      
+#if !defined(__FreeBSD_version)
+# include <sys/ioctl.h>
 #endif
 #include <sys/fcntl.h>
-#include <sys/uio.h>
 #if !defined(_KERNEL) && !defined(KERNEL)
 # include <stdio.h>
 # include <string.h>
@@ -77,9 +79,9 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.23.4.2 2002/02/11 20:10:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.23.4.3 2002/06/23 17:50:56 jdolecek Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.17 2002/01/15 14:36:49 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.22 2002/04/26 10:23:17 darrenr Exp";
 #endif
 #endif
 
@@ -96,11 +98,12 @@ static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
 
 #define	AP_SESS_SIZE	53
 
-#if defined(_KERNEL)
 #include "netinet/ip_ftp_pxy.c"
+#if defined(_KERNEL)
 #include "netinet/ip_rcmd_pxy.c"
 #include "netinet/ip_raudio_pxy.c"
 #include "netinet/ip_netbios_pxy.c"
+#include "netinet/ip_h323_pxy.c"
 #endif
 #include "netinet/ip_ipsec_pxy.c"
 
@@ -128,6 +131,12 @@ aproxy_t	ap_proxies[] = {
 #ifdef	IPF_NETBIOS_PROXY
 	{ NULL, "netbios", (char)IPPROTO_TCP, 0, 0, ippr_netbios_init, NULL,
 	  NULL, NULL, NULL, ippr_netbios_out, NULL },
+#endif
+#ifdef  IPF_H323_PROXY
+    { NULL, "h323", (char)IPPROTO_TCP, 0, 0, ippr_h323_init, NULL,
+	  ippr_h323_new, ippr_h323_del, ippr_h323_in, ippr_h323_out, NULL },
+    { NULL, "h245", (char)IPPROTO_TCP, 0, 0, ippr_h245_init, NULL,
+	  ippr_h245_new, NULL, NULL, ippr_h245_out, NULL },
 #endif
 	{ NULL, "", '\0', 0, 0, NULL, NULL, NULL }
 };
@@ -257,8 +266,9 @@ nat_t *nat;
 	aps->aps_psiz = 0;
 	if (apr->apr_new != NULL)
 		if ((*apr->apr_new)(fin, ip, aps, nat) == -1) {
-			if ((aps->aps_data != NULL) && (aps->aps_psiz != 0))
+			if ((aps->aps_data != NULL) && (aps->aps_psiz != 0)) {
 				KFREES(aps->aps_data, aps->aps_psiz);
+			}
 			KFREE(aps);
 			return -1;
 		}
@@ -402,7 +412,7 @@ ap_session_t *aps;
 	apr = aps->aps_apr;
 	if ((apr != NULL) && (apr->apr_del != NULL))
 		(*apr->apr_del)(aps);
- 
+
 	if ((aps->aps_data != NULL) && (aps->aps_psiz != 0))
 		KFREES(aps->aps_data, aps->aps_psiz);
 	KFREE(aps);

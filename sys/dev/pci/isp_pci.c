@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.70.2.4 2002/03/16 16:01:15 jdolecek Exp $ */
+/* $NetBSD: isp_pci.c,v 1.70.2.5 2002/06/23 17:47:49 jdolecek Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.70.2.4 2002/03/16 16:01:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.70.2.5 2002/06/23 17:47:49 jdolecek Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -87,42 +87,42 @@ static int isp_pci_intr(void *);
 #if	defined(ISP_DISABLE_1020_SUPPORT)
 #define	ISP_1040_RISC_CODE	NULL
 #else
-#define	ISP_1040_RISC_CODE	isp_1040_risc_code
+#define	ISP_1040_RISC_CODE	(u_int16_t *) isp_1040_risc_code
 #include <dev/microcode/isp/asm_1040.h>
 #endif
 
 #if	defined(ISP_DISABLE_1080_SUPPORT)
 #define	ISP_1080_RISC_CODE	NULL
 #else
-#define	ISP_1080_RISC_CODE	isp_1080_risc_code
+#define	ISP_1080_RISC_CODE	(u_int16_t *) isp_1080_risc_code
 #include <dev/microcode/isp/asm_1080.h>
 #endif
 
 #if	defined(ISP_DISABLE_12160_SUPPORT)
 #define	ISP_12160_RISC_CODE	NULL
 #else
-#define	ISP_12160_RISC_CODE	isp_12160_risc_code
+#define	ISP_12160_RISC_CODE	(u_int16_t *) isp_12160_risc_code
 #include <dev/microcode/isp/asm_12160.h>
 #endif
 
 #if	defined(ISP_DISABLE_2100_SUPPORT)
 #define	ISP_2100_RISC_CODE	NULL
 #else
-#define	ISP_2100_RISC_CODE	isp_2100_risc_code
+#define	ISP_2100_RISC_CODE	(u_int16_t *) isp_2100_risc_code
 #include <dev/microcode/isp/asm_2100.h>
 #endif
 
 #if	defined(ISP_DISABLE_2200_SUPPORT)
 #define	ISP_2200_RISC_CODE	NULL
 #else
-#define	ISP_2200_RISC_CODE	isp_2200_risc_code
+#define	ISP_2200_RISC_CODE	(u_int16_t *) isp_2200_risc_code
 #include <dev/microcode/isp/asm_2200.h>
 #endif
 
 #if	defined(ISP_DISABLE_2300_SUPPORT)
 #define	ISP_2300_RISC_CODE	NULL
 #else
-#define	ISP_2300_RISC_CODE	isp_2300_risc_code
+#define	ISP_2300_RISC_CODE	(u_int16_t *) isp_2300_risc_code
 #include <dev/microcode/isp/asm_2300.h>
 #endif
 
@@ -360,7 +360,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 #ifdef	DEBUG
 	static char oneshot = 1;
 #endif
-	static const char nomem[] = "%s: no mem for sdparam table\n";
+	static const char nomem[] = "\n%s: no mem for sdparam table\n";
 	u_int32_t data, rev, linesz = PCI_DFLT_LNSZ;
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
@@ -368,6 +368,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t st, iot, memt;
 	bus_space_handle_t sh, ioh, memh;
 	pci_intr_handle_t ih;
+	char *dstring;
 	const char *intrstr;
 	int ioh_valid, memh_valid;
 
@@ -387,7 +388,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to map device registers\n");
 		return;
 	}
-	printf("\n");
+	dstring = "\n";
 
 	pcs->pci_st = st;
 	pcs->pci_sh = sh;
@@ -402,6 +403,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 
 #ifndef	ISP_DISABLE_1020_SUPPORT
 	if (pa->pa_id == PCI_QLOGIC_ISP) {
+		dstring = ": QLogic 1020 Ultra Wide SCSI HBA\n";
 		isp->isp_mdvec = &mdvec;
 		isp->isp_type = ISP_HA_SCSI_UNKNOWN;
 		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
@@ -414,6 +416,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #ifndef	ISP_DISABLE_1080_SUPPORT
 	if (pa->pa_id == PCI_QLOGIC_ISP1080) {
+		dstring = ": QLogic 1080 Ultra-2 Wide SCSI HBA\n";
 		isp->isp_mdvec = &mdvec_1080;
 		isp->isp_type = ISP_HA_SCSI_1080;
 		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
@@ -426,6 +429,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 		    ISP1080_DMA_REGS_OFF;
 	}
 	if (pa->pa_id == PCI_QLOGIC_ISP1240) {
+		dstring = ": QLogic Dual Channel Ultra Wide SCSI HBA\n";
 		isp->isp_mdvec = &mdvec_1080;
 		isp->isp_type = ISP_HA_SCSI_1240;
 		isp->isp_param =
@@ -439,6 +443,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 		    ISP1080_DMA_REGS_OFF;
 	}
 	if (pa->pa_id == PCI_QLOGIC_ISP1280) {
+		dstring = ": QLogic Dual Channel Ultra-2 Wide SCSI HBA\n";
 		isp->isp_mdvec = &mdvec_1080;
 		isp->isp_type = ISP_HA_SCSI_1280;
 		isp->isp_param =
@@ -454,6 +459,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #ifndef	ISP_DISABLE_12160_SUPPORT
 	if (pa->pa_id == PCI_QLOGIC_ISP12160) {
+		dstring = ": QLogic Dual Channel Ultra-3 Wide SCSI HBA\n";
 		isp->isp_mdvec = &mdvec_12160;
 		isp->isp_type = ISP_HA_SCSI_12160;
 		isp->isp_param =
@@ -469,6 +475,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #ifndef	ISP_DISABLE_2100_SUPPORT
 	if (pa->pa_id == PCI_QLOGIC_ISP2100) {
+		dstring = ": QLogic FC-AL HBA\n";
 		isp->isp_mdvec = &mdvec_2100;
 		isp->isp_type = ISP_HA_FC_2100;
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
@@ -492,6 +499,7 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #ifndef	ISP_DISABLE_2200_SUPPORT
 	if (pa->pa_id == PCI_QLOGIC_ISP2200) {
+		dstring = ": QLogic FC-AL and Fabric HBA\n";
 		isp->isp_mdvec = &mdvec_2200;
 		isp->isp_type = ISP_HA_FC_2200;
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
@@ -510,8 +518,11 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	    pa->pa_id == PCI_QLOGIC_ISP2312) {
 		isp->isp_mdvec = &mdvec_2300;
 		if (pa->pa_id == PCI_QLOGIC_ISP2300) {
+			dstring = ": QLogic FC-AL and 2Gbps Fabric HBA\n";
 			isp->isp_type = ISP_HA_FC_2300;
 		} else {
+			dstring =
+			    ": QLogic Dual Port FC-AL and 2Gbps Fabric HBA\n";
 			isp->isp_type = ISP_HA_FC_2312;
 			isp->isp_port = pa->pa_function;
 		}
@@ -536,12 +547,14 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (bootverbose)
 		isp->isp_dblev |= ISP_LOGCONFIG|ISP_LOGINFO;
 #ifdef	SCSIDEBUG
-	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
-#endif
-#ifdef	DEBUG
-	isp->isp_dblev |= ISP_LOGDEBUG0;
+	isp->isp_dblev |= ISP_LOGDEBUG0|ISP_LOGDEBUG1|ISP_LOGDEBUG2;
 #endif
 #endif
+	if (isp->isp_dblev & ISP_LOGCONFIG) {
+		printf("\n");
+	} else {
+		printf(dstring);
+	}
 
 #ifdef	DEBUG
 	if (oneshot) {
@@ -568,6 +581,9 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	data |= PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE;
 	if (IS_2300(isp)) {	/* per QLogic errata */
 		data &= ~PCI_COMMAND_INVALIDATE_ENABLE;
+	}
+	if (IS_23XX(isp)) {
+		isp->isp_touched = 1;
 	}
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, data);
 
@@ -1009,7 +1025,10 @@ isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, ispreq_t *rq,
 	    ((xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
 		XS_SETERR(xs, HBA_BOTCH);
-		return (CMD_COMPLETE);
+		if (error == EAGAIN || error == ENOMEM)
+			return (CMD_EAGAIN);
+		else
+			return (CMD_COMPLETE);
 	}
 
 	segcnt = dmap->dm_nsegs;

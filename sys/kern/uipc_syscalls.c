@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.64.2.4 2002/03/16 16:01:53 jdolecek Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.64.2.5 2002/06/23 17:49:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.64.2.4 2002/03/16 16:01:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.64.2.5 2002/06/23 17:49:41 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -780,19 +780,22 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 	struct file	*fp;
 	struct mbuf	*m;
 	int		error;
+	unsigned int	l;
 
 	m = NULL;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	if (SCARG(uap, valsize) > MLEN) {
+	l = SCARG(uap, valsize);
+	if (l > MCLBYTES) {
 		error = EINVAL;
 		goto out;
 	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
-		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
-			       SCARG(uap, valsize));
+		if (l > MLEN)
+			MCLGET(m, M_WAIT);
+		error = copyin(SCARG(uap, val), mtod(m, caddr_t), l);
 		if (error) {
 			(void) m_free(m);
 			goto out;

@@ -27,7 +27,7 @@
  *	i4b_lme.c - layer management entity
  *	-------------------------------------
  *
- *	$Id: i4b_lme.c,v 1.2.2.1 2002/01/10 20:03:39 thorpej Exp $ 
+ *	$Id: i4b_lme.c,v 1.2.2.2 2002/06/23 17:51:30 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_lme.c,v 1.2.2.1 2002/01/10 20:03:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_lme.c,v 1.2.2.2 2002/06/23 17:51:30 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -64,12 +64,12 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_lme.c,v 1.2.2.1 2002/01/10 20:03:39 thorpej Exp 
 #include <netisdn/i4b_ioctl.h>
 #endif
 
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
-
-#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
+#include <netisdn/i4b_l3l4.h>
 
 /*---------------------------------------------------------------------------*
  *	mdl assign indication handler
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_lme.c,v 1.2.2.1 2002/01/10 20:03:39 thorpej Exp 
 void
 i4b_mdl_assign_ind(l2_softc_t *l2sc)
 {
-	NDBGL2(L2_PRIM, "bri %d", l2sc->bri);
+	NDBGL2(L2_PRIM, "bri %d", l2sc->drv->bri);
 	
 	i4b_l1_activate(l2sc);
 	
@@ -125,7 +125,7 @@ i4b_mdl_error_ind(l2_softc_t *l2sc, char *where, int errorcode)
 	if(errorcode > MDL_ERR_MAX)
 		errorcode = MDL_ERR_MAX;
 		
-	NDBGL2(L2_ERROR, "bri = %d, location = %s", l2sc->bri, where);
+	NDBGL2(L2_ERROR, "bri = %d, location = %s", l2sc->drv->bri, where);
 	NDBGL2(L2_ERROR, "error = %s", error_text[errorcode]);
 
 	switch(errorcode)

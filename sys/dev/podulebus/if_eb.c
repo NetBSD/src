@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.1.4.1 2002/01/10 19:57:29 thorpej Exp $ */
+/* $NetBSD: if_eb.c,v 1.1.4.2 2002/06/23 17:48:28 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.1.4.1 2002/01/10 19:57:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eb.c,v 1.1.4.2 2002/06/23 17:48:28 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -93,10 +93,7 @@ ebprobe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 	
-	if (matchpodule(pa, MANUFACTURER_ANT, PODULE_ANT_ETHERB, -1) == 0)
-		return 0;
-
-	return 1;
+	return pa->pa_product == PODULE_ETHERB;
 }
 
 

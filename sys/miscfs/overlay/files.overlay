@@ -1,0 +1,6 @@
+#	$NetBSD: files.overlay,v 1.1.8.2 2002/06/23 17:50:11 jdolecek Exp $
+
+deffs	OVERLAY
+
+file	miscfs/overlay/overlay_vfsops.c	overlay
+file	miscfs/overlay/overlay_vnops.c	overlay

@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.3.4.4 2002/02/11 20:09:42 jdolecek Exp $	*/
+/*	$NetBSD: iopl.c,v 1.3.4.5 2002/06/23 17:46:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.3.4.4 2002/02/11 20:09:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.3.4.5 2002/06/23 17:46:05 jdolecek Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -709,7 +709,7 @@ iopl_rx_post(struct iopl_softc *sc)
 				}
 			}
 
-			if (p + 2 + IOPL_MAX_SEGS >= ep)
+			if (p + 2 + sc->sc_tx_maxsegs >= ep)
 				break;
 			if (--sc->sc_rx_freecnt <= 0) 
 				break;

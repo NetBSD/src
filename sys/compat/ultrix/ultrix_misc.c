@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.71.2.1 2002/01/10 19:52:27 thorpej Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.71.2.2 2002/06/23 17:44:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.71.2.1 2002/01/10 19:52:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.71.2.2 2002/06/23 17:44:52 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -292,7 +292,6 @@ ultrix_sys_select(p, v, retval)
 		if (atv.tv_sec < 0 || atv.tv_usec < 0)
 			printf("ultrix select( %ld, %ld): negative timeout\n",
 			    atv.tv_sec, atv.tv_usec);
-		/*tvp = (timeval *)STACKGAPBASE;*/
 #endif
 
 	}
@@ -512,12 +511,13 @@ ultrix_sys_nfssvc(p, v, retval)
 	struct sys_nfssvc_args outuap;
 	struct sockaddr sa;
 	int error;
+	caddr_t sg = stackgap_init(p, 0);
 
 	memset(&outuap, 0, sizeof outuap);
 	SCARG(&outuap, fd) = SCARG(uap, fd);
-	SCARG(&outuap, mskval) = STACKGAPBASE;
+	SCARG(&outuap, mskval) = stackgap_alloc(p, &sg, sizeof sa);
 	SCARG(&outuap, msklen) = sizeof sa;
-	SCARG(&outuap, mtchval) = outuap.mskval + sizeof sa;
+	SCARG(&outuap, mtchval) = stackgap_alloc(p, &sg, sizeof sa);
 	SCARG(&outuap, mtchlen) = sizeof sa;
 
 	memset(&sa, 0, sizeof sa);
@@ -883,8 +883,8 @@ ultrix_sys_fcntl(p, v, retval)
 		error = ultrix_to_bsd_flock(&ufl, &fl);
 		if (error)
 			return (error);
-		sg = stackgap_init(p->p_emul);
-		flp = (struct flock *)stackgap_alloc(&sg, sizeof(*flp));
+		sg = stackgap_init(p, 0);
+		flp = (struct flock *)stackgap_alloc(p, &sg, sizeof(*flp));
 		error = copyout(&fl, flp, sizeof(*flp));
 		if (error)
 			return (error);

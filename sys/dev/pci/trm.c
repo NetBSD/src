@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.6.2.3 2002/03/16 16:01:20 jdolecek Exp $	*/
+/*	$NetBSD: trm.c,v 1.6.2.4 2002/06/23 17:48:04 jdolecek Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.6.2.3 2002/03/16 16:01:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.6.2.4 2002/06/23 17:48:04 jdolecek Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -574,8 +574,7 @@ trm_init(sc)
 		if (bus_dmamap_create(sc->sc_dmat,
 		    MAXPHYS, TRM_MAX_SG_ENTRIES, MAXPHYS, 0,
 		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &srb->dmap)) {
-			printf(": unable to create DMA transfer map...\n",
-			    sc->sc_dev.dv_xname);
+			printf(": unable to create DMA transfer map...\n");
 			free(sc->sc_srb, M_DEVBUF);
 			return (1);
 		}
@@ -966,10 +965,8 @@ trm_select(sc, srb)
 	DPRINTF(("trm_select.....\n"));
 
 	if ((srb->xs->xs_control & XS_CTL_POLL) == 0) {
-		int timeout = srb->xs->timeout;
-		timeout = (timeout > 100000) ?
-		    timeout / 1000 * hz : timeout * hz / 1000;
-		callout_reset(&srb->xs->xs_callout, timeout, trm_timeout, srb);
+		callout_reset(&srb->xs->xs_callout, mstohz(srb->xs->timeout),
+		    trm_timeout, srb);
 	}
 
 	bus_space_write_1(iot, ioh, TRM_SCSI_HOSTID, sc->sc_id);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rlreg.h,v 1.1 2000/04/22 16:46:46 ragge Exp $	*/ 
+/*	$NetBSD: rlreg.h,v 1.1.10.1 2002/06/23 17:48:32 jdolecek Exp $	*/ 
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -74,6 +74,16 @@
 /*
  * Bits in Multipurpose register
  */
+#define	RLMP_STATUS	0000007		/* Status bits mask */
+#define	RLMP_UNLOAD	0		/* not loaded */
+#define	RLMP_SPINUP	1		/* spinning up */
+#define	RLMP_BRUSHING	2		/* brushes out */
+#define	RLMP_LOADHEADS	3		/* loading heads */
+#define	RLMP_SEEKING	4		/* seeking */
+#define	RLMP_LOCKED	5		/* lock turned on */
+#define	RLMP_UNLHEADS	6		/* unloading heads */
+#define	RLMP_SPUNDOWN	7		/* disk spun down */
+
 #define	RLMP_DT		0000200		/* Set if RL02, otherwise RL01 */
 #define	RLMP_HS		0000100		/* Head select */
 

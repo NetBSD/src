@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.1.8.2 2002/03/16 16:00:50 jdolecek Exp $	*/
+/*	$NetBSD: dz.c,v 1.1.8.3 2002/06/23 17:45:58 jdolecek Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.1.8.2 2002/03/16 16:00:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.1.8.3 2002/06/23 17:45:58 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -408,6 +408,7 @@ dzioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
@@ -447,7 +448,7 @@ dzioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.11 1997/01/22 07:09:11 mikel Exp $	*/
+/*	$NetBSD: domain.h,v 1.11.40.1 2002/06/23 17:51:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,6 +46,7 @@
  * Forward structure declarations for function prototypes [sic].
  */
 struct	mbuf;
+struct	ifnet;
 
 struct	domain {
 	int	dom_family;		/* AF_xxx */
@@ -62,10 +63,13 @@ struct	domain {
 			__P((void **, int));
 	int	dom_rtoffset;		/* an arg to rtattach, in bits */
 	int	dom_maxrtkey;		/* for routing layer */
+	void	*(*dom_ifattach) __P((struct ifnet *));
+	void	(*dom_ifdetach) __P((struct ifnet *, void *));
+					/* af-dependent data on ifnet */
 };
 
 #ifdef _KERNEL
-struct	domain *domains;
+extern	struct	domain *domains;
 void domaininit __P((void));
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.25.2.1 2002/01/10 20:02:29 thorpej Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.25.2.2 2002/06/23 17:50:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.25.2.1 2002/01/10 20:02:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_x25subr.c,v 1.25.2.2 2002/06/23 17:50:38 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -700,11 +700,11 @@ x25_dg_rtinit(dst, ia, af)
 
 
 int x25_startproto = 1;
+struct pklcdhead pk_listenhead;
 
 void
 pk_init()
 {
-
 	TAILQ_INIT(&pk_listenhead);
 	if (x25_startproto) {
 		pk_protolisten(0xcc, 1, x25_dgram_incoming);

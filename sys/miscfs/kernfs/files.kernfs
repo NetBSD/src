@@ -1,0 +1,6 @@
+#	$NetBSD: files.kernfs,v 1.1.8.2 2002/06/23 17:50:10 jdolecek Exp $
+
+deffs	fs_kernfs.h			KERNFS		# XXX
+
+file	miscfs/kernfs/kernfs_vfsops.c	kernfs
+file	miscfs/kernfs/kernfs_vnops.c	kernfs

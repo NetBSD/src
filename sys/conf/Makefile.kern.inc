@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.10.2.3 2002/03/16 16:00:41 jdolecek Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.10.2.4 2002/06/23 17:44:53 jdolecek Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -22,10 +22,12 @@
 ## (0) toolchain settings for things that aren't part of the standard
 ## toolchain
 ##
+DBSYM?=		dbsym
 MKDEP?=		mkdep
 STRIP?=		strip
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
+.MAKEOVERRIDES+=USETOOLS	# make sure proper value is propagated
 
 ##
 ## (1) port independent source tree identification
@@ -47,7 +49,7 @@ COPTS?=		${DEFCOPTS}
 DBG=		# might contain unwanted -Ofoo
 DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
-CWARNFLAGS+=	-Werror -Wall -Wno-main
+CWARNFLAGS+=	-Werror -Wall -Wno-main -Wno-format-zero-length
 WEAK_POINTERS?=	no
 .if !(${WEAK_POINTERS} == "yes")
 CWARNFLAGS+=	-Wpointer-arith
@@ -254,7 +256,7 @@ LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
 	${CC} -E -C ${AFLAGS} ${CPPFLAGS} ${_sfile} | \
 	      awk -f $S/kern/genlintstub.awk >${.TARGET}
 .endfor
-lint: ${CFILES} ${KERNLINTSTUBS} ${MI_CFILES} ${MD_CFILES}
+lint: ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
 	@${LINT} ${KERNLINTFLAGS} ${CPPFLAGS} -UKGDB \
 	    ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES} | \
 	    grep -v 'static function .* unused'

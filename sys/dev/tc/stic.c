@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.8.4.4 2002/03/16 16:01:34 jdolecek Exp $	*/
+/*	$NetBSD: stic.c,v 1.8.4.5 2002/06/23 17:48:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.4.4 2002/03/16 16:01:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.4.5 2002/06/23 17:48:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -631,7 +631,7 @@ sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (si->si_ioctl != NULL)
 		return ((*si->si_ioctl)(si, cmd, data, flag, p));
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 void
@@ -1385,7 +1385,7 @@ stic_get_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 {
 
 	/* XXX */
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.6 2000/06/12 10:40:48 itojun Exp $	*/
+/*	$NetBSD: keysock.h,v 1.6.6.1 2002/06/23 17:51:42 jdolecek Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 /* statistics for pfkey socket */
 struct pfkeystat {
-	/* kernel -> userland */
+	/* userland -> kernel */
 	u_quad_t out_total;		/* # of total calls */
 	u_quad_t out_bytes;		/* total bytecount */
 	u_quad_t out_msgtype[256];	/* message type histogram */
@@ -48,7 +48,7 @@ struct pfkeystat {
 	u_quad_t out_invexttype;	/* invalid extension type */
 	u_quad_t out_invsatype;		/* invalid sa type */
 	u_quad_t out_invaddr;		/* invalid address extension */
-	/* userland -> kernel */
+	/* kernel -> userland */
 	u_quad_t in_total;		/* # of total calls */
 	u_quad_t in_bytes;		/* total bytecount */
 	u_quad_t in_msgtype[256];	/* message type histogram */
@@ -80,7 +80,6 @@ extern int key_usrreq __P((struct socket *,
 	int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 #endif
 
-extern int key_sendup __P((struct socket *, struct sadb_msg *, u_int, int));
 extern int key_sendup_mbuf __P((struct socket *, struct mbuf *, int));
 #endif /* _KERNEL */
 

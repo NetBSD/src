@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.2.6.2 2002/03/16 16:00:37 jdolecek Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.2.6.3 2002/06/23 17:44:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,12 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.2.6.2 2002/03/16 16:00:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.2.6.3 2002/06/23 17:44:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
+#include <sys/dirent.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
@@ -65,8 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.2.6.2 2002/03/16 16:00:37 jdolece
 #include <compat/linux/common/linux_fcntl.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_dirent.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+#ifndef alpha
 
 static void bsd_to_linux_stat __P((struct stat *, struct linux_stat64 *));
 static int linux_do_stat64 __P((struct proc *, void *, register_t *, int));
@@ -100,7 +104,9 @@ bsd_to_linux_stat(bsp, lsp)
 	lsp->lst_atime   = bsp->st_atime;
 	lsp->lst_mtime   = bsp->st_mtime;
 	lsp->lst_ctime   = bsp->st_ctime;
-	lsp->lst_ino64   = bsp->st_ino;
+#if LINUX_STAT64_HAS_BROKEN_ST_INO
+	lsp->__lst_ino   = (linux_ino_t) bsp->st_ino;
+#endif
 }
 
 /*
@@ -123,9 +129,9 @@ linux_sys_fstat64(p, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
-	st = stackgap_alloc(&sg, sizeof (struct stat));
+	st = stackgap_alloc(p, &sg, sizeof (struct stat));
 
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
@@ -158,8 +164,8 @@ linux_do_stat64(p, v, retval, dolstat)
 	int error;
 	struct linux_sys_stat64_args *uap = v;
 
-	sg = stackgap_init(p->p_emul);
-	st = stackgap_alloc(&sg, sizeof (struct stat));
+	sg = stackgap_init(p, 0);
+	st = stackgap_alloc(p, &sg, sizeof (struct stat));
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&sa, ub) = st;
@@ -218,14 +224,65 @@ linux_sys_truncate64(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(off_t) length;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return sys_truncate(p, uap, retval);
 }
 
-#ifdef __mips__ /* i386 and powerpc could use it too */
+#if !defined(__m68k__)
+static void bsd_to_linux_flock64 __P((struct linux_flock64 *,
+    const struct flock *));
+static void linux_to_bsd_flock64 __P((struct flock *, 
+    const struct linux_flock64 *));
+
+static void
+bsd_to_linux_flock64(lfp, bfp)
+	struct linux_flock64 *lfp;
+	const struct flock *bfp;
+{
+
+	lfp->l_start = bfp->l_start;
+	lfp->l_len = bfp->l_len;
+	lfp->l_pid = bfp->l_pid;
+	lfp->l_whence = bfp->l_whence;
+	switch (bfp->l_type) {
+	case F_RDLCK:
+		lfp->l_type = LINUX_F_RDLCK;
+		break;
+	case F_UNLCK:
+		lfp->l_type = LINUX_F_UNLCK;
+		break;
+	case F_WRLCK:
+		lfp->l_type = LINUX_F_WRLCK;
+		break;
+	}
+}
+
+static void
+linux_to_bsd_flock64(bfp, lfp)
+	struct flock *bfp;
+	const struct linux_flock64 *lfp;
+{
+
+	bfp->l_start = lfp->l_start;
+	bfp->l_len = lfp->l_len;
+	bfp->l_pid = lfp->l_pid;
+	bfp->l_whence = lfp->l_whence;
+	switch (lfp->l_type) {
+	case LINUX_F_RDLCK:
+		bfp->l_type = F_RDLCK;
+		break;
+	case LINUX_F_UNLCK:
+		bfp->l_type = F_UNLCK;
+		break;
+	case LINUX_F_WRLCK:
+		bfp->l_type = F_WRLCK;
+		break;
+	}
+}
+
 int
 linux_sys_fcntl64(p, v, retval)
 	struct proc *p;
@@ -233,34 +290,200 @@ linux_sys_fcntl64(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_fcntl64_args /* {
-		syscallarg(unsigned int) fd;
-		syscallarg(unsigned int) cmd;
-		syscallarg(unsigned long) arg;
+		syscallarg(int) fd;
+		syscallarg(int) cmd;
+		syscallarg(void *) arg;
 	} */ *uap = v;
-	unsigned int fd, cmd;
-	unsigned long arg;
+	struct sys_fcntl_args fca;
+	struct linux_flock64 lfl;
+	struct flock bfl, *bfp;
 	int error;
-
-	fd = SCARG(uap, fd);
-	cmd = SCARG(uap, cmd);
-	arg = SCARG(uap, arg);
+	caddr_t sg;
+	void *arg = SCARG(uap, arg);
+	int cmd = SCARG(uap, cmd);
+	int fd = SCARG(uap, fd);
 
 	switch (cmd) {
-		/* XXX implement this later */
-		case LINUX_F_GETLK64:
-			error = 0;
-			break;
-		case LINUX_F_SETLK64:
-			error = 0;
-			break;
-		case LINUX_F_SETLKW64:
-			error = 0;
-			break;
-		default:
-			error = linux_sys_fcntl(p, v, retval);
-			break;
+	case LINUX_F_GETLK64:
+		sg = stackgap_init(p, 0);
+		bfp = (struct flock *) stackgap_alloc(p, &sg, sizeof *bfp);
+		if ((error = copyin(arg, &lfl, sizeof lfl)) != 0)
+			return error;
+		linux_to_bsd_flock64(&bfl, &lfl);
+		if ((error = copyout(&bfl, bfp, sizeof bfl)) != 0)
+			return error;
+		SCARG(&fca, fd) = fd;
+		SCARG(&fca, cmd) = F_GETLK;
+		SCARG(&fca, arg) = bfp;
+		if ((error = sys_fcntl(p, &fca, retval)) != 0)
+			return error;
+		if ((error = copyin(bfp, &bfl, sizeof bfl)) != 0)
+			return error;
+		bsd_to_linux_flock64(&lfl, &bfl);
+		return copyout(&lfl, arg, sizeof lfl);
+	case LINUX_F_SETLK64:
+	case LINUX_F_SETLKW64:
+		cmd = (cmd == LINUX_F_SETLK64 ? F_SETLK : F_SETLKW);
+		if ((error = copyin(arg, &lfl, sizeof lfl)) != 0)
+			return error;
+		linux_to_bsd_flock64(&bfl, &lfl);
+		sg = stackgap_init(p, 0);
+		bfp = (struct flock *) stackgap_alloc(p, &sg, sizeof *bfp);
+		if ((error = copyout(&bfl, bfp, sizeof bfl)) != 0)
+			return error;
+		SCARG(&fca, fd) = fd;
+		SCARG(&fca, cmd) = cmd;
+		SCARG(&fca, arg) = bfp;
+		return sys_fcntl(p, &fca, retval);
+	default:
+		return linux_sys_fcntl(p, v, retval);
+	}
+}
+#endif /* !m68k */
+
+#endif /* !alpha */
+
+/*
+ * Linux 'readdir' call. This code is mostly taken from the
+ * SunOS getdents call (see compat/sunos/sunos_misc.c), though
+ * an attempt has been made to keep it a little cleaner.
+ *
+ * The d_off field contains the offset of the next valid entry,
+ * unless the older Linux getdents(2), which used to have it set
+ * to the offset of the entry itself. This function also doesn't
+ * need to deal with the old count == 1 glibc problem.
+ *
+ * Read in BSD-style entries, convert them, and copy them out.
+ *
+ * Note that this doesn't handle union-mounted filesystems.
+ */
+int
+linux_sys_getdents64(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_getdents_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct linux_dirent64 *) dent;
+		syscallarg(unsigned int) count;
+	} */ *uap = v;
+	struct dirent *bdp;
+	struct vnode *vp;
+	caddr_t	inp, buf;		/* BSD-format */
+	int len, reclen;		/* BSD-format */
+	caddr_t outp;			/* Linux-format */
+	int resid, linux_reclen = 0;	/* Linux-format */
+	struct file *fp;
+	struct uio auio;
+	struct iovec aiov;
+	struct linux_dirent64 idb;
+	off_t off;		/* true file offset */
+	int buflen, error, eofflag, nbytes;
+	struct vattr va;
+	off_t *cookiebuf = NULL, *cookie;
+	int ncookies;
+
+	/* getvnode() will use the descriptor for us */
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out1;
 	}
 
+	vp = (struct vnode *)fp->f_data;
+	if (vp->v_type != VDIR) {
+		error = EINVAL;
+		goto out1;
+	}
+
+	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
+		goto out1;
+
+	nbytes = SCARG(uap, count);
+	buflen = min(MAXBSIZE, nbytes);
+	if (buflen < va.va_blocksize)
+		buflen = va.va_blocksize;
+	buf = malloc(buflen, M_TEMP, M_WAITOK);
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	off = fp->f_offset;
+again:
+	aiov.iov_base = buf;
+	aiov.iov_len = buflen;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_rw = UIO_READ;
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_procp = p;
+	auio.uio_resid = buflen;
+	auio.uio_offset = off;
+	/*
+         * First we read into the malloc'ed buffer, then
+         * we massage it into user space, one record at a time.
+         */
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &cookiebuf,
+	    &ncookies);
+	if (error)
+		goto out;
+
+	inp = buf;
+	outp = (caddr_t)SCARG(uap, dent);
+	resid = nbytes;
+	if ((len = buflen - auio.uio_resid) == 0)
+		goto eof;
+
+	for (cookie = cookiebuf; len > 0; len -= reclen) {
+		bdp = (struct dirent *)inp;
+		reclen = bdp->d_reclen;
+		if (reclen & 3)
+			panic("linux_readdir");
+		if (bdp->d_fileno == 0) {
+			inp += reclen;	/* it is a hole; squish it out */
+			off = *cookie++;
+			continue;
+		}
+		linux_reclen = LINUX_RECLEN(&idb, bdp->d_namlen);
+		if (reclen > len || resid < linux_reclen) {
+			/* entry too big for buffer, so just stop */
+			outp++;
+			break;
+		}
+		off = *cookie++;	/* each entry points to next */
+		/*
+		 * Massage in place to make a Linux-shaped dirent (otherwise
+		 * we have to worry about touching user memory outside of
+		 * the copyout() call).
+		 */
+		idb.d_ino = bdp->d_fileno;
+		idb.d_type = bdp->d_type;
+		idb.d_off = off;
+		idb.d_reclen = (u_short)linux_reclen;
+		strcpy(idb.d_name, bdp->d_name);
+		if ((error = copyout((caddr_t)&idb, outp, linux_reclen)))
+			goto out;
+		/* advance past this real entry */
+		inp += reclen;
+		/* advance output past Linux-shaped entry */
+		outp += linux_reclen;
+		resid -= linux_reclen;
+	}
+
+	/* if we squished out the whole block, try again */
+	if (outp == (caddr_t)SCARG(uap, dent))
+		goto again;
+	fp->f_offset = off;	/* update the vnode offset */
+
+eof:
+	*retval = nbytes - resid;
+out:
+	VOP_UNLOCK(vp, 0);
+	if (cookiebuf)
+		free(cookiebuf, M_TEMP);
+	free(buf, M_TEMP);
+out1:
+	FILE_UNUSE(fp, p);
 	return error;
 }
-#endif /* __mips__ */

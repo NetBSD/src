@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.83.2.5 2002/03/16 16:01:01 jdolecek Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.83.2.6 2002/06/23 17:46:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.83.2.5 2002/03/16 16:01:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.83.2.6 2002/06/23 17:46:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,6 +230,13 @@ ncr53c9x_attach(sc)
 	printf(": %s, %dMHz, SCSI ID %d\n",
 	    ncr53c9x_variant_names[sc->sc_rev], sc->sc_freq, sc->sc_id);
 
+	/*
+	 * Treat NCR53C90 with the 86C01 DMA chip exactly as ESP100
+	 * from now on.
+	 */
+	if (sc->sc_rev == NCR_VARIANT_NCR53C90_86C01)
+		sc->sc_rev = NCR_VARIANT_ESP100;
+
 	sc->sc_ccf = FREQTOCCF(sc->sc_freq);
 
 	/* The value *must not* be == 1. Make it 2 */
@@ -354,7 +361,6 @@ ncr53c9x_reset(sc)
 	case NCR_VARIANT_ESP100A:
 		sc->sc_features |= NCR_F_SELATN3;
 		NCR_WRITE_REG(sc, NCR_CFG2, sc->sc_cfg2);
-	case NCR_VARIANT_NCR53C90_86C01:
 	case NCR_VARIANT_ESP100:
 		NCR_WRITE_REG(sc, NCR_CFG1, sc->sc_cfg1);
 		NCR_WRITE_REG(sc, NCR_CCF, sc->sc_ccf);
@@ -640,14 +646,7 @@ ncr53c9x_select(sc, ecb)
 	 * always possible that the interrupt may never happen.
 	 */
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0) {
-		int timeout = ecb->timeout;
-
-		if (timeout > 1000000)
-			timeout = (timeout / 1000) * hz;
-		else
-			timeout = (timeout * hz) / 1000;
-
-		callout_reset(&ecb->xs->xs_callout, timeout,
+		callout_reset(&ecb->xs->xs_callout, mstohz(ecb->timeout),
 		    ncr53c9x_timeout, ecb);
 	}
 
@@ -2169,6 +2168,7 @@ again:
 			printf("%s: DMA error; resetting\n",
 			    sc->sc_dev.dv_xname);
 			ncr53c9x_init(sc, 1);
+			return 1;
 		}
 		/* If DMA active here, then go back to work... */
 		if (NCRDMA_ISACTIVE(sc))
@@ -2836,8 +2836,6 @@ ncr53c9x_abort(sc, ecb)
 	ecb->flags |= ECB_ABORT;
 
 	if (ecb == sc->sc_nexus) {
-		int timeout;
-
 		/*
 		 * If we're still selecting, the message will be scheduled
 		 * after selection is complete.
@@ -2848,12 +2846,7 @@ ncr53c9x_abort(sc, ecb)
 		/*
 		 * Reschedule timeout.
 		 */
-		timeout = ecb->timeout;
-		if (timeout > 1000000)
-			timeout = (timeout / 1000) * hz;
-		else
-			timeout = (timeout * hz) / 1000;
-		callout_reset(&ecb->xs->xs_callout, timeout,
+		callout_reset(&ecb->xs->xs_callout, mstohz(ecb->timeout),
 		    ncr53c9x_timeout, ecb);
 	} else {
 		/*

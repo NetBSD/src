@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.6.2 2002/01/10 20:01:11 thorpej Exp $
+#	$NetBSD: Makefile,v 1.1.6.3 2002/06/23 17:50:06 jdolecek Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/vax1k
 
-CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_AOUT
+CPPFLAGS+=	-nostdinc -D_KERNEL -DEXEC_AOUT
 
 KMOD=	exec_vax1k
 

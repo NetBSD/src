@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.19.4.2 2002/01/10 18:29:12 thorpej Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.19.4.3 2002/06/23 17:47:02 jdolecek Exp $	*/
 
 /*
  * TODO
@@ -291,7 +291,7 @@ irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
 	if (sc == NULL || tp != sc->sc_tp)
-		return (-1);
+		return (EPASSTHROUGH);
 
 	error = 0;
 	switch (cmd) {
@@ -308,7 +308,7 @@ irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
 		sc->sc_dongle = d;
 		break;
 	default:
-		error = -1;
+		error = EPASSTHROUGH;
 		break;
 	}
 

@@ -27,7 +27,7 @@
  *	i4b_l3fsm.c - layer 3 FSM
  *	-------------------------
  *
- *	$Id: i4b_l3fsm.c,v 1.3.2.2 2002/01/10 20:03:37 thorpej Exp $ 
+ *	$Id: i4b_l3fsm.c,v 1.3.2.3 2002/06/23 17:51:28 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l3fsm.c,v 1.3.2.2 2002/01/10 20:03:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l3fsm.c,v 1.3.2.3 2002/06/23 17:51:28 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -67,16 +67,14 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l3fsm.c,v 1.3.2.2 2002/01/10 20:03:37 thorpej Ex
 #endif
 
 #include <netisdn/i4b_isdnq931.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
-
-#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l3.h>
 #include <netisdn/i4b_l3fsm.h>
 #include <netisdn/i4b_q931.h>
-
 #include <netisdn/i4b_l4.h>
 
 
@@ -292,8 +290,8 @@ static void F_00A(call_desc_t *cd)
 
 	if(i4b_get_dl_stat(cd) == DL_DOWN)
 	{
-		struct l2_softc * l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
-		i4b_dl_establish_req(l2sc);
+		struct l2_softc * l2sc = (l2_softc_t*)cd->l3drv->l1_token;
+		i4b_dl_establish_req(l2sc, l2sc->drv);
 		cd->Q931state = ST_OW;
 	}
 	else
@@ -512,8 +510,8 @@ static void F_06D(call_desc_t *cd)
 
 	if(i4b_get_dl_stat(cd) == DL_DOWN)
 	{	
-		struct l2_softc * l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
-		i4b_dl_establish_req(l2sc);
+		struct l2_softc * l2sc = (l2_softc_t*)cd->l3drv->l1_token;
+		i4b_dl_establish_req(l2sc, l2sc->drv);
 		cd->Q931state = ST_IWL;
 	}
 	else
@@ -532,8 +530,8 @@ static void F_06E(call_desc_t *cd)
 
 	if(i4b_get_dl_stat(cd) == DL_DOWN)
 	{	
-		struct l2_softc * l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
-		i4b_dl_establish_req(l2sc);
+		struct l2_softc * l2sc = (l2_softc_t*)cd->l3drv->l1_token;
+		i4b_dl_establish_req(l2sc, l2sc->drv);
 		cd->Q931state = ST_IWA;		
 	}
 	else
@@ -553,8 +551,8 @@ static void F_06F(call_desc_t *cd)
 
 	if(i4b_get_dl_stat(cd) == DL_DOWN)
 	{	
-		struct l2_softc * l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
-		i4b_dl_establish_req(l2sc);
+		struct l2_softc * l2sc = (l2_softc_t*)cd->l3drv->l1_token;
+		i4b_dl_establish_req(l2sc, l2sc->drv);
 		cd->Q931state = ST_IWR;		
 	}
 	else
@@ -1044,13 +1042,13 @@ static void F_DLRI(call_desc_t *cd)
  *---------------------------------------------------------------------------*/	
 static void F_DLRIA(call_desc_t *cd)
 {
-	struct l2_softc * l2sc = (struct l2_softc*)isdn_find_l2_by_bri(cd->bri);
+	struct l2_softc * l2sc = (l2_softc_t*)cd->l3drv->l1_token;
 	NDBGL3(L3_F_MSG, "FSM function F_DLRIA executing");
 
 	if(cd->T309 == TIMER_IDLE)
 		T309_start(cd);
 
-	i4b_dl_establish_req(l2sc);
+	i4b_dl_establish_req(l2sc, l2sc->drv);
 }
 	
 #endif /* NI4BQ931 > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.8.2.2 2002/03/16 16:01:19 jdolecek Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.8.2.3 2002/06/23 17:48:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -32,7 +32,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.8.2.2 2002/03/16 16:01:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.8.2.3 2002/06/23 17:48:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.8.2.2 2002/03/16 16:01:19 jdol
 #include <dev/scsipi/scsipiconf.h>
 
 #include <dev/ic/siopreg.h>
-#include <dev/ic/siopvar.h>
+#include <dev/ic/siopvar_common.h>
 #include <dev/pci/siop_pci_common.h>
 
 /* List (array, really :) of chips we know how to handle */
@@ -150,7 +150,7 @@ const struct siop_product_desc siop_products[] = {
 	0x00,
 	"Symbios Logic 53c896 (ultra2-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
-	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
+	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
 	7, 31, 7, 62, 8192
@@ -159,28 +159,39 @@ const struct siop_product_desc siop_products[] = {
 	0x00,
 	"Symbios Logic 53c895a (ultra2-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
-	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
+	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM | SF_CHIP_QUAD |
 	SF_CHIP_LS | SF_CHIP_10REGS |
 	SF_BUS_ULTRA2 | SF_BUS_WIDE,
 	7, 31, 7, 62, 8192
 	},
 	{ PCI_PRODUCT_SYMBIOS_1010,
 	0x00,
-	"Symbios Logic 53c1010-33 (ultra2-wide scsi)",
+	"Symbios Logic 53c1010-33 rev 0 (ultra3-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
-	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
+	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
 	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR |
-	SF_BUS_ULTRA2 | SF_BUS_WIDE, 
-	7, 31, 7, 62, 8192
+	SF_CHIP_GEBUG |
+	SF_BUS_ULTRA3 | SF_BUS_WIDE,
+	7, 31, 0, 62, 8192
+	},
+	{ PCI_PRODUCT_SYMBIOS_1010,
+	0x01,
+	"Symbios Logic 53c1010-33 (ultra3-wide scsi)",
+	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
+	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
+	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR | SF_CHIP_DT |
+	SF_CHIP_GEBUG |
+	SF_BUS_ULTRA3 | SF_BUS_WIDE,
+	7, 62, 0, 62, 8192
 	},
 	{ PCI_PRODUCT_SYMBIOS_1010_2,
 	0x00,
-	"Symbios Logic 53c1010-66 (ultra2-wide scsi)",
+	"Symbios Logic 53c1010-66 (ultra3-wide scsi)",
 	SF_PCI_RL | SF_PCI_CLS | SF_PCI_WRI | SF_PCI_RM |
-	SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
-	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR |
-	SF_BUS_ULTRA2 | SF_BUS_WIDE, 
-	7, 31, 7, 62, 8192
+	SF_CHIP_LEDC | SF_CHIP_FIFO | SF_CHIP_PF | SF_CHIP_RAM |
+	SF_CHIP_LS | SF_CHIP_10REGS | SF_CHIP_DFBC | SF_CHIP_DBLR | SF_CHIP_DT |
+	SF_BUS_ULTRA3 | SF_BUS_WIDE, 
+	7, 62, 0, 62, 8192
 	},
 	{ PCI_PRODUCT_SYMBIOS_1510D,
 	0x00,
@@ -219,9 +230,12 @@ siop_lookup_product(id, rev)
 }
 
 int
-siop_pci_attach_common(sc, pa)
-	struct siop_pci_softc *sc;
+siop_pci_attach_common(pci_sc, siop_sc, pa, intr)
+	struct siop_pci_common_softc *pci_sc;
+	struct siop_common_softc *siop_sc;
 	struct pci_attach_args *pa;
+	int (*intr) __P((void*));
+
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;    
@@ -233,24 +247,28 @@ siop_pci_attach_common(sc, pa)
 	int memh_valid, ioh_valid;
 	bus_addr_t ioaddr, memaddr;
 
-	sc->sc_pp = siop_lookup_product(pa->pa_id, PCI_REVISION(pa->pa_class));
-	if (sc->sc_pp == NULL) {
+	pci_sc->sc_pp =
+	    siop_lookup_product(pa->pa_id, PCI_REVISION(pa->pa_class));
+	if (pci_sc->sc_pp == NULL) {
 		printf("sym: broken match/attach!!\n");
 		return 0;
 	}
 	/* copy interesting infos about the chip */
-	sc->siop.features = sc->sc_pp->features;
-	sc->siop.maxburst = sc->sc_pp->maxburst;
-	sc->siop.maxoff = sc->sc_pp->maxoff;
-	sc->siop.clock_div = sc->sc_pp->clock_div;
-	sc->siop.clock_period = sc->sc_pp->clock_period;
-	sc->siop.ram_size = sc->sc_pp->ram_size;
+	siop_sc->features = pci_sc->sc_pp->features;
+#ifdef SIOP_SYMLED    /* XXX Should be a devprop! */
+	siop_sc->features |= SF_CHIP_LED0;
+#endif
+	siop_sc->maxburst = pci_sc->sc_pp->maxburst;
+	siop_sc->maxoff = pci_sc->sc_pp->maxoff;
+	siop_sc->clock_div = pci_sc->sc_pp->clock_div;
+	siop_sc->clock_period = pci_sc->sc_pp->clock_period;
+	siop_sc->ram_size = pci_sc->sc_pp->ram_size;
 
-	sc->siop.sc_reset = siop_pci_reset;
-	printf(": %s\n", sc->sc_pp->name);
-	sc->sc_pc = pc;
-	sc->sc_tag = tag;
-	sc->siop.sc_dmat = pa->pa_dmat;
+	siop_sc->sc_reset = siop_pci_reset;
+	printf(": %s\n", pci_sc->sc_pp->name);
+	pci_sc->sc_pc = pc;
+	pci_sc->sc_tag = tag;
+	siop_sc->sc_dmat = pa->pa_dmat;
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, 0x14);
 	switch (memtype) {
@@ -267,20 +285,20 @@ siop_pci_attach_common(sc, pa)
 	    &iot, &ioh, &ioaddr, NULL) == 0);
 
 	if (memh_valid) {
-		sc->siop.sc_rt = memt;
-		sc->siop.sc_rh = memh;
-		sc->siop.sc_raddr = memaddr;
+		siop_sc->sc_rt = memt;
+		siop_sc->sc_rh = memh;
+		siop_sc->sc_raddr = memaddr;
 	} else if (ioh_valid) {
-		sc->siop.sc_rt = iot;
-		sc->siop.sc_rh = ioh;
-		sc->siop.sc_raddr = ioaddr;
+		siop_sc->sc_rt = iot;
+		siop_sc->sc_rh = ioh;
+		siop_sc->sc_raddr = ioaddr;
 	} else {
 		printf("%s: unable to map device registers\n",
-		    sc->siop.sc_dev.dv_xname);
+		    siop_sc->sc_dev.dv_xname);
 		return 0;
 	}
 
-	if (sc->siop.features & SF_CHIP_RAM) {
+	if (siop_sc->features & SF_CHIP_RAM) {
 		int bar;
 		switch (memtype) {
 		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
@@ -291,32 +309,32 @@ siop_pci_attach_common(sc, pa)
 			break;
 		}
 		if (pci_mapreg_map(pa, bar, memtype, 0,
-                    &sc->siop.sc_ramt, &sc->siop.sc_ramh,
-		    &sc->siop.sc_scriptaddr, NULL) == 0) {
+                    &siop_sc->sc_ramt, &siop_sc->sc_ramh,
+		    &siop_sc->sc_scriptaddr, NULL) == 0) {
 			printf("%s: using on-board RAM\n",
-			    sc->siop.sc_dev.dv_xname);
+			    siop_sc->sc_dev.dv_xname);
 		} else {
 			printf("%s: can't map on-board RAM\n",
-			    sc->siop.sc_dev.dv_xname);
-			sc->siop.features &= ~SF_CHIP_RAM;
+			    siop_sc->sc_dev.dv_xname);
+			siop_sc->features &= ~SF_CHIP_RAM;
 		}
 	}
 
 	if (pci_intr_map(pa, &intrhandle) != 0) {
 		printf("%s: couldn't map interrupt\n",
-		    sc->siop.sc_dev.dv_xname);
+		    siop_sc->sc_dev.dv_xname);
 		return 0;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
-	    siop_intr, &sc->siop);
-	if (sc->sc_ih != NULL) {
+	pci_sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
+	    intr, siop_sc);
+	if (pci_sc->sc_ih != NULL) {
 		printf("%s: interrupting at %s\n",
-		    sc->siop.sc_dev.dv_xname,
+		    siop_sc->sc_dev.dv_xname,
 		    intrstr ? intrstr : "unknown interrupt");
 	} else {
 		printf("%s: couldn't establish interrupt",
-		    sc->siop.sc_dev.dv_xname);
+		    siop_sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -327,7 +345,7 @@ siop_pci_attach_common(sc, pa)
 
 void
 siop_pci_reset(sc)
-	struct siop_softc *sc;
+	struct siop_common_softc *sc;
 {
 	int dmode;
 

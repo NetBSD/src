@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1.2.3 2002/03/16 16:00:26 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.4 2002/06/23 17:43:35 jdolecek Exp $	*/
 
 /*
  *
@@ -422,6 +422,10 @@ extern paddr_t msgbuf_paddr;
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
 
+extern vaddr_t kernel_loaded_end;
+
+extern int end;
+
 #if defined(I586_CPU)
 /* stuff to fix the pentium f00f bug */
 extern vaddr_t pentium_idt_vaddr;
@@ -812,8 +816,8 @@ void
 pmap_bootstrap(kva_start)
 	vaddr_t kva_start;
 {
+	vaddr_t kva, kva_end;
 	struct pmap *kpm;
-	vaddr_t kva;
 	pt_entry_t *pte;
 	int i;
 	unsigned long p1i;
@@ -883,7 +887,12 @@ pmap_bootstrap(kva_start)
 		pmap_pg_g = PG_G;		/* enable software */
 
 		/* add PG_G attribute to already mapped kernel pages */
+#if KERNBASE == VM_MIN_KERNEL_ADDRESS
 		for (kva = VM_MIN_KERNEL_ADDRESS ; kva < virtual_avail ;
+#else
+		kva_end = roundup((vaddr_t)&end, NBPG);
+		for (kva = KERNBASE; kva < kva_end ;
+#endif
 		     kva += PAGE_SIZE) {
 			p1i = pl1_i(kva);
 			if (pmap_valid_entry(PTE_BASE[p1i]))
@@ -891,14 +900,13 @@ pmap_bootstrap(kva_start)
 		}
 	}
 
-#ifdef LARGEPAGES
+#if defined(LARGEPAGES) && 0	/* XXX non-functional right now */
 	/*
 	 * enable large pages of they are supported.
 	 */
 
 	if (cpu_feature & CPUID_PSE) {
 		paddr_t pa;
-		vaddr_t kva_end;
 		pd_entry_t *pde;
 		extern char _etext;
 
@@ -930,6 +938,16 @@ pmap_bootstrap(kva_start)
 #endif /* LARGEPAGES */
 
 	/*
+	 * zero_pte is stuck at the end of mapped space for the kernel
+	 * image (disjunct from kva space). This is done so that it
+	 * can safely be used in pmap_growkernel (pmap_get_physpage),
+	 * when it's called for the first time.
+	 */
+
+	zerop = (caddr_t)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
+	zero_pte = PTE_BASE + pl1_i((unsigned long)zerop);
+
+	/*
 	 * now we allocate the "special" VAs which are used for tmp mappings
 	 * by the pmap (and other modules).    we allocate the VAs by advancing
 	 * virtual_avail (note that there are no pages mapped at these VAs).
@@ -945,8 +963,10 @@ pmap_bootstrap(kva_start)
 	cdstp = (caddr_t) virtual_avail;  cdst_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
 
+#if 0
 	zerop = (caddr_t) virtual_avail;  zero_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
+#endif
 
 	ptpp = (caddr_t) virtual_avail;  ptp_pte = pte;
 	virtual_avail += PAGE_SIZE; pte++;
@@ -1687,6 +1707,10 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	/* zero the rest */
 	memset(&pdir[PDIR_SLOT_KERN + npde], 0,
 	    (NTOPLEVEL_PDES - (PDIR_SLOT_KERN + npde)) * sizeof(pd_entry_t));
+
+#if VM_MIN_KERNEL_ADDRESS != KERNBASE
+	pdir[pl4_pi(KERNBASE)] = PDP_BASE[pl4_pi(KERNBASE)];
+#endif
 
 	return (0);
 }
@@ -3008,6 +3032,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	struct pv_head *pvh;
 	struct pv_entry *pve;
 	int bank, off, error;
+	int ptpdelta, wireddelta, resdelta;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DIAGNOSTIC
@@ -3058,15 +3083,19 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 	if (pmap_valid_entry(opte)) {
 		/*
-		 * first, update pm_stats.  resident count will not
-		 * change since we are replacing/changing a valid
-		 * mapping.  wired count might change...
+		 * first, calculate pm_stats updates.  resident count will not
+		 * change since we are replacing/changing a valid mapping.
+		 * wired count might change...
 		 */
 
+		resdelta = 0;
 		if (wired && (opte & PG_W) == 0)
-			pmap->pm_stats.wired_count++;
+			wireddelta = 1;
 		else if (!wired && (opte & PG_W) != 0)
-			pmap->pm_stats.wired_count--;
+			wireddelta = -1;
+		else
+			wireddelta = 0;
+		ptpdelta = 0;
 
 		/*
 		 * is the currently mapped PA the same as the one we
@@ -3122,17 +3151,20 @@ pmap_enter(pmap, va, pa, prot, flags)
 		}
 	} else {	/* opte not valid */
 		pve = NULL;
-		pmap->pm_stats.resident_count++;
+		resdelta = 1;
 		if (wired)
-			pmap->pm_stats.wired_count++;
+			wireddelta = 1;
+		else
+			wireddelta = 0;
 		if (ptp)
-			ptp->wire_count++;      /* count # of valid entrys */
+			ptpdelta = 1;
+		else
+			ptpdelta = 0;
 	}
 
 	/*
-	 * at this point pm_stats has been updated.   pve is either NULL
-	 * or points to a now-free pv_entry structure (the latter case is
-	 * if we called pmap_remove_pv above).
+	 * pve is either NULL or points to a now-free pv_entry structure
+	 * (the latter case is if we called pmap_remove_pv above).
 	 *
 	 * if this entry is to be on a pvlist, enter it now.
 	 */
@@ -3165,6 +3197,10 @@ enter_now:
 	 * at this point pvh is !NULL if we want the PG_PVLIST bit set
 	 */
 
+	pmap->pm_stats.resident_count += resdelta;
+	pmap->pm_stats.wired_count += wireddelta;
+	if (ptp)
+		ptp->wire_count += ptpdelta;
 	npte = pa | protection_codes[prot] | PG_V;
 	if (pvh)
 		npte |= PG_PVLIST;
@@ -3312,6 +3348,8 @@ pmap_growkernel(maxkvaddr)
 		if (target_nptp > nkptpmax[i])
 			panic("out of KVA space");
 		needed_kptp[i] = target_nptp - nkptp[i];
+		if (needed_kptp[i] == 0 && nkptp[i] == 0)
+			needed_kptp[i] = 1;
 	}
 
 

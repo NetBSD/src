@@ -1,49 +1,41 @@
-/*
- *   Copyright (c) 1997, 1998 Martin Husemann. All rights reserved.
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- *   Redistribution and use in source and binary forms, with or without
- *   modification, are permitted provided that the following conditions
- *   are met:
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Martin Husemann <martin@netbsd.org>.
  *
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *   3. Neither the name of the author nor the names of any co-contributors
- *      may be used to endorse or promote products derived from this software
- *      without specific prior written permission.
- *   4. Altered versions must be plainly marked as such, and must not be
- *      misrepresented as being the original software and/or documentation.
- *   
- *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- *   ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- *   FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- *   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- *   OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- *   HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *   LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- *   OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- *   SUCH DAMAGE.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- *---------------------------------------------------------------------------
- *
- *	isapnp_isic.c - ISA-P&P bus frontend for i4b_isic driver
- *	--------------------------------------------------------
- *
- *	$Id: isic_isapnp.c,v 1.3.2.3 2002/03/16 16:01:08 jdolecek Exp $ 
- *
- *      last edit-date: [Fri Jan  5 11:38:29 2001]
- *
- *	-mh	original implementation
- *      -hm     NetBSD patches from Martin 
- *
- *---------------------------------------------------------------------------*/
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.3.2.3 2002/03/16 16:01:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.3.2.4 2002/06/23 17:47:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -70,8 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.3.2.3 2002/03/16 16:01:08 jdolecek
 #include <machine/i4b_ioctl.h>
 #include <machine/i4b_trace.h>
 #else
+#include <netisdn/i4b_global.h>
+#include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #endif
 
 #include <dev/ic/isic_l1.h>
@@ -94,34 +90,34 @@ static int isic_isapnp_probe __P((struct device *, struct cfdata *, void *));
 static void isic_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach isic_isapnp_ca = {
-	sizeof(struct l1_softc), isic_isapnp_probe, isic_isapnp_attach
+	sizeof(struct isic_softc), isic_isapnp_probe, isic_isapnp_attach
 };
 
-typedef void (*allocmaps_func)(struct isapnp_attach_args *ipa, struct l1_softc *sc);
-typedef void (*attach_func)(struct l1_softc *sc);
+typedef void (*allocmaps_func)(struct isapnp_attach_args *ipa, struct isic_softc *sc);
+typedef void (*attach_func)(struct isic_softc *sc);
 
 /* map allocators */
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_SEDLBAUER) \
 	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)	\
 	|| defined(ISICPNP_ITKIX)
-static void generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc);
+static void generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct isic_softc *sc);
 #endif
 #ifdef ISICPNP_DRN_NGO
-static void ngo_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc);
+static void ngo_pnp_mapalloc(struct isapnp_attach_args *ipa, struct isic_softc *sc);
 #endif
 #if defined(ISICPNP_CRTX_S0_P) || defined(ISICPNP_TEL_S0_16_3_P)
-static void tls_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc);
+static void tls_pnp_mapalloc(struct isapnp_attach_args *ipa, struct isic_softc *sc);
 #endif
 
 /* card attach functions */
-extern void isic_attach_Cs0P __P((struct l1_softc *sc));
-extern void isic_attach_Dyn __P((struct l1_softc *sc));
-extern void isic_attach_s0163P __P((struct l1_softc *sc));
-extern void isic_attach_drnngo __P((struct l1_softc *sc));
-extern void isic_attach_sws __P((struct l1_softc *sc));
-extern void isic_attach_Eqs1pi __P((struct l1_softc *sc));
-extern void isic_attach_siemens_isurf __P((struct l1_softc *sc));
-extern void isic_attach_isapnp_itkix1 __P((struct l1_softc *sc));
+extern void isic_attach_Cs0P __P((struct isic_softc *sc));
+extern void isic_attach_Dyn __P((struct isic_softc *sc));
+extern void isic_attach_s0163P __P((struct isic_softc *sc));
+extern void isic_attach_drnngo __P((struct isic_softc *sc));
+extern void isic_attach_sws __P((struct isic_softc *sc));
+extern void isic_attach_Eqs1pi __P((struct isic_softc *sc));
+extern void isic_attach_siemens_isurf __P((struct isic_softc *sc));
+extern void isic_attach_isapnp_itkix1 __P((struct isic_softc *sc));
 
 struct isic_isapnp_card_desc {
 	char *devlogic;			/* ISAPNP logical device ID */
@@ -235,7 +231,7 @@ isic_isapnp_attach(parent, self, aux)
 		"Unknown Version"
 	};
 
-	struct l1_softc *sc = (void *)self;
+	struct isic_softc *sc = (void *)self;
 	struct isapnp_attach_args *ipa = aux;
 	const struct isic_isapnp_card_desc *desc = isic_isapnp_descriptions;
 	int i;
@@ -254,7 +250,6 @@ isic_isapnp_attach(parent, self, aux)
 
 	/* setup parameters */
 	sc->sc_cardtyp = desc->card_type;
-	sc->sc_unit = sc->sc_dev.dv_unit;
 	sc->sc_irq = ipa->ipa_irq[0].num;
 	desc->allocmaps(ipa, sc);
 
@@ -306,9 +301,7 @@ isic_isapnp_attach(parent, self, aux)
 			break;
 	};
 
-	/* ISAC setup */
-
-	isic_isac_init(sc);
+        sc->sc_intr_valid = ISIC_INTR_DISABLED;
 
 	/* HSCX setup */
 
@@ -343,10 +336,6 @@ isic_isapnp_attach(parent, self, aux)
 	callout_init(&sc->sc_T4_callout);
 #endif
 
-	/* init higher protocol layers and save l2 handle */
-
-	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
-
 	/* announce chip versions */
 	
 	if(sc->sc_isac_version >= ISAC_UNKN)
@@ -377,13 +366,16 @@ isic_isapnp_attach(parent, self, aux)
 				ISIC_PARM,
 				HSCXversion[sc->sc_hscx_version]);
 	}
+
+	/* init higher protocol layers and save l2 handle */
+	isic_attach_bri(sc, desc->name, &isic_std_driver);
 }
 
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_SEDLBAUER) \
 	|| defined(ISICPNP_DYNALINK) || defined(ISICPNP_SIEMENS_ISURF2)	\
 	|| defined(ISICPNP_ITKIX)
 static void
-generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc)
+generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct isic_softc *sc)
 {
 	sc->sc_num_mappings = 1;	/* most cards have just one mapping */
 	MALLOC_MAPS(sc);		/* malloc the maps */
@@ -395,7 +387,7 @@ generic_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc)
 
 #ifdef ISICPNP_DRN_NGO
 static void
-ngo_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc)
+ngo_pnp_mapalloc(struct isapnp_attach_args *ipa, struct isic_softc *sc)
 {
 	sc->sc_num_mappings = 2;	/* one data, one address mapping */
 	MALLOC_MAPS(sc);		/* malloc the maps */
@@ -410,7 +402,7 @@ ngo_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc)
 
 #if defined(ISICPNP_CRTX_S0_P) || defined(ISICPNP_TEL_S0_16_3_P)
 static void
-tls_pnp_mapalloc(struct isapnp_attach_args *ipa, struct l1_softc *sc)
+tls_pnp_mapalloc(struct isapnp_attach_args *ipa, struct isic_softc *sc)
 {
 	sc->sc_num_mappings = 4;	/* config, isac, 2 * hscx */
 	MALLOC_MAPS(sc);		/* malloc the maps */

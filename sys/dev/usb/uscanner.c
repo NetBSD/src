@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.15.2.3 2002/03/16 16:01:43 jdolecek Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.15.2.4 2002/06/23 17:49:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.15.2.3 2002/03/16 16:01:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.15.2.4 2002/06/23 17:49:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,7 @@ static const struct uscan_info uscanner_devs[] = {
  {{ USB_VENDOR_KYE, USB_PRODUCT_KYE_VIVIDPRO }, 0 },
 
   /* HP */
+ {{ USB_VENDOR_HP, USB_PRODUCT_HP_2200C }, 0 },
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_3300C }, 0 },
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_3400CSE }, 0 },
  {{ USB_VENDOR_HP, USB_PRODUCT_HP_4100C }, 0 },

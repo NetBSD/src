@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.7.4.2 2002/01/10 19:55:58 thorpej Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.7.4.3 2002/06/23 17:47:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.7.4.2 2002/01/10 19:55:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.7.4.3 2002/06/23 17:47:12 jdolecek Exp $");
 
 #include "rnd.h"
 #include "locators.h"
@@ -201,7 +201,6 @@ edmcastrategy(bp)
 	struct ed_softc *ed = device_lookup(&ed_cd, DISKUNIT(bp->b_dev));
 	struct disklabel *lp = ed->sc_dk.dk_label;
 	daddr_t blkno;
-	int s;
 
 	WDCDEBUG_PRINT(("edmcastrategy (%s)\n", ed->sc_dev.dv_xname),
 	    DEBUG_XFERS);
@@ -248,7 +247,6 @@ edmcastrategy(bp)
 	bp->b_rawblkno = blkno;
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
-	s = splbio();
 	simple_lock(&ed->sc_q_lock);
 	disksort_blkno(&ed->sc_q, bp);
 	simple_unlock(&ed->sc_q_lock);
@@ -256,7 +254,6 @@ edmcastrategy(bp)
 	/* Ring the worker thread */
 	wakeup_one(ed->edc_softc);
 
-	splx(s);
 	return;
 bad:
 	bp->b_flags |= B_ERROR;

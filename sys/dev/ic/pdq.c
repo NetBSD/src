@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.31.2.1 2002/01/10 19:54:58 thorpej Exp $	*/
+/*	$NetBSD: pdq.c,v 1.31.2.2 2002/06/23 17:46:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.31.2.1 2002/01/10 19:54:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.31.2.2 2002/06/23 17:46:46 jdolecek Exp $");
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
@@ -178,7 +178,7 @@ pdq_print_fddi_chars(
     pdq_t *pdq,
     const pdq_response_status_chars_get_t *rsp)
 {
-    const char hexchars[] = "0123456789abcdef";
+    static const char hexchars[] = "0123456789abcdef";
 
     printf(
 #if !defined(__bsdi__) && !defined(__NetBSD__)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpica,v 1.1.8.2 2002/01/10 19:52:55 thorpej Exp $
+#	$NetBSD: files.acpica,v 1.1.8.3 2002/06/23 17:45:04 jdolecek Exp $
 
 file	dev/acpi/acpica/Osd/OsdEnvironment.c		acpi
 file	dev/acpi/acpica/Osd/OsdHardware.c		acpi
@@ -48,13 +48,15 @@ file	dev/acpi/acpica/Subsystem/exconfig.c		acpi
 file	dev/acpi/acpica/Subsystem/exconvrt.c		acpi
 file	dev/acpi/acpica/Subsystem/excreate.c		acpi
 file	dev/acpi/acpica/Subsystem/exdump.c		acpi
-file	dev/acpi/acpica/Subsystem/exdyadic.c		acpi
 file	dev/acpi/acpica/Subsystem/exfield.c		acpi
 file	dev/acpi/acpica/Subsystem/exfldio.c		acpi
 file	dev/acpi/acpica/Subsystem/exmisc.c		acpi
-file	dev/acpi/acpica/Subsystem/exmonad.c		acpi
 file	dev/acpi/acpica/Subsystem/exmutex.c		acpi
 file	dev/acpi/acpica/Subsystem/exnames.c		acpi
+file	dev/acpi/acpica/Subsystem/exoparg1.c		acpi
+file	dev/acpi/acpica/Subsystem/exoparg2.c		acpi
+file	dev/acpi/acpica/Subsystem/exoparg3.c		acpi
+file	dev/acpi/acpica/Subsystem/exoparg6.c		acpi
 file	dev/acpi/acpica/Subsystem/exprep.c		acpi
 file	dev/acpi/acpica/Subsystem/exregion.c		acpi
 file	dev/acpi/acpica/Subsystem/exresnte.c		acpi
@@ -65,7 +67,6 @@ file	dev/acpi/acpica/Subsystem/exstoren.c		acpi
 file	dev/acpi/acpica/Subsystem/exstorob.c		acpi
 file	dev/acpi/acpica/Subsystem/exsystem.c		acpi
 file	dev/acpi/acpica/Subsystem/exutils.c		acpi
-file	dev/acpi/acpica/Subsystem/exxface.c		acpi
 
 # hardware/
 file	dev/acpi/acpica/Subsystem/hwacpi.c		acpi
@@ -130,6 +131,7 @@ file	dev/acpi/acpica/Subsystem/utdelete.c		acpi
 file	dev/acpi/acpica/Subsystem/uteval.c		acpi
 file	dev/acpi/acpica/Subsystem/utglobal.c		acpi
 file	dev/acpi/acpica/Subsystem/utinit.c		acpi
+file	dev/acpi/acpica/Subsystem/utmath.c		acpi
 file	dev/acpi/acpica/Subsystem/utmisc.c		acpi
 file	dev/acpi/acpica/Subsystem/utobject.c		acpi
 file	dev/acpi/acpica/Subsystem/utxface.c		acpi

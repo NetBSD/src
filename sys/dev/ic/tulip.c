@@ -1,12 +1,12 @@
-/*	$NetBSD: tulip.c,v 1.94.2.4 2002/02/11 20:09:47 jdolecek Exp $	*/
+/*	$NetBSD: tulip.c,v 1.94.2.5 2002/06/23 17:46:53 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center; and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.94.2.4 2002/02/11 20:09:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.94.2.5 2002/06/23 17:46:53 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -103,7 +103,6 @@ void	tlp_stop __P((struct ifnet *, int));
 
 void	tlp_shutdown __P((void *));
 
-void	tlp_reset __P((struct tulip_softc *));
 void	tlp_rxdrain __P((struct tulip_softc *));
 int	tlp_add_rxbuf __P((struct tulip_softc *, int));
 void	tlp_idle __P((struct tulip_softc *, u_int32_t));
@@ -147,6 +146,8 @@ void	tlp_21140_reset __P((struct tulip_softc *));
 void	tlp_21142_reset __P((struct tulip_softc *));
 void	tlp_pmac_reset __P((struct tulip_softc *));
 void	tlp_dm9102_reset __P((struct tulip_softc *));
+
+void	tlp_2114x_nway_tick __P((void *));
 
 #define	tlp_mchash(addr, sz)						\
 	(ether_crc32_le((addr), ETHER_ADDR_LEN) & ((sz) - 1))
@@ -702,6 +703,10 @@ tlp_start(ifp)
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
+	if (sc->sc_tick == tlp_2114x_nway_tick &&
+	    (sc->sc_flags & TULIPF_LINK_UP) == 0 && ifp->if_snd.ifq_len < 10)
+		return;
+
 	/*
 	 * Remember the previous number of free descriptors and
 	 * the first descriptor we'll use.
@@ -871,7 +876,7 @@ tlp_start(ifp)
 		sc->sc_txfree -= dmamap->dm_nsegs;
 		sc->sc_txnext = nexttx;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
 		last_txs = txs;
@@ -943,7 +948,7 @@ tlp_watchdog(ifp)
 	int doing_setup, doing_transmit;
 
 	doing_setup = (sc->sc_flags & TULIPF_DOING_SETUP);
-	doing_transmit = (SIMPLEQ_FIRST(&sc->sc_txdirtyq) != NULL);
+	doing_transmit = (! SIMPLEQ_EMPTY(&sc->sc_txdirtyq));
 
 	if (doing_setup && doing_transmit) {
 		printf("%s: filter setup and transmit timeout\n",
@@ -1429,7 +1434,7 @@ tlp_txintr(sc)
 		if (txstat & TDSTAT_OWN)
 			break;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 
 		sc->sc_txfree += txs->txs_ndescs;
 
@@ -1886,7 +1891,7 @@ tlp_init(ifp)
 
 	if (sc->sc_tick != NULL) {
 		/* Start the one second clock. */
-		callout_reset(&sc->sc_tick_callout, hz, sc->sc_tick, sc);
+		callout_reset(&sc->sc_tick_callout, hz >> 3, sc->sc_tick, sc);
 	}
 
 	/*
@@ -2036,7 +2041,7 @@ tlp_stop(ifp, disable)
 	 * Release any queued transmit buffers.
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 		if (txs->txs_mbuf != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
 			m_freem(txs->txs_mbuf);
@@ -2057,6 +2062,11 @@ tlp_stop(ifp, disable)
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	/*
+	 * Reset the chip (needed on some flavors to actually disable it).
+	 */
+	tlp_reset(sc);
 }
 
 #define	SROM_EMIT(sc, x)						\
@@ -2523,7 +2533,7 @@ tlp_filter_setup(sc)
 	 * If there are transmissions pending, wait until they have
 	 * completed.
 	 */
-	if (SIMPLEQ_FIRST(&sc->sc_txdirtyq) != NULL ||
+	if (! SIMPLEQ_EMPTY(&sc->sc_txdirtyq) ||
 	    (sc->sc_flags & TULIPF_DOING_SETUP) != 0) {
 		sc->sc_flags |= TULIPF_WANT_SETUP;
 		DPRINTF(sc, ("%s: tlp_filter_setup: deferring\n",
@@ -2721,7 +2731,7 @@ tlp_filter_setup(sc)
 	sc->sc_txfree -= 1;
 	sc->sc_txnext = TULIP_NEXTTX(sc->sc_txnext);
 
-	SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs, txs_q);
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
 	/*
@@ -3400,20 +3410,8 @@ tlp_2114x_preinit(sc)
 	 * Whether or not we're in MII or SIA/SYM mode, the media info
 	 * contains the appropriate OPMODE bits.
 	 *
-	 * Note that if we have no media info, we are are doing
-	 * non-MII `auto'.
-	 *
 	 * Also, we always set the Must-Be-One bit.
 	 */
-	if (tm == NULL) {
-#ifdef DIAGNOSTIC
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			panic("tlp_2114x_preinit: not IFM_AUTO");
-		if (sc->sc_nway_active == NULL)
-			panic("tlp_2114x_preinit: nway_active NULL");
-#endif
-		tm = sc->sc_nway_active->ifm_aux;
-	}
 	sc->sc_opmode |= OPMODE_MBO | tm->tm_opmode;
 
 	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
@@ -3538,21 +3536,19 @@ tlp_21142_reset(sc)
 {
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	struct tulip_21x4x_media *tm = ife->ifm_aux;
-	const u_int8_t *ncp;
+	const u_int8_t *cp;
 	int i;
 
-	ncp = &sc->sc_srom[tm->tm_reset_offset];
-	for (i = 0; i < tm->tm_reset_length; i++, ncp += 2) {
+	cp = &sc->sc_srom[tm->tm_reset_offset];
+	for (i = 0; i < tm->tm_reset_length; i++, cp += 2) {
 		delay(10);
-		TULIP_WRITE(sc, CSR_SIAGEN,
-		    TULIP_ROM_GETW(ncp, 0) << 16);
+		TULIP_WRITE(sc, CSR_SIAGEN, TULIP_ROM_GETW(cp, 0) << 16);
 	}
 
-	ncp = &sc->sc_srom[tm->tm_gp_offset];
-	for (i = 0; i < tm->tm_gp_length; i++, ncp += 2) {
+	cp = &sc->sc_srom[tm->tm_gp_offset];
+	for (i = 0; i < tm->tm_gp_length; i++, cp += 2) {
 		delay(10);
-		TULIP_WRITE(sc, CSR_SIAGEN,
-		    TULIP_ROM_GETW(ncp, 0) << 16);
+		TULIP_WRITE(sc, CSR_SIAGEN, TULIP_ROM_GETW(cp, 0) << 16);
 	}
 
 	/* If there were no sequences, just lower the pins. */
@@ -3631,7 +3627,7 @@ tlp_dm9102_reset(sc)
 const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 	{ TULIP_ROM_MB_MEDIA_TP,	IFM_10_T,	0,
 	  "10baseT",
-	  0,
+	  OPMODE_TTM,
 	  { SIACONN_21040_10BASET,
 	    SIATXRX_21040_10BASET,
 	    SIAGEN_21040_10BASET },
@@ -3691,7 +3687,7 @@ const struct tulip_srom_to_ifmedia tulip_srom_to_ifmedia_table[] = {
 
 	{ TULIP_ROM_MB_MEDIA_TP_FDX,	IFM_10_T,	IFM_FDX,
 	  "10baseT-FDX",
-	  OPMODE_FD|OPMODE_HBD,
+	  OPMODE_TTM|OPMODE_FD|OPMODE_HBD,
 	  { SIACONN_21040_10BASET_FDX,
 	    SIATXRX_21040_10BASET_FDX,
 	    SIAGEN_21040_10BASET_FDX },
@@ -4130,9 +4126,6 @@ tlp_sia_set(sc)
  * 21140 GPIO utility functions.
  */
 void	tlp_21140_gpio_update_link __P((struct tulip_softc *));
-void	tlp_21140_gpio_get __P((struct tulip_softc *sc,
-	    struct ifmediareq *ifmr));
-int	tlp_21140_gpio_set __P((struct tulip_softc *sc));
 
 void
 tlp_21140_gpio_update_link(sc)
@@ -4460,6 +4453,14 @@ const struct tulip_mediasw tlp_2114x_isv_mediasw = {
 	tlp_2114x_isv_tmsw_init, tlp_2114x_isv_tmsw_get, tlp_2114x_isv_tmsw_set
 };
 
+void	tlp_2114x_nway_get __P((struct tulip_softc *, struct ifmediareq *));
+int	tlp_2114x_nway_set __P((struct tulip_softc *));
+
+void	tlp_2114x_nway_statchg __P((struct device *));
+int	tlp_2114x_nway_service __P((struct tulip_softc *, int));
+void	tlp_2114x_nway_auto __P((struct tulip_softc *));
+void	tlp_2114x_nway_status __P((struct tulip_softc *));
+
 void
 tlp_2114x_isv_tmsw_init(sc)
 	struct tulip_softc *sc;
@@ -4536,8 +4537,12 @@ tlp_2114x_isv_tmsw_init(sc)
 	for (; m_cnt != 0; cp = ncp, m_cnt--) {
 		/*
 		 * Determine the type and length of this media block.
+		 * The 21143 is spec'd to always use extended format blocks,
+		 * but some cards don't set the bit to indicate this.
+		 * Hopefully there are no cards which really don't use
+		 * extended format blocks.
 		 */
-		if ((*cp & 0x80) == 0) {
+		if ((*cp & 0x80) == 0 && sc->sc_chip != TULIP_CHIP_21143) {
 			length = 4;
 			type = TULIP_ROM_MB_21140_GPR;
 		} else {
@@ -4581,7 +4586,8 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * active.
 			 */
 			word = TULIP_ROM_GETW(cp, 2);
-			tm->tm_opmode = TULIP_ROM_MB_OPMODE(word);
+			tm->tm_opmode &= OPMODE_FD;
+			tm->tm_opmode |= TULIP_ROM_MB_OPMODE(word);
 			if ((word & TULIP_ROM_MB_NOINDICATOR) == 0) {
 				tm->tm_actmask =
 				    TULIP_ROM_MB_BITPOS(word);
@@ -4745,8 +4751,8 @@ tlp_2114x_isv_tmsw_init(sc)
 				cp++;
 
 			/* Next is GPIO control/data. */
-			tm->tm_gpctl  = TULIP_ROM_GETW(cp, 0);
-			tm->tm_gpdata = TULIP_ROM_GETW(cp, 2);
+			tm->tm_gpctl  = TULIP_ROM_GETW(cp, 0) << 16;
+			tm->tm_gpdata = TULIP_ROM_GETW(cp, 2) << 16;
 
 			ifmedia_add(&sc->sc_mii.mii_media,
 			    IFM_MAKEWORD(IFM_ETHER, tsti->tsti_subtype,
@@ -4798,18 +4804,18 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * it and issue the selection sequence.
 			 */
 
-			ncp = &sc->sc_srom[tm->tm_reset_offset];
-			for (i = 0; i < tm->tm_reset_length; i++, ncp += 2) {
+			cp = &sc->sc_srom[tm->tm_reset_offset];
+			for (i = 0; i < tm->tm_reset_length; i++, cp += 2) {
 				delay(10);
 				TULIP_WRITE(sc, CSR_SIAGEN,
-				    TULIP_ROM_GETW(ncp, 0) << 16);
+				    TULIP_ROM_GETW(cp, 0) << 16);
 			}
 
-			ncp = &sc->sc_srom[tm->tm_gp_offset];
-			for (i = 0; i < tm->tm_gp_length; i++, ncp += 2) {
+			cp = &sc->sc_srom[tm->tm_gp_offset];
+			for (i = 0; i < tm->tm_gp_length; i++, cp += 2) {
 				delay(10);
 				TULIP_WRITE(sc, CSR_SIAGEN,
-				    TULIP_ROM_GETW(ncp, 0) << 16);
+				    TULIP_ROM_GETW(cp, 0) << 16);
 			}
 
 			/* If there were no sequences, just lower the pins. */
@@ -4891,8 +4897,8 @@ tlp_2114x_isv_tmsw_init(sc)
 			tlp_srom_media_info(sc, tsti, tm);
 
 			/* Next is GPIO control/data. */
-			tm->tm_gpctl  = TULIP_ROM_GETW(cp, 1);
-			tm->tm_gpdata = TULIP_ROM_GETW(cp, 3);
+			tm->tm_gpctl  = TULIP_ROM_GETW(cp, 1) << 16;
+			tm->tm_gpdata = TULIP_ROM_GETW(cp, 3) << 16;
 
 			/*
 			 * Next is a word containing OPMODE information
@@ -4900,7 +4906,8 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * active.
 			 */
 			word = TULIP_ROM_GETW(cp, 5);
-			tm->tm_opmode = TULIP_ROM_MB_OPMODE(word);
+			tm->tm_opmode &= OPMODE_FD;
+			tm->tm_opmode |= TULIP_ROM_MB_OPMODE(word);
 			if ((word & TULIP_ROM_MB_NOINDICATOR) == 0) {
 				tm->tm_actmask =
 				    TULIP_ROM_MB_BITPOS(word);
@@ -4940,12 +4947,36 @@ tlp_2114x_isv_tmsw_init(sc)
 	if (miidef != 0)
 		defmedia = miidef;
 	else {
-		/*
-		 * XXX Pick a better default.  Should come from SROM
-		 * XXX on 21140[A], and should be "auto" on 21142,
-		 * XXX 21143, and Macronix chips.
-		 */
-		defmedia = IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0);
+		switch (sc->sc_chip) {
+		case TULIP_CHIP_21140:
+		case TULIP_CHIP_21140A:
+			/* XXX should come from SROM */
+			defmedia = IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0);
+			break;
+
+		case TULIP_CHIP_21142:
+		case TULIP_CHIP_21143:
+		case TULIP_CHIP_MX98713A:
+		case TULIP_CHIP_MX98715:
+		case TULIP_CHIP_MX98715A:
+		case TULIP_CHIP_MX98715AEC_X:
+		case TULIP_CHIP_MX98725:
+			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);
+			tm->tm_name = "auto";
+			tm->tm_get = tlp_2114x_nway_get;
+			tm->tm_set = tlp_2114x_nway_set;
+
+			defmedia = IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, 0);
+			ifmedia_add(&sc->sc_mii.mii_media, defmedia, 0, tm);
+
+			sc->sc_statchg = tlp_2114x_nway_statchg;
+			sc->sc_tick = tlp_2114x_nway_tick;
+			break;
+
+		default:
+			defmedia = IFM_MAKEWORD(IFM_ETHER, IFM_10_T, 0, 0);
+			break;
+		}
 	}
 
 	ifmedia_set(&sc->sc_mii.mii_media, defmedia);
@@ -4961,23 +4992,267 @@ tlp_2114x_isv_tmsw_init(sc)
 }
 
 void
+tlp_2114x_nway_get(sc, ifmr)
+	struct tulip_softc *sc;
+	struct ifmediareq *ifmr;
+{
+
+	(void) tlp_2114x_nway_service(sc, MII_POLLSTAT);
+	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	ifmr->ifm_active = sc->sc_mii.mii_media_active; 
+}
+
+int
+tlp_2114x_nway_set(sc)
+	struct tulip_softc *sc;
+{
+
+	return (tlp_2114x_nway_service(sc, MII_MEDIACHG));
+}
+
+void
+tlp_2114x_nway_statchg(self)
+	struct device *self;
+{
+	struct tulip_softc *sc = (struct tulip_softc *)self;
+	struct mii_data *mii = &sc->sc_mii;
+
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE)
+		return;
+
+	/* Idle the transmit and receive processes. */
+	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+
+	sc->sc_opmode &= ~(OPMODE_TTM|OPMODE_FD|OPMODE_PS|OPMODE_PCS|
+	    OPMODE_SCR|OPMODE_HBD);
+
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_10_T)
+		sc->sc_opmode |= OPMODE_TTM;
+	else
+		sc->sc_opmode |= OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_HBD;
+
+	if (mii->mii_media_active & IFM_FDX)
+		sc->sc_opmode |= OPMODE_FD|OPMODE_HBD;
+
+	/*
+	 * Write new OPMODE bits.  This also restarts the transmit
+	 * and receive processes.
+	 */
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+}
+
+void
+tlp_2114x_nway_tick(arg)
+	void *arg;
+{
+	struct tulip_softc *sc = arg;
+	struct mii_data *mii = &sc->sc_mii;
+	int s, ticks;
+
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return;
+
+	s = splnet();
+	tlp_2114x_nway_service(sc, MII_TICK);
+	if ((sc->sc_flags & TULIPF_LINK_UP) == 0 &&
+	    (mii->mii_media_status & IFM_ACTIVE) != 0 &&
+	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
+		sc->sc_flags |= TULIPF_LINK_UP;
+		tlp_start(&sc->sc_ethercom.ec_if);
+	} else if ((sc->sc_flags & TULIPF_LINK_UP) != 0 &&
+	    (mii->mii_media_status & IFM_ACTIVE) == 0) {
+		sc->sc_flags &= ~TULIPF_LINK_UP;
+	}
+	splx(s);
+
+	if ((sc->sc_flags & TULIPF_LINK_UP) == 0)
+		ticks = hz >> 3;
+	else
+		ticks = hz;
+	callout_reset(&sc->sc_tick_callout, ticks, tlp_2114x_nway_tick, sc);
+}
+
+/*
+ * Support for the 2114X internal NWay block.  This is constructed
+ * somewhat like a PHY driver for simplicity.
+ */
+
+int
+tlp_2114x_nway_service(sc, cmd)
+	struct tulip_softc *sc;
+	int cmd;
+{
+	struct mii_data *mii = &sc->sc_mii;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+
+	if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
+		return (0);
+
+	switch (cmd) {
+	case MII_POLLSTAT:
+		/* Nothing special to do here. */
+		break;
+
+	case MII_MEDIACHG:
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
+		case IFM_AUTO:
+			goto restart;
+		default:
+			/* Manual setting doesn't go through here. */
+			printf("tlp_2114x_nway_service: oops!\n");
+			return (EINVAL);
+		}
+		break;
+
+	case MII_TICK:
+		/*
+		 * Only used for autonegotiation.
+		 */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+			break;
+
+		/*
+		 * Check to see if we have link.  If we do, we don't
+		 * need to restart the autonegotiation process.
+		 */
+#if 0
+		if (mii->mii_media_status & IFM_ACTIVE)
+#else
+		if (sc->sc_flags & TULIPF_LINK_UP)
+#endif
+			break;
+
+		/*
+		 * Only retry autonegotiation every 5 seconds.
+		 */
+		if (++sc->sc_nway_ticks != (5 << 3))
+			break;
+
+	restart:
+		sc->sc_nway_ticks = 0;
+		ife->ifm_data = IFM_NONE;
+		tlp_2114x_nway_auto(sc);
+		break;
+	}
+
+	/* Update the media status. */
+	tlp_2114x_nway_status(sc);
+
+	/*
+	 * Callback if something changed.  Manually configuration goes through
+	 * tlp_sia_set() anyway, so ignore that here.
+	 */
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO &&
+	    ife->ifm_data != mii->mii_media_active) {
+		(*sc->sc_statchg)(&sc->sc_dev);
+		ife->ifm_data = mii->mii_media_active;
+	}
+	return (0);
+}
+
+void
+tlp_2114x_nway_auto(sc)
+	struct tulip_softc *sc;
+{
+	uint32_t siastat;
+
+	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+
+	sc->sc_opmode &= ~(OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_TTM);
+	sc->sc_opmode |= OPMODE_FD|OPMODE_HBD;
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+
+	TULIP_WRITE(sc, CSR_SIACONN, 0);
+	delay(1000);
+	TULIP_WRITE(sc, CSR_SIACONN, SIACONN_SRL);
+
+	TULIP_WRITE(sc, CSR_SIATXRX, 0x3ffff);
+
+	siastat = TULIP_READ(sc, CSR_SIASTAT);
+	siastat &= ~(SIASTAT_ANS|SIASTAT_LPC|SIASTAT_TRA|SIASTAT_ARA|SIASTAT_LS100|SIASTAT_LS10|SIASTAT_MRA);
+	siastat |= SIASTAT_ANS_TXDIS;
+	TULIP_WRITE(sc, CSR_SIASTAT, siastat);
+}
+
+void
+tlp_2114x_nway_status(sc)
+	struct tulip_softc *sc;
+{
+	struct mii_data *mii = &sc->sc_mii;
+	uint32_t siatxrx, siastat, anlpar;
+
+	mii->mii_media_status = IFM_AVALID;
+	mii->mii_media_active = IFM_ETHER;
+
+	if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
+		return;
+
+	siastat = TULIP_READ(sc, CSR_SIASTAT);
+	siatxrx = TULIP_READ(sc, CSR_SIATXRX);
+
+	if (siatxrx & SIATXRX_ANE) {
+		if ((siastat & SIASTAT_ANS) != SIASTAT_ANS_FLPGOOD) {
+			/* Erg, still trying, I guess... */
+			mii->mii_media_active |= IFM_NONE;
+			return;
+		}
+
+		if (~siastat & (SIASTAT_LS10 | SIASTAT_LS100))
+			mii->mii_media_status |= IFM_ACTIVE;
+
+		if (siastat & SIASTAT_LPN) {
+			anlpar = SIASTAT_GETLPC(siastat);
+			if (anlpar & ANLPAR_T4 /* &&
+			    sc->mii_capabilities & BMSR_100TXHDX */)
+				mii->mii_media_active |= IFM_100_T4;
+			else if (anlpar & ANLPAR_TX_FD /* &&
+			    sc->mii_capabilities & BMSR_100TXFDX */)
+				mii->mii_media_active |= IFM_100_TX|IFM_FDX;
+			else if (anlpar & ANLPAR_TX /* &&
+			    sc->mii_capabilities & BMSR_100TXHDX */)
+				mii->mii_media_active |= IFM_100_TX;
+			else if (anlpar & ANLPAR_10_FD)
+				mii->mii_media_active |= IFM_10_T|IFM_FDX;
+			else if (anlpar & ANLPAR_10)
+				mii->mii_media_active |= IFM_10_T;
+			else
+				mii->mii_media_active |= IFM_NONE;
+		} else {
+			/*
+			 * If the other side doesn't support NWAY, then the
+			 * best we can do is determine if we have a 10Mbps or
+			 * 100Mbps link. There's no way to know if the link 
+			 * is full or half duplex, so we default to half duplex
+			 * and hope that the user is clever enough to manually
+			 * change the media settings if we're wrong.
+			 */
+			if ((siastat & SIASTAT_LS100) == 0)
+				mii->mii_media_active |= IFM_100_TX;
+			else if ((siastat & SIASTAT_LS10) == 0)
+				mii->mii_media_active |= IFM_10_T;
+			else
+				mii->mii_media_active |= IFM_NONE;
+		}
+	} else {
+		if (~siastat & (SIASTAT_LS10 | SIASTAT_LS100))
+			mii->mii_media_status |= IFM_ACTIVE;
+
+		if (sc->sc_opmode & OPMODE_TTM)
+			mii->mii_media_active |= IFM_10_T;
+		else
+			mii->mii_media_active |= IFM_100_TX;
+		if (sc->sc_opmode & OPMODE_FD)
+			mii->mii_media_active |= IFM_FDX;
+	}
+}
+
+void
 tlp_2114x_isv_tmsw_get(sc, ifmr)
 	struct tulip_softc *sc;
 	struct ifmediareq *ifmr;
 {
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	struct tulip_21x4x_media *tm = ife->ifm_aux;
-
-	/*
-	 * We might be polling a non-MII autosense; check for that.
-	 */
-	if (tm == NULL) {
-#ifdef DIAGNOSTIC
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			panic("tlp_2114x_isv_tmsw_get");
-#endif
-		tm = sc->sc_nway_active->ifm_aux;
-	}
 
 	(*tm->tm_get)(sc, ifmr);
 }
@@ -4988,17 +5263,6 @@ tlp_2114x_isv_tmsw_set(sc)
 {
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	struct tulip_21x4x_media *tm = ife->ifm_aux;
-
-	/*
-	 * We might be setting a non-MII autosense; check for that.
-	 */
-	if (tm == NULL) {
-#ifdef DIAGNOSTIC
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			panic("tlp_2114x_isv_tmsw_set");
-#endif
-		/* XXX XXX XXX */
-	}
 
 	/*
 	 * Check to see if we need to reset the chip, and do it.  The
@@ -5490,6 +5754,7 @@ tlp_pmac_tmsw_init(sc)
 		TULIP_ROM_MB_MEDIA_100TX_FDX,
 	};
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct tulip_21x4x_media *tm;
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = tlp_bitbang_mii_readreg;
@@ -5530,10 +5795,16 @@ tlp_pmac_tmsw_init(sc)
 		tlp_add_srom_media(sc, TULIP_ROM_MB_21143_SYM,
 		    tlp_sia_get, tlp_sia_set, media + 2, 2);
 
-		/*
-		 * XXX Autonegotiation not yet supported.
-		 */
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_10_T);
+		tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);
+		tm->tm_name = "auto";
+		tm->tm_get = tlp_2114x_nway_get;
+		tm->tm_set = tlp_2114x_nway_set;
+		ifmedia_add(&sc->sc_mii.mii_media,
+		    IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, 0), 0, tm);
+
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
+		sc->sc_statchg = tlp_2114x_nway_statchg;
+		sc->sc_tick = tlp_2114x_nway_tick;
 		break;
 	}
 

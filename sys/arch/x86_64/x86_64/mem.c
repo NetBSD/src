@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.2.1 2002/03/16 16:00:26 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.2.2 2002/06/23 17:43:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,7 @@
 
 extern char *vmmap;            /* poor name! */
 caddr_t zeropage;
+extern int start, end, etext;
 
 /*ARGSUSED*/
 int
@@ -136,9 +137,15 @@ mmrw(dev, uio, flags)
 		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!uvm_kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
+			if (v >= (vaddr_t)&start && (v + c) < (vaddr_t)&end) {
+				if (v < (vaddr_t)&etext &&
+				    uio->uio_rw == UIO_WRITE)
+					return EFAULT;
+			} else {
+				if (!uvm_kernacc((caddr_t)v, c,
+				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+					return EFAULT;
+			}
 			error = uiomove((caddr_t)v, c, uio);
 			break;
 

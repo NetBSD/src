@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_ip.h,v 1.7 1996/02/13 22:11:12 christos Exp $	*/
+/*	$NetBSD: tp_ip.h,v 1.7.44.1 2002/06/23 17:51:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -80,7 +80,7 @@ SOFTWARE.
 #include <netinet/ip_var.h>
 
 
-struct inpcbtable tp_inpcb;
+extern struct inpcbtable tp_inpcb;
 /* queue of active inpcbs for tp ; for tp with dod ip */
 
 #endif				/* _NETISO_TP_IP_H_ */

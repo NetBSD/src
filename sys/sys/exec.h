@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.79.2.2 2002/01/10 20:04:40 thorpej Exp $	*/
+/*	$NetBSD: exec.h,v 1.79.2.3 2002/06/23 17:51:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -61,30 +61,10 @@ struct ps_strings {
 };
 
 /*
- * Address of ps_strings structure.  We only use this as a default in user
- * space; normal access is done through __ps_strings.
- *
- * XXXX PS_STRINGS is deprecated since it can move around for different
- * processes or emulations.
- * In the kernel use p->p_psstr.
- * In userland you should use what's passed in to crt0.s or system calls.
- *
- */
-#define	PS_STRINGS \
-	((struct ps_strings *)(USRSTACK - sizeof(struct ps_strings)))
-
-/*
- * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
+ * Below the ps_strings and sigtramp, we may require a gap on the stack
  * (used to copyin/copyout various emulation data structures).
  */
 #define	STACKGAPLEN	512	/* plenty enough for now */
-/*
- * XXXX The following are deprecated.  Use p->p_psstr instead of PS_STRINGS.
- */
-#define	STACKGAPBASE_UNALIGNED	\
-	((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN)
-#define	STACKGAPBASE		\
-	((caddr_t)(((unsigned long) STACKGAPBASE_UNALIGNED) & ~ALIGNBYTES))
 
 /*
  * the following structures allow execve() to put together processes
@@ -121,10 +101,11 @@ struct execsw {
 	int	es_arglen;		/* Extra argument size in words */
 					/* Copy arguments on the new stack */
 	int	(*es_copyargs) __P((struct exec_package *, struct ps_strings *,
-				   char **, void *));
+				    char **, void *));
 					/* Set registers before execution */
 	void	(*es_setregs) __P((struct proc *, struct exec_package *,
-				  u_long));
+				   u_long));
+					/* Dump core */
 	int	(*es_coredump) __P((struct proc *, struct vnode *,
 				    struct ucred *));
 };
@@ -215,6 +196,7 @@ int	exec_read_from		__P((struct proc *, struct vnode *, u_long off,
 #ifdef LKM
 int	emul_register		__P((const struct emul *, int));
 int	emul_unregister		__P((const char *));
+const struct emul *emul_search	__P((const char *));
 
 int	exec_add		__P((struct execsw *, const char *));
 int	exec_remove		__P((const struct execsw *));

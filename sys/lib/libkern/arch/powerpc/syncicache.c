@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.3.4.2 2002/03/16 16:01:55 jdolecek Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.3.4.3 2002/06/23 17:49:50 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -45,7 +45,7 @@
 #ifndef	CACHELINESIZE
 #error "Must know the size of a cache line"
 #endif
-static struct _cache_info {
+static struct cache_info _cache_info = {
 	CACHELINESIZE,
 	CACHELINESIZE,
 	CACHELINESIZE,
@@ -92,11 +92,11 @@ getcachelinesize(void)
 #endif
 
 void
-__syncicache(void *from, int len)
+__syncicache(void *from, size_t len)
 {
-	int l, off;
+	size_t l, off;
+	size_t linesz;
 	char *p;
-	int linesz;
 
 #if	!defined(_KERNEL) && !defined(_STANDALONE)
 	if (!_cachelinesize)
@@ -105,24 +105,25 @@ __syncicache(void *from, int len)
 
 	if (CACHEINFO.dcache_size > 0) {
 		linesz = CACHEINFO.dcache_line_size;
-		off = (u_int)from & (linesz - 1);
-		l = len += off;
+		off = (uintptr_t)from & (linesz - 1);
+		l = (len + off + linesz - 1) & ~(linesz - 1);
 		p = (char *)from - off;
 		do {
 			__asm__ __volatile ("dcbst 0,%0" :: "r"(p));
 			p += linesz;
-		} while ((l -= linesz) > 0);
+		} while ((l -= linesz) != 0);
 	}
 	__asm__ __volatile ("sync");
 
 	if (CACHEINFO.icache_size > 0 ) {
 		linesz = CACHEINFO.icache_line_size;
-		off = (u_int)from & (linesz - 1);
+		off = (uintptr_t)from & (linesz - 1);
+		l = (len + off + linesz - 1) & ~(linesz - 1);
 		p = (char *)from - off;
 		do {
 			__asm__ __volatile ("icbi 0,%0" :: "r"(p));
 			p += linesz;
-		} while ((len -= linesz) > 0);
+		} while ((l -= linesz) != 0);
 	}
-	__asm__ __volatile ("isync");
+	__asm__ __volatile ("sync; isync");
 }

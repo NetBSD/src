@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.17.6.2 2002/01/10 20:05:15 thorpej Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.17.6.3 2002/06/23 17:52:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.17.6.2 2002/01/10 20:05:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.17.6.3 2002/06/23 17:52:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,6 @@ void
 lfs_seglock(struct lfs *fs, unsigned long flags)
 {
 	struct segment *sp;
-	int s;
 	
 	if (fs->lfs_seglock) {
 		if (fs->lfs_lockpid == curproc->p_pid) {
@@ -152,6 +151,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 			 M_SEGMENT, M_WAITOK);
 	sp->seg_flags = flags;
 	sp->vp = NULL;
+	sp->seg_iocount = 0;
 	(void) lfs_initseg(fs);
 	
 	/*
@@ -160,9 +160,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	 * so we artificially increment it by one until we've scheduled all of
 	 * the writes we intend to do.
 	 */
-	s = splbio();
 	++fs->lfs_iocount;
-	splx(s);
 }
 
 /*
@@ -174,10 +172,14 @@ lfs_segunlock(struct lfs *fs)
 {
 	struct segment *sp;
 	unsigned long sync, ckp;
-	int s;
-	struct vnode *vp;
+	struct buf *bp;
+	struct vnode *vp, *nvp;
 	struct mount *mp;
 	extern int lfs_dirvcount;
+#ifdef LFS_MALLOC_SUMMARY
+	extern int locked_queue_count;
+	extern long locked_queue_bytes;
+#endif
 	
 	sp = fs->lfs_sp;
 
@@ -192,23 +194,27 @@ lfs_segunlock(struct lfs *fs)
 		 */
 #ifndef LFS_NO_BACKVP_HACK
 	/* BEGIN HACK */
-#define	VN_OFFSET	(((caddr_t)&vp->v_mntvnodes.le_next) - (caddr_t)vp)
-#define	BACK_VP(VP)	((struct vnode *)(((caddr_t)VP->v_mntvnodes.le_prev) - VN_OFFSET))
-#define	BEG_OF_VLIST	((struct vnode *)(((caddr_t)&mp->mnt_vnodelist.lh_first) - VN_OFFSET))
+#define	VN_OFFSET	(((caddr_t)&LIST_NEXT(vp, v_mntvnodes)) - (caddr_t)vp)
+#define	BACK_VP(VP)	((struct vnode *)(((caddr_t)(VP)->v_mntvnodes.le_prev) - VN_OFFSET))
+#define	BEG_OF_VLIST	((struct vnode *)(((caddr_t)&LIST_FIRST(&mp->mnt_vnodelist)) - VN_OFFSET))
 	
 		/* Find last vnode. */
-	loop:	for (vp = mp->mnt_vnodelist.lh_first;
-		     vp && vp->v_mntvnodes.le_next != NULL;
-		     vp = vp->v_mntvnodes.le_next);
-		for (; vp && vp != BEG_OF_VLIST; vp = BACK_VP(vp)) {
+	loop:	for (vp = LIST_FIRST(&mp->mnt_vnodelist);
+		     vp && LIST_NEXT(vp, v_mntvnodes) != NULL;
+		     vp = LIST_NEXT(vp, v_mntvnodes));
+		for (; vp && vp != BEG_OF_VLIST; vp = nvp) {
+			nvp = BACK_VP(vp);
 #else
 	loop:
-		 for (vp = mp->mnt_vnodelist.lh_first;
+		 for (vp = LIST_FIRST(&mp->mnt_vnodelist);
 		     vp != NULL;
-		     vp = vp->v_mntvnodes.le_next) {
+		     vp = nvp) {
+			nvp = LIST_NEXT(vp, v_mntvnodes);
 #endif
-			if (vp->v_mount != mp)
+			if (vp->v_mount != mp) {
+				printf("lfs_segunlock: starting over\n");
 				goto loop;
+			}
 			if (vp->v_type == VNON)
 				continue;
 			if (lfs_vref(vp))
@@ -239,13 +245,26 @@ lfs_segunlock(struct lfs *fs)
 		if (sp->bpp != sp->cbpp) {
 			/* Free allocated segment summary */
 			fs->lfs_offset -= btofsb(fs, fs->lfs_sumsize);
-                        lfs_freebuf(*sp->bpp);
+			bp = *sp->bpp;
+#ifdef LFS_MALLOC_SUMMARY
+			lfs_freebuf(bp);
+#else
+			s = splbio();
+			bremfree(bp);
+			bp->b_flags |= B_DONE|B_INVAL;
+			bp->b_flags &= ~B_DELWRI;
+			reassignbuf(bp,bp->b_vp);
+			splx(s);
+			brelse(bp);
+#endif
 		} else
 			printf ("unlock to 0 with no summary");
 
 		free(sp->bpp, M_SEGMENT);
 		sp->bpp = NULL;
-		free(sp, M_SEGMENT);
+		/* The sync case holds a reference in `sp' to be freed below */
+		if (!sync)
+			free(sp, M_SEGMENT);
 		fs->lfs_sp = NULL;
 
 		/*
@@ -253,8 +272,24 @@ lfs_segunlock(struct lfs *fs)
 		 * At the moment, the user's process hangs around so we can
 		 * sleep.
 		 */
-		s = splbio();
-		--fs->lfs_iocount;
+		if (--fs->lfs_iocount < LFS_THROTTLE)
+			wakeup(&fs->lfs_iocount);
+		if(fs->lfs_iocount == 0) {
+			lfs_countlocked(&locked_queue_count,
+					&locked_queue_bytes, "lfs_segunlock");
+			wakeup(&locked_queue_count);
+			wakeup(&fs->lfs_iocount);
+		}
+		/*
+		 * If we're not checkpointing, we don't have to block
+		 * other processes to wait for a synchronous write
+		 * to complete.
+		 */
+		if (!ckp) {
+			--fs->lfs_seglock;
+			fs->lfs_lockpid = 0;
+			wakeup(&fs->lfs_seglock);
+		}
 		/*
 		 * We let checkpoints happen asynchronously.  That means
 		 * that during recovery, we have to roll forward between
@@ -262,10 +297,16 @@ lfs_segunlock(struct lfs *fs)
 		 * superblocks to make sure that the checkpoint described
 		 * by a superblock completed.
 		 */
-		while (sync && fs->lfs_iocount)
+		while (ckp && sync && fs->lfs_iocount)
 			(void)tsleep(&fs->lfs_iocount, PRIBIO + 1,
-				     "lfs vflush", 0);
-		splx(s);
+				     "lfs_iocount", 0);
+		while (sync && sp->seg_iocount) {
+			(void)tsleep(&sp->seg_iocount, PRIBIO + 1,
+				     "seg_iocount", 0);
+			/* printf("sleeping on iocount %x == %d\n", sp, sp->seg_iocount); */
+		}
+		if (sync)
+			free(sp, M_SEGMENT);
 		if (ckp) {
 			fs->lfs_nactive = 0;
 			/* If we *know* everything's on disk, write both sbs */
@@ -273,10 +314,11 @@ lfs_segunlock(struct lfs *fs)
 				lfs_writesuper(fs,fs->lfs_sboffs[fs->lfs_activesb]);
 			fs->lfs_activesb = 1 - fs->lfs_activesb;
 			lfs_writesuper(fs,fs->lfs_sboffs[fs->lfs_activesb]);
+
+			--fs->lfs_seglock;
+			fs->lfs_lockpid = 0;
+			wakeup(&fs->lfs_seglock);
 		}
-		--fs->lfs_seglock;
-		fs->lfs_lockpid = 0;
-		wakeup(&fs->lfs_seglock);
 	} else if (fs->lfs_seglock == 0) {
 		panic ("Seglock not held");
 	} else {

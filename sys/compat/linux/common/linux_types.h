@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.11.4.2 2002/03/16 16:00:39 jdolecek Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.11.4.3 2002/06/23 17:44:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@
 #include <compat/linux/arch/m68k/linux_types.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_types.h>
+#else
+typedef unsigned long linux_clock_t;
+typedef unsigned long linux_time_t;
 #endif
 
 /*

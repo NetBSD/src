@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.23.2.3 2002/01/10 19:56:14 thorpej Exp $	*/
+/*	$NetBSD: inphy.c,v 1.23.2.4 2002/06/23 17:47:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.23.2.3 2002/01/10 19:56:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: inphy.c,v 1.23.2.4 2002/06/23 17:47:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ inphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &inphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags | ma->mii_flags;	/* XXX */
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);

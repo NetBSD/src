@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.40.2.3 2002/03/16 16:01:13 jdolecek Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.40.2.4 2002/06/23 17:47:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.40.2.3 2002/03/16 16:01:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.40.2.4 2002/06/23 17:47:41 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -138,10 +138,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.40.2.3 2002/03/16 16:01:13 jdolecek Exp
  * enough descriptors for 128 pending transmissions, and 8 segments
  * per packet.  This MUST work out to a power of 2.
  */
-#define	SIP_NTXSEGS		8
+#define	SIP_NTXSEGS		16
+#define	SIP_NTXSEGS_ALLOC	8
 
 #define	SIP_TXQUEUELEN		256
-#define	SIP_NTXDESC		(SIP_TXQUEUELEN * SIP_NTXSEGS)
+#define	SIP_NTXDESC		(SIP_TXQUEUELEN * SIP_NTXSEGS_ALLOC)
 #define	SIP_NTXDESC_MASK	(SIP_NTXDESC - 1)
 #define	SIP_NEXTTX(x)		(((x) + 1) & SIP_NTXDESC_MASK)
 
@@ -590,7 +591,7 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
-	printf(": %s\n", sip->sip_name);
+	printf(": %s, rev %#02x\n", sip->sip_name, sc->sc_rev);
 
 	sc->sc_model = sip;
 
@@ -911,7 +912,7 @@ printf("%s: using I/O mapped registers\n", sc->sc_dev.dv_xname);
 	 * may trash the first few outgoing packets if the
 	 * PCI bus is saturated.
 	 */
-	sc->sc_tx_drain_thresh = 512 / 32;
+	sc->sc_tx_drain_thresh = 1504 / 32;
 
 	/*
 	 * Initialize the Rx FIFO drain threshold.
@@ -1248,7 +1249,7 @@ SIP_DECL(start)(struct ifnet *ifp)
 		sc->sc_txfree -= dmamap->dm_nsegs;
 		sc->sc_txnext = nexttx;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
 #if NBPFILTER > 0
@@ -1519,7 +1520,7 @@ SIP_DECL(txintr)(struct sip_softc *sc)
 		if (cmdsts & CMDSTS_OWN)
 			break;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 
 		sc->sc_txfree += txs->txs_dmamap->dm_nsegs;
 
@@ -2322,7 +2323,7 @@ SIP_DECL(stop)(struct ifnet *ifp, int disable)
 		     CMDSTS_INTR) == 0)
 			printf("%s: sip_stop: last descriptor does not "
 			    "have INTR bit set\n", sc->sc_dev.dv_xname);
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 #ifdef DIAGNOSTIC
 		if (txs->txs_mbuf == NULL) {
 			printf("%s: dirty txsoft with no mbuf chain\n",
@@ -2672,17 +2673,16 @@ SIP_DECL(dp83815_set_filter)(struct sip_softc *sc)
 			goto allmulti;
 		}
 
-#ifdef DP83820
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 
+#ifdef DP83820
 		/* Just want the 11 most significant bits. */
 		hash = crc >> 21;
 #else
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-
 		/* Just want the 9 most significant bits. */
 		hash = crc >> 23;
 #endif /* DP83820 */
+
 		slot = hash >> 4;
 		bit = hash & 0xf;
 
@@ -3072,10 +3072,11 @@ SIP_DECL(sis900_read_macaddr)(struct sip_softc *sc,
 {
 	u_int16_t myea[ETHER_ADDR_LEN / 2];
 
-	switch (PCI_REVISION(pa->pa_class)) {
+	switch (sc->sc_rev) {
 	case SIS_REV_630S:
 	case SIS_REV_630E:
 	case SIS_REV_630EA1:
+	case SIS_REV_630ET:
 	case SIS_REV_635:
 		/*
 		 * The MAC address for the on-board Ethernet of

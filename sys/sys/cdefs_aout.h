@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.5.4.1 2002/01/10 20:04:38 thorpej Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.5.4.2 2002/06/23 17:51:54 jdolecek Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -53,7 +53,12 @@
 #define __RCSID(_s)	__IDSTRING(rcsid,_s)
 #define __SCCSID(_s)
 #define __SCCSID2(_s)
+#if 0	/* XXX userland __COPYRIGHTs have \ns in them */
 #define __COPYRIGHT(_s)	__IDSTRING(copyright,_s)
+#else
+#define __COPYRIGHT(_s)							\
+	static const char copyright[] __attribute__((__unused__)) = _s
+#endif
 
 #if defined(USE_KERNEL_RCSIDS) || !defined(_KERNEL)
 #define	__KERNEL_RCSID(_n,_s) __IDSTRING(__CONCAT(rcsid,_n),_s)

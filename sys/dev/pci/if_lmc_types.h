@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_types.h,v 1.3.2.1 2001/09/13 01:15:54 thorpej Exp $	*/
+/*	$NetBSD: if_lmc_types.h,v 1.3.2.2 2002/06/23 17:47:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -67,8 +67,8 @@ typedef struct {
 } lmc_desc_t;
 
 #define	LMC_CTL_FLGS(x)		(((x)>>22)&0x3ff)
-#define	LMC_CTL_LEN1(x)		(((x)>>11)&0x7ff)
-#define	LMC_CTL_LEN2(x)		((x)&0x7ff)
+#define	LMC_CTL_LEN2(x)		(((x)>>11)&0x7ff)
+#define	LMC_CTL_LEN1(x)		((x)&0x7ff)
 #define	LMC_CTL(f,l1,l2)	((((f)&0x3ff)<<22)|(((l2)&0x7ff)<<11)|((l1)&0x7ff))
 
 #if defined(__NetBSD__)

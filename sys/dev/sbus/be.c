@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.26.2.3 2002/03/16 16:01:28 jdolecek Exp $	*/
+/*	$NetBSD: be.c,v 1.26.2.4 2002/06/23 17:48:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.26.2.3 2002/03/16 16:01:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.26.2.4 2002/06/23 17:48:37 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -262,7 +262,7 @@ beattach(parent, self, aux)
 				sa->sa_reg[0].sbr_slot,
 				sa->sa_reg[0].sbr_offset),
 			  (bus_size_t)sa->sa_reg[0].sbr_size,
-			  BUS_SPACE_MAP_LINEAR, &sc->sc_cr) != 0) {
+			  0, &sc->sc_cr) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}
@@ -272,7 +272,7 @@ beattach(parent, self, aux)
 				sa->sa_reg[1].sbr_slot,
 				sa->sa_reg[1].sbr_offset),
 			  (bus_size_t)sa->sa_reg[1].sbr_size,
-			  BUS_SPACE_MAP_LINEAR, &sc->sc_br) != 0) {
+			  0, &sc->sc_br) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}
@@ -282,7 +282,7 @@ beattach(parent, self, aux)
 				sa->sa_reg[2].sbr_slot,
 				sa->sa_reg[2].sbr_offset),
 			  (bus_size_t)sa->sa_reg[2].sbr_size,
-			  BUS_SPACE_MAP_LINEAR, &sc->sc_tr) != 0) {
+			  0, &sc->sc_tr) != 0) {
 		printf("beattach: cannot map registers\n");
 		return;
 	}
@@ -1213,7 +1213,7 @@ be_mcreset(sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast
 			 * addresses.  For now, just accept all

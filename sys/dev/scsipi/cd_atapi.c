@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.15.2.2 2002/01/10 19:58:17 thorpej Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.15.2.3 2002/06/23 17:48:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles M. Hannum.
+ *	This product includes software developed by Manuel Bouyer.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.15.2.2 2002/01/10 19:58:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.15.2.3 2002/06/23 17:48:44 jdolecek Exp $");
 
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.h,v 1.11 1997/11/03 15:01:19 is Exp $	*/
+/*	$NetBSD: esis.h,v 1.11.28.1 2002/06/23 17:51:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -117,7 +117,10 @@ struct esis_stat {
 };
 
 #ifdef	_KERNEL
-struct esis_stat esis_stat;
+extern struct esis_stat esis_stat;
+extern short esis_holding_time;
+extern short esis_config_time;
+extern short esis_esconfig_time;
 struct socket;
 struct mbuf;
 struct snpa_hdr;

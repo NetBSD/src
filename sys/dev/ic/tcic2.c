@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.6.4.1 2002/01/10 19:55:05 thorpej Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.6.4.2 2002/06/23 17:46:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.6.4.1 2002/01/10 19:55:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.6.4.2 2002/06/23 17:46:52 jdolecek Exp $");
 
 #undef	TCICDEBUG
 
@@ -477,7 +477,7 @@ tcic_event_thread(arg)
 			(void) tsleep(&h->events, PWAIT, "tcicev", 0);
 			continue;
 		}
-		SIMPLEQ_REMOVE_HEAD(&h->events, pe, pe_q);
+		SIMPLEQ_REMOVE_HEAD(&h->events, pe_q);
 		splx(s);
 
 		switch (pe->pe_type) {

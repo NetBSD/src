@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.56.2.1 2002/01/10 19:59:49 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.56.2.2 2002/06/23 17:49:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.56.2.1 2002/01/10 19:59:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.56.2.2 2002/06/23 17:49:28 jdolecek Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -487,9 +487,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	else {
 		if (p == NULL) {
 			if (!doing_shutdown) {
-#ifdef DIAGNOSTIC
 				panic("lockmgr: no context");
-#endif
 			} else {
 				p = &proc0;
 				if (panicstr && (!(flags & LK_NOWAIT))) {
@@ -1273,3 +1271,59 @@ simple_lock_only_held(volatile struct simplelock *lp, const char *where)
 	}
 }
 #endif /* LOCKDEBUG */ /* } */
+
+#if defined(MULTIPROCESSOR)
+/*
+ * Functions for manipulating the kernel_lock.  We put them here
+ * so that they show up in profiles.
+ */
+
+struct lock kernel_lock; 
+
+void
+_kernel_lock_init(void)
+{
+
+	spinlockinit(&kernel_lock, "klock", 0);
+}
+
+/*
+ * Acquire/release the kernel lock.  Intended for use in the scheduler
+ * and the lower half of the kernel.
+ */
+void
+_kernel_lock(int flag)
+{
+
+	SCHED_ASSERT_UNLOCKED();
+	spinlockmgr(&kernel_lock, flag, 0);
+}
+
+void
+_kernel_unlock(void)
+{
+
+	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+}
+
+/*
+ * Acquire/release the kernel_lock on behalf of a process.  Intended for
+ * use in the top half of the kernel.
+ */
+void
+_kernel_proc_lock(struct proc *p)
+{
+
+	SCHED_ASSERT_UNLOCKED();
+	spinlockmgr(&kernel_lock, LK_EXCLUSIVE, 0);
+	p->p_flag |= P_BIGLOCK;
+}
+
+void
+_kernel_proc_unlock(struct proc *p)
+{
+
+	p->p_flag &= ~P_BIGLOCK;
+	spinlockmgr(&kernel_lock, LK_RELEASE, 0);
+}
+#endif /* MULTIPROCESSOR */

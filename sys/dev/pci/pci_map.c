@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.9.4.1 2002/01/10 19:56:54 thorpej Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.9.4.2 2002/06/23 17:47:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.9.4.1 2002/01/10 19:56:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.9.4.2 2002/06/23 17:47:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,8 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	waddress = (u_int64_t)address1 << 32UL | address;
 	wmask = (u_int64_t)mask1 << 32UL | mask;
 
-	if (PCI_MAPREG_MEM64_SIZE(wmask) == 0) {
+	if ((is64bit && PCI_MAPREG_MEM64_SIZE(wmask) == 0) ||
+	    (!is64bit && PCI_MAPREG_MEM_SIZE(mask) == 0)) {
 		printf("pci_mem_find: void region\n");
 		return (1);
 	}
@@ -213,17 +214,37 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	return (0);
 }
 
+#define _PCI_MAPREG_TYPEBITS(reg) \
+	(PCI_MAPREG_TYPE(reg) == PCI_MAPREG_TYPE_IO ? \
+	reg & PCI_MAPREG_TYPE_MASK : \
+	reg & (PCI_MAPREG_TYPE_MASK|PCI_MAPREG_MEM_TYPE_MASK))
+
 pcireg_t
 pci_mapreg_type(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
-	pcireg_t rv;
 
-	rv = pci_conf_read(pc, tag, reg);
-	if (PCI_MAPREG_TYPE(rv) == PCI_MAPREG_TYPE_IO)
-		rv &= PCI_MAPREG_TYPE_MASK;
-	else
-		rv &= PCI_MAPREG_TYPE_MASK|PCI_MAPREG_MEM_TYPE_MASK;
-	return (rv);
+	return (_PCI_MAPREG_TYPEBITS(pci_conf_read(pc, tag, reg)));
+}
+
+int
+pci_mapreg_probe(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *typep)
+{
+	pcireg_t address, mask;
+	int s;
+	
+	s = splhigh();
+	address = pci_conf_read(pc, tag, reg);
+	pci_conf_write(pc, tag, reg, 0xffffffff);
+	mask = pci_conf_read(pc, tag, reg);
+	pci_conf_write(pc, tag, reg, address);
+	splx(s);
+
+	if (mask == 0) /* unimplemented mapping register */
+		return (0);
+
+	if (typep)
+		*typep = _PCI_MAPREG_TYPEBITS(address);
+	return (1);
 }
 
 int

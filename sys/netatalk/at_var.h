@@ -1,4 +1,4 @@
-/*	$NetBSD: at_var.h,v 1.2 2000/03/23 07:03:27 thorpej Exp $	 */
+/*	$NetBSD: at_var.h,v 1.2.8.1 2002/06/23 17:50:36 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -68,8 +68,7 @@ struct at_aliasreq {
 #ifdef _KERNEL
 TAILQ_HEAD(at_ifaddrhead, at_ifaddr);
 extern struct at_ifaddrhead at_ifaddr;
-struct ifqueue  atintrq1, atintrq2;
-int atdebug;
+extern struct ifqueue atintrq1, atintrq2;
 #endif
 
 #endif /* _NETATALK_AT_VAR_H_ */

@@ -1,7 +1,7 @@
-/*	$NetBSD: aha_mca.c,v 1.3.2.1 2002/01/10 19:55:57 thorpej Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.3.2.2 2002/06/23 17:47:12 jdolecek Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000-2002 The NetBSD Foundation, Inc.
  * Copyright (c) 1996-1999 Scott D. Telford.
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
  * Portions:
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.3.2.1 2002/01/10 19:55:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.3.2.2 2002/06/23 17:47:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,18 +93,13 @@ aha_mca_probe(parent, match, aux)
 {
 	register struct mca_attach_args *ma = aux;
 
-	switch(ma->ma_id) {
-	case MCA_PRODUCT_AHA1640:
-		return 1;
-	}
+	if (ma->ma_id == MCA_PRODUCT_AHA1640)
+		return (1);
 
-	return 0;
+	return (0);
 }
 
 
-/*
- * Attach all the sub-devices we can find
- */
 void
 aha_mca_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -117,6 +112,38 @@ aha_mca_attach(parent, self, aux)
 	struct aha_probe_data apd;
 	mca_chipset_tag_t mc = ma->ma_mc;
 	bus_addr_t iobase;
+
+	/*
+	 * POS registers differ much between 8003 and 8013, so they are
+	 * divided to two sections.
+	 * 
+	 * POS register 2: (adf pos0)
+	 * 7 6 5 4 3 2 1 0
+	 * | 0 0 0 0 0 0 \__ enable: 0=adapter disabled, 1=adapter enabled
+	 *  \_______________ Adapter BIOS location
+	 *
+	 * POS register 3: (adf pos1)
+	 * 7 6 5 4 3 2 1 0
+	 * \_/ \___/ \___/
+	 *  |    |       \__ I/O Port Address (upper part) 
+	 *  |    |__________ Adapter BIOS location
+	 *  |_______________ I/O Port Address (lower part)
+	 *
+	 * POS register 4: (adf pos2)
+	 * 7 6 5 4 3 2 1 0
+	 * \___/ | | \___/
+	 *   |   | |     \__ IRQ: XXX+8
+	 *   |   | |________ Sync xfer started by AHA-1640: 1=YES 2=NO
+	 *   |   |__________ SCSI Parity Checking On/Off
+	 *   |______________ SCSI Address
+	 * 
+	 * POS register 3: (adf pos3)
+	 * 7 6 5 4 3 2 1 0
+	 *       | \_____/
+	 *       |       \__ Arbitration lvl (DMA channel)
+	 *       |__________ Fairness On/Off
+	 *
+	 */
 
 	apd.sc_irq = (ma->ma_pos[4] & 0x7) + 8;
 	apd.sc_drq = ma->ma_pos[5] & 0xf;
@@ -139,8 +166,8 @@ aha_mca_attach(parent, self, aux)
 	sc->sc_dmat = ma->ma_dmat;
 
 	/*
-	 * AHA1640 should be bus-mastering card, should not need any
-	 * assistance by MCA DMA controller for DMA transfers.
+	 * AHA1640 is bus-mastering card, does not need any assistance
+	 * with DMA transfers by MCA DMA controller.
 	 */
 
 	sc->sc_ih = mca_intr_establish(mc, apd.sc_irq, IPL_BIO, aha_intr, sc);

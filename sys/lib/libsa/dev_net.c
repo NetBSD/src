@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.18 1999/11/13 21:17:56 thorpej Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.18.8.1 2002/06/23 17:49:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -107,8 +107,10 @@ net_open(struct open_file *f, ...)
 				printf("net_open: netif_open() failed\n");
 				return (ENXIO);
 			}
+#ifdef NETIF_DEBUG
 			if (debug)
 				printf("net_open: netif_open() succeeded\n");
+#endif
 		}
 		if (rootip.s_addr == 0) {
 			/* Get root IP address, and path, etc. */
@@ -127,8 +129,10 @@ net_open(struct open_file *f, ...)
 				netdev_sock = -1;
 				return (error);
 			}
+#ifdef NETIF_DEBUG
 			if (debug)
 				printf("net_open: NFS mount succeeded\n");
+#endif
 		}
 	}
 	netdev_opens++;
@@ -157,8 +161,10 @@ net_close(f)
 		return(0);
 	rootip.s_addr = 0;
 	if (netdev_sock >= 0) {
+#ifdef NETIF_DEBUG
 		if (debug)
 			printf("net_close: calling netif_close()\n");
+#endif
 		netif_close(netdev_sock);
 		netdev_sock = -1;
 	}
@@ -221,8 +227,10 @@ net_getparams(sock)
 		bootp(sock);
 	if (myip.s_addr != 0)
 		return (0);
+#ifdef NETIF_DEBUG
 	if (debug)
 		printf("net_open: BOOTP failed, trying RARP/RPC...\n");
+#endif
 #endif
 
 	/*

@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.4.2.3 2002/01/10 20:03:35 thorpej Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.4.2.4 2002/06/23 17:51:25 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,18 +36,11 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.4.2.3 2002/01/10 20:03:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.4.2.4 2002/06/23 17:51:25 jdolecek Exp $");
 
-#include "i4b.h"
-#include "i4bipr.h"
-#include "i4btel.h"
+#include "isdn.h"
 
-
-#if NI4B > 1
-#error "only 1 (one) i4b device possible!"
-#endif
-
-#if NI4B > 0
+#if NISDN > 0
 
 #include <sys/param.h>
 
@@ -69,15 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.4.2.3 2002/01/10 20:03:35 thorpej E
 #include <sys/select.h>
 #include <net/if.h>
 
-#if defined(__FreeBSD__)
-#include "i4bing.h"
-#endif
-
 #ifdef __FreeBSD__
 #include "i4bisppp.h"
 #else
 #include <net/if_sppp.h>
-#endif
 #endif
 
 #ifdef __FreeBSD__
@@ -128,17 +116,17 @@ static void *devfs_token;
 #ifndef __FreeBSD__
 
 #define	PDEVSTATIC	/* - not static - */
-PDEVSTATIC void i4battach __P((void));
-PDEVSTATIC int i4bopen __P((dev_t dev, int flag, int fmt, struct proc *p));
-PDEVSTATIC int i4bclose __P((dev_t dev, int flag, int fmt, struct proc *p));
-PDEVSTATIC int i4bread __P((dev_t dev, struct uio *uio, int ioflag));
-PDEVSTATIC int i4bioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+PDEVSTATIC void isdnattach __P((void));
+PDEVSTATIC int isdnopen __P((dev_t dev, int flag, int fmt, struct proc *p));
+PDEVSTATIC int isdnclose __P((dev_t dev, int flag, int fmt, struct proc *p));
+PDEVSTATIC int isdnread __P((dev_t dev, struct uio *uio, int ioflag));
+PDEVSTATIC int isdnioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
 
 #ifdef OS_USES_POLL
-PDEVSTATIC int i4bpoll __P((dev_t dev, int events, struct proc *p));
-PDEVSTATIC int i4bkqfilter __P((dev_t dev, struct knote *kn));
+PDEVSTATIC int isdnpoll __P((dev_t dev, int events, struct proc *p));
+PDEVSTATIC int isdnkqfilter __P((dev_t dev, struct knote *kn));
 #else
-PDEVSTATIC int i4bselect __P((dev_t dev, int rw, struct proc *p));
+PDEVSTATIC int isdnselect __P((dev_t dev, int rw, struct proc *p));
 #endif
 
 #endif /* #ifndef __FreeBSD__ */
@@ -247,14 +235,11 @@ dummy_i4battach(struct device *parent, struct device *self, void *aux)
  *---------------------------------------------------------------------------*/
 PDEVSTATIC void
 #ifdef __FreeBSD__
-i4battach(void *dummy)
+isdnattach(void *dummy)
 #else
-i4battach()
+isdnattach()
 #endif
 {
-#ifndef HACK_NO_PSEUDO_ATTACH_MSG
-	printf("i4b: ISDN call control device attached\n");
-#endif
 	i4b_rdqueue.ifq_maxlen = IFQ_MAXLEN;
 
 #if defined(__FreeBSD__)
@@ -276,7 +261,7 @@ i4battach()
  *	i4bopen - device driver open routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bopen(dev_t dev, int flag, int fmt, struct proc *p)
+isdnopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int x;
 
@@ -298,7 +283,7 @@ i4bopen(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bclose - device driver close routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bclose(dev_t dev, int flag, int fmt, struct proc *p)
+isdnclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int x = splnet();
 	openflag = 0;
@@ -312,7 +297,7 @@ i4bclose(dev_t dev, int flag, int fmt, struct proc *p)
  *	i4bread - device driver read routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bread(dev_t dev, struct uio *uio, int ioflag)
+isdnread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct mbuf *m;
 	int x;
@@ -351,8 +336,9 @@ i4bread(dev_t dev, struct uio *uio, int ioflag)
  *	i4bioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+	struct isdn_l3_driver *d;
 	call_desc_t *cd;
 	int error = 0;
 	
@@ -385,9 +371,17 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				error = EINVAL;
 				break;
 			}
+			cd->bri = -1;
+			cd->l3drv = NULL;
+
+			d = isdn_find_l3_by_bri(mcr->controller);
+			if (d == NULL) {
+				error = EINVAL;
+				break;
+			}
 
 			/* prevent dialling on leased lines */
-			if(ctrl_desc[mcr->controller].protocol == PROTOCOL_D64S)
+			if(d->protocol == PROTOCOL_D64S)
 			{
 				SET_CAUSE_TYPE(cd->cause_in, CAUSET_I4B);
 				SET_CAUSE_VAL(cd->cause_in, CAUSE_I4B_LLDIAL);
@@ -397,9 +391,10 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 
 			cd->bri = mcr->controller;	/* fill cd */
+			cd->l3drv = d;
 			cd->bprot = mcr->bprot;
-			cd->driver = mcr->driver;
-			cd->driver_unit = mcr->driver_unit;
+			cd->bchan_driver_index = mcr->driver;
+			cd->bchan_driver_unit = mcr->driver_unit;
 			cd->cr = get_rand_cr(cd->bri);
 
 			cd->shorthold_data.shorthold_algorithm = mcr->shorthold_data.shorthold_algorithm;
@@ -434,13 +429,13 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			{
 				case CHAN_B1:
 				case CHAN_B2:
-					if(ctrl_desc[mcr->controller].bch_state[mcr->channel] != BCH_ST_FREE)
+					if(d->bch_state[mcr->channel] != BCH_ST_FREE)
 						SET_CAUSE_VAL(cd->cause_in, CAUSE_I4B_NOCHAN);
 					break;
 
 				case CHAN_ANY:
-					if((ctrl_desc[mcr->controller].bch_state[CHAN_B1] != BCH_ST_FREE) &&
-					   (ctrl_desc[mcr->controller].bch_state[CHAN_B2] != BCH_ST_FREE))
+					if((d->bch_state[CHAN_B1] != BCH_ST_FREE) &&
+					   (d->bch_state[CHAN_B2] != BCH_ST_FREE))
 						SET_CAUSE_VAL(cd->cause_in, CAUSE_I4B_NOCHAN);
 					break;
 
@@ -460,7 +455,7 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			}
 			else
 			{
-				ctrl_desc[cd->bri].N_CONNECT_REQUEST(mcr->cdid);
+				d->l3driver->N_CONNECT_REQUEST(cd);
 			}
 			break;
 		}
@@ -482,8 +477,8 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			T400_stop(cd);
 
-			cd->driver = mcrsp->driver;
-			cd->driver_unit = mcrsp->driver_unit;
+			cd->bchan_driver_index = mcrsp->driver;
+			cd->bchan_driver_unit = mcrsp->driver_unit;
 			cd->max_idle_time = mcrsp->max_idle_time;
 
 			cd->shorthold_data.shorthold_algorithm = SHA_FIXU;
@@ -495,7 +490,12 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			
 			NDBGL4(L4_TIMO, "I4B_CONNECT_RESP max_idle_time set to %ld seconds", (long)cd->max_idle_time);
 
-			(*ctrl_desc[cd->bri].N_CONNECT_RESPONSE)(mcrsp->cdid, mcrsp->response, mcrsp->cause);
+			d = isdn_find_l3_by_bri(cd->bri);
+			if (d == NULL) {
+				error = EINVAL;
+				break;
+			}
+			d->l3driver->N_CONNECT_RESPONSE(cd, mcrsp->response, mcrsp->cause);
 			break;
 		}
 		
@@ -509,15 +509,21 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			if((cd = cd_by_cdid(mdr->cdid)) == NULL)/* get cd */
 			{
-				NDBGL4(L4_ERR, "I4B_DISCONNECT_REQ ioctl, cdid not found!"); 
+				NDBGL4(L4_ERR, "I4B_DISCONNECT_REQ ioctl, cdid %d not found!", mdr->cdid); 
 				error = EINVAL;
 				break;
 			}
 
 			/* preset causes with our cause */
 			cd->cause_in = cd->cause_out = mdr->cause;
-			
-			(*ctrl_desc[cd->bri].N_DISCONNECT_REQUEST)(mdr->cdid, mdr->cause);
+
+			d = isdn_find_l3_by_bri(cd->bri);
+			if (d == NULL) {
+				error = EINVAL;
+				break;
+			}
+
+			d->l3driver->N_DISCONNECT_REQUEST(cd, mdr->cause);
 			break;
 		}
 		
@@ -526,26 +532,21 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case I4B_CTRL_INFO_REQ:
 		{
 			msg_ctrl_info_req_t *mcir;
+			struct isdn_l3_driver *d;
+			int bri;
 			
 			mcir = (msg_ctrl_info_req_t *)data;
-			mcir->ncontroller = nctrl;
-
-			if(mcir->controller > nctrl)
-			{
-				mcir->ctrl_type = -1;
-				mcir->card_type = -1;
-			}
-			else
-			{
-				mcir->ctrl_type = 
-					ctrl_desc[mcir->controller].ctrl_type;
-				mcir->card_type = 
-					ctrl_desc[mcir->controller].card_type;
-
-				if(ctrl_desc[mcir->controller].ctrl_type == CTRL_PASSIVE)
-					mcir->tei = ctrl_desc[mcir->controller].tei;
-				else
-					mcir->tei = -1;
+			bri = mcir->controller;
+			memset(mcir, 0, sizeof(msg_ctrl_info_req_t));
+			mcir->controller = bri;
+			mcir->ncontroller = isdn_count_bri(&mcir->maxbri);
+			d = isdn_find_l3_by_bri(bri);
+			if (d != NULL) {
+				mcir->tei = d->tei;
+				strncpy(mcir->devname, d->devname, sizeof(mcir->devname)-1);
+				strncpy(mcir->cardname, d->card_name, sizeof(mcir->cardname)-1);
+			} else {
+				error = ENODEV;
 			}
 			break;
 		}
@@ -554,46 +555,17 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		
 		case I4B_DIALOUT_RESP:
 		{
-			drvr_link_t *dlt = NULL;
+			const struct isdn_l4_driver_functions *drv;
 			msg_dialout_resp_t *mdrsp;
+			void * l4_softc;
 			
 			mdrsp = (msg_dialout_resp_t *)data;
+			drv = isdn_l4_get_driver(mdrsp->driver, mdrsp->driver_unit);
 
-			switch(mdrsp->driver)
-			{
-#if NI4BIPR > 0
-				case BDRV_IPR:
-					dlt = ipr_ret_linktab(mdrsp->driver_unit);
-					break;
-#endif					
-
-#if NI4BISPPP > 0
-				case BDRV_ISPPP:
-					dlt = i4bisppp_ret_linktab(mdrsp->driver_unit);
-					break;
-#endif
-
-#if NI4BTEL > 0
-				case BDRV_TEL:
-					dlt = tel_ret_linktab(mdrsp->driver_unit);
-					break;
-#endif
-
-#if NIBC > 0
-				case BDRV_IBC:
-					dlt = ibc_ret_linktab(mdrsp->driver_unit);
-					break;
-#endif
-
-#if NI4BING > 0
-				case BDRV_ING:
-					dlt = ing_ret_linktab(mdrsp->driver_unit);
-					break;
-#endif					
+			if(drv != NULL)	{
+				l4_softc = (*drv->get_softc)(mdrsp->driver_unit);
+				(*drv->dial_response)(l4_softc, mdrsp->stat, mdrsp->cause);
 			}
-
-			if(dlt != NULL)		
-				(*dlt->dial_response)(mdrsp->driver_unit, mdrsp->stat, mdrsp->cause);
 			break;
 		}
 		
@@ -678,17 +650,17 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		case I4B_UPDOWN_IND:
 		{
 			msg_updown_ind_t *mui;
-			
-			mui = (msg_updown_ind_t *)data;
+			const struct isdn_l4_driver_functions *drv;
+			void * l4_softc;
 
-#if NI4BIPR > 0
-			if(mui->driver == BDRV_IPR)
+			mui = (msg_updown_ind_t *)data;
+			drv = isdn_l4_get_driver(mui->driver, mui->driver_unit);
+
+			if (drv)
 			{
-				drvr_link_t *dlt;
-				dlt = ipr_ret_linktab(mui->driver_unit);
-				(*dlt->updown_ind)(mui->driver_unit, mui->updown);
+				l4_softc = drv->get_softc(mui->driver_unit);
+				(*drv->updown_ind)(l4_softc, mui->updown);
 			}
-#endif
 			break;
 		}
 		
@@ -709,7 +681,12 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 			T400_stop(cd);
 			
-			(*ctrl_desc[cd->bri].N_ALERT_REQUEST)(mar->cdid);
+			d = cd->l3drv;
+			if (d == NULL) {
+				error = EINVAL;
+				break;
+			}
+			d->l3driver->N_ALERT_REQUEST(cd);
 
 			break;
 		}
@@ -736,13 +713,27 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			
 			mpi = (msg_prot_ind_t *)data;
 
-			ctrl_desc[mpi->controller].protocol = mpi->protocol;
+			d = isdn_find_l3_by_bri(mpi->controller);
+			if (d == NULL) {
+				error = EINVAL;
+				break;
+			}
+			d->protocol = mpi->protocol;
 			
+			break;
+		}
+
+		case I4B_L4DRIVER_LOOKUP:
+		{
+			msg_l4driver_lookup_t *lookup = (msg_l4driver_lookup_t*)data;
+			lookup->name[L4DRIVER_NAME_SIZ-1] = 0;
+			lookup->driver_id = isdn_l4_find_driverid(lookup->name);
+			if (lookup->driver_id < 0)
+				error = ENXIO;
 			break;
 		}
 		
 		/* Download request */
-#if 0	/* XXX */
 		case I4B_CTRL_DOWNLOAD:
 		{
 			struct isdn_dr_prot *prots = NULL, *prots2 = NULL;
@@ -750,13 +741,14 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				(struct isdn_download_request*)data;
 			int i;
 
-			if (r->controller < 0 || r->controller >= nctrl)
+			d = isdn_find_l3_by_bri(r->controller);
+			if (d == NULL)
 			{
 				error = ENODEV;
 				goto download_done;
 			}
 
-			if(!ctrl_desc[r->controller].N_DOWNLOAD)
+			if(d->l3driver->N_DOWNLOAD == NULL)
 			{
 				error = ENODEV;
 				goto download_done;
@@ -783,8 +775,8 @@ i4bioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				prots2[i].bytecount = prots[i].bytecount; 
 			}
 
-			error = ctrl_desc[r->controller].N_DOWNLOAD(
-						ctrl_desc[r->controller].unit,
+			error = d->l3driver->N_DOWNLOAD(
+						d->l1_token,
 						r->numprotos, prots2);
 
 download_done:
@@ -815,13 +807,14 @@ download_done:
 				(struct isdn_diagnostic_request*)data;
 
 			req.in_param = req.out_param = NULL;
-			if (r->controller < 0 || r->controller >= nctrl)
+			d = isdn_find_l3_by_bri(r->controller);
+			if (d == NULL)
 			{
 				error = ENODEV;
 				goto diag_done;
 			}
 
-			if(!ctrl_desc[r->controller].N_DIAGNOSTICS)
+			if (d->l3driver->N_DIAGNOSTICS == NULL)
 			{
 				error = ENODEV;
 				goto diag_done;
@@ -860,7 +853,7 @@ download_done:
 				}
 			}
 			
-			error = ctrl_desc[r->controller].N_DIAGNOSTICS(r->controller, &req);
+			error = d->l3driver->N_DIAGNOSTICS(d->l1_token, &req);
 
 			if(!error && req.out_param_len)
 				error = copyout(req.out_param, r->out_param, req.out_param_len);
@@ -874,7 +867,6 @@ diag_done:
 
 			break;
 		}
-#endif
 
 		/* default */
 		
@@ -924,7 +916,7 @@ i4bselect(dev_t dev, int rw, struct proc *p)
  *	i4bpoll - device driver poll routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-i4bpoll(dev_t dev, int events, struct proc *p)
+isdnpoll(dev_t dev, int events, struct proc *p)
 {
 	int x;
 	
@@ -981,7 +973,7 @@ static const struct filterops i4b_seltrue_filtops =
 	{ 1, NULL, filt_i4brdetach, filt_seltrue };
 
 int
-i4bkqfilter(dev_t dev, struct knote *kn)
+isdnkqfilter(dev_t dev, struct knote *kn)
 {
 	struct klist *klist;
 	int s;
@@ -1094,4 +1086,19 @@ i4bputqueue_hipri(struct mbuf *m)
 	}
 }
 
-#endif /* NI4B > 0 */
+void
+isdn_bri_ready(int bri)
+{
+	struct isdn_l3_driver *d = isdn_find_l3_by_bri(bri);
+
+	if (d == NULL)
+		return;
+
+	printf("BRI %d at %s\n", bri, d->devname);
+	if (!openflag) return;
+
+	d->l3driver->N_MGMT_COMMAND(d, CMR_DOPEN, 0);
+	i4b_l4_contr_ev_ind(bri, 1);
+}
+
+#endif /* NISDN > 0 */

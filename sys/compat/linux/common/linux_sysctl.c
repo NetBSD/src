@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.2.8.2 2002/03/16 16:00:39 jdolecek Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.2.8.3 2002/06/23 17:44:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2.8.2 2002/03/16 16:00:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2.8.3 2002/06/23 17:44:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.2.8.2 2002/03/16 16:00:39 jdolece
 
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/common/linux_sysctl.h>
+#include <compat/linux/common/linux_exec.h>
 
 int linux_kern_sysctl(int *, u_int, void *, size_t *, void *, size_t,
     struct proc *);
@@ -168,17 +169,14 @@ linux_sys___sysctl(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
-/*
- * NOTE: DO NOT CHANGE THIS
- * Linux makes assumptions about specific features being present with
- * more recent kernels. Specifically, LinuxThreads use RT queued
- * signals if the kernel release is bigger. Since we don't support them
- * yet, the version needs to stay this way until we'd have the RT queued
- * signals implemented.
- */
 char linux_sysname[128] = "Linux";
+#ifdef __i386__
+char linux_release[128] = "2.4.18";
+char linux_version[128] = "#0 Wed Feb 20 20:00:02 CET 2002";
+#else
 char linux_release[128] = "2.0.38";
-char linux_version[128] = "#0 Sun Apr 1 11:11:11 MET 2000";
+char linux_version[128] = "#0 Sun Nov 11 11:11:11 MET 2000";
+#endif
 
 /*
  * kernel related system variables.
@@ -199,6 +197,35 @@ linux_kern_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
 		return sysctl_string(oldp, oldlenp, newp, newlen,
 		    linux_release, sizeof(linux_release));
 	case LINUX_KERN_VERSION:
+		return sysctl_string(oldp, oldlenp, newp, newlen,
+		    linux_version, sizeof(linux_version));
+	default:
+		return EOPNOTSUPP;
+	}
+}
+
+/*
+ * kernel related system variables.
+ */
+int
+linux_sysctl(int *name, u_int nlen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct proc *p)
+{
+	if (nlen != 2 || name[0] != EMUL_LINUX_KERN)
+		return EOPNOTSUPP;
+
+	/*
+	 * Note that we allow writing into this, so that userland
+	 * programs can setup things as they see fit. This is suboptimal.
+	 */
+	switch (name[1]) {
+	case EMUL_LINUX_KERN_OSTYPE:
+		return sysctl_string(oldp, oldlenp, newp, newlen,
+		    linux_sysname, sizeof(linux_sysname));
+	case EMUL_LINUX_KERN_OSRELEASE:
+		return sysctl_string(oldp, oldlenp, newp, newlen,
+		    linux_release, sizeof(linux_release));
+	case EMUL_LINUX_KERN_VERSION:
 		return sysctl_string(oldp, oldlenp, newp, newlen,
 		    linux_version, sizeof(linux_version));
 	default:

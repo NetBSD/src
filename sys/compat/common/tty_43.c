@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.12.4.1 2002/01/10 19:51:01 thorpej Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.12.4.2 2002/06/23 17:43:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.12.4.1 2002/01/10 19:51:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.12.4.2 2002/06/23 17:43:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ ttcompat(tp, com, data, flag, p)
 		break;
 
 	default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.2.2.2 2002/03/16 16:02:17 jdolecek Exp $ 
+ *	$Id: i4b_l4if.c,v 1.2.2.3 2002/06/23 17:51:30 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.2.2.2 2002/03/16 16:02:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.2.2.3 2002/06/23 17:51:30 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -67,104 +67,73 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.2.2.2 2002/03/16 16:02:17 jdolecek Ex
 #endif
 
 #include <netisdn/i4b_isdnq931.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_l3l4.h>
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
 
-#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l3.h>
 #include <netisdn/i4b_l3fsm.h>
 #include <netisdn/i4b_q931.h>
 
 #include <netisdn/i4b_l4.h>
 
-extern void isic_settrace(int unit, int val);		/*XXX*/
-extern int isic_gettrace(int unit);			/*XXX*/
-
-static void n_connect_request(u_int cdid);
-static void n_connect_response(u_int cdid, int response, int cause);
-static void n_disconnect_request(u_int cdid, int cause);
-static void n_alert_request(u_int cdid);
-static void n_mgmt_command(int bri, int cmd, void *parm);
+void n_connect_request(struct call_desc *cd);
+void n_connect_response(struct call_desc *cd, int response, int cause);
+void n_disconnect_request(struct call_desc *cd, int cause);
+void n_alert_request(struct call_desc *cd);
+void n_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
 
 /*---------------------------------------------------------------------------*
  *	i4b_mdl_status_ind - status indication from lower layers
  *---------------------------------------------------------------------------*/
 int
-i4b_mdl_status_ind(int bri, int status, int parm)
+i4b_mdl_status_ind(struct isdn_l3_driver *d, int status, int parm)
 {
-	struct l2_softc * l2sc = (struct l2_softc*)isdn_find_l2_by_bri(bri);
-	int sendup;
+	int sendup, update_leds = 0;
 	int i;
 	
-	NDBGL3(L3_MSG, "bri = %d, status = %d, parm = %d", bri, status, parm);
+	NDBGL3(L3_MSG, "bri = %d, status = %d, parm = %d", d->bri, status, parm);
 
 	switch(status)
 	{
 		case STI_ATTACH:
-			NDBGL3(L3_MSG, "STI_ATTACH: attaching bri %d to controller %d", bri, nctrl);
-		
-			/* init function pointers */
-			
-			ctrl_desc[nctrl].N_CONNECT_REQUEST = n_connect_request;
-			ctrl_desc[nctrl].N_CONNECT_RESPONSE = n_connect_response;
-			ctrl_desc[nctrl].N_DISCONNECT_REQUEST = n_disconnect_request;
-			ctrl_desc[nctrl].N_ALERT_REQUEST = n_alert_request;
-#if 0
-			ctrl_desc[nctrl].N_DOWNLOAD = NULL;	/* only used by active cards */
-			ctrl_desc[nctrl].N_DIAGNOSTICS = NULL;	/* only used by active cards */
-#endif
-			ctrl_desc[nctrl].N_MGMT_COMMAND = n_mgmt_command;
-		
-			/* init type and unit */
-			
-			ctrl_desc[nctrl].l1_token = l2sc->l1_token;
-			ctrl_desc[nctrl].bri = bri;
-			ctrl_desc[nctrl].ctrl_type = CTRL_PASSIVE;
-			ctrl_desc[nctrl].card_type = parm;
-		
-			/* state fields */
-		
-			ctrl_desc[nctrl].dl_est = DL_DOWN;
-			ctrl_desc[nctrl].bch_state[CHAN_B1] = BCH_ST_FREE;
-			ctrl_desc[nctrl].bch_state[CHAN_B2] = BCH_ST_FREE;	
-			ctrl_desc[nctrl].tei = -1;
-			
-			/* init unit to controller table */
-			
-			utoc_tab[bri] = nctrl;
-			
-			/* increment no. of controllers */
-			
-			nctrl++;
-
+			if (parm) {
+				NDBGL3(L3_MSG, "STI_ATTACH: attaching bri %d", d->bri);
+			} else {
+				NDBGL3(L3_MSG, "STI_ATTACH: dettaching bri %d", d->bri);
+			}
 			break;
-			
+
 		case STI_L1STAT:
-			i4b_l4_l12stat(bri, 1, parm);
-			NDBGL3(L3_MSG, "STI_L1STAT: bri %d layer 1 = %s", bri, status ? "up" : "down");
+			i4b_l4_l12stat(d, 1, parm);
+			update_leds = 1;
+			NDBGL3(L3_MSG, "STI_L1STAT: bri %d layer 1 = %s", d->bri, status ? "up" : "down");
 			break;
 			
 		case STI_L2STAT:
-			i4b_l4_l12stat(bri, 2, parm);
-			NDBGL3(L3_MSG, "STI_L2STAT: bri %d layer 2 = %s", bri, status ? "up" : "down");
+			i4b_l4_l12stat(d, 2, parm);
+			update_leds = 1;
+			NDBGL3(L3_MSG, "STI_L2STAT: bri %d layer 2 = %s", d->bri, status ? "up" : "down");
 			break;
 
 		case STI_TEIASG:
-			ctrl_desc[bri].tei = parm;
-			i4b_l4_teiasg(bri, parm);
-			NDBGL3(L3_MSG, "STI_TEIASG: bri %d TEI = %d = 0x%02x", bri, parm, parm);
+			d->tei = parm;
+			i4b_l4_teiasg(d, parm);
+			update_leds = 1;
+			NDBGL3(L3_MSG, "STI_TEIASG: bri %d TEI = %d = 0x%02x", d->bri, parm, parm);
 			break;
 
 		case STI_PDEACT:	/* L1 T4 timeout */
-			NDBGL3(L3_ERR, "STI_PDEACT: bri %d TEI = %d = 0x%02x", bri, parm, parm);
+			NDBGL3(L3_ERR, "STI_PDEACT: bri %d TEI = %d = 0x%02x", d->bri, parm, parm);
 
+			update_leds = 1;
 			sendup = 0;
 
-			for(i=0; i < N_CALL_DESC; i++)
+			for(i=0; i < num_call_desc; i++)
 			{
-				if(call_desc[i].bri == bri)
+				if(call_desc[i].bri == d->bri)
                 		{
 					i4b_l3_stop_all_timers(&(call_desc[i]));
 					if(call_desc[i].cdid != CDID_UNUSED)
@@ -172,24 +141,25 @@ i4b_mdl_status_ind(int bri, int status, int parm)
 				}
 			}
 
-			ctrl_desc[utoc_tab[bri]].dl_est = DL_DOWN;
-			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B1] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B2] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[bri]].tei = -1;
+			d->dl_est = DL_DOWN;
+			d->bch_state[CHAN_B1] = BCH_ST_FREE;
+			d->bch_state[CHAN_B2] = BCH_ST_FREE;
+			d->tei = -1;
 
 			if(sendup)
 			{
-				i4b_l4_pdeact(bri, sendup);
+				i4b_l4_pdeact(d, sendup);
 				call_desc[i].cdid = CDID_UNUSED;
 			}
 			break;
 
 		case STI_NOL1ACC:	/* no outgoing access to S0 */
-			NDBGL3(L3_ERR, "STI_NOL1ACC: bri %d no outgoing access to S0", bri);
+			NDBGL3(L3_ERR, "STI_NOL1ACC: bri %d no outgoing access to S0", d->bri);
+			update_leds = 1;
 
-			for(i=0; i < N_CALL_DESC; i++)
+			for(i=0; i < num_call_desc; i++)
 			{
-				if(call_desc[i].bri == bri)
+				if(call_desc[i].bri == d->bri)
                 		{
 					if(call_desc[i].cdid != CDID_UNUSED)
 					{
@@ -199,82 +169,95 @@ i4b_mdl_status_ind(int bri, int status, int parm)
 					}
 				}
 			}
+			d->dl_est = DL_DOWN;
+			d->bch_state[CHAN_B1] = BCH_ST_FREE;
+			d->bch_state[CHAN_B2] = BCH_ST_FREE;
+			d->tei = -1;
 
-			ctrl_desc[utoc_tab[bri]].dl_est = DL_DOWN;
-			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B1] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B2] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[bri]].tei = -1;
 			break;
 
 		default:
-			NDBGL3(L3_ERR, "ERROR, bri %d, unknown status value %d!", bri, status);
+			NDBGL3(L3_ERR, "ERROR, bri %d, unknown status value %d!", d->bri, status);
 			break;
-	}		
+	}
+
+	if (update_leds && d != NULL)
+		update_controller_leds(d);
+
 	return(0);
+}
+
+void
+update_controller_leds(struct isdn_l3_driver *d)
+{
+	int leds = 0;
+
+	if (d->tei != -1)
+		leds |= CMRLEDS_TEI;
+	if (d->bch_state[CHAN_B1] != BCH_ST_FREE)
+		leds |= CMRLEDS_B0;
+	if (d->bch_state[CHAN_B2] != BCH_ST_FREE)
+		leds |= CMRLEDS_B1;
+
+	d->l3driver->N_MGMT_COMMAND(d, CMR_SETLEDS, (void*)leds);
 }
 
 /*---------------------------------------------------------------------------*
  *	send command to the lower layers
  *---------------------------------------------------------------------------*/
-static void
-n_mgmt_command(int bri, int cmd, void *parm)
+void
+n_mgmt_command(struct isdn_l3_driver *d, int cmd, void *parm)
 {
 	int i;
 
 	switch(cmd)
 	{
 		case CMR_DOPEN:
-			NDBGL3(L3_MSG, "CMR_DOPEN for bri %d", bri);
+			NDBGL3(L3_MSG, "CMR_DOPEN for bri %d", d->bri);
 			
-			for(i=0; i < N_CALL_DESC; i++)
+			for(i=0; i < num_call_desc; i++)
 			{
-				if(call_desc[i].bri == bri)
+				if(call_desc[i].bri == d->bri)
                 		{
                 			call_desc[i].cdid = CDID_UNUSED;
 				}
 			}
+			d->dl_est = DL_DOWN;
+			d->bch_state[CHAN_B1] = BCH_ST_FREE;
+			d->bch_state[CHAN_B2] = BCH_ST_FREE;
+			d->tei = -1;
 
-			ctrl_desc[utoc_tab[bri]].dl_est = DL_DOWN;
-			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B1] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[bri]].bch_state[CHAN_B2] = BCH_ST_FREE;
-			ctrl_desc[utoc_tab[bri]].tei = -1;
 			break;
 
 		case CMR_DCLOSE:
-			NDBGL3(L3_MSG, "CMR_DCLOSE for bri %d", bri);
+			NDBGL3(L3_MSG, "CMR_DCLOSE for bri %d", d->bri);
 			break;
 			
 		default:
-			NDBGL3(L3_MSG, "unknown cmd %d for bri %d", cmd, bri);
+			NDBGL3(L3_MSG, "unknown cmd %d for bri %d", cmd, d->bri);
 			break;
 	}
 
-	i4b_mdl_command_req(bri, cmd, parm);
+	i4b_mdl_command_req(d, cmd, parm);
 }
 
 /*---------------------------------------------------------------------------*
  *	handle connect request message from userland
  *---------------------------------------------------------------------------*/
-static void
-n_connect_request(u_int cdid)
+void
+n_connect_request(struct call_desc *cd)
 {
-	call_desc_t *cd;
-
-	cd = cd_by_cdid(cdid);
-
 	next_l3state(cd, EV_SETUPRQ);	
 }
 
 /*---------------------------------------------------------------------------*
  *	handle setup response message from userland
  *---------------------------------------------------------------------------*/
-static void
-n_connect_response(u_int cdid, int response, int cause)
+void
+n_connect_response(struct call_desc *cd, int response, int cause)
 {
-	call_desc_t *cd;
+	struct isdn_l3_driver *d = cd->l3drv;
 	int chstate;
-
-	cd = cd_by_cdid(cdid);
 
 	T400_stop(cd);
 	
@@ -307,8 +290,9 @@ n_connect_response(u_int cdid, int response, int cause)
 
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
-		ctrl_desc[cd->bri].bch_state[cd->channelid] = chstate;
-		i4b_l2_channel_set_state(cd->bri, cd->channelid, chstate);
+		d->bch_state[cd->channelid] = chstate;
+		i4b_l2_channel_set_state(cd->l3drv, cd->channelid, chstate);
+		update_controller_leds(d);
 	}
 	else
 	{
@@ -319,13 +303,9 @@ n_connect_response(u_int cdid, int response, int cause)
 /*---------------------------------------------------------------------------*
  *	handle disconnect request message from userland
  *---------------------------------------------------------------------------*/
-static void
-n_disconnect_request(u_int cdid, int cause)
+void
+n_disconnect_request(struct call_desc *cd, int cause)
 {
-	call_desc_t *cd;
-
-	cd = cd_by_cdid(cdid);
-
 	cd->cause_out = cause;
 
 	next_l3state(cd, EV_DISCRQ);
@@ -334,13 +314,9 @@ n_disconnect_request(u_int cdid, int cause)
 /*---------------------------------------------------------------------------*
  *	handle alert request message from userland
  *---------------------------------------------------------------------------*/
-static void
-n_alert_request(u_int cdid)
+void
+n_alert_request(struct call_desc *cd)
 {
-	call_desc_t *cd;
-
-	cd = cd_by_cdid(cdid);
-
 	next_l3state(cd, EV_ALERTRQ);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.5.2.3 2002/02/11 20:09:38 jdolecek Exp $	*/
+/*	$NetBSD: acpi.c,v 1.5.2.4 2002/06/23 17:45:02 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.5.2.3 2002/02/11 20:09:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.5.2.4 2002/06/23 17:45:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,15 +478,19 @@ int
 acpi_print(void *aux, const char *pnp)
 {
 	struct acpi_attach_args *aa = aux;
+#if 0
 	char *str;
+#endif
 
 	if (pnp) {
 		printf("%s ", aa->aa_node->ad_devinfo.HardwareId);
+#if 0 /* Not until we fix acpi_eval_string */
 		if (acpi_eval_string(aa->aa_node->ad_handle,
 		    "_STR", &str) == AE_OK) {
 			printf("[%s] ", str);
 			AcpiOsFree(str);
 		}
+#endif
 		printf("at %s", pnp);
 	}
 
@@ -554,7 +558,7 @@ acpi_fixed_power_button_handler(void *context)
 
 	printf("%s: fixed power button pressed\n", sc->sc_dev.dv_xname);
 
-	return (INTERRUPT_HANDLED);
+	return (ACPI_INTERRUPT_HANDLED);
 }
 
 /*
@@ -571,7 +575,7 @@ acpi_fixed_sleep_button_handler(void *context)
 
 	printf("%s: fixed sleep button pressed\n", sc->sc_dev.dv_xname);
 
-	return (INTERRUPT_HANDLED);
+	return (ACPI_INTERRUPT_HANDLED);
 }
 
 /*****************************************************************************
@@ -607,17 +611,19 @@ acpi_eval_integer(ACPI_HANDLE handle, char *path, int *valp)
 	return (rv);
 }
 
+#if 0
 /*
  * acpi_eval_string:
  *
- *	Evaluage a (Unicode) string object.
+ *	Evaluate a (Unicode) string object.
+ * XXX current API may leak memory, so don't use this.
  */
 ACPI_STATUS
 acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
 {
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
-	ACPI_OBJECT param;
+	ACPI_OBJECT *param;
 
 	if (handle == NULL)
 		handle = ACPI_ROOT_OBJECT;
@@ -634,15 +640,48 @@ acpi_eval_string(ACPI_HANDLE handle, char *path, char **stringp)
 		return (AE_NO_MEMORY);
 
 	rv = AcpiEvaluateObject(handle, path, NULL, &buf);
+	param = (ACPI_OBJECT *)buf.Pointer;
 	if (rv == AE_OK) {
-		if (param.Type == ACPI_TYPE_STRING) {
-			*stringp = buf.Pointer;
+		if (param->Type == ACPI_TYPE_STRING) {
+			/* XXX may leak buf.Pointer!! */
+			*stringp = param->String.Pointer;
 			return (AE_OK);
 		}
 		rv = AE_TYPE;
 	}
 
 	AcpiOsFree(buf.Pointer);
+	return (rv);
+}
+#endif
+
+
+/*
+ * acpi_eval_struct:
+ *
+ *	Evaluate a more complex structure.  Caller must free buf.Pointer.
+ */
+ACPI_STATUS
+acpi_eval_struct(ACPI_HANDLE handle, char *path, ACPI_BUFFER *bufp)
+{
+	ACPI_STATUS rv;
+
+	if (handle == NULL)
+		handle = ACPI_ROOT_OBJECT;
+
+	bufp->Pointer = NULL;
+	bufp->Length = 0;
+
+	rv = AcpiEvaluateObject(handle, path, NULL, bufp);
+	if (rv != AE_BUFFER_OVERFLOW)
+		return (rv);
+
+	bufp->Pointer = AcpiOsAllocate(bufp->Length);
+	if (bufp->Pointer == NULL)
+		return (AE_NO_MEMORY);
+
+	rv = AcpiEvaluateObject(handle, path, NULL, bufp);
+
 	return (rv);
 }
 
@@ -664,9 +703,10 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 	if (rv != AE_BUFFER_OVERFLOW)
 		return (rv);
 
-	buf->Pointer = AcpiOsCallocate(buf->Length);
+	buf->Pointer = AcpiOsAllocate(buf->Length);
 	if (buf->Pointer == NULL)
 		return (AE_NO_MEMORY);
+	memset(buf->Pointer, 0, buf->Length);
 
 	return ((*getit)(handle, buf));
 }

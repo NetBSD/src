@@ -37,7 +37,7 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Teles S0/16.3
  *	========================================================
  *
- *	$Id: isic_isa_tel_s0163.c,v 1.2.6.1 2002/01/10 19:55:34 thorpej Exp $ 
+ *	$Id: isic_isa_tel_s0163.c,v 1.2.6.2 2002/06/23 17:47:04 jdolecek Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
@@ -49,7 +49,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s0163.c,v 1.2.6.1 2002/01/10 19:55:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s0163.c,v 1.2.6.2 2002/06/23 17:47:04 jdolecek Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_TEL_S0_16_3
@@ -89,21 +89,23 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s0163.c,v 1.2.6.1 2002/01/10 19:55:34 t
 #include <netisdn/i4b_ioctl.h>
 #endif
 
+#include <netisdn/i4b_global.h>
+#include <netisdn/i4b_debug.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
+#include <netisdn/i4b_mbuf.h>
+
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
 #include <dev/ic/hscx.h>
 
-#include <netisdn/i4b_global.h>
-#include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_mbuf.h>
-
 static u_char intr_no[] = { 1, 1, 0, 2, 4, 6, 1, 1, 1, 0, 8, 10, 12, 1, 1, 14 };
 
 #if !defined(__FreeBSD__) && !defined(__bsdi__)
-static u_int8_t tels0163_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void tels0163_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void tels0163_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void tels0163_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
+static u_int8_t tels0163_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
+static void tels0163_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
+static void tels0163_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
+static void tels0163_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
 #endif
 
 /*---------------------------------------------------------------------------*
@@ -120,7 +122,7 @@ tels0163_read_fifo(void *buf, const void *base, size_t len)
 #else
 
 static void
-tels0163_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+tels0163_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
         bus_space_tag_t t = sc->sc_maps[what+1].t;
         bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -144,7 +146,7 @@ tels0163_write_fifo(void *base, const void *buf, size_t len)
 #else
 
 static void
-tels0163_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+tels0163_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
         bus_space_tag_t t = sc->sc_maps[what+1].t;
         bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -167,7 +169,7 @@ tels0163_write_reg(u_char *base, u_int offset, u_int v)
 #else
 
 static void
-tels0163_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+tels0163_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[what+1].t;
 	bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -190,7 +192,7 @@ tels0163_read_reg(u_char *base, u_int offset)
 #else
 
 static u_int8_t
-tels0163_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+tels0163_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[what+1].t;
 	bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -207,7 +209,7 @@ tels0163_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 int
 isic_probe_s0163(struct isa_device *dev)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	u_char byte;
 	
 	/* check max unit range */
@@ -347,7 +349,7 @@ isic_probe_s0163(struct isa_device *dev)
 #elif defined(__bsdi__)
 
 static int
-set_softc(struct l1_softc *sc, struct isa_attach_args *ia, int unit)
+set_softc(struct isic_softc *sc, struct isa_attach_args *ia, int unit)
 {
 	sc->sc_irq = ia->ia_irq;
 
@@ -418,7 +420,7 @@ isic_probe_s0163(struct device *dev, struct cfdata *cf,
 		struct isa_attach_args *ia)
 {
 	u_char byte;
-	struct l1_softc dummysc, *sc = &dummysc;
+	struct isic_softc dummysc, *sc = &dummysc;
 	
 	if((intr_no[ffs(ia->ia_irq) - 1]) == 1)
 	{
@@ -538,7 +540,7 @@ extern int
 isic_attach_s0163(struct device *parent, struct device *self, struct isa_attach_args *ia)
 {
 	u_char irq;
-	struct l1_softc *sc = (struct l1_softc *)self;
+	struct isic_softc *sc = (struct isic_softc *)self;
 	int unit = sc->sc_dev.dv_unit;
 
 	/* Commit the probed attachement values */
@@ -563,7 +565,7 @@ isic_attach_s0163(struct device *parent, struct device *self, struct isa_attach_
 #else
 
 int
-isic_attach_s0163(struct l1_softc *sc)
+isic_attach_s0163(struct isic_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;

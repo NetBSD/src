@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.34.4.1 2002/01/10 20:00:13 thorpej Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.34.4.2 2002/06/23 17:49:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.34.4.1 2002/01/10 20:00:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.34.4.2 2002/06/23 17:49:40 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.34.4.1 2002/01/10 20:00:13 thorpej
 
 void	pffasttimo __P((void *));
 void	pfslowtimo __P((void *));
+
+struct	domain	*domains;
 
 struct callout pffasttimo_ch, pfslowtimo_ch;
 

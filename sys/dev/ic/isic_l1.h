@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.2 2001/03/24 12:40:29 martin Exp $ */
+/* $NetBSD: isic_l1.h,v 1.2.2.1 2002/06/23 17:46:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -83,7 +83,7 @@ struct isic_io_map {
 				   (i.e.: don't ever unmap it!) */
 };
 
-/* this is passed around at probe time (no struct l1_softc yet) */
+/* this is passed around at probe time (no struct isic_softc yet) */
 struct isic_attach_args {
 	int ia_flags;			/* flags from config file */
 	int ia_num_mappings;		/* number of io mappings provided */
@@ -95,7 +95,6 @@ struct isic_attach_args {
  *---------------------------------------------------------------------------*/
 typedef struct
 {
-	int		unit;		/* cards unit number	*/
 	int		channel;	/* which channel is this*/
 	
 	u_char		hscx_mask;	/* HSCX interrupt mask	*/
@@ -129,8 +128,10 @@ typedef struct
 	
 	/* link between b channel and driver */
 	
-	isdn_link_t	isdn_linktab;	/* b channel addresses	*/
-	drvr_link_t	*drvr_linktab;	/* ptr to driver linktab*/
+	isdn_link_t	isdn_linktab;		/* b channel driver data	*/
+	const struct isdn_l4_driver_functions 
+			*l4_driver;		/* layer 4 driver		*/
+	void		*l4_driver_softc;	/* layer 4 driver instance	*/
 
 	/* statistics */
 
@@ -149,23 +150,51 @@ typedef struct
 } l1_bchan_state_t;
 
 /*---------------------------------------------------------------------------*
- *	l1_softc: the state of the layer 1 of the D channel
+ *	isic_softc: the state of the layer 1 of the D channel
  *---------------------------------------------------------------------------*/
-struct l1_softc
+struct isic_softc
 {
 	struct device	sc_dev;
-	void	      * sc_l2;		/* layer 2 token for our BRI */
-	int		sc_unit;	/* unit number		*/
-	int		sc_irq;		/* interrupt vector	*/
+	void 		*sc_l3token;	/* pointer to registered L3 instance */
+	struct l2_softc	sc_l2;		/* D-channel variables */
 
-	u_int		sc_maddr;	/* "memory address" for card config register */
+	int		sc_irq;		/* interrupt vector	*/
+	int		sc_intr_valid;	/* set when card is detached or disable */
+#define	ISIC_INTR_VALID		0	/* normal operation */
+#define	ISIC_INTR_DISABLED	1	/* ISDN subsystem not opened */
+#define	ISIC_INTR_DYING		2	/* card is detaching */
+
 	int sc_num_mappings;		/* number of io mappings provided */
 	struct isic_io_map *sc_maps;
 
 #define	MALLOC_MAPS(sc)	\
 	(sc)->sc_maps = (struct isic_io_map*)malloc(sizeof((sc)->sc_maps[0])*(sc)->sc_num_mappings, M_DEVBUF, 0)
 
-	int		sc_cardtyp;	/* CARD_TYPEP_xxxx	*/
+	int		sc_cardtyp;	/* only needed for some cards	*/
+#define CARD_TYPEP_UNK		0	/* unknown			*/
+#define CARD_TYPEP_8		1	/* Teles, S0/8 			*/
+#define CARD_TYPEP_16		2	/* Teles, S0/16			*/
+#define CARD_TYPEP_16_3		3	/* Teles, S0/16.3		*/
+#define CARD_TYPEP_AVMA1	4	/* AVM A1 or AVM Fritz!Card	*/
+#define CARD_TYPEP_163P		5	/* Teles, S0/16.3 PnP		*/
+#define CARD_TYPEP_CS0P		6	/* Creatix, S0 PnP		*/
+#define CARD_TYPEP_USRTA	7	/* US Robotics ISDN TA internal	*/
+#define CARD_TYPEP_DRNNGO	8	/* Dr. Neuhaus Niccy GO@	*/
+#define CARD_TYPEP_SWS		9	/* Sedlbauer Win Speed		*/
+#define CARD_TYPEP_DYNALINK	10	/* Dynalink IS64PH		*/
+#define CARD_TYPEP_BLMASTER	11	/* ISDN Blaster / ISDN Master	*/
+#define	CARD_TYPEP_PCFRITZ	12	/* AVM PCMCIA Fritz!Card	*/
+#define CARD_TYPEP_ELSAQS1ISA	13	/* ELSA QuickStep 1000pro ISA	*/
+#define CARD_TYPEP_ELSAQS1PCI	14	/* ELSA QuickStep 1000pro PCI	*/
+#define CARD_TYPEP_SIEMENSITALK	15	/* Siemens I-Talk		*/
+#define	CARD_TYPEP_ELSAMLIMC	16	/* ELSA MicroLink ISDN/MC	*/
+#define	CARD_TYPEP_ELSAMLMCALL	17	/* ELSA MicroLink MCall		*/
+#define	CARD_TYPEP_ITKIX1	18	/* ITK ix1 micro 		*/
+#define CARD_TYPEP_AVMA1PCI	19	/* AVM FRITZ!CARD PCI		*/
+#define CARD_TYPEP_PCC16	20	/* ELSA PCC-16			*/
+#define CARD_TYPEP_AVM_PNP	21	/* AVM FRITZ!CARD PnP		*/
+#define CARD_TYPEP_SIE_ISURF2 	22	/* Siemens I-Surf 2 PnP		*/
+#define CARD_TYPEP_ASUSCOMIPAC	23	/* Asuscom ISDNlink 128 K PnP	*/
 
 	int		sc_bustyp;	/* IOM1 or IOM2		*/
 #define BUS_TYPE_IOM1  0x01
@@ -180,7 +209,8 @@ struct l1_softc
 #define ISAC_TX_ACTIVE	0x01		/* state = transmitter active */
 
 	int		sc_init_tries;	/* no of out tries to access S0 */
-	
+	int		sc_maddr;	/* some stupid ISA cards need this */
+
 	u_char		sc_isac_mask;	/* ISAC IRQ mask	*/
 #define ISAC_IMASK	(sc->sc_isac_mask)
 
@@ -214,6 +244,9 @@ struct l1_softc
 	int		sc_I430T4;	/* Timer T4 running */	
 	struct callout sc_T4_callout;
 
+	int		sc_driver_specific;	/* used for LED values */
+	struct callout	sc_driver_callout;	/* used for LED timer */
+
 	/*
 	 * byte fields for the AVM Fritz!Card PCI. These are packed into
 	 * a u_int in the driver.
@@ -221,8 +254,6 @@ struct l1_softc
 	u_char		avma1pp_cmd;
 	u_char		avma1pp_txl;
 	u_char		avma1pp_prot;
-
-	int		sc_enabled;	/* daemon is running */
 
 	int		sc_ipac;	/* flag, running on ipac */
 	int		sc_bfifolen;	/* length of b channel fifos */
@@ -232,11 +263,13 @@ struct l1_softc
 #define	ISIC_WHAT_HSCXB	2
 #define	ISIC_WHAT_IPAC	3
 
-	u_int8_t	(*readreg) __P((struct l1_softc *sc, int what, bus_size_t offs));
-	void		(*writereg) __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-	void		(*readfifo) __P((struct l1_softc *sc, int what, void *buf, size_t size));
-	void		(*writefifo) __P((struct l1_softc *sc, int what, const void *data, size_t size));
-	void		(*clearirq) __P((struct l1_softc *sc));
+	u_int8_t	(*readreg) __P((struct isic_softc *sc, int what, bus_size_t offs));
+	void		(*writereg) __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
+	void		(*readfifo) __P((struct isic_softc *sc, int what, void *buf, size_t size));
+	void		(*writefifo) __P((struct isic_softc *sc, int what, const void *data, size_t size));
+	void		(*clearirq) __P((struct isic_softc *sc));
+
+	void		(*drv_command) __P((struct isic_softc *sc, int cmd, void *data));
 
 #define	ISAC_READ(r)		(*sc->readreg)(sc, ISIC_WHAT_ISAC, (r))
 #define	ISAC_WRITE(r,v)		(*sc->writereg)(sc, ISIC_WHAT_ISAC, (r), (v))
@@ -297,33 +330,34 @@ enum I430commands {
 
 #define N_COMMANDS CMD_ILL
 
-extern void isic_recover __P((struct l1_softc *sc));
+extern void isic_recover __P((struct isic_softc *sc));
 extern int isicintr __P((void *));
 extern int isicprobe __P((struct isic_attach_args *ia));
-extern int isic_attach_avma1 __P((struct l1_softc *sc));
-extern int isic_attach_s016 __P((struct l1_softc *sc));
-extern int isic_attach_s0163 __P((struct l1_softc *sc));
-extern int isic_attach_s08 __P((struct l1_softc *sc));
-extern int isic_attach_usrtai __P((struct l1_softc *sc));
-extern int isic_attach_itkix1 __P((struct l1_softc *sc));
+extern int isic_attach_avma1 __P((struct isic_softc *sc));
+extern int isic_attach_s016 __P((struct isic_softc *sc));
+extern int isic_attach_s0163 __P((struct isic_softc *sc));
+extern int isic_attach_s08 __P((struct isic_softc *sc));
+extern int isic_attach_usrtai __P((struct isic_softc *sc));
+extern int isic_attach_itkix1 __P((struct isic_softc *sc));
 extern void isic_bchannel_setup __P((void*, int hscx_channel, int bprot, int activate));
-extern void isic_hscx_init __P((struct l1_softc *sc, int hscx_channel, int activate));
-extern void isic_hscx_irq __P((struct l1_softc *sc, u_char ista, int hscx_channel, u_char ex_irq));
-extern int isic_hscx_silence __P(( unsigned char *data, int len ));
-extern void isic_hscx_cmd __P(( struct l1_softc *sc, int h_chan, unsigned char cmd ));
-extern void isic_hscx_waitxfw __P(( struct l1_softc *sc, int h_chan ));
-extern void isic_init_linktab __P((struct l1_softc *sc));
-extern int isic_isac_init __P((struct l1_softc *sc));
-extern void isic_isac_irq __P((struct l1_softc *sc, int r));
-extern void isic_isac_l1_cmd __P((struct l1_softc *sc, int command));
-extern void isic_next_state __P((struct l1_softc *sc, int event));
-extern char * isic_printstate __P((struct l1_softc *sc));
+extern void isic_hscx_init __P((struct isic_softc *sc, int hscx_channel, int activate));
+extern void isic_hscx_irq __P((struct isic_softc *sc, u_char ista, int hscx_channel, u_char ex_irq));
+extern void isic_hscx_cmd __P(( struct isic_softc *sc, int h_chan, unsigned char cmd ));
+extern void isic_hscx_waitxfw __P(( struct isic_softc *sc, int h_chan ));
+extern void isic_init_linktab __P((struct isic_softc *sc));
+extern int isic_isac_init __P((struct isic_softc *sc));
+extern void isic_isac_irq __P((struct isic_softc *sc, int r));
+extern void isic_isac_l1_cmd __P((struct isic_softc *sc, int command));
+extern void isic_next_state __P((struct isic_softc *sc, int event));
+extern char * isic_printstate __P((struct isic_softc *sc));
 extern int isic_probe_avma1 __P((struct isic_attach_args *ia));
 extern int isic_probe_s016 __P((struct isic_attach_args *ia));
 extern int isic_probe_s0163 __P((struct isic_attach_args *ia));
 extern int isic_probe_s08 __P((struct isic_attach_args *ia));
 extern int isic_probe_usrtai __P((struct isic_attach_args *ia));
 extern int isic_probe_itkix1 __P((struct isic_attach_args *ia));
+extern int isic_attach_bri(struct isic_softc *sc, const char *cardname, const struct isdn_layer1_bri_driver *dchan_driver);
+extern int isic_detach_bri(struct isic_softc *sc);
 
 #endif /* !_ISIC_L1_H */
 

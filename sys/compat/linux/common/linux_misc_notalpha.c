@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.60.4.1 2002/01/10 19:51:44 thorpej Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.60.4.2 2002/06/23 17:44:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.60.4.1 2002/01/10 19:51:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.60.4.2 2002/06/23 17:44:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,8 +230,8 @@ linux_sys_utime(p, v, retval)
 	struct timeval tv[2], *tvp;
 	struct linux_utimbuf lut;
 
-	sg = stackgap_init(p->p_emul);
-	tvp = (struct timeval *) stackgap_alloc(&sg, sizeof(tv));
+	sg = stackgap_init(p, 0);
+	tvp = (struct timeval *) stackgap_alloc(p, &sg, sizeof(tv));
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ua, path) = SCARG(uap, path);
@@ -273,8 +273,8 @@ linux_sys_waitpid(p, v, retval)
 	caddr_t sg;
 
 	if (SCARG(uap, status) != NULL) {
-		sg = stackgap_init(p->p_emul);
-		status = (int *) stackgap_alloc(&sg, sizeof status);
+		sg = stackgap_init(p, 0);
+		status = (int *) stackgap_alloc(p, &sg, sizeof status);
 	} else
 		status = NULL;
 
@@ -391,7 +391,7 @@ linux_sys_getresgid(p, v, retval)
 			     sizeof(gid_t))) != 0)
 		return (error);
 
-	if ((error = copyout(&pc->pc_ucred->cr_uid, SCARG(uap, egid),
+	if ((error = copyout(&pc->pc_ucred->cr_gid, SCARG(uap, egid),
 			     sizeof(gid_t))) != 0)
 		return (error);
 

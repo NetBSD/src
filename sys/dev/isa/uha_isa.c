@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.19.8.1 2002/01/10 19:55:44 thorpej Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.19.8.2 2002/06/23 17:47:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.19.8.1 2002/01/10 19:55:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.19.8.2 2002/06/23 17:47:06 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -324,7 +324,7 @@ u14_start_mbox(sc, mscp)
 
 	if ((mscp->xs->xs_control & XS_CTL_POLL) == 0)
 		callout_reset(&mscp->xs->xs_callout,
-		    (mscp->timeout * hz) / 1000, uha_timeout, mscp);
+		    mstohz(mscp->timeout), uha_timeout, mscp);
 }
 
 /*

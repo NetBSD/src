@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdio.c,v 1.2.2.1 2002/01/10 19:51:42 thorpej Exp $	*/
+/*	$NetBSD: linux_hdio.c,v 1.2.2.2 2002/06/23 17:44:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.2.2.1 2002/01/10 19:51:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.2.2.2 2002/06/23 17:44:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,8 @@ linux_ioctl_hdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 	switch (com) {
 	case LINUX_HDIO_OBSOLETE_IDENTITY:
 	case LINUX_HDIO_GET_IDENTITY:
-		sg = stackgap_init(p->p_emul);
-		atap = stackgap_alloc(&sg, DEV_BSIZE);
+		sg = stackgap_init(p, 0);
+		atap = stackgap_alloc(p, &sg, DEV_BSIZE);
 		if (atap == NULL) {
 			error = ENOMEM;
 			break;

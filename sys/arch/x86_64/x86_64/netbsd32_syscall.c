@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.1 2001/06/19 00:21:17 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.1.2.1 2002/06/23 17:43:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ netbsd32_syscall_plain(frame)
 	case 0:
 		frame.tf_rax = rval[0];
 		frame.tf_rdx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame.tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -150,7 +150,7 @@ netbsd32_syscall_plain(frame)
 	default:
 	bad:
 		frame.tf_rax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame.tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
@@ -171,6 +171,10 @@ netbsd32_syscall_fancy(frame)
 	size_t argsize;
 	register32_t code, args[8];
 	register_t rval[2];
+#ifdef KTRACE
+	int i;
+	register_t args64[8];
+#endif
 
 	uvmexp.syscalls++;
 	p = curproc;
@@ -212,8 +216,11 @@ netbsd32_syscall_fancy(frame)
 	scdebug_call(p, code, args);
 #endif /* SYSCALL_DEBUG */
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
+	if (KTRPOINT(p, KTR_SYSCALL)) {
+		for (i = 0; i < (argsize >> 2); i++)
+			args64[i] = args[i];
+		ktrsyscall(p, code, argsize << 1, args64);
+	}
 #endif /* KTRACE */
 
 	rval[0] = 0;
@@ -223,7 +230,7 @@ netbsd32_syscall_fancy(frame)
 	case 0:
 		frame.tf_rax = rval[0];
 		frame.tf_rdx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame.tf_rflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -239,7 +246,7 @@ netbsd32_syscall_fancy(frame)
 	default:
 	bad:
 		frame.tf_rax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame.tf_rflags |= PSL_C;	/* carry bit */
 		break;
 	}
 

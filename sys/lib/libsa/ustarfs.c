@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.15.4.2 2002/03/16 16:01:58 jdolecek Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.15.4.3 2002/06/23 17:49:54 jdolecek Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -105,8 +105,9 @@ typedef struct ustar_struct {
 		ust_gid[8],
 		ust_size[12],
 		ust_misc[12 + 8 + 1 + 100],
-		ust_magic[6];
+		ust_magic[6],
 	/* there is more, but we don't care */
+		ust_pad[1];	/* make it aligned */
 } ustar_t;
 
 /*
@@ -484,7 +485,7 @@ ustarfs_seek(f, offs, whence)
 	}
 	return ustf->uas_fseek;
 }
-#endif /* !LIBSA_NO_FS_CLOSE */
+#endif /* !LIBSA_NO_FS_SEEK */
 
 int
 ustarfs_read(f, start, size, resid)

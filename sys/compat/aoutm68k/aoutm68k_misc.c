@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_misc.c,v 1.3.2.1 2002/01/10 19:50:56 thorpej Exp $	*/
+/*	$NetBSD: aoutm68k_misc.c,v 1.3.2.2 2002/06/23 17:43:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_misc.c,v 1.3.2.1 2002/01/10 19:50:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_misc.c,v 1.3.2.2 2002/06/23 17:43:41 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -71,7 +71,7 @@ aoutm68k_sys_open(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_open_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -86,7 +86,7 @@ aoutm68k_sys_link(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_link_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -101,7 +101,7 @@ aoutm68k_sys_unlink(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_unlink_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -116,7 +116,7 @@ aoutm68k_sys_chdir(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_chdir_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -131,7 +131,7 @@ aoutm68k_sys_chmod(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_chmod_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -146,7 +146,7 @@ aoutm68k_sys_chown(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_chown_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -161,7 +161,7 @@ aoutm68k_sys_access(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_access_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -176,7 +176,7 @@ aoutm68k_sys_chflags(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_chflags_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -191,7 +191,7 @@ aoutm68k_sys_revoke(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_revoke_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -206,7 +206,7 @@ aoutm68k_sys_symlink(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_symlink_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -221,7 +221,7 @@ aoutm68k_sys_readlink(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_readlink_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
@@ -236,7 +236,7 @@ aoutm68k_sys_execve(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_execve_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -251,7 +251,7 @@ aoutm68k_sys_chroot(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_chroot_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -266,7 +266,7 @@ aoutm68k_sys_rename(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_rename_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
 
@@ -282,7 +282,7 @@ aoutm68k_compat_43_sys_truncate(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_compat_43_sys_truncate_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -298,7 +298,7 @@ aoutm68k_sys_rmdir(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_rmdir_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -313,7 +313,7 @@ aoutm68k_sys_utimes(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_utimes_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -328,7 +328,7 @@ aoutm68k_sys_statfs(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_statfs_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -344,7 +344,7 @@ aoutm68k_sys_getfh(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_getfh_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, fname));
 
@@ -360,7 +360,7 @@ aoutm68k_sys_pathconf(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_pathconf_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -375,7 +375,7 @@ aoutm68k_sys_truncate(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_truncate_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -390,7 +390,7 @@ aoutm68k_sys_undelete(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_undelete_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -405,7 +405,7 @@ aoutm68k_sys___posix_rename(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys___posix_rename_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
 
@@ -420,7 +420,7 @@ aoutm68k_sys_lchmod(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_lchmod_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
@@ -435,7 +435,7 @@ aoutm68k_sys_lchown(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_lchown_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
@@ -450,7 +450,7 @@ aoutm68k_sys_lutimes(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys_lutimes_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
@@ -465,7 +465,7 @@ aoutm68k_sys___posix_chown(p, v, retval)
 	register_t *retval;
 {
 	struct aoutm68k_sys___posix_chown_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 

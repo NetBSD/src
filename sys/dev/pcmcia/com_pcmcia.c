@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.21.16.2 2002/03/16 16:01:22 jdolecek Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.21.16.3 2002/06/23 17:48:12 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.21.16.2 2002/03/16 16:01:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.21.16.3 2002/06/23 17:48:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,8 +176,7 @@ com_pcmcia_match(parent, match, aux)
 
 	/* 2. Does it have all four 'standard' port ranges? */
 	comportmask = 0;
-	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
-	    cfe = cfe->cfe_list.sqe_next) {
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
 		switch (cfe->iospace[0].start) {
 		case IO_COM1:
 			comportmask |= 1;
@@ -217,11 +216,12 @@ com_pcmcia_attach(parent, self, aux)
 
 	psc->sc_pf = pa->pf;
 
+	psc->sc_io_window = -1;
+
 retry:
 	/* find a cfe we can use */
 
-	for (cfe = pa->pf->cfe_head.sqh_first; cfe;
-	    cfe = cfe->cfe_list.sqe_next) {
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
 #if 0
 		/*
 		 * Some modem cards (e.g. Xircom CM33) also have
@@ -307,6 +307,13 @@ com_pcmcia_detach(self, flags)
 {
 	struct com_pcmcia_softc *psc = (struct com_pcmcia_softc *) self;
 	int error;
+
+	/* Unmap our i/o window. */
+	if (psc->sc_io_window == -1) {
+		printf("%s: I/O window not allocated.",
+		    psc->sc_com.sc_dev.dv_xname);
+		return 0;
+	}
 
 	if ((error = com_detach(self, flags)) != 0)
 		return error;

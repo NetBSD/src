@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.132.2.5 2002/03/16 16:01:23 jdolecek Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.132.2.6 2002/06/23 17:48:24 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.163 2002/03/04 16:41:50 martin Exp 
+ *	NetBSD: pcmciadevs,v 1.172 2002/06/08 18:01:14 martin Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -134,6 +134,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "3Com 3CRWE62092A Wireless LAN",	}
 	,
 	{
+	    PCMCIA_VENDOR_ACTIONTEC, PCMCIA_PRODUCT_ACTIONTEC_PRISM,
+	    PCMCIA_CIS_ACTIONTEC_PRISM,
+	    0,
+	    "ACTIONTEC",
+	    "PRISM Wireless LAN PC Card",	}
+	,
+	{
 	    PCMCIA_VENDOR_ADAPTEC, PCMCIA_PRODUCT_ADAPTEC_APA1460,
 	    PCMCIA_CIS_ADAPTEC_APA1460,
 	    0,
@@ -204,6 +211,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "BayStack 660 Wireless LAN",	}
 	,
 	{
+	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_EMOBILITY_11B,
+	    PCMCIA_CIS_BAY_EMOBILITY_11B,
+	    0,
+	    "Bay Networks",
+	    "e-Mobility 11Mb Wireless LAN",	}
+	,
+	{
 	    PCMCIA_VENDOR_BREEZECOM, PCMCIA_PRODUCT_BREEZECOM_BREEZENET,
 	    PCMCIA_CIS_BREEZECOM_BREEZENET,
 	    0,
@@ -223,6 +237,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "BUFFALO (Melco Corporation)",
 	    "BUFFALO AirStation 11Mbps CF WLAN",	}
+	,
+	{
+	    PCMCIA_VENDOR_BUFFALO, PCMCIA_PRODUCT_BUFFALO_LPC3_CLT,
+	    PCMCIA_CIS_BUFFALO_LPC3_CLT,
+	    0,
+	    "BUFFALO (Melco Corporation)",
+	    "BUFFALO LPC3-CLT Ethernet Adapter",	}
 	,
 	{
 	    PCMCIA_VENDOR_COMPAQ, PCMCIA_PRODUCT_COMPAQ_NC5004,
@@ -533,6 +554,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Instant Wireless Network PC Card",	}
 	,
 	{
+	    PCMCIA_VENDOR_LINKSYS2, PCMCIA_PRODUCT_LINKSYS2_IWN3,
+	    PCMCIA_CIS_LINKSYS2_IWN3,
+	    0,
+	    "The Linksys Group",
+	    "Instant Wireless Network PC Card, Versin 3",	}
+	,
+	{
+	    PCMCIA_VENDOR_LINKSYS2, PCMCIA_PRODUCT_LINKSYS2_WCF11,
+	    PCMCIA_CIS_LINKSYS2_WCF11,
+	    0,
+	    "The Linksys Group",
+	    "Instant Wireless Network CF Card",	}
+	,
+	{
 	    PCMCIA_VENDOR_LUCENT, PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	    PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
 	    0,
@@ -671,6 +706,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Netgear",
 	    "Netgear FA410TXC",	}
+	,
+	{
+	    PCMCIA_VENDOR_NETGEAR, PCMCIA_PRODUCT_NETGEAR_FA411,
+	    PCMCIA_CIS_NETGEAR_FA411,
+	    0,
+	    "Netgear",
+	    "Netgear FA411",	}
 	,
 	{
 	    PCMCIA_VENDOR_NI, PCMCIA_PRODUCT_NI_PCMCIA_GPIB,
@@ -1051,6 +1093,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Corega Ether PCC-TD",	}
 	,
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_TD,
+	    PCMCIA_CIS_COREGA_ETHER_II_PCC_TD,
+	    0,
+	    "Corega K.K.",
+	    "Corega EtherII PCC-TD",	}
+	,
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T,
 	    PCMCIA_CIS_COREGA_ETHER_II_PCC_T,
 	    0,
@@ -1126,6 +1175,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "D-Link",
 	    "D-Link DE-660+",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DLINK_DFE670TXD,
+	    PCMCIA_CIS_DLINK_DFE670TXD,
+	    0,
+	    "D-Link",
+	    "D-Link DFE-670TXD",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_EIGERLABS_EPX_AA2000,
@@ -1266,6 +1322,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Planex Communications Inc",
 	    "Planex FNW-3700-T",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_PLANEX_GWNS11H,
+	    PCMCIA_CIS_PLANEX_GWNS11H,
+	    0,
+	    "Planex Communications Inc",
+	    "PLANEX GW-NS11H Wireless LAN PC Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_RPTI_EP400,
@@ -1563,6 +1626,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_DLINK_3,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "D-Link",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_LINKSYS,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1752,6 +1823,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "NewMedia",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ACTIONTEC,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "ACTIONTEC",
 	    NULL,
 	},
 	{

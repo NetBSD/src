@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.35.2.2 2002/01/10 20:03:25 thorpej Exp $	*/
-/*	$KAME: ipsec.c,v 1.125 2001/09/12 23:01:16 sakane Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.35.2.3 2002/06/23 17:51:18 jdolecek Exp $	*/
+/*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.35.2.2 2002/01/10 20:03:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.35.2.3 2002/06/23 17:51:18 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -104,7 +104,7 @@ int ip4_esp_trans_deflev = IPSEC_LEVEL_USE;
 int ip4_esp_net_deflev = IPSEC_LEVEL_USE;
 int ip4_ah_trans_deflev = IPSEC_LEVEL_USE;
 int ip4_ah_net_deflev = IPSEC_LEVEL_USE;
-struct secpolicy ip4_def_policy;
+struct secpolicy *ip4_def_policy;
 int ip4_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
 static int sp_cachegen = 1;	/* cache generation # */
@@ -115,35 +115,34 @@ int ip6_esp_trans_deflev = IPSEC_LEVEL_USE;
 int ip6_esp_net_deflev = IPSEC_LEVEL_USE;
 int ip6_ah_trans_deflev = IPSEC_LEVEL_USE;
 int ip6_ah_net_deflev = IPSEC_LEVEL_USE;
-struct secpolicy ip6_def_policy;
+struct secpolicy *ip6_def_policy;
 int ip6_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
 #endif /* INET6 */
 
 static struct secpolicy *ipsec_checkpcbcache __P((struct mbuf *,
-	struct inpcbpolicy *pcbsp, int));
+	struct inpcbpolicy *, int));
 static int ipsec_fillpcbcache __P((struct inpcbpolicy *, struct mbuf *,
 	struct secpolicy *, int));
 static int ipsec_invalpcbcache __P((struct inpcbpolicy *, int));
 static int ipsec_setspidx_mbuf
-	__P((struct secpolicyindex *, u_int, u_int, struct mbuf *, int));
-static int ipsec4_setspidx_inpcb __P((struct mbuf *, struct inpcb *pcb));
-#ifdef INET6
-static int ipsec6_setspidx_in6pcb __P((struct mbuf *, struct in6pcb *pcb));
-#endif
+	__P((struct secpolicyindex *, int, struct mbuf *, int));
 static int ipsec_setspidx __P((struct mbuf *, struct secpolicyindex *, int));
-static void ipsec4_get_ulp __P((struct mbuf *m, struct secpolicyindex *, int));
+static void ipsec4_get_ulp __P((struct mbuf *, struct secpolicyindex *, int));
 static int ipsec4_setspidx_ipaddr __P((struct mbuf *, struct secpolicyindex *));
 #ifdef INET6
-static void ipsec6_get_ulp __P((struct mbuf *m, struct secpolicyindex *, int));
+static void ipsec6_get_ulp __P((struct mbuf *, struct secpolicyindex *, int));
 static int ipsec6_setspidx_ipaddr __P((struct mbuf *, struct secpolicyindex *));
 #endif
 static struct inpcbpolicy *ipsec_newpcbpolicy __P((void));
 static void ipsec_delpcbpolicy __P((struct inpcbpolicy *));
-static struct secpolicy *ipsec_deepcopy_policy __P((struct secpolicy *src));
-static int ipsec_set_policy __P((struct secpolicy **pcb_sp,
-	int optname, caddr_t request, size_t len, int priv));
-static int ipsec_get_policy __P((struct secpolicy *pcb_sp, struct mbuf **mp));
+#if 0
+static int ipsec_deepcopy_pcbpolicy __P((struct inpcbpolicy *));
+#endif
+static struct secpolicy *ipsec_deepcopy_policy __P((struct secpolicy *));
+static int ipsec_set_policy
+	__P((struct secpolicy **, int, caddr_t, size_t, int));
+static int ipsec_get_policy __P((struct secpolicy *, struct mbuf **));
 static void vshiftl __P((unsigned char *, int, int));
 static int ipsec_in_reject __P((struct secpolicy *, struct mbuf *));
 static size_t ipsec_hdrsiz __P((struct secpolicy *));
@@ -173,15 +172,11 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 	int dir;
 {
 	struct secpolicyindex spidx;
-#if defined(__FreeBSD__) && __FreeBSD__ > 2
-	struct timeval mono_time;
-
-	microtime(&mono_time);
-#endif
 
 	switch (dir) {
 	case IPSEC_DIR_INBOUND:
 	case IPSEC_DIR_OUTBOUND:
+	case IPSEC_DIR_ANY:
 		break;
 	default:
 		return NULL;
@@ -197,13 +192,19 @@ ipsec_checkpcbcache(m, pcbsp, dir)
 	}
 	if (!pcbsp->cache[dir])
 		return NULL;
+	if (pcbsp->cache[dir]->state != IPSEC_SPSTATE_ALIVE) {
+		ipsec_invalpcbcache(pcbsp, dir);
+		return NULL;
+	}
 	if ((pcbsp->cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
 		if (!pcbsp->cache[dir])
 			return NULL;
 		if (ipsec_setspidx(m, &spidx, 1) != 0)
 			return NULL;
 		if (bcmp(&pcbsp->cacheidx[dir], &spidx, sizeof(spidx))) {
-			if (!key_cmpspidx_withmask(&pcbsp->cache[dir]->spidx,
+			if (pcbsp->cache[dir]->policy == IPSEC_POLICY_IPSEC &&
+			    pcbsp->cache[dir]->spidx &&
+			    !key_cmpspidx_withmask(pcbsp->cache[dir]->spidx,
 			    &spidx))
 				return NULL;
 			pcbsp->cacheidx[dir] = spidx;
@@ -336,6 +337,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 	struct inpcbpolicy *pcbsp = NULL;
 	struct secpolicy *currsp = NULL;	/* policy on socket */
 	struct secpolicy *kernsp = NULL;	/* policy on kernel */
+	struct secpolicyindex spidx;
 
 	/* sanity check */
 	if (m == NULL || so == NULL || error == NULL)
@@ -350,6 +352,8 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		pcbsp = sotoin6pcb(so)->in6p_sp;
 		break;
 #endif
+	default:
+		panic("ipsec4_getpolicybysock: unsupported address family\n");
 	}
 
 	/* if we have a cached entry, and if it is still valid, use it. */
@@ -360,29 +364,6 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		return currsp;
 	}
 	ipsecstat.spdcachemiss++;
-
-	/*
-	 * XXX why is it necessary to do this, per-packet?
-	 * we are of course sure that the socket policy do match the packet,
-	 * because policy-on-pcb does not contain selectors, and
-	 * in_pcblookup (inbound) ensures the packet-pcb matching.
-	 */
-	switch (so->so_proto->pr_domain->dom_family) {
-	case AF_INET:
-		/* set spidx in pcb */
-		*error = ipsec4_setspidx_inpcb(m, sotoinpcb(so));
-		break;
-#ifdef INET6
-	case AF_INET6:
-		/* set spidx in pcb */
-		*error = ipsec6_setspidx_in6pcb(m, sotoin6pcb(so));
-		break;
-#endif
-	default:
-		panic("ipsec4_getpolicybysock: unsupported address family\n");
-	}
-	if (*error)
-		return NULL;
 
 	/* sanity check */
 	if (pcbsp == NULL)
@@ -414,10 +395,9 @@ ipsec4_getpolicybysock(m, dir, so, error)
 
 		case IPSEC_POLICY_ENTRUST:
 			/* look for a policy in SPD */
-			kernsp = key_allocsp(&currsp->spidx, dir);
-
-			/* SP found */
-			if (kernsp != NULL) {
+			if (ipsec_setspidx_mbuf(&spidx, AF_INET, m, 0) == 0 &&
+			    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+				/* SP found */
 				KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 					printf("DP ipsec4_getpolicybysock called "
 					       "to allocate SP:%p\n", kernsp));
@@ -427,18 +407,11 @@ ipsec4_getpolicybysock(m, dir, so, error)
 			}
 
 			/* no SP found */
-			if (ip4_def_policy.policy != IPSEC_POLICY_DISCARD
-			 && ip4_def_policy.policy != IPSEC_POLICY_NONE) {
-				ipseclog((LOG_INFO,
-				    "fixed system default policy: %d->%d\n",
-				    ip4_def_policy.policy, IPSEC_POLICY_NONE));
-				ip4_def_policy.policy = IPSEC_POLICY_NONE;
-			}
-			ip4_def_policy.refcnt++;
+			ip4_def_policy->refcnt++;
 			*error = 0;
-			ipsec_fillpcbcache(pcbsp, m, &ip4_def_policy, dir);
-			return &ip4_def_policy;
-			
+			ipsec_fillpcbcache(pcbsp, m, ip4_def_policy, dir);
+			return ip4_def_policy;
+
 		case IPSEC_POLICY_IPSEC:
 			currsp->refcnt++;
 			*error = 0;
@@ -456,10 +429,9 @@ ipsec4_getpolicybysock(m, dir, so, error)
 
 	/* when non-privilieged socket */
 	/* look for a policy in SPD */
-	kernsp = key_allocsp(&currsp->spidx, dir);
-
-	/* SP found */
-	if (kernsp != NULL) {
+	if (ipsec_setspidx_mbuf(&spidx, AF_INET, m, 0) == 0 &&
+	    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+		/* SP found */
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 			printf("DP ipsec4_getpolicybysock called "
 			       "to allocate SP:%p\n", kernsp));
@@ -478,17 +450,10 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		return NULL;
 
 	case IPSEC_POLICY_ENTRUST:
-		if (ip4_def_policy.policy != IPSEC_POLICY_DISCARD
-		 && ip4_def_policy.policy != IPSEC_POLICY_NONE) {
-			ipseclog((LOG_INFO,
-			    "fixed system default policy: %d->%d\n",
-			    ip4_def_policy.policy, IPSEC_POLICY_NONE));
-			ip4_def_policy.policy = IPSEC_POLICY_NONE;
-		}
-		ip4_def_policy.refcnt++;
+		ip4_def_policy->refcnt++;
 		*error = 0;
-		ipsec_fillpcbcache(pcbsp, m, &ip4_def_policy, dir);
-		return &ip4_def_policy;
+		ipsec_fillpcbcache(pcbsp, m, ip4_def_policy, dir);
+		return ip4_def_policy;
 
 	case IPSEC_POLICY_IPSEC:
 		currsp->refcnt++;
@@ -528,13 +493,14 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
 	if (m == NULL || error == NULL)
 		panic("ipsec4_getpolicybyaddr: NULL pointer was passed.\n");
 
+	/* get a policy entry matched with the packet */
     {
 	struct secpolicyindex spidx;
 
 	bzero(&spidx, sizeof(spidx));
 
 	/* make a index to look for a policy */
-	*error = ipsec_setspidx_mbuf(&spidx, dir, AF_INET, m,
+	*error = ipsec_setspidx_mbuf(&spidx, AF_INET, m,
 	    (flag & IP_FORWARDING) ? 0 : 1);
 
 	if (*error != 0)
@@ -553,16 +519,9 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
 	}
 
 	/* no SP found */
-	if (ip4_def_policy.policy != IPSEC_POLICY_DISCARD
-	 && ip4_def_policy.policy != IPSEC_POLICY_NONE) {
-		ipseclog((LOG_INFO, "fixed system default policy:%d->%d\n",
-			ip4_def_policy.policy,
-			IPSEC_POLICY_NONE));
-		ip4_def_policy.policy = IPSEC_POLICY_NONE;
-	}
-	ip4_def_policy.refcnt++;
+	ip4_def_policy->refcnt++;
 	*error = 0;
-	return &ip4_def_policy;
+	return ip4_def_policy;
 }
 
 #ifdef INET6
@@ -586,6 +545,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 	struct inpcbpolicy *pcbsp = NULL;
 	struct secpolicy *currsp = NULL;	/* policy on socket */
 	struct secpolicy *kernsp = NULL;	/* policy on kernel */
+	struct secpolicyindex spidx;
 
 	/* sanity check */
 	if (m == NULL || so == NULL || error == NULL)
@@ -606,10 +566,6 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		return currsp;
 	}
 	ipsec6stat.spdcachemiss++;
-
-	/* set spidx in pcb */
-	/* XXX why is it necessary to do this? */
-	ipsec6_setspidx_in6pcb(m, sotoin6pcb(so));
 
 	/* sanity check */
 	if (pcbsp == NULL)
@@ -641,10 +597,9 @@ ipsec6_getpolicybysock(m, dir, so, error)
 
 		case IPSEC_POLICY_ENTRUST:
 			/* look for a policy in SPD */
-			kernsp = key_allocsp(&currsp->spidx, dir);
-
-			/* SP found */
-			if (kernsp != NULL) {
+			if (ipsec_setspidx_mbuf(&spidx, AF_INET6, m, 0) == 0 &&
+			    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+				/* SP found */
 				KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 					printf("DP ipsec6_getpolicybysock called "
 					       "to allocate SP:%p\n", kernsp));
@@ -654,18 +609,11 @@ ipsec6_getpolicybysock(m, dir, so, error)
 			}
 
 			/* no SP found */
-			if (ip6_def_policy.policy != IPSEC_POLICY_DISCARD
-			 && ip6_def_policy.policy != IPSEC_POLICY_NONE) {
-				ipseclog((LOG_INFO,
-				    "fixed system default policy: %d->%d\n",
-				    ip6_def_policy.policy, IPSEC_POLICY_NONE));
-				ip6_def_policy.policy = IPSEC_POLICY_NONE;
-			}
-			ip6_def_policy.refcnt++;
+			ip6_def_policy->refcnt++;
 			*error = 0;
-			ipsec_fillpcbcache(pcbsp, m, &ip6_def_policy, dir);
-			return &ip6_def_policy;
-			
+			ipsec_fillpcbcache(pcbsp, m, ip6_def_policy, dir);
+			return ip6_def_policy;
+
 		case IPSEC_POLICY_IPSEC:
 			currsp->refcnt++;
 			*error = 0;
@@ -683,10 +631,9 @@ ipsec6_getpolicybysock(m, dir, so, error)
 
 	/* when non-privilieged socket */
 	/* look for a policy in SPD */
-	kernsp = key_allocsp(&currsp->spidx, dir);
-
-	/* SP found */
-	if (kernsp != NULL) {
+	if (ipsec_setspidx_mbuf(&spidx, AF_INET6, m, 0) == 0 &&
+	    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+		/* SP found */
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 			printf("DP ipsec6_getpolicybysock called "
 			       "to allocate SP:%p\n", kernsp));
@@ -705,17 +652,10 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		return NULL;
 
 	case IPSEC_POLICY_ENTRUST:
-		if (ip6_def_policy.policy != IPSEC_POLICY_DISCARD
-		 && ip6_def_policy.policy != IPSEC_POLICY_NONE) {
-			ipseclog((LOG_INFO,
-			    "fixed system default policy: %d->%d\n",
-			    ip6_def_policy.policy, IPSEC_POLICY_NONE));
-			ip6_def_policy.policy = IPSEC_POLICY_NONE;
-		}
-		ip6_def_policy.refcnt++;
+		ip6_def_policy->refcnt++;
 		*error = 0;
-		ipsec_fillpcbcache(pcbsp, m, &ip6_def_policy, dir);
-		return &ip6_def_policy;
+		ipsec_fillpcbcache(pcbsp, m, ip6_def_policy, dir);
+		return ip6_def_policy;
 
 	case IPSEC_POLICY_IPSEC:
 		currsp->refcnt++;
@@ -762,13 +702,14 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
 	if (m == NULL || error == NULL)
 		panic("ipsec6_getpolicybyaddr: NULL pointer was passed.\n");
 
+	/* get a policy entry matched with the packet */
     {
 	struct secpolicyindex spidx;
 
 	bzero(&spidx, sizeof(spidx));
 
 	/* make a index to look for a policy */
-	*error = ipsec_setspidx_mbuf(&spidx, dir, AF_INET6, m,
+	*error = ipsec_setspidx_mbuf(&spidx, AF_INET6, m,
 	    (flag & IP_FORWARDING) ? 0 : 1);
 
 	if (*error != 0)
@@ -787,15 +728,9 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
 	}
 
 	/* no SP found */
-	if (ip6_def_policy.policy != IPSEC_POLICY_DISCARD
-	 && ip6_def_policy.policy != IPSEC_POLICY_NONE) {
-		ipseclog((LOG_INFO, "fixed system default policy: %d->%d\n",
-		    ip6_def_policy.policy, IPSEC_POLICY_NONE));
-		ip6_def_policy.policy = IPSEC_POLICY_NONE;
-	}
-	ip6_def_policy.refcnt++;
+	ip6_def_policy->refcnt++;
 	*error = 0;
-	return &ip6_def_policy;
+	return ip6_def_policy;
 }
 #endif /* INET6 */
 
@@ -810,9 +745,9 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
  *	other:	failure, and set errno.
  */
 int
-ipsec_setspidx_mbuf(spidx, dir, family, m, needport)
+ipsec_setspidx_mbuf(spidx, family, m, needport)
 	struct secpolicyindex *spidx;
-	u_int dir, family;
+	int family;
 	struct mbuf *m;
 	int needport;
 {
@@ -827,7 +762,6 @@ ipsec_setspidx_mbuf(spidx, dir, family, m, needport)
 	error = ipsec_setspidx(m, spidx, needport);
 	if (error)
 		goto bad;
-	spidx->dir = dir;
 
 	return 0;
 
@@ -836,86 +770,6 @@ ipsec_setspidx_mbuf(spidx, dir, family, m, needport)
 	bzero(spidx, sizeof(*spidx));
 	return EINVAL;
 }
-
-static int
-ipsec4_setspidx_inpcb(m, pcb)
-	struct mbuf *m;
-	struct inpcb *pcb;
-{
-	struct secpolicyindex *spidx;
-	int error;
-
-	/* sanity check */
-	if (pcb == NULL)
-		panic("ipsec4_setspidx_inpcb: no PCB found.\n");
-	if (pcb->inp_sp == NULL)
-		panic("ipsec4_setspidx_inpcb: no inp_sp found.\n");
-	if (pcb->inp_sp->sp_out == NULL || pcb->inp_sp->sp_in == NULL)
-		panic("ipsec4_setspidx_inpcb: no sp_in/out found.\n");
-
-	bzero(&pcb->inp_sp->sp_in->spidx, sizeof(*spidx));
-	bzero(&pcb->inp_sp->sp_out->spidx, sizeof(*spidx));
-
-	spidx = &pcb->inp_sp->sp_in->spidx;
-	error = ipsec_setspidx(m, spidx, 1);
-	if (error)
-		goto bad;
-	spidx->dir = IPSEC_DIR_INBOUND;
-
-	spidx = &pcb->inp_sp->sp_out->spidx;
-	error = ipsec_setspidx(m, spidx, 1);
-	if (error)
-		goto bad;
-	spidx->dir = IPSEC_DIR_OUTBOUND;
-
-	return 0;
-
-bad:
-	bzero(&pcb->inp_sp->sp_in->spidx, sizeof(*spidx));
-	bzero(&pcb->inp_sp->sp_out->spidx, sizeof(*spidx));
-	return error;
-}
-
-#ifdef INET6
-static int
-ipsec6_setspidx_in6pcb(m, pcb)
-	struct mbuf *m;
-	struct in6pcb *pcb;
-{
-	struct secpolicyindex *spidx;
-	int error;
-
-	/* sanity check */
-	if (pcb == NULL)
-		panic("ipsec6_setspidx_in6pcb: no PCB found.\n");
-	if (pcb->in6p_sp == NULL)
-		panic("ipsec6_setspidx_in6pcb: no in6p_sp found.\n");
-	if (pcb->in6p_sp->sp_out == NULL || pcb->in6p_sp->sp_in == NULL)
-		panic("ipsec6_setspidx_in6pcb: no sp_in/out found.\n");
-
-	bzero(&pcb->in6p_sp->sp_in->spidx, sizeof(*spidx));
-	bzero(&pcb->in6p_sp->sp_out->spidx, sizeof(*spidx));
-
-	spidx = &pcb->in6p_sp->sp_in->spidx;
-	error = ipsec_setspidx(m, spidx, 1);
-	if (error)
-		goto bad;
-	spidx->dir = IPSEC_DIR_INBOUND;
-
-	spidx = &pcb->in6p_sp->sp_out->spidx;
-	error = ipsec_setspidx(m, spidx, 1);
-	if (error)
-		goto bad;
-	spidx->dir = IPSEC_DIR_OUTBOUND;
-
-	return 0;
-
-bad:
-	bzero(&pcb->in6p_sp->sp_in->spidx, sizeof(*spidx));
-	bzero(&pcb->in6p_sp->sp_out->spidx, sizeof(*spidx));
-	return error;
-}
-#endif
 
 /*
  * configure security policy index (src/dst/proto/sport/dport)
@@ -1235,19 +1089,43 @@ ipsec_delpcbpolicy(p)
 
 /* initialize policy in PCB */
 int
-ipsec_init_policy(so, pcb_sp)
+ipsec_init_pcbpolicy(so, pcb_sp)
 	struct socket *so;
 	struct inpcbpolicy **pcb_sp;
 {
 	struct inpcbpolicy *new;
+	static int initialized = 0;
+	static struct secpolicy *in = NULL, *out = NULL;
 
 	/* sanity check. */
 	if (so == NULL || pcb_sp == NULL)
-		panic("ipsec_init_policy: NULL pointer was passed.\n");
+		panic("ipsec_init_pcbpolicy: NULL pointer was passed.\n");
+
+	if (!initialized) {
+		if ((in = key_newsp()) == NULL)
+			return ENOBUFS;
+		if ((out = key_newsp()) == NULL) {
+			key_freesp(in);
+			in = NULL;
+			return ENOBUFS;
+		}
+
+		in->state = IPSEC_SPSTATE_ALIVE;
+		in->policy = IPSEC_POLICY_ENTRUST;
+		in->dir = IPSEC_DIR_INBOUND;
+		in->readonly = 1;
+
+		out->state = IPSEC_SPSTATE_ALIVE;
+		out->policy = IPSEC_POLICY_ENTRUST;
+		out->dir = IPSEC_DIR_OUTBOUND;
+		out->readonly = 1;
+
+		initialized++;
+	}
 
 	new = ipsec_newpcbpolicy();
 	if (new == NULL) {
-		ipseclog((LOG_DEBUG, "ipsec_init_policy: No more memory.\n"));
+		ipseclog((LOG_DEBUG, "ipsec_init_pcbpolicy: No more memory.\n"));
 		return ENOBUFS;
 	}
 	bzero(new, sizeof(*new));
@@ -1257,20 +1135,10 @@ ipsec_init_policy(so, pcb_sp)
 	else
 		new->priv = 0;
 
-	if ((new->sp_in = key_newsp()) == NULL) {
-		ipsec_delpcbpolicy(new);
-		return ENOBUFS;
-	}
-	new->sp_in->state = IPSEC_SPSTATE_ALIVE;
-	new->sp_in->policy = IPSEC_POLICY_ENTRUST;
-
-	if ((new->sp_out = key_newsp()) == NULL) {
-		key_freesp(new->sp_in);
-		ipsec_delpcbpolicy(new);
-		return ENOBUFS;
-	}
-	new->sp_out->state = IPSEC_SPSTATE_ALIVE;
-	new->sp_out->policy = IPSEC_POLICY_ENTRUST;
+	new->sp_in = in;
+	new->sp_in->refcnt++;
+	new->sp_out = out;
+	new->sp_out->refcnt++;
 
 	*pcb_sp = new;
 
@@ -1279,29 +1147,57 @@ ipsec_init_policy(so, pcb_sp)
 
 /* copy old ipsec policy into new */
 int
-ipsec_copy_policy(old, new)
+ipsec_copy_pcbpolicy(old, new)
 	struct inpcbpolicy *old, *new;
 {
-	struct secpolicy *sp;
 
-	sp = ipsec_deepcopy_policy(old->sp_in);
-	if (sp) {
+	if (new->sp_in)
 		key_freesp(new->sp_in);
-		new->sp_in = sp;
-	} else
-		return ENOBUFS;
+	if (old->sp_in->policy == IPSEC_POLICY_IPSEC)
+		new->sp_in = ipsec_deepcopy_policy(old->sp_in);
+	else {
+		new->sp_in = old->sp_in;
+		new->sp_in->refcnt++;
+	}
 
-	sp = ipsec_deepcopy_policy(old->sp_out);
-	if (sp) {
+	if (new->sp_out)
 		key_freesp(new->sp_out);
-		new->sp_out = sp;
-	} else
-		return ENOBUFS;
+	if (old->sp_out->policy == IPSEC_POLICY_IPSEC)
+		new->sp_out = ipsec_deepcopy_policy(old->sp_out);
+	else {
+		new->sp_out = old->sp_out;
+		new->sp_out->refcnt++;
+	}
 
 	new->priv = old->priv;
 
 	return 0;
 }
+
+#if 0
+static int
+ipsec_deepcopy_pcbpolicy(pcb_sp)
+	struct inpcbpolicy *pcb_sp;
+{
+	struct secpolicy *sp;
+
+	sp = ipsec_deepcopy_policy(pcb_sp->sp_in);
+	if (sp) {
+		key_freesp(pcb_sp->sp_in);
+		pcb_sp->sp_in = sp;
+	} else
+		return ENOBUFS;
+
+	sp = ipsec_deepcopy_policy(pcb_sp->sp_out);
+	if (sp) {
+		key_freesp(pcb_sp->sp_out);
+		pcb_sp->sp_out = sp;
+	} else
+		return ENOBUFS;
+
+	return 0;
+}
+#endif
 
 /* deep-copy a policy in PCB */
 static struct secpolicy *
@@ -1345,6 +1241,10 @@ ipsec_deepcopy_policy(src)
 		q = &((*q)->next);
 	}
 
+	if (src->spidx)
+		if (keydb_setsecpolicyindex(dst, src->spidx) != 0)
+			goto fail;
+
 	dst->req = newchain;
 	dst->state = src->state;
 	dst->policy = src->policy;
@@ -1358,13 +1258,14 @@ fail:
 		free(p, M_SECA);
 		p = NULL;
 	}
+	key_freesp(dst);
 	return NULL;
 }
 
 /* set policy and ipsec request if present. */
 static int
-ipsec_set_policy(pcb_sp, optname, request, len, priv)
-	struct secpolicy **pcb_sp;
+ipsec_set_policy(spp, optname, request, len, priv)
+	struct secpolicy **spp;
 	int optname;
 	caddr_t request;
 	size_t len;
@@ -1375,7 +1276,7 @@ ipsec_set_policy(pcb_sp, optname, request, len, priv)
 	int error;
 
 	/* sanity check. */
-	if (pcb_sp == NULL || *pcb_sp == NULL || request == NULL)
+	if (spp == NULL || *spp == NULL || request == NULL)
 		return EINVAL;
 	if (len < sizeof(*xpl))
 		return EINVAL;
@@ -1387,8 +1288,8 @@ ipsec_set_policy(pcb_sp, optname, request, len, priv)
 
 	/* check policy type */
 	/* ipsec_set_policy() accepts IPSEC, ENTRUST and BYPASS. */
-	if (xpl->sadb_x_policy_type == IPSEC_POLICY_DISCARD
-	 || xpl->sadb_x_policy_type == IPSEC_POLICY_NONE)
+	if (xpl->sadb_x_policy_type == IPSEC_POLICY_DISCARD ||
+	    xpl->sadb_x_policy_type == IPSEC_POLICY_NONE)
 		return EINVAL;
 
 	/* check privileged socket */
@@ -1402,8 +1303,8 @@ ipsec_set_policy(pcb_sp, optname, request, len, priv)
 	newsp->state = IPSEC_SPSTATE_ALIVE;
 
 	/* clear old SP and set new SP */
-	key_freesp(*pcb_sp);
-	*pcb_sp = newsp;
+	key_freesp(*spp);
+	*spp = newsp;
 	KEYDEBUG(KEYDEBUG_IPSEC_DUMP,
 		printf("ipsec_set_policy: new policy\n");
 		kdebug_secpolicy(newsp));
@@ -1412,16 +1313,16 @@ ipsec_set_policy(pcb_sp, optname, request, len, priv)
 }
 
 static int
-ipsec_get_policy(pcb_sp, mp)
-	struct secpolicy *pcb_sp;
+ipsec_get_policy(sp, mp)
+	struct secpolicy *sp;
 	struct mbuf **mp;
 {
 
 	/* sanity check. */
-	if (pcb_sp == NULL || mp == NULL)
+	if (sp == NULL || mp == NULL)
 		return EINVAL;
 
-	*mp = key_sp2msg(pcb_sp);
+	*mp = key_sp2msg(sp);
 	if (!*mp) {
 		ipseclog((LOG_DEBUG, "ipsec_get_policy: No more memory.\n"));
 		return ENOBUFS;
@@ -1444,7 +1345,7 @@ ipsec4_set_policy(inp, optname, request, len, priv)
 	int priv;
 {
 	struct sadb_x_policy *xpl;
-	struct secpolicy **pcb_sp;
+	struct secpolicy **spp;
 
 	/* sanity check. */
 	if (inp == NULL || request == NULL)
@@ -1456,10 +1357,10 @@ ipsec4_set_policy(inp, optname, request, len, priv)
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = &inp->inp_sp->sp_in;
+		spp = &inp->inp_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = &inp->inp_sp->sp_out;
+		spp = &inp->inp_sp->sp_out;
 		break;
 	default:
 		ipseclog((LOG_ERR, "ipsec4_set_policy: invalid direction=%u\n",
@@ -1468,7 +1369,7 @@ ipsec4_set_policy(inp, optname, request, len, priv)
 	}
 
 	ipsec_invalpcbcache(inp->inp_sp, IPSEC_DIR_ANY);
-	return ipsec_set_policy(pcb_sp, optname, request, len, priv);
+	return ipsec_set_policy(spp, optname, request, len, priv);
 }
 
 int
@@ -1479,7 +1380,7 @@ ipsec4_get_policy(inp, request, len, mp)
 	struct mbuf **mp;
 {
 	struct sadb_x_policy *xpl;
-	struct secpolicy *pcb_sp;
+	struct secpolicy *sp;
 
 	/* sanity check. */
 	if (inp == NULL || request == NULL || mp == NULL)
@@ -1493,18 +1394,18 @@ ipsec4_get_policy(inp, request, len, mp)
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = inp->inp_sp->sp_in;
+		sp = inp->inp_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = inp->inp_sp->sp_out;
+		sp = inp->inp_sp->sp_out;
 		break;
 	default:
-		ipseclog((LOG_ERR, "ipsec4_set_policy: invalid direction=%u\n",
+		ipseclog((LOG_ERR, "ipsec4_get_policy: invalid direction=%u\n",
 			xpl->sadb_x_policy_dir));
 		return EINVAL;
 	}
 
-	return ipsec_get_policy(pcb_sp, mp);
+	return ipsec_get_policy(sp, mp);
 }
 
 /* delete policy in PCB */
@@ -1547,7 +1448,7 @@ ipsec6_set_policy(in6p, optname, request, len, priv)
 	int priv;
 {
 	struct sadb_x_policy *xpl;
-	struct secpolicy **pcb_sp;
+	struct secpolicy **spp;
 
 	/* sanity check. */
 	if (in6p == NULL || request == NULL)
@@ -1559,10 +1460,10 @@ ipsec6_set_policy(in6p, optname, request, len, priv)
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = &in6p->in6p_sp->sp_in;
+		spp = &in6p->in6p_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = &in6p->in6p_sp->sp_out;
+		spp = &in6p->in6p_sp->sp_out;
 		break;
 	default:
 		ipseclog((LOG_ERR, "ipsec6_set_policy: invalid direction=%u\n",
@@ -1571,7 +1472,7 @@ ipsec6_set_policy(in6p, optname, request, len, priv)
 	}
 
 	ipsec_invalpcbcache(in6p->in6p_sp, IPSEC_DIR_ANY);
-	return ipsec_set_policy(pcb_sp, optname, request, len, priv);
+	return ipsec_set_policy(spp, optname, request, len, priv);
 }
 
 int
@@ -1582,7 +1483,7 @@ ipsec6_get_policy(in6p, request, len, mp)
 	struct mbuf **mp;
 {
 	struct sadb_x_policy *xpl;
-	struct secpolicy *pcb_sp;
+	struct secpolicy *sp;
 
 	/* sanity check. */
 	if (in6p == NULL || request == NULL || mp == NULL)
@@ -1596,18 +1497,18 @@ ipsec6_get_policy(in6p, request, len, mp)
 	/* select direction */
 	switch (xpl->sadb_x_policy_dir) {
 	case IPSEC_DIR_INBOUND:
-		pcb_sp = in6p->in6p_sp->sp_in;
+		sp = in6p->in6p_sp->sp_in;
 		break;
 	case IPSEC_DIR_OUTBOUND:
-		pcb_sp = in6p->in6p_sp->sp_out;
+		sp = in6p->in6p_sp->sp_out;
 		break;
 	default:
-		ipseclog((LOG_ERR, "ipsec6_set_policy: invalid direction=%u\n",
+		ipseclog((LOG_ERR, "ipsec6_get_policy: invalid direction=%u\n",
 			xpl->sadb_x_policy_dir));
 		return EINVAL;
 	}
 
-	return ipsec_get_policy(pcb_sp, mp);
+	return ipsec_get_policy(sp, mp);
 }
 
 int
@@ -1645,8 +1546,9 @@ ipsec6_delete_pcbpolicy(in6p)
  * Either IPSEC_LEVEL_USE or IPSEC_LEVEL_REQUIRE are always returned.
  */
 u_int
-ipsec_get_reqlevel(isr)
+ipsec_get_reqlevel(isr, af)
 	struct ipsecrequest *isr;
+	int af;
 {
 	u_int level = 0;
 	u_int esp_trans_deflev, esp_net_deflev, ah_trans_deflev, ah_net_deflev;
@@ -1654,46 +1556,29 @@ ipsec_get_reqlevel(isr)
 	/* sanity check */
 	if (isr == NULL || isr->sp == NULL)
 		panic("ipsec_get_reqlevel: NULL pointer is passed.\n");
-	if (((struct sockaddr *)&isr->sp->spidx.src)->sa_family
-			!= ((struct sockaddr *)&isr->sp->spidx.dst)->sa_family)
-		panic("ipsec_get_reqlevel: family mismatched.\n");
-
-/* XXX note that we have ipseclog() expanded here - code sync issue */
-#define IPSEC_CHECK_DEFAULT(lev) \
-	(((lev) != IPSEC_LEVEL_USE && (lev) != IPSEC_LEVEL_REQUIRE	      \
-			&& (lev) != IPSEC_LEVEL_UNIQUE)			      \
-		? (ipsec_debug						      \
-			? log(LOG_INFO, "fixed system default level " #lev ":%d->%d\n",\
-				(lev), IPSEC_LEVEL_REQUIRE)		      \
-			: 0),						      \
-			(lev) = IPSEC_LEVEL_REQUIRE,			      \
-			(lev)						      \
-		: (lev))
 
 	/* set default level */
-	switch (((struct sockaddr *)&isr->sp->spidx.src)->sa_family) {
+	switch (af) {
 #ifdef INET
 	case AF_INET:
-		esp_trans_deflev = IPSEC_CHECK_DEFAULT(ip4_esp_trans_deflev);
-		esp_net_deflev = IPSEC_CHECK_DEFAULT(ip4_esp_net_deflev);
-		ah_trans_deflev = IPSEC_CHECK_DEFAULT(ip4_ah_trans_deflev);
-		ah_net_deflev = IPSEC_CHECK_DEFAULT(ip4_ah_net_deflev);
+		esp_trans_deflev = ip4_esp_trans_deflev;
+		esp_net_deflev = ip4_esp_net_deflev;
+		ah_trans_deflev = ip4_ah_trans_deflev;
+		ah_net_deflev = ip4_ah_net_deflev;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		esp_trans_deflev = IPSEC_CHECK_DEFAULT(ip6_esp_trans_deflev);
-		esp_net_deflev = IPSEC_CHECK_DEFAULT(ip6_esp_net_deflev);
-		ah_trans_deflev = IPSEC_CHECK_DEFAULT(ip6_ah_trans_deflev);
-		ah_net_deflev = IPSEC_CHECK_DEFAULT(ip6_ah_net_deflev);
+		esp_trans_deflev = ip6_esp_trans_deflev;
+		esp_net_deflev = ip6_esp_net_deflev;
+		ah_trans_deflev = ip6_ah_trans_deflev;
+		ah_net_deflev = ip6_ah_net_deflev;
 		break;
 #endif /* INET6 */
 	default:
 		panic("key_get_reqlevel: Unknown family. %d\n",
-			((struct sockaddr *)&isr->sp->spidx.src)->sa_family);
+			((struct sockaddr *)&isr->sp->spidx->src)->sa_family);
 	}
-
-#undef IPSEC_CHECK_DEFAULT
 
 	/* set level */
 	switch (isr->level) {
@@ -1766,7 +1651,7 @@ ipsec_in_reject(sp, m)
 	case IPSEC_POLICY_BYPASS:
 	case IPSEC_POLICY_NONE:
 		return 0;
-	
+
 	case IPSEC_POLICY_IPSEC:
 		break;
 
@@ -1782,9 +1667,8 @@ ipsec_in_reject(sp, m)
 	/* XXX should compare policy against ipsec header history */
 
 	for (isr = sp->req; isr != NULL; isr = isr->next) {
-
 		/* get current level */
-		level = ipsec_get_reqlevel(isr);
+		level = ipsec_get_reqlevel(isr, AF_INET);
 
 		switch (isr->saidx.proto) {
 		case IPPROTO_ESP:
@@ -1943,7 +1827,7 @@ ipsec_hdrsiz(sp)
 	size_t siz, clen;
 
 	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
-		printf("ipsec_in_reject: using SP\n");
+		printf("ipsec_hdrsiz: using SP\n");
 		kdebug_secpolicy(sp));
 
 	/* check policy */
@@ -1952,7 +1836,7 @@ ipsec_hdrsiz(sp)
 	case IPSEC_POLICY_BYPASS:
 	case IPSEC_POLICY_NONE:
 		return 0;
-	
+
 	case IPSEC_POLICY_IPSEC:
 		break;
 
@@ -2451,7 +2335,7 @@ ok:
 }
 
 /*
- * shift variable length bunffer to left.
+ * shift variable length buffer to left.
  * IN:	bitmap: pointer to the buffer
  * 	nbit:	the number of to shift.
  *	wsize:	buffer size (bytes).
@@ -2683,7 +2567,7 @@ ipsec4_output(state, sp, flags)
 
 		/* validity check */
 		if (isr->sav == NULL) {
-			switch (ipsec_get_reqlevel(isr)) {
+			switch (ipsec_get_reqlevel(isr, AF_INET)) {
 			case IPSEC_LEVEL_USE:
 				continue;
 			case IPSEC_LEVEL_REQUIRE:
@@ -2936,7 +2820,7 @@ ipsec6_output_trans(state, nexthdrp, mprev, sp, flags, tun)
 
 		/* validity check */
 		if (isr->sav == NULL) {
-			switch (ipsec_get_reqlevel(isr)) {
+			switch (ipsec_get_reqlevel(isr, AF_INET6)) {
 			case IPSEC_LEVEL_USE:
 				continue;
 			case IPSEC_LEVEL_REQUIRE:
@@ -3101,7 +2985,7 @@ ipsec6_output_tunnel(state, sp, flags)
 
 		/* validity check */
 		if (isr->sav == NULL) {
-			switch (ipsec_get_reqlevel(isr)) {
+			switch (ipsec_get_reqlevel(isr, AF_INET6)) {
 			case IPSEC_LEVEL_USE:
 				continue;
 			case IPSEC_LEVEL_REQUIRE:
@@ -3198,14 +3082,16 @@ ipsec6_output_tunnel(state, sp, flags)
 		switch (isr->saidx.proto) {
 		case IPPROTO_ESP:
 #ifdef IPSEC_ESP
-			error = esp6_output(state->m, &ip6->ip6_nxt, state->m->m_next, isr);
+			error = esp6_output(state->m, &ip6->ip6_nxt,
+					    state->m->m_next, isr);
 #else
 			m_freem(state->m);
 			error = EINVAL;
 #endif
 			break;
 		case IPPROTO_AH:
-			error = ah6_output(state->m, &ip6->ip6_nxt, state->m->m_next, isr);
+			error = ah6_output(state->m, &ip6->ip6_nxt,
+					   state->m->m_next, isr);
 			break;
 		case IPPROTO_IPCOMP:
 			/* XXX code should be here */
@@ -3414,11 +3300,12 @@ ipsec_copypkt(m)
 	for (n = m, mpp = &m; n; n = n->m_next) {
 		if (n->m_flags & M_EXT) {
 			/*
-			 * Make a copy only if there are more than one
+			 * Make a copy only if there is more than one
 			 * references to the cluster.
 			 * XXX: is this approach effective?
 			 */
-			if (n->m_ext.ext_free || MCLISREFERENCED(n)) {
+			if (M_READONLY(n))
+			{
 				int remain, copied;
 				struct mbuf *mm;
 
@@ -3659,7 +3546,7 @@ ipsec_clearhist(m)
 
 	n = ipsec_findaux(m);
 	if ((n) && n->m_len > sizeof(struct ipsecaux))
-		n->m_len = sizeof(struct ipsecaux); 
+		n->m_len = sizeof(struct ipsecaux);
 	ipsec_optaux(m, n);
 }
 
@@ -3703,13 +3590,7 @@ ipsec_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				return EINVAL;
 			}
 		}
-	}
-
-	switch (name[0]) {
-
-	case IPSECCTL_STATS:
-		return sysctl_struct(oldp, oldlenp, newp, newlen,
-				     &ipsecstat, sizeof(ipsecstat));
+		break;
 	case IPSECCTL_DEF_POLICY:
 		if (newp != NULL && newlen == sizeof(int)) {
 			switch (*(int *)newp) {
@@ -3721,8 +3602,16 @@ ipsec_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			}
 			ipsec_invalpcbcacheall();
 		}
+		break;
+	}
+
+	switch (name[0]) {
+	case IPSECCTL_STATS:
+		return sysctl_struct(oldp, oldlenp, newp, newlen,
+				     &ipsecstat, sizeof(ipsecstat));
+	case IPSECCTL_DEF_POLICY:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip4_def_policy.policy);
+				  &ip4_def_policy->policy);
 	case IPSECCTL_DEF_ESP_TRANSLEV:
 		if (newp != NULL)
 			ipsec_invalpcbcacheall();
@@ -3803,13 +3692,7 @@ ipsec6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				return EINVAL;
 			}
 		}
-	}
-
-	switch (name[0]) {
-
-	case IPSECCTL_STATS:
-		return sysctl_struct(oldp, oldlenp, newp, newlen,
-				     &ipsec6stat, sizeof(ipsec6stat));
+		break;
 	case IPSECCTL_DEF_POLICY:
 		if (newp != NULL && newlen == sizeof(int)) {
 			switch (*(int *)newp) {
@@ -3821,8 +3704,16 @@ ipsec6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			}
 			ipsec_invalpcbcacheall();
 		}
+		break;
+	}
+
+	switch (name[0]) {
+	case IPSECCTL_STATS:
+		return sysctl_struct(oldp, oldlenp, newp, newlen,
+				     &ipsec6stat, sizeof(ipsec6stat));
+	case IPSECCTL_DEF_POLICY:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_def_policy.policy);
+				  &ip6_def_policy->policy);
 	case IPSECCTL_DEF_ESP_TRANSLEV:
 		if (newp != NULL)
 			ipsec_invalpcbcacheall();

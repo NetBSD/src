@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.133.2.3 2002/02/11 20:10:45 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.133.2.4 2002/06/23 17:51:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -122,6 +122,9 @@ struct emul {
 #else
 	void		(*e_syscall) __P((void));
 #endif
+					/* Emulation specific sysctl */
+	int		(*e_sysctl) __P((int *, u_int , void *, size_t *,
+				void *, size_t, struct proc *p));
 };
 
 /* 

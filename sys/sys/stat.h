@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.40 2000/04/17 14:31:23 mrg Exp $	*/
+/*	$NetBSD: stat.h,v 1.40.8.1 2002/06/23 17:52:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -100,7 +100,7 @@ struct stat12 {				/* NetBSD-1.2 stat struct */
  * should be removed the next time the stat structure ABI is changed.
  * (This will happen whever we change to 8 byte time_t.)
  */
-#if defined(__alpha__)			/* XXX XXX XXX */
+#if defined(_LP64)	/* XXXX  && _BSD_TIME_T_ == int */
 #define	__STATPAD(x)	int x;
 #else
 #define	__STATPAD(x)	/* nothing */

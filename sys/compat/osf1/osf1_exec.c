@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.25.2.1 2002/01/10 19:52:01 thorpej Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.25.2.2 2002/06/23 17:44:36 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.25.2.1 2002/01/10 19:52:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.25.2.2 2002/06/23 17:44:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ const struct emul emul_osf1 = {
 	"/emul/osf1",
 #ifndef __HAVE_MINIMAL_EMUL
 	0,
-	(int *)osf1_errno_rxlist,
+	(int *)native_to_osf1_errno,
 	OSF1_SYS_syscall,
 	OSF1_SYS_MAXSYSCALL,
 #endif

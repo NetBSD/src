@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.76.2.2 2002/03/16 16:01:53 jdolecek Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.76.2.3 2002/06/23 17:49:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -48,8 +48,10 @@
  *		UNIX Operating System (Addison Welley, 1989)
  */
 
+#include "opt_softdep.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.76.2.2 2002/03/16 16:01:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.76.2.3 2002/06/23 17:49:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +79,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.76.2.2 2002/03/16 16:01:53 jdolecek Ex
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
+#ifndef SOFTDEP
 struct bio_ops bioops;	/* I/O operation notification */
+#endif
 
 /*
  * Insq/Remq for the buffer hash lists.
@@ -229,18 +233,7 @@ bread(vp, blkno, size, cred, bpp)
 	/* Get buffer for block. */
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
 
-	/*
-	 * Delayed write buffers are found in the cache and have
-	 * valid contents. Also, B_ERROR is not set, otherwise
-	 * getblk() would not have returned them.
-	 */
-	if (ISSET(bp->b_flags, B_DONE|B_DELWRI))
-		return (0);
-
-	/*
-	 * Otherwise, we had to start a read for it; wait until
-	 * it's valid and return the result.
-	 */
+	/* Wait for the read to complete, and return result. */
 	return (biowait(bp));
 }
 
@@ -274,18 +267,7 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 		(void) bio_doread(vp, rablks[i], rasizes[i], cred, B_ASYNC);
 	}
 
-	/*
-	 * Delayed write buffers are found in the cache and have
-	 * valid contents. Also, B_ERROR is not set, otherwise
-	 * getblk() would not have returned them.
-	 */
-	if (ISSET(bp->b_flags, B_DONE|B_DELWRI))
-		return (0);
-
-	/*
-	 * Otherwise, we had to start a read for it; wait until
-	 * it's valid and return the result.
-	 */
+	/* Otherwise, we had to start a read for it; wait until it's valid. */
 	return (biowait(bp));
 }
 
@@ -883,7 +865,7 @@ biowait(bp)
 	int s;
 	
 	s = splbio();
-	while (!ISSET(bp->b_flags, B_DONE))
+	while (!ISSET(bp->b_flags, B_DONE | B_DELWRI))
 		tsleep(bp, PRIBIO + 1, "biowait", 0);
 	splx(s);
 

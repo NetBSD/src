@@ -1,4 +1,4 @@
-/*	$NetBSD: example_syscall.c,v 1.1.6.1 2002/01/10 20:01:16 thorpej Exp $	*/
+/*	$NetBSD: example_syscall.c,v 1.1.6.2 2002/06/23 17:50:08 jdolecek Exp $	*/
 
 /*
  * example_syscall.c
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: example_syscall.c,v 1.1.6.1 2002/01/10 20:01:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: example_syscall.c,v 1.1.6.2 2002/06/23 17:50:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -63,7 +63,7 @@ int
 example_syscall(p, uap, retval)
 	struct proc	*p;
 	void		*uap;
-	int		retval[];
+	register_t	retval[];
 {
 	/*
 	 * Our new system call simply prints a message; it takes no

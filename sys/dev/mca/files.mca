@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.13.2.1 2002/01/10 19:55:59 thorpej Exp $
+# $NetBSD: files.mca,v 1.13.2.2 2002/06/23 17:47:13 jdolecek Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -19,7 +19,7 @@ attach	we at mca with we_mca
 file	dev/mca/if_we_mca.c		we_mca
 
 # Adaptec AHA-1640
-attach	aha at mca with aha_mca: isadma
+attach	aha at mca with aha_mca
 file	dev/mca/aha_mca.c		aha_mca
 
 # TROPIC based Token-Ring (IBM)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.2.3 2002/03/16 16:00:26 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.2.4 2002/06/23 17:43:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -111,6 +111,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		fpusave();
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
+	if (p1->p_flag & P_32)
+		p2->p_flag |= P_32;
 
 	/* Copy pcb from proc p1 to p2. */
 	if (p1 == curproc) {
@@ -152,7 +154,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	sf->sf_ppl = 0;
 	sf->sf_r12 = (u_int64_t)func;
 	sf->sf_r13 = (u_int64_t)arg;
-	sf->sf_rip = (u_int64_t)proc_trampoline;
+	if (func == child_return && !(p2->p_flag & P_32))
+		sf->sf_rip = (u_int64_t)child_trampoline;
+	else
+		sf->sf_rip = (u_int64_t)proc_trampoline;
 	pcb->pcb_rsp = (u_int64_t)sf;
 	pcb->pcb_rbp = 0;
 }

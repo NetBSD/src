@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.1 2001/06/19 00:21:18 fvdl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.1.2.1 2002/06/23 17:43:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ process_fpframe(p)
 	struct proc *p;
 {
 
-	return (&p->p_addr->u_pcb.pcb_savefpu);
+	return (&p->p_addr->u_pcb.pcb_savefpu.fp_fxsave);
 }
 
 int
@@ -105,7 +105,7 @@ process_read_regs(p, regs)
 {
 	struct trapframe *tf = process_frame(p);
 
-	regs->r_eflags = tf->tf_eflags;
+	regs->r_rflags = tf->tf_rflags;
 	regs->r_rdi = tf->tf_rdi;
 	regs->r_rsi = tf->tf_rsi;
 	regs->r_rbp = tf->tf_rbp;
@@ -205,7 +205,6 @@ process_write_regs(p, regs)
 	struct reg *regs;
 {
 	struct trapframe *tf = process_frame(p);
-	struct pcb *pcb = &p->p_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 #if 0
 	union descriptor *gdt = (union descriptor *)gdtstore;
@@ -214,8 +213,8 @@ process_write_regs(p, regs)
 	/*
 	 * Check for security violations.
 	 */
-	if (((regs->r_eflags ^ tf->tf_eflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(regs->r_cs, regs->r_eflags))
+	if (((regs->r_rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(regs->r_cs, regs->r_rflags))
 		return (EINVAL);
 
 	simple_lock(&pmap->pm_lock);
@@ -234,9 +233,7 @@ process_write_regs(p, regs)
 
 	simple_unlock(&pmap->pm_lock);
 
-	pcb->pcb_gs = regs->r_gs;
-	pcb->pcb_fs = regs->r_fs;
-	tf->tf_eflags = regs->r_eflags;
+	tf->tf_rflags = regs->r_rflags;
 	tf->tf_r15 = regs->r_r15;
 	tf->tf_r14 = regs->r_r14;
 	tf->tf_r13 = regs->r_r13;
@@ -285,9 +282,9 @@ process_sstep(p, sstep)
 	struct trapframe *tf = process_frame(p);
 
 	if (sstep)
-		tf->tf_eflags |= PSL_T;
+		tf->tf_rflags |= PSL_T;
 	else
-		tf->tf_eflags &= ~PSL_T;
+		tf->tf_rflags &= ~PSL_T;
 	
 	return (0);
 }

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6.2.3 2002/03/16 16:00:31 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.6.2.4 2002/06/23 17:44:06 jdolecek Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -220,7 +220,8 @@
 122	STD		{ int linux_sys_uname(struct linux_utsname *up); }
 123	UNIMPL		modify_ldt	
 124	UNIMPL		adjtimex
-125	NOARGS		{ int sys_mprotect(caddr_t addr, int len, int prot); }
+125	STD		{ int linux_sys_mprotect(const void *start, \
+			    unsigned long len, int prot); }
 126	STD		{ int linux_sys_sigprocmask(int how, \
 			    const linux_old_sigset_t *set, \
 			    linux_old_sigset_t *oset); }
@@ -324,8 +325,7 @@
 190	NOARGS		vfork { int sys___vfork14(void); }
 191	STD		{ int linux_sys_ugetrlimit(int which, \
 			    struct rlimit *rlp); }
-192	STD		{ int linux_sys_mmap2(void *addr, size_t len, \
-			    int prot, int flags, int fd, off_t offset); }
+192	UNIMPL		mmap2
 193	STD		{ int linux_sys_truncate64(const char *path, \
 				off_t length); }
 194	NOARGS		ftruncate64 { int sys_ftruncate(int fd, \
@@ -366,11 +366,12 @@
 214	NOARGS		setgid32 { int sys_setgid(gid_t gid); }
 215	NOARGS		setfsuid32 { int linux_sys_setfsuid(uid_t uid); }
 216	NOARGS		getfsuid32 { int linux_sys_getfsuid(void); }
-217	UNIMPL		getdents64
+217	STD		{ int linux_sys_getdents64(int fd, \
+			    struct linux_dirent64 *dent, unsigned int count); }
 218	UNIMPL		pivot_root
 219	UNIMPL		mincore
 220	UNIMPL		madvise
-221	UNIMPL		fcntl64
+221	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }
 ; Fill until 256
 222	UNIMPL
 223	UNIMPL

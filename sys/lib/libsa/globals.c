@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.3.46.1 2002/03/16 16:01:57 jdolecek Exp $	*/
+/*	$NetBSD: globals.c,v 1.3.46.2 2002/06/23 17:49:52 jdolecek Exp $	*/
 
 /*
  *	globals.c:
@@ -15,8 +15,6 @@
 #include "net.h"
 
 u_char	bcea[6] = BA;			/* broadcast ethernet address */
-
-struct open_file files[SOPEN_MAX];
 
 char	rootpath[FNAME_SIZE] = "/";	/* root mount path */
 char	bootfile[FNAME_SIZE];		/* bootp says to boot this */

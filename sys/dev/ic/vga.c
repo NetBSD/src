@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.36.2.4 2002/03/16 16:01:03 jdolecek Exp $ */
+/* $NetBSD: vga.c,v 1.36.2.5 2002/06/23 17:46:56 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.36.2.4 2002/03/16 16:01:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.36.2.5 2002/06/23 17:46:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,7 +361,7 @@ egavga_getfont(struct vga_config *vc, struct vgascreen *scr, char *name,
 	}
 
 	cookie = wsfont_find(name, 8, scr->pcs.type->fontheight, 0,
-			     WSDISPLAY_FONTORDER_L2R, 0);
+	                     WSDISPLAY_FONTORDER_L2R, 0);
 	/* XXX obey "primary" */
 	if (cookie == -1) {
 #ifdef VGAFONTDEBUG
@@ -708,7 +708,7 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSDISPLAYIO_GINFO:
 		/* XXX should get detailed hardware information here */
-		return ENOTTY;
+		return EPASSTHROUGH;
 
 	case WSDISPLAYIO_GVIDEO:
 		*(int *)data = (vga_get_video(vc) ? WSDISPLAYIO_VIDEO_ON :
@@ -727,14 +727,14 @@ vga_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
 		/* NONE of these operations are by the generic VGA driver. */
-		return ENOTTY;
+		return EPASSTHROUGH;
 	}
 
 	if (vc->vc_funcs == NULL)
-		return (-1);
+		return (EPASSTHROUGH);
 
 	if (vf->vf_ioctl == NULL)
-		return (-1);
+		return (EPASSTHROUGH);
 
 	return ((*vf->vf_ioctl)(v, cmd, data, flag, p));
 }
@@ -973,9 +973,12 @@ vga_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 	int res;
 
 	if (scr) {
-		name2 = strchr(data->name, ',');
-		if (name2)
-			*name2++ = '\0';
+		name2 = NULL;
+		if (data->name) {
+			name2 = strchr(data->name, ',');
+			if (name2)
+				*name2++ = '\0';
+		}
 		res = vga_selectfont(vc, scr, data->name, name2);
 		if (!res)
 			vga_setfont(vc, scr);

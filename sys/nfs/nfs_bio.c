@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.68.2.2 2002/02/11 20:10:42 jdolecek Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.68.2.3 2002/06/23 17:51:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.68.2.2 2002/02/11 20:10:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.68.2.3 2002/06/23 17:51:46 jdolecek Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -620,7 +620,8 @@ nfs_write(v)
 			np->n_size = uio->uio_offset + bytelen;
 		}
 		if ((uio->uio_offset & PAGE_MASK) == 0 &&
-		    ((uio->uio_offset + bytelen) & PAGE_MASK) == 0) {
+		    (bytelen & PAGE_MASK) == 0 &&
+		    uio->uio_offset >= vp->v_size) {
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
 			    UBC_WRITE | UBC_FAULTBUSY);
 		} else {
@@ -648,8 +649,7 @@ nfs_write(v)
 			error = VOP_PUTPAGES(vp,
 			    trunc_page(oldoff & ~(nmp->nm_wsize - 1)),
 			    round_page((uio->uio_offset + nmp->nm_wsize - 1) &
-				       ~(nmp->nm_wsize - 1)),
-			    PGO_CLEANIT | PGO_WEAK);
+				       ~(nmp->nm_wsize - 1)), PGO_CLEANIT);
 		}
 	} while (uio->uio_resid > 0);
 	if ((np->n_flag & NQNFSNONCACHE) || (ioflag & IO_SYNC)) {
@@ -972,7 +972,7 @@ nfs_doio(bp, p)
 	    struct vm_page *pgs[npages];
 	    boolean_t needcommit = TRUE;
 
-	    if ((bp->b_flags & B_ASYNC) != 0) {
+	    if ((bp->b_flags & B_ASYNC) != 0 && NFS_ISV3(vp)) {
 		    iomode = NFSV3WRITE_UNSTABLE;
 	    } else {
 		    iomode = NFSV3WRITE_FILESYNC;
@@ -1109,9 +1109,10 @@ nfs_getpages(v)
 	struct vnode *vp = ap->a_vp;
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct nfsnode *np = VTONFS(vp);
-	struct vm_page *pg, **pgs;
+	const int npages = *ap->a_count;
+	struct vm_page *pg, **pgs, *opgs[npages];
 	off_t origoffset, len;
-	int i, error, npages;
+	int i, error;
 	boolean_t v3 = NFS_ISV3(vp);
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	boolean_t locked = (ap->a_flags & PGO_LOCKED) != 0;
@@ -1127,26 +1128,88 @@ nfs_getpages(v)
 	crhold(np->n_rcred);
 
 	/*
-	 * call the genfs code to get the pages.
+	 * call the genfs code to get the pages.  `pgs' may be NULL
+	 * when doing read-ahead.
 	 */
 
-	npages = *ap->a_count;
+	pgs = ap->a_m;
+	if (write && locked && v3) {
+		KASSERT(pgs != NULL);
+#ifdef DEBUG
+
+		/*
+		 * If PGO_LOCKED is set, real pages shouldn't exists
+		 * in the array.
+		 */
+
+		for (i = 0; i < npages; i++)
+			KDASSERT(pgs[i] == NULL || pgs[i] == PGO_DONTCARE);
+#endif
+		memcpy(opgs, pgs, npages * sizeof(struct vm_pages *));
+	}
 	error = genfs_getpages(v);
-	if (error || !write || !v3) {
-		return error;
+	if (error) {
+		return (error);
+	}
+
+	/*
+	 * for read faults where the nfs node is not yet marked NMODIFIED,
+	 * set PG_RDONLY on the pages so that we come back here if someone
+	 * tries to modify later via the mapping that will be entered for
+	 * this fault.
+	 */
+
+	if (!write && (np->n_flag & NMODIFIED) == 0 && pgs != NULL) {
+		if (!locked) {
+			simple_lock(&uobj->vmobjlock);
+		}
+		for (i = 0; i < npages; i++) {
+			pg = pgs[i];
+			if (pg == NULL || pg == PGO_DONTCARE) {
+				continue;
+			}
+			pg->flags |= PG_RDONLY;
+		}
+		if (!locked) {
+			simple_unlock(&uobj->vmobjlock);
+		}
+	}
+	if (!write) {
+		return (0);
 	}
 
 	/*
 	 * this is a write fault, update the commit info.
 	 */
 
-	pgs = ap->a_m;
 	origoffset = ap->a_offset;
 	len = npages << PAGE_SHIFT;
 
-	lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
-	nfs_del_committed_range(vp, origoffset, len);
-	nfs_del_tobecommitted_range(vp, origoffset, len);
+	if (v3) {
+		error = lockmgr(&np->n_commitlock,
+		    LK_EXCLUSIVE | (locked ? LK_NOWAIT : 0), NULL);
+		if (error) {
+			KASSERT(locked != 0);
+
+			/*
+			 * Since PGO_LOCKED is set, we need to unbusy
+			 * all pages fetched by genfs_getpages() above,
+			 * tell the caller that there are no pages
+			 * available and put back original pgs array.
+			 */
+
+			uvm_lock_pageq();
+			uvm_page_unbusy(pgs, npages);
+			uvm_unlock_pageq();
+			*ap->a_count = 0;
+			memcpy(pgs, opgs,
+			    npages * sizeof(struct vm_pages *));
+			return (error);
+		}
+		nfs_del_committed_range(vp, origoffset, len);
+		nfs_del_tobecommitted_range(vp, origoffset, len);
+	}
+	np->n_flag |= NMODIFIED;
 	if (!locked) {
 		simple_lock(&uobj->vmobjlock);
 	}
@@ -1160,6 +1223,8 @@ nfs_getpages(v)
 	if (!locked) {
 		simple_unlock(&uobj->vmobjlock);
 	}
-	lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
-	return 0;
+	if (v3) {
+		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+	}
+	return (0);
 }

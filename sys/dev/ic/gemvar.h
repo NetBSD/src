@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.5.4.2 2002/01/10 19:54:30 thorpej Exp $ */
+/*	$NetBSD: gemvar.h,v 1.5.4.3 2002/06/23 17:46:23 jdolecek Exp $ */
 
 /*
  * 
@@ -64,6 +64,7 @@
  */
 #define	GEM_NRXDESC		128
 #define	GEM_NRXDESC_MASK	(GEM_NRXDESC - 1)
+#define	GEM_PREVRX(x)		((x - 1) & GEM_NRXDESC_MASK)
 #define	GEM_NEXTRX(x)		((x + 1) & GEM_NRXDESC_MASK)
 
 /*
@@ -130,6 +131,13 @@ struct gem_softc {
 	int		sc_mif_config;	/* Selected MII reg setting */
 
 	int		sc_pci;		/* XXXXX -- PCI buses are LE. */
+	u_int		sc_variant;	/* which GEM are we dealing with? */
+#define	GEM_UNKNOWN		0	/* don't know */
+#define	GEM_SUN_GEM		1	/* Sun GEM variant */
+#define	GEM_APPLE_GMAC		2	/* Apple GMAC variant */
+
+	u_int		sc_flags;	/* */
+#define	GEM_GIGABIT		0x0001	/* has a gigabit PHY */
 
 	void *sc_sdhook;		/* shutdown hook */
 	void *sc_powerhook;		/* power management hook */
@@ -157,11 +165,13 @@ struct gem_softc {
 
 	int		sc_txfree;	/* number of free Tx descriptors */
 	int		sc_txnext;	/* next ready Tx descriptor */
+	int		sc_txwin;	/* Tx descriptors since last Tx int */
 
 	struct gem_txsq	sc_txfreeq;	/* free Tx descsofts */
 	struct gem_txsq	sc_txdirtyq;	/* dirty Tx descsofts */
 
 	int		sc_rxptr;	/* next ready RX descriptor/descsoft */
+	int		sc_rxfifosize;	/* Rx FIFO size (bytes) */
 
 	/* ========== */
 	int		sc_inited;
@@ -175,7 +185,22 @@ struct gem_softc {
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
+
+	struct evcnt sc_ev_intr;
+#ifdef GEM_COUNTERS
+	struct evcnt sc_ev_txint;
+	struct evcnt sc_ev_rxint;
+	struct evcnt sc_ev_rxnobuf;
+	struct evcnt sc_ev_rxfull;
+	struct evcnt sc_ev_rxhist[9];
+#endif
 };
+
+#ifdef GEM_COUNTERS
+#define	GEM_COUNTER_INCR(sc, ctr)	((void) (sc->ctr.ev_count++))
+#else
+#define	GEM_COUNTER_INCR(sc, ctr)	((void) sc)
+#endif
 
 
 #define	GEM_DMA_READ(sc, v)	(((sc)->sc_pci) ? le64toh(v) : be64toh(v))

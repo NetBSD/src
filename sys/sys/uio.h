@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.20.22.1 2002/01/10 20:04:53 thorpej Exp $	*/
+/*	$NetBSD: uio.h,v 1.20.22.2 2002/06/23 17:52:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994

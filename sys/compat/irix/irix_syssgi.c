@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.11.4.4 2002/03/16 16:00:28 jdolecek Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.11.4.5 2002/06/23 17:43:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.4.4 2002/03/16 16:00:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.4.5 2002/06/23 17:43:58 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.4.4 2002/03/16 16:00:28 jdolece
 
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
+#include <compat/irix/irix_prctl.h>
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
 #include <compat/irix/irix_syssgi.h>
@@ -84,6 +85,7 @@ void	ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
 static int irix_syssgi_mapelf __P((int, Elf_Phdr *, int, 
     struct proc *, register_t *));
 static int irix_syssgi_sysconf __P((int name, struct proc *, register_t *));
+static int irix_syssgi_pathconf __P((char *, int, struct proc *, register_t *));
 
 int
 irix_sys_syssgi(p, v, retval)
@@ -128,6 +130,10 @@ irix_sys_syssgi(p, v, retval)
 		break;
 	}
 
+	case IRIX_SGI_SETSID: 	/* Set session ID: setsid(2) */
+		return (sys_setsid(p, NULL, retval)); 
+		break;
+
 	case IRIX_SGI_GETSID: {	/* Get session ID: getsid(2) */
 		struct sys_getsid_args cup;
 
@@ -143,6 +149,20 @@ irix_sys_syssgi(p, v, retval)
 		return (sys_getpgid(p, &cup, retval)); 
 		break;
 	}
+
+	case IRIX_SGI_SETPGID: {/* Get parent process GID: setpgid(2) */
+		struct sys_setpgid_args cup;
+
+		SCARG(&cup, pid) = (pid_t)SCARG(uap, arg1); 
+		SCARG(&cup, pgid) = (pid_t)SCARG(uap, arg2); 
+		return (sys_setpgid(p, &cup, retval)); 
+		break;
+	}
+
+	case IRIX_SGI_PATHCONF: /* Get file limits: pathconf(3) */ 
+		return irix_syssgi_pathconf((char *)SCARG(uap, arg1),
+		    (int)SCARG(uap, arg2), p, retval);
+		break;
 
 	case IRIX_SGI_RDNAME: {	/* Read Processes' name */
 		struct proc *tp;
@@ -200,6 +220,7 @@ irix_sys_syssgi(p, v, retval)
 		return irix_syssgi_sysconf((int)arg1, p, retval);	
 		break;
 
+	case IRIX_SGI_SATCTL:		/* control audit stream */
 	case IRIX_SGI_RXEV_GET:		/* Trusted IRIX call */
 		/* Undocumented (?) and unimplemented */
 		return 0;
@@ -371,8 +392,8 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 				   
 				vcp->ev_addr += base_vcp->ev_addr;
 			}
-			error = (*vcp->ev_proc)(p, vcp);
-			if (error)
+			/* Eventually do it for a whole share group */
+			if ((error = irix_sync_saddr_vmcmd(p, vcp)) != 0)
 				goto bad;
 		}
 		pht++;
@@ -398,7 +419,7 @@ irix_syssgi_sysconf(name, p, retval)
 	int mib[2], value;
 	int len = sizeof(value);
 	struct sys___sysctl_args cup;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	switch (name) {
 	case IRIX_SC_ARG_MAX:
@@ -429,6 +450,7 @@ irix_syssgi_sysconf(name, p, retval)
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_SAVED_IDS;
 		break;
+	case IRIX_SC_IP_SECOPTS:/* IP security options */
 	/* Trusted IRIX capabilities are unsupported */
 	case IRIX_SC_ACL:	/* ACcess Lists */
 	case IRIX_SC_AUDIT:	/* Audit */
@@ -448,22 +470,64 @@ irix_syssgi_sysconf(name, p, retval)
 	default:
 		printf("Warning: syssgi(SYSCONF) unsupported variable %d\n",
 		    name);
-		    return EINVAL;
+		return EINVAL;
 		break;
 	}
 
-	SCARG(&cup, name) = stackgap_alloc(&sg, sizeof(mib));
+	SCARG(&cup, name) = stackgap_alloc(p, &sg, sizeof(mib));
 	if ((error = copyout(&mib, SCARG(&cup, name), sizeof(mib))) != 0)
 		return error;
 	SCARG(&cup, namelen) = sizeof(mib);
-	SCARG(&cup, old) = stackgap_alloc(&sg, sizeof(value));
+	SCARG(&cup, old) = stackgap_alloc(p, &sg, sizeof(value));
 	if ((copyout(&value, SCARG(&cup, old), sizeof(value))) != 0)
 		return error;
-	SCARG(&cup, oldlenp) = stackgap_alloc(&sg, sizeof(len));
+	SCARG(&cup, oldlenp) = stackgap_alloc(p, &sg, sizeof(len));
 	if ((copyout(&len, SCARG(&cup, oldlenp), sizeof(len))) != 0)
 		return error;
 	SCARG(&cup, new) = NULL;
 	SCARG(&cup, newlen) = 0;
 
 	return sys___sysctl(p, &cup, retval);
+}
+
+static int 
+irix_syssgi_pathconf(path, name, p, retval)
+	char *path;
+	int name;
+	struct proc *p;
+	register_t *retval;
+{
+	struct sys_pathconf_args cup;
+	int bname;
+
+	switch (name) {
+	case IRIX_PC_LINK_MAX:
+	case IRIX_PC_MAX_CANON:
+	case IRIX_PC_MAX_INPUT:
+	case IRIX_PC_NAME_MAX:
+	case IRIX_PC_PATH_MAX:
+	case IRIX_PC_PIPE_BUF:
+	case IRIX_PC_CHOWN_RESTRICTED:
+	case IRIX_PC_NO_TRUNC:
+	case IRIX_PC_VDISABLE:
+	case IRIX_PC_SYNC_IO:
+		bname = name;
+		break;
+	case IRIX_PC_FILESIZEBITS:
+		bname = _PC_FILESIZEBITS;
+		break;
+	case IRIX_PC_PRIO_IO:
+	case IRIX_PC_ASYNC_IO:
+	case IRIX_PC_ABI_ASYNC_IO:
+	case IRIX_PC_ABI_AIO_XFER_MAX:
+	default:
+		printf("Warning: unimplemented IRIX pathconf() command %d\n",
+		    name);
+		*retval = 0;
+		return 0;
+		break;
+	}
+	SCARG(&cup, path) = path;
+	SCARG(&cup, name) = bname;
+	return sys_pathconf(p, &cup, retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.57.2.1 2002/01/10 19:51:13 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.57.2.2 2002/06/23 17:43:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.57.2.1 2002/01/10 19:51:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.57.2.2 2002/06/23 17:43:49 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,10 +178,10 @@ ibcs2_sys_waitsys(p, v, retval)
 	struct sys_wait4_args w4;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
 	SCARG(&w4, rusage) = NULL;
-	SCARG(&w4, status) = stackgap_alloc(&sg, sizeof(int));
+	SCARG(&w4, status) = stackgap_alloc(p, &sg, sizeof(int));
 
 #if defined(__i386__)
 #define WAITPID_EFLAGS	0x8c4	/* OF, SF, ZF, PF */
@@ -218,7 +218,7 @@ ibcs2_sys_execv(p, v, retval)
 	struct sys_execve_args ap;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -242,7 +242,7 @@ ibcs2_sys_execve(p, v, retval)
 	struct sys_execve_args ap;
 	caddr_t sg;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
@@ -613,7 +613,7 @@ ibcs2_sys_mknod(p, v, retval)
 		syscallarg(int) mode;
 		syscallarg(int) dev;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
         CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	if (S_ISFIFO(SCARG(uap, mode))) {
@@ -645,7 +645,7 @@ ibcs2_sys_getgroups(p, v, retval)
 	gid_t nset[NGROUPS_MAX];
 	struct sys_getgroups_args sa;
 	int gidsetsize;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	gidsetsize = SCARG(uap, gidsetsize);
 	if (gidsetsize > NGROUPS_MAX)
@@ -654,7 +654,7 @@ ibcs2_sys_getgroups(p, v, retval)
 	SCARG(&sa, gidsetsize) = gidsetsize;
 	
 	if (gidsetsize) {
-		SCARG(&sa, gidset) = stackgap_alloc(&sg, NGROUPS_MAX *
+		SCARG(&sa, gidset) = stackgap_alloc(p, &sg, NGROUPS_MAX *
 						    sizeof(gid_t *));
 	}
 	if ((error = sys_getgroups(p, &sa, retval)) != 0)
@@ -690,7 +690,7 @@ ibcs2_sys_setgroups(p, v, retval)
 	ibcs2_gid_t iset[NGROUPS_MAX];
 	struct sys_setgroups_args sa;
 	gid_t gp[NGROUPS_MAX], *ngid;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
 	if (SCARG(uap, gidsetsize) > NGROUPS_MAX)
@@ -704,7 +704,7 @@ ibcs2_sys_setgroups(p, v, retval)
 	}
 	for (i = 0; i < SCARG(&sa, gidsetsize); i++)
 		gp[i]= (gid_t)iset[i];
-	ngid = stackgap_alloc(&sg, NGROUPS_MAX * sizeof(gid_t));
+	ngid = stackgap_alloc(p, &sg, NGROUPS_MAX * sizeof(gid_t));
 	error = copyout(gp, ngid, SCARG(&sa, gidsetsize) * sizeof(gid_t));
 	if (error)
 		return error;
@@ -832,10 +832,10 @@ ibcs2_sys_sysconf(p, v, retval)
 
 	case IBCS2_SC_CHILD_MAX:
 	    {
-		caddr_t sg = stackgap_init(p->p_emul);
+		caddr_t sg = stackgap_init(p, 0);
 
 		SCARG(&ga, which) = RLIMIT_NPROC;
-		SCARG(&ga, rlp) = stackgap_alloc(&sg, sizeof(struct rlimit *));
+		SCARG(&ga, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit *));
 		if ((error = sys_getrlimit(p, &ga, retval)) != 0)
 			return error;
 		*retval = SCARG(&ga, rlp)->rlim_cur;
@@ -852,10 +852,10 @@ ibcs2_sys_sysconf(p, v, retval)
 
 	case IBCS2_SC_OPEN_MAX:
 	    {
-		caddr_t sg = stackgap_init(p->p_emul);
+		caddr_t sg = stackgap_init(p, 0);
 
 		SCARG(&ga, which) = RLIMIT_NOFILE;
-		SCARG(&ga, rlp) = stackgap_alloc(&sg, sizeof(struct rlimit *));
+		SCARG(&ga, rlp) = stackgap_alloc(p, &sg, sizeof(struct rlimit *));
 		if ((error = sys_getrlimit(p, &ga, retval)) != 0)
 			return error;
 		*retval = SCARG(&ga, rlp)->rlim_cur;
@@ -912,10 +912,10 @@ ibcs2_sys_alarm(p, v, retval)
 	int error;
         struct itimerval *itp, *oitp;
 	struct sys_setitimer_args sa;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
-        itp = stackgap_alloc(&sg, sizeof(*itp));
-	oitp = stackgap_alloc(&sg, sizeof(*oitp));
+        itp = stackgap_alloc(p, &sg, sizeof(*itp));
+	oitp = stackgap_alloc(p, &sg, sizeof(*oitp));
         timerclear(&itp->it_interval);
         itp->it_value.tv_sec = SCARG(uap, sec);
         itp->it_value.tv_usec = 0;
@@ -981,8 +981,8 @@ ibcs2_sys_times(p, v, retval)
 	struct sys_getrusage_args ga;
 	struct tms tms;
         struct timeval t;
-	caddr_t sg = stackgap_init(p->p_emul);
-        struct rusage *ru = stackgap_alloc(&sg, sizeof(*ru));
+	caddr_t sg = stackgap_init(p, 0);
+        struct rusage *ru = stackgap_alloc(p, &sg, sizeof(*ru));
 #define CONVTCK(r)      (r.tv_sec * hz + r.tv_usec / (1000000 / hz))
 
 	SCARG(&ga, who) = RUSAGE_SELF;
@@ -1018,10 +1018,10 @@ ibcs2_sys_stime(p, v, retval)
 	} */ *uap = v;
 	int error;
 	struct sys_settimeofday_args sa;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	struct timeval *tvp;
 
-	tvp = stackgap_alloc(&sg, sizeof(*SCARG(&sa, tv)));
+	tvp = stackgap_alloc(p, &sg, sizeof(*SCARG(&sa, tv)));
 	SCARG(&sa, tzp) = NULL;
 	error = copyin((caddr_t)SCARG(uap, timep),
 		       (void *)&tvp->tv_sec, sizeof(long));
@@ -1048,8 +1048,8 @@ ibcs2_sys_utime(p, v, retval)
 	struct sys_utimes_args sa;
 	struct timeval *tp;
 
-	caddr_t sg = stackgap_init(p->p_emul);
-	tp = stackgap_alloc(&sg, 2 * sizeof(struct timeval *));
+	caddr_t sg = stackgap_init(p, 0);
+	tp = stackgap_alloc(p, &sg, 2 * sizeof(struct timeval *));
         CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&sa, path) = SCARG(uap, path);
 	if (SCARG(uap, buf)) {
@@ -1265,11 +1265,11 @@ xenix_sys_rdchk(p, v, retval)
 	} */ *uap = v;
 	int error;
 	struct sys_ioctl_args sa;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&sa, fd) = SCARG(uap, fd);
 	SCARG(&sa, com) = FIONREAD;
-	SCARG(&sa, data) = stackgap_alloc(&sg, sizeof(int));
+	SCARG(&sa, data) = stackgap_alloc(p, &sg, sizeof(int));
 	if ((error = sys_ioctl(p, &sa, retval)) != 0)
 		return error;
 	*retval = (*((int*)SCARG(&sa, data))) ? 1 : 0;
@@ -1307,10 +1307,10 @@ xenix_sys_nap(p, v, retval)
 	struct sys_nanosleep_args na;
         struct timespec *rqtp;
         struct timespec *rmtp;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
-	rqtp = stackgap_alloc(&sg, sizeof(struct timespec));
-	rmtp = stackgap_alloc(&sg, sizeof(struct timespec));
+	rqtp = stackgap_alloc(p, &sg, sizeof(struct timespec));
+	rmtp = stackgap_alloc(p, &sg, sizeof(struct timespec));
 	rqtp->tv_sec = 0;
 	rqtp->tv_nsec = SCARG(uap, millisec) * 1000;
 	SCARG(&na, rqtp) = rqtp;
@@ -1330,7 +1330,7 @@ ibcs2_sys_unlink(p, v, retval)
 	struct ibcs2_sys_unlink_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_unlink(p, uap, retval);
@@ -1345,7 +1345,7 @@ ibcs2_sys_chdir(p, v, retval)
 	struct ibcs2_sys_chdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chdir(p, uap, retval);
@@ -1361,7 +1361,7 @@ ibcs2_sys_chmod(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chmod(p, uap, retval);
@@ -1378,7 +1378,7 @@ ibcs2_sys_chown(p, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys___posix_chown(p, uap, retval);
@@ -1393,7 +1393,7 @@ ibcs2_sys_rmdir(p, v, retval)
 	struct ibcs2_sys_rmdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_rmdir(p, uap, retval);
@@ -1409,7 +1409,7 @@ ibcs2_sys_mkdir(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	return sys_mkdir(p, uap, retval);
@@ -1425,7 +1425,7 @@ ibcs2_sys_symlink(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(const char *) link;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
@@ -1442,7 +1442,7 @@ ibcs2_sys_rename(p, v, retval)
 		syscallarg(const char *) from;
 		syscallarg(const char *) to;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
@@ -1460,7 +1460,7 @@ ibcs2_sys_readlink(p, v, retval)
 		syscallarg(char *) buf;
 		syscallarg(int) count;
 	} */ *uap = v;
-        caddr_t sg = stackgap_init(p->p_emul);
+        caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 	return sys_readlink(p, uap, retval);
@@ -1604,8 +1604,8 @@ ibcs2_sys_scoinfo(p, v, retval)
 		syscallarg(struct scoutsname *) bp;
 		syscallarg(int) len;
 	} */ *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
-	struct scoutsname *utsp = stackgap_alloc(&sg,
+	caddr_t sg = stackgap_init(p, 0);
+	struct scoutsname *utsp = stackgap_alloc(p, &sg,
 						 sizeof(struct scoutsname));
 
 	memset(utsp, 0, sizeof(struct scoutsname));
@@ -1652,7 +1652,7 @@ xenix_sys_locking(p, v, retval)
 	struct file *fp;
 	int cmd;
 	off_t off;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	switch SCARG(uap, blk) {
 	case X_LK_GETLK:
@@ -1665,7 +1665,7 @@ xenix_sys_locking(p, v, retval)
 		return (EBADF);
 	off = fp->f_offset;
 
-	flp = stackgap_alloc(&sg, sizeof(*flp));
+	flp = stackgap_alloc(p, &sg, sizeof(*flp));
 	flp->l_start = off;
 	switch SCARG(uap, blk) {
 	case X_LK_UNLCK:  

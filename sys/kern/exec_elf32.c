@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.63.2.3 2002/02/11 20:10:22 jdolecek Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.63.2.4 2002/06/23 17:49:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.63.2.3 2002/02/11 20:10:22 jdolecek Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.63.2.4 2002/06/23 17:49:23 jdolecek Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -383,7 +383,7 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 			    eh.e_entry < (ph[i].p_vaddr + size)) {
 				/* XXX */
 				*entry = addr + eh.e_entry;
-#ifdef mips
+#ifdef __mips__
 				*entry -= ph[i].p_vaddr;
 #endif
 				ap->arg_interp = addr;

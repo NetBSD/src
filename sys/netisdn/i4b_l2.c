@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.4.2.1 2002/01/10 20:03:36 thorpej Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.4.2.2 2002/06/23 17:51:27 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.4.2.1 2002/01/10 20:03:36 thorpej Exp $ 
+ *	$Id: i4b_l2.c,v 1.4.2.2 2002/06/23 17:51:27 jdolecek Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.4.2.1 2002/01/10 20:03:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.4.2.2 2002/06/23 17:51:27 jdolecek Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.4.2.1 2002/01/10 20:03:36 thorpej Exp $
 #include <netisdn/i4b_ioctl.h>
 #endif
 
+#include <netisdn/i4b_l3l4.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
@@ -74,13 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.4.2.1 2002/01/10 20:03:36 thorpej Exp $
 #include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
 
-int i4b_dl_establish_ind(int);
-int i4b_dl_establish_cnf(int);
-int i4b_dl_release_ind(int);
-int i4b_dl_release_cnf(int);
-int i4b_dl_data_ind(int, struct mbuf *);
-int i4b_dl_unit_data_ind(int, struct mbuf *);
-
 /* this layers debug level */
 
 unsigned int i4b_l2_debug = L2_DEBUG_DEFAULT;
@@ -88,28 +83,28 @@ unsigned int i4b_l2_debug = L2_DEBUG_DEFAULT;
 /*---------------------------------------------------------------------------*
  *	DL_ESTABLISH_REQ from layer 3
  *---------------------------------------------------------------------------*/
-int i4b_dl_establish_req(l2_softc_t *l2sc)
+int i4b_dl_establish_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
-	NDBGL2(L2_PRIM, "bri %d", l2sc->bri);
+	NDBGL2(L2_PRIM, "bri %d", l2sc->drv->bri);
 	i4b_l1_activate(l2sc);
-	i4b_next_l2state(l2sc, EV_DLESTRQ);
+	i4b_next_l2state(l2sc, drv, EV_DLESTRQ);
 	return(0);
 }
 
 /*---------------------------------------------------------------------------*
  *	DL_RELEASE_REQ from layer 3
  *---------------------------------------------------------------------------*/
-int i4b_dl_release_req(l2_softc_t *l2sc)
+int i4b_dl_release_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv)
 {
-	NDBGL2(L2_PRIM, "bri %d", l2sc->bri);
-	i4b_next_l2state(l2sc, EV_DLRELRQ);
+	NDBGL2(L2_PRIM, "bri %d", l2sc->drv->bri);
+	i4b_next_l2state(l2sc, drv, EV_DLRELRQ);
 	return(0);	
 }
 
 /*---------------------------------------------------------------------------*
  *	DL UNIT DATA REQUEST from Layer 3
  *---------------------------------------------------------------------------*/
-int i4b_dl_unit_data_req(l2_softc_t *l2sc, struct mbuf *m)
+int i4b_dl_unit_data_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
 #ifdef NOTDEF
 	NDBGL2(L2_PRIM, "bri %d", l2sc->bri);
@@ -120,7 +115,7 @@ int i4b_dl_unit_data_req(l2_softc_t *l2sc, struct mbuf *m)
 /*---------------------------------------------------------------------------*
  *	DL DATA REQUEST from Layer 3
  *---------------------------------------------------------------------------*/
-int i4b_dl_data_req(l2_softc_t *l2sc, struct mbuf *m)
+int i4b_dl_data_req(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
 	switch(l2sc->Q921_state)
 	{
@@ -146,7 +141,7 @@ int i4b_dl_data_req(l2_softc_t *l2sc, struct mbuf *m)
 			break;
 			
 		default:
-			NDBGL2(L2_ERROR, "bri %d ERROR in state [%s], freeing mbuf", l2sc->bri, i4b_print_l2state(l2sc));
+			NDBGL2(L2_ERROR, "bri %d ERROR in state [%s], freeing mbuf", l2sc->drv->bri, i4b_print_l2state(l2sc));
 			i4b_Dfreembuf(m);
 			break;
 	}		
@@ -157,10 +152,8 @@ int i4b_dl_data_req(l2_softc_t *l2sc, struct mbuf *m)
  *	isdn_layer2_activate_ind - link activation/deactivation indication from layer 1
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_activate_ind(isdn_layer2token t, int event_activate)
+isdn_layer2_activate_ind(struct l2_softc *l2sc, struct isdn_l3_driver *drv, int event_activate)
 {
-	struct l2_softc *l2sc = (struct l2_softc*)t;
-
 	if (event_activate) {
 		l2sc->ph_active = PH_ACTIVE;
 	} else {
@@ -215,22 +208,30 @@ i4b_l2_unit_init(l2_softc_t *l2sc)
  *	isdn_layer2_status_ind - status indication upward
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_status_ind(isdn_layer2token token, int status, int parm)
+isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int status, int parm)
 {
-	l2_softc_t *l2sc = (l2_softc_t*)token;
 	int s;
 	int sendup = 1;
 	
 	s = splnet();
 
-	NDBGL1(L1_PRIM, "bri %d, status=%d, parm=%d", l2sc->bri, status, parm);
+	NDBGL2(L2_PRIM, "bri %d, status=%d, parm=%d", l2sc->drv->bri, status, parm);
 
 	switch(status)
 	{
 		case STI_ATTACH:
+			if (parm == 0) {
+				/* detach */
+				callout_stop(&l2sc->T200_callout);
+				callout_stop(&l2sc->T202_callout);
+				callout_stop(&l2sc->T203_callout);
+				callout_stop(&l2sc->IFQU_callout);
+				break;
+			}
+
 			l2sc->i_queue.ifq_maxlen = IQUEUE_MAXLEN;
 			l2sc->ua_frame = NULL;
-			bzero(&l2sc->stat, sizeof(lapdstat_t));			
+			memset(&l2sc->stat, 0, sizeof(lapdstat_t));			
 			i4b_l2_unit_init(l2sc);
 			
 			/* initialize the callout handles for timeout routines */
@@ -248,8 +249,10 @@ isdn_layer2_status_ind(isdn_layer2token token, int status, int parm)
 /*XXX*/			if((l2sc->Q921_state >= ST_AW_EST) &&
 			   (l2sc->Q921_state <= ST_TIMREC))
 			{
-				NDBGL2(L2_ERROR, "bri %d, persistent deactivation!", l2sc->bri);
+				NDBGL2(L2_ERROR, "bri %d, persistent deactivation!", l2sc->drv->bri);
 				i4b_l2_unit_init(l2sc);
+				parm = -1;	/* this is passed as the new
+						 * TEI to upper layers */
 			}
 			else
 			{
@@ -259,16 +262,16 @@ isdn_layer2_status_ind(isdn_layer2token token, int status, int parm)
 
 		case STI_NOL1ACC:
 			i4b_l2_unit_init(l2sc);
-			NDBGL2(L2_ERROR, "bri %d, cannot access S0 bus!", l2sc->bri);
+			NDBGL2(L2_ERROR, "bri %d, cannot access S0 bus!", l2sc->drv->bri);
 			break;
 			
 		default:
-			NDBGL2(L2_ERROR, "ERROR, bri %d, unknown status message!", l2sc->bri);
+			NDBGL2(L2_ERROR, "ERROR, bri %d, unknown status message!", l2sc->drv->bri);
 			break;
 	}
 	
 	if(sendup)
-		i4b_mdl_status_ind(l2sc->bri, status, parm);  /* send up to layer 3 */
+		i4b_mdl_status_ind(l2sc->drv, status, parm);  /* send up to layer 3 */
 
 	splx(s);
 	
@@ -278,11 +281,11 @@ isdn_layer2_status_ind(isdn_layer2token token, int status, int parm)
 /*---------------------------------------------------------------------------*
  *	MDL_COMMAND_REQ from layer 3
  *---------------------------------------------------------------------------*/
-int i4b_mdl_command_req(int bri, int command, void * parm)
+int i4b_mdl_command_req(struct isdn_l3_driver *drv, int command, void * parm)
 {
-	struct l2_softc *sc = (struct l2_softc*)isdn_find_l2_by_bri(bri);
+	struct l2_softc *sc = (l2_softc_t*)drv->l1_token;
 
-	NDBGL2(L2_PRIM, "bri %d, command=%d, parm=%p", bri, command, parm);
+	NDBGL2(L2_PRIM, "bri %d, command=%d, parm=%p", drv->bri, command, parm);
 
 	switch(command)
 	{
@@ -295,9 +298,9 @@ int i4b_mdl_command_req(int bri, int command, void * parm)
 			break;
 	}		
 
-	/* XXX - check if we still need this (and the whole function
-	   pointer, when enable/disable is done properly) */
-	sc->driver->mph_command_req(sc->l1_token, command, parm);
+	/* pass down to layer 1 driver */
+	if (sc->driver)
+		sc->driver->mph_command_req(sc->l1_token, command, parm);
 	
 	return(0);
 }
@@ -306,9 +309,8 @@ int i4b_mdl_command_req(int bri, int command, void * parm)
  * isdn_layer2_data_ind - process a rx'd frame got from layer 1
  *---------------------------------------------------------------------------*/
 int
-isdn_layer2_data_ind(isdn_layer2token t, struct mbuf *m)
+isdn_layer2_data_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, struct mbuf *m)
 {
-	l2_softc_t *l2sc = (l2_softc_t*)t;
 	u_char *ptr = m->m_data;
 
 	if ( (*(ptr + OFF_CNTL) & 0x01) == 0 )
@@ -320,7 +322,7 @@ isdn_layer2_data_ind(isdn_layer2token t, struct mbuf *m)
 			i4b_Dfreembuf(m);
 			return(0);
 		}
-		i4b_rxd_i_frame(l2sc, m);
+		i4b_rxd_i_frame(l2sc, drv, m);
 	}
 	else if ( (*(ptr + OFF_CNTL) & 0x03) == 0x01 )
 	{
@@ -331,7 +333,7 @@ isdn_layer2_data_ind(isdn_layer2token t, struct mbuf *m)
 			i4b_Dfreembuf(m);
 			return(0);
 		}
-		i4b_rxd_s_frame(l2sc, m);
+		i4b_rxd_s_frame(l2sc, drv, m);
 	}
 	else if ( (*(ptr + OFF_CNTL) & 0x03) == 0x03 )
 	{
@@ -342,7 +344,7 @@ isdn_layer2_data_ind(isdn_layer2token t, struct mbuf *m)
 			i4b_Dfreembuf(m);
 			return(0);
 		}
-		i4b_rxd_u_frame(l2sc, m);
+		i4b_rxd_u_frame(l2sc, drv, m);
 	}
 	else
 	{
@@ -354,16 +356,49 @@ isdn_layer2_data_ind(isdn_layer2token t, struct mbuf *m)
 	return(0);
 }
 
-int i4b_l2_channel_get_state(int bri, int b_chanid)
+int i4b_l2_channel_get_state(struct isdn_l3_driver *drv, int b_chanid)
 {
-	l2_softc_t *sc = (l2_softc_t*)isdn_find_l2_by_bri(bri);
+	l2_softc_t *sc = drv->l1_token;
 	return sc->bchan_state[b_chanid];
 }
 
-void i4b_l2_channel_set_state(int bri, int b_chanid, int state)
+void i4b_l2_channel_set_state(struct isdn_l3_driver *drv, int b_chanid, int state)
 {
-	l2_softc_t *sc = (l2_softc_t*)isdn_find_l2_by_bri(bri);
+	l2_softc_t *sc = drv->l1_token;
 	sc->bchan_state[b_chanid] = state;
 }
+
+/*---------------------------------------------------------------------------*
+ *	telephony silence detection
+ *---------------------------------------------------------------------------*/
+
+#define TEL_IDLE_MIN (BCH_MAX_DATALEN/2)
+
+int
+isdn_bchan_silence(unsigned char *data, int len)
+{
+	register int i = 0;
+	register int j = 0;
+
+	/* count idle bytes */
+	
+	for(;i < len; i++)
+	{
+		if((*data >= 0xaa) && (*data <= 0xac))
+			j++;
+		data++;
+	}
+
+#ifdef NOTDEF
+	printf("isic_hscx_silence: got %d silence bytes in frame\n", j);
+#endif
+	
+	if(j < (TEL_IDLE_MIN))
+		return(0);
+	else
+		return(1);
+
+}
+
 
 #endif /* NI4BQ921 > 0 */

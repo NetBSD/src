@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.113.2.3 2002/02/11 20:09:52 jdolecek Exp $
+#	$NetBSD: files.isa,v 1.113.2.4 2002/06/23 17:47:03 jdolecek Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -294,7 +294,7 @@ define	sbdsp { }
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audio, isadma, sbdsp, mulaw, auconv, midibus
+device	sb: audiobus, isadma, sbdsp, mulaw, auconv, midibus
 file	dev/isa/sb.c			sb			needs-flag
 
 attach	sb at isa with sb_isa
@@ -307,7 +307,7 @@ attach	mpu at sbdsp with mpu_sb
 file	dev/isa/mpu_sb.c		mpu_sb
 
 # ProAudio Spectrum
-device	pas: audio, isadma, sbdsp, mulaw, auconv
+device	pas: audiobus, isadma, sbdsp, mulaw, auconv
 attach	pas at isa
 file	dev/isa/pas.c			pas			needs-flag
 
@@ -324,12 +324,12 @@ device	pss {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
 	     [irq = -1], [drq = -1]}
 attach	pss at isa
-device	sp: audio, isadma, ad1848, auconv
+device	sp: audiobus, isadma, ad1848, auconv
 attach	sp at pss
 file	dev/isa/pss.c			pss			needs-flag
 
 # Microsoft Windows Sound System
-device	wss { } : audio, isadma, ad1848, auconv
+device	wss { } : audiobus, isadma, ad1848, auconv
 file	dev/isa/wss.c			wss			needs-flag
 
 attach	wss at isa with wss_isa
@@ -339,7 +339,7 @@ attach	opl at wss with opl_wss
 file	dev/isa/opl_wss.c		opl_wss
 
 # ESS Technology ES1887/ES888/ES1888
-device	ess { } : audio, isadma, mulaw, auconv, midibus
+device	ess { } : audiobus, isadma, mulaw, auconv, midibus
 file	dev/isa/ess.c			ess			needs-flag
 
 attach	ess at isa with ess_isa
@@ -353,7 +353,7 @@ attach	opl at isa with opl_isa
 file	dev/isa/opl_isa.c		opl_isa
 
 # Yamaha OPL3-SA3
-device	ym { }: audio, isadma, ad1848, auconv
+device	ym { }: audiobus, isadma, ad1848, auconv
 file	dev/isa/ym.c			ym
 defparam opt_ym.h	YM_POWER_MODE YM_POWER_OFF_SEC
 
@@ -366,13 +366,13 @@ file	dev/isa/mpu_ym.c		mpu_ym			needs-flag
 # Gravis UltraSound & UltraSound MAX.
 # Use the "drq2" keyword in a config file to specify an extra DMA
 # channel for full-duplex operation. 
-device	gus: audio, isadma, ics2101, ad1848, mulaw, auconv
+device	gus: audiobus, isadma, ics2101, ad1848, mulaw, auconv
 attach	gus at isa
 file	dev/isa/gus.c			gus			needs-flag
 
 # Sierra's Aria chipset.
 # (e.g. Prometheus Aria 16)
-device	aria: audio, mulaw, auconv
+device	aria: audiobus, mulaw, auconv
 attach	aria at isa
 file	dev/isa/aria.c			aria
 

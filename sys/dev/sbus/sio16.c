@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.2.2.3 2002/03/16 16:01:31 jdolecek Exp $	*/
+/*	$NetBSD: sio16.c,v 1.2.2.4 2002/06/23 17:48:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.2.2.3 2002/03/16 16:01:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.2.2.4 2002/06/23 17:48:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -156,7 +156,7 @@ sio16_attach(parent, self, aux)
 			 sa->sa_reg[0].sbr_slot,
 			 sa->sa_reg[0].sbr_offset,
 			 sa->sa_reg[0].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, &h) != 0) {
+			 0, &h) != 0) {
 		printf("%s at sbus: can not map registers 0\n",
 		    self->dv_xname);
 		return;
@@ -166,7 +166,7 @@ sio16_attach(parent, self, aux)
 			 sa->sa_reg[1].sbr_slot,
 			 sa->sa_reg[1].sbr_offset,
 			 sa->sa_reg[1].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, &h) != 0) {
+			 0, &h) != 0) {
 		printf("%s at sbus: can not map registers 1\n",
 		    self->dv_xname);
 		return;
@@ -176,7 +176,7 @@ sio16_attach(parent, self, aux)
 			 sa->sa_reg[2].sbr_slot,
 			 sa->sa_reg[2].sbr_offset,
 			 sa->sa_reg[2].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, &h) != 0) {
+			 0, &h) != 0) {
 		printf("%s at sbus: can not map registers 2\n",
 		    self->dv_xname);
 		return;
@@ -186,7 +186,7 @@ sio16_attach(parent, self, aux)
 			 sa->sa_reg[3].sbr_slot,
 			 sa->sa_reg[3].sbr_offset,
 			 sa->sa_reg[3].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, &h) != 0) {
+			 0, &h) != 0) {
 		printf("%s at sbus: can not map registers 3\n",
 		    self->dv_xname);
 		return;

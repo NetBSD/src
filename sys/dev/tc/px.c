@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.7.2.2 2002/02/11 20:10:14 jdolecek Exp $	*/
+/* 	$NetBSD: px.c,v 1.7.2.3 2002/06/23 17:48:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.7.2.2 2002/02/11 20:10:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.7.2.3 2002/06/23 17:48:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,6 @@ px_init(struct stic_info *si, int bootstrap)
 		if (bpa + PX_BUF_SIZE > 8192*1024)
 			panic("px_init: allocation out of bounds");
 	} else {
-		TAILQ_INIT(&pglist);
 		if (uvm_pglistalloc(PX_BUF_SIZE, 0, 8192*1024, PX_BUF_ALIGN,
 		    0, &pglist, 1, 0) != 0)
 			panic("px_init: allocation failure");
@@ -419,7 +418,7 @@ px_ioctl(struct stic_info *si, u_long cmd, caddr_t data, int flag,
 		break;
 
 	default:
-		rv = ENOTTY;
+		rv = EPASSTHROUGH;
 		break;
 	}
 

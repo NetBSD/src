@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.19.2.2 2002/01/10 19:54:13 thorpej Exp $	*/
+/*	$NetBSD: an.c,v 1.19.2.3 2002/06/23 17:46:13 jdolecek Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.19.2.2 2002/01/10 19:54:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.19.2.3 2002/06/23 17:46:13 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -143,11 +143,6 @@ __KERNEL_RCSID(0, "$NetBSD: an.c,v 1.19.2.2 2002/01/10 19:54:13 thorpej Exp $");
 
 #include <dev/ic/anreg.h>
 #include <dev/ic/anvar.h>
-
-#if !defined(lint)
-static const char rcsid[] =
-  "$FreeBSD: src/sys/dev/an/if_an.c,v 1.12 2000/11/13 23:04:12 wpaul Exp $";
-#endif
 
 /* These are global because we need them in sys/pci/if_an_p.c. */
 static void an_reset		__P((struct an_softc *));

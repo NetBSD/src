@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.134.2.4 2002/03/16 16:02:20 jdolecek Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.134.2.5 2002/06/23 17:51:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.134.2.4 2002/03/16 16:02:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.134.2.5 2002/06/23 17:51:50 jdolecek Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -264,8 +264,8 @@ const struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
  */
 extern u_int32_t nfs_true, nfs_false;
 extern u_int32_t nfs_xdrneg1;
-extern struct nfsstats nfsstats;
 extern nfstype nfsv3_type[9];
+
 struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
 struct nfsmount *nfs_iodmount[NFS_MAXASYNCDAEMON];
 int nfs_numasync = 0;
@@ -2545,9 +2545,10 @@ nfs_readdirplusrpc(vp, uiop, cred)
 			    nfsm_adv(nfsm_rndup(i));
 			}
 			if (newvp != NULLVP) {
-			    vrele(newvp);
-			    if (newvp != vp)
-				VOP_UNLOCK(vp, 0);
+			    if (newvp == vp) 
+				vrele(newvp); 
+			    else 
+				vput(newvp);
 			    newvp = NULLVP;
 			}
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
@@ -2584,9 +2585,10 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		dnp->n_direofoffset = uiop->uio_offset;
 nfsmout:
 	if (newvp != NULLVP) {
-		vrele(newvp);
-		if (newvp != vp)
-			VOP_UNLOCK(vp, 0);
+		if(newvp == vp)
+		    vrele(newvp);
+		else
+		    vput(newvp);
 	}
 	return (error);
 }

@@ -1,0 +1,12 @@
+#	$NetBSD: files.ntfs,v 1.1.8.2 2002/06/23 17:51:52 jdolecek Exp $
+
+deffs	fs_ntfs.h		NTFS
+
+defflag	opt_ntfs.h		NTFS_DEBUG
+
+file	ntfs/ntfs_compr.c	ntfs
+file	ntfs/ntfs_conv.c	ntfs
+file	ntfs/ntfs_ihash.c	ntfs
+file	ntfs/ntfs_subr.c	ntfs
+file	ntfs/ntfs_vfsops.c	ntfs
+file	ntfs/ntfs_vnops.c	ntfs

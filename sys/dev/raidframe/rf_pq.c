@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.8.2.2 2002/01/10 19:57:54 thorpej Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.8.2.3 2002/06/23 17:48:36 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.8.2.2 2002/01/10 19:57:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_pq.c,v 1.8.2.3 2002/06/23 17:48:36 jdolecek Exp $");
 
 #include "rf_archs.h"
 
@@ -568,7 +568,7 @@ rf_RecoveryQFunc(node)
 
 	RF_ETIMER_START(timer);
 	/* start by copying Q into the buffer */
-	bcopy(node->params[node->numParams - 3].p, node->results[0],
+	memcpy(node->results[0], node->params[node->numParams - 3].p,
 	    rf_RaidAddressToByte(raidPtr, failedPDA->numSector));
 	for (i = 0; i < node->numParams - 4; i += 2) {
 		RF_ASSERT(node->params[i + 1].p != node->results[0]);

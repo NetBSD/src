@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_card.c,v 1.9.4.1 2002/01/10 19:57:11 thorpej Exp $	*/
+/*	$NetBSD: bktr_card.c,v 1.9.4.2 2002/06/23 17:48:07 jdolecek Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp */
 
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.9.4.1 2002/01/10 19:57:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_card.c,v 1.9.4.2 2002/06/23 17:48:07 jdolecek Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -323,7 +323,7 @@ static const struct CARDTYPE cards[] = {
 	   0xE00 },				/* GPIO mask */
 
 	{  CARD_LEADTEK,			/* the card id */
-	  "Leadtek Winfast TV 2000",		/* the 'name' */
+	  "Leadtek WinFast TV2000/VC100",	/* the 'name' */
 	   NULL,				/* the tuner */
 	   0,
 	   0,
@@ -542,6 +542,7 @@ static int locate_eeprom_address( bktr_ptr_t bktr) {
 /* Following not confirmed with http://members.hyperlink.net.au/~chart,
    so not added to NetBSD's pcidevs */
 #define PCI_VENDOR_LEADTEK_ALT	0x6606
+#define PCI_VENDOR_LEADTEK_ALT_2	0x6607
 #define PCI_VENDOR_FLYVIDEO	0x1851
 #define PCI_VENDOR_FLYVIDEO_2	0x1852
 #define PCI_VENDOR_PINNACLE_ALT	0xBD11
@@ -664,7 +665,8 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
                     goto checkTuner;
                 }
 
-                if (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT) {
+                if ((subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT)
+                 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_2) ) {
                     bktr->card = cards[ (card = CARD_LEADTEK) ];
 		    bktr->card.eepromAddr = eeprom_i2c_address;
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);

@@ -38,14 +38,14 @@
  *		EXPERIMENTAL !!!
  *		================
  *
- *	$Id: isic_isapnp_tel_s0P.c,v 1.2.6.1 2002/01/10 19:55:56 thorpej Exp $ 
+ *	$Id: isic_isapnp_tel_s0P.c,v 1.2.6.2 2002/06/23 17:47:11 jdolecek Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.2.6.1 2002/01/10 19:55:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.2.6.2 2002/06/23 17:47:11 jdolecek Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_TEL_S0_16_3_P
@@ -79,8 +79,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.2.6.1 2002/01/10 19:55:56 
 #include <machine/i4b_debug.h>
 #include <machine/i4b_ioctl.h>
 #else
+#include <netisdn/i4b_global.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #endif
 
 #include <dev/ic/isic_l1.h>
@@ -92,11 +95,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.2.6.1 2002/01/10 19:55:56 
 #include <netisdn/i4b_mbuf.h>
 
 #ifndef __FreeBSD__
-static u_int8_t tels0163P_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void tels0163P_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void tels0163P_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void tels0163P_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
-void isic_attach_s0163P __P((struct l1_softc *sc));
+static u_int8_t tels0163P_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
+static void tels0163P_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
+static void tels0163P_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
+static void tels0163P_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
+void isic_attach_s0163P __P((struct isic_softc *sc));
 #endif
 
 
@@ -114,7 +117,7 @@ tels0163P_read_fifo(void *buf, const void *base, size_t len)
 #else
 
 static void
-tels0163P_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+tels0163P_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
         bus_space_tag_t t = sc->sc_maps[what+1].t;
         bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -138,7 +141,7 @@ tels0163P_write_fifo(void *base, const void *buf, size_t len)
 #else
 
 static void
-tels0163P_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+tels0163P_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
         bus_space_tag_t t = sc->sc_maps[what+1].t;
         bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -161,7 +164,7 @@ tels0163P_write_reg(u_char *base, u_int offset, u_int v)
 #else
 
 static void
-tels0163P_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+tels0163P_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[what+1].t;
 	bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -184,7 +187,7 @@ tels0163P_read_reg(u_char *base, u_int offset)
 #else
 
 static u_int8_t
-tels0163P_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+tels0163P_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[what+1].t;
 	bus_space_handle_t h = sc->sc_maps[what+1].h;
@@ -200,7 +203,7 @@ tels0163P_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 int
 isic_probe_s0163P(struct isa_device *dev, unsigned int iobase2)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	
 	/* check max unit range */
 	
@@ -340,7 +343,7 @@ isic_attach_s0163P(struct isa_device *dev, unsigned int iobase2)
 #else
 
 void
-isic_attach_s0163P(struct l1_softc *sc)
+isic_attach_s0163P(struct isic_softc *sc)
 {
 	/* init card */
 	bus_space_tag_t t = sc->sc_maps[0].t;

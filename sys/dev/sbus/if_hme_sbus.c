@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_sbus.c,v 1.6.4.2 2002/03/16 16:01:29 jdolecek Exp $	*/
+/*	$NetBSD: if_hme_sbus.c,v 1.6.4.3 2002/06/23 17:48:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.6.4.2 2002/03/16 16:01:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_sbus.c,v 1.6.4.3 2002/06/23 17:48:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ hmeattach_sbus(parent, self, aux)
 			 sa->sa_reg[0].sbr_slot,
 			 sa->sa_reg[0].sbr_offset,
 			 (bus_size_t)sa->sa_reg[0].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, &sc->sc_seb) != 0) {
+			 0, &sc->sc_seb) != 0) {
 		printf("%s: cannot map SEB registers\n", self->dv_xname);
 		return;
 	}
@@ -142,7 +142,7 @@ hmeattach_sbus(parent, self, aux)
 			 sa->sa_reg[1].sbr_slot,
 			 sa->sa_reg[1].sbr_offset,
 			 (bus_size_t)sa->sa_reg[1].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, &sc->sc_etx) != 0) {
+			 0, &sc->sc_etx) != 0) {
 		printf("%s: cannot map ETX registers\n", self->dv_xname);
 		return;
 	}
@@ -150,7 +150,7 @@ hmeattach_sbus(parent, self, aux)
 			 sa->sa_reg[2].sbr_slot,
 			 sa->sa_reg[2].sbr_offset,
 			 (bus_size_t)sa->sa_reg[2].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, &sc->sc_erx) != 0) {
+			 0, &sc->sc_erx) != 0) {
 		printf("%s: cannot map ERX registers\n", self->dv_xname);
 		return;
 	}
@@ -158,7 +158,7 @@ hmeattach_sbus(parent, self, aux)
 			 sa->sa_reg[3].sbr_slot,
 			 sa->sa_reg[3].sbr_offset,
 			 (bus_size_t)sa->sa_reg[3].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, &sc->sc_mac) != 0) {
+			 0, &sc->sc_mac) != 0) {
 		printf("%s: cannot map MAC registers\n", self->dv_xname);
 		return;
 	}
@@ -166,7 +166,7 @@ hmeattach_sbus(parent, self, aux)
 			 sa->sa_reg[4].sbr_slot,
 			 sa->sa_reg[4].sbr_offset,
 			 (bus_size_t)sa->sa_reg[4].sbr_size,
-			 BUS_SPACE_MAP_LINEAR, &sc->sc_mif) != 0) {
+			 0, &sc->sc_mif) != 0) {
 		printf("%s: cannot map MIF registers\n", self->dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.1.6.2 2002/02/11 20:09:54 jdolecek Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.1.6.3 2002/06/23 17:47:30 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.1.6.2 2002/02/11 20:09:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.1.6.3 2002/06/23 17:47:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,14 +73,14 @@ struct cfattach pckbc_ofisa_ca = {
 
 static void pckbc_ofisa_intr_establish (struct pckbc_softc *, pckbc_slot_t);
 
-static const char *kb_compatible_strings[] = { "pnpPNP,303", NULL };
-static const char *ms_compatible_strings[] = { "pnpPNP,f03", NULL };
+static const char *const kb_compatible_strings[] = { "pnpPNP,303", NULL };
+static const char *const ms_compatible_strings[] = { "pnpPNP,f03", NULL };
 
 static int
 pckbc_ofisa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
-	static const char *compatible_strings[] = { "INTC,80c42", NULL };
+	static const char *const compatible_strings[] = { "INTC,80c42", NULL };
 	int rv = 0;
 
 	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.9.2.2 2002/01/10 19:53:55 thorpej Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.9.2.3 2002/06/23 17:46:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.9.2.2 2002/01/10 19:53:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.9.2.3 2002/06/23 17:46:02 jdolecek Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -591,7 +591,7 @@ bivideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EINVAL);
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t

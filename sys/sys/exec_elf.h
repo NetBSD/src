@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.51.2.3 2002/02/11 20:10:44 jdolecek Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.51.2.4 2002/06/23 17:51:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -249,7 +249,8 @@ typedef struct {
 #define	EM_TINYJ	61	/* Advanced Logic Corp. TinyJ embedded family processor */
 #define	EM_X86_64	62	/* AMD x86-64 architecture */
 #define	EM_PDSP		63	/* Sony DSP Processor */
-			/* 64-65 - Reserved */
+#define	EM_PDP10	64	/* Digital Equipment Corp. PDP-10 */
+#define	EM_PDP11	65	/* Digital Equipment Corp. PDP-11 */
 #define	EM_FX66		66	/* Siemens FX66 microcontroller */
 #define	EM_ST9PLUS	67	/* STMicroelectronics ST9+ 8/16 bit microcontroller */
 #define	EM_ST7		68	/* STMicroelectronics ST7 8-bit microcontroller */

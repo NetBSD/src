@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.h,v 1.8 2001/02/21 23:53:02 eeh Exp $	 */
+/*	$NetBSD: svr4_stat.h,v 1.8.4.1 2002/06/23 17:44:48 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ struct svr4_stat {
 
 struct svr4_xstat {
 	svr4_dev_t		st_dev;
-#ifndef __LP64__
+#ifndef _LP64
 	long			st_pad1[3];
 #endif
 	svr4_ino_t		st_ino;
@@ -67,11 +67,11 @@ struct svr4_xstat {
 	svr4_uid_t		st_uid;
 	svr4_gid_t		st_gid;
 	svr4_dev_t		st_rdev;
-#ifndef __LP64__
+#ifndef _LP64
 	long			st_pad2[2];
 #endif
 	svr4_off_t		st_size;
-#ifndef __LP64__
+#ifndef _LP64
 	long			st_pad3;
 #endif
 	svr4_timestruc_t	st_atim;
@@ -81,14 +81,14 @@ struct svr4_xstat {
 	int			st_blksize;
 	svr4_blkcnt_t		st_blocks;
 	char			st_fstype[16];
-#ifndef __LP64__
+#ifndef _LP64
 	long			st_pad4[8];
 #endif
 };
 
 struct svr4_stat64 {
 	svr4_dev_t		st_dev;
-#ifndef __LP64__
+#ifndef _LP64
 	long			st_pad1[3];
 #endif
 	svr4_ino64_t		st_ino;
@@ -97,7 +97,7 @@ struct svr4_stat64 {
 	svr4_uid_t		st_uid;
 	svr4_gid_t		st_gid;
 	svr4_dev_t		st_rdev;
-#ifndef __LP64__
+#ifndef _LP64
 	long			st_pad2[2];
 #endif
 	svr4_off64_t		st_size;
@@ -107,7 +107,7 @@ struct svr4_stat64 {
 	int			st_blksize;
 	svr4_blkcnt64_t		st_blocks;
 	char			st_fstype[16];
-#ifndef __LP64__
+#ifndef _LP64
 	long			st_pad4[8];
 #endif
 };

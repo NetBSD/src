@@ -1,4 +1,4 @@
-/*	$NetBSD: stvar.h,v 1.2.4.1 2002/01/10 19:58:30 thorpej Exp $ */
+/*	$NetBSD: stvar.h,v 1.2.4.2 2002/06/23 17:48:51 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,6 +114,11 @@ struct st_softc {
 	u_int last_dsty;	/* last density opened               */
 	short mt_resid;		/* last (short) resid                */
 	short mt_erreg;		/* last error (sense key) seen       */
+	/* relative to BOT location */
+	daddr_t fileno;
+	daddr_t blkno;
+	int32_t last_io_resid;
+	int32_t last_ctl_resid;
 #define	mt_key	mt_erreg
 	u_int8_t asc;		/* last asc code seen		     */
 	u_int8_t ascq;		/* last asc code seen		     */
@@ -167,12 +172,13 @@ struct st_softc {
 #define	ST_DONTBUFFER	0x1000	/* Disable buffering/caching */
 #define	ST_EARLYWARN	0x2000	/* Do (deferred) EOM for variable mode */
 #define	ST_EOM_PENDING	0x4000	/* EOM reporting deferred until next op */
+#define	ST_POSUPDATED	0x8000	/* tape position already updated */
 
 #define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_EOM_PENDING | \
 			 ST_BLANK_READ)
 #define	ST_PER_MOUNT	(ST_INFO_VALID | ST_BLOCK_SET | ST_WRITTEN |	\
 			 ST_FIXEDBLOCKS | ST_READONLY | ST_FM_WRITTEN |	\
-			 ST_2FM_AT_EOD | ST_PER_ACTION)
+			 ST_2FM_AT_EOD | ST_PER_ACTION | ST_POSUPDATED)
 
 void	stattach __P((struct device *, struct st_softc *, void *));
 int stactivate __P((struct device *, enum devact));

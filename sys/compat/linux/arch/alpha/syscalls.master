@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35.2.2 2002/03/16 16:00:30 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.35.2.3 2002/06/23 17:44:04 jdolecek Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -176,8 +176,9 @@
 			    int prot, int flags, int fd, linux_off_t offset); }
 72	UNIMPL
 73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
-74	NOARGS		{ int sys_mprotect(void *addr, size_t len, int prot); }
-; Liunx sys_madvise just returns 0.
+74	STD		{ int linux_sys_mprotect(const void *start, \
+			    unsigned long len, int prot); }
+; Linux sys_madvise just returns 0.
 75	UNIMPL		madvise
 76	UNIMPL		vhangup
 77	UNIMPL
@@ -344,8 +345,7 @@
 ; XXX: Dunno
 191	STD		{ int linux_sys_ugetrlimit(int which, \
 			    struct rlimit *rlp); }
-192	STD		{ int linux_sys_mmap2(void *addr, size_t len, \
-			    int prot, int flags, int fd, off_t offset); }
+192	UNIMPL		mmap2
 193	UNIMPL
 194	UNIMPL
 195	UNIMPL
@@ -602,5 +602,5 @@
 374	UNIMPL		pivot_root
 375	UNIMPL		mincore
 376	UNIMPL		pciconfig_iobase
-377	UNIMPL		getdents64
-
+377	STD		{ int linux_sys_getdents64(int fd, \
+			    struct linux_dirent64 *dent, unsigned int count); }

@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.2.2.1 2002/01/10 19:57:29 thorpej Exp $ */
+/* $NetBSD: acemidi.c,v 1.2.2.2 2002/06/23 17:48:26 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.2.2.1 2002/01/10 19:57:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.2.2.2 2002/06/23 17:48:26 jdolecek Exp $");
 
 #include <sys/param.h>
 
@@ -72,7 +72,7 @@ acemidi_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
-	if (pa->pa_product == PODULE_MCS_MIDICONNECT)
+	if (pa->pa_product == PODULE_MIDICONNECT)
 		return 1;
 	return 0;
 }

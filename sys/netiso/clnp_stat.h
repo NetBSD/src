@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_stat.h,v 1.6 1996/02/13 22:08:46 christos Exp $	*/
+/*	$NetBSD: clnp_stat.h,v 1.6.44.1 2002/06/23 17:51:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -95,11 +95,15 @@ struct clnp_stat {
 						 * received */
 	int             cns_er_inhist[CLNP_ERRORS + 1];
 	int             cns_er_outhist[CLNP_ERRORS + 1];
-}               clnp_stat;
+};
+
+#ifdef _KERNEL
+extern struct clnp_stat clnp_stat;
 
 #ifdef INCSTAT
 #undef INCSTAT
 #endif				/* INCSTAT */
-#define INCSTAT(x) clnp_stat./**/x/**/++
+#define INCSTAT(x) clnp_stat.x++
+#endif /* _KERNEL */
 
 #endif				/* _NETISO_CLNP_STAT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.2.6.2 2002/03/16 16:01:31 jdolecek Exp $ */
+/*	$NetBSD: tcx.c,v 1.2.6.3 2002/06/23 17:48:42 jdolecek Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.6.2 2002/03/16 16:01:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.2.6.3 2002/06/23 17:48:42 jdolecek Exp $");
+
+/*
+ * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
+ * it is bypassed on the 8-bit version (onboard framebuffer for SS4)
+ */
+#undef TCX_CG8
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +91,28 @@ struct tcx_softc {
 
 	volatile struct bt_regs *sc_bt;	/* Brooktree registers */
 	volatile struct tcx_thc *sc_thc;/* THC registers */
+#ifdef TCX_CG8
+	volatile ulong *sc_cplane;	/* framebuffer with control planes */
+#endif
+	short	sc_8bit;		/* true if 8-bit hardware */
 	short	sc_blanked;		/* true if blanked */
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
+
+/*
+ * The S24 provides the framebuffer RAM mapped in three ways:
+ * 26 bits per pixel, in 32-bit words; the low-order 24 bits are
+ * blue, green, and red values, and the other two bits select the
+ * display modes, per pixel);
+ * 24 bits per pixel, in 32-bit words; the high-order byte reads as
+ * zero, and is ignored on writes (so the mode bits cannot be altered);
+ * 8 bits per pixel, unpadded; writes to this space do not modify the
+ * other 18 bits.
+ */
+#define TCX_CTL_8_MAPPED	0x00000000	/* 8 bits, uses color map */
+#define TCX_CTL_24_MAPPED	0x01000000	/* 24 bits, uses color map */
+#define TCX_CTL_24_LEVEL	0x03000000	/* 24 bits, ignores color map */
+#define TCX_CTL_PIXELMASK	0x00FFFFFF	/* mask for index/level */
 
 /* autoconfiguration driver */
 static void	tcxattach __P((struct device *, struct device *, void *));
@@ -112,6 +137,20 @@ static void tcx_reset __P((struct tcx_softc *));
 static void tcx_loadcmap __P((struct tcx_softc *, int, int));
 
 #define OBPNAME	"SUNW,tcx"
+
+#ifdef TCX_CG8
+/*
+ * For CG8 emulation, we map the 32-bit-deep framebuffer at an offset of
+ * 256K; the cg8 space begins with a mono overlay plane and an overlay
+ * enable plane (128K bytes each, 1 bit per pixel), immediately followed
+ * by the color planes, 32 bits per pixel.  We also map just the 32-bit
+ * framebuffer at 0x04000000 (TCX_USER_RAM_COMPAT), for compatibility
+ * with the cg8 driver.
+ */
+#define	TCX_CG8OVERLAY	(256 * 1024)
+#define	TCX_SIZE_DFB32	(1152 * 900 * 4) /* max size of the framebuffer */
+#endif
+
 /*
  * Match a tcx.
  */
@@ -149,27 +188,71 @@ tcxattach(parent, self, args)
 	fb->fb_device = &sc->sc_dev;
 	/* Mask out invalid flags from the user. */
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
-	fb->fb_type.fb_depth = node_has_property(node, "tcx-24-bit")
-		? 24
-		: (node_has_property(node, "tcx-8-bit")
-			? 8
-			: 8);
+	/*
+	 * The onboard framebuffer on the SS4 supports only 8-bit mode;
+	 * it can be distinguished from the S24 card for the SS5 by the
+	 * presence of the "tcx-8-bit" attribute on the SS4 version.
+	 */
+	sc->sc_8bit = node_has_property(node, "tcx-8-bit");
+#ifdef TCX_CG8
+	if (sc->sc_8bit) {
+#endif
+		/*
+		 * cg8 emulation is either not compiled in or not supported
+		 * on this hardware.  Report values for the 8-bit framebuffer
+		 * so cg3 emulation works.  (If this hardware supports
+		 * 24-bit mode, the 24-bit framebuffer will also be available)
+		 */
+		fb->fb_type.fb_depth = 8;
+		fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
 
-	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
-
-	ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
+		ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
+#ifdef TCX_CG8
+	} else {
+		/*
+		 * for cg8 emulation, unconditionally report the depth as
+		 * 32 bits, but use the height and width reported by the
+		 * boot prom.  cg8 users want to see the full size of
+		 * overlay planes plus color planes included in the
+		 * reported framebuffer size.
+		 */
+		fb->fb_type.fb_depth = 32;
+		fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
+		fb->fb_linebytes =
+			(fb->fb_type.fb_width * fb->fb_type.fb_depth) / 8;
+		ramsize = TCX_CG8OVERLAY +
+			(fb->fb_type.fb_height * fb->fb_linebytes);
+	}
+#endif
 	fb->fb_type.fb_cmsize = 256;
 	fb->fb_type.fb_size = ramsize;
 	printf(": %s, %d x %d", OBPNAME,
 		fb->fb_type.fb_width,
 		fb->fb_type.fb_height);
+#ifdef TCX_CG8
+	/*
+	 * if cg8 emulation is enabled, say so; but if hardware can't
+	 * emulate cg8, explain that instead
+	 */
+	printf( (sc->sc_8bit)?
+		" (8-bit only)" :
+		" (emulating cg8)");
+#endif
 
 	/*
 	 * XXX - should be set to FBTYPE_TCX.
 	 * XXX For CG3 emulation to work in current (96/6) X11 servers,
 	 * XXX `fbtype' must point to an "unregocnised" entry.
 	 */
+#ifdef TCX_CG8
+	if (sc->sc_8bit) {
+		fb->fb_type.fb_type = FBTYPE_RESERVED3;
+	} else {
+		fb->fb_type.fb_type = FBTYPE_MEMCOLOR;
+	}
+#else
 	fb->fb_type.fb_type = FBTYPE_RESERVED3;
+#endif
 
 
 	if (sa->sa_nreg != TCX_NREG) {
@@ -193,7 +276,8 @@ tcxattach(parent, self, args)
 		printf("tcxattach: cannot map thc registers\n");
 		return;
 	}
-	sc->sc_thc = (volatile struct tcx_thc *)bh;
+	sc->sc_thc = (volatile struct tcx_thc *)
+		bus_space_vaddr(sa->sa_bustag, bh);
 
 	if (sbus_bus_map(sa->sa_bustag,
 			 sc->sc_physadr[TCX_REG_CMAP].sbr_slot,
@@ -203,7 +287,23 @@ tcxattach(parent, self, args)
 		printf("tcxattach: cannot map bt registers\n");
 		return;
 	}
-	sc->sc_bt = bt = (volatile struct bt_regs *)bh;
+	sc->sc_bt = bt = (volatile struct bt_regs *)
+		bus_space_vaddr(sa->sa_bustag, bh);
+
+#ifdef TCX_CG8
+	if (!sc->sc_8bit) {
+		if (sbus_bus_map(sa->sa_bustag,
+			 (bus_type_t)sc->sc_physadr[TCX_REG_RDFB32].sbr_slot,
+			 (bus_addr_t)sc->sc_physadr[TCX_REG_RDFB32].sbr_offset,
+			 TCX_SIZE_DFB32,
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+			printf("tcxattach: cannot map control planes\n");
+			return;
+		}
+		sc->sc_cplane = (volatile ulong *)bh;
+	}
+#endif
 
 	isconsole = fb_is_console(node);
 
@@ -232,6 +332,16 @@ tcxattach(parent, self, args)
 	fb_attach(&sc->sc_fb, isconsole);
 }
 
+#ifdef TCX_CG8
+/*
+ * keep track of the number of opens, so we can switch to 24-bit mode
+ * when the device is first opened, and return to 8-bit mode on the
+ * last close.  (stolen from cgfourteen driver...)  There can only be
+ * one TCX per system, so we only need one flag.
+ */
+static int tcx_opens = 0;
+#endif
+
 int
 tcxopen(dev, flags, mode, p)
 	dev_t dev;
@@ -239,9 +349,34 @@ tcxopen(dev, flags, mode, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
+#ifdef TCX_CG8
+	struct tcx_softc *sc;
+	int i, s, oldopens;
+	volatile ulong *cptr;
+	struct fbdevice *fb;
+#endif
 
 	if (unit >= tcx_cd.cd_ndevs || tcx_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
+#ifdef TCX_CG8
+	sc = tcx_cd.cd_devs[unit];
+	if (!sc->sc_8bit) {
+		s = splhigh();
+		oldopens = tcx_opens++;
+		splx(s);
+		if (oldopens == 0) {
+			/*
+			 * rewrite the control planes to select 24-bit mode
+			 * and clear the screen
+			 */
+			fb = &sc->sc_fb;
+			i = fb->fb_type.fb_height * fb->fb_type.fb_width;
+			cptr = sc->sc_cplane;
+			while (--i >= 0)
+				*cptr++ = TCX_CTL_24_LEVEL;
+		}
+	}
+#endif
 	return (0);
 }
 
@@ -252,8 +387,34 @@ tcxclose(dev, flags, mode, p)
 	struct proc *p;
 {
 	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
+#ifdef TCX_CG8
+	int i, s, opens;
+	volatile ulong *cptr;
+	struct fbdevice *fb;
+#endif
 
 	tcx_reset(sc);
+#ifdef TCX_CG8
+	if (!sc->sc_8bit) {
+		s = splhigh();
+		opens = --tcx_opens;
+		if (tcx_opens <= 0)
+			opens = tcx_opens = 0;
+		splx(s);
+		if (opens == 0) {
+			/*
+			 * rewrite the control planes to select 8-bit mode,
+			 * preserving the contents of the screen.
+			 * (or we could just bzero the whole thing...)
+			 */
+			fb = &sc->sc_fb;
+			i = fb->fb_type.fb_height * fb->fb_type.fb_width;
+			cptr = sc->sc_cplane;
+			while (--i >= 0)
+				*cptr++ &= TCX_CTL_PIXELMASK;
+		}
+	}
+#endif
 	return (0);
 }
 
@@ -294,6 +455,15 @@ tcxioctl(dev, cmd, data, flags, p)
 
 	case FBIOPUTCMAP:
 		/* copy to software map */
+#ifdef TCX_CG8
+		if (!sc->sc_8bit) {
+			/*
+			 * cg8 has extra bits in high-order byte of the index
+			 * that bt_putcmap doesn't recognize
+			 */
+			p->index &= 0xffffff;
+		}
+#endif
 		error = bt_putcmap(p, &sc->sc_cmap, 256, 1);
 		if (error)
 			return (error);
@@ -434,7 +604,7 @@ tcxmmap(dev, off, prot)
 {
 	struct tcx_softc *sc = tcx_cd.cd_devs[minor(dev)];
 	struct sbus_reg *rr = sc->sc_physadr;
-	struct mmo *mo;
+	struct mmo *mo, *mo_end;
 	u_int u, sz;
 	static struct mmo mmo[] = {
 		{ TCX_USER_RAM, 0, TCX_REG_DFB8 },
@@ -443,7 +613,7 @@ tcxmmap(dev, off, prot)
 
 		{ TCX_USER_STIP, 1, TCX_REG_STIP },
 		{ TCX_USER_BLIT, 1, TCX_REG_BLIT },
-		{ TCX_USER_RDFB32, 1, TCX_REG_RDFB32 },
+		{ TCX_USER_RDFB32, 0, TCX_REG_RDFB32 },
 		{ TCX_USER_RSTIP, 1, TCX_REG_RSTIP },
 		{ TCX_USER_RBLIT, 1, TCX_REG_RBLIT },
 		{ TCX_USER_TEC, 1, TCX_REG_TEC },
@@ -454,22 +624,67 @@ tcxmmap(dev, off, prot)
 		{ TCX_USER_ROM, 65536, TCX_REG_ROM },
 	};
 #define NMMO (sizeof mmo / sizeof *mmo)
+#ifdef TCX_CG8
+	/*
+	 * alternate mapping for CG8 emulation:
+	 * map part of the 8-bit-deep framebuffer into the cg8 overlay
+	 * space, just so there's something there, and map the 32-bit-deep
+	 * framebuffer where cg8 users expect to find it.
+	 */
+	static struct mmo mmo_cg8[] = {
+		{ TCX_USER_RAM, TCX_CG8OVERLAY, TCX_REG_DFB8 },
+		{ TCX_CG8OVERLAY, TCX_SIZE_DFB32, TCX_REG_DFB24 },
+		{ TCX_USER_RAM_COMPAT, TCX_SIZE_DFB32, TCX_REG_DFB24 }
+	};
+#define NMMO_CG8 (sizeof mmo_cg8 / sizeof *mmo_cg8)
+#endif
 
 	if (off & PGOFSET)
 		panic("tcxmmap");
 
 	/*
 	 * Entries with size 0 map video RAM (i.e., the size in fb data).
+	 * Entries that map 32-bit deep regions are adjusted for their
+	 * depth (fb_size gives the size of the 8-bit-deep region).
 	 *
 	 * Since we work in pages, the fact that the map offset table's
 	 * sizes are sometimes bizarre (e.g., 1) is effectively ignored:
 	 * one byte is as good as one page.
 	 */
-	for (mo = mmo; mo < &mmo[NMMO]; mo++) {
+#ifdef TCX_CG8
+	if (sc->sc_8bit) {
+		mo = mmo;
+		mo_end = &mmo[NMMO];
+	} else {
+		mo = mmo_cg8;
+		mo_end = &mmo_cg8[NMMO_CG8];
+	}
+#else
+	mo = mmo;
+	mo_end = &mmo[NMMO];
+#endif
+	for (; mo < mo_end; mo++) {
 		if ((u_int)off < mo->mo_uaddr)
 			continue;
 		u = off - mo->mo_uaddr;
-		sz = mo->mo_size ? mo->mo_size : sc->sc_fb.fb_type.fb_size;
+		sz = mo->mo_size;
+		if (sz == 0) {
+			sz = sc->sc_fb.fb_type.fb_size;
+			/*
+			 * check for the 32-bit-deep regions and adjust
+			 * accordingly
+			 */
+			if (mo->mo_uaddr == TCX_USER_RAM24 ||
+			    mo->mo_uaddr == TCX_USER_RDFB32) {
+				if (sc->sc_8bit) {
+					/*
+					 * not present on 8-bit hardware
+					 */
+					continue;
+				}
+				sz *= 4;
+			}
+		}
 		if (u < sz) {
 			return (bus_space_mmap(sc->sc_bustag,
 				BUS_ADDR(rr[mo->mo_bank].sbr_slot,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.6.2.1 2002/01/10 19:52:13 thorpej Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.6.2.2 2002/06/23 17:44:44 jdolecek Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.6.2.1 2002/01/10 19:52:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.6.2.2 2002/06/23 17:44:44 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -1047,13 +1047,13 @@ sunos32_sys_fcntl(p, v, retval)
 			int error;
 			struct sunos_flock	 ifl;
 			struct flock		*flp, fl;
-			caddr_t sg = stackgap_init(p->p_emul);
+			caddr_t sg = stackgap_init(p, 0);
 			struct sys_fcntl_args		fa;
 
 			SCARG(&fa, fd) = SCARG(uap, fd);
 			SCARG(&fa, cmd) = SCARG(uap, cmd);
 
-			flp = stackgap_alloc(&sg, sizeof(struct flock));
+			flp = stackgap_alloc(p, &sg, sizeof(struct flock));
 			SCARG(&fa, arg) = (void *) flp;
 
 			error = copyin((caddr_t)(u_long)SCARG(uap, arg), &ifl, sizeof ifl);

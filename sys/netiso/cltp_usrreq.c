@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.17.8.1 2002/01/10 20:03:46 thorpej Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.17.8.2 2002/06/23 17:51:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.17.8.1 2002/01/10 20:03:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.17.8.2 2002/06/23 17:51:34 jdolecek Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -76,7 +76,9 @@ cltp_init()
 	cltb.isop_next = cltb.isop_prev = &cltb;
 }
 
-int             cltp_cksum = 1;
+int cltp_cksum = 1;
+struct isopcb   cltb;
+struct cltpstat cltpstat;
 
 
 /* ARGUSED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_decluster.c,v 1.6.4.1 2002/01/10 19:57:42 thorpej Exp $	*/
+/*	$NetBSD: rf_decluster.c,v 1.6.4.2 2002/06/23 17:48:34 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  *--------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.6.4.1 2002/01/10 19:57:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_decluster.c,v 1.6.4.2 2002/06/23 17:48:34 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -103,7 +103,7 @@ rf_ConfigureDeclustered(
 
 	/* 2. extract parameters from the config structure */
 	if (layoutPtr->map->flags & RF_DISTRIBUTE_SPARE) {
-		(void) bcopy(cfgBuf, info->sparemap_fname, RF_SPAREMAP_NAME_LEN);
+		(void)memcpy(info->sparemap_fname, cfgBuf, RF_SPAREMAP_NAME_LEN);
 	}
 	cfgBuf += RF_SPAREMAP_NAME_LEN;
 

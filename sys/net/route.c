@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.43.4.3 2002/03/16 16:02:09 jdolecek Exp $	*/
+/*	$NetBSD: route.c,v 1.43.4.4 2002/06/23 17:50:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.43.4.3 2002/03/16 16:02:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.43.4.4 2002/06/23 17:50:33 jdolecek Exp $");
 
 #include "opt_ns.h"
 
@@ -131,6 +131,10 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.43.4.3 2002/03/16 16:02:09 jdolecek Exp 
 #endif
 
 #define	SA(p) ((struct sockaddr *)(p))
+
+struct	route_cb route_cb;
+struct	rtstat	rtstat;
+struct	radix_node_head *rt_tables[AF_MAX+1];
 
 int	rttrash;		/* routes not in table but not freed */
 struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */

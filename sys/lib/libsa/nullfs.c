@@ -1,4 +1,4 @@
-/*	$NetBSD: nullfs.c,v 1.2 1999/03/31 01:50:25 cgd Exp $	*/
+/*	$NetBSD: nullfs.c,v 1.2.22.1 2002/06/23 17:49:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -64,52 +64,61 @@
  * rights to redistribute these changes.
  */
 
-/*
- * XXX Does not currently implement:
- * XXX
- * XXX LIBSA_NO_FS_CLOSE
- * XXX LIBSA_NO_FS_SEEK
- * XXX LIBSA_NO_FS_WRITE
- * XXX LIBSA_NO_FS_SYMLINK (does this even make sense?)
- * XXX LIBSA_FS_SINGLECOMPONENT (does this even make sense?)
- */
-
 #include "stand.h"
 
 /*
  * Null filesystem
  */
-int	null_open (char *path, struct open_file *f)
+
+int
+null_open(char *path, struct open_file *f)
 {
-	errno  = EIO;
+
+	errno = EIO;
 	return -1;
 }
 
-int	null_close(struct open_file *f)
+#ifndef LIBSA_NO_FS_CLOSE
+int
+null_close(struct open_file *f)
 {
+
 	return 0;
 }
+#endif
 
-ssize_t	null_read (struct open_file *f, void *buf, size_t size, size_t *resid)
+ssize_t
+null_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
+
 	errno = EIO;
 	return -1;
 }
 
-ssize_t	null_write (struct open_file *f, void *buf, size_t size, size_t *resid)
+#ifndef LIBSA_NO_FS_WRITE
+ssize_t
+null_write(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
+
 	errno = EIO;
 	return -1;
 }
+#endif
 
-off_t	null_seek (struct open_file *f, off_t offset, int where)
+#ifndef LIBSA_NO_FS_SEEK
+off_t
+null_seek(struct open_file *f, off_t offset, int where)
 {
+
 	errno = EIO;
 	return -1;
 }
+#endif
 
-int	null_stat (struct open_file *f, struct stat *sb)
+int
+null_stat(struct open_file *f, struct stat *sb)
 {
+
 	errno = EIO;
 	return -1;
 }

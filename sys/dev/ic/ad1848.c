@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.10.4.2 2002/03/16 16:00:52 jdolecek Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.10.4.3 2002/06/23 17:46:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.10.4.2 2002/03/16 16:00:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.10.4.3 2002/06/23 17:46:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1139,6 +1139,14 @@ ad1848_commit_settings(addr)
 
 	if (sc->channels == 2)
 		fs |= FMT_STEREO;
+
+	/*
+	 * OPL3-SA2 (YMF711) is sometimes busy here.
+	 * Wait until it becomes ready.
+	 */
+	for (timeout = 0;
+	    timeout < 1000 && ADREAD(sc, AD1848_IADDR) & SP_IN_INIT; timeout++)
+		delay(10);
 
 	ad_write(sc, SP_CLOCK_DATA_FORMAT, fs);
 

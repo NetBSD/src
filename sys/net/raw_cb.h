@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.12 1998/02/09 17:43:56 perry Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.12.28.1 2002/06/23 17:50:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -59,7 +59,8 @@ struct rawcb {
 #define	RAWRCVQ		8192
 
 #ifdef _KERNEL
-LIST_HEAD(, rawcb) rawcb;		/* head of list */
+LIST_HEAD(rawcbhead, rawcb);
+extern	struct	rawcbhead rawcb;		/* head of list */
 
 int	raw_attach __P((struct socket *, int));
 void	*raw_ctlinput __P((int, struct sockaddr *, void *));

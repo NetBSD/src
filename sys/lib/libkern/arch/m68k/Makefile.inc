@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2001/05/16 03:30:39 fredette Exp $
+#	$NetBSD: Makefile.inc,v 1.21.2.1 2002/06/23 17:49:48 jdolecek Exp $
 
 SRCS+=	__main.c __assert.c \
 	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
@@ -10,10 +10,7 @@ SRCS+=	__main.c __assert.c \
 	scanc.S skpc.S \
 	htonl.S htons.S ntohl.S ntohs.S
 .if defined(MACHINE_ARCH) && (${MACHINE_ARCH} == "m68000")
-LIBGCC_OBJS=	_mulsi3.o _divsi3.o _udivsi3.o _modsi3.o _umodsi3.o
-${LIBGCC_OBJS}:
-	@${AR} xv `${CC} --print-libgcc-file-name` $@
-OBJS+=	${LIBGCC_OBJS}
+SRCS+=	mulsi3.S divsi3.S udivsi3.S modsi3.S umodsi3.S
 SRCS+=	ffs.c random.c
 .else
 SRCS+=	ffs.S random.S

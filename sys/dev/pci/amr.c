@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.1.2.2 2002/02/11 20:09:55 jdolecek Exp $	*/
+/*	$NetBSD: amr.c,v 1.1.2.3 2002/06/23 17:47:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.1.2.2 2002/02/11 20:09:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.1.2.3 2002/06/23 17:47:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,7 +775,7 @@ amr_ccb_enqueue(struct amr_softc *amr, struct amr_ccb *ac)
 	while ((ac = SIMPLEQ_FIRST(&amr->amr_ccb_queue)) != NULL) {
 		if ((*amr->amr_submit)(amr, ac) != 0)
 			break;
-		SIMPLEQ_REMOVE_HEAD(&amr->amr_ccb_queue, ac, ac_chain.simpleq);
+		SIMPLEQ_REMOVE_HEAD(&amr->amr_ccb_queue, ac_chain.simpleq);
 	}
 
 	splx(s);
