@@ -35,8 +35,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.13 1993/10/17 05:34:26 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.14 1993/10/27 09:06:36 mycroft Exp $
  */
+
+#ifdef DIAGNOSTIC
+#define	STATIC
+#else
+#define	STATIC	static
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,10 +107,10 @@ struct fdc_softc {
 };
 
 /* controller driver configuration */
-static int fdcprobe __P((struct device *, struct cfdata *, void *));
-static void fdcforceintr __P((void *));
-static void fdcattach __P((struct device *, struct device *, void *));
-static int fdcintr __P((void *));
+STATIC int fdcprobe __P((struct device *, struct cfdata *, void *));
+STATIC void fdcforceintr __P((void *));
+STATIC void fdcattach __P((struct device *, struct device *, void *));
+STATIC int fdcintr __P((void *));
 
 struct	cfdriver fdccd =
 { NULL, "fdc", fdcprobe, fdcattach, DV_DULL, sizeof(struct fdc_softc) };
@@ -129,7 +135,7 @@ struct fd_type {
 };
 
 /* The order of entries in the following table is important -- BEWARE! */
-static struct fd_type fd_types[] = {
+STATIC struct fd_type fd_types[] = {
         { 18,2,0xff,0xcf,0x1b,0x6c,80,2880,1,0,2,"1.44MB"    }, /* 1.44MB diskette */
         { 15,2,0xff,0xdf,0x1b,0x54,80,2400,1,0,2, "1.2MB"    }, /* 1.2 MB AT-diskettes */
         {  9,2,0xff,0xdf,0x23,0x50,40, 720,2,1,2, "360KB/AT" }, /* 360kB in 1.2MB drive */
@@ -157,29 +163,29 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-static int fdmatch __P((struct device *, struct cfdata *, void *));
-static void fdattach __P((struct device *, struct device *, void *));
+STATIC int fdmatch __P((struct device *, struct cfdata *, void *));
+STATIC void fdattach __P((struct device *, struct device *, void *));
 
 struct	cfdriver fdcd =
 { NULL, "fd", fdmatch, fdattach, DV_DISK, sizeof(struct fd_softc) };
 
 void fdstrategy __P((struct buf *));
 
-static struct dkdriver fddkdriver = { fdstrategy };
+STATIC struct dkdriver fddkdriver = { fdstrategy };
 
-static struct fd_type *fd_nvtotype __P((char *, int, int));
-static void set_motor __P((struct fd_softc *fd, int reset));
-static void fd_motor_off __P((struct fd_softc *fd));
-static void fd_motor_on __P((struct fd_softc *fd));
-static int in_fdc __P((u_short iobase));
-static int out_fdc __P((u_short iobase, u_char x));
-static void fdstart __P((struct fdc_softc *fdc));
-static void fd_timeout __P((struct fdc_softc *fdc));
-static void fd_pseudointr __P((struct fdc_softc *fdc));
-static int fdcstate __P((struct fdc_softc *fdc));
-static int fdcretry __P((struct fdc_softc *fdc));
+STATIC struct fd_type *fd_nvtotype __P((char *, int, int));
+STATIC void set_motor __P((struct fd_softc *fd, int reset));
+STATIC void fd_motor_off __P((struct fd_softc *fd));
+STATIC void fd_motor_on __P((struct fd_softc *fd));
+STATIC int in_fdc __P((u_short iobase));
+STATIC int out_fdc __P((u_short iobase, u_char x));
+STATIC void fdstart __P((struct fdc_softc *fdc));
+STATIC void fd_timeout __P((struct fdc_softc *fdc));
+STATIC void fd_pseudointr __P((struct fdc_softc *fdc));
+STATIC int fdcstate __P((struct fdc_softc *fdc));
+STATIC int fdcretry __P((struct fdc_softc *fdc));
 
-static int
+STATIC int
 fdcprobe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -209,7 +215,7 @@ fdcprobe(parent, cf, aux)
 	return 1;
 }
 
-static void
+STATIC void
 fdcforceintr(aux)
 	void *aux;
 {
@@ -240,7 +246,7 @@ struct fdc_attach_args {
  * in the system config file; print the drive name as well.
  * Return UNCONF (config_find ignores this if the device was configured).
  */
-static int
+STATIC int
 fdprint(args, fdc)
 	void *args;
 	char *fdc;
@@ -253,7 +259,7 @@ fdprint(args, fdc)
 	return (UNCONF);
 }
 
-static void
+STATIC void
 fdcattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -299,7 +305,7 @@ fdcattach(parent, self, aux)
 	}
 }
 
-static int
+STATIC int
 fdmatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -316,7 +322,7 @@ fdmatch(parent, cf, aux)
  * Controller is working, drive was found (or, if fa_deftype == NULL,
  * not even tested for).  Attach it.
  */
-static void
+STATIC void
 fdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -345,7 +351,7 @@ fdattach(parent, self, aux)
  * Translate nvram type into internal data structure.  Return NULL for
  * none/unknown/unusable.
  */
-static struct fd_type *
+STATIC struct fd_type *
 fd_nvtotype(fdc, nvraminfo, drive)
 	char *fdc;
 	int nvraminfo, drive;
@@ -419,7 +425,7 @@ fdstrategy(bp)
 	biodone(bp);
 }
 
-static void
+STATIC void
 set_motor(fd, reset)
 	struct fd_softc *fd;
 	int reset;
@@ -434,7 +440,7 @@ set_motor(fd, reset)
 	outb(fdc->sc_iobase + fdout, status);
 }
 
-static void
+STATIC void
 fd_motor_off(fd)
 	struct fd_softc *fd;
 {
@@ -445,7 +451,7 @@ fd_motor_off(fd)
 	splx(s);
 }
 
-static void
+STATIC void
 fd_motor_on(fd)
 	struct fd_softc *fd;
 {
@@ -458,7 +464,7 @@ fd_motor_on(fd)
 	splx(s);
 }
 
-static int
+STATIC int
 in_fdc(iobase)
 	u_short iobase;
 {
@@ -475,7 +481,7 @@ in_fdc(iobase)
 	return i;
 }
 
-static int
+STATIC int
 out_fdc(iobase, x)
 	u_short iobase;
 	u_char x;
@@ -535,7 +541,7 @@ fdclose(dev, flags)
 	return 0;
 }
 
-static void
+STATIC void
 fdstart(fdc)
 	struct fdc_softc *fdc;
 {
@@ -548,7 +554,7 @@ fdstart(fdc)
 	splx(s);
 }
 
-static void
+STATIC void
 fd_status(fd, s)
 	struct fd_softc *fd;
 	char *s;
@@ -569,7 +575,7 @@ fd_status(fd, s)
 	       s, st0, NE7_ST0BITS, cyl, st3, NE7_ST3BITS);
 }
 
-static void
+STATIC void
 fd_timeout(fdc)
 	struct fdc_softc *fdc;
 {
@@ -593,7 +599,7 @@ fd_timeout(fdc)
 	splx(s);
 }
 
-static void
+STATIC void
 fd_pseudointr(fdc)
 	struct fdc_softc *fdc;
 {
@@ -605,7 +611,7 @@ fd_pseudointr(fdc)
 	splx(s);
 }
 
-static int
+STATIC int
 fdcintr(aux)
 	void *aux;
 {
@@ -617,12 +623,12 @@ fdcintr(aux)
 	return 1;
 }
 
-static int
+STATIC int
 fdcstate(fdc)
 	struct fdc_softc *fdc;
 {
 	int	read, head, trac, sec, i, s, sectrac, cyl, st0, blkno;
-	struct	fd_softc *fd = fdc->sc_afd;
+	struct	fd_softc *fd;
 	int	fdu;
 	u_short	iobase = fdc->sc_iobase;
 	struct	buf *dp, *bp;
@@ -641,8 +647,9 @@ fdcstate(fdc)
  		return 0;
 	}
 	fdu = FDUNIT(minor(bp->b_dev));
+	fd = fdcd.cd_devs[fdu];
 #ifdef DIAGNOSTIC
-	if (fd && (fd != fdcd.cd_devs[fdu]))
+	if (fdc->sc_afd && (fd != fdc->sc_afd))
 		printf("%s: confused fd pointers\n", fdc->sc_dev.dv_xname);
 #endif
 	read = bp->b_flags & B_READ;
@@ -810,7 +817,7 @@ fdcstate(fdc)
 #endif
 }
 
-static int
+STATIC int
 fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
