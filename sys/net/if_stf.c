@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.22 2001/11/13 00:49:35 lukem Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.23 2001/12/21 03:21:50 itojun Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,15 +75,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.22 2001/11/13 00:49:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.23 2001/12/21 03:21:50 itojun Exp $");
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include "opt_inet.h"
-#include "opt_inet6.h"
-#endif
-#ifdef __NetBSD__
-#include "opt_inet.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,20 +85,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.22 2001/11/13 00:49:35 lukem Exp $");
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
-#if !(defined(__FreeBSD__) && __FreeBSD__ >= 3)
 #include <sys/ioctl.h>
-#endif
 #include <sys/protosw.h>
-#ifdef __FreeBSD__
-#include <sys/kernel.h>
-#endif
 #include <sys/queue.h>
 #include <sys/syslog.h>
 #include <machine/cpu.h>
-
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <sys/malloc.h>
-#endif
 
 #include <net/if.h>
 #include <net/route.h>
@@ -130,12 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.22 2001/11/13 00:49:35 lukem Exp $");
 
 #include <net/net_osdep.h>
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 4
-#include "bpf.h"
-#define NBPFILTER	NBPF
-#else
 #include "bpfilter.h"
-#endif
 #include "stf.h"
 #include "gif.h"	/*XXX*/
 
@@ -175,13 +155,15 @@ extern int ip_gif_ttl;	/*XXX*/
 static int ip_gif_ttl = 40;	/*XXX*/
 #endif
 
-extern struct protosw in_stf_protosw;
+extern struct domain inetdomain;
+struct protosw in_stf_protosw =
+{ SOCK_RAW,	&inetdomain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR,
+  in_stf_input, rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
+  0,            0,              0,              0
+};
 
-#ifdef __FreeBSD__
-void stfattach __P((void *));
-#else
 void stfattach __P((int));
-#endif
 static int stf_encapcheck __P((const struct mbuf *, int, int, void *));
 static struct in6_ifaddr *stf_getsrcifa6 __P((struct ifnet *));
 static int stf_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
@@ -191,11 +173,7 @@ static int stf_checkaddr4 __P((struct stf_softc *, struct in_addr *,
 static int stf_checkaddr6 __P((struct stf_softc *, struct in6_addr *,
 	struct ifnet *));
 static void stf_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
-#if defined(__FreeBSD__) && __FreeBSD__ < 3
-static int stf_ioctl __P((struct ifnet *, int, caddr_t));
-#else
 static int stf_ioctl __P((struct ifnet *, u_long, caddr_t));
-#endif
 
 /* ARGSUSED */
 void
@@ -238,9 +216,6 @@ stf_clone_create(ifc, unit)
 	sc->sc_if.if_output = stf_output;
 	sc->sc_if.if_type   = IFT_STF;
 	sc->sc_if.if_dlt    = DLT_NULL;
-#if defined(__FreeBSD__) && __FreeBSD__ >= 4
-	sc->sc_if.if_snd.ifq_maxlen = IFQ_MAXLEN;
-#endif
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
@@ -264,10 +239,6 @@ stf_clone_destroy(ifp)
 	if_detach(ifp);
 	free(sc, M_DEVBUF);
 }
-
-#ifdef __FreeBSD__
-PSEUDO_SET(stfattach, if_stf);
-#endif
 
 static int
 stf_encapcheck(m, off, proto, arg)
@@ -341,11 +312,7 @@ stf_getsrcifa6(ifp)
 	struct sockaddr_in6 *sin6;
 	struct in_addr in;
 
-#if defined(__bsdi__) || (defined(__FreeBSD__) && __FreeBSD__ < 3)
-	for (ia = ifp->if_addrlist; ia; ia = ia->ifa_next)
-#else
 	TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list)
-#endif
 	{
 		if (ia->ifa_addr == NULL)
 			continue;
@@ -356,25 +323,7 @@ stf_getsrcifa6(ifp)
 			continue;
 
 		bcopy(GET_V4(&sin6->sin6_addr), &in, sizeof(in));
-#ifdef __NetBSD__
 		INADDR_TO_IA(in, ia4);
-#else
-#ifdef __OpenBSD__
-		for (ia4 = TAILQ_FIRST(&in_ifaddr);
-		     ia4;
-		     ia4 = TAILQ_NEXT(ia4, ia_list))
-#elif defined(__FreeBSD__) && __FreeBSD__ >= 3
-		for (ia4 = TAILQ_FIRST(&in_ifaddrhead);
-		     ia4;
-		     ia4 = TAILQ_NEXT(ia4, ia_link))
-#else
-		for (ia4 = in_ifaddr; ia4 != NULL; ia4 = ia4->ia_next)
-#endif
-		{
-			if (ia4->ia_addr.sin_addr.s_addr == in.s_addr)
-				break;
-		}
-#endif
 		if (ia4 == NULL)
 			continue;
 
@@ -506,11 +455,7 @@ stf_output(ifp, m, dst, rt)
 		}
 	}
 
-#ifndef __OpenBSD__
 	return ip_output(m, NULL, &sc->sc_ro, 0, NULL);
-#else
-	return ip_output(m, NULL, &sc->sc_ro, 0, NULL, NULL);
-#endif
 }
 
 static int
@@ -535,15 +480,7 @@ stf_checkaddr4(sc, in, inifp)
 	/*
 	 * reject packets with broadcast
 	 */
-#if defined(__OpenBSD__) || defined(__NetBSD__)
 	TAILQ_FOREACH(ia4, &in_ifaddr, ia_list)
-#elif defined(__FreeBSD__) && __FreeBSD__ >= 3
-	for (ia4 = TAILQ_FIRST(&in_ifaddrhead);
-	     ia4;
-	     ia4 = TAILQ_NEXT(ia4, ia_link))
-#else
-	for (ia4 = in_ifaddr; ia4 != NULL; ia4 = ia4->ia_next)
-#endif
 	{
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
@@ -562,11 +499,7 @@ stf_checkaddr4(sc, in, inifp)
 		sin.sin_family = AF_INET;
 		sin.sin_len = sizeof(struct sockaddr_in);
 		sin.sin_addr = *in;
-#ifdef __FreeBSD__
-		rt = rtalloc1((struct sockaddr *)&sin, 0, 0UL);
-#else
 		rt = rtalloc1((struct sockaddr *)&sin, 0);
-#endif
 		if (!rt || rt->rt_ifp != inifp) {
 #if 0
 			log(LOG_WARNING, "%s: packet from 0x%x dropped "
@@ -748,11 +681,7 @@ stf_rtrequest(cmd, rt, info)
 static int
 stf_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
-#if defined(__FreeBSD__) && __FreeBSD__ < 3
-	int cmd;
-#else
 	u_long cmd;
-#endif
 	caddr_t data;
 {
 	struct ifaddr *ifa;
