@@ -1,5 +1,6 @@
-#	@(#)Makefile	5.1 (Berkeley) 5/11/90
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
-SUBDIR=	ktrace kdump
+PROG=	ktrace
+SRCS=	ktrace.c subr.c
 
-.include <bsd.subdir.mk>
+.include <bsd.prog.mk>
