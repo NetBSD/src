@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.611 2003/10/04 13:41:47 jdolecek Exp $
+# $NetBSD: mi,v 1.612 2003/10/04 14:10:41 jdolecek Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -527,6 +527,7 @@
 ./usr/share/man/cat4/amiga/ed.0			man-sys-catman
 ./usr/share/man/cat4/amiga/es.0			man-sys-catman
 ./usr/share/man/cat4/amiga/fdc.0		man-sys-catman
+./usr/share/man/cat4/amiga/grf.0		man-sys-catman
 ./usr/share/man/cat4/amiga/grfcl.0		man-sys-catman
 ./usr/share/man/cat4/amiga/grfcv.0		man-sys-catman
 ./usr/share/man/cat4/amiga/grfcv3d.0		man-sys-catman
@@ -2358,6 +2359,7 @@
 ./usr/share/man/man4/amiga/ed.4			man-sys-man
 ./usr/share/man/man4/amiga/es.4			man-sys-man
 ./usr/share/man/man4/amiga/fdc.4		man-sys-man
+./usr/share/man/man4/amiga/grf.4		man-sys-man
 ./usr/share/man/man4/amiga/grfcl.4		man-sys-man
 ./usr/share/man/man4/amiga/grfcv.4		man-sys-man
 ./usr/share/man/man4/amiga/grfcv3d.4		man-sys-man
