@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.24 1996/03/14 19:45:01 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.25 1996/03/16 23:28:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -645,7 +645,7 @@ fdstrategy(bp)
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
-		printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d\n",
+		printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld\n",
 		    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin);
 #endif
 
