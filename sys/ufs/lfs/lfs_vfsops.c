@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.157 2004/08/15 16:07:08 mycroft Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.158 2004/08/16 12:49:55 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.157 2004/08/15 16:07:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.158 2004/08/16 12:49:55 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1073,6 +1073,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 	ump->um_maxsymlinklen = fs->lfs_maxsymlinklen;
 	ump->um_dirblksiz = DIRBLKSIZ;
 	ump->um_maxfilesize = fs->lfs_maxfilesize;
+	if (ump->um_maxsymlinklen > 0)
+		mp->mnt_iflag |= IMNT_DTYPE;
 	devvp->v_specmountpoint = mp;
 
 	/* Set up reserved memory for pageout */
