@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: mixerctl,v 1.3 2002/06/11 16:31:41 lukem Exp $
+# $NetBSD: mixerctl,v 1.4 2002/07/16 03:24:24 rafal Exp $
 #
 
 # PROVIDE: mixerctl
@@ -17,7 +17,7 @@ mixerctl_start()
 	if [ -r /etc/mixerctl.conf ]; then
 		echo "Setting mixerctl variables..."
 		while read setting; do
-			mixerctl -n -w $setting
+			[ -z "$setting" ] || mixerctl -n -w $setting
 		done < /etc/mixerctl.conf
 	fi
 }
