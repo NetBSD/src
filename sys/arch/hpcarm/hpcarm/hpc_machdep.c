@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.45 2002/04/09 22:37:03 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.46 2002/04/12 18:50:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -48,7 +48,6 @@
  * hpc_machdep.c 
  */
 
-#include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 
@@ -83,6 +82,7 @@
 #include <machine/intr.h>
 #include <arm/arm32/katelib.h>
 #include <machine/bootinfo.h>
+#include <arm/cpuconf.h>
 #include <arm/undefined.h>
 #include <machine/rtc.h>
 #include <machine/platid.h>
