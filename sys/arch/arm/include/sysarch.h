@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.1 2001/07/14 00:23:09 matt Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.2 2001/07/23 17:04:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -43,8 +43,8 @@
 #define ARM32_DRAIN_WRITEBUF	1
 
 struct arm32_sync_icache_args {
-	u_int	addr;		/* Virtual start address */
-	int	len;		/* Region size */
+	uintptr_t	addr;		/* Virtual start address */
+	size_t		len;		/* Region size */
 };
 
 #ifndef _KERNEL
