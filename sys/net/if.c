@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.61 2000/03/30 09:45:34 augustss Exp $	*/
+/*	$NetBSD: if.c,v 1.62 2000/04/26 13:38:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -567,15 +567,24 @@ ifa_ifwithnet(addr)
 	}
 #ifdef NETATALK
 	if (af == AF_APPLETALK) {
+		struct sockaddr_at *sat, *sat2;
+		sat = (struct sockaddr_at *)addr;
 		for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
 		     ifp = TAILQ_NEXT(ifp, if_list)) {
 			if (ifp->if_output == if_nulloutput)
 				continue;
 			ifa = at_ifawithnet((struct sockaddr_at *)addr, ifp);
-			if (ifa)
-				return (ifa);
+			if (ifa == NULL)
+				continue;
+			sat2 = (struct sockaddr_at *)ifa->ifa_addr;
+			if (sat2->sat_addr.s_net == sat->sat_addr.s_net)
+				return (ifa); /* exact match */
+			if (ifa_maybe == NULL) {
+				/* else keep the if with the rigth range */
+				ifa_maybe = ifa;
+			}
 		}
-		return (NULL);
+		return (ifa_maybe);
 	}
 #endif
 	for (ifp = TAILQ_FIRST(&ifnet); ifp != NULL;
