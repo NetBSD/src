@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.13 1997/08/27 11:24:02 bouyer Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14 1998/08/08 20:57:55 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -507,7 +507,7 @@ printlp(lp, str)
 	printf("Num partitions %x\n", lp->d_npartitions);
 	for (i = 0; i < lp->d_npartitions; i++) {
 		struct partition *part = &lp->d_partitions[i];
-		char *fstyp = fstypenames[part->p_fstype];
+		const char *fstyp = fstypenames[part->p_fstype];
 		
 		printf("%c: size %10x offset %10x type %7s frag %5x cpg %3x\n",
 		    'a' + i, part->p_size, part->p_offset, fstyp,
@@ -532,7 +532,7 @@ printclp(clp, str)
 	max = clp->partitions < 16 ? clp->partitions : 16;
 	for (i = 0; i < max; i++) {
 		struct partition *part;
-		char *fstyp;
+		const char *fstyp;
 
 		if (i < 4) {
 			part = (void *)&clp->vid_4[0];
