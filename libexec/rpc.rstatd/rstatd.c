@@ -1,4 +1,4 @@
-/*	$NetBSD: rstatd.c,v 1.7 1996/08/30 20:17:44 thorpej Exp $	*/
+/*	$NetBSD: rstatd.c,v 1.8 1997/10/07 11:28:21 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -33,23 +33,32 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: rstatd.c,v 1.7 1996/08/30 20:17:44 thorpej Exp $";
+__RCSID("$NetBSD: rstatd.c,v 1.8 1997/10/07 11:28:21 mrg Exp $");
 #endif /* not lint */
+
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include <stdio.h>
 #include <rpc/rpc.h>
 #include <signal.h>
 #include <syslog.h>
+#include <string.h>
+#include <stdlib.h>
 #include <rpcsvc/rstat.h>
 
-extern void rstat_service();
+extern void rstat_service __P((struct svc_req *, SVCXPRT *));
+void cleanup __P((int));
+int main __P((int, char *[]));
 
 int from_inetd = 1;     /* started from inetd ? */
 int closedown = 20;	/* how long to wait before going dormant */
 
 void
-cleanup()
+cleanup(dummy)
+	int dummy;
 {
         (void) pmap_unset(RSTATPROG, RSTATVERS_TIME);
         (void) pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
@@ -57,6 +66,7 @@ cleanup()
         exit(0);
 }
 
+int
 main(argc, argv)
         int argc;
         char *argv[];

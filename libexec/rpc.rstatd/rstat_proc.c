@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.19 1997/07/19 20:25:44 fvdl Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.20 1997/10/07 11:28:18 mrg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -28,10 +28,15 @@
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
+
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
-/*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$NetBSD: rstat_proc.c,v 1.19 1997/07/19 20:25:44 fvdl Exp $";
+#if 0
+static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
+static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: rstat_proc.c,v 1.20 1997/10/07 11:28:18 mrg Exp $");
+#endif
 #endif
 
 /*
@@ -95,7 +100,6 @@ char *memf = NULL, *nlistf = NULL;
 
 struct ifnet_head ifnetq;	/* chain of ethernet interfaces */
 int numintfs;
-int stats_service();
 
 extern int from_inetd;
 int sincelastreq = 0;		/* number of alarms since last request */
@@ -108,7 +112,15 @@ union {
 	struct statstime s3;
 } stats_all;
 
-void updatestat();
+extern void dkreadstats __P((void));
+extern int dkinit __P((int));
+
+void updatestat __P((int));
+void setup __P((void));
+void stat_init __P((void));
+int havedisk __P((void));
+void rstat_service __P((struct svc_req *, SVCXPRT *));
+
 static stat_is_init = 0;
 extern int errno;
 
@@ -116,11 +128,12 @@ extern int errno;
 #define FSCALE (1 << 8)
 #endif
 
+void
 stat_init()
 {
 	stat_is_init = 1;
 	setup();
-	updatestat();
+	updatestat(0);
 	(void) signal(SIGALRM, updatestat);
 	alarm(1);
 }
@@ -191,7 +204,8 @@ rstatproc_havedisk_1_svc(arg, rqstp)
 }
 
 void
-updatestat()
+updatestat(dummy)
+	int dummy;
 {
 	long off;
 	int i;
@@ -199,9 +213,6 @@ updatestat()
 	struct ifnet ifnet;
 	double avrun[3];
 	struct timeval tm, btm;
-#ifdef BSD
-	int cp_time[BSD_CPUSTATES];
-#endif
 
 #ifdef DEBUG
 	syslog(LOG_DEBUG, "entering updatestat");
@@ -299,6 +310,7 @@ updatestat()
 	alarm(1);
 }
 
+void
 setup()
 {
 	struct ifnet ifnet;
