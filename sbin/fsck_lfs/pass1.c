@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.15 2003/04/02 10:39:28 fvdl Exp $	 */
+/* $NetBSD: pass1.c,v 1.16 2003/07/12 11:49:04 yamt Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -180,7 +180,10 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	mode_t mode;
 
 	vp = vget(fs, inumber);
-	dp = VTOD(vp);
+	if (vp)
+		dp = VTOD(vp);
+	else
+		dp = NULL;
 
 	if (dp == NULL) {
 		/* pwarn("Could not find inode %ld\n",(long)inumber); */
