@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.29 1998/10/10 07:38:23 mrg Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.30 1998/12/20 15:07:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.29 1998/10/10 07:38:23 mrg Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.30 1998/12/20 15:07:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,10 +192,10 @@ main(argc, argv)
 		usage();
 
 	/* get group and owner id's */
-	if (group && !(gp = getgrnam(group)) && !isdigit(*group))
+	if (group && !(gp = getgrnam(group)) && !isdigit((unsigned char)*group))
 		errx(1, "unknown group %s", group);
 	gid = (group) ? ((gp) ? gp->gr_gid : atoi(group)) : -1;
-	if (owner && !(pp = getpwnam(owner)) && !isdigit(*owner))
+	if (owner && !(pp = getpwnam(owner)) && !isdigit((unsigned char)*owner))
 		errx(1, "unknown user %s", owner);
 	uid = (owner) ? ((pp) ? pp->pw_uid : atoi(owner)) : -1;
 
