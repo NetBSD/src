@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.31 2002/01/31 19:24:47 tv Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.32 2002/02/02 12:14:41 lukem Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.31 2002/01/31 19:24:47 tv Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.32 2002/02/02 12:14:41 lukem Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -870,7 +870,7 @@ void prog_makefile_rules(FILE *outmk, prog_t *p)
 	    p->ident, p->ident, p->ident);
 	fprintf(outmk, "\tprintf \".PATH: ${%s_SRCDIR}\\n.CURDIR:= ${%s_SRCDIR}\\n"
 	    ".include \\\"\\$${.CURDIR}/Makefile\\\"\\n\" \\\n", p->ident, p->ident);
-	fprintf(outmk, "\t| ${MAKE} DBG=\"${DBG}\" -f- depend ${%s_OBJS}\n\n",
+	fprintf(outmk, "\t| ${MAKE} CRUNCHEDPROG=1 DBG=\"${DBG}\" -f- depend ${%s_OBJS}\n\n",
 	    p->ident);
     }
     else
