@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/03/14 04:59:41 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1997/03/14 05:07:27 mycroft Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -7,7 +7,7 @@ NOMAN=
 
 SRCS= main.c devopen.c conf.c dev_net.c version.c
 
-CLEANFILES+= ${ROMSTART} ${PROG}.rom ${PROG}.sym ${PROG}.list
+CLEANFILES+= ${ROMSTART} ${PROG}.bin ${PROG}.rom ${PROG}.sym ${PROG}.list
 
 #CPPFLAGS+= -DCOMPAT_OLDBOOT
 #CPPFLAGS+= -DDEBUG
