@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: ifwatchd,v 1.1 2001/12/10 16:53:07 martin Exp $
+# $NetBSD: ifwatchd,v 1.2 2003/03/14 09:18:50 martin Exp $
 #
 
 # PROVIDE: ifwatchd
-# REQUIRE: mountcritremote network
+# REQUIRE: mountcritremote
+# BEFORE: SERVERS
 
 . /etc/rc.subr
 
