@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.47 1998/08/13 10:06:32 kleink Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.47.6.1 1999/08/28 23:22:21 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -656,7 +656,7 @@ fdesc_readdir(v)
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct filedesc *fdp;
-	int i;
+	off_t i;
 	int error;
 	off_t *cookies = NULL;
 	int ncookies = 0;
@@ -688,6 +688,9 @@ fdesc_readdir(v)
 
 	if (VTOFDESC(ap->a_vp)->fd_type == Froot) {
 		struct fdesc_target *ft;
+
+		if (i >= nfdesc_targets)
+			return 0;
 
 		if (ap->a_ncookies) {
 			ncookies = min(ncookies, (nfdesc_targets - i));
@@ -748,7 +751,7 @@ fdesc_readdir(v)
 				if (fdp->fd_ofiles[i - 2] == NULL)
 					continue;
 				d.d_fileno = i - 2 + FD_STDIN;
-				d.d_namlen = sprintf(d.d_name, "%d", i - 2);
+				d.d_namlen = sprintf(d.d_name, "%d", (int) i - 2);
 				d.d_type = DT_UNKNOWN;
 				break;
 			}
