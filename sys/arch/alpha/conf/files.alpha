@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.118 2000/06/11 22:45:44 thorpej Exp $
+# $NetBSD: files.alpha,v 1.119 2000/06/25 17:21:57 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -11,6 +11,7 @@ maxusers 8 16 64
 defopt	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 defopt	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 defopt	DEC_2100_A500	# Sable etc:	AlphaServer 2100
+defopt	DEC_2100A_A500	# Lynx etc:	AlphaServer 2100A
 defopt	DEC_3000_300	# Pelican etc:	3000/300*
 defopt	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 defopt	DEC_550		# Miata:	Personal Workstation (550)
@@ -376,7 +377,7 @@ file	arch/alpha/sableio/pckbc_sableio.c	pckbc_sableio
 # CPU support files
 file	arch/alpha/alpha/dec_2000_300.c	dec_2000_300
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
-file	arch/alpha/pci/pci_2100_a500.c	dec_2100_a500
+file	arch/alpha/pci/pci_2100_a500.c	dec_2100_a500 | dec_2100a_a500
 file	arch/alpha/pci/pci_up1000.c	api_up1000
 file	arch/alpha/pci/pci_a12.c	avalon_a12
 file	arch/alpha/pci/pci_alphabook1.c	dec_alphabook1
@@ -484,7 +485,7 @@ file	arch/alpha/alpha/promcons.c
 
 # CPU support
 file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50
-file	arch/alpha/alpha/dec_2100_a500.c	dec_2100_a500
+file	arch/alpha/alpha/dec_2100_a500.c	dec_2100_a500 | dec_2100a_a500
 file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300
 file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500
 file	arch/alpha/alpha/dec_550.c		dec_550
