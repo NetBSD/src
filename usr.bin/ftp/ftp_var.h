@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.39 1999/10/01 06:55:45 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.40 1999/10/01 08:01:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -204,6 +204,7 @@ GLOBAL	int	ttywidth;	/* width of tty */
 GLOBAL	char   *tmpdir;		/* temporary directory */
 GLOBAL	FILE   *ttyout;		/* stdout, or stderr if retrieving to stdout */
 GLOBAL	int	epsv4;		/* use EPSV/EPRT on IPv4 connections */
+GLOBAL	int	epsv4bad;	/* EPSV doesn't work on the current server */
 
 #ifndef NO_EDITCOMPLETE
 GLOBAL	int	  editing;	/* command line editing enabled */
