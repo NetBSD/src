@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)in_systm.h	7.4 (Berkeley) 6/28/90
+ *	@(#)in_systm.h	8.1 (Berkeley) 6/10/93
  */
 
 /*
@@ -52,5 +52,5 @@ typedef u_long	n_long;			/* long as received from the net */
 typedef	u_long	n_time;			/* ms since 00:00 GMT, byte rev */
 
 #ifdef KERNEL
-n_time	iptime();
+n_time	 iptime __P((void));
 #endif

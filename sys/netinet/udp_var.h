@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)udp_var.h	7.7 (Berkeley) 6/28/90
+ *	@(#)udp_var.h	8.1 (Berkeley) 6/10/93
  */
 
 /*
@@ -54,21 +54,39 @@ struct	udpiphdr {
 
 struct	udpstat {
 				/* input statistics: */
-	int	udps_ipackets;		/* total input packets */
-	int	udps_hdrops;		/* packet shorter than header */
-	int	udps_badsum;		/* checksum error */
-	int	udps_badlen;		/* data length larger than packet */
-	int	udps_noport;		/* no socket on port */
-	int	udps_noportbcast;	/* of above, arrived as broadcast */
-	int	udps_fullsock;		/* not delivered, input socket full */
-	int	udpps_pcbcachemiss;	/* input packets missing pcb cache */
+	u_long	udps_ipackets;		/* total input packets */
+	u_long	udps_hdrops;		/* packet shorter than header */
+	u_long	udps_badsum;		/* checksum error */
+	u_long	udps_badlen;		/* data length larger than packet */
+	u_long	udps_noport;		/* no socket on port */
+	u_long	udps_noportbcast;	/* of above, arrived as broadcast */
+	u_long	udps_fullsock;		/* not delivered, input socket full */
+	u_long	udpps_pcbcachemiss;	/* input packets missing pcb cache */
 				/* output statistics: */
-	int	udps_opackets;		/* total output packets */
+	u_long	udps_opackets;		/* total output packets */
 };
 
-#define	UDP_TTL		30	/* default time to live for UDP packets */
+/*
+ * Names for UDP sysctl objects
+ */
+#define	UDPCTL_CHECKSUM		1	/* checksum UDP packets */
+#define UDPCTL_MAXID		2
+
+#define UDPCTL_NAMES { \
+	{ 0, 0 }, \
+	{ "checksum", CTLTYPE_INT }, \
+}
 
 #ifdef KERNEL
 struct	inpcb udb;
 struct	udpstat udpstat;
+
+void	 udp_ctlinput __P((int, struct sockaddr *, struct ip *));
+void	 udp_init __P((void));
+void	 udp_input __P((struct mbuf *, int));
+int	 udp_output __P((struct inpcb *,
+	    struct mbuf *, struct mbuf *, struct mbuf *));
+int	 udp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
+int	 udp_usrreq __P((struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *));
 #endif

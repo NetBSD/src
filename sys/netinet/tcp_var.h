@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_var.h	7.10 (Berkeley) 6/28/90
+ *	@(#)tcp_var.h	8.3 (Berkeley) 4/10/94
  */
 
 /*
@@ -50,12 +50,18 @@ struct tcpcb {
 	short	t_dupacks;		/* consecutive dup acks recd */
 	u_short	t_maxseg;		/* maximum segment size */
 	char	t_force;		/* 1 if forcing out a byte */
-	u_char	t_flags;
-#define	TF_ACKNOW	0x01		/* ack peer immediately */
-#define	TF_DELACK	0x02		/* ack, but try to delay it */
-#define	TF_NODELAY	0x04		/* don't delay packets to coalesce */
-#define	TF_NOOPT	0x08		/* don't use tcp options */
-#define	TF_SENTFIN	0x10		/* have sent FIN */
+	u_short	t_flags;
+#define	TF_ACKNOW	0x0001		/* ack peer immediately */
+#define	TF_DELACK	0x0002		/* ack, but try to delay it */
+#define	TF_NODELAY	0x0004		/* don't delay packets to coalesce */
+#define	TF_NOOPT	0x0008		/* don't use tcp options */
+#define	TF_SENTFIN	0x0010		/* have sent FIN */
+#define	TF_REQ_SCALE	0x0020		/* have/will request window scaling */
+#define	TF_RCVD_SCALE	0x0040		/* other side has requested scaling */
+#define	TF_REQ_TSTMP	0x0080		/* have/will request timestamps */
+#define	TF_RCVD_TSTMP	0x0100		/* a timestamp was received in SYN */
+#define	TF_SACK_PERMIT	0x0200		/* other side said I could SACK */
+
 	struct	tcpiphdr *t_template;	/* skeletal packet for transmit */
 	struct	inpcb *t_inpcb;		/* back pointer to internet pcb */
 /*
@@ -69,9 +75,9 @@ struct tcpcb {
 	tcp_seq	snd_wl1;		/* window update seg seq number */
 	tcp_seq	snd_wl2;		/* window update seg ack number */
 	tcp_seq	iss;			/* initial send sequence number */
-	u_short	snd_wnd;		/* send window */
+	u_long	snd_wnd;		/* send window */
 /* receive sequence variables */
-	u_short	rcv_wnd;		/* receive window */
+	u_long	rcv_wnd;		/* receive window */
 	tcp_seq	rcv_nxt;		/* receive next */
 	tcp_seq	rcv_up;			/* receive urgent pointer */
 	tcp_seq	irs;			/* initial receive sequence number */
@@ -85,8 +91,8 @@ struct tcpcb {
 					 * used to recognize retransmits
 					 */
 /* congestion control (for slow start, source quench, retransmit after loss) */
-	u_short	snd_cwnd;		/* congestion-controlled window */
-	u_short snd_ssthresh;		/* snd_cwnd size threshhold for
+	u_long	snd_cwnd;		/* congestion-controlled window */
+	u_long	snd_ssthresh;		/* snd_cwnd size threshhold for
 					 * for slow start exponential to
 					 * linear switch
 					 */
@@ -100,7 +106,7 @@ struct tcpcb {
 	short	t_srtt;			/* smoothed round-trip time */
 	short	t_rttvar;		/* variance in round-trip time */
 	u_short	t_rttmin;		/* minimum rtt allowed */
-	u_short	max_sndwnd;		/* largest window peer has offered */
+	u_long	max_sndwnd;		/* largest window peer has offered */
 
 /* out-of-band data */
 	char	t_oobflags;		/* have some */
@@ -108,6 +114,18 @@ struct tcpcb {
 #define	TCPOOB_HAVEDATA	0x01
 #define	TCPOOB_HADDATA	0x02
 	short	t_softerror;		/* possible error not yet reported */
+
+/* RFC 1323 variables */
+	u_char	snd_scale;		/* window scaling for send window */
+	u_char	rcv_scale;		/* window scaling for recv window */
+	u_char	request_r_scale;	/* pending window scaling */
+	u_char	requested_s_scale;
+	u_long	ts_recent;		/* timestamp echo data */
+	u_long	ts_recent_age;		/* when last updated */
+	tcp_seq	last_ack_sent;
+
+/* TUBA stuff */
+	caddr_t	t_tuba_pcb;		/* next level down pcb for TCP over z */
 };
 
 #define	intotcpcb(ip)	((struct tcpcb *)(ip)->inp_ppcb)
@@ -207,12 +225,54 @@ struct	tcpstat {
 	u_long	tcps_rcvackpack;	/* rcvd ack packets */
 	u_long	tcps_rcvackbyte;	/* bytes acked by rcvd acks */
 	u_long	tcps_rcvwinupd;		/* rcvd window update packets */
+	u_long	tcps_pawsdrop;		/* segments dropped due to PAWS */
+	u_long	tcps_predack;		/* times hdr predict ok for acks */
+	u_long	tcps_preddat;		/* times hdr predict ok for data pkts */
+	u_long	tcps_pcbcachemiss;
 };
 
 #ifdef KERNEL
 struct	inpcb tcb;		/* head of queue of active tcpcb's */
 struct	tcpstat tcpstat;	/* tcp statistics */
-struct	tcpiphdr *tcp_template();
-struct	tcpcb *tcp_close(), *tcp_drop();
-struct	tcpcb *tcp_timers(), *tcp_disconnect(), *tcp_usrclosed();
+u_long	tcp_now;		/* for RFC 1323 timestamps */
+
+int	 tcp_attach __P((struct socket *));
+void	 tcp_canceltimers __P((struct tcpcb *));
+struct tcpcb *
+	 tcp_close __P((struct tcpcb *));
+void	 tcp_ctlinput __P((int, struct sockaddr *, struct ip *));
+int	 tcp_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
+struct tcpcb *
+	 tcp_disconnect __P((struct tcpcb *));
+struct tcpcb *
+	 tcp_drop __P((struct tcpcb *, int));
+void	 tcp_dooptions __P((struct tcpcb *,
+	    u_char *, int, struct tcpiphdr *, int *, u_long *, u_long *));
+void	 tcp_drain __P((void));
+void	 tcp_fasttimo __P((void));
+void	 tcp_init __P((void));
+void	 tcp_input __P((struct mbuf *, int));
+int	 tcp_mss __P((struct tcpcb *, u_int));
+struct tcpcb *
+	 tcp_newtcpcb __P((struct inpcb *));
+void	 tcp_notify __P((struct inpcb *, int));
+int	 tcp_output __P((struct tcpcb *));
+void	 tcp_pulloutofband __P((struct socket *,
+	    struct tcpiphdr *, struct mbuf *));
+void	 tcp_quench __P((struct inpcb *, int));
+int	 tcp_reass __P((struct tcpcb *, struct tcpiphdr *, struct mbuf *));
+void	 tcp_respond __P((struct tcpcb *,
+	    struct tcpiphdr *, struct mbuf *, u_long, u_long, int));
+void	 tcp_setpersist __P((struct tcpcb *));
+void	 tcp_slowtimo __P((void));
+struct tcpiphdr *
+	 tcp_template __P((struct tcpcb *));
+struct tcpcb *
+	 tcp_timers __P((struct tcpcb *, int));
+void	 tcp_trace __P((int, int, struct tcpcb *, struct tcpiphdr *, int));
+struct tcpcb *
+	 tcp_usrclosed __P((struct tcpcb *));
+int	 tcp_usrreq __P((struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *));
+void	 tcp_xmit_timer __P((struct tcpcb *, int));
 #endif

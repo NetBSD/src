@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1988, 1990 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,39 +30,42 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_timer.c	7.18 (Berkeley) 6/28/90
+ *	@(#)tcp_timer.c	8.1 (Berkeley) 6/10/93
  */
 
-#include "param.h"
-#include "systm.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "protosw.h"
-#include "errno.h"
+#ifndef TUBA_INCLUDE
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "in.h"
-#include "in_systm.h"
-#include "ip.h"
-#include "in_pcb.h"
-#include "ip_var.h"
-#include "tcp.h"
-#include "tcp_fsm.h"
-#include "tcp_seq.h"
-#include "tcp_timer.h"
-#include "tcp_var.h"
-#include "tcpip.h"
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/ip_var.h>
+#include <netinet/tcp.h>
+#include <netinet/tcp_fsm.h>
+#include <netinet/tcp_seq.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
+#include <netinet/tcpip.h>
 
 int	tcp_keepidle = TCPTV_KEEP_IDLE;
 int	tcp_keepintvl = TCPTV_KEEPINTVL;
 int	tcp_maxidle;
+#endif /* TUBA_INCLUDE */
 /*
  * Fast timeout routine for processing delayed acks
  */
+void
 tcp_fasttimo()
 {
 	register struct inpcb *inp;
@@ -87,6 +90,7 @@ tcp_fasttimo()
  * Updates the timers in all active tcb's and
  * causes finite state machine actions if timers expire.
  */
+void
 tcp_slowtimo()
 {
 	register struct inpcb *ip, *ipnxt;
@@ -128,12 +132,15 @@ tpgone:
 	if ((int)tcp_iss < 0)
 		tcp_iss = 0;				/* XXX */
 #endif
+	tcp_now++;					/* for timestamps */
 	splx(s);
 }
+#ifndef TUBA_INCLUDE
 
 /*
  * Cancel all timers for TCP tp.
  */
+void
 tcp_canceltimers(tp)
 	struct tcpcb *tp;
 {
@@ -302,3 +309,4 @@ tcp_timers(tp, timer)
 	}
 	return (tp);
 }
+#endif /* TUBA_INCLUDE */
