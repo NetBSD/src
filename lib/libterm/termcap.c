@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.10 1997/01/23 14:03:12 mrg Exp $	*/
+/*	$NetBSD: termcap.c,v 1.11 1997/04/22 12:33:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: termcap.c,v 1.10 1997/01/23 14:03:12 mrg Exp $";
+static char rcsid[] = "$NetBSD: termcap.c,v 1.11 1997/04/22 12:33:20 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -139,6 +139,11 @@ tgetent(bp, name)
 		if (cgetset(cp) < 0)
 			return (-2);
 
+	/*
+	 * XXX potential security hole here in a set-id program if the
+	 * user had setup name to be built from a path they can not
+	 * normally read.
+	 */
 	dummy = NULL;
 	i = cgetent(&dummy, pathvec, name);      
 

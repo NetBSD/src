@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.12 1997/04/13 10:30:51 mrg Exp $	*/
+/*	$NetBSD: res_query.c,v 1.13 1997/04/22 12:33:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -58,7 +58,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: res_query.c,v 1.12 1997/04/13 10:30:51 mrg Exp $";
+static char rcsid[] = "$NetBSD: res_query.c,v 1.13 1997/04/22 12:33:17 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -361,6 +361,10 @@ __hostalias(name)
 
 	if (_res.options & RES_NOALIASES)
 		return (NULL);
+	/*
+	 * XXX potential security problem if this file is not normally 
+	 * readable by the user of a setuid program.
+	 */
 	file = getenv("HOSTALIASES");
 	if (file == NULL || (fp = fopen(file, "r")) == NULL)
 		return (NULL);
