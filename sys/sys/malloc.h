@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.36 1998/03/01 02:24:13 fvdl Exp $	*/
+/*	$NetBSD: malloc.h,v 1.37 1998/04/30 00:36:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -135,6 +135,7 @@
 #define M_UVMAOBJ	83	/* UVM aobj and related structs */
 #define	M_TEMP		84	/* misc temporary data buffers */
 #define	M_DMAMAP	85	/* bus_dma(9) structures */
+#define	M_IPFLOW	86	/* IP flow entries */
 #define	M_LAST		87	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
@@ -224,7 +225,8 @@
 	"UVM aobj",	/* 83 M_UVMAOBJ */ \
 	"temp",		/* 84 M_TEMP */ \
 	"DMA map",	/* 85 M_DMAMAP */ \
-	NULL,		/* 86 */ \
+	"IP flow,	/* 86 M_IPFLOW*/ \
+	NULL,		/* 87 */ \
 }
 
 struct kmemstats {
