@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.20 2002/09/06 13:18:43 gehenna Exp $
+#	$NetBSD: files.dreamcast,v 1.21 2002/11/15 14:15:36 itohy Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 8
@@ -63,6 +63,14 @@ file	arch/dreamcast/dev/maple/mkbd.c			mkbd	needs-flag
 device	mms: wsmousedev
 attach	mms at maple
 file	arch/dreamcast/dev/maple/mms.c			mms	needs-flag
+
+device	mmem: disk
+attach	mmem at maple
+file	arch/dreamcast/dev/maple/mmemcard.c		mmem	needs-flag
+
+device	mlcd
+attach	mlcd at maple
+file	arch/dreamcast/dev/maple/mlcd.c			mlcd	needs-flag
 
 device	pvr: wsemuldisplaydev, rasops16
 attach	pvr at shb

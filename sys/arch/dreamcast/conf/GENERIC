@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28 2002/10/30 12:22:55 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.29 2002/11/15 14:15:36 itohy Exp $
 #
 # GENERIC machine description file
 # 
@@ -36,7 +36,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 options 	SYSTRACE	# system call vetting via sistrace(1)
 
 options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -148,8 +148,15 @@ pvr0		at shb?
 wsdisplay*	at pvr? console ?
 
 maple0		at shb?
+
 mkbd*		at maple? port ? subunit ?
-wskbd*		at mkbd? console ?
+wskbd*		at mkbd? mux 1 console ?
+
+mms*		at maple? port ? subunit ?
+wsmouse*	at mms? mux 0
+
+mmem*		at maple? port ? subunit ?
+mlcd*		at maple? port ? subunit ?
 
 gdrom0		at shb?
 
@@ -182,3 +189,4 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	wsmux			# mouse & keyboard multiplexor
