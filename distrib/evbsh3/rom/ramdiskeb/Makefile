@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/09/18 07:21:02 msaitoh Exp $
+#	$NetBSD: Makefile,v 1.2 2000/10/26 04:53:57 garbled Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -67,7 +67,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	PATH=/usr/local/sh-evbsh3112-netbsdcoff/bin:${PATH} \
-	make -f ${CBIN}.mk all
+	${MAKE} -f ${CBIN}.mk all
 
 # This is listed in stonebin.conf but is built here.
 #${CBIN}: libhack.o
