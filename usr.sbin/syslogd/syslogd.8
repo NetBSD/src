@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.27 2002/05/25 14:21:02 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.28 2003/02/25 10:36:20 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -148,7 +148,7 @@ creates the file
 and stores its process
 id there.
 This can be used to kill or reconfigure
-.Nm "" .
+.Nm .
 .Pp
 By using multiple
 .Fl p
@@ -156,12 +156,12 @@ options, one can setup many chroot environments by passing the pathname
 to the log socket
 .Pa ( /var/run/log )
 in each chroot area to
-.Nm "" .
+.Nm .
 For example:
 .Dl syslogd -p /var/run/log -p /web/var/run/log -p /ftp/var/run/log
 .Pp
 Note: the normal log socket must now also be passed to
-.Nm "" .
+.Nm .
 .Pp
 Accesses from UDP socket can be filtered by libwrap configuration files, like
 .Pa /etc/hosts.deny .
@@ -189,7 +189,7 @@ include file
 The configuration file.
 .It Pa /var/run/syslogd.pid
 The process id of current
-.Nm "" .
+.Nm .
 .It Pa /var/run/log
 Name of the
 .Ux

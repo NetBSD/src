@@ -1,4 +1,4 @@
-.\"	$NetBSD: window.1,v 1.12 2003/02/04 23:07:37 perry Exp $
+.\"	$NetBSD: window.1,v 1.13 2003/02/25 10:36:01 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -188,7 +188,7 @@ In addition,
 it is set apart by highlighting its identifier and label in reverse video.
 .Pp
 Typing
-.Nm "" Ns 's
+.Nm Ns 's
 escape character (normally
 .Ic ^P )
 in conversation
@@ -260,11 +260,11 @@ List a short summary of commands.
 Refresh the screen.
 .It Ic q
 Exit
-.Nm ""  .
+.Nm .
 Confirmation is requested.
 .It Ic ^Z
 Suspend
-.Nm ""  .
+.Nm .
 .It Ic w
 Create a new window.
 The user is prompted for the positions
@@ -813,7 +813,7 @@ The initial value is 1 (true).
 Write the list of strings,
 .Aq Ar string-list ,
 to
-.Nm ""  ,
+.Nm ,
 separated
 by spaces and terminated with a new line.
 The strings are only
@@ -989,7 +989,7 @@ The created window's identifier is returned as a number.
 Send the list of strings,
 .Aq Ar string-list ,
 to
-.Nm "" ,
+.Nm ,
 separated
 by spaces but not terminated with a new line.
 The strings are actually given to the window as input.
@@ -999,7 +999,7 @@ Default is the current window.
 .Ss Predefined Variables
 These variables are for information only.
 Redefining them does not affect the internal operation of
-.Nm "" .
+.Nm .
 .Bl -tag -width modes
 .It Ar baud
 The baud rate as a number between 50 and 38400.

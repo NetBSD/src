@@ -1,4 +1,4 @@
-.\"	$NetBSD: chkconfig.8,v 1.5 2002/10/01 13:40:27 wiz Exp $
+.\"	$NetBSD: chkconfig.8,v 1.6 2003/02/25 10:34:53 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Ar service
-.Nm ""
+.Nm
 .Op Fl f
 .Ar service
 .Op Ar on | off
@@ -90,7 +90,7 @@ In order for
 .Nm
 to display service status or to control service state, the service
 must be managed by
-.Nm "" .
+.Nm .
 A
 .Nm
 managed service is one that has the

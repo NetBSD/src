@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.42 2002/10/21 15:54:51 rtr Exp $
+.\"	$NetBSD: disklabel.8,v 1.43 2003/02/25 10:34:53 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,36 +43,36 @@
 .Nm disklabel
 .Nd read and write disk pack label
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl rt
 .Op Fl C
 .Ar disk
-.Nm ""
+.Nm
 .Fl w
 .Op Fl r
 .Op Fl f Ar disktab
 .Ar disk Ar disktype
 .Oo Ar packid Oc
-.Nm ""
+.Nm
 .Fl e
 .Op Fl r
 .Op Fl I
 .Op Fl C
 .Ar disk
-.Nm ""
+.Nm
 .Fl i
 .Op Fl I
 .Op Fl r
 .Ar disk
-.Nm ""
+.Nm
 .Fl R
 .Op Fl r
 .Ar disk Ar protofile
-.Nm ""
+.Nm
 .Op Fl NW
 .Ar disk
 .sp
-.Nm ""
+.Nm
 .Fl B
 .Op Fl f Ar disktab
 .Oo
@@ -81,7 +81,7 @@
 .Oc
 .Ar disk
 .Oo Ar disktype Oc
-.Nm ""
+.Nm
 .Fl w
 .Fl B
 .Op Fl f Ar disktab
@@ -91,7 +91,7 @@
 .Oc
 .Ar disk Ar disktype
 .Oo Ar packid Oc
-.Nm ""
+.Nm
 .Fl R
 .Fl B
 .Op Fl f Ar disktab

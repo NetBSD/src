@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.18 2003/02/14 15:20:19 grant Exp $
+.\"	$NetBSD: pppoe.4,v 1.19 2003/02/25 10:35:14 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -133,7 +133,7 @@ data from them, or to do your online banking).
 .Pp
 Without special care systems as described above will not be able
 to send larger chunks of data to a system connected via
-.Nm "" .
+.Nm .
 But there is a workaround (some may call it cheating): pretend to not
 be able to handle large packets, by sending a small MSS (maximum
 segment size) option during initial TCP handshake.

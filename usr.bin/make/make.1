@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.73 2003/02/04 23:07:34 perry Exp $
+.\"	$NetBSD: make.1,v 1.74 2003/02/25 10:35:47 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm make
 .Nd maintain program dependencies
 .Sh SYNOPSIS
-.Nm ""
+.Nm
 .Op Fl BeikNnqrstW
 .Bk -words
 .Op Fl D Ar variable
@@ -223,7 +223,7 @@ Rather than re-building a target as specified in the makefile, create it
 or update its modification time to make it appear up-to-date.
 .It Fl V Ar variable
 Print
-.Nm "" Ns 's
+.Nm Ns 's
 idea of the value of
 .Ar variable ,
 in the global context.
@@ -376,7 +376,7 @@ are:
 .Bl -tag -width Ds
 .It Environment variables
 Variables defined as part of
-.Nm "" Ns 's
+.Nm Ns 's
 environment.
 .It Global variables
 Variables defined in the makefile or in included makefiles.
@@ -470,10 +470,10 @@ The environment variable
 .Ql Ev MAKEFLAGS
 may contain anything that
 may be specified on
-.Nm "" Ns 's
+.Nm Ns 's
 command line.
 Anything specified on
-.Nm "" Ns 's
+.Nm Ns 's
 command line is appended to the
 .Ql Ev MAKEFLAGS
 variable which is then
@@ -594,7 +594,7 @@ Order every word in variable alphabetically.
 .It Cm Q
 Quotes every shell meta-character in the variable, so that it can be passed
 safely through recursive invocations of
-.Nm "" .
+.Nm .
 .It Cm R
 Replaces each word in the variable with everything but its suffix.
 .It Cm tl
@@ -817,7 +817,7 @@ to the variable.
 .Sh INCLUDE STATEMENTS, CONDITIONALS AND FOR LOOPS
 Makefile inclusion, conditional structures and for loops  reminiscent
 of the C programming language are provided in
-.Nm "" .
+.Nm .
 All such structures are identified by a line beginning with a single
 dot
 .Pq Ql \&.
@@ -968,7 +968,7 @@ has been defined.
 .It Ic make
 Takes a target name as an argument and evaluates to true if the target
 was specified as part of
-.Nm "" Ns 's
+.Nm Ns 's
 command line or was declared the default target (either implicitly or
 explicitly, see
 .Va .MAIN )
@@ -1083,7 +1083,7 @@ or
 .Fl t
 options were specified.
 Normally used to mark recursive
-.Nm "" Ns 's .
+.Nm Ns 's .
 .It Ic .NOTMAIN
 Normally
 .Nm
@@ -1106,7 +1106,7 @@ as if they all were preceded by an at sign
 .Pq Ql @ .
 .It Ic .USE
 Turn the target into
-.Nm "" Ns 's
+.Nm Ns 's
 version of a macro.
 When the target is used as a source for another target, the other target
 acquires the commands, sources, and attributes (except for
@@ -1237,7 +1237,7 @@ attribute is applied to every
 command in the file.
 .It Ic .SUFFIXES
 Each source specifies a suffix to
-.Nm "" .
+.Nm .
 If no sources are specified, any previously specified suffixes are deleted.
 .El
 .Sh ENVIRONMENT

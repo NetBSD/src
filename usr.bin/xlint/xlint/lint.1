@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.24 2002/10/21 21:16:12 christos Exp $
+.\" $NetBSD: lint.1,v 1.25 2003/02/25 10:36:02 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -112,10 +112,10 @@ preprocessor symbol
 .Sy lint
 defined to allow certain questionable code to be altered
 or skipped by
-.Nm "" .
+.Nm .
 Therefore, this symbol should be thought of as a reserved
 word for all code that is to be checked by
-.Nm "" .
+.Nm .
 .Pp
 Among the possible problems that are currently noted are
 unreachable statements, loops not entered at the top,
@@ -136,7 +136,7 @@ are taken to be C source files.
 Filename arguments with names ending with
 .Pa \&.ln
 are taken to be the result of an earlier invocation of
-.Nm "" ,
+.Nm ,
 with either the
 .Fl i ,
 .Fl o
@@ -275,7 +275,7 @@ file on the command line.
 These
 .Pa \&.ln
 files are the product of
-.Nm "" Ns 's
+.Nm Ns 's
 first pass only, and are not checked for compatibility
 between functions.
 .It Fl n
@@ -393,7 +393,7 @@ followed by a question mark.
 Name the output file
 .Ar outputfile .
 The output file produced is the input that is given to
-.Nm "" Ns 's
+.Nm Ns 's
 second pass.
 The
 .Fl o
@@ -417,7 +417,7 @@ for the preprocessor.
 .It Fl V
 Print the command lines constructed by the controller program to
 run the C preprocessor and
-.Nm "" Ns 's
+.Nm Ns 's
 first and second pass.
 .It Fl w
 Treat warnings as errors.
@@ -429,7 +429,7 @@ A list of messages and ids can be found in
 .Pp
 .Sy Input Grammar
 .Pp
-.Nm "" Ns 's
+.Nm Ns 's
 first pass reads standard C source files.
 .Nm
 recognizes the following C comments as commands.
@@ -548,7 +548,7 @@ file that corresponds to the
 file, and prints all messages that are about just that
 source file.
 After all the source files have been separately run through
-.Nm "" ,
+.Nm ,
 it is invoked once more (without the
 .Fl i
 option), listing all the
@@ -565,7 +565,7 @@ to be used to
 .Nm
 only the source files that have been modified since the last
 time the set of source files were
-.Nm "" Ns No ed .
+.Nm Ns No ed .
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev LIBDIR
