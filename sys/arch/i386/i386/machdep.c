@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.401 2000/09/28 18:31:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.402 2000/09/29 09:03:18 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -170,6 +170,8 @@ extern struct proc *npxproc;
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
+
+u_int cpu_serial[3];
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
@@ -349,6 +351,14 @@ cpu_startup()
 		    buf, sizeof(buf));
 		printf("cpu0: features %s\n", buf);
 	}
+
+	if (cpuid_level < 3)
+		printf("cpu0: serial number not supported\n");
+	else if ((cpu_feature & CPUID_PN) == 0)
+	  	printf("cpu0: serial number disabled\n");
+	else
+		printf("cpu0: serial number %08X%08X%08X\n",
+		       cpu_serial[0], cpu_serial[1], cpu_serial[2]);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -784,6 +794,22 @@ do_cpuid(u_int which, u_int *rv)
 	: "ebx", "ecx", "edx");
 }
 
+static void
+do_cpuid_serial(u_int *serial)
+{
+	__asm __volatile(
+	"	movl	$1,%%eax	;"
+	"	cpuid			;"
+	"	movl	%%eax,0(%0)	;"
+	"	movl	$3,%%eax	;"
+	"	cpuid			;"
+	"	movl	%%edx,4(%0)	;"
+	"	movl	%%ecx,8(%0)	"
+	: /* no imputs */
+	: "S" (serial)
+	: "eax", "ebx", "ecx", "edx");
+}
+
 void
 identifycpu()
 {
@@ -892,6 +918,13 @@ identifycpu()
 			do_cpuid(2, descs);
 		}
 	}
+
+	/*
+	 * If the processor serial number misfeature is present and supported,
+	 * extract it here.
+	 */
+	if (cpuid_level >= 3 && (cpu_feature & CPUID_PN) != 0)
+		do_cpuid_serial(cpu_serial);
 
 	/*
 	 * Now that we have told the user what they have,
