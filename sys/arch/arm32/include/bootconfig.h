@@ -1,4 +1,4 @@
-/*	$NetBSD: bootconfig.h,v 1.4 1997/10/14 09:20:03 mark Exp $	*/
+/*	$NetBSD: bootconfig.h,v 1.5 1998/06/17 19:35:24 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -91,6 +91,35 @@ typedef struct _BootConfig {
 
 extern BootConfig bootconfig;
 #endif	/* _KERNEL && (RISCPC || RC7500) */
+
+#if defined(_KERNEL) && defined(OFW)
+/*
+ * Currently several bootconfig structure members are used
+ * in the arm32 generic part. This needs to be fixed.
+ * In the mean time just define the fields required
+ * to get the files to compile.
+ * To solve this either
+ * 1. fake a bootconfig structure as required
+ * 2. provide a generic structure for this information
+ *    (need to see the shark code first)
+ * 3. move the dependant routines to the machine specific
+ *    areas (e.g. move dumpsys() to *_machdep.c
+ *
+ * 1 is probably the simplest stop gap measure
+ * 2 is the solution I plan on using.
+ *
+ * code affected: pmap.c stubs.c
+ */
+
+#define DRAM_BLOCKS	33
+
+typedef struct _BootConfig {
+	PhysMem dram[DRAM_BLOCKS];
+	u_int dramblocks;
+} BootConfig;
+
+extern BootConfig bootconfig;
+#endif	/* _KERNEL && OFW */
 
 #ifdef _KERNEL
 #define BOOTOPT_TYPE_BOOLEAN		0
