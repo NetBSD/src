@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 1998/02/02 04:59:19 sakamoto Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 1999/07/02 15:33:36 sakamoto Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -157,7 +157,7 @@ microtime(tvp)
  */
 void
 delay(n)
-	int n;
+	unsigned int n;
 {
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
