@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.22 1999/10/04 19:23:49 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.23 2000/04/30 21:09:46 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct module_info {
 	void (*hotfix) __P((struct cpu_info *));
 	void (*mmu_enable)__P((void));
 	void (*cache_enable)__P((void));
-	int  ncontext;			/* max. # of contexts (we use) */
+	int  ncontext;			/* max. # of contexts (that we use) */
 
 	void (*get_syncflt)__P((void));
 	int  (*get_asyncflt)__P((u_int *, u_int *));
@@ -74,6 +74,8 @@ struct module_info {
 	void (*pure_vcache_flush)__P((void));
 	void (*cache_flush_all)__P((void));
 	void (*memerr)__P((unsigned, u_int, u_int, struct trapframe *));
+	void (*zero_page)__P((paddr_t));
+	void (*copy_page)__P((paddr_t, paddr_t));
 };
 
 struct xpmsg {
@@ -257,6 +259,10 @@ struct cpu_info {
 	void	(*pcache_flush_line)__P((int, int));
 	void	(*pure_vcache_flush)__P((void));
 	void	(*cache_flush_all)__P((void));
+
+	/* Support for hardware-assisted page clear/copy */
+	void	(*zero_page)__P((paddr_t));
+	void	(*copy_page)__P((paddr_t, paddr_t));
 
 #ifdef SUN4M
 	/* hardware-assisted block operation routines */
