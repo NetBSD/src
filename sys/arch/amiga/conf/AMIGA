@@ -1,9 +1,9 @@
-# $NetBSD: AMIGA,v 1.41 2002/01/26 13:22:12 aymeric Exp $
+# $NetBSD: AMIGA,v 1.42 2002/01/27 11:12:39 jdolecek Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.166 2002/01/13 23:24:22 jandberg Exp $
+# Created from: #NetBSD: GENERIC,v 1.170 2002/01/27 11:07:38 jdolecek Exp $
 
 #GENERIC machine description file
 
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.41 $"
+#ident  		"GENERIC-$Revision: 1.42 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -138,9 +138,8 @@ options 	KTRACE		# system call tracing support
 options 	LKM		# Loadable kernel modules
 options 	UCONSOLE	# anyone can redirect a virtual console
 
-#options 	INSECURE	# allow, among other insecure stuff, LKM
-				# loading in multi-user mode.
-options 	SCSIVERBOSE	# Verbose SCSI errors
+#options 	INSECURE	# disable kernel security levels
+options 	SCSIVERBOSE	# human readable SCSI error messages
 
 options 	NTP		# NTP phase/frequency locked loop
 
@@ -161,7 +160,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	NKPTADD=4	# set this for 4 additional KPT pages
 #options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
 				# per 16 MB (1<<24 bytes) of RAM
-				# define and decrease this, or define and
+				# uncomment and decrease this, or uncomment and
 				# increase NKPTADD if you get "out of PT pages"
 				# panics.
 
@@ -278,7 +277,7 @@ lpt*		at iobl? port ?		# IOBlix parallel ports
 #Keyboard device. Optionally can attach a wskbd.
 #wskbd works together with a wsdisplay so enable them both if you will.
 #Don't enable wskbd if you use ite.
-
+#
 #XXX in std.amiga: kbd0 at mainbus0
 #wskbd0		at kbd0 console ?
 
@@ -412,8 +411,16 @@ pseudo-device	pty			# pseudo-terminals
 
 pseudo-device	vnd		4	# vnode pseudo-disks
 pseudo-device	ccd		4	# concatenated disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
-#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#Options to enable various other RAIDframe RAID types.
+#options	RF_INCLUDE_EVENODD=1
+#options	RF_INCLUDE_RAID5_RS=1
+#options	RF_INCLUDE_PARITYLOGGING=1
+#options	RF_INCLUDE_CHAINDECLUSTER=1
+#options	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
