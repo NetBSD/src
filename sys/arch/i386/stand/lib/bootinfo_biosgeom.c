@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_biosgeom.c,v 1.6 1999/03/12 01:01:42 fvdl Exp $	*/
+/*	$NetBSD: bootinfo_biosgeom.c,v 1.7 1999/03/28 19:41:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -89,11 +89,9 @@ void bi_getbiosgeom()
 
 		if (d.flags & BIOSDISK_EXT13) {
 			if (ed.flags & EXT13_GEOM_VALID)
-				bibg->disk[nvalid].totsec = 
-				    (u_int64_t)ed.sec * (u_int64_t)ed.head *
-				    (u_int64_t)ed.cyl;
-			else
 				bibg->disk[nvalid].totsec = ed.totsec;
+			else
+				bibg->disk[nvalid].totsec = 0;
 			bibg->disk[nvalid].flags |= BI_GEOM_EXTINT13;
 		}
 		for (j = 0, cksum = 0; j < BIOSDISK_SECSIZE; j++)
