@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.18 1999/08/09 09:56:00 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.19 1999/09/23 11:04:32 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ struct channel_softc { /* Per channel data */
 	u_int8_t ch_error;          /* copy of error register */
 	/* per-drive infos */
 	struct ata_drive_datas ch_drive[2];
+
+	struct device *atapibus;
 
 	/*
 	 * channel queues. May be the same for all channels, if hw channels
@@ -153,6 +155,8 @@ struct wdc_xfer {
 
 int   wdcprobe __P((struct channel_softc *));
 void  wdcattach __P((struct channel_softc *));
+int   wdcdetach __P((struct device *, int));
+int   wdcactivate __P((struct device *, enum devact));
 int   wdcintr __P((void *));
 void  wdc_exec_xfer __P((struct channel_softc *, struct wdc_xfer *));
 struct wdc_xfer *wdc_get_xfer __P((int)); /* int = WDC_NOSLEEP/CANSLEEP */

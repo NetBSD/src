@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.195 1999/09/22 09:51:03 enami Exp $ */
+/*	$NetBSD: wd.c,v 1.196 1999/09/23 11:04:29 enami Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -86,6 +86,7 @@
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/vnode.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -109,6 +110,7 @@
 
 #define	WDUNIT(dev)		DISKUNIT(dev)
 #define	WDPART(dev)		DISKPART(dev)
+#define	WDMINOR(unit, part)	DISKMINOR(unit, part)
 #define	MAKEWDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
 #define	WDLABELDEV(dev)	(MAKEWDDEV(major(dev), WDUNIT(dev), RAW_PART))
@@ -156,6 +158,9 @@ struct wd_softc {
 	int heads;
 	int sectors;
 	int retries; /* number of xfer retry */
+
+	void *sc_sdhook;		/* our shutdown hook */
+
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
@@ -168,10 +173,12 @@ struct wd_softc {
 
 int	wdprobe		__P((struct device *, struct cfdata *, void *));
 void	wdattach	__P((struct device *, struct device *, void *));
+int	wddetach __P((struct device *, int));
+int	wdactivate __P((struct device *, enum devact));
 int	wdprint	__P((void *, char *));
 
 struct cfattach wd_ca = {
-	sizeof(struct wd_softc), wdprobe, wdattach
+	sizeof(struct wd_softc), wdprobe, wdattach, wddetach, wdactivate
 };
 
 extern struct cfdriver wd_cd;
@@ -341,13 +348,85 @@ wdattach(parent, self, aux)
 	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
-	if (shutdownhook_establish(wd_shutdown, wd) == NULL)
+	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
+	if (wd->sc_sdhook == NULL)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    wd->sc_dev.dv_xname); 
 #if NRND > 0
 	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
 #endif
+}
+
+int
+wdactivate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		/*
+		 * Nothing to do; we key off the device's DVF_ACTIVATE.
+		 */
+		break;
+	}
+	return (rv);
+}
+
+int
+wddetach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct wd_softc *sc = (struct wd_softc *)self;
+	struct buf *bp;
+	int s, bmaj, cmaj, mn;
+
+	/* locate the major number */
+	for (bmaj = 0; bmaj < nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == wdopen)
+			break;
+	for (cmaj = 0; cmaj < nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == wdopen)
+			break;
+
+	s = splbio();
+
+	/* Kill off any queued buffers. */ 
+	while ((bp = sc->sc_q.b_actf) != NULL) {
+		sc->sc_q.b_actf = bp->b_actf;
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR; 
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
+
+	splx(s);
+
+	/* Nuke the vnodes for any open instances. */
+	mn = WDMINOR(self->dv_unit, 0);
+	vdevgone(bmaj, mn, mn + MAXPARTITIONS - 1, VBLK);
+	vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
+
+	/* Detach disk. */
+	disk_detach(&sc->sc_dk);
+
+	/* Get rid of the shutdown hook. */
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
+
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&sc->rnd_source);
+#endif
+
+	return (0);
 }
 
 /*
