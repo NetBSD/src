@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.206 2004/04/20 08:36:46 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.207 2004/04/20 08:38:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6551,7 +6551,7 @@ ENTRY(delay)			! %o0 = n
 	retl				! return
 	 nop				! [delay slot]
 
-#if defined(MULTIPROCESSOR) && !defined(__CPU_SIMPLE_LOCK_INLINE)
+
 /*
  * void __cpu_simple_lock(__cpu_simple_lock_t *alp)
  */
@@ -6583,7 +6583,6 @@ _ENTRY(_C_LABEL(__cpu_simple_lock))
 Lpanic_spunout:
 	.asciz	"cpu%d: stuck on lock@%x"
 	_ALIGN
-#endif /* MULTIPROCESSOR && !__CPU_SIMPLE_LOCK_INLINE */
 
 #if defined(KGDB) || defined(DDB) || defined(DIAGNOSTIC)
 /*
