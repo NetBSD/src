@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.68 1997/08/24 22:31:29 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.69 1997/08/26 19:04:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -644,9 +644,11 @@ audio_open(dev, flags, ifmt, p)
 	sc->sc_eof = 0;
 	sc->sc_playdrop = 0;
 
-	sc->sc_full_duplex = (flags & (FWRITE|FREAD)) == (FWRITE|FREAD) &&
+	sc->sc_full_duplex = 0;
+/* doesn't always work right on SB.
+		(flags & (FWRITE|FREAD)) == (FWRITE|FREAD) &&
 		(hw->get_props(sc->hw_hdl) & AUDIO_PROP_FULLDUPLEX);
-
+*/
 
 	mode = 0;
 	if (flags & FREAD) {

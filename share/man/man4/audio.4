@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.11 1997/08/24 22:44:16 augustss Exp $
+.\"	$NetBSD: audio.4,v 1.12 1997/08/26 19:03:55 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,6 +102,9 @@ sampling rate.  If both playback and recording are requested on a half-duplex
 device, playback mode takes precedence and recordings will get silence.
 On a full-duplex device, reads and writes may operate
 concurrently without interference.
+If a full-duplex capable audio device is opened for both reading and writing 
+it will start in half-duplex play mode; full-duplex mode has to be set 
+explicitely.
 On either type of device, if the playback mode is paused then silence is
 played instead of the provided samples, and if recording is paused then
 the process blocks in
