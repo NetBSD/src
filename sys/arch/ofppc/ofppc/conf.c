@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2000/11/15 00:39:31 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 2001/03/26 12:33:25 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -79,11 +79,8 @@ cdev_decl(openfirm);
 
 cdev_decl(raid);
 
-#define	cdev_rtc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), \
-	dev_init(c,n,read), dev_init(c,n,write), \
-	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
+/* open, close, read, write */
+#define	cdev_rtc_init(c,n)	cdev__ocrw_init(c,n)
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */

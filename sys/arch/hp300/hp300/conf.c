@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.45 1999/04/19 21:22:58 kleink Exp $	*/
+/*	$NetBSD: conf.c,v 1.46 2001/03/26 12:33:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -86,25 +86,14 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, ioctl, poll, mmap -- XXX should be a map device */
-#define	cdev_grf_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap) }
-
 /* open, close, read, write, ioctl -- XXX should be a generic device */
-#define	cdev_ppi_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
+#define	cdev_ppi_init(c,n)	cdev__ocrwi_init(c,n)
 
-/* open, close, read, ioctl, poll, mmap -- XXX should be a map device */
+/* open, close, read, (write), ioctl, poll, mmap -- XXX should be a map device */
 #define	cdev_hil_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap) }
+	dev_noimpl(write,nullop), dev_init(c,n,ioctl), \
+	dev_noimpl(stop,enodev), 0, dev_init(c,n,poll), dev_init(c,n,mmap) }
 
 cdev_decl(cn);
 cdev_decl(ctty);
