@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.5 2000/10/16 21:53:19 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.5 2000/10/16 21:53:19 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
 {
 	int i;
 	u_char *hp;
-	static long nleft = 0;
+	static size_t nleft = 0;
 	static int cnt = 0, flag = -1;
 	static u_char maxb = 0;
 	static FILE *fp;
@@ -84,9 +84,7 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
 				return (EOF);
 			}
 			fp = fstack[infl0.top + cnt].fp;
-			hp = (u_char *) &nleft;
-			for (i = sizeof(TRECHEADER); i; --i)
-				*hp++ = getc(fp);
+			fread(&nleft, sizeof(nleft), 1, fp);
 			if (binno < maxb)
 				fstack[infl0.top+cnt].max_o
 					+= sizeof(nleft) + nleft;
@@ -107,10 +105,9 @@ getnext(binno, infl0, nfiles, pos, end, dummy)
 	}
 	if ((u_char *) pos > end - sizeof(TRECHEADER))
 		return (BUFFEND);
-	hp = (u_char *) pos;
-	for (i = sizeof(TRECHEADER); i ; --i)
-		*hp++ = (u_char) getc(fp);
+	fread(pos, sizeof(TRECHEADER), 1, fp);
 	if (end - pos->data < pos->length) {
+		hp = ((u_char *) pos) + sizeof(TRECHEADER);
 		for (i = sizeof(TRECHEADER); i ;  i--)
 			ungetc(*--hp, fp);
 		return (BUFFEND);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.5 2000/10/16 21:53:19 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.5 2000/10/16 21:53:19 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -143,10 +143,11 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 				 * bigger buffer */
 				bufsize *= 2;
 				buffer = realloc(buffer, bufsize);
-				bufend = buffer + bufsize;
-				if (!buffer)
+				if (!buffer) {
 					err(2, "failed to realloc buffer to %ld bytes",
 						(unsigned long) bufsize);
+				}
+				bufend = buffer + bufsize;
 				continue;
 			}
 			if (c == BUFFEND || ntfiles || mfct) {	/* push */
@@ -264,7 +265,7 @@ onepass(a, depth, n, sizes, tr, fp)
 	u_char *tr;
 	FILE *fp;
 {
-	long tsizes[NBINS+1];
+	size_t tsizes[NBINS+1];
 	const u_char **bin[257], ***bp, ***bpmax, **top[256], ***tp;
 	static int histo[256];
 	int *hp;
@@ -274,7 +275,7 @@ onepass(a, depth, n, sizes, tr, fp)
 
 	memset(tsizes, 0, sizeof(tsizes));
 	depth += sizeof(TRECHEADER);
-	an = a + n;
+	an = &a[n];
 	for (ak = a; ak < an; ak++) {
 		histo[c = tr[**ak]]++;
 		tsizes[c] += ((const RECHEADER *) (*ak -= depth))->length;
@@ -298,7 +299,7 @@ onepass(a, depth, n, sizes, tr, fp)
 		n = an - ak;
 		tsizes[c] += n * sizeof(TRECHEADER);
 		/* tell getnext how many elements in this bin, this segment. */
-		EWRITE(tsizes+c, sizeof(long), 1, fp);
+		EWRITE(&tsizes[c], sizeof(size_t), 1, fp);
 		sizes[c] += tsizes[c];
 		for (; ak < an; ++ak)
 			putrec((const RECHEADER *) *ak, fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: append.c,v 1.5 2000/10/16 21:37:03 jdolecek Exp $	*/
+/*	$NetBSD: append.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: append.c,v 1.5 2000/10/16 21:37:03 jdolecek Exp $");
+__RCSID("$NetBSD: append.c,v 1.6 2000/10/17 15:22:57 jdolecek Exp $");
 __SCCSID("@(#)append.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -94,11 +94,15 @@ append(keylist, nelem, depth, fp, put, ftbl)
 		prec = (const RECHEADER *) (*ppos - depth);
 		if (UNIQUE)
 			put(prec, fp);
-		for (cpos = keylist+1; cpos < lastkey; cpos++) {
+		for (cpos = &keylist[1]; cpos < lastkey; cpos++) {
 			crec = (const RECHEADER *) (*cpos - depth);
 			if (crec->length  == prec->length) {
-				pend = (const u_char *) &prec->offset + prec->length;
-				cend = (const u_char *) &crec->offset + crec->length;
+				/*
+				 * Set pend & cend so that trailing '\0' and
+				 * record separator is ignored.
+				 */
+				pend = (const u_char *) &prec->data + prec->length - 2;
+				cend = (const u_char *) &crec->data + crec->length - 2;
 				for (start = *cpos; cend >= start; cend--) {
 					if (wts[*cend] != wts[*pend])
 						break;
@@ -129,8 +133,12 @@ append(keylist, nelem, depth, fp, put, ftbl)
 		for (cpos = keylist+1; cpos < lastkey; cpos++) {
 			crec = (const RECHEADER *) (*cpos - depth);
 			if (crec->offset == prec->offset) {
-				pend = (const u_char *) &prec->offset + prec->offset;
-				cend = (const u_char *) &crec->offset + crec->offset;
+				/*
+				 * Set pend & cend so that trailing '\0' and
+				 * record separator is ignored.
+				 */
+				pend = (const u_char *) &prec->data + prec->offset - 2;
+				cend = (const u_char *) &crec->data + crec->offset - 2;
 				for (start = *cpos; cend >= start; cend--) {
 					if (wts[*cend] != wts[*pend])
 						break;
