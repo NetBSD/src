@@ -280,11 +280,13 @@ choose_temp_base ()
   base = choose_temp_base_try (getenv ("TMP"), base);
   base = choose_temp_base_try (getenv ("TEMP"), base);
 
+#ifndef __NetBSD__
 #ifdef P_tmpdir
   base = choose_temp_base_try (P_tmpdir, base);
 #endif
 
   base = choose_temp_base_try ("/usr/tmp", base);
+#endif
   base = choose_temp_base_try ("/tmp", base);
 
   /* If all else fails, use the current directory! */  
