@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.12 1995/03/21 07:28:54 cgd Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.13 1995/06/25 21:44:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-static char rcsid[] = "$NetBSD: mkdir.c,v 1.12 1995/03/21 07:28:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: mkdir.c,v 1.13 1995/06/25 21:44:38 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,13 +133,15 @@ mkpath(path, mode, dir_mode)
 {
 	struct stat sb;
 	register char *slash;
+	int done = 0;
 
-	/* skip leading slashes */
 	slash = path;
-	while (*slash == '/')
-		slash++;
 
-	while ((slash = strchr(slash, '/')) != NULL) {
+	while (!done) {
+		slash += strspn(slash, "/");
+		slash += strcspn(slash, "/");
+
+		done = (*slash == '\0');
 		*slash = '\0';
 
 		if (stat(path, &sb)) {
@@ -152,18 +154,10 @@ mkpath(path, mode, dir_mode)
 			return 1;
 		}
 		    
-		/* skip multiple slashes */
-		*slash++ = '/';
-		while (*slash == '/')
-			slash++;
+		*slash = '/';
 	}
 
-	if (mkdir (path, mode)) {
-		warn("%s", path);
-		return 1;
-	}
-
-	return(0);
+	return (0);
 }
 
 void
