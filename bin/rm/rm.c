@@ -1,4 +1,4 @@
-/*	$NetBSD: rm.c,v 1.26 1999/11/09 15:06:32 drochner Exp $	*/
+/* $NetBSD: rm.c,v 1.27 2001/09/16 21:24:54 wiz Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.26 1999/11/09 15:06:32 drochner Exp $");
+__RCSID("$NetBSD: rm.c,v 1.27 2001/09/16 21:24:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,22 +55,22 @@ __RCSID("$NetBSD: rm.c,v 1.26 1999/11/09 15:06:32 drochner Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
+#include <grp.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <pwd.h>
-#include <grp.h>
 
-int dflag, eval, fflag, iflag, Pflag, Wflag, stdin_ok;
+int dflag, eval, fflag, iflag, Pflag ,stdin_ok, Wflag;
 
-int	check __P((char *, char *, struct stat *));
-void	checkdot __P((char **));
-void	rm_file __P((char **));
-void	rm_overwrite __P((char *, struct stat *));
-void	rm_tree __P((char **));
-void	usage __P((void));
-int	main __P((int, char *[]));
+int	check(char *, char *, struct stat *);
+void	checkdot(char **);
+void	rm_file(char **);
+void	rm_overwrite(char *, struct stat *);
+void	rm_tree(char **);
+void	usage(void);
+int	main(int, char *[]);
 
 /*
  * For the sake of the `-f' flag, check whether an error number indicates the
@@ -88,12 +88,11 @@ int	main __P((int, char *[]));
  * 	file removal.
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, rflag;
 
+	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
 	Pflag = rflag = 0;
@@ -146,13 +145,11 @@ main(argc, argv)
 }
 
 void
-rm_tree(argv)
-	char **argv;
+rm_tree(char **argv)
 {
 	FTS *fts;
 	FTSENT *p;
-	int needstat;
-	int flags;
+	int flags, needstat;
 
 	/*
 	 * Remove a file hierarchy.  If forcing removal (-f), or interactive
@@ -252,8 +249,7 @@ rm_tree(argv)
 }
 
 void
-rm_file(argv)
-	char **argv;
+rm_file(char **argv)
 {
 	struct stat sb;
 	int rval;
@@ -316,9 +312,7 @@ rm_file(argv)
  * kernel support.
  */
 void
-rm_overwrite(file, sbp)
-	char *file;
-	struct stat *sbp;
+rm_overwrite(char *file, struct stat *sbp)
 {
 	struct stat sb;
 	off_t len;
@@ -360,9 +354,7 @@ err:	eval = 1;
 
 
 int
-check(path, name, sp)
-	char *path, *name;
-	struct stat *sp;
+check(char *path, char *name, struct stat *sp)
 {
 	int ch, first;
 	char modep[15];
@@ -404,8 +396,7 @@ check(path, name, sp)
  */
 #define ISDOT(a) ((a)[0] == '.' && (!(a)[1] || ((a)[1] == '.' && !(a)[2])))
 void
-checkdot(argv)
-	char **argv;
+checkdot(char **argv)
 {
 	char *p, **save, **t;
 	int complained;
@@ -436,10 +427,9 @@ checkdot(argv)
 }
 
 void
-usage()
+usage(void)
 {
-
-	(void)fprintf(stderr, "usage: rm [-dfiPRrW] file ...\n");
+	(void)fprintf(stderr, "usage: %s [-dfiPRrW] file ...\n", getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
