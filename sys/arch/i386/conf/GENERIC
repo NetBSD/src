@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.637 2004/10/26 19:52:23 perry Exp $
+# $NetBSD: GENERIC,v 1.638 2004/11/01 23:20:42 wiz Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.637 $"
+#ident 		"GENERIC-$Revision: 1.638 $"
 
 maxusers	32		# estimated number of users
 
@@ -378,7 +378,7 @@ pci*	at ppb? bus ?
 					# L2/L3 work, but should not be enabled
 					# on anything else.
 #options 	PCIBIOS_SHARP_MM20_FIXUP # this code makes the Sharp MM 20
-					# work, but should not be enabled for
+					# work, but should not be enabled
 					# on anything else.
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
