@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.21 1998/10/13 20:11:42 scw Exp $	*/
+/*	$NetBSD: mkdir.c,v 1.22 1999/05/25 00:27:45 tron Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.21 1998/10/13 20:11:42 scw Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.22 1999/05/25 00:27:45 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ main(argc, argv)
 				 * set a mode including the sticky, setuid,
 				 * setgid bits you lose them. So chmod().
 				 */
-				if (chmod(*argv, mode) == -1) {
+				if (mode > 0777 && chmod(*argv, mode) == -1) {
 					warn("%s", *argv);
 					exitval = 1;
 				}
@@ -172,7 +172,8 @@ mkpath(path, mode, dir_mode)
                 	 * nine bits, so if you try to set a mode including the
                     	 * sticky, setuid, setgid bits you lose them. So chmod().
                          */
-                    	if (chmod(path, done ? mode : dir_mode) == -1) {
+                    	if (done && mode > 0777 &&
+			    chmod(path, mode) == -1) {
                             	warn("%s", path);
                             	return (-1);
                         }
