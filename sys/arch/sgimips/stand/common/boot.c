@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 2003/12/30 23:50:25 sekiya Exp $	*/
+/*	$NetBSD: boot.c,v 1.10 2004/01/03 10:29:37 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -237,21 +237,23 @@ main(int argc, char **argv)
 	}
 
 finish:
+#if 0
 	strncpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
 	bi_add(&bi_bpath, BTINFO_BOOTPATH);
 
-	entry = (void *) marks[MARK_ENTRY];
 	bi_syms.nsym = marks[MARK_NSYM];
 	bi_syms.ssym = marks[MARK_SYM];
 	bi_syms.esym = marks[MARK_END];
 	bi_add(&bi_syms, BTINFO_SYMTAB);
+#endif
+	entry = (void *) marks[MARK_ENTRY];
 
 	if (debug) {
 		printf("Starting at %p\n\n", entry);
 		printf("nsym 0x%lx ssym 0x%lx esym 0x%lx\n", marks[MARK_NSYM],
 		       marks[MARK_SYM], marks[MARK_END]);
 	}
-	(*entry) (argc, argv, BOOTINFO_MAGIC, bootinfo);
+	(*entry) (argc, argv, 0 /* BOOTINFO_MAGIC */, NULL);
 
 	printf("Kernel returned!  Halting...\n");
 	return (0);
