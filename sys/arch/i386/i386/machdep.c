@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.430 2001/03/15 06:10:40 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.431 2001/04/14 06:49:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -2263,6 +2263,9 @@ init386(first_avail)
 #if NISA > 0
 	isa_defaultirq();
 #endif
+
+	/* Initialize software interrupts. */
+	softintr_init();
 
 	splraise(-1);
 	enable_intr();

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.184 2001/03/25 09:54:11 jdolecek Exp $
+#	$NetBSD: files.i386,v 1.185 2001/04/14 06:49:31 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -75,6 +75,7 @@ file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
+file	arch/i386/i386/softintr.c
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/syscall.c
 file	arch/i386/i386/trap.c
