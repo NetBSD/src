@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.76 2002/09/27 15:37:57 provos Exp $	*/
+/*	$NetBSD: key.c,v 1.77 2002/10/04 05:45:22 itojun Exp $	*/
 /*	$KAME: key.c,v 1.249 2002/06/14 14:46:22 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.76 2002/09/27 15:37:57 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.77 2002/10/04 05:45:22 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1397,6 +1397,7 @@ key_spdadd(so, m, mhp)
 	struct sadb_lifetime *lft = NULL;
 	struct secpolicyindex spidx;
 	struct secpolicy *newsp;
+	struct ipsecrequest *isr;
 	int error;
 
 	/* sanity check */
@@ -1508,24 +1509,72 @@ key_spdadd(so, m, mhp)
 		keydb_delsecpolicy(newsp);
 		return key_senderror(so, m, EINVAL);
 	}
+
+	for (isr = newsp->req; isr; isr = isr->next) {
+		struct sockaddr *sa;
+
+		/*
+		 * port spec is not permitted for tunnel mode
+		 */
+		if (isr->saidx.mode == IPSEC_MODE_TUNNEL) {
+			sa = (struct sockaddr *)(src0 + 1);
+			switch (sa->sa_family) {
+			case AF_INET:
+				if (((struct sockaddr_in *)sa)->sin_port) {
+					keydb_delsecpolicy(newsp);
+					return key_senderror(so, m, EINVAL);
+				}
+				break;
+			case AF_INET6:
+				if (((struct sockaddr_in6 *)sa)->sin6_port) {
+					keydb_delsecpolicy(newsp);
+					return key_senderror(so, m, EINVAL);
+				}
+				break;
+			default:
+				break;
+			}
+			sa = (struct sockaddr *)(src0 + 1);
+			switch (sa->sa_family) {
+			case AF_INET:
+				if (((struct sockaddr_in *)sa)->sin_port) {
+					keydb_delsecpolicy(newsp);
+					return key_senderror(so, m, EINVAL);
+				}
+				break;
+			case AF_INET6:
+				if (((struct sockaddr_in6 *)sa)->sin6_port) {
+					keydb_delsecpolicy(newsp);
+					return key_senderror(so, m, EINVAL);
+				}
+				break;
+			default:
+				break;
+			}
+		}
+
 #if 1
-	if (newsp->req && newsp->req->saidx.src.ss_family) {
-		struct sockaddr *sa;
-		sa = (struct sockaddr *)(src0 + 1);
-		if (sa->sa_family != newsp->req->saidx.src.ss_family) {
-			keydb_delsecpolicy(newsp);
-			return key_senderror(so, m, EINVAL);
+		/*
+		 * bark if we have different address family on tunnel address
+		 * specification.  applies only if we decapsulate in RFC2401
+		 * IPsec (implementation limitation).
+		 */
+		if (isr->saidx.src.ss_family) {
+			sa = (struct sockaddr *)(src0 + 1);
+			if (sa->sa_family != isr->saidx.src.ss_family) {
+				keydb_delsecpolicy(newsp);
+				return key_senderror(so, m, EINVAL);
+			}
 		}
-	}
-	if (newsp->req && newsp->req->saidx.dst.ss_family) {
-		struct sockaddr *sa;
-		sa = (struct sockaddr *)(dst0 + 1);
-		if (sa->sa_family != newsp->req->saidx.dst.ss_family) {
-			keydb_delsecpolicy(newsp);
-			return key_senderror(so, m, EINVAL);
+		if (isr->saidx.dst.ss_family) {
+			sa = (struct sockaddr *)(dst0 + 1);
+			if (sa->sa_family != isr->saidx.dst.ss_family) {
+				keydb_delsecpolicy(newsp);
+				return key_senderror(so, m, EINVAL);
+			}
 		}
-	}
 #endif
+	}
 
 	newsp->created = time.tv_sec;
 	newsp->lastused = time.tv_sec;
