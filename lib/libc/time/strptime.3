@@ -1,4 +1,4 @@
-.\"	$NetBSD: strptime.3,v 1.9 2001/03/29 19:06:39 kleink Exp $
+.\"	$NetBSD: strptime.3,v 1.10 2001/04/02 20:49:57 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,9 @@ The
 .Fn strptime
 function converts the character string pointed to by
 .Fa buf
-to values which are stored in the ``tm'' structure pointed to by
+to values which are stored in the
+.Va tm
+structure pointed to by
 .Fa tm ,
 using the format specified by
 .Fa format .
@@ -72,8 +74,10 @@ match any number of whitespace characters in
 .Fa buf ,
 including none.
 .Pp
-A conversion specification consists of a percent sign `%' followed by one
-or two conversion characters which specify the replacement required. 
+A conversion specification consists of a percent sign
+.Ql %
+followed by one
+or two conversion characters which specify the replacement required.
 There must be white-space or other non-alphanumeric characters between any
 two conversion specifications.
 .Pp
@@ -190,7 +194,7 @@ nor specifications supported by the system, the behavior will be as if the
 unmodified conversion specification were used.
 .Sh RETURN VALUES
 If successful, the
-.Nm
+.Fn strptime
 function returns a pointer to the character following the last character
 parsed.  Otherwise, a null pointer is returned.
 .Sh SEE ALSO
