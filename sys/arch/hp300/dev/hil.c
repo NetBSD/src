@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hil.c 1.33 89/12/22
  *	from: @(#)hil.c	7.8.1.1 (Berkeley) 6/28/91
- *	$Id: hil.c,v 1.7 1993/08/08 03:44:10 mycroft Exp $
+ *	$Id: hil.c,v 1.8 1994/01/09 21:36:55 mycroft Exp $
  */
 
 #include "sys/param.h"
@@ -796,7 +796,7 @@ hil_process_int(stat, c)
 	}
 }
 
-#if defined(DEBUG) && !defined(PANICBUTTON)
+#if (defined(DDB) || defined(DEBUG)) && !defined(PANICBUTTON)
 #define PANICBUTTON
 #endif
 
