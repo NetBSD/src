@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.9 1996/08/24 19:39:43 thorpej Exp $
+.\"	$NetBSD: diskless.8,v 1.10 1997/06/16 07:32:15 thorpej Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
@@ -223,8 +223,7 @@ is installed in the directory
 Add myclient to the bootparams database
 .Pa /etc/bootparams :
 .Bd -literal -offset indent -compact
-myclient  root=server:/export/myclient/root \\
-          swap=server:/export/myclient/swap
+myclient  root=server:/export/myclient/root
 .Ed
 .Pp
 .It 6.
@@ -244,6 +243,12 @@ client architecture and the version of the NetBSD distribution.
 It can be as simple as copying and modifying the server's root
 filesystem, or perhaps you need to get those files out of the
 standard binary distribution.
+.Pp
+Note that, unlike SunOS, you need to create a mount point for the
+client's swap:
+.Bd -literal -offset indent -compact
+# mkdir /export/myclient/root/swap
+.Ed
 .Pp
 .It 8.
 Export the required filesystems in
@@ -297,8 +302,13 @@ Correct the critical mount points in the client's
 ie.
 .Bd -literal -offset indent -compact
 myserver:/export/myclient/root / nfs rw 0 0
+myserver:/export/myclient/swap none swap sw,nfsmntpt=/swap 0 0
 myserver:/usr /usr nfs rw 0 0
 .Ed
+.Pp
+Note, you must specify the swap file in
+.Pa /etc/fstab
+or it will not be used!
 .El
 .Sh FILES
 .Bl -tag -width /usr/mdec/rbootd -compact
