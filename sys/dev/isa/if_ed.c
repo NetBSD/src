@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.113 1997/10/13 00:47:28 explorer Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.114 1997/10/14 23:04:19 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -107,7 +107,6 @@ struct ed_softc {
 	int	mem_size;	/* total NIC memory size */
 	int	mem_ring;	/* offset of RX ring-buffer (in NIC mem) */
 
-	u_char	mem_shared;	/* NIC memory is shared with host */
 	u_char	txb_cnt;	/* number of transmit buffers */
 	u_char	txb_inuse;	/* number of transmit buffers active */
 
@@ -135,8 +134,6 @@ int ed_find_WD80x3 __P((struct ed_softc *, struct cfdata *,
     struct isa_attach_args *ia));
 int ed_find_3Com __P((struct ed_softc *, struct cfdata *,
     struct isa_attach_args *ia));
-int ed_find_Novell __P((struct ed_softc *, struct cfdata *,
-    struct isa_attach_args *ia));
 int edintr __P((void *));
 int edioctl __P((struct ifnet *, u_long, caddr_t));
 void edstart __P((struct ifnet *));
@@ -157,10 +154,6 @@ static inline void ed_rint __P((struct ed_softc *));
 static inline void ed_xmit __P((struct ed_softc *));
 static inline int ed_ring_copy __P((struct ed_softc *, int, caddr_t,
 					u_short));
-
-void ed_pio_readmem __P((struct ed_softc *, u_short, caddr_t, u_short));
-void ed_pio_writemem __P((struct ed_softc *, caddr_t, u_short, u_short));
-u_short ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_short));
 
 struct cfattach ed_ca = {
 	sizeof(struct ed_softc), edprobe, edattach
@@ -206,8 +199,6 @@ ed_find(sc, cf, ia)
 	if (ed_find_WD80x3(sc, cf, ia))
 		return (1);
 	if (ed_find_3Com(sc, cf, ia))
-		return (1);
-	if (ed_find_Novell(sc, cf, ia))
 		return (1);
 	return (0);
 }
@@ -519,7 +510,6 @@ ed_find_WD80x3(sc, cf, ia)
 	/* XXX Figure out the shared memory address. */
 
 	sc->isa16bit = isa16bit;
-	sc->mem_shared = 1;
 	ia->ia_msize = memsize;
 	if (bus_space_map(memt, ia->ia_maddr, memsize, 0, &memh))
 		goto out;
@@ -808,7 +798,6 @@ ed_find_3Com(sc, cf, ia)
 
 	sc->vendor = ED_VENDOR_3COM;
 	sc->type_str = "3c503";
-	sc->mem_shared = 1;
 	sc->cr_proto = ED_CR_RD2;
 
 	/*
@@ -994,253 +983,6 @@ ed_find_3Com(sc, cf, ia)
 	bus_space_unmap(memt, memh, memsize);
  err:
 	bus_space_unmap(iot, ioh, ED_3COM_IO_PORTS);
-	return 0;
-}
-
-/*
- * Probe and vendor-specific initialization routine for NE1000/2000 boards.
- */
-int
-ed_find_Novell(sc, cf, ia)
-	struct ed_softc *sc;
-	struct cfdata *cf;
-	struct isa_attach_args *ia;
-{
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int memsize, n;
-	u_char romdata[16], tmp;
-	static u_char test_pattern[32] = "THIS is A memory TEST pattern";
-	u_char test_buffer[32];
-	int asicbase, nicbase;
-
-	iot = ia->ia_iot;
-
-	if (bus_space_map(iot, ia->ia_iobase, ED_NOVELL_IO_PORTS, 0, &ioh))
-		return (0);
-
-	sc->asic_base = asicbase = ED_NOVELL_ASIC_OFFSET;
-	sc->nic_base = nicbase = ED_NOVELL_NIC_OFFSET;
-
-	/* XXX - do Novell-specific probe here */
-
-	/* Reset the board. */
-#ifdef GWETHER
-	bus_space_write_1(iot, ioh, asicbase + ED_NOVELL_RESET, 0);
-	delay(200);
-#endif /* GWETHER */
-	tmp = bus_space_read_1(iot, ioh, asicbase + ED_NOVELL_RESET);
-
-	/*
-	 * I don't know if this is necessary; probably cruft leftover from
-	 * Clarkson packet driver code. Doesn't do a thing on the boards I've
-	 * tested. -DG [note that a outb(0x84, 0) seems to work here, and is
-	 * non-invasive...but some boards don't seem to reset and I don't have
-	 * complete documentation on what the 'right' thing to do is...so we do
-	 * the invasive thing for now.  Yuck.]
-	 */
-	bus_space_write_1(iot, ioh, asicbase + ED_NOVELL_RESET, tmp);
-	delay(5000);
-
-	/*
-	 * This is needed because some NE clones apparently don't reset the NIC
-	 * properly (or the NIC chip doesn't reset fully on power-up)
-	 * XXX - this makes the probe invasive! ...Done against my better
-	 * judgement.  -DLG
-	 */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_CR,
-	    ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STP);
-
-	delay(5000);
-
-	/* Make sure that we really have an 8390 based board. */
-	if (!ed_probe_generic8390(iot, ioh, nicbase))
-		goto out;
-
-	sc->vendor = ED_VENDOR_NOVELL;
-	sc->mem_shared = 0;
-	sc->cr_proto = ED_CR_RD2;
-	ia->ia_msize = 0;
-
-	/*
-	 * Test the ability to read and write to the NIC memory.  This has the
-	 * side affect of determining if this is an NE1000 or an NE2000.
-	 */
-
-	/*
-	 * This prevents packets from being stored in the NIC memory when the
-	 * readmem routine turns on the start bit in the CR.
-	 */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RCR, ED_RCR_MON);
-
-	/* Temporarily initialize DCR for byte operations. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_DCR, ED_DCR_FT1 | ED_DCR_LS);
-
-	NIC_PUT(iot, ioh, nicbase, ED_P0_PSTART, 8192 >> ED_PAGE_SHIFT);
-	NIC_PUT(iot, ioh, nicbase, ED_P0_PSTOP, 16384 >> ED_PAGE_SHIFT);
-
-	sc->isa16bit = 0;
-
-	/*
-	 * XXX indirect brokenness, used by ed_pio{read,write}mem()
-	 */
-	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
-
-	/*
-	 * Write a test pattern in byte mode.  If this fails, then there
-	 * probably isn't any memory at 8k - which likely means that the board
-	 * is an NE2000.
-	 */
-	ed_pio_writemem(sc, test_pattern, 8192, sizeof(test_pattern));
-	ed_pio_readmem(sc, 8192, test_buffer, sizeof(test_pattern));
-
-	if (bcmp(test_pattern, test_buffer, sizeof(test_pattern))) {
-		/* not an NE1000 - try NE2000 */
-
-		NIC_PUT(iot, ioh, nicbase, ED_P0_DCR,
-		    ED_DCR_WTS | ED_DCR_FT1 | ED_DCR_LS);
-		NIC_PUT(iot, ioh, nicbase, ED_P0_PSTART, 16384 >> ED_PAGE_SHIFT);
-		NIC_PUT(iot, ioh, nicbase, ED_P0_PSTOP, 32768 >> ED_PAGE_SHIFT);
-
-		sc->isa16bit = 1;
-
-		/*
-		 * Write a test pattern in word mode.  If this also fails, then
-		 * we don't know what this board is.
-		 */
-		ed_pio_writemem(sc, test_pattern, 16384, sizeof(test_pattern));
-		ed_pio_readmem(sc, 16384, test_buffer, sizeof(test_pattern));
-
-		if (bcmp(test_pattern, test_buffer, sizeof(test_pattern)))
-			goto out; /* not an NE2000 either */
-
-		sc->type = ED_TYPE_NE2000;
-		sc->type_str = "NE2000";
-	} else {
-		sc->type = ED_TYPE_NE1000;
-		sc->type_str = "NE1000";
-	}
-
-	if (ia->ia_irq == IRQUNK) {
-		printf("%s: %s does not have soft configuration\n",
-		    sc->sc_dev.dv_xname, sc->type_str);
-		goto out;
-	}
-
-	/* 8k of memory plus an additional 8k if 16-bit. */
-	memsize = 8192 + sc->isa16bit * 8192;
-
-#if 0 /* probably not useful - NE boards only come two ways */
-	/* Allow kernel config file overrides. */
-	if (ia->ia_msize)
-		memsize = ia->ia_msize;
-#endif
-
-	/* NIC memory doesn't start at zero on an NE board. */
-	/* The start address is tied to the bus width. */
-	sc->mem_start = (8192 + sc->isa16bit * 8192);
-	sc->tx_page_start = memsize >> ED_PAGE_SHIFT;
-
-#ifdef GWETHER
-	{
-		int x, i, mstart = 0;
-		char pbuf0[ED_PAGE_SIZE], pbuf[ED_PAGE_SIZE], tbuf[ED_PAGE_SIZE];
-
-		for (i = 0; i < ED_PAGE_SIZE; i++)
-			pbuf0[i] = 0;
-
-		/* Search for the start of RAM. */
-		for (x = 1; x < 256; x++) {
-			ed_pio_writemem(sc, pbuf0, x << ED_PAGE_SHIFT, ED_PAGE_SIZE);
-			ed_pio_readmem(sc, x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE);
-			if (!bcmp(pbuf0, tbuf, ED_PAGE_SIZE)) {
-				for (i = 0; i < ED_PAGE_SIZE; i++)
-					pbuf[i] = 255 - x;
-				ed_pio_writemem(sc, pbuf, x << ED_PAGE_SHIFT, ED_PAGE_SIZE);
-				ed_pio_readmem(sc, x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE);
-				if (!bcmp(pbuf, tbuf, ED_PAGE_SIZE)) {
-					mstart = x << ED_PAGE_SHIFT;
-					memsize = ED_PAGE_SIZE;
-					break;
-				}
-			}
-		}
-
-		if (mstart == 0) {
-			printf("%s: cannot find start of RAM\n",
-			    sc->sc_dev.dv_xname);
-			goto err;
-		}
-
-		/* Search for the end of RAM. */
-		for (++x; x < 256; x++) {
-			ed_pio_writemem(sc, pbuf0, x << ED_PAGE_SHIFT, ED_PAGE_SIZE);
-			ed_pio_readmem(sc, x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE);
-			if (!bcmp(pbuf0, tbuf, ED_PAGE_SIZE)) {
-				for (i = 0; i < ED_PAGE_SIZE; i++)
-					pbuf[i] = 255 - x;
-				ed_pio_writemem(sc, pbuf, x << ED_PAGE_SHIFT, ED_PAGE_SIZE);
-				ed_pio_readmem(sc, x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE);
-				if (!bcmp(pbuf, tbuf, ED_PAGE_SIZE))
-					memsize += ED_PAGE_SIZE;
-				else
-					break;
-			} else
-				break;
-		}
-
-		printf("%s: RAM start %x, size %d\n",
-		    sc->sc_dev.dv_xname, mstart, memsize);
-
-		sc->mem_start = (caddr_t)mstart;
-		sc->tx_page_start = mstart >> ED_PAGE_SHIFT;
-	}
-#endif /* GWETHER */
-
-	sc->mem_size = memsize;
-	sc->mem_end = sc->mem_start + memsize;
-
-	/*
-	 * Use one xmit buffer if < 16k, two buffers otherwise (if not told
-	 * otherwise).
-	 */
-	if ((memsize < 16384) || (cf->cf_flags & ED_FLAGS_NO_MULTI_BUFFERING))
-		sc->txb_cnt = 1;
-	else
-		sc->txb_cnt = 2;
-
-	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
-	sc->rec_page_stop = sc->tx_page_start + (memsize >> ED_PAGE_SHIFT);
-
-	sc->mem_ring =
-	    sc->mem_start + ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
-
-	ed_pio_readmem(sc, 0, romdata, 16);
-	for (n = 0; n < ETHER_ADDR_LEN; n++)
-		sc->sc_enaddr[n] = romdata[n*(sc->isa16bit+1)];
-
-#ifdef GWETHER
-	if (sc->sc_enaddr[2] == 0x86)
-		sc->type_str = "Gateway AT";
-#endif /* GWETHER */
-
-	/* Clear any pending interrupts that might have occurred above. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_ISR, 0xff);
-
-	ia->ia_iosize = ED_NOVELL_IO_PORTS;
-
-	/*
-	 * XXX Sould always unmap, but we can't yet.
-	 * XXX Need to squish "indirect" first.
-	 */
-	sc->sc_iot = iot;
-	sc->sc_ioh = ioh;
-	/* sc_memh is not used by this driver */
-	return 1;
- out:
-	bus_space_unmap(iot, ioh, ED_NOVELL_IO_PORTS);
-
 	return 0;
 }
 
@@ -1641,62 +1383,59 @@ outloop:
 	buffer = sc->mem_start +
 	    ((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
-	if (sc->mem_shared) {
-		/* Special case setup for 16 bit boards... */
-		switch (sc->vendor) {
-		/*
-		 * For 16bit 3Com boards (which have 16k of memory), we
-		 * have the xmit buffers in a different page of memory
-		 * ('page 0') - so change pages.
-		 */
-		case ED_VENDOR_3COM:
-			if (sc->isa16bit)
-				bus_space_write_1(iot, ioh,
-				    asicbase + ED_3COM_GACFR,
-				    ED_3COM_GACFR_RSEL);
-			break;
-		/*
-		 * Enable 16bit access to shared memory on WD/SMC
-		 * boards.
-		 */
-		case ED_VENDOR_WD_SMC:
-			if (sc->isa16bit)
-				bus_space_write_1(iot, ioh, asicbase + ED_WD_LAAR,
-				    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
-			bus_space_write_1(iot, ioh, asicbase + ED_WD_MSR,
-			    sc->wd_msr_proto | ED_WD_MSR_MENB);
-			(void) bus_space_read_1(iot, sc->sc_delaybah, 0);
-			(void) bus_space_read_1(iot, sc->sc_delaybah, 0);
-			break;
-		}
+	/* Special case setup for 16 bit boards... */
+	switch (sc->vendor) {
+	/*
+	 * For 16bit 3Com boards (which have 16k of memory), we
+	 * have the xmit buffers in a different page of memory
+	 * ('page 0') - so change pages.
+	 */
+	case ED_VENDOR_3COM:
+		if (sc->isa16bit)
+			bus_space_write_1(iot, ioh,
+			    asicbase + ED_3COM_GACFR,
+			    ED_3COM_GACFR_RSEL);
+		break;
+	/*
+	 * Enable 16bit access to shared memory on WD/SMC
+	 * boards.
+	 */
+	case ED_VENDOR_WD_SMC:
+		if (sc->isa16bit)
+			bus_space_write_1(iot, ioh, asicbase + ED_WD_LAAR,
+			    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
+		bus_space_write_1(iot, ioh, asicbase + ED_WD_MSR,
+		    sc->wd_msr_proto | ED_WD_MSR_MENB);
+		(void) bus_space_read_1(iot, sc->sc_delaybah, 0);
+		(void) bus_space_read_1(iot, sc->sc_delaybah, 0);
+		break;
+	}
 
-		for (m = m0; m != 0; m = m->m_next) {
-			ed_shared_writemem(sc, mtod(m, caddr_t), buffer,
-			    m->m_len);
-			buffer += m->m_len;
-		}
-		len = m0->m_pkthdr.len;
+	for (m = m0; m != 0; m = m->m_next) {
+		ed_shared_writemem(sc, mtod(m, caddr_t), buffer,
+		    m->m_len);
+		buffer += m->m_len;
+	}
+	len = m0->m_pkthdr.len;
 
-		/* Restore previous shared memory access. */
-		switch (sc->vendor) {
-		case ED_VENDOR_3COM:
-			if (sc->isa16bit)
-				bus_space_write_1(iot, ioh,
-				    asicbase + ED_3COM_GACFR,
-				    ED_3COM_GACFR_RSEL | ED_3COM_GACFR_MBS0);
-			break;
-		case ED_VENDOR_WD_SMC:
-			bus_space_write_1(iot, ioh, asicbase + ED_WD_MSR,
-			    sc->wd_msr_proto);
-			if (sc->isa16bit)
-				bus_space_write_1(iot, ioh, asicbase + ED_WD_LAAR,
-				    sc->wd_laar_proto);
-			(void) bus_space_read_1(iot, sc->sc_delaybah, 0);
-			(void) bus_space_read_1(iot, sc->sc_delaybah, 0);
-			break;
-		}
-	} else
-		len = ed_pio_write_mbufs(sc, m0, (long)buffer);
+	/* Restore previous shared memory access. */
+	switch (sc->vendor) {
+	case ED_VENDOR_3COM:
+		if (sc->isa16bit)
+			bus_space_write_1(iot, ioh,
+			    asicbase + ED_3COM_GACFR,
+			    ED_3COM_GACFR_RSEL | ED_3COM_GACFR_MBS0);
+		break;
+	case ED_VENDOR_WD_SMC:
+		bus_space_write_1(iot, ioh, asicbase + ED_WD_MSR,
+		    sc->wd_msr_proto);
+		if (sc->isa16bit)
+			bus_space_write_1(iot, ioh, asicbase + ED_WD_LAAR,
+			    sc->wd_laar_proto);
+		(void) bus_space_read_1(iot, sc->sc_delaybah, 0);
+		(void) bus_space_read_1(iot, sc->sc_delaybah, 0);
+		break;
+	}
 
 	m_freem(m0);
 	sc->txb_len[sc->txb_new] = max(len, ETHER_MIN_LEN);
@@ -1760,12 +1499,8 @@ loop:
 		 * The byte count includes a 4 byte header that was added by
 		 * the NIC.
 		 */
-		if (sc->mem_shared)
-			ed_shared_readmem(sc, packet_ptr, (caddr_t)&packet_hdr,
-			    sizeof(packet_hdr));
-		else
-			ed_pio_readmem(sc, (long)packet_ptr,
-			    (caddr_t) &packet_hdr, sizeof(packet_hdr));
+		ed_shared_readmem(sc, packet_ptr, (caddr_t)&packet_hdr,
+		    sizeof(packet_hdr));
 		len = packet_hdr.count;
 
 		/*
@@ -2213,217 +1948,6 @@ edread(sc, buf, len)
  */
 
 /*
- * Given a NIC memory source address and a host memory destination address,
- * copy 'amount' from NIC to host using Programmed I/O.  The 'amount' is
- * rounded up to a word - okay as long as mbufs are word sized.
- * This routine is currently Novell-specific.
- */
-void
-ed_pio_readmem(sc, src, dst, amount)
-	struct ed_softc *sc;
-	u_short src;
-	caddr_t dst;
-	u_short amount;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	int nicbase = sc->nic_base;
-
-	/* Select page 0 registers. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_CR,
-	    ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
-
-	/* Round up to a word. */
-	if (amount & 1)
-		++amount;
-
-	/* Set up DMA byte count. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RBCR0, amount);
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RBCR1, amount >> 8);
-
-	/* Set up source address in NIC mem. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RSAR0, src);
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RSAR1, src >> 8);
-
-	NIC_PUT(iot, ioh, nicbase, ED_P0_CR,
-	    ED_CR_RD0 | ED_CR_PAGE_0 | ED_CR_STA);
-
-	if (sc->isa16bit)
-		bus_space_read_multi_2(iot, ioh, sc->asic_base + ED_NOVELL_DATA,
-		    (u_int16_t *)dst, amount / 2);
-	else
-		bus_space_read_multi_1(iot, ioh, sc->asic_base + ED_NOVELL_DATA,
-		    dst, amount);
-}
-
-/*
- * Stripped down routine for writing a linear buffer to NIC memory.  Only used
- * in the probe routine to test the memory.  'len' must be even.
- */
-void
-ed_pio_writemem(sc, src, dst, len)
-	struct ed_softc *sc;
-	caddr_t src;
-	u_short dst;
-	u_short len;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	int nicbase = sc->nic_base;
-	int maxwait = 100; /* about 120us */
-
-	/* Select page 0 registers. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_CR,
-	    ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
-
-	/* Reset remote DMA complete flag. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_ISR, ED_ISR_RDC);
-
-	/* Set up DMA byte count. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RBCR0, len);
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RBCR1, len >> 8);
-
-	/* Set up destination address in NIC mem. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RSAR0, dst);
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RSAR1, dst >> 8);
-
-	/* Set remote DMA write. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_CR,
-	    ED_CR_RD1 | ED_CR_PAGE_0 | ED_CR_STA);
-
-	if (sc->isa16bit)
-		bus_space_write_multi_2(iot, ioh, sc->asic_base + ED_NOVELL_DATA,
-		    (u_int16_t *)src, len / 2);
-	else
-		bus_space_write_multi_1(iot, ioh, sc->asic_base + ED_NOVELL_DATA,
-		    src, len);
-
-	/*
-	 * Wait for remote DMA complete.  This is necessary because on the
-	 * transmit side, data is handled internally by the NIC in bursts and
-	 * we can't start another remote DMA until this one completes.  Not
-	 * waiting causes really bad things to happen - like the NIC
-	 * irrecoverably jamming the ISA bus.
-	 */
-	while (((NIC_GET(iot, ioh, nicbase, ED_P0_ISR) & ED_ISR_RDC) !=
-	    ED_ISR_RDC) && --maxwait);
-}
-
-/*
- * Write an mbuf chain to the destination NIC memory address using programmed
- * I/O.
- */
-u_short
-ed_pio_write_mbufs(sc, m, dst)
-	struct ed_softc *sc;
-	struct mbuf *m;
-	u_short dst;
-{
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
-	int nicbase = sc->nic_base, asicbase = sc->asic_base;
-	u_short len;
-	int maxwait = 100; /* about 120us */
-
-	len = m->m_pkthdr.len;
-
-	/* Select page 0 registers. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_CR,
-	    ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);
-
-	/* Reset remote DMA complete flag. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_ISR, ED_ISR_RDC);
-
-	/* Set up DMA byte count. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RBCR0, len);
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RBCR1, len >> 8);
-
-	/* Set up destination address in NIC mem. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RSAR0, dst);
-	NIC_PUT(iot, ioh, nicbase, ED_P0_RSAR1, dst >> 8);
-
-	/* Set remote DMA write. */
-	NIC_PUT(iot, ioh, nicbase, ED_P0_CR,
-	    ED_CR_RD1 | ED_CR_PAGE_0 | ED_CR_STA);
-
-	/*
-	 * Transfer the mbuf chain to the NIC memory.
-	 * 16-bit cards require that data be transferred as words, and only
-	 * words, so that case requires some extra code to patch over
-	 * odd-length mbufs.
-	 */
-	if (!sc->isa16bit) {
-		/* NE1000s are easy. */
-		for (; m != 0; m = m->m_next) {
-			if (m->m_len) {
-				bus_space_write_multi_1(iot, ioh,
-				    asicbase + ED_NOVELL_DATA,
-				    mtod(m, u_char *), m->m_len);
-			}
-		}
-	} else {
-		/* NE2000s are a bit trickier. */
-		u_int8_t *data, savebyte[2];
-		int len, wantbyte;
-
-		wantbyte = 0;
-		for (; m != 0; m = m->m_next) {
-			len = m->m_len;
-			if (len == 0)
-				continue;
-			data = mtod(m, u_int8_t *);
-			/* Finish the last word. */
-			if (wantbyte) {
-				savebyte[1] = *data;
-				bus_space_write_2(iot, ioh,
-				    asicbase + ED_NOVELL_DATA,
-				    *(u_int16_t *)savebyte);
-				data++;
-				len--;
-				wantbyte = 0;
-			}
-			/* Output contiguous words. */
-			if (len > 1) {
-				bus_space_write_multi_2(iot, ioh,
-				    asicbase + ED_NOVELL_DATA,
-				    (u_int16_t *)data, len >> 1);
-			}
-			/* Save last byte, if necessary. */
-			if (len & 1) {
-				data += len & ~1;
-				savebyte[0] = *data;
-				wantbyte = 1;
-			}
-		}
-
-		if (wantbyte) {
-			savebyte[1] = 0;
-			bus_space_write_2(iot, ioh, asicbase + ED_NOVELL_DATA,
-			    *(u_int16_t *)savebyte);
-		}
-	}
-
-	/*
-	 * Wait for remote DMA complete.  This is necessary because on the
-	 * transmit side, data is handled internally by the NIC in bursts and
-	 * we can't start another remote DMA until this one completes. 	Not
-	 * waiting causes really bad things to happen - like the NIC
-	 * irrecoverably jamming the ISA bus.
-	 */
-	while (((NIC_GET(iot, ioh, nicbase, ED_P0_ISR) & ED_ISR_RDC) !=
-	    ED_ISR_RDC) && --maxwait);
-
-	if (!maxwait) {
-		log(LOG_WARNING,
-		    "%s: remote transmit DMA failed to complete\n",
-		    sc->sc_dev.dv_xname);
-		edreset(sc);
-	}
-
-	return (len);
-}
-
-/*
  * Given a source and destination address, copy 'amount' of a packet from the
  * ring buffer into a linear destination buffer.  Takes into account ring-wrap.
  */
@@ -2441,20 +1965,14 @@ ed_ring_copy(sc, src, dst, amount)
 		tmp_amount = sc->mem_end - src;
 
 		/* Copy amount up to end of NIC memory. */
-		if (sc->mem_shared)
-			ed_shared_readmem(sc, src, dst, tmp_amount);
-		else
-			ed_pio_readmem(sc, (long)src, dst, tmp_amount);
+		ed_shared_readmem(sc, src, dst, tmp_amount);
 
 		amount -= tmp_amount;
 		src = sc->mem_ring;
 		dst += tmp_amount;
 	}
 
-	if (sc->mem_shared)
-		ed_shared_readmem(sc, src, dst, amount);
-	else
-		ed_pio_readmem(sc, (long)src, dst, amount);
+	ed_shared_readmem(sc, src, dst, amount);
 
 	return (src + amount);
 }

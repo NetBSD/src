@@ -1,4 +1,4 @@
-/*	$NetBSD: if_edreg.h,v 1.15 1996/01/10 16:49:22 chuck Exp $	*/
+/*	$NetBSD: if_edreg.h,v 1.16 1997/10/14 23:04:26 thorpej Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -15,7 +15,6 @@
  */
 #define ED_VENDOR_WD_SMC	0x00	/* Western Digital/SMC */
 #define ED_VENDOR_3COM		0x01	/* 3Com */
-#define ED_VENDOR_NOVELL	0x02	/* Novell */
 
 /*
  * Compile-time config flags
@@ -388,31 +387,3 @@
  * Register File Access LSB
  */
 #define ED_3COM_RFLSB		0x0f
-
-/*
- *		 Definitions for Novell NE1000/2000 boards
- */
-
-/*
- * Board type codes
- */
-#define ED_TYPE_NE1000		0x01
-#define ED_TYPE_NE2000		0x02
-
-/*
- * Register offsets/total
- */
-#define ED_NOVELL_NIC_OFFSET	0x00
-#define ED_NOVELL_ASIC_OFFSET	0x10
-#define ED_NOVELL_IO_PORTS	32
-
-/*
- * Remote DMA data register; for reading or writing to the NIC mem via
- * programmed I/O (offset from ASIC base).
- */
-#define ED_NOVELL_DATA		0x00
-
-/*
- * Reset register; reading from this register causes a board reset.
- */
-#define ED_NOVELL_RESET		0x0f
