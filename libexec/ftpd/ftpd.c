@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.138 2002/02/11 11:45:07 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.139 2002/05/30 00:24:47 enami Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.138 2002/02/11 11:45:07 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.139 2002/05/30 00:24:47 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,8 @@ __RCSID("$NetBSD: ftpd.c,v 1.138 2002/02/11 11:45:07 lukem Exp $");
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
+#include <sys/resource.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -208,6 +210,13 @@ int epsvall = 0;
 int	swaitmax = SWAITMAX;
 int	swaitint = SWAITINT;
 
+enum send_status {
+	SS_SUCCESS,
+	SS_NO_TRANSFER,			/* no transfer made yet */
+	SS_FILE_ERROR,			/* file read error */
+	SS_DATA_ERROR			/* data send error */
+};
+
 static int	 bind_pasv_addr(void);
 static int	 checkuser(const char *, const char *, int, int, char **);
 static int	 checkaccess(const char *);
@@ -219,8 +228,15 @@ static void	 logremotehost(struct sockinet *);
 static void	 lostconn(int);
 static void	 myoob(int);
 static int	 receive_data(FILE *, FILE *);
-static int	 send_data(FILE *, FILE *, off_t, int);
+static int	 send_data(FILE *, FILE *, const struct stat *, int);
 static struct passwd *sgetpwnam(const char *);
+static int	 write_data(int, char *, size_t, off_t *, struct timeval *,
+		     int);
+static enum send_status
+		 send_data_with_read(int, int, const struct stat *, int);
+static enum send_status
+		 send_data_with_mmap(int, int, const struct stat *, int);
+static void	 logrusage(const struct rusage *, const struct rusage *);
 
 int	main(int, char *[]);
 
@@ -1206,6 +1222,7 @@ retrieve(char *argv[], const char *name)
 	int (*closefunc)(FILE *) = NULL;
 	int log, sendrv, closerv, stderrfd, isconversion, isdata, isls;
 	struct timeval start, finish, td, *tdp;
+	struct rusage rusage_before, rusage_after;
 	const char *dispname;
 	char *error;
 
@@ -1286,15 +1303,20 @@ retrieve(char *argv[], const char *name)
 	if (dout == NULL)
 		goto done;
 
+	(void)getrusage(RUSAGE_SELF, &rusage_before);
 	(void)gettimeofday(&start, NULL);
-	sendrv = send_data(fin, dout, st.st_blksize, isdata);
+	sendrv = send_data(fin, dout, &st, isdata);
 	(void)gettimeofday(&finish, NULL);
+	(void)getrusage(RUSAGE_SELF, &rusage_after);
 	closedataconn(dout);		/* close now to affect timing stats */
 	timersub(&finish, &start, &td);
 	tdp = &td;
  done:
-	if (log)
+	if (log) {
 		logxfer("get", byte_count, name, NULL, tdp, error);
+		if (tdp != NULL)
+			logrusage(&rusage_before, &rusage_after);
+	}
 	closerv = (*closefunc)(fin);
 	if (sendrv == 0) {
 		FILE *errf;
@@ -1585,21 +1607,173 @@ closedataconn(FILE *fd)
 	pdata = -1;
 }
 
+int
+write_data(int fd, char *buf, size_t size, off_t *bufrem,
+    struct timeval *then, int isdata)
+{
+	struct timeval now, td;
+	ssize_t c;
+
+	while (size > 0) {
+		c = size;
+		if (curclass.writesize) {
+			if (curclass.writesize < c)
+				c = curclass.writesize;
+		}
+		if (curclass.rateget) {
+			if (*bufrem < c)
+				c = *bufrem;
+		}
+		(void) alarm(curclass.timeout);
+		c = write(fd, buf, c);
+		if (c <= 0)
+			return (1);
+		buf += c;
+		size -= c;
+		byte_count += c;
+		if (isdata) {
+			total_data_out += c;
+			total_data += c;
+		}
+		total_bytes_out += c;
+		total_bytes += c;
+		if (curclass.rateget) {
+			*bufrem -= c;
+			if (*bufrem == 0) {
+				(void)gettimeofday(&now, NULL);
+				timersub(&now, then, &td);
+				if (td.tv_sec == 0) {
+					usleep(1000000 - td.tv_usec);
+					(void)gettimeofday(then, NULL);
+				} else
+					*then = now;
+				*bufrem = curclass.rateget;
+			}
+		}
+	}
+	return (0);
+}
+
+static enum send_status
+send_data_with_read(int filefd, int netfd, const struct stat *st, int isdata)
+{
+	struct timeval then;
+	off_t bufrem;
+	size_t readsize;
+	char *buf;
+	int c, error;
+
+	if (curclass.readsize)
+		readsize = curclass.readsize;
+	else
+		readsize = (size_t)st->st_blksize;
+	if ((buf = malloc(readsize)) == NULL) {
+		perror_reply(451, "Local resource failure: malloc");
+		return (SS_NO_TRANSFER);
+	}
+
+	if (curclass.rateget) {
+		bufrem = curclass.rateget;
+		(void)gettimeofday(&then, NULL);
+	}
+	while (1) {
+		(void) alarm(curclass.timeout);
+		c = read(filefd, buf, readsize);
+		if (c == 0)
+			error = SS_SUCCESS;
+		else if (c < 0)
+			error = SS_FILE_ERROR;
+		else if (write_data(netfd, buf, c, &bufrem, &then, isdata))
+			error = SS_DATA_ERROR;
+		else
+			continue;
+
+		free(buf);
+		return (error);
+	}
+}
+
+static enum send_status
+send_data_with_mmap(int filefd, int netfd, const struct stat *st, int isdata)
+{
+	struct timeval then;
+	off_t bufrem, filesize, off, origoff;
+	size_t mapsize, winsize;
+	int error, sendbufsize, sendlowat;
+	void *win;
+
+	if (curclass.sendbufsize) {
+		sendbufsize = curclass.sendbufsize;
+		if (setsockopt(netfd, SOL_SOCKET, SO_SNDBUF,
+		    &sendbufsize, sizeof(int)) == -1)
+			syslog(LOG_WARNING, "setsockopt(SO_SNDBUF, %d): %m",
+			    sendbufsize);
+	}
+
+	if (curclass.sendlowat) {
+		sendlowat = curclass.sendlowat;
+		if (setsockopt(netfd, SOL_SOCKET, SO_SNDLOWAT,
+		    &sendlowat, sizeof(int)) == -1)
+			syslog(LOG_WARNING, "setsockopt(SO_SNDLOWAT, %d): %m",
+			    sendlowat);
+	}
+
+	winsize = curclass.mmapsize;
+	filesize = st->st_size;
+	if (debug)
+		syslog(LOG_INFO, "mmapsize = %ld, writesize = %ld",
+		    (long)winsize, (long)curclass.writesize);
+	if (winsize == 0)
+		goto try_read;
+
+	off = lseek(filefd, (off_t)0, SEEK_CUR);
+	if (off == -1)
+		goto try_read;
+
+	origoff = off;
+	if (curclass.rateget) {
+		bufrem = curclass.rateget;
+		(void)gettimeofday(&then, NULL);
+	}
+	while (1) {
+		mapsize = MIN(filesize - off, winsize);
+		if (mapsize == 0)
+			break;
+		win = mmap(NULL, mapsize, PROT_READ,
+		    MAP_FILE|MAP_SHARED, filefd, off);
+		if (win == MAP_FAILED) {
+			if (off == origoff)
+				goto try_read;
+			return (SS_FILE_ERROR);
+		}
+		(void) madvise(win, mapsize, MADV_SEQUENTIAL);
+		error = write_data(netfd, win, mapsize, &bufrem, &then,
+		    isdata);
+		(void) madvise(win, mapsize, MADV_DONTNEED);
+		munmap(win, mapsize);
+		if (error)
+			return (SS_DATA_ERROR);
+		off += mapsize;
+	}
+	return (SS_SUCCESS);
+
+ try_read:
+	return (send_data_with_read(filefd, netfd, st, isdata));
+}
+
 /*
  * Tranfer the contents of "instr" to "outstr" peer using the appropriate
- * encapsulation of the data subject * to Mode, Structure, and Type.
+ * encapsulation of the data subject to Mode, Structure, and Type.
  *
  * NB: Form isn't handled.
  */
 static int
-send_data(FILE *instr, FILE *outstr, off_t blksize, int isdata)
+send_data(FILE *instr, FILE *outstr, const struct stat *st, int isdata)
 {
 	int	 c, filefd, netfd, rval;
-	char	*buf;
 
 	transflag = 1;
 	rval = -1;
-	buf = NULL;
 	if (setjmp(urgcatch))
 		goto cleanup_send_data;
 
@@ -1642,66 +1816,22 @@ send_data(FILE *instr, FILE *outstr, off_t blksize, int isdata)
 
 	case TYPE_I:
 	case TYPE_L:
-		if ((buf = malloc((size_t)blksize)) == NULL) {
-			perror_reply(451, "Local resource failure: malloc");
-			goto cleanup_send_data;
-		}
 		filefd = fileno(instr);
 		netfd = fileno(outstr);
-		(void) alarm(curclass.timeout);
-		if (curclass.rateget) {
-			while (1) {
-				int d;
-				struct timeval then, now, td;
-				off_t bufrem;
-				char *bufp;
+		switch (send_data_with_mmap(filefd, netfd, st, isdata)) {
 
-				(void)gettimeofday(&then, NULL);
-				errno = c = d = 0;
-				bufrem = curclass.rateget;
-				while (bufrem > 0) {
-					if ((c = read(filefd, buf,
-					    MIN(blksize, bufrem))) <= 0)
-						goto senddone;
-					(void) alarm(curclass.timeout);
-					bufrem -= c;
-					byte_count += c;
-					if (isdata) {
-						total_data_out += c;
-						total_data += c;
-					}
-					total_bytes_out += c;
-					total_bytes += c;
-					for (bufp = buf; c > 0;
-					    c -= d, bufp += d)
-						if ((d =
-						    write(netfd, bufp, c)) <= 0)
-							break;
-					if (d < 0)
-						goto data_err;
-				}
-				(void)gettimeofday(&now, NULL);
-				timersub(&now, &then, &td);
-				if (td.tv_sec == 0)
-					usleep(1000000 - td.tv_usec);
-			}
-		} else {
-			while ((c = read(filefd, buf, (size_t)blksize)) > 0) {
-				if (write(netfd, buf, c) != c)
-					goto data_err;
-				(void) alarm(curclass.timeout);
-				byte_count += c;
-				if (isdata) {
-					total_data_out += c;
-					total_data += c;
-				}
-				total_bytes_out += c;
-				total_bytes += c;
-			}
-		}
- senddone:
-		if (c < 0)
+		case SS_SUCCESS:
+			break;
+
+		case SS_NO_TRANSFER:
+			goto cleanup_send_data;
+
+		case SS_FILE_ERROR:
 			goto file_err;
+
+		case SS_DATA_ERROR:
+			goto data_err;
+		}
 		rval = 0;
 		goto cleanup_send_data;
 
@@ -1723,8 +1853,6 @@ send_data(FILE *instr, FILE *outstr, off_t blksize, int isdata)
  cleanup_send_data:
 	(void) alarm(0);
 	transflag = 0;
-	if (buf)
-		free(buf);
 	if (isdata) {
 		total_files_out++;
 		total_files++;
@@ -2851,7 +2979,7 @@ conffilename(const char *s)
  */
 void
 logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
-	const struct timeval *elapsed, const char *error)
+    const struct timeval *elapsed, const char *error)
 {
 	char		 buf[MAXPATHLEN * 2 + 100], realfile[MAXPATHLEN];
 	const char	*r1, *r2;
@@ -2935,6 +3063,31 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 	    curclass.type == CLASS_GUEST ? pw->pw_passwd : pw->pw_name,
 	    error != NULL ? 'i' : 'c'
 	    );
+}
+
+/*
+ * Log the resource usage.
+ *
+ * XXX: more resource usage to logging?
+ */
+void
+logrusage(const struct rusage *rusage_before,
+    const struct rusage *rusage_after)
+{
+	struct timeval usrtime, systime;
+
+	if (logging <= 1)
+		return;
+
+	timersub(&rusage_after->ru_utime, &rusage_before->ru_utime, &usrtime);
+	timersub(&rusage_after->ru_stime, &rusage_before->ru_stime, &systime);
+	syslog(LOG_INFO, "%ld.%.03du %ld.%.03ds %ld+%ldio %ldpf+%ldw",
+	    usrtime.tv_sec, (int)(usrtime.tv_usec / 1000),
+	    systime.tv_sec, (int)(systime.tv_usec / 1000),
+	    rusage_after->ru_inblock - rusage_before->ru_inblock,
+	    rusage_after->ru_oublock - rusage_before->ru_oublock,
+	    rusage_after->ru_majflt - rusage_before->ru_majflt,
+	    rusage_after->ru_nswap - rusage_before->ru_nswap);
 }
 
 /*
