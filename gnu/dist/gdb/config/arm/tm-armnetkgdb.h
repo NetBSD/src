@@ -23,6 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define IEEE_FLOAT
 
+#define ADDR_BITS_REMOVE(val) (val)
+
 /* Offset from address of function to start of its code.
    Zero on most machines.  */
 
@@ -38,7 +40,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    the new frame is not set up until the new function executes
    some instructions.  */
 
-#define SAVED_PC_AFTER_CALL(frame) (read_register (LR_REGNUM) & 0x03fffffc)
+#define SAVED_PC_AFTER_CALL(frame) (ADDR_BITS_REMOVE(read_register (LR_REGNUM)))
 
 /* I don't know the real values for these.  */
 #define TARGET_UPAGES UPAGES
@@ -46,7 +48,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* Address of end of stack space.  */
 
-#define STACK_END_ADDR (0x01000000 - (TARGET_UPAGES * TARGET_NBPG))
+#define STACK_END_ADDR (0xefc00000 - (TARGET_UPAGES * TARGET_NBPG))
 
 /* Stack grows downward.  */
 
@@ -213,13 +215,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* In the case of the ARM, the frame's nominal address is the FP value,
    and 12 bytes before comes the saved previous FP value as a 4-byte word.  */
 
+#define LOWEST_PC 0x20  /* the first 0x20 bytes are the trap vectors. */
+
 #define FRAME_CHAIN(thisframe)  \
-  ((thisframe)->pc >= 0x8000 ? \
+  ((thisframe)->pc >= LOWEST_PC ?	\
    read_memory_integer ((thisframe)->frame - 12, 4) :\
    0)
 
 #define FRAME_CHAIN_VALID(chain, thisframe) \
-  (chain != 0 && (FRAME_SAVED_PC (thisframe) >= 0x8000))
+  (chain != 0 && (FRAME_SAVED_PC (thisframe) >= LOWEST_PC))
 
 /* Define other aspects of the stack frame.  */
 
@@ -239,7 +243,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 /* Saved Pc.  */
 
 #define FRAME_SAVED_PC(FRAME) \
-  (read_memory_integer ((FRAME)->frame - 4, 4) & 0x03fffffc)
+  ADDR_BITS_REMOVE (read_memory_integer ((FRAME)->frame - 4, 4))
 
 #define FRAME_ARGS_ADDRESS(fi) (fi->frame)
 
@@ -274,12 +278,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
     register CORE_ADDR sp = read_register (SP_REGNUM);		\
     register int regnum;					\
     /* opcode for ldmdb fp,{v1-v6,fp,ip,lr,pc}^ */		\
-    sp = push_word(sp, 0xe92dbf0); /* dummy return_data_save ins */ \
+    sp = push_word(sp, 0xe92bdbf0); /* dummy return_data_save ins */ \
     /* push a pointer to the dummy instruction minus 12 */	\
     sp = push_word(sp, read_register (SP_REGNUM) - 16);		\
     sp = push_word(sp, read_register (PS_REGNUM));		\
     sp = push_word(sp, read_register (SP_REGNUM));		\
-    sp = push_word(sp, read_register (FP_REGNUM)); 		\
+    sp = push_word(sp, read_register (FP_REGNUM));		\
     for (regnum = 9; regnum >= 4; regnum --)			\
 	sp = push_word(sp, read_register (regnum));		\
     write_register (FP_REGNUM, read_register (SP_REGNUM) - 8);	\
@@ -291,11 +295,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 {									\
     register CORE_ADDR fp = read_register (FP_REGNUM);			\
     register unsigned long return_data_save =				\
-	read_memory_integer ( (read_memory_integer (fp, 4) &		\
-			       0x03fffffc)  - 12, 4);			\
+	read_memory_integer ( ADDR_BITS_REMOVE(read_memory_integer (fp, 4))	\
+			       - 12, 4);					\
     register int regnum;						\
     write_register (PS_REGNUM, read_memory_integer (fp - 4, 4));	\
-    write_register (PC_REGNUM, read_register (PS_REGNUM) & 0x03fffffc);	\
+    write_register (PC_REGNUM, ADDR_BITS_REMOVE(read_register (PS_REGNUM)));	\
     write_register (SP_REGNUM, read_memory_integer (fp - 8, 4));	\
     write_register (FP_REGNUM, read_memory_integer (fp - 12, 4));	\
     fp -= 12;								\
