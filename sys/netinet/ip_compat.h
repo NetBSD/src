@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.31 2002/09/19 08:12:46 martti Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.32 2003/02/24 22:12:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -589,7 +589,7 @@ extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
       (__FreeBSD_version >= 300000))
 #   if (defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105180000)) || \
        (defined(OpenBSD) && (OpenBSD >= 200111))
-#    include <uvm/uvm_extern.h>
+/* #    include <uvm/uvm_extern.h> */
 #   else
 #    include <vm/vm_extern.h>
 extern	vm_map_t	kmem_map;
