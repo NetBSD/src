@@ -341,16 +341,22 @@ ipkdb_files_info()
 	printf_unfiltered("\tAttached to IPKDB at %s.\n", host);
 }
 
+#ifdef	BREAKPOINT
 static char bpt[] = BREAKPOINT;
+#endif
 
 static int
 ipkdb_insert_breakpoint(addr, save)
 	CORE_ADDR addr;
 	char *save;
 {
+#ifdef	BREAKPOINT
 	ipkdb_read_bytes(addr, save, sizeof bpt);
 	ipkdb_write_bytes(addr, bpt, sizeof bpt);
 	return 0;
+#else
+	error("Don't know how to insert breakpoint");
+#endif
 }
 
 static int
@@ -358,8 +364,12 @@ ipkdb_remove_breakpoint(addr, save)
 	CORE_ADDR addr;
 	char *save;
 {
+#ifdef	BREAKPOINT
 	ipkdb_write_bytes(addr, save, sizeof bpt);
 	return 0;
+#else
+	error("Don't know how to remove breakpoint");
+#endif
 }
 
 static void
