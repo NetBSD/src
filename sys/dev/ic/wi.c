@@ -1,4 +1,4 @@
-/* $NetBSD: wi.c,v 1.9 2001/05/16 02:36:37 ichiro Exp $ */
+/* $NetBSD: wi.c,v 1.10 2001/05/16 07:53:28 ichiro Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1404,7 +1404,7 @@ wi_init(ifp)
 		wi_write_record(sc, (struct wi_ltv_gen *)&sc->wi_keys);
 		if (sc->sc_prism2 && sc->wi_use_wep) {
 			/*
-			 * Prism2 Firmware version < ver 0.8 variant3
+			 * Prism2 Firmware version less than 0.8 variant3
 			 *   If promiscuous mode disable, Prism2 chip
 			 *  does not work with WEP .
 			 * It is under investigation for details.
@@ -1673,27 +1673,31 @@ wi_get_id(sc)
 	printf("%s: using ", sc->sc_dev.dv_xname);
 	switch (ver.wi_ver[0]) {
 		case WI_NIC_EVB2:
-			printf("PRISM2 HFA3841(EVB2)");
+			printf("PRISM I HFA3841(EVB2)");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3763:
-			printf("PRISM2 HWB3763 rev.B");
+			printf("PRISM II HWB3763 rev.B");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3163:
-			printf("PRISM2 HWB3163 rev.A");
+			printf("PRISM II HWB3163 rev.A");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB3163B:
-			printf("PRISM2 HWB3163 rev.B");
+			printf("PRISM II HWB3163 rev.B");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_EVB3:
-			printf("PRISM2 HFA3842(EVB3)");
+			printf("PRISM II  HFA3842(EVB3)");
 			sc->sc_prism2 = 1;
 			break;
 		case WI_NIC_HWB1153:
-			printf("PRISM2 HFA1153");
+			printf("PRISM I HFA1153");
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_P2_SST:
+			printf("PRISM II HWB3163 SST-flash");
 			sc->sc_prism2 = 1;
 			break;
 		default:               
