@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.16 1999/03/04 06:48:15 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.17 1999/03/09 12:18:23 kleink Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -100,7 +100,7 @@ sys_sbrk(p, v, retval)
 			  } */ *uap = v;
 #endif
 
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 /*
@@ -120,7 +120,7 @@ sys_sstk(p, v, retval)
 			  } */ *uap = v;
 #endif
 
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 /*
@@ -142,7 +142,7 @@ sys_madvise(p, v, retval)
 			     } */ *uap = v;
 #endif
 
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 /*
@@ -164,7 +164,7 @@ sys_mincore(p, v, retval)
 			     } */ *uap = v;
 #endif
 
-	return (EOPNOTSUPP);
+	return (ENOSYS);
 }
 
 #if 0
