@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_signal.h,v 1.4 2003/09/25 22:00:02 christos Exp $ */
+/*	$NetBSD: freebsd_signal.h,v 1.5 2003/11/17 10:07:58 keihan Exp $ */
 
 /*
  * Copyright (c) 2000 Atsushi Onoe
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
