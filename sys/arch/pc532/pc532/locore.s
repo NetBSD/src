@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37 1996/05/17 16:38:24 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.38 1996/07/31 16:47:30 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -76,22 +76,18 @@
 	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
 	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 == sizeof pde
 
-	.globl	_proc0paddr, _PTDpaddr
-_proc0paddr:	.long	0
-_PTDpaddr:	.long	0	# paddr of PTD, for libkvm
-
 /*
  * Initialization
  */
 	.data
-	.globl	_cold, _esym, _bootdev, _boothowto, _inttab
-	.globl	__save_sp, __save_fp, __old_intbase, __have_fpu
+
+	.globl	_cold, _esym, _bootdev, _boothowto, _inttab, __have_fpu
+	.globl	_proc0paddr, _PTDpaddr
 _cold:		.long	1	/* cold till we are not */
 _esym:		.long	0	/* pointer to end of symbols */
-__save_sp:	.long	0	/* Monitor stack pointer */
-__save_fp:	.long	0	/* Monitor frame pointer */
-__old_intbase:	.long	0	/* Monitor intbase */
 __have_fpu:	.long	0	/* Have we an FPU installed? */
+_proc0paddr:	.long	0
+_PTDpaddr:	.long	0	# paddr of PTD, for libkvm
 
 	.text
 	.globl start
@@ -111,13 +107,6 @@ _kernel_text:
 	movd	r0,tos			# push length
 	addr	_edata(pc),tos		# push address
 	bsr	_bzero			# zero the bss segment
-
-	/*
-	 * Save monitor's sp, fp and intbase.
-	 */
-	sprd	sp,__save_sp(pc)
-	sprd	fp,__save_fp(pc)
-	sprd	intbase,__old_intbase(pc)
 
 	/*
 	 * The boot program provides us a magic in r3,
@@ -766,6 +755,12 @@ ENTRY(cpu_switch)
 
 	movd	_imask(pc),tos
 	bsr	_splx			/* spl0 - process pending interrupts */
+#ifdef DDB
+	cmpqd	0,tos
+	movd	r0,tos
+#else
+	movd	r0,0(sp)
+#endif
 
 	/*
 	 * First phase: find new process.
@@ -1082,8 +1077,7 @@ rei:	ints_off
 /*
  * The handler for all asynchronous interrupts.
  */
-	.align	2
-trap_int:
+ENTRY(interrupt)
 	KENTER
 	lprd    sb,0			/* Kernel code expects sb to be 0 */
 	movd	_Cur_pl(pc),tos
@@ -1121,7 +1115,7 @@ trap_int:
  */
 	.align 2
 _inttab:
-	.long trap_int
+	.long _interrupt
 	.long trap_nmi
 	.long trap_abt
 	.long trap_slave
@@ -1236,57 +1230,13 @@ tmp_nmi:				/* come here if parity error */
 	addr	rz_exit(pc),0(sp)	/* modify return addr to exit */
 	rett	0
 
-/* To get back to the rom monitor .... */
-ENTRY(bpt_to_monitor)
-
-/* Switch to monitor's stack. */
-	ints_off
-	bicpsrw	PSL_US			/* make sure we are using sp0. */
-	sprd	psr, tos		/* Push the current psl. */
-	save	[r1,r2,r3,r4]
-	sprd	sp, r1  		/* save kernel's sp */
-	sprd	fp, r2  		/* save kernel's fp */
-	sprd	intbase, r3		/* Save current intbase. */
-	smr	ptb0, r4		/* Save current ptd! */
-
-/* Change to low addresses */
-	lmr	ptb0, _PTDpaddr(pc)	/* Load the idle ptd */
-	addr	low(pc), r0
-	andd	~KERNBASE, r0
-	movd	r0, tos
-	ret	0
-
-low:
-/* Turn off mapping. */
-	smr	mcr, r0
-	lmr	mcr, 0
-	lprd	sp, __save_sp(pc)	/* restore monitors sp */
-	lprd	fp, __save_fp(pc)	/* restore monitors fp */
-	lprd	intbase, __old_intbase(pc)	/* restore monitors intbase */
-	bpt
-
-/* Reload kernel stack AND return. */
-	lprd	intbase, r3		/* restore kernel's intbase */
-	lprd	fp, r2			/* restore kernel's fp */
-	lprd	sp, r1			/* restore kernel's sp */
-	lmr	mcr, r0
-	addr	highagain(pc), r0
-	ord  	KERNBASE, r0
-	jump 	0(r0)
-highagain:
-	lmr	ptb0, r4		/* Get the last ptd! */
-	restore	[r1,r2,r3,r4]
-	lprd	psr, tos		/* restore psl */
-	ints_on
-	ret 0
-
 /* Include all other .s files. */
 #include "bcopy.s"
 
 /****************************************************************************/
 
 /*
- * vmstat -i uses the following labels and trap_int even increments the
+ * vmstat -i uses the following labels and _interrupt even increments the
  * counters. This information is also availiable from ivt[n].iv_use
  * and ivt[n].iv_cnt in much better form.
  */
