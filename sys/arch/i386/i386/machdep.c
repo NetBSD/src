@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.44 1993/09/04 01:29:22 cgd Exp $
+ *	$Id: machdep.c,v 1.45 1993/09/04 05:32:18 cgd Exp $
  */
 
 #include "npx.h"
@@ -1451,3 +1451,41 @@ pmap_page_index(pa)
 	return -1;
 }
 #endif /* MACHINE_NONCONTIG */
+
+/*
+ * The registers are in the frame; the frame is in the user area of
+ * the process in question; when the process is active, the registers
+ * are in "the kernel stack"; when it's not, they're still there, but
+ * things get flipped around.  So, since p->p_regs is the whole address
+ * of the register set, take its offset from the kernel stack, and
+ * index into the user block.  Don't you just *love* virtual memory?
+ * (I'm starting to think seymour is right...)
+ */
+
+int
+ptrace_set_pc (struct proc *p, unsigned int addr) {
+	struct pcb *pcb;
+	void *regs = (char*)p->p_addr +
+		((char*) p->p_regs - (char*) kstack);
+
+	pcb = &p->p_addr->u_pcb;
+	if (pcb->pcb_flags & FM_TRAP)
+		((struct trapframe *)regs)->tf_eip = addr;
+	else
+		((struct syscframe *)regs)->sf_eip = addr;
+	return 0;
+}
+
+int
+ptrace_single_step (struct proc *p) {
+	struct pcb *pcb;
+	void *regs = (char*)p->p_addr +
+		((char*) p->p_regs - (char*) kstack);
+
+	pcb = &p->p_addr->u_pcb;
+	if (pcb->pcb_flags & FM_TRAP)
+		((struct trapframe *)regs)->tf_eflags |= PSL_T;
+	else
+		((struct syscframe *)regs)->sf_eflags |= PSL_T;
+	return 0;
+}
