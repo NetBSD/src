@@ -3601,7 +3601,20 @@ find_reloads (insn, replace, ind_levels, live_known, reload_reg_p)
       {
 	int opno = recog_dup_num[i];
 	*recog_dup_loc[i] = *recog_operand_loc[opno];
+#ifdef GCC_27_ARM32_PIC_SUPPORT
+       /*
+        * This is a patch for a bug found when implementing arm32 PIC support
+        * that should be fixed in 2.8
+        */
+        /*  is there is a label that is duplicated
+         *   we cannot reload it
+         *   - it appears that insn_n_operands - does not include labels
+         */
+	if ((opno < insn_n_operands[insn_code_number])
+             && (operand_reloadnum[opno] >= 0))
+#else
 	if (operand_reloadnum[opno] >= 0)
+#endif
 	  push_replacement (recog_dup_loc[i], operand_reloadnum[opno],
 			    insn_operand_mode[insn_code_number][opno]);
       }
@@ -4336,6 +4349,40 @@ find_reloads_address (mode, memrefloc, ad, loc, opnum, type, ind_levels)
 
       return 1;
     }
+#ifdef GCC_27_ARM32_PIC_SUPPORT
+   /*
+    * This is a patch for a bug found when implementing arm32 PIC support
+    * that has been fixed in 2.8
+    */
+    else if (GET_CODE (ad) == MINUS && GET_CODE (XEXP (ad, 0)) == PLUS
+	   && GET_CODE (XEXP (XEXP (ad, 0), 1 )) == CONST_INT
+	   && (XEXP (XEXP (ad, 0), 0) == frame_pointer_rtx
+#if HARD_FRAME_POINTER_REGNUM != FRAME_POINTER_REGNUM
+	       || XEXP (XEXP (ad, 0), 0) == hard_frame_pointer_rtx
+#endif
+#if FRAME_POINTER_REGNUM != ARG_POINTER_REGNUM
+	       || XEXP (XEXP (ad, 0), 0) == arg_pointer_rtx
+#endif
+	       || XEXP (XEXP (ad, 0), 0) == stack_pointer_rtx)
+	   && ! memory_address_p (mode, ad))
+    {
+        rtx base = XEXP (XEXP (ad , 0) ,0);
+        rtx index = XEXP (ad , 1);
+        rtx disp = XEXP (XEXP (ad, 0) ,1);
+             // base + disp - index
+             // base - (index +disp)
+
+
+      *loc = ad = gen_rtx (MINUS, GET_MODE (ad),
+			   base,
+			   plus_constant (index, -INTVAL (disp)));
+
+        find_reloads_address_part (XEXP (ad, 1), &XEXP (ad, 1), BASE_REG_CLASS,
+  				 GET_MODE (ad), opnum, type, ind_levels);
+        find_reloads_address_1 (XEXP (ad, 0), 1, &XEXP (ad, 0), opnum, type, 0);
+      return 1;
+    }
+#endif
 			   
   else if (GET_CODE (ad) == PLUS && GET_CODE (XEXP (ad, 1)) == CONST_INT
 	   && GET_CODE (XEXP (ad, 0)) == PLUS
