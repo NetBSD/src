@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/10/12 18:49:28 thorpej Exp $
+#	$NetBSD: Makefile,v 1.22 2002/10/14 14:41:22 christos Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -51,7 +51,7 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/usr.sbin/mtree \
 
 NOHTML=doc2html-error
 
-.ifndef HOSTPROG
+.if !defined(HOSTPROG) && !defined(SMALLPROG)
 CPPFLAGS+=	-DSUPPORT_RMT
 
 LDADD+=	-lutil -lrmt
