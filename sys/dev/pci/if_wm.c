@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.83 2004/10/30 18:09:22 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.84 2004/11/22 19:28:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.83 2004/10/30 18:09:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.84 2004/11/22 19:28:37 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.83 2004/10/30 18:09:22 thorpej Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/syslog.h>
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
@@ -1369,7 +1370,7 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 
 	if (m0->m_len < (offset + iphl)) {
 		if ((txs->txs_mbuf = m_pullup(m0, offset + iphl)) == NULL) {
-			printf("%s: wm_tx_cksum: mbuf allocation failed, "
+			log(LOG_ERR, "%s: wm_tx_cksum: mbuf allocation failed, "
 			    "packet dropped\n", sc->sc_dev.dv_xname);
 			return (ENOMEM);
 		}
@@ -1459,11 +1460,13 @@ wm_dump_mbuf_chain(struct wm_softc *sc, struct mbuf *m0)
 	struct mbuf *m;
 	int i;
 
-	printf("%s: mbuf chain:\n", sc->sc_dev.dv_xname);
+	log(LOG_DEBUG, "%s: mbuf chain:\n", sc->sc_dev.dv_xname);
 	for (m = m0, i = 0; m != NULL; m = m->m_next, i++)
-		printf("\tm_data = %p, m_len = %d, m_flags = 0x%08x\n",
+		log(LOG_DEBUG, "%s:\tm_data = %p, m_len = %d, "
+		    "m_flags = 0x%08x\n", sc->sc_dev.dv_xname,
 		    m->m_data, m->m_len, m->m_flags);
-	printf("\t%d mbuf%s in chain\n", i, i == 1 ? "" : "s");
+	log(LOG_DEBUG, "%s:\t%d mbuf%s in chain\n", sc->sc_dev.dv_xname,
+	    i, i == 1 ? "" : "s");
 }
 
 /*
@@ -1629,7 +1632,7 @@ wm_start(struct ifnet *ifp)
 		if (error) {
 			if (error == EFBIG) {
 				WM_EVCNT_INCR(&sc->sc_ev_txdrop);
-				printf("%s: Tx packet consumes too many "
+				log(LOG_ERR, "%s: Tx packet consumes too many "
 				    "DMA segments, dropping...\n",
 				    sc->sc_dev.dv_xname);
 				IFQ_DEQUEUE(&ifp->if_snd, m0);
@@ -1857,7 +1860,8 @@ wm_watchdog(struct ifnet *ifp)
 	wm_txintr(sc);
 
 	if (sc->sc_txfree != WM_NTXDESC(sc)) {
-		printf("%s: device timeout (txfree %d txsfree %d txnext %d)\n",
+		log(LOG_ERR,
+		    "%s: device timeout (txfree %d txsfree %d txnext %d)\n",
 		    sc->sc_dev.dv_xname, sc->sc_txfree, sc->sc_txsfree,
 		    sc->sc_txnext);
 		ifp->if_oerrors++;
@@ -1974,7 +1978,8 @@ wm_intr(void *arg)
 		}
 
 		if (icr & ICR_RXO) {
-			printf("%s: Receive overrun\n", sc->sc_dev.dv_xname);
+			log(LOG_WARNING, "%s: Receive overrun\n",
+			    sc->sc_dev.dv_xname);
 			wantinit = 1;
 		}
 	}
@@ -2046,11 +2051,11 @@ wm_txintr(struct wm_softc *sc)
 		if (status & (WTX_ST_EC|WTX_ST_LC)) {
 			ifp->if_oerrors++;
 			if (status & WTX_ST_LC)
-				printf("%s: late collision\n",
+				log(LOG_WARNING, "%s: late collision\n",
 				    sc->sc_dev.dv_xname);
 			else if (status & WTX_ST_EC) {
 				ifp->if_collisions += 16;
-				printf("%s: excessive collisions\n",
+				log(LOG_WARNING, "%s: excessive collisions\n",
 				    sc->sc_dev.dv_xname);
 			}
 		} else
@@ -2196,13 +2201,13 @@ wm_rxintr(struct wm_softc *sc)
 		     (WRX_ER_CE|WRX_ER_SE|WRX_ER_SEQ|WRX_ER_CXE|WRX_ER_RXE)) {
 			ifp->if_ierrors++;
 			if (errors & WRX_ER_SE)
-				printf("%s: symbol error\n",
+				log(LOG_WARNING, "%s: symbol error\n",
 				    sc->sc_dev.dv_xname);
 			else if (errors & WRX_ER_SEQ)
-				printf("%s: receive sequence error\n",
+				log(LOG_WARNING, "%s: receive sequence error\n",
 				    sc->sc_dev.dv_xname);
 			else if (errors & WRX_ER_CE)
-				printf("%s: CRC error\n",
+				log(LOG_WARNING, "%s: CRC error\n",
 				    sc->sc_dev.dv_xname);
 			m_freem(m);
 			continue;
@@ -2231,7 +2236,8 @@ wm_rxintr(struct wm_softc *sc)
 			    M_NOWAIT);
 			if (vtag == NULL) {
 				ifp->if_ierrors++;
-				printf("%s: unable to allocate VLAN tag\n",
+				log(LOG_ERR,
+				    "%s: unable to allocate VLAN tag\n",
 				    sc->sc_dev.dv_xname);
 				m_freem(m);
 				continue;
@@ -2454,7 +2460,7 @@ wm_reset(struct wm_softc *sc)
 	}
 
 	if (CSR_READ(sc, WMREG_CTRL) & CTRL_RST)
-		printf("%s: WARNING: reset failed to complete\n",
+		log(LOG_ERR, "%s: reset failed to complete\n",
 		    sc->sc_dev.dv_xname);
 }
 
@@ -2567,7 +2573,7 @@ wm_init(struct ifnet *ifp)
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf == NULL) {
 			if ((error = wm_add_rxbuf(sc, i)) != 0) {
-				printf("%s: unable to allocate or map rx "
+				log(LOG_ERR, "%s: unable to allocate or map rx "
 				    "buffer %d, error = %d\n",
 				    sc->sc_dev.dv_xname, i, error);
 				/*
@@ -2717,7 +2723,8 @@ wm_init(struct ifnet *ifp)
 
  out:
 	if (error)
-		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+		log(LOG_ERR, "%s: interface not running\n",
+		    sc->sc_dev.dv_xname);
 	return (error);
 }
 
@@ -3058,9 +3065,10 @@ wm_add_rxbuf(struct wm_softc *sc, int idx)
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, rxs->rxs_dmamap, m,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
+		/* XXX XXX XXX */
 		printf("%s: unable to load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, idx, error);
-		panic("wm_add_rxbuf");	/* XXX XXX XXX */
+		panic("wm_add_rxbuf");
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
@@ -3238,16 +3246,16 @@ wm_tbi_mediainit(struct wm_softc *sc)
 
 #define	ADD(ss, mm, dd)							\
 do {									\
-	printf("%s%s", sep, ss);					\
+	aprint_normal("%s%s", sep, ss);					\
 	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|(mm), (dd), NULL);	\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
 
-	printf("%s: ", sc->sc_dev.dv_xname);
+	aprint_normal("%s: ", sc->sc_dev.dv_xname);
 	ADD("1000baseSX", IFM_1000_SX, ANAR_X_HD);
 	ADD("1000baseSX-FDX", IFM_1000_SX|IFM_FDX, ANAR_X_FD);
 	ADD("auto", IFM_AUTO, ANAR_X_FD|ANAR_X_HD);
-	printf("\n");
+	aprint_normal("\n");
 
 #undef ADD
 
@@ -3672,12 +3680,12 @@ wm_gmii_i82544_readreg(struct device *self, int phy, int reg)
 	}
 
 	if ((mdic & MDIC_READY) == 0) {
-		printf("%s: MDIC read timed out: phy %d reg %d\n",
+		log(LOG_WARNING, "%s: MDIC read timed out: phy %d reg %d\n",
 		    sc->sc_dev.dv_xname, phy, reg);
 		rv = 0;
 	} else if (mdic & MDIC_E) {
 #if 0 /* This is normal if no PHY is present. */
-		printf("%s: MDIC read error: phy %d reg %d\n",
+		log(LOG_WARNING, "%s: MDIC read error: phy %d reg %d\n",
 		    sc->sc_dev.dv_xname, phy, reg);
 #endif
 		rv = 0;
@@ -3713,10 +3721,10 @@ wm_gmii_i82544_writereg(struct device *self, int phy, int reg, int val)
 	}
 
 	if ((mdic & MDIC_READY) == 0)
-		printf("%s: MDIC write timed out: phy %d reg %d\n",
+		log(LOG_WARNING, "%s: MDIC write timed out: phy %d reg %d\n",
 		    sc->sc_dev.dv_xname, phy, reg);
 	else if (mdic & MDIC_E)
-		printf("%s: MDIC write error: phy %d reg %d\n",
+		log(LOG_WARNING, "%s: MDIC write error: phy %d reg %d\n",
 		    sc->sc_dev.dv_xname, phy, reg);
 }
 
