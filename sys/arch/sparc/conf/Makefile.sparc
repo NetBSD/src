@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.55 1999/01/08 19:26:15 augustss Exp $
+# 	$NetBSD: Makefile.sparc,v 1.56 1999/02/14 20:04:26 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -17,6 +17,8 @@
 #
 # -DTRACE	compile in kernel tracing hooks
 # -DQUOTA	compile in file system quotas
+
+.include <bsd.own.mk>
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
@@ -54,7 +56,10 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 # add `-mno-fpu' to work around gcc (last noticed in v2.7.2) bug
 CFLAGS+=	-mno-fpu
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-N -p -Ttext F0004000 -e start
+LINKFLAGS=	-Ttext F0004000 -e start
+.if ${OBJECT_FMT} != "ELF"
+LINKFLAGS+=	-N -p
+.endif
 STRIPFLAGS=	-d
 
 ### find out what to use for libkern
