@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.165 2003/04/11 19:41:37 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.166 2003/06/15 02:49:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.165 2003/04/11 19:41:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.166 2003/06/15 02:49:33 matt Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -220,6 +220,10 @@ u_long	in_ifaddrhash;				/* size of hash table - 1 */
 int	in_ifaddrentries;			/* total number of addrs */
 struct	in_ifaddrhead in_ifaddr;
 struct	in_ifaddrhashhead *in_ifaddrhashtbl;
+u_long	in_multihash;				/* size of hash table - 1 */
+int	in_multientries;			/* total number of addrs */
+struct	in_multihead in_multi;
+struct	in_multihashhead *in_multihashtbl;
 struct	ifqueue ipintrq;
 struct	ipstat	ipstat;
 u_int16_t	ip_id;
@@ -287,6 +291,7 @@ do {									\
 
 #define	IPQ_UNLOCK()		ipq_unlock()
 
+struct pool inmulti_pool;
 struct pool ipqent_pool;
 
 #ifdef INET_CSUM_COUNTERS
@@ -339,6 +344,8 @@ ip_init()
 	struct protosw *pr;
 	int i;
 
+	pool_init(&inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl",
+	    NULL);
 	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl",
 	    NULL);
 
@@ -358,6 +365,8 @@ ip_init()
 	TAILQ_INIT(&in_ifaddr);
 	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IFADDR,
 	    M_WAITOK, &in_ifaddrhash);
+	in_multihashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IPMADDR,
+	    M_WAITOK, &in_multihash);
 	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY
 	ipflow_init();

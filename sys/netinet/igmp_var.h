@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp_var.h,v 1.14 2002/06/30 22:40:33 thorpej Exp $	*/
+/*	$NetBSD: igmp_var.h,v 1.15 2003/06/15 02:49:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 Stephen Deering.
@@ -83,7 +83,7 @@ extern	struct igmpstat igmpstat;
 
 void	igmp_init __P((void));
 void	igmp_input __P((struct mbuf *, ...));
-void	igmp_joingroup __P((struct in_multi *));
+int	igmp_joingroup __P((struct in_multi *));
 void	igmp_leavegroup __P((struct in_multi *));
 void	igmp_fasttimo __P((void));
 void	igmp_slowtimo __P((void));

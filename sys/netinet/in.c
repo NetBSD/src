@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.83 2003/06/13 07:59:57 onoe Exp $	*/
+/*	$NetBSD: in.c,v 1.84 2003/06/15 02:49:32 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.83 2003/06/13 07:59:57 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.84 2003/06/15 02:49:32 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -126,6 +126,9 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.83 2003/06/13 07:59:57 onoe Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
+#include <netinet/in_pcb.h>
 #include <netinet/if_inarp.h>
 #include <netinet/ip_mroute.h>
 #include <netinet/igmp_var.h>
@@ -543,21 +546,45 @@ in_purgeaddr(ifa, ifp)
 	struct ifnet *ifp;
 {
 	struct in_ifaddr *ia = (void *) ifa;
+        struct in_ifaddr *nia;
+        struct inpcb *inp, *inp_ialink;
 
 	in_ifscrub(ifp, ia);
+
+        nia = ia;
+        NEXT_IA_WITH_SAME_ADDR(nia);
+        /*
+         * Kick all the sockets!
+         */
+        for (inp = LIST_FIRST(&ia->ia_inpcbs); inp != NULL; inp = inp_ialink) {
+                inp_ialink = LIST_NEXT(inp, inp_ialink);
+                KASSERT(inp != inp_ialink);
+                LIST_REMOVE(inp, inp_ialink);
+                IFAFREE(&ia->ia_ifa);
+                inp->inp_ia = NULL;
+                if (nia != NULL) {
+                        KASSERT(nia != ia);
+                        inp->inp_ia = nia;
+                        IFAREF(&nia->ia_ifa); 
+                        LIST_INSERT_HEAD(&nia->ia_inpcbs, inp, inp_ialink);
+                } else if (inp->inp_socket != NULL) {
+                        if ((inp->inp_socket->so_state & SS_NOFDREF) &&
+                            inp->inp_socket->so_head == NULL) {
+                                soabort(inp->inp_socket);
+                        } else {
+                                inp->inp_socket->so_error = ECONNABORTED;
+                                sorwakeup(inp->inp_socket);
+                                sowwakeup(inp->inp_socket);
+                        }
+                }
+        }
+
 	LIST_REMOVE(ia, ia_hash);
 	TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
 	IFAFREE(&ia->ia_ifa);
 	TAILQ_REMOVE(&in_ifaddr, ia, ia_list);
 	if (ia->ia_allhosts != NULL)
 		in_delmulti(ia->ia_allhosts);
-	if (LIST_FIRST(&ia->ia_multiaddrs) != NULL &&
-	    /*
-	     * If the interface is going away, don't bother to save
-	     * the multicast entries.
-	     */
-	    ifp->if_output != if_nulloutput)
-		in_savemkludge(ia);
 	IFAFREE(&ia->ia_ifa);
 	in_setmaxmtu();
 }
@@ -574,7 +601,6 @@ in_purgeif(ifp)
 			continue;
 		in_purgeaddr(ifa, ifp);
 	}
-	in_purgemkludge(ifp);
 }
 
 /*
@@ -855,11 +881,6 @@ in_ifinit(ifp, ia, sin, scrub)
 	}
 	error = in_addprefix(ia, flags);
 	/*
-	 * recover multicast kludge entry, if there is.
-	 */
-	if (ifp->if_flags & IFF_MULTICAST)
-		in_restoremkludge(ia, ifp);
-	/*
 	 * If the interface supports multicast, join the "all hosts"
 	 * multicast group on that interface.
 	 */
@@ -1033,91 +1054,6 @@ in_broadcast(in, ifp)
 }
 
 /*
- * Multicast address kludge:
- * If there were any multicast addresses attached to this interface address,
- * either move them to another address on this interface, or save them until
- * such time as this interface is reconfigured for IPv4.
- */
-void
-in_savemkludge(oia)
-	struct in_ifaddr *oia;
-{
-	struct in_ifaddr *ia;
-	struct in_multi *inm, *next;
-
-	IFP_TO_IA(oia->ia_ifp, ia);
-	if (ia) {	/* there is another address */
-		for (inm = LIST_FIRST(&oia->ia_multiaddrs); inm; inm = next){
-			next = LIST_NEXT(inm, inm_list);
-			LIST_REMOVE(inm, inm_list);
-			IFAFREE(&inm->inm_ia->ia_ifa);
-			IFAREF(&ia->ia_ifa);
-			inm->inm_ia = ia;
-			LIST_INSERT_HEAD(&ia->ia_multiaddrs, inm, inm_list);
-		}
-	} else {	/* last address on this if deleted, save */
-		TAILQ_INSERT_TAIL(&in_mk, oia, ia_list);
-		IFAREF(&oia->ia_ifa);
-	}
-}
-
-/*
- * Continuation of multicast address hack:
- * If there was a multicast group list previously saved for this interface,
- * then we re-attach it to the first address configured on the i/f.
- */
-void
-in_restoremkludge(ia, ifp)
-	struct in_ifaddr *ia;
-	struct ifnet *ifp;
-{
-	struct in_ifaddr *oia;
-
-	for (oia = TAILQ_FIRST(&in_mk); oia != NULL;
-	    oia = TAILQ_NEXT(oia, ia_list)) {
-		if (oia->ia_ifp == ifp) {
-			struct in_multi *inm, *next;
-
-			for (inm = LIST_FIRST(&oia->ia_multiaddrs);
-			    inm != NULL; inm = next) {
-				next = LIST_NEXT(inm, inm_list);
-				LIST_REMOVE(inm, inm_list);
-				IFAFREE(&inm->inm_ia->ia_ifa);
-				IFAREF(&ia->ia_ifa);
-				inm->inm_ia = ia;
-				LIST_INSERT_HEAD(&ia->ia_multiaddrs,
-				    inm, inm_list);
-			}
-	    		TAILQ_REMOVE(&in_mk, oia, ia_list);
-			IFAFREE(&oia->ia_ifa);
-			break;
-		}
-	}
-}
-
-void
-in_purgemkludge(ifp)
-	struct ifnet *ifp;
-{
-	struct in_ifaddr *oia;
-
-	for (oia = TAILQ_FIRST(&in_mk); oia != NULL;
-	    oia = TAILQ_NEXT(oia, ia_list)) {
-		if (oia->ia_ifp != ifp)
-			continue;
-
-		/*
-		 * Leaving from all multicast groups joined through
-		 * this interface is done via in_pcbpurgeif().
-		 */
-
-	    	TAILQ_REMOVE(&in_mk, oia, ia_list);
-		IFAFREE(&oia->ia_ifa);
-		break;
-	}
-}
-
-/*
  * Add an address to the list of IP multicast addresses for a given interface.
  */
 struct in_multi *
@@ -1127,7 +1063,6 @@ in_addmulti(ap, ifp)
 {
 	struct in_multi *inm;
 	struct ifreq ifr;
-	struct in_ifaddr *ia;
 	int s = splsoftnet();
 
 	/*
@@ -1144,8 +1079,7 @@ in_addmulti(ap, ifp)
 		 * New address; allocate a new multicast record
 		 * and link it into the interface's multicast list.
 		 */
-		inm = (struct in_multi *)malloc(sizeof(*inm),
-		    M_IPMADDR, M_NOWAIT);
+		inm = pool_get(&inmulti_pool, PR_NOWAIT);
 		if (inm == NULL) {
 			splx(s);
 			return (NULL);
@@ -1153,15 +1087,9 @@ in_addmulti(ap, ifp)
 		inm->inm_addr = *ap;
 		inm->inm_ifp = ifp;
 		inm->inm_refcount = 1;
-		IFP_TO_IA(ifp, ia);
-		if (ia == NULL) {
-			free(inm, M_IPMADDR);
-			splx(s);
-			return (NULL);
-		}
-		inm->inm_ia = ia;
-		IFAREF(&inm->inm_ia->ia_ifa);
-		LIST_INSERT_HEAD(&ia->ia_multiaddrs, inm, inm_list);
+                LIST_INSERT_HEAD(
+                    &IN_MULTI_HASH(inm->inm_addr.s_addr, ifp),
+                    inm, inm_list); 
 		/*
 		 * Ask the network driver to update its multicast reception
 		 * filter appropriately for the new address.
@@ -1172,14 +1100,19 @@ in_addmulti(ap, ifp)
 		if ((ifp->if_ioctl == NULL) ||
 		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI,(caddr_t)&ifr) != 0) {
 			LIST_REMOVE(inm, inm_list);
-			free(inm, M_IPMADDR);
+			pool_put(&inmulti_pool, inm);
 			splx(s);
 			return (NULL);
 		}
 		/*
 		 * Let IGMP know that we have joined a new IP multicast group.
 		 */
-		igmp_joingroup(inm);
+		if (igmp_joingroup(inm) != 0) {
+			LIST_REMOVE(inm, inm_list);
+			pool_put(&inmulti_pool, inm);
+			splx(s);
+			return (NULL);
+		}
 	}
 	splx(s);
 	return (inm);
@@ -1205,7 +1138,6 @@ in_delmulti(inm)
 		 * Unlink from list.
 		 */
 		LIST_REMOVE(inm, inm_list);
-		IFAFREE(&inm->inm_ia->ia_ifa);
 		/*
 		 * Notify the network driver to update its multicast reception
 		 * filter.
@@ -1214,7 +1146,7 @@ in_delmulti(inm)
 		satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
 		(*inm->inm_ifp->if_ioctl)(inm->inm_ifp, SIOCDELMULTI,
 							     (caddr_t)&ifr);
-		free(inm, M_IPMADDR);
+		pool_put(&inmulti_pool, inm);
 	}
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.32 2002/11/02 19:03:44 itojun Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.33 2003/06/15 02:49:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,6 +96,8 @@ struct inpcb {
 #if 1 /*IPSEC*/
 	struct inpcbpolicy *inp_sp;     /* security policy. */
 #endif
+	LIST_ENTRY(inpcb) inp_ialink;
+	struct	in_ifaddr *inp_ia;	/* in_ifaddr which laddr is bound */
 };
 #define	inp_faddr	inp_ip.ip_dst
 #define	inp_laddr	inp_ip.ip_src

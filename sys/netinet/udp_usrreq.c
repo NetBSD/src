@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.99 2003/05/14 06:47:37 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.100 2003/06/15 02:49:34 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.99 2003/05/14 06:47:37 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.100 2003/06/15 02:49:34 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1007,6 +1007,11 @@ udp_usrreq(so, req, m, nam, control, p)
 		so->so_state &= ~SS_ISCONNECTED;	/* XXX */
 		in_pcbdisconnect(inp);
 		inp->inp_laddr = zeroin_addr;		/* XXX */
+		if (inp->inp_ia != NULL) {
+			LIST_REMOVE(inp, inp_ialink);
+			IFAFREE(&inp->inp_ia->ia_ifa);
+			inp->inp_ia = NULL;
+		}
 		in_pcbstate(inp, INP_BOUND);		/* XXX */
 		break;
 
@@ -1035,11 +1040,8 @@ udp_usrreq(so, req, m, nam, control, p)
 				goto die;
 			}
 			error = in_pcbconnect(inp, nam);
-			if (error) {
-			die:
-				m_freem(m);
-				break;
-			}
+			if (error)
+				goto die;
 		} else {
 			if ((so->so_state & SS_ISCONNECTED) == 0) {
 				error = ENOTCONN;
@@ -1047,11 +1049,20 @@ udp_usrreq(so, req, m, nam, control, p)
 			}
 		}
 		error = udp_output(m, inp);
+		m = NULL;
 		if (nam) {
 			in_pcbdisconnect(inp);
 			inp->inp_laddr = laddr;		/* XXX */
 			in_pcbstate(inp, INP_BOUND);	/* XXX */
 		}
+	  die:
+		if (inp->inp_ia != NULL && in_nullhost(inp->inp_laddr)) {
+			LIST_REMOVE(inp, inp_ialink);
+			IFAFREE(&inp->inp_ia->ia_ifa);
+			inp->inp_ia = NULL;
+		}
+		if (m)
+			m_freem(m);
 	}
 		break;
 

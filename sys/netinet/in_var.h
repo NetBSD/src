@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.44 2002/05/12 20:33:50 matt Exp $	*/
+/*	$NetBSD: in_var.h,v 1.45 2003/06/15 02:49:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ struct in_ifaddr {
 	LIST_HEAD(, in_multi) ia_multiaddrs; /* list of multicast addresses */
 	struct	in_multi *ia_allhosts;	/* multicast address record for
 					   the allhosts multicast group */
+	LIST_HEAD(, inpcb) ia_inpcbs;	/* list of pcbs with this source */
 };
 
 struct	in_aliasreq {
@@ -122,6 +123,9 @@ struct	in_aliasreq {
 #ifndef IN_IFADDR_HASH_SIZE
 #define IN_IFADDR_HASH_SIZE 509	/* 61, 127, 251, 509, 1021, 2039 are good */
 #endif
+#ifndef IN_MULTI_HASH_SIZE
+#define IN_MULTI_HASH_SIZE 509	/* 61, 127, 251, 509, 1021, 2039 are good */
+#endif
 
 /*
  * This is a bit unconventional, and wastes a little bit of space, but
@@ -130,14 +134,24 @@ struct	in_aliasreq {
  */
 
 #define	IN_IFADDR_HASH(x) in_ifaddrhashtbl[(u_long)(x) % IN_IFADDR_HASH_SIZE]
+#define IN_MULTI_HASH(x, ifp) \
+        (in_multihashtbl[(u_long)((x) ^ (ifp->if_index)) % IN_MULTI_HASH_SIZE])
 
 LIST_HEAD(in_ifaddrhashhead, in_ifaddr);	/* Type of the hash head */
 TAILQ_HEAD(in_ifaddrhead, in_ifaddr);		/* Type of the list head */
+LIST_HEAD(in_multihashhead, in_multi);		/* Type of the hash head */
+LIST_HEAD(in_multihead, in_multi);		/* Type of the list head */
+
 
 extern	u_long in_ifaddrhash;			/* size of hash table - 1 */
 extern	int	in_ifaddrentries;		/* total number of addrs */
 extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
 extern  struct in_ifaddrhead in_ifaddr;		/* List head (in ip_input) */
+
+extern	u_long in_multihash;			/* size of hash table - 1 */
+extern	int	in_multientries;		/* total number of addrs */
+extern  struct in_multihashhead *in_multihashtbl;	/* Hash table head */
+extern  struct in_multihead in_multi;		/* List head (in ip_input) */
 
 extern	struct	ifqueue	ipintrq;		/* ip packet input queue */
 extern	const	int	inetctlerrmap[];
@@ -213,10 +227,10 @@ extern	const	int	inetctlerrmap[];
  * Per-interface router version information.
  */
 struct router_info {
+	LIST_ENTRY(router_info) rti_link;
 	struct	ifnet *rti_ifp;
 	int	rti_type;	/* type of router on this interface */
 	int	rti_age;	/* time since last v1 query */
-	struct	router_info *rti_next;
 };
 
 /*
@@ -226,14 +240,13 @@ struct router_info {
  * structure.
  */
 struct in_multi {
-	struct	in_addr inm_addr;	/* IP multicast address */
+	LIST_ENTRY(in_multi) inm_list;	/* list of multicast addresses */
+	struct	router_info *inm_rti;	/* router version info */
 	struct	ifnet *inm_ifp;		/* back pointer to ifnet */
-	struct	in_ifaddr *inm_ia;	/* back pointer to in_ifaddr */
+	struct	in_addr inm_addr;	/* IP multicast address */
 	u_int	inm_refcount;		/* no. membership claims by sockets */
 	u_int	inm_timer;		/* IGMP membership report timer */
-	LIST_ENTRY(in_multi) inm_list;	/* list of multicast addresses */
 	u_int	inm_state;		/* state of membership */
-	struct	router_info *inm_rti;	/* router version info */
 };
 
 #ifdef _KERNEL
@@ -242,7 +255,6 @@ struct in_multi {
  * all of the in_multi records.
  */
 struct in_multistep {
-	struct in_ifaddr *i_ia;
 	struct in_multi *i_inm;
 };
 
@@ -255,16 +267,11 @@ struct in_multistep {
 	/* struct ifnet *ifp; */ \
 	/* struct in_multi *inm; */ \
 { \
-	struct in_ifaddr *ia; \
-\
-	IFP_TO_IA((ifp), ia); 			/* multicast */ \
-	if (ia == NULL) \
-		(inm) = NULL; \
-	else \
-		for ((inm) = LIST_FIRST(&ia->ia_multiaddrs); \
-		    (inm) != NULL && !in_hosteq((inm)->inm_addr, (addr)); \
-		     (inm) = LIST_NEXT((inm), inm_list)) \
-			 continue; \
+	LIST_FOREACH((inm), &IN_MULTI_HASH(((addr).s_addr), (ifp)), inm_list) {\
+		if (in_hosteq((inm)->inm_addr, (addr)) && \
+		    (inm)->inm_ifp == (ifp)) \
+			break; \
+	} \
 }
 
 /*
@@ -280,23 +287,13 @@ struct in_multistep {
 { \
 	if (((inm) = (step).i_inm) != NULL) \
 		(step).i_inm = LIST_NEXT((inm), inm_list); \
-	else \
-		while ((step).i_ia != NULL) { \
-			(inm) = LIST_FIRST(&(step).i_ia->ia_multiaddrs); \
-			(step).i_ia = TAILQ_NEXT((step).i_ia, ia_list); \
-			if ((inm) != NULL) { \
-				(step).i_inm = LIST_NEXT((inm), inm_list); \
-				break; \
-			} \
-		} \
 }
 
 #define IN_FIRST_MULTI(step, inm) \
 	/* struct in_multistep step; */ \
 	/* struct in_multi *inm; */ \
 { \
-	(step).i_ia = TAILQ_FIRST(&in_ifaddr); \
-	(step).i_inm = NULL; \
+	(step).i_inm = LIST_FIRST(&in_multi); \
 	IN_NEXT_MULTI((step), (inm)); \
 }
 

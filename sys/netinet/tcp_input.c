@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.168 2003/05/30 01:15:04 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.169 2003/06/15 02:49:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.168 2003/05/30 01:15:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.169 2003/06/15 02:49:33 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -180,6 +180,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.168 2003/05/30 01:15:04 itojun Exp $
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
+#include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 
 #ifdef INET6
@@ -2696,23 +2697,23 @@ tcp_newreno(tp, th)
 		 * offset in tcp_output().
 		 */
 		TCP_TIMER_DISARM(tp, TCPT_REXMT);
-	        tp->t_rtttime = 0;
-	        tp->snd_nxt = th->th_ack;
+		tp->t_rtttime = 0;
+		tp->snd_nxt = th->th_ack;
 		/*
 		 * Set snd_cwnd to one segment beyond ACK'd offset.  snd_una
 		 * is not yet updated when we're called.
 		 */
 		tp->snd_cwnd = tp->t_segsz + (th->th_ack - tp->snd_una);
-	        (void) tcp_output(tp);
-	        tp->snd_cwnd = ocwnd;
-	        if (SEQ_GT(onxt, tp->snd_nxt))
-	                tp->snd_nxt = onxt;
-	        /*
-	         * Partial window deflation.  Relies on fact that tp->snd_una
-	         * not updated yet.
-	         */
-	        tp->snd_cwnd -= (th->th_ack - tp->snd_una - tp->t_segsz);
-	        return 1;
+		(void) tcp_output(tp);
+		tp->snd_cwnd = ocwnd;
+		if (SEQ_GT(onxt, tp->snd_nxt))
+			tp->snd_nxt = onxt;
+		/*
+		 * Partial window deflation.  Relies on fact that tp->snd_una
+		 * not updated yet.
+		 */
+		tp->snd_cwnd -= (th->th_ack - tp->snd_una - tp->t_segsz);
+		return 1;
 	}
 	return 0;
 }
@@ -3121,9 +3122,16 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 #ifdef INET
 	case AF_INET:
 		if (inp) {
+			struct in_ifaddr *ia;
 			inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
 			inp->inp_lport = ((struct sockaddr_in *)dst)->sin_port;
 			inp->inp_options = ip_srcroute();
+			INADDR_TO_IA(inp->inp_laddr, ia);
+			KASSERT(ia != NULL); 
+			KASSERT(inp->inp_ia == NULL);
+			inp->inp_ia = ia; 
+			LIST_INSERT_HEAD(&ia->ia_inpcbs, inp, inp_ialink);
+			IFAREF(&ia->ia_ifa);
 			in_pcbstate(inp, INP_BOUND);
 			if (inp->inp_options == NULL) {
 				inp->inp_options = sc->sc_ipopts;
