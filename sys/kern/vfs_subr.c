@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.201 2003/06/29 22:31:33 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.202 2003/07/30 12:09:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.201 2003/06/29 22:31:33 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.202 2003/07/30 12:09:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -191,6 +191,7 @@ static int vfs_hang_addrlist __P((struct mount *, struct netexport *,
 				  struct export_args *));
 static int vfs_free_netcred __P((struct radix_node *, void *));
 static void vfs_free_addrlist __P((struct netexport *));
+static struct vnode *getcleanvnode __P((struct proc *));
 
 #ifdef DEBUG
 void printlockedvnodes __P((void));
@@ -210,6 +211,80 @@ vntblinit()
 	 * Initialize the filesystem syncer.
 	 */
 	vn_initialize_syncerd();
+}
+
+int
+vfs_drainvnodes(long target, struct proc *p)
+{
+
+	simple_lock(&vnode_free_list_slock);
+	while (numvnodes > target) {
+		struct vnode *vp;
+
+		vp = getcleanvnode(p);
+		if (vp == NULL)
+			return EBUSY; /* give up */
+		pool_put(&vnode_pool, vp);
+		simple_lock(&vnode_free_list_slock);
+		numvnodes--;
+	}
+	simple_unlock(&vnode_free_list_slock);
+
+	return 0;
+}
+
+/*
+ * grab a vnode from freelist and clean it.
+ */
+struct vnode *
+getcleanvnode(p)
+	struct proc *p;
+{
+	struct vnode *vp;
+	struct freelst *listhd;
+
+	LOCK_ASSERT(simple_lock_held(&vnode_free_list_slock));
+	if ((vp = TAILQ_FIRST(listhd = &vnode_free_list)) == NULL)
+		vp = TAILQ_FIRST(listhd = &vnode_hold_list);
+	for (; vp != NULL; vp = TAILQ_NEXT(vp, v_freelist)) {
+		if (simple_lock_try(&vp->v_interlock)) {
+			if ((vp->v_flag & VLAYER) == 0) {
+				break;
+			}
+			if (VOP_ISLOCKED(vp) == 0)
+				break;
+			else
+				simple_unlock(&vp->v_interlock);
+		}
+	}
+
+	if (vp == NULLVP) {
+		simple_unlock(&vnode_free_list_slock);
+		return NULLVP;
+	}
+
+	if (vp->v_usecount)
+		panic("free vnode isn't, vp %p", vp);
+	TAILQ_REMOVE(listhd, vp, v_freelist);
+	/* see comment on why 0xdeadb is set at end of vgone (below) */
+	vp->v_freelist.tqe_prev = (struct vnode **)0xdeadb;
+	simple_unlock(&vnode_free_list_slock);
+	vp->v_lease = NULL;
+
+	if (vp->v_type != VBAD)
+		vgonel(vp, p);
+	else
+		simple_unlock(&vp->v_interlock);
+#ifdef DIAGNOSTIC
+	if (vp->v_data || vp->v_uobj.uo_npages ||
+	    TAILQ_FIRST(&vp->v_uobj.memq))
+		panic("cleaned vnode isn't, vp %p", vp);
+	if (vp->v_numoutput)
+		panic("clean vnode has pending I/O's, vp %p", vp);
+#endif
+	KASSERT((vp->v_flag & VONWORKLST) == 0);
+
+	return vp;
 }
 
 /*
@@ -434,7 +509,6 @@ getnewvnode(tag, mp, vops, vpp)
 	extern struct uvm_pagerops uvm_vnodeops;
 	struct uvm_object *uobj;
 	struct proc *p = curproc;	/* XXX */
-	struct freelst *listhd;
 	static int toggle;
 	struct vnode *vp;
 	int error = 0, tryalloc;
@@ -494,26 +568,13 @@ getnewvnode(tag, mp, vops, vpp)
 		TAILQ_INIT(&uobj->memq);
 		numvnodes++;
 	} else {
-		if ((vp = TAILQ_FIRST(listhd = &vnode_free_list)) == NULL)
-			vp = TAILQ_FIRST(listhd = &vnode_hold_list);
-		for (; vp != NULL; vp = TAILQ_NEXT(vp, v_freelist)) {
-			if (simple_lock_try(&vp->v_interlock)) {
-				if ((vp->v_flag & VLAYER) == 0) {
-					break;
-				}
-				if (VOP_ISLOCKED(vp) == 0)
-					break;
-				else
-					simple_unlock(&vp->v_interlock);
-			}
-		}
+		vp = getcleanvnode(p);
 		/*
 		 * Unless this is a bad time of the month, at most
 		 * the first NCPUS items on the free list are
 		 * locked, so this is close enough to being empty.
 		 */
 		if (vp == NULLVP) {
-			simple_unlock(&vnode_free_list_slock);
 			if (mp && error != EDEADLK)
 				vfs_unbusy(mp);
 			if (tryalloc) {
@@ -526,26 +587,6 @@ getnewvnode(tag, mp, vops, vpp)
 			*vpp = 0;
 			return (ENFILE);
 		}
-		if (vp->v_usecount)
-			panic("free vnode isn't, vp %p", vp);
-		TAILQ_REMOVE(listhd, vp, v_freelist);
-		/* see comment on why 0xdeadb is set at end of vgone (below) */
-		vp->v_freelist.tqe_prev = (struct vnode **)0xdeadb;
-		simple_unlock(&vnode_free_list_slock);
-		vp->v_lease = NULL;
-
-		if (vp->v_type != VBAD)
-			vgonel(vp, p);
-		else
-			simple_unlock(&vp->v_interlock);
-#ifdef DIAGNOSTIC
-		if (vp->v_data || vp->v_uobj.uo_npages ||
-		    TAILQ_FIRST(&vp->v_uobj.memq))
-			panic("cleaned vnode isn't, vp %p", vp);
-		if (vp->v_numoutput)
-			panic("clean vnode has pending I/O's, vp %p", vp);
-#endif
-		KASSERT((vp->v_flag & VONWORKLST) == 0);
 		vp->v_flag = 0;
 		vp->v_socket = NULL;
 #ifdef VERIFIED_EXEC
@@ -1756,31 +1797,37 @@ vgonel(vp, p)
 	}
 
 	/*
-	 * If it is on the freelist and not already at the head,
-	 * move it to the head of the list. The test of the back
-	 * pointer and the reference count of zero is because
-	 * it will be removed from the free list by getnewvnode,
-	 * but will not have its reference count incremented until
-	 * after calling vgone. If the reference count were
-	 * incremented first, vgone would (incorrectly) try to
-	 * close the previous instance of the underlying object.
+	 * The test of the back pointer and the reference count of
+	 * zero is because it will be removed from the free list by
+	 * getcleanvnode, but will not have its reference count
+	 * incremented until after calling vgone. If the reference
+	 * count were incremented first, vgone would (incorrectly)
+	 * try to close the previous instance of the underlying object.
 	 * So, the back pointer is explicitly set to `0xdeadb' in
 	 * getnewvnode after removing it from the freelist to ensure
 	 * that we do not try to move it here.
 	 */
 
+	vp->v_type = VBAD;
 	if (vp->v_usecount == 0) {
+		boolean_t dofree;
+
 		simple_lock(&vnode_free_list_slock);
 		if (vp->v_holdcnt > 0)
 			panic("vgonel: not clean, vp %p", vp);
-		if (vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb &&
-		    TAILQ_FIRST(&vnode_free_list) != vp) {
+		/*
+		 * if it isn't on the freelist, we're called by getcleanvnode
+		 * and vnode is being re-used.  otherwise, we'll free it.
+		 */
+		dofree = vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb;
+		if (dofree) {
 			TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
-			TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
+			numvnodes--;
 		}
 		simple_unlock(&vnode_free_list_slock);
+		if (dofree)
+			pool_put(&vnode_pool, vp);
 	}
-	vp->v_type = VBAD;
 }
 
 /*
