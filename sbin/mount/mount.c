@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount.c	8.19 (Berkeley) 4/19/94";*/
-static char *rcsid = "$Id: mount.c,v 1.13 1994/08/29 02:38:00 mycroft Exp $";
+static char *rcsid = "$Id: mount.c,v 1.14 1994/12/18 16:03:02 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -90,7 +90,6 @@ static struct opt {
 	{ MNT_RDONLY,		"read-only" },
 	{ MNT_SYNCHRONOUS,	"synchronous" },
 	{ MNT_UNION,		"union" },
-	{ MNT_USER,		"user mount" },
 	{ NULL }
 };
 
