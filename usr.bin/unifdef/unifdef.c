@@ -1,4 +1,4 @@
-/*	$NetBSD: unifdef.c,v 1.5 1997/10/20 02:23:14 lukem Exp $	*/
+/*	$NetBSD: unifdef.c,v 1.6 1998/10/08 01:31:59 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unifdef.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unifdef.c,v 1.5 1997/10/20 02:23:14 lukem Exp $");
+__RCSID("$NetBSD: unifdef.c,v 1.6 1998/10/08 01:31:59 wsanchez Exp $");
 #endif				/* not lint */
 
 /*
@@ -71,6 +71,8 @@ FILE   *input;
 #define YES 1
 #define NO  0
 #endif				/* YES */
+#define C_COMMENT   1
+#define CXX_COMMENT 2
 typedef int Bool;
 
 char   *progname BSS;
@@ -432,7 +434,7 @@ eol:
 					if (inquote == QUOTE_DOUBLE)
 						cp = skipquote(cp, QUOTE_DOUBLE);
 					else
-						if (*cp == '/' && cp[1] == '*')
+						if (*cp == '/' && (cp[1] == '*' || cp[1] == '/'))
 							cp = skipcomment(cp);
 						else
 							if (*cp == '\'')
@@ -460,24 +462,40 @@ skipcomment(cp)
 			cp++;
 		if (text)
 			return cp;
-		if (cp[0] != '/'
-		    || cp[1] != '*'
-		    )
+		if (cp[0] != '/')
 			return cp;
+
+		if (cp[1] == '*') {
+			if (!incomment) {
+				incomment = C_COMMENT;
+				stqcline = linenum;
+			}
+		} else if (cp[1] == '/') {
+			if (!incomment) {
+				incomment = CXX_COMMENT;
+				stqcline = linenum;
+			}
+		} else
+			return cp;
+
 		cp += 2;
-		if (!incomment) {
-			incomment = YES;
-			stqcline = linenum;
-		}
 inside:
-		for (;;) {
-			for (; *cp != '*'; cp++)
+		if (incomment == C_COMMENT) {
+			for (;;) {
+				for (; *cp != '*'; cp++)
+					if (*cp == '\0')
+						return cp;
+				if (*++cp == '/') {
+					incomment = NO;
+					break;
+				}
+			}
+		}
+		else if (incomment == CXX_COMMENT) {
+			for (; *cp != '\n'; cp++)
 				if (*cp == '\0')
 					return cp;
-			if (*++cp == '/') {
-				incomment = NO;
-				break;
-			}
+			incomment = NO;
 		}
 	}
 }
