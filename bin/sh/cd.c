@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.14 1995/11/19 23:27:37 christos Exp $	*/
+/*	$NetBSD: cd.c,v 1.15 1996/03/01 01:58:58 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.14 1995/11/19 23:27:37 christos Exp $";
+static char rcsid[] = "$NetBSD: cd.c,v 1.15 1996/03/01 01:58:58 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,20 +118,16 @@ cdcmd(argc, argv)
 
 
 /*
- * Actually do the chdir.  If the name refers to symbolic links, we
- * compute the actual directory name before doing the cd.  In an
- * interactive shell, print the directory name if "print" is nonzero
- * or if the name refers to a symbolic link.  We also print the name
- * if "/u/logname" was expanded in it, since this is similar to a
- * symbolic link.  (The check for this breaks if the user gives the
- * cd command some additional, unused arguments.)
+ * Actually do the chdir.  In an interactive shell, print the
+ * directory name if "print" is nonzero.
  */
 
-#if SYMLINKS == 0
 STATIC int
 docd(dest, print)
 	char *dest;
-	{
+{
+
+	TRACE(("docd(\"%s\", %d) called\n", dest, print));
 	INTOFF;
 	if (chdir(dest) < 0) {
 		INTON;
@@ -143,99 +139,6 @@ docd(dest, print)
 		out1fmt("%s\n", stackblock());
 	return 0;
 }
-
-#else
-
-
-
-STATIC int
-docd(dest, print)
-	char *dest;
-	int print;
-{
-	register char *p;
-	register char *q;
-	char *symlink;
-	char *component;
-	struct stat statb;
-	int first;
-	int i;
-
-	TRACE(("docd(\"%s\", %d) called\n", dest, print));
-
-top:
-	cdcomppath = dest;
-	STARTSTACKSTR(p);
-	if (*dest == '/') {
-		STPUTC('/', p);
-		cdcomppath++;
-	}
-	first = 1;
-	while ((q = getcomponent()) != NULL) {
-		if (q[0] == '\0' || (q[0] == '.' && q[1] == '\0'))
-			continue;
-		if (! first)
-			STPUTC('/', p);
-		first = 0;
-		component = q;
-		while (*q)
-			STPUTC(*q++, p);
-		if (equal(component, ".."))
-			continue;
-		STACKSTRNUL(p);
-		if (lstat(stackblock(), &statb) < 0)
-			error("lstat %s failed", stackblock());
-		if (!S_ISLNK(statb.st_mode))
-			continue;
-
-		/* Hit a symbolic link.  We have to start all over again. */
-		print = 1;
-		STPUTC('\0', p);
-		symlink = grabstackstr(p);
-		i = (int)statb.st_size + 2;		/* 2 for '/' and '\0' */
-		if (cdcomppath != NULL)
-			i += strlen(cdcomppath);
-		p = stalloc(i);
-		if (readlink(symlink, p, (int)statb.st_size) < 0) {
-			error("readlink %s failed", stackblock());
-		}
-		if (cdcomppath != NULL) {
-			p[(int)statb.st_size] = '/';
-			scopy(cdcomppath, p + (int)statb.st_size + 1);
-		} else {
-			p[(int)statb.st_size] = '\0';
-		}
-		if (p[0] != '/') {	/* relative path name */
-			char *r;
-			q = r = symlink;
-			while (*q) {
-				if (*q++ == '/')
-					r = q;
-			}
-			*r = '\0';
-			dest = stalloc(strlen(symlink) + strlen(p) + 1);
-			scopy(symlink, dest);
-			strcat(dest, p);
-		} else {
-			dest = p;
-		}
-		goto top;
-	}
-	STPUTC('\0', p);
-	p = grabstackstr(p);
-	INTOFF;
-	if (chdir(p) < 0) {
-		INTON;
-		return -1;
-	}
-	updatepwd(p);
-	INTON;
-	if (print && iflag)
-		out1fmt("%s\n", p);
-	return 0;
-}
-#endif /* SYMLINKS */
-
 
 
 /*
@@ -356,6 +259,7 @@ getpwd()
 #if defined(__NetBSD__) || defined(__svr4__)
 	if (getcwd(buf, sizeof(buf)) == NULL)
 		error("getcwd() failed");
+	curdir = savestr(buf);
 #else
 	{
 		char *p;
@@ -395,7 +299,7 @@ getpwd()
 			error("pwd command failed");
 		p[-1] = '\0';
 	}
-#endif
 	curdir = savestr(buf);
 	INTON;
+#endif
 }
