@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.48 2000/06/03 14:12:54 thorpej Exp $ */
+/* $NetBSD: cpu.c,v 1.49 2000/06/03 14:13:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2000/06/03 14:12:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.49 2000/06/03 14:13:42 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -158,7 +158,7 @@ struct cputable_struct {
 	{ PCS_PROC_EV6,		"21264",	ev6minor	},
 	{ PCS_PROC_PCA56,	"PCA56",	pca56minor	},
 	{ PCS_PROC_PCA57,	"PCA57",	NULL		},
-	{ PCS_PROC_EV67,	"EV67",		NULL		},
+	{ PCS_PROC_EV67,	"21264A",	NULL		},
 };
 
 /*
