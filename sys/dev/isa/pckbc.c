@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.4 1998/04/28 19:13:24 thorpej Exp $ */
+/* $NetBSD: pckbc.c,v 1.5 1998/05/03 10:02:11 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -641,7 +641,7 @@ pckbc_poll_cmd1(t, slot, cmd)
 			if (cmd->retries++ < 5)
 				continue;
 			else {
-#ifdef DIAGNOSTIC
+#ifdef PCKBCDEBUG
 				printf("pckbc: cmd failed\n");
 #endif
 				cmd->status = EIO;
@@ -649,7 +649,7 @@ pckbc_poll_cmd1(t, slot, cmd)
 			}
 		}
 		if (c == -1) {
-#ifdef DIAGNOSTIC
+#ifdef PCKBCDEBUG
 			printf("pckbc_cmd: timeout\n");
 #endif
 			cmd->status = EIO;
@@ -672,7 +672,7 @@ pckbc_poll_cmd1(t, slot, cmd)
 				break;
 		}
 		if (c == -1) {
-#ifdef DIAGNOSTIC
+#ifdef PCKBCDEBUG
 			printf("pckbc_cmd: no data\n");
 #endif
 			cmd->status = ETIMEDOUT;
