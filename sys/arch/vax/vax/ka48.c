@@ -71,7 +71,6 @@ extern  short *clk_page;
  */
 struct	cpu_dep ka48_calls = {
 	ka48_steal_pages,
-	generic_clock,
 	ka48_mchk,
 	ka48_memerr, 
 	ka48_conf,

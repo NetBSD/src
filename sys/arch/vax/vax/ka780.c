@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.12 1999/02/02 18:37:21 ragge Exp $	*/
+/*	$NetBSD: ka780.c,v 1.13 1999/05/01 16:13:44 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -67,7 +67,6 @@ static	int	ka780_mchk __P((caddr_t));
  */
 struct	cpu_dep ka780_calls = {
 	0,
-	generic_clock,
 	ka780_mchk,
 	ka780_memerr,
 	ka780_conf,

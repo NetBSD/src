@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.7 1999/04/14 23:14:46 ragge Exp $ */
+/*	$NetBSD: ka46.c,v 1.8 1999/05/01 16:13:44 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -70,7 +70,6 @@ extern  short *clk_page;
  */
 struct	cpu_dep ka46_calls = {
 	ka46_steal_pages,
-	no_nicr_clock,
 	ka46_mchk,
 	ka46_memerr, 
 	ka46_conf,

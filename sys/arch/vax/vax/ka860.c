@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.13 1999/02/02 18:37:21 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.14 1999/05/01 16:13:45 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -64,7 +64,6 @@ void	crlattach __P((void));
 
 struct	cpu_dep	ka860_calls = {
 	0,
-	generic_clock,
 	ka86_mchk,
 	ka86_memerr,
 	ka86_conf,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.18 1999/04/14 23:14:46 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.19 1999/05/01 16:13:44 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -71,7 +71,6 @@ extern  short *clk_page;
  */
 struct	cpu_dep ka410_calls = {
 	0,
-	no_nicr_clock,
 	ka410_mchk,
 	ka410_memerr, 
 	ka410_conf,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.27 1999/02/02 18:37:21 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.28 1999/05/01 16:13:44 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -64,7 +64,6 @@ void	ka750_clrf __P((void));
 
 struct	cpu_dep	ka750_calls = {
 	0,
-	generic_clock,
 	ka750_mchk,
 	ka750_memerr,
 	ka750_conf,

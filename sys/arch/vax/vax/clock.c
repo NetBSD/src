@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27 1999/03/26 22:04:07 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.28 1999/05/01 16:13:43 ragge Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -153,29 +153,17 @@ delay(i)
 	asm ("1: sobgtr %0, 1b" : : "r" (dep_call->cpu_vups * i));
 }
 
-#if VAX750 || VAX780 || VAX8200 || VAX8600 || VAX8800 || VAX48 || VAX49
 /*
- * On most VAXen there are a microsecond clock that should
- * be used for interval interrupts. Have a generic version here.
+ * On all VAXen there are a microsecond clock that should
+ * be used for interval interrupts. Some CPUs don't use the ICR interval
+ * register but it doesn't hurt to load it anyway.
  */
 void
-generic_clock()
+cpu_initclocks()
 {
 	mtpr(-10000, PR_NICR); /* Load in count register */
 	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
 }
-#endif
-
-#if VAX650 || VAX630 || VAX410 || VAX43 || VAX46
-/*
- * Most microvaxen don't have a interval count register.
- */
-void
-no_nicr_clock()
-{
-	mtpr(0x800000d1, PR_ICCS); /* Start clock and enable interrupt */
-}
-#endif
 
 /*
  * There are two types of real-time battery-backed up clocks on
