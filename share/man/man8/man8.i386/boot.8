@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.12 2000/05/13 17:11:35 jhawk Exp $
+.\"	$NetBSD: boot.8,v 1.12.4.1 2000/08/13 09:21:33 jdolecek Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -99,7 +99,7 @@ input of these commands:
 .It Xo Ic boot
 .Op Va device : Ns
 .Op Va filename
-.Op Fl adrs
+.Op Fl ads
 .Xc
 The default
 .Va device
@@ -160,9 +160,6 @@ dump device.
 Bring the system up in debug mode.  Here it waits for a kernel
 debugger connect; see
 .Xr ddb 4 .
-.It Fl r
-Instructs the system to use the compiled in value for the root
-device, not the device the system image was loaded from.
 .It Fl s
 Bring the system up in single-user mode.
 .El
@@ -221,9 +218,9 @@ boot block (written by installboot).
 .Xr dosboot 8 ,
 .Xr halt 8 ,
 .Xr installboot 8 ,
-.Xr mbr 8
+.Xr mbr 8 ,
 .Xr reboot 8 ,
-.Xr shutdown 8 ,
+.Xr shutdown 8
 .Sh BUGS
 Hard disks are always accessed by BIOS functions. Unit numbers are
 BIOS device numbers which might differ from numbering in the
