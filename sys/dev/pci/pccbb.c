@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.16 2000/01/23 04:02:19 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.17 2000/01/24 15:51:59 joda Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -308,8 +308,6 @@ struct yenta_chipinfo {
   {MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420), "TI1420", CB_TI12XX,
      PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
   {MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), "TI1450", CB_TI12XX,
-     PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
-  {MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030), "TI2030", CB_UNKNOWN,
      PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 
   /* Ricoh chips */
