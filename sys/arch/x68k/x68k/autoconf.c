@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 1999/03/16 16:30:23 minoura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 1999/03/30 04:25:36 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -308,13 +308,8 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "intio"  , simple_devprint);
 	config_found(dp, "grfbus" , simple_devprint);
 	config_found(dp, "par"    , simple_devprint);
-	config_found(dp, "fdc"    , simple_devprint);
-	config_found(dp, "ed"     , simple_devprint);
-	config_found(dp, "zs"     , simple_devprint);
 	config_found(dp, "com"    , simple_devprint);
 	config_found(dp, "com"    , simple_devprint);
-	config_found(dp, "spc"    , simple_devprint);
-	config_found(dp, "mha"    , simple_devprint);
-	config_found(dp, "adpcm"  , simple_devprint);
+/*	config_found(dp, "adpcm"  , simple_devprint);	*/
 	config_found(dp, "*"      , simple_devprint);
 }
