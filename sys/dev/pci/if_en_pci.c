@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_pci.c,v 1.7 1997/03/20 21:30:46 chuck Exp $	*/
+/*	$NetBSD: if_en_pci.c,v 1.8 1997/04/13 19:47:07 cgd Exp $	*/
 
 /*
  *
@@ -199,14 +199,12 @@ void *aux;
   struct en_softc *sc = (void *)self;
   struct en_pci_softc *scp = (void *)self;
   struct pci_attach_args *pa = aux;
-  bus_addr_t membase;
   pci_intr_handle_t ih;
   const char *intrstr;
   int retval;
 
   printf("\n");
 
-  sc->en_memt = pa->pa_memt;
   sc->is_adaptec = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADP) ? 1 : 0;
   scp->en_pc = pa->pa_pc;
 
@@ -235,17 +233,14 @@ void *aux;
    * memory map
    */
 
-  retval = pci_mem_find(scp->en_pc, pa->pa_tag, PCI_CBMA,
-				&membase, &sc->en_obmemsz, NULL);
-  if (retval == 0)
-    retval = bus_space_map(sc->en_memt, membase, sc->en_obmemsz, 0,
-      &sc->en_base);
- 
+  retval = pci_map_register(pa, PCI_CBMA,
+			   PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+			   &sc->en_memt, &sc->en_base, NULL, &sc->en_obmemsz);
   if (retval) {
     printf("%s: couldn't map memory\n", sc->sc_dev.dv_xname);
     return;
   }
-
+	
   /*
    * set up pci bridge
    */

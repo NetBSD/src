@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.16 1997/03/17 03:19:10 thorpej Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.17 1997/04/13 19:47:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -162,10 +162,8 @@ le_pci_attach(parent, self, aux)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
-	bus_addr_t iobase;
-	bus_size_t iosize;
+	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	bus_space_tag_t iot = pa->pa_iot;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t csr;
 	int i;
@@ -184,11 +182,8 @@ le_pci_attach(parent, self, aux)
 
 	printf(": %s\n", model);
 
-	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
-		printf("%s: can't find I/O base\n", sc->sc_dev.dv_xname);
-		return;
-	}
-	if (bus_space_map(iot, iobase, iosize, 0, &ioh)) {
+	if (pci_map_register(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, NULL)) {
 		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
 		return;
 	}
