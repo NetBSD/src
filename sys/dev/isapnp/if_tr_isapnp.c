@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isapnp.c,v 1.9.6.1 2005/02/04 11:46:28 skrll Exp $	*/
+/*	$NetBSD: if_tr_isapnp.c,v 1.9.6.2 2005/03/04 16:43:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -19,7 +19,7 @@
  *    must display the following acknowledgement:
  *        This product includes software developed by The NetBSD
  *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.9.6.1 2005/02/04 11:46:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.9.6.2 2005/03/04 16:43:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/mbuf.h> 
-#include <sys/socket.h> 
+#include <sys/mbuf.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
@@ -132,7 +132,7 @@ tr_isapnp_attach(parent, self, aux)
 
 	sc->sc_aca = TR_ACA_OFFSET;
 	sc->sc_maddr = ipa->ipa_mem[sramidx].base;
-	/* 
+	/*
 	 * Reset the card.
 	 */
 	if (tr_reset(sc))

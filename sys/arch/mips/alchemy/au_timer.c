@@ -1,4 +1,4 @@
-/* $NetBSD: au_timer.c,v 1.1.12.3 2004/09/21 13:18:30 skrll Exp $ */
+/* $NetBSD: au_timer.c,v 1.1.12.4 2005/03/04 16:38:48 skrll Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.1.12.3 2004/09/21 13:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.1.12.4 2005/03/04 16:38:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,7 +75,7 @@ au_cal_timers(bus_space_tag_t st, bus_space_handle_t sh)
 
 	/* Enable the programmable counter 1. */
 	ctl = bus_space_read_4(st, sh, PC_COUNTER_CONTROL);
-	if ((ctl & (CC_EO | CC_EN1)) != (CC_EO | CC_EN1));
+	if ((ctl & (CC_EO | CC_EN1)) != (CC_EO | CC_EN1))
 		SET_PC_REG(PC_COUNTER_CONTROL, 0, ctl | CC_EO | CC_EN1);
 
 	/* Initialize for 16Hz. */
@@ -104,7 +104,7 @@ au_cal_timers(bus_space_tag_t st, bus_space_handle_t sh)
 	}
 
 	/* Disable the counter (if it wasn't enabled already). */
-	if ((ctl & (CC_EO | CC_EN1)) != (CC_EO | CC_EN1));
+	if ((ctl & (CC_EO | CC_EN1)) != (CC_EO | CC_EN1))
 		SET_PC_REG(PC_COUNTER_CONTROL, 0, ctl);
 
 	/* Compute the number of cycles per second. */

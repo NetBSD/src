@@ -1,4 +1,4 @@
-/* $NetBSD: bt485.c,v 1.9.6.4 2005/02/04 11:45:24 skrll Exp $ */
+/* $NetBSD: bt485.c,v 1.9.6.5 2005/03/04 16:41:27 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,11 +28,11 @@
  */
 
  /* This code was derived from and originally located in sys/dev/pci/
-  *	 NetBSD: tga_bt485.c,v 1.4 1999/03/24 05:51:21 mrg Exp 
+  *	 NetBSD: tga_bt485.c,v 1.4 1999/03/24 05:51:21 mrg Exp
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.9.6.4 2005/02/04 11:45:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt485.c,v 1.9.6.5 2005/03/04 16:41:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ struct bt485data {
 					 * around, and is probably
 					 * struct tga_devconfig *
 					 */
-	
+
 	int             (*ramdac_sched_update)(void *, void (*)(void *));
 	void            (*ramdac_wr)(void *, u_int, u_int8_t);
 	u_int8_t        (*ramdac_rd)(void *, u_int);
@@ -549,7 +549,7 @@ bt485_update(vp)
 		for (i = 0; i < count; i++)
 			data->ramdac_wr(data->cookie, BT485_REG_CURSOR_RAM,
 			    data->curimage[i]);
-		
+
 		/*
 		 * Write the cursor mask data:
 		 *	set addr[9:8] to 2,

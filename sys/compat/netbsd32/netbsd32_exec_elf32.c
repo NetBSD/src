@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.19.2.5 2004/09/21 13:25:53 skrll Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.19.2.6 2005/03/04 16:40:20 skrll Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.19.2.5 2004/09/21 13:25:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.19.2.6 2005/03/04 16:40:20 skrll Exp $");
 
 #define	ELFSIZE		32
 
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.19.2.5 2004/09/21 13:25:53
 #include <machine/frame.h>
 #include <machine/netbsd32_machdep.h>
 
-int netbsd32_copyinargs(struct exec_package *, struct ps_strings *, 
+int netbsd32_copyinargs(struct exec_package *, struct ps_strings *,
 			void *, size_t, const void *, const void *);
 int ELFNAME2(netbsd32,probe_noteless)(struct lwp *, struct exec_package *epp,
 				      void *eh, char *itp, vaddr_t *pos);

@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayreg.h,v 1.10.2.3 2004/09/21 13:28:04 skrll Exp $	*/
+/*	$NetBSD: midwayreg.h,v 1.10.2.4 2005/03/04 16:41:30 skrll Exp $	*/
 
 /*
  * m i d w a y r e g . h
@@ -38,7 +38,7 @@ typedef caddr_t bus_addr_t;
  *
  * in order to have a portable driver, the netbsd guys will not let us
  * use structs.   we have a bus_space_handle_t which is the en_base address.
- * everything else is an offset from that base.   all card data must be 
+ * everything else is an offset from that base.   all card data must be
  * accessed with bus_space_read_4()/bus_space_write_4():
  *
  * rv = bus_space_read_4(sc->en_memt, sc->en_base, BYTE_OFFSET);
@@ -153,7 +153,7 @@ typedef caddr_t bus_addr_t;
  * obmem items
  */
 
-/* 
+/*
  * vci table in obmem (offset from MID_VCTOFF)
  */
 
@@ -168,10 +168,10 @@ typedef caddr_t bus_addr_t;
 #define MIDV_LOCTOPSHFT	8		/* shift to get top 11 bits of 19 */
 #define MIDV_LOCSHIFT	18
 #define MIDV_LOCMASK	0x7ff
-#define MIDV_LOC(X)	(((X) >> MIDV_LOCSHIFT) & MIDV_LOCMASK) 
+#define MIDV_LOC(X)	(((X) >> MIDV_LOCSHIFT) & MIDV_LOCMASK)
 					/* 11 most sig bits of addr */
 #define MIDV_SZSHIFT	15
-#define MIDV_SZ(X)	(((X) >> MIDV_SZSHIFT) & 7) 
+#define MIDV_SZ(X)	(((X) >> MIDV_SZSHIFT) & 7)
 					/* size encoded the usual way */
 #define MIDV_INSERVICE	0x1		/* in service list */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.5.2.3 2004/09/21 13:27:50 skrll Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.5.2.4 2005/03/04 16:41:25 skrll Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.5.2.3 2004/09/21 13:27:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.5.2.4 2005/03/04 16:41:25 skrll Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -327,7 +327,7 @@ ahd_set_active_fifo(struct ahd_softc *ahd)
 void
 ahd_restart(struct ahd_softc *ahd)
 {
-  
+
 	ahd_pause(ahd);
 
 	ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
@@ -501,7 +501,7 @@ ahd_flush_qoutfifo(struct ahd_softc *ahd)
 	while (!SCBID_IS_NULL(scbid)) {
 		uint8_t *hscb_ptr;
 		u_int	 i;
-		
+
 		ahd_set_scbptr(ahd, scbid);
 		next_scbid = ahd_inw_scbram(ahd, SCB_NEXT_COMPLETE);
 		scb = ahd_lookup_scb(ahd, scbid);
@@ -619,7 +619,7 @@ ahd_run_data_fifo(struct ahd_softc *ahd, struct scb *scb)
 			 */
 			ahd_outb(ahd, SCB_FIFO_USE_COUNT,
 				 ahd_inb_scbram(ahd, SCB_FIFO_USE_COUNT) + 1);
-			
+
 			/*
 			 * Install a "fake" handler for this FIFO.
 			 */
@@ -1115,7 +1115,7 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 	{
 		struct	scb *scb;
 		u_int	scb_index;
-		
+
 #ifdef AHD_DEBUG
 		if ((ahd_debug & AHD_SHOW_RECOVERY) != 0) {
 			printf("%s: CFG4OVERRUN mode = %x\n", ahd_name(ahd),
@@ -1219,7 +1219,7 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 					    MSG_TYPE_TARGET_MSGOUT;
 					ahd->msgin_index = 0;
 				}
-				else 
+				else
 					ahd_setup_target_msgin(ahd,
 							       &devinfo,
 							       scb);
@@ -1460,9 +1460,9 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 				;
 			ahd_outb(ahd, SCB_TASK_MANAGEMENT, 0);
 			ahd_search_qinfifo(ahd, SCB_GET_TARGET(ahd, scb),
-					   SCB_GET_CHANNEL(ahd, scb),  
+					   SCB_GET_CHANNEL(ahd, scb),
 					   SCB_GET_LUN(scb), SCB_GET_TAG(scb),
-					   ROLE_INITIATOR, /*status*/0,   
+					   ROLE_INITIATOR, /*status*/0,
 					   SEARCH_REMOVE);
 		}
 		break;
@@ -1782,7 +1782,7 @@ ahd_handle_transmission_error(struct ahd_softc *ahd)
 	perrdiag = ahd_inb(ahd, PERRDIAG);
 	msg_out = MSG_INITIATOR_DET_ERR;
 	ahd_outb(ahd, CLRSINT1, CLRSCSIPERR);
-	
+
 	/*
 	 * Try to find the SCB associated with this error.
 	 */
@@ -1906,13 +1906,13 @@ ahd_handle_transmission_error(struct ahd_softc *ahd)
 				    ahd_lookup_phase_entry(curphase)->phasemsg);
 			ahd_inb(ahd, SCSIDAT);
 		}
-	
+
 		if (curphase == P_MESGIN)
 			msg_out = MSG_PARITY_ERROR;
 	}
 
 	/*
-	 * We've set the hardware to assert ATN if we 
+	 * We've set the hardware to assert ATN if we
 	 * get a parity error on "in" phases, so all we
 	 * need to do is stuff the message buffer with
 	 * the appropriate message.  "In" phases have set
@@ -2503,7 +2503,7 @@ ahd_clear_critical_section(struct ahd_softc *ahd)
 
 		cs = ahd->critical_sections;
 		for (i = 0; i < ahd->num_critical_sections; i++, cs++) {
-			
+
 			if (cs->begin < seqaddr && cs->end >= seqaddr)
 				break;
 		}
@@ -2787,7 +2787,7 @@ ahd_devlimited_syncrate(struct ahd_softc *ahd,
 	 */
 	if (role == ROLE_TARGET)
 		transinfo = &tinfo->user;
-	else 
+	else
 		transinfo = &tinfo->goal;
 	*ppr_options &= (transinfo->ppr_options|MSG_EXT_PPR_PCOMP_EN);
 	if (transinfo->width == MSG_EXT_WDTR_BUS_8_BIT) {
@@ -2818,7 +2818,7 @@ ahd_find_syncrate(struct ahd_softc *ahd, u_int *period,
 	if ((*ppr_options & MSG_EXT_PPR_DT_REQ) != 0
 	 && *period > AHD_SYNCRATE_MIN_DT)
 		*ppr_options &= ~MSG_EXT_PPR_DT_REQ;
-		
+
 	if (*period > AHD_SYNCRATE_MIN)
 		*period = 0;
 
@@ -3181,7 +3181,7 @@ ahd_update_neg_table(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 	ahd_outb(ahd, NEGOADDR, devinfo->target);
 	period = tinfo->period;
 	offset = tinfo->offset;
-	memcpy(iocell_opts, ahd->iocell_opts, sizeof(ahd->iocell_opts)); 
+	memcpy(iocell_opts, ahd->iocell_opts, sizeof(ahd->iocell_opts));
 	ppr_opts = tinfo->ppr_options & (MSG_EXT_PPR_QAS_REQ|MSG_EXT_PPR_DT_REQ
 					|MSG_EXT_PPR_IU_REQ|MSG_EXT_PPR_RTI);
 	con_opts = 0;
@@ -3769,7 +3769,7 @@ ahd_clear_msg_state(struct ahd_softc *ahd)
  */
 static void
 ahd_handle_message_phase(struct ahd_softc *ahd)
-{ 
+{
 	struct	ahd_devinfo devinfo;
 	u_int	bus_phase;
 	int	end_session;
@@ -3941,7 +3941,7 @@ reswitch:
 #endif
 				ahd_assert_atn(ahd);
 			}
-		} else 
+		} else
 			ahd->msgin_index++;
 
 		if (message_done == MSGLOOP_TERMINATED) {
@@ -4044,7 +4044,7 @@ reswitch:
 			 */
 			return;
 		}
-		
+
 		ahd->msgin_index++;
 
 		/*
@@ -4212,7 +4212,7 @@ ahd_parse_msg(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 			u_int	 ppr_options;
 			u_int	 offset;
 			u_int	 saved_offset;
-			
+
 			if (ahd->msgin_buf[1] != MSG_EXT_SDTR_LEN) {
 				reject = TRUE;
 				break;
@@ -4910,7 +4910,7 @@ ahd_reinitialize_dataptrs(struct ahd_softc *ahd)
 
 	AHD_ASSERT_MODES(ahd, AHD_MODE_DFF0_MSK|AHD_MODE_DFF1_MSK,
 			 AHD_MODE_DFF0_MSK|AHD_MODE_DFF1_MSK);
-			 
+
 	scb_index = ahd_get_scbptr(ahd);
 	scb = ahd_lookup_scb(ahd, scb_index);
 
@@ -5043,7 +5043,7 @@ ahd_handle_devreset(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 
 	ahd_send_async(ahd, devinfo->channel, devinfo->target,
 		       lun, AC_SENT_BDR, NULL);
-	
+
 	if (message != NULL
 	 && (verbose_level <= bootverbose))
 		printf("%s: %s on %c:%d. %d SCBs aborted\n", ahd_name(ahd),
@@ -5056,11 +5056,11 @@ ahd_setup_target_msgin(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 		       struct scb *scb)
 {
 
-	/*              
+	/*
 	 * To facilitate adding multiple messages together,
 	 * each routine should increment the index and len
 	 * variables instead of setting them explicitly.
-	 */             
+	 */
 	ahd->msgout_index = 0;
 	ahd->msgout_len = 0;
 
@@ -5137,7 +5137,7 @@ ahd_softc_init(struct ahd_softc *ahd)
 {
 
 	ahd->unpause = 0;
-	ahd->pause = PAUSE; 
+	ahd->pause = PAUSE;
 	return (0);
 }
 
@@ -5385,7 +5385,7 @@ static void
 ahd_initialize_hscbs(struct ahd_softc *ahd)
 {
 	int i;
-	
+
 	for (i = 0; i < ahd->scb_data.maxhscbs; i++) {
 		ahd_set_scbptr(ahd, i);
 
@@ -5443,7 +5443,7 @@ ahd_init_scbdata(struct ahd_softc *ahd)
 	/*
 	 * Note that we were successfull
 	 */
-	return (0); 
+	return (0);
 
 error_exit:
 
@@ -5688,7 +5688,7 @@ found:
  */
 void
 ahd_free_scb(struct ahd_softc *ahd, struct scb *scb)
-{       
+{
 
 	/* Clean up for the next user */
 	scb->flags = SCB_FLAG_NONE;
@@ -5778,10 +5778,10 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		memset(hscb_map, 0, sizeof(*hscb_map));
 
 		/* Allocate the next batch of hardware SCBs */
-		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags, 
+		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags,
 				     &hscb_map->dmamap, (caddr_t *)&hscb_map->vaddr,
 				     &hscb_map->physaddr, &hscb_map->dmasegs,
-				     &hscb_map->nseg, ahd_name(ahd), 
+				     &hscb_map->nseg, ahd_name(ahd),
 				     "hardware SCB structures") < 0) {
 			free(hscb_map, M_DEVBUF);
 			return;
@@ -5813,10 +5813,10 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		bzero(sg_map, sizeof(*sg_map));
 
 		/* Allocate the next batch of S/G lists */
-		if (ahd_createdmamem(ahd->parent_dmat, ahd_sglist_allocsize(ahd), ahd->sc_dmaflags, 
+		if (ahd_createdmamem(ahd->parent_dmat, ahd_sglist_allocsize(ahd), ahd->sc_dmaflags,
 				     &sg_map->dmamap, (caddr_t *)&sg_map->vaddr,
 				     &sg_map->physaddr, &sg_map->dmasegs,
-				     &sg_map->nseg, ahd_name(ahd), 
+				     &sg_map->nseg, ahd_name(ahd),
 				     "SG data structures") < 0) {
 			free(sg_map, M_DEVBUF);
 			return;
@@ -5853,10 +5853,10 @@ ahd_alloc_scbs(struct ahd_softc *ahd)
 		bzero(sense_map, sizeof(*sense_map));
 
 		/* Allocate the next batch of sense buffers */
-		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags, 
+		if (ahd_createdmamem(ahd->parent_dmat, PAGE_SIZE, ahd->sc_dmaflags,
 				     &sense_map->dmamap, (caddr_t *)&sense_map->vaddr,
 				     &sense_map->physaddr, &sense_map->dmasegs,
-				     &sense_map->nseg, ahd_name(ahd), 
+				     &sense_map->nseg, ahd_name(ahd),
 				     "Sense Data structures") < 0) {
 			free(sense_map, M_DEVBUF);
 			return;
@@ -5982,7 +5982,7 @@ ahd_controller_info(struct ahd_softc *ahd, char *buf, size_t l)
 static const char *channel_strings[] = {
 	"Primary Low",
 	"Primary High",
-	"Secondary Low", 
+	"Secondary Low",
 	"Secondary High"
 };
 
@@ -6007,7 +6007,7 @@ ahd_init(struct ahd_softc *ahd)
 	u_int		 warn_user;
 	uint8_t		 current_sensing;
 	uint8_t		 fstat;
-	
+
 	AHD_ASSERT_MODES(ahd, AHD_MODE_SCSI_MSK, AHD_MODE_SCSI_MSK);
 
 	ahd->stack_size = ahd_probe_stack_size(ahd);
@@ -6234,7 +6234,7 @@ ahd_chip_init(struct ahd_softc *ahd)
 	} else {
 		sxfrctl1 |= ahd->seltime;
 	}
-		
+
 	ahd_outb(ahd, SXFRCTL0, DFON);
 	ahd_outb(ahd, SXFRCTL1, sxfrctl1|ahd->seltime|ENSTIMER|ACTNEGEN);
 	ahd_outb(ahd, SIMODE1, ENSELTIMO|ENSCSIRST|ENSCSIPERR);
@@ -6490,7 +6490,7 @@ ahd_chip_init(struct ahd_softc *ahd)
 	ahd_outb(ahd, CMDSIZE_TABLE + 5, 11);
 	ahd_outb(ahd, CMDSIZE_TABLE + 6, 0);
 	ahd_outb(ahd, CMDSIZE_TABLE + 7, 0);
-		
+
 	/* Tell the sequencer of our initial queue positions */
 	ahd_set_modes(ahd, AHD_MODE_CCHAN, AHD_MODE_CCHAN);
 	ahd_outb(ahd, QOFF_CTLSTA, SCB_QSIZE_512);
@@ -6937,7 +6937,7 @@ ahd_find_busy_tcl(struct ahd_softc *ahd, u_int tcl)
 	u_int scbid;
 	u_int scb_offset;
 	u_int saved_scbptr;
-		
+
 	scb_offset = ahd_index_busy_tcl(ahd, &saved_scbptr, tcl);
 	scbid = ahd_inw_scbram(ahd, scb_offset);
 	ahd_set_scbptr(ahd, saved_scbptr);
@@ -6949,7 +6949,7 @@ ahd_busy_tcl(struct ahd_softc *ahd, u_int tcl, u_int scbid)
 {
 	u_int scb_offset;
 	u_int saved_scbptr;
-		
+
 	scb_offset = ahd_index_busy_tcl(ahd, &saved_scbptr, tcl);
 	ahd_outw(ahd, scb_offset, scbid);
 	ahd_set_scbptr(ahd, saved_scbptr);
@@ -7002,7 +7002,7 @@ ahd_freeze_devq(struct ahd_softc *ahd, struct scb *scb)
 	target = SCB_GET_TARGET(ahd, scb);
 	lun = SCB_GET_LUN(scb);
 	channel = SCB_GET_CHANNEL(ahd, scb);
-	
+
 	ahd_search_qinfifo(ahd, target, channel, lun,
 			   /*tag*/SCB_LIST_NULL, ROLE_UNKNOWN,
 			   CAM_REQUEUE_REQ, SEARCH_COMPLETE);
@@ -7046,7 +7046,7 @@ ahd_qinfifo_requeue(struct ahd_softc *ahd, struct scb *prev_scb,
 		ahd_outb(ahd, NEXT_QUEUED_SCB_ADDR + 3, (busaddr >> 24) & 0xFF);
 	} else {
 		prev_scb->hscb->next_hscb_busaddr = scb->hscb->hscb_busaddr;
-		ahd_sync_scb(ahd, prev_scb, 
+		ahd_sync_scb(ahd, prev_scb,
 			     BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	ahd->qinfifo[AHD_QIN_WRAP(ahd->qinfifonext)] = SCB_GET_TAG(scb);
@@ -7733,9 +7733,9 @@ ahd_reset_poll(void *arg)
 	u_int	scsiseq1;
 	u_long	l;
 	int	s;
-	
+
 	ahd_list_lock(&l);
-	ahd = (void*)arg; 
+	ahd = (void*)arg;
 	if (ahd == NULL) {
 		printf("ahd_reset_poll: Instance %p no longer exists\n", arg);
 		ahd_list_unlock(&l);
@@ -7774,9 +7774,9 @@ ahd_stat_timer(void *arg)
 	u_long	l;
 	int	s;
 	int	enint_coal;
-	
+
 	ahd_list_lock(&l);
-	ahd = (void *)arg; 
+	ahd = (void *)arg;
 	if (ahd == NULL) {
 		printf("ahd_stat_timer: Instance %p no longer exists\n", arg);
 		ahd_list_unlock(&l);
@@ -7835,7 +7835,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 	 * handle the error and decrement the QFREEZE count
 	 * to allow the sequencer to continue.
 	 */
-	hscb = scb->hscb; 
+	hscb = scb->hscb;
 
 	/* Freeze the queue until the client sees the error. */
 	ahd_freeze_devq(ahd, scb);
@@ -7915,7 +7915,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 #ifdef AHD_DEBUG
 			if ((ahd_debug & AHD_SHOW_SENSE) != 0) {
 				printf("Sense data available (%d)\n", siu->sense_length[0]);
-			  	printf("SK 0x%x ASC 0x%x ASCQ 0x%x\n", 
+			  	printf("SK 0x%x ASC 0x%x ASCQ 0x%x\n",
 				       ((uint8_t)scb->sense_data[SIU_SENSE_OFFSET(siu)+2]) & 0x0F,
 				       ((uint8_t)scb->sense_data[SIU_SENSE_OFFSET(siu)+12]),
 				       ((uint8_t)scb->sense_data[SIU_SENSE_OFFSET(siu)+13]));
@@ -7930,7 +7930,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 	{
 		struct ahd_devinfo devinfo;
 		struct ahd_dma_seg *sg;
-		struct scsipi_sense *sc;
+		struct scsi_request_sense *sc;
 		struct ahd_initiator_tinfo *targ_info;
 		struct ahd_tmode_tstate *tstate;
 		struct ahd_transinfo *tinfo;
@@ -7957,7 +7957,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 						&tstate);
 		tinfo = &targ_info->curr;
 		sg = scb->sg_list;
-		sc = (struct scsipi_sense *)hscb->shared_data.idata.cdb;
+		sc = (struct scsi_request_sense *)hscb->shared_data.idata.cdb;
 		/*
 		 * Save off the residual if there is one.
 		 */
@@ -7972,12 +7972,9 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 		sg = ahd_sg_setup(ahd, scb, sg, ahd_get_sense_bufaddr(ahd, scb),
 				  ahd_get_sense_bufsize(ahd, scb),
 				  /*last*/TRUE);
-		sc->opcode = REQUEST_SENSE;
-		sc->byte2 = 0;
-		sc->unused[0] = 0;
-		sc->unused[1] = 0;
+		memset(sc, 0, sizeof(*sc));
+		sc->opcode = SCSI_REQUEST_SENSE;
 		sc->length = ahd_get_sense_bufsize(ahd, scb);
-		sc->control = 0;
 
 		/*
 		 * We can't allow the target to disconnect.
@@ -8017,7 +8014,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 		 */
 		ahd_scb_timer_reset(scb, 5 * 1000000);
 		break;
-	}	
+	}
 	case SCSI_STATUS_OK:
 		printf("%s: Interrupted for status of 0? (SCB 0x%x)\n",
 		       ahd_name(ahd), SCB_GET_TAG(scb));
@@ -8097,7 +8094,7 @@ ahd_calc_residual(struct ahd_softc *ahd, struct scb *scb)
 
 		/*
 		 * Remainder of the SG where the transfer
-		 * stopped.  
+		 * stopped.
 		 */
 		resid = ahd_le32toh(spkt->residual_datacnt) & AHD_SG_LEN_MASK;
 		sg = ahd_sg_bus_to_virt(ahd, scb, resid_sgptr & SG_PTR_MASK);
@@ -8281,7 +8278,7 @@ ahd_loadseq(struct ahd_softc *ahd)
 
 	/*
 	 * Setup downloadable constant table.
-	 * 
+	 *
 	 * The computation for the S/G prefetch variables is
 	 * a bit complicated.  We would like to always fetch
 	 * in terms of cachelined sized increments.  However,
@@ -8615,11 +8612,11 @@ ahd_print_register(ahd_reg_parse_entry_t *table, u_int num_entries,
 			  == table[entry].mask))
 				continue;
 			printed += snprintf(&line[printed],
-			    (sizeof line) - printed, "%s%s", 
+			    (sizeof line) - printed, "%s%s",
 				printed_mask == 0 ? ":(" : "|",
 				table[entry].name);
 			printed_mask |= table[entry].mask;
-			
+
 			break;
 		}
 		if (entry >= num_entries)
@@ -8660,7 +8657,7 @@ ahd_dump_card_state(struct ahd_softc *ahd)
 	ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
 	printf(">>>>>>>>>>>>>>>>>> Dump Card State Begins <<<<<<<<<<<<<<<<<\n"
 	       "%s: Dumping Card State at program address 0x%x Mode 0x%x\n",
-	       ahd_name(ahd), 
+	       ahd_name(ahd),
 	       ahd_inb(ahd, CURADDR) | (ahd_inb(ahd, CURADDR+1) << 8),
 	       ahd_build_mode_state(ahd, ahd->saved_src_mode,
 				    ahd->saved_dst_mode));
@@ -8766,7 +8763,7 @@ ahd_dump_card_state(struct ahd_softc *ahd)
 	}
 	printf("\n");
 
-	
+
 	printf("Sequencer DMA-Up and Complete list: ");
 	scb_index = ahd_inw(ahd, COMPLETE_DMA_SCB_HEAD);
 	i = 0;
@@ -8925,7 +8922,7 @@ ahd_read_seeprom(struct ahd_softc *ahd, uint16_t *buf,
 
 		ahd_outb(ahd, SEEADR, cur_addr);
 		ahd_outb(ahd, SEECTL, SEEOP_READ | SEESTART);
-		
+
 		error = ahd_wait_seeprom(ahd);
 		if (error) {
 			printf("%s: ahd_wait_seeprom timed out\n", ahd_name(ahd));
@@ -8982,7 +8979,7 @@ ahd_write_seeprom(struct ahd_softc *ahd, uint16_t *buf,
 		ahd_outw(ahd, SEEDAT, *buf++);
 		ahd_outb(ahd, SEEADR, cur_addr);
 		ahd_outb(ahd, SEECTL, SEEOP_WRITE | SEESTART);
-		
+
 		retval = ahd_wait_seeprom(ahd);
 		if (retval)
 			break;
@@ -9360,7 +9357,7 @@ ahd_handle_en_lun(struct ahd_softc *ahd, struct cam_sim *sim, union ccb *ccb)
 				targid_mask |= target_mask;
 				ahd_outb(ahd, TARGID, targid_mask);
 				ahd_outb(ahd, TARGID+1, (targid_mask >> 8));
-				
+
 				ahd_update_scsiid(ahd, targid_mask);
 			} else {
 				u_int our_id;
@@ -9422,7 +9419,7 @@ ahd_handle_en_lun(struct ahd_softc *ahd, struct cam_sim *sim, union ccb *ccb)
 		}
 
 		ahd_lock(ahd, &s);
-		
+
 		ccb->ccb_h.status = CAM_REQ_CMP;
 		LIST_FOREACH(scb, &ahd->pending_scbs, pending_links) {
 			struct ccb_hdr *ccbh;
@@ -9643,7 +9640,7 @@ ahd_handle_target_cmd(struct ahd_softc *ahd, struct target_cmd *cmd)
 		ahd->flags &= ~AHD_TQINFIFO_BLOCKED;
 #ifdef AHD_DEBUG
 	if ((ahd_debug & AHD_SHOW_TQIN) != 0)
-	  printf("%s: incoming command from %d for %d:%d%s\n", 
+	  printf("%s: incoming command from %d for %d:%d%s\n",
 		 ahd_name(ahd),
 		 initiator, target, lun,
 		 lstate == ahd->black_hole ? "(Black Holed)" : "");
@@ -9694,7 +9691,7 @@ ahd_handle_target_cmd(struct ahd_softc *ahd, struct target_cmd *cmd)
 		printf("Reserved or VU command code type encountered\n");
 		break;
 	}
-	
+
 	memcpy(atio->cdb_io.cdb_bytes, byte, atio->cdb_len);
 
 	atio->ccb_h.status |= CAM_CDB_RECVD;

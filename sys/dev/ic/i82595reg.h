@@ -1,4 +1,4 @@
-/*	$NetBSD: i82595reg.h,v 1.6 2003/01/06 13:05:10 wiz Exp $	*/
+/*	$NetBSD: i82595reg.h,v 1.6.2.1 2005/03/04 16:41:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /*
  * Intel 82595 Ethernet chip register, bit, and structure definitions.
  *
- * Written by is with reference to Intel's i82595FX data sheet, with some 
+ * Written by is with reference to Intel's i82595FX data sheet, with some
  * clarification coming from looking at the Clarkson Packet Driver code for this
  * chip written by Russ Nelson and others;
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.7.2.5 2004/09/21 13:31:07 skrll Exp $	*/
+/*	$NetBSD: siside.c,v 1.7.2.6 2005/03/04 16:45:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -377,7 +377,7 @@ sis_setup_channel(struct ata_channel *chp)
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 
 	ATADEBUG_PRINT(("sis_setup_channel: old timings reg for "
-	    "channel %d 0x%x\n", chp->ch_channel, 
+	    "channel %d 0x%x\n", chp->ch_channel,
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, SIS_TIM(chp->ch_channel))),
 	    DEBUG_PROBE);
 	sis_tim = 0;
@@ -408,16 +408,16 @@ sis_setup_channel(struct ata_channel *chp)
 			switch (sc->sis_type) {
 			case SIS_TYPE_66:
 			case SIS_TYPE_100OLD:
-				sis_tim |= sis_udma66_tim[drvp->UDMA_mode] << 
+				sis_tim |= sis_udma66_tim[drvp->UDMA_mode] <<
 				    SIS_TIM66_UDMA_TIME_OFF(drive);
 				break;
 			case SIS_TYPE_100NEW:
 				sis_tim |=
-				    sis_udma100new_tim[drvp->UDMA_mode] << 
+				    sis_udma100new_tim[drvp->UDMA_mode] <<
 				    SIS_TIM100_UDMA_TIME_OFF(drive);
 			case SIS_TYPE_133OLD:
 				sis_tim |=
-				    sis_udma133old_tim[drvp->UDMA_mode] << 
+				    sis_udma133old_tim[drvp->UDMA_mode] <<
 				    SIS_TIM100_UDMA_TIME_OFF(drive);
 				break;
 			default:

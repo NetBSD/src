@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_acl.h,v 1.1 2001/02/06 16:37:57 eeh Exp $	*/
+/*	$NetBSD: svr4_32_acl.h,v 1.1.26.1 2005/03/04 16:40:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <compat/svr4/svr4_acl.h>
 
 typedef struct svr4_32_aclent {
-	int			a_type;	
+	int			a_type;
 	svr4_32_uid_t		a_id;
 	svr4_32_o_mode_t	a_perm;
 } svr4_32_aclent_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.2.2.2 2004/11/29 07:24:17 skrll Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.2.2.3 2005/03/04 16:45:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -161,7 +161,7 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	aprint_normal("%s: interrupting at %s\n",
 		sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
 		intrstr ? intrstr : "unknown interrupt");
-		
+
 	sc->sc_dma_ok = (pci_mapreg_map(pa, PCIIDE_REG_BUS_MASTER_DMA,
 	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_dma_iot,
 	    &sc->sc_dma_ioh, NULL, &dmasize) == 0);
@@ -200,7 +200,7 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_wdcdev.sc_atac.atac_set_modes = pdc203xx_setup_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->wdc_chanarray;
 	bus_space_write_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x06c, 0x00ff0033);
-	sc->sc_wdcdev.sc_atac.atac_nchannels = 
+	sc->sc_wdcdev.sc_atac.atac_nchannels =
 	    (bus_space_read_4(sc->sc_ba5_st, sc->sc_ba5_sh, 0x48) & 0x02) ?
 	    PDC203xx_NCHANNELS : 3;
 	wdc_allocate_regs(&sc->sc_wdcdev);
@@ -315,7 +315,7 @@ pdc203xx_pci_intr(void *arg)
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
-	int i, rv, crv; 
+	int i, rv, crv;
 	u_int32_t scr;
 
 	rv = 0;

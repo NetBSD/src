@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.8.2.5 2005/02/04 11:45:24 skrll Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.8.2.6 2005/03/04 16:41:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.8.2.5 2005/02/04 11:45:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.8.2.6 2005/03/04 16:41:27 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -403,7 +403,7 @@ sonic_start(struct ifnet *ifp)
 				totlen = ETHER_PAD_LEN;
 				seg++;
 			}
-				    
+
 			tda32->tda_status = 0;
 			tda32->tda_pktconfig = 0;
 			tda32->tda_pktsize = htosonic32(sc, totlen);
@@ -1125,7 +1125,7 @@ sonic_add_rxbuf(struct sonic_softc *sc, int idx)
 	error = bus_dmamap_load(sc->sc_dmat, ds->ds_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
-	if (error) {    
+	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, idx, error);
 		panic("sonic_add_rxbuf");	/* XXX */

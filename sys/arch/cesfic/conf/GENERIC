@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.19.2.4 2004/11/14 08:15:05 skrll Exp $
+# $NetBSD: GENERIC,v 1.19.2.5 2005/03/04 16:38:13 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -49,6 +49,7 @@ options 	COMPAT_13	# compatibility with NetBSD 1.3
 options 	COMPAT_14	# compatibility with NetBSD 1.4
 options 	COMPAT_15	# compatibility with NetBSD 1.5
 options 	COMPAT_16	# compatibility with NetBSD 1.6
+options 	COMPAT_20	# compatibility with NetBSD 2.0
 #options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers

@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_eisa.c,v 1.5.6.3 2004/09/21 13:27:36 skrll Exp $	*/
+/*	$NetBSD: depca_eisa.c,v 1.5.6.4 2005/03/04 16:41:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.5.6.3 2004/09/21 13:27:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.5.6.4 2005/03/04 16:41:14 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: depca_eisa.c,v 1.5.6.3 2004/09/21 13:27:36 skrll Exp
 #include <net/if_ether.h>
 
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
 

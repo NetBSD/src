@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.22.2.5 2005/01/17 19:31:26 skrll Exp $ */
+/*      $NetBSD: sv.c,v 1.22.2.6 2005/03/04 16:45:26 skrll Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -52,7 +52,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The author's name or those of the contributors may be used to
- *    endorse or promote products derived from this software without 
+ *    endorse or promote products derived from this software without
  *    specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) AND CONTRIBUTORS
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.22.2.5 2005/01/17 19:31:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.22.2.6 2005/03/04 16:45:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

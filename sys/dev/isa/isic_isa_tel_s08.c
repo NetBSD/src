@@ -1,7 +1,7 @@
 /*
  *   Copyright (c) 1996 Arne Helme. All rights reserved.
  *
- *   Copyright (c) 1996 Gary Jennejohn. All rights reserved. 
+ *   Copyright (c) 1996 Gary Jennejohn. All rights reserved.
  *
  *   Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
  *
@@ -19,7 +19,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -37,7 +37,7 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Teles S0/8 and clones
  *	================================================================
  *
- *	$Id: isic_isa_tel_s08.c,v 1.4.10.1 2005/02/04 11:46:09 skrll Exp $ 
+ *	$Id: isic_isa_tel_s08.c,v 1.4.10.2 2005/03/04 16:43:14 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
@@ -50,7 +50,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s08.c,v 1.4.10.1 2005/02/04 11:46:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_tel_s08.c,v 1.4.10.2 2005/03/04 16:43:14 skrll Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_TEL_S0_8
@@ -173,7 +173,7 @@ tels08_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 
-static void		
+static void
 tels08_memcpyb(void *to, const void *from, size_t len)
 {
 	for(;len > 0; len--)
@@ -210,17 +210,17 @@ isic_probe_s08(struct isa_device *dev)
 	struct isic_softc *sc = &l1_sc[dev->id_unit];
 
 	/* check max unit range */
-	
+
 	if(dev->id_unit >= ISIC_MAXUNIT)
 	{
 		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for Teles S0/8!\n",
 				dev->id_unit, dev->id_unit);
-		return(0);	
-	}	
+		return(0);
+	}
 	sc->sc_unit = dev->id_unit;
 
 	/* check IRQ validity */
-	
+
 	switch(ffs(dev->id_irq)-1)
 	{
 		case 2:
@@ -231,26 +231,26 @@ isic_probe_s08(struct isa_device *dev)
 		case 6:
 		case 7:
 			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid IRQ [%d] specified for Teles S0/8!\n",
 				dev->id_unit, ffs(dev->id_irq)-1);
 			return(0);
 			break;
-	}		
+	}
 	sc->sc_irq = dev->id_irq;
-	
+
 	/* check if we got an iobase */
 
 	if(dev->id_iobase > 0)
 	{
 		printf("isic%d: Error, iobase specified for Teles S0/8!\n",
 				dev->id_unit);
-		return(0);	
+		return(0);
 	}
-	
+
 	/* check if inside memory range of 0xA0000 .. 0xDF000 */
-	
+
 	if( (kvtop(dev->id_maddr) < 0xa0000) ||
 	    (kvtop(dev->id_maddr) > 0xdf000) )
 	{
@@ -258,10 +258,10 @@ isic_probe_s08(struct isa_device *dev)
 				dev->id_unit, kvtop(dev->id_maddr));
 		return(0);
 	}
-		
+
 	sc->sc_vmem_addr = (caddr_t) dev->id_maddr;
 	dev->id_msize = 0x1000;
-	
+
 	/* setup ISAC access routines */
 
 	sc->clearirq = NULL;
@@ -272,25 +272,25 @@ isic_probe_s08(struct isa_device *dev)
 	sc->writefifo = tels08_memcpyb;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_8;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM1;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
 
 	/* setup ISAC base addr */
-	
+
 	ISAC_BASE = (caddr_t)((dev->id_maddr) + 0x100);
 
 	/* setup HSCX base addr */
-	
+
 	HSCX_A_BASE = (caddr_t)((dev->id_maddr) + 0x180);
 	HSCX_B_BASE = (caddr_t)((dev->id_maddr) + 0x1c0);
-		
+
 	return (1);
 }
 
@@ -302,7 +302,7 @@ isic_probe_s08(struct isic_attach_args *ia)
 	/* no real sensible probe is easy - write to fifo memory
 	   and read back to verify there is memory doesn't work,
 	   because you talk to tx fifo and rcv fifo. So, just check
-	   HSCX version, which at least fails if no card present 
+	   HSCX version, which at least fails if no card present
 	   at the given location. */
 	bus_space_tag_t t = ia->ia_maps[0].t;
 	bus_space_handle_t h = ia->ia_maps[0].h;
@@ -364,7 +364,7 @@ isic_attach_s08(struct isic_softc *sc)
 	DELAY(SEC_DELAY / 5);
 
 #ifndef __FreeBSD__
-	
+
 	/* setup ISAC access routines */
 
 	sc->clearirq = NULL;
@@ -374,18 +374,18 @@ isic_attach_s08(struct isic_softc *sc)
 	sc->writefifo = tels08_write_fifo;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_8;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM1;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
-	
+
 #endif
-  
+
   	return (1);
 }
 

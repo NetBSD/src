@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.49.2.4 2005/02/04 11:44:48 skrll Exp $
+# 	$NetBSD: INSTALL,v 1.49.2.5 2005/03/04 16:39:01 skrll Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -56,6 +56,7 @@ file-system 	KERNFS			# kernel data-structure filesystem
 # Filesystem options
 #options 	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 
 # Networking options

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isapnp.c,v 1.2.4.4 2004/09/21 13:30:16 skrll Exp $ */
+/* $NetBSD: atppc_isapnp.c,v 1.2.4.5 2005/03/04 16:43:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.2.4.4 2004/09/21 13:30:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.2.4.5 2005/03/04 16:43:40 skrll Exp $");
 
 #include "opt_atppc.h"
 
@@ -75,13 +75,13 @@ struct atppc_isapnp_softc {
 CFATTACH_DECL(atppc_isapnp, sizeof(struct atppc_isapnp_softc),
     atppc_isapnp_match, atppc_isapnp_attach, NULL, NULL);
 
-static int atppc_isapnp_dma_start(struct atppc_softc *, void *, u_int, 
+static int atppc_isapnp_dma_start(struct atppc_softc *, void *, u_int,
 	u_int8_t);
 static int atppc_isapnp_dma_finish(struct atppc_softc *);
 static int atppc_isapnp_dma_abort(struct atppc_softc *);
-static int atppc_isapnp_dma_malloc(struct device *, caddr_t *, bus_addr_t *, 
+static int atppc_isapnp_dma_malloc(struct device *, caddr_t *, bus_addr_t *,
 	bus_size_t);
-static void atppc_isapnp_dma_free(struct device *, caddr_t *, bus_addr_t *, 
+static void atppc_isapnp_dma_free(struct device *, caddr_t *, bus_addr_t *,
 	bus_size_t);
 /*
  * atppc_isapnp_match: autoconf(9) match routine
@@ -109,7 +109,7 @@ atppc_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	printf(": AT Parallel Port\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", 
+		printf("%s: error in region allocation\n",
 		       sc->sc_dev.dv_xname);
 		return;
 	}
@@ -144,34 +144,34 @@ atppc_isapnp_attach(struct device *parent, struct device *self, void *aux)
 }
 
 /* Start DMA operation over ISA bus */
-static int 
+static int
 atppc_isapnp_dma_start(struct atppc_softc *lsc, void *buf, u_int nbytes,
 	u_int8_t mode)
 {
 	struct atppc_isapnp_softc * sc = (struct atppc_isapnp_softc *) lsc;
-	
+
 	return atppc_isadma_start(sc->sc_ic, sc->sc_drq, buf, nbytes, mode);
 }
 
 /* Stop DMA operation over ISA bus */
-static int 
+static int
 atppc_isapnp_dma_finish(struct atppc_softc * lsc)
 {
 	struct atppc_isapnp_softc * sc = (struct atppc_isapnp_softc *) lsc;
-	
+
 	return atppc_isadma_finish(sc->sc_ic, sc->sc_drq);
 }
 
 /* Abort DMA operation over ISA bus */
-int 
+int
 atppc_isapnp_dma_abort(struct atppc_softc * lsc)
 {
 	struct atppc_isapnp_softc * sc = (struct atppc_isapnp_softc *) lsc;
-	
+
 	return atppc_isadma_abort(sc->sc_ic, sc->sc_drq);
 }
 
-/* Allocate memory for DMA over ISA bus */ 
+/* Allocate memory for DMA over ISA bus */
 int
 atppc_isapnp_dma_malloc(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr,
 	bus_size_t size)
@@ -181,9 +181,9 @@ atppc_isapnp_dma_malloc(struct device * dev, caddr_t * buf, bus_addr_t * bus_add
 	return atppc_isadma_malloc(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
 }
 
-/* Free memory allocated by atppc_isa_dma_malloc() */ 
-void 
-atppc_isapnp_dma_free(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr, 
+/* Free memory allocated by atppc_isa_dma_malloc() */
+void
+atppc_isapnp_dma_free(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr,
 	bus_size_t size)
 {
 	struct atppc_isapnp_softc * sc = (struct atppc_isapnp_softc *) dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcireg.h,v 1.2 2003/03/24 17:03:18 matt Exp $	*/
+/*	$NetBSD: gtpcireg.h,v 1.2.2.1 2005/03/04 16:43:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -637,7 +637,7 @@
  * 11:00 Addr		Base Address Corresponds to address bits[31:20].
  * 12:12 PrefetchEn	Read Prefetch Enable
  *			0: Prefetch disabled (The PCI slave reads single words)
- *			1: Prefetch enabled. 
+ *			1: Prefetch enabled.
  * 14:14 Reserved	 Must be 0
  * 15:15 Reserved
  * 16:16 RdPrefetch	PCI Read Aggressive Prefetch Enable; 0: Disable;
@@ -798,7 +798,7 @@
 	|PCI_SERRMSK_MMabort|PCI_SERRMSK_MTabort|PCI_SERRMSK_MRetry \
 	|PCI_SERRMSK_SMabort|PCI_SERRMSK_STabort|PCI_SERRMSK_SAccProt \
 	|PCI_SERRMSK_SWrProt|PCI_SERRMSK_SRdBuf|PCI_SERRMSK_Arb)
-	
+
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.25.6.1 2005/02/04 11:46:28 skrll Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.25.6.2 2005/03/04 16:43:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -31,12 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isapnp.c,v 1.25.6.1 2005/02/04 11:46:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isapnp.c,v 1.25.6.2 2005/03/04 16:43:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
-#include <sys/socket.h> 
+#include <sys/mbuf.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>

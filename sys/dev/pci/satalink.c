@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.17.2.5 2004/09/21 13:31:07 skrll Exp $	*/
+/*	$NetBSD: satalink.c,v 1.17.2.6 2005/03/04 16:45:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -487,7 +487,7 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
-	/* 
+	/*
 	 * The 3112 either identifies itself as a RAID storage device
 	 * or a Misc storage device.  Fake up the interface bits for
 	 * what our driver expects.

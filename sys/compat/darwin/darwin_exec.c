@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.16.2.6 2004/11/12 16:24:02 skrll Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.16.2.7 2005/03/04 16:39:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.6 2004/11/12 16:24:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.7 2005/03/04 16:39:22 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -148,7 +148,7 @@ exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
 	long argc, envc;
 	int error;
 
-	/* 
+	/*
 	 * Prepare the comm pages
 	 */
 	if ((error = darwin_commpage_map(p)) != 0)
@@ -177,7 +177,7 @@ exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
 
 	dp = (char *) (cpp + argc + envc + 4);
 
-	if ((error = copyoutstr(emea->filename, dp, 
+	if ((error = copyoutstr(emea->filename, dp,
 	    (ARG_MAX < MAXPATHLEN) ? ARG_MAX : MAXPATHLEN, &len)) != 0)
 		return error;
 	progname = dp;
@@ -225,7 +225,7 @@ exec_darwin_probe(path)
 	return 0;
 }
 
-static void 
+static void
 darwin_e_proc_exec(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
@@ -247,7 +247,7 @@ darwin_e_proc_exec(p, epp)
 	return;
 }
 
-static void 
+static void
 darwin_e_proc_fork(p, parent, forkflags)
 	struct proc *p;
 	struct proc *parent;
@@ -263,9 +263,9 @@ darwin_e_proc_fork(p, parent, forkflags)
 	/* Use parent's vmspace because our vmspace may not be setup yet */
 	darwin_e_proc_init(p, parent->p_vmspace);
 
-	/* 
-	 * Setup the mach_emuldata part of darwin_emuldata 
-	 * The null third argument asks to not re-allocate 
+	/*
+	 * Setup the mach_emuldata part of darwin_emuldata
+	 * The null third argument asks to not re-allocate
 	 * p->p_emuldata again.
 	 */
 	mach_e_proc_fork1(p, parent, 0);
@@ -292,7 +292,7 @@ darwin_e_proc_fork(p, parent, forkflags)
 	return;
 }
 
-static void 
+static void
 darwin_e_proc_init(p, vmspace)
 	struct proc *p;
 	struct vmspace *vmspace;
@@ -315,7 +315,7 @@ darwin_e_proc_init(p, vmspace)
 	return;
 }
 
-static void 
+static void
 darwin_e_proc_exit(p)
 	struct proc *p;
 {
@@ -335,7 +335,7 @@ darwin_e_proc_exit(p)
 	l = proc_representative_lwp(p);
 	/*
 	 * mach_init is setting the bootstrap port for other processes.
-	 * If mach_init dies, we want to restore the original bootstrap 
+	 * If mach_init dies, we want to restore the original bootstrap
 	 * port.
 	 */
 	if (ded->ded_fakepid == 2)
@@ -352,8 +352,8 @@ darwin_e_proc_exit(p)
 		wakeup(ded->ded_hidsystem_finished);
 	}
 
-	/* 
-	 * Restore text mode and black and white colormap 
+	/*
+	 * Restore text mode and black and white colormap
 	 */
 	if (ded->ded_wsdev != NODEV) {
 		mode = WSDISPLAYIO_MODE_EMUL;
@@ -392,9 +392,9 @@ darwin_e_proc_exit(p)
 #endif
 
 	}
-		
-	/* 
-	 * Cleanup mach_emuldata part of darwin_emuldata 
+
+	/*
+	 * Cleanup mach_emuldata part of darwin_emuldata
 	 * It will also free p->p_emuldata.
 	 */
 	mach_e_proc_exit(p);
@@ -403,8 +403,8 @@ darwin_e_proc_exit(p)
 }
 
 int
-darwin_exec_setup_stack(p, epp)
-	struct proc *p;
+darwin_exec_setup_stack(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	u_long max_stack_size;
@@ -418,9 +418,9 @@ darwin_exec_setup_stack(p, epp)
 		epp->ep_minsaddr = DARWIN_USRSTACK;
 		max_stack_size = MAXSSIZ;
 	}
-	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, 
+	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
@@ -433,7 +433,7 @@ darwin_exec_setup_stack(p, epp)
 	access_size = epp->ep_ssize;
 	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
 	noaccess_size = max_stack_size - access_size;
-	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr, 
+	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
 	if (noaccess_size > 0) {
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,

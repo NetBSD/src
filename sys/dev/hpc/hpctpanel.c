@@ -1,4 +1,4 @@
-/*	$NetBSD: hpctpanel.c,v 1.1.2.5 2005/01/24 08:59:40 skrll Exp $	*/
+/*	$NetBSD: hpctpanel.c,v 1.1.2.6 2005/03/04 16:41:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpctpanel.c,v 1.1.2.5 2005/01/24 08:59:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpctpanel.c,v 1.1.2.6 2005/03/04 16:41:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,10 +73,10 @@ hpc_tpanel_ioctl(struct tpcalib_softc *sc, u_long cmd, caddr_t data, int flag,
         case WSMOUSEIO_SCALIBCOORDS:
         case WSMOUSEIO_GCALIBCOORDS:
                 return tpcalib_ioctl(sc, cmd, data, flag, l);
-        
+
 	default:
 		return EPASSTHROUGH;
 	}
-	
+
 	return 0;
 }

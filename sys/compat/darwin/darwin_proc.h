@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_proc.h,v 1.3.4.4 2004/09/21 13:24:59 skrll Exp $ */
+/*	$NetBSD: darwin_proc.h,v 1.3.4.5 2005/03/04 16:39:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct darwin_pcred {
 	gid_t   pc_rgid;
 	gid_t   pc_svgid;
 	int     pc_refcnt;
-}; 
+};
 
 struct darwin_vmspace {
 	int     vm_refcnt;
@@ -127,8 +127,8 @@ struct darwin_extern_proc {
 	sigset13_t p_sigcatch;
 	u_char	p_priority;
 	u_char	p_usrpri;
-	char	p_nice;	
-#define DARWIN_MAXCOMLEN 16 
+	char	p_nice;
+#define DARWIN_MAXCOMLEN 16
 	char	p_comm[DARWIN_MAXCOMLEN + 1];
 	struct	darwin_pgrp *p_pgrp;
 	struct	darwin_user *p_addr;
@@ -138,11 +138,11 @@ struct darwin_extern_proc {
 };
 
 struct darwin_kinfo_proc {
-	/* 
+	/*
 	 * kp_proc is a struct darwin_extern_proc.
 	 * Declaring struct darwin_extern_proc here causes an allignement
 	 * on a word boundary. We replace it by a char array to avoid that.
-	 */ 
+	 */
 	char kp_proc[196];
 	struct	darwin_eproc {
 		struct	darwin_proc *e_paddr;

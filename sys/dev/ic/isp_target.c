@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.23.2.3 2004/09/21 13:28:00 skrll Exp $ */
+/* $NetBSD: isp_target.c,v 1.23.2.4 2005/03/04 16:41:30 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.23.2.3 2004/09/21 13:28:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.23.2.4 2005/03/04 16:41:30 skrll Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -299,7 +299,7 @@ isp_target_notify(struct ispsoftc *isp, void *vptr, u_int16_t *optrp)
 	return (rval);
 }
 
- 
+
 /*
  * Toggle (on/off) target mode for bus/target/lun
  *
@@ -625,7 +625,7 @@ isp_got_msg_fc(struct ispsoftc *isp, int bus, in_fcentry_t *inp)
 {
 	int lun;
 	static const char f1[] = "%s from iid %d lun %d seq 0x%x";
-	static const char f2[] = 
+	static const char f2[] =
 	    "unknown %s 0x%x lun %d iid %d task flags 0x%x seq 0x%x\n";
 
 	if (FCPARAM(isp)->isp_fwattr & ISP_FW_ATTR_SCCLUN) {

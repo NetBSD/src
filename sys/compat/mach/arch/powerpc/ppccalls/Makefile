@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.8.4 2004/09/21 13:25:52 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.8.5 2005/03/04 16:40:20 skrll Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -7,8 +7,8 @@ OBJS=	mach_ppccalls_sysent.c mach_ppccalls_syscalls.c \
 	mach_ppccalls_syscall.h mach_ppccalls_syscallargs.h
 
 ${OBJS}: ${DEP}
-	-mv -f mach_ppccalls_sysent.c mach_ppccalls_sysent.c.bak
-	-mv -f mach_ppccalls_syscalls.c mach_ppccalls_syscalls.c.bak
-	-mv -f mach_ppccalls_syscall.h mach_ppccalls_syscall.h.bak
-	-mv -f mach_ppccalls_syscallargs.h mach_ppccalls_syscallargs.h.bak
 	${HOST_SH} ../../../../../kern/makesyscalls.sh syscalls.conf syscalls.master
+
+all: ${OBJS}
+
+.include <bsd.kinc.mk>

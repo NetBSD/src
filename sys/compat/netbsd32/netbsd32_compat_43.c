@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.27.2.4 2004/09/21 13:25:53 skrll Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.27.2.5 2005/03/04 16:40:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.27.2.4 2004/09/21 13:25:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.27.2.5 2005/03/04 16:40:20 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -59,7 +59,7 @@ int compat_43_netbsd32_sigblock __P((struct lwp *, void *, register_t *retval));
 int compat_43_netbsd32_sigblock __P((struct lwp *, void *, register_t *retval));
 int compat_43_netbsd32_sigsetmask __P((struct lwp *, void *, register_t *retval));
 
-void 
+void
 netbsd32_from_stat43(sp43, sp32)
 	struct stat43 *sp43;
 	struct netbsd32_stat43 *sp32;

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.23.6.5 2005/02/04 11:44:17 skrll Exp $
+#	$NetBSD: INSTALL,v 1.23.6.6 2005/03/04 16:38:13 skrll Exp $
 #
 # First try for BEBOX config file
 #
@@ -42,6 +42,8 @@ options 	COMPAT_10
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_16
+options 	COMPAT_20
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -63,6 +65,7 @@ file-system 	KERNFS
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE # Not inlining vnode op calls saves mem
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 #options 	NFSSERVER
 

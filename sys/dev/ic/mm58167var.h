@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167var.h,v 1.1.26.1 2005/02/04 11:45:26 skrll Exp $	*/
+/*	$NetBSD: mm58167var.h,v 1.1.26.2 2005/03/04 16:41:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,12 +54,12 @@ struct mm58167_softc {
 
 	/*
 	 * Pointers to MM58167 registers.  All of these values are in
-         * BCD. 
+         * BCD.
 	 */
-  
+
 	/*
 	 * The most significant digit of this first value is the
-	 * milliseconds unit; least significant digit is undefined: 
+	 * milliseconds unit; least significant digit is undefined:
 	 */
 	bus_size_t	mm58167_msec_xxx;
 	/* both digits of this value make up centiseconds: */
@@ -74,7 +74,7 @@ struct mm58167_softc {
 	/*
 	 * The MM58167 has compare latches that line up with the
 	 * above, interrupt registers, etc., but we don't use them, so
-	 * we don't mention them here.  
+	 * we don't mention them here.
 	 */
 	bus_size_t	mm58167_status;		/* bad counter read status */
 	bus_size_t	mm58167_go;		/* GO - start at integral seconds */

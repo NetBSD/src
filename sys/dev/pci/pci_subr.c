@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.56.2.3 2004/09/21 13:31:04 skrll Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.56.2.4 2005/03/04 16:45:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.56.2.3 2004/09/21 13:31:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.56.2.4 2005/03/04 16:45:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -610,7 +610,7 @@ pci_conf_print_bar(
 	if (rval == 0) {
 		printf("not implemented(?)\n");
 		return width;
-	} 
+	}
 	printf("type: ");
 	if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
 		const char *type, *prefetch;

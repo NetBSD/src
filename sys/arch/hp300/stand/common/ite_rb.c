@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rb.c,v 1.1.60.3 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: ite_rb.c,v 1.1.60.4 2005/03/04 16:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -91,8 +91,7 @@
 void rbox_windowmove(struct ite_data *, int, int, int, int, int, int, int);
 
 void
-rbox_init(ip)
-	struct ite_data *ip;
+rbox_init(struct ite_data *ip)
 {
 	struct rboxfb *regbase = (void *)ip->regbase;
 	int i;
@@ -163,10 +162,7 @@ rbox_init(ip)
 }
 
 void
-rbox_putc(ip, c, dy, dx, mode)
-	struct ite_data *ip;
-	int dy, dx;
-	int c, mode;
+rbox_putc(struct ite_data *ip, int dy, int dx, int c, int mode)
 {
 
 	rbox_windowmove(ip, charY(ip, c), charX(ip, c),
@@ -175,9 +171,7 @@ rbox_putc(ip, c, dy, dx, mode)
 }
 
 void
-rbox_cursor(ip, flag)
-	struct ite_data *ip;
-	int flag;
+rbox_cursor(struct ite_data *ip, int flag)
 {
 
 	if (flag == DRAW_CURSOR)
@@ -190,9 +184,7 @@ rbox_cursor(ip, flag)
 }
 
 void
-rbox_clear(ip, sy, sx, h, w)
-	struct ite_data *ip;
-	int sy, sx, h, w;
+rbox_clear(struct ite_data *ip, int sy, int sx, int h, int w)
 {
 
 	rbox_windowmove(ip, sy * ip->ftheight, sx * ip->ftwidth,
@@ -202,10 +194,7 @@ rbox_clear(ip, sy, sx, h, w)
 }
 
 void
-rbox_scroll(ip, sy, sx, count, dir)
-	struct ite_data *ip;
-	int sy, count;
-	int dir, sx;
+rbox_scroll(struct ite_data *ip, int sy, int count, int dir, int sx)
 {
 	int dy = sy - count;
 	int height = ip->rows - sy;
@@ -219,9 +208,8 @@ rbox_scroll(ip, sy, sx, count, dir)
 }
 
 void
-rbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
-	struct ite_data *ip;
-	int sy, sx, dy, dx, h, w, func;
+rbox_windowmove(struct ite_data *ip, int sy, int sx, int dy, int dx,
+    int h, int w, int func)
 {
 	struct rboxfb *rp = (void *)ip->regbase;
 

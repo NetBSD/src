@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.c,v 1.5.2.6 2004/11/14 08:15:33 skrll Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.5.2.7 2005/03/04 16:39:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.5.2.6 2004/11/14 08:15:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.5.2.7 2005/03/04 16:39:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ unsigned char native_to_darwin_af[] = {
 	DARWIN_AF_HYLINK,	/* 15 */
 	DARWIN_AF_APPLETALK,
 	DARWIN_AF_ROUTE,
-	DARWIN_AF_LINK,	
+	DARWIN_AF_LINK,
 	DARWIN_AF_XTP,
 	DARWIN_AF_COIP,		/* 20 */
 	DARWIN_AF_CNT,
@@ -119,7 +119,7 @@ unsigned char darwin_to_native_af[] = {
 	AF_HYLINK,	/* 15 */
 	AF_APPLETALK,
 	AF_ROUTE,
-	AF_LINK,	
+	AF_LINK,
 	0,
 	AF_COIP,	/* 20 */
 	AF_CNT,
@@ -172,7 +172,7 @@ darwin_to_native_sockaddr(dsa, nsa)
 	}
 
 	if (len == 0) {
-		/* 	
+		/*
 		 * It happens for AF_LOCAL sockets, where the
 		 * size must be computed by hand...
 		 */
@@ -180,8 +180,8 @@ darwin_to_native_sockaddr(dsa, nsa)
 		case DARWIN_AF_LOCAL: {
 			struct sockaddr_un *sun = (struct sockaddr_un *)dsa;
 
-			len = sizeof(*sun) 
-			    - sizeof(sun->sun_path) 
+			len = sizeof(*sun)
+			    - sizeof(sun->sun_path)
 			    + strlen(sun->sun_path)
 			    + 1; /* For trailing \0 */
 			if (len > _SS_MAXSIZE) {
@@ -287,7 +287,7 @@ darwin_sys_recvfrom(l, v, retval)
 
 	if ((error = copyout(&len, SCARG(uap, fromlenaddr), sizeof(len))) != 0)
 		return error;
-	
+
 	return 0;
 }
 
@@ -393,7 +393,7 @@ darwin_sys_getpeername(l, v, retval)
 
 	if ((error = copyout(&len, SCARG(uap, alen), sizeof(len))) != 0)
 		return error;
-	
+
 	return 0;
 }
 
@@ -446,7 +446,7 @@ darwin_sys_getsockname(l, v, retval)
 
 	if ((error = copyout(&len, SCARG(uap, alen), sizeof(len))) != 0)
 		return error;
-	
+
 	return 0;
 }
 
@@ -481,7 +481,7 @@ darwin_sys_connect(l, v, retval)
 
 	len = SCARG(uap, namelen);
 	if (nss.ss_len < len)
-		len = nss.ss_len;	
+		len = nss.ss_len;
 
 	if ((error = copyout(&nss, nssp, sizeof(nss))) != 0)
 		return error;
@@ -524,7 +524,7 @@ darwin_sys_bind(l, v, retval)
 
 	len = SCARG(uap, namelen);
 	if (nss.ss_len < len)
-		len = nss.ss_len;	
+		len = nss.ss_len;
 
 	if ((error = copyout(&nss, nssp, sizeof(nss))) != 0)
 		return error;
@@ -570,7 +570,7 @@ darwin_sys_sendto(l, v, retval)
 
 	len = SCARG(uap, tolen);
 	if (nss.ss_len < len)
-		len = nss.ss_len;	
+		len = nss.ss_len;
 
 	if ((error = copyout(&nss, nssp, sizeof(nss))) != 0)
 		return error;

@@ -1,5 +1,5 @@
-/* $NetBSD: aica_armcode.h,v 1.1.4.4 2004/09/21 13:14:40 skrll Exp $ */
-static u_int32_t aica_armcode[] = {
+/* $NetBSD: aica_armcode.h,v 1.1.4.5 2005/03/04 16:38:13 skrll Exp $ */
+static uint32_t aica_armcode[] = {
  /* 0000 */	0xea000006, 
  /* 0004 */	0xea000010, 
  /* 0008 */	0xea00000e, 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.23.2.4 2004/11/28 11:30:04 skrll Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.23.2.5 2005/03/04 16:40:43 skrll Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -24,11 +24,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
+ * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.23.2.4 2004/11/28 11:30:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.23.2.5 2005/03/04 16:40:43 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -87,7 +87,7 @@ static const struct speedtab sptab[] = {
 	{ -1, -1 }
 };
 
-static const u_long s2btab[] = { 
+static const u_long s2btab[] = {
 	0,
 	50,
 	75,
@@ -205,7 +205,7 @@ stios2btios(struct emul_termios *st, struct termios *bt)
 	case 0x00000030:
 		r = CS8;
 		break;
-	}		
+	}
 	r |=	((l & 0x00000040) ? CSTOPB	: 0);
 	r |=	((l & 0x00000080) ? CREAD	: 0);
 	r |= 	((l & 0x00000100) ? PARENB	: 0);
@@ -495,7 +495,7 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		int on = 1;
 		return (*ctl)(fp, TIOCCONS, &on, l);
 	    }
-	case _IOW('t', 37, struct sunos_ttysize): 
+	case _IOW('t', 37, struct sunos_ttysize):
 	    {
 		struct winsize ws;
 		struct sunos_ttysize ss;
@@ -511,7 +511,7 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 
 		return (*ctl)(fp, TIOCSWINSZ, &ws, l);
 	    }
-	case _IOW('t', 38, struct sunos_ttysize): 
+	case _IOW('t', 38, struct sunos_ttysize):
 	    {
 		struct winsize ws;
 		struct sunos_ttysize ss;
@@ -531,17 +531,17 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		SCARG(uap, com) = TIOCGPGRP;
 		break;
 
-	/* Emulate termio or termios tcget() */	
+	/* Emulate termio or termios tcget() */
 	case ULTRIX_TCGETA:
-	case ULTRIX_TCGETS: 
+	case ULTRIX_TCGETS:
 	    {
 		struct termios bts;
 		struct ultrix_termios sts;
 		struct ultrix_termio st;
-	
+
 		if ((error = (*ctl)(fp, TIOCGETA, &bts, l)) != 0)
 			return error;
-	
+
 		btios2stios (&bts, &sts);
 		if (SCARG(uap, com) == ULTRIX_TCGETA) {
 			stios2stio (&sts, &st);
@@ -559,7 +559,7 @@ ultrix_sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		struct ultrix_termios sts;
 		struct ultrix_termio st;
 		int result;
-	       
+
 		if ((error = copyin(SCARG(uap, data), &st, sizeof (st))) != 0)
 			return error;
 

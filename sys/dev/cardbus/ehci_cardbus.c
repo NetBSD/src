@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.6.6.4 2005/03/04 16:41:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.6.6.4 2005/03/04 16:41:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ ehci_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 	    CARDBUS_SUBCLASS(ca->ca_class) == CARDBUS_SUBCLASS_SERIALBUS_USB &&
 	    CARDBUS_INTERFACE(ca->ca_class) == CARDBUS_INTERFACE_EHCI)
 		return (1);
- 
+
 	return (0);
 }
 
@@ -175,7 +175,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	else
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 		    "vendor 0x%04x", CARDBUS_VENDOR(ca->ca_id));
-	
+
 	/*
 	 * Find companion controllers.  According to the spec they always
 	 * have lower function numbers so they should be enumerated already.

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.37.2.6 2005/02/15 21:33:13 skrll Exp $	*/
+/*	$NetBSD: twe.c,v 1.37.2.7 2005/03/04 16:45:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.37.2.6 2005/02/15 21:33:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.37.2.7 2005/03/04 16:45:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.37.2.6 2005/02/15 21:33:13 skrll Exp $");
 #include <sys/malloc.h>
 #include <sys/conf.h>
 #include <sys/disk.h>
+#include <sys/sysctl.h>
 #include <sys/syslog.h>
 
 #include <uvm/uvm_extern.h>
@@ -135,10 +136,13 @@ const struct cdevsw twe_cdevsw = {
 	nostop, notty, nopoll, nommap,
 };
 
-extern struct	cfdriver twe_cd; 
+extern struct	cfdriver twe_cd;
 
 CFATTACH_DECL(twe, sizeof(struct twe_softc),
     twe_match, twe_attach, NULL, NULL);
+
+/* FreeBSD driver revision for sysctl expected by the 3ware cli */
+const char twever[] = "1.50.01.002";
 
 /*
  * Tables to convert numeric codes to strings.
@@ -305,7 +309,7 @@ twe_match(struct device *parent, struct cfdata *cfdata, void *aux)
 
 	pa = aux;
 
-	return (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3WARE &&	 
+	return (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3WARE &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_ESCALADE ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_ESCALADE_ASIC));
 }
@@ -327,6 +331,8 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	int s, size, i, rv, rseg;
 	size_t max_segs, max_xfer;
 	bus_dma_segment_t seg;
+        struct ctlname ctlnames[] = CTL_NAMES;
+        struct sysctlnode *node;
 	struct twe_cmd *tc;
 	struct twe_ccb *ccb;
 
@@ -383,14 +389,14 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	 */
         size = sizeof(struct twe_cmd) * TWE_MAX_QUEUECNT;
 
-	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1, 
+	if ((rv = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: unable to allocate commands, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
 		return;
 	}
 
-	if ((rv = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size, 
+	if ((rv = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    (caddr_t *)&sc->sc_cmds,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map commands, rv = %d\n",
@@ -398,14 +404,14 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if ((rv = bus_dmamap_create(sc->sc_dmat, size, size, 1, 0, 
+	if ((rv = bus_dmamap_create(sc->sc_dmat, size, size, 1, 0,
 	    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
 		aprint_error("%s: unable to create command DMA map, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
 		return;
 	}
 
-	if ((rv = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_cmds, 
+	if ((rv = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_cmds,
 	    size, NULL, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: unable to load command DMA map, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
@@ -472,6 +478,37 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR |
 	    TWE_CTL_UNMASK_RESP_INTR |
 	    TWE_CTL_ENABLE_INTRS);
+
+	/* sysctl set-up for 3ware cli */
+	if (sysctl_createv(NULL, 0, NULL, NULL,
+				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
+				NULL, NULL, 0, NULL, 0,
+				CTL_HW, CTL_EOL) != 0) {
+		printf("%s: could not create %s sysctl node\n",
+			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name);
+		return;
+	}
+	if (sysctl_createv(NULL, 0, NULL, &node,
+        			0, CTLTYPE_NODE, sc->sc_dv.dv_xname,
+        			SYSCTL_DESCR("twe driver information"),
+        			NULL, 0, NULL, 0,
+				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
+                printf("%s: could not create %s.%s sysctl node\n",
+			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
+			sc->sc_dv.dv_xname);
+		return;
+	}
+	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
+        			0, CTLTYPE_STRING, "driver_version",
+        			SYSCTL_DESCR("twe0 driver version"),
+        			NULL, 0, &twever, 0,
+				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
+				!= 0) {
+                printf("%s: could not create %s.%s.driver_version sysctl\n",
+			sc->sc_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
+			sc->sc_dv.dv_xname);
+		return;
+	}
 }
 
 void
@@ -527,7 +564,7 @@ twe_add_unit(struct twe_softc *sc, int unit)
 	if (unit < 0 || unit >= TWE_MAX_UNITS)
 		return (EINVAL);
 
-	/* Find attached units. */ 
+	/* Find attached units. */
 	rv = twe_param_get(sc, TWE_PARAM_UNITSUMMARY,
 	    TWE_PARAM_UNITSUMMARY_Status, TWE_MAX_UNITS, NULL, &dtp);
 	if (rv != 0) {
@@ -801,7 +838,7 @@ twe_intr(void *arg)
 	/*
 	 * Command interrupts, signalled when the controller can accept more
 	 * commands.  We don't use this; instead, we try to submit commands
-	 * when we receive them, and when other commands have completed. 
+	 * when we receive them, and when other commands have completed.
 	 * Mask it so we don't get another one.
 	 */
 	if ((status & TWE_STS_CMD_INTR) != 0) {
@@ -1101,7 +1138,7 @@ twe_param_get_4(struct twe_softc *sc, int table_id, int param_id,
 
 /*
  * Execute a TWE_OP_GET_PARAM command.  If a callback function is provided,
- * it will be called with generated context when the command has completed. 
+ * it will be called with generated context when the command has completed.
  * If no callback is provided, the command will be executed synchronously
  * and a pointer to a buffer containing the data returned.
  *
@@ -1229,7 +1266,7 @@ done:
 }
 
 /*
- * Execute a TWE_OP_INIT_CONNECTION command.  Return non-zero on error. 
+ * Execute a TWE_OP_INIT_CONNECTION command.  Return non-zero on error.
  * Must be called with interrupts blocked.
  */
 static int
@@ -1374,7 +1411,7 @@ twe_ccb_alloc(struct twe_softc *sc, int flags)
 	struct twe_ccb *ccb;
 	int s;
 
-	s = splbio();	
+	s = splbio();
 	if (__predict_false((flags & TWE_CCB_AEN) != 0)) {
 		/* Use the reserved CCB. */
 		ccb = sc->sc_ccbs;
@@ -1826,7 +1863,7 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			error = EFAULT;
 			goto done;
 		}
-		error = copyout(param->tp_data, tp->tp_data, 
+		error = copyout(param->tp_data, tp->tp_data,
 		    param->tp_param_size);
 		goto done;
 

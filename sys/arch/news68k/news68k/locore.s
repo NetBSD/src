@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.32.2.4 2004/12/18 09:31:25 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.32.2.5 2005/03/04 16:38:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -249,7 +249,7 @@ ASENTRY_NOPROFILE(start)
 
 	RELOC(ctrl_power, %a0);
 	movl	#CTRL_POWER1200,%a0@	| CTRL_POWER port for news1200
-	RELOC(ctrl_led, %a0);
+	RELOC(ctrl_led_phys, %a0);
 	movl	#CTRL_LED1200,%a0@	| CTRL_LED port for news1200
 	jra	Lcom030
 
@@ -297,7 +297,7 @@ Lnot1200:
 
 	RELOC(ctrl_power, %a0);
 	movl	#CTRL_POWER1700,%a0@	| CTRL_POWER port for news1700
-	RELOC(ctrl_led, %a0);
+	RELOC(ctrl_led_phys, %a0);
 	movl	#CTRL_LED1700,%a0@	| CTRL_LED port for news1700
 Lcom030:
 
@@ -429,7 +429,7 @@ Lstploaddone:
 	movc	%d0,%cacr		| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
-#if 1 /* XXX use %tt0 register to map I/O space temporary */
+#if 0 /* XXX use %tt0 register to map I/O space temporary */
 	RELOC(protott0, %a0)
 	movl	#0xe01f8550,%a0@	| use %tt0 (0xe0000000-0xffffffff)
 	.long	0xf0100800		| pmove %a0@,%tt0
@@ -1156,7 +1156,7 @@ Lnocache5:
  * used as break point before printf enabled
  */
 ASENTRY_NOPROFILE(debug_led)
-	RELOC(ctrl_led,%a0)		| assume %a5 still has base address
+	RELOC(ctrl_led_phys,%a0)	| assume %a5 still has base address
 	movl	%d0,%a0@
 
 1:	nop
@@ -1168,7 +1168,7 @@ ASENTRY_NOPROFILE(debug_led)
  * similar to debug_led(), but used after MMU enabled
  */
 ASENTRY_NOPROFILE(debug_led2)
-	movl	_C_LABEL(ctrl_led),%d1
+	movl	_C_LABEL(ctrl_led_phys),%d1
 	subl	_C_LABEL(intiobase_phys),%d1
 	addl	_C_LABEL(intiobase),%d1
 	movl    %d1,%a0
@@ -1253,7 +1253,7 @@ GLOBAL(extiotop_phys)
 GLOBAL(ctrl_power)
 	.long	0		| PA of power control port
 
-GLOBAL(ctrl_led)
+GLOBAL(ctrl_led_phys)
 	.long	0		| PA of LED control port
 
 GLOBAL(cache_ctl)

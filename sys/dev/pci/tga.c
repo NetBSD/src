@@ -1,21 +1,21 @@
-/* $NetBSD: tga.c,v 1.52.2.5 2005/02/04 11:46:41 skrll Exp $ */
+/* $NetBSD: tga.c,v 1.52.2.6 2005/03/04 16:45:26 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.52.2.5 2005/02/04 11:46:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.52.2.6 2005/03/04 16:45:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ tga_mapaddrs(memt, pc, tag, pcisize, dc)
 		panic("tga_mapaddrs: could not map TGA address space");
 	dc->dc_vaddr = (vaddr_t) bus_space_vaddr(memt, dc->dc_memh);
 
-	bus_space_subregion(dc->dc_memt, dc->dc_memh, 
+	bus_space_subregion(dc->dc_memt, dc->dc_memh,
 						TGA_MEM_CREGS, TGA_CREGS_SIZE,
 						&dc->dc_regs);
 }
@@ -283,7 +283,7 @@ tga_init(memt, pc, tag, dc)
 
 	if (dc->dc_tga2)
 		tga2_init(dc);
-	
+
 	switch (TGARREG(dc, TGA_REG_VHCR) & 0x1ff) {		/* XXX */
 	case 0:
 		dc->dc_wid = 8192;
@@ -319,7 +319,7 @@ tga_init(memt, pc, tag, dc)
 	    1 * tgac->tgac_vvbr_units;
 	dc->dc_blanked = 1;
 	tga_unblank(dc);
-	
+
 	/*
 	 * Set all bits in the pixel mask, to enable writes to all pixels.
 	 * It seems that the console firmware clears some of them
@@ -370,16 +370,16 @@ tga_init(memt, pc, tag, dc)
 	dc->dc_rinfo.ri_wsfcookie = cookie;
 
 	rasops_init(rip, 34, 80);
-	
+
 	/* add our accelerated functions */
-	/* XXX shouldn't have to do this; rasops should leave non-NULL 
+	/* XXX shouldn't have to do this; rasops should leave non-NULL
 	 * XXX entries alone.
 	 */
 	dc->dc_rinfo.ri_ops.copyrows = tga_copyrows;
 	dc->dc_rinfo.ri_ops.eraserows = tga_eraserows;
 	dc->dc_rinfo.ri_ops.erasecols = tga_erasecols;
 	dc->dc_rinfo.ri_ops.copycols = tga_copycols;
-	dc->dc_rinfo.ri_ops.putchar = tga_putchar;	
+	dc->dc_rinfo.ri_ops.putchar = tga_putchar;
 
 	tga_stdscreen.nrows = dc->dc_rinfo.ri_rows;
 	tga_stdscreen.ncols = dc->dc_rinfo.ri_cols;
@@ -467,17 +467,17 @@ tgaattach(parent, self, aux)
 
 	sc->sc_dc->dc_ramdac_funcs = sc->sc_dc->dc_tgaconf->ramdac_funcs();
 	if (!sc->sc_dc->dc_tga2) {
-	    if (sc->sc_dc->dc_tgaconf->ramdac_funcs == bt485_funcs) 
-		  sc->sc_dc->dc_ramdac_cookie = 
+	    if (sc->sc_dc->dc_tgaconf->ramdac_funcs == bt485_funcs)
+		  sc->sc_dc->dc_ramdac_cookie =
 			sc->sc_dc->dc_ramdac_funcs->ramdac_register(sc->sc_dc,
 		    tga_sched_update, tga_ramdac_wr, tga_ramdac_rd);
 		else
-		  sc->sc_dc->dc_ramdac_cookie = 
+		  sc->sc_dc->dc_ramdac_cookie =
 			sc->sc_dc->dc_ramdac_funcs->ramdac_register(sc->sc_dc,
 		    tga_sched_update, tga_bt463_wr, tga_bt463_rd);
 	} else {
-		sc->sc_dc->dc_ramdac_cookie = 
-			sc->sc_dc->dc_ramdac_funcs->ramdac_register(sc->sc_dc, 
+		sc->sc_dc->dc_ramdac_cookie =
+			sc->sc_dc->dc_ramdac_funcs->ramdac_register(sc->sc_dc,
 			tga_sched_update, tga2_ramdac_wr, tga2_ramdac_rd);
 
 		/* XXX this is a bit of a hack, setting the dotclock here */
@@ -519,7 +519,7 @@ tgaattach(parent, self, aux)
 	config_interrupts(self, tga_config_interrupts);
 }
 
-static void 
+static void
 tga_config_interrupts (d)
 	struct device *d;
 {
@@ -622,7 +622,7 @@ tga_sched_update(v, f)
 		TGAWREG(dc, TGA_REG_SISR, 0x00000001);
 		TGAREGWB(dc, TGA_REG_SISR, 1);
 	}
-		
+
 	return 0;
 }
 
@@ -644,7 +644,7 @@ tga_intr(v)
 			TGAREGWB(dc, TGA_REG_SISR, 1);
 			/* This was our interrupt, even if we're puzzled as to why
 			 * we got it.  Don't make the interrupt handler think it
-			 * was a stray.  
+			 * was a stray.
 			 */
 			return -1;
 		} else {
@@ -693,7 +693,7 @@ tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = &sc->sc_dc->dc_rinfo; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	sc->sc_dc->dc_rinfo.ri_ops.allocattr(&sc->sc_dc->dc_rinfo, 
+	sc->sc_dc->dc_rinfo.ri_ops.allocattr(&sc->sc_dc->dc_rinfo,
 		0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
@@ -767,7 +767,7 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	}
 	dcp->dc_rinfo.ri_ops.allocattr(&dcp->dc_rinfo, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&tga_stdscreen, &dcp->dc_rinfo, 0, 0, defattr);
-	
+
 	return(0);
 }
 
@@ -1068,9 +1068,9 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 
 	srcb = sy * src->ri_stride + sx * (src->ri_depth/8);
 	dstb = dy * dst->ri_stride + dx * (dst->ri_depth/8);
-	tga_srcb = offset + (sy + src->ri_yorigin) * src->ri_stride + 
+	tga_srcb = offset + (sy + src->ri_yorigin) * src->ri_stride +
 		(sx + src->ri_xorigin) * (src->ri_depth/8);
-	tga_dstb = offset + (dy + dst->ri_yorigin) * dst->ri_stride + 
+	tga_dstb = offset + (dy + dst->ri_yorigin) * dst->ri_stride +
 		(dx + dst->ri_xorigin) * (dst->ri_depth/8);
 
 	if (sy >= dy) {
@@ -1114,7 +1114,7 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 			for (xleft = wb, x = xstart; xleft >= 4*64;
 			     x += 4*64, xleft -= 4*64) {
 
-				/* XXX XXX Eight writes to different addresses should fill 
+				/* XXX XXX Eight writes to different addresses should fill
 				 * XXX XXX up the write buffers on 21064 and 21164 chips,
 				 * XXX XXX but later CPUs might have larger write buffers which
 				 * XXX XXX require further unrolling of this loop, or the
@@ -1161,7 +1161,7 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 			for (xleft = wb, x = xstart; xleft >= 4*64;
 			     x -= 4*64, xleft -= 4*64) {
 
-				/* XXX XXX Eight writes to different addresses should fill 
+				/* XXX XXX Eight writes to different addresses should fill
 				 * XXX XXX up the write buffers on 21064 and 21164 chips,
 				 * XXX XXX but later CPUs might have larger write buffers which
 				 * XXX XXX require further unrolling of this loop, or the
@@ -1231,7 +1231,7 @@ void tga_putchar (c, row, col, uc, attr)
 	 */
 	TGAWREG(dc, TGA_REG_GFGR, ri->ri_devcmap[(attr >> 24) & 15]);
 	TGAWREG(dc, TGA_REG_GBGR, ri->ri_devcmap[(attr >> 16) & 15]);
-	
+
 	/* Set raster operation to "copy"... */
 	if (ri->ri_depth == 8)
 		TGAWREG(dc, TGA_REG_GOPR, 0x3);
@@ -1243,15 +1243,15 @@ void tga_putchar (c, row, col, uc, attr)
 
 	/* Set drawing mode to opaque stipple. */
 	TGAWREG(dc, TGA_REG_GMOR, 0x1);
-	
+
 	/* Insert write barrier before actually sending data */
 	/* XXX Abuses the fact that there is only one write barrier on Alphas */
 	TGAREGWB(dc, TGA_REG_GMOR, 1);
 
 	while(height--) {
 		/* The actual stipple write */
-		*rp = fr[0] | (fr[1] << 8) | (fr[2] << 16) | (fr[3] << 24); 
-						  
+		*rp = fr[0] | (fr[1] << 8) | (fr[2] << 16) | (fr[3] << 24);
+
 		fr += fs;
 		rp = (int32_t *)((caddr_t)rp + ri->ri_stride);
 	}
@@ -1307,7 +1307,7 @@ tga_eraserows(c, row, num, attr)
 
 	/* Set drawing mode to block fill. */
 	TGAWREG(dc, TGA_REG_GMOR, 0x2d);
-	
+
 	/* Insert write barrier before actually sending data */
 	/* XXX Abuses the fact that there is only one write barrier on Alphas */
 	TGAREGWB(dc, TGA_REG_GMOR, 1);
@@ -1319,7 +1319,7 @@ tga_eraserows(c, row, num, attr)
 
 	/* Set grapics mode back to normal. */
 	TGAWREG(dc, TGA_REG_GMOR, 0);
-	
+
 }
 
 static void
@@ -1361,7 +1361,7 @@ long attr;
 
 	/* Set drawing mode to block fill. */
 	TGAWREG(dc, TGA_REG_GMOR, 0x2d);
-	
+
 	/* Insert write barrier before actually sending data */
 	/* XXX Abuses the fact that there is only one write barrier on Alphas */
 	TGAREGWB(dc, TGA_REG_GMOR, 1);
@@ -1403,7 +1403,7 @@ tga2_ramdac_wr(v, btreg, val)
 	if (btreg > BT485_REG_MAX)
 		panic("tga_ramdac_wr: reg %d out of range", btreg);
 
-	bus_space_subregion(dc->dc_memt, dc->dc_memh, TGA2_MEM_RAMDAC + 
+	bus_space_subregion(dc->dc_memt, dc->dc_memh, TGA2_MEM_RAMDAC +
 		(0xe << 12) + (btreg << 8), 4, &ramdac);
 	bus_space_write_4(dc->dc_memt, ramdac, 0, val & 0xff);
 	bus_space_barrier(dc->dc_memt, ramdac, 0, 4, BUS_SPACE_BARRIER_WRITE);
@@ -1417,11 +1417,11 @@ tga_bt463_rd(v, btreg)
 	struct tga_devconfig *dc = v;
 	tga_reg_t rdval;
 
-	/* 
-	 * Strobe CE# (high->low->high) since status and data are latched on 
+	/*
+	 * Strobe CE# (high->low->high) since status and data are latched on
 	 * the falling and rising edges (repsectively) of this active-low signal.
 	 */
-	
+
 	TGAREGWB(dc, TGA_REG_EPSR, 1);
 	TGAWREG(dc, TGA_REG_EPSR, (btreg << 2) | 2 | 1);
 	TGAREGWB(dc, TGA_REG_EPSR, 1);
@@ -1444,12 +1444,12 @@ tga_bt463_wr(v, btreg, val)
 {
 	struct tga_devconfig *dc = v;
 
-	/* 
+	/*
 	 * In spite of the 21030 documentation, to set the MPU bus bits for
 	 * a write, you set them in the upper bits of EPDR, not EPSR.
 	 */
-	
-	/* 
+
+	/*
 	 * Strobe CE# (high->low->high) since status and data are latched on
 	 * the falling and rising edges of this active-low signal.
 	 */
@@ -1493,7 +1493,7 @@ tga2_ramdac_rd(v, btreg)
 	if (btreg > BT485_REG_MAX)
 		panic("tga_ramdac_rd: reg %d out of range", btreg);
 
-	bus_space_subregion(dc->dc_memt, dc->dc_memh, TGA2_MEM_RAMDAC + 
+	bus_space_subregion(dc->dc_memt, dc->dc_memh, TGA2_MEM_RAMDAC +
 		(0xe << 12) + (btreg << 8), 4, &ramdac);
 	retval = bus_space_read_4(dc->dc_memt, ramdac, 0) & 0xff;
 	bus_space_barrier(dc->dc_memt, ramdac, 0, 4, BUS_SPACE_BARRIER_READ);
@@ -1526,19 +1526,19 @@ tga2_init(dc)
 		tga2_ics9110_wr(dc, m->dotclock);
 	}
 #if 0
-	TGAWREG(dc, TGA_REG_VHCR, 
+	TGAWREG(dc, TGA_REG_VHCR,
 	     ((m->hbp / 4) << 21) |
 	     ((m->hsync / 4) << 14) |
 	    (((m->hfp - 4) / 4) << 9) |
 	     ((m->cols + 4) / 4));
 #else
-	TGAWREG(dc, TGA_REG_VHCR, 
+	TGAWREG(dc, TGA_REG_VHCR,
 	     ((m->hbp / 4) << 21) |
 	     ((m->hsync / 4) << 14) |
 	    (((m->hfp) / 4) << 9) |
 	     ((m->cols) / 4));
 #endif
-	TGAWREG(dc, TGA_REG_VVCR, 
+	TGAWREG(dc, TGA_REG_VVCR,
 	    (m->vbp << 22) |
 	    (m->vsync << 16) |
 	    (m->vfp << 11) |
@@ -1610,14 +1610,14 @@ tga2_ics9110_wr(dc, dotclock)
 
 	for (i=24; i>0; i--) {
 		u_int32_t       writeval;
-                
+
 		writeval = valU & 0x1;
-		if (i == 1)  
-			writeval |= 0x2; 
+		if (i == 1)
+			writeval |= 0x2;
 		valU >>= 1;
 		bus_space_write_4(dc->dc_memt, clock, 0, writeval);
 		bus_space_barrier(dc->dc_memt, clock, 0, 4, BUS_SPACE_BARRIER_WRITE);
-        }       
+        }
 	bus_space_subregion(dc->dc_memt, dc->dc_memh, TGA2_MEM_EXTDEV +
 	    TGA2_MEM_CLOCK + (0xe << 12) + (0x1 << 11) + (0x1 << 11), 4,
 		&clock); /* XXX */

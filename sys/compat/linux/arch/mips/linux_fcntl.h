@@ -1,4 +1,4 @@
-/* $NetBSD: linux_fcntl.h,v 1.2 2001/09/30 16:04:04 manu Exp $ */
+/* $NetBSD: linux_fcntl.h,v 1.2.18.1 2005/03/04 16:39:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,16 +43,16 @@
 #ifndef _MIPS_LINUX_FCNTL_H
 #define _MIPS_LINUX_FCNTL_H
 
-/* 
+/*
  * read/write mode for open(2) are defined in common/linux_fcntl.h
  */
 
-/* 
- * flags used in open(2) 
- * From Linux's include/asm-mips/fcntl.h 
+/*
+ * flags used in open(2)
+ * From Linux's include/asm-mips/fcntl.h
  */
 #define LINUX_O_CREAT		0x0100
-#define LINUX_O_EXCL		0x0400	
+#define LINUX_O_EXCL		0x0400
 #define LINUX_O_NOCTTY		0x0800
 #define LINUX_O_TRUNC		0x0200
 #define LINUX_O_APPEND		0x0008
@@ -62,9 +62,9 @@
 
 #define LINUX_FASYNC		0x1000
 
-/* 
- * fcntl(2) operations 
- * From Linux's include/asm-mips/fcntl.h 
+/*
+ * fcntl(2) operations
+ * From Linux's include/asm-mips/fcntl.h
  */
 #define LINUX_F_DUPFD		0
 #define LINUX_F_GETFD		1
@@ -84,7 +84,7 @@
 #define LINUX_LOCK_EX		4  /* F_EXLCK in Linux, and comment "or 3 " */
 #define LINUX_LOCK_SH		8  /* F_SHLCK in Linux, and comment "or 4'  */
 
-/* 
+/*
  * From Linux's include/asm-mips64/fcntl.h
  */
 #define LINUX_F_GETLK64		33

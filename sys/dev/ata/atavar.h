@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.26.6.7 2005/02/04 11:45:22 skrll Exp $	*/
+/*	$NetBSD: atavar.h,v 1.26.6.8 2005/03/04 16:41:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -50,7 +50,7 @@
  */
 struct ata_xfer {
 	__volatile u_int c_flags;	/* command state flags */
-	
+
 	/* Channel and drive that are to process the request. */
 	struct ata_channel *c_chp;
 	int	c_drive;
@@ -126,10 +126,10 @@ struct ata_drive_datas {
 
 #define	DRIVE_ATA	0x0001
 #define	DRIVE_ATAPI	0x0002
-#define	DRIVE_OLD	0x0004 
+#define	DRIVE_OLD	0x0004
 #define	DRIVE		(DRIVE_ATA|DRIVE_ATAPI|DRIVE_OLD)
 #define	DRIVE_CAP32	0x0008
-#define	DRIVE_DMA	0x0010 
+#define	DRIVE_DMA	0x0010
 #define	DRIVE_UDMA	0x0020
 #define	DRIVE_MODE	0x0040	/* the drive reported its mode */
 #define	DRIVE_RESET	0x0080	/* reset the drive state at next xfer */
@@ -193,7 +193,7 @@ struct ata_drive_datas {
  */
 struct ata_bio {
 	volatile u_int16_t flags;/* cmd flags */
-#define	ATA_NOSLEEP	0x0001	/* Can't sleep */   
+#define	ATA_NOSLEEP	0x0001	/* Can't sleep */
 #define	ATA_POLL	0x0002	/* poll for completion */
 #define	ATA_ITSDONE	0x0004	/* the transfer is as done as it gets */
 #define	ATA_SINGLE	0x0008	/* transfer must be done in singlesector mode */
@@ -222,7 +222,7 @@ struct ata_bio {
 };
 
 /*
- * ATA/ATAPI commands description 
+ * ATA/ATAPI commands description
  *
  * This structure defines the interface between the ATA/ATAPI device driver
  * and the controller for short commands. It contains the command's parameter,

@@ -1,7 +1,7 @@
-/*	$NetBSD: aic7xxx_seeprom.c,v 1.8.2.3 2004/09/21 13:27:52 skrll Exp $	*/
+/*	$NetBSD: aic7xxx_seeprom.c,v 1.8.2.4 2005/03/04 16:41:26 skrll Exp $	*/
 
-/*       
- * Product specific probe and attach routines for: 
+/*
+ * Product specific probe and attach routines for:
  *      3940, 2940, aic7895, aic7890, aic7880,
  *      aic7870, aic7860 and aic7850 SCSI controllers
  *
@@ -45,14 +45,14 @@
  * Jason Thorpe <thorpej@NetBSD.org>. This version was split off
  * from the FreeBSD source file aic7xxx_pci.c by Frank van der Linden
  * <fvdl@NetBSD.org>
- * 
- * $Id: aic7xxx_seeprom.c,v 1.8.2.3 2004/09/21 13:27:52 skrll Exp $
+ *
+ * $Id: aic7xxx_seeprom.c,v 1.8.2.4 2005/03/04 16:41:26 skrll Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_pci.c,v 1.22 2003/01/20 20:44:55 gibbs Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.8.2.3 2004/09/21 13:27:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.8.2.4 2005/03/04 16:41:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +105,9 @@ ahc_check_extport(struct ahc_softc *ahc, u_int *sxfrctl1)
 	sd.sd_tag = ahc->tag;
 	sd.sd_bsh = ahc->bsh;
 	sd.sd_regsize = 1;
-	sd.sd_control_offset = SEECTL;		
-	sd.sd_status_offset = SEECTL;		
-	sd.sd_dataout_offset = SEECTL;		
+	sd.sd_control_offset = SEECTL;
+	sd.sd_status_offset = SEECTL;
+	sd.sd_dataout_offset = SEECTL;
 	sc = ahc->seep_config;
 
 	/*
@@ -131,7 +131,7 @@ ahc_check_extport(struct ahc_softc *ahc, u_int *sxfrctl1)
 	have_seeprom = ahc_acquire_seeprom(ahc, &sd);
 	if (have_seeprom) {
 
-		if (bootverbose) 
+		if (bootverbose)
 			printf("%s: Reading SEEPROM...", ahc_name(ahc));
 
 		for (;;) {
@@ -291,7 +291,7 @@ ahc_parse_pci_eeprom(struct ahc_softc *ahc, struct seeprom_config *sc)
 
 			if (sc->device_flags[i] & CFSYNCH)
 				offset = MAX_OFFSET_ULTRA2;
-			else 
+			else
 				offset = 0;
 			ahc_outb(ahc, TARG_OFFSET + i, offset);
 
@@ -362,15 +362,15 @@ configure_termination(struct ahc_softc *ahc,
 		      u_int *sxfrctl1)
 {
 	uint8_t brddat;
-	
+
 	brddat = 0;
 
 	/*
 	 * Update the settings in sxfrctl1 to match the
-	 * termination settings 
+	 * termination settings
 	 */
 	*sxfrctl1 = 0;
-	
+
 	/*
 	 * SEECS must be on for the GALS to latch
 	 * the data properly.  Be sure to leave MS
@@ -545,7 +545,7 @@ configure_termination(struct ahc_softc *ahc,
 				       "termination Enabled\n",
 				       ahc_name(ahc));
 		}
-		
+
 		write_brdctl(ahc, brddat);
 
 	} else {
@@ -663,7 +663,7 @@ aic785X_cable_detect(struct ahc_softc *ahc, int *internal50_present,
 
 	*eeprom_present = (ahc_inb(ahc, SPIOCAP) & EEPROM) ? 1 : 0;
 }
-	
+
 int
 ahc_acquire_seeprom(struct ahc_softc *ahc, struct seeprom_descriptor *sd)
 {
@@ -686,7 +686,7 @@ ahc_acquire_seeprom(struct ahc_softc *ahc, struct seeprom_descriptor *sd)
 		ahc_delay(1000);  /* delay 1 msec */
 	}
 	if ((SEEPROM_STATUS_INB(sd) & sd->sd_RDY) == 0) {
-		SEEPROM_OUTB(sd, 0); 
+		SEEPROM_OUTB(sd, 0);
 		return (0);
 	}
 	return(1);

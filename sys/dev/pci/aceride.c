@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.7.2.5 2004/09/21 13:31:00 skrll Exp $	*/
+/*	$NetBSD: aceride.c,v 1.7.2.6 2005/03/04 16:45:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -20,7 +20,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -116,7 +116,7 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		}
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
-	    
+
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 	sc->sc_wdcdev.sc_atac.atac_set_modes = acer_setup_channel;
@@ -181,7 +181,7 @@ acer_setup_channel(struct ata_channel *chp)
 
 	idedma_ctl = 0;
 	acer_fifo_udma = pci_conf_read(sc->sc_pc, sc->sc_tag, ACER_FTH_UDMA);
-	ATADEBUG_PRINT(("acer_setup_channel: old fifo/udma reg 0x%x\n", 
+	ATADEBUG_PRINT(("acer_setup_channel: old fifo/udma reg 0x%x\n",
 	    acer_fifo_udma), DEBUG_PROBE);
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -226,7 +226,7 @@ acer_setup_channel(struct ata_channel *chp)
 			drvp->drive_flags &= ~DRIVE_DMA;
 			splx(s);
 			acer_fifo_udma |= ACER_UDMA_EN(chp->ch_channel, drive);
-			acer_fifo_udma |= 
+			acer_fifo_udma |=
 			    ACER_UDMA_TIM(chp->ch_channel, drive,
 				acer_udma[drvp->UDMA_mode]);
 			/* XXX disable if one drive < UDMA3 ? */
@@ -271,7 +271,7 @@ acer_pci_intr(void *arg)
 	struct pciide_softc *sc = arg;
 	struct pciide_channel *cp;
 	struct ata_channel *wdc_cp;
-	int i, rv, crv; 
+	int i, rv, crv;
 	u_int32_t chids;
 
 	rv = 0;

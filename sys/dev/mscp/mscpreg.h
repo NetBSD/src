@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpreg.h,v 1.4.38.3 2004/09/21 13:30:59 skrll Exp $	*/
+/*	$NetBSD: mscpreg.h,v 1.4.38.4 2005/03/04 16:44:58 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -146,12 +146,12 @@ struct	mscp_pack {
 
 #define STEP0MASK	(ALLSTEPS | MP_NV)
 
-#define STEP1MASK	(ALLSTEPS | MP_IE | MP_NCNRMASK) 
+#define STEP1MASK	(ALLSTEPS | MP_IE | MP_NCNRMASK)
 #define STEP1GOOD	(MP_STEP2 | MP_IE | (NCMDL2 << 3) | NRSPL2)
- 
+
 #define STEP2MASK	(ALLSTEPS | MP_IE | MP_IVECMASK)
 #define STEP2GOOD(iv)	(MP_STEP3 | MP_IE | (iv))
- 
+
 #define STEP3MASK	ALLSTEPS
 #define STEP3GOOD	MP_STEP4
 

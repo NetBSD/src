@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.10.2.3 2004/09/21 13:27:57 skrll Exp $	*/
+/*	$NetBSD: icp.c,v 1.10.2.4 2005/03/04 16:41:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.10.2.3 2004/09/21 13:27:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.10.2.4 2005/03/04 16:41:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 		for (j = 0; j < cdev_cnt && j < ICP_MAX_HDRIVES; j++) {
 			if (icp->icp_cdr[j].cd_size == 0)
 				continue;
-		
+
 			icpa.icpa_unit = j;
 
 			ldesc->len = 1;
@@ -685,7 +685,7 @@ icp_async_event(struct icp_softc *icp, int service)
 			icp->icp_evt.eu.async.status = icp->icp_status;
 			icp->icp_evt.eu.async.info = icp->icp_info;
 			/* XXXJRT FIX THIS */
-			*(u_int32_t *) icp->icp_evt.eu.async.scsi_coord = 
+			*(u_int32_t *) icp->icp_evt.eu.async.scsi_coord =
 			    icp->icp_info2;
 		}
 		icp_store_event(icp, GDT_ES_ASYNC, service, &icp->icp_evt);

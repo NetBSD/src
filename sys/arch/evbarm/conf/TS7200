@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.7.4.5 2005/02/15 21:32:32 skrll Exp $
+#	$NetBSD: TS7200,v 1.7.4.6 2005/03/04 16:38:14 skrll Exp $
 #
 #	GENERIC -- Generic kernel
 #
@@ -45,7 +45,7 @@ file-system	UNION		# union file system
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
-options 	FFS_SNAPSHOT	# ffs snapshots
+#options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.12.2.5 2004/09/21 13:31:00 skrll Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.12.2.6 2005/03/04 16:44:58 skrll Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.12.2.5 2004/09/21 13:31:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.12.2.6 2005/03/04 16:44:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.12.2.5 2004/09/21 13:31:00 skrll Exp
 
 struct wdc_ofisa_softc {
 	struct wdc_softc sc_wdcdev;
-	struct ata_channel *sc_chanlist[1];	
+	struct ata_channel *sc_chanlist[1];
 	struct ata_channel sc_channel;
 	struct ata_queue sc_chqueue;
 	struct wdc_regs wdc_regs;

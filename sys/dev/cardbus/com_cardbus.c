@@ -1,19 +1,19 @@
-/* $NetBSD: com_cardbus.c,v 1.9.6.3 2004/09/21 13:27:25 skrll Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.9.6.4 2005/03/04 16:41:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
  *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  *
  * 3. Neither the name of author nor the names of any contributors may
  *    be used to endorse or promote products derived from this
@@ -32,7 +32,7 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* A driver for CardBus based serial devices. 
+/* A driver for CardBus based serial devices.
 
    If the CardBus device only has one BAR (that is not also the CIS
    BAR) listed in the CIS, it is assumed to be the one to use. For
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.9.6.3 2004/09/21 13:27:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.9.6.4 2005/03/04 16:41:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ find_csdev(struct cardbus_attach_args *ca)
 	struct csdev *cp;
 
 	for(cp = csdevs; cp < csdevs + ncsdevs; cp++)
-		if(cp->vendor == CARDBUS_VENDOR(ca->ca_id) && 
+		if(cp->vendor == CARDBUS_VENDOR(ca->ca_id) &&
 		   cp->product == CARDBUS_PRODUCT(ca->ca_id))
 			return cp;
 	return NULL;
@@ -159,7 +159,7 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 		if(ca->ca_cis.bar[i].size == 0)
 			continue;
 		/* ignore the CIS BAR */
-		if(CARDBUS_CIS_ASI_BAR(cis_ptr) == 
+		if(CARDBUS_CIS_ASI_BAR(cis_ptr) ==
 		   CARDBUS_CIS_ASI_BAR(ca->ca_cis.bar[i].flags))
 			continue;
 		if(index != -1)
@@ -179,9 +179,9 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 
   multi_bar:
 	printf(": there are more than one possible base\n");
-	
+
 	printf("%s: address for this device, "
-	       "please report the following information\n", 
+	       "please report the following information\n",
 	       DEVNAME(csc));
 	printf("%s: vendor 0x%x product 0x%x\n", DEVNAME(csc),
 	       CARDBUS_VENDOR(ca->ca_id), CARDBUS_PRODUCT(ca->ca_id));
@@ -190,12 +190,12 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 		if(ca->ca_cis.bar[i].size == 0)
 			continue;
 		/* ignore the CIS BAR */
-		if(CARDBUS_CIS_ASI_BAR(cis_ptr) == 
+		if(CARDBUS_CIS_ASI_BAR(cis_ptr) ==
 		   CARDBUS_CIS_ASI_BAR(ca->ca_cis.bar[i].flags))
 			continue;
-		printf("%s: base address %x type %s size %x\n", 
+		printf("%s: base address %x type %s size %x\n",
 		       DEVNAME(csc),
-		       CARDBUS_CIS_ASI_BAR(ca->ca_cis.bar[i].flags), 
+		       CARDBUS_CIS_ASI_BAR(ca->ca_cis.bar[i].flags),
 		       (ca->ca_cis.bar[i].flags & 0x10) ? "i/o" : "mem",
 		       ca->ca_cis.bar[i].size);
 	}
@@ -214,14 +214,14 @@ com_cardbus_attach (struct device *parent, struct device *self, void *aux)
 
 	if(gofigure(ca, csc) != 0)
 		return;
-    
-	if(Cardbus_mapreg_map(ca->ca_ct, 
+
+	if(Cardbus_mapreg_map(ca->ca_ct,
 			      csc->cc_reg,
-			      csc->cc_type, 
-			      0, 
-			      &sc->sc_iot, 
-			      &sc->sc_ioh, 
-			      &csc->cc_addr, 
+			      csc->cc_type,
+			      0,
+			      &sc->sc_iot,
+			      &sc->sc_ioh,
+			      &csc->cc_addr,
 			      &csc->cc_size) != 0) {
 		printf("failed to map memory");
 		return;
@@ -252,7 +252,7 @@ com_cardbus_attach (struct device *parent, struct device *self, void *aux)
 	}
 
 	com_cardbus_setup(csc);
-    
+
 	com_attach_subr(sc);
 
 	Cardbus_function_disable(csc->cc_ct);
@@ -294,7 +294,7 @@ static int
 com_cardbus_enable(struct com_softc *sc)
 {
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
-	struct cardbus_softc *psc = 
+	struct cardbus_softc *psc =
 		(struct cardbus_softc *)sc->sc_dev.dv_parent;
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
@@ -304,15 +304,15 @@ com_cardbus_enable(struct com_softc *sc)
 	com_cardbus_setup(csc);
 
 	/* establish the interrupt. */
-	csc->cc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline, 
+	csc->cc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline,
 					    IPL_SERIAL, comintr, sc);
 	if (csc->cc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n", 
+		printf("%s: couldn't establish interrupt\n",
 		       DEVNAME(csc));
 		return 1;
 	}
 
-	printf("%s: interrupting at irq %d\n", 
+	printf("%s: interrupting at irq %d\n",
 	       DEVNAME(csc), psc->sc_intrline);
 
 	return 0;
@@ -320,9 +320,9 @@ com_cardbus_enable(struct com_softc *sc)
 
 static void
 com_cardbus_disable(struct com_softc *sc)
-{ 
+{
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
-	struct cardbus_softc *psc = 
+	struct cardbus_softc *psc =
 		(struct cardbus_softc *)sc->sc_dev.dv_parent;
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
@@ -346,8 +346,8 @@ com_cardbus_detach(struct device *self, int flags)
 
 	if (csc->cc_ih != NULL)
 		cardbus_intr_disestablish(psc->sc_cc, psc->sc_cf, csc->cc_ih);
-    
-	Cardbus_mapreg_unmap(csc->cc_ct, csc->cc_reg, sc->sc_iot, sc->sc_ioh, 
+
+	Cardbus_mapreg_unmap(csc->cc_ct, csc->cc_reg, sc->sc_iot, sc->sc_ioh,
 			     csc->cc_size);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.60.2.5 2005/01/24 08:59:39 skrll Exp $	*/
+/*	$NetBSD: ite.c,v 1.60.2.6 2005/03/04 16:38:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60.2.5 2005/01/24 08:59:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60.2.6 2005/03/04 16:38:26 skrll Exp $");
 
 #include "hil.h"
 
@@ -144,6 +144,8 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60.2.5 2005/01/24 08:59:39 skrll Exp $");
 #include <hp300/dev/itevar.h>
 #include <hp300/dev/kbdmap.h>
 
+#include "ioconf.h"
+
 #define set_attr(ip, attr)	((ip)->attribute |= (attr))
 #define clr_attr(ip, attr)	((ip)->attribute &= ~(attr))
 
@@ -163,8 +165,6 @@ CFATTACH_DECL(ite, sizeof(struct ite_softc),
 
 /* XXX this has always been global, but shouldn't be */
 static struct kbdmap *ite_km;
-
-extern struct cfdriver ite_cd;
 
 static dev_type_open(iteopen);
 static dev_type_close(iteclose);

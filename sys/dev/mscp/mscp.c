@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.19.2.4 2004/11/02 07:51:55 skrll Exp $	*/
+/*	$NetBSD: mscp.c,v 1.19.2.5 2005/03/04 16:44:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.19.2.4 2004/11/02 07:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.19.2.5 2005/03/04 16:44:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -423,7 +423,7 @@ out:
 		mxi->mxi_inuse = 0;
 		mi->mi_mxiuse |= (1 << mp->mscp_cmdref);
 		break;
-		
+
 	case M_OP_REPLACE | M_OP_END:
 		/*
 		 * A replace operation finished.  Just let the driver

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_localq.c,v 1.4.16.3 2004/09/21 13:11:19 skrll Exp $	*/
+/*	$NetBSD: altq_localq.c,v 1.4.16.4 2005/03/04 16:38:00 skrll Exp $	*/
 /*	$KAME: altq_localq.c,v 1.4 2001/08/16 11:28:25 kjc Exp $	*/
 /*
  * a skeleton file for implementing a new queueing discipline.
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.4.16.3 2004/09/21 13:11:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.4.16.4 2005/03/04 16:38:00 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -59,7 +59,7 @@ localqioctl(dev, cmd, addr, flag, l)
 	struct lwp *l;
 {
 	int error = 0;
-	
+
 	return error;
 }
 

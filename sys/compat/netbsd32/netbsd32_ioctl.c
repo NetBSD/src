@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.20.2.4 2004/09/21 13:25:53 skrll Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.20.2.5 2005/03/04 16:40:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.20.2.4 2004/09/21 13:25:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.20.2.5 2005/03/04 16:40:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,7 +374,7 @@ netbsd32_ioctl(l, v, retval)
 
 	/*
 	 * we need to translate some commands (_IOW) before calling sys_ioctl,
-	 * some after (_IOR), and some both (_IOWR). 
+	 * some after (_IOR), and some both (_IOWR).
 	 */
 #if 0
 	{

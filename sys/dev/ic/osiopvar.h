@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.3.10.4 2005/01/17 19:30:40 skrll Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.3.10.5 2005/03/04 16:41:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -68,8 +68,8 @@
 #define osiop_read_4(sc, reg)					\
     bus_space_read_4((sc)->sc_bst, (sc)->sc_reg, reg)
 #define osiop_write_4(sc, reg, val)				\
-    bus_space_write_4((sc)->sc_bst, (sc)->sc_reg, reg, val)     
-        
+    bus_space_write_4((sc)->sc_bst, (sc)->sc_reg, reg, val)
+
 /*
  * The largest single request will be MAXPHYS bytes which will require
  * at most MAXPHYS/NBPG+1 chain elements to describe, i.e. if none of
@@ -233,6 +233,7 @@ struct osiop_softc {
 	uint8_t sc_sstat1;
 	uint8_t sc_istat;
 	uint8_t sc_dcntl;
+	uint8_t sc_ctest4;
 	uint8_t sc_ctest7;
 	uint8_t sc_sien;
 	uint8_t sc_dien;

@@ -1,4 +1,4 @@
-/* $NetBSD: al2210reg.h,v 1.1.2.4 2004/09/21 13:27:52 skrll Exp $ */
+/* $NetBSD: al2210reg.h,v 1.1.2.5 2005/03/04 16:41:26 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 David Young.  All rights reserved.
@@ -110,7 +110,7 @@
 /* AGC detector control, 1: enable, 0: disable. */
 #define		AL2210_RECEIVER_AGCDETENA	BIT(11)
 /* Rx filter bandwidth select */
-#define		AL2210_RECEIVER_BW_SEL_MASK	BITS(4, 2)	
+#define		AL2210_RECEIVER_BW_SEL_MASK	BITS(4, 2)
 #define		AL2210_RECEIVER_BW_SEL_9_5MHZ	0
 #define		AL2210_RECEIVER_BW_SEL_9MHZ	1
 #define		AL2210_RECEIVER_BW_SEL_8_5MHZ	2

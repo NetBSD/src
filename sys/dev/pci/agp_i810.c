@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.16.2.5 2005/02/04 11:46:37 skrll Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.16.2.6 2005/03/04 16:45:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.16.2.5 2005/02/04 11:46:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.16.2.6 2005/03/04 16:45:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 		gatt->ag_size = gatt->ag_entries * sizeof(u_int32_t);
 		memset(gatt->ag_virtual, 0, gatt->ag_size);
-		
+
 		agp_flush_cache();
 		/* Install the GATT. */
 		WRITE4(AGP_I810_PGTBL_CTL, gatt->ag_physical | 1);
@@ -241,10 +241,10 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 		case AGP_I830_GCC1_GMS_STOLEN_512:
 			isc->stolen = (512 - 132) * 1024 / 4096;
 			break;
-		case AGP_I830_GCC1_GMS_STOLEN_1024: 
+		case AGP_I830_GCC1_GMS_STOLEN_1024:
 			isc->stolen = (1024 - 132) * 1024 / 4096;
 			break;
-		case AGP_I830_GCC1_GMS_STOLEN_8192: 
+		case AGP_I830_GCC1_GMS_STOLEN_8192:
 			isc->stolen = (8192 - 132) * 1024 / 4096;
 			break;
 		default:

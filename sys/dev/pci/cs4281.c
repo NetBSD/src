@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.16.2.7 2005/01/17 19:31:24 skrll Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.16.2.8 2005/03/04 16:45:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16.2.7 2005/01/17 19:31:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.16.2.8 2005/03/04 16:45:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1144,7 +1144,7 @@ cs4281_init(struct cs428x_softc *sc, int init)
 #endif
 
 	/* disable Sound Blaster Pro emulation */
-	/* XXX: 
+	/* XXX:
 	 * Cannot set since the documents does not describe which bit is
 	 * correspond to SSCR_SB. Since the reset value of SSCR is 0,
 	 * we can ignore it.*/

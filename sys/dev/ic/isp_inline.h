@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.22.6.3 2004/09/21 13:27:59 skrll Exp $ */
+/* $NetBSD: isp_inline.h,v 1.22.6.4 2005/03/04 16:41:29 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -760,7 +760,7 @@ isp_put_sns_request(struct ispsoftc *isp, sns_screq_t *src, sns_screq_t *dst)
 	for (i = 0; i < nw; i++) {
 		ISP_IOXPUT_16(isp, src->snscb_data[i], &dst->snscb_data[i]);
 	}
-	
+
 }
 
 static INLINE void

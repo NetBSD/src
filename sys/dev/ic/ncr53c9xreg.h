@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.12.2.3 2004/09/21 13:28:05 skrll Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.12.2.4 2005/03/04 16:41:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -201,7 +201,7 @@
 /*
    The following registers are only on the ESP406/FAS408.  The
    documentation refers to them as "Control Register Set #1".
-   These are the registers that are visible when bit 7 of 
+   These are the registers that are visible when bit 7 of
    register 0x0d is set.  This bit is common to both register sets.
 */
 
@@ -269,7 +269,7 @@
 
 /*
  * FAS366
- */ 
+ */
 #define NCR_RCL		NCR_TCH	/* Recommand counter low */
 #define NCR_RCH		0xf	/* Recommand counter high */
 #define NCR_UID		NCR_RCL	/* fas366 part-uniq id */

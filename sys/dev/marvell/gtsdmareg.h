@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsdmareg.h,v 1.1.2.3 2004/09/21 13:30:17 skrll Exp $	*/
+/*	$NetBSD: gtsdmareg.h,v 1.1.2.4 2005/03/04 16:43:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
 #define _GTSDMAREG_H
 
 #ifndef BIT
-#define BIT(bitno)          (1U << (bitno))      
+#define BIT(bitno)          (1U << (bitno))
 #endif
 #ifndef BITS
 #define BITS(hi, lo)        ((~((~0) << ((hi) + 1))) & ((~0) << (lo)))
@@ -125,7 +125,7 @@
 #define SDMA_INTR_RESb		BITS(31,12)
 #define SDMA_INTR_RES           (SDMA_INTR_RESa|SDMA_INTR_RESb)
 #define SDMA_U_INTR_MASK(u)     U__(BITS(3,0),u)
-					 
+
 
 /*******************************************************************************
  *

@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.3.4.5 2004/10/19 15:56:59 skrll Exp $ */
+/* $NetBSD: if_skvar.h,v 1.3.4.6 2005/03/04 16:45:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ struct sk_chain {
  * chosen to make the total struct size an even power of two. It's
  * critical that no TxCB be split across a page boundary since
  * no attempt is made to allocate physically contiguous memory.
- * 
+ *
  */
 #define SK_NTXSEG      30
 

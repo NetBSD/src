@@ -1,4 +1,4 @@
-#	$NetBSD: majors.shark,v 1.4.2.4 2005/01/17 19:30:19 skrll Exp $
+#	$NetBSD: majors.shark,v 1.4.2.5 2005/03/04 16:39:10 skrll Exp $
 #
 # Device majors for shark
 #
@@ -50,6 +50,7 @@ device-major	vcoda		char 59			vcoda
 device-major	wsdisplay	char 60			wsdisplay
 device-major	wskbd		char 61			wskbd
 device-major	wsmouse		char 62			wsmouse
+device-major	wsfont		char 63			wsfont
 
 device-major	raid		char 71  block 71	raid
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.10.2.7 2004/11/12 16:24:02 skrll Exp $ */
+/*	$NetBSD: compat_file.c,v 1.10.2.8 2005/03/04 16:39:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.10.2.7 2004/11/12 16:24:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.10.2.8 2005/03/04 16:39:22 skrll Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -460,7 +460,7 @@ bsd_sys_bind(l, v, retval)
 	struct sockaddr_un sun;
 	struct sockaddr_un *usun;
 	const char *name;
-	caddr_t sg; 
+	caddr_t sg;
 	int error;
 	extern struct domain unixdomain;
 	char namebuf[sizeof(sun.sun_path) + 1];
@@ -485,7 +485,7 @@ bsd_sys_bind(l, v, retval)
 
 	(void)strncpy(namebuf, sun.sun_path, sizeof(namebuf));
 	namebuf[sizeof(namebuf) - 1] = '\0';
-	if ((error = emul_find(l, NULL, p->p_emul->e_path, 
+	if ((error = emul_find(l, NULL, p->p_emul->e_path,
 	    namebuf, &name, CHECK_ALT_FL_CREAT)) != 0)
 		return error;
 
@@ -496,7 +496,7 @@ bsd_sys_bind(l, v, retval)
 	if (error)
 		return error;
 
-	/* 
+	/*
 	 * Rebuild a new struct sockaddr_un and store it in userspace.
 	 */
 	sg = stackgap_init(p, 0);
@@ -529,7 +529,7 @@ bsd_sys_connect(l, v, retval)
 	struct sockaddr_un sun;
 	struct sockaddr_un *usun;
 	const char *name;
-	caddr_t sg; 
+	caddr_t sg;
 	int error;
 	extern struct domain unixdomain;
 	char namebuf[sizeof(sun.sun_path) + 1];
@@ -565,7 +565,7 @@ bsd_sys_connect(l, v, retval)
 	if (error)
 		return sys_connect(l, uap, retval);
 
-	/* 
+	/*
 	 * Rebuild a new struct sockaddr_un and store it in userspace.
 	 */
 	sg = stackgap_init(p, 0);

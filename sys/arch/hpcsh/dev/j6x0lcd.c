@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.3.2.4 2004/09/21 13:16:24 skrll Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.3.2.5 2005/03/04 16:38:36 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,14 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.3.2.4 2004/09/21 13:16:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.3.2.5 2005/03/04 16:38:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
-#include <sys/callout.h>
 #ifdef GPROF
 #include <sys/gmon.h>
 #endif
@@ -172,7 +170,7 @@ j6x0lcd_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t bcr, bdr;
 	uint8_t dcr, ddr;
 
-	/* 
+	/*
 	 * Brightness is controlled by DAC channel 0.
 	 */
 	dcr = DAC_(CR);
@@ -218,24 +216,24 @@ j6x0lcd_attach(struct device *parent, struct device *self, void *aux)
 
 
 	/* LCD brightness hooks */
-        config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_BRIGHTNESS_MAX,
+	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_BRIGHTNESS_MAX,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
-        config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_BRIGHTNESS,
+	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_BRIGHTNESS,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
-        config_hook(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS,
+	config_hook(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
 
 	/* LCD contrast hooks */
-        config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_CONTRAST_MAX,
+	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_CONTRAST_MAX,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
-        config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_CONTRAST,
+	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_CONTRAST,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
-        config_hook(CONFIG_HOOK_SET, CONFIG_HOOK_CONTRAST,
+	config_hook(CONFIG_HOOK_SET, CONFIG_HOOK_CONTRAST,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
 
@@ -315,9 +313,9 @@ j6x0lcd_param(ctx, type, id, msg)
 
 static int
 j6x0lcd_power(ctx, type, id, msg)
-	void *ctx; 
-	int type; 
-	long id; 
+	void *ctx;
+	int type;
+	long id;
 	void *msg;
 {
 	int on;

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.20.2.7 2005/02/15 21:33:01 skrll Exp $
+# $NetBSD: INSTALL,v 1.20.2.8 2005/03/04 16:39:13 skrll Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -80,7 +80,7 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-#options 	FFS_SNAPSHOT	# ffs snapshots
+options 	FFS_NO_SNAPSHOT	# ffs snapshots
 
 # Networking options
 options 	INET		# IP prototol stack support

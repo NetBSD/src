@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.8.6.3 2005/02/04 11:46:09 skrll Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.8.6.4 2005/03/04 16:43:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.8.6.3 2005/02/04 11:46:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.8.6.4 2005/03/04 16:43:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,19 +407,19 @@ we_params(asict, asich, typep, memsizep, is16bitp, is790p)
 
 	type = bus_space_read_1(asict, asich, WE_CARD_ID);
 	switch (type) {
-	case WE_TYPE_WD8003S: 
-		typestr = "WD8003S"; 
+	case WE_TYPE_WD8003S:
+		typestr = "WD8003S";
 		break;
 	case WE_TYPE_WD8003E:
 		typestr = "WD8003E";
 		break;
-	case WE_TYPE_WD8003EB: 
+	case WE_TYPE_WD8003EB:
 		typestr = "WD8003EB";
 		break;
 	case WE_TYPE_WD8003W:
 		typestr = "WD8003W";
 		break;
-	case WE_TYPE_WD8013EBT: 
+	case WE_TYPE_WD8013EBT:
 		typestr = "WD8013EBT";
 		memsize = 16384;
 		is16bit = 1;

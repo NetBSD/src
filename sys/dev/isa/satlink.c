@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.22.2.3 2005/02/04 11:46:10 skrll Exp $	*/
+/*	$NetBSD: satlink.c,v 1.22.2.4 2005/03/04 16:43:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.22.2.3 2005/02/04 11:46:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.22.2.4 2005/03/04 16:43:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,8 +274,8 @@ satlinkopen(dev, flags, fmt, p)
 		    SATLINK_CMD_RESET);
 
 	/* Reset the ring buffer, and start the DMA loop. */
-	sc->sc_uptr = 0; 
-	sc->sc_sptr = 0; 
+	sc->sc_uptr = 0;
+	sc->sc_sptr = 0;
 	sc->sc_lastresid = sc->sc_bufsize;
 	memset(sc->sc_buf, 0, sc->sc_bufsize);
 	error = isa_dmastart(sc->sc_ic, sc->sc_drq, sc->sc_buf,

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 2003/01/18 08:49:22 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.38.2.1 2005/03/04 16:40:42 skrll Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -273,7 +273,7 @@
 			    int len); }
 166	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
 			    int len); }
-167	UNIMPL 
+167	UNIMPL
 168	STD		{ int ultrix_sys_quotactl(int cmd, char *special, \
 			    int uid, caddr_t addr); }
 169	STD		{ int ultrix_sys_exportfs(char *path, char *ex); }

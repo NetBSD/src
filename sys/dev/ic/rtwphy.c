@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.1.2.4 2005/01/17 19:30:40 skrll Exp $ */
+/* $NetBSD: rtwphy.c,v 1.1.2.5 2005/03/04 16:41:33 skrll Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.1.2.4 2005/01/17 19:30:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.1.2.5 2005/03/04 16:41:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ rtw_sa2400_dc_calibration(struct rtw_sa2400 *sa)
 			 * microseconds
 			 */
 
-	dccal &= ~SA2400_OPMODE_MODE_MASK; 
+	dccal &= ~SA2400_OPMODE_MODE_MASK;
 	dccal |= SA2400_OPMODE_MODE_DCALIB;
 
 	rc = rtw_rfbus_write(&sa->sa_bus, RTW_RFCHIPID_PHILIPS, SA2400_OPMODE,

@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.48.2.7 2005/01/24 08:35:26 skrll Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.48.2.8 2005/03/04 16:44:57 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.56 2005/01/17 13:16:19 scw Exp 
+ *	NetBSD: miidevs,v 1.57 2005/02/20 16:35:56 jdolecek Exp
  */
 
 /*-
@@ -62,6 +62,7 @@
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
+#define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
@@ -165,6 +166,14 @@
 #define	MII_STR_BROADCOM_BCM5705	"BCM5705 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5750	0x0018
 #define	MII_STR_BROADCOM_BCM5750	"BCM5750 1000BASE-T media interface"
+
+/* Cicada Semiconductor PHYs (now owned by Vitesse?) */
+#define	MII_MODEL_CICADA_CS8201	0x0001
+#define	MII_STR_CICADA_CS8201	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_CS8201A	0x0020
+#define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_CICADA_CS8201B	0x0021
+#define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */

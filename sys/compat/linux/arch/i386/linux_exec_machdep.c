@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.1.2.3 2005/02/04 07:09:17 skrll Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.1.2.4 2005/03/04 16:39:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.1.2.3 2005/02/04 07:09:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.1.2.4 2005/03/04 16:39:51 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -100,7 +100,7 @@ linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 		    "java will not work properly\n");
 	}
 #endif
-	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, 
+	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
 	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
@@ -115,7 +115,7 @@ linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	access_size = epp->ep_ssize;
 	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
 	noaccess_size = max_stack_size - access_size;
-	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr, 
+	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
 	if (noaccess_size > 0) {
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,

@@ -1,4 +1,4 @@
-/*	$NetBSD: midwayvar.h,v 1.12.2.4 2005/02/04 11:45:26 skrll Exp $	*/
+/*	$NetBSD: midwayvar.h,v 1.12.2.5 2005/03/04 16:41:30 skrll Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * m i d w a y v a r . h
  *
  * we define the en_softc here so that bus specific modules can allocate
- * it as the first item in their softc.   note that BSD-required 
+ * it as the first item in their softc.   note that BSD-required
  * "struct device" is in the mid_softc!
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
@@ -123,7 +123,7 @@ struct en_softc {
   u_int16_t swsl_head, 		/* ends of swslist (index into swslist) */
 	    swsl_tail;
   u_int32_t swsl_size;		/* # of items in swsl */
-  
+
 
   /* xmit DMA */
   u_int32_t dtq[MID_DTQ_N];	/* sw copy of DMA q (see ENIDQ macros) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.9.2.6 2005/02/15 21:33:12 skrll Exp $	*/
+/*	$NetBSD: fss.c,v 1.9.2.7 2005/03/04 16:40:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.9.2.6 2005/02/15 21:33:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.9.2.7 2005/03/04 16:40:53 skrll Exp $");
 
 #include "fss.h"
 
@@ -519,7 +519,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	}
 
 	sc->sc_mount = nd.ni_vp->v_mount;
-	memcpy(sc->sc_mntname, sc->sc_mount->mnt_stat.f_mntonname, MNAMELEN); 
+	memcpy(sc->sc_mntname, sc->sc_mount->mnt_stat.f_mntonname, MNAMELEN);
 
 	vrele(nd.ni_vp);
 
@@ -782,7 +782,7 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
  * Get the block address and number of contiguous blocks.
  * If the file contains a hole, try to allocate.
  * Backing store is locked by caller.
- */  
+ */
 static int
 fss_bmap(struct fss_softc *sc, off_t start, int len,
     struct vnode **vpp, daddr_t *bnp, int *runp)
@@ -1134,7 +1134,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 
 	VOP_UNLOCK(sc->sc_bs_vp, 0);
 
-	return error;           
+	return error;
 }
 
 /*

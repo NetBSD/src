@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.155.2.3 2004/09/21 13:18:48 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.155.2.4 2005/03/04 16:38:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -251,6 +251,7 @@ cpu_switch_queuescan:
 	lw	t0, _C_LABEL(sched_whichqs)	# look for non-empty queue
 	li	t2, -1				# t2 = lowest bit set
 	bne	t0, zero, 1f
+	nop					# - delay slot -
 	lw	t3, _C_LABEL(mips_locoresw) + MIPSX_CPU_IDLE
 	nop					# for r2000/r3000
 	jal	ra, t3

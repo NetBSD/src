@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.12 2003/05/03 14:57:38 ad Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.12.2.1 2005/03/04 16:41:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.12 2003/05/03 14:57:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.12.2.1 2005/03/04 16:41:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ mlx_eisa_attach(struct device *parent, struct device *self, void *aux)
 	mlx->mlx_ioh = ioh;
 	mlx->mlx_dmat = ea->ea_dmat;
 
-	/* 
+	/*
 	 * Map and establish the interrupt.
 	 */
 	icfg = bus_space_read_1(iot, ioh, MLX_EISA_CFG03);
@@ -272,7 +272,7 @@ mlx_v1_intaction(struct mlx_softc *mlx, int action)
  * Returns 0 if initialisation is complete, 1 if still in progress but no
  * error has been fetched, 2 if an error has been retrieved.
  */
-static int 
+static int
 mlx_v1_fw_handshake(struct mlx_softc *mlx, int *error, int *param1, int *param2)
 {
 	u_int8_t fwerror;
@@ -316,7 +316,7 @@ mlx_v1_fw_handshake(struct mlx_softc *mlx, int *error, int *param1, int *param2)
 /*
  * Reset the controller.  Return non-zero on failure.
  */
-static int 
+static int
 mlx_v1_reset(struct mlx_softc *mlx)
 {
 	int i;

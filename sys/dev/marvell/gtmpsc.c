@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.8.2.4 2005/01/17 08:25:45 skrll Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.8.2.5 2005/03/04 16:43:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.8.2.4 2005/01/17 08:25:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.8.2.5 2005/03/04 16:43:40 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -296,7 +296,7 @@ gtmpsc_cache_invalidate(void *p)
 	GT_WRITE(sc, SDMA_IMASK, r); \
 } while (/*CONSTCOND*/ 0)
 
-static volatile inline unsigned int 
+static volatile inline unsigned int
 desc_read(unsigned int *ip)
 {
 	unsigned int rv;
@@ -595,7 +595,7 @@ gtmpscopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s;
 	int s2;
 	int error;
-	
+
 	if (unit >= gtmpsc_cd.cd_ndevs)
 		return ENXIO;
 	sc = gtmpsc_cd.cd_devs[unit];
@@ -703,7 +703,7 @@ gtmpscread(dev_t dev, struct uio *uio, int flag)
 {
 	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(dev)];
 	struct tty *tp = sc->gtmpsc_tty;
-	
+
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
@@ -712,7 +712,7 @@ gtmpscwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(dev)];
 	struct tty *tp = sc->gtmpsc_tty;
-	
+
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
@@ -731,7 +731,7 @@ gtmpscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(dev)];
 	struct tty *tp = sc->gtmpsc_tty;
 	int error;
-	
+
 	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l)) >= 0)
 		return error;
 	if ((error = ttioctl(tp, cmd, data, flag, l)) >= 0)
@@ -1109,7 +1109,7 @@ gtmpsc_txflush(gtmpsc_softc_t *sc)
 			break;
 		DELAY(GTMPSC_POLL_DELAY);
 		limit -= GTMPSC_POLL_DELAY;
-	} 
+	}
 }
 
 STATIC void
@@ -1267,7 +1267,7 @@ gtmpscinit_start(struct gtmpsc_softc *sc, int once)
 		 *	MR1 --> Serial Port 1
 		 */
 		GT_WRITE(sc, GTMPSC_MRR, GTMPSC_MRR_RES);
-	
+
 		/*
 		 * RX and TX Clock Routing:
 		 *      CRR0 --> BRG0
@@ -1346,7 +1346,7 @@ gtmpsccngetc(dev_t dev)
 {
 	unsigned int unit = 0;
 	int c;
-	
+
 	unit = GTMPSCUNIT(dev);
 	if (major(dev) != 0) {
 		struct gtmpsc_softc *sc = device_lookup(&gtmpsc_cd, unit);
@@ -1367,7 +1367,7 @@ gtmpsccnputc(dev_t dev, int c)
 	unsigned int unit = 0;
 	char ch = c;
 	static int ix = 0;
-	
+
 	if (gtmpsccninit_done == 0) {
 		if ((minor(dev) == 0) && (ix < sizeof(gtmpsc_earlybuf)))
 			gtmpsc_earlybuf[ix++] = (unsigned char)c;
@@ -1776,7 +1776,7 @@ gtmpsc_kgdb_poll(void *arg)
 	char                    c;
 	int                     brk;
 
-	s = splserial(); 
+	s = splserial();
 	if (kgdb_recover == 0) { /* gdb is not currently talking to its agent */
 		while (gtmpsc_common_pollc(sc->gtmpsc_unit, &c, &brk)) {
 			if (c == CTRL('c'))
@@ -1857,7 +1857,7 @@ gtmpsccnhalt(dev_t dev)
 		gtmpsc_txflush(sc);
 
 		/*
-		 * stop MPSC unit RX 
+		 * stop MPSC unit RX
 		 */
 		r = GT_READ(sc, GTMPSC_U_CHRN(unit, 2));
 		r &= ~GTMPSC_CHR2_EH;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.17.2.4 2005/02/04 11:45:23 skrll Exp $	*/
+/*	$NetBSD: rbus.c,v 1.17.2.5 2005/03/04 16:41:05 skrll Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.17.2.4 2005/02/04 11:45:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus.c,v 1.17.2.5 2005/03/04 16:41:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 			}
 		} else if (decodesize == 0) {
 			/* maybe, the register is overflowed. */
-      
+
 			if (extent_alloc_subregion(rbt->rb_ext, addr,
 			    addr + size, size, 1, 0, exflags, &result)) {
 				return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.7.2.5 2005/02/04 07:09:17 skrll Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.7.2.6 2005/03/04 16:39:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.7.2.5 2005/02/04 07:09:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.7.2.6 2005/03/04 16:39:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,20 +62,20 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.7.2.5 2005/02/04 07:09:17 skrl
 
 
 int exec_ibcs2_coff_prep_omagic __P((struct lwp *, struct exec_package *,
-				     struct coff_filehdr *, 
+				     struct coff_filehdr *,
 				     struct coff_aouthdr *));
 int exec_ibcs2_coff_prep_nmagic __P((struct lwp *, struct exec_package *,
-				     struct coff_filehdr *, 
+				     struct coff_filehdr *,
 				     struct coff_aouthdr *));
 int exec_ibcs2_coff_prep_zmagic __P((struct lwp *, struct exec_package *,
-				     struct coff_filehdr *, 
+				     struct coff_filehdr *,
 				     struct coff_aouthdr *));
 void cpu_exec_ibcs2_coff_setup __P((int, struct proc *, struct exec_package *,
 				    void *));
 
 static int coff_load_shlib __P((struct lwp *, const char *,
 		struct exec_package *));
-static int coff_find_section __P((struct lwp *, struct vnode *, 
+static int coff_find_section __P((struct lwp *, struct vnode *,
 				  struct coff_filehdr *, struct coff_scnhdr *,
 				  int));
 
@@ -109,7 +109,7 @@ exec_ibcs2_coff_makecmds(l, epp)
 		DPRINTF(("ibcs2: bad coff magic\n"));
 		return ENOEXEC;
 	}
-	
+
 	ap = (void *)((char *)epp->ep_hdr + sizeof(struct coff_filehdr));
 	switch (ap->a_magic) {
 	case COFF_OMAGIC:
@@ -178,7 +178,7 @@ exec_ibcs2_coff_prep_omagic(l, epp, fp, ap)
 		if (epp->ep_taddr + epp->ep_tsize > epp->ep_daddr)
 			epp->ep_tsize = epp->ep_daddr - epp->ep_taddr;
 	}
-	
+
 	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 
@@ -373,12 +373,12 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 	u_long offset;
 	long dsize, baddr, bsize;
 	struct coff_scnhdr sh;
-	
+
 	/* DPRINTF(("enter exec_ibcs2_coff_prep_zmagic\n")); */
 
 	/* set up command for text segment */
 	error = coff_find_section(l, epp->ep_vp, fp, &sh, COFF_STYP_TEXT);
-	if (error) {		
+	if (error) {
 		DPRINTF(("can't find text section: %d\n", error));
 		return error;
 	}
@@ -394,7 +394,7 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 	error = vn_marktext(epp->ep_vp);
 	if (error)
 		return (error);
-	
+
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, epp->ep_tsize,
 		  epp->ep_taddr, epp->ep_vp, offset,
 		  VM_PROT_READ|VM_PROT_EXECUTE);
@@ -498,7 +498,7 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 		}
 		free(buf, M_TEMP);
 	}
-		
+
 	/* set up entry point */
 	epp->ep_entry = ap->a_entry;
 
@@ -518,7 +518,7 @@ exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap)
 			epp->ep_tsize = epp->ep_daddr - epp->ep_taddr;
 	}
 
-	
+
 	return (*epp->ep_esch->es_setup_stack)(l, epp);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_dchan.c,v 1.2 2002/09/27 15:37:27 provos Exp $	*/
+/*	$NetBSD: iwic_dchan.c,v 1.2.10.1 2005/03/04 16:45:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.2 2002/09/27 15:37:27 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_dchan.c,v 1.2.10.1 2005/03/04 16:45:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -297,7 +297,7 @@ dchan_get_mbuf(struct iwic_softc *sc, int len)
 
 	if (!sc->sc_dchan.ibuf)
 		panic("dchan_get_mbuf: unable to allocate %d bytes for mbuf!", len);
-		
+
 	sc->sc_dchan.ibuf_ptr = sc->sc_dchan.ibuf->m_data;
 	sc->sc_dchan.ibuf_max_len = sc->sc_dchan.ibuf->m_len;
 	sc->sc_dchan.ibuf_len = 0;
@@ -310,7 +310,7 @@ static void
 dchan_receive(struct iwic_softc *sc, int ista)
 {
 	int command = D_CMDR_RACK;
-	
+
 	if (ista & ISTA_D_RMR)
 	{
 		/* Got 64 bytes in FIFO */
@@ -353,15 +353,15 @@ dchan_receive(struct iwic_softc *sc, int ista)
 		{
 			int hi, lo;
 			int total_frame_len;
-	
+
 			lo = IWIC_READ(sc, D_RBCL);
 			hi = IWIC_READ(sc, D_RBCH);
 			total_frame_len = D_RBC(hi, lo);
 			lo = lo & 0x3f;
-	
+
 			if (lo == 0)
 				lo = IWIC_DCHAN_FIFO_LEN;
-	
+
 			if (!sc->sc_dchan.ibuf)
 			{
 				dchan_get_mbuf(sc, lo);
@@ -371,13 +371,13 @@ dchan_receive(struct iwic_softc *sc, int ista)
 			{
 				panic("dchan_receive: buffer not long enough");
 			}
-	
+
 			IWIC_RDDFIFO(sc, sc->sc_dchan.ibuf_ptr, lo);
 			sc->sc_dchan.ibuf_len += lo;
 			sc->sc_dchan.rx_count += lo;
-	
+
 			sc->sc_dchan.ibuf->m_len = sc->sc_dchan.ibuf_len;
-	
+
 			if(sc->sc_trace & TRACE_D_RX)
 			{
 				i4b_trace_hdr hdr;
@@ -387,7 +387,7 @@ dchan_receive(struct iwic_softc *sc, int ista)
 				isdn_layer2_trace_ind(&sc->sc_l2, sc->sc_l3token, &hdr, sc->sc_dchan.ibuf->m_len, sc->sc_dchan.ibuf->m_data);
 			}
 			isdn_layer2_data_ind(&sc->sc_l2,sc->sc_l3token,sc->sc_dchan.ibuf);
-			
+
 			sc->sc_dchan.ibuf = NULL;
 		}
 	}
@@ -418,7 +418,7 @@ iwic_dchan_transmit(struct iwic_softc *sc)
 
 	if(sc->sc_trace & TRACE_D_TX)
 	{
-		i4b_trace_hdr hdr;	
+		i4b_trace_hdr hdr;
 		hdr.type = TRC_CH_D;
 		hdr.dir = FROM_TE;
 		hdr.count = ++sc->sc_dchan.trace_count;

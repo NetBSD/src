@@ -1,4 +1,4 @@
-/*	$NetBSD: aic77xx.c,v 1.3.2.3 2004/09/21 13:27:50 skrll Exp $	*/
+/*	$NetBSD: aic77xx.c,v 1.3.2.4 2005/03/04 16:41:25 skrll Exp $	*/
 
 /*
  * Common routines for AHA-27/284X and aic7770 motherboard SCSI controllers.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.3.2.3 2004/09/21 13:27:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.3.2.4 2005/03/04 16:41:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ ahc_aic77xx_irq(iot, ioh)
 	/* Pause the card preseving the IRQ type */
 	hcntrl = bus_space_read_1(iot, ioh, HCNTRL) & IRQMS;
 	bus_space_write_1(iot, ioh, HCNTRL, hcntrl | PAUSE);
-	
+
 	intdef = bus_space_read_1(iot, ioh, INTDEF);
 	irq = (intdef & INTDEF_IRQ_MASK);
 	switch (irq) {

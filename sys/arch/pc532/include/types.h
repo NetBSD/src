@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.29.2.3 2004/09/21 13:19:57 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.29.2.4 2005/03/04 16:39:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -59,7 +59,6 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
-#define	__BROKEN_CONFIG_UNIT_USAGE
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_MD_RUNQUEUE
 

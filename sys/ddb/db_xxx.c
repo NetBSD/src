@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.25.2.6 2004/09/21 13:26:24 skrll Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.25.2.7 2005/03/04 16:40:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.25.2.6 2004/09/21 13:26:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.25.2.7 2005/03/04 16:40:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,8 +179,8 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 				 while (l != NULL) {
 					db_printf("%c%4d %d %#9x %18p %18p %s\n",
 					    " >"[cl == l], l->l_lid,
-					    l->l_stat, l->l_flag, l, 
-					    l->l_addr, 
+					    l->l_stat, l->l_flag, l,
+					    l->l_addr,
 					    (l->l_wchan && l->l_wmesg) ?
 					    l->l_wmesg : "");
 
@@ -195,7 +195,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 				    p->p_cred->p_ruid, p->p_stat, p->p_flag,
 				    p->p_nlwps, p->p_comm,
 				    (p->p_nlwps != 1) ? "*" : (
-				    (l->l_wchan && l->l_wmesg) ? 
+				    (l->l_wchan && l->l_wmesg) ?
 				    l->l_wmesg : ""));
 				break;
 

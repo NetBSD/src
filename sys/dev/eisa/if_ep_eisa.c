@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.28.2.3 2004/09/21 13:27:37 skrll Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.28.2.4 2005/03/04 16:41:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.28.2.3 2004/09/21 13:27:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.28.2.4 2005/03/04 16:41:14 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -89,22 +89,22 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.28.2.3 2004/09/21 13:27:37 skrll Ex
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_ether.h>   
+#include <net/if_ether.h>
 #include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-#include <netinet/in_var.h>     
+#include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_inarp.h>   
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
-#endif 
-        
+#endif
+
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>

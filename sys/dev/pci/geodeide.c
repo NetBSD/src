@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.2.2.6 2004/09/21 13:31:02 skrll Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.2.2.7 2005/03/04 16:45:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.2.2.6 2004/09/21 13:31:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.2.2.7 2005/03/04 16:45:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ geodeide_match(struct device *parent, struct cfdata *match, void *aux)
 	     PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NS) &&
 	     PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
 	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE &&
-	     pciide_lookup_product(pa->pa_id, pciide_geode_products)) 
+	     pciide_lookup_product(pa->pa_id, pciide_geode_products))
 		return(2);
 	return (0);
 }

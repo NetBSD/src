@@ -1,4 +1,4 @@
-/* $NetBSD: atppcreg.h,v 1.3.4.4 2004/09/21 13:27:53 skrll Exp $ */
+/* $NetBSD: atppcreg.h,v 1.3.4.5 2005/03/04 16:41:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -65,10 +65,10 @@
 /* To set "inverted" flags, do AND. Otherwise, do OR */
 /* 0 & x = 0, 1 | x = 1 */
 
-/* Clear flags: n(var) is equivalent to var = 0. 
+/* Clear flags: n(var) is equivalent to var = 0.
 #define n(flags) (~(flags) & (flags))*/
 
-/* Invert flags 
+/* Invert flags
 #define inv(flags) (~(flags))*/
 
 /* SPP mode control register bit positions. */
@@ -97,7 +97,7 @@
 
 /* Flags indicating ready condition */
 #define SPP_READY (SELECT | nFAULT | nBUSY)
-#define SPP_MASK (SELECT | nFAULT | PERROR | nBUSY) 
+#define SPP_MASK (SELECT | nFAULT | PERROR | nBUSY)
 
 /* Byte mode signals */
 #define HOSTCLK		STROBE /* Also ECP mode signal */
@@ -123,10 +123,10 @@
 #define nADDRSTB	SELECTIN
 #define nWAIT		nBUSY
 #define nRESET		nINIT
-#define nINTR		nACK		
+#define nINTR		nACK
 
 
-/* 
+/*
  * Useful macros for reading/writing registers.
  */
 
@@ -174,37 +174,37 @@
 #define atppc_w_ecr(atppc, byte) bus_space_write_1((atppc)->sc_iot, \
 	(atppc)->sc_ioh, ATPPC_ECP_ECR, (byte))
 #define atppc_w_fifo(atppc, byte) bus_space_write_1((atppc)->sc_iot, \
-	(atppc)->sc_ioh, ATPPC_ECP_D_FIFO, (byte)) 
+	(atppc)->sc_ioh, ATPPC_ECP_D_FIFO, (byte))
 #define atppc_w_fifo_multi(atppc, buf, count) bus_space_write_multi_1( \
 	(atppc)->sc_iot, (atppc)->sc_ioh, ATPPC_ECP_D_FIFO, (buf), (count))
 
 /* Barrier macros for reads/writes */
 #define atppc_barrier_r(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_READ) 
+	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_READ)
 #define atppc_barrier_w(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE) 
+	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE)
 #define atppc_barrier(atppc) bus_space_barrier((atppc)->sc_iot, \
 	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE | \
-	BUS_SPACE_BARRIER_READ) 
+	BUS_SPACE_BARRIER_READ)
 
 /* These are defined in man pages but don't actually exist for all acrhs */
 #define atppc_barrier_rr(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_READ_BEFORE_READ) 
+	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_READ_BEFORE_READ)
 #define atppc_barrier_rw(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_READ_BEFORE_WRITE) 
+	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_READ_BEFORE_WRITE)
 #define atppc_barrier_rb(atppc) bus_space_barrier((atppc)->sc_iot, \
 	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_READ_BEFORE_READ | \
-	BUS_SPACE_BARRIER_READ_BEFORE_WRITE) 
+	BUS_SPACE_BARRIER_READ_BEFORE_WRITE)
 #define atppc_barrier_wr(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE_BEFORE_READ) 
+	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE_BEFORE_READ)
 #define atppc_barrier_ww(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE) 
+	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE)
 #define atppc_barrier_wb(atppc) bus_space_barrier((atppc)->sc_iot, \
 	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE_BEFORE_READ | \
-	BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE) 
+	BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE)
 #define atppc_barrier_sync(atppc) bus_space_barrier((atppc)->sc_iot, \
 	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_SYNC)
-	
+
 /*
  * Register defines for the PC873xx parts
  */

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_machdep.h,v 1.5 2002/02/15 16:48:01 christos Exp $ */
+/* $NetBSD: linux_machdep.h,v 1.5.16.1 2005/03/04 16:39:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@
 #include <compat/linux/common/linux_signal.h>
 
 #if defined(ELFSIZE) && (ELFSIZE == 64)
-/* 
- * From Linux's include/asm-mips64/sigcontext.h 
+/*
+ * From Linux's include/asm-mips64/sigcontext.h
  */
 struct linux_sigcontext {
 	unsigned long long sc_regs[32];
@@ -59,10 +59,10 @@ struct linux_sigcontext {
 	unsigned int sc_badvaddr;
 }
 #else
-/* 
- * From Linux's include/asm-mips/sigcontext.h 
+/*
+ * From Linux's include/asm-mips/sigcontext.h
  */
-struct linux_sigcontext { 
+struct linux_sigcontext {
 	unsigned int lsc_regmask;		/* Unused */
 	unsigned int lsc_status;
 	unsigned long long lsc_pc;
@@ -76,7 +76,7 @@ struct linux_sigcontext {
 	unsigned long long lsc_mdlo;
 	unsigned int lsc_cause;	  		/* Unused */
 	unsigned int lsc_badvaddr;	  	/* Unused */
-	unsigned long lsc_sigset[4]; 		/* kernel's sigset_t */	
+	unsigned long lsc_sigset[4]; 		/* kernel's sigset_t */
 };
 #endif
 
@@ -132,7 +132,7 @@ struct linux_rt_sigframe
 /*
  * From Linux's include/linux/utsname.h
  */
-#define LINUX___NEW_UTS_LEN	64	
+#define LINUX___NEW_UTS_LEN	64
 
 /*
  * Major device numbers of VT device on both Linux and NetBSD. Used in
@@ -140,13 +140,13 @@ struct linux_rt_sigframe
  *
  * LINUX_CONS_MAJOR is from Linux's include/linux/major.h
  */
-#define LINUX_CONS_MAJOR 4  
+#define LINUX_CONS_MAJOR 4
 #define NETBSD_WSCONS_MAJOR 47 /* XXX */
 
 /*
  * Linux ioctl calls for the keyboard.
  *
- * From Linux's include/linux/kd.h 
+ * From Linux's include/linux/kd.h
  */
 #define LINUX_KDGKBMODE	0x4b44
 #define LINUX_KDSKBMODE	0x4b45
@@ -167,7 +167,7 @@ struct linux_rt_sigframe
 #define LINUX_K_MEDIUMRAW 2
 
 /*
- * VT ioctl calls in Linux (the ones that the pcvt emulation in 
+ * VT ioctl calls in Linux (the ones that the pcvt emulation in
  * wscons can handle)
  *
  * From Linux's include/linux/vt.h
@@ -193,7 +193,7 @@ struct linux_rt_sigframe
 /*
  * Range of ioctls to just pass on, so that LKMs (like VMWare) can
  * handle them.
- * 
+ *
  * From Linux's include/linux/vt.h
  */
 #define LINUX_IOCTL_MIN_PASS LINUX_VMWARE_NONE

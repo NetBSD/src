@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.39.6.4 2004/09/21 13:31:03 skrll Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.39.6.5 2005/03/04 16:45:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.39.6.4 2004/09/21 13:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_pci.c,v 1.39.6.5 2005/03/04 16:45:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ le_pci_mediachange(struct lance_softc *sc)
 				bus_space_write_2(iot, ioh, PCNET_PCI_BDP, reg);
 			}
 		}
-		
+
 	}
 
 	if ((IFM_OPTIONS(newmedia) ^ IFM_OPTIONS(lesc->sc_currentmedia))

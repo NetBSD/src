@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.3.28.3 2004/09/21 13:30:40 skrll Exp $
+#	$NetBSD: devlist2h.awk,v 1.3.28.4 2005/03/04 16:44:57 skrll Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -98,6 +98,7 @@ BEGIN {
 NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
+	gsub(/ $/, "", VERSION)
 
 	printf("/*\t$NetBSD" "$\t*/\n\n") > hfile
 	printf("/*\n") > hfile
@@ -153,7 +154,7 @@ NF > 0 && $1 == "model" {
 		firstdone = 1
 	}
 
-	printf(" { MII_OUI_%s, MII_MODEL_%s_%s, MII_STR_%s_%s }, \n",
+	printf(" { MII_OUI_%s, MII_MODEL_%s_%s, MII_STR_%s_%s },\n",
 	       $2, $2, $3, $2, $3) > dfile
 
 	next

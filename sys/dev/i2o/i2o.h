@@ -1,4 +1,4 @@
-/*	$NetBSD: i2o.h,v 1.9.20.3 2004/09/21 13:27:46 skrll Exp $	*/
+/*	$NetBSD: i2o.h,v 1.9.20.4 2005/03/04 16:41:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -434,7 +434,7 @@ struct i2o_exec_iop_reset {
 /*
  * ================= Executive class parameter groups =================
  */
- 
+
 #define	I2O_PARAM_EXEC_LCT_SCALAR	0x0101
 #define	I2O_PARAM_EXEC_LCT_TABLE	0x0102
 
@@ -550,7 +550,7 @@ struct i2o_util_abort_reply {
 	u_int32_t	count;
 } __attribute__ ((__packed__));
 
-#define	I2O_UTIL_PARAMS_SET		0x05 
+#define	I2O_UTIL_PARAMS_SET		0x05
 #define	I2O_UTIL_PARAMS_GET		0x06
 struct i2o_util_params_op {
 	u_int32_t	msgflags;

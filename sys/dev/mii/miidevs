@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.48.2.7 2005/01/24 08:35:26 skrll Exp $
+$NetBSD: miidevs,v 1.48.2.8 2005/03/04 16:44:57 skrll Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ $NetBSD: miidevs,v 1.48.2.7 2005/01/24 08:35:26 skrll Exp $
 oui ALTIMA			0x0010a9	Altima Communications
 oui AMD				0x00001a	Advanced Micro Devices
 oui BROADCOM			0x001018	Broadcom Corporation
+oui CICADA			0x0003F1	Cicada Semiconductor
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui ICS				0x00a0be	Integrated Circuit Systems
@@ -133,6 +134,11 @@ model BROADCOM BCM5703		0x0016 BCM5703 1000BASE-T media interface
 model BROADCOM BCM5704		0x0019 BCM5704 1000BASE-T media interface
 model BROADCOM BCM5705		0x001a BCM5705 1000BASE-T media interface
 model BROADCOM BCM5750		0x0018 BCM5750 1000BASE-T media interface
+
+/* Cicada Semiconductor PHYs (now owned by Vitesse?) */
+model CICADA CS8201		0x0001 Cicada CS8201 10/100/1000TX PHY
+model CICADA CS8201A		0x0020 Cicada CS8201 10/100/1000TX PHY
+model CICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.3 2004/09/21 13:21:25 skrll Exp $
+#	$NetBSD: Makefile,v 1.5.2.4 2005/03/04 16:39:09 skrll Exp $
 
 PROG=	aoutboot
 
@@ -11,9 +11,11 @@ SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
 	getopt.c disk.c
 
 ${PROG}: ip2xboot ip3xboot
-	${ELF2ECOFF} ip2xboot aoutboot
+	${OBJCOPY} --impure -O ecoff-bigmips \
+		-R .pdr -R .mdebug.abi32 -R .comment -R .ident \
+		ip2xboot aoutboot
 
-# XXX Temporary hack to install the ELF verision, too.
+# XXX Temporary hack to install the ELF version, too.
 FILES+=		ip2xboot ip3xboot
 CLEANFILES+=	ip2xboot ip3xboot
 

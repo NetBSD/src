@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa.c,v 1.7.6.1 2005/02/04 11:46:36 skrll Exp $	*/
+/*	$NetBSD: lpt_ofisa.c,v 1.7.6.2 2005/03/04 16:44:58 skrll Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.7.6.1 2005/02/04 11:46:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.7.6.2 2005/03/04 16:44:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -140,7 +140,7 @@ lpt_ofisa_attach(parent, self, aux)
 
 	printf("\n");
 
-	lpt_attach_subr(sc);	
+	lpt_attach_subr(sc);
 
 #if 0
 	printf("%s: registers: ", sc->sc_dev.dv_xname);

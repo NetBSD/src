@@ -17,7 +17,7 @@
  *      without specific prior written permission.
  *   4. Altered versions must be plainly marked as such, and must not be
  *      misrepresented as being the original software and/or documentation.
- *   
+ *
  *   THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  *   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -38,14 +38,14 @@
  *		EXPERIMENTAL !!!
  *		================
  *
- *	$Id: isic_isapnp_tel_s0P.c,v 1.4.10.1 2005/02/04 11:46:29 skrll Exp $ 
+ *	$Id: isic_isapnp_tel_s0P.c,v 1.4.10.2 2005/03/04 16:43:40 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.4.10.1 2005/02/04 11:46:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.4.10.2 2005/03/04 16:43:40 skrll Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_TEL_S0_16_3_P
@@ -108,7 +108,7 @@ void isic_attach_s0163P(struct isic_softc *sc);
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 
-static void             
+static void
 tels0163P_read_fifo(void *buf, const void *base, size_t len)
 {
         insb((int)base + 0x3e, (u_char *)buf, (u_int)len);
@@ -204,15 +204,15 @@ int
 isic_probe_s0163P(struct isa_device *dev, unsigned int iobase2)
 {
 	struct isic_softc *sc = &l1_sc[dev->id_unit];
-	
+
 	/* check max unit range */
-	
+
 	if(dev->id_unit >= ISIC_MAXUNIT)
 	{
 		printf("isic%d: Error, unit %d >= ISIC_MAXUNIT for Teles S0/16.3 PnP!\n",
 				dev->id_unit, dev->id_unit);
-		return(0);	
-	}	
+		return(0);
+	}
 	sc->sc_unit = dev->id_unit;
 
 	/* check IRQ validity */
@@ -227,7 +227,7 @@ isic_probe_s0163P(struct isa_device *dev, unsigned int iobase2)
 		case 12:
 			break;
 
-		default:					
+		default:
 			printf("isic%d: Error, invalid IRQ [%d] specified for Teles S0/16.3 PnP!\n",
 				dev->id_unit, ffs(dev->id_irq)-1);
 			return(0);
@@ -244,7 +244,7 @@ isic_probe_s0163P(struct isa_device *dev, unsigned int iobase2)
 		return(0);
 	}
 	dev->id_msize = 0;
-	
+
 	/* check if we got an iobase */
 
 	switch(dev->id_iobase)
@@ -253,7 +253,7 @@ isic_probe_s0163P(struct isa_device *dev, unsigned int iobase2)
 		case 0x500:
 		case 0x680:
 			break;
-			
+
 		default:
 			printf("isic%d: Error, invalid iobase 0x%x specified for Teles S0/16.3 PnP!\n",
 				dev->id_unit, dev->id_iobase);
@@ -272,18 +272,18 @@ isic_probe_s0163P(struct isa_device *dev, unsigned int iobase2)
 	sc->writefifo = tels0163P_write_fifo;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_163P;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
 	sc->sc_bfifolen = HSCX_FIFO_LEN;
 
 	/* setup ISAC and HSCX base addr */
-	
+
 	switch(dev->id_iobase)
 	{
 		case 0x580:
@@ -305,7 +305,7 @@ isic_probe_s0163P(struct isa_device *dev, unsigned int iobase2)
 			break;
 	}
 
-	/* 
+	/*
 	 * Read HSCX A/B VSTR.  Expected value for the S0/16.3 PnP card is
 	 * 0x05 in the least significant bits.
 	 */
@@ -320,7 +320,7 @@ isic_probe_s0163P(struct isa_device *dev, unsigned int iobase2)
 		printf("isic%d: HSC1: VSTR: %#x\n",
 			dev->id_unit, HSCX_READ(1, H_VSTR));
 		return (0);
-	}                   
+	}
 
 	return (1);
 }
@@ -363,15 +363,15 @@ isic_attach_s0163P(struct isic_softc *sc)
 	sc->writefifo = tels0163P_write_fifo;
 
 	/* setup card type */
-	
+
 	sc->sc_cardtyp = CARD_TYPEP_163P;
 
 	/* setup IOM bus type */
-	
+
 	sc->sc_bustyp = BUS_TYPE_IOM2;
 
 	sc->sc_ipac = 0;
-	sc->sc_bfifolen = HSCX_FIFO_LEN;	
+	sc->sc_bfifolen = HSCX_FIFO_LEN;
 }
 #endif
 

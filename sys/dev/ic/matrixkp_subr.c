@@ -29,24 +29,24 @@
  * driver can work for any size of keypad.  A one key keypad (aka
  * button) can also be used.  The theory of operation is described
  * thusly:
- * 
+ *
  * 	1) The keypad is connected to the NetBSD embedded system
  * 	with digital I/O (DIO) pins connected to each column of
  * 	the keypad and also to each row of the keypad.
- * 
+ *
  * 	2) When a button is pressed, a short is made between a
  * 	column line and the intersecting row line.
- * 
+ *
  * 	3) Software is responsible to poll each row/column individually
  * 	and also to debounce any key presses.
- * 
+ *
  * To correctly wire up such a thing requires the input DIO
  * lines to have pull-up resistors, otherwise an input may be read as a random
  * value if not currently being shorted by a button press.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: matrixkp_subr.c,v 1.1.2.2 2005/02/04 11:45:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: matrixkp_subr.c,v 1.1.2.3 2005/03/04 16:41:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ rescan:
 	sc->mxkp_scankeys(sc, scanned);
 	FOR_KEYS(i, changed[i] = sc->mxkp_pressed[i] ^ scanned[i]);
 	FOR_KEYS(i, anychanged |= changed[i]);
-	
+
 	if (!(sc->sc_flags & MXKP_NODEBOUNCE) && anychanged) {
 		mxkp_debounce(sc, changed, scanned);
 		anychanged = 0;
@@ -129,15 +129,15 @@ rescan:
 }
 
 /*
- * debounce will return when masked keys have been stable 
- * for sc->debounce_stable_ms 
+ * debounce will return when masked keys have been stable
+ * for sc->debounce_stable_ms
  */
-void 
+void
 mxkp_debounce(struct matrixkp_softc *sc, u_int32_t *mask, u_int32_t *scan) {
 	struct timeval verystart, start, now;
 	u_int32_t last_val[(MAXNKEYS + 31) / 32];
 	u_int32_t anyset, i;
-	
+
 	FOR_KEYS(i, last_val[i] = scan[i]);
 	microtime(&verystart);
 	start = verystart;

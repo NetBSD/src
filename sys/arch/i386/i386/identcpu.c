@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.4.2.4 2004/09/21 13:16:42 skrll Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.4.2.5 2005/03/04 16:38:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4.2.4 2004/09/21 13:16:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4.2.5 2005/03/04 16:38:39 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -137,6 +137,7 @@ void transmeta_cpu_setup(struct cpu_info *);
 
 static void via_cpu_probe(struct cpu_info *);
 static void amd_family6_probe(struct cpu_info *);
+static void intel_family_new_probe(struct cpu_info *);
 
 static const char *intel_family6_name(struct cpu_info *);
 
@@ -258,7 +259,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium 4"	/* Default */
 			},
 			NULL,
-			NULL,
+			intel_family_new_probe,
 			NULL,
 		} }
 	},
@@ -811,6 +812,23 @@ cpu_probe_features(struct cpu_info *ci)
 }
 
 void
+intel_family_new_probe(struct cpu_info *ci)
+{
+	u_int32_t lfunc;
+	u_int32_t descs[4];
+
+	CPUID(0x80000000, lfunc, descs[1], descs[2], descs[3]);
+
+	/*
+	 * Determine extended feature flags.
+	 */
+	if (lfunc >= 0x80000001) {
+		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
+		ci->ci_feature3_flags |= descs[3];
+	}
+}
+
+void
 amd_family6_probe(struct cpu_info *ci)
 {
 	u_int32_t lfunc;
@@ -1234,6 +1252,12 @@ identifycpu(struct cpu_info *ci)
 		bitmask_snprintf(ci->ci_feature2_flags,
 		    CPUID2_FLAGS, buf, sizeof(buf));
 		printf("%s: features2 %s\n", cpuname, buf);
+	}
+
+	if (ci->ci_feature3_flags) {
+		bitmask_snprintf(ci->ci_feature3_flags,
+			CPUID_FLAGS4, buf, sizeof(buf));
+		printf("%s: features3 %s\n", cpuname, buf);
 	}
 
 	if (*cpu_brand_string != '\0')

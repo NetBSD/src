@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_14.c,v 1.5 2003/01/18 07:28:34 thorpej Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.5.2.1 2005/03/04 16:39:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.5 2003/01/18 07:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.5.2.1 2005/03/04 16:39:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ compat_14_sys_msgctl(struct lwp *l, void *v, register_t *retval)
 
 	if (cmd == IPC_SET) {
 		error = copyin(SCARG(uap, buf), &omsqbuf, sizeof(omsqbuf));
-		if (error) 
+		if (error)
 			return (error);
 		msqid_ds14_to_native(&omsqbuf, &msqbuf);
 	}
@@ -126,7 +126,7 @@ compat_14_sys_msgctl(struct lwp *l, void *v, register_t *retval)
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
-		native_to_msqid_ds14(&msqbuf, &omsqbuf);     
+		native_to_msqid_ds14(&msqbuf, &omsqbuf);
 		error = copyout(&omsqbuf, SCARG(uap, buf), sizeof(omsqbuf));
 	}
 

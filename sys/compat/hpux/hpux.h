@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.h,v 1.17.6.3 2004/09/21 13:25:10 skrll Exp $	*/
+/*	$NetBSD: hpux.h,v 1.17.6.4 2005/03/04 16:39:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ struct	hpux_stat {
 	long		hst_blksize;
 	long		hst_blocks;
 	u_int		hst_remote;
-	long		hst_netdev;  	
+	long		hst_netdev;
 	u_long		hst_netino;
 	u_short		hst_cnode;
 	u_short		hst_rcnode;
@@ -374,4 +374,4 @@ struct hpux_sigaction {
  */
 #define	HPUX_UF_NONBLOCK_ON	0x10
 #define	HPUX_UF_FNDELAY_ON	0x20
-#define	HPUX_UF_FIONBIO_ON	0x40 
+#define	HPUX_UF_FIONBIO_ON	0x40

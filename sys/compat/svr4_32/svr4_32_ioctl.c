@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.8 2003/01/19 16:47:14 thorpej Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.8.2.1 2005/03/04 16:40:42 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.8 2003/01/19 16:47:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.8.2.1 2005/03/04 16:40:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -159,6 +159,6 @@ svr4_32_sys_ioctl(l, v, retval)
 		DPRINTF(("Unimplemented ioctl %lx\n", cmd));
 		return 0;	/* XXX: really ENOSYS */
 	}
-	return (*fun)(fp, l, retval, SCARG(uap, fd), cmd, 
+	return (*fun)(fp, l, retval, SCARG(uap, fd), cmd,
 		      (caddr_t)(u_long)SCARG(uap, data));
 }

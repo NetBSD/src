@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.19.2.7 2005/02/04 11:44:13 skrll Exp $
+#	$NetBSD: P5064,v 1.19.2.8 2005/03/04 16:38:01 skrll Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.19.2.7 $"
+#ident 		"P5064-$Revision: 1.19.2.8 $"
 
 maxusers 32
 
@@ -41,6 +41,7 @@ file-system	FDESC		# /dev/fd file system
 options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	FFS_NO_SNAPSHOT	# No FFS snapshots
 
 # Networking options
 options 	INET		# Internet protocol suite
@@ -60,6 +61,7 @@ options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 options 	COMPAT_16
+options 	COMPAT_20
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # System V-like message queues
