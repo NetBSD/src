@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.31 2002/06/09 16:33:38 itojun Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.32 2002/11/02 19:03:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -68,9 +68,6 @@
 #define _NETINET_IN_PCB_H_
 
 #include <sys/queue.h>
-#if 1	/*IPSEC*/
-#include <netinet6/ipsec.h>
-#endif
 
 /*
  * Common structure pcb for internet protocol implementation.
@@ -79,6 +76,8 @@
  * up (to a socket structure) and down (to a protocol-specific)
  * control block.
  */
+struct inpcbpolicy;
+
 struct inpcb {
 	LIST_ENTRY(inpcb) inp_hash;
 	CIRCLEQ_ENTRY(inpcb) inp_queue;
