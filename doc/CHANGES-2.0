@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.130 2004/04/28 05:26:07 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.131 2004/04/28 05:30:57 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1383,3 +1383,9 @@ sys/dev/acpi/files.acpi				1.23
 	Add ACPI ECDT (Embedded Controller Description Table) support.
 	This will enable usage of EC in early stage of ACPI initialization.
 	[kochi, ticket #191]
+
+sbin/sysctl/sysctl.c				1.94
+
+	When converting a string to a number, also make sure that you didn't
+	convert an empty string to a zero. PR#25115
+	[atatat, ticket #192]
