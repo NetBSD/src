@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.4 1998/06/24 18:50:56 mark Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.5 1998/06/24 19:44:33 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -96,6 +96,8 @@ extern void undefinedinstruction_bounce	__P((trapframe_t *frame));
 #ifdef	DDB
 extern void db_machine_init     __P((void));
 #endif
+int	ofbus_match __P((struct device *, struct cfdata *, void *));
+void	ofbus_attach __P((struct device *, struct device *, void *));
 
 /* Local routines */
 static void process_kernel_args	__P((void));
@@ -112,6 +114,9 @@ int max_processes = 64;			/* Default number */
 
 int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
 
+struct cfattach ofbus_root_ca = {
+	sizeof(struct device), ofbus_match, ofbus_attach
+};
 
 /**************************************************************/
 
