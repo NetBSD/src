@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.4 2000/06/18 07:20:15 mrg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.5 2000/12/13 08:19:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -83,7 +83,8 @@ typedef struct {
 char	*audio_enc_from_val __P((int));
 int	audio_enc_to_val __P((const char *));
 
-int	audio_get_sun_encoding __P((int, int *, int *));
+int	audio_sun_to_encoding __P((int, int *, int *));
+int	audio_encoding_to_sun __P((int, int, int *));
 
 /*
  * M$ WAV files, info gleamed from sox sources
