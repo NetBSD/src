@@ -1,4 +1,4 @@
-/*	$NetBSD: localedef.h,v 1.2 1994/10/26 02:53:17 cgd Exp $	*/
+/*	$NetBSD: localedef.h,v 1.3 1994/11/30 22:15:58 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -39,8 +39,8 @@
 typedef struct
 {
 	char *yesexpr;
-	char *yesstr;
 	char *noexpr;
+	char *yesstr;
 	char *nostr;
 } _MessagesLocale;
 
