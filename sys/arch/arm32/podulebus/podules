@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.5 1997/02/23 03:51:19 mark Exp $
+$NetBSD: podules,v 1.6 1997/07/28 17:47:53 mark Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -37,23 +37,27 @@ $NetBSD: podules,v 1.5 1997/02/23 03:51:19 mark Exp $
 
 manufacturer	ACORN		0x0000	Acorn Computers
 manufacturer	OLIVETTI	0x0002	Olivetti
-manufacturer	WATFORD		0x0003	Watford
+manufacturer	WATFORD		0x0003	Watford Electronics
 manufacturer	CCONCEPTS	0x0004	Computer Concepts
 manufacturer	ARMADILLO	0x0007	Armadillo Systems
 manufacturer	WILDVISION	0x0009	Wild Vision
 manufacturer	ATOMWIDE	0x0011	Atomwide
+manufacturer	ATOMWIDE2	0x0017	Atomwide
 manufacturer	LINGENUITY	0x001a	Lingenuity
 manufacturer	IRLAM		0x001f	Irlam Instruments
 manufacturer	OAK		0x0021	Oak Solutions
 manufacturer	MORLEY		0x002b	Morley
+manufacturer	VTI		0x0035	Vertical Twist
 manufacturer	CUMANA		0x003a	Cumana
 manufacturer	ICS		0x003c	ICS
+manufacturer	SERIALPORT	0x003f	Serial Port
 manufacturer	ARXE		0x0041	ARXE
 manufacturer	ALEPH1		0x0042	Aleph 1
 manufacturer	ICUBED		0x0046	I-Cubed
 manufacturer	BRINI		0x0050	Brini
 manufacturer	ANT		0x0053	ANT
 manufacturer	ALSYSTEMS	0x005b	Alsystems
+manufacturer	SIMTEC		0x005f	Simtec Electronics
 manufacturer	YES		0x0060	Yellowstone Educational Solutions
 manufacturer	MCS		0x0063	MCS
 
@@ -65,6 +69,7 @@ podule	ACORN		SCSI		0x0002	SCSI 1 interface
 podule	ACORN		ETHER1		0x0003	ether 1 interface
 podule	ACORN		RAMROM		0x0005	RAM/ROM podule
 podule	ACORN		BBCIO		0x0006	BBC IO interface
+podule	ACORN		ST506		0x000b	ST506 HD interface
 podule	ACORN		MIDI		0x0013	MIDI interface
 podule	ACORN		ETHER2		0x0061	ether 2 interface
 
@@ -80,6 +85,8 @@ podule	WILDVISION	MIDIMAX		0x0200	MIDI max
 
 podule	ATOMWIDE	ETHER3		0x00A4	ether 3/5 interface
 
+podule	ATOMWIDE2	SERIAL		0x0090	serial interface
+
 podule	LINGENUITY	SCSI		0x0095	16 bit SCSI interface
 
 podule	IRLAM		24I16		0x00e6	24i16 digitiser
@@ -88,24 +95,28 @@ podule	OAK		SCSI		0x0058	16 bit SCSI interface
 
 podule	MORLEY		SCSI		0x0067	SCSI interface
 
+podule	VTI		SCSI		0x008d	SCSI interface
+
 podule	CUMANA		SCSI2		0x003a	SCSI II interface
 podule	CUMANA		SCSI1		0x00a0	SCSI I interface
 podule	CUMANA		SLCD		0x00dd	CDFS & SLCD expansion card
 
 podule	ICS		IDE		0x00ae	IDE Interface
 
+podule	SERIALPORT	DUALSERIAL	0x00b9	Serial interface
+
 podule	ARXE		SCSI		0x0041	16 bit SCSI interface
 
 podule	ALEPH1		PCCARD		0x00ea	PC card
 
-podule	ICUBED		ETHERH		0x00ec	etherlan 600 network slot interface
-podule	ICUBED		ETHERHFLASH	0x011e	etherlan 600 network slot interface
+podule	ICUBED		ETHERLAN600	0x00ec	etherlan 600 network slot interface
+podule	ICUBED		ETHERLAN600A	0x011e	etherlan 600A network slot interface
 podule	ICUBED		ETHERLAN500	0x00d4	etherlen 500 interface
-podule	ICUBED		ETHERLAN500A	0x011f	etherlen 500 interface
+podule	ICUBED		ETHERLAN500A	0x011f	etherlen 500A interface
 podule	ICUBED		ETHERLAN200	0x00bd	etherlen 200 interface
-podule	ICUBED		ETHERLAN200A	0x011d	etherlen 200 interface
+podule	ICUBED		ETHERLAN200A	0x011d	etherlen 200A interface
 podule	ICUBED		ETHERLAN100	0x00c4	etherlen 100 interface
-podule	ICUBED		ETHERLAN100A	0x011c	etherlen 100 interface
+podule	ICUBED		ETHERLAN100A	0x011c	etherlen 100A interface
 
 podule	BRINI		PORT		0x0000	BriniPort intelligent I/O interface
 podule	BRINI		LINK		0x00df	BriniLink transputer link adapter
@@ -115,6 +126,9 @@ podule	ANT		ETHERB		0x00e4	ether B network slot interface
 podule	ANT		ETHERM		0x00d8	ether M dual interface NIC
 
 podule	ALSYSTEMS	SCSI		0x0107	SCSI II host adapter
+
+podule	SIMTEC		IDE8		0x0130	8 bit IDE interface
+podule	SIMTEC		IDE		0x0131	16 bit IDE interface
 
 podule	YES		RAPIDE		0x0114	RapIDE32 interface
 
