@@ -1,7 +1,7 @@
-/*	$NetBSD: samachdep.h,v 1.7 2002/03/16 06:20:08 gmcgarry Exp $	*/
+/*	$NetBSD: exec.c,v 1.1 2002/03/16 06:20:08 gmcgarry Exp $ */
 
-/*
- * Copyright (c) 1982, 1990, 1993
+/*-
+ * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,75 +32,45 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)samachdep.h	8.1 (Berkeley) 6/10/93
+ *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <sys/types.h>
-#include <machine/hp300spu.h>
+#include <sys/param.h>
 
-#define	NHPIB		4
-#define	NSCSI		2
-#define NRD		8
-#define NCT		8
-#define NSD		8
+#include <machine/bootinfo.h>
 
-#define NITE		4
+#include <lib/libsa/loadfile.h>
 
-/* from cpu.h */
-#define	INTIOBASE	(0x00400000)
-#define IIOV(x)		(x)
-#define DIOBASE		(0x600000)
-#define	DIOCSIZE	(0x10000)
-#define DIOIIBASE	(0x01000000)
-#define DIOIICSIZE	(0x00400000)
+#include <hp300/stand/common/samachdep.h>
 
-#define MHZ_8		1
-#define MHZ_16		2
-#define MHZ_25		3
-#define MHZ_33		4
-#define MHZ_50		6
+#define	round_to_size(x) \
+	(((x) + sizeof(u_long) - 1) & ~(sizeof(u_long) - 1))
 
-extern	int cpuspeed, machineid, mmuid;
-extern	int howto;
-extern	int cons_scode;
-extern	u_int opendev;
-extern	u_int bootdev;
-char	*getmachineid __P((void));
+void
+exec_hp300(file, loadaddr, howto)
+	char *file;
+	u_long loadaddr;
+	int howto;
+{
+	u_long marks[MARK_MAX];
+	struct btinfo_magic *bt;
+	int fd;
 
-extern	int userom;
-void	romputchar __P((int));
+	marks[MARK_START] = loadaddr;
+	if ((fd = loadfile(file, marks, LOAD_KERNEL)) == -1)
+		return;
 
-void	exec_hp300 __P((char *, u_long, int));
-void	transfer __P((char *entry, int howto, int opendev, int conscode,
-	    char *lowram, char *esym));
-void	_transfer __P((char *entry, int howto, int opendev, int conscode,
-	    char *lowram, char *esym));
+	marks[MARK_END] = round_to_size(marks[MARK_END] - loadaddr);
+	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n",
+	    marks[MARK_ENTRY], marks[MARK_NSYM],
+	    marks[MARK_SYM], marks[MARK_END]);
 
-#define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
+	bt = (struct btinfo_magic *)loadaddr;
+        bt->common.type = BTINFO_MAGIC;
+        bt->magic1 = BOOTINFO_MAGIC1;
+        bt->magic2 = BOOTINFO_MAGIC2;
 
-/* bogon grfinfo structure to keep grf_softc happy */
-struct grfinfo {
-	int	grf_foo;
-};
-
-/*
- * Switch we use to set punit in devopen.
- */
-struct punitsw {
-	int	(*p_punit) __P((int, int, int *));
-};
-extern	struct punitsw punitsw[];
-extern	int npunit;
-
-extern	struct devsw devsw_net[];
-extern	int ndevs_net;
-
-extern	struct devsw devsw_general[];
-extern	int ndevs_general;
-
-extern	struct fs_ops file_system_rawfs[];
-extern	struct fs_ops file_system_ufs[];
-extern	struct fs_ops file_system_nfs[];
-
-extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
-	    bootprog_maker[];
+	machdep_start((char *)marks[MARK_ENTRY], howto,
+	    (char *)loadaddr, (char *)marks[MARK_SYM],
+	    (char *)marks[MARK_END]);
+}
