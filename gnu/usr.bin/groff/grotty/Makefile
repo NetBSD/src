@@ -5,7 +5,7 @@
 PROG=		grotty
 SRCS=		grotty.cc
 LDADD+=		$(.CURDIR)/../libdriver/obj/libdriver.a \
-		$(.CURDIR)/../libgroff/obj/libgroff.a
+		$(.CURDIR)/../libgroff/obj/libgroff.a -lm
 # Nuke -Ig++-include when we finally install libg++.
 GXXFLAGS+=	-I$(.CURDIR)/../libdriver -I$(.CURDIR)/../libgroff \
 		-I$(.CURDIR)/../../../lib/libg++/g++-include
