@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.h,v 1.7 2000/06/04 19:14:44 cgd Exp $	*/
+/*	$NetBSD: eisa_machdep.h,v 1.8 2000/08/11 00:43:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -67,3 +67,12 @@ int		eisa_mem_alloc(bus_space_tag_t, bus_size_t, bus_size_t,
 		    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *);
 void		eisa_mem_free(bus_space_tag_t, bus_space_handle_t,
 		    bus_size_t);
+
+int		eisa_conf_read_mem(eisa_chipset_tag_t, int, int, int,
+		    struct eisa_cfg_mem *);
+int		eisa_conf_read_irq(eisa_chipset_tag_t, int, int, int,
+		    struct eisa_cfg_irq *);
+int		eisa_conf_read_dma(eisa_chipset_tag_t, int, int, int,
+		    struct eisa_cfg_dma *);
+int		eisa_conf_read_io(eisa_chipset_tag_t, int, int, int,
+		    struct eisa_cfg_io *);

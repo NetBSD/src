@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.15 2000/08/10 23:30:08 thorpej Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.16 2000/08/11 00:43:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -41,6 +41,11 @@
  * configuration.  Some of this information is machine-specific, and is
  * separated into eisa_machdep.h.
  */
+
+struct eisa_cfg_mem;
+struct eisa_cfg_irq;
+struct eisa_cfg_dma;
+struct eisa_cfg_io;
 
 #include <machine/bus.h>
 #include <dev/eisa/eisareg.h>		/* For ID register & string info. */
