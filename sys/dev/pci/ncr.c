@@ -1,7 +1,6 @@
-/*	$NetBSD: ncr.c,v 1.26 1996/03/11 18:57:04 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.27 1996/03/11 23:05:47 cgd Exp $	*/
 
 /**************************************************************************
-**
 **
 **  Device driver for the   NCR 53C810   PCI-SCSI-Controller.
 **
@@ -1320,7 +1319,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.26 1996/03/11 18:57:04 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.27 1996/03/11 23:05:47 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
