@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.33 2002/06/05 10:56:18 lukem Exp $	*/
+/*	$NetBSD: gram.y,v 1.34 2002/06/22 02:09:12 ross Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,7 +107,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PREFIX PSEUDO_DEVICE ROOT
 %token	SOURCE TYPE WITH NEEDS_COUNT NEEDS_FLAG NO
 %token	<val> NUMBER
-%token	<str> PATHNAME WORD EMPTY
+%token	<str> PATHNAME QSTRING WORD EMPTY
 %token	ENDDEFS
 
 %left '|'
@@ -141,6 +141,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<list>	defoptdeps
 %type	<str>	optfile_opt
 %type	<list>	subarches_opt subarches
+%type	<str>	filename stringvalue locname
 
 %%
 
@@ -165,8 +166,8 @@ topthings:
 	/* empty */;
 
 topthing:
-	SOURCE PATHNAME '\n'		{ if (!srcdir) srcdir = $2; } |
-	BUILD  PATHNAME '\n'		{ if (!builddir) builddir = $2; } |
+	SOURCE filename '\n'		{ if (!srcdir) srcdir = $2; } |
+	BUILD  filename '\n'		{ if (!builddir) builddir = $2; } |
 	include '\n' |
 	'\n';
 
@@ -187,10 +188,10 @@ subarches:
  * Various nonterminals shared between the grammars.
  */
 file:
-	XFILE PATHNAME fopts fflgs rule	{ addfile($2, $3, $4, $5); };
+	XFILE filename fopts fflgs rule	{ addfile($2, $3, $4, $5); };
 
 object:
-	XOBJECT PATHNAME fopts oflgs	{ addobject($2, $3, $4); };
+	XOBJECT filename fopts oflgs	{ addobject($2, $3, $4); };
 
 /* order of options is important, must use right recursion */
 fopts:
@@ -223,15 +224,15 @@ oflag:
 	NEEDS_FLAG			{ $$ = OI_NEEDSFLAG; };
 
 rule:
-	COMPILE_WITH WORD		{ $$ = $2; } |
+	COMPILE_WITH stringvalue	{ $$ = $2; } |
 	/* empty */			{ $$ = NULL; };
 
 include:
-	INCLUDE WORD			{ (void) include($2, 0, 0, 1); } |
-	CINCLUDE WORD			{ (void) include($2, 0, 1, 1); };
+	INCLUDE filename		{ (void) include($2, 0, 0, 1); } |
+	CINCLUDE filename		{ (void) include($2, 0, 1, 1); };
 
 prefix:
-	PREFIX PATHNAME			{ prefix_push($2); } |
+	PREFIX filename			{ prefix_push($2); } |
 	PREFIX				{ prefix_pop(); };
 
 /*
@@ -318,13 +319,18 @@ loclist:
 
 /* "[ WORD locdefault ]" syntax may be unnecessary... */
 locdef:
-	WORD locdefault 		{ $$ = new_nsi($1, $2, 0); } |
-	WORD				{ $$ = new_nsi($1, NULL, 0); } |
-	'[' WORD locdefault ']'		{ $$ = new_nsi($2, $3, 1); } |
-	WORD '[' NUMBER ']'		{ $$ = mk_nsis($1, $3, NULL, 0); } |
-	WORD '[' NUMBER ']' locdefaults	{ $$ = mk_nsis($1, $3, $5, 0); } |
-	'[' WORD '[' NUMBER ']' locdefaults ']'
+	locname locdefault 		{ $$ = new_nsi($1, $2, 0); } |
+	locname				{ $$ = new_nsi($1, NULL, 0); } |
+	'[' locname locdefault ']'	{ $$ = new_nsi($2, $3, 1); } |
+	locname '[' NUMBER ']'		{ $$ = mk_nsis($1, $3, NULL, 0); } |
+	locname '[' NUMBER ']' locdefaults
+					{ $$ = mk_nsis($1, $3, $5, 0); } |
+	'[' locname '[' NUMBER ']' locdefaults ']'
 					{ $$ = mk_nsis($2, $4, $6, 1); };
+
+locname:
+	WORD				{ $$ = $1; } |
+	QSTRING				{ $$ = $1; };
 
 locdefault:
 	'=' value			{ $$ = $2; };
@@ -333,19 +339,28 @@ locdefaults:
 	'=' '{' values '}'		{ $$ = $3; };
 
 fsoptfile_opt:
-	PATHNAME			{ $$ = $1; } |
+	filename			{ $$ = $1; } |
 	/* empty */			{ $$ = NULL; };
 
 optfile_opt:
-	PATHNAME			{ $$ = $1; } |
+	filename			{ $$ = $1; } |
 	/* empty */			{ $$ = NULL; };
 
+filename:
+	QSTRING				{ $$ = $1; } |
+	PATHNAME			{ $$ = $1; };
+
 value:
+	QSTRING				{ $$ = $1; } |
 	WORD				{ $$ = $1; } |
 	EMPTY				{ $$ = $1; } |
 	signed_number			{ char bf[40];
 					    (void)sprintf(bf, FORMAT($1), $1);
 					    $$ = intern(bf); };
+
+stringvalue:
+	QSTRING				{ $$ = $1; } |
+	WORD				{ $$ = $1; };
 
 values:
 	value ',' values		{ $$ = new_sx($1, $3); } |
@@ -395,7 +410,7 @@ config_spec:
 	NO OPTIONS no_opt_list |
 	OPTIONS opt_list |
 	MAXUSERS NUMBER			{ setmaxusers($2); } |
-	IDENT WORD			{ setident($2); } |
+	IDENT stringvalue		{ setident($2); } |
 	CONFIG conf root_spec sysparam_list
 					{ addconf(&conf); } |
 	NO PSEUDO_DEVICE WORD		{ delpseudo($3); } |
