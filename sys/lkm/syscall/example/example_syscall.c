@@ -1,4 +1,4 @@
-/*	$NetBSD: example_syscall.c,v 1.3 2002/06/01 14:07:33 simonb Exp $	*/
+/*	$NetBSD: example_syscall.c,v 1.4 2003/12/30 06:53:26 atatat Exp $	*/
 
 /*
  * example_syscall.c
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: example_syscall.c,v 1.3 2002/06/01 14:07:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: example_syscall.c,v 1.4 2003/12/30 06:53:26 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 
-int     example_syscall __P((struct proc *, void *, register_t *));
+int     example_syscall __P((struct lwp *, void *, register_t *));
 
 /*
  * This is the actual code for system call...  it can be static because
@@ -60,8 +60,8 @@ int     example_syscall __P((struct proc *, void *, register_t *));
  * files into a single ".o" file for use by "modload".
  */
 int
-example_syscall(p, uap, retval)
-	struct proc	*p;
+example_syscall(l, uap, retval)
+	struct lwp	*l;
 	void		*uap;
 	register_t	retval[];
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_misc.c,v 1.3 2003/09/01 17:11:03 jdolecek Exp $	*/
+/*	$NetBSD: lkminit_misc.c,v 1.4 2003/12/30 06:53:26 atatat Exp $	*/
 
 /*
  * Makefile for miscmod
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.3 2003/09/01 17:11:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_misc.c,v 1.4 2003/12/30 06:53:26 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -98,7 +98,7 @@ miscmod_handle( lkmtp, cmd)
 	int			i;
 	struct lkm_misc		*args = lkmtp->private.lkm_misc;
 	int			err = 0;	/* default = success*/
-	extern int sys_lkmnosys __P((struct proc *, void *, register_t *));
+	extern int sys_lkmnosys __P((struct lwp *, void *, register_t *));
 
 	switch( cmd) {
 	case LKM_E_LOAD:
@@ -134,7 +134,7 @@ miscmod_handle( lkmtp, cmd)
 		bcopy( &newent, &sysent[ i], sizeof( struct sysent));
 
 		/* done!*/
-		args->lkm_offset = i;	/* slot in sysent[]*/
+		args->mod.lkm_offset = i;	/* slot in sysent[]*/
 
 
 		/* if we make it to here, print copyright on console*/
@@ -147,7 +147,7 @@ miscmod_handle( lkmtp, cmd)
 
 	case LKM_E_UNLOAD:
 		/* current slot...*/
-		i = args->lkm_offset;
+		i = args->mod.lkm_offset;
 
 		/* replace current slot contents with old contents*/
 		bcopy( &oldent, &sysent[ i], sizeof( struct sysent));
