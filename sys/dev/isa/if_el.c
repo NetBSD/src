@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.23 1995/04/17 12:08:56 cgd Exp $	*/
+/*	$NetBSD: if_el.c,v 1.24 1995/06/09 18:09:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -687,9 +687,7 @@ el_ioctl(ifp, cmd, data)
 			break;
 #endif
 #ifdef NS
-		/*
-		 * XXX - This code is probably wrong.
-		 */
+		/* XXX - This code is probably wrong. */
 		case AF_NS:
 		    {
 			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
@@ -697,14 +695,10 @@ el_ioctl(ifp, cmd, data)
 			if (ns_nullhost(*ina))
 				ina->x_host =
 				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
-			else {
-				/* 
-				 * 
-				 */
-				bcopy((caddr_t)ina->x_host.c_host,
-				    (caddr_t)sc->sc_arpcom.ac_enaddr,
+			else
+				bcopy(ina->x_host.c_host,
+				    sc->sc_arpcom.ac_enaddr,
 				    sizeof(sc->sc_arpcom.ac_enaddr));
-			}
 			/* Set new address. */
 			el_init(sc);
 			break;
@@ -739,10 +733,13 @@ el_ioctl(ifp, cmd, data)
 			 */
 			el_reset(sc);
 		}
+		break;
 
 	default:
 		error = EINVAL;
+		break;
 	}
+
 	splx(s);
 	return error;
 }
