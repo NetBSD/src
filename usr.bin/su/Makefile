@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/02/18 21:22:52 scottr Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 2000/01/08 18:35:13 he Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	su
@@ -18,4 +18,8 @@ INSTALLFLAGS=-fschg
 CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+= -lskey
+.endif
+
+.ifdef SUROOTAUTH
+CPPFLAGS+=-DROOTAUTH=\"${SUROOTAUTH}\"
 .endif
