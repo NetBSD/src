@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.31 1994/05/05 05:36:23 cgd Exp $
+ *      $Id: aha1742.c,v 1.32 1994/05/05 07:41:44 mycroft Exp $
  */
 
 /*
@@ -667,7 +667,7 @@ ahbintr(ahb)
 			if ((ahb_debug & AHB_SHOWECBS) && ecb)
 				printf("<int ecb(%x)>", ecb);
 #endif /*AHBDEBUG */
-			untimeout(ahb_timeout, (caddr_t)ecb);
+			untimeout(ahb_timeout, ecb);
 			ahb_done(ahb, ecb, stat != AHB_ECB_OK);
 		}
 	} while (inb(port + G2STAT) & G2STAT_INT_PEND);
@@ -1028,8 +1028,7 @@ ahb_scsi_cmd(xs)
 		if (!(flags & SCSI_NOMASK)) {
 			s = splbio();
 			ahb_send_immed(ahb, sc_link->target, AHB_TARG_RESET);
-			timeout(ahb_timeout, ecb,
-			    (xs->timeout * hz) / 1000);
+			timeout(ahb_timeout, ecb, (xs->timeout * hz) / 1000);
 			splx(s);
 			return SUCCESSFULLY_QUEUED;
 		} else {
