@@ -1,8 +1,8 @@
-/*	$NetBSD: bztzscreg.h,v 1.1 1996/12/16 16:17:29 is Exp $	*/
+/*	$NetBSD: cbscvar.h,v 1.1.2.2 1997/10/14 08:26:27 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1996 Ignatios Souvatzis
- * Copyright (c) 1995 Daniel Widenfalk
+ * Copyright (c) 1997 Michael L. Hitch.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,10 +14,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Daniel Widenfalk
- *      for the NetBSD Project.
+ *	This product includes software developed for the NetBSD Project
+ *	by Michael L. Hitch.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,24 +31,34 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Blizzard 2060 with FAS216 SCSI interface hardware 
- * description.
- */
+struct cbsc_softc {
+	struct ncr53c9x_softc	sc_ncr53c9x;	/* glue to MI code */
 
-#ifndef _BZTZSCREG_H_
-#define _BZTZSCREG_H_
+	struct	isr		 sc_isr;	/* Interrupt chain struct */
 
-#ifndef _SFASREG_H_
-#include <amiga/dev/sfasreg.h>
-#endif
+	volatile u_char *sc_reg;		/* the registers */
+	volatile u_char *sc_dmabase;
 
-typedef struct bztzsc_regmap {
-	sfas_regmap_t	FAS216;
-	vu_char		*hardbits;
-	vu_char		*addrport;
-} bztzsc_regmap_t;
+	int		sc_active;		/* Pseudo-DMA state vars */
+	int		sc_datain;
+	int		sc_tc;
+	size_t		sc_dmasize;
+	size_t		sc_dmatrans;
+	char		**sc_dmaaddr;
+	size_t		*sc_pdmalen;
+	vm_offset_t	sc_pa;
 
-typedef bztzsc_regmap_t *bztzsc_regmap_p;
+	u_char		sc_pad1[18];		/* XXX */
+	u_char		sc_alignbuf[256];
+	u_char		sc_pad2[16];
+	u_char		sc_hardbits;
+	u_char		sc_portbits;
+	u_char		sc_xfr_align;
 
-#endif
+};
+
+#define CBSC_HB_CREQ		0x80
+
+#define CBSC_PB_LONG		0x20
+#define CBSC_PB_WRITE		0x40
+#define CBSC_PB_LED		0x80

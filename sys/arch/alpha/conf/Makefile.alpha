@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.34.2.1 1997/08/23 07:06:37 thorpej Exp $
+# $NetBSD: Makefile.alpha,v 1.34.2.2 1997/10/14 08:18:08 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -100,8 +100,8 @@ LINKFLAGS+=	-S
 %LOAD
 
 # Use awk to cross-build assym.h from the genassym.s file.
-assym.h: genassym.o ${ALPHA}/alpha/genassym.awk
-	awk -f ${ALPHA}/alpha/genassym.awk < genassym.s > $@
+assym.h: genassym.o $S/kern/genassym.awk
+	awk -f $S/kern/genassym.awk < genassym.s > $@
 
 # The above rule lists genassym.o as a prerequisite so that the
 # generated .depend rule is effective, even though we actually
@@ -125,10 +125,17 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
 
-clean: cleankernel
-cleankernel:
+__CLEANKERNEL: .USE
+	@echo "${.TARGET}ing the kernel objects"
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
-	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+	    [Ee]rrs linterrs makelinks assym.h.tmp assym.h
+
+__CLEANDEPEND: .USE
+	rm -f .depend
+
+clean: __CLEANKERNEL
+
+cleandir: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
