@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.h,v 1.3 1997/11/07 16:59:41 drochner Exp $	*/
+/*	$NetBSD: bbinfo.h,v 1.4 2003/02/02 21:08:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -54,7 +54,7 @@ struct fraglist {
 
 /* only used by bootsect code (not by installboot) */
 #ifndef MAXFLENTRIES
-#define MAXFLENTRIES 10
+#define MAXFLENTRIES 20
 #endif
 #ifndef PRIM_LOADSZ
 #define PRIM_LOADSZ 15
