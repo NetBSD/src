@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55 2000/11/26 17:44:09 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56 2001/05/05 17:53:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -161,7 +161,8 @@ matchbiosdisks()
 		if (dv->dv_class == DV_DISK &&
 		    (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
 		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
-		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld")))
+		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld") ||
+		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ed")))
 			i386_ndisks++;
 
 	if (i386_ndisks == 0)
@@ -198,7 +199,8 @@ matchbiosdisks()
 #endif
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
 		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
-		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld")) {
+		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld") ||
+		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ed")) {
 			n++;
 			sprintf(i386_alldisks->dl_nativedisks[n].ni_devname,
 			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
@@ -398,7 +400,8 @@ findroot(void)
 
 			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
 			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
-			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld")) {
+			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld") ||
+			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ed")) {
 				/*
 				 * Don't trust BIOS device numbers, try
 				 * to match the information passed by the
@@ -411,7 +414,7 @@ findroot(void)
 				goto found;
 			}
 
-			/* no "fd", "wd", "sd", "ld" */
+			/* no "fd", "wd", "sd", "ld", "ed" */
 			continue;
 
 found:
