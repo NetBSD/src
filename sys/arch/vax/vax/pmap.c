@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 1998/11/29 14:55:05 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.55 1998/12/19 20:03:23 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -985,7 +985,7 @@ pmap_is_modified(pa)
 #ifdef PMAPDEBUG
 	if (startpmapdebug) printf("No\n");
 #endif
-	return 1;
+	return 0;
 }
 
 /*
