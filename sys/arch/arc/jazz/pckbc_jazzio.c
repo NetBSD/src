@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.12 2005/01/22 07:35:34 tsutsui Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.13 2005/01/22 07:44:08 tsutsui Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.12 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.13 2005/01/22 07:44:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,8 +147,8 @@ pckbc_jazzio_attach(struct device *parent, struct device *self, void *aux)
 		    bus_space_map(iot, PICA_KBCMDP, 1, 0, &ioh_c))
 			panic("pckbc_attach: couldn't map");
 
-		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		bzero(t, sizeof(struct pckbc_internal));
+		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF,
+		    M_WAITOK | M_ZERO);
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;
