@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.10 1998/08/10 22:35:01 tv Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.11 1999/03/03 18:06:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.10 1998/08/10 22:35:01 tv Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.11 1999/03/03 18:06:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,7 @@ extern sigset_t s_mask;
 
 static char hdbuf[BLKMULT];             /* space for archive header on read */
 u_long flcnt;				/* number of files processed */
+ARCHD archd;
 
 /*
  * list()
@@ -91,7 +92,6 @@ list()
 {
 	ARCHD *arcn;
 	int res;
-	ARCHD archd;
 	time_t now;
 
 	arcn = &archd;
@@ -171,7 +171,6 @@ extract()
 	ARCHD *arcn;
 	int res;
 	off_t cnt;
-	ARCHD archd;
 	struct stat sb;
 	int fd;
 
@@ -561,7 +560,6 @@ append()
 {
 	ARCHD *arcn;
 	int res;
-	ARCHD archd;
 	FSUB *orgfrmt;
 	int udev;
 	off_t tlen;
@@ -700,7 +698,6 @@ void
 archive()
 #endif
 {
-	ARCHD archd;
 
 	/*
 	 * if we only are adding members that are newer, we need to save the
@@ -739,7 +736,6 @@ copy()
 	int drem;
 	int fdsrc = -1;
 	struct stat sb;
-	ARCHD archd;
 	char dirbuf[PAXPATHLEN+1];
 
 	arcn = &archd;
