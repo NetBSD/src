@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.2.6.1 1996/06/07 01:45:07 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
