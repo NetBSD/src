@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.81 1998/01/12 08:44:08 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.82 1998/03/03 09:16:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -472,8 +472,8 @@ audio_alloc_ring(sc, r, bufsize)
 	if (hw->round_buffersize)
 		bufsize = hw->round_buffersize(hdl, bufsize);
 	r->bufsize = bufsize;
-	if (hw->alloc)
-	    r->start = hw->alloc(hdl, r->bufsize, M_DEVBUF, M_WAITOK);
+	if (hw->allocm)
+	    r->start = hw->allocm(hdl, r->bufsize, M_DEVBUF, M_WAITOK);
 	else
 	    r->start = malloc(bufsize, M_DEVBUF, M_WAITOK);
 	if (r->start == 0)
@@ -486,8 +486,8 @@ audio_free_ring(sc, r)
 	struct audio_softc *sc;
 	struct audio_ringbuffer *r;
 {
-	if (sc->hw_if->free) {
-	    sc->hw_if->free(sc->hw_hdl, r->start, M_DEVBUF);
+	if (sc->hw_if->freem) {
+	    sc->hw_if->freem(sc->hw_hdl, r->start, M_DEVBUF);
 	} else {
 	    free(r->start, M_DEVBUF);
 	}
@@ -2807,7 +2807,8 @@ mixer_ioctl(dev, cmd, addr, flag, p)
 		mixer_remove(sc, p); /* remove old entry */
 		if (*(int *)addr) {
 			struct mixer_asyncs *ma;
-			ma = malloc(sizeof (struct mixer_asyncs), M_DEVBUF, M_WAITOK);
+			ma = malloc(sizeof (struct mixer_asyncs),
+                                    M_DEVBUF, M_WAITOK);
 			ma->next = sc->sc_async_mixer;
 			ma->proc = p;
 			sc->sc_async_mixer = ma;
