@@ -30,7 +30,7 @@
  *	Author: Tatu Ylonen, Jukka Virtanen
  *	Helsinki University of Technology 1992.
  *
- *	$Id: bcopy.s,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $
+ *	$Id: bcopy.s,v 1.2 1994/03/10 21:39:56 phil Exp $
  */
 
 #include <machine/asm.h>
@@ -59,6 +59,34 @@ ENTRY(memcpy)
 	movd	B_ARG1,r1   /* from */
 	br common
 
+/* ovbcopy (from, to, bcount)  -- does overlapping stuff */
+
+ENTRY(ovbcopy)
+	DFRAME
+	movd	B_ARG0,r1  /* from */
+	movd	B_ARG1,r2  /* to */
+	cmpd	r2, r1
+	bls	common	   /* safe to do standard thing */
+	movd	B_ARG2,r0  /* bcount */
+	addd	r1, r0     /* add to start of from */
+	cmpd	r2, r0
+	bhi	common	   /* safe to do standard thing */
+
+/* Must do a reverse copy  (and assume that the start is on a
+	word boundry . . . so we move the "remaining" bytes first) */
+
+	movd	B_ARG2,r0  /* bcount */
+	addd	r0, r1
+	addd	r0, r1
+	andd	3,r0
+	movsb	B	   /* move bytes backwards */
+	movd	B_ARG2,r0
+	lshd	-2,r0
+	movsd	B	   /* move words backwards */
+	DEMARF
+	ret	0
+	
+#if 0
 /* bcopy_bytes(from, to, bcount)
  *
  * PC532 uses memory mapped SCSI pseudo dma addresses that
@@ -132,4 +160,4 @@ bcopy_skip:
 	ret	0
 	.globl EX(bcopy_bytes_end)
 LEX(bcopy_bytes_end)
-
+#endif

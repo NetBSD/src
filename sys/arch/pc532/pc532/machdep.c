@@ -104,7 +104,7 @@ int	msgbufmapped = 0;		/* set when safe to use msgbuf */
     kernel running at the correct place in memory.
  */
 
-extern char _end[], _edata[];
+extern char end[], _edata[];
 extern vm_offset_t   avail_start;
 extern vm_offset_t   avail_end;
 
@@ -124,9 +124,9 @@ _low_level_init ()
   int  p0, p1, p2;
   extern int _mapped;
 
-  mem_size = ram_size(_end);
+  mem_size = ram_size(end);
   physmem = btoc(mem_size);
-  start_page = ((int)&_end + PAGE_SIZE) & ~(PAGE_SIZE-1);
+  start_page = ((int)&end + PAGE_SIZE) & ~(PAGE_SIZE-1);
   avail_start = start_page; 
   avail_end   = mem_size - PAGE_SIZE;
   

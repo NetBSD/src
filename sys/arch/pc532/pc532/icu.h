@@ -30,7 +30,7 @@
  *
  *	icu.h
  *
- *	$Id: icu.h,v 1.1.1.1 1993/09/09 23:53:48 phil Exp $
+ *	$Id: icu.h,v 1.2 1994/03/10 21:39:59 phil Exp $
  */
 
 /* icu.h: defines for use with the ns32532 icu. */
@@ -117,9 +117,9 @@
    change.  This includes software "interrupts" -- Bit masks in the upper
    half of the word. */
 
-#define SPL_NET		0x40000		/* net */
+#define SPL_NET		0x20000		/* net */
 #define SPL_SOFTCLK	0x10000		/* Soft clock interrupt. */
-#define SPL_IMP		0x20000		/* ??? */
+#define SPL_IMP		0x22a80		/* Must include ttyX */
 
 #define SPL_CLK		0x0004		/* 1 << IR_CLK */
 #define SPL_AIC		0x0020
