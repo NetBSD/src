@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.36 1999/03/31 00:44:48 fvdl Exp $	*/
+/*	$NetBSD: defs.h,v 1.36.2.1 1999/04/05 15:08:22 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -235,7 +235,6 @@ void toplevel __P((void));
 
 /* from disks.c */
 int	find_disks __P((void));
-void	disp_cur_part __P((struct mbr_partition *, int,int));
 void	disp_cur_fspart __P((int, int));
 void	make_bsd_partitions __P((void));
 void	write_disklabel __P((void));
