@@ -73,7 +73,7 @@ my $NT=0;
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "VMS", "WIN16", "WIN32",
-			"WINNT", "PERL5", "NeXT" );
+			"WINNT", "PERL5", "NeXT", "__NetBSD__" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "RIPEMD",
 			 "MDC2", "RSA", "DSA", "DH", "HMAC", "FP_API" );
@@ -530,7 +530,7 @@ sub do_defs
 
 	# Prune the returned symbols
 
-	$platform{"crypt"} .= ",!PERL5,!__FreeBSD__,!NeXT";
+	$platform{"crypt"} .= ",!PERL5,!__FreeBSD__,!NeXT,!__NetBSD__";
 
         delete $syms{"SSL_add_dir_cert_subjects_to_stack"};
         delete $syms{"bn_dump1"};
