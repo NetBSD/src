@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.222.2.2 2001/04/25 09:30:42 he Exp $	*/
+/*	$NetBSD: locore.s,v 1.222.2.3 2001/06/11 20:40:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2319,6 +2319,7 @@ IDTVEC(exceptions)
 NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
 NENTRY(resume_pop_ds)
+	pushl	%es
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movl	%ax,%es
 NENTRY(resume_pop_es)
