@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.7 1999/09/08 21:17:47 jsm Exp $	*/
+/*	$NetBSD: score.c,v 1.8 1999/09/08 21:45:26 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.7 1999/09/08 21:17:47 jsm Exp $");
+__RCSID("$NetBSD: score.c,v 1.8 1999/09/08 21:45:26 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ pegscore(crd, tbl, n, sum)
 int
 adjust(cb, tnv)
 	const CARD cb[];
-	CARD tnv;
+	CARD tnv __attribute__((__unused__));
 {
 	long scr;
 	int i, c0, c1;
