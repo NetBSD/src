@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.174 2004/01/02 21:49:08 cjep Exp $
+#	$NetBSD: 3RDPARTY,v 1.175 2004/01/04 18:42:22 itojun Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -86,6 +86,8 @@ it needs too much effort).  Reasons: (1) need to support binaries that use
 BIND4 resolver API (res_init), and need to support BIND8 API.  we practically
 need to maintain both BIND4 _res and BIND8 _res.  (2) amount of local changes.
 nsswitch/nsdispatch need to be reimplemented.
+do not forget to update gnu/usr.bin/cvs/include/config.h to match
+gnu/dist/cvs/config.h.in.
 
 Package:	binutils
 Version:	2.14
