@@ -1,4 +1,4 @@
-/* $NetBSD: scireg.h,v 1.1 1999/09/13 10:31:22 itojun Exp $ */
+/* $NetBSD: scireg.h,v 1.2 1999/09/16 21:15:36 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -29,94 +29,9 @@
 #ifndef _SH3_SCIREG_H_
 #define _SH3_SCIREG_H_
 
-#ifndef BYTE_ORDER
-#error Define BYTE_ORDER!
-#endif
-
 /*
  * Serial Communication Interface (SCI)
  */
-
-/* Serial Mode Register */
-typedef union {
-	unsigned char	BYTE;	/* Byte Access */
-	struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-		/* Bit 7..0 */
-		unsigned char CA  :1;
-		unsigned char CHR :1;
-		unsigned char PE  :1;
-		unsigned char OE  :1;
-		unsigned char STOP:1;
-		unsigned char MP  :1;
-		unsigned char CKS :2;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-		/* Bit 0..7 */
-		unsigned char CKS :2;
-		unsigned char MP  :1;
-		unsigned char STOP:1;
-		unsigned char OE  :1;
-		unsigned char PE  :1;
-		unsigned char CHR :1;
-		unsigned char CA  :1;
-#endif
-	} BIT;
-} SH3SCSMR;
-
-/* Serial Control Register */
-typedef union {
-	unsigned char	BYTE;	/* Byte Access */
-	struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-		/* Bit 7..0 */
-		unsigned char TIE :1;
-		unsigned char RIE :1;
-		unsigned char TE  :1;
-		unsigned char RE  :1;
-		unsigned char MPIE:1;
-		unsigned char TEIE:1;
-		unsigned char CKE :2;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-		/* Bit 0..7 */
-		unsigned char CKE :2;
-		unsigned char TEIE:1;
-		unsigned char MPIE:1;
-		unsigned char RE  :1;
-		unsigned char TE  :1;
-		unsigned char RIE :1;
-		unsigned char TIE :1;
-#endif
-	} BIT;
-} SH3SCSCR;
-
-/* Serial Status Register */
-typedef union {
-	unsigned char	BYTE;	/* Byte Access */
-	struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-		/* Bit 7..0 */
-		unsigned char TDRE:1;
-		unsigned char RDRF:1;
-		unsigned char ORER:1;
-		unsigned char FER :1;
-		unsigned char PER :1;
-		unsigned char TEND:1;
-		unsigned char MPB :1;
-		unsigned char MPBT:1;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-		/* Bit 0..7 */
-		unsigned char MPBT:1;
-		unsigned char MPB :1;
-		unsigned char TEND:1;
-		unsigned char PER :1;
-		unsigned char FER :1;
-		unsigned char ORER:1;
-		unsigned char RDRF:1;
-		unsigned char TDRE:1;
-#endif
-	} BIT;
-} SH3SCSSR;
-
 
 #if !defined(SH4)
 

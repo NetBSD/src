@@ -1,4 +1,4 @@
-/* $NetBSD: tmureg.h,v 1.1 1999/09/13 10:31:23 itojun Exp $ */
+/* $NetBSD: tmureg.h,v 1.2 1999/09/16 21:15:36 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -29,183 +29,57 @@
 #ifndef _SH3_TMUREG_H_
 #define _SH3_TMUREG_H_
 
-#ifndef BYTE_ORDER
-#error Define BYTE_ORDER!
-#endif
-
 /*
  * Timer Unit
  */
-struct sh3_tmu {
-	/* Timer Output Control Register (FFFFFE90) */
-	union {
-		unsigned char	BYTE;	/* Byte Access */
-		struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-			/* Bit 7..0 */
-			unsigned char	  :7;
-			unsigned char TCOE:1;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-			/* Bit 0..7 */
-			unsigned char TCOE:1;
-			unsigned char	  :7;
-#endif
-		} BIT;
-	} TOCR;
-	unsigned char	dummy;
-
-	/* Timer Start Register (0xFFFFFE92) */
-	union {
-		unsigned char	BYTE;	/* Byte Access */
-		struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-			/* Bit 7..0 */
-			unsigned char	  :5;
-			unsigned char STR2:1;
-			unsigned char STR1:1;
-			unsigned char STR0:1;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-			/* Bit 0..7 */
-			unsigned char STR0:1;
-			unsigned char STR1:1;
-			unsigned char STR2:1;
-			unsigned char	  :5;
-#endif
-		} BIT;
-	} TSTR;
-	unsigned char	dummy1;
-
-	/* Timer COnstant Register 0 (0xFFFFFE94) */
-	unsigned int	TCOR0;
-
-	/* Timer CouNTer 0 (0xFFFFFE98) */
-	unsigned int	TCNT0;
-
-	/* Timer Control Register 0 (0xFFFFFE9C) */
-	union {
-		unsigned short	WORD;	/* Word Access */
-		struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-			/* Bit 15..0 */
-			unsigned short	    :7;
-			unsigned short UNF  :1;
-			unsigned short	    :2;
-			unsigned short UNIE :1;
-			unsigned short CKEG1:1;
-			unsigned short CKEG0:1;
-			unsigned short TPSC2:1;
-			unsigned short TPSC1:1;
-			unsigned short TPSC0:1;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-			/* Bit 0..15 */
-			unsigned short TPSC0:1;
-			unsigned short TPSC1:1;
-			unsigned short TPSC2:1;
-			unsigned short CKEG0:1;
-			unsigned short CKEG1:1;
-			unsigned short UNIE :1;
-			unsigned short	    :2;
-			unsigned short UNF  :1;
-			unsigned short	    :7;
-#endif
-		} BIT;
-	} TCR0;
-	unsigned short	dummy2;
-
-	/* Timer COnstant Register 1 (0xFFFFFEA0) */
-	unsigned int	TCOR1;
-
-	/* Timer CouNTer 1 (0xFFFFFEA4) */
-	unsigned int	TCNT1;
-
-	/* Timer Control Register 1 (0xFFFFFEA8) */
-	union {
-		unsigned short	WORD;	/* Word Access */
-		struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-			/* Bit 15..0 */
-			unsigned short	    :7;
-			unsigned short UNF  :1;
-			unsigned short	    :2;
-			unsigned short UNIE :1;
-			unsigned short CKEG1:1;
-			unsigned short CKEG0:1;
-			unsigned short TPSC2:1;
-			unsigned short TPSC1:1;
-			unsigned short TPSC0:1;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-			/* Bit 0..15 */
-			unsigned short TPSC0:1;
-			unsigned short TPSC1:1;
-			unsigned short TPSC2:1;
-			unsigned short CKEG0:1;
-			unsigned short CKEG1:1;
-			unsigned short UNIE :1;
-			unsigned short	    :2;
-			unsigned short UNF  :1;
-			unsigned short	    :7;
-#endif
-		} BIT;
-	} TCR1;
-	unsigned short	dummy3;
-
-	/* Timer COnstant Register 2 (0xFFFFFEAC) */
-	unsigned int	TCOR2;
-
-	/* Timer CouNTer 2 (0xFFFFFEB0) */
-	unsigned int	TCNT2;
-
-	/* Timer Control Register 2 (0xFFFFFEB4) */
-	union {
-		unsigned short	WORD;	/* Word Access */
-		struct {		/* Bit	Access */
-#if BYTE_ORDER == BIG_ENDIAN
-			/* Bit 15..0 */
-			unsigned short	    :5;
-			unsigned short ICPF1:1;
-			unsigned short ICPF0:1;
-			unsigned short UNF  :1;
-			unsigned short ICPE :2;
-			unsigned short UNIE :1;
-			unsigned short CKEG1:1;
-			unsigned short CKEG0:1;
-			unsigned short TPSC2:1;
-			unsigned short TPSC1:1;
-			unsigned short TPSC0:1;
-#else  /* BYTE_ORDER == LITTLE_ENDIAN */
-			/* Bit 0..15 */
-			unsigned short TPSC0:1;
-			unsigned short TPSC1:1;
-			unsigned short TPSC2:1;
-			unsigned short CKEG0:1;
-			unsigned short CKEG1:1;
-			unsigned short UNIE :1;
-			unsigned short ICPE :2;
-			unsigned short UNF  :1;
-			unsigned short ICPF0:1;
-			unsigned short ICPF1:1;
-			unsigned short	    :5;
-#endif
-		} BIT;
-	} TCR2;
-
-	/* Input CaPture Register 2 (0xFFFFFEB8) */
-	unsigned int	TCPR2;
-};
 
 #if !defined(SH4)
 
 /* SH3 definition */
 
-/* TMU	Address */
-#define SHREG_TMU	(*(volatile struct sh3_tmu *)	0xFFFFFE90)
+/* common */
+#define SHREG_TOCR	(*(volatile unsigned char *)	0xfffffe90)
+#define SHREG_TSTR	(*(volatile unsigned char *)	0xfffffe92)
+
+/* ch. 0 */
+#define SHREG_TCOR0	(*(volatile unsigned int *)	0xfffffe94)
+#define SHREG_TCNT0	(*(volatile unsigned int *)	0xfffffe98)
+#define SHREG_TCR0	(*(volatile unsigned short *)	0xfffffe9c)
+
+/* ch. 1 */
+#define SHREG_TCOR1	(*(volatile unsigned int *)	0xfffffea0)
+#define SHREG_TCNT1	(*(volatile unsigned int *)	0xfffffea4)
+#define SHREG_TCR1	(*(volatile unsigned short *)	0xfffffea8)
+
+/* ch. 2 */
+#define SHREG_TCOR2	(*(volatile unsigned int *)	0xfffffeac)
+#define SHREG_TCNT2	(*(volatile unsigned int *)	0xfffffeb0)
+#define SHREG_TCR2	(*(volatile unsigned short *)	0xfffffeb4)
+#define SHREG_TCPR2	(*(volatile unsigned int *)	0xfffffeb8)
 
 #else
 
 /* SH4 address definition */
 
-/* TMU	Address */
-#define SHREG_TMU	(*(volatile struct sh3_tmu *)	0xffd80000)
+/* common */
+#define SHREG_TOCR	(*(volatile unsigned char *)	0xffd80000)
+#define SHREG_TSTR	(*(volatile unsigned char *)	0xffd80004)
+
+/* ch. 0 */
+#define SHREG_TCOR0	(*(volatile unsigned int *)	0xffd80008)
+#define SHREG_TCNT0	(*(volatile unsigned int *)	0xffd8000c)
+#define SHREG_TCR0	(*(volatile unsigned short *)	0xffd80010)
+
+/* ch. 1 */
+#define SHREG_TCOR1	(*(volatile unsigned int *)	0xffd80014)
+#define SHREG_TCNT1	(*(volatile unsigned int *)	0xffd80018)
+#define SHREG_TCR1	(*(volatile unsigned short *)	0xffd8001c)
+
+/* ch. 2 */
+#define SHREG_TCOR2	(*(volatile unsigned int *)	0xffd80020)
+#define SHREG_TCNT2	(*(volatile unsigned int *)	0xffd80024)
+#define SHREG_TCR2	(*(volatile unsigned short *)	0xffd80028)
+#define SHREG_TCPR2	(*(volatile unsigned int *)	0xffd8002c)
 
 #endif
 
