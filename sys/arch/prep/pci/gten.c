@@ -1,4 +1,40 @@
-/*	$NetBSD: gten.c,v 1.1 2000/12/01 21:54:01 matt Exp $	*/
+/*	$NetBSD: gten.c,v 1.2 2000/12/02 05:46:46 matt Exp $	*/
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Matt Thomas <matt@3am-software.com>
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -22,9 +58,9 @@
 #include <machine/bus.h>
 #include <machine/gtenvar.h>
 
-int	gten_match (struct device *, struct cfdata *, void *);
-void	gten_attach (struct device *, struct device *, void *);
-int	gten_print (void *, const char *);
+static	int	gten_match (struct device *, struct cfdata *, void *);
+static	void	gten_attach (struct device *, struct device *, void *);
+static	int	gten_print (void *, const char *);
 
 struct cfattach gten_ca = {
 	sizeof(struct gten_softc), gten_match, gten_attach,
@@ -58,7 +94,7 @@ static void gten_free_screen (void *, void *);
 static int gten_show_screen (void *, void *, int,
 			     void (*) (void *, int, int), void *);
 
-struct wsdisplay_accessops gten_accessops = {
+static struct wsdisplay_accessops gten_accessops = {
 	gten_ioctl,
 	gten_mmap,
 	gten_alloc_screen,
@@ -71,7 +107,9 @@ static void gten_common_init (struct rasops_info *);
 static int gten_getcmap (struct gten_softc *, struct wsdisplay_cmap *);
 static int gten_putcmap (struct gten_softc *, struct wsdisplay_cmap *);
 
-int
+#define	GTEN_VRAM_OFFSET	0xf00000
+
+static int
 gten_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -83,7 +121,7 @@ gten_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
+static void
 gten_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gten_softc *gt = (struct gten_softc *)self;
@@ -119,8 +157,8 @@ gten_attach(struct device *parent, struct device *self, void *aux)
 			(bus_space_handle_t *) &gt->gt_ri->ri_bits,
 			NULL, NULL);
 #else
-		error = bus_space_map(pa->pa_memt, gt->gt_memaddr + 0xef9000,
-			1024*1024, BUS_SPACE_MAP_LINEAR, 
+		error = bus_space_map(pa->pa_memt, gt->gt_memaddr + GTEN_VRAM_OFFSET,
+			960*1024, BUS_SPACE_MAP_LINEAR, 
 			(bus_space_handle_t *) &gt->gt_ri->ri_bits);
 #endif
 		if (error) {
@@ -129,13 +167,6 @@ gten_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		gten_common_init(gt->gt_ri);
-
-#if 0
-		int i, len, screenbytes;
-		screenbytes = ri->ri_stride * ri->ri_height;
-		for (i = 0; i < screenbytes; i += sizeof(u_int32_t))
-			*(u_int32_t *)(gt->gt_ri->ri_bits + i) = 0xffffffff;
-#endif
 	}
 
 	gt->gt_paddr = vtophys((vaddr_t)gt->gt_ri->ri_bits);
@@ -143,12 +174,37 @@ gten_attach(struct device *parent, struct device *self, void *aux)
 		printf(": cannot map framebuffer\n");
 		return;
 	}
+	gt->gt_psize = gt->gt_memsize - GTEN_VRAM_OFFSET;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s\n", devinfo);
-	format_bytes(pbuf, sizeof(pbuf), gt->gt_memsize);
-	printf("%s: %s, %d x %d, %dbpp\n", self->dv_xname, pbuf,
-	       gt->gt_ri->ri_width, gt->gt_ri->ri_height, gt->gt_ri->ri_depth);
+	format_bytes(pbuf, sizeof(pbuf), gt->gt_psize);
+	printf("%s: %s, %dx%d, %dbpp\n", self->dv_xname, pbuf,
+	       gt->gt_ri->ri_width, gt->gt_ri->ri_height,
+	       gt->gt_ri->ri_depth);
+#if defined(DEBUG)
+	printf("%s: text %dx%d, =+%d+%d\n", self->dv_xname,
+	       gt->gt_ri->ri_cols, gt->gt_ri->ri_rows,
+	       gt->gt_ri->ri_xorigin, gt->gt_ri->ri_yorigin);
+
+	{ int i;
+	  struct rasops_info *ri = gt->gt_ri;
+	for (i = 0; i < 64; i++) {
+		int j = i * ri->ri_stride;
+		int k = (ri->ri_height - i - 1) * gt->gt_ri->ri_stride;
+		memset(ri->ri_bits + j, 0, 64 - i);
+		memset(ri->ri_bits + j + 64 - i, 255, i);
+
+		memset(ri->ri_bits + j + ri->ri_width - 64 + i, 0, 64 - i);
+		memset(ri->ri_bits + j + ri->ri_width - 64, 255, i);
+
+		memset(ri->ri_bits + k, 0, 64 - i);
+		memset(ri->ri_bits + k + 64 - i, 255, i);
+
+		memset(ri->ri_bits + k + ri->ri_width - 64 + i, 0, 64 - i);
+		memset(ri->ri_bits + k + ri->ri_width - 64, 255, i);
+	}}
+#endif
 
 	gt->gt_cmap_red[0] = gt->gt_cmap_green[0] = gt->gt_cmap_blue[0] = 0;
 	gt->gt_cmap_red[15] = gt->gt_cmap_red[255] = 0xff;
@@ -174,24 +230,22 @@ gten_common_init(struct rasops_info *ri)
 	ri->ri_height = 480;
 	ri->ri_depth = 8;
 	ri->ri_stride = 640;
-	ri->ri_flg = RI_FORCEMONO | RI_FULLCLEAR | RI_CENTER;
+	ri->ri_flg = RI_FORCEMONO | RI_FULLCLEAR;
 
-	rasops_init(ri, 24, 80);
+	rasops_init(ri, 30, 80);
 	/* black on white */
 	ri->ri_devcmap[0] = 0xffffffff;			/* bg */
 	ri->ri_devcmap[1] = 0;				/* fg */
+
+	memset(ri->ri_bits, 0xff, ri->ri_stride * ri->ri_height);
 
 	gten_stdscreen.nrows = ri->ri_rows;
 	gten_stdscreen.ncols = ri->ri_cols;
 	gten_stdscreen.textops = &ri->ri_ops;
 	gten_stdscreen.capabilities = ri->ri_caps;
-
-	screenbytes = ri->ri_stride * ri->ri_height;
-	for (i = 0; i < screenbytes; i += sizeof(u_int32_t))
-		*(u_int32_t *)(ri->ri_bits + i) = 0xffffffff;
 }
 
-int
+static int
 gten_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
@@ -225,7 +279,7 @@ gten_ioctl(v, cmd, data, flag, p)
 	return -1;
 }
 
-paddr_t
+static paddr_t
 gten_mmap(v, offset, prot)
 	void *v;
 	off_t offset;
@@ -233,13 +287,15 @@ gten_mmap(v, offset, prot)
 {
 	struct gten_softc *gt = v;
 
-	if (offset >=0 && offset < gt->gt_memsize)
+	if (offset >= 0 && offset < gt->gt_psize)
 		return gt->gt_paddr + offset;
+	if (offset >= 0x1000000 && offset < gt->gt_memsize)
+		return gt->gt_memaddr + offset - 0x1000000;
 
 	return -1;
 }
 
-int
+static int
 gten_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	void *v;
 	const struct wsscreen_descr *type;
@@ -263,7 +319,7 @@ gten_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	return 0;
 }
 
-void
+static void
 gten_free_screen(v, cookie)
 	void *v;
 	void *cookie;
@@ -276,7 +332,7 @@ gten_free_screen(v, cookie)
 	gt->gt_nscreens--;
 }
 
-int
+static int
 gten_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
@@ -318,7 +374,7 @@ gten_cnattach(bus_space_tag_t memt)
 	bussize = PCI_MAPREG_MEM_SIZE(mask);
 	busaddr = PCI_MAPREG_MEM_ADDR(mapreg);
 
-	error = bus_space_map(memt, busaddr + 0xef9000, bussize,
+	error = bus_space_map(memt, busaddr + GTEN_VRAM_OFFSET, 960*1024,
 		BUS_SPACE_MAP_LINEAR, (bus_space_handle_t *) &ri->ri_bits);
 	if (error)
 		return error;
@@ -333,7 +389,7 @@ gten_cnattach(bus_space_tag_t memt)
 	return 0;
 }
 
-int
+static int
 gten_getcmap(gt, cm)
 	struct gten_softc *gt;
 	struct wsdisplay_cmap *cm;
@@ -358,7 +414,7 @@ gten_getcmap(gt, cm)
 	return 0;
 }
 
-int
+static int
 gten_putcmap(gt, cm)
 	struct gten_softc *gt;
 	struct wsdisplay_cmap *cm;
