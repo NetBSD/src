@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.19 2004/07/19 00:28:42 heas Exp $	*/
+/*	$NetBSD: sab.c,v 1.20 2004/09/13 14:32:38 drochner Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.19 2004/07/19 00:28:42 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.20 2004/09/13 14:32:38 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.19 2004/07/19 00:28:42 heas Exp $");
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 #include <sparc64/dev/sab82532reg.h>
+
+#include "locators.h"
 
 #define SABUNIT(x)		(minor(x) & 0x7ffff)
 #define SABDIALOUT(x)		(minor(x) & 0x80000)
@@ -123,6 +125,8 @@ struct sabtty_softc *sabtty_cons_output;
 
 int sab_match(struct device *, struct cfdata *, void *);
 void sab_attach(struct device *, struct device *, void *);
+int sab_submatch(struct device *, struct cfdata *,
+		 const locdesc_t *, void *);
 int sab_print(void *, const char *);
 int sab_intr(void *);
 
@@ -238,6 +242,8 @@ sab_attach(parent, self, aux)
 	struct ebus_attach_args *ea = aux;
 	u_int8_t r;
 	u_int i;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	sc->sc_bt = ea->ea_bustag;
 	sc->sc_node = ea->ea_node;
@@ -296,11 +302,28 @@ sab_attach(parent, self, aux)
 		struct sabtty_attach_args sta;
 
 		sta.sbt_portno = i;
-		sc->sc_child[i] = (struct sabtty_softc *)config_found_sm(self,
-		    &sta, sab_print, sabtty_match);
+
+		ldesc->len = 1;
+		ldesc->locs[SABCF_CHANNEL] = i;
+
+		sc->sc_child[i] =
+		    (struct sabtty_softc *)config_found_sm_loc(self,
+		     "sab", ldesc, &sta, sab_print, sab_submatch);
 		if (sc->sc_child[i] != NULL)
 			sc->sc_nchild++;
 	}
+}
+
+int
+sab_submatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
+{
+
+        if (cf->cf_loc[SABCF_CHANNEL] != SABCF_CHANNEL_DEFAULT &&
+            cf->cf_loc[SABCF_CHANNEL] != ldesc->locs[SABCF_CHANNEL])
+                return (0);
+
+        return (config_match(parent, cf, aux));
 }
 
 int
@@ -360,11 +383,8 @@ sabtty_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct sabtty_attach_args *sa = aux;
 
-	if (sa->sbt_portno < SAB_NCHAN)
-		return (1);
-	return (0);
+	return (1);
 }
 
 void
