@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.2 2001/04/01 16:58:06 reinoud Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.3 2001/04/01 20:08:18 reinoud Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.2 2001/04/01 16:58:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.3 2001/04/01 20:08:18 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,6 @@ struct vidcvideo_softc {
 	int sc_changed;			/* need update of hardware */
 #define	WSDISPLAY_CMAP_DOLUT	0x20
 #define WSDISPLAY_VIDEO_ONOFF	0x40
-#define WSDISPLAY_HWSCROLL	0x80
 	int nscreens;
 };
 
@@ -570,11 +569,6 @@ vidcvideointr(arg)
 		};
 	}
 
-	if (v & WSDISPLAY_HWSCROLL) {
-		/* program the VIDC to use a different display address */
-		vidcvideo_progr_scroll();
-	};
-
 	if (v & WSDISPLAY_VIDEO_ONOFF) {
 		vidcvideo_blank(sc->sc_dc->dc_blanked);
 	};
@@ -862,9 +856,9 @@ static void vv_copyrows(id, srcrow, dstrow, nrows)
 	scrollup   = (srcrow + nrows >= ri->ri_rows);
 	scrolldown = (dstrow + nrows >= ri->ri_rows);
 
-	if (sc && (scrollup || scrolldown)) {
+	if (scrollup || scrolldown) {
 		ri->ri_bits = vidcvideo_hwscroll(offset);
-		sc->sc_changed |= WSDISPLAY_HWSCROLL;	/* do it at vsync */
+		vidcvideo_progr_scroll();	/* sadistic ; shouldnt this be on vsync? */
 
 		/* wipe out remains of the screen if nessisary */
 		if (ri->ri_emuheight != ri->ri_height) vv_eraserows(id, ri->ri_rows, 1, NULL);
