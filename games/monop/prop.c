@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.6 1999/09/09 17:27:59 jsm Exp $	*/
+/*	$NetBSD: prop.c,v 1.7 2001/01/16 02:41:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.6 1999/09/09 17:27:59 jsm Exp $");
+__RCSID("$NetBSD: prop.c,v 1.7 2001/01/16 02:41:17 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ bid()
 	cur_max = 0;
 	num_in = num_play;
 	while (num_in > 1 || (cur_max == 0 && num_in > 0)) {
-		i = ++i % num_play;
+		i = (i + 1) % num_play;
 		if (in[i]) {
 			do {
 				(void)sprintf(buf, "%s: ", name_list[i]);
@@ -200,7 +200,7 @@ bid()
 	}
 	if (cur_max != 0) {
 		while (!in[i])
-			i = ++i % num_play;
+			i = (i + 1) % num_play;
 		printf("It goes to %s (%d) for $%d\n",play[i].name,i+1,cur_max);
 		buy(i, &board[cur_p->loc]);
 		play[i].money -= cur_max;

@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.12 2001/01/04 23:05:56 lukem Exp $	*/
+/*	$NetBSD: reverse.c,v 1.13 2001/01/16 02:41:18 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.12 2001/01/04 23:05:56 lukem Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.13 2001/01/16 02:41:18 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -201,8 +201,10 @@ r_buf(fp)
 			tl->prev = mark->prev;
 			mark->prev->next = tl;
 			mark->prev = tl;
-		} else
-			mark->next = mark->prev = (mark = tl);
+		} else {
+			mark = tl;
+			mark->next = mark->prev = mark;
+		}
 
 		/* Fill the block with input data. */
 		for (p = tl->l, len = 0;
