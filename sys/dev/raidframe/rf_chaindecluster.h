@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.h,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
+/*	$NetBSD: rf_chaindecluster.h,v 1.4 2001/01/26 04:14:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -61,9 +61,7 @@ void    (**createFunc) (RF_Raid_t *,
             RF_DagHeader_t *,
             void *,
             RF_RaidAccessFlags_t,
-            RF_AllocListElem_t *)
-/**INDENT** Warning@59: Extra ) */
-);
+            RF_AllocListElem_t *);
 #endif
 
 #endif				/* !_RF__RF_CHAINDECLUSTER_H_ */
