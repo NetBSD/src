@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 2001/06/15 08:08:04 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 2001/06/15 08:17:00 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,13 +60,14 @@
 #include <powerpc/bat.h>
 #endif
 
-#define	PMAPCHECK
+/*#define PMAPCHECK*/
 
 #if defined(DEBUG) || defined(PMAPCHECK)
 #define	STATIC
 #else
 #define	STATIC	static
 #endif
+
 struct pteg {
 	pte_t pt[8];
 };
