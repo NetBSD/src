@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.9 2003/02/22 05:13:35 tsutsui Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.10 2003/04/01 02:07:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,12 +67,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.9 2003/02/22 05:13:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.10 2003/04/01 02:07:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -148,7 +150,7 @@ asc_tcds_match(parent, cf, aux)
 	return 1;
 }
 
-#define DMAMAX(a)	(NBPG - ((a) & (NBPG - 1)))
+#define DMAMAX(a)	(PAGE_SIZE - ((a) & (PAGE_SIZE - 1)))
 
 /*
  * Attach this instance, and then all the sub-devices
@@ -179,8 +181,8 @@ asc_tcds_attach(parent, self, aux)
 	 * to support 8k transfers.
 	 */
 	asc->sc_dmat = tcdsdev->tcdsda_dmat;
-	if ((error = bus_dmamap_create(asc->sc_dmat, NBPG, 1, NBPG,
-	    NBPG, BUS_DMA_NOWAIT, &asc->sc_dmamap)) < 0) {
+	if ((error = bus_dmamap_create(asc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
+	    PAGE_SIZE, BUS_DMA_NOWAIT, &asc->sc_dmamap)) < 0) {
 		printf("failed to create dma map, error = %d\n", error);
 	}
 
