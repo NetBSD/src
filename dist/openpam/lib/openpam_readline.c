@@ -56,7 +56,7 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 	size_t len, size;
 	int ch;
 
-	if ((line = malloc(MIN_LINE_LENGTH)) == NULL)
+	if ((line = malloc((size_t)MIN_LINE_LENGTH)) == NULL)
 		return (NULL);
 	size = MIN_LINE_LENGTH;
 	len = 0;
