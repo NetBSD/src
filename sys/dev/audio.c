@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.153 2002/03/17 03:20:40 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.154 2002/03/21 05:22:24 isaki Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.153 2002/03/17 03:20:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.154 2002/03/21 05:22:24 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1228,7 +1228,9 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 			cc = used - cb->usedlow; /* maximum to read */
 			if (cc > sc->sc_rconvbuffer_size)
 				cc = sc->sc_rconvbuffer_size;
-			cc = cc * params->factor / params->factor_denom;
+			n = cc * params->factor / params->factor_denom;
+			if (n < cc)
+				cc = n;
 			/* cc must be aligned by the sample size */
 			cc = (cc * 8 / hw_bits_per_sample) * hw_bits_per_sample / 8;
 #ifdef DIAGNOSTIC
