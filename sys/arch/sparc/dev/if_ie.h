@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.h,v 1.3 1994/11/20 20:52:20 deraadt Exp $ */
+/*	$NetBSD: if_ie.h,v 1.4 1994/12/16 22:01:11 deraadt Exp $ */
 
 /*
  * if_sunie.h
@@ -152,6 +152,8 @@ struct ieob {
 #define IEOB_XCVRL2 0x04	/* level 2 transceiver? */
 #define IEOB_BUSERR 0x02	/* bus error */
 #define IEOB_INT    0x01	/* interrupt */
+
+#define IEOB_ADBASE 0xff000000  /* KVA base addr of 24 bit address space */
 
 /*
  * PART 3: the 3E board
