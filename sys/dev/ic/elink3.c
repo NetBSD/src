@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.73 2000/02/02 17:09:46 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.74 2000/02/03 06:03:39 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -727,6 +727,9 @@ ep_tick(arg)
 	if ((sc->ep_flags & ELINK_FLAGS_MII) == 0)
 		panic("ep_tick");
 #endif
+
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return;
 
 	s = splnet();
 	mii_tick(&sc->sc_mii);
@@ -2105,6 +2108,11 @@ epdisable(sc)
 	}
 }
 
+/*
+ * ep_activate:
+ *
+ *	Handle device activation/deactivation requests.
+ */
 int
 ep_activate(self, act)
 	struct device *self;
@@ -2121,6 +2129,9 @@ ep_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
+		if (sc->ep_flags & ELINK_FLAGS_MII)
+			mii_activate(&sc->sc_mii, act, MII_PHY_ANY,
+			    MII_OFFSET_ANY);
 		if_deactivate(ifp);
 		break;
 	}
@@ -2128,6 +2139,11 @@ ep_activate(self, act)
 	return (error);
 }
 
+/*
+ * ep_detach:
+ *
+ *	Detach a elink3 interface.
+ */
 int
 ep_detach(self, flags)
 	struct device *self;
@@ -2141,6 +2157,12 @@ ep_detach(self, flags)
 	untimeout(ep_tick, sc);
 	untimeout(epmbuffill, sc);
 
+	if (sc->ep_flags & ELINK_FLAGS_MII) {
+		/* Detach all PHYs */
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	}
+
+	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 
 #if NRND > 0
