@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.23 1997/01/27 19:40:50 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.24 1997/02/10 19:11:12 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -404,7 +404,9 @@ kdcninit(cn)
 {
 	struct kbd_state *ks = &kdcn_state;
 
-	mon_printf("console on kd0 (keyboard/display)\n");
+	mon_printf("console is kd0 (keyboard/display)\n");
+	cn->cn_dev = makedev(KDMAJOR, 0);
+	cn->cn_pri = CN_INTERNAL;
 
 	/* This prepares kbd_translate() */
 	ks->kbd_id = KBD_MIN_TYPE;
