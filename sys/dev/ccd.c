@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.5 1994/10/30 21:47:27 cgd Exp $      */
+/*	$NetBSD: ccd.c,v 1.6 1995/03/02 06:38:11 cgd Exp $      */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,16 +72,19 @@ int ccddebug = 0x00;
 #define CCDB_IO		0x04
 #endif
 
-struct	buf *ccdbuffer();
-char	*ccddevtostr();
-void	ccdiodone();
+#define	ccdunit(x)	DISKUNIT(x)
 
-#define	ccdunit(x)	((minor(x) >> 3) & 0xf)	/* for consistency */
+struct ccdbuf {
+	struct buf	cb_buf;		/* new I/O buf */
+	struct buf	*cb_obp;	/* ptr. to original I/O buf */
+	int		cb_unit;	/* target unit */
+	int		cb_comp;	/* target component */
+};
 
-#define	getcbuf()	\
-	((struct buf *)malloc(sizeof(struct buf), M_DEVBUF, M_WAITOK))
-#define putcbuf(bp)	\
-	free((caddr_t)(bp), M_DEVBUF)
+#define	getccdbuf()	\
+	((struct ccdbuf *)malloc(sizeof(struct ccdbuf), M_DEVBUF, M_WAITOK))
+#define putccdbuf(cbp)	\
+	free((caddr_t)(cbp), M_DEVBUF)
 
 struct ccd_softc {
 	int		 sc_flags;		/* flags */
@@ -93,6 +96,11 @@ struct ccd_softc {
 	int		 sc_usecnt;		/* number of requests active */
 	int		 sc_dk;			/* disk index */
 };
+
+struct ccdbuf	*ccdbuffer __P((struct ccd_softc *cs, struct buf *bp,
+		    daddr_t bn, caddr_t addr, long bcount));
+char		*ccddevtostr __P((dev_t));
+void		ccdiodone __P((struct ccdbuf *cbp));
 
 /* sc_flags */
 #define	CCDF_ALIVE	0x01
@@ -469,7 +477,7 @@ ccdstart(cs, bp)
 	register struct buf *bp;
 {
 	register long bcount, rcount;
-	struct buf *cbp;
+	struct ccdbuf *cbp;
 	caddr_t addr;
 	daddr_t bn;
 
@@ -493,8 +501,8 @@ ccdstart(cs, bp)
 	addr = bp->b_data;
 	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
 		cbp = ccdbuffer(cs, bp, bn, addr, bcount);
-		rcount = cbp->b_bcount;
-		(*bdevsw[major(cbp->b_dev)].d_strategy)(cbp);
+		rcount = cbp->cb_buf.b_bcount;
+		(*bdevsw[major(cbp->cb_buf.b_dev)].d_strategy)(&cbp->cb_buf);
 		bn += btodb(rcount);
 		addr += rcount;
 	}
@@ -503,7 +511,7 @@ ccdstart(cs, bp)
 /*
  * Build a component buffer header.
  */
-struct buf *
+struct ccdbuf *
 ccdbuffer(cs, bp, bn, addr, bcount)
 	register struct ccd_softc *cs;
 	struct buf *bp;
@@ -512,7 +520,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	long bcount;
 {
 	register struct ccdcinfo *ci;
-	register struct buf *cbp;
+	register struct ccdbuf *cbp;
 	register daddr_t cbn, cboff;
 
 #ifdef DEBUG
@@ -563,32 +571,35 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	/*
 	 * Fill in the component buf structure.
 	 */
-	cbp = getcbuf();
-	cbp->b_flags = bp->b_flags | B_CALL;
-	cbp->b_iodone = ccdiodone;
-	cbp->b_proc = bp->b_proc;
-	cbp->b_dev = ci->ci_dev;
-	cbp->b_blkno = cbn + cboff;
-	cbp->b_data = addr;
-	cbp->b_vp = 0;
+	cbp = getccdbuf();
+	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
+	cbp->cb_buf.b_iodone = (void (*)())ccdiodone;
+	cbp->cb_buf.b_proc = bp->b_proc;
+	cbp->cb_buf.b_dev = ci->ci_dev;
+	cbp->cb_buf.b_blkno = cbn + cboff;
+	cbp->cb_buf.b_data = addr;
+	cbp->cb_buf.b_vp = 0;
 	if (cs->sc_ileave == 0)
-		cbp->b_bcount = dbtob(ci->ci_size - cbn);
+		cbp->cb_buf.b_bcount = dbtob(ci->ci_size - cbn);
 	else
-		cbp->b_bcount = dbtob(cs->sc_ileave - cboff);
-	if (cbp->b_bcount > bcount)
-		cbp->b_bcount = bcount;
+		cbp->cb_buf.b_bcount = dbtob(cs->sc_ileave - cboff);
+	if (cbp->cb_buf.b_bcount > bcount)
+		cbp->cb_buf.b_bcount = bcount;
+
 	/*
-	 * XXX context for ccdiodone
+	 * context for ccdiodone
 	 */
-	cbp->b_saveaddr = (caddr_t)bp;
-	cbp->b_pfcent = ((cs - ccd_softc) << 16) | (ci - cs->sc_cinfo);
+	cbp->cb_obp = bp;
+	cbp->cb_unit = cs - ccd_softc;
+	cbp->cb_comp = ci - cs->sc_cinfo;
+
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
 		printf(" dev %x(u%d): cbp %x bn %d addr %x bcnt %d\n",
-		       ci->ci_dev, ci-cs->sc_cinfo, cbp, cbp->b_blkno,
-		       cbp->b_data, cbp->b_bcount);
+		       ci->ci_dev, ci-cs->sc_cinfo, cbp, cbp->cb_buf.b_blkno,
+		       cbp->cb_buf.b_data, cbp->cb_buf.b_bcount);
 #endif
-	return(cbp);
+	return (cbp);
 }
 
 ccdintr(cs, bp)
@@ -617,10 +628,10 @@ ccdintr(cs, bp)
  */
 void
 ccdiodone(cbp)
-	register struct buf *cbp;
+	register struct ccdbuf *cbp;
 {
-	register struct buf *bp = (struct buf *)cbp->b_saveaddr;/* XXX */
-	register int unit = (cbp->b_pfcent >> 16) & 0xFFFF;	/* XXX */
+	register struct buf *bp = cbp->cb_obp;
+	register int unit = cbp->cb_unit;
 	int count, s;
 
 	s = splbio();
@@ -631,21 +642,22 @@ ccdiodone(cbp)
 		printf("ccdiodone: bp %x bcount %d resid %d\n",
 		       bp, bp->b_bcount, bp->b_resid);
 		printf(" dev %x(u%d), cbp %x bn %d addr %x bcnt %d\n",
-		       cbp->b_dev, cbp->b_pfcent & 0xFFFF, cbp,
-		       cbp->b_blkno, cbp->b_data, cbp->b_bcount);
+		       cbp->cb_buf.b_dev, cbp->cb_comp, cbp,
+		       cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
+		       cbp->cb_buf.b_bcount);
 	}
 #endif
 
-	if (cbp->b_flags & B_ERROR) {
+	if (cbp->cb_buf.b_flags & B_ERROR) {
 		bp->b_flags |= B_ERROR;
-		bp->b_error = biowait(cbp);
+		bp->b_error = cbp->cb_buf.b_error ? cbp->cb_buf.b_error : EIO;
 #ifdef DEBUG
 		printf("ccd%d: error %d on component %d\n",
-		       unit, bp->b_error, cbp->b_pfcent & 0xFFFF);
+		       unit, bp->b_error, cbp->cb_comp);
 #endif
 	}
-	count = cbp->b_bcount;
-	putcbuf(cbp);
+	count = cbp->cb_buf.b_bcount;
+	putccdbuf(cbp);
 
 	/*
 	 * If all done, "interrupt".
