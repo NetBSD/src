@@ -1,12 +1,12 @@
 #
-#	GENERIC -- everything that's currently supported
+#	BETA -- Kernel configuration used for beta kernels
 #
 
 include	"std.arm32"
 
 # estimated number of users
 
-maxusers	32
+maxusers	8
 
 # Standard system options
 
@@ -23,38 +23,37 @@ options		CPU_LATE_ABORT	# ARM7XX compatibility
 
 # FPA options
 
-options		FPE
+options		FPE		# Single precision FPE
+options		ARMFPE		# ARM Ltd FPE
 
 # File system options
 
 options		FFS		# UFS
-#options	QUOTA		# UFS quotas
-#options	LFS		# log-structured file system
-#options	MFS		# memory file system
+#options		QUOTA		# UFS quotas
+#options		LFS		# log-structured file system
+#options		MFS		# memory file system
 
 options		CD9660		# ISO 9660 + Rock Ridge file system
 options		MSDOSFS		# MS-DOS file system
 options		FDESC		# /dev/fd
 options		FIFO		# FIFOs; RECOMMENDED
 options		KERNFS		# /kern
-#options	NULLFS		# loopback file system
-#options	PORTAL		# ?
+#options		NULLFS		# loopback file system
+#options		PORTAL		# ?
 options		PROCFS		# /proc
-#options	UMAPFS		# NULLFS + uid and gid remapping
+#options		UMAPFS		# NULLFS + uid and gid remapping
 options		UNION		# union file system
 
 # Networking options
 
 options		NFSCLIENT
 options		NFSSERVER
-options		GATEWAY		# packet forwarding
+#options		GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
-#options	NS		# XNS
-#options	ISO,TPIP	# OSI
-#options	EON		# OSI tunneling over IP
-#options	CCITT,LLC,HDLC	# X.25
-
-options		PLIP
+#options		NS		# XNS
+#options		ISO,TPIP	# OSI
+#options		EON		# OSI tunneling over IP
+#options		CCITT,LLC,HDLC	# X.25
 
 # Compatibility options
 
@@ -70,15 +69,21 @@ options         TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
 #options	SYSVSHM		# System V-like memory sharing
 #options	SHMMAXPGS=1024	# 1024 pages is the default
 
+# Device options
+
+options		RAMDISK_HOOKS	# boottime setup of ramdisk
+options		RAMDISK_SIZE=0	# Size in KBytes
+options		PLIP		# Build plip device into lpt driver
+
 # Development options
 
 options		DIAGNOSTIC	# internally consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 options		IRQSTATS	# IRQ statistics
 options		POSTMORTEM	# perform postmortem on panic
-#options	ROTTEN_INNARDS	# show the gory bit of the postmortem
+#options		ROTTEN_INNARDS	# show the gory bit of the postmortem
 options		KSHELL		# kernel developemnt shell (debug)
-options		LKM		# loadable kernel modules
+#options		LKM		# loadable kernel modules
 #options	DEBUGTERM	# create a debug console
 #options	KGDB		# remote kernel debugging
 #options	DDB		# in-kernel debugger
@@ -89,6 +94,12 @@ options		GENERIC
 
 # The main bus device
 mainbus0 at root
+
+# The boot cpu
+cpu0 at mainbus?
+
+# The vidc
+vidcvideo0	at mainbus?
 
 # generic VT console device
 vt0     at mainbus?
@@ -126,27 +137,32 @@ lpt0    at mainbus? base 0x002109e0 irq 0
 # Crude sound device
 beep0	at mainbus? base 0x00000000
 
-# The hydra mulitprocessor device
-#hydra0 at mainbus?
-
 # Podule bus device
 podulebus0	at root
 
-asc0	at podulebus?			# Acorn SCSI card
-scsibus* at asc?
+#asc0	at podulebus?			# Acorn SCSI card
+#scsibus* at asc?
 
 csc0	at podulebus?			# Cumana SCSI II card
 scsibus* at csc?
+
+ptsc0	at podulebus?			# Power-Tec SCSI II card
+scsibus* at ptsc?
+
+oak0	at podulebus?			# Oak SCSI I card
+scsibus* at oak?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI auto-changers
+uk*	at scsibus? target ? lun ?	# SCSI unknown device
 
 #kie*	at podulebus? slot ? offset ?
 
+ea0	at podulebus?			# Ether3 podules
 eb0	at podulebus?			# EtherB network slot cards
-#ea0	at podulebus?			# Ether3 podules
+eh0	at podulebus?			# EtherH network slot cards
 ie0	at podulebus?			# Ether1 podules
 
 pseudo-device	loop	1               # network loopback
@@ -158,6 +174,7 @@ pseudo-device	tun	2		# network tunneling over tty
 pseudo-device   pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device   vnd     4               # paging to files
+pseudo-device	ccd	2		# concatenated disk devices
 
 makeoptions MONITOR="Taxan875+LR"
 #makeoptions MONITOR="AKF60"
