@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.10 1997/01/13 17:53:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.10 1997/01/13 17:53:19 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,10 +117,10 @@ doexec(v, t)
     Char **v;
     struct command *t;
 {
-    register Char *dp, **pv, **av, *sav;
-    register struct varent *pathv;
-    register bool slash;
-    register int hashval = 0, hashval1, i;
+    Char *dp, **pv, **av, *sav;
+    struct varent *pathv;
+    bool slash;
+    int hashval = 0, hashval1, i;
     Char   *blk[2];
     sigset_t sigset;
 
@@ -271,12 +271,12 @@ pexerr()
 static void
 texec(sf, st)
     Char   *sf;
-    register Char **st;
+    Char **st;
 {
-    register char **t;
-    register char *f;
-    register struct varent *v;
-    register Char **vp;
+    char **t;
+    char *f;
+    struct varent *v;
+    Char **vp;
     Char   *lastsh[2];
     int     fd;
     unsigned char c;
@@ -367,7 +367,7 @@ texec(sf, st)
 void
 execash(t, kp)
     Char  **t;
-    register struct command *kp;
+    struct command *kp;
 {
     int     saveIN, saveOUT, saveDIAG, saveSTD;
     int     oSHIN;
@@ -452,8 +452,8 @@ dohash(v, t)
     struct command *t;
 {
     DIR    *dirp;
-    register struct dirent *dp;
-    register int cnt;
+    struct dirent *dp;
+    int cnt;
     int     i = 0;
     struct varent *pathv = adrof(STRpath);
     Char  **pv;
@@ -510,9 +510,9 @@ hashstat(v, t)
  */
 static int
 hashname(cp)
-    register Char *cp;
+    Char *cp;
 {
-    register long h = 0;
+    long h = 0;
 
     while (*cp)
 	h = hash(h, *cp++);
@@ -523,11 +523,11 @@ static int
 iscommand(name)
     Char   *name;
 {
-    register Char **pv;
-    register Char *sav;
-    register struct varent *v;
-    register bool slash = any(short2str(name), '/');
-    register int hashval = 0, hashval1, i;
+    Char **pv;
+    Char *sav;
+    struct varent *v;
+    bool slash = any(short2str(name), '/');
+    int hashval = 0, hashval1, i;
 
     v = adrof(STRpath);
     if (v == 0 || v->vec[0] == 0 || slash)
@@ -624,7 +624,7 @@ executable(dir, name, dir_ok)
 /*ARGSUSED*/
 void
 dowhich(v, c)
-    register Char **v;
+    Char **v;
     struct command *c;
 {
     struct wordent lex[3];
@@ -660,9 +660,9 @@ tellmewhat(lexp, str)
     struct wordent *lexp;
     Char *str;
 {
-    register int i;
-    register struct biltins *bptr;
-    register struct wordent *sp = lexp->next;
+    int i;
+    struct biltins *bptr;
+    struct wordent *sp = lexp->next;
     bool    aliased = 0, found;
     Char   *s0, *s1, *s2, *cmd;
     Char    qc;
@@ -718,8 +718,8 @@ tellmewhat(lexp, str)
     sp->word = cmd = globone(sp->word, G_IGNORE);
 
     if ((i = iscommand(sp->word)) != 0) {
-	register Char **pv;
-	register struct varent *v;
+	Char **pv;
+	struct varent *v;
 	bool    slash = any(short2str(sp->word), '/');
 
 	v = adrof(STRpath);
