@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.6 1993/06/27 05:59:13 andrew Exp $
+ *	$Id: vnode.h,v 1.7 1993/08/07 08:12:30 cgd Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -57,7 +57,7 @@ enum vtype 	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
  * These are for the benefit of external programs only (e.g., pstat)
  * and should NEVER be inspected inside the kernel.
  */
-enum vtagtype	{ VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_PCFS, VT_ISOFS,
+enum vtagtype	{ VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_ISOFS,
 		  VT_KERNFS, VT_FDESC };
 
 /*

@@ -1,7 +1,7 @@
 #
 # GENERICAHA -- Generic machine w/aha driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.22 1993/08/01 19:25:28 mycroft Exp $
+#	$Id: GENERICAHA,v 1.23 1993/08/07 08:03:41 cgd Exp $
 #
 
 machine		"i386"
@@ -14,7 +14,8 @@ options		INET,ISOFS,NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		XSERVER,UCONSOLE
-options		PCFS,KERNFS
+options		MSDOSFS
+options		KERNFS
 options		SCSI
 options		"MATH_EMULATE"
 options		"COMPAT_NOMID"

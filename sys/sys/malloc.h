@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)malloc.h	7.25 (Berkeley) 5/15/91
- *	$Id: malloc.h,v 1.10 1993/06/07 18:13:14 cgd Exp $
+ *	$Id: malloc.h,v 1.11 1993/08/07 08:12:20 cgd Exp $
  */
 
 #ifndef _SYS_MALLOC_H_
@@ -91,8 +91,8 @@
 #define	M_LOCKF		40	/* Byte-range locking structures */
 #define	M_PROC		41	/* Proc structures */
 #define	M_SUBPROC	42	/* Proc sub-structures */
-#define	M_PCFSMNT	43	/* PCFS mount structure */
-#define	M_PCFSFAT	44	/* PCFS fat table */
+#define	M_MSDOSFSMNT	43	/* MSDOS FS mount structure */
+#define	M_MSDOSFSFAT	44	/* MSDOS FS fat table */
 #define	M_TTYS		45	/* allocated tty structures */
 #define	M_EXEC		46	/* argument lists & other mem used by exec */
 #define M_MISCFSMNT	47	/* miscfs mount structures */
@@ -144,8 +144,8 @@
 	"lockf",	/* 40 M_LOCKF */ \
 	"proc",		/* 41 M_PROC */ \
 	"subproc",	/* 42 M_PROC */ \
-	"PCFS mount",	/* 43 M_PCFSMNT */ \
-	"PCFS fat",	/* 44 M_PCFSFAT */ \
+	"MSDOSFS mount", /* 43 M_MSDOSFSMNT */ \
+	"MSDOSFS fat",	/* 44 M_MSDOSFSFAT */ \
 	"ttys",		/* 45 M_TTYS */ \
 	"exec",		/* 46 M_EXEC */ \
 	"miscfs mount",	/* 47 M_MISCFSMNT */ \
