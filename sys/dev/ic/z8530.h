@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530.h,v 1.1 1995/04/11 02:29:25 mycroft Exp $ */
+/*	$NetBSD: z8530.h,v 1.2 1995/04/11 02:35:18 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,22 +66,22 @@
  */
 #ifndef LOCORE
 struct zschan {
+#if BYTE_ORDER == BIG_ENDIAN
 	u_char	zc_csr;		/* control and status, and indirect access */
 	u_char	zc_xxx0;
 	u_char	zc_data;	/* data */
 	u_char	zc_xxx1;
+#else
+	u_char	zc_xxx0;
+	u_char	zc_csr;		/* control and status, and indirect access */
+	u_char	zc_xxx1;
+	u_char	zc_data;	/* data */
+#endif
 };
 
-/*
- * N.B.: the keyboard is channel 1, the mouse channel 0; ttyb is 1, ttya
- * is 0.  In other words, the things are BACKWARDS.
- */
 struct zsdevice {
-	struct	zschan zs_chan[2];	/* channel A = 1, B = 0 */
+	struct	zschan zs_chan[2];
 };
-
-#define	CHAN_A	1
-#define	CHAN_B	0
 #endif
 
 /*
