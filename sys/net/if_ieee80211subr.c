@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.24 2003/02/25 01:57:36 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.25 2003/04/08 04:31:23 kml Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.24 2003/02/25 01:57:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.25 2003/04/08 04:31:23 kml Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -118,6 +118,9 @@ static void ieee80211_recv_disassoc(struct ieee80211com *,
 static void ieee80211_recv_deauth(struct ieee80211com *,
     struct mbuf *, int, u_int32_t);
 
+static void ieee80211_recv_pspoll(struct ieee80211com *,
+    struct mbuf *, int, u_int32_t);
+
 static void ieee80211_crc_init(void);
 static u_int32_t ieee80211_crc_update(u_int32_t, u_int8_t *, int);
 
@@ -164,6 +167,9 @@ ieee80211_ifattach(struct ifnet *ifp)
 	if (rate)
 		ifp->if_baudrate = IF_Mbps(rate);
 	ifp->if_hdrlen = sizeof(struct ieee80211_frame);
+
+	if (ic->ic_max_aid == 0)
+		ic->ic_max_aid = IEEE80211_MAX_AID;
 
 	/* initialize management frame handler */
 	ic->ic_recv_mgmt[IEEE80211_FC0_SUBTYPE_PROBE_RESP
@@ -215,6 +221,7 @@ ieee80211_ifdetach(struct ifnet *ifp)
 
 	s = splnet();
 	IF_PURGE(&ic->ic_mgtq);
+	IF_PURGE(&ic->ic_pwrsaveq);
 	if (ic->ic_wep_ctx != NULL) {
 		free(ic->ic_wep_ctx, M_DEVBUF);
 		ic->ic_wep_ctx = NULL;
@@ -275,7 +282,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 			else
 				bssid = wh->i_addr1;
 			if (!IEEE80211_ADDR_EQ(bssid, ic->ic_bss.ni_bssid) &&
-			    !IEEE80211_ADDR_EQ(bssid, ifp->if_broadcastaddr)) {
+			    !IEEE80211_ADDR_EQ(bssid, ifp->if_broadcastaddr) &&
+			    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
+			    IEEE80211_FC0_TYPE_CTL) {
 				/* not interested in */
 				DPRINTF2(("ieee80211_input: other bss %s\n",
 				    ether_sprintf(wh->i_addr3)));
@@ -303,6 +312,38 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 			goto out;
 		}
 		ni->ni_inact = 0;
+	}
+
+	if (ic->ic_set_tim != NULL &&
+	    (wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) 
+	    && ni->ni_pwrsave == 0) {
+		/* turn on power save mode */
+
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: power save mode on for %s\n",
+			    ifp->if_xname, ether_sprintf(wh->i_addr2));
+
+		ni->ni_pwrsave = IEEE80211_PS_SLEEP;
+	}
+	if (ic->ic_set_tim != NULL &&
+	    (wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) == 0  && 
+	    ni->ni_pwrsave != 0) {
+		/* turn off power save mode, dequeue stored packets */
+
+		ni->ni_pwrsave = 0;
+		if (ic->ic_set_tim) 
+			ic->ic_set_tim(ic, ni->ni_associd, 0);
+
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: power save mode off for %s\n",
+			    ifp->if_xname, ether_sprintf(wh->i_addr1));
+
+		while (!IF_IS_EMPTY(&ni->ni_savedq)) {
+			struct mbuf *m;
+			IF_DEQUEUE(&ni->ni_savedq, m);
+			IF_ENQUEUE(&ic->ic_pwrsaveq, m);
+			(*ifp->if_start)(ifp);
+		}
 	}
 
 	switch (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) {
@@ -482,6 +523,19 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, int rssi, u_int32_t rstamp)
 		return;
 
 	case IEEE80211_FC0_TYPE_CTL:
+		if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+			goto out;
+		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+		if (subtype == IEEE80211_FC0_SUBTYPE_PS_POLL) {
+			/* Dump out a single packet from the host */
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: got power save probe from %s\n",
+				       ifp->if_xname, 
+				       ether_sprintf(wh->i_addr2));
+			ieee80211_recv_pspoll(ic, m, rssi, rstamp);
+		}
+		goto out;
+
 	default:
 		DPRINTF(("ieee80211_input: bad type %x\n", wh->i_fc[0]));
 		/* should not come here */
@@ -1303,8 +1357,14 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	s = splnet();
 	if (ic->ic_node_free != NULL)
 		(*ic->ic_node_free)(ic, ni);
+	IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 	TAILQ_REMOVE(&ic->ic_node, ni, ni_list);
 	LIST_REMOVE(ni, ni_hash);
+	if (!IF_IS_EMPTY(&ni->ni_savedq)) {
+		IF_PURGE(&ni->ni_savedq);
+		if (ic->ic_set_tim)
+			ic->ic_set_tim(ic, ni->ni_associd, 0);
+	}
 	splx(s);
 	free(ni, M_DEVBUF);
 	if (TAILQ_EMPTY(&ic->ic_node))
@@ -1377,6 +1437,30 @@ ieee80211_fix_rate(struct ieee80211com *ic, struct ieee80211_node *ni, int flags
 	if (okrate == 0 || error != 0)
 		return badrate | IEEE80211_RATE_BASIC;
 	return okrate & IEEE80211_RATE_VAL;
+}
+
+void
+ieee80211_pwrsave(struct ieee80211com *ic, struct ieee80211_node *ni, 
+		  struct mbuf *m)
+{
+	/* Store the new packet on our queue, changing the TIM if necessary */
+
+	if (IF_IS_EMPTY(&ni->ni_savedq)) {
+		ic->ic_set_tim(ic, ni->ni_associd, 1);
+	}
+	if (ni->ni_savedq.ifq_len >= IEEE80211_PS_MAX_QUEUE) {
+		IF_DROP(&ni->ni_savedq);
+		m_freem(m);
+		if (ic->ic_if.if_flags & IFF_DEBUG)
+			printf("%s: station %s power save queue overflow"
+			       " of size %d drops %d\n",
+			       ic->ic_if.if_xname, 
+			       ether_sprintf(ni->ni_macaddr), 
+			       IEEE80211_PS_MAX_QUEUE,
+			       ni->ni_savedq.ifq_drops);
+	} else {
+		IF_ENQUEUE(&ni->ni_savedq, m);
+	}
 }
 
 static int
@@ -2034,6 +2118,7 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	     IEEE80211_CAPINFO_PRIVACY : 0)) {
 		DPRINTF(("ieee80211_recv_asreq: capability unmatch %x for %s\n",
 		    capinfo, ether_sprintf(wh->i_addr2)));
+		IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 		ni->ni_associd = 0;
 		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_CAPINFO);
 		return;
@@ -2046,6 +2131,7 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	if (ni->ni_nrate == 0) {
 		DPRINTF(("ieee80211_recv_asreq: rate unmatch for %s\n",
 		    ether_sprintf(wh->i_addr2)));
+		IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 		ni->ni_associd = 0;
 		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_BASIC_RATE);
 		return;
@@ -2058,15 +2144,34 @@ ieee80211_recv_asreq(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 	ni->ni_fhdwell = ic->ic_bss.ni_fhdwell;
 	ni->ni_fhindex = ic->ic_bss.ni_fhindex;
 	if (ni->ni_associd == 0) {
-		ni->ni_associd = 0xc000 | ic->ic_bss.ni_associd++;
-		newassoc = 1;
+		u_int16_t aid;
+
+		/* 
+		 * It would be clever to search the bitmap more efficiently,
+		 * but this will do for now.
+		 */
+		for (aid = 1; aid < ic->ic_max_aid; aid++) {
+			if (!IEEE80211_AID_ISSET(aid, ic->ic_aid_bitmap))
+				break;
+		}
+		
+		if (ic->ic_bss.ni_associd >= ic->ic_max_aid) {
+			IEEE80211_SEND_MGMT(ic, ni, resp,
+					    IEEE80211_REASON_ASSOC_TOOMANY);
+			return;
+		} else {
+			ni->ni_associd = aid | 0xc000;
+			IEEE80211_AID_SET(ni->ni_associd, ic->ic_aid_bitmap);
+			newassoc = 1;
+		}
 	} else
 		newassoc = 0;
 	IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_SUCCESS);
 	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: station %s %s associated\n",
-		    ifp->if_xname, (newassoc ? "newly" : "already"),
-		    ether_sprintf(ni->ni_macaddr));
+		printf("%s: station %s %s associated at aid %d\n",
+		       ifp->if_xname, (newassoc ? "newly" : "already"),
+		       ether_sprintf(ni->ni_macaddr), 
+		       (ni->ni_associd & ~0xc000));
 }
 
 static void
@@ -2161,6 +2266,7 @@ ieee80211_recv_disassoc(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 				printf("%s: station %s disassociated"
 				    " by peer (reason %d)\n", ifp->if_xname,
 				    ether_sprintf(ni->ni_macaddr), reason);
+			IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 			ni->ni_associd = 0;
 		}
 		break;
@@ -2210,6 +2316,79 @@ ieee80211_recv_deauth(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		break;
 	}
 }
+
+
+static void
+ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0, int rssi,
+		      u_int32_t rstamp)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_frame *wh;
+	struct ieee80211_node *ni;
+	struct mbuf *m;
+	u_int16_t aid;
+
+	if (ic->ic_set_tim == NULL)  /* No powersaving functionality */
+		return;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if ((ni = ieee80211_find_node(ic, wh->i_addr2)) == NULL) {
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: station %s sent bogus power save poll\n",
+			       ifp->if_xname, ether_sprintf(wh->i_addr2));
+		return;
+	}
+
+	memcpy(&aid, wh->i_dur, sizeof(wh->i_dur));
+	if ((aid & 0xc000) != 0xc000) {
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: station %s sent bogus aid %x\n",
+			       ifp->if_xname, ether_sprintf(wh->i_addr2), aid);
+		return;
+	}
+
+	if (aid != ni->ni_associd) {
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: station %s aid %x doesn't match pspoll "
+			       "aid %x\n",
+			       ifp->if_xname, ether_sprintf(wh->i_addr2),
+			       ni->ni_associd, aid);
+		return;
+	}
+
+	/* Okay, take the first queued packet and put it out... */
+
+	IF_DEQUEUE(&ni->ni_savedq, m);
+	if (m == NULL) {
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: station %s sent pspoll, "
+			       "but no packets are saved\n",
+			       ifp->if_xname, ether_sprintf(wh->i_addr2));
+		return;
+	}
+	wh = mtod(m, struct ieee80211_frame *);
+
+	/* 
+	 * If this is the last packet, turn off the TIM fields.
+	 * If there are more packets, set the more packets bit.
+	 */
+
+	if (IF_IS_EMPTY(&ni->ni_savedq)) {
+		if (ic->ic_set_tim) 
+			ic->ic_set_tim(ic, ni->ni_associd, 0);
+	} else {
+		wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;
+	}
+
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: enqueued power saving packet for station %s\n",
+		       ifp->if_xname, ether_sprintf(ni->ni_macaddr));
+
+	IF_ENQUEUE(&ic->ic_pwrsaveq, m);
+	(*ifp->if_start)(ifp);
+}
+
 
 int
 ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
@@ -2283,6 +2462,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 			ic->ic_scan_timer = 0;
 			ic->ic_mgt_timer = 0;
 			IF_PURGE(&ic->ic_mgtq);
+			IF_PURGE(&ic->ic_pwrsaveq);
 			if (ic->ic_wep_ctx != NULL) {
 				free(ic->ic_wep_ctx, M_DEVBUF);
 				ic->ic_wep_ctx = NULL;

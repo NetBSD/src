@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.43 2003/02/25 00:56:35 dyoung Exp $	*/
+/*	$NetBSD: wireg.h,v 1.44 2003/04/08 04:31:25 kml Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -574,3 +574,6 @@ struct wi_frame {
 #define	 WI_ENC_TX_802_11	0x08
 #define	WI_TXCNTL_ALTRTRY	0x0020
 #define	WI_TXCNTL_NOCRYPT	0x0080
+
+/* Limit on the number of AIDs handled in the PRISM2-based Host AP mode. */
+#define WI_MAX_AID		256

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.26 2003/02/25 01:57:35 dyoung Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.27 2003/04/08 04:31:23 kml Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -277,6 +277,16 @@ typedef u_int8_t *ieee80211_mgt_auth_t;
 #define	IEEE80211_MAX_LEN			(2300 + IEEE80211_CRC_LEN + \
     (IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN + IEEE80211_WEP_CRCLEN))
 
+#define IEEE80211_MAX_AID			2007
+
+#define IEEE80211_AID_SET(b, w) \
+	((w)[((b) & ~0xc000) / 32] |= (1 << (((b) & ~0xc000) % 32)))
+#define IEEE80211_AID_CLR(b, w) \
+	((w)[((b) & ~0xc000) / 32] &= ~(1 << (((b) & ~0xc000) % 32)))
+#define IEEE80211_AID_ISSET(b, w) \
+	((w)[((b) & ~0xc000) / 32] & (1 << (((b) & ~0xc000) % 32)))
+
+
 /*
  * ioctls
  */
@@ -417,6 +427,11 @@ struct ieee80211_node {
 	u_int16_t		ni_fhdwell;	/* FH only */
 	u_int8_t		ni_fhindex;	/* FH only */
 
+	/* power saving mode */
+
+	u_int8_t		ni_pwrsave;
+	struct ifqueue		ni_savedq;	/* packets queued for pspoll */
+
 	/* others */
 	u_int16_t		ni_associd;	/* assoc response */
 	u_int16_t		ni_txseq;	/* seq to be transmitted */
@@ -433,6 +448,10 @@ struct ieee80211_node {
 #define	IEEE80211_FH_CHANSET(chan)	((chan)/IEEE80211_FH_CHANMOD+1)
 #define	IEEE80211_FH_CHANPAT(chan)	((chan)%IEEE80211_FH_CHANMOD)
 
+#define IEEE80211_PS_SLEEP	0x1	/* STA is in power saving mode */
+
+#define IEEE80211_PS_MAX_QUEUE	50	/* maximum saved packets */
+
 struct ieee80211_wepkey {
 	int			wk_len;
 	u_int8_t		wk_key[IEEE80211_KEYBUF_SIZE];
@@ -446,11 +465,13 @@ struct ieee80211com {
 				    struct ieee80211_node *, int, int);
 	int			(*ic_newstate)(void *, enum ieee80211_state);
 	int			(*ic_chancheck)(void *, u_char *);
+	int			(*ic_set_tim)(struct ieee80211com *, int, int);
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];
 	u_int8_t		ic_sup_rates[IEEE80211_RATE_SIZE];
 	u_char			ic_chan_avail[roundup(IEEE80211_CHAN_MAX,NBBY)];
 	u_char			ic_chan_active[roundup(IEEE80211_CHAN_MAX, NBBY)];
 	struct ifqueue		ic_mgtq;
+	struct ifqueue		ic_pwrsaveq;
 	int			ic_flags;
 	enum ieee80211_phytype	ic_phytype;
 	enum ieee80211_opmode	ic_opmode;
@@ -476,6 +497,8 @@ struct ieee80211com {
 	int			ic_wep_txkey;	/* default tx key index */
 	void			*ic_wep_ctx;	/* wep crypt context */
 	u_int32_t		ic_iv;		/* initial vector for wep */
+	u_int32_t		ic_aid_bitmap[IEEE80211_MAX_AID / 32 + 1];
+	u_int16_t		ic_max_aid;
 };
 #define	ic_if		ic_ec.ec_if
 #define	ic_softc	ic_ec.ec_if.if_softc
@@ -538,6 +561,9 @@ int	ieee80211_media2rate(int, enum ieee80211_phytype);
 
 int	ieee80211_cfgget(struct ifnet *, u_long, caddr_t);
 int	ieee80211_cfgset(struct ifnet *, u_long, caddr_t);
+
+void	ieee80211_pwrsave(struct ieee80211com *, struct ieee80211_node *, 
+			  struct mbuf *);
 
 #endif /* _KERNEL */
 
