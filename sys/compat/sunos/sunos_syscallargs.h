@@ -107,10 +107,6 @@ struct sunos_sys_setpgrp_args {
 	syscallarg(int) pgid;
 };
 
-struct compat_12_sys_swapon_args {
-	syscallarg(char *) name;
-};
-
 struct sunos_sys_fcntl_args {
 	syscallarg(int) fd;
 	syscallarg(int) cmd;
@@ -277,7 +273,7 @@ int	sys_setgroups	__P((struct proc *, void *, register_t *));
 int	sys_getpgrp	__P((struct proc *, void *, register_t *));
 int	sunos_sys_setpgrp	__P((struct proc *, void *, register_t *));
 int	sys_setitimer	__P((struct proc *, void *, register_t *));
-int	compat_12_sys_swapon	__P((struct proc *, void *, register_t *));
+int	sys_swapon	__P((struct proc *, void *, register_t *));
 int	sys_getitimer	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_gethostname	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sethostname	__P((struct proc *, void *, register_t *));

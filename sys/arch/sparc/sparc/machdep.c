@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73.2.1 1997/02/12 12:25:41 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.79.2.1 1997/05/04 15:19:36 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -245,12 +245,8 @@ cpu_startup()
 		vtorc(dvma_base), "dvmamap", ndvmamap);
 
 	/*
-	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-	 * we use the more space efficient malloc in place of kmem_alloc.
+	 * Finally, allocate mbuf cluster submap.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
-	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 	/*
@@ -338,23 +334,23 @@ allocsys(v)
 	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0) {
-		int bmax = btoc(VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS)/2;
+		int bmax = btoc(VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+			   (MAXBSIZE/NBPG) / 2;
 		bufpages = (physmem / 20) / CLSIZE;
-		if (bufpages > bmax)
+		if (nbuf == 0 && bufpages > bmax)
 			bufpages = bmax;
+		/*
+		 * XXX stopgap measure to prevent wasting too much KVM on
+		 * the sparsely filled buffer cache.
+		 */
+		if (CPU_ISSUN4C && bufpages > (128 * (65536/MAXBSIZE)))
+			bufpages = (128 * (65536/MAXBSIZE));
 	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
-
-	/*
-	 * XXX stopgap measure to prevent wasting too much KVM on
-	 * the sparsely filled buffer cache.
-	 */
-	if (nbuf > 128)
-		nbuf = 128;
 
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) &~ 1;	/* force even */
@@ -639,7 +635,7 @@ sys_sigreturn(p, v, retval)
 int	waittime = -1;
 
 void
-boot(howto, user_boot_string)
+cpu_reboot(howto, user_boot_string)
 	register int howto;
 	char *user_boot_string;
 {
@@ -709,7 +705,7 @@ int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
 void
-dumpconf()
+cpu_dumpconf()
 {
 	register int nblks, dumpblks;
 
@@ -777,7 +773,7 @@ dumpsys()
 	 * if dump device has already configured...
 	 */
 	if (dumpsize == 0)
-		dumpconf();
+		cpu_dumpconf();
 	if (dumplo <= 0)
 		return;
 	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);

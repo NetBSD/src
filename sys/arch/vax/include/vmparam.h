@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12.4.1 1997/02/12 12:25:54 mrg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13.2.1 1997/05/04 15:19:50 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,20 +65,28 @@
  */
 
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(6*1024*1024)		/* max text size */
+#define	MAXTSIZ		(8*1024*1024)		/* max text size */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(16*1024*1024)		/* max data size */
+#define	MAXDSIZ		(24*1024*1024)		/* max data size */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(16*1024*1024)		/* max stack size */
+#define	MAXSSIZ		(8*1024*1024)		/* max stack size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(6*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
 #endif
+
+/*
+ * All mmap()'ed data will be mapped above MAXDSIZ. This means that
+ * pte space must be allocated for (possible) mmap()'ed data.
+ * Note: This is just a hint, if we mmap() more than this the page
+ * table will be expanded. (at the cost of speed).
+ */
+#define	MMAPSPACE	(24*1024*1024)
 
 /* 
  * Size of shared memory map
@@ -92,19 +100,6 @@
  * Size of User Raw I/O map
  */
 #define	USRIOSIZE	300
-
-/*
- * Sizes of the system and user portions of the system page table.
- * USRPTSIZE is maximum possible user virtual memory to be used.
- * KALLOCMEM is kernel malloc area size. How much needed for each process?
- * SYSPTSIZE is total size of statically allocated pte. (in physmem)
- * Ptsizes are in PTEs.
- */
-
-#define	USRPTSIZE 	((MAXDSIZ >> PGSHIFT) * maxproc)
-#define	KALLOCMEM	(((1*1024*1024*maxproc)>>PGSHIFT)/4)
-#define SYSPTSIZE	(((USRPTSIZE * 4) >> PGSHIFT) + UPAGES * maxproc + \
-			    KALLOCMEM)
 
 /*
  * The time for a process to be blocked before being very swappable.
@@ -134,29 +129,6 @@
 
 #define	SAFERSS		8		/* nominal ``small'' resident set size
 					   protected against replacement */
-
-/*
- * There are two clock hands, initially separated by HANDSPREAD bytes
- * (but at most all of user memory).  The amount of time to reclaim
- * a page once the pageout process examines it increases with this
- * distance and decreases as the scan rate rises.
- */
-
-#define	HANDSPREAD	(2 * 1024 * 1024)
-
-/*
- * The number of times per second to recompute the desired paging rate
- * and poke the pagedaemon.
- */
-
-#define	RATETOSCHEDPAGING	4
-
-/*
- * Believed threshold (in megabytes) for which interleaved
- * swapping area is desirable.
- */
-
-#define	LOTSOFMEM	2
 
 #define	mapin(pte, v, pfnum, prot) \
 	{(*(int *)(pte) = ((pfnum)<<PGSHIFT) | (prot)) ; }

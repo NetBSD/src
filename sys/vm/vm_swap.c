@@ -1,8 +1,8 @@
-/*	$NetBSD: vm_swap.c,v 1.36.2.6 1997/03/15 08:58:33 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37 1997/04/17 00:12:50 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996, 1997 Matthew R. Green
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,22 +14,25 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Matthew R. Green for
- *      The NetBSD Foundation.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)vm_swap.c	8.5 (Berkeley) 2/17/94
  */
 
 #include <sys/param.h>
@@ -37,568 +40,218 @@
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
-#include <sys/dmap.h>
-#include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/map.h>
 #include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/extent.h>
-#include <vm/vm_swap.h>
+
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <machine/vmparam.h>
-
+#include <vm/vm.h>
 #include <vm/vm_conf.h>
 
 #include <miscfs/specfs/specdev.h>
 
 /*
- * The idea here is to provide a single interface for
- * multiple swap devices, of any kind and priority
- * in a simple and fast way.
- *
- * Each swap device has several properties:
- *	* rate of use.
- *	* swap in use.
- *	* swap enabled.
- *
- * And the rate in use is determined by XXX.
- *
- * The arguments to swap(2) are:
- *	int cmd;
- *	void *arg;
- *	int misc;
- * The cmd can be one of:
- *	SWAP_NSWAP - swap(2) returns the number of swap devices
- *		currently in use. (done)
- *	SWAP_STATS - swap(2) takes a struct swapent[] in (void *arg)
- *		and writes misc or fewer (to zero) entries of
- *		configured swap devices, and returns the number of
- *		entries written.  -1 on error (EFAULT, EPERM, ..)
- *		(done).
- *	SWAP_ON - swap(2) takes a (char *) in arg to be the pathname
- *		of a device or file to begin swapping on, with it's
- *		priority in misc, returning 0 on success and -1 on
- *		failure, setting errno to indicate which (done).
- *	SWAP_OFF - swap(2) takes a (char *) n arg to be the pathname
- *		of a device or file to stop swapping on.  returning 0
- *		or -1 (done).  XXX unwritten
- *	SWAP_CTL - swap(2) changes the properties of a swap device,
- *		using the misc value (done).
+ * Indirect driver for multi-controller paging.
  */
+
+int	nswap, nswdev;
+#ifdef SEQSWAP
+int	niswdev;		/* number of interleaved swap devices */
+int	niswap;			/* size of interleaved swap area */
+#endif
+extern	int dmmax;
+
+int swfree __P((struct proc *, int));
 
 /*
- * XXX
- *
- * Does all the manipulation of the swap_priority list, etc, need to
- * be locked ?
+ * Set up swap devices.
+ * Initialize linked list of free swap
+ * headers. These do not actually point
+ * to buffers, but rather to pages that
+ * are being swapped in and out.
  */
-
-#define SWAPDEBUG
-
-#ifdef SWAPDEBUG
-#define	VMSDB_SWON	0x0001
-#define VMSDB_SWOFF	0x0002
-#define VMSDB_SWINIT	0x0004
-#define VMSDB_SWALLOC	0x0008
-#define VMSDB_SWFLOW	0x0010
-#define VMSDB_INFO	0x0020
-int vmswapdebug = VMSDB_SWON | VMSDB_SWOFF | VMSDB_SWINIT | VMSDB_SWALLOC |
-    VMSDB_SWFLOW | VMSDB_INFO;
-#endif
-
-struct swapdev {
-	struct swapent		swd_se;
-#define swd_dev			swd_se.se_dev
-#define swd_flags		swd_se.se_flags
-#define swd_nblks		swd_se.se_nblks
-#define swd_priority		swd_se.se_priority
-	daddr_t			swd_mapoffset;
-	int			swd_mapsize;
-	struct extent		*swd_ex;
-	struct vnode		*swd_vp;
-	CIRCLEQ_ENTRY(swapdev)	swd_next;
-};
-
-struct swappri {
-	int			spi_priority;
-	CIRCLEQ_HEAD(spi_swapdev, swapdev)	spi_swapdev;
-	LIST_ENTRY(swappri)	spi_swappri;
-};
-
-int nswapdev, nswap, nswapmap;
-int swflags;
-struct extent *swapmap;
-LIST_HEAD(swap_priority, swappri) swap_priority;
-
-static int swap_on __P((struct proc *, struct swapdev *));
-#ifdef SWAP_OFF_WORKS
-static int swap_off __P((struct proc *, struct swapdev *));
-#endif
-static struct swapdev *swap_getdevfromaddr __P((daddr_t));
-static daddr_t swap_vtop_addr __P((daddr_t));
-static daddr_t swap_ptov_addr __P((struct swapdev *, daddr_t));
-static void swap_addmap __P((struct swapdev *, int));
-
-int
-sys_swapon(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+void
+swapinit()
 {
-	struct sys_swapon_args /* {
-		syscallarg(int) cmd;
-		syscallarg(void *) arg;
-		syscallarg(int) misc;
-	} */ *uap = (struct sys_swapon_args *)v;
+	register int i;
+	register struct buf *sp = swbuf;
+	register struct proc *p = &proc0;	/* XXX */
+	struct swdevt *swp;
+	int error;
+
+	/*
+	 * Count swap devices, and adjust total swap space available.
+	 * Some of the space will not be countable until later (dynamically
+	 * configurable devices) and some of the counted space will not be
+	 * available until a swapon() system call is issued, both usually
+	 * happen when the system goes multi-user.
+	 *
+	 * If using NFS for swap, swdevt[0] will already be bdevvp'd.	XXX
+	 */
+#ifdef SEQSWAP
+	nswdev = niswdev = 0;
+	nswap = niswap = 0;
+	/*
+	 * All interleaved devices must come first
+	 */
+	for (swp = swdevt; swp->sw_dev != NODEV || swp->sw_vp != NULL; swp++) {
+		if (swp->sw_flags & SW_SEQUENTIAL)
+			break;
+		niswdev++;
+		if (swp->sw_nblks > niswap)
+			niswap = swp->sw_nblks;
+	}
+	niswap = roundup(niswap, dmmax);
+	niswap *= niswdev;
+	if (niswdev != 0 && swdevt[0].sw_vp == NULL &&
+	    bdevvp(swdevt[0].sw_dev, &swdevt[0].sw_vp))
+		panic("swapvp");
+	/*
+	 * The remainder must be sequential
+	 */
+	for ( ; swp->sw_dev != NODEV; swp++) {
+		if ((swp->sw_flags & SW_SEQUENTIAL) == 0)
+			panic("binit: mis-ordered swap devices");
+		nswdev++;
+		if (swp->sw_nblks > 0) {
+			if (swp->sw_nblks % dmmax)
+				swp->sw_nblks -= (swp->sw_nblks % dmmax);
+			nswap += swp->sw_nblks;
+		}
+	}
+	nswdev += niswdev;
+	nswap += niswap;
+#else
+	nswdev = 0;
+	nswap = 0;
+	for (swp = swdevt; swp->sw_dev != NODEV || swp->sw_vp != NULL; swp++) {
+		nswdev++;
+		if (swp->sw_nblks > nswap)
+			nswap = swp->sw_nblks;
+	}
+	if (nswdev > 1)
+		nswap = ((nswap + dmmax - 1) / dmmax) * dmmax;
+	nswap *= nswdev;
+	if (nswdev != 0 && swdevt[0].sw_vp == NULL &&
+	    bdevvp(swdevt[0].sw_dev, &swdevt[0].sw_vp))
+		panic("swapvp");
+#endif
+	if (nswap == 0)
+		printf("WARNING: no swap space found\n");
+	else if ((error = swfree(p, 0)) == ENXIO)
+		printf("WARNING: primary swap device not configured\n");
+	else if (error) {
+		printf("swfree errno %d\n", error);	/* XXX */
+		panic("swapinit swfree 0");
+	}
+
+	/*
+	 * Now set up swap buffer headers.
+	 */
+	bswlist.b_actf = sp;
+	for (i = 0; i < nswbuf - 1; i++, sp++) {
+		sp->b_actf = sp + 1;
+		sp->b_rcred = sp->b_wcred = p->p_ucred;
+		sp->b_vnbufs.le_next = NOLIST;
+	}
+	sp->b_rcred = sp->b_wcred = p->p_ucred;
+	sp->b_vnbufs.le_next = NOLIST;
+	sp->b_actf = NULL;
+}
+
+void
+swstrategy(bp)
+	register struct buf *bp;
+{
+	int sz, off, seg, index;
+	register struct swdevt *sp;
 	struct vnode *vp;
-	struct nameidata nd;
-	struct swappri *spp, *nspp = NULL, *pspp = swap_priority.lh_first;
-	struct swapdev *sdp = NULL, *nsdp = NULL;
-	struct swapinfo si;
-	struct swapent *sep;
-	int	count = 0, error, misc;
 
-	misc = SCARG(uap, misc);
-
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("entering sys_swapon\n");
-#endif /* SWAPDEBUG */
-	
-	/* how many swap devices */
-	if (SCARG(uap, cmd) == SWAP_NSWAP) {
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("did SWAP_NSWAP:  leaving sys_swapon\n");
-#endif /* SWAPDEBUG */
-		*retval = nswapdev;
-		return (0);
+	sz = howmany(bp->b_bcount, DEV_BSIZE);
+	if (bp->b_blkno + sz > nswap) {
+		bp->b_error = EINVAL;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
+		return;
 	}
-
-	/* stats on the swap devices. */
-	if (SCARG(uap, cmd) == SWAP_STATS) {
-
-		error = copyin(SCARG(uap, arg), &si, sizeof(si));
-		if (error)
-			return error;
-		sep = si.si_ent;
-
-		for (spp = swap_priority.lh_first; spp != NULL && misc-- > 0;
-		    spp = spp->spi_swappri.le_next) {
-			for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
-			    sdp = sdp->swd_next.cqe_next) {	
-				if (sdp->swd_dev == NODEV)
-					continue;
-				error = copyout((caddr_t)&sdp->swd_se,
-				    (caddr_t)sep, sizeof(struct swapent));
-				if (error)
-					return (error);
-				count++;
-				sep++;
-			}
-		}
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("sw: did SWAP_STATS:  leaving sys_swapon\n");
-#endif /* SWAPDEBUG */
-		*retval = count;
-		return (0);
-	}
-	
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
-		goto out;
-
-	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_USERSPACE, SCARG(uap, arg), p);
-	if ((error = namei(&nd)))
-		goto out;
-
-	vp = nd.ni_vp;
-
-	if (vp == NULL)
-
-	switch(SCARG(uap, cmd)) {
-	case SWAP_ON:
-	{
-		int	priority = SCARG(uap, misc);
-
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("sw: doing SWAP_ON...\n");
-#endif /* SWAPDEBUG */
-		for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
-			if (spp->spi_priority <= priority)
-				break;
-			pspp = spp;
-		}
-
-		if (spp == NULL || spp->spi_priority != priority) {
-			nspp = (struct swappri *)malloc(sizeof *nspp,
-			   M_VMSWAP, M_WAITOK);
-
-#ifdef SWAPDEBUG
-			if (vmswapdebug & VMSDB_SWFLOW)
-				printf("sw: had to create a new swappri = %d\n",
-				   priority);
-#endif /* SWAPDEBUG */
-			nspp->spi_priority = priority;
-			if (spp == NULL)
-				spp = pspp;
-		}
-
-		nsdp = (struct swapdev *)malloc(sizeof *nsdp, M_VMSWAP,
-		    M_WAITOK);
-		if (vp->v_type == VBLK)
-			nsdp->swd_dev = (dev_t)vp->v_rdev;
-		nsdp->swd_flags = 0;
-		nsdp->swd_priority = priority;
-		nsdp->swd_vp = vp;
-		if ((error = swap_on(p, nsdp)) != 0)
-			goto bad;
-		if (nspp) {
-			if (pspp) {
-				LIST_INSERT_AFTER(pspp, nspp, spi_swappri);
-			} else {
-				LIST_INSERT_HEAD(&swap_priority, nspp,
-				    spi_swappri);
-			}
-		}
-		CIRCLEQ_INIT(&nspp->spi_swapdev);
-		CIRCLEQ_INSERT_TAIL(&nspp->spi_swapdev, nsdp, swd_next);
-		goto out;
-	}
-	case SWAP_OFF:
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("doing SWAP_OFF...\n");
-#endif /* SWAPDEBUG */
-#ifdef SWAP_OFF_WORKS
-		for (spp = swap_priority.lh_first; spp != NULL;
-		    spp = spp->spi_swappri.le_next) {
-			for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
-			    sdp = sdp->swd_next.cqe_next) {
-				if (sdp->swd_vp != vp)
-					continue;
-				/*
-				 * if a device isn't in use or enabled, we
-				 * can't stop swapping from it (again).
-				 */
-				if ((sdp->swd_flags & (SWF_INUSE|SWF_ENABLE)) == 0) {
-					error = EBUSY;
-					goto bad;
+	if (nswdev > 1) {
+#ifdef SEQSWAP
+		if (bp->b_blkno < niswap) {
+			if (niswdev > 1) {
+				off = bp->b_blkno % dmmax;
+				if (off+sz > dmmax) {
+					bp->b_error = EINVAL;
+					bp->b_flags |= B_ERROR;
+					biodone(bp);
+					return;
 				}
-				if ((error = swap_off(p, sdp)))
-					goto bad;
-				CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
-				free((caddr_t)sdp, M_VMSWAP);
+				seg = bp->b_blkno / dmmax;
+				index = seg % niswdev;
+				seg /= niswdev;
+				bp->b_blkno = seg*dmmax + off;
+			} else
+				index = 0;
+		} else {
+			register struct swdevt *swp;
+
+			bp->b_blkno -= niswap;
+			for (index = niswdev, swp = &swdevt[niswdev];
+			     swp->sw_dev != NODEV;
+			     swp++, index++) {
+				if (bp->b_blkno < swp->sw_nblks)
+					break;
+				bp->b_blkno -= swp->sw_nblks;
+			}
+			if (swp->sw_dev == NODEV ||
+			    bp->b_blkno+sz > swp->sw_nblks) {
+				bp->b_error = swp->sw_dev == NODEV ?
+					ENODEV : EINVAL;
+				bp->b_flags |= B_ERROR;
+				biodone(bp);
+				return;
 			}
 		}
-		if (sdp == NULL)
-			error = ENXIO;
 #else
-#ifdef DIAGNOSTIC
-		printf("swap SWAP_OFF attempted\n");
-#endif
-#endif
-		goto out2;
-	case SWAP_CTL:
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("doing SWAP_CTL...\n");
-#endif /* SWAPDEBUG */
-	default:
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("doing default...\n");
-#endif /* SWAPDEBUG */
-		error = EINVAL;
-	}
-bad:
-	if (nspp)
-		free((caddr_t)nspp, M_VMSWAP);
-	if (nsdp)
-		free((caddr_t)nsdp, M_VMSWAP);
-	if (vp)
-out2:
-		vput(vp);
-out:
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWFLOW)
-		printf("leaving sys_swapon:  error %d\n", error);
-#endif /* SWAPDEBUG */
-	return (error);
-}
-
-/*
- * swap_on() attempts to begin swapping on a swapdev.  we check that this
- * device is OK to swap from, miss the start of any disk (to avoid any
- * disk labels that may exist).
- */
-static int
-swap_on(p, sdp)
-	struct proc *p;
-	struct swapdev *sdp;
-{
-	static int count = 0;
-	extern int dmmax;
-	struct vnode *vp = sdp->swd_vp;
-	int error, nblks, size;
-	long blk, addr;
-#ifdef SWAP_TO_FILES
-	struct vattr va;
-#endif
-	dev_t dev = sdp->swd_dev;
-	int ssize;
-	char *name, *storage;
-
-#if 0
-	/*
-	 * XXX
-	 *
-	 * Need to handle where root is on swap.
-	 */
-	if (vp != rootvp) {
-		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p)))
-			return (error);
-	}
-#endif
-	sdp->swd_flags |= SWF_INUSE;
-#ifdef SWAPDEBUG	/* this wants only to block devices */
-	if (vmswapdebug & VMSDB_INFO)
-		printf("swap_on: dev = %d, major(dev) = %d\n", dev, major(dev));
-#endif /* SWAPDEBUG */
-	if (vp->v_type == VBLK && (bdevsw[major(dev)].d_psize == 0 ||
-	    (nblks = (*bdevsw[major(dev)].d_psize)(dev)) == -1)) {
-		error = ENXIO;
-		goto bad;
-	} else {
-#ifdef SWAP_TO_FILES
-		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
-			goto bad;
-		nblks = (int)(va.va_size / S_BLKSIZE);
-#else
-		error = ENXIO;
-		goto bad;
-#endif
-	}
-	if (nblks == 0) {
-#ifdef SWAPDEBUG
-		if (vmswapdebug & VMSDB_SWFLOW)
-			printf("swap_on: nblks == 0\n");
-#endif /* SWAPDEBUG */
-		error = EINVAL;
-		goto bad;
-	}
-	sdp->swd_nblks = nblks;
-
-	/* XXX should redo the dmmax stuff here and in swap_pager.c */
-	for (blk = 0; blk < nblks; blk += dmmax)
-		;
-	/*
-	 * skip over first cluster of a device incase of labels or
-	 * boot blocks.
-	 */
-	if (vp->v_type == VBLK) {
-		size = (int)(blk - ctod(CLSIZE));
-		addr = (long)ctod(CLSIZE);
-	} else {
-		size = (int)blk;
-		addr = (long)0;
-	}
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWON)
-		printf("swap_on: dev %x: size %d, addr %ld\n", dev, size, addr);
-#endif /* SWAPDEBUG */
-	/* coalese these two malloc calls? */
-	name = malloc(12, M_VMSWAP, M_WAITOK);
-	sprintf(name, "swap0x%04x", count++);
-	ssize = EXTENT_FIXED_STORAGE_SIZE(nswapmap);
-	storage = malloc(ssize, M_VMSWAP, M_WAITOK);
-	sdp->swd_ex = extent_create(name, addr, addr + size, M_VMSWAP, storage,
-	    ssize, EX_MALLOCOK|EX_NOWAIT);
-	swap_addmap(sdp, size);
-	nswapdev++;
-	nswap += nblks;
-	sdp->swd_flags |= SWF_ENABLE;
-	if (dumpdev == NULL && vp->v_type == VBLK)
-		dumpdev = dev;
-	/* XXX handle miniroot == (rootvp == vp) */
-	return (0);
-
-bad:
-	/* XXX see above */
-#ifdef 0
-	if (vp != rootvp)
-		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
-#endif
-	return (error);
-}
-
-#ifdef SWAP_OFF_WORKS
-static int
-swap_off(p, sdp)
-	struct proc *p;
-	struct swapdev *sdp;
-{
-	/* turn off the enable flag */
-	sdp->swd_flags &= ~SWF_ENABLE;
-
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWOFF)
-		printf("swap_off: %x\n", sdp->swd_dev);
-#endif /* SWAPDEBUG */
-
-	/*
-	 * XXX write me
-	 *
-	 * the idea is to find out which processes are using this swap
-	 * device, and page them all in.
-	 *
-	 * eventually, we should try to move them out to other swap areas
-	 * if available.
-	 */
-
-	/* until the above code is written, we must ENODEV */
-	return ENODEV;
-
-	free(sdp->swd_ex->ex_name, M_VMSWAP);
-	extent_free(swapmap, sdp->swd_mapsize, sdp->swd_mapoffset, EX_WAITOK);
-	nswap -= sdp->swd_nblks;
-	nswapdev--;
-	extent_destroy(sdp->swd_ex);
-	free((caddr_t)sdp->swd_ex, M_VMSWAP);
-	if (sdp->swp_vp != rootvp)
-		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
-	if (sdp->swd_vp)
-		vput(sdp->swd_vp);
-	free((caddr_t)sdp, M_VMSWAP);
-	return (0);
-}
-#endif
-
-/*
- * to decide where to allocate what part of swap, we must, "round robin"
- * the swap devicies in swap_priority of the same priority until they are
- * full.  we do this with a list of swap priorities that have circle
- * queue's of swapdev's.
- *
- * the following functions control allocation and freeing of part of the
- * swap area.  you call swap_alloc() with a size and it returns an address.
- * later you call swap_free() and it free's the use of that swap area.
- *
- *	daddr_t swap_alloc(int size);
- *	void swap_free(int size, daddr_t addr);
- */
-
-daddr_t
-swap_alloc(size)
-	int size;
-{
-	daddr_t addr;
-	struct swapdev *sdp;
-	struct swappri *spp;
-	u_long	result;
-
-	if (nswapdev < 1)
-		return NULL;
-	
-	/* XXX THIS IS BUSTED XXX */
-	for (spp = swap_priority.lh_first; spp != NULL;
-	    spp = spp->spi_swappri.le_next) {
-		for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
-		    sdp = sdp->swd_next.cqe_next) {
-			/* if it's not enabled, then, we can't swap from it */
-			if ((sdp->swd_flags & SWF_ENABLE) == 0 ||
-			    extent_alloc(sdp->swd_ex, size, EX_NOALIGN,
-			    EX_NOBOUNDARY, 0, &result) != 0)
-				continue;
-			addr = swap_ptov_addr(sdp, (daddr_t)result);
-			CIRCLEQ_REMOVE(&spp->spi_swapdev, sdp, swd_next);
-			CIRCLEQ_INSERT_TAIL(&spp->spi_swapdev, sdp, swd_next);
-			if (addr)
-				return addr;
+		off = bp->b_blkno % dmmax;
+		if (off+sz > dmmax) {
+			bp->b_error = EINVAL;
+			bp->b_flags |= B_ERROR;
+			biodone(bp);
+			return;
 		}
+		seg = bp->b_blkno / dmmax;
+		index = seg % nswdev;
+		seg /= nswdev;
+		bp->b_blkno = seg*dmmax + off;
+#endif
+	} else
+		index = 0;
+	sp = &swdevt[index];
+	if (sp->sw_vp == NULL) {
+		bp->b_error = ENODEV;
+		bp->b_flags |= B_ERROR;
+		biodone(bp);
+		return;
 	}
-	return 0;
-}
-
-void
-swap_free(size, addr)
-	int size;
-	daddr_t addr;
-{
-	struct swapdev *sdp = swap_getdevfromaddr(addr);
-
-#ifdef DIAGNOSTIC
-	if (sdp == NULL)
-		panic("swap_free: unmapped address\n");
-	if (nswapdev < 1)
-		panic("swap_free: nswapdev < 1\n");
-#endif
-	extent_free(sdp->swd_ex, size, swap_vtop_addr(addr), EX_NOWAIT);
-}
-
-/*
- * We have a physical -> virtual mapping to address here.  There
- * are several different physical address spaces that are to be
- * mapped onto a single virtual address space.
- */
-#define ADDR_IN_MAP(addr, sdp) \
-	(((addr) >= (sdp)->swd_mapoffset) && \
- 	 ((addr) < ((sdp)->swd_mapoffset + (sdp)->swd_mapsize)))
-
-struct swapdev *
-swap_getdevfromaddr(addr)
-	daddr_t addr;
-{
-	struct swapdev *sdp;
-	struct swappri *spp;
-	
-	for (spp = swap_priority.lh_first; spp != NULL;
-				    spp = spp->spi_swappri.le_next)
-		for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
-				    sdp = sdp->swd_next.cqe_next)
-			if (ADDR_IN_MAP(addr, sdp))
-				return sdp;
-	return NULL;
-}
-
-static daddr_t
-swap_ptov_addr(sdp, addr)
-	struct swapdev *sdp;
-	daddr_t addr;
-{
-
-	return (addr + sdp->swd_mapoffset);
-}
-
-static daddr_t
-swap_vtop_addr(addr)
-	daddr_t addr;
-{
-	struct swapdev *sdp = swap_getdevfromaddr(addr);
-
-	return (addr - sdp->swd_mapoffset);
-}
-
-void
-swap_addmap(sdp, size)
-	struct swapdev *sdp;
-	int	size;
-{
-	u_long result;
-
-	sdp->swd_mapoffset = extent_alloc(swapmap, size, EX_NOALIGN,
-	    EX_NOBOUNDARY, 0, &result);
-	/* XXX if we fail we should try another swap partition!!! */
-#ifdef DIAGNOSTIC
-	if (result < 0)
-		panic("swap_addmap");
-#endif
-	sdp->swd_mapsize = size;
+	if ((bp->b_dev = sp->sw_dev) == NODEV && sp->sw_vp->v_type != VREG)
+		panic("swstrategy");
+	VHOLD(sp->sw_vp);
+	if ((bp->b_flags & B_READ) == 0) {
+		if ((vp = bp->b_vp) != NULL) {
+			vp->v_numoutput--;
+			if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
+				vp->v_flag &= ~VBWAIT;
+				wakeup((caddr_t)&vp->v_numoutput);
+			}
+		}
+		sp->sw_vp->v_numoutput++;
+	}
+	if (bp->b_vp != NULL)
+		brelvp(bp);
+	bp->b_vp = sp->sw_vp;
+	VOP_STRATEGY(bp);
 }
 
 /*ARGSUSED*/
@@ -623,86 +276,211 @@ swwrite(dev, uio, ioflag)
 	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
-void
-swstrategy(bp)
-	struct buf *bp;
+/*
+ * System call swapon(name) enables swapping on device name,
+ * which must be in the swdevsw.  Return EBUSY
+ * if already swapping on this device.
+ */
+/* ARGSUSED */
+int
+sys_swapon(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
 {
-	struct swapdev *sdp;
-	struct vnode *vp;
-	daddr_t addr;
+	struct sys_swapon_args /* {
+		syscallarg(char *) name;
+	} */ *uap = v;
+	register struct vnode *vp;
+	register struct swdevt *sp;
+	dev_t dev;
+	int error;
+	struct nameidata nd;
 
-	addr = bp->b_blkno * DEV_BSIZE;
-	sdp = swap_getdevfromaddr(addr);
-
-	VHOLD(sdp->swd_vp);
-	if ((bp->b_flags & B_READ) == 0) {
-		if ((vp = bp->b_vp)) {
-			vp->v_numoutput--;
-			if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
-				vp->v_flag &= ~VBWAIT;
-				wakeup((caddr_t)&vp->v_numoutput);
-			}
-		}
-		sdp->swd_vp->v_numoutput++;
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, name), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	vp = nd.ni_vp;
+	if (vp->v_type != VBLK) {
+		vrele(vp);
+		return (ENOTBLK);
 	}
-	if (bp->b_vp != NULL)
-		brelvp(bp);
-	bp->b_vp = sdp->swd_vp;
-	VOP_STRATEGY(bp);
+	dev = (dev_t)vp->v_rdev;
+	if (major(dev) >= nblkdev) {
+		vrele(vp);
+		return (ENXIO);
+	}
+	for (sp = &swdevt[0]; sp->sw_dev != NODEV; sp++) {
+		if (sp->sw_dev == dev) {
+			if (sp->sw_flags & SW_FREED) {
+				vrele(vp);
+				return (EBUSY);
+			}
+			sp->sw_vp = vp;
+			if ((error = swfree(p, sp - swdevt)) != 0) {
+				vrele(vp);
+				return (error);
+			}
+			return (0);
+		}
+#ifdef SEQSWAP
+		/*
+		 * If we have reached a non-freed sequential device without
+		 * finding what we are looking for, it is an error.
+		 * That is because all interleaved devices must come first
+		 * and sequential devices must be freed in order.
+		 */
+		if ((sp->sw_flags & (SW_SEQUENTIAL|SW_FREED)) == SW_SEQUENTIAL)
+			break;
+#endif
+	}
+	vrele(vp);
+	return (EINVAL);
 }
 
-void
-swapinit()
+/*
+ * Swfree(index) frees the index'th portion of the swap map.
+ * Each of the nswdev devices provides 1/nswdev'th of the swap
+ * space, which is laid out with blocks of dmmax pages circularly
+ * among the devices.
+ */
+int
+swfree(p, index)
+	struct proc *p;
+	int index;
 {
-	struct buf *sp = swbuf;
-	struct proc *p = &proc0;       /* XXX */
-	u_long size, addr;
-	int i, ssize;
-	char *storage;
+	register struct swdevt *sp;
+	register swblk_t vsbase;
+	register long blk;
+	struct vnode *vp;
+	register swblk_t dvbase;
+	register int nblks;
+	int error;
 
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWINIT)
-		printf("swapinit\n");
-#endif
-	nswap = 0;
-	nswapdev = 0;
+	sp = &swdevt[index];
+	vp = sp->sw_vp;
+	/* If root on swap, then the skip open/close operations. */
+	if (vp != rootvp) {
+		if ((error = VOP_OPEN(vp, FREAD|FWRITE, p->p_ucred, p)) != 0)
+			return (error);
+	}
+	sp->sw_flags |= SW_FREED;
+	nblks = sp->sw_nblks;
+	/*
+	 * Some devices may not exist til after boot time.
+	 * If so, their nblk count will be 0.
+	 */
+	if (nblks <= 0) {
+		int perdev;
+		dev_t dev = sp->sw_dev;
 
-	LIST_INIT(&swap_priority);
-	/* XXX this 4 is simply a default starting point */
-	ssize = EXTENT_FIXED_STORAGE_SIZE(4);
-	storage = malloc(ssize , M_VMSWAP, M_WAITOK);
-	if (storage == 0)
-		panic("swapinit: can't malloc storage");
-	nswapmap = maxproc / 2;
-	size = VM_MAX_ADDRESS - VM_MIN_ADDRESS;
-	addr = VM_MIN_ADDRESS;
-	/* XXX make this based on ram as well. */
-	if (addr == 0)
-		addr = 0x1000;	/* XXX does this really matter ??? */
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWALLOC)
-		printf("swapinit: swapmap size=%08lx addr=%08lx nswapmap=%d\n",
-		    size, addr, nswapmap);
+		if (bdevsw[major(dev)].d_psize == 0 ||
+		    (nblks = (*bdevsw[major(dev)].d_psize)(dev)) == -1) {
+			if (vp != rootvp)
+				(void) VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
+			sp->sw_flags &= ~SW_FREED;
+			return (ENXIO);
+		}
+#ifdef SEQSWAP
+		if (index < niswdev) {
+			perdev = niswap / niswdev;
+			if (nblks > perdev)
+				nblks = perdev;
+		} else {
+			if (nblks % dmmax)
+				nblks -= (nblks % dmmax);
+			nswap += nblks;
+		}
+#else
+		perdev = nswap / nswdev;
+		if (nblks > perdev)
+			nblks = perdev;
 #endif
-	swapmap = extent_create("swapmap", addr, addr + size, M_WAITOK, storage,
-	    ssize, EX_MALLOCOK);
-	if (swapmap == 0)
-		panic("swapinit: extent_create failed");
+		sp->sw_nblks = nblks;
+	}
+	if (nblks == 0) {
+		if (vp != rootvp)
+			(void) VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
+		sp->sw_flags &= ~SW_FREED;
+		return (0);	/* XXX error? */
+	}
+#ifdef SEQSWAP
+	if (sp->sw_flags & SW_SEQUENTIAL) {
+		register struct swdevt *swp;
+
+		blk = niswap;
+		for (swp = &swdevt[niswdev]; swp != sp; swp++)
+			blk += swp->sw_nblks;
+		rmfree(swapmap, nblks, blk);
+		return (0);
+	}
+#endif
+	for (dvbase = 0; dvbase < nblks; dvbase += dmmax) {
+		blk = nblks - dvbase;
+#ifdef SEQSWAP
+		if ((vsbase = index*dmmax + dvbase*niswdev) >= niswap)
+			panic("swfree");
+#else
+		if ((vsbase = index*dmmax + dvbase*nswdev) >= nswap)
+			panic("swfree");
+#endif
+		if (blk > dmmax)
+			blk = dmmax;
+		if (vsbase == 0) {
+			/*
+			 * First of all chunks... initialize the swapmap.
+			 * Don't use the first cluster of the device
+			 * in case it starts with a label or boot block.
+			 */
+			rminit(swapmap, blk - ctod(CLSIZE),
+			    vsbase + ctod(CLSIZE), "swap", nswapmap);
+		} else if (dvbase == 0) {
+			/*
+			 * Don't use the first cluster of the device
+			 * in case it starts with a label or boot block.
+			 */
+			rmfree(swapmap, blk - ctod(CLSIZE),
+			    vsbase + ctod(CLSIZE));
+		} else
+			rmfree(swapmap, blk, vsbase);
+	}
 
 	/*
-	 * Now set up swap buffer headers.
+	 * Preserve the mini-root if appropriate:
+	 * Note: this requires !SEQSWAP && nswdev==1
+	 *
+	 * A mini-root gets copied into the front of the swap
+	 * and we run over top of the swap area just long
+	 * enough for us to do a mkfs and restor of the real
+	 * root (sure beats rewriting standalone restor).
 	 */
-	bswlist.b_actf = sp;
-	for (i = 0; i < nswbuf - 1; i++, sp++) {
-		sp->b_actf = sp + 1;
-		sp->b_rcred = sp->b_wcred = p->p_ucred;
-		sp->b_vnbufs.le_next = NOLIST;
-	}
-	sp->b_rcred = sp->b_wcred = p->p_ucred;
-	sp->b_vnbufs.le_next = NOLIST;
-	sp->b_actf = NULL;
-#ifdef SWAPDEBUG
-	if (vmswapdebug & VMSDB_SWINIT)
-		printf("leaving swapinit\n");
+	if (vp == rootvp) {
+#ifndef	MINIROOTSIZE
+		struct mount *mp;
+		struct statfs *sp;
 #endif
+		long firstblk;
+		int rootblks;
+
+#ifdef	MINIROOTSIZE
+		rootblks = MINIROOTSIZE;
+#else
+		/* Get size from root FS (mountroot did statfs) */
+		mp = rootvnode->v_mount;
+		sp = &mp->mnt_stat;
+		rootblks = sp->f_blocks * (sp->f_bsize / DEV_BSIZE);
+#endif
+		if (rootblks > nblks)
+			panic("swfree miniroot size");
+		/* First ctod(CLSIZE) blocks are not in the map. */
+		firstblk = rmalloc(swapmap, rootblks - ctod(CLSIZE));
+		if (firstblk != ctod(CLSIZE))
+			panic("swfree miniroot save");
+		printf("Preserved %d blocks of miniroot leaving %d pages of swap\n",
+		    rootblks, dtoc(nblks - rootblks));
+	}
+
+	return (0);
 }

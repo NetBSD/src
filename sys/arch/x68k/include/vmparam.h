@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.1.1.6.1 1997/02/12 12:25:57 mrg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.1.1.10.1 1997/05/04 15:19:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

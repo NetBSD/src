@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.30.4.2 1997/03/02 16:28:04 mrg Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.32.2.1 1997/05/04 15:20:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -65,6 +65,7 @@
 #include <vm/vm_pageout.h>
 #include <vm/swap_pager.h>
 
+/* XXX this makes the max swap devices 16 */
 #define NSWSIZES	16	/* size of swtab */
 #define MAXDADDRS	64	/* max # of disk addrs for fixed allocations */
 #ifndef NPENDINGIO
@@ -114,6 +115,11 @@ struct swtab {
 	u_long	  st_usecnt;	/* total used of this size */
 #endif
 } swtab[NSWSIZES+1];
+
+int	dmmin, dmmax;
+
+struct	map *swapmap;
+int	nswapmap;
 
 #ifdef DEBUG
 int		swap_pager_poip;	/* pageouts in progress */
@@ -197,6 +203,8 @@ swap_pager_init()
 		spc->spc_flags = SPC_FREE;
 	}
 
+/* this needs to be at least ctod(1) for all ports for vtod() to work */
+#define DMMIN	32
 	/*
 	 * Fill in our table of object size vs. allocation size.  bsize needs
 	 * to be at least ctod(1) for all ports for vtod() to work, with a
@@ -914,8 +922,7 @@ swap_pager_clean(rw)
 		 * Done with the object, decrement the paging count
 		 * and unlock it.
 		 */
-		if (--object->paging_in_progress == 0)
-			wakeup(object);
+		vm_object_paging_end(object);
 		vm_object_unlock(object);
 
 		/*
