@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.3 2001/09/16 15:08:40 bjh21 Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.4 2001/09/17 22:41:59 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.3 2001/09/16 15:08:40 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.4 2001/09/17 22:41:59 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -375,6 +375,8 @@ eca_stop(struct ifnet *ifp, int disable)
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	ifp->if_flags &= ~IFF_RUNNING;
+
+	eco_stop(ifp, disable);
 
 	/* Interrupts disabled, no DMA, hold Tx and Rx in reset. */
 	sc->sc_cr1 = MC6854_CR1_RX_RS | MC6854_CR1_TX_RS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.7 2001/09/16 15:08:39 bjh21 Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.8 2001/09/17 22:42:00 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.7 2001/09/16 15:08:39 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.8 2001/09/17 22:42:00 bjh21 Exp $");
 
 #include <sys/errno.h>
 #include <sys/kernel.h>
@@ -93,6 +93,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.7 2001/09/16 15:08:39 bjh21 Exp $")
 #include <netinet/in_var.h>
 #endif
 
+#define ECO_MAUX_RETRYPARMS 0
+
+struct eco_retryparms {
+	int	erp_delay;
+	int	erp_count;
+};
+
 /* Default broadcast address */
 static const u_int8_t eco_broadcastaddr[] = { 0xff, 0xff };
 
@@ -106,10 +113,14 @@ static int eco_interestingp(struct ifnet *ifp, struct mbuf *m);
 static struct mbuf *eco_immediate(struct ifnet *ifp, struct mbuf *m);
 static struct mbuf *eco_ack(struct ifnet *ifp, struct mbuf *m);
 
+static void eco_defer(struct ifnet *, struct mbuf *, int);
+static void eco_retry_free(struct eco_retry *er);
+static void eco_retry(void *);
+
 void
 eco_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 {
-/*	struct ecocom *ec = (void *)ifp; */
+	struct ecocom *ec = (void *)ifp;
 
 	ifp->if_type = IFT_OTHER;
 	ifp->if_addrlen = ECO_ADDR_LEN;
@@ -128,6 +139,9 @@ eco_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 
 	/* XXX cast safe? */
 	ifp->if_broadcastaddr = (u_int8_t *)eco_broadcastaddr;
+
+	LIST_INIT(&ec->ec_retries);
+
 #if NBPFILTER > 0
 	bpfattach(ifp, ifp->if_dlt, ECO_HDR_LEN);
 #endif
@@ -142,8 +156,18 @@ int
 eco_init(struct ifnet *ifp) {
 	struct ecocom *ec = (struct ecocom *)ifp;
 
-	ec->ec_state = ECO_UNKNOWN;
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		ec->ec_state = ECO_UNKNOWN;
 	return 0;
+}
+
+void
+eco_stop(struct ifnet *ifp, int disable)
+{
+	struct ecocom *ec = (struct ecocom *)ifp;
+
+	while (!LIST_EMPTY(&ec->ec_retries))
+		eco_retry_free(LIST_FIRST(&ec->ec_retries));
 }
 
 static int
@@ -156,6 +180,9 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct rtentry *rt;
 	int hdrcmplt;
 	size_t len;
+	int delay, count;
+	struct mbuf *maux;
+	struct eco_retryparms *erp;
 #ifdef INET
 	struct mbuf *m1;
 	struct arphdr *ah;
@@ -204,6 +231,8 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	hdrcmplt = 0;
+	delay = hz / 16;
+	count = 16;
 	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
@@ -286,6 +315,17 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	if (!hdrcmplt)
 		memcpy(eh->eco_shost, LLADDR(ifp->if_sadl),
 		    ECO_ADDR_LEN);
+
+	if ((m->m_flags & M_BCAST) == 0) {
+		/* Attach retry info to packet. */
+		maux = m_aux_add(m, AF_LINK, ECO_MAUX_RETRYPARMS);
+		if (maux == NULL)
+			senderr(ENOBUFS);
+		erp = mtod(maux, struct eco_retryparms *);
+		erp->erp_delay = delay;
+		erp->erp_count = count;
+		maux->m_len = sizeof(struct eco_retryparms);
+	}
 
 #ifdef PFIL_HOOKS
 	if ((error = pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
@@ -453,6 +493,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 		m_freem(m);
 		return;
 	}
+
 	s = splnet();
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
@@ -483,8 +524,12 @@ eco_start(struct ifnet *ifp)
 		} else {
 			ec->ec_packet = m;
 			m = m_copym(m, 0, ECO_HDR_LEN, M_DONTWAIT);
+			/* m_copym moves the aux ptr.  Move it back. */
+			ec->ec_packet->m_pkthdr.aux = m->m_pkthdr.aux;
+			m->m_pkthdr.aux = NULL;
 			if (m == NULL) {
 				m_freem(ec->ec_packet);
+				ec->ec_packet = NULL;
 				return;
 			}
 			ec->ec_txframe(ifp, m);
@@ -648,14 +693,19 @@ eco_inputframe(struct ifnet *ifp, struct mbuf *m)
 		m_freem(m);
 		/* Chop out the control and port bytes. */
 		m0 = m_copym(ec->ec_packet, 0, ECO_SHDR_LEN, M_DONTWAIT);
+		/* Put the aux ptr back where it belongs. */
+		ec->ec_packet->m_pkthdr.aux = m0->m_pkthdr.aux;
+		m0->m_pkthdr.aux = NULL;
 		if (m0 == NULL) {
 			m_freem(ec->ec_packet);
 			return NULL;
 		}
-		m = m_copypacket(ec->ec_packet, M_DONTWAIT);
-		if (m == NULL) {
+		/* m_copypacket moves the aux ptr, hence this little dance. */
+		m = ec->ec_packet;
+		ec->ec_packet = m_copypacket(m, M_DONTWAIT);
+		if (ec->ec_packet == NULL) {
 			m_freem(m0);
-			m_freem(ec->ec_packet);
+			m_freem(m);
 			return NULL;
 		}
 		m_adj(m, ECO_HDR_LEN);
@@ -748,10 +798,37 @@ void
 eco_inputidle(struct ifnet *ifp)
 {
 	struct ecocom *ec = (void *)ifp;
+	struct mbuf *m, *maux;
+	struct eco_retryparms *erp;
 
+	switch (ec->ec_state) {
+	case ECO_SCOUT_SENT:
+	case ECO_DATA_SENT:
+	case ECO_IMMED_SENT:
+		/* Outgoing packet failed.  Check if we should retry. */
+		m = ec->ec_packet;
+		ec->ec_packet = NULL;
+		maux = m_aux_find(m, AF_LINK, ECO_MAUX_RETRYPARMS);
+		if (maux == NULL)
+			m_freem(m);
+		else {
+			erp = mtod(maux, struct eco_retryparms *);
+			if (--erp->erp_count > 0)
+				eco_defer(ifp, m, erp->erp_delay);
+			else {
+				printf("%s: pkt failed\n", ifp->if_xname);
+				m_freem(m);
+			}
+		}
+		break;
+	case ECO_SCOUT_RCVD:
+		m_freem(ec->ec_scout);
+		ec->ec_scout = NULL;
+		break;
+	default:
+		break;
+	}
 	ec->ec_state = ECO_IDLE;
-	m_freem(ec->ec_scout);
-	ec->ec_scout = NULL;
 	ifp->if_start(ifp);
 }
 
@@ -770,3 +847,65 @@ eco_sprintf(const u_int8_t *ea)
 	return buf;
 }
 		    
+/*
+ * Econet retry handling.
+ */
+static void
+eco_defer(struct ifnet *ifp, struct mbuf *m, int delay)
+{
+	struct ecocom *ec = (struct ecocom *)ifp;
+	struct eco_retry *er;
+	int s;
+
+	MALLOC(er, struct eco_retry *, sizeof(*er), M_TEMP, M_NOWAIT);
+	if (er == NULL) {
+		m_freem(m);
+		return;
+	}
+	callout_init(&er->er_callout);
+	er->er_packet = m;
+	er->er_ifp = ifp;
+	s = splnet();
+	LIST_INSERT_HEAD(&ec->ec_retries, er, er_link);
+	splx(s);
+	callout_reset(&er->er_callout, delay, eco_retry, er);
+}
+
+static void
+eco_retry_free(struct eco_retry *er)
+{
+	int s;
+
+	callout_stop(&er->er_callout);
+	m_freem(er->er_packet);
+	s = splnet();
+	LIST_REMOVE(er, er_link);
+	splx(s);
+	FREE(er, M_TEMP);
+}
+
+static void
+eco_retry(void *arg)
+{
+	struct eco_retry *er = arg;
+	struct mbuf *m;
+	struct ifnet *ifp;
+	int s, error, len;
+
+	ifp = er->er_ifp;
+	m = er->er_packet;
+	len = m->m_pkthdr.len;
+	LIST_REMOVE(er, er_link);
+	s = splnet();
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+	if (error) {
+		splx(s);
+		/* XXX should defer again? */
+		m_freem(m);
+	}
+	ifp->if_obytes += len;
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		(*ifp->if_start)(ifp);
+	splx(s);
+	FREE(er, M_TEMP);
+}
