@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.21 1999/03/27 13:46:19 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.22 2000/01/27 23:39:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.21 1999/03/27 13:46:19 christos Exp $");
+__RCSID("$NetBSD: trap.c,v 1.22 2000/01/27 23:39:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,7 +322,7 @@ dotrap() {
 		}
 		gotsig[i - 1] = 0;
 		savestatus=exitstatus;
-		evalstring(trap[i]);
+		evalstring(trap[i], 0);
 		exitstatus=savestatus;
 	}
 done:
@@ -373,7 +373,7 @@ exitshell(status)
 	handler = &loc1;
 	if ((p = trap[0]) != NULL && *p != '\0') {
 		trap[0] = NULL;
-		evalstring(p);
+		evalstring(p, 0);
 	}
 l1:   handler = &loc2;			/* probably unnecessary */
 	flushall();
