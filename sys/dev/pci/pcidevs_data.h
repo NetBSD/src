@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.412 2002/02/28 03:40:44 junyoung Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.413 2002/03/01 13:49:00 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.409 2002/02/28 03:39:37 junyoung Exp 
+ *	NetBSD: pcidevs,v 1.410 2002/03/01 13:47:30 kleink Exp 
  */
 
 /*
@@ -4076,6 +4076,24 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Motorola",
 	    "MPC107 \"Chaparral\" Host Bridge",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_RAVEN,
+	    0,
+	    "Motorola",
+	    "Raven Host Bridge & Multi-Processor Interrupt Controller",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_FALCON,
+	    0,
+	    "Motorola",
+	    "Falcon ECC Memory Controller Chip Set",
+	},
+	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_HAWK,
+	    0,
+	    "Motorola",
+	    "Hawk System Memory Controller & PCI Host Bridge",
 	},
 	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V2,
