@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)csh.h	5.15 (Berkeley) 6/8/91
- *	$Id: csh.h,v 1.4 1993/08/01 19:00:57 mycroft Exp $
+ *	$Id: csh.h,v 1.5 1993/09/27 05:08:10 mycroft Exp $
  */
 
 /*
@@ -76,6 +76,7 @@ typedef void *ioctl_t;		/* Third arg of ioctl */
 
 typedef void *ptr_t;
 
+#include <sys/types.h>
 #include "const.h"
 #include "char.h"
 #include "err.h"
