@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.64 2003/04/02 10:39:30 fvdl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.65 2003/04/02 20:48:13 dbj Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -52,7 +52,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.64 2003/04/02 10:39:30 fvdl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.65 2003/04/02 20:48:13 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,6 +130,13 @@ int main(int, char *[]);
 #define	M_DFL_BLKSIZE	8192
 #define	L_DFL_FRAGSIZE	2048
 #define	L_DFL_BLKSIZE	16384
+
+/* Apple requires the fragment size to be at least APPLEUFS_DIRBLKSIZ
+ * but the block size cannot be larger than Darwin's PAGE_SIZE.  See
+ * the mount check in Darwin's ffs_mountfs for an explanation.
+ */
+#define APPLEUFS_DFL_FRAGSIZE APPLEUFS_DIRBLKSIZ /* 1024 */
+#define APPLEUFS_DFL_BLKSIZE 4096 /* default Darwin PAGE_SIZE */
 
 /*
  * Default sector size.
@@ -543,7 +550,10 @@ main(int argc, char *argv[])
 			errx(1, "no default sector size");
 	}
 
-	if (fssize < SMALL_FSSIZE) {
+	if (isappleufs) {
+		dfl_fragsize = APPLEUFS_DFL_FRAGSIZE;
+		dfl_blksize = APPLEUFS_DFL_BLKSIZE;
+	} else if (fssize < SMALL_FSSIZE) {
 		dfl_fragsize = S_DFL_FRAGSIZE;
 		dfl_blksize = S_DFL_BLKSIZE;
 	} else if (fssize < MEDIUM_FSSIZE) {
@@ -564,6 +574,16 @@ main(int argc, char *argv[])
 		if (bsize <= 0)
 			bsize = MIN(dfl_blksize, 8 * fsize);
 	}
+
+	if (isappleufs && (fsize < APPLEUFS_DFL_FRAGSIZE)) {
+		warnx("Warning: chosen fsize of %d is less than Apple UFS minimum of %d",
+			fsize,APPLEUFS_DFL_FRAGSIZE);
+	}
+	if (isappleufs && (bsize > APPLEUFS_DFL_BLKSIZE)) {
+		warnx("Warning: chosen bsize of %d is greater than Apple UFS maximum of %d",
+			bsize,APPLEUFS_DFL_BLKSIZE);
+	}
+
 	/*
 	 * Maxcontig sets the default for the maximum number of blocks
 	 * that may be allocated sequentially. With filesystem clustering
