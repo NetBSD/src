@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.3 2002/09/04 19:13:00 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.4 2002/09/05 15:38:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -47,13 +47,8 @@
 #define	adbg(x)		/* nothing */
 #endif
 
-/*
- * _rtld_setup_alpha_pltgot:
- *
- *	Set up the Alpha pltgot glue.
- */
 void
-_rtld_setup_alpha_pltgot(const Obj_Entry *obj, bool dodebug)
+_rtld_setup_pltgot(const Obj_Entry *obj)
 {
 	uint32_t word0;
 
