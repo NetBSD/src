@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1999/03/24 05:50:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 1999/09/12 01:19:24 chs Exp $
 
 PROG =	rpc.rstatd
 .PATH: ${.CURDIR}/../../usr.bin/vmstat
@@ -12,8 +12,3 @@ DPADD=	${LIBRPCSVC} ${LIBKVM}
 LDADD=	-lrpcsvc -lkvm
 
 .include <bsd.prog.mk>
-
-# XXX
-.if defined(PMAP_NEW)
-CPPFLAGS+=      -DPMAP_NEW
-.endif

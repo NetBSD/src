@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.126 1999/08/21 06:16:21 simonb Exp $
+#	$NetBSD: bsd.own.mk,v 1.127 1999/09/12 01:19:25 chs Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -80,19 +80,11 @@ STRIPFLAG?=	-s
 # in environments where it's not possible to keep /sys publicly readable)
 #SYS_INCLUDE= 	symlinks
 
-# XXX The next two are temporary until the transition to UVM is complete.
+# XXX The next one is temporary until the transition to UVM is complete.
 
 # Systems on which UVM is the standard VM system.
 .if ${MACHINE} != "pica"
 UVM?=		yes
-.endif
-
-# Systems that use UVM's new pmap interface.
-.if ${MACHINE} == "alpha" || \
-    ${MACHINE} == "i386" || \
-    ${MACHINE} == "pc532" || \
-    ${MACHINE} == "vax"
-PMAP_NEW?=	yes
 .endif
 
 # The sparc64 port is incomplete.
