@@ -1,4 +1,4 @@
-/*	$NetBSD: hasmntopt.c,v 1.1.1.4 2001/05/13 17:50:32 veego Exp $	*/
+/*	$NetBSD: hasmntopt.c,v 1.2 2001/09/16 00:01:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Erez Zadok
@@ -109,7 +109,7 @@ hasmntopt(mntent_t *mnt, char *opt)
   char t[MNTMAXSTR];
   char *f;
   char *o = t;
-  int l = strlen(opt);
+  size_t l = strlen(opt);
 
   strcpy(t, mnt->mnt_opts);
 
