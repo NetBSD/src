@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.2 2002/11/12 06:14:39 manu Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.3 2002/11/17 02:46:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,6 +45,20 @@
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
+
+#define	MACH_ALTERNATE_LOAD_SITE	1
+#define MACH_NEW_LOCAL_SHARED_REGIONS	2
+#define MACH_QUERY_IS_SYSTEM_REGION	4
+#define MACH_SF_PREV_LOADED		1
+#define MACH_SYSTEM_REGION_BACKED	2
+
+typedef struct mach_sf_mapping {
+	mach_vm_offset_t mapping_offset;
+	mach_vm_size_t size;
+	mach_vm_offset_t file_offset;
+	mach_vm_prot_t protection;
+	mach_vm_offset_t cksum;
+} mach_sf_mapping_t;
 
 /* vm_map */
 

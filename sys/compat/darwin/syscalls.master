@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.3 2002/11/16 19:59:20 manu Exp $
+	$NetBSD: syscalls.master,v 1.4 2002/11/17 02:46:26 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -53,7 +53,13 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
+#include <compat/mach/mach_types.h>
+#include <compat/mach/mach_vm.h>
+
 #include <compat/freebsd/freebsd_syscallargs.h>
+
+#include <compat/darwin/darwin_syscallargs.h>
+
 %%
 
 0	INDIR		{ int sys_syscall(int number, ...); }
@@ -474,7 +480,10 @@
 293	UNIMPL
 294	UNIMPL
 295	UNIMPL
-296	UNIMPL		load_shared_file
+296	STD		{ int darwin_sys_load_shared_file(char *filename, \
+			    caddr_t addr, u_long len, caddr_t *base, \
+			    int count, mach_sf_mapping_t *mappings, \
+			    int *flags); }
 297	UNIMPL		reset_shared_file
 298	UNIMPL		new_system_shared_regions
 299	UNIMPL
