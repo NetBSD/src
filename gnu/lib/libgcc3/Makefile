@@ -1,11 +1,5 @@
-#	$NetBSD: Makefile,v 1.23 2004/02/25 21:53:49 matt Exp $
+#	$NetBSD: Makefile,v 1.24 2004/02/25 22:11:14 matt Exp $
 
-SUBDIR+=	libgcc libgcc_eh
-
-.include <bsd.own.mk>
-
-.if ${MKPIC} != "no"
-SUBDIR+=	libgcc_s
-.endif
+SUBDIR+=	libgcc libgcc_eh libgcc_s
 
 .include <bsd.subdir.mk>
