@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.5.2.1 1997/01/14 21:28:58 thorpej Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.5.2.2 1997/01/20 05:44:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,7 +122,7 @@ mkoneswap(cf)
 	nv = cf->cf_dump;
 	if (fprintf(fp, "dev_t\tdumpdev = %s;\t/* %s */\n",
 	    nv ? mkdevstr(nv->nv_int) : "NODEV",
-	    nv ? nv->nv_str : "unspecified") < 0)
+	    nv ? (nv->nv_str ? nv->nv_str : "none") : "unspecified") < 0)
 		goto wrerror;
 
 	/*
@@ -131,14 +131,18 @@ mkoneswap(cf)
 	 */
 	if (fputs("\nstruct\tswdevt swdevt[] = {\n", fp) < 0)
 		goto wrerror;
-	if (cf->cf_swap == NULL)
+	if (cf->cf_swap == NULL) {
 		if (fputs("\t{ NODEV, 0, 0 },\t/* unspecified */\n", fp) < 0)
 			goto wrerror;
-	else
+	} else if (cf->cf_swap->nv_str == NULL) {
+		if (fputs("\t{ NODEV, 0, 0 },\t/* none */\n", fp) < 0)
+			goto wrerror;
+	} else {
 		for (nv = cf->cf_swap; nv != NULL; nv = nv->nv_next)
 			if (fprintf(fp, "\t{ %s,\t0,\t0 },\t/* %s */\n",
 			    mkdevstr(nv->nv_int), nv->nv_str) < 0)
 				goto wrerror;
+	}
 	if (fputs("\t{ NODEV, 0, 0 }\n};\n\n", fp) < 0)
 		goto wrerror;
 
