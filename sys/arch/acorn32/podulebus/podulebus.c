@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.15 2003/01/01 00:25:02 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.16 2003/04/26 19:35:02 chris Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.15 2003/01/01 00:25:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.16 2003/04/26 19:35:02 chris Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -441,15 +441,17 @@ podulebusattach(parent, self, aux)
 #endif
 	printf("\n");
 
+
+#ifndef ARM32_PMAP_NEW
 	/* Ok we need to map in the podulebus */
-
+	/* with the new pmap mappings have to be done when the L1 tables
+	 * are built during initarm
+	 */
 	/* Map the FAST and SYNC simple podules */
-
 	pmap_map_section((vm_offset_t)pmap_kernel()->pm_pdir,
 	    SYNC_PODULE_BASE & 0xfff00000, SYNC_PODULE_HW_BASE & 0xfff00000,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	cpu_tlb_flushD();
-
 	/* Now map the EASI space */
 
 	for (loop = 0; loop < MAX_PODULES; ++loop) {
@@ -462,7 +464,7 @@ podulebusattach(parent, self, aux)
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	}
 	cpu_tlb_flushD();
-
+#endif
 	/*
 	 * The MEDIUM and SLOW simple podules and the module space will have been
 	 * mapped when the IOMD and COMBO we mapped in for the RPC
