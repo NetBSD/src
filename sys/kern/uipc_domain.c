@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.15 1996/07/04 03:16:56 chuck Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -77,6 +77,9 @@ domaininit()
 #endif
 #ifdef CCITT
 	ADDDOMAIN(ccitt);
+#endif
+#ifdef NATM
+	ADDDOMAIN(natm);
 #endif
 #ifdef notdef /* XXXX */
 #include "imp.h"
