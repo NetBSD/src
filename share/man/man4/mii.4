@@ -1,4 +1,4 @@
-.\"	$NetBSD: mii.4,v 1.10 2001/08/25 03:30:10 thorpej Exp $
+.\"	$NetBSD: mii.4,v 1.11 2001/08/25 03:34:07 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Nm mii
 .Nd IEEE 802.3 Media Independent Interface network bus
 .Sh SYNOPSIS
+.Cd "acphy*    at mii? phy ?		# Altima AC101 10/100 PHY"
 .Cd "bmtphy*   at mii? phy ?		# Broadcom BCM5201/5202 PHYs"
 .Cd "brgphy*   at mii? phy ?		# Broadcom BCM5400/5401 Gig-E PHYs"
 .Cd "dmphy*    at mii? phy ?		# Davicom DM9101 PHYs"
@@ -56,6 +57,7 @@
 .Cd "makphy*   at mii? phy ?		# Marvel 88E1000 Gig-E PHYs"
 .Cd "nsphy*    at mii? phy ?		# NatSemi DP83840 PHYs"
 .Cd "nsphyter* at mii? phy ?		# NatSemi DP83843/DP83815 PHYs"
+.Cd "pnaphy*   at mii? phy ?		# Generic HomePNA PHYs"
 .Cd "qsphy*    at mii? phy ?		# Quality Semiconductor QS6612 PHYs"
 .Cd "sqphy*    at mii? phy ?		# Seeq 80220/80221/80223/80225 PHYs"
 .Cd "tlphy*    at mii? phy ?		# ThunderLAN internal PHYs"
