@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 1996/09/07 22:26:44 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.49 1996/09/08 11:21:11 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -480,7 +480,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 		if (type == T_MMUFLT)
 			return;
 		userret(p, fp->f_pc, sticks); 
-		reutrn;
+		return;
 	}
 #else /* use hacky 386bsd_code */
 	if (rv == KERN_SUCCESS) {
