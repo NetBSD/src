@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.5 2001/06/02 20:13:50 bjh21 Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.6 2001/06/12 11:52:03 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -68,11 +68,14 @@
 
 /*
  * HCCS 8-bit SCSI driver using the generic NCR5380 driver
+ *
+ * Andy Armstrong gives some details of the HCCS SCSI cards at
+ * <URL:http://www.armlinux.org/~webmail/linux-arm/1997-08/msg00042.html>.
  */
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.5 2001/06/02 20:13:50 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.6 2001/06/12 11:52:03 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
