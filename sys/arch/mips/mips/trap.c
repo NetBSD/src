@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.174 2002/11/04 20:02:10 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.175 2002/11/09 20:06:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.174 2002/11/04 20:02:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175 2002/11/09 20:06:07 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -357,9 +357,9 @@ trap(status, cause, vaddr, opc, frame)
 		 */
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
 			if (rv == 0) {
-				unsigned nss;
+				segsz_t nss;
 
-				nss = btoc(USRSTACK-(unsigned)va);
+				nss = btoc(USRSTACK - va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			}
@@ -378,7 +378,7 @@ trap(status, cause, vaddr, opc, frame)
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_ucred->cr_uid : (uid_t) -1);
 			sig = SIGKILL;
 		} else {
 			sig = (rv == EACCES) ? SIGBUS : SIGSEGV;
@@ -479,7 +479,7 @@ trap(status, cause, vaddr, opc, frame)
 		mips_dcache_wbinv_all();	/* XXXJRT -- necessary? */
 
 		if (rv < 0)
-			printf("Warning: can't restore instruction at 0x%x: 0x%x\n",
+			printf("Warning: can't restore instruction at 0x%lx: 0x%x\n",
 				p->p_md.md_ss_addr, p->p_md.md_ss_instr);
 		p->p_md.md_ss_addr = 0;
 		sig = SIGTRAP;
@@ -601,7 +601,7 @@ mips_singlestep(p)
 	int rv;
 
 	if (p->p_md.md_ss_addr) {
-		printf("SS %s (%d): breakpoint already set at %x\n",
+		printf("SS %s (%d): breakpoint already set at %lx\n",
 			p->p_comm, p->p_pid, p->p_md.md_ss_addr);
 		return EFAULT;
 	}
