@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.3 2001/06/21 20:09:48 nathanw Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.4 2001/07/09 22:34:00 nathanw Exp $	*/
 
 /* XXX Copyright 
 */
@@ -75,8 +75,9 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SELECT	0x00040	/* Selecting; wakeup/waiting danger. */
 #define	L_SINTR		0x00080	/* Sleep is interruptible. */
 #define	L_TIMEOUT	0x00400	/* Timing out during sleep. */
-#define L_DETACHED	0x00800 /* Won't be waited for. */
-#define L_SA		0x01000 /* Scheduler activations LWP */
+#define	L_DETACHED	0x00800 /* Won't be waited for. */
+#define	L_SA		0x01000 /* Scheduler activations LWP */
+#define	L_SA_UPCALL	0x02000 /* SA upcall is pending */
 
 /*
  * Status values.
@@ -93,7 +94,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	LSZOMB	5		/* Awaiting collection by parent. */
 #define	LSDEAD	6		/* Process is almost a zombie. */
 #define	LSONPROC	7	/* Process is currently on a CPU. */
-#define LSSUSPENDED	8	/* Not running, not signalable. */
+#define	LSSUSPENDED	8	/* Not running, not signalable. */
 
 #ifdef _KERNEL
 #define	PHOLD(l)							\
