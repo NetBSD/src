@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.71 2003/08/07 10:04:33 agc Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.72 2003/08/15 15:07:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.71 2003/08/07 10:04:33 agc Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.72 2003/08/15 15:07:16 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ static void calc_memfree(void);
 static void *mkfs_malloc(size_t size);
 #endif
 
-static int count_digits(int);
+static int count_digits(uint64_t);
 
 /*
  * make file system for cylinder-group style file systems
@@ -198,7 +198,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		printf("preposterous size %lld\n", (long long)fssize);
 		exit(13);
 	}
-	wtfs(fssize - 1, sectorsize, (char *)&sblock);
+	wtfs(fssize - 1, sectorsize, &sblock);
 
 	if (isappleufs) {
 		struct appleufslabel appleufs;
@@ -211,12 +211,16 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	 */
 	sblock.fs_avgfilesize = avgfilesize;
 	sblock.fs_avgfpdir = avgfpdir;
-	if (sblock.fs_avgfilesize <= 0)
+	if (sblock.fs_avgfilesize <= 0) {
 		printf("illegal expected average file size %d\n",
-		    sblock.fs_avgfilesize), exit(14);
-	if (sblock.fs_avgfpdir <= 0)
+		    sblock.fs_avgfilesize);
+		exit(14);
+	}
+	if (sblock.fs_avgfpdir <= 0) {
 		printf("illegal expected number of files per directory %d\n",
-		    sblock.fs_avgfpdir), exit(15);
+		    sblock.fs_avgfpdir);
+		exit(15);
+	}
 	/*
 	 * collect and verify the block and fragment sizes
 	 */
@@ -289,6 +293,11 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	sblock.fs_fsbtodb = ilog2(sblock.fs_fsize / sectorsize);
 	sblock.fs_size = fssize = dbtofsb(&sblock, fssize);
 	if (Oflag <= 1) {
+		if (sblock.fs_size >= 1ull << 31) {
+			printf("Too many fragments (0x%" PRIx64
+			    ") for a UFS1 filesystem\n", sblock.fs_size);
+			exit(22);
+		}
 		sblock.fs_magic = FS_UFS1_MAGIC;
 		sblock.fs_sblockloc = SBLOCK_UFS1;
 		sblock.fs_nindir = sblock.fs_bsize / sizeof(int32_t);
@@ -306,7 +315,7 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 		sblock.fs_old_interleave = 1;
 		sblock.fs_old_trackskew = 0;
 		sblock.fs_old_cpc = 0;
-		sblock.fs_old_postblformat = 1;
+		sblock.fs_old_postblformat = FS_DYNAMICPOSTBLFMT;
 		sblock.fs_old_nrpos = 1;
 	} else {
 		sblock.fs_magic = FS_UFS2_MAGIC;
@@ -495,12 +504,11 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo,
 	}
 	/*
 	 * Now determine how wide each column will be, and calculate how
-	 * many columns will fit in a 76 char line. 76 is the width of the
-	 * subwindows in sysinst.
+	 * many columns will fit in a 80 char line.
 	 */
 	printcolwidth = count_digits(
 			fsbtodb(&sblock, cgsblock(&sblock, sblock.fs_ncg -1)));
-	nprintcols = 76 / (printcolwidth + 2);
+	nprintcols = 80 / (printcolwidth + 2);
 
 	/*
 	 * allocate space for superblock, cylinder group map, and
@@ -615,8 +623,14 @@ initcg(int cylno, const struct timeval *tv)
 		dmax = sblock.fs_size;
 	dlower = cgsblock(&sblock, cylno) - cbase;
 	dupper = cgdmin(&sblock, cylno) - cbase;
-	if (cylno == 0)
+	if (cylno == 0) {
 		dupper += howmany(sblock.fs_cssize, sblock.fs_fsize);
+		if (dupper >= cgstart(&sblock, cylno + 1)) {
+			printf("\rToo many cylinder groups to fit summary "
+				"information into first cylinder group\n");
+			exit(40);
+		}
+	}
 	cs = fscs + cylno;
 	memset(&acg, 0, sblock.fs_cgsize);
 	acg.cg_time = tv->tv_sec;
@@ -1033,8 +1047,7 @@ goth:
 	/* host -> fs byte order */
 	if (needswap)
 		ffs_cg_swap(&acg, &acg, &sblock);
-	wtfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize,
-	    (char *)&acg);
+	wtfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	return (d);
 }
 
@@ -1063,8 +1076,7 @@ iput(union dinode *ip, ino_t ino)
 	/* host -> fs byte order */
 	if (needswap)
 		ffs_cg_swap(&acg, &acg, &sblock);
-	wtfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize,
-	    (char *)&acg);
+	wtfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	sblock.fs_cstotal.cs_nifree--;
 	fscs[0].cs_nifree--;
 	if (ino >= sblock.fs_ipg * sblock.fs_ncg) {
@@ -1114,13 +1126,7 @@ rdfs(daddr_t bno, int size, void *bf)
 	}
 #endif
 	offset = bno;
-	offset *= sectorsize;
-	if (lseek(fsi, offset, SEEK_SET) < 0) {
-		printf("rdfs: seek error for sector %lld: %s\n",
-		    (long long)bno, strerror(errno));
-		exit(33);
-	}
-	n = read(fsi, bf, size);
+	n = pread(fsi, bf, size, offset * sectorsize);
 	if (n != size) {
 		printf("rdfs: read error for sector %lld: %s\n",
 		    (long long)bno, strerror(errno));
@@ -1146,13 +1152,7 @@ wtfs(daddr_t bno, int size, void *bf)
 	if (Nflag)
 		return;
 	offset = bno;
-	offset *= sectorsize;
-	if (lseek(fso, offset, SEEK_SET) < 0) {
-		printf("wtfs: seek error for sector %lld: %s\n",
-		    (long long)bno, strerror(errno));
-		exit(35);
-	}
-	n = write(fso, bf, size);
+	n = pwrite(fso, bf, size, offset * sectorsize);
 	if (n != size) {
 		printf("wtfs: write error for sector %lld: %s\n",
 		    (long long)bno, strerror(errno));
@@ -1267,11 +1267,11 @@ copy_dir(struct direct *dir, struct direct *dbuf)
 
 /* Determine how many digits are needed to print a given integer */
 static int
-count_digits(int num)
+count_digits(uint64_t num)
 {
 	int ndig;
 
-	for(ndig = 1; num > 9; num /=10, ndig++);
+	for (ndig = 1; num > 9; num /= 10, ndig++);
 
 	return (ndig);
 }
