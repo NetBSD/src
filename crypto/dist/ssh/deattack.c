@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.c,v 1.2 2000/10/30 18:58:37 mason Exp $	*/
+/*	$NetBSD: deattack.c,v 1.3 2001/01/14 05:22:32 itojun Exp $	*/
 
 /*
  * Cryptographic attack detector for ssh - source code
@@ -19,11 +19,11 @@
  * <http://www.core-sdi.com>
  */
 
-/* from OpenBSD: deattack.c,v 1.9 2000/09/07 20:27:51 deraadt Exp */
+/* from OpenBSD: deattack.c,v 1.11 2000/12/19 23:17:56 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: deattack.c,v 1.2 2000/10/30 18:58:37 mason Exp $");
+__RCSID("$NetBSD: deattack.c,v 1.3 2001/01/14 05:22:32 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -58,16 +58,16 @@ static void
 crc_update(u_int32_t *a, u_int32_t b)
 {
 	b ^= *a;
-	*a = ssh_crc32((unsigned char *) &b, sizeof(b));
+	*a = ssh_crc32((u_char *) &b, sizeof(b));
 }
 
 /* detect if a block is used in a particular pattern */
 static int
-check_crc(unsigned char *S, unsigned char *buf, u_int32_t len,
-	  unsigned char *IV)
+check_crc(u_char *S, u_char *buf, u_int32_t len,
+	  u_char *IV)
 {
 	u_int32_t crc;
-	unsigned char *c;
+	u_char *c;
 
 	crc = 0;
 	if (IV && !CMP(S, IV)) {
@@ -89,14 +89,14 @@ check_crc(unsigned char *S, unsigned char *buf, u_int32_t len,
 
 /* Detect a crc32 compensation attack on a packet */
 int
-detect_attack(unsigned char *buf, u_int32_t len, unsigned char *IV)
+detect_attack(u_char *buf, u_int32_t len, u_char *IV)
 {
 	static u_int16_t *h = (u_int16_t *) NULL;
 	static u_int32_t n = HASH_MINSIZE / HASH_ENTRYSIZE;
 	register u_int32_t i, j;
 	u_int32_t l;
-	register unsigned char *c;
-	unsigned char *d;
+	register u_char *c;
+	u_char *d;
 
 	if (len > (SSH_MAXBLOCKS * SSH_BLOCKSIZE) ||
 	    len % SSH_BLOCKSIZE != 0) {

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.304 2001/01/13 19:37:23 nonaka Exp $
+# $NetBSD: mi,v 1.305 2001/01/14 05:22:34 itojun Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -335,6 +335,7 @@
 ./usr/share/man/cat1/ssh-add.0
 ./usr/share/man/cat1/ssh-agent.0
 ./usr/share/man/cat1/ssh-keygen.0
+./usr/share/man/cat1/ssh-keyscan.0
 ./usr/share/man/cat1/ssh.0
 ./usr/share/man/cat1/stop.0
 ./usr/share/man/cat1/stty.0
@@ -1387,6 +1388,7 @@
 ./usr/share/man/cat8/setencstat.0
 ./usr/share/man/cat8/setkey.0
 ./usr/share/man/cat8/setobjstat.0
+./usr/share/man/cat8/sftp-server.0
 ./usr/share/man/cat8/showmount.0
 ./usr/share/man/cat8/showq.0
 ./usr/share/man/cat8/shutdown.0
@@ -1802,6 +1804,7 @@
 ./usr/share/man/man1/ssh-add.1
 ./usr/share/man/man1/ssh-agent.1
 ./usr/share/man/man1/ssh-keygen.1
+./usr/share/man/man1/ssh-keyscan.1
 ./usr/share/man/man1/ssh.1
 ./usr/share/man/man1/stop.1
 ./usr/share/man/man1/stty.1
@@ -2854,6 +2857,7 @@
 ./usr/share/man/man8/setencstat.8
 ./usr/share/man/man8/setkey.8
 ./usr/share/man/man8/setobjstat.8
+./usr/share/man/man8/sftp-server.8
 ./usr/share/man/man8/showmount.8
 ./usr/share/man/man8/showq.8
 ./usr/share/man/man8/shutdown.8

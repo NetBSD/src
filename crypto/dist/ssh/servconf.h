@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.h,v 1.2 2000/10/03 09:56:38 lukem Exp $	*/
+/*	$NetBSD: servconf.h,v 1.3 2001/01/14 05:22:32 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,7 +13,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: servconf.h,v 1.28 2000/09/07 20:27:53 deraadt Exp */
+/* from OpenBSD: servconf.h,v 1.32 2000/12/19 23:17:58 markus Exp */
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
@@ -25,15 +25,16 @@
 #define MAX_ALLOW_GROUPS	256	/* Max # groups on allow list. */
 #define MAX_DENY_GROUPS		256	/* Max # groups on deny list. */
 #define MAX_SUBSYSTEMS		256	/* Max # subsystems. */
+#define MAX_HOSTKEYS		256	/* Max # hostkeys. */
 
 typedef struct {
-	unsigned int num_ports;
-	unsigned int ports_from_cmdline;
+	u_int num_ports;
+	u_int ports_from_cmdline;
 	u_short ports[MAX_PORTS];	/* Port number to listen on. */
 	char   *listen_addr;		/* Address on which the server listens. */
 	struct addrinfo *listen_addrs;	/* Addresses on which the server listens. */
-	char   *host_key_file;	/* File containing host key. */
-	char   *host_dsa_key_file;	/* File containing dsa host key. */
+	char   *host_key_files[MAX_HOSTKEYS];	/* Files containing host keys. */
+	int     num_host_key_files;     /* Number of files for host keys. */
 	char   *pid_file;	/* Where to put our pid */
 	int     server_key_bits;/* Size of the server key. */
 	int     login_grace_time;	/* Disconnect if no auth in this time
@@ -64,7 +65,7 @@ typedef struct {
 	int     rhosts_rsa_authentication;	/* If true, permit rhosts RSA
 						 * authentication. */
 	int     rsa_authentication;	/* If true, permit RSA authentication. */
-	int     dsa_authentication;	/* If true, permit DSA authentication. */
+	int     pubkey_authentication;	/* If true, permit ssh2 pubkey authentication. */
 #ifdef KRB4
 	int     kerberos_authentication;	/* If true, permit Kerberos
 						 * authentication. */
@@ -83,6 +84,7 @@ typedef struct {
 #endif
 	int     password_authentication;	/* If true, permit password
 						 * authentication. */
+	int     kbd_interactive_authentication;	/* If true, permit */
 #ifdef SKEY
 	int     skey_authentication;	/* If true, permit s/key
 					 * authentication. */
@@ -90,16 +92,17 @@ typedef struct {
 	int     permit_empty_passwd;	/* If false, do not permit empty
 					 * passwords. */
 	int     use_login;	/* If true, login(1) is used */
-	unsigned int num_allow_users;
+	int	allow_tcp_forwarding;
+	u_int num_allow_users;
 	char   *allow_users[MAX_ALLOW_USERS];
-	unsigned int num_deny_users;
+	u_int num_deny_users;
 	char   *deny_users[MAX_DENY_USERS];
-	unsigned int num_allow_groups;
+	u_int num_allow_groups;
 	char   *allow_groups[MAX_ALLOW_GROUPS];
-	unsigned int num_deny_groups;
+	u_int num_deny_groups;
 	char   *deny_groups[MAX_DENY_GROUPS];
 
-	unsigned int num_subsystems;
+	u_int num_subsystems;
 	char   *subsystem_name[MAX_SUBSYSTEMS];
 	char   *subsystem_command[MAX_SUBSYSTEMS];
 

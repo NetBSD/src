@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.2 2000/11/13 02:30:38 itojun Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.3 2001/01/14 05:22:32 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -60,11 +60,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: clientloop.c,v 1.37 2000/09/26 19:59:58 markus Exp */
+/* from OpenBSD: clientloop.c,v 1.42 2000/12/19 23:17:56 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: clientloop.c,v 1.2 2000/11/13 02:30:38 itojun Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.3 2001/01/14 05:22:32 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -85,6 +85,12 @@ __RCSID("$NetBSD: clientloop.c,v 1.2 2000/11/13 02:30:38 itojun Exp $");
 #include "buffer.h"
 #include "bufaux.h"
 
+#include <openssl/dsa.h>
+#include <openssl/rsa.h>
+#include "key.h"
+#include "authfd.h"
+
+/* import options */
 extern Options options;
 
 /* Flag indicating that stdin should be redirected from /dev/null. */
@@ -127,8 +133,8 @@ static int stdin_eof;		/* EOF has been encountered on standard error. */
 static Buffer stdin_buffer;	/* Buffer for stdin data. */
 static Buffer stdout_buffer;	/* Buffer for stdout data. */
 static Buffer stderr_buffer;	/* Buffer for stderr data. */
-static unsigned long stdin_bytes, stdout_bytes, stderr_bytes;
-static unsigned int buffer_high;/* Soft max buffer size. */
+static u_long stdin_bytes, stdout_bytes, stderr_bytes;
+static u_int buffer_high;/* Soft max buffer size. */
 static int max_fd;		/* Maximum file descriptor number in select(). */
 static int connection_in;	/* Connection to server (input). */
 static int connection_out;	/* Connection to server (output). */
@@ -284,7 +290,7 @@ client_check_initial_eof_on_stdin(void)
 			 * and also process it as an escape character if
 			 * appropriate.
 			 */
-			if ((unsigned char) buf[0] == escape_char)
+			if ((u_char) buf[0] == escape_char)
 				escape_pending = 1;
 			else {
 				buffer_append(&stdin_buffer, buf, 1);
@@ -304,7 +310,7 @@ client_check_initial_eof_on_stdin(void)
 static void
 client_make_packets_from_stdin_data(void)
 {
-	unsigned int len;
+	u_int len;
 
 	/* Send buffered stdin data to the server. */
 	while (buffer_len(&stdin_buffer) > 0 &&
@@ -528,8 +534,8 @@ process_escapes(Buffer *bin, Buffer *bout, Buffer *berr, char *buf, int len)
 	char string[1024];
 	pid_t pid;
 	int bytes = 0;
-	unsigned int i;
-	unsigned char ch;
+	u_int i;
+	u_char ch;
 	char *s;
 
 	for (i = 0; i < len; i++) {
@@ -990,7 +996,7 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 static void
 client_input_stdout_data(int type, int plen, void *ctxt)
 {
-	unsigned int data_len;
+	u_int data_len;
 	char *data = packet_get_string(&data_len);
 	packet_integrity_check(plen, 4 + data_len, type);
 	buffer_append(&stdout_buffer, data, data_len);
@@ -1001,7 +1007,7 @@ client_input_stdout_data(int type, int plen, void *ctxt)
 static void
 client_input_stderr_data(int type, int plen, void *ctxt)
 {
-	unsigned int data_len;
+	u_int data_len;
 	char *data = packet_get_string(&data_len);
 	packet_integrity_check(plen, 4 + data_len, type);
 	buffer_append(&stderr_buffer, data, data_len);
@@ -1026,14 +1032,100 @@ client_input_exit_status(int type, int plen, void *ctxt)
 	quit_pending = 1;
 }
 
+static Channel *
+client_request_forwarded_tcpip(const char *request_type, int rchan)
+{
+	Channel* c = NULL;
+	char *listen_address, *originator_address;
+	int listen_port, originator_port;
+	int sock, newch;
+
+	/* Get rest of the packet */
+	listen_address = packet_get_string(NULL);
+	listen_port = packet_get_int();
+	originator_address = packet_get_string(NULL);
+	originator_port = packet_get_int();
+	packet_done();
+
+	debug("client_request_forwarded_tcpip: listen %s port %d, originator %s port %d",
+	    listen_address, listen_port, originator_address, originator_port);
+
+	sock = channel_connect_by_listen_adress(listen_port);
+	if (sock >= 0) {
+		newch = channel_new("forwarded-tcpip",
+		    SSH_CHANNEL_CONNECTING, sock, sock, -1,
+		    CHAN_TCP_WINDOW_DEFAULT, CHAN_TCP_WINDOW_DEFAULT, 0,
+		    xstrdup(originator_address), 1);
+		c = channel_lookup(newch);
+	}
+	xfree(originator_address);
+	xfree(listen_address);
+	return c;
+}
+
+static Channel*
+client_request_x11(const char *request_type, int rchan)
+{
+	Channel *c = NULL;
+	char *originator;
+	int originator_port;
+	int sock, newch;
+
+	if (!options.forward_x11) {
+		error("Warning: ssh server tried X11 forwarding.");
+		error("Warning: this is probably a break in attempt by a malicious server.");
+		return NULL;
+	}
+	originator = packet_get_string(NULL);
+	if (datafellows & SSH_BUG_X11FWD) {
+		debug2("buggy server: x11 request w/o originator_port");
+		originator_port = 0;
+	} else {
+		originator_port = packet_get_int();
+	}
+	packet_done();
+	/* XXX check permission */
+	sock = x11_connect_display();
+	if (sock >= 0) {
+		newch = channel_new("x11",
+		    SSH_CHANNEL_X11_OPEN, sock, sock, -1,
+		    CHAN_TCP_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT, 0,
+		    xstrdup("x11"), 1);
+		c = channel_lookup(newch);
+	}
+	xfree(originator);
+	return c;
+}
+
+static Channel*
+client_request_agent(const char *request_type, int rchan)
+{
+	Channel *c = NULL;
+	int sock, newch;
+
+	if (!options.forward_agent) {
+		error("Warning: ssh server tried agent forwarding.");
+		error("Warning: this is probably a break in attempt by a malicious server.");
+		return NULL;
+	}
+	sock =  ssh_get_authentication_socket();
+	if (sock >= 0) {
+		newch = channel_new("authentication agent connection",
+		    SSH_CHANNEL_OPEN, sock, sock, -1,
+		    CHAN_X11_WINDOW_DEFAULT, CHAN_TCP_WINDOW_DEFAULT, 0,
+		    xstrdup("authentication agent connection"), 1);
+		c = channel_lookup(newch);
+	}
+	return c;
+}
+
 /* XXXX move to generic input handler */
 static void
 client_input_channel_open(int type, int plen, void *ctxt)
 {
 	Channel *c = NULL;
 	char *ctype;
-	int id;
-	unsigned int len;
+	u_int len;
 	int rchan;
 	int rmaxpack;
 	int rwindow;
@@ -1046,28 +1138,12 @@ client_input_channel_open(int type, int plen, void *ctxt)
 	debug("client_input_channel_open: ctype %s rchan %d win %d max %d",
 	    ctype, rchan, rwindow, rmaxpack);
 
-	if (strcmp(ctype, "x11") == 0 && options.forward_x11) {
-		int sock;
-		char *originator;
-		int originator_port;
-		originator = packet_get_string(NULL);
-		if (datafellows & SSH_BUG_X11FWD) {
-			debug2("buggy server: x11 request w/o originator_port");
-			originator_port = 0;
-		} else {
-			originator_port = packet_get_int();
-		}
-		packet_done();
-		/* XXX check permission */
-		xfree(originator);
-		/* XXX move to channels.c */
-		sock = x11_connect_display();
-		if (sock >= 0) {
-			id = channel_new("x11", SSH_CHANNEL_X11_OPEN,
-			    sock, sock, -1, CHAN_X11_WINDOW_DEFAULT,
-			    CHAN_X11_PACKET_DEFAULT, 0, xstrdup("x11"));
-			c = channel_lookup(id);
-		}
+	if (strcmp(ctype, "forwarded-tcpip") == 0) {
+		c = client_request_forwarded_tcpip(ctype, rchan);
+	} else if (strcmp(ctype, "x11") == 0) {
+		c = client_request_x11(ctype, rchan);
+	} else if (strcmp(ctype, "auth-agent@openssh.com") == 0) {
+		c = client_request_agent(ctype, rchan);
 	}
 /* XXX duplicate : */
 	if (c != NULL) {
@@ -1123,9 +1199,9 @@ client_init_dispatch_13(void)
 	dispatch_set(SSH_SMSG_STDOUT_DATA, &client_input_stdout_data);
 
 	dispatch_set(SSH_SMSG_AGENT_OPEN, options.forward_agent ?
-	    &auth_input_open_request : NULL);
+	    &auth_input_open_request : &deny_input_open);
 	dispatch_set(SSH_SMSG_X11_OPEN, options.forward_x11 ?
-	    &x11_input_open : NULL);
+	    &x11_input_open : &deny_input_open);
 }
 static void
 client_init_dispatch_15(void)
@@ -1149,7 +1225,7 @@ static void
 client_input_channel_req(int id, void *arg)
 {
 	Channel *c = NULL;
-	unsigned int len;
+	u_int len;
 	int success = 0;
 	int reply;
 	char *rtype;

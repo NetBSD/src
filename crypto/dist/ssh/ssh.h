@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.h,v 1.2 2000/10/05 14:09:08 sommerfeld Exp $	*/
+/*	$NetBSD: ssh.h,v 1.3 2001/01/14 05:22:33 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,21 +14,13 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: ssh.h,v 1.51 2000/09/12 20:53:10 markus Exp */
+/* from OpenBSD: ssh.h,v 1.56 2000/12/19 23:17:58 markus Exp */
 
 #ifndef SSH_H
 #define SSH_H
 
 #include "rsa.h"
 #include "cipher.h"
-
-/*
- * XXX
- * The default cipher used if IDEA is not supported by the remote host. It is
- * recommended that this be one of the mandatory ciphers (DES, 3DES), though
- * that is not required.
- */
-#define SSH_FALLBACK_CIPHER	SSH_CIPHER_3DES
 
 /* Cipher used for encrypting authentication files. */
 #define SSH_AUTHFILE_CIPHER	SSH_CIPHER_3DES
@@ -190,9 +182,9 @@
  * information is not available.  This must be called before record_login.
  * The host from which the user logged in is stored in buf.
  */
-unsigned long
+u_long
 get_last_login_time(uid_t uid, const char *logname,
-    char *buf, unsigned int bufsize);
+    char *buf, u_int bufsize);
 
 /*
  * Records that the user has logged in.  This does many things normally done
@@ -271,7 +263,7 @@ int     auth_rsa(struct passwd * pw, BIGNUM * client_n);
  * Parses an RSA key (number of bits, e, n) from a string.  Moves the pointer
  * over the key.  Skips any whitespace at the beginning and at end.
  */
-int     auth_rsa_read_key(char **cpp, unsigned int *bitsp, BIGNUM * e, BIGNUM * n);
+int     auth_rsa_read_key(char **cpp, u_int *bitsp, BIGNUM * e, BIGNUM * n);
 
 /*
  * Returns the name of the machine at the other end of the socket.  The
@@ -312,7 +304,7 @@ int     auth_rsa_challenge_dialog(RSA *pk);
  * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
  * from_stdin is true, the passphrase will be read from stdin instead.
  */
-char   *read_passphrase(const char *prompt, int from_stdin);
+char   *read_passphrase(char *prompt, int from_stdin);
 
 
 /*------------ Definitions for logging. -----------------------*/
@@ -444,7 +436,7 @@ int	auth_krb4_password(struct passwd * pw, const char *password);
 int     auth_kerberos_tgt(struct passwd * pw, const char *string);
 int     auth_afs_token(struct passwd * pw, const char *token_string);
 
-int     creds_to_radix(CREDENTIALS * creds, unsigned char *buf, size_t buflen);
+int     creds_to_radix(CREDENTIALS * creds, u_char *buf, size_t buflen);
 int     radix_to_creds(const char *buf, CREDENTIALS * creds);
 #endif				/* AFS */
 
