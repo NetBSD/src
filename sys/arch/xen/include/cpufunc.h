@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.5 2005/03/09 22:39:20 bouyer Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.5.2.1 2005/03/30 10:04:30 tron Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -294,7 +294,7 @@ breakpoint(void)
 #define write_psl(x) do {						\
     __insn_barrier();							\
     HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_mask = (x) ;	\
-    __insn_barrier();							\
+    x86_lfence();							\
     if ((x) == 0 && HYPERVISOR_shared_info->vcpu_data[0].evtchn_upcall_pending) \
 	hypervisor_force_callback();					\
 } while (0)
