@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.11 2003/07/15 01:44:52 lukem Exp $	*/
+/*	$NetBSD: pow.c,v 1.12 2005/01/18 07:12:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.11 2003/07/15 01:44:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.12 2005/01/18 07:12:15 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,11 +60,11 @@ __KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.11 2003/07/15 01:44:52 lukem Exp $");
 
 struct pow_softc pows[NPOW];
 
-void powattach __P((int));
-void powintr __P((void));
-static int setalarm __P((struct x68k_alarminfo *));
+void powattach(int);
+void powintr(void);
+static int setalarm(struct x68k_alarminfo *);
 
-static void pow_check_switch __P((void*));
+static void pow_check_switch(void *);
 
 dev_type_open(powopen);
 dev_type_close(powclose);
@@ -76,9 +76,8 @@ const struct cdevsw pow_cdevsw = {
 };
 
 /* ARGSUSED */
-void
-powattach(num)
-	int num;
+void 
+powattach(int num)
 {
 	int minor;
 	int sw;
@@ -122,11 +121,8 @@ powattach(num)
 }
 
 /*ARGSUSED*/
-int
-powopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int 
+powopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct pow_softc *sc = &pows[minor(dev)];
 
@@ -146,11 +142,8 @@ powopen(dev, flags, mode, p)
 }
 
 /*ARGSUSED*/
-int
-powclose (dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+int 
+powclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct pow_softc *sc = &pows[minor(dev)];
 
@@ -161,15 +154,15 @@ powclose (dev, flags, mode, p)
 	return 0;
 }
 
-#define SRAMINT(offset)	(*((int*) (&sramtop[offset])))
+#define SRAMINT(offset)	(*((int *) (&sramtop[offset])))
 #define RTCWAIT DELAY(100)
 
-static int
-setalarm (bp)
-	struct x68k_alarminfo *bp;
+static int 
+setalarm(struct x68k_alarminfo *bp)
 {
-	int s = splclock ();
-	int ontime;
+	int s, ontime;
+
+	s = splclock ();
 
 	sysport.sramwp = 0x31;
 	if (bp->al_enable) {
@@ -231,20 +224,15 @@ setalarm (bp)
 
 
 /*ARGSUSED*/
-int
-powioctl (dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+int 
+powioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct pow_softc *sc = &pows[minor(dev)];
 
 	switch (cmd) {
 	case POWIOCGPOWERINFO:
 		{
-			struct x68k_powerinfo *bp = (struct x68k_powerinfo*)addr;
+			struct x68k_powerinfo *bp = (void *)addr;
 			if (!(sc->rw & FREAD))
 				return EBADF;
 			bp->pow_switch_boottime = sc->sw;
@@ -257,7 +245,7 @@ powioctl (dev, cmd, addr, flag, p)
 
 	case POWIOCGALARMINFO:
 		{
-			struct x68k_alarminfo *bp = (struct x68k_alarminfo*) addr;
+			struct x68k_alarminfo *bp = (void *) addr;
 			if (!(sc->rw & FREAD))
 				return EBADF;
 			bp->al_enable = (sramtop[0x26] == 0);
@@ -270,7 +258,7 @@ powioctl (dev, cmd, addr, flag, p)
 	case POWIOCSALARMINFO:
 		if (!(sc->rw & FWRITE))
 			return EBADF;
-		return setalarm ((struct x68k_alarminfo*) addr);
+		return setalarm ((void *) addr);
 
 	case POWIOCSSIGNAL:
 		if (minor(dev) != 0)
@@ -278,7 +266,7 @@ powioctl (dev, cmd, addr, flag, p)
 		if (!(sc->rw & FWRITE))
 			return EBADF;
 		{
-			int signum = *(int*) addr;
+			int signum = *(int *) addr;
 			if (signum <= 0 || signum > 31)
 				return EINVAL;
 
@@ -295,8 +283,8 @@ powioctl (dev, cmd, addr, flag, p)
 	return 0;
 }
 
-void
-powintr()
+void 
+powintr(void)
 {
 	int sw;
 	int s;
@@ -313,9 +301,8 @@ powintr()
 	splx(s);
 }
 
-static void
-pow_check_switch(dummy)
-	void *dummy;
+static void 
+pow_check_switch(void *dummy)
 {
 	extern int power_switch_is_off;
 

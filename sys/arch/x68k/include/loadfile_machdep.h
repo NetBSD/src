@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.2 2001/10/31 17:20:50 thorpej Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.3 2005/01/18 07:12:16 chs Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,9 +77,9 @@
 #define FREE(a, b)		free(a)
 #define OKMAGIC(a)		((a) == NMAGIC)
 
-ssize_t vread __P((int, u_long, u_long *, size_t));
-void vcopy __P((u_long, u_long, u_long *, size_t));
-void vzero __P((u_long, u_long *, size_t));
+ssize_t vread(int, u_long, u_long *, size_t);
+void vcopy(u_long, u_long, u_long *, size_t);
+void vzero(u_long, u_long *, size_t);
 
 #endif
 #endif /* ! _X68K_LOADFILE_MACHDEP_H_ */

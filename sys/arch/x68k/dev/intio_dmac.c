@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.20 2004/12/13 02:14:13 chs Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.21 2005/01/18 07:12:15 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.20 2004/12/13 02:14:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.21 2005/01/18 07:12:15 chs Exp $");
 
 #include "opt_m680x0.h"
 
@@ -66,23 +66,23 @@ int dmacdebug = 0;
 #define DDUMPREGS(n,x)
 #endif
 
-static void dmac_init_channels __P((struct dmac_softc*));
+static void dmac_init_channels(struct dmac_softc *);
 #ifdef DMAC_ARRAYCHAIN
-static int dmac_program_arraychain __P((struct device*, struct dmac_dma_xfer*,
-					u_int, u_int));
+static int dmac_program_arraychain(struct device *, struct dmac_dma_xfer *,
+	u_int, u_int);
 #endif
-static int dmac_done __P((void*));
-static int dmac_error __P((void*));
+static int dmac_done(void *);
+static int dmac_error(void *);
 
 #ifdef DMAC_DEBUG
-static int dmac_dump_regs __P((void));
+static int dmac_dump_regs(void);
 #endif
 
 /*
  * autoconf stuff
  */
-static int dmac_match __P((struct device *, struct cfdata *, void *));
-static void dmac_attach __P((struct device *, struct device *, void *));
+static int dmac_match(struct device *, struct cfdata *, void *);
+static void dmac_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(dmac, sizeof(struct dmac_softc),
     dmac_match, dmac_attach, NULL, NULL);
@@ -90,10 +90,7 @@ CFATTACH_DECL(dmac, sizeof(struct dmac_softc),
 static int dmac_attached;
 
 static int
-dmac_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+dmac_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -115,9 +112,7 @@ dmac_match(parent, cf, aux)
 }
 
 static void
-dmac_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dmac_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dmac_softc *sc = (struct dmac_softc *)self;
 	struct intio_attach_args *ia = aux;
@@ -141,8 +136,7 @@ dmac_attach(parent, self, aux)
 }
 
 static void
-dmac_init_channels(sc)
-	struct dmac_softc *sc;
+dmac_init_channels(struct dmac_softc *sc)
 {
 	int i;
 
@@ -168,15 +162,9 @@ dmac_init_channels(sc)
  * Channel initialization/deinitialization per user device.
  */
 struct dmac_channel_stat *
-dmac_alloc_channel(self, ch, name,
-		   normalv, normal, normalarg,
-		   errorv, error, errorarg)
-	struct device *self;
-	int ch;
-	char *name;
-	int normalv, errorv;
-	dmac_intr_handler_t normal, error;
-	void *normalarg, *errorarg;
+dmac_alloc_channel(struct device *self, int ch, char *name, int normalv,
+    dmac_intr_handler_t normal, void *normalarg, int errorv,
+    dmac_intr_handler_t error, void *errorarg)
 {
 	struct intio_softc *intio = (void*) self;
 	struct dmac_softc *sc = (void*) intio->sc_dmac;
@@ -262,10 +250,7 @@ dmac_alloc_channel(self, ch, name,
 }
 
 int
-dmac_free_channel(self, ch, channel)
-	struct device *self;
-	int ch;
-	void *channel;
+dmac_free_channel(struct device *self, int ch, void *channel)
 {
 	struct intio_softc *intio = (void*) self;
 	struct dmac_softc *sc = (void*) intio->sc_dmac;
@@ -294,10 +279,8 @@ dmac_free_channel(self, ch, channel)
  * Initialization / deinitialization per transfer.
  */
 struct dmac_dma_xfer *
-dmac_alloc_xfer (chan, dmat, dmamap)
-	struct dmac_channel_stat *chan;
-	bus_dma_tag_t dmat;
-	bus_dmamap_t dmamap;
+dmac_alloc_xfer(struct dmac_channel_stat *chan, bus_dma_tag_t dmat,
+    bus_dmamap_t dmamap)
 {
 	struct dmac_dma_xfer *xf = &chan->ch_xfer;
 
@@ -314,11 +297,9 @@ dmac_alloc_xfer (chan, dmat, dmamap)
 }
 
 int
-dmac_load_xfer (self, xf)
-	struct device *self;
-	struct dmac_dma_xfer *xf;
+dmac_load_xfer(struct device *self, struct dmac_dma_xfer *xf)
 {
-	struct dmac_softc *sc = (void*) self;
+	struct dmac_softc *sc = (void *)self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
 
 	DPRINTF (3, ("dmac_load_xfer\n"));
@@ -343,12 +324,8 @@ dmac_load_xfer (self, xf)
 }
 
 struct dmac_dma_xfer *
-dmac_prepare_xfer (chan, dmat, dmamap, dir, scr, dar)
-	struct dmac_channel_stat *chan;
-	bus_dma_tag_t dmat;
-	bus_dmamap_t dmamap;
-	int dir, scr;
-	void *dar;
+dmac_prepare_xfer(struct dmac_channel_stat *chan, bus_dma_tag_t dmat,
+    bus_dmamap_t dmamap, int dir, int scr, void *dar)
 {
 	struct dmac_dma_xfer *xf;
 	struct dmac_softc *sc = (struct dmac_softc*) chan->ch_softc;
@@ -372,19 +349,14 @@ static struct dmac_channel_stat *debugchan = 0;
  * Do the actual transfer.
  */
 int
-dmac_start_xfer(self, xf)
-	struct device *self;
-	struct dmac_dma_xfer *xf;
+dmac_start_xfer(struct device *self, struct dmac_dma_xfer *xf)
 {
 	return dmac_start_xfer_offset(self, xf, 0, 0);
 }
 
 int
-dmac_start_xfer_offset(self, xf, offset, size)
-	struct device *self;
-	struct dmac_dma_xfer *xf;
-	u_int offset;
-	u_int size;
+dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
+    u_int offset, u_int size)
 {
 	struct dmac_softc *sc = (void*) self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
@@ -486,11 +458,8 @@ dmac_start_xfer_offset(self, xf, offset, size)
 
 #ifdef DMAC_ARRAYCHAIN
 static int
-dmac_program_arraychain(self, xf, offset, size)
-	struct device *self;
-	struct dmac_dma_xfer *xf;
-	u_int offset;
-	u_int size;
+dmac_program_arraychain(struct device *self, struct dmac_dma_xfer *xf,
+    u_int offset, u_int size)
 {
 	struct dmac_channel_stat *chan = xf->dx_channel;
 	int ch = chan->ch_channel;
@@ -522,8 +491,7 @@ dmac_program_arraychain(self, xf, offset, size)
  * interrupt handlers.
  */
 static int
-dmac_done(arg)
-	void *arg;
+dmac_done(void *arg)
 {
 	struct dmac_channel_stat *chan = arg;
 	struct dmac_softc *sc = (void*) chan->ch_softc;
@@ -569,8 +537,7 @@ dmac_done(arg)
 }
 
 static int
-dmac_error(arg)
-	void *arg;
+dmac_error(void *arg)
 {
 	struct dmac_channel_stat *chan = arg;
 	struct dmac_softc *sc = (void*) chan->ch_softc;
@@ -591,9 +558,7 @@ dmac_error(arg)
 }
 
 int
-dmac_abort_xfer(self, xf)
-	struct device *self;
-	struct dmac_dma_xfer *xf;
+dmac_abort_xfer(struct device *self, struct dmac_dma_xfer *xf)
 {
 	struct dmac_softc *sc = (void*) self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
