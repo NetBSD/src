@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.205 2000/05/22 17:13:53 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.206 2000/05/23 05:12:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205 2000/05/22 17:13:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.206 2000/05/23 05:12:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1840,7 +1840,7 @@ do_sir()
 {
 	u_int64_t n;
 
-	while ((n = alpha_atomic_loadlatch_q(&ssir, 0)) != 0) {
+	while ((n = atomic_loadlatch_ulong(&ssir, 0)) != 0) {
 #define	COUNT_SOFT	uvmexp.softs++
 
 #define	DO_SIR(bit, fn)							\
