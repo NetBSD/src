@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.21 2003/11/09 02:05:42 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.22 2003/11/13 03:09:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.21 2003/11/09 02:05:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.22 2003/11/13 03:09:28 chs Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -431,7 +431,7 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (0);
 
 	case WSDISPLAYIO_GETCMAP:
-		cmap = (struct wsdisplay_cmap*)data;
+		cmap = (struct wsdisplay_cmap *)data;
 		cnt = cmap->count;
 		idx = cmap->index;
 
@@ -442,25 +442,21 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return (EINVAL);
 		}
 
-		if (!uvm_useracc(cmap->red, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->green, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->blue, cnt, B_WRITE)) {
-			return (EFAULT);
-		}
-
 		error = cmap_work_alloc(&r, &g, &b, 0, cnt);
-		if (error != 0) {
-			cmap_work_free(r, g, b, 0);
-			return  (ENOMEM);
-		}
-
+		if (error)
+			goto out;
 		hd64461video_get_clut(sc->sc_vc, idx, cnt, r, g, b);
-		copyout(r, cmap->red, cnt);
-		copyout(g, cmap->green,cnt);
-		copyout(b, cmap->blue, cnt);
-		cmap_work_free(r, g, b, 0);
+		error = copyout(r, cmap->red, cnt);
+		if (error)
+			goto out;
+		error = copyout(g, cmap->green,cnt);
+		if (error)
+			goto out;
+		error = copyout(b, cmap->blue, cnt);
 
-		return (0);
+out:
+		cmap_work_free(r, g, b, 0);
+		return error;
 		
 	case WSDISPLAYIO_PUTCMAP:
 		cmap = (struct wsdisplay_cmap *)data;
@@ -474,25 +470,21 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return (EINVAL);
 		}
 
-		if (!uvm_useracc(cmap->red, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->green, cnt, B_WRITE) ||
-		    !uvm_useracc(cmap->blue, cnt, B_WRITE)) {
-			return (EFAULT);
-		}
-
 		error = cmap_work_alloc(&r, &g, &b, 0, cnt);
-		if (error != 0) {
-			cmap_work_free(r, g, b, 0);
-			return  (ENOMEM);
-		}
+		if (error)
+			goto out;
 
-		copyin(cmap->red, r, cnt);
-		copyin(cmap->green,g, cnt);
-		copyin(cmap->blue, b, cnt);
+		error = copyin(cmap->red, r, cnt);
+		if (error)
+			goto out;
+		error = copyin(cmap->green,g, cnt);
+		if (error)
+			goto out;
+		error = copyin(cmap->blue, b, cnt);
+		if (error)
+			goto out;
 		hd64461video_set_clut(sc->sc_vc, idx, cnt, r, g, b);
-		cmap_work_free(r, g, b, 0);
-
-		return (0);
+		goto out;
 
 	case HPCFBIO_GCONF:
 		fbconf = (struct hpcfb_fbconf *)data;

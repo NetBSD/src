@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.12 2003/10/28 15:25:27 chs Exp $	*/
+/*	$NetBSD: zx.c,v 1.13 2003/11/13 03:09:29 chs Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.12 2003/10/28 15:25:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.13 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,6 +303,7 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	struct zx_softc *sc;
 	struct fbcmap *cm;
 	struct fbcursor *cu;
+	uint32_t curbits[2][32];
 	int rv, v, count, i;
 
 	sc = zx_cd.cd_devs[minor(dev)];
@@ -386,9 +387,12 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			if ((u_int)cu->size.x > 32 || (u_int)cu->size.y > 32)
 				return (EINVAL);
 			count = cu->size.y * 4;
-			if (!uvm_useracc(cu->image, count, B_READ) ||
-			    !uvm_useracc(cu->mask, count, B_READ))
-				return (EFAULT);
+			rv = copyin(cu->mask, curbits[0], count);
+			if (rv)
+				return rv;
+			rv = copyin(cu->image, curbits[1], count);
+			if (rv)
+				return rv;
 		}
 		if ((v & FB_CUR_SETCUR) != 0) {
 			if (cu->enable)
@@ -424,8 +428,8 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			sc->sc_cursize = cu->size;
 			count = cu->size.y * 4;
 			memset(sc->sc_curbits, 0, sizeof(sc->sc_curbits));
-			copyin(cu->mask, (caddr_t)sc->sc_curbits[0], count);
-			copyin(cu->image, (caddr_t)sc->sc_curbits[1], count);
+			memcpy(sc->sc_curbits[0], curbits[0], count);
+			memcpy(sc->sc_curbits[1], curbits[1], count);
 			zx_cursor_set(sc);
 		}
 		break;
@@ -441,12 +445,10 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 		if (cu->image != NULL) {
 			count = sc->sc_cursize.y * 4;
-			rv = copyout((caddr_t)sc->sc_curbits[1],
-			    (caddr_t)cu->image, count);
+			rv = copyout(sc->sc_curbits[1], cu->image, count);
 			if (rv)
 				return (rv);
-			rv = copyout((caddr_t)sc->sc_curbits[0],
-			    (caddr_t)cu->mask, count);
+			rv = copyout(sc->sc_curbits[0], cu->mask, count);
 			if (rv)
 				return (rv);
 		}

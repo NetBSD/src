@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.78 2003/11/02 16:26:10 cl Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.79 2003/11/13 03:09:30 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.78 2003/11/02 16:26:10 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.79 2003/11/13 03:09:30 chs Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -443,12 +443,6 @@ adjtime1(delta, olddelta, p)
 	if (error)
 		return (error);
 
-	if (olddelta != NULL) {
-		if (uvm_useracc((caddr_t)olddelta,
-		    sizeof(struct timeval), B_WRITE) == FALSE)
-			return (EFAULT);
-	}
-
 	/*
 	 * Compute the total correction and the rate at which to apply it.
 	 * Round the adjustment down to a whole multiple of the per-tick
@@ -483,9 +477,9 @@ adjtime1(delta, olddelta, p)
 	if (olddelta) {
 		atv.tv_sec = odelta / 1000000;
 		atv.tv_usec = odelta % 1000000;
-		(void) copyout(&atv, olddelta, sizeof(struct timeval));
+		error = copyout(&atv, olddelta, sizeof(struct timeval));
 	}
-	return (0);
+	return error;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.9 2003/01/22 12:58:23 rafal Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.10 2003/11/13 03:09:29 chs Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.9 2003/01/22 12:58:23 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.10 2003/11/13 03:09:29 chs Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -182,9 +182,6 @@ irix_sysmp_saget(cmd, buf, len)
 	void *kbuf;
 	int error = 0;
 
-	if (!uvm_useracc(buf, len, B_WRITE))
-		return EINVAL;
-
 	kbuf = malloc(len, M_TEMP, M_WAITOK);
 
 	switch (cmd) {
@@ -216,7 +213,7 @@ irix_sysmp_saget(cmd, buf, len)
 	}
 
 	if (error == 0)
-		(void)copyout((void *)kbuf, (void *)buf, len);
+		error = copyout(kbuf, buf, len);
 
 	free(kbuf, M_TEMP);
 	return error;
