@@ -39,7 +39,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.2 1993/11/29 00:41:11 briggs Exp $
+ *	$Id: vm_machdep.c,v 1.3 1994/03/01 15:21:21 briggs Exp $
  */
 
 #include "param.h"
@@ -112,7 +112,7 @@ cpu_fork(p1, p2)
  * until swtch_exit has made things safe again.
  */
 
-void
+volatile void
 cpu_exit(p)
 	struct proc *p;
 {
@@ -125,6 +125,7 @@ cpu_exit(p)
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 
 	swtch_exit();
+	for(;;); /* Get rid of a compile warning */
 	/* NOTREACHED */
 }
 
