@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.11 1998/02/03 20:01:38 perry Exp $	*/
+/*	$NetBSD: crt0.c,v 1.12 1998/03/16 22:22:14 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.11 1998/02/03 20:01:38 perry Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.12 1998/03/16 22:22:14 matthias Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -58,7 +58,7 @@ extern void	start __P((char *)) __asm("start");
  * The address of PS_STRINGS is passed in r7 by the kernel.
  */
 
-struct ps_strings *kps_strings __asm("r7");
+register struct ps_strings *kps_strings __asm("r7");
 
 void
 start(arg0)
