@@ -1,4 +1,4 @@
-/* $Id: ispmbox.h,v 1.8 1998/09/08 07:24:23 mjacob Exp $ */
+/* $NetBSD: ispmbox.h,v 1.9 1998/09/17 22:51:54 mjacob Exp $ */
 /*
  * Mailbox and Queue Entry Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -455,6 +455,16 @@ typedef struct {
 	u_int16_t	_reserved3;
 	u_int16_t	req_timeout;	/* HOST->FW: Lun timeout value */
 } isplun_t;
+/* inbound status */
+#define	LUN_OKAY	0x01
+#define	LUN_ERR		0x04
+#define	LUN_NOCAP	0x16
+#define	LUN_ENABLED	0x3e
+/* outbound flags */
+#define	LUN_INCR_CMD	0x0001
+#define	LUN_DECR_CMD	0x0002
+#define	LUN_INCR_IMMED	0x0100
+#define	LUN_DECR_IMMED	0x0200
 
 typedef struct {
 	isphdr_t	req_header;
@@ -466,11 +476,17 @@ typedef struct {
 	u_int8_t	req_lun;
 	u_int8_t	req_initiator;
 #endif
-	u_int16_t	_reserved1[3];
+	u_int16_t	req_flags;	/* NOTIFY_ACK only */
+	u_int16_t	_reserved1[2];
 	u_int16_t	req_status;
 	u_int16_t	req_task_flags;
 	u_int16_t	req_sequence;
 } ispnotify_t;
+
+#define	IN_NOCAP	0x16
+#define	IN_IDE_RECEIVED	0x33
+#define	IN_RSRC_UNAVAIL	0x34
+#define	IN_MSG_RECEIVED	0x36
 
 typedef struct {
 	isphdr_t	req_header;
@@ -496,12 +512,78 @@ typedef struct {
 	u_int8_t	req_taskflags;
 	u_int8_t	req_execodes;
 #endif
-	u_int32_t	req_cdb[4];
+	u_int8_t	req_cdb[16];
 	u_int32_t	req_datalen;
-	u_int32_t	_reserved1;;
+	u_int16_t	req_scclun;
+	u_int16_t	_reserved1;;
 	u_int16_t	req_scsi_status;
-	u_int8_t	req_sense[8];
+	u_int8_t	req_sense[18];
 } ispatiot2_t;
+
+#define	ATIO_PATH_INVALID	0x07
+#define	ATIO_PHASE_ERROR	0x14
+#define	ATIO_NOCAP		0x16
+#define	ATIO_BDR_MSG		0x17
+#define	ATIO_CDB_RECEIVED	0x3d
+
+#define	ATIO_SENSEVALID		0x80
+
+/*
+ * Continue Target I/O, type 2
+ */
+typedef struct {
+	isphdr_t	req_header;
+	u_int32_t	req_handle;
+#if	BYTE_ORDER == BIG_ENDIAN
+	u_int8_t	req_initiator;
+	u_int8_t	req_lun;
+#else
+	u_int8_t	req_lun;
+	u_int8_t	req_initiator;
+#endif
+	u_int16_t	req_rxid;
+	u_int16_t	req_flags;
+	u_int16_t	req_status;
+	u_int16_t	req_timeout;
+	u_int16_t	req_seg_count;	/* data segment count */
+	u_int8_t	req_reloff[4];	/* relative offset */
+	u_int8_t	req_resid[4];	/* residual */
+	u_int8_t	_reserved0[4];
+	union {				/* should be offset 0x20 */
+		struct {
+			u_int16_t _reserved0;
+			u_int16_t req_scsi_status;
+			u_int32_t req_datalen;
+			ispds_t	req_dataseg[ISP_RQDSEG_T2];
+		} mode0;
+		struct {
+			u_int16_t req_sense_len;
+			u_int16_t req_scsi_status;
+			u_int32_t req_response_length;
+			u_int8_t req_response[26];
+		} mode1;
+		struct {
+			u_int16_t _reserved0[2];
+			u_int32_t req_datalen;
+			ispds_t	req_fcpiudata;
+		} mode2;
+	} req_m;
+} ispctiot2_t;
+
+#define	CTIO_SEND_STATUS	0x8000
+#define	CTIO_SEND_DATA		0x0040	/* To initiator */
+#define	CTIO_RECV_DATA		0x0080
+#define	CTIO_NODATA		0x00C0
+
+#define	CTIO2_SMODE0		0x0000
+#define	CTIO2_SMODE1		0x0001
+#define	CTIO2_SMODE2		0x0002
+
+#define	CTIO2_RESP_VALID	0x0100
+#define	CTIO2_STATUS_VALID	0x0200
+#define	CTIO2_RSPOVERUN		0x0400
+#define	CTIO2_RSPUNDERUN	0x0800
+
 
 /*
  * FC (ISP2100) specific data structures
