@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.9 1999/05/12 18:50:51 thorpej Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.10 1999/07/30 10:35:38 itojun Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -51,7 +51,8 @@
  * indexing sc_npmode.
  */
 #define NP_IP	0		/* Internet Protocol */
-#define NUM_NP	1		/* Number of NPs. */
+#define NP_IPV6	1		/* Internet Protocol version 6 */
+#define NUM_NP	2		/* Number of NPs. */
 
 /*
  * Structure describing each ppp unit.

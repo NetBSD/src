@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.4 1999/07/09 22:57:26 thorpej Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.5 1999/07/30 10:35:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,7 +57,6 @@
 #ifdef INET
 #include <netinet/ip.h>
 #endif
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_gif.h>

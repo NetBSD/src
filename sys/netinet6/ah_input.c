@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.4 1999/07/06 08:55:56 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.5 1999/07/30 10:35:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -62,7 +62,6 @@
 #include <netinet/ip_ecn.h>
 
 #ifdef INET6
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>

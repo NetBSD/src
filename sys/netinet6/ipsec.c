@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.7 1999/07/11 17:45:11 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.8 1999/07/30 10:35:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -72,7 +72,6 @@
 #include <netinet/ip_ecn.h>
 
 #ifdef INET6
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>

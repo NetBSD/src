@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.4 1999/04/04 06:57:03 explorer Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.5 1999/07/30 10:35:38 itojun Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -130,6 +130,7 @@
 #define PPP_ISO		0x0023		/* ISO OSI Protocol */
 #define PPP_XNS		0x0025		/* Xerox NS Protocol */
 #define PPP_IPX		0x002b		/* Novell IPX Protocol */
+#define PPP_IPV6	0x0057		/* Internet Protocol version 6 */
 #define PPP_LCP		0xc021		/* Link Control Protocol */
 #define PPP_PAP		0xc023		/* Password Authentication Protocol */
 #define PPP_CHAP	0xc223		/* Challenge-Handshake Auth Protocol */
@@ -680,6 +681,12 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	}
 #endif
 
+#ifdef INET6
+	if (dst->sa_family == AF_INET6) {
+		/* XXX do something tricky here? */
+	}
+#endif
+
 	/*
 	 * Prepend general data packet PPP header. For now, IP only.
 	 */
@@ -721,6 +728,26 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			 * ENETDOWN, as opposed to ENOBUFS.
 			 */
 			h->protocol = htons(PPP_IP);
+			if (sp->state[IDX_IPCP] != STATE_OPENED)
+				rv = ENETDOWN;
+		}
+		break;
+#endif
+#ifdef INET6
+	case AF_INET6:   /* Internet Protocol version 6 */
+		if (sp->pp_flags & PP_CISCO)
+			h->protocol = htons (ETHERTYPE_IPV6);
+		else {
+			/*
+			 * Don't choke with an ENETDOWN early.  It's
+			 * possible that we just started dialing out,
+			 * so don't drop the packet immediately.  If
+			 * we notice that we run out of buffer space
+			 * below, we will however remember that we are
+			 * not ready to carry IP packets, and return
+			 * ENETDOWN, as opposed to ENOBUFS.
+			 */
+			h->protocol = htons(PPP_IPV6);
 			if (sp->state[IDX_IPCP] != STATE_OPENED)
 				rv = ENETDOWN;
 		}
