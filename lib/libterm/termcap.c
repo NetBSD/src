@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.22 1999/09/20 04:48:05 lukem Exp $	*/
+/*	$NetBSD: termcap.c,v 1.23 2000/04/18 14:42:42 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.22 1999/09/20 04:48:05 lukem Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.23 2000/04/18 14:42:42 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,14 +53,7 @@ __RCSID("$NetBSD: termcap.c,v 1.22 1999/09/20 04:48:05 lukem Exp $");
 #include <termcap.h>
 #include <errno.h>
 #include "pathnames.h"
-
-/* internal definition of tinfo structure - just a pointer to the malloc'ed
- * buffer for now.
- */
-struct tinfo
-{
-	char *info;
-};
+#include "termcap_private.h"
 
 /*
  * termcap - routines for dealing with the terminal capability data base
