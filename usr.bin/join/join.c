@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.23 2003/08/07 11:14:10 agc Exp $	*/
+/*	$NetBSD: join.c,v 1.24 2003/10/16 06:56:17 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.23 2003/08/07 11:14:10 agc Exp $");
+__RCSID("$NetBSD: join.c,v 1.24 2003/10/16 06:56:17 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,9 +293,11 @@ slurp(F)
 {
 	LINE *lp;
 	LINE tmp;
+	LINE *nline;
 	size_t len;
 	int cnt;
 	char *bp, *fieldp;
+	u_long nsize;
 
 	/*
 	 * Read all of the lines from an input file that have the same
@@ -310,12 +312,14 @@ slurp(F)
 		if (F->setcnt == F->setalloc) {
 			cnt = F->setalloc;
 			if (F->setalloc == 0)
-				F->setalloc = 64;
+				nsize = 64;
 			else
-				F->setalloc <<= 1;
-			if ((F->set = realloc(F->set,
-			    F->setalloc * sizeof(LINE))) == NULL)
+				nsize = F->setalloc << 1;
+			if ((nline = realloc(F->set,
+			    nsize * sizeof(LINE))) == NULL)
 				enomem();
+			F->set = nline;
+			F->setalloc = nsize;
 			memset(F->set + cnt, 0,
 			    (F->setalloc - cnt) * sizeof(LINE));
 		}
@@ -338,13 +342,19 @@ slurp(F)
 		if ((bp = fgetln(F->fp, &len)) == NULL)
 			return;
 		if (lp->linealloc <= len + 1) {
+			char *n;
+
 			if (lp->linealloc == 0)
-				lp->linealloc = 128;
-			while (lp->linealloc <= len + 1)
-				lp->linealloc <<= 1;
-			if ((lp->line = realloc(lp->line,
-			    lp->linealloc * sizeof(char))) == NULL)
+				nsize = 128;
+			else
+				nsize = lp->linealloc;
+			while (nsize <= len + 1)
+				nsize <<= 1;
+			if ((n = realloc(lp->line,
+			    nsize * sizeof(char))) == NULL)
 				enomem();
+			lp->line = n;
+			lp->linealloc = nsize;
 		}
 		memmove(lp->line, bp, len);
 
@@ -361,13 +371,17 @@ slurp(F)
 			if (spans && *fieldp == '\0')
 				continue;
 			if (lp->fieldcnt == lp->fieldalloc) {
+				char **n;
+
 				if (lp->fieldalloc == 0)
-					lp->fieldalloc = 16;
+					nsize = 16;
 				else
-					lp->fieldalloc <<= 1;
-				if ((lp->fields = realloc(lp->fields,
-				    lp->fieldalloc * sizeof(char *))) == NULL)
+					nsize = lp->fieldalloc << 1;
+				if ((n = realloc(lp->fields,
+				    nsize * sizeof(char *))) == NULL)
 					enomem();
+				lp->fields = n;
+				lp->fieldalloc = nsize;
 			}
 			lp->fields[lp->fieldcnt++] = fieldp;
 		}
@@ -506,6 +520,7 @@ fieldarg(option)
 {
 	u_long fieldno;
 	char *end, *token;
+	OLIST *n;
 
 	while ((token = strsep(&option, ", \t")) != NULL) {
 		if (*token == '\0')
@@ -518,10 +533,11 @@ fieldarg(option)
 		if (fieldno == 0)
 			errx(1, "field numbers are 1 based");
 		if (olistcnt == olistalloc) {
-			olistalloc += 50;
-			if ((olist = realloc(olist,
-			    olistalloc * sizeof(OLIST))) == NULL)
+			if ((n = realloc(olist,
+			    (olistalloc + 50) * sizeof(OLIST))) == NULL)
 				enomem();
+			olist = n;
+			olistalloc += 50;
 		}
 		olist[olistcnt].fileno = token[0] - '0';
 		olist[olistcnt].fieldno = fieldno - 1;
