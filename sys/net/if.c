@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.74 2000/10/07 03:41:38 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.75 2000/10/11 16:52:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -214,11 +214,20 @@ if_nullioctl(ifp, cmd, data)
 }
 
 int
-if_nullreset(ifp)
+if_nullinit(ifp)
 	struct ifnet *ifp;
 {
 
 	return (ENXIO);
+}
+
+void
+if_nullstop(ifp, disable)
+	struct ifnet *ifp;
+	int disable;
+{
+
+	/* Nothing. */
 }
 
 void
@@ -357,7 +366,8 @@ if_deactivate(ifp)
 	ifp->if_input	 = if_nullinput;
 	ifp->if_start	 = if_nullstart;
 	ifp->if_ioctl	 = if_nullioctl;
-	ifp->if_reset	 = if_nullreset;
+	ifp->if_init	 = if_nullinit;
+	ifp->if_stop	 = if_nullstop;
 	ifp->if_watchdog = if_nullwatchdog;
 	ifp->if_drain	 = if_nulldrain;
 
