@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:46 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/06/19 23:50:52 thorpej Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/krb5
 .PATH: ${DIST}/heimdal/lib/des
@@ -159,6 +159,16 @@ $(SRCS:.c=.o): krb5_err.h heim_err.h
 
 TEXINFO=	heimdal.texi
 INFOFLAGS=	-I${DIST}/heimdal/doc
+
+# Prevent collision with old MIT Kerberos includes -- require manual
+# intervention of the operator.
+.BEGIN:
+.ifmake includes
+	@if [ -f ${DESTDIR}${INCSDIR}/osconf.h ]; then \
+		echo "Error: you must first remove the MIT headers from ${DESTDIR}${INCSDIR}" >&2; \
+		false; \
+	fi
+.endif
 
 .include <bsd.lib.mk>
 .include <bsd.info.mk>
