@@ -146,6 +146,8 @@ Unrecognized value in TARGET_CPU_DEFAULT.
 %{march=strongarm:-D__ARM_ARCH_4__} \
 %{march=strongarm110:-D__ARM_ARCH_4__} \
 %{march=strongarm1100:-D__ARM_ARCH_4__} \
+%{march=xscale:-D__ARM_ARCH_5TE__} \
+%{march=xscale:-D__XSCALE__} \
 %{march=armv2:-D__ARM_ARCH_2__} \
 %{march=armv2a:-D__ARM_ARCH_2__} \
 %{march=armv3:-D__ARM_ARCH_3__} \
