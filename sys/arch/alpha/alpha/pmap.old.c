@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.37 1998/02/27 19:39:03 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.38 1998/02/27 22:25:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.37 1998/02/27 19:39:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.38 1998/02/27 22:25:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,13 +163,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.37 1998/02/27 19:39:03 thorpej Exp $"
 #endif
 
 #ifdef PMAPSTATS
-struct {
-	int collectscans;
-	int collectpages;
-	int kpttotal;
-	int kptinuse;
-	int kptmaxuse;
-} kpt_stats;
 struct {
 	int kernel;	/* entering kernel mapping */
 	int user;	/* entering user mapping */
@@ -263,17 +256,6 @@ int pmapdebug = PDB_PARANOIA;
 int	protection_codes[2][8];
 
 /*
- * Kernel page table page management.
- */
-struct kpt_page {
-	struct kpt_page *kpt_next;	/* link on either used or free list */
-	vm_offset_t	kpt_va;		/* always valid kernel VA */
-	vm_offset_t	kpt_pa;		/* PA of this page (for speed) */
-};
-struct kpt_page *kpt_free_list, *kpt_used_list;
-struct kpt_page *kpt_pages;
-
-/*
  * The Alpha's level-1 page table.
  */
 pt_entry_t	*Lev1map;
@@ -340,7 +322,6 @@ pa_to_pvh(pa)
  * Internal routines
  */
 void	alpha_protection_init __P((void));
-void	pmap_collect1 __P((pmap_t, vm_offset_t, vm_offset_t));
 void	pmap_remove_mapping __P((pmap_t, vm_offset_t, pt_entry_t *, int));
 void	pmap_changebit __P((vm_offset_t, u_long, boolean_t));
 void	pmap_enter_ptpage __P((pmap_t, vm_offset_t));
@@ -1499,139 +1480,16 @@ void
 pmap_collect(pmap)
 	pmap_t		pmap;
 {
-	int s, bank;
-
-	if (pmap != pmap_kernel())
-		return;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_collect(%p)\n", pmap);
 #endif
-#ifdef PMAPSTATS
-	kpt_stats.collectscans++;
-#endif
-	s = splimp();
-	for (bank = 0; bank < vm_nphysseg; bank++)
-		pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
-		    ptoa(vm_physmem[bank].end));
-	splx(s);
 
 #ifdef notyet
 	/* Go compact and garbage-collect the pv_table. */
 	pmap_collect_pv();
 #endif
-}
-
-/*
- *	Routine:	pmap_collect1()
- *
- *	Function:
- *		Helper function for pmap_collect().  Do the actual
- *		garbage-collection of range of physical addresses.
- */
-void
-pmap_collect1(pmap, startpa, endpa)
-	pmap_t pmap;
-	vm_offset_t startpa, endpa;
-{
-	struct kpt_page *kpt, **pkpt;
-	vm_offset_t pa, kpa;
-	struct pv_head *pvh;
-	pv_entry_t pv;
-	pt_entry_t *pte;
-#ifdef DEBUG
-	pt_entry_t *ste;
-	int opmapdebug = 0;
-#endif
-
-	for (pa = startpa; pa < endpa; pa += PAGE_SIZE) {
-		/*
-		 * Locate physical pages which are being used as kernel
-		 * page table pages.
-		 */
-		pvh = pa_to_pvh(pa);
-		pv = LIST_FIRST(&pvh->pvh_list);
-		if (pv->pv_pmap != pmap_kernel() ||
-		    (pvh->pvh_attrs & PMAP_ATTR_PTPAGE) == 0)
-			continue;
-		do {
-			if (pv->pv_ptpte && pv->pv_ptpmap == pmap_kernel())
-				break;
-		} while ((pv = LIST_NEXT(pv, pv_list)) != NULL);
-		if (pv == NULL)
-			continue;
-#ifdef DEBUG
-		if (pv->pv_va < (vm_offset_t)Sysmap ||
-		    pv->pv_va >= (vm_offset_t)Sysmap + ALPHA_MAX_PTSIZE)
-			printf("collect: kernel PT VA out of range\n");
-		else
-			goto ok;
-		pmap_pvdump(pa);
-		continue;
-ok:
-#endif
-		pte = (pt_entry_t *)(pv->pv_va + ALPHA_PAGE_SIZE);
-		while (--pte >= (pt_entry_t *)pv->pv_va && *pte == PG_NV)
-			;
-		if (pte >= (pt_entry_t *)pv->pv_va)
-			continue;
-
-#ifdef DEBUG
-		if (pmapdebug & (PDB_PTPAGE|PDB_COLLECT)) {
-			printf("collect: freeing KPT page at %lx (ste %lx@%p)\n",
-			       pv->pv_va, *pv->pv_ptpte, pv->pv_ptpte);
-			opmapdebug = pmapdebug;
-			pmapdebug |= PDB_PTPAGE;
-		}
-
-		ste = pv->pv_ptpte;
-#endif
-		/*
-		 * If all entries were invalid we can remove the page.
-		 * We call pmap_remove_entry to take care of invalidating
-		 * ST and Sysptmap entries.
-		 */
-		kpa = pmap_extract(pmap, pv->pv_va);
-		pmap_remove_mapping(pmap, pv->pv_va, PT_ENTRY_NULL,
-		    PRM_TFLUSH|PRM_CFLUSH);
-		/*
-		 * Use the physical address to locate the original
-		 * (kmem_alloc assigned) address for the page and put
-		 * that page back on the free list.
-		 */
-		for (pkpt = &kpt_used_list, kpt = *pkpt;
-		     kpt != (struct kpt_page *)0;
-		     pkpt = &kpt->kpt_next, kpt = *pkpt)
-			if (kpt->kpt_pa == kpa)
-				break;
-#ifdef DEBUG
-		if (kpt == (struct kpt_page *)0)
-			panic("pmap_collect: lost a KPT page");
-		if (pmapdebug & (PDB_PTPAGE|PDB_COLLECT))
-			printf("collect: %lx (%lx) to free list\n",
-			       kpt->kpt_va, kpa);
-#endif
-		*pkpt = kpt->kpt_next;
-		kpt->kpt_next = kpt_free_list;
-		kpt_free_list = kpt;
-#ifdef PMAPSTATS
-		kpt_stats.kptinuse--;
-		kpt_stats.collectpages++;
-#endif
-#ifdef DEBUG
-		if (pmapdebug & (PDB_PTPAGE|PDB_COLLECT))
-			pmapdebug = opmapdebug;
-
-		if (*ste)
-			printf("collect: kernel STE at %p still valid (%lx)\n",
-			       ste, *ste);
-		ste = &Sysptmap[(pt_entry_t *)ste-pmap_ste(pmap_kernel(), 0)];
-		if (*ste)
-			printf("collect: kernel PTmap at %p still valid (%lx)\n",
-			       ste, *ste);
-#endif
-	}
 }
 
 /*
@@ -2229,15 +2087,23 @@ pmap_enter_ptpage(pmap, va)
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER|PDB_PTPAGE))
 		printf("pmap_enter_ptpage: pmap %p, va %lx\n", pmap, va);
 #endif
+
+	/*
+	 * Currently all kernel page table pages are allocated
+	 * up-front in pmap_bootstrap(); this can't happen.
+	 */
+	if (pmap == pmap_kernel())
+		panic("pmap_enter_ptpage: called for kernel pmap");
+
 #ifdef PMAPSTATS
 	enter_stats.ptpneeded++;
 #endif
 
 	/*
-	 * If this is a user pmap and we're still referencing the
-	 * kernel Lev1map, create a new level 1 page table.
+	 * If we're still referencing the kernel Lev1map, create a new
+	 * level 1 page table.
 	 */
-	if (pmap != pmap_kernel() && pmap->pm_lev1map == Lev1map)
+	if (pmap->pm_lev1map == Lev1map)
 		pmap_create_lev1map(pmap);
 
 	/*
@@ -2269,86 +2135,44 @@ pmap_enter_ptpage(pmap, va)
 	va = trunc_page((vm_offset_t)pmap_pte(pmap, va));
 
 	/*
-	 * In the kernel we allocate a page from the kernel PT page
-	 * free list and map it into the kernel page table map (via
-	 * pmap_enter).
-	 */
-	if (pmap == pmap_kernel()) {
-		register struct kpt_page *kpt;
-
-		s = splimp();
-		if ((kpt = kpt_free_list) == (struct kpt_page *)0) {
-			/*
-			 * No PT pages available.
-			 * Try once to free up unused ones.
-			 */
-#ifdef DEBUG
-			if (pmapdebug & PDB_COLLECT)
-				printf("enter: no KPT pages, collecting...\n");
-#endif
-			pmap_collect(pmap_kernel());
-			if ((kpt = kpt_free_list) == (struct kpt_page *)0)
-				panic("pmap_enter_ptpage: can't get KPT page");
-		}
-#ifdef PMAPSTATS
-		if (++kpt_stats.kptinuse > kpt_stats.kptmaxuse)
-			kpt_stats.kptmaxuse = kpt_stats.kptinuse;
-#endif
-		kpt_free_list = kpt->kpt_next;
-		kpt->kpt_next = kpt_used_list;
-		kpt_used_list = kpt;
-		ptpa = kpt->kpt_pa;
-		bzero((caddr_t)kpt->kpt_va, ALPHA_PAGE_SIZE);
-		pmap_enter(pmap, va, ptpa, VM_PROT_DEFAULT, TRUE);
-#ifdef DEBUG
-		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE)) {
-			int ix = pmap_ste(pmap, va) - pmap_ste(pmap, 0);
-
-			printf("enter: add &Sysptmap[%d]: %lx (KPT page %lx)\n",
-			       ix, Sysptmap[ix], kpt->kpt_va);
-		}
-#endif
-		splx(s);
-	}
-	/*
 	 * For user processes we just simulate a fault on that location
 	 * letting the VM system allocate a zero-filled page.
 	 */
-	else {
-		/*
-		 * Count the segment table reference now so that we won't
-		 * lose the segment table when low on memory.
-		 */
-		pmap->pm_sref++;
+
+	/*
+	 * Count the segment table reference now so that we won't
+	 * lose the segment table when low on memory.
+	 */
+	pmap->pm_sref++;
 #ifdef DEBUG
-		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
-			printf("enter: about to fault UPT pg at %lx\n", va);
+	if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
+		printf("enter: about to fault UPT pg at %lx\n", va);
 #endif
 #if defined(UVM)
-		s = uvm_fault(pt_map, va, 0, VM_PROT_READ|VM_PROT_WRITE); 
-		if (s != KERN_SUCCESS) {
-			printf("uvm_fault(pt_map, 0x%lx, 0, RW) -> %d\n",
-			    va, s);
-			panic("pmap_enter: uvm_fault failed");
-		}
-#else
-		s = vm_fault(pt_map, va, VM_PROT_READ|VM_PROT_WRITE, FALSE);
-		if (s != KERN_SUCCESS) {
-			printf("vm_fault(pt_map, %lx, RW, 0) -> %d\n", va, s);
-			panic("pmap_enter: vm_fault failed");
-		}
-#endif
-		ptpa = pmap_extract(pmap_kernel(), va);
-		/*
-		 * Mark the page clean now to avoid its pageout (and
-		 * hence creation of a pager) between now and when it
-		 * is wired; i.e. while it is on a paging queue.
-		 */
-		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_CLEAN;
-#ifdef DEBUG
-		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_PTPAGE;
-#endif
+	s = uvm_fault(pt_map, va, 0, VM_PROT_READ|VM_PROT_WRITE); 
+	if (s != KERN_SUCCESS) {
+		printf("uvm_fault(pt_map, 0x%lx, 0, RW) -> %d\n",
+		    va, s);
+		panic("pmap_enter: uvm_fault failed");
 	}
+#else
+	s = vm_fault(pt_map, va, VM_PROT_READ|VM_PROT_WRITE, FALSE);
+	if (s != KERN_SUCCESS) {
+		printf("vm_fault(pt_map, %lx, RW, 0) -> %d\n", va, s);
+		panic("pmap_enter: vm_fault failed");
+	}
+#endif
+	ptpa = pmap_extract(pmap_kernel(), va);
+	/*
+	 * Mark the page clean now to avoid its pageout (and
+	 * hence creation of a pager) between now and when it
+	 * is wired; i.e. while it is on a paging queue.
+	 */
+	PHYS_TO_VM_PAGE(ptpa)->flags |= PG_CLEAN;
+#ifdef DEBUG
+	PHYS_TO_VM_PAGE(ptpa)->flags |= PG_PTPAGE;
+#endif
+
 	/*
 	 * Locate the PV entry in the kernel for this PT page and
 	 * record the STE address.  This is so that we can invalidate
