@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.1 2000/12/13 03:16:37 mycroft Exp $ */
+/* $NetBSD: syscall.c,v 1.2 2000/12/13 07:53:58 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1 2000/12/13 03:16:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2000/12/13 07:53:58 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,14 +119,20 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1 2000/12/13 03:16:37 mycroft Exp $");
 
 void	userret __P((struct proc *));
 void	syscall_intern __P((struct proc *));
-void	syscall __P((struct proc *, u_int64_t, struct trapframe *));
+void	syscall_plain __P((struct proc *, u_int64_t, struct trapframe *));
+void	syscall_fancy __P((struct proc *, u_int64_t, struct trapframe *));
 
 void
 syscall_intern(p)
 	struct proc *p;
 {
 
-	p->p_md.md_syscall = syscall;
+#ifdef KTRACE
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
+		p->p_md.md_syscall = syscall_fancy;
+	else
+#endif
+		p->p_md.md_syscall = syscall_plain;
 }
 
 /*
@@ -143,7 +149,104 @@ syscall_intern(p)
  * a3, and v0 from the frame before returning to the user process.
  */
 void
-syscall(p, code, framep)
+syscall_plain(p, code, framep)
+	struct proc *p;
+	u_int64_t code;
+	struct trapframe *framep;
+{
+	const struct sysent *callp;
+	int error;
+	u_int64_t rval[2];
+	u_int64_t *args, copyargs[10];				/* XXX */
+	u_int hidden, nargs;
+
+	KERNEL_PROC_LOCK(p);
+
+	uvmexp.syscalls++;
+	p->p_md.md_tf = framep;
+
+	callp = p->p_emul->e_sysent;
+
+	switch (code) {
+	case SYS_syscall:
+	case SYS___syscall:
+		/*
+		 * syscall() and __syscall() are handled the same on
+		 * the alpha, as everything is 64-bit aligned, anyway.
+		 */
+		code = framep->tf_regs[FRAME_A0];
+		hidden = 1;
+		break;
+	default:
+		hidden = 0;
+		break;
+	}
+
+	code &= (SYS_NSYSENT - 1);
+	callp += code;
+
+	nargs = callp->sy_narg + hidden;
+	switch (nargs) {
+	default:
+		error = copyin((caddr_t)alpha_pal_rdusp(), &copyargs[6],
+		    (nargs - 6) * sizeof(u_int64_t));
+		if (error)
+			goto bad;
+	case 6:	
+		copyargs[5] = framep->tf_regs[FRAME_A5];
+	case 5:	
+		copyargs[4] = framep->tf_regs[FRAME_A4];
+	case 4:	
+		copyargs[3] = framep->tf_regs[FRAME_A3];
+		copyargs[2] = framep->tf_regs[FRAME_A2];
+		copyargs[1] = framep->tf_regs[FRAME_A1];
+		copyargs[0] = framep->tf_regs[FRAME_A0];
+		args = copyargs;
+		break;
+	case 3:	
+	case 2:	
+	case 1:	
+	case 0:
+		args = &framep->tf_regs[FRAME_A0];
+		break;
+	}
+	args += hidden;
+
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, args);
+#endif
+
+	rval[0] = 0;
+	rval[1] = 0;
+	error = (*callp->sy_call)(p, args, rval);
+
+	switch (error) {
+	case 0:
+		framep->tf_regs[FRAME_V0] = rval[0];
+		framep->tf_regs[FRAME_A4] = rval[1];
+		framep->tf_regs[FRAME_A3] = 0;
+		break;
+	case ERESTART:
+		framep->tf_regs[FRAME_PC] -= 4;
+		break;
+	case EJUSTRETURN:
+		break;
+	default:
+	bad:
+		framep->tf_regs[FRAME_V0] = error;
+		framep->tf_regs[FRAME_A3] = 1;
+		break;
+	}
+
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(p, code, error, rval);
+#endif
+	KERNEL_PROC_UNLOCK(p);
+	userret(p);
+}
+
+void
+syscall_fancy(p, code, framep)
 	struct proc *p;
 	u_int64_t code;
 	struct trapframe *framep;
