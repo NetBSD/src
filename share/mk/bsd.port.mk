@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.12 1997/10/17 01:40:49 thorpej Exp $
+#	$NetBSD: bsd.port.mk,v 1.13 1997/10/18 23:33:25 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -131,6 +131,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 # NO_WRKDIR		- There's no work directory at all; port does this someplace
 #				  else.
 # NO_DEPENDS	- Don't verify build of dependencies.
+# NOCLEANDEPENDS - Don't clean dependent packages
 # BROKEN		- Port is broken.  Set this string to the reason why.
 # RESTRICTED	- Port is restricted.  Set this string to the reason why.
 # USE_GMAKE		- Says that the port uses gmake.
@@ -310,6 +311,7 @@ NOMANCOMPRESS?=	yes
 DEF_UMASK?=		022
 .elif (${OPSYS} == "NetBSD")
 DEF_UMASK?=		0022
+NOCLEANDEPENDS=	yes
 .else
 DEF_UMASK?=		0022
 .endif
@@ -1781,6 +1783,9 @@ fake-pkg: ${PLIST}
 		fi; \
 		if [ -f ${PKGDIR}/REQ ]; then \
 			${CP} ${PKGDIR}/REQ ${PKG_DBDIR}/${PKGNAME}/+REQ; \
+		fi; \
+		if [ -f ${PKGDIR}/MESSAGE ]; then \
+			${CP} ${PKGDIR}/MESSAGE ${PKG_DBDIR}/${PKGNAME}/+DISPLAY; \
 		fi; \
 		for dep in `make package-depends ECHO_MSG=/usr/bin/true | sort -u`; do \
 			if [ -d ${PKG_DBDIR}/$$dep ]; then \
