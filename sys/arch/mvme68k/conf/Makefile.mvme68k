@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.7 1996/02/03 00:44:10 mycroft Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.8 1996/02/09 02:21:28 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -36,7 +36,7 @@ MVME68K=../..
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dmvme68k -DFPCOPROC
 CFLAGS=		${DEBUG} -O2 -Werror -msoft-float
-AFLAGS=		-D_LOCORE
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 8000 -e start
 
 ### find out what to use for libkern
@@ -69,8 +69,8 @@ NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-NORMAL_S=	${CC} -traditional-cpp -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} -traditional-cpp -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
@@ -155,9 +155,9 @@ SRCS=	${MVME68K}/mvme68k/locore.s \
 	vnode_if.c param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h vnode_if.h param.c
-	mkdep -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${MVME68K}/mvme68k/locore.s
+	mkdep ${AFLAGS} ${CPPFLAGS} ${MVME68K}/mvme68k/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} vnode_if.c param.c ioconf.c ${CFILES}
-	mkdep -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${MVME68K}/mvme68k/genassym.c
 
 
