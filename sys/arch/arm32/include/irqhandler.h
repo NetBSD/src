@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.15 1998/09/05 03:51:01 mark Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.16 1998/09/08 03:10:07 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,9 @@
 #ifndef _ARM32_IRQHANDLER_H_
 #define _ARM32_IRQHANDLER_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_cputypes.h"
+#endif
 
 #ifndef _LOCORE
 #include <sys/types.h>
