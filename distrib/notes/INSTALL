@@ -348,8 +348,12 @@ work in NetBSD _VER:
 	2.3.0.4, and most likely earlier versions
 
   Workaround/Fix:
-	Upgrade to AMANDA 2.4.0 or newer, or apply the patch found at:
+	One of:
+	* Apply the patch found at:
 	    ftp://ftp.netbsd.org/pub/NetBSD/misc/patches/amanda-pre-2.4.patch
+	* Upgrade to AMANDA 2.4.0 or newer. The side effect of this is
+	  that the network protocol is incompatible with earlier
+	  versions.
 
 
 Installing the NetBSD System:
