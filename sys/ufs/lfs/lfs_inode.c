@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.35 2000/05/05 20:59:21 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.36 2000/05/13 23:43:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ lfs_update(v)
 				  struct vnode *a_vp;
 				  struct timespec *a_access;
 				  struct timespec *a_modify;
-				  int a_waitfor;
+				  int a_flags;
 				  } */ *ap = v;
 	struct inode *ip;
 	struct vnode *vp = ap->a_vp;
@@ -144,9 +144,10 @@ lfs_update(v)
 	 * already been scheduled for writing, but the writes have not
 	 * yet completed, lfs_vflush will not be called, and vinvalbuf
 	 * will cause a panic.  So, we must wait until any pending write
-	 * for our inode completes, if we are called with LFS_SYNC set.
+	 * for our inode completes, if we are called with UPDATE_WAIT set.
 	 */
-	while((ap->a_waitfor & LFS_SYNC) && WRITEINPROG(vp)) {
+	while((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
+	    WRITEINPROG(vp)) {
 #ifdef DEBUG_LFS
 		printf("lfs_update: sleeping on inode %d (in-progress)\n",ip->i_number);
 #endif
@@ -165,7 +166,7 @@ lfs_update(v)
 	}
 	
 	/* If sync, push back the vnode and any dirty blocks it may have. */
-	if(ap->a_waitfor & LFS_SYNC) {
+	if((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP))==UPDATE_WAIT) {
 		/* Avoid flushing VDIROP. */
 		++fs->lfs_diropwait;
 		while(vp->v_flag & VDIROP) {

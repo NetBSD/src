@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.11 2000/03/30 12:41:11 augustss Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.12 2000/05/13 23:43:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -163,7 +163,7 @@ ext2fs_read(v)
 	if (!(vp->v_mount->mnt_flag & MNT_NOATIME)) {
 		ip->i_flag |= IN_ACCESS;
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
-			error = VOP_UPDATE(vp, NULL, NULL, 1);
+			error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	}
 	return (error);
 }
@@ -295,6 +295,6 @@ ext2fs_write(v)
 			uio->uio_resid = resid;
 		}
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
-		error = VOP_UPDATE(vp, NULL, NULL, 1);
+		error = VOP_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	return (error);
 }

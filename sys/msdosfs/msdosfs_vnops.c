@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.96 2000/04/22 22:45:37 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.97 2000/05/13 23:43:11 perseant Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -757,7 +757,7 @@ msdosfs_update(v)
 		struct vnode *a_vp;
 		struct timespec *a_access;
 		struct timespec *a_modify;
-		int a_waitfor;
+		int a_flags;
 	} */ *ap = v;
 	struct buf *bp;
 	struct direntry *dirp;
@@ -783,7 +783,7 @@ msdosfs_update(v)
 	if (error)
 		return (error);
 	DE_EXTERNALIZE(dirp, dep);
-	if (ap->a_waitfor == MNT_WAIT)
+	if (ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP))
 		return (bwrite(bp));
 	else {
 		bdwrite(bp);

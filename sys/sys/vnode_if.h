@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.21 1999/12/07 23:58:27 thorpej Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.22 2000/05/13 23:43:12 perseant Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -1038,23 +1038,23 @@ struct vop_update_args {
 	struct vnode *a_vp;
 	struct timespec *a_access;
 	struct timespec *a_modify;
-	int a_waitfor;
+	int a_flags;
 };
 extern struct vnodeop_desc vop_update_desc;
 static __inline int VOP_UPDATE __P((struct vnode *, struct timespec *, 
     struct timespec *, int)) __attribute__((__unused__));
-static __inline int VOP_UPDATE(vp, access, modify, waitfor)
+static __inline int VOP_UPDATE(vp, access, modify, flags)
 	struct vnode *vp;
 	struct timespec *access;
 	struct timespec *modify;
-	int waitfor;
+	int flags;
 {
 	struct vop_update_args a;
 	a.a_desc = VDESC(vop_update);
 	a.a_vp = vp;
 	a.a_access = access;
 	a.a_modify = modify;
-	a.a_waitfor = waitfor;
+	a.a_flags = flags;
 	return (VCALL(vp, VOFFSET(vop_update), &a));
 }
 

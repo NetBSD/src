@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.30 2000/03/30 12:41:12 augustss Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.31 2000/05/13 23:43:13 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -75,8 +75,8 @@ static int ffs_indirtrunc __P((struct inode *, ufs_daddr_t, ufs_daddr_t,
  * updated but that the times have already been set. The access
  * and modified times are taken from the second and third parameters;
  * the inode change time is always taken from the current time. If
- * waitfor is set, then wait for the disk write of the inode to
- * complete.
+ * UPDATE_WAIT flag is set, or UPDATE_DIROP is set and we are not doing
+ * softupdates, then wait for the disk write of the inode to complete.
  */
 
 int
@@ -87,7 +87,7 @@ ffs_update(v)
 		struct vnode *a_vp;
 		struct timespec *a_access;
 		struct timespec *a_modify;
-		int a_waitfor;
+		int a_flags;
 	} */ *ap = v;
 	struct fs *fs;
 	struct buf *bp;
@@ -95,6 +95,7 @@ ffs_update(v)
 	int error;
 	struct timespec ts;
 	caddr_t cp;
+	int waitfor;
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
@@ -103,10 +104,16 @@ ffs_update(v)
 	FFS_ITIMES(ip,
 	    ap->a_access ? ap->a_access : &ts,
 	    ap->a_modify ? ap->a_modify : &ts, &ts);
-	if ((ip->i_flag & IN_MODIFIED) == 0 && ap->a_waitfor != MNT_WAIT)
+	if ((ip->i_flag & IN_MODIFIED) == 0 && (ap->a_flags & UPDATE_WAIT) == 0)
 		return (0);
 	ip->i_flag &= ~IN_MODIFIED;
 	fs = ip->i_fs;
+
+	waitfor=0;
+	if ((ap->a_flags & UPDATE_DIROP) && !DOINGSOFTDEP(ap->a_vp))
+		waitfor = UPDATE_WAIT;
+	waitfor |= ap->a_flags & UPDATE_WAIT;
+
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.
@@ -123,7 +130,7 @@ ffs_update(v)
 		return (error);
 	}
 	if (DOINGSOFTDEP(ap->a_vp))
-		softdep_update_inodeblock(ip, bp, ap->a_waitfor);
+		softdep_update_inodeblock(ip, bp, waitfor);
 	else if (ip->i_ffs_effnlink != ip->i_ffs_nlink)
 		panic("ffs_update: bad link cnt");
 	cp = (caddr_t)bp->b_data +
@@ -134,7 +141,7 @@ ffs_update(v)
 	else
 #endif
 		memcpy(cp, &ip->i_din.ffs_din, DINODE_SIZE);
-	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
+	if (waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
 		return (bwrite(bp));
 	} else {
 		bdwrite(bp);
@@ -196,7 +203,7 @@ ffs_truncate(v)
 		memset((char *)&oip->i_ffs_shortlink, 0, (u_int)oip->i_ffs_size);
 		oip->i_ffs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 1));
+		return (VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT));
 	}
 	if (oip->i_ffs_size == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -258,7 +265,7 @@ ffs_truncate(v)
 		else
 			bawrite(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 1));
+		return (VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT));
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -318,7 +325,7 @@ ffs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_ffs_db[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = VOP_UPDATE(ovp, NULL, NULL, 1)) != 0)
+	if ((error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT)) != 0)
 		allerror = error;
 	/*
 	 * Having written the new inode to disk, save its new configuration

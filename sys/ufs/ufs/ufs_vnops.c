@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.65 2000/05/05 20:59:20 perseant Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.66 2000/05/13 23:43:16 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -675,7 +675,7 @@ ufs_link(v)
 	ip->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(vp))
 		softdep_change_linkcnt(ip);
-	error = VOP_UPDATE(vp, NULL, NULL, !DOINGSOFTDEP(vp));
+	error = VOP_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
 		ufs_makedirentry(ip, cnp, &newdir);
 		error = ufs_direnter(dvp, vp, &newdir, cnp, NULL);
@@ -915,7 +915,7 @@ abortit:
 	if (DOINGSOFTDEP(fvp))
 		softdep_change_linkcnt(ip);
 	ip->i_flag |= IN_CHANGE;
-	if ((error = VOP_UPDATE(fvp, NULL, NULL, !DOINGSOFTDEP(fvp))) != 0) {
+	if ((error = VOP_UPDATE(fvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		VOP_UNLOCK(fvp, 0);
 		goto bad;
 	}
@@ -978,7 +978,7 @@ abortit:
 			if (DOINGSOFTDEP(tdvp))
 				softdep_change_linkcnt(dp);
 			if ((error = VOP_UPDATE(tdvp, NULL, NULL, 
-			    !DOINGSOFTDEP(tdvp))) != 0) {
+			    UPDATE_DIROP)) != 0) {
 				dp->i_ffs_effnlink--;
 				dp->i_ffs_nlink--;
 				dp->i_flag |= IN_CHANGE;
@@ -996,7 +996,8 @@ abortit:
 				dp->i_flag |= IN_CHANGE;
 				if (DOINGSOFTDEP(tdvp))
 					softdep_change_linkcnt(dp);
-				(void)VOP_UPDATE(tdvp, NULL, NULL, 1);
+				(void)VOP_UPDATE(tdvp, NULL, NULL,
+						 UPDATE_WAIT|UPDATE_DIROP);
 			}
 			goto bad;
 		}
@@ -1221,7 +1222,7 @@ ufs_mkdir(v)
 		softdep_change_linkcnt(ip);
 	if (cnp->cn_flags & ISWHITEOUT)
 		ip->i_ffs_flags |= UF_OPAQUE;
-	error = VOP_UPDATE(tvp, NULL, NULL, MNT_WAIT);
+	error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_WAIT|UPDATE_DIROP);
 
 	/*
 	 * Bump link count in parent directory to reflect work done below.
@@ -1233,7 +1234,7 @@ ufs_mkdir(v)
 	dp->i_flag |= IN_CHANGE;
 	if (DOINGSOFTDEP(dvp))
 		softdep_change_linkcnt(dp);
-	if ((error = VOP_UPDATE(dvp, NULL, NULL, !DOINGSOFTDEP(dvp))) != 0)
+	if ((error = VOP_UPDATE(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
 
 	/*
@@ -1281,7 +1282,7 @@ ufs_mkdir(v)
 			blkoff += DIRBLKSIZ;
 		}
 	}
-	if ((error = VOP_UPDATE(tvp, NULL, NULL, !DOINGSOFTDEP(tvp))) != 0) {
+	if ((error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		(void)VOP_BWRITE(bp);
 		goto bad;
 	}
@@ -2006,7 +2007,7 @@ ufs_makeinode(mode, dvp, vpp, cnp)
 	/*
 	 * Make sure inode goes to disk before directory entry.
 	 */
-	if ((error = VOP_UPDATE(tvp, NULL, NULL, !DOINGSOFTDEP(tvp))) != 0)
+	if ((error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
 	ufs_makedirentry(ip, cnp, &newdir);
 	if ((error = ufs_direnter(dvp, tvp, &newdir, cnp, NULL)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.21 2000/05/05 20:59:21 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.22 2000/05/13 23:43:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,22 +124,6 @@
 
 #define	LFS_LABELPAD	8192		/* LFS label size */
 #define	LFS_SBPAD	8192		/* LFS superblock size */
-
-/*
- * XXX
- * This is a kluge and NEEDS to go away.
- *
- * Right now, ufs code handles most of the calls for directory operations
- * such as create, mkdir, link, etc.  As a result VOP_UPDATE is being
- * called with waitfor set (since ffs does these things synchronously).
- * Since LFS does not want to do these synchronously, we treat the last
- * argument to lfs_update as a set of flags.  If LFS_SYNC is set, then
- * the update should be synchronous, if not, do it asynchronously.
- * Unfortunately, this means that LFS won't work with NFS yet because
- * NFS goes through paths that will make normal calls to ufs which will
- * call lfs with a last argument of 1.
- */
-#define	LFS_SYNC	0x02
 
 /* On-disk and in-memory checkpoint segment usage structure. */
 typedef struct segusage SEGUSE;

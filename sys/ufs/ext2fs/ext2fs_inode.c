@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.14 2000/03/30 12:41:11 augustss Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.15 2000/05/13 23:43:12 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -116,8 +116,8 @@ out:
  * used to specify that the inode needs to be updated but that the times have
  * already been set. The access and modified times are taken from the second
  * and third parameters; the inode change time is always taken from the current
- * time. If waitfor is set, then wait for the disk write of the inode to
- * complete.
+ * time. If UPDATE_WAIT or UPDATE_DIROP is set, then wait for the disk
+ * write of the inode to complete.
  */
 int
 ext2fs_update(v)
@@ -127,7 +127,7 @@ ext2fs_update(v)
 		struct vnode *a_vp;
 		struct timespec *a_access;
 		struct timespec *a_modify;
-		int a_waitfor;
+		int a_flags;
 	} */ *ap = v;
 	struct m_ext2fs *fs;
 	struct buf *bp;
@@ -157,7 +157,8 @@ ext2fs_update(v)
 	cp = (caddr_t)bp->b_data +
 	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
 	e2fs_isave(&ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
-	if (ap->a_waitfor && (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
+	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) &&
+	    (ap->a_vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
 		return (bwrite(bp));
 	else {
 		bdwrite(bp);
@@ -213,7 +214,7 @@ ext2fs_truncate(v)
 			(u_int)oip->i_e2fs_size);
 		oip->i_e2fs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 1));
+		return (VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT));
 	}
 	if (oip->i_e2fs_size == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -248,7 +249,7 @@ ext2fs_truncate(v)
 		else
 			bawrite(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, NULL, NULL, 1));
+		return (VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT));
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -306,7 +307,7 @@ ext2fs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_e2fs_blocks[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = VOP_UPDATE(ovp, NULL, NULL, 1)) != 0)
+	if ((error = VOP_UPDATE(ovp, NULL, NULL, UPDATE_WAIT)) != 0)
 		allerror = error;
 	/*
 	 * Having written the new inode to disk, save its new configuration
