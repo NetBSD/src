@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2000/02/21 08:10:21 mjacob Exp $
+# $NetBSD: Makefile.inc,v 1.2 2000/02/21 08:40:54 mjacob Exp $
 # $OpenBSD: $
 # $FreeBSD: $
 #
@@ -45,4 +45,4 @@ COPTS	+=	-I/usr/include/cam/scsi -DSESINC="<scsi_ses.h>"
 .endif
 BINDIR	?=	${DESTDIR}/usr/sbin
 
-.PATH:	../srcs
+.PATH:	${.CURDIR}/../srcs
