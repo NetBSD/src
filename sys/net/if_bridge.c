@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.4 2002/03/08 20:48:43 thorpej Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.5 2002/03/24 16:11:23 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.4 2002/03/08 20:48:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.5 2002/03/24 16:11:23 jdolecek Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -577,7 +577,8 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		break;
 
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		goto out;
 	}
 
 	bif->bif_ifp = ifs;
