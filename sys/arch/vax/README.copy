@@ -1,4 +1,4 @@
-	$NetBSD: README.copy,v 1.1 1995/09/16 12:00:20 ragge Exp $
+	$NetBSD: README.copy,v 1.2 1995/09/29 16:33:38 ragge Exp $
 
                 How to use copy
                 ------------------
@@ -24,7 +24,7 @@ and install this miniroot onto disk.
 
 Specify the device to read from as xx(N,0), where
 xx is the device-name and N is the unit-number, e.g.
-"tms(0,0)" for the first TMSCP-tape (TK50),
+"tms(0,1)" for the first TMSCP-tape (TK50),
 "ra(2,0)" for the third MSCP-disk/floppy (RX33/RX50)
 
 device to read from ? tms(0,1) /* Tape 0, file 1 */
@@ -32,7 +32,6 @@ device to read from ? tms(0,1) /* Tape 0, file 1 */
 Specify number of blocks to transfer. Usually this is
 sizeof(miniroot) / 512.
 It's safe to transfer more blocks than just the miniroot.
-The transfer-size must be smaller than memory-size minus 1MB.
 
 number of blocks ? 4096  /* Miniroot size is 4096 block */
                    ^^^^
@@ -54,9 +53,9 @@ Now specify the device to write miniroot to as xx(N,1)
 where xx is the drive type and N is the drive number.
 For example: ra(0,1) refers to MSCP drive #0, b partition
 
-Root disk ? : ra(1,0,1) /* Actually DUB0, partition b (swap) */
+Root disk ? : ra(0,1) /* Actually DUA0, partition b (swap) */
               ^^^^^^^^^
-Initializing 'b'-partition ... done.
+Initializing partition ... done.
 (4096 blocks written.)
 
 Halt the machine and reboot from distribution media,
