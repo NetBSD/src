@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.12 1999/03/24 05:50:59 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.13 1999/06/28 08:20:43 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -293,6 +293,7 @@ void	netintr __P((void));
 void	arpintr __P((void));
 void	atintr __P((void));
 void	ipintr __P((void));
+void	ip6intr __P((void));
 void	nsintr __P((void));
 void	clnlintr __P((void));
 void	ccittintr __P((void));
@@ -319,6 +320,10 @@ netintr()
 #endif
 		if (isr & (1 << NETISR_IP))
 			ipintr();
+#endif
+#ifdef INET6
+		if (isr & (1 << NETISR_IPV6))
+			ip6intr();
 #endif
 #ifdef NETATALK
 		if (isr & (1 << NETISR_ATALK))

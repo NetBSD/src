@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 1999/05/26 19:16:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 1999/06/28 08:20:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -741,6 +741,10 @@ softnet()
 #endif
 	if (isr & (1 << NETISR_IP))
 		ipintr();
+#endif
+#ifdef	INET6
+	if (isr & (1 << NETISR_IPV6))
+		ip6intr();
 #endif
 #ifdef	IMP
 	if (isr & (1 << NETISR_IMP))
