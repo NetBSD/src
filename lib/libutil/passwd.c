@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.20 2000/07/06 11:06:12 ad Exp $	*/
+/*	$NetBSD: passwd.c,v 1.21 2000/07/06 13:09:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.20 2000/07/06 11:06:12 ad Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.21 2000/07/06 13:09:47 ad Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -423,7 +423,7 @@ pw_getconf(char *data, size_t max, const char *key, const char *option)
 		/* Now we found our specified key */
 		while (read_line(fp, line, LINE_MAX)) {
 			/* Leaving key field */
-			if (strchr(line, ':') != NULL) {
+			if (line[0] != '\0' && strchr(line + 1, ':') != NULL) {
 				got = 1;
 				break;
 			}

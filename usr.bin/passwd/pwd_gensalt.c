@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_gensalt.c,v 1.1 2000/07/06 11:16:50 ad Exp $	*/
+/*	$NetBSD: pwd_gensalt.c,v 1.2 2000/07/06 13:09:46 ad Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -76,7 +76,7 @@ pwd_gensalt(char *salt, int max, struct passwd *pwd, char type)
 	/* Try to find an entry for the group */
 	if (*option == 0) {
 		if ((grp = getgrgid(pwd->pw_gid)) != NULL) {
-                        snprintf(grpkey, LINE_MAX - 1, ".%s", grp->gr_name);
+                        snprintf(grpkey, LINE_MAX - 1, ":%s", grp->gr_name);
 			grpkey[LINE_MAX-1] = 0;
 			pw_getconf(option, LINE_MAX, grpkey, cipher);
 		}
