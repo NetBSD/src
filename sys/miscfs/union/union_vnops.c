@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.29 1996/05/10 22:57:49 jtk Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.30 1996/05/13 07:13:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -494,7 +494,7 @@ union_lookup(v)
 		if (cnp->cn_namelen == 1 &&
 		    cnp->cn_nameptr[0] == '.' &&
 		    *ap->a_vpp != dvp) {
-		    panic("union_lookup returning . (%x) not same as startdir (%x)",
+		    panic("union_lookup returning . (%p) not same as startdir (%p)",
 			  ap->a_vpp, dvp);
 		}
 
