@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.96 2004/04/09 18:27:48 tv Exp $	*/
+/*	$NetBSD: perform.c,v 1.97 2004/04/10 09:10:17 abs Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.96 2004/04/09 18:27:48 tv Exp $");
+__RCSID("$NetBSD: perform.c,v 1.97 2004/04/10 09:10:17 abs Exp $");
 #endif
 #endif
 
@@ -960,6 +960,7 @@ read_buildinfo(char **buildinfo)
 			    buildinfo[BI_MACHINE_ARCH] = strdup(line);
 		}
 	}
+	fclose(fp);
 	if (buildinfo[BI_OPSYS] == NULL ||
 	    buildinfo[BI_OS_VERSION] == NULL ||
 	    buildinfo[BI_MACHINE_ARCH] == NULL) {
