@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
+#	$NetBSD: files.sbus,v 1.17 2001/10/03 04:28:41 mrg Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -78,6 +78,12 @@ attach	mtty at magma
 device	mbpp
 attach	mbpp at magma
 file	dev/sbus/magma.c		magma | mtty | mbpp needs-flag
+
+device siosixteen { channel = -1 }
+attach siosixteen at sbus
+device clcd: tty, cd18xx
+attach clcd at siosixteen
+file	dev/sbus/sio16.c		siosixteen | clcd needs-flag
 
 # STP4020 SBus to PCMCIA bridge (`nell' to her friends)
 device	nell: pcmciabus
