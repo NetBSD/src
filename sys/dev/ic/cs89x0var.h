@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.1 2001/11/26 19:17:08 yamt Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.2 2002/05/14 19:23:45 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -107,14 +107,14 @@ struct cs_softc {
 #endif
 
 	/* power management */
-	int (*sc_enable) __P((struct cs_softc *));
-	void (*sc_disable) __P((struct cs_softc *));
+	int (*sc_enable)(struct cs_softc *);
+	void (*sc_disable)(struct cs_softc *);
 	void *sc_powerhook;
 
 	/* dma hooks */
-	void (*sc_dma_process_rx) __P((struct cs_softc *));
-	void (*sc_dma_chipinit) __P((struct cs_softc *));
-	void (*sc_dma_attach) __P((struct cs_softc *));
+	void (*sc_dma_process_rx)(struct cs_softc *);
+	void (*sc_dma_chipinit)(struct cs_softc *);
+	void (*sc_dma_attach)(struct cs_softc *);
 };
 
 
@@ -169,14 +169,11 @@ _CS_READ_PACKET_PAGE_IO(struct cs_softc *sc, int offset)
 	return (_cs_read_port(sc, PORT_PKTPG_DATA));
 }
 
-static __inline__ u_int16_t CS_READ_PACKET_PAGE_IO __P((bus_space_tag_t,
-	bus_space_handle_t, int));
+static __inline__ u_int16_t CS_READ_PACKET_PAGE_IO(bus_space_tag_t,
+	bus_space_handle_t, int);
 
 static __inline__ u_int16_t
-CS_READ_PACKET_PAGE_IO(iot, ioh, offset)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int offset;
+CS_READ_PACKET_PAGE_IO(bus_space_tag_t iot, bus_space_handle_t ioh, int offset)
 {
 
 	bus_space_write_2(iot, ioh, PORT_PKTPG_PTR, offset);
@@ -233,17 +230,17 @@ do {									\
 
 #define MAXLOOP            0x8888
 
-int	cs_attach __P((struct cs_softc *sc, u_int8_t *enaddr,
-	    int *media, int nmedia, int defmedia));
-int	cs_detach __P((struct cs_softc *sc));
-int	cs_verify_eeprom __P((bus_space_tag_t, bus_space_handle_t));
-int	cs_read_eeprom __P((bus_space_tag_t, bus_space_handle_t, int,
-	    u_int16_t *));
-int	cs_intr __P((void *));
-int cs_activate __P((struct device *, enum devact));
-void	cs_ether_input __P((struct cs_softc *, struct mbuf *));
-void	cs_print_rx_errors __P((struct cs_softc *, u_int16_t));
-int	cs_init __P((struct ifnet *));
+int	cs_attach(struct cs_softc *sc, u_int8_t *enaddr,
+		  int *media, int nmedia, int defmedia);
+int	cs_detach(struct cs_softc *sc);
+int	cs_verify_eeprom(bus_space_tag_t, bus_space_handle_t);
+int	cs_read_eeprom(bus_space_tag_t, bus_space_handle_t, int,
+		       u_int16_t *);
+int	cs_intr(void *);
+int	cs_activate(struct device *, enum devact);
+void	cs_ether_input(struct cs_softc *, struct mbuf *);
+void	cs_print_rx_errors(struct cs_softc *, u_int16_t);
+int	cs_init(struct ifnet *);
 
 #define CS_IS_ENABLED(sc)	((sc)->sc_cfgflags & CFGFLG_ENABLED)
 
