@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.58.2.3 2002/11/03 14:36:36 he Exp $
+#  $NetBSD: build.sh,v 1.58.2.4 2002/11/03 16:28:36 he Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -232,9 +232,7 @@ export MAKEFLAGS MACHINE MACHINE_ARCH
 make="${TOOLDIR-nonexistent}/bin/nbmake"
 if [ -x $make ]; then
 	for f in usr.bin/make/*.[ch] usr.bin/make/lst.lib/*.[ch]; do
-		# Explcitly use /bin/test here; makes this script
-		# work otherwise-unchanged with Solaris 8's /bin/sh.
-		if /bin/test $f -nt $make; then
+		if [ $f -nt $make ]; then
 			do_rebuildmake=true; break
 		fi
 	done
@@ -375,7 +373,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.58.2.3 2002/11/03 14:36:36 he Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.58.2.4 2002/11/03 16:28:36 he Exp $
 #
 
 EOF
