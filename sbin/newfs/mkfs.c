@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.81 2003/09/11 12:19:44 dsl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.82 2003/09/17 21:09:18 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.81 2003/09/11 12:19:44 dsl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.82 2003/09/17 21:09:18 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -1391,7 +1391,8 @@ zap_old_sblock(int sblkoff)
 	if (sblkoff >= sblock.fs_sblockloc) {
 		/* ...unless we will write that area anyway */
 		if (sblkoff >= cg0_data)
-			wtfs(sblkoff/sectorsize, sizeof sblock, iobuf);
+			wtfs(sblkoff / sectorsize,
+			    roundup(sizeof sblock, sectorsize), iobuf);
 		return;
 	}
 
