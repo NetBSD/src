@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcent.h,v 1.1 2000/06/02 22:57:56 fvdl Exp $	*/
+/*	$NetBSD: rpcent.h,v 1.2 2004/08/16 02:47:54 ginsbach Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -58,7 +58,7 @@ extern struct rpcent *getrpcbynumber_r __P((int, struct rpcent *, char *, int));
 extern struct rpcent *getrpcent_r __P((struct rpcent *, char *, int));
 
 /* Old interfaces that return a pointer to a static area;  MT-unsafe */
-extern struct rpcent *getrpcbyname	__P((char *));
+extern struct rpcent *getrpcbyname	__P((const char *));
 extern struct rpcent *getrpcbynumber	__P((int));
 extern struct rpcent *getrpcent		__P((void));
 extern void setrpcent __P((int));
