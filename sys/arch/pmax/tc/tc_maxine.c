@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_maxine.c,v 1.4 1999/12/01 08:55:09 nisimura Exp $	*/
+/*	$NetBSD: tc_maxine.c,v 1.5 2000/02/29 07:20:21 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_maxine.c,v 1.4 1999/12/01 08:55:09 nisimura Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: tc_maxine.c,v 1.5 2000/02/29 07:20:21 nisimura Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,15 +50,15 @@ __KERNEL_RCSID(0, "$NetBSD: tc_maxine.c,v 1.4 1999/12/01 08:55:09 nisimura Exp $
  * device and sits in slot #3 space.
  */
 static struct tc_slotdesc tc_xine_slots [4] = {
-       	{ TC_KV(XINE_PHYS_TC_0_START), TC_C(0) }, /* 0 - tc option slot 0 */
-	{ TC_KV(XINE_PHYS_TC_1_START), TC_C(1) }, /* 1 - tc option slot 1 */
-	{ TC_KV(XINE_PHYS_CFB_START),  TC_C(2) }, /* 2 - fb on b'board */
-	{ TC_KV(XINE_PHYS_TC_3_START), TC_C(3) }, /* 3 - IOASIC on b'board */
+    { KV(XINE_PHYS_TC_0_START), C(SYS_DEV_OPT0),  },	/* 0 - opt slot 0 */
+    { KV(XINE_PHYS_TC_1_START), C(SYS_DEV_OPT1),  },	/* 1 - opt slot 1 */
+    { KV(XINE_PHYS_CFB_START),	C(SYS_DEV_BOGUS), },	/* 2 - unused */
+    { KV(XINE_PHYS_TC_3_START), C(SYS_DEV_BOGUS), },	/* 3 - IOASIC */
 };
 
 const struct tc_builtin tc_xine_builtins[] = {
-	{ "IOCTL   ",	3, 0x0, TC_C(3), },
-	{ "PMAG-DV ",	2, 0x0, TC_C(2), },	/* pretend as a TC device */
+	{ "IOCTL   ",	3, 0x0, C(3), },
+	{ "PMAG-DV ",	2, 0x0, C(2), },	/* pretend as a TC device */
 };
 
 struct tcbus_attach_args xine_tc_desc = {

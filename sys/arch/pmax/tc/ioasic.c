@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.10 2000/02/03 08:13:45 nisimura Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.11 2000/02/29 07:20:22 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.10 2000/02/03 08:13:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.11 2000/02/29 07:20:22 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,16 +49,15 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.10 2000/02/03 08:13:45 nisimura Exp $")
 #include "opt_dec_maxine.h"
 #include "opt_dec_3maxplus.h"
 
-#define	C(x)		((void *)(x))
 #define ARRAY_SIZEOF(x) (sizeof((x)) / sizeof((x)[0]))
 
 #if defined(DEC_3MIN)
 static struct ioasic_dev kmin_ioasic_devs[] = {
-	{ "lance",	0x0C0000, C(KMIN_LANCE_SLOT),	IOASIC_INTR_LANCE, },
-	{ "scc",	0x100000, C(KMIN_SCC0_SLOT),	IOASIC_INTR_SCC_0, },
-	{ "scc",	0x180000, C(KMIN_SCC1_SLOT),	IOASIC_INTR_SCC_1, },
-	{ "mc146818",	0x200000, C(-1),		0 },
-	{ "asc",	0x300000, C(KMIN_SCSI_SLOT),	IOASIC_INTR_SCSI, },
+	{ "lance",	0x0C0000, C(SYS_DEV_LANCE),	IOASIC_INTR_LANCE, },
+	{ "scc",	0x100000, C(SYS_DEV_SCC0),	IOASIC_INTR_SCC_0, },
+	{ "scc",	0x180000, C(SYS_DEV_SCC1),	IOASIC_INTR_SCC_1, },
+	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS),		0 },
+	{ "asc",	0x300000, C(SYS_DEV_SCSI),	IOASIC_INTR_SCSI, },
 };
 static int kmin_builtin_ndevs = ARRAY_SIZEOF(kmin_ioasic_devs);
 static int kmin_ioasic_ndevs = ARRAY_SIZEOF(kmin_ioasic_devs);
@@ -66,16 +65,16 @@ static int kmin_ioasic_ndevs = ARRAY_SIZEOF(kmin_ioasic_devs);
 
 #if defined(DEC_MAXINE)
 static struct ioasic_dev xine_ioasic_devs[] = {
-	{ "lance",	0x0C0000, C(XINE_LANCE_SLOT),	IOASIC_INTR_LANCE },
-	{ "scc",	0x100000, C(XINE_SCC0_SLOT),	IOASIC_INTR_SCC_0 },
-	{ "mc146818",	0x200000, C(-1),		0 },
-	{ "isdn",	0x240000, C(XINE_ISDN_SLOT),	XINE_INTR_ISDN, },
-	{ "dtop",	0x280000, C(XINE_DTOP_SLOT),	XINE_INTR_DTOP, },
-	{ "fdc",	0x2C0000, C(XINE_FLOPPY_SLOT),	0 },
-	{ "asc",	0x300000, C(XINE_SCSI_SLOT),	IOASIC_INTR_SCSI, },
-	{ "(TC0)",	0x0,	  C(0),			XINE_INTR_TC_0,	},
-	{ "(TC1)",	0x0,	  C(1),			XINE_INTR_TC_1,	},
-	{ "(TC2)",	0x0,	  C(2),			XINE_INTR_VINT,	},
+	{ "lance",	0x0C0000, C(SYS_DEV_LANCE),	IOASIC_INTR_LANCE },
+	{ "scc",	0x100000, C(SYS_DEV_SCC0),	IOASIC_INTR_SCC_0 },
+	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS),		0 },
+	{ "isdn",	0x240000, C(SYS_DEV_ISDN),	XINE_INTR_ISDN, },
+	{ "dtop",	0x280000, C(SYS_DEV_DTOP),	XINE_INTR_DTOP, },
+	{ "fdc",	0x2C0000, C(SYS_DEV_FDC),	0 },
+	{ "asc",	0x300000, C(SYS_DEV_SCSI),	IOASIC_INTR_SCSI, },
+	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),	XINE_INTR_TC_0,	},
+	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),	XINE_INTR_TC_1,	},
+	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),	XINE_INTR_VINT,	},
 };
 static int xine_builtin_ndevs = ARRAY_SIZEOF(xine_ioasic_devs) - 3;
 static int xine_ioasic_ndevs = ARRAY_SIZEOF(xine_ioasic_devs);
@@ -83,14 +82,14 @@ static int xine_ioasic_ndevs = ARRAY_SIZEOF(xine_ioasic_devs);
 
 #if defined(DEC_3MAXPLUS)
 static struct ioasic_dev kn03_ioasic_devs[] = {
-	{ "lance",	0x0C0000, C(KN03_LANCE_SLOT),	IOASIC_INTR_LANCE, },
-	{ "z8530   ",	0x100000, C(KN03_SCC0_SLOT),	IOASIC_INTR_SCC_0, },
-	{ "z8530   ",	0x180000, C(KN03_SCC1_SLOT),	IOASIC_INTR_SCC_1, },
-	{ "mc146818",	0x200000, C(-1),		0,		},
-	{ "asc",	0x300000, C(KN03_SCSI_SLOT),	IOASIC_INTR_SCSI, },
-	{ "(TC0)",	0x0,	  C(0),			KN03_INTR_TC_0,	},
-	{ "(TC1)",	0x0,	  C(1),			KN03_INTR_TC_1,	},
-	{ "(TC2)",	0x0,	  C(2),			KN03_INTR_TC_2,	},
+	{ "lance",	0x0C0000, C(SYS_DEV_LANCE),	IOASIC_INTR_LANCE, },
+	{ "z8530   ",	0x100000, C(SYS_DEV_SCC0),	IOASIC_INTR_SCC_0, },
+	{ "z8530   ",	0x180000, C(SYS_DEV_SCC1),	IOASIC_INTR_SCC_1, },
+	{ "mc146818",	0x200000, C(SYS_DEV_BOGUS),	0,		},
+	{ "asc",	0x300000, C(SYS_DEV_SCSI),	IOASIC_INTR_SCSI, },
+	{ "(TC0)",	0x0,	  C(SYS_DEV_OPT0),	KN03_INTR_TC_0,	},
+	{ "(TC1)",	0x0,	  C(SYS_DEV_OPT1),	KN03_INTR_TC_1,	},
+	{ "(TC2)",	0x0,	  C(SYS_DEV_OPT2),	KN03_INTR_TC_2,	},
 };
 static int kn03_builtin_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs) - 3;
 static int kn03_ioasic_ndevs = ARRAY_SIZEOF(kn03_ioasic_devs);
@@ -231,13 +230,5 @@ found:
 	i = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
 	i |= intrbits;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, i);
-}
-
-void
-ioasic_intr_disestablish(ioa, cookie)
-	struct device *ioa;
-	void *cookie;
-{
-	panic("ioasic_intr_disestablish: cookie %d", (int)cookie);
 }
 #endif
