@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.25 2001/07/08 16:32:23 abs Exp $
+#	$NetBSD: GENERIC,v 1.26 2001/08/29 17:37:47 briggs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.25 $"
+#ident		"GENERIC-$Revision: 1.26 $"
 
 maxusers	32
 
@@ -207,6 +207,7 @@ lpt0	at isa? port 0x3bc irq 7	# standard PC parallel ports
 # SCSI Controllers and Devices
 
 # PCI SCSI controllers
+adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
@@ -216,6 +217,7 @@ siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # SCSI bus support
+scsibus* at adw?
 scsibus* at ahc?
 scsibus* at aic?
 scsibus* at iha?
