@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bcmp.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: bcmp.c,v 1.4 1995/01/06 00:48:17 cgd Exp $";
+static char *rcsid = "$Id: bcmp.c,v 1.5 1995/10/07 09:26:19 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
