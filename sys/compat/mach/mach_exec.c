@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.43 2003/12/06 15:15:19 manu Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.44 2003/12/06 17:04:50 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.43 2003/12/06 15:15:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.44 2003/12/06 17:04:50 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -105,6 +105,7 @@ const struct emul emul_mach = {
 	NULL,
 	NULL,
 #endif
+	NULL,
 	setregs,
 	mach_e_proc_exec,
 	mach_e_proc_fork,
@@ -367,10 +368,25 @@ mach_e_proc_exit(p)
 
 	if (--med->med_bootstrap->mp_refcount <= 0)
 		mach_port_put(med->med_bootstrap);
-	if (--med->med_kernel->mp_refcount <= 0) 
+
+	/* 
+	 * If the kernel and host port are still referenced, remove
+	 * the pointer to this process' struct proc, as it will 
+	 * become invalid once the process will exit.
+	 */
+	if (--med->med_kernel->mp_refcount <= 0) {
 		mach_port_put(med->med_kernel);
-	if (--med->med_host->mp_refcount <= 0)  
+	} else {
+		med->med_kernel->mp_datatype = MACH_MP_NONE;
+		med->med_kernel->mp_data = NULL;
+	}
+
+	if (--med->med_host->mp_refcount <= 0) { 
 		mach_port_put(med->med_host);  
+	} else {
+		med->med_host->mp_datatype = MACH_MP_NONE;
+		med->med_host->mp_data = NULL;
+	}
 
 	for (i = 0; i <= MACH_EXC_MAX; i++)
 		if ((med->med_exc[i] != NULL) &&
