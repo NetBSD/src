@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.20 2003/07/26 20:34:14 salo Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.21 2003/10/23 22:17:58 cube Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mixerctl.c,v 1.20 2003/07/26 20:34:14 salo Exp $");
+__RCSID("$NetBSD: mixerctl.c,v 1.21 2003/10/23 22:17:58 cube Exp $");
 #endif
 
 #include <stdio.h>
@@ -274,7 +274,16 @@ wrarg(int fd, char *arg, char *sep)
 			return;
 		}
 		arg[l-2] = 0;
-	} else
+	} else if (q > arg && (*(q-1) == '+' || *(q-1) == '-')) {
+		if (sscanf(q+1, "%d", &incdec) != 1) {
+			warnx("Bad number %s", q+1);
+			return;
+		}
+		if (*(q-1) == '-')
+			incdec *= -1;
+		*(q-1) = 0;
+		q = NULL;
+	} else		
 		*q++ = 0;
 
 	p = findfield(arg);
