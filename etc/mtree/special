@@ -1,12 +1,12 @@
-#	$NetBSD: special,v 1.48 2001/10/15 02:56:42 lukem Exp $
+#	$NetBSD: special,v 1.49 2001/10/15 03:00:23 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
 # /etc/security checks:
 #	- All of these are checked if $check_mtree is enabled.
-#	- Files with "nomail" tags are highlighted if they change.
-#	- Files without "nomail" or "exclude" tags are displayed
+#	- Files with "nodiff" tags are highlighted if they change.
+#	- Files without "nodiff" or "exclude" tags are displayed
 #	  with diff(1)s if $check_changelist is enabled.
 #
 
@@ -85,7 +85,7 @@
 ./etc/mail.rc			type=file mode=0644
 ./etc/mailer.conf		type=file mode=0644
 ./etc/man.conf			type=file mode=0644
-./etc/master.passwd		type=file mode=0600 tags=nomail
+./etc/master.passwd		type=file mode=0600 tags=nodiff
 ./etc/mk.conf			type=file mode=0644
 ./etc/moduli			type=file mode=0444
 ./etc/monthly			type=file mode=0644
@@ -218,11 +218,11 @@
 ./etc/shosts.equiv		type=file mode=0600 optional
 ./etc/spwd.db			type=file mode=0600 tags=exclude
 ./etc/ssh.conf			type=file mode=0644 optional
-./etc/ssh_host_dsa_key		type=file mode=0600 optional tags=nomail
+./etc/ssh_host_dsa_key		type=file mode=0600 optional tags=nodiff
 ./etc/ssh_host_dsa_key.pub	type=file mode=0644 optional
-./etc/ssh_host_key		type=file mode=0600 optional tags=nomail
+./etc/ssh_host_key		type=file mode=0600 optional tags=nodiff
 ./etc/ssh_host_key.pub		type=file mode=0644 optional
-./etc/ssh_host_rsa_key		type=file mode=0600 optional tags=nomail
+./etc/ssh_host_rsa_key		type=file mode=0600 optional tags=nodiff
 ./etc/ssh_host_rsa_key.pub	type=file mode=0644 optional
 ./etc/ssh_known_hosts		type=file mode=0644 optional
 ./etc/ssh_known_hosts2		type=file mode=0644 optional
@@ -248,11 +248,11 @@
 ./root/.ssh/authorized_keys	type=file mode=0600 optional
 ./root/.ssh/authorized_keys2	type=file mode=0600 optional
 ./root/.ssh/config		type=file mode=0644 optional
-./root/.ssh/id_dsa		type=file mode=0600 optional tags=nomail
+./root/.ssh/id_dsa		type=file mode=0600 optional tags=nodiff
 ./root/.ssh/id_dsa.pub		type=file mode=0644 optional
-./root/.ssh/id_rsa		type=file mode=0600 optional tags=nomail
+./root/.ssh/id_rsa		type=file mode=0600 optional tags=nodiff
 ./root/.ssh/id_rsa.pub		type=file mode=0644 optional
-./root/.ssh/identity		type=file mode=0600 optional tags=nomail
+./root/.ssh/identity		type=file mode=0600 optional tags=nodiff
 ./root/.ssh/identity.pub	type=file mode=0644 optional
 ./root/.ssh/known_hosts		type=file mode=0644 optional
 ./root/.ssh/known_hosts2	type=file mode=0644 optional
