@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.45 1997/02/18 20:49:35 mrg Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.46 1997/02/19 08:30:04 cjs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -1252,9 +1252,11 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		 * Don't allow this to change in a secure environment.
 		 */
 		if (securelevel > 0)
-			return (EPERM);
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip_forwsrcrt));
+			return (sysctl_rdint(oldp, oldlenp, newp,
+			    ip_forwsrcrt));
+		else
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
+			    &ip_forwsrcrt));
 	case IPCTL_DIRECTEDBCAST:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_directedbcast));
