@@ -1,4 +1,4 @@
-/* $NetBSD: mach_sysent.c,v 1.12 2003/11/16 01:14:07 manu Exp $ */
+/* $NetBSD: mach_sysent.c,v 1.13 2003/11/20 07:12:34 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_sysent.c,v 1.12 2003/11/16 01:14:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_sysent.c,v 1.13 2003/11/20 07:12:34 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
