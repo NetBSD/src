@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.11 1998/01/30 23:38:09 perry Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.12 1998/02/03 01:48:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtoul.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoul.c,v 1.11 1998/01/30 23:38:09 perry Exp $");
+__RCSID("$NetBSD: strtoul.c,v 1.12 1998/02/03 01:48:30 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,12 +57,12 @@ unsigned long
 strtoul(nptr, endptr, base)
 	const char *nptr;
 	char **endptr;
-	register int base;
+	int base;
 {
-	register const char *s;
-	register unsigned long acc, cutoff;
-	register int c;
-	register int neg, any, cutlim;
+	const char *s;
+	unsigned long acc, cutoff;
+	int c;
+	int neg, any, cutlim;
 
 	/*
 	 * See strtol for comments as to the logic used.

@@ -1,4 +1,4 @@
-/*	$NetBSD: strtouq.c,v 1.8 1998/01/30 23:38:10 perry Exp $	*/
+/*	$NetBSD: strtouq.c,v 1.9 1998/02/03 01:48:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtouq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtouq.c,v 1.8 1998/01/30 23:38:10 perry Exp $");
+__RCSID("$NetBSD: strtouq.c,v 1.9 1998/02/03 01:48:31 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,12 +60,17 @@ u_quad_t
 _strtouq(nptr, endptr, base)
 	const char *nptr;
 	char **endptr;
-	register int base;
+	int base;
 {
-	register const char *s;
-	register u_quad_t acc, cutoff;
-	register int c;
-	register int neg, any, cutlim;
+	const char *s;
+	u_quad_t acc, cutoff;
+	int c;
+	int neg, any, cutlim;
+
+#ifdef __GNUC__
+	/* This outrageous construct just to shut up a GCC warning. */
+	(void) &acc;
+#endif
 
 	/*
 	 * See strtoq for comments as to the logic used.
