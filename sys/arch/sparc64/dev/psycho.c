@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.47 2002/05/16 01:01:45 thorpej Exp $	*/
+/*	$NetBSD: psycho.c,v 1.48 2002/05/16 20:28:33 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -398,6 +398,7 @@ found:
 	psycho_get_bus_range(sc->sc_node, psycho_br);
 
 	pba.pba_bus = psycho_br[0];
+	pba.pba_bridgetag = NULL;
 
 	printf("bus range %u to %u", psycho_br[0], psycho_br[1]);
 	printf("; PCI bus %d", psycho_br[0]);
@@ -593,7 +594,6 @@ psycho_alloc_chipset(pp, node, pc)
 	memcpy(npc, pc, sizeof *pc);
 	npc->cookie = pp;
 	npc->rootnode = node;
-	npc->curnode = node;
 
 	return (npc);
 }
