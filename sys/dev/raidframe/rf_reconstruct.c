@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.36 2002/09/14 17:53:59 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.37 2002/09/16 02:25:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.36 2002/09/14 17:53:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.37 2002/09/16 02:25:08 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -440,15 +440,17 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			/* some component other than this has failed.
 			   Let's not make things worse than they already
 			   are... */
-			printf("RAIDFRAME: Unable to reconstruct to disk at:\n");
-			printf("      Row: %d Col: %d   Too many failures.\n",
-			       row, col);
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:     Row: %d Col: %d   Too many failures.\n",
+			       raidPtr->raidid, row, col);
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[row][col].status == rf_ds_reconstructing) {
-			printf("RAIDFRAME: Unable to reconstruct to disk at:\n");
-			printf("      Row: %d Col: %d   Reconstruction already occuring!\n", row, col);
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:    Row: %d Col: %d   Reconstruction already occuring!\n", raidPtr->raidid, row, col);
 
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
@@ -504,8 +506,10 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		   first time. Close it before trying to open it again.. */
 
 		if (raidPtr->raid_cinfo[row][col].ci_vp != NULL) {
+#if 0
 			printf("Closed the open device: %s\n",
 			       raidPtr->Disks[row][col].devname);
+#endif
 			vp = raidPtr->raid_cinfo[row][col].ci_vp;
 			ac = raidPtr->Disks[row][col].auto_configured;
 			rf_close_component(raidPtr, vp, ac);
@@ -514,8 +518,10 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		/* note that this disk was *not* auto_configured (any longer)*/
 		raidPtr->Disks[row][col].auto_configured = 0;
 
+#if 0
 		printf("About to (re-)open the device for rebuilding: %s\n",
 		       raidPtr->Disks[row][col].devname);
+#endif
 		
 		retcode = raidlookup(raidPtr->Disks[row][col].devname, 
 				     proc, &vp);
@@ -573,9 +579,10 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		spareDiskPtr = &raidPtr->Disks[row][col];
 		spareDiskPtr->status = rf_ds_used_spare;
 
-		printf("RECON: initiating in-place reconstruction on\n");
-		printf("       row %d col %d -> spare at row %d col %d\n", 
-		       row, col, row, col);
+		printf("raid%d: initiating in-place reconstruction on\n",
+		       raidPtr->raidid);
+		printf("raid%d:    row %d col %d -> spare at row %d col %d\n", 
+		       raidPtr->raidid, row, col, row, col);
 
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 		
@@ -811,20 +818,23 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 		rf_ResumeNewRequests(raidPtr);
 
-		printf("Reconstruction of disk at row %d col %d completed\n", 
-		       row, col);
+		printf("raid%d: Reconstruction of disk at row %d col %d completed\n", 
+		       raidPtr->raidid, row, col);
 		xor_s = raidPtr->accumXorTimeUs / 1000000;
 		xor_resid_us = raidPtr->accumXorTimeUs % 1000000;
-		printf("Recon time was %d.%06d seconds, accumulated XOR time was %ld us (%ld.%06ld)\n",
-		    (int) elpsd.tv_sec, (int) elpsd.tv_usec, raidPtr->accumXorTimeUs, xor_s, xor_resid_us);
-		printf("  (start time %d sec %d usec, end time %d sec %d usec)\n",
-		    (int) raidPtr->reconControl[row]->starttime.tv_sec,
-		    (int) raidPtr->reconControl[row]->starttime.tv_usec,
-		    (int) etime.tv_sec, (int) etime.tv_usec);
+		printf("raid%d: Recon time was %d.%06d seconds, accumulated XOR time was %ld us (%ld.%06ld)\n",
+		       raidPtr->raidid, 
+		       (int) elpsd.tv_sec, (int) elpsd.tv_usec, 
+		       raidPtr->accumXorTimeUs, xor_s, xor_resid_us);
+		printf("raid%d:  (start time %d sec %d usec, end time %d sec %d usec)\n",
+		       raidPtr->raidid,
+		       (int) raidPtr->reconControl[row]->starttime.tv_sec,
+		       (int) raidPtr->reconControl[row]->starttime.tv_usec,
+		       (int) etime.tv_sec, (int) etime.tv_usec);
 
 #if RF_RECON_STATS > 0
-		printf("Total head-sep stall count was %d\n",
-		    (int) reconDesc->hsStallCount);
+		printf("raid%d: Total head-sep stall count was %d\n",
+		       raidPtr->raidid, (int) reconDesc->hsStallCount);
 #endif				/* RF_RECON_STATS > 0 */
 		rf_FreeReconControl(raidPtr, row);
 		RF_Free(raidPtr->recon_tracerecs, raidPtr->numCol * sizeof(RF_AccTraceEntry_t));
