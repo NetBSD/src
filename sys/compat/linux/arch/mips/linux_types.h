@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.2 2001/09/02 08:39:37 manu Exp $ */
+/*	$NetBSD: linux_types.h,v 1.3 2001/09/22 21:15:18 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -74,8 +74,8 @@ typedef unsigned char linux_cc_t;
 typedef unsigned int linux_speed_t;
 typedef unsigned int linux_tcflag_t;
 #else
-typedef unsigned long speed_t;
-typedef unsigned long tcflag_t;
+typedef unsigned long linux_speed_t;
+typedef unsigned long linux_tcflag_t;
 #endif
 
 /* 
@@ -199,7 +199,7 @@ struct linux_stat {
 	long		lst_blocks;
 	char		lst_fstype[16];
 	long		lst_pad4[8];
-	unsigned int	lst_flags
+	unsigned int	lst_flags;
 	unsigned int	lst_gen;
 };
 #endif
