@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.197 2004/07/07 04:19:15 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.198 2004/07/07 05:34:33 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.195 2004/07/07 04:19:01 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.196 2004/07/07 05:34:18 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -93,6 +93,7 @@
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
 #define	PCMCIA_VENDOR_ANYCOM	0x0264	/* Anycom */
+#define	PCMCIA_VENDOR_ARTEM	0x0268	/* ARtem */
 #define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
@@ -197,6 +198,11 @@
 #define	PCMCIA_CIS_ARCHOS_ARC_ATAPI	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ARCHOS_ARC_ATAPI	0x0043
 #define	PCMCIA_STR_ARCHOS_ARC_ATAPI	"MiniCD"
+
+/* ARtem */
+#define	PCMCIA_CIS_ARTEM_ONAIR	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ARTEM_ONAIR	0x0001
+#define	PCMCIA_STR_ARTEM_ONAIR	"ARtem Onair Wireless LAN"
 
 /* Bay Networks */
 #define	PCMCIA_CIS_BAY_STACK_650	{ NULL, NULL, NULL, NULL }
@@ -716,6 +722,7 @@
 #define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
 #define	PCMCIA_VENDOR_EXP	-1	/* EXP Computer Inc */
 #define	PCMCIA_VENDOR_GEMTEK	-1	/* Gem Tek */
+#define	PCMCIA_VENDOR_GENIUS	-1	/* Genius */
 #define	PCMCIA_VENDOR_ICOM	-1	/* ICOM Inc */
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
 #define	PCMCIA_VENDOR_LANTECH	-1	/* Lantech Computer Company */
@@ -740,6 +747,9 @@
 #define	PCMCIA_CIS_AMBICOM_AMB8002T	{ "AmbiCom Inc", "AMB8002T", NULL, NULL }
 #define	PCMCIA_PRODUCT_AMBICOM_AMB8002T	-1
 #define	PCMCIA_STR_AMBICOM_AMB8002T	"AmbiCom AMB8002T"
+#define	PCMCIA_CIS_AMBICON_AMB8110	{ "AmbiCom,Inc.", "Fast Ethernet PC Card(AMB8110)", NULL, NULL }
+#define	PCMCIA_PRODUCT_AMBICON_AMB8110	-1
+#define	PCMCIA_STR_AMBICON_AMB8110	"AmbiCom AMB8110"
 #define	PCMCIA_CIS_AMD_AM79C930	{ "AMD", "Am79C930", NULL, NULL }
 #define	PCMCIA_PRODUCT_AMD_AM79C930	-1
 #define	PCMCIA_STR_AMD_AM79C930	"AMD Am79C930"
@@ -845,6 +855,9 @@
 #define	PCMCIA_CIS_GEMTEK_WLAN	{ "Intersil", "PRISM 2_5 PCMCIA ADAPTER", "ISL37300P", "Eval-RevA" }
 #define	PCMCIA_PRODUCT_GEMTEK_WLAN	-1
 #define	PCMCIA_STR_GEMTEK_WLAN	"GEMTEK Prism2_5 WaveLAN Card"
+#define	PCMCIA_CIS_GENIUS_ME3000II	{ "PCMCIA", "PCMCIA-ETHERNET-CARD", "UE2216", "R01" }
+#define	PCMCIA_PRODUCT_GENIUS_ME3000II	-1
+#define	PCMCIA_STR_GENIUS_ME3000II	""
 #define	PCMCIA_CIS_ICOM_SL200	{ "Icom", "SL-200", NULL, NULL }
 #define	PCMCIA_PRODUCT_ICOM_SL200	-1
 #define	PCMCIA_STR_ICOM_SL200	"Icom SL-200"
