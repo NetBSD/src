@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.60 2001/11/12 15:25:11 lukem Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.61 2002/05/11 11:56:57 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.60 2001/11/12 15:25:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.61 2002/05/11 11:56:57 enami Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -487,9 +487,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	else {
 		if (p == NULL) {
 			if (!doing_shutdown) {
-#ifdef DIAGNOSTIC
 				panic("lockmgr: no context");
-#endif
 			} else {
 				p = &proc0;
 				if (panicstr && (!(flags & LK_NOWAIT))) {
