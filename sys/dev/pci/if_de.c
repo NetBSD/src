@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.101 2001/07/07 16:46:34 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.102 2001/07/07 16:47:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -2162,8 +2162,8 @@ tulip_identify_dec_nic(
 #define D0	4
     if (sc->tulip_chipid <= TULIP_DE425)
 	return;
-    if (bcmp(sc->tulip_rombuf + 29, "DE500", 5) == 0
-	|| bcmp(sc->tulip_rombuf + 29, "DE450", 5) == 0) {
+    if (memcmp(sc->tulip_rombuf + 29, "DE500", 5) == 0
+	|| memcmp(sc->tulip_rombuf + 29, "DE450", 5) == 0) {
 	memcpy(&sc->tulip_boardid[D0], sc->tulip_rombuf + 29, 8);
 	sc->tulip_boardid[D0+8] = ' ';
     }
@@ -2946,7 +2946,7 @@ tulip_read_macaddr(
     }
 
 
-    if (bcmp(&sc->tulip_rombuf[0], &sc->tulip_rombuf[16], 8) != 0) {
+    if (memcmp(&sc->tulip_rombuf[0], &sc->tulip_rombuf[16], 8) != 0) {
 	/*
 	 * Some folks don't use the standard ethernet rom format
 	 * but instead just put the address in the first 6 bytes
@@ -3031,14 +3031,14 @@ tulip_read_macaddr(
      * This is the standard DEC address ROM test.
      */
 
-    if (bcmp(&sc->tulip_rombuf[24], testpat, 8) != 0)
+    if (memcmp(&sc->tulip_rombuf[24], testpat, 8) != 0)
 	return -3;
 
     tmpbuf[0] = sc->tulip_rombuf[15]; tmpbuf[1] = sc->tulip_rombuf[14];
     tmpbuf[2] = sc->tulip_rombuf[13]; tmpbuf[3] = sc->tulip_rombuf[12];
     tmpbuf[4] = sc->tulip_rombuf[11]; tmpbuf[5] = sc->tulip_rombuf[10];
     tmpbuf[6] = sc->tulip_rombuf[9];  tmpbuf[7] = sc->tulip_rombuf[8];
-    if (bcmp(&sc->tulip_rombuf[0], tmpbuf, 8) != 0)
+    if (memcmp(&sc->tulip_rombuf[0], tmpbuf, 8) != 0)
 	return -2;
 
     memcpy(sc->tulip_enaddr, sc->tulip_rombuf, ETHER_ADDR_LEN);
@@ -3063,7 +3063,7 @@ tulip_read_macaddr(
      * Check for various boards based on OUI.  Did I say braindead?
      */
     for (idx = 0; tulip_vendors[idx].vendor_identify_nic != NULL; idx++) {
-	if (bcmp((caddr_t) sc->tulip_enaddr,
+	if (memcmp((caddr_t) sc->tulip_enaddr,
 		 (caddr_t) tulip_vendors[idx].vendor_oui, 3) == 0) {
 	    (*tulip_vendors[idx].vendor_identify_nic)(sc);
 	    break;
@@ -3196,7 +3196,7 @@ tulip_addr_filter(
 	memset(sc->tulip_setupdata, 0, sizeof(sc->tulip_setupdata));
 	ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 		    hash = tulip_mchash(enm->enm_addrlo);
 #if BYTE_ORDER == BIG_ENDIAN
 		    sp[hash >> 4] |= bswap32(1 << (hash & 0xF));
@@ -3250,7 +3250,7 @@ tulip_addr_filter(
 	     */
 	    ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
 	    for (; enm != NULL; idx++) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 #if BYTE_ORDER == BIG_ENDIAN
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[0] << 16;
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[1] << 16;
