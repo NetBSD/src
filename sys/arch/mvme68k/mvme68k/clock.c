@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.8 1996/11/05 02:51:03 thorpej Exp $	*/
+/*      $NetBSD: clock.c,v 1.9 1998/01/12 19:51:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,10 +82,6 @@ int	clock_statmin;		/* statclock interval - (1/2 * variance) */
 /*
  * autoconf
  */
-
-struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL, 0
-};
 
 struct chiptime {
         int     sec;

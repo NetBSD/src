@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.14 1997/03/19 16:24:39 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.15 1998/01/12 19:51:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -78,6 +78,8 @@ void	le_pcc_attach __P((struct device *, struct device *, void *));
 struct cfattach le_pcc_ca = {
 	sizeof(struct le_softc), le_pcc_match, le_pcc_attach
 };
+
+extern struct cfdriver le_cd;
 
 hide void le_pcc_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
 hide u_int16_t le_pcc_rdcsr __P((struct am7990_softc *, u_int16_t));

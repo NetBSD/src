@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.24 1997/07/17 02:05:14 jtk Exp $	*/
+/*	$NetBSD: lpt.c,v 1.25 1998/01/12 19:55:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -202,9 +202,7 @@ struct cfattach lpt_ca = {
 	sizeof(struct lpt_softc), lptmatch, lptattach
 };
 
-struct cfdriver lpt_cd = {
-	NULL, "lpt", DV_TTY, NULL, 0
-};
+extern struct cfdriver lpt_cd;
 
 static int
 lptmatch(parent, cf, aux)
