@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.7 2002/08/28 03:52:45 itojun Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.8 2002/10/08 14:49:24 provos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.7 2002/08/28 03:52:45 itojun Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.8 2002/10/08 14:49:24 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -614,6 +614,17 @@ nbsd_read(int fd)
 			err(1, "%s:%d: answer", __func__, __LINE__);
 		break;
 
+	case SYSTR_MSG_UGID: {
+		struct str_msg_ugid *msg_ugid;
+		
+		msg_ugid = &msg.msg_data.msg_ugid;
+
+		intercept_ugid(icpid, msg_ugid->uid, msg_ugid->uid);
+
+		if (nbsd_answer(fd, pid, seqnr, 0, 0, 0) == -1)
+			err(1, "%s:%d: answer", __func__, __LINE__);
+		break;
+	}
 	case SYSTR_MSG_CHILD:
 		intercept_child_info(msg.msg_pid,
 		    msg.msg_data.msg_child.new_pid);

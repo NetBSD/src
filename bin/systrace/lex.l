@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.3 2002/08/28 03:52:45 itojun Exp $	*/
+/*	$NetBSD: lex.l,v 1.4 2002/10/08 14:49:24 provos Exp $	*/
 /*	$OpenBSD: lex.l,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lex.l,v 1.3 2002/08/28 03:52:45 itojun Exp $");
+__RCSID("$NetBSD: lex.l,v 1.4 2002/10/08 14:49:24 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -94,6 +94,12 @@ true		{ return TRUE; }
 "->"		{ return THEN; }
 \(		{ return LBRACE; }
 \)		{ return RBRACE; }
+if		{ return IF; }
+user		{ return USER; }
+group		{ return GROUP; }
+","		{ return COMMA; }
+"="		{ return EQUAL; }
+"!="		{ return NEQUAL; }
 [\$A-Za-z][\.\(\)\/A-Za-z_\-0-9]* { yylval.string = strdup(yytext); return STRING; }
 [0-9]+		{ yylval.number = atoi(yytext); return NUMBER; }
 \"[^\"]+\" { char line[1024];
