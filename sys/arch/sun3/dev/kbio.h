@@ -1,4 +1,4 @@
-/*	$NetBSD: kbio.h,v 1.2 1994/10/26 09:09:03 cgd Exp $	*/
+/*	$NetBSD: kbio.h,v 1.3 1994/11/21 21:31:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,8 +42,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)kbio.h	8.1 (Berkeley) 6/11/93
- *
- * Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
+ *	from: Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
  */
 
 /*

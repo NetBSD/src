@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_subr.c,v 1.7 1994/10/26 09:08:51 cgd Exp $	*/
+/*	$NetBSD: if_le_subr.c,v 1.8 1994/11/21 21:30:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass

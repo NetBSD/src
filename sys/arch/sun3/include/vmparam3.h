@@ -1,6 +1,7 @@
-/*	$NetBSD: vmparam3.h,v 1.9 1994/10/26 09:11:29 cgd Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.10 1994/11/21 21:34:30 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -38,13 +39,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
- *
- *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
+ *	from: Utah $Hdr: vmparam.h 1.16 91/01/18$
+ *	from: @(#)vmparam.h	7.3 (Berkeley) 5/7/91
+ *	vmparam.h,v 1.2 1993/05/22 07:58:38 cgd Exp
  */
 
-#define USRTEXT         NBPG
-#define USRSTACK        0x0E000000
+/*
+ * Machine dependent constants for Sun-4c SPARC
+ */
+
+/*
+ * USRTEXT is the start of the user text/data space, while USRSTACK
+ * is the top (end) of the user stack.
+ */
+#define	USRTEXT 	NBPG		/* Start of user text */
+#define	USRSTACK	KERNBASE	/* High end of user stack */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -62,7 +71,7 @@
 #define	DFLSSIZ		(512*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(MAXDSIZ)		/* max stack size */
+#define	MAXSSIZ		MAXDSIZ			/* max stack size */
 #endif
 
 /*
@@ -113,8 +122,13 @@
 					   protected against replacement */
 
 #define DVMA_SPACE_SIZE  0x00100000
-#define DVMA_SPACE_START 0x0FD00000
+#define DVMA_SPACE_START 0x0FD00000	
 #define DVMA_SPACE_END   0x0FE00000 /* mon start */
+
+/*
+ * Kernel VA of kernel u-area for current process
+ */
+#define	UADDR	0x0FFE0000	/* mon shortseg */
 
 /*
  * Mach derived constants
@@ -122,10 +136,10 @@
 
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0x0E000000)
-#define VM_MAX_ADDRESS		((vm_offset_t)0x0FFF00000)
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0x0E000000)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0x0FD00000) /* dvma start */
+#define VM_MAX_ADDRESS		((vm_offset_t)KERNBASE)
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)KERNBASE)
+#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)KERNBASE)
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)DVMA_SPACE_START)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)

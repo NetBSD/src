@@ -1,6 +1,8 @@
-#	$NetBSD: files.sun3.newconf,v 1.15 1994/10/26 09:08:22 cgd Exp $
+#	$NetBSD: files.sun3.newconf,v 1.16 1994/11/21 21:26:50 gwr Exp $
+
 #
 # sun3-specific configuration info
+#
 
 maxusers 2 8 64
 
@@ -98,6 +100,8 @@ file arch/sun3/sun3/sun3_startup.c
 file arch/sun3/sun3/trap.c		
 file arch/sun3/sun3/vector.c		
 file arch/sun3/sun3/vm_machdep.c	
+
+file arch/sun3/sun3/db_memrw.c		ddb
 
 file	compat/sunos/sun_exec.c		compat_sunos
 file	compat/sunos/sun_ioctl.c	compat_sunos

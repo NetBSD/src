@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.4 1994/10/26 09:09:16 cgd Exp $	*/
+/*	$NetBSD: obmem.c,v 1.5 1994/11/21 21:31:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass

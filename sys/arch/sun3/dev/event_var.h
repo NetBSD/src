@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.2 1994/10/26 09:08:41 cgd Exp $	*/
+/*	$NetBSD: event_var.h,v 1.3 1994/11/21 21:30:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,9 +41,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)event_var.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: event_var.h,v 1.5 92/11/26 01:11:51 torek Exp  (LBL)
+ *	from: @(#)event_var.h	8.1 (Berkeley) 6/11/93
+ *	from: Hdr: event_var.h,v 1.5 92/11/26 01:11:51 torek Exp  (LBL)
  */
 
 /*

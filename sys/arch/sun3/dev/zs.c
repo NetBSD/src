@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10 1994/10/26 09:09:33 cgd Exp $	*/
+/*	$NetBSD: zs.c,v 1.11 1994/11/21 21:31:26 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross

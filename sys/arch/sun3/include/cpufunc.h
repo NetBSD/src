@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4 1994/10/26 09:10:11 cgd Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.5 1994/11/21 21:33:32 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass

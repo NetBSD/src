@@ -1,6 +1,7 @@
-/*	$NetBSD: pte.h,v 1.7 1994/10/26 09:11:10 cgd Exp $	*/
+/*	$NetBSD: pte.h,v 1.8 1994/11/21 21:34:12 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -44,20 +45,21 @@
 #define PG_SYSTEM  0x20000000
 #define PG_NC      0x10000000
 #define PG_TYPE    0x0C000000
-#define PG_ACCESS  0x02000000
+#define PG_REF     0x02000000
 #define PG_MOD     0x01000000
 
-#define PG_SPECIAL (PG_VALID|PG_WRITE|PG_SYSTEM|PG_NC|PG_ACCESS|PG_MOD)
+#define PG_SPECIAL (PG_VALID|PG_WRITE|PG_SYSTEM|PG_NC|PG_REF|PG_MOD)
 #define PG_PERM    (PG_VALID|PG_WRITE|PG_SYSTEM|PG_NC)
+#define	PG_MODREF  (PG_REF|PG_MOD)
 #define PG_FRAME   0x0007FFFF
 
 #define PG_MOD_SHIFT 24
 #define PG_PERM_SHIFT 28
 
-#define PG_MMEM      0
-#define PG_OBIO      1
-#define PG_VME16D    2
-#define PG_VME32D    3
+#define OBMEM	0
+#define OBIO 	1
+#define VME_D16	2
+#define VME_D32	3
 #define PG_TYPE_SHIFT 26
 
 #define PG_INVAL   0x0
@@ -65,6 +67,12 @@
 #define MAKE_PGTYPE(x) ((x) << PG_TYPE_SHIFT)
 #define PG_PGNUM(pte) (pte & PG_FRAME)
 #define PG_PA(pte) ((pte & PG_FRAME) <<PGSHIFT)
+
+#define	PGT_MASK	MAKE_PGTYPE(3)
+#define	PGT_OBMEM	MAKE_PGTYPE(OBMEM)		/* onboard memory */
+#define	PGT_OBIO	MAKE_PGTYPE(OBIO)		/* onboard I/O */
+#define	PGT_VME_D16	MAKE_PGTYPE(VME_D16)	/* VMEbus 16-bit data */
+#define	PGT_VME_D32	MAKE_PGTYPE(VME_D32)	/* VMEbus 32-bit data */
 
 #define VA_PTE_NUM_SHIFT  13
 #define VA_PTE_NUM_MASK (0xF << VA_PTE_NUM_SHIFT)

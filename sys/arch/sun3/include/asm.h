@@ -1,3 +1,3 @@
-/*	$NetBSD: asm.h,v 1.6 1994/10/26 09:09:56 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.7 1994/11/21 21:33:24 gwr Exp $	*/
 
 #include <m68k/asm.h>

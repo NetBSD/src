@@ -1,6 +1,7 @@
-/*	$NetBSD: pmap.h,v 1.10 1994/10/26 09:10:59 cgd Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 1994/11/21 21:34:04 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -15,92 +16,67 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Adam Glass.
- * 4. The name of the Author may not be used to endorse or promote products
+ * 4. The name of the Authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY Adam Glass ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_PMAP_MACHINE_
-#define	_PMAP_MACHINE_
-
-#include <sys/queue.h>
+#ifndef	_MACHINE_PMAP_
+#define	_MACHINE_PMAP_
 
 /*
- * Pmap stuff
- * [some ideas borrowed from torek, but no code]
+ * Physical map structures exported to the VM code.
  */
-
-struct context_state {
-	TAILQ_ENTRY(context_state) context_link;
-	int            context_num;
-	struct pmap   *context_upmap;
-};
-
-typedef struct context_state *context_t;
 
 struct pmap {
 	int	                pm_refcount;	/* pmap reference count */
 	simple_lock_data_t      pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	context_t               pm_context;     /* context if any */
 	int                     pm_version;
+	int                     pm_ctxnum;
 	unsigned char           *pm_segmap;
 };
 
 typedef struct pmap *pmap_t;
 
+#ifdef KERNEL
+
 extern pmap_t kernel_pmap;
-
-#define PMEGQ_FREE     0
-#define PMEGQ_INACTIVE 1
-#define PMEGQ_ACTIVE   2
-#define PMEGQ_KERNEL   3
-#define PMEGQ_NONE     4
-
-struct pmeg_state {
-	TAILQ_ENTRY(pmeg_state) pmeg_link;
-	int            pmeg_index;
-	pmap_t         pmeg_owner;
-	int            pmeg_owner_version;
-	vm_offset_t    pmeg_va;
-	int            pmeg_wired_count;
-	int            pmeg_reserved;
-	int            pmeg_vpages;
-	int            pmeg_qstate;
-};
-
-typedef struct pmeg_state *pmeg_t;
-
-#define PMAP_ACTIVATE(pmap, pcbp, iscurproc) \
-      pmap_activate(pmap, pcbp)
-#define PMAP_DEACTIVATE(pmap, pcbp) \
-      pmap_deactivate(pmap, pcbp)
-
 #define	pmap_kernel()			(kernel_pmap)
 
-/* like the sparc port, use the lower bits of a pa which must be page
- *  aligned anyway to pass memtype, caching information.
+#define PMAP_ACTIVATE(pmap, pcbp, iscurproc) \
+	pmap_activate(pmap, pcbp)
+#define PMAP_DEACTIVATE(pmap, pcbp) \
+	pmap_deactivate(pmap, pcbp)
+
+/* XXX - Need a (silly) #define get code in kern_sysctl.c */
+extern segsz_t pmap_resident_pages(pmap_t);
+#define	pmap_resident_count(pmap)	pmap_resident_pages(pmap)
+
+/*
+ * Since PTEs also contain type bits, we have to have some way
+ * to tell pmap_enter `this is an IO page' or `this is not to
+ * be cached'.  Since physical addresses are always aligned, we
+ * can do this with the low order bits.
+ *
+ * The values below must agree with pte.h such that:
+ *	(PMAP_OBIO << PG_MOD_SHIFT) == PGT_OBIO
  */
-#define PMAP_MMEM      0x0
-#define PMAP_OBIO      0x1
-#define PMAP_VME16D    0x2
-#define PMAP_VME32D    0x3
-#define PMAP_MEMMASK   0x3
-#define PMAP_NC        0x4
-#define PMAP_SPECMASK  0x7
+#define	PMAP_OBIO	0x04		/* tells pmap_enter to use PG_OBIO */
+#define	PMAP_VME16	0x08		/* etc */
+#define	PMAP_VME32	0x0C		/* etc */
+#define	PMAP_NC		0x10		/* tells pmap_enter to set PG_NC */
+#define	PMAP_SPEC	0x1C		/* mask to get all above. */
 
-extern vm_offset_t virtual_avail, virtual_end;
-extern vm_offset_t avail_start, avail_end;
-
-#endif	_PMAP_MACHINE_
+#endif	/* KERNEL */
+#endif	/* _MACHINE_PMAP_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.h,v 1.8 1994/10/26 09:10:30 cgd Exp $	*/
+/*	$NetBSD: idprom.h,v 1.9 1994/11/21 21:33:45 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -32,11 +32,8 @@
  */
 
 /*
- *
  * structure/definitions for the 32 byte id prom found in sun3s
- *
  */
-
 
 struct idprom {
     unsigned char idp_format;

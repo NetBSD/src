@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.8 1994/10/26 09:09:27 cgd Exp $	*/
+/*	$NetBSD: si.c,v 1.9 1994/11/21 21:31:22 gwr Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross

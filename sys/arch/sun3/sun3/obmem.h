@@ -1,6 +1,7 @@
-/*	$NetBSD: obmem.h,v 1.4 1994/10/26 09:10:52 cgd Exp $	*/
+/*	$NetBSD: obmem.h,v 1.5 1994/11/21 21:33:57 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -31,8 +32,16 @@
  * SUCH DAMAGE.
  */
 
-/* put something in here about framebuffers... */
+/* Location of Sun3/50 video ram, right in the way at physical 1MB. */
+#define	OBMEM_BW50_ADDR   0x100000
 
+#define	OBMEM_BW2_ADDR	0xff000000
+#define	OBMEM_BW2_SIZE	  0x020000
+
+#define	OBMEM_CG4_ADDR	0xff300000
+#define	OBMEM_CG4_SIZE	  0x100000
+
+/* autoconfiguration data */
 struct obmem_cf_loc {
     int obmem_cf_addr;
     int obmem_cf_size;

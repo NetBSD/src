@@ -1,4 +1,4 @@
-/*	$NetBSD: zsreg.h,v 1.3 1994/10/26 09:09:38 cgd Exp $	*/
+/*	$NetBSD: zsreg.h,v 1.4 1994/11/21 21:31:29 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,8 +42,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)zsreg.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: zsreg.h,v 1.7 92/11/26 01:27:18 torek Exp  (LBL)
+ *	from: Hdr: zsreg.h,v 1.7 92/11/26 01:27:18 torek Exp  (LBL)
  */
 
 /*

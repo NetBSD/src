@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.6 1994/10/26 09:08:55 cgd Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.7 1994/11/21 21:30:58 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -32,9 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: if_lereg.h,v 1.7 93/10/31 04:41:00 leres Locked
- *
- *	@(#)if_lereg.h	8.2 (Berkeley) 10/30/93
+ *	from: Header: if_lereg.h,v 1.7 93/10/31 04:41:00 leres Locked
+ *	from: @(#)if_lereg.h	8.2 (Berkeley) 10/30/93
  */
 
 #define	LEMTU		1518

@@ -1,6 +1,8 @@
-/*	$NetBSD: cpu.h,v 1.13 1994/10/26 09:10:06 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 1994/11/21 21:33:29 gwr Exp $	*/
 
-/* Copyright (c) 1993 Adam Glass
+/*
+ * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,9 +39,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: cpu.h 1.16 91/03/25
- *
- *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
+ *	from: Utah Hdr: cpu.h 1.16 91/03/25
+ *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
+ *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
  */
 
 #ifdef KERNEL
@@ -55,7 +57,6 @@
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
 #define	cpu_exec(p) 	/* nothing */
-#define	cpu_swapin(p)	/* nothing */
 #define	cpu_wait(p) 	/* nothing */
 #define cpu_setstack(p, ap)		(p)->p_md.md_regs[SP] = ap
 #define cpu_set_init_frame(p, fp)	(p)->p_md.md_regs = fp
@@ -168,4 +169,4 @@ extern	char *intiobase, *intiolimit;
 
 #define IC_CLEAR (IC_CLR|IC_ENABLE)
 
-#endif
+#endif	/* KERNEL */

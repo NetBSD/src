@@ -1,4 +1,3 @@
-/*	$NetBSD: endian.h,v 1.5 1994/10/26 09:10:18 cgd Exp $	*/
+/*	$NetBSD: endian.h,v 1.6 1994/11/21 21:33:37 gwr Exp $	*/
 
-/* Just use the common m68k definition */
 #include <m68k/endian.h>

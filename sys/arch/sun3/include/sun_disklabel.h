@@ -1,6 +1,7 @@
-/*	$NetBSD: sun_disklabel.h,v 1.2 1994/10/26 09:11:20 cgd Exp $	*/
+/*	$NetBSD: sun_disklabel.h,v 1.3 1994/11/21 21:34:20 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -42,8 +43,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)sun_disklabel.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: sun_disklabel.h,v 1.4 92/06/17 07:04:13 torek Exp
+ *	from: Header: sun_disklabel.h,v 1.4 92/06/17 07:04:13 torek Exp
+ *	from: sun_disklabel.h,v 1.1 1993/11/14 10:47:13 deraadt Exp
  */
 
 /*

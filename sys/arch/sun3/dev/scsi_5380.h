@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_5380.h,v 1.3 1994/10/26 09:09:22 cgd Exp $	*/
+/*	$NetBSD: scsi_5380.h,v 1.4 1994/11/21 21:31:18 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,6 +38,7 @@
  * 	[91/04/21            af]
  * 
  */
+
 /*
  *	File: scsi_5380.h
  * 	Author: Alessandro Forin, Carnegie Mellon University

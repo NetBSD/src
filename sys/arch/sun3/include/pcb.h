@@ -1,6 +1,7 @@
-/*	$NetBSD: pcb.h,v 1.7 1994/10/26 09:10:56 cgd Exp $	*/
+/*	$NetBSD: pcb.h,v 1.8 1994/11/21 21:34:02 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -39,22 +40,20 @@
  * SUCH DAMAGE.
  *
  *	from: Utah Hdr: pcb.h 1.14 91/03/25
- *	@(#)pcb.h	8.1 (Berkeley) 6/10/93
+ *	from: @(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
 #include <machine/frame.h>
 
 /*
- * Sun3 (close to but not exactly the same as the hp300) process control block
+ * Sun3 process control block
  */
 struct pcb
 {
-	short	pcb_flags;	/* misc. process flags (+0) */
-	short	pcb_ps; 	/* processor status word (+2) */
-	int	pcb_ustp;	/* user segment table pointer (+4) (not used)*/
-	int	pcb_usp;	/* user stack pointer (+8) */
-	int	pcb_regs[12];	/* D2-D7, A2-A7 (+C) */
-	vm_offset_t pcb_upte[UPAGES]; /* ptes for u-area */
+	short	pcb_flags;	/* misc. process flags */
+	short	pcb_ps; 	/* processor status word */
+	int	pcb_usp;	/* user stack pointer */
+	int	pcb_regs[12];	/* D2-D7, A2-A7 */
 	caddr_t	pcb_onfault;	/* for copyin/out faults */
 	struct	fpframe pcb_fpregs; /* 68881/2 context save area */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: control.h,v 1.10 1994/10/26 09:10:01 cgd Exp $	*/
+/*	$NetBSD: control.h,v 1.11 1994/11/21 21:33:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -33,12 +33,11 @@
 
 /*
  * defines for sun3 control space
- *
  */
 
 #define IDPROM_BASE 0x00000000
 #define PGMAP_BASE  0x10000000
-#define SEGMAP_BASE  0x20000000
+#define SEGMAP_BASE 0x20000000
 #define CONTEXT_REG 0x30000000
 #define SYSTEM_ENAB 0x40000000
 #define UDVMA_ENAB  0x50000000
@@ -86,9 +85,6 @@ unsigned char get_control_byte __P((char *));
 unsigned int get_control_word __P((char *));
 void set_control_byte __P((char *, unsigned char));
 void set_control_word __P((char *, unsigned int));
-
-vm_offset_t get_pte_pmeg __P((unsigned char, unsigned int));
-void set_pte_pmeg __P((unsigned char, unsigned int, vm_offset_t));
 
 int get_context __P((void));
 void set_context __P((int));
