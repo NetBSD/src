@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.28 2000/01/10 06:12:20 tsutsui Exp $
+# $NetBSD: GENERIC3X,v 1.29 2000/04/01 14:00:29 tsutsui Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -58,6 +58,7 @@ file-system	MSDOSFS		# MS-DOS FAT file system
 file-system	FDESC		# /dev/fd/*
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
+file-system	OVERLAY		# overlay file system
 file-system	PROCFS		# /proc
 file-system	UNION		# union file system
 file-system	MFS		# memory-based filesystem
@@ -233,3 +234,4 @@ pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	vnd		4	# paging to files
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
