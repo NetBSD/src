@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.11 2002/07/10 22:44:22 wiz Exp $	*/
+/*	$NetBSD: slave.c,v 1.12 2002/09/19 00:01:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)slave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: slave.c,v 1.11 2002/07/10 22:44:22 wiz Exp $");
+__RCSID("$NetBSD: slave.c,v 1.12 2002/09/19 00:01:33 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -683,12 +683,11 @@ schgdate(struct tsp *msg, char *newdate)
 static void
 answerdelay(void)
 {
-	struct timeval timeout;
+	struct timespec timeout;
 
 	timeout.tv_sec = 0;
-	timeout.tv_usec = delay1;
+	timeout.tv_nsec = delay1 * 1000;
 
-	(void)select(0, (fd_set *)NULL, (fd_set *)NULL, (fd_set *)NULL,
-	    &timeout);
+	nanosleep(&timeout, NULL);
 	return;
 }
