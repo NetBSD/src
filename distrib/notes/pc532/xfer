@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.6 2000/10/29 14:08:09 lukem Exp $
+.\"	$NetBSD: xfer,v 1.7 2001/07/24 18:05:20 nra Exp $
 .
 The
 .Sq standard
@@ -14,7 +14,7 @@ a program called download is part of this distribution.  Download
 sends data to the ROM monitor over the serial line.
 .Pp
 You may need to find and read the documentation about the ROM monitor
-download command and other low level comands.
+download command and other low level commands.
 .Pp
 Other methods of getting
 .Nx*M
