@@ -1,4 +1,41 @@
-/*	$NetBSD: if_media.h,v 1.6 1998/08/03 12:42:26 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.7 1998/08/06 02:19:34 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1997
@@ -191,13 +228,20 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 #define	IFM_TYPE(x)	((x) & IFM_NMASK)
 #define	IFM_SUBTYPE(x)	((x) & IFM_TMASK)
 #define	IFM_INST(x)	(((x) & IFM_IMASK) >> IFM_ISHIFT)
+#define	IFM_OPTIONS(x)	((x) & (IFM_OMASK|IFM_GMASK))
 
 /*
  * NetBSD extension not defined in the BSDI API.  This is used in various
  * places to get the canonical description for a given type/subtype.
  *
- * NOTE: all but the top-level type descriptions must contain NO whitespace!
- * Otherwise, parsing these in ifconfig(8) would be a nightmare.
+ * In the subtype and mediaopt descriptions, the valid TYPE bits are OR'd
+ * in to indicate which TYPE the subtype/option corresponds to.  If no
+ * TYPE is present, it is a shared media/mediaopt.
+ *
+ * Note that these are parsed case-insensitive.
+ *
+ * Order is important.  The first matching entry is the canonical name
+ * for a media type; subsequent matches are aliases.
  */
 struct ifmedia_description {
 	int	ifmt_word;		/* word value; may be masked */
@@ -205,110 +249,92 @@ struct ifmedia_description {
 };
 
 #define	IFM_TYPE_DESCRIPTIONS {						\
-	{ IFM_ETHER,	"Ethernet" },					\
-	{ IFM_TOKEN,	"Token ring" },					\
-	{ IFM_FDDI,	"FDDI" },					\
+	{ IFM_ETHER,			"Ethernet" },			\
+	{ IFM_ETHER,			"ether" },			\
+	{ IFM_TOKEN,			"TokenRing" },			\
+	{ IFM_TOKEN,			"token" },			\
+	{ IFM_FDDI,			"FDDI" },			\
 	{ 0, NULL },							\
 }
 
-#define	IFM_SUBTYPE_ETHERNET_DESCRIPTIONS {				\
-	{ IFM_10_T,	"10baseT/UTP" },				\
-	{ IFM_10_2,	"10base2/BNC" },				\
-	{ IFM_10_5,	"10base5/AUI" },				\
-	{ IFM_100_TX,	"100baseTX" },					\
-	{ IFM_100_FX,	"100baseFX" },					\
-	{ IFM_100_T4,	"100baseT4" },					\
-	{ IFM_100_VG,	"100baseVG" },					\
-	{ IFM_100_T2,	"100baseT2" },					\
-	{ IFM_1000_FX,	"1000baseFX" },					\
-	{ IFM_10_STP,	"10baseT/STP" },				\
-	{ IFM_10_FL,	"10baseFL" },					\
+#define	IFM_TYPE_MATCH(dt, t)						\
+	(IFM_TYPE((dt)) == 0 || IFM_TYPE((dt)) == IFM_TYPE((t)))
+
+#define	IFM_SUBTYPE_DESCRIPTIONS {					\
+	{ IFM_AUTO,			"autoselect" },			\
+	{ IFM_AUTO,			"auto" },			\
+	{ IFM_MANUAL,			"manual" },			\
+	{ IFM_NONE,			"none" },			\
+									\
+	{ IFM_ETHER|IFM_10_T,		"10baseT" },			\
+	{ IFM_ETHER|IFM_10_T,		"UTP" },			\
+	{ IFM_ETHER|IFM_10_T,		"10UTP" },			\
+	{ IFM_ETHER|IFM_10_2,		"10base2" },			\
+	{ IFM_ETHER|IFM_10_2,		"BNC" },			\
+	{ IFM_ETHER|IFM_10_2,		"10BNC" },			\
+	{ IFM_ETHER|IFM_10_5,		"10base5" },			\
+	{ IFM_ETHER|IFM_10_5,		"AUI" },			\
+	{ IFM_ETHER|IFM_10_5,		"10AUI" },			\
+	{ IFM_ETHER|IFM_100_TX,		"100baseTX" },			\
+	{ IFM_ETHER|IFM_100_TX,		"100TX" },			\
+	{ IFM_ETHER|IFM_100_FX,		"100baseFX" },			\
+	{ IFM_ETHER|IFM_100_FX,		"100FX" },			\
+	{ IFM_ETHER|IFM_100_T4,		"100baseT4" },			\
+	{ IFM_ETHER|IFM_100_T4,		"100T4" },			\
+	{ IFM_ETHER|IFM_100_VG,		"100baseVG" },			\
+	{ IFM_ETHER|IFM_100_VG,		"100VG" },			\
+	{ IFM_ETHER|IFM_100_T2,		"100baseT2" },			\
+	{ IFM_ETHER|IFM_100_T2,		"100T2" },			\
+	{ IFM_ETHER|IFM_1000_FX,	"1000baseFX" },			\
+	{ IFM_ETHER|IFM_1000_FX,	"1000FX" },			\
+	{ IFM_ETHER|IFM_10_STP,		"10baseSTP" },			\
+	{ IFM_ETHER|IFM_10_STP,		"STP" },			\
+	{ IFM_ETHER|IFM_10_STP,		"10STP" },			\
+	{ IFM_ETHER|IFM_10_FL,		"10baseFL" },			\
+	{ IFM_ETHER|IFM_10_FL,		"FL" },				\
+	{ IFM_ETHER|IFM_10_FL,		"10FL" },			\
+									\
+	{ IFM_TOKEN|IFM_TOK_STP4,	"DB9/4Mbit" },			\
+	{ IFM_TOKEN|IFM_TOK_STP4,	"4STP" },			\
+	{ IFM_TOKEN|IFM_TOK_STP16,	"DB9/16Mbit" },			\
+	{ IFM_TOKEN|IFM_TOK_STP16,	"16STP" },			\
+	{ IFM_TOKEN|IFM_TOK_UTP4,	"UTP/4Mbit" },			\
+	{ IFM_TOKEN|IFM_TOK_UTP4,	"4UTP" },			\
+	{ IFM_TOKEN|IFM_TOK_UTP16,	"UTP/16Mbit" },			\
+	{ IFM_TOKEN|IFM_TOK_UTP16,	"16UTP" },			\
+									\
+	{ IFM_FDDI|IFM_FDDI_SMF,	"Single-mode" },		\
+	{ IFM_FDDI|IFM_FDDI_SMF,	"SMF" },			\
+	{ IFM_FDDI|IFM_FDDI_MMF,	"Multi-mode" },			\
+	{ IFM_FDDI|IFM_FDDI_MMF,	"MMF" },			\
+	{ IFM_FDDI|IFM_FDDI_UTP,	"UTP" },			\
+	{ IFM_FDDI|IFM_FDDI_UTP,	"CDDI" },			\
+									\
 	{ 0, NULL },							\
 }
 
-#define	IFM_SUBTYPE_ETHERNET_ALIASES {					\
-	{ IFM_10_T,	"UTP" },					\
-	{ IFM_10_T,	"10UTP" },					\
-	{ IFM_10_2,	"BNC" },					\
-	{ IFM_10_2,	"10BNC" },					\
-	{ IFM_10_5,	"AUI" },					\
-	{ IFM_10_5,	"10AUI" },					\
-	{ IFM_100_TX,	"100TX" },					\
-	{ IFM_100_FX,	"100FX" },					\
-	{ IFM_100_T4,	"100T4" },					\
-	{ IFM_100_VG,	"100VG" },					\
-	{ IFM_100_T2,	"100T2" },					\
-	{ IFM_1000_FX,	"1000FX" },					\
-	{ IFM_10_STP,	"STP" },					\
-	{ IFM_10_FL,	"10FL" },					\
-	{ 0, NULL },							\
-}
-
-#define	IFM_SUBTYPE_ETHERNET_OPTION_DESCRIPTIONS {			\
-	{ 0, NULL },							\
-}
-
-#define	IFM_SUBTYPE_TOKENRING_DESCRIPTIONS {				\
-	{ IFM_TOK_STP4,	"DB9/4Mbit" },					\
-	{ IFM_TOK_STP16, "DB9/16Mbit" },				\
-	{ IFM_TOK_UTP4,	"UTP/4Mbit" },					\
-	{ IFM_TOK_UTP16, "UTP/16Mbit" },				\
-	{ 0, NULL },							\
-}
-
-#define	IFM_SUBTYPE_TOKENRING_ALIASES {					\
-	{ IFM_TOK_STP4,	"4STP" },					\
-	{ IFM_TOK_STP16, "16STP" },					\
-	{ IFM_TOK_UTP4,	"4UTP" },					\
-	{ IFM_TOK_UTP16, "16UTP" },					\
-	{ 0, NULL },							\
-}
-
-#define	IFM_SUBTYPE_TOKENRING_OPTION_DESCRIPTIONS {			\
-	{ IFM_TOK_ETR,	"EarlyTokenRelease" },				\
-	{ IFM_TOK_SRCRT, "SourceRouting" },				\
-	{ IFM_TOK_ALLR,	"AllRoutes" },					\
-	{ 0, NULL },							\
-}
-
-#define	IFM_SUBTYPE_FDDI_DESCRIPTIONS {					\
-	{ IFM_FDDI_SMF, "Single-mode" },				\
-	{ IFM_FDDI_MMF, "Multi-mode" },					\
-	{ IFM_FDDI_UTP, "UTP" },					\
-	{ 0, NULL },							\
-}
-
-#define	IFM_SUBTYPE_FDDI_ALIASES {					\
-	{ IFM_FDDI_SMF,	"SMF" },					\
-	{ IFM_FDDI_MMF,	"MMF" },					\
-	{ IFM_FDDI_UTP,	"CDDI" },					\
-	{ 0, NULL },							\
-}
-
-#define	IFM_SUBTYPE_FDDI_OPTION_DESCRIPTIONS {				\
-	{ IFM_FDDI_DA, "Dual-attach" },					\
-	{ 0, NULL },							\
-}
-
-#define	IFM_SUBTYPE_SHARED_DESCRIPTIONS {				\
-	{ IFM_AUTO,	"autoselect" },					\
-	{ IFM_MANUAL,	"manual" },					\
-	{ IFM_NONE,	"none" },					\
-	{ 0, NULL },							\
-}
-
-#define	IFM_SUBTYPE_SHARED_ALIASES {					\
-	{ IFM_AUTO,	"auto" },					\
-	{ 0, NULL },							\
-}
-
-#define	IFM_SHARED_OPTION_DESCRIPTIONS {				\
-	{ IFM_FDX,	"full-duplex" },				\
-	{ IFM_HDX,	"half-duplex" },				\
-	{ IFM_FLAG0,	"flag0" },					\
-	{ IFM_FLAG1,	"flag1" },					\
-	{ IFM_FLAG2,	"flag2" },					\
-	{ IFM_LOOP,	"hw-loopback" },				\
+#define	IFM_OPTION_DESCRIPTIONS {					\
+	{ IFM_FDX,			"full-duplex" },		\
+	{ IFM_FDX,			"fdx" },			\
+	{ IFM_HDX,			"half-duplex" },		\
+	{ IFM_HDX,			"hdx" },			\
+	{ IFM_FLAG0,			"flag0" },			\
+	{ IFM_FLAG1,			"flag1" },			\
+	{ IFM_FLAG2,			"flag2" },			\
+	{ IFM_LOOP,			"loopback" },			\
+	{ IFM_LOOP,			"hw-loopback"},			\
+	{ IFM_LOOP,			"loop" },			\
+									\
+	{ IFM_TOKEN|IFM_TOK_ETR,	"EarlyTokenRelease" },		\
+	{ IFM_TOKEN|IFM_TOK_ETR,	"ETR" },			\
+	{ IFM_TOKEN|IFM_TOK_SRCRT,	"SourceRouting" },		\
+	{ IFM_TOKEN|IFM_TOK_SRCRT,	"SRCRT" },			\
+	{ IFM_TOKEN|IFM_TOK_ALLR,	"AllRoutes" },			\
+	{ IFM_TOKEN|IFM_TOK_ALLR,	"ALLR" },			\
+									\
+	{ IFM_FDDI|IFM_FDDI_DA,		"dual-attach" },		\
+	{ IFM_FDDI|IFM_FDDI_DA,		"das" },			\
+									\
 	{ 0, NULL },							\
 }
 
