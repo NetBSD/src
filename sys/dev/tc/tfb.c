@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.17 1999/08/25 07:56:22 nisimura Exp $ */
+/* $NetBSD: tfb.c,v 1.18 1999/09/20 06:29:06 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.17 1999/08/25 07:56:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.18 1999/09/20 06:29:06 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,8 +434,7 @@ tfbioctl(v, cmd, data, flag, p)
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = /* WSDISPLAY_TYPE_TX */ 0x19980910;
-printf("WSDISPLAYIO_GTYPE: %d\n", *(u_int *)data);
+		*(u_int *)data = WSDISPLAY_TYPE_TX;
 		return (0);
 
 	case WSDISPLAYIO_GINFO:
