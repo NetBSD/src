@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.7 1997/09/06 14:08:28 drochner Exp $ */
+/* $NetBSD: disk.c,v 1.8 1998/10/15 00:48:55 ross Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,34 +98,20 @@ diskopen(f, ctlr, unit, part)
 	struct open_file *f;
 	int ctlr, unit, part;
 {
-	struct disklabel *lp;
-	prom_return_t ret;
+	int i;
 	size_t cnt;
-	int devlen, i;
-	char *msg, buf[DEV_BSIZE], devname[32];
+	struct disklabel *lp;
+	char *msg, buf[DEV_BSIZE];
 	struct disk_softc *sc;
 
 	if (unit >= 8 || part >= MAXPARTITIONS)
 		return (ENXIO);
-	/* 
-	 * XXX
-	 * We don't know what device names look like yet,
-	 * so we can't change them.
-	 */
-	ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
-	devlen = ret.u.retval;
-
-	ret.bits = prom_open(devname, devlen);
-	if (ret.u.status == 2)
-		return (ENXIO);
-	if (ret.u.status == 3)
-		return (EIO);
 
 	sc = alloc(sizeof(struct disk_softc));
 	bzero(sc, sizeof(struct disk_softc));
 	f->f_devdata = (void *)sc;
 
-	sc->sc_fd = ret.u.retval;
+	sc->sc_fd = booted_dev_fd;
 	sc->sc_ctlr = ctlr;
 	sc->sc_unit = unit;
 	sc->sc_part = part;
