@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.12 2000/04/19 04:26:22 simonb Exp $
+# $NetBSD: rc.subr,v 1.13 2000/04/22 03:01:22 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -231,12 +231,6 @@ run_rc_command()
 	_ckvar=${rcvar:-$name}
 	if [ -z "$_ckvar" ]; then
 		err 3 'neither $rcvar or $name is set.'
-	fi
-
-	if [ ! -z "$rc_fastboot" ]; then
-		if checkyesno rc_fastboot; then
-			_arg=fast$_arg
-		fi
 	fi
 
 	case "$_arg" in
