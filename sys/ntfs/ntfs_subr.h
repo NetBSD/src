@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.h,v 1.5 1999/09/04 18:56:01 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.h,v 1.6 1999/09/28 06:10:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -90,7 +90,7 @@ int ntfs_filesize __P(( struct ntfsmount *, struct fnode *, u_int64_t *, u_int64
 int ntfs_times __P(( struct ntfsmount *, struct ntnode *, ntfs_times_t *));
 struct timespec	ntfs_nttimetounix __P(( u_int64_t ));
 int ntfs_ntreaddir __P(( struct ntfsmount *, struct fnode *, u_int32_t, struct attr_indexentry **));
-int ntfs_uustricmp __P((wchar *, int, wchar *, int ));
+int ntfs_uustricmp __P((const wchar *, int, const wchar *, int ));
 int ntfs_uastricmp __P((const wchar *, int, const char *, int ));
 int ntfs_uastrcmp __P((const wchar *, int, const char *, int ));
 char ntfs_u28	__P((wchar));
@@ -102,13 +102,12 @@ struct ntvattr * ntfs_findntvattr __P(( struct ntfsmount *, struct ntnode *, u_i
 int ntfs_ntlookupfile __P((struct ntfsmount *, struct vnode *, struct componentname *, struct vnode **));
 int ntfs_isnamepermitted __P((struct ntfsmount *, struct attr_indexentry * ));
 int ntfs_ntvattrrele __P((struct ntvattr * ));
-int ntfs_ntvattrget __P((struct ntfsmount *, struct ntnode *, u_int32_t, char *, cn_t , struct ntvattr **));
+int ntfs_ntvattrget __P((struct ntfsmount *, struct ntnode *, u_int32_t, const char *, cn_t , struct ntvattr **));
 int ntfs_ntlookup __P((struct ntfsmount *, ino_t, struct ntnode **));
 int ntfs_ntget __P((struct ntnode *));
 void ntfs_ntrele __P((struct ntnode *));
 void ntfs_ntput __P((struct ntnode *));
 int ntfs_loadntnode __P(( struct ntfsmount *, struct ntnode * ));
-int ntfs_ntlookupattr __P((struct ntfsmount *, const char *, int, int *, char **));
 int ntfs_writentvattr_plain __P((struct ntfsmount *, struct ntnode *, struct ntvattr *, off_t, size_t, void *, size_t *, struct uio *));
 int ntfs_writeattr_plain __P((struct ntfsmount *, struct ntnode *, u_int32_t, char *, off_t, size_t, void *, size_t *, struct uio *));
 void ntfs_toupper_init __P((void));
