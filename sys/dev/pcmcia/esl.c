@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.6 2001/11/13 07:26:32 lukem Exp $	*/
+/*	$NetBSD: esl.c,v 1.7 2001/12/25 02:37:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.6 2001/11/13 07:26:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.7 2001/12/25 02:37:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,20 +648,24 @@ esl_intr(void *hdl)
 	reg = bus_space_read_1(iot, ioh, ESS_CLEAR_INTR);
 
 	if (sc->sc_esl.active) {
-		pos = sc->sc_esl.sc_dmaaddr;
-		bus_space_write_multi_1(iot, ioh, ESS_FIFO_WRITE, pos,
-		    ESS_FIFO_SIZE / 2);
+		reg = bus_space_read_1(iot, ioh, ESS_DSP_RW_STATUS);
+		while (reg & ESS_DSP_READ_HALF) {
+			pos = sc->sc_esl.sc_dmaaddr;
+			bus_space_write_multi_1(iot, ioh, ESS_FIFO_WRITE, pos,
+			    ESS_FIFO_SIZE / 2);
 
-		sc->sc_esl.sc_blkpos += (ESS_FIFO_SIZE / 2);
-		if (sc->sc_esl.sc_blkpos > sc->sc_esl.sc_blksize) {
-			(*sc->sc_esl.intr)(sc->sc_esl.arg);
-			sc->sc_esl.sc_blkpos -= sc->sc_esl.sc_blksize;
+			sc->sc_esl.sc_blkpos += (ESS_FIFO_SIZE / 2);
+			if (sc->sc_esl.sc_blkpos > sc->sc_esl.sc_blksize) {
+				(*sc->sc_esl.intr)(sc->sc_esl.arg);
+				sc->sc_esl.sc_blkpos -= sc->sc_esl.sc_blksize;
+			}
+			pos += (ESS_FIFO_SIZE / 2);
+			if (pos >= sc->sc_esl.sc_dmaend)
+				pos = sc->sc_esl.sc_dmastart;
+
+			sc->sc_esl.sc_dmaaddr = pos;
+			reg = bus_space_read_1(iot, ioh, ESS_DSP_RW_STATUS);
 		}
-		pos += (ESS_FIFO_SIZE / 2);
-		if (pos >= sc->sc_esl.sc_dmaend)
-			pos = sc->sc_esl.sc_dmastart;
-
-		sc->sc_esl.sc_dmaaddr = pos;
 	}
 
 	return (1);
