@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.12 1997/10/19 19:29:06 mycroft Exp $	*/
+/*	$NetBSD: collect.c,v 1.13 1997/10/31 21:23:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.12 1997/10/19 19:29:06 mycroft Exp $");
+__RCSID("$NetBSD: collect.c,v 1.13 1997/10/31 21:23:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -591,10 +591,12 @@ collstop(s)
 	sig_t old_action = signal(s, SIG_DFL);
 	sigset_t nset;
 
+	sigprocmask(SIG_SETMASK, NULL, &nset);
+	sigdelset(&nset, s);
+	sigprocmask(SIG_SETMASK, &nset, NULL);
+	kill(0, s);
 	sigemptyset(&nset);
 	sigaddset(&nset, s);
-	sigprocmask(SIG_UNBLOCK, &nset, NULL);
-	kill(0, s);
 	sigprocmask(SIG_BLOCK, &nset, NULL);
 	signal(s, old_action);
 	if (colljmp_p) {
