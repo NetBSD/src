@@ -1,4 +1,4 @@
-.\"	$NetBSD: elfstrip.1,v 1.2 1997/01/09 20:18:39 tls Exp $
+.\"	$NetBSD: elfstrip.1,v 1.3 1997/10/18 13:54:51 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strip.1	6.6 (Berkeley) 5/26/91
-.\"	$NetBSD: elfstrip.1,v 1.2 1997/01/09 20:18:39 tls Exp $
+.\"	$NetBSD: elfstrip.1,v 1.3 1997/10/18 13:54:51 lukem Exp $
 .\"
 .Dd September 30, 1996
 .Dt ELFSTRIP 1
@@ -41,18 +41,18 @@
 .Nm elfstrip
 .Nd remove unnecessary information from ELF executable files
 .Sh SYNOPSIS
-.Nm elfstrip
+.Nm
 .Ar file ...
 .Sh DESCRIPTION
 The
-.Nm elfstrip
+.Nm
 utility
 deletes the relocation information and symbol table used by
 assemblers, loaders and debuggers.
 This significantly
 decreases the size of the installed binaries and saves disk space.
 .Pp
-.Nm Elfstrip
+.Nm
 is more aggressive about stripping unecessary information
 than the GNU equivalent.  The
 GNU binutils
@@ -61,7 +61,7 @@ utility uses the "unecessary" information and  may not be able to
 find the size of executable segments of stripped files.
 The strippped files are still correctly executed.
 .Pp
-.Nm Strip
+.Nm
 exits 0 on success and 1 if an error occurred.
 .Sh SEE ALSO
 .Xr cc 1 ,
@@ -83,6 +83,6 @@ A
 command appeared in
 .At v6 .
 This
-.Nm elfstrip
+.Nm
 command first appeared in
 .Nx 1.1 .
