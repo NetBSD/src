@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.10 1999/05/21 06:01:14 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.11 1999/05/21 06:36:37 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1516,13 +1516,13 @@ END(mips1_FlushDCache)
  * Drain processor's write buffer, normally used to ensure any I/O
  * register write operations are done before subsequent manipulations.
  *
- * Some hardware implementations have a WB chip indenpendent from CPU
+ * Some hardware implementations have a WB chip independent from CPU
  * core, and CU0 (Coprocessor Usability #0) bit of CP0 status register
- * is wired to indicate writebuffer condition.  This does busy-loop
+ * is wired to indicate writebuffer condition.  This code does busy-loop
  * while CU0 bit indicates false condition.
  *
  * For other hardwares which have the writebuffer logic is implemented
- * in a system controler ASIC chip, wbflush operation would done
+ * in a system controller ASIC chip, wbflush operation would done
  * differently.
  */
 LEAF(mips1_wbflush)
@@ -1542,10 +1542,10 @@ END(mips1_wbflush)
  * Special arrangement for a process about to go user mode right after
  * fork() system call.  When the first CPU tick is scheduled to the
  * forked child, it starts running from here.  Then, a service function
- * is called with one argument suppied to complete final preparations,
- * and the child process returns to user mode as if the fork() system
- * call is handled in a normal way.  No need to save any registers
- * although this calls another.
+ * is called with one argument supplied to complete final preparations,
+ * and the process returns to user mode as if the fork() system call is
+ * handled in a normal way.  No need to save any registers although this
+ * calls another.
  */
 LEAF(mips1_proc_trampoline)
 	jal	ra, s0
