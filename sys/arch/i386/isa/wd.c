@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.91 1994/10/09 15:06:26 mycroft Exp $
+ *	$Id: wd.c,v 1.92 1994/10/14 18:26:56 cgd Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -81,14 +81,11 @@
 
 #define	WDIORETRIES	5	/* number of retries before giving up */
 
-#define WDUNIT(dev)	(minor(dev) / MAXPARTITIONS)
-#define WDPART(dev)	(minor(dev) % MAXPARTITIONS)
-#define makewddev(maj, unit, part) \
-    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
-#ifndef RAW_PART
-#define RAW_PART	3		/* XXX should be 2 */
-#endif
-#define	WDLABELDEV(dev)	(makewddev(major(dev), WDUNIT(dev), RAW_PART))
+#define	WDUNIT(dev)			DISKUNIT(dev)
+#define	WDPART(dev)			DISKPART(dev)
+#define	MAKEWDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
+
+#define	WDLABELDEV(dev)	(MAKEWDDEV(major(dev), WDUNIT(dev), RAW_PART))
 
 #define b_cylin	b_resid		/* cylinder number for doing IO to */
 				/* shares an entry in the buf struct */
@@ -1285,7 +1282,7 @@ wdsize(dev)
     
 	if (wd->sc_state < OPEN || (wd->sc_flags & WDF_BSDLABEL) == 0) {
 		int val;
-		val = wdopen(makewddev(major(dev), lunit, RAW_PART), FREAD,
+		val = wdopen(MAKEWDDEV(major(dev), lunit, RAW_PART), FREAD,
 		    S_IFBLK, 0);
 		/* XXX Clear the open flag? */
 		if (val != 0)

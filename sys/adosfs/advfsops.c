@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.5 1994/07/11 05:07:40 chopps Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.6 1994/10/14 18:26:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -106,12 +106,7 @@ adosfs_mountfs(mp, path, bdvp, args, p)
 	struct vnode *rvp;
 	int error, nl, part, i;
 
-#ifdef DISKPART
 	part = DISKPART(bdvp->v_rdev);
-#else
-	part = minor(bdvp->v_rdev) % MAXPARTITIONS;
-#error	just_for_now
-#endif
 	amp = NULL;
 	/*
 	 * anything mounted on blkdev?

@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.18 1994/08/05 22:57:14 mycroft Exp $
+ *	$Id: mcd.c,v 1.19 1994/10/14 18:26:53 cgd Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -69,10 +69,9 @@
 #define MCD_TRACE(fmt,a,b,c,d)	{if (sc->debug) {printf("%s: st=%02x: ", sc->sc_dev.dv_xname, sc->status); printf(fmt,a,b,c,d);}}
 #endif
 
-#define MCDPART(dev)	(((minor(dev)) & 0x07)     )
-#define MCDUNIT(dev)	(((minor(dev)) & 0x78) >> 3)
-#define MCDPHYS(dev)	(((minor(dev)) & 0x80) >> 7)
-#define RAW_PART	3
+#define	MCDPART(dev)	((minor(dev) & 0x7f) % MAXPARTITONS)
+#define	MCDUNIT(dev)	((minor(dev) & 0x7f) / MAXPARTITONS)
+#define	MCDPHYS(dev)	(minor(dev) & 0x80)
 
 /* flags */
 #define MCDOPEN		0x0001	/* device opened */
