@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.29 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: sem.c,v 1.29.8.1 2002/05/16 12:55:00 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@ static struct deva **nextdeva;
 static struct config **nextcf;
 static struct devi **nextdevi;
 static struct devi **nextpseudo;
+static struct devm **nextdevm;
 
 static int has_errobj(struct nvlist *, void *);
 static struct nvlist *addtoattr(struct nvlist *, struct devbase *);
@@ -87,6 +88,8 @@ static void selectbase(struct devbase *, struct deva *);
 static int onlist(struct nvlist *, void *);
 static const char **fixloc(const char *, struct attr *, struct nvlist *);
 static const char *makedevstr(int, int);
+
+extern const char *yyfile;
 
 void
 initsem(void)
@@ -112,6 +115,9 @@ initsem(void)
 
 	allpseudo = NULL;
 	nextpseudo = &allpseudo;
+
+	alldevms = NULL;
+	nextdevm = &alldevms;
 
 	s_ifnet = intern("ifnet");
 	s_qmark = intern("?");
@@ -954,6 +960,39 @@ addpseudo(const char *name, int number)
 	*nextpseudo = i;
 	nextpseudo = &i->i_next;
 	npseudo++;
+}
+
+void
+adddevm(const char *name, int cmajor, int bmajor, struct nvlist *options)
+{
+	struct devm *dm;
+
+	if (cmajor < 0 || cmajor >= 4096) {
+		error("character major %d is invalid", cmajor);
+		nvfreel(options);
+		return;
+	}
+
+	if (bmajor < -1 || bmajor >= 4096) {
+		error("block major %d is invalid", bmajor);
+		nvfreel(options);
+		return;
+	}
+
+	dm = emalloc(sizeof(*dm));
+	dm->dm_srcfile = yyfile;
+	dm->dm_srcline = currentline();
+	dm->dm_name = name;
+	dm->dm_cmajor = cmajor;
+	dm->dm_bmajor = bmajor;
+	dm->dm_opts = options;
+	dm->dm_next = NULL;
+
+	*nextdevm = dm;
+	nextdevm = &dm->dm_next;
+
+	maxcdevm = MAX(maxcdevm, dm->dm_cmajor);
+	maxbdevm = MAX(maxbdevm, dm->dm_bmajor);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.13 2000/10/02 19:48:35 cgd Exp $	*/
+/*	$NetBSD: sem.h,v 1.13.14.1 2002/05/16 12:55:00 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@ void		setconf(struct nvlist **, const char *, struct nvlist *);
 void		setfstype(const char **, const char *);
 void		adddev(const char *, const char *, struct nvlist *, int);
 void		addpseudo(const char *name, int number);
+void		adddevm(const char *, int, int, struct nvlist *);
 const char     *ref(const char *name);
 const char     *starref(const char *name);
 const char     *wildref(const char *name);
