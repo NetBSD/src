@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.2 2002/11/28 06:00:28 chs Exp $
+#	$NetBSD: Makefile.buildboot,v 1.3 2003/10/12 18:56:44 he Exp $
 
 MACHINE_ARCH=hppa
 MACHINE=hp700
@@ -11,6 +11,11 @@ HEAP_LIMIT=0x7c0000
 #DEBUGFLAGS+=-DEXEC_DEBUG
 #DEBUGFLAGS+=-DALLOC_TRACE
 #DEBUGLIBS=	no
+
+LIBCRT0=	# nothing
+LIBCRTBEGIN=	# nothing
+LIBCRTEND=	# nothing
+LIBC=		# nothing
 
 S=		${.CURDIR}/../../../..
 
