@@ -1,4 +1,4 @@
-/*	$NetBSD: wctype.h,v 1.3 2000/12/22 14:16:16 itojun Exp $	*/
+/*	$NetBSD: wctype.h,v 1.4 2001/01/20 17:40:09 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -58,10 +58,6 @@ int	iswupper __P((wint_t));
 int	iswxdigit __P((wint_t));
 wint_t	towlower __P((wint_t));
 wint_t	towupper __P((wint_t));
-
-unsigned long	___runetype_mb __P((wint_t));
-wint_t	___tolower_mb __P((wint_t));
-wint_t	___toupper_mb __P((wint_t));
 __END_DECLS
 
 #endif		/* _WCTYPE_H_ */
