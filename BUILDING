@@ -30,8 +30,8 @@ REQUIREMENTS
      toolchain (make is not required); all other tools are created as part of
      the NetBSD build process.
 
-           Note: A couple host toolchain components are not yet available in
-           the tools directory.  Also, some tools use non-POSIX, non-ANSI C
+           Note: A couple of host toolchain components are not yet available
+           in the tools directory.  Also, some tools use non-POSIX, non-ANSI C
            extensions and need to be standardized.  As a result, cross-compil-
            ing from systems other than NetBSD is not currently supported.
 
@@ -410,7 +410,8 @@ BUILDING
                    the proper order.
 
      distribution  Do a ``make build'', and then install a full distribution
-                   into DESTDIR.
+                   into DESTDIR, including files in /dev, /etc, /root and
+                   /var.
 
      buildworld    As per ``make distribution'', except that it ensures that
                    DESTDIR is not the root directory.
@@ -423,9 +424,10 @@ BUILDING
                    Note: It is highly recommended that you upgrade your kernel
                    and reboot before performing this operation.
 
-     release       Do a ``make build'', then package the system into a stan-
-                   dard release layout as described by release(7).  This re-
-                   quires that RELEASEDIR be set (see above).
+     release       Do a ``make distribution'', build kernels, distribution me-
+                   dia, and install sets, and then package the system into a
+                   standard release layout as described by release(7).  This
+                   requires that RELEASEDIR be set (see above).
 
      regression-tests
                    Can only be run after building the regression tests in the
@@ -449,8 +451,38 @@ BUILDING
      of options below, variables that are automatically set by build.sh are
      noted where applicable.
 
-     The following are available command line options that may be supplied to
-     build.sh:
+     The following operations are supported by build.sh:
+
+     build         Build the system as per ``make build''.  This option im-
+                   plies the obj and tools operations.
+
+     distribution  Build a full distribution as per ``make distribution''.
+                   This option implies the build operation.
+
+     release       Build a full release as per ``make release''.  This option
+                   implies the distribution operation.
+
+     obj           Perform ``make obj''.
+
+     tools         Build and install the host tools from src/tools.
+
+     kernel=kconf  Build a new kernel.  The kconf argument is the name of a
+                   configuration file suitable for use by config(8).  If kconf
+                   does not contain any `/' characters, the configuration file
+                   is expected to be found in the KERNCONFDIR directory, which
+                   is typically sys/arch/MACHINE/conf.  The new kernel will be
+                   built in a subdirectory of KERNOBJDIR, which is typically
+                   sys/arch/MACHINE/compile or an associated object directory.
+                   In order to ensure that the kernel is built using up-to-
+                   date tools, it is strongly recommended that the tools be
+                   rebuilt (using the tools operation).
+
+     install=idir  Install the contents of DESTDIR to idir, using ``make
+                   installworld''.
+
+     The following command line options alter the behaviour of the above oper-
+     ations: The following command line options alter the behaviour of the
+     build.sh operations described above:
 
      -a arch   Set the value of MACHINE_ARCH to arch.
 
@@ -460,42 +492,15 @@ BUILDING
                that the resulting name is of the form ``nbmake-MACHINE-
                BUILDID''.
 
-     -b        Bootstrap ``make'' and create a nbmake-MACHINE script (see be-
-               low).
-
      -D dest   Set the value of DESTDIR to dest.
-
-     -d        Build a full distribution.  This differs from a default build
-               in that files will also be installed to /dev, /etc, /root and
-               /var.  Note this does not build a ``release''; no release sets
-               are placed in ${RELEASEDIR}.  -d is implied by -R.
 
      -E        Set `expert' mode; DESTDIR does not have to be set to a non-
                root path for builds when this is set.
-
-     -i installworlddir
-               Install the contents of DESTDIR to installworlddir after all
-               other operations have completed, using the top level
-               ``installworld'' target.
 
      -j njob   Passed through to make(1).  Makefiles should use .WAIT or have
                explicit dependancies as necessary to enforce build ordering.
                If you see build failures with -j, please save complete build
                logs so the failures can be analyzed.
-
-     -k kernel
-               Build a new kernel.  The kernel argument is the name of a con-
-               figuration file suitable for use by config(8).  If kernel does
-               not contain any `/' characters, the configuration file is ex-
-               pected to be found in the KERNCONFDIR directory, which is typi-
-               cally sys/arch/MACHINE/conf.  The new kernel will be built in a
-               subdirectory of KERNOBJDIR, which is typically
-               sys/arch/MACHINE/compile or an associated object directory.  In
-               order to ensure that the kernel is built using up-to-date
-               tools, it is strongly recommended that the tools be rebuilt
-               (using the -t option) in a separate invocation of build.sh pri-
-               or to using the -k option, or that the -t and -k options be
-               used together in a single invocation of build.sh.
 
      -M obj    Set MAKEOBJDIRPREFIX to obj.
 
@@ -516,9 +521,7 @@ BUILDING
 
      -o        Set the value of MKOBJDIRS to ``no''.
 
-     -R rel    Set the value of RELEASEDIR to rel.  Setting this option will
-               cause build.sh to run ``make release'' instead of ``make
-               build''.
+     -R rel    Set the value of RELEASEDIR to rel.
 
      -r        Remove the contents of DESTDIR and TOOLDIR before building
                (provides a clean starting point).  This will skip deleting
@@ -527,9 +530,6 @@ BUILDING
      -T tools  Set the value of TOOLDIR to tools.  If set, the bootstrap
                ``make'' will only be rebuilt as needed (when the source files
                for make(1) change).
-
-     -t        Build and install the host tools from src/tools only.  This op-
-               tion implies -b.
 
      -U        Set the UNPRIVED variable.
 
@@ -558,7 +558,7 @@ BUILDING
      with an absolute path.
 
 EXAMPLES
-     ./build.sh -t
+     ./build.sh tools
                Build a new toolchain.
 
      cd ${KERNCONFDIR} ; ${TOOLDIR}/bin/nbconfig GENERIC
@@ -568,15 +568,23 @@ EXAMPLES
      cd ${KERNOBJDIR}/GENERIC ; ${TOOLDIR}/bin/nbmake-${MACHINE} dependall
                Use the new toolchain to build a new GENERIC kernel.
 
-     ./build.sh -t -k GENERIC
+     ./build.sh tools kernel=GENERIC
                Build a new toolchain, and use the new toolchain to configure
-               and build a new GENERIC kernel.
+               and build a new GENERIC kernel.  This is a simpler way to
+               achieve what the first three examples do.
 
-     ./build.sh -U -d
+     ./build.sh -U distribution
                Using unprivileged mode, build a complete distribution in
                DESTDIR.
 
-     ./build.sh -U -R /some/dir/RELEASE
+     # ./build.sh -U installworld=/
+               As root, install the distribution that was built with unprivi-
+               leged mode from DESTDIR to /.  (Even though this is run as
+               root, -U is required so that the permissions stored in
+               DESTDIR/METALOG are correctly applied to the files as they're
+               copied to /).
+
+     ./build.sh -U -R /some/dir/RELEASE release
                Using unprivileged mode, build a complete release in the speci-
                fied release directory.
 
@@ -597,4 +605,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                          January 4, 2003                             10
+NetBSD                         January 24, 2003                             10
