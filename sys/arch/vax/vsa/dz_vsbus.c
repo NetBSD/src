@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.4 1998/06/04 15:51:12 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.5 1998/06/07 20:19:12 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -260,9 +260,9 @@ int
 lkccngetc(dev) 
 	dev_t dev;
 {
+	int lkc_decode(int);
 	int c;
 	u_char mask;
-	extern unsigned short q_key[];
 
 	mask = vs_cpu->vc_intmsk;	/* save old state */
 	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
@@ -271,8 +271,8 @@ loop:
 	while ((dz->csr & 0x80) == 0)
 		; /* Wait for char */
 
-	c = q_key[dz->rbuf & 255];
-	if (c == 0)
+	c = lkc_decode(dz->rbuf & 255);
+	if (c < 1)
 		goto loop;
 
 	vs_cpu->vc_intclr = 0x80;	/* clear te interrupt request */
