@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.34 2000/02/18 09:44:46 lukem Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.34.4.1 2000/06/30 22:35:30 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.34 2000/02/18 09:44:46 lukem Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.34.4.1 2000/06/30 22:35:30 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,11 +187,12 @@ struct	filed consfile;
 int	Debug;			/* debug flag */
 char	LocalHostName[MAXHOSTNAMELEN+1];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
-int	*finet;			/* Internet datagram sockets */
+int	*finet = NULL;			/* Internet datagram sockets */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
-int	SecureMode = 0;		/* when true, speak only unix domain socks */
+int	SecureMode = 0;		/* listen only on unix domain socks */
+int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
 
 void	cfline __P((char *, struct filed *));
@@ -246,7 +247,7 @@ main(argc, argv)
 			logpath_fileadd(&LogPaths, &funixsize, 
 			    &funixmaxsize, optarg);
 			break;
-		case 's':		/* no network mode */
+		case 's':		/* no network listen mode */
 			SecureMode++;
 			break;
 		case '?':
@@ -319,19 +320,7 @@ main(argc, argv)
 		dprintf("listening on unix dgram socket %s\n", *pp);
 	}
 
-	finet = socksetup(PF_UNSPEC);
-	if (finet) {
-		if (SecureMode) {
-			for (j = 0; j < *finet; j++) {
-				if (shutdown(finet[j+1], SHUT_RD) < 0) {
-					logerror("shutdown");
-					die(0);
-				}
-			}
-		} else
-			dprintf("listening on inet and/or inet6 socket\n");
-		dprintf("sending on inet and/or inet6 socket\n");
-	}
+	init(0);
 
 	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0) {
 		dprintf("can't open %s (%d)\n", _PATH_KLOG, errno);
@@ -345,7 +334,6 @@ main(argc, argv)
 
 	dprintf("off & running....\n");
 
-	init(0);
 	(void)signal(SIGHUP, init);
 
 	/* setup pollfd set. */
@@ -448,7 +436,7 @@ usage()
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-"usage: %s [-f conffile] [-m markinterval] [-p logpath1] [-p logpath2 ..]\n",
+"usage: %s [-ds] [-f conffile] [-m markinterval] [-P logpathfile] [-p logpath1] [-p logpath2 ..]\n",
 	    __progname);
 	exit(1);
 }
@@ -1073,6 +1061,19 @@ init(signo)
 	Files = NULL;
 	nextp = &Files;
 
+	/*
+	 *  Close all open sockets
+	 */
+
+	if (finet) {
+		for (i = 0; i < *finet; i++) {
+			if (close(finet[i+1]) < 0) {
+				logerror("close");
+				die(0);
+			}
+		}
+	}
+
 	/* open the configuration file */
 	if ((cf = fopen(ConfFile, "r")) == NULL) {
 		dprintf("cannot open %s\n", ConfFile);
@@ -1138,6 +1139,20 @@ init(signo)
 			}
 			printf("\n");
 		}
+	}
+
+	finet = socksetup(PF_UNSPEC);
+	if (finet) {
+		if (SecureMode) {
+			for (i = 0; i < *finet; i++) {
+				if (shutdown(finet[i+1], SHUT_RD) < 0) {
+					logerror("shutdown");
+					die(0);
+				}
+			}
+		} else
+			dprintf("listening on inet and/or inet6 socket\n");
+		dprintf("sending on inet and/or inet6 socket\n");
 	}
 
 	logmsg(LOG_SYSLOG|LOG_INFO, "syslogd: restart", LocalHostName, ADDDATE);
@@ -1228,8 +1243,6 @@ cfline(line, f)
 	switch (*p)
 	{
 	case '@':
-		if (!finet)
-			break;
 		(void)strcpy(f->f_un.f_forw.f_hname, ++p);
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
@@ -1243,6 +1256,7 @@ cfline(line, f)
 		}
 		f->f_un.f_forw.f_addr = res;
 		f->f_type = F_FORW;
+		NumForwards++;
 		break;
 
 	case '/':
@@ -1337,6 +1351,9 @@ socksetup(af)
 	struct addrinfo hints, *res, *r;
 	int error, maxs, *s, *socks;
 
+	if(SecureMode && !NumForwards)
+		return(NULL);
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_PASSIVE;
 	hints.ai_family = af;
@@ -1365,7 +1382,7 @@ socksetup(af)
 			logerror("socket");
 			continue;
 		}
-		if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
+		if (!SecureMode && bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
 			close (*s);
 			logerror("bind");
 			continue;
