@@ -1,6 +1,6 @@
-/*	$NetBSD: adbsysasm.s,v 1.7 1998/10/23 01:16:23 ender Exp $	*/
+/*	$NetBSD: aedvar.h,v 1.1 1998/10/23 01:16:23 ender Exp $	*/
 
-/*-
+/*
  * Copyright (C) 1994	Bradley A. Grantham
  * All rights reserved.
  *
@@ -30,60 +30,49 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
- * ADB subsystem routines in assembly
- */
+#include <machine/adbsys.h>
 
-/* This routine is called when a keyboard has sent us some data. */
-/* (provided it has been set up with SetADBInfo) */
-	.global	_adb_kbd_asmcomplete
-	.global	_kbd_adbcomplete
-_adb_kbd_asmcomplete:
-	moveml	#0xc0c0, sp@-	| save scratch regs
-	movl	d0, sp@-	/* ADB command byte */
-	movl	a2, sp@-	/* data area pointer */
-	/*	a1 is the pointer to this routine itself. */
-	movl	a0, sp@-	/* device data buffer */
-	jbsr	_kbd_adbcomplete
-	addl	#12, sp		/* pop params */
-	moveml	sp@+, #0x0303	| restore scratch regs
-	rts
+/* Event queue definitions */
+#ifndef AED_MAX_EVENTS
+#define AED_MAX_EVENTS 200	/* Maximum events to be kept in queue */  
+				/* maybe should be higher for slower macs? */
+#endif				/* AED_MAX_EVENTS */
 
-/* This routine is called when a mouse has sent us some data. */
-/* (provided it has been set up with SetADBInfo) */
-	.global	_adb_ms_asmcomplete
-	.global	_ms_adbcomplete
-_adb_ms_asmcomplete:
-	moveml	#0xc0c0, sp@-	| save scratch regs
-	movl	d0, sp@-	/* ADB command byte */
-	movl	a2, sp@-	/* data area pointer */
-	/*	a1 is the pointer to this routine itself. */
-	movl	a0, sp@-	/* device data buffer */
-	jbsr	_ms_adbcomplete
-	addl	#12, sp		/* pop params */
-	moveml	sp@+, #0x0303	| restore scratch regs
-	rts
+struct aed_softc {
+	struct  device  sc_dev;
 
+	/* ADB info */
+	u_char		origaddr;	/* ADB device type (ADBADDR_AED) */
+	u_char		adbaddr;	/* current ADB address */
+	u_char		handler_id;	/* type of device */
 
-_adb_jadbprochello:
-	.asciz	"adb: hello from adbproc\n"
-	.even
+	/* ADB event queue */
+	adb_event_t	sc_evq[AED_MAX_EVENTS];	/* the queue */
+	int		sc_evq_tail;	/* event queue tail pointer */
+	int		sc_evq_len;	/* event queue length */
 
+	/* Keyboard repeat state */
+	int		sc_rptdelay;	/* ticks before auto-repeat */
+	int		sc_rptinterval;	/* ticks between auto-repeat */
+	int		sc_repeating;	/* key that is auto-repeating */
+	adb_event_t	sc_rptevent;	/* event to auto-repeat */
 
-	.global	_adb_jadbproc
-_adb_jadbproc:
-#if defined(ADB_DEBUG) && 0
-	moveml	#0xc0c0, sp@-	| save scratch regs
-	movl	_adb_jadbprochello, sp@-
-	jbsr	_printf
-	addl	#4, sp		/* pop params */
-	moveml	sp@+, #0x0303	| restore scratch regs
-#endif
-		/* Don't do anything; adbattach fixes dev info for us. */
-	rts
+	int		sc_buttons;	/* mouse button state */
 
-	/* ADBOp's completion routine used by extdms_init() in adbsys.c. */
-	.global	_extdms_complete
-_extdms_complete:
-	movl	#-1,a2@		| set done flag
-	rts
+	struct selinfo	sc_selinfo;	/* select() info */
+	struct proc *	sc_ioproc;	/* process to wakeup */
+
+	int		sc_open;	/* Are we queuing events? */
+	int		sc_options;	/* config options */
+};
+
+/* Options */
+#define AED_MSEMUL	0x1		/* emulate mouse buttons */
+
+void	aed_input __P((adb_event_t *event));
+int	aedopen __P((dev_t dev, int flag, int mode, struct proc *p));
+int	aedclose __P((dev_t dev, int flag, int mode, struct proc *p));
+int	aedread __P((dev_t dev, struct uio *uio, int flag));
+int	aedwrite __P((dev_t dev, struct uio *uio, int flag));
+int	aedioctl __P((dev_t , int , caddr_t , int , struct proc *));
+int	aedpoll __P((dev_t dev, int events, struct proc *p));

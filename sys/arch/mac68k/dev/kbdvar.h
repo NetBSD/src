@@ -1,7 +1,7 @@
-/*	$NetBSD: adb_direct.h,v 1.1 1997/04/08 03:16:19 scottr Exp $	*/
+/*	$Id: kbdvar.h,v 1.1 1998/10/23 01:16:24 ender Exp $	*/
 
 /*
- * Copyright (C) 1996 John P. Wittkoski
+ * Copyright (C) 1998	Colin Wood
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by John P. Wittkoski.
+ *	This product includes software developed by Colin Wood.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -29,25 +29,31 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* From: adb_direct.h 1.4 10/23/96 jpw */
+
+#ifndef _MAC68K_KBDVAR_H_
+#define _MAC68K_KBDVAR_H_
+
+#include <machine/adbsys.h>
 
 /*
- * These are public declarations that other routines may need.
+ * State info, per keyboard instance.
  */
+struct kbd_softc {
+	struct  device  sc_dev;
 
-/* types of adb hardware that we (will eventually) support */
-#define ADB_HW_UNKNOWN		0x01	/* don't know */
-#define ADB_HW_II		0x02	/* Mac II series */
-#define ADB_HW_IISI		0x03	/* Mac IIsi series */
-#define ADB_HW_PB		0x04	/* PowerBook series */
-#define ADB_HW_CUDA		0x05	/* Machines with a Cuda chip */
+	/* ADB info */
+	u_int8_t        origaddr;       /* ADB device type (ADBADDR_KBD) */
+	u_int8_t        adbaddr;        /* current ADB address */
+	u_int8_t        handler_id;     /* type of keyboard */
 
-int	adb_poweroff __P((void));
-int	CountADBs __P((void));
-void	ADBReInit __P((void));
-int	GetIndADB __P((ADBDataBlock *info, int index));
-int	GetADBInfo __P((ADBDataBlock *info, int adbAddr));
-int	SetADBInfo __P((ADBSetInfoBlock *info, int adbAddr));
-int	ADBOp __P((Ptr buffer, Ptr compRout, Ptr data, short commandNum));
-int	adb_read_date_time __P((unsigned long *));
-int	adb_set_date_time __P((unsigned long));
+	u_int8_t	sc_leds;	/* current LED state */
+};
+
+/* LED register bits, inverse of actual register value */
+#define LED_NUMLOCK	0x1
+#define LED_CAPSLOCK	0x2
+#define LED_SCROLL_LOCK	0x4
+
+void    kbd_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
+
+#endif /* _MAC68K_KBDVAR_H_ */
