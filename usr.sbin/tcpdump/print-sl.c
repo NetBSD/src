@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
- * $Id: print-sl.c,v 1.2 1993/12/25 02:28:54 deraadt Exp $
+ * $Id: print-sl.c,v 1.3 1994/02/10 05:41:44 cgd Exp $
  */
 
 #ifndef lint
@@ -53,7 +53,7 @@ static  char rcsid[] =
 #include <netinet/tcpip.h>
 
 #include <net/slcompress.h>
-#include <net/if_slvar.h>
+#include <net/slip.h>
 #include <net/bpf.h>
 
 #include "interface.h"
