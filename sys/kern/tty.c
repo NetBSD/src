@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128.4.1 2001/09/07 04:45:38 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.4.2 2001/09/18 19:13:53 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -75,6 +75,9 @@ static void ttyblock __P((struct tty *));
 static void ttyecho __P((int, struct tty *));
 static void ttyrubo __P((struct tty *, int));
 static int proc_compare __P((struct proc *, struct proc *));
+
+#include <sys/conf.h>
+extern int comopen(struct vnode *, int oflags, int devtype, struct proc *p);
 
 /* Symbolic sleep message strings. */
 const char	ttclos[] = "ttycls";
@@ -228,6 +231,7 @@ ttyopen(struct tty *tp, int dialout, int nonblock)
 	splx(s);
 	return (0);
 }
+
 
 /*
  * Initial open of tty, or (re)entry to standard tty line discipline.
@@ -1117,6 +1121,11 @@ ttyflush(struct tty *tp, int rw)
 {
 	int	s;
 
+	if (tp->t_devvp->v_specinfo == NULL) {
+		VOP_PRINT(tp->t_devvp);
+		panic("bad specinfo");
+	}
+
 	s = spltty();
 	if (rw & FREAD) {
 		FLUSHQ(&tp->t_canq);
@@ -1213,7 +1222,6 @@ ttstart(struct tty *tp)
 int
 ttylclose(struct tty *tp, int flag)
 {
-
 	if (flag & FNONBLOCK)
 		ttyflush(tp, FREAD | FWRITE);
 	else

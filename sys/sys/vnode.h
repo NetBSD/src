@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.91 2001/04/29 04:23:20 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.91.4.1 2001/09/18 19:14:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -507,6 +507,8 @@ int	vflush(struct mount *mp, struct vnode *vp, int flags);
 void	vntblinit(void);
 void	vwakeup(struct buf *);
 void	vdevgone(int, int, int, enum vtype);
+void	vdevremhash(struct vnode *);
+void	vdevinshash(struct vnode *, dev_t);
 int 	vget(struct vnode *vp, int lockflag);
 void 	vgone(struct vnode *vp);
 void	vgonel(struct vnode *vp, struct proc *p);

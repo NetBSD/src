@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.83 2001/08/31 04:56:26 chs Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.83.2.1 2001/09/18 19:13:56 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -232,6 +232,7 @@ procfs_open(v)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct vnode *a_vpp;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct proc *p1, *p2;

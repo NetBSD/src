@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.40.4.1 2001/09/07 04:45:22 thorpej Exp $	*/
+/*	$NetBSD: cons.c,v 1.40.4.2 2001/09/18 19:13:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,21 +59,20 @@
 
 struct	tty *constty = NULL;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
-struct	vnode *cn_devvp;	/* vnode for underlying device. */
 
 int
-cnopen(devvp, flag, mode, p)
+cnopen(devvp, mode, flag, p)
 	struct vnode *devvp;
 	int flag, mode;
 	struct proc *p;
 {
 	int error;
 	dev_t cndev;
+	struct vnode *vp;
 
 	if (cn_tab == NULL)
 		return (0);
 
-	/* XXXDEVVP */
 
 	/*
 	 * always open the 'real' console device, so we don't get nailed
@@ -99,12 +98,20 @@ cnopen(devvp, flag, mode, p)
 		panic("cnopen: cn_tab->cn_dev == dev\n");
 	}
 
-	if (cn_devvp == NULLVP) {
-		error = cdevvp(cndev, &cn_devvp);
-		if (error)
-			return (error);
-	}
-	return ((*cdevsw[major(cndev)].d_open)(cn_devvp, flag, mode, p));
+	if (vfinddev(cndev, VCHR, &vp) == 0) {
+		error = cdevvp(cndev, &vp);
+		if (error != 0)
+			return error;
+	} else
+		vref(vp);
+	devvp->v_devcookie = vp;
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_OPEN(vp, mode, p->p_ucred, p, NULL);
+	VOP_UNLOCK(vp, 0);
+	if (error != 0)
+		vrele(vp);
+	return error;
 }
  
 int
@@ -114,25 +121,18 @@ cnclose(devvp, flag, mode, p)
 	struct proc *p;
 {
 	struct vnode *vp;
-	dev_t dev;
+	int error;
 
 	if (cn_tab == NULL)
 		return (0);
 
-	/*
-	 * If the real console isn't otherwise open, close it.
-	 * If it's otherwise open, don't close it, because that'll
-	 * screw up others who have it open.
-	 */
-	dev = cn_tab->cn_dev;
-	if (cn_devvp != NULLVP) {
-		/* release our reference to real dev's vnode */
-		vrele(cn_devvp);
-		cn_devvp = NULLVP;
-	}
-	if (vfinddev(dev, VCHR, &vp) && vcount(vp))
-		return (0);
-	return ((*cdevsw[major(dev)].d_close)(vp, flag, mode, p));
+	vp = devvp->v_devcookie;
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_CLOSE(vp, flag, p->p_ucred, p);
+	vput(vp);
+
+	return error;
 }
  
 int
@@ -141,6 +141,9 @@ cnread(devvp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
+	int error;
+	struct vnode *vp;
+	struct proc *p = uio->uio_procp;
 
 	/*
 	 * If we would redirect input, punt.  This will keep strange
@@ -154,7 +157,12 @@ cnread(devvp, uio, flag)
 	else if (cn_tab == NULL)
 		return ENXIO;
 
-	return ((*cdevsw[major(cn_tab->cn_dev)].d_read)(cn_devvp, uio, flag));
+	vp = devvp->v_devcookie;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_READ(vp, uio, flag, p->p_ucred);
+	VOP_UNLOCK(vp, 0);
+
+	return error;
 }
  
 int
@@ -163,18 +171,24 @@ cnwrite(devvp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
+	int error;
+	struct vnode *vp;
+	struct proc *p = uio->uio_procp;
 
 	/*
 	 * Redirect output, if that's appropriate.
 	 * If there's no real console, return ENXIO.
 	 */
 	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		devvp = constty->t_devvp;
+		vp = constty->t_devvp;
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else
-		devvp = cn_devvp;
-	return ((*cdevsw[major(devvp->v_rdev)].d_write)(devvp, uio, flag));
+		vp = devvp->v_devcookie;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_WRITE(vp, uio, flag, p->p_ucred);
+	VOP_UNLOCK(vp, 0);
+	return error;
 }
 
 void
@@ -194,6 +208,7 @@ cnioctl(devvp, cmd, data, flag, p)
 	struct proc *p;
 {
 	int error;
+	struct vnode *vp;
 
 	/*
 	 * Superuser can always use this to wrest control of console
@@ -214,13 +229,13 @@ cnioctl(devvp, cmd, data, flag, p)
 	 * out from under it.
 	 */
 	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		devvp = constty->t_devvp;
+		vp = constty->t_devvp;
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else
-		devvp = cn_devvp;
-	return ((*cdevsw[major(devvp->v_rdev)].d_ioctl)(devvp, cmd, data,
-	    flag, p));
+		vp = devvp->v_devcookie;
+
+	return VOP_IOCTL(vp, cmd, data, flag, p->p_ucred, p);
 }
 
 /*ARGSUSED*/
@@ -230,6 +245,7 @@ cnpoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
+	struct vnode *vp;
 
 	/*
 	 * Redirect the poll, if that's appropriate.
@@ -237,12 +253,13 @@ cnpoll(devvp, events, p)
 	 * of console redirection here.
 	 */
 	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		devvp = constty->t_devvp;
+		vp = constty->t_devvp;
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else
-		devvp = cn_devvp;
-	return ((*cdevsw[major(devvp->v_rdev)].d_poll)(devvp, events, p));
+		vp = devvp->v_devcookie;
+
+	return VOP_POLL(vp, events, p);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.109.2.1 2001/09/07 04:45:29 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.109.2.2 2001/09/18 19:13:50 fvdl Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2649,7 +2649,7 @@ rf_find_raid_components()
 		if (bdevvp(dev, &vp))
 			panic("RAID can't alloc vnode");
 
-		error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+		error = VOP_OPEN(vp, FREAD, NOCRED, 0, NULL);
 
 		if (error) {
 			/* "Who cares."  Continue looking 
@@ -2685,7 +2685,7 @@ rf_find_raid_components()
 			if (bdevvp(dev, &vp))
 				panic("RAID can't alloc vnode");
 
-			error = VOP_OPEN(vp, FREAD, NOCRED, 0);
+			error = VOP_OPEN(vp, FREAD, NOCRED, 0, NULL);
 			if (error) {
 				/* Whatever... */
 				vput(vp);

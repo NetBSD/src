@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.36 2001/06/19 22:14:14 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.36.4.1 2001/09/18 19:13:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -452,7 +452,7 @@ ntfs_mountfs(devvp, mp, argsp, p)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
+	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p, NULL);
 	if (error)
 		return (error);
 

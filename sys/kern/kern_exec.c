@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.144 2001/07/29 21:22:42 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.144.2.1 2001/09/18 19:13:53 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -223,7 +223,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
 	/* try to open it */
-	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, p)) != 0)
+	if ((error = VOP_OPEN(vp, FREAD, p->p_ucred, p, NULL)) != 0)
 		goto bad1;
 
 	/* unlock vp, since we need it unlocked from here on out. */

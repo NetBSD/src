@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.36 2001/08/24 10:24:47 wiz Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.36.2.1 2001/09/18 19:14:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -180,6 +180,7 @@ ext2fs_open(v)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct vnode **a_vpp;
 	} */ *ap = v;
 
 	/*

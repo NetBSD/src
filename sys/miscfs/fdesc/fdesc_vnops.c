@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.64.4.1 2001/09/07 04:45:39 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.64.4.2 2001/09/18 19:13:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -434,6 +434,7 @@ fdesc_open(v)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct vnode **a_vpp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -455,7 +456,7 @@ fdesc_open(v)
 		 * XXX cttyopen() doesn't use the vnode it's passed.
 		 * XXX --thorpej@netbsd.org
 		 */
-		return (cttyopen(NULL, ap->a_mode, 0, ap->a_p));
+		return (do_cttyopen(NULL, ap->a_mode, 0, ap->a_p, ap->a_vpp));
 	case Froot:
 	case Fdevfd:
 	case Flink:

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.214.4.1 2001/09/07 04:45:24 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.214.4.2 2001/09/18 19:13:49 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -442,7 +442,7 @@ wdstrategy(bp)
 
 	WDCDEBUG_PRINT(("wdstrategy (%s)\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
-	
+
 	/* Valid request?  */
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % lp->d_secsize) != 0 ||
@@ -1176,7 +1176,7 @@ wdsize(dev)
 		    (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
 
 	if (omask == 0) {
-		if (sdclose(vp, 0, S_IFBLK, NULL) != 0)
+		if (wdclose(vp, 0, S_IFBLK, NULL) != 0)
 			size = -1;
 		vrele(vp);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.168 2001/07/24 15:39:31 assar Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.168.2.1 2001/09/18 19:13:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1120,7 +1120,7 @@ sys_fhopen(p, v, retval)
 	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
-	struct vnode *vp = NULL;
+	struct vnode *vp = NULL, *vp2;
 	struct mount *mp;
 	struct ucred *cred = p->p_ucred;
 	int flags;
@@ -1186,8 +1186,14 @@ sys_fhopen(p, v, retval)
 		if ((error = VOP_SETATTR(vp, &va, cred, p)) != 0)
 			goto bad;
 	}
-	if ((error = VOP_OPEN(vp, flags, cred, p)) != 0)
+	vp2 = NULL;
+	if ((error = VOP_OPEN(vp, flags, cred, p, &vp2)) != 0)
 		goto bad;
+	if (vp2 != NULL) {
+		vput(vp);
+		vp = vp2;
+	}
+
 	if (vp->v_type == VREG &&
 	    uvn_attach(vp, flags & FWRITE ? VM_PROT_WRITE : 0) == NULL) {
 		error = EIO;

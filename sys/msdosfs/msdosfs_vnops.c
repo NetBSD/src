@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.111.2.1 2001/09/07 04:45:41 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.111.2.2 2001/09/18 19:13:58 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -194,6 +194,7 @@ msdosfs_open(v)
 		int a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct vnode **a_vpp;
 	} */ *ap;
 #endif
 

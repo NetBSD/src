@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.3 2000/11/05 04:06:14 thorpej Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.3.8.1 2001/09/18 19:13:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -79,16 +79,16 @@ struct sysmon_wdog {
 
 struct proc;
 
-int	sysmonopen_envsys(dev_t, int, int, struct proc *);
-int	sysmonclose_envsys(dev_t, int, int, struct proc *);
-int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct proc *);
+int	sysmonopen_envsys(struct vnode *, int, int, struct proc *);
+int	sysmonclose_envsys(struct vnode *, int, int, struct proc *);
+int	sysmonioctl_envsys(struct vnode *, u_long, caddr_t, int, struct proc *);
 
 int	sysmon_envsys_register(struct sysmon_envsys *);
 void	sysmon_envsys_unregister(struct sysmon_envsys *);
 
-int	sysmonopen_wdog(dev_t, int, int, struct proc *);
-int	sysmonclose_wdog(dev_t, int, int, struct proc *);
-int	sysmonioctl_wdog(dev_t, u_long, caddr_t, int, struct proc *);
+int	sysmonopen_wdog(struct vnode *, int, int, struct proc *);
+int	sysmonclose_wdog(struct vnode *, int, int, struct proc *);
+int	sysmonioctl_wdog(struct vnode *, u_long, caddr_t, int, struct proc *);
 
 int	sysmon_wdog_register(struct sysmon_wdog *);
 void	sysmon_wdog_unregister(struct sysmon_wdog *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.40 2000/08/03 20:41:28 thorpej Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.40.6.1 2001/09/18 19:13:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -682,7 +682,7 @@ union_copyup(un, docopy, cred, p)
 
         	error = VOP_GETATTR(lvp, &lvattr, cred, p);
 		if (error == 0)
-			error = VOP_OPEN(lvp, FREAD, cred, p);
+			error = VOP_OPEN(lvp, FREAD, cred, p, NULL);
 		if (error == 0) {
 			error = union_copyfile(lvp, uvp, cred, p);
 			(void) VOP_CLOSE(lvp, FREAD, cred, p);
@@ -717,7 +717,7 @@ union_copyup(un, docopy, cred, p)
 		vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
 		for (i = 0; i < un->un_openl; i++) {
 			(void) VOP_CLOSE(lvp, FREAD, cred, p);
-			(void) VOP_OPEN(uvp, FREAD, cred, p);
+			(void) VOP_OPEN(uvp, FREAD, cred, p, NULL);
 		}
 		un->un_openl = 0;
 		VOP_UNLOCK(lvp, 0);
@@ -965,7 +965,7 @@ union_vn_create(vpp, un, p)
 	if ((error = VOP_CREATE(un->un_dirvp, &vp, &cn, vap)) != 0)
 		return (error);
 
-	if ((error = VOP_OPEN(vp, fmode, cred, p)) != 0) {
+	if ((error = VOP_OPEN(vp, fmode, cred, p, NULL)) != 0) {
 		vput(vp);
 		return (error);
 	}

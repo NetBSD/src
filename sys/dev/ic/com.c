@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.188.2.1 2001/09/07 04:45:25 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.188.2.2 2001/09/18 19:13:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -930,10 +930,15 @@ comclose(devvp, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct com_softc *sc = devvp->v_devcookie;
-	struct tty *tp = sc->sc_tty;
+	struct com_softc *sc;
+	struct tty *tp;
+
+	sc = devvp->v_devcookie;
 
 	/* XXX This is for cons.c. */
+	if (sc == NULL)
+		return (0);
+	tp = sc->sc_tty;
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		return (0);
 

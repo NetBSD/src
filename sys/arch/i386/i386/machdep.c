@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.453 2001/08/12 08:35:31 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.453.2.1 2001/09/18 19:13:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1990,6 +1990,7 @@ cpu_dumpconf()
 	dumpblks = cpu_dumpsize();
 	if (dumpblks < 0)
 		goto bad;
+
 	dumpblks += ctod(cpu_dump_mempagecnt());
 
 	/* If dump won't fit (incl. room for possible label), punt. */

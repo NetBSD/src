@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.48 2001/04/09 10:22:02 jdolecek Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.48.4.1 2001/09/18 19:13:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -78,7 +78,7 @@ vn_open(ndp, fmode, cmode)
 	struct nameidata *ndp;
 	int fmode, cmode;
 {
-	struct vnode *vp;
+	struct vnode *vp, *vp2;
 	struct proc *p = ndp->ni_cnd.cn_proc;
 	struct ucred *cred = p->p_ucred;
 	struct vattr va;
@@ -158,8 +158,14 @@ vn_open(ndp, fmode, cmode)
 		if ((error = VOP_SETATTR(vp, &va, cred, p)) != 0)
 			goto bad;
 	}
-	if ((error = VOP_OPEN(vp, fmode, cred, p)) != 0)
+	vp2 = NULL;
+	if ((error = VOP_OPEN(vp, fmode, cred, p, &vp2)) != 0)
 		goto bad;
+	if (vp2 != NULL) {
+		vput(vp);
+		ndp->ni_vp = vp = vp2;
+	}
+
 	if (vp->v_type == VREG &&
 	    uvn_attach(vp, fmode & FWRITE ? VM_PROT_WRITE : 0) == NULL) {
 		error = EIO;
@@ -331,7 +337,7 @@ unionread:
 		}
 		
 		if (lvp != NULLVP) {
-			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
+			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p, NULL);
 			if (error) {
 				vput(lvp);
 				return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.1 2000/12/07 03:33:47 deberg Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.1.8.1 2001/09/18 19:14:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -236,6 +236,7 @@ smbfs_open(ap)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct vnode *a_vpp;
 	} */ *ap;
 {
 	struct vnode *vp = ap->a_vp;
@@ -472,7 +473,8 @@ smbfs_setattr(ap)
 		 */
 		if (np->opened == 0) {
 			if (vcp->vc_flags & SMBV_WIN95) {
-				error = VOP_OPEN(vp, FWRITE, ap->a_cred, ap->a_p);
+				error = VOP_OPEN(vp, FWRITE, ap->a_cred,
+				    ap->a_p, NULL);
 				if (!error) {
 /*				error = smbfs_smb_setfattrNT(np, 0, mtime, atime, &scred);
 				VOP_GETATTR(vp, &vattr, ap->a_cred, ap->a_p);*/

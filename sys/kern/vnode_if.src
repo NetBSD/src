@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.29 2001/07/24 15:39:31 assar Exp $
+#	$NetBSD: vnode_if.src,v 1.29.2.1 2001/09/18 19:13:55 fvdl Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -126,12 +126,14 @@ vop_mknod {
 
 #
 #% open               vp      L L L
+#% open               vpp     - - L
 #
 vop_open {
 	IN struct vnode *vp;
 	IN int mode;
 	IN struct ucred *cred;
 	IN struct proc *p;
+	OUT struct vnode **vpp;
 };
 
 #

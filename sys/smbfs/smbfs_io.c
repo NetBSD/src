@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.2 2001/05/26 21:27:20 chs Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.2.4.1 2001/09/18 19:14:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -550,7 +550,7 @@ smbfs_putpages(ap)
 #ifdef SMBFS_RWGENERIC
 	p = curproc;			/* XXX */
 	cred = p->p_ucred;		/* XXX */
-	VOP_OPEN(vp, FWRITE, cred, p);
+	VOP_OPEN(vp, FWRITE, cred, p, NULL);
 	error = vnode_pager_generic_putpages(ap->a_vp, ap->a_m, ap->a_count,
 		ap->a_sync, ap->a_rtvals);
 	VOP_CLOSE(vp, FWRITE, cred, p);

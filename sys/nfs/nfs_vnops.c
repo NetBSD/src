@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.137 2001/08/17 05:54:36 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.137.2.1 2001/09/18 19:13:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -431,6 +431,7 @@ nfs_open(v)
 		int  a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct vnode *a_vpp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);

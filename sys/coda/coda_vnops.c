@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.26 2001/07/24 15:39:30 assar Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.26.2.1 2001/09/18 19:13:48 fvdl Exp $	*/
 
 /*
  * 
@@ -289,7 +289,7 @@ coda_open(v)
     cp->c_inode = inode;
 
     /* Open the cache file. */
-    error = VOP_OPEN(vp, flag, cred, p); 
+    error = VOP_OPEN(vp, flag, cred, p, NULL); 
     return(error);
 }
 
@@ -441,7 +441,7 @@ coda_rdwr(vp, uiop, rw, ioflag, cred, p)
 	    opened_internally = 1;
 	    MARK_INT_GEN(CODA_OPEN_STATS);
 	    error = VOP_OPEN(vp, (rw == UIO_READ ? FREAD : FWRITE), 
-			     cred, p);
+			     cred, p, NULL);
 #ifdef	CODA_VERBOSE
 printf("coda_rdwr: Internally Opening %p\n", vp);
 #endif
@@ -1707,7 +1707,7 @@ coda_readdir(v)
 	    MARK_INT_GEN(CODA_OPEN_STATS);
 	    error = VOP_OPEN(vp, FREAD, cred, p);
 #ifdef	CODA_VERBOSE
-printf("coda_readdir: Internally Opening %p\n", vp);
+printf("coda_readdir: Internally Opening %p\n", vp, NULL);
 #endif
 	    if (error) return(error);
 	}
@@ -2025,7 +2025,7 @@ coda_getpages(v)
 		return(EINVAL);
 	}
 
-	error = VOP_OPEN(vp, FREAD, cred, p);
+	error = VOP_OPEN(vp, FREAD, cred, p, NULL);
 	if (error) {
 		return error;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.20.2.1 2001/09/07 04:45:40 thorpej Exp $	*/
+/*	$NetBSD: specdev.h,v 1.20.2.2 2001/09/18 19:13:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,7 +47,16 @@ struct specinfo {
 	dev_t	si_rdev;
 	struct	lockf *si_lockf;
 	void	*si_devcookie;
+	void	(*si_callback)(struct vnode *, int, void *);
+	void	*si_cbarg;
 };
+
+/*
+ * Values to the int arg of the callback function. Only a call to
+ * spec_close can lead to a callback for now.
+ */
+#define VN_CB_CLOSE		1
+
 /*
  * Exported shorthand
  */
@@ -57,6 +66,9 @@ struct specinfo {
 #define v_speclockf	v_specinfo->si_lockf
 #define v_specmountpoint v_specinfo->si_mountpoint
 #define	v_devcookie	v_specinfo->si_devcookie
+#define v_callback	v_specinfo->si_callback
+#define v_cbarg		v_specinfo->si_cbarg
+
 
 /*
  * Special device management

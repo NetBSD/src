@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.9.8.1 2001/09/07 04:45:35 thorpej Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.9.8.2 2001/09/18 19:13:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ wsmuxopen(devvp, flags, mode, p)
 			if (error) {
 				/* Ignore opens that fail */
 				lasterror = error;
-				vrele(m->sc_pdevvp);
+				vput(m->sc_pdevvp);
 				m->sc_pdevvp = NULL;
 				DPRINTF(("wsmuxopen: open failed %d\n", 
 					 error));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.80.2.1 2001/09/07 04:45:45 thorpej Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.80.2.2 2001/09/18 19:14:03 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -189,6 +189,7 @@ ufs_open(void *v)
 		int		a_mode;
 		struct ucred	*a_cred;
 		struct proc	*a_p;
+		struct vnode 	**a_vpp;
 	} */ *ap = v;
 
 	/*

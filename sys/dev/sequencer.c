@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.16.2.1 2001/09/07 04:45:23 thorpej Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.16.2.2 2001/09/18 19:13:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1388,8 +1388,8 @@ midi_unit_count()
 }
 
 int
-midiopen(dev, flags, ifmt, p)
-	dev_t dev;
+midiopen(devvp, flags, ifmt, p)
+	struct vnode *devvp;
 	int flags, ifmt;
 	struct proc *p;
 {
@@ -1406,8 +1406,8 @@ midi_getinfo(dev, mi)
 }
 
 int
-midiclose(dev, flags, ifmt, p)
-	dev_t dev;
+midiclose(devvp, flags, ifmt, p)
+	struct vnode *devvp;
 	int flags, ifmt;
 	struct proc *p;
 {

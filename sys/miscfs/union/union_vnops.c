@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.54 2001/07/24 15:39:32 assar Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.54.2.1 2001/09/18 19:13:57 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -631,6 +631,7 @@ union_open(v)
 		int a_mode;
 		struct ucred *a_cred;
 		struct proc *a_p;
+		struct vnode *a_vpp;
 	} */ *ap = v;
 	struct union_node *un = VTOUNION(ap->a_vp);
 	struct vnode *tvp;
@@ -653,7 +654,8 @@ union_open(v)
 		if ((ap->a_mode & FWRITE) && (tvp->v_type == VREG)) {
 			error = union_copyup(un, (mode&O_TRUNC) == 0, cred, p);
 			if (error == 0)
-				error = VOP_OPEN(un->un_uppervp, mode, cred, p);
+				error = VOP_OPEN(un->un_uppervp, mode, cred, p,
+				    ap->a_vpp);
 			return (error);
 		}
 
@@ -665,7 +667,7 @@ union_open(v)
 			return ENXIO;
 		un->un_openl++;
 		vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_OPEN(tvp, mode, cred, p);
+		error = VOP_OPEN(tvp, mode, cred, p, ap->a_vpp);
 		VOP_UNLOCK(tvp, 0);
 
 		return (error);
@@ -679,7 +681,7 @@ union_open(v)
 
 	FIXUP(un);
 
-	error = VOP_OPEN(tvp, mode, cred, p);
+	error = VOP_OPEN(tvp, mode, cred, p, ap->a_vpp);
 
 	return (error);
 }
