@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.22 2001/05/02 10:32:11 scw Exp $	*/
+/*	$NetBSD: qd.c,v 1.22.2.1 2001/09/12 15:59:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -1560,6 +1560,88 @@ qdpoll(dev, events, p)
 	return (revents);
 } /* qdpoll() */
 
+static void
+filt_qdrdetach(struct knote *kn)
+{
+	dev_t dev = (u_long) kn->kn_hook;
+	u_int minor_dev = minor(dev);
+	int unit = minor_dev >> 2;
+	int s;
+
+	s = spl5();
+	SLIST_REMOVE(&qdrsel[unit].si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_qdread(struct knote *kn, long hint)
+{
+	dev_t dev = (u_long) kn->kn_hook;
+	u_int minor_dev = minor(dev);
+	int unit = minor_dev >> 2;
+
+	if (ISEMPTY(eq_header[unit]))
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static int
+filt_qdwrite(struct knote *kn, long hint)
+{
+	dev_t dev = (u_long) kn->kn_hook;
+	u_int minor_dev = minor(dev);
+	int unit = minor_dev >> 2;
+
+	if (! DMA_ISEMPTY(DMAheader[unit]))
+		return (0);
+
+	kn->kn_data = 0;	/* XXXLUKEM (thorpej): what to put here? */
+	return (1);
+}
+
+static const struct filterops qdread_filtops =
+	{ 1, NULL, filt_qdrdetach, filt_qdread };
+
+static const struct filterops qdwrite_filtops =
+	{ 1, NULL, filt_qdrdetach, filt_qdwrite };
+
+int
+qdkqfilter(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+	u_int minor_dev = minor(dev);
+	int s, unit = minor_dev >> 2;
+
+	if ((minor_dev & 0x03) != 2) {
+		/* TTY device. */
+		return (ttykqfilter(dev, kn));
+	}
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &qdrsel[unit].si_klist;
+		kn->kn_fop = &qdread_filtops;
+		break;
+
+	case EVFILT_WRITE:
+		klist = &qdrsel[unit].si_klist;
+		kn->kn_fop = &qdwrite_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (caddr_t)(u_long) dev;
+
+	s = spl5();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
 
 void qd_strategy(struct buf *bp);
 
