@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.6 2002/11/22 15:23:39 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.7 2002/11/28 16:37:35 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -266,12 +266,15 @@ cpu_attach(parent, self, aux)
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
-	ci->ci_cpuid = caa->cpu_number;
+	ci->ci_apicid = caa->cpu_number;
+#ifdef MULTIPROCESSOR
+	ci->ci_cpuid = ci->ci_apicid;
+#else
+	ci->ci_cpuid = 0;	/* False for APs, but they're not used anyway */
+#endif
 	ci->ci_func = caa->cpu_func;
 
 	simple_lock_init(&ci->ci_slock);
-
-	cpu_intr_init(ci);
 
 #if defined(MULTIPROCESSOR)
 	/*
@@ -308,6 +311,7 @@ cpu_attach(parent, self, aux)
 	case CPU_ROLE_SP:
 		printf("(uniprocessor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
+		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
@@ -316,6 +320,7 @@ cpu_attach(parent, self, aux)
 	case CPU_ROLE_BP:
 		printf("apid %d (boot processor)\n", caa->cpu_number);
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
+		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
@@ -339,6 +344,7 @@ cpu_attach(parent, self, aux)
 		printf("apid %d (application processor)\n", caa->cpu_number);
 
 #if defined(MULTIPROCESSOR)
+		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
 		cpu_set_tss_gates(ci);
 		cpu_start_secondary(ci);

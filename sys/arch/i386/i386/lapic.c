@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.5 2002/11/22 15:23:41 fvdl Exp $ */
+/* $NetBSD: lapic.c,v 1.6 2002/11/28 16:37:36 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ lapic_set_lvt()
 	for (i = 0; i < mp_nintr; i++) {
 		mpi = &mp_intrs[i];
 		if (mpi->ioapic == NULL && (mpi->cpu_id == MPS_ALL_APICS
-					    || mpi->cpu_id == ci->ci_cpuid)) {
+					    || mpi->cpu_id == ci->ci_apicid)) {
 #ifdef DIAGNOSTIC
 			if (mpi->ioapic_pin > 1)
 				panic("lapic_set_lvt: bad pin value %d",
