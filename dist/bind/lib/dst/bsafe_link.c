@@ -1,7 +1,7 @@
-/*	$NetBSD: bsafe_link.c,v 1.1.1.1.8.1 2001/01/28 15:52:20 he Exp $	*/
+/*	$NetBSD: bsafe_link.c,v 1.1.1.1.8.2 2002/07/01 17:13:58 he Exp $	*/
 
 #if defined(BSAFE) || defined(DNSSAFE)
-static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/bsafe_link.c,v 1.11 1999/10/13 16:39:22 vixie Exp";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/bsafe_link.c,v 1.15 2001/09/25 04:50:28 marka Exp";
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -120,7 +120,7 @@ static void *dst_bsafe_free_key_structure(void *key);
  *	   BSAFE/DNSSAFE related functions 
  */
 int
-dst_bsafe_init()
+dst_bsafe_init(void)
 {
 	if (dst_t_func[KEY_RSA] != NULL)
 		return (1);
@@ -329,7 +329,8 @@ dst_bsafe_verify(const int mode, DST_KEY *dkey, void **context,
 		if (ret == 0 && 
 		    (status = B_DecryptUpdate(rsaEncryptor, work_area,
 					      &u_bytes, 0,
-					      (u_char *) signature, sig_len,
+					      (const u_char *) signature,
+					      sig_len,
 					      NULL_PTR, NULL_SURRENDER)))
 			ret = VERIFY_FINAL_FAILURE;
 
@@ -387,24 +388,28 @@ dst_bsafe_to_dns_key(const DST_KEY *in_key, u_char *out_str,
 	public = (B_KEY_OBJ)((RSA_Key *) in_key->dk_KEY_struct)->rk_Public_Key;
 
 	n = B_GetKeyInfo((POINTER *) &pub, public, KI_RSAPublic);
-
-	if (out_len < pub->exponent.len) /* not enough space */
+	if (n != 0)
 		return (-1);
-	if (pub->exponent.len < 256)  /* key exponent is <= 2040 bits */
+
+	if (pub->exponent.len < 256) {  /* key exponent is <= 2040 bits */
+		if ((unsigned int)out_len < pub->exponent.len + 1)
+			return (-1);
 		*op++ = (u_int8_t) pub->exponent.len;
-	else {                       /*  key exponent is > 2040 bits */
+	} else {                       /*  key exponent is > 2040 bits */
 		u_int16_t e = (u_int16_t) pub->exponent.len;
-		*op++ = 0;          /* 3 byte lenght field */
+		if ((unsigned int)out_len < pub->exponent.len + 3)
+			return (-1);
+		*op++ = 0;          /* 3 byte length field */
 		dst_s_put_int16(op, e);
 		op += sizeof(e);
 		n = 2;
 	}
-	n += pub->exponent.len;
-	memcpy(op, pub->exponent.data, n);
-	op += n;
 	n++;
+	memcpy(op, pub->exponent.data, pub->exponent.len);
+	op += pub->exponent.len;
+	n += pub->exponent.len;
 
-	if ((out_len - n) > pub->modulus.len) {
+	if ((unsigned int)(out_len - n) >= pub->modulus.len) {
 		/*copy exponent */
 		memcpy(op, pub->modulus.data, pub->modulus.len);
 		n += pub->modulus.len;
@@ -491,8 +496,6 @@ dst_bsafe_from_dns_key(DST_KEY *s_key, const u_char *key, const int len)
 
 	B_SetKeyInfo(r_key->rk_Public_Key, KI_RSAPublic, (POINTER) public);
 
-	s_key->dk_id = (u_int16_t)
-		dst_s_get_int16(&public->modulus.data[public->modulus.len - 3]);
 	s_key->dk_key_size = dst_bsafe_key_size(r_key);
 	SAFE_FREE(public->modulus.data);
 	SAFE_FREE(public->exponent.data);
@@ -616,7 +619,6 @@ dst_bsafe_key_from_file_format(DST_KEY *d_key, const char *buff,
 	int status;
 	char s[RAW_KEY_SIZE];
 	int len, s_len = sizeof(s);
-	int tag = -1;
 	const char *p = buff;
 	RSA_Key *b_key;
 	A_RSA_KEY *public;
@@ -752,8 +754,6 @@ dst_bsafe_key_from_file_format(DST_KEY *d_key, const char *buff,
 	if (status)
 		return (-1);
 
-	tag = (int)(u_int16_t)
-		dst_s_get_int16(&public->modulus.data[public->modulus.len - 3]);
 	d_key->dk_key_size = dst_bsafe_key_size(b_key);
 
 	SAFE_FREE(private->modulus.data);
@@ -768,7 +768,7 @@ dst_bsafe_key_from_file_format(DST_KEY *d_key, const char *buff,
 	SAFE_FREE(public->modulus.data);
 	SAFE_FREE(public->exponent.data);
 	SAFE_FREE(public);
-	return (tag);
+	return (0);
 }
 
 
@@ -927,10 +927,7 @@ dst_bsafe_generate_keypair(DST_KEY *key, int exp)
 	rsa->rk_Public_Key = public;
 	key->dk_KEY_struct = (void *) rsa;
 
-	/* fill in the footprint on generate key */
 	B_GetKeyInfo((POINTER *) &pk_access, public, KI_RSAPublic);
-	key->dk_id = (u_int16_t)
-		dst_s_get_int16(&pk_access->modulus.data[pk_access->modulus.len - 3]);
 	return (1);
 }
 
@@ -1050,7 +1047,7 @@ dst_bsafe_md5digest(const int mode, B_ALGORITHM_OBJ *digest_obj,
 
 	if (digest_obj == NULL || *digest_obj == NULL) {
 		printf("NO digest obj\n");
-		exit(-33);
+		exit(33);
 	}
 
 	if ((mode & SIG_MODE_INIT) &&
@@ -1059,8 +1056,7 @@ dst_bsafe_md5digest(const int mode, B_ALGORITHM_OBJ *digest_obj,
 		return (SIGN_INIT_FAILURE);
 
 	if ((mode & SIG_MODE_UPDATE) && data && (len > 0) &&
-	    (status = B_DigestUpdate(*digest_obj, (u_char *) data, len,
-				     NULL_SURRENDER)))
+	    (status = B_DigestUpdate(*digest_obj, data, len, NULL_SURRENDER)))
 		return (SIGN_UPDATE_FAILURE);
 
 	if (mode & SIG_MODE_FINAL) {
@@ -1089,13 +1085,13 @@ T_malloc(unsigned int len)
 }
 
 int
-T_memcmp(POINTER firstBlock, POINTER secondBlock, unsigned int len)
+T_memcmp(CPOINTER firstBlock, CPOINTER secondBlock, unsigned int len)
 {
 	return (memcmp(firstBlock, secondBlock, len));
 }
 
 void
-T_memcpy(POINTER output, POINTER input, unsigned int len)
+T_memcpy(POINTER output, CPOINTER input, unsigned int len)
 {
 	memcpy(output, input, len);
 }
