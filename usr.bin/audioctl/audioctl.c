@@ -1,4 +1,4 @@
-/*	$NetBSD: audioctl.c,v 1.4 1997/07/15 18:00:12 veego Exp $	*/
+/*	$NetBSD: audioctl.c,v 1.5 1997/07/16 06:55:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -121,17 +121,20 @@ struct {
 	char *ename;
 	int eno;
 } encs[] = {
-    { "ulaw", AUDIO_ENCODING_ULAW },
-    { "alaw", AUDIO_ENCODING_ALAW },
-    { "linear", AUDIO_ENCODING_LINEAR },
-    { "ulinear", AUDIO_ENCODING_ULINEAR },
-    { "adpcm", AUDIO_ENCODING_ADPCM },
-    { "ADPCM", AUDIO_ENCODING_ADPCM },
-    { "mulaw", AUDIO_ENCODING_ULAW },
-    { "linear_le", AUDIO_ENCODING_SLINEAR_LE },
-    { "ulinear_le", AUDIO_ENCODING_ULINEAR_LE },
-    { "linear_be", AUDIO_ENCODING_SLINEAR_BE },
-    { "ulinear_be", AUDIO_ENCODING_ULINEAR_BE },
+    { "ulaw",		AUDIO_ENCODING_ULAW },
+    { "mulaw",		AUDIO_ENCODING_ULAW },
+    { "alaw", 		AUDIO_ENCODING_ALAW },
+    { "slinear",	AUDIO_ENCODING_SLINEAR },
+    { "linear",		AUDIO_ENCODING_SLINEAR },
+    { "ulinear",	AUDIO_ENCODING_ULINEAR },
+    { "adpcm",		AUDIO_ENCODING_ADPCM },
+    { "ADPCM",		AUDIO_ENCODING_ADPCM },
+    { "slinear_le",	AUDIO_ENCODING_SLINEAR_LE },
+    { "linear_le",	AUDIO_ENCODING_SLINEAR_LE },
+    { "ulinear_le",	AUDIO_ENCODING_ULINEAR_LE },
+    { "slinear_be",	AUDIO_ENCODING_SLINEAR_BE },
+    { "linear_be",	AUDIO_ENCODING_SLINEAR_BE },
+    { "ulinear_be",	AUDIO_ENCODING_ULINEAR_BE },
     { 0 }
 };
 
