@@ -1,4 +1,41 @@
-/*	$NetBSD: util.c,v 1.16.2.2 1997/12/14 01:19:52 mellon Exp $	*/
+/*	$NetBSD: util.c,v 1.16.2.3 1998/11/10 18:49:11 cgd Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,12 +72,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.16.2.2 1997/12/14 01:19:52 mellon Exp $");
+__RCSID("$NetBSD: util.c,v 1.16.2.3 1998/11/10 18:49:11 cgd Exp $");
 #endif /* not lint */
 
 /*
  * FTP User Program -- Misc support routines
  */
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <arpa/ftp.h>
@@ -49,6 +88,8 @@ __RCSID("$NetBSD: util.c,v 1.16.2.2 1997/12/14 01:19:52 mellon Exp $");
 #include <err.h>
 #include <fcntl.h>
 #include <glob.h>
+#include <termios.h>
+#include <signal.h>
 #include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -71,10 +112,10 @@ setpeer(argc, argv)
 	char *argv[];
 {
 	char *host;
-	u_int16_t port;
+	in_port_t port;
 
 	if (connected) {
-		printf("Already connected to %s, use close first.\n",
+		fprintf(ttyout, "Already connected to %s, use close first.\n",
 		    hostname);
 		code = -1;
 		return;
@@ -82,7 +123,7 @@ setpeer(argc, argv)
 	if (argc < 2)
 		(void)another(&argc, &argv, "to");
 	if (argc < 2 || argc > 3) {
-		printf("usage: %s host-name [port]\n", argv[0]);
+		fprintf(ttyout, "usage: %s host-name [port]\n", argv[0]);
 		code = -1;
 		return;
 	}
@@ -95,13 +136,15 @@ setpeer(argc, argv)
 		long nport;
 
 		nport = strtol(argv[2], &ep, 10);
-		if (nport < 1 || nport > 0xffff || *ep != '\0') {
-			printf("%s: bad port number '%s'.\n", argv[1], argv[2]);
-			printf("usage: %s host-name [port]\n", argv[0]);
+		if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0') {
+			fprintf(ttyout, "%s: bad port number '%s'.\n",
+			    argv[1], argv[2]);
+			fprintf(ttyout, "usage: %s host-name [port]\n",
+			    argv[0]);
 			code = -1;
 			return;
 		}
-		port = htons(nport);
+		port = htons((in_port_t)nport);
 	}
 
 	if (gatemode) {
@@ -118,7 +161,8 @@ setpeer(argc, argv)
 			if (command("PASSERVE %s", argv[1]) != COMPLETE)
 				return;
 			if (verbose)
-				printf("Connected via pass-through server %s\n",
+				fprintf(ttyout,
+				    "Connected via pass-through server %s\n",
 				    gateserver);
 		}
 
@@ -133,7 +177,7 @@ setpeer(argc, argv)
 		(void)strcpy(structname, "file"), stru = STRU_F;
 		(void)strcpy(bytename, "8"), bytesize = 8;
 		if (autologin)
-			(void)login(argv[1], NULL, NULL);
+			(void)ftp_login(argv[1], NULL, NULL);
 
 		overbose = verbose;
 		if (debug == 0)
@@ -141,9 +185,9 @@ setpeer(argc, argv)
 		if (command("SYST") == COMPLETE && overbose) {
 			char *cp, c;
 			c = 0;
-			cp = strchr(reply_string+4, ' ');
+			cp = strchr(reply_string + 4, ' ');
 			if (cp == NULL)
-				cp = strchr(reply_string+4, '\r');
+				cp = strchr(reply_string + 4, '\r');
 			if (cp) {
 				if (cp[-1] == '.')
 					cp--;
@@ -151,7 +195,8 @@ setpeer(argc, argv)
 				*cp = '\0';
 			}
 
-			printf("Remote system type is %s.\n", reply_string + 4);
+			fprintf(ttyout, "Remote system type is %s.\n",
+			    reply_string + 4);
 			if (cp)
 				*cp = c;
 		}
@@ -169,7 +214,8 @@ setpeer(argc, argv)
 			type = 0;
 			(void)strcpy(typename, "binary");
 			if (overbose)
-			    printf("Using %s mode to transfer files.\n",
+			    fprintf(ttyout,
+				"Using %s mode to transfer files.\n",
 				typename);
 		} else {
 			if (proxy)
@@ -178,26 +224,25 @@ setpeer(argc, argv)
 				unix_server = 0;
 			if (overbose &&
 			    !strncmp(reply_string, "215 TOPS20", 10))
-				puts(
-"Remember to set tenex mode when transferring binary files from this machine.");
+				fputs(
+"Remember to set tenex mode when transferring binary files from this machine.\n",
+				    ttyout);
 		}
 		verbose = overbose;
 	}
 }
 
-
 /*
  * login to remote host, using given username & password if supplied
  */
 int
-login(host, user, pass)
+ftp_login(host, user, pass)
 	const char *host;
-	char *user, *pass;
+	const char *user, *pass;
 {
 	char tmp[80];
-	char *acct;
-	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN];	/* "user@hostname" */
-	char hostname[MAXHOSTNAMELEN];
+	const char *acct;
+	char anonpass[MAXLOGNAME + 2]; /* "user@" */
 	struct passwd *pw;
 	int n, aflag = 0;
 
@@ -214,45 +259,41 @@ login(host, user, pass)
 	 */
 	if ((user == NULL || pass == NULL) && anonftp) {
 		memset(anonpass, 0, sizeof(anonpass));
-		memset(hostname, 0, sizeof(hostname));
 
 		/*
 		 * Set up anonymous login password.
 		 */
-		if ((user = getlogin()) == NULL) {
-			if ((pw = getpwuid(getuid())) == NULL)
-				user = "anonymous";
-			else
-				user = pw->pw_name;
+		if ((pass = getenv("FTPANONPASS")) == NULL) {
+			if ((pass = getlogin()) == NULL) {
+				if ((pw = getpwuid(getuid())) == NULL)
+					pass = "anonymous";
+				else
+					pass = pw->pw_name;
+			}
+			/*
+			 * Every anonymous FTP server I've encountered
+			 * will accept the string "username@", and will
+			 * append the hostname itself.  We do this by default
+			 * since many servers are picky about not having
+			 * a FQDN in the anonymous password.
+			 * - thorpej@netbsd.org
+			 */
+			snprintf(anonpass, sizeof(anonpass) - 1, "%s@", pass);
+			pass = anonpass;
 		}
-		gethostname(hostname, MAXHOSTNAMELEN);
-#ifndef DONT_CHEAT_ANONPASS
-		/*
-		 * Every anonymous FTP server I've encountered
-		 * will accept the string "username@", and will
-		 * append the hostname itself.  We do this by default
-		 * since many servers are picky about not having
-		 * a FQDN in the anonymous password. - thorpej@netbsd.org
-		 */
-		snprintf(anonpass, sizeof(anonpass) - 1, "%s@",
-		    user);
-#else
-		snprintf(anonpass, sizeof(anonpass) - 1, "%s@%s",
-		    user, hp->h_name);
-#endif
-		pass = anonpass;
 		user = "anonymous";	/* as per RFC 1635 */
 	}
 
 	while (user == NULL) {
-		char *myname = getlogin();
+		const char *myname = getlogin();
 
 		if (myname == NULL && (pw = getpwuid(getuid())) != NULL)
 			myname = pw->pw_name;
 		if (myname)
-			printf("Name (%s:%s): ", host, myname);
+			fprintf(ttyout, "Name (%s:%s): ", host, myname);
 		else
-			printf("Name (%s): ", host);
+			fprintf(ttyout, "Name (%s): ", host);
+		*tmp = '\0';
 		(void)fgets(tmp, sizeof(tmp) - 1, stdin);
 		tmp[strlen(tmp) - 1] = '\0';
 		if (*tmp == '\0')
@@ -306,10 +347,10 @@ another(pargc, pargv, prompt)
 	int len = strlen(line), ret;
 
 	if (len >= sizeof(line) - 3) {
-		puts("sorry, arguments too long.");
+		fputs("sorry, arguments too long.\n", ttyout);
 		intr();
 	}
-	printf("(%s) ", prompt);
+	fprintf(ttyout, "(%s) ", prompt);
 	line[len++] = ' ';
 	if (fgets(&line[len], sizeof(line) - len, stdin) == NULL)
 		intr();
@@ -386,7 +427,9 @@ remglob(argv, doswitch, errbuf)
                 (void)unlink(temp);
                 if (ftemp == NULL) {
 			if (errbuf == NULL)
-				puts("can't find list of remote files, oops.");
+				fputs(
+				    "can't find list of remote files, oops.\n",
+				    ttyout);
 			else
 				*errbuf =
 				    "can't find list of remote files, oops.";
@@ -411,8 +454,8 @@ confirm(cmd, file)
 
 	if (!interactive || confirmrest)
 		return (1);
-	printf("%s %s? ", cmd, file);
-	(void)fflush(stdout);
+	fprintf(ttyout, "%s %s? ", cmd, file);
+	(void)fflush(ttyout);
 	if (fgets(line, sizeof(line), stdin) == NULL)
 		return (0);
 	switch (tolower(*line)) {
@@ -420,11 +463,12 @@ confirm(cmd, file)
 			return (0);
 		case 'p':
 			interactive = 0;
-			puts("Interactive mode: off.");
+			fputs("Interactive mode: off.\n", ttyout);
 			break;
 		case 'a':
 			confirmrest = 1;
-			printf("Prompting off for duration of %s.\n", cmd);
+			fprintf(ttyout, "Prompting off for duration of %s.\n",
+			    cmd);
 			break;
 	}
 	return (1);
@@ -446,7 +490,7 @@ globulize(cpp)
 	if (!doglob)
 		return (1);
 
-	flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
+	flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 	memset(&gl, 0, sizeof(gl));
 	if (glob(*cpp, flags, NULL, &gl) ||
 	    gl.gl_pathc == 0) {
@@ -457,7 +501,7 @@ globulize(cpp)
 		/* XXX: caller should check if *cpp changed, and
 		 *	free(*cpp) if that is the case
 		 */
-	*cpp = strdup(gl.gl_pathv[0]);
+	*cpp = xstrdup(gl.gl_pathv[0]);
 	globfree(&gl);
 	return (1);
 }
@@ -483,12 +527,18 @@ remotesize(file, noisy)
 		cp = strchr(reply_string, ' ');
 		if (cp != NULL) {
 			cp++;
+#ifndef NO_QUAD
 			size = strtoq(cp, &ep, 10);
-			if (*ep != '\0' && !isspace(*ep))
+#else
+			size = strtol(cp, &ep, 10);
+#endif
+			if (*ep != '\0' && !isspace((unsigned char)*ep))
 				size = -1;
 		}
-	} else if (noisy && debug == 0)
-		puts(reply_string);
+	} else if (noisy && debug == 0) {
+		fputs(reply_string, ttyout);
+		putc('\n', ttyout);
+	}
 	verbose = overbose;
 	return (size);
 }
@@ -521,15 +571,22 @@ remotemodtime(file, noisy)
 		timebuf.tm_hour = hour;
 		timebuf.tm_mday = day;
 		timebuf.tm_mon = mo - 1;
-		timebuf.tm_year = yy - 1900;
+		timebuf.tm_year = yy - TM_YEAR_BASE;
 		timebuf.tm_isdst = -1;
 		rtime = mktime(&timebuf);
 		if (rtime == -1 && (noisy || debug != 0))
-			printf("Can't convert %s to a time.\n", reply_string);
+			fprintf(ttyout, "Can't convert %s to a time.\n",
+			    reply_string);
 		else
+#ifndef __SVR4
 			rtime += timebuf.tm_gmtoff;	/* conv. local -> GMT */
-	} else if (noisy && debug == 0)
-		puts(reply_string);
+#else
+			rtime -= timezone;
+#endif
+	} else if (noisy && debug == 0) {
+		fputs(reply_string, ttyout);
+		putc('\n', ttyout);
+	}
 	verbose = overbose;
 	if (rtime == -1)
 		code = ocode;
@@ -537,11 +594,12 @@ remotemodtime(file, noisy)
 }
 
 #ifndef	SMALL
-static void updateprogressmeter __P((int));
 
-void
-updateprogressmeter(dummy)
-	int dummy;
+/*
+ * return non-zero if we're the current foreground process
+ */
+int
+foregroundproc()
 {
 	static pid_t pgrp = -1;
 	int ctty_pgrp;
@@ -549,11 +607,22 @@ updateprogressmeter(dummy)
 	if (pgrp == -1)
 		pgrp = getpgrp();
 
+	return ((ioctl(fileno(ttyout), TIOCGPGRP, &ctty_pgrp) != -1 &&
+	    ctty_pgrp == (int)pgrp));
+}
+
+
+static void updateprogressmeter __P((int));
+
+static void
+updateprogressmeter(dummy)
+	int dummy;
+{
+
 	/*
 	 * print progress bar only if we are foreground process.
 	 */
-	if (ioctl(STDOUT_FILENO, TIOCGPGRP, &ctty_pgrp) != -1 &&
-	    ctty_pgrp == (int)pgrp)
+	if (foregroundproc())
 		progressmeter(0);
 }
 #endif	/* SMALL */
@@ -569,6 +638,7 @@ updateprogressmeter(dummy)
  * - After the transfer, call with flag = 1
  */
 static struct timeval start;
+static struct timeval lastupdate;
 
 void
 progressmeter(flag)
@@ -579,12 +649,11 @@ progressmeter(flag)
 	 * List of order of magnitude prefixes.
 	 * The last is `P', as 2^64 = 16384 Petabytes
 	 */
-	static const char prefixes[] = " KMGTP";
+	static const char prefixes[] = "BKMGTP";
 
-	static struct timeval lastupdate;
 	static off_t lastsize;
 	struct timeval now, td, wait;
-	off_t cursize, abbrevsize;
+	off_t cursize, abbrevsize, bytespersec;
 	double elapsed;
 	int ratio, barlength, i, len, remaining;
 	char buf[256];
@@ -592,21 +661,21 @@ progressmeter(flag)
 	len = 0;
 
 	if (flag == -1) {
-		(void)gettimeofday(&start, (struct timezone *)0);
+		(void)gettimeofday(&start, NULL);
 		lastupdate = start;
 		lastsize = restart_point;
 	}
-	(void)gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, NULL);
 	if (!progress || filesize <= 0)
 		return;
 	cursize = bytes + restart_point;
 
-	ratio = cursize * 100 / filesize;
+	ratio = (int)((double)cursize * 100.0 / (double)filesize);
 	ratio = MAX(ratio, 0);
 	ratio = MIN(ratio, 100);
 	len += snprintf(buf + len, sizeof(buf) - len, "\r%3d%% ", ratio);
 
-	barlength = ttywidth - 30;
+	barlength = ttywidth - 42;
 	if (barlength > 0) {
 		i = barlength * ratio / 100;
 		len += snprintf(buf + len, sizeof(buf) - len,
@@ -616,15 +685,17 @@ progressmeter(flag)
 		    barlength - i, "");
 	}
 
-	i = 0;
 	abbrevsize = cursize;
-	while (abbrevsize >= 100000 && i < sizeof(prefixes)) {
-		i++;
+	for (i = 0; abbrevsize >= 100000 && i < sizeof(prefixes); i++)
 		abbrevsize >>= 10;
-	}
 	len += snprintf(buf + len, sizeof(buf) - len,
-	    " %5qd %c%c ", (long long)abbrevsize, prefixes[i],
-	    prefixes[i] == ' ' ? ' ' : 'B');
+#ifndef NO_QUAD
+	    " %5qd %c%c ", (long long)abbrevsize,
+#else
+	    " %5ld %c%c ", (long)abbrevsize,
+#endif
+	    i == 0 ? ' ' : prefixes[i],
+	    i == 0 ? ' ' : 'B');
 
 	timersub(&now, &lastupdate, &wait);
 	if (cursize > lastsize) {
@@ -639,6 +710,23 @@ progressmeter(flag)
 
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
+
+	bytespersec = 0;
+	if (bytes > 0) {
+		bytespersec = bytes;
+		if (elapsed > 0.0)
+			bytespersec /= elapsed;
+	}
+	for (i = 0; bytespersec >= 100000 && i < sizeof(prefixes); i++)
+		bytespersec >>= 10;
+	len += snprintf(buf + len, sizeof(buf) - len,
+#ifndef NO_QUAD
+	    " %5qd %c%s ", (long long)bytespersec,
+#else
+	    " %5ld %c%s ", (long)bytespersec,
+#endif
+	    prefixes[i],
+	    i == 0 ? "/s " : "B/s");
 
 	if (bytes <= 0 || elapsed <= 0.0 || cursize > filesize) {
 		len += snprintf(buf + len, sizeof(buf) - len,
@@ -665,16 +753,17 @@ progressmeter(flag)
 			    "%02d:%02d ETA", i / 60, i % 60);
 		}
 	}
-	(void)write(STDOUT_FILENO, buf, len);
+	(void)write(fileno(ttyout), buf, len);
 
 	if (flag == -1) {
-		(void)signal(SIGALRM, updateprogressmeter);
+		(void)xsignal(SIGALRM, updateprogressmeter);
 		alarmtimer(1);		/* set alarm timer for 1 Hz */
 	} else if (flag == 1) {
+		(void)xsignal(SIGALRM, SIG_DFL);
 		alarmtimer(0);
-		(void)putchar('\n');
+		(void)putc('\n', ttyout);
 	}
-	fflush(stdout);
+	fflush(ttyout);
 #endif	/* SMALL */
 }
 
@@ -683,47 +772,80 @@ progressmeter(flag)
  * Requires start to be initialised by progressmeter(-1),
  * direction to be defined by xfer routines, and filesize and bytes
  * to be updated by xfer routines
- * If siginfo is nonzero, an ETA is displayed, and the output goes to STDERR
- * instead of STDOUT.
+ * If siginfo is nonzero, an ETA is displayed, and the output goes to stderr
+ * instead of ttyout.
  */
 void
 ptransfer(siginfo)
 	int siginfo;
 {
 #ifndef	SMALL
-	struct timeval now, td;
+	struct timeval now, td, wait;
 	double elapsed;
-	off_t bs;
+	off_t bytespersec;
 	int meg, remaining, hh, len;
 	char buf[100];
 
 	if (!verbose && !siginfo)
 		return;
 
-	(void)gettimeofday(&now, (struct timezone *)0);
+	(void)gettimeofday(&now, NULL);
 	timersub(&now, &start, &td);
 	elapsed = td.tv_sec + (td.tv_usec / 1000000.0);
-	bs = bytes / (elapsed == 0.0 ? 1 : elapsed);
+	bytespersec = 0;
 	meg = 0;
-	if (bs > (1024 * 1024))
-		meg = 1;
+	if (bytes > 0) {
+		bytespersec = bytes;
+		if (elapsed > 0.0)
+			bytespersec /= elapsed;
+		if (bytespersec > (1024 * 1024))
+			meg = 1;
+	}
 	len = 0;
 	len += snprintf(buf + len, sizeof(buf) - len,
-	    "%qd byte%s %s in %.2f seconds (%.2f %sB/s)\n",
-	    (long long)bytes, bytes == 1 ? "" : "s", direction, elapsed,
-	    bs / (1024.0 * (meg ? 1024.0 : 1.0)), meg ? "M" : "K");
+#ifndef NO_QUAD
+	    "%qd byte%s %s in ", (long long)bytes,
+#else
+	    "%ld byte%s %s in ", (long)bytes,
+#endif
+	    bytes == 1 ? "" : "s", direction);
+	remaining = (int)elapsed;
+	if (remaining > SECSPERDAY) {
+		int days;
+
+		days = remaining / SECSPERDAY;
+		remaining %= SECSPERDAY;
+		len += snprintf(buf + len, sizeof(buf) - len,
+		    "%d day%s ", days, days == 1 ? "" : "s");
+	}
+	hh = remaining / SECSPERHOUR;
+	remaining %= SECSPERHOUR;
+	if (hh)
+		len += snprintf(buf + len, sizeof(buf) - len, "%2d:", hh);
+	len += snprintf(buf + len, sizeof(buf) - len,
+	    "%02d:%02d (%.2f %sB/s)", remaining / 60, remaining % 60,
+	    bytespersec / (1024.0 * (meg ? 1024.0 : 1.0)),
+	    meg ? "M" : "K");
+
 	if (siginfo && bytes > 0 && elapsed > 0.0 && filesize >= 0
 	    && bytes + restart_point <= filesize) {
 		remaining = (int)((filesize - restart_point) /
 				  (bytes / elapsed) - elapsed);
 		hh = remaining / SECSPERHOUR;
 		remaining %= SECSPERHOUR;
-		len--;	 		/* decrement len to overwrite \n */
+		len += snprintf(buf + len, sizeof(buf) - len, "  ETA: ");
+		if (hh)
+			len += snprintf(buf + len, sizeof(buf) - len, "%2d:",
+			    hh);
 		len += snprintf(buf + len, sizeof(buf) - len,
-		    "  ETA: %02d:%02d:%02d\n", hh, remaining / 60,
-		    remaining % 60);
+		    "%02d:%02d", remaining / 60, remaining % 60);
+		timersub(&now, &lastupdate, &wait);
+		if (wait.tv_sec >= STALLTIME)
+			len += snprintf(buf + len, sizeof(buf) - len,
+			    "  (stalled)");
 	}
-	(void)write(siginfo ? STDERR_FILENO : STDOUT_FILENO, buf, len);
+	len += snprintf(buf + len, sizeof(buf) - len, "\n");
+	(void)write(siginfo ? STDERR_FILENO : fileno(ttyout), buf, len);
 #endif	/* SMALL */
 }
 
@@ -755,15 +877,15 @@ list_vertical(sl)
 		for (j = 0; j < columns; j++) {
 			p = sl->sl_str[j * lines + i];
 			if (p)
-				fputs(p, stdout);
+				fputs(p, ttyout);
 			if (j * lines + i + lines >= sl->sl_cur) {
-				putchar('\n');
+				putc('\n', ttyout);
 				break;
 			}
 			w = strlen(p);
 			while (w < width) {
 				w = (w + 8) &~ 7;
-				(void)putchar('\t');
+				(void)putc('\t', ttyout);
 			}
 		}
 	}
@@ -778,7 +900,8 @@ setttywidth(a)
 {
 	struct winsize winsize;
 
-	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsize) != -1)
+	if (ioctl(fileno(ttyout), TIOCGWINSZ, &winsize) != -1 &&
+	    winsize.ws_col != 0)
 		ttywidth = winsize.ws_col;
 	else
 		ttywidth = 80;
@@ -808,10 +931,18 @@ controlediting()
 {
 	if (editing && el == NULL && hist == NULL) {
 		HistEvent ev;
+		int editmode;
 
-		el = el_init(__progname, stdin, stdout); /* init editline */
+#ifdef EL_EDITMODE /* hack */
+		el = el_init(__progname, stdin, ttyout, stderr);
+#else
+		el = el_init(__progname, stdin, ttyout);
+#endif /* EL_EDITMODE */
+		/* init editline */
 		hist = history_init();		/* init the builtin history */
-		history(hist, &ev, H_SETMAXSIZE, 100);/* remember 100 events */
+#ifdef H_SETSIZE
+		history(hist, &ev, H_SETSIZE, 100);/* remember 100 events */
+#endif
 		el_set(el, EL_HIST, history, hist);	/* use history */
 
 		el_set(el, EL_EDITOR, "emacs");	/* default editor is emacs */
@@ -822,10 +953,23 @@ controlediting()
 		    "Context sensitive argument completion",
 		    complete);
 		el_set(el, EL_BIND, "^I", "ftp-complete", NULL);
-
 		el_source(el, NULL);	/* read ~/.editrc */
-		el_set(el, EL_SIGNAL, 1);
-	} else if (!editing) {
+#ifdef EL_EDITMODE
+		if ((el_get(el, EL_EDITMODE, &editmode) != -1) && editmode == 0)
+			editing = 0;	/* the user doesn't want editing,
+					 * so disable, and let statement
+					 * below cleanup */
+		else
+			el_set(el, EL_SIGNAL, 1);
+#else
+		if (editmode == 0) {
+			editing = 0;
+		} else {
+			el_set(el, EL_SIGNAL, 1);
+		}
+#endif
+	}
+	if (!editing) {
 		if (hist) {
 			history_end(hist);
 			hist = NULL;
@@ -837,3 +981,152 @@ controlediting()
 	}
 }
 #endif /* !SMALL */
+
+/*
+ * Parse the specified socket buffer size.
+ */
+int
+getsockbufsize(arg)
+	const char *arg;
+{
+	char *cp;
+	int val;
+
+	if (!isdigit((unsigned char)arg[0]))
+		return (-1);
+
+	val = strtol(arg, &cp, 10);
+	if (cp != NULL) {
+		if (cp[1] != '\0')
+			 return (-1);
+		if (cp[0] == 'k')
+			val *= 1024;
+		if (cp[0] == 'm')
+			val *= 1024 * 1024;
+	}
+
+	if (val < 0)
+		return (-1);
+
+	return (val);
+}
+
+/*
+ * Set up socket buffer sizes before a connection is made.
+ */
+void
+setupsockbufsize(sock)
+	int sock;
+{
+	static int sndbuf_default, rcvbuf_default;
+	int len, size;
+
+	/*
+	 * Get the default socket buffer sizes if we don't already
+	 * have them.  It doesn't matter which socket we do this
+	 * to, because on the first call no socket buffer sizes
+	 * will have been modified, so we are guaranteed to get
+	 * the system defaults.
+	 */
+	if (sndbuf_default == 0) {
+		len = sizeof(sndbuf_default);
+		if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sndbuf_default,
+		    &len) < 0)
+			err(1, "unable to get default sndbuf size");
+		len = sizeof(rcvbuf_default);
+		if (getsockopt(sock, SOL_SOCKET, SO_RCVBUF, &rcvbuf_default,
+		    &len) < 0)
+			err(1, "unable to get default rcvbuf size");
+
+	}
+
+	size = sndbuf_size ? sndbuf_size : sndbuf_default;
+	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF, &size, sizeof(size)) < 0)
+		warn("unable to set sndbuf size %d", size);
+
+	size = rcvbuf_size ? rcvbuf_size : rcvbuf_default;
+	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) < 0)
+		warn("unable to set rcvbuf size %d", size);
+}
+
+/*
+ * If the socket buffer sizes were not set manually (i.e. came from a
+ * configuration file), reset them so the right thing will happen on
+ * subsequent connections.
+ */
+void
+resetsockbufsize()
+{
+
+	if (sndbuf_manual == 0)
+		sndbuf_size = 0;
+	if (rcvbuf_manual == 0)
+		rcvbuf_size = 0;
+}
+
+/*
+ * Internal version of connect(2); sets socket buffer sizes first.
+ */
+int
+xconnect(sock, name, namelen)
+	int sock;
+	const struct sockaddr *name;
+	int namelen;
+{
+
+	setupsockbufsize(sock);
+	return (connect(sock, name, namelen));
+}
+
+/*
+ * Internal version of listen(2); sets socket buffer sizes first.
+ */
+int
+xlisten(sock, backlog)
+	int sock, backlog;
+{
+
+	setupsockbufsize(sock);
+	return (listen(sock, backlog));
+}
+
+void *
+xmalloc(size)
+	size_t size;
+{
+	void *p;
+
+	p = malloc(size);
+	if (p == NULL)
+		err(1, "Unable to allocate %ld bytes of memory", (long)size);
+	return (p);
+}
+
+char *
+xstrdup(str)
+	const char *str;
+{
+	char *s;
+
+	if (str == NULL)
+		errx(1, "xstrdup() called with NULL argument");
+	s = strdup(str);
+	if (s == NULL)
+		err(1, "Unable to allocate memory for string copy");
+	return (s);
+}
+
+sig_t
+xsignal(sig, func)
+	int sig;
+	void (*func) __P((int));
+{
+	struct sigaction act, oact;
+
+	act.sa_handler = func;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_RESTART;
+	if (sigaction(sig, &act, &oact) < 0)
+		return (SIG_ERR);
+	return (oact.sa_handler);
+}
