@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.30 1996/05/28 23:27:04 pk Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.31 1996/06/23 12:12:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -206,64 +206,69 @@ rip_ctloutput(op, so, level, optname, m)
 	struct mbuf **m;
 {
 	register struct inpcb *inp = sotoinpcb(so);
-#ifdef MROUTING
-	int error;
-#endif
+	int error = 0;
 
 	if (level != IPPROTO_IP) {
-		if (m != 0 && *m != 0)
-			(void)m_free(*m);
-		return (EINVAL);
-	}
+		error = ENOPROTOOPT;
+		if (op == PRCO_SETOPT && *m != 0)
+			(void) m_free(*m);
+	} else switch (op) {
 
-	switch (optname) {
-
-	case IP_HDRINCL:
-		if (op == PRCO_SETOPT || op == PRCO_GETOPT) {
-			if (m == 0 || *m == 0 || (*m)->m_len < sizeof (int))
-				return (EINVAL);
-			if (op == PRCO_SETOPT) {
+	case PRCO_SETOPT:
+		switch (optname) {
+		case IP_HDRINCL:
+			if (*m == 0 || (*m)->m_len < sizeof (int))
+				error = EINVAL;
+			else {
 				if (*mtod(*m, int *))
 					inp->inp_flags |= INP_HDRINCL;
 				else
 					inp->inp_flags &= ~INP_HDRINCL;
-				(void)m_free(*m);
-			} else {
-				(*m)->m_len = sizeof (int);
-				*mtod(*m, int *) = inp->inp_flags & INP_HDRINCL;
 			}
-			return (0);
+			if (*m != 0)
+				(void) m_free(*m);
+			break;
+
+#ifdef MROUTING
+		case MRT_INIT:
+		case MRT_DONE:
+		case MRT_ADD_VIF:
+		case MRT_DEL_VIF:
+		case MRT_ADD_MFC:
+		case MRT_DEL_MFC:
+		case MRT_ASSERT:
+			error = ip_mrouter_set(so, optname, m);
+			break;
+#endif
+
+		default:
+			error = ip_ctloutput(op, so, level, optname, m);
+			break;
 		}
 		break;
 
-	case MRT_INIT:
-	case MRT_DONE:
-	case MRT_ADD_VIF:
-	case MRT_DEL_VIF:
-	case MRT_ADD_MFC:
-	case MRT_DEL_MFC:
-	case MRT_VERSION:
-	case MRT_ASSERT:
+	case PRCO_GETOPT:
+		switch (optname) {
+		case IP_HDRINCL:
+			*m = m_get(M_WAIT, M_SOOPTS);
+			(*m)->m_len = sizeof (int);
+			*mtod(*m, int *) = inp->inp_flags & INP_HDRINCL ? 1 : 0;
+			break;
+
 #ifdef MROUTING
-		switch (op) {
-		case PRCO_SETOPT:
-			error = ip_mrouter_set(optname, so, m);
+		case MRT_VERSION:
+		case MRT_ASSERT:
+			error = ip_mrouter_get(so, optname, m);
 			break;
-		case PRCO_GETOPT:
-			error = ip_mrouter_get(optname, so, m);
-			break;
+#endif
+
 		default:
-			error = EINVAL;
+			error = ip_ctloutput(op, so, level, optname, m);
 			break;
 		}
-		return (error);
-#else
-		if (op == PRCO_SETOPT && *m)
-			m_free(*m);
-		return (EOPNOTSUPP);
-#endif
+		break;
 	}
-	return (ip_ctloutput(op, so, level, optname, m));
+	return (error);
 }
 
 int
