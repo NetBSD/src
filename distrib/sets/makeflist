@@ -1,42 +1,75 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.7 1997/12/15 18:45:45 gwr Exp $
+# $NetBSD: makeflist,v 1.8 1998/06/15 14:45:06 lukem Exp $
 #
-# Print out the files in some or all lists.  Usage:
-# makeflist [-arch arch] [-setd setsdir] [-x11] [setname ...]
+# Print out the files in some or all lists.
+# Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
 #
 
 # set defaults
-arch=${MACHINE:-`uname -m`}
+machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | make -s -f-`}
+arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | make -s -f-`}
 setd=`pwd`
-lists="base comp etc games man misc text"
+nlists="base comp etc games man misc text"
 xlists="xbase xcomp xcontrib xfont xserver"
+lists=$nlists
 
 # handle args
-while :
-do
+while : ; do
 	case $1 in
-	-arch)	arch=$2; shift;;
-	-setd)	setd=$2; shift;;
-	-x11)	lists=$xlists;;
-	-both)  lists="$xlists $lists";;
-	-*)	echo "bad option"; exit 1;;
-	*)	break;;
+	-b*)
+		lists="$xlists $nlists"
+		;;
+	-x*)
+		lists=$xlists
+		;;
+	-a*)
+		arch=$2; shift
+		;;
+	-m*)
+		machine=$2; shift
+		;;
+	-s*)
+		setd=$2; shift
+		;;
+	-*)
+		cat 1>&2 <<USAGE
+Usage: $0 [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
+	-b		make netbsd + x11 lists
+	-x		only make x11 lists
+	-a arch		set arch (e.g, m68k, mips, powerpc)	[$arch]
+	-m machine	set machine (e.g, amiga, i386, macppc)	[$machine]
+	-s setsdir	directory to find sets	[$setd]
+	[setname ...]	sets to build 	[$lists]
+USAGE
+		exit 1
+		;;
+	*)
+		break
+		;;
 	esac
 	shift
 done
-[ "$1" ] && lists="$@"
+if [ -n "$1" ]; then
+	lists="$@"
+fi
 
 # EXTRA SPECIAL (not done here): secr
 
-for setname in $lists
-do
-	cat $setd/lists/$setname/mi $setd/lists/$setname/md.${arch}
-	# Split man/md_share into: this arch, other arch
+for setname in $lists; do
+	cat $setd/lists/$setname/mi
+	if [ "$machine" != "$cpu" -a -f $setd/lists/$setname/ad.${arch} ]; then
+		cat $setd/lists/$setname/ad.${arch}
+	fi
+	if [ -f $setd/lists/$setname/md.${machine} ]; then
+		cat $setd/lists/$setname/md.${machine}
+	fi
+
+	# Split man/md_share into: this machine, other machine
 	if [ $setname = man ]; then
-		grep ${arch} $setd/lists/man/md_share
+		grep ${machine} $setd/lists/man/md_share
 	fi
 	if [ $setname = misc ]; then
-		grep -v ${arch} $setd/lists/man/md_share
+		grep -v ${machine} $setd/lists/man/md_share
 	fi
-done | sort
+done | sort -u
