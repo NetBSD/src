@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: map3270.c,v 1.2 1993/08/01 18:06:02 mycroft Exp $";
+static char rcsid[] = "$Id: map3270.c,v 1.3 1994/04/01 04:09:28 cgd Exp $";
 #endif /* not lint */
 
 /*	This program reads a description file, somewhat like /etc/termcap,
@@ -905,7 +905,7 @@ int	(*translator)();	/* Translates ascii string to integer */
 		GotIt = Position(environPointer, keybdPointer);
 	    }
 	    if (!GotIt) {
-		GotIt = Position("/etc/map3270", keybdPointer);
+		GotIt = Position("/usr/share/misc/map3270", keybdPointer);
 	    }
 	}
 	if (!GotIt) {
@@ -913,7 +913,7 @@ int	(*translator)();	/* Translates ascii string to integer */
 		GotIt = Position(environPointer, "unknown");
 	    }
 	    if (!GotIt) {
-		GotIt = Position("/etc/map3270", keybdPointer);
+		GotIt = Position("/usr/share/misc/map3270", keybdPointer);
 	    }
 	}
 	if (!GotIt) {
