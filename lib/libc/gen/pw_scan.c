@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_scan.c,v 1.17 2005/01/19 22:59:24 christos Exp $	*/
+/*	$NetBSD: pw_scan.c,v 1.18 2005/01/20 21:11:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -36,7 +36,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pw_scan.c,v 1.17 2005/01/19 22:59:24 christos Exp $");
+__RCSID("$NetBSD: pw_scan.c,v 1.18 2005/01/20 21:11:56 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
@@ -65,7 +65,6 @@ gettime(time_t *res, const char *p, int *flags, int dowarn, int flag)
 	long l;
 	char *ep;
 
-printf("time %s %x\n", p, flag);
 	if (*p == '\0') {
 		*flags |= flag;
 		*res = 0;
