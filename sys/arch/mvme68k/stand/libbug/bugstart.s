@@ -1,4 +1,4 @@
-/*	$NetBSD: bugstart.s,v 1.1 2000/12/05 21:54:33 scw Exp $	*/
+/*	$NetBSD: bugstart.s,v 1.2 2001/04/14 13:43:08 scw Exp $	*/
 
 #define _LOCORE
 #include <machine/prom.h>
@@ -21,6 +21,14 @@ GLOBAL(bugargs)
 
 ENTRY_NOPROFILE(_start)
 ENTRY_NOPROFILE(start)
+	moveml	%d0/%a0,%sp@-
+	lea	_C_LABEL(edata),%a0
+	movl	#_C_LABEL(end) - 4,%d0
+	subl	%a0,%d0
+	lsrl	#2,%d0
+1:	clrl	%a0@+
+	dbra	%d0,1b
+	moveml	%sp@+,%d0/%a0
 	movl	MVMEPROM_REG_DEVLUN, BUG_ARG(MVMEPROM_ARGS_DEVLUN)
 	movl	MVMEPROM_REG_CTRLLUN, BUG_ARG(MVMEPROM_ARGS_CTRLLUN)
 	movl	MVMEPROM_REG_FLAGS, BUG_ARG(MVMEPROM_ARGS_FLAGS)
@@ -31,12 +39,6 @@ ENTRY_NOPROFILE(start)
 	movl	MVMEPROM_REG_NBARGEND, BUG_ARG(MVMEPROM_ARGS_NBARGEND)
 	movl	MVMEPROM_REG_ARGSTART, BUG_ARG(MVMEPROM_ARGS_ARGSTART)
 	movl	MVMEPROM_REG_ARGEND, BUG_ARG(MVMEPROM_ARGS_ARGEND)
-	lea	_C_LABEL(edata),%a0
-	movl	#_C_LABEL(end) - 4,%d0
-	subl	%a0,%d0
-	lsrl	#2,%d0
-1:	clrl	%a0@+
-	dbra	%d0,1b
 	jmp	_C_LABEL(_bugstart)
 
 ENTRY_NOPROFILE(bugexec)
