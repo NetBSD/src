@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.7 2003/02/24 19:32:16 jdolecek Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.8 2003/03/03 21:16:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -144,7 +144,6 @@ struct smb_rq;
 void smb_makescred(struct smb_cred *scred, struct proc *p, struct ucred *cred);
 int  smb_proc_intr(struct proc *);
 char *smb_strdup(const char *s);
-void *smb_memdup(const void *umem, int len);
 char *smb_strdupin(char *s, int maxlen);
 void *smb_memdupin(void *umem, int len);
 void smb_strtouni(u_int16_t *dst, const char *src);
@@ -160,7 +159,9 @@ int  smb_put_dmem(struct mbchain *mbp, struct smb_vc *vcp,
 int  smb_put_dstring(struct mbchain *mbp, struct smb_vc *vcp,
 	const char *src, int caseopt);
 int  smb_put_string(struct smb_rq *rqp, const char *src);
+#if 0
 int  smb_put_asunistring(struct smb_rq *rqp, const char *src);
+#endif
 
 struct sockaddr *dup_sockaddr(struct sockaddr *, int);
 
