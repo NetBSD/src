@@ -61,6 +61,11 @@
 
 static const char * const ieee1394_speeds[] = { IEEE1394_SPD_STRINGS };
 
+#if 0
+static int fwohci_dnamem_alloc(struct fwohci_softc *sc, int size, int alignment,
+			       bus_dmamap_t *mapp, caddr_t *kvap, int flags);
+#endif
+
 static int  fwohci_desc_alloc(struct fwohci_softc *);
 
 static int  fwohci_ctx_alloc(struct fwohci_softc *, struct fwohci_ctx **,
@@ -113,10 +118,16 @@ static int  fwohci_if_output(struct device *, struct mbuf *,
 		void (*)(struct device *, struct mbuf *));
 
 int
-fwohci_init(struct fwohci_softc *sc)
+fwohci_init(struct fwohci_softc *sc, const struct evcnt *ev)
 {
 	int i;
 	u_int32_t val;
+#if 0
+	int error;
+#endif
+
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ev,
+	    sc->sc_sc1394.sc1394_dev.dv_xname, "intr");
 
 	OHCI_CSR_WRITE(sc, OHCI_REG_HCControlClear, OHCI_HCControl_SoftReset);
 	/*
@@ -139,21 +150,22 @@ fwohci_init(struct fwohci_softc *sc)
 	if ((val & OHCI_Version_GUID_ROM) == 0) {
 		printf("\n%s: fatal: no global UID ROM\n", sc->sc_sc1394.sc1394_dev.dv_xname);
 		return -1;
+	} else {
+
+		/* Extract the Global UID
+		 */
+		val = OHCI_CSR_READ(sc, OHCI_REG_GUIDHi);
+		sc->sc_sc1394.sc1394_guid[0] = (val >> 24) & 0xff;
+		sc->sc_sc1394.sc1394_guid[1] = (val >> 16) & 0xff;
+		sc->sc_sc1394.sc1394_guid[2] = (val >>  8) & 0xff;
+		sc->sc_sc1394.sc1394_guid[3] = (val >>  0) & 0xff;
+
+		val = OHCI_CSR_READ(sc, OHCI_REG_GUIDLo);
+		sc->sc_sc1394.sc1394_guid[4] = (val >> 24) & 0xff;
+		sc->sc_sc1394.sc1394_guid[5] = (val >> 16) & 0xff;
+		sc->sc_sc1394.sc1394_guid[6] = (val >>  8) & 0xff;
+		sc->sc_sc1394.sc1394_guid[7] = (val >>  0) & 0xff;
 	}
-
-	/* Extract the Global UID
-	 */
-	val = OHCI_CSR_READ(sc, OHCI_REG_GUIDHi);
-	sc->sc_sc1394.sc1394_guid[0] = (val >> 24) & 0xff;
-	sc->sc_sc1394.sc1394_guid[1] = (val >> 16) & 0xff;
-	sc->sc_sc1394.sc1394_guid[2] = (val >>  8) & 0xff;
-	sc->sc_sc1394.sc1394_guid[3] = (val >>  0) & 0xff;
-
-	val = OHCI_CSR_READ(sc, OHCI_REG_GUIDLo);
-	sc->sc_sc1394.sc1394_guid[4] = (val >> 24) & 0xff;
-	sc->sc_sc1394.sc1394_guid[5] = (val >> 16) & 0xff;
-	sc->sc_sc1394.sc1394_guid[6] = (val >>  8) & 0xff;
-	sc->sc_sc1394.sc1394_guid[7] = (val >>  0) & 0xff;
 
 	printf(", %02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
 	    sc->sc_sc1394.sc1394_guid[0], sc->sc_sc1394.sc1394_guid[1],
@@ -194,6 +206,14 @@ fwohci_init(struct fwohci_softc *sc)
 	printf(", %d iso_ctx", sc->sc_isoctx);
 
 	printf("\n");
+
+#if 0
+	error = fwohci_dnamem_alloc(sc, OHCI_CONFIG_SIZE, OHCI_CONFIG_ALIGNMENT,
+				    &sc->sc_configrom_map,
+				    (caddr_t *) &sc->sc_configrom,
+				    BUS_DMA_WAITOK|BUS_DMA_COHERENT);
+	return error;
+#endif
 
 	/*
 	 * Enable Link Power
@@ -379,9 +399,52 @@ fwohci_intr(void *arg)
 		}
 
 		OHCI_CSR_WRITE(sc, OHCI_REG_IntEventClear, intmask);
-		progress = 1;
+		if (!progress) {
+			sc->sc_intrcnt.ev_count++;
+			progress = 1;
+		}
 	}
 }
+
+#if 0
+static int
+fwohci_dnamem_alloc(struct fwohci_softc *sc, int size, int alignment,
+		    bus_dmamap_t *mapp, caddr_t *kvap, int flags)
+{
+	bus_dma_segment_t segs[1];
+	int error, nsegs, steps;
+
+	steps = 0;
+	error = bus_dmamem_alloc(sc->sc_dmat, size, alignment, alignment,
+				 segs, 1, &nsegs, flags);
+	if (error)
+		goto cleanup;
+
+	steps = 1;
+	error = bus_dmamem_map(sc->sc_dmat, segs, nsegs, segs[0].ds_len,
+			       kvap, flags);
+	if (error)
+		goto cleanup;
+
+	if (error == 0)
+		error = bus_dmamap_create(sc->sc_dmat, size, 1, alignment,
+					  size, flags, mapp);
+	if (error)
+		goto cleanup;
+	if (error == 0)
+		error = bus_dmamap_load(sc->sc_dmat, *mapp, *kvap, size, NULL, flags);
+	if (error)
+		goto cleanup;
+
+cleanup:
+	switch (steps) {
+	case 1:
+		bus_dmamem_free(sc->sc_dmat, segs, nsegs);
+	}
+
+	return error;
+}
+#endif
 
 int
 fwohci_print(void *aux, const char *pnp)
@@ -1720,15 +1783,13 @@ fwohci_if_inreg(struct device *self, u_int32_t offhi, u_int32_t offlo,
 static int
 fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 {
-#ifdef FW_DEBUG
-	int i;
-#endif
 	int n, len;
 	struct mbuf *m;
 	struct iovec *iov;
 	void (*handler)(struct device *, struct mbuf *) = arg;
 
 #ifdef FW_DEBUG
+	{ int n;
 	printf("fwohci_if_input: tcode=0x%x, dlen=%d",
 	    pkt->fp_tcode, pkt->fp_dlen);
 	for (i = 0; i < pkt->fp_hlen/4; i++)
@@ -1742,6 +1803,7 @@ fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		printf("$");
 	}
 	printf("\n");
+	}
 #endif /* FW_DEBUG */
 	len = pkt->fp_dlen;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);

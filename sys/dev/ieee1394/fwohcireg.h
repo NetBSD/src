@@ -59,6 +59,9 @@
 
 /* Bus Independent Definitions */
 
+#define	OHCI_CONFIG_SIZE		1024
+#define	OHCI_CONFIG_ALIGNMENT		1024
+
 /* OHCI Registers
  * OHCI Registers are divided into four spaces:
  *   1) 0x000 .. 0x17C = Control register space

@@ -103,11 +103,21 @@ struct fwohci_uidtbl {
 
 struct fwohci_softc {
 	struct ieee1394_softc sc_sc1394;
+	struct evcnt sc_intrcnt;
 
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 	bus_dma_tag_t sc_dmat;
 	bus_size_t sc_memsize;
+#if 0
+
+/* Mandatory structures to get the link enabled
+ */
+	bus_dmamap_t sc_configrom_map;
+	bus_dmamap_t sc_selfid_map;
+	u_int32_t *sc_selfid_buf;
+	u_int32_t *sc_configrom;
+#endif
 
 	bus_dma_segment_t sc_dseg;
 	int sc_dnseg;
@@ -135,9 +145,9 @@ struct fwohci_softc {
 	u_int8_t sc_rootid;
 };
 
-int fwohci_init __P((struct fwohci_softc *));
-int fwohci_intr __P((void *));
-int fwohci_print __P((void *, const char *));
+int fwohci_init (struct fwohci_softc *, const struct evcnt *);
+int fwohci_intr (void *);
+int fwohci_print (void *, const char *);
 
 /* Macros to read and write the OHCI registers
  */
