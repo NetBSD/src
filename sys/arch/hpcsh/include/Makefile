@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.13 2004/05/08 21:51:48 kleink Exp $
+#	$NetBSD: Makefile,v 1.14 2004/07/03 12:49:21 uch Exp $
 
 INCSDIR= /usr/include/hpcsh
 
-INCS=	ansi.h aout_machdep.h asm.h \
+INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	bootinfo.h bswap.h bus.h \
 	cdefs.h coff_machdep.h cpu.h cputypes.h \
 	db_machdep.h disklabel.h \
