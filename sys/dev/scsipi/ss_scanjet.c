@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.9 1996/12/03 01:25:53 thorpej Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.10 1996/12/22 10:35:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -439,7 +439,7 @@ strchr(cp, ch)
 	char ch;
 {
 	while (*cp && *cp != ch) cp++;
-	return (*cp ? (char *)cp : 0);
+	return (*cp ? (char *)cp : 0);			/* XXX kills const */
 }
 
 int
