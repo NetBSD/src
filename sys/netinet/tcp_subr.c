@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.125 2002/04/27 01:47:58 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.126 2002/05/07 02:59:39 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.125 2002/04/27 01:47:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.126 2002/05/07 02:59:39 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -240,6 +240,46 @@ struct evcnt tcp_output_refbig = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "tcp", "output reference big");
 #endif /* TCP_OUTPUT_COUNTERS */
 
+#ifdef TCP_REASS_COUNTERS
+#include <sys/device.h>
+
+struct evcnt tcp_reass_ = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp_reass", "calls");
+struct evcnt tcp_reass_empty = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    &tcp_reass_, "tcp_reass", "insert into empty queue");
+struct evcnt tcp_reass_iteration[8] = {
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &tcp_reass_, "tcp_reass", ">7 iterations"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &tcp_reass_, "tcp_reass", "1 iteration"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &tcp_reass_, "tcp_reass", "2 iterations"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &tcp_reass_, "tcp_reass", "3 iterations"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &tcp_reass_, "tcp_reass", "4 iterations"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &tcp_reass_, "tcp_reass", "5 iterations"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &tcp_reass_, "tcp_reass", "6 iterations"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &tcp_reass_, "tcp_reass", "7 iterations"),
+};
+struct evcnt tcp_reass_prependfirst = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    &tcp_reass_, "tcp_reass", "prepend to first");
+struct evcnt tcp_reass_prepend = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    &tcp_reass_, "tcp_reass", "prepend");
+struct evcnt tcp_reass_insert = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    &tcp_reass_, "tcp_reass", "insert");
+struct evcnt tcp_reass_inserttail = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    &tcp_reass_, "tcp_reass", "insert at tail");
+struct evcnt tcp_reass_append = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    &tcp_reass_, "tcp_reass", "append");
+struct evcnt tcp_reass_appendtail = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    &tcp_reass_, "tcp_reass", "append to tail fragment");
+struct evcnt tcp_reass_overlaptail = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    &tcp_reass_, "tcp_reass", "overlap at end");
+struct evcnt tcp_reass_overlapfront = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    &tcp_reass_, "tcp_reass", "overlap at start");
+struct evcnt tcp_reass_segdup = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    &tcp_reass_, "tcp_reass", "duplicate segment");
+struct evcnt tcp_reass_fragdup = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    &tcp_reass_, "tcp_reass", "duplicate fragment");
+
+#endif /* TCP_REASS_COUNTERS */
+
 /*
  * Tcp initialization
  */
@@ -291,6 +331,29 @@ tcp_init()
 	evcnt_attach_static(&tcp_output_copybig);
 	evcnt_attach_static(&tcp_output_refbig);
 #endif /* TCP_OUTPUT_COUNTERS */
+
+#ifdef TCP_REASS_COUNTERS
+	evcnt_attach_static(&tcp_reass_);
+	evcnt_attach_static(&tcp_reass_empty);
+	evcnt_attach_static(&tcp_reass_iteration[0]);
+	evcnt_attach_static(&tcp_reass_iteration[1]);
+	evcnt_attach_static(&tcp_reass_iteration[2]);
+	evcnt_attach_static(&tcp_reass_iteration[3]);
+	evcnt_attach_static(&tcp_reass_iteration[4]);
+	evcnt_attach_static(&tcp_reass_iteration[5]);
+	evcnt_attach_static(&tcp_reass_iteration[6]);
+	evcnt_attach_static(&tcp_reass_iteration[7]);
+	evcnt_attach_static(&tcp_reass_prependfirst);
+	evcnt_attach_static(&tcp_reass_prepend);
+	evcnt_attach_static(&tcp_reass_insert);
+	evcnt_attach_static(&tcp_reass_inserttail);
+	evcnt_attach_static(&tcp_reass_append);
+	evcnt_attach_static(&tcp_reass_appendtail);
+	evcnt_attach_static(&tcp_reass_overlaptail);
+	evcnt_attach_static(&tcp_reass_overlapfront);
+	evcnt_attach_static(&tcp_reass_segdup);
+	evcnt_attach_static(&tcp_reass_fragdup);
+#endif /* TCP_REASS_COUNTERS */
 }
 
 /*
@@ -823,8 +886,8 @@ tcp_newtcpcb(family, aux)
 	if (tp == NULL)
 		return (NULL);
 	bzero((caddr_t)tp, sizeof(struct tcpcb));
-	LIST_INIT(&tp->segq);
-	LIST_INIT(&tp->timeq);
+	TAILQ_INIT(&tp->segq);
+	TAILQ_INIT(&tp->timeq);
 	tp->t_family = family;		/* may be overridden later on */
 	tp->t_peermss = tcp_mssdflt;
 	tp->t_ourmss = tcp_mssdflt;
@@ -1080,14 +1143,14 @@ tcp_freeq(tp)
 
 	TCP_REASS_LOCK_CHECK(tp);
 
-	while ((qe = LIST_FIRST(&tp->segq)) != NULL) {
+	while ((qe = TAILQ_FIRST(&tp->segq)) != NULL) {
 #ifdef TCPREASS_DEBUG
 		printf("tcp_freeq[%p,%d]: %u:%u(%u) 0x%02x\n",
 			tp, i++, qe->ipqe_seq, qe->ipqe_seq + qe->ipqe_len,
 			qe->ipqe_len, qe->ipqe_flags & (TH_SYN|TH_FIN|TH_RST));
 #endif
-		LIST_REMOVE(qe, ipqe_q);
-		LIST_REMOVE(qe, ipqe_timeq);
+		TAILQ_REMOVE(&tp->segq, qe, ipqe_q);
+		TAILQ_REMOVE(&tp->timeq, qe, ipqe_timeq);
 		m_freem(qe->ipqe_m);
 		pool_put(&ipqent_pool, qe);
 		rv = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.140 2002/03/24 17:09:01 christos Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.141 2002/05/07 02:59:38 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.140 2002/03/24 17:09:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141 2002/05/07 02:59:38 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -292,6 +292,31 @@ extern struct evcnt tcp_swcsum;
 
 #endif /* TCP_CSUM_COUNTERS */
 
+#ifdef TCP_REASS_COUNTERS
+#include <sys/device.h>
+
+extern struct evcnt tcp_reass_;
+extern struct evcnt tcp_reass_empty;
+extern struct evcnt tcp_reass_iteration[8];
+extern struct evcnt tcp_reass_prependfirst;
+extern struct evcnt tcp_reass_prepend;
+extern struct evcnt tcp_reass_insert;
+extern struct evcnt tcp_reass_inserttail;
+extern struct evcnt tcp_reass_append;
+extern struct evcnt tcp_reass_appendtail;
+extern struct evcnt tcp_reass_overlaptail;
+extern struct evcnt tcp_reass_overlapfront;
+extern struct evcnt tcp_reass_segdup;
+extern struct evcnt tcp_reass_fragdup;
+
+#define	TCP_REASS_COUNTER_INCR(ev)	(ev)->ev_count++
+
+#else
+
+#define	TCP_REASS_COUNTER_INCR(ev)	/* nothing */
+
+#endif /* TCP_REASS_COUNTERS */
+
 int
 tcp_reass(tp, th, m, tlen)
 	struct tcpcb *tp;
@@ -306,6 +331,9 @@ tcp_reass(tp, th, m, tlen)
 	unsigned pkt_len;
 	u_long rcvpartdupbyte = 0;
 	u_long rcvoobyte;
+#ifdef TCP_REASS_COUNTERS
+	u_int count = 0;
+#endif
 
 	if (tp->t_inpcb)
 		so = tp->t_inpcb->inp_socket;
@@ -331,11 +359,64 @@ tcp_reass(tp, th, m, tlen)
 	pkt_seq = th->th_seq;
 	pkt_len = *tlen;
 	pkt_flags = th->th_flags;
+
+	TCP_REASS_COUNTER_INCR(&tcp_reass_);
+
+	if ((p = TAILQ_LAST(&tp->segq, ipqehead)) != NULL) {
+		/*
+		 * When we miss a packet, the vast majority of time we get
+		 * packets that follow it in order.  So optimize for that.
+		 */
+		if (pkt_seq == p->ipqe_seq + p->ipqe_len) {
+			p->ipqe_len += pkt_len;
+			p->ipqe_flags |= pkt_flags;
+			m_cat(p->ipqe_m, m);
+			tiqe = p;
+			TAILQ_REMOVE(&tp->timeq, p, ipqe_timeq);
+			TCP_REASS_COUNTER_INCR(&tcp_reass_appendtail);
+			goto skip_replacement;
+		}
+		/*
+		 * While we're here, if the pkt is completely beyond
+		 * anything we have, just insert it at the tail.
+		 */
+		if (SEQ_GT(pkt_seq, p->ipqe_seq + p->ipqe_len)) {
+			TCP_REASS_COUNTER_INCR(&tcp_reass_inserttail);
+			goto insert_it;
+		}
+	}
+
+	q = TAILQ_FIRST(&tp->segq);
+
+	if (q != NULL) {
+		/*
+		 * If this segment immediately precedes the first out-of-order
+		 * block, simply slap the segment in front of it and (mostly)
+		 * skip the complicated logic.
+		 */
+		if (pkt_seq + pkt_len == q->ipqe_seq) {
+			q->ipqe_seq = pkt_seq;
+			q->ipqe_len += pkt_len;
+			q->ipqe_flags |= pkt_flags;
+			m_cat(m, q->ipqe_m);
+			q->ipqe_m = m;
+			tiqe = q;
+			TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
+			TCP_REASS_COUNTER_INCR(&tcp_reass_prependfirst);
+			goto skip_replacement;
+		}
+	} else {
+		TCP_REASS_COUNTER_INCR(&tcp_reass_empty);
+	}
+
 	/*
 	 * Find a segment which begins after this one does.
 	 */
-	for (p = NULL, q = LIST_FIRST(&tp->segq); q != NULL; q = nq) {
-		nq = LIST_NEXT(q, ipqe_q);
+	for (p = NULL; q != NULL; q = nq) {
+		nq = TAILQ_NEXT(q, ipqe_q);
+#ifdef TCP_REASS_COUNTERS
+		count++;
+#endif
 		/*
 		 * If the received segment is just right after this
 		 * fragment, merge the two together and then check
@@ -352,6 +433,7 @@ tcp_reass(tp, th, m, tlen)
 			pkt_seq = q->ipqe_seq;
 			m_cat(q->ipqe_m, m);
 			m = q->ipqe_m;
+			TCP_REASS_COUNTER_INCR(&tcp_reass_append);
 			goto free_ipqe;
 		}
 		/*
@@ -366,8 +448,11 @@ tcp_reass(tp, th, m, tlen)
 		 * If the fragment is past the received segment, 
 		 * it (or any following) can't be concatenated.
 		 */
-		if (SEQ_GT(q->ipqe_seq, pkt_seq + pkt_len))
+		if (SEQ_GT(q->ipqe_seq, pkt_seq + pkt_len)) {
+			TCP_REASS_COUNTER_INCR(&tcp_reass_insert);
 			break;
+		}
+
 		/*
 		 * We've received all the data in this segment before.
 		 * mark it as a duplicate and return.
@@ -379,6 +464,7 @@ tcp_reass(tp, th, m, tlen)
 			m_freem(m);
 			if (tiqe != NULL)
 				pool_put(&ipqent_pool, tiqe);
+			TCP_REASS_COUNTER_INCR(&tcp_reass_segdup);
 			return (0);
 		}
 		/*
@@ -390,6 +476,7 @@ tcp_reass(tp, th, m, tlen)
 		    SEQ_LEQ(q->ipqe_seq + q->ipqe_len, pkt_seq + pkt_len)) {
 			rcvpartdupbyte += q->ipqe_len;
 			m_freem(q->ipqe_m);
+			TCP_REASS_COUNTER_INCR(&tcp_reass_fragdup);
 			goto free_ipqe;
 		}
 		/*
@@ -413,6 +500,7 @@ tcp_reass(tp, th, m, tlen)
 			pkt_seq = q->ipqe_seq;
 			pkt_len += q->ipqe_len - overlap;
 			rcvoobyte -= overlap;
+			TCP_REASS_COUNTER_INCR(&tcp_reass_overlaptail);
 			goto free_ipqe;
 		}
 		/*
@@ -432,6 +520,7 @@ tcp_reass(tp, th, m, tlen)
 			m_adj(m, -overlap);
 			pkt_len -= overlap;
 			rcvpartdupbyte += overlap;
+			TCP_REASS_COUNTER_INCR(&tcp_reass_overlapfront);
 			rcvoobyte -= overlap;
 		}
 		/*
@@ -448,13 +537,14 @@ tcp_reass(tp, th, m, tlen)
 			pkt_len += q->ipqe_len;
 			pkt_flags |= q->ipqe_flags;
 			m_cat(m, q->ipqe_m);
-			LIST_REMOVE(q, ipqe_q);
-			LIST_REMOVE(q, ipqe_timeq);
+			TAILQ_REMOVE(&tp->segq, q, ipqe_q);
+			TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
 			if (tiqe == NULL) {
 			    tiqe = q;
 			} else {
 			    pool_put(&ipqent_pool, q);
 			}
+			TCP_REASS_COUNTER_INCR(&tcp_reass_prepend);
 			break;
 		}
 		/*
@@ -473,14 +563,23 @@ tcp_reass(tp, th, m, tlen)
 		 * to save doing a malloc/free in most instances.
 		 */
 	  free_ipqe:
-		LIST_REMOVE(q, ipqe_q);
-		LIST_REMOVE(q, ipqe_timeq);
+		TAILQ_REMOVE(&tp->segq, q, ipqe_q);
+		TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
 		if (tiqe == NULL) {
 		    tiqe = q;
 		} else {
 		    pool_put(&ipqent_pool, q);
 		}
 	}
+
+#ifdef TCP_REASS_COUNTERS
+	if (count > 7)
+		TCP_REASS_COUNTER_INCR(&tcp_reass_iteration[0]);
+	else if (count > 0)
+		TCP_REASS_COUNTER_INCR(&tcp_reass_iteration[count]);
+#endif
+
+    insert_it:
 
 	/*
 	 * Allocate a new queue entry since the received segment did not
@@ -516,14 +615,14 @@ tcp_reass(tp, th, m, tlen)
 	tiqe->ipqe_len = pkt_len;
 	tiqe->ipqe_flags = pkt_flags;
 	if (p == NULL) {
-		LIST_INSERT_HEAD(&tp->segq, tiqe, ipqe_q);
+		TAILQ_INSERT_HEAD(&tp->segq, tiqe, ipqe_q);
 #ifdef TCPREASS_DEBUG
 		if (tiqe->ipqe_seq != tp->rcv_nxt)
 			printf("tcp_reass[%p]: insert %u:%u(%u) at front\n",
 			       tp, pkt_seq, pkt_seq + pkt_len, pkt_len);
 #endif
 	} else {
-		LIST_INSERT_AFTER(p, tiqe, ipqe_q);
+		TAILQ_INSERT_AFTER(&tp->segq, p, tiqe, ipqe_q);
 #ifdef TCPREASS_DEBUG
 		printf("tcp_reass[%p]: insert %u:%u(%u) after %u:%u(%u)\n",
 		       tp, pkt_seq, pkt_seq + pkt_len, pkt_len,
@@ -531,7 +630,9 @@ tcp_reass(tp, th, m, tlen)
 #endif
 	}
 
-	LIST_INSERT_HEAD(&tp->timeq, tiqe, ipqe_timeq);
+skip_replacement:
+
+	TAILQ_INSERT_HEAD(&tp->timeq, tiqe, ipqe_timeq);
 
 present:
 	/*
@@ -540,7 +641,7 @@ present:
 	 */
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		return (0);
-	q = LIST_FIRST(&tp->segq);
+	q = TAILQ_FIRST(&tp->segq);
 	if (q == NULL || q->ipqe_seq != tp->rcv_nxt)
 		return (0);
 	if (tp->t_state == TCPS_SYN_RECEIVED && q->ipqe_len)
@@ -550,8 +651,8 @@ present:
 	pkt_flags = q->ipqe_flags & TH_FIN;
 	ND6_HINT(tp);
 
-	LIST_REMOVE(q, ipqe_q);
-	LIST_REMOVE(q, ipqe_timeq);
+	TAILQ_REMOVE(&tp->segq, q, ipqe_q);
+	TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
 	if (so->so_state & SS_CANTRCVMORE)
 		m_freem(q->ipqe_m);
 	else
@@ -1375,7 +1476,7 @@ after_listen:
 				return;
 			}
 		} else if (th->th_ack == tp->snd_una &&
-		    LIST_FIRST(&tp->segq) == NULL &&
+		    TAILQ_FIRST(&tp->segq) == NULL &&
 		    tlen <= sbspace(&so->so_rcv)) {
 			/*
 			 * this is a pure, in-sequence data packet
@@ -2122,7 +2223,7 @@ dodata:							/* XXX */
 		/* NOTE: this was TCP_REASS() macro, but used only once */
 		TCP_REASS_LOCK(tp);
 		if (th->th_seq == tp->rcv_nxt &&
-		    LIST_FIRST(&tp->segq) == NULL &&
+		    TAILQ_FIRST(&tp->segq) == NULL &&
 		    tp->t_state == TCPS_ESTABLISHED) {
 			TCP_SETUP_ACK(tp, th);
 			tp->rcv_nxt += tlen;
