@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.24 2000/06/03 04:12:48 simonb Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.25 2000/06/16 03:58:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ main(int argc, char *argv[])
 	if (argc - optind > 0)
 		usage();
 
-	if (namelist == NULL && core == NULL) {
+	if (core == NULL) {
 		if (display & (MSGINFO | MSGTOTAL))
 			msg_sysctl();
 		if (display & (SHMINFO | SHMTOTAL))

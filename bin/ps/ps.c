@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.40 2000/06/08 13:30:40 simonb Exp $	*/
+/*	$NetBSD: ps.c,v 1.41 2000/06/16 03:51:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.40 2000/06/08 13:30:40 simonb Exp $");
+__RCSID("$NetBSD: ps.c,v 1.41 2000/06/16 03:51:00 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -340,7 +340,7 @@ main(argc, argv)
 	}
 #endif
 
-	if (nlistf == NULL && memf == NULL && swapf == NULL) {
+	if (memf == NULL && swapf == NULL) {
 		kd = kvm_openfiles(nlistf, memf, swapf, KVM_NO_FILES, errbuf);
 		donlist_sysctl();
 	} else
