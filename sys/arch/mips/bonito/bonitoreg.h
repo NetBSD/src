@@ -1,4 +1,4 @@
-/*	$NetBSD: bonitoreg.h,v 1.3 2001/06/25 20:15:03 thorpej Exp $	*/
+/*	$NetBSD: bonitoreg.h,v 1.4 2002/01/09 02:35:29 thorpej Exp $	*/
 
 /*
  * Bonito Register Map 
@@ -319,6 +319,7 @@
 #define BONITO_ICU_MASTERERR		0x00000400
 #define BONITO_ICU_SYSTEMERR		0x00000800
 #define BONITO_ICU_DRAMPERR		0x00001000
+#define BONITO_ICU_RETRYERR		0x00002000
 #define BONITO_ICU_GPIOS		0x01ff0000
 #define BONITO_ICU_GPIOS_SHIFT		16
 #define BONITO_ICU_GPINS		0x7e000000
