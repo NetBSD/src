@@ -1,4 +1,4 @@
-/*	$NetBSD: except.c,v 1.5 2002/02/21 07:38:16 itojun Exp $	*/
+/*	$NetBSD: except.c,v 1.6 2004/03/05 16:37:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -38,17 +38,24 @@
 #include <assert.h>
 #include <ieeefp.h>
 #include <float.h>
+#include <setjmp.h>
 
-void sigfpe();
+void sigfpe(int, siginfo_t *, void *);
 volatile sig_atomic_t signal_caught;
+volatile int sicode;
 
 static volatile const double one  = 1.0;
 static volatile const double zero = 0.0;
 static volatile const double huge = DBL_MAX;
 static volatile const double tiny = DBL_MIN;
 
+static sigjmp_buf b;
+
 main()
 {
+	struct sigaction sa;
+	fp_except ex1, ex2;
+	int r;
 	volatile double x;
 
 	/*
@@ -59,56 +66,87 @@ main()
 	assert(fpgetsticky() == 0);
 
 	/* set up signal handler */
-	signal (SIGFPE, sigfpe);
+	sa.sa_sigaction = sigfpe;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = SA_SIGINFO;
+	sigaction(SIGFPE, &sa, 0);
 	signal_caught = 0;
 
 	/* trip divide by zero */
 	x = one / zero;
-	assert (fpgetsticky() & FP_X_DZ);
+	ex1 = fpgetsticky();
+	assert (ex1 & FP_X_DZ);
 	assert (signal_caught == 0);
-	fpsetsticky(0);
+	ex2 = fpsetsticky(0);
+	assert(fpgetsticky() == 0);
+	assert(ex1 == ex2);
 
 	/* trip invalid operation */
 	x = zero / zero;
-	assert (fpgetsticky() & FP_X_INV);
+	ex1 = fpgetsticky();
+	assert (ex1 & FP_X_INV);
 	assert (signal_caught == 0);
-	fpsetsticky(0);
+	ex2 = fpsetsticky(0);
+	assert(fpgetsticky() == 0);
+	assert(ex1 == ex2);
 
 	/* trip overflow */
 	x = huge * huge;
-	assert (fpgetsticky() & FP_X_OFL);
+	ex1 = fpgetsticky();
+	assert (ex1 & FP_X_OFL);
 	assert (signal_caught == 0);
-	fpsetsticky(0);
+	ex2 = fpsetsticky(0);
+	assert(fpgetsticky() == 0);
+	assert(ex1 == ex2);
 
 	/* trip underflow */
 	x = tiny * tiny;
-	assert (fpgetsticky() & FP_X_UFL);
+	ex1 = fpgetsticky();
+	assert (ex1 & FP_X_UFL);
 	assert (signal_caught == 0);
-	fpsetsticky(0);
+	ex2 = fpsetsticky(0);
+	assert(fpgetsticky() == 0);
+	assert(ex1 == ex2);
 
 #if 1
 	/* unmask and then trip divide by zero */
 	fpsetmask(FP_X_DZ);
-	x = one / zero;
+	r = sigsetjmp(b, 1);
+	if (!r)
+		x = one / zero;
 	assert (signal_caught == 1);
+	if (sicode != FPE_FLTDIV)
+		printf("si_code=%d, should be FPE_FLTDIV\n", sicode);
 	signal_caught = 0;
 
 	/* unmask and then trip invalid operation */
 	fpsetmask(FP_X_INV);
-	x = zero / zero;
+	r = sigsetjmp(b, 1);
+	if (!r)
+		x = zero / zero;
 	assert (signal_caught == 1);
+	if (sicode != FPE_FLTINV)
+		printf("si_code=%d, should be FPE_FLTINV\n", sicode);
 	signal_caught = 0;
 
 	/* unmask and then trip overflow */
 	fpsetmask(FP_X_OFL);
-	x = huge * huge;
+	r = sigsetjmp(b, 1);
+	if (!r)
+		x = huge * huge;
 	assert (signal_caught == 1);
+	if (sicode != FPE_FLTOVF)
+		printf("si_code=%d, should be FPE_FLTOVF\n", sicode);
 	signal_caught = 0;
 
 	/* unmask and then trip underflow */
 	fpsetmask(FP_X_UFL);
-	x = tiny * tiny;
+	r = sigsetjmp(b, 1);
+	if (!r)
+		x = tiny * tiny;
 	assert (signal_caught == 1);
+	if (sicode != FPE_FLTUND)
+		printf("si_code=%d, should be FPE_FLTUND\n", sicode);
 	signal_caught = 0;
 #endif
 
@@ -116,7 +154,9 @@ main()
 }
 
 void
-sigfpe()
+sigfpe(int s, siginfo_t *si, void *c)
 {
 	signal_caught = 1;
+	sicode = si->si_code;
+	siglongjmp(b, 1);
 }
