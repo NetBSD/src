@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/04/19 14:41:38 wiz Exp $
+#	$NetBSD: Makefile,v 1.9 2001/11/12 17:09:46 tv Exp $
 
 .include "../Makefile.lib"
 
@@ -11,6 +11,6 @@ CPPFLAGS+=	-I${DIST}
 LDADD+=		$(LIBBIB) $(LIBGROFF) -lm
 DPADD+=		$(LIBBIB) $(LIBGROFF) $(LIBM)
 
-CLEANFILES+=	label.cc label.tab.h
+CLEANFILES+=	label.cc label_tab.h
 
 .include <bsd.prog.mk>
