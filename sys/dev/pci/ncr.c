@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.35.4.2 1996/12/10 08:30:33 mycroft Exp $	*/
 
 /**************************************************************************
 **
@@ -162,7 +162,8 @@
 #define KERNEL
 #endif
 #endif
-#include <stddef.h>
+
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1329,7 +1330,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.35.4.2 1996/12/10 08:30:33 mycroft Exp $\n";
 #endif
 
 u_long	ncr_version = NCR_VERSION	* 11
