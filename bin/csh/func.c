@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.18 2000/05/31 22:48:45 christos Exp $	*/
+/*	$NetBSD: func.c,v 1.19 2001/01/06 23:56:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.18 2000/05/31 22:48:45 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.19 2001/01/06 23:56:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: func.c,v 1.18 2000/05/31 22:48:45 christos Exp $");
 #include "pathnames.h"
 
 extern char **environ;
+extern int progprintf __P((int, char **));
 
 static void	islogin __P((void));
 static void	reexecute __P((struct command *));
@@ -1515,7 +1516,6 @@ doprintf(v, t)
     struct command *t;
 {
     char **c;
-    extern int progprintf __P((int, char **));
     int ret;
 
     ret = progprintf(blklen(v), c = short2blk(v));
