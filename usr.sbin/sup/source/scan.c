@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.15 2002/07/10 21:28:13 wiz Exp $	*/
+/*	$NetBSD: scan.c,v 1.16 2002/07/10 23:55:06 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -149,11 +149,7 @@ static TREE *execT;		/* execute command list */
  ***    E X T E R N    ***
  *************************/
 
-#ifdef	lint
-static char _argbreak;
-#else
 extern char _argbreak;		/* break character from nxtarg */
-#endif
 
 extern TREELIST *listTL;	/* list of trees for scanning */
 extern TREE *listT;		/* final list of files in collection */
