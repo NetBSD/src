@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.25 1998/09/02 22:32:07 is Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.26 1998/10/19 22:00:14 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1998 Ignatios Souvatzis
@@ -36,7 +36,7 @@
  * compatibility mode) boards
  */
 
-#define BAHSOFTCOPY /**/
+#undef BAHSOFTCOPY /**/
 #define BAHRETRANSMIT /**/
 
 #include "opt_inet.h"
@@ -718,11 +718,12 @@ bah_tint(sc, isr)
 
 	/* XXXX TODO */
 #ifdef BAHSOFTCOPY
+Error	this is broken currently!
 	/* schedule soft int to fill a new buffer for us */
 	softintr_schedule(sc->sc_softcookie);
 #else
 	/* call it directly */
-	bah_srint(sc);
+	bah_start(ifp);
 #endif
 }
 
