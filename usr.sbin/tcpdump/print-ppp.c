@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  * 
- * $Id: print-ppp.c,v 1.1 1993/11/14 21:20:50 deraadt Exp $
+ * $Id: print-ppp.c,v 1.2 1994/01/25 05:58:21 deraadt Exp $
  */
 
 #ifndef lint
@@ -48,11 +48,10 @@ static  char rcsid[] =
 
 #include <net/bpf.h>
 
+#include <net/if_ppp.h>
+
 #include "interface.h"
 #include "addrtoname.h"
-
-/* XXX This goes somewhere else. */
-#define PPP_HDRLEN 4
 
 void
 ppp_if_print(p, tvp, length, caplen)
