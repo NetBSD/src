@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_addr.c,v 1.11 1997/09/15 09:34:58 lukem Exp $	*/
+/*	$NetBSD: ccitt_addr.c,v 1.12 1997/09/16 07:04:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ccitt_addr.c	8.1 (Berkeley) 6/5/93
+ *	@(#)ccitt_addr.c	8.2 (Berkeley) 4/28/95
  */
 
 /*
