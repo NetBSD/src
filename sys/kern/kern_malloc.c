@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.51 2000/05/08 20:02:21 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.52 2000/05/26 23:18:26 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -56,7 +56,7 @@ vm_map_t kmem_map = NULL;
 #include "opt_kmempages.h"
 
 #ifdef NKMEMCLUSTERS
-#error NKMEMCLUSTERS is obsolete; use NKMEMPAGES instead or let the kernel auto-size
+#error NKMEMCLUSTERS is obsolete; remove it from your kernel config file and use NKMEMPAGES instead or let the kernel auto-size
 #endif
 
 /*
