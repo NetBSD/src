@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 1999/08/12 21:00:05 tron Exp $
+#	$NetBSD: Makefile,v 1.24 1999/08/22 12:43:51 kleink Exp $
 
 LIB=	compat
 CPPFLAGS+=-DLIBC_SCCS -DSYSLIBC_SCCS -D__LIBCOMPAT_SOURCE__
@@ -21,7 +21,7 @@ SRCS=	gtty.c ftime.c stty.c
 # missing: (for vax) reset.s
 .endif
 
-MAN+=	ftime.3 getpw.3 stty.3 vlimit.3 vtimes.3
+MAN+=	ftime.3 stty.3
 
 MLINKS+=stty.3 gtty.3
 
