@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.113 2005/03/16 12:52:53 he Exp $
+# $NetBSD: mi,v 1.113.2.1 2005/04/04 17:32:26 tron Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -464,11 +464,13 @@
 ./usr/share/examples/emul/svr4/etc/netconfig	misc-sys-examples	share
 ./usr/share/examples/emul/svr4/etc/nsswitch.conf	misc-sys-examples	share
 ./usr/share/examples/emul/ultrix/etc/svc.conf	misc-sys-examples	share
-./usr/share/examples/fstab/fstab.md		misc-fstab-examples	share
+./usr/share/examples/fstab/fstab.cdrom		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.nfs.1		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.nfs.2		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.nfs.3		misc-fstab-examples	share
+./usr/share/examples/fstab/fstab.pseudo		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.ra		misc-fstab-examples	share
+./usr/share/examples/fstab/fstab.ramdisk	misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.rd		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.sd0.1		misc-fstab-examples	share
 ./usr/share/examples/fstab/fstab.sd0.2		misc-fstab-examples	share
