@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.13 2003/09/07 22:20:05 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.14 2003/09/12 07:45:22 itojun Exp $	*/
 /*	$KAME: token.l,v 1.43 2003/07/25 09:35:28 itojun Exp $	*/
 
 /*
@@ -106,6 +106,7 @@ spdadd		{ return(SPDADD); }
 spddelete	{ return(SPDDELETE); }
 spddump		{ return(SPDDUMP); }
 spdflush	{ return(SPDFLUSH); }
+tagged		{ return(TAGGED); }
 {hyphen}P	{ BEGIN S_PL; return(F_POLICY); }
 <S_PL>[a-zA-Z0-9:\.\-_/ \n\t][a-zA-Z0-9:\.%\-_/ \n\t]* {
 			yymore();
