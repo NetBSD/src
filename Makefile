@@ -1,8 +1,22 @@
-#	$NetBSD: Makefile,v 1.75 1998/12/12 23:44:22 tv Exp $
+#	$NetBSD: Makefile,v 1.76 1998/12/22 11:21:09 bouyer Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
+# Configurations variables (can be set either in /etc/mk.conf or
+# as environement variable
+# NBUILDJOBS: the number of jobs to start in parallel in a 'make build'.
+#             defaults to 1
+# NOMAN: if set to 1, don't build and install man pages
+# NOSHARE: if set to 1, don't build or install /usr/share stuffs
+# UPDATE: if set to 1, don't do a 'make cleandir' before compile
+# DESTDIR: The target directory for installation (default to '/',
+#          which mean the current system is updated).
+
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
+
+.if defined(NBUILDJOBS)
+_J= -j${NBUILDJOBS}
+.endif
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -62,36 +76,36 @@ build: beforeinstall
 	false
 .else
 	(cd ${.CURDIR}/gnu/usr.bin/egcs && \
-	    ${MAKE} depend && ${MAKE} NOMAN= && ${MAKE} NOMAN= install && \
-	    ${MAKE} cleandir)
+	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && \
+	    ${MAKE} NOMAN= install && ${MAKE} cleandir)
 .endif
 .endif
 	${MAKE} includes
 	(cd ${.CURDIR}/lib/csu && \
-	    ${MAKE} depend && ${MAKE} NOMAN= && ${MAKE} NOMAN= install)
+	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
 	(cd ${.CURDIR}/lib && \
-	    ${MAKE} depend && ${MAKE} NOMAN= && ${MAKE} NOMAN= install)
+	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
 	(cd ${.CURDIR}/gnu/lib && \
-	    ${MAKE} depend && ${MAKE} NOMAN= && ${MAKE} NOMAN= install)
+	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
 # libtelnet depends on libdes and libkrb.  libkrb depends on
 # libcom_err.
 .if exists(domestic/lib/libdes)
 	(cd ${.CURDIR}/domestic/lib/libdes && \
-	    ${MAKE} depend && ${MAKE} NOMAN= && ${MAKE} NOMAN= install)
+	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
 .endif
 .if exists(domestic/lib/libcom_err)
 	(cd ${.CURDIR}/domestic/lib/libcom_err && \
-	    ${MAKE} depend && ${MAKE} NOMAN= && ${MAKE} NOMAN= install)
+	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
 .endif
 .if exists(domestic/lib/libkrb)
 	(cd ${.CURDIR}/domestic/lib/libkrb && \
-	    ${MAKE} depend && ${MAKE} NOMAN= && ${MAKE} NOMAN= install)
+	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
 .endif
 	(cd ${.CURDIR}/domestic/lib && \
-	    ${MAKE} depend && ${MAKE} NOMAN= && ${MAKE} NOMAN= install)
+	    ${MAKE} depend && ${MAKE} ${_J} NOMAN= && ${MAKE} NOMAN= install)
 .endif
-	${MAKE} depend && ${MAKE} && ${MAKE} install
+	${MAKE} depend && ${MAKE} ${_J} && ${MAKE} install
 	@echo -n "Build finished at: "
 	@date
 
