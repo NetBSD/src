@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.4.2.1 1998/10/15 03:16:46 nisimura Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.4.2.2 1998/11/16 10:41:28 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.4.2.1 1998/10/15 03:16:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.4.2.2 1998/11/16 10:41:28 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ compat_13_sys_sigreturn(p, v, retval)
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext13 *scp;
-	int error, *regs;
+	mips_reg_t error, *regs;
 	struct sigcontext13 ksc;
 	sigset_t mask;
 
@@ -58,7 +58,7 @@ compat_13_sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
+		printf("sigreturn13: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((error = copyin(scp, &ksc, sizeof(ksc))) != 0)
 		return (error);
