@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)hexdump.1	5.12 (Berkeley) 7/27/91
-.\"	$Id: hexdump.1,v 1.3 1994/01/11 02:27:37 jtc Exp $
+.\"	$Id: hexdump.1,v 1.4 1996/11/11 00:12:49 lukem Exp $
 .\"
 .Dd July 27, 1991
 .Dt HEXDUMP 1
@@ -196,7 +196,7 @@ described in the C standard are supported:
 .Ed
 .El
 .Pp
-Hexdump also supports the the following additional conversion strings:
+Hexdump also supports the following additional conversion strings:
 .Bl -tag -width Fl
 .It Cm \&_a Ns Op Cm dox 
 Display the input offset, cumulative across input files, of the
@@ -264,7 +264,7 @@ The input is manipulated in ``blocks'', where a block is defined as the
 largest amount of data specified by any format string.
 Format strings interpreting less than an input block's worth of data,
 whose last format unit both interprets some number of bytes and does
-not have a specified iteration count, have the the iteration count
+not have a specified iteration count, have the iteration count
 incremented until the entire input block has been processed or there
 is not enough data remaining in the block to satisfy the format string.
 .Pp
