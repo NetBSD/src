@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.57 1996/03/08 22:03:26 cgd Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.58 1996/03/17 00:47:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -319,8 +319,12 @@ struct scsi_device ahb_dev = {
 int	ahbmatch __P((struct device *, void *, void *));
 void	ahbattach __P((struct device *, struct device *, void *));
 
-struct cfdriver ahbcd = {
-	NULL, "ahb", ahbmatch, ahbattach, DV_DULL, sizeof(struct ahb_softc)
+struct cfattach ahb_ca = {
+	sizeof(struct ahb_softc), ahbmatch, ahbattach
+};
+
+struct cfdriver ahb_cd = {
+	NULL, "ahb", DV_DULL
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.90 1996/03/16 07:24:15 cgd Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.91 1996/03/17 00:53:18 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -141,8 +141,12 @@ void ed_pio_readmem __P((struct ed_softc *, u_short, caddr_t, u_short));
 void ed_pio_writemem __P((struct ed_softc *, caddr_t, u_short, u_short));
 u_short ed_pio_write_mbufs __P((struct ed_softc *, struct mbuf *, u_short));
 
-struct cfdriver edcd = {
-	NULL, "ed", edprobe, edattach, DV_IFNET, sizeof(struct ed_softc)
+struct cfattach ed_ca = {
+	sizeof(struct ed_softc), edprobe, edattach
+};
+
+struct cfdriver ed_cd = {
+	NULL, "ed", DV_IFNET
 };
 
 #define	ETHER_MIN_LEN	64
@@ -1082,7 +1086,7 @@ edattach(parent, self, aux)
 
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = edcd.cd_name;
+	ifp->if_name = ed_cd.cd_name;
 	ifp->if_start = edstart;
 	ifp->if_ioctl = edioctl;
 	ifp->if_watchdog = edwatchdog;
@@ -1186,7 +1190,7 @@ void
 edwatchdog(unit)
 	int unit;
 {
-	struct ed_softc *sc = edcd.cd_devs[unit];
+	struct ed_softc *sc = ed_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -1390,7 +1394,7 @@ void
 edstart(ifp)
 	struct ifnet *ifp;
 {
-	struct ed_softc *sc = edcd.cd_devs[ifp->if_unit];
+	struct ed_softc *sc = ed_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
 	caddr_t buffer;
 	int asicbase = sc->asic_base;
@@ -1816,7 +1820,7 @@ edioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ed_softc *sc = edcd.cd_devs[ifp->if_unit];
+	struct ed_softc *sc = ed_cd.cd_devs[ifp->if_unit];
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
