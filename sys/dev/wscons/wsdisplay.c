@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.13 1999/01/09 15:42:34 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.14 1999/01/13 16:21:02 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.13 1999/01/09 15:42:34 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.14 1999/01/13 16:21:02 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -868,7 +868,8 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 	struct proc *p;
 {
 	int error;
-	void *buf;
+	char namebuf[16];
+	struct wsdisplay_font fd;
 
 	if (sc->sc_kbddv != NULL) {
 		/* check ioctls for keyboard */
@@ -911,27 +912,27 @@ wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p)
 		    return (EINVAL);
 	    return (0);
 #undef d
-	case WSDISPLAYIO_SFONT:
-#define d ((struct wsdisplay_font *)data)
-		if (d->fontheight != scr->scr_dconf->scrdata->fontheight ||
-		    d->fontwidth != scr->scr_dconf->scrdata->fontwidth)
+
+	case WSDISPLAYIO_USEFONT:
+#define d ((struct wsdisplay_usefontdata *)data)
+		if (!sc->sc_accessops->load_font)
 			return (EINVAL);
-		buf = malloc(d->fontheight * d->stride * d->numchars,
-			     M_DEVBUF, M_WAITOK);
-		error = copyin(d->data, buf,
-			       d->fontheight * d->stride * d->numchars);
-		if (error) {
-			free(buf, M_DEVBUF);
-			return (error);
-		}
-		error =
-		  (*sc->sc_accessops->load_font)(sc->sc_accesscookie,
-						 scr->scr_dconf->emulcookie,
-						 d->firstchar, d->numchars,
-						 d->stride, buf);
-		free(buf, M_DEVBUF);
-#undef d
+		if (d->name) {
+			error = copyinstr(d->name, namebuf, sizeof(namebuf), 0);
+			if (error)
+				return (error);
+			fd.name = namebuf;
+		} else
+			fd.name = 0;
+		fd.data = 0;
+		error = (*sc->sc_accessops->load_font)(sc->sc_accesscookie,
+					scr->scr_dconf->emulcookie, &fd);
+		if (!error && WSSCREEN_HAS_EMULATOR(scr) &&
+		    scr->scr_dconf->wsemul->reset != NULL)
+			(*scr->scr_dconf->wsemul->reset)
+				(scr->scr_dconf->wsemulcookie, WSEMUL_SYNCFONT);
 		return (error);
+#undef d
 	}
 
 	/* check ioctls for display */
@@ -949,6 +950,7 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 {
 	int error;
 	char *type, typebuf[16], *emul, emulbuf[16];
+	void *buf;
 
 	switch (cmd) {
 	case WSDISPLAYIO_ADDSCREEN:
@@ -975,6 +977,31 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 #define d ((struct wsdisplay_delscreendata *)data)
 		return (wsdisplay_delscreen(sc, d->idx, d->flags));
 #undef d
+	case WSDISPLAYIO_LDFONT:
+#define d ((struct wsdisplay_font *)data)
+		if (!sc->sc_accessops->load_font)
+			return (EINVAL);
+		if (d->name) {
+			error = copyinstr(d->name, typebuf, sizeof(typebuf), 0);
+			if (error)
+				return (error);
+			d->name = typebuf;
+		} else
+			d->name = "loaded"; /* ??? */
+		buf = malloc(d->fontheight * d->stride * d->numchars,
+			     M_DEVBUF, M_WAITOK);
+		error = copyin(d->data, buf,
+			       d->fontheight * d->stride * d->numchars);
+		if (error) {
+			free(buf, M_DEVBUF);
+			return (error);
+		}
+		d->data = buf;
+		error =
+		  (*sc->sc_accessops->load_font)(sc->sc_accesscookie, 0, d);
+		free(buf, M_DEVBUF);
+#undef d
+		return (error);
 	}
 	return (EINVAL);
 }

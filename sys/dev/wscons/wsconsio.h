@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.12 1999/01/09 15:44:45 drochner Exp $ */
+/* $NetBSD: wsconsio.h,v 1.13 1999/01/13 16:21:02 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -244,11 +244,16 @@ struct wsdisplay_cursor {
  * XXX to be changed without care about backwards compatibility!
  */
 struct wsdisplay_font {
+	char *name;
 	int firstchar, numchars;
-	int fontwidth, fontheight, stride;
+	int encoding;
+#define WSDISPLAY_FONTENC_ISO 0
+#define WSDISPLAY_FONTENC_IBM 1
+#define WSDISPLAY_FONTENC_PCVT 2
+	int fontwidth, fontheight, stride; /* XXX endianness??? */
 	void *data;
 };
-#define WSDISPLAYIO_SFONT	_IOW('W', 77, struct wsdisplay_font)
+#define WSDISPLAYIO_LDFONT	_IOW('W', 77, struct wsdisplay_font)
 
 struct wsdisplay_addscreendata {
 	int idx; /* screen index */
@@ -263,6 +268,11 @@ struct wsdisplay_delscreendata {
 #define WSDISPLAY_DELSCR_FORCE 1
 };
 #define WSDISPLAYIO_DELSCREEN _IOW('W', 79, struct wsdisplay_delscreendata)
+
+struct wsdisplay_usefontdata {
+	char *name;
+};
+#define WSDISPLAYIO_USEFONT	_IOW('W', 80, struct wsdisplay_usefontdata)
 
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.8 1999/01/09 15:44:45 drochner Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.9 1999/01/13 16:21:02 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -92,6 +92,7 @@ struct wsscreen_descr {
 #define WSSCREEN_UNDERLINE	16	/* can underline */
 };
 
+struct wsdisplay_font;
 /*
  * Display access functions, invoked by user-land programs which require
  * direct device access, such as X11.
@@ -107,7 +108,7 @@ struct wsdisplay_accessops {
 				     void **, int *, int *, long *));
 	void	(*free_screen) __P((void *, void *));
 	void	(*show_screen) __P((void *, void *));
-	int	(*load_font) __P((void *, void *, int, int, int, void *));
+	int	(*load_font) __P((void *, void *, struct wsdisplay_font *));
 };
 
 /*
