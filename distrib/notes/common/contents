@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.90 2003/06/01 17:34:48 mbw Exp $
+.\"	$NetBSD: contents,v 1.91 2003/09/02 05:35:37 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -896,8 +896,11 @@ server with man pages.
 .
 .if \n[macppc] \{\
 .It Sy xserver
-The Xmacppc
-server which supports 256 colors with man pages.
+The Xmacppc server which supports all on-board video and Open 
+Firmware-compatible video cards with man pages.  Acceleration and depths 
+greater than 256 colors are not supported.  See the X11 FAQ for help 
+installing and using the XFree86 server.
+.Lk http://www.netbsd.org/Ports/macppc/x11.html
 .showsize 2 5
 .\}
 .
