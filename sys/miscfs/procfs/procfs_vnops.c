@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.61 1999/03/12 18:45:40 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.61.2.1 1999/08/28 23:28:16 he Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -797,7 +797,7 @@ procfs_readdir(v)
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct pfsnode *pfs;
-	int i;
+	off_t i;
 	int error;
 	off_t *cookies = NULL;
 	int ncookies;
@@ -824,6 +824,9 @@ procfs_readdir(v)
 	case Pproc: {
 		struct proc *p;
 		struct proc_target *pt;
+
+		if (i >= nproc_targets)
+			return 0;
 
 		p = PFIND(pfs->pfs_pid);
 		if (p == NULL)
