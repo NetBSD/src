@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.13.2.5 2002/07/20 02:30:12 lukem Exp $
+.\"	$NetBSD: upgrade,v 1.13.2.6 2002/07/22 05:25:03 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,8 +79,9 @@ binary distribution sets available, so that you can upgrade with them,
 using one of the upgrade methods described above.
 Finally, you must have sufficient disk space available to install the
 new binaries.
-Since the old binaries are being overwritten in place, you only need
-space for the new binaries, which weren't previously on the system.
+Since files already installed on the system are overwritten in place,
+you only need additional free space for files which weren't previously
+installed or to account for growth of the sets between releases.
 If you have a few megabytes free on each of your root
 .Pq Pa /
 and
