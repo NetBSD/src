@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 10/27/93"; */
-static char *rcsid = "$Id: tty.c,v 1.3 1993/11/09 04:08:56 cgd Exp $";
+/* from: static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 1/2/94"; */
+static char *rcsid = "$Id: tty.c,v 1.4 1994/01/24 08:36:59 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/ioctl.h>
