@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2001/09/23 23:40:29 tls Exp $
+#	$NetBSD: Makefile,v 1.26 2001/11/08 02:10:25 christos Exp $
 
 DBG=		-Os
 
@@ -14,11 +14,11 @@ SUBDIR+=	bootfloppy-ps2
 SUBDIR+=	bootfloppy-small
 SUBDIR+=	bootfloppy-tiny
 
-SUBDIR+=	ramdisk-rescuesmall
-SUBDIR+=	ramdisk-rescuetiny
-SUBDIR+=	kernel-rescue
-SUBDIR+=	rescue-small
-SUBDIR+=	rescue-tiny
+#SUBDIR+=	ramdisk-rescuesmall
+#SUBDIR+=	ramdisk-rescuetiny
+#SUBDIR+=	kernel-rescue
+#SUBDIR+=	rescue-small
+#SUBDIR+=	rescue-tiny
 
 TARGETS+=release
 

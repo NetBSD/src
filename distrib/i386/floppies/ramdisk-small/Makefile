@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2001/10/13 06:15:17 jmc Exp $
+#	$NetBSD: Makefile,v 1.12 2001/11/08 02:10:28 christos Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -11,12 +11,10 @@ AUXDEPENDS= 	dot.profile disktab.preinstall  termcap.mini
 CBIN=		ramdiskbin
 
 MOUNT_POINT?=	/mnt
-# DEV/RDEV file system device, CDEV/RDEV vnconfig device
+# DEV/RDEV file system device
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}d
-VND_CRDEV=	/dev/r${VND}d
 IMAGE?=		xxx.fs
 MDEC=		${DESTDIR}/usr/mdec
 
@@ -27,7 +25,7 @@ MTREECONF=	mtree.conf
 CRUNCHGEN?=	crunchgen
 MTREE?=		mtree
 
-RAMDISKSPC=	165
+RAMDISKSPC=	170
 RAMDISKCYLS=	16
 RAMDISKSIZE!=	expr ${RAMDISKSPC} \* ${RAMDISKCYLS}
 DBG?=-Os
@@ -37,10 +35,10 @@ realall: ${IMAGE}
 ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	rm -f ${IMAGE}.tmp
 	dd if=/dev/zero of=${IMAGE}.tmp count=${RAMDISKSIZE}
-	vnconfig -v -c ${VND_CDEV} ${IMAGE}.tmp \
+	vnconfig -v -c ${VND} ${IMAGE}.tmp \
 	    512/${RAMDISKSPC}/1/${RAMDISKCYLS}
-	-disklabel ${VND_CDEV} >tmplabel
-	disklabel -r -R ${VND_CDEV} tmplabel
+	-disklabel ${VND} >tmplabel
+	disklabel -r -R ${VND} tmplabel
 	newfs -B le -m 0 -o space -i 5000 -c 80 ${VND_RDEV} 
 	mount ${VND_DEV} ${MOUNT_POINT}
 	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
@@ -50,7 +48,7 @@ ${IMAGE}: ${CBIN} ${AUXDEPENDS} ${MTREECONF} ${LISTS}
 	@df -i ${MOUNT_POINT}
 	@echo ""
 	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+	vnconfig -u ${VND}
 	mv -f ${IMAGE}.tmp ${IMAGE}
 
 unconfig:
