@@ -1,4 +1,4 @@
-/*	$NetBSD: mcadevs_data.h,v 1.14 2001/04/20 11:19:51 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.15 2001/04/23 06:10:09 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
