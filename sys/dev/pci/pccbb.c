@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.46 2000/10/25 09:15:58 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.47 2000/11/27 09:04:32 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -364,6 +364,10 @@ pccbb_shutdown(void *arg)
 	pcireg_t command;
 
 	DPRINTF(("%s: shutdown\n", sc->sc_dev.dv_xname));
+
+	/* turn off power */
+	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+
 	bus_space_write_4(sc->sc_base_memt, sc->sc_base_memh, CB_SOCKET_MASK,
 	    0);
 
