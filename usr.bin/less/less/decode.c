@@ -1,5 +1,7 @@
+/*	$NetBSD: decode.c,v 1.1.1.2 1997/04/22 13:45:44 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -51,6 +53,7 @@
 #include "lesskey.h"
 
 extern int erase_char, kill_char;
+extern int secure;
 
 /*
  * Command table is ordered roughly according to expected
@@ -85,6 +88,7 @@ static unsigned char cmdtable[] =
 	ESC,'v',0,			A_B_SCREEN,
 	'z',0,				A_F_WINDOW,
 	'w',0,				A_B_WINDOW,
+	ESC,' ',0,			A_FF_SCREEN,
 	'F',0,				A_F_FOREVER,
 	'R',0,				A_FREPAINT,
 	'r',0,				A_REPAINT,
@@ -96,6 +100,8 @@ static unsigned char cmdtable[] =
 	ESC,'<',0,			A_GOLINE,
 	'p',0,				A_PERCENT,
 	'%',0,				A_PERCENT,
+	ESC,'[',0,			A_LSHIFT,
+	ESC,']',0,			A_RSHIFT,
 	'{',0,				A_F_BRACKET|A_EXTRA,	'{','}',0,
 	'}',0,				A_B_BRACKET|A_EXTRA,	'{','}',0,
 	'(',0,				A_F_BRACKET|A_EXTRA,	'(',')',0,
@@ -153,6 +159,7 @@ static unsigned char cmdtable[] =
 	'h',0,				A_HELP,
 	'V',0,				A_VERSION,
 	'q',0,				A_QUIT,
+	'Q',0,				A_QUIT,
 	':','q',0,			A_QUIT,
 	':','Q',0,			A_QUIT,
 	'Z','Z',0,			A_QUIT
@@ -195,6 +202,7 @@ struct tablelist
  */
 static struct tablelist *list_fcmd_tables = NULL;
 static struct tablelist *list_ecmd_tables = NULL;
+static struct tablelist *list_var_tables = NULL;
 
 
 /*
@@ -268,6 +276,18 @@ add_ecmd_table(buf, len)
 {
 	if (add_cmd_table(&list_ecmd_tables, buf, len) < 0)
 		error("Warning: some edit commands disabled", NULL_PARG);
+}
+
+/*
+ * Add an environment variable table.
+ */
+	public void
+add_var_table(buf, len)
+	char *buf;
+	int len;
+{
+	if (add_cmd_table(&list_var_tables, buf, len) < 0)
+		error("Warning: environment variables from lesskey file unavailable", NULL_PARG);
 }
 
 /*
@@ -403,7 +423,29 @@ ecmd_decode(cmd, sp)
 	return (cmd_decode(list_ecmd_tables, cmd, sp));
 }
 
+/*
+ * Get the value of an environment variable.
+ * Looks first in the lesskey file, then in the real environment.
+ */
+	public char *
+lgetenv(var)
+	char *var;
+{
+	int a;
+	char *s;
+
+	a = cmd_decode(list_var_tables, var, &s);
+	if (a == EV_OK)
+		return (s);
+	return (getenv(var));
+}
+
 #if USERFILE
+/*
+ * Get an "integer" from a lesskey file.
+ * Integers are stored in a funny format: 
+ * two bytes, low order first, in radix KRADIX.
+ */
 	static int
 gint(sp)
 	char **sp;
@@ -415,6 +457,9 @@ gint(sp)
 	return (n);
 }
 
+/*
+ * Process an old (pre-v241) lesskey file.
+ */
 	static int
 old_lesskey(buf, len)
 	char *buf;
@@ -433,6 +478,9 @@ old_lesskey(buf, len)
 	return (0);
 }
 
+/* 
+ * Process a new (post-v241) lesskey file.
+ */
 	static int
 new_lesskey(buf, len)
 	char *buf;
@@ -440,7 +488,6 @@ new_lesskey(buf, len)
 {
 	char *p;
 	register int c;
-	register int done;
 	register int n;
 
 	/*
@@ -452,8 +499,7 @@ new_lesskey(buf, len)
 	    buf[len-1] != C2_END_LESSKEY_MAGIC)
 		return (-1);
 	p = buf + 4;
-	done = 0;
-	while (!done)
+	for (;;)
 	{
 		c = *p++;
 		switch (c)
@@ -468,15 +514,20 @@ new_lesskey(buf, len)
 			add_ecmd_table(p, n);
 			p += n;
 			break;
-		case END_SECTION:
-			done = 1;
+		case VAR_SECTION:
+			n = gint(&p);
+			add_var_table(p, n);
+			p += n;
 			break;
+		case END_SECTION:
+			return (0);
 		default:
-			free(buf);
+			/*
+			 * Unrecognized section type.
+			 */
 			return (-1);
 		}
 	}
-	return (0);
 }
 
 /*
@@ -491,6 +542,8 @@ lesskey(filename)
 	register long n;
 	register int f;
 
+	if (secure)
+		return (1);
 	/*
 	 * Try to open the lesskey file.
 	 */
@@ -553,7 +606,8 @@ add_hometable()
 	char *filename;
 	PARG parg;
 
-	filename = homefile(LESSKEYFILE);
+	if ((filename = lgetenv("LESSKEY")) == NULL)
+		filename = homefile(LESSKEYFILE);
 	if (filename == NULL)
 		return;
 	if (lesskey(filename) < 0)
@@ -604,6 +658,7 @@ editchar(c, flags)
 		action = ecmd_decode(usercmd, &s);
 	} while (action == A_PREFIX);
 	
+#if CMD_HISTORY
 	if (flags & EC_NOHISTORY) 
 	{
 		/*
@@ -618,6 +673,8 @@ editchar(c, flags)
 			break;
 		}
 	}
+#endif
+#if TAB_COMPLETE_FILENAME
 	if (flags & EC_NOCOMPLETE) 
 	{
 		/*
@@ -633,6 +690,7 @@ editchar(c, flags)
 			break;
 		}
 	}
+#endif
 	if ((flags & EC_PEEK) || action == A_INVALID)
 	{
 		/*
@@ -641,7 +699,8 @@ editchar(c, flags)
 		 * This does NOT include the original character that was 
 		 * passed in as a parameter.
 		 */
-		while (nch > 1) {
+		while (nch > 1) 
+		{
 			ungetcc(usercmd[--nch]);
 		}
 	} else
