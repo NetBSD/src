@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc,v 1.25 2001/06/23 13:09:47 itojun Exp $
+.\"	$NetBSD: doc,v 1.26 2002/01/03 16:30:16 tv Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,13 +74,13 @@
 .	if \n(.g .init C0 C1 C2 C3 C4 C5 C6 C7 C8 C9
 .\" warning initializations end
 .if t \{\
-.       so /usr/share/tmac/tmac.doc-ditroff
+.       mso tmac.doc-ditroff
 .\}
 .if n \{\
-.       so /usr/share/tmac/tmac.doc-nroff
+.       mso tmac.doc-nroff
 .\}
-.so /usr/share/tmac/tmac.doc-common
-.so /usr/share/tmac/tmac.doc-syms
+.mso tmac.doc-common
+.mso tmac.doc-syms
 .\" NS Db macro - start/stop DEBUG MODE
 .\" NS Db register DEBUG MODE
 .\" NS iN register DEBUG MODE (inline if 1, to stderr if 0 (default))
