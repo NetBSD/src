@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.6 2001/05/01 04:18:29 jmc Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.7 2001/05/01 06:15:43 enami Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -171,7 +171,8 @@ fw_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ieee1394_ifattach(ifp, &sc->sc_ic.ic_hwaddr);
 	(*psc->sc1394_ifinreg)
-	    (sc->sc_sc1394.sc1394_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO, fw_input);
+	    (sc->sc_sc1394.sc1394_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO,
+	    fw_input);
 
 	sc->sc_flags |= FWF_ATTACHED;
 
