@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.62.6.1 2005/01/28 13:52:18 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.62.6.2 2005/02/11 13:26:01 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.62.6.1 2005/01/28 13:52:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.62.6.2 2005/02/11 13:26:01 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -353,7 +353,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	faddr = trunc_page((vaddr_t)bp->b_saveaddr);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
+	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	bp->b_data = (caddr_t)(taddr + off);
 	for (; len > 0; len -= PAGE_SIZE) {
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
@@ -391,7 +391,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	 */
 	pmap_kremove(addr, len);
 	pmap_update(pmap_kernel());
-	uvm_km_free_wakeup(phys_map, addr, len);
+	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
