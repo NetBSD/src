@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.23 2001/07/18 04:51:54 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.24 2001/09/10 03:22:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.23 2001/07/18 04:51:54 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.24 2001/09/10 03:22:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,12 +53,13 @@ __RCSID("$NetBSD: spec.c,v 1.23 2001/07/18 04:51:54 lukem Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 #include <vis.h>
 
 #include "mtree.h"
 #include "extern.h"
 
-int lineno;				/* Current spec line number. */
+size_t lineno;				/* Current spec line number. */
 
 static void	 set(char *, NODE *);
 static void	 unset(char *, NODE *);
@@ -69,47 +70,27 @@ spec(void)
 	NODE *centry, *last;
 	char *p;
 	NODE ginfo, *root;
-	int c_cur, c_next;
-	char buf[2048];
+	char *buf;
 
 	root = NULL;
 	centry = last = NULL;
 	memset(&ginfo, 0, sizeof(ginfo));
-	c_cur = c_next = 0;
-	for (lineno = 1; fgets(buf, sizeof(buf), stdin);
-	    ++lineno, c_cur = c_next, c_next = 0) {
-		/* Skip empty lines. */
-		if (buf[0] == '\n')
+	for (lineno = 0;
+	    (buf = fparseln(stdin, NULL, &lineno, NULL,
+		FPARSELN_UNESCCOMM | FPARSELN_UNESCCONT | FPARSELN_UNESCESC));
+	    free(buf)) {
+		/* Skip leading whitespace. */
+		for (p = buf; *p && isspace((unsigned char)*p); ++p)
 			continue;
 
-		/* Find end of line. */
-		if ((p = strchr(buf, '\n')) == NULL)
-			mtree_err("line %d too long", lineno);
-
-		/* See if next line is continuation line. */
-		if (p[-1] == '\\') {
-			--p;
-			c_next = 1;
-		}
-
-		/* Null-terminate the line. */
-		*p = '\0';
-
-		/* Skip leading whitespace. */
-		for (p = buf; *p && isspace((unsigned char)*p); ++p);
-
-		/* If nothing but whitespace or comment char, continue. */
-		if (!*p || *p == '#')
+		/* If nothing but whitespace, continue. */
+		if (!*p)
 			continue;
 
 #ifdef DEBUG
 		(void)fprintf(stderr, "line %d: {%s}\n", lineno, p);
 #endif
-		if (c_cur) {
-			set(p, centry);
-			continue;
-		}
-			
+
 		/* Grab file name, "$", "set", or "unset". */
 		if ((p = strtok(p, "\n\t ")) == NULL)
 			mtree_err("missing field");
