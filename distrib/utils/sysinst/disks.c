@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.46 2002/08/12 02:22:52 grant Exp $ */
+/*	$NetBSD: disks.c,v 1.47 2002/12/05 01:17:16 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -304,14 +304,15 @@ make_fstab(void)
 	make_target_dir("/etc");
 	f = target_fopen("/etc/fstab", "w");
 	if (logging)
-		(void)fprintf(log, "Creating %s/etc/fstab.\n", target_prefix());
+		(void)fprintf(logfp,
+		    "Creating %s/etc/fstab.\n", target_prefix());
 	scripting_fprintf(NULL, "cat <<EOF >%s/etc/fstab\n", target_prefix());
 
 	if (f == NULL) {
 #ifndef DEBUG
 		msg_display(MSG_createfstab);
 		if (logging)
-			(void)fprintf(log, "Failed to make /etc/fstab!\n");
+			(void)fprintf(logfp, "Failed to make /etc/fstab!\n");
 		process_menu(MENU_ok);
 		return 1;
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.32 2002/10/19 20:33:18 provos Exp $	*/
+/*	$NetBSD: target.c,v 1.33 2002/12/05 01:17:18 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.32 2002/10/19 20:33:18 provos Exp $");
+__RCSID("$NetBSD: target.c,v 1.33 2002/12/05 01:17:18 fvdl Exp $");
 #endif
 
 /*
@@ -299,7 +299,7 @@ mounted_rootpart()
 		    strerror(errno));
 		fflush(stderr);
 		if (logging)
-			fprintf(log, "Help! statfs() can't find root: %s\n",
+			fprintf(logfp, "Help! statfs() can't find root: %s\n",
 			    strerror(errno));
 		exit(errno);
 		return(0);
@@ -518,8 +518,8 @@ do_target_chdir(dir, must_succeed)
 	if (chdir(tgt_dir) < 0)
 		error = errno;
 	if (logging) {
-		fprintf(log, "cd to %s\n", tgt_dir);
-		fflush(log);
+		fprintf(logfp, "cd to %s\n", tgt_dir);
+		fflush(logfp);
 	}
 	if (scripting) {
 		scripting_fprintf(NULL, "cd %s\n", tgt_dir);
@@ -530,7 +530,7 @@ do_target_chdir(dir, must_succeed)
 		fprintf(stderr, msg_string(MSG_realdir),
 		       target_prefix(), strerror(error));
 		if (logging)
-			fprintf(log, msg_string(MSG_realdir),
+			fprintf(logfp, msg_string(MSG_realdir),
 			       target_prefix(), strerror(error));
 		exit(1);
 	}
