@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 1995/10/09 02:24:30 thorpej Exp $
+#	$NetBSD: Makefile,v 1.25 1995/10/10 21:42:00 gwr Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -31,7 +31,7 @@ SUBDIR+= fdisk
 .elif ${MACHINE} == "pc532"
 SUBDIR+= bim
 .elif ${MACHINE} == "sun3"
-SUBDIR+= edlabe
+SUBDIR+= edlabel
 .endif
 
 .include <bsd.subdir.mk>
