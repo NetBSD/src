@@ -1,4 +1,4 @@
-/*	$NetBSD: mdprologue.S,v 1.7 1998/10/19 03:09:33 matt Exp $	*/
+/*	$NetBSD: mdprologue.S,v 1.8 1998/10/23 00:51:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas <matt@3am-software.com>
@@ -62,10 +62,20 @@ _rtl:					/* crt0 calls us here */
 
 /*
  * First call to a procedure generally comes through here for binding.
- * We got here via JSB so now (sp) is pointing to the reloc_index
- * inside our jmpslot_t.  So we simply preserve our registers,
- * pushd the address again for _binder.  Save R0 on the stack that
- * the JSB used.  Call the actual function and return.
+ * We got here via JSB so now (sp) is inside our jmpslot_t.  So we
+ * simply preserve our registers, push the address of jmpslot_t for
+ * _binder.  Save the address we are supported to call (which was 
+ * returned in R0) in the stack location that the JSB used to store
+ * its return address (which we don't care about anymore).
+ *
+ * Check to see the function has a zero entry mask.  Since we
+ * were called with a zero entry, if the function we need to call
+ * also has a zero entry mask, we can let it use our call frame
+ * and jump inside of it to its first instruction.  Otherwise we'll
+ * call the actual function the slow way and return.
+ *
+ * The above optimization is required in order for vfork(2) to
+ * work properly in shared libraries.  DO NOT REMOVE IT.
  */
 	.align	1
 	.type	_binder_entry,@label
@@ -77,11 +87,19 @@ _binder_entry:
 	pushl	$2
 	calls	$3,_write
 #endif
-	subl3	$9, 24(sp), -(sp) /* point to beginning of jmpslot */
+	subl3	$8, 24(sp), -(sp) /* point to beginning of jmpslot */
+	bicl2	$3, (sp)
 	calls	$1, _binder	/* _binder(jsp) */
-	movl	r0, 24(sp)
+	movpsl	-(sp)		/* flush the instruction cache */
+	pushab	1f		/*   by issuing an */
+	rei			/*   rei. */
+1:	movl	r0, 24(sp)	/* save return address onto stack */
 	popr	$0x3f		/* restore r0 to r5 */
-	callg	(ap), *(sp)+	/* return value from _binder() == actual */
+	tstw	*(sp)		/* does the entry mask save any regs */
+	bneq	2f		/* yes? do it the hard way */
+	addl2	$2,(sp)		/* no? skip past the mask */
+	rsb			/*    and jump to it */
+2:	callg	(ap), *(sp)+	/* return value from _binder() == actual */
 	ret
 #ifdef DEBUG
 LC1:	.asciz	"ld.so: entered _binder_entry\n"
