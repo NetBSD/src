@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.14 2000/05/31 02:06:57 mycroft Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.15 2000/06/01 19:11:47 mycroft Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -2159,9 +2159,9 @@ softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp)
 	MALLOC(dap, struct diradd *, sizeof(struct diradd), M_DIRADD, M_WAITOK);
 	bzero(dap, sizeof(struct diradd));
 	dap->da_list.wk_type = D_DIRADD;
+	dap->da_state = ATTACHED;
 	dap->da_offset = offset;
 	dap->da_newinum = newinum;
-	dap->da_state = ATTACHED;
 	if (newdirbp == NULL) {
 		dap->da_state |= DEPCOMPLETE;
 		ACQUIRE_LOCK(&lk);
@@ -2583,21 +2583,18 @@ softdep_setup_directory_change(bp, dp, ip, newinum, isrmdir)
 		dirrem->dm_dirinum = pagedep->pd_ino;
 		add_to_worklist(&dirrem->dm_list);
 	}
+	LIST_INSERT_HEAD(&pagedep->pd_diraddhd[DIRADDHASH(offset)], dap,
+	    da_pdlist);
 	/*
 	 * Link into its inodedep. Put it on the id_bufwait list if the inode
 	 * is not yet written. If it is written, do the post-inode write
 	 * processing to put it on the id_pendinghd list.
 	 */
-	if (inodedep_lookup(dp->i_fs, newinum, DEPALLOC, &inodedep) == 0 ||
-	    (inodedep->id_state & ALLCOMPLETE) == ALLCOMPLETE) {
-		dap->da_state |= COMPLETE;
-		LIST_INSERT_HEAD(&pagedep->pd_pendinghd, dap, da_pdlist);
-		WORKLIST_INSERT(&inodedep->id_pendinghd, &dap->da_list);
-	} else {
-		LIST_INSERT_HEAD(&pagedep->pd_diraddhd[DIRADDHASH(offset)],
-		    dap, da_pdlist);
+	(void) inodedep_lookup(dp->i_fs, newinum, DEPALLOC, &inodedep);
+	if ((inodedep->id_state & ALLCOMPLETE) == ALLCOMPLETE)
+		diradd_inode_written(dap, inodedep);
+	else
 		WORKLIST_INSERT(&inodedep->id_bufwait, &dap->da_list);
-	}
 	FREE_LOCK(&lk);
 }
 
