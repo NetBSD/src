@@ -10,7 +10,7 @@ fi
 dir=$1
 
 FILES="defaultdomain fstab ifconfig.* inetd.conf mrouted.conf \
-	mygate myname netstart nsswitch.conf ntp.conf rbootd.conf \
+	mygate myname netstart nsswitch.conf ntp.conf \
 	rc.conf rc.conf.d resolv.conf"
 
 if [ $dir = init ] ; then
