@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.36 2000/05/31 09:17:13 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.37 2000/05/31 16:13:31 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -340,7 +340,7 @@ struct umass_softc {
 #	define PROTO_CBI_I	0x0004
 #	define PROTO_WIRE	0x00ff		/* USB wire protocol mask */
 #	define PROTO_SCSI	0x0100		/* command protocol */
-#	define PROTO_8070	0x0200
+#	define PROTO_ATAPI	0x0200
 #	define PROTO_UFI	0x0400
 #	define PROTO_COMMAND	0xff00		/* command protocol mask */
 
@@ -673,9 +673,9 @@ umass_match_proto(sc, iface, dev)
 	    && UGETW(dd->idProduct) == USB_PRODUCT_SHUTTLE_EUSB) {
 		sc->drive = SHUTTLE_EUSB;
 #if CBI_I
-		sc->proto = PROTO_8070 | PROTO_CBI_I;
+		sc->proto = PROTO_ATAPI | PROTO_CBI_I;
 #else
-		sc->proto = PROTO_8070 | PROTO_CBI;
+		sc->proto = PROTO_ATAPI | PROTO_CBI;
 #endif
 		sc->quirks |= NO_TEST_UNIT_READY | NO_START_STOP;
 		return (UMATCH_VENDOR_PRODUCT);
@@ -723,7 +723,7 @@ umass_match_proto(sc, iface, dev)
 	case UISUBCLASS_SFF8020I:
 	case UISUBCLASS_SFF8070I:
 	case UISUBCLASS_QIC157:
-		sc->proto |= PROTO_8070;
+		sc->proto |= PROTO_ATAPI;
 		break;
 	default:
 		DPRINTF(UDMASS_GEN, ("%s: Unsupported command protocol %d\n",
@@ -1013,7 +1013,7 @@ USB_ATTACH(umass)
 		sc->transform = umass_scsi_transform;
 	else if (sc->proto & PROTO_UFI)
 		sc->transform = umass_ufi_transform;
-	else if (sc->proto & PROTO_8070)
+	else if (sc->proto & PROTO_ATAPI)
 		sc->transform = umass_8070_transform;
 #ifdef UMASS_DEBUG
 	else
@@ -1024,7 +1024,7 @@ USB_ATTACH(umass)
 	/* From here onwards the device can be used. */
 
 	if ((sc->proto & PROTO_SCSI) ||
-	    (sc->proto & PROTO_8070) ||
+	    (sc->proto & PROTO_ATAPI) ||
 	    (sc->proto & PROTO_UFI)) {
 		/* Prepare the SCSI command block */
 		sc->cam_scsi_sense.opcode = REQUEST_SENSE;
@@ -1080,7 +1080,7 @@ USB_ATTACH(umass)
 		break;
 
 #if NATAPIBUS > 0
-	case PROTO_8070:
+	case PROTO_ATAPI:
 		sc->u.aa.sc_aa.aa_type = T_ATAPI;
 		sc->u.aa.sc_aa.aa_channel = 0;
 		sc->u.aa.sc_aa.aa_openings = 1;
@@ -1162,7 +1162,7 @@ USB_DETACH(umass)
 
 #if defined(__FreeBSD__)
 	if ((sc->proto & PROTO_SCSI) ||
-	    (sc->proto & PROTO_8070) ||
+	    (sc->proto & PROTO_ATAPI) ||
 	    (sc->proto & PROTO_UFI))
 		/* detach the device from the SCSI host controller (SIM) */
 		rv = umass_cam_detach(sc);
