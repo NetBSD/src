@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.11 2003/11/03 22:34:51 cl Exp $	*/
+/*	$NetBSD: savar.h,v 1.12 2003/11/12 21:27:46 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -116,7 +116,6 @@ void	sa_switch(struct lwp *, int);
 void	sa_preempt(struct lwp *);
 void	sa_yield(struct lwp *);
 void	sa_switchcall(void *);
-void	sa_yieldcall(void *);
 int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *);
 int	sa_upcall0(struct lwp *, int, struct lwp *, struct lwp *,
 	    size_t, void *, struct sadata_upcall *, stack_t *);
