@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986, 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,25 +30,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.21 1994/05/05 05:38:40 cgd Exp $
+ *	from: @(#)tty_pty.c	8.2 (Berkeley) 9/23/93
+ *	$Id: tty_pty.c,v 1.22 1994/05/12 03:48:36 cgd Exp $
  */
 
 /*
  * Pseudo-teletype Driver
  * (Actually two drivers, requiring two entries in 'cdevsw')
  */
-#include "pty.h"
+#include "pty.h"		/* XXX */
 
-#if NPTY > 0
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/select.h>
+#include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
@@ -64,33 +62,51 @@
  * pts == /dev/tty[pqrs]?
  * ptc == /dev/pty[pqrs]?
  */
-struct	tty *pt_tty[NPTY];
+struct	tty *pt_tty[NPTY];	/* XXX */
 struct	pt_ioctl {
 	int	pt_flags;
-	struct selinfo pt_selr, pt_selw;
+	struct	selinfo pt_selr, pt_selw;
 	u_char	pt_send;
 	u_char	pt_ucntl;
-} pt_ioctl[NPTY];
+} pt_ioctl[NPTY];		/* XXX */
 int	npty = NPTY;		/* for pstat -t */
 
-#define	PF_COPEN	0x01		/* master open */
-#define	PF_SOPEN	0x02		/* slave open */
 #define	PF_PKT		0x08		/* packet mode */
 #define	PF_STOPPED	0x10		/* user told stopped */
 #define	PF_REMOTE	0x20		/* remote and flow controlled input */
 #define	PF_NOSTOP	0x40
 #define PF_UCNTL	0x80		/* user control mode */
 
-void ptcwakeup __P((struct tty *tp, int flag));
+void	ptsstop __P((struct tty *, int));
 
+/*
+ * Establish n (or default if n is 1) ptys in the system.
+ *
+ * XXX cdevsw & pstat require the array `pty[]' to be an array
+ */
 void
 ptyattach(n)
 	int n;
 {
+#ifdef notyet
+	char *mem;
+	register u_long ntb;
+#define	DEFAULT_NPTY	32
+
+	/* maybe should allow 0 => none? */
+	if (n <= 1)
+		n = DEFAULT_NPTY;
+	ntb = n * sizeof(struct tty);
+	mem = malloc(ntb + ALIGNBYTES + n * sizeof(struct pt_ioctl),
+	    M_DEVBUF, M_WAITOK);
+	pt_tty = (struct tty *)mem;
+	mem = (char *)ALIGN(mem + ntb);
+	pt_ioctl = (struct pt_ioctl *)mem;
+	npty = n;
+#endif
 }
 
 /*ARGSUSED*/
-int
 ptsopen(dev, flag, devtype, p)
 	dev_t dev;
 	int flag, devtype;
@@ -99,12 +115,9 @@ ptsopen(dev, flag, devtype, p)
 	register struct tty *tp;
 	int error;
 
-#ifdef lint
-	npty = npty;
-#endif
-	if (minor(dev) >= NPTY)
+	if (minor(dev) >= npty)
 		return (ENXIO);
-	if(!pt_tty[minor(dev)]) {
+	if (!pt_tty[minor(dev)]) {
 		tp = pt_tty[minor(dev)] = ttymalloc();
 	} else
 		tp = pt_tty[minor(dev)];
@@ -129,36 +142,26 @@ ptsopen(dev, flag, devtype, p)
 		    ttopen, 0))
 			return (error);
 	}
-	if (error = (*linesw[tp->t_line].l_open)(dev, tp))
-		return (error);
-	pt_ioctl[minor(dev)].pt_flags |= PF_SOPEN;
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
 	ptcwakeup(tp, FREAD|FWRITE);
-	return (0);
+	return (error);
 }
 
-int
 ptsclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
 	register struct tty *tp;
+	int err;
 
 	tp = pt_tty[minor(dev)];
-	(*linesw[tp->t_line].l_close)(tp, flag);
-	ttyclose(tp);
+	err = (*linesw[tp->t_line].l_close)(tp, flag);
+	err |= ttyclose(tp);
 	ptcwakeup(tp, FREAD|FWRITE);
-	pt_ioctl[minor(dev)].pt_flags &= ~PF_SOPEN;
-#ifdef broken /* session holds a ref to the tty; can't deallocate */
-	if ((pt_ioctl[minor(dev)].pt_flags & PF_COPEN) == 0) {
-		ttyfree(tp);
-		pt_tty[minor(dev)] = (struct tty *)NULL;
-	}
-#endif
-	return(0);
+	return (err);
 }
 
-int
 ptsread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -175,7 +178,7 @@ again:
 			if ((p->p_sigignore & sigmask(SIGTTIN)) ||
 			    (p->p_sigmask & sigmask(SIGTTIN)) ||
 			    p->p_pgrp->pg_jobc == 0 ||
-			    p->p_flag&P_PPWAIT)
+			    p->p_flag & P_PPWAIT)
 				return (EIO);
 			pgsignal(p->p_pgrp, SIGTTIN, 1);
 			if (error = ttysleep(tp, (caddr_t)&lbolt, 
@@ -211,7 +214,6 @@ again:
  * Wakeups of controlling tty will happen
  * indirectly, when tty driver calls ptsstart.
  */
-int
 ptswrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -242,10 +244,8 @@ ptsstart(tp)
 		pti->pt_send = TIOCPKT_START;
 	}
 	ptcwakeup(tp, FREAD);
-	return;
 }
 
-void
 ptcwakeup(tp, flag)
 	struct tty *tp;
 	int flag;
@@ -254,7 +254,7 @@ ptcwakeup(tp, flag)
 
 	if (flag & FREAD) {
 		selwakeup(&pti->pt_selr);
-		wakeup((caddr_t)&tp->t_outq.c_cl);
+		wakeup((caddr_t)&tp->t_outq.c_cf);
 	}
 	if (flag & FWRITE) {
 		selwakeup(&pti->pt_selw);
@@ -264,10 +264,8 @@ ptcwakeup(tp, flag)
 
 /*ARGSUSED*/
 #ifdef __STDC__
-int
 ptcopen(dev_t dev, int flag, int devtype, struct proc *p)
 #else
-int
 ptcopen(dev, flag, devtype, p)
 	dev_t dev;
 	int flag, devtype;
@@ -277,7 +275,7 @@ ptcopen(dev, flag, devtype, p)
 	register struct tty *tp;
 	struct pt_ioctl *pti;
 
-	if (minor(dev) >= NPTY)
+	if (minor(dev) >= npty)
 		return (ENXIO);
 	if(!pt_tty[minor(dev)]) {
 		tp = pt_tty[minor(dev)] = ttymalloc();
@@ -289,14 +287,12 @@ ptcopen(dev, flag, devtype, p)
 	(void)(*linesw[tp->t_line].l_modem)(tp, 1);
 	tp->t_lflag &= ~EXTPROC;
 	pti = &pt_ioctl[minor(dev)];
-	pti->pt_flags &= PF_SOPEN;
-	pti->pt_flags |= PF_COPEN;
+	pti->pt_flags = 0;
 	pti->pt_send = 0;
 	pti->pt_ucntl = 0;
 	return (0);
 }
 
-int
 ptcclose(dev)
 	dev_t dev;
 {
@@ -306,18 +302,9 @@ ptcclose(dev)
 	(void)(*linesw[tp->t_line].l_modem)(tp, 0);
 	tp->t_state &= ~TS_CARR_ON;
 	tp->t_oproc = 0;		/* mark closed */
-
-	pt_ioctl[minor(dev)].pt_flags &= ~PF_COPEN;
-#ifdef broken
-	if ((pt_ioctl[minor(dev)].pt_flags & PF_SOPEN) == 0) {
-		ttyfree(tp);
-		pt_tty[minor(dev)] = (struct tty *)NULL;
-	}
-#endif
 	return (0);
 }
 
-int
 ptcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -325,7 +312,7 @@ ptcread(dev, uio, flag)
 {
 	register struct tty *tp = pt_tty[minor(dev)];
 	struct pt_ioctl *pti = &pt_ioctl[minor(dev)];
-	u_char buf[BUFSIZ];
+	char buf[BUFSIZ];
 	int error = 0, cc;
 
 	/*
@@ -341,10 +328,9 @@ ptcread(dev, uio, flag)
 				if (error)
 					return (error);
 				if (pti->pt_send & TIOCPKT_IOCTL) {
-					cc = MIN(uio->uio_resid,
+					cc = min(uio->uio_resid,
 						sizeof(tp->t_termios));
-					uiomove((caddr_t)&tp->t_termios, cc,
-						uio);
+					uiomove(&tp->t_termios, cc, uio);
 				}
 				pti->pt_send = 0;
 				return (0);
@@ -363,14 +349,14 @@ ptcread(dev, uio, flag)
 			return (0);	/* EOF */
 		if (flag & IO_NDELAY)
 			return (EWOULDBLOCK);
-		if (error = tsleep((caddr_t)&tp->t_outq.c_cl, TTIPRI | PCATCH,
+		if (error = tsleep((caddr_t)&tp->t_outq.c_cf, TTIPRI | PCATCH,
 		    ttyin, 0))
 			return (error);
 	}
 	if (pti->pt_flags & (PF_PKT|PF_UCNTL))
 		error = ureadc(0, uio);
 	while (uio->uio_resid > 0 && error == 0) {
-		cc = q_to_b(&tp->t_outq, buf, MIN(uio->uio_resid, BUFSIZ));
+		cc = q_to_b(&tp->t_outq, buf, min(uio->uio_resid, BUFSIZ));
 		if (cc <= 0)
 			break;
 		error = uiomove(buf, cc, uio);
@@ -409,7 +395,6 @@ ptsstop(tp, flush)
 	ptcwakeup(tp, flag);
 }
 
-int
 ptcselect(dev, rw, p)
 	dev_t dev;
 	int rw;
@@ -464,7 +449,6 @@ ptcselect(dev, rw, p)
 	return (0);
 }
 
-int
 ptcwrite(dev, uio, flag)
 	dev_t dev;
 	register struct uio *uio;
@@ -497,7 +481,7 @@ again:
 					return (EIO);
 			}
 			if (cc)
-				(void) b_to_q(cp, cc, &tp->t_canq);
+				(void) b_to_q((char *)cp, cc, &tp->t_canq);
 			cc = 0;
 		}
 		(void) putc(0, &tp->t_canq);
@@ -553,7 +537,6 @@ block:
 }
 
 /*ARGSUSED*/
-int
 ptyioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
@@ -630,7 +613,6 @@ ptyioctl(dev, cmd, data, flag, p)
 			return (0);
 
 #ifdef COMPAT_43
-	/* wkt */
 		case TIOCSETP:		
 		case TIOCSETN:
 #endif
@@ -674,10 +656,11 @@ ptyioctl(dev, cmd, data, flag, p)
 		case TIOCSETA:
 		case TIOCSETAW:
 		case TIOCSETAF:
-#ifdef	COMPAT_43
-	/* wkt */
+#ifdef COMPAT_43
 		case TIOCSETP:
 		case TIOCSETN:
+#endif
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 		case TIOCSETC:
 		case TIOCSLTC:
 		case TIOCLBIS:
@@ -685,6 +668,7 @@ ptyioctl(dev, cmd, data, flag, p)
 		case TIOCLSET:
 #endif
 			pti->pt_send |= TIOCPKT_IOCTL;
+			ptcwakeup(tp, FREAD);
 		default:
 			break;
 		}
@@ -708,4 +692,3 @@ ptyioctl(dev, cmd, data, flag, p)
 	}
 	return (error);
 }
-#endif
