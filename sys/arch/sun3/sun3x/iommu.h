@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.h,v 1.1.1.1 1997/01/14 20:57:09 gwr Exp $	*/
+/*	$NetBSD: iommu.h,v 1.2 1997/01/16 06:38:26 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -83,8 +83,8 @@
  * <M>  MODIFIED        - Set when the cpu has modified (written to) the
  *                        physical page.
  * <U>  USED            - Set when the cpu has accessed the physical page.
- * <WP> WRITE PROTECT   - When set, prevents all DMA devices from writing to the
- *                        page.
+ * <WP> WRITE PROTECT   - When set, prevents all DMA devices from writing to
+ *                        the page.
  * <DT> DESCRIPTOR TYPE - One of the following values:
  *                        00 = Invalid page
  *                        01 = Valid page
@@ -127,16 +127,19 @@ typedef struct iommu_pde_struct iommu_pde_t;
 #define	IOMMU_VALID_DT(pde)	((pde).addr.raw & IOMMU_PDE_DT)	/* X1 */
 #define IOMMU_BTOP(pa)		(((u_int) pa) >> IOMMU_PAGE_SHIFT)
 
-/* X1: This macro will incorrectly report the validity for entries which contain
- * codes that are invalid.  (Do not confuse this with the code for 'invalid entry',
- * which means that the descriptor is properly formed, but just not used.)
+/* X1: This macro will incorrectly report the validity for entries which
+ * contain codes that are invalid.  (Do not confuse this with the code for
+ * 'invalid entry', which means that the descriptor is properly formed, but
+ * just not used.)
  */
 
 /* Constants for the I/O mapper as used in the sun3x */
 #define	IOMMU_NENT	2048	/* Number of entries in the map */
 
+#ifdef _KERNEL
 /* Interfaces for manipulating the I/O mapper */
 void iommu_enter __P((u_int32_t va, u_int32_t pa));
 void iommu_remove __P((u_int32_t va, u_int32_t len));
+#endif /* _KERNEL */
 
 #endif	/* _SUN3X_IOMMU_H */
