@@ -14,7 +14,7 @@
  *    must display the following acknowledgement:
  *      This product includes software developed by Winning Strategies, Inc.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: lsearch.c,v 1.1 1993/10/22 17:51:56 jtc Exp $";
+static char *rcsid = "$Id: lsearch.c,v 1.2 1994/01/28 20:41:03 jtc Exp $";
 #endif
 
 #include <stddef.h>
