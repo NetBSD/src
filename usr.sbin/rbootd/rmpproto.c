@@ -1,4 +1,4 @@
-/*	$NetBSD: rmpproto.c,v 1.11 1999/02/01 17:00:44 bouyer Exp $	*/
+/*	$NetBSD: rmpproto.c,v 1.12 2001/01/16 02:41:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,7 +51,7 @@
 #if 0
 static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rmpproto.c,v 1.11 1999/02/01 17:00:44 bouyer Exp $");
+__RCSID("$NetBSD: rmpproto.c,v 1.12 2001/01/16 02:41:18 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -351,7 +351,10 @@ SendBootRepl(req, rconn, filelist)
 	 *  stripped file name and spoof the client into thinking that it
 	 *  really got what it wanted.
 	 */
-	filename = (filename = strrchr(filepath,'/'))? ++filename: filepath;
+	if ((filename = strrchr(filepath,'/')) != NULL)
+		filename++;
+	else
+		filename = filepath;
 
 	/*
 	 *  Check that this is a valid boot file name.
