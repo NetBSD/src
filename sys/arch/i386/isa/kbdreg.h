@@ -1,8 +1,10 @@
 /*
  * Keyboard definitions
  *
- *	$Id: kbdreg.h,v 1.2 1993/10/06 12:09:35 mycroft Exp $
+ *	$Id: kbdreg.h,v 1.3 1993/10/17 14:04:15 mycroft Exp $
  */
+
+#include <i386/isa/ic/i8042.h>
 
 /* keyboard commands */
 #define	KBC_RESET	0xFF	/* reset the keyboard */
@@ -15,6 +17,7 @@
 #define	KBC_ECHO	0xEE	/* request an echo from the keyboard */
 
 /* keyboard responses */
+#define	KBR_EXTENDED	0xE0	/* extended key sequence */
 #define	KBR_RESEND	0xFE	/* needs resend of command */
 #define	KBR_ACK		0xFA	/* received a valid command */
 #define	KBR_OVERRUN	0x00	/* flooded */
