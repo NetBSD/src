@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.2.1 2002/11/23 14:14:47 martin Exp $
+#	$NetBSD: genassym.cf,v 1.1.2.2 2002/11/29 16:01:01 uwe Exp $
 
 
 include <ucontext.h>
@@ -25,6 +25,7 @@ define UC_FPREG		offsetof(ucontext_t, uc_mcontext.__fpreg)
 define PT_STATE_RECYCLABLE      PT_STATE_RECYCLABLE
 define STACKSPACE       STACKSPACE
 define _UC_USER_BIT	_UC_USER_BIT
+define _UC_USER		_UC_USER
 define _UC_CPU		_UC_CPU
 define _UC_FPU		_UC_FPU
 
