@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.126 2000/05/28 04:13:56 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.127 2000/06/10 18:27:01 assar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -326,16 +326,15 @@ vfs_getvfs(fsid)
  * Get a new unique fsid
  */
 void
-vfs_getnewfsid(mp, fstypename)
+vfs_getnewfsid(mp)
 	struct mount *mp;
-	char *fstypename;
 {
 	static u_short xxxfs_mntid;
 	fsid_t tfsid;
 	int mtype;
 
 	simple_lock(&mntid_slock);
-	mtype = makefstype(fstypename);
+	mtype = makefstype(mp->mnt_op->vfs_name);
 	mp->mnt_stat.f_fsid.val[0] = makedev(nblkdev + mtype, 0);
 	mp->mnt_stat.f_fsid.val[1] = mtype;
 	if (xxxfs_mntid == 0)
@@ -357,7 +356,7 @@ vfs_getnewfsid(mp, fstypename)
  */
 long
 makefstype(type)
-	char *type;
+	const char *type;
 {
 	long rv;
 
