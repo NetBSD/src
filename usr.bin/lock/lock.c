@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.6 1995/06/07 16:09:53 cgd Exp $	*/
+/*	$NetBSD: lock.c,v 1.7 1995/06/27 00:16:17 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: lock.c,v 1.6 1995/06/07 16:09:53 cgd Exp $";
+static char rcsid[] = "$NetBSD: lock.c,v 1.7 1995/06/27 00:16:17 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -60,7 +60,7 @@ static char rcsid[] = "$NetBSD: lock.c,v 1.6 1995/06/07 16:09:53 cgd Exp $";
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/signal.h>
+#include <signal.h>
 
 #include <ctype.h>
 #include <err.h>
