@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.8 2000/06/29 07:48:18 mrg Exp $ */
+/*	$NetBSD: mem.c,v 1.9 2001/02/04 17:38:11 briggs Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,12 @@
 
 #include <uvm/uvm_extern.h>
 
+/* These should be defined in a header somewhere */
+int mmopen __P((dev_t, int, int));
+int mmclose __P((dev_t, int, int));
+int mmrw __P((dev_t, struct uio *, int));
+paddr_t mmmmap __P((dev_t, off_t, int));
+
 /*ARGSUSED*/
 int
 mmopen(dev, flag, mode)
@@ -79,7 +85,7 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	vaddr_t o, v;
+	vaddr_t v;
 	u_int c;
 	struct iovec *iov;
 	int error = 0;
@@ -101,7 +107,7 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			c = uio->uio_resid;
 			/* This doesn't allow device mapping!	XXX */
-			pmap_real_memory(&v, &c);
+			pmap_real_memory(&v, (psize_t *) &c);
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 2001/01/14 03:26:11 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 2001/02/04 17:38:11 briggs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -122,13 +122,27 @@ static u_int usedsr[NPMAPS / sizeof(u_int) / 8];
 
 static int pmap_initialized;
 
+static inline void tlbie __P((vaddr_t));
+static inline void tlbsync __P((void));
+static inline void tlbia __P((void));
+static inline int ptesr __P((sr_t *, vaddr_t));
+static inline int pteidx __P((sr_t, vaddr_t));
+static inline int ptematch __P((pte_t *, sr_t, vaddr_t, int));
+static __inline struct pv_entry *pa_to_pv __P((paddr_t));
+static __inline char *pa_to_attr __P((paddr_t));
+static int pte_insert __P((int, pte_t *));
+int pte_spill __P((vaddr_t));	/* Called from trap_subr.S */
+static inline int pmap_enter_pv __P((int, vaddr_t, paddr_t));
+static void pmap_remove_pv __P((int, vaddr_t, paddr_t, struct pte *));
+static pte_t *pte_find __P((struct pmap *, vaddr_t));
+
 /*
  * These small routines may have to be replaced,
  * if/when we support processors other that the 604.
  */
 static inline void
 tlbie(ea)
-	caddr_t ea;
+	vaddr_t ea;
 {
 	asm volatile ("tlbie %0" :: "r"(ea));
 }
@@ -142,10 +156,10 @@ tlbsync()
 static void
 tlbia()
 {
-	caddr_t i;
+	vaddr_t i;
 	
 	asm volatile ("sync");
-	for (i = 0; i < (caddr_t)0x00040000; i += 0x00001000)
+	for (i = 0; i < (vaddr_t)0x00040000; i += 0x00001000)
 		tlbie(i);
 	tlbsync();
 }
@@ -883,7 +897,7 @@ pmap_enter_pv(pteidx, va, pa)
 	s = splvm();
 
 	pv = pa_to_pv(pa);
-	if (first = pv->pv_idx == -1) {
+	if ((first = pv->pv_idx) == -1) {
 		/*
 		 * No entries yet, use header as the first entry.
 		 */
@@ -942,7 +956,7 @@ pmap_remove_pv(pteidx, va, pa, pte)
 		} else
 			pv->pv_idx = -1;
 	} else {
-		for (; npv = pv->pv_next; pv = npv)
+		for (; (npv = pv->pv_next) != NULL; pv = npv)
 			if (pteidx == npv->pv_idx && va == npv->pv_va)
 				break;
 		if (npv) {
@@ -968,12 +982,11 @@ pmap_enter(pm, va, pa, prot, flags)
 	int flags;
 {
 	sr_t sr;
-	int idx, i, s;
+	int idx, s;
 	pte_t pte;
 	struct pte_ovfl *po;
 	int managed;
 	struct mem_region *mp;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	/*
 	 * Have to remove any existing mapping first.
@@ -1185,7 +1198,7 @@ pmap_protect(pm, sva, eva, prot)
 	if (prot & VM_PROT_READ) {
 		s = splvm();
 		while (sva < eva) {
-			if (ptp = pte_find(pm, sva)) {
+			if ((ptp = pte_find(pm, sva)) != NULL) {
 				valid = ptp->pte_hi & PTE_VALID;
 				ptp->pte_hi &= ~PTE_VALID;
 				asm volatile ("sync");
