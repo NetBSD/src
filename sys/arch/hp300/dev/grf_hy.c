@@ -1,11 +1,12 @@
 /*
- * Copyright (c) 1988 University of Utah.
+ * Copyright (c) 1991 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
- * Science Department.
+ * Science Department and Mark Davies of the Department of Computer
+ * Science, Victoria University of Wellington, New Zealand.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,41 +36,40 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: grf_tc.c 1.20 93/08/13$
+ * from: Utah $Hdr: grf_hy.c 1.2 93/08/13$
  *
- *	from: @(#)grf_tc.c	8.4 (Berkeley) 1/12/94
- *	$Id: grf_tc.c,v 1.3 1994/05/25 11:47:53 mycroft Exp $
+ *	from: @(#)grf_hy.c	8.4 (Berkeley) 1/12/94
+ *	$Id: grf_hy.c,v 1.1 1994/05/25 11:47:34 mycroft Exp $
  */
 
 #include "grf.h"
 #if NGRF > 0
 
 /*
- * Graphics routines for TOPCAT and CATSEYE frame buffers
+ * Graphics routines for HYPERION frame buffer
  */
 #include <sys/param.h>
 #include <sys/errno.h>
 
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
-#include <hp300/dev/grfreg.h>
-#include <hp300/dev/grf_tcreg.h>
+#include <hp300/dev/grf_hyreg.h>
 
 #include <machine/cpu.h>
+
+caddr_t badhyaddr = (caddr_t) -1;
 
 /*
  * Initialize hardware.
  * Must fill in the grfinfo structure in g_softc.
  * Returns 0 if hardware not present, non-zero ow.
  */
-tc_init(gp, addr)
+hy_init(gp, addr)
 	struct grf_softc *gp;
 	caddr_t addr;
 {
-	register struct tcboxfb *tp = (struct tcboxfb *) addr;
+	register struct hyboxfb *hy = (struct hyboxfb *) addr;
 	struct grfinfo *gi = &gp->g_display;
-	volatile u_char *fbp;
-	u_char save;
 	int fboff;
 	extern caddr_t sctopa(), iomap();
 
@@ -77,11 +77,11 @@ tc_init(gp, addr)
 		gi->gd_regaddr = (caddr_t) IIOP(addr);
 	else
 		gi->gd_regaddr = sctopa(vatosc(addr));
-	gi->gd_regsize = 0x10000;
-	gi->gd_fbwidth = (tp->fbwmsb << 8) | tp->fbwlsb;
-	gi->gd_fbheight = (tp->fbhmsb << 8) | tp->fbhlsb;
-	gi->gd_fbsize = gi->gd_fbwidth * gi->gd_fbheight;
-	fboff = (tp->fbomsb << 8) | tp->fbolsb;
+	gi->gd_regsize = 0x20000;
+	gi->gd_fbwidth = (hy->fbwmsb << 8) | hy->fbwlsb;
+	gi->gd_fbheight = (hy->fbhmsb << 8) | hy->fbhlsb;
+	gi->gd_fbsize = (gi->gd_fbwidth * gi->gd_fbheight) >> 3;
+	fboff = (hy->fbomsb << 8) | hy->fbolsb;
 	gi->gd_fbaddr = (caddr_t) (*((u_char *)addr + fboff) << 16);
 	if (gi->gd_regaddr >= (caddr_t)DIOIIBASE) {
 		/*
@@ -100,20 +100,11 @@ tc_init(gp, addr)
 		gp->g_regkva = addr;
 		gp->g_fbkva = iomap(gi->gd_fbaddr, gi->gd_fbsize);
 	}
-	gi->gd_dwidth = (tp->dwmsb << 8) | tp->dwlsb;
-	gi->gd_dheight = (tp->dhmsb << 8) | tp->dhlsb;
-	gi->gd_planes = tp->num_planes;
+	gi->gd_dwidth = (hy->dwmsb << 8) | hy->dwlsb;
+	gi->gd_dheight = (hy->dhmsb << 8) | hy->dhlsb;
+	gi->gd_planes = hy->num_planes;
 	gi->gd_colors = 1 << gi->gd_planes;
-	if (gi->gd_colors == 1) {
-		fbp = (u_char *) gp->g_fbkva;
-		tp->wen = ~0;
-		tp->prr = 0x3;
-		tp->fben = ~0;
-		save = *fbp;
-		*fbp = 0xFF;
-		gi->gd_colors = *fbp + 1;
-		*fbp = save;
-	}
+
 	return(1);
 }
 
@@ -123,8 +114,7 @@ tc_init(gp, addr)
  * Return a UNIX error number or 0 for success.
  * Function may not be needed anymore.
  */
-/*ARGSUSED*/
-tc_mode(gp, cmd, data)
+hy_mode(gp, cmd, data)
 	struct grf_softc *gp;
 	int cmd;
 	caddr_t data;
@@ -167,32 +157,8 @@ tc_mode(gp, cmd, data)
 		fi->npl = gi->gd_planes;
 		fi->bppu = fi->npl;
 		fi->nplbytes = fi->xlen * ((fi->length * fi->bpp) / NBBY);
-		/* XXX */
-		switch (gp->g_sw->gd_hwid) {
-		case GID_HRCCATSEYE:
-			bcopy("HP98550", fi->name, 8);
-			break;
-		case GID_LRCATSEYE:
-			bcopy("HP98549", fi->name, 8);
-			break;
-		case GID_HRMCATSEYE:
-			bcopy("HP98548", fi->name, 8);
-			break;
-		case GID_TOPCAT:
-			switch (gi->gd_colors) {
-			case 64:
-				bcopy("HP98547", fi->name, 8);
-				break;
-			case 16:
-				bcopy("HP98545", fi->name, 8);
-				break;
-			case 2:
-				bcopy("HP98544", fi->name, 8);
-				break;
-			}
-			break;
-		}
-		fi->attr = 2;	/* HW block mover */
+		bcopy("A1096A", fi->name, 7);	/* ?? */
+		fi->attr = 0;			/* ?? */
 		/*
 		 * If mapped, return the UVA where mapped.
 		 */

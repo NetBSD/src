@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: grfioctl.h 1.1 90/07/09
- *	from: @(#)grfioctl.h	7.2 (Berkeley) 11/4/90
- *	$Id: grfioctl.h,v 1.3 1993/08/01 19:24:17 mycroft Exp $
+ * from: Utah $Hdr: grfioctl.h 1.17 93/08/13$
+ *
+ *	from: @(#)grfioctl.h	8.2 (Berkeley) 9/9/93
+ *	$Id: grfioctl.h,v 1.4 1994/05/25 11:47:59 mycroft Exp $
  */
 
 struct	grfinfo {
@@ -61,6 +62,8 @@ struct	grfinfo {
 #define GRFBOBCAT	9
 #define	GRFCATSEYE	9
 #define GRFRBOX		10
+#define GRFFIREEYE	11
+#define GRFHYPERION	12
 #define GRFDAVINCI	14
 
 /*
@@ -69,6 +72,20 @@ struct	grfinfo {
 struct	grf_slot {
 	int	slot;
 	u_char	*addr;
+};
+
+struct	grf_fbinfo {
+	int	id;
+	int	mapsize;
+	int	dwidth, dlength;
+	int	width, length;
+	int	xlen;
+	int	bpp, bppu;
+	int	npl, nplbytes;
+	char	name[32];
+	int	attr;
+	caddr_t	fbbase, regbase;
+	caddr_t	regions[6];
 };
 
 #ifndef _IOH
@@ -88,6 +105,7 @@ struct	grf_slot {
 #define	GCSTATIC_CMAP	_IOH('G', 11)
 #define	GCVARIABLE_CMAP _IOH('G', 12)
 #define GCSLOT		_IOWR('G', 13, struct grf_slot)
+#define GCDESCRIBE	_IOR('G', 21, struct grf_fbinfo)
 
 /* XXX: for now */
 #define	IOMAPID		_IOR('M',0,int)	/* ??? */
@@ -103,7 +121,3 @@ struct	grf_slot {
 #define	GRFIOCOFF	_IO('G', 2)		/* turn graphics off */
 #define GRFIOCMAP	_IOWR('G', 5, int)	/* map in regs+framebuffer */
 #define GRFIOCUNMAP	_IOW('G', 6, int)	/* unmap regs+framebuffer */
-
-/* compat - for old grfinfo structure */
-struct ogrfinfo { char	oinfo[24]; };
-#define	OGRFIOCGINFO	_IOR('G', 0, struct ogrfinfo)

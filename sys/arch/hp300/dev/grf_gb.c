@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: grf_gb.c 1.16 91/04/02
- *	from: @(#)grf_gb.c	7.4 (Berkeley) 5/7/91
- *	$Id: grf_gb.c,v 1.2 1993/08/01 19:24:12 mycroft Exp $
+ * from: Utah $Hdr: grf_gb.c 1.18 93/08/13$
+ *
+ *	from: @(#)grf_gb.c	8.4 (Berkeley) 1/12/94
+ *	$Id: grf_gb.c,v 1.3 1994/05/25 11:47:28 mycroft Exp $
  */
 
 #include "grf.h"
@@ -50,14 +51,14 @@
  *       HP 987x0 graphics systems.  "Gator" is not used for high res mono.
  *       (as in 9837 Gator systems)
  */
-#include "sys/param.h"
-#include "sys/errno.h"
+#include <sys/param.h>
+#include <sys/errno.h>
 
-#include "grfioctl.h"
-#include "grfvar.h"
-#include "grf_gbreg.h"
+#include <hp300/dev/grfioctl.h>
+#include <hp300/dev/grfvar.h>
+#include <hp300/dev/grf_gbreg.h>
 
-#include "../include/cpu.h"
+#include <machine/cpu.h>
 
 #define CRTC_DATA_LENGTH  0x0e
 u_char crtc_init_data[CRTC_DATA_LENGTH] = {
@@ -139,8 +140,10 @@ gb_microcode(gbp)
  * Right now all we can do is grfon/grfoff.
  * Return a UNIX error number or 0 for success.
  */
-gb_mode(gp, cmd)
+gb_mode(gp, cmd, data)
 	register struct grf_softc *gp;
+	int cmd;
+	caddr_t data;
 {
 	struct gboxfb *gbp;
 	int error = 0;
@@ -150,8 +153,59 @@ gb_mode(gp, cmd)
 	case GM_GRFON:
 		gbp->sec_interrupt = 1;
 		break;
+
 	case GM_GRFOFF:
 		break;
+
+	/*
+	 * Remember UVA of mapping for GCDESCRIBE.
+	 * XXX this should be per-process.
+	 */
+	case GM_MAP:
+		gp->g_data = data;
+		break;
+
+	case GM_UNMAP:
+		gp->g_data = 0;
+		break;
+
+#ifdef COMPAT_HPUX
+	case GM_DESCRIBE:
+	{
+		struct grf_fbinfo *fi = (struct grf_fbinfo *)data;
+		struct grfinfo *gi = &gp->g_display;
+		int i;
+
+		/* feed it what HP-UX expects */
+		fi->id = gi->gd_id;
+		fi->mapsize = gi->gd_fbsize;
+		fi->dwidth = gi->gd_dwidth;
+		fi->dlength = gi->gd_dheight;
+		fi->width = gi->gd_fbwidth;
+		fi->length = gi->gd_fbheight;
+		fi->bpp = NBBY;
+		fi->xlen = (fi->width * fi->bpp) / NBBY;
+		fi->npl = gi->gd_planes;
+		fi->bppu = fi->npl;
+		fi->nplbytes = fi->xlen * ((fi->length * fi->bpp) / NBBY);
+		bcopy("HP98700", fi->name, 8);
+		fi->attr = 2;	/* HW block mover */
+		/*
+		 * If mapped, return the UVA where mapped.
+		 */
+		if (gp->g_data) {
+			fi->regbase = gp->g_data;
+			fi->fbbase = fi->regbase + gp->g_display.gd_regsize;
+		} else {
+			fi->fbbase = 0;
+			fi->regbase = 0;
+		}
+		for (i = 0; i < 6; i++)
+			fi->regions[i] = 0;
+		break;
+	}
+#endif
+
 	default:
 		error = EINVAL;
 		break;

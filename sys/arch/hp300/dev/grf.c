@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,15 +35,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: grf.c 1.31 91/01/21
- *	from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.10 1994/05/17 10:27:49 cgd Exp $
+ * from: Utah $Hdr: grf.c 1.36 93/08/13$
+ *
+ *	from: @(#)grf.c	8.4 (Berkeley) 1/12/94
+ *	$Id: grf.c,v 1.11 1994/05/25 11:47:17 mycroft Exp $
  */
 
 /*
- * Graphics display driver for the HP300.
+ * Graphics display driver for HP 300/400/700/800 machines.
  * This is the hardware-independent portion of the driver.
- * Hardware access is through the grfdev routines below.
+ * Hardware access is through the machine dependent grf switch routines.
  */
 
 #include "grf.h"
@@ -57,9 +58,9 @@
 #include <sys/vnode.h>
 #include <sys/mman.h>
 
-#include <hp300/dev/device.h>
 #include <hp300/dev/grfioctl.h>
 #include <hp300/dev/grfvar.h>
+#include <hp300/dev/grfreg.h>
 
 #include <machine/cpu.h>
 
@@ -74,37 +75,12 @@
 
 #include <miscfs/specfs/specdev.h>
 
-#include "ite.h"
+#include <ite.h>
 #if NITE == 0
 #define	iteon(u,f)
 #define	iteoff(u,f)
 #endif
 
-int	grfprobe();
-int	tc_init(), tc_mode();
-int	gb_init(), gb_mode();
-int	rb_init(), rb_mode();
-int	dv_init(), dv_mode();
-
-struct grfdev grfdev[] = {
-	GID_TOPCAT,	GRFBOBCAT,	tc_init,	tc_mode,
-	"topcat",
-	GID_GATORBOX,	GRFGATOR,	gb_init,	gb_mode,
-	"gatorbox",
-	GID_RENAISSANCE,GRFRBOX,	rb_init,	rb_mode,
-	"renaissance",
-	GID_LRCATSEYE,	GRFCATSEYE,	tc_init,	tc_mode,
-	"lo-res catseye",
-	GID_HRCCATSEYE,	GRFCATSEYE,	tc_init,	tc_mode,
-	"hi-res catseye",
-	GID_HRMCATSEYE,	GRFCATSEYE,	tc_init,	tc_mode,
-	"hi-res catseye",
-	GID_DAVINCI,    GRFDAVINCI,	dv_init,	dv_mode,
-	"davinci",
-};
-int	ngrfdev = sizeof(grfdev) / sizeof(grfdev[0]);
-
-struct	driver grfdriver = { grfprobe, "grf" };
 struct	grf_softc grf_softc[NGRF];
 
 #ifdef DEBUG
@@ -115,98 +91,10 @@ int grfdebug = 0;
 #define GDB_LOCK	0x08
 #endif
 
-/*
- * XXX: called from ite console init routine.
- * Does just what configure will do later but without printing anything.
- */
-grfconfig()
-{
-	register caddr_t addr;
-	register struct hp_hw *hw;
-	register struct hp_device *hd, *nhd;
-
-	for (hw = sc_table; hw->hw_type; hw++) {
-	        if (!HW_ISDEV(hw, D_BITMAP))
-			continue;
-		/*
-		 * Found one, now match up with a logical unit number
-		 */
-		nhd = NULL;		
-		addr = hw->hw_kva;
-		for (hd = hp_dinit; hd->hp_driver; hd++) {
-			if (hd->hp_driver != &grfdriver || hd->hp_alive)
-				continue;
-			/*
-			 * Wildcarded.  If first, remember as possible match.
-			 */
-			if (hd->hp_addr == NULL) {
-				if (nhd == NULL)
-					nhd = hd;
-				continue;
-			}
-			/*
-			 * Not wildcarded.
-			 * If exact match done searching, else keep looking.
-			 */
-			if (sctova(hd->hp_addr) == addr) {
-				nhd = hd;
-				break;
-			}
-		}
-		/*
-		 * Found a match, initialize
-		 */
-		if (nhd && grfinit(addr, nhd->hp_unit))
-			nhd->hp_addr = addr;
-	}
-}
-
-/*
- * Normal init routine called by configure() code
- */
-grfprobe(hd)
-	struct hp_device *hd;
-{
-	struct grf_softc *gp = &grf_softc[hd->hp_unit];
-
-	if ((gp->g_flags & GF_ALIVE) == 0 &&
-	    !grfinit(hd->hp_addr, hd->hp_unit))
-		return(0);
-	printf("grf%d: %d x %d ", hd->hp_unit,
-	       gp->g_display.gd_dwidth, gp->g_display.gd_dheight);
-	if (gp->g_display.gd_colors == 2)
-		printf("monochrome");
-	else
-		printf("%d color", gp->g_display.gd_colors);
-	printf(" %s display\n", grfdev[gp->g_type].gd_desc);
-	return(1);
-}
-
-grfinit(addr, unit)
-	caddr_t addr;
-{
-	struct grf_softc *gp = &grf_softc[unit];
-	struct grfreg *gr;
-	register struct grfdev *gd;
-
-	gr = (struct grfreg *) addr;
-	if (gr->gr_id != GRFHWID)
-		return(0);
-	for (gd = grfdev; gd < &grfdev[ngrfdev]; gd++)
-		if (gd->gd_hardid == gr->gr_id2)
-			break;
-	if (gd < &grfdev[ngrfdev] && (*gd->gd_init)(gp, addr)) {
-		gp->g_display.gd_id = gd->gd_softid;
-		gp->g_type = gd - grfdev;
-		gp->g_flags = GF_ALIVE;
-		return(1);
-	}
-	return(0);
-}
-
 /*ARGSUSED*/
 grfopen(dev, flags)
 	dev_t dev;
+	int flags;
 {
 	int unit = GRFUNIT(dev);
 	register struct grf_softc *gp = &grf_softc[unit];
@@ -246,11 +134,14 @@ grfopen(dev, flags)
 /*ARGSUSED*/
 grfclose(dev, flags)
 	dev_t dev;
+	int flags;
 {
 	register struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
 
 	(void) grfoff(dev);
+#ifdef COMPAT_HPUX
 	(void) grfunlock(gp);
+#endif
 	gp->g_flags &= GF_ALIVE;
 	return(0);
 }
@@ -258,9 +149,8 @@ grfclose(dev, flags)
 /*ARGSUSED*/
 grfioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	int cmd, flag;
 	caddr_t data;
-	int flag;
 	struct proc *p;
 {
 	register struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
@@ -272,11 +162,6 @@ grfioctl(dev, cmd, data, flag, p)
 #endif
 	error = 0;
 	switch (cmd) {
-
-	/* XXX: compatibility hack */
-	case OGRFIOCGINFO:
-		bcopy((caddr_t)&gp->g_display, data, sizeof(struct ogrfinfo));
-		break;
 
 	case GRFIOCGINFO:
 		bcopy((caddr_t)&gp->g_display, data, sizeof(struct grfinfo));
@@ -309,111 +194,82 @@ grfioctl(dev, cmd, data, flag, p)
 /*ARGSUSED*/
 grfselect(dev, rw)
 	dev_t dev;
+	int rw;
 {
 	if (rw == FREAD)
 		return(0);
 	return(1);
 }
 
-grflock(gp, block)
-	register struct grf_softc *gp;
-	int block;
-{
-	struct proc *p = curproc;		/* XXX */
-	int error;
-	extern char devioc[];
-
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grflock(%d): dev %x flags %x lockpid %x\n",
-		       p->p_pid, gp-grf_softc, gp->g_flags,
-		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
-#endif
-#ifdef COMPAT_HPUX
-	if (gp->g_pid) {
-#ifdef DEBUG
-		if (grfdebug & GDB_LOCK)
-			printf(" lockpslot %d lockslot %d lock[lockslot] %d\n",
-			       gp->g_lock->gl_lockslot, gp->g_lockpslot,
-			       gp->g_lock->gl_locks[gp->g_lockpslot]);
-#endif
-		gp->g_lock->gl_lockslot = 0;
-		if (gp->g_lock->gl_locks[gp->g_lockpslot] == 0) {
-			gp->g_lockp = NULL;
-			gp->g_lockpslot = 0;
-		}
-	}
-#endif
-	if (gp->g_lockp) {
-		if (gp->g_lockp == p)
-			return(EBUSY);
-		if (!block)
-			return(EAGAIN);
-		do {
-			gp->g_flags |= GF_WANTED;
-			if (error = tsleep((caddr_t)&gp->g_flags,
-					   (PZERO+1) | PCATCH, devioc, 0))
-				return (error);
-		} while (gp->g_lockp);
-	}
-	gp->g_lockp = p;
-#ifdef COMPAT_HPUX
-	if (gp->g_pid) {
-		int slot = grffindpid(gp);
-#ifdef DEBUG
-		if (grfdebug & GDB_LOCK)
-			printf("  slot %d\n", slot);
-#endif
-		gp->g_lockpslot = gp->g_lock->gl_lockslot = slot;
-		gp->g_lock->gl_locks[slot] = 1;
-	}
-#endif
-	return(0);
-}
-
-grfunlock(gp)
-	register struct grf_softc *gp;
-{
-#ifdef DEBUG
-	if (grfdebug & GDB_LOCK)
-		printf("grfunlock(%d): dev %x flags %x lockpid %d\n",
-		       curproc->p_pid, gp-grf_softc, gp->g_flags,
-		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
-#endif
-	if (gp->g_lockp != curproc)
-		return(EBUSY);
-#ifdef COMPAT_HPUX
-	if (gp->g_pid) {
-#ifdef DEBUG
-		if (grfdebug & GDB_LOCK)
-			printf(" lockpslot %d lockslot %d lock[lockslot] %d\n",
-			       gp->g_lock->gl_lockslot, gp->g_lockpslot,
-			       gp->g_lock->gl_locks[gp->g_lockpslot]);
-#endif
-		gp->g_lock->gl_locks[gp->g_lockpslot] = 0;
-		gp->g_lockpslot = gp->g_lock->gl_lockslot = 0;
-	}
-#endif
-	if (gp->g_flags & GF_WANTED) {
-		wakeup((caddr_t)&gp->g_flags); 
-		gp->g_flags &= ~GF_WANTED;
-	}
-	gp->g_lockp = NULL;
-	return(0);
-}
-
 /*ARGSUSED*/
 grfmap(dev, off, prot)
 	dev_t dev;
+	int off, prot;
 {
 	return(grfaddr(&grf_softc[GRFUNIT(dev)], off));
 }
 
+grfon(dev)
+	dev_t dev;
+{
+	int unit = GRFUNIT(dev);
+	struct grf_softc *gp = &grf_softc[unit];
+
+	/*
+	 * XXX: iteoff call relies on devices being in same order
+	 * as ITEs and the fact that iteoff only uses the minor part
+	 * of the dev arg.
+	 */
+	iteoff(unit, 3);
+	return((*gp->g_sw->gd_mode)(gp,
+				    (dev&GRFOVDEV) ? GM_GRFOVON : GM_GRFON,
+				    (caddr_t)0));
+}
+
+grfoff(dev)
+	dev_t dev;
+{
+	int unit = GRFUNIT(dev);
+	struct grf_softc *gp = &grf_softc[unit];
+	int error;
+
+	(void) grfunmmap(dev, (caddr_t)0, curproc);
+	error = (*gp->g_sw->gd_mode)(gp,
+				     (dev&GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF,
+				     (caddr_t)0);
+	/* XXX: see comment for iteoff above */
+	iteon(unit, 2);
+	return(error);
+}
+
+grfaddr(gp, off)
+	struct grf_softc *gp;
+	register int off;
+{
+	register struct grfinfo *gi = &gp->g_display;
+
+	/* control registers */
+	if (off >= 0 && off < gi->gd_regsize)
+		return(((u_int)gi->gd_regaddr + off) >> PGSHIFT);
+
+	/* frame buffer */
+	if (off >= gi->gd_regsize && off < gi->gd_regsize+gi->gd_fbsize) {
+		off -= gi->gd_regsize;
+		return(((u_int)gi->gd_fbaddr + off) >> PGSHIFT);
+	}
+	/* bogus */
+	return(-1);
+}
+
+/*
+ * HP-UX compatibility routines
+ */
 #ifdef COMPAT_HPUX
 
 /*ARGSUSED*/
 hpuxgrfioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	int cmd, flag;
 	caddr_t data;
 	struct proc *p;
 {
@@ -480,6 +336,10 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 		break;
 	}
 
+	case GCDESCRIBE:
+		error = (*gp->g_sw->gd_mode)(gp, GM_DESCRIBE, data);
+		break;
+
 	/*
 	 * XXX: only used right now to map in rbox control registers
 	 * Will be replaced in the future with a real IOMAP interface.
@@ -510,59 +370,88 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 	return(error);
 }
 
-#endif
-
-grfon(dev)
-	dev_t dev;
+grflock(gp, block)
+	register struct grf_softc *gp;
+	int block;
 {
-	int unit = GRFUNIT(dev);
-	struct grf_softc *gp = &grf_softc[unit];
-
-	/*
-	 * XXX: iteoff call relies on devices being in same order
-	 * as ITEs and the fact that iteoff only uses the minor part
-	 * of the dev arg.
-	 */
-	iteoff(unit, 3);
-	return((*grfdev[gp->g_type].gd_mode)
-			(gp, (dev&GRFOVDEV) ? GM_GRFOVON : GM_GRFON));
-}
-
-grfoff(dev)
-	dev_t dev;
-{
-	int unit = GRFUNIT(dev);
-	struct grf_softc *gp = &grf_softc[unit];
+	struct proc *p = curproc;		/* XXX */
 	int error;
+	extern char devioc[];
 
-	(void) grfunmmap(dev, (caddr_t)0, curproc);
-	error = (*grfdev[gp->g_type].gd_mode)
-			(gp, (dev&GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF);
-	/* XXX: see comment for iteoff above */
-	iteon(unit, 2);
-	return(error);
-}
-
-grfaddr(gp, off)
-	struct grf_softc *gp;
-	register int off;
-{
-	register struct grfinfo *gi = &gp->g_display;
-
-	/* control registers */
-	if (off >= 0 && off < gi->gd_regsize)
-		return(((u_int)gi->gd_regaddr + off) >> PGSHIFT);
-
-	/* frame buffer */
-	if (off >= gi->gd_regsize && off < gi->gd_regsize+gi->gd_fbsize) {
-		off -= gi->gd_regsize;
-		return(((u_int)gi->gd_fbaddr + off) >> PGSHIFT);
+#ifdef DEBUG
+	if (grfdebug & GDB_LOCK)
+		printf("grflock(%d): dev %x flags %x lockpid %x\n",
+		       p->p_pid, gp-grf_softc, gp->g_flags,
+		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
+#endif
+	if (gp->g_pid) {
+#ifdef DEBUG
+		if (grfdebug & GDB_LOCK)
+			printf(" lockpslot %d lockslot %d lock[lockslot] %d\n",
+			       gp->g_lock->gl_lockslot, gp->g_lockpslot,
+			       gp->g_lock->gl_locks[gp->g_lockpslot]);
+#endif
+		gp->g_lock->gl_lockslot = 0;
+		if (gp->g_lock->gl_locks[gp->g_lockpslot] == 0) {
+			gp->g_lockp = NULL;
+			gp->g_lockpslot = 0;
+		}
 	}
-	/* bogus */
-	return(-1);
+	if (gp->g_lockp) {
+		if (gp->g_lockp == p)
+			return(EBUSY);
+		if (!block)
+			return(OEAGAIN);
+		do {
+			gp->g_flags |= GF_WANTED;
+			if (error = tsleep((caddr_t)&gp->g_flags,
+					   (PZERO+1) | PCATCH, devioc, 0))
+				return (error);
+		} while (gp->g_lockp);
+	}
+	gp->g_lockp = p;
+	if (gp->g_pid) {
+		int slot = grffindpid(gp);
+
+#ifdef DEBUG
+		if (grfdebug & GDB_LOCK)
+			printf("  slot %d\n", slot);
+#endif
+		gp->g_lockpslot = gp->g_lock->gl_lockslot = slot;
+		gp->g_lock->gl_locks[slot] = 1;
+	}
+	return(0);
 }
 
-#ifdef COMPAT_HPUX
+grfunlock(gp)
+	register struct grf_softc *gp;
+{
+#ifdef DEBUG
+	if (grfdebug & GDB_LOCK)
+		printf("grfunlock(%d): dev %x flags %x lockpid %d\n",
+		       curproc->p_pid, gp-grf_softc, gp->g_flags,
+		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
+#endif
+	if (gp->g_lockp != curproc)
+		return(EBUSY);
+	if (gp->g_pid) {
+#ifdef DEBUG
+		if (grfdebug & GDB_LOCK)
+			printf(" lockpslot %d lockslot %d lock[lockslot] %d\n",
+			       gp->g_lock->gl_lockslot, gp->g_lockpslot,
+			       gp->g_lock->gl_locks[gp->g_lockpslot]);
+#endif
+		gp->g_lock->gl_locks[gp->g_lockpslot] = 0;
+		gp->g_lockpslot = gp->g_lock->gl_lockslot = 0;
+	}
+	if (gp->g_flags & GF_WANTED) {
+		wakeup((caddr_t)&gp->g_flags); 
+		gp->g_flags &= ~GF_WANTED;
+	}
+	gp->g_lockp = NULL;
+	return(0);
+}
+
 /*
  * Convert a BSD style minor devno to HPUX style.
  * We cannot just create HPUX style nodes as they require 24 bits
@@ -575,7 +464,7 @@ grfdevno(dev)
 {
 	int unit = GRFUNIT(dev);
 	struct grf_softc *gp = &grf_softc[unit];
-	int newdev, sc;
+	int newdev;
 
 	if (unit >= NGRF || (gp->g_flags&GF_ALIVE) == 0)
 		return(bsdtohpuxdev(dev));
@@ -583,7 +472,7 @@ grfdevno(dev)
 	newdev = 12 << 24;
 	/* now construct minor number */
 	if (gp->g_display.gd_regaddr != (caddr_t)GRFIADDR) {
-		sc = patosc(gp->g_display.gd_regaddr);
+		int sc = patosc(gp->g_display.gd_regaddr);
 		newdev |= (sc << 16) | 0x200;
 	}
 	if (dev & GRFIMDEV)
@@ -596,7 +485,8 @@ grfdevno(dev)
 #endif
 	return(newdev);
 }
-#endif
+
+#endif	/* COMPAT_HPUX */
 
 grfmmap(dev, addrp, p)
 	dev_t dev;
@@ -623,8 +513,10 @@ grfmmap(dev, addrp, p)
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
 	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
-			(vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags,
-			(caddr_t)&vn, 0);
+			(vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL,
+			flags, (caddr_t)&vn, 0);
+	if (error == 0)
+		(void) (*gp->g_sw->gd_mode)(gp, GM_MAP, *addrp);
 	return(error);
 }
 
@@ -643,6 +535,7 @@ grfunmmap(dev, addr, p)
 #endif
 	if (addr == 0)
 		return(EINVAL);		/* XXX: how do we deal with this? */
+	(void) (*gp->g_sw->gd_mode)(gp, GM_UNMAP, 0);
 	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
 	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t)addr, size);
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
@@ -653,12 +546,10 @@ iommap(dev, addrp)
 	dev_t dev;
 	caddr_t *addrp;
 {
-	struct proc *p = curproc;		/* XXX */
-	struct grf_softc *gp = &grf_softc[GRFUNIT(dev)];
 
 #ifdef DEBUG
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iommap(%d): addr %x\n", p->p_pid, *addrp);
+		printf("iommap(%d): addr %x\n", curproc->p_pid, *addrp);
 #endif
 	return(EINVAL);
 }
