@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.12.4.7 2001/11/25 20:00:41 he Exp $	*/
+/*	$NetBSD: fs.h,v 1.12.4.8 2001/11/25 20:01:20 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -241,7 +241,7 @@ struct fs {
 	int8_t	 fs_flags;		/* see FS_ flags below */
 	u_char	 fs_fsmnt[MAXMNTLEN];	/* name mounted on */
 /* these fields retain the current block allocation info */
-	int32_t	 fs_cgrotor;		/* last cg searched */
+	int32_t	 fs_cgrotor;		/* last cg searched (UNUSED) */
 	void 	*fs_ocsp[NOCSPTRS];	/* padding; was list of fs_cs buffers */
 	u_int16_t *fs_contigdirs;	/* # of contiguously allocated dirs */
 	struct csum *fs_csp;		/* cg summary info buffer for fs_cs */
