@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.63 2003/05/14 14:41:33 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.64 2003/06/30 08:00:59 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.63 2003/05/14 14:41:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.64 2003/06/30 08:00:59 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -230,6 +230,7 @@ ip6_input(m)
 	u_int32_t rtalert = ~0;
 	int nxt, ours = 0;
 	struct ifnet *deliverifp = NULL;
+	int srcrt = 0;
 
 #ifdef IPSEC
 	/*
@@ -315,12 +316,16 @@ ip6_input(m)
 	if (1)
 #endif
 	{
+		struct in6_addr odst;
+
+		odst = ip6->ip6_dst;
 		if (pfil_run_hooks(&inet6_pfil_hook, &m, m->m_pkthdr.rcvif,
 				   PFIL_IN) != 0)
 			return;
 		if (m == NULL)
 			return;
 		ip6 = mtod(m, struct ip6_hdr *);
+		srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
 	}
 #endif /* PFIL_HOOKS */
 
@@ -683,7 +688,7 @@ ip6_input(m)
 			return;
 		}
 	} else if (!ours) {
-		ip6_forward(m, 0);
+		ip6_forward(m, srcrt);
 		return;
 	}
 
