@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.2.1 2004/04/22 07:47:42 tron Exp $
+#	$NetBSD: Makefile,v 1.22.2.2 2004/05/25 01:30:35 jmc Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,7 +17,7 @@ LISTS+=			${.CURDIR}/list.miniroot
 IMAGEDEPENDS+=		netbsd.gz
 
 ${CRUNCHBIN}: ${CRUNCHBINDIR}/${CRUNCHBIN}
-	mkdir sysinst
+	mkdir -p sysinst
 	cp -p ${CRUNCHBINDIR}/sysinst/sysinstmsgs.* sysinst
 	cp ${.ALLSRC} ${.TARGET}
 
