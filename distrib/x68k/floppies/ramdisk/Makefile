@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2000/09/12 16:42:50 minoura Exp $
+#	$NetBSD: Makefile,v 1.19 2000/09/12 17:07:44 minoura Exp $
 
 TOP=		${.CURDIR}/..
 COMMONDIR=	${TOP}/ramdisk-common
@@ -13,11 +13,11 @@ AUXCLEAN=	${AUXTARGETS}
 
 CBIN=		ramdiskbin
 
-RAMDISKSPT=	15
-RAMDISKCYLS=	80
+RAMDISKSPT=	23
+RAMDISKCYLS=	50
 RAMDISKHEADS=	2
 RAMDISKCPG=	80
-RAMDISKBPI=	5120
+RAMDISKBPI=	4096
 
 install.sh: install.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
