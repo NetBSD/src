@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 1998/11/11 06:43:50 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.77 1998/11/12 14:00:06 ws Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1228,7 +1228,7 @@ void
 child_return(arg)
 	void *arg;
 {
-	staruct proc *p = arg;
+	struct proc *p = arg;
 
 	/*
 	 * Return values in the frame set by cpu_fork().
