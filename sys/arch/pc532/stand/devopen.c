@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 1994/10/26 08:25:47 cgd Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 1994/12/09 21:04:41 phil Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -96,7 +96,9 @@ devparse(char *fname, int *dev, int *adapt, int *ctlr, int *unit, int *part, cha
 
 	/* tokenize device ident */
 	args[0] = ++s;
-	for (args[0] = s, i = 1; *s && *s != ')'; s++) {
+	for (i = 1; *s && *s != ')'; s++) {
+	    if (i > 3)
+	        goto baddev;
 	    if (*s == ',')
 		args[i++] = ++s;
 	}
@@ -135,7 +137,7 @@ devparse(char *fname, int *dev, int *adapt, int *ctlr, int *unit, int *part, cha
 	    goto baddev;
 
 	/* isolate unit */
-	if ((*unit = atoi(s)) > sizeof(char))
+	if ((*unit = atoi(s)) > ((1 << (sizeof(char) * 8)) - 1))
 	    goto bad;
 	for (; isdigit(*s); s++);
 	
