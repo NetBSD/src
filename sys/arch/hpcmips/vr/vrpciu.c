@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.2 2001/11/22 14:24:33 takemura Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.3 2002/01/05 06:45:32 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -33,8 +33,11 @@
 #include <machine/bus.h>
 #include <machine/bus_space_hpcmips.h>
 #include <machine/bus_dma_hpcmips.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <hpcmips/vr/icureg.h>
 #include <hpcmips/vr/vripvar.h>
@@ -80,6 +83,7 @@ static int	vrpciu_intr(void *);
 static void	vrpciu_attach_hook(struct device *, struct device *,
 		    struct pcibus_attach_args *);
 static int	vrpciu_bus_maxdevs(pci_chipset_tag_t, int);
+static int	vrpciu_bus_devorder(pci_chipset_tag_t, int, char *);
 static pcitag_t	vrpciu_make_tag(pci_chipset_tag_t, int, int, int);
 static void	vrpciu_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
 		    int *);
@@ -246,7 +250,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 	pc->pc_dev = &sc->sc_dev;
 	pc->pc_attach_hook = vrpciu_attach_hook;
 	pc->pc_bus_maxdevs = vrpciu_bus_maxdevs;
-	pc->pc_bus_devorder = vrc4173bcu_pci_bus_devorder;
+	pc->pc_bus_devorder = vrpciu_bus_devorder;
 	pc->pc_make_tag = vrpciu_make_tag;
 	pc->pc_decompose_tag = vrpciu_decompose_tag;
 	pc->pc_conf_read = vrpciu_conf_read;
@@ -341,6 +345,35 @@ vrpciu_attach_hook(struct device *parent, struct device *self,
 int
 vrpciu_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
+
+	return (32);
+}
+
+int
+vrpciu_bus_devorder(pci_chipset_tag_t pc, int busno, char *devs)
+{
+	int i, dev;
+	char priorities[32];
+	static pcireg_t ids[] = {
+		/* these devices should be attached first */
+		PCI_ID_CODE(PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_BCU),
+	};
+
+	/* scan PCI devices and check the id table */
+	memset(priorities, 0, sizeof(priorities));
+	for (dev = 0; dev < 32; dev++) {
+		pcireg_t id;
+		id = pci_conf_read(pc, pci_make_tag(pc, 0, dev, 0),PCI_ID_REG);
+		for (i = 0; i < sizeof(ids)/sizeof(*ids); i++)
+			if (id == ids[i])
+				priorities[dev] = 1;
+	}
+
+	/* fill order array */
+	for (i = 1; 0 <= i; i--)
+		for (dev = 0; dev < 32; dev++)
+			if (priorities[dev] == i)
+				*devs++ = dev;
 
 	return (32);
 }
@@ -440,11 +473,17 @@ vrpciu_vrcintr_establish(pci_chipset_tag_t pc, int port,
 	struct vrpciu_softc *sc = (struct vrpciu_softc *)pc->pc_dev;
 	struct vrip_softc *vsc = (struct vrip_softc *)sc->sc_vc;
 	void *ih;
+	int mode;
 
 	sc->sc_bcu = arg;
+
+	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_SIGMARION2))
+		mode = HPCIO_INTR_LEVEL | HPCIO_INTR_HIGH | HPCIO_INTR_THROUGH;
+	else
+		mode = HPCIO_INTR_LEVEL | HPCIO_INTR_LOW | HPCIO_INTR_HOLD;
+
 	ih = hpcio_intr_establish(vsc->sc_gpio_chips[VRIP_IOCHIP_VRGIU],
-	    port, HPCIO_INTR_LEVEL | HPCIO_INTR_LOW | HPCIO_INTR_HOLD,
-	    func, arg);
+	    port, mode, func, arg);
 
 	return (ih);
 }
