@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.75 2001/03/31 20:13:19 leo Exp $
+#	$NetBSD: files.atari,v 1.76 2001/03/31 20:24:10 leo Exp $
 
 maxpartitions 16
 
@@ -168,6 +168,12 @@ major   {fdisa = 2}
 attach	wdc at mainbus with wdc_mb
 file	arch/atari/dev/wdc_mb.c		wdc_mb
 major	{wd = 14}
+
+# Milan wdc driver - uses the 'generic' isa version except for a bit
+# if trickery in the multi_stream methods setup in the attachment.
+device	wdcisa: ata, atapi, wdc_base
+attach	wdcisa at isa
+file	arch/atari/dev/wdc_isa.c	wdcisa
 
 # ISA Plug 'n Play devices
 file	arch/atari/isa/isapnp_machdep.c	isapnp
