@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.16 2004/08/13 15:49:13 uch Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.17 2005/01/11 01:05:32 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -616,6 +616,16 @@ extern platid_t platid_mask_MACH_COMPAQ_IPAQ_H3660;
 #  define COMPAQ_IPAQ_H3660 ((int)&platid_mask_MACH_COMPAQ_IPAQ_H3660)
 #endif
 #endif /* hpcarm */
+#ifdef hpcsh
+extern platid_t platid_mask_MACH_COMPAQ_AERO;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_AERO ((int)&platid_mask_MACH_COMPAQ_AERO)
+#endif
+extern platid_t platid_mask_MACH_COMPAQ_AERO_8000;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define COMPAQ_AERO_8000 ((int)&platid_mask_MACH_COMPAQ_AERO_8000)
+#endif
+#endif /* hpcsh */
 #ifdef hpcmips
 extern platid_t platid_mask_MACH_VICTOR;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
@@ -760,6 +770,14 @@ extern platid_t platid_mask_MACH_HP_JORNADA_680SV;
 extern platid_t platid_mask_MACH_HP_JORNADA_690SV;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HP_JORNADA_690SV ((int)&platid_mask_MACH_HP_JORNADA_690SV)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_680ES;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_680ES ((int)&platid_mask_MACH_HP_JORNADA_680ES)
+#endif
+extern platid_t platid_mask_MACH_HP_JORNADA_690ES;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HP_JORNADA_690ES ((int)&platid_mask_MACH_HP_JORNADA_690ES)
 #endif
 #endif /* hpcsh */
 #ifdef hpcarm
