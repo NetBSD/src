@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.7 1998/01/12 10:21:24 thorpej Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.8 1998/05/13 02:50:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.7 1998/01/12 10:21:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.8 1998/05/13 02:50:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -40,11 +40,14 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.7 1998/01/12 10:21:24 thorpej Exp
 #include <sys/device.h>
 
 #include <machine/bus.h>
-#include <machine/autoconf.h>
 
 #include <dev/dec/clockvar.h>
 #include <dev/dec/mcclockvar.h>
-#include <alpha/tlsb/tlsbreg.h>
+
+#include <alpha/tlsb/gbusvar.h>
+
+#include <alpha/tlsb/tlsbreg.h>		/* XXX */
+
 #include <dev/ic/mc146818reg.h>
 
 #define	KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
@@ -82,8 +85,8 @@ mcclock_tlsb_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	if (strcmp(ca->ca_name, mcclock_cd.cd_name))
+	struct gbus_attach_args *ga = aux;
+	if (strcmp(ga->ga_name, mcclock_cd.cd_name))
 		return (0);
 	return (1);
 }
@@ -94,8 +97,11 @@ mcclock_tlsb_attach(parent, self, aux)
 	void *aux;
 {
 	struct mcclock_tlsb_softc *sc = (struct mcclock_tlsb_softc *)self;
-	struct confargs *ca = aux;
-	sc->regbase = TLSB_GBUS_BASE + ca->ca_offset;
+	struct gbus_attach_args *ga = aux;
+
+	/* XXX Should be bus.h'd, so we can accomodate the kn7aa. */
+	sc->regbase = TLSB_GBUS_BASE + ga->ga_offset;
+
 	mcclock_attach(&sc->sc_mcclock, &mcclock_tlsb_busfns);
 }
 
