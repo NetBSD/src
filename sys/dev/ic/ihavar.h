@@ -1,4 +1,4 @@
-/*	$NetBSD: ihavar.h,v 1.8 2002/11/14 17:07:42 tsutsui Exp $ */
+/*	$NetBSD: ihavar.h,v 1.9 2005/01/02 12:22:19 tsutsui Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -51,8 +51,8 @@
  *   Scatter-Gather Element Structure
  */
 struct iha_sg_element {
-	u_int32_t sg_addr;	/* Data Pointer */
-	u_int32_t sg_len;	/* Data Length  */
+	uint32_t sg_addr;	/* Data Pointer */
+	uint32_t sg_len;	/* Data Length  */
 };
 
 #define IHA_SG_SIZE (sizeof(struct iha_sg_element) * IHA_MAX_SG_ENTRIES)
@@ -83,8 +83,8 @@ struct iha_scb {
 	int target;			/* Target Id			*/
 	int lun;			/* Lun				*/
 
-	u_int32_t bufaddr;		/* Data Buffer Physical Addr	*/
-	u_int32_t buflen;		/* Data Allocation Length	*/
+	uint32_t bufaddr;		/* Data Buffer Physical Addr	*/
+	uint32_t buflen;		/* Data Allocation Length	*/
 	int ha_stat;			/* Status of Host Adapter	*/
 #define  HOST_OK	0x00		/*  OK - operation a success	*/
 #define  HOST_TIMED_OUT	0x01		/*  Request timed out		*/
@@ -102,14 +102,14 @@ struct iha_scb {
 	bus_size_t sgoffset;		/* xfer buf offset              */
 
 	int sg_size;			/* # of valid entries in sg_list */
-	u_int32_t sg_addr;		/* SGList Physical Address	*/
+	uint32_t sg_addr;		/* SGList Physical Address	*/
 
 	int cmdlen;			/* CDB Length			*/
-	u_int8_t cmd[12];		/* SCSI Command			*/
+	uint8_t cmd[12];		/* SCSI Command			*/
 
-	u_int8_t scb_id;		/* Identity Message		*/
-	u_int8_t scb_tagmsg;		/* Tag Message			*/
-	u_int8_t scb_tagid;		/* Queue Tag			*/
+	uint8_t scb_id;			/* Identity Message		*/
+	uint8_t scb_tagmsg;		/* Tag Message			*/
+	uint8_t scb_tagid;		/* Queue Tag			*/
 };
 
 /*
@@ -133,8 +133,8 @@ struct tcs {
 
 	struct iha_scb *ntagscb;
 
-	u_int8_t syncm;
-	u_int8_t sconfig0;
+	uint8_t syncm;
+	uint8_t sconfig0;
 };
 
 struct iha_softc {
@@ -180,11 +180,11 @@ struct iha_softc {
 
 	struct tcs sc_tcs[IHA_MAX_TARGETS];
 
-	u_int8_t sc_msg[IHA_MAX_EXTENDED_MSG];	    /* [0] len, [1] Msg Code */
-	u_int8_t sc_sistat;
-	u_int8_t sc_status0;
-	u_int8_t sc_status1;
-	u_int8_t sc_sconf1;
+	uint8_t sc_msg[IHA_MAX_EXTENDED_MSG];	    /* [0] len, [1] Msg Code */
+	uint8_t sc_sistat;
+	uint8_t sc_status0;
+	uint8_t sc_status1;
+	uint8_t sc_sconf1;
 };
 
 /*
@@ -198,7 +198,7 @@ struct iha_softc {
 #define EEP_WAIT()	DELAY(5)
 
 struct eeprom_adapter {
-	u_int16_t config1;		/* 0x00 Channel Adapter SCSI Id  */
+	uint16_t config1;		/* 0x00 Channel Adapter SCSI Id  */
 #define  CFG_ID_MASK	0x000f
 #define  CFG_ID(cfg)	((cfg) & CFG_ID_MASK)
 #define  CFG_SCSI_RESET	0x0100		/*     Reset bus at power up     */
@@ -208,11 +208,11 @@ struct eeprom_adapter {
 #define  CFG_AUTO_TERM	0x1000		/*     Enable auto terminator    */
 #define  CFG_EN_PWR	0x8000		/*     Enable power mgmt         */
 #define  CFG_DEFAULT	(CFG_SCSI_RESET | CFG_AUTO_TERM | CFG_EN_PAR)
-	u_int16_t config2;
+	uint16_t config2;
 #define  CFG_CFG2(x)	EEP_LBYTE(x)	/* 0x02 Unused Channel Cfg byte 2*/
 #define  CFG_TARGET(x)	EEP_HBYTE(x)	/* 0x03 Number of SCSI targets   */
 					/* 0x04 Lower bytes of targ flags*/
-	u_int16_t tflags[IHA_MAX_TARGETS / sizeof(u_int16_t)];
+	uint16_t tflags[IHA_MAX_TARGETS / sizeof(uint16_t)];
 #define  FLAG_DEFAULT	(FLAG_NO_WIDE | FLAG_1GIGA | FLAG_EN_DISC)
 };
 
@@ -221,17 +221,17 @@ struct eeprom_adapter {
  */
 struct iha_eeprom {
 	/* ---------- Header ------------------------------------------------*/
-	u_int16_t signature;		       /* 0x00 NVRAM Signature	     */
+	uint16_t signature;		       /* 0x00 NVRAM Signature	     */
 #define EEP_SIGNATURE	0xC925
-	u_int16_t revision;
+	uint16_t revision;
 #define EEP_SIZE(x)	EEP_LBYTE(x)	       /* 0x02 Size of data structure*/
 #define EEP_REV(x)	EEP_HBYTE(x)	       /* 0x03 Rev. of data structure*/
 	/* ---------- Host Adapter Structure --------------------------------*/
-	u_int16_t model;		       /* 0x04 Model number          */
-	u_int16_t modelinfo;
+	uint16_t model;			       /* 0x04 Model number          */
+	uint16_t modelinfo;
 #define EEP_INFO(x)	EEP_LBYTE(x)	       /* 0x06 Model information     */
 #define EEP_CHAN(x)	EEP_HBYTE(x)	       /* 0x07 Number of SCSI channel*/
-	u_int16_t bioscfg;		       /* 0x08 BIOS configuration 1  */
+	uint16_t bioscfg;		       /* 0x08 BIOS configuration 1  */
 #define EEP_BIOSCFG_ENABLE	0x0001	       /*      BIOS enable	     */
 #define EEP_BIOSCFG_8DRIVE	0x0002	       /*      Support > 2 drives    */
 #define EEP_BIOSCFG_REMOVABLE	0x0004	       /*      Support removable drv */
@@ -239,15 +239,15 @@ struct iha_eeprom {
 #define EEP_BIOSCFG_BIOSSCAN	0x0010	       /*      Dynamic BIOS scan     */
 #define EEP_BIOSCFG_LUNSUPPORT	0x0040	       /*      Support LUN	     */
 #define EEP_BIOSCFG_DEFAULT	EEP_BIOSCFG_ENABLE
-	u_int16_t hacfg;		       /* 0x0a Host adapter config 1 */
+	uint16_t hacfg;			       /* 0x0a Host adapter config 1 */
 #define EEP_HACFG_BOOTIDMASK	0x000F	       /*      Boot ID number	     */
 #define EEP_HACFG_LUNMASK	0x0070	       /*      Boot LUN number	     */
 #define EEP_HACFG_CHANMASK	0x0080	       /*      Boot Channel number   */
 	struct eeprom_adapter adapter[2];      /* 0x0c		             */
-	u_int16_t reserved[5];		       /* 0x34			     */
+	uint16_t reserved[5];		       /* 0x34			     */
 
 	/* --------- CheckSum -----------------------------------------------*/
-	u_int16_t checksum;		       /* 0x3E Checksum of NVRam     */
+	uint16_t checksum;		       /* 0x3E Checksum of NVRam     */
 };
 
 /* Functions used by higher SCSI layers, the kernel, or iha.c and iha_pci.c  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.5 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.6 2005/01/02 12:22:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -91,13 +91,13 @@
  * Data Structure for SCRIPTS program
  */
 typedef struct buf_table {
-	u_int32_t count;
-	u_int32_t addr;
+	uint32_t count;
+	uint32_t addr;
 } buf_table_t;
 
 struct osiop_ds {
-	u_int32_t scsi_addr;		/* SCSI ID & sync */
-	u_int32_t pad1;
+	uint32_t scsi_addr;		/* SCSI ID & sync */
+	uint32_t pad1;
 	buf_table_t id;			/* Identify message */
 	buf_table_t cmd;		/* SCSI command */
 	buf_table_t status;		/* Status */
@@ -107,9 +107,9 @@ struct osiop_ds {
 	buf_table_t synmsg;		/* Sync transfer request */
 	buf_table_t data[OSIOP_NSG];	/* DMA S/G buffers */
 
-	u_int8_t msgout[8];
-	u_int8_t msgbuf[8];
-	u_int8_t stat[8];
+	uint8_t msgout[8];
+	uint8_t msgbuf[8];
+	uint8_t stat[8];
 } __attribute__((__packed__));
 
 /* status can hold the SCSI_* status values, and 2 additional values: */
@@ -163,7 +163,7 @@ struct osiop_acb {
 	int flags;		/* cmd slot flags */
 #define ACB_F_TIMEOUT	0x01	/* command timeout */
 
-	u_int8_t intstat;	/* buffer to save sc_flags on disconnect */
+	uint8_t intstat;	/* buffer to save sc_flags on disconnect */
 };
 
 /*
@@ -183,8 +183,8 @@ struct osiop_tinfo {
 #define TI_NOSYNC	0x01	/* disable sync xfer on this target */
 #define TI_NODISC	0x02	/* disable disconnect on this target */
 	int state;		/* negotiation state */
-	u_int8_t sxfer;		/* value for SXFER reg */
-	u_int8_t sbcl;		/* value for SBCL reg */
+	uint8_t sxfer;		/* value for SXFER reg */
+	uint8_t sbcl;		/* value for SBCL reg */
 };
 
 struct osiop_softc {
@@ -197,7 +197,7 @@ struct osiop_softc {
 	bus_dmamap_t sc_scrdma;		/* script dma map */
 	bus_dmamap_t sc_dsdma;		/* script data dma map */
 
-	u_int32_t *sc_script;		/* ptr to script memory */
+	uint32_t *sc_script;		/* ptr to script memory */
 	struct osiop_ds *sc_ds;		/* ptr to data structure memory */
 
 	int sc_id;			/* adapter SCSI id */
@@ -228,14 +228,14 @@ struct osiop_softc {
 
 	int sc_minsync;
 
-	u_int8_t sc_dstat;
-	u_int8_t sc_sstat0;
-	u_int8_t sc_sstat1;
-	u_int8_t sc_istat;
-	u_int8_t sc_dcntl;
-	u_int8_t sc_ctest7;
-	u_int8_t sc_sien;
-	u_int8_t sc_dien;
+	uint8_t sc_dstat;
+	uint8_t sc_sstat0;
+	uint8_t sc_sstat1;
+	uint8_t sc_istat;
+	uint8_t sc_dcntl;
+	uint8_t sc_ctest7;
+	uint8_t sc_sien;
+	uint8_t sc_dien;
 };
 
 /* negotiation states */

@@ -1,4 +1,4 @@
-/* $NetBSD: oosiopvar.h,v 1.2 2003/05/03 18:11:23 wiz Exp $ */
+/* $NetBSD: oosiopvar.h,v 1.3 2005/01/02 12:22:19 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -33,13 +33,13 @@
 
 struct oosiop_xfer {
 	/* script for scatter/gather DMA (move*nsg+jump) */
-	u_int32_t datain_scr[(OOSIOP_NSG + 1) * 2];
-	u_int32_t dataout_scr[(OOSIOP_NSG + 1) * 2];
+	uint32_t datain_scr[(OOSIOP_NSG + 1) * 2];
+	uint32_t dataout_scr[(OOSIOP_NSG + 1) * 2];
 
-	u_int8_t msgin[8];
-	u_int8_t msgout[8];
-	u_int8_t status;
-	u_int8_t pad[7];
+	uint8_t msgin[8];
+	uint8_t msgout[8];
+	uint8_t status;
+	uint8_t pad[7];
 } __attribute__((__packed__));
 
 #define	SCSI_OOSIOP_NOSTATUS	0xff	/* device didn't report status */
@@ -95,8 +95,8 @@ TAILQ_HEAD(oosiop_cb_queue, oosiop_cb);
 struct oosiop_target {
 	struct oosiop_cb *nexus;
 	int flags;
-	u_int8_t scf;		/* synchronous clock divisor */
-	u_int8_t sxfer;		/* synchronous period and offset */
+	uint8_t scf;		/* synchronous clock divisor */
+	uint8_t sxfer;		/* synchronous period and offset */
 };
 
 /* target flags */
@@ -113,7 +113,7 @@ struct oosiop_softc {
 	bus_dmamap_t sc_scrdma;		/* script DMA map */
 
 	bus_addr_t sc_scrbase;		/* script DMA base address */
-	u_int32_t *sc_scr;		/* ptr to script memory */
+	uint32_t *sc_scr;		/* ptr to script memory */
 
 	int sc_chip;			/* 700 or 700-66 */
 #define	OOSIOP_700	0
@@ -122,8 +122,8 @@ struct oosiop_softc {
 	int		sc_id;		/* SCSI ID of this interface */
 	int		sc_freq;	/* SCLK frequency */
 	int		sc_ccf;		/* asynchronous divisor (*10) */
-	u_int8_t	sc_dcntl;
-	u_int8_t	sc_minperiod;
+	uint8_t		sc_dcntl;
+	uint8_t		sc_minperiod;
 
 	struct oosiop_target sc_tgt[OOSIOP_NTGT];
 
