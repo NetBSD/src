@@ -880,12 +880,12 @@ nbsd_thread_sync_cmd (char *exp, int from_tty)
   if ((ret = td_sync_info (ts, &tsi)) != 0)
     error ("nbsd_thread_sync_cmd: td_sync_info: %s", td_err_string (ret));
 
-  printf_filtered ("%p: %s ", (void *)addr, syncnames[tsi.sync_type]);
+  printf_filtered ("%p: %s", (void *)addr, syncnames[tsi.sync_type]);
 
   if (tsi.sync_type == TD_SYNC_MUTEX)
     {
       if (!tsi.sync_data.mutex.locked)
-	printf_filtered (" unlocked ");
+	printf_filtered (" unlocked");
       else
 	{
 	  td_thr_info (tsi.sync_data.mutex.owner, &ti);
@@ -895,15 +895,35 @@ nbsd_thread_sync_cmd (char *exp, int from_tty)
   else if (tsi.sync_type == TD_SYNC_SPIN)
     {
       if (!tsi.sync_data.spin.locked)
-	printf_filtered (" unlocked ");
+	printf_filtered (" unlocked");
       else
 	printf_filtered (" locked (waiters not tracked)");
     }
   else if (tsi.sync_type == TD_SYNC_JOIN)
     {
       td_thr_info (tsi.sync_data.join.thread, &ti);
-      printf_filtered (" %d ", ti.thread_id);
+      printf_filtered (" %d", ti.thread_id);
     }
+  else if (tsi.sync_type == TD_SYNC_RWLOCK)
+    {
+      if (!tsi.sync_data.rwlock.locked)
+	printf_filtered (" unlocked");
+      else
+	{
+	  printf_filtered (" locked");
+	  if (tsi.sync_data.rwlock.readlocks > 0)
+	    printf_filtered (" by %d reader%s", 
+			     tsi.sync_data.rwlock.readlocks,
+			     (tsi.sync_data.rwlock.readlocks > 1) ? "s" : "");
+	  else
+	    {
+	      td_thr_info (tsi.sync_data.rwlock.writeowner, &ti);
+	      printf_filtered (" by writer %d", ti.thread_id);
+	    }
+	}
+    }
+  else
+    printf_filtered("Unknown sync object type %d", tsi.sync_type);
 
   if (tsi.sync_haswaiters)
     {
