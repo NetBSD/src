@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 1998/08/28 23:05:55 dbj Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 1998/09/09 00:07:54 thorpej Exp $	*/
 
 /*
  * This file was taken from from mvme68k/mvme68k/vm_machdep.c
@@ -126,22 +126,14 @@ cpu_set_kpc(p, pc)
 
 /*
  * cpu_exit is called as the last action during exit.
- * We release the address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
- * Once finished, we call switch_exit, which switches to a temporary
- * pcb and stack and never returns.  We block memory allocation
- * until switch_exit has made things safe again.
+ *
+ * Block context switches and then call switch_exit() which will
+ * switch to another process thus we never return.
  */
 void
 cpu_exit(p)
 	struct proc *p;
 {
-
-#ifdef UVM
-	uvmspace_free(p->p_vmspace);
-#else
-	vmspace_free(p->p_vmspace);
-#endif
 
 	(void) splhigh();
 #ifdef UVM

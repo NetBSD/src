@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 1998/09/02 06:41:22 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.28 1998/09/09 00:07:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.27 1998/09/02 06:41:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.28 1998/09/09 00:07:53 thorpej Exp $");
 
 #include "opt_uvm.h"
 
@@ -145,10 +145,11 @@ cpu_swapin(p)
 
 /*
  * cpu_exit is called as the last action during exit.
- * We release the address space of the process, block interrupts,
- * and call switch_exit.  switch_exit switches to nullproc's PCB and stack,
- * then jumps into the middle of cpu_switch, as if it were switching
- * from nullproc.
+ *
+ * We clean up a little and then call switch_exit() with the old proc as an
+ * argument.  switch_exit() first switches to nullproc's PCB and stack,
+ * schedules the dead proc's vmspace and stack to be freed, then jumps
+ * into the middle of cpu_switch(), as if it were switching from nullproc.
  */
 void
 cpu_exit(p)
@@ -158,12 +159,8 @@ cpu_exit(p)
 		fpcurproc = (struct proc *)0;
 
 #if defined(UVM)
-	uvmspace_free(p->p_vmspace);
-
 	uvmexp.swtch++;
 #else
-	vmspace_free(p->p_vmspace);
-
 	cnt.v_swtch++;
 #endif
 	(void)splhigh();

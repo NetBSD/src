@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 1998/08/21 14:13:56 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.39 1998/09/09 00:07:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -312,10 +312,11 @@ cpu_set_kpc(p, pc)
 
 /*
  * cpu_exit is called as the last action during exit.
- * We release the address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
- * Since the latter is also the interrupt stack, we release it
- * from assembly code after switching to a temporary pcb+stack.
+ *
+ * We clean up a little and then call switchexit() with the old proc
+ * as an argument.  switchexit() switches to the idle context, schedules
+ * the old vmspace and stack to be freed, then selects a new process to
+ * run.
  */
 void
 cpu_exit(p)
@@ -330,12 +331,7 @@ cpu_exit(p)
 		}
 		free((void *)fs, M_SUBPROC);
 	}
-#if defined(UVM)
-	uvmspace_free(p->p_vmspace);
-#else
-	vmspace_free(p->p_vmspace);
-#endif
-	switchexit(kernel_map, p->p_addr, USPACE);
+	switchexit(p);
 	/* NOTREACHED */
 }
 

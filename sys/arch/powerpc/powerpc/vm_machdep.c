@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 1998/08/31 14:43:41 tsubai Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 1998/09/09 00:07:55 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -154,12 +154,11 @@ pagemove(from, to, size)
 
 /*
  * cpu_exit is called as the last action during exit.
- * We release the address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
  *
- * Since we don't have curproc anymore, we cannot sleep, and therefor
- * this is at least incorrect for the multiprocessor version.
- * Not sure whether we can get away with this in the single proc version.		XXX
+ * We clean up a little and then call switchexit() with the old proc
+ * as an argument.  switchexit() switches to the idle context, schedules
+ * the old vmspace and stack to be freed, then selects a new process to
+ * run.
  */
 void
 cpu_exit(p)
@@ -168,12 +167,7 @@ cpu_exit(p)
 	if (p == fpuproc)	/* release the fpu */
 		fpuproc = 0;
 	
-#if defined(UVM)
-	uvmspace_free(p->p_vmspace);
-#else
-	vmspace_free(p->p_vmspace);
-#endif
-	switchexit(kernel_map, p->p_addr, USPACE);
+	switchexit(p);
 }
 
 /*

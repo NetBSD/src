@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.3 1998/08/28 22:47:12 dbj Exp $	*/
+/*	$NetBSD: locore.s,v 1.4 1998/09/09 00:07:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -1113,7 +1113,8 @@ ASBSS(nullpcb,SIZEOF_PCB)
 
 /*
  * At exit of a process, do a switch for the last time.
- * Switch to a safe stack and PCB, and deallocate the process's resources.
+ * Switch to a safe stack and PCB, and select a new process to run.  The
+ * old stack and u-area will be freed by the reaper.
  */
 ENTRY(switch_exit)
 	movl	sp@(4),a0
@@ -1121,12 +1122,10 @@ ENTRY(switch_exit)
 	movl	#_ASM_LABEL(nullpcb),_C_LABEL(curpcb)
 	lea	_ASM_LABEL(tmpstk),sp	| goto a tmp stack
 
-	/* Free old process's resources. */
-	movl	#USPACE,sp@-		| size of u-area
-	movl	a0@(P_ADDR),sp@-	| address of process's u-area
-	movl	_C_LABEL(kernel_map),sp@- | map it was allocated in
-	jbsr	_C_LABEL(kmem_free)	| deallocate it
-	lea	sp@(12),sp		| pop args
+	/* Schedule the vmspace and stack to be freed. */
+	movl	a0,sp@-			| exit2(p)
+	jbsr	_C_LABEL(exit2)
+	lea	sp@(4),sp		| pop args
 
 	jra	_C_LABEL(cpu_switch)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 1998/07/04 22:18:34 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.9 1998/09/09 00:07:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -255,8 +255,7 @@ ASENTRY(Idle)
 	b	_ASM_LABEL(Idle)
 
 /*
- * switchexit gets called from cpu_exit to free the user structure
- * and kernel stack of the current process.
+ * switchexit gets called from cpu_exit to complete the exit procedure.
  */
 ENTRY(switchexit)
 /* First switch to the idle pcb/kernel stack */
@@ -265,12 +264,12 @@ ENTRY(switchexit)
 	lis	7,_C_LABEL(curpcb)@ha
 	stw	6,_C_LABEL(curpcb)@l(7)
 	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
-/* Now free the old user structure (args are already in r3, r4, r5) */
-#if defined(UVM)
-	bl	_C_LABEL(uvm_km_free)
-#else
-	bl	_C_LABEL(kmem_free)
-#endif
+	/*
+	 * Schedule the vmspace and stack to be freed (the proc arg is
+	 * already in r3).
+	 */
+	bl	_C_LABEL(exit2)
+
 /* Fall through to cpu_switch to actually select another proc */
 	li	3,0			/* indicate exited process */
 

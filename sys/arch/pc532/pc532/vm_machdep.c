@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 1998/09/02 19:17:21 matthias Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.28 1998/09/09 00:07:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -159,11 +159,9 @@ cpu_swapout(p)
 /*
  * cpu_exit is called as the last action during exit.
  *
- * We switch to a temorary stack and address space. Then we release
- * release the original address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
- * Once finished, we call cpu_exit, which never returns.
- * We block interrupts until cpu_switch has made things safe again.
+ * We clean up a little and then call switch_exit() with the old proc as an
+ * argument.  switch_exit() first switches to proc0's context, and finally
+ * jumps into switch() to wait for another process to wake up.
  */
 void
 cpu_exit(arg)
@@ -188,16 +186,9 @@ cpu_exit(arg)
 	lprd(sp, INTSTACK);
 	load_ptb(proc0paddr->u_pcb.pcb_ptb);
 
-	/* Free resources. */
-#if defined(UVM)
-	uvmspace_free(p->p_vmspace);
+	/* Schedule the vmspace and stack to be freed. */
 	(void) splhigh();
-	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
-#else
-	vmspace_free(p->p_vmspace);
-	(void) splhigh();
-	kmem_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
-#endif
+	exit2(p);
 
 	/* Don't update pcb in cpu_switch. */
 	curproc = NULL;

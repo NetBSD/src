@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.71 1998/08/13 21:36:04 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.72 1998/09/09 00:07:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -188,9 +188,8 @@ cpu_swapout(p)
  * cpu_exit is called as the last action during exit.
  *
  * We clean up a little and then call switch_exit() with the old proc as an
- * argument.  switch_exit() first switches to proc0's context, then does the
- * vmspace_free() and uvm_km_free() that we don't do here, and finally jumps
- * into switch() to wait for another process to wake up.
+ * argument.  switch_exit() first switches to proc0's context, and finally
+ * jumps into switch() to wait for another process to wake up.
  */
 void
 cpu_exit(p)

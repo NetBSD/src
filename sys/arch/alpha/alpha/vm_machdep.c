@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.37 1998/08/14 16:50:02 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.38 1998/09/09 00:07:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37 1998/08/14 16:50:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38 1998/09/09 00:07:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,10 +108,9 @@ cpu_coredump(p, vp, cred, chdr)
 
 /*
  * cpu_exit is called as the last action during exit.
- * We release the address space of the process, block interrupts,
- * and call switch_exit.  switch_exit switches to proc0's PCB and stack,
- * then jumps into the middle of cpu_switch, as if it were switching
- * from proc0.
+ * We block interrupts and call switch_exit.  switch_exit switches
+ * to proc0's PCB and stack, then jumps into the middle of cpu_switch,
+ * as if it were switching from proc0.
  */
 void
 cpu_exit(p)
@@ -128,12 +127,6 @@ cpu_exit(p)
 	 * vmspace's context until the switch to proc0 in switch_exit().
 	 */
 	pmap_deactivate(p);
-
-#if defined(UVM)
-	uvmspace_free(p->p_vmspace);
-#else
-	vmspace_free(p->p_vmspace);
-#endif
 
 	(void) splhigh();
 	switch_exit(p);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.29 1998/07/28 18:34:55 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.30 1998/09/09 00:07:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,20 +141,14 @@ void	switch_exit __P((struct proc *));
 
 /*
  * cpu_exit is called as the last action during exit.
- * We release the address space and machine-dependent resources,
- * block context switches and then call switch_exit() which will
- * free our stack and user area and switch to another process.
- * Thus, we never return.
+ *
+ * Block context switches and then call switch_exit() which will
+ * switch to another process thus we never return.
  */
-volatile void
+void
 cpu_exit(p)
 	struct proc *p;
 {
-#if defined(UVM)
-	uvmspace_free(p->p_vmspace);
-#else
-	vmspace_free(p->p_vmspace);
-#endif
 
 	(void)splhigh();
 #if defined(UVM)
@@ -163,7 +157,6 @@ cpu_exit(p)
 	cnt.v_swtch++;
 #endif
 	switch_exit(p);
-	for(;;); /* Get rid of a compile warning */
 	/* NOTREACHED */
 }
 

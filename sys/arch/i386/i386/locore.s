@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.199 1998/08/15 05:10:23 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.200 1998/09/09 00:07:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2111,24 +2111,15 @@ ENTRY(switch_exit)
 	/* Interrupts are okay again. */
 	sti
 
-	/* Thoroughly nuke the old process's resources. */
-	pushl	P_ADDR(%edi)
+	/*
+	 * Nuke the TSS and schedule the dead process's
+	 * vmspace and stack to be freed.
+	 */
+	pushl	P_ADDR(%edi)		/* tss_free(p->p_addr) */
 	call	_tss_free
-	pushl	P_VMSPACE(%edi)
-#if defined(UVM)
-	call	_uvmspace_free
-#else
-	call	_vmspace_free
-#endif
-	pushl	$USPACE
-	pushl	P_ADDR(%edi)
-	pushl	_kernel_map
-#if defined(UVM)
-	call	_uvm_km_free
-#else
-	call	_kmem_free
-#endif
-	addl	$20,%esp
+	pushl	%edi			/* exit2(p) */
+	call	_exit2
+	addl	$8,%esp
 
 	/* Jump into cpu_switch() with the right state. */
 	movl	%ebx,%esi
