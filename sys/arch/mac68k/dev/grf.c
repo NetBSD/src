@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.28 1995/07/06 17:13:45 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.29 1995/09/21 11:13:27 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -352,7 +352,8 @@ grfaddr(gp, off)
 	u_long	addr;
 
 	if (off < mac68k_round_page(gm->fbsize + gm->fboff) ) {
-		addr = (*grfdev[gp->g_type].gd_phys) (gp, gm->fbbase) + off;
+		addr = (u_long) (*grfdev[gp->g_type].gd_phys) (gp, gm->fbbase)
+				+ off;
 		return mac68k_btop(addr);
 	}
 	/* bogus */
