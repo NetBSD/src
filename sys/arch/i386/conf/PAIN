@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.46 1994/12/11 16:20:54 mycroft Exp $
+#	$NetBSD: PAIN,v 1.47 1995/01/16 12:00:51 mycroft Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -72,7 +72,6 @@ config		netbsd	swap generic
 options		GENERIC
 
 isa0	at root
-eisa0	at root
 #pci0	at root
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
@@ -107,13 +106,13 @@ lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #scsibus* at aha?
-ahb*	at eisa? slot ? irq ?		# Adaptec 174[024] SCSI controllers
+ahb*	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
 aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
 #bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt*	at eisa? slot ? irq ?
+#bt*	at isa? port ? irq ?
 #scsibus* at bt?
 #ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
 #scsibus* at ncr?
@@ -121,7 +120,7 @@ scsibus* at aic?
 #scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha*	at eisa? slot ? irq ?		# UltraStor 24f SCSI controllers
+#uha*	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
 #scsibus* at uha?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
