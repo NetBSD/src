@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.1.2.2 2001/11/11 03:44:06 shin Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.1.2.3 2001/11/12 16:17:28 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -127,6 +127,13 @@ r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t w2va, eva;
 
+	eva = round_line(va + size);
+	va = trunc_line(va);
+
+	mips_dcache_wbinv_range_index(va, (eva - va));
+
+	__asm __volatile("sync");
+
 	/*
 	 * Since we're doing Index ops, we expect to not be able
 	 * to access the address we've been given.  So, get the
@@ -138,10 +145,6 @@ r5k_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 	eva = round_line(va + size);
 	va = trunc_line(va);
 	w2va = va + mips_picache_way_size;
-
-	mips_dcache_wbinv_range_index(va, (eva - va));
-
-	__asm __volatile("sync");
 
 	while ((eva - va) >= (16 * 32)) {
 		cache_r4k_op_16lines_32_2way(va, w2va,
