@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.14 2003/09/22 14:18:38 cl Exp $	*/
+/*	$NetBSD: signal.h,v 1.15 2003/10/18 17:57:06 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -41,6 +41,13 @@ typedef int sig_atomic_t;
 #define __HAVE_SIGINFO
 
 #if defined(_NETBSD_SOURCE)
+
+#ifdef COMPAT_16
+#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
+#else
+#define SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
+
 /*
  * Get the "code" values
  */
