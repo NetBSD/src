@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_apollo_reg.h,v 1.11 2002/04/23 20:41:17 bouyer Exp $	*/
+/*	$NetBSD: pciide_apollo_reg.h,v 1.12 2002/08/25 17:25:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -89,9 +89,10 @@
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
 #define APO_UDMA_CLK66(channel) (0x08 << ((1 - (channel)) << 4))
 
+static const int8_t apollo_udma133_tim[] __attribute__((__unused__)) =
+    {0x07, 0x07, 0x06, 0x04, 0x02, 0x01, 0x00};
 static const int8_t apollo_udma100_tim[] __attribute__((__unused__)) =
-    /* XXX Check modes other than 2, 4, 5 */
-    {0x0f, 0x07, 0x04, 0x02, 0x01, 0x00};
+    {0x07, 0x07, 0x04, 0x02, 0x01, 0x00};
 static const int8_t apollo_udma66_tim[] __attribute__((__unused__)) =
     {0x03, 0x03, 0x02, 0x01, 0x00};
 static const int8_t apollo_udma33_tim[] __attribute__((__unused__)) =
