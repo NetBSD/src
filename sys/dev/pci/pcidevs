@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.375 2001/12/16 21:59:47 thorpej Exp $
+$NetBSD: pcidevs,v 1.376 2001/12/20 03:24:22 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1694,6 +1694,7 @@ product SIS 85C496		0x0496	85C496
 product SIS 530HB		0x0530	530 Host to PCI Bridge
 product SIS 85C601		0x0601	85C601
 product SIS 645			0x0645	SiS 645 Host Bridge
+product SIS 630			0x0630	SiS 630 Host Bridge
 product SIS 650			0x0650	SiS 650 Host Bridge
 product SIS 730			0x0730	SiS 730 Host Bridge
 product SIS 735			0x0735	SiS 735 Host Bridge
