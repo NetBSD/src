@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.10.4.1 1996/05/27 09:53:45 is Exp $	*/
+/*	$NetBSD: adutil.c,v 1.10.4.2 1996/05/27 10:21:29 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -159,18 +159,18 @@ CapitalChar(ch, inter)
 	return(ch);
 }
 
-long
+u_int32_t
 adoscksum(bp, n)
 	struct buf *bp;
-	long n;
+	int n;
 {
-	long sum, *lp;
+	u_int32_t sum, *lp;
 	
-	lp = (long *)bp->b_data;
+	lp = (u_int32_t *)bp->b_data;
 	sum = 0;
 
 	while (n--)
-		sum += *lp++;
+		sum += ntohl(*lp++);
 	return(sum);
 }
 
@@ -223,7 +223,7 @@ tvtods(tvp, dsp)
 #endif
 
 #ifndef m68k
-long
+u_int32_t
 adoswordn(bp, wn)
 	struct buf *bp;
 	int wn;
@@ -231,6 +231,6 @@ adoswordn(bp, wn)
 	/*
 	 * ados stored in network (big endian) order
 	 */
-	return(ntohl(*((long *)bp->b_data + wn)));
+	return(ntohl(*((u_int32_t *)bp->b_data + wn)));
 }
 #endif
