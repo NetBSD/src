@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.h,v 1.2 2002/12/08 21:53:10 manu Exp $ */
+/*	$NetBSD: darwin_machdep.h,v 1.3 2003/09/07 07:50:31 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef	_DARWIN_MACHDEP_H_
 #define	_DARWIN_MACHDEP_H_
+
+#include <compat/darwin/darwin_signal.h>
 
 void darwin_fork_child_return(void *);
 
@@ -96,6 +98,10 @@ struct darwin_sigframe {
 		struct darwin_ucontext uctx;
 	} duc;
 	int nocopy3[56];
+};
+
+struct darwin_slock {
+	volatile unsigned int lock_data[10];
 };
 
 #endif /* !_DARWIN_MACHDEP_H_ */
