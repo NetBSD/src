@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
-#	$Id: Makefile.hp300,v 1.17 1994/07/05 17:11:24 mycroft Exp $
+#	$Id: Makefile.hp300,v 1.18 1994/07/18 07:15:49 mycroft Exp $
 #
 # Makefile for NetBSD
 #
@@ -35,7 +35,7 @@ HP300=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dmc68020 -Dhp300 -DFPCOPROC
-CFLAGS=	-O ${COPTS}
+CFLAGS=	-O6 ${COPTS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
