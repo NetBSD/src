@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.291 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.292 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -644,3 +644,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	gzip(1):  Switch to non GPL gzip.  [mrg 20040326]
 	aac(4): Add support for Adaptec 2200S (Vulcan 2M) & Dell PERC 320/DC
 		[gendalia 20040326]
+	postfix(1): update to 2.0.19 [heas 20040327]
