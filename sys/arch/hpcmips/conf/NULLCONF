@@ -1,11 +1,14 @@
 #
-# 	$NetBSD: NULLCONF,v 1.8 2000/09/27 10:21:23 shin Exp $
+# 	$NetBSD: NULLCONF,v 1.9 2001/04/11 08:23:26 sato Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	8
 options 	MIPS3			# R4000/R4400/R4600 CPUs
-options 	VR41X1			# NEC VR41x1 series
-options		MIPS3_4100		# VR4100 core
+options 	MIPS3_4100		# VR4100 core
+options 	VR41XX			# NEC VR41xx series
+options		VR4102			# NEC VR4102
+options		VR4111			# NEC VR4111
+options		VR4121			# NEC VR4121
 options 	NOFPU			# No FPU
 options 	SOFTFLOAT		# emulate FPU insn
 options		MIPS3_L2CACHE_ABSENT
