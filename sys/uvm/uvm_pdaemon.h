@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.h,v 1.6 1999/03/25 18:48:56 mrg Exp $	*/
+/*	$NetBSD: uvm_pdaemon.h,v 1.7 1999/06/21 17:25:12 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -73,10 +73,14 @@
  * uvm_pdaemon.h: page daemon hooks
  */
 
+#ifdef _KERNEL
+
 /*
  * prototypes
  */
 
 void uvm_wait __P((char *));
+
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_PDAEMON_H_ */
