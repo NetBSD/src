@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.51 1999/05/02 17:26:14 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -478,10 +478,7 @@ pmap_bootstrap(nextpa, firstpa)
 
 	maxaddr = high[numranges - 1] - m68k_ptob(1);
 	high[numranges - 1] -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
-	avail_remaining -= (m68k_round_page(MSGBUFSIZE) + m68k_ptob(1));
 	avail_end = high[numranges - 1];
-	avail_remaining = m68k_btop(m68k_trunc_page(avail_remaining));
-
 	mem_size = m68k_ptob(physmem);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -494,7 +491,7 @@ pmap_bootstrap(nextpa, firstpa)
 	{
 		int *kp;
 
-		kp = (int *) &protection_codes;
+		kp = (int *)&protection_codes;
 		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
 		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
