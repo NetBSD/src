@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.8 2001/11/27 01:12:56 thorpej Exp $	*/
+/*	$NetBSD: stubs.c,v 1.9 2002/03/06 13:10:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -58,7 +58,7 @@ extern BootConfig bootconfig;
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 

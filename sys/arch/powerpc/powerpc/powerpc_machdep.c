@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.8 2001/08/26 02:47:39 matt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.9 2002/03/06 13:10:23 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -124,7 +124,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 /*
  * Crash dump handling.
  */
-u_long dumpmag = 0x8fca0101;		/* magic number */
+u_int32_t dumpmag = 0x8fca0101;		/* magic number */
 int dumpsize = 0;			/* size of dump in pages */
 long dumplo = -1;			/* blocks */
 

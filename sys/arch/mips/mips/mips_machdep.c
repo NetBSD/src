@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.122 2002/03/05 15:53:00 simonb Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.123 2002/03/06 13:10:22 tsutsui Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.122 2002/03/05 15:53:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.123 2002/03/06 13:10:22 tsutsui Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -1295,7 +1295,7 @@ extern int mem_cluster_cnt;
 /*
  * These variables are needed by /sbin/savecore.
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 

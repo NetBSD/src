@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2001/09/10 21:19:11 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 2002/03/06 13:10:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -526,7 +526,7 @@ vaddr_t	p;
 	return(p + BYTES_PER_DUMP);
 }
 
-unsigned	dumpmag  = 0x8fca0101;	/* magic number for savecore	*/
+u_int32_t	dumpmag  = 0x8fca0101;	/* magic number for savecore	*/
 int		dumpsize = 0;		/* also for savecore (pages)	*/
 long		dumplo   = 0;		/* (disk blocks)		*/
 

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.252 2001/09/18 19:36:34 jdolecek Exp $ */
+/* $NetBSD: machdep.c,v 1.253 2002/03/06 13:10:18 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252 2001/09/18 19:36:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.253 2002/03/06 13:10:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1151,7 +1151,7 @@ haltsys:
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
