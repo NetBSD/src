@@ -1,4 +1,4 @@
-.\"	$NetBSD: esa.4,v 1.4 2002/01/24 22:24:19 he Exp $
+.\"	$NetBSD: esa.4,v 1.5 2003/08/03 15:13:57 jmcneill Exp $
 .\"
 .\" Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
 .\" All rights reserved.
@@ -33,6 +33,7 @@
 .Sh SYNOPSIS
 .Cd "esa*   at pci? dev ? function ?"
 .Cd "audio* at esa?"
+.Cd "options ESA_NUM_VOICES=4"
 .Sh DESCRIPTION
 The
 .Nm
@@ -42,6 +43,11 @@ on the PCI bus. These devices are popular in laptop systems.
 The Allegro-1 and the Maestro-3 are full-duplex devices that allow
 independent playback and recording at sample rates between 8000Hz and
 48000Hz and are capable of playback at 8 and 16 bit in mono and stereo.
+.Pp
+Setting options ESA_NUM_VOICES=4 allows for hardware mixing in the device
+driver. Note that due to microcode constraints, the
+.Nm
+driver is currently limited to 4 simultaneous voices.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr pci 4
@@ -51,6 +57,6 @@ The
 device driver appeared in
 .Nx 1.5.3 .
 .Sh AUTHORS
-.An Jared D. McNeill Aq jmcneill@invisible.yi.org
+.An Jared D. McNeill Aq jmcneill@invisible.ca
 .Sh BUGS
 Hardware volume control is not yet supported by this driver.
