@@ -97,7 +97,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
 {
   struct md_coredump *core_reg;
   struct trapframe *tf;
-  struct fpreg *fs;
+  struct fpu *fs;
   register int regnum;
 
   /* We get everything from the .reg section. */
@@ -106,9 +106,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
 
   core_reg = (struct md_coredump *)core_reg_sect;
   tf = &core_reg->frame;
-#if 0
-  fs = &core_reg->md_fpstate;
-#endif
+  fs = &core_reg->fpstate;
 
   if (core_reg_size < sizeof(*core_reg)) {
     fprintf_unfiltered (gdb_stderr, "Couldn't read regs from core file\n");
@@ -119,11 +117,8 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
   for (regnum = 0; regnum < 32; regnum++)
     *(long *) &registers[REGISTER_BYTE (regnum)] = tf->fixreg[regnum];
 
-#if 0
   /* Floating point registers */
-  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)],
-	  &fs->fpr_regs[0], sizeof(fs->fpr_regs));
-#endif
+  memcpy (&registers[REGISTER_BYTE (FP0_REGNUM)], fs->fpr, sizeof(fs->fpr));
 
   /* Special registers (PC, LR) */
   *(long *) &registers[REGISTER_BYTE (PC_REGNUM)] = tf->srr0;
