@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wwinit.c	3.40 (Berkeley) 8/12/90";*/
-static char rcsid[] = "$Id: wwinit.c,v 1.3 1993/08/01 18:01:44 mycroft Exp $";
+static char rcsid[] = "$Id: wwinit.c,v 1.4 1993/12/02 22:34:42 mycroft Exp $";
 #endif /* not lint */
 
 #include "ww.h"
@@ -118,11 +118,11 @@ wwinit()
 		wwerrno = WWE_BADTERM;
 		goto bad;
 	}
-#ifdef OLD_TTY
-	wwospeed = wwoldtty.ww_sgttyb.sg_ospeed;
-#else
+#ifndef OLD_TTY
 	wwospeed = cfgetospeed(&wwoldtty.ww_termios);
-#endif
+	wwbaud = wwospeed;
+#else
+	wwospeed = wwoldtty.ww_sgttyb.sg_ospeed;
 	switch (wwospeed) {
 	default:
 	case B0:
@@ -181,7 +181,18 @@ wwinit()
 #endif
 		wwbaud = 38400;
 		break;
+#ifdef B57600
+	case B57600:
+		wwbaud = 57600;
+		break;
+#endif
+#ifdef B115200
+	case B11520:
+		wwbaud = 115200;
+		break;
+#endif
 	}
+#endif
 
 	if (xxinit() < 0)
 		goto bad;
