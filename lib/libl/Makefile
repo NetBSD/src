@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.1 (Berkeley) 6/18/90
-#	$Id: Makefile,v 1.4 1994/12/20 15:51:13 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1995/02/25 09:02:37 cgd Exp $
 
 LIB=	l
 SRCS=	libmain.c libyywrap.c
