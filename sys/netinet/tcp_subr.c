@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.120 2001/11/04 13:42:27 matt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.121 2001/11/04 20:55:29 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1057,7 +1057,7 @@ tcp_freeq(tp)
 
 	TCP_REASS_LOCK_CHECK(tp);
 
-	while ((qe = tp->segq.lh_first) != NULL) {
+	while ((qe = LIST_FIRST(&tp->segq)) != NULL) {
 #ifdef TCPREASS_DEBUG
 		printf("tcp_freeq[%p,%d]: %u:%u(%u) 0x%02x\n",
 			tp, i++, qe->ipqe_seq, qe->ipqe_seq + qe->ipqe_len,
@@ -1084,10 +1084,9 @@ tcp_drain()
 	/*
 	 * Free the sequence queue of all TCP connections.
 	 */
-	inp = tcbtable.inpt_queue.cqh_first;
+	inp = CIRCLEQ_FIRST(&tcbtable.inpt_queue);
 	if (inp)						/* XXX */
-	for (; inp != (struct inpcb *)&tcbtable.inpt_queue;
-	    inp = inp->inp_queue.cqe_next) {
+	CIRCLEQ_FOREACH(inp, &tcbtable.inpt_queue, inp_queue) {
 		if ((tp = intotcpcb(inp)) != NULL) {
 			/*
 			 * We may be called from a device's interrupt

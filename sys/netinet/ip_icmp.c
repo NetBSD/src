@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.64 2001/11/04 13:38:50 matt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.65 2001/11/04 20:55:27 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -668,8 +668,7 @@ icmp_reflect(m)
 
 	/* look for packet sent to broadcast address */
 	if (ia == NULL && (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
-		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;  
-		    ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
+		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			if (in_hosteq(t,ifatoia(ifa)->ia_broadaddr.sin_addr)) {
@@ -722,8 +721,7 @@ icmp_reflect(m)
 	   interface.  This can happen when routing is asymmetric, or
 	   when the incoming packet was encapsulated */
 	if (sin == (struct sockaddr_in *)0) {
-		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;  
-		     ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
+		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			sin = &(ifatoia(ifa)->ia_addr);
@@ -738,8 +736,7 @@ icmp_reflect(m)
 	 * interface.
 	 */
 	if (sin == (struct sockaddr_in *)0)
-		for (ia = in_ifaddr.tqh_first; ia != NULL;
-		    ia = ia->ia_list.tqe_next) {
+		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 			if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
 				continue;
 			sin = &ia->ia_addr;

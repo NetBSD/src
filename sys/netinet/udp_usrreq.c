@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.88 2001/11/02 02:37:50 itojun Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.89 2001/11/04 20:55:29 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -635,9 +635,7 @@ udp4_realinput(src, dst, m, off)
 		/*
 		 * Locate pcb(s) for datagram.
 		 */
-		for (inp = udbtable.inpt_queue.cqh_first;
-		    inp != (struct inpcb *)&udbtable.inpt_queue;
-		    inp = inp->inp_queue.cqe_next) {
+		CIRCLEQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
 			if (inp->inp_lport != *dport)
 				continue;
 			if (!in_nullhost(inp->inp_laddr)) {
@@ -701,12 +699,9 @@ in6_mcmatch(in6p, ia6, ifp)
 	if (im6o == NULL)
 		return 0;
 
-	for (imm = im6o->im6o_memberships.lh_first; imm != NULL;
-	     imm = imm->i6mm_chain.le_next) {
-		if ((ifp == NULL ||
-		     imm->i6mm_maddr->in6m_ifp == ifp) &&
-		    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
-				       ia6))
+	LIST_FOREACH(imm, &im6o->im6o_memberships, i6mm_chain) {
+		if ((ifp == NULL || imm->i6mm_maddr->in6m_ifp == ifp) &&
+		    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr, ia6))
 			return 1;
 	}
 	return 0;

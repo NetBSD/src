@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.56 2001/07/22 13:34:11 wiz Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.57 2001/11/04 20:55:28 matt Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -201,8 +201,7 @@ static int pim_assert;
 	struct mfc *_rt; \
 	(rt) = 0; \
 	++mrtstat.mrts_mfc_lookups; \
-	for (_rt = mfchashtbl[MFCHASH(o, g)].lh_first; \
-	     _rt; _rt = _rt->mfc_hash.le_next) { \
+	LIST_FOREACH(_rt, &mfchashtbl[MFCHASH(o, g)], mfc_hash) { \
 		if (in_hosteq(_rt->mfc_origin, (o)) && \
 		    in_hosteq(_rt->mfc_mcastgrp, (g)) && \
 		    _rt->mfc_stall == 0) { \
@@ -472,8 +471,8 @@ ip_mrouter_done()
 	for (i = 0; i < MFCTBLSIZ; i++) {
 		struct mfc *rt, *nrt;
 
-		for (rt = mfchashtbl[i].lh_first; rt; rt = nrt) {
-			nrt = rt->mfc_hash.le_next;
+		for (rt = LIST_FIRST(&mfchashtbl[i]); rt; rt = nrt) {
+			nrt = LIST_NEXT(rt, mfc_hash);
 			
 			expire_mfc(rt);
 		}
@@ -810,7 +809,7 @@ add_mfc(m)
 	 */
 	nstl = 0;
 	hash = MFCHASH(mfccp->mfcc_origin, mfccp->mfcc_mcastgrp);
-	for (rt = mfchashtbl[hash].lh_first; rt; rt = rt->mfc_hash.le_next) {
+	LIST_FOREACH(rt, &mfchashtbl[hash], mfc_hash) {
 		if (in_hosteq(rt->mfc_origin, mfccp->mfcc_origin) &&
 		    in_hosteq(rt->mfc_mcastgrp, mfccp->mfcc_mcastgrp) &&
 		    rt->mfc_stall != 0) {
@@ -1108,7 +1107,7 @@ ip_mforward(m, ifp)
 	    
 	/* is there an upcall waiting for this packet? */
 	hash = MFCHASH(ip->ip_src, ip->ip_dst);
-	for (rt = mfchashtbl[hash].lh_first; rt; rt = rt->mfc_hash.le_next) {
+	LIST_FOREACH(rt, &mfchashtbl[hash], mfc_hash) {
 	    if (in_hosteq(ip->ip_src, rt->mfc_origin) &&
 		in_hosteq(ip->ip_dst, rt->mfc_mcastgrp) &&
 		rt->mfc_stall != 0)
@@ -1225,8 +1224,8 @@ expire_upcalls(v)
 		if (nexpire[i] == 0)
 			continue;
 
-		for (rt = mfchashtbl[i].lh_first; rt; rt = nrt) {
-			nrt = rt->mfc_hash.le_next;
+		for (rt = LIST_FIRST(&mfchashtbl[i]); rt; rt = nrt) {
+			nrt = LIST_NEXT(rt, mfc_hash);
 
 			if (rt->mfc_expire == 0 ||
 			    --rt->mfc_expire > 0)
