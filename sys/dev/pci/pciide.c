@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.2 1998/03/04 19:18:22 cgd Exp $	*/
+/*	$NetBSD: pciide.c,v 1.3 1998/03/04 19:19:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -194,7 +194,7 @@ pciide_attach(parent, self, aux)
 		sc->sc_dma_ioh_valid = (pci_mapreg_map(pa,
 		    PCIIDE_REG_BUS_MASTER_DMA, PCI_MAPREG_TYPE_IO, 0,
 		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
-		printf("%s: Bus Master DMA support present, but unused (%s)\n",
+		printf("%s: bus-master DMA support present, but unused (%s)\n",
 		    sc->sc_dev.dv_xname,
 		    sc->sc_dma_ioh_valid ? "no driver support" :
 		      "couldn't map regs!");
