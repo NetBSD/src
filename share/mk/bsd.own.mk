@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.425 2004/11/25 08:09:14 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.426 2004/11/28 07:00:52 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -204,6 +204,9 @@ MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
 TSORT=		${TOOLDIR}/bin/${_TOOL_PREFIX}tsort -q
 YACC=		${TOOLDIR}/bin/${_TOOL_PREFIX}yacc
 
+TOOL_AMIGAAOUT2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-aout2bb
+TOOL_AMIGAELF2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-elf2bb
+TOOL_AMIGATXLT=		${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-txlt
 TOOL_ASN1_COMPILE=	${TOOLDIR}/bin/${_TOOL_PREFIX}asn1_compile
 TOOL_BEBOXELF2PEF=	${TOOLDIR}/bin/${_TOOL_PREFIX}bebox-elf2pef
 TOOL_BEBOXMKBOOTIMAGE=	${TOOLDIR}/bin/${_TOOL_PREFIX}bebox-mkbootimage
