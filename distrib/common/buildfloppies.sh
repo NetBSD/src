@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.6 2003/03/07 09:33:53 lukem Exp $
+# $NetBSD: buildfloppies.sh,v 1.7 2003/11/09 23:44:48 lukem Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,6 +63,11 @@ plural()
 	[ $1 -ne 1 ] && echo "s"
 }
 
+roundup()
+{
+	echo $(( ( $1 + $2 - 1 ) / ( $2 ) ))
+}
+
 
 #	parse and check arguments
 #
@@ -96,7 +101,6 @@ floppy=floppy.$$.tar
 trap "rm -f ${floppy}" 0 1 2 3			# EXIT HUP INT QUIT
 rm -f ${floppybase}?${suffix}
 
-
 #	create tar file
 #
 dd if=/dev/zero of=${floppy} bs=8k count=1 2>/dev/null
@@ -111,14 +115,17 @@ fi
 #	check size against available number of disks
 #
 bytes=$( ls -l "${floppy}" | awk '{print $5}' )
-blocks=$(( ${bytes} / 512 ))
-numdisks=$(( ( ${blocks} + ${floppysize} - 1 ) / ${floppysize} ))
+blocks=$(roundup ${bytes} 512)
+	# when calculating numdisks, take into account:
+	#	a) the image already has an 8K tar header prepended
+	#	b) each floppy needs an 8K tar volume header
+numdisks=$(roundup ${blocks}-16 ${floppysize}-16)
 if [ -z "${maxdisks}" ]; then
 	maxdisks=${numdisks}
 fi
 
 if [ ${numdisks} -gt ${maxdisks} ]; then
-	excess=$(( ( ${blocks} - ${floppysize} * ${maxdisks} ) * 512 ))
+	excess=$(( ( ${blocks} - (${floppysize} - 16) * ${maxdisks} ) * 512 ))
 	echo 1>&2 \
 	    "$prog: Image is ${excess} bytes ($(( ${excess} / 1024 )) KB)"\
 	    "too big to fit on ${maxdisks} disk"$(plural ${maxdisks})
@@ -164,13 +171,6 @@ while [ ${curdisk} -le ${numdisks} ]; do
 
 	curdisk=$(( ${curdisk} + 1 ))
 done
-
-#
-# XXX:	the old bootfloppy generation code used to zero the last 0.5k of the
-#	end of the image in single disk configs; that possibly trashed real
-#	data???
-#	is that functionality still required?
-#
 
 #	pad last disk if necessary
 #
