@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.451 2002/03/14 12:26:38 uwe Exp $
+# $NetBSD: mi,v 1.452 2002/03/16 17:31:23 martin Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -270,12 +270,12 @@
 ./usr/share/man/cat1/patch.0			man-util-catman
 ./usr/share/man/cat1/pawd.0			man-amd-catman
 ./usr/share/man/cat1/pax.0			man-util-catman
+./usr/share/man/cat1/pgrep.0			man-util-catman
 ./usr/share/man/cat1/pkg_add.0			man-pkgutil-catman
 ./usr/share/man/cat1/pkg_admin.0		man-pkgutil-catman
 ./usr/share/man/cat1/pkg_create.0		man-pkgutil-catman
 ./usr/share/man/cat1/pkg_delete.0		man-pkgutil-catman
 ./usr/share/man/cat1/pkg_info.0			man-pkgutil-catman
-./usr/share/man/cat1/pgrep.0			man-util-catman
 ./usr/share/man/cat1/pkill.0			man-util-catman
 ./usr/share/man/cat1/pmc.0			man-util-catman
 ./usr/share/man/cat1/popd.0			man-util-catman
@@ -599,11 +599,11 @@
 ./usr/share/man/cat4/envsys.0			man-sys-catman
 ./usr/share/man/cat4/ep.0			man-sys-catman
 ./usr/share/man/cat4/epic.0			man-sys-catman
+./usr/share/man/cat4/esa.0			man-sys-catman
 ./usr/share/man/cat4/esh.0			man-sys-catman
 ./usr/share/man/cat4/esis.0			man-sys-catman
 ./usr/share/man/cat4/esl.0			man-sys-catman
 ./usr/share/man/cat4/esm.0			man-sys-catman
-./usr/share/man/cat4/esa.0			man-sys-catman
 ./usr/share/man/cat4/eso.0			man-sys-catman
 ./usr/share/man/cat4/esp.0			man-sys-catman
 ./usr/share/man/cat4/ess.0			man-sys-catman
@@ -677,13 +677,6 @@
 ./usr/share/man/cat4/i386/opms.0		man-sys-catman
 ./usr/share/man/cat4/i386/pcibios.0		man-sys-catman
 ./usr/share/man/cat4/i386/pnpbios.0		man-sys-catman
-./usr/share/man/cat4/i4b.0			man-sys-catman
-./usr/share/man/cat4/i4bctl.0			man-sys-catman
-./usr/share/man/cat4/i4bipr.0			man-sys-catman
-./usr/share/man/cat4/i4bisppp.0			man-sys-catman
-./usr/share/man/cat4/i4brbch.0			man-sys-catman
-./usr/share/man/cat4/i4btel.0			man-sys-catman
-./usr/share/man/cat4/i4btrc.0			man-sys-catman
 ./usr/share/man/cat4/icmp.0			man-sys-catman
 ./usr/share/man/cat4/icmp6.0			man-sys-catman
 ./usr/share/man/cat4/icsphy.0			man-sys-catman
@@ -706,13 +699,20 @@
 ./usr/share/man/cat4/ipkdb.0			man-sys-catman
 ./usr/share/man/cat4/ipl.0			man-sys-catman
 ./usr/share/man/cat4/ipnat.0			man-sys-catman
+./usr/share/man/cat4/ippp.0			man-sys-catman
 ./usr/share/man/cat4/ipsec.0			man-sys-catman
 ./usr/share/man/cat4/irda.0			man-sys-catman
 ./usr/share/man/cat4/irframe.0			man-sys-catman
 ./usr/share/man/cat4/irframetty.0		man-sys-catman
+./usr/share/man/cat4/irip.0			man-sys-catman
 ./usr/share/man/cat4/isa.0			man-sys-catman
 ./usr/share/man/cat4/isabeep.0			man-sys-catman
 ./usr/share/man/cat4/isapnp.0			man-sys-catman
+./usr/share/man/cat4/isdn.0			man-sys-catman
+./usr/share/man/cat4/isdnbchan.0		man-sys-catman
+./usr/share/man/cat4/isdnctl.0			man-sys-catman
+./usr/share/man/cat4/isdntel.0			man-sys-catman
+./usr/share/man/cat4/isdntrc.0			man-sys-catman
 ./usr/share/man/cat4/isic.0			man-sys-catman
 ./usr/share/man/cat4/iso.0			man-sys-catman
 ./usr/share/man/cat4/isp.0			man-sys-catman
@@ -1361,6 +1361,7 @@
 ./usr/share/man/cat8/ipfstat.0			man-ipf-catman
 ./usr/share/man/cat8/ipmon.0			man-ipf-catman
 ./usr/share/man/cat8/ipnat.0			man-ipf-catman
+./usr/share/man/cat8/ipppctl.0			man-isdn-catman
 ./usr/share/man/cat8/irda.0			man-sysutil-catman
 ./usr/share/man/cat8/irdaattach.0		man-sysutil-catman
 ./usr/share/man/cat8/isdnd.0			man-isdn-catman
@@ -1368,7 +1369,6 @@
 ./usr/share/man/cat8/isdntel.0			man-isdn-catman
 ./usr/share/man/cat8/isdntelctl.0		man-isdn-catman
 ./usr/share/man/cat8/isdntrace.0		man-isdn-catman
-./usr/share/man/cat8/ispppcontrol.0		man-isdn-catman
 ./usr/share/man/cat8/iteconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/kadmin.0			man-krb5-catman
 ./usr/share/man/cat8/kadmind.0			man-krb5-catman
@@ -1942,12 +1942,12 @@
 ./usr/share/man/man1/patch.1			man-util-man
 ./usr/share/man/man1/pawd.1			man-amd-man
 ./usr/share/man/man1/pax.1			man-util-man
+./usr/share/man/man1/pgrep.1			man-util-man
 ./usr/share/man/man1/pkg_add.1			man-pkgutil-man
 ./usr/share/man/man1/pkg_admin.1		man-pkgutil-man
 ./usr/share/man/man1/pkg_create.1		man-pkgutil-man
 ./usr/share/man/man1/pkg_delete.1		man-pkgutil-man
 ./usr/share/man/man1/pkg_info.1			man-pkgutil-man
-./usr/share/man/man1/pgrep.1			man-util-man
 ./usr/share/man/man1/pkill.1			man-util-man
 ./usr/share/man/man1/pmc.1			man-util-man
 ./usr/share/man/man1/popd.1			man-util-man
@@ -2212,8 +2212,8 @@
 ./usr/share/man/man4/auich.4			man-sys-man
 ./usr/share/man/man4/autri.4			man-sys-man
 ./usr/share/man/man4/auvia.4			man-sys-man
-./usr/share/man/man4/az.4			man-sys-man
 ./usr/share/man/man4/awi.4			man-sys-man
+./usr/share/man/man4/az.4			man-sys-man
 ./usr/share/man/man4/bba.4			man-sys-man
 ./usr/share/man/man4/bha.4			man-sys-man
 ./usr/share/man/man4/bicc.4			man-sys-man
@@ -2273,11 +2273,11 @@
 ./usr/share/man/man4/envsys.4			man-sys-man
 ./usr/share/man/man4/ep.4			man-sys-man
 ./usr/share/man/man4/epic.4			man-sys-man
+./usr/share/man/man4/esa.4			man-sys-man
 ./usr/share/man/man4/esh.4			man-sys-man
 ./usr/share/man/man4/esis.4			man-sys-man
 ./usr/share/man/man4/esl.4			man-sys-man
 ./usr/share/man/man4/esm.4			man-sys-man
-./usr/share/man/man4/esa.4			man-sys-man
 ./usr/share/man/man4/eso.4			man-sys-man
 ./usr/share/man/man4/esp.4			man-sys-man
 ./usr/share/man/man4/ess.4			man-sys-man
@@ -2351,13 +2351,6 @@
 ./usr/share/man/man4/i386/opms.4		man-sys-man
 ./usr/share/man/man4/i386/pcibios.4		man-sys-man
 ./usr/share/man/man4/i386/pnpbios.4		man-sys-man
-./usr/share/man/man4/i4b.4			man-sys-man
-./usr/share/man/man4/i4bctl.4			man-sys-man
-./usr/share/man/man4/i4bipr.4			man-sys-man
-./usr/share/man/man4/i4bisppp.4			man-sys-man
-./usr/share/man/man4/i4brbch.4			man-sys-man
-./usr/share/man/man4/i4btel.4			man-sys-man
-./usr/share/man/man4/i4btrc.4			man-sys-man
 ./usr/share/man/man4/icmp.4			man-sys-man
 ./usr/share/man/man4/icmp6.4			man-sys-man
 ./usr/share/man/man4/icsphy.4			man-sys-man
@@ -2380,13 +2373,20 @@
 ./usr/share/man/man4/ipkdb.4			man-sys-man
 ./usr/share/man/man4/ipl.4			man-sys-man
 ./usr/share/man/man4/ipnat.4			man-sys-man
+./usr/share/man/man4/ippp.4			man-sys-man
 ./usr/share/man/man4/ipsec.4			man-sys-man
 ./usr/share/man/man4/irda.4			man-sys-man
 ./usr/share/man/man4/irframe.4			man-sys-man
 ./usr/share/man/man4/irframetty.4		man-sys-man
+./usr/share/man/man4/irip.4			man-sys-man
 ./usr/share/man/man4/isa.4			man-sys-man
 ./usr/share/man/man4/isabeep.4			man-sys-man
 ./usr/share/man/man4/isapnp.4			man-sys-man
+./usr/share/man/man4/isdn.4			man-sys-man
+./usr/share/man/man4/isdnbchan.4		man-sys-man
+./usr/share/man/man4/isdnctl.4			man-sys-man
+./usr/share/man/man4/isdntel.4			man-sys-man
+./usr/share/man/man4/isdntrc.4			man-sys-man
 ./usr/share/man/man4/isic.4			man-sys-man
 ./usr/share/man/man4/iso.4			man-sys-man
 ./usr/share/man/man4/isp.4			man-sys-man
@@ -3035,6 +3035,7 @@
 ./usr/share/man/man8/ipfstat.8			man-ipf-man
 ./usr/share/man/man8/ipmon.8			man-ipf-man
 ./usr/share/man/man8/ipnat.8			man-ipf-man
+./usr/share/man/man8/ipppctl.8			man-isdn-man
 ./usr/share/man/man8/irda.8			man-sysutil-man
 ./usr/share/man/man8/irdaattach.8		man-sysutil-man
 ./usr/share/man/man8/isdnd.8			man-isdn-man
@@ -3042,7 +3043,6 @@
 ./usr/share/man/man8/isdntel.8			man-isdn-man
 ./usr/share/man/man8/isdntelctl.8		man-isdn-man
 ./usr/share/man/man8/isdntrace.8		man-isdn-man
-./usr/share/man/man8/ispppcontrol.8		man-isdn-man
 ./usr/share/man/man8/iteconfig.8		man-sysutil-man
 ./usr/share/man/man8/kadmin.8			man-krb5-man
 ./usr/share/man/man8/kadmind.8			man-krb5-man
@@ -3158,8 +3158,8 @@
 ./usr/share/man/man8/next68k/makedev.8		man-sysutil-man
 ./usr/share/man/man8/nfsd.8			man-nfsserver-man
 ./usr/share/man/man8/nis.8			man-nis-man
-./usr/share/man/man8/nqmgr.8
 ./usr/share/man/man8/nologin.8			man-sysutil-man
+./usr/share/man/man8/nqmgr.8			man-postfix-man
 ./usr/share/man/man8/nslookup.8			man-netutil-man
 ./usr/share/man/man8/nsupdate.8			man-netutil-man
 ./usr/share/man/man8/ntpd.8			man-ntp-man
