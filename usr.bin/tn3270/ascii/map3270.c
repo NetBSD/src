@@ -1,4 +1,4 @@
-/*	$NetBSD: map3270.c,v 1.6 1998/03/04 13:16:06 christos Exp $	*/
+/*	$NetBSD: map3270.c,v 1.7 1998/11/06 20:03:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)map3270.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: map3270.c,v 1.6 1998/03/04 13:16:06 christos Exp $");
+__RCSID("$NetBSD: map3270.c,v 1.7 1998/11/06 20:03:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ extern void free();
 extern char *getenv();
 #endif
 
-#define	IsPrint(c)	((isprint(c) && !isspace(c)) || ((c) == ' '))
+#define	IsPrint(c)	((isprint((unsigned char)c) && !isspace((unsigned char)c)) || ((c) == ' '))
 
 #include "state.h"
 #include "map3270.h"
