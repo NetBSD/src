@@ -1,4 +1,4 @@
-/*	$NetBSD: command.c,v 1.10 2003/10/21 12:02:32 agc Exp $	*/
+/*	$NetBSD: command.c,v 1.10.2.1 2004/09/01 03:34:08 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudelman
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)command.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: command.c,v 1.10 2003/10/21 12:02:32 agc Exp $");
+__RCSID("$NetBSD: command.c,v 1.10.2.1 2004/09/01 03:34:08 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -335,7 +335,7 @@ commands()
 	int action;
 
 	last_mca = 0;
-	scroll = (sc_height + 1) / 2;
+	scroll_lines = (sc_height + 1) / 2;
 
 	for (;;) {
 		mca = 0;
@@ -418,14 +418,14 @@ again:		if (sigs)
 		case A_F_SCROLL:	/* forward N lines */
 			CMD_EXEC;
 			if (number > 0)
-				scroll = number;
-			forward(scroll, 0);
+				scroll_lines = number;
+			forward(scroll_lines, 0);
 			break;
 		case A_B_SCROLL:	/* backward N lines */
 			CMD_EXEC;
 			if (number > 0)
-				scroll = number;
-			backward(scroll, 0);
+				scroll_lines = number;
+			backward(scroll_lines, 0);
 			break;
 		case A_FREPAINT:	/* flush buffers and repaint */
 			if (!ispipe) {
