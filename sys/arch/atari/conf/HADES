@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.38 2002/05/23 06:32:42 leo Exp $
+# $NetBSD: HADES,v 1.39 2002/06/17 05:25:18 lukem Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.20 2002/05/23 06:30:32 leo Exp $
+#		NetBSD: GENERIC.in,v 1.21 2002/06/17 05:14:06 lukem Exp $
 
 #This configuration file is for a generic Medusa-Hades
 
@@ -197,6 +197,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 #MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs

@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.14 2002/06/15 21:45:37 leo Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.15 2002/06/17 05:25:18 lukem Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.10 2002/06/15 21:44:07 leo Exp $
-#		NetBSD: GENERIC.in,v 1.20 2002/05/23 06:30:32 leo Exp $
+#		NetBSD: GENERIC.in,v 1.21 2002/06/17 05:14:06 lukem Exp $
 
 #This configuration file is for a generic Milan
 
@@ -89,7 +89,7 @@ options 	QUOTA		# Disk quotas for local disks
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
-				# immutable) behave as system flags.
+				#immutable) behave as system flags.
 
 #Misc. debugging options
 
@@ -194,6 +194,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 #MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -260,7 +261,7 @@ fdisa0 		at fdcisa0 drive 0
 #a little endian (ISA) bus, in PIO mode this is essentially the same as
 #swapping the bytelanes. The fun starts when you use the PCIIDE DMA mode
 #provided by the PCI_ISA bridge on the Milan. CDROM's are OK, but the data
-#on the disk is swapped :-( Now luckily, both the Milan and HDDRIVER
+# on the disk is swapped :-( Now luckily, both the Milan and HDDRIVER
 #developers have thought up a solution, you can make a byteswapped disk
 #during the partioning with HDDRIVER and TOS supports booting from it!
 #Ok, now you have to choose:
@@ -275,7 +276,7 @@ atapibus* 	at pciide? channel ?			# ATAPI bus support
 
 #The Milan uses wscons
 #XXX without the __HAVE_NWSCONS option, the keyboard won't work...
-
+#
 options 	__HAVE_NWSCONS
 vga0 		at pci? dev ? function ?	# a PCI VGA card
 wsdisplay* 	at vga? console ?		# as a wscons console

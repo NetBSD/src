@@ -1,12 +1,12 @@
 #
-# $NetBSD: ATARITT,v 1.47 2002/04/25 15:06:24 atatat Exp $
+# $NetBSD: ATARITT,v 1.48 2002/06/17 05:25:18 lukem Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: ATARITT.in,v 1.4 2001/04/10 06:28:38 leo Exp $
-#		NetBSD: GENERIC.in,v 1.18 2002/04/16 22:42:55 bjh21 Exp $
+#		NetBSD: GENERIC.in,v 1.21 2002/06/17 05:14:06 lukem Exp $
 
 #This configuration file is for a GENERIC ATARI-TT
 
@@ -194,6 +194,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 #Hardware options for GENERIC are in the various machine type specific files
 
