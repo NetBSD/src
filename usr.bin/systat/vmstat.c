@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.30 2000/06/04 18:29:14 mycroft Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.31 2000/06/05 21:36:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.30 2000/06/04 18:29:14 mycroft Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.31 2000/06/05 21:36:34 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -316,7 +316,7 @@ labelkre()
 	mvprintw(DISKROW + 1, DISKCOL, "seeks");
 	mvprintw(DISKROW + 2, DISKCOL, "xfers");
 	mvprintw(DISKROW + 3, DISKCOL, "Kbyte");
-	mvprintw(DISKROW + 4, DISKCOL, "  sec");
+	mvprintw(DISKROW + 4, DISKCOL, "%%busy");
 	j = 0;
 	for (i = 0; i < dk_ndrive && j < MAXDRIVES; i++)
 		if (dk_select[i]) {
@@ -659,5 +659,5 @@ dinfo(dn, c)
 	putint((int)((float)cur.dk_seek[dn]/etime+0.5), DISKROW + 1, c, 5);
 	putint((int)((float)cur.dk_xfer[dn]/etime+0.5), DISKROW + 2, c, 5);
 	putint((int)(words/etime + 0.5), DISKROW + 3, c, 5);
-	putfloat(atime/etime, DISKROW + 4, c, 5, 2, 1);
+	putfloat(atime*100.0/etime, DISKROW + 4, c, 5, 1, 1);
 }
