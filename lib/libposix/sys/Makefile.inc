@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2003/08/01 17:03:59 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2004/02/08 22:55:27 lukem Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/sys
@@ -13,7 +13,8 @@ ASMDEPS=	${.CURDIR}/sys/Makefile.inc ${ARCHDIR}/SYS.h \
 		${DESTDIR}/usr/include/sys/syscall.h
 
 ${PSEUDO}: ${ASMDEPS}
-	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/^/__posix_/})\n' \
+	${_MKTARGET_CREATE}
+	printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/^/__posix_/})\n' \
 		>${.TARGET}
 
 # Lint stubs for all automatically-generated assembly stubs (GENERATED)
@@ -25,5 +26,6 @@ CLEANFILES+=	LintSysPseudo.c
 
 LintSysPseudo.c: ${NETBSDSRCDIR}/lib/libc/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
+	${_MKTARGET_CREATE}
 	CPP=${CPP:Q} ${HOST_SH} ${NETBSDSRCDIR}/lib/libc/sys/makelintstub \
 	    -o ${.TARGET} -p -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDO}
