@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2003/04/04 03:49:20 atatat Exp $ */
+/*	$NetBSD: main.c,v 1.8 2003/04/16 12:15:07 wiz Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.7 2003/04/04 03:49:20 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2003/04/16 12:15:07 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -245,8 +245,8 @@ main(int argc, char *argv[])
 		default:
 			fprintf(stderr, "usage: %s [-adlmPRsv] [-A address] "
 				"[-D number] [-E address] [-M core]\n"
-				"\t[-N system] [-S address] [-V address] "
-				"[-p pid] [pid ...]\n",
+				"\t[-N system] [-p pid] [-S address] "
+				"[-V address] [pid ...]\n",
 				getprogname());
 			exit(1);
 		}
