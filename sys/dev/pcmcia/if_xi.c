@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.32 2003/10/25 18:29:40 christos Exp $ */
+/*	$NetBSD: if_xi.c,v 1.33 2003/10/28 23:26:28 mycroft Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.32 2003/10/25 18:29:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.33 2003/10/28 23:26:28 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -791,7 +791,7 @@ xi_intr(arg)
 	struct xi_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t esr, rsr, isr, rx_status, savedpage;
-	u_int16_t tx_status = 0, recvcount = 0, tempint;
+	u_int16_t tx_status, recvcount = 0, tempint;
 
 	DPRINTF(XID_CONFIG, ("xi_intr()\n"));
 
@@ -900,16 +900,16 @@ xi_intr(arg)
 	if ((tx_status & TX_ABORT) && ifp->if_opackets > 0)
 		ifp->if_oerrors++;
 
+	/* have handled the interrupt */
+#if NRND > 0    
+	rnd_add_uint32(&sc->sc_rnd_source, tx_status);  
+#endif
+
 end:
 	/* Reenable interrupts. */
 	PAGE(sc, savedpage);
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, sc->sc_offset + CR,
 	    ENABLE_INT);
-
-	/* have handled the interrupt */
-#if NRND > 0    
-	rnd_add_uint32(&sc->sc_rnd_source, tx_status);  
-#endif
 
 	return (1);
 }
