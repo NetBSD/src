@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.32 2000/11/01 22:35:30 simonb Exp $ */
+/* $NetBSD: user.c,v 1.33 2000/11/04 04:31:43 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.32 2000/11/01 22:35:30 simonb Exp $");
+__RCSID("$NetBSD: user.c,v 1.33 2000/11/04 04:31:43 simonb Exp $");
 #endif
 
 #include <sys/types.h>
@@ -966,12 +966,18 @@ adduser(char *login, user_t *up)
 		err(EXIT_FAILURE, "can't add `%s'", buf);
 	}
 	if (up->u_flags & F_MKDIR) {
-		if (lstat(home, &st) < 0 && asystem("%s -p %s", MKDIR, home) != 0) {
+		if (lstat(home, &st) == 0) {
 			(void) close(ptmpfd);
 			(void) pw_abort();
-			err(EXIT_FAILURE, "can't mkdir `%s'", home);
+			errx(EXIT_FAILURE, "home directory `%s' already exists", home);
+		} else {
+			if (asystem("%s -p %s", MKDIR, home) != 0) {
+				(void) close(ptmpfd);
+				(void) pw_abort();
+				err(EXIT_FAILURE, "can't mkdir `%s'", home);
+			}
+			(void) copydotfiles(up->u_skeldir, up->u_uid, gid, home);
 		}
-		(void) copydotfiles(up->u_skeldir, up->u_uid, gid, home);
 	}
 	if (strcmp(up->u_primgrp, "=uid") == 0 &&
 	    getgrnam(login) == NULL &&
