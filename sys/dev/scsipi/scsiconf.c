@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: scsiconf.c,v 1.8 1993/05/25 07:27:35 deraadt Exp $
+ *	$Id: scsiconf.c,v 1.9 1993/05/27 10:14:02 deraadt Exp $
  */
 
 #include "sys/types.h"
@@ -131,7 +131,7 @@ scsi_probe(int masunit, struct scsi_switch *sw, int physid, int type, int want)
 
 	if( scsi_ready(masunit, targ, lun, sw,
 	    SCSI_NOSLEEP | SCSI_NOMASK) != COMPLETE)
-		return (struct scsidevs *)0;
+		return (struct scsidevs *)-1;
 
 	if( scsi_inquire(masunit, targ, lun, sw, (u_char *)&inqbuf,
 	    SCSI_NOSLEEP | SCSI_NOMASK) != COMPLETE)
@@ -235,6 +235,7 @@ print:
 		printf("%s%d targ %d lun %d: qualifier %d(%s)\n",
 			sw->name, masunit, targ, lun,
 			inqbuf.device_qualifier, qtype);
+	sw->printed[targ] |= (1<<lun);
 	return ret;
 }
 
@@ -310,7 +311,6 @@ scsi_attach(int masunit, int mytarg, struct scsi_switch *sw,
 			return 0;
 		}
 
-		sw->printed[targ] |= (1<<lun);
 		if(!match)
 			return 0;
 
@@ -335,10 +335,8 @@ scsi_attach(int masunit, int mytarg, struct scsi_switch *sw,
 				match = (struct scsidevs *)0;
 				continue;
 			}
-			if(!match) {
-				sw->printed[targ] |= (1<<lun);
+			if(!match)
 				break;
-			}
 			ret = (*(match->attach_rtn))(masunit, sw, *physid, unit);
 			if(ret)
 				goto success;
@@ -351,13 +349,10 @@ scsi_attach(int masunit, int mytarg, struct scsi_switch *sw,
 success:
 	targ = *physid >> 3;
 	lun = *physid & 7;
-	if(match->flags & SC_MORE_LUS) {
+	if(match->flags & SC_MORE_LUS)
 		sw->used[targ] |= (1<<lun);
-		sw->printed[targ] |= (1<<lun);
-	} else {
+	else
 		sw->used[targ] = 0xff;
-		sw->printed[targ] = 0xff;
-	}
 	return ret;
 }
 
