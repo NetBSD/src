@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.25 2000/10/22 15:41:31 kleink Exp $	*/
+/*	$NetBSD: extern.h,v 1.26 2001/10/25 05:33:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -53,39 +53,39 @@ extern int curdirfd;
 extern const char *gzip_program;
 extern time_t starttime;
 extern int force_one_volume;
-int ar_open __P((const char *));
-void ar_close __P((void));
-void ar_drain __P((void));
-int ar_set_wr __P((void));
-int ar_app_ok __P((void));
+int ar_open(const char *);
+void ar_close(void);
+void ar_drain(void);
+int ar_set_wr(void);
+int ar_app_ok(void);
 #ifdef SYS_NO_RESTART
-int read_with_restart __P((int, void *, int));
-int write_with_restart __P((int, void *, int));
+int read_with_restart(int, void *, int);
+int write_with_restart(int, void *, int);
 #else
 #define read_with_restart	read
 #define write_with_restart	write
 #endif
-int xread __P((int, void *, int));
-int xwrite __P((int, void *, int));
-int ar_read __P((char *, int));
-int ar_write __P((char *, int));
-int ar_rdsync __P((void));
-int ar_fow __P((off_t, off_t *));
-int ar_rev __P((off_t ));
-int ar_next __P((void));
-void ar_summary __P((int));
-int ar_dochdir __P((char *));
+int xread(int, void *, int);
+int xwrite(int, void *, int);
+int ar_read(char *, int);
+int ar_write(char *, int);
+int ar_rdsync(void);
+int ar_fow(off_t, off_t *);
+int ar_rev(off_t );
+int ar_next(void);
+void ar_summary(int);
+int ar_dochdir(char *);
 
 /*
  * ar_subs.c
  */
 extern u_long flcnt;
 extern ARCHD archd;
-void list __P((void));
-void extract __P((void));
-void append __P((void));
-void archive __P((void));
-void copy __P((void));
+void list(void);
+void extract(void);
+void append(void);
+void archive(void);
+void copy(void);
 
 /*
  * buf_subs.c
@@ -97,97 +97,97 @@ extern int rdblksz;
 extern off_t wrlimit;
 extern off_t rdcnt;
 extern off_t wrcnt;
-int wr_start __P((void));
-int rd_start __P((void));
-void cp_start __P((void));
-int appnd_start __P((off_t));
-int rd_sync __P((void));
-void pback __P((char *, int));
-int rd_skip __P((off_t));
-void wr_fin __P((void));
-int wr_rdbuf __P((char *, int));
-int rd_wrbuf __P((char *, int));
-int wr_skip __P((off_t));
-int wr_rdfile __P((ARCHD *, int, off_t *));
-int rd_wrfile __P((ARCHD *, int, off_t *));
-void cp_file __P((ARCHD *, int, int));
-int buf_fill __P((void));
-int buf_flush __P((int));
+int wr_start(void);
+int rd_start(void);
+void cp_start(void);
+int appnd_start(off_t);
+int rd_sync(void);
+void pback(char *, int);
+int rd_skip(off_t);
+void wr_fin(void);
+int wr_rdbuf(char *, int);
+int rd_wrbuf(char *, int);
+int wr_skip(off_t);
+int wr_rdfile(ARCHD *, int, off_t *);
+int rd_wrfile(ARCHD *, int, off_t *);
+void cp_file(ARCHD *, int, int);
+int buf_fill(void);
+int buf_flush(int);
 
 /*
  * cpio.c
  */
 extern int cpio_swp_head;
-int cpio_strd __P((void));
-int cpio_subtrail __P((ARCHD *));
-int cpio_endwr __P((void));
-int cpio_id __P((char *, int));
-int cpio_rd __P((ARCHD *, char *));
-off_t cpio_endrd __P((void));
-int cpio_stwr __P((void));
-int cpio_wr __P((ARCHD *));
-int vcpio_id __P((char *, int));
-int crc_id __P((char *, int));
-int crc_strd __P((void));
-int vcpio_rd __P((ARCHD *, char *));
-off_t vcpio_endrd __P((void));
-int crc_stwr __P((void));
-int vcpio_wr __P((ARCHD *));
-int bcpio_id __P((char *, int));
-int bcpio_rd __P((ARCHD *, char *));
-off_t bcpio_endrd __P((void));
-int bcpio_wr __P((ARCHD *));
+int cpio_strd(void);
+int cpio_subtrail(ARCHD *);
+int cpio_endwr(void);
+int cpio_id(char *, int);
+int cpio_rd(ARCHD *, char *);
+off_t cpio_endrd(void);
+int cpio_stwr(void);
+int cpio_wr(ARCHD *);
+int vcpio_id(char *, int);
+int crc_id(char *, int);
+int crc_strd(void);
+int vcpio_rd(ARCHD *, char *);
+off_t vcpio_endrd(void);
+int crc_stwr(void);
+int vcpio_wr(ARCHD *);
+int bcpio_id(char *, int);
+int bcpio_rd(ARCHD *, char *);
+off_t bcpio_endrd(void);
+int bcpio_wr(ARCHD *);
 
 /*
  * file_subs.c
  */
 extern char *gnu_hack_string;
-int file_creat __P((ARCHD *));
-void file_close __P((ARCHD *, int));
-int lnk_creat __P((ARCHD *));
-int cross_lnk __P((ARCHD *));
-int chk_same __P((ARCHD *));
-int node_creat __P((ARCHD *));
-int unlnk_exist __P((char *, int));
-int chk_path __P((char *, uid_t, gid_t));
-void set_ftime __P((char *fnm, time_t mtime, time_t atime, int frc));
-int set_ids __P((char *, uid_t, gid_t));
-void set_pmode __P((char *, mode_t));
-void set_chflags __P((char *fnm, u_int32_t flags));
-int file_write __P((int, char *, int, int *, int *, int, char *));
-void file_flush __P((int, char *, int));
-void rdfile_close __P((ARCHD *, int *));
-int set_crc __P((ARCHD *, int));
+int file_creat(ARCHD *);
+void file_close(ARCHD *, int);
+int lnk_creat(ARCHD *);
+int cross_lnk(ARCHD *);
+int chk_same(ARCHD *);
+int node_creat(ARCHD *);
+int unlnk_exist(char *, int);
+int chk_path(char *, uid_t, gid_t);
+void set_ftime(char *fnm, time_t mtime, time_t atime, int frc);
+int set_ids(char *, uid_t, gid_t);
+void set_pmode(char *, mode_t);
+void set_chflags(char *fnm, u_int32_t flags);
+int file_write(int, char *, int, int *, int *, int, char *);
+void file_flush(int, char *, int);
+void rdfile_close(ARCHD *, int *);
+int set_crc(ARCHD *, int);
 
 /*
  * ftree.c
  */
-int ftree_start __P((void));
-int ftree_add __P((char *, int));
-void ftree_sel __P((ARCHD *));
-void ftree_chk __P((void));
-int next_file __P((ARCHD *));
+int ftree_start(void);
+int ftree_add(char *, int);
+void ftree_sel(ARCHD *);
+void ftree_chk(void);
+int next_file(ARCHD *);
 
 /*
  * gen_subs.c
  */
-void ls_list __P((ARCHD *, time_t));
-void ls_tty __P((ARCHD *));
-void zf_strncpy __P((char *, const char *, int));
-int l_strncpy __P((char *, const char *, int));
-u_long asc_ul __P((char *, int, int));
-int ul_asc __P((u_long, char *, int, int));
+void ls_list(ARCHD *, time_t);
+void ls_tty(ARCHD *);
+void zf_strncpy(char *, const char *, int);
+int l_strncpy(char *, const char *, int);
+u_long asc_ul(char *, int, int);
+int ul_asc(u_long, char *, int, int);
 #ifndef NET2_STAT
-u_quad_t asc_uqd __P((char *, int, int));
-int uqd_asc __P((u_quad_t, char *, int, int));
+u_longlong_t asc_ull(char *, int, int);
+int ull_asc(u_longlong_t, char *, int, int);
 #endif
-int check_Aflag __P((void));
+int check_Aflag(void);
 
 /*
  * getoldopt.c
  */
 struct option;
-int getoldopt __P((int, char **, const char *, struct option *, int *));
+int getoldopt(int, char **, const char *, struct option *, int *);
 
 /*
  * options.c
@@ -195,22 +195,22 @@ int getoldopt __P((int, char **, const char *, struct option *, int *));
 extern FSUB fsub[];
 extern int ford[];
 extern int cpio_mode;
-void options __P((int, char **));
-OPLIST * opt_next __P((void));
-int opt_add __P((const char *));
-int opt_chdir __P((char *));
-int bad_opt __P((void));
+void options(int, char **);
+OPLIST * opt_next(void);
+int opt_add(const char *);
+int opt_chdir(char *);
+int bad_opt(void);
 
 /*
  * pat_rep.c
  */
-int rep_add __P((char *));
-int pat_add __P((char *, int));
-void pat_chk __P((void));
-int pat_sel __P((ARCHD *));
-int pat_match __P((ARCHD *));
-int mod_name __P((ARCHD *));
-int set_dest __P((ARCHD *, char *, int));
+int rep_add(char *);
+int pat_add(char *, int);
+void pat_chk(void);
+int pat_sel(ARCHD *);
+int pat_match(ARCHD *);
+int mod_name(ARCHD *);
+int set_dest(ARCHD *, char *, int);
 
 /*
  * pax.c
@@ -244,67 +244,67 @@ extern int exit_val;
 extern int docrc;
 extern char *dirptr;
 extern char *argv0;
-int main __P((int, char **));
-void sig_cleanup __P((int));
+int main(int, char **);
+void sig_cleanup(int);
 
 /*
  * sel_subs.c
  */
-int sel_chk __P((ARCHD *));
-int grp_add __P((char *));
-int usr_add __P((char *));
-int trng_add __P((char *));
+int sel_chk(ARCHD *);
+int grp_add(char *);
+int usr_add(char *);
+int trng_add(char *);
 
 /*
  * tables.c
  */
-int lnk_start __P((void));
-int chk_lnk __P((ARCHD *));
-void purg_lnk __P((ARCHD *));
-void lnk_end __P((void));
-int ftime_start __P((void));
-int chk_ftime __P((ARCHD *));
-int name_start __P((void));
-int add_name __P((char *, int, char *));
-void sub_name __P((char *, int *));
-int dev_start __P((void));
-int add_dev __P((ARCHD *));
-int map_dev __P((ARCHD *, u_long, u_long));
-int atdir_start __P((void));
-void atdir_end __P((void));
-void add_atdir __P((char *, dev_t, ino_t, time_t, time_t));
-int get_atdir __P((dev_t, ino_t, time_t *, time_t *));
-int dir_start __P((void));
-void add_dir __P((char *, int, struct stat *, int));
-void proc_dir __P((void));
-u_int st_hash __P((char *, int, int));
+int lnk_start(void);
+int chk_lnk(ARCHD *);
+void purg_lnk(ARCHD *);
+void lnk_end(void);
+int ftime_start(void);
+int chk_ftime(ARCHD *);
+int name_start(void);
+int add_name(char *, int, char *);
+void sub_name(char *, int *);
+int dev_start(void);
+int add_dev(ARCHD *);
+int map_dev(ARCHD *, u_long, u_long);
+int atdir_start(void);
+void atdir_end(void);
+void add_atdir(char *, dev_t, ino_t, time_t, time_t);
+int get_atdir(dev_t, ino_t, time_t *, time_t *);
+int dir_start(void);
+void add_dir(char *, int, struct stat *, int);
+void proc_dir(void);
+u_int st_hash(char *, int, int);
 
 /*
  * tar.c
  */
 extern int is_oldgnutar;
-int tar_endwr __P((void));
-off_t tar_endrd __P((void));
-int tar_trail __P((char *, int, int *));
-int tar_id __P((char *, int));
-int tar_opt __P((void));
-int tar_rd __P((ARCHD *, char *));
-int tar_wr __P((ARCHD *));
-int ustar_strd __P((void));
-int ustar_stwr __P((void));
-int ustar_id __P((char *, int));
-int ustar_rd __P((ARCHD *, char *));
-int ustar_wr __P((ARCHD *));
-int tar_gnutar_X_compat __P((const char *));
+int tar_endwr(void);
+off_t tar_endrd(void);
+int tar_trail(char *, int, int *);
+int tar_id(char *, int);
+int tar_opt(void);
+int tar_rd(ARCHD *, char *);
+int tar_wr(ARCHD *);
+int ustar_strd(void);
+int ustar_stwr(void);
+int ustar_id(char *, int);
+int ustar_rd(ARCHD *, char *);
+int ustar_wr(ARCHD *);
+int tar_gnutar_X_compat(const char *);
 
 /*
  * tty_subs.c
  */
-int tty_init __P((void));
-void tty_prnt __P((char *, ...))
+int tty_init(void);
+void tty_prnt(const char *, ...)
     __attribute__((format (printf, 1, 2)));
-int tty_read __P((char *, int));
-void tty_warn __P((int, char *, ...))
+int tty_read(char *, int);
+void tty_warn(int, const char *, ...)
     __attribute__((format (printf, 2, 3)));
-void syswarn __P((int, int, char *, ...))
+void syswarn(int, int, const char *, ...)
     __attribute__((format (printf, 3, 4)));
