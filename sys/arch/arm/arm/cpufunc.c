@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.59 2003/05/23 00:57:23 ichiro Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.60 2003/05/25 01:30:52 ichiro Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -77,7 +77,7 @@
 #include <arm/xscale/ixp425var.h>
 #endif
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || defined(CPU_XSCALE_IXP425)
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 #include <arm/xscale/xscalereg.h>
 #endif
 
