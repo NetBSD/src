@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.15 2001/11/20 12:56:22 lukem Exp $
+#	$NetBSD: Makefile.arm26,v 1.16 2001/11/23 05:19:02 atatat Exp $
 
 # Makefile for NetBSD
 #
@@ -27,16 +27,13 @@ NEED_OWN_INSTALL_TARGET?=no
 ##
 ARM26=		$S/arch/arm26
 GENASSYM=	${ARM26}/arm26/genassym.cf
-MD_CPPFLAGS=	-Darm26
 
 ##
 ## (2) compile settings
 ##
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT \
-		${MD_CPPFLAGS}
-COPTS?=		-O2
-CFLAGS=		-ffixed-r14 ${DEBUG} ${COPTS} ${CWARNFLAGS}
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+CPPFLAGS+=	-Darm26
+CFLAGS+=	-ffixed-r14
+AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 
 ##
 ## (3) libkern and compat
@@ -57,8 +54,6 @@ locore.o: ${ARM26}/arm26/locore.S assym.h
 ##
 TEXTADDR?=	0x02098000
 LINKFORMAT=	-N
-LINKFLAGS_DEBUG=	-X
-LINKFLAGS_NORMAL=	-S
 
 ##
 ## (6) port specific target dependencies
