@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.13.4.8 2004/04/12 05:09:42 jmc Exp $	*/
+/*	$NetBSD: route6d.c,v 1.13.4.9 2004/08/26 03:26:39 jmc Exp $	*/
 /*	$KAME: route6d.c,v 1.36 2000/10/05 22:20:39 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.13.4.8 2004/04/12 05:09:42 jmc Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.13.4.9 2004/08/26 03:26:39 jmc Exp $");
 #endif
 
 #include <stdio.h>
@@ -964,7 +964,7 @@ riprecv()
 	index = IN6_LINKLOCAL_IFINDEX(fsock.sin6_addr);
 	ifcp = (index < nindex2ifc) ? index2ifc[index] : NULL;
 	if (!ifcp) {
-		trace(1, "Packets to unknown interface index %d\n", index);
+		trace(1, "Packets to unknown interface index %d\n", (int)index);
 		return;		/* Ignore it */
 	}
 	if (IN6_ARE_ADDR_EQUAL(&ifcp->ifc_mylladdr, &fsock.sin6_addr))
@@ -976,7 +976,7 @@ riprecv()
 	if (iff_find(ifcp, 'N') != NULL)
 		return;
 	tracet(1, "Recv(%s): from %s.%d info(%d)\n",
-		ifcp->ifc_name, inet6_n2p(&nh), ntohs(fsock.sin6_port), nn);
+		ifcp->ifc_name, inet6_n2p(&nh), ntohs(fsock.sin6_port), (int)nn);
 
 	t = time(NULL);
 	for (; nn; nn--, np++) {
