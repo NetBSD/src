@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2001/11/17 18:55:57 kleink Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2002/02/04 16:17:36 nonaka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,7 +47,7 @@ mftb()
 	u_long scratch;
 	u_quad_t tb;
 
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
+	__asm__ volatile ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
 	    : "=r"(tb), "=r"(scratch));
 	return (tb);
 }
@@ -66,6 +66,6 @@ delay(n)
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw 0, %0,%2; blt 1b; 2:"
+	__asm__ volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw 0, %0,%2; blt 1b; 2:"
 		: "=r"(scratch) : "r"(tbh), "r"(tbl));
 }
