@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.14 2002/06/23 17:47:45 perry Exp $	*/
+/*	$NetBSD: timed.c,v 1.15 2002/07/06 22:08:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.14 2002/06/23 17:47:45 perry Exp $");
+__RCSID("$NetBSD: timed.c,v 1.15 2002/07/06 22:08:31 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ static void add_good_host(char*,char);
  */
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	int on;
 	int ret;
@@ -473,9 +473,7 @@ main(int argc, char **argv)
 /* suppress an upstart, untrustworthy, self-appointed master
  */
 void
-suppress(struct sockaddr_in *addr,
-         char *name,
-	 struct netinfo *net)
+suppress(struct sockaddr_in *addr, char *name, struct netinfo *net)
 {
 	struct sockaddr_in tgt;
 	char tname[MAXHOSTNAMELEN];
@@ -599,7 +597,7 @@ lookformaster(struct netinfo *ntp)
  * networks;
  */
 void
-setstatus()
+setstatus(void)
 {
 	struct netinfo *ntp;
 
@@ -718,7 +716,7 @@ casual(long inf, long sup)
 }
 
 char *
-date()
+date(void)
 {
 	struct	timeval tv;
 	time_t t;
@@ -846,8 +844,7 @@ get_goodgroup(int force)
 /* see if a machine is trustworthy
  */
 int					/* 1=trust hp to change our date */
-good_host_name(name)
-	char *name;
+good_host_name(char *name)
 {
 	register struct goodhost *ghp = goodhosts;
 	register char c;
