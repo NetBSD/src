@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.555 2004/07/03 21:02:09 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.556 2004/07/22 15:12:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.555 2004/07/03 21:02:09 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.556 2004/07/22 15:12:46 mycroft Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -963,7 +963,7 @@ reserve_dumppages(vaddr_t p)
 void
 dumpsys()
 {
-	u_long totalbytesleft, bytes, i, n, memseg;
+	u_long totalbytesleft, bytes, i, n, m, memseg;
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
@@ -1029,8 +1029,9 @@ dumpsys()
 			if (n > BYTES_PER_DUMP)
 				n = BYTES_PER_DUMP;
 
-			(void) pmap_map(dumpspace, maddr, maddr + n,
-			    VM_PROT_READ);
+			for (m = 0; m < n; m += NBPG)
+				pmap_kenter_pa(dumpspace + m, maddr + m,
+				    VM_PROT_READ);
 
 			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
 			if (error)
