@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.18 2002/10/14 21:14:25 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.19 2002/10/23 21:30:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.18 2002/10/14 21:14:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.19 2002/10/23 21:30:46 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -85,6 +85,7 @@ static struct irix_shared_regions_rec *irix_isrr_create __P((vaddr_t,
 #ifdef DEBUG_IRIX
 static void irix_isrr_debug __P((struct proc *));
 #endif
+static void irix_isrr_cleanup __P((struct proc *));
 
 int
 irix_sys_prctl(p, v, retval)
@@ -852,6 +853,10 @@ irix_isrr_insert(start, len, shared, p)
 #ifdef DEBUG_IRIX
 				irix_isrr_debug(p);
 #endif
+				irix_isrr_cleanup(p);
+#ifdef DEBUG_IRIX
+				irix_isrr_debug(p);
+#endif
 				return;
 			}
 
@@ -902,8 +907,52 @@ irix_isrr_insert(start, len, shared, p)
 #ifdef DEBUG_IRIX
 	irix_isrr_debug(p);
 #endif
+	irix_isrr_cleanup(p);
+#ifdef DEBUG_IRIX
+	irix_isrr_debug(p);
+#endif
 	return;
 }
+
+/*
+ * Cleanup the region list by 
+ * (1) removing regions with length 0, and
+ * (2) merging contiguous regions with the same status
+ */
+static void
+irix_isrr_cleanup(p)
+	struct proc *p;
+{
+	struct irix_emuldata *ied = (struct irix_emuldata *)p->p_emuldata;
+	struct irix_shared_regions_rec *isrr;
+	struct irix_shared_regions_rec *new_isrr;
+	
+	isrr = LIST_FIRST(&ied->ied_shared_regions);
+	do {
+		new_isrr = LIST_NEXT(isrr, isrr_list);
+
+		if (isrr->isrr_len == 0) {
+			LIST_REMOVE(isrr, isrr_list);
+			free(isrr, M_EMULDATA);
+			isrr = new_isrr;
+			if (isrr == NULL)
+				break;
+		}
+
+		if (new_isrr == NULL)
+			break;
+
+		if (isrr->isrr_shared == new_isrr->isrr_shared) {
+			isrr->isrr_len += new_isrr->isrr_len;
+			new_isrr->isrr_len = 0;
+		}
+
+		isrr = new_isrr;
+	} while (1);
+
+	return;
+}
+
 
 #ifdef DEBUG_IRIX
 static void
