@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.101 1998/01/15 22:25:52 thorpej Exp $
+#	$NetBSD: files.i386,v 1.102 1998/01/21 23:29:08 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -13,6 +13,9 @@ defopt	opt_cputype.h I386_CPU I486_CPU I586_CPU I686_CPU
 
 # VM86 emulation
 defopt	VM86
+
+# Floating point emulation
+defopt	MATH_EMULATE
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/conf.c
