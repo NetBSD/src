@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.552 2002/09/25 22:27:38 thorpej Exp $
+#	$NetBSD: files,v 1.553 2002/09/30 06:50:39 onoe Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -425,10 +425,8 @@ file	dev/ic/am79c930.c		awi
 
 # Lucent & Intersil WaveLan IEEE (802.11)
 #
-#device wi: arp, wlan, ifnet
-device wi: arp, ifnet
+device wi: arp, wlan, ifnet
 file	dev/ic/wi.c			wi
-file	dev/ic/wi_hostap.c		wi
 
 # 3Com Etherlink-III Ethernet controller
 #
