@@ -1,7 +1,7 @@
-/*	$NetBSD: vrpiu.c,v 1.26 2002/12/15 09:24:26 takemura Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.27 2003/01/03 04:36:28 takemura Exp $	*/
 
 /*
- * Copyright (c) 1999-2002 TAKEMURA Shin All rights reserved.
+ * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
  * Copyright (c) 2000-2001 SATO Kazumi, All rights reserved.
  * Copyright (c) 1999-2001 PocketBSD Project. All rights reserved.
  *
@@ -544,6 +544,7 @@ vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	case WSMOUSEIO_SCALIBCOORDS:
 	case WSMOUSEIO_GCALIBCOORDS:
+	case WSMOUSEIO_GETID:
 		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, p);
 		
 	default:
