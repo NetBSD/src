@@ -1,6 +1,6 @@
-# $NetBSD: md.hpcsh,v 1.15 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.hpcsh,v 1.16 2004/02/22 01:42:25 uwe Exp $
 ./usr/include/hpcsh				comp-c-include
-./usr/include/hpcsh/_G_config.h			comp-c-include
+./usr/include/hpcsh/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/ansi.h			comp-c-include
 ./usr/include/hpcsh/aout_machdep.h		comp-c-include
 ./usr/include/hpcsh/asm.h			comp-c-include
