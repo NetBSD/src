@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.7 2000/06/19 13:28:06 hubertf Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.7.2.1 2001/03/20 18:13:43 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.7 2000/06/19 13:28:06 hubertf Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.7.2.1 2001/03/20 18:13:43 he Exp $");
 #endif
 
 /*
@@ -64,10 +64,10 @@ pkgdb_open(int ro)
 
 	/* try our btree format first */
 	info.flags = 0;
-	info.cachesize = 0;
+	info.cachesize = 2*1024*1024;
 	info.maxkeypage = 0;
 	info.minkeypage = 0;
-	info.psize = 0;
+	info.psize = 4096;
 	info.compare = NULL;
 	info.prefix = NULL;
 	info.lorder = 0;
