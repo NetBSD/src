@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.225 2004/01/04 13:30:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.226 2004/01/06 07:25:40 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -218,7 +218,7 @@ build:
 .for tgt in ${BUILDTARGETS}
 	@(cd ${.CURDIR} && ${MAKE} ${tgt})
 .endfor
-	(cd ${.CURDIR}/etc && ${MAKE} install-release-info)
+	(cd ${.CURDIR}/etc && ${MAKE} install-etc-release)
 	@echo   "Build started at:  ${START_TIME}"
 	@printf "Build finished at: " && date
 .endif
