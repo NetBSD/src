@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.111 2004/01/19 11:57:42 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.112 2004/01/25 18:02:04 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.111 2004/01/19 11:57:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.112 2004/01/25 18:02:04 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -505,7 +505,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, struct ucred *cred,
 			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
 		else
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(vp, bp);
 
 		/* Pay for the read. */
 		p->p_stats->p_ru.ru_inblock++;
@@ -650,7 +650,7 @@ bwrite(struct buf *bp)
 	else
 		BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
 
-	VOP_STRATEGY(bp);
+	VOP_STRATEGY(vp, bp);
 
 	if (sync) {
 		/* If I/O was synchronous, wait for it to complete. */
