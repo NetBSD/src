@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.118 1999/05/02 14:47:33 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.119 1999/05/03 16:17:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -218,7 +218,6 @@ cputypval:
 	.ascii	"     "
 cputypvar:
 	.asciz	"compatible"
-cputypvallen = cputypvar - cputypval
 	_ALIGN
 #endif
 
@@ -268,7 +267,7 @@ sun4_notsup:
  * which must be aligned on a 4096 byte boundary.  The text segment
  * starts beyond page 0 of KERNBASE so that there is a red zone
  * between user and kernel space.  Since the boot ROM loads us at
- * 0x4000, it is far easier to start at KERNBASE+0x4000 than to
+ * PROM_LOADADDR, it is far easier to start at KERNBASE+PROM_LOADADDR than to
  * buck the trend.  This is two or four pages in (depending on if
  * pagesize is 8192 or 4096).    We place two items in this area:
  * the message buffer (phys addr 0) and the cpu_softc structure for
@@ -277,8 +276,6 @@ sun4_notsup:
  * kernel space we remap it in configure() to another location and
  * invalidate the mapping at KERNBASE.
  */
-!	.globl _msgbufaddr	/* This label no longer used in C code */
-_msgbufaddr = KERNBASE
 
 /*
  * Each trap has room for four instructions, of which one perforce must
@@ -3351,8 +3348,8 @@ dostart:
 	 * Startup.
 	 *
 	 * We have been loaded in low RAM, at some address which
-	 * is page aligned (0x4000 actually) rather than where we
-	 * want to run (KERNBASE+0x4000).  Until we get everything set,
+	 * is page aligned (PROM_LOADADDR actually) rather than where we
+	 * want to run (KERNBASE+PROM_LOADADDR).  Until we get everything set,
 	 * we have to be sure to use only pc-relative addressing.
 	 */
 
@@ -3425,7 +3422,7 @@ dostart:
 	 * Sun4 passes in the `load address'.  Although possible, its highly
 	 * unlikely that OpenBoot would place the prom vector there.
 	 */
-	set	0x4000, %g7
+	set	PROM_LOADADDR, %g7
 	cmp	%o0, %g7
 	be	is_sun4
 	 nop
