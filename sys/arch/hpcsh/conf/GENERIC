@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.35 2004/06/18 15:04:04 christos Exp $
+# $NetBSD: GENERIC,v 1.36 2004/06/22 14:09:50 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -189,3 +189,5 @@ pseudo-device	ksyms			# kernel symbol table interface
 
 # mouse & keyboard multiplexor pseudo-devices
 pseudo-device	wsmux
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if

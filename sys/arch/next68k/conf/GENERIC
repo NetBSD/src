@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.75 2004/06/18 15:04:05 christos Exp $
+# $NetBSD: GENERIC,v 1.76 2004/06/22 14:09:51 itojun Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.75 $"
+#ident 		"GENERIC-$Revision: 1.76 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -242,3 +242,5 @@ pseudo-device	vnd		4	# paging to files
 pseudo-device	ccd		4	# concatenated disks
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if

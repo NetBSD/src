@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.25 2004/06/18 15:04:06 christos Exp $
+# $NetBSD: GENERIC,v 1.26 2004/06/22 14:09:51 itojun Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.25 $"
+#ident 		"GENERIC-$Revision: 1.26 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 options 	DEBUG		# extra kernel debugging support
@@ -168,6 +168,8 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random & kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
 
 # A pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

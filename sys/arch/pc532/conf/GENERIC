@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.37 2004/06/18 15:04:05 christos Exp $
+# $NetBSD: GENERIC,v 1.38 2004/06/22 14:09:51 itojun Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.37 $"
+#ident 		"GENERIC-$Revision: 1.38 $"
 
 maxusers	8			# estimated number of users
 
@@ -109,3 +109,5 @@ pseudo-device	ccd		4	# Concatenated Disk Driver
 pseudo-device	rnd			# kernel random number generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
