@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.63 1996/10/18 03:09:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.64 1996/12/18 22:18:39 cgd Exp $
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
 
 # Missing: mp.h
 
 FILES=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
-	disktab.h err.h fnmatch.h fstab.h fts.h glob.h grp.h ieeefp.h \
+	disktab.h dlfcn.h err.h fnmatch.h fstab.h fts.h glob.h grp.h ieeefp.h \
 	iso646.h kvm.h langinfo.h limits.h locale.h malloc.h math.h \
 	memory.h mpool.h ndbm.h netdb.h netgroup.h nlist.h nl_types.h paths.h \
 	pwd.h ranlib.h re_comp.h regex.h regexp.h resolv.h rmt.h search.h \
@@ -13,7 +13,7 @@ FILES=	a.out.h ar.h assert.h bitstring.h bm.h cpio.h ctype.h db.h dirent.h \
 	util.h utime.h utmp.h vis.h
 
 .if (${MACHINE_ARCH} != "alpha")
-FILES+=	dlfcn.h link.h
+FILES+=	link.h
 .endif
 
 DIRS=	arpa protocols rpc rpcsvc
