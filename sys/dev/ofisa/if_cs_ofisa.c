@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.2 1998/08/15 02:59:01 thorpej Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.3 1998/08/17 20:34:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ cs_ofisa_attach(parent, self, aux)
 
 	n = ofisa_reg_get(aa->oba.oba_phandle, reg, 2);
 #ifdef _CS_OFISA_MD_REG_FIXUP
-	n = cs_ofisa_md_reg_fixup(parent, self, aux, &reg, 2, n);
+	n = cs_ofisa_md_reg_fixup(parent, self, aux, reg, 2, n);
 #endif
 	if (n < 1 || n > 2) {
 		printf(": error getting register data\n");
