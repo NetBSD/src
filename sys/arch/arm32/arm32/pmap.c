@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 2001/02/19 13:29:39 bjh21 Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 2001/02/24 20:04:42 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -440,7 +440,7 @@ pmap_enter_pv(pmap, va, pv, flags)
 		 * There is at least one other VA mapping this page.
 		 * Place this entry after the header.
 		 */
-#ifdef DIAGNOSTIC
+#ifdef PMAP_DEBUG
 		for (npv = pv; npv; npv = npv->pv_next)
 			if (pmap == npv->pv_pmap && va == npv->pv_va)
 				panic("pmap_enter_pv: already in pv_tab pv %p: %08lx/%p/%p",
