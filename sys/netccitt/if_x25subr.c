@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_x25subr.c	7.14 (Berkeley) 6/26/91
- *	$Id: if_x25subr.c,v 1.3 1993/12/18 00:41:30 mycroft Exp $
+ *	$Id: if_x25subr.c,v 1.4 1994/01/16 01:59:21 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -55,7 +55,7 @@
 #include <netccitt/pk.h>
 #include <netccitt/pk_var.h>
 
-#include <machine/mtpr.h>
+#include <machine/cpu.h>
 
 #ifdef INET
 #include <netinet/in.h>
