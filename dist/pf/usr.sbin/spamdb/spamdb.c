@@ -1,3 +1,4 @@
+/*	$NetBSD: spamdb.c,v 1.2 2004/06/25 16:27:22 itojun Exp $	*/
 /*	$OpenBSD: spamdb.c,v 1.11 2004/04/27 21:25:11 itojun Exp $	*/
 
 /*
@@ -28,8 +29,12 @@
 #include <string.h>
 #include <time.h>
 #include <netdb.h>
+#include <unistd.h>
 
 #include "grey.h"
+
+int dbupdate(char *, char *, int);
+int dblist(char *);
 
 int
 dbupdate(char *dbname, char *ip, int add)
@@ -163,8 +168,9 @@ dblist(char *dbname)
 		cp = strchr(a, '\n');
 		if (cp == NULL)
 			/* this is a whitelist entry */
-			printf("WHITE|%s|||%d|%d|%d|%d|%d\n", a, gd.first,
-			    gd.pass, gd.expire, gd.bcount, gd.pcount);
+			printf("WHITE|%s|||%ld|%ld|%ld|%d|%d\n", a,
+			    (long)gd.first, (long)gd.pass, (long)gd.expire,
+			    gd.bcount, gd.pcount);
 		else {
 			char *from, *to;
 
@@ -179,9 +185,9 @@ dblist(char *dbname)
 			}
 			*to = '\0';
 			to++;
-			printf("GREY|%s|%s|%s|%d|%d|%d|%d|%d\n",
-			    a, from, to, gd.first, gd.pass, gd.expire,
-			    gd.bcount, gd.pcount);
+			printf("GREY|%s|%s|%s|%ld|%ld|%ld|%d|%d\n",
+			    a, from, to, (long)gd.first, (long)gd.pass,
+			    (long)gd.expire, gd.bcount, gd.pcount);
 		}
 		free(a);
 	}
