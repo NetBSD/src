@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.28 1997/02/22 04:36:48 thorpej Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.29 1997/02/23 08:56:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -490,11 +490,12 @@ vnode_pager_sync(mp)
 		vm_object_lock(object);
 
 		/*
-		 * This object might have lost its last reference while
-		 * we were paging out something else.  If so, don't bother
-		 * to clean it; just delete it.
+		 * If this object is already being deleted, or lost its last
+		 * reference while we were sleeping, don't bother to clean it
+		 * here; vm_object_terminate() will do it.
 		 */
-		if (object->ref_count > 1)
+		if ((object->flags & OBJ_FADING) == 0 &&
+		    object->ref_count > 1)
 			(void) vm_object_page_clean(object, 0, 0, FALSE, FALSE);
 
 		vm_object_unlock(object);
