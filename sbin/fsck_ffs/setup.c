@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.47 2001/09/03 14:52:18 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.48 2001/09/03 14:53:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.47 2001/09/03 14:52:18 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.48 2001/09/03 14:53:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -604,7 +604,6 @@ cmpsblks(const struct fs *sb, struct fs *asb)
 	asb->fs_interleave = sb->fs_interleave;
 	asb->fs_npsect = sb->fs_npsect;
 	asb->fs_nrpos = sb->fs_nrpos;
-	asb->fs_state = sb->fs_state;
 	asb->fs_qbmask = sb->fs_qbmask;
 	asb->fs_qfmask = sb->fs_qfmask;
 	asb->fs_state = sb->fs_state;
