@@ -1,3 +1,4 @@
+# $NetBSD: Makefile.inc,v 1.2 2004/12/12 08:18:42 christos Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -24,8 +25,17 @@
 #
 # $FreeBSD: src/lib/libpam/Makefile.inc,v 1.15 2004/03/15 13:23:20 des Exp $
 
-.ifdef PAM_DEBUG
-DEBUG_FLAGS+=	-DDEBUG
-.endif
+# Include support for static modules.
+CPPFLAGS+= -DOPENPAM_STATIC_MODULES
 
-SHLIB_MAJOR=	2
+# Enable the static module macros.
+CPPFLAGS+= -DOPENPAM_STATIC_MODULE
+
+# ...and don't do either of those on the shared library.
+# XXX CSHLIBFLAGS isn't perfect, but it'll do for now.
+CSHLIBFLAGS+= -DNO_STATIC_MODULES
+
+# Define the shared library version here.  libpam and the modules share a
+# version, and we need these variables early for module install rules.
+SHLIB_MAJOR=	0
+SHLIB_MINOR=	0

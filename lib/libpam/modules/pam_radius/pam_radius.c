@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_radius.c,v 1.2 2004/12/12 08:18:46 christos Exp $	*/
+
 /*-
  * Copyright 1998 Juniper Networks, Inc.
  * All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_radius/pam_radius.c,v 1.22 2004/06/25 12:32:45 kan Exp $");
+#else
+__RCSID("$NetBSD: pam_radius.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/types.h>
