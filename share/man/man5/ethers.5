@@ -1,8 +1,8 @@
-.\"	$NetBSD: ethers.5,v 1.5 1999/03/17 20:19:45 garbled Exp $
+.\"	$NetBSD: ethers.5,v 1.6 2000/11/07 07:17:13 lukem Exp $
 .\"
 .\"     Written by Roland McGrath <roland@frob.com>.  Public domain.
 .\"
-.Dd December 16, 1993
+.Dd November 7, 2000
 .Dt ETHERS 5
 .Os
 .Sh NAME
@@ -18,6 +18,11 @@ A ``#'' character indicates the beginning of a comment;
 characters up to the end of
 the line are not interpreted by routines which search the file.
 .Pp
+Each line in
+.Nm
+has the format:
+.Dl ethernet-MAC-address hostname-or-IP
+.Pp
 Ethernet MAC addresses are expressed as six hexadecimal numbers separated
 by colons, e.g. "08:00:20:00:5a:bc".
 The functions described in 
@@ -25,6 +30,16 @@ The functions described in
 and
 .Xr ether_aton 3
 can read and produce this format.
+.Pp
+The tradional use of
+.Nm
+involved using hostnames for the second argument.
+This may not be suitable for machines that don't have a common MAC
+address for all interfaces (i.e., just about every non
+.Tn Sun
+machine).
+There should be no problem in using an IP address as the second field
+if you wish to differentiate between different interfaces on a system.
 .Sh FILES
 .Bl -tag -width /etc/ethers -compact
 .It Pa /etc/ethers
