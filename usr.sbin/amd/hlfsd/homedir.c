@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: homedir.c,v 1.1.1.1 1997/07/24 21:22:41 christos Exp $
+ * $Id: homedir.c,v 1.1.1.2 1997/09/22 21:12:34 christos Exp $
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -296,11 +296,7 @@ interlock(int signum)
 {
   int child;
   uid2home_t *lostchild;
-#ifdef HAVE_SIGACTION
   int status;
-#else /* not HAVE_SIGACTION */
-  union wait status;
-#endif /* not HAVE_SIGACTION */
 
 #ifdef HAVE_WAITPID
   while ((child = waitpid((pid_t) -1, &status, WNOHANG)) > 0) {
@@ -312,25 +308,15 @@ interlock(int signum)
     if (lastchild && lastchild->child == child) {
       lastchild->child = 0;
 
-#ifdef HAVE_SIGACTION
       if (WIFEXITED(status))
 	lastchild->last_status = WEXITSTATUS(status);
-#else /* not HAVE_SIGACTION */
-      if (status.w_retcode)
-	lastchild->last_status = status.w_retcode;
-#endif /* not HAVE_SIGACTION */
       lastchild = (uid2home_t *) NULL;
     } else {
       /* and if not, we have to search for it... */
       for (lostchild = pwtab; lostchild < &pwtab[cur_pwtab_num]; lostchild++) {
 	if (lostchild->child == child) {
-#ifdef HAVE_SIGACTION
 	  if (WIFEXITED(status))
 	    lostchild->last_status = WEXITSTATUS(status);
-#else /* not HAVE_SIGACTION */
-	  if (status.w_retcode)
-	    lostchild->last_status = status.w_retcode;
-#endif /* not HAVE_SIGACTION */
 	  lostchild->child = 0;
 	  break;
 	}
@@ -387,7 +373,7 @@ uidof(char *username)
   int idx;
 
   if ((idx = untab_index(username)) < 0)	/* not found */
-    return -3;			/* an invalid user id */
+    return INVALIDID;			/* an invalid user id */
   return untab[idx].uid;
 }
 
@@ -494,13 +480,13 @@ plt_reset(void)
       if (pwtab[i].home)
 	free(pwtab[i].home);
       pwtab[i].home = (char *) NULL;
-      pwtab[i].uid = -3;	/* not a valid uid (yet...) */
+      pwtab[i].uid = INVALIDID;	/* not a valid uid (yet...) */
       pwtab[i].child = (pid_t) 0;
       pwtab[i].uname = (char *) NULL;	/* only a ptr to untab[i].username */
       if (untab[i].username)
 	free(untab[i].username);
       untab[i].username = (char *) NULL;
-      untab[i].uid = -3;	/* invalid uid */
+      untab[i].uid = INVALIDID;	/* invalid uid */
       untab[i].home = (char *) NULL;	/* only a ptr to pwtab[i].home  */
     }
   cur_pwtab_num = 0;		/* zero current size */
@@ -517,6 +503,7 @@ plt_reset(void)
 static void
 table_add(int u, char *h, char *n)
 {
+  int i;
 
   if (max_pwtab_num <= 0) {	/* was never initialized */
     max_pwtab_num = 1;
@@ -536,6 +523,14 @@ table_add(int u, char *h, char *n)
 					sizeof(username2uid_t) *
 					max_pwtab_num);
   }
+
+  /* do NOT add duplicate entries (this is an O(N^2) algorithm... */
+  for (i=0; i<cur_pwtab_num; ++i)
+    if (u == pwtab[i].uid  &&  u != 0 ) {
+      plog(XLOG_ERROR, "ignoring duplicate home %s for uid %d (already %s)",
+	   h, u, pwtab[i].home);
+      return;
+    }
 
   /* add new password entry */
   pwtab[cur_pwtab_num].home = xmalloc((strlen(h) + 1) * sizeof(char));

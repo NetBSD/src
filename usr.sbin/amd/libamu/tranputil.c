@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: tranputil.c,v 1.1.1.1 1997/07/24 21:20:10 christos Exp $
+ * $Id: tranputil.c,v 1.1.1.2 1997/09/22 21:11:23 christos Exp $
  *
  * Socket specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -91,6 +91,7 @@ bind_resv_port(int so, u_short *pp)
 
   return rc;
 }
+
 
 /*
  * close a descriptot, Sockets style
@@ -282,8 +283,30 @@ get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const c
     nfs_version = NFS_VERS_MAX;
     again = 1;
   }
-  tv.tv_sec = 2;
+  tv.tv_sec = 3;		/* retry every 3 seconds, but also timeout */
   tv.tv_usec = 0;
+
+  /*
+   * First check if remote portmapper is up (verify if remote host is up).
+   * This is performed by testing of the NULL procedure of NFS version 2
+   * exists.  I am using version 2 because it is likely that all servers who
+   * support even version 3 will support 2 (it's in the specs), and this
+   * way, this test will succeeded faster.
+   */
+  clnt_stat = pmap_rmtcall(sin,
+			   NFS_PROGRAM,
+			   NFS_VERSION,	/* this is correct! */
+			   NFSPROC_NULL,
+			   (XDRPROC_T_TYPE) xdr_void,
+			   NULL,
+			   (XDRPROC_T_TYPE) xdr_void,
+			   NULL,
+			   tv,
+			   NULL);
+  if (clnt_stat == RPC_TIMEDOUT) {
+    plog(XLOG_ERROR, "get_nfs_version: failed to contact portmapper on host \"%s\": %s", host, clnt_sperrno(clnt_stat));
+    return 0;
+  }
 
 try_again:
 
@@ -303,8 +326,13 @@ try_again:
 
   /* Try a couple times to verify the CLIENT handle. */
   tv.tv_sec = 6;
-  clnt_stat = clnt_call(clnt, NFSPROC_NULL, (xdrproc_t) xdr_void, 0,
-			(xdrproc_t) xdr_void, 0, tv);
+  clnt_stat = clnt_call(clnt,
+			NFSPROC_NULL,
+			(XDRPROC_T_TYPE) xdr_void,
+			0,
+			(XDRPROC_T_TYPE) xdr_void,
+			0,
+			tv);
   close(sock);
   clnt_destroy(clnt);
   if (clnt_stat != RPC_SUCCESS) {
@@ -327,3 +355,19 @@ try_again:
        nfs_version, proto, host);
   return nfs_version;
 }
+
+
+/*
+ * AUTOFS FUNCTIONS FOR SOCKETS:
+ */
+#ifdef HAVE_FS_AUTOFS
+/*
+ * Create the nfs service for amd
+ */
+int
+create_autofs_service(int *soAUTOFSp, u_short *autofs_portp, SVCXPRT **autofs_xprtp, void (*dispatch_fxn)(struct svc_req *rqstp, SVCXPRT *transp))
+{
+  /* NOT IMPLEMENTED! */
+  return -1;
+}
+#endif /* HAVE_FS_AUTOFS */

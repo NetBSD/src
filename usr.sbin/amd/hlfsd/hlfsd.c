@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: hlfsd.c,v 1.1.1.1 1997/07/24 21:22:40 christos Exp $
+ * $Id: hlfsd.c,v 1.1.1.2 1997/09/22 21:12:32 christos Exp $
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -62,8 +62,8 @@ static char default_dir_name[] = DEFAULT_DIRNAME;
 static char *dir_name = default_dir_name;
 static int printpid = 0;
 static int stoplight = 0;
-static void hlfsd_init(P_void);
-static void usage(P_void);
+static void hlfsd_init(void);
+static void usage(void);
 
 static struct itimerval reloadinterval = {
   {DEFAULT_INTERVAL, 0},
@@ -87,7 +87,7 @@ char *slinkname = 0;
 char hostname[MAXHOSTNAMELEN] = "localhost";
 int cache_interval = DEFAULT_CACHE_INTERVAL;
 int foreground = 1;		/* This is the top-level server */
-int hlfs_gid = -3;
+int hlfs_gid = INVALIDID;
 int masterpid = 0;
 int noverify = 0;
 int orig_umask;
@@ -97,9 +97,12 @@ pid_t mypid;			/* Current process id */
 serv_state amd_state;
 u_short nfs_port;
 
+/* symbol must be available always */
 #ifdef MOUNT_TABLE_ON_FILE
-char *mtab = MNTTAB_FILE_NAME;
-#endif /* MOUNT_TABLE_ON_FILE */
+char *mnttab_file_name = MNTTAB_FILE_NAME;
+#else /* not MOUNT_TABLE_ON_FILE */
+char *mnttab_file_name = NULL;
+#endif /* not MOUNT_TABLE_ON_FILE */
 
 #ifdef DEBUG
 int debug_flags = 0;
@@ -137,6 +140,8 @@ main(int argc, char *argv[])
   int opterrs = 0;
   int retry;
   int soNFS;			/* NFS socket */
+  int s = -99;
+
   mntent_t mnt;
   nfs_args_t mountargs;
   struct dirent *direntry;
@@ -264,12 +269,13 @@ main(int argc, char *argv[])
  * Terminate if did not ask to forcecache (-C) and hlfsd would not be able
  * to set the minimum cache intervals.
  */
-#if !defined(MNT2_NFS_OPT_ACREGMIN) || !defined(MNT2_NFS_OPT_ACDIRMIN)
+#if !defined(MNT2_NFS_OPT_ACREGMIN) && !defined(MNT2_NFS_OPT_NOAC) && !defined(HAVE_FIELD_NFS_ARGS_T_ACREGMIN)
   if (!forcecache) {
     fprintf(stderr, "%s: will not be able to turn off attribute caches.\n", progname);
     exit(1);
   }
-#endif /* !defined(MNT2_NFS_OPT_ACREGMIN) || !defined(MNT2_NFS_OPT_ACDIRMIN) */
+#endif /* !defined(MNT2_NFS_OPT_ACREGMIN) && !defined(MNT2_NFS_OPT_NOAC) && !defined(HAVE_FIELD_NFS_ARGS_T_ACREGMIN) */
+
 
   switch (argc - optind) {
   case 2:
@@ -441,10 +447,11 @@ main(int argc, char *argv[])
   amuDebug(D_DAEMON) {
 #endif /* DEBUG */
     /* XXX: port to use pure svr4 signals */
+    s = -99;
     while (stoplight != SIGUSR2) {
-      int s = -99;
-      plog(XLOG_INFO, "parent waits for child to setup");
+      plog(XLOG_INFO, "parent waits for child to setup (stoplight=%d)", stoplight);
       s = sigpause(0);		/* wait for child to set up */
+      sleep(1);
     }
 #ifdef DEBUG
   }
@@ -483,6 +490,8 @@ main(int argc, char *argv[])
     mnt.mnt_opts = preopts;
   }
 
+  memset((char *) &mountargs, 0, sizeof(mountargs)); /* paranoid */
+
   /*
    * Make sure that amd's top-level NFS mounts are hidden by default
    * from df.
@@ -490,11 +499,10 @@ main(int argc, char *argv[])
    * option entry, or the "auto" one, set the mount type to "nfs".
    */
   mnt.mnt_type = HIDE_MOUNT_TYPE;
-
-  /*
-   * Set the address field of the nfs_args structure.
-   */
-  memset((char *) &mountargs, 0, sizeof(mountargs));
+  /* some systems don't have a mount type, but a mount flag */
+#ifdef MNT2_NFS_OPT_AUTO
+  mountargs.flags |= MNT2_NFS_OPT_AUTO;
+#endif /* MNT2_NFS_OPT_AUTO */
 
 #ifdef HAVE_TRANSPORT_TYPE_TLI
   mountargs.addr = &nfsxprt->xp_ltaddr;
@@ -514,7 +522,7 @@ main(int argc, char *argv[])
 #else /* not HAVE_TRANSPORT_TYPE_TLI */
   amu_get_myaddress(&localsocket.sin_addr);
   localsocket.sin_family = AF_INET;
-  localsocket.sin_port = nfsxprt->xp_port;
+  localsocket.sin_port = htons(nfsxprt->xp_port);
 
   NFS_SA_DREF(mountargs, &localsocket);
 #endif /* not HAVE_TRANSPORT_TYPE_TLI */
@@ -586,29 +594,42 @@ main(int argc, char *argv[])
 #endif /* MNT2_NFS_OPT_DUMBTIMR */
 
 #ifdef MNT2_NFS_OPT_NOAC
+  plog(XLOG_INFO, "turning on NFS option noac");
   mountargs.flags |= MNT2_NFS_OPT_NOAC;
 #endif /* MNT2_NFS_OPT_NOAC */
 
 #ifdef MNT2_NFS_OPT_ACREGMIN
+  plog(XLOG_INFO, "turning on NFS option acregmin");
   mountargs.flags |= MNT2_NFS_OPT_ACREGMIN;
-  mountargs.acregmin = SYMTTL_ATTR_CACHE_VALUE;
 #endif /* MNT2_NFS_OPT_ACREGMIN */
 #ifdef MNT2_NFS_OPT_ACREGMAX
+  plog(XLOG_INFO, "turning on NFS option acregmax");
   mountargs.flags |= MNT2_NFS_OPT_ACREGMAX;
-  mountargs.acregmax = SYMTTL_ATTR_CACHE_VALUE;
 #endif /* MNT2_NFS_OPT_ACREGMAX */
+#ifdef HAVE_FIELD_NFS_ARGS_T_ACREGMIN
+  plog(XLOG_INFO, "setting NFS acregmin/max to %d", SYMTTL_ATTR_CACHE_VALUE);
+  mountargs.acregmin = SYMTTL_ATTR_CACHE_VALUE;
+  mountargs.acregmax = SYMTTL_ATTR_CACHE_VALUE;
+#endif /* HAVE_FIELD_NFS_ARGS_T_ACREGMIN */
+
 #ifdef MNT2_NFS_OPT_ACDIRMIN
+  plog(XLOG_INFO, "turning on NFS option acdirmin");
   mountargs.flags |= MNT2_NFS_OPT_ACDIRMIN;
-  mountargs.acdirmin = SYMTTL_ATTR_CACHE_VALUE;
 #endif /* MNT2_NFS_OPT_ACDIRMIN */
 #ifdef MNT2_NFS_OPT_ACDIRMAX
+  plog(XLOG_INFO, "turning on NFS option acdirmax");
   mountargs.flags |= MNT2_NFS_OPT_ACDIRMAX;
-  mountargs.acdirmax = SYMTTL_ATTR_CACHE_VALUE;
 #endif /* MNT2_NFS_OPT_ACDIRMAX */
+#ifdef HAVE_FIELD_NFS_ARGS_T_ACDIRMIN
+  plog(XLOG_INFO, "setting NFS acdirmin/max to %d", SYMTTL_ATTR_CACHE_VALUE);
+  mountargs.acdirmin = SYMTTL_ATTR_CACHE_VALUE;
+  mountargs.acdirmax = SYMTTL_ATTR_CACHE_VALUE;
+#endif /* HAVE_FIELD_NFS_ARGS_T_ACDIRMIN */
 
 #ifdef MNT2_NFS_OPT_SYMTTL
+  plog(XLOG_INFO, "turning on NFS option symttl and setting value to %d", SYMTTL_ATTR_CACHE_VALUE);
   mountargs.flags |= MNT2_NFS_OPT_SYMTTL;
-  mountargs.symttl = 0;
+  mountargs.symttl = SYMTTL_ATTR_CACHE_VALUE;
 #endif /* MNT2_NFS_OPT_SYMTTL */
 
 #if defined(MNT2_NFS_OPT_POSIX) && defined(MNTTAB_OPT_POSIX)
@@ -651,17 +672,18 @@ main(int argc, char *argv[])
  *      -Erez Zadok.
  */
   if (debug_flags & D_DAEMON) {	/* asked for -D daemon */
-    if (mount_fs(&mnt, mntflags, (caddr_t) & mountargs, retry, type, 0, NULL) < 0)
+    if (mount_fs(&mnt, mntflags, (caddr_t) & mountargs, retry, type, 0, NULL, mnttab_file_name) < 0)
       fatal("nfsmount: %m");
   } else {			/* asked for -D nodaemon */
     if (fork() == 0) {		/* child runs mount */
-      if (mount_fs(&mnt, mntflags, (caddr_t) & mountargs, retry, type, 0, NULL) < 0)
+      if (mount_fs(&mnt, mntflags, (caddr_t) & mountargs, retry, type, 0, NULL, mnttab_file_name) < 0) {
 	fatal("nfsmount: %m");
+      }
       exit(0);			/* all went well */
     }
   }
 #else /* not DEBUG */
-  if (mount_fs(&mnt, mntflags, (caddr_t) & mountargs, retry, type, 0, NULL) < 0)
+  if (mount_fs(&mnt, mntflags, (caddr_t) & mountargs, retry, type, 2, "udp", mnttab_file_name) < 0)
     fatal("nfsmount: %m");
 #endif /* not DEBUG */
 
@@ -688,15 +710,18 @@ static void
 hlfsd_init(void)
 {
   int child = 0;
-
 #ifdef HAVE_SIGACTION
   struct sigaction sa;
 #endif /* HAVE_SIGACTION */
-
 #ifndef HAVE_SETPGRP
   int tty;
 #endif /* not HAVE_SETPGRP */
 
+  /*
+   * Initialize file handles.
+   */
+  plog(XLOG_INFO, "initializing hlfsd file handles");
+  hlfsd_init_filehandles();
 
 #ifdef DEBUG
   /*
@@ -812,12 +837,10 @@ hlfsd_init(void)
     if ((tty = open("/dev/tty", O_RDWR)) < 0) {
       /* not an error if already no ctty */
       if (errno != ENXIO)
-	plog(XLOG_WARNING,
-	     "Could not open controlling tty: %m");
+	plog(XLOG_WARNING, "Could not open controlling tty: %m");
     } else {
       if (ioctl(tty, TIOCNOTTY, 0) < 0  &&  errno != ENOTTY)
-	plog(XLOG_WARNING,
-	     "Could not disassociate tty (TIOCNOTTY): %m");
+	plog(XLOG_WARNING, "Could not disassociate tty (TIOCNOTTY): %m");
       close(tty);
     }
 # endif /* not HAVE_SETPGRP */
@@ -914,7 +937,7 @@ cleanup(int signum)
   mypid = getpid();
 
   for (;;) {
-    while ((umount_result = UMOUNT_FS(dir_name)) == EBUSY) {
+    while ((umount_result = UMOUNT_FS(dir_name, mnttab_file_name)) == EBUSY) {
 #ifdef DEBUG
       dlog("cleanup(): umount delaying for 10 seconds");
 #endif /* DEBUG */

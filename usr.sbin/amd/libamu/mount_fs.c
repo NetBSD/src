@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mount_fs.c,v 1.1.1.1 1997/07/24 21:20:08 christos Exp $
+ * $Id: mount_fs.c,v 1.1.1.2 1997/09/22 21:11:17 christos Exp $
  *
  */
 
@@ -127,7 +127,7 @@ compute_mount_flags(mntent_t *mnt)
 
 
 int
-mount_fs(mntent_t *mnt, int flags, caddr_t mnt_data, int retry, MTYPE_TYPE type, u_long nfs_version, const char *nfs_proto)
+mount_fs(mntent_t *mnt, int flags, caddr_t mnt_data, int retry, MTYPE_TYPE type, u_long nfs_version, const char *nfs_proto, const char *mnttabname)
 {
   int error = 0;
 #if defined(MNTTAB_OPT_DEV) || defined(MNTTAB_OPT_FSID)
@@ -184,7 +184,7 @@ again:
        * points around which need to be removed before we
        * can mount something new in their place.
        */
-      errno = umount_fs(mnt->mnt_dir);
+      errno = umount_fs(mnt->mnt_dir, mnttabname);
       if (errno != 0)
 	plog(XLOG_ERROR, "%s: umount: %m", mnt->mnt_dir);
       else {
@@ -276,7 +276,7 @@ again:
 #  endif /* not HAVE_FIELD_MNTENT_T_TIME_STRING */
 # endif /* HAVE_FIELD_MNTENT_T_TIME */
 
-  write_mntent(mnt);
+  write_mntent(mnt, mnttabname);
 
 # ifdef MNTTAB_OPT_DEV
   if (xopts) {

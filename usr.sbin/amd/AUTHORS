@@ -38,6 +38,9 @@ June 23, 1997: mount options should be properly comma limited.
 July 10, 1997: info_ldap.c and prototype changes to all map _init and _mtime
 functions.  Contributed scripts/amd2ldif.pl.
 
+August 4, 1997: info_ldap.c fixes and adding two new amd.conf ldap
+variables: ldap_cache_seconds and ldap_cache_maxmem.
+
 * Andreas Stolcke <stolcke@speech.sri.com>
 
 June 22, 1997: patches to ensure that proto= and vers= options work
@@ -65,3 +68,34 @@ July 13, 1997: Move amd.conf parsing to before switch_option() on log/debug
 options.  Minor type wrt "ro" option in libamu/mount_fs.c.  Added more
 fillers of mnttab options, for acdirmax, acdirmin, acregmax, acregmin, noac,
 grpid, nosuid, and actimo.
+
+* Roman Hodek <Roman.Hodek@informatik.uni-erlangen.de>
+
+July 23, 1997: Got lots of patches from the Debian Linux folks, who fixed
+several generic bugs, and one serious one for Linux.  The latter involved
+using connected sockets for NFS mounts on kernels 1.3.10 and older.  Roman's
+work is baed on amd-upl102, and work from Ian Murdock <imurdock@debian.org>
+and Dominik Kubla <dominik@debian.org>.
+
+* Rainer Orth <ro@TechFak.Uni-Bielefeld.DE>
+
+August 6, 1997: assorted fixes to support hesiod-1.3, solaris 2.4 (which I
+already fixed but did not release yet), and support for $LDFLAGS at
+configure/compile time.
+
+* Jason Thorpe <thorpej@nas.nasa.gov>
+
+August 25, 1997: make amd work when talking to NIS+ servers in NIS
+compatibility mode.  Fix originally came from Matthieu Herrb
+<matthieu@laas.fr>.
+
+* Chris Metcalf <metcalf@catfish.lcs.mit.edu>
+
+August 29, 1997: patch to make amd use FQHN for NFS/RPC authentication,
+useful esp. for cross-domain NFS mounts.
+September 2, 1997: if plock() succeeded, don't display errno string.
+
+* Enami Tsugutomo <enami@cv.sony.co.jp>
+
+September 4, 1997: don't ping remote servers with NFS V.3 always, but V.2,
+regardless of client's NFS version. (conf/transp/transp_sockets.c)
