@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.163 1999/09/27 23:46:56 ad Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.164 1999/09/29 00:07:51 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.156 1999/09/27 23:45:57 ad Exp 
+ *	NetBSD: pcidevs,v 1.157 1999/09/29 00:07:15 thorpej Exp 
  */
 
 /*
@@ -620,6 +620,7 @@
 #define	PCI_PRODUCT_ADP_AIC7855	0x5578		/* AIC-7855 */
 #define	PCI_PRODUCT_ADP_AIC5900	0x5900		/* AIC-5900 ATM */
 #define	PCI_PRODUCT_ADP_AIC5905	0x5905		/* AIC-5905 ATM */
+#define	PCI_PRODUCT_ADP_AIC6915	0x6915		/* AIC-6915 10/100 Ethernet */
 #define	PCI_PRODUCT_ADP_AIC7860	0x6078		/* AIC-7860 */
 #define	PCI_PRODUCT_ADP_2940AU	0x6178		/* AHA-2940A Ultra */
 #define	PCI_PRODUCT_ADP_AIC7870	0x7078		/* AIC-7870 */

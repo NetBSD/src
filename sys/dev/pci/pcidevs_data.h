@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.161 1999/09/27 23:46:56 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.162 1999/09/29 00:07:51 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.156 1999/09/27 23:45:57 ad Exp 
+ *	NetBSD: pcidevs,v 1.157 1999/09/29 00:07:15 thorpej Exp 
  */
 
 /*
@@ -362,6 +362,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec",
 	    "AIC-5905 ATM",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC6915,
+	    0,
+	    "Adaptec",
+	    "AIC-6915 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7860,
