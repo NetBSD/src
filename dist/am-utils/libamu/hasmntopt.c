@@ -1,4 +1,4 @@
-/*	$NetBSD: hasmntopt.c,v 1.4 2003/03/09 01:38:49 christos Exp $	*/
+/*	$NetBSD: hasmntopt.c,v 1.5 2003/07/14 17:22:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -110,7 +110,7 @@ amu_hasmntopt(mntent_t *mnt, char *opt)
   char *o = t;
   size_t l = strlen(opt);
 
-  strcpy(t, mnt->mnt_opts);
+  strlcpy(t, mnt->mnt_opts, sizeof(t));
 
   while (*(f = nextmntopt(&o)))
     if (NSTREQ(opt, f, l))
