@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.18 1999/05/26 04:23:59 nisimura Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.19 1999/05/27 06:43:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.18 1999/05/26 04:23:59 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.19 1999/05/27 06:43:50 nisimura Exp $");
 
 
 #include <sys/types.h>
@@ -126,8 +126,6 @@ void dec_3min_mcclock_cpuspeed __P((volatile struct chiptime *mcclock_addr,
 			       int clockmask));
 u_long	kmin_tc3_imask;
 
-static unsigned latched_cycle_cnt;
-
 void kn02ba_wbflush __P((void));
 unsigned kn02ba_clkread __P((void));
 extern unsigned (*clkread) __P((void));
@@ -138,6 +136,7 @@ extern char cpu_model[];
 extern int physmem_boardmax;
 
 #ifdef MIPS3
+static unsigned latched_cycle_cnt;
 extern u_int32_t mips3_cycle_count __P((void));
 #endif
 
