@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.4 2003/02/25 09:12:11 jdolecek Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.5 2003/02/26 21:50:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.4 2003/02/25 09:12:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.5 2003/02/26 21:50:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,15 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.4 2003/02/25 09:12:11 jdolecek Exp
 #include <sys/uio.h>
 
 #include <netsmb/mchain.h>
-
-#ifndef __NetBSD__
-MODULE_VERSION(libmchain, 1);
-#endif
-
-#ifdef __NetBSD__
-#define M_TRYWAIT M_WAIT
-#define c_caddr_t const char *
-#endif
 
 #define MBERROR(format, args...) printf("%s(%d): "format, __func__ , \
 				    __LINE__ ,## args)
@@ -68,11 +59,11 @@ m_getm(struct mbuf *m, int len, int how, int type)
 
         KASSERT(len >= 0);
 
-        MGET(mp, how, type);
+        mp = m_get(how, type);
         if (mp == NULL)
                 return (NULL);
         else if (len > MINCLSIZE) {
-                MCLGET(mp, how);
+                m_clget(mp, how);
                 if ((mp->m_flags & M_EXT) == 0) {
                         m_free(mp);
                         return (NULL);
@@ -88,14 +79,14 @@ m_getm(struct mbuf *m, int len, int how, int type)
 
         top = tail = mp;
         while (len > 0) {
-                MGET(mp, how, type);
+                mp = m_get(how, type);
                 if (mp == NULL)
                         goto failed;
 
                 tail->m_next = mp;
                 tail = mp;
                 if (len > MINCLSIZE) {
-                        MCLGET(mp, how);
+                        m_clget(mp, how);
                         if ((mp->m_flags & M_EXT) == 0)
                                 goto failed;
                 }
@@ -137,7 +128,7 @@ mb_init(struct mbchain *mbp)
 {
 	struct mbuf *m;
 
-	m = m_gethdr(M_TRYWAIT, MT_DATA);
+	m = m_gethdr(M_WAIT, MT_DATA);
 	if (m == NULL) 
 		return ENOBUFS;
 	m->m_len = 0;
@@ -194,7 +185,7 @@ mb_reserve(struct mbchain *mbp, int size)
 		panic("mb_reserve: size = %d", size);
 	m = mbp->mb_cur;
 	if (mbp->mb_mleft < size) {
-		mn = m_get(M_TRYWAIT, MT_DATA);
+		mn = m_get(M_WAIT, MT_DATA);
 		if (mn == NULL)
 			return NULL;
 		mbp->mb_cur = m->m_next = mn;
@@ -258,7 +249,7 @@ mb_put_int64le(struct mbchain *mbp, int64_t x)
 }
 
 int
-mb_put_mem(struct mbchain *mbp, c_caddr_t source, int size, int type)
+mb_put_mem(struct mbchain *mbp, const char *source, int size, int type)
 {
 	struct mbuf *m;
 	caddr_t dst;
@@ -271,7 +262,7 @@ mb_put_mem(struct mbchain *mbp, c_caddr_t source, int size, int type)
 	while (size > 0) {
 		if (mleft == 0) {
 			if (m->m_next == NULL) {
-				m = m_getm(m, size, M_TRYWAIT, MT_DATA);
+				m = m_getm(m, size, M_WAIT, MT_DATA);
 				if (m == NULL)
 					return ENOBUFS;
 			}
@@ -370,7 +361,7 @@ md_init(struct mdchain *mdp)
 {
 	struct mbuf *m;
 
-	m = m_gethdr(M_TRYWAIT, MT_DATA);
+	m = m_gethdr(M_WAIT, MT_DATA);
 	if (m == NULL) 
 		return ENOBUFS;
 	m->m_len = 0;
@@ -572,7 +563,7 @@ md_get_mbuf(struct mdchain *mdp, int size, struct mbuf **ret)
 {
 	struct mbuf *m = mdp->md_cur, *rm;
 
-	rm = m_copym(m, mdp->md_pos - mtod(m, u_char*), size, M_TRYWAIT);
+	rm = m_copym(m, mdp->md_pos - mtod(m, u_char*), size, M_WAIT);
 	if (rm == NULL)
 		return EBADRPC;
 	md_get_mem(mdp, NULL, size, MB_MZERO);
