@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipsec,v 1.1 2000/06/13 16:29:54 itojun Exp $
+# $NetBSD: ipsec,v 1.2 2000/06/13 18:17:13 itojun Exp $
 #
 
 # PROVIDE: ipsec
@@ -30,6 +30,8 @@ ipsec_start()
 	if [ ! -f /etc/ipsec.conf ]; then
 		err 1 "/etc/ipsec.conf not readable; ipsec start aborted."
 	fi
+	# XXX should check if ipsec.conf is secure enough
+	#
 	echo "Installing ipsec manual keys/policies."
 	/sbin/setkey -f /etc/ipsec.conf
 }
