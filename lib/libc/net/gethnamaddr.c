@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.23 1999/07/19 19:42:27 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.24 1999/08/09 15:00:14 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.23 1999/07/19 19:42:27 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.24 1999/08/09 15:00:14 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -624,8 +624,6 @@ gethostbyaddr(addr, len, af)
 	int len, af;
 {
 	const u_char *uaddr = (const u_char *)addr;
-	static const u_char mapped[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0xff,0xff };
-	static const u_char tunnelled[] = { 0,0, 0,0, 0,0, 0,0, 0,0, 0,0 };
 	int size;
 	struct hostent *hp;
 	static const ns_dtab dtab[] = {
@@ -636,11 +634,11 @@ gethostbyaddr(addr, len, af)
 	};
 	
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
-	    (!memcmp(uaddr, mapped, sizeof mapped) ||
-	     !memcmp(uaddr, tunnelled, sizeof tunnelled))) {
+	    (IN6_IS_ADDR_V4MAPPED((struct in6_addr *)uaddr) ||
+	     IN6_IS_ADDR_V4COMPAT((struct in6_addr *)uaddr))) {
 		/* Unmap. */
-		addr += sizeof mapped;
-		uaddr += sizeof mapped;
+		addr += IN6ADDRSZ - INADDRSZ;
+		uaddr += IN6ADDRSZ - INADDRSZ;
 		af = AF_INET;
 		len = INADDRSZ;
 	}
