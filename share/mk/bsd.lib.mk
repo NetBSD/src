@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.89 1997/03/24 21:54:17 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.90 1997/03/24 23:19:12 christos Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -156,7 +156,7 @@ all: ${_LIBS} _SUBDIRUSE
 
 OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
 
-__achivebuild: .USE
+__archivebuild: .USE
 	@rm -f ${.TARGET}
 	@${AR} cq ${.TARGET} `lorder ${.ALLSRC} | tsort -q`
 	${RANLIB} ${.TARGET}
