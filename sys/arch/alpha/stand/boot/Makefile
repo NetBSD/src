@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 1999/03/31 02:52:11 cgd Exp $
+# $NetBSD: Makefile,v 1.22 1999/04/01 11:08:39 ross Exp $
 
 PROG = boot
 
@@ -6,20 +6,20 @@ SRCS = start.S boot.c loadfile.c disk.c conf.c prom.c prom_disp.S OSFpal.c
 SRCS+= devopen.c filesystem.c prom_swpal.S
 
 BOOT_RELOC = ${SECONDARY_LOAD_ADDRESS}
+HEADERSIZE_PROG = headersize
 
-CPPFLAGS += ${SECONDARY_CPPFLAGS}
+CPPFLAGS += ${FILE_FORMAT_CPPFLAGS}
 
-CLEANFILES+= vers.c vers.o ${PROG}.sym
+CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym ${HEADERSIZE_PROG}
 
-${PROG}: ${PROG}.sym
-	@echo creating ${PROG} from ${PROG}.sym...
-	@objcopy --output-target=binary ${PROG}.sym ${PROG}
-	@chmod 644 ${PROG}
-	@ls -l ${PROG}
-	@${CHECKSIZE_CMD} ${PROG}.sym ${PROG} ${SECONDARY_MAX_LOAD} \
-	    ${SECONDARY_MAX_TOTAL} || (rm -f ${PROG} ; false)
+${PROG}.nosym: ${PROG}.sym
+	cp ${PROG}.sym ${PROG}.nosym
+	${STRIP} ${PROG}.nosym
 
-SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=yes
+${PROG}: ${PROG}.nosym ${HEADERSIZE_PROG}
+	dd if=${PROG}.nosym of=${PROG} \
+	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${PROG}.nosym` skip=1
+
 .include "../Makefile.bootprogs"
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
