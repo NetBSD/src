@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.76 2001/04/12 07:20:39 toshii Exp $
+.\"	$NetBSD: sysctl.3,v 1.77 2001/09/16 02:30:25 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -349,7 +349,7 @@ for format of this template).  The default value is
 .Nm %n.core
 and can be changed with the kernel configuration option
 .Cd options DEFCORENAME
-(see 
+(see
 .Xr options 4
 ).
 .It Li KERN_DOMAINNAME
@@ -802,8 +802,8 @@ the MTU of the appropriate interface.  Otherwise, it is calculated based on
 the greater of the MTU of the interface, and the largest (non-loopback)
 interface MTU on the system.
 .It Li tcp.sack
-TCP Selective ACKnowledgement (RFC 2018) is not implemented in 
-.Nx 
+TCP Selective ACKnowledgement (RFC 2018) is not implemented in
+.Nx
 at this time.
 Changing this value will have no effect.
 .It Li tcp.win_scale
@@ -1119,14 +1119,14 @@ points to the current process, or the PID of the target process.
 .It Li PROC_PID_CORENAME
 The template used for the core dump file name (see
 .Xr core 5
-for details). The base name must either be 
+for details). The base name must either be
 .Nm core
 or end with the suffix ``.core'' (the super-user may set arbitrary names). By
 default it points to KERN_DEFCORENAME.
 .It Li PROC_PID_LIMIT
 Return resources limits, as defined for the
 .Xr getrlimit 2
-and 
+and
 .Xr setrlimit 2
 system calls.
 The fourth level name is one of:

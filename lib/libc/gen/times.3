@@ -1,4 +1,4 @@
-.\"	$NetBSD: times.3,v 1.9 1999/03/22 19:44:47 garbled Exp $
+.\"	$NetBSD: times.3,v 1.10 2001/09/16 02:30:25 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,7 +43,7 @@
 .Lb libc
 .Sh SYNOPSIS
 .Fd #include <sys/times.h>
-.Ft clock_t 
+.Ft clock_t
 .Fn times "struct tms *tp"
 .Sh DESCRIPTION
 .Bf -symbolic
@@ -117,7 +117,7 @@ If an error occurs,
 .Fn times
 returns the value
 .Pq (clock_t)\-1 ,
-and sets 
+and sets
 .Va errno
 to indicate the error.
 .Sh ERRORS

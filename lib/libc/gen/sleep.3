@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.3,v 1.9 1998/02/05 18:47:56 perry Exp $
+.\"	$NetBSD: sleep.3,v 1.10 2001/09/16 02:30:25 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,10 +56,10 @@ action is to invoke a signal-catching function or to terminate the
 process.  The suspension time may be longer than requested due to the
 scheduling of other activity by the system.
 .Sh RETURN VALUE
-If the 
+If the
 .Fn sleep
 function returns because the requested time has elapsed, the value
-returned will be zero.  If the 
+returned will be zero.  If the
 .Fn sleep
 function returns due to the delivery of a signal, the value returned
 will be the unslept amount (the request time minus the time actually
@@ -68,9 +68,9 @@ slept) in seconds.
 .Xr nanosleep 2 ,
 .Xr usleep 3
 .Sh STANDARDS
-The 
-.Fn sleep 
-function conforms to 
+The
+.Fn sleep
+function conforms to
 .St -p1003.1-90 .
 .Sh HISTORY
 A

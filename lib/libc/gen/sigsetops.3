@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigsetops.3,v 1.9 2000/06/07 19:47:59 nathanw Exp $
+.\"	$NetBSD: sigsetops.3,v 1.10 2001/09/16 02:30:25 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,9 +67,9 @@ or
 must be called for every object of type
 .Fa sigset_t
 before any other use of the object.
-.Fn sigemptyset 
+.Fn sigemptyset
 and
-.Fn sigfillset 
+.Fn sigfillset
 are provided as macros, but actual functions are available
 if their names are undefined (with #undef
 .Em name ) .
