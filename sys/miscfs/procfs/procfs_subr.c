@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.52 2003/04/18 23:19:24 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.53 2003/05/28 18:03:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.52 2003/04/18 23:19:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.53 2003/05/28 18:03:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,6 +209,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	case Pmap:	/* /proc/N/map = -r--r--r-- */
 	case Pmaps:	/* /proc/N/maps = -r--r--r-- */
 	case Pstatus:	/* /proc/N/status = -r--r--r-- */
+	case Pstat:	/* /proc/N/stat = -r--r--r-- */
 	case Pcmdline:	/* /proc/N/cmdline = -r--r--r-- */
 	case Pmeminfo:	/* /proc/meminfo = -r--r--r-- */
 	case Pcpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
@@ -313,6 +314,9 @@ procfs_rw(v)
 
 	case Pstatus:
 		return (procfs_dostatus(curp, l, pfs, uio));
+
+	case Pstat:
+		return (procfs_do_pid_stat(curp, l, pfs, uio));
 
 	case Pmap:
 		return (procfs_domap(curp, p, pfs, uio, 0));
