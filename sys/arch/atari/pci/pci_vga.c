@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.5 2001/05/28 08:30:03 leo Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.6 2001/05/29 06:01:27 leo Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -40,6 +40,7 @@
 
 #include <atari/dev/font.h>
 
+#include "vga_pci.h"
 #if NVGA_PCI > 0
 #include <dev/cons.h>
 #include <dev/ic/mc6845reg.h>
