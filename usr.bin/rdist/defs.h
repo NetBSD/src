@@ -1,3 +1,5 @@
+/*	$NetBSD: defs.h,v 1.7 1996/07/12 00:46:20 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	8.1 (Berkeley) 6/9/93
- *	$Id: defs.h,v 1.6 1996/07/12 00:38:51 thorpej Exp $
  */
 
 #include <sys/param.h>

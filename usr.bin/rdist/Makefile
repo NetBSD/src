@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.5 1996/07/12 00:46:18 thorpej Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 3/12/91
-#	$Id: Makefile,v 1.4 1996/07/12 00:38:50 thorpej Exp $
 
 PROG=	rdist
 CFLAGS+=-I${.CURDIR}
