@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.39 2000/12/14 22:45:25 is Exp $
+.\"	$NetBSD: hardware,v 1.40 2001/03/11 21:44:31 is Exp $
 .
 .Nx \*V
 runs on any Amiga that has a 68020 or better CPU with
@@ -144,13 +144,15 @@ accessed from the A3000. This might apply to other
 .It
 Most SCSI CD-ROM drives
 .It
-Serial cards
+Serial/Parallel cards
 .(bullet -compact
 HyperCom 3Z, HyperCom 4, HyperCom 3+ and 4+
 .It
 MultiFaceCard II and III
 .It
 A2232 (normal and clockdoubled)
+.It
+IOBlix Zorro-Bus
 .bullet)
 .It
 Amiga floppy drives with Amiga (880/1760kB) and
