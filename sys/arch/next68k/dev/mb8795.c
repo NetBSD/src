@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.10.4.1 1999/06/21 00:54:01 thorpej Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.10.4.2 1999/07/01 23:15:01 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -1079,7 +1079,7 @@ mb8795_mediachange(ifp)
 
 	if (sc->sc_mediachange)
 		return ((*sc->sc_mediachange)(sc));
-	return (EINVAL);
+	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.2.4.1 1999/06/21 01:03:40 thorpej Exp $	*/
+/*	$NetBSD: netio.c,v 1.2.4.2 1999/07/01 23:27:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -140,6 +140,7 @@ int
 netclose(f)
 	struct open_file *f;
 {
+	netif_close(netdev_sock);
 	f->f_devdata = NULL;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.h,v 1.8.4.1 1999/06/21 01:47:20 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.h,v 1.8.4.2 1999/07/01 23:55:15 thorpej Exp $	*/
 
 /*
  *
@@ -65,6 +65,8 @@ struct uvm_faultinfo {
 	vsize_t size;			/* size of interest */
 };
 
+#ifdef _KERNEL
+
 /*
  * fault prototypes
  */
@@ -82,5 +84,7 @@ static void uvmfault_unlockmaps __P((struct uvm_faultinfo *, boolean_t));
 int uvm_fault_wire __P((vm_map_t, vaddr_t, vaddr_t, vm_prot_t));
 void uvm_fault_unwire __P((vm_map_t, vaddr_t, vaddr_t));
 void uvm_fault_unwire_locked __P((vm_map_t, vaddr_t, vaddr_t));
+
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_FAULT_H_ */

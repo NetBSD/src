@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.76.2.1.2.1 1999/06/21 01:01:39 thorpej Exp $
+# 	$NetBSD: GENERIC,v 1.76.2.1.2.2 1999/07/01 23:22:07 thorpej Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -414,9 +414,12 @@ ie3	at vme0 addr 0x35ff02 pri 3 vec 0x77		# VME
 ie4	at vme0 addr 0x2dff02 pri 3 vec 0x7c		# VME
 
 ## qec/be, qec/hme
-qec*		at sbus? slot ? offset ?
-be*		at qec?
-qe*		at qec?
+qec*	at sbus? slot ? offset ?
+be*	at qec?
+qe*	at qec?
+
+## hme (driver not quite ready yet)
+#hme*	at sbus? slot ? offset ?
 
 # midway ATM
 en0	at sbus? slot ? offset ?

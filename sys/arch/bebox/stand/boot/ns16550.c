@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.c,v 1.3 1999/02/15 04:38:06 sakamoto Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.3.4.1 1999/07/01 23:06:31 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -35,20 +35,21 @@
  * NS16550 support
  */
 
-#include <bebox/include/bootinfo.h>
+#include <stand.h>
+#include "boot.h"
 #include "ns16550.h"
 
 volatile struct NS16550 *
-NS16550_init()
-{
-	volatile struct NS16550 *com_port;
+NS16550_init(addr, speed)
+	int addr;
 	int speed;
-	extern struct btinfo_console btinfo_console;
+{
+	struct NS16550 *com_port;
 
-	com_port = (struct NS16550 *)(COMBASE + btinfo_console.addr);
+	com_port = (struct NS16550 *)(COMBASE + addr);
 
 	com_port->lcr = 0x80;  /* Access baud rate */
-	speed = comspeed(btinfo_console.speed);
+	speed = comspeed(speed);
 	com_port->dll = speed;
 	com_port->dlm = speed >> 8;
 
@@ -56,31 +57,41 @@ NS16550_init()
 	com_port->mcr = 0x00;
 	com_port->fcr = 0x07;  /* Clear & enable FIFOs */
 	com_port->ier = 0x00;
+
 	return (com_port);
 }
 
-
-NS16550_putc(volatile struct NS16550 *com_port, unsigned char c)
+void
+NS16550_putc(com_port, c)
+	volatile struct NS16550 *com_port;
+	int c;
 {
-	volatile int i;
-	while ((com_port->lsr & LSR_THRE) == 0) ;
+	while ((com_port->lsr & LSR_THRE) == 0)
+		;
 	com_port->thr = c;
 }
 
-unsigned char NS16550_getc(volatile struct NS16550 *com_port)
+int
+NS16550_getc(com_port)
+	volatile struct NS16550 *com_port;
 {
-	while ((com_port->lsr & LSR_DR) == 0) ;
+	while ((com_port->lsr & LSR_DR) == 0)
+		;
 	return (com_port->rbr);
 }
 
-int NS16550_scankbd(volatile struct NS16550 *com_port)
+int
+NS16550_scankbd(com_port)
+	volatile struct NS16550 *com_port;
 {
 	if ((com_port->lsr & LSR_DR) == 0)
 		return -1;
 	return (com_port->rbr);
 }
 
-NS16550_test(volatile struct NS16550 *com_port)
+int
+NS16550_test(com_port)
+	volatile struct NS16550 *com_port;
 {
 	return ((com_port->lsr & LSR_DR) != 0);
 }

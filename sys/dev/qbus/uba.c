@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.48.2.2 1999/06/21 01:18:55 thorpej Exp $	   */
+/*	$NetBSD: uba.c,v 1.48.2.3 1999/07/01 23:35:36 thorpej Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -201,17 +201,19 @@ ubasearch(parent, cf, aux)
 	scb_vecalloc(vec, ua.ua_ivec, cf->cf_unit, SCB_ISTACK);
 	if (ua.ua_reset) { /* device wants ubareset */
 		if (sc->uh_resno == 0) {
-			sc->uh_reset = malloc(sizeof(ua.ua_reset),
+#define	RESETSIXE	128
+			sc->uh_reset = malloc(sizeof(void *) * RESETSIXE,
 			    M_DEVBUF, M_NOWAIT);
-			sc->uh_resarg = (int *)sc->uh_reset + 128;
+			sc->uh_resarg = malloc(sizeof(void *) * RESETSIXE,
+			    M_DEVBUF, M_NOWAIT);
 		}
-		if (sc->uh_resno > 127) {
+		if (sc->uh_resno < RESETSIXE) {
+			sc->uh_resarg[sc->uh_resno] = cf->cf_unit;
+			sc->uh_reset[sc->uh_resno++] = ua.ua_reset;
+		} else {
 			printf("%s: Expand reset table, skipping reset %s%d\n",
 			    sc->uh_dev.dv_xname, cf->cf_driver->cd_name,
 			    cf->cf_unit);
-		} else {
-			sc->uh_resarg[sc->uh_resno] = cf->cf_unit;
-			sc->uh_reset[sc->uh_resno++] = ua.ua_reset;
 		}
 	}
 	ua.ua_br = br;

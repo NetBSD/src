@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.5.4.1 1999/06/21 01:19:27 thorpej Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.5.4.2 1999/07/01 23:40:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ typedef struct uhci_softc {
 #endif /* defined(__FreeBSD__) */
 
 	uhci_physaddr_t *sc_pframes;
+	usb_dma_t sc_dma;
 	struct uhci_vframe sc_vframes[UHCI_VFRAMELIST_COUNT];
 
 	uhci_soft_qh_t *sc_ctl_start;	/* dummy QH for control */
@@ -144,6 +145,9 @@ typedef struct uhci_softc {
 	u_int8_t sc_conf;		/* device configuration */
 
 	char sc_isreset;
+
+	char sc_suspend;
+	usbd_request_handle sc_has_timo;
 
 	int sc_intrs;
 	LIST_HEAD(, uhci_intr_info) sc_intrhead;

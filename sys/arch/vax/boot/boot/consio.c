@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.2.2.1.2.1 1999/06/21 01:03:40 thorpej Exp $ */
+/*	$NetBSD: consio.c,v 1.2.2.1.2.2 1999/07/01 23:27:16 thorpej Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -134,8 +134,6 @@ consinit()
 	 */
 	switch (vax_boardtype) {
 
-	case VAX_BTYP_660:
-/*	case VAX_BTYP_670: */
 	case VAX_BTYP_690:
 	case VAX_BTYP_1303:
 		put_fp = rom_putchar;

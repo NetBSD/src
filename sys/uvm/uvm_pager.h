@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.9.4.1 1999/06/07 04:25:37 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.9.4.2 1999/07/01 23:55:17 thorpej Exp $	*/
 
 /*
  *
@@ -128,6 +128,8 @@ struct uvm_pagerops {
 /* page we are not interested in getting */
 #define PGO_DONTCARE ((struct vm_page *) -1)	/* [get only] */
 
+#ifdef _KERNEL
+
 /*
  * handle inline options
  */
@@ -160,5 +162,6 @@ struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
 				       vaddr_t, vaddr_t));
 void		uvm_shareprot __P((vm_map_entry_t, vm_prot_t));
 
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_PAGER_H_ */

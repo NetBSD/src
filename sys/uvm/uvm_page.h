@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.11.4.1 1999/06/21 01:47:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.11.4.2 1999/07/01 23:55:17 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -73,6 +73,8 @@
  * uvm_page.h
  */
 
+#ifdef _KERNEL
+
 /*
  * macros
  */
@@ -125,5 +127,7 @@ PAGE_INLINE void uvm_pagewire __P((struct vm_page *));
 PAGE_INLINE void uvm_pagezero __P((struct vm_page *));
 
 PAGE_INLINE int uvm_page_lookup_freelist __P((struct vm_page *));
+
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_PAGE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.2 1999/05/06 15:43:20 christos Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.2.2.1 1999/07/01 23:49:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133.2.1.2.1 1999/06/21 00:46:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.133.2.1.2.2 1999/07/01 23:01:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,6 +122,13 @@
 #endif
 #include <netinet/ip_var.h>
 #endif 
+#ifdef INET6
+# ifndef INET
+#  include <netinet/in.h>
+# endif
+#include <netinet6/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
 #ifdef NS
 #include <netns/ns_var.h>
 #endif
@@ -366,7 +373,7 @@ cpu_startup()
 	 */
 	if (memlist->m_nseg > 0 && memlist->m_nseg < 16)
 		for (i = 0; i < memlist->m_nseg; i++)
-			printf("memory segment %d at %x size %x\n", i,
+			printf("memory segment %d at %08x size %08x\n", i,
 			    memlist->m_seg[i].ms_start, 
 			    memlist->m_seg[i].ms_size);
 
@@ -1046,6 +1053,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef INET6
+	if (netisr & (1 << NETISR_IPV6)) {
+		netisr &= ~(1 << NETISR_IPV6);
+		ip6intr();
 	}
 #endif
 #ifdef NETATALK

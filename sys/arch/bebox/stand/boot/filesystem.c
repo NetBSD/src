@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.1 1998/01/16 04:17:48 sakamoto Exp $	*/
+/*	$NetBSD: filesystem.c,v 1.1.10.1 1999/07/01 23:06:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -51,4 +51,4 @@ struct fs_ops file_system[] = {
 #endif
 };
 
-int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
+int nfsys = sizeof (file_system)/sizeof (struct fs_ops);

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.285.2.1.2.3 1999/06/22 02:28:27 thorpej Exp $
+#	$NetBSD: files,v 1.285.2.1.2.4 1999/07/01 23:31:05 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -51,6 +51,7 @@ defopt  opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 
 # networking protocols
 defopt	INET
+defopt	opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
 defopt	opt_atalk.h	NETATALK
 defopt	opt_ns.h	NSIP	 	# XNS tunneled over IP
 defopt	opt_iso.h	ISO TPIP	# ISO network stack
@@ -151,6 +152,7 @@ define	fddi
 define	hippi
 define	token
 define	sppp
+define	crypto
 
 # devices ARPing IPv4 pull this in:
 define	arp
@@ -236,8 +238,8 @@ file	dev/ic/am79900.c		le32
 file	dev/ic/lance.c			le24 | le32
 
 # Sun HME Ethernet controllers
-#device	hme: arp, ether, ifnet
-#file	dev/ic/hme.c			hme
+device	hme: arp, ether, ifnet, mii
+file	dev/ic/hme.c			hme
 
 # 8390-family Ethernet controllers
 define	dp8390nic
@@ -275,6 +277,10 @@ file	dev/ic/hd64570.c		hd64570
 # Intel 82586 Ethernet Controller
 define	i82586
 file	dev/ic/i82586.c			i82586
+
+# Intel 82557/82558/82559 Ethernet Controller
+device	fxp: ether, ifnet, arp, mii
+file	dev/ic/i82557.c			fxp
 
 # SMC 91Cxx Ethernet Controller
 device	sm: arp, ether, ifnet
@@ -414,6 +420,8 @@ pseudo-device strip: ifnet
 pseudo-device ipfilter: ifnet
 pseudo-device ipip: ifnet
 pseudo-device gre: ifnet
+pseudo-device gif: ifnet
+pseudo-device faith: ifnet
 
 pseudo-device sequencer
 
@@ -537,6 +545,59 @@ file isofs/cd9660/cd9660_vnops.c	cd9660
 file kern/exec_aout.c			exec_aout
 file kern/exec_conf.c
 file kern/exec_ecoff.c			exec_ecoff
+
+file netkey/key.c			ipsec
+file netkey/key_debug.c			ipsec
+file netkey/keysock.c			ipsec
+
+# inet6 stuff
+file net/if_faith.c			faith			needs-count
+file net/if_gif.c			gif			needs-count
+file netinet/ip_ecn.c			inet | inet6
+file netinet/in_gif.c			gif & inet
+file netinet6/in6_gif.c			gif & inet6
+file netinet6/in6.c			inet6
+file netinet6/in6_ifattach.c		inet6
+file netinet6/in6_cksum.c		inet6
+file netinet6/in6_pcb.c			inet6
+file netinet6/in6_prefix.c		inet6
+file netinet6/in6_proto.c		inet6
+file netinet6/dest6.c			inet6
+file netinet6/frag6.c			inet6
+file netinet6/icmp6.c			inet6
+file netinet6/ip6_input.c		inet6
+file netinet6/ip6_forward.c		inet6
+file netinet6/ip6_mroute.c		inet6
+file netinet6/ip6_output.c		inet6
+file netinet6/route6.c			inet6
+file netinet6/mld6.c			inet6
+file netinet6/nd6.c			inet6
+file netinet6/nd6_nbr.c			inet6
+file netinet6/nd6_rtr.c			inet6
+file netinet6/raw_ip6.c			inet6
+file netinet6/udp6_usrreq.c		inet6
+file netinet6/ah_core.c			ipsec
+file netinet6/esp_core.c		ipsec & ipsec_esp
+file netinet6/ipsec.c			ipsec
+file netinet6/ah_output.c		ipsec
+file netinet6/ah_input.c		ipsec
+file netinet6/esp_output.c		ipsec & ipsec_esp
+file netinet6/esp_input.c		ipsec & ipsec_esp
+file crypto/des/des_cbc.c		ipsec & ipsec_esp
+file crypto/des/des_ecb.c		ipsec & ipsec_esp
+file crypto/des/des_setkey.c		ipsec & ipsec_esp
+file crypto/des/des_3cbc.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_cbc.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_cbc_m.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_enc.c		ipsec & ipsec_esp
+file crypto/blowfish/bf_skey.c		ipsec & ipsec_esp
+file crypto/cast128/cast128.c		ipsec & ipsec_esp
+file crypto/cast128/cast128_cbc.c	ipsec & ipsec_esp
+file crypto/rc5/rc5.c			ipsec & ipsec_esp
+file crypto/rc5/rc5_cbc.c		ipsec & ipsec_esp
+file netinet6/ipcomp_core.c		ipsec
+file netinet6/ipcomp_input.c		ipsec
+file netinet6/ipcomp_output.c		ipsec
 file kern/exec_elf32.c			exec_elf32
 file kern/exec_elf64.c			exec_elf64
 file kern/exec_elf_common.c		exec_elf32 | exec_elf64
@@ -673,7 +734,7 @@ file net/raw_usrreq.c
 file net/route.c
 file net/rtsock.c
 file net/slcompress.c			sl | ppp | strip
-file net/zlib.c				ppp & ppp_deflate
+file net/zlib.c				(ppp & ppp_deflate) | ipsec
 file netccitt/ccitt_proto.c		ccitt
 file netccitt/hd_debug.c		hdlc
 file netccitt/hd_input.c		hdlc

@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.32.4.1 1999/06/21 01:03:43 thorpej Exp $     */
+/*      $NetBSD: pmap.h,v 1.32.4.2 1999/07/01 23:27:17 thorpej Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -107,6 +107,8 @@ extern	struct pmap kernel_pmap_store;
  */
 #define	PMAP_MAP_POOLPAGE(pa)	((pa) | KERNBASE)
 #define PMAP_UNMAP_POOLPAGE(va)	((va) & ~KERNBASE)
+
+#define	PMAP_STEAL_MEMORY
 
 /* Routines that are best to define as macros */
 #define	pmap_phys_address(phys) 	((u_int)(phys) << PGSHIFT)

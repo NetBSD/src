@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.17 1998/07/05 00:51:10 jonathan Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.17.12.1 1999/07/01 23:10:04 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -186,7 +186,11 @@ sn_obio_attach(parent, self, aux)
 		return;
 	}
 
-	add_nubus_intr(sc->slotno, snintr, (void *)sc);
+	if (mac68k_machine.aux_interrupts) {
+		intr_establish((int (*)(void *))snintr, (void *)sc, 3);
+	} else {
+		add_nubus_intr(sc->slotno, snintr, (void *)sc);
+	}
 }
 
 static int

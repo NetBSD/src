@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.30.4.1 1999/06/21 01:26:43 thorpej Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.30.4.2 1999/07/01 23:44:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -652,6 +652,7 @@ union_copyup(un, docopy, cred, p)
 {
 	int error;
 	struct vnode *lvp, *uvp;
+	struct vattr lvattr, uvattr;
 
 	error = union_vn_create(&uvp, un, p);
 	if (error)
@@ -669,10 +670,20 @@ union_copyup(un, docopy, cred, p)
 		 * from VOP_CLOSE
 		 */
 		vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_OPEN(lvp, FREAD, cred, p);
+
+        	error = VOP_GETATTR(lvp, &lvattr, cred, p);
+		if (error == 0)
+			error = VOP_OPEN(lvp, FREAD, cred, p);
 		if (error == 0) {
 			error = union_copyfile(lvp, uvp, cred, p);
 			(void) VOP_CLOSE(lvp, FREAD, cred, p);
+		}
+		if (error == 0) {
+			/* Copy permissions up too */
+			VATTR_NULL(&uvattr);
+			uvattr.va_mode = lvattr.va_mode;
+			uvattr.va_flags = lvattr.va_flags;
+        		error = VOP_SETATTR(uvp, &uvattr, cred, p);
 		}
 		VOP_UNLOCK(lvp, 0);
 #ifdef UNION_DIAGNOSTIC

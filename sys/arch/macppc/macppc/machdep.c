@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.2.2.2.1 1999/06/21 00:51:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.2.2.2.2 1999/07/01 23:12:06 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,6 +70,14 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #include <netinet/ip_var.h>
+#endif
+
+#ifdef INET6
+# ifndef INET
+#  include <netinet/in.h>
+# endif
+#include <netinet6/ip6.h>
+#include <netinet6/ip6_var.h>
 #endif
 
 #include <machine/bat.h>
@@ -813,6 +821,10 @@ softnet()
 #endif
 	if (isr & (1 << NETISR_IP))
 		ipintr();
+#endif
+#ifdef	INET6
+	if (isr & (1 << NETISR_IPV6))
+		ip6intr();
 #endif
 #ifdef	IMP
 	if (isr & (1 << NETISR_IMP))

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.88.6.1 1999/06/21 00:50:58 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.88.6.2 1999/07/01 23:09:57 thorpej Exp $
 
 # mac68k-specific configuration info
 
@@ -109,7 +109,7 @@ file	arch/mac68k/obio/sbc_obio.c	sbc_obio
 
 device	esp: scsi, ncr53c9x
 attach	esp at obio_norm
-file	arch/mac68k/obio/esp.c		esp needs-flag
+file	arch/mac68k/obio/esp.c		esp
 
 device	zsc { channel = -1 }
 attach	zsc at obio_norm
@@ -136,6 +136,7 @@ file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/conf.c
 file	arch/mac68k/mac68k/disksubr.c		disk
 file	arch/mac68k/mac68k/intr.c
+file	arch/mac68k/mac68k/iop.c
 file	arch/mac68k/mac68k/kgdb_machdep.c	kgdb
 file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/macrom.c

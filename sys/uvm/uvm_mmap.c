@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.19.4.2 1999/06/21 01:47:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.19.4.3 1999/07/01 23:55:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -255,7 +255,7 @@ sys_mincore(p, v, retval)
 		}
 
 		if (uobj != NULL)
-			simple_unlock(&obj->vmobjlock);
+			simple_unlock(&uobj->vmobjlock);
 		if (amap != NULL)
 			amap_unlock(amap);
 	}

@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.22.4.1 1999/06/21 01:19:30 thorpej Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.22.4.2 1999/07/01 23:40:23 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.31 1999/06/05 14:14:02 augustss Exp 
+ *	aNetBSD: usbdevs,v 1.35 1999/06/28 04:09:53 augustss Exp 
  */
 
 /*
@@ -58,9 +58,11 @@
 #define	USB_VENDOR_MICROSOFT	0x045e		/* Microsoft */
 #define	USB_VENDOR_KENSINGTON	0x0461		/* Primax Electronics */
 #define	USB_VENDOR_CHERRY	0x046a		/* Cherry Mikroschalter GMBH */
+#define	USB_VENDOR_LOGITECH	0x046d		/* Logitech Inc. */
 #define	USB_VENDOR_BTC	0x046e		/* Behavior Tech. Computer */
 #define	USB_VENDOR_PHILIPS	0x0471		/* Philips */
 #define	USB_VENDOR_CONNECTIX	0x0478		/* Connectix Corp. */
+#define	USB_VENDOR_STMICRO	0x0483		/* STMicroelectronics */
 #define	USB_VENDOR_ACER	0x04a5		/* Acer Peripheral Inc. */
 #define	USB_VENDOR_CYPRESS	0x04b4		/* Cypress Semiconductor */
 #define	USB_VENDOR_EPSON	0x04b8		/* Seiko Epson Corp. */
@@ -78,7 +80,7 @@
 #define	USB_VENDOR_AGILER	0x056e		/* Elecom Co., Ltd. */
 #define	USB_VENDOR_IOMEGA	0x059b		/* Iomega Corporation */
 #define	USB_VENDOR_BELKIN	0x05ab		/* In-System Design */
-#define	USB_VENDOR_LOGITECH	0x05ac		/* Apple Computer */
+#define	USB_VENDOR_APPLE	0x05ac		/* Apple Computer */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
 #define	USB_VENDOR_MACALLY	0x0618		/* Macally */
@@ -135,6 +137,9 @@
 /* Connectix products */
 #define	USB_PRODUCT_CONNECTIX_QUICKCAM	0x0001		/* QuickCam */
 
+/* STMicroelectronics products */
+#define	USB_PRODUCT_STMICRO_COMMUNICATOR	0x7554		/* USB Communicator */
+
 /* Acer products */
 #define	USB_PRODUCT_ACER_ACERSCAN_C310U	0x12a6		/* Acerscan C310U */
 
@@ -190,6 +195,7 @@
 /* Logitech products */
 #define	USB_PRODUCT_LOGITECH_M2452	0x0203		/* M2452 keyboard */
 #define	USB_PRODUCT_LOGITECH_M4848	0x0301		/* M4848 mouse */
+#define	USB_PRODUCT_LOGITECH_USBPS2	0xc001		/* USB-PS/2 mouse */
 
 /* Chic Technology products */
 #define	USB_PRODUCT_CHIC_MOUSE1	0x0001		/* mouse */

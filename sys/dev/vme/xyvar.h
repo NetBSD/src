@@ -1,4 +1,4 @@
-/*	$NetBSD: xyvar.h,v 1.3 1998/08/22 11:47:46 pk Exp $	*/
+/*	$NetBSD: xyvar.h,v 1.3.8.1 1999/07/01 23:40:51 thorpej Exp $	*/
 
 /*
  *
@@ -136,7 +136,6 @@ struct xy_softc {
 
 struct xyc_softc {
 	struct device sc_dev;            /* device struct, reqd by autoconf */
-	struct intrhand sc_ih;           /* interrupt info */
 	struct evcnt sc_intrcnt;         /* event counter (for vmstat -i) */
 
 	struct xyc *xyc;                 /* vaddr of vme registers */

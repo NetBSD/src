@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.50.4.1 1999/06/21 01:27:34 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.50.4.2 1999/07/01 23:45:20 thorpej Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -108,6 +108,12 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
+#else
+#ifdef _KERNEL
+#ifdef VJC
+#error ppp device with VJC assumes INET
+#endif
+#endif
 #endif
 
 #include "bpfilter.h"

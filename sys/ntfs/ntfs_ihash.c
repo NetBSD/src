@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.2 1999/05/06 15:43:19 christos Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.2.2.1 1999/07/01 23:49:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995

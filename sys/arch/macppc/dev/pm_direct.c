@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.3 1998/12/07 17:17:14 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.3.6.1 1999/07/01 23:12:05 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -96,8 +96,8 @@ signed char pm_send_cmd_type[] = {
 	0x00, 0x00,   -1,   -1,   -1,   -1,   -1, 0x00,
 	  -1, 0x00, 0x02, 0x01, 0x01,   -1,   -1,   -1,
 	0x00,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-	0x04, 0x14,   -1,   -1,   -1,   -1,   -1,   -1,
-	0x00, 0x00, 0x02,   -1,   -1,   -1,   -1,   -1,
+	0x04, 0x14,   -1, 0x03,   -1,   -1,   -1,   -1,
+	0x00, 0x00, 0x02, 0x02,   -1,   -1,   -1,   -1,
 	0x01, 0x01,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x00, 0x00,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x01, 0x00, 0x02, 0x02,   -1, 0x01, 0x03, 0x01,
@@ -133,7 +133,7 @@ signed char pm_receive_cmd_type[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x05, 0x15,   -1,   -1,   -1,   -1,   -1,   -1,
+	0x05, 0x15,   -1, 0x02,   -1,   -1,   -1,   -1,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x02, 0x02,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1165,7 +1165,7 @@ pm_adb_restart()
 {
 	PMData p;
 
-	p.command = 0xd0;	/* reset CPU */
+	p.command = PMU_RESET_CPU;
 	p.num_data = 0;
 	p.s_buf = p.data;
 	p.r_buf = p.data;
@@ -1178,11 +1178,55 @@ pm_read_date_time(time)
 {
 	PMData p;
 
-	p.command = 0x38;	/* read time */
+	p.command = PMU_READ_RTC;
 	p.num_data = 0;
 	p.s_buf = p.data;
 	p.r_buf = p.data;
 	pmgrop(&p);
 
 	bcopy(p.data, time, 4);
+}
+
+void
+pm_set_date_time(time)
+	u_long time;
+{
+	PMData p;
+
+	p.command = PMU_SET_RTC;
+	p.num_data = 4;
+	p.s_buf = p.r_buf = p.data;
+	bcopy(&time, p.data, 4);
+	pmgrop(&p);
+}
+
+int
+pm_read_nvram(addr)
+	int addr;
+{
+	PMData p;
+
+	p.command = PMU_READ_NVRAM;
+	p.num_data = 2;
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = addr >> 8;
+	p.data[1] = addr;
+	pmgrop(&p);
+
+	return p.data[0];
+}
+
+void
+pm_write_nvram(addr, val)
+	int addr, val;
+{
+	PMData p;
+
+	p.command = PMU_WRITE_NVRAM;
+	p.num_data = 3;
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = addr >> 8;
+	p.data[1] = addr;
+	p.data[2] = val;
+	pmgrop(&p);
 }

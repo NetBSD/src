@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.24.4.1 1999/06/21 01:24:03 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.24.4.2 1999/07/01 23:43:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #define	malloc(s, t, flags)		malloc(s)
 #define	free(p, t)			free(p)

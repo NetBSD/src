@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.h,v 1.1.8.1 1999/06/21 00:51:38 thorpej Exp $	*/
+/*	$NetBSD: pm_direct.h,v 1.1.8.2 1999/07/01 23:12:05 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -44,7 +44,12 @@ typedef	struct	{
 	char	data[32];	/* data buffer (is it too much?)	*/
 }	PMData;
 
-int	pmgrop(PMData *);
+int pmgrop __P((PMData *));
+void pm_adb_restart __P((void));
+void pm_read_date_time __P((u_long *));
+void pm_set_date_time __P((u_long));
+int pm_read_nvram __P((int));
+void pm_write_nvram __P((int, int));
 
 /* PMU commands */
 #define PMU_POWER_OFF		0x7e	/* Turn Power off */

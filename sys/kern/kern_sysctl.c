@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.43.4.1 1999/06/21 01:24:03 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.43.4.2 1999/07/01 23:43:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -397,6 +397,14 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_MBUF:
 		return (sysctl_dombuf(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
+	case KERN_MAPPED_FILES:
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+	case KERN_MEMLOCK:
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+	case KERN_MEMLOCK_RANGE:
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
+	case KERN_MEMORY_PROTECTION:
+		return (sysctl_rdint(oldp, oldlenp, newp, 1));
 	default:
 		return (EOPNOTSUPP);
 	}

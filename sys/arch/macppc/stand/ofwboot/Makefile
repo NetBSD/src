@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.4.4.1 1999/06/21 00:51:42 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4.4.2 1999/07/01 23:12:07 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
+FILES=		${PROG}.elf
 SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S

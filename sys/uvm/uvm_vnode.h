@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.h,v 1.7.4.1 1999/06/07 04:25:38 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.h,v 1.7.4.2 1999/07/01 23:55:18 thorpej Exp $	*/
 
 /*
  *
@@ -99,6 +99,5 @@ struct uvm_vnode {
  * touching the vnode [set WANTED and sleep to wait for it to clear]
  */
 #define UVM_VNODE_BLOCKED (UVM_VNODE_ALOCK|UVM_VNODE_DYING|UVM_VNODE_RELKILL)
-#endif
 
 #endif /* _UVM_UVM_VNODE_H_ */

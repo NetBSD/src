@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.68.2.1.2.1 1999/06/21 00:52:07 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.68.2.1.2.2 1999/07/01 23:13:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,11 +54,12 @@
  */
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
-#include "opt_ccitt.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_ddb.h"
 #include "opt_compat_ultrix.h"
+#include "opt_ns.h"
+#include "opt_ccitt.h"
+#include "opt_iso.h"
+#include "fs_coda.h"
 
 #include <machine/cdefs.h>
 
@@ -908,7 +909,7 @@ bcopy:
 	move	a1, v0
 #endif
 
-#if defined(NS) || defined(ISO) || defined(CCITT)
+#if defined(NS) || defined(ISO) || defined(CCITT) || defined(CODA)
 /*
  * Insert 'p' after 'q'.
  *	_insque(p, q)
