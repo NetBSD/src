@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.7 2003/02/24 08:48:18 perseant Exp $  */
+/*      $NetBSD: coalesce.c,v 1.8 2003/02/25 23:12:08 perseant Exp $  */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ char *coalesce_return[] = {
 	"Negative size",
 	"Not enough blocks to account for size",
 	"Malloc failed",
-	"LIOCBMAPV failed",
+	"LFCNBMAPV failed",
 	"Not broken enough to fix",
 	"Too many blocks not found",
 	"Too many blocks found in active segments",
@@ -171,7 +171,7 @@ int clean_inode(struct fs_info *fsp, ino_t ino)
 		/* Don't set the size, but let lfs_bmap fill it in */
 	}
 	if ((error = lfs_bmapv_emul(ifile_fd, bip, nb)) < 0) { 
-                syslog(LOG_WARNING, "LIOCBMAPV: %m");
+                syslog(LOG_WARNING, "LFCNBMAPV: %m");
 		retval = COALESCE_BADBMAPV;
 		goto out;
 	}
