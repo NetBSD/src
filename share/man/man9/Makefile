@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.62 2000/06/04 19:14:16 cgd Exp $
+#       $NetBSD: Makefile,v 1.63 2000/06/25 23:45:22 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -6,9 +6,9 @@ MAN=	access.9 arp.9 audio.9 bus_dma.9 bus_space.9 callout.9 copy.9 \
 	cpu_reboot.9 ctxsw.9 disk.9 disklabel.9 dopowerhooks.9 \
 	doshutdownhooks.9 ethersubr.9 evcnt.9 extent.9 fetch.9 fork1.9 \
 	humanize_number.9 inittodr.9 intro.9 ioctl.9 kprintf.9 \
-	log.9 malloc.9 mbuf.9 microtime.9 panic.9 pfil.9 physio.9 pool.9 \
-	powerhook_establish.9 psignal.9 ratecheck.9 resettodr.9 rnd.9 \
-	rt_timer.9 shutdownhook_establish.9 \
+	lock.9 log.9 malloc.9 mbuf.9 microtime.9 panic.9 pfil.9 physio.9 \
+	pool.9 powerhook_establish.9 psignal.9 ratecheck.9 resettodr.9 \
+	rnd.9 rt_timer.9 shutdownhook_establish.9 \
 	sleep.9 softintr.9 spl.9 store.9 time.9 uiomove.9 ucom.9 usbdi.9 uvm.9 \
 	wdc.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
@@ -79,6 +79,12 @@ MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 MLINKS+=humanize_number.9 format_bytes.9
 MLINKS+=kprintf.9 printf.9 kprintf.9 sprintf.9 kprintf.9 vprintf.9 \
 	kprintf.9 uprintf.9 kprintf.9 ttyprintf.9
+MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
+	lock.9 simple_lock_try.9 lock.9 simple_lock_unlock.9 \
+	lock.9 simple_lock_freecheck.9 lock.9 simple_lock_dump.9  \
+	lock.9 lockinit.9 lock.9 lockmgr.9 \
+	lock.9 lockstatus.9 lock.9 lockmgr_printinfo.9 \
+	lock.9 spinlockinit.9 spinlockmgr.9 
 MLINKS+=malloc.9 free.9
 MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_copym.9 mbuf.9 m_copypacket.9 mbuf.9 m_copydata.9 \
