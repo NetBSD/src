@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.51 2000/02/03 19:27:43 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.52 2000/02/08 12:10:56 tsubai Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.51 $"
+#ident 		"GENERIC-$Revision: 1.52 $"
 
 maxusers	32
 
@@ -146,7 +146,7 @@ ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 pciide*	at pci? dev ? function ?
-cbb*	at pci? dev? function ?		# PCI-CardBus bridge
+cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 obio0	at pci? dev ? function ?
 #macofcons0 at pci? dev ? function ?	# OpenFirmware console (for debugging)
 
@@ -172,6 +172,7 @@ adb*	at obio?			# Apple Desktop Bus
 aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
+abtn*	at adb?
 zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
@@ -186,7 +187,8 @@ wdc*	at pcmcia? function ?		# PCMCIA IDE controllers
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
-ex*	at cardbus?			# 3Com 3C575TX
+ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
+tlp*	at cardbus? dev ? function ?	# DECchip 21143
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
@@ -218,7 +220,7 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # PCI USB controllers
-ohci*	at pci?				# Open Host Controller
+ohci*	at pci? dev ? function ?	# Open Host Controller
 
 # USB bus support
 usb*	at ohci?
