@@ -1,4 +1,4 @@
-/* $NetBSD: if_es.c,v 1.2 1996/05/20 17:09:24 mark Exp $ */
+/* $NetBSD: if_es.c,v 1.3 1996/06/12 20:28:29 mark Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -347,7 +347,7 @@ esintr(sc)
 	intsts = inb(iobase + B2IST);
 	intact = inb(iobase + B2MSK) & intsts;
 	if ((intact) == 0) {
-		return (0);
+		return (0);	/* Pass interrupt on down the chain */
 	}
 
 #ifdef ESDEBUG
@@ -533,7 +533,7 @@ zzzz:
 	}
 #endif
 
-	return (1);
+	return (1);	/* Claim interrupt */
 }
 
 #define NWAIT(n)	\
