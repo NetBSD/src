@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.86 2002/12/17 14:28:54 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.87 2002/12/17 14:37:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.86 2002/12/17 14:28:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.87 2002/12/17 14:37:49 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -377,7 +377,6 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 	struct inode *ip;
 	struct vnode *vp, *nvp;
 	int inodes_written = 0, only_cleaning;
-	int needs_unlock;
 
 #ifndef LFS_NO_BACKVP_HACK
 	/* BEGIN HACK */
@@ -433,24 +432,6 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			continue;
 		}
 
-		needs_unlock = 0;
-		if (VOP_ISLOCKED(vp)) {
-			if (vp != fs->lfs_ivnode &&
-			    vp->v_lock.lk_lockholder != curproc->p_pid) {
-#ifdef DEBUG_LFS
-				printf("lfs_writevnodes: not writing ino %d,"
-				       " locked by pid %d\n",
-				       VTOI(vp)->i_number,
-				       vp->v_lock.lk_lockholder);
-#endif
-				lfs_vunref(vp);
-				continue;
-			}
-		} else if (vp != fs->lfs_ivnode) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			needs_unlock = 1;
-		}
-
 		only_cleaning = 0;
 		/*
 		 * Write the inode/file if dirty and it's not the IFILE.
@@ -480,9 +461,6 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 			(void) lfs_writeinode(fs, sp, ip);
 			inodes_written++;
 		}
-
-		if (needs_unlock)
-			VOP_UNLOCK(vp, 0);
 
 		if (lfs_clean_vnhead && only_cleaning)
 			lfs_vunref_head(vp);
