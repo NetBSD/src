@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.26.6.5 1998/11/22 07:28:29 cgd Exp $	*/
+/*	$NetBSD: dtop.c,v 1.26.6.6 1998/11/24 06:03:55 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.5 1998/11/22 07:28:29 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.6 1998/11/24 06:03:55 cgd Exp $");
 
 #include "rasterconsole.h"
 
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.5 1998/11/22 07:28:29 cgd Exp $");
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
 #include <pmax/dev/fbreg.h>
+#include <pmax/dev/rconsvar.h>
 
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/maxine.h>
@@ -185,8 +186,6 @@ int  dtop_locator_handler	__P((dtop_device_t, dtop_message_t, int, int));
 int  dtop_keyboard_handler	__P((dtop_device_t, dtop_message_t, int, int));
 int  dtopparam		__P((struct tty *, struct termios *));
 void dtopstart		__P((struct tty *));
-
-
 
 /*
  * lk201 keyboard divisions and up/down mode key bitmap.
@@ -336,7 +335,7 @@ dtopopen(dev, flag, mode, p)
 		return (error);
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
 
-#if NRASTERCONSOLE > 0
+#if (RASTERCONSOLE > 0) && defined(RCONS_BRAINDAMAGE)
 	/* handle raster console specially */
 	if (tp == DTOP_TTY(0) && firstopen) {
 	  	extern struct tty *fbconstty;
@@ -444,10 +443,13 @@ dtopintr(sc)
 	dtop_message msg;
 	int devno;
 	dtop_softc_t dtop;
+	int s;
 
 	dtop = sc;
+	s = spltty();
+
 	if (dtop_get_packet(dtop, &msg) < 0) {
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined (DEBUG) || defined(RCONS_DEBUG)
 	    printf("dtop: overrun (or stray)\n");
 #endif
 	    /*
@@ -465,15 +467,17 @@ dtopintr(sc)
 	 * If not probed yet, just throw the data away.
 	 */
 	if (!dtop->probed_once)
-		return 0;
+		goto out;
 
 	devno = DTOP_DEVICE_NO(msg.src_address);
 	if (devno < 0 || devno > 15)
-		return (0);
+		goto out;
 
 	(void) (*dtop->device[devno].handler)
 			(&dtop->device[devno].status, &msg,
 			 DTOP_EVENT_RECEIVE_PACKET, 0);
+out:
+	splx(s);
 	return(0);
 }
 
@@ -481,7 +485,6 @@ void
 dtopstart(tp)
 	register struct tty *tp;
 {
-	register int cc;
 	int s;
 
 	s = spltty();
@@ -496,8 +499,11 @@ dtopstart(tp)
 	}
 	if (tp->t_outq.c_cc == 0)
 		goto out;
+#ifdef RCONS_BRAINDAMAGE
 	/* handle console specially */
 	if (tp == DTOP_TTY(0)) {
+		register int cc;
+
 		while (tp->t_outq.c_cc > 0) {
 			cc = getc(&tp->t_outq) & 0x7f;
 			cnputc(cc);
@@ -514,6 +520,8 @@ dtopstart(tp)
 			selwakeup(&tp->t_wsel);
 		}
 	}
+#endif	/* RCONS_BRAINDAMAGE */
+
 out:
 	splx(s);
 }
@@ -823,7 +831,9 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	register u_char *ls, *le, *ns, *ne;
 	u_char save[11], retc;
 	int msg_len, c, s;
+#ifdef RCONS_BRAINDAMAGE
 	struct tty *tp = DTOP_TTY(0);
+#endif
 
 	/*
 	 * Fiddle about emulating an lk201 keyboard. The lk501
@@ -923,8 +933,12 @@ dtop_keyboard_handler(dev, msg, event, outc)
 		    if (dtopDivertXInput) {
 			(*dtopDivertXInput)(*ns);
 			c = -1; /* consumed by X */
-		    } else if (c >= 0 && tp != NULL)
+		    } else if (c >= 0 /*&& tp != NULL*/)
+#if 0
 			(*linesw[tp->t_line].l_rint)(c, tp);
+#else
+			rcons_input(0, c);
+#endif
 		    dev->keyboard.k_ar_state = K_AR_ACTIVE;
 		}
 		/* return the related keycode anyways */
@@ -952,7 +966,10 @@ dtop_keyboard_repeat(arg)
 {
 	dtop_device_t dev = (dtop_device_t)arg;
 	register int i, c;
+	
+#if 0
 	struct tty *tp = DTOP_TTY(0);
+#endif
 	int s = spltty(), gotone = 0;
 
 	for (i = 0; i < dev->keyboard.last_codes_count; i++) {
@@ -967,7 +984,11 @@ dtop_keyboard_repeat(arg)
 			}
 
 			if ((c = kbdMapChar(KEY_REPEAT)) >= 0) {
+#if 0
 				(*linesw[tp->t_line].l_rint)(c, tp);
+#else
+				rcons_input(0, c);
+#endif
 				gotone = 1;
 			}
 		}
