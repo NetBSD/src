@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.49 2001/07/30 07:45:08 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.50 2001/07/31 01:31:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.49 2001/07/30 07:45:08 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.50 2001/07/31 01:31:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,9 +75,6 @@ static void clrblock(struct fs *, unsigned char *, int);
 static void setblock(struct fs *, unsigned char *, int);
 static int32_t calcipg(int32_t, int32_t, off_t *);
 static void swap_cg(struct cg *, struct cg *);
-static void *Malloc(size_t);
-static void *Calloc(size_t, size_t);
-static void Free(void *);
 
 static int count_digits(int);
 
@@ -135,10 +132,10 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo)
 	time(&utime);
 #endif
 	if (mfs) {
-		(void)Malloc(0);
+		(void)malloc(0);
 		if (fssize * sectorsize > memleft)
 			fssize = (memleft - 16384) / sectorsize;
-		if ((membase = Malloc(fssize * sectorsize)) == 0)
+		if ((membase = malloc(fssize * sectorsize)) == 0)
 			exit(12);
 	}
 	fsi = fi;
@@ -538,7 +535,7 @@ next:
 	sblock.fs_csmask = ~(i - 1);
 	for (sblock.fs_csshift = 0; i > 1; i >>= 1)
 		sblock.fs_csshift++;
-	fscs = (struct csum *)Calloc(1, sblock.fs_cssize);
+	fscs = (struct csum *)calloc(1, sblock.fs_cssize);
 	if (fscs == NULL)
 		exit(39);
 	sblock.fs_magic = FS_MAGIC;
@@ -623,7 +620,7 @@ next:
 	 * to get swapped to.
 	 */
 	if (needswap) {
-		if ((writebuf2=Malloc(sblock.fs_cssize)) == NULL)
+		if ((writebuf2=malloc(sblock.fs_cssize)) == NULL)
 			exit(12);
 		ffs_csum_swap(fscs, (struct csum*)writebuf2, sblock.fs_cssize);
 	} else
@@ -635,7 +632,7 @@ next:
 			    sblock.fs_cssize - i : sblock.fs_bsize,
 			((char *)writebuf2) + i);
 	if (writebuf2 != (char *)fscs)
-		Free(writebuf2);
+		free(writebuf2);
 
 	/*
 	 * Update information about this partion in pack
@@ -1068,8 +1065,8 @@ iput(struct dinode *ip, ino_t ino)
 /*
  * Replace libc function with one suited to our needs.
  */
-static void *
-Malloc(size_t size)
+void *
+malloc(size_t size)
 {
 	void *p;
 	char *base, *i;
@@ -1100,33 +1097,31 @@ Malloc(size_t size)
 	return (p);
 }
 
-#if 0
 /*
  * Replace libc function with one suited to our needs.
  */
-static void *
-Realloc(void *ptr, size_t size)
+void *
+realloc(void *ptr, size_t size)
 {
 	void *p;
 
-	if ((p = Malloc(size)) == NULL)
+	if ((p = malloc(size)) == NULL)
 		return (NULL);
 	memmove(p, ptr, size);
-	Free(ptr);
+	free(ptr);
 	return (p);
 }
-#endif
 
 /*
  * Replace libc function with one suited to our needs.
  */
-static void *
-Calloc(size_t size, size_t numelm)
+void *
+calloc(size_t size, size_t numelm)
 {
 	void *base;
 
 	size *= numelm;
-	base = Malloc(size);
+	base = malloc(size);
 	if (base == NULL)
 		return (NULL);
 	memset(base, 0, size);
@@ -1136,8 +1131,8 @@ Calloc(size_t size, size_t numelm)
 /*
  * Replace libc function with one suited to our needs.
  */
-static void
-Free(void *ptr)
+void
+free(void *ptr)
 {
 	
 	/* do not worry about it for now */
