@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.4 1994/06/30 10:45:03 pk Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.4.2.1 1994/08/11 23:48:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon Ross, Adam Glass 
@@ -186,6 +186,7 @@ krpc_call(sa, prog, vers, func, data)
 	struct uio auio;
 	int error, rcvflg, timo, secs, len;
 	static u_long xid = ~0xFF;
+	u_short tport;
 
 	/*
 	 * Validate address family.
@@ -214,6 +215,29 @@ krpc_call(sa, prog, vers, func, data)
 	tv->tv_usec = 0;
 	if ((error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m)))
 		goto out;
+
+	/*
+	 * Bind the local endpoint to a reserved port,
+	 * because some NFS servers refuse requests from
+	 * non-reserved (non-privileged) ports.
+	 */
+	m = m_getclr(M_WAIT, MT_SONAME);
+	sin = mtod(m, struct sockaddr_in *);
+	sin->sin_len = m->m_len = sizeof(*sin);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = INADDR_ANY;
+	tport = IPPORT_RESERVED;
+	do {
+		tport--;
+		sin->sin_port = htons(tport);
+		error = sobind(so, m);
+	} while (error == EADDRINUSE &&
+			 tport > IPPORT_RESERVED / 2);
+	m_freem(m);
+	if (error) {
+		printf("bind failed\n");
+		goto out;
+	}
 
 	/*
 	 * Setup socket address for the server.
@@ -332,7 +356,11 @@ krpc_call(sa, prog, vers, func, data)
  gotreply:
 
 	/*
-	 * Make result buffer contiguous.
+	 * Pull as much as we can into first mbuf, to make
+	 * result buffer contiguous.  Note that if the entire
+	 * resulte won't fit into one mbuf, you're out of luck.
+	 * XXX - Should not rely on making the entire reply
+	 * contiguous (fix callers instead). -gwr
 	 */
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
