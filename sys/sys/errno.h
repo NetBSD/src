@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.20 1998/11/30 20:37:52 thorpej Exp $	*/
+/*	$NetBSD: errno.h,v 1.21 1999/01/12 03:08:14 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,25 +42,6 @@
 
 #ifndef _SYS_ERRNO_H_
 #define _SYS_ERRNO_H_
-
-#ifndef _KERNEL
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-#if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
-    defined(_REENTRANT)
-extern int *__errno __P((void));
-#define errno (*__errno())
-#else
-extern int errno;
-#endif
-
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
-extern __const int sys_nerr __RENAME(__sys_nerr14);
-extern __const char *__const *sys_errlist __RENAME(__sys_errlist14);
-#endif
-__END_DECLS
-#endif /* !_KERNEL */
 
 #define	EPERM		1		/* Operation not permitted */
 #define	ENOENT		2		/* No such file or directory */
