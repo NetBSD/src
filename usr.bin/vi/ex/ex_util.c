@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_util.c,v 1.10 2001/05/02 21:15:19 windsor Exp $	*/
+/*	$NetBSD: ex_util.c,v 1.11 2002/04/09 01:47:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -11,8 +11,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)ex_util.c	10.23 (Berkeley) 6/19/96";
+#else
+__RCSID("$NetBSD");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

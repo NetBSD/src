@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.8 2001/03/31 11:37:50 aymeric Exp $	*/
+/*	$NetBSD: ex_script.c,v 1.9 2002/04/09 01:47:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -14,8 +14,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)ex_script.c	10.30 (Berkeley) 9/24/96";
+#else
+__RCSID("$NetBSD");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

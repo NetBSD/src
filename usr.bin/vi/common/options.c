@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.5 2001/03/31 11:37:46 aymeric Exp $	*/
+/*	$NetBSD: options.c,v 1.6 2002/04/09 01:47:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -11,8 +11,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)options.c	10.51 (Berkeley) 10/14/96";
+#else
+__RCSID("$NetBSD: options.c,v 1.6 2002/04/09 01:47:31 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: v_scroll.c,v 1.8 2000/03/13 23:22:52 soren Exp $	*/
+/*	$NetBSD: v_scroll.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,8 +11,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)v_scroll.c	10.9 (Berkeley) 4/27/96";
+#else
+__RCSID("$NetBSD: v_scroll.c,v 1.9 2002/04/09 01:47:36 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

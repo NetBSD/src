@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2001/05/01 16:46:11 aymeric Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2002/04/09 01:47:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -11,16 +11,21 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
-static const char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1992, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n\
 @(#) Copyright (c) 1992, 1993, 1994, 1995, 1996\n\
-	Keith Bostic.  All rights reserved.\n";
+	Keith Bostic.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)main.c	10.48 (Berkeley) 10/11/96";
+#else
+__RCSID("$NetBSD: main.c,v 1.7 2002/04/09 01:47:31 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>

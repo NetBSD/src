@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.8 2001/10/20 22:30:31 yamt Exp $	*/
+/*	$NetBSD: msg.c,v 1.9 2002/04/09 01:47:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -11,8 +11,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)msg.c	10.48 (Berkeley) 9/15/96";
+#else
+__RCSID("$NetBSD: msg.c,v 1.9 2002/04/09 01:47:31 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

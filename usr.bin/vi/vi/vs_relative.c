@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_relative.c,v 1.3 2001/12/13 20:51:36 aymeric Exp $	*/
+/*	$NetBSD: vs_relative.c,v 1.4 2002/04/09 01:47:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -11,8 +11,13 @@
 
 #include "config.h"
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char sccsid[] = "@(#)vs_relative.c	10.11 (Berkeley) 5/13/96";
+#else
+__RCSID("$NetBSD: vs_relative.c,v 1.4 2002/04/09 01:47:37 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
