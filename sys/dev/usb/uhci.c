@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.83 2000/01/28 00:15:54 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.84 2000/01/28 00:44:27 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -226,6 +226,7 @@ static usbd_status	uhci_root_ctrl_transfer __P((usbd_xfer_handle));
 static usbd_status	uhci_root_ctrl_start __P((usbd_xfer_handle));
 static void		uhci_root_ctrl_abort __P((usbd_xfer_handle));
 static void		uhci_root_ctrl_close __P((usbd_pipe_handle));
+static void		uhci_root_ctrl_done  __P((usbd_xfer_handle));
 
 static usbd_status	uhci_root_intr_transfer __P((usbd_xfer_handle));
 static usbd_status	uhci_root_intr_start __P((usbd_xfer_handle));
@@ -286,7 +287,7 @@ struct usbd_pipe_methods uhci_root_ctrl_methods = {
 	uhci_root_ctrl_abort,
 	uhci_root_ctrl_close,
 	uhci_noop,
-	0,
+	uhci_root_ctrl_done,
 };
 
 struct usbd_pipe_methods uhci_root_intr_methods = {	
@@ -785,6 +786,12 @@ uhci_timo(addr)
 
 void
 uhci_root_intr_done(xfer)
+	usbd_xfer_handle xfer;
+{
+}
+
+void
+uhci_root_ctrl_done(xfer)
 	usbd_xfer_handle xfer;
 {
 }
