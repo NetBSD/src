@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.4 1993/10/04 04:49:17 cgd Exp $
+ *	$Id: stdio.h,v 1.5 1993/10/04 18:50:23 jtc Exp $
  */
 
 #ifndef	_STDIO_H_
@@ -206,13 +206,13 @@ FILE	*fopen __P((const char *, const char *));
 int	 fprintf __P((FILE *, const char *, ...));
 int	 fputc __P((int, FILE *));
 int	 fputs __P((const char *, FILE *));
-int	 fread __P((void *, size_t, size_t, FILE *));
+size_t	 fread __P((void *, size_t, size_t, FILE *));
 FILE	*freopen __P((const char *, const char *, FILE *));
 int	 fscanf __P((FILE *, const char *, ...));
 int	 fseek __P((FILE *, long, int));
 int	 fsetpos __P((FILE *, const fpos_t *));
 long	 ftell __P((const FILE *));
-int	 fwrite __P((const void *, size_t, size_t, FILE *));
+size_t	 fwrite __P((const void *, size_t, size_t, FILE *));
 int	 getc __P((FILE *));
 int	 getchar __P((void));
 char	*gets __P((char *));

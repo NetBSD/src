@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fwrite.c	5.5 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: fwrite.c,v 1.3 1993/08/26 00:47:03 jtc Exp $";
+static char *rcsid = "$Id: fwrite.c,v 1.4 1993/10/04 18:51:13 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -47,6 +47,7 @@ static char *rcsid = "$Id: fwrite.c,v 1.3 1993/08/26 00:47:03 jtc Exp $";
  * Write `count' objects (each size `size') from memory to the given file.
  * Return the number of whole objects written.
  */
+size_t
 fwrite(buf, size, count, fp)
 	const void *buf;
 	size_t size, count;

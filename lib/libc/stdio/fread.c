@@ -36,12 +36,13 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fread.c	5.4 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: fread.c,v 1.3 1993/08/26 00:46:53 jtc Exp $";
+static char *rcsid = "$Id: fread.c,v 1.4 1993/10/04 18:51:10 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <string.h>
 
+size_t
 fread(buf, size, count, fp)
 	void *buf;
 	size_t size, count;
