@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.c,v 1.19 1998/07/07 21:44:58 thorpej Exp $ */
+/* $NetBSD: pci_eb164.c,v 1.20 1998/07/07 21:49:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.19 1998/07/07 21:44:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb164.c,v 1.20 1998/07/07 21:49:47 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -152,9 +152,15 @@ pci_eb164_pickintr(ccp)
 		eb164_intr_disable(i);	
 
 	eb164_pci_intr = alpha_shared_intr_alloc(EB164_MAX_IRQ);
-	for (i = 0; i < EB164_MAX_IRQ; i++)
+	for (i = 0; i < EB164_MAX_IRQ; i++) {
+		/*
+		 * Systems with a Pyxis seem to have problems with
+		 * stray interrupts, so just ignore them.  Sigh,
+		 * I hate buggy hardware.
+		 */
 		alpha_shared_intr_set_maxstrays(eb164_pci_intr, i,
-			PCI_STRAY_MAX);
+			(ccp->cc_flags & CCF_PYXIS) ? 0 : PCI_STRAY_MAX);
+	}
 
 #if NSIO
 	sio_intr_setup(pc, iot);
