@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.19 2001/01/23 15:56:46 jdolecek Exp $	*/
+/*	$NetBSD: tputs.c,v 1.20 2002/11/11 23:56:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.19 2001/01/23 15:56:46 jdolecek Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.20 2002/11/11 23:56:46 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,8 @@ tputs(cp, affcnt, outc)
 	 */
 	if (i == 0)
 		return;
-	if (ospeed <= 0 || ospeed >= (sizeof tmspc10 / sizeof tmspc10[0]))
+	if (ospeed <= 0 ||
+	    (size_t) ospeed >= (sizeof tmspc10 / sizeof tmspc10[0]))
 		return;
 
 	/*
@@ -208,7 +209,8 @@ t_puts(info, cp, affcnt, outc, args)
 	 */
 	if (i == 0)
 		return 0;
-	if (ospeed <= 0 || ospeed >= (sizeof tmspc10 / sizeof tmspc10[0]))
+	if (ospeed <= 0 ||
+	    (size_t) ospeed >= (sizeof tmspc10 / sizeof tmspc10[0]))
 		return 0;
 
 	/*
