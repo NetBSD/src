@@ -1,4 +1,4 @@
-/*	$NetBSD: ka53.c,v 1.3 2001/01/28 21:01:53 ragge Exp $	*/
+/*	$NetBSD: ka53.c,v 1.4 2001/02/04 20:36:32 ragge Exp $	*/
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Done by Michael Kukat (michael@unixiron.org) */
+/*
+ * Done by Michael Kukat (michael@unixiron.org)
+ * Thanx for the good cooperation with Hugh Graham (hugh@openbsd.org)
+ * and his useful hints for the console of these machines
+ */
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,13 +81,20 @@ struct cpu_dep ka53_calls = {
 void
 ka53_conf()
 {
-	/* Don't ask why, but we seem to need this... */
+	char *cpuname;
 
+	/* Don't ask why, but we seem to need this... */
 	volatile int *hej = (void *)mfpr(PR_ISP);
 	*hej = *hej;
 	hej[-1] = hej[-1];
 
-	printf("cpu0: KA53, ucode rev %d\n", vax_cpudata & 0xff);
+	switch((vax_siedata & 0xff00) >> 8) {
+		case VAX_STYP_51: cpuname = "KA51"; break;
+		case VAX_STYP_52: cpuname = "KA52"; break;
+		case VAX_STYP_53: cpuname = "KA53 or KA57"; break;
+		default: cpuname = "unknown NVAX";
+	}
+	printf("cpu0: %s, ucode rev %d\n", cpuname, vax_cpudata & 0xff);
 }
 
 /*
@@ -133,8 +144,6 @@ void
 ka53_cache_enable()
 {
 	int start, slut;
-
-	return;
 
 	/*
 	 * Turn caches off.
