@@ -2,6 +2,7 @@
 
 DIR=	usd/13.viref
 SRCS=	vi.ref ex.cmd.roff set.opt.roff vi.cmd.roff ref.so
+EXTRA=	merge.awk spell.ok
 MACROS=	-me
 CLEANFILES+=vi.ref.txt index index.so
 

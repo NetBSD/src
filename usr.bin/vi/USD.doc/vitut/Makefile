@@ -2,6 +2,7 @@
 
 DIR=	usd/12.vi
 SRCS=	vi.in vi.chars
+EXTRA=	vi.apwh.ms vi.summary
 MACROS=	-msU
 CLEANFILES+=summary.* viapwh.*
 

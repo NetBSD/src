@@ -2,6 +2,7 @@
 
 DIR=	usd/11.edit
 SRCS=	edittut.ms
+EXTRA=	edit.vindex
 MACROS=	-msU
 
 paper.ps: ${SRCS}
