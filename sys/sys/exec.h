@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.47 1994/10/20 04:27:44 cgd Exp $	*/
+/*	$NetBSD: exec.h,v 1.48 1994/10/24 05:32:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -67,7 +67,8 @@ struct ps_strings {
  * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
  * (used to copyin/copyout various emulation data structures).
  */
-#if defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
+#if defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX) || \
+    defined(COMPAT_IBCS2) || defined(COMPAT_SVR4)
 #define	STACKGAPLEN	400	/* plenty enough for now */
 #else
 #define	STACKGAPLEN	0
@@ -92,7 +93,8 @@ struct proc;
 struct exec_package;
 
 typedef int (*exec_makecmds_fcn) __P((struct proc *, struct exec_package *));
-typedef void (*exec_setup_fcn) __P((struct proc *, struct exec_package *));
+typedef void (*exec_setup_fcn) __P((int, struct proc *, struct exec_package *,
+    void *));
 
 struct execsw {
 	u_int	es_hdrsz;		/* size of header for this format */
@@ -114,7 +116,6 @@ struct exec_package {
 	u_int	ep_hdrlen;		/* length of ep_hdr */
 	u_int	ep_hdrvalid;		/* bytes of ep_hdr that are valid */
 	struct nameidata *ep_ndp;	/* namei data pointer for lookups */
-	exec_setup_fcn ep_setup;	/* special setup fn for exec type */
 	struct	exec_vmcmd_set ep_vmcmds;  /* vmcmds used to build vmspace */
 	struct	vnode *ep_vp;		/* executable's vnode */
 	struct	vattr *ep_vap;		/* executable's attributes */
@@ -130,12 +131,19 @@ struct exec_package {
 	u_int	ep_flags;		/* flags; see below. */
 	char	**ep_fa;		/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
+	exec_setup_fcn ep_setup;	/* special setup fn for exec type */
+	void	*ep_setup_arg;		/* setup argument */
+	u_long	ep_setup_arglen;	/* size of extra arguments */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
 #define	EXEC_HASFD	0x0002		/* holding a shell script */
 #define	EXEC_HASARGL	0x0004		/* has fake args vector */
 #define	EXEC_SKIPARG	0x0008		/* don't copy user-supplied argv[0] */
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
+
+#define EXEC_SETUP_ADDARGS	0	/* add arguments on the stack */
+#define EXEC_SETUP_FINISH	1	/* final setup before exec */
+#define EXEC_SETUP_CLEANUP	2	/* called to cleanup things */
 
 struct exec_vmcmd {
 	int	(*ev_proc) __P((struct proc *p, struct exec_vmcmd *cmd));
