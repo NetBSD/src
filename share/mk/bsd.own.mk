@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.151 2001/01/04 15:17:41 itojun Exp $
+#	$NetBSD: bsd.own.mk,v 1.152 2001/01/05 00:25:59 itojun Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -133,12 +133,12 @@ GNU_ARCH.sparc=sparc
 GNU_ARCH.sparc64=sparc
 GNU_ARCH.vax=vax
 .if ${MACHINE_ARCH} == "mips"
-.INIT:
+.BEGIN:
 	@echo Must set MACHINE_ARCH to one of mipseb or mipsel
 	@false
 .endif
 .if ${MACHINE_ARCH} == "sh3"
-.INIT:
+.BEGIN:
 	@echo Must set MACHINE_ARCH to one of sh3eb or sh3el
 	@false
 .endif
