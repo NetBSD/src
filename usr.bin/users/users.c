@@ -1,4 +1,4 @@
-/*	$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $	*/
+/*	$NetBSD: users.c,v 1.6 1997/10/20 02:41:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)users.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $";
+__RCSID("$NetBSD: users.c,v 1.6 1997/10/20 02:41:22 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,6 +55,7 @@ static char rcsid[] = "$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $";
 
 typedef char	namebuf[UT_NAMESIZE];
 
+int	main __P((int, char **));
 int scmp __P((const void *, const void *));
 
 int
@@ -63,13 +64,13 @@ main(argc, argv)
 	char **argv;
 {
 	namebuf *names = NULL;
-	register int ncnt = 0;
-	register int nmax = 0;
+	int ncnt = 0;
+	int nmax = 0;
 	int cnt;
 	struct utmp utmp;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:
@@ -92,7 +93,7 @@ main(argc, argv)
 					sizeof (*names) * nmax);
 
 				if (!names) {
-					err(1, NULL);
+					err(1, "realloc");
 					/* NOTREACHED */
 				}
 			}
