@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.29 1999/01/16 01:40:27 abs Exp $
+#	$NetBSD: MAKEDEV,v 1.30 1999/03/16 11:00:46 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -98,6 +98,9 @@
 #	rtc*	RTC device
 #	cfs*	Coda file system device
 #
+
+dialin=0
+dialout=524288		# high bit of the minor number
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -239,9 +242,10 @@ ccd*|fd*|raid*|sd*|vnd*|wd*)
 
 tty*)
 	unit=${i#???}
-	rm -f com$unit tty0$unit
-	mknod tty0$unit c 12 $unit
-	chown uucp.wheel tty0$unit
+	rm -f tty0$unit dty0$unit
+	mknod tty0$unit c 12 $(($unit + $dialin ))
+	mknod dty0$unit c 12 $(($unit + $dialout))
+	chown uucp.wheel tty0$unit dty0$unit
 	;;
 
 pty*)
