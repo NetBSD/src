@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 1999/03/26 08:34:37 ender Exp $
+#	$NetBSD: list,v 1.1.2.1 2000/01/08 20:17:43 he Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -87,4 +87,4 @@ COPY	dot.profile				.profile
 COPY	dot.hdprofile				tmp/.hdprofile
 
 # and a copy of the INSTALL notes
-COPY	${CURDIR}/../../../notes/mac68k/INSTALL.more	INSTALL.more
+COPY	${OBJDIR}/INSTALL.more			INSTALL.more
