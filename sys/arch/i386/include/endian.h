@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)endian.h	7.8 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.3 1993/05/22 08:00:16 cgd Exp $
+ *	$Id: endian.h,v 1.4 1993/08/16 18:30:35 jtc Exp $
  */
 
 /*
@@ -48,39 +48,67 @@
 #include <sys/cdefs.h>
 #endif
 
-#define __word_swap_long(x) \
-({ register u_long X = (x); \
-   asm ("rorl $16, %1" \
-	: "=r" (X) \
+__BEGIN_DECLS
+unsigned long   htonl __P((unsigned long));
+unsigned short  htons __P((unsigned short));
+unsigned long   ntohl __P((unsigned long));
+unsigned short  ntohs __P((unsigned short));
+__END_DECLS
+
+
+#if __GNUC__
+#if __GNUC__ >= 2
+#if defined(KERNEL) && ((defined(I486_CPU) || defined(I586_CPU)) && !defined(I386_CPU))
+#define __byte_swap_long(x) \
+({ register unsigned long X = (x); \
+   asm ("bswap %1" \
+	: "=q" (X) \
 	: "0" (X)); \
    X; })
-#if __GNUC__ >= 2
+#else
 #define __byte_swap_long(x) \
-({ register u_long X = (x); \
+({ register unsigned long X = (x); \
    asm ("xchgb %h1, %b1\n\trorl $16, %1\n\txchgb %h1, %b1" \
 	: "=q" (X) \
 	: "0" (X)); \
    X; })
+#endif	/* KERNEL && ... */
 #define __byte_swap_word(x) \
-({ register u_short X = (x); \
+({ register unsigned short X = (x); \
    asm ("xchgb %h1, %b1" \
 	: "=q" (X) \
 	: "0" (X)); \
    X; })
-#else /* __GNUC__ >= 2 */
+#else	/* __GNUC__ >= 2 */
+#if defined(KERNEL) && ((defined(I486_CPU) || defined(I586_CPU)) && !defined(I386_CPU))
+#define __byte_swap_long(x) \
+({ register unsigned long X = (x); \
+   asm ("bswap %1" \
+	: "=r" (X) \
+	: "0" (X)); \
+   X; })
+#else
 #define __byte_swap_long(x) \
 ({ register u_long X = (x); \
    asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
 	: "=r" (X) \
 	: "0" (X)); \
    X; })
+#endif	/* KERNEL && ... */
 #define __byte_swap_word(x) \
 ({ register u_short X = (x); \
    asm ("rorw $8, %w1" \
 	: "=r" (X) \
 	: "0" (X)); \
    X; })
-#endif /* __GNUC__ >= 2 */
+#endif	/* __GNUC__ >= 2 */
+
+#define	ntohl(x)	__byte_swap_long(x)
+#define	ntohs(x)	__byte_swap_word(x)
+#define	htonl(x)	__byte_swap_long(x)
+#define	htons(x)	__byte_swap_word(x)
+#endif	/* __GNUC__ */
+
 
 /*
  * Macros for network/external number representation conversion.
@@ -97,11 +125,6 @@
 #define	HTONS(x)	(x)
 
 #else
-
-#define	ntohl	__byte_swap_long
-#define	ntohs	__byte_swap_word
-#define	htonl	__byte_swap_long
-#define	htons	__byte_swap_word
 
 #define	NTOHL(x)	(x) = ntohl((u_long)x)
 #define	NTOHS(x)	(x) = ntohs((u_short)x)
