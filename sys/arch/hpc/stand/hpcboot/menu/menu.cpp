@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.8 2003/12/23 15:24:26 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.9 2004/03/28 15:32:35 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,10 +109,7 @@ MainTabWindow::init(HWND w)
 	SendDlgItemMessage(w, IDC_MAIN_DIR, CB_SETCURSEL, menu.dir_default(),
 	    0);
 	// platform
-	for (i = 0; entry = menu.platform_get(i); i++)
-		_insert_item(w, entry, IDC_MAIN_PLATFORM);
-	SendDlgItemMessage(w, IDC_MAIN_PLATFORM, CB_SETCURSEL,
-	    menu.platform_default(), 0);
+	_sort_platids(w);
 	// kernel file name.
 	Edit_SetText(GetDlgItem(w, IDC_MAIN_KERNEL), pref.kernel_user ?
 	    pref.kernel_user_file : TEXT("netbsd.gz"));
@@ -147,6 +144,68 @@ MainTabWindow::init(HWND w)
 	_combobox_serial_speed = GetDlgItem(_window, IDC_MAIN_OPTION_H_SPEED);
 	SendDlgItemMessage(w, IDC_MAIN_OPTION_H_SPEED, CB_SETCURSEL, sel, 0);
 	EnableWindow(_combobox_serial_speed, pref.boot_serial);
+}
+
+int
+MainTabWindow::_platcmp(const void *a, const void *b)
+{
+	const MainTabWindow::PlatMap *pa =
+		reinterpret_cast <const MainTabWindow::PlatMap *>(a);
+	const MainTabWindow::PlatMap *pb =
+		reinterpret_cast <const MainTabWindow::PlatMap *>(b);
+
+	return wcscmp(pa->name, pb->name);
+}
+
+void
+MainTabWindow::_sort_platids(HWND w)
+{
+	HpcMenuInterface &menu = HPC_MENU;
+	MainTabWindow::PlatMap *p;
+	TCHAR *entry;
+	int nids;
+	int i;
+
+	for (nids = 0; menu.platform_get(nids); ++nids)
+		continue;
+
+	_platmap = reinterpret_cast <MainTabWindow::PlatMap *>
+		(malloc(nids * sizeof(MainTabWindow::PlatMap)));
+
+	if (_platmap == NULL) {
+		// can't sort, present in the order of definition
+		for (i = 0; entry = menu.platform_get(i); i++)
+			_insert_item(w, entry, IDC_MAIN_PLATFORM);
+		SendDlgItemMessage(w, IDC_MAIN_PLATFORM, CB_SETCURSEL,
+				   menu.platform_default(), 0);
+		return;
+	}
+
+	for (i = 0, p = _platmap; i < nids; ++i, ++p) {
+		p->id = i;
+		p->name = menu.platform_get(i);
+	}
+
+	qsort(_platmap, nids, sizeof(MainTabWindow::PlatMap),
+	      MainTabWindow::_platcmp);
+
+	int defid = menu.platform_default();
+	int defitem = 0;
+	for (i = 0; i < nids; ++i) {
+		if (_platmap[i].id == defid)
+			defitem = i;
+		_insert_item(w, _platmap[i].name, IDC_MAIN_PLATFORM);
+	}
+	SendDlgItemMessage(w, IDC_MAIN_PLATFORM, CB_SETCURSEL, defitem, 0);
+}
+
+int
+MainTabWindow::_item_to_platid(int idx)
+{
+	if (_platmap == NULL)
+		return idx;
+	else
+		return _platmap[idx].id;
 }
 
 void
@@ -197,7 +256,7 @@ MainTabWindow::get()
 	pref.kernel_user = TRUE;
 
 	int i = ComboBox_GetCurSel(GetDlgItem(_window, IDC_MAIN_PLATFORM));
-	menu.platform_set(i);
+	menu.platform_set(_item_to_platid(i));
 
 	if (_is_checked(IDC_MAIN_ROOT_WD))
 		pref.rootfs = 0;

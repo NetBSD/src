@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.h,v 1.2 2001/05/21 15:55:04 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.h,v 1.3 2004/03/28 15:32:35 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,16 @@ class MainTabWindow : public TabWindow
 private:
 	HWND _edit_md_root;
 	HWND _combobox_serial_speed;
+
+	struct PlatMap {
+		int id;		// index in platid_name_table
+		TCHAR *name;	// platform name
+	};
+
+	struct PlatMap *_platmap;
+	void _sort_platids(HWND w);
+	int _item_to_platid(int idx);
+	static int _platcmp(const void *, const void *);
 
 	int _item_idx;
 	void _insert_item(HWND w, TCHAR *name, int id);
