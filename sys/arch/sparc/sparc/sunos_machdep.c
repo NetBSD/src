@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.10 2002/07/04 23:32:07 thorpej Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.11 2003/01/18 06:45:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -41,6 +41,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
@@ -70,14 +71,15 @@ sunos_sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct sunos_sigframe *fp;
 	struct trapframe *tf;
 	int addr, onstack, oldsp, newsp;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sunos_sigframe sf;
 
-	tf = p->p_md.md_tf;
+	tf = l->l_md.md_tf;
 	oldsp = tf->tf_out[6];
 
 	/*
@@ -134,7 +136,7 @@ sunos_sendsig(sig, mask, code)
 	 */
 	newsp = (int)fp - sizeof(struct rwindow);
 	write_user_windows();
-	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
+	if (rwindow_save(l) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
 	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -144,7 +146,7 @@ sunos_sendsig(sig, mask, code)
 		if ((sunos_sigdebug & SDB_KSTACK) && p->p_pid == sunos_sigpid)
 			printf("sendsig: window save or copyout error\n");
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 #ifdef DEBUG
@@ -172,13 +174,13 @@ sunos_sendsig(sig, mask, code)
 }
 
 int
-sunos_sys_sigreturn(p, v, retval)
-        register struct proc *p;
+sunos_sys_sigreturn(l, v, retval)
+        register struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sunos_sys_sigreturn_args *uap = v;
 
-	return (compat_13_sys_sigreturn(p,
+	return (compat_13_sys_sigreturn(l,
 			(struct compat_13_sys_sigreturn_args *)uap, retval));
 }

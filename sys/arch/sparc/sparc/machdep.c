@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.221 2003/01/16 16:20:20 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.222 2003/01/18 06:45:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -102,8 +102,10 @@
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
+#include <sys/savar.h>
 
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
@@ -388,17 +390,17 @@ mdallocsys(v)
  */
 /* ARGSUSED */
 void
-setregs(p, pack, stack)
-	struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack;
 {
-	struct trapframe *tf = p->p_md.md_tf;
+	struct trapframe *tf = l->l_md.md_tf;
 	struct fpstate *fs;
 	int psr;
 
 	/* Don't allow misaligned code by default */
-	p->p_md.md_flags &= ~MDP_FIXALIGN;
+	l->l_md.md_flags &= ~MDP_FIXALIGN;
 
 	/*
 	 * Set the registers to 0 except for:
@@ -408,7 +410,7 @@ setregs(p, pack, stack)
 	 *	%pc,%npc: entry point of program
 	 */
 	psr = tf->tf_psr & (PSR_S | PSR_CWP);
-	if ((fs = p->p_md.md_fpstate) != NULL) {
+	if ((fs = l->l_md.md_fpstate) != NULL) {
 		struct cpu_info *cpi;
 		int s;
 		/*
@@ -417,26 +419,26 @@ setregs(p, pack, stack)
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
 		FPU_LOCK(s);
-		if ((cpi = p->p_md.md_fpu) != NULL) {
-			if (cpi->fpproc != p)
-				panic("FPU(%d): fpproc %p",
-					cpi->ci_cpuid, cpi->fpproc);
-			if (p == cpuinfo.fpproc)
+		if ((cpi = l->l_md.md_fpu) != NULL) {
+			if (cpi->fplwp != l)
+				panic("FPU(%d): fplwp %p",
+					cpi->ci_cpuid, cpi->fplwp);
+			if (l == cpuinfo.fplwp)
 				savefpstate(fs);
 #if defined(MULTIPROCESSOR)
 			else
 				XCALL1(savefpstate, fs, 1 << cpi->ci_cpuid);
 #endif
-			cpi->fpproc = NULL;
+			cpi->fplwp = NULL;
 		}
-		p->p_md.md_fpu = NULL;
+		l->l_md.md_fpu = NULL;
 		FPU_UNLOCK(s);
 		free((void *)fs, M_SUBPROC);
-		p->p_md.md_fpstate = NULL;
+		l->l_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_psr = psr;
-	tf->tf_global[1] = (int)p->p_psstr;
+	tf->tf_global[1] = (int)l->l_proc->p_psstr;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 	stack -= sizeof(struct rwindow);
@@ -518,7 +520,8 @@ sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct sigframe *fp;
 	struct trapframe *tf;
@@ -526,7 +529,7 @@ sendsig(sig, mask, code)
 	struct sigframe sf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = p->p_md.md_tf;
+	tf = l->l_md.md_tf;
 	oldsp = tf->tf_out[6];
 
 	/*
@@ -592,7 +595,7 @@ sendsig(sig, mask, code)
 	 */
 	newsp = (int)fp - sizeof(struct rwindow);
 	write_user_windows();
-	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
+	if (rwindow_save(l) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
 	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -602,7 +605,7 @@ sendsig(sig, mask, code)
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig: window save or copyout error\n");
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 #ifdef DEBUG
@@ -627,7 +630,7 @@ sendsig(sig, mask, code)
 
 	default:
 		/* Don't know what trampoline version; kill it. */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 
 	tf->tf_global[1] = (int)catcher;
@@ -656,8 +659,8 @@ sendsig(sig, mask, code)
  */
 /* ARGSUSED */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
+sys___sigreturn14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -666,12 +669,15 @@ sys___sigreturn14(p, v, retval)
 	} */ *uap = v;
 	struct sigcontext sc, *scp;
 	struct trapframe *tf;
+	struct proc *p;
 	int error;
+
+	p = l->l_proc;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-	if (rwindow_save(p))
-		sigexit(p, SIGILL);
+	if (rwindow_save(l))
+		sigexit(l, SIGILL);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: %s[%d], sigcntxp %p\n",
@@ -681,7 +687,7 @@ sys___sigreturn14(p, v, retval)
 		return (error);
 	scp = &sc;
 
-	tf = p->p_md.md_tf;
+	tf = l->l_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
 	 * verified.  pc and npc must be multiples of 4.  This is all
@@ -709,6 +715,216 @@ sys___sigreturn14(p, v, retval)
 	return (EJUSTRETURN);
 }
 
+/*
+ * cpu_upcall:
+ *
+ *	Send an an upcall to userland.
+ */
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+	   void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+	vaddr_t addr;
+
+	tf = l->l_md.md_tf;
+	addr = (vaddr_t) upcall;
+
+	/* Arguments to the upcall... */
+	tf->tf_out[0] = type;
+	tf->tf_out[1] = (vaddr_t) sas;
+	tf->tf_out[2] = nevents;
+	tf->tf_out[3] = ninterrupted;
+	tf->tf_out[4] = (vaddr_t) ap;
+
+	/*
+	 * Ensure the stack is double-word aligned, and provide a
+	 * C call frame.
+	 */
+	sp = (void *)(((vaddr_t)sp & ~0x7) - CCFSZ);
+
+	/* Arrange to begin execution at the upcall handler. */
+	tf->tf_pc = addr;
+	tf->tf_npc = addr + 4;
+	tf->tf_out[6] = (vaddr_t) sp;
+	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
+}
+
+void
+cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
+	mcontext_t *mcp;
+	unsigned int *flags;
+{
+	struct trapframe *tf = (struct trapframe *)l->l_md.md_tf;
+	__greg_t *r = mcp->__gregs;
+#ifdef FPU_CONTEXT
+	__fpregset_t *f = &mcp->__fpregs;
+	struct fpstate *fps = l->l_md.md_fpstate;
+#endif
+
+	write_user_windows();
+	if (rwindow_save(l))
+		sigexit(l, SIGILL);
+
+	/*
+	 * Get the general purpose registers
+	 */
+	r[_REG_PSR] = tf->tf_psr;
+	r[_REG_PC] = tf->tf_pc;
+	r[_REG_nPC] = tf->tf_npc;
+	r[_REG_Y] = tf->tf_y;
+	r[_REG_G1] = tf->tf_global[1];
+	r[_REG_G2] = tf->tf_global[2];
+	r[_REG_G3] = tf->tf_global[3];
+	r[_REG_G4] = tf->tf_global[4];
+	r[_REG_G5] = tf->tf_global[5];
+	r[_REG_G6] = tf->tf_global[6];
+	r[_REG_G7] = tf->tf_global[7];
+	r[_REG_O0] = tf->tf_out[0];
+	r[_REG_O1] = tf->tf_out[1];
+	r[_REG_O2] = tf->tf_out[2];
+	r[_REG_O3] = tf->tf_out[3];
+	r[_REG_O4] = tf->tf_out[4];
+	r[_REG_O5] = tf->tf_out[5];
+	r[_REG_O6] = tf->tf_out[6];
+	r[_REG_O7] = tf->tf_out[7];
+
+	*flags |= _UC_CPU;
+
+#ifdef FPU_CONTEXT
+	/*
+	 * Get the floating point registers
+	 */
+	bcopy(fps->fs_regs, f->__fpu_regs, sizeof(fps->fs_regs));
+	f->__fp_nqsize = sizeof(struct fp_qentry);
+	f->__fp_nqel = fps->fs_qsize;
+	f->__fp_fsr = fps->fs_fsr;
+	if (f->__fp_q != NULL) {
+		size_t sz = f->__fp_nqel * f->__fp_nqsize;
+		if (sz > sizeof(fps->fs_queue)) {
+#ifdef DIAGNOSTIC
+			printf("getcontext: fp_queue too large\n");
+#endif
+			return;
+		}
+		if (copyout(fps->fs_queue, f->__fp_q, sz) != 0) {
+#ifdef DIAGNOSTIC
+			printf("getcontext: copy of fp_queue failed %d\n",
+			    error);
+#endif
+			return;
+		}
+	}
+	f->fp_busy = 0;	/* XXX: How do we determine that? */
+	*flags |= _UC_FPU;
+#endif
+
+	return;
+}
+
+/*
+ * Set to mcontext specified.
+ * Return to previous pc and psl as specified by
+ * context left by sendsig. Check carefully to
+ * make sure that the user has not modified the
+ * psl to gain improper privileges or to cause
+ * a machine fault.
+ * This is almost like sigreturn() and it shows.
+ */
+int
+cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
+	const mcontext_t *mcp;
+	unsigned int flags;
+{
+	struct trapframe *tf;
+	__greg_t *r = mcp->__gregs;
+#ifdef FPU_CONTEXT
+	__fpregset_t *f = &mcp->__fpregs;
+	struct fpstate *fps = l->l_md.md_fpstate;
+#endif
+
+	write_user_windows();
+	if (rwindow_save(l))
+		sigexit(l, SIGILL);
+
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("__setmcontext: %s[%d], __mcontext %p\n",
+		    l->l_proc->p_comm, l->l_proc->p_pid, mcp);
+#endif
+
+	if (flags & _UC_CPU) {
+		/* Restore register context. */
+		tf = (struct trapframe *)l->l_md.md_tf;
+
+		/*
+		 * Only the icc bits in the psr are used, so it need not be
+		 * verified.  pc and npc must be multiples of 4.  This is all
+		 * that is required; if it holds, just do it.
+		 */
+		if (((r[_REG_PC] | r[_REG_nPC]) & 3) != 0) {
+			printf("pc or npc are not multiples of 4!\n");
+			return (EINVAL);
+		}
+
+		/* take only psr ICC field */
+		tf->tf_psr = (tf->tf_psr & ~PSR_ICC) |
+		    (r[_REG_PSR] & PSR_ICC);
+		tf->tf_pc = r[_REG_PC];
+		tf->tf_npc = r[_REG_nPC];
+		tf->tf_y = r[_REG_Y];
+
+		/* Restore everything */
+		tf->tf_global[1] = r[_REG_G1];
+		tf->tf_global[2] = r[_REG_G2];
+		tf->tf_global[3] = r[_REG_G3];
+		tf->tf_global[4] = r[_REG_G4];
+		tf->tf_global[5] = r[_REG_G5];
+		tf->tf_global[6] = r[_REG_G6];
+		tf->tf_global[7] = r[_REG_G7];
+
+		tf->tf_out[0] = r[_REG_O0];
+		tf->tf_out[1] = r[_REG_O1];
+		tf->tf_out[2] = r[_REG_O2];
+		tf->tf_out[3] = r[_REG_O3];
+		tf->tf_out[4] = r[_REG_O4];
+		tf->tf_out[5] = r[_REG_O5];
+		tf->tf_out[6] = r[_REG_O6];
+		tf->tf_out[7] = r[_REG_O7];
+	}
+
+#ifdef FPU_CONTEXT
+	if (flags & _UC_FPU) {
+		/*
+		 * Set the floating point registers
+		 */
+		int error;
+		size_t sz = f->__fp_nqel * f->__fp_nqsize;
+		if (sz > sizeof(fps->fs_queue)) {
+#ifdef DIAGNOSTIC
+			printf("setmcontext: fp_queue too large\n");
+#endif
+			return (EINVAL);
+		}
+		bcopy(f->__fpu_regs, fps->fs_regs, sizeof(fps->fs_regs));
+		fps->fs_qsize = f->__fp_nqel;
+		fps->fs_fsr = f->__fp_fsr;
+		if (f->__fp_q != NULL) {
+			if ((error = copyin(f->__fp_q, fps->fs_queue, sz)) != 0) {
+#ifdef DIAGNOSTIC
+				printf("setmcontext: fp_queue copy failed\n");
+#endif
+				return (error);
+			}
+		}
+	}
+#endif
+
+	return (0);
+}
+
 int	waittime = -1;
 
 void
@@ -731,12 +947,12 @@ cpu_reboot(howto, user_boot_string)
 #endif
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		extern struct proc proc0;
+		extern struct lwp lwp0;
 		extern int sparc_clock_time_is_ok;
 
-		/* XXX protect against curproc->p_stats.foo refs in sync() */
-		if (curproc == NULL)
-			curproc = &proc0;
+		/* XXX protect against curlwp->p_stats.foo refs in sync() */
+		if (curlwp == NULL)
+			curlwp = &lwp0;
 		waittime = 0;
 		vfs_shutdown();
 
@@ -1024,10 +1240,11 @@ oldmon_w_trace(va)
 	u_long stop;
 	struct frame *fp;
 
-	if (curproc)
-		printf("curproc = %p, pid %d\n", curproc, curproc->p_pid);
+	if (curlwp)
+		printf("curlwp = %p, pid %d\n",
+			curlwp, curproc->p_pid);
 	else
-		printf("no curproc\n");
+		printf("no curlwp\n");
 
 	printf("uvm: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
 	    uvmexp.swtch, uvmexp.traps, uvmexp.syscalls, uvmexp.intrs,
@@ -1094,10 +1311,10 @@ caddr_t addr;
 	}
 
 	s = splhigh();
-	if (curproc == NULL)
+	if (curlwp == NULL)
 		xpcb = (struct pcb *)proc0paddr;
 	else
-		xpcb = &curproc->p_addr->u_pcb;
+		xpcb = &curlwp->l_addr->u_pcb;
 
 	saveonfault = (u_long)xpcb->pcb_onfault;
         res = xldcontrolb(addr, xpcb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.166 2003/01/16 17:21:43 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.167 2003/01/18 06:45:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -435,8 +435,8 @@ static	struct cpu_softc *bootcpu;
 		pmap_globalize_boot_cpuinfo(cpi);
 		cpuinfo.ci_self = cpi;
 
-		/* XXX - fixup proc0.p_cpu */
-		proc0.p_cpu = cpi;
+		/* XXX - fixup lwp.l_cpu */
+		lwp0.l_cpu = cpi;
 #else
 		/* The `local' VA is global for uniprocessor. */
 		cpi = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
@@ -2134,8 +2134,8 @@ cpu_debug_dump(void)
 		    ci,
 		    ci->ci_cpuid,
 		    ci->flags,
-		    ci->ci_curproc,
-		    ci->fpproc);
+		    ci->ci_curlwp,
+		    ci->fplwp);
 	}
 }
 #endif

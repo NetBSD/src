@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.53 2003/01/16 16:57:43 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.54 2003/01/18 06:45:03 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -356,32 +356,37 @@ db_proc_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
+	struct lwp *l;
 	struct proc *p;
 
-	p = curproc;
+	l = curlwp;
 	if (have_addr) 
-		p = (struct proc*) addr;
-	if (p == NULL) {
+		l = (struct lwp *) addr;
+
+	if (l == NULL) {
 		db_printf("no current process\n");
 		return;
 	}
-	db_printf("process %p: ", p);
-	db_printf("pid:%d cpu:%d stat:%d vmspace:%p", p->p_pid,
-	    p->p_cpu->ci_cpuid, p->p_stat, p->p_vmspace);
+
+	p = l->l_proc;
+
+	db_printf("LWP %p: ", l);
+	db_printf("pid:%d.%d cpu:%d stat:%d vmspace:%p", p->p_pid,
+	    l->l_lid, l->l_cpu->ci_cpuid, l->l_stat, p->p_vmspace);
 	if (p->p_stat != SZOMB && p->p_stat != SDEAD)
 		db_printf(" ctx: %p cpuset %x",
 			  p->p_vmspace->vm_map.pmap->pm_ctx,
 			  p->p_vmspace->vm_map.pmap->pm_cpuset);
 	db_printf("\npmap:%p wchan:%p pri:%d upri:%d\n",
 		  p->p_vmspace->vm_map.pmap, 
-		  p->p_wchan, p->p_priority, p->p_usrpri);
+		  l->l_wchan, l->l_priority, l->l_usrpri);
 	db_printf("maxsaddr:%p ssiz:%d pg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
 		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
 	db_printf("profile timer: %ld sec %ld usec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_usec);
-	db_printf("pcb: %p\n", &p->p_addr->u_pcb);
+	db_printf("pcb: %p\n", &l->l_addr->u_pcb);
 	return;
 }
 
