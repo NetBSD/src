@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.6 2003/07/15 01:37:31 lukem Exp $ */
+/* $NetBSD: autoconf.c,v 1.7 2004/10/23 17:07:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2003/07/15 01:37:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2004/10/23 17:07:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2003/07/15 01:37:31 lukem Exp $");
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>
 #include <mips/alchemy/include/aubusvar.h>
-
-static struct device	*booted_device;
-static int		 booted_partition;
 
 /*
  * Configure all devices on system

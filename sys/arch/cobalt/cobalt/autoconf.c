@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 2003/09/12 17:55:44 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 2004/10/23 17:07:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11 2003/09/12 17:55:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2004/10/23 17:07:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,9 +40,6 @@ extern char	bootstring[];
 extern int	netboot;
 extern int	bootunit;
 extern int	bootpart;
-
-struct device *booted_device;
-int booted_partition = 0;
 
 int		cpuspeed = 100;		/* Until we know more precisely. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2003/08/07 16:29:17 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 2004/10/23 17:12:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2003/08/07 16:29:17 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2004/10/23 17:12:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2003/08/07 16:29:17 agc Exp $");
 #include <sys/device.h>
 
 #include <powerpc/pte.h>
-
-struct device *booted_device;
-int booted_partition;
 
 void findroot(void);
 void disable_intr(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.97 2004/03/30 21:26:40 petrov Exp $ */
+/*	$NetBSD: autoconf.c,v 1.98 2004/10/23 17:12:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.97 2004/03/30 21:26:40 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.98 2004/10/23 17:12:23 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1064,8 +1064,6 @@ instance_match(dev, aux, bp)
 
 	return (0);
 }
-
-struct device *booted_device;
 
 void
 nail_bootdev(dev, bp)
