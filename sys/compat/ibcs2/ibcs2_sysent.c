@@ -1,5 +1,3 @@
-/*	$NetBSD: ibcs2_sysent.c,v 1.13 1998/01/09 06:21:31 thorpej Exp $	*/
-
 /*
  * System call switch table.
  *
@@ -169,8 +167,8 @@ struct sysent ibcs2_sysent[] = {
 	    sys_nosys },			/* 56 = unimplemented */
 	{ 3, s(struct ibcs2_sys_utssys_args),
 	    ibcs2_sys_utssys },			/* 57 = utssys */
-	{ 0, 0,
-	    sys_nosys },			/* 58 = unimplemented */
+	{ 1, s(struct sys_fsync_args),
+	    sys_fsync },			/* 58 = fsync */
 	{ 3, s(struct ibcs2_sys_execve_args),
 	    ibcs2_sys_execve },			/* 59 = execve */
 	{ 1, s(struct sys_umask_args),
@@ -239,38 +237,38 @@ struct sysent ibcs2_sysent[] = {
 	    ibcs2_sys_lstat },			/* 91 = lstat */
 	{ 3, s(struct ibcs2_sys_readlink_args),
 	    ibcs2_sys_readlink },		/* 92 = readlink */
-	{ 0, 0,
-	    sys_nosys },			/* 93 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 94 = unimplemented */
+	{ 2, s(struct sys_fchmod_args),
+	    sys_fchmod },			/* 93 = fchmod */
+	{ 3, s(struct sys_fchown_args),
+	    sys_fchown },			/* 94 = fchown */
 	{ 0, 0,
 	    sys_nosys },			/* 95 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 96 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 97 = unimplemented */
+	    sys_nosys },			/* 97 = unimplemented sigaltstack */
 	{ 0, 0,
 	    sys_nosys },			/* 98 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 99 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 100 = unimplemented */
+	    sys_nosys },			/* 100 = unimplemented getcontext/setcontext/sigsetjmp */
 	{ 0, 0,
 	    sys_nosys },			/* 101 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 102 = unimplemented */
-	{ 1, s(struct sys_sigreturn_args),
-	    sys_sigreturn },			/* 103 = sigreturn */
 	{ 0, 0,
-	    sys_nosys },			/* 104 = unimplemented */
+	    sys_nosys },			/* 103 = unimplemented statvfs */
+	{ 0, 0,
+	    sys_nosys },			/* 104 = unimplemented fstatvfs */
 	{ 0, 0,
 	    sys_nosys },			/* 105 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 106 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 107 = unimplemented */
+	    sys_nosys },			/* 107 = unimplemented waitid */
 	{ 0, 0,
-	    sys_nosys },			/* 108 = unimplemented */
+	    sys_nosys },			/* 108 = unimplemented sigsendset */
 	{ 0, 0,
 	    sys_nosys },			/* 109 = unimplemented */
 	{ 0, 0,
@@ -278,75 +276,75 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 111 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 112 = unimplemented */
+	    sys_nosys },			/* 112 = unimplemented priocntl */
 	{ 0, 0,
 	    sys_nosys },			/* 113 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 114 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 115 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 116 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 117 = unimplemented */
+	{ 6, s(struct ibcs2_sys_mmap_args),
+	    ibcs2_sys_mmap },			/* 115 = mmap */
+	{ 3, s(struct sys_mprotect_args),
+	    sys_mprotect },			/* 116 = mprotect */
+	{ 2, s(struct sys_munmap_args),
+	    sys_munmap },			/* 117 = munmap */
 	{ 0, 0,
 	    sys_nosys },			/* 118 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 119 = unimplemented */
+	    sys_nosys },			/* 119 = unimplemented vfork */
+	{ 1, s(struct sys_fchdir_args),
+	    sys_fchdir },			/* 120 = fchdir */
+	{ 3, s(struct sys_readv_args),
+	    sys_readv },			/* 121 = readv */
+	{ 3, s(struct sys_writev_args),
+	    sys_writev },			/* 122 = writev */
 	{ 0, 0,
-	    sys_nosys },			/* 120 = unimplemented */
+	    sys_nosys },			/* 123 = unimplemented xstat */
 	{ 0, 0,
-	    sys_nosys },			/* 121 = unimplemented */
+	    sys_nosys },			/* 124 = unimplemented lxstat */
 	{ 0, 0,
-	    sys_nosys },			/* 122 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 123 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 124 = unimplemented */
-	{ 0, 0,
-	    sys_nosys },			/* 125 = unimplemented */
+	    sys_nosys },			/* 125 = unimplemented fxstat */
 	{ 0, 0,
 	    sys_nosys },			/* 126 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 127 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 128 = unimplemented */
+	    sys_nosys },			/* 128 = unimplemented setrlimit */
 	{ 0, 0,
-	    sys_nosys },			/* 129 = unimplemented xenix_xlocking */
+	    sys_nosys },			/* 129 = unimplemented getrlimit */
 	{ 0, 0,
-	    sys_nosys },			/* 130 = unimplemented xenix_creatsem */
+	    sys_nosys },			/* 130 = unimplemented lchown */
+	{ 6, s(struct ibcs2_sys_memcntl_args),
+	    ibcs2_sys_memcntl },		/* 131 = memcntl */
 	{ 0, 0,
-	    sys_nosys },			/* 131 = unimplemented xenix_opensem */
+	    sys_nosys },			/* 132 = unimplemented getpmsg */
 	{ 0, 0,
-	    sys_nosys },			/* 132 = unimplemented xenix_sigsem */
+	    sys_nosys },			/* 133 = unimplemented putpmsg */
 	{ 0, 0,
-	    sys_nosys },			/* 133 = unimplemented xenix_waitsem */
+	    sys_nosys },			/* 134 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 134 = unimplemented xenix_nbwaitsem */
-	{ 1, s(struct xenix_sys_rdchk_args),
-	    xenix_sys_rdchk },			/* 135 = rdchk */
+	    sys_nosys },			/* 135 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 136 = unimplemented */
+	    sys_nosys },			/* 136 = unimplemented setegid */
 	{ 0, 0,
 	    sys_nosys },			/* 137 = unimplemented */
-	{ 2, s(struct xenix_sys_chsize_args),
-	    xenix_sys_chsize },			/* 138 = chsize */
-	{ 1, s(struct xenix_sys_ftime_args),
-	    xenix_sys_ftime },			/* 139 = ftime */
-	{ 1, s(struct xenix_sys_nap_args),
-	    xenix_sys_nap },			/* 140 = nap */
 	{ 0, 0,
-	    sys_nosys },			/* 141 = unimplemented xenix_sdget */
+	    sys_nosys },			/* 138 = unimplemented adjtime */
 	{ 0, 0,
-	    sys_nosys },			/* 142 = unimplemented xenix_sdfree */
+	    sys_nosys },			/* 139 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 143 = unimplemented xenix_sdenter */
+	    sys_nosys },			/* 140 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 144 = unimplemented xenix_sdleave */
+	    sys_nosys },			/* 141 = unimplemented seteuid */
 	{ 0, 0,
-	    sys_nosys },			/* 145 = unimplemented xenix_sdgetv */
+	    sys_nosys },			/* 142 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 146 = unimplemented xenix_sdwaitv */
+	    sys_nosys },			/* 143 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 144 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 145 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 146 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 147 = unimplemented */
 	{ 0, 0,
@@ -374,38 +372,204 @@ struct sysent ibcs2_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 159 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 160 = unimplemented xenix_proctl */
+	    sys_nosys },			/* 160 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 161 = unimplemented xenix_execseg */
+	    sys_nosys },			/* 161 = unimplemented */
 	{ 0, 0,
-	    sys_nosys },			/* 162 = unimplemented xenix_unexecseg */
+	    sys_nosys },			/* 162 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 163 = unimplemented */
-	{ 5, s(struct sys_select_args),
-	    sys_select },			/* 164 = select */
-	{ 2, s(struct ibcs2_sys_eaccess_args),
-	    ibcs2_sys_eaccess },		/* 165 = eaccess */
 	{ 0, 0,
-	    sys_nosys },			/* 166 = unimplemented xenix_paccess */
+	    sys_nosys },			/* 164 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 165 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 166 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 167 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 168 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 169 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 170 = unimplemented */
+	{ 1, s(struct ibcs2_sys_gettimeofday_args),
+	    ibcs2_sys_gettimeofday },		/* 171 = gettimeofday */
+	{ 1, s(struct ibcs2_sys_settimeofday_args),
+	    ibcs2_sys_settimeofday },		/* 172 = settimeofday */
+	{ 0, 0,
+	    sys_nosys },			/* 173 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 174 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 175 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 176 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 177 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 178 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 179 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 180 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 181 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 182 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 183 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 184 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 185 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 186 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 187 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 188 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 189 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 190 = unimplemented */
+	{ 2, s(struct compat_43_sys_truncate_args),
+	    compat_43_sys_truncate },		/* 191 = truncate */
+	{ 2, s(struct compat_43_sys_ftruncate_args),
+	    compat_43_sys_ftruncate },		/* 192 = ftruncate */
+	{ 0, 0,
+	    sys_nosys },			/* 193 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 194 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 195 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 196 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 197 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 198 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 199 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 200 = unimplemented */
+	{ 3, s(struct xenix_sys_locking_args),
+	    xenix_sys_locking },		/* 201 = locking */
+	{ 0, 0,
+	    sys_nosys },			/* 202 = unimplemented xenix_creatsem */
+	{ 0, 0,
+	    sys_nosys },			/* 203 = unimplemented xenix_opensem */
+	{ 0, 0,
+	    sys_nosys },			/* 204 = unimplemented xenix_sigsem */
+	{ 0, 0,
+	    sys_nosys },			/* 205 = unimplemented xenix_waitsem */
+	{ 0, 0,
+	    sys_nosys },			/* 206 = unimplemented xenix_nbwaitsem */
+	{ 1, s(struct xenix_sys_rdchk_args),
+	    xenix_sys_rdchk },			/* 207 = rdchk */
+	{ 0, 0,
+	    sys_nosys },			/* 208 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 209 = unimplemented */
+	{ 2, s(struct xenix_sys_chsize_args),
+	    xenix_sys_chsize },			/* 210 = chsize */
+	{ 1, s(struct xenix_sys_ftime_args),
+	    xenix_sys_ftime },			/* 211 = ftime */
+	{ 1, s(struct xenix_sys_nap_args),
+	    xenix_sys_nap },			/* 212 = nap */
+	{ 0, 0,
+	    sys_nosys },			/* 213 = unimplemented xenix_sdget */
+	{ 0, 0,
+	    sys_nosys },			/* 214 = unimplemented xenix_sdfree */
+	{ 0, 0,
+	    sys_nosys },			/* 215 = unimplemented xenix_sdenter */
+	{ 0, 0,
+	    sys_nosys },			/* 216 = unimplemented xenix_sdleave */
+	{ 0, 0,
+	    sys_nosys },			/* 217 = unimplemented xenix_sdgetv */
+	{ 0, 0,
+	    sys_nosys },			/* 218 = unimplemented xenix_sdwaitv */
+	{ 0, 0,
+	    sys_nosys },			/* 219 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 220 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 221 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 222 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 223 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 224 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 225 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 226 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 227 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 228 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 229 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 230 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 231 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 232 = unimplemented xenix_proctl */
+	{ 0, 0,
+	    sys_nosys },			/* 233 = unimplemented xenix_execseg */
+	{ 0, 0,
+	    sys_nosys },			/* 234 = unimplemented xenix_unexecseg */
+	{ 0, 0,
+	    sys_nosys },			/* 235 = unimplemented */
+	{ 5, s(struct sys_select_args),
+	    sys_select },			/* 236 = select */
+	{ 2, s(struct ibcs2_sys_eaccess_args),
+	    ibcs2_sys_eaccess },		/* 237 = eaccess */
+	{ 0, 0,
+	    sys_nosys },			/* 238 = unimplemented xenix_paccess */
 	{ 3, s(struct ibcs2_sys_sigaction_args),
-	    ibcs2_sys_sigaction },		/* 167 = sigaction */
+	    ibcs2_sys_sigaction },		/* 239 = sigaction */
 	{ 3, s(struct ibcs2_sys_sigprocmask_args),
-	    ibcs2_sys_sigprocmask },		/* 168 = sigprocmask */
+	    ibcs2_sys_sigprocmask },		/* 240 = sigprocmask */
 	{ 1, s(struct ibcs2_sys_sigpending_args),
-	    ibcs2_sys_sigpending },		/* 169 = sigpending */
+	    ibcs2_sys_sigpending },		/* 241 = sigpending */
 	{ 1, s(struct ibcs2_sys_sigsuspend_args),
-	    ibcs2_sys_sigsuspend },		/* 170 = sigsuspend */
+	    ibcs2_sys_sigsuspend },		/* 242 = sigsuspend */
 	{ 2, s(struct ibcs2_sys_getgroups_args),
-	    ibcs2_sys_getgroups },		/* 171 = getgroups */
+	    ibcs2_sys_getgroups },		/* 243 = getgroups */
 	{ 2, s(struct ibcs2_sys_setgroups_args),
-	    ibcs2_sys_setgroups },		/* 172 = setgroups */
+	    ibcs2_sys_setgroups },		/* 244 = setgroups */
 	{ 1, s(struct ibcs2_sys_sysconf_args),
-	    ibcs2_sys_sysconf },		/* 173 = sysconf */
+	    ibcs2_sys_sysconf },		/* 245 = sysconf */
 	{ 2, s(struct ibcs2_sys_pathconf_args),
-	    ibcs2_sys_pathconf },		/* 174 = pathconf */
+	    ibcs2_sys_pathconf },		/* 246 = pathconf */
 	{ 2, s(struct ibcs2_sys_fpathconf_args),
-	    ibcs2_sys_fpathconf },		/* 175 = fpathconf */
+	    ibcs2_sys_fpathconf },		/* 247 = fpathconf */
 	{ 2, s(struct ibcs2_sys_rename_args),
-	    ibcs2_sys_rename },			/* 176 = rename */
+	    ibcs2_sys_rename },			/* 248 = rename */
+	{ 0, 0,
+	    sys_nosys },			/* 249 = unimplemented */
+	{ 2, s(struct ibcs2_sys_scoinfo_args),
+	    ibcs2_sys_scoinfo },		/* 250 = scoinfo */
+	{ 0, 0,
+	    sys_nosys },			/* 251 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 252 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 253 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 254 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 255 = unimplemented getitimer */
+	{ 0, 0,
+	    sys_nosys },			/* 256 = unimplemented setitimer */
+	{ 0, 0,
+	    sys_nosys },			/* 257 = unimplemented */
+	{ 0, 0,
+	    sys_nosys },			/* 258 = unimplemented setreuid */
+	{ 0, 0,
+	    sys_nosys },			/* 259 = unimplemented setregid */
 };
 

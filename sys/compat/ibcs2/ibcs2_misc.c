@@ -1,7 +1,7 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.30 1997/10/10 22:16:04 fvdl Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.31 1998/02/09 02:30:49 scottb Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Scott Bartram
+ * Copyright (c) 1994, 1995, 1998 Scott Bartram
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -93,6 +93,7 @@
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_dirent.h>
 #include <compat/ibcs2/ibcs2_fcntl.h>
+#include <compat/ibcs2/ibcs2_mman.h>
 #include <compat/ibcs2/ibcs2_time.h>
 #include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_timeb.h>
@@ -573,6 +574,7 @@ eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
 	VOP_UNLOCK(vp);
+	free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 	return (error);
 }
@@ -1257,13 +1259,25 @@ xenix_sys_nap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#ifdef notyet
 	struct xenix_sys_nap_args /* {
-		syscallarg(int) millisec;
+		syscallarg(long) millisec;
 	} */ *uap = v;
-#endif
+	int error;
+	struct sys_nanosleep_args na;
+        struct timespec *rqtp;
+        struct timespec *rmtp;
+	caddr_t sg = stackgap_init(p->p_emul);
 
-	return ENOSYS;
+	rqtp = stackgap_alloc(&sg, sizeof(struct timespec));
+	rmtp = stackgap_alloc(&sg, sizeof(struct timespec));
+	rqtp->tv_sec = 0;
+	rqtp->tv_nsec = SCARG(uap, millisec) * 1000;
+	SCARG(&na, rqtp) = rqtp;
+	SCARG(&na, rmtp) = rmtp;
+	if ((error = sys_nanosleep(p, &na, retval)) != 0)
+		return error;
+	*retval = rmtp->tv_nsec / 1000;
+	return 0;
 }
 
 int
@@ -1444,8 +1458,218 @@ ibcs2_sys_sysi86(p, v, retval)
                 *retval = ctob(physmem);
 		break;
 
+	case IBCS2_SI86GETFEATURES:	/* XXX structure def? */
+		break;
+
 	default:
 		return EINVAL;
 	}
 	return 0;
+}
+
+
+/*
+ * mmap compat code borrowed from svr4/svr4_misc.c
+ */
+
+int
+ibcs2_sys_mmap(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ibcs2_sys_mmap_args /* {
+		syscallarg(ibcs2_caddr_t) addr;
+		syscallarg(ibcs2_size_t) len;
+		syscallarg(int) prot;
+		syscallarg(int) flags;
+		syscallarg(int) fd;
+		syscallarg(ibcs2_off_t) off;
+	} */ *uap = v;
+	struct sys_mmap_args mm;
+	void *rp;
+
+#define _MAP_NEW	0x80000000 /* XXX why? */
+
+	if (SCARG(uap, prot) & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
+		return EINVAL;
+	if (SCARG(uap, len) == 0)
+		return EINVAL;
+
+	SCARG(&mm, prot) = SCARG(uap, prot);
+	SCARG(&mm, len) = SCARG(uap, len);
+	SCARG(&mm, flags) = SCARG(uap, flags) & ~_MAP_NEW;
+	SCARG(&mm, fd) = SCARG(uap, fd);
+	SCARG(&mm, addr) = SCARG(uap, addr);
+	SCARG(&mm, pos) = SCARG(uap, off);
+
+	rp = (void *) round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
+	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
+	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
+		SCARG(&mm, addr) = rp;
+
+	return sys_mmap(p, &mm, retval);
+}
+
+int
+ibcs2_sys_memcntl(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ibcs2_sys_memcntl_args /* {
+		syscallarg(ibcs2_caddr_t) addr;
+		syscallarg(ibcs2_size_t) len;
+		syscallarg(int) cmd;
+		syscallarg(ibcs2_caddr_t) arg;
+		syscallarg(int) attr;
+		syscallarg(int) mask;
+	} */ *uap = v;
+
+	switch (SCARG(uap, cmd)) {
+	case IBCS2_MC_SYNC:
+		{
+			struct sys___msync13_args msa;
+
+			SCARG(&msa, addr) = SCARG(uap, addr);
+			SCARG(&msa, len) = SCARG(uap, len);
+			SCARG(&msa, flags) = (int)SCARG(uap, arg);
+
+			return sys___msync13(p, &msa, retval);
+		}
+#ifdef IBCS2_MC_ADVISE		/* supported? */
+	case IBCS2_MC_ADVISE:
+		{
+			struct sys_madvise_args maa;
+
+			SCARG(&maa, addr) = SCARG(uap, addr);
+			SCARG(&maa, len) = SCARG(uap, len);
+			SCARG(&maa, behav) = (int)SCARG(uap, arg);
+
+			return sys_madvise(p, &maa, retval);
+		}
+#endif
+	case IBCS2_MC_LOCK:
+	case IBCS2_MC_UNLOCK:
+	case IBCS2_MC_LOCKAS:
+	case IBCS2_MC_UNLOCKAS:
+		return EOPNOTSUPP;
+	default:
+		return ENOSYS;
+	}
+}
+
+int
+ibcs2_sys_gettimeofday(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ibcs2_sys_gettimeofday_args /* {
+		syscallarg(struct timeval *) tp;
+	} */ *uap = v;
+
+        if (SCARG(uap, tp)) {
+                struct timeval atv;
+
+                microtime(&atv);
+                return copyout(&atv, SCARG(uap, tp), sizeof (atv));
+        }
+
+        return 0;
+}
+
+int
+ibcs2_sys_settimeofday(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ibcs2_sys_settimeofday_args /* {
+		syscallarg(struct timeval *) tp;
+	} */ *uap = v;
+        struct sys_settimeofday_args ap;
+
+        SCARG(&ap, tv) = SCARG(uap, tp);
+        SCARG(&ap, tzp) = NULL;
+        return sys_settimeofday(p, &ap, retval);
+}
+
+int
+ibcs2_sys_scoinfo(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ibcs2_sys_scoinfo_args /* {
+		syscallarg(struct scoutsname *) bp;
+		syscallarg(int) len;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+	struct scoutsname *utsp = stackgap_alloc(&sg,
+						 sizeof(struct scoutsname));
+	extern char ostype[], machine[], osrelease[];
+
+	bzero(utsp, sizeof(struct scoutsname));
+	strncpy(utsp->sysname, ostype, 8);
+	strncpy(utsp->nodename, hostname, 8);
+	strncpy(utsp->release, osrelease, 15);
+	strncpy(utsp->kid, "kernel id 1", 19);
+	strncpy(utsp->machine, machine, 8);
+	strncpy(utsp->bustype, "pci", 8);
+	strncpy(utsp->serial, "1234", 9);
+	utsp->origin = 0;
+	utsp->oem = 0;
+	strncpy(utsp->nusers, "unlim", 8);
+	utsp->ncpu = 1;
+
+	return copyout((caddr_t)utsp, (caddr_t)SCARG(uap, bp),
+		       sizeof(struct scoutsname));
+}
+
+#define X_LK_UNLCK  0
+#define X_LK_LOCK   1
+#define X_LK_NBLCK 20 
+#define X_LK_RLCK   3
+#define X_LK_NBRLCK 4
+#define X_LK_GETLK  5
+#define X_LK_SETLK  6
+#define X_LK_SETLKW 7
+#define X_LK_TESTLK 8
+
+int
+xenix_sys_locking(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct xenix_sys_locking_args /* {
+	      syscallarg(int) fd;
+	      syscallarg(int) blk;
+	      syscallarg(int) size;
+	} */ *uap = v;
+	struct sys_flock_args fl;
+
+	SCARG(&fl, fd) = SCARG(uap, fd);
+	switch SCARG(uap, blk) {
+	case X_LK_UNLCK:
+		SCARG(&fl, how) = LOCK_UN;
+		break;
+	case X_LK_NBLCK:
+		SCARG(&fl, how) = LOCK_NB | LOCK_EX;
+		break;
+	case X_LK_NBRLCK:
+		SCARG(&fl, how) = LOCK_NB | LOCK_SH;
+		break;
+	case X_LK_LOCK:
+		SCARG(&fl, how) = LOCK_EX;
+		break;
+	case X_LK_SETLKW:
+		SCARG(&fl, how) = LOCK_EX;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return sys_flock(p, &fl, retval);
 }

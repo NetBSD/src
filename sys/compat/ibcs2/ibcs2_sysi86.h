@@ -1,7 +1,7 @@
-/*	$NetBSD: ibcs2_sysi86.h,v 1.1 1996/01/06 03:23:54 scottb Exp $	*/
+/*	$NetBSD: ibcs2_sysi86.h,v 1.2 1998/02/09 02:30:56 scottb Exp $	*/
 
 /*
- * Copyright (c) 1996 Scott Bartram
+ * Copyright (c) 1996, 1998 Scott Bartram
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@
 #define IBCS2_SI86STIME		54	/* set system time */
 #define IBCS2_SI86SETNAME	56	/* set hostname */
 #define IBCS2_SI86PHYSMEM	65	/* get physical memory size */
+#define IBCS2_SI86GETFEATURES	114	/* get os features */
 
 /* from sys/fp.h */
 #define IBCS2_FP_NO	0

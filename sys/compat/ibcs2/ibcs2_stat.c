@@ -1,6 +1,6 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.7 1997/10/20 22:05:21 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.8 1998/02/09 02:30:51 scottb Exp $	*/
 /*
- * Copyright (c) 1995 Scott Bartram
+ * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -252,7 +252,7 @@ ibcs2_sys_utssys(p, v, retval)
 	} */ *uap = v;
 
 	switch (SCARG(uap, flag)) {
-	case 0:			/* uname(2) */
+	case 0:			/* uname(struct utsname *) */
 	{
 		struct ibcs2_utsname sut;
 		extern char ostype[], machine[], osrelease[];
@@ -269,9 +269,16 @@ ibcs2_sys_utssys(p, v, retval)
 			       ibcs2_utsname_len);
 	}
 
-	case 2:			/* ustat(2) */
+	case 2:			/* ustat(dev_t, struct ustat *) */
 	{
-		return ENOSYS;	/* XXX - TODO */
+		struct ibcs2_ustat xu;
+
+		xu.f_tfree = 10000; /* XXX fixme */
+		xu.f_tinode = 32000;
+		xu.f_fname[0] = 0;
+		xu.f_fpack[0] = 0;
+		return copyout((caddr_t)&xu, (caddr_t)SCARG(uap, a2),
+                               ibcs2_ustat_len);
 	}
 
 	default:
