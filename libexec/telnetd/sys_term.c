@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.41 2004/11/14 18:07:56 christos Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.42 2005/02/06 05:58:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.41 2004/11/14 18:07:56 christos Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.42 2005/02/06 05:58:21 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,14 +54,14 @@ struct	utmp wtmp;
 
 struct termios termbuf, termbuf2;	/* pty control structure */
 
-void getptyslave __P((void));
-int cleanopen __P((char *));
-char **addarg __P((char **, char *));
-void scrub_env __P((void));
-int getent __P((char *, char *));
-char *getstr __P((const char *, char **));
+void getptyslave(void);
+int cleanopen(char *);
+char **addarg(char **, char *);
+void scrub_env(void);
+int getent(char *, char *);
+char *getstr(const char *, char **);
 #ifdef KRB5
-extern void kerberos5_cleanup __P((void));
+extern void kerberos5_cleanup(void);
 #endif
 
 /*
@@ -76,7 +76,7 @@ extern void kerberos5_cleanup __P((void));
  */
 
 void
-init_termbuf()
+init_termbuf(void)
 {
 	(void) tcgetattr(pty, &termbuf);
 	termbuf2 = termbuf;
@@ -84,9 +84,7 @@ init_termbuf()
 
 #if	defined(LINEMODE) && defined(TIOCPKT_IOCTL)
 void
-copy_termbuf(cp, len)
-	char *cp;
-	int len;
+copy_termbuf(char *cp, int len)
 {
 	if (len > sizeof(termbuf))
 		len = sizeof(termbuf);
@@ -96,7 +94,7 @@ copy_termbuf(cp, len)
 #endif	/* defined(LINEMODE) && defined(TIOCPKT_IOCTL) */
 
 void
-set_termbuf()
+set_termbuf(void)
 {
 	/*
 	 * Only make the necessary changes.
@@ -119,10 +117,7 @@ set_termbuf()
 
 
 int
-spcset(func, valp, valpp)
-	int func;
-	cc_t *valp;
-	cc_t **valpp;
+spcset(int func, cc_t *valp, cc_t **valpp)
 {
 
 #define	setval(a, b)	*valp = termbuf.c_cc[a]; \
@@ -194,8 +189,7 @@ char *line = Xline;
 static int ptyslavefd; /* for cleanopen() */
 
 int
-getpty(ptynum)
-int *ptynum;                     
+getpty(int *ptynum)
 {                   
 	int ptyfd;
 
@@ -230,14 +224,13 @@ int *ptynum;
 
 
 int
-tty_linemode()
+tty_linemode(void)
 {
 	return(termbuf.c_lflag & EXTPROC);
 }
 
 void
-tty_setlinemode(on)
-	int on;
+tty_setlinemode(int on)
 {
 	set_termbuf();
 	(void) ioctl(pty, TIOCEXT, (char *)&on);
@@ -246,26 +239,25 @@ tty_setlinemode(on)
 #endif	/* LINEMODE */
 
 int
-tty_isecho()
+tty_isecho(void)
 {
 	return (termbuf.c_lflag & ECHO);
 }
 
 int
-tty_flowmode()
+tty_flowmode(void)
 {
 	return((termbuf.c_iflag & IXON) ? 1 : 0);
 }
 
 int
-tty_restartany()
+tty_restartany(void)
 {
 	return((termbuf.c_iflag & IXANY) ? 1 : 0);
 }
 
 void
-tty_setecho(on)
-	int on;
+tty_setecho(int on)
 {
 	if (on)
 		termbuf.c_lflag |= ECHO;
@@ -274,14 +266,13 @@ tty_setecho(on)
 }
 
 int
-tty_israw()
+tty_israw(void)
 {
 	return(!(termbuf.c_lflag & ICANON));
 }
 
 void
-tty_binaryin(on)
-	int on;
+tty_binaryin(int on)
 {
 	if (on) {
 		termbuf.c_iflag &= ~ISTRIP;
@@ -291,8 +282,7 @@ tty_binaryin(on)
 }
 
 void
-tty_binaryout(on)
-	int on;
+tty_binaryout(int on)
 {
 	if (on) {
 		termbuf.c_cflag &= ~(CSIZE|PARENB);
@@ -306,33 +296,32 @@ tty_binaryout(on)
 }
 
 int
-tty_isbinaryin()
+tty_isbinaryin(void)
 {
 	return(!(termbuf.c_iflag & ISTRIP));
 }
 
 int
-tty_isbinaryout()
+tty_isbinaryout(void)
 {
 	return(!(termbuf.c_oflag&OPOST));
 }
 
 #ifdef	LINEMODE
 int
-tty_isediting()
+tty_isediting(void)
 {
 	return(termbuf.c_lflag & ICANON);
 }
 
 int
-tty_istrapsig()
+tty_istrapsig(void)
 {
 	return(termbuf.c_lflag & ISIG);
 }
 
 void
-tty_setedit(on)
-	int on;
+tty_setedit(int on)
 {
 	if (on)
 		termbuf.c_lflag |= ICANON;
@@ -341,8 +330,7 @@ tty_setedit(on)
 }
 
 void
-tty_setsig(on)
-	int on;
+tty_setsig(int on)
 {
 	if (on)
 		termbuf.c_lflag |= ISIG;
@@ -352,7 +340,7 @@ tty_setsig(on)
 #endif	/* LINEMODE */
 
 int
-tty_issofttab()
+tty_issofttab(void)
 {
 # ifdef	OXTABS
 	return (termbuf.c_oflag & OXTABS);
@@ -363,8 +351,7 @@ tty_issofttab()
 }
 
 void
-tty_setsofttab(on)
-	int on;
+tty_setsofttab(int on)
 {
 	if (on) {
 # ifdef	OXTABS
@@ -386,7 +373,7 @@ tty_setsofttab(on)
 }
 
 int
-tty_islitecho()
+tty_islitecho(void)
 {
 # ifdef	ECHOCTL
 	return (!(termbuf.c_lflag & ECHOCTL));
@@ -400,8 +387,7 @@ tty_islitecho()
 }
 
 void
-tty_setlitecho(on)
-	int on;
+tty_setlitecho(int on)
 {
 # ifdef	ECHOCTL
 	if (on)
@@ -418,21 +404,19 @@ tty_setlitecho(on)
 }
 
 int
-tty_iscrnl()
+tty_iscrnl(void)
 {
 	return (termbuf.c_iflag & ICRNL);
 }
 
 void
-tty_tspeed(val)
-	int val;
+tty_tspeed(int val)
 {
 	cfsetospeed(&termbuf, val);
 }
 
 void
-tty_rspeed(val)
-	int val;
+tty_rspeed(int val)
 {
 	cfsetispeed(&termbuf, val);
 }
@@ -450,10 +434,10 @@ tty_rspeed(val)
 extern int def_tspeed, def_rspeed;
 	extern int def_row, def_col;
 
-    void
-getptyslave()
+void
+getptyslave(void)
 {
-	register int t = -1;
+	int t = -1;
 
 #ifdef	LINEMODE
 	int waslm;
@@ -534,8 +518,7 @@ getptyslave()
  * making sure that we have a clean tty.
  */
 int
-cleanopen(ttyline)
-	char *ttyline;
+cleanopen(char *ttyline)
 {
 	return ptyslavefd;
 }
@@ -549,12 +532,9 @@ cleanopen(ttyline)
 
 /* ARGSUSED */
 void
-startslave(host, autologin, autoname)
-	char *host;
-	int autologin;
-	char *autoname;
+startslave(char *host, int autologin, char *autoname)
 {
-	register int i;
+	int i;
 
 #ifdef AUTHENTICATION
 	if (!autoname || !autoname[0])
@@ -580,7 +560,7 @@ startslave(host, autologin, autoname)
 char	*envinit[3];
 
 void
-init_env()
+init_env(void)
 {
 	char **envp;
 
@@ -601,12 +581,9 @@ init_env()
 extern char *gettyname;
 
 void
-start_login(host, autologin, name)
-	char *host;
-	int autologin;
-	char *name;
+start_login(char *host, int autologin, char *name)
 {
-	register char **argv;
+	char **argv;
 #define	TABBUFSIZ	512
 	char	defent[TABBUFSIZ];
 	char	defstrs[TABBUFSIZ];
@@ -701,12 +678,10 @@ start_login(host, autologin, name)
 	/*NOTREACHED*/
 }
 
-	char **
-addarg(argv, val)
-	register char **argv;
-	register char *val;
+char **
+addarg(char **argv, char *val)
 {
-	register char **cpp;
+	char **cpp;
 	char **nargv;
 
 	if (argv == NULL) {
@@ -746,7 +721,7 @@ addarg(argv, val)
  */
 
 void
-scrub_env()
+scrub_env(void)
 {
 	static const char *reject[] = {
 		"TERMCAP=/",
@@ -796,8 +771,7 @@ scrub_env()
  */
 /* ARGSUSED */
 void
-cleanup(sig)
-	int sig;
+cleanup(int sig)
 {
 	char *p, c;
 
