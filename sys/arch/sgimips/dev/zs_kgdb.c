@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.7 2004/02/08 13:15:42 sekiya Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.8 2004/07/08 22:30:53 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.7 2004/02/08 13:15:42 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.8 2004/07/08 22:30:53 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ zs_kgdb_init()
 	if (cdevsw_lookup(kgdb_dev) != &zstty_cdevsw)
 		return;
 
-	unit = (kgdb_dev & 2) ? 2 : 0;
+	unit = (kgdb_dev & 2) ? 1 : 0;	/* XXX ??? */
 	channel = kgdb_dev & 1;
 	printf("zs_kgdb_init: attaching to Serial(%d) at %d baud\n",
 		   (kgdb_dev & 3), kgdb_rate);
@@ -168,7 +168,7 @@ zs_check_kgdb(cs, dev)
 	int dev;
 {
 
-	if (dev != kgdb_dev)
+	if (dev != Kgdb_dev)
 		return (0);
 
 	/*

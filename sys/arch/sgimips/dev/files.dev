@@ -1,4 +1,4 @@
-#	$NetBSD: files.dev,v 1.2 2004/01/19 00:12:31 sekiya Exp $
+#	$NetBSD: files.dev,v 1.3 2004/07/08 22:30:53 sekiya Exp $
 
 define giobus {}
 
@@ -22,6 +22,17 @@ device	zsc {[channel = -1]}
 device	zstty: tty
 attach	zstty at zsc
 file 	dev/ic/z8530tty.c			zstty needs-flag
+
+device	zskbd: wskbddev 
+attach	zskbd at zsc
+file	arch/sgimips/dev/zs_kbd.c		zskbd needs-flag
+
+device	zsms: wsmousedev
+attach	zsms at zsc
+file	arch/sgimips/dev/zs_ms.c		zsms
+
 file	arch/sgimips/dev/zs_kgdb.c		kgdb
 file 	arch/sgimips/dev/zs.c			zsc needs-flag
 file 	dev/ic/z8530sc.c			zsc
+
+file	arch/sgimips/dev/wskbdmap_sgi.c		zskbd
