@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.9 1999/05/07 14:00:39 drochner Exp $
+.\"	$NetBSD: boot.8,v 1.10 2000/03/06 01:44:29 hubertf Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -90,8 +90,20 @@ section].)
 The default disk will be set to the disk that the boot loader was
 loaded from.
 To boot from an alternate disk, the full name of the device should
-be given at the prompt. Alternate system images can be loaded by
-just specifying the name of the image.
+be given at the prompt.
+.Pp
+The default image is 
+.Dq Li netbsd ;
+if the boot loader fails to successfully
+open that image, it then tries
+.Dq Li netbsd.gz
+(expected to be a kernel image compressed by gzip), followed by
+.Dq Li netbsd.old ,
+.Dq Li netbsd.old.gz ,
+.Dq Li onetbsd ,
+and finally
+.Dq Li onetbsd.gz .
+Alternate system images can be loaded by just specifying the name of the image.
 .Pp
 The following list of supported devices may vary from installation to
 installation:
@@ -129,6 +141,8 @@ can be used to boot from floppy.
 .Bl -tag -width /usr/mdec/biosboot.sym -compact
 .It Pa /netbsd
 system code
+.It Pa /netbsd.gz
+gzip-compressed system code
 .It Pa /usr/mdec/biosboot.sym
 boot block (not installed)
 .It Pa /boot
