@@ -1,4 +1,4 @@
-/*	$NetBSD: isnan.c,v 1.1 1997/03/29 20:55:57 thorpej Exp $	*/
+/*	$NetBSD: isnan.c,v 1.2 1997/07/13 18:41:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,12 +39,18 @@
  * from: Header: isnan.c,v 1.1 91/07/08 19:03:34 torek Exp
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)isnan.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: isnan.c,v 1.2 1997/07/13 18:41:38 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/ieee.h>
+#include <math.h>
 
 int
 isnan(d)
