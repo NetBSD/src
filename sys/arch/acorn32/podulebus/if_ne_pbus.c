@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.2 2001/11/27 00:53:12 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.3 2001/12/15 20:30:06 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@
 #include <dev/ic/dp8390var.h>
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
+#include <dev/ic/mx98905var.h>
 
 #include <arch/acorn32/podulebus/podulebus.h>
 #include <arch/acorn32/podulebus/if_ne_pbusreg.h>
@@ -118,6 +119,7 @@ void	eh600_mediastatus       __P((struct dp8390_softc *, struct ifmediareq *));
 void	eh600_init_card         __P((struct dp8390_softc *));
 void	eh600_init_media        __P((struct dp8390_softc *));
 
+void	en_postattach		__P((struct ne_pbus_softc *));
 int	en_mediachange          __P((struct dp8390_softc *));
 void	en_mediastatus          __P((struct dp8390_softc *, struct ifmediareq *));
 void	en_init_card            __P((struct dp8390_softc *));
@@ -197,7 +199,7 @@ struct ne_clone {
 	  EN_NIC_OFFSET, EN_NIC_SIZE, EN_ASIC_OFFSET, EN_ASIC_SIZE,
 	  0,0, NE_SPACE_EASI,
 	  NE_SPACE_EASI, NE_SPACE_EASI, 0,
-	  "EtherN", em_ea, NULL ,NULL,
+	  "EtherN", em_ea, NULL, en_postattach,
 	  en_mediachange, en_mediastatus, en_init_card,
 	  en_init_media
 	},
@@ -207,7 +209,7 @@ struct ne_clone {
 	  EN_NIC_OFFSET, EN_NIC_SIZE, EN_ASIC_OFFSET, EN_ASIC_SIZE,
 	  0,0, NE_SPACE_EASI,
 	  NE_SPACE_EASI, NE_SPACE_EASI, 0,
-	  "EtherI", em_ea, NULL ,NULL,
+	  "EtherI", em_ea, NULL, en_postattach,
 	  en_mediachange, en_mediastatus, en_init_card,
 	  en_init_media
 	},
@@ -659,6 +661,14 @@ eh600_mediastatus(sc, ifmr)
 	}
 }
 
+
+void
+en_postattach(sc)
+	struct ne_pbus_softc *sc;
+{
+
+	mx98905_attach(&sc->sc_ne2000.sc_dp8390);
+}
 
 /*
  * EtherN media.
