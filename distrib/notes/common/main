@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.199 2002/07/16 00:31:44 lha Exp $
+.\"	$NetBSD: main,v 1.200 2002/07/19 07:17:46 scottr Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -235,9 +235,9 @@ Model Support webpage.
 At present,
 .Nx*M
 cannot exist on the same hard drive as
-.Tn MacOS
+.Tn Mac OS
 unless you partition your disk using a
-.Tn MacOS
+.Tn Mac OS
 partitioning utility.
 Open Firmware versions prior to 3 cannot boot into
 .Nx
@@ -246,7 +246,7 @@ partitioned with the installation tools.
 Open Firmware version 3 cannot boot into
 .Nx
 on a drive partitioned with the installation tools, you must use a
-.Tn MacOS
+.Tn Mac OS
 partitioning utility and the
 .Dq Me "Re-install sets or install additional sets"
 option in the installer (selecting the
@@ -463,7 +463,7 @@ Unified Buffer Cache (UBC) removes size restriction of the file system's
 buffer cache to use all available RAM (if not otherwise used!) and
 improves overall system performance.
 .It
-Road-robin page colouring implemented for various ports for better
+Round-robin page colouring implemented for various ports for better
 cache utilisation, more deterministic run-time behaviour, and faster
 program execution.
 .It
@@ -475,8 +475,9 @@ See
 .It
 A new pipe implementation with significantly higher performance
 due to lower overheads, which uses the UVM Page Loan facility.
+.if !\n[mac68k] \{\
 .It
-New boot flags
+New boot loader flags
 .Fl v
 .Pq Em bootverbose
 and
@@ -489,6 +490,7 @@ An in-kernel boot time device configuration manager
 activated with the
 .Fl c
 boot loader flag.
+\}
 .It
 A work-in-progress snapshot of ACPI support,
 based on the 20010831 snapshot of the Intel ACPICA reference implementation.
@@ -1109,7 +1111,8 @@ own checksum files, just as the source distribution does.
 .so prep -----------------------------------------------
 .br_ne 7P
 .
-.Ss "Installing the NetBSD System"
+.ie r_mac68k .Ss "Installing the NetBSD System (Sysinst Method)"
+.el .Ss "Installing the NetBSD System"
 .
 .so install -----------------------------------------------
 .br_ne 7P
@@ -1358,7 +1361,7 @@ distribution set.
 Traditionally, the
 .Dq man pages
 (documentation) are denoted by
-.Sq Li name(section . )
+.Sq Li name(section) .
 Some examples of this are
 .Pp
 .(bullet -compact -offset indent

@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.17 2002/07/15 12:48:00 rafal Exp $
+.\"	$NetBSD: upgrade,v 1.18 2002/07/19 07:17:49 scottr Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,7 @@ To do the upgrade, you must first boot the system as described in the
 section.
 .\}
 .el \{\
-.ie \n[macppc]:\n[sparc] \{\
+.ie \n[mac68k]:\n[macppc]:\n[sparc] \{\
 To do the upgrade, you must boot from the installer kernel using one of
 the methods described above.
 .\}
@@ -100,7 +100,7 @@ another operating system's partition, before beginning the upgrade
 process.
 .if r_macppc \{\
 Since installation of the bootloader will prevent
-.Tn MacOS
+.Tn Mac OS
 from using the disk and will prevent Open Firmware 3 machines from
 booting, there is an option to bypass this step.
 Make sure you know whether or not to install the bootloader.
