@@ -1,4 +1,4 @@
-/*	$NetBSD: if_prom.c,v 1.3 1996/10/02 21:06:56 cgd Exp $	*/
+/*	$NetBSD: if_prom.c,v 1.4 1996/10/02 21:18:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -109,31 +109,22 @@ prom_get(desc, pkt, len, timeout)
 	int len;
 	time_t timeout;
 {
-        prom_return_t ret;
-        time_t t;
-        int cc;
+	prom_return_t ret;
+	time_t t;
+	int cc;
 	char hate[2000];
 
-        t = getsecs();  
-        cc = 0;                 
-        while (((getsecs() - t) < timeout) && !cc) {
-#if 0 /* TC machines' firmware */
-                ret.bits = prom_read(netfd, 0, hate, 0);
-#else
-                ret.bits = prom_read(netfd, sizeof hate, hate, 0);
-#endif
+	t = getsecs();
+	cc = 0;
+	while (((getsecs() - t) < timeout) && !cc) {
+		ret.bits = prom_read(netfd, sizeof hate, hate, 0);
 		if (ret.u.status == 0)
 			cc += ret.u.retval;
-        }
-
-#if 0 /* TC machines' firmware */
-	cc = min(cc, len);
-#else
+	}
 	cc = len;
-#endif
 	bcopy(hate, pkt, cc);
 
-        return cc;
+	return cc;
 }
 
 extern char *strchr();
@@ -143,14 +134,13 @@ prom_init(desc, machdep_hint)
 	struct iodesc *desc;
 	void *machdep_hint;
 {
-
-        prom_return_t ret;
-        char devname[64];
-        int devlen, i;
+	prom_return_t ret;
+	char devname[64];
+	int devlen, i;
 	char *enet_addr;
 
-        ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
-        devlen = ret.u.retval;
+	ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
+	devlen = ret.u.retval;
 
 	/* Ethernet address is the 9th component of the booted_dev string. */
 	enet_addr = devname;
@@ -186,12 +176,12 @@ prom_init(desc, machdep_hint)
 
 	printf("boot: ethernet address: %s\n", ether_sprintf(desc->myea));
 
-        ret.bits = prom_open(devname, devlen + 1); 
-        if (ret.u.status) {
-                printf("prom_init: open failed: %d\n", ret.u.status);
-                return;
-        }
-        netfd = ret.u.retval;
+	ret.bits = prom_open(devname, devlen + 1);
+	if (ret.u.status) {
+		printf("prom_init: open failed: %d\n", ret.u.status);
+		goto punt;
+	}
+	netfd = ret.u.retval;
 	return;
 
 punt:
