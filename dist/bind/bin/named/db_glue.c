@@ -1,4 +1,4 @@
-/*	$NetBSD: db_glue.c,v 1.1.1.1.2.2 1999/12/04 16:53:25 he Exp $	*/
+/*	$NetBSD: db_glue.c,v 1.1.1.1.2.3 2000/10/10 21:12:12 he Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_glue.c	4.4 (Berkeley) 6/1/90";
@@ -404,7 +404,7 @@ rm_name(struct namebuf *np, struct namebuf **pp, struct namebuf *pnp) {
 	if ( (np->n_data && (msg = "data"))
 	  || (np->n_hash && (msg = "hash"))
 	    ) {
-		ns_panic(ns_log_db, 1, "rm_name(%#x(%s)): non-nil %s pointer",
+		ns_panic(ns_log_db, 1, "rm_name(%p(%s)): non-nil %s pointer",
 			 np, NAME(*np), msg);
 	}
 
