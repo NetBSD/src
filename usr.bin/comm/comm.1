@@ -1,4 +1,4 @@
-.\"	$NetBSD: comm.1,v 1.4 1995/03/26 09:25:50 glass Exp $
+.\"	$NetBSD: comm.1,v 1.5 1997/10/18 13:04:19 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,12 +43,12 @@
 .Nm comm
 .Nd select or reject lines common to two files
 .Sh SYNOPSIS
-.Nm comm
+.Nm
 .Op Fl 123
 .Ar file1 file2
 .Sh DESCRIPTION
 The
-.Nm comm
+.Nm
 utility reads
 .Ar file1
 and
@@ -79,7 +79,7 @@ For example, if column number two is being suppressed, lines printed
 in column number one will not have any tabs preceding them, and lines
 printed in column number three will have one.
 .Pp
-.Nm Comm
+.Nm
 assumes that the files are lexically sorted; all characters
 participate in line comparisons.
 .\" .Sh ENVIRONMENT
@@ -91,7 +91,7 @@ participate in line comparisons.
 .\" .It Ev LC_MESSAGES
 .\" .El
 .Sh DIAGNOSTICS
-.Nm Comm
+.Nm
 exits 0 on success, >0 if an error occurred.
 .Sh SEE ALSO
 .Xr cmp 1 ,
@@ -100,6 +100,6 @@ exits 0 on success, >0 if an error occurred.
 .Xr uniq 1
 .Sh STANDARDS
 The
-.Nm comm
+.Nm
 utility conforms to 
 .St -p1003.2-92 .
