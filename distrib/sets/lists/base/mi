@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.175 2000/07/26 16:35:33 itojun Exp $
+# $NetBSD: mi,v 1.176 2000/07/28 00:13:59 wiz Exp $
 .
 ./altroot
 ./bin
@@ -1152,6 +1152,17 @@
 ./usr/share/vi/catalog/german
 ./usr/share/vi/catalog/ru_SU.KOI8-R
 ./usr/share/vi/catalog/swedish
+./usr/share/wscons
+./usr/share/wscons/fonts
+./usr/share/wscons/fonts/vt220h.808
+./usr/share/wscons/fonts/vt220h.810
+./usr/share/wscons/fonts/vt220h.814
+./usr/share/wscons/fonts/vt220h.816
+./usr/share/wscons/fonts/vt220l.808
+./usr/share/wscons/fonts/vt220l.810
+./usr/share/wscons/fonts/vt220l.814
+./usr/share/wscons/fonts/vt220l.816
+./usr/share/wscons/keymaps
 ./usr/share/zoneinfo
 ./usr/share/zoneinfo/Africa
 ./usr/share/zoneinfo/Africa/Abidjan
