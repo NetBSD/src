@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.248 2003/10/19 09:08:40 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.249 2003/10/30 08:16:41 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -625,6 +625,7 @@
 ./usr/share/man/cat4/pmppc
 ./usr/share/man/cat4/sgimips
 ./usr/share/man/cat4/sparc
+./usr/share/man/cat4/sparc64
 ./usr/share/man/cat4/sun2
 ./usr/share/man/cat4/sun3
 ./usr/share/man/cat4/vax
@@ -725,6 +726,7 @@
 ./usr/share/man/man4/pmppc
 ./usr/share/man/man4/sgimips
 ./usr/share/man/man4/sparc
+./usr/share/man/man4/sparc64
 ./usr/share/man/man4/sun2
 ./usr/share/man/man4/sun3
 ./usr/share/man/man4/vax
@@ -825,6 +827,7 @@
 ./usr/share/man/html4/pmppc
 ./usr/share/man/html4/sgimips
 ./usr/share/man/html4/sparc
+./usr/share/man/html4/sparc64
 ./usr/share/man/html4/sun2
 ./usr/share/man/html4/sun3
 ./usr/share/man/html4/vax
