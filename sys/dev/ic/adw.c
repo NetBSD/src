@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.2 1998/09/26 19:54:22 dante Exp $	 */
+/* $NetBSD: adw.c,v 1.3 1998/10/10 00:28:33 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -100,8 +100,7 @@ struct scsipi_adapter adw_switch =
 {
 	adw_scsi_cmd,		/* called to start/enqueue a SCSI command */
 	adwminphys,		/* to limit the transfer to max device can do */
-	0,			/* IT SEEMS IT IS NOT USED YET */
-	0,			/* as above... */
+	NULL,			/* scsipi_ioctl */
 };
 
 

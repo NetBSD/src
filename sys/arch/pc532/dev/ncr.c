@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.41 1998/01/12 19:55:40 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.42 1998/10/10 00:28:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -82,10 +82,9 @@ static void	ncr_wait_not_req __P((struct ncr5380_softc *sc));
 int ncr_default_options = 0;
 
 struct scsipi_adapter ncr_switch = {
-	ncr5380_scsi_cmd,	/* scsi_cmd()				*/
-	minphys,		/* scsi_minphys()			*/
-	0,			/* open_target_lu()			*/
-	0			/* close_target_lu()			*/
+	ncr5380_scsi_cmd,	/* scsipi_cmd				*/
+	minphys,		/* scsipi_minphys			*/
+	NULL,			/* scsipi_ioctl				*/
 };
 
 struct scsipi_device ncr_dev = {

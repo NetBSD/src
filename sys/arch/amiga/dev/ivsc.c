@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.23 1998/01/12 10:39:56 thorpej Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.24 1998/10/10 00:28:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -61,8 +61,7 @@ int ivsc_dma_xfer_out __P((struct sci_softc *dev, int len,
 struct scsipi_adapter ivsc_scsiswitch = {
 	sci_scsicmd,
 	sci_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device ivsc_scsidev = {

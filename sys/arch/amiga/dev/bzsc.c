@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.22 1998/05/24 19:32:34 is Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.23 1998/10/10 00:28:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -79,8 +79,7 @@ struct cfattach bzsc_ca = {
 struct scsipi_adapter bzsc_switch = {
 	ncr53c9x_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */
-	NULL,
-	NULL,
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device bzsc_dev = {

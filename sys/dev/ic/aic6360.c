@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.58 1998/07/04 22:18:49 jonathan Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.59 1998/10/10 00:28:33 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -184,10 +184,9 @@ void	aic_print_active_acb __P((void));
 #endif
 
 struct scsipi_adapter aic_switch = {
-	aic_scsi_cmd,
-	aic_minphys,
-	0,
-	0,
+	aic_scsi_cmd,		/* scsipi_cmd */
+	aic_minphys,		/* scsipi_minphys */
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device aic_dev = {

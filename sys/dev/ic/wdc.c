@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.29 1998/09/22 00:27:51 mark Exp $ */
+/*	$NetBSD: wdc.c,v 1.30 1998/10/10 00:28:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,8 +141,7 @@ static int wdc_nxfer;
 static struct scsipi_adapter wdc_switch  = {
 	wdc_atapi_send_command_packet,
 	wdc_atapi_minphys,
-	0,
-	0
+	NULL,			/* scsipi_ioctl */
 };
 #endif
 

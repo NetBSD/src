@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.11 1998/01/12 19:51:13 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.12 1998/10/10 00:28:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -67,8 +67,7 @@ int     wdsc_scsiintr   __P((void *));
 struct scsipi_adapter wdsc_scsiswitch = {
     sbic_scsicmd,
     sbic_minphys,
-    0,          /* no lun support */
-    0,          /* no lun support */
+    NULL,	/* scsipi_ioctl */
 };
 
 struct scsipi_device wdsc_scsidev = {

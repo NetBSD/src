@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.22 1998/09/04 22:00:27 is Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.23 1998/10/10 00:28:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -69,8 +69,7 @@ void ahsc_dump __P((void));
 struct scsipi_adapter ahsc_scsiswitch = {
 	sbic_scsicmd,
 	sbic_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device ahsc_scsidev = {

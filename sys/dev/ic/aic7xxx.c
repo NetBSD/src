@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.30 1998/08/13 02:10:51 eeh Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.31 1998/10/10 00:28:33 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -222,9 +222,11 @@ static struct scsipi_adapter ahc_switch =
 {
         ahc_scsi_cmd,
         ahcminphys,
+#if defined(__NetBSD__)
+	NULL,			/* scsipi_ioctl */
+#elif defined(__FreeBSD__)
         0,
         0,
-#if defined(__FreeBSD__)
         0,
         "ahc",
         { 0, 0 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.17 1998/08/17 00:26:34 mycroft Exp $	*/
+/*	$NetBSD: uha.c,v 1.18 1998/10/10 00:28:34 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -105,10 +105,9 @@ void uha_enqueue __P((struct uha_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *uha_dequeue __P((struct uha_softc *));
 
 struct scsipi_adapter uha_switch = {
-	uha_scsi_cmd,
-	uhaminphys,
-	0,
-	0,
+	uha_scsi_cmd,		/* scsipi_cmd */
+	uhaminphys,		/* scsipi_minphys */
+	NULL,			/* scsipi_ioctl */
 };
 
 /* the below structure is so we have a default dev struct for out link struct */

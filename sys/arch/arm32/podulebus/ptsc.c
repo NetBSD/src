@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.19 1998/05/24 18:19:29 mark Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.20 1998/10/10 00:28:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -73,8 +73,7 @@ int ptsc_scsicmd __P((struct scsipi_xfer *));
 struct scsipi_adapter ptsc_scsiswitch = {
 	ptsc_scsicmd,
 	sfas_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device ptsc_scsidev = {

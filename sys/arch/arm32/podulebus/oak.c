@@ -1,4 +1,4 @@
-/*	$NetBSD: oak.c,v 1.14 1998/09/18 03:23:19 mark Exp $	*/
+/*	$NetBSD: oak.c,v 1.15 1998/10/10 00:28:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,10 +63,9 @@ int  oak_match  __P((struct device *, struct cfdata *, void *));
 static void oak_minphys __P((struct buf *bp));
 
 struct scsipi_adapter oak_scsiswitch = {
-	ncr5380_scsi_cmd,	/* scsi_cmd() */
-	oak_minphys,		/* scsi_minphys() */
-	0,			/* no lun support */
-	0,			/* no lun support */
+	ncr5380_scsi_cmd,	/* scsipi_cmd */
+	oak_minphys,		/* scsipi_minphys */
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device oak_scsidev = {

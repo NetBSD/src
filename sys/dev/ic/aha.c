@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.18 1998/08/17 00:26:33 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.19 1998/10/10 00:28:33 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -116,10 +116,9 @@ void aha_enqueue __P((struct aha_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *aha_dequeue __P((struct aha_softc *));
 
 struct scsipi_adapter aha_switch = {
-	aha_scsi_cmd,
-	ahaminphys,
-	0,
-	0,
+	aha_scsi_cmd,		/* scsipi_cmd */
+	ahaminphys,		/* scsipi_minphys */
+	NULL,			/* scsipi_ioctl */
 };
 
 /* the below structure is so we have a default dev struct for out link struct */

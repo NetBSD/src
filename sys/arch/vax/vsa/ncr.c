@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.13 1998/07/04 22:18:45 jonathan Exp $	*/
+/*	$NetBSD: ncr.c,v 1.14 1998/10/10 00:28:32 thorpej Exp $	*/
 
 #define USE_VMAPBUF
 
@@ -256,10 +256,9 @@ void si_dma_eop __P((struct ncr5380_softc *));
 void si_dma_stop __P((struct ncr5380_softc *));
 
 static struct scsipi_adapter	si_ops = {
-	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
-	si_minphys,			/* scsi_minphys()	*/
-	NULL,				/* open_target_lu()	*/
-	NULL,				/* close_target_lu()	*/
+	ncr5380_scsi_cmd,		/* scsipi_cmd()		*/
+	si_minphys,			/* scsipi_minphys()	*/
+	NULL,				/* scsipi_ioctl()	*/
 };
 
 /* This is copied from julian's bt driver */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.17 1998/10/08 20:17:52 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.18 1998/10/10 00:28:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ typedef	int	boolean;
  */
 
 struct buf;
+struct scsipi_link;
 struct scsipi_xfer;
 
 struct scsipi_generic {
@@ -141,12 +142,16 @@ struct scsipi_device {
  * These entrypoints are called by the high-end drivers to get services from
  * whatever low-end drivers they are attached to each adapter type has one of
  * these statically allocated.
+ *
+ *	scsipi_cmd		required
+ *	scsipi_minphys		required
+ *	scsipi_ioctl		optional
  */
 struct scsipi_adapter {
 	int	(*scsipi_cmd) __P((struct scsipi_xfer *));
 	void	(*scsipi_minphys) __P((struct buf *));
-	int	(*open_target_lu) __P((void));
-	int	(*close_target_lu) __P((void));
+	int	(*scsipi_ioctl) __P((struct scsipi_link *, u_long,
+		    caddr_t, int, struct proc *));
 };
 
 /*

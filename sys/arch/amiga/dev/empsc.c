@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.15 1998/01/12 10:39:24 thorpej Exp $	*/
+/*	$NetBSD: empsc.c,v 1.16 1998/10/10 00:28:36 thorpej Exp $	*/
 
 /*
 
@@ -57,8 +57,7 @@ int empsc_intr __P((void *));
 struct scsipi_adapter empsc_scsiswitch = {
 	sci_scsicmd,
 	sci_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device empsc_scsidev = {

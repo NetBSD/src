@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.47 1998/08/13 02:10:56 eeh Exp $	*/
+/*	$NetBSD: asc.c,v 1.48 1998/10/10 00:28:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -416,8 +416,7 @@ static void asc_timeout __P((void *arg));
 struct scsipi_adapter asc_switch = {
 	NULL, /* XXX - asc_scsi_cmd */
 /*XXX*/	minphys,		/* no max transfer size; DMA engine deals */
-	NULL,
-	NULL,
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device asc_dev = {

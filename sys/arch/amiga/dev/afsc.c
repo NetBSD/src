@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.22 1998/01/12 10:39:06 thorpej Exp $	*/
+/*	$NetBSD: afsc.c,v 1.23 1998/10/10 00:28:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -62,8 +62,7 @@ void afsc_dump __P((void));
 struct scsipi_adapter afsc_scsiswitch = {
 	siop_scsicmd,
 	siop_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device afsc_scsidev = {

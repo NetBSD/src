@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.32 1998/10/06 09:32:44 leo Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.33 1998/10/10 00:28:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -82,10 +82,9 @@ static int	ncr5380_scsi_cmd __P((struct scsipi_xfer *xs));
 static void	ncr5380_show_scsi_cmd __P((struct scsipi_xfer *xs));
 
 struct scsipi_adapter ncr5380_switch = {
-	ncr5380_scsi_cmd,		/* scsi_cmd()			*/
-	ncr5380_minphys,		/* scsi_minphys()		*/
-	0,				/* open_target_lu()		*/
-	0				/* close_target_lu()		*/
+	ncr5380_scsi_cmd,		/* scsipi_cmd			*/
+	ncr5380_minphys,		/* scsipi_minphys		*/
+	NULL,				/* scsipi_ioctl			*/
 };
 
 struct scsipi_device ncr5380_dev = {

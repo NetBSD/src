@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.32 1998/08/15 03:02:32 mycroft Exp $	*/
+/*	$NetBSD: idesc.c,v 1.33 1998/10/10 00:28:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -256,8 +256,7 @@ int  idesc_intr __P((void *));
 struct scsipi_adapter idesc_scsiswitch = {
 	ide_scsicmd,
 	minphys,		/* no max transfer len, at this level */
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device idesc_scsidev = {

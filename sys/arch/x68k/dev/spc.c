@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.16 1998/08/04 16:51:52 minoura Exp $	*/
+/*	$NetBSD: spc.c,v 1.17 1998/10/10 00:28:40 thorpej Exp $	*/
 
 #define	integrate	__inline static
 
@@ -389,8 +389,7 @@ extern struct cfdriver spc_cd;
 struct scsipi_adapter spc_switch = {
 	spc_scsi_cmd,
 	spc_minphys,
-	0,
-	0,
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device spc_dev = {

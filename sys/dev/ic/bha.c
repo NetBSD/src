@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.25 1998/08/17 00:26:33 mycroft Exp $	*/
+/*	$NetBSD: bha.c,v 1.26 1998/10/10 00:28:34 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #undef BHADIAG
@@ -114,10 +114,9 @@ void bha_enqueue __P((struct bha_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *bha_dequeue __P((struct bha_softc *));
 
 struct scsipi_adapter bha_switch = {
-	bha_scsi_cmd,
-	bhaminphys,
-	0,
-	0,
+	bha_scsi_cmd,		/* scsipi_ioctl */
+	bhaminphys,		/* scsipi_minphys */
+	NULL,			/* scsipi_ioctl */
 };
 
 /* the below structure is so we have a default dev struct for out link struct */

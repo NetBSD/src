@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.12 1998/07/26 06:45:18 is Exp $	*/
+/*	$NetBSD: drsc.c,v 1.13 1998/10/10 00:28:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -62,8 +62,7 @@ void drsc_dump __P((void));
 struct scsipi_adapter drsc_scsiswitch = {
 	siop_scsicmd,
 	siop_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device drsc_scsidev = {

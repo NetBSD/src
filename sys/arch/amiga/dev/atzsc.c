@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.25 1998/08/21 19:13:28 is Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.26 1998/10/10 00:28:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -68,8 +68,7 @@ void atzsc_dump __P((void));
 struct scsipi_adapter atzsc_scsiswitch = {
 	sbic_scsicmd,
 	sbic_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device atzsc_scsidev = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.73 1998/09/21 14:53:58 mjacob Exp $	*/
+/*	$NetBSD: ncr.c,v 1.74 1998/10/10 00:28:29 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1434,7 +1434,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.73 1998/09/21 14:53:58 mjacob Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.74 1998/10/10 00:28:29 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -1507,11 +1507,13 @@ static struct scsipi_adapter ncr_switch =
 #else
 	ncr_minphys,
 #endif
-	0,
-	0,
 #ifndef __NetBSD__
+	0,
+	0,
 	ncr_info,
 	"ncr",
+#else
+	NULL,			/* scsipi_ioctl */
 #endif /* !__NetBSD__ */
 };
 

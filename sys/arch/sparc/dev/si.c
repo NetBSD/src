@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.48 1998/07/31 12:45:48 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.49 1998/10/10 00:28:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -246,8 +246,7 @@ void si_obio_intr_off __P((struct ncr5380_softc *));
 static struct scsipi_adapter	si_ops = {
 	ncr5380_scsi_cmd,		/* scsipi_cmd()		*/
 	si_minphys,			/* scsipi_minphys()	*/
-	NULL,				/* open_arget_lu()	*/
-	NULL,				/* close_target_lu()	*/
+	NULL,				/* scsipi_ioctl()	*/
 };
 
 /* This is copied from julian's bt driver */

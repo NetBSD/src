@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.8 1998/09/09 16:42:51 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.9 1998/10/10 00:28:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -257,8 +257,7 @@ extern struct cfdriver mha_cd;
 struct scsipi_adapter mha_switch = {
 	mha_scsi_cmd,
 	mha_minphys,
-	0,
-	0,
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device mha_dev = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.39 1998/01/12 20:32:25 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.40 1998/10/10 00:28:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -119,10 +119,9 @@ int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 static void	si_minphys __P((struct buf *));
 
 static struct scsipi_adapter	si_ops = {
-	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
-	si_minphys,			/* scsi_minphys()	*/
-	NULL,				/* open_target_lu()	*/
-	NULL,				/* close_target_lu()	*/
+	ncr5380_scsi_cmd,		/* scsipi_cmd()		*/
+	si_minphys,			/* scsipi_minphys()	*/
+	NULL,				/* scsipi_ioctl()	*/
 };
 
 /* This is copied from julian's bt driver */

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.4 1998/09/26 16:02:56 dante Exp $	*/
+/*	$NetBSD: adv.c,v 1.5 1998/10/10 00:28:32 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -100,8 +100,7 @@ struct scsipi_adapter adv_switch =
 {
 	adv_scsi_cmd,		/* called to start/enqueue a SCSI command */
 	advminphys,		/* to limit the transfer to max device can do */
-	0,			/* IT SEEMS IT IS NOT USED YET */
-	0,			/* as above... */
+	NULL,			/* scsipi_ioctl */
 };
 
 

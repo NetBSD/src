@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.3 1998/09/15 20:26:25 pk Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.4 1998/10/10 00:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -102,8 +102,7 @@ struct cfattach esp_dma_ca = {
 static struct scsipi_adapter esp_sbus_switch = {
 	ncr53c9x_scsi_cmd,
 	minphys,		/* no max at this level; handled by DMA code */
-	NULL,
-	NULL,
+	NULL,			/* scsipi_ioctl */
 };
 
 static struct scsipi_device esp_sbus_dev = {
