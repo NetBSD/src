@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.3 2001/05/02 10:32:22 scw Exp $	*/
+/*	$NetBSD: console.c,v 1.4 2001/05/11 04:56:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -44,6 +44,8 @@
 
 #include <dev/cons.h>
 
+#include "zsc.h"
+
 static void	arcs_cnputc(dev_t, int);
 static int	arcs_cngetc(dev_t);
 static int	arcs_cnlookc(dev_t, int *);
@@ -55,16 +57,47 @@ struct consdev arcs_cn = {
 
 struct callout arcs_ch = CALLOUT_INITIALIZER;
 
+extern struct consdev zs_cn;
+
 void
 consinit()
 {
-	arcs_cn.cn_dev = makedev(37, 0);
+	char* consdev;
+	int force_arcs = 0;
+	int bad_consdev = 0;
+
+	if ((consdev = ARCS->GetEnvironmentVariable("console")) != NULL) {
+	    if (consdev[0] != 'd' && consdev[0] != 'g' && consdev[0] != 'G')
+		bad_consdev = 1;
+	    else if (consdev[0] == 'g' || consdev[0] == 'G')
+		force_arcs  = 1;
+	} else
+	    bad_consdev = 1;
+
+#if NZSC > 0
+	/* 
+	 * Only use zs driver as console if we know the console port is set
+	 * to one of the serial ports.  If it's set to the graphic display,
+	 * something unknown or not set, fall back to ARCS console.
+	 */
+	if (!force_arcs && !bad_consdev) {
+	    cn_tab = &zs_cn;
+	    (*cn_tab->cn_init)(cn_tab);
+	    return;
+	}
+#endif
 
 	cn_tab = &arcs_cn;
+	arcs_cn.cn_dev = makedev(37, 0);
 
 	return;
 }
 
+/*
+ * XXXrkb: Using ARCS console is really annoying, since a Control-C sent
+ * to it tosses you back into ARCS rather than sending a control-C to the
+ * ARCS console code (and I have no idea how to restart from there 8-/).
+ */
 static void
 arcs_cnputc(dev, c)
 	dev_t dev;
@@ -74,7 +107,6 @@ arcs_cnputc(dev, c)
 	u_int32_t count;
 
 	ARCS->Write(ARCS_STDOUT, &ch, 1, &count);
-
 	return;
 }
 
