@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.31.4.2 2002/04/01 07:43:07 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.31.4.3 2002/09/17 21:17:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
@@ -90,7 +89,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * The Sun provides a 4.9152 MHz clock to the ZS chips.
@@ -291,7 +289,9 @@ zs_attach(zsc, zsd, pri)
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
 		struct device *child;
+#if (NKBD > 0) || (NMS > 0)
 		extern struct cfdriver zstty_cd; /* in ioconf.c */
+#endif
 
 		zsc_args.channel = channel;
 		cs = &zsc->zsc_cs_store[channel];

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123.6.5 2002/06/20 03:41:01 nathanw Exp $
+# $NetBSD: GENERIC,v 1.123.6.6 2002/09/17 21:17:37 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.123.6.5 $"
+#ident 		"GENERIC-$Revision: 1.123.6.6 $"
 
 maxusers	32
 
@@ -602,6 +602,9 @@ cgfourteen0	at obio0			# sun4m
 
 # P9100-based display on Tadpole SPARCbook 3.
 pnozz0		at sbus? slot ? offset ?
+
+# Sun ZX/Leo 24-bit framebuffer
+zx*		at sbus? slot ? offset ?
 
 #### Other device configuration
 

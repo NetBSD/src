@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_timer.c,v 1.1.4.2 2002/02/28 04:08:38 nathanw Exp $	*/
+/*	$NetBSD: joy_timer.c,v 1.1.4.3 2002/09/17 21:13:56 nathanw Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -41,13 +41,13 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/conf.h>
 
 #include <machine/bus.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/joystick.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>

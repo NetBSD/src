@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.2.2.4 2002/04/01 07:46:35 nathanw Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.2.2.5 2002/09/17 21:20:18 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.2.2.4 2002/04/01 07:46:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.2.2.5 2002/09/17 21:20:18 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -55,7 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.2.2.4 2002/04/01 07:46:35 nathanw E
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciio.h>
 
-cdev_decl(pci);
+dev_type_open(pciopen);
+dev_type_ioctl(pciioctl);
+dev_type_mmap(pcimmap);
+
+const struct cdevsw pci_cdevsw = {
+	pciopen, nullclose, noread, nowrite, pciioctl,
+	nostop, notty, nopoll, pcimmap,
+};
 
 int
 pciopen(dev_t dev, int flags, int mode, struct proc *p)
@@ -67,13 +74,6 @@ pciopen(dev_t dev, int flags, int mode, struct proc *p)
 	sc = device_lookup(&pci_cd, unit);
 	if (sc == NULL)
 		return (ENXIO);
-
-	return (0);
-}
-
-int
-pciclose(dev_t dev, int flags, int mode, struct proc *p)
-{
 
 	return (0);
 }

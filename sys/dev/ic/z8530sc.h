@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.14.6.1 2001/06/21 20:03:33 nathanw Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.14.6.2 2002/09/17 21:19:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -149,8 +149,6 @@ void	zs_iflush __P((struct zs_chanstate *));
 void	zs_loadchannelregs __P((struct zs_chanstate *));
 int 	zs_set_speed __P((struct zs_chanstate *, int));
 int 	zs_set_modes __P((struct zs_chanstate *, int));
-
-extern int zs_major;
 
 int zs_check_kgdb __P((struct zs_chanstate *, int));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.46.2.8 2002/07/12 01:40:17 nathanw Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.46.2.9 2002/09/17 21:22:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.46.2.8 2002/07/12 01:40:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.46.2.9 2002/09/17 21:22:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	long todo;
 
 	error = 0;
-	flags &= B_READ | B_WRITE | B_ORDERED;
+	flags &= B_READ | B_WRITE;
 
 	/* Make sure we have a buffer, creating one if necessary. */
 	if ((nobuf = (bp == NULL)) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.4.4.1 2001/11/14 19:16:09 nathanw Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.4.4.2 2002/09/17 21:21:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.4.4.1 2001/11/14 19:16:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.4.4.2 2002/09/17 21:21:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -54,7 +54,14 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.4.4.1 2001/11/14 19:16:09 nathanw Exp $
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/sysmon/sysmonconf.h>
 
-cdev_decl(sysmon);
+dev_type_open(sysmonopen);
+dev_type_close(sysmonclose);
+dev_type_ioctl(sysmonioctl);
+
+const struct cdevsw sysmon_cdevsw = {
+	sysmonopen, sysmonclose, noread, nowrite, sysmonioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 /*
  * sysmonopen:

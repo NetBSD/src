@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.9 2002/08/01 02:45:31 nathanw Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.10 2002/09/17 21:20:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.70.2.9 2002/08/01 02:45:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.70.2.10 2002/09/17 21:20:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,10 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_ACCTON_EN2212,
       0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
+    { PCMCIA_STR_ACCTON_EN2216,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_ACCTON_EN2216,
+      0, -1, { 0x00, 0x00, 0xe8 } },
 
     { PCMCIA_STR_SVEC_COMBOCARD,
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
@@ -801,7 +805,7 @@ again:
 			typestr = " (RTL8019)";
 			dsc->sc_mediachange = rtl80x9_mediachange;
 			dsc->sc_mediastatus = rtl80x9_mediastatus;
-				dsc->init_card = rtl80x9_init_card;
+			dsc->init_card = rtl80x9_init_card;
 			dsc->sc_media_init = rtl80x9_media_init;
 		}
 	}

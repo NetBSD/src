@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.47.4.5 2002/08/01 02:42:30 nathanw Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.47.4.6 2002/09/17 21:15:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -714,6 +714,9 @@
 #define	MIPS_REV_R4400_A	0x40
 #define	MIPS_REV_R4400_B	0x50
 #define	MIPS_REV_R4400_C	0x60
+
+/* For MIPS_TX4900 */
+#define	MIPS_REV_TX4927		0x22
 
 /*
  * CPU processor revision IDs for company ID == 1 (MIPS)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.25.4.2 2002/04/01 07:42:39 nathanw Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.25.4.3 2002/09/17 21:17:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -102,7 +102,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
@@ -130,20 +129,26 @@ static void	cgeightunblank __P((struct device *));
 
 static int	cg8_pfour_probe __P((void *, void *));
 
-/* cdevsw prototypes */
-cdev_decl(cgeight);
-
 struct cfattach cgeight_ca = {
 	sizeof(struct cgeight_softc), cgeightmatch, cgeightattach
 };
 
 extern struct cfdriver cgeight_cd;
 
+dev_type_open(cgeightopen);
+dev_type_ioctl(cgeightioctl);
+dev_type_mmap(cgeightmmap);
+
+const struct cdevsw cgeight_cdevsw = {
+	cgeightopen, nullclose, noread, nowrite, cgeightioctl,
+	nostop, notty, nopoll, cgeightmmap,
+};
+
 #if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgeightfbdriver = {
-	cgeightunblank, cgeightopen, cgeightclose, cgeightioctl, 
-	cgeightpoll, cgeightmmap
+	cgeightunblank, cgeightopen, nullclose, cgeightioctl, 
+	nopoll, cgeightmmap
 };
 
 static void cgeightloadcmap __P((struct cgeight_softc *, int, int));
@@ -323,16 +328,6 @@ cgeightopen(dev, flags, mode, p)
 }
 
 int
-cgeightclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 cgeightioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -391,16 +386,6 @@ cgeightioctl(dev, cmd, data, flags, p)
 	}
 #endif
 	return (0);
-}
-
-int
-cgeightpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
 }
 
 /*

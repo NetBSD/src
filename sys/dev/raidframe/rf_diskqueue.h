@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.5.6.2 2002/08/13 02:19:51 nathanw Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.5.6.3 2002/09/17 21:20:48 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -68,11 +68,8 @@ struct RF_DiskQueueData_s {
 	RF_Raid_t *raidPtr;	/* needed for simulation */
 	RF_AccTraceEntry_t *tracerec;	/* perf mon only */
 	RF_Etimer_t qtime;	/* perf mon only - time request is in queue */
-	long    entryTime;
 	RF_DiskQueueData_t *next;
 	RF_DiskQueueData_t *prev;
-	caddr_t buf2;		/* for read-op-write */
-	dev_t   dev;		/* the device number for in-kernel version */
 	RF_DiskQueue_t *queue;	/* the disk queue to which this req is
 				 * targeted */
 	RF_DiskQueueDataFlags_t flags;	/* flags controlling operation */
@@ -117,10 +114,6 @@ struct RF_DiskQueue_s {
 						 * arrived at the head of the
 						 * queue & is waiting for
 						 * drainage */
-	RF_DiskQueueData_t *unlockingOp;	/* used at user level to
-						 * communicate unlocking op
-						 * b/w user (or dag exec) &
-						 * disk threads */
 	int     numWaiting;	/* number of threads waiting on this variable.
 				 * user-level only */
 	RF_DiskQueueFlags_t flags;	/* terminate, locked */

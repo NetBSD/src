@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74.4.15 2002/08/28 22:26:33 petrov Exp $ */
+/*	$NetBSD: trap.c,v 1.74.4.16 2002/09/17 21:18:05 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -2010,6 +2010,7 @@ syscall(tf, code, pc)
 		/* Need to convert from int64 to int32 or we lose */
 		for (argp = &args.i[0]; i--;) 
 			*argp++ = *ap++;
+
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL)) {
 #if defined(__arch64__)
@@ -2024,7 +2025,7 @@ syscall(tf, code, pc)
 			ktrsyscall(p, code, (register_t *)&args.i);
 #endif
 		}
-#endif
+#endif /* KTRACE */
 		if (error) {
 			goto bad;
 		}

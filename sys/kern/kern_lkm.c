@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.55.2.4 2002/05/29 21:33:11 nathanw Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.55.2.5 2002/09/17 21:22:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.55.2.4 2002/05/29 21:33:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.55.2.5 2002/09/17 21:22:04 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -110,6 +110,14 @@ static int _lkm_strmod __P((struct lkm_table *, int));
 static int _lkm_exec __P((struct lkm_table *, int));
 static int _lkm_compat __P((struct lkm_table *, int));
 
+dev_type_open(lkmopen);
+dev_type_close(lkmclose);
+dev_type_ioctl(lkmioctl);
+
+const struct cdevsw lkm_cdevsw = {
+	lkmopen, lkmclose, noread, nowrite, lkmioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 /*ARGSUSED*/
 int
@@ -577,20 +585,6 @@ sys_lkmnosys(l, v, retval)
 }
 
 /*
- * Acts like "enodev", but can be identified in cdevsw and bdevsw for
- * dynamic driver major number assignment for a limited number of
- * drivers.
- *
- * Place holder for device switch slots reserved for loadable modules.
- */
-int
-lkmenodev()
-{
-
-	return (enodev());
-}
-
-/*
  * A placeholder function for load/unload/stat calls; simply returns zero.
  * Used where people don't want to specify a special function.
  */
@@ -740,8 +734,7 @@ _lkm_dev(lkmtp, cmd)
 	int cmd;
 {
 	struct lkm_dev *args = lkmtp->private.lkm_dev;
-	int i;
-	int error = 0;
+	int error;
 
 	switch(cmd) {
 	case LKM_E_LOAD:
@@ -749,102 +742,27 @@ _lkm_dev(lkmtp, cmd)
 		if (lkmexists(lkmtp))
 			return (EEXIST);
 
-		switch(args->lkm_devtype) {
-		case LM_DT_BLOCK:
-			if ((i = args->lkm_offset) == -1) {	/* auto */
-				/*
-				 * Search the table looking for a slot...
-				 */
-				for (i = 0; i < nblkdev; i++)
-					if (bdevsw[i].d_open == 
-					    (dev_type_open((*))) lkmenodev)
-						break;		/* found it! */
-				/* out of allocable slots? */
-				if (i == nblkdev) {
-					error = ENFILE;
-					break;
-				}
-			} else {				/* assign */
-				if (i < 0 || i >= nblkdev) {
-					error = EINVAL;
-					break;
-				}
-			}
+		error = devsw_attach(args->lkm_devname,
+				     args->lkm_bdev, &args->lkm_bdevmaj,
+				     args->lkm_cdev, &args->lkm_cdevmaj);
+		if (error != 0)
+			return (error);
 
-			/* save old */
-			memcpy(&args->lkm_olddev.bdev, &bdevsw[i], sizeof(struct bdevsw));
-
-			/* replace with new */
-			memcpy(&bdevsw[i], args->lkm_dev.bdev, sizeof(struct bdevsw));
-
-			/* done! */
-			args->lkm_offset = i;	/* slot in bdevsw[] */
-			break;
-
-		case LM_DT_CHAR:
-			if ((i = args->lkm_offset) == -1) {	/* auto */
-				/*
-				 * Search the table looking for a slot...
-				 */
-				for (i = 0; i < nchrdev; i++)
-					if (cdevsw[i].d_open ==
-					    (dev_type_open((*))) lkmenodev)
-						break;		/* found it! */
-				/* out of allocable slots? */
-				if (i == nchrdev) {
-					error = ENFILE;
-					break;
-				}
-			} else {				/* assign */
-				if (i < 0 || i >= nchrdev) {
-					error = EINVAL;
-					break;
-				}
-			}
-
-			/* save old */
-			memcpy(&args->lkm_olddev.cdev, &cdevsw[i], sizeof(struct cdevsw));
-
-			/* replace with new */
-			memcpy(&cdevsw[i], args->lkm_dev.cdev, sizeof(struct cdevsw));
-
-			/* done! */
-			args->lkm_offset = i;	/* slot in cdevsw[] */
-
-			break;
-
-		default:
-			error = ENODEV;
-			break;
-		}
+		args->lkm_offset = makemajor(args->lkm_bdevmaj,
+					     args->lkm_cdevmaj);
 		break;
 
 	case LKM_E_UNLOAD:
-		/* current slot... */
-		i = args->lkm_offset;
-
-		switch(args->lkm_devtype) {
-		case LM_DT_BLOCK:
-			/* replace current slot contents with old contents */
-			memcpy(&bdevsw[i], &args->lkm_olddev.bdev, sizeof(struct bdevsw));
-			break;
-
-		case LM_DT_CHAR:
-			/* replace current slot contents with old contents */
-			memcpy(&cdevsw[i], &args->lkm_olddev.cdev, sizeof(struct cdevsw));
-			break;
-
-		default:
-			error = ENODEV;
-			break;
-		}
+		devsw_detach(args->lkm_bdev, args->lkm_cdev);
+		args->lkm_bdevmaj = -1;
+		args->lkm_cdevmaj = -1;
 		break;
 
 	case LKM_E_STAT:	/* no special handling... */
 		break;
 	}
 
-	return (error);
+	return (0);
 }
 
 #ifdef STREAMS

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37.6.2 2002/08/13 02:18:01 nathanw Exp $	*/
+/*	$NetBSD: fd.c,v 1.37.6.3 2002/09/17 21:13:42 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -192,16 +192,12 @@ static short	def_type = 0;		/* Reflects config-switches	*/
 
 typedef void	(*FPV) __P((void *));
 
-/*
- * {b,c}devsw[] function prototypes
- */
 dev_type_open(fdopen);
 dev_type_close(fdclose);
 dev_type_read(fdread);
 dev_type_write(fdwrite);
 dev_type_ioctl(fdioctl);
-dev_type_size(fdsize);
-dev_type_dump(fddump);
+dev_type_strategy(fdstrategy);
 
 /*
  * Private drive functions....
@@ -273,6 +269,15 @@ static void	fdcattach __P((struct device *, struct device *, void *));
 
 struct cfattach fdc_ca = {
 	sizeof(struct device), fdcmatch, fdcattach
+};
+
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
 };
 
 static int
@@ -354,7 +359,6 @@ const char	*pnp;
 static int	fdmatch __P((struct device *, struct cfdata *, void *));
 static void	fdattach __P((struct device *, struct device *, void *));
 
-       void	fdstrategy __P((struct buf *));
 struct dkdriver fddkdriver = { fdstrategy };
 
 struct cfattach fd_ca = {
@@ -645,29 +649,6 @@ bad:
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
-}
-
-/*
- * no dumps to floppy disks thank you.
- */
-int
-fddump(dev, blkno, va, size)
-dev_t	dev;
-daddr_t	blkno;
-caddr_t	va;
-size_t	size;
-{
-	return(ENXIO);
-}
-
-/*
- * no dumps to floppy disks thank you.
- */
-int
-fdsize(dev)
-dev_t dev;
-{
-	return(-1);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.62.2.13 2002/08/01 02:44:14 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.62.2.14 2002/09/17 21:18:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.13 2002/08/01 02:44:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.14 2002/09/17 21:18:58 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -121,7 +121,6 @@ int linux_write_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
 
 static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
 extern struct disklist *i386_alldisks;
-extern const char *findblkname __P((int));
 
 /*
  * Deal with some i386-specific things in the Linux emulation code.
@@ -561,7 +560,8 @@ linux_fakedev(dev, raw)
 {
 	if (raw) {
 #if (NWSDISPLAY > 0)
-		if (major(dev) == NETBSD_WSCONS_MAJOR)
+		extern const struct cdevsw wsdisplay_cdevsw;
+		if (cdevsw_lookup(dev) == &wsdisplay_cdevsw)
 			return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
 #endif
 	}
@@ -668,7 +668,7 @@ fd2biosinfo(p, fp)
 	if (vp->v_type != VBLK)
 		return NULL;
 
-	blkname = findblkname(major(vp->v_rdev));
+	blkname = devsw_blk2name(major(vp->v_rdev));
 	snprintf(diskname, sizeof diskname, "%s%u", blkname,
 	    DISKUNIT(vp->v_rdev));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.107.2.16 2002/08/27 23:46:55 nathanw Exp $	*/
+/*	$NetBSD: pciide.c,v 1.107.2.17 2002/09/17 21:20:26 nathanw Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.107.2.16 2002/08/27 23:46:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.107.2.17 2002/09/17 21:20:26 nathanw Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -748,7 +748,7 @@ pciide_attach(parent, self, aux)
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
 }
 
-/* tell wether the chip is enabled or not */
+/* tell whether the chip is enabled or not */
 int
 pciide_chipen(sc, pa)
 	struct pciide_softc *sc;

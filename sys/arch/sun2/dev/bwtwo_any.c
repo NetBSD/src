@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_any.c,v 1.3.8.2 2002/04/01 07:43:16 nathanw Exp $ */
+/*	$NetBSD: bwtwo_any.c,v 1.3.8.3 2002/09/17 21:18:08 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -99,7 +99,6 @@
 #include <sys/conf.h>
 
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 #include <sun2/sun2/control.h>
 
 #include <dev/sun/fbio.h>

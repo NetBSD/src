@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.7.26.2 2001/11/14 19:15:06 nathanw Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.7.26.3 2002/09/17 21:20:11 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.7.26.2 2001/11/14 19:15:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.7.26.3 2002/09/17 21:20:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.7.26.2 2001/11/14 19:15:06 nathanw Exp $
 #include <sys/conf.h>
 
 #include <dev/ofw/openfirm.h>
-
-cdev_decl(ofrtc_);
 
 struct ofrtc_softc {
 	struct device sc_dev;
@@ -57,6 +55,15 @@ struct cfattach ofrtc_ca = {
 };
 
 extern struct cfdriver ofrtc_cd;
+
+dev_type_open(ofrtc_open);
+dev_type_read(ofrtc_read);
+dev_type_write(ofrtc_write);
+
+const struct cdevsw ofrtc_cdevsw = {
+	ofrtc_open, nullclose, ofrtc_read, ofrtc_write, noioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 static int
 ofrtc_match(struct device *parent, struct cfdata *match, void *aux)
@@ -123,12 +130,6 @@ ofrtc_open(dev_t dev, int flags, int fmt, struct proc *p)
 
 	}
 
-	return 0;
-}
-
-int
-ofrtc_close(dev_t dev, int flags, int fmt, struct proc *p)
-{
 	return 0;
 }
 

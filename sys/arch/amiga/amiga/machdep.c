@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165.2.11 2002/08/27 23:44:23 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.12 2002/09/17 21:12:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.11 2002/08/27 23:44:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.12 2002/09/17 21:12:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,6 +598,7 @@ cpu_dumpconf()
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
+	const struct bdevsw *bdev;
 	int nblks;
 	int i;
 	extern u_int Sysseg_pa;
@@ -659,8 +660,9 @@ cpu_dumpconf()
 		m->ram_segs[1].size  = memlist->m_seg[i].ms_size;
 		break;
 	}
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	if ((bdev = bdevsw_lookup(dumpdev)) != NULL &&
+	    bdev->d_psize != NULL) {
+		nblks = (*bdev->d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
@@ -702,8 +704,12 @@ dumpsys()
 	kcore_seg_t *kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
 	char	dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
+	const struct bdevsw *bdev;
 
 	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL || bdev->d_psize == NULL)
 		return;
 	/*
 	 * For dumps during autoconfiguration,
@@ -719,7 +725,7 @@ dumpsys()
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable.\n");
@@ -745,7 +751,7 @@ dumpsys()
 	maddr = cpu_kcore_hdr.un._m68k.ram_segs[0].start;
 	seg = 0;
 	blkno = dumplo;
-	dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdev->d_dump;
 	error = (*dump) (dumpdev, blkno++, (caddr_t)dump_hdr, dbtob(1));
 	for (i = 0; i < bytes && error == 0; i += n) {
 		/* Print out how many MBs we have to go. */

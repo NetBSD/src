@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.40.2.6 2002/06/20 03:45:11 nathanw Exp $
+$NetBSD: isapnpdevs,v 1.40.2.7 2002/09/17 21:20:04 nathanw Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -151,6 +151,7 @@ devlogic	gus	GRV0000		0	Gravis Ultrasound
  */
 devlogic	le	TKN0010		0	Lance Ethernet on TEKNOR board
 devlogic	le	ATK1500		0	Lance Ethernet on Allied Telesyn board
+devlogic	le	CSI2203		0	Cabletron E22xx
 
 /*
  * mpu

@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.29.6.4 2002/02/28 04:14:25 nathanw Exp $	*/
+/*	$NetBSD: uk.c,v 1.29.6.5 2002/09/17 21:21:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.29.6.4 2002/02/28 04:14:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.29.6.5 2002/09/17 21:21:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,14 @@ struct cfattach uk_atapibus_ca = {
 
 extern struct cfdriver uk_cd;
 
-cdev_decl(uk);
+dev_type_open(ukopen);
+dev_type_close(ukclose);
+dev_type_ioctl(ukioctl);
+
+const struct cdevsw uk_cdevsw = {
+	ukopen, ukclose, noread, nowrite, ukioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 int
 ukmatch(parent, match, aux)
@@ -146,9 +153,7 @@ ukdetach(self, flags)
 	int cmaj, mn;
  
 	/* locate the major number */
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == ukopen)
-			break;
+	cmaj = cdevsw_lookup_major(&uk_cdevsw);
  
 	/* Nuke the vnodes for any open instances */
 	mn = self->dv_unit;

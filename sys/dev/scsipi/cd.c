@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.144.2.8 2002/08/01 02:45:41 nathanw Exp $	*/
+/*	$NetBSD: cd.c,v 1.144.2.9 2002/09/17 21:21:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.144.2.8 2002/08/01 02:45:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.144.2.9 2002/09/17 21:21:11 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -139,6 +139,24 @@ int	dvd_read_manufact __P((struct cd_softc *, dvd_struct *));
 int	dvd_read_struct __P((struct cd_softc *, dvd_struct *));
 
 extern struct cfdriver cd_cd;
+
+dev_type_open(cdopen);
+dev_type_close(cdclose);
+dev_type_read(cdread);
+dev_type_write(cdwrite);
+dev_type_ioctl(cdioctl);
+dev_type_strategy(cdstrategy);
+dev_type_dump(cddump);
+dev_type_size(cdsize);
+
+const struct bdevsw cd_bdevsw = {
+	cdopen, cdclose, cdstrategy, cdioctl, cddump, cdsize, D_DISK
+};
+
+const struct cdevsw cd_cdevsw = {
+	cdopen, cdclose, cdread, cdwrite, cdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 struct dkdriver cddkdriver = { cdstrategy };
 
@@ -232,12 +250,8 @@ cddetach(self, flags)
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
-	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == cdopen)
-			break;
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == cdopen)
-			break;
+	bmaj = bdevsw_lookup_major(&cd_bdevsw);
+	cmaj = cdevsw_lookup_major(&cd_cdevsw);
 
 	s = splbio();
 
@@ -802,15 +816,11 @@ cdstart(periph)
 		/*
 		 * Figure out what flags to use.
 		 */
-		flags = XS_CTL_NOSLEEP|XS_CTL_ASYNC;
+		flags = XS_CTL_NOSLEEP|XS_CTL_ASYNC|XS_CTL_SIMPLE_TAG;
 		if (bp->b_flags & B_READ)
 			flags |= XS_CTL_DATA_IN;
 		else
 			flags |= XS_CTL_DATA_OUT;
-		if (bp->b_flags & B_ORDERED)
-			flags |= XS_CTL_ORDERED_TAG;
-		else
-			flags |= XS_CTL_SIMPLE_TAG;
 
 		/*
 		 * Call the routine that chats with the adapter.

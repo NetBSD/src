@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.14 2002/08/01 02:42:32 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.15 2002/09/17 21:15:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -308,6 +308,11 @@ END(remrunqueue)
  * profiling.
  */
 LEAF(mips_idle)
+	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
+#if defined(LOCKDEBUG)
+	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
+	nop
+#endif
 #ifdef 	IPL_ICU_MASK
 	# all interrupts enable.
 	sw	zero, _C_LABEL(md_imask)	
@@ -319,11 +324,6 @@ LEAF(mips_idle)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	COP0_SYNC
 	nop
-	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
-#if defined(LOCKDEBUG)
-	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
-	nop
-#endif
 
 	/* Try to zero some free pages. */
 	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
@@ -345,28 +345,19 @@ LEAF(mips_idle)
 	nop
 	beq	t0, zero, 1b
 	nop
-#if defined(LOCKDEBUG)
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
 	COP0_SYNC
 	nop
 	nop
 	nop
+#if defined(LOCKDEBUG)
 	nop
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
-	la	ra, cpu_switch_queuescan
-	j	ra
-	nop
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
-	COP0_SYNC
-	nop
-	nop
-	nop
-	la	ra, cpu_switch_queuescan
-	j	ra
-	nop
 #endif
+	la	ra, cpu_switch_queuescan
+	j	ra
+	nop
 END(mips_idle)
 
 /*
@@ -511,8 +502,27 @@ cpu_switch_queuescan:
 
 	jal	_C_LABEL(pmap_activate)
 	move	a0, s7				# -BDSLOT-
-	li	s5, 1				# remember that we switched
 
+	/*
+	 * Check for restartable atomic sequences (RAS)
+	 */
+	lw	v1, L_PROC(s7)	
+	lw	a0, L_ADDR(s7)
+	lw	v1, P_NRAS(v1)
+
+	addu	t0, a0, USPACE - FRAME_SIZ
+	beq	v1, zero, 1f
+	nop
+	move	a0, s7
+	jal	_C_LABEL(ras_lookup)
+	lw	a1, FRAME_EPC(t0)
+	lw	a0, L_ADDR(s7)
+	li	v1, -1
+	beq	v1, v0, 1f
+	addu	t0, a0, USPACE - FRAME_SIZ
+	sw	v0, FRAME_EPC(t0)
+1:		
+	li	s5, 1				# remember that we switched
 4:
 	/* New context is now active */
 	lw	a0, L_ADDR(s7)

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.4.2 2002/04/01 07:43:18 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.1.4.3 2002/09/17 21:18:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/promlib.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
@@ -83,7 +82,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /* ZS channel used as the console device (if any) */
 void *zs_conschan_get, *zs_conschan_put;

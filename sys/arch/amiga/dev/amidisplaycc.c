@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.1.10.3 2002/08/01 02:41:07 nathanw Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.1.10.4 2002/09/17 21:12:55 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.1.10.3 2002/08/01 02:41:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.1.10.4 2002/09/17 21:12:55 nathanw Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -386,15 +386,7 @@ amidisplaycc_cninit(struct consdev  * cd)
 	 */
 	config_console();
 
-	/*
-	 * Call the init function in grfabs.c if we have
-	 * no grfcc to do it.
-	 * If grfcc is present it will call grfcc_probe()
-	 * during config_console() above.
-	 */
-#if NGRFCC==0
 	grfcc_probe();
-#endif
 
 #if NVIEW>0
 	viewprobe();
@@ -439,6 +431,12 @@ amidisplaycc_attach(struct device *pdp, struct device *dp, void *auxp)
 	struct amidisplaycc_softc            * adp;
 
 	adp = (struct amidisplaycc_softc*)dp;
+
+	grfcc_probe();
+
+#if NVIEW>0
+	viewprobe();
+#endif
 
 	/*
 	 * Attach only at real configuration time. Console init is done at

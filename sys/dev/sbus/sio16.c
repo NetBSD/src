@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.1.2.4 2002/04/01 07:47:16 nathanw Exp $	*/
+/*	$NetBSD: sio16.c,v 1.1.2.5 2002/09/17 21:21:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.1.2.4 2002/04/01 07:47:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.1.2.5 2002/09/17 21:21:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.1.2.4 2002/04/01 07:47:16 nathanw Exp $"
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include <dev/ic/cd18xxvar.h>
 #include <dev/ic/cd18xxreg.h>
@@ -153,9 +152,9 @@ sio16_attach(parent, self, aux)
 	 * a 4 byte region for interrupt acknowledgement.
 	 */
 	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_reg[0].sbr_slot,
-			 sa->sa_reg[0].sbr_offset,
-			 sa->sa_reg[0].sbr_size,
+			 sa->sa_reg[0].oa_space,
+			 sa->sa_reg[0].oa_base,
+			 sa->sa_reg[0].oa_size,
 			 0, &h) != 0) {
 		printf("%s at sbus: can not map registers 0\n",
 		    self->dv_xname);

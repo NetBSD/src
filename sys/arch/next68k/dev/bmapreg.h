@@ -1,4 +1,4 @@
-/*	$NetBSD: bmapreg.h,v 1.1.4.2 2002/08/01 02:42:47 nathanw Exp $	*/
+/*	$NetBSD: bmapreg.h,v 1.1.4.3 2002/09/17 21:16:21 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 2002 Christian Limpach
@@ -35,8 +35,14 @@
 #define BMAP_DDIR_UTPENABLE_MASK 0x80|0x10
 
 #define BMAP_DATA (13 * 4)
+/* observed values:
+ * utp: 0xb0 0xd0 0xf0
+ * bnc: 0x60
+ */
 #define BMAP_DATA_UTPCARRIER_MASK 0x20
+#define BMAP_DATA_UTPENABLED_MASK 0x10
 #define BMAP_DATA_UTPENABLE 0x80|0x10
+#define BMAP_DATA_BNCENABLE 0x00
 
 /* Size of register area to be mapped */
 #define BMAP_SIZE 14 * 4

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.1.12.4 2002/02/28 04:07:40 nathanw Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.1.12.5 2002/09/17 21:13:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -47,9 +47,9 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #if 0
+#include <sys/conf.h>
 #include <uvm/uvm_extern.h>
 #include <machine/io.h>
-#include <machine/conf.h>
 #endif
 #include <machine/cpu.h>
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.17 2002/08/02 09:26:12 gmcgarry Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.18 2002/09/17 21:15:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.17 2002/08/02 09:26:12 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.18 2002/09/17 21:15:51 nathanw Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.17 2002/08/02 09:26:12 gmcgarry Exp
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
 #include <sys/user.h>
@@ -612,6 +613,16 @@ mips_singlestep(l)
 		    PCB_FSR(&l->l_addr->u_pcb), 1);
 	else
 		va = pc + sizeof(int);
+
+	/*
+	 * We can't single-step into a RAS.  Check if we're in
+	 * a RAS, and set the breakpoint just past it.
+	 */
+	if (p->p_nras != 0) {
+		while (ras_lookup(p, (caddr_t)va) != (caddr_t)-1)
+			va += sizeof(int);
+	}
+
 	l->l_md.md_ss_addr = va;
 	l->l_md.md_ss_instr = fuiword((void *)va);
 	rv = suiword((void *)va, MIPS_BREAK_SSTEP);

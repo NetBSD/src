@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.4.2.2 2001/11/14 19:14:54 nathanw Exp $	*/
+/*	$NetBSD: spkr.c,v 1.4.2.3 2002/09/17 21:20:03 nathanw Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.4.2.2 2001/11/14 19:14:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.4.2.3 2002/09/17 21:20:03 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -27,8 +27,6 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.4.2.2 2001/11/14 19:14:54 nathanw Exp $")
 
 #include <dev/isa/spkrio.h>
 
-cdev_decl(spkr);
-
 int spkrprobe __P((struct device *, struct cfdata *, void *));
 void spkrattach __P((struct device *, struct device *, void *));
 
@@ -38,6 +36,16 @@ struct spkr_softc {
 
 struct cfattach spkr_ca = {
 	sizeof(struct spkr_softc), spkrprobe, spkrattach
+};
+
+dev_type_open(spkropen);
+dev_type_close(spkrclose);
+dev_type_write(spkrwrite);
+dev_type_ioctl(spkrioctl);
+
+const struct cdevsw spkr_cdevsw = {
+	spkropen, spkrclose, noread, spkrwrite, spkrioctl,
+	nostop, notty, nopoll, nommap,
 };
 
 static pcppi_tag_t ppicookie;

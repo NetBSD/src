@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.13.6.3 2002/08/13 02:19:50 nathanw Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.13.6.4 2002/09/17 21:20:47 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.13.6.3 2002/08/13 02:19:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.13.6.4 2002/09/17 21:20:47 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -197,21 +197,18 @@ rf_ConfigureDiskQueue(
 	diskqueue->maxOutstanding = maxOutstanding;
 	diskqueue->curPriority = RF_IO_NORMAL_PRIORITY;
 	diskqueue->nextLockingOp = NULL;
-	diskqueue->unlockingOp = NULL;
 	diskqueue->numWaiting = 0;
 	diskqueue->flags = 0;
 	diskqueue->raidPtr = raidPtr;
 	diskqueue->rf_cinfo = &raidPtr->raid_cinfo[r][c];
 	rc = rf_create_managed_mutex(listp, &diskqueue->mutex);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	rc = rf_create_managed_cond(listp, &diskqueue->cond);
 	if (rc) {
-		RF_ERRORMSG3("Unable to init cond file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_init_cond(__FILE__, __LINE__, rc);
 		return (rc);
 	}
 	return (0);
@@ -236,8 +233,7 @@ rf_ConfigureDiskQueueSystem(listp)
 		return (ENOMEM);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown( __FILE__, __LINE__, rc);
 		rf_ShutdownDiskQueueSystem(NULL);
 		return (rc);
 	}
@@ -408,7 +404,7 @@ rf_DiskIOComplete(queue, req, status)
 	 * locking req fails */
 	if (RF_UNLOCKING_REQ(req) || (RF_LOCKING_REQ(req) && status)) {
 		Dprintf2("DiskIOComplete: unlocking queue at r %d c %d\n", queue->row, queue->col);
-		RF_ASSERT(RF_QUEUE_LOCKED(queue) && (queue->unlockingOp == NULL));
+		RF_ASSERT(RF_QUEUE_LOCKED(queue));
 		RF_UNLOCK_QUEUE(queue);
 	}
 	queue->numOutstanding--;
@@ -532,7 +528,6 @@ rf_CreateDiskQueueData(
 	p->next = next;
 	p->tracerec = tracerec;
 	p->priority = RF_IO_NORMAL_PRIORITY;
-	p->buf2 = NULL;
 	p->raidPtr = raidPtr;
 	p->flags = flags;
 	p->b_proc = kb_proc;

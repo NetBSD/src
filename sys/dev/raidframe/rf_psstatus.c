@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.5.6.3 2001/11/14 19:15:52 nathanw Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.5.6.4 2002/09/17 21:20:56 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.5.6.3 2001/11/14 19:15:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.5.6.4 2002/09/17 21:20:56 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -107,8 +107,7 @@ rf_ConfigurePSStatus(
 		return (ENOMEM);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownPSStatus, raidPtr);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-		    __FILE__, __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownPSStatus(raidPtr);
 		return (rc);
 	}
@@ -132,8 +131,7 @@ rf_MakeParityStripeStatusTable(raidPtr)
 	for (i = 0; i < raidPtr->pssTableSize; i++) {
 		rc = rf_mutex_init(&pssTable[i].mutex);
 		if (rc) {
-			RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-			    __LINE__, rc);
+			rf_print_unable_to_init_mutex(__FILE__, __LINE__, rc);
 			/* fail and deallocate */
 			for (j = 0; j < i; j++) {
 				rf_mutex_destroy(&pssTable[i].mutex);

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_kmem.c,v 1.2.2.2 2002/04/01 07:43:57 nathanw Exp $ */
+/*	$NetBSD: irix_kmem.c,v 1.2.2.3 2002/09/17 21:18:56 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.2.2.2 2002/04/01 07:43:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.2.2.3 2002/09/17 21:18:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.2.2.2 2002/04/01 07:43:57 nathanw Ex
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
+#include <sys/conf.h>
 
 #include <compat/irix/irix_kmem.h>
 #include <compat/irix/irix_sysmp.h>
@@ -64,6 +65,16 @@ long irix_kernel_var[32] = { 0x7fff2fc8, 0x0fb72194, 0x00000000, 0x0fb68890,
 			   };
 struct irix_kmem_softc {
 	struct device irix_kmem_dev;
+};
+
+dev_type_open(irix_kmemopen);
+dev_type_close(irix_kmemclose);
+dev_type_read(irix_kmemread);
+dev_type_write(irix_kmemwrite);
+
+const struct cdevsw irix_kmem_cdevsw = {
+	irix_kmemopen, irix_kmemclose, irix_kmemread, irix_kmemwrite,
+	noioctl, nostop, notty, nopoll, nommap,
 };
 
 void

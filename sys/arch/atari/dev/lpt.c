@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.18 2001/01/16 21:13:09 thomas Exp $ */
+/*	$NetBSD: lpt.c,v 1.18.8.1 2002/09/17 21:13:47 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -132,6 +132,11 @@ struct cfattach lp_ca = {
 };
 
 extern struct cfdriver lp_cd;
+
+const struct cdevsw lp_cdevsw = {
+	lpopen, lpclose, noread, lpwrite, lpioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 /*ARGSUSED*/
 static	int

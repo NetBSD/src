@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.2.4.6 2002/06/20 03:38:10 nathanw Exp $	*/
+/*	$NetBSD: beep.c,v 1.2.4.7 2002/09/17 21:13:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.2.4.6 2002/06/20 03:38:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.2.4.7 2002/09/17 21:13:29 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.2.4.6 2002/06/20 03:38:10 nathanw Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/conf.h>
 #include <machine/intr.h>
 #include <arm/arm32/katelib.h>
 #include <machine/pmap.h>
@@ -84,8 +83,6 @@ struct beep_softc {
 
 int	beepprobe	(struct device *, struct cfdata *, void *);
 void	beepattach	(struct device *, struct device *, void *);
-int	beepopen	(dev_t, int, int, struct proc *);
-int	beepclose	(dev_t, int, int, struct proc *);
 int	beepintr	(void *arg);
 void	beepdma		(struct beep_softc *sc, int buf);
 
@@ -96,6 +93,15 @@ struct cfattach beep_ca = {
 };
 
 extern struct cfdriver beep_cd;
+
+dev_type_open(beepopen);
+dev_type_close(beepclose);
+dev_type_ioctl(beepioctl);
+
+const struct cdevsw beep_cdevsw = {
+	beepopen, beepclose, noread, nowrite, beepioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 int
 beepprobe(struct device *parent, struct cfdata *cf, void *aux)

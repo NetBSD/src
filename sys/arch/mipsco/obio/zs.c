@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.10.8.2 2002/01/08 00:26:30 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.10.8.3 2002/09/17 21:15:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 1;
 
 
 #define PCLK		10000000	/* PCLK pin input clock rate */
@@ -671,8 +670,10 @@ void
 zscninit(cn)
 	struct consdev *cn;
 {
+	extern const struct cdevsw zstty_cdevsw;
+
 	cons_port = prom_getconsole(); 
-	cn->cn_dev = makedev(zs_major, cons_port);
+	cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), cons_port);
 	cn->cn_pri = CN_REMOTE;
 	zs_hwflags[0][cons_port] = ZS_HWFLAG_CONSOLE;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.72.2.12 2002/07/12 01:40:13 nathanw Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.72.2.13 2002/09/17 21:21:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.12 2002/07/12 01:40:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.13 2002/09/17 21:21:59 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,13 @@ static __inline void	fd_used(struct filedesc *, int);
 static __inline void	fd_unused(struct filedesc *, int);
 int			finishdup(struct proc *, int, int, register_t *);
 int			fcntl_forfs(int, struct proc *, int, void *);
+
+dev_type_open(filedescopen);
+
+const struct cdevsw filedesc_cdevsw = {
+	filedescopen, noclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 static __inline void
 fd_used(struct filedesc *fdp, int fd)

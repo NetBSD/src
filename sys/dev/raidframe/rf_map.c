@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.5.2.7 2002/08/13 02:19:53 nathanw Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.5.2.8 2002/09/17 21:20:51 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.5.2.7 2002/08/13 02:19:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_map.c,v 1.5.2.8 2002/09/17 21:20:51 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -354,8 +354,7 @@ rf_ConfigureMapModule(listp)
 	}
 	rc = rf_ShutdownCreate(listp, rf_ShutdownMapModule, NULL);
 	if (rc) {
-		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n", __FILE__,
-		    __LINE__, rc);
+		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownMapModule(NULL);
 		return (rc);
 	}

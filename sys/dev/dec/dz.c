@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.1.2.3 2002/04/01 07:45:09 nathanw Exp $	*/
+/*	$NetBSD: dz.c,v 1.1.2.4 2002/09/17 21:19:30 nathanw Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.1.2.3 2002/04/01 07:45:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.1.2.4 2002/09/17 21:19:30 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -113,7 +113,20 @@ static void	dzstart(struct tty *);
 static int	dzparam(struct tty *, struct termios *);
 static unsigned	dzmctl(struct dz_softc *, int, int, int);
 static void	dzscan(void *);
-cdev_decl(dz);
+
+dev_type_open(dzopen);
+dev_type_close(dzclose);
+dev_type_read(dzread);
+dev_type_write(dzwrite);
+dev_type_ioctl(dzioctl);
+dev_type_stop(dzstop);
+dev_type_tty(dztty);
+dev_type_poll(dzpoll);
+
+const struct cdevsw dz_cdevsw = {
+	dzopen, dzclose, dzread, dzwrite, dzioctl,
+	dzstop, dztty, dzpoll, nommap, D_TTY
+};
 
 /*
  * The DZ series doesn't interrupt on carrier transitions,

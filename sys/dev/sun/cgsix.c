@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.5.2.4 2002/08/23 20:36:26 petrov Exp $ */
+/*	$NetBSD: cgsix.c,v 1.5.2.5 2002/09/17 21:21:24 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.2.4 2002/08/23 20:36:26 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.2.5 2002/09/17 21:21:24 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,18 +124,23 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.5.2.4 2002/08/23 20:36:26 petrov Exp $")
 #include <dev/wscons/wsconsio.h>
 #endif
 
-#include <machine/conf.h>
-
 static void	cg6_unblank(struct device *);
-
-/* cdevsw prototypes */
-cdev_decl(cgsix);
 
 extern struct cfdriver cgsix_cd;
 
+dev_type_open(cgsixopen);
+dev_type_close(cgsixclose);
+dev_type_ioctl(cgsixioctl);
+dev_type_mmap(cgsixmmap);
+
+const struct cdevsw cgsix_cdevsw = {
+	cgsixopen, cgsixclose, noread, nowrite, cgsixioctl,
+	nostop, notty, nopoll, cgsixmmap,
+};
+
 /* frame buffer generic driver */
 static struct fbdriver cg6_fbdriver = {
-	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, cgsixpoll, cgsixmmap
+	cg6_unblank, cgsixopen, cgsixclose, cgsixioctl, nopoll, cgsixmmap
 };
 
 static void cg6_reset (struct cgsix_softc *);
@@ -731,16 +736,6 @@ cgsixioctl(dev, cmd, data, flags, p)
 		return (ENOTTY);
 	}
 	return (0);
-}
-
-int
-cgsixpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.8.1 2002/04/01 07:39:33 nathanw Exp $	*/
+/*	$NetBSD: view.c,v 1.17.8.2 2002/09/17 21:13:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -67,6 +67,17 @@ int view_default_y;
 int view_default_width  = 640;
 int view_default_height = 400;
 int view_default_depth  = 1;
+
+dev_type_open(viewopen);
+dev_type_close(viewclose);
+dev_type_ioctl(viewioctl);
+dev_type_poll(viewpoll);
+dev_type_mmap(viewmmap);
+
+const struct cdevsw view_cdevsw = {
+	viewopen, viewclose, nullread, nullwrite, viewioctl,
+	nostop, notty, viewpoll, viewmmap,
+};
 
 /* 
  *  functions for probeing.

@@ -1,4 +1,4 @@
-/* $NetBSD: awireg.h,v 1.3.8.3 2002/08/13 02:19:23 nathanw Exp $ */
+/* $NetBSD: awireg.h,v 1.3.8.4 2002/09/17 21:19:41 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -258,7 +258,9 @@
 #define AWI_DRV_RXLED			0x40
 #define AWI_DRV_TXLED			0x80
 
-#define AWI_VBM			0x500	/* Virtual Bit Map */
+#define AWI_VBM_OFFSET		0x500	/* Virtual Bit Map */
+#define AWI_VBM_LENGTH		0x501
+#define AWI_VBM_BITMAP		0x502
 
 #define AWI_BUFFERS		0x600	/* Buffers */
 #define	AWI_BUFFERS_END		0x6000

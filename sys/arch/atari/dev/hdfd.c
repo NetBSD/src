@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.28.8.3 2002/08/13 02:18:01 nathanw Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.28.8.4 2002/09/17 21:13:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -101,8 +101,7 @@ dev_type_close(fdclose);
 dev_type_read(fdread);
 dev_type_write(fdwrite);
 dev_type_ioctl(fdioctl);
-dev_type_size(fdsize);
-dev_type_dump(fddump);
+dev_type_strategy(fdstrategy);
 
 volatile u_char	*fdio_addr;
 
@@ -255,7 +254,15 @@ struct cfattach hdfd_ca = {
 
 extern struct cfdriver hdfd_cd;
 
-void	fdstrategy __P((struct buf *));
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
+
 void	fdstart __P((struct fd_softc *));
 
 struct dkdriver fddkdriver = { fdstrategy };
@@ -1287,27 +1294,6 @@ fdcretry(fdc)
 		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;
-}
-
-int
-fdsize(dev)
-	dev_t dev;
-{
-
-	/* Swapping to floppies would not make sense. */
-	return -1;
-}
-
-int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return ENXIO;
 }
 
 int

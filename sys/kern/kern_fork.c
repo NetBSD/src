@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.15 2002/08/13 02:20:05 nathanw Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.16 2002/09/17 21:22:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.15 2002/08/13 02:20:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.16 2002/09/17 21:22:03 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.15 2002/08/13 02:20:05 nathanw 
 #include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/ras.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -362,6 +363,13 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	memcpy(p2->p_cred, p1->p_cred, sizeof(*p2->p_cred));
 	p2->p_cred->p_refcnt = 1;
 	crhold(p1->p_ucred);
+
+	LIST_INIT(&p2->p_raslist);
+	p2->p_nras = 0;
+	simple_lock_init(&p2->p_raslock);
+#if defined(__HAVE_RAS)
+	ras_fork(p1, p2);
+#endif
 
 	/* bump references to the text vnode (for procfs) */
 	p2->p_textvp = p1->p_textvp;

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.61.8.4 2002/06/24 22:08:50 nathanw Exp $      */
+/*      $NetBSD: cpu.h,v 1.61.8.5 2002/09/17 21:18:27 nathanw Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -203,7 +203,6 @@ void	vax_unmap_physmem(vaddr_t, int);
 void	ioaccess(vaddr_t, paddr_t, int);
 void	iounaccess(vaddr_t, int);
 void	findcpu(void);
-int	getmajor(void *);
 #ifdef DDB
 int	kdbrint(int);
 #endif

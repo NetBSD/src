@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 2000/04/14 10:11:06 tsubai Exp $	*/
+/*	$NetBSD: zs.c,v 1.12.12.1 2002/09/17 21:16:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@ extern struct cfdriver zsc_cd;
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 1;
 
 int
 zs_print(aux, name)

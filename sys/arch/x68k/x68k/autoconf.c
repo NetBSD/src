@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26.8.3 2002/08/01 02:44:06 nathanw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.26.8.4 2002/09/17 21:18:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -160,7 +160,8 @@ struct device *booted_device;
 static void
 findroot(void)
 {
-	int i, majdev, unit, part;
+	int majdev, unit, part;
+	const char *name;
 	char buf[32];
 
 	if (booted_device)
@@ -181,16 +182,14 @@ findroot(void)
 			booted_partition = B_X68K_SCSI_PART(bootdev);
 		return;
 	}
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
-		if (majdev == dev_name2blk[i].d_maj)
-			break;
-	if (dev_name2blk[i].d_name == NULL)
+	name = devsw_blk2name(majdev);
+	if (name == NULL)
 		return;
 
 	part = B_PARTITION(bootdev);
 	unit = B_UNIT(bootdev);
 
-	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
+	sprintf(buf, "%s%d", name, unit);
 
 	if ((booted_device = find_dev_byname(buf)) != NULL)
 		booted_partition = part;

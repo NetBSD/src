@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.188.2.17 2002/08/27 23:47:21 nathanw Exp $	*/
+/*	$NetBSD: init_main.c,v 1.188.2.18 2002/09/17 21:21:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.17 2002/08/27 23:47:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.188.2.18 2002/09/17 21:21:57 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -190,6 +190,7 @@ main(void)
 	 * Initialize the current LWP pointer (curlwp) before
 	 * any possible traps/probes to simplify trap processing.
 	 */
+	simple_lock_init(&proc0.p_raslock);
 	l = &lwp0;
 	curlwp = l;
 	l->l_cpu = curcpu();
@@ -305,7 +306,7 @@ main(void)
 		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
 
 	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = maxfiles;
-	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur = 
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur =
 	    maxfiles < NOFILE ? maxfiles : NOFILE;
 
 	limit0.pl_rlimit[RLIMIT_NPROC].rlim_max = maxproc;
@@ -353,7 +354,7 @@ main(void)
 	 * 0.5% of memory for vnode cache (but not less than NVNODE vnodes).
 	 */
 	usevnodes = (ptoa((unsigned)physmem) / 200) / sizeof(struct vnode);
-	if (usevnodes > desiredvnodes) 
+	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
 	vfsinit();
@@ -463,14 +464,14 @@ main(void)
 	} while (error != 0);
 	mountroothook_destroy();
 
-	mountlist.cqh_first->mnt_flag |= MNT_ROOTFS;
-	mountlist.cqh_first->mnt_op->vfs_refcount++;
+	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
+	CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
 
 	/*
 	 * Get the vnode for '/'.  Set filedesc0.fd_fd.fd_cdir to
 	 * reference it.
 	 */
-	if (VFS_ROOT(mountlist.cqh_first, &rootvnode))
+	if (VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode))
 		panic("cannot find root vnode");
 	cwdi0.cwdi_cdir = rootvnode;
 	VREF(cwdi0.cwdi_cdir);
@@ -618,7 +619,7 @@ start_init(void *arg)
 	 * Need just enough stack to hold the faked-up "execve()" arguments.
 	 */
 	addr = USRSTACK - PAGE_SIZE;
-	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
+	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE,
                     NULL, UVM_UNKNOWN_OFFSET, 0,
                     UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 		    UVM_ADV_NORMAL,

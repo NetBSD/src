@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.14.8.2 2002/02/28 04:06:31 nathanw Exp $ */
+/*	$NetBSD: aster.c,v 1.14.8.3 2002/09/17 21:12:56 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.14.8.2 2002/02/28 04:06:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.14.8.3 2002/09/17 21:12:56 nathanw Exp $");
 
 /*
  * zbus ISDN Blaster, ISDN Master driver.
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.14.8.2 2002/02/28 04:06:31 nathanw Exp $
 #include <sys/param.h>
 
 #include <machine/bus.h>
-#include <machine/conf.h>
 
 #include <amiga/include/cpu.h>
 

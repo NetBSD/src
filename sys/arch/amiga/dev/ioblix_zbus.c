@@ -1,4 +1,4 @@
-/*	$NetBSD: ioblix_zbus.c,v 1.3.8.2 2002/02/28 04:06:48 nathanw Exp $ */
+/*	$NetBSD: ioblix_zbus.c,v 1.3.8.3 2002/09/17 21:13:02 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.3.8.2 2002/02/28 04:06:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.3.8.3 2002/09/17 21:13:02 nathanw Exp $");
 
 /* IOBlix Zorro driver */
 /* XXX to be done: we need to probe the com clock speed! */
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.3.8.2 2002/02/28 04:06:48 nathanw 
 #include <sys/param.h>
 
 #include <machine/bus.h>
-#include <machine/conf.h>
 
 #include <amiga/include/cpu.h>
 

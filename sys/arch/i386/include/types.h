@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.27.2.3 2002/08/13 02:18:23 nathanw Exp $	*/
+/*	$NetBSD: types.h,v 1.27.2.4 2002/09/17 21:15:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,5 +69,6 @@ typedef int		register_t;
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
+#define __HAVE_RAS
 
 #endif	/* _MACHTYPES_H_ */

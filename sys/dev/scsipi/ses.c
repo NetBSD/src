@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.8.4.4 2002/01/08 00:31:55 nathanw Exp $ */
+/*	$NetBSD: ses.c,v 1.8.4.5 2002/09/17 21:21:18 nathanw Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.8.4.4 2002/01/08 00:31:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.8.4.5 2002/09/17 21:21:18 nathanw Exp $");
 
 #include "opt_scsi.h"
 
@@ -132,9 +132,14 @@ static int safte_set_objstat __P((ses_softc_t *, ses_objstat *, int));
 #define	WRITE_BUFFER		0x3b
 #define	READ_BUFFER		0x3c
 
-int sesopen __P((dev_t, int, int, struct proc *));
-int sesclose __P((dev_t, int, int, struct proc *));
-int sesioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
+dev_type_open(sesopen);
+dev_type_close(sesclose);
+dev_type_ioctl(sesioctl);
+
+const struct cdevsw ses_cdevsw = {
+	sesopen, sesclose, noread, nowrite, sesioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 static int ses_runcmd	__P((struct ses_softc *, char *, int, char *, int *));
 static void ses_log	__P((struct ses_softc *, const char *, ...))

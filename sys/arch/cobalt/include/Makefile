@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.9.8.3 2002/08/13 02:18:06 nathanw Exp $
+#	$NetBSD: Makefile,v 1.9.8.4 2002/09/17 21:14:09 nathanw Exp $
 
 KDIR=	/sys/arch/cobalt/include
 INCSDIR= /usr/include/cobalt
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	bsd-aout.h bswap.h \
-	cdefs.h conf.h cpu.h \
+	cdefs.h cpu.h \
 	db_machdep.h disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	float.h \

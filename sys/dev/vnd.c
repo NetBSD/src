@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.71.2.13 2002/08/13 02:19:19 nathanw Exp $	*/
+/*	$NetBSD: vnd.c,v 1.71.2.14 2002/09/17 21:19:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.71.2.13 2002/08/13 02:19:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.71.2.14 2002/09/17 21:19:25 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -182,6 +182,24 @@ void	vndgetdisklabel __P((dev_t));
 
 static	int vndlock __P((struct vnd_softc *));
 static	void vndunlock __P((struct vnd_softc *));
+
+dev_type_open(vndopen);
+dev_type_close(vndclose);
+dev_type_read(vndread);
+dev_type_write(vndwrite);
+dev_type_ioctl(vndioctl);
+dev_type_strategy(vndstrategy);
+dev_type_dump(vnddump);
+dev_type_size(vndsize);
+
+const struct bdevsw vnd_bdevsw = {
+	vndopen, vndclose, vndstrategy, vndioctl, vnddump, vndsize, D_DISK
+};
+
+const struct cdevsw vnd_cdevsw = {
+	vndopen, vndclose, vndread, vndwrite, vndioctl,
+	nostop, notty, nopoll, nommap, D_DISK
+};
 
 void
 vndattach(num)

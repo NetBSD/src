@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.37.4.3 2002/08/01 02:42:57 nathanw Exp $	*/
+/*	$NetBSD: px.c,v 1.37.4.4 2002/09/17 21:16:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.37.4.3 2002/08/01 02:42:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.37.4.4 2002/09/17 21:16:59 nathanw Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.37.4.3 2002/08/01 02:42:57 nathanw Exp $");
 #include <dev/wsfont/wsfont.h>
 
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 #include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #include <machine/pmioctl.h>
@@ -122,6 +121,17 @@ struct cfattach px_ca = {
 	sizeof(struct px_softc),
 	px_match,
 	px_attach,
+};
+
+dev_type_open(pxopen);
+dev_type_close(pxclose);
+dev_type_ioctl(pxioctl);
+dev_type_poll(pxpoll);
+dev_type_mmap(pxmmap);
+
+const struct cdevsw px_cdevsw = {
+	pxopen, pxclose, noread, nowrite, pxioctl,
+	nostop, notty, pxpoll, pxmmap,
 };
 
 /* The different types of card that we support, for px_match(). */
