@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2000/08/25 01:04:11 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 2001/02/03 12:50:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -50,6 +50,8 @@
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_lockdebug.h"
 #endif
+
+#include <m68k/m68k.h>
 
 #ifdef _KERNEL
 
