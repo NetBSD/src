@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.130 2001/10/14 11:21:10 tron Exp $	*/
+/*	$NetBSD: pciide.c,v 1.131 2001/10/16 08:22:50 tron Exp $	*/
 
 
 /*
@@ -2743,7 +2743,10 @@ sis_hostbr_match(pa)
 	struct pci_attach_args *pa;
 {
 	return ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SIS) &&
-	   (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_735));
+	   ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_645) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_650) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_730) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SIS_735)));
 }
 
 void
