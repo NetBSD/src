@@ -32,6 +32,10 @@
  *	across the network to save BandWidth
  *
  * $Log: supcparse.c,v $
+ * Revision 1.6  1996/12/31 18:08:06  christos
+ * 64 bit patches (mostly long -> time_t) from Matthew Jacob (?)
+ * sup now works on the alpha!
+ *
  * Revision 1.5  1996/12/23 19:42:20  christos
  * - add missing prototypes.
  * - fix function call inconsistencies
@@ -244,14 +248,14 @@ char *collname,*args;
 }
 
 
-long
+time_t
 getwhen(collection, relsuffix)
 	char *collection, *relsuffix;
 {
 	char buf[STRINGLENGTH];
 	char *ep;
 	FILE *fp;
-	long tstamp;
+	time_t tstamp;
 
 	(void) sprintf (buf,FILEWHEN,collection,relsuffix);
 
@@ -274,7 +278,7 @@ getwhen(collection, relsuffix)
 int
 putwhen(fname, tstamp)
 	char *fname;
-	long tstamp;
+	time_t tstamp;
 {
 	FILE *fp;
 	if ((fp = fopen(fname, "w")) == NULL)
