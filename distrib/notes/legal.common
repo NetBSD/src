@@ -139,6 +139,9 @@
 
 	This product includes software developed for the FreeBSD project.
 
+	This product includes software developed for the Internet
+	Software Consortium by Ted Lemon.
+
 	This product includes software developed for the NetBSD Project
 	by Frank van der Linden.
 
@@ -155,10 +158,10 @@
 	by Matthieu Herrb.
 
 	This product includes software developed for the NetBSD Project
-	by Ted Lemon.
+	by Perry E. Metzger.
 
 	This product includes software developed for the NetBSD Project
 	by Piermont Information Systems Inc.
 
-	This product includes software developed for the Internet
-	Software Consortium by Ted Lemon.
+	This product includes software developed for the NetBSD Project
+	by Ted Lemon.
