@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.89 1999/11/15 18:49:11 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.90 2000/02/01 10:33:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -814,7 +814,8 @@ msdosfs_remove(v)
 	else
 		error = removede(ddep, dep);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_remove(), dep %p, v_usecount %d\n", dep, ap->a_vp->v_usecount);
+	printf("msdosfs_remove(), dep %p, v_usecount %ld\n",
+		dep, ap->a_vp->v_usecount);
 #endif
 	if (ddep == dep)
 		vrele(ap->a_vp);

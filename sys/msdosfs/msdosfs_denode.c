@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.36 1999/03/24 05:51:27 mrg Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.37 2000/02/01 10:33:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -635,8 +635,8 @@ out:
 	 * so that it can be reused immediately.
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): v_usecount %d, de_Name[0] %x\n", vp->v_usecount,
-	       dep->de_Name[0]);
+	printf("msdosfs_inactive(): v_usecount %ld, de_Name[0] %x\n",
+		vp->v_usecount, dep->de_Name[0]);
 #endif
 	if (dep->de_Name[0] == SLOT_DELETED)
 		vrecycle(vp, (struct simplelock *)0, p);

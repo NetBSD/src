@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.65 1999/11/15 18:49:11 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.66 2000/02/01 10:33:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -763,7 +763,7 @@ msdosfs_unmount(mp, mntflags, p)
 		struct vnode *vp = pmp->pm_devvp;
 
 		printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
-		printf("flag %08lx, usecount %d, writecount %d, holdcnt %ld\n",
+		printf("flag %08lx, usecount %ld, writecount %ld, holdcnt %ld\n",
 		    vp->v_flag, vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
 		printf("lastr %d, id %lu, mount %p, op %p\n",
 		    vp->v_lastr, vp->v_id, vp->v_mount, vp->v_op);
