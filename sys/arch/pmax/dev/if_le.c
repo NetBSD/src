@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	8.2 (Berkeley) 11/16/93
- *      $Id: if_le.c,v 1.5 1994/05/27 08:58:54 glass Exp $
+ *      $Id: if_le.c,v 1.5.2.1 1994/07/24 23:04:35 glass Exp $
  */
 
 #include <le.h>
@@ -461,11 +461,8 @@ leinit(unit)
 	int s;
 
 	/* not yet, if address still unknown */
-	for (ifa = ifp->if_addrlist;; ifa = ifa->ifa_next)
-		if (ifa == 0)
-			return;
-		else if (ifa->ifa_addr && ifa->ifa_addr->sa_family != AF_LINK)
-			break;
+	if (ifp->if_addrlist == NULL)
+	        return;
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		s = splnet();
 		ifp->if_flags |= IFF_RUNNING;
