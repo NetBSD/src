@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.2,v 1.1.2.27 2001/08/22 18:56:06 tv Exp $
+#	$NetBSD: CHANGES-1.5.2,v 1.1.2.28 2001/08/22 19:08:16 tv Exp $
 
 A complete list of changes from NetBSD 1.5.1 to NetBSD 1.5.2:
 
@@ -307,3 +307,10 @@ lib/libc/gen/__fts13.c				1.35
   Add a fts_safe_changedir() function to do sanity checking of paths
   passed to chdir().  Avoids a race condition when parent paths or
   symlinks are moved mid-traversal.
+
+gnu/dist/sendmail/sendmail/trace.c		1.5
+gnu/dist/sendmail/sendmail/version.c		patch
+
+  Fix a security hole in command line argument parsing, which can
+  lead to a hijack of local root privilege.  Fixed in sendmail 8.11.6;
+  here, version number bumped to 8.11.3nb1 to note the difference.
