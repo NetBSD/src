@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.75 2002/12/11 07:10:20 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.76 2003/01/18 09:42:58 thorpej Exp $	*/
 
 /*
  *
@@ -532,10 +532,10 @@ void		vmapbuf __P((struct buf *, vsize_t));
 void		vunmapbuf __P((struct buf *, vsize_t));
 void		pagemove __P((caddr_t, caddr_t, size_t));
 #ifndef	cpu_swapin
-void		cpu_swapin __P((struct proc *));
+void		cpu_swapin __P((struct lwp *));
 #endif
 #ifndef	cpu_swapout
-void		cpu_swapout __P((struct proc *));
+void		cpu_swapout __P((struct lwp *));
 #endif
 
 /* uvm_aobj.c */
@@ -561,18 +561,20 @@ int			uvm_fault __P((struct vm_map *, vaddr_t, vm_fault_t,
 #if defined(KGDB)
 void			uvm_chgkprot __P((caddr_t, size_t, int));
 #endif
+void			uvm_proc_fork __P((struct proc *, struct proc *, boolean_t));
+void			uvm_lwp_fork __P((struct lwp *, struct lwp *,
+			    void *, size_t, void (*)(void *), void *));
 int			uvm_coredump_walkmap __P((struct proc *,
 			    struct vnode *, struct ucred *,
 			    int (*)(struct proc *, struct vnode *,
 				    struct ucred *,
 				    struct uvm_coredump_state *), void *));
-void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
-			    void *, size_t, void (*)(void *), void *));
-void			uvm_exit __P((struct proc *));
+void			uvm_proc_exit __P((struct proc *));
+void			uvm_lwp_exit __P((struct lwp *));
 void			uvm_init_limits __P((struct proc *));
 boolean_t		uvm_kernacc __P((caddr_t, size_t, int));
 __dead void		uvm_scheduler __P((void)) __attribute__((noreturn));
-void			uvm_swapin __P((struct proc *));
+void			uvm_swapin __P((struct lwp *));
 boolean_t		uvm_uarea_alloc(vaddr_t *);
 void			uvm_uarea_free(vaddr_t);
 boolean_t		uvm_useracc __P((caddr_t, size_t, int));
@@ -628,11 +630,11 @@ int			uvm_map_protect __P((struct vm_map *, vaddr_t,
 struct vmspace		*uvmspace_alloc __P((vaddr_t, vaddr_t));
 void			uvmspace_init __P((struct vmspace *, struct pmap *,
 				vaddr_t, vaddr_t));
-void			uvmspace_exec __P((struct proc *, vaddr_t, vaddr_t));
+void			uvmspace_exec __P((struct lwp *, vaddr_t, vaddr_t));
 struct vmspace		*uvmspace_fork __P((struct vmspace *));
 void			uvmspace_free __P((struct vmspace *));
 void			uvmspace_share __P((struct proc *, struct proc *));
-void			uvmspace_unshare __P((struct proc *));
+void			uvmspace_unshare __P((struct lwp *));
 
 
 /* uvm_meter.c */

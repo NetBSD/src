@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.73 2002/11/02 07:40:49 perry Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.74 2003/01/18 09:43:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.73 2002/11/02 07:40:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.74 2003/01/18 09:43:01 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.73 2002/11/02 07:40:49 perry Exp $");
 #include <sys/extent.h>
 #include <sys/mount.h>
 #include <sys/pool.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/swap.h>
 
@@ -449,8 +450,8 @@ swapdrum_getsdp(pgno)
  * 	[with two helper functions: swap_on and swap_off]
  */
 int
-sys_swapctl(p, v, retval)
-	struct proc *p;
+sys_swapctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -459,6 +460,7 @@ sys_swapctl(p, v, retval)
 		syscallarg(void *) arg;
 		syscallarg(int) misc;
 	} */ *uap = (struct sys_swapctl_args *)v;
+	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	struct nameidata nd;
 	struct swappri *spp;
