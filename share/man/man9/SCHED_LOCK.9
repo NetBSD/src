@@ -1,4 +1,4 @@
-.\"     $NetBSD: SCHED_LOCK.9,v 1.1 2002/09/22 06:27:17 gmcgarry Exp $
+.\"     $NetBSD: SCHED_LOCK.9,v 1.2 2002/09/27 07:56:55 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -52,14 +52,14 @@
 .Ft int
 .Fn SCHED_LOCK "void"
 .Ft void
-.Fn SCHED_UNLOCK "s"
+.Fn SCHED_UNLOCK "int"
 .Sh DESCRIPTION
-Access to the system run queue within the scheduler is protected by
-the
+Access to the system run queue within the scheduler is protected by the
 .Va sched_lock
 simplelock and the
-.Xr splsched
-interrupt priority level.  The
+.Xr splsched 9
+interrupt priority level.
+The
 .Fn sched_lock_idle
 and
 .Fn sched_unlock_idle
