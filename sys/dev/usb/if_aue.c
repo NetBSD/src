@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.49 2000/12/13 02:49:22 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.50 2000/12/14 07:51:36 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -886,6 +886,8 @@ USB_ATTACH(aue)
 #endif
 	strncpy(ifp->if_xname, USBDEVNAME(sc->aue_dev), IFNAMSIZ);
 
+	IFQ_SET_READY(&ifp->if_snd);
+
 	/* Initialize MII/media info. */
 	mii = &sc->aue_mii;
 	mii->mii_ifp = ifp;
@@ -1309,7 +1311,7 @@ aue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	m_freem(c->aue_mbuf);
 	c->aue_mbuf = NULL;
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		aue_start(ifp);
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
@@ -1347,7 +1349,7 @@ aue_tick(void *xsc)
 			DPRINTFN(2,("%s: %s: got link\n",
 				    USBDEVNAME(sc->aue_dev),__FUNCTION__));
 			sc->aue_link++;
-			if (ifp->if_snd.ifq_head != NULL)
+			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 				aue_start(ifp);
 		}
 	}
@@ -1423,15 +1425,16 @@ aue_start(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	IF_DEQUEUE(&ifp->if_snd, m_head);
+	IFQ_POLL(&ifp->if_snd, m_head);
 	if (m_head == NULL)
 		return;
 
 	if (aue_send(sc, m_head, 0)) {
-		IF_PREPEND(&ifp->if_snd, m_head);
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
+
+	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	/*
@@ -1748,7 +1751,7 @@ aue_watchdog(struct ifnet *ifp)
 	aue_init(sc);
 	usbd_set_polling(sc->aue_udev, 0);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		aue_start(ifp);
 }
 
