@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.112 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.113 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -310,4 +310,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sysctl: Make hw.physmem and hw.usermem saturate if they are used
 		on a system with >=4G RAM.  [thorpej 20030306]
 	postfix: update to 2.0.6 [perry 20030308]
-	kernel: let LFS use UBC natively [perseant 20030308]
+	kernel: let LFS use the UBC system natively.  This should provide
+		complete coherency between mmap(2) and read(2)/write(2) on
+		LFS, in addition to allowing it to use much more memory for
+		its buffers.  [perseant 20030308]
