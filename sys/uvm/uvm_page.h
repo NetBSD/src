@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.31 2001/09/15 20:36:46 chs Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.32 2002/11/08 02:05:16 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -345,7 +345,7 @@ vm_physseg_find(pframe, offp)
 	int	start, len, try;
 
 	/*
-	 * if try is too large (thus target is less than than try) we reduce
+	 * if try is too large (thus target is less than try) we reduce
 	 * the length to trunc(len/2) [i.e. everything smaller than "try"]
 	 *
 	 * if the try is too small (thus target is greater than try) then
