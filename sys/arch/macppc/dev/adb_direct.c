@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.11 1999/07/11 16:59:31 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.12 2000/01/27 17:39:20 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -1240,7 +1240,6 @@ adb_hw_setup_IIsi(u_char * buffer)
 }
 
 
-
 /*
  * adb_reinit sets up the adb stuff
  *
@@ -1304,6 +1303,7 @@ adb_reinit(void)
 
 	/* initial scan through the devices */
 	for (i = 1; i < 16; i++) {
+		send_string[0] = 0;
 		command = (int)(0x0f | ((int)(i & 0x000f) << 4));	/* talk R3 */
 		result = adb_op_sync((Ptr)send_string, (Ptr)0,
 		    (Ptr)0, (short)command);
