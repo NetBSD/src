@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.57 2003/09/22 12:59:59 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.58 2003/10/21 22:55:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,9 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.57 2003/09/22 12:59:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.58 2003/10/21 22:55:47 thorpej Exp $");
 
 #include "opt_mbuftrace.h"
+#include "opt_sb_max.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +59,9 @@ const char	netcon[] = "netcon";
 const char	netcls[] = "netcls";
 const char	netio[] = "netio";
 const char	netlck[] = "netlck";
+
+u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
+static u_long sb_max_adj;	/* adjusted sb_max */
 
 /*
  * Procedures to manipulate state flags of socket
@@ -354,6 +358,22 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
  */
 
 int
+sb_max_set(u_long new_sbmax)
+{
+	int s;
+
+	if (new_sbmax < (16 * 1024))
+		return (EINVAL);
+
+	s = splsoftnet();
+	sb_max = new_sbmax;
+	sb_max_adj = (u_quad_t)new_sbmax * MCLBYTES / (MSIZE + MCLBYTES);
+	splx(s);
+
+	return (0);
+}
+
+int
 soreserve(struct socket *so, u_long sndcc, u_long rcvcc)
 {
 
@@ -383,8 +403,8 @@ int
 sbreserve(struct sockbuf *sb, u_long cc)
 {
 
-	if (cc == 0 || 
-	    (u_quad_t) cc > (u_quad_t) sb_max * MCLBYTES / (MSIZE + MCLBYTES))
+	KDASSERT(sb_max_adj != 0);
+	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 	sb->sb_hiwat = cc;
 	sb->sb_mbmax = min(cc * 2, sb_max);
