@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.19 1995/03/31 03:06:21 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.20 1995/06/10 22:45:15 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -287,8 +287,6 @@ out:
 	return error;
 }
 
-#define DEVZERO makedev(2, 12)
-
 int
 svr4_mmap(p, uap, retval)
 	register struct proc		*p;
@@ -318,19 +316,6 @@ svr4_mmap(p, uap, retval)
 	if ((SCARG(&mm, flags) & MAP_FIXED) == 0 &&
 	    SCARG(&mm, addr) != 0 && SCARG(&mm, addr) < rp)
 		SCARG(&mm, addr) = rp;
-
-	/*
-         * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
-         */
-	fdp = p->p_fd;
-	if ((unsigned) SCARG(uap, fd) < fdp->fd_nfiles &&	 /* XXX */
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) != NULL &&	 /* XXX */
-	    fp->f_type == DTYPE_VNODE &&			 /* XXX */
-	    (vp = (struct vnode *) fp->f_data)->v_type == VCHR &&/* XXX */
-	    vp->v_rdev == DEVZERO) {	/* XXX */
-		SCARG(&mm, flags) |= MAP_ANON;
-		SCARG(&mm, fd) = -1;
-	}
 
 	return mmap(p, &mm, retval);
 }
