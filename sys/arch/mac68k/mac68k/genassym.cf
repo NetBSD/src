@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 1998/04/20 05:40:28 scottr Exp $
+#	$NetBSD: genassym.cf,v 1.9 1998/04/24 05:27:24 scottr Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -45,6 +45,10 @@ include	<sys/syscall.h>
 include	<sys/user.h>
 
 include	<vm/vm.h>
+
+ifdef UVM
+include <uvm/uvm_extern.h>
+endif
 
 include	<machine/cpu.h>
 include	<machine/psl.h>

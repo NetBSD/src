@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 1998/03/27 18:11:31 scottr Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 1998/04/24 05:27:24 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
  * Implementation of bus_space mapping for mac68k.
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/extent.h>
@@ -50,6 +52,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *));
@@ -165,7 +171,11 @@ bus_mem_add_mapping(bpa, size, flags, bshp)
 		panic("bus_mem_add_mapping: overflow");
 #endif
 
+#if defined(UVM)
+	va = uvm_km_valloc(kernel_map, endpa - pa);
+#else
 	va = kmem_alloc_pageable(kernel_map, endpa - pa);
+#endif
 	if (va == 0)
 		return (ENOMEM);
 
@@ -203,7 +213,11 @@ bus_space_unmap(t, bsh, size)
 	/*
 	 * Free the kernel virtual mapping.
 	 */
+#if defined(UVM)
+	uvm_km_free(kernel_map, va, endva - va);
+#else
 	kmem_free(kernel_map, va, endva - va);
+#endif
 
 	if (extent_free(iomem_ex, bpa, size,
 	    EX_NOWAIT | (iomem_malloc_safe ? EX_MALLOCOK : 0))) {

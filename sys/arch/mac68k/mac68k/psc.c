@@ -1,4 +1,4 @@
-/*	$NetBSD: psc.c,v 1.3 1997/12/19 05:38:00 scottr Exp $	*/
+/*	$NetBSD: psc.c,v 1.4 1998/04/24 05:27:26 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -38,7 +38,6 @@
 #include <machine/cpu.h>
 #include <machine/psc.h>
 
-void		psc_init __P((void));
 void		psc_lev3_intr __P((struct frame *));
 static void	psc_lev3_noint __P((void *));
 int		psc_lev4_intr __P((struct frame *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11 1997/07/23 06:33:53 scottr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.12 1998/04/24 05:27:24 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,6 +75,9 @@
  *
  *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
  */
+
+#ifndef _MAC68K_VMPARAM_H_
+#define	_MAC68K_VMPARAM_H_
 
 /*
  * Machine dependent constants for mac68k -- mostly derived from hp300.
@@ -260,3 +263,26 @@
 
 /* pcb base */
 #define	pcbb(p)		((u_int)(p)->p_addr)
+
+/* Use new VM page bootstrap interface. */
+#define	MACHINE_NEW_NONCONTIG
+
+#if defined(MACHINE_NEW_NONCONTIG)
+/*
+ * Constants which control the way the VM system deals with memory segments.
+ * Most mac68k systems have only 1 physical memory segment, but some have 2.
+ */
+#define	VM_PHYSSEG_MAX		2
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_NOADD
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_entry *pvent;		/* pv table for this seg */
+	char *attrs;			/* page attributes for this seg */
+};
+#endif /* MACHINE_NEW_NONCONTIG */
+
+#endif /* _MAC68K_VMPARAM_H_ */
