@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.7 1993/10/18 08:28:11 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.8 1993/10/26 11:59:12 mycroft Exp $
  */
 
 /*
@@ -134,6 +134,13 @@ trap(frame)
 
 	cnt.v_trap++;
 
+#ifdef DEBUG
+	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
+		frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
+		frame.tf_eflags, rcr2(), cpl);
+	printf("curpcb %x curproc %x\n", curpcb, curproc);
+#endif
+
 	frame.tf_eflags &= ~PSL_NT;	/* clear nested trap XXX */
 	type = frame.tf_trapno;
 
@@ -166,23 +173,22 @@ copyfault:
 	ucode = 0;
 	eva = rcr2();
 	code = frame.tf_err;
+
 	switch (type) {
 
 	default:
 	we_re_toast:
 #ifdef KDB /* XXX KGDB? */
-		if (kdb_trap (&psl))
+		if (kdb_trap(&psl))
 			return;
 #endif
 #ifdef DDB
-		if (kdb_trap (type, 0, &frame))
+		if (kdb_trap(type, 0, &frame))
 			return;
 #endif
 
-		printf("trap type %d code = %x eip = %x cs = %x eflags = %x ",
-			type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags);
-		eva = rcr2();
-		printf("cr2 %x cpl %x\n", eva, cpl);
+		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
+			type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags, eva, cpl);
 		panic("trap");
 		/*NOTREACHED*/
 
@@ -274,27 +280,6 @@ copyfault:
 		unsigned nss,v;
 
 		va = trunc_page((vm_offset_t)eva);
-		/*
-		 * Avoid even looking at pde_v(va) for high va's.   va's
-		 * above VM_MAX_KERNEL_ADDRESS don't correspond to normal
-		 * PDE's (half of them correspond to APDEpde and half to
-		 * an unmapped kernel PDE).  va's betweeen 0xFEC00000 and
-		 * VM_MAX_KERNEL_ADDRESS correspond to unmapped kernel PDE's
-		 * (XXX - why are only 3 initialized when 6 are required to
-		 * reach VM_MAX_KERNEL_ADDRESS?).  Faulting in an unmapped
-		 * kernel page table would give inconsistent PTD's.
-		 *
-		 * XXX - faulting in unmapped page tables wastes a page if
-		 * va turns out to be invalid.
-		 *
-		 * XXX - should "kernel address space" cover the kernel page
-		 * tables?  Might have same problem with PDEpde as with
-		 * APDEpde (or there may be no problem with APDEpde).
-		 */
-		if (va > 0xFEBFF000) {
-			v = KERN_FAILURE;	/* becomes SIGBUS */
-			goto nogo;
-		}
 		/*
 		 * It is only a kernel address space fault iff:
 		 * 	1. (type & T_USER) == 0  and
