@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/03/29 06:37:53 matt Exp $
+#	$NetBSD: Makefile,v 1.14 2002/03/31 17:30:16 matt Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -8,11 +8,12 @@ IMAGESIZE=	1536k
 
 WARNS=		1
 
+MAKEFS_FLAGS=	-f 15
 CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list  ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
-MAKEDEVTARGETS=	std mt0 st0 rd0 rd1 dz0 dl0 dhu0 rx0 ra0 ra1 hp0 hp1 \
+MAKEDEVTARGETS=	std mt0 st0 rd0 rd1 dz0 dl0 dhu0 rx0 ra0 ra1 ra2 ra3 hp0 hp1 \
 		sd0 sd1 sd2 md0 pty0 cd0 cd1
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.profile termcap.vt100 \
