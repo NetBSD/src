@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.24 2000/04/23 16:38:54 matt Exp $ */
+/*	$NetBSD: vsbus.c,v 1.25 2000/05/26 21:05:01 ragge Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -248,8 +248,12 @@ unsigned char
 vsbus_setmask(mask)
 	unsigned char mask;
 {
-	struct vsbus_softc *sc = vsbus_cd.cd_devs[0];
+	struct vsbus_softc *sc;
 	unsigned char ch;
+
+	if (vsbus_cd.cd_ndevs == 0)
+		return 0;
+	sc = vsbus_cd.cd_devs[0];
 
 	ch = *sc->sc_intmsk;
 	*sc->sc_intmsk = mask;
@@ -263,7 +267,11 @@ void
 vsbus_clrintr(mask)
 	unsigned char mask;
 {
-	struct vsbus_softc *sc = vsbus_cd.cd_devs[0];
+	struct vsbus_softc *sc;
+
+	if (vsbus_cd.cd_ndevs == 0)
+		return;
+	sc = vsbus_cd.cd_devs[0];
 
 	*sc->sc_intclr = mask;
 }
