@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.30 1999/11/16 05:10:54 jun Exp $
+$NetBSD: isapnpdevs,v 1.31 1999/11/27 09:02:13 castor Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -185,6 +185,7 @@ devcompat	wdc	PNP0600		0	Western Digital Compatible Controller
  */
 devlogic	wss	AZT0001		1	Aztech AZT2320 AUDIO
 devlogic	wss	CSC0000		0	Windows Sound System
+devlogic	wss	CSC0100		0	CS4235 CODEC
 devlogic	wss	CSCA800		0	Terratec EWS64 CoDec
 devlogic	wss	ASB1611		0	AdLib NSC 16 PNP
 devlogic	wss	ASB1622		0	AdLib MSC 32 Wave PnP V3SB
