@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.35 2000/05/30 01:12:51 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.36 2000/05/31 09:17:13 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -145,6 +145,8 @@
 #include <dev/scsipi/scsi_changer.h>
 
 #include <dev/ata/atavar.h>	/* XXX */
+#include <sys/disk.h>		/* XXX */
+#include <dev/scsipi/sdvar.h>	/* XXX */
 #endif
 
 #ifdef UMASS_DEBUG
@@ -589,6 +591,9 @@ Static int umass_scsipi_cmd __P((struct scsipi_xfer *xs));
 Static void umass_scsipi_minphys __P((struct buf *bp));
 Static int umass_scsipi_ioctl __P((struct scsipi_link *, u_long,
 				   caddr_t, int, struct proc *));
+Static int umass_scsipi_getgeom __P((struct scsipi_link *link,
+			      struct disk_parms *, u_long sectors));
+
 Static void umass_scsipi_cb	__P((struct umass_softc *sc, void *priv,
 				     int residue, int status));
 Static void umass_scsipi_sense_cb __P((struct umass_softc *sc, void *priv,
@@ -1050,6 +1055,7 @@ USB_ATTACH(umass)
 	sc->sc_adapter.scsipi_cmd = umass_scsipi_cmd;
 	sc->sc_adapter.scsipi_minphys = umass_scsipi_minphys;
 	sc->sc_adapter.scsipi_ioctl = umass_scsipi_ioctl;
+	sc->sc_adapter.scsipi_getgeom = umass_scsipi_getgeom;
 	
 	/*
 	 * fill in the prototype scsipi_link.
@@ -3197,6 +3203,36 @@ umass_scsipi_ioctl(link, cmd, arg, flag, p)
 #endif
 	default:
 		return (ENOTTY);
+	}
+}
+
+Static int
+umass_scsipi_getgeom(sc_link, dp, sectors)
+	struct scsipi_link *sc_link;
+	struct disk_parms *dp;
+	u_long sectors;
+{
+	struct umass_softc *sc = sc_link->adapter_softc;
+
+	/* If it's not a floppy, we don't know what to do. */
+	if (!(sc->proto & PROTO_UFI))
+		return (0);
+
+	switch (sectors) {
+	case 1440:
+		/* Most likely a single density 3.5" floppy. */
+		dp->heads = 2;
+		dp->sectors = 9;
+		dp->cyls = 80;
+		return (1);
+	case 2880:
+		/* Most likely a double density 3.5" floppy. */
+		dp->heads = 2;
+		dp->sectors = 18;
+		dp->cyls = 80;
+		return (1);
+	default:
+		return (0);
 	}
 }
 
