@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.7 1995/03/21 07:08:26 cgd Exp $	*/
+/*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,9 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)rmail.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$NetBSD: rmail.c,v 1.7 1995/03/21 07:08:26 cgd Exp $";
+static char rcsid[] = "$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,10 @@ static char rcsid[] = "$NetBSD: rmail.c,v 1.7 1995/03/21 07:08:26 cgd Exp $";
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
+
+#ifndef MAX
+# define MAX(a, b)	((a) < (b) ? (b) : (a))
+#endif
 
 void err __P((int, const char *, ...));
 void usage __P((void));
@@ -213,6 +217,8 @@ main(argc, argv)
 		/* Save off from user's address; the last one wins. */
 		for (p = addrp; *p && !isspace(*p); ++p);
 		*p = '\0';
+		if (*addrp == '\0')
+			addrp = "<>";
 		if (from_user != NULL)
 			free(from_user);
 		if ((from_user = strdup(addrp)) == NULL)
@@ -235,17 +241,14 @@ main(argc, argv)
 	args[i++] = "-odq";		/* Queue it, don't try to deliver. */
 	args[i++] = "-oi";		/* Ignore '.' on a line by itself. */
 
-	if (from_sys != NULL) {		/* Set sender's host name. */
-		if (strchr(from_sys, '.') == NULL)
-			(void)snprintf(buf, sizeof(buf),
-			    "-oMs%s.%s", from_sys, domain);
-		else
-			(void)snprintf(buf, sizeof(buf), "-oMs%s", from_sys);
-		if ((args[i++] = strdup(buf)) == NULL)
-			 err(EX_TEMPFAIL, NULL);
-	}
-					/* Set protocol used. */
-	(void)snprintf(buf, sizeof(buf), "-oMr%s", domain);
+	/* set from system and protocol used */
+	if (from_sys == NULL)
+		(void)snprintf(buf, sizeof(buf), "-p%s", domain);
+	else if (strchr(from_sys, '.') == NULL)
+		(void)snprintf(buf, sizeof(buf), "-p%s:%s.%s",
+			domain, from_sys, domain);
+	else
+		(void)snprintf(buf, sizeof(buf), "-p%s:%s", domain, from_sys);
 	if ((args[i++] = strdup(buf)) == NULL)
 		err(EX_TEMPFAIL, NULL);
 
@@ -258,11 +261,22 @@ main(argc, argv)
 	/*
 	 * Don't copy arguments beginning with - as they will be
 	 * passed to sendmail and could be interpreted as flags.
+	 * To prevent confusion of sendmail wrap < and > around
+	 * the address (helps to pass addrs like @gw1,@gw2:aa@bb)
 	 */
-	do {
-		if (*argv && **argv == '-')
+	while (*argv) {
+		if (**argv == '-')
 			err(EX_USAGE, "dash precedes argument: %s", *argv);
-	} while ((args[i++] = *argv++) != NULL);
+		if (strchr(*argv, ',') == NULL || strchr(*argv, '<') != NULL)
+			args[i++] = *argv;
+		else {
+			if ((args[i] = malloc(strlen(*argv) + 3)) == NULL)
+				err(EX_TEMPFAIL, "Cannot malloc");
+			sprintf (args [i++], "<%s>", *argv);
+		}
+		argv++;
+	} 
+	args[i] = 0;
 
 	if (debug) {
 		(void)fprintf(stderr, "Sendmail arguments:\n");

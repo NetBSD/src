@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.4 1995/03/21 09:06:38 cgd Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.5 1995/09/07 06:43:01 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/27/94";
+static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$NetBSD: stat_flags.c,v 1.4 1995/03/21 09:06:38 cgd Exp $";
+static char rcsid[] = "$NetBSD: stat_flags.c,v 1.5 1995/09/07 06:43:01 jtc Exp $";
 #endif
 #endif /* not lint */
 

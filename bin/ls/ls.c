@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.14 1995/03/21 09:06:30 cgd Exp $	*/
+/*	$NetBSD: ls.c,v 1.15 1995/09/07 06:42:58 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$NetBSD: ls.c,v 1.14 1995/03/21 09:06:30 cgd Exp $";
+static char rcsid[] = "$NetBSD: ls.c,v 1.15 1995/09/07 06:42:58 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ main(argc, argv)
 		fts_options |= FTS_COMFOLLOW;
 
 	/*
-	 * If -W, show whiteout entries.
+	 * If -W, show whiteout entries
 	 */
 #ifdef FTS_WHITEOUT
 	if (f_whiteout)
