@@ -1,62 +1,32 @@
 /*
- * Copyright (c) 1985, 1990 The Regents of the University of California.
- * All rights reserved.
+ * ====================================================
+ * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	from: @(#)math.h	5.8 (Berkeley) 4/2/91
- *	$Id: math.h,v 1.5 1993/10/11 18:13:24 jtc Exp $
+ * Developed at SunPro, a Sun Microsystems, Inc. business.
+ * Permission to use, copy, modify, and distribute this
+ * software is freely granted, provided that this notice 
+ * is preserved.
+ * ====================================================
  */
 
-#ifndef	_MATH_H_
-#define	_MATH_H_
-
-#if defined(vax) || defined(tahoe)	/* DBL_MAX from float.h */
-#define	HUGE_VAL	1.701411834604692294E+38
-#else
-extern char __infinity[];		/* bytes for IEEE754 +Infinity */
-#define HUGE_VAL (*(double *) __infinity)
-#endif
-
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-#if defined(vax) || defined(tahoe)
 /*
- * HUGE for the VAX and Tahoe converts to the largest possible F-float value.
- * This implies an understanding of the conversion behavior of atof(3).  It
- * was defined to be the largest float so that overflow didn't occur when it
- * was assigned to a single precision number.  HUGE_VAL is strongly preferred.
+ * from: @(#)fdlibm.h 5.1 93/09/24
+ * $Id: math.h,v 1.6 1994/02/11 18:36:42 jtc Exp $
  */
-#define	HUGE	1.701411733192644270E+38		
-#else
-#define	HUGE	HUGE_VAL
-#endif
 
+#ifndef _MATH_H_
+#define _MATH_H
+
+/*
+ * ANSI/POSIX
+ */
+extern char __infinity[];
+#define HUGE_VAL	(*(double *) __infinity)
+
+/*
+ * XOPEN/SVID
+ */
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 #define	M_E		2.7182818284590452354	/* e */
 #define	M_LOG2E		1.4426950408889634074	/* log 2e */
 #define	M_LOG10E	0.43429448190325182765	/* log 10e */
@@ -70,65 +40,183 @@ extern char __infinity[];		/* bytes for IEEE754 +Infinity */
 #define	M_2_SQRTPI	1.12837916709551257390	/* 2/sqrt(pi) */
 #define	M_SQRT2		1.41421356237309504880	/* sqrt(2) */
 #define	M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
-#endif	/* !_ANSI_SOURCE && !_POSIX_SOURCE */
+
+#define	MAXFLOAT	((float)3.40282346638528860e+38)
+extern int signgam;
+
+#if !defined(_XOPEN_SOURCE)
+enum fdversion {fdlibm_ieee = -1, fdlibm_svid, fdlibm_xopen, fdlibm_posix};
+
+#define _LIB_VERSION_TYPE enum fdversion
+#define _LIB_VERSION _fdlib_version  
+
+/* if global variable _LIB_VERSION is not desirable, one may 
+ * change the following to be a constant by: 
+ *	#define _LIB_VERSION_TYPE const enum version
+ * In that case, after one initializes the value _LIB_VERSION (see
+ * s_lib_version.c) during compile time, it cannot be modified
+ * in the middle of a program
+ */ 
+extern  _LIB_VERSION_TYPE  _LIB_VERSION;
+
+#define _IEEE_  fdlibm_ieee
+#define _SVID_  fdlibm_svid
+#define _XOPEN_ fdlibm_xopen
+#define _POSIX_ fdlibm_posix
+
+struct exception {
+	int type;
+	char *name;
+	double arg1;
+	double arg2;
+	double retval;
+};
+
+#define	HUGE		MAXFLOAT
+
+/* 
+ * set X_TLOSS = pi*2**52, which is possibly defined in <values.h>
+ * (one may replace the following line by "#include <values.h>")
+ */
+
+#define X_TLOSS		1.41484755040568800000e+16 
+
+#define	DOMAIN		1
+#define	SING		2
+#define	OVERFLOW	3
+#define	UNDERFLOW	4
+#define	TLOSS		5
+#define	PLOSS		6
+
+#endif /* !_XOPEN_SOURCE */
+#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
+
 
 #include <sys/cdefs.h>
-
 __BEGIN_DECLS
-__pure double	acos __P((double));
-__pure double	asin __P((double));
-__pure double	atan __P((double));
-__pure double	atan2 __P((double, double));
-__pure double	ceil __P((double));
-__pure double	cos __P((double));
-__pure double	cosh __P((double));
-__pure double	exp __P((double));
-__pure double	fabs __P((double));
-__pure double	floor __P((double));
-__pure double	fmod __P((double, double));
-double	frexp __P((double, int *));
-__pure double	ldexp __P((double, int));
-__pure double	log __P((double));
-__pure double	log10 __P((double));
-double	modf __P((double, double *));
-__pure double	pow __P((double, double));
-__pure double	sin __P((double));
-__pure double	sinh __P((double));
-__pure double	sqrt __P((double));
-__pure double	tan __P((double));
-__pure double	tanh __P((double));
+/*
+ * ANSI/POSIX
+ */
+extern double acos __P((double));
+extern double asin __P((double));
+extern double atan __P((double));
+extern double atan2 __P((double, double));
+extern double cos __P((double));
+extern double sin __P((double));
+extern double tan __P((double));
+
+extern double cosh __P((double));
+extern double sinh __P((double));
+extern double tanh __P((double));
+
+extern double exp __P((double));
+extern double frexp __P((double, int *));
+extern double ldexp __P((double, int));
+extern double log __P((double));
+extern double log10 __P((double));
+extern double modf __P((double, double *));
+
+extern double pow __P((double, double));
+extern double sqrt __P((double));
+
+extern double ceil __P((double));
+extern double fabs __P((double));
+extern double floor __P((double));
+extern double fmod __P((double, double));
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-__pure double	acosh __P((double));
-__pure double	asinh __P((double));
-__pure double	atanh __P((double));
-__pure double	cabs();		/* we can't describe cabs()'s argument properly */
-__pure double	cbrt __P((double));
-__pure double	copysign __P((double, double));
-__pure double	drem __P((double, double));
-__pure double	erf __P((double));
-__pure double	erfc __P((double));
-__pure double	expm1 __P((double));
-__pure int	finite __P((double));
-double	hypot __P((double, double));
-#if defined(vax) || defined(tahoe)
-__pure double	infnan __P((int));
-#endif
-__pure int	isinf __P((double));
-__pure int	isnan __P((double));
-__pure double	j0 __P((double));
-__pure double	j1 __P((double));
-__pure double	jn __P((int, double));
-__pure double	lgamma __P((double));
-__pure double	log1p __P((double));
-__pure double	logb __P((double));
-__pure double	rint __P((double));
-__pure double	scalb __P((double, int));
-__pure double	y0 __P((double));
-__pure double	y1 __P((double));
-__pure double	yn __P((int, double));
-#endif	/* !_ANSI_SOURCE && !_POSIX_SOURCE */
+extern double erf __P((double));
+extern double erfc __P((double));
+extern double gamma __P((double));
+extern double hypot __P((double, double));
+extern int isinf __P((double));
+extern int isnan __P((double));
+extern int finite __P((double));
+extern double j0 __P((double));
+extern double j1 __P((double));
+extern double jn __P((int, double));
+extern double lgamma __P((double));
+extern double y0 __P((double));
+extern double y1 __P((double));
+extern double yn __P((int, double));
 
+#if !defined(_XOPEN_SOURCE)
+extern double acosh __P((double));
+extern double asinh __P((double));
+extern double atanh __P((double));
+extern double cbrt __P((double));
+extern double logb __P((double));
+extern double nextafter __P((double, double));
+extern double remainder __P((double, double));
+extern double scalb __P((double, double));
+
+extern int matherr __P((struct exception *));
+
+/*
+ * IEEE Test Vector
+ */
+extern double significand __P((double));
+
+/*
+ * Functions callable from C, intended to support IEEE arithmetic.
+ */
+extern double copysign __P((double, double));
+extern int ilogb __P((double));
+extern double rint __P((double));
+extern double scalbn __P((double, int));
+
+/*
+ * BSD math library entry points
+ */
+extern double expm1 __P((double));
+extern double log1p __P((double));
+
+/*
+ * Reentrant version of gamma & lgamma; passes signgam back by reference
+ * as the second argument; user must allocate space for signgam.
+ */
+#ifdef _REENTRANT
+extern double gamma_r __P((double, int *));
+extern double lgamma_r __P((double, int *));
+#endif /* _REENTRANT */
+#endif /* !_XOPEN_SOURCE */
+#endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
+
+/* ieee style elementary functions */
+extern double __ieee754_sqrt __P((double));			
+extern double __ieee754_acos __P((double));			
+extern double __ieee754_acosh __P((double));			
+extern double __ieee754_log __P((double));			
+extern double __ieee754_atanh __P((double));			
+extern double __ieee754_asin __P((double));			
+extern double __ieee754_atan2 __P((double,double));			
+extern double __ieee754_exp __P((double));
+extern double __ieee754_cosh __P((double));
+extern double __ieee754_fmod __P((double,double));
+extern double __ieee754_pow __P((double,double));
+extern double __ieee754_lgamma_r __P((double,int *));
+extern double __ieee754_gamma_r __P((double,int *));
+extern double __ieee754_lgamma __P((double));
+extern double __ieee754_gamma __P((double));
+extern double __ieee754_log10 __P((double));
+extern double __ieee754_sinh __P((double));
+extern double __ieee754_hypot __P((double,double));
+extern double __ieee754_j0 __P((double));
+extern double __ieee754_j1 __P((double));
+extern double __ieee754_y0 __P((double));
+extern double __ieee754_y1 __P((double));
+extern double __ieee754_jn __P((int,double));
+extern double __ieee754_yn __P((int,double));
+extern double __ieee754_remainder __P((double,double));
+extern int    __ieee754_rem_pio2 __P((double,double*));
+extern double __ieee754_scalb __P((double,double));
+
+/* fdlibm kernel function */
+extern double __kernel_standard __P((double,double,int));	
+extern double __kernel_sin __P((double,double,int));
+extern double __kernel_cos __P((double,double));
+extern double __kernel_tan __P((double,double,int));
+extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int,const int*));
 __END_DECLS
 
 #endif /* _MATH_H_ */
