@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.354 2001/05/22 14:52:25 fredette Exp $
+# $NetBSD: mi,v 1.355 2001/05/26 08:10:18 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1001,6 +1001,10 @@
 ./usr/share/man/cat5/isdnd.acct.0		man-isdn-catman
 ./usr/share/man/cat5/isdnd.rates.0		man-isdn-catman
 ./usr/share/man/cat5/isdnd.rc.0			man-isdn-catman
+./usr/share/man/cat5/krb.conf.0			man-krb5-catman
+./usr/share/man/cat5/krb.equiv.0		man-krb5-catman
+./usr/share/man/cat5/krb.extra.0		man-krb5-catman
+./usr/share/man/cat5/krb.realms.0		man-krb5-catman
 ./usr/share/man/cat5/krb5.conf.0		man-krb5-catman
 ./usr/share/man/cat5/lastlog.0			man-sys-catman
 ./usr/share/man/cat5/ld.so.conf.0		man-sys-catman
@@ -2507,6 +2511,10 @@
 ./usr/share/man/man5/isdnd.acct.5		man-isdn-man
 ./usr/share/man/man5/isdnd.rates.5		man-isdn-man
 ./usr/share/man/man5/isdnd.rc.5			man-isdn-man
+./usr/share/man/man5/krb.conf.5			man-krb5-man
+./usr/share/man/man5/krb.equiv.5		man-krb5-man
+./usr/share/man/man5/krb.extra.5		man-krb5-man
+./usr/share/man/man5/krb.realms.5		man-krb5-man
 ./usr/share/man/man5/krb5.conf.5		man-krb5-man
 ./usr/share/man/man5/lastlog.5			man-sys-man
 ./usr/share/man/man5/ld.so.conf.5		man-sys-man
