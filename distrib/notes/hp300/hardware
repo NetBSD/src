@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.14 2002/06/29 11:01:28 lukem Exp $
+.\"	$NetBSD: hardware,v 1.15 2002/07/24 21:59:00 mbw Exp $
 .
 .Nx*M
 \*V will run on most HP 9000/300- and 400-series machines.
@@ -33,9 +33,7 @@ CPUs
 .br
 .Em "Requires System Interface board"
 .It
-362 (25 MHz 68030)
-.br
-.Em "Requires System Interface board"
+362 (25 MHz 68030, up to 16 MB RAM, built-in SCSI)
 .br
 .Em "Framebuffer is unsupported, you must use a serial console"
 .It
@@ -47,7 +45,7 @@ CPUs
 .It
 380 (25 MHz 68040, up to 128 MB RAM, built-in SCSI)
 .It
-382 (25 MHz 68040, built-in SCSI)
+382 (25 MHz 68040, up to 32 MB RAM, built-in SCSI)
 .br
 .Em "Framebuffer is unsupported, you must use a serial console"
 .It
@@ -258,7 +256,7 @@ Miscellaneous boards/interfaces
 domain keyboard and mouse, on Series 400 workstations.
 Needs wscons
 .It
-parallel port, on 345, 375, 380, and Series 400 workstations
+parallel port, on 345, 362, 375, 380, 382, 382, and Series 400 workstations
 .It
 EISA support, on Series 400 workstations
 .It
@@ -268,6 +266,6 @@ VME bus adapter, on Series 300 workstations
 .It
 98625C fast HP-IB option on models 345 and 375
 .It
-floppy drive on 425e
+internal SCSI floppy drive on 362, 382, and 425e
 .bullet)
 .bullet)
