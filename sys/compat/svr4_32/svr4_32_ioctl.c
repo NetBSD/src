@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.3 2001/02/19 15:49:00 eeh Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.4 2001/02/19 19:49:35 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #include <compat/svr4_32/svr4_32_stropts.h>
 #include <compat/svr4_32/svr4_32_ioctl.h>
 #include <compat/svr4_32/svr4_32_termios.h>
-#include <compat/svr4_32/svr4_32_ttold.h>
+#include <compat/svr4/svr4_ttold.h>
 #include <compat/svr4/svr4_filio.h>
 #include <compat/svr4_32/svr4_32_sockio.h>
 
