@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.79 1998/09/13 13:21:37 christos Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.80 1998/10/14 11:45:16 ws Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -156,7 +156,7 @@ chgkprot(addr, len, rw)
 	int rw;
 {
 	vm_prot_t prot;
-	vaddr_t pa;
+	paddr_t pa;
 	vaddr_t sva, eva;
 
 	prot = rw == B_READ ? VM_PROT_READ : VM_PROT_READ|VM_PROT_WRITE;
