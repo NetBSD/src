@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.440 2003/12/04 18:24:39 drochner Exp $
+# $NetBSD: mi,v 1.441 2003/12/05 06:30:18 simonb Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -913,6 +913,7 @@
 ./usr/sbin/setobjstat		base-sysutil-bin
 ./usr/sbin/sliplogin		base-slip-bin
 ./usr/sbin/slstats		base-slip-bin
+./usr/sbin/sntp			base-ntp-bin
 ./usr/sbin/spray		base-rpcutil-bin
 ./usr/sbin/sshd			base-secsh-bin
 ./usr/sbin/stdethers		base-nis-bin

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.630 2003/11/25 06:28:55 dyoung Exp $
+# $NetBSD: mi,v 1.631 2003/12/05 06:30:18 simonb Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -354,6 +354,7 @@
 ./usr/share/man/cat1/skeyinit.0			man-util-catman
 ./usr/share/man/cat1/sleep.0			man-util-catman
 ./usr/share/man/cat1/slogin.0			man-secsh-catman
+./usr/share/man/cat1/sntp.0			man-ntp-catman
 ./usr/share/man/cat1/sort.0			man-util-catman
 ./usr/share/man/cat1/source.0			man-util-catman
 ./usr/share/man/cat1/split.0			man-util-catman
@@ -2106,6 +2107,7 @@
 ./usr/share/man/man1/skeyinit.1			man-util-man
 ./usr/share/man/man1/sleep.1			man-util-man
 ./usr/share/man/man1/slogin.1			man-secsh-man
+./usr/share/man/man1/sntp.1			man-ntp-man
 ./usr/share/man/man1/sort.1			man-util-man
 ./usr/share/man/man1/source.1			man-util-man
 ./usr/share/man/man1/split.1			man-util-man
