@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.79 1999/12/18 06:33:54 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.80 1999/12/19 00:09:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.79 1999/12/18 06:33:54 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.80 1999/12/19 00:09:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,6 @@ int	mode;
 int	doutmp = 0;		/* update utmp file */
 int	usedefault = 1;		/* for data transfers */
 int	pdata = -1;		/* for passive mode */
-int	family = AF_INET;
 int	mapped = 0;		/* IPv4 connection on AF_INET6 socket */
 sig_atomic_t transflag;
 off_t	file_size;
@@ -278,8 +277,9 @@ main(argc, argv)
 	logging = 0;
 	sflag = 0;
 	(void)strcpy(confdir, _DEFAULT_CONFDIR);
+	hostname[0] = '\0';
 
-	while ((ch = getopt(argc, argv, "a:c:C:dlst:T:u:Uv46")) != -1) {
+	while ((ch = getopt(argc, argv, "a:c:C:dh:lst:T:u:Uv")) != -1) {
 		switch (ch) {
 		case 'a':
 			anondir = optarg;
@@ -296,6 +296,10 @@ main(argc, argv)
 		case 'd':
 		case 'v':		/* deprecated */
 			debug = 1;
+			break;
+
+		case 'h':
+			strlcpy(hostname, optarg, sizeof(hostname));
 			break;
 
 		case 'l':
@@ -315,14 +319,6 @@ main(argc, argv)
 
 		case 'U':
 			doutmp = 1;
-			break;
-
-		case '4':
-			family = AF_INET;
-			break;
-
-		case '6':
-			family = AF_INET6;
 			break;
 
 		default:
@@ -401,10 +397,13 @@ main(argc, argv)
 #endif
 	data_source.su_port = htons(ntohs(ctrl_addr.su_port) - 1);
 
-	if (getnameinfo((struct sockaddr *)&ctrl_addr, ctrl_addr.su_len,
-	    hostname, sizeof(hostname), NULL, 0, 0) != 0)
-		(void)gethostname(hostname, sizeof(hostname));
-	hostname[sizeof(hostname) - 1] = '\0';
+	/* if the hostname hasn't been given, attempt to determine it */ 
+	if (hostname[0] == '\0') {
+		if (getnameinfo((struct sockaddr *)&ctrl_addr, ctrl_addr.su_len,
+		    hostname, sizeof(hostname), NULL, 0, 0) != 0)
+			(void)gethostname(hostname, sizeof(hostname));
+		hostname[sizeof(hostname) - 1] = '\0';
+	}
 
 	/* set this here so klogin can use it... */
 	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
