@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.55 2003/03/11 04:49:18 lukem Exp $
+# $NetBSD: postinstall,v 1.56 2003/03/24 15:19:27 atatat Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -252,6 +252,7 @@ rcconf_is_set()
 		    ${DEST_DIR}/etc/rc.conf.d/${_rcis_name}; do
 			[ -f "${f}" ] && . "${f}";
 		done
+		eval echo -n \"\${${_rcis_var}}\" 1>&3
 		if eval "[ -n \"\${${_rcis_var}}\" \
 			    -o \"\${${_rcis_var}-UNSET}\" != \"UNSET\" ]"; then
 			if [ -n "${_rcis_verbose}" ]; then
@@ -291,6 +292,30 @@ find_file_in_dirlist()
 	done
 	msg "Can't find source directory for ${_msg}"
 	return 1
+}
+
+# stat op format target value
+#	call stat on the given target according to the given format, if
+#	stat(1) is available (it is presumed to live in /usr/bin).  if
+#	it is not available, this routine will always succeed, otherwise
+#	it returns 0 or 1, depending on whether or not the output from
+#	stat(1) matches the expected value.
+#
+stat()
+{
+	_stop=$1
+	_stfmt=$2
+	_sttgt=$3
+	_stval=$4
+
+	if [ ! -x /usr/bin/stat ]; then
+		msg "(/usr/bin/stat not available; skipping ${_stop} on ${_sttgt})"
+		return 0
+	fi
+
+	_stres=$(/usr/bin/stat -q -f "${_stfmt}" "${_sttgt}")
+	[ "${_stres}" = "${_stval}" ]
+	return $?
 }
 
 
@@ -402,7 +427,7 @@ do_rc()
 		nfslocking ntpd ntpdate poffd postfix ppp pwcheck \
 		quota racoon rpcbind raidframe raidframeparity rarpd rbootd \
 		root route6d routed rtadvd rtsold rwho savecore \
-		screenblank sendmail securelevel sshd staticroute \
+		screenblank sendmail securelevel smmsp sshd staticroute \
 		swap1 swap2 sysdb sysctl syslogd timed ttys virecover \
 		wdogctl wscons wsmoused \
 		xdm xfs ypbind yppasswdd ypserv
@@ -660,6 +685,161 @@ do_obsolete()
 	return ${failed}
 }
 
+#
+#	sendmail
+#
+additem sendmail "sendmail configuration being up to date"
+do_sendmail()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_sendmail  fix|check"
+	_op=$1
+
+	#
+	# check owner and mode of sendmail (and "root" setting)
+	# check .cf file version
+	# check submit.cf existence (and version)
+	# uid and gid are checked elsewhere
+	# look at clientmqueue's owner, group, and mode
+	#
+	failed=0
+	_etcmail="${DEST_DIR}/etc/mail"
+	_sendmailcf="${_etcmail}/sendmail.cf"
+	_submitcf="${_etcmail}/submit.cf"
+	_sendmail=${DEST_DIR}/usr/libexec/sendmail/sendmail
+
+	#
+	# check for "root" setting first, so that checks can be
+	# adjusted accordingly
+	#
+	_notfixed=""
+	_root=$(rcconf_is_set ${_op} sendmail sendmail_suidroot 3>&1 1>&4) 4>&1
+	if [ $? != 0 ]; then
+		if [ "${_op}" = "fix" ]; then
+			_notfixed=${NOT_FIXED}
+		fi
+		msg "sendmail_suidroot variable not set (assuming \`\`no'')${_notfixed}"
+		_root=NO
+		failed=1
+	fi
+
+	# normalize the "root" setting
+	_root=$(. ${DEST_DIR}/etc/rc.subr
+		warn() {} # eliminate complaints
+		if checkyesno _root; then
+		    echo true
+		else
+		    echo false
+		fi)
+
+	if "${_root}"; then
+	    _smownerfmt="%p %Su"
+	    _smownermode="4555"
+	    _smownerreq="root"
+	else
+	    _smownerfmt="%p %Su:%Sg"
+	    _smownermode="2555"
+	    _smownerreq="root:smmsp"
+	fi
+
+	# check that owner and mode match what it required
+	if ! stat "${_op}" "${_smownerfmt}" "${_sendmail}" \
+	    "10${_smownermode} ${_smownerreq}"; then
+		if [ "${_op}" = "fix" ]; then
+			_notfixed=${NOT_FIXED}
+			chown "${_smownerreq}" "${_sendmail}" &&
+			    chmod "${_smownermode}" "${_sendmail}" &&
+			    _notfixed=" [ FIXED ]" ||
+			    failed=1
+		else
+			_notfixed=""
+			failed=1
+		fi
+		msg "${_sendmail} binary has wrong owner/mode${_notfixed}"
+	fi
+
+	if [ ! -f "${_sendmailcf}" ]; then
+		# XXX no fix here
+		_notfixed=""
+		if [ "${_op}" = "fix" ]; then
+			_notfixed=${NOT_FIXED}
+		fi
+		msg "${_sendmailcf} is missing${_notfixed}"
+		_cfversion="10"		# pretend it's okay
+		failed=1
+	else
+		_cfversion=$(sed -n 's/^V *\([0-9]*\).*/\1/p' "${_sendmailcf}")
+	fi
+
+	if [ "${_cfversion}" -lt 10 ]; then
+		# XXX no fix here
+		_notfixed=""
+		if [ "${_op}" = "fix" ]; then
+			_notfixed=${NOT_FIXED}
+		fi
+		msg "Version of ${_sendmailcf} is ${_cfversion}, should be 10${_notfixed}"
+		failed=1
+	fi
+
+	if $_root; then
+		if [ -f "${_submitcf}" ]; then
+			if [ "${_op}" = "fix" ]; then
+				_notfixed=${NOT_FIXED}
+				rm -f "${_submitcf}" &&
+				    _notfixed=" [ FIXED ]" ||
+				    failed=1
+			else
+				_notfixed=""
+				failed=1
+			fi
+			msg "Submission configuration file ${_submitcf} exists${_notfixed}"
+	       fi
+	       _checkcq=false
+	else
+		if [ ! -f "${_submitcf}" ]; then
+			_notfixed=""
+			if [ "${_op}" = "fix" ]; then
+				_notfixed=${NOT_FIXED}
+			fi
+			failed=1
+			msg "Submission configuration file ${_submitcf} missing${_notfixed}"
+		fi
+		_checkcq=true
+	fi
+
+	_cqueuemode="770"
+	_cqueueowner="smmsp:smmsp"
+	if "${_checkcq}"; then
+		if [ -f "${_submitcf}" ]; then
+			_cqueuepath=$(awk 'match($0,"^O *QueueDirectory=") {
+				print(substr($0, RSTART+RLENGTH))
+				}' "${_submitcf}")
+		else
+			_cqueuepath="/var/spool/clientmqueue"
+		fi
+		_cqueuefmt="%.1Sp %Lp %Su:%Sg"
+	else
+		_cqueuepath="/"
+		_cqueuefmt="d ${_cqueuemode} ${_cqueueowner}"
+	fi
+
+	if ! stat "${_op}" "${_cqueuefmt}" "${_cqueuepath}" \
+	    "d ${_cqueuemode} ${_cqueueowner}"; then
+		if [ "${_op}" = "fix" ]; then
+			_notfixed=${NOT_FIXED}
+			mkdir -p "${_cqueuepath}" &&
+			    chown "${_cqueueowner}" "${_cqueuepath}" &&
+			    chmod "${_cqueuemode}" "${_cqueuepath}" &&
+			    _notfixed=" [ FIXED ]" ||
+			    failed=1
+		else
+			failed=1
+		fi
+		msg "Client queue ${_cqueuepath} has wrong owner/mode${_notfixed}"
+	fi
+
+	return ${failed}
+}
+
 
 #
 #	end of items
@@ -828,6 +1008,8 @@ SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
 trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
 
 umask 022
+exec 3>/dev/null
+exec 4>/dev/null
 
 main "$@"
 exit 0
