@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpcgen.1,v 1.16 2004/05/11 23:19:56 kleink Exp $
+.\"	$NetBSD: rpcgen.1,v 1.17 2004/05/12 13:02:01 kleink Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
 .Dd May 11, 2004
@@ -226,13 +226,8 @@ routines.
 .It Fl a
 Generate all the files including sample code for client and server side.
 .It Fl b
-This generates code for the
-.Tn "SunOS 4.1"
-sockets style of
-.Tn RPC .
-By default, code for
-.Tn "TI RPC"
-is generated.
+Compile stubs in "backwards compatible" mode, disabling support for
+transport-independant RPC.
 .It Fl c
 Compile into
 .Tn XDR
@@ -290,9 +285,6 @@ For such servers,
 .Nm
 should be used with
 .Dq Fl K No -1 .
-.It Fl b
-Compile stubs in "backwards compatible" mode, disabling support for
-transport-independant RPC.
 .It Fl l
 Compile into client-side stubs.
 .Xr inetd 8 .
