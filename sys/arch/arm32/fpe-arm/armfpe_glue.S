@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.6 1996/03/18 19:54:59 mark Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.7 1996/08/21 20:16:30 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -40,6 +40,7 @@
  * Created      : 21/12/95
  */
 
+/*#define CHECK_BEFORE_USERRET*/
 #include "assym.h"
 #include <machine/cpu.h>
 
@@ -47,52 +48,19 @@ sp	.req	r13
 lr	.req	r14
 pc	.req	r15
 
-/* Offsets into fpe core for function addresses */
-
-#define ARM_FPE_CORE_ABORT		 0
-#define ARM_FPE_CORE_INITWS		 4
-#define ARM_FPE_CORE_INITCONTEXT	 8
-#define ARM_FPE_CORE_CHANGECONTEXT	12
-#define ARM_FPE_CORE_SHUTDOWN		16
-#define ARM_FPE_CORE_ACTIVATECONTEXT	20
-#define ARM_FPE_CORE_DEACTIVATECONTEXT	24
-#define ARM_FPE_CORE_SAVECONTEXT	28
-#define ARM_FPE_CORE_LOADCONTEXT	32
-#define	ARM_FPE_CORE_DISABLE		36
-#define	ARM_FPE_CORE_ENABLE		40
-
-/*
- * Ok Lots of little stubs for calling the fpe core
- * routines from C
- */
-
 	.text
-	.align
-
-arm_fpe_header:
-	.word	_arm_fpe_mod
-
+	.align	0
 	.global	_arm_fpe_core_disable
 _arm_fpe_core_disable:
 	stmfd	sp!, {r0-r7, lr}
-	ldr	r0, [pc, #arm_fpe_header - . - 8]
-	ldr	r0, [r0, #ARM_FPE_CORE_DISABLE]
-
-	add	lr, pc, #L1 - . - 8
-	mov	pc, r0
-L1:
+	bl	_fpe_arm_core_disable
 	ldmfd	sp!, {r0-r7, pc}
 
 
 	.global	_arm_fpe_core_enable
 _arm_fpe_core_enable:
 	stmfd	sp!, {r0-r7, lr}
-	ldr	r0, [pc, #arm_fpe_header - . - 8]
-	ldr	r0, [r0, #ARM_FPE_CORE_ENABLE]
-
-	add	lr, pc, #L2 - . - 8
-	mov	pc, r0
-L2:
+	bl	_fpe_arm_core_enable
 	ldmfd	sp!, {r0-r7, pc}
 
 
@@ -100,12 +68,7 @@ L2:
 _arm_fpe_core_initws:
 	stmfd	sp!, {r10, lr}
 	mov	r10, r0
-	ldr	r3, [pc, #arm_fpe_header - . - 8]
-	ldr	r3, [r3, #ARM_FPE_CORE_INITWS]
-
-	add	lr, pc, #L3 - . - 8
-	mov	pc, r3
-L3:
+	bl	_fpe_arm_core_initws
 	ldmfd	sp!, {r10, pc}
 
 
@@ -115,12 +78,7 @@ _arm_fpe_core_abort:
 	mov	r10, r0
 	mov	r0, r1
 	mov	r1, r2
-	ldr	r3, [pc, #arm_fpe_header - . - 8]
-	ldr	r3, [r3, #ARM_FPE_CORE_ABORT]
-
-	add	lr, pc, #L4 - . - 8
-	mov	pc, r3
-L4:
+	bl	_fpe_arm_core_abort
 	ldmfd	sp!, {r1-r7, r10, pc}
 
 
@@ -130,12 +88,7 @@ L4:
 _arm_fpe_core_initcontext:
 	stmfd	sp!, {r0-r7, r10, lr}
 	mov	r10, r0
-	ldr	r3, [pc, #arm_fpe_header - . - 8]
-	ldr	r3, [r3, #ARM_FPE_CORE_INITCONTEXT]
-
-	add	lr, pc, #L5 - . - 8
-	mov	pc, r3
-L5:
+	bl	_fpe_arm_core_initcontext
 	ldmfd	sp!, {r0-r7, r10, pc}
 
 
@@ -145,12 +98,7 @@ L5:
 _arm_fpe_core_changecontext:
 	stmfd	sp!, {r1-r7, r10, lr}
 	mov	r10, r0
-	ldr	r3, [pc, #arm_fpe_header - . - 8]
-	ldr	r3, [r3, #ARM_FPE_CORE_CHANGECONTEXT]
-
-	add	lr, pc, #L6 - . - 8
-	mov	pc, r3
-L6:
+	bl	_fpe_arm_core_changecontext
 	ldmfd	sp!, {r1-r7, r10, pc}
 
 
@@ -159,12 +107,7 @@ L6:
 	.global	_arm_fpe_core_shutdown
 _arm_fpe_core_shutdown:
 	stmfd	sp!, {r0-r7, r10, lr}
-	ldr	r3, [pc, #arm_fpe_header - . - 8]
-	ldr	r3, [r3, #ARM_FPE_CORE_SHUTDOWN]
-
-	add	lr, pc, #L7 - . - 8
-	mov	pc, r3
-L7:
+	bl	_fpe_arm_core_shutdown
 	ldmfd	sp!, {r0-r7, r10, pc}
 
 
@@ -175,12 +118,7 @@ _arm_fpe_core_savecontext:
 	mov	r10, r0
 	mov	r0, r1
 	mov	r1, r2
-	ldr	r3, [pc, #arm_fpe_header - . - 8]
-	ldr	r3, [r3, #ARM_FPE_CORE_SAVECONTEXT]
-
-	add	lr, pc, #L8 - . - 8
-	mov	pc, r3
-L8:
+	bl	_fpe_arm_core_savecontext
 	ldmfd	sp!, {r1-r7, r10, pc}
 
 
@@ -191,12 +129,7 @@ _arm_fpe_core_loadcontext:
 	stmfd	sp!, {r0-r7, r10, lr}
 	mov	r10, r0
 	mov	r0, r1
-	ldr	r3, [pc, #arm_fpe_header - . - 8]
-	ldr	r3, [r3, #ARM_FPE_CORE_LOADCONTEXT]
-
-	add	lr, pc, #L9 - . - 8
-	mov	pc, r3
-L9:
+	bl	_fpe_arm_core_loadcontext
 	ldmfd	sp!, {r0-r7, r10, pc}
 
 
@@ -206,12 +139,7 @@ L9:
 _arm_fpe_core_activatecontext:
 	stmfd	sp!, {r0-r7, r10, lr}
 	mov	r10, r0
-	ldr	r3, [pc, #arm_fpe_header - . - 8]
-	ldr	r3, [r3, #ARM_FPE_CORE_ACTIVATECONTEXT]
-
-	add	lr, pc, #L10 - . - 8
-	mov	pc, r3
-L10:
+	bl	_fpe_arm_core_activatecontext
 	ldmfd	sp!, {r0-r7, r10, pc}
 
 
@@ -220,14 +148,8 @@ L10:
 	.global	_arm_fpe_core_deactivatecontext
 _arm_fpe_core_deactivatecontext:
 	stmfd	sp!, {r1-r7, r10, lr}
-	ldr	r3, [pc, #arm_fpe_header - . - 8]
-	ldr	r3, [r3, #ARM_FPE_CORE_DEACTIVATECONTEXT]
-
-	add	lr, pc, #L11 - . - 8
-	mov	pc, r3
-L11:
+	bl	_fpe_arm_core_deactivatecontext
 	ldmfd	sp!, {r1-r7, r10, pc}
-
 
 /* Simple call back function that panics */
 
@@ -245,9 +167,101 @@ fpe_panic_text:
  * Call back routine from FPE on completion of an instruction
  */
 
+#ifdef CHECK_BEFORE_USERRET
+
+	.global	_userret_count0
+	.global	_userret_count1
+	.data
+_userret_count0:
+	.word	0
+_userret_count1:
+	.word	0
+
+	.text
+
+Luserret_count0:
+	.word	_userret_count0
+Luserret_count1:
+	.word	_userret_count1
+
+Lwant_resched:
+	.word	_want_resched
+
+Lcurproc:
+	.word	_curproc
+
+Lcurpriority:
+	.word	_curpriority
+
+#endif
+
 	.global	_arm_fpe_post_proc_glue
 _arm_fpe_post_proc_glue:
-	stmfd	sp!, {r0-r6, r10-r12, lr}
+	stmfd	sp!, {r0-r3, lr}
+
+#ifdef CHECK_BEFORE_USERRET
+
+	/* Call userret if we need a reschedule */
+
+	/* Debugging */
+	ldr	r0, Luserret_count0
+	ldr	r1, [r0]
+	add	r1, r1, #1
+	str	r1, [r0]
+
+	/* Do we need a reschedule */
+	ldr	r0, Lwant_resched
+	ldr	r0, [r0]
+	teq	r0, #0x00000000
+	bne	Lwe_need_userret
+
+	/* All other userret requirement conditions come from curproc */
+	ldr	r0, Lcurproc
+	ldr	r0, [r0]
+
+	/* Remember the flags field */
+	ldr	r3, [r0, #(P_FLAG)]
+
+	/* Get the signal list */
+	ldr	r1, [r0, #(P_SIGLIST)]
+	teq	r1, #0x00000000
+	beq	Lno_signals_pending
+
+	tst	r3, #(P_TRACED)
+	bne	Lwe_need_userret
+
+	ldr	r1, [r0, #(P_SIGLIST)]
+	ldr	r2, [r0, #(P_SIGMASK)]
+	bic	r1, r1, r2
+	teq	r1, #0x00000000
+	bne	Lwe_need_userret
+
+Lno_signals_pending:
+	/* Are we profiling ? */
+	tst	r3, #(P_PROFIL)
+	bne	Lwe_need_userret
+
+	/* Update the current priority */
+	ldrb	r1, [r0, #(P_USRPRI)]
+	strb	r1, [r0, #(P_PRIORITY)]
+	ldr	r0, Lcurpriority
+	strb	r1, [r0]
+
+	/* Fast return */
+	ldmfd	sp!, {r0-r3, pc}
+
+Lwe_need_userret:
+	/* Ok we need to call userret() */
+
+	stmfd	sp!, {r4-r6, r10-r12}
+
+	/* Debugging */
+	ldr	r0, Luserret_count1
+	ldr	r1, [r0]
+	add	r1, r1, #1
+	str	r1, [r0]
+
+#endif
 
 /* This could be optimised as we are going from UND32->SVC32 mode */
 
@@ -264,42 +278,23 @@ _arm_fpe_post_proc_glue:
 	mov	r1, sp
 
 	ldr	r2, [r0, #-0x0008]	/* Copy spsr */
-	str	r2, [r1, #0x0000]
+	str	r2, [r1], #0x0004
 
-	ldr	r2, [r0, #0x0000]	/* Copy r0 */
-	str	r2, [r1, #0x0004]
-	ldr	r2, [r0, #0x0004]
-	str	r2, [r1, #0x0008]
-	ldr	r2, [r0, #0x0008]
-	str	r2, [r1, #0x000c]
-	ldr	r2, [r0, #0x000c]
-	str	r2, [r1, #0x0010]
-	ldr	r2, [r0, #0x0010]
-	str	r2, [r1, #0x0014]
-	ldr	r2, [r0, #0x0014]
-	str	r2, [r1, #0x0018]
-	ldr	r2, [r0, #0x0018]
-	str	r2, [r1, #0x001c]
-	ldr	r2, [r0, #0x001c]
-	str	r2, [r1, #0x0020]
-	ldr	r2, [r0, #0x0020]
-	str	r2, [r1, #0x0024]
-	ldr	r2, [r0, #0x0024]
-	str	r2, [r1, #0x0028]
-	ldr	r2, [r0, #0x0028]
-	str	r2, [r1, #0x002c]
-	ldr	r2, [r0, #0x002c]
-	str	r2, [r1, #0x0030]
-	ldr	r2, [r0, #0x0030]	/* Copy r12 */
-	str	r2, [r1, #0x0034]
-	ldr	r2, [r0, #0x0034]	/* Copy usr r13 */
-	str	r2, [r1, #0x0038]
-	ldr	r2, [r0, #0x0038]	/* Copy usr r14 */
-	str	r2, [r1, #0x003c]
-	ldr	r2, [r0, #0x003c]	/* Copy old pc */
-	str	r2, [r1, #0x0044]
+	ldmia	r0!, {r2, r3, r5, r6}	/* copy r0-r5 */
+	stmia	r1!, {r2, r3, r5, r6}
 
-	str	r14, [r1, #0x0040]	/* SVC r14 */
+	ldmia	r0!, {r2, r3, r5, r6}	/* copy r6-r11 */
+	stmia	r1!, {r2, r3, r5, r6}
+
+	ldmia	r0!, {r2, r3, r5, r6}	/* copy r6-r11 */
+	stmia	r1!, {r2, r3, r5, r6}
+
+	ldmia	r0!, {r2, r3, r5, r6}	/* copy r12, r13, r14, r15 */
+	stmia	r1!, {r2, r3, r5, r14}
+	str	r6, [r1, #0x0000]
+
+	mov	r0, r12
+	mov	r1, sp
 
 /*
  * OK Question Time ...
@@ -313,55 +308,36 @@ _arm_fpe_post_proc_glue:
 	mov	r5, r14
 	mov	r6, r12
 
-/* More optimisation ... Need to code a assembly version of userret() */
+/* More optimisation ... Need to code an assembly version of userret() */
 
 	bl	_arm_fpe_postproc
 
 /* Release the trapframe on the SVC stack */
+	mov	r14, r5
 
-	ldr	r2, [sp, #0x0000]	/* Copy spsr */
+	mov	r0, sp
+
+	ldr	r2, [r0], #0x0004	/* Copy spsr */
 	str	r2, [r6, #-0x0008]
 
-	ldr	r2, [sp, #0x0004]	/* Copy r0 */
-	str	r2, [r6, #0x0000]
-	ldr	r2, [sp, #0x0008]	/* Copy r1 */
-	str	r2, [r6, #0x0004]
-	ldr	r2, [sp, #0x000c]	/* Copy r2 */
-	str	r2, [r6, #0x0008]
-	ldr	r2, [sp, #0x0010]	/* Copy r3 */
-	str	r2, [r6, #0x000c]
-	ldr	r2, [sp, #0x0014]	/* Copy r4 */
-	str	r2, [r6, #0x0010]
-	ldr	r2, [sp, #0x0018]	/* Copy r5 */
-	str	r2, [r6, #0x0014]
-	ldr	r2, [sp, #0x001c]	/* Copy r6 */
-	str	r2, [r6, #0x0018]
-	ldr	r2, [sp, #0x0020]	/* Copy r7 */
-	str	r2, [r6, #0x001c]
-	ldr	r2, [sp, #0x0024]	/* Copy r8 */
-	str	r2, [r6, #0x0020]
-	ldr	r2, [sp, #0x0028]	/* Copy r9 */
-	str	r2, [r6, #0x0024]
-	ldr	r2, [sp, #0x002c]	/* Copy r10 */
-	str	r2, [r6, #0x0028]
-	ldr	r2, [sp, #0x0030]	/* Copy r11 */
-	str	r2, [r6, #0x002c]
-	ldr	r2, [sp, #0x0034]	/* Copy r12 */
-	str	r2, [r6, #0x0030]
-	ldr	r2, [sp, #0x0038]	/* Copy usr r13 */
-	str	r2, [r6, #0x0034]
-	ldr	r2, [sp, #0x003c]	/* Copy usr r14 */
-	str	r2, [r6, #0x0038]
-	ldr	r2, [sp, #0x0044]	/* Copy pc */
-	str	r2, [r6, #0x003c]
+	ldmia	r0!, {r1, r2, r3, r5, r10, r11}	/* copy r0-r5 */
+	stmia	r6!, {r1, r2, r3, r5, r10, r11}
+
+	ldmia	r0!, {r1, r2, r3, r5, r10, r11}	/* copy r6-r11 */
+	stmia	r6!, {r1, r2, r3, r5, r10, r11}
+
+	ldmia	r0!, {r1, r2, r3}	/* copy r12, r13, r14 */
+	stmia	r6!, {r1, r2, r3}
+
+	ldr	r1, [r0, #0x0004]
+	str	r1, [r6]
 
 	add	sp, sp, #(TRAPFRAMESIZE)
 
-	mov	r14, r5
-
 	msr	cpsr_all, r4
 
-	ldmfd	sp!, {r0-r6, r10-r12, pc}
+	ldmfd	sp!, {r4-r6, r10-r12}
+	ldmfd	sp!, {r0-r3, pc}
 
 
 /*
