@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.12 1998/08/23 10:40:38 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.13 1998/08/30 21:26:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -388,7 +388,7 @@ vmeattach_iommu(parent, self, aux)
 	 * Map VME control space
 	 */
 	rr = NULL;
-	if (getpropA(node, "reg", sizeof(*rr), &nreg, (void**)&rr) != 0) {
+	if (getprop(node, "reg", sizeof(*rr), &nreg, (void**)&rr) != 0) {
 		printf("%s: can't get register property\n", self->dv_xname);
 		return;
 	}
@@ -445,8 +445,8 @@ vmeattach_iommu(parent, self, aux)
 	/*
 	 * Get "range" property.
 	 */
-	if (getpropA(node, "ranges", sizeof(struct rom_range),
-		     &sc->sc_nrange, (void **)&sc->sc_range) != 0) {
+	if (getprop(node, "ranges", sizeof(struct rom_range),
+		    &sc->sc_nrange, (void **)&sc->sc_range) != 0) {
 		panic("%s: can't get ranges property", self->dv_xname);
 	}
 
