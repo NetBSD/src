@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.4 2001/05/13 13:51:08 bjh21 Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -35,7 +35,6 @@
  * Machine-dependent defines for new kernel debugger.
  */
 
-#include "opt_progmode.h"
 #include <uvm/uvm_extern.h>
 #include <arm/armreg.h>
 #include <machine/frame.h>
@@ -51,7 +50,7 @@ typedef trapframe_t db_regs_t;
 db_regs_t		ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-#ifdef PROG26
+#ifdef __PROG26
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_r15 & R15_PC)
 #define PC_ADVANCE(regs) ((regs)->tf_r15 += 4)
 #else
