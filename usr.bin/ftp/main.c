@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.71 2000/05/31 14:23:59 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.72 2000/06/11 02:12:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.71 2000/05/31 14:23:59 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.72 2000/06/11 02:12:06 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -950,6 +950,7 @@ getoptionvalue(const char *name)
 	if (c != NULL)
 		return (c->value);
 	errx(1, "getoptionvalue() invoked with unknown option `%s'", name);
+	/* NOTREACHED */
 }
 
 static void
