@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_sysv_ipc.c,v 1.2 1999/05/04 05:11:03 cgd Exp $ */
+/* $NetBSD: osf1_sysv_ipc.c,v 1.2.18.1 2001/08/30 23:43:47 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -43,8 +43,8 @@
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_shmat(p, v, retval)
-	struct proc *p;
+osf1_sys_shmat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -54,8 +54,8 @@ osf1_sys_shmat(p, v, retval)
 }
 
 int
-osf1_sys_shmctl(p, v, retval)
-	struct proc *p;
+osf1_sys_shmctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -65,8 +65,8 @@ osf1_sys_shmctl(p, v, retval)
 }
 
 int
-osf1_sys_shmdt(p, v, retval)
-	struct proc *p;
+osf1_sys_shmdt(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -76,8 +76,8 @@ osf1_sys_shmdt(p, v, retval)
 }
 
 int
-osf1_sys_shmget(p, v, retval)
-	struct proc *p;
+osf1_sys_shmget(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_pipe.c,v 1.5.2.1 2001/08/30 23:43:44 nathanw Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.1.6.2 2001/08/30 23:43:40 nathanw Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -38,41 +38,16 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/mman.h>
-#include <sys/mount.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
-  
-#include <sys/syscallargs.h> 
- 
-#include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_mmap.h>
-#include <compat/linux/common/linux_signal.h>
+#include <sys/user.h>
+#include <sys/acct.h>
+#include <sys/kernel.h>
+#include <sys/signal.h>
+#include <sys/syscall.h>
 
-#include <compat/linux/linux_syscallargs.h>
+#include <compat/linux/common/linux_exec.h>
 
-/*
- * The Alpha version of sys_pipe.
- *
- * Linux returns fd[1] in a4
- * and fd[0] in the retval[0].
- */
-
-
-int
-linux_sys_pipe(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	int error;
-
-	if ((error = sys_pipe(l, 0, retval)))
-		return error;
-
-	(l->l_md.md_tf)->tf_regs[FRAME_A4] = retval[1];
-	return 0;
+void
+linux_trapsignal(struct lwp *l, int signo, u_long type) {
+	trapsignal(l, signo, type);
 }

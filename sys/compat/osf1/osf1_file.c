@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.9.2.2 2001/06/21 20:00:15 nathanw Exp $ */
+/* $NetBSD: osf1_file.c,v 1.9.2.3 2001/08/30 23:43:45 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -89,12 +89,13 @@
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_access(p, v, retval)
-	struct proc *p;
+osf1_sys_access(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_access_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_access_args a;
 	unsigned long leftovers;
 	caddr_t sg;
@@ -110,16 +111,17 @@ osf1_sys_access(p, v, retval)
 	if (leftovers != 0)
 		return (EINVAL);
 
-	return sys_access(p, &a, retval);
+	return sys_access(l, &a, retval);
 }
 
 int
-osf1_sys_execve(p, v, retval)
-	struct proc *p;
+osf1_sys_execve(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_execve_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_execve_args ap;
 	caddr_t sg;
 
@@ -130,7 +132,7 @@ osf1_sys_execve(p, v, retval)
 	SCARG(&ap, argp) = SCARG(uap, argp);
 	SCARG(&ap, envp) = SCARG(uap, envp);
 
-	return sys_execve(p, &ap, retval);
+	return sys_execve(l, &ap, retval);
 }
 
 /*
@@ -138,12 +140,13 @@ osf1_sys_execve(p, v, retval)
  */
 /* ARGSUSED */
 int
-osf1_sys_lstat(p, v, retval)
-	struct proc *p;
+osf1_sys_lstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_lstat_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct osf1_stat osb;
 	int error;
@@ -171,12 +174,13 @@ osf1_sys_lstat(p, v, retval)
  */
 /* ARGSUSED */
 int
-osf1_sys_lstat2(p, v, retval)
-	struct proc *p;
+osf1_sys_lstat2(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_lstat2_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct osf1_stat2 osb;
 	int error;
@@ -200,12 +204,13 @@ osf1_sys_lstat2(p, v, retval)
 }
 
 int
-osf1_sys_mknod(p, v, retval)
-	struct proc *p;
+osf1_sys_mknod(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_mknod_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_mknod_args a;
 	caddr_t sg;
 
@@ -216,16 +221,17 @@ osf1_sys_mknod(p, v, retval)
 	SCARG(&a, mode) = SCARG(uap, mode);
 	SCARG(&a, dev) = osf1_cvt_dev_to_native(SCARG(uap, dev));
 
-	return sys_mknod(p, &a, retval);
+	return sys_mknod(l, &a, retval);
 }
 
 int
-osf1_sys_open(p, v, retval)
-	struct proc *p;
+osf1_sys_open(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_open_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_open_args a;
 	const char *path;
 	caddr_t sg;
@@ -257,16 +263,17 @@ osf1_sys_open(p, v, retval)
 		CHECK_ALT_EXIST(p, &sg, path);
 	SCARG(&a, path) = path;
 
-	return sys_open(p, &a, retval);
+	return sys_open(l, &a, retval);
 }
 
 int
-osf1_sys_pathconf(p, v, retval)
-	struct proc *p;
+osf1_sys_pathconf(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_pathconf_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_pathconf_args a;
 	caddr_t sg;
 	int error;
@@ -280,7 +287,7 @@ osf1_sys_pathconf(p, v, retval)
 	    &SCARG(&a, name));
 
 	if (error == 0)
-		error = sys_pathconf(p, &a, retval);
+		error = sys_pathconf(l, &a, retval);
 
 	return (error);
 }
@@ -290,12 +297,13 @@ osf1_sys_pathconf(p, v, retval)
  */
 /* ARGSUSED */
 int
-osf1_sys_stat(p, v, retval)
-	struct proc *p;
+osf1_sys_stat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_stat_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct osf1_stat osb;
 	int error;
@@ -323,12 +331,13 @@ osf1_sys_stat(p, v, retval)
  */
 /* ARGSUSED */
 int
-osf1_sys_stat2(p, v, retval)
-	struct proc *p;
+osf1_sys_stat2(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_stat2_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct osf1_stat2 osb;
 	int error;
@@ -352,12 +361,13 @@ osf1_sys_stat2(p, v, retval)
 }
 
 int
-osf1_sys_truncate(p, v, retval)
-	struct proc *p;
+osf1_sys_truncate(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_truncate_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_truncate_args a;
 	caddr_t sg;
 
@@ -368,16 +378,17 @@ osf1_sys_truncate(p, v, retval)
 	SCARG(&a, pad) = 0;
 	SCARG(&a, length) = SCARG(uap, length);
 
-	return sys_truncate(p, &a, retval);
+	return sys_truncate(l, &a, retval);
 }
 
 int
-osf1_sys_utimes(p, v, retval)
-	struct proc *p;
+osf1_sys_utimes(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_utimes_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_utimes_args a;
 	struct osf1_timeval otv;
 	struct timeval tv;
@@ -411,7 +422,7 @@ osf1_sys_utimes(p, v, retval)
 	}
 
 	if (error == 0)
-		error = sys_utimes(p, &a, retval);
+		error = sys_utimes(l, &a, retval);
 
 	return (error);
 }

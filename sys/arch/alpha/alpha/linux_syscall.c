@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.3.2.1 2001/08/30 23:43:42 nathanw Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.5.4.2 2001/08/30 23:43:40 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,16 +94,17 @@
  * rights to redistribute these changes.
  */
 
+#if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
+#endif
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.1 2001/08/30 23:43:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.5.4.2 2001/08/30 23:43:40 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/savar.h>
 #include <sys/user.h>
@@ -120,20 +121,27 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3.2.1 2001/08/30 23:43:42 nathanw Exp 
 #include <machine/alpha.h>
 #include <machine/userret.h>
 
-void	syscall_intern(struct proc *);
-void	syscall_plain(struct lwp *, u_int64_t, struct trapframe *);
-void	syscall_fancy(struct lwp *, u_int64_t, struct trapframe *);
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_errno.h>
+#include <compat/linux/linux_syscall.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
+#include <compat/linux/arch/alpha/linux_machdep.h>
+
+void	linux_syscall_intern(struct proc *);
+void	linux_syscall_plain(struct lwp *, u_int64_t, struct trapframe *);
+void	linux_syscall_fancy(struct lwp *, u_int64_t, struct trapframe *);
 
 void
-syscall_intern(struct proc *p)
+linux_syscall_intern(struct proc *p)
 {
 
 #ifdef KTRACE
 	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET))
-		p->p_md.md_syscall = syscall_fancy;
+		p->p_md.md_syscall = linux_syscall_fancy;
 	else
 #endif
-		p->p_md.md_syscall = syscall_plain;
+		p->p_md.md_syscall = linux_syscall_plain;
 }
 
 /*
@@ -150,7 +158,7 @@ syscall_intern(struct proc *p)
  * a3, and v0 from the frame before returning to the user process.
  */
 void
-syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
+linux_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
@@ -167,12 +175,8 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	callp = p->p_emul->e_sysent;
 
 	switch (code) {
-	case SYS_syscall:
-	case SYS___syscall:
-		/*
-		 * syscall() and __syscall() are handled the same on
-		 * the alpha, as everything is 64-bit aligned, anyway.
-		 */
+	case LINUX_SYS_syscall:
+		/* OSF/1 syscall() */
 		code = framep->tf_regs[FRAME_A0];
 		hidden = 1;
 		break;
@@ -181,7 +185,7 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		break;
 	}
 
-	code &= (SYS_NSYSENT - 1);
+	code &= (LINUX_SYS_NSYSENT - 1);
 	callp += code;
 
 	nargs = callp->sy_narg + hidden;
@@ -232,6 +236,7 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		break;
 	default:
 	bad:
+		error = native_to_linux_errno[error];
 		framep->tf_regs[FRAME_V0] = error;
 		framep->tf_regs[FRAME_A3] = 1;
 		break;
@@ -240,12 +245,12 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(l, code, error, rval);
 #endif
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_PROC_UNLOCK(p);
 	userret(l);
 }
 
 void
-syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
+linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 {
 	const struct sysent *callp;
 	int error;
@@ -262,12 +267,8 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	callp = p->p_emul->e_sysent;
 
 	switch (code) {
-	case SYS_syscall:
-	case SYS___syscall:
-		/*
-		 * syscall() and __syscall() are handled the same on
-		 * the alpha, as everything is 64-bit aligned, anyway.
-		 */
+	case LINUX_SYS_syscall:
+		/* OSF/1 syscall() */
 		code = framep->tf_regs[FRAME_A0];
 		hidden = 1;
 		break;
@@ -276,7 +277,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		break;
 	}
 
-	code &= (SYS_NSYSENT - 1);
+	code &= (LINUX_SYS_NSYSENT - 1);
 	callp += code;
 
 	nargs = callp->sy_narg + hidden;
@@ -331,6 +332,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		break;
 	default:
 	bad:
+		error = native_to_linux_errno[error];
 		framep->tf_regs[FRAME_V0] = error;
 		framep->tf_regs[FRAME_A3] = 1;
 		break;
@@ -345,30 +347,6 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(l);
 		ktrsysret(p, code, error, rval[0]);
-		KERNEL_PROC_UNLOCK(l);
-	}
-#endif
-}
-
-/*
- * Process the tail end of a fork() for the child.
- */
-void
-child_return(void *arg)
-{
-	struct lwp *l = arg;
-	struct proc *p = l->l_proc;
-
-	/*
-	 * Return values in the frame set by cpu_fork().
-	 */
-
-	KERNEL_PROC_UNLOCK(l);
-	userret(l);
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
-		ktrsysret(p, SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif

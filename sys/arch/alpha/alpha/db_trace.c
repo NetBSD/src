@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.9 2000/12/13 03:16:36 mycroft Exp $ */
+/* $NetBSD: db_trace.c,v 1.9.2.1 2001/08/30 23:43:39 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.9 2000/12/13 03:16:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.9.2.1 2001/08/30 23:43:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,6 +195,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	boolean_t ra_from_pcb;
 	u_long last_ipl = ~0L;
 	struct proc *p = NULL;
+	struct lwp *l = NULL;
 	boolean_t trace_thread = FALSE;
 	boolean_t have_trapframe = FALSE;
 
@@ -202,7 +203,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		trace_thread |= c == 't';
 
 	if (!have_addr) {
-		p = curproc;
+		p = curproc->l_proc;
 		addr = DDB_REGS->tf_regs[FRAME_SP] - FRAME_SIZE * 8;
 		tf = (struct trapframe *)addr;
 		have_trapframe = 1;
@@ -214,11 +215,12 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 				(*pr)("not found\n");
 				return;
 			}	
-			if ((p->p_flag & P_INMEM) == 0) {
+			l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
+			if ((l->l_flag & L_INMEM) == 0) {
 				(*pr)("swapped out\n");
 				return;
 			}
-			pcbp = &p->p_addr->u_pcb;
+			pcbp = &l->l_addr->u_pcb;
 			addr = (db_expr_t)pcbp->pcb_hw.apcb_ksp;
 			callpc = pcbp->pcb_context[7];
 			(*pr)("at 0x%lx\n", addr);

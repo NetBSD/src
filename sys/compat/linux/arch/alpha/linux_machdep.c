@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15.2.1 2001/06/21 19:59:25 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15.2.2 2001/08/30 23:43:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,13 +96,13 @@
  */
 
 void
-linux_setregs(p, epp, stack)
-	struct proc *p;
+linux_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	u_long stack;
 {
 /* XXX XAX I think this is ok. not sure though. */
-	setregs(p, epp, stack);
+	setregs(l, epp, stack);
 }
 
 void setup_linux_rt_sigframe(tf, sig, mask)
@@ -110,7 +110,8 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 	int sig;
 	sigset_t *mask;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct linux_rt_sigframe *sfp, sigframe;
 	int onstack;
 	int fsize, rndfsize;
@@ -154,9 +155,9 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 	frametoreg(tf, (struct reg *)sigframe.uc.uc_mcontext.sc_regs);
 	sigframe.uc.uc_mcontext.sc_regs[R_SP] = alpha_pal_rdusp();
 
-	alpha_enable_fp(p, 1);
+	alpha_enable_fp(l, 1);
 	sigframe.uc.uc_mcontext.sc_fpcr = alpha_read_fpcr();
-	sigframe.uc.uc_mcontext.sc_fp_control = alpha_read_fp_c(p);
+	sigframe.uc.uc_mcontext.sc_fp_control = alpha_read_fp_c(l);
 	alpha_pal_wrfen(0);
 
 	sigframe.uc.uc_mcontext.sc_traparg_a0 = tf->tf_regs[FRAME_A0];
@@ -185,7 +186,7 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -210,7 +211,8 @@ void setup_linux_sigframe(tf, sig, mask)
 	int sig;
 	sigset_t *mask;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct linux_sigframe *sfp, sigframe;
 	int onstack;
 	int fsize, rndfsize;
@@ -249,11 +251,11 @@ void setup_linux_sigframe(tf, sig, mask)
 	frametoreg(tf, (struct reg *)sigframe.sf_sc.sc_regs);
 	sigframe.sf_sc.sc_regs[R_SP] = alpha_pal_rdusp();
 
-	if (p == fpcurproc) {
+	if (l == fpcurproc) {
 	    alpha_pal_wrfen(1);
-	    savefpstate(&p->p_addr->u_pcb.pcb_fp);
+	    savefpstate(&l->l_addr->u_pcb.pcb_fp);
 	    alpha_pal_wrfen(0);
-	    sigframe.sf_sc.sc_fpcr = p->p_addr->u_pcb.pcb_fp.fpr_cr;
+	    sigframe.sf_sc.sc_fpcr = l->l_addr->u_pcb.pcb_fp.fpr_cr;
 	    fpcurproc = NULL;
 	}
 	/* XXX ownedfp ? etc...? */
@@ -272,7 +274,7 @@ void setup_linux_sigframe(tf, sig, mask)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -309,8 +311,8 @@ linux_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
-	struct trapframe *tf = p->p_md.md_tf;
+	struct lwp *l = curproc;
+	struct trapframe *tf = l->l_md.md_tf;
 #ifdef notyet
 	struct linux_emuldata *edp;
 
@@ -360,10 +362,11 @@ linux_sendsig(catcher, sig, mask, code)
  */
 
 int
-linux_restore_sigcontext(struct proc *p, struct linux_sigcontext context,
+linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext context,
 			 sigset_t *mask)
 {
 
+	struct proc *p = l->l_proc;
 	/*
 	 * Linux doesn't (yet) have alternate signal stacks.
 	 * However, the OSF/1 sigcontext which they use has
@@ -384,17 +387,17 @@ linux_restore_sigcontext(struct proc *p, struct linux_sigcontext context,
 	if (context.sc_ps != ALPHA_PSL_USERMODE)
 	    return(EINVAL);
 
-	p->p_md.md_tf->tf_regs[FRAME_PC] = context.sc_pc;
-	p->p_md.md_tf->tf_regs[FRAME_PS] = context.sc_ps;
+	l->l_md.md_tf->tf_regs[FRAME_PC] = context.sc_pc;
+	l->l_md.md_tf->tf_regs[FRAME_PS] = context.sc_ps;
 
-	regtoframe((struct reg *)context.sc_regs, p->p_md.md_tf);
+	regtoframe((struct reg *)context.sc_regs, l->l_md.md_tf);
 	alpha_pal_wrusp(context.sc_regs[R_SP]);
 
-	if (p == fpcurproc)
+	if (l == fpcurproc)
 	    fpcurproc = NULL;
 
 	/* Restore fp regs and fpr_cr */
-	bcopy((struct fpreg *)context.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
+	bcopy((struct fpreg *)context.sc_fpregs, &l->l_addr->u_pcb.pcb_fp,
 	    sizeof(struct fpreg));
 	/* XXX sc_ownedfp ? */
 	/* XXX sc_fp_control ? */
@@ -407,8 +410,8 @@ linux_restore_sigcontext(struct proc *p, struct linux_sigcontext context,
 }
 
 int
-linux_sys_rt_sigreturn(p, v, retval)
-	struct proc *p;
+linux_sys_rt_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -439,13 +442,13 @@ linux_sys_rt_sigreturn(p, v, retval)
 	/* Grab the signal mask */
 	linux_to_native_sigset(&sigframe.uc.uc_sigmask, &mask);
 
-	return(linux_restore_sigcontext(p, sigframe.uc.uc_mcontext, &mask));
+	return(linux_restore_sigcontext(l, sigframe.uc.uc_mcontext, &mask));
 }
 
 
 int
-linux_sys_sigreturn(p, v, retval)
-	struct proc *p;
+linux_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -475,7 +478,7 @@ linux_sys_sigreturn(p, v, retval)
 	/* XXX use frame.extramask */
 	linux_old_to_native_sigset(frame.sf_sc.sc_mask, &mask);
 
-	return(linux_restore_sigcontext(p, frame.sf_sc, &mask));
+	return(linux_restore_sigcontext(l, frame.sf_sc, &mask));
 }
 
 /*
@@ -506,7 +509,8 @@ linux_machdepioctl(p, v, retval)
 		return EINVAL;
 	}
 	SCARG(&bia, com) = com;
-	return sys_ioctl(p, &bia, retval);
+	/* XXX njwlwp */
+	return sys_ioctl(curproc, &bia, retval);
 }
 
 /* XXX XAX fix this */
