@@ -1,4 +1,4 @@
-.\"     $NetBSD: stf.4,v 1.17 2002/11/17 19:34:52 itojun Exp $
+.\"     $NetBSD: stf.4,v 1.18 2003/09/07 15:57:30 wiz Exp $
 .\"     $KAME: stf.4,v 1.39 2002/11/17 19:34:02 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -51,41 +51,41 @@ interfaces are dynamically created and destroyed with the
 and
 .Cm destroy
 subcommands.  Only one
-.Nm stf
+.Nm
 interface may be created.
 .Pp
-For ordinary nodes in 6to4 site, you do not need
+For ordinary nodes in 6to4 sites, you do not need a
 .Nm
 interface.
 The
 .Nm
-interface is necessary for site border router
+interface is only necessary on the site border router
 .Po
-called
+called the
 .Dq 6to4 router
 in the specification
 .Pc .
 .Pp
-Due to the way 6to4 protocol is specified,
+Due to the way the 6to4 protocol is specified,
 .Nm
-interface requires certain configuration to work properly.
-Single
-.Pq no more than 1
-valid 6to4 address needs to be configured to the interface.
+interfaces require certain configuration to work properly.
+A single
+.Pq no more than one
+valid 6to4 address needs to be configured on the interface.
 .Dq A valid 6to4 address
 is an address which has the following properties.
 If any of the following properties are not satisfied,
 .Nm stf
-raises runtime error on packet transmission.
+raises a runtime error on packet transmission.
 Read the specification for more details.
 .Bl -bullet
 .It
 matches
-.Li 2002:xxyy:zzuu::/48
+.Li 2002:xxyy:zzuu::/48 ,
 where
 .Li xxyy:zzuu
-is a hexadecimal notation of an IPv4 address for the node.
-IPv4 address can be taken from any of interfaces your node has.
+is the hexadecimal notation of an IPv4 address for the node.
+The IPv4 address used can be taken from any interface your node has.
 Since the specification forbids the use of IPv4 private address,
 the address needs to be a global IPv4 address.
 .It
@@ -100,79 +100,80 @@ If you would like the node to behave as a relay router,
 the prefix length for the IPv6 interface address needs to be 16 so that
 the node would consider any 6to4 destination as
 .Dq on-link .
-If you would like to restrict 6to4 peers to be inside certain IPv4 prefix,
-you may want to configure IPv6 prefix length as
+If you would like to restrict 6to4 peers to be inside a certain IPv4 prefix,
+you may want to configure the IPv6 prefix length to be
 .Dq 16 + IPv4 prefix length .
+The
 .Nm
-interface will check the IPv4 source address on packets,
+interface will check the IPv4 source address on packets
 if the IPv6 prefix length is larger than 16.
 .Pp
 .Nm
-can be configured to be ECN friendly.
+can be configured to be ECN (Explicit Congestion Notification) friendly.
 This can be configured by
 .Dv IFF_LINK1 .
 See
 .Xr gif 4
 for details.
 .Pp
-Please note that 6to4 specification is written as
+Please note that the 6to4 specification is written as an
 .Dq accept tunnelled packet from everyone
 tunnelling device.
-By enabling
+By enabling the
 .Nm
 device, you are making it much easier for malicious parties to inject
-fabricated IPv6 packet to your node.
-Also, malicious party can inject an IPv6 packet with fabricated source address
-to make your node generate improper tunnelled packet.
-Administrators must take caution when enabling the interface.
-To prevent possible attacks,
+fabricated IPv6 packets to your node.
+Also, malicious parties can inject IPv6 packets with fabricated source addresses
+to make your node generate improper tunnelled packets.
+Administrators must be cautious when enabling the interface.
+To prevent possible attacks, the
 .Nm
-interface filters out the following packets.
-Note that the checks are no way complete:
+interface filters out the following packets (note that the checks are
+in no way complete):
 .Bl -bullet
 .It
-Packets with IPv4 unspecified address as outer IPv4 source/destination
+Packets with IPv4 unspecified addresses as outer IPv4 source/destination
 .Pq Li 0.0.0.0/8
 .It
-Packets with loopback address as outer IPv4 source/destination
+Packets with the loopback address as outer IPv4 source/destination
 .Pq Li 127.0.0.0/8
 .It
-Packets with IPv4 multicast address as outer IPv4 source/destination
+Packets with IPv4 multicast addresses as outer IPv4 source/destination
 .Pq Li 224.0.0.0/4
 .It
-Packets with limited broadcast address as outer IPv4 source/destination
+Packets with limited broadcast addresses as outer IPv4 source/destination
 .Pq Li 255.0.0.0/8
 .It
-Packets with private address as outer IPv4 source/destination
+Packets with private addresses as outer IPv4 source/destination
 .Pq Li 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
 .It
-Packets with IPv4 link-local address as outer IPv4 source/destination
+Packets with IPv4 link-local addresses as outer IPv4 source/destination
 .Pq Li 169.254.0.0/16
 .It
-Packets with subnet broadcast address as outer IPv4 source/destination.
+Packets with subnet broadcast addresses as outer IPv4 source/destination.
 The check is made against subnet broadcast addresses for
 all of the directly connected subnets.
 .It
-Packets that does not pass ingress filtering.
-Outer IPv4 source address must meet the IPv4 topology on the routing table.
-Ingress filter can be turned off by
+Packets that do not pass ingress filtering.
+Outer IPv4 source addresses must meet the IPv4 topology on the routing table.
+Ingress filtering can be turned off by
 .Dv IFF_LINK2
 bit.
 .It
 The same set of rules are applied against the IPv4 address embedded into
-inner IPv6 address, if the IPv6 address matches 6to4 prefix.
+the inner IPv6 address, if the IPv6 address matches the 6to4 prefix.
 .It
-Packets with site-local or link-local unicast address as
+Packets with site-local or link-local unicast addresses as
 inner IPv6 source/destination
 .It
-Packets with node-local or link-local multicast address as
+Packets with node-local or link-local multicast addresses as
 inner IPv6 source/destination
 .El
 .Pp
 It is recommended to filter/audit
-incoming IPv4 packet with IP protocol number 41, as necessary.
+incoming IPv4 packets with IP protocol number 41, as necessary.
 It is also recommended to filter/audit encapsulated IPv6 packets as well.
-You may also want to run normal ingress filter against inner IPv6 address
+You may also want to run normal ingress filtering against inner IPv6 addresses
 to avoid spoofing.
 .Pp
 By setting the
@@ -180,27 +181,27 @@ By setting the
 flag on the
 .Nm
 interface, it is possible to disable the input path,
-making the direct attacks from the outside impossible.
-Note, however, there are other security risks exist.
+making direct attacks from the outside impossible.
+Note, however, that other security risks exist.
 If you wish to use the configuration,
-you must not advertise your 6to4 address to others.
+you must not advertise your 6to4 addresses to others.
 .\"
 .Sh EXAMPLES
 Note that
 .Li 8504:0506
 is equal to
 .Li 133.4.5.6 ,
-written in hexadecimals.
+written in hexadecimal.
 .Bd -literal
 # ifconfig ne0 inet 133.4.5.6 netmask 0xffffff00
 # ifconfig stf0 create inet6 2002:8504:0506:0000:a00:5aff:fe38:6f86 \\
 	prefixlen 16 alias
 .Ed
 .Pp
-The following configuration accepts packets from IPv4 source
+The following configuration accepts packets from IPv4 source address
 .Li 9.1.0.0/16
 only.
-It emits 6to4 packet only for IPv6 destination 2002:0901::/32
+It emits 6to4 packets only for IPv6 destination 2002:0901::/32
 .Pq IPv4 destination will match Li 9.1.0.0/16 .
 .Bd -literal
 # ifconfig ne0 inet 9.1.2.3 netmask 0xffff0000
@@ -220,7 +221,7 @@ For inbound traffic, you will not receive any 6to4-tunneled packets
 .Pq less security drawbacks .
 Be careful not to advertise your 6to4 prefix to others
 .Pq Li 2002:8504:0506::/48 ,
-and not to use your 6to4 prefix as a source.
+and not to use your 6to4 prefix as a source address.
 .Bd -literal
 # ifconfig ne0 inet 133.4.5.6 netmask 0xffffff00
 # ifconfig stf0 create inet6 2002:8504:0506:0000:a00:5aff:fe38:6f86 \\
@@ -262,9 +263,9 @@ interface is allowed for a node,
 and no more than one IPv6 interface address is allowed for an
 .Nm
 interface.
-It is to avoid source address selection conflicts
-between IPv6 layer and IPv4 layer,
-and to cope with ingress filtering rule on the other side.
+This is to avoid source address selection conflicts
+between the IPv6 layer and the IPv4 layer,
+and to cope with ingress filtering rules on the other side.
 This is a feature to make
 .Nm
 work right for all occasions.
