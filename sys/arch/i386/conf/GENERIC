@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.433 2001/11/03 17:08:56 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.434 2001/11/04 07:39:41 itohy Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.433 $"
+#ident 		"GENERIC-$Revision: 1.434 $"
 
 maxusers	32		# estimated number of users
 
@@ -830,6 +830,7 @@ wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at cmpci? flags 1
 #opl*	at esl?
 opl*	at eso?
 opl*	at ess?
@@ -868,6 +869,7 @@ audio*	at ym?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
+mpu*	at cmpci?
 mpu*	at eso?
 mpu*	at fms?
 mpu*	at sb?

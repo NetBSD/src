@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.26 2001/10/17 18:41:20 jdolecek Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.27 2001/11/04 07:39:41 itohy Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.27 $"
 
 maxusers	32		# estimated number of users
 
@@ -626,6 +626,7 @@ esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at cmpci? flags 1
 opl*	at esl?
 opl*	at eso?
 opl*	at ess?
@@ -664,6 +665,7 @@ audio*	at ym?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
+mpu*	at cmpci?
 mpu*	at eso?
 mpu*	at fms?
 mpu*	at sb?

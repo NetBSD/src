@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.40 2001/10/30 01:39:15 lukem Exp $
+#	$NetBSD: CARDBUS,v 1.41 2001/11/04 07:39:40 itohy Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.40 $"
+#ident		"CARDBUS-$Revision: 1.41 $"
 
 maxusers	32		# estimated number of users
 
@@ -807,6 +807,7 @@ esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
+opl*	at cmpci? flags 1
 opl*	at esl?
 opl*	at eso?
 #opl*	at ess?
@@ -845,6 +846,7 @@ audio*	at yds?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9        # MPU401 or compatible card
+mpu*	at cmpci?
 mpu*	at eso?
 mpu*	at fms?
 mpu*	at sb?
