@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.17 2004/04/03 11:33:29 sekiya Exp $	*/
+/*	$NetBSD: imc.c,v 1.18 2004/06/13 18:30:11 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.17 2004/04/03 11:33:29 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.18 2004/06/13 18:30:11 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,11 +57,11 @@ struct imc_softc {
 static int	imc_match(struct device *, struct cfdata *, void *);
 static void	imc_attach(struct device *, struct device *, void *);
 static int	imc_print(void *, const char *);
-void		imc_bus_reset(void);
-void		imc_bus_error(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-void		imc_watchdog_reset(void);
-void		imc_watchdog_disable(void);
-void		imc_watchdog_enable(void);
+static void	imc_bus_reset(void);
+static void	imc_bus_error(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+static void	imc_watchdog_reset(void);
+static void	imc_watchdog_disable(void);
+static void	imc_watchdog_enable(void);
 
 CFATTACH_DECL(imc, sizeof(struct imc_softc),
     imc_match, imc_attach, NULL, NULL);
@@ -243,14 +243,14 @@ imc_print(aux, name)
 	return UNCONF;
 }
 
-void
+static void
 imc_bus_reset(void)
 {
 	bus_space_write_4(isc.iot, isc.ioh, IMC_CPU_ERRSTAT, 0);
 	bus_space_write_4(isc.iot, isc.ioh, IMC_GIO_ERRSTAT, 0);
 }
 
-void
+static void
 imc_bus_error(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	printf("bus error: cpu_stat %08x addr %08x, gio_stat %08x addr %08x\n",
@@ -261,12 +261,13 @@ imc_bus_error(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipendin
 	imc_bus_reset();
 }
 
-void
+static void
 imc_watchdog_reset(void)
 {
 	bus_space_write_4(isc.iot, isc.ioh, IMC_WDOG, 0);
 }
-void
+
+static void
 imc_watchdog_disable(void)
 {
 	u_int32_t reg;
@@ -277,7 +278,7 @@ imc_watchdog_disable(void)
         bus_space_write_4(isc.iot, isc.ioh, IMC_CPUCTRL0, reg);
 }
 
-void
+static void
 imc_watchdog_enable(void)
 {
 	u_int32_t reg;
