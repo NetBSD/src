@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.9 1999/12/22 23:21:21 augustss Exp $
+.\" $NetBSD: ugen.4,v 1.10 1999/12/23 09:23:48 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,7 +100,7 @@ To perform input from an interrupt endpoint
 should be used.  A moderate amount of buffering is done
 by the driver.
 .Pp
-The control endpoint (endpoint 0) handles the following
+All endpoints handle the following
 .Xr ioctl 2
 calls:
 .Pp
@@ -111,7 +111,15 @@ which is shorter than the request specified is reported as an
 error.
 .It Dv USB_SET_TIMEOUT (int)
 Set the timeout on the device operations, the time is specified
-in milliseconds.
+in milliseconds.  The value 0 is used to indicate that there is
+no timeout.
+.El
+.Pp
+The control endpoint (endpoint 0) handles the following
+.Xr ioctl 2
+calls:
+.Pp
+.Bl -tag -width indent -compact
 .It Dv USB_GET_CONFIG (int)
 Get the device configuration number.
 .It Dv USB_SET_CONFIG (int)
