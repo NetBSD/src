@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciareg.h,v 1.6 1998/08/13 15:00:02 nathanw Exp $	*/
+/*	$NetBSD: pcmciareg.h,v 1.7 1998/10/29 09:45:52 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -177,6 +177,8 @@
 #define	PCMCIA_TPLFE_TYPE_LAN_MEDIA			0x03
 #define	PCMCIA_TPLFE_TYPE_LAN_NID			0x04
 #define	PCMCIA_TPLFE_TYPE_LAN_CONN			0x05
+#define	PCMCIA_TPLFE_TYPE_DISK_DEVICE_INTERFACE		0x01
+#define	PCMCIA_TPLFE_DDI_PCCARD_ATA				0x01
 #define	PCMCIA_CISTPL_END			0xFF
 
 /* Layer 2 Data Recording Format Tuples */
