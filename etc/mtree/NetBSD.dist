@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.228 2003/04/17 22:23:47 thorpej Exp $
+#	$NetBSD: NetBSD.dist,v 1.229 2003/04/18 05:15:29 thorpej Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -22,6 +22,8 @@
 ./etc/openssl/misc
 ./etc/openssl/private
 ./etc/postfix
+./etc/powerd
+./etc/powerd/scripts
 ./etc/racoon
 ./etc/rc.conf.d
 ./etc/rc.d
