@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.7 1994/01/30 01:04:35 briggs Exp $
+ *	$Id: machdep.c,v 1.8 1994/02/22 01:30:55 briggs Exp $
  */
 
 #include <param.h>
@@ -118,10 +118,19 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
+#include "via.h"
+
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
 
 int dbg_flg = 0;
+extern unsigned long	load_addr;
+int			mach_processor;
+int			do_graybars;
+int			mach_memsize;
+int			booter_version;
+extern unsigned long	videoaddr;
+extern unsigned long	videorowbytes;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -380,59 +389,70 @@ setregs(p, entry, sp, retval)
 
 identifycpu()
 {
+	extern unsigned long	bootdev, root_scsi_id,
+				videobitdepth, videosize;
 /* MF Just a little interesting tidbit about what machine we are
    running on.  In the future magic may happen here based on
    machine, i.e. different via, scsi, iop, serial stuff
 */
-	/* machine id is 
-	bit 0				bit 32
-	ppMMMMMMxxxxxxxxxSxxxxxxxxx..xx currently
-	where pp is processor
-	MM is machine 
-	S is serial boot
-	*/
+
 	printf("Apple Macintosh ");
-	switch ((machineid >>2) & 0x3f) {
-	case MACH_MAC2:
-		printf("II ");
-		break;
-	case MACH_MAC2X:
-		printf("IIx ");
-		break;
-	case MACH_MAC2SI:
-		printf("IIsi ");
-		break;
-	case MACH_MAC2CI:
-		printf("IIci ");
-		break;
-	case MACH_MAC2CX:
-		printf("IIcx ");
-		break;
-	case MACH_MAC2FX:
-		printf("IIfx ");
-		break;
-	case MACH_MACSE30:
-		printf("SE/30 ");
-		break;
-	default:
-		printf("Pentium (gestalt %d) ", (machineid >> 2) & 0x3f);
-		break;
+	switch (machineid) {
+		case MACH_MAC2:
+			printf("II ");
+			break;
+		case MACH_MAC2X:
+			printf("IIx ");
+			break;
+		case MACH_MAC2SI:
+			printf("IIsi ");
+			break;
+		case MACH_MAC2CI:
+			printf("IIci ");
+			break;
+		case MACH_MAC2CX:
+			printf("IIcx ");
+			break;
+		case MACH_MAC2FX:
+			printf("IIfx ");
+			break;
+		case MACH_MACSE30:
+			printf("SE/30 ");
+			break;
+		case MACH_MACQ700:
+			printf("Quadra 700 ");
+			break;
+		case MACH_MACQ900:
+			printf("Quadra 900 ");
+			break;
+		case MACH_MACPB140:
+			printf("PowerBook 140 ");
+			break;
+		case MACH_MACPB170:
+			printf("PowerBook 170 ");
+			break;
+		case MACH_MACCLASSIC2:
+			printf("Classic II ");
+			break;
+		default:
+			printf("Pentium (gestalt %d) ", machineid);
+			break;
 	}
 
-	switch(machineid & 3) {
-	case MACH_68020:
-		printf("(68020)");
-		break;	
-	case MACH_68030:
-		printf("(68030)");
-		break;	
-	case MACH_68040:
-		printf("(68040)");
-		break;	
-	case MACH_PENTIUM:
-	default:
-		printf("(PENTIUM)");
-		break;	
+	switch(mach_processor) {
+		case MACH_68020:
+			printf("(68020)");
+			break;	
+		case MACH_68030:
+			printf("(68030)");
+			break;	
+		case MACH_68040:
+			printf("(68040)");
+			break;	
+		case MACH_PENTIUM:
+		default:
+			printf("(PENTIUM)");
+			break;	
 	}
 	printf ("\n");
 }
@@ -1048,7 +1068,7 @@ extern long via1_spent[2][7];
 
 nmihand(struct frame frame)
 {
-#ifdef never
+#ifdef 1
    int i;
   /* LAK: Should call debugger */
 	printf("VIA1 interrupt timings:\n");
@@ -1330,51 +1350,21 @@ physstrat(bp, strat, prio)
 }
 
 
-extern unsigned long videoaddr;
-extern unsigned long videorowbytes;
-static unsigned long *gray_nextaddr = 0;
+static unsigned long gray_nextaddr = 0;
 
 
-/* MF A little note to casual passers by, this code will crash you if
- your machine has a larger rowbytes than 128...*/
-
-void bar_flash()
-{
-   static int count = 0;
-   static int i;
-
-   asm("movl a0, sp@-");
-   asm("movl a1, sp@-");
-   asm("movl d0, sp@-");
-   asm("movl d1, sp@-");
-   if (count++ == 100)
-   {
-     for(i = 0;i < 32; i++)
-        gray_nextaddr[i] ^= 0xffffffff;
-     for(i = 0;i < 32; i++)
-        gray_nextaddr[i] ^= 0xffffffff;
-     count=0;
-   }
-   asm("movl sp@+, d1");
-   asm("movl sp@+, d0");
-   asm("movl sp@+, a1");
-   asm("movl sp@+, a0");
-}
-
-
-void gray_bar()
+void gray_bar2()
 {
    static int i=0;
    static int flag=0;
-/* MF basic premise as I see it, save the scratch regs as they are not
-   saved by the compilier.
-   Set the video base address that was passed from the booter.
-   Check to see if we want gray bars, if so display 40 lines
-   of gray, a couple of lines of white(about 8), and loop to slow this
-   down.
-   then restore regs
 
-REALLY BIG GREY BARS!! REALLY!!
+/* MF basic premise as I see it:
+	1) Save the scratch regs as they are not saved by the compilier.
+   	2) Check to see if we want gray bars, if so,
+		display some lines of gray,
+		a couple of lines of white(about 8),
+		and loop to slow this down.
+   	3) restore regs
 */
 
    asm("movl a0, sp@-");
@@ -1383,24 +1373,52 @@ REALLY BIG GREY BARS!! REALLY!!
    asm("movl d1, sp@-");
 
 
-/* set video addr once ! */
-
-   if (!flag)
-   {
-	flag++;
-	gray_nextaddr = (unsigned long *)videoaddr;
+/* check to see if gray bars are turned off */
+   if (do_graybars) {
+   	/* MF the 10*rowbytes is done lots, but we want this to be slow */
+   	for(i = 0; i < 10*videorowbytes; i++)
+      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0xaaaaaaaa;
+   	for(i = 0; i < 2*videorowbytes; i++)
+      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0x00000000;
+	
+   	for(i=0;i<100000;i++);
    }
 
+
+   asm("movl sp@+, d1");
+   asm("movl sp@+, d0");
+   asm("movl sp@+, a1");
+   asm("movl sp@+, a0");
+}
+void gray_bar()
+{
+   static int i=0;
+   static int flag=0;
+
+/* MF basic premise as I see it:
+	1) Save the scratch regs as they are not saved by the compilier.
+   	2) Check to see if we want gray bars, if so,
+		display some lines of gray,
+		a couple of lines of white(about 8),
+		and loop to slow this down.
+   	3) restore regs
+*/
+
+   asm("movl a0, sp@-");
+   asm("movl a1, sp@-");
+   asm("movl d0, sp@-");
+   asm("movl d1, sp@-");
+
+
 /* check to see if gray bars are turned off */
-   if ((machineid & 0x20000)) 
-   {
-   /* MF the 10*rowbytes is done lots, but we want this to be slow, so its ok */
-   for(i = 0; i < 10*videorowbytes; i++)
-      *gray_nextaddr++ = 0xaaaaaaaa;
-   for(i = 0; i < 2*videorowbytes; i++)
-      *gray_nextaddr++ = 0x00000000;
+   if (do_graybars) {
+   	/* MF the 10*rowbytes/4 is done lots, but we want this to be slow */
+   	for(i = 0; i < 10*videorowbytes/4; i++)
+      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0xaaaaaaaa;
+   	for(i = 0; i < 2*videorowbytes/4; i++)
+      		((unsigned long *)videoaddr)[gray_nextaddr++] = 0x00000000;
 	
-   for(i=0;i<100000;i++);
+   	for(i=0;i<100000;i++);
    }
 
 
@@ -1410,6 +1428,8 @@ REALLY BIG GREY BARS!! REALLY!!
    asm("movl sp@+, a0");
 }
 
+extern void	macserinit();
+extern void	macserputchar(unsigned char c);
 
 void dprintf(unsigned long value)
 {
@@ -1644,7 +1664,7 @@ int get_top_of_ram(void)
 	unsigned long	i, found, store;
 	char		*p, *zero;
 
-	return((((machineid >> 7) & 0x1f) * MEGABYTE) - 4096);
+	return((mach_memsize * MEGABYTE) - 4096);
 
 #if TESTING 	/* Why doesn't any of this code work? */
 	found = 0;
@@ -1739,16 +1759,17 @@ print_pte_dups(
 dump_ptes()
 {
 	int va, pa;
+	extern dddprintf(char *, int, int);
 
 	for(va = NBPG; va < 20 * 1024 * 1024; va += NBPG)
 	   if(brad_kvtoste(va)->sg_v)
 	      if(kvtopte(va)->pg_v)
-	         printf("VA %d maps to PA %d\n", va,
+	         dddprintf("VA %d maps to PA %d\n", va,
 	          kvtopte(va)->pg_pfnum << PG_SHIFT);
 	for(va = - 10 * 1024 * 1024; va != 0; va += NBPG)
 	   if(brad_kvtoste(va)->sg_v)
 	      if(kvtopte(va)->pg_v)
-	         printf("VA %d maps to PA %d\n", va,
+	         dddprintf("VA %d maps to PA %d\n", va,
                   kvtopte(va)->pg_pfnum << PG_SHIFT);
 }
 #endif
@@ -1870,6 +1891,51 @@ likeyuhknow(void)
 		p->p_pid, p->p_comm, p->p_regs[PC], p->p_regs[SP]);*/
 }
 
+#if defined(MACHINE_NONCONTIG)
+/*
+ * LAK: These functions are from NetBSD/i386 and are used for
+ *  the non-contiguous memory machines, such as the IIci and IIsi.
+ *  See the functions in sys/vm that ifdef MACHINE_NONCONTIG.
+ */
+
+unsigned int
+pmap_free_pages()
+{
+
+	return avail_remaining;
+}
+
+int
+pmap_next_page(addrp)
+	vm_offset_t *addrp;
+{
+
+	if (avail_next == avail_end)
+		return FALSE;
+	
+	/* skip the hole */
+	if (avail_next == hole_start)
+		avail_next = hole_end;
+	
+	*addrp = avail_next;
+	avail_next += NBPG;
+	avail_remaining--;
+	return TRUE;
+}
+
+unsigned int
+pmap_page_index(pa)
+	vm_offset_t pa;
+{
+
+	if (pa >= avail_start && pa < hole_start)
+		return i386_btop(pa - avail_start);
+	if (pa >= hole_end && pa < avail_end)
+		return i386_btop(pa - hole_end + hole_start - avail_start);
+	return -1;
+}
+#endif  /* MACHINE_NONCONTIG */
+
 int
 pslisting(void)
 {
@@ -1887,4 +1953,318 @@ pslisting(void)
 			p, p->p_pid, p->p_flag, p->p_stat, p->p_comm, s);
 		p = p->p_nxt;
 	} while (p && p != allproc);
+}
+
+void ddprintf (char *fmt, int val)
+{
+  char buf[128], *s;
+
+  sprintf (buf, fmt, val);
+  for (s = buf; *s; s++) {
+    macserputchar (*s);
+    if (*s == '\n') {
+      macserputchar ('\r');
+    }
+  }
+}
+
+void dddprintf (char *fmt, int val1, int val2)
+{
+  char buf[128], *s;
+
+  sprintf (buf, fmt, val1, val2);
+  for (s = buf; *s; s++) {
+    macserputchar (*s);
+    if (*s == '\n') {
+      macserputchar ('\r');
+    }
+  }
+}
+
+static char *envbuf = NULL;
+
+void initenv (unsigned long flag, char *buf)
+{
+  /*
+   * If flag & 0x80000000 == 0, then we're booting with the old booter
+   * and we should freak out.
+   */
+
+  if ((flag & 0x80000000) == 0) {
+    /* Freak out; print something if that becomes available */
+  } else {
+    envbuf = buf;
+  }
+}
+
+static char toupper (char c)
+{
+  if (c >= 'a' && c <= 'z') {
+    return c - 'a'+ 'A';
+  } else {
+    return c;
+  }
+}
+
+static long getenv (char *str)
+{
+  /*
+   * Returns the value of the environment variable "str".
+   *
+   * Format of the buffer is "var=val\0var=val\0...\0var=val\0\0".
+   *
+   * Returns 0 if the variable is not there, and 1 if the variable is there
+   * without an "=val".
+   */
+
+  char *s, *s1, *s2;
+  int val, base;
+
+  s = envbuf;
+  while (1) {
+    for (s1 = str; *s1 && *s && *s != '='; s1++, s++) {
+      if (toupper (*s1) != toupper (*s)) {
+        break;
+      }
+    }
+    if (*s1) {  /* No match */
+      while (*s) {
+        s++;
+      }
+      s++;
+      if (*s == '\0') {  /* Not found */
+        /* Boolean flags are FALSE (0) if not there */
+        return 0;
+      }
+      continue;
+    }
+    if (*s == '=') { /* Has a value */
+      s++;
+      val = 0;
+      base = 10;
+      if (*s == '0' && (*(s+1) == 'x' || *(s+1) == 'X')) {
+        base = 16;
+        s += 2;
+      } else if (*s == '0') {
+        base = 8;
+      }
+      while (*s) {
+        if (toupper (*s) >= 'A' && toupper (*s) <= 'F') {
+          val = val * base + toupper (*s) - 'A' + 10;
+        } else {
+          val = val * base + (*s - '0');
+        }
+        s++;
+      }
+      return val;
+    } else {  /* TRUE (1) */
+      return 1;
+    }
+  }
+}
+
+void getenvvars (void)
+{
+  /* LAK: Grab a few useful variables */
+
+  extern unsigned long bootdev, root_scsi_id, videobitdepth, videosize;
+
+  bootdev = root_scsi_id = getenv ("ROOT_SCSI_ID");
+  boothowto = getenv ("SINGLE_USER");
+  videoaddr = getenv ("VIDEO_ADDR");
+		/* These next two should give us mapped video & serial */
+		/* We need these for pre-mapping graybars & echo, but probably */
+		/* only on MacII or LC. */
+  /* videoaddr = getenv("MACOS_VIDEO"); */
+  /* sccaddr = getenv("MACOS_SCC"); */
+  videorowbytes = getenv ("ROW_BYTES");
+  videobitdepth = getenv ("SCREEN_DEPTH");
+  videosize = getenv ("DIMENSIONS");
+  /* New info stuff */
+  machineid = getenv("MACHINEID");
+  mach_processor = getenv("PROCESSOR");
+  mach_memsize = getenv("MEMSIZE");
+  do_graybars = getenv("GRAYBARS");
+  serial_boot_echo = getenv("SERIALECHO");
+		/* Should probably check this and fail if old */
+  booter_version = getenv("BOOTERVER");
+}
+
+void printenvvars (void)
+{
+  extern unsigned long bootdev, root_scsi_id, videobitdepth, videosize;
+
+  ddprintf ("bootdev = %u\n", (int)bootdev);
+  ddprintf ("root_scsi_id = %u\n", (int)root_scsi_id);
+  ddprintf ("boothowto = %u\n", (int)boothowto);
+  ddprintf ("videoaddr = %u\n", (int)videoaddr);
+  ddprintf ("videorowbytes = %u\n", (int)videorowbytes);
+  ddprintf ("videobitdepth = %u\n", (int)videobitdepth);
+  ddprintf ("videosize = %u\n", (int)videosize);
+  ddprintf ("machineid = %u\n", (int)machineid);
+  ddprintf ("processor = %u\n", (int)mach_processor);
+  ddprintf ("memsize = %u\n", (int)mach_memsize);
+  ddprintf ("graybars = %u\n", (int)do_graybars);
+  ddprintf ("serial echo = %u\n", (int)serial_boot_echo);
+}
+
+
+extern long (*via1itab[7])();
+extern long adb_intr_II(void);
+extern long adb_intr_SI(void);
+extern long adb_intr_PB(void);
+
+/* BG 1/2/94 */
+void setmachdep(void)
+{
+	/* Sets a bunch of machine-specific variables */
+	load_addr = 0;
+
+	/* Set up any machine specific stuff that we have to before */
+	/*  ANYTHING else happens */
+	switch(machineid){	/* remove bit overlap */
+		case MACH_MAC2:
+		case MACH_MACSE30:
+		case MACH_MAC2X:
+		case MACH_MAC2CX:
+			VIA2 = 1;
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+			via1itab[2] = adb_intr_II;
+			break;
+		case MACH_MACPB140:
+		case MACH_MACPB170:
+			VIA2 = 1;
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+			via1itab[2] = adb_intr_PB;
+			break;
+		case MACH_MAC2CI:
+			VIA2 = 0x13;
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
+			/*
+			 * LAK: Find out if internal video is on.  If yes, then
+			 * we loaded in bank B.  We need a better way to determine
+			 * this, like use the TT0 register.
+			 */
+			if (rbv_vidstatus ()) {
+				load_addr = 0x04000000;
+			}
+			via1itab[2] = adb_intr_II;
+			break;
+		case MACH_MAC2SI:		/* I'm really not sure about IIsi. */
+			VIA2 = 0x13;
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
+			/*
+			 * LAK: Find out if internal video is on.  If yes, then
+			 * we loaded in bank B.  We need a better way to determine
+			 * this, like use the TT0 register.
+			 */
+			if (rbv_vidstatus ()) {
+				load_addr = 0x04000000;
+			}
+			via1itab[2] = adb_intr_SI;
+			break;
+		case MACH_MACQ700:		/* These three are guesses */
+		case MACH_MACQ900:
+		case MACH_MACCLASSIC2:
+			VIA2 = 0x13;
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
+			via1itab[2] = adb_intr_SI;
+			break;
+		default:
+			/* For any other machine, I have no idea how to handle it! */
+			VIA2 = 0x13;	/* Is it the same as RBV?? */
+			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
+			via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
+			via1itab[2] = adb_intr_SI;
+			break;
+	}
+}
+
+void mmudebug (long phys2, long phys1, long logical)
+{
+  ddprintf ("logical = 0x%x\n", logical);
+  ddprintf ("phys1 = 0x%x\n", phys1);
+  ddprintf ("phys2 = 0x%x\n", phys2);
+}
+
+void gothere (long i)
+{
+  dddprintf ("Got here #%d (0x%x)\n", i, i);
+}
+
+void dump_pmaps (void)
+{
+  /* LAK: Dumps all of the page tables to serial */
+
+  unsigned long *s, *p;
+  extern unsigned long *Sysseg;
+  int i, j;
+
+  s = (unsigned long *)Sysseg;
+
+  ddprintf ("About to dump the pmaps (%x):\n", (unsigned int)s);
+  for (i = 0; i < 1000; i++) {
+    if (s[i] & SG_V) {
+      p = (unsigned long *)((s[i] & SG_FRAME) - load_addr);
+      for (j = 0; j < 1000; j++) {
+        if (p[j] & PG_V) {
+          dddprintf ("%x --> %x\n", i*1024*4096 + j*4096, p[j] & PG_FRAME);
+        }
+      }
+    }
+  }
+  ddprintf ("Just dumped the pmaps\n", 0);
+}
+
+unsigned long getphysical (unsigned long tc, unsigned long pte,
+                           unsigned long psr, unsigned int kva)
+{
+  /*
+   * LAK: (1/2/94) This function should be called right after a
+   *  ptestr instruction.  tc is the current TC, pte is the
+   *  one returned by ptestr, and psr is the PSR right after
+   *  the ptestr.  This function returns the physical address
+   *  of kva.
+   */
+
+  /*
+   * Here is the general idea.  We do a ptestr, and the MMU looks
+   * up "kva" as if it were looking up the address normally.  It
+   * returns a pointer to the last PTE which it accesses (pte),
+   * and puts a number in psr which says how many levels it
+   * had to go through to get there.  This number of levels may
+   * not be the number of levels that TC says it has because this
+   * particular leaf may have been early-terminated.  Now we must
+   * know the page size for that PTE to get the right offset into
+   * that page.
+   */
+
+  unsigned int pagesize, pagebits, levels, i;
+
+  pagebits = 32;  /* Start with 32-bit addressing */
+
+  pagebits -= (tc >> 16) & 0xF; /* Subtract Initial Shift */
+
+  /* Subtract each level of the table tree: */
+  levels = psr & 0x7;
+  for (i = 0; i < levels; i++) {
+    pagebits -= (tc >> (12 - i * 4)) & 0xF;
+  }
+
+  /* Number of bits left must be the size of that page: */
+  pagesize = 1 << pagebits;
+
+  /* Mask off info bits: */
+  pte &= 0xFFFFFF00;
+
+  /* Add offset into page: */
+  pte += kva & (pagesize-1);
+
+  /* And return that sucker: */
+  return pte;
 }
