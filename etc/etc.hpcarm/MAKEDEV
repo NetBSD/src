@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.1 2002/04/13 00:07:25 toshii Exp $
+#	$NetBSD: MAKEDEV,v 1.2 2002/04/18 13:24:58 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -59,7 +59,6 @@
 #
 # Pointing devices:
 #	quadmouse*	"quadrature mouse"
-#	pms*		"PS/2 mouse"
 #	wsmouse* wscons mouse events
 #
 # Keyboard devices:
@@ -149,7 +148,7 @@ all)
 	makedev ttyv0 ttyS0
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev lpa0 lpt0 tun0 tun1 tun2 ipl
-	makedev beep lkm qms0 pms0 local
+	makedev beep lkm qms0 local
 	makedev usbs isdns
 	makedev mouse-qms0 random openfirm
 	makedev music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
@@ -498,11 +497,10 @@ lpt*|lpa*)
 	;;
 
 
-bpf*|tun*|pms*|qms*|joy*)
+bpf*|tun*|qms*|joy*)
 	case $i in
 	bpf*) name=bpf;	unit=${i#bpf};	chr=32;;
 	tun*) name=tun;	unit=${i#tun};	chr=33;;
-	pms*) name=pms;	unit=${i#pms};	chr=40;;
 	qms*) name=qms;	unit=${i#qms};	chr=9;;
 	joy*) name=joy;	unit=${i#joy};	chr=56;;
 	esac
@@ -533,7 +531,6 @@ lkm)
 
 mouse-*)
 	case $i in
-	mouse-pms*) name=pms;	unit=${i#mouse-pms};;
 	mouse-qms*) name=qms;	unit=${i#mouse-qms};;
 	esac
 	ln -fs $name$unit mouse

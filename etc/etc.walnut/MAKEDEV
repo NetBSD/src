@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.18 2002/04/02 05:24:59 briggs Exp $
+#	$NetBSD: MAKEDEV,v 1.19 2002/04/18 13:24:59 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -53,7 +53,6 @@
 #	ttyE*	wscons
 #
 # Pointing devices:
-#	pms*	PS/2 mouse
 #	wsmouse* wscons mouse events
 #
 # Keyboard devices:
@@ -127,7 +126,7 @@ all)
 	makedev lpt0 lpt1 lpt2 tun0 tun1 ipl
 	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
 	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random ttyCY0
-	makedev lkm mms0 lms0 pms0 apm local satlink0
+	makedev lkm mms0 lms0 apm local satlink0
 	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7 ttyE8
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
 	makedev isdns
@@ -438,11 +437,10 @@ lpt*|lpa*)
 	mknod $name$unit	c $chr $(($unit + $flags))
 	;;
 
-bpf*|tun*|pms*)
+bpf*|tun*)
 	case $i in
 	bpf*) name=bpf;	unit=${i#bpf};	chr=10;;
 	tun*) name=tun;	unit=${i#tun};	chr=11;;
-	pms*) name=pms;	unit=${i#pms};	chr=37;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.14 2002/03/13 01:26:56 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.15 2002/04/18 13:24:57 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -309,13 +309,12 @@ maple*)
 	chmod 600 $name$subunit
 	;;
 
-bpf*|tun*|mms*|lms*|pms*|joy*)
+bpf*|tun*|mms*|lms*|joy*)
 	case $i in
 	bpf*) name=bpf;	unit=${i#bpf};	chr=23;;
 	tun*) name=tun;	unit=${i#tun};	chr=40;;
 	mms*) name=mms;	unit=${i#mms};	chr=35;;
 	lms*) name=lms;	unit=${i#lms};	chr=36;;
-	pms*) name=pms;	unit=${i#pms};	chr=37;;
 	joy*) name=joy;	unit=${i#joy};	chr=26;;
 	esac
 	rm -f $name$unit
