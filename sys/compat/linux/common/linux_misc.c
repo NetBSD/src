@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.105 2002/03/31 22:22:47 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.106 2002/04/03 10:17:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.105 2002/03/31 22:22:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.106 2002/04/03 10:17:01 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1115,7 +1115,7 @@ linux_sys_setgroups16(p, v, retval)
 	sg = stackgap_init(p, 0);
 	bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
 	lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
-	kbset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
+	kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
 	if (lset == NULL || bset == NULL)
 		return ENOMEM;
 	error = copyin(SCARG(uap, gidset), lset, n * sizeof (linux_gid_t));
