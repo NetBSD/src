@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.10 1999/12/06 10:04:50 ad Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.11 2000/01/05 16:04:00 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -40,8 +40,6 @@
 
 #include <dev/wscons/wsdisplayvar.h>
 
-#include "vga.h"
-
 void
 pcdisplay_cursor(id, on, row, col)
 	void *id;
@@ -52,19 +50,6 @@ pcdisplay_cursor(id, on, row, col)
 	bus_space_tag_t memt = scr->hdl->ph_memt;
 	bus_space_handle_t memh = scr->hdl->ph_memh;
 	int off;
-#if NVGA == 0
-	static int hwoff;
-
-	/* 
-	 * If the VGA driver hasn't been included in the kernel, we
-	 * need to turn the hardware cursor off here.
-	 */
-	if (hwoff == 0) {
-		pcdisplay_6845_write(scr->hdl, cursorh, 0x10);
-		pcdisplay_6845_write(scr->hdl, cursorl, 0x10);
-		hwoff = 1;
-	}
-#endif	/* NVGA == 0 */
 
 	/* Remove old cursor image */
 	if (scr->cursoron) {
