@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.14 2001/05/09 20:21:51 kleink Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.15 2001/06/06 21:39:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -28,7 +28,9 @@
  * SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -72,6 +74,10 @@ netbsd32_setregs(p, pack, stack)
 
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
+
+	/* Setup the coredump32 hook */
+	if (coredump32_hook == NULL)
+		coredump32_hook = coredump32;
 
 	/*
 	 * Set the registers to 0 except for:
@@ -169,7 +175,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	 */
 	sf.sf_signo = sig;
 	sf.sf_code = (u_int)code;
-#ifdef COMPAT_SUNOS
+#if defined(COMPAT_SUNOS) || defined(LKM)
 	sf.sf_scp = (u_long)&fp->sf_sc;
 #endif
 	sf.sf_addr = 0;			/* XXX */
