@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.13 2001/11/15 07:03:29 lukem Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.14 2001/11/17 19:32:03 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.13 2001/11/15 07:03:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.14 2001/11/17 19:32:03 kleink Exp $");
 
 #include "opt_largepages.h"
 
@@ -472,7 +472,7 @@ i386_memio_mmap(t, addr, off, prot, flags)
 
 	/* Can't mmap I/O space. */
 	if (t == I386_BUS_SPACE_IO)
-		return (EOPNOTSUPP);
+		return (-1);
 
 	/*
 	 * "addr" is the base address of the device we're mapping.
