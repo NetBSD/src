@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.2 2002/10/14 02:08:39 takemura Exp $	*/
+/*	$NetBSD: apmio.h,v 1.1 2002/10/14 02:08:40 takemura Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,10 +34,37 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __SPARC_APM_H__
-#define __SPARC_APM_H__
+#ifndef __DEV_APM_APMIO_H__
+#define __DEV_APM_APMIO_H__
 
-#include <dev/apm/apmbios.h>
-#include <dev/apm/apmio.h>
+struct apm_event_info {
+	u_int type;
+	u_int index;
+	u_int spare[8];
+};
 
-#endif /* __SPARC_APM_H__ */
+struct apm_power_info {
+	u_char battery_state;
+	u_char ac_state;
+	u_char battery_life;
+	u_char spare1;
+	u_int minutes_left;		/* estimate */
+	u_int nbattery;		
+	u_int batteryid;
+	u_int spare2[4];
+};
+
+struct apm_ctl {
+	u_int dev;
+	u_int mode;
+};
+
+#define	APM_IOC_REJECT	_IOW('A', 0, struct apm_event_info) /* reject request # */
+#define	APM_IOC_STANDBY	_IO('A', 1)	/* put system into standby */
+#define	APM_IOC_SUSPEND	_IO('A', 2)	/* put system into suspend */
+#define	OAPM_IOC_GETPOWER _IOR('A', 3, struct apm_power_info) /* fetch battery state */
+#define	APM_IOC_GETPOWER _IOWR('A', 3, struct apm_power_info) /* fetch battery state */
+#define	APM_IOC_NEXTEVENT _IOR('A', 4, struct apm_event_info) /* fetch event */
+#define	APM_IOC_DEV_CTL	_IOW('A', 5, struct apm_ctl) /* put device into mode */
+
+#endif /* __DEV_APM_APMIO_H__ */
