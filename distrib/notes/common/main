@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.264 2004/08/22 06:56:03 tron Exp $
+.\"	$NetBSD: main,v 1.265 2004/08/23 01:07:46 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1427,8 +1427,8 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Phil Nelson                    Ta Mt      phil@NetBSD.org Ta Sy pc532
 .It Ta Reinoud Zandijk                Ta Mt   reinoud@NetBSD.org Ta Sy acorn32
 .It Ta Ross Harvey                    Ta Mt      ross@NetBSD.org Ta Sy alpha
-.It Ta S(/oren Jørvang                Ta Mt     soren@NetBSD.org Ta Sy cobalt
-.It Ta S(/oren Jørvang                Ta Mt     soren@NetBSD.org Ta Sy sgimips
+.It Ta S(/oren J(/orvang              Ta Mt     soren@NetBSD.org Ta Sy cobalt
+.It Ta S(/oren J(/orvang              Ta Mt     soren@NetBSD.org Ta Sy sgimips
 .It Ta Scott Reynolds                 Ta Mt    scottr@NetBSD.org Ta Sy mac68k
 .It Ta Shin Takemura                  Ta Mt  takemura@NetBSD.org Ta Sy hpcmips
 .It Ta Simon Burge                    Ta Mt    simonb@NetBSD.org Ta Sy evbmips
