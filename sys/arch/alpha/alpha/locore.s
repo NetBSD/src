@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.100 2002/05/13 21:38:09 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.101 2002/07/01 03:10:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.100 2002/05/13 21:38:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.101 2002/07/01 03:10:01 thorpej Exp $");
 
 #include "assym.h"
 
@@ -272,26 +272,16 @@ backtolocore1:
 /**************************************************************************/
 
 /*
- * Signal "trampoline" code. Invoked from RTE setup by sendsig().
+ * Signal "trampoline" code.
  *
- * On entry, stack & registers look like:
+ * The kernel arranges for the handler to be invoked directly.  This
+ * trampoline is used only to return from the signal.
  *
- *      a0	signal number
- *      a1	signal specific code
- *      a2	pointer to signal context frame (scp)
- *      pv	address of handler
- *      sp+0	saved hardware state
- *                      .
- *                      .
- *      scp+0	beginning of signal context frame
+ * The stack pointer points to the saved sigcontext.
  */
 
 NESTED_NOPROFILE(sigcode,0,0,ra,0,0)
-	lda	sp, -16(sp)		/* save the sigcontext pointer */
-	stq	a2, 0(sp)
-	jsr	ra, (t12)		/* call the signal handler (t12==pv) */
-	ldq	a0, 0(sp)		/* get the sigcontext pointer */
-	lda	sp, 16(sp)
+	mov	sp, a0			/* get pointer to sigcontext */
 	CALLSYS_NOERROR(__sigreturn14)	/* and call sigreturn() with it. */
 	mov	v0, a0			/* if that failed, get error code */
 	CALLSYS_NOERROR(exit)		/* and call exit() with it. */
