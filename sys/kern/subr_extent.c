@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.31 2000/06/06 17:32:50 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.32 2000/06/16 16:48:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -673,7 +673,10 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 				    boundary, dontcross);
 #endif
 
-				if (newend > dontcross) {
+				/* Check for overflow */
+				if (dontcross < ex->ex_start)
+					dontcross = ex->ex_end;
+				else if (newend > dontcross) {
 					/*
 					 * Candidate region crosses boundary.
 					 * Throw away the leading part and see
@@ -764,7 +767,10 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 			    boundary, dontcross);
 #endif
 
-			if (newend > dontcross) {
+			/* Check for overflow */
+			if (dontcross < ex->ex_start)
+				dontcross = ex->ex_end;
+			else if (newend > dontcross) {
 				/*
 				 * Candidate region crosses boundary.
 				 * Throw away the leading part and see
