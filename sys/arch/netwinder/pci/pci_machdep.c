@@ -86,6 +86,10 @@ netwinder_pci_attach_hook (struct device *parent,
 	regval = PCI_CLASS_CODE(PCI_CLASS(regval), PCI_SUBCLASS(regval), 0x8A);
 	pci_conf_write(pba->pba_pc, tag, PCI_CLASS_REG, regval);
 
+	regval = pci_conf_read(pba->pba_pc, tag, 0x40);
+	regval &= ~0x10;	/* disable secondary port */
+	pci_conf_write(pba->pba_pc, tag, 0x40, regval);
+
 	pci_conf_write(pba->pba_pc, tag, 0x10, 0x01f0 | PCI_MAPREG_TYPE_IO);
 	pci_conf_write(pba->pba_pc, tag, 0x14, 0x03f4 | PCI_MAPREG_TYPE_IO);
 	pci_conf_write(pba->pba_pc, tag, 0x18, 0x0170 | PCI_MAPREG_TYPE_IO);
