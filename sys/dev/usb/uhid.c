@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.60.2.1 2004/05/11 12:54:26 tron Exp $	*/
+/*	$NetBSD: uhid.c,v 1.60.2.2 2004/07/02 17:17:06 he Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.60.2.1 2004/05/11 12:54:26 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.60.2.2 2004/07/02 17:17:06 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,7 +537,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
                 struct usb_string_desc *si = (struct usb_string_desc *)addr;
                 err = usbd_get_string_desc(sc->sc_hdev.sc_parent->sc_udev,
 			si->usd_string_index,
-                	si->usd_language_id, &si->usd_desc);
+                	si->usd_language_id, &si->usd_desc, &size);
                 if (err)
                         return (EINVAL);
                 break;
