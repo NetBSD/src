@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.235 2003/08/13 22:26:44 reed Exp $
+.\"	$NetBSD: main,v 1.236 2003/08/28 15:15:28 cl Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1802,6 +1802,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Johnny C. Lam Ta Mt jlam@NetBSD.org
 .It Ta Martin J. Laubach Ta Mt mjl@NetBSD.org
 .It Ta Ted Lemon Ta Mt mellon@NetBSD.org
+.It Ta Christian Limpach Ta Mt cl@NetBSD.org
 .It Ta Frank van der Linden Ta Mt fvdl@NetBSD.org
 .It Ta Joel Lindholm Ta Mt joel@NetBSD.org
 .It Ta Mike Long Ta Mt mikel@NetBSD.org
