@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_sysent.c,v 1.68 2001/01/27 08:00:59 thorpej Exp $ */
+/* $NetBSD: svr4_sysent.c,v 1.69 2001/02/11 01:14:25 eeh Exp $ */
 
 /*
  * System call switch table.
@@ -79,7 +79,7 @@ struct sysent svr4_sysent[] = {
 	{ 1, s(struct sys_setuid_args), 0,
 	    sys_setuid },			/* 23 = setuid */
 	{ 0, 0, 0,
-	    sys_getuid },			/* 24 = getuid */
+	    sys_getuid_with_euid },		/* 24 = getuid_with_euid */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 25 = unimplemented stime */
 	{ 0, 0, 0,
@@ -125,7 +125,7 @@ struct sysent svr4_sysent[] = {
 	{ 1, s(struct sys_setgid_args), 0,
 	    sys_setgid },			/* 46 = setgid */
 	{ 0, 0, 0,
-	    sys_getgid },			/* 47 = getgid */
+	    sys_getgid_with_egid },		/* 47 = getgid_with_egid */
 	{ 2, s(struct svr4_sys_signal_args), 0,
 	    svr4_sys_signal },			/* 48 = signal */
 #ifdef SYSVMSG
