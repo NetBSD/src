@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.10 2000/10/29 12:36:35 tsutsui Exp $
+#	$NetBSD: files.newsmips,v 1.11 2000/10/30 10:07:35 tsubai Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -119,6 +119,14 @@ device sc: scsi
 attach sc at hb
 file arch/newsmips/dev/scsi_1185.c		sc needs-count
 file arch/newsmips/dev/sc_wrap.c		sc
+
+device spifi: scsi
+attach spifi at ap
+file arch/newsmips/apbus/spifi.c		spifi
+
+device dmac
+attach dmac at ap
+file arch/newsmips/apbus/dmac3.c		dmac
 
 # network devices MII bus
 include "dev/mii/files.mii"
