@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.81 2000/10/19 21:14:18 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.82 2000/10/20 16:01:43 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1773,3 +1773,22 @@ usr.bin/kdump/kdump.c				patch
 usr.bin/window/lcmd2.c				1.11
 
   Fix format / arg mismatch.
+
+usr.bin/chpass/chpass.c				patch
+usr.bin/chpass/pw_yp.c				patch
+
+  Change password database information without turning off the user
+  when using secure YP maps.
+
+domestic/lib/libkrb/decomp_ticket.c		1.6
+domestic/lib/libkrb/get_ad_tkt.c		1.6
+domestic/lib/libkrb/krb_get_in_tkt.c		1.6
+domestic/lib/libkrb/kuserok.c			1.5
+domestic/lib/libkrb/rd_req.c			1.6
+
+  Fix possible buffer overflows when parsing the ticket file
+  and tickets off the wire.  Also some format string fixups.
+
+lib/libc/net/ns_addr.c				1.11
+
+  Avoid use of variable string fmt.
