@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.37 2000/08/10 04:37:59 eeh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.38 2000/08/17 04:15:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -830,6 +830,29 @@ _simple_lock(__volatile struct simplelock *alp, const char *id, int l)
 
  out:
 	splx(s);
+}
+
+int
+_simple_lock_held(__volatile struct simplelock *alp)
+{
+#if defined(MULTIPROCESSOR)
+	cpuid_t cpu_id = cpu_number();
+	int s, locked = 0;
+
+	s = splhigh();
+	if (__cpu_simple_lock_try(&alp->lock_data) == 0)
+		locked = (alp->lock_holder == cpu_id);
+	else
+		__cpu_simple_unlock(&alp->lock_data);
+	splx(s);
+#else
+	int s, locked;
+
+	s = splhigh();
+	locked = (alp->lock_data == __SIMPLELOCK_LOCKED);
+	splx(s);
+#endif
+	return (locked);
 }
 
 int
