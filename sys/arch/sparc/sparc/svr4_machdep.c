@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.7 1995/08/14 02:11:24 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.8 1995/08/14 02:14:07 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -108,7 +108,7 @@ svr4_getcontext(p, uc, mask, oonstack)
 	/*
 	 * Set the signal mask
 	 */
-	bsd_to_svr4_sigset_t(&mask, &uc->uc_sigmask);
+	bsd_to_svr4_sigset(&mask, &uc->uc_sigmask);
 
 	/*
 	 * Set the flags
@@ -169,7 +169,7 @@ svr4_setcontext(p, uc)
 	/*
 	 * restore signal mask
 	 */
-	svr4_to_bsd_sigset_t(&uc->uc_sigmask, &mask);
+	svr4_to_bsd_sigset(&uc->uc_sigmask, &mask);
 	p->p_sigmask = mask & ~sigcantmask;
 
 	/*
