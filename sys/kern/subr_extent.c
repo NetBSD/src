@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.14 1998/07/23 20:57:17 pk Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.15 1998/07/24 06:40:45 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 #define	wakeup(chan)			((void)0)
 #endif
 
+static	pool_handle_t expool_create __P((void));
 static	void extent_insert_and_optimize __P((struct extent *, u_long, u_long,
 	    int, struct extent_region *, struct extent_region *));
 static	struct extent_region *extent_alloc_region_descriptor
@@ -79,6 +80,18 @@ static pool_handle_t expool;
  */
 #define EXTENT_ALIGN(_start, _align)			\
 	(((_start) + ((_align) - 1)) & (-(_align)))
+
+/*
+ * Create the extent_region pool.
+ * (This is deferred until one of our callers thinks we can malloc()).
+ */
+
+static pool_handle_t expool_create()
+{
+  expool = pool_create(sizeof(struct extent_region), 0, 0,
+		       0, "extent", 0, 0, 0, 0);
+  return expool;
+}
 
 /*
  * Allocate and initialize an extent map.
@@ -97,11 +110,6 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 	size_t sz = storagesize;
 	struct extent_region *rp;
 	int fixed_extent = (storage != NULL);
-
-	if (expool == NULL &&
-	    (expool = pool_create(sizeof(struct extent_region), 0, 0,
-				 0, "extent", 0, 0, 0, 0)) == NULL)
-		return (NULL);
 
 #ifdef DIAGNOSTIC
 	/* Check arguments. */
@@ -147,6 +155,10 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 			LIST_INSERT_HEAD(&fex->fex_freelist, rp, er_link);
 		}
 	} else {
+		if ((expool == NULL) &&
+		    !expool_create())
+			return NULL;
+
 		ex = (struct extent *)malloc(sizeof(struct extent),
 		    mtype, (flags & EX_WAITOK) ? M_WAITOK : M_NOWAIT);
 		if (ex == NULL)
@@ -966,6 +978,10 @@ extent_alloc_region_descriptor(ex, flags)
 	}
 
  alloc:
+	if ((expool == NULL) &&
+	    !expool_create())
+		return (NULL);
+
 	rp = pool_get(expool, (flags & EX_WAITOK) ? PR_WAITOK : 0);
 
 	if (rp != NULL)
