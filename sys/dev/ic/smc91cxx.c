@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.1.2.1 1997/08/11 19:52:01 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.1.2.2 1997/08/12 06:58:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -164,10 +164,10 @@ void	smc91cxx_stop __P((struct smc91cxx_softc *));
 void	smc91cxx_watchdog __P((struct ifnet *));
 int	smc91cxx_ioctl __P((struct ifnet *, u_long, caddr_t));
 
-/* XXX fix me before i will work! XXX */
-#define	ETHER_MAX_LEN	1600
-#define	ETHER_MIN_LEN	100
-#define	ETHER_CRC_LEN	32
+/* XXX Should be in a common header file. */
+#define	ETHER_MAX_LEN	1518
+#define	ETHER_MIN_LEN	64
+#define	ETHER_CRC_LEN	4
 
 static __inline int ether_cmp __P((void *, void *));
 static __inline int
