@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1 2002/02/11 18:03:06 uch Exp $	*/
+/*	$NetBSD: cache.c,v 1.2 2002/02/17 20:57:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <sh3/cache_sh4.h>
 
 /*
- * XXX __cache_flush is used before sh_cache_config() is called.
+ * __cache_flush is used before sh_cache_config() is called.
  */
 static void __cache_flush(void);
 struct sh_cache_ops sh_cache_ops = {
@@ -73,54 +73,27 @@ int sh_cache_index_mode_icache;
 int sh_cache_index_mode_dcache;
 
 void
-sh_cache_config(int cpu_id)
+sh_cache_init()
 {
 
 #ifdef CACHE_DEBUG
-	printf("*** USE DEBUG CACHE FLUSH CODE ***\n");
 	return;
 #endif
-
-#if 1	/* XXX No cpu identify method. temporary. */
-#ifdef SH4
-	sh4_cache_config(cpu_id);
-#else
-	sh3_cache_config(cpu_id);
-#endif
-#endif /* temporary */
-
-#if notyet
-	switch (cpu_id) {
-#ifdef CPU_SH3
-	case CPU_PRODUCT_SH7708:
-	case CPU_PRODUCT_SH7708S:
-	case CPU_PRODUCT_SH7708R:
-	case CPU_PRODUCT_SH7709:
-	case CPU_PRODUCT_SH7709A:
-		sh3_cache_config();
-		break;
-#endif /* CPU_SH3 */
-#ifdef CPU_SH4
-	case CPU_PRODUCT_SH7750:
-	case CPU_PRODUCT_SH7750S:
-		sh4_cache_config();
-		break;
-#endif /* CPU_SH4 */
-	default:
-		panic("sh_cache_config: no cache flush operation.");
-		break;
-	}
-#endif
-
+	if (CPU_IS_SH3)
+		sh3_cache_config();		
+	else
+		sh4_cache_config();		
 }
 
 void
 sh_cache_information()
 {
+
 #ifdef CACHE_DEBUG
-	printf("No cache information.\n");
+	printf("*** USE CPU INDEPENDENT CACHE OPS. ***\n");
 	return;
 #endif
+
 	/* I-cache or I/D-unified cache */
 	printf("%dKB/%dB ", sh_cache_size_icache >> 10, sh_cache_line_size);
 	if (sh_cache_ways > 1)
