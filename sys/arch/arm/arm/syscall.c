@@ -1,7 +1,7 @@
-/*	$NetBSD: syscall.c,v 1.15 2003/01/17 22:28:49 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.16 2003/03/01 04:36:38 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2003/01/17 22:28:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2003/03/01 04:36:38 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -171,16 +171,150 @@ swi_handler(trapframe_t *frame)
 	uvmexp.syscalls++;
 
 	(*(void(*)(struct trapframe *, struct lwp *, u_int32_t))
-	    (p->p_emul->e_syscall))(frame, l, insn);
+	    (p->p_md.md_syscall))(frame, l, insn);
 }
 
 #define MAXARGS 8
 
-/* XXX */
-void syscall(struct trapframe *frame, struct lwp *l, u_int32_t insn);
+void syscall_intern(struct proc *);
+void syscall_plain(struct trapframe *, struct lwp *, u_int32_t);
+void syscall_fancy(struct trapframe *, struct lwp *, u_int32_t);
 
 void
-syscall(struct trapframe *frame, struct lwp *l, u_int32_t insn)
+syscall_intern(struct proc *p)
+{
+#ifdef KTRACE
+	if (p->p_traceflag & (KTRFAC_SYSCALL | KTRFAC_SYSRET)) {
+		p->p_md.md_syscall = syscall_fancy;
+		return;
+	}
+#endif
+#ifdef SYSTRACE
+	if (p->p_flag & P_SYSTRACE) {
+		p->p_md.md_syscall = syscall_fancy;
+		return;
+	}
+#endif
+	p->p_md.md_syscall = syscall_plain;
+}
+
+void
+syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
+{
+	struct proc *p = l->l_proc;
+	const struct sysent *callp;
+	int code, error;
+	u_int nap, nargs;
+	register_t *ap, *args, copyargs[MAXARGS], rval[2];
+
+	KERNEL_PROC_LOCK(p);
+
+	switch (insn & SWI_OS_MASK) { /* Which OS is the SWI from? */
+	case SWI_OS_ARM: /* ARM-defined SWIs */
+		code = insn & 0x00ffffff;
+		switch (code) {
+		case SWI_IMB:
+		case SWI_IMBrange:
+			/*
+			 * Do nothing as there is no prefetch unit that needs
+			 * flushing
+			 */
+			break;
+		default:
+			/* Undefined so illegal instruction */
+			trapsignal(l, SIGILL, insn);
+			break;
+		}
+
+		userret(l);
+		return;
+	case 0x000000: /* Old unofficial NetBSD range. */
+	case SWI_OS_NETBSD: /* New official NetBSD range. */
+		nap = 4;
+		break;
+	default:
+		/* Undefined so illegal instruction */
+		trapsignal(l, SIGILL, insn);
+		userret(l);
+		return;
+	}
+
+	code = insn & 0x000fffff;
+
+	ap = &frame->tf_r0;
+	callp = p->p_emul->e_sysent;
+
+	switch (code) {	
+	case SYS_syscall:
+		code = *ap++;
+		nap--;
+		break;
+        case SYS___syscall:
+		code = ap[_QUAD_LOWWORD];
+		ap += 2;
+		nap -= 2;
+		break;
+	}
+
+	code &= (SYS_NSYSENT - 1);
+	callp += code;
+	nargs = callp->sy_argsize / sizeof(register_t);
+	if (nargs <= nap)
+		args = ap;
+	else {
+		KASSERT(nargs <= MAXARGS);
+		memcpy(copyargs, ap, nap * sizeof(register_t));
+		error = copyin((void *)frame->tf_usr_sp, copyargs + nap,
+		    (nargs - nap) * sizeof(register_t));
+		if (error)
+			goto bad;
+		args = copyargs;
+	}
+
+	rval[0] = 0;
+	rval[1] = 0;
+	error = (*callp->sy_call)(l, args, rval);
+
+	switch (error) {
+	case 0:
+		frame->tf_r0 = rval[0];
+		frame->tf_r1 = rval[1];
+
+#ifdef __PROG32
+		frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
+#else
+		frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
+#endif
+		break;
+
+	case ERESTART:
+		/*
+		 * Reconstruct the pc to point at the swi.
+		 */
+		frame->tf_pc -= INSN_SIZE;
+		break;
+
+	case EJUSTRETURN:
+		/* nothing to do */
+		break;
+
+	default:
+	bad:
+		frame->tf_r0 = error;
+#ifdef __PROG32
+		frame->tf_spsr |= PSR_C_bit;	/* carry bit */
+#else
+		frame->tf_r15 |= R15_FLAG_C;	/* carry bit */
+#endif
+		break;
+	}
+
+	KERNEL_PROC_UNLOCK(l);
+	userret(l);
+}
+
+void
+syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 {
 	struct proc *p = l->l_proc;
 	const struct sysent *callp;
@@ -325,5 +459,3 @@ child_return(arg)
 	}
 #endif
 }
-
-/* End of syscall.c */
