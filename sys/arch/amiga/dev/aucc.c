@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.5 1997/06/21 21:52:37 is Exp $	*/
+/*	$NetBSD: aucc.c,v 1.6 1997/06/21 22:46:43 kleink Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -34,7 +34,7 @@
 #if NAUCC > 0
 
 #ifdef LEV6_DEFER
-Error: Not prepared yet for coexistance with LEV6_DEFER.
+#error Not prepared yet for coexistance with LEV6_DEFER.
 #endif
 
 #include <sys/param.h>
