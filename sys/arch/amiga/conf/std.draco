@@ -1,4 +1,4 @@
-#	$NetBSD: std.draco,v 1.2 1996/12/20 19:15:07 veego Exp $
+#	$NetBSD: std.draco,v 1.3 1997/11/17 01:57:30 lukem Exp $
 
 # standard amiga information
 
@@ -10,9 +10,9 @@ clock0	at mainbus0
 kbd0	at mainbus0
 zbus0	at mainbus0
 
-options	SWAPPAGER	# paging
-options	VNODEPAGER	# mmap() of files
-options	DEVPAGER	# mmap() of devices
+options 	SWAPPAGER	# paging
+options 	VNODEPAGER	# mmap() of files
+options 	DEVPAGER	# mmap() of devices
 
-options	EXEC_AOUT
-options	EXEC_SCRIPT
+options 	EXEC_AOUT
+options 	EXEC_SCRIPT

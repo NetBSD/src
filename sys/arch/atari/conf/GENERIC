@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.36 1997/08/29 19:52:11 leo Exp $
+#	$NetBSD: GENERIC,v 1.37 1997/11/17 01:57:39 lukem Exp $
 #
 # Generic atari
 #
@@ -57,10 +57,11 @@ options 	QUOTA		# Disk quotas for local disks
 options 	NFSSERVER	# Network File System server side code
 
 #
-# Misc. debuging options
+# Misc. debugging options
 #
 options 	PANICWAIT	# Require keystroke to dump/reboot
 options 	DDB		# Kernel debugger
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 
 #
 # Compatability options for various existing systems
@@ -69,16 +70,16 @@ options 	COMPAT_43	# 4.3 BSD compatible system calls (required)
 options 	COMPAT_10	# Compatibility to NetBSD1.0
 options 	COMPAT_11	# Compatibility to NetBSD1.1
 options 	COMPAT_12	# Compatibility to NetBSD1.2
-#options	COMPAT_09	# has no meaning on the atari
-#options	COMPAT_SUNOS	# Support to run Sun-3 executables
-#options	TCP_COMPAT_42	# Disable UDP checksums (not needed)
+#options 	COMPAT_09	# has no meaning on the atari
+#options 	COMPAT_SUNOS	# Support to run Sun-3 executables
+#options 	TCP_COMPAT_42	# Disable UDP checksums (not needed)
 
 #
 # Support for System V IPC facilities.
 #
-options	SYSVSHM			# System V shared memory
-options	SYSVMSG			# System V messages
-options	SYSVSEM			# System V semaphores
+options 	SYSVSHM			# System V shared memory
+options 	SYSVMSG			# System V messages
+options 	SYSVSEM			# System V semaphores
 
 #
 # Support for various kernel options
@@ -91,7 +92,7 @@ options 	NKMEMCLUSTERS=256	# Size of kernel malloc area
 #
 # Atari specific options
 #
-#options	KFONT_8x8		# Use 8x8 font instead of 8x16
+#options 	KFONT_8x8		# Use 8x8 font instead of 8x16
 options 	ST_POOL_SIZE=22		# smallest that allows TT-HIGH
 options 	TT_SCSI			# SCSI-support for TT
 options 	FALCON_SCSI		# SCSI-support for Falcon
