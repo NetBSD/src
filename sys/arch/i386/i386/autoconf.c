@@ -247,11 +247,13 @@ setroot()
 
 #if defined(FFS) || defined(LFS)
 	    case DV_DISK:
-		majdev = findblkmajor(bootdk);
-		if (majdev < 0)
-			return;
-		part = 0;
-		mindev = (bootdv->dv_unit << UNITSHIFT) + part;
+		/*
+		 * If we got this far, we're doing an autoboot, so default
+		 * to the boot device.
+		 */
+		nrootdev = makedev(B_TYPE(bootdev),
+				   B_UNIT(bootdev) << UNITSHIFT
+				   + B_PARTITION(bootdev));
 		break;
 #endif
 
@@ -261,21 +263,21 @@ setroot()
 	}
 
 	/*
-	 * Form a new rootdev
-	 */
-	nrootdev = makedev(majdev, mindev);
-	/*
 	 * If the original rootdev is the same as the one
 	 * just calculated, don't need to adjust the swap configuration.
 	 */
 	if (rootdev == nrootdev)
 		return;
 
+	majdev = major(nrootdev);
+	mindev = minor(nrootdev);
+	part = mindev & PARTITIONMASK;
+	mindev -= part;
+
 	rootdev = nrootdev;
 	printf("Changing root device to %s%c\n", bootdv->dv_xname, part + 'a');
 
 #ifdef DOSWAP
-	mindev &= ~PARTITIONMASK;
 	temp = NODEV;
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (majdev == major(swp->sw_dev) &&
