@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.74 2003/10/08 11:10:04 bouyer Exp $
+#	$NetBSD: INSTALL_TINY,v 1.75 2003/10/18 08:11:02 lukem Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -348,13 +348,15 @@ wdc* 	at pcmcia? function ?
 # Some controllers pass the initial 32bit test, but will fail later.
 wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 wdc1	at isa? port 0x170 irq 15 flags 0x00
-atabus* at wdc? channel ?
+
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 wd*	at atabus? drive ?		# the drives themselves
 
 # ATAPI bus support
-atapibus* at atabus?
+atapibus* at atapi?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
