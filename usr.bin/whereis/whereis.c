@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.13 2003/08/07 11:17:17 agc Exp $	*/
+/*	$NetBSD: whereis.c,v 1.14 2004/04/01 20:50:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: whereis.c,v 1.13 2003/08/07 11:17:17 agc Exp $");
+__RCSID("$NetBSD: whereis.c,v 1.14 2004/04/01 20:50:32 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,22 +53,23 @@ __RCSID("$NetBSD: whereis.c,v 1.13 2003/08/07 11:17:17 agc Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void usage __P((void));
-int main __P((int, char *[]));
+static void usage(void) __attribute__((__noreturn__));
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct stat sb;
 	size_t len;
-	int ch, sverrno, mib[2];
+	int ch, mib[2];
 	char *p, *t, *std, path[MAXPATHLEN];
-	int useenvpath = 0, found = 0;
+	int which = strcmp(getprogname(), "which") == 0;
+	int useenvpath = which, found = 0;
 
-	while ((ch = getopt(argc, argv, "p")) != -1)
+	while ((ch = getopt(argc, argv, "ap")) != -1)
 		switch (ch) {
+		case 'a':
+			which = 0;
+			break;
 		case 'p':
 			useenvpath = 1;	/* use environment for PATH */
 			break;
@@ -85,28 +86,24 @@ main(argc, argv)
 
  	if (useenvpath) {
  		if ((std = getenv("PATH")) == NULL)
- 			err(1, "getenv: PATH" );
+ 			errx(1, "PATH environment variable is not set");
 	} else {
 		/* Retrieve the standard path. */
 		mib[0] = CTL_USER;
 		mib[1] = USER_CS_PATH;
 		if (sysctl(mib, 2, NULL, &len, NULL, 0) == -1)
-			return (-1);
+			err(1, "sysctl: user.cs_path");
 		if (len == 0)
-			err(1, "user_cs_path: sysctl: zero length");
+			errx(1, "sysctl: user.cs_path (zero length)");
 		if ((std = malloc(len)) == NULL)
 			err(1, NULL);
-		if (sysctl(mib, 2, std, &len, NULL, 0) == -1) {
-			sverrno = errno;
-			free(std);
-			errno = sverrno;
-			err(1, "sysctl: user_cs_path");
-		}
+		if (sysctl(mib, 2, std, &len, NULL, 0) == -1)
+			err(1, "sysctl: user.cs_path");
 	}
 
 	/* For each path, for each program... */
 	for (; *argv; ++argv)
-		for (p = std;; *p++ = ':') {
+		for (p = std; p; p && (*p++ = ':')) {
 			t = p;
 			if ((p = strchr(p, ':')) != NULL) {
 				*p = '\0';
@@ -116,21 +113,25 @@ main(argc, argv)
 				if (strlen(t) == 0)
 					t = ".";
 			(void)snprintf(path, sizeof(path), "%s/%s", t, *argv);
-			if (!stat(path, &sb)) {
-				(void)printf("%s\n", path);
-				found++;
-			}
-			if (p == NULL)
+			if (stat(path, &sb) == -1)
+				continue;
+			if (!S_ISREG(sb.st_mode))
+				continue;
+			if (access(path, X_OK) == -1)
+				continue;
+			(void)printf("%s\n", path);
+			found++;
+			if (which)
 				break;
 		}
 	
-	return ((found == 0) ? 3 : ((found == argc) ? 0 : 2));
+	return ((found == 0) ? 3 : ((found >= argc) ? 0 : 2));
 }
 
-void
-usage()
+static void
+usage(void)
 {
 
-	(void)fprintf(stderr, "usage: whereis [-p] program [...]\n");
-	exit (1);
+	(void)fprintf(stderr, "Usage: %s [-ap] program [...]\n", getprogname());
+	exit(1);
 }
