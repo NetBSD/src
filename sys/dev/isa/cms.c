@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.1 2000/05/01 22:48:33 augustss Exp $ */
+/* $NetBSD: cms.c,v 1.2 2001/09/26 21:49:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,9 +32,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "cms.h"
-#if NCMS > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,5 +338,3 @@ cms_reset(sc)
 	CMS_WRITE(sc, 0, CMS_IREG_SYS_CTL, CMS_IREG_SYS_ENBL);
 	CMS_WRITE(sc, 1, CMS_IREG_SYS_CTL, CMS_IREG_SYS_ENBL);
 }
-
-#endif

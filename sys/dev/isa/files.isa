@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.115 2001/09/26 21:40:07 thorpej Exp $
+#	$NetBSD: files.isa,v 1.116 2001/09/26 21:49:09 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -380,7 +380,7 @@ file	dev/isa/aria.c			aria
 # Creative Music System (CMS)
 device	cms: midibus
 attach	cms at isa
-file	dev/isa/cms.c			cms			needs-flag
+file	dev/isa/cms.c			cms
 
 #
 # PlanetConnect satellite receiver driver.
