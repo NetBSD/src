@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.71 2005/02/26 22:25:34 perry Exp $	*/
+/*	$NetBSD: socket.h,v 1.72 2005/03/08 07:43:14 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -271,7 +271,7 @@ struct sockaddr_storage {
 #define	PF_INET6	AF_INET6
 #define	PF_IPX		AF_IPX		/* same format as AF_NS */
 #if defined(_NETBSD_SOURCE)
-#define PF_RTIP		pseudo_AF_FTIP	/* same format as AF_INET */
+#define PF_RTIP		pseudo_AF_RTIP	/* same format as AF_INET */
 #define PF_PIP		pseudo_AF_PIP
 #endif
 #define PF_ISDN		AF_ISDN		/* same as E164 */
