@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.24 2002/06/01 23:50:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.25 2003/07/07 14:39:27 yamt Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 assert.3 bitstring.3 dlfcn.3 end.3 intro.3 queue.3 \
-	stdarg.3 varargs.3
+	stdarg.3 tree.3 varargs.3
 MLINKS+=end.3 edata.3 end.3 etext.3
 MLINKS+=queue.3 LIST_EMPTY.3
 MLINKS+=queue.3 LIST_ENTRY.3 queue.3 LIST_FIRST.3 queue.3 LIST_HEAD.3
@@ -32,6 +32,22 @@ MLINKS+=stdarg.3 va_arg.3 stdarg.3 va_copy.3 \
 	stdarg.3 va_end.3 stdarg.3 va_start.3
 MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
 	dlfcn.3 dlerror.3 dlfcn.3 dladdr.3
+MLINKS+=tree.3 SPLAY_PROTOTYPE.3 tree.3 SPLAY_GENERATE.3 \
+	tree.3 SPLAY_ENTRY.3 tree.3 SPLAY_HEAD.3 \
+	tree.3 SPLAY_INITIALIZER.3 tree.3 SPLAY_ROOT.3 \
+	tree.3 SPLAY_EMPTY.3 tree.3 SPLAY_NEXT.3 \
+	tree.3 SPLAY_MIN.3 tree.3 SPLAY_MAX.3 tree.3 SPLAY_FIND.3 \
+	tree.3 SPLAY_LEFT.3 tree.3 SPLAY_RIGHT.3 tree.3 SPLAY_INIT.3 \
+	tree.3 SPLAY_INSERT.3 tree.3 SPLAY_REMOVE.3 \
+	tree.3 SPLAY_FOREACH.3
+MLINKS+=tree.3 RB_PROTOTYPE.3 tree.3 RB_GENERATE.3 \
+	tree.3 RB_ENTRY.3 tree.3 RB_HEAD.3 \
+	tree.3 RB_INITIALIZER.3 tree.3 RB_ROOT.3 \
+	tree.3 RB_EMPTY.3 tree.3 RB_NEXT.3 \
+	tree.3 RB_MIN.3 tree.3 RB_MAX.3 tree.3 RB_FIND.3 \
+	tree.3 RB_LEFT.3 tree.3 RB_RIGHT.3 tree.3 RB_PARENT.3 \
+	tree.3 RB_INIT.3 tree.3 RB_INSERT.3 tree.3 RB_REMOVE.3 \
+	tree.3 RB_FOREACH.3
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
