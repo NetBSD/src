@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.83 2001/08/26 02:50:37 matt Exp $ */
+/* $NetBSD: vmstat.c,v 1.84 2001/10/07 12:50:54 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.83 2001/08/26 02:50:37 matt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.84 2001/10/07 12:50:54 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -1061,8 +1061,18 @@ dopool(void)
 		PRWORD(ovflw, " %*s", 6, 1, maxp);
 		PRWORD(ovflw, " %*lu\n", 5, 1, pp->pr_nidle);
 
-		inuse += (pp->pr_nget - pp->pr_nput) * pp->pr_size;
-		total += pp->pr_npages * pp->pr_pagesz;
+		if (pp->pr_roflags & PR_RECURSIVE) {
+			/*
+			 * Don't count in-use memory, since it's part
+			 * of another pool and will be accounted for
+			 * there.
+			 */
+			total += pp->pr_npages * pp->pr_pagesz -
+			     (pp->pr_nget - pp->pr_nput) * pp->pr_size;
+		} else {
+			inuse += (pp->pr_nget - pp->pr_nput) * pp->pr_size;
+			total += pp->pr_npages * pp->pr_pagesz;
+		}
 		addr = (long)TAILQ_NEXT(pp, pr_poollist);
 	}
 
