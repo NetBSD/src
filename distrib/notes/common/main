@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.269 2004/10/20 16:41:38 peter Exp $
+.\"	$NetBSD: main,v 1.270 2004/11/14 04:15:40 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -334,7 +334,7 @@ prompt.
 After your system first powers on, and displays some initial information,
 press the
 .Key STOP-A
-keys, or send a BREAK of you're on a serial console.
+keys, or send a BREAK if you're on a serial console.
 At the
 .Dq Ic "ok"
 prompt, type the command to boot your system into
