@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.51 1998/04/13 21:18:19 kml Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.52 1998/04/28 21:52:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -1444,7 +1445,15 @@ tcp_dooptions(tp, cp, cnt, ti, oi)
 			if (!(ti->ti_flags & TH_SYN))
 				continue;
 			tp->t_flags |= TF_RCVD_SCALE;
-			tp->requested_s_scale = min(cp[2], TCP_MAX_WINSHIFT);
+			tp->requested_s_scale = cp[2];
+			if (tp->requested_s_scale > TCP_MAX_WINSHIFT) {
+				log(LOG_ERR, "TCP: invalid wscale %d from "
+				    "0x%08x, assuming %d\n",
+				    tp->requested_s_scale,
+				    ntohl(ti->ti_src.s_addr),
+				    TCP_MAX_WINSHIFT);
+				tp->requested_s_scale = TCP_MAX_WINSHIFT;
+			}
 			break;
 
 		case TCPOPT_TIMESTAMP:
