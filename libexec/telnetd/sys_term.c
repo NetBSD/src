@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.24 2001/08/20 11:04:52 wiz Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.25 2001/08/20 11:13:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.24 2001/08/20 11:04:52 wiz Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.25 2001/08/20 11:13:17 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1023,7 +1023,7 @@ struct termspeeds {
 #endif
 	{ -1,     0 }
 };
-#endif	/* DECODE_BUAD */
+#endif	/* DECODE_BAUD */
 
 	void
 tty_tspeed(val)
@@ -1037,9 +1037,9 @@ tty_tspeed(val)
 	if (tp->speed == -1)	/* back up to last valid value */
 		--tp;
 	cfsetospeed(&termbuf, tp->value);
-#else	/* DECODE_BUAD */
+#else	/* DECODE_BAUD */
 	cfsetospeed(&termbuf, val);
-#endif	/* DECODE_BUAD */
+#endif	/* DECODE_BAUD */
 }
 
 	void
@@ -1837,7 +1837,7 @@ start_login(host, autologin, name)
 	sleep(1);
         execv(loginprog, argv);
 
-        syslog(LOG_ERR, "%s: %m\n", loginprog);
+        syslog(LOG_ERR, "%s: %m", loginprog);
         fatalperror(net, loginprog);
 	/*NOTREACHED*/
 }
@@ -2257,12 +2257,12 @@ cleantmpdir(jid, tpath, user)
 {
 	switch(fork()) {
 	case -1:
-		syslog(LOG_WARNING, "TMPDIR cleanup(%s): fork() failed: %m\n",
+		syslog(LOG_WARNING, "TMPDIR cleanup(%s): fork() failed: %m",
 		    tpath);
 		break;
 	case 0:
 		execl(CLEANTMPCMD, CLEANTMPCMD, user, tpath, NULL);
-		syslog(LOG_ERR, "TMPDIR cleanup(%s): execl(%s) failed: %m\n",
+		syslog(LOG_ERR, "TMPDIR cleanup(%s): execl(%s) failed: %m",
 		    tpath, CLEANTMPCMD);
 		exit(1);
 	default:

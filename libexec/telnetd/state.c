@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.19 2001/08/20 11:01:48 wiz Exp $	*/
+/*	$NetBSD: state.c,v 1.20 2001/08/20 11:13:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.19 2001/08/20 11:01:48 wiz Exp $");
+__RCSID("$NetBSD: state.c,v 1.20 2001/08/20 11:13:17 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,7 +362,7 @@ gotiac:			switch (c) {
 			continue;
 
 		default:
-			syslog(LOG_ERR, "telnetd: panic state=%d\n", state);
+			syslog(LOG_ERR, "panic state=%d", state);
 			printf("telnetd: panic state=%d\n", state);
 			exit(1);
 		}
@@ -1243,7 +1243,7 @@ suboption()
 	if (SB_EOF())
 	    break;		/* another garbage check */
 
-	if (request == LM_SLC) {  /* SLC is not preceeded by WILL or WONT */
+	if (request == LM_SLC) {  /* SLC is not preceded by WILL or WONT */
 		/*
 		 * Process suboption buffer of slc's
 		 */
