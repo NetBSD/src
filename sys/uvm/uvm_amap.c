@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.36 2001/11/06 06:31:06 simonb Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.37 2001/11/10 07:36:59 lukem Exp $	*/
 
 /*
  *
@@ -40,6 +40,9 @@
  * this file contains functions that perform operations on amaps.  see
  * uvm_amap.h for a brief explanation of the role of amaps in uvm.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.37 2001/11/10 07:36:59 lukem Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 

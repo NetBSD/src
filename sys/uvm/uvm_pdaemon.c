@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.41 2001/11/06 08:07:52 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.42 2001/11/10 07:37:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,11 +66,14 @@
  * rights to redistribute these changes.
  */
 
-#include "opt_uvmhist.h"
-
 /*
  * uvm_pdaemon.c: the page daemon
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.42 2001/11/10 07:37:01 lukem Exp $");
+
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
