@@ -1,9 +1,10 @@
-/*	$NetBSD: in6.h,v 1.13 2000/02/28 12:08:22 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.14 2000/05/24 14:40:09 itojun Exp $	*/
+/*	$KAME: in6.h,v 1.44 2000/05/24 08:50:17 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -231,10 +232,10 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
  */
 #ifdef _KERNEL
 #define IN6_ARE_ADDR_EQUAL(a, b)			\
-	(bcmp((a), (b), sizeof(struct in6_addr)) == 0)
+    (bcmp(&(a)->s6_addr[0], &(b)->s6_addr[0], sizeof(struct in6_addr)) == 0)
 #else
 #define IN6_ARE_ADDR_EQUAL(a, b)			\
-	(memcmp((a), (b), sizeof(struct in6_addr)) == 0)
+    (memcmp(&(a)->s6_addr[0], &(b)->s6_addr[0], sizeof(struct in6_addr)) == 0)
 #endif
 
 /*
