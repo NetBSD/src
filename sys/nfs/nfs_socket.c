@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.99 2003/10/09 13:23:33 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.100 2003/12/07 21:15:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.99 2003/10/09 13:23:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.100 2003/12/07 21:15:46 fvdl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -932,6 +932,7 @@ nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	u_int32_t xid;
 	char *auth_str, *verf_str;
 	NFSKERBKEY_T key;		/* save session key */
+	struct ucred acred;
 #ifndef NFS_V2_ONLY
 	int nqlflag, cachable;
 	u_quad_t frev;
@@ -972,6 +973,17 @@ kerbauth:
 			}
 		}
 	} else {
+		switch (procnum) {
+		case NFSPROC_READ:
+		case NFSPROC_WRITE:
+		case NFSPROC_COMMIT:
+			acred.cr_uid = np->n_vattr->va_uid;
+			acred.cr_gid = np->n_vattr->va_gid;
+			acred.cr_ngroups = 0;
+			acred.cr_ref = 2;	/* Just to be safe.. */
+			cred = &acred;
+			break;
+		}
 		auth_type = RPCAUTH_UNIX;
 		auth_len = (((cred->cr_ngroups > nmp->nm_numgrps) ?
 			nmp->nm_numgrps : cred->cr_ngroups) << 2) +
