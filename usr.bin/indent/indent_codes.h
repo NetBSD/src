@@ -1,6 +1,8 @@
-/*-
- * Copyright (c) 1985, 1993
+/*
+ * Copyright (c) 1985 Sun Microsystems, Inc.
+ * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,37 +32,38 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)timedc.h	8.1 (Berkeley) 6/6/93
+ *	@(#)indent_codes.h	8.1 (Berkeley) 6/6/93
  */
 
-#include <sys/param.h>
-#include <sys/time.h>
-#ifdef sgi
-#include <sys/uio.h>
-#endif
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <errno.h>
-#include <netdb.h>
-#include <stdio.h>
-
-extern int errno;
-
-#define ON		1
-#define OFF		0
-
-#define GOOD		1
-#define UNREACHABLE	2
-#define NONSTDTIME	3
-#define HOSTDOWN 	0x7fffffff
-
-struct	cmd {
-	char	*c_name;		/* command name */
-	char	*c_help;		/* help message */
-	void	(*c_handler)();		/* routine to do the work */
-	int	c_priv;			/* privileged command */
-};
-
-#include "extern.h"
+#define newline		1
+#define lparen		2
+#define rparen		3
+#define unary_op	4
+#define binary_op	5
+#define postop		6
+#define question	7
+#define casestmt	8
+#define colon		9
+#define semicolon	10
+#define lbrace		11
+#define rbrace		12
+#define ident		13
+#define comma		14
+#define comment		15
+#define swstmt		16
+#define preesc		17
+#define form_feed	18
+#define decl		19
+#define sp_paren	20
+#define sp_nparen	21
+#define ifstmt		22
+#define whilestmt	23
+#define forstmt		24
+#define stmt		25
+#define stmtl		26
+#define elselit		27
+#define dolit		28
+#define dohead		29
+#define ifhead		30
+#define elsehead	31
+#define period		32

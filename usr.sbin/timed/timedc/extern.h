@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1985, 1993
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,37 +30,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)timedc.h	8.1 (Berkeley) 6/6/93
+ *	@(#)extern.h	8.1 (Berkeley) 6/6/93
  */
 
-#include <sys/param.h>
-#include <sys/time.h>
-#ifdef sgi
-#include <sys/uio.h>
+#if __STDC__
+struct tsp;
 #endif
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
-#include <errno.h>
-#include <netdb.h>
-#include <stdio.h>
+extern struct cmd cmdtab[];
 
-extern int errno;
-
-#define ON		1
-#define OFF		0
-
-#define GOOD		1
-#define UNREACHABLE	2
-#define NONSTDTIME	3
-#define HOSTDOWN 	0x7fffffff
-
-struct	cmd {
-	char	*c_name;		/* command name */
-	char	*c_help;		/* help message */
-	void	(*c_handler)();		/* routine to do the work */
-	int	c_priv;			/* privileged command */
-};
-
-#include "extern.h"
+void	bytehostorder __P((struct tsp *));
+void	bytenetorder __P((struct tsp *));
+void	clockdiff __P((int, char *[]));
+void	help __P((int, char *[]));
+void	intr __P((int));
+void	makeargv __P((void));
+void	msite __P((int, char *[]));
+int	priv_resources __P((void));
+void	quit __P((void));
+void	testing __P((int, char *[]));
+void	tracing __P((int, char *[]));
