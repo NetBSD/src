@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.2 2003/03/24 04:15:49 bsh Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.3 2003/06/06 09:05:42 scw Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -123,7 +123,7 @@ struct bus_space pxa2x0_bs_tag = {
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
+	generic_bs_rr_1,
 	generic_armv4_bs_rr_2,
 	generic_bs_rr_4,
 	bs_notimpl_bs_rr_8,
@@ -141,7 +141,7 @@ struct bus_space pxa2x0_bs_tag = {
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	bs_notimpl_bs_wr_1,
+	generic_bs_wr_1,
 	generic_armv4_bs_wr_2,
 	generic_bs_wr_4,
 	bs_notimpl_bs_wr_8,
@@ -153,7 +153,7 @@ struct bus_space pxa2x0_bs_tag = {
 	bs_notimpl_bs_sm_8,
 
 	/* set region */
-	bs_notimpl_bs_sr_1,
+	generic_bs_sr_1,
 	generic_armv4_bs_sr_2,
 	bs_notimpl_bs_sr_4,
 	bs_notimpl_bs_sr_8,
