@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.30 2003/07/18 08:53:42 lukem Exp $	*/
+/*	$NetBSD: signal.h,v 1.31 2003/07/18 15:50:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,8 +47,6 @@
 #endif
 
 #include <sys/signal.h>
-
-#include <pthread_types.h>
 
 #if defined(_NETBSD_SOURCE)
 extern __const char *__const *sys_signame __RENAME(__sys_signame14);
