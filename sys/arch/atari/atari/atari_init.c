@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.26 1997/01/21 20:37:03 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.27 1997/03/07 21:45:41 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -577,7 +577,8 @@ atari_hwinit()
 		 * Initialize the SCU, to enable interrupts on the SCC (ipl5),
 		 * MFP (ipl6) and softints (ipl1).
 		 */
-		SCU->sys_mask = SCU_MFP | SCU_SCC | SCU_SYS_SOFT;
+		SCU->sys_mask = SCU_SYS_SOFT;
+		SCU->vme_mask = SCU_MFP | SCU_SCC;
 #ifdef DDB
 		/*
 		 * This allows people with the correct hardware modification
