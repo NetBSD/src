@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.11 2002/10/18 02:43:30 nathanw Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.70.2.12 2003/01/17 16:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.70.2.11 2002/10/18 02:43:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.70.2.12 2003/01/17 16:31:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,6 +404,11 @@ static const struct ne2000dev {
       PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_EZCARD,
       PCMCIA_CIS_SMC_EZCARD,
       0, 0x01c0, { 0x00, 0xe0, 0x29 } },
+
+    { PCMCIA_STR_SMC_8041,
+      PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_8041,
+      PCMCIA_CIS_SMC_8041,
+      0, -1, { 0x00, 0x04, 0xe2 } },
 
     { PCMCIA_STR_SOCKET_EA_ETHER,
       PCMCIA_VENDOR_SOCKET, PCMCIA_PRODUCT_SOCKET_EA_ETHER,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.4.4.2 2002/08/01 02:45:14 nathanw Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.4.4.3 2003/01/17 16:31:40 thorpej Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -233,6 +233,7 @@
 #define BGE_ASICREV_BCM5703_A0		0x10000000
 #define BGE_ASICREV_BCM5703_A1		0x10010000
 #define BGE_ASICREV_BCM5703_A2		0x10020000
+#define BGE_ASICREV_BCM5704_A0		0x20000000
 
 /* PCI DMA Read/Write Control register */
 #define BGE_PCIDMARWCTL_MINDMA		0x000000FF
@@ -240,11 +241,16 @@
 #define BGE_PCIDMARWCTL_WRADDR_BNDRY	0x00003800
 #define BGE_PCIDMARWCTL_ONEDMA_ATONCE	0x00004000
 #define BGE_PCIDMARWCTL_RD_WAT		0x00070000
+# define BGE_PCIDMARWCTL_RD_WAT_SHIFT	16
 #define BGE_PCIDMARWCTL_WR_WAT		0x00380000
+# define BGE_PCIDMARWCTL_WR_WAT_SHIFT	19
 #define BGE_PCIDMARWCTL_USE_MRM		0x00400000
 #define BGE_PCIDMARWCTL_ASRT_ALL_BE	0x00800000
 #define BGE_PCIDMARWCTL_DFLT_PCI_RD_CMD	0x0F000000
+# define  BGE_PCIDMA_RWCTL_PCI_RD_CMD_SHIFT	 24
 #define BGE_PCIDMARWCTL_DFLT_PCI_WR_CMD	0xF0000000
+# define  BGE_PCIDMA_RWCTL_PCI_WR_CMD_SHIFT	 28
+
 
 #define BGE_PCI_READ_BNDRY_DISABLE	0x00000000
 #define BGE_PCI_READ_BNDRY_16BYTES	0x00000100
@@ -2237,6 +2243,7 @@ struct bge_softc {
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_asicrev;
 	u_int32_t		bge_quirks;
+	u_int32_t		bge_local_ctrl_reg;
 	struct bge_ring_data	*bge_rdata;	/* rings */
 	struct bge_chain_data	bge_cdata;	/* mbufs */
 	bus_dmamap_t		bge_ring_map;

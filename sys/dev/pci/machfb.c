@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.8.2.4 2002/12/19 00:48:10 thorpej Exp $	*/
+/*	$NetBSD: machfb.c,v 1.8.2.5 2003/01/17 16:31:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -1088,7 +1088,7 @@ mach64_switch_screen(struct mach64_softc *sc)
 	if (oldscr) {
 		if (!oldscr->active)
 			panic("mach64_switch_screen: not active");
-		if (oldscr->type != vc->currenttype)
+		if (oldscr->type != sc->currenttype)
 			panic("mach64_switch_screen: bad type");
 	}
 #endif

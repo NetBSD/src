@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.14.2.12 2002/12/29 20:49:20 thorpej Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.14.2.13 2003/01/17 16:31:36 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.43 2002/12/27 03:14:06 matt Exp 
+ *	NetBSD: miidevs,v 1.45 2003/01/17 06:20:07 gendalia Exp 
  */
 
 /*-
@@ -110,6 +110,8 @@
 #define	MII_STR_ALTIMA_ACXXX	"ACXXX 10/100 media interface"
 #define	MII_MODEL_ALTIMA_AC101	0x0021
 #define	MII_STR_ALTIMA_AC101	"AC101 10/100 media interface"
+#define	MII_MODEL_ALTIMA_AC101L	0x0012
+#define	MII_STR_ALTIMA_AC101L	"AC101L 10/100 media interface"
 
 /* Advanced Micro Devices PHYs */
 /* see Davicom DM9101 for Am79C873 */
@@ -143,6 +145,8 @@
 #define	MII_STR_BROADCOM_BCM5701	"BCM5701 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM_BCM5703	0x0016
 #define	MII_STR_BROADCOM_BCM5703	"BCM5703 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM_BCM5704	0x0019
+#define	MII_STR_BROADCOM_BCM5704	"BCM5704 1000BASE-T media interface"
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */

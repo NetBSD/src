@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187.4.26 2003/01/15 18:40:17 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.187.4.27 2003/01/17 16:23:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -925,28 +925,6 @@ cpu_setmcontext(l, mcp, flags)
 	return (0);
 }
 
-#if defined(MULTIPROCESSOR)
-/*
- * xcall function to stop this cpu completely; used by cpu_reboot and DDB.
- */
-static void
-cpu_halt(void)
-{
-
-	/*
-	 * This CPU is no longer available, mark it so.  We do this before
-	 * posting GOTMSG so that we can never ever get another xcall().
-	 */
-	cpuinfo.flags &= ~CPUFLG_READY;
-	cpuinfo.flags |= CPUFLG_GOTMSG;
-
-	printf("cpu%d halted\n", cpu_number());
-
-	spl0();
-	prom_cpustop(0);
-}
-#endif /* MULTIPROCESSOR */
-
 int	waittime = -1;
 
 void
@@ -955,6 +933,7 @@ cpu_reboot(howto, user_boot_string)
 	char *user_boot_string;
 {
 	int i;
+	char opts[4];
 	static char str[128];
 
 	/* If system is cold, just halt. */
@@ -1013,11 +992,6 @@ cpu_reboot(howto, user_boot_string)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
-#if defined(MULTIPROCESSOR)
-	XCALL0(cpu_halt, CPUSET_ALL & ~(1 << cpu_number()));
-	delay(100);
-#endif /* MULTIPROCESSOR */
-
 	/* If powerdown was requested, do it. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NPOWER > 0
@@ -1036,6 +1010,7 @@ cpu_reboot(howto, user_boot_string)
 
 	if (howto & RB_HALT) {
 #if defined(MULTIPROCESSOR)
+		mp_halt_cpus();
 		printf("cpu%d halted\n\n", cpu_number());
 #else
 		printf("halted\n\n");
@@ -1044,26 +1019,24 @@ cpu_reboot(howto, user_boot_string)
 	}
 
 	printf("rebooting\n\n");
+
+	i = 1;
+	if (howto & RB_SINGLE)
+		opts[i++] = 's';
+	if (howto & RB_KDB)
+		opts[i++] = 'd';
+	opts[i] = '\0';
+	opts[0] = (i > 1) ? '-' : '\0';
+
 	if (user_boot_string && *user_boot_string) {
 		i = strlen(user_boot_string);
-		if (i > sizeof(str))
+		if (i > sizeof(str) - sizeof(opts) - 1)
 			prom_boot(user_boot_string);	/* XXX */
 		bcopy(user_boot_string, str, i);
-	} else {
-		i = 1;
-		str[0] = '\0';
+		if (opts[0] != '\0')
+			str[i] = ' ';
 	}
-
-	if (howto & RB_SINGLE)
-		str[i++] = 's';
-	if (howto & RB_KDB)
-		str[i++] = 'd';
-	if (i > 1) {
-		if (str[0] == '\0')
-			str[0] = '-';
-		str[i] = 0;
-	} else
-		str[0] = 0;
+	strcat(str, opts);
 	prom_boot(str);
 	/*NOTREACHED*/
 }

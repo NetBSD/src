@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.2.2.5 2002/10/18 02:44:28 nathanw Exp $	*/
+/*	$NetBSD: if_url.c,v 1.2.2.6 2003/01/17 16:32:07 thorpej Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.2.2.5 2002/10/18 02:44:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.2.2.6 2003/01/17 16:32:07 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -911,8 +911,11 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 	c->url_mbuf = m;
 	total_len = m->m_pkthdr.len;
 
-	if (total_len < URL_MIN_FRAME_LEN)
+	if (total_len < URL_MIN_FRAME_LEN) {
+		memset(c->url_buf + total_len, 0,
+		    URL_MIN_FRAME_LEN - total_len);
 		total_len = URL_MIN_FRAME_LEN;
+	}
 	usbd_setup_xfer(c->url_xfer, sc->sc_pipe_tx, c, c->url_buf, total_len,
 			USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
 			URL_TX_TIMEOUT, url_txeof);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.20.2.8 2002/10/18 02:43:07 nathanw Exp $ */
+/* $NetBSD: if_ti.c,v 1.20.2.9 2003/01/17 16:31:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.20.2.8 2002/10/18 02:43:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.20.2.9 2003/01/17 16:31:44 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2071,12 +2071,13 @@ static void ti_rxeof(sc)
 		}
 
 		if (have_tag) {
-			struct mbuf *n;
-			n = m_aux_add(m, AF_LINK, ETHERTYPE_VLAN);
-			if (n) {
-				*mtod(n, int *) = vlan_tag;
-				n->m_len = sizeof(int);
-			} else {
+			struct m_tag *mtag;
+
+			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
+			    M_NOWAIT);
+			if (mtag)
+				*(u_int *)mtag = vlan_tag;
+			else {
 				printf("%s: no mbuf for tag\n", ifp->if_xname);
 				m_freem(m);
 				continue;
@@ -2277,7 +2278,7 @@ static int ti_encap_tigon1(sc, m_head, txidx)
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int error, i;
-	struct mbuf *n;
+	struct m_tag *mtag;
 	u_int16_t csum_flags = 0;
 
 	dma = SIMPLEQ_FIRST(&sc->txdma_list);
@@ -2333,10 +2334,10 @@ static int ti_encap_tigon1(sc, m_head, txidx)
 		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 		f->ti_len = dmamap->dm_segs[i].ds_len;
 		f->ti_flags = csum_flags;
-		n = m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN);
-		if (n) {
+		mtag = m_tag_find(m_head, PACKET_TAG_VLAN, NULL);
+		if (mtag) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = *mtod(n, int *);
+			f->ti_vlan_tag = *(u_int *)(mtag + 1);
 		} else {
 			f->ti_vlan_tag = 0;
 		}
@@ -2384,7 +2385,7 @@ static int ti_encap_tigon2(sc, m_head, txidx)
 	struct txdmamap_pool_entry *dma;
 	bus_dmamap_t dmamap;
 	int error, i;
-	struct mbuf *n;
+	struct m_tag *mtag;
 	u_int16_t csum_flags = 0;
 
 	dma = SIMPLEQ_FIRST(&sc->txdma_list);
@@ -2428,10 +2429,10 @@ static int ti_encap_tigon2(sc, m_head, txidx)
 		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 		f->ti_len = dmamap->dm_segs[i].ds_len;
 		f->ti_flags = csum_flags;
-		n = m_aux_find(m_head, AF_LINK, ETHERTYPE_VLAN);
-		if (n) {
+		mtag = m_tag_find(m_head, PACKET_TAG_VLAN, NULL);
+		if (mtag) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = *mtod(n, int *);
+			f->ti_vlan_tag = *(u_int *)(mtag + 1);
 		} else {
 			f->ti_vlan_tag = 0;
 		}
