@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.37.2.1 2002/05/25 18:18:56 thorpej Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.37.2.2 2002/05/29 18:01:22 tv Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.37.2.1 2002/05/25 18:18:56 thorpej Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.37.2.2 2002/05/29 18:01:22 tv Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -200,12 +200,12 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 		if (sp) {
 			if (strlen(sp->s_name) + 1 > servlen)
 				return EAI_MEMORY;
-			strcpy(serv, sp->s_name);
+			strlcpy(serv, sp->s_name, servlen);
 		} else {
 			snprintf(numserv, sizeof(numserv), "%d", ntohs(port));
 			if (strlen(numserv) + 1 > servlen)
 				return EAI_MEMORY;
-			strcpy(serv, numserv);
+			strlcpy(serv, numserv, servlen);
 		}
 	}
 
@@ -279,7 +279,7 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 			numaddrlen = strlen(numaddr);
 			if (numaddrlen + 1 > hostlen) /* don't forget terminator */
 				return EAI_MEMORY;
-			strcpy(host, numaddr);
+			strlcpy(host, numaddr, hostlen);
 			break;
 		}
 	} else {
@@ -301,7 +301,7 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 			if (strlen(hp->h_name) + 1 > hostlen) {
 				return EAI_MEMORY;
 			}
-			strcpy(host, hp->h_name);
+			strlcpy(host, hp->h_name, hostlen);
 		} else {
 			if (flags & NI_NAMEREQD)
 				return EAI_NONAME;
@@ -351,7 +351,7 @@ ip6_parsenumeric(sa, addr, host, hostlen, flags)
 	numaddrlen = strlen(numaddr);
 	if (numaddrlen + 1 > hostlen) /* don't forget terminator */
 		return EAI_MEMORY;
-	strcpy(host, numaddr);
+	strlcpy(host, numaddr, hostlen);
 
 	if (((const struct sockaddr_in6 *)(const void *)sa)->sin6_scope_id) {
 		char zonebuf[MAXHOSTNAMELEN];
