@@ -1,11 +1,11 @@
-/* $NetBSD: sched.h,v 1.10.2.3 2001/08/24 00:13:08 nathanw Exp $ */
+/* $NetBSD: sched.h,v 1.10.2.4 2002/12/18 19:44:37 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ross Harvey and Jason R. Thorpe.
+ * by Ross Harvey, Jason R. Thorpe, and Nathan J. Williams.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -84,9 +84,18 @@
 #include "opt_lockdebug.h"
 #endif
 
+struct sched_param {
+	int	sched_priority;
+};
+
 /*
- * Posix defines a <sched.h> which may want to include <sys/sched.h>
+ * Scheduling policies required by IEEE Std 1003.1-2001
  */
+#define	SCHED_OTHER	0	/* Behavior can be FIFO or RR, or not */
+#define	SCHED_FIFO	1
+#define	SCHED_RR	2
+
+/* Other nonstandard policies: */
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE) && \
     !defined(_ANSI_SOURCE)
