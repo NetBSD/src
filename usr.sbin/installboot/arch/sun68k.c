@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.1 2002/04/22 17:17:36 lukem Exp $ */
+/*	$NetBSD: sun68k.c,v 1.2 2002/04/22 21:11:46 fredette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.1 2002/04/22 17:17:36 lukem Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.2 2002/04/22 21:11:46 fredette Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -184,6 +184,9 @@ sun68k_setboot(ib_params *params)
 		goto done;
 	}
 
+	/* Make sure the (probably new) secondary bootstrap is on disk. */
+	sync(); sleep(1); sync();
+
 	/* Collect the blocks for the secondary bootstrap. */
 	nblk = maxblk;
 	if (! params->fstype->findstage2(params, &nblk, blocks))
@@ -237,8 +240,13 @@ sun68k_setboot(ib_params *params)
 	} else if (rv != SUN68K_BOOT_BLOCK_MAX_SIZE) {
 		warnx("Writing `%s': short write", params->filesystem);
 		goto done;
-	} else
+	} else {
+
+		/* Sync filesystems (to clean in-memory superblock?) */
+		sync();
+
 		retval = 1;
+	}
 
  done:
 	if (blocks != NULL)
