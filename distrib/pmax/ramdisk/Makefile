@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/04/16 14:12:14 simonb Exp $
+#	$NetBSD: Makefile,v 1.4 1999/04/27 01:37:13 simonb Exp $
 
 TOP?=		${.CURDIR}/..
 ARCHDIR?=        ${.CURDIR}/../../${MACHINE}/miniroot
@@ -24,7 +24,9 @@ LISTS=		list
 CRUNCHCONF=	${CBIN}.conf
 MTREE=		mtree.conf
 
-all: ${CBIN} 
+all: ${IMAGE}
+
+${IMAGE}: ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
 	vnconfig -v -c ${VND_CDEV} ${IMAGE}
 #	disklabel -rw ${VND_CDEV} ${DISKTYPE}
