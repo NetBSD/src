@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2000/06/26 15:32:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2000/06/27 09:00:15 mrg Exp $
 
 KDIR=	/sys/vm
 INCSDIR= /usr/include/vm
 
-INCS=	pmap.h vm.h vm_extern.h vm_page.h
+INCS=	vm.h
 
 .include <bsd.kinc.mk>
