@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.414 2004/04/13 12:25:03 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.415 2004/04/13 12:37:29 rtr Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -676,6 +676,7 @@ X11LIBDIR?=		${X11ROOTDIR}/lib/X11
 X11MANDIR?=		${X11ROOTDIR}/man
 X11USRLIBDIR?=		${X11ROOTDIR}/lib
 X11DRI?=		no
+X11LOADABLE?=		yes
 
 
 #
