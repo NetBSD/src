@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.17 1997/07/30 05:01:04 thorpej Exp $	*/
+/*	$NetBSD: print.c,v 1.17.2.1 1998/01/29 11:26:19 mellon Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.17 1997/07/30 05:01:04 thorpej Exp $");
+__RCSID("$NetBSD: print.c,v 1.17.2.1 1998/01/29 11:26:19 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,8 @@ static void	printlink __P((FTSENT *));
 static void	printtime __P((time_t));
 static int	printtype __P((u_int));
 
+static time_t	now;
+
 #define	IS_NOPRINT(p)	((p)->fts_number == NO_PRINT)
 
 void
@@ -93,6 +95,8 @@ printlong(dp)
 	FTSENT *p;
 	NAMES *np;
 	char buf[20];
+
+	time(&now);
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
 		(void)printf("total %lu\n", howmany(dp->btotal, blocksize));
@@ -242,7 +246,7 @@ printtime(ftime)
 	if (f_sectime)
 		for (i = 11; i < 24; i++)
 			(void)putchar(longstring[i]);
-	else if (ftime + SIXMONTHS > time(NULL))
+	else if (ftime + SIXMONTHS > now && ftime - SIXMONTHS < now)
 		for (i = 11; i < 16; ++i)
 			(void)putchar(longstring[i]);
 	else {
