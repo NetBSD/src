@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.22 1995/03/23 19:46:26 jtc Exp $
+#	$NetBSD: Makefile.amiga,v 1.23 1995/05/16 22:24:26 jtc Exp $
 
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
 #
@@ -34,7 +34,7 @@ S=	../../../..
 AMIGA=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys 
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL -D_KERNEL -Dmc68020 -Damiga
+COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Damiga
 CFLAGS=	-O -mc68020 -m68881 ${COPTS}
 
 ### find out what to use for libkern

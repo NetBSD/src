@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.13 1995/05/12 12:54:47 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.14 1995/05/16 22:24:43 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -39,7 +39,6 @@
 #define _VA_LIST_ _BSD_VA_LIST_
 #define _PTRDIFF_T_ _BSD_PTRDIFF_T_
 
-#define KERNEL
 #define _KERNEL
 
 #include <sys/param.h>

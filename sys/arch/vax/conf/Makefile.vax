@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.7 1995/03/23 19:47:43 jtc Exp $
+#	$NetBSD: Makefile.vax,v 1.8 1995/05/16 22:25:24 jtc Exp $
 
 #	@(#)Makefile.vax	7.18 (Berkeley) 12/16/90
 #
@@ -29,7 +29,7 @@ S=	../../../..
 VAX=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL -D_KERNEL
+COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
 AOPTS=  ${COPTS} -DASSEMBLER
 CFLAGS=	${COPTS}
 LOAD_ADDRESS=80000000

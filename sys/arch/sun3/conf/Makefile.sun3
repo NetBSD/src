@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.28 1995/03/23 19:47:34 jtc Exp $
+#	$NetBSD: Makefile.sun3,v 1.29 1995/05/16 22:25:15 jtc Exp $
 
 #
 # Makefile for NetBSD
@@ -41,7 +41,7 @@ SUN3=	../..
 LIBKERN=../libkern.a
 
 INCLUDES= ${XINC} -I. -I../.. -I$S -I$S/sys -I$S/arch
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL -D_KERNEL -Dmc68020 -Dsun3
+COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dsun3
 CFLAGS=	${COPTS}
 
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
