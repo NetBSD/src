@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2005/03/25 20:14:40 christos Exp $
+#	$NetBSD: Makefile,v 1.40 2005/03/26 02:21:34 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -17,6 +17,7 @@
 #
 
 USE_SHLIBDIR=	yes
+USE_FIPS=	yes
 
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
@@ -86,8 +87,35 @@ INCS+=	rc5.h
 INCS+=	mdc2.h
 
 # FIPS
+# This part is always included, because OpenSSL does not protect
+# The FIPS include files
 .PATH: ${OPENSSLSRC}/fips ${OPENSSLSRC}/fips/rand
 INCS+=	fips.h fips_rand.h
+
+.if (${USE_FIPS} != "no")
+CPPFLAGS+=-DOPENSSL_FIPS
+.PATH: ${OPENSSLSRC}/fips/aes
+SRCS+=fips_aes_core.c fips_aes_selftest.c
+.PATH: ${OPENSSLSRC}/fips/des
+SRCS+=fips_des_enc.c fips_des_selftest.c fips_set_key.c
+# asm/fips-dx86-elf.s 
+.PATH: ${OPENSSLSRC}/fips/dh
+SRCS+=fips_dh_check.c fips_dh_gen.c fips_dh_key.c
+.PATH: ${OPENSSLSRC}/fips/dsa
+SRCS+=fips_dsa_ossl.c fips_dsa_gen.c fips_dsa_selftest.c
+#.PATH: ${OPENSSLSRC}/fips/rand
+SRCS+=fips_rand.c
+.PATH: ${OPENSSLSRC}/fips/rsa
+SRCS+=fips_rsa_eay.c fips_rsa_gen.c fips_rsa_selftest.c
+SRCS+=fips_sha1dgst.c fips_sha1_selftest.c
+# asm/sx86-elf.s
+.PATH: ${OPENSSLSRC}/fips/sha1
+SRCS+= fips_standalone_sha1.c
+#.PATH: ${OPENSSLSRC}/fips
+SRCS+=fips.c fips_err_wrapper.c
+
+SRCS+=rc5_skey.c i_skey.c mdc2dgst.c
+.endif
 
 INCSDIR=/usr/include/openssl
 
