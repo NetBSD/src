@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.9 2002/03/30 07:08:14 martin Exp $ 
+ *	$Id: i4b_q931.c,v 1.10 2002/03/30 11:43:33 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.9 2002/03/30 07:08:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.10 2002/03/30 11:43:33 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -180,10 +180,13 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 	{
 		if(*msg_ptr == SETUP)
 		{
+			struct isdn_l3_driver *drv = isdn_find_l3_by_bri(bri);
+
 			/* get and init new calldescriptor */
 
 			cd = reserve_cd();	/* cdid filled in */
 			cd->bri = bri;
+			cd->l3drv = drv;
 			cd->cr = crval;		
 			cd->crflag = CRF_DEST;	/* we are the dest side */
 			cd->l4_driver = NULL;		/* reset link tab ptrs */

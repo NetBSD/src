@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.19 2002/03/30 11:15:41 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.20 2002/03/30 11:43:33 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.19 2002/03/30 11:15:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.20 2002/03/30 11:43:33 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -633,7 +633,7 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 		i4b_unlink_bchandrvr(cd);
 	}
 
-	d = isdn_find_l3_by_bri(cd->bri);
+	d = cd->l3drv;
 
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
@@ -808,7 +808,7 @@ i4b_l4_contr_ev_ind(int controller, int attach)
 static int
 i4b_link_bchandrvr(call_desc_t *cd)
 {
-	struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
+	struct isdn_l3_driver *d = cd->l3drv;
 	
 	if (d == NULL || d->l3driver == NULL || d->l3driver->get_linktab == NULL)
 	{
@@ -849,7 +849,7 @@ i4b_link_bchandrvr(call_desc_t *cd)
 static void
 i4b_unlink_bchandrvr(call_desc_t *cd)
 {
-	struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
+	struct isdn_l3_driver *d = cd->l3drv;
 
 	/*
 	 * XXX - what's this *cd manipulation for? Shouldn't we
@@ -1057,7 +1057,7 @@ i4b_idle_check(call_desc_t *cd)
 	{
 		if((i4b_get_idletime(cd) + cd->max_idle_time) <= SECOND)
 		{
-			struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
+			struct isdn_l3_driver *d = cd->l3drv;
 			NDBGL4(L4_TIMO, "%ld: incoming-call, line idle timeout, disconnecting!", (long)SECOND);
 			d->l3driver->N_DISCONNECT_REQUEST(cd,
 					(CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
@@ -1100,7 +1100,7 @@ i4b_idle_check(call_desc_t *cd)
 static void
 i4b_idle_check_fix_unit(call_desc_t *cd)
 {
-	struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
+	struct isdn_l3_driver *d = cd->l3drv;
 
 	/* simple idletime calculation */
 
@@ -1204,7 +1204,7 @@ i4b_idle_check_var_unit(call_desc_t *cd)
 		}
 		else
 		{	/* no activity, hangup */
-			struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
+			struct isdn_l3_driver *d = cd->l3drv;
 			NDBGL4(L4_TIMO, "%ld: outgoing-call, var idle timeout - last activity at %ld", (long)SECOND, (long)i4b_get_idletime(cd));
 			d->l3driver->N_DISCONNECT_REQUEST(cd, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);

@@ -27,7 +27,7 @@
  *	i4b_l2if.c - Layer 3 interface to Layer 2
  *	-------------------------------------------
  *
- *	$Id: i4b_l2if.c,v 1.4 2002/03/24 20:35:59 martin Exp $ 
+ *	$Id: i4b_l2if.c,v 1.5 2002/03/30 11:43:33 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.4 2002/03/24 20:35:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2if.c,v 1.5 2002/03/30 11:43:33 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -133,7 +133,7 @@ make_q931_cause(cause_t cause)
 int
 i4b_get_dl_stat(call_desc_t *cd)
 {
-	const struct isdn_l3_driver * drv = isdn_find_l3_by_bri(cd->bri);
+	const struct isdn_l3_driver * drv = cd->l3drv;
 	return drv->dl_est;
 }
 

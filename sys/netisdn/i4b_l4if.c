@@ -27,7 +27,7 @@
  *	i4b_l4if.c - Layer 3 interface to Layer 4
  *	-------------------------------------------
  *
- *	$Id: i4b_l4if.c,v 1.8 2002/03/30 11:15:41 martin Exp $ 
+ *	$Id: i4b_l4if.c,v 1.9 2002/03/30 11:43:33 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.8 2002/03/30 11:15:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4if.c,v 1.9 2002/03/30 11:43:33 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -236,10 +236,8 @@ n_connect_request(struct call_desc *cd)
 void
 n_connect_response(struct call_desc *cd, int response, int cause)
 {
-	struct isdn_l3_driver *d;
+	struct isdn_l3_driver *d = cd->l3drv;
 	int chstate;
-
-	d = isdn_find_l3_by_bri(cd->bri);
 
 	T400_stop(cd);
 	

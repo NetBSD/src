@@ -27,7 +27,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.8 2002/03/29 20:29:53 martin Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.9 2002/03/30 11:43:33 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.8 2002/03/29 20:29:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.9 2002/03/30 11:43:33 martin Exp $");
 
 #include "isdn.h"
 
@@ -227,6 +227,7 @@ void free_all_cd_of_bri(int bri)
 				i4b_stop_callout(&call_desc[i]);
 			call_desc[i].cdid = CDID_UNUSED;
 			call_desc[i].bri = -1;
+			call_desc[i].l3drv = NULL;
 			break;
 		}
 	}

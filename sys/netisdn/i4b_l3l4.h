@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.12 2002/03/30 11:15:41 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.13 2002/03/30 11:43:33 martin Exp $
  *
  * $FreeBSD$
  *
@@ -66,6 +66,7 @@ typedef struct i4b_isdn_bchan_linktab {
 } isdn_link_t;
 
 struct isdn_l4_driver_functions;
+struct isdn_l3_driver;
 
 /*---------------------------------------------------------------------------*
  *	this structure describes one call/connection on one B-channel
@@ -75,6 +76,7 @@ typedef struct call_desc
 {
 	u_int	cdid;			/* call descriptor id		*/
 	int	bri;			/* isdn controller number	*/
+	struct isdn_l3_driver *l3drv;
 	int	cr;			/* call reference value		*/
 
 	int	crflag;			/* call reference flag		*/
@@ -222,7 +224,6 @@ const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int uni
 /* forward decl. */
 struct isdn_diagnostic_request;
 struct isdn_dr_prot;
-struct isdn_l3_driver;
 
 /*
  * functions exported by a layer 3 driver to layer 4
