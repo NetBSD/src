@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.40.4.2 2001/09/18 19:13:49 fvdl Exp $	*/
+/*	$NetBSD: cons.c,v 1.40.4.3 2001/09/20 11:15:42 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,11 +102,11 @@ cnopen(devvp, mode, flag, p)
 		error = cdevvp(cndev, &vp);
 		if (error != 0)
 			return error;
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	} else
-		vref(vp);
+		vget(vp, LK_EXCLUSIVE | LK_RETRY);
 	devvp->v_devcookie = vp;
 
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_OPEN(vp, mode, p->p_ucred, p, NULL);
 	VOP_UNLOCK(vp, 0);
 	if (error != 0)
