@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.66 1998/07/30 14:11:45 augustss Exp $
+#	$NetBSD: files.isa,v 1.67 1998/07/31 04:40:39 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -337,3 +337,10 @@ file	dev/isa/pcppi.c	pcppi	needs-flag
 device spkr
 attach spkr at pcppi
 file	dev/isa/spkr.c		spkr	needs-flag
+
+#
+# ISA Plug 'n Play autoconfiguration glue.
+# THIS MUST COME AFTER ALL MI ISA DEVICES ARE DEFINED.  This is because
+# ISA PnP devices often use `device' declarations listed in this file.
+#
+include "dev/isapnp/files.isapnp"
