@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.605 2003/07/26 14:23:19 he Exp $
+#	$NetBSD: mi,v 1.606 2003/07/30 08:24:11 itojun Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -48,6 +48,7 @@
 ./usr/bin/strip			comp-util-bin
 ./usr/bin/tsort			comp-util-bin
 ./usr/bin/unifdef		comp-util-bin
+./usr/bin/unifdefall		comp-util-bin
 ./usr/bin/xgettext		comp-c-bin
 ./usr/bin/xstr			comp-c-bin
 ./usr/bin/yacc			comp-c-bin
@@ -1144,6 +1145,7 @@
 ./usr/share/man/cat1/strip.0		comp-util-catman
 ./usr/share/man/cat1/tsort.0		comp-c-catman
 ./usr/share/man/cat1/unifdef.0		comp-c-catman
+./usr/share/man/cat1/unifdefall.0	comp-c-catman
 ./usr/share/man/cat1/xstr.0		comp-c-catman
 ./usr/share/man/cat1/yacc.0		comp-c-catman
 ./usr/share/man/cat2/_Exit.0		comp-c-catman
@@ -4564,6 +4566,7 @@
 ./usr/share/man/man1/strip.1		comp-util-man
 ./usr/share/man/man1/tsort.1		comp-util-man
 ./usr/share/man/man1/unifdef.1		comp-util-man
+./usr/share/man/man1/unifdefall.1	comp-util-man
 ./usr/share/man/man1/xstr.1		comp-c-man
 ./usr/share/man/man1/yacc.1		comp-c-man
 ./usr/share/man/man2/_Exit.2		comp-c-man
