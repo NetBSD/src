@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.17 2000/04/19 13:52:39 blymn Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.18 2000/05/19 01:05:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.17 2000/04/19 13:52:39 blymn Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.18 2000/05/19 01:05:43 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -167,7 +167,7 @@ fgoto(in_refresh)
 	if (destline < outline && !(CA || UP))
 		destline = outline;
 	if (CA) {
-		t_goto(_cursesi_genbuf, CM, destcol, destline, cgp, 1023);
+		t_goto(NULL, CM, destcol, destline, cgp, 1023);
 
 		/*
 		 * Need this condition due to inconsistent behavior
