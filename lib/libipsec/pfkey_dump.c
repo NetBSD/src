@@ -1,5 +1,5 @@
-/*	$NetBSD: pfkey_dump.c,v 1.13 2003/07/22 03:33:10 itojun Exp $	*/
-/*	$KAME: pfkey_dump.c,v 1.41 2003/06/27 06:05:37 itojun Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.14 2003/07/25 10:06:09 itojun Exp $	*/
+/*	$KAME: pfkey_dump.c,v 1.44 2003/07/25 09:35:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pfkey_dump.c,v 1.13 2003/07/22 03:33:10 itojun Exp $");
+__RCSID("$NetBSD: pfkey_dump.c,v 1.14 2003/07/25 10:06:09 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,6 +129,8 @@ static struct val2str str_alg_auth[] = {
 	{ SADB_X_AALG_SHA2_256, "hmac-sha2-256", },
 	{ SADB_X_AALG_SHA2_384, "hmac-sha2-384", },
 	{ SADB_X_AALG_SHA2_512, "hmac-sha2-512", },
+	{ SADB_X_AALG_RIPEMD160HMAC, "hmac-ripemd160", },
+	{ SADB_X_AALG_AES_XCBC_MAC, "aes-xcbc-mac", },
 	{ -1, NULL, },
 };
 
@@ -143,6 +145,7 @@ static struct val2str str_alg_enc[] = {
 	{ SADB_X_EALG_CAST128CBC, "cast128-cbc", },
 	{ SADB_X_EALG_BLOWFISHCBC, "blowfish-cbc", },
 	{ SADB_X_EALG_RIJNDAELCBC, "rijndael-cbc", },
+	{ SADB_X_EALG_AESCTR, "aes-ctr", },
 	{ -1, NULL, },
 };
 
