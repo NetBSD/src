@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.71 2003/09/21 19:16:59 jdolecek Exp $ */
+/* $NetBSD: wskbd.c,v 1.72 2003/11/28 13:32:55 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.71 2003/09/21 19:16:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.72 2003/11/28 13:32:55 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1303,9 +1303,6 @@ change_displayparam(struct wskbd_softc *sc, int param, int updown,
 	int res;
 	struct wsdisplay_param dp;
 
-	if (sc->sc_base.me_dispdv == NULL)
-		return;
-
 	dp.param = param;
 	res = wsdisplay_param(sc->sc_base.me_dispdv, WSDISPLAYIO_GETPARAM, &dp);
 
@@ -1346,9 +1343,8 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	     ! MOD_ALLSET(sc->id, MOD_COMMAND1 | MOD_COMMAND2)))
 		return (0);
 
-	switch (ksym) {
 #if defined(DDB) || defined(KGDB)
-	case KS_Cmd_Debugger:
+	if (ksym == KS_Cmd_Debugger) {
 		if (sc->sc_isconsole) {
 #ifdef DDB
 			console_debugger();
@@ -1360,9 +1356,14 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 		/* discard this key (ddb discarded command modifiers) */
 		*type = WSCONS_EVENT_KEY_UP;
 		return (1);
+	}
 #endif
 
 #if NWSDISPLAY > 0
+	if (sc->sc_base.me_dispdv == NULL)
+		return (0);
+
+	switch (ksym) {
 	case KS_Cmd_Screen0:
 	case KS_Cmd_Screen1:
 	case KS_Cmd_Screen2:
@@ -1402,8 +1403,9 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 				    ksym == KS_Cmd_ContrastDown ? -1 : 1,
 				    ksym == KS_Cmd_ContrastRotate ? 1 : 0);
 		return (1);
-#endif
 	}
+#endif
+
 	return (0);
 }
 
