@@ -4,7 +4,8 @@
 /*
  * CATS specifc device includes go in here
  */
-#define	CONS_HAVE_SCSIPI
-#define	CONS_HAVE_WSCONS
+#define	CONF_HAVE_SCSIPI
+#define	CONF_HAVE_WSCONS
+#define	CONF_HAVE_USB
 
 #endif	/* _CATS_CONF_H */
