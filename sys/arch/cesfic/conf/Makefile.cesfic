@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.11 2003/09/28 21:22:45 cl Exp $
+#	$NetBSD: Makefile.cesfic,v 1.11.4.1 2005/02/06 07:45:24 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -87,3 +87,8 @@ TEXTADDR?=	2000
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

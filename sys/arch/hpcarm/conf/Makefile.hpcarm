@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcarm,v 1.14 2002/10/05 17:12:09 chs Exp $
+#	$NetBSD: Makefile.hpcarm,v 1.14.10.1 2005/02/06 07:45:25 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -90,3 +90,8 @@ cpuswitch.o fault.o machdep.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf

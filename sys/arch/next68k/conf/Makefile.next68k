@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.next68k,v 1.25 2002/11/26 18:51:16 thorpej Exp $
+# $NetBSD: Makefile.next68k,v 1.25.10.1 2005/02/06 07:45:25 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -89,3 +89,8 @@ locore.o pmap.o trap.o: Makefile
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) IPF source directory
+##
+CPPFLAGS+=	-I$S/dist/ipf
