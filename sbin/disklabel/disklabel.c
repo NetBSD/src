@@ -43,7 +43,7 @@ static char copyright[] =
 #ifndef lint
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 /* from static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94"; */
-static char rcsid[] = "$Id: disklabel.c,v 1.20 1995/01/12 12:23:19 mycroft Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.21 1995/01/30 20:14:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -218,7 +218,6 @@ main(argc, argv)
 	} else {
 		if (op == UNSPEC)
 			op = READ;
-		xxboot = bootxx = 0;
 	}
 #else
 	if (op == UNSPEC)
@@ -749,7 +748,7 @@ display(f, lp)
 	fprintf(f, "label: %.*s\n", sizeof(lp->d_packname), lp->d_packname);
 	fprintf(f, "flags:");
 	if (lp->d_flags & D_REMOVABLE)
-		fprintf(f, " removeable");
+		fprintf(f, " removable");
 	if (lp->d_flags & D_ECC)
 		fprintf(f, " ecc");
 	if (lp->d_flags & D_BADSECT)
@@ -864,7 +863,7 @@ edit(lp, f)
 		if (first == 'n' || first == 'N')
 			break;
 	}
-	(void) unlink(tmpfil);
+	(void)unlink(tmpfil);
 	return (1);
 }
 
@@ -978,7 +977,7 @@ getasciilabel(f, lp)
 		if (!strcmp(cp, "flags")) {
 			for (v = 0; (cp = tp) && *cp != '\0';) {
 				tp = word(cp);
-				if (!strcmp(cp, "removeable"))
+				if (!strcmp(cp, "removable"))
 					v |= D_REMOVABLE;
 				else if (!strcmp(cp, "ecc"))
 					v |= D_ECC;
