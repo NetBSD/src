@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.6 2001/06/30 14:16:55 thorpej Exp $ */
+/* $NetBSD: if_tireg.h,v 1.7 2001/06/30 14:47:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1071,23 +1071,27 @@ struct ti_softc {
 	char			*ti_vhandle;
 	bus_space_tag_t		ti_btag;
 	void			*ti_intrhand;
-#if 0
-	struct resource		*ti_irq;
-	struct resource		*ti_res;
-#endif
+
 	struct ifmedia		ifmedia;	/* media info */
-#if 0
-	u_int8_t		ti_unit;	/* interface number */
-#endif
+
 	u_int8_t		ti_hwrev;	/* Tigon rev (1 or 2) */
 	u_int8_t		ti_copper;	/* 1000baseTX card */
 	u_int8_t		ti_linkstat;	/* Link state */
 	struct ti_ring_data	*ti_rdata;	/* rings */
-	struct ti_tx_desc	*ti_tx_ring_nic;/* pointer to shared mem */
-	struct ti_chain_data	ti_cdata;	/* mbufs */
 #define ti_ev_prodidx		ti_rdata->ti_ev_prodidx_r
 #define ti_return_prodidx	ti_rdata->ti_return_prodidx_r
 #define ti_tx_considx		ti_rdata->ti_tx_considx_r
+
+	struct ti_tx_desc	*ti_tx_ring_nic;/* pointer to shared mem */
+
+	struct ti_chain_data	ti_cdata;	/* mbufs */
+
+	/*
+	 * Function pointers to deal with Tigon 1 vs. Tigon 2 differences.
+	 */
+	int			(*sc_tx_encap)(struct ti_softc *,
+				    struct mbuf *, uint32_t *);
+
 	u_int16_t		ti_tx_saved_considx;
 	u_int16_t		ti_rx_saved_considx;
 	u_int16_t		ti_ev_saved_considx;
