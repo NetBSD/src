@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.28 1996/06/23 12:12:46 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.29 1996/09/09 14:51:17 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -59,8 +59,8 @@ int		ip_mrtproto = IGMP_DVMRP;    /* for netstat only */
 #define RTE_FOUND	0x2
 
 #define	MFCHASH(a, g) \
-	((((a) >> 20) ^ ((a) >> 10) ^ (a) ^ \
-	  ((g) >> 20) ^ ((g) >> 10) ^ (g)) & mfchash)
+	((((a).s_addr >> 20) ^ ((a).s_addr >> 10) ^ (a).s_addr ^ \
+	  ((g).s_addr >> 20) ^ ((g).s_addr >> 10) ^ (g).s_addr) & mfchash)
 LIST_HEAD(mfchashhdr, mfc) *mfchashtbl;
 u_long	mfchash;
 
@@ -165,7 +165,7 @@ static int have_encap_tunnel = 0;
  * one-back cache used by ipip_input to locate a tunnel's vif
  * given a datagram's src ip address.
  */
-static u_int32_t last_encap_src;
+static struct in_addr last_encap_src;
 static struct vif *last_encap_vif;
 
 /*
@@ -188,8 +188,8 @@ static int pim_assert;
 	++mrtstat.mrts_mfc_lookups; \
 	for (_rt = mfchashtbl[MFCHASH(o, g)].lh_first; \
 	     _rt; _rt = _rt->mfc_hash.le_next) { \
-		if (_rt->mfc_origin.s_addr == (o) && \
-		    _rt->mfc_mcastgrp.s_addr == (g) && \
+		if (in_hosteq(_rt->mfc_origin, (o)) && \
+		    in_hosteq(_rt->mfc_mcastgrp, (g)) && \
 		    _rt->mfc_stall == NULL) { \
 			(rt) = _rt; \
 			break; \
@@ -347,7 +347,7 @@ get_sg_cnt(req)
 	int s;
 
 	s = splsoftnet();
-	MFCFIND(req->src.s_addr, req->grp.s_addr, rt);
+	MFCFIND(req->src, req->grp, rt);
 	splx(s);
 	if (rt != NULL) {
 		req->pktcnt = rt->mfc_pkt_cnt;
@@ -439,7 +439,7 @@ ip_mrouter_done()
 	/* Clear out all the vifs currently in use. */
 	for (vifi = 0; vifi < numvifs; vifi++) {
 		vifp = &viftable[vifi];
-		if (vifp->v_lcl_addr.s_addr != 0)
+		if (!in_nullhost(vifp->v_lcl_addr))
 			reset_vif(vifp);
 	}
 
@@ -542,7 +542,7 @@ add_vif(m)
 		return (EINVAL);
 
 	vifp = &viftable[vifcp->vifc_vifi];
-	if (vifp->v_lcl_addr.s_addr != 0)
+	if (!in_nullhost(vifp->v_lcl_addr))
 		return (EADDRINUSE);
 	
 	/* Find the interface with an address in AF_INET family. */
@@ -578,7 +578,7 @@ add_vif(m)
 		/* Enable promiscuous reception of all IP multicasts. */
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-		satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
+		satosin(&ifr.ifr_addr)->sin_addr = zeroin_addr;
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
 		if (error)
 			return (error);
@@ -634,12 +634,12 @@ reset_vif(vifp)
 		free(vifp->v_ifp, M_MRTABLE);
 		if (vifp == last_encap_vif) {
 			last_encap_vif = 0;
-			last_encap_src = 0;
+			last_encap_src = zeroin_addr;
 		}
 	} else {
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-		satosin(&ifr.ifr_addr)->sin_addr.s_addr = INADDR_ANY;
+		satosin(&ifr.ifr_addr)->sin_addr = zeroin_addr;
 		ifp = vifp->v_ifp;
 		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
 	}
@@ -666,7 +666,7 @@ del_vif(m)
 		return (EINVAL);
 
 	vifp = &viftable[*vifip];
-	if (vifp->v_lcl_addr.s_addr == 0)
+	if (in_nullhost(vifp->v_lcl_addr))
 		return (EADDRNOTAVAIL);
 	
 	s = splsoftnet();
@@ -677,7 +677,7 @@ del_vif(m)
 	
 	/* Adjust numvifs down */
 	for (vifi = numvifs; vifi > 0; vifi--)
-		if (viftable[vifi-1].v_lcl_addr.s_addr != 0)
+		if (!in_nullhost(viftable[vifi-1].v_lcl_addr))
 			break;
 	numvifs = vifi;
 	
@@ -739,7 +739,7 @@ add_mfc(m)
 	mfccp = mtod(m, struct mfcctl *);
 
 	s = splsoftnet();
-	MFCFIND(mfccp->mfcc_origin.s_addr, mfccp->mfcc_mcastgrp.s_addr, rt);
+	MFCFIND(mfccp->mfcc_origin, mfccp->mfcc_mcastgrp, rt);
 
 	/* If an entry already exists, just update the fields */
 	if (rt) {
@@ -762,10 +762,10 @@ add_mfc(m)
 	 * Find the entry for which the upcall was made and update
 	 */
 	nstl = 0;
-	hash = MFCHASH(mfccp->mfcc_origin.s_addr, mfccp->mfcc_mcastgrp.s_addr);
+	hash = MFCHASH(mfccp->mfcc_origin, mfccp->mfcc_mcastgrp);
 	for (rt = mfchashtbl[hash].lh_first; rt; rt = rt->mfc_hash.le_next) {
-		if (rt->mfc_origin.s_addr == mfccp->mfcc_origin.s_addr &&
-		    rt->mfc_mcastgrp.s_addr == mfccp->mfcc_mcastgrp.s_addr &&
+		if (in_hosteq(rt->mfc_origin, mfccp->mfcc_origin) &&
+		    in_hosteq(rt->mfc_mcastgrp, mfccp->mfcc_mcastgrp) &&
 		    rt->mfc_stall != NULL) {
 			if (nstl++)
 				log(LOG_ERR, "add_mfc %s o %x g %x p %x dbx %p",
@@ -878,11 +878,12 @@ del_mfc(m)
 
 	if (mrtdebug & DEBUG_MFC)
 		log(LOG_DEBUG, "del_mfc origin %x mcastgrp %x",
-		    ntohl(mfccp->mfcc_origin.s_addr), ntohl(mfccp->mfcc_mcastgrp.s_addr));
+		    ntohl(mfccp->mfcc_origin.s_addr),
+		    ntohl(mfccp->mfcc_mcastgrp.s_addr));
 
 	s = splsoftnet();
 
-	MFCFIND(mfccp->mfcc_origin.s_addr, mfccp->mfcc_mcastgrp.s_addr, rt);
+	MFCFIND(mfccp->mfcc_origin, mfccp->mfcc_mcastgrp, rt);
 	if (rt == NULL) {
 		splx(s);
 		return (EADDRNOTAVAIL);
@@ -1001,7 +1002,7 @@ ip_mforward(m, ifp)
      * Determine forwarding vifs from the forwarding cache table
      */
     s = splsoftnet();
-    MFCFIND(ip->ip_src.s_addr, ip->ip_dst.s_addr, rt);
+    MFCFIND(ip->ip_src, ip->ip_dst, rt);
 
     /* Entry exists, so forward if necessary */
     if (rt != NULL) {
@@ -1050,10 +1051,10 @@ ip_mforward(m, ifp)
 	}
 	    
 	/* is there an upcall waiting for this packet? */
-	hash = MFCHASH(ip->ip_src.s_addr, ip->ip_dst.s_addr);
+	hash = MFCHASH(ip->ip_src, ip->ip_dst);
 	for (rt = mfchashtbl[hash].lh_first; rt; rt = rt->mfc_hash.le_next) {
-	    if (ip->ip_src.s_addr == rt->mfc_origin.s_addr &&
-		ip->ip_dst.s_addr == rt->mfc_mcastgrp.s_addr &&
+	    if (in_hosteq(ip->ip_src, rt->mfc_origin) &&
+		in_hosteq(ip->ip_dst, rt->mfc_mcastgrp) &&
 		rt->mfc_stall != NULL)
 		break;
 	}
@@ -1289,7 +1290,7 @@ ip_mdq(m, ifp, rt)
     }
 
     /* If I sourced this packet, it counts as output, else it was input. */
-    if (ip->ip_src.s_addr == viftable[vifi].v_lcl_addr.s_addr) {
+    if (in_hosteq(ip->ip_src, viftable[vifi].v_lcl_addr)) {
 	viftable[vifi].v_pkt_out++;
 	viftable[vifi].v_bytes_out += plen;
     } else {
@@ -1465,14 +1466,14 @@ ipip_input(m, va_alist)
 		return;
 	}
 
-	if (ip->ip_src.s_addr != last_encap_src) {
+	if (!in_hosteq(ip->ip_src, last_encap_src)) {
 		register struct vif *vife;
 	
 		vifp = viftable;
 		vife = vifp + numvifs;
 		for (; vifp < vife; vifp++)
 			if (vifp->v_flags & VIFF_TUNNEL &&
-			    vifp->v_rmt_addr.s_addr == ip->ip_src.s_addr)
+			    in_hosteq(vifp->v_rmt_addr, ip->ip_src))
 				break;
 		if (vifp == vife) {
 			mrtstat.mrts_cant_tunnel++; /*XXX*/
@@ -1483,7 +1484,7 @@ ipip_input(m, va_alist)
 			return;
 		}
 		last_encap_vif = vifp;
-		last_encap_src = ip->ip_src.s_addr;
+		last_encap_src = ip->ip_src;
 	} else
 		vifp = last_encap_vif;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.21 1996/05/22 14:42:29 mycroft Exp $	*/
+/*	$NetBSD: in.h,v 1.22 1996/09/09 14:51:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -259,15 +259,19 @@ struct ip_mreq {
 
 
 #ifdef _KERNEL
-int	   in_broadcast __P((struct in_addr, struct ifnet *));
-int	   in_canforward __P((struct in_addr));
-int	   in_cksum __P((struct mbuf *, int));
-int	   in_localaddr __P((struct in_addr));
-void	   in_socktrim __P((struct sockaddr_in *));
+extern	struct in_addr zeroin_addr;
+
+int	in_broadcast __P((struct in_addr, struct ifnet *));
+int	in_canforward __P((struct in_addr));
+int	in_cksum __P((struct mbuf *, int));
+int	in_localaddr __P((struct in_addr));
+void	in_socktrim __P((struct sockaddr_in *));
+
+#define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
+#define	in_nullhost(x)	((x).s_addr == INADDR_ANY)
 
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
 #define	sintosa(sin)	((struct sockaddr *)(sin))
 #define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
-#define	SAME_INADDR(a, b)	((a)->sin_addr.s_addr == (b)->sin_addr.s_addr)
 #endif
 #endif /* !_NETINET_IN_H_ */

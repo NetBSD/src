@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
+/*	$NetBSD: igmp.c,v 1.16 1996/09/09 14:51:08 mycroft Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -214,7 +214,7 @@ igmp_input(m, va_alist)
 				if (inm->inm_ifp == ifp &&
 				    !IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
 				    (ip->ip_dst.s_addr == INADDR_ALLHOSTS_GROUP ||
-				     ip->ip_dst.s_addr == inm->inm_addr.s_addr)) {
+				     in_hosteq(ip->ip_dst, inm->inm_addr))) {
 					switch (inm->inm_state) {
 					case IGMP_DELAYING_MEMBER:
 						if (inm->inm_timer <= timer)
@@ -248,7 +248,7 @@ igmp_input(m, va_alist)
 			break;
 
 		if (!IN_MULTICAST(igmp->igmp_group.s_addr) ||
-		    igmp->igmp_group.s_addr != ip->ip_dst.s_addr) {
+		    !in_hosteq(igmp->igmp_group, ip->ip_dst)) {
 			++igmpstat.igps_rcv_badreports;
 			m_freem(m);
 			return;
@@ -304,7 +304,7 @@ igmp_input(m, va_alist)
 		 * group.
 		 */
 		IFP_TO_IA(ifp, ia);
-		if (ia && ip->ip_src.s_addr == ia->ia_addr.sin_addr.s_addr)
+		if (ia && in_hosteq(ip->ip_src, ia->ia_addr.sin_addr))
 			break;
 #endif
 
@@ -314,7 +314,7 @@ igmp_input(m, va_alist)
 			break;
 
 		if (!IN_MULTICAST(igmp->igmp_group.s_addr) ||
-		    igmp->igmp_group.s_addr != ip->ip_dst.s_addr) {
+		    !in_hosteq(igmp->igmp_group, ip->ip_dst)) {
 			++igmpstat.igps_rcv_badreports;
 			m_freem(m);
 			return;
@@ -492,7 +492,7 @@ igmp_sendpkt(inm, type)
 	ip->ip_len = sizeof(struct ip) + IGMP_MINLEN;
 	ip->ip_off = 0;
 	ip->ip_p = IPPROTO_IGMP;
-	ip->ip_src.s_addr = INADDR_ANY;
+	ip->ip_src = zeroin_addr;
 	ip->ip_dst = inm->inm_addr;
 
 	m->m_data += sizeof(struct ip);

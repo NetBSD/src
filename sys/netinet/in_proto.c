@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.15 1996/09/09 14:51:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -140,7 +140,7 @@ struct protosw inetsw[] = {
 #endif /* EON */
 #ifdef NSIP
 { SOCK_RAW,	&inetdomain,	IPPROTO_IDP,	PR_ATOMIC|PR_ADDR,
-  idpip_input,	rip_output,	nsip_ctlinput,	0,
+  nsip_input,	nsip_output,	nsip_ctlinput,	0,
   rip_usrreq,
   0,		0,		0,		0,
 },
