@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.19 2003/04/15 14:22:13 dsl Exp $	*/
+/*	$NetBSD: installboot.h,v 1.20 2003/07/27 07:53:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include "../../sys/sys/bootblock.h"
 #else
 #include <sys/bootblock.h>
+#include <sys/endian.h>
 #endif
 
 #include <sys/stat.h>
