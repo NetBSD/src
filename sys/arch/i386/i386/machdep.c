@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.3 2000/04/22 16:05:19 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.4 2000/06/25 19:37:04 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -163,11 +163,19 @@
 extern struct proc *npxproc;
 #endif
 
+#include "mca.h"
+#if NMCA > 0
+#include <machine/mca_machdep.h>	/* for mca_busprobe() */
+#endif
+
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
 char bootinfo[BOOTINFO_MAXSIZE];
+
+/* Our exported CPU info; we have only one right now. */  
+struct cpu_info cpu_info_store;
 
 struct bi_devmatch *i386_alldisks = NULL;
 int i386_ndisks = 0;
@@ -262,7 +270,7 @@ cpu_startup()
 	 * Initialize error message buffer (et end of core).
 	 */
 	msgbuf_vaddr = uvm_km_valloc(kernel_map, i386_round_page(MSGBUFSIZE));
-	if (msgbuf_vaddr == NULL)
+	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
 	/* msgbuf_paddr was init'd in pmap */
@@ -273,7 +281,8 @@ cpu_startup()
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf(version);
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
+
 	printf("total memory = %s\n", pbuf);
 
 	/*
@@ -1335,7 +1344,6 @@ dumpsys()
 	/* Save registers. */
 	savectx(&dumppcb);
 
-	msgbufenabled = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
 
@@ -1757,6 +1765,13 @@ init386(first_avail)
 	}
 #endif
 
+#if NMCA > 0
+	/* check for MCA bus, needed to be done before ISA stuff - if
+	 * MCA is detected, ISA needs to use level triggered interrupts
+	 * by default */
+	mca_busprobe();
+#endif
+
 #if NISA > 0
 	isa_defaultirq();
 #endif
@@ -1777,10 +1792,10 @@ init386(first_avail)
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
-		       "have %d bytes, want %d bytes\n"
+		       "have %lu bytes, want %lu bytes\n"
 		       "running in degraded mode\n"
 		       "press a key to confirm\n\n",
-		       ctob(physmem), 2*1024*1024);
+		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
 }

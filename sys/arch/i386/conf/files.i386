@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.147.2.3 2000/05/03 14:42:30 sommerfeld Exp $
+#	$NetBSD: files.i386,v 1.147.2.4 2000/06/25 19:36:57 sommerfeld Exp $
 #
 # new style config file for i386 architecture
 #
@@ -11,7 +11,7 @@ maxusers 2 16 64
 # APM options
 defopt	opt_apm.h APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
 	APM_NO_STANDBY APM_V10_ONLY APM_NO_V12 APMDEBUG APMDEBUG_VALUE
-	APM_POWER_PRINT APM_DISABLE_INTERRUPTS
+	APM_POWER_PRINT APM_DISABLE_INTERRUPTS APM_ALLOW_BOGUS_SEGMENTS
 
 # Processor type options.
 defopt	opt_cputype.h I386_CPU I486_CPU I586_CPU I686_CPU
@@ -114,8 +114,7 @@ file	arch/i386/i386/bios32.c		bios32 needs-flag
 
 define mainbus { apid = -1 }
 # XXX BIOS32 only if something that uses it is configured!
-# device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32
-device	mainbus: isabus, eisabus, pcibus, mainbus, bios32
+device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -187,8 +186,10 @@ file	dev/clock_subr.c		isa
 
 # Numeric Processing Extension; Math Co-processor
 device	npx
-attach	npx at isa
 file	arch/i386/isa/npx.c		npx needs-flag
+
+attach	npx at isa with npx_isa
+file	arch/i386/isa/npx_isa.c		npx_isa
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
@@ -200,16 +201,6 @@ attach	pc at isa
 device	pcconskbd
 attach	pcconskbd at pckbc
 file	arch/i386/isa/pccons.c		pc | pcconskbd needs-flag
-
-# PC console support a la "pcvt"
-device	vt: tty, pckbcport
-attach	vt at isa
-file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
-file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag
 
 # PC Mice; Logitech-style, Microsoft-style, and PS/2-style
 device	olms
@@ -266,9 +257,9 @@ file	arch/i386/eisa/eisa_machdep.c	eisa
 # MCA-only drivers
 #
 
-# device mca {[slot = -1]} : bioscall
-# include "dev/mca/files.mca"
-# file	arch/i386/mca/mca_machdep.c	mca
+device mca {[slot = -1]} : bioscall
+include "dev/mca/files.mca"
+file	arch/i386/mca/mca_machdep.c	mca
 
 # ISA Plug 'n Play devices
 file	arch/i386/isa/isapnp_machdep.c	isapnp
@@ -342,6 +333,9 @@ file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 
 # a.out binary compatibility (COMPAT_AOUT)
 include "compat/aout/files.aout"
+
+# Win32 binary compatibility (COMPAT_PECOFF)
+include "compat/pecoff/files.pecoff"
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"

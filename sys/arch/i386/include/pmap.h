@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43.2.2 2000/05/03 14:42:32 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.h,v 1.43.2.3 2000/06/25 19:37:11 sommerfeld Exp $	*/
 
 /*
  *
@@ -344,6 +344,7 @@ struct pmap_remove_record {
 };
 #endif
 
+#if 0
 /*
  * pmap_transfer_location: used to pass the current location in the
  * pmap between pmap_transfer and pmap_transfer_ptes [e.g. during
@@ -355,6 +356,7 @@ struct pmap_transfer_location {
 	pt_entry_t *pte;		/* the PTE that maps address */
 	struct vm_page *ptp;		/* the PTP that the PTE lives in */
 };
+#endif
 
 /*
  * global kernel variables
@@ -377,10 +379,10 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 #define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
 #define pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
-#define pmap_copy(DP,SP,D,L,S)		pmap_transfer(DP,SP,D,L,S, FALSE)
+#define pmap_copy(DP,SP,D,L,S)		
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#define pmap_move(DP,SP,D,L,S)		pmap_transfer(DP,SP,D,L,S, TRUE)
+#define pmap_move(DP,SP,D,L,S)		
 #define pmap_phys_address(ppn)		i386_ptob(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 

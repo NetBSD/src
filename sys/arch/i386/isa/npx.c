@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.70.8.2 2000/04/22 16:05:21 sommerfeld Exp $	*/
+/*	$NetBSD: npx.c,v 1.70.8.3 2000/06/25 19:37:13 sommerfeld Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -57,9 +57,9 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 #include <machine/cpufunc.h>
 #include <machine/pcb.h>
 #include <machine/trap.h>
@@ -67,7 +67,9 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+
 #include <i386/isa/icu.h>
+#include <i386/isa/npxvar.h>
 
 /*
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
@@ -106,30 +108,9 @@
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
-int npxdna __P((struct proc *));
-void npxexit __P((void));
-int npxintr __P((void *));
-static int npxprobe1 __P((struct isa_attach_args *));
-static void npxsave1 __P((void));
-
-struct npx_softc {
-	struct device sc_dev;
-	void *sc_ih;
-};
-
-int npxprobe __P((struct device *, struct cfdata *, void *));
-void npxattach __P((struct device *, struct device *, void *));
-
-struct cfattach npx_ca = {
-	sizeof(struct npx_softc), npxprobe, npxattach
-};
-
-enum npx_type {
-	NPX_NONE = 0,
-	NPX_INTERRUPT,
-	NPX_EXCEPTION,
-	NPX_BROKEN,
-};
+int npxdna(struct proc *);
+void npxexit(void);
+static void npxsave1(void);
 
 struct proc	*npxproc;
 
@@ -140,15 +121,45 @@ volatile u_int			npx_traps_while_probing;
 
 extern int			i386_fpu_present;
 
-static inline int
-npxprobe1(ia)
-	struct isa_attach_args *ia;
+struct npx_softc		*npx_softc;	/* XXXSMP: per-cpu */
+
+enum npx_type
+npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 {
+	struct gate_descriptor save_idt_npxintr;
+	struct gate_descriptor save_idt_npxtrap;
+	enum npx_type rv = NPX_NONE;
+	u_long	save_eflags;
+	unsigned save_imen;
 	int control;
 	int status;
 
-	ia->ia_iosize = 16;
-	ia->ia_msize = 0;
+	save_eflags = read_eflags();
+	disable_intr();
+	save_idt_npxintr = idt[NRSVIDT + irq].gd;
+	save_idt_npxtrap = idt[16].gd;
+	setgate(&idt[NRSVIDT + irq].gd, probeintr, 0, SDT_SYS386IGT, SEL_KPL);
+	setgate(&idt[16].gd, probetrap, 0, SDT_SYS386TGT, SEL_KPL);
+	save_imen = imen;
+	imen = ~((1 << IRQ_SLAVE) | (1 << irq));
+	SET_ICUS();
+
+	/*
+	 * Partially reset the coprocessor, if any.  Some BIOS's don't reset
+	 * it after a warm boot.
+	 */
+	/* full reset on some systems, NOP on others */
+	bus_space_write_1(iot, ioh, 1, 0);
+	delay(1000);
+	/* clear BUSY# latch */
+	bus_space_write_1(iot, ioh, 0, 0);
+
+	/*
+	 * We set CR0 in locore to trap all ESC and WAIT instructions.
+	 * We have to turn off the CR0_EM bit temporarily while probing.
+	 */
+	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
+	enable_intr();
 
 	/*
 	 * Finish resetting the coprocessor, if any.  If there is an error
@@ -183,123 +194,42 @@ npxprobe1(ia)
 				/*
 				 * Good, exception 16 works.
 				 */
-				npx_type = NPX_EXCEPTION;
-				ia->ia_irq = IRQUNK;	/* zap the interrupt */
+				rv = NPX_EXCEPTION;
 			} else if (npx_intrs_while_probing != 0) {
 				/*
 				 * Bad, we are stuck with IRQ13.
 				 */
-				npx_type = NPX_INTERRUPT;
+				rv = NPX_INTERRUPT;
 			} else {
 				/*
 				 * Worse, even IRQ13 is broken.  Use emulator.
 				 */
-				npx_type = NPX_BROKEN;
-				ia->ia_irq = IRQUNK;
+				rv = NPX_BROKEN;
 			}
-			return 1;
 		}
 	}
-	/*
-	 * Probe failed.  There is no usable FPU.
-	 */
-	npx_type = NPX_NONE;
-	return 0;
-}
 
-/*
- * Probe routine.  Initialize cr0 to give correct behaviour for [f]wait
- * whether the device exists or not (XXX should be elsewhere).  Set flags
- * to tell npxattach() what to do.  Modify device struct if npx doesn't
- * need to use interrupts.  Return 1 if device exists.
- */
-int
-npxprobe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct	isa_attach_args *ia = aux;
-	int	irq;
-	int	result;
-	u_long	save_eflags;
-	unsigned save_imen;
-	struct	gate_descriptor save_idt_npxintr;
-	struct	gate_descriptor save_idt_npxtrap;
-
-	/*
-	 * This routine is now just a wrapper for npxprobe1(), to install
-	 * special npx interrupt and trap handlers, to enable npx interrupts
-	 * and to disable other interrupts.  Someday isa_configure() will
-	 * install suitable handlers and run with interrupts enabled so we
-	 * won't need to do so much here.
-	 */
-	irq = NRSVIDT + ia->ia_irq;
-	save_eflags = read_eflags();
-	disable_intr();
-	save_idt_npxintr = idt[irq].gd;
-	save_idt_npxtrap = idt[16].gd;
-	setgate(&idt[irq].gd, probeintr, 0, SDT_SYS386IGT, SEL_KPL);
-	setgate(&idt[16].gd, probetrap, 0, SDT_SYS386TGT, SEL_KPL);
-	save_imen = imen;
-	imen = ~((1 << IRQ_SLAVE) | (1 << ia->ia_irq));
-	SET_ICUS();
-
-	/*
-	 * Partially reset the coprocessor, if any.  Some BIOS's don't reset
-	 * it after a warm boot.
-	 */
-	outb(0xf1, 0);		/* full reset on some systems, NOP on others */
-	delay(1000);
-	outb(0xf0, 0);		/* clear BUSY# latch */
-
-	/*
-	 * We set CR0 in locore to trap all ESC and WAIT instructions.
-	 * We have to turn off the CR0_EM bit temporarily while probing.
-	 */
-	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
-	enable_intr();
-	result = npxprobe1(ia);
 	disable_intr();
 	lcr0(rcr0() | (CR0_EM|CR0_TS));
 
 	imen = save_imen;
 	SET_ICUS();
-	idt[irq].gd = save_idt_npxintr;
+	idt[NRSVIDT + irq].gd = save_idt_npxintr;
 	idt[16].gd = save_idt_npxtrap;
 	write_eflags(save_eflags);
-	return (result);
+
+	return (rv);
 }
 
-
 /*
- * Attach routine - announce which it is, and wire into system
+ * Common attach routine.
  */
 void
-npxattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+npxattach(struct npx_softc *sc)
 {
-	struct npx_softc *sc = (void *)self;
-	struct isa_attach_args *ia = aux;
 
-	switch (npx_type) {
-	case NPX_INTERRUPT:
-		printf("\n");
-		lcr0(rcr0() & ~CR0_NE);
-		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
-		    IST_EDGE, IPL_NONE, npxintr, 0);
-		break;
-	case NPX_EXCEPTION:
-		printf(": using exception 16\n");
-		break;
-	case NPX_BROKEN:
-		printf(": error reporting broken; not using\n");
-		npx_type = NPX_NONE;
-		return;
-	case NPX_NONE:
-		return;
-	}
+	npx_softc = sc;
+	npx_type = sc->sc_type;
 
 	lcr0(rcr0() & ~(CR0_EM|CR0_TS));
 	fninit();
@@ -325,13 +255,15 @@ npxattach(parent, self, aux)
  * IRQ13 exception handling makes exceptions even less precise than usual.
  */
 int
-npxintr(arg)
-	void *arg;
+npxintr(void *arg)
 {
 	register struct proc *p = npxproc;
 	register struct save87 *addr;
 	struct intrframe *frame = arg;
+	struct npx_softc *sc;
 	int code;
+
+	sc = npx_softc;
 
 	uvmexp.traps++;
 	IPRINTF(("Intr"));
@@ -345,7 +277,7 @@ npxintr(arg)
 	/*
 	 * Clear the interrupt latch.
 	 */
-	outb(0xf0, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0);
 
 	/*
 	 * If we're saving, ignore the interrupt.  The FPU will generate
@@ -444,7 +376,7 @@ npxintr(arg)
  * so that it could succeed.
  */
 static inline void
-npxsave1()
+npxsave1(void)
 {
 	struct proc *p = npxproc;
 
@@ -461,8 +393,7 @@ npxsave1()
  * saved state.
  */
 int
-npxdna(p)
-	struct proc *p;
+npxdna(struct proc *p)
 {
 
 	if (npx_type == NPX_NONE) {
@@ -522,7 +453,7 @@ npxdna(p)
  * Drop the current FPU state on the floor.
  */
 void
-npxdrop()
+npxdrop(void)
 {
 	struct proc *p = npxproc;
 
@@ -541,7 +472,7 @@ npxdrop()
  * to trap once per fork(), and at best saves us a reload once per fork().
  */
 void
-npxsave()
+npxsave(void)
 {
 
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.h,v 1.5.16.1 2000/02/29 13:17:20 sommerfeld Exp $	*/
+/*	$NetBSD: eisa_machdep.h,v 1.5.16.2 2000/06/25 19:37:11 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -57,16 +57,17 @@ typedef int eisa_intr_handle_t;
 /*
  * Functions provided to machine-independent EISA code.
  */
-void		eisa_attach_hook __P((struct device *, struct device *,
-		    struct eisabus_attach_args *));
-int		eisa_maxslots __P((eisa_chipset_tag_t));
-int		eisa_intr_map __P((eisa_chipset_tag_t, u_int,
-		    eisa_intr_handle_t *));
-const char	*eisa_intr_string __P((eisa_chipset_tag_t, eisa_intr_handle_t));
-void		*eisa_intr_establish __P((eisa_chipset_tag_t,
-		    eisa_intr_handle_t, int, int, int (*)(void *), void *));
-void		eisa_intr_disestablish __P((eisa_chipset_tag_t, void *));
-int		eisa_mem_alloc __P((bus_space_tag_t, bus_size_t, bus_size_t,
-		    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *));
-void		eisa_mem_free __P((bus_space_tag_t, bus_space_handle_t,
-		    bus_size_t));
+void		eisa_attach_hook(struct device *, struct device *,
+		    struct eisabus_attach_args *);
+int		eisa_maxslots(eisa_chipset_tag_t);
+int		eisa_intr_map(eisa_chipset_tag_t, u_int,
+		    eisa_intr_handle_t *);
+const char	*eisa_intr_string(eisa_chipset_tag_t, eisa_intr_handle_t);
+const struct evcnt *eisa_intr_evcnt(eisa_chipset_tag_t, eisa_intr_handle_t);
+void		*eisa_intr_establish(eisa_chipset_tag_t,
+		    eisa_intr_handle_t, int, int, int (*)(void *), void *);
+void		eisa_intr_disestablish(eisa_chipset_tag_t, void *);
+int		eisa_mem_alloc(bus_space_tag_t, bus_size_t, bus_size_t,
+		    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *);
+void		eisa_mem_free(bus_space_tag_t, bus_space_handle_t,
+		    bus_size_t);
