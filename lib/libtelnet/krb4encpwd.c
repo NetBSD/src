@@ -1,4 +1,4 @@
-/*	$NetBSD: krb4encpwd.c,v 1.2 2002/05/26 22:07:28 wiz Exp $	*/
+/*	$NetBSD: krb4encpwd.c,v 1.3 2003/07/15 05:09:35 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)krb4encpwd.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: krb4encpwd.c,v 1.2 2002/05/26 22:07:28 wiz Exp $");
+__RCSID("$NetBSD: krb4encpwd.c,v 1.3 2003/07/15 05:09:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,7 @@ krb4encpwd_is(ap, data, cnt)
 		  register int i;
 
 		  time(&now);
-		  sprintf(challenge, "%x", now);
+		  snprintf(challenge, sizeof(challenge), "%x", now);
 		  Data(ap, KRB4_ENCPWD_CHALLENGE, (void *)challenge, strlen(challenge));
 		}
 		break;
@@ -322,7 +322,7 @@ krb4encpwd_reply(ap, data, cnt)
 		local_des_read_pw_string(user_passwd, sizeof(user_passwd)-1, "Password: ", 0);
 		UserPassword = user_passwd;
 		Challenge = challenge;
-		strcpy(instance, RemoteHostName);
+		strlcpy(instance, RemoteHostName, sizeof(instance));
 		if ((cp = strchr(instance, '.')) != 0)  *cp = '\0';
 
 		if (r = krb_mk_encpwd_req(&krb_token, KRB_SERVICE_NAME, instance, realm, Challenge, UserNameRequested, user_passwd)) {
@@ -403,12 +403,12 @@ krb4encpwd_printsub(data, cnt, buf, buflen)
 		goto common2;
 
 	default:
-		sprintf(lbuf, " %d (unknown)", data[3]);
+		snprintf(lbuf, sizeof(lbuf), " %d (unknown)", data[3]);
 		strncpy((char *)buf, lbuf, buflen);
 	common2:
 		BUMP(buf, buflen);
 		for (i = 4; i < cnt; i++) {
-			sprintf(lbuf, " %d", data[i]);
+			snprintf(lbuf, sizeof(lbuf), " %d", data[i]);
 			strncpy((char *)buf, lbuf, buflen);
 			BUMP(buf, buflen);
 		}
