@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.14 1998/02/24 07:42:06 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.15 1998/02/24 19:01:59 chuck Exp $        */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -609,7 +609,7 @@ bogons:
 	/*
 	 * Allocate the segment table map and the page table map
 	 */
-	s = maxproc + HP_STSIZE;
+	s = maxproc * HP_STSIZE;
 	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
 				 FALSE, &st_map_store);
 
