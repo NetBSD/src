@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.690 2004/03/29 04:14:03 dyoung Exp $
+#	$NetBSD: mi,v 1.691 2004/04/18 23:42:23 lukem Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2172,6 +2172,8 @@
 ./usr/share/man/cat3/CIRCLEQ_EMPTY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/CIRCLEQ_ENTRY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/CIRCLEQ_FIRST.0		comp-c-catman		.cat
+./usr/share/man/cat3/CIRCLEQ_FOREACH.0		comp-c-catman		.cat
+./usr/share/man/cat3/CIRCLEQ_FOREACH_REVERSE.0	comp-c-catman		.cat
 ./usr/share/man/cat3/CIRCLEQ_HEAD.0		comp-c-catman		.cat
 ./usr/share/man/cat3/CIRCLEQ_HEAD_INITIALIZER.0	comp-c-catman		.cat
 ./usr/share/man/cat3/CIRCLEQ_INIT.0		comp-c-catman		.cat
@@ -2223,6 +2225,7 @@
 ./usr/share/man/cat3/LIST_EMPTY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_ENTRY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_FIRST.0		comp-c-catman		.cat
+./usr/share/man/cat3/LIST_FOREACH.0		comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_HEAD.0		comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_HEAD_INITIALIZER.0	comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_INIT.0		comp-c-catman		.cat
@@ -2316,6 +2319,7 @@
 ./usr/share/man/cat3/SIMPLEQ_EMPTY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SIMPLEQ_ENTRY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SIMPLEQ_FIRST.0		comp-c-catman		.cat
+./usr/share/man/cat3/SIMPLEQ_FOREACH.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SIMPLEQ_HEAD.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SIMPLEQ_HEAD_INITIALIZER.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SIMPLEQ_INIT.0		comp-c-catman		.cat
@@ -2325,6 +2329,18 @@
 ./usr/share/man/cat3/SIMPLEQ_NEXT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SIMPLEQ_REMOVE.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SIMPLEQ_REMOVE_HEAD.0	comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_EMPTY.0		comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_ENTRY.0		comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_FIRST.0		comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_FOREACH.0		comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_HEAD.0		comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_HEAD_INITIALIZER.0	comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_INIT.0		comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_INSERT_AFTER.0	comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_INSERT_HEAD.0	comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_NEXT.0		comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_REMOVE.0		comp-c-catman		.cat
+./usr/share/man/cat3/SLIST_REMOVE_HEAD.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SMIME_read_PKCS7.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SMIME_write_PKCS7.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SPLAY_EMPTY.0		comp-c-catman		.cat
@@ -2421,9 +2437,24 @@
 ./usr/share/man/cat3/SSL_state_string.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_want.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_write.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/STAILQ_EMPTY.0		comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_ENTRY.0		comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_FIRST.0		comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_FOREACH.0		comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_HEAD.0		comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_HEAD_INITIALIZER.0	comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_INIT.0		comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_INSERT_AFTER.0	comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_INSERT_HEAD.0	comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_INSERT_TAIL.0	comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_NEXT.0		comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_REMOVE.0		comp-c-catman		.cat
+./usr/share/man/cat3/STAILQ_REMOVE_HEAD.0	comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_EMPTY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_ENTRY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_FIRST.0		comp-c-catman		.cat
+./usr/share/man/cat3/TAILQ_FOREACH.0		comp-c-catman		.cat
+./usr/share/man/cat3/TAILQ_FOREACH_REVERSE.0	comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_HEAD.0		comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_HEAD_INITIALIZER.0	comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_INIT.0		comp-c-catman		.cat
@@ -2431,7 +2462,9 @@
 ./usr/share/man/cat3/TAILQ_INSERT_BEFORE.0	comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_INSERT_HEAD.0	comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_INSERT_TAIL.0	comp-c-catman		.cat
+./usr/share/man/cat3/TAILQ_LAST.0		comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_NEXT.0		comp-c-catman		.cat
+./usr/share/man/cat3/TAILQ_PREV.0		comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_REMOVE.0		comp-c-catman		.cat
 ./usr/share/man/cat3/X509_NAME_ENTRY_get_object.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/X509_NAME_add_entry_by_txt.0	comp-c-catman		crypto,.cat
@@ -5828,6 +5861,8 @@
 ./usr/share/man/man3/CIRCLEQ_EMPTY.3		comp-c-man		.man
 ./usr/share/man/man3/CIRCLEQ_ENTRY.3		comp-c-man		.man
 ./usr/share/man/man3/CIRCLEQ_FIRST.3		comp-c-man		.man
+./usr/share/man/man3/CIRCLEQ_FOREACH.3		comp-c-man		.man
+./usr/share/man/man3/CIRCLEQ_FOREACH_REVERSE.3	comp-c-man		.man
 ./usr/share/man/man3/CIRCLEQ_HEAD.3		comp-c-man		.man
 ./usr/share/man/man3/CIRCLEQ_HEAD_INITIALIZER.3	comp-c-man		.man
 ./usr/share/man/man3/CIRCLEQ_INIT.3		comp-c-man		.man
@@ -5879,6 +5914,7 @@
 ./usr/share/man/man3/LIST_EMPTY.3		comp-c-man		.man
 ./usr/share/man/man3/LIST_ENTRY.3		comp-c-man		.man
 ./usr/share/man/man3/LIST_FIRST.3		comp-c-man		.man
+./usr/share/man/man3/LIST_FOREACH.3		comp-c-man		.man
 ./usr/share/man/man3/LIST_HEAD.3		comp-c-man		.man
 ./usr/share/man/man3/LIST_HEAD_INITIALIZER.3	comp-c-man		.man
 ./usr/share/man/man3/LIST_INIT.3		comp-c-man		.man
@@ -5972,6 +6008,7 @@
 ./usr/share/man/man3/SIMPLEQ_EMPTY.3		comp-c-man		.man
 ./usr/share/man/man3/SIMPLEQ_ENTRY.3		comp-c-man		.man
 ./usr/share/man/man3/SIMPLEQ_FIRST.3		comp-c-man		.man
+./usr/share/man/man3/SIMPLEQ_FOREACH.3		comp-c-man		.man
 ./usr/share/man/man3/SIMPLEQ_HEAD.3		comp-c-man		.man
 ./usr/share/man/man3/SIMPLEQ_HEAD_INITIALIZER.3	comp-c-man		.man
 ./usr/share/man/man3/SIMPLEQ_INIT.3		comp-c-man		.man
@@ -5981,6 +6018,18 @@
 ./usr/share/man/man3/SIMPLEQ_NEXT.3		comp-c-man		.man
 ./usr/share/man/man3/SIMPLEQ_REMOVE.3		comp-c-man		.man
 ./usr/share/man/man3/SIMPLEQ_REMOVE_HEAD.3	comp-c-man		.man
+./usr/share/man/man3/SLIST_EMPTY.3		comp-c-man		.man
+./usr/share/man/man3/SLIST_ENTRY.3		comp-c-man		.man
+./usr/share/man/man3/SLIST_FIRST.3		comp-c-man		.man
+./usr/share/man/man3/SLIST_FOREACH.3		comp-c-man		.man
+./usr/share/man/man3/SLIST_HEAD.3		comp-c-man		.man
+./usr/share/man/man3/SLIST_HEAD_INITIALIZER.3	comp-c-man		.man
+./usr/share/man/man3/SLIST_INIT.3		comp-c-man		.man
+./usr/share/man/man3/SLIST_INSERT_AFTER.3	comp-c-man		.man
+./usr/share/man/man3/SLIST_INSERT_HEAD.3	comp-c-man		.man
+./usr/share/man/man3/SLIST_NEXT.3		comp-c-man		.man
+./usr/share/man/man3/SLIST_REMOVE.3		comp-c-man		.man
+./usr/share/man/man3/SLIST_REMOVE_HEAD.3	comp-c-man		.man
 ./usr/share/man/man3/SMIME_read_PKCS7.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/SMIME_write_PKCS7.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SPLAY_EMPTY.3		comp-c-man		.man
@@ -6077,9 +6126,24 @@
 ./usr/share/man/man3/SSL_state_string.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_want.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_write.3		comp-c-man		crypto,.man
+./usr/share/man/man3/STAILQ_EMPTY.3		comp-c-man		.man
+./usr/share/man/man3/STAILQ_ENTRY.3		comp-c-man		.man
+./usr/share/man/man3/STAILQ_FIRST.3		comp-c-man		.man
+./usr/share/man/man3/STAILQ_FOREACH.3		comp-c-man		.man
+./usr/share/man/man3/STAILQ_HEAD.3		comp-c-man		.man
+./usr/share/man/man3/STAILQ_HEAD_INITIALIZER.3	comp-c-man		.man
+./usr/share/man/man3/STAILQ_INIT.3		comp-c-man		.man
+./usr/share/man/man3/STAILQ_INSERT_AFTER.3	comp-c-man		.man
+./usr/share/man/man3/STAILQ_INSERT_HEAD.3	comp-c-man		.man
+./usr/share/man/man3/STAILQ_INSERT_TAIL.3	comp-c-man		.man
+./usr/share/man/man3/STAILQ_NEXT.3		comp-c-man		.man
+./usr/share/man/man3/STAILQ_REMOVE.3		comp-c-man		.man
+./usr/share/man/man3/STAILQ_REMOVE_HEAD.3	comp-c-man		.man
 ./usr/share/man/man3/TAILQ_EMPTY.3		comp-c-man		.man
 ./usr/share/man/man3/TAILQ_ENTRY.3		comp-c-man		.man
 ./usr/share/man/man3/TAILQ_FIRST.3		comp-c-man		.man
+./usr/share/man/man3/TAILQ_FOREACH.3		comp-c-man		.man
+./usr/share/man/man3/TAILQ_FOREACH_REVERSE.3	comp-c-man		.man
 ./usr/share/man/man3/TAILQ_HEAD.3		comp-c-man		.man
 ./usr/share/man/man3/TAILQ_HEAD_INITIALIZER.3	comp-c-man		.man
 ./usr/share/man/man3/TAILQ_INIT.3		comp-c-man		.man
@@ -6087,7 +6151,9 @@
 ./usr/share/man/man3/TAILQ_INSERT_BEFORE.3	comp-c-man		.man
 ./usr/share/man/man3/TAILQ_INSERT_HEAD.3	comp-c-man		.man
 ./usr/share/man/man3/TAILQ_INSERT_TAIL.3	comp-c-man		.man
+./usr/share/man/man3/TAILQ_LAST.3		comp-c-man		.man
 ./usr/share/man/man3/TAILQ_NEXT.3		comp-c-man		.man
+./usr/share/man/man3/TAILQ_PREV.3		comp-c-man		.man
 ./usr/share/man/man3/TAILQ_REMOVE.3		comp-c-man		.man
 ./usr/share/man/man3/X509_NAME_ENTRY_get_object.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/X509_NAME_add_entry_by_txt.3	comp-c-man		crypto,.man
