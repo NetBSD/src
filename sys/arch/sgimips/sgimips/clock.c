@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2004/01/19 03:26:14 sekiya Exp $	*/
+/*	$NetBSD: clock.c,v 1.12 2004/03/25 15:06:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2004/01/19 03:26:14 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.12 2004/03/25 15:06:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -151,11 +151,14 @@ setstatclockrate(int newhz)
 void
 cpu_initclocks()
 {
+
 	if (clockfns == NULL)
 		panic("cpu_initclocks: clock device not attached");
 
+#ifdef MIPS3
 	if (mach_type != MACH_SGI_IP12) {
-		next_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
+		next_clk_intr = mips3_cp0_count_read()
+		    + curcpu()->ci_cycles_per_hz;
 		mips3_cp0_compare_write(next_clk_intr);
 
 		/* number of microseconds between interrupts */
@@ -169,6 +172,7 @@ cpu_initclocks()
 			tickfixinterval = hz >> (ftp - 1);
 		}
 	}
+#endif /* MIPS3 */
 
 	(*clockfns->cf_init)(clockdev);
 }
@@ -256,13 +260,24 @@ resettodr()
 }
 
 void
-mips1_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+mips1_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
+		 u_int32_t ipending)
 {
+
 	return;
 }
 
+unsigned long
+mips1_clkread(void)
+{
+
+	return 0;
+}
+
+#ifdef MIPS3
 void
-mips3_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+mips3_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
+		 u_int32_t ipending)
 {
         u_int32_t newcnt;
 	struct clockframe cf;
@@ -291,12 +306,6 @@ mips3_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipen
 }
 
 unsigned long
-mips1_clkread(void)
-{
-	return 0;
-}
-
-unsigned long
 mips3_clkread(void)
 {
 	uint32_t res, count;
@@ -305,3 +314,4 @@ mips3_clkread(void)
 	MIPS_COUNT_TO_MHZ(curcpu(), count, res);
 	return (res);
 }
+#endif /* MIPS3 */
