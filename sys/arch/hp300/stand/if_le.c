@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/hp300/stand/Attic/if_le.c,v 1.1 1995/02/19 19:17:05 mycroft Exp $
+ * $Header: /cvsroot/src/sys/arch/hp300/stand/Attic/if_le.c,v 1.2 1995/02/19 23:54:18 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -467,10 +467,10 @@ le_poll(desc, pkt, len)
 		printf("le%d: le_poll called. next_rd=%d\n", unit, sc->sc_next_rd);
 #endif
 	stat = lerdcsr(sc, 0);
-	if ((stat & LE_RINT) == 0)
-		return 0;
 	lewrcsr(sc, 0, stat & (LE_BABL | LE_MISS | LE_MERR | LE_RINT));
 	cdm = &sc->sc_rd[sc->sc_next_rd];
+	if (cdm->flags & LE_OWN)
+		return 0;
 #ifdef LE_DEBUG
 	if (le_debug) {
 		printf("next_rd %d\n", sc->sc_next_rd);
@@ -481,8 +481,6 @@ le_poll(desc, pkt, len)
 #endif
 	if (stat & (LE_BABL | LE_CERR | LE_MISS | LE_MERR))
 		le_error(unit, "le_poll", stat);
-	if (cdm->flags & LE_OWN)
-		panic("le_poll: rmd still owned by lance");
 	if (cdm->flags & (LE_FRAM | LE_OFLO | LE_CRC | LE_RBUFF)) {
 		printf("le%d_poll: rmd status 0x%x\n", unit, cdm->flags);
 		length = 0;
