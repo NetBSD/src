@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.c,v 1.6 1996/06/03 22:33:51 mark Exp $ */
+/* $NetBSD: irqhandler.c,v 1.7 1996/06/12 20:23:58 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,8 +47,6 @@
  *
  * Created      : 30/09/94
  */
-
-/* Note: Need to remove IRQ_FLAG_ACTIVE as it is not used */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +133,7 @@ irq_init()
 	irqmasks[IPL_TTY]   = 0x00000000;
 	irqmasks[IPL_CLOCK] = 0x00000000;
 	irqmasks[IPL_IMP]   = 0x00000000;
+	irqmasks[IPL_NONE]   = 0x00000000;
 
 	current_mask = 0x00000000;
 	actual_mask = 0x00000000;
@@ -162,6 +161,15 @@ irq_claim(irq, handler)
 {
 	int level;
 
+#ifdef DIAGNOSTIC
+	/* Sanity check */
+	if (handler == NULL)
+		panic("NULL interrupt handler\n");
+	if (handler->ih_func == NULL)
+		panic("Interrupt handler does not have a function\n");
+#endif
+
+
 /* IRQ_INSTRUCT indicates that we should get the irq number from the irq structure */
 
 	if (irq == IRQ_INSTRUCT)
@@ -172,26 +180,10 @@ irq_claim(irq, handler)
 	if (irq < 0 || irq >= NIRQS)
 		return(-1);
 
-#ifdef DIAGNOSTIC
-	/* Sanity check */
-	if (handler->ih_func == NULL)
-		panic("Interrupt handler does not have a function\n");
-#endif
-
-/* Install the handler at the top of the chain */
+	/* Attach handler at top of chain */
 
 	handler->ih_next = irqhandlers[irq];
 	irqhandlers[irq] = handler;
-
-/*	if (irq == IRQ_VSYNC)
-	  {
-	    irqhandler_t *x;
-	    x = irqhandlers[irq];
-	    while (x) {
-	    	printf("handler = %08x %08x\n", x, handler);
-	    	x = x->ih_next;
-	    }
-	  }*/
 
 /*
  * Reset the flags for this handler.
@@ -207,27 +199,44 @@ irq_claim(irq, handler)
  
 	handler->ih_num = irq;
 
-/* If this is the first interrupt to be attached make a not of any name */
-
 #ifdef IRQSTATS
-	if (handler->ih_next == NULL && handler->ih_name) {
+	/* Get the interrupt name from the head of the list */
+
+	if (/*handler->ih_next == NULL && */handler->ih_name) {
 		extern char *_intrnames;
 		char *ptr = _intrnames + (irq * 14);
 /*		printf("intrnames=%08x ptr=%08x irq=%d\n", (u_int)_intrnames, (u_int)ptr, irq);*/
 		strcpy(ptr, "             ");
 		strncpy(ptr, handler->ih_name, min(strlen(handler->ih_name), 13));
+	} else {
+		extern char *_intrnames;
+		char *ptr = _intrnames + (irq * 14);
+		sprintf(ptr, "irq %2d     ", irq);
 	}
 #endif
 
 /*
  * Update the irq masks.
- * This IRQ is allowable at all lower Interrupt Priority Levels.
+ * Find the lowest interrupt priority on the irq chain.
+ * Interrupt is allowable at priorities lower than this.
+ * If ih_level is out of range then don't bother to update
+ * the masks.
  */
 	if (handler->ih_level >= 0 && handler->ih_level < IRQ_LEVELS) {
-		level = handler->ih_level - 1;
-		while (level >= 0) {
-			irqmasks[level] |= (1 << irq);
-			--level;
+		irqhandler_t *ptr;
+
+		ptr = irqhandlers[irq];
+		if (ptr) {
+			level = ptr->ih_level - 1;
+			while (ptr) {
+				if (ptr->ih_level - 1 < level)
+					level = ptr->ih_level - 1;
+				ptr = ptr->ih_next;
+			}
+			while (level >= 0) {
+				irqmasks[level] |= (1 << irq);
+				--level;
+			}
 		}
 
 #include "sl.h"
@@ -289,18 +298,6 @@ irq_release(irq, handler)
 	if (irq < 0 || irq >= NIRQS)
 		return(-1);
 
-/*
- * Update the irq masks.
- * Remove the IRQ from all the approriate IPL's
- */
-  
-	if (handler->ih_level >= 0 && handler->ih_level < IRQ_LEVELS) {
-		level = handler->ih_level - 1;
-		while (level >= 0) {
-			irqmasks[level] &= ~(1 << irq);
-			--level;
-		}
-	}
 
 /* Locate the handler */
 
@@ -319,6 +316,7 @@ irq_release(irq, handler)
 	else
 		return(-1);
 
+
 /* Now the handler has been removed from the chain mark is as inactive */
 
 	irqhand->ih_flags &= ~IRQ_FLAG_ACTIVE;
@@ -327,6 +325,55 @@ irq_release(irq, handler)
 
 	if (irqhandlers[irq])
 		irqhandlers[irq]->ih_flags |= IRQ_FLAG_ACTIVE;
+
+#ifdef IRQSTATS
+	/* Get the interrupt name from the head of the list */
+	if (irqhandlers[irq] && irqhandlers[irq]->ih_name) {
+		extern char *_intrnames;
+		char *ptr = _intrnames + (irq * 14);
+		strcpy(ptr, "             ");
+		strncpy(ptr, irqhandlers[irq]->ih_name, min(strlen(irqhandlers[irq]->ih_name), 13));
+	} else {
+		extern char *_intrnames;
+		char *ptr = _intrnames + (irq * 14);
+		sprintf(ptr, "irq %2d     ", irq);
+	}
+#endif
+
+/*
+ * Update the irq masks.
+ * If ih_level is out of range then don't bother to update
+ * the masks.
+ */
+  
+	if (handler->ih_level >= 0 && handler->ih_level < IRQ_LEVELS) {
+		irqhandler_t *ptr;
+
+/* Clean the bit from all the masks */
+
+		for (level = 0; level < IRQ_LEVELS; ++level)
+			irqmasks[level] &= ~(1 << irq);
+
+/*
+ * Find the lowest interrupt priority on the irq chain.
+ * Interrupt is allowable at priorities lower than this.
+ */
+
+		ptr = irqhandlers[irq];
+		if (ptr) {
+			level = ptr->ih_level - 1;
+			while (ptr) {
+				if (ptr->ih_level - 1 < level)
+					level = ptr->ih_level - 1;
+				ptr = ptr->ih_next;
+			}
+
+			while (level >= 0) {
+				irqmasks[level] |= (1 << irq);
+				--level;
+			}
+		}
+	}
 
 /*
  * Disable the appropriate mask bit if there are no handlers left for
@@ -349,9 +396,10 @@ disable_interrupts(mask)
 	register u_int cpsr;
 
 	cpsr = SetCPSR(mask, mask);
+#ifdef DIAGNOSTIC
 	if ((GetCPSR() & I32_bit) == 0)
 		printf("Alert ! disable_interrupts has failed\n");
-
+#endif
 	return(cpsr);
 }
 
@@ -439,9 +487,14 @@ void
 dosoftints()
 {
 	register u_int softints;
-    
+	u_int oldcpsr;
+
 	softints = soft_interrupts & spl_mask;
 
+/*	if (soft_interrupts) {
+		printf("current_spl_level=%d ", current_spl_level);
+		printf("soft_interrupts=%08x spl_mask=%08x\n", soft_interrupts, spl_mask);
+	}*/
 
 	/*
 	 * Software clock interrupts
@@ -450,23 +503,27 @@ dosoftints()
 	if (softints & IRQMASK_SOFTCLOCK) {
 		int s;
 		
+		s = splhigh();
 		++cnt.v_soft;
 		++intrcnt[IRQ_SOFTCLOCK];
 		soft_interrupts &= ~IRQMASK_SOFTCLOCK;
-		s = lowerspl(SPL_SOFT);
+		oldcpsr = enable_interrupts(I32_bit);
 		softclock();
+		restore_interrupts(oldcpsr);
 		(void)splx(s);
 	}
 #if defined(INET) && defined(PLIP) && defined(notyet)
 	if (softints & IRQMASK_SOFTPLIP) {
 		int s;
 		
+/*		oldcpsr = enable_interrupts(I32_bit);  */
 		++cnt.v_soft;
 		++intrcnt[IRQ_SOFTPLIP];
 		soft_interrupts &= ~IRQMASK_SOFTPLIP;
-		s = lowerspl(SPL_SOFT);
+/*		s = raisespl(SPL_NET);*/
 		plipintr();
-		(void)splx(s);
+/*		(void)splx(s);*/
+/*		restore_interrupts(oldcpsr);  */
 	}
 #endif
 
@@ -486,6 +543,8 @@ dosoftints()
 		isr = netisr;
 		netisr = 0;
 		restore_interrupts(cpsr);
+
+/*		oldcpsr = enable_interrupts(I32_bit);  */
 
 /*		if (isr == 0) return;*/
 #ifdef INET
@@ -511,7 +570,9 @@ dosoftints()
 #if NPPP > 0
 		if (isr & (1 << NETISR_PPP)) pppintr();
 #endif
+/*		restore_interrupts(oldcpsr);  */
 	}
+
 }
 
 extern vgone();
