@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.15 1997/07/31 00:13:18 mark Exp $ */
+/* $NetBSD: if_ea.c,v 1.16 1997/10/14 22:31:50 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -159,7 +159,7 @@ static void ea_hardreset __P((struct ea_softc *));
 static void eagetpackets __P((struct ea_softc *));
 static void eatxpacket __P((struct ea_softc *));
 
-int eaprobe __P((struct device *, void *, void *));
+int eaprobe __P((struct device *, struct cfdata *, void *));
 void eaattach __P((struct device *, struct device *, void *));
 
 /* driver structure for autoconf */
@@ -237,15 +237,15 @@ ea_dump_buffer(sc, offset)
  */
 
 /*
- * int eaprobe(struct device *parent, void *match, void *aux)
+ * int eaprobe(struct device *parent, struct cfdata *cf, void *aux)
  *
  * Probe for the ether3 podule.
  */
 
 int
-eaprobe(parent, match, aux)
+eaprobe(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
 	struct podule_attach_args *pa = (void *)aux;
@@ -254,6 +254,7 @@ eaprobe(parent, match, aux)
 /* Look for a network slot interface */
 
 	if ((matchpodule(pa, MANUFACTURER_ATOMWIDE, PODULE_ATOMWIDE_ETHER3, -1) == 0)
+	    && (matchpodule(pa, MANUFACTURER_ACORN, PODULE_ACORN_ETHER3XXX, -1) == 0)
 	    && (matchpodule(pa, MANUFACTURER_ANT, PODULE_ANT_ETHER3, -1) == 0))
 		return(0);
 
@@ -345,10 +346,7 @@ eaattach(parent, self, aux)
 
 /* Claim either a network slot interrupt or a podule interrupt */
 
-	if (sc->sc_podule_number >= MAX_PODULES)
-		sc->sc_irq = IRQ_NETSLOT;
-	else
-		sc->sc_irq = IRQ_PODULE /*+ sc->sc_podule_number*/;
+	sc->sc_irq = sc->sc_podule->interrupt;
 
 	/* Stop the board. */
 
