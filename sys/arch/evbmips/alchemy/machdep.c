@@ -1,39 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3.2.2 2002/08/30 00:29:34 gehenna Exp $	*/
-
-/*
- * Copyright 2001, 2002 Wasabi Systems, Inc.
- * All rights reserved.
- *
- * Written by Jason R. Thorpe and Simon Burge for Wasabi Systems, Inc.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project by
- *      Wasabi Systems, Inc.
- * 4. The name of Wasabi Systems, Inc. may not be used to endorse
- *    or promote products derived from this software without specific prior
- *    written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
+/* $NetBSD: machdep.c,v 1.3.2.2 2002/08/30 00:29:28 gehenna Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,12 +38,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)machdep.c   8.3 (Berkeley) 1/12/94
- *	from: Utah Hdr: machdep.c 1.63 91/04/24
+ *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
+ * 	from: Utah Hdr: machdep.c 1.63 91/04/24
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3.2.2 2002/08/30 00:29:28 gehenna Exp $");
+
 #include "opt_ddb.h"
-#include "opt_execfmt.h"
+#include "opt_kgdb.h"
+
+#include "opt_memsize.h"
+#include "opt_ethaddr.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +62,9 @@
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
 
+#include <net/if.h>
+#include <net/if_ether.h>
+
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
@@ -100,29 +74,29 @@
 #include <ddb/db_extern.h>
 #endif
 
-#include <machine/cpu.h>
-#include <machine/psl.h>
+#include <mips/cache.h>
+#include <mips/locore.h>
 #include <machine/yamon.h>
 
-#include <evbmips/malta/autoconf.h>
-#include <evbmips/malta/maltareg.h>
-#include <evbmips/malta/maltavar.h>
+#include <evbmips/alchemy/pb1000var.h>
+#include <mips/alchemy/include/aureg.h>
+#include <mips/alchemy/include/auvar.h>
+#include <mips/alchemy/include/aubusvar.h>
 
-#include "com.h"
-#if NCOM > 0
-#include <dev/ic/comreg.h>
-#include <dev/ic/comvar.h>
+#include "aucom.h"
+#if NAUCOM > 0
+#include <mips/alchemy/dev/aucomvar.h>
 
-int	comcnrate = 38400;	/* XXX should be config option */
-#endif /* NCOM > 0 */
+#ifndef CONSPEED
+#define CONSPEED TTYDEF_SPEED
+#endif
+int	aucomcnrate = CONSPEED;
+#endif /* NAUCOM > 0 */
 
+/* The following are used externally (sysctl_hw). */
+extern char	cpu_model[];
 
-#define REGVAL(x)       *((__volatile u_int32_t *)(MIPS_PHYS_TO_KSEG1((x))))
-
-struct malta_config malta_configuration;
-
-/* For sysctl_hw. */
-extern char cpu_model[];
+struct	user *proc0paddr;
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -132,53 +106,37 @@ struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-int	physmem;		/* Total physical memory */
+int physmem;		/* # pages of physical memory */
+int maxmem;			/* max memory per process */
 
-int	netboot;		/* Are we netbooting? */
+int mem_cluster_cnt;
+phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 
 yamon_env_var *yamon_envp;
+struct pb1000_config pb1000_configuration;
+struct propdb *alchemy_prop_info;
 
-phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int mem_cluster_cnt;
+void	mach_init(int, char **, yamon_env_var *, u_long); /* XXX */
 
-void	configure(void);
-void	mach_init(int, char **, yamon_env_var *, u_long);
-
-/*
- * safepri is a safe priority for sleep to set for a spin-wait during
- * autoconfiguration or after a panic.  Used as an argument to splx().
- */
-int	safepri = MIPS1_PSL_LOWIPL;
-
-extern struct user *proc0paddr;
-
-/*
- * Do all the stuff that locore normally does before calling main().
- */
 void
 mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 {
-	struct malta_config *mcp = &malta_configuration;
+	struct pb1000_config *pbc = &pb1000_configuration;
 	bus_space_handle_t sh;
-	caddr_t kernend, v;
-        u_long first, last;
-	vsize_t size;
-	char *cp;
-	int i, howto;
-	uint8_t *brkres = (uint8_t *)MIPS_PHYS_TO_KSEG1(MALTA_BRKRES);
+	caddr_t kernend;
+	const char *cp;
+	u_long first, last;
+	caddr_t v;
+	int howto, i;
 
-	extern char edata[], end[];
+	extern char edata[], end[];	/* XXX */
 
-	*brkres = 0;	/* Disable BREAK==reset on console */
-
-	/* Get the propaganda in early! */
-	led_display_str("NetBSD");
-
-	/*
-	 * Clear the BSS segment.
-	 */
+	/* clear the BSS segment */
 	kernend = (caddr_t)mips_round_page(end);
-	memset(edata, 0, kernend - edata);
+	memset(edata, 0, kernend - (caddr_t)edata);
+
+	/* set cpu model info for sysctl_hw */
+	strcpy(cpu_model, "Alchemy Semiconductor Pb1000");
 
 	/* save the yamon environment pointer */
 	yamon_envp = envp;
@@ -195,53 +153,49 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 */
 	mips_vector_init();
 
-	/* set the VM page size */
+	/*
+	 * Set the VM page size.
+	 */
 	uvm_setpagesize();
 
-	physmem = btoc(memsize);
-
-	gt_pci_init(&mcp->mc_pc, &mcp->mc_gt);
-	malta_bus_io_init(&mcp->mc_iot, mcp);
-	malta_bus_mem_init(&mcp->mc_memt, mcp);
-	malta_dma_init(mcp);
+	/*
+	 * Initialize bus space tags.
+	 */
+	au_cpureg_bus_mem_init(&pbc->pc_cpuregt, pbc);
+	aubus_st = &pbc->pc_cpuregt;		/* XXX: for aubus.c */
 
 	/*
 	 * Calibrate the timer, delay() relies on this.
 	 */
-	bus_space_map(&mcp->mc_iot, MALTA_RTCADR, 2, 0, &sh);
-	malta_cal_timer(&mcp->mc_iot, sh);
-	bus_space_unmap(&mcp->mc_iot, sh, 2);
+	bus_space_map(&pbc->pc_cpuregt, PC_BASE, PC_SIZE, 0, &sh);
+	au_cal_timers(&pbc->pc_cpuregt, sh);
+	bus_space_unmap(&pbc->pc_cpuregt, sh, PC_SIZE);
 
-#if NCOM > 0
+	/*
+	 * Bring up the console.
+	 */
+#if NAUCOM > 0
 	/*
 	 * Delay to allow firmware putchars to complete.
 	 * FIFO depth * character time.
 	 * character time = (1000000 / (defaultrate / 10))
 	 */
-	delay(160000000 / comcnrate);
-	if (comcnattach(&mcp->mc_iot, MALTA_UART0ADR, comcnrate, COM_FREQ,
+	delay(160000000 / aucomcnrate);
+	if (aucomcnattach(&pbc->pc_cpuregt, UART0_BASE, aucomcnrate,
+	    curcpu()->ci_cpu_freq / 4,
 	    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8) != 0)
-		panic("malta: unable to initialize serial console");
+		panic("pb1000: unable to initialize serial console");
 #else
-	panic("malta: not configured to use serial console");
-#endif /* NCOM > 0 */
-
-	consinit();
-
-	mem_clusters[0].start = 0;
-	mem_clusters[0].size = ctob(physmem);
-	mem_cluster_cnt = 1;
-
-	strcpy(cpu_model, "MIPS Malta Evaluation Board");
-
-	/*
-	 * XXX: check argv[0] - do something if "gdb"???
-	 */
+	panic("pb1000: not configured to use serial console");
+#endif /* NAUCOM > 0 */
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
 	 */
 	boothowto = RB_AUTOBOOT;
+#ifdef KADB
+	boothowto |= RB_KDB;
+#endif
 	for (i = 1; i < argc; i++) {
 		for (cp = argv[i]; *cp; cp++) {
 			/* Ignore superfluous '-', if there is one */
@@ -258,15 +212,46 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	}
 
 	/*
+	 * Determine the memory size.  Use the `memsize' PMON
+	 * variable.  If that's not available, panic.
+	 *
+	 * Note: Reserve the first page!  That's where the trap
+	 * vectors are located.
+	 */
+
+#if defined(MEMSIZE)
+	size = MEMSIZE;
+#else
+	if (memsize == 0) {
+		if ((cp = yamon_getenv("memsize")) != NULL)
+			memsize = strtoul(cp, NULL, 0);
+		else {
+			printf("FATAL: `memsize' YAMON variable not set.  Set it to\n");
+			printf("       the amount of memory (in MB) and try again.\n");
+			printf("       Or, build a kernel with the `MEMSIZE' "
+			    "option.\n");
+			panic("pb1000_init");
+		}
+	}
+#endif /* MEMSIZE */
+	printf("Memory size: 0x%08lx\n", memsize);
+	physmem = btoc(memsize);
+
+	mem_clusters[mem_cluster_cnt].start = NBPG;
+	mem_clusters[mem_cluster_cnt].size =
+	    memsize - mem_clusters[mem_cluster_cnt].start;
+	mem_cluster_cnt++;
+
+	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
 	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
 	last = mem_clusters[0].start + mem_clusters[0].size;
 	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
-		VM_FREELIST_DEFAULT);
+	    VM_FREELIST_DEFAULT);
 
 	/*
-	 * Initialize error message buffer (at end of core).
+	 * Initialize message buffer (at end of core).
 	 */
 	mips_init_msgbuf();
 
@@ -274,15 +259,18 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * Compute the size of system data structures.  pmap_bootstrap()
 	 * needs some of this information.
 	 */
-	size = (vsize_t)allocsys(NULL, NULL);
+	memsize = (u_long)allocsys(NULL, NULL);
 
+	/*
+	 * Initialize the virtual memory system.
+	 */
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Init mapping for u page(s) for proc0.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
-	proc0.p_addr = proc0paddr = (struct user *)v;
+	v = (caddr_t) uvm_pageboot_alloc(USPACE);
+	proc0.p_addr = proc0paddr = (struct user *) v;
 	proc0.p_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
@@ -291,10 +279,10 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * Allocate space for system data structures.  These data structures
 	 * are allocated here instead of cpu_startup() because physical
 	 * memory is directly addressable.  We don't have to map these into
-	 * virtual address space.
+	 * the virtual address space.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(size); 
-	if ((allocsys(v, NULL) - v) != size)
+	v = (caddr_t)uvm_pageboot_alloc(memsize);
+	if ((allocsys(v, NULL) - v) != memsize)
 		panic("mach_init: table size inconsistency");
 
 	/*
@@ -302,10 +290,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 */
 #ifdef DDB
 	ddb_init(0, 0, 0);
-#endif
-
 	if (boothowto & RB_KDB)
-#if defined(DDB)
 		Debugger();
 #endif
 }
@@ -320,29 +305,27 @@ consinit(void)
 	 */
 }
 
-/*
- * Allocate memory for variable-sized tables,
- */
 void
-cpu_startup()
+cpu_startup(void)
 {
-	u_int i, base, residual;
+	char pbuf[9];
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-	char pbuf[9];
+	u_int i, base, residual;
+#ifdef DEBUG
+	extern int pmapdebug;		/* XXX */
+	int opmapdebug = pmapdebug;
+
+	pmapdebug = 0;		/* Shut up pmap debug during bootstrap */
+#endif
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf(version);
+	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("%s memory", pbuf);
-
-	/*
-	 * Virtual memory is bootstrapped -- notify the bus spaces
-	 * that memory allocation is now safe.
-	 */
-	malta_configuration.mc_mallocsafe = 1;
+	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * Allocate virtual address space for file I/O buffers.
@@ -353,11 +336,17 @@ cpu_startup()
 	if (uvm_map(kernel_map, (vaddr_t *)&buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-		    UVM_ADV_NORMAL, 0)) != 0)
-		panic("startup: cannot allocate VM for buffers");
+				UVM_ADV_NORMAL, 0)) != 0)
+		panic("cpu_startup: cannot allocate VM for buffers");
+
 	minaddr = (vaddr_t)buffers;
+	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
+		bufpages = btoc(MAXBSIZE) * nbuf; /* do not overallocate RAM */
+	}
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
+
+	/* now allocate RAM for buffers */
 	for (i = 0; i < nbuf; i++) {
 		vsize_t curbufsize;
 		vaddr_t curbuf;
@@ -369,16 +358,16 @@ cpu_startup()
 		 * for the first "residual" buffers, and then we allocate
 		 * "base" pages for the rest.
 		 */
-		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base + 1) : base);
+		curbuf = (vaddr_t)buffers + (i * MAXBSIZE);
+		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
-					"buffer cache");
+				    "buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-				       VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -390,54 +379,67 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+
 	/*
-	 * Allocate a submap for physio.
+	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
-	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters
+	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
 	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.)
+	 * map those pages.
 	 */
 
+#ifdef DEBUG
+	pmapdebug = opmapdebug;
+#endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf(", %s free", pbuf);
+	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf(", %s in %u buffers\n", pbuf, nbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
-	 * Set up buffers, so they can be used to read disk labels.
+	 * Set up buffers, so they can be used to read disklabels.
 	 */
 	bufinit();
+
+	/*
+	 * Set up the chip/board properties database.
+	 */
+	if (!(alchemy_prop_info = propdb_create("board info")))
+		panic("Cannot create board info database");
 }
 
-int	waittime = -1;
-
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
+	static int waittime = -1;
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
 		savectx((struct user *)curpcb);
-
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
 
 	/* If "always halt" was specified as a boot flag, obey. */
 	if (boothowto & RB_HALT)
 		howto |= RB_HALT;
 
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && (waittime < 0)) {
+
+	/* If system is cold, just halt. */
+	if (cold) {
+		boothowto |= RB_HALT;
+		goto haltsys;
+	}
+
+	if ((boothowto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
+
+		/*
+		 * Synchronize the disks....
+		 */
 		vfs_shutdown();
 
 		/*
@@ -447,37 +449,32 @@ cpu_reboot(howto, bootstr)
 		resettodr();
 	}
 
+	/* Disable interrupts. */
 	splhigh();
 
-	if (howto & RB_DUMP)
+	if (boothowto & RB_DUMP)
 		dumpsys();
 
-haltsys:
+ haltsys:
+	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
-	if (howto & RB_HALT) {
-		printf("\n");
-		printf("The operating system has halted.\n");
-		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* For proper keyboard command handling */
-		cngetc();
-		cnpollc(0);
-	}
-
+#if 1
+	/* XXX
+	 * For some reason we are leaving the ethernet MAC in a state where
+	 * YAMON isn't happy with it.  So just call the reset vector (grr,
+	 * Alchemy YAMON doesn't have a "reset" command).
+	 */
+	printf("reseting board...\n\n");
+	mips_icache_sync_all();
+	mips_dcache_wbinv_all();
+	asm volatile("jr	%0" :: "r"(MIPS_RESET_EXC_VEC));
+#else
 	printf("%s\n\n", ((howto & RB_HALT) != 0) ? "halted." : "rebooting...");
 	yamon_exit(boothowto);
-	printf("Oops, back from yamon_exit()\n\nResetting...");
-
-	REGVAL(MALTA_SOFTRES) = MALTA_GORESET;
-
-	/*
-	 * Need a small delay here, otherwise we see the first few characters of
-	 * the warning below.
-	 */
-	delay(80000);
-
-	printf("WARNING: reset failed!\nSpinning...");
-
+	printf("Oops, back from yamon_exit()\n\nSpinning...");
+#endif
 	for (;;)
 		/* spin forever */ ;	/* XXX */
+	/*NOTREACHED*/
 }
