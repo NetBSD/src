@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.19 2000/12/03 13:43:40 takemura Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.20 2000/12/12 22:41:02 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.19 2000/12/03 13:43:40 takemura Exp $";
+    "$Id: hpcfb.c,v 1.20 2000/12/12 22:41:02 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,6 @@ int	hpcfb_debug = 0;
  * currently experimental
 #define HPCFB_JUMP
 #define HPCFB_MULTI
-#define HPCFB_BSTORE
 */
 
 struct hpcfb_vchar {
@@ -142,15 +141,10 @@ struct hpcfb_devconfig {
 #define HPCFB_DC_UPDATE			0x08	/* tvram update */
 #define HPCFB_DC_SCRDELAY		0x10	/* scroll time but delay it */
 #define HPCFB_DC_SCRTHREAD		0x20	/* in scroll thread or callout */
-#ifdef HPCFB_BSTORE
-	u_char *dc_bstore;
-#endif /* HPCFB_BSTORE */
 #ifdef HPCFB_MULTI
 	int dc_scrno;
-#endif /* HPCFB_MULTI */
-#if defined(HPCFB_BSTORE) || defined(HPCFB_MULTI)
 	int	dc_memsize;
-#endif /* defined(HPCFB_BSTORE) || defined(HPCFB_MULTI) */
+#endif /* HPCFB_MULTI */
 };
 
 #define HPCFB_MAX_SCREEN 5
@@ -355,9 +349,6 @@ hpcfbattach(parent, self, aux)
 #ifdef HPCFB_MULTI
 	printf(" multi");
 #endif /* HPCFB_MULTI */
-#ifdef HPCFB_BSTORE
-	printf(" bstore");
-#endif /* HPCFB_BSTORE */
 	printf("\n");
 
 	/* Set video chip dependent CLUT if any. */
@@ -512,16 +503,9 @@ hpcfb_init(fbconf, dc)
 #endif /* HPCFB_JUMP */
 	dc->dc_tvram = hpcfb_console_tvram;
 	bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
-#if defined(HPCFB_BSTORE) || defined(HPCFB_MULTI)
+#if defined(HPCFB_MULTI)
 	dc->dc_memsize = ri->ri_stride * ri->ri_height;
-#endif /* defined(HPCFB_BSTORE) || defined(HPCFB_MULTI) */
-#ifdef HPCFB_BSTORE
-	if (dc->dc_bstore == NULL) {
-		dc->dc_bstore =
-			malloc(dc->dc_memsize, M_DEVBUF, M_WAITOK);
-		bzero(dc->dc_bstore, dc->dc_memsize);
-	}
-#endif /* HPCFB_BSTORE */
+#endif /*  defined(HPCFB_MULTI) */
 #ifdef HPCFB_MULTI
 	dc->dc_scrno = 0;
 #endif /* HPCFB_MULTI */
@@ -691,23 +675,12 @@ hpcfb_power(why, arg)
 		} else {
 			sc->sc_screen_resumed = WSDISPLAY_NULLSCREEN;
 		}
-#ifdef HPCFB_BSTORE
-		if (sc->sc_dc->dc_bstore)
-			bcopy(sc->sc_dc->dc_rinfo.ri_bits, sc->sc_dc->dc_bstore,
-				sc->sc_dc->dc_memsize);
-#endif /* HPCFB_BSTORE */
 		break;
 	case PWR_RESUME:
 		if (sc->sc_screen_resumed != WSDISPLAY_NULLSCREEN)
 			wsdisplay_switch(sc->sc_wsdisplay,
 			    sc->sc_screen_resumed,
 			    1 /* waitok */);
-#ifdef HPCFB_BSTORE
-		if (sc->sc_dc->dc_bstore)
-			bcopy(sc->sc_dc->dc_bstore, 
-				sc->sc_dc->dc_rinfo.ri_bits,
-				sc->sc_dc->dc_memsize);
-#endif /* HPCFB_BSTORE */
 		break;
 	}
 }
@@ -773,14 +746,6 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	dc->dc_rows = sc->sc_dc->dc_rinfo.ri_rows;
 	dc->dc_cols = sc->sc_dc->dc_rinfo.ri_cols;
 	dc->dc_memsize = sc->sc_dc->dc_rinfo.ri_stride * sc->sc_dc->dc_rinfo.ri_height;
-#ifdef HPCFB_BSTORE
-	if (dc->dc_bstore == NULL) {
-		dc->dc_bstore = 
-			malloc(dc->dc_memsize, M_DEVBUF, M_WAITOK);
-		bzero(dc->dc_bstore, dc->dc_memsize);
-	}
-	dc->dc_rinfo.ri_bits  = dc->dc_bstore;
-#endif /* HPCFB_BSTORE */
 	if (dc->dc_tvram == NULL){
 		dc->dc_tvram = 
 			malloc(sizeof(struct hpcfb_tvrow)*dc->dc_rows,
@@ -851,29 +816,11 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 	sc->sc_dc->dc_state &= ~HPCFB_DC_CURRENT;
 	/* switch screen image */
 	dc->dc_state |= HPCFB_DC_CURRENT;
-#ifdef HPCFB_BSTORE
-	if (sc->sc_dc->dc_bstore)
-		bcopy(sc->sc_dc->dc_rinfo.ri_bits, sc->sc_dc->dc_bstore,
-			sc->sc_dc->dc_memsize);
-	sc->sc_dc->dc_rinfo.ri_bits = sc->sc_dc->dc_bstore;
-#endif /* HPCFB_BSTORE */
 
 	sc->sc_dc = dc;
-#ifdef HPCFB_BSTORE
-	if (dc->dc_bstore) {
-		dc->dc_state |= HPCFB_DC_DRAWING;
-		bcopy(dc->dc_bstore, dc->dc_rinfo.ri_bits, dc->dc_memsize);
-		dc->dc_state &= ~HPCFB_DC_DRAWING;
-	} else {
-		hpcfb_redraw(dc, 0, dc->dc_rows, 1);
-		if (dc->dc_curx > 0 && dc->dc_cury > 0)
-			hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
-	}
-#else /* HPCFB_BSTORE */
 	hpcfb_redraw(dc, 0, dc->dc_rows, 1);
 	if (dc->dc_curx > 0 && dc->dc_cury > 0)
 		hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
-#endif /* HPCFB_BSTORE */
 #else /* HPCFB_MULTI */
 	hpcfb_refresh_screen(sc);
 #endif /* !HPCFB_MULTI */
