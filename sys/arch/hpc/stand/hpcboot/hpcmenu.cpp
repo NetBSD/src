@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.7 2001/05/08 18:51:22 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.8 2001/05/17 01:50:35 enami Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ HpcMenuInterface::_set_default_pref()
 	_pref.boot_verbose	= FALSE;
 	_pref.boot_single_user	= FALSE;
 	_pref.boot_ask_for_name	= FALSE;
+	_pref.boot_debugger	= FALSE;
 	_pref.auto_boot		= 0;
 	_pref.reverse_video	= FALSE;
 	_pref.pause_before_boot	= TRUE;
@@ -232,6 +233,8 @@ __END_MACRO
 		SETOPT('s');
 	if (_pref.boot_ask_for_name)	// ask for file name to boot from
 		SETOPT('a');
+	if (_pref.boot_debugger)	// break into the kernel debugger
+		SETOPT('d');
 
 	// boot from
 	switch(_pref.rootfs) {
