@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.322 2001/03/28 08:05:35 toddpw Exp $
+#	$NetBSD: mi,v 1.323 2001/03/31 19:11:01 kleink Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2000,6 +2000,7 @@
 ./usr/share/man/cat3/d2i_DHparams.0		comp-c-catman
 ./usr/share/man/cat3/d2i_RSAPublicKey.0		comp-c-catman
 ./usr/share/man/cat3/daemon.0	comp-c-catman
+./usr/share/man/cat3/daylight.0	comp-c-catman
 ./usr/share/man/cat3/db.0	comp-c-catman
 ./usr/share/man/cat3/dbopen.0	comp-c-catman
 ./usr/share/man/cat3/dcgettext.0	comp-c-catman
@@ -3855,6 +3856,7 @@
 ./usr/share/man/man3/d2i_DHparams.3		comp-c-man
 ./usr/share/man/man3/d2i_RSAPublicKey.3		comp-c-man
 ./usr/share/man/man3/daemon.3		comp-c-man
+./usr/share/man/man3/daylight.3		comp-c-man
 ./usr/share/man/man3/db.3		comp-c-man
 ./usr/share/man/man3/dbopen.3		comp-c-man
 ./usr/share/man/man3/dcgettext.3	comp-c-man
