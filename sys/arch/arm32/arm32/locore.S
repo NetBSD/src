@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.35 2001/01/13 00:06:51 bjh21 Exp $	*/
+/*	$NetBSD: locore.S,v 1.36 2001/02/18 12:21:02 reinoud Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -188,12 +188,20 @@ ENTRY_NP(cpu_reset)
 Lboot_cache_purged:
 
 	/*
+	 * load the needs_wb_drain flag to determine if its nessisary
+	 */
+
+	ldr	r1, Lcpu_reset_needs_wb_drain
+	ldr	r1, [r1]
+	cmp	r1, #0
+
+	/*
  	 * MMU & IDC off, 32 bit program & data space
 	 * Hurl ourselves into the ROM
 	 */
 	mov	r0, #(CPU_CONTROL_32BP_ENABLE | CPU_CONTROL_32BD_ENABLE)
 	mcr     15, 0, r0, c1, c0, 0
-	mcr     15, 0, r0, c8, c7, 0
+	mcrne   15, 0, r0, c8, c7, 0 	/* only when wb drain is asked for */
 	mov     pc, r4
 
 	/*
@@ -201,9 +209,18 @@ Lboot_cache_purged:
 	 * the cpu reset after turning the MMU off
 	 * This variable is provided by the hardware specific code
 	 */
-
 Lcpu_reset_address:
 	.word	_C_LABEL(cpu_reset_address)
+
+	/*
+	 * cpu_reset_needs_wb_drain contains a flag that signals if the wb
+	 * drain instruction needs executing... it is an illegal instruction
+	 * on f.e. ARM6/7 that locks up the computer in an endless illegal
+	 * instruction / data-abort / reset loop.
+	 */
+Lcpu_reset_needs_wb_drain:
+	.word	_C_LABEL(cpu_reset_needs_wb_drain)
+
 #endif	/* OFW */
 
 #ifdef IPKDB

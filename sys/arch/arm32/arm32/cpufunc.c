@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.10 2001/01/12 13:43:12 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.11 2001/02/18 12:21:02 reinoud Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -332,8 +332,15 @@ struct cpu_functions sa110_cpufuncs = {
 };          
 #endif	/* CPU_SA110 */
 
+
+/*
+ * Global constants also used by locore.s
+ */
+
 struct cpu_functions cpufuncs;
 u_int cputype;
+u_int cpu_reset_needs_wb_drain;		/* flag used in locore.s */
+
 
 /*
  * Cannot panic here as we may not have a console yet ...
@@ -349,22 +356,26 @@ set_cpufuncs()
 #ifdef CPU_ARM6
 	case ID_ARM610:
 		cpufuncs = arm6_cpufuncs;
+		cpu_reset_needs_wb_drain = 0;
 		break;
 #endif	/* CPU_ARM6 */
 #ifdef CPU_ARM7
 	case ID_ARM700:
 	case ID_ARM710:
 		cpufuncs = arm7_cpufuncs;
+		cpu_reset_needs_wb_drain = 0;
 		break;
 #endif	/* CPU_ARM7 */
 #ifdef CPU_ARM8
 	case ID_ARM810:
 		cpufuncs = arm8_cpufuncs;
+		cpu_reset_needs_wb_drain = 0;	/* XXX correct? */
 		break;
 #endif	/* CPU_ARM8 */
 #ifdef CPU_SA110
 	case ID_SA110:
 		cpufuncs = sa110_cpufuncs;
+		cpu_reset_needs_wb_drain = 1;	/* SA needs it	*/
 		break;
 #endif	/* CPU_SA110 */
 	default:
