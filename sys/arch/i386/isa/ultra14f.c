@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: ultra14f.c,v 1.33 1994/07/27 13:24:17 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.34 1994/07/27 15:02:59 mycroft Exp $
  */
 
 /*
@@ -220,10 +220,6 @@ typedef struct {
 #define	EISA_MODEL		0x0c82	/* model number (2 ports) */
 #define	EISA_CONTROL		0x0c84
 #define  EISA_DISABLE		0x01
-
-#define CHAR1(x) ('@' | ((x >> 10) & 0x1f))
-#define CHAR2(x) ('@' | ((x >>  5) & 0x1f))
-#define CHAR3(x) ('@' | ((x >>  0) & 0x1f))
 
 /*
  * ha_status error codes
