@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.13 2000/11/22 08:39:52 thorpej Exp $ */
+/* $NetBSD: alpha.h,v 1.14 2000/12/13 03:16:38 mycroft Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,7 +88,6 @@ void	regtoframe(struct reg *, struct trapframe *);
 void	savectx(struct pcb *);
 void    switch_exit(struct proc *);				/* MAGIC */
 void	proc_trampoline(void);					/* MAGIC */
-void	syscall(u_int64_t, struct trapframe *);
 void	trap(unsigned long, unsigned long, unsigned long, unsigned long,
 	    struct trapframe *);
 void	trap_init(void);

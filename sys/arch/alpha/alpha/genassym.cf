@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.1 2000/11/29 12:55:12 jdolecek Exp $
+# $NetBSD: genassym.cf,v 1.2 2000/12/13 03:16:37 mycroft Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -122,6 +122,7 @@ define	P_STAT			offsetof(struct proc, p_stat)
 define	P_CPU			offsetof(struct proc, p_cpu)
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 define	P_MD_PCBPADDR		offsetof(struct proc, p_md.md_pcbpaddr)
+define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	PH_LINK			offsetof(struct prochd, ph_link)
 define	PH_RLINK		offsetof(struct prochd, ph_rlink)
 

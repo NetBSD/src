@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.20 2000/12/11 05:29:01 mycroft Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.21 2000/12/13 03:16:39 mycroft Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -42,15 +42,21 @@
 extern struct sysent osf1_sysent[];
 extern const char * const osf1_syscallnames[];
 extern char osf1_sigcode[], osf1_esigcode[];
+#ifdef __HAVE_SYSCALL_INTERN
+void osf1_syscall_intern __P((struct proc *));
+#else
 void syscall __P((void));
+#endif
 
 const struct emul emul_osf1 = {
 	"osf1",
 	"/emul/osf1",
+#ifndef __HAVE_MINIMAL_EMUL
 	0,
 	(int *)osf1_errno_rxlist,
 	OSF1_SYS_syscall,
 	OSF1_SYS_MAXSYSCALL,
+#endif
 	osf1_sysent,
 	osf1_syscallnames,
 	sendsig,
@@ -59,5 +65,9 @@ const struct emul emul_osf1 = {
 	NULL,
 	NULL,
 	NULL,
-	syscall
+#ifdef __HAVE_SYSCALL_INTERN
+	osf1_syscall_intern,
+#else
+	syscall,
+#endif
 };

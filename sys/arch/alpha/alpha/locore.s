@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.86 2000/12/13 00:38:20 mycroft Exp $ */
+/* $NetBSD: locore.s,v 1.87 2000/12/13 03:16:37 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.86 2000/12/13 00:38:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.87 2000/12/13 03:16:37 mycroft Exp $");
 
 #include "assym.h"
 
@@ -527,9 +527,12 @@ LEAF(exception_restore_regs, 0)
 	stq	ra,(FRAME_RA*8)(sp)
 
 	/* syscall number, passed in v0, is first arg, frame pointer second */
-	mov	v0,a0
-	mov	sp,a1			; .loc 1 __LINE__
-	CALL(syscall)
+	mov	v0,a1
+	GET_CURPROC
+	ldq	a0,0(v0)
+	mov	sp,a2			; .loc 1 __LINE__
+	ldq	t12,P_MD_SYSCALL(a0)
+	CALL((t12))
 
 	jmp	zero, exception_return
 	END(XentSys)
