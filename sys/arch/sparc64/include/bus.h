@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.46 2004/06/28 09:32:14 pk Exp $	*/
+/*	$NetBSD: bus.h,v 1.47 2004/06/28 10:17:01 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -173,6 +173,9 @@ struct sparc_bus_space_tag {
 		int (*) __P((void *)), void *, void (*)__P((void))));
 
 };
+
+int	bus_space_translate_address_generic(struct openprom_range *, int,
+	    bus_addr_t *);
 
 #if 0
 /*
