@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.43 1998/03/06 23:19:26 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.44 1998/03/06 23:41:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.43 1998/03/06 23:19:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.44 1998/03/06 23:41:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -914,14 +914,14 @@ pmap_remove(pmap, sva, eva)
 		 * If VA belongs to an unallocated segment,
 		 * skip to the next segment boundary.
 		 */
-		if (pmap_pte_v(pmap_ste(pmap, sva)) == 0) {
+		if (pmap_pte_v(pmap_l2pte(pmap, sva)) == 0) {
 			sva = nssva;
 			continue;
 		}
 		/*
 		 * Invalidate every valid mapping within this segment.
 		 */
-		pte = pmap_pte(pmap, sva);
+		pte = pmap_l3pte(pmap, sva);
 		while (sva < nssva) {
 			if (pmap_pte_v(pte)) {
 				pmap_remove_mapping(pmap, sva, pte, flags);
@@ -989,9 +989,9 @@ pmap_page_protect(pa, prot)
 
 		nextpv = LIST_NEXT(pv, pv_list);
 
-		pte = pmap_pte(pv->pv_pmap, pv->pv_va);
+		pte = pmap_l3pte(pv->pv_pmap, pv->pv_va);
 #ifdef DEBUG
-		if (pmap_pte_v(pmap_ste(pv->pv_pmap, pv->pv_va)) == 0 ||
+		if (pmap_pte_v(pmap_l2pte(pv->pv_pmap, pv->pv_va)) == 0 ||
 		    pmap_pte_pa(pte) != pa)
 			panic("pmap_page_protect: bad mapping");
 #endif
@@ -1055,7 +1055,7 @@ pmap_protect(pmap, sva, eva, prot)
 		 * If VA belongs to an unallocated segment,
 		 * skip to the next segment boundary.
 		 */
-		if (pmap_pte_v(pmap_ste(pmap, sva)) == 0) {
+		if (pmap_pte_v(pmap_l2pte(pmap, sva)) == 0) {
 			sva = nssva;
 			continue;
 		}
@@ -1063,7 +1063,7 @@ pmap_protect(pmap, sva, eva, prot)
 		 * Change protection on mapping if it is valid and doesn't
 		 * already have the correct protection.
 		 */
-		pte = pmap_pte(pmap, sva);
+		pte = pmap_l3pte(pmap, sva);
 		while (sva < nssva) {
 			if (pmap_pte_v(pte) && pmap_pte_prot_chg(pte, bits)) {
 				pmap_pte_set_prot(pte, bits);
@@ -1138,7 +1138,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 */
 		if (pmap_pte_v(pmap_l1pte(pmap, va)) == 0)
 			panic("pmap_enter: kernel level 1 PTE not valid");
-		if (pmap_pte_v(pmap_ste(pmap, va)) == 0)
+		if (pmap_pte_v(pmap_l2pte(pmap, va)) == 0)
 			panic("pmap_enter: kernel level 2 PTE not valid");
 	} else {
 #ifdef PMAPSTATS
@@ -1160,11 +1160,11 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * Check to see if the level 2 PTE is valid, and
 		 * allocate a new level 3 page table page if it's not.
 		 */
-		if (pmap_pte_v(pmap_ste(pmap, va)) == 0)
+		if (pmap_pte_v(pmap_l2pte(pmap, va)) == 0)
 			pmap_enter_ptpage(pmap, va);
 	}
 
-	pte = pmap_pte(pmap, va);
+	pte = pmap_l3pte(pmap, va);
 
 	/*
 	 * Check to see if the old mapping is valid.  If not,
@@ -1302,7 +1302,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	}
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
-		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
+		pmap_check_wiring("enter", trunc_page(pmap_l3pte(pmap, va)));
 #endif
 }
 
@@ -1328,14 +1328,14 @@ pmap_change_wiring(pmap, va, wired)
 	if (pmap == NULL)
 		return;
 
-	pte = pmap_pte(pmap, va);
+	pte = pmap_l3pte(pmap, va);
 #ifdef DEBUG
 	/*
 	 * Page table page is not allocated.
 	 * Should this ever happen?  Ignore it for now,
 	 * we don't want to force allocation of unnecessary PTE pages.
 	 */
-	if (pmap_pte_v(pmap_ste(pmap, va)) == 0) {
+	if (pmap_pte_v(pmap_l2pte(pmap, va)) == 0) {
 		if (pmapdebug & PDB_PARANOIA)
 			printf("pmap_change_wiring: invalid STE for %lx\n", va);
 		return;
@@ -1383,8 +1383,8 @@ pmap_extract(pmap, va)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
 	pa = 0;
-	if (pmap && pmap_pte_v(pmap_ste(pmap, va))) {
-		pte = *pmap_pte(pmap, va);
+	if (pmap && pmap_pte_v(pmap_l2pte(pmap, va))) {
+		pte = *pmap_l3pte(pmap, va);
 		if (pte & PG_V)
 			pa = ctob(PG_PFNUM(pte)) | (va & PGOFSET);
 	}
@@ -1588,9 +1588,9 @@ pmap_pageable(pmap, sva, eva, pageable)
 			printf("pmap_pageable(%p, %lx, %lx, %x)\n",
 			       pmap, sva, eva, pageable);
 #endif
-		if (pmap_pte_v(pmap_ste(pmap, sva)) == 0)
+		if (pmap_pte_v(pmap_l2pte(pmap, sva)) == 0)
 			return;
-		pa = pmap_pte_pa(pmap_pte(pmap, sva));
+		pa = pmap_pte_pa(pmap_l3pte(pmap, sva));
 		if (!PAGE_IS_MANAGED(pa))
 			return;
 		pvh = pa_to_pvh(pa);
@@ -1616,7 +1616,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 		}
 		if (pmapdebug & PDB_PTPAGE)
 			printf("pmap_pageable: PT page %lx(%lx) unmodified\n",
-			       sva, *pmap_pte(pmap, sva));
+			       sva, *pmap_l3pte(pmap, sva));
 		if (pmapdebug & PDB_WIRING)
 			pmap_check_wiring("pageable", sva);
 #endif
@@ -1804,7 +1804,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * PTE not provided, compute it from pmap and va.
 	 */
 	if (pte == PT_ENTRY_NULL) {
-		pte = pmap_pte(pmap, va);
+		pte = pmap_l3pte(pmap, va);
 		if (*pte == PG_NV)
 			return;
 	}
@@ -1880,7 +1880,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #ifdef DEBUG
 		if (pmapdebug & (PDB_REMOVE|PDB_PTPAGE))
 			printf("remove: ste was %lx@%p pte was %lx@%p\n",
-			       *ste, ste, opte, pmap_pte(pmap, va));
+			       *ste, ste, opte, pmap_l3pte(pmap, va));
 #endif
 		*ste = PG_NV;
 		/*
@@ -1992,7 +1992,7 @@ pmap_changebit(pa, bit, setem)
 #endif
 		}
 
-		pte = pmap_pte(pv->pv_pmap, va);
+		pte = pmap_l3pte(pv->pv_pmap, va);
 		if (setem)
 			npte = *pte | bit;
 		else
@@ -2080,8 +2080,8 @@ pmap_enter_ptpage(pmap, va)
 #endif
 	}
 
-	ste = pmap_ste(pmap, va);
-	va = trunc_page((vm_offset_t)pmap_pte(pmap, va));
+	ste = pmap_l2pte(pmap, va);
+	va = trunc_page((vm_offset_t)pmap_l3pte(pmap, va));
 
 	/*
 	 * For user processes we just simulate a fault on that location
@@ -2212,7 +2212,7 @@ pmap_emulate_reference(p, v, user, write)
 		if (p->p_vmspace == NULL)
 			panic("pmap_emulate_reference: bad p_vmspace");
 #endif
-		pte = pmap_pte(p->p_vmspace->vm_map.pmap, v);
+		pte = pmap_l3pte(p->p_vmspace->vm_map.pmap, v);
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
@@ -2312,8 +2312,8 @@ pmap_check_wiring(str, va)
 	register int count;
 
 	va = trunc_page(va);
-	if (pmap_pte_v(pmap_ste(pmap_kernel(), va)) == 0 ||
-	    pmap_pte_v(pmap_pte(pmap_kernel(), va)) == 0)
+	if (pmap_pte_v(pmap_l2pte(pmap_kernel(), va)) == 0 ||
+	    pmap_pte_v(pmap_l3pte(pmap_kernel(), va)) == 0)
 		return;
 
 	if (!vm_map_lookup_entry(pt_map, va, &entry)) {

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.22 1998/03/06 23:19:27 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.23 1998/03/06 23:41:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -189,10 +189,10 @@ int	pmap_uses_prom_console __P((void));
 #define	pmap_l1pte(pmap, v)						\
 	(&(pmap)->pm_lev1map[l1pte_index((vm_offset_t)(v))])
 
-#define	pmap_ste(pmap, v)						\
+#define	pmap_l2pte(pmap, v)						\
 	(&(pmap)->pm_stab[l2pte_index((vm_offset_t)(v))])
 
-#define	pmap_pte(pmap, v)						\
+#define	pmap_l3pte(pmap, v)						\
 	(&(pmap)->pm_ptab[NPTEPG * l2pte_index((vm_offset_t)(v)) +	\
 	    l3pte_index((vm_offset_t)(v))])
 
