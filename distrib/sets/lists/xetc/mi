@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.3 2004/05/16 10:25:13 lukem Exp $
+# $NetBSD: mi,v 1.4 2004/05/16 10:35:55 lukem Exp $
 ./etc/X11/fs/config
 ./etc/X11/lbxproxy/AtomControl
 ./etc/X11/proxymngr/pmconfig
@@ -34,4 +34,3 @@
 ./etc/fonts/fonts.conf
 ./etc/fonts/fonts.dtd
 ./etc/mtree/set.xetc					xetc-sys-root
-./usr/X11R6/lib/X11/rgb.txt
