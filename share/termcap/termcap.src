@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.74 2003/01/24 10:24:09 wiz Exp $
+#	$NetBSD: termcap.src,v 1.75 2003/02/02 17:34:19 jdc Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -915,6 +915,20 @@ wsvt25|NetBSD wscons in 25 line DEC VT220 mode:\
 
 wsvt25m|NetBSD wscons in 25 line DEC VT220 mode with Meta:\
 	:km:tc=wsvt25:
+
+# NetBSD 'window version 2'
+# This is the window-v2 binding that NetBSD's window(1) exports into
+# the TERMCAP environment variable.
+# Note that older versions of window have a bug where turning off
+# underscore or standout also turns off the other, but does not reset
+# the internal state.
+WW|window-v2|window program version 2: \
+	:am:bs:da:db:ms:pt:cr=^M:nl=^J:bl=^G:ta=^I: \
+	:cm=\EY%+ %+ :le=^H:nd=\EC:up=\EA:do=\EB:ho=\EH: \
+	:cd=\EJ:ce=\EK:cl=\EE:me=\Er^?:co#80:li#24:se=\ErA:so=\EsA: \
+	:mr=\EsA:ue=\ErD:us=\EsD:ae=\ErH:as=\EsH:al=\EL:dl=\EM: \
+	:im=\E@:ei=\EO:ic=:mi:dc=\EN: \
+	:kb=^H:ku=^[OA:kd=^[OB:kl=^[OD:kr=^[OC:kh=^[OH:
 
 #### FreeBSD console entries
 #
