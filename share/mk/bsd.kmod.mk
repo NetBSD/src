@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.54 2002/07/20 11:44:31 mrg Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.55 2002/07/29 07:42:52 jdolecek Exp $
 
 .include <bsd.init.mk>
 
@@ -18,6 +18,13 @@ CPPFLAGS+=	-D_KERNEL -D_LKM
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}} \
 		machine ${MACHINE_CPU}
+
+# see below why this is necessary
+.if ${MACHINE} == "sun2" || ${MACHINE} == "sun3"
+CLEANFILES+=	sun68k
+.elif ${MACHINE} == "sparc64"
+CLEANFILES+=	sparc
+.endif
 
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 PROG?=		${KMOD}.o
