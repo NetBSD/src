@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.45 2001/04/12 10:45:52 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.46 2001/04/25 22:37:02 wiz Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -182,6 +182,7 @@
 /usr/include/dev/isapnp/if_levar.h
 /usr/include/dev/isapnp/isapnpreg.h
 /usr/include/dev/isapnp/isapnpvar.h
+/usr/include/dev/microcode
 /usr/include/dev/microcode/aic7xxx
 /usr/include/dev/microcode/aic7xxx/aic7xxx_reg.h
 /usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h
