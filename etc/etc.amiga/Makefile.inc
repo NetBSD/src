@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2002/02/10 20:43:34 is Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2002/03/31 16:07:54 bjh21 Exp $
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
@@ -18,4 +18,4 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 	cd ${.CURDIR}/../distrib/miniroot && ${MAKE} && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-#	sh ${.CURDIR}/../distrib/sets/makesums -t ${RELEASEDIR}/installation/miniroot '*.gz'
+#	${MAKESUMS} -t ${RELEASEDIR}/installation/miniroot '*.gz'

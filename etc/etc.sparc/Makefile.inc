@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2002/03/05 19:53:19 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2002/03/31 16:07:56 bjh21 Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -54,7 +54,7 @@ snap_md_post:
 
 	# compute checksums
 .for dir in ${MD_INSTALLATION_DIRS}
-	sh $(TOP)/distrib/sets/makesums -t ${RELEASEDIR}/${dir} '*'
+	${MAKESUMS} -t ${RELEASEDIR}/${dir} '*'
 .endfor
 
 CDBOOTIMAGEDIR!= cd ${TOP}/distrib/sparc/bootfs && ${PRINTOBJDIR}

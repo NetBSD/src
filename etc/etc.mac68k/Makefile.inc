@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2002/03/04 16:43:06 shiba Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2002/03/31 16:07:55 bjh21 Exp $
 #
 #	mac68k-specific release building goo
 #
@@ -16,4 +16,4 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 	cd ${.CURDIR}/../distrib/mac68k && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-	sh ../distrib/sets/makesums -t ${RELEASEDIR}/installation/instkernel '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/installation/instkernel '*.gz'
