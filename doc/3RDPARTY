@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.144 2003/09/28 07:22:09 dent Exp $
+#	$NetBSD: 3RDPARTY,v 1.145 2003/09/28 07:45:14 dent Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -26,7 +26,7 @@
 
 Package:	acpica
 Version:	20030228
-Current Vers:	20030714
+Current Vers:	20030918
 Maintainer:	INTEL
 Archive Site:	http://developer.intel.com/technology/IAPC/acpi/downloads.htm
 Mailing List:	acpi-devel@lists.sourceforge.net
@@ -36,7 +36,7 @@ The sources were integrated into src/sys/dev/acpi/acpica/Subsystem.
 
 Package:	am-utils [amd]
 Version:	6.1b2
-Current Vers:	6.1b2
+Current Vers:	6.1b4
 Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
 Archive Site:	ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/
 Mailing List:	amd-dev
@@ -234,7 +234,7 @@ Notes:
 
 Package:	flex
 Version:	2.5.4
-Current Vers:	2.5.4a/2.5.27
+Current Vers:	2.5.4a/2.5.31
 Maintainer:	Vern Paxson <vern@ee.lbl.gov>
 Archive Site:	ftp://ftp.gnu.org/gnu/non-gnu/flex/
 Mailing List:
@@ -488,7 +488,7 @@ X11 support and other things we don't want.
 
 Package:	ntp
 Version:	4.0.99i
-Current Vers:	4.1.1c-rc1/4.1.74
+Current Vers:	4.1.2/4.1.80
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	ftp://ftp.udel.edu/pub/ntp/ntp4/
 Mailing List:	
@@ -501,7 +501,7 @@ exploit/DoS attack which has been pulled up to the 1.4 and 1.5 branches.
 
 Package:	OpenSSH
 Version:	3.6.1 around 20030403
-Current Vers:	3.6.1 / portable 3.6.1p1
+Current Vers:	3.7.1 / portable 3.7.1p2
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Mailing List:	openssh-unix-announce@mindrot.org
@@ -734,7 +734,7 @@ Notes:
 
 Package:	tz
 Version:	tzcode2002b / tzdata2003a
-Current Vers:	tzcode2003a / tzdata2003a
+Current Vers:	tzcode2003c / tzdata2003c
 Maintainer:	Arthur David Olson <ado@elsie.nci.nih.gov>
 Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Mailing List:	tz@elsie.nci.nih.gov
