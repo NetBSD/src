@@ -32,12 +32,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)Ovfork.s	5.1 (Berkeley) 4/23/90
+ *	$Id: Ovfork.S,v 1.3 1993/10/21 02:19:25 jtc Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	/*.asciz "from: @(#)Ovfork.s	5.1 (Berkeley) 4/23/90"*/
-	.asciz "$Id: Ovfork.S,v 1.2 1993/10/21 01:48:41 jtc Exp $"
+	.asciz "$Id: Ovfork.S,v 1.3 1993/10/21 02:19:25 jtc Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"

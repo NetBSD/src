@@ -32,12 +32,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)setlogin.s	5.2 (Berkeley) 4/12/91
+ *	$Id: setlogin.s,v 1.3 1993/10/21 02:19:37 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	/*.asciz "from: @(#)setlogin.s	5.2 (Berkeley) 4/12/91"*/
-	.asciz "$Id: setlogin.s,v 1.2 1993/10/21 01:40:47 jtc Exp $"
+	.asciz "$Id: setlogin.s,v 1.3 1993/10/21 02:19:37 jtc Exp $"
 #endif
 
 #include "SYS.h"
