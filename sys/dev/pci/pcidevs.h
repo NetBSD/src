@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.465 2002/08/03 17:12:42 kent Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.466 2002/08/04 21:47:58 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.461 2002/08/03 17:10:35 kent Exp 
+ *	NetBSD: pcidevs,v 1.462 2002/08/04 21:47:25 thorpej Exp 
  */
 
 /*
@@ -1379,6 +1379,7 @@
 #define	PCI_PRODUCT_INTEL_82815_FULL_AGP	0x1131		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_FULL_GRAPH	0x1132		/* 82815 Graphics */
 #define	PCI_PRODUCT_INTEL_82806AA	0x1161		/* 82806AA PCI64 Hub Advanced Programmable Interrupt Controller */
+#define	PCI_PRODUCT_INTEL_ADI_BECC	0x1162		/* ADI i80200 Big Endian Companion Chip */
 #define	PCI_PRODUCT_INTEL_IXP1200	0x1200		/* IXP1200 Network Processor */
 #define	PCI_PRODUCT_INTEL_82559ER	0x1209		/* 82559ER Fast Ethernet LAN Controller */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE controller */
