@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.33 2004/09/25 10:15:36 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.34 2004/09/25 10:32:15 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.33 2004/09/25 10:15:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.34 2004/09/25 10:32:15 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1674,17 +1674,17 @@ spc_intr(arg)
 	struct spc_tinfo *ti;
 	int n;
 
+	SPC_TRACE(("spc_intr  "));
+
+	ints = bus_space_read_1(iot, ioh, INTS);
+	if (ints == 0)
+		return 0;
+
 	/*
 	 * Disable interrupt.
 	 */
 	bus_space_write_1(iot, ioh, SCTL,
 	    bus_space_read_1(iot, ioh, SCTL) & ~SCTL_INTR_ENAB);
-
-	SPC_TRACE(("spc_intr  "));
-
-	ints = bus_space_read_1(iot, ioh, INTS);
-	if (ints == 0)
-		goto out;
 
 	if (sc->sc_dma_done != NULL &&
 	    sc->sc_state == SPC_CONNECTED &&
