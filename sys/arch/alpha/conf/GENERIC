@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.129 1999/09/28 23:43:07 ad Exp $
+# $NetBSD: GENERIC,v 1.130 1999/09/29 10:43:14 kleink Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -171,6 +171,7 @@ eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
+eso*	at	pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
@@ -192,9 +193,13 @@ vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 
 audio*	at	eap?
+audio*	at	eso?
 audio*	at	sv?
 
+opl*	at	eso?
 #opl*	at	sv?
+
+mpu*	at	eso?
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
