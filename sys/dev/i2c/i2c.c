@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.2 2004/05/16 11:42:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -108,7 +108,7 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = iba->iba_tag;
 
 	/*
-	 * Attach all i2c deviecs described in the kernel
+	 * Attach all i2c devices described in the kernel
 	 * configuration file.
 	 */
 	config_search(iic_search, self, NULL);
