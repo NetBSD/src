@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.10 1995/12/18 23:58:41 pk Exp $ */
+/*	$NetBSD: espvar.h,v 1.11 1996/02/12 16:00:00 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -71,7 +71,19 @@ struct ecb {
 	char	*daddr;		/* Saved data pointer */
 	int	 dleft;		/* Residue */
 	u_char 	 stat;		/* SCSI status byte */
+#if ESP_DEBUG > 0
+	char trace[1000];
+#endif
 };
+#if ESP_DEBUG > 0
+#define ECB_TRACE(ecb, msg, a, b) do { \
+	int n = strlen((ecb)->trace); \
+	if (n < (sizeof((ecb)->trace)-100)) \
+		sprintf((ecb)->trace + n, "[" msg "]",  a, b); \
+} while(0)
+#else
+#define ECB_TRACE(ecb, msg, a, b)
+#endif
 
 /* 
  * Some info about each (possible) target on the SCSI bus.  This should 
@@ -90,8 +102,7 @@ struct esp_tinfo {
 #define T_NEGOTIATE	0x02	/* (Re)Negotiate synchronous options */
 #define T_BUSY		0x04	/* Target is busy, i.e. cmd in progress */
 #define T_SYNCMODE	0x08	/* sync mode has been negotiated */
-#define T_XXX		0x10	/* Target is XXX */
-#define T_SYNCHNEGO	0x20	/* .. */
+#define T_SYNCHNEGO	0x10	/* .. */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 } tinfo_t;
@@ -194,6 +205,7 @@ struct esp_softc {
 	int sc_id;				/* our scsi id */
 	int sc_rev;				/* esp revision */
 	int sc_minsync;				/* minimum sync period / 4 */
+	int sc_maxxfer;				/* maximum transfer size */
 };
 
 /*
@@ -285,13 +297,10 @@ struct esp_softc {
 	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
 /* DMA macros for ESP */
-#define	DMA_ENINTR(r)		((r->enintr)(r))
-#define	DMA_ISINTR(r)		((r->isintr)(r))
-#define	DMA_RESET(r)		((r->reset)(r))
-#define	DMA_START(a, b, c, d)	((a->start)(a, b, c, d))
-#define	DMA_INTR(r)		((r->intr)(r))
-
-#define DMA_DRAIN(sc)	if (sc->sc_rev < DMAREV_2) { \
-				DMACSR(sc) |= D_DRAIN; \
-				DMAWAIT1(sc); \
-			}
+#define DMA_ENINTR(r)		(((r)->enintr)(r))
+#define DMA_ISINTR(r)		(((r)->isintr)(r))
+#define DMA_RESET(r)		(((r)->reset)(r))
+#define DMA_INTR(r)		(((r)->intr)(r))
+#define DMA_ISACTIVE(r)		((r)->sc_active)
+#define DMA_SETUP(a, b, c, d, e)	(((a)->setup)(a, b, c, d, e))
+#define DMA_GO(r)		(((r)->go)(r))
