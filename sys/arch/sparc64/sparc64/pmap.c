@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 2000/03/16 02:37:00 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 2000/04/06 12:49:00 mrg Exp $	*/
 #undef NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 #undef BOOT_DEBUG
@@ -244,7 +244,9 @@ static int pmap_initialized;
 int avail_start, avail_end;	/* These are used by ps & family */
 
 static int ptelookup_va __P((vaddr_t va)); /* sun4u */
+#if notyet
 static void tsb_enter __P((int ctx, int64_t va, int64_t data));
+#endif
 static void pmap_pinit __P((struct pmap *));
 static void pmap_release __P((pmap_t));
 
@@ -893,7 +895,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			pmap_get_page(&newp);
 			pmap_zero_page(newp);
 		} while (!newp); /* Throw away page zero */
-		pmap_kernel()->pm_segs=(paddr_t*)newp;
+		pmap_kernel()->pm_segs=(paddr_t *)(u_long)newp;
 		pmap_kernel()->pm_physaddr = newp;
 		/* mark kernel context as busy */
 		((paddr_t*)ctxbusy)[0] = (int)pmap_kernel()->pm_physaddr;
@@ -1128,7 +1130,7 @@ pmap_pinit(pm)
 		}
 		pm->pm_physaddr = (paddr_t)VM_PAGE_TO_PHYS(page);
 		pmap_zero_page(pm->pm_physaddr);
-		pm->pm_segs = (paddr_t*)pm->pm_physaddr;
+		pm->pm_segs = (paddr_t *)(u_long)pm->pm_physaddr;
 		if (!pm->pm_physaddr) panic("pmap_pinit");
 #ifdef NOTDEF_DEBUG
 		printf("pmap_pinit: segs %p == %p\n", pm->pm_segs, (void*)page->phys_addr);
@@ -1189,18 +1191,18 @@ pmap_release(pm)
 	for(i=0; i<STSZ; i++)
 		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			for (k=0; k<PDSZ; k++) {
-				if ((ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
+				if ((ptbl = (paddr_t *)(u_long)ldxa(&pdir[k], ASI_PHYS_CACHED))) {
 					for (j=0; j<PTSZ; j++) {
 						int64_t data = ldxa(&ptbl[j], ASI_PHYS_CACHED);
 						if (data&TLB_V && 
 						    IS_VM_PHYSADDR(data&TLB_PA_MASK)) {
 #ifdef DEBUG
-							printf("pmap_release: pm=%p page %p still in use\n", pm, 
-							       ((long)i<<STSHIFT)|((long)k<<PDSHIFT)|((long)j<<PTSHIFT));
+							printf("pmap_release: pm=%p page %llx still in use\n", pm, 
+							       ((u_int64_t)i<<STSHIFT)|((u_int64_t)k<<PDSHIFT)|((u_int64_t)j<<PTSHIFT));
 							Debugger();
 #endif
 							pmap_remove_pv(pm, 
-								       ((long)i<<STSHIFT)|((long)k<<PDSHIFT)|((long)j<<PTSHIFT), 
+								       (long)((u_int64_t)i<<STSHIFT)|((long)k<<PDSHIFT)|((long)j<<PTSHIFT), 
 								       data&TLB_PA_MASK);
 						}
 					}
@@ -1396,7 +1398,7 @@ pmap_kenter_pa(va, pa, prot)
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	return pmap_enter(pmap_kernel(), va, pa, prot, prot|PMAP_WIRED);
+	pmap_enter(pmap_kernel(), va, pa, prot, prot|PMAP_WIRED);
 }
 #else
 void
@@ -1472,13 +1474,11 @@ pmap_kenter_pa(va, pa, prot)
 	tsb_enter(pm->pm_ctx, va, tte.data.data);
 	ASSERT((tsb[i].data.data & TLB_NFO) == 0);
 #if 1
-#if 1
 	/* this is correct */
 	dcache_flush_page(va);
 #else
 	/* Go totally crazy */
 	blast_vcache();
-#endif
 #endif
 
 }
@@ -1621,9 +1621,9 @@ pmap_enter(pm, va, pa, prot, flags)
 	int flags;
 {
 	pte_t tte;
-	int s, i, aliased = 0;
-	register pv_entry_t pv=NULL, npv;
 	paddr_t pg;
+	int i, aliased = 0;
+	pv_entry_t pv = NULL;
 	int size = 0; /* PMAP_SZ_TO_TTE(pa); */
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
@@ -1691,7 +1691,10 @@ pmap_enter(pm, va, pa, prot, flags)
 #ifdef DEBUG
 	enter_stats.ci ++;
 #endif
-/*	tte.tag.tag = TSB_TAG(0,pm->pm_ctx,va); /* Not used any more. */
+	/*
+	 * Not used any more.
+	tte.tag.tag = TSB_TAG(0,pm->pm_ctx,va);
+	 */
 	tte.data.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
 				 (flags & VM_PROT_WRITE),
 				 (!(pa & PMAP_NC)),aliased,1,(pa & PMAP_LITTLE));
@@ -1733,14 +1736,16 @@ pmap_enter(pm, va, pa, prot, flags)
 	}
 
 #if 1
-	if (pv)	pmap_enter_pv(pm, va, pa);
+	if (pv)
+		pmap_enter_pv(pm, va, pa);
 #else
 	if (pv) {
        		/*
 		 * Enter the pmap and virtual address into the
 		 * physical to virtual map table.
 		 */
-		s = splimp();
+		int npv;
+		int s = splimp();
 #ifdef DEBUG
 		if (pmapdebug & PDB_ENTER)
 			printf("pmap_enter: pv %x: was %x/%x/%x ",
@@ -2431,7 +2436,9 @@ ptelookup_va(va)
 	return (tsbptr/sizeof(pte_t));
 }
 
-void tsb_enter(ctx, va, data)
+#if notyet
+void
+tsb_enter(ctx, va, data)
 	int ctx;
 	int64_t va;
 	int64_t data;
@@ -2453,6 +2460,7 @@ void tsb_enter(ctx, va, data)
 	tlb_flush_pte(va, ctx);	/* Force reload -- protections may be changed */
 	splx(s);
 }
+#endif
 
 /*
  * Do whatever is needed to sync the MOD/REF flags
@@ -2540,9 +2548,6 @@ pmap_clear_modify(pg)
 		printf("pmap_clear_modify(): %p still modified!\n", pg);
 		Debugger();
 	}
-#endif
-out:
-#ifdef DEBUG	
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
 		printf("pmap_clear_modify: page %lx %s\n", (long)pa, 
 		       (changed?"was modified":"was not modified"));
@@ -2642,9 +2647,6 @@ pmap_clear_reference(pg)
 		printf("pmap_clear_reference(): %p still referenced!\n", pg);
 		Debugger();
 	}
-#endif
-out:
-#ifdef DEBUG	
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
 		printf("pmap_clear_reference: page %lx %s\n", (long)pa, 
 		       (changed?"was referenced":"was not referenced"));
@@ -3028,7 +3030,9 @@ pmap_page_protect(pg, prot)
 				pv->pv_pmap = NULL;
 				pv->pv_next = NULL;
 			}
+#if 0
 		skipit:
+#endif
 		}
 		splx(s);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.5 1999/11/06 20:18:50 eeh Exp $	*/
+/*	$NetBSD: emul.c,v 1.6 2000/04/06 12:49:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@
 # define DPRINTF(a)
 #endif
 
-#define GPR(tf, i)	((int32_t *) &tf->tf_global)[i]
-#define IPR(tf, i)	((int32_t *) tf->tf_out[6])[i - 16]
+#define GPR(tf, i)	((int32_t *)(u_long)&tf->tf_global)[i]
+#define IPR(tf, i)	((int32_t *)(u_long)tf->tf_out[6])[i - 16]
 #define FPR(p, i)	((int32_t) p->p_md.md_fpstate->fs_regs[i])
 
 static __inline int readgpreg __P((struct trapframe64 *, int, void *));
@@ -209,17 +209,17 @@ muldiv(tf, code, rd, rs1, rs2)
 		tf->tf_tstate &= ~(TSTATE_CCR);
 
 		if (*rd == 0)
-			tf->tf_tstate |= (ICC_Z|XCC_Z) << TSTATE_CCR_SHIFT;
+			tf->tf_tstate |= (u_int64_t)(ICC_Z|XCC_Z) << TSTATE_CCR_SHIFT;
 		else {
 			if (op.bits.sgn && *rd < 0)
-				tf->tf_tstate |= (ICC_N|XCC_N) << TSTATE_CCR_SHIFT;
+				tf->tf_tstate |= (u_int64_t)(ICC_N|XCC_N) << TSTATE_CCR_SHIFT;
 			if (op.bits.div) {
 				if (*rd * *rs2 != *rs1)
-					tf->tf_tstate |= (ICC_V|XCC_V) << TSTATE_CCR_SHIFT;
+					tf->tf_tstate |= (u_int64_t)(ICC_V|XCC_V) << TSTATE_CCR_SHIFT;
 			}
 			else {
 				if (*rd / *rs2 != *rs1)
-					tf->tf_tstate |= (ICC_V|XCC_V) << TSTATE_CCR_SHIFT;
+					tf->tf_tstate |= (u_int64_t)(ICC_V|XCC_V) << TSTATE_CCR_SHIFT;
 			}
 		}
 	}
@@ -268,7 +268,7 @@ fixalign(p, tf)
 	int error;
 
 	/* fetch and check the instruction that caused the fault */
-	error = copyin((caddr_t) tf->tf_pc, &code.i_int, sizeof(code.i_int));
+	error = copyin((caddr_t)(u_long)tf->tf_pc, &code.i_int, sizeof(code.i_int));
 	if (error != 0) {
 		DPRINTF(("fixalign: Bad instruction fetch\n"));
 		return EINVAL;
@@ -345,13 +345,13 @@ fixalign(p, tf)
 		}
 
 		if (size == 2)
-			return copyout(&data.s[1], (caddr_t) rs1, size);
+			return copyout(&data.s[1], (caddr_t)(u_long)rs1, size);
 		else
-			return copyout(&data.d, (caddr_t) rs1, size);
+			return copyout(&data.d, (caddr_t)(u_long)rs1, size);
 	}
 	else { /* load */
 		if (size == 2) {
-			error = copyin((caddr_t) rs1, &data.s[1], size);
+			error = copyin((caddr_t)(u_long)rs1, &data.s[1], size);
 			if (error)
 				return error;
 
@@ -362,7 +362,7 @@ fixalign(p, tf)
 				data.s[0] = 0;
 		}
 		else
-			error = copyin((caddr_t) rs1, &data.d, size);
+			error = copyin((caddr_t)(u_long)rs1, &data.d, size);
 
 		if (error)
 			return error;
