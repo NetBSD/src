@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8 1994/12/02 18:13:00 dean Exp $
+	$NetBSD: syscalls.master,v 1.9 1995/02/01 05:09:14 mellon Exp $
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
 ; Processed to created sun_sysent.c, sun_syscalls.c and sun_syscall.h.
@@ -47,8 +47,8 @@
 4	NOARGS		{ int write(int fd, char *buf, u_int nbyte); }
 5	STD		{ int sun_open(char *path, int flags, int mode); }
 6	NOARGS		{ int close(int fd); }
-7	UNIMPL	0 old_wait
-8	STD		{ int sun_creat(char *path, int mode); }
+7	UNIMPL		old_wait
+8	NOARGS		{ int compat_43_creat(char *path, int mode); }
 9	NOARGS		{ int link(char *path, char *link); }
 10	NOARGS		{ int unlink(char *path); }
 11	STD		{ int sun_execv(char *path, char **argp); }
@@ -77,7 +77,7 @@
 34	OBSOL		v7 nice
 35	OBSOL		v7 ftime
 36	NOARGS		{ int sync(void); }
-37	NOARGS		{ int kill(int pidd, int signum); }
+37	NOARGS		{ int kill(int pid, int signum); }
 38	NOARGS		{ int compat_43_stat(char *path, struct ostat *ub); }
 39	OBSOL		v7 setpgrp
 40	NOARGS		{ int compat_43_lstat(char *path, struct ostat *ub); }
@@ -86,19 +86,18 @@
 43	OBSOL		v7 times
 44	NOARGS		{ int profil(caddr_t samples, u_int size, \
 			    u_int offset, u_int scale); }
-45	UNIMPL	0 nosys
+45	UNIMPL		nosys
 46	OBSOL		v7 setgid
 47	NOARGS		{ gid_t getgid(void); }
 48	UNIMPL		sun_ssig
 49	UNIMPL		reserved for USG
 50	UNIMPL		reserved for USG
 51	NOARGS		{ int acct(char *path); }
-52	UNIMPL	0 nosys
-53	UNIMPL	0 syslock
-54	UNIMPL		{ int sunos_ioctl(int fd, u_long com, caddr_t data); }
-
+52	UNIMPL		nosys
+53	UNIMPL		syslock
+54	NOARGS		{ int ioctl(int fd, u_long com, caddr_t data); }
 55	NOARGS		{ int reboot(int opt); }
-56	UNIMPL		7thedition  mpxchan
+56	UNIMPL		v7 mpxchan
 57	NOARGS		{ int symlink(char *path, char *link); }
 58	NOARGS		{ int readlink(char *path, char *buf, int count); }
 59	NOARGS		{ int execve(char *path, char **argp, char **envp); }
@@ -220,7 +219,7 @@
 #else
 158	UNIMPL
 #endif
-159	NOARGS		{ int getdirentries(int fd, char *buf, u_int count, \
+159	NOARGS		{ int compat_43_getdirentries(int fd, char *buf, u_int count, \
 			    long *basep); }
 160	STD		{ int sun_statfs(char *path, struct sunos_statfs *buf); }
 161	STD		{ int sun_fstatfs(int fd, struct sunos_statfs *buf); }
@@ -270,8 +269,8 @@
 182	UNIMPL	0 lockf
 183	STD		{ int sun_ustat(int dev, struct sunos_ustat *buf); }
 184	UNIMPL	ult_getmnt /*implemented by jonathan@DSG.Stanford.EDU*/
-185	UNIMPL	 notdef
-186	UNIMPL	 notdef
+185	UNIMPL	 	notdef
+186	UNIMPL	 	notdef
 187	STD		{ int sun_sigpending(int *mask); }
 188	NOARGS		{ int setsid(void); }
 189	STD		{ int ultrix_waitpid(); }
