@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.33 1994/02/16 07:26:52 hpeyerl Exp $
+ *	$Id: isa.c,v 1.34 1994/02/16 17:59:21 mycroft Exp $
  */
 
 /*
@@ -93,23 +93,6 @@ u_short *Crtat = (u_short *)MONO_BUF;
 int config_isadev(struct isa_device *, u_int *);
 void config_attach(struct isa_driver *, struct isa_device *);
 static void sysbeepstop(int);
-
-/*
- * elink_reset: This is the reset code for the dumb 3c50[79] cards
- * which is required during probe.  The problem is that the two cards
- * use the same reset to the ID_PORT and hence the two drivers will
- * reset each others cards. This is notably non-optimal.
- */
- 
-void
-elink_reset()
-{  
-	static x;
-
-	if(x == 0)
-		outb(ELINK_ID_PORT, ELINK_RESET);
-	x = 1;
-}
 
 /*
  * Configure all ISA devices
