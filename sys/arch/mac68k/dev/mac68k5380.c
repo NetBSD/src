@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.17 1996/01/24 06:02:06 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.18 1996/02/03 23:17:53 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -66,7 +66,37 @@
 #undef	DBG_PIO			/* Show the polled-I/O process		*/
 #undef	DBG_INF			/* Show information transfer process	*/
 #define	DBG_NOSTATIC		/* No static functions, all in DDB trace*/
-#define	DBG_PID		20	/* Keep track of driver			*/
+#define	DBG_PID		25	/* Keep track of driver			*/
+#ifdef DBG_NOSTATIC
+#	define	static
+#endif
+#ifdef DBG_SEL
+#	define	DBG_SELPRINT(a,b)	printf(a,b)
+#else
+#	define DBG_SELPRINT(a,b)
+#endif
+#ifdef DBG_PIO
+#	define DBG_PIOPRINT(a,b,c) 	printf(a,b,c)
+#else
+#	define DBG_PIOPRINT(a,b,c)
+#endif
+#ifdef DBG_INF
+#	define DBG_INFPRINT(a,b,c)	a(b,c)
+#else
+#	define DBG_INFPRINT(a,b,c)
+#endif
+#ifdef DBG_PID
+	/* static	char	*last_hit = NULL, *olast_hit = NULL; */
+	static char *last_hit[DBG_PID];
+#	define	PID(a)	\
+	{ int i; \
+	  for (i=0; i< DBG_PID-1; i++) \
+		last_hit[i] = last_hit[i+1]; \
+	  last_hit[DBG_PID-1] = a; }
+#else
+#	define	PID(a)
+#endif
+
 #undef 	REAL_DMA		/* Use DMA if sensible			*/
 #define fair_to_keep_dma()	1
 #define claimed_dma()		1
@@ -181,9 +211,6 @@ u_long	pending_5380_count;
 int		pdma_5380_sends = 0;
 int		pdma_5380_bytes = 0;
 
-char	*pdma_5380_state="", *pdma_5380_prev_state="";
-#define DBG_SET(x) {pdma_5380_prev_state=pdma_5380_state; pdma_5380_state=(x);}
-
 void
 pdma_stat()
 {
@@ -193,8 +220,6 @@ pdma_stat()
 		pdma_5380_dir);
 	printf("datap = 0x%x, remainder = %d.\n",
 		pending_5380_data, pending_5380_count);
-	printf("state: %s\t", pdma_5380_state);
-	printf("last state: %s\n", pdma_5380_prev_state);
 	scsi_show();
 }
 #endif
@@ -206,11 +231,11 @@ pdma_cleanup(void)
 	int	bytes, s;
 
 	s = splbio();
+	PID("pdma_cleanup0");
 
 	pdma_5380_dir = 0;
 
 #if NCR5380_PDMA_DEBUG
-	DBG_SET("in pdma_cleanup().")
 	pdma_5380_sends++;
 	pdma_5380_bytes+=(reqp->xdata_len - pending_5380_count);
 #endif
@@ -244,13 +269,9 @@ pdma_cleanup(void)
 	/*
 	 * Back for more punishment.
 	 */
-#if NCR5380_PDMA_DEBUG
-	pdma_5380_state = "pdma_cleanup() -- going back to run_main().";
-#endif
+	PID("pdma_cleanup1");
 	run_main(cur_softc);
-#if NCR5380_PDMA_DEBUG
-	pdma_5380_state = "pdma_cleanup() -- back from run_main().";
-#endif
+	PID("pdma_cleanup2");
 }
 #endif
 
@@ -262,19 +283,16 @@ pdma_ready()
 	int	dmstat, idstat;
 extern	u_char	ncr5380_no_parchk;
 
+	PID("pdma_ready0");
 	if (pdma_5380_dir) {
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("got irq interrupt in xfer.")
-#endif
+		PID("pdma_ready1.")
 		/*
 		 * If Mr. IRQ isn't set one might wonder how we got
 		 * here.  It does happen, though.
 		 */
 		dmstat = GET_5380_REG(NCR5380_DMSTAT);
 		if (!(dmstat & SC_IRQ_SET)) {
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("irq not set.")
-#endif
+			PID("pdma_ready2");
 			return 0;
 		}
 		/*
@@ -288,18 +306,14 @@ extern	u_char	ncr5380_no_parchk;
 		if (   ((dmstat & (0xff & ~SC_ATN_STAT)) == SC_IRQ_SET)
 		    && ((idstat & (SC_S_BSY|SC_S_REQ))
 			== (SC_S_BSY | SC_S_REQ)) ) {
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("BSY|REQ.")
-#endif
+			PID("pdma_ready3");
 			pdma_cleanup();
 			return 1;
 		} else if (PH_IN(reqp->phase) && (dmstat & SC_PAR_ERR)) {
 			if (!(ncr5380_no_parchk & (1 << reqp->targ_id)))
 				/* XXX: Should be parity error ???? */
 				reqp->xs->error = XS_DRIVER_STUFFUP;
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("PARITY.")
-#endif
+			PID("pdma_ready4");
 			/* XXX: is this the right reaction? */
 			pdma_cleanup();
 			return 1;
@@ -317,7 +331,8 @@ extern	u_char	ncr5380_no_parchk;
 			scsi_show();
 			panic("Spurious interrupt during PDMA xfer.\n");
 		}
-	}
+	} else
+		PID("pdma_ready5");
 #endif
 	return 0;
 }
@@ -328,6 +343,7 @@ ncr5380_irq_intr(p)
 {
 	struct ncr_softc	*sc = p;
 
+	PID("irq");
 #if USE_PDMA
 	if (pdma_ready()) {
 		return;
@@ -373,6 +389,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 	 */
 	if (   !(GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)
 	    || !pdma_5380_dir) {
+		PID("drq0");
 		return;
 	}
 
@@ -382,15 +399,23 @@ extern	int			*nofault, mac68k_buserr_addr;
 	 * let go of PH_DATAOUT until we do pdma_cleanup().
 	 */
 	if (pending_5380_count == 0) {
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("forcing pdma_cleanup().")
+#if DBG_PID
+		if (pdma_5380_dir == 2) {
+			PID("drq1 (in)");
+		} else {
+			PID("drq1 (out)");
+		}
 #endif
 		pdma_cleanup();
 		return;
 	}
 
-#if NCR5380_PDMA_DEBUG
-	DBG_SET("got drq interrupt.")
+#if DBG_PID
+	if (pdma_5380_dir == 2) {
+		PID("drq (in)");
+	} else {
+		PID("drq (out)");
+	}
 #endif
 
 	/*
@@ -401,10 +426,8 @@ extern	int			*nofault, mac68k_buserr_addr;
 	nofault = (int *) &faultbuf;
 
 	if (setjmp((label_t *) nofault)) {
+		PID("drq berr");
 		nofault = (int *) 0;
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("buserr in xfer.")
-#endif
 		count = (  (u_long) mac68k_buserr_addr
 			 - (u_long) ncr_5380_with_drq);
 		if ((count < 0) || (count > pending_5380_count)) {
@@ -418,9 +441,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 		pending_5380_data += count;
 		pending_5380_count -= count;
 
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("handled bus error in xfer.")
-#endif
+		PID("end drq early");
 		mac68k_buserr_addr = 0;
 		return;
 	}
@@ -428,18 +449,12 @@ extern	int			*nofault, mac68k_buserr_addr;
 	if (pdma_5380_dir == 2) { /* Data In */
 		int	resid;
 
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("Data in.")
-#endif
 		/*
 		 * Get the dest address aligned.
 		 */
 		resid = count = min(pending_5380_count,
 				    4 - (((int) pending_5380_data) & 0x3));
 		if (count && (count < 4)) {
-#if NCR5380_PDMA_DEBUG
-			DBG_SET("Data in (aligning dest).")
-#endif
 			data = (u_int8_t *) pending_5380_data;
 			drq = (u_int8_t *) ncr_5380_with_drq;
 			while (count) {
@@ -457,9 +472,6 @@ extern	int			*nofault, mac68k_buserr_addr;
 		while (pending_5380_count) {
 		int dcount;
 
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("Data in (starting read).")
-#endif
 		dcount = count = min(pending_5380_count, MIN_PHYS);
 		long_drq = (volatile u_int32_t *) ncr_5380_with_drq;
 		long_data = (u_int32_t *) pending_5380_data;
@@ -471,9 +483,6 @@ extern	int			*nofault, mac68k_buserr_addr;
 
 				pending_5380_data += (dcount - count);
 				pending_5380_count -= (dcount - count);
-#if NCR5380_PDMA_DEBUG
-				DBG_SET("drq low")
-#endif
 				return;
 			}
 			R4; R4; R4; R4; R4; R4; R4; R4;
@@ -498,9 +507,6 @@ extern	int			*nofault, mac68k_buserr_addr;
 			R4; count -= 4;
 		}
 #undef R4
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("Data in (finishing up).")
-#endif
 		data = (u_int8_t *) long_data;
 		drq = (u_int8_t *) long_drq;
 		while (count) {
@@ -514,18 +520,12 @@ extern	int			*nofault, mac68k_buserr_addr;
 	} else {
 		int	resid;
 
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("Data out.")
-#endif
 		/*
 		 * Get the source address aligned.
 		 */
 		resid = count = min(pending_5380_count,
 				    4 - (((int) pending_5380_data) & 0x3));
 		if (count && (count < 4)) {
-#if NCR5380_PDMA_DEBUG
-			DBG_SET("Data out (aligning dest).")
-#endif
 			data = (u_int8_t *) pending_5380_data;
 			drq = (u_int8_t *) ncr_5380_with_drq;
 			while (count) {
@@ -543,9 +543,6 @@ extern	int			*nofault, mac68k_buserr_addr;
 		while (pending_5380_count) {
 		int dcount;
 
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("Data out (starting write).")
-#endif
 		dcount = count = min(pending_5380_count, MIN_PHYS);
 		long_drq = (volatile u_int32_t *) ncr_5380_with_drq;
 		long_data = (u_int32_t *) pending_5380_data;
@@ -560,9 +557,6 @@ extern	int			*nofault, mac68k_buserr_addr;
 			W4; count -= 4;
 		}
 #undef W4
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("Data out (cleaning up).")
-#endif
 		data = (u_int8_t *) long_data;
 		drq = (u_int8_t *) long_drq;
 		while (count) {
@@ -581,10 +575,7 @@ extern	int			*nofault, mac68k_buserr_addr;
 	 */
 	nofault = (int *) 0;
 
-#if NCR5380_PDMA_DEBUG
-	DBG_SET("done in xfer.")
-#endif
-
+	PID("end drq");
 #endif	/* if USE_PDMA */
 }
 
@@ -606,17 +597,13 @@ transfer_pdma(phasep, data, count)
 		panic("ncrscsi: transfer_pdma called when operation already "
 			"pending.\n");
 	}
-#if NCR5380_PDMA_DEBUG
-	DBG_SET("in transfer_pdma.")
-#endif
+	PID("transfer_pdma0")
 
 	/*
  	 * Don't bother with PDMA if we can't sleep or for small transfers.
  	 */
 	if (reqp->dr_flag & DRIVER_NOINT) {
-#if NCR5380_PDMA_DEBUG
-		DBG_SET("pdma, actually using transfer_pio.")
-#endif
+		PID("pdma, falling back to transfer_pio.")
 		transfer_pio(phasep, data, count, 0);
 		return -1;
 	}
@@ -663,10 +650,6 @@ transfer_pdma(phasep, data, count)
 	pending_5380_data = data;
 	pending_5380_count = len;
 
-#if NCR5380_PDMA_DEBUG
-	DBG_SET("setting up for interrupt.")
-#endif
-
 	/*
 	 * Set the transfer function to be called on DRQ interrupts.
 	 * And note that we're waiting.
@@ -688,9 +671,7 @@ transfer_pdma(phasep, data, count)
 		break;
 	}
 
-#if NCR5380_PDMA_DEBUG
-	DBG_SET("wait for interrupt.")
-#endif
+	PID("waiting for interrupt.")
 
 	/*
 	 * Now that we're set up, enable interrupts and drop processor
