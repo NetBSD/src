@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.9 1999/12/10 09:13:06 jun Exp $	*/
+/*	$NetBSD: platid.def,v 1.10 1999/12/26 05:50:59 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -79,6 +79,7 @@ NEC {
       CPU=MIPS_VR_4111 500
       CPU=MIPS_VR_4121 510 520 520A
       CPU=MIPS_VR_4111 500A
+      CPU=MIPS_VR_4121 530
     }
     7XX {
       CPU=MIPS_VR_4121 700 700A
@@ -124,7 +125,7 @@ Sharp {
 Fujitsu {
   INTERTOP {
     ITXXX {
-      CPU=MIPS_VR_4121 IT300
+      CPU=MIPS_VR_4121 IT300 IT310
     }
   }
 }
