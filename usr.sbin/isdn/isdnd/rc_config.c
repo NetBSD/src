@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.20 2004/03/21 16:31:22 martin Exp $ 
+ *	$Id: rc_config.c,v 1.21 2004/03/28 20:49:22 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -654,7 +654,7 @@ cfg_setval(int keyword)
 		break;
 
 	case FIRMWARE:
-		DBGL(DL_RCCF, (logit(LL_DBG, "controller %d: firmware = %s", cur_ctrl->bri, yylval.str)));
+		DBGL(DL_RCCF, (logit(LL_DBG, "controller %d: firmware = %s", cur_ctrl->isdnif, yylval.str)));
 		cur_ctrl->firmware = strdup(yylval.str);
 		break;
 
@@ -697,25 +697,15 @@ cfg_setval(int keyword)
 		break;
 
 	case ISDNCHANNEL:
-		switch (yylval.num)
-		{
-		case 0:
-		case -1:
+		if (yylval.num == 0 || yylval.num == -1) {
 			current_cfe->isdnchannel = CHAN_ANY;
 			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: isdnchannel = any", current_cfe->name)));
-			break;
-		case 1:
-			current_cfe->isdnchannel = CHAN_B1;
-			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: isdnchannel = one", current_cfe->name)));
-			break;
-		case 2:
-			current_cfe->isdnchannel = CHAN_B2;
-			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: isdnchannel = two", current_cfe->name)));
-			break;
-		default:
+		} else if (yylval.num > MAX_BCHAN) {
 			logit(LL_DBG, "entry %s: isdnchannel value out of range", current_cfe->name);
 			config_error_flag++;
-			break;
+		} else {
+			current_cfe->isdnchannel = yylval.num - 1;
+			DBGL(DL_RCCF, (logit(LL_DBG, "entry %s: isdnchannel = %d", current_cfe->name, yylval.num)));
 		}
 		break;
 
@@ -857,7 +847,7 @@ cfg_setval(int keyword)
 		break;
 
 	case PROTOCOL:
-		DBGL(DL_RCCF, (logit(LL_DBG, "controller %d: protocol = %s", cur_ctrl->bri, yylval.str)));
+		DBGL(DL_RCCF, (logit(LL_DBG, "controller %d: protocol = %s", cur_ctrl->isdnif, yylval.str)));
 		if (!(strcmp(yylval.str, "dss1")))
 			cur_ctrl->protocol = PROTOCOL_DSS1;
 		else if (!(strcmp(yylval.str, "d64s")))
@@ -1549,11 +1539,8 @@ print_config(void)
 		case CHAN_ANY:
 			fprintf(PFILE, "-1\t\t# any ISDN B-channel may be used\n");
 			break;
-		case CHAN_B1:
-			fprintf(PFILE, "1\t\t# only ISDN B-channel 1 may be used\n");
-			break;
-		case CHAN_B2:
-			fprintf(PFILE, "2\t\t# only ISDN B-channel 2 ay be used\n");
+		default:
+			fprintf(PFILE, "1\t\t# only ISDN B-channel %d may be used\n", cep->isdnchannel);
 			break;
 		}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: monitor.c,v 1.12 2003/11/12 13:31:07 grant Exp $ */
+/* $NetBSD: monitor.c,v 1.13 2004/03/28 20:49:22 pooka Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -648,7 +648,7 @@ monitor_handle_connect(int sockfd, int is_local)
 
 		I4B_PREP_CMD(ictrl, I4B_MON_ICTRL_CODE);
 		I4B_PUT_STR(ictrl, I4B_MON_ICTRL_NAME, ctrl_desc);
-		I4B_PUT_2B(ictrl, I4B_MON_ICTRL_BUSID, ctrl->bri);
+		I4B_PUT_2B(ictrl, I4B_MON_ICTRL_BUSID, ctrl->isdnif);
 		I4B_PUT_4B(ictrl, I4B_MON_ICTRL_FLAGS, 0);
 		I4B_PUT_2B(ictrl, I4B_MON_ICTRL_NCHAN, 2);
 
@@ -683,9 +683,9 @@ monitor_handle_connect(int sockfd, int is_local)
 	/* current state of controller(s) */
 	
 	for (ctrl = get_first_ctrl_state(); ctrl; ctrl = NEXT_CTRL(ctrl)) {
-		monitor_evnt_tei(ctrl->bri, ctrl->tei);
-		monitor_evnt_l12stat(ctrl->bri, LAYER_ONE, ctrl->l1stat);
-		monitor_evnt_l12stat(ctrl->bri, LAYER_TWO, ctrl->l2stat);
+		monitor_evnt_tei(ctrl->isdnif, ctrl->tei);
+		monitor_evnt_l12stat(ctrl->isdnif, LAYER_ONE, ctrl->l1stat);
+		monitor_evnt_l12stat(ctrl->isdnif, LAYER_TWO, ctrl->l2stat);
 	}
 
 	/* current state of entries */
@@ -943,23 +943,20 @@ hangup_channel(int controller, int channel, const char *source)
 {
 	struct cfg_entry * cep = NULL;
 	struct isdn_ctrl_state * ctrl = NULL;
+	int i;
 
 	ctrl = find_ctrl_state(controller);
 	if (ctrl != NULL) {	
 		if (ctrl->state != CTRL_UP)
 			return;
-		if (ctrl->stateb1 != CHAN_IDLE) {
-			cep = get_cep_by_cc(controller, 0);
-			if (cep != NULL && cep->isdnchannelused == channel &&
-				cep->isdncontrollerused == controller)
-				goto found;
-		}
-		if (ctrl-> stateb2 != CHAN_IDLE)
-		{
-			cep = get_cep_by_cc(controller, 1);
-			if (cep != NULL && cep->isdnchannelused == channel &&
-				cep->isdncontrollerused == controller)
-				goto found;
+		for (i = 0; i < ctrl->nbch; i++) {
+			if (ctrl->stateb[i] != CHAN_IDLE) {
+				cep = get_cep_by_cc(controller, i);
+				if (cep != NULL
+				    && cep->isdnchannelused == channel
+				    && cep->isdncontrollerused == controller)
+					goto found;
+			}
 		}
 	}
 	/* not found */

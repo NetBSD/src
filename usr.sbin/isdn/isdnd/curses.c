@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.8 2003/10/06 09:43:27 itojun Exp $
+ *	$Id: curses.c,v 1.9 2004/03/28 20:49:22 pooka Exp $
  *
  * $FreeBSD$
  *
@@ -541,7 +541,7 @@ void
 display_chans(void)
 {
 	char buffer[80];
-	int i, cnt = 0;
+	int i, j, cnt = 0;
 	WINDOW *chan_w;
 	int nlines, ncols, pos_x, pos_y;
 	struct pollfd set[1];
@@ -557,10 +557,9 @@ display_chans(void)
 	for (ctrl = get_first_ctrl_state(); ctrl; ctrl = NEXT_CTRL(ctrl)) {
 		if ((get_controller_state(ctrl)) != CTRL_UP)
 			continue;
-		if ((ret_channel_state(ctrl, CHAN_B1)) == CHAN_RUN)
-			cnt++;
-		if ((ret_channel_state(ctrl, CHAN_B2)) == CHAN_RUN)
-			cnt++;
+		for (j = 0; j < ctrl->nbch; j++)
+			if ((ret_channel_state(ctrl, j)) == CHAN_RUN)
+				cnt++;
 	}
 
 	if (cnt > 0)
@@ -622,23 +621,17 @@ display_chans(void)
 		if ((get_controller_state(ctrl)) != CTRL_UP)
 			continue;
 
-		if ((ret_channel_state(ctrl, CHAN_B1)) == CHAN_RUN)
+		for (j = 0; j < ctrl->nbch; i++)
 		{
-			snprintf(buffer, sizeof(buffer), "%d - Controller %d channel %s", ncols, i, "B1");
-			mvwaddstr(chan_w, nlines, 2, buffer);
-			cc[ncols - 1].cntl = i;
-			cc[ncols - 1].chn = CHAN_B1;
-			nlines++;
-			ncols++;
-		}
-		if ((ret_channel_state(ctrl, CHAN_B2)) == CHAN_RUN)
-		{
-			snprintf(buffer, sizeof(buffer), "%d - Controller %d channel %s", ncols, i, "B2");
-			mvwaddstr(chan_w, nlines, 2, buffer);
-			cc[ncols - 1].cntl = i;
-			cc[ncols - 1].chn = CHAN_B2;
-			nlines++;
-			ncols++;
+			if ((ret_channel_state(ctrl, j)) == CHAN_RUN)
+			{
+				snprintf(buffer, sizeof(buffer), "%d - Controller %d channel B%d", ncols, i, j);
+				mvwaddstr(chan_w, nlines, 2, buffer);
+				cc[ncols - 1].cntl = i;
+				cc[ncols - 1].chn = j;
+				nlines++;
+				ncols++;
+			}
 		}
 	}
 

@@ -27,7 +27,7 @@
  *	i4b daemon - message from kernel handling routines
  *	--------------------------------------------------
  *
- *	$Id: msghdl.c,v 1.9 2003/10/06 09:43:27 itojun Exp $ 
+ *	$Id: msghdl.c,v 1.10 2004/03/28 20:49:22 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -448,28 +448,28 @@ msg_teiasg_ind(msg_teiasg_ind_t *mt)
 void
 msg_pdeact_ind(msg_pdeact_ind_t *md)
 {
-	int bri = md->controller;
+	int isdnif = md->controller;
 	struct cfg_entry *cep;
-	struct isdn_ctrl_state * ctrl = find_ctrl_state(bri);
+	struct isdn_ctrl_state * ctrl = find_ctrl_state(isdnif);
 
 #ifdef USE_CURSES
 	if (do_fullscreen)
 	{
-		display_l12stat(bri, LAYER_ONE, LAYER_IDLE);
-		display_l12stat(bri, LAYER_TWO, LAYER_IDLE);
-		display_tei(bri, -1);
+		display_l12stat(isdnif, LAYER_ONE, LAYER_IDLE);
+		display_l12stat(isdnif, LAYER_TWO, LAYER_IDLE);
+		display_tei(isdnif, -1);
 	}
 #endif
 #ifdef I4B_EXTERNAL_MONITOR
 	if (do_monitor && accepted)
 	{
-		monitor_evnt_l12stat(bri, LAYER_ONE, LAYER_IDLE);
-		monitor_evnt_l12stat(bri, LAYER_TWO, LAYER_IDLE);		
-		monitor_evnt_tei(bri, -1);
+		monitor_evnt_l12stat(isdnif, LAYER_ONE, LAYER_IDLE);
+		monitor_evnt_l12stat(isdnif, LAYER_TWO, LAYER_IDLE);		
+		monitor_evnt_tei(isdnif, -1);
 	}
 #endif
 
-	DBGL(DL_CNST, (logit(LL_DBG, "msg_pdeact_ind: BRI %d, persistent deactivation", bri)));
+	DBGL(DL_CNST, (logit(LL_DBG, "msg_pdeact_ind: BRI %d, persistent deactivation", isdnif)));
 
 	ctrl->l1stat = LAYER_IDLE;
 	ctrl->l2stat = LAYER_IDLE;
@@ -477,7 +477,7 @@ msg_pdeact_ind(msg_pdeact_ind_t *md)
 	
 	for (cep = get_first_cfg_entry(); cep; cep = NEXT_CFE(cep)) {
 		if (cep->cdid != CDID_UNUSED &&
-		    cep->isdncontrollerused == bri) {
+		    cep->isdncontrollerused == isdnif) {
 			
 			if (cep->cdid == CDID_RESERVED)
 			{
