@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.22 2001/05/13 16:55:40 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.23 2001/05/28 22:16:17 chs Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/vm_machdep.c
@@ -229,11 +229,8 @@ pagemove(from, to, size)
 		if (pmap_extract(pmap_kernel(), (vaddr_t)to, NULL) == TRUE)
 			panic("pagemove 3");
 #endif
-		pmap_remove(pmap_kernel(),
-			    (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
-		pmap_enter(pmap_kernel(),
-			   (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE,
-			   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kremove((vaddr_t)from, PAGE_SIZE);
+		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
