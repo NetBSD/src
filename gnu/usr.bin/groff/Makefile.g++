@@ -5,7 +5,7 @@
 #
 
 GXX=		g++
-GXXFLAGS=	-O -felide-constructors
+GXXFLAGS=	${CFLAGS} -felide-constructors
 LDXX=		/usr/libexec/ld++
 # Temporary, to achieve linking
 CC=		g++
