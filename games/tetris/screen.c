@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.3 1995/04/28 22:09:25 mycroft Exp $	*/
+/*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@ char	*tgetstr(), *tgoto();
  * Capabilities from TERMCAP.
  */
 char	PC, *BC, *UP;		/* tgoto requires globals: ugh! */
-short	ospeed;
+speed_t	ospeed;
 
 static char
 	*bcstr,			/* backspace char */
