@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.65 2002/01/01 09:27:53 perry Exp $       */
+/*     $NetBSD: login.c,v 1.66 2002/07/27 20:10:32 christos Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.65 2002/01/01 09:27:53 perry Exp $");
+__RCSID("$NetBSD: login.c,v 1.66 2002/07/27 20:10:32 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -74,7 +74,12 @@ __RCSID("$NetBSD: login.c,v 1.65 2002/01/01 09:27:53 perry Exp $");
 #include <ttyent.h>
 #include <tzfile.h>
 #include <unistd.h>
+#ifdef UPDATE_UTMP
 #include <utmp.h>
+#endif
+#ifdef UPDATE_UTMPX
+#include <utmpx.h>
+#endif
 #include <util.h>
 #ifdef SKEY
 #include <skey.h>
@@ -98,7 +103,15 @@ int login_krb5_retain_ccache = 0;
 
 void	 badlogin __P((char *));
 void	 checknologin __P((char *));
-void	 dolastlog __P((int));
+#ifdef UPDATE_UTMP
+static void	 doutmp __P((void));
+static void	 dolastlog __P((int));
+#endif
+#ifdef UPDATE_UTMPX
+static void	 doutmpx __P((void));
+static void	 dolastlogx __P((int));
+#endif
+static void	 update_db __P((int));
 void	 getloginname __P((void));
 int	 main __P((int, char *[]));
 void	 motd __P((char *));
@@ -159,6 +172,8 @@ extern int	krb5_configured;
 struct	passwd *pwd;
 int	failures;
 char	term[64], *envinit[1], *hostname, *username, *tty;
+struct timeval now;
+struct sockaddr_storage ss;
 
 static const char copyrightstr[] = "\
 Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002\n\
@@ -174,8 +189,6 @@ main(argc, argv)
 	extern char **environ;
 	struct group *gr;
 	struct stat st;
-	struct timeval tp;
-	struct utmp utmp;
 	int ask, ch, cnt, fflag, hflag, pflag, sflag, quietlog, rootlogin, rval;
 	int Fflag;
 	uid_t uid, saved_uid;
@@ -216,8 +229,8 @@ main(argc, argv)
 	/*
 	 * -p is used by getty to tell login not to destroy the environment
 	 * -f is used to skip a second login authentication
-	 * -h is used by other servers to pass the name of the remote
-	 *    host to login so that it may be placed in utmp and wtmp
+	 * -h is used by other servers to pass the name of the remote host to
+	 *    login so that it may be placed in utmp/utmpx and wtmp/wtmpx
 	 * -s is used to force use of S/Key or equivalent.
 	 */
 	domain = NULL;
@@ -557,13 +570,12 @@ main(argc, argv)
             _PASSWORD_WARNDAYS * SECSPERDAY);
 #endif
 
-	if (pwd->pw_change || pwd->pw_expire)
-		(void)gettimeofday(&tp, (struct timezone *)NULL);
+	(void)gettimeofday(&now, (struct timezone *)NULL);
 	if (pwd->pw_expire) {
-		if (tp.tv_sec >= pwd->pw_expire) {
+		if (now.tv_sec >= pwd->pw_expire) {
 			(void)printf("Sorry -- your account has expired.\n");
 			sleepexit(1);
-		} else if (pwd->pw_expire - tp.tv_sec < pw_warntime && 
+		} else if (pwd->pw_expire - now.tv_sec < pw_warntime && 
 		    !quietlog)
 			(void)printf("Warning: your account expires on %s",
 			    ctime(&pwd->pw_expire));
@@ -571,25 +583,17 @@ main(argc, argv)
 	if (pwd->pw_change) {
 		if (pwd->pw_change == _PASSWORD_CHGNOW)
 			need_chpass = 1;
-		else if (tp.tv_sec >= pwd->pw_change) {
+		else if (now.tv_sec >= pwd->pw_change) {
 			(void)printf("Sorry -- your password has expired.\n");
 			sleepexit(1);
-		} else if (pwd->pw_change - tp.tv_sec < pw_warntime && 
+		} else if (pwd->pw_change - now.tv_sec < pw_warntime && 
 		    !quietlog)
 			(void)printf("Warning: your password expires on %s",
 			    ctime(&pwd->pw_change));
 
 	}
 	/* Nothing else left to fail -- really log in. */
-	memset((void *)&utmp, 0, sizeof(utmp));
-	(void)time(&utmp.ut_time);
-	(void)strncpy(utmp.ut_name, username, sizeof(utmp.ut_name));
-	if (hostname)
-		(void)strncpy(utmp.ut_host, hostname, sizeof(utmp.ut_host));
-	(void)strncpy(utmp.ut_line, tty, sizeof(utmp.ut_line));
-	login(&utmp);
-
-	dolastlog(quietlog);
+	update_db(quietlog);
 
 	(void)chown(ttyn, pwd->pw_uid,
 	    (gr = getgrnam(TTYGRPNAME)) ? gr->gr_gid : pwd->pw_gid);
@@ -899,7 +903,99 @@ checknologin(fname)
 	}
 }
 
-void
+static void
+update_db(int quietlog)
+{
+	if (hostname != NULL) {
+		socklen_t len = sizeof(ss);
+		(void)getpeername(STDIN_FILENO, (struct sockaddr *)&ss, &len);
+	}
+	(void)gettimeofday(&now, NULL);
+#ifdef UPDATE_UTMPX
+	doutmpx();
+	dolastlogx(quietlog);
+	quietlog = 1;
+#endif	
+#ifdef UPDATE_UTMP
+	doutmp();
+	dolastlog(quietlog);
+#endif
+}
+
+#ifdef UPDATE_UTMPX
+static void
+doutmpx()
+{
+	struct utmpx utmpx;
+	char *t;
+
+	memset((void *)&utmpx, 0, sizeof(utmpx));
+	utmpx.ut_tv = now;
+	(void)strncpy(utmpx.ut_name, username, sizeof(utmpx.ut_name));
+	if (hostname) {
+		(void)strncpy(utmpx.ut_host, hostname, sizeof(utmpx.ut_host));
+		utmpx.ut_ss = ss;
+	}
+	(void)strncpy(utmpx.ut_line, tty, sizeof(utmpx.ut_line));
+	utmpx.ut_type = USER_PROCESS;
+	utmpx.ut_pid = getpid();
+	t = tty + strlen(tty);
+	if (t - tty >= sizeof(utmpx.ut_id)) {
+	    (void)strncpy(utmpx.ut_id, t - sizeof(utmpx.ut_id),
+		sizeof(utmpx.ut_id));
+	} else {
+	    (void)strncpy(utmpx.ut_id, tty, sizeof(utmpx.ut_id));
+	}
+	if (pututxline(&utmpx) == NULL)
+		syslog(LOG_NOTICE, "Cannot update utmpx %m");
+	endutxent();
+	if (updwtmpx(_PATH_WTMPX, &utmpx) != 0)
+		syslog(LOG_NOTICE, "Cannot update wtmpx %m");
+}
+
+static void
+dolastlogx(quiet)
+	int quiet;
+{
+	struct lastlogx ll;
+	if (getlastlogx(pwd->pw_uid, &ll) != NULL) {
+		time_t t = (time_t)ll.ll_tv.tv_sec;
+		(void)printf("Last login: %.24s ", ctime(&t));
+		if (*ll.ll_host != '\0')
+			(void)printf("from %.*s ",
+			    (int)sizeof(ll.ll_host),
+			    ll.ll_host);
+		(void)printf("on %.*s\n",
+		    (int)sizeof(ll.ll_line),
+		    ll.ll_line);
+	}
+	ll.ll_tv = now;
+	(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
+	if (hostname) {
+		(void)strncpy(ll.ll_host, hostname, sizeof(ll.ll_host));
+		ll.ll_ss = ss;
+	}
+	if (updlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != 0)
+		syslog(LOG_NOTICE, "Cannot update lastlogx %m");
+}
+#endif
+
+#ifdef UPDATE_UTMP
+static void
+doutmp()
+{
+	struct utmp utmp;
+
+	(void)memset((void *)&utmp, 0, sizeof(utmp));
+	utmp.ut_time = now.tv_sec;
+	(void)strncpy(utmp.ut_name, username, sizeof(utmp.ut_name));
+	if (hostname)
+		(void)strncpy(utmp.ut_host, hostname, sizeof(utmp.ut_host));
+	(void)strncpy(utmp.ut_line, tty, sizeof(utmp.ut_line));
+	login(&utmp);
+}
+
+static void
 dolastlog(quiet)
 	int quiet;
 {
@@ -911,22 +1007,20 @@ dolastlog(quiet)
 		if (!quiet) {
 			if (read(fd, (char *)&ll, sizeof(ll)) == sizeof(ll) &&
 			    ll.ll_time != 0) {
-				(void)printf("Last login: %.*s ",
-				    24, (char *)ctime(&ll.ll_time));
+				(void)printf("Last login: %.24s ",
+				    ctime(&ll.ll_time));
 				if (*ll.ll_host != '\0')
-					(void)printf("from %.*s\n",
+					(void)printf("from %.*s ",
 					    (int)sizeof(ll.ll_host),
 					    ll.ll_host);
-				else
-					(void)printf("on %.*s\n",
-					    (int)sizeof(ll.ll_line),
-					    ll.ll_line);
+				(void)printf("on %.*s\n",
+				    (int)sizeof(ll.ll_line), ll.ll_line);
 			}
 			(void)lseek(fd, (off_t)(pwd->pw_uid * sizeof(ll)),
 			    SEEK_SET);
 		}
 		memset((void *)&ll, 0, sizeof(ll));
-		(void)time(&ll.ll_time);
+		ll.ll_time = now.tv_sec;
 		(void)strncpy(ll.ll_line, tty, sizeof(ll.ll_line));
 		if (hostname)
 			(void)strncpy(ll.ll_host, hostname, sizeof(ll.ll_host));
@@ -934,6 +1028,7 @@ dolastlog(quiet)
 		(void)close(fd);
 	}
 }
+#endif
 
 void
 badlogin(name)
