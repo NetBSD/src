@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.7 2001/01/09 11:38:32 minoura Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.8 2001/01/11 16:09:42 minoura Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -47,10 +47,12 @@
 
 #include <machine/bus.h>
 
+#include <dev/clock_subr.h>
+
 #include <arch/x68k/dev/rtclock_var.h>
 #include <arch/x68k/dev/intiovar.h>
 
-static u_long rtgettod __P((void));
+static time_t rtgettod __P((void));
 static int  rtsettod __P((long));
 
 static int rtc_match __P((struct device *, struct cfdata *, void *));
@@ -118,7 +120,7 @@ rtc_attach(parent, self, aux)
  * x68k/clock.c calls thru this vector, if it is set, to read
  * the realtime clock.
  */
-u_long (*gettod) __P((void));
+time_t (*gettod) __P((void));
 int (*settod) __P((long));
 
 int
@@ -133,66 +135,40 @@ rtclockinit()
 	return 1;
 }
 
-static int month_days[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-static u_long
+static time_t
 rtgettod()
 {
-	register int i;
-	register u_long tmp;
-	int year, month, day, hour, min, sec;
+	struct clock_ymdhms dt;
 
 	/* hold clock */
 	RTC_WRITE(RTC_MODE, RTC_HOLD_CLOCK);
 
 	/* read it */
-	sec   = RTC_REG(RTC_SEC10)  * 10 + RTC_REG(RTC_SEC);
-	min   = RTC_REG(RTC_MIN10)  * 10 + RTC_REG(RTC_MIN);
-	hour  = RTC_REG(RTC_HOUR10) * 10 + RTC_REG(RTC_HOUR);
-	day   = RTC_REG(RTC_DAY10)  * 10 + RTC_REG(RTC_DAY);
-	month = RTC_REG(RTC_MON10)  * 10 + RTC_REG(RTC_MON);
-	year  = RTC_REG(RTC_YEAR10) * 10 + RTC_REG(RTC_YEAR)  + 1980;
+	dt.dt_sec  = RTC_REG(RTC_SEC10)  * 10 + RTC_REG(RTC_SEC);
+	dt.dt_min  = RTC_REG(RTC_MIN10)  * 10 + RTC_REG(RTC_MIN);
+	dt.dt_hour = RTC_REG(RTC_HOUR10) * 10 + RTC_REG(RTC_HOUR);
+	dt.dt_day  = RTC_REG(RTC_DAY10)  * 10 + RTC_REG(RTC_DAY);
+	dt.dt_mon  = RTC_REG(RTC_MON10)  * 10 + RTC_REG(RTC_MON);
+	dt.dt_year = RTC_REG(RTC_YEAR10) * 10 + RTC_REG(RTC_YEAR)  + 1980;
 
 	/* let it run again.. */
 	RTC_WRITE(RTC_MODE, RTC_FREE_CLOCK);
 
 #ifdef DIAGNOSTIC
-	range_test(hour, 0, 23);
-	range_test(day, 1, 31);
-	range_test(month, 1, 12);
-	range_test(year, STARTOFTIME, 2079);
+	range_test(dt.dt_hour, 0, 23);
+	range_test(dt.dt_day, 1, 31);
+	range_test(dt.dt_mon, 1, 12);
+	range_test(dt.dt_year, STARTOFTIME, 2079);
 #endif
   
-	tmp = 0;
-
-	for (i = STARTOFTIME; i < year; i++)
-		tmp += days_in_year(i);
-	if (leapyear(year) && month > FEBRUARY)
-		tmp++;
-  
-	for (i = 1; i < month; i++)
-		tmp += days_in_month(i);
-  
-	tmp += (day - 1);
-
-	tmp = ((tmp * 24 + hour) * 60 + min + rtc_offset) * 60 + sec;
-  
-	return tmp;
+	return clock_ymdhms_to_secs (&dt);
 }
 
 static int
 rtsettod (tim)
-	long tim;
+	time_t tim;
 {
-	/*
-	 * I don't know if setting the clock is analogous
-	 * to reading it, I don't have demo-code for setting.
-	 * just give it a try..
-	 */
-	register int i;
-	register long hms, day;
+	struct clock_ymdhms dt;
 	u_char sec1, sec2;
 	u_char min1, min2;
 	u_char hour1, hour2;
@@ -200,44 +176,22 @@ rtsettod (tim)
 	u_char mon1, mon2;
 	u_char year1, year2;
 
-	tim -= (rtc_offset * 60);
+	clock_secs_to_ymdhms (tim, &dt);
 
 	/* prepare values to be written to clock */
-	day = tim / SECDAY;
-	hms = tim % SECDAY;
+	sec1  = dt.dt_sec  / 10;
+	sec2  = dt.dt_sec  % 10;
+	min1  = dt.dt_min  / 10;
+	min2  = dt.dt_min  % 10;
+	hour1 = dt.dt_hour / 10;
+	hour2 = dt.dt_hour % 10;
 
-	hour2 = hms / 3600;
-	hour1 = hour2 / 10;
-	hour2 %= 10;
-
-	min2 = (hms % 3600) / 60;
-	min1 = min2 / 10;
-	min2 %= 10;
-
-	sec2 = (hms % 3600) % 60;
-	sec1 = sec2 / 10;
-	sec2 %= 10;
-
-	/* Number of years in days */
-	for (i = STARTOFTIME - 1980; day >= days_in_year(i); i++)
-		day -= days_in_year(i);
-	year1 = i / 10;
-	year2 = i % 10;
-
-	/* Number of months in days left */
-	if (leapyear(i))
-		days_in_month(FEBRUARY) = 29;
-	for (i = 1; day >= days_in_month(i); i++)
-		day -= days_in_month(i);
-	days_in_month(FEBRUARY) = 28;
-
-	mon1 = i / 10;
-	mon2 = i % 10;
-  
-	/* Days are what is left over (+1) from all that. */
-	day ++;
-	day1 = day / 10;
-	day2 = day % 10;
+	day1  = dt.dt_day  / 10;
+	day2  = dt.dt_day  % 10;
+	mon1  = dt.dt_mon  / 10;
+	mon2  = dt.dt_mon  % 10;
+	year1 = (dt.dt_year - 1980) / 10;
+	year2 = dt.dt_year % 10;
 
 	RTC_WRITE(RTC_MODE,   RTC_HOLD_CLOCK);
 	RTC_WRITE(RTC_SEC10,  sec1);
