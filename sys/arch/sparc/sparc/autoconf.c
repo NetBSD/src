@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 1995/07/13 12:03:08 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.31 1995/08/18 08:14:28 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,6 +92,9 @@ static	int findblkmajor __P((struct device *));
 static	struct device *getdisk __P((char *, int, int, dev_t *));
 
 struct	bootpath bootpath[8];
+static	void bootpath_build __P((void));
+static	void bootpath_fake __P((struct bootpath *, char *));
+static	void bootpath_print __P((struct bootpath *));
 
 /*
  * Most configuration on the SPARC is done by matching OPENPROM Forth
@@ -160,9 +163,6 @@ void	getidprom __P((struct idprom *, int size));
 void
 bootstrap()
 {
-	register char *cp, *pp;
-	register struct bootpath *bp;
-	int v0val[3];
 	int nregion, nsegment, ncontext, node;
 #ifdef KGDB
 	extern int kgdb_debug_panic;
@@ -250,6 +250,30 @@ bootstrap()
 	db_machine_init();
 	ddb_init();
 #endif
+}
+
+
+/*
+ * bootpath_build: build a bootpath. Used when booting a generic
+ * kernel to find our root device.  Newer proms give us a bootpath,
+ * for older proms we have to create one.  An element in a bootpath
+ * has 3 fields: name (device name), val[0], and val[1]. Note that:
+ *
+ * if (val[0] == -1) { 
+ *	val[1] is a unit number    (happens with old proms )
+ * } else {
+ *	val[0] is a sbus slot, and val[1] is an sbus offset [if sbus]
+ *	val[0] = val[1] = 0 [!sbus, e.g. obio@0,0]
+ * }
+ *
+ */
+
+static void 
+bootpath_build()
+{
+	register char *cp, *pp;
+	register struct bootpath *bp;
+	int v0val[3];
 
 	/*
 	 * On SS1s, promvec->pv_v0bootargs->ba_argv[1] contains the flags
@@ -260,59 +284,24 @@ bootstrap()
 	 */
 	bp = bootpath;
 	if (promvec->pv_romvec_vers < 2) {
-		/* Grab boot device name and values. */
+		/*
+		 * Grab boot device name and values.  build fake bootpath.
+		 */
 		cp = (*promvec->pv_v0bootargs)->ba_argv[0];
-		if (cp != NULL) {
-			/* Kludge something up */
-			pp = cp + 2;
-			v0val[0] = v0val[1] = v0val[2] = 0;
-			if (*pp == '(' &&
-			    *(pp = str2hex(++pp, &v0val[0])) == ',' &&
-			    *(pp = str2hex(++pp, &v0val[1])) == ',')
-				(void)str2hex(++pp, &v0val[2]);
 
-			/* XXX: unwisely assume sbus0 */
-			strcpy(bp->name, "sbus");
-			bp->val[0] = 0;
-			++bp;
+		if (cp != NULL)
+			bootpath_fake(bp, cp);
 
-			if (cp[0] == 's' &&
-			    (cp[1] == 'd' || cp[1] == 't' || cp[1] == 'r')) {
-				/*
-				 * XXX: unwisely assume that the scsi disk is
-				 * hooked up to an esp
-				 */
-				strcpy(bp->name, "esp");
-				bp->val[0] = -1;
-				bp->val[1] = v0val[0];
-
-				++bp;
-				/* exact device */
-				bp->name[0] = cp[0];
-				bp->name[1] = cp[1];
-				bp->name[2] = '\0';
-
-/* XXX map target 0 to 3, 3 to 0. Should really see how the prom is configed */
-#define CRAZYMAP(v) ((v) == 3 ? 0 : (v) == 0 ? 3 : (v))
-
-				bp->val[0] = CRAZYMAP(v0val[1]);
-				bp->val[1] = v0val[2];
-			} else {
-				/* some other device like ie, le, etc. */
-				bp->name[0] = cp[0];
-				bp->name[1] = cp[1];
-				bp->name[2] = '\0';
-				bp->val[0] = -1;
-				bp->val[1] = v0val[0];
-			}
-		}
+		bootpath_print(bootpath);
 
 		/* Setup pointer to boot flags */
 		cp = (*promvec->pv_v0bootargs)->ba_argv[1];
 		if (cp == NULL || *cp != '-')
 			return;
 	} else {
-		/* Grab boot path */
+		/* 
+		 * Grab boot path from PROM
+		 */
 		cp = *promvec->pv_v2bootargs.v2_bootpath;
 		while (cp != NULL && *cp == '/') {
 			/* Step over '/' */
@@ -333,6 +322,9 @@ bootstrap()
 #endif
 			++bp;
 		}
+		bp->name[0] = 0;
+
+		bootpath_print(bootpath);
 
 		/* Setup pointer to boot flags */
 		cp = *promvec->pv_v2bootargs.v2_bootargs;
@@ -374,6 +366,272 @@ bootstrap()
 }
 
 /*
+ * Fake a ROM generated bootpath.
+ * The argument `cp' points to a string such as "xd(0,0,0)netbsd"
+ */
+
+static void
+bootpath_fake(bp, cp)
+	struct bootpath *bp;
+	char *cp;
+{
+	register char *pp;
+	int v0val[3];
+	char tmpname[8];
+
+#define BP_APPEND(BP,N,V0,V1) { \
+	strcpy((BP)->name, N); \
+	(BP)->val[0] = (V0); \
+	(BP)->val[1] = (V1); \
+	(BP)++; }
+
+
+	pp = cp + 2;
+	v0val[0] = v0val[1] = v0val[2] = 0;
+	if (*pp == '(' 					/* for vi: ) */ 
+ 	    && *(pp = str2hex(++pp, &v0val[0])) == ',' 
+	    && *(pp = str2hex(++pp, &v0val[1])) == ',')
+		(void)str2hex(++pp, &v0val[2]);
+
+#ifdef SUN4
+	if (cputyp == CPU_SUN4) {
+
+		/*
+		 *  xylogics VME dev: xd, xy, xt 
+		 *  fake looks like: /vmel@0,0/xdc0/xd@1,0
+		 */
+		if (cp[0] == 'x') { 
+			if (cp[1] == 'd') {/* xd? */
+				BP_APPEND(bp,"vmel",0,0);
+			} else {
+				BP_APPEND(bp,"vmes",0,0);
+			}
+			sprintf(tmpname,"x%cc", cp[1]); /* e.g. xdc */
+			BP_APPEND(bp,tmpname,-1,v0val[0]);
+			sprintf(tmpname,"%c%c", cp[0], cp[1]);
+			BP_APPEND(bp,tmpname,v0val[1], v0val[2]); /* e.g. xd */
+			return;
+		}
+
+		/*
+		 * ethernet: ie, le (rom supports only obio?)
+		 * fake looks like: /obio@0,0/le@0,0
+		 */
+		if ((cp[0] == 'i' || cp[0] == 'l') && cp[1] == 'e')  {
+			BP_APPEND(bp,"obio",0,0);
+			sprintf(tmpname,"%c%c", cp[0], cp[1]);
+			BP_APPEND(bp,tmpname,-1,0);
+			return;
+		}
+
+		/*
+		 * scsi: sd, st, sr
+		 * assume: 4/100 = sw: /obio@0,0/sw0/sd@0,0
+		 * 4/200 & 4/400 = si/sc: /vmes@0,0/si0/sd@0,0
+ 		 * 4/300 = esp: /obio@0,0/esp0/sd@0,0
+		 * (note we expect sc to mimic an si...)
+		 */
+		if (cp[0] == 's' && 
+			(cp[1] == 'd' || cp[1] == 't' || cp[1] == 'r')) {
+			
+			switch (cpumod) {
+			case SUN4_200:
+			case SUN4_400:
+				BP_APPEND(bp,"vmes",0,0);
+				BP_APPEND(bp,"si",-1,v0val[0]);
+				sprintf(tmpname,"%c%c", cp[0], cp[1]);
+				BP_APPEND(bp,tmpname,v0val[1],v0val[2]);
+				return;
+			case SUN4_100:
+				BP_APPEND(bp,"obio",0,0);
+				BP_APPEND(bp,"sw",-1,v0val[0]);
+				sprintf(tmpname,"%c%c", cp[0], cp[1]);
+				BP_APPEND(bp,tmpname,v0val[1],v0val[2]);
+				return;
+			case SUN4_300:
+				BP_APPEND(bp,"obio",0,0);
+				BP_APPEND(bp,"esp",-1,v0val[0]);
+				sprintf(tmpname,"%c%c", cp[0], cp[1]);
+				BP_APPEND(bp,tmpname,v0val[1],v0val[2]);
+				return;
+			}
+			panic("bootpath_fake: unknown cpumod?");
+		}
+
+		return; /* didn't grok bootpath, no change */
+	}
+#endif /* SUN4 */
+		
+#ifdef SUN4C
+	/*
+	 * sun4c stuff
+	 */
+
+	/*
+	 * floppy: fd
+	 * fake looks like: /fd@0,0
+	 */
+	if (cp[0] == 'f' && cp[1] == 'd') {
+		BP_APPEND(bp,"fd",v0val[1],v0val[2]);
+		return;
+	}
+
+	/*
+	 * ethenet: le
+	 * fake looks like: /sbus@0,0/le@0,0
+	 */
+	if (cp[0] == 'l' && cp[1] == 'e') {
+		BP_APPEND(bp,"sbus",0,0);
+		BP_APPEND(bp,"le",v0val[0],0);
+		return;
+	}
+
+	/*
+	 * scsi: sd, st, sr
+	 * fake looks like: /sbus@0,0/esp@0,800000/sd@3,0
+	 */		
+	if (cp[0] == 's' &&
+	    (cp[1] == 'd' || cp[1] == 't' || cp[1] == 'r')) {
+		BP_APPEND(bp,"sbus",0,0);
+		BP_APPEND(bp,"esp",-1,v0val[0]);
+		if (cp[1] == 'r') 
+			sprintf(tmpname, "cd"); /* netbsd uses 'cd', not 'sr'*/
+		else
+			sprintf(tmpname,"%c%c", cp[0], cp[1]);
+		BP_APPEND(bp,tmpname,v0val[1], v0val[2]);
+		return;
+	}
+#endif /* SUN4C */
+
+
+	/*
+	 * unknown; return
+	 */
+		
+#undef BP_APPEND
+}
+
+/*
+ * print out the bootpath
+ */
+
+static void 
+bootpath_print(bp)
+	struct bootpath *bp;
+{
+	printf("bootpath: ");
+	while (bp->name[0]) {
+		if (bp->val[0] == -1)
+			printf("/%s%x", bp->name, bp->val[1]);
+		else
+			printf("/%s@%x,%x", bp->name, bp->val[0], bp->val[1]);
+		bp++;
+	}
+	printf("\n");
+}
+
+
+/*
+ * save or read a bootpath pointer from the boothpath store.
+ *
+ * XXX. required because of SCSI... we don't have control over the "sd"
+ * device, so we can't set boot device there.   we patch in with 
+ * dk_establish(), and use this to recover the bootpath.
+ */
+
+struct bootpath *
+bootpath_store(storep, bp)
+	int storep;
+	struct bootpath *bp;
+{
+	static struct bootpath *save;
+	struct bootpath *retval;
+
+	retval = save;
+	if (storep)
+		save = bp;
+
+	return (retval);
+}
+
+/* 
+ * Set up the sd target mappings for non SUN4 PROMs.
+ * Find out about the real SCSI target, given the PROM's idea of the
+ * target of the (boot) device (i.e., the value in bp->v0val[0]).
+ */
+static void
+crazymap(prop, map)
+	char *prop;
+	int *map;
+{
+	int i;
+	char *propval;
+	struct nodeops *no;
+
+	if (cputyp != CPU_SUN4 && promvec->pv_romvec_vers < 2) {
+		/*
+		 * Machines with real v0 proms have an `s[dt]-targets' property
+		 * which contains the mapping for us to use. v2 proms donot
+		 * require remapping.
+		 */
+		propval = getpropstring(optionsnode, prop);
+		if (propval == NULL || strlen(propval) != 8) {
+ build_default_map:
+			printf("WARNING: %s map is bogus, using default\n",
+				prop);
+			for (i = 0; i < 8; ++i)
+				map[i] = i;
+			i = map[0];
+			map[0] = map[3];
+			map[3] = i;
+			return;
+		}
+		for (i = 0; i < 8; ++i) {
+			map[i] = propval[i] - '0';
+			if (map[i] < 0 ||
+			    map[i] >= 8)
+				goto build_default_map;
+		}
+	} else {
+		/*
+		 * Set up the identity mapping for old sun4 monitors
+		 * and v[2-] OpenPROMs. Note: dkestablish() does the
+		 * SCSI-target juggling for sun4 monitors.
+		 */
+		for (i = 0; i < 8; ++i)
+			map[i] = i;
+	}
+}
+
+int 
+sd_crazymap(n)
+	int	n;
+{
+	static int prom_sd_crazymap[8]; /* static: compute only once! */
+	static int init = 0;
+
+	if (init == 0) {
+		crazymap("sd-targets", prom_sd_crazymap);
+		init = 1;
+	}
+	return prom_sd_crazymap[n];
+}
+
+int 
+st_crazymap(n)
+	int	n;
+{
+	static int prom_st_crazymap[8]; /* static: compute only once! */
+	static int init = 0;
+
+	if (init == 0) {
+		crazymap("st-targets", prom_st_crazymap);
+		init = 1;
+	}
+	return prom_st_crazymap[n];
+}
+
+/*
  * Determine mass storage and memory configuration for a machine.
  * We get the PROM's root device and make sure we understand it, then
  * attach it as `mainbus0'.  We also set up to handle the PROM `sync'
@@ -385,6 +643,9 @@ configure()
 	register int node = 0;
 	register char *cp;
 	void sync_crash();
+
+	/* build the bootpath */
+	bootpath_build();
 
 #if defined(SUN4)
 	if (cputyp == CPU_SUN4) {
@@ -460,6 +721,7 @@ clockfreq(freq)
 	register int freq;
 {
 	register char *p;
+int n;
 	static char buf[10];
 
 	freq /= 1000;
@@ -1237,7 +1499,7 @@ setroot()
 		 * because swap must be on same device as root, for
 		 * network devices this is easy.
 		 */
-		if (bootdv->dv_class == DV_IFNET) {
+		if (bootdv != NULL && bootdv->dv_class == DV_IFNET) {
 			goto gotswap;
 		}
 		for (;;) {
