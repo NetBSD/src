@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.37 2001/01/22 12:17:39 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.38 2001/01/25 12:44:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -130,7 +130,6 @@ procfs_mount(mp, path, data, ndp, p)
 	memcpy(mp->mnt_stat.f_mntfromname, "procfs", sizeof("procfs"));
 
 	pmnt->pmnt_exechook = exechook_establish(procfs_revoke_vnodes, mp);
-	pmnt->pmnt_mp = mp;
 	pmnt->pmnt_flags = args.flags;
 
 	return (0);
