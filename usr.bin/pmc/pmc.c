@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.5 2002/06/06 21:20:42 gmcgarry Exp $	*/
+/*	$NetBSD: pmc.c,v 1.6 2002/06/07 01:38:17 gmcgarry Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -47,11 +47,54 @@
 #include <string.h>
 #include <unistd.h>
 
-const struct pmc_name2val {
+struct pmc_name2val {
 	const char *name;
 	int val;
 	int unit;
-} pmc_names[] = {
+};
+
+const struct pmc_name2val i586_names[] = {
+	{ "tlb-data-miss",		PMC5_DATA_TLB_MISS,		0 },
+	{ "tlb-ins-miss",		PMC5_INST_TLB_MISS,		0 },
+	{ "l1cache-ins-miss", 		PMC5_INST_CACHE_MISS,		0 },
+	{ "l1cache-data-miss",		PMC5_DATA_RW_MISS,		0 },
+	{ "l1cache-data-miss-read",	PMC5_DATA_READ_MISS,		0 },
+	{ "l1cache-data-miss-write",	PMC5_DATA_WRITE_MISS,		0 },
+	{ "l1cache-writeback",		PMC5_DATA_LINES_WBACK,		0 },
+	{ "l1cache-writeback-hit",	PMC5_WRITE_M_E,			0 },
+	{ "l2cache-data-snoop",		PMC5_DATA_CACHE_SNOOP,		0 },
+	{ "l2cache-data-snoop-hit",	PMC5_DATA_CACHE_SNOOP_HIT,	0 },
+	{ "mem-read",			PMC5_DATA_READ,			0 },
+	{ "mem-write",			PMC5_DATA_WRITE,		0 },
+	{ "mem-access",			PMC5_DATA_RW,			0 },
+	{ "mem-access-both-pipes",	PMC5_MEM_ACCESS_BOTH_PIPES,	0 },
+	{ "mem-bank-conflicts",		PMC5_BANK_CONFLICTS,		0 },
+	{ "mem-misalign-ref",		PMC5_MISALIGNED_DATA,		0 },
+	{ "mem-uncached-read",		PMC5_NONCACHE_MEM_READ,		0 },
+	{ "seg-load-any",		PMC5_SEGMENT_REG_LOAD,		0 },
+	{ "branch",			PMC5_BRANCHES,			0 },
+	{ "branch-btb-hit",		PMC5_BTB_HITS,			0 },
+	{ "branch-taken",		PMC5_BRANCH_TAKEN,		0 },
+	{ "ins-read",			PMC5_INST_READ,			0 },
+	{ "ins-pipeline-flush",		PMC5_PIPELINE_FLUSH,		0 },
+	{ "ins-executed",		PMC5_INST_EXECUTED,		0 },
+	{ "ins-executed-vpipe",		PMC5_INST_EXECUTED_V_PIPE,	0 },
+	{ "ins-stall-agi",		PMC5_AGI_STALL,			0 },
+	{ "ins-stall-write",		PMC5_WRITE_BACKUP_STALL,	0 },
+	{ "ins-stall-data",		PMC5_DATA_READ_STALL,		0 },
+	{ "ins-stall-writeline",	PMC5_WRITE_E_M_STALL,		0 },
+	{ "bus-utilization",		PMC5_BUS_UTILIZATION,		0 },
+	{ "bus-locked",			PMC5_LOCKED_BUS,		0 },
+	{ "bus-io-cycle",		PMC5_IO_CYCLE,			0 },
+	{ "fpu-flops", 			PMC5_FLOPS,			0 },
+	{ "int-hw",			PMC5_HARDWARE_INTR,		0 },
+	{ "break-match0",		PMC5_BP0_MATCH,			0 },
+	{ "break-match1",		PMC5_BP1_MATCH,			0 },
+	{ "break-match2",		PMC5_BP2_MATCH,			0 },
+	{ "break-match3",		PMC5_BP3_MATCH,			0 },
+};
+
+const struct pmc_name2val i686_names[] = {
 	{ "mem-refs",			PMC6_DATA_MEM_REFS,		0 },
 	{ "l1cache-lines",		PMC6_DCU_LINES_IN,		0 },
 	{ "l1cache-mlines",		PMC6_DCU_M_LINES_IN,		0 },
@@ -62,7 +105,6 @@ const struct pmc_name2val {
 	{ "itlb-misses",		PMC6_IFU_IFETCH_MISS,		0 },
 	{ "insfetch-mem-stall",		PMC6_IFU_MEM_STALL,		0 },
 	{ "insfetch-decode-stall",	PMC6_ILD_STALL,			0 },
-
 	{ "l2cache-insfetch",		PMC6_L2_IFETCH,			0x0f },
 	{ "l2cache-data-loads",		PMC6_L2_LD,			0x0f },
 	{ "l2cache-data-stores",	PMC6_L2_ST,			0x0f },
@@ -74,7 +116,6 @@ const struct pmc_name2val {
 	{ "l2cache-addr-strobes",	PMC6_L2_ADS,			0 },
 	{ "l2cache-data-busy",		PMC6_L2_DBUS_BUSY,		0 },
 	{ "l2cache-data-busy-read",	PMC6_L2_DBUS_BUSY_RD },
-
 	{ "bus-drdy-clocks-self",	PMC6_BUS_DRDY_CLOCKS,		0x00 },
 	{ "bus-drdy-clocks-any",	PMC6_BUS_DRDY_CLOCKS,		0x20 },
 	{ "bus-lock-clocks-self",	PMC6_BUS_LOCK_CLOCKS,		0x00 },
@@ -110,14 +151,12 @@ const struct pmc_name2val {
 	{ "bus-hit-cycles",		PMC6_BUS_HIT_DRV,		0 },
 	{ "bus-hitm-cycles",		PMC6_BUS_HITM_DRDV,		0 },
 	{ "bus-snoop-stall",		PMC6_BUS_SNOOP_STALL,		0 },
-
 	{ "fpu-flops",			PMC6_FLOPS,			0 },
 	{ "fpu-comp-ops",		PMC6_FP_COMP_OPS_EXE,		0 },
 	{ "fpu-except-assist",		PMC6_FP_ASSIST,			0 },
 	{ "fpu-mul",			PMC6_MUL,			0 },
 	{ "fpu-div",			PMC6_DIV,			0 },
 	{ "fpu-div-busy",		PMC6_CYCLES_DIV_BUSY,		0 },
-
 	{ "mem-sb-blocks",		PMC6_LD_BLOCKS,			0 },
 	{ "mem-sb-drains",		PMC6_SB_DRAINS,			0 },
 	{ "mem-misalign-ref",		PMC6_MISALIGN_MEM_REF,		0 },
@@ -129,7 +168,6 @@ const struct pmc_name2val {
 	{ "ins-pref-miss-t1",		PMC6_EMON_KNI_PREF_MISS,	0x01 },
 	{ "ins-pref-miss-t2",		PMC6_EMON_KNI_PREF_MISS,	0x02 },
 	{ "ins-pref-miss-weak",		PMC6_EMON_KNI_PREF_MISS,	0x03 },
-
 	{ "ins-retired",		PMC6_INST_RETIRED,		0 },
 	{ "uops-retired",		PMC6_UOPS_RETIRED,		0 },
 	{ "ins-decoded",		PMC6_INST_DECODED,		0 },
@@ -141,12 +179,10 @@ const struct pmc_name2val {
 	    PMC6_EMON_KNI_COMP_INST_RET, 0x00 },
 	{ "ins-stream-comp-retired--scalar",
 	    PMC6_EMON_KNI_COMP_INST_RET, 0x01 },
-	
-
 	{ "int-hw",			PMC6_HW_INT_RX,			0 },
 	{ "int-cycles-masked",		PMC6_CYCLES_INT_MASKED,		0 },
-	{ "int-cycles-masked-pending",	PMC6_CYCLES_INT_PENDING_AND_MASKED, 0 },
-
+	{ "int-cycles-masked-pending",
+	    PMC6_CYCLES_INT_PENDING_AND_MASKED, 0 },
 	{ "branch-retired",		PMC6_BR_INST_RETIRED,		0 },
 	{ "branch-miss-retired",	PMC6_BR_MISS_PRED_RETIRED,	0 },
 	{ "branch-taken-retired",	PMC6_BR_TAKEN_RETIRED,		0 },
@@ -155,14 +191,10 @@ const struct pmc_name2val {
 	{ "branch-btb-miss",		PMC6_BTB_MISSES,		0 },
 	{ "branch-bogus",		PMC6_BR_BOGUS,			0 },
 	{ "branch-baclear",		PMC6_BACLEARS,			0 },
-
 	{ "stall-resource",		PMC6_RESOURCE_STALLS,		0 },
 	{ "stall-partial",		PMC6_PARTIAL_RAT_STALLS,	0 },
-
 	{ "seg-loads",			PMC6_SEGMENT_REG_LOADS,		0 },
-
 	{ "unhalted-cycles",		PMC6_CPU_CLK_UNHALTED,		0 },
-
 	{ "mmx-exec",			PMC6_MMX_INSTR_EXEC,		0 },
 	{ "mmx-sat-exec",		PMC6_MMX_SAT_INSTR_EXEC,	0 },
 	{ "mmx-uops-exec",		PMC6_MMX_UOPS_EXEC,		0x0f },
@@ -176,7 +208,6 @@ const struct pmc_name2val {
 	{ "mmx-trans-float-mmx",	PMC6_FP_MMX_TRANS,		0x01 },
 	{ "mmx-assist",			PMC6_MMX_ASSIST,		0 },
 	{ "mmx-retire",			PMC6_MMX_INSTR_RET,		0 },
-
 	{ "seg-rename-stalls-es",	PMC6_SEG_RENAME_STALLS,		0x01 },
 	{ "seg-rename-stalls-ds",	PMC6_SEG_RENAME_STALLS,		0x02 },
 	{ "seg-rename-stalls-fs",	PMC6_SEG_RENAME_STALLS,		0x04 },
@@ -190,38 +221,63 @@ const struct pmc_name2val {
 	{ "seg-rename-retire",		PMC6_RET_SEG_RENAMES,		0 },
 };
 
+struct pmc_name2val_cpus {
+	int type;
+	const struct pmc_name2val *pmc_names;
+	int size;
+} pmc_cpus[] = {
+	{ PMC_TYPE_I586, i586_names,
+	  sizeof(i586_names)/sizeof(struct pmc_name2val) },
+	{ PMC_TYPE_I686, i686_names,
+	  sizeof(i586_names)/sizeof(struct pmc_name2val) },
+};
+
+
+static const struct pmc_name2val_cpus *
+pmc_lookup_cpu(int type)
+{
+	int i;
+
+	for (i = 0; i < sizeof(pmc_cpus)/sizeof(struct pmc_name2val_cpus);
+	    i++) {
+		if (pmc_cpus[i].type == type)
+			return (&pmc_cpus[i]);
+	}
+	return (NULL);
+}
+
+
 static const struct pmc_name2val *
-find_pmc_name(const char *name)
+find_pmc_name(const struct pmc_name2val_cpus *pncp, const char *name)
 {
 	int i;
 	const struct pmc_name2val *pnp = NULL;
 
-	for (i = 0; i < sizeof (pmc_names) / (sizeof (struct pmc_name2val));
-	     i++) {
-		if (strcmp(pmc_names[i].name, name) == 0) {
-			pnp = &pmc_names[i];
+	for (i = 0; i < pncp->size; i++) {
+		if (strcmp(pncp->pmc_names[i].name, name) == 0) {
+			pnp = &pncp->pmc_names[i];
 			break;
 		}
 	}
 
-	return pnp;
+	return (pnp);
 }
 
 static void
-list_pmc_names(void)
+list_pmc_names(const struct pmc_name2val_cpus *pncp)
 {
 	int i, n, left, pairs;
 
 	printf("Supported performance counter events:\n");
-	n = sizeof (pmc_names) / sizeof (struct pmc_name2val);
+	n = pncp->size;
 	pairs = n / 2;
 	left = n % 2;
 
 	for (i = 0; i < pairs; i++)
-		printf("    %37s %37s\n", pmc_names[i * 2].name,
-		    pmc_names[i * 2 + 1].name);
+		printf("    %37s %37s\n", pncp->pmc_names[i * 2].name,
+		    pncp->pmc_names[i * 2 + 1].name);
 	if (left != 0)
-		printf("\t%37s\n", pmc_names[n - 1].name);
+		printf("\t%37s\n", pncp->pmc_names[n - 1].name);
 }
 
 static void
@@ -240,11 +296,19 @@ main(int argc, char **argv)
 {
 	int c, status, ret0, ret1, errn0, errn1;
 	char *event;
+	const struct pmc_name2val_cpus *pncp;
 	const struct pmc_name2val *pnp;
 	struct i386_pmc_info_args pi;
 	struct i386_pmc_startstop_args pss0, pss1;
 	struct i386_pmc_read_args pr0, pr1;
 	pid_t pid;
+
+	if (i386_pmc_info(&pi) < 0)
+		errx(2, "PMC support is not compiled into the kernel");
+
+	pncp = pmc_lookup_cpu(pi.type);
+	if (pncp == NULL)
+		errx(3, "PMC counters are not supported by CPU");
 
 	pnp = NULL;
 	while ((c = getopt(argc, argv, "Cc:h")) != -1) {
@@ -264,11 +328,11 @@ main(int argc, char **argv)
 			exit(0);
 		case 'c':
 			event = optarg;
-			pnp = find_pmc_name(event);
+			pnp = find_pmc_name(pncp, event);
 			break;
 		case 'h':
 			if (argc == 2) {
-				list_pmc_names();
+				list_pmc_names(pncp);
 				exit(0);
 			}
 		default:
@@ -278,11 +342,6 @@ main(int argc, char **argv)
 
 	if (pnp == NULL)
 		usage();
-
-	if (i386_pmc_info(&pi) < 0)
-		errx(2, "PMC support is not compiled into the kernel");
-	if (pi.type != PMC_TYPE_I686)
-		errx(3, "only 686 counters are supported");
 
 	memset(&pss0, 0, sizeof pss0);
 	memset(&pss1, 0, sizeof pss1);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmc.1,v 1.4 2002/06/06 21:32:37 gmcgarry Exp $
+.\"	$NetBSD: pmc.1,v 1.5 2002/06/07 01:38:17 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2000 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -78,9 +78,9 @@ kernel.  It may be included using the
 option.  See
 .Xr options 4
 for details.
-.It only 686 counters are supported 
-Currently, only supports 686-class performance-monitoring
-counters are supported.
+.It PMC counters are not supported by CPU
+Performance-monitoring counters are not available for the CPU.
+.El
 .Sh SEE ALSO
 .Xr time 1 ,
 .Xr options 4
@@ -100,5 +100,5 @@ architecture was written by
 .Sh BUGS
 The
 .Nm
-command currently only supports 686-class performance-monitoring
-counters on the i386 architecture.
+command currently only supports performance-monitoring counters
+on the i386 architecture.
