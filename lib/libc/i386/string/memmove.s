@@ -2,7 +2,7 @@
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
+ * This code is derived from locore.s.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: memmove.s,v 1.7 1993/08/16 17:06:34 jtc Exp $
+ *	$Id: memmove.s,v 1.8 1993/08/24 16:59:01 jtc Exp $
  */
 
 #if defined(LIBC_RCS) && !defined(lint)
-        .asciz "$Id: memmove.s,v 1.7 1993/08/16 17:06:34 jtc Exp $"
+        .asciz "$Id: memmove.s,v 1.8 1993/08/24 16:59:01 jtc Exp $"
 #endif /* LIBC_RCS and not lint */
 
 #include "DEFS.h"
@@ -85,5 +85,4 @@ TWOENTRY(memmove,memcpy)
 	popl	%eax
 	popl	%edi
 	popl	%esi
-	cld
 	ret
