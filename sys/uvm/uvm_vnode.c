@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.46 2001/02/22 01:02:09 enami Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.47 2001/03/09 01:02:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -830,7 +830,7 @@ uvn_cluster(uobj, offset, loffset, hoffset)
 	struct uvm_vnode *uvn = (struct uvm_vnode *)uobj;
 
 	*loffset = offset;
-	*hoffset = min(offset + MAXBSIZE, round_page(uvn->u_size));
+	*hoffset = MIN(offset + MAXBSIZE, round_page(uvn->u_size));
 }
 
 /*
@@ -937,13 +937,7 @@ uvn_findpage(uobj, offset, pgp, flags)
 				UVMHIST_LOG(ubchist, "noalloc", 0,0,0,0);
 				return 0;
 			}
-			if (uvmexp.vnodepages > 
-			    (uvmexp.active + uvmexp.inactive + uvmexp.wired +
-			     uvmexp.free) * 7 / 8) {
-				pg = NULL;
-			} else {
-				pg = uvm_pagealloc(uobj, offset, NULL, 0);
-			}
+			pg = uvm_pagealloc(uobj, offset, NULL, 0);
 			if (pg == NULL) {
 				if (flags & UFP_NOWAIT) {
 					UVMHIST_LOG(ubchist, "nowait",0,0,0,0);
@@ -954,7 +948,11 @@ uvn_findpage(uobj, offset, pgp, flags)
 				simple_lock(&uobj->vmobjlock);
 				continue;
 			}
-			uvmexp.vnodepages++;
+			if (UVM_OBJ_IS_VTEXT(uobj)) {
+				uvmexp.vtextpages++;
+			} else {
+				uvmexp.vnodepages++;
+			}
 			UVMHIST_LOG(ubchist, "alloced",0,0,0,0);
 			break;
 		} else if (flags & UFP_NOCACHE) {
