@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.6 1998/08/10 14:47:16 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.7 1999/02/02 18:37:21 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,6 +48,8 @@
 #include <machine/sid.h>
 #include <machine/uvax.h>
 #include <machine/vsbus.h>
+#include <machine/cpu.h>
+
 #include <machine/../vax/gencons.h>
 
 #include <vax/uba/dzreg.h>
@@ -61,6 +63,8 @@ static  void    dz_vsbus_attach __P((struct device *, struct device *, void *));
 static	int	dz_print __P((void *, const char *));
 static  void    txon __P((void));
 static  void    rxon __P((void));
+
+static	vaddr_t dz_regs; /* Used for console */
 
 struct  cfattach dz_vsbus_ca = {
         sizeof(struct dz_softc), dz_vsbus_match, dz_vsbus_attach
@@ -155,10 +159,12 @@ dzcngetc(dev)
 	int c = 0;
 	int mino = minor(dev);
 	u_short rbuf;
+#if 0
 	u_char mask;
 
 	mask = vs_cpu->vc_intmsk;	/* save old state */
 	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
+#endif
 
 	do {
 		while ((dz->csr & 0x80) == 0)
@@ -172,8 +178,10 @@ dzcngetc(dev)
 	if (c == 13)
 		c = 10;
 
+#if 0
 	vs_cpu->vc_intclr = 0x80;	/* clear te interrupt request */
 	vs_cpu->vc_intmsk = mask;	/* restore interrupt mask */
+#endif
 
 	return (c);
 }
@@ -184,6 +192,7 @@ void
 dzcnprobe(cndev)
 	struct	consdev *cndev;
 {
+	extern	vaddr_t iospace;
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
@@ -191,6 +200,8 @@ dzcnprobe(cndev)
 	case VAX_BTYP_43:
 	case VAX_BTYP_46:
 		cndev->cn_dev = makedev(DZMAJOR, 3);
+		dz_regs = iospace;
+		ioaccess(iospace, 0x200A0000, 1);
 		cndev->cn_pri = CN_NORMAL;
 		break;
 
@@ -222,13 +233,17 @@ dzcnputc(dev,ch)
 	int timeout = 1<<15;            /* don't hang the machine! */
 	int mino = minor(dev);
 	u_short tcr;
+#if 0
 	u_char mask;
+#endif
 
 	if (mfpr(PR_MAPEN) == 0)
 		return;
 
+#if 0
 	mask = vs_cpu->vc_intmsk;	/* save old state */
 	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
+#endif
 	tcr = dz->tcr;	/* remember which lines to scan */
 	dz->tcr = (1 << mino);
 
@@ -238,7 +253,9 @@ dzcnputc(dev,ch)
 	dz->tdr = ch;                    /* Put the  character */
 
 	dz->tcr = tcr;
+#if 0
 	vs_cpu->vc_intmsk = mask;	/* restore interrupt mask */
+#endif
 }
 
 void 
@@ -269,10 +286,12 @@ lkccngetc(dev)
 {
 	int lkc_decode(int);
 	int c;
+#if 0
 	u_char mask;
 
 	mask = vs_cpu->vc_intmsk;	/* save old state */
 	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
+#endif
 
 loop:
 	while ((dz->csr & 0x80) == 0)
@@ -282,8 +301,10 @@ loop:
 	if (c < 1)
 		goto loop;
 
+#if 0
 	vs_cpu->vc_intclr = 0x80;	/* clear te interrupt request */
 	vs_cpu->vc_intmsk = mask;	/* restore interrupt mask */
+#endif
 
 	return (c);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 1999/01/19 22:57:47 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.59 1999/02/02 18:37:21 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -87,6 +87,7 @@ struct pmap kernel_pmap_store;
 struct	pte *Sysmap;		/* System page table */
 struct	pv_entry *pv_table;	/* array of entries, one per LOGICAL page */
 void	*scratch;
+vaddr_t	iospace;
 
 vaddr_t ptemapstart, ptemapend;
 vm_map_t pte_map;
@@ -160,6 +161,8 @@ pmap_bootstrap()
 	sysptsize += ((USRPTSIZE * 4) / VAX_NBPG) * maxproc;
 	/* Kernel stacks per process */
 	sysptsize += UPAGES * maxproc;
+	/* IO device register space */
+	sysptsize += IOSPSZ;
 #endif
 
 	/*
@@ -232,11 +235,14 @@ pmap_bootstrap()
         MAPVIRT(qd_ubaio, 16);
 #endif
 
+	MAPVIRT(iospace, IOSPSZ); /* Device iospace mapping area */
+
 	/* Init SCB and set up stray vectors. */
 	avail_start = scb_init(avail_start);
 	bzero(0, VAX_NBPG >> 1);
 
-	(*dep_call->cpu_steal_pages)();
+	if (dep_call->cpu_steal_pages)
+		(*dep_call->cpu_steal_pages)();
 
 	avail_start = ROUND_PAGE(avail_start);
 	virtual_avail = ROUND_PAGE(virtual_avail);

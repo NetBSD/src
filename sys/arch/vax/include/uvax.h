@@ -1,4 +1,4 @@
-/*	$NetBSD: uvax.h,v 1.4 1998/08/11 17:52:59 ragge Exp $ */
+/*	$NetBSD: uvax.h,v 1.5 1999/02/02 18:37:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -83,5 +83,4 @@ struct vs_cpu {
 #define	PARCTL_CPEN	2
 #define	PARCTL_DPEN	1
 
-struct  vs_cpu *vs_cpu; /* Common CPU registers */
 #endif

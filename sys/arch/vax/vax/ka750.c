@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.26 1999/01/19 21:04:49 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.27 1999/02/02 18:37:21 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -63,7 +63,7 @@ void	ctuattach __P((void));
 void	ka750_clrf __P((void));
 
 struct	cpu_dep	ka750_calls = {
-	ka750_steal_pages,
+	0,
 	generic_clock,
 	ka750_mchk,
 	ka750_memerr,
@@ -260,23 +260,6 @@ ka750_mchk(cmcf)
 	return (MCHK_PANIC);
 }
 
-void
-ka750_steal_pages()
-{
-	extern	vm_offset_t avail_start, virtual_avail;
-	int	junk;
-
-	/*
-	 * We take away the pages we need, one for SCB and the rest
-	 * for UBA vectors == 1 + 2 will alloc all needed space.
-	 * We also set up virtual area for SBI.
-	 */
-	MAPPHYS(junk, V750PGS, VM_PROT_READ|VM_PROT_WRITE);
-	MAPVIRT(nexus, vax_btoc(NEX750SZ));
-	pmap_map((vm_offset_t)nexus, NEX750, NEX750 + NEX750SZ,
-	    VM_PROT_READ|VM_PROT_WRITE);
-}
-
 static  int cmi_print __P((void *, const char *));
 static  int cmi_match __P((struct device *, struct cfdata *, void *));
 static  void cmi_attach __P((struct device *, struct device *, void*));
@@ -319,43 +302,57 @@ cmi_attach(parent, self, aux)
         void    *aux;
 {
         struct  sbi_attach_args sa;
+	struct	nexus *nexusP;
 
 	printf("I\n");
 	/*
 	 * Probe for memory, can be in the first 4 slots.
 	 */
+#define	NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
 	for (sa.nexnum = 0; sa.nexnum < 4; sa.nexnum++) {
-		if (badaddr((caddr_t)&nexus[sa.nexnum], 4))
-			continue;
-
-		sa.nexaddr = nexus + sa.nexnum;
-		sa.type = NEX_MEM16;
-		config_found(self, (void*)&sa, cmi_print);
+		nexusP = (struct nexus *)vax_map_physmem(NEX750 +
+		    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
+		if (badaddr((caddr_t)nexusP, 4)) {
+			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
+		} else {
+			sa.nexaddr = nexusP;
+			sa.type = NEX_MEM16;
+			config_found(self, (void*)&sa, cmi_print);
+		}
 	}
 
 	/*
 	 * Probe for mba's, can be in slot 4 - 7.
 	 */
 	for (sa.nexnum = 4; sa.nexnum < 7; sa.nexnum++) {
-		if (badaddr((caddr_t)&nexus[sa.nexnum], 4))
-			continue;
-
-		sa.nexaddr = nexus + sa.nexnum;
-		sa.type = NEX_MBA;
-		config_found(self, (void*)&sa, cmi_print);
+		nexusP = (struct nexus *)vax_map_physmem(NEX750 +
+		    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
+		if (badaddr((caddr_t)nexusP, 4)) {
+			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
+		} else {
+			sa.nexaddr = nexusP;
+			sa.type = NEX_MBA;
+			config_found(self, (void*)&sa, cmi_print);
+		}
 	}
 
 	/*
 	 * There are always one generic UBA, and maybe an optional.
 	 */
 	sa.nexnum = 8;
-	sa.nexaddr = nexus + sa.nexnum;
+	sa.nexaddr = (struct nexus *)vax_map_physmem(NEX750 +
+	    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
 	sa.type = NEX_UBA0;
 	config_found(self, (void*)&sa, cmi_print);
-	sa.type = NEX_UBA1;
-	if (badaddr((caddr_t)&nexus[++sa.nexnum], 4) == 0)
-		config_found(self, (void*)&sa, cmi_print);
 
+	sa.nexnum = 9;
+	sa.nexaddr = (struct nexus *)vax_map_physmem(NEX750 +
+	    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
+	sa.type = NEX_UBA1;
+	if (badaddr((caddr_t)nexusP, 4))
+		vax_unmap_physmem((vaddr_t)sa.nexaddr, NEXPAGES);
+	else
+		config_found(self, (void*)&sa, cmi_print);
 }
 
 void

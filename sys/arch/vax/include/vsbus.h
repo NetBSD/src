@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.5 1999/01/01 21:43:18 ragge Exp $ */
+/*	$NetBSD: vsbus.h,v 1.6 1999/02/02 18:37:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -86,6 +86,7 @@ struct	vsbus_attach_args {
 #define NI_ADDR         0x20090000      /* Ethernet address */
 #define DZ_CSR          0x200a0000      /* DZ11-compatible chip csr */
 #define VS_CLOCK        0x200b0000      /* clock chip address */
+#define SCA_REGS        0x200c0000      /* disk device addresses */
 #define NI_BASE         0x200e0000      /* LANCE CSRs */
 #define NI_IOSIZE       (128 * VAX_NBPG)    /* IO address size */
 #define VS_REGS         0x20080000      /* Misc cpu internal regs */
@@ -121,14 +122,7 @@ struct	vsbus_attach_args {
 #define	VS4000_ST	4
 #define	VS4000_NI	1
 
-caddr_t	dz_regs;	/* On-board serial line */
-caddr_t	le_iomem;       /* base addr of RAM -- CPU's view */
-short   *lance_csr;     /* LANCE CSR virtual address */
-int     *lance_addr;    /* Ethernet address */
-struct  vs_cpu *vs_cpu; /* Common CPU registers */
-caddr_t	sm_addr;	/* virtual address of graphic space */
-caddr_t	dma_area;	/* DMA area mapping addess */
-caddr_t	sca_regs;	/* device registers */
+caddr_t le_iomem; /* base addr of RAM -- CPU's view */
 int	inr_ni, inr_sr, inr_st, inr_vf; /* Interrupt register bit */
 
 void vsbus_intr_enable __P((int));

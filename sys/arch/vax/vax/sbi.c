@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.18 1998/04/13 12:10:28 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.19 1999/02/02 18:37:21 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -92,19 +92,24 @@ sbi_attach(parent, self, aux)
 	 * in different ways (if they identifies themselves at all).
 	 * We have to fake identifying depending on different CPUs.
 	 */
+#define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
 	minnex = self->dv_unit * NNEXSBI;
 	for (nexnum = minnex; nexnum < minnex + NNEXSBI; nexnum++) {
+		struct  nexus *nexusP;
 		volatile int tmp;
 
-		if (badaddr((caddr_t)&nexus[nexnum], 4))
-			continue;
+		nexusP = (struct nexus *)vax_map_physmem((paddr_t)NEXA8600 +
+		    sizeof(struct nexus) * nexnum, NEXPAGES);
+		if (badaddr((caddr_t)nexusP, 4)) {
+			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
+		} else {
+			tmp = nexusP->nexcsr.nex_csr; /* no byte reads */
+			sa.type = tmp & 255;
 
-		tmp = nexus[nexnum].nexcsr.nex_csr; /* no byte reads */
-		sa.type = tmp & 255;
-
-		sa.nexnum = nexnum;
-		sa.nexaddr = nexus + nexnum;
-		config_found(self, (void*)&sa, sbi_print);
+			sa.nexnum = nexnum;
+			sa.nexaddr = nexusP;
+			config_found(self, (void*)&sa, sbi_print);
+		}
 	}
 }
 
