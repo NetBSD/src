@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.13 2003/04/11 22:02:33 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.14 2003/04/18 21:07:35 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -264,8 +264,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	process_read_regs(l, (struct reg *)(void *)gr);
 
-	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_PC])) != -1)
+	if ((ras_pc = (__greg_t)(intptr_t) ras_lookup(l->l_proc,
+	    (caddr_t)(intptr_t) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
 
 	*flags |= _UC_CPU;
