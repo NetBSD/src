@@ -1,10 +1,11 @@
-# $NetBSD: extest.awk,v 1.1 1999/05/11 19:14:50 drochner Exp $
+# $NetBSD: extest.awk,v 1.2 2000/03/06 18:51:57 kleink Exp $
 
 BEGIN {
 	first = 1;
 
-	printf("#include <stdio.h>\n")
+	printf("#include <sys/types.h>\n")
 	printf("#include <sys/extent.h>\n\n")
+	printf("#include <stdio.h>\n")
 	printf("main() {\n")
 	printf("struct extent *ex; int error; long result;\n")
 }
