@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.14 1997/07/20 04:51:02 thorpej Exp $	*/
+/*	$NetBSD: chmod.c,v 1.15 1997/10/06 08:25:10 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.14 1997/07/20 04:51:02 thorpej Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.15 1997/10/06 08:25:10 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ done:	argv += optind;
 		}
 		if (chmod(p->fts_accpath, oct ? omode :
 		    getmode(set, p->fts_statp->st_mode)) && !fflag) {
-			warn(p->fts_path);
+			warn("%s", p->fts_path);
 			rval = 1;
 		}
 	}
