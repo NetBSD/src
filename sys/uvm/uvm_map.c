@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.103 2001/09/07 00:50:54 lukem Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.104 2001/09/09 19:38:22 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -80,6 +80,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/kernel.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -108,6 +109,7 @@ struct pool uvm_vmspace_pool;
  */
 
 struct pool uvm_map_entry_pool;
+struct pool uvm_map_entry_kmem_pool;
 
 #ifdef PMAP_GROWKERNEL
 /*
@@ -192,8 +194,6 @@ static void uvm_map_unreference_amap __P((struct vm_map_entry *, int));
 
 /*
  * uvm_mapent_alloc: allocate a map entry
- *
- * => XXX: static pool for kernel map?
  */
 
 static __inline struct vm_map_entry *
@@ -202,38 +202,36 @@ uvm_mapent_alloc(map)
 {
 	struct vm_map_entry *me;
 	int s;
-	UVMHIST_FUNC("uvm_mapent_alloc");
-	UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
 
-	if ((map->flags & VM_MAP_INTRSAFE) == 0 &&
-	    map != kernel_map && kernel_map != NULL /* XXX */) {
-		me = pool_get(&uvm_map_entry_pool, PR_WAITOK);
-		me->flags = 0;
-		/* me can't be null, wait ok */
-	} else {
-		s = splvm();	/* protect kentry_free list with splvm */
+	if (map->flags & VM_MAP_INTRSAFE || cold) {
+		s = splvm();
 		simple_lock(&uvm.kentry_lock);
 		me = uvm.kentry_free;
 		if (me) uvm.kentry_free = me->next;
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
-		if (!me)
-			panic(
-    "mapent_alloc: out of static map entries, check MAX_KMAPENT (currently %d)",
-	MAX_KMAPENT);
+		if (me == NULL) {
+			panic("uvm_mapent_alloc: out of static map entries, "
+			      "check MAX_KMAPENT (currently %d)",
+			      MAX_KMAPENT);
+		}
 		me->flags = UVM_MAP_STATIC;
+	} else if (map == kernel_map) {
+		me = pool_get(&uvm_map_entry_kmem_pool, PR_WAITOK);
+		me->flags = UVM_MAP_KMEM;
+	} else {
+		me = pool_get(&uvm_map_entry_pool, PR_WAITOK);
+		me->flags = 0;
 	}
 
-	UVMHIST_LOG(maphist, "<- new entry=0x%x [kentry=%d]",
-		me, ((map->flags & VM_MAP_INTRSAFE) != 0 || map == kernel_map)
-		? TRUE : FALSE, 0, 0);
+	UVMHIST_LOG(maphist, "<- new entry=0x%x [kentry=%d]", me,
+	    ((map->flags & VM_MAP_INTRSAFE) != 0 || map == kernel_map), 0, 0);
 	return(me);
 }
 
 /*
  * uvm_mapent_free: free map entry
- *
- * => XXX: static pool for kernel map?
  */
 
 static __inline void
@@ -241,19 +239,21 @@ uvm_mapent_free(me)
 	struct vm_map_entry *me;
 {
 	int s;
-	UVMHIST_FUNC("uvm_mapent_free");
-	UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC("uvm_mapent_free"); UVMHIST_CALLED(maphist);
+
 	UVMHIST_LOG(maphist,"<- freeing map entry=0x%x [flags=%d]",
 		me, me->flags, 0, 0);
-	if ((me->flags & UVM_MAP_STATIC) == 0) {
-		pool_put(&uvm_map_entry_pool, me);
-	} else {
-		s = splvm();	/* protect kentry_free list with splvm */
+	if (me->flags & UVM_MAP_STATIC) {
+		s = splvm();
 		simple_lock(&uvm.kentry_lock);
 		me->next = uvm.kentry_free;
 		uvm.kentry_free = me;
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
+	} else if (me->flags & UVM_MAP_KMEM) {
+		pool_put(&uvm_map_entry_kmem_pool, me);
+	} else {
+		pool_put(&uvm_map_entry_pool, me);
 	}
 }
 
@@ -364,6 +364,8 @@ uvm_map_init()
 	pool_init(&uvm_map_entry_pool, sizeof(struct vm_map_entry),
 	    0, 0, 0, "vmmpepl", 0,
 	    pool_page_alloc_nointr, pool_page_free_nointr, M_VMMAP);
+	pool_init(&uvm_map_entry_kmem_pool, sizeof(struct vm_map_entry),
+	    0, 0, 0, "vmmpekpl", 0, NULL, NULL, M_VMMAP);
 }
 
 /*
