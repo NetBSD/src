@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.55 2001/09/10 10:04:49 fvdl Exp $	*/
+/*	$NetBSD: pci.c,v 1.56 2001/09/13 21:49:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -53,17 +53,6 @@ int pci_config_dump = 0;
 
 int pcimatch __P((struct device *, struct cfdata *, void *));
 void pciattach __P((struct device *, struct device *, void *));
-
-struct pci_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot, sc_memt;
-	bus_dma_tag_t sc_dmat;
-	pci_chipset_tag_t sc_pc;
-	int sc_bus, sc_maxndevs;
-	u_int sc_intrswiz;
-	pcitag_t sc_intrtag;
-	int sc_flags;
-};
 
 struct cfattach pci_ca = {
 	sizeof(struct pci_softc), pcimatch, pciattach
