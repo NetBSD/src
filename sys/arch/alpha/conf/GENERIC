@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120 1999/06/27 15:58:18 christos Exp $
+# $NetBSD: GENERIC,v 1.121 1999/06/27 22:35:56 christos Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -185,11 +185,15 @@ audio*	at	sv?
 #opl*	at	sv?
 
 # MII/PHY support
-exphy*	at	mii? phy ?
-inphy*	at	mii? phy ?
-nsphy*	at	mii? phy ?
-qsphy*	at	mii? phy ? 
-tlphy*	at	mii? phy ?
+exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # ISA/EISA bus support
 isa*	at	pceb?
