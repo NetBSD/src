@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.81 2003/05/20 18:16:09 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.82 2003/06/28 14:21:56 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.81 2003/05/20 18:16:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.82 2003/06/28 14:21:56 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ sys_ptrace(l, v, retval)
 		 * not at or above the root directory of the tracee
 		 */
 
-		if (!proc_isunder(t, p))
+		if (!proc_isunder(t, l))
 			return EPERM;
 		break;
 
@@ -282,8 +282,8 @@ sys_ptrace(l, v, retval)
 		uio.uio_resid = sizeof(tmp);
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-		uio.uio_procp = p;
-		error = process_domem(p, t, &uio);
+		uio.uio_lwp = l;
+		error = process_domem(l, lt, &uio);
 		if (!write)
 			*retval = tmp;
 		return (error);
@@ -299,7 +299,7 @@ sys_ptrace(l, v, retval)
 		uio.uio_offset = (off_t)(long)piod.piod_offs;
 		uio.uio_resid = piod.piod_len;
 		uio.uio_segflg = UIO_USERSPACE;
-		uio.uio_procp = p;
+		uio.uio_lwp = l;
 		switch (piod.piod_op) {
 		case PIOD_READ_D:
 		case PIOD_READ_I:
@@ -312,7 +312,7 @@ sys_ptrace(l, v, retval)
 		default:
 			return (EINVAL);
 		}
-		error = process_domem(p, t, &uio);
+		error = process_domem(l, lt, &uio);
 		piod.piod_len -= uio.uio_resid;
 		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
 		return (error);
@@ -472,7 +472,7 @@ sys_ptrace(l, v, retval)
 			if (lt == NULL)
 				return (ESRCH);
 		}
-		if (!process_validregs(t))
+		if (!process_validregs(proc_representative_lwp(t)))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);
@@ -483,8 +483,8 @@ sys_ptrace(l, v, retval)
 			uio.uio_resid = sizeof(struct reg);
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-			uio.uio_procp = p;
-			return (process_doregs(p, lt, &uio));
+			uio.uio_lwp = l;
+			return (process_doregs(l, lt, &uio));
 		}
 #endif
 
@@ -505,7 +505,7 @@ sys_ptrace(l, v, retval)
 			if (lt == NULL)
 				return (ESRCH);
 		}
-		if (!process_validfpregs(t))
+		if (!process_validfpregs(proc_representative_lwp(t)))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);
@@ -516,14 +516,14 @@ sys_ptrace(l, v, retval)
 			uio.uio_resid = sizeof(struct fpreg);
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-			uio.uio_procp = p;
-			return (process_dofpregs(p, lt, &uio));
+			uio.uio_lwp = l;
+			return (process_dofpregs(l, lt, &uio));
 		}
 #endif
 
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
-		return (ptrace_machdep_dorequest(p, lt,
+		return (ptrace_machdep_dorequest(l, lt,
 		    SCARG(uap, req), SCARG(uap, addr),
 		    SCARG(uap, data)));
 #endif
@@ -536,18 +536,19 @@ sys_ptrace(l, v, retval)
 }
 
 int
-process_doregs(curp, l, uio)
-	struct proc *curp;		/* tracer */
+process_doregs(curl, l, uio)
+	struct lwp *curl;		/* tracer */
 	struct lwp *l;			/* traced */
 	struct uio *uio;
 {
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
+	struct proc *p = l->l_proc;
 	int error;
 	struct reg r;
 	char *kv;
 	int kl;
 
-	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
+	if ((error = process_checkioperm(curl, p)) != 0)
 		return error;
 
 	kl = sizeof(r);
@@ -582,30 +583,31 @@ process_doregs(curp, l, uio)
 }
 
 int
-process_validregs(p)
-	struct proc *p;
+process_validregs(l)
+	struct lwp *l;
 {
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-	return ((p->p_flag & P_SYSTEM) == 0);
+	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
 #else
 	return (0);
 #endif
 }
 
 int
-process_dofpregs(curp, l, uio)
-	struct proc *curp;		/* tracer */
+process_dofpregs(curl, l, uio)
+	struct lwp *curl;		/* tracer */
 	struct lwp *l;			/* traced */
 	struct uio *uio;
 {
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
+	struct proc *p = l->l_proc;
 	int error;
 	struct fpreg r;
 	char *kv;
 	int kl;
 
-	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
+	if ((error = process_checkioperm(curl, p)) != 0)
 		return (error);
 
 	kl = sizeof(r);
@@ -640,9 +642,10 @@ process_dofpregs(curp, l, uio)
 }
 
 int
-process_validfpregs(p)
-	struct proc *p;
+process_validfpregs(l)
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
 	return ((p->p_flag & P_SYSTEM) == 0);
@@ -652,11 +655,12 @@ process_validfpregs(p)
 }
 
 int
-process_domem(curp, p, uio)
-	struct proc *curp;		/* tracer */
-	struct proc *p;			/* traced */
+process_domem(curl, l, uio)
+	struct lwp *curl;		/* tracer */
+	struct lwp *l;			/* traced */
 	struct uio *uio;
 {
+	struct proc *p = l->l_proc;	/* traced */
 	int error;
 
 	size_t len;
@@ -673,7 +677,7 @@ process_domem(curp, p, uio)
 	addr = uio->uio_offset;
 #endif
 
-	if ((error = process_checkioperm(curp, p)) != 0)
+	if ((error = process_checkioperm(curl, p)) != 0)
 		return (error);
 
 	/* XXXCDC: how should locking work here? */
@@ -697,9 +701,11 @@ process_domem(curp, p, uio)
  *	t	The process who's memory/registers will be read/written.
  */
 int
-process_checkioperm(p, t)
-	struct proc *p, *t;
+process_checkioperm(l, t)
+	struct lwp *l;
+	struct proc *t;
 {
+	struct proc *p = l->l_proc;
 	int error;
 
 	/*
@@ -731,7 +737,7 @@ process_checkioperm(p, t)
 	 *	(4) the tracer is chrooted, and its root directory is
 	 * 	    not at or above the root directory of the tracee
 	 */
-	if (!proc_isunder(t, p))
+	if (!proc_isunder(t, l))
 		return (EPERM);
 	
 	return (0);

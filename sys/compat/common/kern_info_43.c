@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.14 2003/01/18 07:28:34 thorpej Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.15 2003/06/28 14:21:16 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.14 2003/01/18 07:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.15 2003/06/28 14:21:16 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,13 +90,12 @@ compat_43_sys_gethostname(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) hostname;
 		syscallarg(u_int) len;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int name;
 	size_t sz;
 
 	name = KERN_HOSTNAME;
 	sz = SCARG(uap, len);
-	return (kern_sysctl(&name, 1, SCARG(uap, hostname), &sz, 0, 0, p));
+	return (kern_sysctl(&name, 1, SCARG(uap, hostname), &sz, 0, 0, l));
 }
 
 #define	KINFO_PROC		(0<<8)
@@ -150,7 +149,6 @@ compat_43_sys_getkerninfo(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int *) size;
 		syscallarg(int) arg;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	int error, name[5];
 	size_t size;
 
@@ -167,13 +165,13 @@ compat_43_sys_getkerninfo(struct lwp *l, void *v, register_t *retval)
 		name[3] = SCARG(uap, op) & 0xff;
 		name[4] = SCARG(uap, arg);
 		error =
-		    net_sysctl(name, 5, SCARG(uap, where), &size, NULL, 0, p);
+		    net_sysctl(name, 5, SCARG(uap, where), &size, NULL, 0, l);
 		break;
 
 	case KINFO_VNODE:
 		name[0] = KERN_VNODE;
 		error =
-		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, l);
 		break;
 
 	case KINFO_PROC:
@@ -181,31 +179,31 @@ compat_43_sys_getkerninfo(struct lwp *l, void *v, register_t *retval)
 		name[1] = SCARG(uap, op) & 0xff;
 		name[2] = SCARG(uap, arg);
 		error =
-		    kern_sysctl(name, 3, SCARG(uap, where), &size, NULL, 0, p);
+		    kern_sysctl(name, 3, SCARG(uap, where), &size, NULL, 0, l);
 		break;
 
 	case KINFO_FILE:
 		name[0] = KERN_FILE;
 		error =
-		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, l);
 		break;
 
 	case KINFO_METER:
 		name[0] = VM_METER;
 		error =
-		    uvm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+		    uvm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, l);
 		break;
 
 	case KINFO_LOADAVG:
 		name[0] = VM_LOADAVG;
 		error =
-		    uvm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+		    uvm_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, l);
 		break;
 
 	case KINFO_CLOCKRATE:
 		name[0] = KERN_CLOCKRATE;
 		error =
-		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
+		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, l);
 		break;
 
 
@@ -307,5 +305,5 @@ compat_43_sys_sethostname(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	name = KERN_HOSTNAME;
 	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, hostname),
-			    SCARG(uap, len), p));
+			    SCARG(uap, len), l));
 }

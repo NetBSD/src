@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.h,v 1.1 2002/12/23 17:52:09 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_node.h,v 1.2 2003/06/28 14:21:49 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -140,13 +140,13 @@ void	cd9660_defattr __P((struct iso_directory_record *,
 			struct iso_node *, struct buf *));
 void	cd9660_deftstamp __P((struct iso_directory_record *,
 			struct iso_node *, struct buf *));
-struct	vnode *cd9660_ihashget __P((dev_t, ino_t));
+struct	vnode *cd9660_ihashget __P((dev_t, ino_t, struct lwp *));
 void	cd9660_ihashins __P((struct iso_node *));
 void	cd9660_ihashrem __P((struct iso_node *));
 int	cd9660_tstamp_conv7 __P((u_char *, struct timespec *));
 int	cd9660_tstamp_conv17 __P((u_char *, struct timespec *));
 int	cd9660_vget_internal __P((struct mount *, ino_t, struct vnode **, int,
-			      struct iso_directory_record *));
+			      struct iso_directory_record *, struct lwp *));
 #ifdef	ISODEVMAP
 struct iso_dnode *iso_dmap __P((dev_t, ino_t, int));
 void iso_dunmap __P((dev_t));

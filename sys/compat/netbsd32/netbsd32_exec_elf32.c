@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.16 2003/04/01 01:52:39 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.17 2003/06/28 14:21:24 darrenr Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.16 2003/04/01 01:52:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.17 2003/06/28 14:21:24 darrenr Exp $");
 
 #define	ELFSIZE		32
 
@@ -81,8 +81,8 @@ ELFNAME2(netbsd32,probe_noteless)(struct proc *p, struct exec_package *epp,
 
 	if (itp[0]) {
 		/* Translate interpreter name if needed */
-		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
-		    itp)) != 0)
+		if ((error = emul_find_interp(LIST_FIRST(&p->p_lwps),
+		    epp->ep_esch->es_emul->e_path, itp)) != 0)
 			return error;
 	}
 	epp->ep_flags |= EXEC_32;

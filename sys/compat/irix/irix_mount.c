@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.5 2003/01/22 12:58:23 rafal Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.6 2003/06/28 14:21:20 darrenr Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.5 2003/01/22 12:58:23 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.6 2003/06/28 14:21:20 darrenr Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -75,7 +75,7 @@ irix_sys_getmountid(l, v, retval)
 	irix_mountid_t mountid;
 	void *addr;
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	(void)memcpy(cred, p->p_ucred, sizeof(*cred));
 	cred->cr_ref = 1;
@@ -84,7 +84,7 @@ irix_sys_getmountid(l, v, retval)
 
 	/* Get the vnode for the requested path */
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
+	    SCARG(uap, path), l);
 	nd.ni_cnd.cn_cred = cred;
 	if ((error = namei(&nd)) != 0)
 		goto out;

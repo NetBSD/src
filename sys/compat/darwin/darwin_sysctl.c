@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.10 2003/01/24 21:37:02 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.11 2003/06/28 14:21:17 darrenr Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.10 2003/01/24 21:37:02 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.11 2003/06/28 14:21:17 darrenr Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,21 +60,21 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.10 2003/01/24 21:37:02 manu Exp 
 pid_t darwin_init_pid = 0;
 
 static int darwin_kern_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+    (int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
 static int darwin_vm_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+    (int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
 static int darwin_vfs_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+    (int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
 static int darwin_net_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+    (int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
 static int darwin_debug_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+    (int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
 static int darwin_hw_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+    (int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
 static int darwin_machdep_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+    (int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
 static int darwin_user_sysctl
-    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+    (int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
 
 int
 darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
@@ -165,7 +165,7 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 		savelen = oldlen;
 	}
 
-	error = (*fn)(name + 1, namelen - 1, oldp, oldlenp, newp, newlen, p);
+	error = (*fn)(name + 1, namelen - 1, oldp, oldlenp, newp, newlen, l);
 
 	if (oldp)
 		uvm_vsunlock(p, oldp, savelen);
@@ -181,14 +181,14 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 
 
 static int
-darwin_kern_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
+darwin_kern_sysctl(name, nlen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int nlen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	switch (name[0]) {
 	/* sysctl with the same definition */
@@ -215,7 +215,7 @@ darwin_kern_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 	case DARWIN_KERN_BOOTTIME:
 	case DARWIN_KERN_NISDOMAINNAME:
 	case DARWIN_KERN_MAXPARTITIONS:
-		return kern_sysctl(name, 1, oldp, oldlenp, newp, newlen, p);
+		return kern_sysctl(name, 1, oldp, oldlenp, newp, newlen, l);
 		break;
 	default:
 		return EOPNOTSUPP;
@@ -226,14 +226,14 @@ darwin_kern_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 }
 
 static int
-darwin_vm_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
+darwin_vm_sysctl(name, nlen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int nlen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	switch (name[0]) {
 	default:
@@ -245,14 +245,14 @@ darwin_vm_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 }
 
 static int
-darwin_vfs_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
+darwin_vfs_sysctl(name, nlen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int nlen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	switch (name[0]) {
 	default:
@@ -264,14 +264,14 @@ darwin_vfs_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 }
 
 static int
-darwin_net_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
+darwin_net_sysctl(name, nlen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int nlen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	switch (name[0]) {
 	default:
@@ -283,14 +283,14 @@ darwin_net_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 }
 
 static int
-darwin_debug_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
+darwin_debug_sysctl(name, nlen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int nlen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	switch (name[0]) {
 	default:
@@ -302,19 +302,19 @@ darwin_debug_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 }
 
 static int
-darwin_hw_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
+darwin_hw_sysctl(name, nlen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int nlen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	switch (name[0]) {
 	case DARWIN_HW_NCPU:
 		name[0] = HW_NCPU;
-		return hw_sysctl(name, 1, oldp, oldlenp, newp, newlen, p);
+		return hw_sysctl(name, 1, oldp, oldlenp, newp, newlen, l);
 		break;
 	case DARWIN_HW_VECTORUNIT:
 		return sysctl_rdint(oldp, oldlenp, newp, 0);
@@ -328,14 +328,14 @@ darwin_hw_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 }
 
 static int
-darwin_machdep_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
+darwin_machdep_sysctl(name, nlen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int nlen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	switch (name[0]) {
 	default:
@@ -347,14 +347,14 @@ darwin_machdep_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 }
 
 static int
-darwin_user_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
+darwin_user_sysctl(name, nlen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int nlen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	switch (name[0]) {
 	default:
@@ -366,14 +366,14 @@ darwin_user_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
 }
 
 int
-darwin_sysctl(name, nlen, oldp, oldlenp, newp, newlen, p)
+darwin_sysctl(name, nlen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int nlen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	if (nlen != 1)
 		return EOPNOTSUPP;

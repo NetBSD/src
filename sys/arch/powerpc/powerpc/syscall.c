@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.19 2003/06/23 11:01:36 martin Exp $	*/
+/*	$NetBSD: syscall.c,v 1.20 2003/06/28 14:21:05 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -69,7 +69,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2003/06/23 11:01:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.20 2003/06/28 14:21:05 darrenr Exp $");
 
 void
 child_return(void *arg)
@@ -91,7 +91,7 @@ child_return(void *arg)
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(l);
-		ktrsysret(p, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(l);
 	}
 #endif

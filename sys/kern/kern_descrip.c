@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.108 2003/05/16 14:40:41 itojun Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.109 2003/06/28 14:21:53 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.108 2003/05/16 14:40:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.109 2003/06/28 14:21:53 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,8 +86,8 @@ MALLOC_DEFINE(M_IOCTLOPS, "ioctlops", "ioctl data buffer");
 
 static __inline void	fd_used(struct filedesc *, int);
 static __inline void	fd_unused(struct filedesc *, int);
-int			finishdup(struct proc *, int, int, register_t *);
-int			fcntl_forfs(int, struct proc *, int, void *);
+int			finishdup(struct lwp *, int, int, register_t *);
+int			fcntl_forfs(int, struct lwp *, int, void *);
 
 dev_type_open(filedescopen);
 
@@ -179,15 +179,15 @@ sys_dup(struct lwp *l, void *v, register_t *retval)
 	if ((error = fdalloc(p, 0, &new)) != 0) {
 		if (error == ENOSPC) {
 			fdexpand(p);
-			FILE_UNUSE(fp, p);
+			FILE_UNUSE(fp, l);
 			goto restart;
 		}
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 		return (error);
 	}
 
 	/* finishdup() will unuse the descriptors for us */
-	return (finishdup(p, old, new, retval));
+	return (finishdup(l, old, new, retval));
 }
 
 /*
@@ -233,10 +233,10 @@ sys_dup2(struct lwp *l, void *v, register_t *retval)
 		if ((error = fdalloc(p, new, &i)) != 0) {
 			if (error == ENOSPC) {
 				fdexpand(p);
-				FILE_UNUSE(fp, p);
+				FILE_UNUSE(fp, l);
 				goto restart;
 			}
-			FILE_UNUSE(fp, p);
+			FILE_UNUSE(fp, l);
 			return (error);
 		}
 		if (new != i)
@@ -249,7 +249,7 @@ sys_dup2(struct lwp *l, void *v, register_t *retval)
 	 */
 
 	/* finishdup() will unuse the descriptors for us */
-	return (finishdup(p, old, new, retval));
+	return (finishdup(l, old, new, retval));
 }
 
 /*
@@ -285,7 +285,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 
 	cmd = SCARG(uap, cmd);
 	if ((cmd & F_FSCTL)) {
-		error = fcntl_forfs(fd, p, cmd, SCARG(uap, arg));
+		error = fcntl_forfs(fd, l, cmd, SCARG(uap, arg));
 		goto out;
 	}
 
@@ -301,14 +301,14 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		if ((error = fdalloc(p, newmin, &i)) != 0) {
 			if (error == ENOSPC) {
 				fdexpand(p);
-				FILE_UNUSE(fp, p);
+				FILE_UNUSE(fp, l);
 				goto restart;
 			}
 			goto out;
 		}
 
 		/* finishdup() will unuse the descriptors for us */
-		return (finishdup(p, fd, i, retval));
+		return (finishdup(l, fd, i, retval));
 
 	case F_GETFD:
 		*retval = fdp->fd_ofileflags[fd] & UF_EXCLOSE ? 1 : 0;
@@ -327,24 +327,24 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 
 	case F_SETFL:
 		tmp = FFLAGS((long)SCARG(uap, arg)) & FCNTLFLAGS;
-		error = (*fp->f_ops->fo_fcntl)(fp, F_SETFL, &tmp, p);
+		error = (*fp->f_ops->fo_fcntl)(fp, F_SETFL, &tmp, l);
 		if (error)
 			break;
 		i = tmp ^ fp->f_flag;
 		if (i & FNONBLOCK) {
 			int fl = tmp & FNONBLOCK;
-			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, &fl, p);
+			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, &fl, l);
 			if (error)
 				goto reset_fcntl;
 		}
 		if (i & FASYNC) {
 			int fl = tmp & FASYNC;
-			error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, &fl, p);
+			error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, &fl, l);
 			if (error) {
 				if (i & FNONBLOCK) {
 					tmp = fp->f_flag & FNONBLOCK;
 					(void)(*fp->f_ops->fo_ioctl)(fp,
-						FIONBIO, &tmp, p);
+						FIONBIO, &tmp, l);
 				}
 				goto reset_fcntl;
 			}
@@ -352,7 +352,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		fp->f_flag = (fp->f_flag & ~FCNTLFLAGS) | tmp;
 		break;
 	    reset_fcntl:
-		(void)(*fp->f_ops->fo_fcntl)(fp, F_SETFL, &fp->f_flag, p);
+		(void)(*fp->f_ops->fo_fcntl)(fp, F_SETFL, &fp->f_flag, l);
 		break;
 
 	case F_GETOWN:
@@ -360,7 +360,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 			*retval = ((struct socket *)fp->f_data)->so_pgid;
 			goto out;
 		}
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, &tmp, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, &tmp, l);
 		*retval = -tmp;
 		break;
 
@@ -380,7 +380,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 			}
 			tmp = (long)p1->p_pgrp->pg_id;
 		}
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCSPGRP, &tmp, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCSPGRP, &tmp, l);
 		break;
 
 	case F_SETLKW:
@@ -456,7 +456,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 	}
 
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -464,10 +464,11 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
  * Common code for dup, dup2, and fcntl(F_DUPFD).
  */
 int
-finishdup(struct proc *p, int old, int new, register_t *retval)
+finishdup(struct lwp *l, int old, int new, register_t *retval)
 {
+	struct proc *p = l->l_proc;
+	struct file *fp, *delfp;
 	struct filedesc	*fdp;
-	struct file	*fp, *delfp;
 
 	fdp = p->p_fd;
 
@@ -492,14 +493,14 @@ finishdup(struct proc *p, int old, int new, register_t *retval)
 	if (delfp == NULL)
 		fd_used(fdp, new);
 	*retval = new;
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 
 	if (delfp != NULL) {
 		simple_lock(&delfp->f_slock);
 		FILE_USE(delfp);
 		if (new < fdp->fd_knlistsize)
-			knote_fdclose(p, new);
-		(void) closef(delfp, p);
+			knote_fdclose(l, new);
+		(void) closef(delfp, l);
 	}
 	return (0);
 }
@@ -513,10 +514,11 @@ fdremove(struct filedesc *fdp, int fd)
 }
 
 int
-fdrelease(struct proc *p, int fd)
+fdrelease(struct lwp *l, int fd)
 {
+	struct proc *p = l->l_proc;
+	struct file **fpp, *fp;
 	struct filedesc	*fdp;
-	struct file	**fpp, *fp;
 
 	fdp = p->p_fd;
 	fpp = &fdp->fd_ofiles[fd];
@@ -535,9 +537,9 @@ fdrelease(struct proc *p, int fd)
 	*fpp = NULL;
 	fdp->fd_ofileflags[fd] = 0;
 	if (fd < fdp->fd_knlistsize)
-		knote_fdclose(p, fd);
+		knote_fdclose(l, fd);
 	fd_unused(fdp, fd);
-	return (closef(fp, p));
+	return (closef(fp, l));
 }
 
 /*
@@ -565,7 +567,7 @@ sys_close(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 #endif
 
-	return (fdrelease(p, fd));
+	return (fdrelease(l, fd));
 }
 
 /*
@@ -594,8 +596,8 @@ sys___fstat13(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
-	FILE_UNUSE(fp, p);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
+	FILE_UNUSE(fp, l);
 
 	if (error == 0)
 		error = copyout(&ub, SCARG(uap, sb), sizeof(ub));
@@ -655,7 +657,7 @@ sys_fpathconf(struct lwp *l, void *v, register_t *retval)
 		break;
 	}
 
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -968,15 +970,16 @@ fdshare(struct proc *p1, struct proc *p2)
  * all file descriptor state.
  */
 void
-fdunshare(struct proc *p)
+fdunshare(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	struct filedesc *newfd;
 
 	if (p->p_fd->fd_refcnt == 1)
 		return;
 
 	newfd = fdcopy(p);
-	fdfree(p);
+	fdfree(l);
 	p->p_fd = newfd;
 }
 
@@ -984,12 +987,13 @@ fdunshare(struct proc *p)
  * Clear a process's fd table.
  */
 void
-fdclear(struct proc *p)
+fdclear(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	struct filedesc *newfd;
 
 	newfd = fdinit(p);
-	fdfree(p);
+	fdfree(l);
 	p->p_fd = newfd;
 }
 
@@ -1059,8 +1063,9 @@ fdcopy(struct proc *p)
  * Release a filedesc structure.
  */
 void
-fdfree(struct proc *p)
+fdfree(struct lwp *l)
 {
+	struct proc	*p = l->l_proc;
 	struct filedesc	*fdp;
 	struct file	**fpp, *fp;
 	int		i;
@@ -1076,8 +1081,8 @@ fdfree(struct proc *p)
 			simple_lock(&fp->f_slock);
 			FILE_USE(fp);
 			if (i < fdp->fd_knlistsize)
-				knote_fdclose(p, fdp->fd_lastfile - i);
-			(void) closef(fp, p);
+				knote_fdclose(l, fdp->fd_lastfile - i);
+			(void) closef(fp, l);
 		}
 	}
 	p->p_fd = NULL;
@@ -1100,8 +1105,9 @@ fdfree(struct proc *p)
  * to drop it (the caller thinks the file is going away forever).
  */
 int
-closef(struct file *fp, struct proc *p)
+closef(struct file *fp, struct lwp *l)
 {
+	struct proc	*p = l ? l->l_proc : NULL;
 	struct vnode	*vp;
 	struct flock	lf;
 	int		error;
@@ -1207,7 +1213,7 @@ closef(struct file *fp, struct proc *p)
 		(void) VOP_ADVLOCK(vp, fp, F_UNLCK, &lf, F_FLOCK);
 	}
 	if (fp->f_ops)
-		error = (*fp->f_ops->fo_close)(fp, p);
+		error = (*fp->f_ops->fo_close)(fp, l);
 	else
 		error = 0;
 
@@ -1280,7 +1286,7 @@ sys_flock(struct lwp *l, void *v, register_t *retval)
 		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf,
 		    F_FLOCK|F_WAIT);
  out:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -1294,7 +1300,7 @@ sys_flock(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-filedescopen(dev_t dev, int mode, int type, struct proc *p)
+filedescopen(dev_t dev, int mode, int type, struct lwp *l)
 {
 
 	/*
@@ -1305,7 +1311,7 @@ filedescopen(dev_t dev, int mode, int type, struct proc *p)
 	 * actions in dupfdopen below. Other callers of vn_open or VOP_OPEN
 	 * will simply report the error.
 	 */
-	p->p_dupfd = minor(dev);
+	l->l_proc->p_dupfd = minor(dev);
 	return (ENODEV);
 }
 
@@ -1313,9 +1319,10 @@ filedescopen(dev_t dev, int mode, int type, struct proc *p)
  * Duplicate the specified descriptor to a free descriptor.
  */
 int
-dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
+dupfdopen(struct lwp *l, int indx, int dfd, int mode, int error)
 {
-	struct filedesc	*fdp;
+	struct proc	*p = l->l_proc;
+	struct filedesc *fdp;
 	struct file	*wfp, *fp;
 
 	fdp = p->p_fd;
@@ -1357,14 +1364,14 @@ dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 		 * subset of the mode of the existing descriptor.
 		 */
 		if (((mode & (FREAD|FWRITE)) | wfp->f_flag) != wfp->f_flag) {
-			FILE_UNUSE(wfp, p);
+			FILE_UNUSE(wfp, l);
 			return (EACCES);
 		}
 		fdp->fd_ofiles[indx] = wfp;
 		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
 		wfp->f_count++;
 		fd_used(fdp, indx);
-		FILE_UNUSE(wfp, p);
+		FILE_UNUSE(wfp, l);
 		return (0);
 
 	case ENXIO:
@@ -1381,11 +1388,11 @@ dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 		 */
 		fd_used(fdp, indx);
 		fd_unused(fdp, dfd);
-		FILE_UNUSE(wfp, p);
+		FILE_UNUSE(wfp, l);
 		return (0);
 
 	default:
-		FILE_UNUSE(wfp, p);
+		FILE_UNUSE(wfp, l);
 		return (error);
 	}
 	/* NOTREACHED */
@@ -1395,8 +1402,9 @@ dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
  * fcntl call which is being passed to the file's fs.
  */
 int
-fcntl_forfs(int fd, struct proc *p, int cmd, void *arg)
+fcntl_forfs(int fd, struct lwp *l, int cmd, void *arg)
 {
+	struct proc	*p = l->l_proc;
 	struct file	*fp;
 	struct filedesc	*fdp;
 	int		error;
@@ -1445,7 +1453,7 @@ fcntl_forfs(int fd, struct proc *p, int cmd, void *arg)
 		*(void **)data = arg;
 
 
-	error = (*fp->f_ops->fo_fcntl)(fp, cmd, data, p);
+	error = (*fp->f_ops->fo_fcntl)(fp, cmd, data, l);
 
 	/*
 	 * Copy any data to user, size was
@@ -1462,18 +1470,19 @@ fcntl_forfs(int fd, struct proc *p, int cmd, void *arg)
  * Close any files on exec?
  */
 void
-fdcloseexec(struct proc *p)
+fdcloseexec(struct lwp *l)
 {
-	struct filedesc	*fdp;
+	struct proc	*p = l->l_proc;
+	struct filedesc *fdp;
 	int		fd;
 
-	fdunshare(p);
+	fdunshare(l);
 	cwdunshare(p);
 
 	fdp = p->p_fd;
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
-			(void) fdrelease(p, fd);
+			(void) fdrelease(l, fd);
 }
 
 /*
@@ -1485,9 +1494,10 @@ fdcloseexec(struct proc *p)
  */
 #define CHECK_UPTO 3
 int
-fdcheckstd(p)
-	struct proc *p;
+fdcheckstd(l)
+	struct lwp *l;
 {
+	struct proc *p;
 	struct nameidata nd;
 	struct filedesc *fdp;
 	struct file *fp;
@@ -1497,6 +1507,7 @@ fdcheckstd(p)
 	int fd, i, error, flags = FREAD|FWRITE, devnull = -1;
 	char closed[CHECK_UPTO * 3 + 1], which[3 + 1];
 
+	p = l->l_proc;
 	closed[0] = '\0';
 	if ((fdp = p->p_fd) == NULL)
 		return (0);
@@ -1509,9 +1520,9 @@ fdcheckstd(p)
 			if ((error = falloc(p, &fp, &fd)) != 0)
 				return (error);
 			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null",
-			    p);
+			    l);
 			if ((error = vn_open(&nd, flags, 0)) != 0) {
-				FILE_UNUSE(fp, p);
+				FILE_UNUSE(fp, l);
 				ffree(fp);
 				fdremove(p->p_fd, fd);
 				return (error);
@@ -1537,12 +1548,12 @@ restart:
 			simple_lock(&devnullfp->f_slock);
 			FILE_USE(devnullfp);
 			/* finishdup() will unuse the descriptors for us */
-			if ((error = finishdup(p, devnull, fd, &retval)) != 0)
+			if ((error = finishdup(l, devnull, fd, &retval)) != 0)
 				return (error);
 		}
 	}
 	if (devnullfp)
-		FILE_UNUSE(devnullfp, p);
+		FILE_UNUSE(devnullfp, l);
 	if (closed[0] != '\0') {
 		pp = p->p_pptr;
 		log(LOG_WARNING, "set{u,g}id pid %d (%s) "

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142 2003/06/24 02:48:58 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.143 2003/06/28 14:21:03 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -1158,8 +1158,8 @@ init532()
  * Any takers for Sinix, Genix, SVR2/32000 or Minix?
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	return ENOEXEC;

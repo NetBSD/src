@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.53 2003/05/28 18:03:16 christos Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.54 2003/06/28 14:22:04 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.53 2003/05/28 18:03:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.54 2003/06/28 14:22:04 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.53 2003/05/28 18:03:16 christos Ex
 
 void procfs_hashins __P((struct pfsnode *));
 void procfs_hashrem __P((struct pfsnode *));
-struct vnode *procfs_hashget __P((pid_t, pfstype, int, struct mount *));
+struct vnode *procfs_hashget __P((pid_t, pfstype, int, struct mount *, struct lwp *));
 
 LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
 u_long	pfs_ihash;	/* size of hash table - 1 */
@@ -108,7 +108,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	int error;
 
 	do {
-		if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL)
+		if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp, curlwp)) != NULL)
 			return (0);
 	} while (lockmgr(&pfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
@@ -184,10 +184,10 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 				break;
 			default:
 				error = EOPNOTSUPP;
-				FILE_UNUSE(fp, pown);
+				FILE_UNUSE(fp, proc_representative_lwp(pown));
 				goto bad;
 			}
-			FILE_UNUSE(fp, pown);
+			FILE_UNUSE(fp, proc_representative_lwp(pown));
 		}
 		break;
 
@@ -262,22 +262,24 @@ procfs_rw(v)
 	struct vop_read_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
-	struct proc *curp = uio->uio_procp;
-	struct pfsnode *pfs = VTOPFS(vp);
+	struct lwp *curl;
 	struct lwp *l;
+	struct pfsnode *pfs = VTOPFS(vp);
 	struct proc *p;
 
 	p = PFIND(pfs->pfs_pid);
 	if (p == 0)
 		return (EINVAL);
 
+	curl = uio->uio_lwp;
+
 	/* XXX NJWLWP
 	 * The entire procfs interface needs work to be useful to
-	 * a process with multiple LWPs. For the moment, we'll 
+	 * a process with multiple LWPs. For the moment, we'll
 	 * just kluge this and fail on others.
 	 */
 	l = proc_representative_lwp(p);
-	
+
 	switch (pfs->pfs_type) {
 	case Pregs:
 	case Pfpregs:
@@ -301,50 +303,50 @@ procfs_rw(v)
 	switch (pfs->pfs_type) {
 	case Pnote:
 	case Pnotepg:
-		return (procfs_donote(curp, p, pfs, uio));
+		return (procfs_donote(curl, p, pfs, uio));
 
 	case Pregs:
-		return (procfs_doregs(curp, l, pfs, uio));
+		return (procfs_doregs(curl, l, pfs, uio));
 
 	case Pfpregs:
-		return (procfs_dofpregs(curp, l, pfs, uio));
+		return (procfs_dofpregs(curl, l, pfs, uio));
 
 	case Pctl:
-		return (procfs_doctl(curp, l, pfs, uio));
+		return (procfs_doctl(curl, l, pfs, uio));
 
 	case Pstatus:
-		return (procfs_dostatus(curp, l, pfs, uio));
+		return (procfs_dostatus(curl, l, pfs, uio));
 
 	case Pstat:
-		return (procfs_do_pid_stat(curp, l, pfs, uio));
+		return (procfs_do_pid_stat(curl, l, pfs, uio));
 
 	case Pmap:
-		return (procfs_domap(curp, p, pfs, uio, 0));
+		return (procfs_domap(curl, p, pfs, uio, 0));
 
 	case Pmaps:
-		return (procfs_domap(curp, p, pfs, uio, 1));
+		return (procfs_domap(curl, p, pfs, uio, 1));
 
 	case Pmem:
-		return (procfs_domem(curp, p, pfs, uio));
+		return (procfs_domem(curl, l, pfs, uio));
 
 	case Pcmdline:
-		return (procfs_docmdline(curp, p, pfs, uio));
+		return (procfs_docmdline(curl, p, pfs, uio));
 
 	case Pmeminfo:
-		return (procfs_domeminfo(curp, p, pfs, uio));
+		return (procfs_domeminfo(curl, p, pfs, uio));
 
 	case Pcpuinfo:
-		return (procfs_docpuinfo(curp, p, pfs, uio));
+		return (procfs_docpuinfo(curl, p, pfs, uio));
 
 	case Pfd:
-		return (procfs_dofd(curp, p, pfs, uio));
+		return (procfs_dofd(curl, p, pfs, uio));
 
 	case Puptime:
-		return (procfs_douptime(curp, p, pfs, uio));
+		return (procfs_douptime(curl, p, pfs, uio));
 
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
-		return (procfs_machdep_rw(curp, l, pfs, uio));
+		return (procfs_machdep_rw(curl, l, pfs, uio));
 #endif
 
 	default:
@@ -461,11 +463,12 @@ procfs_hashdone()
 }
 
 struct vnode *
-procfs_hashget(pid, type, fd, mp)
+procfs_hashget(pid, type, fd, mp, l)
 	pid_t pid;
 	pfstype type;
 	int fd;
 	struct mount *mp;
+	struct lwp *l;
 {
 	struct pfs_hashhead *ppp;
 	struct pfsnode *pp;
@@ -480,7 +483,7 @@ loop:
 		    pp->pfs_fd == fd && vp->v_mount == mp) {
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&pfs_hash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, l))
 				goto loop;
 			return (vp);
 		}
@@ -520,15 +523,17 @@ procfs_hashrem(pp)
 }
 
 void
-procfs_revoke_vnodes(p, arg)
-	struct proc *p;
+procfs_revoke_vnodes(l, arg)
+	struct lwp *l;
 	void *arg;
 {
 	struct pfsnode *pfs, *pnext;
 	struct vnode *vp;
 	struct mount *mp = (struct mount *)arg;
 	struct pfs_hashhead *ppp;
+	struct proc *p;
 
+	p = l->l_proc;
 	if (!(p->p_flag & P_SUGID))
 		return;
 

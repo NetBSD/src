@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.14 2001/11/08 02:39:16 lukem Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.15 2003/06/28 14:22:28 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.14 2001/11/08 02:39:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.15 2003/06/28 14:22:28 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,10 +137,11 @@ ufs_ihashlookup(dev, inum)
  * to it. If it is in core, but locked, wait for it.
  */
 struct vnode *
-ufs_ihashget(dev, inum, flags)
+ufs_ihashget(dev, inum, flags, l)
 	dev_t dev;
 	ino_t inum;
 	int flags;
+	struct lwp *l;
 {
 	struct ihashhead *ipp;
 	struct inode *ip;
@@ -154,7 +155,7 @@ loop:
 			vp = ITOV(ip);
 			simple_lock(&vp->v_interlock);
 			simple_unlock(&ufs_ihash_slock);
-			if (vget(vp, flags | LK_INTERLOCK))
+			if (vget(vp, flags | LK_INTERLOCK, l))
 				goto loop;
 			return (vp);
 		}

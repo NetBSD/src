@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.54 2003/06/23 13:58:06 martin Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.55 2003/06/28 14:22:09 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -249,7 +249,7 @@ void	 rip_init __P((void));
 void	 rip_input __P((struct mbuf *, ...));
 int	 rip_output __P((struct mbuf *, ...));
 int	 rip_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *));
 void	ipflow_init __P((void));
 struct	ipflow *ipflow_reap __P((int));
 void	ipflow_create __P((const struct route *, struct mbuf *));

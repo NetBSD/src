@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.31 2003/02/01 06:23:48 thorpej Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.32 2003/06/28 14:22:15 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.31 2003/02/01 06:23:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.32 2003/06/28 14:22:15 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.31 2003/02/01 06:23:48 thorpej Exp 
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -1331,18 +1332,20 @@ u_long	spp_recvspace = 3072;
 
 /*ARGSUSED*/
 int
-spp_usrreq(so, req, m, nam, control, p)
+spp_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct nspcb *nsp;
 	struct sppcb *cb = NULL;
+	struct proc *p;
 	int s;
 	int error = 0;
 	int ostate;
 
+	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
                 return (ns_control(so, (u_long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
@@ -1560,13 +1563,15 @@ release:
 }
 
 int
-spp_usrreq_sp(so, req, m, nam, control, p)
+spp_usrreq_sp(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
-	int error = spp_usrreq(so, req, m, nam, control, p);
+	int error;
+
+	error = spp_usrreq(so, req, m, nam, control, l);
 
 	if (req == PRU_ATTACH && error == 0) {
 		struct nspcb *nsp = sotonspcb(so);
@@ -1741,7 +1746,7 @@ spp_slowtimo()
 				(void) spp_usrreq(cb->s_nspcb->nsp_socket,
 				    PRU_SLOWTIMO, (struct mbuf *)0,
 				    (struct mbuf *)i, (struct mbuf *)0,
-				    (struct proc *)0);
+				    (struct lwp *)0);
 				if (ipnxt->nsp_prev != ip)
 					goto tpgone;
 			}

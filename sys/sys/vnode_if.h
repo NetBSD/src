@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.h,v 1.41 2003/04/10 20:38:12 jdolecek Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.42 2003/06/28 14:22:23 darrenr Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -161,30 +161,30 @@ struct vop_open_args {
 	struct vnode *a_vp;
 	int a_mode;
 	struct ucred *a_cred;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_open_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_OPEN(struct vnode *, int, struct ucred *, struct proc *)
+int VOP_OPEN(struct vnode *, int, struct ucred *, struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_OPEN(vp, mode, cred, p)
+static __inline int VOP_OPEN(vp, mode, cred, l)
 	struct vnode *vp;
 	int mode;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_open_args a;
 	a.a_desc = VDESC(vop_open);
 	a.a_vp = vp;
 	a.a_mode = mode;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_open), &a));
 }
 #endif
@@ -194,30 +194,30 @@ struct vop_close_args {
 	struct vnode *a_vp;
 	int a_fflag;
 	struct ucred *a_cred;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_close_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_CLOSE(struct vnode *, int, struct ucred *, struct proc *)
+int VOP_CLOSE(struct vnode *, int, struct ucred *, struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_CLOSE(vp, fflag, cred, p)
+static __inline int VOP_CLOSE(vp, fflag, cred, l)
 	struct vnode *vp;
 	int fflag;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_close_args a;
 	a.a_desc = VDESC(vop_close);
 	a.a_vp = vp;
 	a.a_fflag = fflag;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_close), &a));
 }
 #endif
@@ -227,30 +227,30 @@ struct vop_access_args {
 	struct vnode *a_vp;
 	int a_mode;
 	struct ucred *a_cred;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_access_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_ACCESS(struct vnode *, int, struct ucred *, struct proc *)
+int VOP_ACCESS(struct vnode *, int, struct ucred *, struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_ACCESS(vp, mode, cred, p)
+static __inline int VOP_ACCESS(vp, mode, cred, l)
 	struct vnode *vp;
 	int mode;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_access_args a;
 	a.a_desc = VDESC(vop_access);
 	a.a_vp = vp;
 	a.a_mode = mode;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_access), &a));
 }
 #endif
@@ -260,30 +260,30 @@ struct vop_getattr_args {
 	struct vnode *a_vp;
 	struct vattr *a_vap;
 	struct ucred *a_cred;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_getattr_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_GETATTR(struct vnode *, struct vattr *, struct ucred *, struct proc *)
+int VOP_GETATTR(struct vnode *, struct vattr *, struct ucred *, struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_GETATTR(vp, vap, cred, p)
+static __inline int VOP_GETATTR(vp, vap, cred, l)
 	struct vnode *vp;
 	struct vattr *vap;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_getattr_args a;
 	a.a_desc = VDESC(vop_getattr);
 	a.a_vp = vp;
 	a.a_vap = vap;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_getattr), &a));
 }
 #endif
@@ -293,30 +293,30 @@ struct vop_setattr_args {
 	struct vnode *a_vp;
 	struct vattr *a_vap;
 	struct ucred *a_cred;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_setattr_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_SETATTR(struct vnode *, struct vattr *, struct ucred *, struct proc *)
+int VOP_SETATTR(struct vnode *, struct vattr *, struct ucred *, struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_SETATTR(vp, vap, cred, p)
+static __inline int VOP_SETATTR(vp, vap, cred, l)
 	struct vnode *vp;
 	struct vattr *vap;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_setattr_args a;
 	a.a_desc = VDESC(vop_setattr);
 	a.a_vp = vp;
 	a.a_vap = vap;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_setattr), &a));
 }
 #endif
@@ -394,26 +394,26 @@ struct vop_ioctl_args {
 	void *a_data;
 	int a_fflag;
 	struct ucred *a_cred;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_ioctl_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
 int VOP_IOCTL(struct vnode *, u_long, void *, int, struct ucred *, 
-    struct proc *)
+    struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_IOCTL(vp, command, data, fflag, cred, p)
+static __inline int VOP_IOCTL(vp, command, data, fflag, cred, l)
 	struct vnode *vp;
 	u_long command;
 	void *data;
 	int fflag;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_ioctl_args a;
 	a.a_desc = VDESC(vop_ioctl);
@@ -422,7 +422,7 @@ static __inline int VOP_IOCTL(vp, command, data, fflag, cred, p)
 	a.a_data = data;
 	a.a_fflag = fflag;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_ioctl), &a));
 }
 #endif
@@ -434,26 +434,26 @@ struct vop_fcntl_args {
 	void *a_data;
 	int a_fflag;
 	struct ucred *a_cred;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_fcntl_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
 int VOP_FCNTL(struct vnode *, u_int, void *, int, struct ucred *, 
-    struct proc *)
+    struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_FCNTL(vp, command, data, fflag, cred, p)
+static __inline int VOP_FCNTL(vp, command, data, fflag, cred, l)
 	struct vnode *vp;
 	u_int command;
 	void *data;
 	int fflag;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_fcntl_args a;
 	a.a_desc = VDESC(vop_fcntl);
@@ -462,7 +462,7 @@ static __inline int VOP_FCNTL(vp, command, data, fflag, cred, p)
 	a.a_data = data;
 	a.a_fflag = fflag;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_fcntl), &a));
 }
 #endif
@@ -471,28 +471,28 @@ struct vop_poll_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
 	int a_events;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_poll_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_POLL(struct vnode *, int, struct proc *)
+int VOP_POLL(struct vnode *, int, struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_POLL(vp, events, p)
+static __inline int VOP_POLL(vp, events, l)
 	struct vnode *vp;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_poll_args a;
 	a.a_desc = VDESC(vop_poll);
 	a.a_vp = vp;
 	a.a_events = events;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_poll), &a));
 }
 #endif
@@ -556,30 +556,30 @@ struct vop_mmap_args {
 	struct vnode *a_vp;
 	int a_fflags;
 	struct ucred *a_cred;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_mmap_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_MMAP(struct vnode *, int, struct ucred *, struct proc *)
+int VOP_MMAP(struct vnode *, int, struct ucred *, struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_MMAP(vp, fflags, cred, p)
+static __inline int VOP_MMAP(vp, fflags, cred, l)
 	struct vnode *vp;
 	int fflags;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_mmap_args a;
 	a.a_desc = VDESC(vop_mmap);
 	a.a_vp = vp;
 	a.a_fflags = fflags;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_mmap), &a));
 }
 #endif
@@ -591,26 +591,25 @@ struct vop_fsync_args {
 	int a_flags;
 	off_t a_offlo;
 	off_t a_offhi;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_fsync_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_FSYNC(struct vnode *, struct ucred *, int, off_t, off_t, 
-    struct proc *)
+int VOP_FSYNC(struct vnode *, struct ucred *, int, off_t, off_t, struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_FSYNC(vp, cred, flags, offlo, offhi, p)
+static __inline int VOP_FSYNC(vp, cred, flags, offlo, offhi, l)
 	struct vnode *vp;
 	struct ucred *cred;
 	int flags;
 	off_t offlo;
 	off_t offhi;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_fsync_args a;
 	a.a_desc = VDESC(vop_fsync);
@@ -619,7 +618,7 @@ static __inline int VOP_FSYNC(vp, cred, flags, offlo, offhi, p)
 	a.a_flags = flags;
 	a.a_offlo = offlo;
 	a.a_offhi = offhi;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_fsync), &a));
 }
 #endif
@@ -958,26 +957,26 @@ static __inline int VOP_ABORTOP(dvp, cnp)
 struct vop_inactive_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_inactive_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_INACTIVE(struct vnode *, struct proc *)
+int VOP_INACTIVE(struct vnode *, struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_INACTIVE(vp, p)
+static __inline int VOP_INACTIVE(vp, l)
 	struct vnode *vp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_inactive_args a;
 	a.a_desc = VDESC(vop_inactive);
 	a.a_vp = vp;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_inactive), &a));
 }
 #endif
@@ -985,26 +984,26 @@ static __inline int VOP_INACTIVE(vp, p)
 struct vop_reclaim_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_reclaim_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_RECLAIM(struct vnode *, struct proc *)
+int VOP_RECLAIM(struct vnode *, struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_RECLAIM(vp, p)
+static __inline int VOP_RECLAIM(vp, l)
 	struct vnode *vp;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_reclaim_args a;
 	a.a_desc = VDESC(vop_reclaim);
 	a.a_vp = vp;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_reclaim), &a));
 }
 #endif
@@ -1381,24 +1380,24 @@ struct vop_truncate_args {
 	off_t a_length;
 	int a_flags;
 	struct ucred *a_cred;
-	struct proc *a_p;
+	struct lwp *a_l;
 };
 extern const struct vnodeop_desc vop_truncate_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_TRUNCATE(struct vnode *, off_t, int, struct ucred *, struct proc *)
+int VOP_TRUNCATE(struct vnode *, off_t, int, struct ucred *, struct lwp *)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_TRUNCATE(vp, length, flags, cred, p)
+static __inline int VOP_TRUNCATE(vp, length, flags, cred, l)
 	struct vnode *vp;
 	off_t length;
 	int flags;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct vop_truncate_args a;
 	a.a_desc = VDESC(vop_truncate);
@@ -1406,7 +1405,7 @@ static __inline int VOP_TRUNCATE(vp, length, flags, cred, p)
 	a.a_length = length;
 	a.a_flags = flags;
 	a.a_cred = cred;
-	a.a_p = p;
+	a.a_l = l;
 	return (VCALL(vp, VOFFSET(vop_truncate), &a));
 }
 #endif
@@ -1447,7 +1446,7 @@ static __inline int VOP_UPDATE(vp, access, modify, flags)
 struct vop_lease_args {
 	const struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
-	struct proc *a_p;
+	struct lwp *a_l;
 	struct ucred *a_cred;
 	int a_flag;
 };
@@ -1455,22 +1454,22 @@ extern const struct vnodeop_desc vop_lease_desc;
 #ifndef VNODE_OP_NOINLINE
 static __inline
 #endif
-int VOP_LEASE(struct vnode *, struct proc *, struct ucred *, int)
+int VOP_LEASE(struct vnode *, struct lwp *, struct ucred *, int)
 #ifndef VNODE_OP_NOINLINE
 __attribute__((__unused__))
 #endif
 ;
 #ifndef VNODE_OP_NOINLINE
-static __inline int VOP_LEASE(vp, p, cred, flag)
+static __inline int VOP_LEASE(vp, l, cred, flag)
 	struct vnode *vp;
-	struct proc *p;
+	struct lwp *l;
 	struct ucred *cred;
 	int flag;
 {
 	struct vop_lease_args a;
 	a.a_desc = VDESC(vop_lease);
 	a.a_vp = vp;
-	a.a_p = p;
+	a.a_l = l;
 	a.a_cred = cred;
 	a.a_flag = flag;
 	return (VCALL(vp, VOFFSET(vop_lease), &a));
