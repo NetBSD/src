@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcctl.c,v 1.4 2001/04/12 23:52:22 itojun Exp $	*/
+/*	$NetBSD: lmcctl.c,v 1.5 2001/07/19 00:19:42 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -359,6 +359,11 @@ dumpdata(char *name, lmc_ctl_t *ctl)
 		printf("%s: Lan Media Corporation LMC1000 (T1/E1)\n", name);
 		print_clocking(ctl);
 		print_t1_cable(ctl);
+		print_protocol(ctl);
+		break;
+	case LMC_CTL_CARDTYPE_LMC1200:
+		printf("%s: Lan Media Corperation LMC1200 (T1)\n", name);
+		print_clocking(ctl);
 		print_protocol(ctl);
 		break;
 	default:
