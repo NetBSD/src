@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/07/25 16:47:50 assar Exp $
+#	$NetBSD: Makefile,v 1.4 2001/09/02 22:16:58 wiz Exp $
 
 PROG=		makeinfo
 SRCS=		cmds.c defun.c files.c footnote.c \
@@ -7,8 +7,7 @@ SRCS=		cmds.c defun.c files.c footnote.c \
 		sectioning.c toc.c 
 
 CPPFLAGS+=	-I${DIST}/texinfo/makeinfo
-MKMAN=		no
 
 .include <bsd.prog.mk>
 
-.PATH: ${DIST}/texinfo/makeinfo
+.PATH: ${DIST}/texinfo/makeinfo ${DIST}/texinfo/doc

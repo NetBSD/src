@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2001/09/02 22:16:58 wiz Exp $
 
 PROG=		info
 SRCS=		dir.c display.c doc.c dribble.c echo-area.c filesys.c \
@@ -10,8 +10,6 @@ CPPFLAGS+=	-I${DIST}/texinfo/info \
 LDADD+=		-ltermcap
 DPADD+=		${LIBTERMCAP}
 
-MKMAN=		no
-
 .include <bsd.prog.mk>
 
-.PATH: ${DIST}/texinfo/info
+.PATH: ${DIST}/texinfo/info ${DIST}/texinfo/doc
