@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.13 2002/12/30 16:41:53 veego Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.14 2003/08/21 00:00:52 elric Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -73,12 +73,12 @@ struct ptable_ent {
 
 #define	cdb2devb(bno)	((bno) * ISO_DEFAULT_BLOCK_SIZE / DEV_BSIZE)
 
-static int	pnmatch __P((char *, struct ptable_ent *));
-static int	dirmatch __P((char *, struct iso_directory_record *));
+static int	pnmatch __P((const char *, struct ptable_ent *));
+static int	dirmatch __P((const char *, struct iso_directory_record *));
 
 static int
 pnmatch(path, pp)
-	char *path;
+	const char *path;
 	struct ptable_ent *pp;
 {
 	char *cp;
@@ -97,7 +97,7 @@ pnmatch(path, pp)
 
 static int
 dirmatch(path, dp)
-	char *path;
+	const char *path;
 	struct iso_directory_record *dp;
 {
 	char *cp;
@@ -135,7 +135,7 @@ dirmatch(path, dp)
 
 int
 cd9660_open(path, f)
-	char *path;
+	const char *path;
 	struct open_file *f;
 {
 	struct file *fp = 0;
