@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.2 2001/02/28 18:15:44 bjh21 Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.3 2001/07/07 06:29:13 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -95,7 +95,7 @@ process_read_regs(p, regs)
 {
 	struct trapframe *tf = process_frame(p);
 
-	bcopy((caddr_t)&tf->tf_r0, (caddr_t)regs->r, sizeof(regs->r));
+	memcpy((caddr_t)regs->r, (caddr_t)&tf->tf_r0, sizeof(regs->r));
 	regs->r_sp = tf->tf_usr_sp;
 	regs->r_lr = tf->tf_usr_lr;
 	regs->r_pc = tf->tf_pc;
@@ -126,7 +126,7 @@ process_write_regs(p, regs)
 {
 	struct trapframe *tf = process_frame(p);
 
-	bcopy((caddr_t)regs->r, (caddr_t)&tf->tf_r0, sizeof(regs->r));
+	memcpy((caddr_t)&tf->tf_r0, (caddr_t)regs->r, sizeof(regs->r));
 	tf->tf_usr_sp = regs->r_sp;
 	tf->tf_usr_lr = regs->r_lr;
 	tf->tf_pc = regs->r_pc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_lcd.c,v 1.5 2001/07/02 13:52:30 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_lcd.c,v 1.6 2001/07/07 06:29:13 ichiro Exp $	*/
 #define SALCD_DEBUG
 
 /*
@@ -216,7 +216,7 @@ salcd_fbinit(fb)
 	struct hpcfb_fbconf *fb;
 {
 	/* Initialize fb */
-	bzero(fb, sizeof(*fb));
+	memset(fb, 0, sizeof(*fb));
 
 	fb->hf_conf_index	= 0;    /* configuration index */
 	fb->hf_nconfs		= 1;
