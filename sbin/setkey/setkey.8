@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.12 2001/11/16 10:25:51 wiz Exp $
+.\"	$NetBSD: setkey.8,v 1.13 2001/11/16 12:10:06 wiz Exp $
 .\"	$KAME: setkey.8,v 1.66 2001/09/04 10:05:07 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -126,7 +126,7 @@ Lines starting with hash signs ('#') are treated as comment lines.
 .Op Fl 46n
 .Ar src Ar dst Ar protocol Ar spi
 .Op Ar extensions
-.Ar algorithm...
+.Ar algorithm ...
 .Li ;
 .Xc
 Add an SAD entry.
@@ -509,7 +509,7 @@ If you use the SA by manual keying,
 you can put the decimal number as the policy identifier after
 .Li unique
 separated by colon
-.Sq \:
+.Sq \&:
 like the following;
 .Li unique:number .
 .Li number
@@ -591,6 +591,9 @@ algorithm
 deflate		rfc2394
 .Ed
 .\"
+.Sh RETURN VALUES
+The command exits with 0 on success, and non-zero on errors.
+.\"
 .Sh EXAMPLES
 .Bd -literal -offset
 add 3ffe:501:4819::1 3ffe:501:481d::1 esp 123457
@@ -613,9 +616,6 @@ spdadd 10.0.11.41/32[21] 10.0.11.33/32[any] any
 	-P out ipsec esp/tunnel/192.168.0.1-192.168.1.2/require ;
 
 .Ed
-.\"
-.Sh RETURN VALUES
-The command exits with 0 on success, and non-zero on errors.
 .\"
 .Sh SEE ALSO
 .Xr ipsec_set_policy 3 ,
