@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.7 1998/07/28 12:22:32 mycroft Exp $	*/
+/*	$NetBSD: namespace.h,v 1.8 1998/09/10 16:02:59 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 
 #ifdef __weak_alias
 #define a64l			_a64l
+#define asctime_r		_asctime_r
 #define alarm			_alarm
 #define alphasort		_alphasort
 #define authnone_create		_authnone_create
@@ -100,6 +101,7 @@
 #define closelog		_closelog
 #define confstr			_confstr
 #define ctermid			_ctermid
+#define ctime_r			_ctime_r
 #define daemon			_daemon
 #define dbm_clearerr		_dbm_clearerr
 #define dbm_close		_dbm_close
@@ -185,6 +187,7 @@
 #define getusershell		_getusershell
 #define glob			_glob
 #define globfree		_globfree
+#define gmtime_r		_gmtime_r
 #define group_from_gid		_group_from_gid
 #define heapsort		_heapsort
 #define inet_lnaof		_inet_lnaof
@@ -205,6 +208,7 @@
 #define jrand48			_jrand48
 #define l64a			_l64a
 #define lcong48			_lcong48
+#define localtime_r		_localtime_r
 #define lockf			_lockf
 #define lrand48			_lrand48
 #define mergesort		_mergesort
