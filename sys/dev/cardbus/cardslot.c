@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.8 2000/01/31 08:49:07 haya Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -205,17 +205,16 @@ cardslotattach(parent, self, aux)
 
 STATIC int
 cardslot_cb_print(aux, pnp)
-     void *aux;
-     const char *pnp;
+	void *aux;
+	const char *pnp;
 {
-  struct cbslot_attach_args *cba = aux;
+	struct cbslot_attach_args *cba = aux;
 
-  if (pnp) {
-    printf("cardbus at %s", pnp);
-    printf(" function %d subordinate bus %d", cba->cba_function, cba->cba_bus);
-  }
+	if (pnp) {
+		printf("cardbus at %s subordinate bus %d", pnp, cba->cba_bus);
+	}
 
-  return UNCONF;
+	return UNCONF;
 }
 
 
