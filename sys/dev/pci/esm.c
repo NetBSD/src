@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.28 2004/10/29 12:57:18 yamt Exp $      */
+/*      $NetBSD: esm.c,v 1.29 2005/01/10 22:01:37 kent Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.28 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.29 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,9 +142,9 @@ static inline u_int	calc_timer_freq(struct esm_chinfo*);
 static void		set_timer(struct esm_softc *);
 
 static void		esmch_set_format(struct esm_chinfo *,
-			    struct audio_params *p);
+			    const audio_params_t *);
 static void		esmch_combine_input(struct esm_softc *,
-			    struct esm_chinfo *ch);
+			    struct esm_chinfo *);
 
 /* Power Management */
 void esm_powerhook(int, void *);
@@ -153,8 +153,8 @@ CFATTACH_DECL(esm, sizeof(struct esm_softc),
     esm_match, esm_attach, NULL, NULL);
 
 const struct audio_hw_if esm_hw_if = {
-	esm_open,
-	esm_close,
+	NULL,				/* open */
+	NULL,				/* close */
 	NULL,				/* drain */
 	esm_query_encoding,
 	esm_set_params,
@@ -206,6 +206,17 @@ static audio_encoding_t esm_encoding[] = {
 
 #define MAESTRO_NENCODINGS 8
 
+#define ESM_NFORMATS	4
+static const struct audio_format esm_formats[ESM_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+};
 
 static const struct esm_quirks esm_quirks[] = {
 	/* COMPAL 38W2 OEM Notebook, e.g. Dell INSPIRON 5000e */
@@ -720,7 +731,7 @@ esm_init_input (void *sc, void *start, int size)
 
 int
 esm_trigger_output(void *sc, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, struct audio_params *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct esm_softc *ess = sc;
 	struct esm_chinfo *ch = &ess->pch;
@@ -829,7 +840,7 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 
 int
 esm_trigger_input(void *sc, void *start, void *end, int blksize,
-    void (*intr)(void *), void *arg, struct audio_params *param)
+    void (*intr)(void *), void *arg, const audio_params_t *param)
 {
 	struct esm_softc *ess = sc;
 	struct esm_chinfo *ch = &ess->rch;
@@ -1076,7 +1087,7 @@ set_timer(struct esm_softc *ess)
 
 
 static void
-esmch_set_format(struct esm_chinfo *ch, struct audio_params *p)
+esmch_set_format(struct esm_chinfo *ch, const audio_params_t *p)
 {
 	u_int16_t wcreg_tpl = (ch->base - 16) & WAVCACHE_CHCTL_ADDRTAG_MASK;
 	u_int16_t aputype = APUTYPE_16BITLINEAR;
@@ -1085,7 +1096,7 @@ esmch_set_format(struct esm_chinfo *ch, struct audio_params *p)
 		wcreg_tpl |= WAVCACHE_CHCTL_STEREO;
 		aputype++;
 	}
-	if (p->precision * p->factor == 8) {
+	if (p->precision == 8) {
 		aputype += 2;
 		switch (p->encoding) {
 		case AUDIO_ENCODING_ULINEAR:
@@ -1100,9 +1111,8 @@ esmch_set_format(struct esm_chinfo *ch, struct audio_params *p)
 	ch->sample_rate = p->sample_rate;
 
 	DPRINTF(ESM_DEBUG_PARAM, ("esmch_set_format: "
-	    "numch=%d, prec=%d*%d, tpl=0x%x, aputype=%d, rate=%ld\n",
-	    p->channels, p->precision, p->factor, wcreg_tpl, aputype,
-	    p->sample_rate));
+	    "numch=%u, prec=%u, tpl=0x%x, aputype=%d, rate=%u\n",
+	    p->channels, p->precision, wcreg_tpl, aputype, p->sample_rate));
 }
 
 /*
@@ -1173,22 +1183,6 @@ esmch_combine_input(struct esm_softc *ess, struct esm_chinfo *ch)
  */
 
 int
-esm_open(void *sc, int flags)
-{
-	DPRINTF(ESM_DEBUG_PARAM, ("esm_open(%p, 0x%x)\n", sc, flags));
-
-	return 0;
-}
-
-
-void
-esm_close(void *sc)
-{
-	DPRINTF(ESM_DEBUG_PARAM, ("esm_close(%p)\n", sc));
-}
-
-
-int
 esm_getdev (void *sc, struct audio_device *adp)
 {
 	*adp = esm_device;
@@ -1197,7 +1191,7 @@ esm_getdev (void *sc, struct audio_device *adp)
 
 
 int
-esm_round_blocksize (void *sc, int blk)
+esm_round_blocksize(void *sc, int blk, int mode, const audio_params_t *param)
 {
 	DPRINTF(ESM_DEBUG_PARAM,
 	    ("esm_round_blocksize(%p, 0x%x)", sc, blk));
@@ -1226,16 +1220,21 @@ esm_query_encoding(void *sc, struct audio_encoding *fp)
 
 int
 esm_set_params(void *sc, int setmode, int usemode,
-	struct audio_params *play, struct audio_params *rec)
+	audio_params_t *play, audio_params_t *rec,
+	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct esm_softc *ess = sc;
-	struct audio_params *p;
-	int mode;
+	audio_params_t *p;
+	const audio_params_t *hw_play, *hw_rec;
+	stream_filter_list_t *fil;
+	int mode, i;
 
 	DPRINTF(ESM_DEBUG_PARAM,
 	    ("esm_set_params(%p, 0x%x, 0x%x, %p, %p)\n",
 	    sc, setmode, usemode, play, rec));
 
+	hw_play = NULL;
+	hw_rec = NULL;
 	for (mode = AUMODE_RECORD; mode != -1; 
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
 		if ((setmode & mode) == 0)
@@ -1248,55 +1247,24 @@ esm_set_params(void *sc, int setmode, int usemode,
 		    (p->channels != 1 && p->channels != 2))
 			return EINVAL;
 
-		p->factor = 1;
-		p->sw_code = 0;
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			else
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision != 16)
-				p->sw_code = change_sign8;
-			break;
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = swap_bytes_change_sign16_le;
-				else
-					p->sw_code = change_sign16_swap_bytes_le;
-			}
-			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16)
-				p->sw_code = change_sign16_le;
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_mulaw;
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_le;
-			} else
-				p->sw_code = ulinear8_to_alaw;
-			break;
-		default:
+		fil = mode == AUMODE_PLAY ? pfil : rfil;
+		i = auconv_set_converter(esm_formats, ESM_NFORMATS,
+					 mode, p, FALSE, fil);
+		if (i < 0)
 			return EINVAL;
-		}
+		if (fil->req_size > 0)
+			p = &fil->filters[0].param;
+		if (mode == AUMODE_PLAY)
+			hw_play = p;
+		else
+			hw_rec = p;
 	}
 
 	if (setmode & AUMODE_PLAY)
-		esmch_set_format(&ess->pch, play);
+		esmch_set_format(&ess->pch, hw_play);
 
 	if (setmode & AUMODE_RECORD)
-		esmch_set_format(&ess->rch, rec);
+		esmch_set_format(&ess->rch, hw_rec);
 
 	return 0;
 }
@@ -1692,7 +1660,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	ess->host_if.reset = esm_reset_codec;
 	ess->host_if.flags = esm_flags_codec;
 
-	if (ac97_attach(&ess->host_if) != 0)
+	if (ac97_attach(&ess->host_if, self) != 0)
 		return;
 
 	/* allocate our DMA region */

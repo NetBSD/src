@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.21 2004/11/02 00:40:08 yamt Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.22 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.21 2004/11/02 00:40:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.22 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,14 +84,15 @@ int	cs4281_match(struct device *, struct cfdata *, void *);
 void	cs4281_attach(struct device *, struct device *, void *);
 int	cs4281_intr(void *);
 int	cs4281_query_encoding(void *, struct audio_encoding *);
-int	cs4281_set_params(void *, int, int, struct audio_params *, struct audio_params *);
+int	cs4281_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+			  stream_filter_list_t *, stream_filter_list_t *);
 int	cs4281_halt_output(void *);
 int	cs4281_halt_input(void *);
 int	cs4281_getdev(void *, struct audio_device *);
 int	cs4281_trigger_output(void *, void *, void *, int, void (*)(void *),
-			      void *, struct audio_params *);
+			      void *, const audio_params_t *);
 int	cs4281_trigger_input(void *, void *, void *, int, void (*)(void *),
-			     void *, struct audio_params *);
+			     void *, const audio_params_t *);
 
 int     cs4281_reset_codec(void *);
 
@@ -105,8 +106,8 @@ int      cs4281_init(struct cs428x_softc *, int);
 void cs4281_power(int, void *);
 
 const struct audio_hw_if cs4281_hw_if = {
-	cs428x_open,
-	cs428x_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,
 	cs4281_query_encoding,
 	cs4281_set_params,
@@ -246,9 +247,9 @@ cs4281_attach(parent, self, aux)
 		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, temp1);
 	}
 #endif
-	
+
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, &ih)) { 
+	if (pci_intr_map(pa, &ih)) {
 		aprint_error("%s: couldn't map interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
@@ -279,14 +280,14 @@ cs4281_attach(parent, self, aux)
 	sc->dma_size     = CS4281_BUFFER_SIZE / MAX_CHANNELS;
 	sc->dma_align    = 0x10;
 	sc->hw_blocksize = sc->dma_size / 2;
-	
+
 	/* AC 97 attachment */
 	sc->host_if.arg = sc;
 	sc->host_if.attach = cs428x_attach_codec;
 	sc->host_if.read   = cs428x_read_codec;
 	sc->host_if.write  = cs428x_write_codec;
 	sc->host_if.reset  = cs4281_reset_codec;
-	if (ac97_attach(&sc->host_if) != 0) {
+	if (ac97_attach(&sc->host_if, self) != 0) {
 		aprint_error("%s: ac97_attach failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -441,22 +442,23 @@ cs4281_query_encoding(addr, fp)
 }
 
 int
-cs4281_set_params(addr, setmode, usemode, play, rec)
-	void *addr;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+cs4281_set_params(void *addr, int setmode, int usemode,
+		  audio_params_t *play, audio_params_t *rec,
+		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
+	audio_params_t hw;
 	struct cs428x_softc *sc = addr;
-	struct audio_params *p;
+	audio_params_t *p;
+	stream_filter_list_t *fil;
 	int mode;
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
 		if ((setmode & mode) == 0)
 			continue;
-		
+
 		p = mode == AUMODE_PLAY ? play : rec;
-		
+
 		if (p == play) {
 			DPRINTFN(5, ("play: sample=%ld precision=%d channels=%d\n",
 				p->sample_rate, p->precision, p->channels));
@@ -474,8 +476,8 @@ cs4281_set_params(addr, setmode, usemode, play, rec)
 				return (EINVAL);
 			}
 		}
-		p->factor  = 1;
-		p->sw_code = 0;
+		hw = *p;
+		fil = mode == AUMODE_PLAY ? pfil : rfil;
 
 		switch (p->encoding) {
 		case AUDIO_ENCODING_SLINEAR_BE:
@@ -487,18 +489,14 @@ cs4281_set_params(addr, setmode, usemode, play, rec)
 		case AUDIO_ENCODING_ULINEAR_LE:
 			break;
 		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = mulaw_to_slinear8;
-			} else {
-				p->sw_code = slinear8_to_mulaw;
-			}
+			hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+			fil->append(fil, mode == AUMODE_PLAY ? mulaw_to_linear8
+				    :  linear8_to_mulaw, &hw);
 			break;
 		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = alaw_to_slinear8;
-			} else {
-				p->sw_code = slinear8_to_alaw;
-			}
+			hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+			fil->append(fil, mode == AUMODE_PLAY ? alaw_to_linear8
+				    : linear8_to_alaw, &hw);
 			break;
 		default:
 			return (EINVAL);
@@ -550,7 +548,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct cs428x_softc *sc = addr;
 	u_int32_t fmt=0;
@@ -571,9 +569,8 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	/* stop playback DMA */
 	BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) | DCRn_MSK);
 
-	DPRINTF(("param: precision=%d  factor=%d channels=%d encoding=%d\n",
-	       param->precision, param->factor, param->channels,
-	       param->encoding));
+	DPRINTF(("param: precision=%d channels=%d encoding=%d\n",
+	       param->precision, param->channels, param->encoding));
 	for (p = sc->sc_dmas; p != NULL && BUFADDR(p) != start; p = p->next)
 		;
 	if (p == NULL) {
@@ -598,7 +595,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	}
 
 	dma_count = sc->dma_size;
-	if (param->precision * param->factor != 8)
+	if (param->precision != 8)
 		dma_count /= 2;   /* 16 bit */
 	if (param->channels > 1)
 		dma_count /= 2;   /* Stereo */
@@ -610,7 +607,7 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 
 	/* set playback format */
 	fmt = BA0READ4(sc, CS4281_DMR0) & ~DMRn_FMTMSK;
-	if (param->precision * param->factor == 8)
+	if (param->precision == 8)
 		fmt |= DMRn_SIZE8;
 	if (param->channels == 1)
 		fmt |= DMRn_MONO;
@@ -652,7 +649,7 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	int blksize;
 	void (*intr) __P((void *));
 	void *arg;
-	struct audio_params *param;
+	const audio_params_t *param;
 {
 	struct cs428x_softc *sc = addr;
 	struct cs428x_dma *p;
@@ -688,7 +685,7 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	sc->sc_rn = sc->sc_rs;
 
 	dma_count = sc->dma_size;
-	if (param->precision * param->factor != 8)
+	if (param->precision != 8)
 		dma_count /= 2;
 	if (param->channels > 1)
 		dma_count /= 2;
@@ -700,7 +697,7 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 	/* set recording format */
 	fmt = BA0READ4(sc, CS4281_DMR1) & ~DMRn_FMTMSK;
-	if (param->precision * param->factor == 8)
+	if (param->precision == 8)
 		fmt |= DMRn_SIZE8;
 	if (param->channels == 1)
 		fmt |= DMRn_MONO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.45 2004/07/09 02:07:01 mycroft Exp $	*/
+/*	$NetBSD: am7930.c,v 1.46 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.45 2004/07/09 02:07:01 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.46 2005/01/10 22:01:37 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -229,11 +229,13 @@ am7930_close(addr)
  * XXX should be extended to handle a few of the more common formats.
  */
 int
-am7930_set_params(addr, setmode, usemode, p, r)
+am7930_set_params(addr, setmode, usemode, p, r, pfil, rfil)
 	void *addr;
 	int setmode, usemode;
-	struct audio_params *p, *r;
+	audio_params_t *p, *r;
+	stream_filter_list_t *pfil, *rfil;
 {
+	audio_params_t hw;
 	struct am7930_softc *sc = addr;
 
 	if ((usemode & AUMODE_PLAY) == AUMODE_PLAY) {
@@ -243,9 +245,11 @@ am7930_set_params(addr, setmode, usemode, p, r)
 			p->channels != 1)
 				return EINVAL;
 		p->sample_rate = 8000;
-		if (sc->sc_glue->factor > 1) {
-			p->factor = sc->sc_glue->factor;
-			p->sw_code = sc->sc_glue->output_conv;
+		if (sc->sc_glue->output_conv != NULL) {
+			hw = *p;
+			hw.encoding = AUDIO_ENCODING_NONE;
+			hw.precision *= sc->sc_glue->factor;
+			pfil->append(pfil, sc->sc_glue->output_conv, &hw);
 		}
 	}
 	if ((usemode & AUMODE_RECORD) == AUMODE_RECORD) {
@@ -255,9 +259,11 @@ am7930_set_params(addr, setmode, usemode, p, r)
 			r->channels != 1)
 				return EINVAL;
 		r->sample_rate = 8000;
-		if (sc->sc_glue->factor > 1) {
-			r->factor = sc->sc_glue->factor;
-			r->sw_code = sc->sc_glue->input_conv;
+		if (sc->sc_glue->input_conv != NULL) {
+			hw = *r;
+			hw.encoding = AUDIO_ENCODING_NONE;
+			hw.precision *= sc->sc_glue->factor;
+			pfil->append(rfil, sc->sc_glue->input_conv, &hw);
 		}
 	}
 
@@ -285,9 +291,11 @@ am7930_query_encoding(addr, fp)
 
 
 int
-am7930_round_blocksize(addr, blk)
+am7930_round_blocksize(addr, blk, mode, param)
 	void *addr;
 	int blk;
+	int mode;
+	const audio_params_t *param;
 {
 	return(blk);
 }

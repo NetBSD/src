@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.4 2004/10/31 22:41:23 he Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.5 2005/01/10 22:01:36 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -78,8 +78,6 @@ struct vs_dma {
 
 struct vs_softc {
 	struct device sc_dev;
-
-	void *sc_codec;		/* MI restriction: must be 1st member */
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;

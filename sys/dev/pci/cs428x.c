@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.7 2004/07/09 01:02:32 mycroft Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.8 2005/01/10 22:01:37 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.7 2004/07/09 01:02:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.8 2005/01/10 22:01:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,18 +63,8 @@ int cs428x_debug = 0;
 #endif
 
 int
-cs428x_open(void *addr, int flags)
-{
-	return 0;
-}
-
-void
-cs428x_close(void *addr)
-{
-}
-
-int
-cs428x_round_blocksize(void *addr, int blk)
+cs428x_round_blocksize(void *addr, int blk,
+		       int mode, const audio_params_t *param)
 {
 	struct cs428x_softc *sc;
 	int retval;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.10 2004/09/22 12:20:25 kent Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.11 2005/01/10 22:01:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -209,18 +209,16 @@ void	esm_initcodec(struct esm_softc *);
 int	esm_init_output(void *, void *, int);
 int	esm_init_input(void *, void *, int);
 int	esm_trigger_output(void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *);
+	    void *, const audio_params_t *);
 int	esm_trigger_input(void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *);
+	    void *, const audio_params_t *);
 int	esm_halt_output(void *);
 int	esm_halt_input(void *);
-int	esm_open(void *, int);
-void	esm_close(void *);
 int	esm_getdev(void *, struct audio_device *);
-int	esm_round_blocksize(void *, int);
+int	esm_round_blocksize(void *, int, int, const audio_params_t *);
 int	esm_query_encoding(void *, struct audio_encoding *);
-int	esm_set_params(void *, int, int, struct audio_params *,
-	    struct audio_params *);
+int	esm_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+	    stream_filter_list_t *, stream_filter_list_t *);
 int	esm_set_port(void *, mixer_ctrl_t *);
 int	esm_get_port(void *, mixer_ctrl_t *);
 int	esm_query_devinfo(void *, mixer_devinfo_t *);
