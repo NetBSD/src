@@ -9406,3 +9406,49 @@ Apologies for any names omitted.
 	recipient delimiter if one is defined, so that extended
 	addresses don't get extra delivery concurrency slots.
 	Files: *qmgr/qmgr_message.c.
+
+20040714
+
+	Bugfix: the code to eliminate the local MTA from the MX
+	address list did not handle the case that inet_interfaces
+	produced a less preferred match than proxy_interfaces.
+	Victor Duchovni, Morgan Stanley. File: smtp/smtp_addr.c.
+
+20040723
+
+	Safety: spawn(8) now rejects a user with the -1 UID or GID
+	value, so that commands will not end up running as root.
+	Files:  util/spawn_command.c, spawn/spawn.c.
+
+	Bugfix: "421 Timeout exceeded" wasn't guarded by setjmp().
+	Victor Duchovni, Morgan Stanley. File: smtpd/smtpd.c.
+
+20040801
+
+	Portability: h_errno is not an lvalue in the UnixWare 7.1
+	multi-threaded environment. Olivier PRENANT.
+
+20040812
+
+	Bugfix: update SMTP server error counter when a client is
+	denied access with smtpd_delay_reject=no.
+
+20040817
+
+	Bugfix: The smtp_chat_cmd() output flushing code in the
+	SMTP client could run before an I/O error handler was set
+	up.  Problem diagnosed by Victor Duchovni, Morgan Stanley.
+	The fix is to disable the smtp_chat_cmd() output flushing
+	code as it duplicates better code in smtp_loop().  File:
+	smtp/smtp_chat.c.
+
+20030823
+
+	Bugfix: vstream_popen() did not close the child pipe after
+	failure to fork(). File: util/vstream_popen.c.
+
+20040913
+
+	Bugfix (introduced 20020803): sent the wrong bounce message
+	type when a Delivered-To: loop was detected for a mailing
+	list alias.  Nicolas Riendeau. File: bounce_notify_util.c.
