@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.25 2002/01/24 08:23:11 martti Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.26 2002/01/24 08:23:41 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -193,8 +193,7 @@ typedef	 int	minor_t;
     defined(__sgi)
 typedef u_int32_t       u_32_t;
 # if defined(_KERNEL) && !defined(IPFILTER_LKM)
-#  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 104110000) && \
-      !defined(_LKM)
+#  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 104110000)
 #   include "opt_inet.h"
 #  endif
 #  if defined(__FreeBSD_version) && (__FreeBSD_version >= 400000) && \
@@ -431,6 +430,7 @@ typedef struct {
 #  define	IWCOPYPTR	iwcopyptr
 #  define	FREE_MB_T(m)	freemsg(m)
 #  define	SPL_NET(x)	;
+#  define	SPL_IMP(x)	;
 #  undef	SPL_X
 #  define	SPL_X(x)	;
 #  ifdef sparc
@@ -569,6 +569,7 @@ extern	vm_map_t	kmem_map;
 #  define	SPL_X(x)	(void) splx(x)
 # else
 #  if !SOLARIS && !defined(linux)
+#   define	SPL_IMP(x)	x = splimp()
 #   define	SPL_NET(x)	x = splnet()
 #   define	SPL_X(x)	(void) splx(x)
 #  endif
@@ -590,6 +591,7 @@ extern	vm_map_t	kmem_map;
 # define	RWLOCK_EXIT(x)	;
 # define	MUTEX_EXIT(x)	;
 # define	SPL_NET(x)	;
+# define	SPL_IMP(x)	;
 # undef		SPL_X
 # define	SPL_X(x)	;
 # define	KMALLOC(a,b)	(a) = (b)malloc(sizeof(*a))
@@ -932,7 +934,7 @@ typedef	struct	{
 	__u32	th_seq;
 	__u32	th_ack;
 # if defined(__i386__) || defined(__MIPSEL__) || defined(__alpha__) ||\
-    defined(__vax__)
+    defined(vax)
 	__u8	th_res:4;
 	__u8	th_off:4;
 #else
@@ -954,7 +956,7 @@ typedef	struct	{
 
 typedef	struct	{
 # if defined(__i386__) || defined(__MIPSEL__) || defined(__alpha__) ||\
-    defined(__vax__)
+    defined(vax)
 	__u8	ip_hl:4;
 	__u8	ip_v:4;
 # else
@@ -1058,6 +1060,7 @@ typedef	struct	uio	{
 #  include <linux/netdevice.h>
 #  define	SPL_X(x)
 #  define	SPL_NET(x)
+#  define	SPL_IMP(x)
  
 #  define	bcmp(a,b,c)	memcmp(a,b,c)
 #  define	bcopy(a,b,c)	memcpy(b,a,c)

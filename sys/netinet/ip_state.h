@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.19 2002/01/24 08:23:15 martti Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.20 2002/01/24 08:23:46 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -8,7 +8,6 @@
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
  * Id: ip_state.h,v 2.13.2.9 2002/01/01 15:12:12 darrenr Exp
  */
-
 #ifndef _NETINET_IP_STATE_H_
 #define _NETINET_IP_STATE_H_
 

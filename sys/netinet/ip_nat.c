@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.43 2002/01/24 08:23:13 martti Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.44 2002/01/24 08:23:44 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -7,26 +7,17 @@
  *
  * Added redirect stuff and a LOT of bug fixes. (mcn@EnGarde.com)
  */
-#if !defined(lint)
-#if defined(__NetBSD__)
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.43 2002/01/24 08:23:13 martti Exp $");
-#else
-static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.32 2001/01/10 06:19:11 darrenr Exp";
-#endif
-#endif
-
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
 #define _KERNEL
 #endif
 
-#include <sys/param.h>
 #include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
-    defined(_KERNEL) && !defined(_LKM)
+    defined(_KERNEL)
 # include "opt_ipfilter_log.h"
 #endif
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -110,12 +101,20 @@ extern struct ifnet vpnif;
 #if (__FreeBSD_version >= 300000)
 # include <sys/malloc.h>
 #endif
+#ifndef	MIN
+# define	MIN(a,b)	(((a)<(b))?(a):(b))
+#endif
 #undef	SOCKADDR_IN
 #define	SOCKADDR_IN	struct sockaddr_in
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.44 2002/01/24 08:23:44 martti Exp $");
+#else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.58 2002/01/02 03:40:24 darrenr Exp";
+#endif
 #endif
 
 nat_t	**nat_table[2] = { NULL, NULL },
@@ -312,8 +311,8 @@ fr_info_t *fin;
 u_short *sp;
 u_32_t n;
 {
-	u_short sumshort;
-	u_32_t sum1;
+	register u_short sumshort;
+	register u_32_t sum1;
 
 	if (!n)
 		return;
@@ -339,8 +338,8 @@ fr_info_t *fin;
 u_short *sp;
 u_32_t n;
 {
-	u_short sumshort;
-	u_32_t sum1;
+	register u_short sumshort;
+	register u_32_t sum1;
 
 	if (!n)
 		return;
@@ -355,6 +354,7 @@ u_32_t n;
 	sum1 = (~(*sp)) & 0xffff;
 #else
 	sum1 = (~ntohs(*sp)) & 0xffff;
+#endif
 	sum1 += ~(n) & 0xffff;
 	sum1 = (sum1 >> 16) + (sum1 & 0xffff);
 	/* Again */
@@ -1068,8 +1068,8 @@ struct nat *natd;
  */
 static int nat_flushtable()
 {
-	nat_t *nat, **natp;
-	int j = 0;
+	register nat_t *nat, **natp;
+	register int j = 0;
 
 	/*
 	 * ALL NAT mappings deleted, so lets just make the deletions
@@ -1101,7 +1101,7 @@ static int nat_flushtable()
  */
 int nat_clearlist()
 {
-	ipnat_t *n, **np = &nat_list;
+	register ipnat_t *n, **np = &nat_list;
 	int i = 0;
 
 	if (nat_rules != NULL)
@@ -1142,7 +1142,7 @@ nat_t **natsave;
 u_int flags;
 int direction;
 {
-	u_32_t sum1, sum2, sumd, l;
+	register u_32_t sum1, sum2, sumd, l;
 	u_short port = 0, sport = 0, dport = 0, nport = 0;
 	struct in_addr in, inb;
 	u_short nflags, sp, dp;
@@ -2201,7 +2201,7 @@ int rw;
  * Lookup the NAT tables to search for a matching redirect
  */
 nat_t *nat_lookupredir(np)
-natlookup_t *np;
+register natlookup_t *np;
 {
 	nat_t *nat;
 	fr_info_t fi;
@@ -2275,8 +2275,8 @@ int ip_natout(ip, fin)
 ip_t *ip;
 fr_info_t *fin;
 {
-	ipnat_t *np = NULL;
-	u_32_t ipa;
+	register ipnat_t *np = NULL;
+	register u_32_t ipa;
 	tcphdr_t *tcp = NULL;
 	u_short sport = 0, dport = 0, *csump = NULL;
 	int natadd = 1, i, icmpset = 1;
@@ -2743,7 +2743,7 @@ void ip_natunload()
  */
 void ip_natexpire()
 {
-	struct nat *nat, **natp;
+	register struct nat *nat, **natp;
 #if defined(_KERNEL) && !SOLARIS
 	int s;
 #endif
@@ -2773,9 +2773,9 @@ void ip_natexpire()
 void ip_natsync(ifp)
 void *ifp;
 {
-	ipnat_t *n;
-	nat_t *nat;
-	u_32_t sum1, sum2, sumd;
+	register ipnat_t *n;
+	register nat_t *nat;
+	register u_32_t sum1, sum2, sumd;
 	struct in_addr in;
 	ipnat_t *np;
 	void *ifp2;

@@ -1,25 +1,17 @@
-/*	$NetBSD: ip_proxy.c,v 1.26 2002/01/24 08:23:14 martti Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.27 2002/01/24 08:23:44 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2002 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
-#if !defined(lint)
-#if defined(__NetBSD__)
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.26 2002/01/24 08:23:14 martti Exp $");
-#else
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.1 2000/05/06 12:30:50 darrenr Exp";
-#endif
-#endif
-
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
 # define	_KERNEL
 #endif
 
-#include <sys/param.h>
 #include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
 #if !defined(__FreeBSD_version)  
@@ -83,7 +75,12 @@ static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.1 2000/05/06 12:30:50 da
 #endif
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.27 2002/01/24 08:23:44 martti Exp $");
+#else
 static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.17 2002/01/15 14:36:49 darrenr Exp";
+#endif
 #endif
 
 #if defined(_KERNEL) && (SOLARIS || defined(__sgi))
