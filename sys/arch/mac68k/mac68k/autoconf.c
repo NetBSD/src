@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1995/02/01 13:40:59 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 1995/03/29 07:38:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -196,6 +196,7 @@ mainbus_attach(parent, dev, aux)
 					{"ncrscsi",   0},
 					{"ncr96scsi", 0},
 					{"asc",       0},
+					{"fpu",       0},
 					{"floppy",    0},
 					{NULL,        0}
 			 	};

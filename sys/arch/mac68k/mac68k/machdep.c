@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 1995/03/26 15:53:36 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 1995/03/29 07:38:57 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -182,6 +182,11 @@ int	physmem = MAXMEM;	/* max supported memory, changes to actual */
  */
 int	safepri = PSL_LOWIPL;
 extern int	freebufspace;
+
+/*
+ * For the fpu emulation and fpu driver.
+ */
+int	fpu_type;
 
 #ifdef COMPAT_SUNOS
 void	sunos_sendsig();
@@ -453,11 +458,12 @@ setregs(p, entry, sp, retval)
 	frame->f_pc = entry & ~1;
 	frame->f_regs[SP] = sp;
 
-#ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-#endif
+
+	if (fpu_type) {
+		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+	}
 }
 
 #define SS_RTEFRAME	1
@@ -643,16 +649,18 @@ sendsig(catcher, sig, mask, code)
 			       p->p_pid, exframesize[ft], ft);
 #endif
 	}
-#ifdef FPCOPROC
-	kfp->sf_state.ss_flags |= SS_FPSTATE;
-	m68881_save(&kfp->sf_state.ss_fpstate);
+
+	if (fpu_type) {
+		kfp->sf_state.ss_flags |= SS_FPSTATE;
+		m68881_save(&kfp->sf_state.ss_fpstate);
+	}
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
 		printf("sendsig(%d): copy out FP state (%x) to %x\n",
 		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
 		       &kfp->sf_state.ss_fpstate);
 #endif
-#endif
+
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
@@ -928,7 +936,7 @@ sigreturn(p, uap, retval)
 			       p->p_pid, sz, tstate.ss_frame.f_format);
 #endif
 	}
-#ifdef FPCOPROC
+
 	/*
 	 * Finally we restore the original FP context
 	 */
@@ -939,9 +947,6 @@ sigreturn(p, uap, retval)
 		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
 		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
 		       &tstate.ss_fpstate);
-#endif
-#endif
-#ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sigreturn(%d): returns\n", p->p_pid);
