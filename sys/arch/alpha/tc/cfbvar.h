@@ -1,4 +1,4 @@
-/* $NetBSD: cfbvar.h,v 1.2 1997/04/06 22:30:25 cgd Exp $ */
+/* $NetBSD: cfbvar.h,v 1.3 1998/04/15 21:15:08 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,8 +29,7 @@
 
 #include <machine/cfbreg.h>
 #include <dev/rcons/raster.h>
-#include <alpha/wscons/wsconsvar.h>
-#include <alpha/wscons/wscons_raster.h>
+#include <dev/wscons/wscons_raster.h>
 
 struct cfb_devconfig;
 struct fbcmap;
@@ -59,4 +58,10 @@ struct cfb_softc {
 	struct device sc_dev;
 
 	struct cfb_devconfig *sc_dc;	/* device configuration */
+
+	int nscreens;
 };
+
+#if 0
+int cfb_cnattach __P((tc_addr_t));
+#endif
