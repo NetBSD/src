@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_jazzio.c,v 1.1 2001/06/13 15:02:15 soda Exp $	*/
+/*	$NetBSD: mcclock_jazzio.c,v 1.2 2002/09/27 20:30:32 thorpej Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -60,7 +60,7 @@
 int mcclock_jazzio_match __P((struct device *, struct cfdata *, void *));
 void mcclock_jazzio_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mcclock_jazzio_ca = {
+const struct cfattach mcclock_jazzio_ca = {
 	sizeof(struct mcclock_softc),
 	mcclock_jazzio_match, mcclock_jazzio_attach
 };

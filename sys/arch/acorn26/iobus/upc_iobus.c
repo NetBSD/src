@@ -1,4 +1,4 @@
-/* $NetBSD: upc_iobus.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $ */
+/* $NetBSD: upc_iobus.c,v 1.3 2002/09/27 20:29:04 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: upc_iobus.c,v 1.2 2002/03/24 23:37:44 bjh21 Exp $");
+__RCSID("$NetBSD: upc_iobus.c,v 1.3 2002/09/27 20:29:04 thorpej Exp $");
 
 #include <sys/device.h>
 
@@ -60,7 +60,7 @@ struct upc_iobus_softc {
 	struct evcnt		sc_intrcntp;
 };
 
-struct cfattach upc_iobus_ca = {
+const struct cfattach upc_iobus_ca = {
 	sizeof(struct upc_iobus_softc), upc_iobus_match, upc_iobus_attach
 };
 

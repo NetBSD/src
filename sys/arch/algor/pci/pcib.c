@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.9 2001/06/22 06:02:55 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.10 2002/09/27 20:29:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.9 2001/06/22 06:02:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.10 2002/09/27 20:29:21 thorpej Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -121,7 +121,7 @@ struct pcib_softc {
 int	pcib_match(struct device *, struct cfdata *, void *);
 void	pcib_attach(struct device *, struct device *, void *);
 
-struct cfattach pcib_ca = {
+const struct cfattach pcib_ca = {
 	sizeof(struct pcib_softc), pcib_match, pcib_attach,
 };
 

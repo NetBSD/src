@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_jazzio.c,v 1.1 2001/06/13 15:02:16 soda Exp $	*/
+/*	$NetBSD: timer_jazzio.c,v 1.2 2002/09/27 20:30:34 thorpej Exp $	*/
 /*	$OpenBSD: clock.c,v 1.6 1998/10/15 21:30:15 imp Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ struct timer_jazzio_softc {
 int timer_jazzio_match __P((struct device *, struct cfdata *, void *));
 void timer_jazzio_attach __P((struct device *, struct device *, void *));
 
-struct cfattach timer_jazzio_ca = {
+const struct cfattach timer_jazzio_ca = {
 	sizeof(struct timer_jazzio_softc),
 	timer_jazzio_match, timer_jazzio_attach
 };

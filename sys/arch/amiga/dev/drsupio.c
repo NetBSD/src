@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.11 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: drsupio.c,v 1.12 2002/09/27 20:29:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.11 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsupio.c,v 1.12 2002/09/27 20:29:53 thorpej Exp $");
 
 /*
  * DraCo multi-io chip bus space stuff
@@ -69,7 +69,7 @@ void drsupioattach(struct device *, struct device *, void *);
 int drsupprint(void *auxp, const char *);
 void drlptintack(void *);
 
-struct cfattach drsupio_ca = {
+const struct cfattach drsupio_ca = {
 	sizeof(struct drsupio_softc), drsupiomatch, drsupioattach
 };
 

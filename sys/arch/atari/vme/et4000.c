@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.7 2002/09/27 15:35:54 provos Exp $	*/
+/*	$NetBSD: et4000.c,v 1.8 2002/09/27 20:31:04 thorpej Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -128,7 +128,7 @@ struct et_softc {
 
 #define ET_SC_FLAGS_INUSE 1
 
-struct cfattach et_ca = {
+const struct cfattach et_ca = {
 	sizeof(struct et_softc), et_vme_match, et_vme_attach
 };
 

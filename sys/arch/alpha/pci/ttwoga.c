@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.3 2002/09/27 02:24:09 thorpej Exp $ */
+/* $NetBSD: ttwoga.c,v 1.4 2002/09/27 20:29:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.3 2002/09/27 02:24:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.4 2002/09/27 20:29:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.3 2002/09/27 02:24:09 thorpej Exp $");
 int	ttwogamatch(struct device *, struct cfdata *, void *);
 void	ttwogaattach(struct device *, struct device *, void *);
 
-struct cfattach ttwoga_ca = {
+const struct cfattach ttwoga_ca = {
 	sizeof(struct device), ttwogamatch, ttwogaattach
 };
 
@@ -79,7 +79,7 @@ int	ttwogaprint(void *, const char *);
 int	ttwopcimatch(struct device *, struct cfdata *, void *);
 void	ttwopciattach(struct device *, struct device *, void *);
 
-struct cfattach ttwopci_ca = {
+const struct cfattach ttwopci_ca = {
 	sizeof(struct device), ttwopcimatch, ttwopciattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qms_iomd.c,v 1.4 2002/09/27 15:35:46 provos Exp $	*/
+/*	$NetBSD: qms_iomd.c,v 1.5 2002/09/27 20:30:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -57,7 +57,7 @@ static int  qms_iomd_probe     __P((struct device *, struct cfdata *, void *));
 static void qms_iomd_attach    __P((struct device *, struct device *, void *));
 static void qms_iomd_intenable __P((struct qms_softc *sc, int enable));
 
-struct cfattach qms_iomd_ca = {
+const struct cfattach qms_iomd_ca = {
 	sizeof(struct qms_softc), qms_iomd_probe, qms_iomd_attach
 };
 

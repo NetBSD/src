@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.5 2002/09/27 15:35:54 provos Exp $	*/
+/*	$NetBSD: leo.c,v 1.6 2002/09/27 20:31:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -100,7 +100,7 @@ static int leo_probe __P((bus_space_tag_t *, bus_space_tag_t *,
 static int leo_init __P((struct leo_softc *, int));
 static int leo_scroll __P((struct leo_softc *, int));
 
-struct cfattach leo_ca = {
+const struct cfattach leo_ca = {
 	sizeof(struct leo_softc), leo_match, leo_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.3 2000/05/29 15:43:50 soren Exp $	*/
+/*	$NetBSD: pchb.c,v 1.4 2002/09/27 20:31:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -40,7 +40,7 @@
 static int	pchb_match(struct device *, struct cfdata *, void *);
 static void	pchb_attach(struct device *, struct device *, void *);
 
-struct cfattach pchb_ca = {
+const struct cfattach pchb_ca = {
 	sizeof(struct device), pchb_match, pchb_attach
 };
 

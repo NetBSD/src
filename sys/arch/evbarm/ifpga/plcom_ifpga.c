@@ -1,4 +1,4 @@
-/*      $NetBSD: plcom_ifpga.c,v 1.4 2002/09/27 15:35:59 provos Exp $ */
+/*      $NetBSD: plcom_ifpga.c,v 1.5 2002/09/27 20:31:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -55,7 +55,7 @@ static int  plcom_ifpga_match(struct device *, struct cfdata *, void *);
 static void plcom_ifpga_attach(struct device *, struct device *, void *);
 static void plcom_ifpga_set_mcr(void *, int, u_int);
 
-struct cfattach plcom_ifpga_ca = {
+const struct cfattach plcom_ifpga_ca = {
 	sizeof(struct plcom_softc), plcom_ifpga_match, plcom_ifpga_attach
 };
 

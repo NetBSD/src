@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.10 2002/09/27 15:35:47 provos Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.11 2002/09/27 20:30:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.10 2002/09/27 15:35:47 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.11 2002/09/27 20:30:43 thorpej Exp $");
 
 #include <sys/conf.h>   /* autoconfig functions */
 #include <sys/device.h> /* device calls */
@@ -104,7 +104,7 @@ void vidcaudio_shutdown	__P((void));
 
 static int sound_dma_intr;
 
-struct cfattach vidcaudio_ca = {
+const struct cfattach vidcaudio_ca = {
 	sizeof(struct vidcaudio_softc), vidcaudio_probe, vidcaudio_attach
 };
 

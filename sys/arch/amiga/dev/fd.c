@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.52 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: fd.c,v 1.53 2002/09/27 20:29:54 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.52 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.53 2002/09/27 20:29:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,7 +239,7 @@ struct fdtype fdtype[] = {
 };
 int nfdtype = sizeof(fdtype) / sizeof(*fdtype);
 
-struct cfattach fd_ca = {
+const struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdmatch, fdattach
 };
 
@@ -263,7 +263,7 @@ const struct cdevsw fd_cdevsw = {
 
 struct dkdriver fddkdriver = { fdstrategy };
 
-struct cfattach fdc_ca = {
+const struct cfattach fdc_ca = {
 	sizeof(struct device), fdcmatch, fdcattach
 };
 

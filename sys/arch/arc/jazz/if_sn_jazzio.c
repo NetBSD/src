@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_jazzio.c,v 1.1 2001/07/05 14:42:35 thorpej Exp $	*/
+/*	$NetBSD: if_sn_jazzio.c,v 1.2 2002/09/27 20:30:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 int	sonic_jazzio_match(struct device *, struct cfdata *, void *);
 void	sonic_jazzio_attach(struct device *, struct device *, void *);
 
-struct cfattach sn_jazzio_ca = {
+const struct cfattach sn_jazzio_ca = {
 	sizeof(struct sonic_softc), sonic_jazzio_match,
 	    sonic_jazzio_attach,
 };

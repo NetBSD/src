@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd_iomd.c,v 1.4 2002/09/27 15:35:46 provos Exp $	*/
+/*	$NetBSD: rpckbd_iomd.c,v 1.5 2002/09/27 20:30:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ extern struct rpckbd_softc console_kbd;
 
 /* Device structures */
 
-struct cfattach rpckbd_iomd_ca = {
+const struct cfattach rpckbd_iomd_ca = {
 	sizeof(struct rpckbd_softc), rpckbd_iomd_probe, rpckbd_iomd_attach
 };
 

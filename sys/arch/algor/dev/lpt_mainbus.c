@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mainbus.c,v 1.4 2002/09/27 02:24:07 thorpej Exp $	*/
+/*	$NetBSD: lpt_mainbus.c,v 1.5 2002/09/27 20:29:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.4 2002/09/27 02:24:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.5 2002/09/27 20:29:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ struct lpt_mainbus_softc {
 int	lpt_mainbus_match(struct device *, struct cfdata *, void *);
 void	lpt_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach lpt_mainbus_ca = {
+const struct cfattach lpt_mainbus_ca = {
 	sizeof(struct lpt_mainbus_softc), lpt_mainbus_match,
 	    lpt_mainbus_attach
 };

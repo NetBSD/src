@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_sableio.c,v 1.2 2002/09/27 02:24:09 thorpej Exp $ */
+/* $NetBSD: lpt_sableio.c,v 1.3 2002/09/27 20:29:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_sableio.c,v 1.2 2002/09/27 02:24:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_sableio.c,v 1.3 2002/09/27 20:29:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ struct lpt_sableio_softc {
 int	lpt_sableio_match(struct device *, struct cfdata *, void *);
 void	lpt_sableio_attach(struct device *, struct device *, void *);
 
-struct cfattach lpt_sableio_ca = {
+const struct cfattach lpt_sableio_ca = {
 	sizeof(struct lpt_sableio_softc), lpt_sableio_match, lpt_sableio_attach
 };
 

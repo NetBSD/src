@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.22 2002/01/28 09:56:54 aymeric Exp $ */
+/*	$NetBSD: empsc.c,v 1.23 2002/09/27 20:29:54 thorpej Exp $ */
 
 /*
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: empsc.c,v 1.22 2002/01/28 09:56:54 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: empsc.c,v 1.23 2002/09/27 20:29:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ extern int sci_debug;
 
 extern int sci_data_wait;
 
-struct cfattach empsc_ca = {
+const struct cfattach empsc_ca = {
 	sizeof(struct sci_softc), empscmatch, empscattach
 };
 

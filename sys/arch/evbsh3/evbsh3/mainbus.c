@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2002/03/24 18:14:28 uch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2002/09/27 20:31:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ struct mainbus_attach_args mainbusdevs[] = {
 	{ NULL }	/* terminator */
 };
 
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 

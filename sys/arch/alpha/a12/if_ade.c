@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.15 2002/09/27 15:35:32 provos Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.16 2002/09/27 20:29:22 thorpej Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -4975,7 +4975,7 @@ tulip_pci_probe(
 
 static void tulip_pci_attach(TULIP_PCI_ATTACH_ARGS);
 
-struct cfattach ade_ca = {
+const struct cfattach ade_ca = {
     sizeof(tulip_softc_t), tulip_pci_probe, tulip_pci_attach
 };
 

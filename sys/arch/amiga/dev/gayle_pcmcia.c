@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.12 2002/01/28 09:56:55 aymeric Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.13 2002/09/27 20:29:56 thorpej Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.12 2002/01/28 09:56:55 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.13 2002/09/27 20:29:56 thorpej Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -81,7 +81,7 @@ static bswm(pcmio_bswr1, u_int8_t);
 static bssr(pcmio_bssr1, u_int8_t);
 static bscr(pcmio_bscr1, u_int8_t);
 
-struct cfattach pccard_ca = {
+const struct cfattach pccard_ca = {
 	sizeof(struct pccard_softc), pccard_probe, pccard_attach
 };
 

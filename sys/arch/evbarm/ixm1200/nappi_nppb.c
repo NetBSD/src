@@ -1,4 +1,4 @@
-/*	$NetBSD: nappi_nppb.c,v 1.2 2002/07/21 14:26:05 ichiro Exp $ */
+/*	$NetBSD: nappi_nppb.c,v 1.3 2002/09/27 20:31:31 thorpej Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -54,7 +54,7 @@ static void	nppbattach(struct device *, struct device *, void *);
 
 int	nppb_intr(void *); /* XXX into i21555var.h */
 
-struct cfattach nppb_ca = {
+const struct cfattach nppb_ca = {
 	sizeof(struct device), nppbmatch, nppbattach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.4 2002/09/27 03:17:45 thorpej Exp $ */
+/* $NetBSD: mainbus.c,v 1.5 2002/09/27 20:30:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -72,7 +72,7 @@ static int  mainbussearch __P((struct device *, struct cfdata *, void *));
 
 /* attach and device structures for the device */
 
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbusmatch, mainbusattach
 };
 

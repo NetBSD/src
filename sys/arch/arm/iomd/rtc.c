@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.4 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: rtc.c,v 1.5 2002/09/27 20:30:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -248,7 +248,7 @@ rtc_read(arg, rtc)
 
 /* device and attach structures */
 
-struct cfattach rtc_ca = {
+const struct cfattach rtc_ca = {
 	sizeof(struct rtc_softc), rtcmatch, rtcattach
 };
 

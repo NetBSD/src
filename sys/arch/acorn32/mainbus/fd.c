@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.7 2002/09/27 15:35:29 provos Exp $	*/
+/*	$NetBSD: fd.c,v 1.8 2002/09/27 20:29:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ int fdcprobe __P((struct device *, struct cfdata *, void *));
 int fdprint __P((void *, const char *));
 void fdcattach __P((struct device *, struct device *, void *));
 
-struct cfattach fdc_ca = {
+const struct cfattach fdc_ca = {
 	sizeof(struct fdc_softc), fdcprobe, fdcattach
 };
 
@@ -264,7 +264,7 @@ void fdattach __P((struct device *, struct device *, void *));
 extern char floppy_read_fiq[], floppy_read_fiq_end[];
 extern char floppy_write_fiq[], floppy_write_fiq_end[];
 
-struct cfattach fd_ca = {
+const struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdprobe, fdattach
 };
 

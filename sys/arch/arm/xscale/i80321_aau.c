@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_aau.c,v 1.6 2002/09/27 02:24:09 thorpej Exp $	*/
+/*	$NetBSD: i80321_aau.c,v 1.7 2002/09/27 20:30:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.6 2002/09/27 02:24:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.7 2002/09/27 20:30:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -211,6 +211,6 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 	iopaau_attach(sc);
 }
 
-struct cfattach iopaau_ca = {
+const struct cfattach iopaau_ca = {
 	sizeof(struct aau321_softc), aau321_match, aau321_attach,
 };

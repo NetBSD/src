@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.7 1998/01/12 18:04:14 thorpej Exp $	*/
+/*	$NetBSD: nvram.c,v 1.8 2002/09/27 20:31:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -64,7 +64,7 @@ static u_char	nvram_csum __P((void));
 static void	nvr_attach __P((struct device *, struct device *, void *));
 static int	nvr_match __P((struct device *, struct cfdata *, void *));
 
-struct cfattach nvr_ca = {
+const struct cfattach nvr_ca = {
 	sizeof(struct nvr_softc), nvr_match, nvr_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.64 2002/09/27 15:35:41 provos Exp $ */
+/*	$NetBSD: ser.c,v 1.65 2002/09/27 20:30:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.64 2002/09/27 15:35:41 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.65 2002/09/27 20:30:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ struct ser_softc {
 	struct tty *ser_tty;
 };
 
-struct cfattach ser_ca = {
+const struct cfattach ser_ca = {
 	sizeof(struct ser_softc), sermatch, serattach
 };
 

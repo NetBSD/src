@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.36 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ite.c,v 1.37 2002/09/27 20:30:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -149,7 +149,7 @@ dev_type_cninit(itecninit);
 dev_type_cngetc(itecngetc);
 dev_type_cnputc(itecnputc);
 
-struct cfattach ite_ca = {
+const struct cfattach ite_ca = {
 	sizeof(struct ite_softc), itematch, iteattach
 };
 

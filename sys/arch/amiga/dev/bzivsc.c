@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.12 2002/01/28 09:56:52 aymeric Exp $ */
+/*	$NetBSD: bzivsc.c,v 1.13 2002/09/27 20:29:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.12 2002/01/28 09:56:52 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.13 2002/09/27 20:29:48 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,7 +69,7 @@ void	bzivscattach(struct device *, struct device *, void *);
 int	bzivscmatch(struct device *, struct cfdata *, void *);
 
 /* Linkup to the rest of the kernel */
-struct cfattach bzivsc_ca = {
+const struct cfattach bzivsc_ca = {
 	sizeof(struct bzivsc_softc), bzivscmatch, bzivscattach
 };
 

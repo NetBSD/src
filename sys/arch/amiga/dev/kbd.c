@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.40 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: kbd.c,v 1.41 2002/09/27 20:30:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.40 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.41 2002/09/27 20:30:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ int drkbdputc(u_int8_t);
 int drkbdputc2(u_int8_t, u_int8_t);
 int drkbdwaitfor(int);
 
-struct cfattach kbd_ca = {
+const struct cfattach kbd_ca = {
 	sizeof(struct device), kbdmatch, kbdattach
 };
 

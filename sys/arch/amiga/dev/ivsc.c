@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.30 2002/01/28 09:57:00 aymeric Exp $ */
+/*	$NetBSD: ivsc.c,v 1.31 2002/09/27 20:30:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ivsc.c,v 1.30 2002/01/28 09:57:00 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ivsc.c,v 1.31 2002/09/27 20:30:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ extern int sci_data_wait;
 
 int ivsdma_pseudo = 1;		/* 0=off, 1=on */
 
-struct cfattach ivsc_ca = {
+const struct cfattach ivsc_ca = {
 	sizeof(struct sci_softc), ivscmatch, ivscattach
 };
 

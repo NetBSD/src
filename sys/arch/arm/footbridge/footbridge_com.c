@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.6 2002/09/27 15:35:44 provos Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.7 2002/09/27 20:30:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -114,7 +114,7 @@ int	fcomcngetc	__P((dev_t));
 void	fcomcnputc	__P((dev_t, int));
 void	fcomcnpollc	__P((dev_t, int));
 
-struct cfattach fcom_ca = {
+const struct cfattach fcom_ca = {
 	sizeof(struct fcom_softc), fcom_probe, fcom_attach
 };
 

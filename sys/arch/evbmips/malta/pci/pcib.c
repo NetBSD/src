@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.3 2002/09/27 15:36:01 provos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.4 2002/09/27 20:31:36 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -132,7 +132,7 @@ static int	pcib_isa_intr_alloc(void *, int, int, int *);
 static const char *
 		pcib_isa_intr_string(void *, int);
 
-struct cfattach pcib_ca = {
+const struct cfattach pcib_ca = {
 	sizeof(struct pcib_softc), pcib_match, pcib_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.29 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: mfc.c,v 1.30 2002/09/27 20:30:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.29 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.30 2002/09/27 20:30:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,12 +204,12 @@ int mfcpmatch(struct device *, struct cfdata *, void *);
 #endif
 int mfcintr(void *);
 
-struct cfattach mfc_ca = {
+const struct cfattach mfc_ca = {
 	sizeof(struct mfc_softc), mfcmatch, mfcattach
 };
 
 #if NMFCS > 0
-struct cfattach mfcs_ca = {
+const struct cfattach mfcs_ca = {
 	sizeof(struct mfcs_softc), mfcsmatch, mfcsattach
 };
 
@@ -217,7 +217,7 @@ extern struct cfdriver mfcs_cd;
 #endif
 
 #if NMFCP > 0
-struct cfattach mfcp_ca = {
+const struct cfattach mfcp_ca = {
 	sizeof(struct mfcp_softc), mfcpmatch, mfcpattach
 };
 #endif

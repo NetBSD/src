@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_supio.c,v 1.10 2002/03/24 20:35:43 martin Exp $ */
+/*	$NetBSD: isic_supio.c,v 1.11 2002/09/27 20:30:10 thorpej Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -47,7 +47,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.10 2002/03/24 20:35:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.11 2002/09/27 20:30:10 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,7 +102,7 @@ struct isic_supio_softc {
 	struct bus_space_tag	sc_bst;
 };
 
-struct cfattach isic_supio_ca = {
+const struct cfattach isic_supio_ca = {
 	sizeof(struct isic_supio_softc), isic_supio_match, isic_supio_attach
 };
 

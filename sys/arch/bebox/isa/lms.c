@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: lms.c,v 1.7 2002/09/27 20:31:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -75,7 +75,7 @@ int lmsprobe __P((struct device *, struct cfdata *, void *));
 void lmsattach __P((struct device *, struct device *, void *));
 int lmsintr __P((void *));
 
-struct cfattach lms_ca = {
+const struct cfattach lms_ca = {
 	sizeof(struct lms_softc), lmsprobe, lmsattach
 };
 

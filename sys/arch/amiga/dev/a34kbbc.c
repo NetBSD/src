@@ -1,4 +1,4 @@
-/*	$NetBSD: a34kbbc.c,v 1.10 2002/01/28 09:56:50 aymeric Exp $ */
+/*	$NetBSD: a34kbbc.c,v 1.11 2002/09/27 20:29:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.10 2002/01/28 09:56:50 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.11 2002/09/27 20:29:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: a34kbbc.c,v 1.10 2002/01/28 09:56:50 aymeric Exp $")
 int a34kbbc_match(struct device *, struct cfdata *, void *);
 void a34kbbc_attach(struct device *, struct device *, void *);
 
-struct cfattach a34kbbc_ca = {
+const struct cfattach a34kbbc_ca = {
 	sizeof(struct device), a34kbbc_match, a34kbbc_attach
 };
 

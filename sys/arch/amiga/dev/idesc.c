@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.49 2002/01/28 09:56:57 aymeric Exp $ */
+/*	$NetBSD: idesc.c,v 1.50 2002/09/27 20:30:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.49 2002/01/28 09:56:57 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idesc.c,v 1.50 2002/09/27 20:30:05 thorpej Exp $");
 
 /*
  * A4000 IDE interface, emulating a SCSI controller
@@ -285,7 +285,7 @@ int ide_atapi_start(struct idec_softc *);
 int ide_atapi_intr(struct idec_softc *);
 void ide_atapi_done(struct idec_softc *);
 
-struct cfattach idesc_ca = {
+const struct cfattach idesc_ca = {
 	sizeof(struct idec_softc), idescmatch, idescattach
 };
 

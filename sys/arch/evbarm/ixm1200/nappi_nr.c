@@ -1,4 +1,4 @@
-/* $NetBSD: nappi_nr.c,v 1.1 2002/07/15 17:13:35 ichiro Exp $ */
+/* $NetBSD: nappi_nr.c,v 1.2 2002/09/27 20:31:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ struct nappinr_softc {
 	struct callout		sc_co;
 };
 
-struct cfattach nappinr_ca = {
+const struct cfattach nappinr_ca = {
 	sizeof(struct nappinr_softc), nappinr_match, nappinr_attach
 };
 

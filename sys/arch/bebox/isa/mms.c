@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.7 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: mms.c,v 1.8 2002/09/27 20:31:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -71,7 +71,7 @@ int mmsprobe __P((struct device *, struct cfdata *, void *));
 void mmsattach __P((struct device *, struct device *, void *));
 int mmsintr __P((void *));
 
-struct cfattach mms_ca = {
+const struct cfattach mms_ca = {
 	sizeof(struct mms_softc), mmsprobe, mmsattach
 };
 

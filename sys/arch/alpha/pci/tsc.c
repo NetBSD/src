@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.7 2002/05/16 01:01:32 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.8 2002/09/27 20:29:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.7 2002/05/16 01:01:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.8 2002/09/27 20:29:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.7 2002/05/16 01:01:32 thorpej Exp $");
 int	tscmatch __P((struct device *, struct cfdata *, void *));
 void	tscattach __P((struct device *, struct device *, void *));
 
-struct cfattach tsc_ca = {
+const struct cfattach tsc_ca = {
 	sizeof(struct tsc_softc), tscmatch, tscattach,
 };
 
@@ -75,7 +75,7 @@ static int tscprint __P((void *, const char *pnp));
 int	tspmatch __P((struct device *, struct cfdata *, void *));
 void	tspattach __P((struct device *, struct device *, void *));
 
-struct cfattach tsp_ca = {
+const struct cfattach tsp_ca = {
 	sizeof(struct tsp_softc), tspmatch, tspattach,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.16 2002/09/27 03:17:47 thorpej Exp $	*/
+/*	$NetBSD: maple.c,v 1.17 2002/09/27 20:31:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -95,7 +95,7 @@ int	maple_polling = 0;	/* Are we polling?  (Debugger mode) */
 /*
  * Driver definition.
  */
-struct cfattach maple_ca = {
+const struct cfattach maple_ca = {
 	sizeof(struct maple_softc), maplematch, mapleattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysbeep_isa.c,v 1.1 2002/02/10 12:26:02 chris Exp $	*/
+/*	$NetBSD: sysbeep_isa.c,v 1.2 2002/09/27 20:30:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ void sysbeep_isa_attach __P((struct device *parent, struct device *self, void *a
 void sysbeep_isa __P((int pitch, int period));
 
 /* device attach structure */
-struct cfattach sysbeep_isa_ca = {
+const struct cfattach sysbeep_isa_ca = {
 	sizeof(struct device), sysbeep_isa_match, sysbeep_isa_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.7 2002/09/27 15:35:50 provos Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.8 2002/09/27 20:30:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -83,7 +83,7 @@ static struct saost_softc *saost_sc = NULL;
 #define STATHZ	64
 #endif
 
-struct cfattach saost_ca = {
+const struct cfattach saost_ca = {
 	sizeof(struct saost_softc), saost_match, saost_attach
 };
 

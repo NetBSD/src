@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_isa.c,v 1.2 2002/01/07 21:46:58 thorpej Exp $	*/
+/*	$NetBSD: timer_isa.c,v 1.3 2002/09/27 20:30:28 thorpej Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -74,7 +74,7 @@ struct timer_isa_softc {
 int timer_isa_match __P((struct device *, struct cfdata *, void *));
 void timer_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach timer_isa_ca = {
+const struct cfattach timer_isa_ca = {
 	sizeof(struct timer_isa_softc),
 	timer_isa_match, timer_isa_attach
 };

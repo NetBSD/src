@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpcom_ixm.c,v 1.3 2002/09/27 02:24:12 thorpej Exp $ */
+/*	$NetBSD: ixpcom_ixm.c,v 1.4 2002/09/27 20:31:31 thorpej Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -56,7 +56,7 @@
 static int	ixpcom_ixm_match(struct device *, struct cfdata *, void *);
 static void	ixpcom_ixm_attach(struct device *, struct device *, void *);
 
-struct cfattach ixpcom_ixm_ca = {
+const struct cfattach ixpcom_ixm_ca = {
 	sizeof(struct ixpcom_softc), ixpcom_ixm_match, ixpcom_ixm_attach
 };
 

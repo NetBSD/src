@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.52 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: dcm.c,v 1.53 2002/09/27 20:31:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.52 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.53 2002/09/27 20:31:42 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -298,7 +298,7 @@ void	dcmcnputc __P((dev_t, int));
 int	dcmmatch __P((struct device *, struct cfdata *, void *));
 void	dcmattach __P((struct device *, struct device *, void *));
 
-struct cfattach dcm_ca = {
+const struct cfattach dcm_ca = {
 	sizeof(struct dcm_softc), dcmmatch, dcmattach
 };
 

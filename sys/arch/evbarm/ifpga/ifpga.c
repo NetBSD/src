@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.11 2002/09/27 03:17:47 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.12 2002/09/27 20:31:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -70,7 +70,7 @@ static int  ifpga_print		(void *, const char *);
 static int  ifpga_pci_print	(void *, const char *);
 
 /* Drive and attach structures */
-struct cfattach ifpga_ca = {
+const struct cfattach ifpga_ca = {
 	sizeof(struct ifpga_softc), ifpga_match, ifpga_attach
 };
 

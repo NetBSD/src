@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.41 2002/09/27 15:35:53 provos Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.42 2002/09/27 20:30:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -195,7 +195,7 @@ int	ncr_match __P((struct device *, struct cfdata *, void *));
 #define CANAME(n)	__CONCAT(n,_ca)
 #define CFSTRING(n)	__STRING(n)
 
-struct cfattach CANAME(DRNAME) = {
+const struct cfattach CANAME(DRNAME) = {
 	sizeof(struct ncr_softc), ncr_match, ncr_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.29 2002/01/28 09:56:50 aymeric Exp $ */
+/*	$NetBSD: afsc.c,v 1.30 2002/09/27 20:29:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.29 2002/01/28 09:56:50 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.30 2002/09/27 20:29:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,11 +66,11 @@ void afsc_dump(void);
 #ifdef DEBUG
 #endif
 
-struct cfattach afsc_ca = {
+const struct cfattach afsc_ca = {
 	sizeof(struct siop_softc), afscmatch, afscattach
 };
 
-struct cfattach aftsc_ca = {
+const struct cfattach aftsc_ca = {
 	sizeof(struct siop_softc), afscmatch, afscattach
 };
 

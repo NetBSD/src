@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.3 2002/05/22 22:43:17 bjh21 Exp $	*/
+/*	$NetBSD: amps.c,v 1.4 2002/09/27 20:29:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ int	amps_probe	__P((struct device *, struct cfdata *, void *));
 void	amps_attach	__P((struct device *, struct device *, void *));
 void	amps_shutdown	__P((void *arg));
 
-struct cfattach amps_ca = {
+const struct cfattach amps_ca = {
 	sizeof(struct amps_softc), amps_probe, amps_attach
 };
 
@@ -229,7 +229,7 @@ static void com_amps_attach  __P((struct device *, struct device *, void *));
 
 /* device attach structure */
 
-struct cfattach com_amps_ca = {
+const struct cfattach com_amps_ca = {
 	sizeof(struct com_amps_softc), com_amps_probe, com_amps_attach
 };
 

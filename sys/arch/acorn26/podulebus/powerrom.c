@@ -1,10 +1,10 @@
-/*	$NetBSD: powerrom.c,v 1.1 2002/03/24 15:47:23 bjh21 Exp $	*/
+/*	$NetBSD: powerrom.c,v 1.2 2002/09/27 20:29:09 thorpej Exp $	*/
 
 /* Test driver to see if we can talk to PowerROMs */
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: powerrom.c,v 1.1 2002/03/24 15:47:23 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerrom.c,v 1.2 2002/09/27 20:29:09 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -14,7 +14,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerrom.c,v 1.1 2002/03/24 15:47:23 bjh21 Exp $");
 int  powerrom_match(struct device *, struct cfdata *, void *);
 void powerrom_attach(struct device *, struct device *, void *);
 
-struct cfattach powerrom_ca = {
+const struct cfattach powerrom_ca = {
 	sizeof(struct device), powerrom_match, powerrom_attach
 };
 

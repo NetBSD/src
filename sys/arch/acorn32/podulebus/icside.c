@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.6 2002/09/15 11:27:47 bjh21 Exp $	*/
+/*	$NetBSD: icside.c,v 1.7 2002/09/27 20:29:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.6 2002/09/15 11:27:47 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.7 2002/09/27 20:29:16 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -99,7 +99,7 @@ void	icside_attach(struct device *, struct device *, void *);
 int	icside_intr(void *);
 void	icside_v6_shutdown(void *);
 
-struct cfattach icside_ca = {
+const struct cfattach icside_ca = {
 	sizeof(struct icside_softc), icside_probe, icside_attach
 };
 

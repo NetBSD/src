@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.15 2002/01/28 09:56:53 aymeric Exp $ */
+/*	$NetBSD: com_supio.c,v 1.16 2002/09/27 20:29:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.15 2002/01/28 09:56:53 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.16 2002/09/27 20:29:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ static int comconsrate;
 static tcflag_t comconscflag;
 #endif
 
-struct cfattach com_supio_ca = {
+const struct cfattach com_supio_ca = {
 	sizeof(struct comsupio_softc), com_supio_match, com_supio_attach
 };
 

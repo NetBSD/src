@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.3 2002/01/13 23:02:34 augustss Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.4 2002/09/27 20:31:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -57,7 +57,7 @@ struct com_mainbus_softc {
 static int	com_mainbus_probe(struct device *, struct cfdata *, void *);
 static void	com_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach com_mainbus_ca = {
+const struct cfattach com_mainbus_ca = {
 	sizeof(struct com_mainbus_softc), com_mainbus_probe, com_mainbus_attach
 };
 

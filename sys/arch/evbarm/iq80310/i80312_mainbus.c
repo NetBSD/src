@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.7 2002/09/27 15:36:00 provos Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.8 2002/09/27 20:31:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -60,7 +60,7 @@
 int	i80312_mainbus_match(struct device *, struct cfdata *, void *);
 void	i80312_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach iopxs_mainbus_ca = {
+const struct cfattach iopxs_mainbus_ca = {
 	sizeof(struct i80312_softc), i80312_mainbus_match,
 	    i80312_mainbus_attach,
 };
