@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.1 1999/05/19 03:55:33 gwr Exp $	*/
+/*	$NetBSD: strerror.c,v 1.2 1999/05/27 05:41:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -49,7 +49,7 @@ strerror(num)
 
 	errnum = num;				/* convert to unsigned */
 	if (errnum < sys_nerr)
-		return(sys_errlist[errnum]);
+		return((__aconst char *)sys_errlist[errnum]);
 
 	return("Unknown error number");
 }

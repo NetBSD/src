@@ -1,4 +1,4 @@
-/*	$NetBSD: perror.c,v 1.1 1999/05/19 03:55:33 gwr Exp $	*/
+/*	$NetBSD: perror.c,v 1.2 1999/05/27 05:41:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
+#include <string.h>
 
 /*
  * Simplified from the libc version.

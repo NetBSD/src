@@ -1,4 +1,4 @@
-/*	$NetBSD: strsignal.c,v 1.1 1999/05/19 03:55:33 gwr Exp $	*/
+/*	$NetBSD: strsignal.c,v 1.2 1999/05/27 05:41:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #include <stdio.h>
 #include <signal.h>
-#include <string.h>
+#include <unistd.h>
 
 /*
  * Simplified from the libc version.
@@ -49,7 +49,7 @@ strsignal(num)
 
 	signum = num;				/* convert to unsigned */
 	if (signum < sys_nsig)
-		return((char *)sys_siglist[signum]);
+		return((__aconst char *)sys_siglist[signum]);
 
 	return("Unknown signal number");
 }
