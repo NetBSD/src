@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.4 2003/07/15 02:43:19 lukem Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.4.2.1 2004/06/17 09:24:44 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,8 +48,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.4 2003/07/15 02:43:19 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.4.2.1 2004/06/17 09:24:44 tron Exp $");
 
+#include "opt_kgdb.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -144,7 +145,7 @@ zs_setparam(cs, iena, rate)
  * Called after cninit(), so printf() etc. works.
  */
 void
-zs_kgdb_init()
+zs_kgdb_init(void)
 {
 	struct zs_chanstate cs;
 	volatile struct zschan *zc;
