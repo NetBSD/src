@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.14 2000/04/26 05:36:41 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.15 2000/07/05 21:01:38 thorpej Exp $	*/
 /*	$KAME: in_gif.c,v 1.39 2000/04/26 05:33:31 itojun Exp $	*/
 
 /*
@@ -122,6 +122,8 @@ in_gif_output(ifp, family, m, rt)
 		return EAFNOSUPPORT;
 	}
 
+	bzero(&iphdr, sizeof(iphdr));
+
 	switch (family) {
 #ifdef INET
 	case AF_INET:
@@ -136,6 +138,9 @@ in_gif_output(ifp, family, m, rt)
 		}
 		ip = mtod(m, struct ip *);
 		tos = ip->ip_tos;
+
+		/* RFCs 1853, 2003, 2401 -- copy the DF bit. */
+		iphdr.ip_off |= (ntohs(ip->ip_off) & IP_DF);
 		break;
 	    }
 #endif /*INET*/
@@ -163,7 +168,6 @@ in_gif_output(ifp, family, m, rt)
 		return EAFNOSUPPORT;
 	}
 
-	bzero(&iphdr, sizeof(iphdr));
 	iphdr.ip_src = sin_src->sin_addr;
 	if (ifp->if_flags & IFF_LINK0) {
 		/* multi-destination mode */
