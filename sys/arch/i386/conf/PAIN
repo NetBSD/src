@@ -1,0 +1,46 @@
+#
+# PAIN -- kernel for another of cgd's 486/50 EISA boxes...
+#
+#	$Id: PAIN,v 1.1 1993/05/17 05:25:01 cgd Exp $
+#
+machine         "i386"
+cpu             "i486"
+ident           PAIN
+timezone        8 dst
+maxusers        10
+options         INET,NFSSERVER,NFSCLIENT,MFS
+options         "COMPAT_43"
+options         "TCP_COMPAT_42"
+options         UCONSOLE, XSERVER
+options		FDESC,KERNFS
+options		KTRACE
+options		SCSI
+
+config          netbsd        root on sd0 swap on sd0
+
+controller      isa0
+controller      fdc0     at isa? port "IO_FD1" bio irq 6 drq 2 vector fdintr
+disk            fd0     at fdc0 drive 0
+disk            fd1     at fdc0 drive 1
+
+device          pc0     at isa? port "IO_KBD" tty irq 1 vector pcrint
+device          npx0    at isa? port "IO_NPX" irq 13 vector npxintr
+
+controller      ahb0    at isa? bio irq 11 drq 5 vector ahbintr
+
+disk            sd0     at ahb0 flags 0 drive 000
+disk            sd1     at ahb0 flags 0 drive ?
+tape		st0	at ahb0 flags 1	drive ?
+
+device          we0 at isa? port 0x300 net irq 5 iomem 0xca000 iosiz 8192 vector weintr
+
+pseudo-device   loop		2
+pseudo-device   ether
+pseudo-device   log
+pseudo-device   pty		16
+
+pseudo-device	bpfilter	4
+
+pseudo-device   swappager
+pseudo-device   vnodepager
+pseudo-device   devpager
