@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.7 2001/05/20 20:38:24 uwe Exp $ */
+/*	$NetBSD: promlib.c,v 1.8 2001/06/26 20:21:59 uwe Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,10 +81,12 @@ static char	*obp_v2_getbootargs __P((void));
 static int	obp_v2_finddevice __P((char *));
 static int	obp_ticks __P((void));
 
-int		findchosen __P((void));
+static int	findchosen __P((void));
 static char	*opf_getbootpath __P((void));
 static char	*opf_getbootfile __P((void));
 static char	*opf_getbootargs __P((void));
+static int	opf_finddevice __P((char *));
+static int	opf_instance_to_package __P((int));
 static char	*opf_nextprop __P((int, char *));
 
 
@@ -704,20 +706,43 @@ obp_ticks()
 	return (*((int *)promops.po_tickdata));
 }
 
-int
+static int
 findchosen()
 {
 static	int chosennode;
 	int node;
 
-	if ((node = chosennode) == 0 && (node = OF_finddevice("/chosen")) == 0)
+	if ((node = chosennode) == 0 && (node = OF_finddevice("/chosen")) == -1)
 		panic("no CHOSEN node");
 
 	chosennode = node;
 	return (node);
 }
 
-char *
+static int
+opf_finddevice(name)
+	char *name;
+{
+	int phandle = OF_finddevice(name);
+	if (phandle == -1)
+		return 0;
+	else
+		return phandle;
+}
+
+static int
+opf_instance_to_package(ihandle)
+	int ihandle;
+{
+	int phandle = OF_instance_to_package(ihandle);
+	if (phandle == -1)
+		return 0;
+	else
+		return phandle;
+}
+
+
+static char *
 opf_getbootpath()
 {
 	int node = findchosen();
@@ -730,7 +755,7 @@ opf_getbootpath()
 	return (buf);
 }
 
-char *
+static char *
 opf_getbootargs()
 {
 	int node = findchosen();
@@ -743,7 +768,7 @@ opf_getbootargs()
 	return (parse_bootargs(buf));
 }
 
-char *
+static char *
 opf_getbootfile()
 {
 	int node = findchosen();
@@ -756,7 +781,7 @@ opf_getbootfile()
 	return (parse_bootfile(buf));
 }
 
-char *
+static char *
 opf_nextprop(node, prop)
 	int node;
 	char *prop;
@@ -953,8 +978,8 @@ prom_init_opf()
 	promops.po_read = OF_read;
 	promops.po_write = OF_write;
 	promops.po_seek = OF_seek;
-	promops.po_instance_to_package = OF_instance_to_package;
-	promops.po_finddevice = OF_finddevice;
+	promops.po_instance_to_package = opf_instance_to_package;
+	promops.po_finddevice = opf_finddevice;
 
 	/* Retrieve and cache stdio handles */
 	node = findchosen();
