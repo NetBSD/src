@@ -35,8 +35,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/sys/lib/libnetboot/Attic/netboot.h,v 1.1 1993/10/13 05:41:34 cgd Exp $ (LBL)
+ *	$Id: netboot.h,v 1.2 1993/10/16 07:57:44 cgd Exp $
  */
+
+#include "exec_var.h"
+#include "iodesc.h"
 
 #define BA { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }
 
@@ -56,17 +59,6 @@
 #define ETHER_SIZE 14
 #define	HEADER_SIZE (ETHER_SIZE + 20 + 8)
 
-struct iodesc {
-	n_long	destip;			/* destination ip address */
-	n_long	myip;			/* my ip address */
-	u_short	destport;		/* destination port */
-	u_short	myport;			/* destination port */
-	u_long	xid;			/* transaction identification */
-	u_char	myea[6];		/* my ethernet address */
-	u_char	*fh;			/* pointer to file handle */
-	struct netif *io_netif;
-};
-
 extern	u_char bcea[6];
 extern	char rootpath[FNAME_SIZE];
 extern	char swappath[FNAME_SIZE];
@@ -78,9 +70,15 @@ extern	n_long smask;
 extern	n_long nmask;
 extern	n_long mask;
 extern	time_t bot;
-extern int debug;
+#ifdef DEBUG
+extern	int debug;			/* defined in the machdep sources */
+#endif
+
+/* ARP functions: */
 
 u_char	*arpwhohas __P((struct iodesc *, n_long));
+
+/* ARP functions: */
 
 void	getnfsfh __P((struct iodesc *, char *, u_char *));
 void	getnfsinfo __P((struct iodesc *, time_t *, u_long *, u_long *));
@@ -90,13 +88,13 @@ int	readdata __P((struct iodesc *, u_long, void *, u_long));
 void    readseg __P((struct iodesc *, u_long, u_long, u_long));
 
 
+/* Ethernet functions: */
+
 void	ethernet_init __P((struct iodesc *));
 int	ethernet_put __P((struct iodesc *, void *, int));
 int	ethernet_poll __P((struct iodesc *, void *, int));
 int	ethernet_get __P((struct iodesc *, void *, int, time_t));
 void	ethernet_macaddr __P((struct iodesc *, int, u_char *));
-time_t	getsecs __P((void));
-u_long	gettenths __P((void));
 
 int	sendether __P((struct iodesc *, void *, int, u_char *, int));
 int	sendudp __P((struct iodesc *, void *, int));
@@ -105,7 +103,27 @@ int	sendrecv __P((struct iodesc *, int (*)(struct iodesc *, void *, int),
 	    void *, int, int (*)(struct iodesc *, void *, int), void *, int));
 void	*checkudp __P((struct iodesc *, void *, int *));
 
-void panic __P((const char *, ...));
+/* utilties: */
+void	panic __P((const char *, ...));
 char	*ether_sprintf __P((u_char *));
 int	in_cksum __P((void *, int));
-void	call __P((u_long));
+char	*intoa __P((n_long));			/* similar to inet_ntoa */
+void	call __P((u_long));					/* ??? */
+
+/* Machine-dependent functions: */
+
+time_t	getsecs __P((void));
+u_long	gettenths __P((void));
+void	delay __P((u_long));
+
+int	putchar __P((int));
+#ifdef notyet							 /* XXX */
+int	getchar __P((void));
+/* something to check for a char... */
+#endif
+
+void	machdep_common_ether __P((unsigned char *));
+void	machdep_exec_setup __P((struct exec_var *));
+int	machdep_exec_override __P((int, int));			/* ??? */
+int	machdep_exec __P((int, int));				/* ??? */
+void	machdep_stop __P((void));
