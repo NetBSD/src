@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.125 1999/05/17 17:08:09 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.126 1999/05/20 09:23:34 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.120 1999/05/17 17:07:00 drochner Exp 
+ *	NetBSD: pcidevs,v 1.121 1999/05/20 09:23:08 augustss Exp 
  */
 
 /*
@@ -1144,10 +1144,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ATM PCA-200e",
 	},
 	{
-	    PCI_VENDOR_FUJITSU4, PCI_PRODUCT_FUJITSU4_LTMODEM,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM,
 	    0,
-	    "Fujitsu Limited (4th PCI Vendor ID)",
+	    "AT&T Microelectronics",
 	    "K56flex DSVD LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
+	    0,
+	    "AT&T Microelectronics",
+	    "USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
@@ -5416,9 +5422,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_FUJITSU4, 0,
+	    PCI_VENDOR_LUCENT, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Fujitsu Limited (4th PCI Vendor ID)",
+	    "AT&T Microelectronics",
 	    NULL,
 	},
 	{
