@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.29 1998/03/17 23:50:30 kml Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.30 1998/03/19 22:29:34 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -694,6 +694,8 @@ tcp_setpersist(tp)
 	/*
 	 * Start/restart persistance timer.
 	 */
+	if (t < tp->t_rttmin)
+		t = tp->t_rttmin;
 	TCPT_RANGESET(tp->t_timer[TCPT_PERSIST],
 	    t * tcp_backoff[tp->t_rxtshift],
 	    TCPTV_PERSMIN, TCPTV_PERSMAX);
