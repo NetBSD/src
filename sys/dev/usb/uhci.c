@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.115 2000/05/03 18:21:36 mycroft Exp $	*/
+/*	$NetBSD: uhci.c,v 1.116 2000/05/28 22:02:05 jhawk Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ Static void		uhci_dump_qh __P((uhci_soft_qh_t *));
 Static void		uhci_dump_tds __P((uhci_soft_td_t *));
 Static void		uhci_dump_td __P((uhci_soft_td_t *));
 Static void		uhci_dump_ii __P((uhci_intr_info_t *ii));
-Static void		uhci_dump __P((void));
+void			uhci_dump __P((void));
 #endif
 
 #define UBARR(sc) bus_space_barrier((sc)->iot, (sc)->ioh, 0, (sc)->sc_size, \
