@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 1998/01/21 10:47:37 christos Exp $
+#	$NetBSD: Makefile,v 1.38 1998/03/29 09:27:40 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -28,19 +28,19 @@ CLEANFILES+= mkinit.o mknodes.o mksyntax.o
 CLEANFILES+= ${GENSRCS} y.tab.h
 
 token.h: mktokens
-	sh ${.CURDIR}/mktokens
+	sh ${.ALLSRC}
 
-builtins.c builtins.h: mkbuiltins builtins.def
-	cd ${.CURDIR}; sh mkbuiltins ${.OBJDIR}
+builtins.c builtins.h: mkbuiltins shell.h builtins.def
+	sh ${.ALLSRC} ${.OBJDIR}
 
 init.c: mkinit ${SHSRCS}
-	./mkinit ${.ALLSRC:S/^mkinit$//}
+	${.ALLSRC}
 
 nodes.c nodes.h: mknodes nodetypes nodes.c.pat
-	./mknodes ${.CURDIR}/nodetypes ${.CURDIR}/nodes.c.pat
+	${.ALLSRC}
 
 syntax.c syntax.h: mksyntax
-	./mksyntax
+	${.ALLSRC}
 
 .include <bsd.prog.mk>
 
