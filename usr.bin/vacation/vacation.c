@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.5 1994/11/17 07:55:51 jtc Exp $	*/
+/*	$NetBSD: vacation.c,v 1.6 1994/12/21 07:19:52 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$NetBSD: vacation.c,v 1.5 1994/11/17 07:55:51 jtc Exp $";
+static char rcsid[] = "$NetBSD: vacation.c,v 1.6 1994/12/21 07:19:52 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -88,9 +88,18 @@ typedef struct alias {
 ALIAS *names;
 
 DB *db;
-
 char from[MAXLINE];
 
+int junkmail __P((void));
+int nsearch __P((char *, char *));
+void readheaders __P((void));
+int recent __P((void));
+void sendmessage __P((char *));
+void setinterval __P((time_t));
+void setreply __P((void));
+void usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -189,6 +198,7 @@ main(argc, argv)
  * readheaders --
  *	read mail headers
  */
+void
 readheaders()
 {
 	register ALIAS *cur;
@@ -256,6 +266,7 @@ findme:			for (cur = names; !tome && cur; cur = cur->next)
  * nsearch --
  *	do a nice, slow, search of a string for a substring.
  */
+int
 nsearch(name, str)
 	register char *name, *str;
 {
@@ -271,6 +282,7 @@ nsearch(name, str)
  * junkmail --
  *	read the header and return if automagic/junk/bulk/list mail
  */
+int
 junkmail()
 {
 	static struct ignore {
@@ -315,6 +327,7 @@ junkmail()
  *	find out if user has gotten a vacation message recently.
  *	use bcopy for machines with alignment restrictions
  */
+int
 recent()
 {
 	DBT key, data;
@@ -343,6 +356,7 @@ recent()
  * setinterval --
  *	store the reply interval
  */
+void
 setinterval(interval)
 	time_t interval;
 {
@@ -359,6 +373,7 @@ setinterval(interval)
  * setreply --
  *	store that this user knows about the vacation.
  */
+void
 setreply()
 {
 	DBT key, data;
@@ -376,6 +391,7 @@ setreply()
  * sendmessage --
  *	exec sendmail to send the vacation file to sender
  */
+void
 sendmessage(myname)
 	char *myname;
 {
@@ -417,6 +433,7 @@ sendmessage(myname)
 	fclose(sfp);
 }
 
+void
 usage()
 {
 	syslog(LOG_NOTICE, "uid %u: usage: vacation [-i] [-a alias] login\n",
