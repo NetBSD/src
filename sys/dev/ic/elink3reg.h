@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.11 1996/12/30 19:18:30 jonathan Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.12 1997/04/07 23:49:48 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -185,14 +185,11 @@
 #define TX_RESET		(u_short) (0xb<<11)
 #define REQ_INTR		(u_short) (0xc<<11)
 
-/* busmastering-cards only? */
-#define STATUS_ENABLE		(u_short) (0xf<<11)
-
 /*
  * The following C_* acknowledge the various interrupts.
  * Some of them don't do anything.  See the manual.
  */
-#define ACK_INTR		(u_short) (0x6800)
+#define ACK_INTR		(u_short) (0xd << 11)
 #      define C_INTR_LATCH	(u_short) (ACK_INTR|0x01)
 #      define C_CARD_FAILURE	(u_short) (ACK_INTR|0x02)
 #      define C_TX_COMPLETE	(u_short) (ACK_INTR|0x04)
@@ -201,17 +198,26 @@
 #      define C_RX_EARLY	(u_short) (ACK_INTR|0x20)
 #      define C_INT_RQD		(u_short) (ACK_INTR|0x40)
 #      define C_UPD_STATS	(u_short) (ACK_INTR|0x80)
+
 #define SET_INTR_MASK		(u_short) (0x0e<<11)
+
+/* busmastering-cards only? */
+#define STATUS_ENABLE		(u_short) (0xf<<11)
+
 #define SET_RD_0_MASK		(u_short) (0x0f<<11)
+
 #define SET_RX_FILTER		(u_short) (0x10<<11)
 #      define FIL_INDIVIDUAL	(u_short) (0x01)
 #      define FIL_MULTICAST	(u_short) (0x02)
 #      define FIL_BRDCST	(u_short) (0x04)
 #      define FIL_PROMISC	(u_short) (0x08)
+
 #define SET_RX_EARLY_THRESH	(u_short) (0x11<<11)
 #define SET_TX_AVAIL_THRESH	(u_short) (0x12<<11)
 #define SET_TX_START_THRESH	(u_short) (0x13<<11)
 #define START_DMA		(u_short) (0x14<<11)	/* busmaster-only */
+#  define START_DMA_TX		(START_DMA | 0x0))	/* busmaster-only */
+#  define START_DMA_RX		(START_DMA | 0x1)	/* busmaster-only */
 #define STATS_ENABLE		(u_short) (0x15<<11)
 #define STATS_DISABLE		(u_short) (0x16<<11)
 #define STOP_TRANSCEIVER	(u_short) (0x17<<11)
@@ -314,6 +320,12 @@
 #define TXS_STATUS_OVERFLOW	0x04
 
 /*
+ * RX status
+ *   Window 1/Port 0x08.
+ */
+#define RX_BYTES_MASK			(u_short) (0x07ff)
+
+/*
  * Internal Config and MAC control (Window 3)
  * Window 3 / Port 0: 32-bit internal config register:
  * bits  0-2:    fifo buffer ram  size
@@ -349,18 +361,36 @@
 #define	CONFIG_MEDIAMASK	(u_short) 0x0070
 #define	CONFIG_MEDIAMASK_SHIFT	(u_short)      4
 
-#define CONFIG_MEDIA_10BASE_T	(u_short)   0x00
-#define CONFIG_MEDIA_AUI	(u_short)   0x01
-#define CONFIG_MEDIA_RESV1	(u_short)   0x02
-#define CONFIG_MEDIA_10BASE_2	(u_short)   0x03
-#define CONFIG_MEDIA_100BASE_TX	(u_short)   0x04
-#define CONFIG_MEDIA_100BASE_FX	(u_short)   0x05
-#define CONFIG_MEDIA_MII	(u_short)   0x06
-#define CONFIG_MEDIA_RESV2	(u_short)   0x07	/* 100Base-T4? */
+/* Active media in EP_W3_RESET_OPTIONS mediamask bits */
+
+#define EPMEDIA_10BASE_T		(u_short)   0x00
+#define EPMEDIA_AUI			(u_short)   0x01
+#define EPMEDIA_RESV1			(u_short)   0x02
+#define EPMEDIA_10BASE_2		(u_short)   0x03
+#define EPMEDIA_100BASE_TX		(u_short)   0x04
+#define EPMEDIA_100BASE_FX		(u_short)   0x05
+#define EPMEDIA_MII			(u_short)   0x06
+#define EPMEDIA_100BASE_T4		(u_short)   0x07
 
 
 #define	CONFIG_AUTOSELECT	(u_short) 0x0100
 #define	CONFIG_AUTOSELECT_SHIFT	(u_short)      8
+
+/*
+ * RESET_OPTIONS (Window 4, on Demon/Vortex/Bomerang only)
+ * also mapped to PCI configuration space on PCI adaptors.
+ *
+ * (same register as  Vortex EP_W3_RESET_OPTIONS, mapped to pci-config space)
+ */
+#define EP_PCI_100BASE_T4		(1<<0)
+#define EP_PCI_100BASE_TX		(1<<1)
+#define EP_PCI_100BASE_FX		(1<<2)
+#define EP_PCI_10BASE_T			(1<<3)
+# define EP_PCI_UTP			EP_PCI_10BASE_T
+#define EP_PCI_BNC			(1<<4)
+#define EP_PCI_AUI 			(1<<5)
+#define EP_PCI_100BASE_MII		(1<<6)
+#define EP_PCI_INTERNAL_VCO		(1<<8)
 
 /*
  * FIFO Status (Window 4)
@@ -402,6 +432,40 @@
 #define	FIFOS_TX_OVERRUN	(u_short) 0x0400
 
 /*
+ * ISA/eisa CONFIG_CNTRL media-present bits.
+ */
+#define EP_W0_CC_AUI 			(1<<13)
+#define EP_W0_CC_BNC 			(1<<12)
+#define EP_W0_CC_UTP 			(1<<9)
+
+
+/* EEPROM state flags/commands */
+#define EEPROM_BUSY			(1<<15)
+#define EEPROM_TST_MODE			(1<<14)
+#define READ_EEPROM			(1<<7)
+
+/* window 4, MEDIA_STATUS bits */
+#define SQE_ENABLE			0x08	/* Enables SQE on AUI ports */
+#define JABBER_GUARD_ENABLE		0x40
+#define LINKBEAT_ENABLE			0x80
+#define ENABLE_UTP			(JABBER_GUARD_ENABLE|LINKBEAT_ENABLE)
+#define DISABLE_UTP			0x0
+#define LINKBEAT_DETECT			0x800
+
+/*
+ * ep_connectors softc media-preset bitflags
+ */
+#define EPC_AUI				0x01
+#define EPC_BNC				0x02
+#define EPC_RESERVED			0x04
+#define EPC_UTP				0x08
+#define	EPC_100TX			0x10
+#define	EPC_100FX			0x20
+#define	EPC_MII				0x40
+#define	EPC_100T4			0x80
+
+
+/*
  * Misc defines for various things.
  */
 #define TAG_ADAPTER 			0xd0
@@ -412,58 +476,6 @@
 #define GO_WINDOW(x) 			bus_space_write_2(sc->sc_iot, \
 				sc->sc_ioh, EP_COMMAND, WINDOW_SELECT|x)
 
-/*
- * ep_connectors softc media-preset bitflags
- */
-#define AUI 				0x01
-#define BNC 				0x02
-#define UTP 				0x04
-#define	TX				0x08
-#define	FX				0x10
-#define	T4				0x20
-#define	MII				0x40
-
-
-/*
- * ISA/eisa CONFIG_CNTRL media-present bits.
- * XXX Also used as bus-independent media flags to epconfig().
- */
-#define IS_AUI 				(1<<13)
-#define IS_BNC 				(1<<12)
-#define IS_UTP 				(1<<9)
-/*
- * XXX Bogus values to allow 10/100 PCI media.
- * Should be replaced with Demon, 3c515, or 10/100 PCMCIA  equivalents.
- * for now, make sure they don't overlap 3c509 CONFIG_CNTRL bits.
- */
-#define IS_100BASE_T4			(1<<16)
-#define IS_100BASE_TX			(1<<17)
-#define IS_100BASE_FX			(1<<18)
-#define IS_100BASE_MII			(1<<19)
-
-
-/* EEPROM state flags/commands */
-#define EEPROM_BUSY			(1<<15)
-#define EEPROM_TST_MODE			(1<<14)
-#define READ_EEPROM			(1<<7)
-
-#define ENABLE_UTP			0xc0
-#define DISABLE_UTP			0x0
-#define RX_BYTES_MASK			(u_short) (0x07ff)
-
-/*
- * PCI configuration-space register media-present bits
- * (same register as  Vortex EP_W3_RESET_OPTIONS, mapped to pci-config space)
- */
-#define IS_PCI_100BASE_T4		(1<<0)
-#define IS_PCI_100BASE_TX		(1<<1)
-#define IS_PCI_100BASE_FX		(1<<2)
-#define IS_PCI_10BASE_T			(1<<3)
-# define IS_PCI_UTP			IS_PCI_10BASE_T
-#define IS_PCI_BNC			(1<<4)
-#define IS_PCI_AUI 			(1<<5)
-#define IS_PCI_100BASE_MII		(1<<6)
-#define IS_PCI_INTERNAL_VCO		(1<<8)
 
 /* Used to probe for large-packet support. */
 #define EP_LARGEWIN_PROBE		EP_THRESH_DISABLE
