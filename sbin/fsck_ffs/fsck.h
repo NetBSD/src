@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.10 1995/04/12 21:24:09 mycroft Exp $	*/
+/*	$NetBSD: fsck.h,v 1.11 1996/06/11 07:07:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -154,6 +154,7 @@ struct zlncnt *zlnhead;		/* head of zero link count list */
  */
 struct inoinfo {
 	struct	inoinfo *i_nexthash;	/* next entry in hash chain */
+	struct	inoinfo	*i_child, *i_sibling, *i_parentp;
 	ino_t	i_number;		/* inode number of this entry */
 	ino_t	i_parent;		/* inode number of parent */
 	ino_t	i_dotdot;		/* inode number of `..' */
