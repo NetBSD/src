@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2001/02/23 21:23:45 reinoud Exp $
+#	$NetBSD: Makefile,v 1.3 2001/11/22 17:59:58 thorpej Exp $
 
-SUBDIR=	include include/arm32
+SUBDIR=	include include/arm26 include/arm32
 
 .include <bsd.kinc.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2001/11/09 17:58:00 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -76,15 +76,6 @@
 #ifndef _LKM
 #include "opt_cputypes.h"
 #include "opt_lockdebug.h"
-#include "opt_progmode.h"
-
-#if defined(PROG26) && defined(PROG32)
-#error "26-bit and 32-bit CPU support are not compatible"
-#endif
-#if !defined(PROG26) && !defined(PROG32)
-#error "Support for at least one CPU type must be configured into the kernel"
-#endif
-
 #endif /* !_LKM */
 
 
@@ -97,7 +88,7 @@
 
 #include <arm/armreg.h>
 
-#ifdef PROG32
+#ifdef __PROG32
 #ifdef _LOCORE
 #define IRQdisable \
 	stmfd	sp!, {r0} ; \
@@ -127,7 +118,7 @@
  * CLKF_USERMODE: Return TRUE/FALSE (1/0) depending on whether the
  * frame came from USR mode or not.
  */
-#ifdef PROG32
+#ifdef __PROG32
 #define CLKF_USERMODE(frame)	((frame->if_spsr & PSR_MODE) == PSR_USR32_MODE)
 #else
 #define CLKF_USERMODE(frame)	((frame->if_r15 & R15_MODE) == R15_MODE_USR)
@@ -146,7 +137,7 @@
  * interrupt handler.
  */
 extern int current_intr_depth;
-#ifdef PROG32
+#ifdef __PROG32
 /* Hack to treat FPE time as interrupt time so we can measure it */
 #define CLKF_INTR(frame)						\
 	((current_intr_depth > 1) ||					\
@@ -158,7 +149,7 @@ extern int current_intr_depth;
 /*
  * CLKF_PC: Extract the program counter from a clockframe
  */
-#ifdef PROG32
+#ifdef __PROG32
 #define CLKF_PC(frame)		(frame->if_pc)
 #else
 #define CLKF_PC(frame)		(frame->if_r15 & R15_PC)
@@ -167,7 +158,7 @@ extern int current_intr_depth;
 /*
  * PROC_PC: Find out the program counter for the given process.
  */
-#ifdef PROG32
+#ifdef __PROG32
 #define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_pc)
 #else
 #define PROC_PC(p)	((p)->p_addr->u_pcb.pcb_tf->tf_r15 & R15_PC)
