@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.45 2000/06/06 05:06:25 jhawk Exp $	*/
+/*	$NetBSD: db_command.c,v 1.46 2000/06/08 21:06:46 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -63,6 +63,8 @@
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_ddb.h>
+
+#include "arp.h"
 
 /*
  * Exported global variables
@@ -442,7 +444,7 @@ struct db_command db_show_all_cmds[] = {
 
 struct db_command db_show_cmds[] = {
 	{ "all",	NULL,			0,	db_show_all_cmds },
-#ifdef INET
+#if defined(INET) && (NARP > 0)
 	{ "arptab",	db_show_arptab,		0,	NULL },
 #endif
 	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
