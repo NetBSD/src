@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.9 2001/12/08 04:22:18 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.10 2001/12/16 01:54:30 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.9 2001/12/08 04:22:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.10 2001/12/16 01:54:30 gmcgarry Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -266,6 +266,8 @@ uvm_proc_fork(p1, p2, shared)
 	} else {
 		p2->p_vmspace = uvmspace_fork(p1->p_vmspace);
 	}
+
+	cpu_proc_fork(p1, p2);
 }
 
 
