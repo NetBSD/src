@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.82 2002/06/05 13:51:54 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.83 2002/08/27 13:11:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.82 2002/06/05 13:51:54 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.83 2002/08/27 13:11:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -281,7 +281,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((ch = getopt(argc, argv, "46AadefginN:o:pP:r:RtT:u:vV")) != -1) {
+	while ((ch = getopt(argc, argv, "46AadefginN:o:pP:q:r:RtT:u:vV")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -351,6 +351,12 @@ main(int argc, char *argv[])
 
 		case 'P':
 			ftpport = optarg;
+			break;
+
+		case 'q':
+			quit_time = strtol(optarg, &ep, 10);
+			if (quit_time < 1 || *ep != '\0')
+				errx(1, "bad quit value: %s", optarg);
 			break;
 
 		case 'r':

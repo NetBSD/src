@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.62 2001/12/26 09:40:16 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.63 2002/08/27 13:11:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2001 The NetBSD Foundation, Inc.
@@ -255,6 +255,7 @@ GLOBAL	int	bytesize;	/* local byte size in binary */
 GLOBAL	int	anonftp;	/* automatic anonymous login */
 GLOBAL	int	dirchange;	/* remote directory changed by cd command */
 GLOBAL	int	flushcache;	/* set HTTP cache flush headers with request */
+GLOBAL	int	quit_time;	/* maximum time to wait if stalled */
 GLOBAL	int	rate_get;	/* maximum get xfer rate */
 GLOBAL	int	rate_get_incr;	/* increment for get xfer rate */
 GLOBAL	int	rate_put;	/* maximum put xfer rate */
