@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.20 1999/04/26 01:23:01 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.21 1999/04/26 03:30:48 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -189,10 +189,6 @@ osf1_sys_setsysinfo(p, v, retval)
 	return (0);
 }
 
-#define OSF1_RLIMIT_LASTCOMMON	5		/* last one that's common */
-#define OSF1_RLIMIT_NOFILE	6		/* OSF1's RLIMIT_NOFILE */
-#define OSF1_RLIMIT_NLIMITS	8		/* Number of OSF1 rlimits */
-
 int
 osf1_sys_getrlimit(p, v, retval)
 	struct proc *p;
@@ -202,15 +198,34 @@ osf1_sys_getrlimit(p, v, retval)
 	struct osf1_sys_getrlimit_args *uap = v;
 	struct sys_getrlimit_args a;
 
-	if (SCARG(uap, which) >= OSF1_RLIMIT_NLIMITS)
-		return (EINVAL);
-
-	if (SCARG(uap, which) <= OSF1_RLIMIT_LASTCOMMON)
-		SCARG(&a, which) = SCARG(uap, which);
-	else if (SCARG(uap, which) == OSF1_RLIMIT_NOFILE)
+	switch (SCARG(uap, which)) {
+	case OSF1_RLIMIT_CPU:
+		SCARG(&a, which) = RLIMIT_CPU;
+		break;
+	case OSF1_RLIMIT_FSIZE:
+		SCARG(&a, which) = RLIMIT_FSIZE;
+		break;
+	case OSF1_RLIMIT_DATA:
+		SCARG(&a, which) = RLIMIT_DATA;
+		break;
+	case OSF1_RLIMIT_STACK:
+		SCARG(&a, which) = RLIMIT_STACK;
+		break;
+	case OSF1_RLIMIT_CORE:
+		SCARG(&a, which) = RLIMIT_CORE;
+		break;
+	case OSF1_RLIMIT_RSS:
+		SCARG(&a, which) = RLIMIT_RSS;
+		break;
+	case OSF1_RLIMIT_NOFILE:
 		SCARG(&a, which) = RLIMIT_NOFILE;
-	else
-		return (0);
+		break;
+	case OSF1_RLIMIT_AS:		/* unhandled */
+	default:
+		return (EINVAL);
+	}
+
+	/* XXX should translate */
 	SCARG(&a, rlp) = SCARG(uap, rlp);
 
 	return sys_getrlimit(p, &a, retval);
@@ -225,15 +240,34 @@ osf1_sys_setrlimit(p, v, retval)
 	struct osf1_sys_setrlimit_args *uap = v;
 	struct sys_setrlimit_args a;
 
-	if (SCARG(uap, which) >= OSF1_RLIMIT_NLIMITS)
-		return (EINVAL);
-
-	if (SCARG(uap, which) <= OSF1_RLIMIT_LASTCOMMON)
-		SCARG(&a, which) = SCARG(uap, which);
-	else if (SCARG(uap, which) == OSF1_RLIMIT_NOFILE)
+	switch (SCARG(uap, which)) {
+	case OSF1_RLIMIT_CPU:
+		SCARG(&a, which) = RLIMIT_CPU;
+		break;
+	case OSF1_RLIMIT_FSIZE:
+		SCARG(&a, which) = RLIMIT_FSIZE;
+		break;
+	case OSF1_RLIMIT_DATA:
+		SCARG(&a, which) = RLIMIT_DATA;
+		break;
+	case OSF1_RLIMIT_STACK:
+		SCARG(&a, which) = RLIMIT_STACK;
+		break;
+	case OSF1_RLIMIT_CORE:
+		SCARG(&a, which) = RLIMIT_CORE;
+		break;
+	case OSF1_RLIMIT_RSS:
+		SCARG(&a, which) = RLIMIT_RSS;
+		break;
+	case OSF1_RLIMIT_NOFILE:
 		SCARG(&a, which) = RLIMIT_NOFILE;
-	else
-		return (0);
+		break;
+	case OSF1_RLIMIT_AS:		/* unhandled */
+	default:
+		return (EINVAL);
+	}
+
+	/* XXX should translate */
 	SCARG(&a, rlp) = SCARG(uap, rlp);
 
 	return sys_setrlimit(p, &a, retval);
