@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.90 2002/10/01 12:56:38 fvdl Exp $
+#	$NetBSD: DISKLESS,v 1.91 2003/03/15 19:34:17 jmmv Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -34,6 +34,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
 options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600

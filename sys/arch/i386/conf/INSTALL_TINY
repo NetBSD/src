@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.65 2003/02/01 13:53:37 zuntum Exp $
+#	$NetBSD: INSTALL_TINY,v 1.66 2003/03/15 19:34:17 jmmv Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -78,6 +78,7 @@ options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 #options 	DEBUG		# expensive debugging checks/support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
