@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.35 2001/10/29 07:02:30 simonb Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.36 2001/11/12 15:25:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)uipc_domain.c	8.3 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.36 2001/11/12 15:25:30 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

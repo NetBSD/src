@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.31 2001/10/27 04:53:38 chs Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.32 2001/11/12 15:25:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)vfs_cache.c	8.3 (Berkeley) 8/22/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.32 2001/11/12 15:25:36 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"

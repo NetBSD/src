@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.58 2001/10/30 13:37:21 itohy Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.59 2001/11/12 15:25:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)sys_generic.c	8.9 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.59 2001/11/12 15:25:23 lukem Exp $");
 
 #include "opt_ktrace.h"
 

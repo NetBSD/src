@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.91 2001/07/18 19:10:27 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.92 2001/11/12 15:25:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
  *
  *	@(#)kern_exit.c	8.10 (Berkeley) 2/23/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.92 2001/11/12 15:25:08 lukem Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_sysv.h"
