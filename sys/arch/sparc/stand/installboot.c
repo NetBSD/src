@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.3 1994/11/20 20:54:58 deraadt Exp $ */
+/*	$NetBSD: installboot.c,v 1.4 1995/05/16 15:28:01 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -59,8 +59,9 @@ daddr_t	*blocknums;		/* block number array in prototype image */
 int	maxblocknum;		/* size of this array */
 
 
-char	*loadprotoblocks __P((char *, long *));
-int	loadblocknums __P((char *, int));
+char		*loadprotoblocks __P((char *, long *));
+int		loadblocknums __P((char *, int));
+static void	devread __P((int, void *, daddr_t, size_t, char *));
 
 
 	void
@@ -210,9 +211,9 @@ loadprotoblocks(fname, size)
 	static void
 devread(fd, buf, blk, size, msg)
 	int	fd;
-	char	*buf;
+	void	*buf;
 	daddr_t	blk;
-	int	size;
+	size_t	size;
 	char	*msg;
 {
 	if (lseek(fd, dbtob(blk), SEEK_SET) != dbtob(blk))
