@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.12 2001/12/09 03:07:58 chs Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.13 2003/02/24 10:10:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.12 2001/12/09 03:07:58 chs Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.13 2003/02/24 10:10:00 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -120,7 +120,7 @@ WINDOW *
 openbufcache(void)
 {
 
-	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
+	return (subwin(stdscr, -1, 0, 5, 0));
 }
 
 void
