@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.207 2002/11/23 10:30:04 blymn Exp $
+#	$NetBSD: NetBSD.dist,v 1.208 2002/12/09 12:48:22 scw Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -457,6 +457,7 @@
 ./usr/share/man/cat8/dreamcast
 ./usr/share/man/cat8/evbarm
 ./usr/share/man/cat8/evbmips
+./usr/share/man/cat8/evbppc
 ./usr/share/man/cat8/evbsh3
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/hp700
@@ -490,7 +491,6 @@
 ./usr/share/man/cat8/sun2
 ./usr/share/man/cat8/sun3
 ./usr/share/man/cat8/vax
-./usr/share/man/cat8/walnut
 ./usr/share/man/cat8/x68k
 ./usr/share/man/cat8/x86_64
 ./usr/share/man/cat9
@@ -553,6 +553,7 @@
 ./usr/share/man/man8/dreamcast
 ./usr/share/man/man8/evbarm
 ./usr/share/man/man8/evbmips
+./usr/share/man/man8/evbppc
 ./usr/share/man/man8/evbsh3
 ./usr/share/man/man8/hp300
 ./usr/share/man/man8/hp700
@@ -586,7 +587,6 @@
 ./usr/share/man/man8/sun2
 ./usr/share/man/man8/sun3
 ./usr/share/man/man8/vax
-./usr/share/man/man8/walnut
 ./usr/share/man/man8/x68k
 ./usr/share/man/man8/x86_64
 ./usr/share/man/man9
@@ -649,6 +649,7 @@
 ./usr/share/man/html8/dreamcast
 ./usr/share/man/html8/evbarm
 ./usr/share/man/html8/evbmips
+./usr/share/man/html8/evbppc
 ./usr/share/man/html8/evbsh3
 ./usr/share/man/html8/hp300
 ./usr/share/man/html8/hp700
@@ -682,7 +683,6 @@
 ./usr/share/man/html8/sun2
 ./usr/share/man/html8/sun3
 ./usr/share/man/html8/vax
-./usr/share/man/html8/walnut
 ./usr/share/man/html8/x68k
 ./usr/share/man/html8/x86_64
 ./usr/share/man/html9
