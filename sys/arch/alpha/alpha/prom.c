@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.20 1998/01/29 21:11:58 ross Exp $ */
+/* $NetBSD: prom.c,v 1.21 1998/02/13 02:09:09 cgd Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.20 1998/01/29 21:11:58 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.21 1998/02/13 02:09:09 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,26 +49,36 @@ struct consdev promcons = { NULL, NULL, promcngetc, promcnputc,
 
 struct rpb	*hwrpb;
 int		alpha_console;
-int		prom_mapped = 1;	/* Is PROM still mapped? */
 
 extern struct prom_vec prom_dispatch_v;
 
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+int		prom_mapped = 1;	/* Is PROM still mapped? */
 pt_entry_t	*rom_ptep, rom_pte, saved_pte;	/* XXX */
+#endif
 
 #ifdef NEW_PMAP
 #define	rom_ptep   (curproc ? &curproc->p_vmspace->vm_map.pmap->dir[0] : rom_ptep)
 #endif
 
 void
-init_prom_interface()
+init_prom_interface(rpb)
+	struct rpb *rpb;
 {
 	struct crb *c;
-	char buf[4];
 
-	c = (struct crb*)((char*)hwrpb + hwrpb->rpb_crb_off);
+	c = (struct crb *)((char *)rpb + rpb->rpb_crb_off);
 
         prom_dispatch_v.routine_arg = c->crb_v_dispatch;
         prom_dispatch_v.routine = c->crb_v_dispatch->entry_va;
+}
+
+void
+init_bootstrap_console()
+{
+	char buf[4];
+
+	init_prom_interface(hwrpb);
 
 	prom_getenv(PROM_E_TTY_DEV, buf, 4);
 	alpha_console = buf[0] - '0';
@@ -79,18 +89,24 @@ init_prom_interface()
 
 static int  enter_prom __P((void));
 static void leave_prom __P((int));
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
 static void prom_cache_sync __P((void));
+#endif
 
 static int
 enter_prom __P((void))
 {
-int	s = splhigh();
+	int s = splhigh();
 
-	if (!prom_mapped) {			/* XXX */
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+	if (!prom_mapped) {
+		if (!pmap_uses_prom_console())
+			panic("enter_prom");
 		saved_pte = *rom_ptep;		/* XXX */
 		*rom_ptep = rom_pte;		/* XXX */
 		prom_cache_sync();		/* XXX */
 	}
+#endif
 	return s;
 }
 
@@ -98,19 +114,26 @@ static void
 leave_prom __P((s))
 	int s;
 {
+
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
 	if (!prom_mapped) {
+		if (!pmap_uses_prom_console())
+			panic("leave_prom");
 		*rom_ptep = saved_pte;		/* XXX */
 		prom_cache_sync();		/* XXX */
 	}
+#endif
 	splx(s);
 }
 
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
 static void
 prom_cache_sync __P((void))
 {
 	ALPHA_TBIA();
 	alpha_pal_imb();
 }
+#endif
 
 /*
  * promcnputc:

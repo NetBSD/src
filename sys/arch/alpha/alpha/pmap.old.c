@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.30 1998/01/31 01:32:55 ross Exp $ */
+/* $NetBSD: pmap.old.c,v 1.31 1998/02/13 02:09:07 cgd Exp $ */
 
 /* 
  * Copyright (c) 1991, 1993
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.30 1998/01/31 01:32:55 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.31 1998/02/13 02:09:07 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.30 1998/01/31 01:32:55 ross Exp $");
 #include <vm/vm_page.h>
 
 #include <machine/cpu.h>
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+#include <machine/rpb.h>			/* XXX */
+#endif
 
 #ifdef PMAPSTATS
 struct {
@@ -422,11 +425,28 @@ pmap_bootstrap(firstaddr, ptaddr)
 	 * Set up level 1 page table
 	 */
 
-	/* First, copy mappings for things below VM_MIN_KERNEL_ADDRESS */
-	bcopy((caddr_t)ptaddr, Lev1map,
-	    kvtol1pte(VM_MIN_KERNEL_ADDRESS) * sizeof Lev1map[0]);
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+    {
+	extern pt_entry_t *rom_ptep, rom_pte;		/* XXX */
+	extern int prom_mapped;				/* XXX */
 
-	/* Second, map all of the level 2 pte pages */
+	if (pmap_uses_prom_console()) {
+		/* XXX save old pte so that we can remap prom if necessary */
+		rom_ptep = &Lev1map[0];				/* XXX */
+		rom_pte = *(pt_entry_t *)ptaddr & ~PG_ASM;	/* XXX */
+	}
+	prom_mapped = 0;
+
+	/*
+	 * Actually, this code lies.  The prom is still mapped, and will
+	 * remain so until the context switch after alpha_init() returns.
+	 * Printfs using the firmware before then will end up frobbing
+	 * Lev1map unnecessarily, but that's OK.
+	 */
+    }
+#endif
+
+	/* Map all of the level 2 pte pages */
 	for (i = 0; i < howmany(Sysptmapsize, NPTEPG); i++) {
 		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Sysptmap) + (i*PAGE_SIZE)) >> PGSHIFT)
 		    << PG_SHIFT;
@@ -435,7 +455,7 @@ pmap_bootstrap(firstaddr, ptaddr)
 		    (i*PAGE_SIZE*NPTEPG*NPTEPG))] = pte;
 	}
 
-	/* Finally, map the virtual page table */
+	/* Map the virtual page table */
 	pte = (ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT) << PG_SHIFT;
 	pte |= PG_V | PG_KRE | PG_KWE; /* NOTE NO ASM */
 	Lev1map[kvtol1pte(VPTBASE)] = pte;
@@ -485,33 +505,16 @@ pmap_bootstrap(firstaddr, ptaddr)
 	curproc->p_addr->u_pcb.pcb_hw.apcb_ptbr = ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map) >> PGSHIFT;
 }
 
-/*
- * Unmap the PROM mappings.  PROM mappings are kept around
- * by pmap_bootstrap, so we can still use the prom's printf.
- * Basically, blow away all mappings in the level one PTE
- * table below VM_MIN_KERNEL_ADDRESS.  The Virtual Page Table
- * Is at the end of virtual space, so it's safe.
- */
-void
-pmap_unmap_prom()
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+int
+pmap_uses_prom_console()
 {
-	extern int prom_mapped;
-	extern pt_entry_t *rom_ptep, rom_pte;
+	extern int cputype;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_BOOTSTRAP))
-		printf("pmap_unmap_prom\n");
-#endif
-
-	/* XXX save old pte so that we can remap prom if necessary */
-	rom_ptep = &Lev1map[0];					/* XXX */
-	rom_pte = *rom_ptep & ~PG_ASM;				/* XXX */
-
-	/* Mark all mappings before VM_MIN_KERNEL_ADDRESS as invalid. */
-	bzero(Lev1map, kvtol1pte(VM_MIN_KERNEL_ADDRESS) * sizeof Lev1map[0]);
-	prom_mapped = 0;
-	ALPHA_TBIA();
+	return (cputype == ST_DEC_21000 || cputype == ST_AVALON_A12 ||
+	    cputype == ST_DEC_3000_300 || cputype == ST_DEC_3000_500);
 }
+#endif _PMAP_MAY_USE_PROM_CONSOLE
 
 /*
  * Bootstrap memory allocator. This function allows for early dynamic

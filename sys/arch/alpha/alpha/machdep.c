@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.105 1998/02/13 00:27:37 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.106 1998/02/13 02:09:05 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 1998/02/13 00:27:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 1998/02/13 02:09:05 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +216,9 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	char *p;
 	caddr_t v;
 	caddr_t start, w;
+	char *bootinfo_msg;
+
+	/* NO OUTPUT ALLOWED UNTIL FURTHER NOTICE */
 
 	/*
 	 * Turn off interrupts (not mchecks) and floating point.
@@ -227,36 +230,10 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	alpha_pal_imb();
 
 	/*
-	 * get address of the restart parameter block, while the
-	 * bootstrap mapping is still around.
+	 * Get critical system information (if possible, from the
+	 * information provided by the boot program).
 	 */
-	hwrpb = (struct rpb *)ALPHA_PHYS_TO_K0SEG(
-	    ((struct rpb *)HWRPB_ADDR)->rpb_phys);
-
-	/*
-	 * Remember how many cycles there are per microsecond, 
-	 * so that we can use delay().  Round up, for safety.
-	 */
-	cycles_per_usec = (hwrpb->rpb_cc_freq + 999999) / 1000000;
-
-	/*
-	 * Init the PROM interface, so we can use printf
-	 * until PROM mappings go away in consinit.
-	 */
-	init_prom_interface();
-
-	hz = hwrpb->rpb_intr_freq >> 12;
-	if (!(60 <= hz && hz <= 10240)) {
-		hz = 1024;
-#ifdef DIAGNOSTIC
-		printf("rpb_intr_freq of %ld=>%d hz was not believed\n",
-			hwrpb->rpb_intr_freq, hz);
-#endif
-	}
-
-	/*
-	 * Check for a bootinfo from the boot program.
-	 */
+	bootinfo_msg = NULL;
 	if (bim == BOOTINFO_MAGIC) {
 		if (biv == 0) {		/* backward compat */
 			biv = *(u_long *)bip;
@@ -268,28 +245,42 @@ alpha_init(pfn, ptb, bim, bip, biv)
 
 			bootinfo.ssym = v1p->ssym;
 			bootinfo.esym = v1p->esym;
+			/* hwrpb may not be provided by boot block in v1 */
+			if (v1p->hwrpb != NULL) {
+				bootinfo.hwrpb_phys =
+				    ((struct rpb *)v1p->hwrpb)->rpb_phys;
+				bootinfo.hwrpb_size = v1p->hwrpbsize;
+			} else {
+				bootinfo.hwrpb_phys =
+				    ((struct rpb *)HWRPB_ADDR)->rpb_phys;
+				bootinfo.hwrpb_size =
+				    ((struct rpb *)HWRPB_ADDR)->rpb_size;
+			}
 			bcopy(v1p->boot_flags, bootinfo.boot_flags,
 			    min(sizeof v1p->boot_flags,
 			      sizeof bootinfo.boot_flags));
 			bcopy(v1p->booted_kernel, bootinfo.booted_kernel,
 			    min(sizeof v1p->booted_kernel,
 			      sizeof bootinfo.booted_kernel));
-			/* booted dev not provided by boot block */
+			/* booted dev not provided in bootinfo */
+			init_prom_interface((struct rpb *)
+			    ALPHA_PHYS_TO_K0SEG(bootinfo.hwrpb_phys));
                 	prom_getenv(PROM_E_BOOTED_DEV, bootinfo.booted_dev,
 			    sizeof bootinfo.booted_dev);
 			break;
 		}
 		default:
-			printf("warning: unknown bootinfo version %d\n",
-			    biv);
+			bootinfo_msg = "unknown bootinfo version";
 			goto nobootinfo;
 		}
 	} else {
-		printf("warning: boot program did not pass bootinfo\n");
-
+		bootinfo_msg = "boot program did not pass bootinfo";
 nobootinfo:
 		bootinfo.ssym = (u_long)_end;
 		bootinfo.esym = (u_long)_end;
+		bootinfo.hwrpb_phys = ((struct rpb *)HWRPB_ADDR)->rpb_phys;
+		bootinfo.hwrpb_size = ((struct rpb *)HWRPB_ADDR)->rpb_size;
+		init_prom_interface((struct rpb *)HWRPB_ADDR);
 		prom_getenv(PROM_E_BOOTED_OSFLAGS, bootinfo.boot_flags,
 		    sizeof bootinfo.boot_flags);
 		prom_getenv(PROM_E_BOOTED_FILE, bootinfo.booted_kernel,
@@ -297,6 +288,32 @@ nobootinfo:
 		prom_getenv(PROM_E_BOOTED_DEV, bootinfo.booted_dev,
 		    sizeof bootinfo.booted_dev);
 	}
+
+	/*
+	 * Initialize the kernel's mapping of the RPB.  It's needed for
+	 * lots of things.
+	 */
+	hwrpb = (struct rpb *)ALPHA_PHYS_TO_K0SEG(bootinfo.hwrpb_phys);
+
+	/*
+	 * Remember how many cycles there are per microsecond, 
+	 * so that we can use delay().  Round up, for safety.
+	 */
+	cycles_per_usec = (hwrpb->rpb_cc_freq + 999999) / 1000000;
+
+	/*
+	 * Initalize the (temporary) bootstrap console interface, so
+	 * we can use printf until the VM system starts being setup.
+	 * The real console is initialized before then.
+	 */
+	init_bootstrap_console();
+
+	/* OUTPUT NOW ALLOWED */
+
+	/* delayed from above */
+	if (bootinfo_msg)
+		printf("WARNING: %s (0x%lx, 0x%lx, 0x%lx)\n",
+		    bootinfo_msg, bim, bip, biv);
 
 	/*
 	 * Point interrupt/exception vectors to our own.
@@ -316,7 +333,46 @@ nobootinfo:
 	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
 
 	/*
-	 * find out this CPU's page size
+	 * Find out what hardware we're on, and do basic initialization.
+	 */
+	cputype = hwrpb->rpb_type;
+	if (cputype >= ncpuinit) {
+		platform_not_supported();
+		/* NOTREACHED */
+	}
+	(*cpuinit[cputype].init)();
+	strcpy(cpu_model, platform.model);
+
+	/*
+	 * Initalize the real console, so the the bootstrap console is
+	 * no longer necessary.
+	 */
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+	if (!pmap_uses_prom_console())
+#endif
+		(*platform.cons_init)();
+
+#ifdef DIAGNOSTIC
+	/* Paranoid sanity checking */
+
+	/* We should always be running on the the primary. */
+	assert(hwrpb->rpb_primary_cpu_id == alpha_pal_whami());
+
+	/* On single-CPU systypes, the primary should always be CPU 0. */
+	if (cputype != ST_DEC_21000)
+		assert(hwrpb->rpb_primary_cpu_id == 0);
+#endif
+
+	/* NO MORE FIRMWARE ACCESS ALLOWED */
+#ifdef _PMAP_MAY_USE_PROM_CONSOLE
+	/*
+	 * XXX (unless _PMAP_MAY_USE_PROM_CONSOLE is defined and
+	 * XXX pmap_uses_prom_console() evaluates to non-zero.)
+	 */
+#endif
+
+	/*
+	 * find out this system's page size
 	 */
 	PAGE_SIZE = hwrpb->rpb_page_size;
 	if (PAGE_SIZE != 8192)
@@ -474,24 +530,6 @@ nobootinfo:
 	}
 
 	/*
-	 * Find out what hardware we're on, and remember its type name.
-	 */
-	cputype = hwrpb->rpb_type;
-	if (cputype >= ncpuinit) {
-		platform_not_supported();
-		/* NOTREACHED */
-	}
-	(*cpuinit[cputype].init)();
-	strcpy(cpu_model, platform.model);
-
-	/* XXX SANITY CHECKING.  SHOULD GO AWAY */
-	/* XXX We should always be running on the the primary. */
-	assert(hwrpb->rpb_primary_cpu_id == alpha_pal_whami());		/*XXX*/
-	/* XXX On single-CPU boxes, the primary should always be CPU 0. */
-	if (cputype != ST_DEC_21000)					/*XXX*/
-		assert(hwrpb->rpb_primary_cpu_id == 0);			/*XXX*/
-
-	/*
 	 * Initialize error message buffer (at end of core).
 	 */
 	lastusablepage -= btoc(MSGBUFSIZE);
@@ -619,6 +657,20 @@ nobootinfo:
 	}
 
 	/*
+	 * Initialize debuggers, and break into them if appropriate.
+	 */
+#ifdef DDB
+	db_machine_init();
+	ddb_init(ksym_start, ksym_end);
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+#ifdef KGDB
+	if (boothowto & RB_KDB)
+		kgdb_connect(0);
+#endif
+
+	/*
 	 * Figure out the number of cpus in the box, from RPB fields.
 	 * Really.  We mean it.
 	 */
@@ -630,6 +682,19 @@ nobootinfo:
 		if ((pcsp->pcs_flags & PCS_PP) != 0)
 			ncpus++;
 	}
+
+	/*
+	 * Figure out our clock frequency, from RPB fields.
+	 */
+	hz = hwrpb->rpb_intr_freq >> 12;
+	if (!(60 <= hz && hz <= 10240)) {
+		hz = 1024;
+#ifdef DIAGNOSTIC
+		printf("WARNING: unbelievable rpb_intr_freq: %ld (%d hz)\n",
+			hwrpb->rpb_intr_freq, hz);
+#endif
+	}
+
 }
 
 /*
@@ -695,19 +760,14 @@ allocsys(v)
 void
 consinit()
 {
-	if (platform.cons_init)
-		(*platform.cons_init)();
-	pmap_unmap_prom();
 
-#ifdef DDB
-	db_machine_init();
-	ddb_init(ksym_start, ksym_end);
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef KGDB
-	if (boothowto & RB_KDB)
-		kgdb_connect(0);
+	/*
+	 * Everything related to console initialization is done
+	 * in alpha_init().
+	 */
+#if defined(DIAGNOSTIC) && defined(_PMAP_MAY_USE_PROM_CONSOLE)
+	printf("consinit: %susing prom console\n",
+	    pmap_uses_prom_console() ? "" : "not ");
 #endif
 }
 
