@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.56 2003/01/22 20:36:04 dsl Exp $
+.\"	$NetBSD: sh.1,v 1.57 2003/01/22 22:05:45 wiz Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -219,10 +219,12 @@ builtin (described later).
 .It Fl a Em allexport
 Export all variables assigned to.
 .It Fl c
-Read commands from the command_string operand instead of
-from the standard input.
-Special parameter 0 will be set from the command_name operand
-and the positional parameters ($1, $2 etc)
+Read commands from the
+.Ar command_string
+operand instead of from the standard input.
+Special parameter 0 will be set from the
+.Ar command_name
+operand and the positional parameters ($1, $2, etc.)
 set from the remaining argument operands.
 .It Fl C Em noclobber
 Don't overwrite existing files with
@@ -548,7 +550,7 @@ an executed shell function.
 .Pp
 If a command consists entirely of variable assignments then the
 exit status of the command is that of the last command substitution
-(if any) otherwise 0.
+if any, otherwise 0.
 .Ss Complex Commands
 Complex commands are combinations of simple commands with control
 operators or reserved words, together creating a larger complex command.
@@ -1168,7 +1170,8 @@ that guarantees to find all the standard utilities.
 .It Fl V
 Do not execute the command but
 search for the command and print the resolution of the
-command search.  This is the same as the type builtin.
+command search.
+This is the same as the type builtin.
 .It Fl v
 Do not execute the command but
 search for the command and print the absolute pathname
@@ -1787,7 +1790,7 @@ unless you are the superuser, in which case it defaults to
 The secondary prompt string, which defaults to
 .Dq \*[Gt] \  .
 .It Ev PS4
-Output before each line when execution trace (set -x) in enabled,
+Output before each line when execution trace (set -x) is enabled,
 defaults to
 .Dq + \  .
 .It Ev IFS
@@ -1837,5 +1840,5 @@ It was, however, unmaintainable so we wrote this one.
 Setuid shell scripts should be avoided at all costs, as they are a
 significant security risk.
 .Pp
-PS1, PS2 and PS4 should be subject to parameter expansion before
+PS1, PS2, and PS4 should be subject to parameter expansion before
 being displayed.
