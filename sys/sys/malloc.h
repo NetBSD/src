@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.22 1996/02/22 12:47:33 jtk Exp $	*/
+/*	$NetBSD: malloc.h,v 1.23 1996/04/05 04:52:52 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -120,6 +120,7 @@
 #define	M_ANODE		68	/* adosfs anode structures and tables. */
 #define	M_IPQ		69	/* IP packet queue entry */
 #define	M_AFS		70	/* Andrew File System */
+#define	M_ADOSFSBITMAP	71	/* adosfs bitmap */
 #define	M_TEMP		84	/* misc temporary data buffers */
 #define	M_LAST		85	/* Must be last type + 1 */
 
@@ -195,7 +196,8 @@
 	"adosfs anode",	/* 68 M_ANODE */ \
 	"IP queue ent", /* 69 M_IPQ */ \
 	"afs",		/* 70 M_AFS */ \
-	NULL, NULL, NULL, NULL, NULL, \
+	"adosfs bitmap", /* 71 M_ADOSFSBITMAP */ \
+	NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, \
 	"temp",		/* 84 M_TEMP */ \
