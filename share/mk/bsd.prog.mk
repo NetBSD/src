@@ -1,5 +1,5 @@
 #	from: @(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
-#	$Id: bsd.prog.mk,v 1.32 1993/11/08 02:18:41 cgd Exp $
+#	$Id: bsd.prog.mk,v 1.33 1993/11/10 03:32:48 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -24,7 +24,6 @@ LIBMP?=		/usr/lib/libmp.a
 LIBPC?=		/usr/lib/libpc.a
 LIBPLOT?=	/usr/lib/libplot.a
 LIBRESOLV?=	/usr/lib/libresolv.a
-LIBRPC?=	/usr/lib/librpc.a
 LIBRPCSVC?=	/usr/lib/librpcsvc.a
 LIBTERMCAP?=	/usr/lib/libtermcap.a
 LIBUTIL?=	/usr/lib/libutil.a
