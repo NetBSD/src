@@ -1,5 +1,5 @@
-.\"	$NetBSD: setkey.8,v 1.4 2000/09/20 22:08:01 gmcgarry Exp $
-.\"     $KAME: setkey.8,v 1.28 2000/06/16 12:03:46 sakane Exp $
+.\"	$NetBSD: setkey.8,v 1.5 2000/10/03 21:48:33 itojun Exp $
+.\"     $KAME: setkey.8,v 1.31 2000/08/29 07:32:48 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -503,9 +503,9 @@ des-cbc		64		esp-old: rfc1829, esp: rfc2405
 simple		0 to 2048	rfc2410
 blowfish-cbc	40 to 448	rfc2451
 cast128-cbc	40 to 128	rfc2451
-rc5-cbc		40 to 2040	rfc2451
 des-deriv	64		ipsec-ciph-des-derived-01 (expired)
 3des-deriv	192		no document
+rijndael-cbc	128/192/256	draft-ietf-ipsec-ciph-aes-cbc-00
 .Ed
 .Pp
 Followings are the list of compression algorithms that can be used as
