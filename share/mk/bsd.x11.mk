@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.18 2004/01/01 12:36:14 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.19 2004/01/10 03:28:19 fredb Exp $
 
 .include <bsd.init.mk>
 
@@ -45,10 +45,12 @@ X11FLAGS.EXTENSION+=	-DXF86VIDMODE
 #	ServerDefines
 X11FLAGS.SERVER+=	-DXINPUT -DXFree86XDGA -DXF86VIDMODE
 
-.if ${MACHINE} != "sparc64"
+.if ${MACHINE} != "sparc64" && ${MACHINE} != "mac68k"
 #	OS_DEFINES
 X11FLAGS.OS_DEFINES+=	-DDDXTIME
-.else
+.endif
+
+.if ${MACHINE} == "sparc64"
 #	ServerDefines
 X11FLAGS.SERVER+=	-D_XSERVER64
 .endif
