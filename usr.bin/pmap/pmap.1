@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.1,v 1.10 2003/04/04 03:49:20 atatat Exp $
+.\"	$NetBSD: pmap.1,v 1.11 2003/04/16 12:12:08 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,9 +48,9 @@
 .Op Fl E Ar address
 .Op Fl M Ar core
 .Op Fl N Ar system
+.Op Fl p Ar pid
 .Op Fl S Ar address
 .Op Fl V Ar address
-.Op Fl p Ar pid
 .Op Ar pid ...
 .Sh DESCRIPTION
 The
@@ -217,7 +217,7 @@ it may appear to be a little inscrutable.
 .Pp
 Here is a portion of the default output from pmap being run at an
 .Xr sh 1
-prompt shows the starting address of the map entry, the size of the
+prompt showing the starting address of the map entry, the size of the
 map entry, the current protection level of the map entry, and either
 the name of the file backing the entry or some other descriptive text.
 .Bd -literal -offset indent
