@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.9 2000/03/22 20:58:29 ws Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.10 2000/03/23 20:33:37 ws Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -563,16 +563,8 @@ inpkt(ifp, ibuf, poll)
 					ifp->hisinetaddr, sizeof ifp->hisinetaddr))
 				/* It's a packet from someone else */
 				break;
-			if (!(ifp->flags&IPKDB_HISIP)) {
-				ifp->flags |= IPKDB_HISIP;
-				ipkdbcopy(&ip->ip_src,
-					  ifp->hisinetaddr, sizeof ifp->hisinetaddr);
-			}
-			if (!(ifp->flags&IPKDB_HISHW)) {
-				ifp->flags |= IPKDB_HISHW;
-				ipkdbcopy(eh->ether_shost,
-					  ifp->hisenetaddr, sizeof ifp->hisenetaddr);
-			}
+			if (!(ifp->flags&IPKDB_HISIP))
+				break;
 			return (char *)(udp + 1);
 		default:
 			/* unknown type */
@@ -760,7 +752,7 @@ setNl(vs, l)
 /* This is the central step in the MD5 algorithm. */
 #define	ipkdb_MD5STEP(f, w, x, y, z, data, s) \
 	((w) += f(x, y, z) + (data), \
-	 (w) = ((w) << (s)) | (((w) >> (32 - 2)) & 0xffffffff), \
+	 (w) = ((w) << (s)) | (((w) >> (32 - s)) & 0xffffffff), \
 	 (w) += (x))
 
 /*
@@ -772,8 +764,8 @@ static void
 ipkdb_MD5Transform(ctx)
 	struct ipkdb_MD5Context *ctx;
 {
-	int a, b, c, d, i;
-	int in[16];
+	u_int a, b, c, d, i;
+	u_int in[16];
 	
 	for (i = 0; i < 16; i++)
 		in[i] = getNl(ctx->in + 4 * i);
@@ -889,7 +881,7 @@ ipkdb_MD5Update(ctx, buf, len)
 	/* Update bitcount */
 	t = ctx->bits[0];
 	if ((ctx->bits[0] = (t + (len << 3)) & 0xffffffff) < t)
-		ctx->bits[1]++;	/* Carry form low to high */
+		ctx->bits[1]++;	/* Carry from low to high */
 	ctx->bits[1] += (len >> 29) & 0xffffffff;
 	
 	t = (t >> 3) & 0x3f;	/* Bytes already in ctx->in */
