@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 1999/03/26 08:15:23 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.21 1999/03/26 08:32:15 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -396,8 +396,10 @@ copyin(udaddr, kaddr, len)
 	size_t l;
 	faultbuf env;
 
-	if (setfault(env))
+	if (setfault(env)) {
+		curpcb->pcb_onfault = 0;
 		return EFAULT;
+	}
 	while (len > 0) {
 		p = (char *)USER_ADDR + ((u_int)up & ~SEGMENT_MASK);
 		l = ((char *)USER_ADDR + SEGMENT_LENGTH) - p;
@@ -425,8 +427,10 @@ copyout(kaddr, udaddr, len)
 	size_t l;
 	faultbuf env;
 
-	if (setfault(env))
+	if (setfault(env)) {
+		curpcb->pcb_onfault = 0;
 		return EFAULT;
+	}
 	while (len > 0) {
 		p = (char *)USER_ADDR + ((u_int)up & ~SEGMENT_MASK);
 		l = ((char *)USER_ADDR + SEGMENT_LENGTH) - p;
