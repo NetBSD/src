@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.48 1999/06/22 04:29:54 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.49 1999/06/23 22:55:14 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -668,15 +668,6 @@ some files were not extracted correctly and your system will not be
 complete.
 
 Continue extracting sets?}
-
-message etc_hosts
-{
-#
-#Added by NetBSD sysinst
-#
-%s %s.%s %s
-127.0.0.1 localhost
-}
 
 message partitions_overlap
 {partitions %c and %c overlap.}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.23 1999/06/22 12:45:26 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.24 1999/06/23 22:55:14 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -690,15 +690,6 @@ Ceci signifie que certains fichiers n'ont pas étés extraits
 correctement et que votre système n'est pas complet.
 
 Voulez-vous continuer à extraire les composants ?}
-
-message etc_hosts
-{
-#
-#Added by NetBSD sysinst
-#
-%s %s.%s %s
-127.0.0.1 localhost
-}
 
 message partitions_overlap
 {Les partitions %c et %c se recouvrent.}
