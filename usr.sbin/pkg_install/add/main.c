@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.21 2001/04/19 12:31:59 dmcmahill Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2001/04/21 01:38:14 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 2001/04/19 12:31:59 dmcmahill Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2001/04/21 01:38:14 hubertf Exp $");
 #endif
 #endif
 
@@ -179,7 +179,10 @@ main(int argc, char **argv)
 						 * pkgs - feature? */
 						char *e;
 						
-						e = strdup(getenv("PKG_PATH"));
+						if (getenv("PKG_PATH"))
+							e = strdup(getenv("PKG_PATH"));
+						else
+							e = NULL;
 						s = NULL;
 						while(s==NULL && e && *e) {
 							char *e2 = strsep(&e, ";");
