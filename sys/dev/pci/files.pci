@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.148 2001/12/05 03:50:09 simonb Exp $
+#	$NetBSD: files.pci,v 1.149 2001/12/05 11:41:16 wiz Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -7,10 +7,10 @@
 defflag	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP PCI_NETBSD_CONFIGURE
 defparam opt_pci.h	PCI_NETBSD_ENABLE_IDE
 
-defflag	opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
+defflag	opt_bktr.h	BKTR_430_FX_MODE BKTR_GPIO_ACCESS BKTR_NO_MSP_RESET
+			BKTR_REVERSE_MUTE BKTR_SIS_VIA_MODE BKTR_USE_PLL
+defparam opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 			BKTR_OVERRIDE_MSP BKTR_SYSTEM_DEFAULT
-			BKTR_USE_PLL BKTR_GPIO_ACCESS BKTR_NO_MSP_RESET
-			BKTR_430_FX_MODE BKTR_SIS_VIA_MODE
 
 defflag	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
 			PCIIDE_CMD0646U_ENABLEUDMA
