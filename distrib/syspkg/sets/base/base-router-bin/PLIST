@@ -1,9 +1,0 @@
-@cwd /
-./usr/sbin/altqd
-./usr/sbin/altqstat
-./usr/sbin/faithd
-./usr/sbin/ipnat
-./usr/sbin/mrinfo
-./usr/sbin/mrouted
-./usr/sbin/route6d
-./usr/sbin/rtadvd
