@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.56 2005/01/13 18:01:13 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.57 2005/01/14 14:20:46 wiz Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -101,6 +101,7 @@ FBRAM	frame buffer random access memory
 FDDI	fiber distributed data interface
 FFS	fast file system
 FHSS	frequency hop spread spectrum
+FIR	fast infrared
 FLOPS	floating [point] operations per second
 FM	frequency modulation
 FPM	fast page mode
@@ -253,6 +254,7 @@ SDRAM	synchronous dynamic random access memory
 SGRAM	synchronous graphics random access memory
 SIFS	short inter-frame space
 SIP	session initiation protocol
+SIR	slow infrared
 SLDRAM	synchronous-link dynamic random access memory
 SMART	self-monitoring analysis and reporting technology
 SMP	symmetric multiprocessing
