@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.1 2001/07/08 23:37:53 rjs Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.2 2002/04/12 18:50:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,6 @@
  */
 
 
-#include "opt_cputypes.h"
 #include "opt_irqstats.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.40 2002/04/09 21:00:42 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.41 2002/04/12 18:50:31 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,6 @@
  */
 
 #include "opt_compat_netbsd.h"
-#include "opt_cputypes.h"
 #include "opt_cpuoptions.h"
 
 #include <sys/types.h>
@@ -58,6 +57,7 @@
 
 #include <uvm/uvm.h>
 
+#include <arm/cpuconf.h>
 #include <arm/cpufunc.h>
 
 #ifdef CPU_XSCALE_80200

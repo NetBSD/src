@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.51 2002/04/10 00:45:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.52 2002/04/12 18:50:32 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -70,6 +70,7 @@
 
 #ifdef _KERNEL
 
+#include <arm/cpuconf.h>
 #include <arm/cpufunc.h>
 #include <arm/arm32/pte.h>
 #include <uvm/uvm_object.h>
@@ -256,21 +257,7 @@ extern vaddr_t	pmap_curmaxkvaddr;
 
 /************************* ARM MMU configuration *****************************/
 
-/*
- * We define several classes of ARM MMU, here:
- *
- *	ARM_MMU_GENERIC		Generic ARM MMU, compatible with ARM6.
- *
- *	ARM_MMU_XSCALE		XScale MMU.  Compatible with generic ARM
- *				MMU, but also has several extensions which
- *				require different PTE layout to use.
- */
-
-#if defined(_LKM) || defined(CPU_ARM6) || defined(CPU_ARM7) || \
-    defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
-    defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110)
-#define	ARM_MMU_GENERIC		1
-
+#if ARM_MMU_GENERIC == 1
 void	pmap_copy_page_generic(paddr_t, paddr_t);
 void	pmap_zero_page_generic(paddr_t);
 
@@ -278,13 +265,9 @@ void	pmap_pte_init_generic(void);
 #if defined(CPU_ARM9)
 void	pmap_pte_init_arm9(void);
 #endif /* CPU_ARM9 */
-#else
-#define	ARM_MMU_GENERIC		0
-#endif
+#endif /* ARM_MMU_GENERIC == 1 */
 
-#if defined(_LKM) || defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
-#define	ARM_MMU_XSCALE		1
-
+#if ARM_MMU_XSCALE == 1
 void	pmap_copy_page_xscale(paddr_t, paddr_t);
 void	pmap_zero_page_xscale(paddr_t);
 
@@ -294,14 +277,7 @@ void	pmap_pte_init_i80200(void);
 #endif /* CPU_XSCALE_80200 */
 
 void	xscale_setup_minidata(vaddr_t, vaddr_t, paddr_t);
-#else
-#define	ARM_MMU_XSCALE		0
-#endif
-
-#define	ARM_NMMUS		(ARM_MMU_GENERIC + ARM_MMU_XSCALE)
-#if ARM_NMMUS == 0
-#error ARM_NMMUS is 0
-#endif
+#endif /* ARM_MMU_XSCALE == 1 */
 
 extern pt_entry_t		pte_l1_s_cache_mode;
 extern pt_entry_t		pte_l1_s_cache_mask;

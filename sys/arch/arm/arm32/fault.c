@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.17 2002/04/04 12:39:55 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.18 2002/04/12 18:50:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -43,7 +43,6 @@
  * Created      : 28/11/94
  */
 
-#include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
 
@@ -55,6 +54,8 @@
 #include <sys/kernel.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <arm/cpuconf.h>
 
 #include <machine/frame.h>
 #include <arm/arm32/katelib.h>

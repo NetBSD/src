@@ -1,9 +1,9 @@
-#	$NetBSD: files.arm,v 1.56 2002/03/26 19:29:45 thorpej Exp $
+#	$NetBSD: files.arm,v 1.57 2002/04/12 18:50:31 thorpej Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
 
-# CPU types
+# CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
 defflag	opt_cputypes.h		CPU_ARM2 CPU_ARM250 CPU_ARM3
 defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_ARM9 CPU_SA110 CPU_SA1100 CPU_SA1110

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.4 2002/01/05 22:41:47 chris Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.5 2002/04/12 18:50:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -34,8 +34,6 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_cputypes.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -48,6 +46,7 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <arm/cpuconf.h>
 #include <arm/cpufunc.h>
 
 #include <arm/footbridge/footbridgevar.h>
