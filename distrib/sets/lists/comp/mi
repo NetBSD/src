@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.562 2003/04/22 20:35:21 elric Exp $
+#	$NetBSD: mi,v 1.563 2003/05/02 16:11:45 ragge Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -753,6 +753,7 @@
 ./usr/include/sys/kernel.h		comp-c-include
 ./usr/include/sys/kgdb.h		comp-c-include
 ./usr/include/sys/ksem.h		comp-c-include
+./usr/include/sys/ksyms.h		comp-c-include
 ./usr/include/sys/ktrace.h		comp-c-include
 ./usr/include/sys/lkm.h			comp-c-include
 ./usr/include/sys/localedef.h		comp-c-include
