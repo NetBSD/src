@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.37 1997/04/11 20:21:56 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.38 1997/04/11 20:32:13 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -903,7 +903,7 @@ cpumatch_cypress(sc, mp, node)
 	sc->cpu_type = CPUTYP_CYPRESS;
 	if (node)
 		/* Put in write-thru mode for now */
-		sc->cacheinfo.c_vactype = VAC_WRITETHROUGH;
+		sc->cacheinfo.c_vactype = VAC_WRITEBACK;
 }
 
 /* Fujitsu Turbosparc */
