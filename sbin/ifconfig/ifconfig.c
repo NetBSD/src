@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.48 1998/08/08 22:40:57 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.49 1998/09/06 17:51:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.48 1998/08/08 22:40:57 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.49 1998/09/06 17:51:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ int	clearaddr, s;
 int	newaddr = -1;
 int	nsellength = 1;
 int	af;
-int	dflag, mflag, lflag, uflag;
+int	Aflag, aflag, dflag, mflag, lflag, uflag;
 int	reset_if_flags;
 
 void 	notealias __P((char *, int));
@@ -224,6 +224,7 @@ void 	adjust_nsellength __P((void));
 int	getinfo __P((struct ifreq *));
 void	getsock __P((int));
 void	printall __P((void));
+void	printalias __P((const char *));
 void 	printb __P((char *, unsigned short, char *));
 void 	status __P((const u_int8_t *, int));
 void 	usage __P((void));
@@ -242,6 +243,7 @@ void	init_current_media __P((void));
  * XNS support liberally adapted from code written at the University of
  * Maryland principally by James O'Toole and Chris Torek.
  */
+void	in_alias __P((struct ifreq *));
 void	in_status __P((int));
 void 	in_getaddr __P((char *, int));
 void	at_status __P((int));
@@ -285,12 +287,16 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, aflag;
+	int ch;
 
 	/* Parse command-line options */
 	aflag = mflag = 0;
-	while ((ch = getopt(argc, argv, "adlmu")) != -1) {
+	while ((ch = getopt(argc, argv, "Aadlmu")) != -1) {
 		switch (ch) {
+		case 'A':
+			Aflag = 1;
+			break;
+
 		case 'a':
 			aflag = 1;
 			break;
@@ -496,6 +502,37 @@ getinfo(ifr)
 }
 
 void
+printalias(iname)
+	const char *iname;
+{
+	char inbuf[8192];
+	struct ifconf ifc;
+	struct ifreq *ifr;
+	int i;
+
+	ifc.ifc_len = sizeof(inbuf);
+	ifc.ifc_buf = inbuf;
+	getsock(af);
+	if (s < 0)
+		err(1, "socket");
+	if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
+		err(1, "SIOCGIFCONF");
+	ifr = ifc.ifc_req;
+	for (i = 0; i < ifc.ifc_len; ) {
+		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
+		i += sizeof(ifr->ifr_name) +
+			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
+				? ifr->ifr_addr.sa_len
+				: sizeof(struct sockaddr));
+		if (!strncmp(iname, ifr->ifr_name, sizeof(ifr->ifr_name))) {
+			if (ifr->ifr_addr.sa_family == AF_INET)
+				in_alias(ifr);
+			continue;
+		}
+	}
+}
+
+void
 printall()
 {
 	char inbuf[8192];
@@ -522,8 +559,11 @@ printall()
 		if (ifr->ifr_addr.sa_family == AF_LINK)
 			sdl = (const struct sockaddr_dl *) &ifr->ifr_addr;
 		if (!strncmp(ifreq.ifr_name, ifr->ifr_name,
-			     sizeof(ifr->ifr_name)))
+			     sizeof(ifr->ifr_name))) {
+			if (Aflag && ifr->ifr_addr.sa_family == AF_INET)
+				in_alias(ifr);
 			continue;
+		}
 		(void) strncpy(name, ifr->ifr_name, sizeof(ifr->ifr_name));
 		ifreq = *ifr;
 
@@ -1088,10 +1128,70 @@ status(ap, alen)
  proto_status:
 	if ((p = afp) != NULL) {
 		(*p->af_status)(1);
+		if (Aflag & !aflag)
+			printalias(name);
 	} else for (p = afs; p->af_name; p++) {
 		ifr.ifr_addr.sa_family = p->af_af;
 		(*p->af_status)(0);
+		if (Aflag & !aflag && p->af_af == AF_INET)
+			printalias(name);
 	}
+}
+
+void
+in_alias(creq)
+	struct ifreq *creq;
+{
+	struct sockaddr_in *sin;
+
+	if (lflag)
+		return;
+
+	/* Get the non-alias address for this interface. */
+	getsock(AF_INET);
+	if (s < 0) {
+		if (errno == EPROTONOSUPPORT)
+			return;
+		err(1, "socket");
+	}
+	(void) memset(&ifr, 0, sizeof(ifr));
+	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	if (ioctl(s, SIOCGIFADDR, (caddr_t)&ifr) < 0) {
+		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
+			return;
+		} else
+			warn("SIOCGIFADDR");
+	}
+	/* If creq and ifr are the same address, this is not an alias. */
+	if (memcmp(&ifr.ifr_addr, &creq->ifr_addr,
+		   sizeof(creq->ifr_addr)) == 0)
+		return;
+	(void) memset(&addreq, 0, sizeof(addreq));
+	(void) strncpy(addreq.ifra_name, name, sizeof(addreq.ifra_name));
+	addreq.ifra_addr = creq->ifr_addr;
+	if (ioctl(s, SIOCGIFALIAS, (caddr_t)&addreq) < 0) {
+		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
+			return;
+		} else
+			warn("SIOCGIFALIAS");
+	}
+
+	sin = (struct sockaddr_in *)&addreq.ifra_addr;
+	printf("\tinet alias %s", inet_ntoa(sin->sin_addr));
+
+	if (flags & IFF_POINTOPOINT) {
+		sin = (struct sockaddr_in *)&addreq.ifra_dstaddr;
+		printf(" -> %s", inet_ntoa(sin->sin_addr));
+	}
+
+	sin = (struct sockaddr_in *)&addreq.ifra_mask;
+	printf(" netmask 0x%x", ntohl(sin->sin_addr.s_addr));
+
+	if (flags & IFF_BROADCAST) {
+		sin = (struct sockaddr_in *)&addreq.ifra_broadaddr;
+		printf(" broadcast %s", inet_ntoa(sin->sin_addr));
+	}
+	printf("\n");
 }
 
 void
@@ -1518,7 +1618,7 @@ void
 usage()
 {
 	fprintf(stderr,
-	    "usage: ifconfig [ -m ] interface\n%s%s%s%s%s%s%s%s%s%s%s%s",
+	    "usage: ifconfig [ -m ] [ -A ] interface\n%s%s%s%s%s%s%s%s%s%s%s%s",
 		"\t[ af [ address [ dest_addr ] ] [ up ] [ down ] ",
 		"[ netmask mask ] ]\n",
 		"\t[ metric n ]\n",
@@ -1529,7 +1629,7 @@ usage()
 		"\t[ -mediaopt mopts ]\n",
 		"\t[ instance minst ]\n",
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n",
-		"       ifconfig -a [ -m ] [ -d ] [ -u ] [ af ]\n",
+		"       ifconfig -a [ -A ] [ -m ] [ -d ] [ -u ] [ af ]\n",
 		"       ifconfig -l [ -d ] [ -u ]\n");
 	exit(1);
 }
