@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.63 2001/07/08 16:18:59 abs Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.64 2001/07/25 23:28:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -800,26 +800,6 @@ tcp_attach(so)
 	default:
 		return EAFNOSUPPORT;
 	}
-#ifdef IPSEC
-#ifdef INET
-	if (inp) {
-		error = ipsec_init_policy(so, &inp->inp_sp);
-		if (error != 0) {
-			in_pcbdetach(inp);
-			return (error);
-		}
-	}
-#endif
-#ifdef INET6
-	if (in6p) {
-		error = ipsec_init_policy(so, &in6p->in6p_sp);
-		if (error != 0) {
-			in6_pcbdetach(in6p);
-			return (error);
-		}
-	}
-#endif
-#endif /*IPSEC*/
 	if (inp)
 		tp = tcp_newtcpcb(family, (void *)inp);
 #ifdef INET6
