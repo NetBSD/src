@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.14 2000/05/14 22:53:38 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.15 2000/09/22 16:35:00 pooka Exp $	*/
 
 /*
  * fsmagic - magic based on filesystem info - directory, special files, etc.
@@ -60,14 +60,14 @@
 #if 0
 FILE_RCSID("@(#)Id: fsmagic.c,v 1.31 2000/04/11 02:32:35 christos Exp ")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.14 2000/05/14 22:53:38 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.15 2000/09/22 16:35:00 pooka Exp $");
 #endif
 #endif	/* lint */
 
 int
 fsmagic(fn, sb)
-const char *fn;
-struct stat *sb;
+	const char *fn;
+	struct stat *sb;
 {
 	int ret = 0;
 
@@ -175,7 +175,7 @@ struct stat *sb;
 	case S_IFLNK:
 		{
 			char buf[BUFSIZ+4];
-			register int nch;
+			int nch;
 			struct stat tstatbuf;
 
 			if ((nch = readlink(fn, buf, BUFSIZ-1)) <= 0) {
@@ -256,4 +256,3 @@ struct stat *sb;
 	}
 	return 0;
 }
-
