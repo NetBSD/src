@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.13 1998/03/27 15:14:37 kleink Exp $	*/
+/*	$NetBSD: uio.h,v 1.14 1998/03/28 01:15:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -49,9 +49,7 @@ struct iovec {
 
 #if !defined(_XOPEN_SOURCE)
 enum	uio_rw { UIO_READ, UIO_WRITE };
-#endif
 
-#ifdef _KERNEL
 /* Segment flag values. */
 enum uio_seg {
 	UIO_USERSPACE,		/* from user data space */
@@ -73,7 +71,7 @@ struct uio {
  */
 #define UIO_MAXIOV	1024		/* max 1K of iov's */
 #define UIO_SMALLIOV	8		/* 8 on stack, else malloc */
-#endif /* _KERNEL */
+#endif /* ! _XOPEN_SOURCE */
 
 #ifndef	_KERNEL
 #include <sys/cdefs.h>
