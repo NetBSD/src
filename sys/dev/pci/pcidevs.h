@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.511 2003/02/28 22:05:59 enami Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.512 2003/03/02 00:36:11 salo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.508 2003/02/28 22:05:00 enami Exp 
+ *	NetBSD: pcidevs,v 1.509 2003/03/02 00:33:10 salo Exp 
  */
 
 /*
@@ -2014,12 +2014,12 @@
 #define	PCI_PRODUCT_SIS_7018	0x7018		/* SiS 7018 Sound */
 
 /* Silicon Motion, Inc. products */
-#define	PCI_PRODUCT_SILMOTION_SM710	0x0710		/* Lynx EM */
-#define	PCI_PRODUCT_SILMOTION_SM712	0x0712		/* Lynx EM+ */
-#define	PCI_PRODUCT_SILMOTION_SM720	0x0720		/* Lynx 3DM */
-#define	PCI_PRODUCT_SILMOTION_SM810	0x0810		/* Lynx E */
-#define	PCI_PRODUCT_SILMOTION_SM811	0x0811		/* Lynx E */
-#define	PCI_PRODUCT_SILMOTION_SM820	0x0820		/* Lynx 3D */
+#define	PCI_PRODUCT_SILMOTION_SM710	0x0710		/* LynxEM */
+#define	PCI_PRODUCT_SILMOTION_SM712	0x0712		/* LynxEM+ */
+#define	PCI_PRODUCT_SILMOTION_SM720	0x0720		/* Lynx3DM */
+#define	PCI_PRODUCT_SILMOTION_SM810	0x0810		/* LynxE */
+#define	PCI_PRODUCT_SILMOTION_SM811	0x0811		/* LynxE */
+#define	PCI_PRODUCT_SILMOTION_SM820	0x0820		/* Lynx3D */
 #define	PCI_PRODUCT_SILMOTION_SM910	0x0910		/* Lynx */
 
 /* SMC products */
