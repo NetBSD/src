@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.193 2002/05/31 12:20:04 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.194 2002/06/03 09:21:24 itojun Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -588,6 +588,7 @@
 ./usr/share/man/html4/pc532
 ./usr/share/man/html4/pmax
 ./usr/share/man/html4/pmppc
+./usr/share/man/html4/sgimips
 ./usr/share/man/html4/sparc
 ./usr/share/man/html4/sun2
 ./usr/share/man/html4/sun3
