@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.23 2003/09/23 18:54:24 cl Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.24 2004/10/27 19:29:57 david Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.23 2003/09/23 18:54:24 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.24 2004/10/27 19:29:57 david Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,8 @@ osf1_sys_kill(l, v, retval)
 	struct osf1_sys_kill_args *uap = v;
 	struct sys_kill_args ka;
 
+	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) > OSF1_NSIG)
+		return EINVAL;
 	SCARG(&ka, pid) = SCARG(uap, pid);
 	SCARG(&ka, signum) = osf1_to_native_signo[SCARG(uap, signum)];
 	return sys_kill(l, &ka, retval);
@@ -84,6 +86,8 @@ osf1_sys_sigaction(l, v, retval)
 	caddr_t sg;
 	int error;
 
+	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) > OSF1_NSIG)
+		return EINVAL;
 	sg = stackgap_init(p, 0);
 	nosa = SCARG(uap, nsa);
 	oosa = SCARG(uap, osa);
@@ -181,10 +185,13 @@ osf1_sys_signal(l, v, retval)
 {
 	struct osf1_sys_signal_args *uap = v;
 	struct proc *p = l->l_proc;
-	int signum = osf1_to_native_signo[OSF1_SIGNO(SCARG(uap, signum))];
+	int signum;
 	int error;
 	caddr_t sg = stackgap_init(p, 0);
 
+	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) > OSF1_NSIG)
+		return EINVAL;
+	signum = osf1_to_native_signo[OSF1_SIGNO(SCARG(uap, signum))];
 	if (signum <= 0 || signum >= OSF1_NSIG) {
 		if (OSF1_SIGCALL(SCARG(uap, signum)) == OSF1_SIGNAL_MASK ||
 		    OSF1_SIGCALL(SCARG(uap, signum)) == OSF1_SIGDEFER_MASK)
