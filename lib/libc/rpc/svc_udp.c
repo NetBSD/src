@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.4 1995/02/25 03:02:02 cgd Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.5 1995/04/14 19:48:30 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_udp.c,v 1.4 1995/02/25 03:02:02 cgd Exp $";
+static char *rcsid = "$NetBSD: svc_udp.c,v 1.5 1995/04/14 19:48:30 jtc Exp $";
 #endif
 
 /*
@@ -45,6 +45,7 @@ static char *rcsid = "$NetBSD: svc_udp.c,v 1.4 1995/02/25 03:02:02 cgd Exp $";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -112,7 +113,7 @@ svcudp_bufcreate(sock, sendsz, recvsz)
 		}
 		madesock = TRUE;
 	}
-	bzero((char *)&addr, sizeof (addr));
+	memset(&addr, 0, sizeof (addr));
 	addr.sin_family = AF_INET;
 	if (bindresvport(sock, &addr)) {
 		addr.sin_port = 0;
@@ -284,7 +285,7 @@ svcudp_destroy(xprt)
 	(type *) mem_alloc((unsigned) (sizeof(type) * (size)))
 
 #define BZERO(addr, type, size)	 \
-	bzero((char *) addr, sizeof(type) * (int) (size)) 
+	memset((char *) addr, 0, sizeof(type) * (int) (size)) 
 
 /*
  * An entry in the cache
@@ -453,7 +454,7 @@ cache_get(xprt, msg, replyp, replylenp)
 	register struct svcudp_data *su = su_data(xprt);
 	register struct udp_cache *uc = (struct udp_cache *) su->su_cache;
 
-#	define EQADDR(a1, a2)	(bcmp((char*)&a1, (char*)&a2, sizeof(a1)) == 0)
+#	define EQADDR(a1, a2)	(memcmp(&a1, &a2, sizeof(a1)) == 0)
 
 	loc = CACHE_LOC(xprt, su->su_xid);
 	for (ent = uc->uc_entries[loc]; ent != NULL; ent = ent->cache_next) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.2 1995/02/25 03:02:05 cgd Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.3 1995/04/14 19:48:32 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_array.c,v 1.2 1995/02/25 03:02:05 cgd Exp $";
+static char *rcsid = "$NetBSD: xdr_array.c,v 1.3 1995/04/14 19:48:32 jtc Exp $";
 #endif
 
 /*
@@ -44,8 +44,11 @@ static char *rcsid = "$NetBSD: xdr_array.c,v 1.2 1995/02/25 03:02:05 cgd Exp $";
  * arrays.  See xdr.h for more info on the interface to xdr.
  */
 
+
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
@@ -99,7 +102,7 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
 					"xdr_array: out of memory\n");
 				return (FALSE);
 			}
-			bzero(target, nodesize);
+			memset(target, 0, nodesize);
 			break;
 
 		case XDR_FREE:
