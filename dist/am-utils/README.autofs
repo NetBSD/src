@@ -1,0 +1,113 @@
+# -*- text -*-
+# This file is README.autofs
+# am-utils-6.0
+# Erez Zadok <ezk@cs.columbia.edu>
+#
+
+** General notes about the autofs support in am-utils
+
+The autofs code in am-utils is VERY much pre-alpha quality!
+
+* Caveats:
+
+- amd acts as *both* /usr/lib/autofs/automountd and /usr/sbin/automount.
+There's no way to distinguish the two.  When amd starts, it first registers
+itself as an autofs server (automountd), then parses its maps, and decides
+on which autofs type mounts to make (automount does that).  After the autofs
+mounts are made, amd listens for RPCs from the kernel-based autofs, and acts
+upon them.
+
+- I only tested it under Solaris 2.5.1 (sparc).  Don't expect irix/linux
+autofs support any time soon.  Also, the autofs API in Solaris 2.6 is very
+different from 2.5.1; for now, am-utils does not even compile in the autofs
+code in Solaris 2.6.
+
+- I did not test mixed autofs and normal amd mount points in the same
+amd.conf file, but it should work.
+
+- I tested it as a separate amd process, which registered under an alternate
+RPC number (300020).  (The multiple amd-support available in a9 really saved
+the day.)
+
+- I did not test amd running autofs mounts while Sun's automounter is
+running.  I don't expect the interaction between the two to be good for your
+health.
+
+* amd.conf requirements:
+
+To tell amd to use an autofs-style mount point and mounts for a map, turn on
+
+	mount_type = autofs
+
+in the map sections you wish.
+
+* Map changes:
+
+I used this sample map for testing autofs:
+
+# /home map
+ezk	-rhost:=shekel;opts:=rw,intr,bg,overlay;fs:=${path} \
+	host!=shekel;type:=nfs;rfs:=/n/shekel/u/zing/${key} \
+	host==shekel;type:=lofs;rfs:=/n/shekel/u/zing/${key}
+
+Note that this implementation of autofs is still infant.  Several important
+changes must be made to your maps to support autofs:
+
+(1) you must supply the 'overlay' option to opts.  Read the autofs paper to
+see why that is crucial, else you will hang amd!
+
+(2) the 'fs' variable in the maps must point to the actual mount point
+inside the autofs/amd mount point, not to where the autodir was.  That is
+because in-place mounts are done.
+
+For example, in the past, /home/ezk would be a symlink to /n/shekel/u/zing,
+which is where shekel:/n/shekel/u/zing was mounted on.  But now /home/ezk is
+a directory on which shekel:/n/shekel/u/zing is directly mounted upon.
+(Yes, this means that finally $PWD is the same as `/bin/pwd`.)
+
+* Todo:
+
+I'm looking for volunteers to improve the autofs code!
+
+(1) These fixes are needed to avoid having to change amd maps:
+
+- the overlay option should be turned on for autofs mounts automatically,
+without having to require it in the maps.
+
+- the 'fs' variable should be ignored in the maps of type autofs.  Rather,
+it should always be set to "/${path}".
+
+- when the mount type is 'link', transparently translate it into a loopback
+file system mount (lofs), that would mount in place, rather than supply a
+symlink instead.
+
+- if amd is killed or dies, the autofs mounts will remain intact as required
+(your system is _not_ hung, yay!)  However, if you restart amd, it will not
+correctly 'restart' the autofs mounts as the Sun automounter does.  Rather,
+it will cause another mount to happen, which leaves your /etc/mnttab
+cluttered with older mounts entries which cannot be unmounted.
+
+(2) Code expansion:
+
+- (amd/ops_autofs.c) autofs_unmount_1_svc() is not implemented at all.
+
+- autofs has many types of mount types which are not supported.  Right now
+amd will assume a 'direct' mount.  Types which are not supported are
+'indirect', 'offset', and 'multiple' or 'hierarchical'.
+
+- implement the sockets version of amu_get_autofs_address() and
+create_autofs_service(), in conf/transp/transp_sockets.c.
+
+(3) Testing and porting to other systems:
+
+- nothing has been tested on irix, which reportedly has a similar
+functioning autofs to Solaris'.
+
+- no testing or even preliminary research was done to find out how to
+support linux autofs.
+
+- did not test the new and improved autofs in Solaris 2.6 either.
+
+- did not test Solaris 2.5.1 on x86, or earlier versions of Solaris on
+either Sparc or x86. 
+
