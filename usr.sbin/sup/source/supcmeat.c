@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.27 2002/10/19 20:33:20 provos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.28 2003/07/28 23:13:17 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1134,14 +1134,14 @@ copyfile(char *to, char *from)
 		/* try destination directory */
 		path(to, dpart, fpart);
 		(void) sprintf(tname, "%s/#%d.sup", dpart, thispid);
-		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC), 0600);
+		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0)
 			break;
 		/* try sup directory */
 		if (thisC->Cprefix)
 			(void) chdir(thisC->Cbase);
 		(void) sprintf(tname, "sup/#%d.sup", thispid);
-		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC), 0600);
+		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0) {
 			if (thisC->Cprefix)
 				(void) chdir(thisC->Cprefix);
@@ -1149,7 +1149,7 @@ copyfile(char *to, char *from)
 		}
 		/* try base directory */
 		(void) sprintf(tname, "#%d.sup", thispid);
-		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC), 0600);
+		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (thisC->Cprefix)
 			(void) chdir(thisC->Cprefix);
 		if (tof >= 0)
@@ -1157,25 +1157,25 @@ copyfile(char *to, char *from)
 #ifdef	VAR_TMP
 		/* try /var/tmp */
 		(void) sprintf(tname, "/var/tmp/#%d.sup", thispid);
-		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC), 0600);
+		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0)
 			break;
 #else
 		/* try /usr/tmp */
 		(void) sprintf(tname, "/usr/tmp/#%d.sup", thispid);
-		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC), 0600);
+		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0)
 			break;
 #endif
 		/* try /tmp */
 		(void) sprintf(tname, "/tmp/#%d.sup", thispid);
-		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC), 0600);
+		tof = open(tname, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0)
 			break;
 		istemp = FALSE;
 		/* give up: try to create output file */
 		if (!docompress)
-			tof = open(to, (O_WRONLY | O_CREAT | O_TRUNC), 0600);
+			tof = open(to, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 		if (tof >= 0)
 			break;
 		/* no luck */
@@ -1283,7 +1283,7 @@ copyfile(char *to, char *from)
 		av[ac++] = NULL;
 		if ((infd = open(tname, O_RDONLY, 0)) == -1 ||
 		    unlink(tname) == -1 ||
-		    (outfd = open(tname, O_WRONLY | O_CREAT | O_TRUNC)) == -1 ||
+		    (outfd = open(tname, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL)) == -1 ||
 		    runiofd(av, infd, outfd, 2) != 0) {
 			notify("SUP: Error in uncompressing file %s (%s)\n",
 			    to, tname);
@@ -1312,7 +1312,7 @@ copyfile(char *to, char *from)
 		lockout(FALSE);
 		return (TRUE);
 	}
-	tof = open(to, (O_WRONLY | O_CREAT | O_TRUNC), 0600);
+	tof = open(to, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
 	if (tof < 0) {
 		(void) close(fromf);
 		notify("SUP: Can't create %s from temp file: %s\n",
