@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_nubus.c,v 1.1 2000/07/30 21:43:40 briggs Exp $	*/
+/*	$NetBSD: if_sm_nubus.c,v 1.2 2000/08/01 13:08:39 briggs Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -116,10 +116,6 @@ sm_nubus_attach(parent, self, aux)
 	}
 
 	mac68k_bus_space_handle_swapped(bst, &bsh);
-	bsh.bsrm2 = mac68k_bsrm2;
-	bsh.bsrm4 = mac68k_bsrm4;
-	bsh.bswm2 = mac68k_bswm2;
-	bsh.bswm4 = mac68k_bswm4;
 
 	smc->sc_bst = bst;
 	smc->sc_bsh = bsh;
