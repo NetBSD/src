@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.6 2001/12/17 21:31:25 nathanw Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.7 2001/12/28 06:12:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.6 2001/12/17 21:31:25 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.7 2001/12/28 06:12:20 nathanw Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -1326,32 +1326,6 @@ void
 upcallret(struct lwp *l)
 {
 	userret(l);
-}
-
-/* Save the user-level ucontext_t on the LWP's own stack. */
-ucontext_t *
-cpu_stashcontext(struct lwp *l)
-{
-	ucontext_t u, *up;
-	struct frame *f;
-	void *stack;
-
-	f = (struct frame *)l->l_md.md_regs;
-	stack = (char *)f->f_regs[SP] - sizeof(ucontext_t);
-	getucontext(l, &u);
-	up = stack;
-
-	if (copyout(&u, stack, sizeof(ucontext_t)) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-#ifdef DIAGNOSTIC
-		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
-		    l->l_proc->p_pid, l->l_lid);
-#endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	return up;
 }
 
 void 

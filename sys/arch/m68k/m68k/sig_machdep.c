@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.10 2001/12/17 21:31:25 nathanw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.11 2001/12/28 06:12:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -289,31 +289,6 @@ cpu_upcall(l, type, nevents, ninterrupted, sas, ap, sp, upcall)
 	frame->f_sr &= ~PSL_T;
 }
 
-/* Save the user-level ucontext_t on the LWP's own stack. */
-ucontext_t *
-cpu_stashcontext(struct lwp *l)
-{
-	ucontext_t u, *up;
-	struct frame *frame;
-	void *stack;
-
-	frame = (struct frame *)l->l_md.md_regs;
-	stack = (char *)frame->f_regs[SP] - sizeof(ucontext_t);
-	getucontext(l, &u);
-	up = stack;
-
-	if (copyout(&u, stack, sizeof(ucontext_t)) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-#ifdef DIAGNOSTIC
-		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
-		    l->l_proc->p_pid, l->l_lid);
-#endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	return up;
-}
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
