@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)stty.c	5.28 (Berkeley) 6/5/91"; */
-static char rcsid[] = "$Id: stty.c,v 1.5 1993/06/01 14:42:17 cgd Exp $";
+static char rcsid[] = "$Id: stty.c,v 1.6 1993/06/05 22:28:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -137,6 +137,7 @@ args:	argc -= optind;
 
 		if (!strncmp(*argv, "gfmt1", sizeof("gfmt1") - 1)) {
 			gread(&i.t, *argv + sizeof("gfmt1") - 1);
+			i.set = 1;
 			continue;
 		}
 
