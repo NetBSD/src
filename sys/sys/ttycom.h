@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.6 1997/10/20 08:04:28 scottr Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.7 1998/02/13 23:14:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -116,6 +116,7 @@ struct winsize {
 #define	TIOCUCNTL	_IOW('t', 102, int)	/* pty: set/clr usr cntl mode */
 #define	TIOCSTAT	_IOW('t', 101, int)	/* generate status message */
 #define		UIOCCMD(n)	_IO('u', n)	/* usr cntl op "n" */
+#define	TIOCGSID	_IOR('t', 99, int)	/* get session id */
 #define	TIOCCONS	_IOW('t', 98, int)	/* become virtual console */
 #define	TIOCSCTTY	 _IO('t', 97)		/* become controlling tty */
 #define	TIOCEXT		_IOW('t', 96, int)	/* pty: external processing */
