@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+/*	$NetBSD: sort.h,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -140,5 +140,6 @@ extern u_char alltable[NBINS], dtable[NBINS], itable[NBINS];
 extern u_char d_mask[NBINS];
 extern int SINGL_FLD, SEP_FLAG, UNIQUE;
 extern int REC_D;
+extern char *tmpdir;
 
 #include "extern.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $	*/
+/*	$NetBSD: sort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.2 2000/10/07 18:37:10 bjh21 Exp $");
+__RCSID("$NetBSD: sort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ extern int ncols;
 
 char devstdin[] = _PATH_STDIN;
 char toutpath[_POSIX_PATH_MAX];
+char *tmpdir = _PATH_VARTMP;
 
 static void cleanup __P((void));
 static void onsignal __P((int));
@@ -102,7 +103,7 @@ main(argc, argv)
 	char *outfile, *outpath = 0;
 	struct field fldtab[ND+2], *ftpos;
 	union f_handle filelist;
-	FILE *outfd;
+	FILE *outfp = NULL;
 	memset(fldtab, 0, (ND+2)*sizeof(struct field));
 	memset(d_mask, 0, NBINS);
 	d_mask[REC_D = '\n'] = REC_D_F;
@@ -111,6 +112,8 @@ main(argc, argv)
 	ftpos = fldtab;
 	fixit(&argc, argv);
 	while ((ch = getopt(argc, argv, "bcdfik:mHno:rt:T:ux")) != EOF) {
+	if ((outfile = getenv("TMPDIR")))
+		tmpdir = outfile;
 	switch (ch) {
 		case 'b': fldtab->flags |= BI | BT;
 			break;
@@ -227,25 +230,28 @@ main(argc, argv)
 		struct sigaction act = {0};
 		int sigtable[] = {SIGHUP, SIGINT, SIGPIPE, SIGXCPU, SIGXFSZ,
 		    SIGVTALRM, SIGPROF, 0};
+		int outfd;
 		errno = 0;
 		if (access(outpath, W_OK))
 			err(2, "%s", outpath);
 		act.sa_handler = onsignal;
 		act.sa_flags = SA_RESTART | SA_RESETHAND;
 		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXX", outpath);
-		outfile = mktemp(toutpath);
-		if (!outfile)
-			err(2, "%s", toutpath);
+		if ((outfd = mkstemp(toutpath)) < 0 ||
+		    (outfp = fdopen(outfd, "w")) == 0)
+			err(2, toutpath);
+		outfile = toutpath;
 		(void)atexit(cleanup);
 		for (i = 0; sigtable[i]; ++i)	/* always unlink toutpath */
 			sigaction(sigtable[i], &act, 0);
-	} else outfile = outpath;
-	if (!(outfd = fopen(outfile, "w")))
-		err(2, "%s", outfile);
+	} else
+		outfile = outpath;
+	if (outfp == NULL && (outfp = fopen(outfile, "w")) == NULL)
+		err(2, outfile);
 	if (mflag)
-		fmerge(-1, filelist, argc-optind, get, outfd, putline, fldtab);
+		fmerge(-1, filelist, argc-optind, get, outfp, putline, fldtab);
 	else
-		fsort(-1, 0, filelist, argc-optind, outfd, fldtab);
+		fsort(-1, 0, filelist, argc-optind, outfp, fldtab);
 	if (outfile != outpath) {
 		if (access(outfile, 0))
 			err(2, "%s", outfile);
