@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.7 2003/02/01 06:23:42 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.8 2003/02/04 09:02:05 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -86,6 +86,10 @@ static int	filt_procattach(struct knote *kn);
 static void	filt_procdetach(struct knote *kn);
 static int	filt_proc(struct knote *kn, long hint);
 static int	filt_fileattach(struct knote *kn);
+static void	filt_timerexpire(void *knx);
+static int	filt_timerattach(struct knote *kn);
+static void	filt_timerdetach(struct knote *kn);
+static int	filt_timer(struct knote *kn, long hint);
 
 static const struct filterops kqread_filtops =
 	{ 1, NULL, filt_kqdetach, filt_kqueue };
@@ -93,9 +97,13 @@ static const struct filterops proc_filtops =
 	{ 0, filt_procattach, filt_procdetach, filt_proc };
 static const struct filterops file_filtops =
 	{ 1, filt_fileattach, NULL, NULL };
+static struct filterops timer_filtops =
+	{ 0, filt_timerattach, filt_timerdetach, filt_timer };
 
 struct pool	kqueue_pool;
 struct pool	knote_pool;
+static int	kq_ncallouts = 0;
+static int	kq_calloutmax = (4 * 1024);
 
 MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");
 
@@ -131,6 +139,7 @@ static const struct kfilter sys_kfilters[] = {
 	{ "EVFILT_VNODE",	EVFILT_VNODE,	&file_filtops },
 	{ "EVFILT_PROC",	EVFILT_PROC,	&proc_filtops },
 	{ "EVFILT_SIGNAL",	EVFILT_SIGNAL,	&sig_filtops },
+	{ "EVFILT_TIMER",	EVFILT_TIMER,	&timer_filtops },
 	{ NULL,			0,		NULL },	/* end of list */ 
 };
 
@@ -482,6 +491,70 @@ filt_proc(struct knote *kn, long hint)
 	}
 
 	return (kn->kn_fflags != 0);
+}
+
+static void
+filt_timerexpire(void *knx)
+{
+	struct knote *kn = knx;
+	int tticks;
+
+	kn->kn_data++;
+	KNOTE_ACTIVATE(kn);
+
+	if ((kn->kn_flags & EV_ONESHOT) == 0) {
+		tticks = mstohz(kn->kn_sdata);
+		callout_schedule((struct callout *)kn->kn_hook, tticks);
+	}
+}
+
+/*
+ * data contains amount of time to sleep, in milliseconds
+ */ 
+static int
+filt_timerattach(struct knote *kn)
+{
+	struct callout *calloutp;
+	int tticks;
+
+	if (kq_ncallouts >= kq_calloutmax)
+		return (ENOMEM);
+	kq_ncallouts++;
+
+	tticks = mstohz(kn->kn_sdata);
+
+	/* if the supplied value is under our resolution, use 1 tick */
+	if (tticks == 0) {
+		if (kn->kn_sdata == 0)
+			return (EINVAL);
+		tticks = 1;
+	}
+
+	kn->kn_flags |= EV_CLEAR;		/* automatically set */
+	MALLOC(calloutp, struct callout *, sizeof(*calloutp),
+	    M_KEVENT, 0);
+	callout_init(calloutp);
+	callout_reset(calloutp, tticks, filt_timerexpire, kn);
+	kn->kn_hook = calloutp;
+
+	return (0);
+}
+
+static void
+filt_timerdetach(struct knote *kn)
+{
+	struct callout *calloutp;
+
+	calloutp = (struct callout *)kn->kn_hook;
+	callout_stop(calloutp);
+	FREE(calloutp, M_KEVENT);
+	kq_ncallouts--;
+}
+
+static int
+filt_timer(struct knote *kn, long hint)
+{
+	return (kn->kn_data != 0);
 }
 
 /*

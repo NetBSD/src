@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.5 2003/02/02 02:22:14 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.6 2003/02/04 09:02:04 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -39,7 +39,8 @@
 #define	EVFILT_VNODE		3	/* attached to vnodes */
 #define	EVFILT_PROC		4	/* attached to struct proc */
 #define	EVFILT_SIGNAL		5	/* attached to struct proc */
-#define	EVFILT_SYSCOUNT		6	/* number of filters */
+#define	EVFILT_TIMER		6	/* arbitrary timer (in ms) */
+#define	EVFILT_SYSCOUNT		7	/* number of filters */
 
 #define	EV_SET(kevp, a, b, c, d, e, f)					\
 do {									\
