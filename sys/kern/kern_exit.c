@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.89.2.2 2001/04/09 01:57:52 nathanw Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.89.2.3 2001/07/09 22:31:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -134,6 +134,10 @@ sys_exit(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int)	rval;
 	} */ *uap = v;
 
+	/* Don't call exit1() multiple times in the same process.*/
+	if (l->l_proc->p_flag & P_WEXIT)
+		lwp_exit(l);
+
 	exit1(l, W_EXITCODE(SCARG(uap, rval), 0));
 	/* NOTREACHED */
 	return (0);
@@ -195,18 +199,16 @@ exit1(struct lwp *l, int rv)
 	 * also self-destruct.
 	 */
 	if (p->p_sa && p->p_sa->sa_ncached > 0) {
-		DPRINTF(("exit1: Placing cached LWPs of %d on run queue: ",
+		DPRINTF(("exit1: Making cached LWPs of %d runnable: ",
 		    p->p_pid));
 		while (!LIST_EMPTY(&p->p_sa->sa_lwpcache)) {
 			l2 = LIST_FIRST(&p->p_sa->sa_lwpcache);
 			LIST_REMOVE(l2, l_sibling);
 			p->p_sa->sa_ncached--;
 			l2->l_priority = l2->l_usrpri;
-			l2->l_stat = LSRUN;
 			SCHED_LOCK(s);
-			setrunqueue(l2);
+			setrunnable(l2);
 			SCHED_UNLOCK(s);
-
 			LIST_INSERT_HEAD(&p->p_lwps, l2, l_sibling);
 			p->p_nlwps++;
 			p->p_nrlwps++;
