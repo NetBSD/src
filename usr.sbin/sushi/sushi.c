@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.2 2001/01/08 21:19:31 garbled Exp $       */
+/*      $NetBSD: sushi.c,v 1.3 2001/01/09 08:06:22 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -111,7 +111,6 @@ main(int argc, char **argv)
 
 	initCDKColor();
 	raw();
-	timeout(150);
 
 	if (mte == NULL)
 		navigate_menu(cqMenuHeadp, "sushi", 
