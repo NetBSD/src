@@ -1,4 +1,4 @@
-/*	$NetBSD: sun_disklabel.h,v 1.6 1996/01/07 22:03:09 thorpej Exp $ */
+/*	$NetBSD: sun_disklabel.h,v 1.7 1996/06/29 22:33:17 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,7 @@ struct sun_dkpart {
 struct sun_disklabel {			/* total size = 512 bytes */
 	char	sl_text[128];
 	char	sl_xxx1[292];
+#define sl_bsdlabel	sl_xxx1		/* Embedded NetBSD label */
 	u_short sl_rpm;			/* rotational speed */
 	u_short	sl_pcylinders;		/* number of physical cyls */
 	u_short sl_sparespercyl;	/* spare sectors per cylinder */
@@ -104,7 +105,7 @@ struct sun_disklabel {			/* total size = 512 bytes */
 	u_short	sl_cksum;		/* xor checksum of all shorts */
 };
 
-#define SUN_LABELOFFSET	128
+#define SUN_LABELOFFSET	128		/* XXX we don't use this */
 
 #ifdef _KERNEL
 /* reads sun label in sector at [cp..cp+511] and sets *lp to BSD label */
