@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.3 2000/12/04 20:17:10 fvdl Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.4 2001/09/24 23:49:33 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,8 +115,8 @@ cgsixattach(parent, self, aux)
 
 	/* Remember cookies for cgsix_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_btype = (bus_type_t)sa->sa_slot;
-	sc->sc_paddr = (bus_addr_t)sa->sa_offset;
+	sc->sc_btype = (bus_type_t)sa->sa_slot; /* Should be deprecated */
+	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
 	node = sa->sa_node;
 
