@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2002/04/09 06:10:44 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/18 05:41:56 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		writev
-NOMAN=		# defined
 
 regress:	${PROG}
 	@echo "This should print 'writev (expected error): Invalid argument'"

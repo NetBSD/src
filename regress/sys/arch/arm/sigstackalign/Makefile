@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:14 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2002/09/18 05:41:50 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		sigstackalign
 SRCS=		sigstackalign.c stackptr.S
-NOMAN=		# defined
 
 regress: ${PROG}
 	./${PROG}

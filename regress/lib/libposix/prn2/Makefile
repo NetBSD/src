@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:24:12 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/18 05:41:49 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		prename
-NOMAN=		# defined
 CPPFLAGS+=	-D_POSIX_SOURCE
 CLEANFILES+=	t1 t2
 

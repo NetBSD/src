@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2002/04/21 20:23:59 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/18 05:41:37 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		clonetest
-NOMAN=		# defined
 COPTS+=		-g
 WARNS?=		1
 

@@ -1,4 +1,6 @@
-# $NetBSD: Makefile,v 1.3 2002/08/28 17:05:30 drochner Exp $
+# $NetBSD: Makefile,v 1.4 2002/09/18 05:41:58 lukem Exp $
+
+NOPROFILE=	yes
 
 SRCS=	ccexc.cc construct.cc virt.cc
 
@@ -6,7 +8,6 @@ LIB=	test
 TESTLIB=	testlib.so
 
 CLEANFILES+=	${TESTLIB}
-NOPROFILE=	yes
 SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 #CXXFLAGS+= -fno-rtti

@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:24:04 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2002/09/18 05:41:42 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		strptime
 SRCS=		main.c
-NOMAN=		# defined
 WARNS?=		1
 
 CLEANFILES+=	got

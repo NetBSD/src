@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2002/03/05 21:57:00 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/18 05:41:55 lukem Exp $
+
+NOMAN=		# defined
 
 PROG=		semtest
-NOMAN=		# defined
 WARNS=		1
 
 regress:
