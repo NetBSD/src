@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.16 1998/10/03 16:24:08 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.17 1998/10/04 01:48:16 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.16 1998/10/03 16:24:08 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.17 1998/10/04 01:48:16 hubertf Exp $");
 #endif
 #endif
 
@@ -316,7 +316,7 @@ fileFindByPath(char *base, char *fname)
     char *cp;
 
     if (ispkgpattern(fname)) {
-	if (cp=findbestmatchingname(".",fname)) {
+	if ((cp=findbestmatchingname(".",fname)) != NULL) {
 	    strcpy (tmp, cp);
 	    return tmp;
 	}

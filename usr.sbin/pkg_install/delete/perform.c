@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.6 1998/10/03 16:24:08 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.7 1998/10/04 01:48:15 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.6 1998/10/03 16:24:08 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.7 1998/10/04 01:48:15 hubertf Exp $");
 #endif
 #endif
 
@@ -183,7 +183,6 @@ undepend(const char *deppkgname, char *pkg2delname)
 {
      char fname[FILENAME_MAX], ftmp[FILENAME_MAX];
      char fbuf[FILENAME_MAX];
-     char dep[FILENAME_MAX];
      FILE *fp, *fpwr;
      char *tmp;
      int s;

@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.5 1998/10/03 16:24:07 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1998/10/04 01:48:15 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.5 1998/10/03 16:24:07 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 1998/10/04 01:48:15 hubertf Exp $");
 #endif
 #endif
 
@@ -137,7 +137,7 @@ main(int argc, char **argv)
 		    if (Verbose)
 			printf("Using %s for %s\n",s, *argv);
 		    
-		    pkgs[ch] - realpath(s, pkgnames[ch]);
+		    pkgs[ch] = realpath(s, pkgnames[ch]);
 		} else {
 		    /* look for the file(pattern) in the expected places */
 		    if (!(cp = fileFindByPath(NULL, *argv)))

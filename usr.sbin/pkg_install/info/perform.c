@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.12 1998/10/03 16:24:08 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.13 1998/10/04 01:48:15 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.12 1998/10/03 16:24:08 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.13 1998/10/04 01:48:15 hubertf Exp $");
 #endif
 #endif
 
@@ -175,7 +175,8 @@ bail:
 }
 
 /* fn to be called for pkgs found */
-int foundpkg(const char *found, char *data)
+static int
+foundpkg(const char *found, char *data)
 {
     if(!Quiet)
 	printf("%s\n", found);
