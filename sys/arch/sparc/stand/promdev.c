@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: promdev.c,v 1.4 1994/07/30 14:22:13 pk Exp $
+ *	$Id: promdev.c,v 1.5 1994/08/13 08:33:51 pk Exp $
  */
 
 #include <sys/param.h>
@@ -76,9 +76,9 @@ devopen(f, fname, file)
 	if (promvec->pv_romvec_vers >= 2) {
 		path = *promvec->pv_v2bootargs.v2_bootpath;
 		fd = (*promvec->pv_v2devops.v2_open)(path);
-		cp = path + strlen(path) - 1;
+		cp = path + strlen(path);
 		while (cp >= path)
-			if (*cp == '/') {
+			if (*--cp == '/') {
 				++cp;
 				break;
 			}
