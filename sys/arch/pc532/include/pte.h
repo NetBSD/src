@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4.2.1 2004/08/03 10:38:48 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.4.2.2 2004/09/18 14:38:25 skrll Exp $	*/
 
 /*
  *

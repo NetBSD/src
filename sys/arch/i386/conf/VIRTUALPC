@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.9.2.2 2004/08/03 10:35:48 skrll Exp $
+# $NetBSD: VIRTUALPC,v 1.9.2.3 2004/09/18 14:35:22 skrll Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.9.2.2 $"
+#ident 		"VIRTUALPC-$Revision: 1.9.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -161,6 +161,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
@@ -202,8 +203,8 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
 #options 	WS_DEFAULT_FG=WSCOL_WHITE
 #options 	WS_DEFAULT_BG=WSCOL_BLACK
-#options 	WS_DEFAULT_COLATTR=""
-#options 	WS_DEFAULT_MONOATTR=""
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WS_KERNEL_COLATTR=""

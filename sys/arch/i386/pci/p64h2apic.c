@@ -1,4 +1,4 @@
-/* $NetBSD: p64h2apic.c,v 1.4.8.1 2004/08/03 10:36:13 skrll Exp $ */
+/* $NetBSD: p64h2apic.c,v 1.4.8.2 2004/09/18 14:35:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.4.8.1 2004/08/03 10:36:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.4.8.2 2004/09/18 14:35:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

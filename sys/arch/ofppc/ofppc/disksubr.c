@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14.2.1 2004/08/03 10:38:40 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14.2.2 2004/09/18 14:38:24 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14.2.1 2004/08/03 10:38:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14.2.2 2004/09/18 14:38:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

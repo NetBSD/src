@@ -1,4 +1,4 @@
-/*	$NetBSD: macereg.h,v 1.1.4.2 2004/08/03 10:40:07 skrll Exp $	*/
+/*	$NetBSD: macereg.h,v 1.1.4.3 2004/09/18 14:39:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang

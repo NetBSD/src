@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.12.8.1 2004/08/03 10:32:49 skrll Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.12.8.2 2004/09/18 14:32:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.12.8.1 2004/08/03 10:32:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus_io.c,v 1.12.8.2 2004/09/18 14:32:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,9 +1,8 @@
-# $NetBSD: Makefile.boot,v 1.6.2.2 2004/08/25 06:57:19 skrll Exp $
+# $NetBSD: Makefile.boot,v 1.6.2.3 2004/09/18 14:35:50 skrll Exp $
 
 S=	${.CURDIR}/../../../../../
 
 NOMAN=
-STRIPFLAG=
 BINDIR= /usr/mdec
 BINMODE= 0444
 PROG?= boot
@@ -17,6 +16,8 @@ SRCS+= vers.c
 .endif
 
 .include <bsd.own.mk>
+
+STRIPFLAG=	# nothing
 
 LIBCRT0=	# nothing
 LIBCRTBEGIN=	# nothing
@@ -40,12 +41,12 @@ COPTS=  -Os
 .if ${MACHINE} == "amd64"
 LD+=  -m elf_i386
 AFLAGS+=   -m32
-COPTS+=    -m32
+CPUFLAGS=  -m32
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 CPPFLAGS+= -DBOOT_ELF64
 .else
-COPTS+=    -mcpu=i386
+CPUFLAGS=  -mcpu=i386
 .endif
 
 COPTS+=    -ffreestanding

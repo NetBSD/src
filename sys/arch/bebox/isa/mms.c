@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.11.6.1 2004/08/03 10:33:36 skrll Exp $	*/
+/*	$NetBSD: mms.c,v 1.11.6.2 2004/09/18 14:33:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.11.6.1 2004/08/03 10:33:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.11.6.2 2004/09/18 14:33:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14.2.2 2004/09/03 12:45:05 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14.2.3 2004/09/18 14:39:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.2.2 2004/09/03 12:45:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14.2.3 2004/09/18 14:39:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>

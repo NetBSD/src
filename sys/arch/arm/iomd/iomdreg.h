@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdreg.h,v 1.2.20.1 2004/08/03 10:32:38 skrll Exp $	*/
+/*	$NetBSD: iomdreg.h,v 1.2.20.2 2004/09/18 14:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.

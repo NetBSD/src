@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.4.28.1 2004/08/03 10:38:07 skrll Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.4.28.2 2004/09/18 14:37:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.5.6.2 2004/08/12 11:41:03 skrll Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.5.6.3 2004/09/18 14:33:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.5.6.2 2004/08/12 11:41:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.5.6.3 2004/09/18 14:33:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

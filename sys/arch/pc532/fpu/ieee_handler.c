@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.14.2.1 2004/08/03 10:38:47 skrll Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.14.2.2 2004/09/18 14:38:24 skrll Exp $	*/
 
 /*
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -52,7 +52,7 @@
  * */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.14.2.1 2004/08/03 10:38:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee_handler.c,v 1.14.2.2 2004/09/18 14:38:24 skrll Exp $");
 
 #include <sys/types.h>
 #include "ieee_internal.h"

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28.2.1 2004/08/03 10:35:27 skrll Exp $
+# $NetBSD: GENERIC,v 1.28.2.2 2004/09/18 14:35:07 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -270,6 +270,7 @@ ne*	at pcmcia0 function ?		# NE2000-compatible Ethernet
 wi*	at pcmcia0 function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 
 # MII/PHY support
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 

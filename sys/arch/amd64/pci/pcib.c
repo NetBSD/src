@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1.2.2 2004/09/03 12:44:28 skrll Exp $	*/
+/*	$NetBSD: pcib.c,v 1.1.2.3 2004/09/18 14:31:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.2.2 2004/09/03 12:44:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.2.3 2004/09/18 14:31:22 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.71.2.1 2004/08/03 10:35:47 skrll Exp $
+#	$NetBSD: INSTALL_TINY,v 1.71.2.2 2004/09/18 14:35:22 skrll Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -128,6 +128,7 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

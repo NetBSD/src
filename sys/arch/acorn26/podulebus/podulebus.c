@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.8.2.1 2004/08/03 10:30:48 skrll Exp $ */
+/* $NetBSD: podulebus.c,v 1.8.2.2 2004/09/18 14:30:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.8.2.1 2004/08/03 10:30:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.8.2.2 2004/09/18 14:30:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

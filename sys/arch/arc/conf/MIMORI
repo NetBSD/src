@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.20.2.1 2004/08/03 10:32:21 skrll Exp $
+#	$NetBSD: MIMORI,v 1.20.2.2 2004/09/18 14:32:08 skrll Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -92,6 +92,7 @@ options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI networking

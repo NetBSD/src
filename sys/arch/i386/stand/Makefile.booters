@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.50.2.1 2004/08/03 10:36:14 skrll Exp $
+#	$NetBSD: Makefile.booters,v 1.50.2.2 2004/09/18 14:35:50 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -13,12 +13,12 @@ LIBC=		# nothing
 # Make sure we override any optimization options specified by the
 # user.
 .if ${MACHINE_ARCH} == "x86_64"
-COPTS=	-Os -m32
+CPUFLAGS= -m32
 CPPFLAGS+= -DBOOT_ELF64
 .else
-COPTS=	-Os -mcpu=i386
+CPUFLAGS= -mcpu=i386
 .endif
-COPTS+= -ffreestanding
+COPTS=	-Os -ffreestanding
 
 I386_STAND_DIR?= $S/arch/i386/stand
 

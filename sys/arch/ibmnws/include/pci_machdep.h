@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.2.2.2 2004/08/03 10:36:26 skrll Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.2.2.3 2004/09/18 14:36:02 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

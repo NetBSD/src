@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.18.1 2004/08/03 10:35:46 skrll Exp $
+#	$NetBSD: Makefile,v 1.12.18.2 2004/09/18 14:35:22 skrll Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
 KSRC=${.CURDIR}/../../..

@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.23.2.1 2004/08/03 10:37:11 skrll Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.23.2.2 2004/09/18 14:36:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.1 2004/08/03 10:37:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.23.2.2 2004/09/18 14:36:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,8 +337,8 @@ iwm_attach(parent, self, auxp)
 			iwm->fd[ia.unit] = NULL;
 			ia.driveType = getFDType(ia.unit);
 			if (NULL != ia.driveType)
-				config_found_sm(self, (void *)&ia,
-				    fd_print, NULL);
+				config_found(self, (void *)&ia,
+				    fd_print);
 		}
 		if (TRACE_CONFIG)
 			printf("iwm: Initialization completed.\n");

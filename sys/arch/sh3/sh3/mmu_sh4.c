@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.6.6.1 2004/08/03 10:40:18 skrll Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.6.6.2 2004/09/18 14:40:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.6.6.1 2004/08/03 10:40:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu_sh4.c,v 1.6.6.2 2004/09/18 14:40:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

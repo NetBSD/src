@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_mainbus.c,v 1.5.2.1 2004/08/03 10:34:03 skrll Exp $ */
+/*	$NetBSD: ixp12x0_mainbus.c,v 1.5.2.2 2004/09/18 14:33:46 skrll Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_mainbus.c,v 1.5.2.1 2004/08/03 10:34:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_mainbus.c,v 1.5.2.2 2004/09/18 14:33:46 skrll Exp $");
 
 /*
  * front-end for the ixp12x0 I/O Processor.

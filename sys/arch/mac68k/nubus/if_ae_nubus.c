@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.33.6.1 2004/08/03 10:37:11 skrll Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.33.6.2 2004/09/18 14:36:56 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.33.6.1 2004/08/03 10:37:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.33.6.2 2004/09/18 14:36:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

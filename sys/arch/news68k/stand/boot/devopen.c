@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4.2.1 2004/08/03 10:38:28 skrll Exp $	*/
+/*	$NetBSD: devopen.c,v 1.4.2.2 2004/09/18 14:38:04 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -60,10 +60,7 @@ struct romdev {
 } romdev;
 
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;	/* out */
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	int fd;
 	char devname[32];
@@ -92,13 +89,13 @@ devopen(f, fname, file)
 int
 dkopen(struct open_file *f, ...)
 {
+
 	DPRINTF("dkopen\n");
 	return 0;
 }
 
 int
-dkclose(f)
-	struct open_file *f;
+dkclose(struct open_file *f)
 {
 	struct romdev *dev = f->f_devdata;
 
@@ -108,13 +105,8 @@ dkclose(f)
 }
 
 int
-dkstrategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;	/* out: number of bytes transfered */
+dkstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
+    size_t *rsize)
 {
 	struct romdev *dev = devdata;
 

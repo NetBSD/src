@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.7.2.2 2004/09/03 12:44:27 skrll Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.7.2.3 2004/09/18 14:30:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.7.2.2 2004/09/03 12:44:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.7.2.3 2004/09/18 14:30:43 skrll Exp $");
 
 #include "opt_algor_p6032.h"
 

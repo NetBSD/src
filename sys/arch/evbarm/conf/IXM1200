@@ -1,4 +1,4 @@
-#	$NetBSD: IXM1200,v 1.5.2.2 2004/08/12 11:41:03 skrll Exp $
+#	$NetBSD: IXM1200,v 1.5.2.3 2004/09/18 14:33:39 skrll Exp $
 #
 #	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
 #
@@ -58,6 +58,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.4.2.1 2004/08/03 10:37:31 skrll Exp $	*/
+/*	$NetBSD: alloc.c,v 1.4.2.2 2004/09/18 14:37:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

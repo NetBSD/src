@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.4.2.1 2004/08/03 10:30:48 skrll Exp $ */
+/* $NetBSD: types.h,v 1.4.2.2 2004/09/18 14:30:30 skrll Exp $ */
 
 #ifndef	_ACORN26_TYPES_H_
 #define	_ACORN26_TYPES_H_

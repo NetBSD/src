@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.9.6.2 2004/08/03 10:32:49 skrll Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.9.6.3 2004/09/18 14:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -47,7 +47,7 @@
 /* woo */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vidcconsole.c,v 1.9.6.2 2004/08/03 10:32:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcconsole.c,v 1.9.6.3 2004/09/18 14:32:32 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,11 +120,11 @@ const struct cdevsw vidcconsole_cdevsw = {
 };
 
 int
-vidcconsoleopen(dev, flags, fmt, l)
+vidcconsoleopen(dev, flags, fmt, p)
 	dev_t dev;
 	int flags;
 	int fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vidcconsole_softc *sc;
 	struct vconsole vconsole_new;
@@ -153,18 +153,18 @@ vidcconsoleopen(dev, flags, fmt, l)
 			  64 + minor(dev) ),
 		    &vconsole_new );
 	} else {
-		log(LOG_WARNING, "Multiple open of/dev/vidcconsole0 by proc %d\n", l->l_proc->p_pid);
+		log(LOG_WARNING, "Multiple open of/dev/vidcconsole0 by proc %d\n", p->p_pid);
 	}
 
 	return 0;
 }
 
 int
-vidcconsoleclose(dev, flags, fmt, l)
+vidcconsoleclose(dev, flags, fmt, p)
 	dev_t dev;
 	int flags;
 	int fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vidcconsole_softc *sc;
 	int unit = minor(dev);
@@ -184,16 +184,16 @@ vidcconsoleclose(dev, flags, fmt, l)
 }
 
 int
-vidcconsoleioctl(dev, cmd, data, flag, l)
+vidcconsoleioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	dev = makedev(cdevsw_lookup_major(&physcon_cdevsw),
 		      64 + minor(dev));
-	return((*physcon_cdevsw.d_ioctl)(dev, cmd, data, flag, l));
+	return((*physcon_cdevsw.d_ioctl)(dev, cmd, data, flag, p));
 }
 
 paddr_t

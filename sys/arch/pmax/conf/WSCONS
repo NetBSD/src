@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.5.2.2 2004/08/03 10:39:10 skrll Exp $
+# $NetBSD: WSCONS,v 1.5.2.3 2004/09/18 14:38:49 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -33,7 +33,7 @@ options 	WSCONS
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.5.2.2 $"
+#ident		"GENERIC-$Revision: 1.5.2.3 $"
 
 maxusers	64
 
@@ -123,6 +123,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# Multicast routing support
+#options 	PIM		# Protocol Independent Multicast
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
 #options 	EON		# OSI tunneling over IP

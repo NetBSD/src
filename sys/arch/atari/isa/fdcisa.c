@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcisa.c,v 1.4.6.1 2004/08/03 10:33:26 skrll Exp $	*/
+/*	$NetBSD: fdcisa.c,v 1.4.6.2 2004/09/18 14:33:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.4.6.1 2004/08/03 10:33:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.4.6.2 2004/09/18 14:33:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,14 +132,14 @@ fdc_isa_probe(parent, cfp, aux)
 		return (0);
 
 	/* Disallow wildcarded I/O addresses. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	/* Don't allow wildcarded IRQ/DRQ. */
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
-	if (ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
+	if (ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ)
 		return (0);
 
 	/* Map the i/o space. */

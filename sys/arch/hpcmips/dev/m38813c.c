@@ -1,4 +1,4 @@
-/*	$NetBSD: m38813c.c,v 1.8.6.1 2004/08/03 10:35:06 skrll Exp $ */
+/*	$NetBSD: m38813c.c,v 1.8.6.2 2004/09/18 14:34:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m38813c.c,v 1.8.6.1 2004/08/03 10:35:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m38813c.c,v 1.8.6.2 2004/09/18 14:34:52 skrll Exp $");
 
 #include "opt_use_poll.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5.6.1 2004/08/03 10:38:35 skrll Exp $	*/
+/*	$NetBSD: devopen.c,v 1.5.6.2 2004/09/18 14:38:10 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.

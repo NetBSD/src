@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.8.2.1 2004/08/03 10:30:55 skrll Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.8.2.2 2004/09/18 14:30:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.8.2.1 2004/08/03 10:30:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.8.2.2 2004/09/18 14:30:37 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/tty.h>

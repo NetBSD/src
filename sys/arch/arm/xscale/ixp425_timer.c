@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.1.2.1 2004/08/03 10:32:58 skrll Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.1.2.2 2004/09/18 14:32:47 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.1.2.1 2004/08/03 10:32:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.1.2.2 2004/09/18 14:32:47 skrll Exp $");
 
 #include "opt_perfctrs.h"
 

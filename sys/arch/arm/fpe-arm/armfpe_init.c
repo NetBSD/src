@@ -1,4 +1,4 @@
-/*	$NetBSD: armfpe_init.c,v 1.6.2.1 2004/08/03 10:32:36 skrll Exp $	*/
+/*	$NetBSD: armfpe_init.c,v 1.6.2.2 2004/09/18 14:32:23 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.6.2.1 2004/08/03 10:32:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armfpe_init.c,v 1.6.2.2 2004/09/18 14:32:23 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/proc.h>

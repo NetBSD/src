@@ -1,9 +1,8 @@
-# $NetBSD: Makefile.bootxx,v 1.5.2.1 2004/08/03 10:36:19 skrll Exp $
+# $NetBSD: Makefile.bootxx,v 1.5.2.2 2004/09/18 14:35:50 skrll Exp $
 
 S=	${.CURDIR}/../../../../../
 
 NOMAN=
-STRIPFLAG=
 PROG?= bootxx_${FS}
 BINDIR= /usr/mdec
 BINMODE= 0444
@@ -19,6 +18,8 @@ BOOTXX_MAXSIZE?= $$(( ${BOOTXX_SECTORS} * 512 ))
 SRCS= pbr.S label.S bootxx.S boot1.c
 
 .include <bsd.own.mk>
+
+STRIPFLAG=	# nothing
 
 LIBCRT0=	# nothing
 LIBCRTBEGIN=	# nothing
@@ -51,12 +52,12 @@ CPPFLAGS+= -DNO_LBA_CHECK
 .if ${MACHINE} == "amd64"
 LD+=  -m elf_i386
 AFLAGS+=   -m32
-COPTS+=    -m32
+CPUFLAGS=  -m32
 LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 CPPFLAGS+= -DBOOT_ELF64
 .else
-COPTS+=    -mcpu=i386
+CPUFLAGS=  -mcpu=i386
 .endif
 
 COPTS+=    -ffreestanding

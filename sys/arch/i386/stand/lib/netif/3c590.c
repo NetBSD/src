@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.11.30.1 2004/08/03 10:36:25 skrll Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.11.30.2 2004/09/18 14:35:57 skrll Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 

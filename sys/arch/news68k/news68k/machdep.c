@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42.2.2 2004/08/03 10:38:23 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42.2.3 2004/09/18 14:38:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42.2.2 2004/08/03 10:38:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42.2.3 2004/09/18 14:38:04 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -198,7 +198,7 @@ int	delay_divisor = 82;	/* delay constant */
  * Early initialization, before main() is called.
  */
 void
-news68k_init()
+news68k_init(void)
 {
 	int i;
 
@@ -243,7 +243,7 @@ news68k_init()
  * initialize CPU, and do autoconfiguration.
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
@@ -325,10 +325,7 @@ cpu_startup()
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
@@ -365,7 +362,7 @@ char cpu_model[124];
 int news_machine_id;
 
 void
-identifycpu()
+identifycpu(void)
 {
 
 	printf("SONY NET WORK STATION, Model %s, ", cpu_model);
@@ -396,9 +393,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 int	waittime = -1;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 #if __GNUC__    /* XXX work around lame compiler problem (gcc 2.7.2) */
@@ -468,7 +463,7 @@ cpu_reboot(howto, bootstr)
  * Initialize the kernel crash dump header.
  */
 void
-cpu_init_kcore_hdr()
+cpu_init_kcore_hdr(void)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
@@ -529,21 +524,19 @@ cpu_init_kcore_hdr()
  * Returns size in disk blocks.
  */
 int
-cpu_dumpsize()
+cpu_dumpsize(void)
 {
 	int size;
 
 	size = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
-	return (btodb(roundup(size, dbtob(1))));
+	return btodb(roundup(size, dbtob(1)));
 }
 
 /*
  * Called by dumpsys() to dump the machine-dependent header.
  */
 int
-cpu_dump(dump, blknop)
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
-	daddr_t *blknop;
+cpu_dump(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t *blknop)
 {
 	int buf[dbtob(1) / sizeof(int)];
 	cpu_kcore_hdr_t *chdr;
@@ -561,7 +554,7 @@ cpu_dump(dump, blknop)
 	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
 	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
-	return (error);
+	return error;
 }
 
 /*
@@ -579,7 +572,7 @@ long	dumplo = 0;		/* blocks */
  * reduce the chance that swapping trashes it.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int chdrsize;	/* size of dump header */
@@ -617,7 +610,7 @@ cpu_dumpconf()
  * Dump physical memory onto the dump device.  Called by cpu_reboot().
  */
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
@@ -707,7 +700,7 @@ dumpsys()
 }
 
 void
-initcpu()
+initcpu(void)
 {
 
 #ifdef MAPPEDCOPY
@@ -724,10 +717,9 @@ initcpu()
 }
 
 void
-straytrap(pc, evec)
-	int pc;
-	u_short evec;
+straytrap(int pc, u_short evec)
 {
+
 	printf("unexpected trap (vector offset %x) from %x\n",
 	    evec & 0xFFF, pc);
 }
@@ -737,21 +729,19 @@ straytrap(pc, evec)
 int	*nofault;
 
 int
-badaddr(addr, nbytes)
-	caddr_t addr;
-	int nbytes;
+badaddr(caddr_t addr, int nbytes)
 {
 	int i;
 	label_t	faultbuf;
 
 #ifdef lint
-	i = *addr; if (i) return (0);
+	i = *addr; if (i) return 0;
 #endif
 
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
-		return(1);
+		return 1;
 	}
 	switch (nbytes) {
 	case 1:
@@ -770,12 +760,11 @@ badaddr(addr, nbytes)
 		panic("badaddr: bad request");
 	}
 	nofault = (int *) 0;
-	return (0);
+	return 0;
 }
 
 int
-badbaddr(addr)
-	caddr_t addr;
+badbaddr(caddr_t addr)
 {
 	int i;
 	label_t	faultbuf;
@@ -783,11 +772,11 @@ badbaddr(addr)
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *)nofault)) {
 		nofault = (int *) 0;
-		return(1);
+		return 1;
 	}
 	i = *(volatile char *)addr;
 	nofault = (int *) 0;
-	return(0);
+	return 0;
 }
 
 /*
@@ -803,9 +792,7 @@ badbaddr(addr)
  *	done on little-endian machines...  -- cgd
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
 #if defined(COMPAT_NOMID) || defined(COMPAT_44)
 	u_long midmag, magic;
@@ -822,13 +809,13 @@ cpu_exec_aout_makecmds(l, epp)
 	switch (midmag) {
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
-		return(error);
+		error = exec_aout_prep_oldzmagic(p, epp);
+		return error;
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
 		error = exec_aout_prep_oldzmagic(p, epp);
-		return(error);
+		return error;
 #endif
 	}
 #endif /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
@@ -853,7 +840,7 @@ struct news68k_model {
 	const char *name;
 };
 
-const struct news68k_model news68k_models[] = {
+static const struct news68k_model news68k_models[] = {
 	{ ICK001,	"ICK001"	},	/*  1 */
 	{ ICK00X,	"ICK00X"	},	/*  2 */
 	{ NWS799,	"NWS-799"	},	/*  3 */
@@ -899,7 +886,7 @@ const struct news68k_model news68k_models[] = {
 };
 
 void
-news1700_init()
+news1700_init(void)
 {
 	struct oidrom idrom;
 	const char *t;
@@ -949,7 +936,7 @@ news1700_init()
  */
 
 void
-parityenable()
+parityenable(void)
 {
 
 #define PARITY_VECT 0xc0
@@ -971,7 +958,7 @@ parityenable()
 static int innmihand;	/* simple mutex */
 
 void
-parityerror()
+parityerror(void)
 {
 
 	/* Prevent unwanted recursion. */
@@ -991,7 +978,7 @@ parityerror()
 
 #ifdef news1200
 void
-news1200_init()
+news1200_init(void)
 {
 	struct idrom idrom;
 	u_char *p, *q;
@@ -1035,7 +1022,7 @@ u_char ssir;
 u_int next_sir;
 
 void
-intrhand_lev2()
+intrhand_lev2(void)
 {
 	int s;
 	u_int bit;
@@ -1064,9 +1051,7 @@ intrhand_lev2()
  * Allocation routines for software interrupts.
  */
 u_char
-allocate_sir(proc, arg)
-	void (*proc)(void *);
-	void *arg;
+allocate_sir(void (*proc)(void *), void *arg)
 {
 	int bit;
 
@@ -1075,11 +1060,11 @@ allocate_sir(proc, arg)
 	bit = next_sir++;
 	sir_routines[bit] = proc;
 	sir_args[bit] = arg;
-	return (1 << bit);
+	return 1 << bit;
 }
 
 void
-init_sir()
+init_sir(void)
 {
 
 	sir_routines[SIR_NET]   = (void (*)(void *))netintr;
@@ -1088,7 +1073,7 @@ init_sir()
 }
 
 void
-intrhand_lev3()
+intrhand_lev3(void)
 {
 	int stat;
 
@@ -1101,7 +1086,7 @@ intrhand_lev3()
 }
 
 void
-intrhand_lev4()
+intrhand_lev4(void)
 {
 	int stat;
 #if NLE > 0
@@ -1158,7 +1143,7 @@ extern struct consdev consdev_bm, consdev_zs;
 int tty00_is_console = 0;
 
 void
-consinit()
+consinit(void)
 {
 
 	int dipsw = *dip_switch;

@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.11.2.1 2004/08/03 10:40:00 skrll Exp $	*/
+/*	$NetBSD: crime.c,v 1.11.2.2 2004/09/18 14:39:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.11.2.1 2004/08/03 10:40:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crime.c,v 1.11.2.2 2004/09/18 14:39:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -183,7 +183,7 @@ crime_attach(struct device *parent, struct device *self, void *aux)
 void *
 crime_intr_establish(int irq, int level, int (*func)(void *), void *arg)
 {
-	if (irq < 8)
+	if (irq < 16)
 		return mace_intr_establish(irq, level, func, arg);
 	
 	if (crime[irq].func != NULL)
@@ -209,8 +209,8 @@ crime_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 	crime_intstat = bus_space_read_8(crm_iot, crm_ioh, CRIME_INTSTAT);
 	crime_ipending = (crime_intstat & crime_intmask);
 
-	if (crime_ipending & 0xff)
-		mace_intr(crime_ipending & 0xff);
+	if (crime_ipending & 0xffff)
+		mace_intr(crime_ipending & 0xffff);
 
         if (crime_ipending & 0xffff0000) {
 	/*
@@ -252,6 +252,16 @@ crime_intr_mask(unsigned int intr)
 
 	mask = bus_space_read_8(crm_iot, crm_ioh, CRIME_INTMASK);
 	mask |= (1 << intr);
+	bus_space_write_8(crm_iot, crm_ioh, CRIME_INTMASK, mask);
+}
+
+void
+crime_intr_unmask(unsigned int intr)
+{
+	u_int64_t mask;
+
+	mask = bus_space_read_8(crm_iot, crm_ioh, CRIME_INTMASK);
+	mask &= ~(1 << intr);
 	bus_space_write_8(crm_iot, crm_ioh, CRIME_INTMASK, mask);
 }
 

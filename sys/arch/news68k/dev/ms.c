@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.1.26.1 2004/08/03 10:38:22 skrll Exp $	*/
+/*	$NetBSD: ms.c,v 1.1.26.2 2004/09/18 14:37:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.1.26.1 2004/08/03 10:38:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.1.26.2 2004/09/18 14:37:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,8 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.1.26.1 2004/08/03 10:38:22 skrll Exp $");
 #include <news68k/dev/msvar.h>
 
 void
-ms_intr(sc)
-	struct ms_softc *sc;
+ms_intr(struct ms_softc *sc)
 {
 	bus_space_tag_t bt = sc->sc_bt;
 	bus_space_handle_t bh = sc->sc_bh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa_machdep.c,v 1.2.2.1 2004/08/03 10:40:33 skrll Exp $	*/
+/*	$NetBSD: lpt_ofisa_machdep.c,v 1.2.2.2 2004/09/18 14:40:16 skrll Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa_machdep.c,v 1.2.2.1 2004/08/03 10:40:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa_machdep.c,v 1.2.2.2 2004/09/18 14:40:16 skrll Exp $");
 
 #include "opt_compat_old_ofw.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.3.2.3 2004/08/05 20:23:05 skrll Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.3.2.4 2004/09/18 14:35:14 skrll Exp $	*/
 
 #ifndef _HPPA_MCONTEXT_H_
 #define	_HPPA_MCONTEXT_H_

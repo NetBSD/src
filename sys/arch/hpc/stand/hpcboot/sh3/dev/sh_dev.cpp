@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_dev.cpp,v 1.1.18.1 2004/08/12 11:41:10 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_dev.cpp,v 1.1.18.2 2004/09/18 14:34:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

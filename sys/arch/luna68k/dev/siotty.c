@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.13.2.1 2004/08/03 10:36:30 skrll Exp $ */
+/* $NetBSD: siotty.c,v 1.13.2.2 2004/09/18 14:36:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.13.2.1 2004/08/03 10:36:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.13.2.2 2004/09/18 14:36:06 skrll Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amigappc,v 1.1.4.2 2004/08/03 10:32:09 skrll Exp $
+#	$NetBSD: majors.amigappc,v 1.1.4.3 2004/09/18 14:31:56 skrll Exp $
 #
 # Devices majors specific to amigappc
 #

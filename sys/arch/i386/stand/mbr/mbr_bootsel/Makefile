@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2004/08/03 10:36:25 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2004/09/18 14:35:57 skrll Exp $
 
 PROG= mbr_bootsel
 AFLAGS+= -DBOOTSEL

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_boot.h,v 1.2.24.1 2004/08/12 11:41:06 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_boot.h,v 1.2.24.2 2004/09/18 14:34:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

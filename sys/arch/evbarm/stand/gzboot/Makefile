@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.1 2004/08/03 10:34:08 skrll Exp $
+#	$NetBSD: Makefile,v 1.2.2.2 2004/09/18 14:33:51 skrll Exp $
 
 .if ${MACHINE_ARCH} == "arm"
 # Little endian platforms

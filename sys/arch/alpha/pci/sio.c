@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.36.2.2 2004/09/03 12:44:28 skrll Exp $ */
+/* $NetBSD: sio.c,v 1.36.2.3 2004/09/18 14:31:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -66,10 +66,11 @@
 #include "opt_dec_2100_a500.h"
 #include "opt_dec_2100a_a500.h"
 #include "eisa.h"
+#include "sio.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.36.2.2 2004/09/03 12:44:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.36.2.3 2004/09/18 14:31:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +103,9 @@ struct sio_softc {
 
 	bus_space_tag_t sc_iot, sc_memt;
 	bus_dma_tag_t	sc_parent_dmat;
+#if NPCEB > 0
 	int		sc_haseisa;
+#endif
 	int		sc_is82c693;
 
 	/* ISA chipset must persist; it's used after autoconfig. */
@@ -115,10 +118,12 @@ void	sioattach __P((struct device *, struct device *, void *));
 CFATTACH_DECL(sio, sizeof(struct sio_softc),
     siomatch, sioattach, NULL, NULL);
 
+#if NPCEB > 0
 int	pcebmatch __P((struct device *, struct cfdata *, void *));
 
 CFATTACH_DECL(pceb, sizeof(struct sio_softc),
     pcebmatch, sioattach, NULL, NULL);
+#endif
 
 union sio_attach_args {
 	struct isabus_attach_args sa_iba;
@@ -127,10 +132,12 @@ union sio_attach_args {
 
 void	sio_isa_attach_hook __P((struct device *, struct device *,
 	    struct isabus_attach_args *));
+#if NPCEB > 0
 void	sio_eisa_attach_hook __P((struct device *, struct device *,
 	    struct eisabus_attach_args *));
 int	sio_eisa_maxslots __P((void *));
 int	sio_eisa_intr_map __P((void *, u_int, eisa_intr_handle_t *));
+#endif
 
 void	sio_bridge_callback __P((struct device *));
 
@@ -163,6 +170,7 @@ siomatch(parent, match, aux)
 	return (0);
 }
 
+#if NPCEB > 0
 int
 pcebmatch(parent, match, aux)
 	struct device *parent;
@@ -177,6 +185,7 @@ pcebmatch(parent, match, aux)
 
 	return (0);
 }
+#endif
 
 void
 sioattach(parent, self, aux)
@@ -195,8 +204,10 @@ sioattach(parent, self, aux)
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_parent_dmat = pa->pa_dmat;
+#if NPCEB > 0
 	sc->sc_haseisa = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PCEB);
+#endif
 	sc->sc_is82c693 = (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CONTAQ &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CONTAQ_82C693);
 
@@ -208,8 +219,9 @@ sio_bridge_callback(self)
 	struct device *self;
 {
 	struct sio_softc *sc = (struct sio_softc *)self;
-	struct alpha_eisa_chipset ec;
 	union sio_attach_args sa;
+#if NPCEB > 0
+	struct alpha_eisa_chipset ec;
 
 	if (sc->sc_haseisa) {
 		ec.ec_v = NULL;
@@ -243,6 +255,7 @@ sio_bridge_callback(self)
 		config_found_ia(&sc->sc_dv, "eisabus", &sa.sa_eba,
 				eisabusprint);
 	}
+#endif /* NPCEB */
 
 	/*
 	 * Deal with platforms which have Odd ISA DMA needs.
@@ -296,6 +309,8 @@ sio_isa_attach_hook(parent, self, iba)
 	/* Nothing to do. */
 }
 
+#if NPCEB > 0
+
 void
 sio_eisa_attach_hook(parent, self, eba)
 	struct device *parent, *self;
@@ -337,3 +352,5 @@ sio_eisa_intr_map(v, irq, ihp)
 	*ihp = irq;
 	return 0;
 }
+
+#endif /* NPCEB */

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.4.2.1 2004/08/03 10:38:16 skrll Exp $	*/
+/*	$NetBSD: extintr.c,v 1.4.2.2 2004/09/18 14:37:57 skrll Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.4.2.1 2004/08/03 10:38:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.4.2.2 2004/09/18 14:37:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

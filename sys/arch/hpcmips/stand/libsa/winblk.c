@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.c,v 1.4.24.1 2004/08/03 10:35:18 skrll Exp $	*/
+/*	$NetBSD: winblk.c,v 1.4.24.2 2004/09/18 14:34:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.41 2002/10/02 05:47:13 thorpej Exp $	*/
+/*	$NetBSD: mms.c,v 1.41.6.1 2004/09/18 14:35:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.41 2002/10/02 05:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.41.6.1 2004/09/18 14:35:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,10 +93,10 @@ mmsprobe(parent, match, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return 0;
 
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return 0;
 
 	/* Map the i/o space. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.6.2.2 2004/08/25 06:57:17 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.6.2.3 2004/09/18 14:32:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.6.2.2 2004/08/25 06:57:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.6.2.3 2004/09/18 14:32:16 skrll Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.3.6.1 2004/08/03 10:38:40 skrll Exp $        */
+/*      $NetBSD: sd.c,v 1.3.6.2 2004/09/18 14:38:17 skrll Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.

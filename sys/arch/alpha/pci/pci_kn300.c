@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.24.10.1 2004/08/03 10:31:20 skrll Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.24.10.2 2004/09/18 14:31:12 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.24.10.1 2004/08/03 10:31:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.24.10.2 2004/09/18 14:31:12 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

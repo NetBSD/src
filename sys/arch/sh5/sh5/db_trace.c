@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10.2.1 2004/08/03 10:40:24 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.10.2.2 2004/09/18 14:40:08 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10.2.1 2004/08/03 10:40:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10.2.2 2004/09/18 14:40:08 skrll Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.4.2.2 2004/08/03 10:40:06 skrll Exp $	 */
+/* $NetBSD: grtwo.c,v 1.4.2.3 2004/09/18 14:39:43 skrll Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.4.2.2 2004/08/03 10:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.4.2.3 2004/09/18 14:39:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

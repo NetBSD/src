@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.37.2.2 2004/09/03 12:44:48 skrll Exp $ */
+/* $NetBSD: pnpbios.c,v 1.37.2.3 2004/09/18 14:35:50 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.37.2.2 2004/09/03 12:44:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.37.2.3 2004/09/18 14:35:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,8 +140,8 @@ static int	pnpbios_attachnode	__P((struct pnpbios_softc *sc,
 
 static int	pnp_scan		__P((const u_int8_t **bufp,
     size_t maxlen, struct pnpresources *pnpresources, int in_depends));
-static int	pnpbios_submatch	__P((struct device *parent,
-    struct cfdata *match, void *aux));
+static int pnpbios_submatch __P((struct device *, struct cfdata *,
+				 const locdesc_t *, void *));
 extern int	pnpbioscall		__P((int));
 
 static void	pnpbios_enumerate(struct pnpbios_softc *sc);
@@ -797,18 +797,37 @@ pnpbios_print_devres(dev, aa)
 }
 
 static int
-pnpbios_submatch(parent, match, aux)
+pnpbios_submatch(parent, match, ldesc, aux)
 	struct device *parent;
 	struct cfdata *match;
+	const locdesc_t *ldesc;
 	void *aux;
 {
-	struct pnpbiosdev_attach_args *aa = aux;
 
 	if (match->cf_loc[PNPBIOSCF_INDEX] != PNPBIOSCF_INDEX_DEFAULT &&
-	    match->cf_loc[PNPBIOSCF_INDEX] != aa->idx)
+	    match->cf_loc[PNPBIOSCF_INDEX] != ldesc->locs[PNPBIOSCF_INDEX])
 		return (0);
 
 	return (config_match(parent, match, aux));
+}
+
+static int
+pnpbios_attachchild(struct pnpbios_softc *sc,
+		    struct pnpbiosdev_attach_args *aa, int matchonly)
+{
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
+
+	ldesc->len = 1;
+	ldesc->locs[PNPBIOSCF_INDEX] = aa->idx;
+
+	if (matchonly)
+		return (config_search_loc(pnpbios_submatch, (struct device *)sc,
+					 "pnpbios", ldesc, aa) != NULL);
+	else 
+		return (config_found_sm_loc((struct device *)sc, "pnpbios",
+			ldesc, aa, pnpbios_print, pnpbios_submatch)
+				!= NULL);
 }
 
 static int
@@ -893,22 +912,15 @@ pnpbios_attachnode(sc, idx, buf, len, matchonly)
 
 	/* first try the specific device ID */
 	aa.idstr = idstr;
-	if (matchonly
-	    ? config_search(pnpbios_submatch, (struct device *)sc, &aa) != NULL
-	    : config_found_sm((struct device *)sc, &aa, pnpbios_print,
-		pnpbios_submatch) != NULL)
-			return -1;
+	if (pnpbios_attachchild(sc, &aa, matchonly))
+		return -1;
 
 	/* if no driver was found, try compatible IDs */
 	compatid = s.compatids;
 	while (compatid) {
 		aa.idstr = compatid->idstr;
-		if (matchonly
-		    ? config_search(pnpbios_submatch, (struct device *)sc,
-			&aa) != NULL
-		    : config_found_sm((struct device *)sc, &aa, pnpbios_print,
-			pnpbios_submatch) != NULL)
-				return -1;
+		if (pnpbios_attachchild(sc, &aa, matchonly))
+			return -1;
 		compatid = compatid->next;
 	}
 

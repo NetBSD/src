@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emu.h,v 1.6.38.1 2004/08/03 10:35:50 skrll Exp $	*/
+/*	$NetBSD: math_emu.h,v 1.6.38.2 2004/09/18 14:35:28 skrll Exp $	*/
 
 /*
  * linux/include/linux/math_emu.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.h,v 1.3.14.1 2004/08/03 10:30:47 skrll Exp $	*/
+/*	$NetBSD: altq_rmclass.h,v 1.3.14.2 2004/09/18 14:30:29 skrll Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.7 2002/01/11 07:32:54 kjc Exp $	*/
 
 /*

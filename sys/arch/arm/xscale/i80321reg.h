@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.10.2.1 2004/08/03 10:32:58 skrll Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.10.2.2 2004/09/18 14:32:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.

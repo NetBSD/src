@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_pckbport.c,v 1.1.4.2 2004/08/03 10:40:45 skrll Exp $ */
+/*	$NetBSD: ms_pckbport.c,v 1.1.4.3 2004/09/18 14:40:28 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.1.4.2 2004/08/03 10:40:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_pckbport.c,v 1.1.4.3 2004/09/18 14:40:28 skrll Exp $");
 
 /*
  * Attach PS/2 mouse at pckbport aux port

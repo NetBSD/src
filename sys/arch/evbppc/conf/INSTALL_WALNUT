@@ -1,8 +1,8 @@
-# 	$NetBSD: INSTALL_WALNUT,v 1.2.2.1 2004/08/03 10:34:16 skrll Exp $
+# 	$NetBSD: INSTALL_WALNUT,v 1.2.2.2 2004/09/18 14:33:58 skrll Exp $
 
 include "arch/evbppc/conf/WALNUT"
 
-#ident 		"INSTALL_WALNUT-$Revision: 1.2.2.1 $"
+#ident 		"INSTALL_WALNUT-$Revision: 1.2.2.2 $"
 
 # DEBUG options turned on:
 

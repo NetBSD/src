@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.63.2.1 2004/08/03 10:33:36 skrll Exp $
+# $NetBSD: GENERIC,v 1.63.2.2 2004/09/18 14:33:20 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.63.2.1 $"
+#ident 		"GENERIC-$Revision: 1.63.2.2 $"
 
 maxusers	32
 

@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.37.2.1 2004/08/03 10:32:21 skrll Exp $
+#	$NetBSD: PICA,v 1.37.2.2 2004/09/18 14:32:08 skrll Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -91,6 +91,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI networking

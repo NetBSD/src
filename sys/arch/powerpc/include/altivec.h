@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.h,v 1.8.2.1 2004/08/03 10:39:29 skrll Exp $	*/
+/*	$NetBSD: altivec.h,v 1.8.2.2 2004/09/18 14:39:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcreg.h,v 1.2.50.1 2004/08/03 10:37:06 skrll Exp $	*/
+/*	$NetBSD: if_mcreg.h,v 1.2.50.2 2004/09/18 14:36:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>

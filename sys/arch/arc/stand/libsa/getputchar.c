@@ -1,4 +1,4 @@
-/*	$NetBSD: getputchar.c,v 1.2.30.1 2004/08/03 10:32:28 skrll Exp $	*/
+/*	$NetBSD: getputchar.c,v 1.2.30.2 2004/09/18 14:32:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

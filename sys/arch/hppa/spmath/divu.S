@@ -1,4 +1,4 @@
-/*	$NetBSD: divu.S,v 1.1.10.1 2004/08/03 10:35:38 skrll Exp $	*/
+/*	$NetBSD: divu.S,v 1.1.10.2 2004/09/18 14:35:22 skrll Exp $	*/
 
 /*	$OpenBSD: divu.S,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.8.2.1 2004/08/03 10:32:29 skrll Exp $	*/
+/*	$NetBSD: exception.S,v 1.8.2.2 2004/09/18 14:32:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.

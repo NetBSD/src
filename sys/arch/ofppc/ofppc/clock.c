@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6.6.1 2004/08/03 10:38:40 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.6.6.2 2004/09/18 14:38:24 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6.6.1 2004/08/03 10:38:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.6.6.2 2004/09/18 14:38:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

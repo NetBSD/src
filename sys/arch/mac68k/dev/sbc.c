@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.43.2.1 2004/08/03 10:37:07 skrll Exp $	*/
+/*	$NetBSD: sbc.c,v 1.43.2.2 2004/09/18 14:36:43 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.43.2.1 2004/08/03 10:37:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.43.2.2 2004/09/18 14:36:43 skrll Exp $");
 
 #include "opt_ddb.h"
 

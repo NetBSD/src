@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.4.16.2 2004/08/12 16:15:32 skrll Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.4.16.3 2004/09/18 14:30:29 skrll Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.4.16.2 2004/08/12 16:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.4.16.3 2004/09/18 14:30:29 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -77,10 +77,10 @@ static void 		fifoq_purge __P((fifoq_state_t *));
 altqdev_decl(fifoq);
 
 int
-fifoqopen(dev, flag, fmt, l)
+fifoqopen(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
@@ -98,10 +98,10 @@ fifoqopen(dev, flag, fmt, l)
  *       is removed (only once with multiple simultaneous references.)
  */
 int
-fifoqclose(dev, flag, fmt, l)
+fifoqclose(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	fifoq_state_t *q;
 	int err, error = 0;
@@ -117,17 +117,16 @@ fifoqclose(dev, flag, fmt, l)
 }
 
 int
-fifoqioctl(dev, cmd, addr, flag, l)
+fifoqioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	fifoq_state_t *q;
 	struct fifoq_interface *ifacep;
 	struct ifnet *ifp;
-	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */

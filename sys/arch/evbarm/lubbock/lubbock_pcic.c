@@ -1,4 +1,4 @@
-/*      $NetBSD: lubbock_pcic.c,v 1.1.4.2 2004/08/03 10:34:03 skrll Exp $	*/
+/*      $NetBSD: lubbock_pcic.c,v 1.1.4.3 2004/09/18 14:33:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.1.4.2 2004/08/03 10:34:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.1.4.3 2004/09/18 14:33:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

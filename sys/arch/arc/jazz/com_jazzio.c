@@ -1,4 +1,4 @@
-/*	$NetBSD: com_jazzio.c,v 1.4.2.1 2004/08/03 10:32:22 skrll Exp $	*/
+/*	$NetBSD: com_jazzio.c,v 1.4.2.2 2004/09/18 14:32:08 skrll Exp $	*/
 /*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 /*	NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp 	*/
 
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.4.2.1 2004/08/03 10:32:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.4.2.2 2004/09/18 14:32:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

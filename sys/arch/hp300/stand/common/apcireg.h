@@ -1,4 +1,4 @@
-/*	$NetBSD: apcireg.h,v 1.1.4.2 2004/08/03 10:34:37 skrll Exp $	*/
+/*	$NetBSD: apcireg.h,v 1.1.4.3 2004/09/18 14:34:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Smith.  All rights reserved.

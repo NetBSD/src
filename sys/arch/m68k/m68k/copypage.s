@@ -1,4 +1,4 @@
-/*	$NetBSD: copypage.s,v 1.9.2.1 2004/08/03 10:36:59 skrll Exp $	*/
+/*	$NetBSD: copypage.s,v 1.9.2.2 2004/09/18 14:36:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

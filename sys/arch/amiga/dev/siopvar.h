@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.22.2.1 2004/08/03 10:31:54 skrll Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.22.2.2 2004/09/18 14:31:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.

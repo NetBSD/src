@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_glue.c,v 1.1.50.1 2004/08/03 10:33:36 skrll Exp $	*/
+/*	$NetBSD: kgdb_glue.c,v 1.1.50.2 2004/09/18 14:33:20 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.1.50.1 2004/08/03 10:33:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_glue.c,v 1.1.50.2 2004/09/18 14:33:20 skrll Exp $");
 
 #include <sys/param.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.58.22.1 2004/08/03 10:35:18 skrll Exp $	*/
+/*	$NetBSD: main.c,v 1.58.22.2 2004/09/18 14:34:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 Shin Takemura.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1.8.1 2004/08/03 10:36:59 skrll Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.1.8.2 2004/09/18 14:36:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.1.8.1 2004/08/03 10:36:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.1.8.2 2004/09/18 14:36:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.10.2.2 2004/09/03 12:44:29 skrll Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.10.2.3 2004/09/18 14:33:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.10.2.2 2004/09/03 12:44:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.10.2.3 2004/09/18 14:33:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

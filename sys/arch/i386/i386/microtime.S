@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.S,v 1.2.2.1 2004/08/03 10:35:50 skrll Exp $	*/
+/*	$NetBSD: microtime.S,v 1.2.2.2 2004/09/18 14:35:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/* $NetBSD: logout.h,v 1.4.6.1 2004/08/03 10:31:19 skrll Exp $ */
+/* $NetBSD: logout.h,v 1.4.6.2 2004/09/18 14:31:03 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob

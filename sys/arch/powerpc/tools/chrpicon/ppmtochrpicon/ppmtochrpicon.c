@@ -1,4 +1,4 @@
-/*	$NetBSD: ppmtochrpicon.c,v 1.2.22.1 2004/08/03 10:39:48 skrll Exp $	*/
+/*	$NetBSD: ppmtochrpicon.c,v 1.2.22.2 2004/09/18 14:39:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ppmtochrpicon.c,v 1.2.22.1 2004/08/03 10:39:48 skrll Exp $");
+__RCSID("$NetBSD: ppmtochrpicon.c,v 1.2.22.2 2004/09/18 14:39:30 skrll Exp $");
 
 #include <stdlib.h>
 

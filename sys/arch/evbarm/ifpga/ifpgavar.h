@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpgavar.h,v 1.2.6.1 2004/08/03 10:33:55 skrll Exp $ */
+/*	$NetBSD: ifpgavar.h,v 1.2.6.2 2004/09/18 14:33:45 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd

@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.11.2.1 2004/09/03 12:44:28 skrll Exp $ */
+/* $NetBSD: tsc.c,v 1.11.2.2 2004/09/18 14:31:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.11.2.1 2004/09/03 12:44:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.11.2.2 2004/09/18 14:31:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkbad.c,v 1.6.12.2 2004/09/03 12:44:39 skrll Exp $	*/
+/*	$NetBSD: dkbad.c,v 1.6.12.3 2004/09/18 14:34:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkbad.c,v 1.6.12.2 2004/09/03 12:44:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkbad.c,v 1.6.12.3 2004/09/18 14:34:19 skrll Exp $");
 
 #ifndef NOBADSECT
 #include <sys/param.h>

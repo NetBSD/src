@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_arith.h,v 1.2.36.1 2004/08/03 10:36:40 skrll Exp $ */
+/*	$NetBSD: fpu_arith.h,v 1.2.36.2 2004/09/18 14:36:16 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200machdep.c,v 1.1.28.1 2004/08/03 10:35:06 skrll Exp $	*/
+/*	$NetBSD: mq200machdep.c,v 1.1.28.2 2004/09/18 14:34:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin
@@ -31,7 +31,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200machdep.c,v 1.1.28.1 2004/08/03 10:35:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200machdep.c,v 1.1.28.2 2004/09/18 14:34:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

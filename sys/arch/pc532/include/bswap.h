@@ -1,4 +1,4 @@
-/*      $NetBSD: bswap.h,v 1.2.34.1 2004/08/03 10:38:47 skrll Exp $      */
+/*      $NetBSD: bswap.h,v 1.2.34.2 2004/09/18 14:38:24 skrll Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 

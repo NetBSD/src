@@ -1,4 +1,4 @@
-/*      $NetBSD: ixdp425_pci.c,v 1.1.2.1 2004/08/03 10:34:03 skrll Exp $ */
+/*      $NetBSD: ixdp425_pci.c,v 1.1.2.2 2004/09/18 14:33:46 skrll Exp $ */
 #define PCI_DEBUG
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.1.2.1 2004/08/03 10:34:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_pci.c,v 1.1.2.2 2004/09/18 14:33:46 skrll Exp $");
 
 /*
  * IXDP425 PCI interrupt support.

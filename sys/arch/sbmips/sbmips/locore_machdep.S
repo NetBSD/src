@@ -1,4 +1,4 @@
-/* $NetBSD: locore_machdep.S,v 1.1.18.1 2004/08/03 10:40:00 skrll Exp $ */
+/* $NetBSD: locore_machdep.S,v 1.1.18.2 2004/09/18 14:39:42 skrll Exp $ */
 
 #include <mips/asm.h>
 

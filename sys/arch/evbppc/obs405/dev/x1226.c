@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.1.4.2 2004/08/03 10:34:16 skrll Exp $	*/
+/*	$NetBSD: x1226.c,v 1.1.4.3 2004/09/18 14:34:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.1.4.2 2004/08/03 10:34:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.1.4.3 2004/09/18 14:34:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.13.6.1 2004/08/03 10:32:09 skrll Exp $
+#	$NetBSD: files.amigappc,v 1.13.6.2 2004/09/18 14:31:56 skrll Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!

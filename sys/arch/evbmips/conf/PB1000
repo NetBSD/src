@@ -1,11 +1,11 @@
-#	$NetBSD: PB1000,v 1.6.2.2 2004/08/25 06:57:17 skrll Exp $
+#	$NetBSD: PB1000,v 1.6.2.3 2004/09/18 14:33:51 skrll Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.pb1000"
 
-#ident 		"PD1000-$Revision: 1.6.2.2 $"
+#ident 		"PB1000-$Revision: 1.6.2.3 $"
 
 maxusers	32
 
@@ -87,6 +87,7 @@ options 	INET		# Internet protocols
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
 #options 	ISO,TPIP	# OSI networking

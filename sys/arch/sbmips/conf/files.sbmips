@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.6.6.1 2004/08/03 10:39:55 skrll Exp $
+# $NetBSD: files.sbmips,v 1.6.6.2 2004/09/18 14:39:37 skrll Exp $
 
 maxpartitions 8
 

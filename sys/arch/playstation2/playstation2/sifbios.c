@@ -1,4 +1,4 @@
-/*	$NetBSD: sifbios.c,v 1.2.22.1 2004/08/03 10:39:06 skrll Exp $	*/
+/*	$NetBSD: sifbios.c,v 1.2.22.2 2004/09/18 14:38:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sifbios.c,v 1.2.22.1 2004/08/03 10:39:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sifbios.c,v 1.2.22.2 2004/09/18 14:38:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

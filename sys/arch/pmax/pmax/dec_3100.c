@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.35.22.1 2004/08/03 10:39:13 skrll Exp $ */
+/* $NetBSD: dec_3100.c,v 1.35.22.2 2004/09/18 14:38:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.35.22.1 2004/08/03 10:39:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.35.22.2 2004/09/18 14:38:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

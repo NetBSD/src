@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcvar.h,v 1.1.26.1 2004/08/03 10:32:22 skrll Exp $	*/
+/*	$NetBSD: fdcvar.h,v 1.1.26.2 2004/09/18 14:32:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

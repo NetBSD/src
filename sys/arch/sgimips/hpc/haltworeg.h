@@ -1,4 +1,4 @@
-/* $NetBSD: haltworeg.h,v 1.1.4.2 2004/08/03 10:40:06 skrll Exp $ */
+/* $NetBSD: haltworeg.h,v 1.1.4.3 2004/09/18 14:39:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen

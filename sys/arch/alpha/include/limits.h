@@ -1,4 +1,4 @@
-/* $NetBSD: limits.h,v 1.8.2.1 2004/08/03 10:31:19 skrll Exp $ */
+/* $NetBSD: limits.h,v 1.8.2.2 2004/09/18 14:31:03 skrll Exp $ */
 
 /*
  * Copyright (c) 1988, 1993

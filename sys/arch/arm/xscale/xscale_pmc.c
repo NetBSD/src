@@ -1,4 +1,4 @@
-/*	$NetBSD: xscale_pmc.c,v 1.6.2.1 2004/08/03 10:32:58 skrll Exp $	*/
+/*	$NetBSD: xscale_pmc.c,v 1.6.2.2 2004/09/18 14:32:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.6.2.1 2004/08/03 10:32:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.6.2.2 2004/09/18 14:32:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.39.2.1 2004/08/03 10:37:06 skrll Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.39.2.2 2004/09/18 14:36:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.39.2.1 2004/08/03 10:37:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.39.2.2 2004/09/18 14:36:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

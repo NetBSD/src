@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.5.6.2 2004/08/03 10:32:38 skrll Exp $	*/
+/*	$NetBSD: kbd.c,v 1.5.6.3 2004/09/18 14:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.5.6.2 2004/08/03 10:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.5.6.3 2004/09/18 14:32:32 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -207,11 +207,11 @@ const struct cdevsw kbd_cdevsw = {
 #define KBD_ST_KCLKI	0x01
 
 int
-kbdopen(dev, flag, mode, l)
+kbdopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct kbd_softc *sc;
 	int unit = KBDUNIT(dev);
@@ -230,7 +230,7 @@ kbdopen(dev, flag, mode, l)
 		sc->sc_state |= RAWKBD_OPEN;
 		if (clalloc(&sc->sc_q, RAWKBD_BSIZE, 0) == -1)
 			return(ENOMEM);
-		sc->sc_proc = l->l_proc;
+		sc->sc_proc = p;
 		rawkbd_device = 1;
 		break;
 	case KBDFLAG_CONUNIT :
@@ -250,11 +250,11 @@ kbdopen(dev, flag, mode, l)
 
 
 int
-kbdclose(dev, flag, mode, l)
+kbdclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = KBDUNIT(dev);
 	struct kbd_softc *sc = kbd_cd.cd_devs[unit];
@@ -330,12 +330,12 @@ kbdread(dev, uio, flag)
 
 
 int
-kbdioctl(dev, cmd, data, flag, l)
+kbdioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct kbd_softc *sc = kbd_cd.cd_devs[KBDUNIT(dev)];
 	struct kbd_autorepeat *kbdar = (void *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.165.2.2 2004/08/03 10:37:49 skrll Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.165.2.3 2004/09/18 14:37:26 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.165.2.2 2004/08/03 10:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.165.2.3 2004/09/18 14:37:26 skrll Exp $");
 
 #include "opt_cputype.h"
 

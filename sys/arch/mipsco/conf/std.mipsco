@@ -1,4 +1,4 @@
-#	$NetBSD: std.mipsco,v 1.8.6.1 2004/08/03 10:37:53 skrll Exp $
+#	$NetBSD: std.mipsco,v 1.8.6.2 2004/09/18 14:37:32 skrll Exp $
 
 machine mipsco mips
 makeoptions	MACHINE_ARCH="mipseb"

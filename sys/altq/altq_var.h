@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_var.h,v 1.4.6.1 2004/08/03 10:30:47 skrll Exp $	*/
+/*	$NetBSD: altq_var.h,v 1.4.6.2 2004/09/18 14:30:29 skrll Exp $	*/
 /*	$KAME: altq_var.h,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*

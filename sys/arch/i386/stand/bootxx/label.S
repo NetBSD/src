@@ -1,4 +1,4 @@
-/*	$NetBSD: label.S,v 1.1.2.1 2004/08/03 10:36:19 skrll Exp $	*/
+/*	$NetBSD: label.S,v 1.1.2.2 2004/09/18 14:35:50 skrll Exp $	*/
 
 #include <machine/asm.h>
 

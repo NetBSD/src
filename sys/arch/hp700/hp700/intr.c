@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5.2.2 2004/09/03 12:44:39 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.5.2.3 2004/09/18 14:34:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5.2.2 2004/09/03 12:44:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5.2.3 2004/09/18 14:34:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.5.8.1 2004/08/03 10:36:20 skrll Exp $	 */
+/*	$NetBSD: panic.c,v 1.5.8.2 2004/09/18 14:35:57 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996

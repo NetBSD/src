@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4.2.1 2004/08/03 10:31:30 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.4.2.2 2004/09/18 14:31:13 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!

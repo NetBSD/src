@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2.16.1 2004/08/03 10:39:55 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.2.16.2 2004/09/18 14:39:37 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@NetBSD.org)

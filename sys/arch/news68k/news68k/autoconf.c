@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7.2.1 2004/08/03 10:38:22 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.2.2 2004/09/18 14:38:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.1 2004/08/03 10:38:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.2 2004/09/18 14:38:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ static void findroot(void);
  * for attached scsi devices.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 	/*
 	 * Kick off autoconfiguration
@@ -140,7 +140,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 
 	findroot();

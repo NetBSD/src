@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.h,v 1.3.48.1 2004/08/03 10:33:36 skrll Exp $	*/
+/*	$NetBSD: icu.h,v 1.3.48.2 2004/09/18 14:33:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

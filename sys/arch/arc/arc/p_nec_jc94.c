@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_jc94.c,v 1.2.2.1 2004/08/03 10:32:10 skrll Exp $	*/
+/*	$NetBSD: p_nec_jc94.c,v 1.2.2.2 2004/09/18 14:31:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_nec_jc94.c,v 1.2.2.1 2004/08/03 10:32:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_nec_jc94.c,v 1.2.2.2 2004/09/18 14:31:56 skrll Exp $");
 
 #include <sys/param.h>
 

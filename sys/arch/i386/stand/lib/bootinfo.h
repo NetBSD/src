@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.5.44.1 2004/08/03 10:36:19 skrll Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.5.44.2 2004/09/18 14:35:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997

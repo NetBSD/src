@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.h,v 1.2.16.1 2004/08/12 11:41:11 skrll Exp $	*/
+/*	$NetBSD: platid.h,v 1.2.16.2 2004/09/18 14:34:46 skrll Exp $	*/
 
 #ifdef MIPS
 #define	hpcmips

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.155.2.1 2004/08/03 10:35:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.155.2.2 2004/09/18 14:35:28 skrll Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155.2.1 2004/08/03 10:35:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155.2.2 2004/09/18 14:35:28 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"

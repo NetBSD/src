@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.3.6.1 2004/08/03 10:33:11 skrll Exp $	*/
+/*	$NetBSD: event_var.h,v 1.3.6.2 2004/09/18 14:32:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,11 +1,11 @@
-/*	$NetBSD: sc_wrap.c,v 1.24.2.1 2004/08/03 10:38:29 skrll Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.24.2.2 2004/09/18 14:38:10 skrll Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.24.2.1 2004/08/03 10:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.24.2.2 2004/09/18 14:38:10 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -297,9 +297,6 @@ start:
 	periph = xs->xs_periph;
 	chan = periph->periph_target;
 	flags = xs->xs_control;
-
-	if (cold)
-		flags |= XS_CTL_POLL;
 
 	if (sc->inuse[chan]) {
 		scb = scb->chain.tqe_next;

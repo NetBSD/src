@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.h,v 1.1.20.1 2004/08/03 10:40:33 skrll Exp $	*/
+/*	$NetBSD: nvram.h,v 1.1.20.2 2004/09/18 14:40:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993

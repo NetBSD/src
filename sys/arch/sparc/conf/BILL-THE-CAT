@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.23.2.1 2004/08/03 10:40:44 skrll Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.23.2.2 2004/09/18 14:40:27 skrll Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -159,6 +159,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	INET		# IP (Internet Protocol) v4
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP

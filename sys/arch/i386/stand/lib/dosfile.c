@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.7.2.1 2004/08/03 10:36:20 skrll Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.7.2.2 2004/09/18 14:35:57 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996

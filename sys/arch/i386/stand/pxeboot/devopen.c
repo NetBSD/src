@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3.2.1 2004/08/03 10:36:25 skrll Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3.2.2 2004/09/18 14:35:57 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.

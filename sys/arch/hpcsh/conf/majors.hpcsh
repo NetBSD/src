@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcsh,v 1.4.2.1 2004/08/03 10:35:27 skrll Exp $
+#	$NetBSD: majors.hpcsh,v 1.4.2.2 2004/09/18 14:35:07 skrll Exp $
 #
 # Device majors for hpcsh
 #

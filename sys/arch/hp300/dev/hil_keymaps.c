@@ -1,4 +1,4 @@
-/*	$NetBSD: hil_keymaps.c,v 1.8.12.1 2004/08/03 10:34:23 skrll Exp $	*/
+/*	$NetBSD: hil_keymaps.c,v 1.8.12.2 2004/09/18 14:34:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil_keymaps.c,v 1.8.12.1 2004/08/03 10:34:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil_keymaps.c,v 1.8.12.2 2004/09/18 14:34:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <hp300/dev/kbdmap.h>

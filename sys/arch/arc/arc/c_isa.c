@@ -1,4 +1,4 @@
-/*	$NetBSD: c_isa.c,v 1.5.2.1 2004/08/03 10:32:10 skrll Exp $	*/
+/*	$NetBSD: c_isa.c,v 1.5.2.2 2004/09/18 14:31:56 skrll Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_isa.c,v 1.5.2.1 2004/08/03 10:32:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_isa.c,v 1.5.2.2 2004/09/18 14:31:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

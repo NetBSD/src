@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2.46.1 2004/08/03 10:38:57 skrll Exp $	*/
+/*	$NetBSD: md.c,v 1.2.46.2 2004/09/18 14:38:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.

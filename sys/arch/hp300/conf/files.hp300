@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.66.2.2 2004/09/03 12:44:30 skrll Exp $
+#	$NetBSD: files.hp300,v 1.66.2.3 2004/09/18 14:34:08 skrll Exp $
 #
 # hp300-specific configuration info
 
@@ -221,9 +221,6 @@ file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 include "compat/linux/files.linux"
 include "compat/linux/arch/m68k/files.linux_m68k"
 file arch/m68k/m68k/linux_trap.c		compat_linux
-
-# a.out binary compatibility (COMPAT_AOUT)
-include "compat/aout/files.aout"
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"

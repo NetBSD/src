@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.5.10.1 2004/08/03 10:34:59 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.5.10.2 2004/09/18 14:34:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

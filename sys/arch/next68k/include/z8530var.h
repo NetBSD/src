@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.2.36.1 2004/08/03 10:38:38 skrll Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2.36.2 2004/09/18 14:38:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

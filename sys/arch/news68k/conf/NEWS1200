@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.21.2.1 2004/08/03 10:38:22 skrll Exp $
+# 	$NetBSD: NEWS1200,v 1.21.2.2 2004/09/18 14:37:58 skrll Exp $
 
 #	news1200 config file
 #
@@ -81,6 +81,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP packet forwarding
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

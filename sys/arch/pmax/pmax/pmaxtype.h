@@ -1,4 +1,4 @@
-/*	$NetBSD: pmaxtype.h,v 1.8.50.1 2004/08/03 10:39:14 skrll Exp $	*/
+/*	$NetBSD: pmaxtype.h,v 1.8.50.2 2004/09/18 14:38:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mipsco,v 1.4.2.1 2004/08/03 10:37:53 skrll Exp $
+#	$NetBSD: majors.mipsco,v 1.4.2.2 2004/09/18 14:37:32 skrll Exp $
 #
 # Device majors for mipsco
 #

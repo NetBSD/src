@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.6.2.2 2004/08/12 11:41:03 skrll Exp $
+#	$NetBSD: NAPPI,v 1.6.2.3 2004/09/18 14:33:39 skrll Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -58,6 +58,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.8.2.1 2004/08/03 10:32:49 skrll Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.8.2.2 2004/09/18 14:32:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.8.2.1 2004/08/03 10:32:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.8.2.2 2004/09/18 14:32:32 skrll Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0

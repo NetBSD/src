@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.17.2.1 2004/08/03 10:38:48 skrll Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.17.2.2 2004/09/18 14:38:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.cats.inc,v 1.13.2.1 2004/08/03 10:33:40 skrll Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.13.2.2 2004/09/18 14:33:26 skrll Exp $
 
+MACHINE_ARCH=	arm
 CPPFLAGS+=	-D${MACHINE}
 
 .if (${OBJECT_FMT} == "ELF")
@@ -12,7 +13,13 @@ LINKFLAGS=	-T ${THISARM}/conf/ldscript.elf
 # Need to convert the kernel from ELF to a.out so that the firmware
 # can load it.
 
-LINKFLAGS=	-T ${THISARM}/conf/kern.ldscript
+LINKFLAGS=	-T ldscript
+
+SYSTEM_LD_HEAD_EXTRA+=; \
+	( cat ${ARM}/conf/kern.ldscript.head ; \
+	  OBJDUMP=${OBJDUMP} ${HOST_SH} ${ARM}/conf/mkldscript.sh \
+		${SYSTEM_OBJ} ; \
+	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo "${DBSYM} $@ || true"; \

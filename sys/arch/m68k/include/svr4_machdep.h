@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.2.6.1 2004/09/03 12:44:56 skrll Exp $	*/
+/*	$NetBSD: svr4_machdep.h,v 1.2.6.2 2004/09/18 14:36:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.h,v 1.5.8.1 2004/08/03 10:36:04 skrll Exp $	*/
+/*	$NetBSD: freebsd_machdep.h,v 1.5.8.2 2004/09/18 14:35:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.16.2.1 2004/08/03 10:32:38 skrll Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.16.2.2 2004/09/18 14:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.16.2.1 2004/08/03 10:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.16.2.2 2004/09/18 14:32:32 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

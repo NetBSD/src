@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.11.6.1 2004/08/03 10:37:47 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.11.6.2 2004/09/18 14:37:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11.6.1 2004/08/03 10:37:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.11.6.2 2004/09/18 14:37:25 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>

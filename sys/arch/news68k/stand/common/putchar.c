@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.1 1999/12/09 14:53:24 tsutsui Exp $	*/
+/*	$NetBSD: putchar.c,v 1.1.32.1 2004/09/18 14:38:05 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -32,8 +32,7 @@
 #include <machine/romcall.h>
 
 void
-putchar(x)
-	int x;
+putchar(int x)
 {
 	char c = x;
 

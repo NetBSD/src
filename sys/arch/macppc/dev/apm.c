@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.8.2.1 2004/08/03 10:37:20 skrll Exp $	*/
+/*	$NetBSD: apm.c,v 1.8.2.2 2004/09/18 14:36:56 skrll Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.8.2.1 2004/08/03 10:37:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.8.2.2 2004/09/18 14:36:56 skrll Exp $");
 
 #include "apm.h"
 

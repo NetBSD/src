@@ -1,4 +1,4 @@
-/*	$NetBSD: isabrvar.h,v 1.1.26.1 2004/08/03 10:32:21 skrll Exp $	*/
+/*	$NetBSD: isabrvar.h,v 1.1.26.2 2004/09/18 14:32:08 skrll Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 

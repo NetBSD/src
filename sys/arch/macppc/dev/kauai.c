@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.1.4.2 2004/08/25 06:57:19 skrll Exp $	*/
+/*	$NetBSD: kauai.c,v 1.1.4.3 2004/09/18 14:36:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.1.4.2 2004/08/25 06:57:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.1.4.3 2004/09/18 14:36:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

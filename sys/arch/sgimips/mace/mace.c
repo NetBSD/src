@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.4.2.2 2004/08/03 10:40:07 skrll Exp $	*/
+/*	$NetBSD: mace.c,v 1.4.2.3 2004/09/18 14:39:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.4.2.2 2004/08/03 10:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.4.2.3 2004/09/18 14:39:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ mace_intr_establish(int intr, int level, int (*func)(void *), void *arg)
 {
 	int i;
 
-	if (intr < 0 || intr >= 8)
+	if (intr < 0 || intr >= 16)
 		panic("invalid interrupt number");
 
 	for (i = 0; i < MACE_NINTR; i++)
@@ -289,6 +289,41 @@ mace_intr_establish(int intr, int level, int (*func)(void *), void *arg)
 	aprint_normal("mace: established interrupt %d (level %x)\n",
 	    intr, level);
 	return (void *)&maceintrtab[i];
+}
+
+void
+mace_intr_disestablish(void *cookie)
+{
+	int intr = -1, level = 0, irq = 0, i;
+
+	for (i = 0; i < MACE_NINTR; i++)
+		if (&maceintrtab[i] == cookie) {
+			evcnt_detach(&maceintrtab[i].evcnt);
+			for (intr = 0;
+			    maceintrtab[i].irq == (1 << intr); intr ++);
+			level = maceintrtab[i].intrmask;
+			irq = maceintrtab[i].irq;
+
+			maceintrtab[i].irq = 0;
+			maceintrtab[i].intrmask = 0;
+		        maceintrtab[i].func = NULL;
+		        maceintrtab[i].arg = NULL;
+			bzero(&maceintrtab[i].evcnt, sizeof (struct evcnt));
+			bzero(&maceintrtab[i].evname,
+			    sizeof (maceintrtab[i].evname));
+			break;
+		}
+	if (intr == -1)
+		panic("mace: lost maceintrtab");
+
+	/* do not do a unmask, when irq is being shared. */
+	for (i = 0; i < MACE_NINTR; i++)
+		if (&maceintrtab[i].func != NULL && maceintrtab[i].irq == irq)
+			break;
+	if (i == MACE_NINTR)
+		crime_intr_unmask(intr);
+	aprint_normal("mace: disestablished interrupt %d (level %x)\n",
+	    intr, level);
 }
 
 void

@@ -1,4 +1,4 @@
-#	$NetBSD: std.newsmips,v 1.14.6.1 2004/08/03 10:38:29 skrll Exp $
+#	$NetBSD: std.newsmips,v 1.14.6.2 2004/09/18 14:38:05 skrll Exp $
 
 machine newsmips mips
 makeoptions	MACHINE_ARCH="mipseb"

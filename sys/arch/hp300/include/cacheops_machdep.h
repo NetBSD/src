@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_machdep.h,v 1.2.8.1 2004/08/03 10:34:37 skrll Exp $	*/
+/*	$NetBSD: cacheops_machdep.h,v 1.2.8.2 2004/09/18 14:34:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993

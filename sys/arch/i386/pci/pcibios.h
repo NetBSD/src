@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.5.18.1 2004/08/03 10:36:14 skrll Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.5.18.2 2004/09/18 14:35:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.13.2.2 2004/08/25 06:57:17 skrll Exp $
+#	$NetBSD: MALTA,v 1.13.2.3 2004/09/18 14:33:51 skrll Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.13.2.2 $"
+#ident 		"MALTA-$Revision: 1.13.2.3 $"
 
 maxusers	32
 
@@ -86,6 +86,7 @@ options 	INET		# Internet protocols
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
 #options 	ISO,TPIP	# OSI networking

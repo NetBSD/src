@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac_0448.h,v 1.3.6.1 2004/08/03 10:38:29 skrll Exp $	*/
+/*	$NetBSD: dmac_0448.h,v 1.3.6.2 2004/09/18 14:38:10 skrll Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

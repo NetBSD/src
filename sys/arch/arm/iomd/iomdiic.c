@@ -1,4 +1,4 @@
-/*	$NetBSD: iomdiic.c,v 1.2.4.2 2004/08/03 10:32:38 skrll Exp $	*/
+/*	$NetBSD: iomdiic.c,v 1.2.4.3 2004/09/18 14:32:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

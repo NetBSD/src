@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.87.2.1 2004/08/03 10:31:37 skrll Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.87.2.2 2004/09/18 14:31:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.87.2.1 2004/08/03 10:31:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.87.2.2 2004/09/18 14:31:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

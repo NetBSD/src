@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.7.2.1 2004/08/03 10:39:22 skrll Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.7.2.2 2004/09/18 14:39:04 skrll Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.7.2.1 2004/08/03 10:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emu.c,v 1.7.2.2 2004/09/18 14:39:04 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -670,6 +670,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				FPU_EMU_EVCNT_INCR(frsqrte);
 				DPRINTF(FPE_INSN, ("fpu_execute: FRSQRTE\n"));
 				fpu_explode(fe, &fe->fe_f1, type, rb);
+				fp = fpu_sqrt(fe);
 				fe->fe_f2 = *fp;
 				/* now we've gotta overwrite the dest reg */
 				*((int *)&fe->fe_fpstate->fpreg[rt]) = 1;

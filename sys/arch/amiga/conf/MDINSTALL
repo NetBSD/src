@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.16.2.1 2004/08/03 10:31:49 skrll Exp $
+#	$NetBSD: MDINSTALL,v 1.16.2.2 2004/09/18 14:31:33 skrll Exp $
 
 #
 # INSTALL kernel for ramdisk installation

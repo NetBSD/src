@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcdefs.h,v 1.3.24.1 2004/08/12 11:41:05 skrll Exp $	*/
+/*	$NetBSD: hpcdefs.h,v 1.3.24.2 2004/09/18 14:34:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

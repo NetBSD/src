@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.8.16.1 2004/08/03 10:34:38 skrll Exp $	*/
+/*	$NetBSD: netio.c,v 1.8.16.2 2004/09/18 14:34:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.14 2003/01/01 00:39:21 thorpej Exp $ */
+/* $NetBSD: gbus.c,v 1.14.2.1 2004/09/18 14:31:13 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.14 2003/01/01 00:39:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.14.2.1 2004/09/18 14:31:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,8 @@ CFATTACH_DECL(gbus, sizeof(struct gbus_softc),
     gbusmatch, gbusattach, NULL, NULL);
 
 static int	gbusprint __P((void *, const char *));
-static int	gbussubmatch __P((struct device *, struct cfdata *, void *));
+static int	gbussubmatch __P((struct device *, struct cfdata *,
+				  const locdesc_t *, void *));
 
 struct gbus_attach_args gbus_children[] = {
 	{ "zsc",	GBUS_DUART0_OFFSET },
@@ -122,26 +123,32 @@ gbusattach(parent, self, aux)
 	struct gbus_softc *sc = (struct gbus_softc *)self;
 	struct tlsb_dev_attach_args *ta = aux;
 	struct gbus_attach_args *ga;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	printf("\n");
 
 	sc->sc_tlsbnode = ta->ta_node;
 
 	/* Attach the children. */
-	for (ga = gbus_children; ga->ga_name != NULL; ga++)
-		(void) config_found_sm(self, ga, gbusprint, gbussubmatch);
+	for (ga = gbus_children; ga->ga_name != NULL; ga++) {
+		ldesc->len = 1;
+		ldesc->locs[GBUSCF_OFFSET] = ga->ga_offset;
+		(void) config_found_sm_loc(self, "gbus", ldesc, ga,
+					   gbusprint, gbussubmatch);
+	}
 }
 
 static int
-gbussubmatch(parent, cf, aux)
+gbussubmatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
-	struct gbus_attach_args *ga = aux;
 
 	if (cf->cf_loc[GBUSCF_OFFSET] != GBUSCF_OFFSET_DEFAULT &&
-	    cf->cf_loc[GBUSCF_OFFSET] != ga->ga_offset)
+	    cf->cf_loc[GBUSCF_OFFSET] != ldesc->locs[GBUSCF_OFFSET])
 		return (0);
 
 	return (config_match(parent, cf, aux));

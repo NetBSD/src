@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_localq.c,v 1.4.16.1 2004/08/12 16:15:32 skrll Exp $	*/
+/*	$NetBSD: altq_localq.c,v 1.4.16.2 2004/09/18 14:30:29 skrll Exp $	*/
 /*	$KAME: altq_localq.c,v 1.4 2001/08/16 11:28:25 kjc Exp $	*/
 /*
  * a skeleton file for implementing a new queueing discipline.
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.4.16.1 2004/08/12 16:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.4.16.2 2004/09/18 14:30:29 skrll Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -30,20 +30,20 @@ __KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.4.16.1 2004/08/12 16:15:32 skrll E
 altqdev_decl(localq);
 
 int
-localqopen(dev, flag, fmt, l)
+localqopen(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	/* everything will be done when the queueing scheme is attached. */
 	return 0;
 }
 
 int
-localqclose(dev, flag, fmt, l)
+localqclose(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error = 0;
 
@@ -51,12 +51,12 @@ localqclose(dev, flag, fmt, l)
 }
 
 int
-localqioctl(dev, cmd, addr, flag, l)
+localqioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	ioctlcmd_t cmd;
 	caddr_t addr;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error = 0;
 	

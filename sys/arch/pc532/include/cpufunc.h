@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.5.6.1 2004/08/03 10:38:47 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.5.6.2 2004/09/18 14:38:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.

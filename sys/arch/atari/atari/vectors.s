@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.18.20.1 2004/08/03 10:33:10 skrll Exp $	*/
+/*	$NetBSD: vectors.s,v 1.18.20.2 2004/09/18 14:32:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 Regents of the University of California.

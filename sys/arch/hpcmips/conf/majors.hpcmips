@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.8.2.1 2004/08/03 10:35:05 skrll Exp $
+#	$NetBSD: majors.hpcmips,v 1.8.2.2 2004/09/18 14:34:51 skrll Exp $
 #
 # Device majors for hpcmips
 #

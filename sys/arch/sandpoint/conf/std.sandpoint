@@ -1,4 +1,4 @@
-#	$NetBSD: std.sandpoint,v 1.8.2.1 2004/08/03 10:39:55 skrll Exp $
+#	$NetBSD: std.sandpoint,v 1.8.2.2 2004/09/18 14:39:37 skrll Exp $
 #
 # standard, required NetBSD/sandpoint 'options'
 

@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.5.2.1 2004/08/03 10:37:46 skrll Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.5.2.2 2004/09/18 14:37:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.5.2.1 2004/08/03 10:37:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.5.2.2 2004/09/18 14:37:25 skrll Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>

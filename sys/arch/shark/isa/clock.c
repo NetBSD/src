@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4.2.1 2004/08/03 10:40:33 skrll Exp $	*/
+/*	$NetBSD: clock.c,v 1.4.2.2 2004/09/18 14:40:16 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -154,7 +154,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4.2.1 2004/08/03 10:40:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4.2.2 2004/09/18 14:40:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

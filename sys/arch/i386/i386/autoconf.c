@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.71.2.2 2004/08/12 11:41:12 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.71.2.3 2004/09/18 14:35:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71.2.2 2004/08/12 11:41:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71.2.3 2004/09/18 14:35:27 skrll Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -254,7 +254,7 @@ matchbiosdisks(void)
 				continue;
 			}
 			error = vn_rdwr(UIO_READ, tv, mbr, DEV_BSIZE, 0,
-			    UIO_SYSSPACE, 0, NOCRED, NULL, 0);
+			    UIO_SYSSPACE, 0, NOCRED, NULL, NULL);
 			VOP_CLOSE(tv, FREAD, NOCRED, 0);
 			if (error) {
 #ifdef GEOM_DEBUG

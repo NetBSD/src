@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.44.2.3 2004/08/25 06:57:19 skrll Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.44.2.4 2004/09/18 14:35:22 skrll Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -129,6 +129,7 @@ options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI
@@ -160,8 +161,8 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 #options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
 #options 	WS_DEFAULT_FG=WSCOL_WHITE
 #options 	WS_DEFAULT_BG=WSCOL_BLACK
-#options 	WS_DEFAULT_COLATTR=""
-#options 	WS_DEFAULT_MONOATTR=""
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
 #options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WS_KERNEL_COLATTR=""

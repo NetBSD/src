@@ -1,4 +1,4 @@
-/*	$NetBSD: gioreg.h,v 1.1.30.1 2004/08/03 10:40:06 skrll Exp $	*/
+/*	$NetBSD: gioreg.h,v 1.1.30.2 2004/09/18 14:39:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen

@@ -1,4 +1,4 @@
-#	$NetBSD: std.ofppc,v 1.9.2.1 2004/08/03 10:38:40 skrll Exp $
+#	$NetBSD: std.ofppc,v 1.9.2.2 2004/09/18 14:38:18 skrll Exp $
 #
 # standard, required NetBSD/ofppc 'options'
 

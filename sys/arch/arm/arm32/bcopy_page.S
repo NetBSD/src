@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy_page.S,v 1.6.2.1 2004/08/03 10:32:29 skrll Exp $	*/
+/*	$NetBSD: bcopy_page.S,v 1.6.2.2 2004/09/18 14:32:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens

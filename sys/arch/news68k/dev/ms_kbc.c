@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_kbc.c,v 1.4.6.1 2004/08/03 10:38:22 skrll Exp $	*/
+/*	$NetBSD: ms_kbc.c,v 1.4.6.2 2004/09/18 14:37:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.4.6.1 2004/08/03 10:38:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.4.6.2 2004/09/18 14:37:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,14 +46,14 @@ __KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.4.6.1 2004/08/03 10:38:22 skrll Exp $")
 
 #include <news68k/news68k/isr.h>
 
-int ms_kbc_match(struct device *, struct cfdata *, void *);
-void ms_kbc_attach(struct device *, struct device *, void *);
-void ms_kbc_init(struct ms_softc *);
+static int ms_kbc_match(struct device *, struct cfdata *, void *);
+static void ms_kbc_attach(struct device *, struct device *, void *);
+static void ms_kbc_init(struct ms_softc *);
 int ms_kbc_intr(void *);
 
-int ms_kbc_enable(void *);
-void ms_kbc_disable(void *);
-int ms_kbc_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int ms_kbc_enable(void *);
+static void ms_kbc_disable(void *);
+static int ms_kbc_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 CFATTACH_DECL(ms_kbc, sizeof(struct ms_softc),
     ms_kbc_match, ms_kbc_attach, NULL, NULL);
@@ -64,11 +64,8 @@ struct wsmouse_accessops ms_kbc_accessops = {
 	ms_kbc_disable
 };
 
-int
-ms_kbc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int
+ms_kbc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct kbc_attach_args *ka = aux;
 
@@ -78,10 +75,8 @@ ms_kbc_match(parent, cf, aux)
 	return 1;
 }
 
-void
-ms_kbc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+ms_kbc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ms_softc *sc = (void *)self;
 	struct kbc_attach_args *ka = aux;
@@ -104,9 +99,8 @@ ms_kbc_attach(parent, self, aux)
 	sc->sc_wsmousedev = config_found(self, &wsa, wsmousedevprint);
 }
 
-void
-ms_kbc_init(sc)
-	struct ms_softc *sc;
+static void
+ms_kbc_init(struct ms_softc *sc)
 {
 	bus_space_tag_t bt = sc->sc_bt;
 	bus_space_handle_t bh = sc->sc_bh;
@@ -116,8 +110,7 @@ ms_kbc_init(sc)
 }
 
 int
-ms_kbc_intr(v)
-	void *v;
+ms_kbc_intr(void *v)
 {
 	struct ms_softc *sc = v;
 	bus_space_tag_t bt = sc->sc_bt;
@@ -134,9 +127,8 @@ ms_kbc_intr(v)
 	return handled;
 }
 
-int
-ms_kbc_enable(v)
-	void *v;
+static int
+ms_kbc_enable(void *v)
 {
 	struct ms_softc *sc = v;
 	bus_space_tag_t bt = sc->sc_bt;
@@ -147,9 +139,8 @@ ms_kbc_enable(v)
 	return 0;
 }
 
-void
-ms_kbc_disable(v)
-	void *v;
+static void
+ms_kbc_disable(void *v)
 {
 	struct ms_softc *sc = v;
 	bus_space_tag_t bt = sc->sc_bt;
@@ -158,13 +149,9 @@ ms_kbc_disable(v)
 	bus_space_write_1(bt, bh, KBC_MSREG_INTE, 0);
 }
 
-int
-ms_kbc_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+static int
+ms_kbc_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+
 	return EPASSTHROUGH;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.9.2.2 2004/09/03 12:45:06 skrll Exp $
+#	$NetBSD: OFWGENCFG,v 1.9.2.3 2004/09/18 14:40:16 skrll Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -63,6 +63,7 @@ options 	NFS_BOOT_RWSIZE=1024	# OFW driver can't cope with more
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

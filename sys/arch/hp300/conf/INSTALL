@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.9.2.2 2004/09/03 12:44:30 skrll Exp $
+# $NetBSD: INSTALL,v 1.9.2.3 2004/09/18 14:34:08 skrll Exp $
 #
 # INSTALL machine description file
 #
@@ -91,6 +91,7 @@ options 	INET		# Internet protocols
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# IP forwarding + larger mb_map
 #options 	MROUTING	# Multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	PFIL_HOOKS	# packet filter hooks
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.1.4.2 2004/08/03 10:40:24 skrll Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.1.4.3 2004/09/18 14:40:08 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1.4.2 2004/08/03 10:40:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1.4.3 2004/09/18 14:40:08 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 

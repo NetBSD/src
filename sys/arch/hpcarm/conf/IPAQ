@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.24.6.1 2004/08/03 10:35:04 skrll Exp $
+#	$NetBSD: IPAQ,v 1.24.6.2 2004/09/18 14:34:51 skrll Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -60,6 +60,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI

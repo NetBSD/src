@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.4.2.1 2004/08/03 10:33:26 skrll Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.4.2.2 2004/09/18 14:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.4.2.1 2004/08/03 10:33:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.4.2.2 2004/09/18 14:33:11 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: files.altq,v 1.1.14.1 2004/08/03 10:30:47 skrll Exp $
+#	$NetBSD: files.altq,v 1.1.14.2 2004/09/18 14:30:29 skrll Exp $
 
 defflag	opt_altq_enabled.h	ALTQ
 defflag opt_altq.h		ALTQ_AFMAP ALTQ_BLUE ALTQ_CBQ ALTQ_CDNR

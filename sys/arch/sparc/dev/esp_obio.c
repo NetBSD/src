@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.15.6.1 2004/08/03 10:40:45 skrll Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.15.6.2 2004/09/18 14:40:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.15.6.1 2004/08/03 10:40:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.15.6.2 2004/09/18 14:40:27 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

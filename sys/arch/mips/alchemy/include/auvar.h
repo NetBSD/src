@@ -1,4 +1,4 @@
-/* $NetBSD: auvar.h,v 1.1.12.1 2004/08/03 10:37:38 skrll Exp $ */
+/* $NetBSD: auvar.h,v 1.1.12.2 2004/09/18 14:37:17 skrll Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

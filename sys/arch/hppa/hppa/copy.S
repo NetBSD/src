@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.1.10.1 2004/08/03 10:35:29 skrll Exp $	*/
+/*	$NetBSD: copy.S,v 1.1.10.2 2004/09/18 14:35:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusreg.h,v 1.4.46.1 2004/08/03 10:40:45 skrll Exp $ */
+/*	$NetBSD: sbusreg.h,v 1.4.46.2 2004/09/18 14:40:28 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

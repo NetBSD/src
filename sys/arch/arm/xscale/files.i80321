@@ -1,4 +1,4 @@
-#	$NetBSD: files.i80321,v 1.11.2.1 2004/08/03 10:32:58 skrll Exp $
+#	$NetBSD: files.i80321,v 1.11.2.2 2004/09/18 14:32:47 skrll Exp $
 #
 # Configuration info for Intel i80321 XScale I/O Processor support
 #

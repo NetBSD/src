@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23.6.2 2004/09/03 12:44:39 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.23.6.3 2004/09/18 14:34:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.6.2 2004/09/03 12:44:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.6.3 2004/09/18 14:34:19 skrll Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 

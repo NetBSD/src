@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5.2.1 2004/08/03 10:39:55 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.5.2.2 2004/09/18 14:39:37 skrll Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 #ifndef _SANDPOINT_BUS_H_

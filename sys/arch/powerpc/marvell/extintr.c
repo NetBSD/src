@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.10.2.1 2004/08/03 10:39:37 skrll Exp $	*/
+/*	$NetBSD: extintr.c,v 1.10.2.2 2004/09/18 14:39:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.10.2.1 2004/08/03 10:39:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.10.2.2 2004/09/18 14:39:19 skrll Exp $");
 
 #include "opt_marvell.h"
 #include "opt_kgdb.h"

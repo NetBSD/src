@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.2.22.1 2004/08/03 10:33:26 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.2.22.2 2004/09/18 14:33:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/* $NetBSD: blkdev.c,v 1.2.2.1 2004/08/03 10:40:00 skrll Exp $ */
+/* $NetBSD: blkdev.c,v 1.2.2.2 2004/09/18 14:39:43 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

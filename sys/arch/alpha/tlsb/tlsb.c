@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.26 2003/01/01 00:39:21 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.26.2.1 2004/09/18 14:31:13 skrll Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.26 2003/01/01 00:39:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.26.2.1 2004/09/18 14:31:13 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -71,7 +71,8 @@ CFATTACH_DECL(tlsb, sizeof (struct device),
 extern struct cfdriver tlsb_cd;
 
 static int	tlsbprint __P((void *, const char *));
-static int	tlsbsubmatch __P((struct device *, struct cfdata *, void *));
+static int	tlsbsubmatch __P((struct device *, struct cfdata *,
+				  const locdesc_t *, void *));
 static char	*tlsb_node_type_str __P((u_int32_t));
 
 /*
@@ -103,15 +104,18 @@ tlsbprint(aux, pnp)
 }
 
 static int
-tlsbsubmatch(parent, cf, aux)
+tlsbsubmatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
-	struct tlsb_dev_attach_args *tap = aux;
 
 	if (cf->cf_loc[TLSBCF_NODE] != TLSBCF_NODE_DEFAULT &&
-	    cf->cf_loc[TLSBCF_NODE] != tap->ta_node)
+	    cf->cf_loc[TLSBCF_NODE] != ldesc->locs[TLSBCF_NODE])
+		return (0);
+	if (cf->cf_loc[TLSBCF_OFFSET] != TLSBCF_OFFSET_DEFAULT &&
+	    cf->cf_loc[TLSBCF_OFFSET] != ldesc->locs[TLSBCF_OFFSET])
 		return (0);
 
 	return (config_match(parent, cf, aux));
@@ -149,6 +153,8 @@ tlsbattach(parent, self, aux)
 	struct tlsb_dev_attach_args ta;
 	u_int32_t tldev;
 	int node;
+	int help[3];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	printf("\n");
 
@@ -200,7 +206,12 @@ tlsbattach(parent, self, aux)
 		/*
 		 * Attach any children nodes, including a CPU's GBus
 		 */
-		config_found_sm(self, &ta, tlsbprint, tlsbsubmatch);
+		ldesc->len = 2;
+		ldesc->locs[TLSBCF_NODE] = node;
+		ldesc->locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
+
+		config_found_sm_loc(self, "tlsb", ldesc, &ta,
+				    tlsbprint, tlsbsubmatch);
 	}
 	/*
 	 * *Now* search for I/O nodes (in descending order)
@@ -241,7 +252,13 @@ tlsbattach(parent, self, aux)
 			ta.ta_dtype = TLDEV_DTYPE(tldev);
 			ta.ta_swrev = TLDEV_SWREV(tldev);
 			ta.ta_hwrev = TLDEV_HWREV(tldev);
-			config_found_sm(self, &ta, tlsbprint, tlsbsubmatch);
+
+			ldesc->len = 2;
+			ldesc->locs[TLSBCF_NODE] = node;
+			ldesc->locs[TLSBCF_OFFSET] = 0; /* XXX unused? */
+
+			config_found_sm_loc(self, "tlsb", ldesc, &ta,
+					    tlsbprint, tlsbsubmatch);
 		}
 	}
 }

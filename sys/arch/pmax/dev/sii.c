@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.47.2.1 2004/08/03 10:39:11 skrll Exp $	*/
+/*	$NetBSD: sii.c,v 1.47.2.2 2004/09/18 14:38:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.47.2.1 2004/08/03 10:39:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.47.2.2 2004/09/18 14:38:50 skrll Exp $");
 
 #include "sii.h"
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.23.2.1 2004/08/03 10:38:22 skrll Exp $
+#	$NetBSD: files.news68k,v 1.23.2.2 2004/09/18 14:37:58 skrll Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -135,9 +135,6 @@ file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
 include	"compat/linux/files.linux"
 include	"compat/linux/arch/m68k/files.linux_m68k"
 file arch/m68k/m68k/linux_trap.c		compat_linux
-
-# a.out binary compatibility (COMPAT_AOUT)
-include "compat/aout/files.aout"
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"

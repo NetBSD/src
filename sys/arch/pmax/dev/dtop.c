@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.66.2.1 2004/08/03 10:39:10 skrll Exp $	*/
+/*	$NetBSD: dtop.c,v 1.66.2.2 2004/09/18 14:38:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -90,7 +90,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.66.2.1 2004/08/03 10:39:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.66.2.2 2004/09/18 14:38:49 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"

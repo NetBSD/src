@@ -1,4 +1,4 @@
-/*	$NetBSD: romboot.S,v 1.6.16.1 2004/08/03 10:35:20 skrll Exp $	*/
+/*	$NetBSD: romboot.S,v 1.6.16.2 2004/09/18 14:34:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003 Takao Shinohara.

@@ -1,4 +1,4 @@
-/*	$NetBSD: hilreg.h,v 1.6.60.1 2004/08/03 10:34:23 skrll Exp $	*/
+/*	$NetBSD: hilreg.h,v 1.6.60.2 2004/09/18 14:34:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

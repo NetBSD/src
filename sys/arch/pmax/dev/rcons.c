@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.58.2.1 2004/08/03 10:39:11 skrll Exp $	*/
+/*	$NetBSD: rcons.c,v 1.58.2.2 2004/09/18 14:38:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.58.2.1 2004/08/03 10:39:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons.c,v 1.58.2.2 2004/09/18 14:38:50 skrll Exp $");
 
 #include "rasterconsole.h"
 #if NRASTERCONSOLE > 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41.2.2 2004/09/03 12:44:57 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.41.2.3 2004/09/18 14:38:17 skrll Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.41.2.2 2004/09/03 12:44:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.41.2.3 2004/09/18 14:38:17 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.3.2.2 2004/09/03 12:44:56 skrll Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.3.2.3 2004/09/18 14:36:17 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993

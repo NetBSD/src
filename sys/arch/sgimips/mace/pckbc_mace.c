@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_mace.c,v 1.3.4.2 2004/08/03 10:40:08 skrll Exp $	*/
+/*	$NetBSD: pckbc_mace.c,v 1.3.4.3 2004/09/18 14:39:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.3.4.2 2004/08/03 10:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_mace.c,v 1.3.4.3 2004/09/18 14:39:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

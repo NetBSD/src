@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9.2.1 2004/08/03 10:34:16 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9.2.2 2004/09/18 14:34:02 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.2.1 2004/08/03 10:34:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9.2.2 2004/09/18 14:34:02 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -171,7 +171,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 #ifdef IPKDB
 	extern int ipkdblow, ipkdbsize;
 #endif
-	int exc;
+	int exc, dbcr0;
 	struct cpu_info * const ci = curcpu();
 
 	/* Disable all external interrupts */
@@ -270,11 +270,8 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	consinit();
 
 	/* Handle trap instruction as PGM exception */
-	{
-	  int dbcr0;
-	  asm volatile("mfspr %0,%1":"=r"(dbcr0):"K"(SPR_DBCR0));
-	  asm volatile("mtspr %0,%1"::"K"(SPR_DBCR0),"r"(dbcr0 & ~DBCR0_TDE));
-	}
+	asm volatile("mfspr %0,%1":"=r"(dbcr0):"K"(SPR_DBCR0));
+	asm volatile("mtspr %0,%1"::"K"(SPR_DBCR0),"r"(dbcr0 & ~DBCR0_TDE));
 
 	/*
 	 * external interrupt handler install

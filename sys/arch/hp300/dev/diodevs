@@ -1,4 +1,4 @@
-$NetBSD: diodevs,v 1.6.2.1 2004/08/03 10:34:23 skrll Exp $
+$NetBSD: diodevs,v 1.6.2.2 2004/09/18 14:34:08 skrll Exp $
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

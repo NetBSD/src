@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.17.6.2 2004/09/03 12:44:30 skrll Exp $	*/
+/*	$NetBSD: itevar.h,v 1.17.6.3 2004/09/18 14:34:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.9.2.1 2004/08/03 10:38:22 skrll Exp $	*/
+/*      $NetBSD: clock.c,v 1.9.2.2 2004/09/18 14:38:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.2.1 2004/08/03 10:38:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.2.2 2004/09/18 14:38:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -61,8 +61,7 @@ static	void (*cpu_initclocks_hook)(int, int);
  * Common parts of todclock autoconfiguration.
  */
 void
-todr_attach(handle)
-	todr_chip_handle_t handle;
+todr_attach(todr_chip_handle_t handle)
 {
 
 	if (todr_handle)
@@ -72,8 +71,7 @@ todr_attach(handle)
 }
 
 void
-timer_config(initfunc)
-	void (*initfunc)(int, int);
+timer_config(void (*initfunc)(int, int))
 {
 
 	if (cpu_initclocks_hook)
@@ -89,7 +87,7 @@ timer_config(initfunc)
  * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 
 	if (todr_handle == NULL)
@@ -114,8 +112,7 @@ cpu_initclocks()
  * profhz == stathz == hz.
  */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 
 	/* nothing to do */
@@ -133,8 +130,7 @@ setstatclockrate(newhz)
  */
 
 void
-microtime(tvp)
-	struct timeval *tvp;
+microtime(struct timeval *tvp)
 {
 	int s = splhigh();
 	static struct timeval lasttime;
@@ -159,8 +155,7 @@ microtime(tvp)
  * Set up the system's time, given a `reasonable' time value.
  */
 void
-inittodr(base)
-	time_t base;
+inittodr(time_t base)
 {
 	int badbase = 0, waszero = (base == 0);
 
@@ -207,7 +202,7 @@ inittodr(base)
  * when crashing during autoconfig.
  */
 void
-resettodr()
+resettodr(void)
 {
 
 	if (time.tv_sec == 0)

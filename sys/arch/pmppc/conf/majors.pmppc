@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pmppc,v 1.5.2.1 2004/08/03 10:39:21 skrll Exp $
+#	$NetBSD: majors.pmppc,v 1.5.2.2 2004/09/18 14:39:04 skrll Exp $
 
 # Majors up to 191 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 

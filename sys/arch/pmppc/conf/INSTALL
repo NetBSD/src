@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7.2.1 2004/08/03 10:39:21 skrll Exp $
+#	$NetBSD: INSTALL,v 1.7.2.2 2004/09/18 14:39:04 skrll Exp $
 #
 #	INSTALL
 #
@@ -96,6 +96,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.11.2.1 2004/08/03 10:31:49 skrll Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.11.2.2 2004/09/18 14:31:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.11.2.1 2004/08/03 10:31:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.11.2.2 2004/09/18 14:31:33 skrll Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions

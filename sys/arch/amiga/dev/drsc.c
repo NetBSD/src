@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.23.2.1 2004/08/03 10:31:50 skrll Exp $ */
+/*	$NetBSD: drsc.c,v 1.23.2.2 2004/09/18 14:31:33 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.23.2.1 2004/08/03 10:31:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.23.2.2 2004/09/18 14:31:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

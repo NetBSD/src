@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.37.2.1 2004/08/03 10:37:39 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.37.2.2 2004/09/18 14:37:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
