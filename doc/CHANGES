@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.171 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.172 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -415,3 +415,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	cobalt: Implement first stage bootloader for the cobalt port.
 		[cdi 20030625]
 	groff(1): Updated to 1.19. [wiz 20030630]
+	texinfo(1): upgraded to 4.6.  [wiz 20030703]
