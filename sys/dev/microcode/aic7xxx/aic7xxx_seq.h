@@ -863,7 +863,7 @@ ahc_patch0_func(struct ahc_softc *ahc)
 }
 
 typedef int patch_func_t __P((struct ahc_softc *));
-struct patch {
+const struct patch {
 	patch_func_t	*patch_func;
 	u_int32_t	begin	   :10,
 			skip_instr :10,
