@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.6 2001/10/04 15:58:53 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.7 2002/08/02 04:01:51 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -64,9 +64,6 @@ struct RF_DiskQueueData_s {
 	int     priority;	/* the priority of this request */
 	int     (*CompleteFunc) (void *, int);	/* function to be called upon
 						 * completion */
-	int     (*AuxFunc) (void *,...);	/* function called upon
-						 * completion of the first I/O
-						 * of a Read_Op_Write pair */
 	void   *argument;	/* argument to be passed to CompleteFunc */
 	RF_Raid_t *raidPtr;	/* needed for simulation */
 	RF_AccTraceEntry_t *tracerec;	/* perf mon only */
@@ -183,18 +180,6 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 		       RF_AccTraceEntry_t * tracerec,
 		       void *raidPtr, RF_DiskQueueDataFlags_t flags, 
 		       void *kb_proc);
-
-RF_DiskQueueData_t *
-rf_CreateDiskQueueDataFull(RF_IoType_t typ, RF_SectorNum_t ssect, 
-			   RF_SectorCount_t nsect, caddr_t buf,
-			   RF_StripeNum_t parityStripeID, 
-			   RF_ReconUnitNum_t which_ru,
-			   int (*wakeF) (void *, int),
-			   void *arg, RF_DiskQueueData_t * next, 
-			   RF_AccTraceEntry_t * tracerec,
-			   int priority, int (*AuxFunc) (void *,...), 
-			   caddr_t buf2, void *raidPtr, 
-			   RF_DiskQueueDataFlags_t flags, void *kb_proc);
 
 void    
 rf_FreeDiskQueueData(RF_DiskQueueData_t * p);
