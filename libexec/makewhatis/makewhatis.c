@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.8 2000/07/09 23:07:14 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.9 2000/07/10 08:11:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.8 2000/07/09 23:07:14 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.9 2000/07/10 08:11:31 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,7 +77,6 @@ struct whatisstruct {
 };
 
 int              main (int, char **);
-void		 sigchildhandler(int);
 char		*findwhitespace(char *);
 char		*GetS(gzFile, char *, int);
 int		 manpagesection (char *);
@@ -114,7 +113,6 @@ main(int argc,char **argv)
 	FILE	*out;
 
 	(void)setlocale(LC_ALL, "");
-	(void)signal(SIGCHLD, sigchildhandler);
 
 	manpath = (argc < 2) ? default_manpath : &argv[1];
 
@@ -162,13 +160,6 @@ main(int argc,char **argv)
 		errx(EXIT_FAILURE, "%s: %s", whatisdb, strerror(errno));
 
 	return EXIT_SUCCESS;
-}
-
-void
-sigchildhandler(int signum)
-
-{
-	while (waitpid(-1, NULL, WNOHANG) > 0);
 }
 
 char
@@ -463,8 +454,8 @@ manpreprocess(char *line)
 char *
 nroff(gzFile *in)
 {
-	char tempname[MAXPATHLEN], buffer[8192], *data;
-	int tempfd, bytes, pipefd[2];
+	char tempname[MAXPATHLEN], buffer[65536], *data;
+	int tempfd, bytes, pipefd[2], status;
 	pid_t child;
 
 	if (gzrewind(in) < 0) {
@@ -526,8 +517,16 @@ nroff(gzFile *in)
 	}
 
 	data = parsecatpage(in);
+	while (gzread(in, buffer, sizeof(buffer)) > 0);
+	(void)gzclose(in);
 
-	(void)gzclose(in); 		/* Child will be killed by SIGPIPE. */
+	while (waitpid(child, &status, 0) != child);
+	if ((data != NULL) &&
+	    !(WIFEXITED(status) && (WEXITSTATUS(status) == 0))) {
+		free(data);
+		data = NULL;
+	}
+
 	(void)unlink(tempname);
 
 	return data;
