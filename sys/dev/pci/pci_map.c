@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.5 1998/08/15 10:10:54 mycroft Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.6 2000/01/25 22:30:04 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -171,8 +171,8 @@ pci_mem_find(pc, tag, reg, type, basep, sizep, flagsp)
 	if (sizep != 0)
 		*sizep = PCI_MAPREG_MEM_SIZE(mask);
 	if (flagsp != 0)
-		*flagsp = PCI_MAPREG_MEM_CACHEABLE(address) ?
-		    BUS_SPACE_MAP_CACHEABLE : 0;
+		*flagsp = PCI_MAPREG_MEM_PREFETCHABLE(address) ?
+		    BUS_SPACE_MAP_PREFETCHABLE : 0;
 
 	return (0);
 }

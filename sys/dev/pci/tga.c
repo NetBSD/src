@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.15 1999/12/06 19:25:59 drochner Exp $ */
+/* $NetBSD: tga.c,v 1.16 2000/01/25 22:30:05 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -168,11 +168,11 @@ tga_getdevconfig(memt, pc, tag, dc)
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 	    &dc->dc_pcipaddr, &pcisize, &flags))
 		return;
-	if ((flags & BUS_SPACE_MAP_CACHEABLE) == 0)		/* XXX */
-		panic("tga memory not cacheable");
+	if ((flags & BUS_SPACE_MAP_PREFETCHABLE) == 0)		/* XXX */
+		panic("tga memory not prefetchable");
 
 	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize,
-	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_LINEAR, &dc->dc_vaddr))
+	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR, &dc->dc_vaddr))
 		return;
 #ifdef __alpha__
 	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
