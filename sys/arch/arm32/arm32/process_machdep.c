@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.7 1998/02/22 23:35:45 mark Exp $ */
+/* $NetBSD: process_machdep.c,v 1.8 1998/02/22 23:45:13 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -73,9 +73,11 @@
 #include <sys/ptrace.h>
 
 #include <machine/reg.h>
-#include <machine/cpus.h>
 
+#ifdef ARMFPE
+#include <machine/cpus.h>
 #include <arm32/fpe-arm/armfpe.h>
+#endif	/* ARMFPE */
 
 static __inline struct trapframe *
 process_frame(p)
