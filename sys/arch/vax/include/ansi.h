@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.14 2001/07/28 05:04:45 matt Exp $	*/
+/*	$NetBSD: ansi.h,v 1.15 2001/07/28 07:43:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -53,7 +53,7 @@
  * Thanks, ANSI!
  */
 #ifdef __ELF__
-#define	_BSD_CLOCK_T_		int		/* clock() */
+#define	_BSD_CLOCK_T_		unsigned int	/* clock() */
 #define	_BSD_PTRDIFF_T_		long int	/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_		unsigned long int /* sizeof() */
 #define	_BSD_SSIZE_T_		long int	/* byte count or error */
