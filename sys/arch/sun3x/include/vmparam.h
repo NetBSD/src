@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.1.1 1997/01/14 20:57:07 gwr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 1997/06/12 15:09:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,16 +71,6 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
-
-/*
- * Default sizes of swap allocation chunks (see dmap.h).
- * The actual values may be changed in vminit() based on MAXDSIZ.
- * With MAXDSIZ of 16Mb and NDMAP of 38, dmmax will be 1024.
- * DMMIN should be at least ctod(1) so that vtod() works.
- * vminit() insures this.
- */
-#define	DMMIN	32			/* smallest swap allocation */
-#define	DMMAX	4096			/* largest potential swap allocation */
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.

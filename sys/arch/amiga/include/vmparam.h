@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 1996/04/21 21:13:23 veego Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15 1997/06/12 15:09:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,16 +83,6 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
-
-/*
- * Default sizes of swap allocation chunks (see dmap.h).
- * The actual values may be changed in vminit() based on MAXDSIZ.
- * With MAXDSIZ of 16Mb and NDMAP of 38, dmmax will be 1024.
- * DMMIN should be at least ctod(1) so that vtod() works.
- * vminit() insures this.
- */
-#define	DMMIN	32			/* smallest swap allocation */
-#define	DMMAX	NBPG			/* largest potential swap allocation */
 
 /*
  * Sizes of the system and user portions of the system page table.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9 1997/06/01 19:23:08 phil Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.10 1997/06/12 15:09:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,15 +80,6 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(8*1024*1024)		/* max stack size */
 #endif
-
-/*
- * Default sizes of swap allocation chunks (see dmap.h).
- * The actual values may be changed in vminit() based on MAXDSIZ.
- * With MAXDSIZ of 16Mb and NDMAP of 38, dmmax will be 1024.
- */
-#define	DMMIN	32			/* smallest swap allocation */
-#define	DMMAX	4096			/* largest potential swap allocation */
-#define	DMTEXT	1024			/* swap allocation for text */
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.
