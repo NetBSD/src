@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.2.2 1999/05/06 19:41:25 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.2.3 1999/05/07 22:39:05 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -1105,12 +1105,6 @@ cninit()
 	int stdout;
 	char type[16];
 
-	/*
-	 * Initialize the PCI chipsets; can't map configuration
-	 * space registers yet!
-	 */
-	pci_init(0);
-
 	l = OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
 	if (l != sizeof(stdout))
 		goto nocons;
@@ -1145,7 +1139,7 @@ cninit()
 			return;
 		}
 
-		node = OF_instance_to_package(stdout);
+		node = OF_instance_to_package(stdin);
 		bzero(type, sizeof(type));
 		l = OF_getprop(node, "name", type, sizeof(type));
 		if (l == -1 || l >= sizeof(type) - 1) {
@@ -1177,6 +1171,12 @@ cninit()
 #endif
 			return;
 		}
+
+		/*
+		 * Initialize the PCI chipsets; can't map configuration
+		 * space registers yet!
+		 */
+		pci_init(0);
 
 		/*
 		 * We're not an ADB keyboard; must be USB.  The parent
