@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.48 2000/09/18 10:48:24 abs Exp $	*/
+/*	$NetBSD: mount.c,v 1.49 2000/10/02 18:52:47 abs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.48 2000/09/18 10:48:24 abs Exp $");
+__RCSID("$NetBSD: mount.c,v 1.49 2000/10/02 18:52:47 abs Exp $");
 #endif
 #endif /* not lint */
 
@@ -584,9 +584,21 @@ getfslab(str)
 	int part;
 	const char *vfstype;
 	u_char fstype;
+	char buf[MAXPATHLEN+1];
+	char *sp;
 
 	/* deduce the filesystem type from the disk label */
-	if ((fd = open(str, O_RDONLY)) == -1)
+
+	/* use raw device name */
+	strlcpy(buf, str, MAXPATHLEN);
+	if ( (sp = strrchr(buf, '/')) != NULL && *(++sp) != '\0' && *sp != 'r' ) {
+	  char *ep;
+	  for( ep = sp + strlen(sp) + 1 ;  ep > sp ; ep-- )
+	    *ep = *(ep-1);
+	  *sp = 'r';
+	}
+
+	if ((fd = open(buf, O_RDONLY)) == -1)
 		err(1, "cannot open `%s'", str);
 
 	if (ioctl(fd, DIOCGDINFO, &dl) == -1)
