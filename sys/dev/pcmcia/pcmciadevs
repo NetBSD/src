@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.194 2004/06/19 04:13:12 itohy Exp $
+$NetBSD: pcmciadevs,v 1.195 2004/07/07 04:19:01 mycroft Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -108,6 +108,7 @@ vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 vendor RATOC			0xc015  RATOC System Inc.
+vendor NEXTCOM			0xc020	NextCom K.K.
 vendor EMTAC			0xc250	EMTAC Technology Corporation
 vendor ELSA			0xd601  Elsa
 
@@ -294,6 +295,9 @@ product NETGEAR_2 MA401		0x7300 Netgear MA401
 /* National Instruments */
 product NI PCMCIA_GPIB		0x4882 National Instruments PCMCIA-GPIB
 
+/* NextCom K.K. */
+product NEXTCOM NEXTHAWK	0x0001 Next Hawk Ethernet
+
 /* Nokia Products */
 product NOKIA C020_WLAN		0x20c0 Nokia C020 WLAN Card
 
@@ -389,8 +393,8 @@ product ZONET ZEN		0x0100	Zonet Zen 10/10
 /*
  * Cards we know only by their cis, sorted by name.
  */
-vendor AMBICOM			-1	AmbiCom Inc
 vendor ACCTON			-1	ACCTON
+vendor AMBICOM			-1	AmbiCom Inc
 vendor AMD			-1	AMD
 vendor BILLIONTON		-1	Billionton Systems Inc.
 vendor CNET			-1	CNet
