@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.67 2003/02/26 06:31:18 matt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.68 2003/03/28 13:05:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.67 2003/02/26 06:31:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.68 2003/03/28 13:05:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,8 @@ nfsrv_lookup(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, cache, len, dirattr_ret = 1;
+	int error = 0, cache, dirattr_ret = 1;
+	uint32_t len;
 	int v3 = (nfsd->nd_flag & ND_NFSV3), pubflag;
 	char *cp2;
 	struct mbuf *mb, *mreq;
@@ -587,7 +588,8 @@ nfsrv_read(nfsd, slp, procp, mrq)
 	int i;
 	caddr_t bpos;
 	int error = 0, rdonly, cache, cnt, len, left, siz, tlen, getret;
-	int v3 = (nfsd->nd_flag & ND_NFSV3), reqlen;
+	int v3 = (nfsd->nd_flag & ND_NFSV3);
+	uint32_t reqlen;
 	char *cp2;
 	struct mbuf *mb, *mreq;
 	struct mbuf *m2;
@@ -1732,7 +1734,8 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	u_int32_t *tl;
 	int32_t t1;
 	caddr_t bpos;
-	int error = 0, cache, len, len2, fdirfor_ret = 1, fdiraft_ret = 1;
+	int error = 0, cache, fdirfor_ret = 1, fdiraft_ret = 1;
+	uint32_t len, len2;
 	int tdirfor_ret = 1, tdiraft_ret = 1;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	char *cp2;
@@ -1784,7 +1787,15 @@ nfsrv_rename(nfsd, slp, procp, mrq)
 	}
 	fvp = fromnd.ni_vp;
 	nfsm_srvmtofh(tfhp);
-	nfsm_strsiz(len2, NFS_MAXNAMLEN);
+	if (v3) {
+		nfsm_dissect(tl, uint32_t *, NFSX_UNSIGNED);
+		len2 = fxdr_unsigned(uint32_t, *tl);
+		/* len2 will be checked by nfs_namei */
+	}
+	else {
+		/* NFSv2 */
+		nfsm_strsiz(len2, NFS_MAXNAMLEN);
+	}
 	cred->cr_uid = saved_uid;
 	tond.ni_cnd.cn_cred = cred;
 	tond.ni_cnd.cn_nameiop = RENAME;
@@ -2042,7 +2053,8 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	char *bpos, *pathcp = NULL, *cp2;
 	struct uio io;
 	struct iovec iv;
-	int error = 0, cache, len, len2, dirfor_ret = 1, diraft_ret = 1;
+	int error = 0, cache, dirfor_ret = 1, diraft_ret = 1;
+	uint32_t len, len2;
 	int v3 = (nfsd->nd_flag & ND_NFSV3);
 	struct mbuf *mb, *mreq;
 	struct vnode *dirp = (struct vnode *)0;
@@ -2071,9 +2083,20 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	if (error)
 		goto out;
 	VATTR_NULL(&va);
-	if (v3)
+	if (v3) {
 		nfsm_srvsattr(&va);
-	nfsm_strsiz(len2, NFS_MAXPATHLEN);
+		nfsm_dissect(tl, uint32_t *, NFSX_UNSIGNED);
+		len2 = fxdr_unsigned(uint32_t, *tl);
+		if (len2 > PATH_MAX) {
+			/* XXX should check _PC_NO_TRUNC */
+			error = ENAMETOOLONG;
+			goto abortop;
+		}
+	}
+	else {
+		/* NFSv2 */
+		nfsm_strsiz(len2, NFS_MAXPATHLEN);
+	}
 	pathcp = malloc(len2 + 1, M_TEMP, M_WAITOK);
 	iv.iov_base = pathcp;
 	iv.iov_len = len2;
@@ -2091,13 +2114,15 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	}
 	*(pathcp + len2) = '\0';
 	if (nd.ni_vp) {
+		error = EEXIST;
+abortop:
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == nd.ni_vp)
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
-		vrele(nd.ni_vp);
-		error = EEXIST;
+		if (nd.ni_vp)
+			vrele(nd.ni_vp);
 		goto out;
 	}
 	nqsrv_getl(nd.ni_dvp, ND_WRITE);
