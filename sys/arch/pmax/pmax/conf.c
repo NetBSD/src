@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29.2.2 1998/10/15 07:12:20 nisimura Exp $	*/
+/*	$NetBSD: conf.c,v 1.29.2.3 1998/10/16 04:10:09 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,8 +162,8 @@ struct cdevsw	cdevsw[] =
 	cdev_swap_init(1,sw),		/* 1: /dev/drum (swap pseudo-device) */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
-        cdev_tty_init(NPTY,pts),        /* 4: pseudo-tty slave */
-        cdev_ptc_init(NPTY,ptc),        /* 5: pseudo-tty master */
+	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
+	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_fd_init(1,filedesc),	/* 7: file descriptor pseudo-dev */
 	cdev_disk_init(NCD,cd),		/* 8: SCSI CDROM */
@@ -177,12 +177,12 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NDC,dc),		/* 16: dc7085 serial interface */
 	cdev_tty_init(NZSTTY,zs),	/* 17: z8530 serial interface */
 	cdev_notdef(),			/* 18: nodev */
-        cdev_notdef(),	        /* 19: ULTRIX mt */
-	cdev_notdef(),		/* 20: ULTRIX pty master */
-        cdev_notdef(), 		/* 21: ULTRIX pty slave */
-	cdev_notdef(),		/* 22: ULTRIX dmf */
-	cdev_notdef(),		/* 23: ULTRIX vax 730 idc */
-	cdev_notdef(),		/* 24: ULTRIX dn-11 */
+	cdev_notdef(),			/* 19: ULTRIX mt */
+	cdev_tty_init(NPTY,pts),	/* 20: ULTRIX pty master */
+	cdev_ptc_init(NPTY,ptc),	/* 21: ULTRIX pty slave */
+	cdev_notdef(),			/* 22: ULTRIX dmf */
+	cdev_notdef(),			/* 23: ULTRIX vax 730 idc */
+	cdev_notdef(),			/* 24: ULTRIX dn-11 */
 
 		/* 25-29 CSRG reserved to local sites, DEC sez: */
 	cdev_notdef(),		/* 25: ULTRIX gpib */
