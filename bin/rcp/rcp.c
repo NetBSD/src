@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.37 2005/03/09 03:11:22 ginsbach Exp $	*/
+/*	$NetBSD: rcp.c,v 1.38 2005/03/09 17:09:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.37 2005/03/09 03:11:22 ginsbach Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.38 2005/03/09 17:09:39 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -868,16 +868,16 @@ usage(void)
 #ifdef KERBEROS
 #ifdef CRYPT
 	(void)fprintf(stderr, "%s\n\t%s\n",
-	    "usage: rcp [-Kpx] [-k realm] f1 f2",
-	    "or: rcp [-Kprx] [-k realm] f1 ... fn directory");
+	    "usage: rcp [-46Kpx] [-k realm] f1 f2",
+	    "or: rcp [-46Kprx] [-k realm] f1 ... fn directory");
 #else
 	(void)fprintf(stderr, "%s\n\t%s\n",
-	    "usage: rcp [-Kp] [-k realm] f1 f2",
-	    "or: rcp [-Kpr] [-k realm] f1 ... fn directory");
+	    "usage: rcp [-46Kp] [-k realm] f1 f2",
+	    "or: rcp [-46Kpr] [-k realm] f1 ... fn directory");
 #endif
 #else
 	(void)fprintf(stderr,
-	    "usage: rcp [-p] f1 f2; or: rcp [-pr] f1 ... fn directory\n");
+	    "usage: rcp [-46p] f1 f2; or: rcp [-46pr] f1 ... fn directory\n");
 #endif
 	exit(1);
 	/* NOTREACHED */
