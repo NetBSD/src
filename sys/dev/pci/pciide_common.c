@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.21 2004/08/21 00:28:34 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.22 2004/11/24 19:52:50 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.21 2004/08/21 00:28:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.22 2004/11/24 19:52:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -589,14 +589,13 @@ pciide_dma_table_setup(sc, channel, drive)
 }
 
 int
-pciide_dma_init(v, channel, drive, databuf, datalen, flags)
-	void *v;
+pciide_dma_dmamap_setup(sc, channel, drive, databuf, datalen, flags)
+	struct pciide_softc *sc;
 	int channel, drive;
 	void *databuf;
 	size_t datalen;
 	int flags;
 {
-	struct pciide_softc *sc = v;
 	int error, seg;
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
 	struct pciide_dma_maps *dma_maps = &cp->dma_maps[drive];
@@ -648,15 +647,37 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 	    dma_maps->dmamap_table->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	/* Maps are ready. Start DMA function */
 #ifdef DIAGNOSTIC
 	if (dma_maps->dmamap_table->dm_segs[0].ds_addr & ~IDEDMA_TBL_MASK) {
-		printf("pciide_dma_init: addr 0x%lx not properly aligned\n",
+		printf("pciide_dma_dmamap_setup: addr 0x%lx "
+		    "not properly aligned\n",
 		    (u_long)dma_maps->dmamap_table->dm_segs[0].ds_addr);
 		panic("pciide_dma_init: table align");
 	}
 #endif
+	/* remember flags */
+	dma_maps->dma_flags = flags;
 
+	return 0;
+}
+
+int
+pciide_dma_init(v, channel, drive, databuf, datalen, flags)
+	void *v;
+	int channel, drive;
+	void *databuf;
+	size_t datalen;
+	int flags;
+{
+	struct pciide_softc *sc = v;
+	int error;
+	struct pciide_channel *cp = &sc->pciide_channels[channel];
+	struct pciide_dma_maps *dma_maps = &cp->dma_maps[drive];
+
+	if ((error = pciide_dma_dmamap_setup(sc, channel, drive,
+	    databuf, datalen, flags)) != 0)
+		return error;
+	/* Maps are ready. Start DMA function */
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
 	    bus_space_read_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0));
@@ -666,8 +687,6 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 	/* set read/write */
 	bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CMD], 0,
 	    ((flags & WDC_DMA_READ) ? IDEDMA_CMD_WRITE : 0) | cp->idedma_cmd);
-	/* remember flags */
-	dma_maps->dma_flags = flags;
 	return 0;
 }
 
