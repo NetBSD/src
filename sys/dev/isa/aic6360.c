@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.26 1995/01/13 14:46:47 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.27 1995/02/01 16:11:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -61,9 +61,6 @@
  * A few customizable items:
  */
 
-/* The SCSI ID of the host adapter/computer */
-#define AIC_SCSI_HOSTID		7
-
 /* Use doubleword transfers to/from SCSI chip.  Note: This requires 
  * motherboard support.  Basicly, some motherboard chipsets are able to
  * split a 32 bit I/O operation into two 16 bit I/O operations,
@@ -72,15 +69,9 @@
  */
 #define AIC_USE_DWORDS		0
 
-/* Allow disconnects?  Was mainly used in an early phase of the driver when
- * the message system was very flaky.  Should go away soon.
- */
-#define AIC_ALLOW_DISCONNECT	1
-
 /* Synchronous data transfers? */
 #define AIC_USE_SYNCHRONOUS	0
-#define AIC_SYNC_PERIOD 	200
-#define AIC_SYNC_REQ_ACK_OFS 	8
+#define AIC_SYNC_REQ_ACK_OFS 	15
 
 /* Wide data transfers? */
 #define	AIC_USE_WIDE		0
@@ -443,11 +434,7 @@ struct aic_dma_seg {
 	physlen seg_len;
 };
 
-extern int delaycount;
-#define FUDGE(X)	((X)>>1) 	/* get 1 ms spincount */
-#define MINIFUDGE(X)	((X)>>4) 	/* get (approx) 125us spincount */
 #define AIC_NSEG	16
-#define NUM_CONCURRENT	7		/* Only one per target for now */
 
 /* 
  * ACB. Holds additional information for each SCSI command Comments: We
@@ -494,7 +481,6 @@ struct aic_tinfo {
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 	u_char	width;		/* Width suggestion */
-	u_char  syncdata;	/* True negotiated synch parameters */
 } tinfo_t;
 
 struct aic_softc {
@@ -509,7 +495,7 @@ struct aic_softc {
 
 	TAILQ_HEAD(, aic_acb) free_list, ready_list, nexus_list;
 	struct aic_acb *sc_nexus;	/* current command */
-	struct aic_acb sc_acb[NUM_CONCURRENT];
+	struct aic_acb sc_acb[8];
 	struct aic_tinfo sc_tinfo[8];
 
 	/* Data about the current nexus (updated for every cmd switch) */
@@ -533,9 +519,7 @@ struct aic_softc {
 #define AIC_DROP_MSGIN	0x01	/* Discard all msgs (parity err detected) */
 #define	AIC_ABORTING	0x02	/* Bailing out */
 #define AIC_DOINGDMA	0x04	/* The FIFO data path is active! */
-
-	/* Debugging stuff */
-	u_char	sc_progress;	/* Set if interrupt has achieved progress */
+	u_char	sc_selid;	/* Reselection ID */
 
 	/* Message stuff */
 	u_char	sc_msgpriq;	/* Messages we want to send */
@@ -554,6 +538,12 @@ struct aic_softc {
 	u_char	*sc_omp;		/* Outgoing message pointer */
 	u_char	sc_imess[AIC_MAX_MSG_LEN];
 	u_char	*sc_imp;		/* Incoming message pointer */
+
+	/* Hardware stuff */
+	int	sc_initiator;		/* Our scsi id */
+	int	sc_freq;		/* Clock frequency in MHz */
+	int	sc_minsync;		/* Minimum sync period / 4 */
+	int	sc_maxsync;		/* Maximum sync period / 4 */
 };
 
 #if AIC_DEBUG
@@ -591,10 +581,11 @@ void	aic_dequeue	__P((struct aic_softc *, struct aic_acb *));
 int	aic_scsi_cmd	__P((struct scsi_xfer *));
 int	aic_poll	__P((struct aic_softc *, struct scsi_xfer *, int));
 void	aic_select	__P((struct aic_softc *, struct aic_acb *));
-void	aic_timeout	__P((void *arg));
+void	aic_timeout	__P((void *));
 int	aic_find	__P((struct aic_softc *));
 void	aic_sched	__P((struct aic_softc *));
 void	aic_scsi_reset	__P((struct aic_softc *));
+void	aic_reset	__P((struct aic_softc *));
 #if AIC_DEBUG
 void	aic_print_active_acb();
 void	aic_dump_driver();
@@ -717,12 +708,29 @@ aic_find(sc)
 	AIC_START(("AIC found at 0x%x ", sc->sc_iobase));
 	AIC_START(("ID: %s ",chip_id));
 	AIC_START(("chip revision %d\n",(int)inb(REV)));
+
+	sc->sc_initiator = 7;
+	sc->sc_freq = 20;	/* XXXX Assume 20 MHz. */
+
+	/*
+	 * These are the bounds of the sync period, based on the frequency of
+	 * the chip's clock input and the size and offset of the sync period
+	 * register.
+	 *
+	 * For a 20Mhz clock, this gives us 25, or 100nS, or 10MB/s, as a
+	 * maximum transfer rate, and 112.5, or 450nS, or 2.22MB/s, as a
+	 * minimum transfer rate.
+	 */
+	sc->sc_minsync = (2 * 250) / sc->sc_freq;
+	sc->sc_maxsync = (9 * 250) / sc->sc_freq;
+
 	return 0;
 }
 
 int
 aicprint()
 {
+
 }
 
 /*
@@ -744,7 +752,7 @@ aicattach(parent, self, aux)
 	 * Fill in the prototype scsi_link
 	 */
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = AIC_SCSI_HOSTID;
+	sc->sc_link.adapter_target = sc->sc_initiator;
 	sc->sc_link.adapter = &aic_switch;
 	sc->sc_link.device = &aic_dev;
 	sc->sc_link.openings = 2;
@@ -768,8 +776,8 @@ aicattach(parent, self, aux)
  * aicprobe should have succeeded, i.e. the iobase address in aic_softc must
  * be valid.
  */
-static void 
-aic6360_reset(sc)
+void
+aic_reset(sc)
 	struct aic_softc *sc;
 {
 
@@ -796,7 +804,7 @@ aic6360_reset(sc)
 
 	outb(CLRSERR, 0x07);	/* Haven't seen ant errors (yet) */
 	
-	outb(SCSIID, AIC_SCSI_HOSTID << OID_S); /* Set our SCSI-ID */
+	outb(SCSIID, sc->sc_initiator << OID_S); /* Set our SCSI-ID */
 	outb(BRSTCNTRL, EISA_BRST_TIM);
 }
 
@@ -813,8 +821,7 @@ aic_scsi_reset(sc)
 }
 
 /*
- * Initialize aic SCSI driver, also (conditonally) reset the SCSI bus.
- * The reinitialization is still buggy (e.g. on SCSI resets).
+ * Initialize aic SCSI driver.
  */
 void
 aic_init(sc)
@@ -823,13 +830,12 @@ aic_init(sc)
 	struct aic_acb *acb;
 	int r;
 	
+	aic_reset(sc);
 	aic_scsi_reset(sc);
-	aic6360_reset(sc);	/* Clean up our own hardware */
+	aic_reset(sc);
 
-/*XXX*/	/* If not the first time (probably a reset condition),
-	 * we should clean queues with active commands
-	 */
-	if (sc->sc_state == 0) {	/* First time through */
+	if (sc->sc_state == 0) {
+		/* First time through; initialize. */
 		TAILQ_INIT(&sc->ready_list);
 		TAILQ_INIT(&sc->nexus_list);
 		TAILQ_INIT(&sc->free_list);
@@ -842,6 +848,7 @@ aic_init(sc)
 		}
 		bzero(&sc->sc_tinfo, sizeof(sc->sc_tinfo));
 	} else {
+		/* Cancel any active commands. */
 		sc->sc_state = AIC_CLEANING;
 		if ((acb = sc->sc_nexus) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
@@ -862,14 +869,17 @@ aic_init(sc)
 		ti->flags = 0;
 #if AIC_USE_SYNCHRONOUS
 		ti->flags |= DO_SYNC;
-		ti->period = AIC_SYNC_PERIOD;
+		ti->period = sc->sc_minsync;
 		ti->offset = AIC_SYNC_REQ_ACK_OFS;
+#else
+		ti->period = ti->offset = 0;
 #endif
 #if AIC_USE_WIDE
 		ti->flags |= DO_WIDE;
 		ti->width = AIC_MAX_WIDTH;
+#else
+		ti->width = 0;
 #endif
-		ti->syncdata = 0;
 	}
 
 	sc->sc_state = AIC_IDLE;
@@ -1039,6 +1049,17 @@ aic_poll(sc, xs, count)
 }
 
 /*
+ * LOW LEVEL SCSI UTILITIES
+ */
+
+#define aic_sched_msgout(m) \
+	do {							\
+		if (sc->sc_msgpriq == 0)			\
+			outb(SCSISIG, sc->sc_phase|ATNO);	\
+		sc->sc_msgpriq |= (m);				\
+	} while (0)
+
+/*
  * Start a selection.  This is used by aic_sched() to select an idle target,
  * and by aic_done() to immediately reselect a target to get sense information.
  */
@@ -1051,15 +1072,94 @@ aic_select(sc, acb)
 	int target = sc_link->target;
 	struct aic_tinfo *ti = &sc->sc_tinfo[target];
 
-	outb(SCSIID, AIC_SCSI_HOSTID << OID_S | target);
-	outb(SCSIRATE, ti->syncdata);
+	outb(SCSIID, sc->sc_initiator << OID_S | target);
+	if (ti->offset != 0)
+		outb(SCSIRATE,
+		    ((ti->period * sc->sc_freq) / 250 - 2) << 4 | ti->offset);
+	else
+		outb(SCSIRATE, 0);
 	outb(SXFRCTL1, STIMO_256ms|ENSTIMER);
+
 	/* Always enable reselections. */
 	outb(SIMODE0, ENSELDI|ENSELDO);
 	outb(SIMODE1, ENSCSIRST|ENSELTIMO);
 	outb(SCSISEQ, ENRESELI|ENSELO|ENAUTOATNO);
 
 	sc->sc_state = AIC_SELECTING;
+}
+
+int
+aic_reselect(sc, message)
+	struct aic_softc *sc;
+	u_char message;
+{
+	u_char selid, target, lun;
+	struct aic_acb *acb;
+	struct scsi_link *sc_link;
+	struct aic_tinfo *ti;
+
+	/*
+	 * The SCSI chip made a snapshot of the data bus while the reselection
+	 * was being negotiated.  This enables us to determine which target did
+	 * the reselect.
+	 */
+	selid = sc->sc_selid & ~(1 << sc->sc_initiator);
+	if (selid & (selid - 1)) {
+		printf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
+		    sc->sc_dev.dv_xname, selid);
+		AIC_BREAK();
+		goto reset;
+	}
+
+	/* Search wait queue for disconnected cmd
+	 * The list should be short, so I haven't bothered with
+	 * any more sophisticated structures than a simple
+	 * singly linked list. 
+	 */
+	target = ffs(selid) - 1;
+	lun = message & 0x07;
+	for (acb = sc->nexus_list.tqh_first; acb != NULL;
+	     acb = acb->chain.tqe_next) {
+		sc_link = acb->xs->sc_link;
+		if (sc_link->target == target && sc_link->lun == lun)
+			break;
+	}
+	if (acb == NULL) {
+		printf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
+		    sc->sc_dev.dv_xname, target, lun);
+		AIC_BREAK();
+		goto abort;
+	}
+
+	/* Make this nexus active again. */
+	TAILQ_REMOVE(&sc->nexus_list, acb, chain);
+	sc->sc_state = AIC_CONNECTED;
+	sc->sc_nexus = acb;
+	ti = &sc->sc_tinfo[target];
+	ti->lubusy |= (1 << lun);
+	if (ti->offset != 0)
+		outb(SCSIRATE,
+		    ((ti->period * sc->sc_freq) / 250 - 2) << 4 | ti->offset);
+	else
+		outb(SCSIRATE, 0);
+
+	/* Do an implicit RESTORE POINTERS. */
+	sc->sc_dp = acb->data_addr;
+	sc->sc_dleft = acb->data_length;
+	sc->sc_cp = (u_char *)&acb->scsi_cmd;
+	sc->sc_cleft = acb->scsi_cmd_length;
+
+	return (0);
+
+reset:
+	sc->sc_flags |= AIC_ABORTING;
+	aic_sched_msgout(SEND_DEV_RESET);
+	return (1);
+
+abort:
+	sc->sc_flags |= AIC_ABORTING;
+	aic_sched_msgout(SEND_ABORT);
+	return (1);
 }
 
 /*
@@ -1085,7 +1185,7 @@ aic_sched(sc)
 	    acb = acb->chain.tqe_next) {
 		sc_link = acb->xs->sc_link;
 		ti = &sc->sc_tinfo[sc_link->target];
-		if ((ti->lubusy & (1<<sc_link->lun)) == 0) {
+		if ((ti->lubusy & (1 << sc_link->lun)) == 0) {
 			AIC_MISC(("selecting %d:%d  ",
 			    sc_link->target, sc_link->lun));
 			TAILQ_REMOVE(&sc->ready_list, acb, chain);
@@ -1180,7 +1280,7 @@ aic_done(sc, acb)
 	 * longer busy.  This code is sickening, but it works.
 	 */
 	if (acb == sc->sc_nexus) {
-		ti->lubusy &= ~(1<<sc_link->lun);
+		ti->lubusy &= ~(1 << sc_link->lun);
 		sc->sc_state = AIC_IDLE;
 		sc->sc_nexus = NULL;
 		aic_sched(sc);
@@ -1211,7 +1311,7 @@ aic_dequeue(sc, acb)
 		}
 		if (acb2 != NULL) {
 			TAILQ_REMOVE(&sc->nexus_list, acb, chain);
-			ti->lubusy &= ~(1<<sc_link->lun);
+			ti->lubusy &= ~(1 << sc_link->lun);
 		} else if (acb->chain.tqe_next) {
 			TAILQ_REMOVE(&sc->ready_list, acb, chain);
 		} else {
@@ -1226,53 +1326,23 @@ aic_dequeue(sc, acb)
  * INTERRUPT/PROTOCOL ENGINE
  */
 
-/* The message system:
- * This is a revamped message system that now should easier accomodate new
- * messages, if necessary.
- * Currently we accept these messages:
- * IDENTIFY (when reselecting)
- * COMMAND COMPLETE # (expect bus free after messages marked #)
- * NOOP
- * MESSAGE REJECT
- * SYNCHRONOUS DATA TRANSFER REQUEST
- * SAVE DATA POINTER
- * RESTORE POINTERS
- * DISCONNECT #
- *
- * We may send these messages in prioritized order:
- * BUS DEVICE RESET #		if SCSI_RESET & xs->flags (or in weird sits.)
- * MESSAGE PARITY ERROR		par. err. during MSGI
- * MESSAGE REJECT		If we get a message we don't know how to handle
- * ABORT #			send on errors
- * INITIATOR DETECTED ERROR	also on errors (SCSI2) (during info xfer)
- * IDENTIFY			At the start of each transfer
- * SYNCHRONOUS DATA TRANSFER REQUEST	if appropriate
- * NOOP				if nothing else fits the bill ...
- */
-
-#define aic_sched_msgout(m) \
-	do {							\
-		if (sc->sc_msgpriq == 0)			\
-			outb(SCSISIG, sc->sc_phase|ATNO);	\
-		sc->sc_msgpriq |= (m);				\
-	} while (0)
-
 #define IS1BYTEMSG(m) (((m) != 0x01 && (m) < 0x20) || (m) >= 0x80)
 #define IS2BYTEMSG(m) (((m) & 0xf0) == 0x20)
 #define ISEXTMSG(m) ((m) == 0x01)
+
 /*
  * Precondition:
  * The SCSI bus is already in the MSGI phase and there is a message byte
  * on the bus, along with an asserted REQ signal.
  */
-void
+int
 aic_msgin(sc)
 	register struct aic_softc *sc;
 {
+	u_char sstat1;
 	int n;
 
 	AIC_TRACE(("aic_msgin  "));
-	sc->sc_progress = 0;
 
 	if (sc->sc_prevphase == PH_MSGIN) {
 		/* This is a continuation of the previous message. */
@@ -1295,30 +1365,30 @@ nextbyte:
 	 */
 	for (;;) {
 		for (;;) {
-			u_char sstat1 = inb(SSTAT1);
-			if ((sstat1 & (REQINIT|BUSFREE)) == 0) {
-				/* Wait for REQINIT.  XXX Need timeout. */
-				continue;
-			}
-			if ((sstat1 & (PHASECHG|BUSFREE)) != 0) {
-				/*
-				 * Target left MESSAGE IN, probably because it
-				 * a) noticed our ATN signal, or
-				 * b) ran out of messages.
-				 */
-				goto out;
-			}
-			/* Still in MESSAGE IN phase, and REQ is asserted. */
-			if ((sstat1 & SCSIPERR) != 0) {
-				aic_sched_msgout(SEND_PARITY_ERROR);
-				sc->sc_flags |= AIC_DROP_MSGIN;
-			}
-			break;
+			sstat1 = inb(SSTAT1);
+			if ((sstat1 & (REQINIT|BUSFREE)) != 0)
+				break;
+			/* Wait for REQINIT.  XXX Need timeout. */
+		}
+		if ((sstat1 & (PHASECHG|BUSFREE)) != 0) {
+			/*
+			 * Target left MESSAGE IN, probably because it
+			 * a) noticed our ATN signal, or
+			 * b) ran out of messages.
+			 */
+			return (1);
+		}
+
+		/* If parity error, just dump everything on the floor. */
+		if ((sstat1 & SCSIPERR) != 0) {
+			aic_sched_msgout(SEND_PARITY_ERROR);
+			sc->sc_flags |= AIC_DROP_MSGIN;
 		}
 
 		/* Gather incoming message bytes if needed. */
 		if ((sc->sc_flags & AIC_DROP_MSGIN) == 0) {
 			if (n >= AIC_MAX_MSG_LEN) {
+				(void) inb(SCSIDAT);
 				aic_sched_msgout(SEND_REJECT);
 				sc->sc_flags |= AIC_DROP_MSGIN;
 			} else {
@@ -1338,7 +1408,8 @@ nextbyte:
 				    n == sc->sc_imess[1] + 2)
 					break;
 			}
-		}
+		} else
+			(void) inb(SCSIDAT);
 
 		/*
 		 * If we reach this spot we're either:
@@ -1353,7 +1424,6 @@ nextbyte:
 			;
 	}
 
-	sc->sc_progress = 1;
 	AIC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
 
 	/* We now have a complete message.  Parse it. */
@@ -1361,8 +1431,6 @@ nextbyte:
 		struct aic_acb *acb;
 		struct scsi_link *sc_link;
 		struct aic_tinfo *ti;
-		int period, offset, width;
-		u_char selid, target, lun;
 
 	case AIC_CONNECTED:
 		AIC_ASSERT(sc->sc_nexus != NULL);
@@ -1392,18 +1460,16 @@ nextbyte:
 			switch (sc->sc_msgout) {
 			case SEND_IDENTIFY:
 				ti->flags &= ~(DO_SYNC|DO_WIDE);
-				ti->syncdata = 0;
-				outb(SCSIRATE, ti->syncdata);
-				/* ... */
+				ti->period = ti->offset = 0;
+				ti->width = 0;
 				break;
 			case SEND_SDTR:
 				ti->flags &= ~DO_SYNC;
-				ti->syncdata = 0;
-				outb(SCSIRATE, ti->syncdata);
+				ti->period = ti->offset = 0;
 				break;
 			case SEND_WDTR:
 				ti->flags &= ~DO_WIDE;
-				/* ... */
+				ti->width = 0;
 				break;
 			case SEND_INIT_DET_ERR:
 				sc->sc_flags |= AIC_ABORTING;
@@ -1437,39 +1503,37 @@ nextbyte:
 			case MSG_EXT_SDTR:
 				if (sc->sc_imess[1] != 3)
 					goto reject;
-				period = (sc->sc_imess[3] * 4 + 49)/50 - 2;
-				offset = sc->sc_imess[4];
-				if (offset == 0) {
-					ti->flags &= ~DO_SYNC;
-					ti->syncdata = 0;
-					outb(SCSIRATE, ti->syncdata);
-				} else if (period > 7) {
-					/* Too slow for aic6360. Do asynch
-					 * instead.  Renegotiate the deal.
-					 */
-					ti->period = 0;
-					ti->offset = 0;
+				ti->period = sc->sc_imess[3];
+				ti->offset = sc->sc_imess[4];
+				if (ti->offset == 0) {
+					sc_print_addr(acb->xs->sc_link);
+					printf("async\n");
+				} else if (ti->period < sc->sc_minsync ||
+					   ti->period > sc->sc_maxsync ||
+					   ti->offset > 15) {
+					sc_print_addr(acb->xs->sc_link);
+					printf("async\n");
+					ti->period = ti->offset = 0;
 					aic_sched_msgout(SEND_SDTR);
 				} else {
-					ti->flags &= ~DO_SYNC;
-					ti->syncdata = period<<4 | offset;
-					outb(SCSIRATE, ti->syncdata);
+					sc_print_addr(acb->xs->sc_link);
+					printf("sync, offset %d, period %dnsec\n",
+					    ti->offset, ti->period * 4);
 				}
 				break;
 
 			case MSG_EXT_WDTR:
 				if (sc->sc_imess[1] != 2)
 					goto reject;
-				width = sc->sc_imess[3];
-				if (width == 0) {
-					ti->flags &= ~DO_WIDE;
-					/* ... */
-				} else if (width > AIC_MAX_WIDTH) {
+				ti->width = sc->sc_imess[3];
+				if (ti->width == 0) {
+				} else if (ti->width > AIC_MAX_WIDTH) {
 					ti->width = 0;
 					aic_sched_msgout(SEND_WDTR);
 				} else {
-					ti->flags &= ~DO_WIDE;
-					/* ... */
+					sc_print_addr(acb->xs->sc_link);
+					printf("wide, width %d\n",
+					    1 << (3 + ti->width));
 				}
 				break;
 
@@ -1499,52 +1563,7 @@ nextbyte:
 			goto reset;
 		}
 
-		/*
-		 * The SCSI chip made a snapshot of the data bus while the
-		 * reselection was being negotiated.  This enables us to
-		 * determine which target did the reselect.
-		 */
-		selid = inb(SELID) & ~(1<<AIC_SCSI_HOSTID);
-		if (selid & (selid - 1)) {
-			printf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
-			    sc->sc_dev.dv_xname, selid);
-			AIC_BREAK();
-			goto reset;
-		}
-
-		/* Search wait queue for disconnected cmd
-		 * The list should be short, so I haven't bothered with
-		 * any more sophisticated structures than a simple
-		 * singly linked list. 
-		 */
-		target = ffs(selid) - 1;
-		lun = sc->sc_imess[0] & 0x07;
-		for (acb = sc->nexus_list.tqh_first; acb != NULL;
-		     acb = acb->chain.tqe_next) {
-			sc_link = acb->xs->sc_link;
-			if (sc_link->target == target && sc_link->lun == lun)
-				break;
-		}
-		if (acb == NULL) {
-			printf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
-			    sc->sc_dev.dv_xname, target, lun);
-			AIC_BREAK();
-			goto abort;
-		}
-
-		/* Make this nexus active again. */
-		TAILQ_REMOVE(&sc->nexus_list, acb, chain);
-		sc->sc_state = AIC_CONNECTED;
-		sc->sc_nexus = acb;
-		ti = &sc->sc_tinfo[sc_link->target];
-		ti->lubusy |= (1<<sc_link->lun);
-		outb(SCSIRATE, ti->syncdata);
-
-		/* Do an implicit RESTORE POINTERS. */
-		sc->sc_dp = acb->data_addr;
-		sc->sc_dleft = acb->data_length;
-		sc->sc_cp = (u_char *)&acb->scsi_cmd;
-		sc->sc_cleft = acb->scsi_cmd_length;
+		(void) aic_reselect(sc, sc->sc_imess[0]);
 		break;
 
 	default:
@@ -1574,23 +1593,11 @@ nextbyte:
 
 out:
 	AIC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
+	return (0);
 }
 
-
-/* The message out (and in) stuff is a bit complicated:
- * If the target requests another message (sequence) without 
- * having changed phase in between it really asks for a 
- * retransmit, probably due to parity error(s).
- * The following messages can be sent:
- * IDENTIFY	   @ These 4 stem from SCSI command activity 
- * SDTR		   @
- * WDTR		   @
- * DEV_RESET	   @
- * REJECT if MSGI doesn't make sense
- * PARITY_ERROR if parity error while in MSGI
- * INIT_DET_ERR if parity error while not in MSGI
- * ABORT if INIT_DET_ERR rejected
- * NOOP if asked for a message and there's nothing to send
+/*
+ * Send the highest priority, scheduled message.
  */
 void
 aic_msgout(sc)
@@ -1601,7 +1608,6 @@ aic_msgout(sc)
 	int n;
 
 	AIC_TRACE(("aic_msgout  "));
-	sc->sc_progress = 0;
 
 	/*
 	 * Set ATN.  If we're just sending a trivial 1-byte message, we'll
@@ -1655,8 +1661,7 @@ nextmsg:
 		}
 		AIC_ASSERT(sc->sc_nexus != NULL);
 		acb = sc->sc_nexus;
-		sc->sc_omess[0] =
-		    MSG_IDENTIFY(acb->xs->sc_link->lun, AIC_ALLOW_DISCONNECT);
+		sc->sc_omess[0] = MSG_IDENTIFY(acb->xs->sc_link->lun, 1);
 		n = 1;
 		break;
 
@@ -1769,8 +1774,6 @@ nextbyte:
 		if (n == 0)
 			break;
 	}
-
-	sc->sc_progress = 1;
 
 	/* We get here only if the entire message has been transmitted. */
 	if (sc->sc_msgpriq != 0) {
@@ -1893,8 +1896,6 @@ phasechange:
 	while ((inb(SXFRCTL0) & SCSIEN) != 0)
 		;
 
-	sc->sc_progress = out != 0;
-
 	/* Turn on ENREQINIT again. */
 	outb(SIMODE1, ENSCSIRST|ENSCSIPERR|ENBUSFREE|ENREQINIT|ENPHASECHG);
 
@@ -2003,9 +2004,7 @@ aic_datain_pio(sc, p, n)
 		}
 
 		AIC_MISC(("aic: %d extra bytes\n", extra));
-		sc->sc_progress = extra != 0;
-	} else
-		sc->sc_progress = 1;
+	}
 
 	/* Stop the FIFO data path */
 	outb(SXFRCTL0, CHEN);
@@ -2024,26 +2023,26 @@ aic_datain_pio(sc, p, n)
  * This is the workhorse routine of the driver.
  * Deficiencies (for now):
  * 1) always uses programmed I/O
- * 2) doesn't support synchronous transfers properly (yet)
  */
 int 
 aicintr(sc)
 	register struct aic_softc *sc;
 {
 	u_char sstat0, sstat1;
-	u_char phase;
 	register struct aic_acb *acb;
 	register struct scsi_link *sc_link;
 	struct aic_tinfo *ti;
 	int n;
 
 	/*
-	 * Clear INTEN.  We enable it again before returning.  This ensures
-	 * that we get another edge on the next `interesting' event.
+	 * Clear INTEN.  We enable it again before returning.  This makes the
+	 * interrupt esssentially level-triggered.
 	 */
 	outb(DMACNTRL0, 0);
+
 	AIC_TRACE(("aicintr  "));
 	
+gotintr:
 	/*
 	 * First check for abnormal conditions, such as reset.
 	 */
@@ -2051,11 +2050,15 @@ aicintr(sc)
 	AIC_MISC(("sstat1:0x%02x ", sstat1));
 
 	if ((sstat1 & SCSIRSTI) != 0) {
-		printf("aic: reset in -- reinitializing....\n");
+		printf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
 		goto reset;
 	}
+
+	/*
+	 * Check for less serious errors.
+	 */
 	if ((sstat1 & SCSIPERR) != 0) {
-		printf("aic: SCSI bus parity error\n");
+		printf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
 		outb(CLRSINT1, CLRSCSIPERR);
 		if (sc->sc_prevphase == PH_MSGIN) {
 			aic_sched_msgout(SEND_PARITY_ERROR);
@@ -2106,6 +2109,9 @@ aicintr(sc)
 				TAILQ_INSERT_HEAD(&sc->ready_list, acb, chain);
 			}
 
+			/* Save reselection ID. */
+			sc->sc_selid = inb(SELID);
+
 			sc->sc_state = AIC_RESELECTED;
 		} else if ((sstat0 & SELDO) != 0) {
 			AIC_MISC(("selected  "));
@@ -2116,7 +2122,7 @@ aicintr(sc)
 			 * c) Mark device as busy.
 			 */
 			if (sc->sc_state != AIC_SELECTING) {
-				printf("%s: selection out while not selecting; resetting\n",
+				printf("%s: selection out while idle; resetting\n",
 				    sc->sc_dev.dv_xname);
 				AIC_BREAK();
 				goto reset;
@@ -2153,7 +2159,7 @@ aicintr(sc)
 			AIC_MISC(("selection timeout  "));
 
 			if (sc->sc_state != AIC_SELECTING) {
-				printf("%s: selection timeout while not selecting; resetting\n",
+				printf("%s: selection timeout while idle; resetting\n",
 				    sc->sc_dev.dv_xname);
 				AIC_BREAK();
 				goto reset;
@@ -2247,15 +2253,14 @@ dophase:
 		goto out;
 	}
 
-	phase = inb(SCSISIG) & PH_MASK;
-	sc->sc_phase = phase;
-	outb(SCSISIG, phase);
+	sc->sc_phase = inb(SCSISIG) & PH_MASK;
+	outb(SCSISIG, sc->sc_phase);
 
-	switch (phase) {
+	switch (sc->sc_phase) {
 	case PH_MSGOUT:
 		/* If aborting, always handle MESSAGE OUT. */
-		if ((sc->sc_flags & AIC_ABORTING) == 0 &&
-		    (sc->sc_state & AIC_CONNECTED) == 0)
+		if ((sc->sc_state & AIC_CONNECTED) == 0 &&
+		    (sc->sc_flags & AIC_ABORTING) == 0)
 			break;
 		aic_msgout(sc);
 		goto nextphase;
@@ -2263,10 +2268,11 @@ dophase:
 	case PH_MSGIN:
 		if ((sc->sc_state & (AIC_CONNECTED|AIC_RESELECTED)) == 0)
 			break;
-		aic_msgin(sc);
+		if (aic_msgin(sc))
+			goto gotintr;
 		goto nextphase;
 
-	case PH_CMD:		/* CMD phase & REQ asserted */
+	case PH_CMD:
 		if ((sc->sc_state & AIC_CONNECTED) == 0)
 			break;
 #if AIC_DEBUG
@@ -2316,15 +2322,14 @@ dophase:
 		goto nextphase;
 	}
 
-	printf("%s: unexpected bus phase; resetting\n",
-	    sc->sc_dev.dv_xname);
+	printf("%s: unexpected bus phase; resetting\n", sc->sc_dev.dv_xname);
 	AIC_BREAK();
 reset:
 	aic_init(sc);
 	return 1;
 
 nextphase:
-	sc->sc_prevphase = phase;
+	sc->sc_prevphase = sc->sc_phase;
 
 out:
 	outb(DMACNTRL0, INTEN);
