@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.21 2000/02/19 23:02:17 erh Exp $
+#	$NetBSD: bsd.nls.mk,v 1.22 2000/06/06 05:40:47 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -41,16 +41,16 @@ realall: ${NLSALL}
 cleannls:
 	rm -f ${NLSALL}
 
-.for F in ${NLSALL}
-nlsinstall:: ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat
+nlsinstall:: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat
+.PHONY: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
 .endif
+.PRECIOUS: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
+
+.for F in ${NLSALL}
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: .MADE
 .endif
-
-.PRECIOUS: ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat
 ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: ${F}
 	${INSTALL} ${INSTPRIV} -d -o ${NLSOWN} -g ${NLSGRP} ${.TARGET:H}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${NLSOWN} \

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.112 2000/04/14 03:36:13 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.113 2000/06/06 05:40:47 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -158,29 +158,22 @@ SCRIPTSDIR?=${BINDIR}
 SCRIPTSOWN?=${BINOWN}
 SCRIPTSGRP?=${BINGRP}
 SCRIPTSMODE?=${BINMODE}
-.for S in ${SCRIPTS}
-SCRIPTSDIR_${S}?=${SCRIPTSDIR}
-SCRIPTSOWN_${S}?=${SCRIPTSOWN}
-SCRIPTSGRP_${S}?=${SCRIPTSGRP}
-SCRIPTSMODE_${S}?=${SCRIPTSMODE}
-.if defined(SCRIPTSNAME)
-SCRIPTSNAME_${S} ?= ${SCRIPTSNAME}
-.else
-SCRIPTSNAME_${S} ?= ${S:T:R}
-.endif
-SCRIPTSDIR_${S} ?= ${SCRIPTSDIR}
-scriptsinstall:: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
-.if !defined(UPDATE)
-.PHONY: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
-.endif
-.if !defined(BUILD) && !make(all) && !make(${S})
-${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: .MADE
-.endif
 
-.PRECIOUS: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
-${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: ${S}
+scriptsinstall:: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
+.if !defined(UPDATE)
+.PHONY: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
+.endif
+.PRECIOUS: ${SCRIPTS:@S@${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}@}
+
+.for S in ${SCRIPTS}
+.if !defined(BUILD) && !make(all) && !make(${S})
+${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}: .MADE
+.endif
+${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U${S:T:R}}}: ${S}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
-	    -o ${SCRIPTSOWN_${S}} -g ${SCRIPTSGRP_${S}} -m ${SCRIPTSMODE_${S}} \
+	    -o ${SCRIPTSOWN_${S}:U${SCRIPTSOWN}} \
+	    -g ${SCRIPTSGRP_${S}:U${SCRIPTSGRP}} \
+	    -m ${SCRIPTSMODE_${S}:U${SCRIPTSMODE}} \
 	    ${.ALLSRC} ${.TARGET}
 .endfor
 .endif
