@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2 2002/11/14 21:47:15 manu Exp $
+	$NetBSD: syscalls.master,v 1.3 2002/11/16 19:59:20 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -357,7 +357,7 @@
 188	NOARGS		{ int freebsd_sys_stat(const char *path, \
 			    struct stat12 *ub); } stat12
 189	NOARGS		{ int compat_12_sys_fstat(int fd, \
-			    struct stat12 *sb); } fstat12
+			    struct stat12 *sb); }
 190	NOARGS		{ int freebsd_sys_lstat(const char *path, \
 			    struct stat12 *ub); } lstat12
 191	NOARGS		{ long freebsd_sys_pathconf(const char *path, \
