@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.4 2000/11/14 18:42:59 thorpej Exp $	*/
+/*	$NetBSD: twevar.h,v 1.5 2001/01/22 17:32:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,19 +70,7 @@
 
 #include "locators.h"
 
-#define	TWE_MIN_QUEUECNT	9	/* One per unit + one for AENs */
-
-#ifndef TWE_MAX_QUEUECNT
-#define	TWE_MAX_QUEUECNT	128	/* Maximum per-adapter queue count */
-#elif TWE_MAX_QUEUECNT > TWE_MAX_CMDS
-#error TWE_MAX_QUEUECNT > TWE_MAX_CMDS
-#elif TWE_MAX_QUEUECNT < TWE_MIN_QUEUECNT
-#error TWE_MAX_QUEUECNT < TWE_MIN_QUEUECNT
-#endif
-
-#ifndef TWE_MAX_PU_QUEUECNT
-#define	TWE_MAX_PU_QUEUECNT	32	/* Maximum per-unit queue count */
-#endif
+#define	TWE_MAX_QUEUECNT	129
 
 /* XXX NBPG */
 #if TWE_SG_SIZE > (((MAXPHYS + NBPG - 1) / NBPG) + 1)
@@ -90,6 +78,7 @@
 #else
 #define	TWE_MAX_SEGS	TWE_SG_SIZE
 #endif
+#define	TWE_MAX_XFER	((TWE_MAX_SEGS - 1) * NBPG)
 
 /* Per-controller state. */
 struct twe_softc {
