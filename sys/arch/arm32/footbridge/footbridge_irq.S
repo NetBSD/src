@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irq.S,v 1.1 1998/09/06 02:20:35 mark Exp $	*/
+/*	$NetBSD: footbridge_irq.S,v 1.2 1998/12/28 09:39:02 mark Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -106,6 +106,10 @@ ASENTRY_NP(irq_entry)
 	/* Load r8 with the Footbridge interrupt requests */
 	mov	r10, #(DC21285_ARMCSR_VBASE)
 	ldr	r8, [r10, #(IRQ_STATUS)]
+
+	/* This condition needs further examination */
+	teq	r8, #0
+	beq	irq_unknown
 
 	/* Block the current requested interrupts */
 	ldr	r1, Lintr_disabled_mask
@@ -251,6 +255,7 @@ nextirq:
         orr     r0, r0, #(I32_bit)
         msr     cpsr_all, r0
 
+irq_unknown:
 	/* Decrement the nest count */
 	ldr	r0, Lcurrent_intr_depth
 	ldr	r1, [r0]
