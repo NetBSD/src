@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.5 1997/10/16 23:25:19 lukem Exp $	*/
+/*	$NetBSD: process.c,v 1.6 2000/01/10 19:33:18 abs Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.5 1997/10/16 23:25:19 lukem Exp $");
+__RCSID("$NetBSD: process.c,v 1.6 2000/01/10 19:33:18 abs Exp $");
 #endif
 
 #include "os.h"
@@ -246,8 +246,8 @@ mopStartLoad(dst, src, dl_rpr, trans)
 			if (dllist[i].status == DL_STATUS_FREE) {
 				if (slot == -1) {
 					slot = i;
-					memmove((char *)dst,
-					    (char *)dllist[i].eaddr, 6);
+					memmove((char *)dllist[i].eaddr,
+					    (char *)dst, 6);
 				}
 			}
 		}
