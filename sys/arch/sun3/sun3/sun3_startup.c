@@ -274,6 +274,17 @@ void sun3_vm_init()
     sun3_context_equiv();
 }
 
+void idprom_etheraddr(eaddrp)
+     u_char *eaddrp;
+{
+    eaddrp[0] = identity_prom.idp_etheraddr[0];
+    eaddrp[1] = identity_prom.idp_etheraddr[1];
+    eaddrp[2] = identity_prom.idp_etheraddr[2];
+    eaddrp[3] = identity_prom.idp_etheraddr[3];
+    eaddrp[4] = identity_prom.idp_etheraddr[4];
+    eaddrp[5] = identity_prom.idp_etheraddr[5];
+}
+
 void sun3_verify_hardware()
 {
     unsigned char arch;

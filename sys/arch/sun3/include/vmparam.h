@@ -68,6 +68,9 @@
 #define	SAFERSS		4		/* nominal ``small'' resident set size
 					   protected against replacement */
 
+#define DVMA_SPACE_SIZE  0x00100000
+#define DVMA_SPACE_START 0x0FD00000
+#define DVMA_SPACE_END   0x0FE00000 /* mon start */
 
 /*
  * Mach derived constants
@@ -78,7 +81,7 @@
 #define VM_MAXUSER_ADDRESS	((vm_offset_t)0x0E000000)
 #define VM_MAX_ADDRESS		((vm_offset_t)0xFFF00000)
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0x0E004000)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0x0FE00000) /* mon start */
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0x0FD00000) /* mon start */
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)

@@ -7,6 +7,7 @@
 
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
+#include "vm/vm_map.h"
 
 #include "machine/cpu.h"
 #include "machine/pte.h"
@@ -152,4 +153,40 @@ vunmapbuf(bp)
 	kmem_free_wakeup(phys_map, kva, ctob(npf));
 	bp->b_un.b_addr = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
+}
+
+/* idea for implementation borrowed from chris torek */
+
+caddr_t dvma_malloc(size)
+     size_t size;
+{
+    caddr_t new_mem;
+    vm_size_t new_size;
+
+    if (!size)
+	return NULL;
+    new_size = sun3_round_page(size);
+    new_mem = (caddr_t) kmem_alloc(phys_map, new_size);
+    if (!new_mem)
+	panic("dvma_malloc: no space in phys_map");
+    /* uncache this piece of memory :) */
+    return new_mem;
+}
+
+caddr_t obio_vm_alloc(npages)
+     int npages;
+{
+    vm_size_t size;
+    vm_offset_t addr;
+    int result;
+
+    if (npages == 0);
+    size = npages*NBPG;
+    addr = vm_map_min(phys_map);
+    result = vm_map_find(phys_map, NULL, (vm_offset_t) 0, &addr, size, TRUE);
+    if (result != KERN_SUCCESS) return NULL;
+    vm_map_lock(phys_map);
+    vm_map_delete(phys_map, addr, addr+size);
+    vm_map_unlock(phys_map);
+    return (caddr_t) addr;
 }
