@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.11 2003/01/18 06:55:25 thorpej Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.12 2003/04/29 05:59:16 nakayama Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -179,14 +179,16 @@ process_read_fpregs(l, regs)
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 
+#ifdef __arch64__
 	if (!(curproc->p_flag & P_32)) {
-		/* 64-bit mode -- copy in fregs */
+		/* 64-bit mode -- copy out fregs */
 		/* NOTE: struct fpreg == struct fpstate */
 		if (l->l_md.md_fpstate)
 			statep = l->l_md.md_fpstate;
 		bcopy(statep, regs, sizeof(struct fpreg64));
 		return 0;
 	}
+#endif
 	/* 32-bit mode -- copy out & convert 32-bit fregs */
 	if (l->l_md.md_fpstate)
 		statep = l->l_md.md_fpstate;
@@ -207,6 +209,7 @@ process_write_fpregs(l, regs)
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 
+#ifdef __arch64__
 	if (!(curproc->p_flag & P_32)) {
 		/* 64-bit mode -- copy in fregs */
 		if (l->l_md.md_fpstate == NULL)
@@ -218,6 +221,7 @@ process_write_fpregs(l, regs)
 		statep->fs_qsize = 0;
 		return 0;
 	}
+#endif
 	/* 32-bit mode -- copy in & convert 32-bit fregs */
 	if (l->l_md.md_fpstate)
 		statep = l->l_md.md_fpstate;
