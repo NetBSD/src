@@ -5,7 +5,7 @@
 
 #include <machine/asm.h>
 
-ENTRY(fpgetmask)
+ENTRY(fpgetsticky)
 	subl $4,%esp
 	fnstsw (%esp)
 	movw (%esp),%ax
