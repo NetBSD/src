@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.28.4.1 1998/05/08 06:32:48 mycroft Exp $	*/
+/*	$NetBSD: sii.c,v 1.28.4.2 1998/05/10 03:41:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -70,6 +70,8 @@
 #include <pmax/dev/siireg.h>		/* device registers */
 #include <pmax/dev/siivar.h>		/* softc and prototypes */
 
+#include <pmax/pmax/pmaxtype.h>
+
 
 /* Machine-indepedent back-end attach entry point */
 void	siiattach __P((struct siisoftc *sc));
@@ -90,6 +92,8 @@ extern struct cfdriver sii_cd;
 struct  cfdriver sii_cd = {
 	NULL, "sii", DV_DULL
 };
+
+extern int pmax_boardtype;
 
 int	siiprint(void*, char*);
 int siiintr __P((void *sc));
@@ -364,7 +368,7 @@ sii_Reset(sc, reset)
 	/*
 	 * Set host adapter ID (6 for PMIN/PMAX, 7 for everything else)
 	 */
-	if (systype == DS_PMAX)
+	if (pmax_boardtype == DS_PMAX)
 		regs->id = SII_ID_IO | 6;
 	else
 		regs->id = SII_ID_IO | 7;
