@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2000/05/28 01:53:12 matt Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2002/12/10 17:14:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 #define	MAX_ALIGNMENT		(sizeof (double))	/* 32??? */
 
-#define PAGSIZ			__LDPGSZ
+#define PAGSIZ			AOUT_LDPGSZ
 
 #define N_SET_FLAG(ex,f)	N_SETMAGIC(ex,			\
 					   N_GETMAGIC(ex),	\
