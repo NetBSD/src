@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.4 1995/02/09 10:28:27 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.5 1995/04/13 14:32:44 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +81,14 @@ cache_enable()
 	cacheinfo.c_enabled = 1;
 
 	printf("cache enabled\n");
+
+#ifdef notyet
+	if (cpumod == SUN4_400) {
+		stba(AC_SYSENABLE, ASI_CONTROL,
+		    lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_IOCACHE);
+		printf("iocache enabled\n");
+	}
+#endif
 }
 
 
@@ -112,6 +120,33 @@ cache_flush_context()
 	}
 }
 
+#ifdef MMU_3L
+/*
+ * Flush the given virtual region from the cache.
+ *
+ * This is also done by writing to each cache line, except that
+ * now the addresses must include the virtual region number, and
+ * we use the `flush region' space.
+ *
+ * This function is only called on sun4's with 3-level MMUs; there's
+ * no hw-flush space.
+ */
+void
+cache_flush_region(vreg)
+	register int vreg;
+{
+	register int i, ls;
+	register char *p;
+
+	cachestats.cs_nrgflush++;
+	p = (char *)VRTOVA(vreg);	/* reg..reg+sz rather than 0..sz */
+	ls = cacheinfo.c_linesize;
+	i = cacheinfo.c_totalsize >> cacheinfo.c_l2linesize;
+	for (; --i >= 0; p += ls)
+		sta(p, ASI_FLUSHREG, 0);
+}
+#endif
+
 /*
  * Flush the given virtual segment from the cache.
  *
@@ -122,14 +157,14 @@ cache_flush_context()
  * Again, for hardware, we just write each page (in hw-flush space).
  */
 void
-cache_flush_segment(vseg)
-	register int vseg;
+cache_flush_segment(vreg, vseg)
+	register int vreg, vseg;
 {
 	register int i, ls;
 	register char *p;
 
 	cachestats.cs_nsgflush++;
-	p = (char *)VSTOVA(vseg);	/* seg..seg+sz rather than 0..sz */
+	p = (char *)VSTOVA(vreg, vseg);	/* seg..seg+sz rather than 0..sz */
 	if (cacheinfo.c_hwflush) {
 		ls = NBPG;
 		i = cacheinfo.c_totalsize >> PGSHIFT;
@@ -227,7 +262,7 @@ cache_flush(base, len)
 	baseoff = (u_int)base & SGOFSET;
 	i = (baseoff + len + SGOFSET) >> SGSHIFT;
 	if (i == 1)
-		cache_flush_segment(VA_VSEG(base));
+		cache_flush_segment(VA_VREG(base), VA_VSEG(base));
 	else
 		cache_flush_context();
 }
