@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsictl.8,v 1.1 1998/10/15 21:44:39 thorpej Exp $
+.\"	$NetBSD: scsictl.8,v 1.2 1998/10/15 21:51:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,9 +103,17 @@ supports the
 ioctl.
 .Pp
 .Nm scan
+.Ar target
+.Ar lun
 .Pp
 Scan the SCSI bus for devices.  This is useful if a device was not
-connected or powered on when the system was booted.
+connected or powered on when the system was booted.  The
+.Ar target
+and
+.Ar lun
+arguments specify which SCSI target and lun on the bus is to be scanned.
+Either may be wildcarded by specifying
+.Dq any .
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr cd 4 ,
