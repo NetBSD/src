@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.16 2002/02/04 23:50:00 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.17 2002/02/06 19:49:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -589,18 +589,9 @@ sa_upcall_userret(struct lwp *l)
 		if (l2) {
 			SCHED_LOCK(s);
 			remrunqueue(l2);
-			l2->l_stat = LSSUSPENDED;
-			SCHED_UNLOCK(s);
-			p->p_nlwps--;
 			p->p_nrlwps--;
-			LIST_REMOVE(l2, l_sibling);
-			PHOLD(l2);
-			/* XXX lock sadata */
-			DPRINTFN(5,("sa_upcall_userret(%d.%d) Adding LWP %d(%x) to cache\n",
-			    p->p_pid, l->l_lid, l2->l_lid, l2->l_flag));
-			LIST_INSERT_HEAD(&sa->sa_lwpcache, l2, l_sibling);
-			sa->sa_ncached++;
-			/* XXX unlock */
+			sa_putcachelwp(p, l2);
+			SCHED_UNLOCK(s);
 		}
 		if (sa_upcall(l, SA_UPCALL_UNBLOCKED, l, l2, 0, NULL) != 0) {
 			/* We were supposed to deliver an UNBLOCKED
@@ -726,3 +717,63 @@ sa_upcall_userret(struct lwp *l)
 
 	cpu_upcall(l, type, nevents, nint, sapp, ap, stack, sa->sa_upcall);
 }
+
+#ifdef DEBUG
+int debug_print_sa(struct proc *);
+int debug_print_lwp(struct lwp *);
+int debug_print_proc(int);
+
+int
+debug_print_proc(int pid)
+{
+	struct proc *p;
+
+	p = pfind(pid);
+	if (p == NULL)
+		printf("No process %d\n", pid);
+	else
+		debug_print_sa(p);
+
+	return 0;
+}
+
+int
+debug_print_sa(struct proc *p)
+{
+	struct lwp *l;
+	struct sadata *sa;
+
+	printf("Process %d (%s), state %d, flags %x\n", 
+	    p->p_pid, p->p_comm, p->p_stat, p->p_flag);
+	printf("LWPs: %d (%d running, %d zombies)\n", 
+	    p->p_nlwps, p->p_nrlwps, p->p_nzlwps);
+	LIST_FOREACH(l, &p->p_lwps, l_sibling)
+	    debug_print_lwp(l);
+	sa = p->p_sa;
+	if (sa) {
+		if (sa->sa_preempted)
+			printf("Preempted lwp: %d\n", sa->sa_preempted->l_lid);
+		printf("SAs: %d cached LWPs\n", sa->sa_ncached);
+		LIST_FOREACH(l, &sa->sa_lwpcache, l_sibling)
+		    debug_print_lwp(l);
+	}
+	
+	return 0;
+}
+
+int
+debug_print_lwp(struct lwp *l)
+{
+	struct proc *p;
+
+	p = l->l_proc;
+	printf("LWP %d, address %p ", l->l_lid, p);
+	printf("state %d flags %x ", l->l_stat, l->l_flag);
+	if (l->l_wchan)
+		printf("wait %p %s", l->l_wchan, l->l_wmesg);
+	printf("\n");
+	
+	return 0;
+}
+
+#endif
