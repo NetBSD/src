@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.51 2002/01/12 12:42:17 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.52 2002/03/16 16:55:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -113,16 +113,16 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define cdev_et_init(c,n)	cdev__ocrwim_init(c,n)
 #define cdev_leo_init(c,n)	cdev__ocrwim_init(c,n)
 
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 
 #include "audio.h"
 #include "bpfilter.h"
@@ -240,11 +240,11 @@ struct cdevsw	cdevsw[] =
 			wsdisplay),	/* 41: wscons placeholder	*/
   	cdev_audio_init(NAUDIO,audio),	/* 42 */
   	cdev_notdef(),			/* 43 */
-	cdev_i4b_init(NI4B, i4b),		/* 44: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 45: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 46: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 47: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 48: i4b phone device */
+	cdev_isdn_init(NISDN, isdn),		/* 44: isdn main device */
+	cdev_isdnctl_init(NISDNCTL, isdnctl),	/* 45: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 46: isdn raw b-channel access */
+	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 47: isdn trace device */
+	cdev_isdntel_init(NISDNTEL, isdntel),	/* 48: isdn phone device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 49: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 50: RAIDframe disk driver */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 51: svr4 net pseudo-device */
