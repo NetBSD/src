@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.5 1998/06/02 15:48:03 thorpej Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.6 1998/06/10 00:47:57 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ ipflow_fastforward(
 	struct ipflow *ipf;
 	struct rtentry *rt;
 	int error;
+	int iplen;
 
 	/*
 	 * Are we forwarding packets?  Big enough for an IP packet?
@@ -141,8 +142,9 @@ ipflow_fastforward(
 	 * IP header with no option and valid version and length
 	 */
 	ip = mtod(m, struct ip *);
+	iplen = ntohs(ip->ip_len);
 	if (ip->ip_v != IPVERSION || ip->ip_hl != (sizeof(struct ip) >> 2) ||
-	    ntohs(ip->ip_len) > m->m_pkthdr.len)
+	    iplen > m->m_pkthdr.len)
 		return 0;
 	/*
 	 * Find a flow.
@@ -184,6 +186,17 @@ ipflow_fastforward(
 		ip->ip_sum += htons(IPTTLDEC << 8) + 1;
 	} else {
 		ip->ip_sum += htons(IPTTLDEC << 8);
+	}
+
+	/*
+	 * Trim the packet in case it's too long.. 
+	 */
+	if (m->m_pkthdr.len > iplen) {
+		if (m->m_len == m->m_pkthdr.len) {
+			m->m_len = iplen;
+			m->m_pkthdr.len = iplen;
+		} else
+			m_adj(m, iplen - m->m_pkthdr.len);
 	}
 
 	/*
