@@ -84,6 +84,18 @@ CLEANUP(8)                                             CLEANUP(8)
        details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
        command after a configuration change.
 
+<b>Content</b> <b>filtering</b>
+       <b>body</b><i>_</i><b>checks</b>
+              Lookup tables with content filters for message body
+              lines.   These  filters see physical lines one at a
+              time, in chunks of at most line_length_limit bytes.
+
+       <b>header</b><i>_</i><b>checks</b>
+              Lookup  tables  with  content  filters  for message
+              header lines.  These filters  see  logical  headers
+              one at a time, including headers that span multiple
+              lines.
+
 <b>Miscellaneous</b>
        <b>always</b><i>_</i><b>bcc</b>
               Address to send a copy of each message that  enters
@@ -113,18 +125,6 @@ CLEANUP(8)                                             CLEANUP(8)
 
        <b>sender</b><i>_</i><b>canonical</b><i>_</i><b>maps</b>
               Address  mapping  lookup  table  for  envelope  and
-              header sender addresses.
-
-       <b>masquerade</b><i>_</i><b>domains</b>
-              List of domains that hide  their  subdomain  struc-
-              ture.
-
-       <b>masquerade</b><i>_</i><b>exceptions</b>
-              List  of user names that are not subject to address
-              masquerading.
-
-       <b>virtual</b><i>_</i><b>maps</b>
-              Address mapping lookup table for envelope recipient
 
 
 
@@ -137,6 +137,18 @@ CLEANUP(8)                                             CLEANUP(8)
 CLEANUP(8)                                             CLEANUP(8)
 
 
+              header sender addresses.
+
+       <b>masquerade</b><i>_</i><b>domains</b>
+              List of domains that hide  their  subdomain  struc-
+              ture.
+
+       <b>masquerade</b><i>_</i><b>exceptions</b>
+              List  of user names that are not subject to address
+              masquerading.
+
+       <b>virtual</b><i>_</i><b>maps</b>
+              Address mapping lookup table for envelope recipient
               addresses.
 
 <b>Resource</b> <b>controls</b>
@@ -168,18 +180,6 @@ CLEANUP(8)                                             CLEANUP(8)
        IBM T.J. Watson Research
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

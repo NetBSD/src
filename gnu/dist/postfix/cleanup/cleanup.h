@@ -62,6 +62,7 @@ extern MAPS *cleanup_comm_canon_maps;
 extern MAPS *cleanup_send_canon_maps;
 extern MAPS *cleanup_rcpt_canon_maps;
 extern MAPS *cleanup_header_checks;
+extern MAPS *cleanup_body_checks;
 extern MAPS *cleanup_virtual_maps;
 extern ARGV *cleanup_masq_domains;
 
