@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.23 2004/04/18 21:00:36 matt Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.24 2004/04/21 17:49:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -90,12 +90,12 @@ extern	struct	udpstat udpstat;
 #define	UDP_HDR_ALIGNED_P(uh)	((((vaddr_t) (uh)) & 3) == 0)
 #endif
 
-void	 *udp_ctlinput (int, struct sockaddr *, void *);
-void	 udp_init (void);
-void	 udp_input (struct mbuf *, ...);
-int	 udp_output (struct mbuf *, ...);
-int	 udp_sysctl (int *, u_int, void *, size_t *, void *, size_t);
-int	 udp_usrreq (struct socket *,
+void	 *udp_ctlinput(int, struct sockaddr *, void *);
+void	 udp_init(void);
+void	 udp_input(struct mbuf *, ...);
+int	 udp_output(struct mbuf *, ...);
+int	 udp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int	 udp_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
 #endif
 
