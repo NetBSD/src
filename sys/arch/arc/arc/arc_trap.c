@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.15 2000/08/02 08:57:15 soda Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.16 2000/10/05 02:36:44 cgd Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ cpu_intr(status, cause, pc, ipending)
 		 *  Writing a value to the Compare register,
 		 *  as a side effect, clears the timer interrupt request.
 		 */
-		mips3_write_compare(mips3_cycle_count());
+		mips3_cp0_compare_write(mips3_cp0_count_read());
 	}
 #endif
 

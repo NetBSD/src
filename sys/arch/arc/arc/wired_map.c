@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.4 2000/06/29 08:34:10 mrg Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.5 2000/10/05 02:36:44 cgd Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -85,7 +85,7 @@ arc_enter_wired(va, pa0, pa1, pg_size)
 	wired_map[nwired].size = MIPS3_PG_SIZE_MASK_TO_SIZE(pg_size);
 
 	/* Allocate new wired entry */
-	mips3_SetWIRED(MIPS3_TLB_WIRED_UPAGES + nwired + 1);
+	mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES + nwired + 1);
 
 	/* Map to it */
 	tlb.tlb_mask = pg_size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2000/09/24 12:32:34 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2000/10/05 02:36:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -499,8 +499,8 @@ cpu_intr(status, cause, pc, ipending)
 	}
 
 	if (ipending & MIPS_INT_MASK_5) {
-		cycles = mips3_cycle_count();
-		mips3_write_compare(cycles + 1250000);	/* XXX */
+		cycles = mips3_cp0_count_read();
+		mips3_cp0_compare_write(cycles + 1250000);	/* XXX */
 
 #if 0
 		cf.pc = pc;
