@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.13 2001/11/25 10:50:06 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.14 2001/11/26 00:56:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.13 2001/11/25 10:50:06 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.14 2001/11/26 00:56:33 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,14 +83,14 @@ summary(void)
 	(void)write(STDERR_FILENO, buf, strlen(buf));
 	if (st.swab) {
 		(void)snprintf(buf, sizeof(buf), "%llu odd length swab %s\n",
-		     (unsigned long long)st.swab,
-		     (st.swab == 1) ? "block" : "blocks");
+		    (unsigned long long)st.swab,
+		    (st.swab == 1) ? "block" : "blocks");
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 	if (st.trunc) {
 		(void)snprintf(buf, sizeof(buf), "%llu truncated %s\n",
-		     (unsigned long long)st.trunc,
-		     (st.trunc == 1) ? "block" : "blocks");
+		    (unsigned long long)st.trunc,
+		    (st.trunc == 1) ? "block" : "blocks");
 		(void)write(STDERR_FILENO, buf, strlen(buf));
 	}
 	(void)snprintf(buf, sizeof(buf),
