@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6 1998/12/10 21:18:07 tsubai Exp $
+#	$NetBSD: MAKEDEV,v 1.7 1998/12/29 04:51:54 tsubai Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -52,12 +52,18 @@
 #
 # Keyboard devices:
 #	wskbd*	wscons keyboard events
-# 
+#
 # Terminal ports:
 #	tty*	standard built-in serial ports
 #
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
+#
+# USB devices:
+#	usb*	Bus control devices used by usbd for attach/detach
+#	uhid*	Generic HID devices
+#	ulpt*	Printer devices
+#	ugen*	Generic device
 #
 # Special purpose devices:
 #	fd	file descriptors
@@ -83,7 +89,7 @@ all)
 	sh $0 std fd sd0 sd1 sd2 st0 st1 cd0 cd1 wd0 wd1 md0
 	sh $0 ss0 ch0 uk0 uk1 vnd0 vnd1 ccd0 ccd1 ccd2 ccd3
 	sh $0 random tty0 tty1 pty0 pty1 adb grf0 wscons
-	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
+	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl usbs
 	sh $0 lkm nvram local raid0 raid1 raid2 raid3
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	;;
@@ -273,7 +279,7 @@ st*)
 	st*) name=st;	unit=${i#st};	chr=14;	blk=5;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	mknod $name$unit	b $blk $(($unit * 16 + 0))
 	mknod n$name$unit	b $blk $(($unit * 16 + 1))
 	mknod e$name$unit	b $blk $(($unit * 16 + 2))
@@ -283,9 +289,9 @@ st*)
 	mknod er$name$unit	c $chr $(($unit * 16 + 2))
 	mknod enr$name$unit	c $chr $(($unit * 16 + 3))
 	chgrp operator $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	chmod 660 $name$unit n$name$unit e$name$unit en$name$unit \
-		r$name$unit nr$name$unit er$name$unit enr$name$unit 
+		r$name$unit nr$name$unit er$name$unit enr$name$unit
 	;;
 
 ch*|uk*)
@@ -305,9 +311,9 @@ cd*)
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
-	mknod ${name}${unit}d	b $blk $(($unit * 8 + 3))
+	mknod ${name}${unit}c	b $blk $(($unit * 8 + 2))
 	mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
-	mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
+	mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
 	;;
@@ -371,11 +377,61 @@ nvram)
 	;;
 
 scsibus*)
-	unit=${i#scsibus}; 
+	unit=${i#scsibus};
 	rm -f scsibus$unit
 	mknod scsibus$unit c 34 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+usbs)
+	sh $0 usb0 usb1
+	sh $0 uhid0 uhid1 uhid2 uhid3
+	sh $0 ulpt0 ulpt1
+	;;
+
+usb*)
+	unit=${i#usb}
+	usb=usb$unit
+	major=39
+	rm -f $usb
+	mknod $usb c $major $unit
+	chown root.wheel $usb
+	chmod 600 $usb
+	;;
+
+uhid*)
+	unit=${i#uhid}
+	uhid=uhid$unit
+	major=40
+	rm -f $uhid
+	mknod $uhid c $major $unit
+	chown root.wheel $uhid
+	chmod 666 $uhid
+	;;
+
+ulpt*)
+	unit=${i#ulpt}
+	ulpt=ulpt$unit
+	major=41
+	rm -f $ulpt
+	mknod $ulpt c $major $unit
+	chown root.wheel $ulpt
+	chmod 600 $ulpt
+	;;
+
+ugen*)
+	unit=${i#ugen}
+	ugen=ugen$unit
+	major=42
+	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+	do
+		ugenj=$ugen.$j
+		rm -f $ugenj
+		mknod $ugenj c $major $(($unit * 16 + $j))
+		chown root.wheel $ugenj
+		chmod 600 $ugenj
+	done
 	;;
 
 local)
