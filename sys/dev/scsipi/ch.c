@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.46.2.1 2001/08/03 04:13:29 lukem Exp $	*/
+/*	$NetBSD: ch.c,v 1.46.2.2 2001/09/08 04:24:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -466,6 +466,51 @@ chpoll(dev, events, p)
 	return (revents);
 }
 
+static void
+filt_chrdetach(struct knote *kn)
+{
+	struct ch_softc *sc = (void *) kn->kn_hook;
+
+	SLIST_REMOVE(&sc->sc_selq.si_klist, kn, knote, kn_selnext);
+}
+
+static int
+filt_chread(struct knote *kn, long hint)
+{
+	struct ch_softc *sc = (void *) kn->kn_hook;
+
+	if (sc->sc_events == 0)
+		return (0);
+	kn->kn_data = CHANGER_EVENT_SIZE;
+	return (1);
+}
+
+static const struct filterops chread_filtops =
+	{ 1, NULL, filt_chrdetach, filt_chread };
+
+int
+chkqfilter(dev_t dev, struct knote *kn)
+{
+	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
+	struct klist *klist;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_selq.si_klist;
+		kn->kn_fop = &chread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+
+	return (0);
+}
+
 int
 ch_interpret_sense(xs)
 	struct scsipi_xfer *xs;
@@ -531,7 +576,7 @@ ch_event(sc, event)
 {
 
 	sc->sc_events |= event;
-	selwakeup(&sc->sc_selq);
+	selnotify(&sc->sc_selq, 0);
 }
 
 int
