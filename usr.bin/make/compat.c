@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.28 1999/09/16 00:49:48 mycroft Exp $	*/
+/*	$NetBSD: compat.c,v 1.29 2000/01/21 17:08:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.28 1999/09/16 00:49:48 mycroft Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.29 2000/01/21 17:08:35 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.28 1999/09/16 00:49:48 mycroft Exp $");
+__RCSID("$NetBSD: compat.c,v 1.29 2000/01/21 17:08:35 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -75,7 +75,6 @@ __RCSID("$NetBSD: compat.c,v 1.28 1999/09/16 00:49:48 mycroft Exp $");
 #include    "hash.h"
 #include    "dir.h"
 #include    "job.h"
-extern int errno;
 
 /*
  * The following array is used to make a fast determination of which

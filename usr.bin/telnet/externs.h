@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.15 1999/07/28 06:35:15 abs Exp $	*/
+/*	$NetBSD: externs.h,v 1.16 2000/01/21 17:08:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -63,9 +63,7 @@
 #else
 #include <sys/filio.h>
 #endif
-#ifdef CRAY
-# include <errno.h>
-#endif /* CRAY */
+#include <errno.h>
 #ifdef	USE_TERMIO
 # ifndef	VINTR
 #  ifdef SYSV_TERMIO
@@ -113,10 +111,6 @@ extern char *ipsec_policy;
 #endif
 
 #define	SUBBUFSIZE	256
-
-#ifndef CRAY
-extern int errno;		/* outside this world */
-#endif /* !CRAY */
 
 #include <sys/cdefs.h>
 #define P __P

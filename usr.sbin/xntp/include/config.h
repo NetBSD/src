@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.6 1998/05/02 15:28:33 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.7 2000/01/21 17:08:39 mycroft Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -568,6 +568,9 @@
 
 /* Define if you have the <errno.h> header file.  */
 #define HAVE_ERRNO_H 1
+
+/* Define if <errno.h> does not define the errno variable.  */
+/* #undef NEED_DECLARATION_ERRNO */
 
 /* Define if you have the <fcntl.h> header file.  */
 #define HAVE_FCNTL_H 1
