@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.5 1995/06/16 07:05:30 jtc Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.6 1997/07/13 19:00:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getcwd.c,v 1.5 1995/06/16 07:05:30 jtc Exp $";
+__RCSID("$NetBSD: getcwd.c,v 1.6 1997/07/13 19:00:40 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,7 +54,7 @@ static char rcsid[] = "$NetBSD: getcwd.c,v 1.5 1995/06/16 07:05:30 jtc Exp $";
 
 #define	ISDOT(dp) \
 	(dp->d_name[0] == '.' && (dp->d_name[1] == '\0' || \
-	    dp->d_name[1] == '.' && dp->d_name[2] == '\0'))
+	    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
 
 char *
 getcwd(pt, size)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.12 1997/05/17 19:29:18 pk Exp $	*/
+/*	$NetBSD: getcap.c,v 1.13 1997/07/13 19:00:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$NetBSD: getcap.c,v 1.12 1997/05/17 19:29:18 pk Exp $";
+__RCSID("$NetBSD: getcap.c,v 1.13 1997/07/13 19:00:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -198,9 +199,8 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 	int fd, depth;
 {
 	DB *capdbp;
-	DBT key, data;
-	register char *r_end, *rp, **db_p;
-	int myfd, eof, foundit, retval, clen;
+	register char *r_end, *rp = NULL, **db_p;	/* pacify gcc */
+	int myfd = 0, eof, foundit, retval, clen;
 	char *record, *cbuf;
 	int tc_not_resolved;
 	char pbuf[_POSIX_PATH_MAX];
@@ -221,7 +221,6 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 			return (-2);
 		}
 		(void)strcpy(record, toprec);	/* XXX: strcpy is safe */
-		myfd = 0;
 		db_p = db_array;
 		rp = record + topreclen + 1;
 		r_end = rp + BFRAG;
@@ -249,7 +248,6 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 
 		if (fd >= 0) {
 			(void)lseek(fd, (off_t)0, L_SET);
-			myfd = 0;
 		} else {
 			(void)snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
 			if ((capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))
@@ -545,8 +543,6 @@ cdbget(capdbp, bp, name)
 	char **bp, *name;
 {
 	DBT key, data;
-	char *buf;
-	int st;
 
 	key.data = name;
 	key.size = strlen(name);
