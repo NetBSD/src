@@ -1,3 +1,16 @@
+1998-11-16  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* typeck2.c (my_friendly_abort): Don't fatal twice in a row.
+
+1998-11-15  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* typeck2.c (my_friendly_abort): Add URL in the other case, too.
+
+1998-11-13  Jason Merrill  <jason@yorick.cygnus.com>
+
+	* rtti.c (synthesize_tinfo_fn): Call import_export_decl here.
+	(get_tinfo_fn): Not here.
+
 1998-11-08  Mark Mitchell  <mark@markmitchell.com>
 
 	* decl.c (grokdeclarator): Tighten checks for invalid
