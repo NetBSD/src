@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.202 2004/04/17 23:28:44 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.203 2004/04/18 19:20:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -6538,6 +6538,40 @@ ENTRY(delay)			! %o0 = n
 2:
 	retl				! return
 	 nop				! [delay slot]
+
+#if defined(MULTIPROCESSOR) && !defined(__CPU_SIMPLE_LOCK_INLINE)
+/*
+ * void __cpu_simple_lock(__cpu_simple_lock_t *alp)
+ */
+_ENTRY(_C_LABEL(__cpu_simple_lock))
+0:
+	ldstub	[%o0], %o1
+	tst	%o1
+	bnz	1f
+	 set	0x1000000, %o2	! set spinout counter
+	retl
+	 EMPTY
+1:
+	ldub	[%o0], %o1
+	tst	%o1
+	bz	0b		! lock has been released; try again
+	deccc	%o2
+	bcc	1b		! repeat until counter < 0
+	 nop
+
+	! spun out; set up stack frame and call panic
+	save	%sp, -CCFSZ, %sp
+	sethi	%hi(CPUINFO_VA + CPUINFO_CPUNO), %o0
+	ld	[%o0 + %lo(CPUINFO_VA + CPUINFO_CPUNO)], %o1
+	mov	%i0, %o2
+	sethi	%hi(Lpanic_spunout), %o0
+	call	_C_LABEL(panic)
+	or	%o0, %lo(Lpanic_spunout), %o0
+
+Lpanic_spunout:
+	.asciz	"cpu%d: stuck on lock@%x"
+	_ALIGN
+#endif /* MULTIPROCESSOR && !__CPU_SIMPLE_LOCK_INLINE */
 
 #if defined(KGDB) || defined(DDB) || defined(DIAGNOSTIC)
 /*
