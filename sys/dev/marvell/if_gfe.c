@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.6 2003/04/08 19:37:17 matt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.7 2003/04/08 22:33:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -48,6 +48,8 @@
 #include <sys/types.h>
 #include <sys/inttypes.h>
 #include <sys/queue.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -347,7 +349,7 @@ gfe_dmamem_alloc(struct gfe_softc *sc, struct gfe_dmamem *gdm, int maxsegs,
 	flags |= BUS_DMA_NOCACHE;
 #endif
 
-	error = bus_dmamem_alloc(sc->sc_dmat, gdm->gdm_size, NBPG,
+	error = bus_dmamem_alloc(sc->sc_dmat, gdm->gdm_size, PAGE_SIZE,
 	    gdm->gdm_size, gdm->gdm_segs, gdm->gdm_maxsegs, &gdm->gdm_nsegs,
 	    BUS_DMA_NOWAIT);
 	if (error)

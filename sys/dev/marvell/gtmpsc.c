@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.5 2003/03/24 20:03:23 matt Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.6 2003/04/08 22:33:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -58,6 +58,9 @@
 #include <sys/kernel.h>
 #include <sys/kgdb.h>
 #endif
+
+#include <uvm/uvm_extern.h>
+
 #include <powerpc/atomic.h>
 #include <dev/cons.h>
 #include <machine/bus.h>
@@ -208,11 +211,15 @@ STATIC void     gtmpsc_kgdb_putc(void *, int);
 /*
  * hacks for console initialization
  * which happens prior to autoconfig "attach"
+ *
+ * XXX Assumes PAGE_SIZE is a constant!
  */
 STATIC unsigned int gtmpsccninit_done = 0;
 STATIC gtmpsc_softc_t gtmpsc_fake_softc;
-STATIC unsigned char gtmpsc_earlybuf[NBPG] __attribute__ ((aligned(NBPG)));
-STATIC unsigned char gtmpsc_fake_dmapage[NBPG] __attribute__ ((aligned(NBPG)));
+STATIC unsigned char gtmpsc_earlybuf[PAGE_SIZE]
+    __attribute__ ((aligned(PAGE_SIZE)));
+STATIC unsigned char gtmpsc_fake_dmapage[PAGE_SIZE]
+    __attribute__ ((aligned(PAGE_SIZE)));
 
 
 #define GTMPSC_PRINT_BUF_SIZE	4096
@@ -444,7 +451,7 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 	sc->gtmpsc_unit = ga->ga_unit;
 
 	aprint_normal(": SDMA");
-	err = bus_dmamem_alloc(sc->gtmpsc_dmat, NBPG, NBPG, NBPG,
+	err = bus_dmamem_alloc(sc->gtmpsc_dmat, PAGE_SIZE, PAGE_SIZE, PAGE_SIZE,
 	    sc->gtmpsc_dma_segs, 1, &rsegs, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
 	if (err) {
 		PRINTF(("mpscattach: bus_dmamem_alloc error 0x%x\n", err));
@@ -452,10 +459,10 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 #ifndef SDMA_COHERENT
-	err = bus_dmamem_map(sc->gtmpsc_dmat, sc->gtmpsc_dma_segs, 1, NBPG,
+	err = bus_dmamem_map(sc->gtmpsc_dmat, sc->gtmpsc_dma_segs, 1, PAGE_SIZE,
 	    &kva, BUS_DMA_NOWAIT);
 #else
-	err = bus_dmamem_map(sc->gtmpsc_dmat, sc->gtmpsc_dma_segs, 1, NBPG,
+	err = bus_dmamem_map(sc->gtmpsc_dmat, sc->gtmpsc_dma_segs, 1, PAGE_SIZE,
 	    &kva, BUS_DMA_NOWAIT|BUS_DMA_NOCACHE);
 #endif
 	if (err) {
@@ -464,22 +471,22 @@ gtmpscattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	err = bus_dmamap_create(sc->gtmpsc_dmat, NBPG, 1, NBPG, NBPG,
-	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &sc->gtmpsc_dma_map);
+	err = bus_dmamap_create(sc->gtmpsc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
+	    PAGE_SIZE, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &sc->gtmpsc_dma_map);
 	if (err) {
 		PRINTF(("mpscattach: bus_dmamap_create error 0x%x\n", err));
 		splx(s);
 		return;
 	}
 
-	err = bus_dmamap_load(sc->gtmpsc_dmat, sc->gtmpsc_dma_map, kva, NBPG,
-	    NULL, 0);
+	err = bus_dmamap_load(sc->gtmpsc_dmat, sc->gtmpsc_dma_map, kva,
+	    PAGE_SIZE, NULL, 0);
 	if (err) {
 		PRINTF(("mpscattach: bus_dmamap_load error 0x%x\n", err));
 		splx(s);
 		return;
 	}
-	memset(kva, 0, NBPG);	/* paranoid/superfluous */
+	memset(kva, 0, PAGE_SIZE);	/* paranoid/superfluous */
 
 	vmps = (gtmpsc_poll_sdma_t *)kva;				    /* KVA */
 	pmps = (gtmpsc_poll_sdma_t *)sc->gtmpsc_dma_map->dm_segs[0].ds_addr;    /* PA */
