@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.18 1998/02/19 06:13:51 thorpej Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.19 1998/06/24 11:20:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,6 +61,7 @@ static int locators_print __P((const char *, void *, void *));
 static int defopts_print __P((const char *, void *, void *));
 static char *cntname __P((const char *));
 static int cmphdr __P((const char *, const char *));
+static int fprintcnt(FILE *fp, struct nvlist *nv);
 
 
 /*
@@ -88,6 +89,16 @@ mkheaders()
 	return (0);
 }
 
+
+static int
+fprintcnt(fp, nv)
+	FILE *fp;
+	struct nvlist *nv;
+{
+	return (fprintf(fp, "#define\t%s\t%d\n",
+	     cntname(nv->nv_name), nv->nv_int));
+}
+
 static int
 emitcnt(head)
 	struct nvlist *head;
@@ -106,8 +117,7 @@ emitcnt(head)
 	}
 
 	for (nv = head; nv != NULL; nv = nv->nv_next)
-		if (fprintf(fp, "#define\t%s\t%d\n",
-		    cntname(nv->nv_name), nv->nv_int) < 0)
+		if (fprintcnt(fp, nv) < 0)
 			return (err("writ", tfname, fp));
 
 	if (fclose(fp) == EOF)
@@ -128,6 +138,8 @@ defopts_print(name, value, arg)
 	char tfname[BUFSIZ];
 	struct nvlist *nv, *option;
 	int isfsoption;
+	int isparam;
+	int isflag;
 	FILE *fp;
 
 	(void)sprintf(tfname, "tmp_%s", name);
@@ -139,6 +151,8 @@ defopts_print(name, value, arg)
 
 	for (nv = value; nv != NULL; nv = nv->nv_next) {
 		isfsoption = (ht_lookup(deffstab, nv->nv_name) != NULL);
+		isparam  = (ht_lookup(defparamtab, nv->nv_name) != NULL);
+		isflag  = (ht_lookup(defflagtab, nv->nv_name) != NULL);
 
 		if ((option = ht_lookup(opttab, nv->nv_name)) == NULL &&
 		    (option = ht_lookup(fsopttab, nv->nv_name)) == NULL) {
@@ -155,6 +169,9 @@ defopts_print(name, value, arg)
 			if (fputc('\n', fp) < 0)
 				goto bad;
 		}
+		if (isflag)
+			fprintcnt(fp, nv);
+
 	}
 
 	if (fclose(fp) == EOF)

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.38 1998/06/10 04:33:31 scottr Exp $	*/
+/*	$NetBSD: config.h,v 1.39 1998/06/24 11:20:54 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -309,6 +309,8 @@ struct	hashtab *needcnttab;	/* retains names marked "needs-count" */
 struct	hashtab *opttab;	/* table of configured options */
 struct	hashtab *fsopttab;	/* table of configured file systems */
 struct	hashtab *defopttab;	/* options that have been "defopt"'d */
+struct	hashtab *defflagtab;	/* options that have been "defflag"'d */
+struct	hashtab *defparamtab;	/* options that have been "defparam"'d */
 struct	hashtab *deffstab;	/* defined file systems */
 struct	hashtab *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
@@ -362,6 +364,10 @@ void	addmkoption __P((const char *name, const char *value));
 void	deffilesystem __P((const char *fname, struct nvlist *fses));
 void	defoption __P((const char *fname, struct nvlist *opts,
 	    struct nvlist *deps));
+void	defflag __P((const char *fname, struct nvlist *opts,
+	    struct nvlist *deps));
+void	defparam __P((const char *fname, struct nvlist *opts,
+	    struct nvlist *deps));
 int	devbase_has_instances __P((struct devbase *, int));
 int	deva_has_instances __P((struct deva *, int));
 void	setupdirs __P((void));
@@ -393,6 +399,7 @@ void	initsem __P((void));
 void	*emalloc __P((size_t));
 void	*erealloc __P((void *, size_t));
 char	*sourcepath __P((const char *));
+void	warn __P((const char *, ...));			/* immediate warns */
 void	error __P((const char *, ...));			/* immediate errs */
 void	xerror __P((const char *, int, const char *, ...)); /* delayed errs */
 __dead void panic __P((const char *, ...));

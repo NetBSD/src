@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 1997/10/18 07:59:38 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.7 1998/06/24 11:20:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,9 @@
 
 static void nomem __P((void));
 static void vxerror __P((const char *, int, const char *, va_list));
+static void vxwarn __P((const char *, int, const char *, va_list));
+static void vxmsg __P((const char *fname, int line, const char *class, 
+		       const char *fmt, va_list));
 
 /*
  * Malloc, with abort on error.
@@ -165,6 +168,38 @@ nvfreel(nv)
 	}
 }
 
+void
+#if __STDC__
+warn(const char *fmt, ...)
+#else
+warn(fmt, va_alist)
+	const char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+	extern const char *yyfile;
+
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	vxwarn(yyfile, currentline(), fmt, ap);
+	va_end(ap);
+}
+
+
+static void
+vxwarn(file, line, fmt, ap)
+	const char *file;
+	int line;
+	const char *fmt;
+	va_list ap;
+{
+	vxmsg(file, line, "warning: ", fmt, ap);
+}
+
 /*
  * External (config file) error.  Complain, using current file
  * and line number.
@@ -176,7 +211,7 @@ error(const char *fmt, ...)
 error(fmt, va_alist)
 	const char *fmt;
 	va_dcl
-#endif
+#endif	/* __STDC__ */
 {
 	va_list ap;
 	extern const char *yyfile;
@@ -226,12 +261,10 @@ vxerror(file, line, fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
-
-	(void)fprintf(stderr, "%s:%d: ", file, line);
-	(void)vfprintf(stderr, fmt, ap);
-	(void)putc('\n', stderr);
+	vxmsg(file, line, "", fmt, ap);
 	errors++;
 }
+
 
 /*
  * Internal error, abort.
@@ -257,4 +290,21 @@ panic(fmt, va_alist)
 	(void)putc('\n', stderr);
 	va_end(ap);
 	exit(2);
+}
+
+/*
+ * Internal form of error() and xerror().
+ */
+static void
+vxmsg(file, line, msgclass, fmt, ap)
+	const char *file;
+	int line;
+	const char *msgclass;
+	const char *fmt;
+	va_list ap;
+{
+
+	(void)fprintf(stderr, "%s:%d: %s", file, line, msgclass);
+	(void)vfprintf(stderr, fmt, ap);
+	(void)putc('\n', stderr);
 }

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.23 1998/06/10 04:33:31 scottr Exp $	*/
+/*	$NetBSD: gram.y,v 1.24 1998/06/24 11:20:54 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,9 +97,9 @@ static	void	check_maxpart __P((void));
 	int	val;
 }
 
-%token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFFS DEFINE DEFOPT DEVICE
-%token	DEVCLASS DUMPS ENDFILE XFILE XOBJECT FILE_SYSTEM FLAGS INCLUDE
-%token	XMACHINE MAJOR MAKEOPTIONS
+%token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFFS DEFINE DEFOPT 
+%token	DEFPARAM DEFFLAG DEVICE DEVCLASS DUMPS ENDFILE XFILE XOBJECT
+%token	FILE_SYSTEM FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
 %token	TYPE WITH NEEDS_COUNT NEEDS_FLAG
 %token	<val> NUMBER
@@ -241,6 +241,10 @@ one_def:
 	DEFINE WORD interface_opt	{ (void)defattr($2, $3, 0); } |
 	DEFOPT optfile_opt defopts defoptdeps
 					{ defoption($2, $3, $4); } |
+	DEFFLAG optfile_opt defopts defoptdeps
+					{ defflag($2, $3, $4); } |
+	DEFPARAM optfile_opt defopts defoptdeps
+					{ defparam($2, $3, $4); } |
 	DEVICE devbase interface_opt attrs_opt
 					{ defdev($2, $3, $4, 0); } |
 	ATTACH devbase AT atlist devattach_opt attrs_opt

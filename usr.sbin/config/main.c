@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33 1998/06/10 04:33:31 scottr Exp $	*/
+/*	$NetBSD: main.c,v 1.34 1998/06/24 11:20:54 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,6 +88,10 @@ static	int	mksymlinks __P((void));
 static	int	hasparent __P((struct devi *));
 static	int	cfcrosscheck __P((struct config *, const char *,
 		    struct nvlist *));
+void	defopt __P((struct hashtab *ht, const char *fname,
+	     struct nvlist *opts, struct nvlist *deps));
+
+int badfilename __P((const char *fname));
 
 int
 main(argc, argv)
@@ -177,6 +181,8 @@ usage:
 	fsopttab = ht_new();
 	deffstab = ht_new();
 	defopttab = ht_new();
+	defparamtab = ht_new();
+	defflagtab = ht_new();
 	optfiletab = ht_new();
 	nextopt = &options;
 	nextmkopt = &mkoptions;
@@ -391,12 +397,39 @@ deffilesystem(fname, fses)
 }
 
 /*
+ * Sanity check a file name.
+ */
+int
+badfilename(fname)
+	const char *fname;
+{
+	const char *n;
+
+	/*
+	 * We're putting multiple options into one file.  Sanity
+	 * check the file name.
+	 */
+	if (strchr(fname, '/') != NULL) {
+		error("option file name contains a `/'");
+		return 1;
+	}
+	if ((n = strrchr(fname, '.')) == NULL || strcmp(n, ".h") != 0) {
+		error("option file name does not end in `.h'");
+		return 1;
+	}
+	return 0;
+}
+
+
+/*
  * Define one or more standard options.  If an option file name is specified,
  * place all options in one file with the specified name.  Otherwise, create
  * an option file for each option.
+ * record the option information in the specified table.
  */
 void
-defoption(fname, opts, deps)
+defopt(ht, fname, opts, deps)
+	struct hashtab *ht;
 	const char *fname;
 	struct nvlist *opts, *deps;
 {
@@ -405,19 +438,8 @@ defoption(fname, opts, deps)
 	char *p, c;
 	char low[500];
 
-	if (fname != NULL) {
-		/*
-		 * We're putting multiple options into one file.  Sanity
-		 * check the file name.
-		 */
-		if (strchr(fname, '/') != NULL) {
-			error("option file name contains a `/'");
-			return;
-		}
-		if ((n = strrchr(fname, '.')) == NULL || strcmp(n, ".h") != 0) {
-			error("option file name does not end in `.h'");
-			return;
-		}
+	if (fname != NULL && badfilename(fname)) {
+		return;
 	}
 
 	/*
@@ -425,7 +447,7 @@ defoption(fname, opts, deps)
 	 */
 	for (nv = opts; nv != NULL; nv = nextnv) {
 		nextnv = nv->nv_next;
-		if (ht_insert(defopttab, nv->nv_name, nv)) {
+		if (ht_insert(ht, nv->nv_name, nv)) {
 			error("file system or option `%s' already defined",
 			    nv->nv_name);
 			return;
@@ -475,6 +497,44 @@ defoption(fname, opts, deps)
 }
 
 /*
+ * Define one or more standard options.  If an option file name is specified,
+ * place all options in one file with the specified name.  Otherwise, create
+ * an option file for each option.
+ */
+void
+defoption(fname, opts, deps)
+	const char *fname;
+	struct nvlist *opts, *deps;
+{
+	defopt(defopttab, fname, opts, deps);
+}
+
+
+/*
+ * Define an option for which a value is required. 
+ */
+void
+defparam(fname, opts, deps)
+	const char *fname;
+	struct nvlist *opts, *deps;
+{
+	defopt(defparamtab, fname, opts, deps);
+}
+
+/*
+ * Define an option which must have a value, and which
+ * emits  a "needs-flag" style output.
+ */
+void
+defflag(fname, opts, deps)
+	const char *fname;
+	struct nvlist *opts, *deps;
+{
+	defopt(defflagtab, fname, opts, deps);
+}
+
+
+/*
  * Add an option from "options FOO".  Note that this selects things that
  * are "optional foo".
  */
@@ -485,11 +545,37 @@ addoption(name, value)
 	const char *n;
 	char *p, c;
 	char low[500];
+	int is_fs, is_param, is_flag, is_opt, is_undecl;
+
+	/* 
+	 * Figure out how this option was declared (if at all.)
+	 * XXX should use "params" and "flags" in config.
+	 * XXX crying out for a type field in a unified hashtab.
+	 */
+	is_fs = ht_lookup(deffstab, name) != NULL;
+	is_param = ht_lookup(defparamtab, name) != NULL;
+	is_opt = ht_lookup(defopttab, name) != NULL;
+	is_flag = ht_lookup(defflagtab, name) != NULL;
+	is_undecl = (!is_param && !is_flag && !is_fs && !is_opt);
 
 	/* Make sure this is not a defined file system. */
-	if (ht_lookup(deffstab, name) != NULL) {
+	if (is_fs) {
 		error("`%s' is a defined file system", name);
 		return;
+	}
+	/* A defparam must have a value */
+	if (is_param && value == NULL) {
+		error("option `%s' must have a value", name);
+		return;
+	}
+	/* A defflag must not have a value */
+	if (is_flag && value != NULL) {
+		error("option `%s' must not have a value", name);
+		return;
+	}
+
+	if (is_undecl) {
+		warn("undeclared option `%s' added to IDENT", name);
 	}
 
 	if (do_option(opttab, &nextopt, name, value, "options"))
