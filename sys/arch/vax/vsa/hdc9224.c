@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.30 2003/07/15 02:15:06 lukem Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.31 2004/10/28 07:07:39 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.30 2003/07/15 02:15:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.31 2004/10/28 07:07:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.30 2003/07/15 02:15:06 lukem Exp $");
 #include <sys/stat.h> 
 #include <sys/ioctl.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>

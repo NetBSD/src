@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.5 2002/10/02 16:33:33 thorpej Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.6 2004/10/28 07:07:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.5 2002/10/02 16:33:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.6 2004/10/28 07:07:40 yamt Exp $");
 
 #include "rnd.h"
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.5 2002/10/02 16:33:33 thorpej Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.63 2004/10/15 07:19:01 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.64 2004/10/28 07:07:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.63 2004/10/15 07:19:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.64 2004/10/28 07:07:46 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_bufq.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.63 2004/10/15 07:19:01 thorpej Exp $
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/syslog.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>

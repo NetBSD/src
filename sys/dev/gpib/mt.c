@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.2 2003/08/07 16:30:56 agc Exp $ */
+/*	$NetBSD: mt.c,v 1.3 2004/10/28 07:07:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,12 +121,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.2 2003/08/07 16:30:56 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.3 2004/10/28 07:07:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #include <sys/file.h>
