@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.17 1997/09/11 22:53:00 phil Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.18 1997/09/14 13:52:27 lukem Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,17 +29,20 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.17 1997/09/11 22:53:00 phil Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.18 1997/09/14 13:52:27 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,6 +73,10 @@ struct mboot mboot;
 
 #define ACTIVE 0x80
 #define BOOT_MAGIC 0xAA55
+
+#ifndef RAWPARTITION
+#define RAWPARTITION	'c'
+#endif
 
 int dos_cylinders;
 int dos_heads;
@@ -454,7 +461,7 @@ print_part(part)
 		printf("PART%dID=%d\n", part, partp->dp_typ);
 		printf("PART%dSIZE=%ld\n", part, getlong(&partp->dp_size));
 		printf("PART%dSTART=%ld\n", part, getlong(&partp->dp_start));
-		printf("PART%dFLAG=%x\n", part, partp->dp_flag);
+		printf("PART%dFLAG=0x%x\n", part, partp->dp_flag);
 		printf("PART%dBCYL=%d\n", part, DPCYL(partp->dp_scyl,
 						      partp->dp_ssect));
 		printf("PART%dBHEAD=%d\n", part, partp->dp_shd);
@@ -472,7 +479,7 @@ print_part(part)
 		return;
 	}
 	printf("sysid %d (%s)\n", partp->dp_typ, get_type(partp->dp_typ));
-	printf("    start %ld, size %ld (%ld MB), flag %x\n",
+	printf("    start %ld, size %ld (%ld MB), flag 0x%x\n",
 	    getlong(&partp->dp_start), getlong(&partp->dp_size),
 	    getlong(&partp->dp_size) * 512 / (1024 * 1024), partp->dp_flag);
 	printf("\tbeg: cylinder %4d, head %3d, sector %2d\n",
@@ -805,12 +812,25 @@ int
 open_disk(u_flag)
 	int u_flag;
 {
+	static char namebuf[MAXPATHLEN + 1];
 	struct stat st;
 
-	if ((fd = open(disk, u_flag ? O_RDWR : O_RDONLY)) == -1) {
-		warn("%s", disk);
+	if (disk[0] != '/')
+		(void)snprintf(namebuf, sizeof(namebuf) - 1, "%sr%s%c",
+		    _PATH_DEV, disk, RAWPARTITION);
+	else
+		(void)snprintf(namebuf, sizeof(namebuf) - 1, "%s", disk);
+	fd = open(namebuf, u_flag ? O_RDWR : O_RDONLY);
+	if (fd < 0 && errno == ENOENT && disk[0] != '/') {
+		(void)snprintf(namebuf, sizeof(namebuf) - 1, "%sr%s",
+		    _PATH_DEV, disk);
+		fd = open(namebuf, u_flag ? O_RDWR : O_RDONLY);
+	}
+	if (fd < 0) {
+		warn("%s", namebuf);
 		return (-1);
 	}
+	disk = namebuf;
 	if (fstat(fd, &st) == -1) {
 		close(fd);
 		warn("%s", disk);
