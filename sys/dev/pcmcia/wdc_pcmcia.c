@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.53 2003/03/22 20:09:35 matt Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.54 2003/03/27 12:19:44 ichiro Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.53 2003/03/22 20:09:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.54 2003/03/27 12:19:44 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -153,6 +153,13 @@ const struct wdc_pcmcia_product {
 	{ -1, -1, 0,
 	  PCMCIA_CIS_IODATA_CBIDE2,
 	  PCMCIA_STR_IODATA_CBIDE2
+	},
+
+	/* TOSHIBA PA2673U(IODATA_CBIDE2 OEM), */
+	/*  with neither vendor ID nor product ID */
+	{ -1, -1, 0,
+	  PCMCIA_CIS_TOSHIBA_CBIDE2,
+	  PCMCIA_STR_TOSHIBA_CBIDE2
 	},
 
 	/* 
