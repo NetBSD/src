@@ -114,30 +114,6 @@ shm_find_segment_by_shmid(shmid)
 	return shmseg;
 }
 
-static vm_offset_t
-shm_find_space(p, size)
-	struct proc *p;
-	size_t size;
-{
-	vm_offset_t low_end, range, current;
-	int result;
-
-	low_end = (vm_offset_t)p->p_vmspace->vm_daddr +
-	    (p->p_vmspace->vm_dsize << PGSHIFT);
-	range = (USRSTACK - low_end);
-
-	/* XXXX totally bogus */
-	/* current = range *3/4 + low_end  */
-	current = ((range&1)<<1 + range)>>2 + range>>1 + low_end;
-#if 0
-	result = vm_map_find(&p->p_vmspace->vm_map, NULL, 0, &current, size,
-			     TRUE);
-	if (result)
-		return NULL;
-#endif
-	return current;
-}
-
 static void
 shm_deallocate_segment(shmseg)
 	struct shmid_ds *shmseg;
@@ -255,9 +231,8 @@ shmat(p, uap, retval)
 		else
 			return EINVAL;
 	} else {
-		attach_va = shm_find_space(p, shmseg->shm_segsz);
-		if (attach_va == NULL)
-			return ENOMEM;
+		/* This is just a hint to vm_mmap() about where to put it. */
+		attach_va = round_page(p->p_vmspace->vm_daddr + MAXDSIZ);
 	}
 	error = vm_mmap(&p->p_vmspace->vm_map, &attach_va, size, prot,
 	    VM_PROT_DEFAULT, flags, uap->shmid, 0);
