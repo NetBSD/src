@@ -50,7 +50,7 @@ send-pr \- send problem report (PR) to a central support site
 .B \-\-request-id
 ]
 [
-.B \-v
+.B \-V
 ]
 .SH DESCRIPTION
 .B send-pr
@@ -149,7 +149,7 @@ use a
 of
 .BR net \|'.
 .TP
-.B \-v
+.B \-V
 Display the 
 .B send-pr
 version number.
