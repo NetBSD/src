@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.21 1996/11/23 11:46:34 fvdl Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.22 1996/12/17 22:04:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -133,12 +133,13 @@ ELFNAME(copyargs)(pack, arginfo, stack, argp)
 	if (!stack)
 		return NULL;
 
+	a = ai;
+
 	/*
 	 * Push extra arguments on the stack needed by dynamically
 	 * linked binaries
 	 */
 	if ((ap = (struct elf_args *)pack->ep_emul_arg)) {
-		a = ai;
 
 		a->au_id = AUX_phdr;
 		a->au_v = ap->arg_phaddr;
@@ -168,17 +169,19 @@ ELFNAME(copyargs)(pack, arginfo, stack, argp)
 		a->au_v = ap->arg_entry;
 		a++;
 
-		a->au_id = AUX_null;
-		a->au_v = 0;
-		a++;
-
 		free((char *)ap, M_TEMP);
 		pack->ep_emul_arg = NULL;
-		len = ELF_AUX_ENTRIES * sizeof (AuxInfo);
-		if (copyout(ai, stack, len))
-			return NULL;
-		stack += len;
 	}
+
+	a->au_id = AUX_null;
+	a->au_v = 0;
+	a++;
+
+	len = (a - ai) * sizeof (AuxInfo);
+	if (copyout(ai, stack, len))
+		return NULL;
+	stack += len;
+
 	return stack;
 }
 
