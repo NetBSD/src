@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.14 2004/04/27 23:57:19 jonathan Exp $	*/
+/*	$NetBSD: key.c,v 1.15 2004/04/30 01:08:35 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.14 2004/04/27 23:57:19 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.15 2004/04/30 01:08:35 jonathan Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7540,7 +7540,7 @@ sysctl_net_key_dumpsa(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	s = splsoftnet();
-	m = key_setdump(name[1], &error);
+	m = key_setdump(name[0], &error);
 	splx(s);
 	if (!m)
 		return (error);
@@ -7617,6 +7617,27 @@ sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
 	return (error);
 }
 
+/*
+ * Create sysctl tree for native FAST_IPSEC key knobs, originally
+ * under name "net.keyv2"  * with MIB number { CTL_NET, PF_KEY_V2. }.
+ * However, sysctl(8) never checked for nodes under { CTL_NET, PF_KEY_V2 };
+ * and in any case the part of our sysctl namespace used for dumping the
+ * SPD and SA database  *HAS* to be compatible with the KAME sysctl
+ * namespace, for API reasons.
+ *
+ * Pending a consensus on the right way  to fix this, add a level of
+ * indirection in how we number the `native' FAST_IPSEC key nodes;
+ * and (as requested by Andrew Brown)  move registration of the
+ * KAME-compatible names  to a separate function.
+ */
+#if 0
+#  define FAST_IPSEC_PFKEY PF_KEY_V2
+# define FAST_IPSEC_PFKEY_NAME "keyv2"
+#else
+#  define FAST_IPSEC_PFKEY PF_KEY
+# define FAST_IPSEC_PFKEY_NAME "key"
+#endif
+
 SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 {
 
@@ -7627,65 +7648,88 @@ SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "keyv2", NULL,
+		       CTLTYPE_NODE, FAST_IPSEC_PFKEY_NAME, NULL,
 		       NULL, 0, NULL, 0,
-		       CTL_NET, PF_KEY_V2, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "debug", NULL,
 		       NULL, 0, &key_debug_level, 0,
-		       CTL_NET, PF_KEY_V2, KEYCTL_DEBUG_LEVEL, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_DEBUG_LEVEL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "spi_try", NULL,
 		       NULL, 0, &key_spi_trycnt, 0,
-		       CTL_NET, PF_KEY_V2, KEYCTL_SPI_TRY, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_SPI_TRY, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "spi_min_value", NULL,
 		       NULL, 0, &key_spi_minval, 0,
-		       CTL_NET, PF_KEY_V2, KEYCTL_SPI_MIN_VALUE, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_SPI_MIN_VALUE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "spi_max_value", NULL,
 		       NULL, 0, &key_spi_maxval, 0,
-		       CTL_NET, PF_KEY_V2, KEYCTL_SPI_MAX_VALUE, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_SPI_MAX_VALUE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "random_int", NULL,
 		       NULL, 0, &key_int_random, 0,
-		       CTL_NET, PF_KEY_V2, KEYCTL_RANDOM_INT, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_RANDOM_INT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "larval_lifetime", NULL,
 		       NULL, 0, &key_larval_lifetime, 0,
-		       CTL_NET, PF_KEY_V2, KEYCTL_LARVAL_LIFETIME, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_LARVAL_LIFETIME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "blockacq_count", NULL,
 		       NULL, 0, &key_blockacq_count, 0,
-		       CTL_NET, PF_KEY_V2, KEYCTL_BLOCKACQ_COUNT, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_BLOCKACQ_COUNT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "blockacq_lifetime", NULL,
 		       NULL, 0, &key_blockacq_lifetime, 0,
-		       CTL_NET, PF_KEY_V2, KEYCTL_BLOCKACQ_LIFETIME, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_BLOCKACQ_LIFETIME, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "esp_keymin", NULL,
 		       NULL, 0, &ipsec_esp_keymin, 0,
-		       CTL_NET, PF_KEY_V2, KEYCTL_ESP_KEYMIN, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_ESP_KEYMIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "esp_auth", NULL,
 		       NULL, 0, &ipsec_esp_auth, 0,
-		       CTL_NET, PF_KEY_V2, KEYCTL_ESP_AUTH, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_ESP_AUTH, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "ah_keymin", NULL,
 		       NULL, 0, &ipsec_ah_keymin, 0,
-		       CTL_NET, PF_KEY_V2, KEYCTL_AH_KEYMIN, CTL_EOL);
+		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_AH_KEYMIN, CTL_EOL);
+}
+
+/*
+ * Register sysctl names used by setkey(8). For historical reasons,
+ * and to share a single API, these names appear under { CTL_NET, PF_KEY }
+ * for both FAST_IPSEC and KAME IPSEC.
+ */
+SYSCTL_SETUP(sysctl_net_key_compat_setup, "sysctl net.key subtree setup for FAST_IPSEC")
+{
+
+	/* Make sure net.key exists before we register nodes underneath it. */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "key", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_KEY, CTL_EOL);
+
+	/* Register the net.key.dump{sa,sp} nodes used by setkey(8). */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "dumpsa", NULL,
