@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.18 2004/03/28 19:01:07 mhitch Exp $	*/
+/*	$NetBSD: osiop.c,v 1.19 2004/09/25 09:46:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.18 2004/03/28 19:01:07 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.19 2004/09/25 09:46:17 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -181,8 +181,7 @@ void osiop_dump(struct osiop_softc *);
 #endif
 
 void
-osiop_attach(sc)
-	struct osiop_softc *sc;
+osiop_attach(struct osiop_softc *sc)
 {
 	struct osiop_acb *acb;
 	bus_dma_segment_t seg;
@@ -352,8 +351,7 @@ osiop_attach(sc)
  * default minphys routine for osiop based controllers
  */
 void
-osiop_minphys(bp)
-	struct buf *bp;
+osiop_minphys(struct buf *bp)
 {
 
 	if (bp->b_bcount > OSIOP_MAX_XFER)
@@ -366,10 +364,8 @@ osiop_minphys(bp)
  *
  */
 void
-osiop_scsipi_request(chan, req, arg)
-	struct scsipi_channel *chan;
-	scsipi_adapter_req_t req;
-	void *arg;
+osiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -494,9 +490,7 @@ osiop_scsipi_request(chan, req, arg)
 }
 
 void
-osiop_poll(sc, acb)
-	struct osiop_softc *sc;
-	struct osiop_acb *acb;
+osiop_poll(struct osiop_softc *sc, struct osiop_acb *acb)
 {
 	struct scsipi_xfer *xs = acb->xs;
 	int status, i, s, to;
@@ -563,8 +557,7 @@ osiop_poll(sc, acb)
  * start next command that's ready
  */
 void
-osiop_sched(sc)
-	struct osiop_softc *sc;
+osiop_sched(struct osiop_softc *sc)
 {
 	struct scsipi_periph *periph;
 	struct osiop_acb *acb;
@@ -610,9 +603,7 @@ osiop_sched(sc)
 }
 
 void
-osiop_scsidone(acb, status)
-	struct osiop_acb *acb;
-	int status;
+osiop_scsidone(struct osiop_acb *acb, int status)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
@@ -741,9 +732,7 @@ osiop_scsidone(acb, status)
 }
 
 void
-osiop_abort(sc, where)
-	struct osiop_softc *sc;
-	const char *where;
+osiop_abort(struct osiop_softc *sc, const char *where)
 {
 
 	printf("%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x\n",
@@ -759,8 +748,7 @@ osiop_abort(sc, where)
 }
 
 void
-osiop_init(sc)
-	struct osiop_softc *sc;
+osiop_init(struct osiop_softc *sc)
 {
 	int i, inhibit_sync, inhibit_disc;
 
@@ -816,8 +804,7 @@ osiop_init(sc)
 }
 
 void
-osiop_reset(sc)
-	struct osiop_softc *sc;
+osiop_reset(struct osiop_softc *sc)
 {
 	struct osiop_acb *acb;
 	int i, s;
@@ -910,8 +897,7 @@ osiop_reset(sc)
 }
 
 void
-osiop_resetbus(sc)
-	struct osiop_softc *sc;
+osiop_resetbus(struct osiop_softc *sc)
 {
 
 	osiop_write_1(sc, OSIOP_SIEN, 0);
@@ -927,8 +913,7 @@ osiop_resetbus(sc)
  */
 
 void
-osiop_start(sc)
-	struct osiop_softc *sc;
+osiop_start(struct osiop_softc *sc)
 {
 	struct osiop_acb *acb = sc->sc_nexus;
 	struct osiop_ds *ds = acb->ds;
@@ -1087,12 +1072,8 @@ osiop_start(sc)
  */
 
 int
-osiop_checkintr(sc, istat, dstat, sstat0, status)
-	struct	osiop_softc *sc;
-	u_int8_t istat;
-	u_int8_t dstat;
-	u_int8_t sstat0;
-	int *status;
+osiop_checkintr(struct osiop_softc *sc, u_int8_t istat, u_int8_t dstat,
+    u_int8_t sstat0, int *status)
 {
 	struct osiop_acb *acb = sc->sc_nexus;
 	struct osiop_ds *ds = NULL;	/* XXX */
@@ -1694,8 +1675,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 }
 
 void
-osiop_select(sc)
-	struct osiop_softc *sc;
+osiop_select(struct osiop_softc *sc)
 {
 	struct osiop_acb *acb = sc->sc_nexus;
 
@@ -1737,8 +1717,7 @@ osiop_select(sc)
  */
 
 void
-osiop_intr(sc)
-	struct osiop_softc *sc;
+osiop_intr(struct osiop_softc *sc)
 {
 	int status, s;
 	u_int8_t istat, dstat, sstat0;
@@ -1815,9 +1794,7 @@ osiop_intr(sc)
 }
 
 void
-osiop_update_xfer_mode(sc, target)
-	struct osiop_softc *sc;
-	int target;
+osiop_update_xfer_mode(struct osiop_softc *sc, int target)
 {
 	struct osiop_tinfo *tinfo = &sc->sc_tinfo[target];
 	struct scsipi_xfer_mode xm;
@@ -1837,9 +1814,7 @@ osiop_update_xfer_mode(sc, target)
 }
 
 void
-scsi_period_to_osiop(sc, target)
-	struct osiop_softc *sc;
-	int target;
+scsi_period_to_osiop(struct osiop_softc *sc, int target)
 {
 	int period, offset, sxfer, sbcl;
 
@@ -1875,8 +1850,7 @@ scsi_period_to_osiop(sc, target)
 }
 
 void
-osiop_timeout(arg)
-	void *arg;
+osiop_timeout(void *arg)
 {
 	struct osiop_acb *acb = arg;
 	struct scsipi_xfer *xs = acb->xs;
@@ -1902,7 +1876,7 @@ osiop_timeout(arg)
 
 #if OSIOP_TRACE_SIZE
 void
-osiop_dump_trace()
+osiop_dump_trace(void)
 {
 	int i;
 
@@ -1918,8 +1892,7 @@ osiop_dump_trace()
 #endif
 
 void
-osiop_dump_acb(acb)
-	struct osiop_acb *acb;
+osiop_dump_acb(struct osiop_acb *acb)
 {
 	u_int8_t *b;
 	int i;
@@ -1944,8 +1917,7 @@ osiop_dump_acb(acb)
 }
 
 void
-osiop_dump(sc)
-	struct osiop_softc *sc;
+osiop_dump(struct osiop_softc *sc)
 {
 	struct osiop_acb *acb;
 	int i, s;
