@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.14 2002/07/29 03:10:16 augustss Exp $	*/
+/*	$NetBSD: acpi.c,v 1.15 2002/07/29 03:26:20 augustss Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.14 2002/07/29 03:10:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.15 2002/07/29 03:26:20 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.14 2002/07/29 03:10:16 augustss Exp $");
 
 #ifndef ACPI_PCI_FIXUP
 #define ACPI_PCI_FIXUP 1
+#endif
+
+#ifndef ACPI_ACTIVATE_DEV
+#define ACPI_ACTIVATE_DEV 0
 #endif
 
 #if ACPI_PCI_FIXUP
@@ -106,6 +110,8 @@ ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
 void		acpi_enable_fixed_events(struct acpi_softc *);
 #if ACPI_PCI_FIXUP
 void		acpi_pci_fixup(struct acpi_softc *);
+#endif
+#if ACPI_PCI_FIXUP || ACPI_ACTIVATE_DEV
 ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE handle);
 #endif
 
@@ -432,6 +438,30 @@ acpi_build_tree(struct acpi_softc *sc)
 	}
 }
 
+#if ACPI_ACTIVATE_DEV
+static void
+acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO *di)
+{
+	ACPI_STATUS rv;
+
+#ifdef ACPI_DEBUG
+	printf("acpi_activate_device: %s, old status=%x\n", 
+	       di->HardwareId, di->CurrentStatus);
+#endif
+
+	rv = acpi_allocate_resources(handle);
+	if (ACPI_FAILURE(rv)) {
+		printf("acpi: activate failed for %s\n", di->HardwareId);
+	}
+
+	(void)AcpiGetObjectInfo(handle, di);
+#ifdef ACPI_DEBUG
+	printf("acpi_activate_device: %s, new status=%x\n", 
+	       di->HardwareId, di->CurrentStatus);
+#endif
+}
+#endif /* ACPI_ACTIVATE_DEV */
+
 /*
  * acpi_make_devnode:
  *
@@ -447,12 +477,31 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 #endif
 	struct acpi_scope *as = state->scope;
 	struct acpi_devnode *ad;
+	ACPI_DEVICE_INFO devinfo;
 	ACPI_OBJECT_TYPE type;
 	ACPI_STATUS rv;
 
 	if (AcpiGetType(handle, &type) == AE_OK) {
+		rv = AcpiGetObjectInfo(handle, &devinfo);
+		if (rv != AE_OK) {
+#ifdef ACPI_DEBUG
+			printf("%s: AcpiGetObjectInfo failed\n",
+			    sc->sc_dev.dv_xname);
+#endif
+			goto out; /* XXX why return OK */
+		}
+
 		switch (type) {
 		case ACPI_TYPE_DEVICE:
+#if ACPI_ACTIVATE_DEV
+			if ((devinfo.Valid & ACPI_VALID_STA) &&
+			    (devinfo.CurrentStatus &
+			     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED)) ==
+			    ACPI_STA_DEV_PRESENT)
+				acpi_activate_device(handle, &devinfo);
+			/* FALLTHROUGH */
+#endif
+
 		case ACPI_TYPE_PROCESSOR:
 		case ACPI_TYPE_THERMAL:
 		case ACPI_TYPE_POWER:
@@ -993,7 +1042,9 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 	free(buf.Pointer, M_DEVBUF);
 	return (AE_OK);
 }
+#endif /* ACPI_PCI_FIXUP */
 
+#if ACPI_PCI_FIXUP || ACPI_ACTIVATE_DEV
 /* XXX This very incomplete */
 ACPI_STATUS
 acpi_allocate_resources(ACPI_HANDLE handle)
@@ -1077,5 +1128,4 @@ out1:
 out:
 	return rv;
 }
-
-#endif
+#endif /* ACPI_PCI_FIXUP || ACPI_ACTIVATE_DEV */
