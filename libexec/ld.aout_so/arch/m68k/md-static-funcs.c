@@ -9,9 +9,9 @@ struct relocation_info	*r;
 long			relocation;
 char			*addr;
 {
-    if (r->r_relative) {
-	*(long *)addr += relocation;
-	_cachectl (addr, 4);		/* maintain cache coherency */
-    }
+	if (r->r_relative) {
+		*(long *)addr += relocation;
+		_cachectl (addr, 4);		/* maintain cache coherency */
+	}
 }
 
