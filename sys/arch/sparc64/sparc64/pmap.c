@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2000/12/10 19:33:02 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84 2000/12/17 21:43:54 pk Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -703,15 +703,15 @@ remap_data:
 			prom_printf("Cannot allocate new kernel\r\n");
 			OF_exit();
 		}
-		BDPRINTF(PDB_BOOT1, ("Allocating new va for buffer at %p\r\n",
-				     (void *)newkp));
+		BDPRINTF(PDB_BOOT1, ("Allocating new va for buffer at %qx\r\n",
+				     (u_int64_t)newkp));
 		if ((newkv = (vaddr_t)prom_alloc_virt(4*MEG, 8)) ==
 		    (vaddr_t)-1) {
 			prom_printf("Cannot allocate new kernel va\r\n");
 			OF_exit();
 		}
-		BDPRINTF(PDB_BOOT1, ("Mapping in buffer %lx at %lx\r\n",
-		    (u_long)newkp, (u_long)newkv));
+		BDPRINTF(PDB_BOOT1, ("Mapping in buffer %qx at %qx\r\n",
+		    (u_int64_t)newkp, (u_int64_t)newkv));
 		prom_map_phys(newkp, 4*MEG, (vaddr_t)newkv, -1); 
 		BDPRINTF(PDB_BOOT1, ("Copying %ld bytes kernel data...", kdsize));
 		bzero((void *)newkv, 4*MEG);
@@ -825,8 +825,8 @@ remap_data:
 			prom_printf("Cannot allocate new kernel text\r\n");
 			OF_exit();
 		}
-		BDPRINTF(PDB_BOOT1, ("Allocating new va for buffer at %p\r\n",
-				     (void *)newkp));
+		BDPRINTF(PDB_BOOT1, ("Allocating new va for buffer at %qx\r\n",
+				     (u_int64_t)newkp));
 		if ((newkv = (vaddr_t)prom_alloc_virt(ktsize, 8)) ==
 		    (vaddr_t)-1) {
 			prom_printf("Cannot allocate new kernel text va\r\n");
@@ -2890,13 +2890,14 @@ pmap_clear_modify(pg)
 	
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
-		printf("pmap_clear_modify(%p)\n", (void *)pa);
+		printf("pmap_clear_modify(%qx)\n", (u_int64_t)pa);
 #endif
 
 	if (!IS_VM_PHYSADDR(pa)) {
 		pv_check();
 #ifdef DEBUG
-		printf("pmap_clear_modify(%p): page not managed\n", (void *)pa);
+		printf("pmap_clear_modify(%qx): page not managed\n",
+			(u_int64_t)pa);
 		Debugger();
 #endif
 		/* We always return 0 for I/O mappings */
@@ -2990,12 +2991,13 @@ pmap_clear_reference(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF))
-		printf("pmap_clear_reference(%p)\n", (void *)pa);
+		printf("pmap_clear_reference(%qx)\n", (u_int64_t)pa);
 #endif
 	if (!IS_VM_PHYSADDR(pa)) {
 		pv_check();
 #ifdef DEBUG
-		printf("pmap_clear_reference(%p): page not managed\n", (void *)pa);
+		printf("pmap_clear_reference(%qx): page not managed\n",
+			(u_int64_t)pa);
 		Debugger();
 #endif
 		return (changed);
@@ -3095,7 +3097,8 @@ pmap_is_modified(pg)
 	if (!IS_VM_PHYSADDR(pa)) {
 		pv_check();
 #ifdef DEBUG
-		printf("pmap_is_modified(%p): page not managed\n", (void *)pa);
+		printf("pmap_is_modified(%qx): page not managed\n",
+			(u_int64_t)pa);
 		Debugger();
 #endif
 		return 0;
@@ -3131,7 +3134,7 @@ pmap_is_modified(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF)) {
-		printf("pmap_is_modified(%p) = %d\n", (void *)pa, i);
+		printf("pmap_is_modified(%qx) = %d\n", (u_int64_t)pa, i);
 		/* if (i) Debugger(); */
 	}
 #endif
@@ -3149,7 +3152,8 @@ pmap_is_referenced(pg)
 
 	if (!IS_VM_PHYSADDR(pa)) {
 #ifdef DEBUG
-		printf("pmap_is_referenced(%p): page not managed\n", (void *)pa);
+		printf("pmap_is_referenced(%qx): page not managed\n",
+			(u_int64_t)pa);
 		Debugger();
 #endif
 		return 0;
@@ -3183,7 +3187,7 @@ pmap_is_referenced(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_CHANGEPROT|PDB_REF)) {
-		printf("pmap_is_referenced(%p) = %d\n", (void *)pa, i);
+		printf("pmap_is_referenced(%qx) = %d\n", (u_int64_t)pa, i);
 		/* if (i) Debugger(); */
 	}
 #endif
@@ -3260,12 +3264,14 @@ pmap_page_protect(pg, prot)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
-		printf("pmap_page_protect: pa %p prot %x\n", (void *)pa, prot);
+		printf("pmap_page_protect: pa %qx prot %x\n",
+			(u_int64_t)pa, prot);
 #endif
 
 	if (!IS_VM_PHYSADDR(pa)) {
 #ifdef DEBUG
-		printf("pmap_page_protect(%p): page unmanaged\n", (void *)(u_long)pa);
+		printf("pmap_page_protect(%qx): page unmanaged\n",
+			(u_int64_t)pa);
 		Debugger();
 #endif
 		pv_check();
@@ -3806,7 +3812,7 @@ pmap_page_cache(pa, mode)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_ENTER))
-		printf("pmap_page_uncache(%lx)\n", pa);
+		printf("pmap_page_uncache(%qx)\n", (u_int64_t)pa);
 #endif
 	if (!IS_VM_PHYSADDR(pa))
 		return;
