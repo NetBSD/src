@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.60 2000/02/03 04:09:19 nisimura Exp $	*/
+/*	$NetBSD: dc.c,v 1.61 2000/02/09 08:29:40 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.60 2000/02/03 04:09:19 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.61 2000/02/09 08:29:40 nisimura Exp $");
 
 /*
  * devDC7085.c --
@@ -58,6 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.60 2000/02/03 04:09:19 nisimura Exp $");
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devDC7085.c,
  *	v 1.4 89/08/29 11:55:30 nelson Exp  SPRITE (DECWRL)";
  */
+
+#include "opt_ddb.h"
+#include "rasterconsole.h"
 
 /*
  * DC7085 (DZ-11 look alike) Driver
@@ -88,10 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.60 2000/02/03 04:09:19 nisimura Exp $");
 
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
-
-#include "dcvar.h"
-#include "tc.h"
-#include "rasterconsole.h"
 
 #define DCUNIT(dev) (minor(dev) >> 2)
 #define DCLINE(dev) (minor(dev) & 3)
