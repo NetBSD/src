@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2003/05/30 22:17:05 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.11 2003/06/03 11:54:54 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,7 +95,7 @@ md_pre_disklabel(void)
 	/* write edited MBR onto disk. */
 	if (write_mbr(diskdev, &mbr, sizeof mbr, 1) != 0) {
 		msg_display(MSG_wmbrfail);
-		process_menu(MENU_ok);
+		process_menu(MENU_ok, NULL);
 		return 1;
 	}
 	return 0;
