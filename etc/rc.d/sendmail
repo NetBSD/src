@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.5 2000/05/13 08:45:09 lukem Exp $
+# $NetBSD: sendmail,v 1.6 2000/05/15 06:16:04 tron Exp $
 #
 
 # PROVIDE: mail
@@ -17,10 +17,11 @@ command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 required_files="/etc/mail/${name}.cf"
 
+load_rc_config $name
+
 # die if there's pre-8.10 configuration file
-if [ -f "/etc/${name}.cf" ]; then
+if checkyesno sendmail && [ -f "/etc/${name}.cf" ]; then
 	err 1 "${name} was not started, move /etc/${name}.cf to /etc/mail."
 fi
 
-load_rc_config $name
 run_rc_command "$1"
