@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.16 1999/09/26 04:43:45 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.17 1999/09/26 05:03:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -220,9 +220,13 @@ const struct tlp_pci_quirks tlp_pci_21041_quirks[] = {
 	{ NULL,				{ 0, 0, 0 } }
 };
 
+void	tlp_pci_asante_21140_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
+
 const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
 	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
+	{ tlp_pci_asante_21140_quirks,	{ 0x00, 0x00, 0x94 } },
 	{ NULL,				{ 0, 0, 0 } }
 };
 
@@ -881,4 +885,41 @@ tlp_pci_accton_21040_quirks(psc, enaddr)
 {
 
 	strcpy(psc->sc_tulip.sc_name, "ACCTON EN1203");
+}
+
+void	tlp_pci_asante_21140_reset __P((struct tulip_softc *));
+
+void
+tlp_pci_asante_21140_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * Some Asante boards don't use the ISV SROM format.  For
+	 * those that don't, we initialize the GPIO direction bits,
+	 * and provide our own reset hook, which resets the MII.
+	 *
+	 * All of these boards use SIO-attached-MII media.
+	 */
+	if (sc->sc_mediasw == &tlp_2114x_isv_mediasw)
+		return;
+
+	strcpy(sc->sc_name, "Asante");
+
+	sc->sc_gp_dir = 0xbf;
+	sc->sc_reset = tlp_pci_asante_21140_reset;
+	sc->sc_mediasw = &tlp_sio_mii_mediasw;
+}
+
+void
+tlp_pci_asante_21140_reset(sc)
+	struct tulip_softc *sc;
+{
+
+	TULIP_WRITE(sc, CSR_GPP, GPP_GPC | sc->sc_gp_dir);
+	TULIP_WRITE(sc, CSR_GPP, 0x8);
+	delay(100);
+	TULIP_WRITE(sc, CSR_GPP, 0);
 }
