@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.39 2000/11/13 14:50:55 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -602,6 +602,13 @@ sys_swapctl(p, v, retval)
 	if ((error = suser(p->p_ucred, &p->p_acflag)))
 		goto out;
 
+	if (SCARG(uap, cmd) == SWAP_GETDUMPDEV) {
+		dev_t	*devp = (dev_t *)SCARG(uap, arg);
+
+		error = copyout(&dumpdev, devp, sizeof(dumpdev));
+		goto out;
+	}
+
 	/*
 	 * at this point we expect a path name in arg.   we will
 	 * use namei() to gain a vnode reference (vref), and lock
@@ -642,6 +649,7 @@ sys_swapctl(p, v, retval)
 
 	error = 0;		/* assume no error */
 	switch(SCARG(uap, cmd)) {
+
 	case SWAP_DUMPDEV:
 		if (vp->v_type != VBLK) {
 			error = ENOTBLK;
