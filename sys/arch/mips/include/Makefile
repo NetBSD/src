@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2001/11/28 20:13:34 manu Exp $
+#	$NetBSD: Makefile,v 1.22 2002/08/07 05:15:33 briggs Exp $
 
 KDIR=	/sys/arch/mips/include
 INCSDIR= /usr/include/mips
@@ -14,7 +14,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	kcore.h kdbparam.h \
 	limits.h lock.h locore.h \
 	math.h mips1_pte.h mips3_pte.h mips_opcode.h mips_param.h \
-	pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
+	pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h regdef.h regnum.h reloc.h \
 	setjmp.h signal.h stdarg.h sysarch.h \
 	trap.h types.h \

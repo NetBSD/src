@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.3 2002/07/15 16:27:16 ichiro Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.4 2002/08/07 05:14:59 briggs Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -140,6 +140,19 @@
 				 ARM_MMU_XSCALE)
 #if ARM_NMMUS == 0
 #error ARM_NMMUS is 0
+#endif
+
+/*
+ * Step 4: Define features that may be present on a subset of CPUs
+ *
+ *	ARM_XSCALE_PMU		Performance Monitoring Unit on 80200 and 80321
+ */
+
+#if !defined(_KERNEL_OPT) ||						\
+    (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321))
+#define ARM_XSCALE_PMU	1
+#else
+#define ARM_XSCALE_PMU	0
 #endif
 
 #endif /* _ARM_CPUCONF_H_ */

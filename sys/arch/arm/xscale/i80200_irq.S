@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.3 2002/07/29 22:00:00 thorpej Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.4 2002/08/07 05:15:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,6 +36,7 @@
  */
 
 #include "assym.h"
+#include "opt_perfctrs.h"
 
 #include <machine/asm.h>
 #include <machine/cpu.h>
@@ -59,6 +60,11 @@ Lcurrent_intr_depth:
 
 Lintr_dispatch:
 	.word	_C_LABEL(i80200_extirq_dispatch)
+
+#if defined(PERFCTRS)
+Lpmc_dispatch:
+	.word	_C_LABEL(xscale_pmc_dispatch)
+#endif
 
 Lastpending:
 	.word	_C_LABEL(astpending)
@@ -86,9 +92,22 @@ ASENTRY_NP(irq_entry)
 	 */
 	mrc	p13, 0, r4, c4, c0, 0
 
+#if defined(PERFCTRS)
 	/*
-	 * XXX Right here will be a good place to check for PMU
-	 * XXX interrupts, if we decide to use IRQs for them.
+	 * Check for PMU interrupts.
+	 * If we have one, call the routine to handle it.
+	 */
+	tst	r4, #(INTSRC_PI)
+	beq	Lpmc_intr_return
+	mov	r1, r4
+	add	lr, pc, #Lpmc_intr_return - . - 8
+	mov	r0, sp
+	ldr	pc, Lpmc_dispatch
+Lpmc_intr_return:
+#endif
+
+	/*
+	 * XXX - any need to handle BMU interrupts?
 	 */
 
 	/*

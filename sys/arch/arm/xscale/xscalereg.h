@@ -1,4 +1,4 @@
-/*	$NetBSD: xscalereg.h,v 1.1 2002/03/26 19:29:46 thorpej Exp $	*/
+/*	$NetBSD: xscalereg.h,v 1.2 2002/08/07 05:15:02 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,5 +65,7 @@
 #define	PMNC_EVCNT0_SHIFT 12
 #define	PMNC_EVCNT1_MASK 0x0ff00000	/* event to count for PMN1 */
 #define	PMNC_EVCNT1_SHIFT 20
+
+void	xscale_pmu_init(void);
 
 #endif /* _ARM_XSCALE_XSCALEREG_H_ */
