@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.13 1995/04/10 07:04:21 mycroft Exp $ */
+/*	$NetBSD: cgsix.c,v 1.14 1995/08/29 22:26:37 pk Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -174,6 +174,7 @@ cgsixattach(parent, self, args)
 	register volatile struct cg6_layout *p;
 	int sbus = 1;
 	char *nam;
+extern struct tty *fbconstty;
 
 	sc->sc_fb.fb_major = CGSIX_MAJOR;	/* XXX to be removed */
 
@@ -243,7 +244,10 @@ cgsixattach(parent, self, args)
 	/* enable video */
 	sc->sc_thc->thc_misc |= THC_MISC_VIDEN;
 
-	printf("\n");
+	if (node == fbnode && fbconstty != NULL) {
+		printf(" (console)\n");
+	} else
+		printf("\n");
 	if (sbus)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	if (node == fbnode)
