@@ -1,4 +1,4 @@
-/*	$NetBSD: sdivsi3.S,v 1.6 2003/08/07 16:42:19 agc Exp $	*/
+/*	$NetBSD: sdivsi3.S,v 1.7 2003/09/22 02:27:59 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sdivsi3.S,v 1.6 2003/08/07 16:42:19 agc Exp $")
+	RCSID("$NetBSD: sdivsi3.S,v 1.7 2003/09/22 02:27:59 uwe Exp $")
 #endif
 
 /* r0 <= r4 / r5 */
@@ -62,12 +62,12 @@ ENTRY(__sdivsi3)
 	rotcl	r0
 
 	rts
-	addc	r2, r0		/* delay slot */
+	 addc	r2, r0
 
 div_by_zero:
 #ifdef _KERNEL
 	rts
-	mov	#0, r0		/* delay slot */
+	 mov	#0, r0
 #else
 	mov.l	r14, @-r15
 	sts.l	pr, @-r15
@@ -79,12 +79,12 @@ div_by_zero:
 #else
 	jsr	@r1
 #endif
-	mov	#8, r4		/* delay slot */
+	 mov	#8, r4		/* delay slot.  8 <- SIGFPE. */
 	mov	#0, r0
 
 	lds.l	@r15+, pr
 	rts
-	mov.l	@r15+, r14	/* delay slot */
+	 mov.l	@r15+, r14
 
 	.align	2
 L_raise:
