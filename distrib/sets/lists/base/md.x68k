@@ -14,6 +14,7 @@
 ./usr/lib/libm.so.0.1
 ./usr/lib/libntp.so.0.0
 ./usr/lib/libpcap.so.0.0
+./usr/lib/libposix.so.0.0
 ./usr/lib/libresolv.so.1.0
 ./usr/lib/libskey.so.0.0
 ./usr/lib/libstdc++.so.0.1
