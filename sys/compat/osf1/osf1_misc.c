@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.58 2000/11/17 05:07:45 simonb Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.59 2000/11/17 21:40:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -157,6 +157,7 @@ osf1_sys_set_program_attributes(p, v, retval)
 int
 osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
 {
+	extern int ncpus;
 	struct osf1_sys_getsysinfo_args *uap = v;
 	int error;
 	int unit;
