@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.20 2003/05/06 19:05:35 wiz Exp $
+.\"	$NetBSD: tty.4,v 1.21 2003/06/27 18:20:38 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -296,7 +296,7 @@ If the value of the int pointed to by
 contains the
 .Dv FREAD
 bit as defined in
-.Pa Aq sys/fcntl.h ,
+.Aq Pa sys/fcntl.h ,
 then all characters in the input queue are cleared.  If it contains
 the
 .Dv FWRITE
@@ -317,7 +317,7 @@ and is the means by which most full\&-screen oriented programs determine the
 screen size.  The
 .Va winsize
 structure is defined in
-.Pa Aq sys/ioctl.h .
+.Aq Pa sys/ioctl.h .
 .It Dv TIOCSWINSZ Fa struct winsize *ws
 Set the window size associated with the terminal to be the value in
 the
@@ -419,7 +419,7 @@ extensible.
 Change to the new line discipline pointed to by
 .Fa ldisc .
 The old list of available line disciplines are listed in
-.Pa Aq sys/ttycom.h
+.Aq Pa sys/ttycom.h
 and are:
 .Pp
 .Bl -tag -width TIOCGWINSZ -compact
