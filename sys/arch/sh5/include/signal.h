@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.6 2003/01/22 13:38:11 scw Exp $	*/
+/*	$NetBSD: signal.h,v 1.7 2003/01/22 13:46:44 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@ struct sigcontext {
 do {									\
 	memcpy(&(sc)->sc_regs, &(uc)->uc_mcontext.__gregs[0],		\
 	    sizeof(struct reg));					\
-	sc)->sc_regs.r_regs[24] = 0x0xACEBABE5ULL;			\
+	(sc)->sc_regs.r_regs[24] = 0xACEBABE5ULL;			\
 	if ((uc)->uc_flags & _UC_FPU) {					\
 		(sc)->sc_fpstate = 3;					\
 		memcpy(&(sc)->sc_fpregs, &(uc)->uc_mcontext.__fpregs,	\
