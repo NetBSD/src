@@ -10,12 +10,8 @@ SRCS=	addbytes.c addch.c addnstr.c box.c clear.c clrtobot.c clrtoeol.c \
 	overwrite.c printw.c putchar.c refresh.c scanw.c scroll.c setterm.c \
 	standout.c toucholap.c touchwin.c tscroll.c tstp.c tty.c unctrl.c
 MAN=	curses.3
-
-includes:
-	-cd ${.CURDIR}; cmp -s curses.h ${DESTDIR}/usr/include/curses.h > \
-	    /dev/null 2>&1 || \
-	    ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 curses.h \
-	    ${DESTDIR}/usr/include
+INCS=curses.h
+INCSDIR=/usr/include
 
 .if make(install)
 SUBDIR+= PSD.doc

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1996/11/03 18:12:00 ws Exp $
+#	$NetBSD: Makefile,v 1.7 1997/03/24 22:11:48 christos Exp $
 
 CFLAGS+=	-DLIBC_SCCS
 .if (${MACHINE_ARCH} != "powerpc")
@@ -13,8 +13,7 @@ c++rt0.o: c++rt0.c
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-install:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
-	    ${DESTDIR}/usr/lib
+FILES=${OBJS}
+FILESDIR=/usr/lib
 
 .include <bsd.prog.mk>
