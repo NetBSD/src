@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)csa12gdma.c
- *	$Id: otgsc.c,v 1.2 1994/05/29 04:50:19 chopps Exp $
+ *	$Id: otgsc.c,v 1.3 1994/06/13 08:13:04 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ otgscmatch(pdp, cdp, auxp)
 	/*
 	 * Check manufacturer and product id.
 	 */
-	if (zap->manid == 2011 && zap->prodid == 1)
+	if (zap->manid == 1058 && zap->prodid == 21)
 		return(1);
 	else
 		return(0);
@@ -114,6 +114,8 @@ otgscattach(pdp, dp, auxp)
 	volatile u_char *rp;
 	struct sci_softc *sc;
 	struct ztwobus_args *zap;
+
+	printf("\n");
 
 	zap = auxp;
 	

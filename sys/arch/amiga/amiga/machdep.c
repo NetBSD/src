@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.29 1994/06/04 11:58:50 chopps Exp $
+ *	$Id: machdep.c,v 1.30 1994/06/13 08:12:32 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -1036,7 +1036,7 @@ bootsync(void)
 			if (nbusy == 0)
 				break;
 			printf("%d ", nbusy);
-			DELAY(40000 * iter);
+			delay(40000 * iter);
 		}
 		if (nbusy)
 			printf("giving up\n");
@@ -1534,8 +1534,8 @@ nmihand(frame)
 #endif
 
 
-regdump(rp, sbytes)
-  int *rp; /* must not be register */
+regdump(fp, sbytes)
+  struct frame *fp; /* must not be register */
   int sbytes;
 {
 	static int doingdump = 0;
@@ -1547,8 +1547,8 @@ regdump(rp, sbytes)
 		return;
 	s = splhigh();
 	doingdump = 1;
-	printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(rp[PC], 8));
-	printf("ps = %s, ", hexstr(rp[PS], 4));
+	printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(fp->f_pc, 8));
+	printf("ps = %s, ", hexstr(fp->f_sr, 4));
 	printf("sfc = %s, ", hexstr(getsfc(), 4));
 	printf("dfc = %s\n", hexstr(getdfc(), 4));
 	printf("Registers:\n     ");
@@ -1556,18 +1556,18 @@ regdump(rp, sbytes)
 		printf("        %d", i);
 	printf("\ndreg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i], 8));
+		printf(" %s", hexstr(fp->f_regs[i], 8));
 	printf("\nareg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(rp[i+8], 8));
+		printf(" %s", hexstr(fp->f_regs[i+8], 8));
 	if (sbytes > 0) {
-		if (rp[PS] & PSL_S) {
+		if (fp->f_sr & PSL_S) {
 			printf("\n\nKernel stack (%s):",
-			       hexstr((int)(((int *)&rp)-1), 8));
-			dumpmem(((int *)&rp)-1, sbytes, 0);
+			       hexstr((int)(((int *)&fp)-1), 8));
+			dumpmem(((int *)&fp)-1, sbytes, 0);
 		} else {
-			printf("\n\nUser stack (%s):", hexstr(rp[SP], 8));
-			dumpmem((int *)rp[SP], sbytes, 1);
+			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
+			dumpmem((int *)fp->f_regs[SP], sbytes, 1);
 		}
 	}
 	doingdump = 0;

@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ivsdma.c
- *	$Id: ivsc.c,v 1.2 1994/05/29 04:50:12 chopps Exp $
+ *	$Id: ivsc.c,v 1.3 1994/06/13 08:13:02 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,8 @@ ivscattach(pdp, dp, auxp)
 	volatile u_char *rp;
 	struct sci_softc *sc;
 	struct ztwobus_args *zap;
+
+	printf("\n");
 
 	zap = auxp;
 	

@@ -66,7 +66,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: idesc.c,v 1.2 1994/05/22 19:05:10 chopps Exp $
+ *	$Id: idesc.c,v 1.3 1994/06/13 08:12:56 chopps Exp $
  *
  *
  */
@@ -352,7 +352,7 @@ idescattach(pdp, dp, auxp)
 		return;
 	/* test if controller will reset */
 	if (idereset(sc) != 0) {
-		DELAY (5000000);
+		delay (500000);
 		if (idereset(sc) != 0) {
 			printf (" IDE controller did not reset\n");
 			return;
@@ -651,7 +651,7 @@ idewait (sc, mask)
 			printf ("idewait timeout %02x\n", regs->ide_status);
 			return (-1);
 		}
-		DELAY (10000);
+		delay (1000);
 	}
 	if (regs->ide_status & IDES_ERR)
 		printf ("idewait: error %02x %02x\n", regs->ide_error,
