@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.s,v 1.1.2.4 2001/01/07 18:18:44 sommerfeld Exp $	*/
+/*	$NetBSD: mptramp.s,v 1.1.2.5 2001/05/27 17:11:18 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -158,23 +158,6 @@ _TRMP_LABEL(mp_startup)
 #endif
 
 	HALT(0x1)
-#if 0
-	/* 
-	 * use cpuid
-	 */
-	xorl    %eax,%eax
-	cpuid
-	movl    %eax,RELOC(cpuid_level)
-	movl    %ebx,RELOC(cpu_vendor)  # store vendor string
-	movl    %edx,RELOC(cpu_vendor)+4
-	movl    %ecx,RELOC(cpu_vendor)+8
-	movl    $0,  RELOC(cpu_vendor)+12
-	movl    $1,%eax
-	cpuid
-	movl    %eax,RELOC(cpu_id)      # store cpu_id and features
-	movl    %edx,RELOC(cpu_feature)
-	HALT(0x2)
-#endif
 	/* First, reset the PSL. */
 	pushl   $PSL_MBO
 	popfl
