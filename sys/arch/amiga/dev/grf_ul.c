@@ -1,8 +1,8 @@
-/*	$NetBSD: grf_ul.c,v 1.26 1999/02/16 22:46:57 is Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.27 1999/02/16 23:34:12 is Exp $	*/
 #define UL_DEBUG
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
