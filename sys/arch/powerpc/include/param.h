@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11 2001/06/10 02:28:57 briggs Exp $	*/
+/*	$NetBSD: param.h,v 1.12 2001/06/10 11:01:27 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -124,5 +124,30 @@
  */
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
+
+#ifndef NEWPMAP
+/*
+ * Segment handling stuff
+ */
+#define	SEGMENT_LENGTH	0x10000000
+#define	SEGMENT_MASK	0xf0000000
+
+/*
+ * Fixed segments
+ */
+#define	USER_SR		13
+#define	KERNEL_SR	14
+#define	KERNEL_SEGMENT	(0xf00000 + KERNEL_SR)
+#define	EMPTY_SEGMENT	0xfffff0
+#define	USER_ADDR	((void *)(USER_SR << ADDR_SR_SHFT))
+
+/*
+ * Some system constants
+ */
+#ifndef	NPMAPS
+#define	NPMAPS		32768	/* Number of pmaps in system */
+#endif
+
+#endif /* NEWPMAP */
 
 #endif /* _POWERPC_PARAM_H_ */
