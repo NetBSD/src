@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.3 2003/07/15 02:43:35 lukem Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.4 2003/10/18 04:34:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.3 2003/07/15 02:43:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.4 2003/10/18 04:34:30 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,10 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 	x |= UE_CE;
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBH_ENABLE, x);
 	delay(10);
-	x |= (UE_E);
+	x |= UE_E;
+#ifdef __MIPSEB__
+	x |= UE_BE;
+#endif
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBH_ENABLE, x);
 	delay(10);
 	x = bus_space_read_4(sc->sc.iot, sc->sc.ioh, OHCI_CONTROL);
