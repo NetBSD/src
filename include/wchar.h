@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.9.2.2 2002/01/14 21:37:09 nathanw Exp $	*/
+/*	$NetBSD: wchar.h,v 1.9.2.3 2002/01/28 21:27:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
