@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.16 2004/12/07 15:01:46 kent Exp $
+#	$NetBSD: BRANCHES,v 1.17 2005/01/16 14:44:22 kent Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -298,8 +298,20 @@ Branch:		kent-audio1
 Description:	Audio converter pipeline
 Status:		Active
 Start Date:	Tue Dec  7 2004
-End Date:	
+End Date:	Tue Jan 11 2005
 Base Tag:	kent-audio1-base
+Maintainer:	TAMURA Kent <kent@NetBSD.org>
+Scope:		kernel (audio device drivers)
+Notes:		http://mail-index.netbsd.org/tech-kern/2004/12/03/0007.html
+		Please consult with the maintainer before committing
+		to this branch.
+
+Branch:		kent-audio2
+Description:	In-kernel audio mixer
+Status:		Active
+Start Date:	Sun Jan 16 2005
+End Date:	
+Base Tag:	kent-audio2-base
 Maintainer:	TAMURA Kent <kent@NetBSD.org>
 Scope:		kernel (audio device drivers)
 Notes:		http://mail-index.netbsd.org/tech-kern/2004/12/03/0007.html
