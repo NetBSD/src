@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.32 2003/05/13 08:35:58 dyoung Exp $	*/
+/*	$NetBSD: wivar.h,v 1.33 2003/05/16 01:26:18 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -200,9 +200,6 @@ struct wi_card_ident {
 	bus_space_read_multi_stream_2(sc->sc_iot, sc->sc_ioh,	\
 			(sc->sc_pci? reg * 2: reg), buf, count)
 
-#define	WI_LOCK_DECL()		int s
-#define	WI_LOCK(_sc)		s = splnet()
-#define	WI_UNLOCK(_sc)		splx(s)
 
 int	wi_attach(struct wi_softc *);
 int	wi_detach(struct wi_softc *);
