@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/01/17 22:38:24 thorpej Exp $
+#	$NetBSD: Makefile,v 1.18 2004/05/08 21:51:47 kleink Exp $
 
 INCSDIR= /usr/include/cats
 
@@ -17,7 +17,8 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h sysarch.h \
 	trap.h types.h \
-	varargs.h vmparam.h
+	varargs.h vmparam.h \
+	wchar_limits.h
 
 INCS+=	joystick.h
 
