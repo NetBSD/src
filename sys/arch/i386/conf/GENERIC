@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.299 2000/02/03 20:31:42 dante Exp $
+#	$NetBSD: GENERIC,v 1.300 2000/02/15 17:14:50 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.299 $"
+#ident 		"GENERIC-$Revision: 1.300 $"
 
 maxusers	32		# estimated number of users
 
@@ -626,6 +626,7 @@ ugen*	at uhub? port ?
 #pnpbios0 at mainbus0
 
 # mainboard audio chips
+#ess*	at pnpbios0 index ?	# ESS AudioDrive
 #sb*	at pnpbios0 index ?	# NeoMagic 256AV in sb mode
 #wss*	at pnpbios0 index ?	# NeoMagic 256AV in wss mode
 #ym*	at pnpbios0 index ?	# OPL3-SA3
