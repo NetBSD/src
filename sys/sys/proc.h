@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.4 2001/09/21 22:37:01 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.5 2001/09/25 16:31:13 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -103,7 +103,7 @@ struct emul {
 	char		*e_sigcode;	/* Start of sigcode */
 	char		*e_esigcode;	/* End of sigcode */
 					/* Set registers before execution */
-	void		(*e_setregs) __P((struct proc *, struct exec_package *,
+	void		(*e_setregs) __P((struct lwp *, struct exec_package *,
 				  u_long));
 
 					/* Per-process hooks */
