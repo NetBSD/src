@@ -1,7 +1,7 @@
-/*	$NetBSD: ata_wdc.c,v 1.32 2001/12/03 00:11:15 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.33 2001/12/03 00:20:23 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1998 Manuel Bouyer.
+ * Copyright (c) 1998, 2001 Manuel Bouyer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.32 2001/12/03 00:11:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.33 2001/12/03 00:20:23 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG

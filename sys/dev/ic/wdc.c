@@ -1,8 +1,8 @@
-/*	$NetBSD: wdc.c,v 1.103 2001/12/03 00:11:17 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.104 2001/12/03 00:20:23 bouyer Exp $ */
 
 
 /*
- * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
+ * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.103 2001/12/03 00:11:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.104 2001/12/03 00:20:23 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
