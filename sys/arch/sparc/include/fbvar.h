@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.3 1995/09/17 20:41:30 pk Exp $ */
+/*	$NetBSD: fbvar.h,v 1.4 1995/10/05 00:26:07 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  * following in order to participate.
  */
 
-#ifdef RCONSOLE
+#ifdef RASTERCONSOLE
 #include <dev/rcons/rcons.h>
 #endif
 
@@ -76,13 +76,13 @@ struct fbdevice {
 	struct	fbdriver *fb_driver;	/* pointer to driver */
 	struct	device *fb_device;	/* parameter for fbd_unblank */
 
-#ifdef RCONSOLE
+#ifdef RASTERCONSOLE
 	/* Raster console emulator state */
 	struct	rconsole fb_rcons;
 #endif
 };
 
 void	fbattach __P((struct fbdevice *));
-#ifdef RCONSOLE
+#ifdef RASTERCONSOLE
 void	fbrcons_init __P((struct fbdevice *));
 #endif
