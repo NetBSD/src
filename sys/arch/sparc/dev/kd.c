@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.8 2000/03/20 11:27:16 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.9 2000/03/23 06:44:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -369,7 +369,7 @@ kdstart(tp)
 			tp->t_state &= ~TS_BUSY;
 		} else {
 			/* called at interrupt level - do it later */
-			timeout(kd_later, (void*)tp, 0);
+			callout_reset(&tp->t_rstrt_ch, kd_later, tp, 0);
 		}
 	}
 	if (cl->c_cc <= tp->t_lowat) {
@@ -476,7 +476,7 @@ kd_rom_iopen(cc)
 	struct cons_channel *cc;
 {
 	/* Poll for ROM input 4 times per second */
-	timeout(kd_rom_intr, cc, hz/4);
+	callout_reset(&cc->cc_callout, hz / 4, kd_rom_intr, cc);
 	return (0);
 }
 
@@ -485,7 +485,7 @@ kd_rom_iclose(cc)
 	struct cons_channel *cc;
 {
 
-	untimeout(kd_rom_intr, cc);
+	callout_stop(&cc->cc_callout);
 	return (0);
 }
 
@@ -500,7 +500,7 @@ kd_rom_intr(arg)
 	int s, c;
 
 	/* Re-schedule */
-	timeout(kd_rom_intr, arg, hz/4);
+	callout_reset(&cc->cc_callout, hz / 4, kd_rom_intr, cc);
 
 	s = spltty();
 

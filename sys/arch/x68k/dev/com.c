@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.16 1999/11/22 03:53:40 sommerfeld Exp $	*/
+/*	$NetBSD: com.c,v 1.17 2000/03/23 06:47:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,6 +118,8 @@ struct com_softc {
 	void *sc_ih;
 	struct tty *sc_tty;
 
+	struct callout sc_diag_ch;
+
 	int sc_overflows;
 	int sc_floods;
 	int sc_errors;
@@ -144,6 +146,8 @@ struct com_softc {
 	u_char *sc_ibuf, *sc_ibufp, *sc_ibufhigh, *sc_ibufend;
 	u_char sc_ibufs[2][COM_IBUFSIZE];
 };
+
+struct callout com_poll_ch = CALLOUT_INITIALIZER;
 
 int comprobe __P((struct device *, struct cfdata *, void *));
 void comattach __P((struct device *, struct device *, void *));
@@ -348,6 +352,8 @@ comattach(parent, dev, aux)
 	int	*hayespp;
 #endif
 
+	callout_init(&sc->sc_diag_ch);
+
 	sc->sc_iobase = iobase;
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
@@ -483,7 +489,7 @@ comopen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 		if (comsopen++ == 0)
-			timeout(compoll, NULL, 1);
+			callout_reset(&com_poll_ch, 1, compoll, NULL);
 
 		sc->sc_ibufp = sc->sc_ibuf = sc->sc_ibufs[0];
 		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
@@ -585,7 +591,7 @@ comclose(dev, flag, mode, p)
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	if (--comsopen == 0)
-		untimeout(compoll, NULL);
+		callout_stop(&com_poll_ch);
 	splx(s);
 	ttyclose(tp);
 #ifdef notyet /* XXXX */
@@ -1041,7 +1047,8 @@ compoll(arg)
 			if (*ibufp & LSR_OE) {
 				sc->sc_overflows++;
 				if (sc->sc_errors++ == 0)
-					timeout(comdiag, sc, 60 * hz);
+					callout_reset(&sc->sc_diag_ch, 60 * hz,
+					    comdiag, sc);
 			}
 			/* This is ugly, but fast. */
 			c |= lsrmap[(*ibufp++ & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
@@ -1050,7 +1057,7 @@ compoll(arg)
 	}
 
 out:
-	timeout(compoll, NULL, 1);
+	callout_reset(&com_poll_ch, 1, compoll, NULL);
 }
 
 int
@@ -1090,7 +1097,8 @@ comintr(arg)
 				if (p >= sc->sc_ibufend) {
 					sc->sc_floods++;
 					if (sc->sc_errors++ == 0)
-						timeout(comdiag, sc, 60 * hz);
+						callout_reset(&sc->sc_diag_ch,
+						    60 * hz, comdiag, sc);
 				} else {
 					*p++ = data;
 					*p++ = lsr;
