@@ -29,8 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)twinkle2.c	8.1 (Berkeley) 6/8/93
-.\"	$Id: twinkle2.c,v 1.2 1993/11/09 04:10:01 cgd Exp $
+.\"	@(#)twinkle2.c	8.1 (Berkeley) 6/8/93
 .\"
 extern int	_putchar();
 
