@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.34 2000/06/28 16:08:46 mrg Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.35 2000/09/05 22:37:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -605,7 +605,7 @@ static int tl_init(sc)
 		if (i > 0) { /* chain the list */
 			sc->Rx_list[i-1].next = &sc->Rx_list[i];
 			sc->Rx_list[i-1].hw_list.fwd =
-			    vtophys(&sc->Rx_list[i].hw_list);
+			    vtophys((vaddr_t)&sc->Rx_list[i].hw_list);
 #ifdef DIAGNOSTIC
 			if (sc->Rx_list[i-1].hw_list.fwd & 0x7)
 				printf("%s: physical addr 0x%x of list not "
@@ -642,7 +642,7 @@ static int tl_init(sc)
 	/* start ticks calls */
 	callout_reset(&sc->tl_tick_ch, hz, tl_ticks, sc);
 	/* write adress of Rx list and enable interrupts */
-	TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys(&sc->Rx_list[0].hw_list));
+	TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys((vaddr_t)&sc->Rx_list[0].hw_list));
 	TL_HR_WRITE(sc, TL_HOST_CMD,
 	    HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | HOST_CMD_IntOn);
 	sc->tl_if.if_flags |= IFF_RUNNING;
@@ -930,7 +930,7 @@ tl_intr(v)
 			}
 			Rx->next = NULL;
 			Rx->hw_list.fwd = 0;
-			sc->last_Rx->hw_list.fwd = vtophys(&Rx->hw_list);
+			sc->last_Rx->hw_list.fwd = vtophys((vaddr_t)&Rx->hw_list);
 #ifdef DIAGNOSTIC
 			if (sc->last_Rx->hw_list.fwd & 0x7)
 				printf("%s: physical addr 0x%x of list not "
@@ -1008,7 +1008,7 @@ tl_intr(v)
 		 * interrupt and enable interrupts in one command
 		 */
 		TL_HR_WRITE(sc, TL_HOST_CH_PARM,
-		    vtophys(&sc->active_Rx->hw_list));
+		    vtophys((vaddr_t)&sc->active_Rx->hw_list));
 		TL_HR_WRITE(sc, TL_HOST_CMD,
 		    HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | ack | int_type |
 		    HOST_CMD_ACK | HOST_CMD_IntOn);
@@ -1022,7 +1022,7 @@ tl_intr(v)
 			ack++;
 #ifdef TLDEBUG_TX
 			printf("TL_INTR_TxEOC: list 0x%xp done\n",
-			    vtophys(&Tx->hw_list));
+			    vtophys((vaddr_t)&Tx->hw_list));
 #endif
 			Tx->hw_list.stat = 0;
 			m_freem(Tx->m);
@@ -1044,7 +1044,7 @@ tl_intr(v)
 			if ( sc->active_Tx != NULL) {
 				/* needs a Tx go command */
 				TL_HR_WRITE(sc, TL_HOST_CH_PARM,
-				    vtophys(&sc->active_Tx->hw_list));
+				    vtophys((vaddr_t)&sc->active_Tx->hw_list));
 				TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 			}
 			sc->tl_if.if_timer = 0;
@@ -1331,7 +1331,7 @@ tbdinit:
 		Tx->hw_list.seg[segment].data_count =
 		    ETHER_MIN_TX - size;
 		Tx->hw_list.seg[segment].data_addr =
-		    vtophys(nullbuf);
+		    vtophys((vaddr_t)nullbuf);
 		size = ETHER_MIN_TX;
 		segment++;
 	}
@@ -1356,16 +1356,16 @@ tbdinit:
 		sc->active_Tx = sc->last_Tx = Tx;
 #ifdef TLDEBUG_TX
 		printf("%s: Tx GO, addr=0x%x\n", sc->sc_dev.dv_xname,
-		    vtophys(&Tx->hw_list));
+		    vtophys((vaddr_t)&Tx->hw_list));
 #endif
-		TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys(&Tx->hw_list));
+		TL_HR_WRITE(sc, TL_HOST_CH_PARM, vtophys((vaddr_t)&Tx->hw_list));
 		TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 	} else {
 #ifdef TLDEBUG_TX
 		printf("%s: Tx addr=0x%x queued\n", sc->sc_dev.dv_xname,
-		    vtophys(&Tx->hw_list));
+		    vtophys((vaddr_t)&Tx->hw_list));
 #endif
-		sc->last_Tx->hw_list.fwd = vtophys(&Tx->hw_list);
+		sc->last_Tx->hw_list.fwd = vtophys((vaddr_t)&Tx->hw_list);
 		sc->last_Tx->next = Tx;
 		sc->last_Tx = Tx;
 #ifdef DIAGNOSTIC
@@ -1462,7 +1462,7 @@ static int tl_add_RxBuff(Rx, oldm)
 	Rx->m = m;
 	Rx->hw_list.stat = ((MCLBYTES -2) << 16) | 0x3000;
 	Rx->hw_list.seg.data_count = (MCLBYTES -2);
-	Rx->hw_list.seg.data_addr = vtophys(m->m_data);
+	Rx->hw_list.seg.data_addr = vtophys((vaddr_t)m->m_data);
 	return (m != oldm);
 }
 
