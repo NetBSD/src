@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.33 1997/07/15 00:42:29 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.34 1997/11/05 23:00:30 cgd Exp $
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
 
 # stdlib sources
@@ -13,20 +13,11 @@ SRCS+=	_strtoq.c _strtouq.c a64l.c abort.c atexit.c atoi.c atof.c atol.c \
 	system.c _rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
 	mrand48.c nrand48.c seed48.c srand48.c qabs.c qdiv.c
 
-.if   (${MACHINE_ARCH} == "m68k")
-SRCS+=	abs.S div.c labs.c ldiv.c
-.elif (${MACHINE_ARCH} == "i386")
-SRCS+=	abs.S div.S labs.S ldiv.S
-.elif (${MACHINE_ARCH} == "ns32k")
-SRCS+=	abs.S div.c labs.c ldiv.c
-.elif (${MACHINE_ARCH} == "vax")
-SRCS+=	abs.c div.c labs.c ldiv.c
-.elif (${MACHINE_ARCH} == "alpha")
-# XXX should be .S's
-SRCS+=	abs.c div.c labs.c ldiv.c
-.else
-SRCS+=	abs.c div.c labs.c ldiv.c
-.endif
+# machine-dependent stdlib sources
+# m-d Makefile.inc must include sources for:
+#       abs() div() labs() ldiv()
+
+.include "${.CURDIR}/arch/${MACHINE_ARCH}/stdlib/Makefile.inc"
 
 MAN+=	abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 bsearch.3 \
 	calloc.3 div.3 exit.3 free.3 getenv.3 getopt.3 labs.3 ldiv.3 \
