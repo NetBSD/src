@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.16 2001/01/17 02:17:47 thorpej Exp $	*/
+/*	$NetBSD: sockio.h,v 1.17 2001/02/20 15:35:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -102,6 +102,8 @@
 #define	SIOCGIFPSRCADDR	_IOWR('i', 71, struct ifreq)	/* get gif psrc addr */
 #define	SIOCGIFPDSTADDR	_IOWR('i', 72, struct ifreq)	/* get gif pdst addr */
 #define SIOCDIFPHYADDR	 _IOW('i', 73, struct ifreq)	/* delete gif addrs */
+#define	SIOCSLIFPHYADDR	 _IOW('i', 74, struct if_laddrreq) /* set gif addrs */
+#define	SIOCGLIFPHYADDR	_IOWR('i', 75, struct if_laddrreq) /* get gif addrs */
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
