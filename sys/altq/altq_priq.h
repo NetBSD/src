@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.h,v 1.3 2003/01/06 03:44:24 christos Exp $	*/
+/*	$NetBSD: altq_priq.h,v 1.4 2003/01/06 14:09:42 christos Exp $	*/
 /*	$KAME: altq_priq.h,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -107,7 +107,7 @@ struct priq_class_stats {
 	struct priq_interface	iface;
 	int			maxpri;	  /* in/out */
 
-	struct _priq_class_stats_	*stats;   /* pointer to stats array */
+	struct priq_basic_class_stats	*stats;   /* pointer to stats array */
 };
 
 #define	PRIQ_IF_ATTACH		_IOW('Q', 1, struct priq_interface)
