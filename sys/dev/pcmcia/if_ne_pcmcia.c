@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.44 1999/11/06 00:58:32 enami Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.45 1999/12/05 20:08:39 danw Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -139,6 +139,11 @@ struct ne2000dev {
       PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_PLANEX_FNW3600T,
       0, -1, { 0x00, 0x90, 0xcc }, NE2000DVF_DL10019 },
+
+    { PCMCIA_STR_EPSON_EEN10B,
+      PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_EPSON_EEN10B,
+      PCMCIA_CIS_EPSON_EEN10B,
+      0, 0xff0, { 0x00, 0x00, 0x48 } },
 
     /*
      * You have to add new entries which contains
@@ -287,9 +292,6 @@ struct ne2000dev {
     { "EP-210 Ethernet",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0110, { 0x00, 0x40, 0x33 } },
-    { "Epson EEN10B",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0ff0, { 0x00, 0x00, 0x48 } },
     { "ELECOM Laneed LD-CDWA",
       0x0000, 0x0000, NULL, NULL, 0,
       0x00b8, { 0x08, 0x00, 0x42 } },
