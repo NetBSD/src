@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.15 2003/07/25 11:54:03 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.16 2003/07/25 17:27:26 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -57,6 +57,15 @@ usage() {
 version() {
 	echo "20030725"
 	exit 0
+}
+
+checkpkg() {
+	if [ -d "$2/$1" ]; then
+		:
+	else
+		echo "Package \`$1' doesn't exist in \`$2'"
+		exit 1
+	fi
 }
 
 stowdir=""
@@ -124,6 +133,7 @@ while [ $# -gt 0 ]; do
 		if [ -f ${pkg_dbdir}/$1/+DEPOT ]; then
 			echo "Package $1 already exists in $viewstr."
 		else
+			checkpkg $1 ${depot_pkg_dbdir}
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
 			env PLIST_IGNORE_FILES="${ignorefiles} $dbs" $linkfarmprog --target=${targetdir} --dir=${depot_pkg_dbdir} $1
 			$mkdirprog -p ${depot_pkg_dbdir}/$1
@@ -144,6 +154,7 @@ while [ $# -gt 0 ]; do
 		fi
 		;;
 	check)
+		checkpkg $1 ${depot_pkg_dbdir}
 		$linkfarmprog -c --target=${targetdir} --dir=${depot_pkg_dbdir} $1
 		exit $?
 		;;
@@ -160,6 +171,7 @@ while [ $# -gt 0 ]; do
 					exit $ec
 				fi
 			fi
+			checkpkg $1 ${depot_pkg_dbdir}
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
 			env PLIST_IGNORE_FILES="${ignorefiles} $dbs" $linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
 			temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
