@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.163 1997/09/12 10:29:28 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.164 1997/09/16 14:35:32 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -265,7 +265,7 @@ consinit(void)
 		mac68k_calibrate_delay();
 }
 
-#define CURRENTBOOTERVER	108
+#define CURRENTBOOTERVER	111
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
@@ -1158,7 +1158,7 @@ getenvvars(flag, buf)
 	extern u_long macos_boottime, MacOSROMBase;
 	extern long macos_gmtbias;
 	extern char end[];
-	int     root_scsi_id;
+	int root_scsi_id;
 
 	/*
          * If flag & 0x80000000 == 0, then we're booting with the old booter
@@ -1168,16 +1168,6 @@ getenvvars(flag, buf)
 		/* Freak out; print something if that becomes available */
 	} else
 		envbuf = buf;
-
-	root_scsi_id = getenv("ROOT_SCSI_ID");
-	/*
-         * For now, we assume that the boot device is off the first controller.
-         */
-	if (bootdev == 0)
-		bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
-
-	if (boothowto == 0)
-		boothowto = getenv("SINGLE_USER");
 
 	/* These next two should give us mapped video & serial */
 	/* We need these for pre-mapping graybars & echo, but probably */
@@ -1210,8 +1200,20 @@ getenvvars(flag, buf)
 	mac68k_machine.print_flags = getenv("SERIAL_PRINT_FLAGS");
 	mac68k_machine.print_cts_clk = getenv("SERIAL_PRINT_HSKICLK");
 	mac68k_machine.print_dcd_clk = getenv("SERIAL_PRINT_GPICLK");
-	/* Should probably check this and fail if old */
 	mac68k_machine.booter_version = getenv("BOOTERVER");
+
+	/*
+         * For now, we assume that the boot device is off the first controller.
+	 * Booter versions 1.11.0 and later set a flag to tell us to construct
+	 * bootdev using the SCSI ID passed in via the environment.
+         */
+	root_scsi_id = getenv("ROOT_SCSI_ID");
+	if (((mac68k_machine.booter_version < CURRENTBOOTERVER) ||
+	    (flag & 0x40000)) && bootdev == 0)
+		bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
+
+	if (boothowto == 0)
+		boothowto = getenv("SINGLE_USER");
 
 	/*
          * Get end of symbols for kernel debugging
