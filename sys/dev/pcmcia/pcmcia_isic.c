@@ -33,7 +33,7 @@
  *	pcmcia_isic.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: pcmcia_isic.c,v 1.3 2001/01/19 20:04:07 martin Exp $ 
+ *	$Id: pcmcia_isic.c,v 1.4 2001/02/03 22:44:23 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -203,10 +203,12 @@ pcmcia_isic_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	const struct isic_pcmcia_card_entry * cde;
+	int s;
 
 	/* Which card is it? */
 	cde = find_matching_card(pa);
-	if (cde == NULL) return; /* oops - not found?!? */
+	if (cde == NULL)
+		return; /* oops - not found?!? */
 
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
@@ -223,11 +225,17 @@ pcmcia_isic_attach(parent, self, aux)
 	/* Announce card name */
 	printf(": %s\n", cde->name);
 
+	/* XXX - we generate interrupts during card initialization.
+	   Block them for now, until the handler is established. */
+	s = splhigh();
+	
 	/* MI initilization */
 	pcmcia_isicattach(sc);
 
 	/* setup interrupt */
 	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, isicintr, sc);
+
+	splx(s);
 }
 
 /*---------------------------------------------------------------------------*
