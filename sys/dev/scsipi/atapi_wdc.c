@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.1.2.2 1998/06/11 09:27:24 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.1.2.3 1998/06/19 21:57:56 leo Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -639,8 +639,6 @@ wdc_atapi_done(chp, xfer)
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
 	struct wdc_softc *wdc = chp->wdc;
 	int need_done =  xfer->c_flags & C_NEEDDONE;
-	if (wdc->cap & WDC_CAPABILITY_HWLOCK)
-	(*wdc->free_hw)(wdc);
 
 	WDCDEBUG_PRINT(("wdc_atapi_done: flags 0x%x\n", (u_int)xfer->c_flags),
 	    DEBUG_FUNCS);
