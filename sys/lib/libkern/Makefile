@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 1998/06/21 18:43:35 christos Exp $
+#	$NetBSD: Makefile,v 1.43 1998/07/19 18:35:16 drochner Exp $
 
 LIB=	kern
 NOPIC=
@@ -114,6 +114,8 @@ strrchr.ln: rindex.c
 	    ${.ALLSRC}
 .endif
 
+POBJS+=	${OBJS:.o=.po} mcount.po
+
 # only needed during build
 libinstall::
 
@@ -124,7 +126,6 @@ lib${LIB}.o:: ${OBJS}
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `NM=${NM} ${LORDER} ${OBJS} | ${TSORT}`
 
-POBJS+=	${OBJS:.o=.po} mcount.po
 lib${LIB}.po:: ${POBJS}
 	@echo building profiled ${LIB} library
 	@rm -f lib${LIB}.po
