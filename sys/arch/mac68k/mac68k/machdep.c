@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 1995/06/25 03:24:09 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 1995/06/28 04:09:32 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -188,7 +188,9 @@ extern int	freebufspace;
  */
 int	fpu_type;
 
-static void	identifycpu(void);
+static void	identifycpu __P((void));
+
+void	dumpsys __P((void));
 
 /*
  * Console initialization: called early on from main,
@@ -771,6 +773,7 @@ sigreturn(p, uap, retval)
 }
 
 int	waittime = -1;
+struct pcb dumppcb;
 
 void
 boot(howto)
@@ -796,17 +799,14 @@ boot(howto)
 		resettodr();
 	}
 	splhigh();			/* extreme priority */
-	if (howto&RB_HALT) {
-		/* LAK: Actually shut down machine */
+	if (howto & RB_HALT) {
 		printf("halted\n\n");
-#if 1
-		via_shutdown();  /* in via.c */
-#else
-		asm("	stop	#0x2700");
-#endif
+		via_shutdown();
 	} else {
-		if (howto & RB_DUMP)
+		if (howto & RB_DUMP) {
+			savectx(&dumppcb);
 			dumpsys();
+		}
 		doboot();
 		/*NOTREACHED*/
 	}
@@ -816,28 +816,61 @@ boot(howto)
 	/*NOTREACHED*/
 }
 
-unsigned int	dumpmag = 0x8fca0101;	/* magic number for savecore */
-int	dumpsize = 0;		/* also for savecore */
-long	dumplo = 0;
+/*
+ * These variables are needed by /sbin/savecore
+ */
+u_long	dumpmag = 0x8fca0101;	/* magic number */
+int	dumpsize = 0;		/* pages */
+long	dumplo = 0;		/* blocks */
 
+static int
+get_max_page()
+{
+	int i, max = 0;
+
+	for (i = 0; i < numranges; i++) {
+		if (high[i] > max)
+			max = high[i];
+	}
+	return max;
+}
+
+/*
+ * This is called by configure to set dumplo and dumpsize.
+ * Dumps always skip the first CLBYTES of disk space in
+ * case there might be a disk label stored there.  If there
+ * is extra space, put dump at the end to reduce the chance
+ * that swapping trashes it.
+ */
+void
 dumpconf()
 {
 	int nblks;
+	int maj;
 
-	dumpsize = physmem;
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
-	}
-	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?)
-	 * in case the dump device includes a disk label.
-	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
+	if (dumpdev == NODEV)
+		return;
+
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdevsw[maj].d_psize == NULL)
+		return;
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
+
+	dumpsize = btoc(get_max_page());
+
+	/* Always skip the first CLBYTES, in case there is a label there. */
+	if (dumplo < ctod(1))
+		dumplo = ctod(1);
+
+	/* Put dump at end of partition, and make it fit. */
+	if (dumpsize > dtoc(nblks - dumplo))
+		dumpsize = dtoc(nblks - dumplo);
+	if (dumplo < nblks - ctod(dumpsize))
+		dumplo = nblks - ctod(dumpsize);
 }
 
 /*
@@ -845,12 +878,67 @@ dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
+#define BYTES_PER_DUMP NBPG	/* Must be a multiple of pagesize XXX small */
+static vm_offset_t dumpspace;
+
+vm_offset_t
+reserve_dumppages(p)
+	vm_offset_t p;
+{
+	dumpspace = p;
+	return (p + BYTES_PER_DUMP);
+}
+
+static int
+find_range(pa)
+	vm_offset_t pa;
+{
+	int i, max = 0;
+
+	for (i = 0; i < numranges; i++) {
+		if (low[i] <= pa && pa < high[i])
+			return i;
+	}
+	return -1;
+}
+
+static int
+find_next_range(pa)
+	vm_offset_t pa;
+{
+	int i, near, best, t;
+
+	near = -1;
+	best = 0x7FFFFFFF;
+	for (i = 0; i < numranges; i++) {
+		if (low[i] <= pa && pa < high[i])
+			return i;
+		t = low[i] - pa;
+		if (t > 0) {
+			if (t < best) {
+				near = i;
+				best = t;
+			}
+		}
+	}
+	return near;
+}
+
+void
 dumpsys()
 {
+	unsigned bytes, i, n;
+	int range;
+	int maddr, psize;
+	daddr_t blkno;
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int error = 0;
+	int c;
 
-	msgbufmapped = 0;
+	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
+
 	/*
 	 * For dumps during autoconfiguration,
 	 * if dump device has already configured...
@@ -860,8 +948,52 @@ dumpsys()
 	if (dumplo < 0)
 		return;
 	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+
+	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	if (psize == -1) {
+		printf("area unavailable.\n");
+		return;
+	}
+
+	bytes = get_max_page();
+	maddr = 0;
+	range = find_range(0);
+	blkno = dumplo;
+	dump = bdevsw[major(dumpdev)].d_dump;
+	for (i = 0; i < bytes; i += n) {
+		/*
+		 * Avoid dumping "holes."
+		 */
+		if ((range == -1) || (i >= high[range])) {
+			range = find_next_range(i);
+			if (range == -1) {
+				error = EIO;
+				break;
+			}
+			n = low[range] - i;
+			maddr += n;
+			blkno += btodb(n);
+			continue;
+		}
+		/* Print out how many MBs we have to go. */
+		n = bytes - i;
+		if (n && (n % (1024*1024)) == 0)
+			printf("%d ", n / (1024 * 1024));
+
+		/* Limit size for next transfer. */
+		if (n > BYTES_PER_DUMP)
+			n = BYTES_PER_DUMP;
+
+		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
+		error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+		if (error)
+			break;
+		maddr += n;
+		blkno += btodb(n);		/* XXX? */
+	}
+
+	switch (error) {
 
 	case ENXIO:
 		printf("device bad\n");
@@ -879,10 +1011,20 @@ dumpsys()
 		printf("i/o error\n");
 		break;
 
-	default:
+	case EINTR:
+		printf("aborted from console\n");
+		break;
+
+	case 0:
 		printf("succeeded\n");
 		break;
+
+	default:
+		printf("error %d\n", error);
+		break;
 	}
+	printf("\n\n");
+	delay(5000000);		/* 5 seconds */
 }
 
 /*
@@ -1204,74 +1346,6 @@ void hex_dump(int addr, int len)
     printf("\n");
   }
   prev=addr+len;
-}
-
-void stack_trace(struct frame *fp)
-{
-  unsigned long *a6;
-  int i;
-
-  printf("D: ");
-  for(i=0;i<8;i++)
-     printf("%08x ", fp->f_regs[i]);
-  printf("\nA:");
-  for(i=0;i<8;i++)
-     printf("%08x ", fp->f_regs[i+8]);
-  printf("\n");
-  printf("FP:%08x ", fp->f_regs[A6]);
-  printf("SP:%08x\n", fp->f_regs[SP]);
-
-  printf ("Stack trace:\n");
-
-  a6 = (unsigned long *)fp -> f_regs[A6];
-
-  while (a6) {
-    printf ("  Return addr = 0x%08x\n",(unsigned long)a6[1]);
-    a6 = (unsigned long *)*a6;
-  }
-}
-
-void stack_list(unsigned long *a6)
-{
-  int i;
-
-  printf ("Stack trace:\n");
-
-  while (a6) {
-    printf ("  (a6 == 0x%08x)", a6);
-    printf ("  Return addr = 0x%08x\n",(unsigned long)a6[1]);
-    a6 = (unsigned long *)*a6;
-  }
-}
-
-void print_bus(struct frame *fp)
-{
-  int format;
-
-  printf("\n\nKernel Panic -- Bus Error\n\n");
-  format = fp -> f_format;
-  switch (format)
-  {
-    case 0: printf ("Normal Stack Frame\n\n"); break;
-    case 1: printf ("Throwaway Stack Frame\n\n"); break;
-    case 10: printf ("Short Bus Cycle Stack Frame\n\n"); break;
-    case 11: printf ("Long Bus Cycle Stack Frame\n\n"); break;
-    default: printf ("Unknown stack frame format: %d\n\n",(int)format); break;
-  }
-  if (format == 10 || format == 11)
-  {
-    printf ("Data cycle fault address: 0x%08x\n",fp -> F_u.F_fmtA.f_dcfa);
-    printf ("Data output buffer 0x%08x\n",fp -> F_u.F_fmtA.f_dob);
-  }
-  printf ("Status word: 0x%04x\n",(long)fp -> f_sr);
-  printf ("Program counter: 0x%08x\n",fp -> f_pc);
-  printf ("Stack pointer: 0x%08x\n",fp -> f_regs[SP]);
-  printf ("Frame: 0x%04x\n",fp -> f_vector + format << 12);
-  printf ("MMU status register: %04x\n", get_mmusr());
-  stack_trace(fp);
-#ifdef NO_MY_CORE_DUMP
-  my_core_dump(fp);
-#endif
 }
 
 int get_crp_pa(register long crp[2])
