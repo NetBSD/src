@@ -1427,6 +1427,7 @@ static	struct	wordtab ipfwords[95] = {
 	{ "skip",			IPFY_SKIP },
 	{ "short",			IPFY_SHORT },
 	{ "state",			IPFY_STATE },
+	{ "state-age",			IPFY_AGE },
 	{ "strict",			IPFY_STRICT },
 	{ "tcp",			IPFY_TCP },
 	{ "tcp-udp",			IPFY_TCPUDP },
