@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.51 1997/01/11 09:11:41 mikel Exp $
+#	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC
 
@@ -101,3 +101,4 @@ pseudo-device	ccd		2
 pseudo-device	ppp		2
 pseudo-device	loop
 pseudo-device	sl
+#pseudo-device	ipfilter
