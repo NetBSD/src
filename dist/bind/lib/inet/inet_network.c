@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.1.1.2 2002/06/20 10:30:19 itojun Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.2 2002/06/20 11:43:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993

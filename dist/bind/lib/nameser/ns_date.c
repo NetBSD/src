@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_date.c,v 1.1.1.2 2002/06/20 10:30:38 itojun Exp $	*/
+/*	$NetBSD: ns_date.c,v 1.2 2002/06/20 11:43:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 by Internet Software Consortium.

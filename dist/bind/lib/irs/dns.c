@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.2 2001/01/27 07:22:03 itojun Exp $	*/
+/*	$NetBSD: dns.c,v 1.3 2002/06/20 11:43:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: dns.c,v 1.15 2000/02/28 07:52:16 vixie Exp";
+static const char rcsid[] = "Id: dns.c,v 1.16 2001/05/29 05:48:26 marka Exp";
 #endif
 
 /*
@@ -60,6 +60,8 @@ struct irs_acc *
 irs_dns_acc(const char *options) {
 	struct irs_acc *acc;
 	struct dns_p *dns;
+
+	UNUSED(options);
 
 	if (!(acc = memget(sizeof *acc))) {
 		errno = ENOMEM;

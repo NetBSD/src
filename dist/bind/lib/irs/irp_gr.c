@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_gr.c,v 1.1.1.2 2002/06/20 10:30:27 itojun Exp $	*/
+/*	$NetBSD: irp_gr.c,v 1.2 2002/06/20 11:43:05 itojun Exp $	*/
 
 /*
  * Portions Copyright(c) 1996, 1998 by Internet Software Consortium.

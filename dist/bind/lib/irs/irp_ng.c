@@ -1,4 +1,4 @@
-/*	$NetBSD: irp_ng.c,v 1.1.1.2 2002/06/20 10:30:28 itojun Exp $	*/
+/*	$NetBSD: irp_ng.c,v 1.2 2002/06/20 11:43:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 by Internet Software Consortium.
