@@ -1,4 +1,4 @@
-/*	$NetBSD: setlogin.S,v 1.1 2002/06/06 20:31:24 fredette Exp $	*/
+/*	$NetBSD: setlogin.S,v 1.2 2002/07/01 16:00:52 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -39,19 +39,21 @@
 #if 0
 	RCSID("from: @(#)setlogin.s	5.1 (Berkeley) 5/6/91")
 #else
-	RCSID("$NetBSD: setlogin.S,v 1.1 2002/06/06 20:31:24 fredette Exp $")
+	RCSID("$NetBSD: setlogin.S,v 1.2 2002/07/01 16:00:52 fredette Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 	.import __logname_valid, data	/* in getlogin() */
 
 ENTRY(setlogin, 0)
-#ifdef	PIC
-#error "PIC not supported yet"
-#else
+#ifdef PIC
+	addil	LT%__logname_valid, %r19
+	ldw	RT%__logname_valid(%r1), %r1
+	stw	%r0, 0(%r1)
+#else  /* !PIC */
 	ldil	L%__logname_valid, r1
 	stw	r0, R%__logname_valid(r1)
-#endif
+#endif /* !PIC */
 	bv	r0(rp)
 	copy	r0, ret0
 EXIT(setlogin)
