@@ -1,7 +1,7 @@
-/*	$NetBSD: iptest.c,v 1.4.2.2 1998/07/23 01:43:11 mellon Exp $	*/
+/*	$NetBSD: iptest.c,v 1.4.2.3 1998/11/24 07:22:33 cgd Exp $	*/
 
 /*
- * ipsend.c (C) 1995-1997 Darren Reed
+ * ipsend.c (C) 1995-1998 Darren Reed
  *
  * This was written to test what size TCP fragments would get through
  * various TCP/IP packet filters, as used in IP firewalls.  In certain
@@ -14,7 +14,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptest.c,v 2.0.2.8.2.1 1997/11/28 03:36:18 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: iptest.c,v 2.0.2.8.2.2 1998/11/22 01:51:17 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <netdb.h>
