@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.4 2002/10/02 15:52:31 thorpej Exp $ */
+/* $NetBSD: rtc.c,v 1.5 2002/11/12 01:22:27 simonb Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -42,50 +42,37 @@
 
 #include <dev/clock_subr.h>
 
+#include <machine/swarm.h>
 #include <machine/systemsw.h>
 
 #include <mips/locore.h>
 #include <mips/sibyte/dev/sbsmbusvar.h>
 
-/* XXX should be in an x1241.h header */
-#define	X1241REG_BL		0x10	/* block protect bits */
-#define	X1241REG_SC		0x30	/* Seconds */
-#define	X1241REG_MN		0x31	/* Minutes */
-#define	X1241REG_HR		0x32	/* Hours */
-#define	X1241REG_DT		0x33	/* Day of month */
-#define	X1241REG_MO		0x34	/* Month */
-#define	X1241REG_YR		0x35	/* Year */
-#define	X1241REG_DW		0x36	/* Day of Week */
-#define	X1241REG_Y2K		0x37	/* Year 2K */
-#define	X1241REG_SR		0x3f	/* Status register */
-
-/* Register bits for the status register */
-#define	X1241REG_SR_BAT		0x80	/* currently on battery power */
-#define	X1241REG_SR_RWEL	0x04	/* r/w latch is enabled, can write RTC */
-#define	X1241REG_SR_WEL		0x02	/* r/w latch is unlocked, can enable r/w now */
-#define	X1241REG_SR_RTCF	0x01	/* clock failed */
-
-/* Register bits for the block protect register */
-#define	X1241REG_BL_BP2		0x80	/* block protect 2 */
-#define	X1241REG_BL_BP1		0x40	/* block protect 1 */
-#define	X1241REG_BL_BP0		0x20	/* block protect 0 */
-#define	X1241REG_BL_WD1		0x10
-#define	X1241REG_BL_WD0		0x08
-
-/* Register bits for the hours register */
-#define	X1241REG_HR_MIL		0x80	/* military time format */
+#include <dev/smbus/m41t81reg.h>
+#include <dev/smbus/x1241reg.h>
 
 struct rtc_softc {
 	struct device		sc_dev;
 	int			sc_smbus_chan;
 	int			sc_smbus_addr;
+	int			sc_type;
 	struct todr_chip_handle	sc_ct;
 };
 
-static int rtc_match(struct device *, struct cfdata *, void *);
-static void rtc_attach(struct device *, struct device *, void *);
-static int rtc_gettime(todr_chip_handle_t, struct timeval *);
-static int rtc_settime(todr_chip_handle_t, struct timeval *);
+/* "types" for RTCs we support */
+#define	SMB_1BYTE_ADDR	1
+#define	SMB_2BYTE_ADDR	2
+
+static int xirtc_match(struct device *, struct cfdata *, void *);
+static void xirtc_attach(struct device *, struct device *, void *);
+static int xirtc_gettime(todr_chip_handle_t, struct timeval *);
+static int xirtc_settime(todr_chip_handle_t, struct timeval *);
+
+static int strtc_match(struct device *, struct cfdata *, void *);
+static void strtc_attach(struct device *, struct device *, void *);
+static int strtc_gettime(todr_chip_handle_t, struct timeval *);
+static int strtc_settime(todr_chip_handle_t, struct timeval *);
+
 static int rtc_getcal(todr_chip_handle_t, int *);
 static int rtc_setcal(todr_chip_handle_t, int);
 static void rtc_inittodr(void *, time_t base);
@@ -94,30 +81,48 @@ static void rtc_cal_timer(void);
 
 static void time_smbus_init(int);
 static int time_waitready(int);
-static int time_readrtc(int, int, int);
-static int time_writertc(int, int, int, int);
+static int time_readrtc(int, int, int, int);
+static int time_writertc(int, int, int, int, int);
 
 #define	WRITERTC(sc, dev, val)	\
-	time_writertc((sc)->sc_smbus_chan, (sc)->sc_smbus_addr, (dev), (val))
+	time_writertc((sc)->sc_smbus_chan, (sc)->sc_smbus_addr, (dev), (sc)->sc_type, (val))
 #define	READRTC(sc, dev)	\
-	time_readrtc((sc)->sc_smbus_chan, (sc)->sc_smbus_addr, (dev))
+	time_readrtc((sc)->sc_smbus_chan, (sc)->sc_smbus_addr, (dev), (sc)->sc_type)
 
 
-CFATTACH_DECL(rtc, sizeof(struct rtc_softc),
-    rtc_match, rtc_attach, NULL, NULL);
+CFATTACH_DECL(xirtc, sizeof(struct rtc_softc),
+    xirtc_match, xirtc_attach, NULL, NULL);
+
+CFATTACH_DECL(strtc, sizeof(struct rtc_softc),
+    strtc_match, strtc_attach, NULL, NULL);
 
 static int rtcfound = 0;
 struct rtc_softc *the_rtc;
 
+/*
+ * Xicor X1241 RTC support.
+ */
 static int
-rtc_match(struct device *parent, struct cfdata *cf, void *aux)
+xirtc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
+	struct smbus_attach_args *sa = aux;
+	int ret;
+
+	time_smbus_init(sa->sa_interface);
+
+	if ((sa->sa_interface != X1241_SMBUS_CHAN) ||
+	    (sa->sa_device != X1241_RTC_SLAVEADDR))
+		return (0);
 	
+	ret = time_readrtc(sa->sa_interface, sa->sa_device, SMB_2BYTE_ADDR, X1241REG_SC);
+	if (ret < 0)
+		return (0);
+
 	return (!rtcfound);
 }
 
 static void
-rtc_attach(struct device *parent, struct device *self, void *aux)
+xirtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct smbus_attach_args *sa = aux;
 	struct rtc_softc *sc = (void *)self;
@@ -127,11 +132,13 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_smbus_chan = sa->sa_interface;
 	sc->sc_smbus_addr = sa->sa_device;
+	sc->sc_type = SMB_2BYTE_ADDR;	/* Two-byte register addresses on the Xicor */
+
 
 	/* Set up MI todr(9) stuff */
 	sc->sc_ct.cookie = sc;
-	sc->sc_ct.todr_settime = rtc_settime;
-	sc->sc_ct.todr_gettime = rtc_gettime;
+	sc->sc_ct.todr_settime = xirtc_settime;
+	sc->sc_ct.todr_gettime = xirtc_gettime;
 	sc->sc_ct.todr_getcal = rtc_getcal;
 	sc->sc_ct.todr_setcal = rtc_setcal;
 
@@ -142,7 +149,7 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-rtc_settime(todr_chip_handle_t handle, struct timeval *tv)
+xirtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	struct rtc_softc *sc = handle->cookie;
 	struct clock_ymdhms ymdhms;
@@ -157,13 +164,11 @@ rtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 	WRITERTC(sc, X1241REG_SR, X1241REG_SR_WEL | X1241REG_SR_RWEL);
 
 	/* set the time */
-
 	WRITERTC(sc, X1241REG_HR, TOBCD(ymdhms.dt_hour) | X1241REG_HR_MIL);
 	WRITERTC(sc, X1241REG_MN, TOBCD(ymdhms.dt_min));
 	WRITERTC(sc, X1241REG_SC, TOBCD(ymdhms.dt_sec));
 
 	/* set the date */
-
 	y2k = (ymdhms.dt_year >= 2000) ? 0x20 : 0x19;
 	year = ymdhms.dt_year % 100;
 
@@ -179,7 +184,7 @@ rtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 }
 
 static int
-rtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
+xirtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	struct rtc_softc *sc = handle->cookie;
 	struct clock_ymdhms ymdhms;
@@ -213,18 +218,120 @@ rtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 	return (0);
 }
 
+/*
+ * ST M41T81 RTC support.
+ */
+static int
+strtc_match(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct smbus_attach_args *sa = aux;
+	int ret;
+
+	if ((sa->sa_interface != M41T81_SMBUS_CHAN) ||
+	    (sa->sa_device != M41T81_SLAVEADDR))
+		return (0);
+
+	time_smbus_init(sa->sa_interface);
+	
+	ret = time_readrtc(sa->sa_interface, sa->sa_device, SMB_1BYTE_ADDR, M41T81_SEC);
+	if (ret < 0)
+		return (0);
+
+	return (!rtcfound);
+}
+
+static void
+strtc_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct smbus_attach_args *sa = aux;
+	struct rtc_softc *sc = (void *)self;
+
+	rtcfound = 1;
+	the_rtc = sc;
+
+	sc->sc_smbus_chan = sa->sa_interface;
+	sc->sc_smbus_addr = sa->sa_device;
+	sc->sc_type = SMB_1BYTE_ADDR;	/* One-byte register addresses on the ST */
+
+	/* Set up MI todr(9) stuff */
+	sc->sc_ct.cookie = sc;
+	sc->sc_ct.todr_settime = strtc_settime;
+	sc->sc_ct.todr_gettime = strtc_gettime;
+	sc->sc_ct.todr_getcal = rtc_getcal;
+	sc->sc_ct.todr_setcal = rtc_setcal;
+
+	system_set_todrfns(sc, rtc_inittodr, rtc_resettodr);
+
+	printf("\n");
+	rtc_cal_timer();	/* XXX */
+}
+
+static int
+strtc_settime(todr_chip_handle_t handle, struct timeval *tv)
+{
+	struct rtc_softc *sc = handle->cookie;
+	struct clock_ymdhms ymdhms;
+	uint8_t hour;
+
+	clock_secs_to_ymdhms(tv->tv_sec, &ymdhms);
+
+	time_smbus_init(sc->sc_smbus_chan);
+
+	hour = TOBCD(ymdhms.dt_hour);
+	if (ymdhms.dt_year >= 2000)	/* Should be always true! */
+		hour |= M41T81_HOUR_CB | M41T81_HOUR_CEB;
+
+	/* set the time */
+	WRITERTC(sc, M41T81_SEC, TOBCD(ymdhms.dt_sec));
+	WRITERTC(sc, M41T81_MIN, TOBCD(ymdhms.dt_min));
+	WRITERTC(sc, M41T81_HOUR, hour);
+
+	/* set the date */
+	WRITERTC(sc, M41T81_DATE, TOBCD(ymdhms.dt_day));
+	WRITERTC(sc, M41T81_MON, TOBCD(ymdhms.dt_mon));
+	WRITERTC(sc, M41T81_YEAR, TOBCD(ymdhms.dt_year % 100));
+
+	return (0);
+}
+
+static int
+strtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
+{
+	struct rtc_softc *sc = handle->cookie;
+	struct clock_ymdhms ymdhms;
+	uint8_t hour;
+
+	time_smbus_init(sc->sc_smbus_chan);
+
+	ymdhms.dt_sec = FROMBCD(READRTC(sc, M41T81_SEC));
+	ymdhms.dt_min = FROMBCD(READRTC(sc, M41T81_MIN));
+	hour = READRTC(sc, M41T81_HOUR & M41T81_HOUR_MASK);
+	ymdhms.dt_hour = FROMBCD(hour & M41T81_HOUR_MASK);
+
+	ymdhms.dt_day = FROMBCD(READRTC(sc, M41T81_DATE));
+	ymdhms.dt_mon =  FROMBCD(READRTC(sc, M41T81_MON));
+	ymdhms.dt_year =  1900 + FROMBCD(READRTC(sc, M41T81_YEAR));
+	if (hour & M41T81_HOUR_CB)
+		ymdhms.dt_year += 100;
+
+	tv->tv_sec = clock_ymdhms_to_secs(&ymdhms);
+	tv->tv_usec = 0;
+
+	return (0);
+}
+
 static int
 rtc_getcal(todr_chip_handle_t handle, int *vp)
 {
 
-	return EOPNOTSUPP;
+	return (EOPNOTSUPP);
 }
 
 static int
 rtc_setcal(todr_chip_handle_t handle, int v)
 {
 
-	return EOPNOTSUPP;
+	return (EOPNOTSUPP);
 }
 
 
@@ -299,6 +406,7 @@ rtc_cal_timer(void)
 		printf("rtc_cal_timer before rtc attached\n");
 		return;
 	}
+return;	/* XXX XXX */
 
 	printf("%s: calibrating CPU clock", the_rtc->sc_dev.dv_xname);
 
@@ -428,13 +536,13 @@ time_waitready(int chan)
 
 	if (status & M_SMB_ERROR) {
 		WRITE_REG(reg, (status & M_SMB_ERROR));
-		return -1;
+		return (-1);
 	}
-	return 0;
+	return (0);
 }
 
 static int
-time_readrtc(int chan, int slaveaddr, int devaddr)
+time_readrtc(int chan, int slaveaddr, int devaddr, int type)
 {
 	uint32_t reg;
 	int err;
@@ -445,30 +553,42 @@ time_readrtc(int chan, int slaveaddr, int devaddr)
 	 */
 
 	if (time_waitready(chan) < 0)
-		return -1;
+		return (-1);
 
-	/*
-	 * Write the device address to the controller. There are two
-	 * parts, the high part goes in the "CMD" field, and the 
-	 * low part is the data field.
-	 */
+	if (type == SMB_2BYTE_ADDR) {
+		/*
+		 * Write the device address to the controller. There are two
+		 * parts, the high part goes in the "CMD" field, and the 
+		 * low part is the data field.
+		 */
 
-	reg = A_SMB_REGISTER(chan, R_SMB_CMD);
-	WRITE_REG(reg, ((devaddr >> 8) & 0x7));
+		reg = A_SMB_REGISTER(chan, R_SMB_CMD);
+		WRITE_REG(reg, (devaddr >> 8) & 0x7);
 
-	/*
-	 * Write the data to the controller
-	 */
+		/*
+		 * Write the data to the controller
+		 */
 
-	reg = A_SMB_REGISTER(chan, R_SMB_DATA);
-	WRITE_REG(reg, ((devaddr & 0xff) & 0xff));
+		reg = A_SMB_REGISTER(chan, R_SMB_DATA);
+		WRITE_REG(reg, (devaddr & 0xff) & 0xff);
+	} else { /* SMB_1BYTE_ADDR */
+		/*
+		 * Write the device address to the controller.
+		 */
+
+		reg = A_SMB_REGISTER(chan, R_SMB_CMD);
+		WRITE_REG(reg, devaddr & 0xff);
+	}
 
 	/*
 	 * Start the command
 	 */
 
 	reg = A_SMB_REGISTER(chan, R_SMB_START);
-	WRITE_REG(reg, V_SMB_TT(K_SMB_TT_WR2BYTE) | slaveaddr);
+	if (type == SMB_2BYTE_ADDR)
+		WRITE_REG(reg, V_SMB_TT(K_SMB_TT_WR2BYTE) | V_SMB_ADDR(slaveaddr));
+	else /* SMB_1BYTE_ADDR */
+		WRITE_REG(reg, V_SMB_TT(K_SMB_TT_WR1BYTE) | V_SMB_ADDR(slaveaddr));
 
 	/*
 	 * Wait till done
@@ -476,30 +596,29 @@ time_readrtc(int chan, int slaveaddr, int devaddr)
 
 	err = time_waitready(chan);
 	if (err < 0)
-		return err;
+		return (err);
 
 	/*
 	 * Read the data byte
 	 */
 
-	WRITE_REG(reg, V_SMB_TT(K_SMB_TT_RD1BYTE) | slaveaddr);
+	WRITE_REG(reg, V_SMB_TT(K_SMB_TT_RD1BYTE) | V_SMB_ADDR(slaveaddr));
 
 	err = time_waitready(chan);
 	if (err < 0)
-		return err;
+		return (err);
 
-	reg = MIPS_PHYS_TO_KSEG1(A_SMB_REGISTER(chan, R_SMB_DATA));
+	reg = A_SMB_REGISTER(chan, R_SMB_DATA);
 	err = READ_REG(reg);
 
 	return (err & 0xff);
 }
 
 static int
-time_writertc(int chan, int slaveaddr, int devaddr, int b)
+time_writertc(int chan, int slaveaddr, int devaddr, int type, int b)
 {
 	uint32_t reg;
-	int err;
-	int64_t timer;
+	int err, timer;
 
 	/*
 	 * Make sure the bus is idle (probably should
@@ -507,7 +626,7 @@ time_writertc(int chan, int slaveaddr, int devaddr, int b)
 	 */
 
 	if (time_waitready(chan) < 0)
-		return -1;
+		return (-1);
 
 	/*
 	 * Write the device address to the controller. There are two
@@ -516,14 +635,20 @@ time_writertc(int chan, int slaveaddr, int devaddr, int b)
 	 */
 
 	reg = A_SMB_REGISTER(chan, R_SMB_CMD);
-	WRITE_REG(reg, ((devaddr >> 8) & 0x7));
+	if (type == SMB_2BYTE_ADDR)
+		WRITE_REG(reg, (devaddr >> 8) & 0x7);
+	else /* SMB_1BYTE_ADDR */
+		WRITE_REG(reg, devaddr & 0xff);
 
 	/*
 	 * Write the data to the controller
 	 */
 
 	reg = A_SMB_REGISTER(chan, R_SMB_DATA);
-	WRITE_REG(reg, ((devaddr & 0xFF) | ((b & 0xFF) << 8)));
+	if (type == SMB_2BYTE_ADDR)
+		WRITE_REG(reg, (devaddr & 0xff) | ((b & 0xff) << 8));
+	else /* SMB_1BYTE_ADDR */
+		WRITE_REG(reg, b & 0xff);
 
 	/*
 	 * Start the command.  Keep pounding on the device until it
@@ -532,7 +657,10 @@ time_writertc(int chan, int slaveaddr, int devaddr, int b)
 	 */
 
 	reg = A_SMB_REGISTER(chan, R_SMB_START);
-	WRITE_REG(reg, V_SMB_TT(K_SMB_TT_WR3BYTE) | slaveaddr);
+	if (type == SMB_2BYTE_ADDR)
+		WRITE_REG(reg, V_SMB_TT(K_SMB_TT_WR3BYTE) | V_SMB_ADDR(slaveaddr));
+	else /* SMB_1BYTE_ADDR */
+		WRITE_REG(reg, V_SMB_TT(K_SMB_TT_WR2BYTE) | V_SMB_ADDR(slaveaddr));
 
 	/*
 	 * Wait till the SMBus interface is done
@@ -540,7 +668,7 @@ time_writertc(int chan, int slaveaddr, int devaddr, int b)
 
 	err = time_waitready(chan);
 	if (err < 0)
-		return err;
+		return (err);
 
 	/*
 	 * Pound on the device with a current address read
@@ -551,13 +679,12 @@ time_writertc(int chan, int slaveaddr, int devaddr, int b)
 	timer = 100000000;	/* XXX */
 
 	while (timer-- > 0) {
-
-		WRITE_REG(reg, V_SMB_TT(K_SMB_TT_RD1BYTE) | slaveaddr);
+		WRITE_REG(reg, V_SMB_TT(K_SMB_TT_RD1BYTE) | V_SMB_ADDR(slaveaddr));
 
 		err = time_waitready(chan);
 		if (err == 0)
 			break;
 	}
 
-	return err;
+	return (err);
 }
