@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.30 1997/10/13 00:48:12 explorer Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.31 1997/10/17 22:12:38 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -60,6 +60,7 @@
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/icmp_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcp_fsm.h>
 #include <netinet/tcp_seq.h>
@@ -429,6 +430,8 @@ tcp_ctlinput(cmd, sa, v)
 		notify = tcp_quench;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
+	else if (cmd == PRC_MSGSIZE && icmp_do_mtudisc)
+		notify = tcp_mtudisc, ip = 0;
 	else if (cmd == PRC_HOSTDEAD)
 		ip = 0;
 	else if (errno == 0)
@@ -462,6 +465,40 @@ tcp_quench(inp, errno)
 	if (tp)
 		tp->snd_cwnd = tp->t_maxseg;
 }
+
+/*
+ * On receipt of path MTU corrections, flush old route and replace it
+ * with the new one.  Retransmit all unacknowledged packets, to ensure
+ * that all packets will be received.
+ */
+
+void
+tcp_mtudisc(inp, errno)
+	struct inpcb *inp;
+	int errno;
+{
+	struct tcpcb *tp = intotcpcb(inp);
+	struct rtentry *rt = in_pcbrtentry(inp);
+
+	if (tp != 0) {
+		if (rt != 0) {
+			/* If this was not a host route, remove and realloc */
+
+			if ((rt->rt_flags & RTF_HOST) == 0) {
+				in_rtchange(inp, errno);
+				rtfree(rt);
+				if ((rt = in_pcbrtentry(inp)) == 0)
+					return;
+			}
+		}
+	    
+		/* Resend unacknowledged packets: */
+
+		tp->snd_nxt = tp->snd_una;
+		tcp_output(tp);
+	}
+}
+
 
 /*
  * Compute the MSS to advertise to the peer.  Called only during

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.23 1997/06/24 01:26:19 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.24 1997/10/17 22:12:24 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -71,8 +71,11 @@ int	icmpmaskrepl = 0;
 #ifdef ICMPPRINTFS
 int	icmpprintfs = 0;
 #endif
+int	icmp_do_mtudisc = 0;
 
 extern	struct protosw inetsw[];
+
+static void icmp_mtudisc __P((struct icmp *));
 
 /*
  * Generate an error packet of type error
@@ -313,6 +316,8 @@ icmp_input(m, va_alist)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
+		if (code == PRC_MSGSIZE && icmp_do_mtudisc)
+			icmp_mtudisc(icp);
 		ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput;
 		if (ctlfunc)
 			(*ctlfunc)(code, sintosa(&icmpsrc), &icp->icmp_ip);
@@ -601,8 +606,76 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	switch (name[0]) {
 	case ICMPCTL_MASKREPL:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmpmaskrepl));
+	case ICMPCTL_MTUDISC:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmp_do_mtudisc));
 	default:
 		return (ENOPROTOOPT);
 	}
 	/* NOTREACHED */
+}
+
+static void
+icmp_mtudisc(icp)
+	struct icmp *icp;
+{
+	struct rtentry *rt;
+	struct sockaddr *dst = sintosa(&icmpsrc);
+	u_long mtu = ntohs(icp->icmp_nextmtu);
+
+	/* Table of common MTUs: */
+
+	static u_long mtu_table[] = {65535, 65280, 32000, 17914, 9180, 8166, 
+				     4352, 2002, 1492, 1006, 508, 296, 68, 0};
+    
+	rt = rtalloc1(dst, 1);
+	if (rt == 0)
+		return;
+    
+	/* If we didn't get a host route, allocate one */
+    
+	if ((rt->rt_flags & RTF_HOST) == 0) {
+		struct rtentry *nrt;
+		int error;
+
+		error = rtrequest((int) RTM_ADD, dst, 
+		    (struct sockaddr *) rt->rt_gateway,
+		    (struct sockaddr *) 0, 
+		    RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC, &nrt);
+		if (error) {
+			rtfree(rt);
+			rtfree(nrt);
+			return;
+		}
+		nrt->rt_rmx = rt->rt_rmx;
+		rtfree(rt);
+		rt = nrt;
+	}
+
+	if (mtu == 0) {
+		int i = 0;
+
+		mtu = htons(icp->icmp_ip.ip_len);
+		/* Some 4.2BSD-based routers incorrectly adjust the ip_len */
+		if (mtu > rt->rt_rmx.rmx_mtu && rt->rt_rmx.rmx_mtu != 0)
+			mtu -= (icp->icmp_ip.ip_hl << 2);
+
+		if (mtu == 0)
+			mtu = rt->rt_rmx.rmx_mtu;
+
+		for (i = 0; i < sizeof(mtu_table) / sizeof(mtu_table[0]); i++)
+			if (mtu > mtu_table[i])
+				break;
+
+		mtu = mtu_table[i];
+	}
+
+	if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
+		if (mtu < 296) 
+			rt->rt_rmx.rmx_locks |= RTV_MTU;
+		else if (rt->rt_rmx.rmx_mtu > mtu || 
+			 rt->rt_rmx.rmx_mtu == 0)
+			rt->rt_rmx.rmx_mtu = mtu;
+	}
+	if (rt)
+		rtfree(rt);
 }
