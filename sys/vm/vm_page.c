@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.30.8.1 1997/05/13 04:01:48 thorpej Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.30.8.2 1997/05/14 21:23:04 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -1084,7 +1084,7 @@ vm_page_alloc_memory(size, low, high, alignment, rlist, nsegs, waitok)
 	struct pglist *rlist;
 	int nsegs, waitok;
 {
-	vm_offset_t try;
+	vm_offset_t try, idxpa;
 	int s, tryidx, idx, end, error;
 	vm_page_t m;
 #ifdef DEBUG
@@ -1096,8 +1096,15 @@ vm_page_alloc_memory(size, low, high, alignment, rlist, nsegs, waitok)
 		panic("vm_page_alloc_memory: alignment must be power of 2");
 #endif
 
+	/*
+	 * Our allocations are always page granularity, so our alignment
+	 * must be, too.
+	 */
+	if (alignment < PAGE_SIZE)
+		alignment = PAGE_SIZE;
+
 	size = round_page(size);
-	try = roundup(max(low, VM_PAGE_TO_PHYS(&vm_page_array[0])), alignment);
+	try = roundup(low, alignment);
 
 	/* Default to "lose". */
 	error = ENOMEM;
@@ -1112,13 +1119,19 @@ vm_page_alloc_memory(size, low, high, alignment, rlist, nsegs, waitok)
 	if (vm_page_queue_free.tqh_first == NULL)
 		goto out;
 
-	for (;;) {
+	for (;; try += alignment) {
 		if (try + size > high) {
 			/*
 			 * We've run past the allowable range.
 			 */
 			goto out;
 		}
+
+		/*
+		 * Make sure this is a managed physical page.
+		 */
+		if (IS_VM_PHYSADDR(try) == 0)
+			continue;
 
 		tryidx = idx = VM_PAGE_INDEX(try);
 		end = idx + (size / PAGE_SIZE);
@@ -1133,7 +1146,13 @@ vm_page_alloc_memory(size, low, high, alignment, rlist, nsegs, waitok)
 		 * Found a suitable starting page.  See of the range
 		 * is free.
 		 */
-		while (idx < end) {
+		for (idxpa = try; idx < end; idx++, idxpa += PAGE_SIZE) {
+			/*
+			 * Make sure this is a managed physical page.
+			 */
+			if (IS_VM_PHYSADDR(idxpa) == 0)
+				break;
+
 			if (VM_PAGE_IS_FREE(&vm_page_array[idx]) == 0) {
 				/*
 				 * Page not available.
@@ -1148,7 +1167,6 @@ vm_page_alloc_memory(size, low, high, alignment, rlist, nsegs, waitok)
 				 */
 				break;
 			}
-			idx++;
 		}
 
 		if (idx == end) {
@@ -1157,9 +1175,6 @@ vm_page_alloc_memory(size, low, high, alignment, rlist, nsegs, waitok)
 			 */
 			break;
 		}
-
-		/* Nope, try again. */
-		try += alignment;
 	}
 
 	/*
