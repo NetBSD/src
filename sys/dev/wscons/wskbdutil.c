@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.2 1998/04/09 13:09:46 hannken Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.3 1998/04/20 10:47:36 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -411,9 +411,9 @@ ksym_upcase(ksym)
 	if (ksym >= KS_f1 && ksym <= KS_f20)
 		return(KS_F1 - KS_f1 + ksym);
 
-	if (KS_GROUP(ksym) == KS_GROUP_Ascii &&
-	    latin1_to_upper[ksym & 0xff] != 0x00)
-		return(latin1_to_upper[ksym & 0xff] | KS_GROUP_Ascii);
+	if (KS_GROUP(ksym) == KS_GROUP_Ascii && ksym <= 0xff &&
+	    latin1_to_upper[ksym] != 0x00)
+		return(latin1_to_upper[ksym]);
 
 	return(ksym);
 }
