@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.139 2003/10/01 23:08:32 enami Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.140 2003/10/02 00:02:10 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.139 2003/10/01 23:08:32 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.140 2003/10/02 00:02:10 enami Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -199,6 +199,8 @@ static void	uvm_mapent_copy(struct vm_map_entry *, struct vm_map_entry *);
 static void	uvm_mapent_free(struct vm_map_entry *);
 static void	uvm_map_entry_unwire(struct vm_map *, struct vm_map_entry *);
 static void	uvm_map_reference_amap(struct vm_map_entry *, int);
+static int	uvm_map_space_avail(vaddr_t *, vsize_t, voff_t, vsize_t, int,
+		    struct vm_map_entry *);
 static void	uvm_map_unreference_amap(struct vm_map_entry *, int);
 
 /*
@@ -1038,6 +1040,54 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 }
 
 /*
+ * See if the range between start and start + length fits in the gap
+ * entry->next->start and entry->end.  Returns 1 if fits, 0 if doesn't
+ * fit, and -1 address wraps around.
+ */
+static __inline int
+uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
+    vsize_t align, int topdown, struct vm_map_entry *entry)
+{
+	vaddr_t end;
+
+#ifdef PMAP_PREFER
+	/*
+	 * push start address forward as needed to avoid VAC alias problems.
+	 * we only do this if a valid offset is specified.
+	 */
+
+	if (uoffset != UVM_UNKNOWN_OFFSET)
+		PMAP_PREFER(uoffset, start);
+#endif
+	if (align != 0) {
+		if ((*start & (align - 1)) != 0) {
+			if (topdown)
+				*start &= ~(align - 1);
+			else
+				*start = roundup(*start, align);
+		}
+		/*
+		 * XXX Should we PMAP_PREFER() here again?
+		 */
+	}
+
+	/*
+	 * Find the end of the proposed new region.  Be sure we didn't
+	 * wrap around the address; if so, we lose.  Otherwise, if the
+	 * proposed new region fits before the next entry, we win.
+	 */
+
+	end = *start + length;
+	if (end < *start)
+		return (-1);
+
+	if (entry->next->start >= end && *start >= entry->end)
+		return (1);
+
+	return (0);
+}
+
+/*
  * uvm_map_findspace: find "length" sized space in "map".
  *
  * => "hint" is a hint about where we want it, unless FINDSPACE_FIXED is
@@ -1055,14 +1105,14 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
     vaddr_t *result /* OUT */, struct uvm_object *uobj, voff_t uoffset,
     vsize_t align, int flags)
 {
-	struct vm_map_entry *entry, *next, *tmp;
-	vaddr_t end, orig_hint;
+	struct vm_map_entry *entry;
+	vaddr_t orig_hint;
 	const int topdown = map->flags & VM_MAP_TOPDOWN;
 	UVMHIST_FUNC("uvm_map_findspace");
 	UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "(map=0x%x, hint=0x%x, len=%d, flags=0x%x)",
-		    map, hint, length, flags);
+	    map, hint, length, flags);
 	KASSERT((align & (align - 1)) == 0);
 	KASSERT((flags & UVM_FLAG_FIXED) == 0 || align == 0);
 
@@ -1082,7 +1132,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	}
 	if (hint > map->max_offset) {
 		UVMHIST_LOG(maphist,"<- VA 0x%x > range [0x%x->0x%x]",
-				hint, map->min_offset, map->max_offset, 0);
+		    hint, map->min_offset, map->max_offset, 0);
 		return (NULL);
 	}
 
@@ -1096,12 +1146,16 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	 *
 	 * 0: found,     fixed,     bottom up -> fail
 	 * 1: found,     fixed,     top down  -> fail
-	 * 2: found,     not fixed, bottom up -> start after tmp->end, loop up
-	 * 3: found,     not fixed, top down  -> start before tmp->start, loop down
-	 * 4: not found, fixed,     bottom up -> check tmp->next->start, fail
-	 * 5: not found, fixed,     top down  -> check tmp->next->start, fail
-	 * 6: not found, not fixed, bottom up -> check tmp->next->start, loop up
-	 * 7: not found, not fixed, top down  -> check tmp->next->start, loop down
+	 * 2: found,     not fixed, bottom up -> start after entry->end,
+	 *                                       loop up
+	 * 3: found,     not fixed, top down  -> start before entry->start,
+	 *                                       loop down
+	 * 4: not found, fixed,     bottom up -> check entry->next->start, fail
+	 * 5: not found, fixed,     top down  -> check entry->next->start, fail
+	 * 6: not found, not fixed, bottom up -> check entry->next->start,
+	 *                                       loop up
+	 * 7: not found, not fixed, top down  -> check entry->next->start,
+	 *                                       loop down
 	 *
 	 * as you can see, it reduces to roughly five cases, and that
 	 * adding top down mapping only adds one unique case (without
@@ -1109,97 +1163,109 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	 */
 
 	if ((flags & UVM_FLAG_FIXED) == 0 && hint == map->min_offset) {
-		if ((entry = map->first_free) != &map->header)
-			hint = entry->end;
+		entry = map->first_free;
 	} else {
-		if (uvm_map_lookup_entry(map, hint, &tmp)) {
+		if (uvm_map_lookup_entry(map, hint, &entry)) {
 			/* "hint" address already in use ... */
 			if (flags & UVM_FLAG_FIXED) {
-				UVMHIST_LOG(maphist,"<- fixed & VA in use",
+				UVMHIST_LOG(maphist, "<- fixed & VA in use",
 				    0, 0, 0, 0);
 				return (NULL);
 			}
-			hint = topdown ? tmp->start - length : tmp->end;
-		} else if ((tmp->next == &map->header ||
-			    tmp->next->start >= hint + length)) {
-			entry = tmp;
-			goto quickfind;
+			if (topdown)
+				/* Start from lower gap. */
+				entry = entry->prev;
+		} else if (flags & UVM_FLAG_FIXED) {
+			if (entry->next->start >= hint + length &&
+			    hint + length > hint)
+				goto found;
+
+			/* "hint" address is gap but too small */
+			UVMHIST_LOG(maphist, "<- fixed mapping failed",
+			    0, 0, 0, 0);
+			return (NULL); /* only one shot at it ... */
+		} else {
+			/*
+			 * See if given hint fits in this gap.
+			 */
+			switch (uvm_map_space_avail(&hint, length,
+			    uoffset, align, topdown, entry)) {
+			case 1:
+				goto found;
+			case -1:
+				goto wraparound;
+			}
+
+			if (topdown)
+				/*
+				 * Still there is a chance to fit
+				 * if hint > entry->end.
+				 */
+				;
+			else
+				goto nextgap;
 		}
-		entry = tmp;
 	}
 
 	/*
 	 * Look through the rest of the map, trying to fit a new region in
 	 * the gap between existing regions, or after the very last region.
-	 * note: entry->end   = base VA of current gap,
-	 *	 next->start  = VA of end of current gap
+	 * note: entry->end = base VA of current gap,
+	 *	 entry->next->start = VA of end of current gap
+	 *
+	 * Also note that all UVM_FLAGS_FIXED case is already handled.
 	 */
+	KDASSERT((flags & UVM_FLAG_FIXED) == 0);
 
-	for (next = NULL;; hint = topdown ?
-		(entry = next)->start - length :
-		(entry = next)->end) {
+	for (;;) {
+		/* Update hint for current gap. */
+		hint = topdown ? entry->next->start - length : entry->end;
 
-		/*
-		 * Find the end of the proposed new region.  Be sure we didn't
-		 * go beyond the end of the map, or wrap around the address;
-		 * if so, we lose.  Otherwise, if this is the last entry, or
-		 * if the proposed new region fits before the next entry, we
-		 * win.
-		 */
-
-#ifdef PMAP_PREFER
-		/*
-		 * push hint forward as needed to avoid VAC alias problems.
-		 * we only do this if a valid offset is specified.
-		 */
-
-		if ((flags & UVM_FLAG_FIXED) == 0 &&
-		    uoffset != UVM_UNKNOWN_OFFSET)
-			PMAP_PREFER(uoffset, &hint);
-#endif
-		if (align != 0) {
-			if ((hint & (align - 1)) != 0) {
-				if (topdown)
-					hint &= ~(align-1);
-				else
-					hint = roundup(hint, align);
-			}
-			/*
-			 * XXX Should we PMAP_PREFER() here again?
-			 */
+		/* See if it fits. */
+		switch (uvm_map_space_avail(&hint, length, uoffset, align,
+		    topdown, entry)) {
+		case 1:
+			goto found;
+		case -1:
+			goto wraparound;
 		}
-		end = hint + length;
-		if (end > map->max_offset || end < hint) {
-			UVMHIST_LOG(maphist,"<- failed (off end)", 0,0,0,0);
-			if (align != 0) {
-				UVMHIST_LOG(maphist,
-				    "calling recursively, no align",
+
+		/* Advance to next/previous gap */
+		if (topdown) {
+			if (entry == &map->header) {
+				UVMHIST_LOG(maphist, "<- failed (off start)",
 				    0,0,0,0);
-				return (uvm_map_findspace(map, orig_hint,
-				    length, result, uobj, uoffset, 0, flags));
+				goto notfound;
 			}
-			return (NULL);
-		}
-		if (!topdown || next == NULL) {
-			next = entry->next;
-		} else
-			next = entry->prev;
-		if (next == &map->header ||
-		    (!topdown && next->start >= end) ||
-		    ( topdown && next->end   <= hint))
-			break;
-		if (flags & UVM_FLAG_FIXED) {
-			UVMHIST_LOG(maphist,"<- fixed mapping failed", 0,0,0,0);
-			return (NULL); /* only one shot at it ... */
+			entry = entry->prev;
+		} else {
+ nextgap:
+			entry = entry->next;
+			if (entry == &map->header) {
+				UVMHIST_LOG(maphist, "<- failed (off end)",
+				    0,0,0,0);
+				goto notfound;
+			}
 		}
 	}
- quickfind:
+
+ found:
 	SAVE_HINT(map, map->hint, entry);
-	if (topdown && entry->start >= hint + length)
-		entry = entry->prev;
 	*result = hint;
 	UVMHIST_LOG(maphist,"<- got it!  (result=0x%x)", hint, 0,0,0);
 	return (entry);
+
+ wraparound:
+	UVMHIST_LOG(maphist, "<- failed (wrap around)", 0,0,0,0);
+
+ notfound:
+	if (align != 0) {
+		UVMHIST_LOG(maphist, "calling recursively, no align",
+		    0,0,0,0);
+		return (uvm_map_findspace(map, orig_hint,
+		    length, result, uobj, uoffset, 0, flags));
+	}
+	return (NULL);
 }
 
 /*
