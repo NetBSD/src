@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sbmips,v 1.1.2.2 2002/05/30 07:14:51 gehenna Exp $
+#	$NetBSD: majors.sbmips,v 1.1.2.3 2002/07/15 01:20:54 gehenna Exp $
 #
 # Device majors for sbmips
 #
@@ -69,3 +69,4 @@ device-major	mlx		char 65			mlx
 device-major	pci		char 66			pci
 
 device-major	clockctl	char 69			clockctl
+device-major	systrace	char 70			systrace
