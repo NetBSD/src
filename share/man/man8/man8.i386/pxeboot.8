@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.4 2003/04/16 10:19:05 wiz Exp $
+.\"	$NetBSD: pxeboot.8,v 1.5 2003/05/25 21:19:06 fair Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,26 +24,43 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 20, 2003
+.Dd May 25, 2003
 .Os
 .Dt PXEBOOT 8 i386
 .Sh NAME
 .Nm pxeboot
-.Nd boot NetBSD/i386 through a PXE BIOS extension
+.Nd network boot NetBSD/i386 through a PXE BIOS extension
 .Sh DESCRIPTION
 .Nm
 is a
 .Nx
-boot program running on top of a PXE BIOS extension which is
-provided by the motherboard or a plug-in network adapter.
+boot program running on top of a
+.Tn PXE
+.Tn BIOS
+extension which is
+provided by the motherboard or a plug-in network adapter,
+in accordance with the
+.Tn Intel
+Preboot eXecution Environement
+.Pq Tn PXE
+specification.
 .Pp
-Booting a system through PXE is a two-stage process:
-.Bl -enum -compact
+Network booting a system through
+.Tn PXE
+is a two-stage process:
+.Pp
+.Bl -enum
 .It
-The PXE BIOS issues a BOOTP/DHCP request and fetches the
+The
+.Tn PXE
+.Tn BIOS
+issues a
+.Tn DHCP
+request and fetches the
 .Nx
 .Nm
-program using TFTP.
+program using
+.Tn TFTP .
 .It
 The
 .Nx
@@ -53,12 +70,23 @@ An interactive mode is entered if the
 user presses a key within five seconds.
 After this time or after the user's
 .Ic boot
-command, another BOOTP/DHCP request is issued and the kernel
-is loaded as specified in the BOOTP/DHCP reply.
-To read the kernel file, the NFS (v2) or TFTP protocols can be used.
+command, another
+.Tn DHCP
+request is issued and the kernel
+is loaded as specified in the
+.Tn DHCP
+reply.
+To read the kernel file, the
+.Tn NFS
+.Pq version 2
+or
+.Tn TFTP
+protocols can be used.
 .El
 .Pp
-The BOOTP/DHCP request issued by the
+The
+.Tn DHCP
+request issued by the
 .Nx
 .Nm
 program has the following special parameters:
@@ -76,8 +104,12 @@ is set to
 .Dq NetBSD:i386:libsa .
 .El
 .Pp
-The BOOTP/DHCP server can use these fields to distinguish between
-the various originators of requests (first and second PXE stage,
+The
+.Tn DHCP
+server can use these fields to distinguish between
+the various originators of requests (first and second
+.Tn PXE
+stage,
 .Nx
 kernel), and to control conditional behaviour depending on the
 user's command line input to the
@@ -87,7 +119,9 @@ program, e.g. to support alternative
 installations on one machine.
 .Pp
 In addition to the standard network interface configuration,
-the following fields in the BOOTP/DHCP reply are interpreted:
+the following fields in the
+.Tn DHCP
+reply are interpreted:
 .Bl -tag -width xxxx
 .It Bootfile name
 specifies the filename of the
@@ -102,19 +136,32 @@ and
 .It Swap server
 can be used to override the
 .Dq server IP address
-if NFS is used to access the kernel.
+if
+.Tn NFS
+is used to access the kernel.
 This matches the behaviour of the
 .Nx
-kernel to access its root file system on NFS.
-This way, different TFTP and NFS servers can be communicated to
-the BOOTP/DHCP client.
-(It is actually a deficiency of the BOOTP/DHCP protocol to
-provide a
+kernel to access its root file system on
+.Tn NFS .
+This way, different
+.Tn TFTP
+and
+.Tn NFS
+servers can be communicated to
+the
+.Tn DHCP
+client
+.Po
+it is actually a deficiency of the
+.Tn DHCP
+protocol to provide a
 .Dq root path
-field but no corresponding IP address.)
+field but no corresponding IP address
+.Pc .
 .It Root path
-is used as path to be mounted in the NFS case to access the kernel
-file, matching the
+is used as path to be mounted in the
+.Tn NFS
+case to access the kernel file, matching the
 .Nx
 kernel's behaviour.
 .El
@@ -143,26 +190,15 @@ program.
 .El
 .Sh EXAMPLES
 The following
-.Pa dhcpd.conf
+.Pa /etc/dhcpd.conf
 entry shows how the PXE ROM can be told to load the
 .Nx
 .Nm
 program and how different kernels can be loaded depending on
 the user's input on the
 .Nm
-command line.
-It is assumed that the TFTP server is the same as the DHCP server
-(unless a
-.Em next-server
-is specified somewhere else in
-.Pa dhcpd.conf ) ,
-and that the NFS server for the root file system is
-.Em mynfsserver .
-(Note that
-.Em swap-server:root-path
-is only used in the NFS case and by the
-.Nx
-kernel to mount the root file system.)
+command line:
+.Pp
 .Bd -literal
 host myhost {
     hardware ethernet 00:00:00:00:00:00;
@@ -183,9 +219,36 @@ host myhost {
     }
 }
 .Ed
+.Pp
+It is assumed that the
+.Tn TFTP
+server is the same as the
+.Tn DHCP
+server unless a
+.Em next-server
+directive is specified somewhere else in
+.Pa dhcpd.conf ,
+and that the
+.Tn NFS
+server for the root file system is
+.Em mynfsserver .
+The
+.Em swap-server:root-path
+is only used in the
+.Tn NFS
+case and by the
+.Nx
+kernel to mount the root file system.
 .Sh SEE ALSO
 .Xr boot 8 ,
-.Xr dhcpd 8
+.Xr dhcpd 8 ,
+.Xr diskless 8
+.Rs
+.%T Preboot Execution Environment (PXE) Specification
+.%N Version 2.1
+.%D September 20, 1999
+.%A Intel Corporation
+.Re
 .Sh HISTORY
 The
 .Nx Ns Tn /i386
@@ -196,5 +259,6 @@ command first appeared in
 If an error is encountered while reading the
 .Nx
 kernel file or if its file format wasn't recognized, it is
-impossible to retry the operation because the PXE network
-stack is already removed from the system.
+impossible to retry the operation because the
+.Tn PXE
+network stack is already removed from the system RAM.

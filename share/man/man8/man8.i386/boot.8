@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.28 2003/04/08 03:49:45 lukem Exp $
+.\"	$NetBSD: boot.8,v 1.29 2003/05/25 21:19:06 fair Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 8, 2003
+.Dd May 25, 2003
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
@@ -44,6 +44,47 @@
 .Nd
 system bootstrapping procedures
 .Sh DESCRIPTION
+.Tn IA-32
+computers
+.Po
+the
+.Tn IBM PC
+and its clones
+.Pc
+that can run
+.Nx Ns /i386
+can use any of the following boot procedures, depending on what the hardware and
+.Tn BIOS
+support:
+.Pp
+.Bl -tag -width "biosboot(8)"
+.It biosboot
+bootstrap
+.Nx
+from the system
+.Tn BIOS
+.It Xr dosboot 8
+bootstrap
+.Nx
+from
+.Tn MS-DOS
+.It Xr w95boot 8
+bootstrap
+.Nx
+from
+.Tn Windows 95
+.It Xr pxeboot 8
+network bootstrap
+.Nx
+from a
+.Tn TCP/IP
+.Tn LAN
+with
+.Tn DHCP ,
+.Tn TFTP ,
+and 
+.Tn NFS .
+.El
 .Ss Power fail and crash recovery
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
@@ -56,8 +97,9 @@ clones attempt to boot the floppy disk drive A (otherwise known as drive
 known as hard disk controller 1, drive 0).
 The
 .Nx
-bootblocks are loaded and started either by the BIOS, or by
-a boot selector program (such as OS-BS, BOOTEASY, the OS/2 Boot Menu or
+bootblocks are loaded and started either by the
+.Tn BIOS ,
+or by a boot selector program (such as OS-BS, BOOTEASY, the OS/2 Boot Menu or
 .Nx No 's
 .No boot-selecting
 master boot record - see
@@ -72,8 +114,8 @@ Press return to boot now, any other key for boot menu
 booting hd0a:netbsd - starting in 5
 .Ed
 .Pp
-After a countdown, the system image listed will be loaded. (In the
-above example, it will be
+After a countdown, the system image listed will be loaded.
+In the example above, it will be
 .Dq Li hd0a:netbsd
 which is the file
 .Nm netbsd
@@ -81,11 +123,17 @@ on partition
 .Dq a
 of the
 .Nx
-MBR partition of the first hard disk known to the BIOS [which is
-apparently an IDE or similar device - see the
+.Tn MBR
+partition of the first hard disk known to the
+.Tn BIOS
+.Po
+which is an
+.Tn IDE
+or similar device - see the
 .Sx BUGS
-section].) Pressing a key within the time limit will enter
-interactive mode.
+section
+.Pc .
+Pressing a key within the time limit will enter interactive mode.
 .Ss Interactive mode
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
@@ -227,36 +275,49 @@ boot block (written by
 .Xr halt 8 ,
 .Xr installboot 8 ,
 .Xr mbr 8 ,
+.Xr pxeboot 8 ,
 .Xr reboot 8 ,
-.Xr shutdown 8
+.Xr shutdown 8 ,
+.Xr w95boot 8
 .Sh BUGS
 This manual page documents the
 .Pa biosboot
 interface, which is used by ports other than
 .Nx Ns /i386 .
 .Pp
-Hard disks are always accessed by BIOS functions. Unit numbers are
-BIOS device numbers which might differ from numbering in the
+Any
+.Ar filename
+specified after the boot options, e.g.:
+.Pp
+.Bd -unfilled -offset indent -compact
+.Cm boot -d netbsd.test
+.Ed
+.Pp
+is ignored, and the default kernel is booted.
+.Pp
+Hard disks are always accessed by
+.Tn BIOS
+functions.
+Unit numbers are
+.Tn BIOS
+device numbers which might differ from numbering in the
 .Nx
-kernel or physical parameters (e.g., SCSI slave numbers). There isn't
-any distinction between
+kernel or physical parameters
+.Po
+e.g.,
+.Tn SCSI
+slave numbers 
+.Pc .
+There isn't any distinction between
 .Dq sd
 and
 .Dq wd
 devices at the bootloader level.
-(This is less a bug of the bootloader code than
-a shortcoming of the PC architecture.)
+This is less a bug of the bootloader code than
+a shortcoming of the PC architecture.
 The default disk device's name printed in the starting message
 is derived from the
 .Dq type
 field of the
 .Nx
 disklabel (if it is a hard disk).
-.Pp
-Any
-.Ar filename
-specified after the boot options, e.g.:
-.Bd -unfilled -offset indent -compact
-.Cm boot -d netbsd.test
-.Ed
-is ignored, and the default kernel is booted.
