@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.368 2002/12/09 14:08:02 scw Exp $
+# $NetBSD: mi,v 1.369 2002/12/11 13:55:13 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -210,6 +210,7 @@
 ./usr/bin/ctags		base-c-bin
 ./usr/bin/cu		base-util-bin
 ./usr/bin/cut		base-util-bin
+./usr/bin/db		base-util-bin
 ./usr/bin/dc		base-util-bin
 ./usr/bin/diff		base-util-bin
 ./usr/bin/diff3		base-util-bin
