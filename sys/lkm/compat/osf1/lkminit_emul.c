@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.3 2000/12/13 11:18:39 enami Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.4 2000/12/17 16:00:38 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ int compat_osf1_lkmentry __P((struct lkm_table *, int, int));
 /*
  * declare the emulation
  */
-MOD_COMPAT("osf1", -1, &emul_osf1);
+MOD_COMPAT("compat_osf1", -1, &emul_osf1);
 
 /*
  * entry point

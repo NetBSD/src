@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.3 2000/12/08 20:15:19 jdolecek Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.4 2000/12/17 16:00:38 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ int compat_sunos_lkmentry __P((struct lkm_table *, int, int));
 /*
  * declare the emulation
  */
-MOD_COMPAT("sunos", -1, &emul_sunos);
+MOD_COMPAT("compat_sunos", -1, &emul_sunos);
 
 /*
  * entry point
