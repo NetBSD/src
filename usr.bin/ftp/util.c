@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.63 1999/09/26 14:21:50 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.64 1999/09/27 23:09:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.63 1999/09/26 14:21:50 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.64 1999/09/27 23:09:45 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -92,7 +92,6 @@ __RCSID("$NetBSD: util.c,v 1.63 1999/09/26 14:21:50 lukem Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <glob.h>
-#include <termios.h>
 #include <signal.h>
 #include <limits.h>
 #include <pwd.h>
@@ -1223,7 +1222,13 @@ xsignal(sig, func)
 
 	act.sa_handler = func;
 	sigemptyset(&act.sa_mask);
+#if defined(SA_RESTART)			/* 4.4BSD, Posix(?), SVR4 */
 	act.sa_flags = SA_RESTART;
+#elif defined(SA_INTERRUPT)		/* SunOS 4.x */
+	act.sa_flags = 0;
+#else
+#error "system must have SA_RESTART or SA_INTERRUPT"
+#endif
 	if (sigaction(sig, &act, &oact) < 0)
 		return (SIG_ERR);
 	return (oact.sa_handler);

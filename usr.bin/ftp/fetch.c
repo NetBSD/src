@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.76 1999/09/26 02:00:12 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.77 1999/09/27 23:09:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.76 1999/09/26 02:00:12 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.77 1999/09/27 23:09:43 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -62,7 +62,6 @@ __RCSID("$NetBSD: fetch.c,v 1.76 1999/09/26 02:00:12 lukem Exp $");
 #include <errno.h>
 #include <netdb.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1024,7 +1023,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	if (strcmp(savefile, "-") == 0) {
 		fout = stdout;
 	} else if (*savefile == '|') {
-		oldintp = signal(SIGPIPE, SIG_IGN);
+		oldintp = xsignal(SIGPIPE, SIG_IGN);
 		fout = popen(savefile + 1, "w");
 		if (fout == NULL) {
 			warn("Can't run `%s'", savefile + 1);
@@ -1043,12 +1042,12 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			/* Trap signals */
 	if (setjmp(httpabort)) {
 		if (oldintr)
-			(void)signal(SIGINT, oldintr);
+			(void)xsignal(SIGINT, oldintr);
 		if (oldintp)
-			(void)signal(SIGPIPE, oldintp);
+			(void)xsignal(SIGPIPE, oldintp);
 		goto cleanup_fetch_url;
 	}
-	oldintr = signal(SIGINT, aborthttp);
+	oldintr = xsignal(SIGINT, aborthttp);
 
 	if (rcvbuf_size > bufsize) {
 		if (xferbuf)
@@ -1065,7 +1064,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 
 			/* Finally, suck down the file. */
 	do {
-		ssize_t chunksize;
+		long chunksize;
 
 		chunksize = 0;
 					/* read chunksize */
@@ -1157,9 +1156,9 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 	}
 	progressmeter(1);
 	(void)fflush(fout);
-	(void)signal(SIGINT, oldintr);
+	(void)xsignal(SIGINT, oldintr);
 	if (oldintp)
-		(void)signal(SIGPIPE, oldintp);
+		(void)xsignal(SIGPIPE, oldintp);
 	if (closefunc == fclose && mtime != -1) {
 		struct timeval tval[2];
 
@@ -1626,8 +1625,8 @@ auto_fetch(argc, argv)
 			disconnect(0, NULL);
 		return (argpos + 1);
 	}
-	(void)signal(SIGINT, (sig_t)intr);
-	(void)signal(SIGPIPE, (sig_t)lostpeer);
+	(void)xsignal(SIGINT, (sig_t)intr);
+	(void)xsignal(SIGPIPE, (sig_t)lostpeer);
 
 	/*
 	 * Loop through as long as there's files to fetch.
