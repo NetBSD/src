@@ -39,9 +39,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)subr_autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: subr_autoconf.c,v 1.7 1994/05/20 04:15:04 glass Exp $
  * from: Header: subr_autoconf.c,v 1.12 93/02/01 19:31:48 torek Exp  (LBL)
+ *	from: @(#)subr_autoconf.c	8.1 (Berkeley) 6/10/93
+ *      $Id: subr_autoconf.c,v 1.8 1994/05/20 04:31:22 cgd Exp $
  */
 
 #include <sys/param.h>
