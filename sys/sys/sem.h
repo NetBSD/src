@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.17 2004/10/06 15:39:19 jdolecek Exp $	*/
+/*	$NetBSD: sem.h,v 1.18 2005/02/03 19:20:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -232,23 +232,23 @@ extern struct semid_ds *sema;		/* semaphore id pool */
 
 __BEGIN_DECLS
 #if defined(__LIBC12_SOURCE__)
-int	semctl __P((int, int, int, union __semun));
-int	__semctl __P((int, int, int, union __semun *));
-int	__semctl13 __P((int, int, int, ...));
+int	semctl(int, int, int, union __semun);
+int	__semctl(int, int, int, union __semun *);
+int	__semctl13(int, int, int, ...);
 #else
-int	semctl __P((int, int, int, ...)) __RENAME(__semctl13);
+int	semctl(int, int, int, ...) __RENAME(__semctl13);
 #endif
-int	semget __P((key_t, int, int));
-int	semop __P((int, struct sembuf *, size_t));
+int	semget(key_t, int, int);
+int	semop(int, struct sembuf *, size_t);
 #if defined(_NETBSD_SOURCE)
-int	semconfig __P((int));
+int	semconfig(int);
 #endif
 __END_DECLS
 #else
-void	seminit __P((void));
-void	semexit __P((struct proc *, void *));
+void	seminit(void);
+void	semexit(struct proc *, void *);
 
-int	semctl1 __P((struct proc *, int, int, int, void *, register_t *));
+int	semctl1(struct proc *, int, int, int, void *, register_t *);
 #endif /* !_KERNEL */
 
 #endif /* !_SEM_H_ */

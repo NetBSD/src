@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.16 2002/11/10 03:28:59 thorpej Exp $	*/
+/*	$NetBSD: rnd.h,v 1.17 2005/02/03 19:20:02 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -143,26 +143,25 @@ struct __rndsource_element {
 #define RND_ENABLED(rp) \
         (((rp)->data.flags & RND_FLAG_NO_COLLECT) == 0)
 
-void		rndpool_init __P((rndpool_t *));
-void		rndpool_init_global __P((void));
-u_int32_t	rndpool_get_entropy_count __P((rndpool_t *));
-void		rndpool_get_stats __P((rndpool_t *, void *, int));
-void		rndpool_increment_entropy_count __P((rndpool_t *, u_int32_t));
-u_int32_t	*rndpool_get_pool __P((rndpool_t *));
-u_int32_t	rndpool_get_poolsize __P((void));
-void		rndpool_add_data __P((rndpool_t *, void *, u_int32_t,
-		    u_int32_t));
-u_int32_t	rndpool_extract_data __P((rndpool_t *, void *, u_int32_t,
-		    u_int32_t));
+void		rndpool_init(rndpool_t *);
+void		rndpool_init_global(void);
+u_int32_t	rndpool_get_entropy_count(rndpool_t *);
+void		rndpool_get_stats(rndpool_t *, void *, int);
+void		rndpool_increment_entropy_count(rndpool_t *, u_int32_t);
+u_int32_t	*rndpool_get_pool(rndpool_t *);
+u_int32_t	rndpool_get_poolsize(void);
+void		rndpool_add_data(rndpool_t *, void *, u_int32_t, u_int32_t);
+u_int32_t	rndpool_extract_data(rndpool_t *, void *, u_int32_t,
+		    u_int32_t);
 
-void		rnd_init __P((void));
-void		rnd_add_uint32 __P((rndsource_element_t *, u_int32_t));
-void		rnd_add_data __P((rndsource_element_t *, void *, u_int32_t,
-		    u_int32_t));
-u_int32_t	rnd_extract_data __P((void *, u_int32_t, u_int32_t));
-void		rnd_attach_source __P((rndsource_element_t *, char *,
-		    u_int32_t, u_int32_t));
-void		rnd_detach_source __P((rndsource_element_t *));
+void		rnd_init(void);
+void		rnd_add_uint32(rndsource_element_t *, u_int32_t);
+void		rnd_add_data(rndsource_element_t *, void *, u_int32_t,
+		    u_int32_t);
+u_int32_t	rnd_extract_data(void *, u_int32_t, u_int32_t);
+void		rnd_attach_source(rndsource_element_t *, char *,
+		    u_int32_t, u_int32_t);
+void		rnd_detach_source(rndsource_element_t *);
 
 #endif /* _KERNEL */
 

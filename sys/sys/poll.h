@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.7 2003/04/28 23:16:29 bjh21 Exp $	*/
+/*	$NetBSD: poll.h,v 1.8 2005/02/03 19:20:01 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ struct pollfd {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	poll __P((struct pollfd *, nfds_t, int));
+int	poll(struct pollfd *, nfds_t, int);
 __END_DECLS
 
 #endif /* _KERNEL */

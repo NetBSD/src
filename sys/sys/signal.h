@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.58 2004/05/07 23:54:48 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.59 2005/02/03 19:20:02 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -96,10 +96,10 @@
 #include <sys/cdefs.h>
 #endif
 
-#define	SIG_DFL		((void (*) __P((int)))  0)
-#define	SIG_IGN		((void (*) __P((int)))  1)
-#define	SIG_ERR		((void (*) __P((int))) -1)
-#define	SIG_HOLD	((void (*) __P((int)))  3)
+#define	SIG_DFL		((void (*)(int))  0)
+#define	SIG_IGN		((void (*)(int))  1)
+#define	SIG_ERR		((void (*)(int)) -1)
+#define	SIG_HOLD	((void (*)(int))  3)
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
@@ -109,7 +109,7 @@
  */
 struct	sigaction13 {
 	void	(*osa_handler)		/* signal handler */
-			    __P((int));
+			   (int);
 	sigset13_t osa_mask;		/* signal mask to apply */
 	int	osa_flags;		/* see signal options below */
 };
@@ -140,10 +140,10 @@ struct	sigaction13 {
  */
 struct	sigaction {
 	union {
-		void (*_sa_handler) __P((int));
+		void (*_sa_handler)(int);
 #if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_NETBSD_SOURCE)
-		void (*_sa_sigaction) __P((int, siginfo_t *, void *));
+		void (*_sa_sigaction)(int, siginfo_t *, void *);
 #endif
 	} _sa_u;	/* signal handler */
 	sigset_t sa_mask;		/* signal mask to apply */
@@ -184,7 +184,7 @@ struct	sigaction {
 #define	SIG_SETMASK	3	/* set specified signal set */
 
 #if defined(_NETBSD_SOURCE)
-typedef	void (*sig_t) __P((int));	/* type of signal function */
+typedef	void (*sig_t)(int);	/* type of signal function */
 #endif
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
@@ -208,7 +208,7 @@ typedef	void (*sig_t) __P((int));	/* type of signal function */
  */
 struct	sigvec {
 	void	(*sv_handler)		/* signal handler */
-			    __P((int));
+			   (int);
 	int	sv_mask;		/* signal mask to apply */
 	int	sv_flags;		/* see signal options below */
 };
@@ -262,6 +262,6 @@ struct	sigevent {
  * defined by <sys/signal.h>.
  */
 __BEGIN_DECLS
-void	(*signal __P((int, void (*) __P((int))))) __P((int));
+void	(*signal(int, void (*)(int)))(int);
 __END_DECLS
 #endif	/* !_SYS_SIGNAL_H_ */
