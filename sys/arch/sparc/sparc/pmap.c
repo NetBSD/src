@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.160 2000/05/01 15:19:46 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.161 2000/05/02 10:35:06 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -420,8 +420,6 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 #if defined(SUN4M)
 void		setpgt4m __P((int *ptep, int pte));
 void		setpte4m __P((vaddr_t va, int pte));
-void		setptesw4m __P((struct pmap *pm, vaddr_t va, int pte));
-static u_int	getptesw4m __P((struct pmap *pm, vaddr_t va));
 #endif
 
 /* Function pointer messiness for supporting multiple sparc architectures
@@ -576,39 +574,6 @@ VA2PA(addr)
 #endif
 }
 
-/*
- * Get the page table entry (PTE) for va by looking it up in the software
- * page tables. These are the same tables that are used by the MMU; this
- * routine allows easy access to the page tables even if the context
- * corresponding to the table is not loaded or selected.
- * This routine should NOT be used if there is any chance that the desired
- * pte is in the TLB cache, since it will return stale data in that case.
- * For that case, and for general use, use getpte4m, which is much faster
- * and avoids walking in-memory page tables if the page is in the cache.
- * Note also that this routine only works if a kernel mapping has been
- * installed for the given page!
- */
-__inline u_int
-getptesw4m(pm, va)		/* Assumes L3 mapping! */
-	struct pmap *pm;
-	vaddr_t va;
-{
-	struct regmap *rm;
-	struct segmap *sm;
-
-	rm = &pm->pm_regmap[VA_VREG(va)];
-#ifdef DEBUG
-	if (rm == NULL)
-		panic("getptesw4m: no regmap entry");
-#endif
-	sm = &rm->rg_segmap[VA_VSEG(va)];
-#ifdef DEBUG
-	if (sm == NULL)
-		panic("getptesw4m: no segmap");
-#endif
-	return (sm->sg_pte[VA_SUN4M_VPG(va)]); 	/* return pte */
-}
-
 __inline void
 setpgt4m(ptep, pte)
 	int *ptep;
@@ -620,37 +585,6 @@ setpgt4m(ptep, pte)
 	if (cpuinfo.cpu_type == CPUTYP_SS1_MBUS_NOMXCC)
 		cpuinfo.pcache_flush_line((int)ptep, VA2PA((caddr_t)ptep));
 #endif
-}
-
-
-/*
- * Set the page table entry for va to pte. Only affects software MMU page-
- * tables (the in-core pagetables read by the MMU). Ignores TLB, and
- * thus should _not_ be called if the pte translation could be in the TLB.
- * In this case, use setpte4m().
- */
-__inline void
-setptesw4m(pm, va, pte)
-	struct pmap *pm;
-	vaddr_t va;
-	int pte;
-{
-	struct regmap *rm;
-	struct segmap *sm;
-
-	rm = &pm->pm_regmap[VA_VREG(va)];
-
-#ifdef DEBUG
-	if (pm->pm_regmap == NULL || rm == NULL)
-		panic("setptesw4m: no regmap entry");
-#endif
-	sm = &rm->rg_segmap[VA_VSEG(va)];
-
-#ifdef DEBUG
-	if (rm->rg_segmap == NULL || sm == NULL || sm->sg_pte == NULL)
-		panic("setptesw4m: no segmap for va %p", (caddr_t)va);
-#endif
-	setpgt4m(sm->sg_pte + VA_SUN4M_VPG(va), pte);
 }
 
 /* Set the page table entry for va to pte. */
@@ -4164,7 +4098,9 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 	if ((nleft = sp->sg_npte) == 0)
 		return;
 
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
+	if (va < virtual_avail)
+		panic("pmap_rmk4m: attempt to free base kernel addr %lx", va);
 	if (sp->sg_pte == NULL || rp->rg_seg_ptps == NULL)
 		panic("pmap_rmk: segment/region does not exist");
 	if (pm->pm_ctx == NULL)
@@ -4217,34 +4153,10 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 		va += NBPG;
 	}
 
-	/*
-	 * If the segment is all gone, remove it from everyone and
-	 * flush the TLB.
-	 */
-	if ((sp->sg_npte = nleft) == 0) {
-		va = VSTOVA(vr,vs);		/* retract */
-
-		tlb_flush_segment(vr, vs); 	/* Paranoia? */
-
-		/*
-		 * We need to free the segment table. The problem is that
-		 * we can't free the initial (bootstrap) mapping, so
-		 * we have to explicitly check for this case (ugh).
-		 */
-		if (va < virtual_avail) {
-#ifdef DEBUG
-			printf("pmap_rmk4m: attempt to free base kernel alloc\n");
-#endif
-			/* sp->sg_pte = NULL; */
-			sp->sg_npte = 0;
-			return;
-		}
-		/* no need to free the table; it is statically allocated */
-		qzero(sp->sg_pte, SRMMU_L3SIZE * sizeof(long));
-	}
-	/* if we're done with a region, leave it wired */
+	sp->sg_npte = nleft;
 }
 #endif /* SUN4M */
+
 /*
  * Just like pmap_rmk_magic, but we have a different threshold.
  * Note that this may well deserve further tuning work.
@@ -5046,12 +4958,6 @@ pmap_page_protect4m(pg, prot)
 #endif
 				goto nextpv;
 			}
-#if 0 /* no need for this */
-			/* no need to free the table; it is static */
-			qzero(sp->sg_pte, SRMMU_L3SIZE * sizeof(int));
-#endif
-
-			/* if we're done with a region, leave it */
 
 		} else { 	/* User mode mapping */
 			if (pm->pm_ctx)
