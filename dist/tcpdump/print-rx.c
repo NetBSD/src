@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rx.c,v 1.2 2001/06/25 20:00:00 itojun Exp $	*/
+/*	$NetBSD: print-rx.c,v 1.3 2001/07/09 09:27:18 itojun Exp $	*/
 
 /*
  * This code unmangles RX packets.  RX is the mutant form of RPC that AFS
@@ -19,7 +19,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-rx.c,v 1.20 2001/01/10 08:12:01 fenner Exp";
 #else
-__RCSID("$NetBSD: print-rx.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
+__RCSID("$NetBSD: print-rx.c,v 1.3 2001/07/09 09:27:18 itojun Exp $");
 #endif
 #endif
 
@@ -41,9 +41,6 @@ __RCSID("$NetBSD: print-rx.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
 #include "interface.h"
 #include "addrtoname.h"
 #include "extract.h"
-
-#undef NOERROR					/* Solaris sucks */
-#include <arpa/nameser.h>
 
 #include "rx.h"
 
@@ -642,14 +639,16 @@ rx_cache_find(const struct rx_header *rxh, const struct ip *ip, int sport,
 			printf(" fid %d/%d/%d", (int) n1, (int) n2, (int) n3); \
 		}
 
-#define STROUT(MAX) { int i; \
+#define STROUT(MAX) { unsigned int i; \
 			TCHECK2(bp[0], sizeof(int32_t)); \
-			i = (int) EXTRACT_32BITS(bp); \
+			i = EXTRACT_32BITS(bp); \
+			if (i > (MAX)) \
+				goto trunc; \
 			bp += sizeof(int32_t); \
-			TCHECK2(bp[0], i); \
-			strncpy(s, (char *) bp, min(MAX, i)); \
-			s[i] = '\0'; \
-			printf(" \"%s\"", s); \
+			printf(" \""); \
+			if (fn_printn(bp, i, snapend)) \
+				goto trunc; \
+			printf("\""); \
 			bp += ((i + sizeof(int32_t) - 1) / sizeof(int32_t)) * sizeof(int32_t); \
 		}
 
@@ -726,15 +725,20 @@ rx_cache_find(const struct rx_header *rxh, const struct ip *ip, int sport,
  */
 
 #define VECOUT(MAX) { char *sp; \
+			char s[AFSNAMEMAX]; \
 			int k; \
-			TCHECK2(bp[0], MAX * sizeof(int32_t)); \
+			if ((MAX) + 1 > sizeof(s)) \
+				goto trunc; \
+			TCHECK2(bp[0], (MAX) * sizeof(int32_t)); \
 			sp = s; \
-			for (k = 0; k < MAX; k++) { \
+			for (k = 0; k < (MAX); k++) { \
 				*sp++ = (char) EXTRACT_32BITS(bp); \
 				bp += sizeof(int32_t); \
 			} \
-			s[MAX] = '\0'; \
-			printf(" \"%s\"", s); \
+			s[(MAX)] = '\0'; \
+			printf(" \""); \
+			fn_print(s, NULL); \
+			printf("\""); \
 		}
 
 static void
@@ -815,7 +819,6 @@ fs_print(register const u_char *bp, int length)
 {
 	int fs_op;
 	unsigned long i;
-	char s[AFSNAMEMAX];
 
 	if (length <= sizeof(struct rx_header))
 		return;
@@ -966,7 +969,6 @@ static void
 fs_reply_print(register const u_char *bp, int length, int32_t opcode)
 {
 	unsigned long i;
-	char s[AFSNAMEMAX];
 	struct rx_header *rxh;
 
 	if (length <= sizeof(struct rx_header))
@@ -1094,7 +1096,9 @@ acl_print(u_char *s, int maxsize, u_char *end)
 		if (sscanf((char *) s, "%s %d\n%n", user, &acl, &n) != 2)
 			goto finish;
 		s += n;
-		printf(" +{%s ", user);
+		printf(" +{");
+		fn_print(user, NULL);
+		printf(" ");
 		ACLOUT(acl);
 		printf("}");
 		if (s > end)
@@ -1105,7 +1109,9 @@ acl_print(u_char *s, int maxsize, u_char *end)
 		if (sscanf((char *) s, "%s %d\n%n", user, &acl, &n) != 2)
 			goto finish;
 		s += n;
-		printf(" -{%s ", user);
+		printf(" -{");
+		fn_print(user, NULL);
+		printf(" ");
 		ACLOUT(acl);
 		printf("}");
 		if (s > end)
@@ -1258,7 +1264,6 @@ static void
 prot_print(register const u_char *bp, int length)
 {
 	unsigned long i;
-	char s[AFSNAMEMAX];
 	int pt_op;
 
 	if (length <= sizeof(struct rx_header))
@@ -1402,7 +1407,6 @@ prot_reply_print(register const u_char *bp, int length, int32_t opcode)
 {
 	struct rx_header *rxh;
 	unsigned long i;
-	char s[AFSNAMEMAX];
 
 	if (length < sizeof(struct rx_header))
 		return;
@@ -1515,7 +1519,6 @@ vldb_print(register const u_char *bp, int length)
 {
 	int vldb_op;
 	unsigned long i;
-	char s[AFSNAMEMAX];
 
 	if (length <= sizeof(struct rx_header))
 		return;
@@ -1609,7 +1612,6 @@ vldb_reply_print(register const u_char *bp, int length, int32_t opcode)
 {
 	struct rx_header *rxh;
 	unsigned long i;
-	char s[AFSNAMEMAX];
 
 	if (length < sizeof(struct rx_header))
 		return;
@@ -1796,7 +1798,6 @@ static void
 kauth_print(register const u_char *bp, int length)
 {
 	int kauth_op;
-	char s[AFSNAMEMAX];
 
 	if (length <= sizeof(struct rx_header))
 		return;
@@ -2023,7 +2024,6 @@ static void
 bos_print(register const u_char *bp, int length)
 {
 	int bos_op;
-	char s[BOSNAMEMAX];
 
 	if (length <= sizeof(struct rx_header))
 		return;
