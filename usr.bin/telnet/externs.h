@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)externs.h	8.3 (Berkeley) 5/30/95
- *	$NetBSD: externs.h,v 1.6 1996/02/24 01:18:36 jtk Exp $
+ *	$NetBSD: externs.h,v 1.7 1996/02/24 07:32:00 jtk Exp $
  */
 
 #ifndef	BSD
@@ -142,7 +142,8 @@ extern int
 #endif	/* defined(TN3270) */
     termdata,		/* Print out terminal data flow */
 #endif	/* defined(unix) */
-    debug;		/* Debug level */
+    debug,		/* Debug level */
+    clienteof;		/* Client received EOF */
 
 extern cc_t escape;	/* Escape to command mode */
 extern cc_t rlogin;	/* Rlogin mode escape character */
