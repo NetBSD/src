@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons.c,v 1.3 1996/04/17 21:48:30 cgd Exp $	*/
+/*	$NetBSD: wscons.c,v 1.4 1996/05/30 18:44:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -175,6 +175,7 @@ wsconsattach(parent, self, aux)
 	 * Set up the device's tty structure.
 	 */
 	sc->sc_tty = ttymalloc();
+	tty_attach(sc->sc_tty);
 
 	/*
 	 * Record other relevant information: ioctl and mmap functions.
