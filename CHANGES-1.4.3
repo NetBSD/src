@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.26 2000/06/29 16:13:55 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.27 2000/07/01 11:23:49 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -231,7 +231,7 @@ sys/netinet/ip.h				1.20-1.21
 
   Add "__attribute__((__packed__))" to structures used to describe
   on-the-wire data, to prevent egcs from making unwarranted assumptions
-  about the alignment of these structures.
+  about the alignment of these structures.  Fixes part of SA#2000-02.
 
 sys/kern/kern_subr.c				patch
 
@@ -270,6 +270,7 @@ dist/bind/include/port_ipv6.h			patch (new)
 sys/netinet/ip_input.c				1.112
 
   Handle large offsets inside very small options correctly.
+  Fixes part of SA#2000-002.
 
 usr.sbin/wiconfig/Makefile			1.1-1.2 (new)
 usr.sbin/wiconfig/wiconfig.8			1.1-1.5 (new)
@@ -674,8 +675,7 @@ sys/arch/mac68k/dev/zs.c			1.33
 
 usr.sbin/dhcp/common/options.c			patch
 
-  Quote user-supplied shell meta-characters properly in generated
-  scripts.
+  Quote shell meta-characters properly in generated scripts.
 
 usr.sbin/mopd/mopd/process.c			1.6-1.7
 
