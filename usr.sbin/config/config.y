@@ -28,7 +28,7 @@
 %token	IOMEM
 %token	IOSIZ
 %token	IRQ
-%token	MACHINE
+%token	MACHIN
 %token	MAJOR
 %token	MASTER
 %token	MAXFDESCS
@@ -104,7 +104,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.y	5.14 (Berkeley) 7/1/91
- *	$Id: config.y,v 1.8 1993/10/14 01:22:29 deraadt Exp $
+ *	$Id: config.y,v 1.9 1993/12/01 05:56:39 deraadt Exp $
  */
 
 #include "config.h"
@@ -142,7 +142,7 @@ Spec:
 		;
 
 Config_spec:
-	MACHINE Save_id
+	MACHIN Save_id
 	    = {
 		if (!strcmp($2, "vax")) {
 			machine = MACHINE_VAX;

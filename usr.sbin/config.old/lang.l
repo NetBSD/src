@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)lang.l	5.8 (Berkeley) 4/19/91
- *	$Id: lang.l,v 1.3 1993/08/01 18:00:06 mycroft Exp $
+ *	$Id: lang.l,v 1.4 1993/12/01 05:56:44 deraadt Exp $
  */
 
 #include <ctype.h>
@@ -75,7 +75,7 @@ struct kt {
 	{ "iosiz",	IOSIZ },
 	{ "irq",	IRQ },
 #endif MACHINE_I386
-	{ "machine",	MACHINE },
+	{ "machine",	MACHIN },
 	{ "major",	MAJOR },
 	{ "makeoptions", MAKEOPTIONS },
 	{ "master",	MASTER },
