@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_500.c,v 1.4 1996/05/02 21:56:46 cgd Exp $	*/
+/*	$NetBSD: tc_3000_500.c,v 1.4.4.1 1996/06/04 19:03:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -86,20 +86,21 @@ struct tcintr {
 	void	*tci_arg;
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
 
+u_int32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
+
 void
 tc_3000_500_intr_setup()
 {
 	u_long i;
-	u_int32_t imr;
 
 	/*
 	 * Disable all slot interrupts.  Note that this cannot
 	 * actually disable CXTurbo, TCDS, and IOASIC interrupts.
 	 */
-	imr = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
+	tc_3000_500_imask = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
 	for (i = 0; i < TC_3000_500_NCOOKIES; i++)
-		imr |= tc_3000_500_intrbits[i];
-	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = imr;
+		tc_3000_500_imask |= tc_3000_500_intrbits[i];
+	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
 	tc_mb();
 
         /*
@@ -119,7 +120,6 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
 	int (*func) __P((void *));
 {
 	u_long dev = (u_long)cookie;
-	u_int32_t imr;
 
 #ifdef DIAGNOSTIC
 	/* XXX bounds-check cookie. */
@@ -131,9 +131,8 @@ tc_3000_500_intr_establish(tcadev, cookie, level, func, arg)
 	tc_3000_500_intr[dev].tci_func = func;
 	tc_3000_500_intr[dev].tci_arg = arg;
 
-	imr = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
-	imr &= ~tc_3000_500_intrbits[dev];
-	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = imr;
+	tc_3000_500_imask &= ~tc_3000_500_intrbits[dev];
+	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
 	tc_mb();
 }
 
@@ -143,7 +142,6 @@ tc_3000_500_intr_disestablish(tcadev, cookie)
 	void *cookie;
 {
 	u_long dev = (u_long)cookie;
-	u_int32_t imr;
 
 #ifdef DIAGNOSTIC
 	/* XXX bounds-check cookie. */
@@ -153,9 +151,8 @@ tc_3000_500_intr_disestablish(tcadev, cookie)
 		panic("tc_3000_500_intr_disestablish: cookie %d bad intr",
 		    dev);
 
-	imr = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
-	imr |= tc_3000_500_intrbits[dev];
-	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = imr;
+	tc_3000_500_imask |= tc_3000_500_intrbits[dev];
+	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = tc_3000_500_imask;
 	tc_mb();
 
 	tc_3000_500_intr[dev].tci_func = tc_3000_500_intrnull;
@@ -176,7 +173,7 @@ tc_3000_500_iointr(framep, vec)
         void *framep;
         int vec;
 {
-        u_int32_t ir, imr, tmp;
+        u_int32_t ir;
 	int ifound;
 
 #ifdef DIAGNOSTIC
@@ -191,13 +188,10 @@ tc_3000_500_iointr(framep, vec)
 
 	do {
 		tc_syncbus();
-		ir = *(volatile u_int32_t *)TC_3000_500_IR;
-		imr = *(volatile u_int32_t *)TC_3000_500_IMR_READ;
-		tc_mb();
-		tmp = *(volatile u_int32_t *)TC_3000_500_IR_CLEAR;
+		ir = *(volatile u_int32_t *)TC_3000_500_IR_CLEAR;
 
 		/* Ignore interrupts that we haven't enabled. */
-		ir &= ~(imr & 0x1ff);
+		ir &= ~(tc_3000_500_imask & 0x1ff);
 
 		ifound = 0;
 #define	CHECKINTR(slot)							\
