@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.50 1998/02/27 11:45:51 mycroft Exp $
+$NetBSD: pcidevs,v 1.51 1998/03/04 00:09:11 cgd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -623,11 +623,16 @@ product CIRRUS CL_GD7542	0x1200	CL-GD7542
 product CIRRUS CL_GD7543	0x1202	CL-GD7543
 product CIRRUS CL_GD7541	0x1204	CL-GD7541
 
-/* CMD Technology products */
-product CMDTECH 640A		0x0640	640A
-product	CMDTECH 642		0x0642	642
-product CMDTECH 646		0x0646	646
-product CMDTECH 650A		0x0650	650A
+/* CMD Technology products -- info gleaned from their web site */
+product CMDTECH 640		0x0640	PCI0640
+product	CMDTECH 642		0x0642	PCI0642 /* not on web, Mar. 3 '98 */
+product	CMDTECH 643		0x0643	PCI0643
+product CMDTECH 646		0x0646	PCI0646
+product CMDTECH 647		0x0647	PCI0647
+/* inclusion of 'A' in the following entry is probably wrong. */
+product CMDTECH 650A		0x0650	PCI0650A /* not on web, Mar. 3 '98 */
+product CMDTECH 670		0x0670	USB0670
+product CMDTECH 673		0x0673	USB0673
 	
 /* Cogent Data Technologies products */
 product COGENT EM110TX		0x1400 EX110TX PCI Fast Ethernet Adapter
