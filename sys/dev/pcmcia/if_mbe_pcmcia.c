@@ -1,7 +1,7 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.12 2000/02/02 09:34:51 enami Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.13 2000/02/04 01:27:13 cgd Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -88,60 +88,37 @@ struct mbe_pcmcia_get_enaddr_args {
 };
 int	mbe_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
 
-struct mbe_pcmcia_product {
-	u_int32_t	mpp_vendor;	/* vendor ID */
-	u_int32_t	mpp_product;	/* product ID */
-	int		mpp_expfunc;	/* exptected function */
+const struct mbe_pcmcia_product {
+	struct pcmcia_product mpp_product;
 	u_int32_t	mpp_ioalign;	/* required alignment */
-	const char	*mpp_name;	/* product name */
 } mbe_pcmcia_products[] = {
-	{ PCMCIA_VENDOR_TDK,		PCMCIA_PRODUCT_TDK_LAK_CD021BX,
-	  0,				0,
-	  PCMCIA_STR_TDK_LAK_CD021BX },
+	{ { PCMCIA_STR_TDK_LAK_CD021BX,		PCMCIA_VENDOR_TDK,
+	    PCMCIA_PRODUCT_TDK_LAK_CD021BX,	0 },
+	  0 }, 
 
-	{ PCMCIA_VENDOR_TDK,            PCMCIA_PRODUCT_TDK_LAK_CF010,
-	  0,                            0,
-	  PCMCIA_STR_TDK_LAK_CF010},
+	{ { PCMCIA_STR_TDK_LAK_CF010,		PCMCIA_VENDOR_TDK,
+	    PCMCIA_PRODUCT_TDK_LAK_CF010,	0 },
+	  0 },
 #if 0 /* XXX 86960-based? */
-	{ PCMCIA_VENDOR_TDK,		PCMCIA_PRODUCT_TDK_LAK_DFL9610,
-	  1,				0,
-	  PCMCIA_STR_TDK_LAK_DFL9610 }
+	{ { PCMCIA_STR_TDK_LAK_DFL9610,		PCMCIA_VENDOR_TDK,
+	    PCMCIA_PRODUCT_TDK_LAK_DFL9610,	1 },
+	  0 },
 #endif
 
-	{ PCMCIA_VENDOR_CONTEC,		PCMCIA_PRODUCT_CONTEC_CNETPC,
-	  0,				0,
-	  PCMCIA_STR_CONTEC_CNETPC },
+	{ { PCMCIA_STR_CONTEC_CNETPC,		PCMCIA_VENDOR_CONTEC,
+	    PCMCIA_PRODUCT_CONTEC_CNETPC,	0 },
+	  0 },
 
-	{ PCMCIA_VENDOR_FUJITSU,	PCMCIA_PRODUCT_FUJITSU_LA501,
-	  0,				0x20,
-	  PCMCIA_STR_FUJITSU_LA501 },
+	{ { PCMCIA_STR_FUJITSU_LA501,		PCMCIA_VENDOR_FUJITSU,
+	    PCMCIA_PRODUCT_FUJITSU_LA501,	0 },
+	  0x20 },
 
-	{ PCMCIA_VENDOR_FUJITSU,	PCMCIA_PRODUCT_FUJITSU_LA10S,
-	  0,				0,
-	  PCMCIA_STR_FUJITSU_LA10S },
+	{ { PCMCIA_STR_FUJITSU_LA10S,		PCMCIA_VENDOR_FUJITSU,
+	    PCMCIA_PRODUCT_FUJITSU_LA10S,	0 },
+	  0 },
 
-	{ 0,				0,
-	  0,				0,
-	  NULL },
+	{ { NULL } }
 };
-
-const struct mbe_pcmcia_product *mbe_pcmcia_lookup
-    __P((const struct pcmcia_attach_args *pa));
-
-const struct mbe_pcmcia_product *
-mbe_pcmcia_lookup(pa)
-	const struct pcmcia_attach_args *pa;
-{
-	const struct mbe_pcmcia_product *mpp;
-
-	for (mpp = mbe_pcmcia_products; mpp->mpp_name != NULL; mpp++) {
-		if (pa->manufacturer == mpp->mpp_vendor &&
-		    pa->product == mpp->mpp_product &&
-		    pa->pf->number == mpp->mpp_expfunc)
-			return (mpp);
-	}
-	return (NULL);
-}
 
 int
 mbe_pcmcia_match(parent, match, aux)
@@ -151,7 +128,9 @@ mbe_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (mbe_pcmcia_lookup(pa) != NULL)
+	if (pcmcia_product_lookup(pa,
+	    (const struct pcmcia_product *)mbe_pcmcia_products,
+	    sizeof mbe_pcmcia_products[0], NULL) != NULL)
 		return (1);
 
 	return (0);
@@ -170,7 +149,9 @@ mbe_pcmcia_attach(parent, self, aux)
 	const struct mbe_pcmcia_product *mpp;
 	int rv;
 
-	mpp = mbe_pcmcia_lookup(pa);
+	mpp = (const struct mbe_pcmcia_product *)pcmcia_product_lookup(pa,
+	    (const struct pcmcia_product *)mbe_pcmcia_products,
+	    sizeof mbe_pcmcia_products[0], NULL);
 	if (mpp == NULL) {
 		printf("\n");
 		panic("mbe_pcmcia_attach: impossible");
@@ -211,7 +192,7 @@ mbe_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	printf(": %s\n", mpp->mpp_name);
+	printf(": %s\n", mpp->mpp_product.pp_name);
 
 	/* Read station address from CIS. */
 	rv = pcmcia_scan_cis(parent, mbe_pcmcia_get_enaddr, &pgea);
