@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.9 1998/10/04 00:02:26 fvdl Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.9.22.1 2001/03/30 21:33:51 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,15 @@
 #ifndef _I386_LINUX_IOCTL_H
 #define _I386_LINUX_IOCTL_H
 
-#define _LINUX_IO(x,y)		(((x) << 8) | (y))
-#define LINUX_IOCGROUP(x)	(((x) >> 8) & 0xff)
+#define _LINUX_IOC_NRBITS	 8
+#define _LINUX_IOC_TYPEBITS	 8
+#define _LINUX_IOC_SIZEBITS	14
+#define _LINUX_IOC_DIRBITS	 2
+
+#define _LINUX_IOC_NRSHIFT	 0
+
+#define _LINUX_IOC_NONE		0U
+#define _LINUX_IOC_WRITE	1U
+#define _LINUX_IOC_READ		2U
 
 #endif /* !_I386_LINUX_IOCTL_H */
