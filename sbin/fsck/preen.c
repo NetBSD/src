@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.22 2001/06/18 06:28:59 lukem Exp $	*/
+/*	$NetBSD: preen.c,v 1.23 2001/11/01 07:31:23 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.22 2001/06/18 06:28:59 lukem Exp $");
+__RCSID("$NetBSD: preen.c,v 1.23 2001/11/01 07:31:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,19 +293,19 @@ printpart(void)
 
 
 static void
-addpart(const char *type, const char *devname, const char *mntpt, void *auxarg)
+addpart(const char *type, const char *dev, const char *mntpt, void *auxarg)
 {
-	struct diskentry *d = finddisk(devname);
+	struct diskentry *d = finddisk(dev);
 	struct partentry *p;
 
 	TAILQ_FOREACH(p, &d->d_part, p_entries)
-		if (strcmp(p->p_devname, devname) == 0) {
-			warnx("%s in fstab more than once!\n", devname);
+		if (strcmp(p->p_devname, dev) == 0) {
+			warnx("%s in fstab more than once!\n", dev);
 			return;
 		}
 
 	p = emalloc(sizeof(*p));
-	p->p_devname = estrdup(devname);
+	p->p_devname = estrdup(dev);
 	p->p_mntpt = estrdup(mntpt);
 	p->p_type = estrdup(type);
 	p->p_auxarg = auxarg;
