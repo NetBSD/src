@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_sa1.S,v 1.2 2001/11/11 00:41:48 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_sa1.S,v 1.3 2001/11/11 01:02:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -144,7 +144,7 @@ Lsa110_cache_clean_size:
 	msr	cpsr_all, r0
 
 #define	SA1_CACHE_CLEAN_UNBLOCK						\
-	msrcpsr_all, r3
+	msr	cpsr_all, r3
 #else
 #define	SA1_CACHE_CLEAN_BLOCK						\
 	ldr	r3, Lblock_userspace_access			;	\
