@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.2 2001/09/22 00:58:13 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.3 2001/10/22 16:42:44 mrg Exp $
 #
 # from: $NetBSD: POWEROFSEVEN32,v 1.10 2001/08/25 15:04:26 mrg Exp
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
@@ -15,7 +15,6 @@ maxusers	64
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
 options		SUN4U		# sun4u - UltraSPARC
-#options 	LOCKDEBUG
 #options 	_LP64		# we're using a 64-bit compiler
 
 ## System options specific to the sparc machine type
@@ -24,6 +23,8 @@ options		SUN4U		# sun4u - UltraSPARC
 ## for headless (no framebuffer) machines.
 # XXX broken on sparc64
 #options 	RASTERCONSOLE		# fast rasterop console
+
+options 	BLINK			# Blink the system LED
 
 #### System options that are the same for all ports
 
@@ -85,6 +86,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## such that gdb(1) can be used on a kernel coredump.
 
 makeoptions 	DEBUG="-g"
+options 	AUDIO_DEBUG
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -413,8 +415,8 @@ pseudo-device	ipfilter
 ## /dev/audio support (`audiocs' plus `audio')
 ##
 #audiocs*	at sbus? slot ? offset ?		# SUNW,CS4231
-#audiocs*	at ebus?                		# SUNW,CS4231
-#audio*		at audiocs?
+audiocs*	at ebus?                		# SUNW,CS4231
+audio*		at audiocs?
 
 
 ## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
