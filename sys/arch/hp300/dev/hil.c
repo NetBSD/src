@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: hil.c 1.33 89/12/22
  *	from: @(#)hil.c	7.8.1.1 (Berkeley) 6/28/91
- *	$Id: hil.c,v 1.10 1994/02/10 14:57:57 mycroft Exp $
+ *	$Id: hil.c,v 1.11 1994/04/10 22:12:32 hpeyerl Exp $
  */
 
 #include <sys/param.h>
@@ -172,7 +172,10 @@ hilopen(dev, flags, mode, p)
 	 * It is safe to flush the read buffer as we are guarenteed
 	 * that no one else is using it.
 	 */
-	ndflush(&dptr->hd_queue, dptr->hd_queue.c_cc);
+	if (!(dptr->hd_flags & HIL_OPENED)) {
+		dptr->hd_flags |= HIL_OPENED;
+		clalloc(&dptr->hd_queue, HILMAXCLIST, 0);
+	}
 
 	send_hil_cmd(hilp->hl_addr, HIL_INTON, NULL, 0, NULL);
 	/*
@@ -233,10 +236,10 @@ hilclose(dev, flags)
 		}
 	}
 	/*
-	 * Always flush the read buffer
+	 * The read buffer can go away.
 	 */
-	dptr->hd_flags &= ~(HIL_QUEUEIN|HIL_READIN|HIL_NOBLOCK);
-	ndflush(&dptr->hd_queue, dptr->hd_queue.c_cc);
+        dptr->hd_flags &= ~(HIL_QUEUEIN|HIL_READIN|HIL_NOBLOCK|HIL_OPENED);
+	clfree(&dptr->hd_queue);
 	/*
 	 * Set keyboard back to cooked mode when closed.
 	 */
