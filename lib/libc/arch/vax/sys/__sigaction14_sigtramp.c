@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.3 2003/01/18 11:18:02 thorpej Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.4 2003/09/30 19:05:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,10 +36,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	__LIBC12_SOURCE__
-
 #include <sys/types.h>
+#include <sys/signal.h>
+#include <stddef.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "extern.h"
 
@@ -48,13 +49,31 @@ __weak_alias(__sigaction14, __libc_sigaction14)
 int
 __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 {
-	extern int __sigtramp_sigcontext_2[];
+	extern const int __sigtramp_sigcontext_2[];
+	extern const int __sigtramp_siginfo_3[];
+	int rv;
 
 	/*
-	 * Right here we should select the SA_SIGINFO trampoline
-	 * if SA_SIGINFO is set in the sigaction.
+	 * If no sigaction, use the "default" trampoline since it won't
+	 * be used.
 	 */
+	if (act == NULL)
+		return  __sigaction_sigtramp(sig, act, oact, NULL, 0);
 
-	return (__sigaction_sigtramp(sig, act, oact,
-				     __sigtramp_sigcontext_2, 2));
+	/*
+	 * We select the non-SA_SIGINFO trampoline if SA_SIGINFO is not
+	 * set in the sigaction.
+	 */
+	if ((act->sa_flags & SA_SIGINFO) == 0) {
+		rv =  __sigaction_sigtramp(sig, act, oact,
+		    __sigtramp_sigcontext_2, 2);
+		if (rv >= 0 || errno != EINVAL)
+			return rv;
+	}
+
+	/*
+	 * If SA_SIGINFO was specificed or the compatibility trampolines
+	 * can't be used, use the siginfo trampoline.
+	 */
+	return __sigaction_sigtramp(sig, act, oact, __sigtramp_siginfo_3, 3);
 }
