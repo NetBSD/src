@@ -1,7 +1,7 @@
-/*	$NetBSD: ahbreg.h,v 1.4 1997/08/27 11:24:41 bouyer Exp $	*/
+/*	$NetBSD: ahbreg.h,v 1.5 1998/02/17 03:02:30 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -252,17 +252,6 @@ struct ahb_ecb {
 #define	ECB_IMMED	0x04
 #define	ECB_IMMED_FAIL	0x08
 	int timeout;
-
-	/*
-	 * DMA maps used by the ECB.  These maps are created
-	 * in ahb_init_ecb().
-	 */
-
-	/*
-	 * This DMA map maps an individual ECB.  This map is
-	 * permanently loaded in ahb_init_ecb().
-	 */
-	bus_dmamap_t	dmamap_self;
 
 	/*
 	 * This DMA map maps the buffer involved in the transfer.
