@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 1999/09/21 12:36:32 tsubai Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 1999/10/13 03:27:48 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -110,7 +110,7 @@ extern int ofmsr;
 
 struct bat battable[16];
 int astpending;
-char *bootpath;
+char bootpath[256];
 paddr_t msgbuf_paddr;
 static int chosen;
 struct pmap ofw_pmap;
@@ -287,7 +287,8 @@ initppc(startkernel, endkernel, args)
 		startsym = endsym = NULL;
 #endif
 
-	bootpath = args;
+	strcpy(bootpath, args);
+	args = bootpath;
 	while (*++args && *args != ' ');
 	if (*args) {
 		*args++ = 0;
