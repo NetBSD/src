@@ -62,7 +62,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    The __arm2__ __arm3__ and __arm6__ are obvious. */
 
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-Dunix -Darm32 -D__arm32__ -D__arm6__ -Driscbsd -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(arm) -Amachine(arm)"
+#define CPP_PREDEFINES "-Dunix -Darm32 -D__arm32__ -D__arm6__ -Driscbsd -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ -Asystem(unix) -Asystem(NetBSD) -Acpu(arm) -Amachine(arm)"
 
 #undef CPP_SPEC
 #define CPP_SPEC "%{m2:-D__arm2__} %{m3:-D__arm3__} %{m2:-U__arm6__}	\
