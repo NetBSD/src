@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)bpf.c	7.5 (Berkeley) 7/15/91
- *	$Id: bpf.c,v 1.5.4.3 1993/11/23 04:52:03 cgd Exp $
+ *	$Id: bpf.c,v 1.5.4.4 1993/11/27 19:43:01 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -358,7 +358,7 @@ bpf_sleep(d)
 		d->bd_timedout = 0;
 		timeout(bpf_timeout, (caddr_t)d, rto);
 	}
-	st = sleep((caddr_t)d, PRINET|PCATCH);
+	st = tsleep((caddr_t)d, PRINET|PCATCH, "bpf_sleep", 0);
 	if (rto != 0) {
 		if (d->bd_timedout == 0)
 			untimeout(bpf_timeout, (caddr_t)d);

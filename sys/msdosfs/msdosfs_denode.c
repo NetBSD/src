@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_denode.c,v 1.1.2.1 1993/11/14 22:27:15 mycroft Exp $
+ *	$Id: msdosfs_denode.c,v 1.1.2.2 1993/11/27 19:50:14 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -130,7 +130,7 @@ loop:
 			 * some potential deadlock?
 			 */
 			ldep->de_flag |= DEWANT;
-			sleep((caddr_t) ldep, PINOD);
+			(void) tsleep((caddr_t) ldep, PINOD, "deget", 0);
 			goto loop;
 		}
 		if (vget(DETOV(ldep)))
@@ -595,7 +595,7 @@ delock(dep)
 		if (dep->de_spare0 == curproc->p_pid)
 			panic("delock: locking against myself");
 		dep->de_spare1 = curproc->p_pid;
-		(void) sleep((caddr_t) dep, PINOD);
+		(void) tsleep((caddr_t) dep, PINOD, "delock", 0);
 	}
 	dep->de_spare1 = 0;
 	dep->de_spare0 = curproc->p_pid;
