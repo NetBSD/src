@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_ultrix.8,v 1.1 1997/06/08 08:12:35 jonathan Exp $
+.\"	$NetBSD: compat_ultrix.8,v 1.2 1997/06/08 23:55:27 jonathan Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -55,6 +55,18 @@ release.  Ultrix commands and libraries are often much older than
 their NetBSD or even SunOS 4.x equivalents, and may require incompatible
 configuration files.
 .Sh SYSTEM CONFIGURATION FILES
+Set up resolv.conf and svc.conf as below:
+.Pp
+.Bl -tag -width 123 -compact -offset indent
+.It # mkdir -p /emul/ultrix/etc
+.br
+.It # cd /emul/ultrix/etc
+.br
+.It # egrep 'domain|nameserver' /etc/resolv.conf  > ./resolv.conf
+.br
+.It # cp -p /usr/share/samples/emul/ultrix/etc/*	./
+.El
+.Pp
 .Ss /etc/resolv.conf
 The Ultrix resolver library only understands
 .Sy domain
@@ -76,8 +88,10 @@ lookups for all Ultrix name services.
 .Pp
 RISC Ultrix YP(NIS) is know to not work.  The Ultrix YP libraries have
 a consistent endian-ness bug. Ultrix YP client will not inter-operate
-with the NetBSD ypbind process.  The only workaround is to use
-/etc/svc.conf to disable
+with the NetBSD 
+.Xr ypbind 8
+process.  The only workaround is to use
+/etc/svc.conf to disable YP(NIS).
 .Pp
 The ndbm hashed-password file used by Ultrix are incompatible with the
 db hashed-password file used by NetBSD. There is no good solution for
