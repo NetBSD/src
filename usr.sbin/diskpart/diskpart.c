@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: diskpart.c,v 1.10 1998/07/26 12:09:07 mycroft Exp $");
+__RCSID("$NetBSD: diskpart.c,v 1.11 1999/01/19 22:23:36 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: diskpart.c,v 1.10 1998/07/26 12:09:07 mycroft Exp $");
 #include <sys/disklabel.h>
 
 #include <ctype.h>
+#include <disktab.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
