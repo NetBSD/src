@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.1 1999/01/16 12:43:09 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.2 1999/01/17 20:47:50 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -141,24 +141,8 @@ struct be_softc {
 	int	sc_burst;
 	int	sc_conf;
 #define BE_CONF_MII	1
-	int	sc_nticks;		/* negotiation ticks */
 
-	/* Ring Descriptors */
-	caddr_t		sc_membase;
-	bus_addr_t	sc_dmabase;
-	struct	qec_xd	*sc_txd;	/* Transmit descriptors */
-	bus_addr_t	sc_txddma;	/* DMA address of same */
-	struct	qec_xd	*sc_rxd;	/* Receive descriptors */
-	bus_addr_t	sc_rxddma;	/* DMA address of same */
-	caddr_t		sc_txbuf;	/* Transmit buffers */
-	caddr_t		sc_rxbuf;	/* Receive buffers */
-	int		sc_ntbuf;	/* # of transmit buffers */
-	int		sc_nrbuf;	/* # of receive buffers */
-
-	/* Ring Descriptor state */
-	int	sc_tdhead, sc_tdtail;
-	int	sc_rdtail;
-	int	sc_td_nbusy;
+	struct  qec_ring	sc_rb;	/* Packet Ring Buffer */
 
 	/* MAC address */
 	u_int8_t sc_enaddr[6];
@@ -168,7 +152,6 @@ int	bematch __P((struct device *, struct cfdata *, void *));
 void	beattach __P((struct device *, struct device *, void *));
 
 void	beinit __P((struct be_softc *));
-void	bememinit __P((struct be_softc *));
 void	bestart __P((struct ifnet *));
 void	bestop __P((struct be_softc *));
 void	bewatchdog __P((struct ifnet *));
@@ -190,6 +173,7 @@ void	be_tcvr_init __P((struct be_softc *));
 /* ifmedia callbacks */
 void	be_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int	be_ifmedia_upd __P((struct ifnet *));
+
 void	be_mcreset __P((struct be_softc *));
 
 /* MII methods & callbacks */
@@ -300,13 +284,15 @@ beattach(parent, self, aux)
 	/*
 	 * Allocate descriptor ring and buffers.
 	 */
-	sc->sc_ntbuf = QEC_XD_RING_MAXSIZE; /* for now, allocate as many bufs */
-	sc->sc_nrbuf = QEC_XD_RING_MAXSIZE; /* as there are ring descriptors */
+
+	/* for now, allocate as many bufs as there are ring descriptors */
+	sc->sc_rb.rb_ntbuf = QEC_XD_RING_MAXSIZE;
+	sc->sc_rb.rb_nrbuf = QEC_XD_RING_MAXSIZE;
 
 	size =	QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd) +
 		QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd) +
-		sc->sc_ntbuf * BE_PKT_BUF_SZ +
-		sc->sc_nrbuf * BE_PKT_BUF_SZ;
+		sc->sc_rb.rb_ntbuf * BE_PKT_BUF_SZ +
+		sc->sc_rb.rb_nrbuf * BE_PKT_BUF_SZ;
 	if ((error = bus_dmamem_alloc(sa->sa_dmatag, size,
 				      NBPG, 0,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
@@ -314,10 +300,10 @@ beattach(parent, self, aux)
 			self->dv_xname, error);
 		return;
 	}
-	sc->sc_dmabase = seg.ds_addr;
+	sc->sc_rb.rb_dmabase = seg.ds_addr;
 
 	if ((error = bus_dmamem_map(sa->sa_dmatag, &seg, rseg, size,
-			            &sc->sc_membase,
+			            &sc->sc_rb.rb_membase,
 			            BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
 			self->dv_xname, error);
@@ -432,7 +418,9 @@ be_put(sc, idx, m)
 {
 	struct mbuf *n;
 	int len, tlen = 0, boff = 0;
-	caddr_t bp = sc->sc_txbuf + (idx % sc->sc_ntbuf) * BE_PKT_BUF_SZ;
+	caddr_t bp;
+
+	bp = sc->sc_rb.rb_txbuf + (idx % sc->sc_rb.rb_ntbuf) * BE_PKT_BUF_SZ;
 
 	for (; m; m = n) {
 		len = m->m_len;
@@ -463,7 +451,9 @@ be_get(sc, idx, totlen)
 	struct mbuf *m;
 	struct mbuf *top, **mp;
 	int len, pad, boff = 0;
-	caddr_t bp = sc->sc_rxbuf + (idx % sc->sc_nrbuf) * BE_PKT_BUF_SZ;
+	caddr_t bp;
+
+	bp = sc->sc_rb.rb_rxbuf + (idx % sc->sc_rb.rb_nrbuf) * BE_PKT_BUF_SZ;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -564,15 +554,15 @@ bestart(ifp)
 	struct ifnet *ifp;
 {
 	struct be_softc *sc = (struct be_softc *)ifp->if_softc;
-	struct qec_xd *txd = sc->sc_txd;
+	struct qec_xd *txd = sc->sc_rb.rb_txd;
 	struct mbuf *m;
 	unsigned int bix, len;
-	unsigned int ntbuf = sc->sc_ntbuf;
+	unsigned int ntbuf = sc->sc_rb.rb_ntbuf;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	bix = sc->sc_tdhead;
+	bix = sc->sc_rb.rb_tdhead;
 
 	for (;;) {
 		IF_DEQUEUE(&ifp->if_snd, m);
@@ -604,13 +594,13 @@ bestart(ifp)
 		if (++bix == QEC_XD_RING_MAXSIZE)
 			bix = 0;
 
-		if (++sc->sc_td_nbusy == ntbuf) {
+		if (++sc->sc_rb.rb_td_nbusy == ntbuf) {
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
 	}
 
-	sc->sc_tdhead = bix;
+	sc->sc_rb.rb_tdhead = bix;
 }
 
 void
@@ -844,13 +834,13 @@ betint(sc)
 	bus_space_write_4(t, br, BE_BRI_EXCNT, 0);
 	bus_space_write_4(t, br, BE_BRI_LTCNT, 0);
 
-	bix = sc->sc_tdtail;
+	bix = sc->sc_rb.rb_tdtail;
 
 	for (;;) {
-		if (sc->sc_td_nbusy <= 0)
+		if (sc->sc_rb.rb_td_nbusy <= 0)
 			break;
 
-		txflags = sc->sc_txd[bix].xd_flags;
+		txflags = sc->sc_rb.rb_txd[bix].xd_flags;
 
 		if (txflags & QEC_XD_OWN)
 			break;
@@ -861,14 +851,14 @@ betint(sc)
 		if (++bix == QEC_XD_RING_MAXSIZE)
 			bix = 0;
 
-		--sc->sc_td_nbusy;
+		--sc->sc_rb.rb_td_nbusy;
 	}
 
-	sc->sc_tdtail = bix;
+	sc->sc_rb.rb_tdtail = bix;
 
 	bestart(ifp);
 
-	if (sc->sc_td_nbusy == 0)
+	if (sc->sc_rb.rb_td_nbusy == 0)
 		ifp->if_timer = 0;
 
 	return (1);
@@ -881,11 +871,11 @@ int
 berint(sc)
 	struct be_softc *sc;
 {
-	struct qec_xd *xd = sc->sc_rxd;
+	struct qec_xd *xd = sc->sc_rb.rb_rxd;
 	unsigned int bix, len;
-	unsigned int nrbuf = sc->sc_nrbuf;
+	unsigned int nrbuf = sc->sc_rb.rb_nrbuf;
 
-	bix = sc->sc_rdtail;
+	bix = sc->sc_rb.rb_rdtail;
 
 	/*
 	 * Process all buffers with valid data.
@@ -906,7 +896,7 @@ berint(sc)
 			bix = 0;
 	}
 
-	sc->sc_rdtail = bix;
+	sc->sc_rb.rb_rdtail = bix;
 
 	return (1);
 }
@@ -984,7 +974,7 @@ beioctl(ifp, cmd, data)
 		}
 #ifdef BEDEBUG
 		if (ifp->if_flags & IFF_DEBUG)
-			sc->sc_debug = BE_XXX;
+			sc->sc_debug = 1;
 		else
 			sc->sc_debug = 0;
 #endif
@@ -1017,97 +1007,23 @@ beioctl(ifp, cmd, data)
 	return (error);
 }
 
-void
-bememinit(sc)
-	struct be_softc *sc;
-{
-	bus_addr_t txbufdma, rxbufdma;
-	bus_addr_t dma;
-	caddr_t p;
-	unsigned int ntbuf, nrbuf, i;
-
-	p = sc->sc_membase;
-	dma = sc->sc_dmabase;
-
-	ntbuf = sc->sc_ntbuf;
-	nrbuf = sc->sc_nrbuf;
-
-	/*
-	 * Allocate transmit descriptors
-	 */
-	sc->sc_txd = (struct qec_xd *)p;
-	sc->sc_txddma = dma;
-	p += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
-	dma += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
-
-	/*
-	 * Allocate receive descriptors
-	 */
-	sc->sc_rxd = (struct qec_xd *)p;
-	sc->sc_rxddma = dma;
-	p += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
-	dma += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
-
-
-	/*
-	 * Allocate transmit buffers
-	 */
-	sc->sc_txbuf = p;
-	txbufdma = dma;
-	p += ntbuf * BE_PKT_BUF_SZ;
-	dma += ntbuf * BE_PKT_BUF_SZ;
-
-	/*
-	 * Allocate receive buffers
-	 */
-	sc->sc_rxbuf = p;
-	rxbufdma = dma;
-	p += nrbuf * BE_PKT_BUF_SZ;
-	dma += nrbuf * BE_PKT_BUF_SZ;
-
-	/*
-	 * Initialize transmit buffer descriptors
-	 */
-	for (i = 0; i < QEC_XD_RING_MAXSIZE; i++) {
-		sc->sc_txd[i].xd_addr = (u_int32_t)
-			(txbufdma + (i % ntbuf) * BE_PKT_BUF_SZ);
-		sc->sc_txd[i].xd_flags = 0;
-	}
-
-	/*
-	 * Initialize receive buffer descriptors
-	 */
-	for (i = 0; i < QEC_XD_RING_MAXSIZE; i++) {
-		sc->sc_rxd[i].xd_addr = (u_int32_t)
-			(rxbufdma + (i % nrbuf) * BE_PKT_BUF_SZ);
-		sc->sc_rxd[i].xd_flags = (i < nrbuf)
-			? QEC_XD_OWN | (BE_PKT_BUF_SZ & QEC_XD_LENGTH)
-			: 0;
-	}
-
-	sc->sc_tdhead = sc->sc_tdtail = 0;
-	sc->sc_td_nbusy = 0;
-	sc->sc_rdtail = 0;
-}
 
 void
 beinit(sc)
 	struct be_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t br = sc->sc_br;
 	bus_space_handle_t cr = sc->sc_cr;
 	struct qec_softc *qec = sc->sc_qec;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int32_t qecaddr;
 	u_int8_t *ea;
 	int s;
 
 	s = splimp();
 
-	sc->sc_nticks = 0;
-
-	bememinit(sc);
+	qec_meminit(&sc->sc_rb, BE_PKT_BUF_SZ);
 	be_tcvr_init(sc);
 
 	be_ifmedia_upd(ifp);
@@ -1152,8 +1068,8 @@ beinit(sc)
 			  BE_BR_IMASK_DTIMEXP);
 
 	/* Channel registers: */
-	bus_space_write_4(t, cr, BE_CRI_RXDS, (u_int32_t)sc->sc_rxddma);
-	bus_space_write_4(t, cr, BE_CRI_TXDS, (u_int32_t)sc->sc_txddma);
+	bus_space_write_4(t, cr, BE_CRI_RXDS, (u_int32_t)sc->sc_rb.rb_rxddma);
+	bus_space_write_4(t, cr, BE_CRI_TXDS, (u_int32_t)sc->sc_rb.rb_txddma);
 
 	qecaddr = sc->sc_channel * qec->sc_msize;
 	bus_space_write_4(t, cr, BE_CRI_RXWBUF, qecaddr);
@@ -1187,7 +1103,7 @@ void
 be_mcreset(sc)
 	struct be_softc *sc;
 {
-	struct ethercom *ac = &sc->sc_ethercom;
+	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t br = sc->sc_br;
@@ -1217,7 +1133,7 @@ be_mcreset(sc)
 
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
 
-	ETHER_FIRST_MULTI(step, ac, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
@@ -1321,14 +1237,14 @@ be_tcvr_init(sc)
 	DELAY(200);
 
 	v = bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-#ifdef DEBUG
-	if (bedebug) {
+#ifdef BEDEBUG
+	if (sc->sc_debug != 0) {
 		char bits[64];
 		printf("be_tcvr_init: MGMTPAL=%s\n",
 		       bitmask_snprintf(v, MGMT_PAL_BITS, bits, sizeof(bits)));
 	}
 #endif
-	if (v & MGMT_PAL_EXT_MDIO) {
+	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
 		sc->sc_conf |= BE_CONF_MII;
 		/*sc->sc_tcvr_type = BE_TCVR_EXTERNAL;*/
 		bus_space_write_4(t, tr, BE_TRI_TCVRPAL,
@@ -1336,15 +1252,13 @@ be_tcvr_init(sc)
 				    TCVR_PAL_LTENABLE));
 
 		(void)bus_space_read_4(t, tr, BE_TRI_TCVRPAL);
-	}
-	else if (v & MGMT_PAL_INT_MDIO) {
+	} else if ((v & MGMT_PAL_INT_MDIO) != 0) {
 		/*sc->sc_tcvr_type = BE_TCVR_INTERNAL;*/
 		bus_space_write_4(t, tr, BE_TRI_TCVRPAL,
 				  ~(TCVR_PAL_EXTLBACK | TCVR_PAL_MSENSE |
 				    TCVR_PAL_LTENABLE | TCVR_PAL_SERIAL));
 		(void)bus_space_read_4(t, tr, BE_TRI_TCVRPAL);
-	}
-	else {
+	} else {
 		printf("%s: no internal or external transceiver found.\n",
 			sc->sc_dev.dv_xname);
 	}
