@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.69 2000/02/02 08:05:26 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.70 2000/02/02 08:41:00 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2110,6 +2110,7 @@ ep_activate(self, act)
 	enum devact act;
 {
 	struct ep_softc *sc = (struct ep_softc *)self;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int rv = 0, s;
 
 	s = splnet();
@@ -2119,13 +2120,7 @@ ep_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-#ifdef notyet
-		/* First, kill off the interface. */
-		if_detach(sc->sc_ethercom.ec_if);
-#endif
-
-		/* Now disable the interface. */
-		epdisable(sc);
+		if_deactivate(ifp);
 		break;
 	}
 	splx(s);
@@ -2138,10 +2133,18 @@ ep_detach(self, flags)
 	int flags;
 {
 	struct ep_softc *sc = (struct ep_softc *)self;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
-	shutdownhook_disestablish(sc->shutdown_hook);
+	epdisable(sc);
 
 	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	shutdownhook_disestablish(sc->shutdown_hook);
 
 	return (0);
 }
