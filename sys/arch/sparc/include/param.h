@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.43 2000/02/11 19:30:29 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.44 2000/05/22 02:35:23 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -198,6 +198,8 @@ extern int cputyp;
  * involving variables, the kernel will perform slighly worse due to the
  * extra memory references they'll generate.
  */
+#define CPU_ISSUN4U	(0)
+#define CPU_ISSUN4MOR4U	(CPU_ISSUN4M)
 #if   defined(SUN4M) && defined(SUN4C) && defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
