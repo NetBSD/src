@@ -30,6 +30,7 @@
 ./usr/include/machine/param.h
 ./usr/include/machine/pcb.h
 ./usr/include/machine/pccons.h
+./usr/include/machine/pcvt_ioctl.h
 ./usr/include/machine/pio.h
 ./usr/include/machine/pmap.h
 ./usr/include/machine/proc.h
