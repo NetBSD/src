@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.51 2003/08/07 16:44:20 agc Exp $
+.\"	$NetBSD: curses.3,v 1.52 2003/10/05 10:13:02 jdc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)curses.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 21, 2003
+.Dd September 23, 2003
 .Dt CURSES 3
 .Os
 .Sh NAME
@@ -212,6 +212,7 @@ must be called before any of the other routines that deal with color are used.
 .It printw Ta Xr curses_print 3
 .It qiflush Ta Xr curses_tty 3
 .It raw Ta Xr curses_tty 3
+.It redrawwin Ta Xr curses_touch 3
 .It refresh Ta Xr curses_refresh 3
 .It reset_prog_mode Ta Xr curses_tty 3
 .It reset_shell_mode Ta Xr curses_tty 3
@@ -278,6 +279,7 @@ must be called before any of the other routines that deal with color are used.
 .It wmove Ta Xr curses_cursor 3
 .It wnoutrefresh Ta Xr curses_refresh 3
 .It wprintw Ta Xr curses_print 3
+.It wredrawln Ta Xr curses_touch 3
 .It wrefresh Ta Xr curses_refresh 3
 .It wresize Ta Xr curses_window 3
 .It wscanw Ta Xr curses_scanw 3
