@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.25.2.11 2002/11/11 22:16:18 nathanw Exp $
+#	$NetBSD: Makefile,v 1.25.2.12 2002/12/11 06:50:04 thorpej Exp $
 
-KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
 
 INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
@@ -19,11 +18,11 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	pmc.h poll.h pool.h proc.h properties.h \
 	protosw.h ptrace.h queue.h ras.h reboot.h radioio.h resource.h \
 	resourcevar.h rnd.h sa.h scanio.h sched.h scsiio.h select.h sem.h sha1.h \
-	shm.h signal.h signalvar.h socket.h socketvar.h sockio.h stat.h \
-	syscall.h syscallargs.h sysctl.h stdint.h swap.h syslimits.h syslog.h \
-	systm.h tablet.h termios.h time.h timeb.h timepps.h times.h timex.h \
-	tprintf.h trace.h tty.h ttychars.h ttycom.h ttydefaults.h ttydev.h \
-	types.h ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h \
+	shm.h siginfo.h signal.h signalvar.h socket.h socketvar.h sockio.h \
+	stat.h syscall.h syscallargs.h sysctl.h stdint.h swap.h syslimits.h \
+	syslog.h systm.h tablet.h termios.h time.h timeb.h timepps.h times.h \
+	timex.h tprintf.h trace.h tty.h ttychars.h ttycom.h ttydefaults.h \
+	ttydev.h types.h ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h \
 	utsname.h vadvise.h verified_exec.h vmmeter.h vnode.h vnode_if.h wait.h wdog.h
 
 SYMLINKS= sys/exec_elf.h /usr/include/elf.h \

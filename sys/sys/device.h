@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.45.2.6 2002/11/11 22:16:21 nathanw Exp $ */
+/* $NetBSD: device.h,v 1.45.2.7 2002/12/11 06:50:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -164,6 +164,13 @@ TAILQ_HEAD(evcntlist, evcnt);
 	group,			/* ev_group */				\
 	name,			/* ev_name */				\
     }
+
+/*
+ * Attach a static event counter.  This uses a link set to do the work.
+ * NOTE: "ev" should not be a pointer to the object, but rather a direct
+ * reference to the object itself.
+ */
+#define	EVCNT_ATTACH_STATIC(ev)	__link_set_add_data(evcnts, ev)
 
 /*
  * Description of a configuration parent.  Each device attachment attaches
@@ -339,6 +346,7 @@ void config_finalize(void);
 void device_register(struct device *, void *);
 #endif
 
+void	evcnt_init(void);
 void	evcnt_attach_static(struct evcnt *);
 void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
 	    const char *, const char *);

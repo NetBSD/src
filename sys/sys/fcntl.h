@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.17.14.2 2002/01/08 00:34:42 nathanw Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.17.14.3 2002/12/11 06:50:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -93,11 +93,15 @@
     (_POSIX_C_SOURCE - 0) >= 199309L || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500
-#define	O_SYNC		0x00000080		/* synchronous writes */
+#define	O_SYNC		0x00000080	/* synchronous writes */
 #endif
-#define	O_CREAT		0x00000200		/* create if nonexistent */
-#define	O_TRUNC		0x00000400		/* truncate to zero length */
-#define	O_EXCL		0x00000800		/* error if already exists */
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#define	O_NOFOLLOW	0x00000100	/* don't follow symlinks on the last */
+					/* path component */
+#endif
+#define	O_CREAT		0x00000200	/* create if nonexistent */
+#define	O_TRUNC		0x00000400	/* truncate to zero length */
+#define	O_EXCL		0x00000800	/* error if already exists */
 
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500
@@ -110,7 +114,7 @@
 #endif
 
 /* defined by POSIX 1003.1; BSD default, but required to be bitwise distinct */
-#define	O_NOCTTY	0x008000	/* don't assign controlling terminal */
+#define	O_NOCTTY	0x00008000	/* don't assign controlling terminal */
 
 #ifdef _KERNEL
 /* convert from open() flags to/from fflags; convert O_RD/WR to FREAD/FWRITE */
@@ -120,18 +124,11 @@
 /* all bits settable during open(2) */
 #define	O_MASK		(O_ACCMODE|O_NONBLOCK|O_APPEND|O_SHLOCK|O_EXLOCK|\
 			 O_ASYNC|O_SYNC|O_CREAT|O_TRUNC|O_EXCL|O_DSYNC|\
-			 O_RSYNC|O_NOCTTY|O_ALT_IO)
+			 O_RSYNC|O_NOCTTY|O_ALT_IO|O_NOFOLLOW)
 
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
 #define	FHASLOCK	0x00004000	/* descriptor holds advisory lock */
-/*
- * Note: The below is not a flag that can be used in the struct file. 
- * It's an option that can be passed to vn_open to make sure it doesn't
- * follow a symlink on the last lookup
- */
-#define	FNOSYMLINK	0x00080000	/* Don't follow symlink for last
-					   component */
 /* bits to save after open(2) */
 #define	FMASK		(FREAD|FWRITE|FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|\
 			 FRSYNC|FALTIO)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.93.2.16 2002/11/11 22:17:02 nathanw Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.93.2.17 2002/12/11 06:51:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.16 2002/11/11 22:17:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.17 2002/12/11 06:51:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -101,9 +101,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.16 2002/11/11 22:17:02 nathanw Ex
 extern struct vm_map *pager_map;
 
 struct uvm_cnt map_ubackmerge, map_uforwmerge;
-struct uvm_cnt map_ubimerge, map_uforwmerge_fail, map_unomerge;
+struct uvm_cnt map_ubimerge, map_unomerge;
 struct uvm_cnt map_kbackmerge, map_kforwmerge;
-struct uvm_cnt map_kbimerge, map_kforwmerge_fail, map_knomerge;
+struct uvm_cnt map_kbimerge, map_knomerge;
 struct uvm_cnt uvm_map_call, uvm_mlk_call, uvm_mlk_hint;
 const char vmmapbsy[] = "vmmapbsy";
 
@@ -190,7 +190,7 @@ vaddr_t uvm_maxkaddr;
  * local prototypes
  */
 
-static struct vm_map_entry *uvm_mapent_alloc __P((struct vm_map *));
+static struct vm_map_entry *uvm_mapent_alloc __P((struct vm_map *, int));
 static void uvm_mapent_copy __P((struct vm_map_entry *, struct vm_map_entry *));
 static void uvm_mapent_free __P((struct vm_map_entry *));
 static void uvm_map_entry_unwire __P((struct vm_map *, struct vm_map_entry *));
@@ -206,11 +206,13 @@ static void uvm_map_unreference_amap __P((struct vm_map_entry *, int));
  */
 
 static __inline struct vm_map_entry *
-uvm_mapent_alloc(map)
+uvm_mapent_alloc(map, flags)
 	struct vm_map *map;
+	int flags;
 {
 	struct vm_map_entry *me;
 	int s;
+	int pflags = (flags & UVM_KMF_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
 	UVMHIST_FUNC("uvm_mapent_alloc"); UVMHIST_CALLED(maphist);
 
 	if (map->flags & VM_MAP_INTRSAFE || cold) {
@@ -220,17 +222,21 @@ uvm_mapent_alloc(map)
 		if (me) uvm.kentry_free = me->next;
 		simple_unlock(&uvm.kentry_lock);
 		splx(s);
-		if (me == NULL) {
+		if (__predict_false(me == NULL)) {
 			panic("uvm_mapent_alloc: out of static map entries, "
 			      "check MAX_KMAPENT (currently %d)",
 			      MAX_KMAPENT);
 		}
 		me->flags = UVM_MAP_STATIC;
 	} else if (map == kernel_map) {
-		me = pool_get(&uvm_map_entry_kmem_pool, PR_WAITOK);
+		me = pool_get(&uvm_map_entry_kmem_pool, pflags);
+		if (__predict_false(me == NULL))
+			return NULL;
 		me->flags = UVM_MAP_KMEM;
 	} else {
-		me = pool_get(&uvm_map_entry_pool, PR_WAITOK);
+		me = pool_get(&uvm_map_entry_pool, pflags);
+		if (__predict_false(me == NULL))
+			return NULL;
 		me->flags = 0;
 	}
 
@@ -354,8 +360,6 @@ uvm_map_init()
 	    "# uvm_map() forward umerges", 0);
 	UVMCNT_INIT(map_ubimerge, UVMCNT_CNT, 0,
 	    "# uvm_map() dual umerge", 0);
-	UVMCNT_INIT(map_uforwmerge_fail, UVMCNT_CNT, 0,
-	    "# uvm_map() forward umerge fails", 0);
 	UVMCNT_INIT(map_unomerge, UVMCNT_CNT, 0,
 	    "# uvm_map() no umerge", 0);
 
@@ -365,8 +369,6 @@ uvm_map_init()
 	    "# uvm_map() forward kmerges", 0);
 	UVMCNT_INIT(map_kbimerge, UVMCNT_CNT, 0,
 	    "# uvm_map() dual kmerge", 0);
-	UVMCNT_INIT(map_kforwmerge_fail, UVMCNT_CNT, 0,
-	    "# uvm_map() forward kmerge fails", 0);
 	UVMCNT_INIT(map_knomerge, UVMCNT_CNT, 0,
 	    "# uvm_map() no kmerge", 0);
 
@@ -425,7 +427,7 @@ uvm_map_clip_start(map, entry, start)
 	 * starting address.
 	 */
 
-	new_entry = uvm_mapent_alloc(map);
+	new_entry = uvm_mapent_alloc(map, 0);
 	uvm_mapent_copy(entry, new_entry); /* entry -> new_entry */
 
 	new_entry->end = start;
@@ -475,7 +477,7 @@ uvm_map_clip_end(map, entry, end)
 	 *	AFTER the specified entry
 	 */
 
-	new_entry = uvm_mapent_alloc(map);
+	new_entry = uvm_mapent_alloc(map, 0);
 	uvm_mapent_copy(entry, new_entry); /* entry -> new_entry */
 
 	new_entry->start = entry->end = end;
@@ -541,6 +543,8 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	uvm_flag_t flags;
 {
 	struct vm_map_entry *prev_entry, *new_entry;
+	const int amapwaitflag = (flags & UVM_KMF_NOWAIT) ?
+	    AMAP_EXTEND_NOWAIT : 0;
 	vm_prot_t prot = UVM_PROTECTION(flags), maxprot =
 	    UVM_MAXPROTECTION(flags);
 	vm_inherit_t inherit = UVM_INHERIT(flags);
@@ -576,7 +580,9 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 
 	new_entry = NULL;
 	if (map == pager_map) {
-		new_entry = uvm_mapent_alloc(map);
+		new_entry = uvm_mapent_alloc(map, (flags & UVM_KMF_NOWAIT));
+		 if (__predict_false(new_entry == NULL))
+			return ENOMEM;
 	}
 
 	/*
@@ -684,7 +690,8 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 		}
 
 		if (prev_entry->aref.ar_amap) {
-			error = amap_extend(prev_entry, size);
+			error = amap_extend(prev_entry, size, 
+			    amapwaitflag | AMAP_EXTEND_FORWARDS);
 			if (error) {
 				vm_map_unlock(map);
 				if (new_entry) {
@@ -751,6 +758,12 @@ forwardmerge:
 		 * merged with the previous entry which has an amap,
 		 * and the next entry also has an amap, we give up.
 		 *
+		 * Interesting cases:
+		 * amap, new, amap -> give up second merge (single fwd extend)
+		 * amap, new, none -> double forward extend (extend again here)
+		 * none, new, amap -> double backward extend (done here)
+		 * uobj, new, amap -> single backward extend (done here)
+		 *
 		 * XXX should we attempt to deal with someone refilling
 		 * the deallocated region between two entries that are
 		 * backed by the same amap (ie, arefs is 2, "prev" and
@@ -765,27 +778,6 @@ forwardmerge:
 			goto nomerge;
 		}
 
-		/* got it...almost */
-
-		if (prev_entry->next->aref.ar_amap) {
-			/*
-			 * XXX if not for this, we could have merged
-			 * forwards, so the number of times we missed
-			 * a *possible* chance to merge more.  note,
-			 * however, that only processes use amaps,
-			 * and they only *VERY* rarely present solely
-			 * forward mergeable allocations.  -- @@@
-			 */
-			if (kmap)
-				UVMCNT_INCR(map_kforwmerge_fail);
-			else
-				UVMCNT_INCR(map_uforwmerge_fail);
-			goto nomerge;
-		}
-
-		/*
-		 * XXX call amap_extend() to merge backwards here if needed.  -- @@@
-		 */
 		if (merged) {
 			/*
 			 * Try to extend the amap of the previous entry to
@@ -793,10 +785,47 @@ forwardmerge:
 			 * just skip on, don't actually give up, since we've
 			 * already completed the back merge.
 			 */
-			if (prev_entry->aref.ar_amap &&
-			    amap_extend(prev_entry, prev_entry->next->end -
-				prev_entry->next->start))
+			if (prev_entry->aref.ar_amap) {
+				if (amap_extend(prev_entry,
+				    prev_entry->next->end -
+				    prev_entry->next->start,
+				    amapwaitflag | AMAP_EXTEND_FORWARDS))
 				goto nomerge;
+			}
+
+			/*
+			 * Try to extend the amap of the *next* entry
+			 * back to cover the new allocation *and* the
+			 * previous entry as well (the previous merge
+			 * didn't have an amap already otherwise we
+			 * wouldn't be checking here for an amap).  If
+			 * it doesn't work just skip on, again, don't
+			 * actually give up, since we've already
+			 * completed the back merge.
+			 */
+			else if (prev_entry->next->aref.ar_amap) {
+				if (amap_extend(prev_entry->next,
+				    prev_entry->end -
+				    prev_entry->start + size,
+				    amapwaitflag | AMAP_EXTEND_BACKWARDS))
+				goto nomerge;
+			}
+		} else {
+			/*
+			 * Pull the next entry's amap backwards to cover this
+			 * new allocation.
+			 */
+			if (prev_entry->next->aref.ar_amap) {
+				error = amap_extend(prev_entry->next, size,
+				    amapwaitflag | AMAP_EXTEND_BACKWARDS);
+				if (error) {
+					vm_map_unlock(map);
+					if (new_entry) {
+						uvm_mapent_free(new_entry);
+					}
+					return error;
+				}
+			}
 		}
 
 		if (merged) {
@@ -827,6 +856,10 @@ forwardmerge:
 			struct vm_map_entry *dead = prev_entry->next;
 			prev_entry->end = dead->end;
 			uvm_map_entry_unlink(map, dead);
+			if (dead->aref.ar_amap != NULL) {
+				prev_entry->aref = dead->aref;
+				dead->aref.ar_amap = NULL;
+			}
 			uvm_mapent_free(dead);
 		} else {
 			prev_entry->next->start -= size;
@@ -856,7 +889,12 @@ nomerge:
 		 */
 
 		if (new_entry == NULL) {
-			new_entry = uvm_mapent_alloc(map);
+			new_entry = uvm_mapent_alloc(map,
+				(flags & UVM_KMF_NOWAIT));
+			if (__predict_false(new_entry == NULL)) {
+				vm_map_unlock(map);
+				return ENOMEM;
+			}
 		}
 		new_entry->start = *startp;
 		new_entry->end = new_entry->start + size;
@@ -888,7 +926,13 @@ nomerge:
 
 			vaddr_t to_add = (flags & UVM_FLAG_AMAPPAD) ?
 				UVM_AMAP_CHUNK << PAGE_SHIFT : 0;
-			struct vm_amap *amap = amap_alloc(size, to_add, M_WAITOK);
+			struct vm_amap *amap = amap_alloc(size, to_add,
+			    (flags & UVM_KMF_NOWAIT) ? M_NOWAIT : M_WAITOK);
+			if (__predict_false(amap == NULL)) {
+				vm_map_unlock(map);
+				uvm_mapent_free(new_entry);
+				return ENOMEM;
+			}
 			new_entry->aref.ar_pageoff = 0;
 			new_entry->aref.ar_amap = amap;
 		} else {
@@ -1674,7 +1718,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 		oldoffset = (entry->start + fudge) - start;
 
 		/* allocate a new map entry */
-		newentry = uvm_mapent_alloc(dstmap);
+		newentry = uvm_mapent_alloc(dstmap, 0);
 		if (newentry == NULL) {
 			error = ENOMEM;
 			goto bad;
@@ -3157,7 +3201,7 @@ uvmspace_fork(vm1)
 				/* XXXCDC: WAITOK??? */
 			}
 
-			new_entry = uvm_mapent_alloc(new_map);
+			new_entry = uvm_mapent_alloc(new_map, 0);
 			/* old_entry -> new_entry */
 			uvm_mapent_copy(old_entry, new_entry);
 
@@ -3194,7 +3238,7 @@ uvmspace_fork(vm1)
 			 * (note that new references are read-only).
 			 */
 
-			new_entry = uvm_mapent_alloc(new_map);
+			new_entry = uvm_mapent_alloc(new_map, 0);
 			/* old_entry -> new_entry */
 			uvm_mapent_copy(old_entry, new_entry);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.18.2.4 2002/10/18 02:46:00 nathanw Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.18.2.5 2002/12/11 06:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,9 +66,6 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _UVM_UVM_MAP_I_H_
-#define _UVM_UVM_MAP_I_H_
-
 /*
  * uvm_map_i.h
  */
@@ -78,6 +75,9 @@
  */
 
 #if defined(UVM_MAP_INLINE) || defined(UVM_MAP)
+
+#ifndef _UVM_UVM_MAP_I_H_
+#define _UVM_UVM_MAP_I_H_
 
 /*
  * uvm_map_create: create map
@@ -178,6 +178,6 @@ uvm_map_reference(map)
 	map->ref_count++;
 	simple_unlock(&map->ref_lock);
 }
-#endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP) */
-
 #endif /* _UVM_UVM_MAP_I_H_ */
+
+#endif /* defined(UVM_MAP_INLINE) || defined(UVM_MAP) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.24.2.5 2002/06/20 03:50:30 nathanw Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.24.2.6 2002/12/11 06:51:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  *
  *	@(#)lfs_extern.h	8.6 (Berkeley) 5/8/95
  */
+
+#ifndef _UFS_LFS_LFS_EXTERN_H_
+#define _UFS_LFS_LFS_EXTERN_H_
 
 /* Copied from ext2fs for ITIMES.  XXX This is a bogus use of v_tag. */
 #define IS_LFS_VNODE(vp)   (vp->v_tag == VT_LFS)
@@ -239,3 +242,5 @@ extern int (**lfs_vnodeop_p)(void *);
 extern int (**lfs_specop_p)(void *);
 extern int (**lfs_fifoop_p)(void *);
 extern struct genfs_ops lfs_genfsops;
+
+#endif /* !_UFS_LFS_LFS_EXTERN_H_ */

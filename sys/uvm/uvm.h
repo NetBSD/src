@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.24.2.7 2002/11/11 22:17:00 nathanw Exp $	*/
+/*	$NetBSD: uvm.h,v 1.24.2.8 2002/12/11 06:51:51 thorpej Exp $	*/
 
 /*
  *
@@ -192,9 +192,15 @@ do {									\
 #define UVM_PAGE_OWN(PG, TAG) /* nothing */
 #endif /* UVM_PAGE_TRKOWN */
 
+#endif /* _KERNEL */
+
+#endif /* _UVM_UVM_H_ */
+
 /*
  * pull in inlines
  */
+
+#ifdef _KERNEL
 
 #include <uvm/uvm_amap_i.h>
 #include <uvm/uvm_fault_i.h>
@@ -204,4 +210,3 @@ do {									\
 
 #endif /* _KERNEL */
 
-#endif /* _UVM_UVM_H_ */

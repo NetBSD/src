@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.6 2000/01/26 16:21:33 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.6.6.1 2002/12/11 06:51:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -41,6 +41,9 @@
  *	@(#)dinode.h	8.6 (Berkeley) 9/13/94
  *  Modified for ext2fs by Manuel Bouyer.
  */
+
+#ifndef _UFS_EXT2FS_EXT2FS_DINODE_H_
+#define _UFS_EXT2FS_EXT2FS_DINODE_H_
 
 #include <sys/stat.h>
 
@@ -143,3 +146,5 @@ void e2fs_i_bswap __P((struct ext2fs_dinode *, struct ext2fs_dinode *));
 #	define e2fs_iload(old, new) e2fs_i_bswap((old), (new))
 #	define e2fs_isave(old, new) e2fs_i_bswap((old), (new))
 #endif
+
+#endif /* !_UFS_EXT2FS_EXT2FS_DINODE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: softdep.h,v 1.3.4.1 2002/01/08 00:34:49 nathanw Exp $	*/
+/*	$NetBSD: softdep.h,v 1.3.4.2 2002/12/11 06:51:43 thorpej Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -31,6 +31,9 @@
  *
  * from: @(#)softdep.h	9.6 (McKusick) 2/25/99
  */
+
+#ifndef _UFS_FFS_SOFTDEP_H_
+#define _UFS_FFS_SOFTDEP_H_
 
 #include <sys/queue.h>
 
@@ -560,3 +563,5 @@ struct newdirblk {
 #	define	db_state db_list.wk_state /* unused */
 	struct	pagedep *db_pagedep;	/* associated pagedep */
 };
+
+#endif /* !_UFS_FFS_SOFTDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.80.2.14 2002/10/18 02:45:50 nathanw Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80.2.15 2002/12/11 06:51:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.14 2002/10/18 02:45:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.80.2.15 2002/12/11 06:51:42 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -83,9 +83,9 @@ int ffs_initcount = 0;
 
 extern struct lock ufs_hashlock;
 
-extern struct vnodeopv_desc ffs_vnodeop_opv_desc;
-extern struct vnodeopv_desc ffs_specop_opv_desc;
-extern struct vnodeopv_desc ffs_fifoop_opv_desc;
+extern const struct vnodeopv_desc ffs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc ffs_specop_opv_desc;
+extern const struct vnodeopv_desc ffs_fifoop_opv_desc;
 
 const struct vnodeopv_desc * const ffs_vnodeopv_descs[] = {
 	&ffs_vnodeop_opv_desc,
@@ -182,7 +182,7 @@ ffs_mount(mp, path, data, ndp, p)
 	struct nameidata *ndp;
 	struct proc *p;
 {
-	struct vnode *devvp;
+	struct vnode *devvp = NULL;
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
 	struct fs *fs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.64.2.13 2002/10/18 02:45:53 nathanw Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.64.2.14 2002/12/11 06:51:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.64.2.13 2002/10/18 02:45:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.64.2.14 2002/12/11 06:51:45 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1313,7 +1313,7 @@ lfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 	if (fs->lfs_ronly)
 		return 0;
 	while (fs->lfs_dirops)
-		error = tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_dirops", 0);
+		error = tsleep(&fs->lfs_writer, PRIBIO + 1, "lfs_dirops", 0);
 	fs->lfs_writer++;
 
 	/* All syncs must be checkpoints until roll-forward is implemented. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.17.2.4 2002/10/18 02:45:49 nathanw Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.17.2.5 2002/12/11 06:51:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,6 +34,9 @@
  *
  *	@(#)ffs_extern.h	8.6 (Berkeley) 3/30/95
  */
+
+#ifndef _UFS_FFS_FFS_EXTERN_H_
+#define _UFS_FFS_FFS_EXTERN_H_
 
 /*
  * Sysctl values for the fast filesystem.
@@ -178,4 +181,4 @@ extern int (**ffs_vnodeop_p) __P((void *));
 extern int (**ffs_specop_p) __P((void *));
 extern int (**ffs_fifoop_p) __P((void *));
 
-
+#endif /* !_UFS_FFS_FFS_EXTERN_H_ */

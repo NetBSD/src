@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.42.20.6 2002/05/20 16:58:35 nathanw Exp $	*/
+/*	$NetBSD: signal.h,v 1.42.20.7 2002/12/11 06:50:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -136,10 +136,10 @@ typedef unsigned int sigset13_t;
  * Signal vector "template" used in sigaction call.
  */
 struct	sigaction13 {
-	void	(*sa_handler)		/* signal handler */
+	void	(*osa_handler)		/* signal handler */
 			    __P((int));
-	sigset13_t sa_mask;		/* signal mask to apply */
-	int	sa_flags;		/* see signal options below */
+	sigset13_t osa_mask;		/* signal mask to apply */
+	int	osa_flags;		/* see signal options below */
 };
 #endif
 
@@ -199,15 +199,22 @@ typedef struct {
 #define sigminusset(s, t)	__sigminusset(s, t)
 #endif /* _KERNEL */
 
+#include <sys/siginfo.h>
+
 /*
  * Signal vector "template" used in sigaction call.
  */
 struct	sigaction {
-	void	(*sa_handler)		/* signal handler */
-			    __P((int));
+	union {
+		void (*_sa_handler) __P((int));
+		void (*_sa_sigaction) __P((int, siginfo_t *, void *));
+	} _sa_u;	/* signal handler */
 	sigset_t sa_mask;		/* signal mask to apply */
 	int	sa_flags;		/* see signal options below */
 };
+
+#define sa_handler _sa_u._sa_handler
+#define sa_sigaction _sa_u._sa_sigaction
 
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
@@ -312,11 +319,6 @@ struct	sigstack {
 #define	BADSIG		SIG_ERR
 #endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 
-union	sigval {
-	int	sival_int;
-	void	*sival_ptr;
-};
-
 struct	sigevent {
 	int	sigev_notify;
 	int	sigev_signo;
@@ -330,18 +332,6 @@ struct	sigevent {
 #define SIGEV_THREAD	2
 #define SIGEV_SA	3
 	      
-typedef struct {
-	int	si_signo;	/* signal number */
-	int	si_errno;	/* if non-zero, associated errno value */
-	int	si_code;	/* signal code */
-	pid_t	si_pid;		/* sending proces ID */
-	uid_t	si_uid;		/* real UID of sending process */
-	void	*si_addr;	/* address of faulting instruction */
-	int	si_status;	/* exit value or signal */
-	long	si_band;
-	union sigval	si_value;
-} siginfo_t;
-
 #endif	/* !_ANSI_SOURCE */
 
 /*

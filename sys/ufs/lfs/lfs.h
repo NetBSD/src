@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.36.2.4 2002/08/01 02:47:03 nathanw Exp $	*/
+/*	$NetBSD: lfs.h,v 1.36.2.5 2002/12/11 06:51:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  *
  *	@(#)lfs.h	8.9 (Berkeley) 5/8/95
  */
+
+#ifndef _UFS_LFS_LFS_H_
+#define _UFS_LFS_LFS_H_
 
 /*
  * Compile-time options for LFS.
@@ -830,4 +833,8 @@ struct lfs_stats {
 	u_int	flush_invoked;
 	u_int	vflush_invoked;
 };
+#ifdef _KERNEL
 extern struct lfs_stats lfs_stats;
+#endif
+
+#endif /* !_UFS_LFS_LFS_H_ */

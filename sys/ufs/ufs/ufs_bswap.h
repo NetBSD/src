@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bswap.h,v 1.6.6.3 2002/02/28 04:15:30 nathanw Exp $	*/
+/*	$NetBSD: ufs_bswap.h,v 1.6.6.4 2002/12/11 06:51:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef _UFS_UFS_BSWAP_H_
+#define _UFS_UFS_BSWAP_H_
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -88,3 +91,5 @@ ufs_rw64(a, ns)
 	(a) = ufs_rw32(ufs_rw32((a), (ns)) + (b), (ns))
 #define ufs_add64(a, b, ns) \
 	(a) = ufs_rw64(ufs_rw64((a), (ns)) + (b), (ns))
+
+#endif /* !_UFS_UFS_BSWAP_H_ */

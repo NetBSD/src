@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.16.2.3 2001/09/21 22:37:16 nathanw Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.16.2.4 2002/12/11 06:51:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,9 +66,6 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _UVM_UVM_PAGE_I_H_
-#define _UVM_UVM_PAGE_I_H_
-
 /*
  * uvm_page_i.h
  */
@@ -78,6 +75,9 @@
  */
 
 #if defined(UVM_PAGE_INLINE) || defined(UVM_PAGE)
+
+#ifndef _UVM_UVM_PAGE_I_H_
+#define _UVM_UVM_PAGE_I_H_
 
 /*
  * uvm_lock_fpageq: lock the free page queue
@@ -288,6 +288,6 @@ uvm_page_lookup_freelist(pg)
 	return (vm_physmem[lcv].free_list);
 }
 
-#endif /* defined(UVM_PAGE_INLINE) || defined(UVM_PAGE) */
-
 #endif /* _UVM_UVM_PAGE_I_H_ */
+
+#endif /* defined(UVM_PAGE_INLINE) || defined(UVM_PAGE) */

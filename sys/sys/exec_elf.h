@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.40.2.11 2002/10/18 02:45:41 nathanw Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.40.2.12 2002/12/11 06:50:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -321,18 +321,20 @@ typedef struct {
 #define	PT_PHDR		6		/* Entry for header table itself */
 #define	PT_NUM		7
 
+#define	PT_LOOS         0x60000000	/* OS-specific range */
+#define	PT_HIOS         0x6fffffff
+#define	PT_LOPROC	0x70000000	/* Processor-specific range */
+#define	PT_HIPROC	0x7fffffff
+
+#define	PT_MIPS_REGINFO	0x70000000
+
 /* p_flags */
 #define	PF_R		0x4	/* Segment is readable */
 #define	PF_W		0x2	/* Segment is writable */
 #define	PF_X		0x1	/* Segment is executable */
 
-#define	PF_MASKOS	0x0ff00000	/* Opersting system specific values */
+#define	PF_MASKOS	0x0ff00000	/* Operating system specific values */
 #define	PF_MASKPROC	0xf0000000	/* Processor-specific values */
-
-#define	PT_LOPROC	0x70000000	/* Processor-specific range */
-#define	PT_HIPROC	0x7fffffff
-
-#define	PT_MIPS_REGINFO	0x70000000
 
 /*
  * Section Headers

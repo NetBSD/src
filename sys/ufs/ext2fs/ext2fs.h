@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.10.6.1 2002/12/11 06:51:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -36,6 +36,9 @@
  *	@(#)fs.h	8.10 (Berkeley) 10/27/94
  *  Modified for ext2fs by Manuel Bouyer.
  */
+
+#ifndef _UFS_EXT2FS_EXT2FS_H_
+#define _UFS_EXT2FS_EXT2FS_H_
 
 #include <machine/bswap.h>
 
@@ -316,3 +319,5 @@ void e2fs_cg_bswap __P((struct ext2_gd *, struct ext2_gd *, int));
  * Number of indirects in a file system block.
  */
 #define	NINDIR(fs)	((fs)->e2fs_bsize / sizeof(u_int32_t))
+
+#endif /* !_UFS_EXT2FS_EXT2FS_H_ */

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:23:06 cgd Exp $
+#	$NetBSD: Makefile,v 1.1.26.1 2002/12/11 07:01:03 thorpej Exp $
 
-KDIR=	/sys/msdosfs
 INCSDIR= /usr/include/msdosfs
 
 INCS=	bootsect.h bpb.h denode.h direntry.h fat.h msdosfsmount.h

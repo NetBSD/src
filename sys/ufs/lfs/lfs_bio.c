@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.35.2.9 2002/08/01 02:47:04 nathanw Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35.2.10 2002/12/11 06:51:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.9 2002/08/01 02:47:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.35.2.10 2002/12/11 06:51:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,16 @@ extern int lfs_dostats;
  * up the vnode lock temporarily and wait for the space to become available.
  *
  * Called with vp locked.  (Note nowever that if fsb < 0, vp is ignored.)
+ *
+ * XXX YAMT - it isn't safe to unlock vp here
+ * because the node might be modified while we sleep.
+ * (eg. cached states like i_offset might be stale,
+ *  the vnode might be truncated, etc..)
+ * maybe we should have a way to restart the vnode op. (EVOPRESTART?)
+ *
+ * XXX YAMT - we unlock the vnode so that cleaner can lock it.
+ * but it isn't enough. eg. for VOP_REMOVE, we should unlock the vnode that
+ * is going to be removed as well.
  */
 int
 lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
@@ -123,7 +133,8 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
 	int error, slept;
 
 	slept = 0;
-	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail)) {
+	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail) &&
+	    vp != fs->lfs_unlockvp) {
 		VOP_UNLOCK(vp, 0);
 
 		if (!slept) {

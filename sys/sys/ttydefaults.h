@@ -1,4 +1,4 @@
-/*	$NetBSD: ttydefaults.h,v 1.10 2000/08/05 01:27:12 chuck Exp $	*/
+/*	$NetBSD: ttydefaults.h,v 1.10.2.1 2002/12/11 06:50:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -88,6 +88,7 @@
 /*
  * #define TTYDEFCHARS to include an array of default control characters.
  */
+#ifdef _KERNEL
 #ifdef TTYDEFCHARS
 cc_t	ttydefchars[NCCS] = {
 	CEOF,	CEOL,	CEOL,	CERASE, CWERASE, CKILL, CREPRINT,
@@ -95,4 +96,7 @@ cc_t	ttydefchars[NCCS] = {
 	CDISCARD, CMIN,	CTIME,  CSTATUS, _POSIX_VDISABLE
 };
 #undef TTYDEFCHARS
+#else
+extern cc_t ttydefchars[NCCS];
 #endif
+#endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.10.6.2 2002/08/01 02:47:06 nathanw Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.10.6.3 2002/12/11 06:51:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)mfsnode.h	8.3 (Berkeley) 5/19/95
  */
+
+#ifndef _UFS_MFS_MFSNODE_H_
+#define _UFS_MFS_MFSNODE_H_
 
 /*
  * This structure defines the control data for the memory based file system.
@@ -88,3 +91,5 @@ struct mfsnode {
 #define	mfs_bwrite	vn_bwrite
 #define	mfs_revoke	genfs_revoke
 #define	mfs_putpages	genfs_null_putpages
+
+#endif /* !_UFS_MFS_MFSNODE_H_ */
