@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/12/18 08:51:39 scw Exp $
+#	$NetBSD: Makefile,v 1.7 2000/12/23 09:06:06 mrg Exp $
 
 PROG=   crunchide
 SRCS=	crunchide.c exec_aout.c exec_coff.c exec_ecoff.c exec_elf32.c \
@@ -8,6 +8,8 @@ SRCS=	crunchide.c exec_aout.c exec_coff.c exec_ecoff.c exec_elf32.c \
 CPPFLAGS+=-DNLIST_ELF64 -DNLIST_ECOFF
 .elif	${MACHINE_ARCH} == "arm26" || \
 	${MACHINE_ARCH} == "mips" || \
+	${MACHINE_ARCH} == "mipsel" || \
+	${MACHINE_ARCH} == "mipseb" || \
 	${MACHINE_ARCH} == "powerpc" || \
 	${MACHINE} == "mvme68k"
 CPPFLAGS+=-DNLIST_ELF32
