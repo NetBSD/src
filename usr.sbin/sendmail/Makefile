@@ -1,7 +1,7 @@
 #       @(#)Makefile	8.3 (Berkeley) 2/27/94
 
 SUBDIR= src mailstats makemap praliases cf/cf
-.if !make(all) && !make(depend) && !make(lint) && !make(tags)
+.if make(install)
 SUBDIR+= doc/intro doc/op
 .endif
 
