@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.11 2003/02/26 22:02:48 thorpej Exp $	*/
+/*	$NetBSD: pthread.c,v 1.12 2003/02/26 23:41:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -251,13 +251,11 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		return EINVAL;
 
 	/* Fetch misc. attributes from the attr structure. */
-	if ((p = nattr.pta_private) != NULL) {
-		if (p->ptap_name[0] != '\0') {
+	name = NULL;
+	if ((p = nattr.pta_private) != NULL)
+		if (p->ptap_name[0] != '\0')
 			if ((name = strdup(p->ptap_name)) == NULL)
 				return ENOMEM;
-		} else
-			name = NULL;
-	}
 
 	self = pthread__self();
 
@@ -300,7 +298,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	nthreads++;
 	pthread_spinunlock(self, &pthread__allqueue_lock);
 
-	SDPRINTF(("(pthread_create %p) Created new thread %p.\n", self, newthread));
+	SDPRINTF(("(pthread_create %p) Created new thread %p (name pointer %p).\n", self, newthread, newthread->pt_name));
 	/* 6. Put on run queue. */
 	pthread__sched(self, newthread);
 
