@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.39 1998/09/14 21:15:56 hwr Exp $	*/
+/*	$NetBSD: in.h,v 1.40 1999/06/26 06:16:47 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -297,7 +297,8 @@ struct ip_mreq {
 #define	IPCTL_ANONPORTMAX      11	/* maximum ephemeral port */
 #define	IPCTL_MTUDISCTIMEOUT   12	/* allow path MTU discovery */
 #define	IPCTL_MAXFLOWS         13	/* maximum ip flows allowed */
-#define	IPCTL_MAXID	       14
+#define	IPCTL_HOSTZEROBROADCAST 14	/* is host zero a broadcast addr? */
+#define	IPCTL_MAXID	       15
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -314,6 +315,7 @@ struct ip_mreq {
 	{ "anonportmax", CTLTYPE_INT }, \
 	{ "mtudisctimeout", CTLTYPE_INT }, \
 	{ "maxflows", CTLTYPE_INT }, \
+	{ "hostzerobroadcast", CTLTYPE_INT }, \
 }
 #endif /* !_XOPEN_SOURCE */
 
