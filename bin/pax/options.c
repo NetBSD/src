@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.27 2000/03/30 17:53:04 thorpej Exp $	*/
+/*	$NetBSD: options.c,v 1.28 2000/04/14 05:52:58 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.27 2000/03/30 17:53:04 thorpej Exp $");
+__RCSID("$NetBSD: options.c,v 1.28 2000/04/14 05:52:58 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,8 +203,6 @@ pax_options(argc, argv)
 	unsigned int bflg = 0;
 	char *pt;
 	FSUB tmp;
-	extern char *optarg;
-	extern int optind;
 
 	/*
 	 * process option flags
