@@ -1,4 +1,4 @@
-/*	$NetBSD: glue.h,v 1.3 1995/02/02 02:10:02 jtc Exp $	*/
+/*	$NetBSD: glue.h,v 1.4 2000/12/10 04:17:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,4 +46,6 @@ struct glue {
 	struct	glue *next;
 	int	niobs;
 	FILE	*iobs;
-} __sglue;
+};
+
+extern struct glue __sglue;
