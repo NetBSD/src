@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 2002/03/24 18:05:45 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66 2002/03/24 20:48:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2002/03/24 18:05:45 chris Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2002/03/24 20:48:59 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2590,14 +2590,12 @@ pmap_enter(pmap, va, pa, prot, flags)
 	vm_prot_t prot;
 	int flags;
 {
-	pt_entry_t *pte, *ptes;
-	u_int npte;
+	pt_entry_t *ptes, opte, npte;
 	paddr_t opa;
-	int nflags;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	struct vm_page *pg;
 	struct pv_entry *pve;
-	int error;
+	int error, nflags;
 
 	PDEBUG(5, printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, wired = %d\n",
 	    va, pa, pmap, prot, wired));
@@ -2624,15 +2622,13 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 	/* get lock */
 	PMAP_MAP_TO_HEAD_LOCK();
+
 	/*
-	 * Get a pointer to the pte for this virtual address. If the
-	 * pte pointer is NULL then we are missing the L2 page table
-	 * so we need to create one.
+	 * map the ptes.  If there's not already an L2 table for this
+	 * address, allocate one.
 	 */
-	/* XXX horrible hack to get us working with lockdebug */
-	simple_lock(&pmap->pm_obj.vmobjlock);
-	pte = pmap_pte(pmap, va);
-	if (!pte) {
+	ptes = pmap_map_ptes(pmap);		/* locks pmap */
+	if (pmap_pde_v(pmap_pde(pmap, va)) == 0) {
 		struct vm_page *ptp;
 
 		/* kernel should be pre-grown */
@@ -2647,13 +2643,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 			}
 			panic("pmap_enter: get ptp failed");
 		}
-		
-		pte = pmap_pte(pmap, va);
-#ifdef DIAGNOSTIC
-		if (!pte)
-			panic("pmap_enter: no pte");
-#endif
 	}
+	opte = ptes[arm_btop(va)];
 
 	nflags = 0;
 	if (prot & VM_PROT_WRITE)
@@ -2661,25 +2652,13 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (wired)
 		nflags |= PT_W;
 
-	/* More debugging info */
-	PDEBUG(5, printf("pmap_enter: pte for V%08lx = V%p (%08x)\n", va, pte,
-	    *pte));
-
 	/* Is the pte valid ? If so then this page is already mapped */
-	if (pmap_pte_v(pte)) {
+	if (l2pte_valid(opte)) {
 		/* Get the physical address of the current page mapped */
-		opa = pmap_pte_pa(pte);
-
-#ifdef MYCROFT_HACK
-		printf("pmap_enter: pmap=%p va=%lx pa=%lx opa=%lx\n", pmap, va, pa, opa);
-#endif
+		opa = l2pte_pa(opte);
 
 		/* Are we mapping the same page ? */
 		if (opa == pa) {
-			/* All we must be doing is changing the protection */
-			PDEBUG(0, printf("Case 02 in pmap_enter (V%08lx P%08lx)\n",
-			    va, pa));
-
 			/* Has the wiring changed ? */
 			if (pg != NULL) {
 				simple_lock(&pg->mdpage.pvh_slock);
@@ -2692,9 +2671,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 
 			/* We are replacing the page with a new one. */
 			cpu_idcache_wbinv_range(va, NBPG);
-
-			PDEBUG(0, printf("Case 03 in pmap_enter (V%08lx P%08lx P%08lx)\n",
-			    va, pa, opa));
 
 			/*
 			 * If it is part of our managed memory then we
@@ -2730,7 +2706,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 						error = ENOMEM;
 						goto out;
 					}
-					panic("pmap_enter: no pv entries available");
+					panic("pmap_enter: no pv entries "
+					    "available");
 				}
 			}
 			/* enter_pv locks pvh when adding */
@@ -2741,11 +2718,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 				pmap_free_pv(pmap, pve);
 		}
 	}
-
-#ifdef MYCROFT_HACK
-	if (mycroft_hack)
-		printf("pmap_enter: pmap=%p va=%lx pa=%lx opa=%lx bank=%d off=%d pv=%p\n", pmap, va, pa, opa, bank, off, pv);
-#endif
 
 	/* Construct the pte, giving the correct access. */
 	npte = (pa & PG_FRAME);
@@ -2777,31 +2749,20 @@ pmap_enter(pmap, va, pa, prot, flags)
 			npte |= L2_INVAL;
 	}
 
-#ifdef MYCROFT_HACK
-	if (mycroft_hack)
-		printf("pmap_enter: pmap=%p va=%lx pa=%lx prot=%x wired=%d access_type=%x npte=%08x\n", pmap, va, pa, prot, wired, flags & VM_PROT_ALL, npte);
-#endif
-
-	*pte = npte;
+	ptes[arm_btop(va)] = npte;
 
 	if (pg != NULL) {
-		/* XXX this will change once the whole of pmap_enter uses
-		 * map_ptes
-		 */
-		ptes = pmap_map_ptes(pmap);
 		simple_lock(&pg->mdpage.pvh_slock);
  		pmap_vac_me_harder(pmap, pg, ptes, pmap_is_curpmap(pmap));
 		simple_unlock(&pg->mdpage.pvh_slock);
-		pmap_unmap_ptes(pmap);
 	}
 
 	/* Better flush the TLB ... */
 	cpu_tlb_flushID_SE(va);
 	error = 0;
 out:
-	simple_unlock(&pmap->pm_obj.vmobjlock);
+	pmap_unmap_ptes(pmap);			/* unlocks pmap */
 	PMAP_MAP_TO_HEAD_UNLOCK();
-	PDEBUG(5, printf("pmap_enter: pte = V%p %08x\n", pte, *pte));
 
 	return error;
 }
