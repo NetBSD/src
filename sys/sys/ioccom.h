@@ -1,4 +1,4 @@
-/*	$NetBSD: ioccom.h,v 1.6 2003/08/07 16:34:05 agc Exp $	*/
+/*	$NetBSD: ioccom.h,v 1.7 2004/02/24 15:22:01 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -51,7 +51,7 @@
 #define	IOC_OUT		(unsigned long)0x40000000
 				/* copy parameters in */
 #define	IOC_IN		(unsigned long)0x80000000
-				/* copy paramters in and out */
+				/* copy parameters in and out */
 #define	IOC_INOUT	(IOC_IN|IOC_OUT)
 				/* mask for IN/OUT/VOID */
 #define	IOC_DIRMASK	(unsigned long)0xe0000000
