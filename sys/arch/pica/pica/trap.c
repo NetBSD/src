@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 1997/11/13 10:43:16 veego Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 1998/06/25 21:19:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
  *
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
+
+#include "opt_ktrace.h"
 
 #if #defined(CPU_R4000) && !defined(CPU_R3000)
 #error Must define at least one of CPU_R3000 or CPU_R4000.
