@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.11 1996/05/22 13:55:43 mycroft Exp $	*/
+/*	$NetBSD: clnp.h,v 1.12 1997/11/03 15:01:18 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -106,7 +106,7 @@ struct clnp_fixed {
 					 * byte */
 	u_char          cnf_cksum_msb;	/* checksum high byte */
 	u_char          cnf_cksum_lsb;	/* checksum low byte */
-};
+} __attribute__((packed));
 #define CNF_TYPE	0x1f
 #define CNF_ERR_OK	0x20
 #define CNF_MORE_SEGS	0x40
