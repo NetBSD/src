@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.132 2003/01/18 11:32:58 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.133 2003/01/20 20:09:27 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -33,7 +33,6 @@ SRCS+=	adjtime.c clock_settime.c ftruncate.c getdirentries.c lseek.c mmap.c \
 # converts structs and unions to pointers to them.
 SRCS+=	__semctl13.c
 
-
 # namespace purity wrappers
 SRCS+=	_brk.c _fork.c _getcontext.c _pipe.c _sbrk.c
 
@@ -59,7 +58,9 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	pmc_get_info.S pmc_control.S profil.S quotactl.S \
 	readlink.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
 	rmdir.S semconfig.S semget.S semop.S ____semctl13.S sendmsg.S \
-	sendto.S setegid.S setcontext.S seteuid.S setgid.S setgroups.S setitimer.S \
+	sendto.S _ksem_close.S _ksem_destroy.S _ksem_getvalue.S _ksem_init.S \
+	_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S _ksem_open.S \
+	setegid.S setcontext.S seteuid.S setgid.S setgroups.S setitimer.S \
 	__setlogin.S setpgid.S setpriority.S setregid.S setreuid.S setrlimit.S \
 	setsid.S setsockopt.S setuid.S \
 	__shmctl13.S shmdt.S shmget.S shutdown.S \
