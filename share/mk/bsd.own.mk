@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.82 1998/09/02 19:25:33 matthias Exp $
+#	$NetBSD: bsd.own.mk,v 1.83 1998/09/03 01:51:43 sakamoto Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -71,10 +71,12 @@ STRIPFLAG?=	-s
 # Systems on which UVM is the standard VM system.
 .if	(${MACHINE} == "alpha") || \
 	(${MACHINE} == "atari") || \
+	(${MACHINE} == "bebox") || \
 	(${MACHINE} == "hp300") || \
 	(${MACHINE} == "i386") || \
 	(${MACHINE} == "mac68k") || \
 	(${MACHINE} == "mvme68k") || \
+	(${MACHINE} == "ofppc") || \
 	(${MACHINE} == "pc532") || \
 	(${MACHINE} == "sparc") || \
 	(${MACHINE} == "sparc64") || \
