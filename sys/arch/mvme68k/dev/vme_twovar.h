@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_twovar.h,v 1.3 2000/06/04 19:14:51 cgd Exp $ */
+/*	$NetBSD: vme_twovar.h,v 1.3.2.1 2000/06/27 20:10:05 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ int _vmetwo_probe __P((void *, vme_addr_t, vme_size_t, vme_am_t,vme_datasize_t,
 
 int _vmetwo_intmap __P((void *, int, int, vme_intr_handle_t *));
 
-const struct evcnt *_vmetwo_intr_establish __P((void *, vme_intr_handle_t));
+const struct evcnt *_vmetwo_intr_evcnt __P((void *, vme_intr_handle_t));
 
 void *_vmetwo_intr_establish __P((void *, vme_intr_handle_t, int,
     int (*)(void *), void *));
