@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.39 2002/02/25 06:58:14 lukem Exp $
+# $NetBSD: rc.subr,v 1.40 2002/02/25 07:12:47 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -353,12 +353,12 @@ run_rc_command()
 	    _group=\$${name}_group	_groups=\$${name}_groups
 
 					# if ${rcvar} is set, and $1 is not
-					# "rcvar" or "status", then run
+					# "rcvar", then run
 					#	checkyesno ${rcvar}
 					# and return if that failed
 					#
 	# XXXX use case?
-	if [ -n "${rcvar}" -a "$_arg" != "rcvar" -a "$_arg" != "status" ]; then
+	if [ -n "${rcvar}" -a "$_arg" != "rcvar" ]; then
 		if ! checkyesno ${rcvar}; then
 			return 0
 		fi
