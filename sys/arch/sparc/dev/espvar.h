@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.20 1997/10/05 18:24:36 thorpej Exp $	*/
+/*	$NetBSD: espvar.h,v 1.21 1998/03/21 20:29:57 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,18 +39,19 @@
 
 struct esp_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
+	bus_space_tag_t	sc_bustag;
+	bus_dma_tag_t	sc_dmatag;
+	struct sbusdev	sc_sd;			/* sbus device */
+	struct intrhand	sc_ih;			/* intr handler */
 
-	struct sbusdev sc_sd;			/* sbus device */
-	struct intrhand sc_ih;			/* intr handler */
-
-	volatile u_char *sc_reg;		/* the registers */
+	volatile u_char	*sc_reg;		/* the registers */
 	struct dma_softc *sc_dma;		/* pointer to my dma */
 
 	/* openprom stuff */
-	int sc_node;				/* PROM node ID */
-	int sc_pri;				/* SBUS priority */
+	int	sc_node;			/* PROM node ID */
+	int	sc_pri;				/* SBUS priority */
 };
 
-#define SAME_ESP(sc, bp, ca) \
-	((bp->val[0] == ca->ca_slot && bp->val[1] == ca->ca_offset) || \
+#define SAME_ESP(sc, bp, sa) \
+	((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) || \
 	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
