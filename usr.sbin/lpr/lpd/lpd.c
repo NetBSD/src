@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lpd.c	5.12 (Berkeley) 3/7/91";*/
-static char rcsid[] = "$Id: lpd.c,v 1.2 1993/08/01 17:58:54 mycroft Exp $";
+static char rcsid[] = "$Id: lpd.c,v 1.3 1993/11/10 04:36:34 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -151,6 +151,7 @@ main(argc, argv)
 	signal(SIGINT, mcleanup);
 	signal(SIGQUIT, mcleanup);
 	signal(SIGTERM, mcleanup);
+	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strcpy(sun.sun_path, _PATH_SOCKETNAME);
 	if (bind(funix,
@@ -175,6 +176,7 @@ main(argc, argv)
 			syslog(LOG_ERR, "printer/tcp: unknown service");
 			mcleanup();
 		}
+		bzero(&sin, sizeof(sin));
 		sin.sin_family = AF_INET;
 		sin.sin_port = sp->s_port;
 		if (bind(finet, (struct sockaddr *)&sin, sizeof(sin)) < 0) {

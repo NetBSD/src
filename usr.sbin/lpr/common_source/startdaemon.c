@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)startdaemon.c	5.7 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: startdaemon.c,v 1.2 1993/08/01 17:59:15 mycroft Exp $";
+static char rcsid[] = "$Id: startdaemon.c,v 1.3 1993/11/10 04:36:04 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -60,6 +60,7 @@ startdaemon(printer)
 		perr("socket");
 		return(0);
 	}
+	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strcpy(sun.sun_path, _PATH_SOCKETNAME);
 	if (connect(s, (struct sockaddr *)&sun, strlen(sun.sun_path) + 2) < 0) {
