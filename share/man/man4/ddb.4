@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.65 2003/05/15 13:18:19 atatat Exp $
+.\"	$NetBSD: ddb.4,v 1.66 2003/05/18 09:04:52 wiz Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd March 4, 2003
+.Dd May 15, 2003
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -677,7 +677,8 @@ Display all watchpoints.
 .Xc
 Search the symbol tables for all symbols of which
 .Ar string
-is a substring, and display them. If
+is a substring, and display them.
+If
 .Cm /F
 is specified, a character is displayed immediately after each symbol
 name indicating the type of symbol.
@@ -921,8 +922,8 @@ Print cache entries
 .It Ic frame
 Print switch frame and trap frames.
 .It Ic stack
-Print kernel stack usage. Only works in NetBSD kernels compiled with
-KSTACK_DEBUG option.
+Print kernel stack usage.
+Only works in NetBSD kernels compiled with the KSTACK_DEBUG option.
 .El
 .Ss SPARC
 .Bl -tag -width "intrchain" -compact
@@ -940,7 +941,8 @@ Print data translation look-aside buffer context information.
 .It Ic dtsb
 Display data translation storage buffer information.
 .It Ic kmap
-Display information about the listed mapping in the kernel pmap.  Use the
+Display information about the listed mapping in the kernel pmap.
+Use the
 .Dq f
 modifier to get a full listing.
 .It Ic pcb
@@ -956,7 +958,8 @@ for this physical address.
 .It Ic phys
 Display physical memory.
 .It Ic pmap
-Display the pmap.  Use the
+Display the pmap.
+Use the
 .Dq f
 modifier to get a fuller listing.
 .It Ic proc
@@ -968,16 +971,18 @@ Display the
 .Dq struct pv_entry
 pointed to.
 .It Ic stack
-Dump the window stack.  Use the
+Dump the window stack.
+Use the
 .Dq u
 modifier to get userland information.
 .It Ic tf
-Display full trap frame state.  This is most useful for inclusion with
-bug reports.
+Display full trap frame state.
+This is most useful for inclusion with bug reports.
 .It Ic ts
 Display trap state.
 .It Ic traptrace
-Display or set trap trace information.  Use the
+Display or set trap trace information.
+Use the
 .Dq r
 and
 .Dq f
@@ -985,10 +990,11 @@ modifiers to get reversed and full information, respectively.
 .It Ic uvmdump
 Dumps the UVM histories.
 .It Ic watch
-Set or clear a physical or virtual hardware watchpoint.  Pass the address
-to be watched, or
+Set or clear a physical or virtual hardware watchpoint.
+Pass the address to be watched, or
 .Dq 0
-to clear the watchpoint.  Append
+to clear the watchpoint.
+Append
 .Dq p
 to the watch point to use the physical watchpoint registers.
 .It Ic window
