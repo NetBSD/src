@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.61 2001/05/01 19:36:56 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.62 2001/05/02 01:22:19 thorpej Exp $	*/
 
 /*
  *
@@ -252,6 +252,9 @@ struct uvmexp {
 	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
 
+	int ncolors;	/* number of page color buckets: must be p-o-2 */
+	int colormask;	/* color bucket mask */
+
 	/* 
 	 * Adding anything before this line will break binary compatibility
 	 * with top(1) on NetBSD 1.5.
@@ -310,7 +313,6 @@ struct uvmexp {
 				   aborted */
 	int colorhit;		/* pagealloc where we got optimal color */
 	int colormiss;		/* pagealloc where we didn't */
-	int ncolors;		/* number of page color buckets */
 
 	/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */
