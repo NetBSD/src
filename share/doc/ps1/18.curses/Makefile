@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 6/30/90
-#	$Id: Makefile,v 1.5 1993/12/28 12:06:43 davidb Exp $
+#	$Id: Makefile,v 1.6 1994/01/24 22:36:54 cgd Exp $
 
 DIR=	ps1/18.curses
 DOC=	18.curses
@@ -12,7 +12,7 @@ CLEANFILES+=win_st.gr twinkle1.gr twinkle2.gr life.gr intro.2.tbl appen.A.tbl
 
 .include <bsd.doc.mk>
 
-${DOC}.${PRINTER}: ${SRCS}
+${DOC}.${PRINTER_TYPE}: ${SRCS}
 	( cd ${.CURDIR} ; ${ROFF} ${SRCS} ) > ${.TARGET}
 
 .SUFFIXES:

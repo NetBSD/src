@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.5 (Berkeley) 1/2/91
-#	$Id: Makefile,v 1.5 1993/07/31 15:33:50 mycroft Exp $
+#	$Id: Makefile,v 1.6 1994/01/24 22:36:45 cgd Exp $
 
 DIR=	ps1/07.ipctut
 DOC=	07.ipctut
@@ -12,5 +12,5 @@ EXTRA=	accept.grn dgramread.c dgramsend.c gremlins pipe.c pipe.grn \
 
 .include <bsd.doc.mk>
 
-${DOC}.${PRINTER}: ${SRCS} ${EXTRA}
+${DOC}.${PRINTER_TYPE}: ${SRCS} ${EXTRA}
 	( cd ${.CURDIR} ; ${TBL} ${SRCS} ) | ${GREMLIN} | ${ROFF} > ${.TARGET}

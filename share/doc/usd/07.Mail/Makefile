@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.2 (Berkeley) 6/30/90
-#	$Id: Makefile,v 1.4 1993/07/31 15:30:41 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/01/24 22:37:35 cgd Exp $
 
 DIR=	usd/07.Mail
 DOC=	07.Mail
@@ -10,5 +10,5 @@ MACROS=	-me
 
 .include <bsd.doc.mk>
 
-${DOC}.${PRINTER}: ${SRCS}
+${DOC}.${PRINTER_TYPE}: ${SRCS}
 	( cd ${.CURDIR} ; ${TBL} ${SRCS} ) | ${ROFF} > ${.TARGET}
