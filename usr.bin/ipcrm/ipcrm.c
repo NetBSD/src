@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcrm.c,v 1.9 1999/08/25 05:13:06 thorpej Exp $	*/
+/*	$NetBSD: ipcrm.c,v 1.10 1999/08/25 05:15:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -48,133 +48,146 @@
 #define IPC_TO_STRING(x) (x == 'Q' ? "message queue" : \
 	(x == 'M' ? "shared memory segment" : "semaphore"))
 
-int signaled;
+int     signaled;
 
-void usage __P((void));
-int msgrm __P((key_t, int));
-int shmrm __P((key_t, int));
-int semrm __P((key_t, int));
-void not_configured __P((void));
-int main __P((int, char *[]));
+void	usage __P((void));
+int	msgrm __P((key_t, int));
+int	shmrm __P((key_t, int));
+int	semrm __P((key_t, int));
+void	not_configured __P((void));
+int	main __P((int, char *[]));
 
-void usage()
+void 
+usage()
 {
-        fprintf(stderr, "usage: ipcrm [ [-q msqid] [-m shmid] [-s semid]\n");
+	fprintf(stderr, "usage: ipcrm [ [-q msqid] [-m shmid] [-s semid]\n");
 	fprintf(stderr, "        [-Q msgkey] [-M shmkey] [-S semkey] ...]\n");
 	exit(1);
 }
 
-int msgrm(key, id)
-    key_t key;
-    int id;
+int 
+msgrm(key, id)
+	key_t   key;
+	int     id;
 {
-    if (key) {
-	id = msgget(key, 0);
-	if (id == -1)
-	    return -1;
-    }
-    return msgctl(id, IPC_RMID, NULL);    
-}
-
-int shmrm(key, id)
-    key_t key;
-    int id;
-{
-    if (key) {
-	id = shmget(key, 0, 0);
-	if (id == -1)
-	    return -1;
-    }
-    return shmctl(id, IPC_RMID, NULL);
-}
-
-int semrm(key, id)
-    key_t key;
-    int id;
-{
-
-    if (key) {
-	id = semget(key, 0, 0);
-	if (id == -1)
-	    return -1;
-    }
-    return semctl(id, 0, IPC_RMID, NULL);
-}
-
-void not_configured()
-{
-    signaled++;
-}
-    
-int main(argc, argv)
-    int argc;
-    char *argv[];
-
-{
-    int c, result, errflg, target_id;
-    key_t target_key;
-
-    errflg = 0;
-    signal(SIGSYS, (void (*) __P((int)))not_configured);
-    while ((c = getopt(argc, argv, ":q:m:s:Q:M:S:")) != -1) {
-
-	signaled = 0;
-	switch (c) {
-	case 'q':
-	case 'm':
-	case 's':
-	    target_id = atoi(optarg);
-	    if (c == 'q')
-		result = msgrm(0, target_id);
-	    else if (c == 'm')
-		result = shmrm(0, target_id);
-	    else
-		result = semrm(0, target_id);
-	    if (result < 0) {
-		errflg++;
-		if (!signaled)
-		    warn("%sid(%d): ", IPC_TO_STR(toupper(c)), target_id);
-		else
-		    warnx("%ss are not configured in the running kernel",
-			  IPC_TO_STRING(toupper(c)));
-	    }
-	    break;
-	case 'Q':
-	case 'M':
-	case 'S':
-	    target_key = atol(optarg);
-	    if (target_key == IPC_PRIVATE) {
-		warnx("can't remove private %ss", IPC_TO_STRING(c));
-		continue;
-	    }
-	    if (c == 'Q')
-		result = msgrm(target_key, 0);
-	    else if (c == 'M')
-		result = shmrm(target_key, 0);
-	    else
-		result = semrm(target_key, 0);
-	    if (result < 0) {
-		errflg++;
-		if (!signaled)
-		    warn("%skey(%ld): ", IPC_TO_STR(c), (long) target_key);
-		else
-		    warnx("%ss are not configured in the running kernel",
-			  IPC_TO_STRING(c));
-	    }
-	    break;
-	case ':':
-	    fprintf(stderr, "option -%c requires an argument\n", optopt);
-	    usage();
-	case '?':
-	    fprintf(stderr, "unrecognized option: -%c\n", optopt);
-	    usage();
+	if (key) {
+		id = msgget(key, 0);
+		if (id == -1)
+			return -1;
 	}
-    }
-
-    if (optind != argc) {
-	    fprintf(stderr, "unknown argument: %s\n", argv[optind]);
-	    usage();
-    }
-    exit(errflg);
+	return msgctl(id, IPC_RMID, NULL);
 }
-    
+
+int 
+shmrm(key, id)
+	key_t   key;
+	int     id;
+{
+	if (key) {
+		id = shmget(key, 0, 0);
+		if (id == -1)
+			return -1;
+	}
+	return shmctl(id, IPC_RMID, NULL);
+}
+
+int 
+semrm(key, id)
+	key_t   key;
+	int     id;
+{
+
+	if (key) {
+		id = semget(key, 0, 0);
+		if (id == -1)
+			return -1;
+	}
+	return semctl(id, 0, IPC_RMID, NULL);
+}
+
+void 
+not_configured()
+{
+	signaled++;
+}
+
+int 
+main(argc, argv)
+	int     argc;
+	char   *argv[];
+
+{
+	int     c, result, errflg, target_id;
+	key_t   target_key;
+
+	errflg = 0;
+	signal(SIGSYS, (void (*) __P((int))) not_configured);
+	while ((c = getopt(argc, argv, ":q:m:s:Q:M:S:")) != -1) {
+
+		signaled = 0;
+		switch (c) {
+		case 'q':
+		case 'm':
+		case 's':
+			target_id = atoi(optarg);
+			if (c == 'q')
+				result = msgrm(0, target_id);
+			else
+				if (c == 'm')
+					result = shmrm(0, target_id);
+				else
+					result = semrm(0, target_id);
+			if (result < 0) {
+				errflg++;
+				if (!signaled)
+					warn("%sid(%d): ",
+					    IPC_TO_STR(toupper(c)), target_id);
+				else
+					warnx("%ss are not configured in "
+					    "the running kernel",
+					    IPC_TO_STRING(toupper(c)));
+			}
+			break;
+		case 'Q':
+		case 'M':
+		case 'S':
+			target_key = atol(optarg);
+			if (target_key == IPC_PRIVATE) {
+				warnx("can't remove private %ss",
+				    IPC_TO_STRING(c));
+				continue;
+			}
+			if (c == 'Q')
+				result = msgrm(target_key, 0);
+			else
+				if (c == 'M')
+					result = shmrm(target_key, 0);
+				else
+					result = semrm(target_key, 0);
+			if (result < 0) {
+				errflg++;
+				if (!signaled)
+					warn("%skey(%ld): ",
+					    IPC_TO_STR(c), (long) target_key);
+				else
+					warnx("%ss are not configured "
+					    in the running kernel",
+					    IPC_TO_STRING(c));
+			}
+			break;
+		case ':':
+			fprintf(stderr, "option -%c requires an argument\n",
+			    optopt);
+			usage();
+		case '?':
+			fprintf(stderr, "unrecognized option: -%c\n", optopt);
+			usage();
+		}
+	}
+
+	if (optind != argc) {
+		fprintf(stderr, "unknown argument: %s\n", argv[optind]);
+		usage();
+	}
+	exit(errflg);
+}
