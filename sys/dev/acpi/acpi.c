@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.27 2003/01/05 22:33:21 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.28 2003/01/07 18:46:48 fvdl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.27 2003/01/05 22:33:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.28 2003/01/07 18:46:48 fvdl Exp $");
 
 #include "opt_acpi.h"
 
@@ -303,6 +303,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	if (acpi_dbgr & ACPI_DBGR_PROBE)
 		acpi_osd_debugger();
 #endif
+	acpi_md_callback((struct device *)sc);
 	acpi_build_tree(sc);
 
 	/*
@@ -1041,21 +1042,44 @@ acpi_pci_fixup_bus(ACPI_HANDLE handle, UINT32 level, void *context,
 	ACPI_PCI_ROUTING_TABLE *PrtElement;
 	ACPI_HANDLE link;
 	uint line;
+	ACPI_NAMESPACE_NODE *node;
+	ACPI_INTEGER val;
 
 	rv = acpi_get(handle, &buf, AcpiGetIrqRoutingTable);
 	if (ACPI_FAILURE(rv))
 		return (AE_OK);
 
+	/*
+	 * If at level 1, this is a PCI root bus. Try the _BBN method
+	 * to get the right PCI bus numbering for the following
+	 * busses (this is a depth-first walk). It may fail,
+	 * for example if there's only one root bus, but that
+	 * case should be ok, so we'll ignore that.
+	 */
+	if (level == 1) {
+		node = AcpiNsMapHandleToNode(handle);
+		rv = AcpiUtEvaluateNumericObject(METHOD_NAME__BBN, node, &val);
+		if (!ACPI_FAILURE(rv)) {
 #ifdef ACPI_DEBUG
-	printf("%s: fixing up PCI bus %d\n", sc->sc_dev.dv_xname,
-	    sc->sc_pci_bus);
+			printf("%s: fixup: _BBN success, bus # was %d now %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_pci_bus,
+			    ACPI_LOWORD(val));
+#endif
+			sc->sc_pci_bus = ACPI_LOWORD(val);
+		}
+	}
+			
+
+#ifdef ACPI_DEBUG
+	printf("%s: fixing up PCI bus %d at level %u\n", sc->sc_dev.dv_xname,
+	    sc->sc_pci_bus, level);
 #endif
 
         for (Buffer = buf.Pointer; ; Buffer += PrtElement->Length) {
 		PrtElement = (ACPI_PCI_ROUTING_TABLE *)Buffer;
 		if (PrtElement->Length == 0)
 			break;
-		if (PrtElement->Source == NULL)
+		if (PrtElement->Source[0] == 0)
 			continue;
 
 		link = acpi_get_node(PrtElement->Source);
