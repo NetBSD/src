@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.69 1997/05/08 16:34:54 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.70 1997/06/07 17:27:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -1594,10 +1594,10 @@ vfs_shutdown()
 	register struct buf *bp;
 	int iter, nbusy;
 
+	printf("syncing disks... ");
+
 	/* XXX Should suspend scheduling. */
 	(void) spl0();
-
-	printf("syncing disks... ");
 
 	if (panicstr == 0) {
 		/* Release inodes held by texts before update. */
