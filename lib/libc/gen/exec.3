@@ -1,4 +1,4 @@
-.\"	$NetBSD: exec.3,v 1.7 1997/11/23 04:18:30 enami Exp $
+.\"	$NetBSD: exec.3,v 1.8 1997/11/23 04:23:48 enami Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -192,7 +192,7 @@ will be set to indicate the error.
 The shell.
 .El
 .Sh ERRORS
-.Fn Execl ,
+.Fn execl ,
 .Fn execle ,
 .Fn execlp
 and
@@ -204,7 +204,7 @@ for any of the errors specified for the library functions
 and
 .Xr malloc 3 .
 .Pp
-.Fn Exect
+.Fn exect
 and
 .Fn execv
 may fail and set
@@ -248,7 +248,7 @@ and
 upon which they returned.
 They now return if any error other than the ones described above occurs.
 .Sh STANDARDS
-.Fn Execl ,
+.Fn execl ,
 .Fn execv ,
 .Fn execle ,
 .Fn execlp
