@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.34 1999/09/22 18:06:21 wrstuden Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.35 1999/11/02 22:42:51 jdolecek Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -84,7 +84,7 @@ load:	${PROG}
 .endif
 
 .if !target(unload)
-unload: ${PROG}
+unload:
 	/sbin/modunload -n ${KMOD}
 .endif
 
