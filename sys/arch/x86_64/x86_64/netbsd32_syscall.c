@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.9 2002/12/21 16:24:00 manu Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.10 2003/02/19 00:37:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -86,16 +88,18 @@ void
 netbsd32_syscall_plain(frame)
 	struct trapframe frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	const struct sysent *callp;
+	struct proc *p;
+	struct lwp *l;
 	int error;
 	size_t argsize;
 	register32_t code, args[8];
 	register_t rval[2];
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curlwp;
+	p = l->l_proc;
 
 	code = frame.tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -140,7 +144,7 @@ netbsd32_syscall_plain(frame)
 	printf("netbsd32: syscall %d (%x %x %x %x %x %x, %x)\n", code,
 	    args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
 #endif
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		frame.tf_rax = rval[0];
@@ -168,16 +172,17 @@ netbsd32_syscall_plain(frame)
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(p, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p);
+	userret(l);
 }
 
 void
 netbsd32_syscall_fancy(frame)
 	struct trapframe frame;
 {
-	register caddr_t params;
-	register const struct sysent *callp;
-	register struct proc *p;
+	caddr_t params;
+	const struct sysent *callp;
+	struct proc *p;
+	struct lwp *l;
 	int error;
 	size_t argsize;
 	register32_t code, args[8];
@@ -188,7 +193,8 @@ netbsd32_syscall_fancy(frame)
 #endif
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curlwp;
+	p = l->l_proc;
 
 	code = frame.tf_rax;
 	callp = p->p_emul->e_sysent;
@@ -237,14 +243,14 @@ netbsd32_syscall_fancy(frame)
 		for (i = 0; i < (argsize >> 2); i++)
 			args64[i] = args[i];
 		/* XXX we need to pass argsize << 1 here? */
-		if ((error = trace_enter(p, code, code, NULL, args64, rval)) != 0)
+		if ((error = trace_enter(l, code, code, NULL, args64, rval)) != 0)
 			goto bad;
 	}
 #endif
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		frame.tf_rax = rval[0];
@@ -270,8 +276,8 @@ netbsd32_syscall_fancy(frame)
 	}
 
 #if defined(KTRACE) || defined(SYSTRACE)
-	trace_exit(p, code, args64, rval, error);
+	trace_exit(l, code, args64, rval, error);
 #endif
 
-	userret(p);
+	userret(l);
 }
