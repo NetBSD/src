@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1997/03/26 22:38:52 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 1997/07/31 01:11:33 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -133,6 +133,7 @@ get_device(name, devpp, partp)
 
 /* Set the rootdev variable from the root specifier in the boot args */
 
+#ifndef MEMORY_DISK_IS_ROOT
 void
 set_root_device()
 {
@@ -147,19 +148,20 @@ set_root_device()
 		}
 	}
 }
-
+#endif
 
 /*
- * Set up the root and swap devices from the boot args
+ * Set up the root device from the boot args
  */
 void
 cpu_rootconf()
 {
+#ifndef MEMORY_DISK_IS_ROOT
 	set_root_device();
 
 	printf("boot device: %s\n",
 	    booted_device != NULL ? booted_device->dv_xname : "<unknown>");
-
+#endif
 	setroot(booted_device, booted_partition, arm32_nam2blk);
 }
 
