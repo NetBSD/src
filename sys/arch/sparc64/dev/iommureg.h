@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.3 1999/06/04 13:48:48 mrg Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.4 2000/06/08 15:23:44 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,8 +97,8 @@ struct iommu_strbuf {
 #define IOTTE_C		0x0000000000000010LL	/* Accesses to cacheable space */
 #define IOTTE_W		0x0000000000000002LL	/* Writeable */
 
-#define IOTSB_VEND	0xffffe000
-#define IOTSB_VSTART(sz)	(u_int)(IOTSB_VEND << (PGSHIFT + (sz))) 
+#define IOTSB_VEND	(0xffffffffffffffffLL<<PGSHIFT)
+#define IOTSB_VSTART(sz)	(u_int)(IOTSB_VEND << ((sz)+10)) 
 
 #define MAKEIOTTE(pa,w,c,s)	(((pa)&IOTTE_PAMASK)|((w)?IOTTE_W:0)|((c)?IOTTE_C:0)|((s)?IOTTE_STREAM:0)|(IOTTE_V|IOTTE_8K))
 #if 0
