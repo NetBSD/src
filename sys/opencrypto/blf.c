@@ -1,4 +1,4 @@
-/*	$NetBSD: blf.c,v 1.1 2003/07/25 21:12:41 jonathan Exp $ */
+/*	$NetBSD: blf.c,v 1.2 2003/08/26 20:20:17 thorpej Exp $ */
 /*	$OpenBSD: blf.c,v 1.4 2002/03/15 18:19:52 millert Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: blf.c,v 1.1 2003/07/25 21:12:41 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: blf.c,v 1.2 2003/08/26 20:20:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ Blowfish_initstate(c)
 
 /* P-box and S-box tables initialized with digits of Pi */
 
-	const blf_ctx initstate =
+	static const blf_ctx initstate =
 
 	{ {
 		{
