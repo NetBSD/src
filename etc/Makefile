@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.137 2000/02/26 18:42:31 mycroft Exp $
+#	$NetBSD: Makefile,v 1.138 2000/03/01 11:21:13 itojun Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -106,7 +106,7 @@ BIN2+=	motd
 # -rw-------
 BIN3+=	hosts.equiv
 
-NAMEDB=	127 root.cache named.conf 0000:0000:0000:0000:0000:0000:000
+NAMEDB=	127 root.cache named.conf loopback.v6
 PCS=	pcs750.bin
 
 all clean cleandir depend distclean etc includes install lint:
