@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 1997/01/16 22:12:50 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 1997/01/17 16:27:20 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -800,17 +800,16 @@ pmap_takeover_mmu()
 	vm_offset_t tbladdr;
 
 	tbladdr = mmu_vtop((vm_offset_t) kernAbase);
-	mon_printf("pmap_takeover_mmu: tbladdr=0x%x\n", tbladdr);
 
 	/* Initialize the CPU Root Pointer (CRP) for proc0. */
 	/* XXX: I'd prefer per-process CRP storage. -gwr */
 	proc0crp.limit = 0x80000003;	/* limit and type */
 	proc0crp.paddr = tbladdr;	/* phys. addr. */
-	curpcb->pcb_mmuctx = (int) &proc0crp;
+	curpcb->pcb_mmucrp = &proc0crp;
 
-	mon_printf("pmap_takeover_mmu: loadcrp...\n");
-	loadcrp(curpcb->pcb_mmuctx);
-	mon_printf("pmap_takeover_mmu: survived!\n");
+	/* mon_printf("pmap_takeover_mmu: loadcrp...\n"); */
+	loadcrp(curpcb->pcb_mmucrp);
+	/* mon_printf("pmap_takeover_mmu: survived!\n"); */
 }
 
 /* pmap_init			INTERFACE

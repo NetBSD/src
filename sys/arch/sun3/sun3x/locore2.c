@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.2 1997/01/16 21:53:07 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.3 1997/01/17 16:27:17 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ sun3x_mode_monitor __P((void))
 	setvbr(old_vector_table);
 	set_clk_mode(IREG_CLOCK_ENAB_7, 0, 1);
 
-	loadcrp((int)&mon_crp);
+	loadcrp(&mon_crp);
 }
 
 /*
@@ -127,7 +127,7 @@ sun3x_mode_normal __P((void))
 	pcb = curpcb ? curpcb :
 		pcb = &proc0paddr->u_pcb;
 
-	loadcrp(pcb->pcb_mmuctx);
+	loadcrp(pcb->pcb_mmucrp);
 }
 
 /*
