@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.17 2000/06/13 04:35:29 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.17.2.1 2001/05/09 19:43:17 he Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.40 2000/06/13 03:02:29 jinmei Exp $	*/
 
 /*
@@ -119,8 +119,8 @@ nd6_rs_input(m, off, icmp6len)
 
 	/* Sanity checks */
 	if (ip6->ip6_hlim != 255) {
-		log(LOG_ERR,
-		    "nd6_rs_input: invalid hlim %d\n", ip6->ip6_hlim);
+		nd6log((LOG_ERR,
+		    "nd6_rs_input: invalid hlim %d\n", ip6->ip6_hlim));
 		goto freeit;
 	}
 
@@ -197,15 +197,15 @@ nd6_ra_input(m, off, icmp6len)
 		goto freeit;
 
 	if (ip6->ip6_hlim != 255) {
-		log(LOG_ERR,
-		    "nd6_ra_input: invalid hlim %d\n", ip6->ip6_hlim);
+		nd6log((LOG_ERR,
+		    "nd6_ra_input: invalid hlim %d\n", ip6->ip6_hlim));
 		goto freeit;
 	}
 
 	if (!IN6_IS_ADDR_LINKLOCAL(&saddr6)) {
-		log(LOG_ERR,
+		nd6log((LOG_ERR,
 		    "nd6_ra_input: src %s is not link-local\n",
-		    ip6_sprintf(&saddr6));
+		    ip6_sprintf(&saddr6)));
 		goto freeit;
 	}
 
