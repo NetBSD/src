@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.11 2003/11/27 23:02:40 fvdl Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.12 2003/12/30 20:20:21 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.11 2003/11/27 23:02:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.12 2003/12/30 20:20:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,8 +49,9 @@ static void wdc_upc_attach(struct device *, struct device *, void *);
 
 struct wdc_upc_softc {
 	struct wdc_softc sc_wdc;
-	struct channel_softc *sc_chanptr;
+	struct channel_softc *sc_chanlist[1];
 	struct channel_softc sc_channel;
+	struct channel_queue sc_chqueue;
 };
 
 CFATTACH_DECL(wdc_upc, sizeof(struct wdc_upc_softc),
@@ -76,21 +77,15 @@ wdc_upc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wdc.DMA_cap = 0;
 	sc->sc_wdc.UDMA_cap = 0;
 	sc->sc_wdc.nchannels = 1;
-	sc->sc_chanptr = &sc->sc_channel;
-	sc->sc_wdc.channels = &sc->sc_chanptr;
+	sc->sc_chanlist[0] = &sc->sc_channel;
+	sc->sc_wdc.channels = sc->sc_chanlist;
 	sc->sc_channel.cmd_iot = ua->ua_iot;
 	sc->sc_channel.cmd_baseioh = ua->ua_ioh;
 	sc->sc_channel.ctl_iot = ua->ua_iot;
 	sc->sc_channel.ctl_ioh = ua->ua_ioh2;
 	sc->sc_channel.channel = 0;
 	sc->sc_channel.wdc = &sc->sc_wdc;
-	sc->sc_channel.ch_queue = malloc(sizeof(struct channel_queue),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->sc_channel.ch_queue == NULL) {
-		aprint_error("%s: can't allocate memory for command queue\n",
-		sc->sc_wdc.sc_dev.dv_xname);
-		return;
-	}
+	sc->sc_channel.ch_queue = &sc->sc_chqueue;
 	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(ua->ua_iot, ua->ua_ioh, i,
 		    i == 0 ? 4 : 1, &sc->sc_channel.cmd_iohs[i]) != 0) {
