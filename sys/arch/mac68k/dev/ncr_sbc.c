@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_sbc.c,v 1.4 1996/03/20 05:10:54 scottr Exp $	*/
+/*	$NetBSD: ncr_sbc.c,v 1.5 1996/03/21 04:49:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -74,7 +74,7 @@
 #include "../mac68k/via.h"
 
 #ifdef SBCTEST
-# define DEBUG
+# define SBC_DEBUG
 #endif
 
 /*
@@ -97,7 +97,7 @@
 #define	SBC_DMA_DRQ_OFFSET	0x06000
 #define	SBC_DMA_NODRQ_OFFSET	0x12000
 
-#ifdef	DEBUG
+#ifdef	SBC_DEBUG
 #define	SBC_DB_INTR	0x01
 #define	SBC_DB_DMA	0x02
 #define	SBC_DB_BREAK	0x04
@@ -132,15 +132,15 @@ struct sbc_softc {
 	volatile u_char	*sc_iflag;
 	int		sc_options;	/* options for this instance. */
 	struct sbc_pdma_handle sc_pdma[SCI_OPENINGS];
-#ifdef DEBUG
+#ifdef SBC_DEBUG
 	char		*sc_vstate;
 #endif
 };
 
 /*
- * Options.  By default, (pseudo) DMA, DMA interrupts, and reselect are
- * enabled.  You may disable any of these features with the `flags'
- * directive in your kernel's configuration file.
+ * Options.  By default, SCSI interrupts and reselect are disabled.
+ * You may enable either of these features with the `flags' directive
+ * in your kernel's configuration file.
  *
  * Alternatively, you can patch your kernel with DDB or some other
  * mechanism.  The sc_options member of the softc is OR'd with
@@ -152,7 +152,6 @@ struct sbc_softc {
 #define	SBC_OPTIONS_BITS	"\10\2RESELECT\1INTR"
 int sbc_options = 0;
 
-static	char sbc_name[] = "sbc";
 static	int	sbc_match __P(());
 static	void	sbc_attach __P(());
 static	void	sbc_minphys __P((struct buf *bp));
@@ -196,7 +195,7 @@ struct cfattach sbc_ca = {
 };
 
 struct cfdriver sbc_cd = {
-	NULL, sbc_name, DV_DULL
+	NULL, "sbc", DV_DULL
 };
 
 
@@ -325,7 +324,7 @@ sbc_attach(parent, self, args)
 	if (sc->sc_options & SBC_INTR)
 		sbc_intr_enable(ncr_sc);
 
-#ifdef	DEBUG
+#ifdef	SBC_DEBUG
 	if (sbc_debug)
 		printf("%s: softc=%x regs=%x\n", ncr_sc->sc_dev.dv_xname,
 		    sc, sc->sc_regs);
@@ -465,7 +464,7 @@ sbc_irq_intr(p)
 			    && ((*ncr_sc->sci_bus_csr & ~SCI_BUS_RST) == 0)) {
 				SCI_CLR_INTR(ncr_sc);	/* RST interrupt */
 			}
-#ifdef DEBUG
+#ifdef SBC_DEBUG
 			else {
 				printf("%s: spurious intr\n",
 				    ncr_sc->sc_dev.dv_xname);
@@ -713,7 +712,7 @@ sbc_drq_intr(p)
 
 	dh->dh_flags &= ~SBC_DH_START;
 
-#ifdef DEBUG
+#ifdef SBC_DEBUG
 	sc->sc_vstate = "got drq interrupt.";
 	if (sbc_debug & SBC_DB_INTR)
 		printf("%s: drq intr, dh_len=%d, dh_flags=0x%x\n",
@@ -729,7 +728,7 @@ sbc_drq_intr(p)
 
 	if (setjmp((label_t *) nofault)) {
 		nofault = (int *) 0;
-#ifdef DEBUG
+#ifdef SBC_DEBUG
 		sc->sc_vstate = "buserr in xfer.";
 #endif
 		count = (  (u_long) mac68k_buserr_addr
@@ -744,7 +743,7 @@ sbc_drq_intr(p)
 		dh->dh_len -= count;
 		dh->dh_flags &= ~SBC_DH_XFER;
 
-#ifdef DEBUG
+#ifdef SBC_DEBUG
 		sc->sc_vstate = "handled bus error in xfer.";
 #endif
 		mac68k_buserr_addr = 0;
@@ -841,7 +840,7 @@ sbc_drq_intr(p)
 					dh->dh_addr += (dcount - count);
 					dh->dh_len -= (dcount - count);
 					dh->dh_flags &= ~SBC_DH_XFER;
-#ifdef DEBUG
+#ifdef SBC_DEBUG
 					sc->sc_vstate = "drq low";
 #endif
 					return;
@@ -888,7 +887,7 @@ sbc_drq_intr(p)
 
 	dh->dh_flags &= ~SBC_DH_XFER;
 
-#ifdef DEBUG
+#ifdef SBC_DEBUG
 	sc->sc_vstate = "done in xfer.";
 #endif
 }
@@ -1003,7 +1002,7 @@ sbc_dma_poll(ncr_sc)
 		delay(100);
 	}
 
-#ifdef	DEBUG
+#ifdef	SBC_DEBUG
 	if (sbc_debug & SBC_DB_DMA)
 		printf("%s: poll done, csr=0x%x, bus_csr=0x%x\n",
 		    ncr_sc->sc_dev.dv_xname, *ncr_sc->sci_csr,
@@ -1053,7 +1052,7 @@ sbc_dma_start(ncr_sc)
 
 	ncr_sc->sc_state |= NCR_DOINGDMA;
 
-#ifdef	DEBUG
+#ifdef	SBC_DEBUG
 	if (sbc_debug & SBC_DB_DMA)
 		printf("sbc_dma_start: started, va=0x%lx, xlen=0x%x\n",
 			(long)dh->dh_addr, dh->dh_len);
@@ -1077,7 +1076,7 @@ sbc_dma_stop(ncr_sc)
 	register int ntrans;
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
-#ifdef DEBUG
+#ifdef SBC_DEBUG
 		printf("sbc_dma_stop: DMA not running\n");
 #endif
 		return;
@@ -1089,7 +1088,7 @@ sbc_dma_stop(ncr_sc)
 
 	ntrans = ncr_sc->sc_datalen - dh->dh_len;
 
-#ifdef DEBUG
+#ifdef SBC_DEBUG
 	if (sbc_debug & SBC_DB_DMA)
 		printf("sbc_dma_stop: ntrans=0x%x\n", ntrans);
 #endif
