@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 1997/10/19 04:40:03 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 1997/12/02 22:34:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.7 1997/10/19 04:40:03 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8 1997/12/02 22:34:05 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ indx(s1, s2)
  */
 void
 putback(c)
-	char c;
+	pbent c;
 {
 	if (bp < endpbb)
 		*bp++ = c;
@@ -96,7 +96,7 @@ pbstr(s)
 	char *s;
 {
 	char *es;
-	char *zp;
+	pbent *zp;
 
 	es = s;
 	zp = bp;

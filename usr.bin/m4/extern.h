@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1997/10/19 04:39:55 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1997/12/02 22:34:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -80,13 +80,13 @@ extern int fp; 			/* m4 call frame pointer */
 extern int ilevel;		/* input file stack pointer */
 extern int oindex;		/* diversion index. */
 extern int sp;			/* current m4 stack pointer */
-extern char *bp;		/* first available character */
-extern char buf[];		/* push-back buffer */
-extern char *bufbase;		/* buffer base for this ilevel */
-extern char *bbase[];		/* buffer base per ilevel */
+extern pbent *bp;		/* first available character */
+extern pbent buf[];		/* push-back buffer */
+extern pbent *bufbase;		/* buffer base for this ilevel */
+extern pbent *bbase[];		/* buffer base per ilevel */
 extern char ecommt[];		/* end character for comment */
 extern char *endest;		/* end of string space */
-extern char *endpbb;		/* end of push-back buffer */
+extern pbent *endpbb;		/* end of push-back buffer */
 extern char *ep;		/* first free char in strspace */
 extern char lquote[];		/* left quote character (`) */
 extern char *m4temp;		/* filename for diversions */
