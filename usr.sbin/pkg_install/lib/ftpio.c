@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.20.2.5 2000/10/01 22:38:41 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.20.2.6 2000/10/18 03:17:26 tv Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.20.2.5 2000/10/01 22:38:41 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.20.2.6 2000/10/18 03:17:26 tv Exp $");
 #endif
 
 /*
@@ -48,7 +48,9 @@ __RCSID("$NetBSD: ftpio.c,v 1.20.2.5 2000/10/01 22:38:41 hubertf Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#ifdef EXPECT_DEBUG
 #include <vis.h>
+#endif
 
 #include "../lib/lib.h"
 
