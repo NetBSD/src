@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.7 1998/12/02 17:20:20 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.8 1998/12/02 22:54:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ uhid_attach(parent, self, aux)
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
 	usbd_devinfo(uaa->device, 0, devinfo);
-	printf("\n%s: %s, interface class %d/%d\n", sc->sc_dev.dv_xname,
+	printf("\n%s: %s, iclass %d/%d\n", sc->sc_dev.dv_xname,
 	       devinfo, id->bInterfaceClass, id->bInterfaceSubClass);
 	ed = usbd_interface2endpoint_descriptor(iface, 0);
 	if (!ed) {
