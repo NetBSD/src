@@ -1,4 +1,4 @@
-/*	$NetBSD: mksyntax.c,v 1.26 2002/11/24 22:35:41 christos Exp $	*/
+/*	$NetBSD: mksyntax.c,v 1.27 2003/01/12 20:26:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ static const char copyright[] =
 static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
 #else
 static const char rcsid[] =
-    "$NetBSD: mksyntax.c,v 1.26 2002/11/24 22:35:41 christos Exp $";
+    "$NetBSD: mksyntax.c,v 1.27 2003/01/12 20:26:53 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ static void filltable(char *);
 static void init(void);
 static void add(char *, char *);
 static void print(char *);
-static void output_type_macros(void);
+static void output_type_macros(int);
 static void digit_convert(void);
 int main(int, char **);
 
@@ -209,7 +209,7 @@ main(int argc, char **argv)
 	fputs("#define SQSYNTAX (sqsyntax + SYNBASE)\n", hfile);
 	fputs("#define ARISYNTAX (arisyntax + SYNBASE)\n", hfile);
 	putc('\n', hfile);
-	output_type_macros();		/* is_digit, etc. */
+	output_type_macros(sign);		/* is_digit, etc. */
 	putc('\n', hfile);
 
 	/* Generate the syntax tables. */
@@ -357,27 +357,27 @@ print(char *name)
  */
 
 static char *macro[] = {
-	"#define is_digit(c)\t((is_type+SYNBASE)[c] & ISDIGIT)",
-	"#define is_alpha(c)\t((c) != UPEOF && ((c) < CTL_FIRST || (c) > CTL_LAST) && isalpha((unsigned char) (c)))",
-	"#define is_name(c)\t((c) != UPEOF && ((c) < CTL_FIRST || (c) > CTL_LAST) && ((c) == '_' || isalpha((unsigned char) (c))))",
-	"#define is_in_name(c)\t((c) != UPEOF && ((c) < CTL_FIRST || (c) > CTL_LAST) && ((c) == '_' || isalnum((unsigned char) (c))))",
-	"#define is_special(c)\t((is_type+SYNBASE)[c] & (ISSPECL|ISDIGIT))",
+	"#define is_digit(c)\t((is_type+SYNBASE)[(unsigned char)(c)] & ISDIGIT)\n",
+	"#define is_alpha(c)\t(((%s)(c)) != UPEOF && ((c) < CTL_FIRST || (c) > CTL_LAST) && isalpha((unsigned char)(c)))\n",
+	"#define is_name(c)\t(((%s)(c)) != UPEOF && ((c) < CTL_FIRST || (c) > CTL_LAST) && ((c) == '_' || isalpha((unsigned char)(c))))\n",
+	"#define is_in_name(c)\t(((%s)(c)) != UPEOF && ((c) < CTL_FIRST || (c) > CTL_LAST) && ((c) == '_' || isalnum((unsigned char)(c))))\n",
+	"#define is_special(c)\t((is_type+SYNBASE)[c] & (ISSPECL|ISDIGIT))\n",
 	NULL
 };
 
 static void
-output_type_macros(void)
+output_type_macros(int sign)
 {
 	char **pp;
 
 	if (digit_contig)
-		macro[0] = "#define is_digit(c)\t((unsigned)((c) - '0') <= 9)";
+		macro[0] = "#define is_digit(c)\t((unsigned)((c) - '0') <= 9)\n";
 	for (pp = macro ; *pp ; pp++)
-		fprintf(hfile, "%s\n", *pp);
+		fprintf(hfile, *pp, sign ? "char" : "unsigned char");
 	if (digit_contig)
 		fputs("#define digit_val(c)\t((c) - '0')\n", hfile);
 	else
-		fputs("#define digit_val(c)\t(digit_value[c])\n", hfile);
+		fputs("#define digit_val(c)\t(digit_value[(unsigned char)(c)])\n", hfile);
 }
 
 
