@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43 1999/11/14 02:39:09 thorpej Exp $ */
+/*	$NetBSD: pmap.h,v 1.44 2000/03/13 23:52:33 soren Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -101,8 +101,8 @@
  *
  * The kernel pmap cannot malloc() PTEs since malloc() will sometimes
  * allocate a new virtual segment.  Since kernel mappings are never
- * `stolen' out of the the MMU, we just keep all its PTEs there, and
- * have no software copies.  Its mmu entries are nonetheless kept on lists
+ * `stolen' out of the MMU, we just keep all its PTEs there, and have
+ * no software copies.  Its mmu entries are nonetheless kept on lists
  * so that the code that fiddles with mmu lists has something to fiddle.
  *
  ** FOR THE SUN4M

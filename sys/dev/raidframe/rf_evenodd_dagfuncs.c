@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.4 2000/01/07 03:41:00 oster Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.5 2000/03/13 23:52:36 soren Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -712,7 +712,7 @@ rf_EvenOddDoubleRecoveryFunc(node)
 		startSector = fsuoff[0];
 		endSector = fsuend[0];
 
-		/* find out the the column of failed disk being accessed */
+		/* find out the column of failed disk being accessed */
 		fcol[0] = rf_EUCol(layoutPtr, pda->raidAddress);
 
 		/* find out the other failed colume not accessed */

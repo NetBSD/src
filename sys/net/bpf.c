@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.51 2000/02/02 09:03:41 enami Exp $	*/
+/*	$NetBSD: bpf.c,v 1.52 2000/03/13 23:52:39 soren Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -1345,7 +1345,7 @@ bpfdetach(ifp)
 		if (cdevsw[cmaj].d_open == bpfopen)
 			break;
 
-	/* Nuke the the vnodes for any open instances */
+	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < NBPFILTER; ++i) {
 		d = &bpf_dtab[i];
 		if (!D_ISFREE(d) && d->bd_bif != NULL &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.54 2000/01/11 12:59:47 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.55 2000/03/13 23:52:33 soren Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  * and Chris Torek for bits of insight needed along the way.  Thanks to
  * David Gilbert and Andrew Gillham who risked filesystem life-and-limb
  * for the sake of testing.  Andrew Gillham helped work out the bugs
- * the the 4/100 DMA code.
+ * the 4/100 DMA code.
  */
 
 /*

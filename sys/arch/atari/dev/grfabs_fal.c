@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.12 1998/12/20 14:32:53 thomas Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.13 2000/03/13 23:52:28 soren Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -238,7 +238,7 @@ dmode_t *dm;
 	struct videl *vregs = vm_regs(dm);
 
 	/*
-	 * First get the the videl register values
+	 * First get the videl register values
 	 */
 
 	vregs->vd_syncmode	= VIDEO->vd_sync;

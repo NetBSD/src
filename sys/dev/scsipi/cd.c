@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.136 2000/02/07 20:16:56 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.137 2000/03/13 23:52:36 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ cddetach(self, flags)
 
 	splx(s);
 
-	/* Nuke the the vnodes for any open instances */
+	/* Nuke the vnodes for any open instances */
 	mn = CDMINOR(self->dv_unit, 0);
 	vdevgone(bmaj, mn, mn + (MAXPARTITIONS - 1), VBLK);
 	vdevgone(cmaj, mn, mn + (MAXPARTITIONS - 1), VCHR);
