@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.167 2002/05/07 09:37:28 onoe Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.168 2002/05/26 14:37:19 tshiozak Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.167 2002/05/07 09:36:50 onoe Exp 
+ *	NetBSD: pcmciadevs,v 1.168 2002/05/26 14:35:10 tshiozak Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1294,6 +1294,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Planex Communications Inc",
 	    "Planex FNW-3700-T",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_PLANEX_GWNS11H,
+	    PCMCIA_CIS_PLANEX_GWNS11H,
+	    0,
+	    "Planex Communications Inc",
+	    "PLANEX GW-NS11H Wireless LAN PC Card",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_RPTI_EP400,
