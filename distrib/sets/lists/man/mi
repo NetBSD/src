@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.161 1999/09/08 14:02:25 soren Exp $
+# $NetBSD: mi,v 1.162 1999/09/08 14:23:05 hubertf Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -439,6 +439,7 @@
 ./usr/share/man/cat4/pcmcia.0
 ./usr/share/man/cat4/pcppi.0
 ./usr/share/man/cat4/pcscp.0
+./usr/share/man/cat4/phy.0
 ./usr/share/man/cat4/pms.0
 ./usr/share/man/cat4/pmsi.0
 ./usr/share/man/cat4/ppp.0
@@ -1584,6 +1585,7 @@
 ./usr/share/man/man4/pcppi.4
 ./usr/share/man/man4/pcscp.4
 ./usr/share/man/man4/pms.4
+./usr/share/man/man4/phy.4
 ./usr/share/man/man4/pmsi.4
 ./usr/share/man/man4/ppp.4
 ./usr/share/man/man4/pss.4
