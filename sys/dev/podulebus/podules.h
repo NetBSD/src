@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.8 2002/05/22 22:43:15 bjh21 Exp $	*/
+/*	$NetBSD: podules.h,v 1.9 2002/05/22 23:27:17 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.9 2002/05/19 22:29:57 bjh21 Exp 
+ *	NetBSD: podules,v 1.11 2002/05/22 23:23:23 bjh21 Exp 
  */
 
 /*
@@ -43,26 +43,74 @@
  */
 
 #define	MANUFACTURER_ACORN	0x0000		/* Acorn Computers */
+#define	MANUFACTURER_ACORNUSA	0x0001		/* Acorn Computers (USA) */
 #define	MANUFACTURER_OLIVETTI	0x0002		/* Olivetti */
 #define	MANUFACTURER_WATFORD	0x0003		/* Watford Electronics */
 #define	MANUFACTURER_CCONCEPTS	0x0004		/* Computer Concepts */
+#define	MANUFACTURER_IINTERFACES	0x0005		/* Intelligent Interfaces */
+#define	MANUFACTURER_CAMAN	0x0006		/* Caman */
 #define	MANUFACTURER_ARMADILLO	0x0007		/* Armadillo Systems */
+#define	MANUFACTURER_SOFTOPTION	0x0008		/* Soft Option */
 #define	MANUFACTURER_WILDVISION	0x0009		/* Wild Vision */
+#define	MANUFACTURER_ANGLOCOMPUTERS	0x000a		/* Anglo Computers */
+#define	MANUFACTURER_RESOURCE	0x000b		/* Resource */
+/* RISC iX: #define XCB_COMPANY_ALLIEDINTERACTIVE 12 */
 #define	MANUFACTURER_HCCS	0x000c		/* HCCS */
+#define	MANUFACTURER_MUSBURYCONSULT	0x000d		/* Musbury Consultants */
+#define	MANUFACTURER_GNOME	0x000e		/* Gnome */
+#define	MANUFACTURER_AANDGELEC	0x000f		/* A and G Electronics */
+#define	MANUFACTURER_SPACETECH	0x0010		/* Spacetech */
 #define	MANUFACTURER_ATOMWIDE	0x0011		/* Atomwide */
+#define	MANUFACTURER_SYNTEC	0x0012		/* Syntec */
+#define	MANUFACTURER_EMR	0x0013		/* ElectroMusic Research */
+#define	MANUFACTURER_MILLIPEDE	0x0014		/* Millipede */
+#define	MANUFACTURER_VIDEOELEC	0x0015		/* Video Electronics */
+#define	MANUFACTURER_BRAINSOFT	0x0016		/* Brainsoft */
+/* RISC iX: #define XCB_COMPANY_ASP 23 */
 #define	MANUFACTURER_ATOMWIDE2	0x0017		/* Atomwide */
+#define	MANUFACTURER_LENDAC	0x0018		/* Lendac Data Systems */
+#define	MANUFACTURER_CAMMICROSYS	0x0019		/* Cambridge Micro Systems */
+/* RISC iX: #define XCB_COMPANY_JOHNBALANCECOMPUTING 26 */
 #define	MANUFACTURER_LINGENUITY	0x001a		/* Lingenuity */
+#define	MANUFACTURER_SIPLAN	0x001b		/* Siplan Electronics Research */
+#define	MANUFACTURER_SCIFRONTIERS	0x001c		/* Science Frontiers */
+#define	MANUFACTURER_PINEAPPLE	0x001d		/* Pineapple Software */
+#define	MANUFACTURER_TECHNOMATIC	0x001e		/* Technomatic */
 #define	MANUFACTURER_IRLAM	0x001f		/* Irlam Instruments */
+#define	MANUFACTURER_NEXUS	0x0020		/* Nexus Electronics */
 #define	MANUFACTURER_OAK	0x0021		/* Oak Solutions */
+#define	MANUFACTURER_HUGHSYMONS	0x0022		/* Hugh Symons */
 #define	MANUFACTURER_BEEBUG	0x0023		/* BEEBUG (RISC Developments) */
+#define	MANUFACTURER_TEKNOMUSIK	0x0024		/* Teknomusik */
+#define	MANUFACTURER_REELTIME	0x0025		/* Reel Time */
+#define	MANUFACTURER_PRES	0x0026		/* PRES */
+#define	MANUFACTURER_DIGIHURST	0x0027		/* Digihurst */
+#define	MANUFACTURER_SGBCOMPSERV	0x0028		/* SGB Computer Services */
 #define	MANUFACTURER_SJ	0x0029		/* SJ Research */
-#define	MANUFACTURER_MORLEY	0x002b		/* Morley */
+#define	MANUFACTURER_PHOBOX	0x002a		/* Phobox Electronics */
+#define	MANUFACTURER_MORLEY	0x002b		/* Morley Electronics */
+#define	MANUFACTURER_RACINGCAR	0x002c		/* Raching Car Computers */
 #define	MANUFACTURER_HCCS2	0x002d		/* HCCS */
+#define	MANUFACTURER_LINDIS	0x002e		/* Lindis International */
+#define	MANUFACTURER_CCC	0x002f		/* Computer Control Consultants */
+#define	MANUFACTURER_UNILAB	0x0030		/* Unilab */
+#define	MANUFACTURER_SEFANFROHLING	0x0031		/* Sefan Frohling */
+#define	MANUFACTURER_ROMBO	0x0032		/* Rombo Productions */
+#define	MANUFACTURER_3SL	0x0033		/* 3SL */
+#define	MANUFACTURER_DELTRONICS	0x0034		/* Deltronics */
+/* RISC iX: #define XCB_COMPANY_PCARNOLDTECHNICALSERVICES 53 */
 #define	MANUFACTURER_VTI	0x0035		/* Vertical Twist */
+#define	MANUFACTURER_SIMIS	0x0036		/* Simis */
 #define	MANUFACTURER_DTSOFT	0x0037		/* D.T. Software */
+#define	MANUFACTURER_ARMINTERFACES	0x0038		/* ARM Interfaces */
+#define	MANUFACTURER_BIA	0x0039		/* BIA */
 #define	MANUFACTURER_CUMANA	0x003a		/* Cumana */
-#define	MANUFACTURER_ICS	0x003c		/* ICS */
+#define	MANUFACTURER_IOTA	0x003b		/* Iota */
+#define	MANUFACTURER_ICS	0x003c		/* Ian Copestake Software */
+#define	MANUFACTURER_BAILDON	0x003d		/* Baildon Electronics */
+#define	MANUFACTURER_CSD	0x003e		/* CSD */
 #define	MANUFACTURER_SERIALPORT	0x003f		/* Serial Port */
+#define	MANUFACTURER_CADSOFT	0x0040		/* CADsoft */
 #define	MANUFACTURER_ARXE	0x0041		/* ARXE */
 #define	MANUFACTURER_ALEPH1	0x0042		/* Aleph 1 */
 #define	MANUFACTURER_ICUBED	0x0046		/* I-Cubed */
