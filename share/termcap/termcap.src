@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.59 2000/04/29 02:49:39 mycroft Exp $
+#	$NetBSD: termcap.src,v 1.60 2000/05/11 23:06:59 jdc Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1742,8 +1742,12 @@ xterm-r6|xterm-old|xterm X11R6 version:\
 # (sgr removed to fit entry within 1023 bytes)
 # (terminfo-only capabilities suppressed to fit entry within 1023 bytes)
 xterm-xf86-v32|xterm terminal emulator (X Window System):\
-	:am:bs:km:mi:ms:xn:\
-	:co#80:it#8:li#24:\
+	:am:bs:km:mi:ms:utxn:\
+	:Co#8:co#80:it#8:li#24:pa#64:\
+	:AB=\E[4%dm:AF=\E[3%dm:op=\E[m:\
+	:*6=\E[4~:@0=\E[1~:@1=\EOE:@7=\EOF:@8=\EOM:F1=\E[23~:\
+	:F2=\E[24~:F3=\E[25~:F4=\E[26~:F5=\E[28~:F6=\E[29~:\
+	:F7=\E[31~:F8=\E[32~:F9=\E[33~:FA=\E[34~:k;=\E[21~:Km=\E[M:\
 	:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
 	:K1=\EOw:K2=\EOy:K3=\EOu:K4=\EOq:K5=\EOs:LE=\E[%dD:\
 	:RI=\E[%dC:UP=\E[%dA:\
@@ -1757,9 +1761,9 @@ xterm-xf86-v32|xterm terminal emulator (X Window System):\
 	:k6=\E[17~:k7=\E[18~:k8=\E[19~:k9=\E[20~:kD=\177:kI=\E[2~:\
 	:kN=\E[6~:kP=\E[5~:kb=^H:kd=\EOB:ke=\E[?1l\E>:kh=\EOH:\
 	:kl=\EOD:kr=\EOC:ks=\E[?1h\E=:ku=\EOA:le=^H:md=\E[1m:\
-	:me=\E[m:mr=\E[7m:nd=\E[C:rc=\E8:sc=\E7:se=\E[27m:\
+	:me=\E[m:mr=\E[7m:nd=\E[C:rc=\E8:sc=\E7:se=\E[m:\
 	:sf=^J:so=\E[7m:sr=\EM:st=\EH:ta=^I:te=\E[2J\E[?47l\E8:\
-	:ti=\E7\E[?47h:ue=\E[24m:up=\E[A:us=\E[4m:\
+	:ti=\E7\E[?47h:ue=\E[m:up=\E[A:us=\E[4m:\
 	:vb=\E[?5h\E[?5l:ve=\E[?25h:vi=\E[?25l:vs=\E[?25h:
 # This is the stock xterm entry supplied with XFree86 3.3, which uses VT100
 # codes for F1-F4 except while in VT220 mode.
