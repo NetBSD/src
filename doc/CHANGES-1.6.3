@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.60 2004/04/01 15:53:33 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.61 2004/04/01 23:23:27 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -377,3 +377,8 @@ crypto/dist/openssl/ssl/ssl_ciph.c		patch
 	Pull up major differences from openssl 0.9.6l->0.9.6m. Major fix is
 	a null pointer check that can cause crashes.
 	[groo, ticket #1640]
+
+gnu/dist/toolchain/gcc/config/arm/arm.c		patch
+
+	Fixes bad code generation that could cause X crashes.
+	[is, ticket #1647]
