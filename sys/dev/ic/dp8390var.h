@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.6 1997/11/02 00:23:55 thorpej Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.7 1997/11/05 07:15:42 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -33,7 +33,7 @@ struct dp8390_softc {
 
 	bus_size_t sc_reg_map[16];	/* register map (offsets) */
 
-	u_char	is790;		/* NIC is a 790 */
+	int	is790;		/* NIC is a 790 */
 
 	u_int8_t cr_proto;	/* values always set in CR */
 	u_int8_t dcr_reg;	/* override DCR iff LS is set */
