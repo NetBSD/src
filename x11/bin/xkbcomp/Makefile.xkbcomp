@@ -1,0 +1,24 @@
+#	$NetBSD: Makefile.xkbcomp,v 1.1.1.1 2003/09/11 18:37:07 lukem Exp $
+
+XKBDISTDIR=	${X11SRCDIR.xc}/programs/xkbcomp/${XKBNAME}
+
+.PATH:		${XKBDISTDIR}
+
+FILESDIR=	${X11LIBDIR}/xkb/${XKBNAME}
+
+
+.if defined(XKBDIR)							# {
+FILES+=			${XKBNAME}.dir
+FILESDIR_${XKBNAME}.dir=${X11LIBDIR}/xkb
+CLEANFILES+=		${XKBNAME}.dir
+
+XKBCOMPDIR!=		cd ${NETBSDSRCDIR}/x11/tools/xkbcomp && ${PRINTOBJDIR}
+XKBCOMP=		${XKBCOMPDIR}/xkbcomp
+
+${XKBNAME}.dir:
+	rm -f ${.TARGET}
+	(cd ${XKBDISTDIR} && ${XKBCOMP} -lfhlpR -o ${.OBJDIR}/${.TARGET} '*')
+
+realall: ${FILES}
+
+.endif									# }
