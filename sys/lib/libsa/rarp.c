@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.7 1995/09/11 21:11:44 thorpej Exp $	*/
+/*	$NetBSD: rarp.c,v 1.8 1995/09/14 23:45:34 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -52,8 +52,8 @@
 #include "net.h"
 #include "netif.h"
 
-static size_t rarpsend __P((struct iodesc *, void *, size_t));
-static size_t rarprecv __P((struct iodesc *, void *, size_t, time_t));
+static ssize_t rarpsend __P((struct iodesc *, void *, size_t));
+static ssize_t rarprecv __P((struct iodesc *, void *, size_t, time_t));
 
 /*
  * Ethernet (Reverse) Address Resolution Protocol (see RFC 903, and 826).
@@ -115,7 +115,7 @@ rarp_getipaddress(sock)
 /*
  * Broadcast a RARP request (i.e. who knows who I am)
  */
-static size_t
+static ssize_t
 rarpsend(d, pkt, len)
 	register struct iodesc *d;
 	register void *pkt;
@@ -133,13 +133,14 @@ rarpsend(d, pkt, len)
 /*
  * Called when packet containing RARP is received
  */
-static size_t
+static ssize_t
 rarprecv(d, pkt, len, tleft)
 	register struct iodesc *d;
 	register void *pkt;
 	register size_t len;
 	time_t tleft;
 {
+	register ssize_t n;
 	register struct ether_arp *ap;
 	u_int16_t etype;	/* host order */
 
@@ -148,11 +149,11 @@ rarprecv(d, pkt, len, tleft)
 		printf("rarprecv: ");
 #endif
 
-	len = readether(d, pkt, len, tleft, &etype);
-	if (len == -1 || len < sizeof(struct ether_arp)) {
+	n = readether(d, pkt, len, tleft, &etype);
+	if (n == -1 || n < sizeof(struct ether_arp)) {
 #ifdef RARP_DEBUG
 		if (debug)
-			printf("bad len=%d\n", len);
+			printf("bad len=%d\n", n);
 #endif
 		goto bad;
 	}
@@ -203,7 +204,7 @@ rarprecv(d, pkt, len, tleft)
 #endif
 
 	/* XXX - Compute our "natural" netmask? */
-	return (0);
+	return (n);
 
 bad:
 	errno = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.5 1995/09/11 21:11:40 thorpej Exp $	*/
+/*	$NetBSD: ether.c,v 1.6 1995/09/14 23:45:25 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "netif.h"
 
 /* Caller must leave room for ethernet header in front!! */
-size_t
+ssize_t
 sendether(d, pkt, len, dea, etype)
 	struct iodesc *d;
 	void *pkt;
@@ -63,6 +63,7 @@ sendether(d, pkt, len, dea, etype)
 	u_char *dea;
 	int etype;
 {
+	register ssize_t n;
 	register struct ether_header *eh;
 
 #ifdef ETHER_DEBUG
@@ -77,12 +78,12 @@ sendether(d, pkt, len, dea, etype)
 	MACPY(dea, eh->ether_dhost);			/* by byte */
 	eh->ether_type = htons(etype);
 
-	len = netif_put(d, eh, len);
-	if (len == -1 || len < sizeof(*eh))
+	n = netif_put(d, eh, len);
+	if (n == -1 || n < sizeof(*eh))
 		return (-1);
 
-	len -= sizeof(*eh);
-	return (len);
+	n -= sizeof(*eh);
+	return (n);
 }
 
 /*
@@ -90,7 +91,7 @@ sendether(d, pkt, len, dea, etype)
  * the broadcast address.  Save the Ether type in arg 5.
  * NOTE: Caller must leave room for the Ether header.
  */
-size_t
+ssize_t
 readether(d, pkt, len, tleft, etype)
 	register struct iodesc *d;
 	register void *pkt;
@@ -98,6 +99,7 @@ readether(d, pkt, len, tleft, etype)
 	time_t tleft;
 	register u_int16_t *etype;
 {
+	register ssize_t n;
 	register struct ether_header *eh;
 
 #ifdef ETHER_DEBUG
@@ -108,8 +110,8 @@ readether(d, pkt, len, tleft, etype)
 	eh = (struct ether_header *)pkt - 1;
 	len += sizeof(*eh);
 
-	len = netif_get(d, eh, len, tleft);
-	if (len == -1 || len < sizeof(*eh))
+	n = netif_get(d, eh, len, tleft);
+	if (n == -1 || n < sizeof(*eh))
 		return (-1);
 
 	/* Validate Ethernet address. */
@@ -124,8 +126,8 @@ readether(d, pkt, len, tleft, etype)
 	}
 	*etype = ntohs(eh->ether_type);
 
-	len -= sizeof(*eh);
-	return (len);
+	n -= sizeof(*eh);
+	return (n);
 }
 
 /*

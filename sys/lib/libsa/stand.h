@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.9 1995/04/30 03:57:54 cgd Exp $	*/
+/*	$NetBSD: stand.h,v 1.10 1995/09/14 23:45:40 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -54,10 +54,10 @@ struct open_file;
 struct fs_ops {
 	int	(*open) __P((char *path, struct open_file *f));
 	int	(*close) __P((struct open_file *f));
-	int	(*read) __P((struct open_file *f, char *buf,
-			u_int size, u_int *resid));
-	int	(*write) __P((struct open_file *f, char *buf,
-			u_int size, u_int *resid));
+	ssize_t	(*read) __P((struct open_file *f, char *buf,
+			     size_t size, size_t *resid));
+	ssize_t	(*write) __P((struct open_file *f, char *buf,
+			     size_t size, size_t *resid));
 	off_t	(*seek) __P((struct open_file *f, off_t offset, int where));
 	int	(*stat) __P((struct open_file *f, struct stat *sb));
 };
@@ -73,7 +73,8 @@ extern struct fs_ops file_system[];
 struct devsw {
 	char	*dv_name;
 	int	(*dv_strategy) __P((void *devdata, int rw,
-			daddr_t blk, u_int size, char *buf, u_int *rsize));
+				    daddr_t blk, size_t size,
+				    void *buf, size_t *rsize));
 	int	(*dv_open) __P((struct open_file *f, ...));
 	int	(*dv_close) __P((struct open_file *f));
 	int	(*dv_ioctl) __P((struct open_file *f, u_long cmd, void *data));
@@ -105,32 +106,34 @@ extern int nfsys;
 #define isspace(c)	((c) == ' ' || (c) == '\t')
 #define isdigit(c)	((c) >= '0' && (c) <= '9')
 
-int	devopen __P((struct open_file *f, const char *fname, char **file));
-void	*alloc __P((unsigned size));
-void	free __P((void *ptr, unsigned size));
+int	devopen __P((struct open_file *, const char *, char **));
+void	*alloc __P((unsigned int));
+void	free __P((void *, unsigned int));
 struct	disklabel;
-char	*getdisklabel __P((const char *buf, struct disklabel *lp));
+char	*getdisklabel __P((const char *, struct disklabel *));
 
 void	printf __P((const char *, ...));
+void	sprintf __P((char *, const char *, ...));
 void	gets __P((char *));
 __dead void	panic __P((const char *, ...))
 			__attribute__((noreturn));
 int	getchar __P((void));
 void	exec __P((char *, char *, int));
-int	open __P((const char *,int));
+int	open __P((const char *, int));
 int	close __P((int));
-int	read __P((int, void *, u_int));
-int	write __P((int, void *, u_int));
+ssize_t	read __P((int, void *, size_t));
+ssize_t	write __P((int, void *, size_t));
     
-int	nodev(), noioctl();
-void	nullsys();
+int	nodev __P((void));
+int	noioctl __P((struct open_file *, u_long, void *));
+void	nullsys __P((void));
 
 int	null_open __P((char *path, struct open_file *f));
 int	null_close __P((struct open_file *f));
-int	null_read __P((struct open_file *f, char *buf,
-		u_int size, u_int *resid));
-int	null_write __P((struct open_file *f, char *buf,
-		u_int size, u_int *resid));
+ssize_t	null_read __P((struct open_file *f, void *buf,
+			size_t size, size_t *resid));
+ssize_t	null_write __P((struct open_file *f, void *buf,
+			size_t size, size_t *resid));
 off_t	null_seek __P((struct open_file *f, off_t offset, int where));
 int	null_stat __P((struct open_file *f, struct stat *sb));
 

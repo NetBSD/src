@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.5 1995/04/22 13:47:52 cgd Exp $	*/
+/*	$NetBSD: bootp.c,v 1.6 1995/09/14 23:45:22 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -58,8 +58,8 @@ static	char vm_rfc1048[4] = VM_RFC1048;
 static	char vm_cmu[4] = VM_CMU;
 
 /* Local forwards */
-static	size_t bootpsend __P((struct iodesc *, void *, size_t));
-static	size_t bootprecv __P((struct iodesc *, void *, size_t, time_t));
+static	ssize_t bootpsend __P((struct iodesc *, void *, size_t));
+static	ssize_t bootprecv __P((struct iodesc *, void *, size_t, time_t));
 static	void vend_cmu __P((u_char *));
 static	void vend_rfc1048 __P((u_char *, u_int));
 
@@ -120,7 +120,7 @@ bootp(sock)
 }
 
 /* Transmit a bootp request */
-static size_t
+static ssize_t
 bootpsend(d, pkt, len)
 	register struct iodesc *d;
 	register void *pkt;
@@ -145,13 +145,14 @@ bootpsend(d, pkt, len)
 }
 
 /* Returns 0 if this is the packet we're waiting for else -1 (and errno == 0) */
-static size_t
+static ssize_t
 bootprecv(d, pkt, len, tleft)
 	register struct iodesc *d;
 	register void *pkt;
 	register size_t len;
 	time_t tleft;
 {
+	register ssize_t n;
 	register struct bootp *bp;
 
 #ifdef BOOTP_DEBUG
@@ -159,8 +160,8 @@ bootprecv(d, pkt, len, tleft)
 		printf("bootprecv: called\n");
 #endif
 
-	len = readudp(d, pkt, len, tleft);
-	if (len == -1 || len < sizeof(struct bootp))
+	n = readudp(d, pkt, len, tleft);
+	if (n == -1 || n < sizeof(struct bootp))
 		goto bad;
 
 	bp = (struct bootp *)pkt;
@@ -168,8 +169,8 @@ bootprecv(d, pkt, len, tleft)
 
 #ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootprecv: checked.  bp = 0x%x, len = %d\n",
-		    (unsigned)bp, len);
+		printf("bootprecv: checked.  bp = 0x%x, n = %d\n",
+		    (unsigned)bp, n);
 #endif
 	if (bp->bp_xid != d->xid) {
 #ifdef BOOTP_DEBUG
@@ -261,7 +262,7 @@ bootprecv(d, pkt, len, tleft)
 		gateip = 0;
 	}
 
-	return (0);
+	return (n);
 
 bad:
 	errno = 0;

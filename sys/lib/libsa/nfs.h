@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.2 1994/10/26 05:44:56 cgd Exp $	*/
+/*	$NetBSD: nfs.h,v 1.3 1995/09/14 23:45:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -35,9 +35,9 @@
 
 int	nfs_open __P((char *path, struct open_file *f));
 int	nfs_close __P((struct open_file *f));
-int	nfs_read __P((struct open_file *f, char *buf,
-		u_int size, u_int *resid));
-int	nfs_write __P((struct open_file *f, char *buf,
-		u_int size, u_int *resid));
+ssize_t	nfs_read __P((struct open_file *f, void *buf,
+			size_t size, size_t *resid));
+ssize_t	nfs_write __P((struct open_file *f, void *buf,
+			size_t size, size_t *resid));
 off_t	nfs_seek __P((struct open_file *f, off_t offset, int where));
 int	nfs_stat __P((struct open_file *f, struct stat *sb));

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.8 1995/07/03 04:56:33 gwr Exp $	*/
+/*	$NetBSD: nfs.c,v 1.9 1995/09/14 23:45:31 pk Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -172,7 +172,7 @@ nfs_lookupfh(d, name, newfd)
 		n_long	h[RPC_HEADER_WORDS];
 		struct repl d;
 	} rdata;
-	size_t cc;
+	ssize_t cc;
 	
 #ifdef NFS_DEBUG
 	if (debug)
@@ -210,7 +210,7 @@ nfs_lookupfh(d, name, newfd)
 }
 
 /* Read data from a file */
-size_t
+ssize_t
 nfs_readdata(d, off, addr, len)
 	struct nfs_iodesc *d;
 	off_t off;
@@ -228,7 +228,8 @@ nfs_readdata(d, off, addr, len)
 		struct nfs_read_repl d;
 	} rdata;
 	size_t cc;
-	int hlen, rlen, x;
+	long x;
+	int hlen, rlen;
 
 	args = &sdata.d;
 	repl = &rdata.d;
@@ -244,8 +245,11 @@ nfs_readdata(d, off, addr, len)
 	cc = rpc_call(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_READ,
 	    args, sizeof(*args),
 	    repl, sizeof(*repl));
-	if (cc < hlen)
+	if (cc < hlen) {
+		if (cc != -1)
+			errno = EBADRPC;
 		return (-1);
+	}
 	if (repl->errno) {
 		errno = ntohl(repl->errno);
 		return (-1);
@@ -254,6 +258,7 @@ nfs_readdata(d, off, addr, len)
 	x = ntohl(repl->count);
 	if (rlen < x) {
 		printf("nfsread: short packet, %d < %d\n", rlen, x);
+		errno = EBADRPC;
 		return(-1);
 	}
 	bcopy(repl->data, addr, x);
@@ -367,21 +372,22 @@ nfs_close(f)
 /*
  * read a portion of a file
  */
-int
-nfs_read(f, addr, size, resid)
+ssize_t
+nfs_read(f, buf, size, resid)
 	struct open_file *f;
-	char *addr;
-	u_int size;
-	u_int *resid;	/* out */
+	void *buf;
+	size_t size;
+	size_t *resid;	/* out */
 {
 	register struct nfs_iodesc *fp = (struct nfs_iodesc *)f->f_fsdata;
-	register size_t cc;
+	register ssize_t cc;
+	register char *addr = buf;
 	
 #ifdef NFS_DEBUG
 	if (debug)
 		printf("nfs_read: size=%d off=%d\n", size, (int)fp->off);
 #endif
-	while (size > 0) {
+	while ((int)size > 0) {
 		twiddle();
 		cc = nfs_readdata(fp, fp->off, (void *)addr, size);
 		/* XXX maybe should retry on certain errors */
@@ -411,12 +417,12 @@ ret:
 /*
  * Not implemented.
  */
-int
-nfs_write(f, start, size, resid)
+ssize_t
+nfs_write(f, buf, size, resid)
 	struct open_file *f;
-	char *start;
-	u_int size;
-	u_int *resid;	/* out */
+	void *buf;
+	size_t size;
+	size_t *resid;	/* out */
 {
 	errno = EROFS;
 	

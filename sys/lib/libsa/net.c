@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.5 1995/09/11 21:11:41 thorpej Exp $	*/
+/*	$NetBSD: net.c,v 1.6 1995/09/14 23:45:26 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -61,13 +61,13 @@
 n_long	myip;
 
 /* Caller must leave room for ethernet, ip and udp headers in front!! */
-size_t
+ssize_t
 sendudp(d, pkt, len)
 	register struct iodesc *d;
 	register void *pkt;
 	register size_t len;
 {
-	register size_t cc;
+	register ssize_t cc;
 	register struct ip *ip;
 	register struct udpiphdr *ui;
 	register struct udphdr *uh;
@@ -133,13 +133,14 @@ sendudp(d, pkt, len)
  * Receive a UDP packet and validate it is for us.
  * Caller leaves room for the headers (Ether, IP, UDP)
  */
-size_t
+ssize_t
 readudp(d, pkt, len, tleft)
 	register struct iodesc *d;
 	register void *pkt;
 	register size_t len;
 	time_t tleft;
 {
+	register ssize_t n;
 	register size_t hlen;
 	register struct ip *ip;
 	register struct udphdr *uh;
@@ -155,9 +156,8 @@ readudp(d, pkt, len, tleft)
 	uh = (struct udphdr *)pkt - 1;
 	ip = (struct ip *)uh - 1;
 
-	len = readether(d, ip, len + sizeof(*ip) + sizeof(*uh),
-					 tleft, &etype);
-	if (len == -1 || len < sizeof(*ip) + sizeof(*uh))
+	n = readether(d, ip, len + sizeof(*ip) + sizeof(*uh), tleft, &etype);
+	if (n == -1 || n < sizeof(*ip) + sizeof(*uh))
 		goto bad;
 
 	/* Ethernet address checks now in readether() */
@@ -200,11 +200,10 @@ readudp(d, pkt, len, tleft)
 		goto bad;
 	}
 	NTOHS(ip->ip_len);
-	if (len < ip->ip_len) {
+	if (n < ip->ip_len) {
 #ifdef NET_DEBUG
 		if (debug)
-			printf("readudp: bad length %d < %d.\n",
-				len, ip->ip_len);
+			printf("readudp: bad length %d < %d.\n", n, ip->ip_len);
 #endif
 		goto bad;
 	}
@@ -222,7 +221,7 @@ readudp(d, pkt, len, tleft)
 	if (hlen != sizeof(*ip)) {
 		bcopy(((u_char *)ip) + hlen, uh, len - hlen);
 		ip->ip_len = sizeof(*ip);
-		len -= hlen - sizeof(*ip);
+		n -= hlen - sizeof(*ip);
 	}
 	if (ntohs(uh->uh_dport) != d->myport) {
 #ifdef NET_DEBUG
@@ -234,9 +233,9 @@ readudp(d, pkt, len, tleft)
 	}
 
 	if (uh->uh_sum) {
-		len = ntohs(uh->uh_ulen) + sizeof(*ip);
-		if (len > RECV_SIZE - ETHER_SIZE) {
-			printf("readudp: huge packet, udp len %d\n", len);
+		n = ntohs(uh->uh_ulen) + sizeof(*ip);
+		if (n > RECV_SIZE - ETHER_SIZE) {
+			printf("readudp: huge packet, udp len %d\n", n);
 			goto bad;
 		}
 
@@ -247,7 +246,7 @@ readudp(d, pkt, len, tleft)
 		ui->ui_prev = 0;
 		ui->ui_x1 = 0;
 		ui->ui_len = uh->uh_ulen;
-		if (in_cksum(ui, len) != 0) {
+		if (in_cksum(ui, n) != 0) {
 #ifdef NET_DEBUG
 			if (debug)
 				printf("readudp: bad cksum\n");
@@ -269,8 +268,8 @@ readudp(d, pkt, len, tleft)
 		goto bad;
 	}
 
-	len -= sizeof(*ip) + sizeof(*uh);
-	return (len);
+	n -= sizeof(*ip) + sizeof(*uh);
+	return (n);
 
 bad:
 	return (-1);
@@ -286,17 +285,17 @@ bad:
  * non-zero errno to indicate failure; finally, it can return -1 with a
  * zero errno to indicate it isn't done yet.
  */
-size_t
+ssize_t
 sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 	register struct iodesc *d;
-	register size_t (*sproc)(struct iodesc *, void *, size_t);
+	register ssize_t (*sproc)(struct iodesc *, void *, size_t);
 	register void *sbuf;
 	register size_t ssize;
-	register size_t (*rproc)(struct iodesc *, void *, size_t, time_t);
+	register ssize_t (*rproc)(struct iodesc *, void *, size_t, time_t);
 	register void *rbuf;
 	register size_t rsize;
 {
-	register size_t cc;
+	register ssize_t cc;
 	register time_t t, tmo, tlast, tleft;
 
 #ifdef NET_DEBUG

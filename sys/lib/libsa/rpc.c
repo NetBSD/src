@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.6 1995/07/03 02:59:16 gwr Exp $	*/
+/*	$NetBSD: rpc.c,v 1.7 1995/09/14 23:45:37 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -100,7 +100,7 @@ struct rpc_reply {
 };
 
 /* Local forwards */
-static	size_t recvrpc __P((struct iodesc *, void *, size_t, time_t));
+static	ssize_t recvrpc __P((struct iodesc *, void *, size_t, time_t));
 
 int rpc_xid;
 int rpc_port = 0x400;	/* predecrement */
@@ -109,7 +109,7 @@ int rpc_port = 0x400;	/* predecrement */
  * Make a rpc call; return length of answer
  * Note: Caller must leave room for headers.
  */
-size_t
+ssize_t
 rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	register struct iodesc *d;
 	register n_long prog, vers, proc;
@@ -118,7 +118,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	register void *rdata;
 	register size_t rlen;
 {
-	register size_t cc;
+	register ssize_t cc;
 	struct auth_info *auth;
 	struct rpc_call *call;
 	struct rpc_reply *reply;
@@ -139,32 +139,32 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	 * Note, must prepend things in reverse order.
 	 */
 	send_head = sdata;
-	send_tail = sdata + slen;
+	send_tail = (char *)sdata + slen;
 
 	/* Auth verifier is always auth_null */
-	send_head -= sizeof(*auth);
+	(char *)send_head -= sizeof(*auth);
 	auth = send_head;
 	auth->authtype = htonl(RPCAUTH_NULL);
 	auth->authlen = 0;
 
 #if 1
 	/* Auth credentials: always auth unix (as root) */
-	send_head -= sizeof(struct auth_unix);
+	(char *)send_head -= sizeof(struct auth_unix);
 	bzero(send_head, sizeof(struct auth_unix));
-	send_head -= sizeof(*auth);
+	(char *)send_head -= sizeof(*auth);
 	auth = send_head;
 	auth->authtype = htonl(RPCAUTH_UNIX);
 	auth->authlen = htonl(sizeof(struct auth_unix));
 #else
 	/* Auth credentials: always auth_null (XXX OK?) */
-	send_head -= sizeof(*auth);
+	(char *)send_head -= sizeof(*auth);
 	auth = send_head;
 	auth->authtype = htonl(RPCAUTH_NULL);
 	auth->authlen = 0;
 #endif
 
 	/* RPC call structure. */
-	send_head -= sizeof(*call);
+	(char *)send_head -= sizeof(*call);
 	call = send_head;
 	rpc_xid++;
 	call->rp_xid       = htonl(rpc_xid);
@@ -176,19 +176,25 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 
 	/* Make room for the rpc_reply header. */
 	recv_head = rdata;
-	recv_tail = rdata + rlen;
-	recv_head -= sizeof(*reply);
+	recv_tail = (char *)rdata + rlen;
+	(char *)recv_head -= sizeof(*reply);
 
 	cc = sendrecv(d,
-	    sendudp, send_head, (send_tail - send_head),
-	    recvrpc, recv_head, (recv_tail - recv_head));
+	    sendudp, send_head, ((int)send_tail - (int)send_head),
+	    recvrpc, recv_head, ((int)recv_tail - (int)recv_head));
 #ifdef RPC_DEBUG
 	if (debug)
 		printf("callrpc: cc=%d rlen=%d\n", cc, rlen);
 #endif
-	if (cc <= sizeof(*reply))
+	if (cc == -1)
 		return (-1);
-	recv_tail = recv_head + cc;
+
+	if (cc <= sizeof(*reply)) {
+		errno = EBADRPC;
+		return (-1);
+	}
+
+	recv_tail = (char *)recv_head + cc;
 
 	/*
 	 * Check the RPC reply status.
@@ -209,9 +215,9 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 		printf("callrpc: error = %d\n", x);
 		return(-1);
 	}
-	recv_head += sizeof(*reply);
+	(char *)recv_head += sizeof(*reply);
 
-	return (recv_tail - recv_head);
+	return (ssize_t)((int)recv_tail - (int)recv_head);
 }
 
 /*
@@ -219,7 +225,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
  * This just checks the XID, direction, acceptance.
  * Remaining checks are done by callrpc
  */
-static size_t
+static ssize_t
 recvrpc(d, pkt, len, tleft)
 	register struct iodesc *d;
 	register void *pkt;
@@ -227,7 +233,8 @@ recvrpc(d, pkt, len, tleft)
 	time_t tleft;
 {
 	register struct rpc_reply *reply;
-	int x;
+	ssize_t n;
+	long x;
 
 	errno = 0;
 #ifdef RPC_DEBUG
@@ -235,8 +242,8 @@ recvrpc(d, pkt, len, tleft)
 		printf("recvrpc: called len=%d\n", len);
 #endif
 
-	len = readudp(d, pkt, len, tleft);
-	if (len <= (4 * 4))
+	n = readudp(d, pkt, len, tleft);
+	if (n <= (4 * 4))
 		goto bad;
 	reply = (struct rpc_reply *)pkt;
 
@@ -266,7 +273,7 @@ recvrpc(d, pkt, len, tleft)
 	}
 
 	/* Return data count (thus indicating success) */
-	return (len);
+	return (n);
 
 bad:
 	return (-1);

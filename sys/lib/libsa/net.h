@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.5 1995/09/11 21:11:43 thorpej Exp $	*/
+/*	$NetBSD: net.h,v 1.6 1995/09/14 23:45:27 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass 
@@ -87,18 +87,20 @@ extern struct iodesc sockets[SOPEN_MAX];
 u_char	*arpwhohas __P((struct iodesc *, n_long));
 void	arp_reply __P((struct iodesc *, void *));
 
-size_t sendether __P((struct iodesc *d, void *pkt, size_t len,
-					  u_char *dea, int etype));
-size_t readether __P((struct iodesc *d, void *pkt, size_t len,
-					  time_t tleft, u_int16_t *etype));
+ssize_t sendether __P((struct iodesc *d, void *pkt, size_t len,
+			u_char *dea, int etype));
+ssize_t readether __P((struct iodesc *d, void *pkt, size_t len,
+			time_t tleft, u_int16_t *etype));
 
-size_t	sendudp __P((struct iodesc *, void *, size_t));
-size_t	readudp __P((struct iodesc *, void *, size_t, time_t));
-size_t	sendrecv __P((struct iodesc *, size_t (*)(struct iodesc *, void *, size_t),
-	    void *, size_t, size_t (*)(struct iodesc *, void *, size_t, time_t),
-	    void *, size_t));
+ssize_t	sendudp __P((struct iodesc *, void *, size_t));
+ssize_t	readudp __P((struct iodesc *, void *, size_t, time_t));
+ssize_t	sendrecv __P((struct iodesc *,
+		      ssize_t (*)(struct iodesc *, void *, size_t),
+			void *, size_t,
+		      ssize_t (*)(struct iodesc *, void *, size_t, time_t),
+			void *, size_t));
 
-/* utilties: */
+/* utilities: */
 
 char	*ether_sprintf __P((u_char *));
 int	in_cksum __P((void *, int));

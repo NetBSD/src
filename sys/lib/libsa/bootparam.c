@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.1 1995/06/27 15:32:40 gwr Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.2 1995/09/14 23:45:24 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -162,7 +162,7 @@ bp_whoami(sockfd)
 	/* rpc_call will set d->destport */
 
 	len = rpc_call(d, PMAPPROG, PMAPVERS, PMAPPROC_CALLIT,
-				  args, send_tail - (void*)args,
+				  args, (int)send_tail - (int)args,
 				  repl, sizeof(*repl));
 	if (len < 8) {
 		printf("bootparamd: 'whoami' call failed\n");
@@ -294,7 +294,7 @@ bp_getfile(sockfd, key, serv_addr, pathname)
 
 	rlen = rpc_call(d,
 		BOOTPARAM_PROG, BOOTPARAM_VERS, BOOTPARAM_GETFILE,
-		sdata.d, send_tail - (void*)sdata.d,
+		sdata.d, (int)send_tail - (int)sdata.d,
 		rdata.d, sizeof(rdata.d));
 	if (rlen < 4) {
 #ifdef	RPC_DEBUG
