@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.15 1997/10/18 14:54:00 lukem Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.16 1998/09/20 15:27:17 christos Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -33,11 +33,18 @@
 #include <time.h>
 #include <sys/types.h>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "file.h"
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: softmagic.c,v 1.15 1997/10/18 14:54:00 lukem Exp $");
+#if 0
+FILE_RCSID("@(#)Id: softmagic.c,v 1.38 1998/09/12 13:21:01 christos Exp ")
+#else
+__RCSID("$NetBSD: softmagic.c,v 1.16 1998/09/20 15:27:17 christos Exp $");
+#endif
 #endif	/* lint */
 
 static int match	__P((unsigned char *, int));
@@ -198,6 +205,7 @@ struct magic *m;
 {
 	char *pp, *rt;
 	uint32 v;
+	time_t curtime;
 	int32 t=0 ;
 
 
@@ -246,7 +254,8 @@ struct magic *m;
 	case DATE:
 	case BEDATE:
 	case LEDATE:
-		pp = ctime((time_t*) &p->l);
+		curtime = p->l;
+		pp = ctime(&curtime);
 		if ((rt = strchr(pp, '\n')) != NULL)
 			*rt = '\0';
 		(void) printf(m->desc, pp);
@@ -347,17 +356,32 @@ int nbytes;
 		mdump(m);
 	}
 
-	if (!mconvert(p, m))
-		return 0;
-
 	if (m->flag & INDIR) {
 
 		switch (m->in.type) {
 		case BYTE:
 			offset = p->b + m->in.offset;
 			break;
+		case BESHORT:
+		        offset = (short)((p->hs[0]<<8)|(p->hs[1]))+
+			          m->in.offset;
+			break;
+		case LESHORT:
+		        offset = (short)((p->hs[1]<<8)|(p->hs[0]))+
+			         m->in.offset;
+			break;
 		case SHORT:
 			offset = p->h + m->in.offset;
+			break;
+		case BELONG:
+		        offset = (int32)((p->hl[0]<<24)|(p->hl[1]<<16)|
+					 (p->hl[2]<<8)|(p->hl[3]))+
+			         m->in.offset;
+			break;
+		case LELONG:
+		        offset = (int32)((p->hl[3]<<24)|(p->hl[2]<<16)|
+					 (p->hl[1]<<8)|(p->hl[0]))+
+			         m->in.offset;
 			break;
 		case LONG:
 			offset = p->l + m->in.offset;
@@ -373,10 +397,9 @@ int nbytes;
 			mdebug(offset, (char *) p, sizeof(union VALUETYPE));
 			mdump(m);
 		}
-
-		if (!mconvert(p, m))
-			return 0;
 	}
+	if (!mconvert(p, m))
+	  return 0;
 	return 1;
 }
 

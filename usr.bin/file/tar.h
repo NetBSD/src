@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.h,v 1.6 1997/10/18 14:54:03 lukem Exp $	*/
+/*	$NetBSD: tar.h,v 1.7 1998/09/20 15:27:17 christos Exp $	*/
 
 /*
  * Header file for public domain tar (tape archive) program.
@@ -7,7 +7,7 @@
  *
  * Created 25 August 1985 by John Gilmore, ihnp4!hoptoad!gnu.
  *
- * $NetBSD: tar.h,v 1.6 1997/10/18 14:54:03 lukem Exp $
+ * Id: tar.h,v 1.4 1998/06/27 13:57:23 christos Exp  # checkin only
  */
 
 /*
@@ -169,9 +169,11 @@ TAR_EXTERN struct link	*linklist;	/* Points to first link in list */
 TAR_EXTERN char		read_error_flag;
 
 
+#if 0
 /*
  * Declarations of functions available to the world.
  */
 /*LINTLIBRARY*/
 #define	 annorec(stream, msg)	anno(stream, msg, 0)	/* Cur rec */
 #define	annofile(stream, msg)	anno(stream, msg, 1)	/* Saved rec */
+#endif

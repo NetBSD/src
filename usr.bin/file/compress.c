@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.5 1997/01/09 20:18:51 tls Exp $	*/
+/*	$NetBSD: compress.c,v 1.6 1998/09/20 15:27:15 christos Exp $	*/
 
 /*
  * compress routines:
@@ -6,20 +6,32 @@
  *		   information if recognized
  *	uncompress(method, old, n, newch) - uncompress old into new, 
  *					    using method, return sizeof new
- * $NetBSD: compress.c,v 1.5 1997/01/09 20:18:51 tls Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
-
+#endif
 #include "file.h"
+#include <sys/cdefs.h>
+#ifndef lint
+#if 0
+FILE_RCSID("@(#)Id: compress.c,v 1.12 1998/06/27 13:57:23 christos Exp ")
+#else
+__RCSID("$NetBSD: compress.c,v 1.6 1998/09/20 15:27:15 christos Exp $");
+#endif
+#endif
+
 
 static struct {
-   char *magic;
+   const char *magic;
    int   maglen;
-   char *argv[3];
+   const char *const argv[3];
    int	 silent;
 } compr[] = {
     { "\037\235", 2, { "uncompress", "-c", NULL }, 0 },	/* compressed */
@@ -92,7 +104,8 @@ int n;
 		if (compr[method].silent)
 		    (void) close(2);
 
-		execvp(compr[method].argv[0], compr[method].argv);
+		execvp(compr[method].argv[0],
+		       (char *const *)compr[method].argv);
 		error("could not execute `%s' (%s).\n", 
 		      compr[method].argv[0], strerror(errno));
 		/*NOTREACHED*/
