@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.42 1996/09/16 04:35:25 scottr Exp $
+#	$NetBSD: GENERIC,v 1.43 1996/09/22 06:49:09 scottr Exp $
 #
 # GENERIC
 
-include	"std.mac68k"
+include	"arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 

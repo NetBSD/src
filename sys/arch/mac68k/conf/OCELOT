@@ -1,8 +1,8 @@
-#	$NetBSD: OCELOT,v 1.12 1996/08/26 23:40:28 mrg Exp $
+#	$NetBSD: OCELOT,v 1.13 1996/09/22 06:49:11 scottr Exp $
 #
 # OCELOT
 
-include	"std.mac68k"
+include "arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
@@ -65,8 +65,8 @@ grf*		at macvid?
 # Attach ite semantics to the appropriate grf device
 ite0		at grf?
 
-ncrscsi0	at mainbus?		# SCSI NCR 5380
-ncr96scsi0	at mainbus?		# SCSI NCR 53C96
+ncrscsi0	at obio?		# SCSI NCR 5380
+ncr96scsi0	at obio?		# SCSI NCR 53C96
 
 scsibus*	at scsi?
 sd*	at scsibus? target ? lun ?
