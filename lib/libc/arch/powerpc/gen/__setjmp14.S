@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.3 1998/10/03 12:30:38 tsubai Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.1 1998/10/03 12:30:38 tsubai Exp $	*/
 
 #include <sys/syscall.h>
 
@@ -6,7 +6,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$NetBSD: setjmp.S,v 1.3 1998/10/03 12:30:38 tsubai Exp $"
+	.asciz "$NetBSD: __setjmp14.S,v 1.1 1998/10/03 12:30:38 tsubai Exp $"
 #endif
 
 /*
@@ -19,31 +19,32 @@
  * The previous signal state is restored.
  */
 
-ENTRY(setjmp)
+ENTRY(__setjmp14)
 	mr	6,3
 	li	3,1			# SIG_BLOCK
 	li	4,0
-	li	0,SYS_compat_13_sigprocmask13
+	addi	5,6,100			# &sigmask
+	li	0,SYS___sigprocmask14
 	sc				# assume no error	XXX
 	mflr	11
 	mfcr	12
 	mr	10,1
 	mr	9,2
-	mr	8,3
-	stmw	8,4(6)
+	stmw	8,4(6)			# save r8-r31
 	li	3,0
 	blr
 
-ENTRY(longjmp)
-	lmw	8,4(3)
+ENTRY(__longjmp14)
+	lmw	8,4(3)			# load r8-r31
 	mr	6,4
 	mtlr	11
 	mtcr	12
 	mr	2,9
 	mr	1,10
-	mr	4,8
+	addi	4,3,100			# &sigmask
 	li	3,3			# SIG_SETMASK
-	li	0,SYS_compat_13_sigprocmask13
+	li	5,0
+	li	0,SYS___sigprocmask14
 	sc				# assume no error	XXX
 	or.	3,6,6
 	bnelr
