@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.15 1994/05/06 17:39:48 briggs Exp $
+ *	$Id: machdep.c,v 1.16 1994/06/26 13:11:11 briggs Exp $
  */
 
 #include <param.h>
@@ -94,6 +94,7 @@
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
+#include <sys/sysctl.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -120,18 +121,20 @@
 
 #include "via.h"
 
+/* The following is used externally (sysctl_hw) */
+char machine[] = "mac68k";	/* cpu "architecture" */
+
 vm_map_t buffer_map;
 extern vm_offset_t avail_end;
 
 int dbg_flg = 0;
-extern unsigned long	load_addr;
 int			mach_processor;
 int			do_graybars;
 int			mach_memsize;
 int			booter_version;
 extern unsigned long	videoaddr;
 extern unsigned long	videorowbytes;
-u_int			cache_copyback = PG_CC;
+u_int			cache_copyback = PG_CCB;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -196,10 +199,10 @@ cpu_startup(void)
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
 #ifdef MACHINE_NONCONTIG
-		pmap_enter(pmap_kernel(), msgbufp, avail_end + i * NBPG,
-			   VM_PROT_ALL, TRUE);
+		pmap_enter(kernel_pmap, (vm_offset_t) msgbufp,
+			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 #else  /* MACHINE_NONCONTIG */
-		pmap_enter(pmap_kernel(), (caddr_t) msgbufp + i * NBPG,
+		pmap_enter(kernel_pmap, (vm_offset_t) msgbufp,
 			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 #endif /* MACHINE_NONCONTIG */
 	msgbufmapped = 1;
@@ -302,7 +305,7 @@ again:
 	 */
 	size = MAXBSIZE * nbuf;
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-				   &maxaddr, size, FALSE);
+				   &maxaddr, size, TRUE);
 	minaddr = (vm_offset_t)buffers;
 	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 			&minaddr, size, FALSE) != KERN_SUCCESS)
@@ -386,8 +389,12 @@ setregs(p, entry, sp, retval)
 	u_long sp;
 	int retval[2];
 {
-	p->p_md.md_regs[PC] = entry & ~1;
-	p->p_md.md_regs[SP] = sp;
+	struct frame	*frame;
+
+	frame = (struct frame *) p->p_md.md_regs;
+	frame->f_pc = entry & ~1;
+	frame->f_regs[SP] = sp;
+
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -395,61 +402,59 @@ setregs(p, entry, sp, retval)
 #endif
 }
 
+char	cpu_model[120];
+
 identifycpu()
 {
 	extern unsigned long	bootdev, root_scsi_id,
 				videobitdepth, videosize;
-/* MF Just a little interesting tidbit about what machine we are
-   running on.  In the future magic may happen here based on
-   machine, i.e. different via, scsi, iop, serial stuff
-*/
+	char			*mod, *proc;
 
-	printf("Apple Macintosh ");
 	switch (machineid) {
-		case MACH_MACII: printf("II "); break;
-		case MACH_MACIIX: printf("IIx "); break;
-		case MACH_MACIISI: printf("IIsi "); break;
-		case MACH_MACIICI: printf("IIci "); break;
-		case MACH_MACIICX: printf("IIcx "); break;
-		case MACH_MACIIFX: printf("IIfx "); break;
-		case MACH_MACSE30: printf("SE/30 "); break;
-		case MACH_MACQ700: printf("Quadra 700 "); break;
-		case MACH_MACQ900: printf("Quadra 900 "); break;
-		case MACH_MACPB140: printf("PowerBook 140 "); break;
-		case MACH_MACPB100: printf("PowerBook 100 "); break;
-		case MACH_MACPB170: printf("PowerBook 170 "); break;
-		case MACH_MACCLASSICII: printf("Classic II "); break;
-		case MACH_MACQ950: printf("Quadra 950 "); break;
-		case MACH_MACLCIII: printf("LC III "); break;
-		case MACH_MACPB210: printf("PowerBook 950 "); break;
-		case MACH_MACC650: printf("Centris 650 "); break;
-		case MACH_MACPB230: printf("PowerBook 230 "); break;
-		case MACH_MACPB180: printf("PowerBook 180 "); break;
-		case MACH_MACPB160: printf("PowerBook 160 "); break;
-		case MACH_MACQ800: printf("Quadra 800 "); break;
-		case MACH_MACQ650: printf("Quadra 650 "); break;
-		case MACH_MACLCII: printf("LC II "); break;
-		case MACH_MACPB250: printf("PowerBook 250 "); break;
-		case MACH_MACIIVI: printf("IIvi "); break;
-		case MACH_MACP600: printf("Performa 600 "); break;
-		case MACH_MACIIVX: printf("IIvx "); break;
-		case MACH_MACCCLASSIC: printf("Classic "); break;
-		case MACH_MACPB165C: printf("PowerBook 165c "); break;
-		case MACH_MACC610: printf("Centris 610 "); break;
-		case MACH_MACQ610: printf("Quadra 610 "); break;
-		case MACH_MACPB145: printf("PowerBook 950 "); break;
-		case MACH_MACLC520: printf("LC 520 "); break;
-		case MACH_MACC660AV: printf("Centris 660AV "); break;
-		case MACH_MACP460: printf("Performa 460 "); break;
-		case MACH_MACPB180C: printf("PowerBook 180c "); break;
-		case MACH_MACPB270: printf("PowerBook 270 "); break;
-		case MACH_MACQ840AV: printf("Quadra 840AV "); break;
-		case MACH_MACP550: printf("Performa 550 "); break;
-		case MACH_MACPB165: printf("PowerBook 165 "); break;
-		case MACH_MACTV: printf("TV "); break;
-		case MACH_MACLC475: printf("LC 475 "); break;
-		case MACH_MACLC575: printf("LC 575 "); break;
-		case MACH_MACQ605: printf("Quadra 605 "); break;
+		case MACH_MACII: mod = ("II "); break;
+		case MACH_MACIIX: mod = ("IIx "); break;
+		case MACH_MACIISI: mod = ("IIsi "); break;
+		case MACH_MACIICI: mod = ("IIci "); break;
+		case MACH_MACIICX: mod = ("IIcx "); break;
+		case MACH_MACIIFX: mod = ("IIfx "); break;
+		case MACH_MACSE30: mod = ("SE/30 "); break;
+		case MACH_MACQ700: mod = ("Quadra 700 "); break;
+		case MACH_MACQ900: mod = ("Quadra 900 "); break;
+		case MACH_MACPB140: mod = ("PowerBook 140 "); break;
+		case MACH_MACPB100: mod = ("PowerBook 100 "); break;
+		case MACH_MACPB170: mod = ("PowerBook 170 "); break;
+		case MACH_MACCLASSICII: mod = ("Classic II "); break;
+		case MACH_MACQ950: mod = ("Quadra 950 "); break;
+		case MACH_MACLCIII: mod = ("LC III "); break;
+		case MACH_MACPB210: mod = ("PowerBook 950 "); break;
+		case MACH_MACC650: mod = ("Centris 650 "); break;
+		case MACH_MACPB230: mod = ("PowerBook 230 "); break;
+		case MACH_MACPB180: mod = ("PowerBook 180 "); break;
+		case MACH_MACPB160: mod = ("PowerBook 160 "); break;
+		case MACH_MACQ800: mod = ("Quadra 800 "); break;
+		case MACH_MACQ650: mod = ("Quadra 650 "); break;
+		case MACH_MACLCII: mod = ("LC II "); break;
+		case MACH_MACPB250: mod = ("PowerBook 250 "); break;
+		case MACH_MACIIVI: mod = ("IIvi "); break;
+		case MACH_MACP600: mod = ("Performa 600 "); break;
+		case MACH_MACIIVX: mod = ("IIvx "); break;
+		case MACH_MACCCLASSIC: mod = ("Classic "); break;
+		case MACH_MACPB165C: mod = ("PowerBook 165c "); break;
+		case MACH_MACC610: mod = ("Centris 610 "); break;
+		case MACH_MACQ610: mod = ("Quadra 610 "); break;
+		case MACH_MACPB145: mod = ("PowerBook 950 "); break;
+		case MACH_MACLC520: mod = ("LC 520 "); break;
+		case MACH_MACC660AV: mod = ("Centris 660AV "); break;
+		case MACH_MACP460: mod = ("Performa 460 "); break;
+		case MACH_MACPB180C: mod = ("PowerBook 180c "); break;
+		case MACH_MACPB270: mod = ("PowerBook 270 "); break;
+		case MACH_MACQ840AV: mod = ("Quadra 840AV "); break;
+		case MACH_MACP550: mod = ("Performa 550 "); break;
+		case MACH_MACPB165: mod = ("PowerBook 165 "); break;
+		case MACH_MACTV: mod = ("TV "); break;
+		case MACH_MACLC475: mod = ("LC 475 "); break;
+		case MACH_MACLC575: mod = ("LC 575 "); break;
+		case MACH_MACQ605: mod = ("Quadra 605 "); break;
 		default:
 			printf("Pentium (gestalt %d) ", machineid);
 			break;
@@ -457,20 +462,21 @@ identifycpu()
 
 	switch(mach_processor) {
 		case MACH_68020:
-			printf("(68020)");
+			proc = ("(68020)");
 			break;	
 		case MACH_68030:
-			printf("(68030)");
+			proc = ("(68030)");
 			break;	
 		case MACH_68040:
-			printf("(68040)");
+			proc = ("(68040)");
 			break;	
 		case MACH_PENTIUM:
 		default:
-			printf("(PENTIUM)");
+			proc = ("");
 			break;	
 	}
-	printf ("\n");
+	sprintf(cpu_model, "Apple Macintosh %s %s", mod, proc);
+	printf ("%s\n", cpu_model);
 }
 
 #define SS_RTEFRAME	1
@@ -544,31 +550,14 @@ sendsig(catcher, sig, mask, code)
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_sigstk.ss_onstack;
+	oonstack = ps->ps_sigstk.ss_flags & SA_ONSTACK;
 
 #ifdef COMPAT_SUNOS
 	if (p->p_emul == EMUL_SUNOS)
 	  {
-#if 0
-	    /* SunOS doesn't seem to make any distinction between
-	       hardware faults and normal signals.. */
-
-	    /* if this is a hardware fault (ft >= FMT9), sun_sendsig
-	       can't currently handle it. Reset signal actions and
-	       have the process die unconditionally. */
-	    if (ft >= FMT9)
-	      {
-		SIGACTION(p, sig) = SIG_DFL;
-		mask = sigmask(sig);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, sig);
-		return;
-	      }
-#endif
-
-	    /* else build the short SunOS frame instead */
+	    /*
+	     * Build the short SunOS frame instead
+	     */
 	    sun_sendsig (catcher, sig, mask, code);
 	    return;
 	  }
@@ -582,9 +571,11 @@ sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sigframe);
-	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigstk.ss_sp - fsize);
-		ps->ps_sigstk.ss_onstack = 1;
+	if ((ps->ps_flags & SAS_ALTSTACK) && !oonstack
+	    && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(ps->ps_sigstk.ss_base +
+					 ps->ps_sigstk.ss_size - fsize);
+		ps->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -719,7 +710,7 @@ sun_sendsig(catcher, sig, mask, code)
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_sigstk.ss_onstack;
+	oonstack = ps->ps_sigstk.ss_flags & SA_ONSTACK;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -728,9 +719,11 @@ sun_sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sun_sigframe);
-	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sun_sigframe *)(ps->ps_sigstk.ss_sp - fsize);
-		ps->ps_sigstk.ss_onstack = 1;
+	if ((ps->ps_flags & SAS_ALTSTACK) && !oonstack
+	    && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sun_sigframe *)(ps->ps_sigstk.ss_base +
+					     ps->ps_sigstk.ss_size - fsize);
+		ps->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
 		fp = (struct sun_sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -847,7 +840,10 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
+	if (scp->sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
@@ -974,7 +970,10 @@ sun_sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
+	if (scp->sc_onstack & 01)
+		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
@@ -1540,62 +1539,20 @@ hexstr(val, len)
 	return(nbuf);
 }
 
-
-/* LAK: The following function was taken from the i386 machdep.c file,
-   probably written by Bill Jolitz. */
-
-physstrat(bp, strat, prio)
-	struct buf *bp;
-	int (*strat)(), prio;
-{
-	register int s;
-	caddr_t baddr;
-
-	/*
-	 * vmapbuf clobbers b_addr so we must remember it so that it
-	 * can be restored after vunmapbuf.  This is truely rude, we
-	 * should really be storing this in a field in the buf struct
-	 * but none are available and I didn't want to add one at
-	 * this time.  Note that b_addr for dirty page pushes is 
-	 * restored in vunmapbuf. (ugh!)
-	 */
-	baddr = bp->b_un.b_addr;
-	vmapbuf(bp);
-	(*strat)(bp);
-	/* pageout daemon doesn't wait for pushed pages */
-	if (bp->b_flags & B_DIRTY)
-		return;
-	s = splbio();
-	while ((bp->b_flags & B_DONE) == 0)
-		sleep((caddr_t)bp, prio);
-	splx(s);
-	vunmapbuf(bp);
-	bp->b_un.b_addr = baddr;
-}
-
-
 static unsigned long gray_nextaddr = 0;
-
 
 void gray_bar2()
 {
    static int i=0;
    static int flag=0;
 
-/* MF basic premise as I see it:
-	1) Save the scratch regs as they are not saved by the compilier.
-   	2) Check to see if we want gray bars, if so,
-		display some lines of gray,
-		a couple of lines of white(about 8),
-		and loop to slow this down.
-   	3) restore regs
-*/
+/* Same premise as gray_bar, but bigger.  Gives a quicker check of
+   where we are while debugging. */
 
    asm("movl a0, sp@-");
    asm("movl a1, sp@-");
    asm("movl d0, sp@-");
    asm("movl d1, sp@-");
-
 
 /* check to see if gray bars are turned off */
    if (do_graybars) {
@@ -1604,16 +1561,14 @@ void gray_bar2()
       		((unsigned long *)videoaddr)[gray_nextaddr++] = 0xaaaaaaaa;
    	for(i = 0; i < 2*videorowbytes; i++)
       		((unsigned long *)videoaddr)[gray_nextaddr++] = 0x00000000;
-	
-   	for(i=0;i<100000;i++);
    }
-
 
    asm("movl sp@+, d1");
    asm("movl sp@+, d0");
    asm("movl sp@+, a1");
    asm("movl sp@+, a0");
 }
+
 void gray_bar()
 {
    static int i=0;
@@ -1633,7 +1588,6 @@ void gray_bar()
    asm("movl d0, sp@-");
    asm("movl d1, sp@-");
 
-
 /* check to see if gray bars are turned off */
    if (do_graybars) {
    	/* MF the 10*rowbytes/4 is done lots, but we want this to be slow */
@@ -1641,10 +1595,7 @@ void gray_bar()
       		((unsigned long *)videoaddr)[gray_nextaddr++] = 0xaaaaaaaa;
    	for(i = 0; i < 2*videorowbytes/4; i++)
       		((unsigned long *)videoaddr)[gray_nextaddr++] = 0x00000000;
-	
-   	for(i=0;i<100000;i++);
    }
-
 
    asm("movl sp@+, d1");
    asm("movl sp@+, d0");
@@ -1652,7 +1603,6 @@ void gray_bar()
    asm("movl sp@+, a0");
 }
 
-extern void	macserinit();
 extern void	macserputchar(unsigned char c);
 
 void dprintf(unsigned long value)
@@ -1684,7 +1634,6 @@ void strprintf(char *str, unsigned long value)
    macputchar((dev_t)0,':');
    macputchar((dev_t)0,' ');
    dprintf(value);
-
 }
 
 void hex_dump(int addr, int len)
@@ -2078,36 +2027,6 @@ cpu_exec_prep_oldzmagic(p, epp)
 }
 #endif /* COMPAT_NOMID */
 
-void
-likeohmigod(void)
-{
-	register struct proc *p = curproc;
-	if (p)
-		printf("-%d,0x%x,0x%x\n", p->p_pid, p->p_md.md_regs[PC], p->p_md.md_regs[SP]);
-	return;
-	if (p)
-	  printf("swtch %d (%s) out.\n", p->p_pid, p->p_comm);
-	else
-	  printf("proc NULL out.\n", p->p_pid, p->p_comm);
-/*	printf("proc %d (%s, pc=0x%x, sp=0x%x being switched out.\n",
-		p->p_pid, p->p_comm, p->p_md.md_regs[PC], p->p_md.md_regs[SP]); */
-}
-
-void
-likeyuhknow(void)
-{
-	register struct proc *p = curproc;
-	if (p)
-		printf("+%d,0x%x,0x%x\n", p->p_pid, p->p_md.md_regs[PC], p->p_md.md_regs[SP]);
-	return;
-	if (p)
-	  printf("proc %d (%s) in.\n", p->p_pid, p->p_comm);
-	else
-	  printf("proc NULL in.\n", p->p_pid, p->p_comm);
-/*	printf("proc %d (%s, pc=0x%x, sp=0x%x being switched in.\n",
-		p->p_pid, p->p_comm, p->p_md.md_regs[PC], p->p_md.md_regs[SP]);*/
-}
-
 #if defined(MACHINE_NONCONTIG)
 /*
  * LAK: These functions are from NetBSD/i386 and are used for
@@ -2153,29 +2072,11 @@ pmap_page_index(pa)
 }
 #endif  /* MACHINE_NONCONTIG */
 
-int
-pslisting(void)
-{
-	struct proc	*p;
-	char		*s;
-
-	printf("curproc = 0x%x.\n", curproc);
-	printf("allproc = 0x%x.\n", allproc);
-	printf("nprocs  = %d.\n", nprocs);
-	p = (struct proc *) allproc;
-	do {
-		s = p->p_wmesg;
-		if (strlen(s) > 16) s = "> 16 char.";
-		printf("0x%x: pid %d, flag 0x%x, stat %d, comm %s, wmsg %s.\n",
-			p, p->p_pid, p->p_flag, p->p_stat, p->p_comm, s);
-		p = p->p_next;
-	} while (p && p != allproc);
-}
-
 void ddprintf (char *fmt, int val)
 {
   char buf[128], *s;
 
+  if (!serial_boot_echo) return;
   sprintf (buf, fmt, val);
   for (s = buf; *s; s++) {
     macserputchar (*s);
@@ -2189,6 +2090,7 @@ void dddprintf (char *fmt, int val1, int val2)
 {
   char buf[128], *s;
 
+  if (!serial_boot_echo) return;
   sprintf (buf, fmt, val1, val2);
   for (s = buf; *s; s++) {
     macserputchar (*s);
@@ -2288,6 +2190,8 @@ void getenvvars (void)
   extern unsigned long end, esym;
 
   bootdev = root_scsi_id = getenv ("ROOT_SCSI_ID");
+  bootdev = (bootdev << 16) | 4;	/* This is wrong for non-scsi-id */
+					/* bootdev... */
   boothowto = getenv ("SINGLE_USER");
   videoaddr = getenv ("VIDEO_ADDR");
 		/* These next two should give us mapped video & serial */
@@ -2314,32 +2218,40 @@ void printenvvars (void)
 {
   extern unsigned long bootdev, root_scsi_id, videobitdepth, videosize;
 
-  ddprintf ("bootdev = %u\n", (int)bootdev);
-  ddprintf ("root_scsi_id = %u\n", (int)root_scsi_id);
-  ddprintf ("boothowto = %u\n", (int)boothowto);
-  ddprintf ("videoaddr = %u\n", (int)videoaddr);
-  ddprintf ("videorowbytes = %u\n", (int)videorowbytes);
-  ddprintf ("videobitdepth = %u\n", (int)videobitdepth);
-  ddprintf ("videosize = %u\n", (int)videosize);
-  ddprintf ("machineid = %u\n", (int)machineid);
-  ddprintf ("processor = %u\n", (int)mach_processor);
-  ddprintf ("memsize = %u\n", (int)mach_memsize);
-  ddprintf ("graybars = %u\n", (int)do_graybars);
-  ddprintf ("serial echo = %u\n", (int)serial_boot_echo);
+  ddprintf ("bootdev = %u\n\r", (int)bootdev);
+  ddprintf ("root_scsi_id = %u\n\r", (int)root_scsi_id);
+  ddprintf ("boothowto = %u\n\r", (int)boothowto);
+  ddprintf ("videoaddr = %u\n\r", (int)videoaddr);
+  ddprintf ("videorowbytes = %u\n\r", (int)videorowbytes);
+  ddprintf ("videobitdepth = %u\n\r", (int)videobitdepth);
+  ddprintf ("videosize = %u\n\r", (int)videosize);
+  ddprintf ("machineid = %u\n\r", (int)machineid);
+  ddprintf ("processor = %u\n\r", (int)mach_processor);
+  ddprintf ("memsize = %u\n\r", (int)mach_memsize);
+  ddprintf ("graybars = %u\n\r", (int)do_graybars);
+  ddprintf ("serial echo = %u\n\r", (int)serial_boot_echo);
 }
 
-
-extern long	(*via1itab[7])();
-extern long	adb_intr_II(void);
-extern long	adb_intr_SI(void);
-extern long	adb_intr_PB(void);
+extern long			(*via1itab[7])();
+extern long			adb_intr_II(void);
+extern long			adb_intr_SI(void);
+extern long			adb_intr_PB(void);
+extern volatile unsigned char	*sccA;
+extern int			sccClkConst;
+extern int			has5380scsi;
+extern int			has53c96scsi;
 
 /* BG 1/2/94 */
-void setmachdep(void)
+void
+setmachdep(void)
 {
+static	int			firstpass = 1;
+
 	/* Sets a bunch of machine-specific variables */
 	load_addr = 0;
 
+	has5380scsi = 1;
+	has53c96scsi = 0;
 	/* Set up any machine specific stuff that we have to before */
 	/*  ANYTHING else happens */
 	switch(machineid){	/* remove bit overlap */
@@ -2373,6 +2285,7 @@ void setmachdep(void)
 				load_addr = 0x04000000;
 			}
 			via1itab[2] = adb_intr_II;
+			sccClkConst = 122400;
 			break;
 		case MACH_MACIISI:		/* I'm really not sure about IIsi. */
 			VIA2 = 0x13;
@@ -2387,14 +2300,23 @@ void setmachdep(void)
 				load_addr = 0x04000000;
 			}
 			via1itab[2] = adb_intr_SI;
+			sccClkConst = 122400;
 			break;
-		case MACH_MACQ700:		/* These three are guesses */
-		case MACH_MACQ900:
+		case MACH_MACQ700:
+		case MACH_MACQ900:	/* Maybe? */
+		case MACH_MACC610:	/* Maybe? */
+		case MACH_MACQ610:	/* Maybe? */
 			cpu040 = 1;
 			VIA2 = 0x1;
 			via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 			via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
-			via1itab[2] = adb_intr_II;
+			if (firstpass) {
+				via1itab[2] = adb_intr_II;
+				sccA = IOBase + 0xc000;
+				sccClkConst = 249600;
+				has5380scsi = 0;
+				has53c96scsi = 1;
+			}
 			break;
 		case MACH_MACCLASSICII:
 			VIA2 = 0x13;
@@ -2410,6 +2332,7 @@ void setmachdep(void)
 			via1itab[2] = adb_intr_SI;
 			break;
 	}
+	firstpass = 0;
 }
 
 void mmudebug (long phys2, long phys1, long logical)
@@ -2494,4 +2417,38 @@ unsigned long getphysical (unsigned long tc, unsigned long pte,
 
   /* And return that sucker: */
   return pte;
+}
+
+/*
+ * machine dependent system variables.
+ */
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);		/* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+/*
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
+*/
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }
