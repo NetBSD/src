@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.20 1994/06/16 15:04:59 chopps Exp $
+ *	$Id: amiga_init.c,v 1.21 1994/06/21 04:06:45 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,6 +637,21 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr)
 	custom.intreq = 0x7fff;			/* clear any current */
 	ciaa.icr = 0x7f;			/* and keyboard */
 	ciab.icr = 0x7f;			/* and again */
+
+	/*
+	 * This is needed for 3000's with superkick ROM's. Bit 7 of
+	 * 0xde0002 enables the ROM if set. If this isn't set the machine
+	 * has to be powercycled in order for it to boot again. ICKA! RFH 
+	 */
+	if (is_a3000()) {
+		volatile unsigned char *a3000_magic_reset;
+
+		a3000_magic_reset = (unsigned char *)ztwomap(0xde0002);
+
+		/* Turn SuperKick ROM (V36) back on */
+		*a3000_magic_reset |= 0x80;
+	}
+
 }
 
 
