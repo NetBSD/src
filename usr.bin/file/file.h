@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.13 1998/09/30 18:51:13 thorpej Exp $	*/
+/*	$NetBSD: file.h,v 1.13.2.1 2000/01/23 12:01:59 he Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -80,6 +80,7 @@ struct magic {
 };
 
 #include <stdio.h>	/* Include that here, to make sure __P gets defined */
+#include <errno.h>
 
 #ifndef __P
 # if __STDC__ || __cplusplus
@@ -110,8 +111,6 @@ extern uint32 signextend	__P((struct magic *, unsigned int32));
 extern int internatmagic	__P((unsigned char *, int));
 extern void tryelf		__P((int, char *, int));
 
-
-extern int errno;		/* Some unixes don't define this..	*/
 
 extern char *progname;		/* the program name 			*/
 extern const char *magicfile;	/* name of the magic file		*/
