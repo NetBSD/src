@@ -1,4 +1,4 @@
-/* $NetBSD: majors+minors,v 1.1 1996/01/31 23:20:42 mark Exp $ */
+/* $NetBSD: majors+minors,v 1.2 1996/03/27 22:09:30 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -40,7 +40,7 @@
  * Created      : 17/09/94
  * Last updated : 30/12/95
  *
- *    $Id: majors+minors,v 1.1 1996/01/31 23:20:42 mark Exp $
+ *    $Id: majors+minors,v 1.2 1996/03/27 22:09:30 mark Exp $
  */
 
 List of allocated and reserved major and minor numbers
@@ -195,7 +195,9 @@ same device driver even if the driver does not require both.
 	  /dev/uk{unit}
 	  unit = minor
 29 B	- reserved
-29 C	- reserved
+29 C	- SCSI scanner device
+	  /dev/ss{unit}
+	  unit = minor
 30 B	- reserved
 30 C	- reserved
 31 B	- reserved
@@ -208,26 +210,31 @@ same device driver even if the driver does not require both.
 	  minor = 1 - /dev/bpf1
 	  minor = 2 - /dev/bpf2
 	  minor = 3 - /dev/bpf3
+33 B	- reserved
 33 C	- network tunnel
 	  /dev/tun{unit}
 	  unit = minor
 	  minor = 0 - /dev/tun0
 	  minor = 1 - /dev/tun1
 	  minor = 2 - /dev/tun2
-33 B	- reserved
+34 B	- reserved
 34 C	- file descriptor pseudo-device
 	  minor = 0 - /dev/stdin
 	  minor = 1 - /dev/stdout
 	  minor = 2 - /dev/stderr
-34 B	- reserved
+35 B	- reserved
 35 C	- loadable module driver
 	  minor = 0 - /dev/lkm
-35 B	- reserved
-36 C	- generic audio device
 36 B	- reserved
+36 C	- generic audio device
+37 B	- reserved
 37 C	- vidcvideo device
 	  minor = 0 - /dev/vidcvideo
-37 B	- reserved
+38 B	- reserved
 38 C	- cpu/hydra
 	  minor = 0 - /dev/cpu0
-38 B	- reserved
+39 B	- reserved
+39 C	- reserved
+40 B	- reserved
+40 C	- PS2 mouse
+	  minor = 0 - /dev/pms
