@@ -1,11 +1,11 @@
-/* $NetBSD: sunlabel.c,v 1.3 2002/01/10 21:43:10 christos Exp $ */
+/* $NetBSD: sunlabel.c,v 1.4 2002/02/11 03:47:05 mrg Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Der Mouse.
+ * by der Mouse.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sunlabel.c,v 1.3 2002/01/10 21:43:10 christos Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.4 2002/02/11 03:47:05 mrg Exp $");
 
 #include <stdio.h>
 #include <errno.h>
@@ -48,10 +48,17 @@ __RCSID("$NetBSD: sunlabel.c,v 1.3 2002/01/10 21:43:10 christos Exp $");
 #include <strings.h>
 #include <inttypes.h>
 #include <err.h>
-#include <util.h>
+
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
+
+/* If neither S_COMMAND nor NO_S_COMMAND is defined, guess. */
+#if !defined(S_COMMAND) && !defined(NO_S_COMMAND)
+#define S_COMMAND
+#include <util.h>
+#endif
+#endif
 
 /*
  * NPART is the total number of partitions.  This must be <= 43, given the
