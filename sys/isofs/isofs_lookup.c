@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	$Id: isofs_lookup.c,v 1.13 1993/12/18 04:31:35 mycroft Exp $
+ *	$Id: isofs_lookup.c,v 1.14 1994/02/06 20:38:42 ws Exp $
  */
 
 #include <sys/param.h>
@@ -252,7 +252,7 @@ searchloop:
 			/* illegal entry, stop */
 			break;
 		
-		if (entryoffsetinblock + reclen >= imp->logical_block_size)
+		if (entryoffsetinblock + reclen > imp->logical_block_size)
 			/* entries are not allowed to cross boundaries */
 			break;
 		

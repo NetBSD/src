@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.13 1993/12/23 07:37:44 cgd Exp $
+ *	$Id: isofs_vnops.c,v 1.14 1994/02/06 20:38:43 ws Exp $
  */
 
 #include <sys/param.h>
@@ -445,7 +445,7 @@ isofs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 			break;
 		}
 		
-		if (entryoffsetinblock + reclen >= imp->logical_block_size) {
+		if (entryoffsetinblock + reclen > imp->logical_block_size) {
 			error = EINVAL;
 			/* illegal directory, so stop looking */
 			break;
@@ -585,7 +585,7 @@ int isofs_readlink(vp, uio, cred)
 	 *   1: Check not cross boundary on block
 	 */
 	if ((ip->i_number & imp->im_bmask) + isonum_711(dirp->length)
-	    >= imp->logical_block_size) {
+	    > imp->logical_block_size) {
 		brelse(bp);
 		return EINVAL;
 	}
