@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.40 2003/11/07 11:59:48 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.41 2003/11/07 18:37:41 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.40 2003/11/07 11:59:48 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.41 2003/11/07 18:37:41 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1426,25 +1426,7 @@ sa_setwoken(struct lwp *l)
 			setrunnable(vp_lwp);
 			break;
 		}
-		if (vp_lwp->l_flag & L_SA_YIELD) {
-			/*
-			 * - about to sleep in sa_yield, will wake up
-			 * - was sleeping in sa_yield, waking up 
-			 */
-			vp_lwp->l_flag |= L_SA_UPCALL;
-		} else if ((vp_lwp->l_flag & L_SA) == 0 ||
-		    vp_lwp->l_flag & L_SA_PAGEFAULT) {
-			/*
-			 * - sleep in kernel with upcalls disabled
-			 * - sleep in kernel during pagefault handling
-			 */
-			vp_lwp->l_flag |= L_SA_UPCALL;
-#ifdef DIAGNOSTIC
-		} else {
-			printf("sa_setwoken(%d.%d) vp lwp %d LSSLEEP\n",
-			    l->l_proc->p_pid, l->l_lid, vp_lwp->l_lid);
-#endif
-		}
+		vp_lwp->l_flag |= L_SA_UPCALL;
 		break;
 	case LSSUSPENDED:
 #ifdef DIAGNOSTIC
