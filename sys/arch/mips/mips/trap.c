@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.100 1999/01/16 03:31:49 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.101 1999/01/16 08:48:06 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.100 1999/01/16 03:31:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.101 1999/01/16 08:48:06 nisimura Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -1073,8 +1073,8 @@ mips_singlestep(p)
 	int rv; 
 
 	if (p->p_md.md_ss_addr) {
-		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
-			p->p_comm, p->p_pid, p->p_md.md_ss_addr, (int)va);
+		printf("SS %s (%d): breakpoint already set at %x\n",
+			p->p_comm, p->p_pid, p->p_md.md_ss_addr);
 		return EFAULT;
 	}
 	pc = (vaddr_t)f->f_regs[PC];
