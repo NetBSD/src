@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.h,v 1.3 2000/07/18 15:29:47 ad Exp $	*/
+/*	$NetBSD: login_cap.h,v 1.4 2000/09/18 16:57:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -71,7 +71,7 @@ quad_t	 login_getcapsize(login_cap_t *, char *, quad_t, quad_t);
 char	*login_getcapstr(login_cap_t *, char *, char *, char *);
 quad_t	 login_getcaptime(login_cap_t *, char *, quad_t, quad_t);
 
-int	secure_path(char *);
+int	secure_path(const char *);
 int	setclasscontext(char *, u_int);
 int	setusercontext(login_cap_t *, struct passwd *, uid_t, u_int);
 
