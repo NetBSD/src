@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.45 2000/07/02 22:27:47 sommerfeld Exp $
+#	$NetBSD: security,v 1.46 2000/09/10 21:27:50 christos Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -331,7 +331,7 @@ if checkyesno check_rhosts; then
 	while read uid homedir; do
 		if [ -f ${homedir}/.rhosts ] ; then
 			rhost=`ls -ldgT ${homedir}/.rhosts`
-			printf "$uid: $rhost\n"
+			printf -- "$uid: $rhost\n"
 		fi
 	done > $OUTPUT
 	if [ -s $OUTPUT ] ; then
@@ -342,7 +342,7 @@ if checkyesno check_rhosts; then
 	while read uid homedir; do
 		if [ -f ${homedir}/.rhosts -a -r ${homedir}/.rhosts ] && \
 		    cat -f ${homedir}/.rhosts | egrep '\+' > /dev/null ; then
-			printf "$uid: + in .rhosts file.\n"
+			printf -- "$uid: + in .rhosts file.\n"
 		fi
 	done < $MPBYPATH > $OUTPUT
 	if [ -s $OUTPUT ] ; then
@@ -358,7 +358,7 @@ if checkyesno check_homes; then
 	while read uid homedir; do
 		if [ -d ${homedir}/ ] ; then
 			file=`ls -ldgT ${homedir}`
-			printf "$uid $file\n"
+			printf -- "$uid $file\n"
 		fi
 	done < $MPBYPATH |
 	awk '$1 != $4 && $4 != "root" \
@@ -379,7 +379,7 @@ if checkyesno check_homes; then
 		for f in $list ; do
 			file=${homedir}/${f}
 			if [ -f $file ] ; then
-				printf "$uid $f `ls -ldgT $file`\n"
+				printf -- "$uid $f `ls -ldgT $file`\n"
 			fi
 		done
 	done < $MPBYPATH |
@@ -404,7 +404,7 @@ if checkyesno check_homes; then
 		for f in $list ; do
 			file=${homedir}/${f}
 			if [ -f $file ] ; then
-				printf "$uid $f `ls -ldgT $file`\n"
+				printf -- "$uid $f `ls -ldgT $file`\n"
 			fi
 		done
 	done < $MPBYPATH |
