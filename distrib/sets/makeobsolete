@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.7 2000/11/18 05:32:00 wiz Exp $
+# $NetBSD: makeobsolete,v 1.8 2001/01/04 11:15:32 itojun Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -61,7 +61,7 @@ if [ -n "$1" ]; then
 fi
 
 # Convert mipse[lb] to mips after processing command line arguments.
-arch=`echo $arch | sed s,^mipse.,mips,`
+arch=`echo $arch | sed s,^mipse.,mips, | sed s,^sh3e.,sh3e,`
 
 if [ ! -d $target ] ; then
 	echo "target directory [$target] doesn't exists"
