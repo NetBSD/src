@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.64 2005/02/04 02:10:45 perry Exp $ */
+/* $NetBSD: if_ti.c,v 1.65 2005/02/20 15:48:35 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.64 2005/02/04 02:10:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.65 2005/02/20 15:48:35 jdolecek Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1499,7 +1499,7 @@ static int ti_gibinit(sc)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
 	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
-	if (sc->ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->ethercom))
 		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 
 	/* Set up the jumbo receive ring. */
@@ -1511,7 +1511,7 @@ static int ti_gibinit(sc)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
 	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
-	if (sc->ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->ethercom))
 		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 
 	/*
@@ -1530,7 +1530,7 @@ static int ti_gibinit(sc)
 		rcb->ti_flags |= TI_RCB_FLAG_IP_CKSUM;
 	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM;
-	if (sc->ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->ethercom))
 		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 
 	/*
@@ -1574,7 +1574,7 @@ static int ti_gibinit(sc)
 	if (ifp->if_capenable & (IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4))
 		rcb->ti_flags |= TI_RCB_FLAG_TCP_UDP_CKSUM|
 		    TI_RCB_FLAG_NO_PHDR_CKSUM;
-	if (sc->ethercom.ec_nvlans != 0)
+	if (VLAN_ATTACHED(&sc->ethercom))
 		rcb->ti_flags |= TI_RCB_FLAG_VLAN_ASSIST;
 	rcb->ti_max_len = TI_TX_RING_CNT;
 	if (sc->ti_hwrev == TI_HWREV_TIGON)
@@ -1948,8 +1948,6 @@ static void ti_rxeof(sc)
 		struct ti_rx_desc	*cur_rx;
 		u_int32_t		rxidx;
 		struct mbuf		*m = NULL;
-		u_int16_t		vlan_tag = 0;
-		int			have_tag = 0;
 		struct ether_header	*eh;
 		bus_dmamap_t dmamap;
 
@@ -1957,12 +1955,6 @@ static void ti_rxeof(sc)
 		    &sc->ti_rdata->ti_rx_return_ring[sc->ti_rx_saved_considx];
 		rxidx = cur_rx->ti_idx;
 		TI_INC(sc->ti_rx_saved_considx, TI_RETURN_RING_CNT);
-
-		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
-			have_tag = 1;
-			/* ti_vlan_tag also has the priority, trim it */
-			vlan_tag = cur_rx->ti_vlan_tag & 4095;
-		}
 
 		if (cur_rx->ti_flags & TI_BDFLAG_JUMBO_RING) {
 			TI_INC(sc->ti_jumbo, TI_JUMBO_RX_RING_CNT);
@@ -2077,22 +2069,13 @@ static void ti_rxeof(sc)
 			break;
 		}
 
-		if (have_tag) {
-			struct m_tag *mtag;
-
-			mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int),
-			    M_NOWAIT);
-			if (mtag) {
-				*(u_int *)(mtag + 1) = vlan_tag;
-				m_tag_prepend(m, mtag);
-				have_tag = vlan_tag = 0;
-			} else {
-				printf("%s: no mbuf for tag\n", ifp->if_xname);
-				m_freem(m);
-				have_tag = vlan_tag = 0;
-				continue;
-			}
+		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
+			VLAN_INPUT_TAG(ifp, m,
+			    /* ti_vlan_tag also has the priority, trim it */
+			    cur_rx->ti_vlan_tag & 4095,
+			    continue);
 		}
+
 		(*ifp->if_input)(ifp, m);
 	}
 
@@ -2343,10 +2326,9 @@ static int ti_encap_tigon1(sc, m_head, txidx)
 		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 		f->ti_len = dmamap->dm_segs[i].ds_len;
 		f->ti_flags = csum_flags;
-		mtag = m_tag_find(m_head, PACKET_TAG_VLAN, NULL);
-		if (mtag) {
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head))) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = *(u_int *)(mtag + 1);
+			f->ti_vlan_tag = VLAN_TAG_VALUE(mtag);
 		} else {
 			f->ti_vlan_tag = 0;
 		}
@@ -2438,10 +2420,9 @@ static int ti_encap_tigon2(sc, m_head, txidx)
 		TI_HOSTADDR(f->ti_addr) = dmamap->dm_segs[i].ds_addr;
 		f->ti_len = dmamap->dm_segs[i].ds_len;
 		f->ti_flags = csum_flags;
-		mtag = m_tag_find(m_head, PACKET_TAG_VLAN, NULL);
-		if (mtag) {
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head))) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = *(u_int *)(mtag + 1);
+			f->ti_vlan_tag = VLAN_TAG_VALUE(mtag);
 		} else {
 			f->ti_vlan_tag = 0;
 		}
