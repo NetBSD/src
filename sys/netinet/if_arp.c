@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.41 1997/10/02 19:42:02 is Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.41.2.1 1997/10/31 07:47:44 mellon Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -479,17 +479,20 @@ in_arpinput(m)
 	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&itaddr, sizeof (itaddr));
 
 	/*
-	 * If either the source or destination IP address is zero, then
-	 * the packet is bogus and we can just ignore it.  If we try to
-	 * process such bogus packets normally, they cause odd problems,
-	 * especially when we are using IP address zero (diskless boot).
+	 * If the target IP address is zero, ignore the packet.
+	 * This prevents the code below from tring to answer
+	 * when we are using IP address zero (booting).
 	 */
-	if (in_nullhost(isaddr) || in_nullhost(itaddr)) {
-		/* On some networks, this happens a lot! (stupid PCs...) */
-		log(LOG_DEBUG, "arp: zero IP addr from link address %s\n",
-		    lla_snprintf(ar_sha(ah), ah->ar_hln));
+	if (in_nullhost(itaddr))
 		goto out;
-	}
+
+	/*
+	 * If the source IP address is zero, this is most likely a
+	 * confused host trying to use IP address zero.  (Windoze?)
+	 * XXX:  Should we bother trying to reply to these?
+	 */
+	if (in_nullhost(isaddr))
+		goto out;
 
 	/* Search for a matching interface address. */
 	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
