@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.32 1999/02/28 17:08:52 explorer Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.33 1999/03/23 23:18:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -325,6 +325,11 @@ fxp_attach(parent, self, aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	printf(": Intel EtherExpress Pro 10+/100B Ethernet\n");
+
+	/* Make sure bus-mastering is enabled. */
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
+	    PCI_COMMAND_MASTER_ENABLE);
 
 	/*
 	 * Allocate our interrupt.
