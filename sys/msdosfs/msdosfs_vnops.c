@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.102 2000/07/30 20:16:48 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.103 2000/08/03 00:57:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1512,7 +1512,7 @@ msdosfs_readdir(v)
 
 	if (ap->a_ncookies) {
 		nc = uio->uio_resid / 16;
-		MALLOC(cookies, off_t *, nc * sizeof (off_t), M_TEMP, M_WAITOK);
+		cookies = malloc(nc * sizeof (off_t), M_TEMP, M_WAITOK);
 		*ap->a_cookies = cookies;
 	}
 
@@ -1698,7 +1698,7 @@ out:
 
 	if (ap->a_ncookies) {
 		if (error) {
-			FREE(*ap->a_cookies, M_TEMP);
+			free(*ap->a_cookies, M_TEMP);
 			*ap->a_ncookies = 0;
 			*ap->a_cookies = NULL;
 		} else
