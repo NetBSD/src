@@ -32,8 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)fts.c	8.1 (Berkeley) 6/4/93";*/
-static char *rcsid = "$Id: fts.c,v 1.5 1994/01/14 01:53:57 jtc Exp $";
+/* from: static char sccsid[] = "@(#)fts.c	8.2 (Berkeley) 1/2/94"; */
+static char *rcsid = "$Id: fts.c,v 1.6 1994/04/12 03:21:39 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -194,7 +194,7 @@ fts_load(sp, p)
 	 */
 	len = p->fts_pathlen = p->fts_namelen;
 	bcopy(p->fts_name, sp->fts_path, len + 1);
-	if ((cp = strrchr(p->fts_name, '/')) && (cp != p->fts_name || cp[1])) {
+	if ((cp = rindex(p->fts_name, '/')) && (cp != p->fts_name || cp[1])) {
 		len = strlen(++cp);
 		bcopy(cp, p->fts_name, len + 1);
 		p->fts_namelen = len;
@@ -737,19 +737,10 @@ mem1:				saved_errno = errno;
 	 * fts_read and didn't find anything, get back.  If can't get
 	 * back, done.
 	 */
-	if (descend && (!nitems || type == BCHILD)) {
-		int error;
-
-		if (cur->fts_level == FTS_ROOTLEVEL)
-			error = FCHDIR(sp, sp->fts_rfd);
-		else
-			error = CHDIR(sp, "..");
-
-		if (error) {
-			cur->fts_info = FTS_ERR;
-			SET(FTS_STOP);
-			return (NULL);
-		}
+	if (descend && (!nitems || type == BCHILD) && CHDIR(sp, "..")) {
+		cur->fts_info = FTS_ERR;
+		SET(FTS_STOP);
+		return (NULL);
 	}
 
 	/* If didn't find anything, return NULL. */
@@ -948,7 +939,8 @@ fts_padjust(sp, addr)
 	FTSENT *p;
 
 #define	ADJUST(p) {							\
-	(p)->fts_accpath = addr + ((p)->fts_accpath - (p)->fts_path);	\
+	(p)->fts_accpath =						\
+	    (char *)addr + ((p)->fts_accpath - (p)->fts_path);		\
 	(p)->fts_path = addr;						\
 }
 	/* Adjust the current set of children. */
