@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.34 2001/12/30 04:46:21 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.35 2002/04/23 10:14:59 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.34 2001/12/30 04:46:21 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.35 2002/04/23 10:14:59 hubertf Exp $");
 #endif
 
 /*
@@ -261,6 +261,12 @@ setupCoproc(const char *base)
 	return -1;
     }
 
+    if (command_pipe[0] == -1 || command_pipe[1] == -1 ||
+	answer_pipe[0] == -1  || answer_pipe[1] == -1 ) {
+	warn("setupCoproc: pipe() returned bogus descriptor");
+	return -1;
+    }
+
     rc1 = fork();
     switch (rc1) {
     case -1:
@@ -274,11 +280,17 @@ setupCoproc(const char *base)
 	    /* Child */
 	    
 	    (void) close(command_pipe[1]);
-	    dup2(command_pipe[0], 0);
+	    rc1 = dup2(command_pipe[0], 0);
+            if (rc1 == -1) {
+                    err(1, "setupCoproc: dup2 failed (command_pipe[0])");
+            }
 	    (void) close(command_pipe[0]);
 	    
 	    (void) close(answer_pipe[0]);
-	    dup2(answer_pipe[1], 1);
+	    rc1 = dup2(answer_pipe[1], 1);
+            if (rc1 == -1) {
+                    err(1, "setupCoproc: dup2 failed (answer_pipe[1])");
+            }
 	    (void) close(answer_pipe[1]);
 	    
 	    setbuf(stdout, NULL);
@@ -456,7 +468,15 @@ ftp_start(char *base)
 		/* get FDs of our coprocess */
 		
 		ftpio.command = dup(atoi(tmp1));
+		if (ftpio.command == -1 ) {
+			warnx("command dup() failed, increase 'descriptors' limit");
+			return -1;
+		}
 		ftpio.answer  = dup(atoi(tmp2));
+		if (ftpio.answer == -1 ) {
+			warnx("answer dup() failed, increase 'descriptors' limit");
+			return -1;
+		}
 		
 		if (Verbose)
 			printf("Reusing FDs %s/%s for communication to FTP coprocess\n", tmp1, tmp2);
