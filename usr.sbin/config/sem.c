@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.33 2002/09/26 04:07:36 thorpej Exp $	*/
+/*	$NetBSD: sem.c,v 1.34 2002/10/09 20:17:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -180,19 +180,40 @@ setident(const char *i)
 }
 
 /*
- * Define an attribute, optionally with an interface (a locator list).
+ * Define an attribute, optionally with an interface (a locator list)
+ * and a set of attribute-dependencies.
+ *
+ * Attribute dependencies MAY NOT be interface attributes.
+ *
  * Since an empty locator list is logically different from "no interface",
  * all locator lists include a dummy head node, which we discard here.
  */
 int
-defattr(const char *name, struct nvlist *locs, int devclass)
+defattr(const char *name, struct nvlist *locs, struct nvlist *deps,
+    int devclass)
 {
-	struct attr *a;
+	struct attr *a, *dep;
 	struct nvlist *nv;
 	int len;
 
 	if (locs != NULL && devclass)
 		panic("defattr(%s): locators and devclass", name);
+
+	if (deps != NULL && devclass)
+		panic("defattr(%s): dependencies and devclass", name);
+
+	/*
+	 * If this attribute depends on any others, make sure none of
+	 * the dependencies are interface attributes.
+	 */
+	for (nv = deps; nv != NULL; nv = nv->nv_next) {
+		dep = nv->nv_ptr;
+		if (dep->a_iattr) {
+			error("`%s' dependency `%s' is an interface attribute",
+			    name, dep->a_name);
+			return (1);
+		}
+	}
 
 	a = emalloc(sizeof *a);
 	if (ht_insert(attrtab, name, a)) {
@@ -235,6 +256,12 @@ defattr(const char *name, struct nvlist *locs, int devclass)
 	a->a_loclen = len;
 	a->a_devs = NULL;
 	a->a_refs = NULL;
+	a->a_deps = deps;
+	a->a_expanding = 0;
+
+	/* Expand the attribute to check for cycles in the graph. */
+	expandattr(a, NULL);
+
 	return (0);
 }
 
@@ -315,7 +342,7 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 	if (loclist != NULL) {
 		nv = loclist;
 		loclist = NULL;	/* defattr disposes of them for us */
-		if (defattr(dev->d_name, nv, 0))
+		if (defattr(dev->d_name, nv, NULL, 0))
 			goto bad;
 		attrs = newnv(dev->d_name, NULL, getattr(dev->d_name), 0,
 		    attrs);
@@ -537,6 +564,36 @@ getattr(const char *name)
 		a = &errattr;
 	}
 	return (a);
+}
+
+/*
+ * Recursively expand an attribute and its dependencies, checking for
+ * cycles, and invoking a callback for each attribute found.
+ */
+void
+expandattr(struct attr *a, void (*callback)(struct attr *))
+{
+	struct nvlist *nv;
+	struct attr *dep;
+
+	if (a->a_expanding) {
+		error("circular dependency on attribute `%s'", a->a_name);
+		return;
+	}
+
+	a->a_expanding = 1;
+
+	/* First expand all of this attribute's dependencies. */
+	for (nv = a->a_deps; nv != NULL; nv = nv->nv_next) {
+		dep = nv->nv_ptr;
+		expandattr(dep, callback);
+	}
+
+	/* ...and now invoke the callback for ourself. */
+	if (callback != NULL)
+		(*callback)(a);
+
+	a->a_expanding = 0;
 }
 
 /*
@@ -1230,6 +1287,13 @@ split(const char *name, size_t nlen, char *base, size_t bsize, int *aunit)
 	return (0);
 }
 
+static void
+selectattr(struct attr *a)
+{
+
+	(void)ht_insert(selecttab, a->a_name, (char *)a->a_name);
+}
+
 /*
  * We have an instance of the base foo, so select it and all its
  * attributes for "optional foo".
@@ -1243,14 +1307,13 @@ selectbase(struct devbase *d, struct deva *da)
 	(void)ht_insert(selecttab, d->d_name, (char *)d->d_name);
 	for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
 		a = nv->nv_ptr;
-		(void)ht_insert(selecttab, a->a_name, (char *)a->a_name);
+		expandattr(a, selectattr);
 	}
 	if (da != NULL) {
 		(void)ht_insert(selecttab, da->d_name, (char *)da->d_name);
 		for (nv = da->d_attrs; nv != NULL; nv = nv->nv_next) {
 			a = nv->nv_ptr;
-			(void)ht_insert(selecttab, a->a_name,
-			    (char *)a->a_name);
+			expandattr(a, selectattr);
 		}
 	}
 }
