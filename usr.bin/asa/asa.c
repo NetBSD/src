@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Header: /cvsroot/src/usr.bin/asa/asa.c,v 1.1 1993/09/23 21:04:18 jtc Exp $
+ *	$Header: /cvsroot/src/usr.bin/asa/asa.c,v 1.2 1993/12/22 07:25:10 cgd Exp $
  */
 
 #ifndef lint
-static char *rcsid = "$Id: asa.c,v 1.1 1993/09/23 21:04:18 jtc Exp $";
+static char *rcsid = "$Id: asa.c,v 1.2 1993/12/22 07:25:10 cgd Exp $";
 #endif
 
 #include <stdio.h>
@@ -70,8 +70,10 @@ asa(f)
 	FILE *f;
 {
 	char *buf;
+	int len;
 
-	if ((buf = fgetline (f, NULL)) != NULL) {
+	if ((buf = fgetline (f, &len)) != NULL) {
+		buf[len - 1] = '\0';
 		/* special case the first line  */
 		switch (buf[0]) {
 		case '0':
@@ -84,7 +86,8 @@ asa(f)
 
 		fputs (&buf[1], stdout);
 
-		while ((buf = fgetline(f, NULL)) != NULL) {
+		while ((buf = fgetline(f, &len)) != NULL) {
+			buf[len - 1] = '\0';
 			switch (buf[0]) {
 			default:
 			case ' ':
