@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.22 1996/12/18 22:11:09 cgd Exp $
+#	$NetBSD: Makefile,v 1.23 1997/02/23 20:42:27 cgd Exp $
 #	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM
-#					# and ELF_TOOLCHAIN
+#					# and ECOFF_TOOLCHAIN
 
 SUBDIR=	atrun comsat fingerd ftpd getNAME getty identd lfs_cleanerd \
 	mail.local makekey makewhatis rexecd rlogind rshd rpc.rquotad \
@@ -16,7 +16,7 @@ SUBDIR=	atrun comsat fingerd ftpd getNAME getty identd lfs_cleanerd \
 SUBDIR+=telnetd
 .endif
 
-.if ((${MACHINE_ARCH} == "alpha") && defined(ELF_TOOLCHAIN))
+.if (${MACHINE_ARCH} == "alpha" && !defined(ECOFF_TOOLCHAIN))
 SUBDIR+= ld.elf_so
 .endif
 
