@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.73 2000/07/25 01:39:22 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.74 2000/07/25 02:33:30 wrstuden Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.73 $"
+#ident 		"GENERIC-$Revision: 1.74 $"
 
 maxusers	32
 
@@ -269,7 +269,6 @@ ugen*	at uhub? port ? configuration ? interface ?
 # Audio Devices
 
 # PCI audio devices
-#auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 #clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 #cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
