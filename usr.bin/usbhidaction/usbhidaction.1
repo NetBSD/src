@@ -1,4 +1,4 @@
-.\" $NetBSD: usbhidaction.1,v 1.5 2001/12/28 17:49:31 augustss Exp $
+.\" $NetBSD: usbhidaction.1,v 1.6 2002/01/18 14:38:59 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,6 +74,8 @@ An absolute path is taken to be the literal device pathname.
 .It Fl v
 Be verbose, and do not become a daemon.
 .El
+.Pp
+The config file will be re-read if the process gets a HUP signal.
 .Sh CONFIGURATION
 The configuration file has a very simple format.  Each line describes an
 action; if a line begins with a whitespace it is considered a continuation
