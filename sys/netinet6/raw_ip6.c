@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.36 2001/10/18 07:44:35 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.37 2001/10/18 09:12:14 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -93,6 +93,7 @@
 #ifdef ENABLE_DEFAULT_SCOPE
 #include <netinet6/scope6_var.h>
 #endif
+#include <netinet6/raw_ip6.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -111,6 +112,8 @@ struct	in6pcb rawin6pcb;
 /*
  * Raw interface to IP6 protocol.
  */
+
+struct rip6stat rip6stat;
 
 /*
  * Initialize raw connection block queue.
@@ -137,6 +140,8 @@ rip6_input(mp, offp, proto)
 	struct in6pcb *last = NULL;
 	struct sockaddr_in6 rip6src;
 	struct mbuf *opts = NULL;
+
+	rip6stat.rip6s_ipackets++;
 
 #if defined(NFAITH) && 0 < NFAITH
 	if (faithprefix(&ip6->ip6_dst)) {
@@ -170,16 +175,18 @@ rip6_input(mp, offp, proto)
 		    in6p->in6p_ip6.ip6_nxt != proto)
 			continue;
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
-		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &ip6->ip6_dst))
+		    !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &ip6->ip6_dst))
 			continue;
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr) &&
-		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &ip6->ip6_src))
+		    !IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &ip6->ip6_src))
 			continue;
-		if (in6p->in6p_cksum != -1
-		 && in6_cksum(m, ip6->ip6_nxt, *offp, m->m_pkthdr.len - *offp))
-		{
-			/* XXX bark something */
-			continue;
+		if (in6p->in6p_cksum != -1) {
+			rip6stat.rip6s_isum++;
+			if (in6_cksum(m, ip6->ip6_nxt, *offp,
+			    m->m_pkthdr.len - *offp)) {
+				rip6stat.rip6s_badsum++;
+				continue;
+			}
 		}
 		if (last) {
 			struct	mbuf *n;
@@ -205,6 +212,7 @@ rip6_input(mp, offp, proto)
 					m_freem(n);
 					if (opts)
 						m_freem(opts);
+					rip6stat.rip6s_fullsock++;
 				} else
 					sorwakeup(last->in6p_socket);
 				opts = NULL;
@@ -233,9 +241,13 @@ rip6_input(mp, offp, proto)
 			m_freem(m);
 			if (opts)
 				m_freem(opts);
+			rip6stat.rip6s_fullsock++;
 		} else
 			sorwakeup(last->in6p_socket);
 	} else {
+		rip6stat.rip6s_nosock++;
+		if (m->m_flags & M_MCAST)
+			rip6stat.rip6s_nosockmcast++;
 		if (proto == IPPROTO_NONE)
 			m_freem(m);
 		else {
@@ -511,7 +523,8 @@ rip6_output(m, va_alist)
 		if (oifp)
 			icmp6_ifoutstat_inc(oifp, type, code);
 		icmp6stat.icp6s_outhist[type]++;
-	}
+	} else
+		rip6stat.rip6s_opackets++;
 
 	goto freectl;
 
