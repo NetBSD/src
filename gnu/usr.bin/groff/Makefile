@@ -1,12 +1,5 @@
-#	$NetBSD: Makefile,v 1.12 2001/04/19 14:40:40 wiz Exp $
+# $FreeBSD: src/gnu/usr.bin/groff/Makefile,v 2.11 2003/05/02 00:55:52 ru Exp $
 
-SUBDIR=	libbib libdriver libgroff .WAIT addftinfo devices eqn grn \
-	grodvi groff grog grohtml grolbp grolj4 grops grotty hpftodit \
-	indxbib lkbib lookbib man mm nroff pfbtops pic refer \
-	tbl tfmtodit tmac troff
-
-# afmtodit is a perl script; xditview an X program (we can't assume X is
-# installed); NetBSD has its own soelim.
-MISC=	afmtodit xditview soelim
+SUBDIR=		contrib doc font man src tmac
 
 .include <bsd.subdir.mk>
