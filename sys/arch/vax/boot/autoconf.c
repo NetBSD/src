@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1997/04/10 21:25:18 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.10 1997/10/18 23:39:18 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,13 +48,15 @@ static int uio750[]={0xfc0000,0xf80000};
 static int uda750[]={0772150};
 
 /* 11/780's only have 4, 8600 have 8 of these. */
+/* XXX - all of these should be bound to physical addresses */
 static int mba780[]={0x20010000,0x20012000,0x20014000,0x20016000,
 	0x22010000,0x22012000,0x22014000,0x22016000};
-static int uba780[]={0x20006000,0x20008000,0x2000a000,0x2000c000,
-	0x22006000,0x22008000,0x2200a000,0x2200c000};
-static int uio780[]={0x20100000,0x20140000,0x20180000,0x201c0000,
-	0x22100000,0x22140000,0x22180000,0x221c0000};
-
+static int uba780[]={0, 0, 0, 0x20006000,0x20008000,0x2000a000,0x2000c000, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0x22006000,0x22008000,0x2200a000,0x2200c000};
+static int uio780[]={0, 0, 0, 0x20100000,0x20140000,0x20180000,0x201c0000, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0x22100000,0x22140000,0x22180000,0x221c0000};
 static int bi8200[]={0x20000000, 0x22000000, 0x24000000, 0x26000000,
 	0x28000000, 0x2a000000};
 static int bio8200[]={0x20400000};
@@ -83,7 +85,7 @@ autoconf()
 	case VAX_8600:
 		memsz = 0;
 		nmba = 8;
-		nuba = 8;
+		nuba = 32; /* XXX */
 		nuda = 1;
 		mbaaddr = mba780;
 		ubaaddr = uba780;
