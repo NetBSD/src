@@ -1,4 +1,4 @@
-#	$NetBSD: DUALITY,v 1.24 1996/12/11 09:10:39 thorpej Exp $
+#	$NetBSD: DUALITY,v 1.25 1997/01/20 16:55:34 scottr Exp $
 #
 # DUALITY (mycroft's hp370 test machine)
 #
@@ -14,7 +14,6 @@ options		FPSP
 
 ident		DUALITY
 maxusers	16
-timezone	5 dst
 
 options		SWAPPAGER
 options		VNODEPAGER,DEVPAGER
