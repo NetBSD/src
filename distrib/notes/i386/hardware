@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.71.2.6 2000/11/13 11:22:39 lukem Exp $
+.\"	$NetBSD: hardware,v 1.71.2.7 2001/01/22 01:56:14 hubertf Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
@@ -424,29 +424,31 @@ Serial mice (no kernel support necessary)
 .It
 Sound Cards
 .(bullet -compact
-SoundBlaster, SoundBlaster Pro, SoundBlaster 16 [*] [+]
+.It
+Aria based sound cards [*]
+.It
+Cirrus Logic CS461x, CS4280 and CS4281 audio [*] [+]
+.It
+Ensoniq AudioPCI [*] [+]
+.It
+ESS Technology ES1777/1868/1869/1887/1888/888, Maestro 2/2E and
+Solo-1 ES1938/1946
+.It
+Gravis Ultrasound Plug\*&Play [*] [+]
 .It
 Gravis Ultrasound and Ultrasound Max [*] [+]
-.It
-Windows Sound System [*] [+]
-.Pp
-.Em The following drivers have not been extensively tested
 .It
 Personal Sound System [*] [+]
 .It
 ProAudio Spectrum [*] [+]
 .It
-Gravis Ultrasound Plug\*&Play [*] [+]
-.It
-Ensoniq AudioPCI [*] [+]
-.It
-Yamaha OPL3-SA3 [*] [+]
-.It
-Aria based sound cards [*]
-.It
 S3 SonicVibes [*] [+]
 .It
-ESS Technology ES1777/1868/1869/1887/1888/888 and Solo-1 ES1938/1946
+SoundBlaster, SoundBlaster Pro, SoundBlaster 16 [*] [+]
+.It
+Windows Sound System [*] [+]
+.It
+Yamaha OPL3-SA3 [*] [+]
 audio [*] [+]
 .bullet)
 .It
