@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.109 2003/10/27 13:44:20 junyoung Exp $	*/
+/*	$NetBSD: cpu.h,v 1.110 2003/12/30 03:52:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -205,12 +205,6 @@ curcpu()
 #define cpu_number() 		(curcpu()->ci_cpuid)
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
-
-#if 0
-#define x86_ipisend(ci)	(((ci) != curcpu()) ? x86_send_ipi((ci),0) : 0)
-#else
-#define x86_ipisend(ci)	0
-#endif
 
 #define aston(p)		((p)->p_md.md_astpending = 1)
 
