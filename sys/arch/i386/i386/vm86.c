@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.6 1996/04/11 05:11:03 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.7 1996/04/11 07:47:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,11 +71,7 @@
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
 
-static void return_to_32bit __P((struct proc *, int));
 static void fast_intxx __P((struct proc *, int));
-
-#define	SETDIRECT	((~(PSL_USERSTATIC|PSL_NT)) & 0xffff)
-#define	GETDIRECT	(SETDIRECT|0x02a) /* add in two MBZ bits */
 
 #define	CS(tf)		(*(u_short *)&tf->tf_cs)
 #define	IP(tf)		(*(u_short *)&tf->tf_eip)
@@ -163,57 +159,6 @@ is_bitset(nr, bitmap)
 }
 
 
-static __inline__ void
-set_vif(p)
-	struct proc *p;
-{
-
-	VM86_EFLAGS(p) |= PSL_VIF;
-	if (VM86_EFLAGS(p) & PSL_VIP)
-		return_to_32bit(p, VM86_STI);
-}
-
-static __inline__ void
-set_vflags(p, flags)
-	struct proc *p;
-	int flags;
-{
-	struct trapframe *tf = p->p_md.md_regs;
-
-	SETFLAGS(VM86_EFLAGS(p), flags, VM86_FLAGMASK(p));
-	SETFLAGS(tf->tf_eflags, flags, SETDIRECT);
-	if (flags & PSL_I)
-		set_vif(p);
-}
-
-static __inline__ void
-set_vflags_short(p, flags)
-	struct proc *p;
-	int flags;
-{
-	struct trapframe *tf = p->p_md.md_regs;
-
-	SETFLAGS(VM86_EFLAGS(p), flags, VM86_FLAGMASK(p) & 0xffff);
-	SETFLAGS(tf->tf_eflags, flags, SETDIRECT);
-	if (flags & PSL_I)
-		set_vif(p);
-}
-
-static __inline__ int
-get_vflags(p)
-	struct proc *p;
-{
-	struct trapframe *tf = p->p_md.md_regs;
-	int flags = 0;
-
-	SETFLAGS(flags, VM86_EFLAGS(p), VM86_FLAGMASK(p));
-	SETFLAGS(flags, tf->tf_eflags, GETDIRECT);
-	if (VM86_EFLAGS(p) & PSL_VIF)
-		flags |= PSL_I;
-	return (flags);
-}
-
-
 #define V86_AH(regs)	(((u_char *)&((regs)->tf_eax))[1])
 #define V86_AL(regs)	(((u_char *)&((regs)->tf_eax))[0])
 
@@ -275,7 +220,7 @@ fast_intxx(p, intrno)
 	ss = SS(tf) << 4;
 	sp = SP(tf);
 
-	putword(ss, sp, get_vflags(p));
+	putword(ss, sp, get_vflags_short(p));
 	putword(ss, sp, CS(tf));
 	putword(ss, sp, IP(tf));
 	SP(tf) = sp;
@@ -284,21 +229,21 @@ fast_intxx(p, intrno)
 	CS(tf) = ihand.cs;
 
 	/* disable further "hardware" interrupts, turn off any tracing. */
-	VM86_EFLAGS(p) &= ~PSL_VIF;
-	tf->tf_eflags &= ~PSL_VIF|PSL_T;
+	tf->tf_eflags &= ~PSL_T;
+	clr_vif(p);
 	return;
 
 vector:
-	return_to_32bit(p, VM86_MAKEVAL(VM86_INTx, intrno));
+	vm86_return(p, VM86_MAKEVAL(VM86_INTx, intrno));
 	return;
 
 bad:
-	return_to_32bit(p, VM86_UNKNOWN);
+	vm86_return(p, VM86_UNKNOWN);
 	return;
 }
 
-static void
-return_to_32bit(p, retval)
+void
+vm86_return(p, retval)
 	struct proc *p;
 	int retval;
 {
@@ -355,15 +300,14 @@ vm86_gpfault(p, type)
 
 	/*
 	 * For most of these, we must set all the registers before calling
-	 * macros/functions which might do a return_to_32bit.
+	 * macros/functions which might do a vm86_return.
 	 */
 	tmpbyte = getbyte(cs, ip);
 	IP(tf) = ip;
 	switch (tmpbyte) {
 	case CLI:
 		/* simulate handling of IF */
-		VM86_EFLAGS(p) &= ~PSL_VIF;
-		tf->tf_eflags &= ~PSL_VIF;
+		clr_vif(p);
 		break;
 
 	case STI:
@@ -382,7 +326,7 @@ vm86_gpfault(p, type)
 		break;
 
 	case PUSHF:
-		putword(ss, sp, get_vflags(p));
+		putword(ss, sp, get_vflags_short(p));
 		SP(tf) = sp;
 		break;
 
@@ -399,7 +343,7 @@ vm86_gpfault(p, type)
 		IP(tf) = ip;
 		switch (tmpbyte) {
 		case PUSHF:
-			putdword(ss, sp, get_vflags(p));
+			putdword(ss, sp, get_vflags(p) & ~PSL_VM);
 			SP(tf) = sp;
 			break;
 
@@ -407,7 +351,7 @@ vm86_gpfault(p, type)
 			IP(tf) = getdword(ss, sp);
 			CS(tf) = getdword(ss, sp);
 		case POPF:
-			set_vflags(p, getdword(ss, sp));
+			set_vflags(p, getdword(ss, sp) | PSL_VM);
 			SP(tf) = sp;
 			break;
 
@@ -425,7 +369,7 @@ vm86_gpfault(p, type)
 	return;
 
 bad:
-	return_to_32bit(p, VM86_UNKNOWN);
+	vm86_return(p, VM86_UNKNOWN);
 	return;
 }
 
@@ -488,12 +432,10 @@ i386_vm86(p, args, retval)
 #undef	DOVREG
 #undef	DOREG
 
-	SETFLAGS(VM86_EFLAGS(p), vm86s.regs.vmsc.sc_eflags, VM86_FLAGMASK(p)|PSL_VIF);
-	SETFLAGS(tf->tf_eflags, vm86s.regs.vmsc.sc_eflags, SETDIRECT);
-	tf->tf_eflags |= PSL_VM;
-
 	/* Going into vm86 mode jumps off the signal stack. */
 	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	set_vflags(p, vm86s.regs.vmsc.sc_eflags | PSL_VM);
 
 	return (EJUSTRETURN);
 }
