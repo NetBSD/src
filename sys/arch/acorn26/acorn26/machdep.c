@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.9 2003/09/21 06:52:42 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.10 2003/09/30 00:35:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2003/09/21 06:52:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2003/09/30 00:35:30 thorpej Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -42,8 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2003/09/21 06:52:42 matt Exp $");
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/pcf8583var.h>
+
 #include <uvm/uvm_extern.h>
 
+#include <machine/machdep.h>
 #include <machine/memcreg.h>
 
 int physmem;
@@ -53,6 +57,9 @@ char cpu_model[] = "Archimedes";
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
+
+/* For reading NVRAM during bootstrap. */
+i2c_tag_t acorn26_i2c_tag;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *phys_map = NULL;
@@ -251,4 +258,26 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ENOTDIR);		/* overloaded */
 
 	return (EOPNOTSUPP);
+}
+
+/* Read a byte from CMOS RAM. */
+int
+cmos_read(int location)
+{
+	uint8_t val;
+
+	if (pcfrtc_bootstrap_read(acorn26_i2c_tag, 0x50,
+	    location, &val, 1) != 0)
+		return (-1);
+	return (val);
+}
+
+/* Write a byte to CMOS RAM. */
+int
+cmos_write(int location, int value)
+{
+	uint8_t val = value;
+
+	return (pcfrtc_bootstrap_write(acorn26_i2c_tag, 0x50,
+	    location, &val, 1));
 }

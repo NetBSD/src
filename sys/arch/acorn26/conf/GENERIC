@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14 2003/09/13 13:30:08 chris Exp $
+# $NetBSD: GENERIC,v 1.15 2003/09/30 00:35:30 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -147,8 +147,10 @@ iobus0		at root			# 16-bit I/O bus
 
 ioc0		at iobus0 base 0x200000	# I/O controller
 
-iic0		at ioc0			# I^2C serial bus
-rtc0		at iic0 addr 0xa0	# Real-time clock
+iociic0		at ioc0			# I^2C serial bus
+iic0		at iociic0
+
+pcfrtc0		at iic0 addr 0x50	# Real-time clock
 
 arckbd0 	at ioc0 bank 0 offset 0x04 # System keyboard
 arcwskbd0	at arckbd0		# Logical devices...

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.194 2003/09/27 13:13:28 mrg Exp $
+#	$NetBSD: files.pci,v 1.195 2003/09/30 00:35:30 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -228,7 +228,8 @@ attach	ne at pci with ne_pci: rtl80x9
 file	dev/pci/if_ne_pci.c		ne_pci | ipkdb_ne_pci
 
 # Texas Instruments ThunderLAN Chip.
-device	tl: ether, ifnet, arp, i2c, i2c_eeprom, mii, mii_bitbang
+device	tl: ether, ifnet, arp, i2cexec, at24cxx_eeprom, i2c_bitbang,
+	    mii, mii_bitbang
 attach	tl at pci
 file	dev/pci/if_tl.c			tl
 
