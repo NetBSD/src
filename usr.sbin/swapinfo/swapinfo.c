@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: swapinfo.c,v 1.5 1993/11/18 03:00:41 cgd Exp $";
+static char rcsid[] = "$Id: swapinfo.c,v 1.6 1994/03/23 04:50:39 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -27,7 +27,7 @@ static char rcsid[] = "$Id: swapinfo.c,v 1.5 1993/11/18 03:00:41 cgd Exp $";
 #include <unistd.h>
 
 extern char *devname __P((int, int));
-void showspace __P((long blocksize));
+void showspace __P((int kflag));
 
 int showmap;			/* show the contents of the swap map */
 int nosum;			/* don't show totals */
@@ -53,16 +53,16 @@ main(argc, argv)
 	char **argv;
 {
 	char *memf, *nlistf;
-	int ch, i;
-	long blocksize = 512;
+	int ch, i, kflag;
 	char errbuf[256];
 
 	memf = nlistf = NULL;
+	kflag = 0;
 	while ((ch = getopt(argc, argv, "kmnM:N:")) != EOF) {
 		switch (ch) {
 
 		case 'k':
-			blocksize = 1024;
+			kflag = 1;
 			break;
 
 		case 'm':
@@ -83,7 +83,7 @@ main(argc, argv)
 
 		case '?':
 		default:
-			errx(1, "usage: swapinfo [-M memfile] [-N kernel]\n");
+			errx(1, "usage: swapinfo [-kmn] [-M memfile] [-N kernel]\n");
 		}
 	}
 	argc -= optind;
@@ -100,7 +100,7 @@ main(argc, argv)
 		(void)fprintf(stderr, "\n");
 		exit(1);
 	}
-	showspace(blocksize);
+	showspace(kflag);
 	exit(0);
 }
 
@@ -114,8 +114,8 @@ main(argc, argv)
 		errx(1, "cannot read %s: %s", msg, kvm_geterr())
 
 void
-showspace(blocksize)
-	long blocksize;
+showspace(kflag)
+	int kflag;
 {
 	int nswap, nswdev, dmmax, nswapmap;
 	int s, e, div, i, ind, avail, nfree, npfree, used;
@@ -123,6 +123,16 @@ showspace(blocksize)
 	long *perdev;
 	struct map *swapmap, *kswapmap;
 	struct mapent *mp;
+	long blocksize;
+	int width, maxwidth, headerlen;
+	char *header;
+
+	if (kflag) {
+		blocksize = 1024;
+		header = "1K-blocks";
+		headerlen = strlen(header);
+	} else
+		header = getbsize(&headerlen, &blocksize);
 
 	div = blocksize / 512;		/* printing routines use this */
 
@@ -196,15 +206,26 @@ showspace(blocksize)
 	if (showmap)
 		printf("\n");
 
-	(void)printf("%-10s %4d-blocks %10s %10s %10s\n",
-	    "Device", blocksize, "Used", "Available", "Capacity");
+	maxwidth = 0;
+	for (i = 0; i < nswdev; i++) {
+		width = strlen(devname(sw[i].sw_dev, S_IFBLK)) + 5;
+		if (width > maxwidth)
+			maxwidth = width;
+	}
+	maxwidth;
+	if (maxwidth < 7)
+		maxwidth = 7;
+
+	(void)printf("%-*.*s  %s    Used   Avail Capacity\n",
+	    maxwidth, maxwidth, "Device", header);
 	avail = npfree = 0;
 	for (i = 0; i < nswdev; i++) {
 		int xsize, xfree;
 
-		(void)printf("/dev/%-5s %11d ",
+		(void)printf("/dev/%-*.*s  %*d ",
+		    maxwidth - 5, maxwidth - 5,
 		    devname(sw[i].sw_dev, S_IFBLK),
-		    sw[i].sw_nblks / div);
+		    headerlen, sw[i].sw_nblks / div);
 
 		/*
 		 * Don't report statistics for partitions which have not
@@ -217,7 +238,7 @@ showspace(blocksize)
 		xsize = sw[i].sw_nblks;
 		xfree = perdev[i];
 		used = xsize - xfree;
-		(void)printf("%10d %10d %7.0f%%\n", 
+		(void)printf("%7d %7d   %5.0f%%\n", 
 		    used / div, xfree / div,
 		    (double)used / (double)xsize * 100.0);
 		npfree++;
@@ -231,9 +252,9 @@ showspace(blocksize)
 
 	if (npfree > 1) {
 		used = avail - nfree;
-		(void)printf("%-10s %11d %10d %10d %7.0f%%\n",
-		    "Total", avail / div, used / div, nfree / div,
-		    (double)used / (double)avail * 100.0);
+		(void)printf("%-*.*s  %*d %7d %7d   %5.0f%%\n", maxwidth,
+		    maxwidth, "Total", headerlen, avail / div, used / div,
+		    nfree / div, (double)used / (double)avail * 100.0);
 	}
 }
 
