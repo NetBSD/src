@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.42 1997/04/30 02:08:12 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.43 1997/05/07 04:36:00 mikel Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -131,30 +131,29 @@ int	sbdsp_set_io_params __P((struct sbdsp_softc *, struct audio_params *));
 
 #ifdef AUDIO_DEBUG
 void sb_printsc __P((struct sbdsp_softc *));
-#endif
 
-#ifdef AUDIO_DEBUG
 void
 sb_printsc(sc)
 	struct sbdsp_softc *sc;
 {
 	int i;
     
-	printf("open %d dmachan %d/%d/%d iobase %x\n",
-	    sc->sc_open, sc->dmachan, sc->sc_drq8, sc->sc_drq16, sc->sc_iobase);
-	printf("irate %d itc %d imode %d orate %d otc %d omode %d encoding %x\n",
+	printf("open %d dmachan %d/%d/%d iobase 0x%x irq %d\n",
+	    (int)sc->sc_open, sc->dmachan, sc->sc_drq8, sc->sc_drq16,
+	    sc->sc_iobase, sc->sc_irq);
+	printf("irate %d itc %d imode %d orate %d otc %d omode %d\n",
 	    sc->sc_irate, sc->sc_itc, sc->sc_imode,
 	    sc->sc_orate, sc->sc_otc, sc->sc_omode);
-	printf("outport %d inport %d spkron %d nintr %lu\n",
+	printf("outport %u inport %u spkron %u nintr %lu\n",
 	    sc->out_port, sc->in_port, sc->spkr_state, sc->sc_interrupts);
-	printf("precision %d channels %d intr %p arg %p\n",
+	printf("precision %u channels %d intr %p arg %p\n",
 	    sc->sc_precision, sc->sc_channels, sc->sc_intr, sc->sc_arg);
-	printf("gain: ");
+	printf("gain:");
 	for (i = 0; i < SB_NDEVS; i++)
-		printf("%d ", sc->gain[i]);
+		printf(" %u", sc->gain[i]);
 	printf("\n");
 }
-#endif
+#endif /* AUDIO_DEBUG */
 
 /*
  * Probe / attach routines.
