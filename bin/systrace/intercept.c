@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.10 2002/10/30 17:39:34 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.11 2002/11/02 19:57:02 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.10 2002/10/30 17:39:34 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.11 2002/11/02 19:57:02 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -565,26 +565,37 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 	static char cwd[2*MAXPATHLEN];
 	struct intercept_pid *icpid;
 	char *name;
+	int havecwd = 0;
 
 	name = intercept_get_string(fd, pid, addr);
 	if (name == NULL)
 		goto abort;
 
-	if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL) {
+	if (intercept.setcwd(fd, pid) == -1) {
 		if (errno == EBUSY)
 			goto abort;
+	getcwderr:
 		if (strcmp(name, "/") == 0)
 			return (name);
 
 		err(1, "%s: getcwd", __func__);
 	}
 
-	/* Update cwd for process */
-	icpid = intercept_getpid(pid);
-	if (strlcpy(icpid->cwd, cwd, sizeof(icpid->cwd)) >= sizeof(icpid->cwd))
-		errx(1, "cwd too long");
+	if (userp == ICLINK_NONE) {
+		if (getcwd(cwd, sizeof(cwd)) == NULL)
+			goto getcwderr;
+		havecwd = 1;
+	}
 
-	if (name[0] != '/') {
+	if (havecwd) {
+		/* Update cwd for process */
+		icpid = intercept_getpid(pid);
+		if (strlcpy(icpid->cwd, cwd, sizeof(icpid->cwd)) >= sizeof(icpid->cwd))
+			errx(1, "cwd too long");
+	}
+
+	/* Need concatenated path for simplifypath */
+	if (havecwd && name[0] != '/') {
 		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
 			goto error;
 		if (strlcat(cwd, name, sizeof(cwd)) >= sizeof(cwd))
@@ -666,12 +677,13 @@ intercept_filename(int fd, pid_t pid, void *addr, int userp)
 
 	return (name);
 
+ error:
+	errx(1, "%s: filename too long", __func__);
+	/* NOTREACHED */
+
  abort:
 	ic_abort = 1;
 	return (NULL);
-
- error:
-	errx(1, "%s: filename too long", __func__);
 }
 
 void
