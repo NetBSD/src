@@ -1,11 +1,11 @@
-/*	$NetBSD: sigprocmask.S,v 1.6 1998/09/27 22:59:40 jonathan Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.1 1998/09/27 22:59:40 jonathan Exp $	*/
 
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1995,
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Ralph Campbell.
+ * Havard Eidnes.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,38 +36,57 @@
  * SUCH DAMAGE.
  */
 
-#include "SYS.h"
+#include <sys/syscall.h>
+#include <mips/regnum.h>
+#include <mips/asm.h>
+#include <mips/setjmp.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	ASMSTR("from: @(#)sigprocmask.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: sigprocmask.S,v 1.6 1998/09/27 22:59:40 jonathan Exp $")
+	ASMSTR("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
+	ASMSTR("$NetBSD: __sigsetjmp14.S,v 1.1 1998/09/27 22:59:40 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
 	.abicalls
 #endif
 
-LEAF(sigprocmask)	# sigprocmask(how, new, old) sigset_t *new, *old;
+/*
+ * C library -- sigsetjmp, siglongjmp
+ *
+ *	siglongjmp(a,v)
+ * will generate a "return(v)" from
+ * the last call to
+ *	sigsetjmp(a, savemask)
+ * by restoring registers from the stack,
+ * and dependent on savemask restores the
+ * signal mask.
+ */
+
+LEAF(__sigsetjmp14)
 #ifdef ABICALLS
-	.set    noreorder
-	.cpload t9
-	.set    reorder
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
 #endif
-	bne	a1, zero, gotptr	# if new sigset pointer not null
-	li	a0, 1			# how = SIG_BLOCK
-	b	doit			# mask = zero
-gotptr:
-	lw	a1, 0(a1)		# indirect to new mask arg
-doit:
-	li	v0, SYS_compat_13_sigprocmask13
-	syscall
-	bne	a3, zero, err
-	beq	a2, zero, out		# test if old mask requested
-	sw	v0, 0(a2)		# store old mask
-out:
-	move	v0, zero
-	j	ra
-err:
-	la	t9, _C_LABEL(cerror)
+	sw	a1, (_JBLEN*4)(a0)		# save "savemask"
+	bne	a1, 0x0, 1f			# do saving of signal mask?
+	la	t9, _setjmp
+	jr t9
+
+1:	la	t9, __setjmp14
+	jr t9
+END(__sigsetjmp14)
+
+LEAF(__siglongjmp14)
+#ifdef ABICALLS
+	.set	noreorder
+	.cpload	t9
+	.set	reorder
+#endif
+	lw	t0, (_JBLEN * 4)(a0)		# get "savemask"
+	bne	t0, 0x0, 1f			# restore signal mask?
+	la	t9, _longjmp
 	jr	t9
-END(sigprocmask)
+1:	la	t9, __longjmp14
+	jr	t9
+END(__siglongjmp14)
