@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.15 2002/09/30 23:07:07 thorpej Exp $ */
+/*	$NetBSD: bpp.c,v 1.16 2002/10/02 16:52:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.15 2002/09/30 23:07:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.16 2002/10/02 16:52:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -120,7 +120,7 @@ static int	bppintr		__P((void *));
 static void	bpp_setparams	__P((struct bpp_softc *, struct hwstate *));
 
 CFATTACH_DECL(bpp, sizeof(struct bpp_softc),
-    bppmatch, bppattach, NULL, NULL)
+    bppmatch, bppattach, NULL, NULL);
 
 extern struct cfdriver bpp_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.41 2002/10/02 02:16:36 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.42 2002/10/02 16:51:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.41 2002/10/02 02:16:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.42 2002/10/02 16:51:24 thorpej Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -500,6 +500,6 @@ pdq_pci_attach(
 }
 
 CFATTACH_DECL(fpa, sizeof(pdq_softc_t),
-    pdq_pci_match, pdq_pci_attach, NULL, NULL)
+    pdq_pci_match, pdq_pci_attach, NULL, NULL);
 
 #endif /* __NetBSD__ */

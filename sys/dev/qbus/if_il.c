@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.7 2002/09/30 22:42:11 thorpej Exp $	*/
+/*	$NetBSD: if_il.c,v 1.8 2002/10/02 16:52:27 thorpej Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.7 2002/09/30 22:42:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.8 2002/10/02 16:52:27 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -133,7 +133,7 @@ static	void iltotal(struct il_softc *);
 static	void ilstop(struct ifnet *, int);
 
 CFATTACH_DECL(il, sizeof(struct il_softc),
-    ilmatch, ilattach, NULL, NULL)
+    ilmatch, ilattach, NULL, NULL);
 
 #define IL_WCSR(csr, val) \
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, csr, val)

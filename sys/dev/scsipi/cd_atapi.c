@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.22 2002/09/30 23:12:50 thorpej Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.23 2002/10/02 16:52:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.22 2002/09/30 23:12:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.23 2002/10/02 16:52:48 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -74,7 +74,7 @@ int	cd_atapibus_match __P((struct device *, struct cfdata *, void *));
 void	cd_atapibus_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(cd_atapibus, sizeof(struct cd_softc),
-    cd_atapibus_match, cd_atapibus_attach, cddetach, cdactivate)
+    cd_atapibus_match, cd_atapibus_attach, cddetach, cdactivate);
 
 struct scsipi_inquiry_pattern cd_atapibus_patterns[] = {
 	{T_CDROM, T_REMOV,

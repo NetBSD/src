@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.11 2002/09/30 20:37:33 thorpej Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.12 2002/10/02 16:51:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.11 2002/09/30 20:37:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.12 2002/10/02 16:51:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ int	hmematch_pci __P((struct device *, struct cfdata *, void *));
 void	hmeattach_pci __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(hme_pci, sizeof(struct hme_pci_softc),
-    hmematch_pci, hmeattach_pci, NULL, NULL)
+    hmematch_pci, hmeattach_pci, NULL, NULL);
 
 int
 hmematch_pci(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_pci.c,v 1.4 2002/09/30 20:37:25 thorpej Exp $	*/
+/*	$NetBSD: icp_pci.c,v 1.5 2002/10/02 16:51:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.4 2002/09/30 20:37:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_pci.c,v 1.5 2002/10/02 16:51:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ void	icp_mpr_set_sema0(struct icp_softc *);
 int	icp_mpr_test_busy(struct icp_softc *);
 
 CFATTACH_DECL(icp_pci, sizeof(struct icp_softc),
-    icp_pci_match, icp_pci_attach, NULL, NULL)
+    icp_pci_match, icp_pci_attach, NULL, NULL);
 
 struct icp_pci_ident {
 	u_short	gpi_vendor;

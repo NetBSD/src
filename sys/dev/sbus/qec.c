@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.23 2002/09/30 23:07:08 thorpej Exp $ */
+/*	$NetBSD: qec.c,v 1.24 2002/10/02 16:52:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.23 2002/09/30 23:07:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.24 2002/10/02 16:52:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ static void *qec_intr_establish __P((
 		void *));		/*arg*/
 
 CFATTACH_DECL(qec, sizeof(struct qec_softc),
-    qecmatch, qecattach, NULL, NULL)
+    qecmatch, qecattach, NULL, NULL);
 
 int
 qecprint(aux, busname)

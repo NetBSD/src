@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.13 2002/09/30 22:26:59 thorpej Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.14 2002/10/02 16:52:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.13 2002/09/30 22:26:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.14 2002/10/02 16:52:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ int	esp_pcmcia_detach __P((struct device *, int));
 int	esp_pcmcia_enable __P((void *, int));
 
 CFATTACH_DECL(esp_pcmcia, sizeof(struct esp_pcmcia_softc),
-    esp_pcmcia_match, esp_pcmcia_attach, esp_pcmcia_detach, NULL)
+    esp_pcmcia_match, esp_pcmcia_attach, esp_pcmcia_detach, NULL);
 
 /*
  * Functions and the switch for the MI code.
