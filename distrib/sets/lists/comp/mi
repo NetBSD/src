@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.486 2002/09/27 21:42:15 thorpej Exp $
+#	$NetBSD: mi,v 1.487 2002/09/29 17:38:37 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3529,7 +3529,6 @@
 ./usr/share/man/cat9/simple_lock_init.0	comp-sys-catman
 ./usr/share/man/cat9/simple_lock_try.0	comp-sys-catman
 ./usr/share/man/cat9/simple_unlock.0	comp-sys-catman
-./usr/share/man/cat9/sleep.0		comp-sys-catman
 ./usr/share/man/cat9/snprintf.0		comp-sys-catman
 ./usr/share/man/cat9/softintr.0		comp-sys-catman
 ./usr/share/man/cat9/softintr_disestablish.0		comp-sys-catman
@@ -6259,7 +6258,6 @@
 ./usr/share/man/man9/simple_lock_init.9	comp-sys-man
 ./usr/share/man/man9/simple_lock_try.9	comp-sys-man
 ./usr/share/man/man9/simple_unlock.9	comp-sys-man
-./usr/share/man/man9/sleep.9		comp-sys-man
 ./usr/share/man/man9/snprintf.9		comp-sys-man
 ./usr/share/man/man9/softintr.9		comp-sys-man
 ./usr/share/man/man9/softintr_disestablish.9		comp-sys-man
