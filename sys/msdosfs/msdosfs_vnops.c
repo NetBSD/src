@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.97 2000/05/13 23:43:11 perseant Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.98 2000/06/28 02:49:15 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -65,8 +65,6 @@
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
