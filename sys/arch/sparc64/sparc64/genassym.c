@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.13.2.2 2000/08/07 01:02:16 mrg Exp $ */
+/*	$NetBSD: genassym.c,v 1.13.2.3 2000/10/18 03:39:11 tv Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 
+#include <vm/vm.h>
 #include <uvm/uvm.h>
 
 #include <machine/db_machdep.h>
