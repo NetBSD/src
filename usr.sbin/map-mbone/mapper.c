@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.10 2002/07/14 15:34:58 wiz Exp $	*/
+/*	$NetBSD: mapper.c,v 1.11 2002/08/09 02:17:26 itojun Exp $	*/
 
 /* Mapper for connections between MRouteD multicast routers.
  * Written by Pavel Curtis <Pavel@PARC.Xerox.Com>
@@ -906,6 +906,8 @@ int main(int argc, char **argv)
 	int 		count, recvlen, dummy = 0;
 
 	FD_ZERO(&fds);
+	if (igmp_socket >= FD_SETSIZE)
+	    log(LOG_ERR, 0, "descriptor too big");
 	FD_SET(igmp_socket, &fds);
 
 	tv.tv_sec = timeout;
