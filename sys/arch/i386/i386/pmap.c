@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 1994/10/27 04:15:41 cgd Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 1994/11/04 00:01:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -89,7 +89,7 @@
 
 #include <machine/cpu.h>
 
-#include <i386/isa/isa.h>
+#include <i386/isa/isareg.h>
 
 #include "isa.h"
 
@@ -279,7 +279,7 @@ pmap_bootstrap(virtual_start)
 	 * reserve special hunk of memory for use by bus dma as a bounce
 	 * buffer (contiguous virtual *and* physical memory).  XXX
 	 */
-#if	NISA > 0
+#if NISA > 0
 	isaphysmem = pmap_steal_memory(DMA_BOUNCE * NBPG);
 #endif
 
