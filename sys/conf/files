@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.363 2000/04/20 18:23:37 thorpej Exp $
+#	$NetBSD: files,v 1.364 2000/04/21 17:57:01 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -248,6 +248,10 @@ device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp
+
+# Symbios/NCR 53c720/53c8xx SCSI controllers
+device siop: scsi
+file dev/ic/siop.c			siop
 
 # UltraStor SCSI controllers
 device	uha: scsi
