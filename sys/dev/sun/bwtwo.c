@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.4 2001/11/13 06:54:32 lukem Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.4.8.1 2002/05/16 11:35:43 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.4 2001/11/13 06:54:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.4.8.1 2002/05/16 11:35:43 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.4 2001/11/13 06:54:32 lukem Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
@@ -112,17 +111,23 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.4 2001/11/13 06:54:32 lukem Exp $");
 #include <dev/sun/bwtwovar.h>
 #include <dev/sun/pfourreg.h>
 
-/* cdevsw prototypes */
-cdev_decl(bwtwo);
-
 extern struct cfdriver bwtwo_cd;
+
+dev_type_open(bwtwoopen);
+dev_type_ioctl(bwtwoioctl);
+dev_type_mmap(bwtwommap);
+
+const struct cdevsw bwtwo_cdevsw = {
+	bwtwoopen, nullclose, noread, nowrite, bwtwoioctl,
+	nostop, notty, nopoll, bwtwommap,
+};
 
 /* XXX we do not handle frame buffer interrupts (do not know how) */
 static void	bwtwounblank(struct device *);
 
 /* frame buffer generic driver */
 static struct fbdriver bwtwofbdriver = {
-	bwtwounblank, bwtwoopen, bwtwoclose, bwtwoioctl, bwtwopoll, bwtwommap
+	bwtwounblank, bwtwoopen, nullclose, bwtwoioctl, nopoll, bwtwommap
 };
 
 int
@@ -227,16 +232,6 @@ bwtwoopen(dev, flags, mode, p)
 }
 
 int
-bwtwoclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 bwtwoioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -273,16 +268,6 @@ bwtwounblank(dev)
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)dev;
 
 	sc->sc_set_video(sc, 1);
-}
-
-int
-bwtwopoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
 }
 
 /*
