@@ -1,4 +1,4 @@
-/*	$NetBSD: dohits.c,v 1.5 1998/03/04 13:16:14 christos Exp $	*/
+/*	$NetBSD: dohits.c,v 1.6 1998/04/04 01:02:09 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dohits.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: dohits.c,v 1.5 1998/03/04 13:16:14 christos Exp $");
+__RCSID("$NetBSD: dohits.c,v 1.6 1998/04/04 01:02:09 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ char *string;
     unsigned int i = seed;
     unsigned char c;
 
-    while ((c = *string++) != '0') {
+    while ((c = *string++) != '\0') {
 	if (c >= 0x60) {
 	    c -= (0x60+0x20);
 	} else {
