@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.35 1999/03/26 22:04:07 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.35.2.1 1999/05/03 12:56:07 perry Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -301,7 +301,7 @@ start()
 	pmap_bootstrap();
 
 	/* Now running virtual. set red zone for proc0 */
-	pt = kvtopte((u_int)proc0.p_addr + VAX_NBPG);
+	pt = kvtopte((u_int)proc0.p_addr + REDZONEADDR);
         pt->pg_v = 0;
 
 	((struct pcb *)proc0paddr)->framep = scratch;
