@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/03/06 03:05:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.7 2004/03/11 16:13:30 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ CONFIG_SUBST=	${HOST_SH} ${FONTCONFIGDIR}/config/config-subst \
 		exec_prefix="${X11BINDIR}" \
 		libdir="${X11USRLIBDIR}" \
 		includedir="${X11INCDIR}" \
+		hardcode_libdir_flag_spec="-Wl,-rpath,${X11USRLIBDIR}" \
 		PACKAGE_VERSION="1.0.1"
 
 fontconfig.pc:
