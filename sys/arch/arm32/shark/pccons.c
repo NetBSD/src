@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.15 2001/05/08 11:29:39 matthias Exp $       */
+/*      $NetBSD: pccons.c,v 1.16 2001/06/19 13:42:13 wiz Exp $       */
 
 /*
  * Copyright 1997
@@ -1210,7 +1210,7 @@ pcclose(dev_t       dev,
     ** Set up our pointers to the softc and tty structures.
     **
     ** Note : This all assumes that the system wont call us with 
-    **        an invalid (ie. non-existant), device identifier.
+    **        an invalid (ie. non-existent), device identifier.
     */
     struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
     struct tty      *tp = sc->sc_tty;
