@@ -1,29 +1,13 @@
-/*	$NetBSD: cmdbuf.c,v 1.3 1999/04/06 05:57:35 mrg Exp $	*/
+/*	$NetBSD: cmdbuf.c,v 1.4 2001/07/26 13:43:44 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -98,11 +82,11 @@ struct mlist
  */
 struct mlist mlist_search =  
 	{ &mlist_search,  &mlist_search,  &mlist_search,  NULL };
-public void *ml_search = (void *) &mlist_search;
+public void constant *ml_search = (void *) &mlist_search;
 
 struct mlist mlist_examine = 
 	{ &mlist_examine, &mlist_examine, &mlist_examine, NULL };
-public void *ml_examine = (void *) &mlist_examine;
+public void constant *ml_examine = (void *) &mlist_examine;
 
 #if SHELL_ESCAPE || PIPEC
 struct mlist mlist_shell =   
@@ -113,10 +97,10 @@ public void constant *ml_shell = (void *) &mlist_shell;
 #else /* CMD_HISTORY */
 
 /* If CMD_HISTORY is off, these are just flags. */
-public void *ml_search = (void *)1;
-public void *ml_examine = (void *)2;
+public void constant *ml_search = (void *)1;
+public void constant *ml_examine = (void *)2;
 #if SHELL_ESCAPE || PIPEC
-public void *ml_shell = (void *)3;
+public void constant *ml_shell = (void *)3;
 #endif
 
 #endif /* CMD_HISTORY */
@@ -125,6 +109,7 @@ public void *ml_shell = (void *)3;
  * History for the current command.
  */
 static struct mlist *curr_mlist = NULL;
+static int curr_cmdflags;
 
 
 /*
@@ -385,15 +370,10 @@ cmd_erase()
 	cmd_repaint(cp);
 	
 	/*
-	 * This is rather weird.
 	 * We say that erasing the entire command string causes us
-	 * to abort the current command, BUT ONLY IF there is no history
-	 * for this type of command.  This causes commands like search (/)
-	 * and edit (:e) to stay active even if we erase the entire string,
-	 * but commands like <digit> and - go away when we erase the string.
-	 * (See same thing in cmd_kill.)
+	 * to abort the current command, if CF_QUIT_ON_ERASE is set.
 	 */
-	if (curr_mlist == NULL && cp == cmdbuf && *cp == '\0')
+	if ((curr_cmdflags & CF_QUIT_ON_ERASE) && cp == cmdbuf && *cp == '\0')
 		return (CC_QUIT);
 	return (CC_OK);
 }
@@ -488,11 +468,12 @@ cmd_kill()
 	cmd_home();
 	*cp = '\0';
 	cmd_repaint(cp);
+
 	/*
-	 * Same weirdness as in cmd_erase.
-	 * If the current command has no history, abort the current command.
+	 * We say that erasing the entire command string causes us
+	 * to abort the current command, if CF_QUIT_ON_ERASE is set.
 	 */
-	if (curr_mlist == NULL)
+	if (curr_cmdflags & CF_QUIT_ON_ERASE)
 		return (CC_QUIT);
 	return (CC_OK);
 }
@@ -501,10 +482,12 @@ cmd_kill()
  * Select an mlist structure to be the current command history.
  */
 	public void
-set_mlist(mlist)
-	constant void *mlist;
+set_mlist(mlist, cmdflags)
+	void *mlist;
+	int cmdflags;
 {
 	curr_mlist = (struct mlist *) mlist;
+	curr_cmdflags = cmdflags;
 }
 
 #if CMD_HISTORY
@@ -883,7 +866,7 @@ init_compl()
  */
 	static char *
 next_compl(action, prev)
-     	int action;
+	int action;
 	char *prev;
 {
 	switch (action)
