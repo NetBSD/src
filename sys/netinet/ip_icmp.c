@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.39 2000/01/25 17:07:56 sommerfeld Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.40 2000/02/15 04:03:49 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -155,8 +155,12 @@ static int	ip_next_mtu __P((int, int));
 
 extern	struct protosw inetsw[];
 
+extern	struct timeval icmperrratelim;
+
 static void icmp_mtudisc __P((struct icmp *));
 static void icmp_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
+
+static int icmp_ratelimit __P((const struct in_addr *, const int, const int));
 
 /*
  * Generate an error packet of type error
@@ -197,8 +201,17 @@ icmp_error(n, type, code, dest, destifp)
 	/* Don't send error in response to a multicast or broadcast packet */
 	if (n->m_flags & (M_BCAST|M_MCAST))
 		goto freeit;
+
 	/*
-	 * First, formulate icmp message
+	 * First, do a rate limitation check.
+	 */
+	if (icmp_ratelimit(&oip->ip_src, type, code)) {
+		/* XXX stat */
+		goto freeit;
+	}
+
+	/*
+	 * Now, formulate icmp message
 	 */
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
@@ -786,6 +799,26 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	switch (name[0]) {
 	case ICMPCTL_MASKREPL:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &icmpmaskrepl));
+	case ICMPCTL_ERRRATELIMIT:
+	    {
+		int rate_usec, error, s;
+
+		/*
+		 * The sysctl specifies the rate in usec-between-icmp,
+		 * so we must convert from/to a timeval.
+		 */
+		rate_usec = (icmperrratelim.tv_sec * 1000000) +
+		    icmperrratelim.tv_usec;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &rate_usec);
+		if (error)
+			return (error);
+		s = splsoftnet();
+		icmperrratelim.tv_sec = rate_usec / 1000000;
+		icmperrratelim.tv_usec = rate_usec % 1000000;
+		splx(s);
+
+		return (0);
+	    }
 	default:
 		return (ENOPROTOOPT);
 	}
@@ -918,7 +951,6 @@ ip_next_mtu(mtu, dir)	/* XXX */
 	}
 }
 
-
 static void
 icmp_mtudisc_timeout(rt, r)
 	struct rtentry *rt;
@@ -935,4 +967,27 @@ icmp_mtudisc_timeout(rt, r)
 			rt->rt_rmx.rmx_mtu = 0;
 		}
 	}
+}
+
+/*
+ * Perform rate limit check.
+ * Returns 0 if it is okay to send the icmp packet.
+ * Returns 1 if the router SHOULD NOT send this icmp packet due to rate
+ * limitation.
+ *
+ * XXX per-destination/type check necessary?
+ */
+static int
+icmp_ratelimit(dst, type, code)
+	const struct in_addr *dst;	/* not used at this moment */
+	const int type;			/* not used at this moment */
+	const int code;			/* not used at this moment */
+{
+	static struct timeval icmperrratelim_last;
+
+	/*
+	 * ratecheck() returns true if it is okay to send.  We return
+	 * true if it is not okay to send.
+	 */
+	return (ratecheck(&icmperrratelim_last, &icmperrratelim) == 0);
 }
