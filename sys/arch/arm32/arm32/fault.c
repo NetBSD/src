@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.36 1999/02/19 22:32:21 mycroft Exp $	*/
+/*	$NetBSD: fault.c,v 1.37 1999/03/18 04:56:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -455,7 +455,15 @@ copyfault:
 				goto out;
 			
 			report_abort("", fault_status, fault_address, fault_pc);
-			trapsignal(p, SIGSEGV, TRAP_CODE);
+			if (rv == KERN_RESOURCE_SHORTAGE) {
+				printf("UVM: pid %d (%s), uid %d killed: "
+				       "out of swap\n", p->p_pid, p->p_comm,
+				       p->p_cred && p->p_ucred ?
+				       p->p_ucred->cr_uid : -1);
+				trapsignal(p, SIGKILL, TRAP_CODE);
+			} else {
+				trapsignal(p, SIGSEGV, TRAP_CODE);
+			}
 			break;
 		}
 		break;

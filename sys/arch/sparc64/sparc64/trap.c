@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 1999/03/18 03:25:55 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.25 1999/03/18 04:56:03 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1148,7 +1148,15 @@ kfault:
 			Debugger();
 		}
 #endif
-		trapsignal(p, SIGSEGV, (u_long)addr);
+		if (rv == KERN_RESOURCE_SHORTAGE) {
+			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+			       p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
+			trapsignal(p, SIGKILL, (u_long)addr);
+		} else {
+			trapsignal(p, SIGSEGV, (u_long)addr);
+		}
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(p, pc, sticks);

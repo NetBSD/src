@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.40 1999/02/23 03:20:03 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.41 1999/03/18 04:56:01 chs Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40 1999/02/23 03:20:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.41 1999/03/18 04:56:01 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,10 +468,15 @@ trap(a0, a1, a2, entry, framep)
 				goto dopanic;
 			}
 			ucode = a0;
-			i = SIGSEGV;
-#ifdef DEBUG
-			printtrap(a0, a1, a2, entry, framep, 1, user);
-#endif
+			if (rv == KERN_RESOURCE_SHORTAGE) {
+				printf("UVM: pid %d (%s), uid %d killed: "
+				       "out of swap\n", p->p_pid, p->p_comm,
+				       p->p_cred && p->p_ucred ?
+				       p->p_ucred->cr_uid : -1);
+				i = SIGKILL;
+			} else {
+				i = SIGSEGV;
+			}
 			break;
 		    }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.104 1999/03/05 22:18:07 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.105 1999/03/18 04:56:02 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.104 1999/03/05 22:18:07 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 1999/03/18 04:56:02 chs Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -582,7 +582,16 @@ trap(status, cause, vaddr, opc, frame)
 		}
 		if ((type & T_USER) == 0) 
 			goto copyfault;
-		sig = (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV;
+		if (rv == KERN_RESOURCE_SHORTAGE) {
+			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
+			       p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
+			sig = SIGKILL;
+		} else {
+			sig = (rv == KERN_PROTECTION_FAILURE) ?
+				SIGBUS : SIGSEGV;
+		}
 		ucode = vaddr;
 		break; /* SIGNAL */  
 	    }

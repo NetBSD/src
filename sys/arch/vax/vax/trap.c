@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.42 1999/03/13 15:16:48 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.43 1999/03/18 04:56:04 chs Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -226,10 +226,16 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
 			}
-ufault:			if (rv == KERN_RESOURCE_SHORTAGE)
-				printf("Pid %d killed: out of memory.\n",
-				 p->p_pid);
-			sig = SIGSEGV;
+ufault:			if (rv == KERN_RESOURCE_SHORTAGE) {
+				printf("UVM: pid %d (%s), uid %d killed: "
+				       "out of swap\n",
+				       p->p_pid, p->p_comm,
+				       p->p_cred && p->p_ucred ?
+				       p->p_ucred->cr_uid : -1);
+				sig = SIGKILL;
+			} else {
+				sig = SIGSEGV;
+			}
 		} else
 			trapsig = 0;
 		break;
