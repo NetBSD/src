@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.3 2001/03/05 07:11:18 toshii Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.4 2001/03/10 13:34:34 toshii Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ void		sacomcnpollc(dev_t, int);
 void		sacomcnprobe(struct consdev *);
 void		sacomcninit(struct consdev *);
 
-extern struct bus_space mainbus_bs_tag;
+extern struct bus_space sa11x0_bs_tag;
 
 static bus_space_tag_t sacomconstag;
 static bus_space_handle_t sacomconsioh;
@@ -1516,19 +1516,19 @@ sacomcninit(cp)
 {
 	if (cp == NULL) {
 		/* XXX cp == NULL means that MMU is disabled. */
-		if (sacominit(&mainbus_bs_tag, SACOM3_HW_BASE,
+		if (sacominit(&sa11x0_bs_tag, SACOM3_HW_BASE,
 				  CONSPEED, CONMODE, &sacomconsioh))
 			panic("can't init serial console @%x", CONADDR);
-		sacomconstag = &mainbus_bs_tag;
+		sacomconstag = &sa11x0_bs_tag;
 		cn_tab = &sacomcons;
 		return;
 	}
 
-	if (sacominit(&mainbus_bs_tag, CONADDR, CONSPEED,
+	if (sacominit(&sa11x0_bs_tag, CONADDR, CONSPEED,
 			  CONMODE, &sacomconsioh))
 		panic("can't init serial console @%x", CONADDR);
 	cn_tab = &sacomcons;
-	sacomconstag = &mainbus_bs_tag;
+	sacomconstag = &sa11x0_bs_tag;
 }
 
 int
