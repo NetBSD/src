@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.111 2004/01/26 04:25:02 itojun Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.112 2004/01/26 10:02:31 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.111 2004/01/26 04:25:02 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.112 2004/01/26 10:02:31 hannken Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -1730,7 +1730,6 @@ ufs_strategy(void *v)
 		return (0);
 	}
 	vp = ip->i_devvp;
-	bp->b_dev = vp->v_rdev;
 	return (VOP_STRATEGY(vp, bp));
 }
 
