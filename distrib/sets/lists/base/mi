@@ -1140,6 +1140,7 @@
 ./usr/share/zoneinfo/Arctic/Longyearbyen
 ./usr/share/zoneinfo/Asia
 ./usr/share/zoneinfo/Asia/Aden
+./usr/share/zoneinfo/Asia/Alma-Ata
 ./usr/share/zoneinfo/Asia/Almaty
 ./usr/share/zoneinfo/Asia/Amman
 ./usr/share/zoneinfo/Asia/Anadyr
@@ -1164,6 +1165,7 @@
 ./usr/share/zoneinfo/Asia/Harbin
 ./usr/share/zoneinfo/Asia/Hong_Kong
 ./usr/share/zoneinfo/Asia/Irkutsk
+./usr/share/zoneinfo/Asia/Ishigaki
 ./usr/share/zoneinfo/Asia/Istanbul
 ./usr/share/zoneinfo/Asia/Jakarta
 ./usr/share/zoneinfo/Asia/Jayapura
