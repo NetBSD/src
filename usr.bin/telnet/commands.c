@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95"; */
-static char rcsid[] = "$NetBSD: commands.c,v 1.11 1996/02/24 18:33:50 jtk Exp $";
+static char rcsid[] = "$NetBSD: commands.c,v 1.12 1996/02/24 18:43:39 jtk Exp $";
 #endif /* not lint */
 
 #if	defined(unix)
@@ -502,7 +502,7 @@ togdebug()
     }
 #else	/* NOT43 */
     if (debug) {
-	if (net > 0 && SetSockOpt(net, SOL_SOCKET, SO_DEBUG, 0, 0) < 0)
+	if (net > 0 && SetSockOpt(net, SOL_SOCKET, SO_DEBUG, 1) < 0)
 	    perror("setsockopt (SO_DEBUG)");
     } else
 	printf("Cannot turn off socket debugging\n");
