@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2003/07/18 08:26:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.35 2003/10/19 14:20:28 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -38,7 +38,7 @@ TZDIR=	/usr/share/zoneinfo
 REDO=		posix_only
 
 # Since "." may not be in PATH...
-YEARISTYPE=	"sh ${.CURDIR}/yearistype.sh"
+YEARISTYPE=	"${HOST_SH} ${.CURDIR}/yearistype.sh"
 
 YDATA=		africa antarctica asia australasia \
 		europe northamerica southamerica pacificnew etcetera factory \
@@ -54,21 +54,31 @@ TZBUILDSPEC=	${.OBJDIR}/builddir.spec
 
 .PHONY:	posix_only
 posix_only: ${TDATA}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	mkdir -p ${TZBUILDDIR}
+	${_MKCMD}\
 	cd ${.CURDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L /dev/null ${TDATA}
 
 .PHONY:	right_only
 right_only: leapseconds ${TDATA}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	mkdir -p ${TZBUILDDIR}
+	${_MKCMD}\
 	cd ${.CURDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -L leapseconds ${TDATA}
 
 .PHONY:	other_two
 other_two: leapseconds ${TDATA}
+	${_MKMSGCREATE}
+	${_MKCMD}\
 	mkdir -p ${TZBUILDDIR}
+	${_MKCMD}\
 	cd ${.CURDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/posix -L /dev/null ${TDATA}
+	${_MKCMD}\
 	cd ${.CURDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR}/right -L leapseconds ${TDATA}
 
@@ -86,19 +96,26 @@ TOOL_PAX.unpriv=
 
 .if ${MKSHARE} != "no"
 afterinstall: ${DATA} ${REDO}
+	${_MKMSGCREATE.m} ${POSIXRULES}
+	${_MKCMD}\
 	mkdir -p ${TZBUILDDIR}
+	${_MKCMD}\
 	cd ${.CURDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -p ${POSIXRULES}
+	${_MKCMD}\
 	cd ${TZBUILDDIR} && \
 	(   find . -type d | xargs -n 1 printf \
 		"%s type=dir mode=0755 uname=${BINOWN} gname=${BINGRP}\n" ; \
 	    find . -type f | xargs -n 1 printf \
 		"%s type=file mode=0444 uname=${BINOWN} gname=${BINGRP}\n" ; \
 	) > ${TZBUILDSPEC}
+	${_MKMSGINSTALL.m} ${DESTDIR}${TZDIR}
+	${_MKCMD}\
 	cd ${TZBUILDDIR} && \
 	  ${TOOL_PAX} -O -rw ${TOOL_PAX.unpriv} -M -N ${NETBSDSRCDIR}/etc \
 	  ${DESTDIR}${TZDIR} < ${TZBUILDSPEC}
 .if ${MKUNPRIVED} != "no"
+	${_MKCMD}\
 	sed -e "s|^\.|./${TZDIR}|g" -e "s|//|/|g" < ${TZBUILDSPEC} | \
 	    ${METALOG.add}
 .endif
@@ -108,6 +125,7 @@ afterinstall:
 .endif	# ${MKSHARE} == "no"
 
 clean:
-	-rm -rf ${TZBUILDDIR} ${TZBUILDSPEC}
+	${_MKCMD}\
+	rm -rf ${TZBUILDDIR} ${TZBUILDSPEC}
 
 .include <bsd.prog.mk>
