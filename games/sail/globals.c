@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.8 1999/12/28 18:05:24 jsm Exp $	*/
+/*	$NetBSD: globals.c,v 1.9 2000/02/09 22:27:56 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.8 1999/12/28 18:05:24 jsm Exp $");
+__RCSID("$NetBSD: globals.c,v 1.9 2000/02/09 22:27:56 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -553,7 +553,8 @@ char randomize;				/* -x, give first available ship */
 char longfmt;				/* -l, print score in long format */
 char nobells;				/* -b, don't ring bell before Signal */
 
-char issetuid;
+gid_t gid;
+gid_t egid;
 
 struct scenario *cc;		/* the current scenario */
 struct ship *ls;		/* &cc->ship[cc->vessels] */
