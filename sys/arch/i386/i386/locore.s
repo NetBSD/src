@@ -468,8 +468,16 @@ _fillw:
 	pushl	%edi
 	movl	8(%esp),%eax
 	movl	12(%esp),%edi
-	movl	16(%esp),%ecx
+	movw	%ax, %cx
+	rorl	$16, %eax
+	movw	%cx, %ax
 	cld
+	movl	16(%esp),%ecx
+	shrl	%ecx
+	rep
+	stosl
+	movl	16(%esp),%ecx
+	andl	$1, %ecx
 	rep
 	stosw
 	popl	%edi
