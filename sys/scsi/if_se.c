@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.4 1997/04/02 02:29:34 mycroft Exp $	*/
+/*	$NetBSD: if_se.c,v 1.5 1997/04/04 19:02:43 matthias Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -51,7 +51,7 @@
  * ioctl entry points. This allows a user program to, for example,
  * display the ea41x stats and download new code into the adaptor ---
  * functions which can't be performed through the ifconfig interface.
- * Normal operation does not require any special userland program. 
+ * Normal operation does not require any special userland program.
  */
 
 #include "bpfilter.h"
@@ -84,6 +84,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -93,6 +94,10 @@
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
+#endif
+
+#ifdef NETATALK
+#include <netatalk/at.h>
 #endif
 
 #if defined(CCITT) && defined(LLC)
@@ -120,12 +125,13 @@
 			 SE_PREFIX + ETHER_CRC)
 #define RBUF_LEN     (16 * 1024)
 
-     /* se_poll and se_poll0 are the normal polling rate and the
-      * minimum polling rate respectively. If se_poll0 should be
-      * chosen so that at maximum ethernet speed, we will read nearly
-      * full buffers. se_poll should be chosen for reasonable maximum
-      * latency. 
-      */
+/*
+ * se_poll and se_poll0 are the normal polling rate and the
+ * minimum polling rate respectively. If se_poll0 should be
+ * chosen so that at maximum ethernet speed, we will read nearly
+ * full buffers. se_poll should be chosen for reasonable maximum
+ * latency.
+ */
 #define SE_POLL 40		/* default in milliseconds */
 #define SE_POLL0 20		/* Default in milliseconds */
 int se_poll = 0; /* Delay in ticks set at attach time */
@@ -160,9 +166,11 @@ struct se_softc {
 	char *sc_tbuf;
 	char *sc_rbuf;
 	int protos;
-#define PROTO_IP	0x1
-#define PROTO_ARP	0x2
-#define PROTO_REVARP	0x4
+#define PROTO_IP	0x01
+#define PROTO_ARP	0x02
+#define PROTO_REVARP	0x04
+#define PROTO_AT	0x08
+#define PROTO_AARP	0x10
 	int sc_debug;
 	int sc_flags;
 #define SE_NEED_RECV 0x1
@@ -171,41 +179,41 @@ struct se_softc {
 cdev_decl(se);
 
 #ifdef __BROKEN_INDIRECT_CONFIG
-int	sematch __P((struct device *, void *, void *));
+static int	sematch __P((struct device *, void *, void *));
 #else
-int	sematch __P((struct device *, struct cfdata *, void *));
+static int	sematch __P((struct device *, struct cfdata *, void *));
 #endif
-void	seattach __P((struct device *, struct device *, void *));
+static void	seattach __P((struct device *, struct device *, void *));
 
-void	se_ifstart __P((struct ifnet *));
-void	sestart __P((void *));
+static void	se_ifstart __P((struct ifnet *));
+static void	sestart __P((void *));
 
-static	void sedone __P((struct scsi_xfer *));
-int	se_ioctl __P((struct ifnet *, u_long, caddr_t));
-void	sewatchdog __P((struct ifnet *));
+static void	sedone __P((struct scsi_xfer *));
+static int	se_ioctl __P((struct ifnet *, u_long, caddr_t));
+static void	sewatchdog __P((struct ifnet *));
 
-static void se_recv __P((void *));
+static __inline u_int16_t ether_cmp __P((void *, void *));
+static void	se_recv __P((void *));
 static struct mbuf *se_get __P((struct se_softc *, char *, int));
-static int se_read __P((struct se_softc *, char *, int));
-void sewatchdog __P((struct ifnet *));
-static int se_reset __P((struct se_softc *));
-static int se_add_proto __P((struct se_softc *, int));
-static int se_get_addr __P((struct se_softc *, u_int8_t *));
-static int se_set_media __P((struct se_softc *, int));
-static int se_init __P((struct se_softc *));
-static int se_set_multi __P((struct se_softc *, u_int8_t *));
-static int se_remove_multi __P((struct se_softc *, u_int8_t *));
+static int	se_read __P((struct se_softc *, char *, int));
+static int	se_reset __P((struct se_softc *));
+static int	se_add_proto __P((struct se_softc *, int));
+static int	se_get_addr __P((struct se_softc *, u_int8_t *));
+static int	se_set_media __P((struct se_softc *, int));
+static int	se_init __P((struct se_softc *));
+static int	se_set_multi __P((struct se_softc *, u_int8_t *));
+static int	se_remove_multi __P((struct se_softc *, u_int8_t *));
 #if 0
-static int sc_set_all_multi __P((struct se_softc *, int));
+static int	sc_set_all_multi __P((struct se_softc *, int));
 #endif
-static void se_stop __P((struct se_softc *));
-static __inline__  int se_scsi_cmd __P((struct scsi_link *sc_link,
+static void	se_stop __P((struct se_softc *));
+static __inline int se_scsi_cmd __P((struct scsi_link *sc_link,
 			    struct scsi_generic *scsi_cmd,
 			    int cmdlen, u_char *data_addr, int datalen,
 			    int retries, int timeout, struct buf *bp,
 			    int flags));
-static void se_delayed_ifstart __P((void *));
-static int se_set_mode(struct se_softc *, int, int);
+static void	se_delayed_ifstart __P((void *));
+static int	se_set_mode(struct se_softc *, int, int);
 
 struct cfattach se_ca = {
 	sizeof(struct se_softc), sematch, seattach
@@ -224,19 +232,17 @@ struct scsi_device se_switch = {
 
 struct scsi_inquiry_pattern se_patterns[] = {
 	{T_PROCESSOR, T_FIXED,
-	 "CABLETRN",         "EA412/14/19",                 ""},
+	 "CABLETRN",	     "EA412/14/19",		    ""},
 	{T_PROCESSOR, T_FIXED,
-	 "Cabletrn",         "EA412/14/19",                 ""},
+	 "Cabletrn",	     "EA412/",			    ""},
 };
-
-static __inline__ u_int16_t ether_cmp __P((void *, void *));
 
 /*
  * Compare two Ether/802 addresses for equality, inlined and
  * unrolled for speed.
  * Note: use this like bcmp()
  */
-static __inline__ u_int16_t
+static __inline u_int16_t
 ether_cmp(one, two)
 	void *one, *two;
 {
@@ -251,7 +257,7 @@ ether_cmp(one, two)
 
 #define ETHER_CMP	ether_cmp
 
-int
+static int
 sematch(parent, match, aux)
 	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
@@ -274,7 +280,7 @@ sematch(parent, match, aux)
  * The routine called by the low level scsi routine when it discovers
  * a device suitable for this driver.
  */
-void
+static void
 seattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -285,6 +291,7 @@ seattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 
+	printf("\n");
 	SC_DEBUG(sc_link, SDEV_DB2, ("seattach: "));
 
 	/*
@@ -306,11 +313,11 @@ seattach(parent, self, aux)
 	 */
 	sc->sc_tbuf = malloc(ETHERMTU + sizeof(struct ether_header),
 			     M_DEVBUF, M_NOWAIT);
-	if(sc->sc_tbuf == 0)
+	if (sc->sc_tbuf == 0)
 		panic("seattach: can't allocate transmit buffer");
 
 	sc->sc_rbuf = malloc(RBUF_LEN, M_DEVBUF, M_NOWAIT);/* A Guess */
-	if(sc->sc_rbuf == 0)
+	if (sc->sc_rbuf == 0)
 		panic("seattach: can't allocate receive buffer");
 
 	se_get_addr(sc, myaddr);
@@ -334,7 +341,8 @@ seattach(parent, self, aux)
 }
 
 
-static __inline__ int se_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
+static __inline int
+se_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 		       retries, timeout, bp, flags)
 	struct scsi_link *sc_link;
 	struct scsi_generic *scsi_cmd;
@@ -353,8 +361,11 @@ static __inline__ int se_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 	splx(s);
 	return error;
 }
+
 /* Start routine for calling from scsi sub system */
-void sestart(void *v)
+static void
+sestart(v)
+	void *v;
 {
 	struct se_softc *sc = (struct se_softc *) v;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -363,7 +374,9 @@ void sestart(void *v)
 	(void) splx(s);
 }
 
-static void se_delayed_ifstart(void *v)
+static void
+se_delayed_ifstart(v)
+	void *v;
 {
 	struct ifnet *ifp = v;
 	int s = splnet();
@@ -376,7 +389,7 @@ static void se_delayed_ifstart(void *v)
  * Start transmission on the interface.
  * Always called at splnet().
  */
-void
+static void
 se_ifstart(ifp)
 	struct ifnet *ifp;
 {
@@ -509,9 +522,10 @@ sedone(xs)
 	}
 	splx(s);
 }
-
-static void se_recv(v)
-     void *v;
+  
+static void
+se_recv(v)
+	void *v;
 {
 	/* do a recv command */
 	struct se_softc *sc = (struct se_softc *) v;
@@ -527,7 +541,6 @@ static void se_recv(v)
 				  SETIMEOUT, NULL, SCSI_NOSLEEP|SCSI_DATA_IN);
 	if (error)
 		timeout(se_recv, (void *)sc, se_poll);
-	
 }
 
 /*
@@ -631,7 +644,7 @@ se_read(sc, data, datalen)
 			goto next_packet;
 		}
 		if ((ifp->if_flags & IFF_PROMISC) != 0) {
-			m_adj(m, SE_PREFIX);	
+			m_adj(m, SE_PREFIX);
 		}
 		ifp->if_ipackets++;
 
@@ -674,7 +687,7 @@ se_read(sc, data, datalen)
 }
 
 
-void
+static void
 sewatchdog(ifp)
 	struct ifnet *ifp;
 {
@@ -706,9 +719,10 @@ se_reset(sc)
 	return error;
 }
 
-static int se_add_proto(sc, proto)
-     struct se_softc *sc;
-     int proto;
+static int
+se_add_proto(sc, proto)
+	struct se_softc *sc;
+	int proto;
 {
 	int error = 0;
 	struct scsi_ctron_ether_generic add_proto_cmd;
@@ -729,12 +743,12 @@ static int se_add_proto(sc, proto)
 			      SERETRIES, SETIMEOUT, NULL,
 			      SCSI_DATA_OUT);
 	return error;
-	
 }
 
-static int se_get_addr(sc, myaddr)
-     struct se_softc *sc;
-     u_int8_t *myaddr;
+static int
+se_get_addr(sc, myaddr)
+	struct se_softc *sc;
+	u_int8_t *myaddr;
 {
 	int error = 0;
 	struct scsi_ctron_ether_generic get_addr_cmd;
@@ -753,9 +767,10 @@ static int se_get_addr(sc, myaddr)
 }
 
 
-static int se_set_media(sc, type)
-     struct se_softc *sc;
-     int type;
+static int
+se_set_media(sc, type)
+	struct se_softc *sc;
+	int type;
 {
 	int error = 0;
 	struct scsi_ctron_ether_generic set_media_cmd;
@@ -772,10 +787,11 @@ static int se_set_media(sc, type)
 	return error;
 }
 
-static int se_set_mode(sc, len, mode)
-     struct se_softc *sc;
-     int len;
-     int mode;
+static int
+se_set_mode(sc, len, mode)
+	struct se_softc *sc;
+	int len;
+	int mode;
 {
 	int error = 0;
 	struct scsi_ctron_ether_set_mode set_mode_cmd;
@@ -792,11 +808,11 @@ static int se_set_mode(sc, len, mode)
 			      0);
 	return error;
 }
-	
 
 
-static int se_init(sc)
-     struct se_softc *sc;
+static int
+se_init(sc)
+	struct se_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct scsi_ctron_ether_generic set_addr_cmd;
@@ -810,9 +826,9 @@ static int se_init(sc)
 #endif
 		error = se_set_mode(sc, ETHERMTU + sizeof(struct ether_header),
 				    0);
-	if(error != 0)
+	if (error != 0)
 		return error;
-	
+
 	PROTOCMD(ctron_ether_set_addr, set_addr_cmd);
 	_lto2b(ETHER_ADDR_LEN, set_addr_cmd.length);
 	error = se_scsi_cmd(sc->sc_link,
@@ -821,7 +837,7 @@ static int se_init(sc)
 			      LLADDR(ifp->if_sadl), ETHER_ADDR_LEN,
 			      SERETRIES, SETIMEOUT, NULL,
 			      SCSI_DATA_OUT);
-	if(error != 0) {
+	if (error != 0) {
 		return error;
 	}
 
@@ -834,8 +850,16 @@ static int se_init(sc)
 	if ((sc->protos & PROTO_REVARP) &&
 	    (error = se_add_proto(sc, ETHERTYPE_REVARP)) != 0)
 		return error;
+#ifdef NETATALK
+	if ((sc->protos & PROTO_AT) &&
+	    (error = se_add_proto(sc, ETHERTYPE_AT)) != 0)
+		return error;
+	if ((sc->protos & PROTO_AARP) &&
+	    (error = se_add_proto(sc, ETHERTYPE_AARP)) != 0)
+		return error;
+#endif
 
-	if((ifp->if_flags & (IFF_RUNNING|IFF_UP)) == IFF_UP) {
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) == IFF_UP) {
 		ifp->if_flags |= IFF_RUNNING;
 		se_recv(sc);
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -844,9 +868,10 @@ static int se_init(sc)
 	return error;
 }
 
-static int se_set_multi(sc, addr)
-     struct se_softc *sc;
-     u_int8_t *addr;
+static int
+se_set_multi(sc, addr)
+	struct se_softc *sc;
+	u_int8_t *addr;
 {
 	struct scsi_ctron_ether_generic set_multi_cmd;
 	int error;
@@ -867,9 +892,10 @@ static int se_set_multi(sc, addr)
 	return error;
 }
 
-static int se_remove_multi(sc, addr)
-     struct se_softc *sc;
-     u_int8_t *addr;
+static int
+se_remove_multi(sc, addr)
+	struct se_softc *sc;
+	u_int8_t *addr;
 {
 	struct scsi_ctron_ether_generic remove_multi_cmd;
 	int error;
@@ -891,9 +917,10 @@ static int se_remove_multi(sc, addr)
 }
 
 #if 0	/* not used  --thorpej */
-static int sc_set_all_multi(sc, set)
-     struct se_softc *sc;
-     int set;
+static int
+sc_set_all_multi(sc, set)
+	struct se_softc *sc;
+	int set;
 {
 	int error = 0;
 	u_int8_t *addr;
@@ -921,7 +948,7 @@ static int sc_set_all_multi(sc, set)
 		}
 
 		addr = enm->enm_addrlo;
-		if((error = set? se_set_multi(sc, addr): se_remove_multi(sc, addr)) != 0)
+		if ((error = set? se_set_multi(sc, addr): se_remove_multi(sc, addr)) != 0)
 			return error;
 		ETHER_NEXT_MULTI(step, enm);
 	}
@@ -929,12 +956,13 @@ static int sc_set_all_multi(sc, set)
 }
 #endif /* not used */
 
-static void se_stop(sc)
-     struct se_softc *sc;
+static void
+se_stop(sc)
+	struct se_softc *sc;
 {
 	/* Don't schedule any reads */
 	untimeout(se_recv, sc);
-	
+
 	/* How can we abort any scsi cmds in progress? */
 }
 
@@ -942,7 +970,7 @@ static void se_stop(sc)
 /*
  * Process an ioctl request.
  */
-int
+static int
 se_ioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
 	u_long cmd;
@@ -962,7 +990,7 @@ se_ioctl(ifp, cmd, data)
 
 		if ((error = se_set_media(sc, CMEDIA_AUTOSENSE) != 0))
 			return error;
-		
+
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -988,6 +1016,13 @@ se_ioctl(ifp, cmd, data)
 			error = se_init(sc);
 			break;
 		    }
+#endif
+#ifdef NETATALK
+		case AF_APPLETALK:
+			sc->protos |= (PROTO_AT | PROTO_AARP);
+			if ((error = se_init(sc)) != 0)
+				break;
+			break;
 #endif
 		default:
 			error = se_init(sc);
@@ -1081,7 +1116,7 @@ seopen(dev, flag, fmt, p)
 	sc = se_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
-		
+
 	sc_link = sc->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1,

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ctron_ether.h,v 1.2 1997/03/24 00:04:55 thorpej Exp $	*/
+/*	$NetBSD: scsi_ctron_ether.h,v 1.3 1997/04/04 19:02:44 matthias Exp $	*/
 
 /*
  * SCSI interface description
@@ -49,60 +49,60 @@ struct scsi_ctron_ether_set_mode {
 
 
 struct ctron_stats {
-    u_int32_t  frames_xmit;
-    u_int32_t  bytes_xmit;
-    u_int32_t  ucast_xmit;			/* never incremented? */
-    u_int32_t  mcast_xmit;			/* gets ucasts and mcasts?? */
-    u_int32_t  bcast_xmit;
-    u_int32_t  defer_xmit;
-    u_int32_t  sgl_coll;
-    u_int32_t  multi_coll;
-    u_int32_t  tot_xmit_err;
-    u_int32_t  late_coll;
-    u_int32_t  excess_coll;
-    u_int32_t  int_err_xmit;
-    u_int32_t  carr_err;
-    u_int32_t  media_abort;
-    u_int32_t  frames_rec;
-    u_int32_t  bytes_rec;
-    u_int32_t  ucast_rec;			/* never incremented? */
-    u_int32_t  mcast_rec;			/* gets ucasts and mcasts?? */
-    u_int32_t  bcast_rec;
-    u_int32_t  tot_rec_err;
-    u_int32_t  too_long;
-    u_int32_t  too_short;
-    u_int32_t  align_err;
-    u_int32_t  crc_err;
-    u_int32_t  len_err;
-    u_int32_t  int_err_rec;
-    u_int32_t  sqe_err;
+	u_int32_t  frames_xmit;
+	u_int32_t  bytes_xmit;
+	u_int32_t  ucast_xmit;			/* never incremented? */
+	u_int32_t  mcast_xmit;			/* gets ucasts and mcasts?? */
+	u_int32_t  bcast_xmit;
+	u_int32_t  defer_xmit;
+	u_int32_t  sgl_coll;
+	u_int32_t  multi_coll;
+	u_int32_t  tot_xmit_err;
+	u_int32_t  late_coll;
+	u_int32_t  excess_coll;
+	u_int32_t  int_err_xmit;
+	u_int32_t  carr_err;
+	u_int32_t  media_abort;
+	u_int32_t  frames_rec;
+	u_int32_t  bytes_rec;
+	u_int32_t  ucast_rec;			/* never incremented? */
+	u_int32_t  mcast_rec;			/* gets ucasts and mcasts?? */
+	u_int32_t  bcast_rec;
+	u_int32_t  tot_rec_err;
+	u_int32_t  too_long;
+	u_int32_t  too_short;
+	u_int32_t  align_err;
+	u_int32_t  crc_err;
+	u_int32_t  len_err;
+	u_int32_t  int_err_rec;
+	u_int32_t  sqe_err;
 };
 
 struct scsi_ctron_ether_inquiry_data {
 /* standard; */
-    u_int8_t device;			/* 3 (T_CPU) */
-    u_int8_t dev_qual2;			/* 0 (fixed) */
-    u_int8_t version;			/* 0 */
-    u_int8_t response_format;			/* 0 */
-    u_int8_t additional_len;		/* 75!! */
-    u_int8_t unused[2];			/* 0, 0 */
-    u_int8_t flags;			/* 0x18 (sync+linked!?) */
-    char vendor[8];			/* ie; "Cabletrn" or "CABLETRN" */
-    char product[16];			/* ie; "EA412/...." */
-    char revision[4];			/* ie; "0100" or "1.00" */
-    char extra[8];			/* ie; "00.00.19" or "01.00.00" */
+	u_int8_t device;		/* 3 (T_CPU) */
+	u_int8_t dev_qual2;		/* 0 (fixed) */
+	u_int8_t version;		/* 0 */
+	u_int8_t response_format;		/* 0 */
+	u_int8_t additional_len;	/* 75!! */
+	u_int8_t unused[2];		/* 0, 0 */
+	u_int8_t flags; 		/* 0x18 (sync+linked!?) */
+	char vendor[8]; 		/* ie; "Cabletrn" or "CABLETRN" */
+	char product[16];		/* ie; "EA412/...." */
+	char revision[4];		/* ie; "0100" or "1.00" */
+	char extra[8];			/* ie; "00.00.19" or "01.00.00" */
 /* non-standard; */
-    u_int8_t hwaddr[6];			/* PROM ethernet addr */
-    u_int8_t swaddr[6];			/* curr ethernet addr */
-    char date[22];			/* firmware date string (asciz) */
-    u_int8_t mtype;			/* media type?? */
-    u_int8_t hwport;			/* value of h/w read port?? */
+	u_int8_t hwaddr[6];		/* PROM ethernet addr */
+	u_int8_t swaddr[6];		/* curr ethernet addr */
+	char date[22];			/* firmware date string (asciz) */
+	u_int8_t mtype; 		/* media type?? */
+	u_int8_t hwport;		/* value of h/w read port?? */
 };
 
 enum scsi_ctron_ether_media {
-    CMEDIA_PRIMARY=0,			/* twisted pair */
-    CMEDIA_SECONDARY=1,			/* coax */
-    CMEDIA_AUTOSENSE=2			/* set_media command only */
+	CMEDIA_PRIMARY=0,		/* twisted pair */
+	CMEDIA_SECONDARY=1,		/* coax */
+	CMEDIA_AUTOSENSE=2		/* set_media command only */
 };
 
 #endif /* _SCSI_CTRON_ETHER_H */
