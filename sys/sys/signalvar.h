@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)signalvar.h	7.1 (Berkeley) 5/9/91
- *	$Id: signalvar.h,v 1.5 1993/10/14 22:35:26 cgd Exp $
+ *	$Id: signalvar.h,v 1.6 1994/01/20 21:23:19 ws Exp $
  */
 
 #ifndef _SYS_SIGNALVAR_H_
@@ -137,12 +137,11 @@ int sigprop[NSIG + 1] = {
 	SA_KILL,		/* SIGUSR1 */
 	SA_KILL,		/* SIGUSR2 */
 };
+#endif /* SIGPROP */
 
 #define	stopsigmask	(sigmask(SIGSTOP)|sigmask(SIGTSTP)|\
 			 sigmask(SIGTTIN)|sigmask(SIGTTOU))
 #define	contsigmask	(sigmask(SIGCONT))
-
-#endif /* SIGPROP */
 
 #define	sigcantmask	(sigmask(SIGKILL)|sigmask(SIGSTOP))
 

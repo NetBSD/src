@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_ctl.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_ctl.c,v 1.6 1994/01/09 23:57:56 cgd Exp $
+ *	$Id: procfs_ctl.c,v 1.7 1994/01/20 21:23:05 ws Exp $
  */
 
 #include <sys/param.h>
@@ -55,12 +55,9 @@
 
 /*
  * True iff process (p) is in trace wait state
- * relative to process (curp)
  */
-#define TRACE_WAIT_P(curp, p) \
+#define TRACE_WAIT_P(p) \
 	((p)->p_stat == SSTOP && \
-	 ((p)->p_flag & SWTED) && \
-	 (p)->p_pptr == (curp) && \
 	 ((p)->p_flag & STRC))
 
 #define PROCFS_CTL_ATTACH	1
@@ -69,36 +66,16 @@
 #define PROCFS_CTL_RUN		4
 #define PROCFS_CTL_WAIT		5
 
-static vfs_namemap_t ctlnames[] = {
+static procfs_namemap_t ctlnames[] = {
 	/* special /proc commands */
 	{ "attach",	PROCFS_CTL_ATTACH },
 	{ "detach",	PROCFS_CTL_DETACH },
 	{ "step",	PROCFS_CTL_STEP },
 	{ "run",	PROCFS_CTL_RUN },
-	{ "wait",	PROCFS_CTL_WAIT },
 	{ 0 },
 };
 
-static vfs_namemap_t signames[] = {
-	/* regular signal names */
-	{ "hup",	SIGHUP },	{ "int",	SIGINT },
-	{ "quit",	SIGQUIT },	{ "ill",	SIGILL },
-	{ "trap",	SIGTRAP },	{ "abrt",	SIGABRT },
-	{ "iot",	SIGIOT },	{ "emt",	SIGEMT },
-	{ "fpe",	SIGFPE },	{ "kill",	SIGKILL },
-	{ "bus",	SIGBUS },	{ "segv",	SIGSEGV },
-	{ "sys",	SIGSYS },	{ "pipe",	SIGPIPE },
-	{ "alrm",	SIGALRM },	{ "term",	SIGTERM },
-	{ "urg",	SIGURG },	{ "stop",	SIGSTOP },
-	{ "tstp",	SIGTSTP },	{ "cont",	SIGCONT },
-	{ "chld",	SIGCHLD },	{ "ttin",	SIGTTIN },
-	{ "ttou",	SIGTTOU },	{ "io",		SIGIO },
-	{ "xcpu",	SIGXCPU },	{ "xfsz",	SIGXFSZ },
-	{ "vtalrm",	SIGVTALRM },	{ "prof",	SIGPROF },
-	{ "winch",	SIGWINCH },	{ "info",	SIGINFO },
-	{ "usr1",	SIGUSR1 },	{ "usr2",	SIGUSR2 },
-	{ 0 },
-};
+extern procfs_namemap_t procfs_signames[];
 
 static int
 procfs_control(curp, p, op)
@@ -109,48 +86,18 @@ procfs_control(curp, p, op)
 	int error;
 
 	/*
-	 * Attach - attaches the target process for debugging
-	 * by the calling process.
-	 */
-	if (op == PROCFS_CTL_ATTACH) {
-		/* check whether already being traced */
-		if (p->p_flag & STRC)
-			return (EBUSY);
-
-		/* can't trace yourself! */
-		if (p->p_pid == curp->p_pid)
-			return (EINVAL);
-
-		/*
-		 * Go ahead and set the trace flag.
-		 * Save the old parent (it's reset in
-		 *   _DETACH, and also in kern_exit.c:wait4()
-		 * Reparent the process so that the tracing
-		 *   proc gets to see all the action.
-		 * Stop the target.
-		 */
-		p->p_flag |= STRC;
-		if (p->p_pptr != curp) {
-			p->p_oppid = p->p_pptr->p_pid;
-			proc_reparent(p, curp);
-		}
-		psignal(p, SIGSTOP);
-		return (0);
-	}
-
-	/*
-	 * Target process must be stopped, owned by (curp) and
-	 * be set up for tracing (STRC flag set).
+	 * Target process must be stopped and
+	 * be set up for tracing (SFSTRC flag set).
+	 * Of course ATTACH is allowed any time.
 	 * Allow DETACH to take place at any time for sanity.
-	 * Allow WAIT any time, of course.
 	 */
 	switch (op) {
+	case PROCFS_CTL_ATTACH:
 	case PROCFS_CTL_DETACH:
-	case PROCFS_CTL_WAIT:
 		break;
 
 	default:
-		if (!TRACE_WAIT_P(curp, p))
+		if (!TRACE_WAIT_P(p))
 			return (EBUSY);
 	}
 
@@ -159,87 +106,81 @@ procfs_control(curp, p, op)
 	 */
 	FIX_SSTEP(p);
 
-	/*
-	 * Don't deliver any signal by default.
-	 * To continue with a signal, just send
-	 * the signal name to the ctl file
-	 */
-	p->p_xstat = 0;
-
 	switch (op) {
+	case PROCFS_CTL_ATTACH:
+		/*
+		 * Attach - attaches the target process for debugging
+		 * by the calling process.
+		 */
+		/* check whether already being traced */
+		if (p->p_flag & STRC)
+			return (EBUSY);
+		
+		/* can't trace yourself! */
+		/* DO WE REALLY NEED THIS RESTRICTION??? */
+		if (curp && p->p_pid == curp->p_pid)
+			return (EINVAL);
+		
+		/*
+		 * Go ahead and set the trace flag.
+		 * Save the old parent (it's reset in
+		 *   _DETACH, and also in kern_exit.c:wait4()
+		 * Reparent the process so that the tracing
+		 *   proc gets to see all the action.
+		 * Stop the target.
+		 */
+		p->p_flag |= STRC|SFSTRC;
+		psignal(p, SIGSTOP);
+		break;
+
 	/*
 	 * Detach.  Cleans up the target process, reparent it if possible
 	 * and set it running once more.
 	 */
 	case PROCFS_CTL_DETACH:
 		/* if not being traced, then this is a painless no-op */
-		if ((p->p_flag & STRC) == 0)
+		if ((p->p_flag & SFSTRC) == 0)
 			return (0);
 
+		if (error = process_sstep(p, 0))
+			return error;
+		
 		/* not being traced any more */
-		p->p_flag &= ~STRC;
-
-		/* give process back to original parent */
-		if (p->p_oppid != p->p_pptr->p_pid) {
-			struct proc *pp;
-
-			pp = pfind(p->p_oppid);
-			if (pp)
-				proc_reparent(p, pp);
-		}
-
-		p->p_flag &= ~SWTED;    /* XXX ? */
-		p->p_oppid = 0;
-
-		break;
-
+		p->p_flag &= ~(STRC|SFSTRC);
+		setrun(p);
+		return 0;
+		
 	/*
 	 * Step.  Let the target process execute a single instruction.
 	 */
 	case PROCFS_CTL_STEP:
-		if (error = process_sstep(p))
-			return error;
-		break;
-
+		/* Fall through */
 	/*
 	 * Run.  Let the target process continue running until a breakpoint
 	 * or some other trap.
 	 */
 	case PROCFS_CTL_RUN:
+		if (error = process_sstep(p, op == PROCFS_CTL_STEP))
+			return error;
+		setrun(p);
 		break;
-
-	/*
-	 * Wait for the target process to stop.
-	 * If the target is not being traced then just wait
-	 * to enter
-	 */
-	case PROCFS_CTL_WAIT:
-		error = 0;
-		if (p->p_flag & STRC) {
-			while (error == 0 &&
-					(p->p_stat != SSTOP) &&
-					(p->p_flag & STRC) &&
-					(p->p_pptr == curp)) {
-				error = tsleep((caddr_t) p,
-						PWAIT|PCATCH, "procfsx", 0);
-			}
-			if (error == 0 && !TRACE_WAIT_P(curp, p))
-				error = EBUSY;
-		} else {
-			while (error == 0 && p->p_stat != SSTOP) {
-				error = tsleep((caddr_t) p,
-						PWAIT|PCATCH, "procfs", 0);
-			}
-		}
-		return (error);
 
 	default:
 		panic("procfs_control");
 	}
-
-	if (p->p_stat == SSTOP)
-		setrun(p);
-	return (0);
+	/*
+	 * Wait for the target process to stop.
+	 */
+	while ((p->p_stat != SSTOP) &&
+	       (p->p_flag & SFSTRC)) {
+		if (error = tsleep((caddr_t) p,
+				   PWAIT|PCATCH, "procfs", 0))
+			return error;
+	}
+	if (!TRACE_WAIT_P(p))
+		return EBUSY;
+	
+	return 0;
 }
 
 pfs_doctl(curp, p, pfs, uio)
@@ -251,46 +192,48 @@ pfs_doctl(curp, p, pfs, uio)
 	int len = uio->uio_resid;
 	int xlen;
 	int error;
-	struct sigmap *sm;
 	char msg[PROCFS_CTLLEN+1];
-	char *cp = msg;
-	vfs_namemap_t *nm;
-
+	procfs_namemap_t *nm;
+	
+	/*
+	 * If we are debugging, you might read the stop signal.
+	 */
+	if (uio->uio_rw == UIO_READ && TRACE_WAIT_P(p)) {
+		if (p->p_xstat) {
+			if (error = pfs_readnote(p->p_xstat, uio))
+				return error;
+			
+			p->p_xstat = 0;
+		}
+		return 0;
+	}
+	
 	if (uio->uio_rw != UIO_WRITE)
 		return (EOPNOTSUPP);
 
 	xlen = PROCFS_CTLLEN;
-	error = vfs_getuserstr(uio, msg, &xlen);
+	error = procfs_getuserstr(uio, msg, &xlen);
 	if (error)
 		return (error);
-
+	
 	/*
-	 * Map signal names into signal generation
-	 * or debug control.  Unknown commands and/or signals
-	 * return EOPNOTSUPP.
-	 *
-	 * Sending a signal while the process is being debugged
-	 * also has the side effect of letting the target continue
-	 * to run.  There is no way to single-step a signal delivery.
+	 * Map debug control.  Unknown commands return EOPNOTSUPP.
 	 */
 	error = EOPNOTSUPP;
 
-	nm = vfs_findname(ctlnames, msg, xlen);
+	nm = procfs_findname(ctlnames, msg, xlen);
 	if (nm) {
 		error = procfs_control(curp, p, nm->nm_val);
-	} else {
-		nm = vfs_findname(signames, msg, xlen);
+	} else if (TRACE_WAIT_P(p)) {
+		/*
+		 * If we are debugging, it might be a signal.
+		 */
+		nm = procfs_findname(procfs_signames, msg, xlen);
 		if (nm) {
-			if (TRACE_WAIT_P(curp, p)) {
-				p->p_xstat = nm->nm_val;
-				FIX_SSTEP(p);
-				setrun(p);
-			} else {
-				psignal(p, nm->nm_val);
-			}
+			p->p_xstat = nm->nm_val;
 			error = 0;
 		}
 	}
-
+	
 	return (error);
 }
