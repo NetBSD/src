@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/10/09 14:36:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 1997/11/09 00:53:19 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
@@ -26,9 +26,9 @@ INCS= histedit.h
 INCSDIR=/usr/include
 
 CLEANFILES+=common.h editline.c emacs.h fcns.c fcns.h help.c help.h vi.h
-CFLAGS+=-I. -I${.CURDIR} 
-CFLAGS+=#-DDEBUG_TTY -DDEBUG_KEY -DDEBUG_READ -DDEBUG -DDEBUG_REFRESH
-CFLAGS+=#-DDEBUG_PASTE
+CPPFLAGS+=-I. -I${.CURDIR} 
+CPPFLAGS+=#-DDEBUG_TTY -DDEBUG_KEY -DDEBUG_READ -DDEBUG -DDEBUG_REFRESH
+CPPFLAGS+=#-DDEBUG_PASTE
 
 AHDR=vi.h emacs.h common.h 
 ASRC=${.CURDIR}/vi.c ${.CURDIR}/emacs.c ${.CURDIR}/common.c
@@ -57,7 +57,9 @@ help.h: ${ASRC} makelist
 editline.c: ${OSRCS}
 	sh ${.CURDIR}/makelist -e ${.ALLSRC:T} > ${.TARGET}
 
+test.o:	${.CURDIR}/TEST/test.c
+	
 test:	libedit.a test.o 
-	${CC} ${CFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermcap
+	${CC} ${LDFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermcap
 
 .include <bsd.lib.mk>
