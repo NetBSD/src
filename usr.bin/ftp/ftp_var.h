@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.32 1999/06/20 22:07:29 cgd Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.33 1999/06/29 10:43:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -62,10 +62,11 @@
 
 #include "extern.h"
 
-#define HASHBYTES	1024
 #define FTPBUFLEN	MAXPATHLEN + 200
 #define MAX_IN_PORT_T	0xffffU
 
+#define HASHBYTES	1024	/* default mark for `hash' command */
+#define	DEFAULTINCR	1024	/* default increment for `rate' command */
 #define STALLTIME	5	/* # of seconds of no xfer before "stalling" */
 
 #define	FTP_PORT	21	/* default if ! getservbyname("ftp/tcp") */
@@ -130,6 +131,10 @@ int	bytesize;		/* local byte size in binary */
 int	anonftp;		/* automatic anonymous login */
 int	dirchange;		/* remote directory changed by cd command */
 int	flushcache;		/* set HTTP cache flush headers with request */
+int	rate_get;		/* maximum get xfer rate */
+int	rate_get_incr;		/* increment for get xfer rate */
+int	rate_put;		/* maximum put xfer rate */
+int	rate_put_incr;		/* increment for put xfer rate */
 int	retry_connect;		/* seconds between retrying connection */
 int	ttywidth;		/* width of tty */
 char   *tmpdir;			/* temporary directory */
