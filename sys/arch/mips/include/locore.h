@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.3 1996/10/13 21:37:35 jonathan Exp $	*/
+/*	$NetBSD: locore.h,v 1.4 1997/05/25 23:00:40 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -49,6 +49,8 @@ struct user;
 extern int  copykstack __P((struct user *up));
 extern void MachSaveCurFPState __P((struct proc *p));
 extern int switch_exit __P((void)); /* XXX never really returns? */
+extern void blkclr __P((caddr_t val, int size));   /* bulk aligned bzero */
+
 
 /* MIPS-generic locore functions used by trap.c */
  extern void MachFPTrap __P((u_int statusReg, u_int CauseReg, u_int pc));
