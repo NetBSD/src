@@ -1,0 +1,16 @@
+#	$NetBSD: Makefile.mkfontdir,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+
+# Note: needs "install" run in ./encodings  first
+#
+
+MKFONTDIRDIR!=	cd ${NETBSDSRCDIR}/x11/tools/mkfontdir && ${PRINTOBJDIR}
+MKFONTDIR=	${MKFONTDIRDIR}/mkfontdir
+
+afterinstall:
+	rm -f ${DESTDIR}/${FILESDIR}/fonts.dir
+	${MKFONTDIR} ${DESTDIR}/${FILESDIR}
+	echo ".${FILESDIR}/fonts.dir type=file mode=0444 uname=root gname=wheel" \
+	    | ${METALOG.add}
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+	    ${DESTDIR}/${X11FONTDIR}/encodings/encodings.dir \
+	    ${DESTDIR}/${FILESDIR}/encodings.dir

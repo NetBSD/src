@@ -1,0 +1,17 @@
+#	$NetBSD: Makefile.pswrap,v 1.1.1.1 2003/09/11 18:37:09 lukem Exp $
+
+.SUFFIXES: .psw .c .h
+
+PSWRAPDIR!=	cd ${NETBSDSRCDIR}/x11/tools/pswrap && ${PRINTOBJDIR}
+PSWRAP=		${PSWRAPDIR}/pswrap
+
+${PSWRAP}:
+	(cd ${NETBSDSRCDIR}/x11/tools/pswrap && ${MAKE})
+
+.psw.c: ${PSWRAP}
+	rm -f ${.TARGET}
+	${PSWRAP} -a -o ${.TARGET} ${.IMPSRC}
+
+.psw.h: ${PSWRAP}
+	rm -f ${.TARGET}
+	${PSWRAP} -a -h ${.TARGET} ${.IMPSRC} >/dev/null

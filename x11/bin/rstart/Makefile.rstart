@@ -1,0 +1,18 @@
+#	$NetBSD: Makefile.rstart,v 1.1.1.1 2003/09/11 18:37:06 lukem Exp $
+
+.include <bsd.own.mk>
+
+.PATH:		${X11SRCDIR.xc}/programs/rstart/${CFDIR}
+FILESDIR=	${X11LIBDIR}/rstart/${CFDIR}
+
+.for _F in ${CFFILES}
+${_F}.sed: ${_F}
+	rm -f ${.TARGET}
+	sed ${CFSED} < ${.ALLSRC} > ${.TARGET}
+
+FILES+=			${_F}.sed
+CLEANFILES+=		${_F}.sed
+FILESNAME_${_F}.sed=	${_F}
+.endfor
+
+realall: ${FILES}
