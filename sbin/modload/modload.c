@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.32 2002/09/18 22:59:36 lha Exp $	*/
+/*	$NetBSD: modload.c,v 1.33 2002/10/06 13:23:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.32 2002/09/18 22:59:36 lha Exp $");
+__RCSID("$NetBSD: modload.c,v 1.33 2002/10/06 13:23:00 simonb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,8 +53,8 @@ __RCSID("$NetBSD: modload.c,v 1.32 2002/09/18 22:59:36 lha Exp $");
 #include <nlist.h>
 #include "pathnames.h"
 
-#define TRUE 1
-#define FALSE 0
+#define	TRUE 1
+#define	FALSE 0
 
 #include "modload.h"
 
@@ -71,20 +71,20 @@ char *out = NULL;
 int symtab = 0;
 int Sflag;
 
-static	void	cleanup __P((void));
+static	void	cleanup(void);
 
 /* prelink the module */
 static int
-prelink(const char *kernel, 
-	const char *entry, 
-	const char *outfile, 
-	const void *address, 
+prelink(const char *kernel,
+	const char *entry,
+	const char *outfile,
+	const void *address,
 	const char *object)
 {
 	char cmdbuf[1024];
 	int error = 0;
 
-	linkcmd(cmdbuf, sizeof(cmdbuf), 
+	linkcmd(cmdbuf, sizeof(cmdbuf),
 		kernel, entry, outfile, address, object);
 
 	if (debug)
@@ -178,8 +178,8 @@ verify_entry(const char *entry, char *filename)
 	return n;
 }
 
-/* 
- * Transfer data to kernel memory in chunks 
+/*
+ * Transfer data to kernel memory in chunks
  * of MODIOBUF size at a time.
  */
 void
@@ -188,7 +188,7 @@ loadbuf(void *buf, size_t len)
 	struct lmc_loadbuf ldbuf;
 	size_t n;
 	char *p = buf;
-	
+
 	while(len) {
 		n = MIN(len, MODIOBUF);
 		ldbuf.cnt = n;
@@ -214,8 +214,8 @@ loadspace(size_t len)
 	}
 }
 
-/* 
- * Transfer symbol table to kernel memory in chunks 
+/*
+ * Transfer symbol table to kernel memory in chunks
  * of MODIOBUF size at a time.
  */
 void
@@ -224,7 +224,7 @@ loadsym(void *buf, size_t len)
 	struct lmc_loadbuf ldbuf;
 	size_t n;
 	char *p = buf;
-	
+
 	while(len) {
 		n = MIN(len, MODIOBUF);
 		ldbuf.cnt = n;
@@ -347,7 +347,7 @@ main(int argc, char **argv)
 		errx(1, "can't prelink `%s' creating `%s'", modobj, out);
 	if (Sflag == 0)
 		fileopen |= OUTFILE_CREAT;
-  
+
  	/*
  	 * Pre-open the 0-linked module to get the size information
  	 */
