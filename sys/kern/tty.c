@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.159 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: tty.c,v 1.160 2004/02/06 06:58:21 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.159 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.160 2004/02/06 06:58:21 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1115,10 +1115,15 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    (tp->t_session != p->p_session)))
 			return (EPERM);
 
-		if (tp->t_session)
-			SESSRELE(tp->t_session);
+		/*
+		 * `p_session' acquires a reference.
+		 * But note that if `t_session' is set at this point,
+		 * it must equal `p_session', in which case the session
+		 * already has the correct reference count.
+		 */
+		if (tp->t_session == NULL)
+			SESSHOLD(p->p_session);
 
-		SESSHOLD(p->p_session);
 		tp->t_session = p->p_session;
 		tp->t_pgrp = p->p_pgrp;
 		p->p_session->s_ttyp = tp;
