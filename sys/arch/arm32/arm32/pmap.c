@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 1998/07/07 01:18:47 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 1998/07/08 00:18:16 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -524,7 +524,7 @@ pmap_map_in_l1(pmap, va, l2pa)
 	    L2_PTE_NC_NB(l2pa, AP_KRW);
 
 	/* XXX should be a purge */
-	cpu_tlb_flushD();
+/*	cpu_tlb_flushD();*/
 }
 
 
@@ -598,7 +598,7 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 				start = physical_freestart;
 			if (end > physical_freeend)
 				end = physical_freeend;
-			printf("%d: %lx -> %lx\n", loop, start, end-1);
+/*			printf("%d: %lx -> %lx\n", loop, start, end-1);*/
 #if defined(UVM)
 			uvm_page_physload(atop(start), atop(end),
 					  atop(start), atop(end));
@@ -1087,8 +1087,8 @@ pmap_allocpagedir(pmap)
 
 	/* XXX - the pmap is not in use thus should not need cleaning */
 	/* Also the page tables are not mapped */
-	cpu_cache_purgeID();
-	cpu_tlb_flushID();
+/*	cpu_cache_purgeID();
+	cpu_tlb_flushID();*/
 
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
