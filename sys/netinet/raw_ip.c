@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.71 2003/08/07 16:33:14 agc Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.72 2003/08/15 03:42:03 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.71 2003/08/07 16:33:14 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.72 2003/08/15 03:42:03 jonathan Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -93,6 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.71 2003/08/07 16:33:14 agc Exp $");
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #endif /*IPSEC*/
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#endif	/* FAST_IPSEC*/
 
 struct inpcbtable rawcbtable;
 
@@ -175,7 +179,7 @@ rip_input(m, va_alist)
 		if (last) {
 			struct mbuf *n;
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 			/* check AH/ESP integrity. */
 			if (ipsec4_in_reject_so(m, last->inp_socket)) {
 				ipsecstat.in_polvio++;
@@ -199,7 +203,7 @@ rip_input(m, va_alist)
 		}
 		last = inp;
 	}
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 	/* check AH/ESP integrity. */
 	if (last && ipsec4_in_reject_so(m, last->inp_socket)) {
 		m_freem(m);
@@ -382,7 +386,7 @@ rip_output(m, va_alist)
 	}
 #endif /*IPSEC*/
 	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions,
-	    &inp->inp_errormtu));
+	     inp, &inp->inp_errormtu));
 }
 
 /*

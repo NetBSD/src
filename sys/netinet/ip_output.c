@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.108 2003/08/07 16:33:14 agc Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.109 2003/08/15 03:42:03 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.108 2003/08/07 16:33:14 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.109 2003/08/15 03:42:03 jonathan Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -136,6 +136,12 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.108 2003/08/07 16:33:14 agc Exp $");
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif /*IPSEC*/
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
+#include <netipsec/xform.h>
+#endif	/* FAST_IPSEC*/
 
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static struct ifnet *ip_multicast_if __P((struct in_addr *, int *));
@@ -175,11 +181,18 @@ ip_output(m0, va_alist)
 	int *mtu_p;
 	u_long mtu;
 	struct ip_moptions *imo;
+	struct inpcb *inp;
 	va_list ap;
 #ifdef IPSEC
 	struct socket *so;
 	struct secpolicy *sp = NULL;
 #endif /*IPSEC*/
+#ifdef FAST_IPSEC
+	struct m_tag *mtag;
+	struct secpolicy *sp = NULL;
+	struct tdb_ident *tdbi;
+	int s;
+#endif
 	u_int16_t ip_len;
 
 	len = 0;
@@ -188,6 +201,7 @@ ip_output(m0, va_alist)
 	ro = va_arg(ap, struct route *);
 	flags = va_arg(ap, int);
 	imo = va_arg(ap, struct ip_moptions *);
+	inp = va_arg(ap, struct inpcb *);
 	if (flags & IP_RETURNMTU)
 		mtu_p = va_arg(ap, int *);
 	else
@@ -195,7 +209,7 @@ ip_output(m0, va_alist)
 	va_end(ap);
 
 	MCLAIM(m, &ip_tx_mowner);
-#ifdef IPSEC
+#ifdef IPSEC	/* XXX so = ((inp == NULL) ? NULL : inp->inp_socket; */
 	so = ipsec_getsocket(m);
 	(void)ipsec_setsocket(m, NULL);
 #endif /*IPSEC*/
@@ -573,6 +587,132 @@ sendit:
 
 skip_ipsec:
 #endif /*IPSEC*/
+#ifdef FAST_IPSEC
+	/*
+	 * Check the security policy (SP) for the packet and, if
+	 * required, do IPsec-related processing.  There are two
+	 * cases here; the first time a packet is sent through
+	 * it will be untagged and handled by ipsec4_checkpolicy.
+	 * If the packet is resubmitted to ip_output (e.g. after
+	 * AH, ESP, etc. processing), there will be a tag to bypass
+	 * the lookup and related policy checking.
+	 */
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
+	s = splsoftnet();
+	if (mtag != NULL) {
+		tdbi = (struct tdb_ident *)(mtag + 1);
+		sp = ipsec_getpolicy(tdbi, IPSEC_DIR_OUTBOUND);
+		if (sp == NULL)
+			error = -EINVAL;	/* force silent drop */
+		m_tag_delete(m, mtag);
+	} else {
+		sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags,
+					&error, inp);
+	}
+	/*
+	 * There are four return cases:
+	 *    sp != NULL	 	    apply IPsec policy
+	 *    sp == NULL, error == 0	    no IPsec handling needed
+	 *    sp == NULL, error == -EINVAL  discard packet w/o error
+	 *    sp == NULL, error != 0	    discard packet, report error
+	 */
+	if (sp != NULL) {
+		/* Loop detection, check if ipsec processing already done */
+		IPSEC_ASSERT(sp->req != NULL, ("ip_output: no ipsec request"));
+		for (mtag = m_tag_first(m); mtag != NULL;
+		     mtag = m_tag_next(m, mtag)) {
+#ifdef MTAG_ABI_COMPAT
+			if (mtag->m_tag_cookie != MTAG_ABI_COMPAT)
+				continue;
+#endif
+			if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE &&
+			    mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED)
+				continue;
+			/*
+			 * Check if policy has an SA associated with it.
+			 * This can happen when an SP has yet to acquire
+			 * an SA; e.g. on first reference.  If it occurs,
+			 * then we let ipsec4_process_packet do its thing.
+			 */
+			if (sp->req->sav == NULL)
+				break;
+			tdbi = (struct tdb_ident *)(mtag + 1);
+			if (tdbi->spi == sp->req->sav->spi &&
+			    tdbi->proto == sp->req->sav->sah->saidx.proto &&
+			    bcmp(&tdbi->dst, &sp->req->sav->sah->saidx.dst,
+				 sizeof (union sockaddr_union)) == 0) {
+				/*
+				 * No IPsec processing is needed, free
+				 * reference to SP.
+				 *
+				 * NB: null pointer to avoid free at
+				 *     done: below.
+				 */
+				KEY_FREESP(&sp), sp = NULL;
+				splx(s);
+				goto spd_done;
+			}
+		}
+
+		/*
+		 * Do delayed checksums now because we send before
+		 * this is done in the normal processing path.
+		 */
+		if (m->m_pkthdr.csum_flags & (M_CSUM_TCPv4|M_CSUM_UDPv4)) {
+			in_delayed_cksum(m);
+			m->m_pkthdr.csum_flags &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
+		}
+
+#ifdef __FreeBSD__
+		ip->ip_len = htons(ip->ip_len);
+		ip->ip_off = htons(ip->ip_off);
+#endif
+
+		/* NB: callee frees mbuf */
+		error = ipsec4_process_packet(m, sp->req, flags, 0);
+		/*
+		 * Preserve KAME behaviour: ENOENT can be returned
+		 * when an SA acquire is in progress.  Don't propagate
+		 * this to user-level; it confuses applications.
+		 *
+		 * XXX this will go away when the SADB is redone.
+		 */
+		if (error == ENOENT)
+			error = 0;
+		splx(s);
+		goto done;
+	} else {
+		splx(s);
+
+		if (error != 0) {
+			/*
+			 * Hack: -EINVAL is used to signal that a packet
+			 * should be silently discarded.  This is typically
+			 * because we asked key management for an SA and
+			 * it was delayed (e.g. kicked up to IKE).
+			 */
+			if (error == -EINVAL)
+				error = 0;
+			goto bad;
+		} else {
+			/* No IPsec processing for this packet. */
+		}
+#ifdef notyet
+		/*
+		 * If deferred crypto processing is needed, check that
+		 * the interface supports it.
+		 */ 
+		mtag = m_tag_find(m, PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED, NULL);
+		if (mtag != NULL && (ifp->if_capenable & IFCAP_IPSEC) == 0) {
+			/* notify IPsec to do its own crypto */
+			ipsp_skipcrypto_unmark((struct tdb_ident *)(mtag + 1));
+			error = EHOSTUNREACH;
+			goto bad;
+		}
+#endif
+	}
+spd_done:
+#endif /* FAST_IPSEC */
 
 #ifdef PFIL_HOOKS
 	/*
@@ -787,6 +927,10 @@ done:
 		key_freesp(sp);
 	}
 #endif /* IPSEC */
+#ifdef FAST_IPSEC
+	if (sp != NULL)
+		KEY_FREESP(&sp);
+#endif /* FAST_IPSEC */
 
 	return (error);
 bad:
@@ -947,7 +1091,7 @@ ip_ctloutput(op, so, level, optname, mp)
 	struct mbuf *m = *mp;
 	int optval = 0;
 	int error = 0;
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 #ifdef __NetBSD__
 	struct proc *p = curproc;	/*XXX*/
 #endif
@@ -1046,7 +1190,7 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 			break;
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 		case IP_IPSEC_POLICY:
 		{
 			caddr_t req = NULL;
@@ -1137,7 +1281,7 @@ ip_ctloutput(op, so, level, optname, mp)
 			*mtod(m, int *) = optval;
 			break;
 
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 		case IP_IPSEC_POLICY:
 		{
 			caddr_t req = NULL;
