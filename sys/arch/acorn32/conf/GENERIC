@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.37.2.1 2004/06/30 21:00:24 jdc Exp $
+# 	$NetBSD: GENERIC,v 1.37.2.2 2004/07/02 17:41:23 he Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.37.2.1 $"
+#ident		"GENERIC-$Revision: 1.37.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -128,6 +128,7 @@ options 	SYSVSEM		# System V-like semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 # Device options
 
