@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.4 1998/09/18 04:17:44 mark Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.5 1999/02/10 13:14:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -273,6 +273,7 @@ filecore_readdir(v)
 
 	error = filecore_dbread(dp, &bp);
 	if (error) {
+		brelse(bp);
 		return error;
 	}
 
