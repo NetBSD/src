@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1 2002/03/07 14:43:58 simonb Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2 2002/04/08 14:08:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <machine/intr.h>
 #include <machine/locore.h>
 
+#include <evbmips/evbmips/clockvar.h>
+
 struct evbmips_soft_intrhand *softnet_intrhand;
 
 /*
@@ -65,6 +67,9 @@ struct evbmips_soft_intr evbmips_soft_intrs[_IPL_NSOFT];
 struct evcnt mips_int5_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
 
+uint32_t last_cp0_count;	/* used by microtime() */
+uint32_t next_cp0_clk_intr;	/* used to schedule hard clock interrupts */
+
 void
 intr_init(void)
 {
@@ -80,13 +85,32 @@ cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 	struct clockframe cf;
 	struct evbmips_soft_intr *si;
 	struct evbmips_soft_intrhand *sih;
+	uint32_t new_cnt;
 	int i, s;
 
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
-		u_int32_t cycles = mips3_cp0_count_read();
-		mips3_cp0_compare_write(cycles + curcpu()->ci_cycles_per_hz);
+		last_cp0_count = next_cp0_clk_intr;
+		next_cp0_clk_intr += curcpu()->ci_cycles_per_hz;
+		mips3_cp0_compare_write(next_cp0_clk_intr);
+
+		/* Check for lost clock interrupts */
+		new_cnt = mips3_cp0_count_read();
+
+		/* 
+		 * Missed one or more clock interrupts, so let's start 
+		 * counting again from the current value.
+		 */
+		if ((next_cp0_clk_intr - new_cnt) & 0x80000000) {
+#if 0
+			missed_clk_intrs++;
+#endif
+
+			next_cp0_clk_intr = new_cnt +
+			    curcpu()->ci_cycles_per_hz;
+			mips3_cp0_compare_write(next_cp0_clk_intr);
+		}
 
 		cf.pc = pc;
 		cf.sr = status;

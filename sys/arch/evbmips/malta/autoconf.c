@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2002/03/07 14:44:03 simonb Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2002/04/08 14:08:27 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -47,8 +47,6 @@ struct device *booted_device;
 int booted_partition;
 
 static void	findroot(void);
-
-int		cpuspeed = 100;		/* Until we know more precisely. */
 
 void
 cpu_configure()

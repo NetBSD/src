@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2002/03/07 14:43:58 simonb Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2002/04/08 14:08:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1 2002/03/07 14:43:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2002/04/08 14:08:25 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,13 +102,12 @@ clockattach(struct device *dev, const struct clockfns *fns)
 void
 cpu_initclocks(void)
 {
-	u_int32_t cycles;
 
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
 
-	cycles = mips3_cp0_count_read();
-	mips3_cp0_compare_write(cycles + curcpu()->ci_cycles_per_hz);
+	next_cp0_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
+	mips3_cp0_compare_write(next_cp0_clk_intr);
 
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
 	tickfix = 1000000 - (hz * tick);
@@ -261,15 +260,19 @@ resettodr(void)
 void
 microtime(struct timeval *tvp)
 {
-	int s = splclock();
+	int s;
 	static struct timeval lasttime;
+	uint32_t count, res;
 
+	s = splclock();
 	*tvp = time;
 
-	/* XXX
-	 * record cp0 count register at each hard clock interrupt
-	 * and use to provide a more accurate microtime here.
-	 */
+	/* 32bit wrap-around during subtraction ok here. */
+	count = mips3_cp0_count_read() - last_cp0_count;
+	asm volatile("multu %1,%2 ; mfhi %0"
+	    : "=r"(res) : "r"(count), "r"(curcpu()->ci_divisor_recip));
+
+	tvp->tv_usec += res;
 
 	if (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
@@ -287,12 +290,30 @@ microtime(struct timeval *tvp)
 }
 
 /*
- * Wait "n" microseconds.
- * XXX Should be calibrated with the cycle counter.
+ * Wait for at least "n" microseconds.
  */
 void
 delay(int n)
 {
+	uint32_t cur, last, delta, usecs;
 
-        DELAY(n);
+	last = mips3_cp0_count_read();
+	delta = usecs = 0;
+
+	while (n > usecs) {
+		cur = mips3_cp0_count_read();
+
+		/* Check to see if the timer has wrapped around. */
+		if (cur < last)
+			delta += ((curcpu()->ci_cycles_per_hz - last) + cur);
+		else
+			delta += (cur - last);
+
+		last = cur;
+
+		if (delta >= curcpu()->ci_divisor_delay) {
+			usecs += delta / curcpu()->ci_divisor_delay;
+			delta %= curcpu()->ci_divisor_delay;
+		}
+	}
 }
