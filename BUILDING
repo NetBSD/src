@@ -13,7 +13,7 @@ STATUS
      plementation are noted specially, as with the note below:
 
      Note: This document applies only to platforms which use the new toolchain
-     as indicated by the default setting of USE_NEW_TOOLCHAIN in <bsd.own.mk>.
+     as indicated by the default setting of TOOLCHAIN_MISSING in <bsd.own.mk>.
      Platforms which have not yet been switched to the new toolchain should
      continue building traditionally, using the notes specified in the file
      UPDATING.
@@ -511,16 +511,20 @@ BUILDING
      with an absolute path.
 
 OBSOLETE VARIABLES
-     NBUILDJOBS  Now obsolete.  Use the make(1) option -j, instead.
+     NBUILDJOBS  Use the make(1) option -j, instead.
+
+     USE_NEW_TOOLCHAIN
+                 The new toolchain is now the default.  To disable, use
+                 TOOLCHAIN_MISSING=yes.
 
 SEE ALSO
      make(1), hier(7), release(7)
 
 HISTORY
-     The USE_NEW_TOOLCHAIN based build scheme was introduced in the ``NetBSD-
-     current'' development sources between NetBSD 1.5 and NetBSD 1.6.
+     The build.sh based build scheme was introduced for NetBSD 1.6 as
+     USE_NEW_TOOLCHAIN, and re-worked to TOOLCHAIN_MISSING after that.
 
 BUGS
-     A few platforms are not yet using the USE_NEW_TOOLCHAIN system.
+     A few platforms are not yet using this build system.
 
-NetBSD                            May 3, 2002                                8
+NetBSD                        September 21, 2002                             8
