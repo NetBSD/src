@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.20 1998/12/15 19:31:39 itohy Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.21 1998/12/19 16:27:10 drochner Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,6 +52,8 @@
  *   Unimplemented:
  *	linux_sys_rt_sigtimedwait	: sigsuspend w/timeout.
  */
+
+#define COMPAT_LINUX 1
 
 #include <sys/param.h>
 #include <sys/systm.h>
