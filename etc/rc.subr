@@ -1,6 +1,6 @@
-# $NetBSD: rc.subr,v 1.64 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: rc.subr,v 1.65 2004/10/12 14:45:29 lukem Exp $
 #
-# Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
+# Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -70,6 +70,7 @@ checkyesno()
 	esac
 }
 
+#
 # reverse_list list
 #	print the list in reverse order
 #
@@ -517,7 +518,7 @@ run_rc_command()
 					#
 			for _f in $required_vars; do
 				if ! checkyesno $_f; then
-					warn "\$${_f} is not set."
+					warn "\$${_f} is not enabled."
 					if [ -z "$rc_force" ]; then
 						return 1
 					fi
@@ -731,7 +732,7 @@ run_rc_script()
 }
 
 #
-# load_rc_config
+# load_rc_config command
 #	Source in the configuration file for a given command.
 #
 load_rc_config()
@@ -752,6 +753,24 @@ load_rc_config()
 	fi
 }
 
+#
+# load_rc_config_var cmd var
+#	Read the rc.conf(5) var for cmd and set in the
+#	current shell, using load_rc_config in a subshell to prevent
+#	unwanted side effects from other variable assignments.
+#
+load_rc_config_var()
+{
+	if [ $# -ne 2 ]; then
+		err 3 'USAGE: load_rc_config_var cmd var'
+	fi
+	eval $(eval '(
+		load_rc_config '$1' >/dev/null;
+                if [ -n "${'$2'}" -o "${'$2'-UNSET}" != "UNSET" ]; then
+			echo '$2'=\'\''${'$2'}\'\'';
+		fi
+	)' )
+}
 
 #
 # rc_usage commands
