@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.6 2001/01/31 18:39:46 thorpej Exp $
+#	$NetBSD: files.dreamcast,v 1.7 2001/02/01 01:27:04 thorpej Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -6,8 +6,8 @@
 include "arch/dreamcast/conf/files.shbus"
 
 include "dev/wscons/files.wscons"
-#include "dev/rasops/files.rasops"
-#include "dev/wsfont/files.wsfont"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
@@ -31,8 +31,7 @@ device	mkbd: wskbddev
 attach	mkbd at maple
 file	arch/dreamcast/dev/maple/mkbd.c			mkbd	needs-flag
 
-#device  pvr: wsemuldisplaydev, rasops16
-device  pvr: wsemuldisplaydev, wsrasteremulops
+device  pvr: wsemuldisplaydev, rasops16
 attach  pvr at shb
 file    arch/dreamcast/dev/pvr.c			pvr	needs-flag
 
