@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.8 1997/01/30 09:04:34 thorpej Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.9 1997/03/31 07:32:19 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -114,12 +114,12 @@ struct	dmareg {
 #if defined(HP320)
 #define	DMA_ARM(dc)	\
 	if (dc->dm_softc->sc_type == DMA_B) { \
-		register struct dmaBdevice *dma = dc->dm_Bhwaddr; \
+		struct dmaBdevice *dma = dc->dm_Bhwaddr; \
 		dma->dmaB_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
 		dma->dmaB_count = dc->dm_chain[dc->dm_cur].dc_count - 1; \
 		dma->dmaB_cmd = dc->dm_cmd; \
 	} else { \
-		register struct dmadevice *dma = dc->dm_hwaddr; \
+		struct dmadevice *dma = dc->dm_hwaddr; \
 		dma->dma_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
 		dma->dma_count = dc->dm_chain[dc->dm_cur].dc_count - 1; \
 		dma->dma_cmd = dc->dm_cmd; \
@@ -127,7 +127,7 @@ struct	dmareg {
 #else
 #define	DMA_ARM(dc)	\
 	{ \
-		register struct dmadevice *dma = dc->dm_hwaddr; \
+		struct dmadevice *dma = dc->dm_hwaddr; \
 		dma->dma_addr = dc->dm_chain[dc->dm_cur].dc_addr; \
 		dma->dma_count = dc->dm_chain[dc->dm_cur].dc_count - 1; \
 		dma->dma_cmd = dc->dm_cmd; \

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.10 1997/01/30 09:18:45 thorpej Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.11 1997/03/31 07:34:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -51,13 +51,13 @@
  *       (as in 9837 Gator systems)
  */
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/errno.h>
-#include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -93,6 +93,10 @@ void	gbox_intio_attach __P((struct device *, struct device *, void *));
 
 int	gbox_dio_match __P((struct device *, struct cfdata *, void *));
 void	gbox_dio_attach __P((struct device *, struct device *, void *));
+
+int	gbox_console_scan __P((int, caddr_t, void *));
+void	gboxcnprobe __P((struct consdev *cp));
+void	gboxcninit __P((struct consdev *cp));
 
 struct cfattach gbox_intio_ca = {
 	sizeof(struct grfdev_softc), gbox_intio_match, gbox_intio_attach
@@ -214,11 +218,10 @@ gb_init(gp, scode, addr)
 	int scode;
 	caddr_t addr;
 {
-	register struct gboxfb *gbp;
+	struct gboxfb *gbp;
 	struct grfinfo *gi = &gp->g_display;
 	u_char *fbp, save;
 	int fboff;
-	extern caddr_t iomap();
 
 	/*
 	 * If the console has been initialized, and it was us, there's
@@ -242,7 +245,7 @@ gb_init(gp, scode, addr)
 		gi->gd_dheight = 768;		/* XXX */
 		gi->gd_planes = 0;		/* how do we do this? */
 		/*
-		 * The minimal register info here is from the Gatorbox X driver.
+		 * The minimal info here is from the Gatorbox X driver.
 		 */
 		fbp = (u_char *) gp->g_fbkva;
 		gbp->write_protect = 0;
@@ -273,7 +276,7 @@ void
 gb_microcode(gbp)
 	struct gboxfb *gbp;
 {
-	register int i;
+	int i;
 	
 	for (i = 0; i < CRTC_DATA_LENGTH; i++) {
 		gbp->crtc_address = i;
@@ -288,7 +291,7 @@ gb_microcode(gbp)
  */
 int
 gb_mode(gp, cmd, data)
-	register struct grf_data *gp;
+	struct grf_data *gp;
 	int cmd;
 	caddr_t data;
 {
@@ -371,7 +374,7 @@ gb_mode(gp, cmd, data)
 
 void
 gbox_init(ip)
-	register struct ite_data *ip;
+	struct ite_data *ip;
 {
 	/* XXX */
 	if (ip->regbase == 0) {
@@ -453,7 +456,7 @@ gbox_putc(ip, c, dy, dx, mode)
         int dy, dx;
 	int c, mode;
 {
-        register int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
+        int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
 
 	gbox_windowmove(ip, charY(ip, c), charX(ip, c),
 			    dy * ip->ftheight, dx * ip->ftwidth,
@@ -500,7 +503,7 @@ gbox_scroll(ip, sy, sx, count, dir)
         struct ite_data *ip;
         int sy, dir, sx, count;
 {
-	register int height, dy, i;
+	int height, dy, i;
 	
 	tile_mover_waitbusy(ip->regbase);
 	REGBASE->write_protect = 0x0;
@@ -532,7 +535,7 @@ gbox_windowmove(ip, sy, sx, dy, dx, h, w, mask)
      struct ite_data *ip;
      int sy, sx, dy, dx, mask, h, w;
 {
-	register int src, dest;
+	int src, dest;
 
 	src  = (sy * 1024) + sx;	/* upper left corner in pixels */
 	dest = (dy * 1024) + dx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.7 1997/01/30 09:04:35 thorpej Exp $	*/
+/*	$NetBSD: dmavar.h,v 1.8 1997/03/31 07:32:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -69,7 +69,9 @@ struct dmaqueue {
 };
 
 #ifdef _KERNEL
-extern void	dmago(), dmafree();
-extern int	dmareq();
-extern void	dmacomputeipl __P((void));
-#endif
+void	dmago __P((int, char *, int, int));
+void	dmastop __P((int));
+void	dmafree __P((struct dmaqueue *));
+int	dmareq __P((struct dmaqueue *));
+void	dmacomputeipl __P((void));
+#endif /* _KERNEL */

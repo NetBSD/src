@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.6 1997/01/30 09:14:19 thorpej Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.7 1997/03/31 07:40:02 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,4 +102,7 @@ struct	rd_softc {
 
 #ifdef _KERNEL
 extern	struct rdidentinfo rdidentinfo[];
+
+/* rd_subr.c */
+void	rdmakedisklabel __P((int, struct disklabel *));
 #endif

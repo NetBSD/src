@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.27 1997/01/30 09:14:17 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.28 1997/03/31 07:40:00 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -50,13 +50,14 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/stat.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/stat.h>
 
 #include <hp300/dev/hpibvar.h>
 
@@ -91,9 +92,14 @@ int	rdgetinfo __P((dev_t));
 void	rdrestart __P((void *));
 struct buf *rdfinish __P((struct rd_softc *, struct buf *));
 
+void	rdrestart __P((void *));
+void	rdustart __P((struct rd_softc *));
+struct buf *rdfinish __P((struct rd_softc *, struct buf *));
 void	rdstart __P((void *));
-void	rdintr __P((void *));
 void	rdgo __P((void *));
+void	rdintr __P((void *));
+int	rdstatus __P((struct rd_softc *));
+int	rderror __P((int));
 
 bdev_decl(rd);
 cdev_decl(rd);
@@ -315,7 +321,6 @@ rdident(parent, sc, ha)
 	struct rd_softc *sc;
 	struct hpibbus_attach_args *ha;
 {
-	struct rd_softc rsc;
 	struct rd_describe *desc = sc != NULL ? &sc->sc_rddesc : NULL;
 	u_char stat, cmd[3];
 	char name[7];
@@ -427,7 +432,7 @@ rdident(parent, sc, ha)
 
 void
 rdreset(rs)
-	register struct rd_softc *rs;
+	struct rd_softc *rs;
 {
 	int ctlr = rs->sc_dev.dv_parent->dv_unit;
 	int slave = rs->sc_slave;
@@ -470,9 +475,9 @@ rdgetinfo(dev)
 {
 	int unit = rdunit(dev);
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
-	register struct disklabel *lp = rs->sc_dkdev.dk_label;
-	register struct partition *pi;
-	char *msg, *readdisklabel();
+	struct disklabel *lp = rs->sc_dkdev.dk_label;
+	struct partition *pi;
+	char *msg;
 
 	/*
 	 * Set some default values to use while reading the label
@@ -494,7 +499,7 @@ rdgetinfo(dev)
 	 */
 	msg = readdisklabel(rdlabdev(dev), rdstrategy, lp, NULL);
 	if (msg == NULL)
-		return(0);
+		return (0);
 
 	pi = lp->d_partitions;
 	printf("%s: WARNING: %s, ", rs->sc_dev.dv_xname, msg);
@@ -517,8 +522,8 @@ rdopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	register int unit = rdunit(dev);
-	register struct rd_softc *rs;
+	int unit = rdunit(dev);
+	struct rd_softc *rs;
 	int error, mask, part;
 
 	if (unit >= rd_cd.cd_ndevs ||
@@ -578,7 +583,7 @@ rdclose(dev, flag, mode, p)
 {
 	int unit = rdunit(dev);
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
-	register struct disk *dk = &rs->sc_dkdev;
+	struct disk *dk = &rs->sc_dkdev;
 	int mask, s;
 
 	mask = 1 << rdpart(dev);
@@ -610,14 +615,14 @@ rdclose(dev, flag, mode, p)
 
 void
 rdstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
 	int unit = rdunit(bp->b_dev);
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
-	register struct buf *dp = &rs->sc_tab;
-	register struct partition *pinfo;
-	register daddr_t bn;
-	register int sz, s;
+	struct buf *dp = &rs->sc_tab;
+	struct partition *pinfo;
+	daddr_t bn;
+	int sz, s;
 	int offset;
 
 #ifdef DEBUG
@@ -694,7 +699,7 @@ void
 rdustart(rs)
 	struct rd_softc *rs;
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	bp = rs->sc_tab.b_actf;
 	rs->sc_addr = bp->b_un.b_addr;
@@ -705,10 +710,10 @@ rdustart(rs)
 
 struct buf *
 rdfinish(rs, bp)
-	register struct rd_softc *rs;
-	register struct buf *bp;
+	struct rd_softc *rs;
+	struct buf *bp;
 {
-	register struct buf *dp = &rs->sc_tab;
+	struct buf *dp = &rs->sc_tab;
 
 	dp->b_errcnt = 0;
 	dp->b_actf = bp->b_actf;
@@ -730,8 +735,8 @@ rdstart(arg)
 	void *arg;
 {
 	struct rd_softc *rs = arg;
-	register struct buf *bp = rs->sc_tab.b_actf;
-	register int part, ctlr, slave;
+	struct buf *bp = rs->sc_tab.b_actf;
+	int part, ctlr, slave;
 
 	ctlr = rs->sc_dev.dv_parent->dv_unit;
 	slave = rs->sc_slave;
@@ -790,7 +795,7 @@ again:
 	rdreset(rs);
 	if (rs->sc_tab.b_errcnt++ < RDRETRY)
 		goto again;
-	printf("%s: rdstart err: cmd 0x%x sect %d blk %d len %d\n",
+	printf("%s: rdstart err: cmd 0x%x sect %ld blk %d len %d\n",
 	       rs->sc_dev.dv_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 	       bp->b_blkno, rs->sc_resid);
 	bp->b_flags |= B_ERROR;
@@ -832,9 +837,9 @@ void
 rdintr(arg)
 	void *arg;
 {
-	register struct rd_softc *rs = arg;
+	struct rd_softc *rs = arg;
 	int unit = rs->sc_dev.dv_unit;
-	register struct buf *bp = rs->sc_tab.b_actf;
+	struct buf *bp = rs->sc_tab.b_actf;
 	u_char stat = 13;	/* in case hpibrecv fails */
 	int rv, restart, ctlr, slave;
 
@@ -899,9 +904,9 @@ rdintr(arg)
 
 int
 rdstatus(rs)
-	register struct rd_softc *rs;
+	struct rd_softc *rs;
 {
-	register int c, s;
+	int c, s;
 	u_char stat;
 	int rv;
 
@@ -952,9 +957,10 @@ rderror(unit)
 	int unit;
 {
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
-	register struct rd_stat *sp;
+	struct rd_stat *sp;
 	struct buf *bp;
 	daddr_t hwbn, pbn;
+	char *hexstr __P((int, int)); /* XXX */
 
 	if (rdstatus(rs)) {
 #ifdef DEBUG
@@ -1090,7 +1096,7 @@ rdioctl(dev, cmd, data, flag, p)
 {
 	int unit = rdunit(dev);
 	struct rd_softc *sc = rd_cd.cd_devs[unit];
-	register struct disklabel *lp = sc->sc_dkdev.dk_label;
+	struct disklabel *lp = sc->sc_dkdev.dk_label;
 	int error, flags;
 
 	switch (cmd) {
@@ -1144,7 +1150,7 @@ int
 rdsize(dev)
 	dev_t dev;
 {
-	register int unit = rdunit(dev);
+	int unit = rdunit(dev);
 	struct rd_softc *rs;
 	int psize, didopen = 0;
 
@@ -1175,7 +1181,7 @@ rdprinterr(str, err, tab)
 	short err;
 	char *tab[];
 {
-	register int i;
+	int i;
 	int printed;
 
 	if (err == 0)

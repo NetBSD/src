@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.14 1997/01/30 09:06:53 thorpej Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.15 1997/03/31 07:32:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -203,7 +203,7 @@ fhpibreset(hs)
 
 void
 fhpibifc(hd)
-	register struct fhpibdevice *hd;
+	struct fhpibdevice *hd;
 {
 	hd->hpib_cmd |= CT_IFC;
 	hd->hpib_cmd |= CT_INITFIFO;
@@ -221,8 +221,8 @@ fhpibsend(hs, slave, sec, ptr, origcnt)
 {
 	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
 	struct fhpibdevice *hd = sc->sc_regs;
-	register int cnt = origcnt;
-	register int timo;
+	int cnt = origcnt;
+	int timo;
 	char *addr = ptr;
 
 	hd->hpib_stat = 0;
@@ -285,8 +285,8 @@ fhpibrecv(hs, slave, sec, ptr, origcnt)
 {
 	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
 	struct fhpibdevice *hd = sc->sc_regs;
-	register int cnt = origcnt;
-	register int timo;
+	int cnt = origcnt;
+	int timo;
 	char *addr = ptr;
 
 	/*
@@ -348,8 +348,8 @@ fhpibgo(hs, slave, sec, ptr, count, rw, timo)
 	void *ptr;
 {
 	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
-	register struct fhpibdevice *hd = sc->sc_regs;
-	register int i;
+	struct fhpibdevice *hd = sc->sc_regs;
+	int i;
 	char *addr = ptr;
 	int flags = 0;
 
@@ -438,13 +438,13 @@ void
 fhpibdmadone(arg)
 	void *arg;
 {
-	register struct hpibbus_softc *hs = arg;
+	struct hpibbus_softc *hs = arg;
 	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
 	int s = splbio();
 
 	if (hs->sc_flags & HPIBF_IO) {
-		register struct fhpibdevice *hd = sc->sc_regs;
-		register struct hpibqueue *hq;
+		struct fhpibdevice *hd = sc->sc_regs;
+		struct hpibqueue *hq;
 
 		hd->hpib_imask = 0;
 		hd->hpib_cid = 0xFF;
@@ -467,9 +467,9 @@ fhpibdone(hs)
 	struct hpibbus_softc *hs;
 {
 	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
-	register struct fhpibdevice *hd = sc->sc_regs;
-	register char *addr;
-	register int cnt;
+	struct fhpibdevice *hd = sc->sc_regs;
+	char *addr;
+	int cnt;
 
 	cnt = hs->sc_curcnt;
 	hs->sc_addr += cnt;
@@ -509,10 +509,13 @@ fhpibintr(arg)
 	void *arg;
 {
 	struct fhpib_softc *sc = arg;
-	register struct hpibbus_softc *hs = sc->sc_hpibbus;
-	register struct fhpibdevice *hd = sc->sc_regs;
-	register struct hpibqueue *hq;
-	register int stat0, unit = sc->sc_dev.dv_unit;
+	struct hpibbus_softc *hs = sc->sc_hpibbus;
+	struct fhpibdevice *hd = sc->sc_regs;
+	struct hpibqueue *hq;
+	int stat0;
+#ifdef DEBUG
+	int unit = sc->sc_dev.dv_unit;
+#endif
 
 	stat0 = hd->hpib_ids;
 	if ((stat0 & (IDS_IE|IDS_IR)) != (IDS_IE|IDS_IR)) {
@@ -586,8 +589,8 @@ fhpibppoll(hs)
 	struct hpibbus_softc *hs;
 {
 	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
-	register struct fhpibdevice *hd = sc->sc_regs;
-	register int ppoll;
+	struct fhpibdevice *hd = sc->sc_regs;
+	int ppoll;
 
 	hd->hpib_stat = 0;
 	hd->hpib_psense = 0;
@@ -606,10 +609,10 @@ fhpibppoll(hs)
 
 int
 fhpibwait(hd, x)
-	register struct fhpibdevice *hd;
+	struct fhpibdevice *hd;
 	int x;
 {
-	register int timo = hpibtimeout;
+	int timo = hpibtimeout;
 
 	while ((hd->hpib_intr & x) == 0 && --timo)
 		DELAY(1);
@@ -631,10 +634,10 @@ void
 fhpibppwatch(arg)
 	void *arg;
 {
-	register struct hpibbus_softc *hs = arg;
+	struct hpibbus_softc *hs = arg;
 	struct fhpib_softc *sc = (struct fhpib_softc *)hs->sc_dev.dv_parent;
-	register struct fhpibdevice *hd = sc->sc_regs;
-	register int slave;
+	struct fhpibdevice *hd = sc->sc_regs;
+	int slave;
 
 	if ((hs->sc_flags & HPIBF_PPOLL) == 0)
 		return;

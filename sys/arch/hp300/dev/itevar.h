@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.13 1997/01/30 09:18:57 thorpej Exp $	*/
+/*	$NetBSD: itevar.h,v 1.14 1997/03/31 07:37:27 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -203,6 +203,8 @@ int	iteon __P((struct ite_data *, int));
 void	iteoff __P((struct ite_data *, int));
 void	itefilter __P((char, char));
 void	itecninit __P((struct grf_data *, struct itesw *));
+int	itecngetc __P((dev_t));
+void	itecnputc __P((dev_t, int));
 int	ite_major __P((void));
 
 /* ite_subr.c prototypes */
