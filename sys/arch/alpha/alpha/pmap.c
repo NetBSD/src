@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.204 2003/10/27 07:07:35 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.205 2003/10/29 04:48:40 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.204 2003/10/27 07:07:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.205 2003/10/29 04:48:40 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2114,8 +2114,7 @@ boolean_t
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
-	paddr_t pa = 0;
-	boolean_t rv = FALSE;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2136,21 +2135,22 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		goto out;
 
 	pa = pmap_pte_pa(l3pte) | (va & PGOFSET);
+	PMAP_UNLOCK(pmap);
 	if (pap != NULL)
 		*pap = pa;
-	rv = TRUE;
+#ifdef DEBUG
+	if (pmapdebug & PDB_FOLLOW)
+		printf("0x%lx\n", pa);
+#endif
+	return (TRUE);
 
  out:
 	PMAP_UNLOCK(pmap);
 #ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW) {
-		if (rv)
-			printf("0x%lx\n", pa);
-		else
-			printf("failed\n");
-	}
+	if (pmapdebug & PDB_FOLLOW)
+		printf("failed\n");
 #endif
-	return (rv);
+	return (FALSE);
 }
 
 /*
