@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.5 1996/04/26 20:48:29 mark Exp $ */
+/* $NetBSD: stubs.c,v 1.6 1996/06/03 22:44:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -89,6 +89,9 @@ extern struct rd_conf *bootrd;
 extern BootConfig bootconfig;
 extern videomemory_t videomemory;
 
+int load_ramdisc_from_floppy __P((struct rd_conf *rd, dev_t dev));
+
+
 int
 do_mountroot()
 {
@@ -154,6 +157,8 @@ do_mountroot()
  * parameters in C.
  */
 
+int copystrinout __P((void */*from*/, void */*to*/, size_t /*maxlen*/, size_t */*lencopied*/));
+
 #if 0
 int
 copystr(from, to, maxlen, lencopied)
@@ -197,8 +202,6 @@ copystr(from, to, maxlen, lencopied)
 	return(copystrinout(from, to, maxlen, lencopied));
 }
 #endif
-
-int copystrinout __P((void */*from*/, void */*to*/, size_t /*maxlen*/, size_t */*lencopied*/));
 
 
 int
@@ -301,6 +304,13 @@ copyout(kaddr, udaddr, len)
 		traceback();
 	}
 	return(error);
+}
+
+void
+setsoftintr(irqmask)
+	u_int irqmask;
+{
+	soft_interrupts |= irqmask;
 }
 
 void
@@ -512,12 +522,16 @@ dumpsys()
  */
 
 #include "beep.h"
+#include "vidcaudio.h"
 #if NBEEP == 0
 void
 beep_generate()
 {
+#if NVIDCAUDIO > 0
+	vidcaudio_beep_generate();
+#endif /* NVIDCAUDIO */
 }
-#endif
+#endif /* NBEEP */
 
 
 #if XXX1
@@ -559,8 +573,7 @@ dumpvncbuf(vp)
 	}
 	(void)splx(s);
 }
-#endif
-
+#endif /* XXX1 */
 
 extern u_int spl_mask;
 
