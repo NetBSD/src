@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.21 2004/06/16 17:59:53 wrstuden Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.22 2004/06/19 06:17:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.21 2004/06/16 17:59:53 wrstuden Exp $
+ *	$Id: layer_vnops.c,v 1.22 2004/06/19 06:17:15 yamt Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.21 2004/06/16 17:59:53 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.22 2004/06/19 06:17:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -691,10 +691,6 @@ layer_unlock(v)
 	}
 }
 
-/*
- * As long as genfs_nolock is in use, don't call VOP_ISLOCKED(lowervp)
- * if vp->v_vnlock == NULL as genfs_noislocked will always report 0.
- */
 int
 layer_islocked(v)
 	void *v;
@@ -703,11 +699,16 @@ layer_islocked(v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	int lkstatus;
 
 	if (vp->v_vnlock != NULL)
-		return (lockstatus(vp->v_vnlock));
-	else
-		return (lockstatus(&vp->v_lock));
+		return lockstatus(vp->v_vnlock);
+
+	lkstatus = VOP_ISLOCKED(LAYERVPTOLOWERVP(vp));
+	if (lkstatus)
+		return lkstatus;
+
+	return lockstatus(&vp->v_lock);
 }
 
 /*
