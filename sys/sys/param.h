@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.51 1998/08/02 19:19:11 nathanw Exp $	*/
+/*	$NetBSD: param.h,v 1.52 1998/09/01 05:20:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,15 +65,15 @@
  *
  */
 
-#define __NetBSD_Version__  103070000	/* NetBSD 1.3G */
+#define __NetBSD_Version__  103080000	/* NetBSD 1.3H */
 
 /*
  * Historical NetBSD #defines -- new code should use
  * __NetBSD_Version__ instead.
  */
 
-#define NetBSD	199808		/* NetBSD version (year & month). */
-#define NetBSD1_3 8		/* NetBSD 1.3G */
+#define NetBSD	199809		/* NetBSD version (year & month). */
+#define NetBSD1_3 9		/* NetBSD 1.3H */
 
 #ifndef NULL
 #define	NULL	0
