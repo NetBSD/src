@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro PCI
  *	=====================================================================
  *
- *	$Id: isic_pci_elsa_qs1p.c,v 1.6 2002/03/27 07:39:37 martin Exp $
+ *	$Id: isic_pci_elsa_qs1p.c,v 1.7 2002/04/17 17:35:29 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.6 2002/03/27 07:39:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.7 2002/04/17 17:35:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -105,9 +105,18 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.6 2002/03/27 07:39:37 marti
 #define ELSA_OFF_ALE		0x00
 #define ELSA_OFF_RW		0x01
 
+/* LED values */
+#define	ELSA_NO_LED		0xff
+#define	ELSA_GREEN_LED		0x40
+#define	ELSA_YELLOW_LED		0x80
+
 #define ELSA_PORT0_MEM_MAPOFF	PCI_MAPREG_START
 #define ELSA_PORT0_IO_MAPOFF	PCI_MAPREG_START+4
 #define ELSA_PORT1_MAPOFF	PCI_MAPREG_START+12
+
+
+static void elsa_cmd_req(struct isic_softc *sc, int cmd, void *data);
+static void elsa_led_handler(void *token);
 
 /*---------------------------------------------------------------------------*
  *      ELSA QuickStep 1000pro/PCI ISAC get fifo routine
@@ -432,6 +441,8 @@ isic_attach_Eqs1pp(psc, pa)
 	sc->readfifo = eqs1pp_read_fifo;
 	sc->writefifo = eqs1pp_write_fifo;
 
+	sc->drv_command = elsa_cmd_req;
+
 	/* setup card type */
 	
 	sc->sc_cardtyp = CARD_TYPEP_ELSAQS1PCI;
@@ -444,16 +455,104 @@ isic_attach_Eqs1pp(psc, pa)
 	
 	sc->sc_ipac = 1;
 	sc->sc_bfifolen = IPAC_BFIFO_LEN;
-	
-	/* enable hscx/isac irq's */
-	IPAC_WRITE(IPAC_MASK, (IPAC_MASK_INT1 | IPAC_MASK_INT0));
 
-	IPAC_WRITE(IPAC_ACFG, 0);	/* outputs are open drain */
-	IPAC_WRITE(IPAC_AOE,		/* aux 5..2 are inputs, 7, 6 outputs */
-		(IPAC_AOE_OE5 | IPAC_AOE_OE4 | IPAC_AOE_OE3 | IPAC_AOE_OE2));
-	IPAC_WRITE(IPAC_ATX, 0xff);	/* set all output lines high */
+	/* disable any interrupts */
+	IPAC_WRITE(IPAC_MASK, 0);
+        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x01);
+}
 
-        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x41);	/* enable card interrupt */
+static void
+elsa_cmd_req(struct isic_softc *sc, int cmd, void *data)
+{
+	int s, v, blink = 0;
+	u_int8_t led_val;
+
+	switch (cmd) {
+	case CMR_DOPEN:
+		s = splnet();
+		/* enable hscx/isac irq's */
+		IPAC_WRITE(IPAC_MASK, (IPAC_MASK_INT1 | IPAC_MASK_INT0));
+
+		IPAC_WRITE(IPAC_ACFG, 0);	/* outputs are open drain */
+		IPAC_WRITE(IPAC_AOE,		/* aux 5..2 are inputs, 7, 6 outputs */
+			(IPAC_AOE_OE5 | IPAC_AOE_OE4 | IPAC_AOE_OE3 | IPAC_AOE_OE2));
+		IPAC_WRITE(IPAC_ATX, ELSA_NO_LED);	/* set all output lines high */
+
+	        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x41);	/* enable card interrupt */
+		splx(s);
+		break;
+	case CMR_DCLOSE:
+		s = splnet();
+		callout_stop(&sc->sc_driver_callout);
+		IPAC_WRITE(IPAC_ATX, ELSA_NO_LED);
+		IPAC_WRITE(IPAC_MASK, 0);
+	        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x01);
+		splx(s);
+		break;
+	case CMR_SETLEDS:
+		/* the magic value and keep reset off */
+		led_val = ELSA_NO_LED;
+
+		/* now see what LEDs we want to add */
+		v = (int)data;
+		if (v & CMRLEDS_TEI)
+			led_val &= ~ELSA_GREEN_LED;
+		blink = 0;
+		if (v & (CMRLEDS_B0|CMRLEDS_B1)) {
+			led_val &= ~ELSA_YELLOW_LED;
+			if ((v & (CMRLEDS_B0|CMRLEDS_B1)) == (CMRLEDS_B0|CMRLEDS_B1))
+				blink = hz/4;
+			else
+				blink = hz;
+			sc->sc_driver_specific = v;
+		}
+
+		s = splnet();
+		IPAC_WRITE(IPAC_ATX, led_val);
+		callout_stop(&sc->sc_driver_callout);
+		if (blink)
+			callout_reset(&sc->sc_driver_callout, blink,
+			    elsa_led_handler, sc);
+		splx(s);
+
+		break;
+	}
+}
+
+static void
+elsa_led_handler(void *token)
+{
+	struct isic_softc *sc = token;
+	int v, s, blink, off = 0;
+	u_int8_t led_val = ELSA_NO_LED;
+
+	s = splnet();
+	v = sc->sc_driver_specific;
+	if (v > 0) {
+		/* turn blinking LED off */
+		v = -sc->sc_driver_specific;
+		sc->sc_driver_specific = v;
+		off = 1;
+	} else {
+		sc->sc_driver_specific = -v;
+	}
+	if (v & CMRLEDS_TEI)
+		led_val &= ~ELSA_GREEN_LED;
+	blink = 0;
+	if (off == 0) {
+		if (v & (CMRLEDS_B0|CMRLEDS_B1))
+			led_val &= ~ELSA_YELLOW_LED;
+	}
+	if ((v & (CMRLEDS_B0|CMRLEDS_B1)) == (CMRLEDS_B0|CMRLEDS_B1))
+		blink = hz/4;
+	else
+		blink = hz;
+
+	IPAC_WRITE(IPAC_ATX, led_val);
+	if (blink)
+		callout_reset(&sc->sc_driver_callout, blink,
+		    elsa_led_handler, sc);
+	splx(s);
 }
 
 #endif
