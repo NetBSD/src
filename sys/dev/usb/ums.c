@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.16 1998/12/26 12:53:03 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.17 1998/12/30 13:14:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -568,7 +568,7 @@ ums_ioctl(v, cmd, data, flag, p)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_PS2;
+		*(u_int *)data = WSMOUSE_TYPE_USB;
 		return (0);
 	}
 
