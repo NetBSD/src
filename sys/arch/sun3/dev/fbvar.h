@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.4 1996/12/17 21:10:42 gwr Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.5 1998/02/08 05:15:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,11 @@ struct fbdevice {
 	caddr_t	fb_pixels;		/* display RAM */
 	int	fb_linebytes;		/* bytes per display line */
 
+	int	fb_flags;		/* copy of cf_flags */
+
+	/* This points to the P4 register if the FB has one. */
+	volatile u_int32_t *fb_pfour;
+
 	/*
 	 * XXX - The "Raster console" stuff could be stored
 	 * in the driver specific structure at fb_private
@@ -86,3 +91,13 @@ void	fb_attach __P((struct fbdevice *, int));
 int 	fb_noioctl __P((struct fbdevice *, void *));
 void	fb_unblank __P((void));
 
+void	fb_eeprom_setsize  __P((struct fbdevice *));
+
+int 	fb_pfour_id __P((void *));
+int 	fb_pfour_get_video __P((struct fbdevice *));
+void	fb_pfour_set_video __P((struct fbdevice *, int));
+
+void	fb_pfour_setsize __P((struct fbdevice *));
+
+/* This comes from enable.c */
+void	enable_video __P((int));

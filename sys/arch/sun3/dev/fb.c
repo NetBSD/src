@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.4 1996/12/17 21:10:41 gwr Exp $ */
+/*	$NetBSD: fb.c,v 1.5 1998/02/08 05:15:35 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,9 +55,11 @@
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 
+#include <machine/eeprom.h>
 #include <machine/fbio.h>
 
-#include "fbvar.h"
+#include <sun3/dev/fbvar.h>
+#include <sun3/dev/p4reg.h>
 
 cdev_decl(fb);
 
@@ -189,3 +191,146 @@ fb_noioctl(fbd, vp)
 	return ENOTTY;
 }
 
+/****************************************************************
+ * Misc. helpers...
+ */
+
+/* Set FB size based on EEPROM screen shape code. */
+void
+fb_eeprom_setsize(fb)
+	struct fbdevice *fb;
+{
+	int szcode;
+	int w, h;
+
+	/* Go get the EEPROM screen size byte. */
+	szcode = eeprom_copy->eeScreenSize;
+
+	w = h = 0;
+	switch (szcode) {
+	case EE_SCR_1152X900:
+		w = 1152;
+		h = 900;
+		break;
+	case EE_SCR_1024X1024:
+		w = 1024;
+		h = 1024;
+		break;
+	case EE_SCR_1600X1280:
+		w = 1600;
+		h = 1280;
+		break;
+	case EE_SCR_1440X1440:
+		w = 1440;
+		h = 1440;
+		break;
+	default:
+		break;
+	}
+
+	if (w && h) {
+		fb->fb_fbtype.fb_width  = w;
+		fb->fb_fbtype.fb_height = h;
+	} else {
+		printf("%s: EE size code %d unknown\n",
+			   fb->fb_name, szcode);
+	}
+}
+
+/*
+ * Probe for a P4 register at the passed virtual address.
+ * Returns P4 ID value, or -1 if no P4 register.
+ */
+int
+fb_pfour_id(va)
+	void *va;
+{
+	volatile u_int32_t val, save, *pfour = va;
+
+	/* Read the P4 register. */
+	save = *pfour;
+
+	/*
+	 * Try to modify the type code.  If it changes, put the
+	 * original value back, and tell the caller that the
+	 * framebuffer does not have a P4 register.
+	 */
+	val = save & ~P4_REG_RESET;
+	*pfour = (val ^ P4_FBTYPE_MASK);
+	if ((*pfour ^ val) & P4_FBTYPE_MASK) {
+		*pfour = save;
+		return (-1);
+	}
+
+	return (P4_ID(val));
+}
+
+/*
+ * Return the status of the video enable.
+ */
+int
+fb_pfour_get_video(fb)
+	struct fbdevice *fb;
+{
+
+	return ((*fb->fb_pfour & P4_REG_VIDEO) != 0);
+}
+
+/*
+ * Turn video on or off using the P4 register.
+ */
+void
+fb_pfour_set_video(fb, on)
+	struct fbdevice *fb;
+	int on;
+{
+	int pfour;
+
+	pfour = *fb->fb_pfour & ~(P4_REG_INTCLR|P4_REG_VIDEO);
+	*fb->fb_pfour = pfour | (on ? P4_REG_VIDEO : 0);
+}
+
+static const struct {
+	int w, h;
+} fb_p4sizedecode[P4_SIZE_MASK+1] = {
+	{ 1600, 1280 },
+	{ 1152,  900 },
+	{ 1024, 1024 },
+	{ 1280, 1024 },
+	{ 1440, 1440 },
+	{  640,  480 },
+};
+
+/*
+ * Use the P4 register to determine the screen size.
+ */
+void
+fb_pfour_setsize(fb)
+	struct fbdevice *fb;
+{
+	int p4, p4type, p4size;
+	int h, w;
+
+	if (fb->fb_pfour == 0)
+		return;
+
+	p4 = *fb->fb_pfour;
+	p4type = P4_FBTYPE(p4);
+
+	/* These do not encode the screen size. */
+	if (p4type == P4_ID_COLOR24)
+		return;
+	if ((p4type & P4_ID_MASK) == P4_ID_FASTCOLOR)
+		return;
+
+	p4size = p4type & P4_SIZE_MASK;
+	w = fb_p4sizedecode[p4size].w;
+	h = fb_p4sizedecode[p4size].h;
+	if (w && h) {
+		fb->fb_fbtype.fb_width  = w;
+		fb->fb_fbtype.fb_height = h;
+	} else {
+		printf("%s: P4 size code %d unknown\n",
+			   fb->fb_name, p4size);
+	}
+}
