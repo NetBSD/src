@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.52 2001/01/07 13:07:58 jdc Exp $ */
+/*	$NetBSD: md.c,v 1.53 2001/01/14 02:38:19 mrg Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -445,19 +445,13 @@ md_cleanup_install(void)
 	sprintf(cmd, "sed "
 			"-e 's/rc_configured=NO/rc_configured=YES/' "
 			" < %s > %s", realfrom, realto);
-	if (logging)
-		(void)fprintf(log, "%s\n", cmd);
-	if (scripting)
-		(void)fprintf(script, "%s\n", cmd);
+	scripting_fprintf(log, "%s\n", sedcmd);
 	do_system(cmd);
 
 	/* put "wscons=YES" into rc.conf.install (which will be renamed
 	 * to rc.conf in a second) */
 	sprintf(cmd, "echo wscons=YES >> %s", realto);
-	if (logging)
-		(void)fprintf(log, "%s\n", cmd);
-	if (scripting)
-		(void)fprintf(script, "%s\n", cmd);
+	scripting_fprintf(log, "%s\n", cmd);
 	do_system(cmd);
 
 	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
@@ -482,10 +476,7 @@ md_cleanup_install(void)
 				" < %s > %s", realfrom, realto);
 	}
 		
-	if (logging)
-		(void)fprintf(log, "%s\n", cmd);
-	if (scripting)
-		(void)fprintf(script, "%s\n", cmd);
+	scripting_fprintf(log, "%s\n", cmd);
 	do_system(cmd);
 	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
 
@@ -813,8 +804,7 @@ move_aout_libs()
 			    target_expand("/emul.old"));
 			backedup = 1;
 		}
-		if (scripting)
-			fprintf(script, "mkdir %s\n", prefix);
+		scripting_fprintf(NULL, "mkdir %s\n", prefix);
 		mkdir(prefix, 0755);
 	}
 
@@ -884,4 +874,23 @@ domove:
 	}
 
 	return n;
+}
+
+void
+md_set_sizemultname()
+{
+
+	set_sizemultname_meg();
+}
+
+void
+md_set_no_x()
+{
+
+	toggle_getit (8);
+	toggle_getit (9);
+	toggle_getit (10);
+	toggle_getit (11);
+	toggle_getit (12);
+	toggle_getit (13);
 }

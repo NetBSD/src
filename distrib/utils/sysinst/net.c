@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.69 2001/01/07 13:07:57 jdc Exp $	*/
+/*	$NetBSD: net.c,v 1.70 2001/01/14 02:38:15 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -410,6 +410,7 @@ config_network()
 	}
 	network_up = 1;
 
+again:
 	strncpy(defname, net_devices, 255);
 	tp = defname;
 	strsep(&tp, " ");
@@ -428,8 +429,6 @@ config_network()
 
 	/* Remove that space we added. */
 	net_dev[strlen(net_dev) - 1] = 0;
-
-again:
 
 #ifdef INET6
 	v6config = 1;
@@ -514,21 +513,18 @@ again:
 #endif
 
 	/* confirm the setting */
-	msg_display(MSG_netok, net_domain, net_host,
+	msg_display(MSG_netok, net_domain, net_host, net_dev,
 		     *net_ip == '\0' ? "<none>" : net_ip,
 		     *net_mask == '\0' ? "<none>" : net_mask,
 		     *net_namesvr == '\0' ? "<none>" : net_namesvr,
 		     *net_defroute == '\0' ? "<none>" : net_defroute,
-		     *net_media == '\0' ? "<default>" : net_media,
+		     *net_media == '\0' ? "<default>" : net_media);
 #ifdef INET6
+	msg_display_add(MSG_netokv6,
 		     !is_v6kernel() ? "<not supported>" :
 			(v6config ? "yes" : "no"),
-		     *net_namesvr6 == '\0' ? "<none>" : net_namesvr6
-#else
-		     "<not supported>",
-		     "<not supported>"
+		     *net_namesvr6 == '\0' ? "<none>" : net_namesvr6);
 #endif
-		     );
 	process_menu(MENU_yesno);
 	if (!yesno)
 		msg_display(MSG_netagain);
@@ -558,32 +554,19 @@ again:
 			(void)fprintf(stderr, "%s", msg_string(MSG_resolv));
 			exit(1);
 		}
-		if (scripting)
-			(void)fprintf(script, "cat <<EOF >/etc/resolv.conf\n");
+		scripting_fprintf(NULL, "cat <<EOF >/etc/resolv.conf\n");
 		time(&now);
 		/* NB: ctime() returns a string ending in  '\n' */
-		(void)fprintf(f, ";\n; BIND data file\n; %s %s;\n", 
+		scripting_fprintf(f, ";\n; BIND data file\n; %s %s;\n", 
 		    "Created by NetBSD sysinst on", ctime(&now)); 
 		if (strcmp(net_namesvr, "") != 0)
-			(void)fprintf(f, "nameserver %s\n", net_namesvr);
+			scripting_fprintf(f, "nameserver %s\n", net_namesvr);
 #ifdef INET6
 		if (strcmp(net_namesvr6, "") != 0)
-			(void)fprintf(f, "nameserver %s\n", net_namesvr6);
+			scripting_fprintf(f, "nameserver %s\n", net_namesvr6);
 #endif
-		(void)fprintf(f, "search %s\n", net_domain);
-		if (scripting) {
-			(void)fprintf(script, ";\n; BIND data file\n; %s %s;\n", 
-			    "Created by NetBSD sysinst on", ctime(&now)); 
-			if (strcmp(net_namesvr, "") != 0)
-				(void)fprintf(script, "nameserver %s\n",
-				    net_namesvr);
-#ifdef INET6
-			if (strcmp(net_namesvr6, "") != 0)
-				(void)fprintf(script, "nameserver %s\n",
-				    net_namesvr6);
-#endif
-			(void)fprintf(script, "search %s\n", net_domain);
-		}
+		scripting_fprintf(f, "search %s\n", net_domain);
+		scripting_fprintf(NULL, "EOF\n");
 		fflush(NULL);
 		fclose(f);
 	}
@@ -828,21 +811,21 @@ write_etc_hosts(FILE *f)
 {
 	int l;
 
-	fprintf(f, "#\n");
-	fprintf(f, "# Added by NetBSD sysinst\n");
-	fprintf(f, "#\n");
+	scripting_fprintf(f, "#\n");
+	scripting_fprintf(f, "# Added by NetBSD sysinst\n");
+	scripting_fprintf(f, "#\n");
 
-	fprintf(f, "127.0.0.1	localhost\n");
+	scripting_fprintf(f, "127.0.0.1	localhost\n");
 
-	fprintf(f, "%s\t", net_ip);
+	scripting_fprintf(f, "%s\t", net_ip);
 	l = strlen(net_host) - strlen(net_domain);
 	if (l <= 0 ||
 	    net_host[l - 1] != '.' ||
 	    strcasecmp(net_domain, net_host + l) != 0) {
 		/* net_host isn't an FQDN. */
-		fprintf(f, "%s.%s ", net_host, net_domain);
+		scripting_fprintf(f, "%s.%s ", net_host, net_domain);
 	}
-	fprintf(f, "%s\n", net_host);
+	scripting_fprintf(f, "%s\n", net_host);
 }
 
 /*
@@ -850,16 +833,12 @@ write_etc_hosts(FILE *f)
  * config files in the target disk.  Be careful not to lose any
  * information we don't immediately add back, in case the install
  * target is the currently-active root. 
- *
- * XXXX rc.conf support is needed here!
  */
 void
 mnt_net_config(void)
 {
 	char ans [5] = "y";
 	char ifconfig_fn [STRSIZE];
-	char to [STRSIZE];
-	char cmd [STRSIZE];
 
 	FILE *f;
 
@@ -869,19 +848,9 @@ mnt_net_config(void)
 	if (*ans != 'y')
 		return;
 
-	/* Write hostname to /etc/myname */
-	if ((net_dhcpconf & DHCPCONF_HOST) == 0) {
-		f = target_fopen("/etc/myname", "w");
-		if (f != 0) {
-			(void)fprintf(f, "%s\n", net_host);
-			if (scripting) {
-				(void)fprintf(script,
-				    "echo \"%s\" >%s/etc/myname\n",
-				    net_host, target_prefix());
-			}
-			(void)fclose(f);
-		}
-	}
+	/* Write hostname to /etc/rc.cofn */
+	if ((net_dhcpconf & DHCPCONF_HOST) == 0)
+		add_rc_conf("hostname=%s\n", net_host);
 
 	/* If not running in target, copy resolv.conf there. */
 	if ((net_dhcpconf & DHCPCONF_NAMESVR) == 0) {
@@ -897,15 +866,11 @@ mnt_net_config(void)
 		 */
 		f = target_fopen("/etc/hosts", "a");
 		if (f != 0) {
+			scripting_fprintf(NULL, "cat <<EOF >>%s/etc/hosts\n",
+			    target_prefix());
 			write_etc_hosts(f);
 			(void)fclose(f);
-			if (scripting) {
-				(void)fprintf(script,
-				    "cat <<EOF >>%s/etc/hosts\n",
-				    target_prefix());
-				write_etc_hosts(script);
-				(void)fprintf(script, "EOF\n");
-			}
+			scripting_fprintf(NULL, "EOF\n");
 		}
 
 		/* Write IPaddr and netmask to /etc/ifconfig.if[0-9] */
@@ -913,54 +878,23 @@ mnt_net_config(void)
 		    net_dev);
 		f = target_fopen(ifconfig_fn, "w");
 		if (f != 0) {
-			if (*net_media != '\0') {
-				fprintf(f, "%s netmask %s media %s\n",
-					net_ip, net_mask, net_media);
-				if (scripting) {
-					fprintf(script,
-					    "echo \"%s netmask %s media %s\">%s%s\n",
-					    net_ip, net_mask, net_media,
-					    target_prefix(), ifconfig_fn);
-				}
-			} else {
-				fprintf(f, "%s netmask %s\n",
-					net_ip, net_mask);
-				if (scripting) {
-					fprintf(script,
-					    "echo \"%s netmask %s\">%s%s\n",
-					    net_ip, net_mask, target_prefix(),
-					    ifconfig_fn);
-				}
-			}
+			scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
+			    target_prefix(), ifconfig_fn);
+			if (*net_media != '\0')
+				scripting_fprintf(f, "%s netmask %s media %s\n",
+				    net_ip, net_mask, net_media);
+			else
+				scripting_fprintf(f, "%s netmask %s\n", net_ip,
+				    net_mask);
+			
 			fclose(f);
+			scripting_fprintf(NULL, "EOF\n");
 		}
-
-		f = target_fopen("/etc/mygate", "w");
-		if (f != 0) {
-			fprintf(f, "%s\n", net_defroute);
-			if (scripting) {
-				fprintf(script,
-				    "echo \"%s\" >%s/etc/mygate\n",
-				    net_defroute, target_prefix());
-			}
-			fclose(f);
-		}
+		add_rc_conf("defaultroute=\"%s\"\n", net_defroute);
 	} else {
-		strncpy(to, target_expand("/etc/rc.conf"), STRSIZE);
-		sprintf(cmd, "echo dhclient=YES >> %s", to);
-		if (logging)
-			(void)fprintf(log, "%s\n", cmd);
-		if (scripting)
-			(void)fprintf(script, "%s\n", cmd);
-		do_system(cmd);
-		sprintf(cmd, "echo dhclient_flags=\"%s\" >> %s", net_dev, to);
-		if (logging)
-			(void)fprintf(log, "%s\n", cmd);
-		if (scripting)
-		        (void)fprintf(script, "%s\n", cmd);
-	       do_system(cmd);
-	}
-
+		add_rc_conf("dhclient=YES\n");
+		add_rc_conf("dhclient_flags=\"%s\"", net_dev);
+        }
 	fflush(NULL);
 }
 

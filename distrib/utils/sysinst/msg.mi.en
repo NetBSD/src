@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.79 2000/12/18 09:39:51 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.80 2001/01/14 02:38:15 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -184,7 +184,8 @@ into multiple BSD partitions.  You must now set up your BSD disklabel.
 You have several choices.  They are summarized below. 
 -- Standard: the BSD disklabel partitions are computed by this program. 
 -- Standard with X: twice the swap space, space for X binaries. 
--- Custom: you specify the sizes of all the BSD disklabel partitions.
+-- Custom: you specify the sizes of all the BSD disklabel partitions. 
+-- Use existing: use current partitions. You must assign mount points. 
 
 The NetBSD part of your disk is %.2f Megabytes. 
 Standard requires at least %.2f Megabytes. 
@@ -223,18 +224,18 @@ message fspart
 }
 
 message fspart_header
-{   Size      Offset    End       FStype Bsize Fsize Mount point
-   --------- --------- --------- ------ ----- ----- -----------
+{   Size      Offset    End       FStype Bsize Fsize Preserve Mount point
+   --------- --------- --------- ------ ----- ----- -------- -----------
 }
 
 message fspart_row_start
 {%c: %-9d %-9d %-9d %-6s }
 
 message fspart_row_end_bsd
-{%-5d %-5d %s\n}
+{%-5d %-5d %-8s %s\n}
 
 message fspart_row_end_msdos
-{            %s\n}
+{                     %s\n}
 
 message fspart_row_end_other
 {\n}
@@ -421,8 +422,8 @@ message nfssource
 located.  Remember, the directory should contain the .tgz files and
 must be nfs mountable.
 
-host:		%s
-directory:	%s
+host:		%s 
+directory:	%s 
 }
 
 message nfsbadmount
@@ -518,12 +519,16 @@ message netok
 
 DNS Domain:		%s 
 Host Name:		%s 
+Primary Interface:	%s 
 Host IP:		%s 
 Netmask:		%s 
 IPv4 Nameserver:	%s 
 IPv4 Gateway:		%s 
 Media type:		%s 
-IPv6 autoconf:		%s 
+}
+
+message netokv6
+{IPv6 autoconf:		%s 
 IPv6 Nameserver:	%s 
 }
 
@@ -826,4 +831,29 @@ Special values that can be entered for the offset value:
     -1:   start at the beginning of the NetBSD part of the disk
    a-%c:   start at the end of partition X
 
+}
+
+message postuseexisting
+{
+Don't forget to fill in the file system mount points for each of the
+file systems that are to be mounted.  Press <return> to continue.
+}
+
+message cur_fs
+{Currently selected file-systems
+
+}
+
+message cur_fs_header
+{    Mount-point   Selected\n}
+
+message cur_fs_row
+{    %s         %s\n}
+
+message no_root_fs
+{
+There is no defined root file system.  You need to define at least
+one mount point with "/".
+
+Press <return> to continue.
 }

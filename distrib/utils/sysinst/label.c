@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.18 2000/12/22 10:12:12 mrg Exp $	*/
+/*	$NetBSD: label.c,v 1.19 2001/01/14 02:38:14 mrg Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.18 2000/12/22 10:12:12 mrg Exp $");
+__RCSID("$NetBSD: label.c,v 1.19 2001/01/14 02:38:14 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -214,8 +214,7 @@ savenewlabel(lp, nparts)
 #endif
 	if (logging)
 		(void)fprintf(log, "Creating disklabel %s\n", bsddiskname);
-	if (scripting)
-		(void)fprintf(script, "cat <<EOF >>/etc/disktab\n");
+	scripting_fprintf(NULL, "cat <<EOF >>/etc/disktab\n");
 	if (f == NULL) {
 		endwin();
 		(void)fprintf(stderr, "Could not open /etc/disktab");
@@ -223,51 +222,28 @@ savenewlabel(lp, nparts)
 			(void)fprintf(log, "Failed to open /etc/diskabel for appending.\n");
 		exit (1);
 	}
-	(void)fprintf(f, "%s|NetBSD installation generated:\\\n", bsddiskname);
-	(void)fprintf(f, "\t:dt=%s:ty=winchester:\\\n", disktype);
-	(void)fprintf(f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
-	(void)fprintf(f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
-	(void)fprintf(f, "\t:se#%d:%s\\\n", sectorsize, doessf);
-	if (scripting) {
-		(void)fprintf(script, "%s|NetBSD installation generated:\\\n", bsddiskname);
-		(void)fprintf(script, "\t:dt=%s:ty=winchester:\\\n", disktype);
-		(void)fprintf(script, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
-		(void)fprintf(script, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
-		(void)fprintf(script, "\t:se#%d:%s\\\n", sectorsize, doessf);
-	}
+	scripting_fprintf(f, "%s|NetBSD installation generated:\\\n", bsddiskname);
+	scripting_fprintf(f, "\t:dt=%s:ty=winchester:\\\n", disktype);
+	scripting_fprintf(f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
+	scripting_fprintf(f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
+	scripting_fprintf(f, "\t:se#%d:%s\\\n", sectorsize, doessf);
 	for (i = 0; i < nparts; i++) {
-		(void)fprintf(f, "\t:p%c#%d:o%c#%d:t%c=%s:",
+		scripting_fprintf(f, "\t:p%c#%d:o%c#%d:t%c=%s:",
 		    'a'+i, bsdlabel[i].pi_size,
 		    'a'+i, bsdlabel[i].pi_offset,
 		    'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
-		if (scripting)
-			(void)fprintf(script, "\t:p%c#%d:o%c#%d:t%c=%s:",
-			    'a'+i, bsdlabel[i].pi_size,
-			    'a'+i, bsdlabel[i].pi_offset,
-			    'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
-		if (bsdlabel[i].pi_fstype == FS_BSDFFS) {
-			(void)fprintf (f, "b%c#%d:f%c#%d:ta=4.2BSD:",
+		if (PI_ISBSDFS(&bsdlabel[i]))
+			scripting_fprintf (f, "b%c#%d:f%c#%d:ta=4.2BSD:",
 				       'a'+i, bsdlabel[i].pi_bsize,
 				       'a'+i, bsdlabel[i].pi_fsize);
-			if (scripting)
-				(void)fprintf (script, "b%c#%d:f%c#%d:ta=4.2BSD:",
-					       'a'+i, bsdlabel[i].pi_bsize,
-					       'a'+i, bsdlabel[i].pi_fsize);
-		}
+	
 		if (i < nparts - 1)
-			(void)fprintf(f, "\\\n");
+			scripting_fprintf(f, "\\\n");
 		else
-			(void)fprintf(f, "\n");
-		if (scripting) {
-			if (i < nparts - 1)
-				(void)fprintf(script, "\\\n");
-			else
-				(void)fprintf(script, "\n");
-		}
+			scripting_fprintf(f, "\n");
 	}
 	fclose (f);
-	if (scripting)
-		(void)fprintf(script, "EOF\n");
+	scripting_fprintf(NULL, "EOF\n");
 	fflush(NULL);
 	return(0);
 }
@@ -290,6 +266,7 @@ translate_partinfo(lp, pp)
 	case FS_SWAP:
 		break;
 
+	case FS_BSDLFS:
 	case FS_BSDFFS:
 		(*lp).pi_offset = 0;
 		(*lp).pi_size = 0;
