@@ -1,10 +1,10 @@
-# 	$NetBSD: SPLODE,v 1.1 2001/08/14 12:16:19 mrg Exp $
+# 	$NetBSD: SPLODE,v 1.2 2001/09/22 00:58:46 mrg Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	64
 
@@ -203,8 +203,8 @@ sbus0	at mainbus0				# Ultra 1
 #upa0	at mainbus0				# Ultra 1E, Ultra 2, Ex0000
 #psycho*	at mainbus0				# Darwin, Ultra5
 #pci*	at psycho?
-#pci*	at simba?
-#simba*	at pci? dev ? function ?		# `APB' support.
+#pci*	at ppb?
+#ppb*	at pci? dev ? function ?		# `APB' support.
 #ebus*	at pci?					# ebus devices
 
 #### Standard system devices -- all required for a given architecture
