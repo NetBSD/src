@@ -1,6 +1,6 @@
 NetBSD Mirror Site List
 
-The following sites mirror NetBSD as of March 03, 1998.
+The following sites mirror NetBSD as of April 28, 1998.
 
 If you wish to become a distribution site for NetBSD, contact
 mirrors@netbsd.org.
@@ -41,11 +41,17 @@ Japan
 
 *   ftp://netbsd.tohoku.ac.jp/NetBSD
 
+Korea
+
+*   ftp://sunsite.kren.ne.kr/pub/OS/NetBSD
+
 Netherlands
 
 *   ftp://ftp.nl.netbsd.org/pub/NetBSD
 
 Norway
+
+*   ftp://ftp.no.netbsd.org/pub/NetBSD
 
 *   ftp://ftp.ntnu.no/pub/NetBSD
 
