@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.6 1993/07/18 08:23:12 andrew Exp $
+ *	$Id: pmap.c,v 1.7 1993/07/18 08:43:19 mycroft Exp $
  */
 
 /*
@@ -835,7 +835,7 @@ pmap_protect(pmap, sva, eva, prot)
 		ix = 0;
 		i386prot = pte_prot(pmap, prot);
 		if (va < UPT_MAX_ADDRESS)	/* see also pmap_enter() */
-			/* what on earth is this?  2 == PG_RW !!! */
+			/* XXX what on earth is this?  2 == PG_RW !!! */
 			/* andrew@werple.apana.org.au */
 			i386prot |= 2 /*PG_u*/;
 		do {
