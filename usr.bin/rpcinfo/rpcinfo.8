@@ -1,183 +1,166 @@
 .\" @(#)rpcinfo.8c	2.2 88/08/03 4.0 RPCSRC; from 1.24 88/02/25 SMI
-.TH RPCINFO 8C "17 December 1987"
-.SH NAME
-rpcinfo \- report RPC information
-.SH SYNOPSIS
-.B "rpcinfo \-p"
-[
-.I host
-]
-.LP
-.B "rpcinfo"
-[
-.B \-n
-.I portnum
-]
-.B \-u
-.I host
-.I program
-[
-.I version
-]
-.LP
-.B "rpcinfo"
-[
-.B \-n
-.I portnum
-]
-.B \-t
-.I host
-.I program
-[
-.I version
-]
-.LP
-.B "rpcinfo \-b"
-.I program
-.I version
-.LP
-.B "rpcinfo \-d"
-.I program
-.I version
-.SH DESCRIPTION
-.B rpcinfo
+.\" converted to -mdoc macros by J.T. Conklin <jtc@wimsey.com>
+.\"
+.Dd December 17, 1987
+.Dt RPCINFO 8
+.Os
+.Sh NAME
+.Nm rpcinfo
+.Nd report RPC information
+.Sh SYNOPSIS
+.Nm rpcinfo
+.Fl p
+.Op Ar host
+.Nm rpcinfo
+.Op Fl n Ar portnum
+.Fl u Ar host
+.Ar program
+.Op Ar version
+.Nm rpcinfo
+.Op Fl n Ar portnum
+.Fl t Ar host 
+.Ar program
+.Op Ar version
+.Nm rpcinfo
+.Fl b
+.Ar program version
+.Nm rpcinfo
+.Fl d
+.Ar program version
+.Sh DESCRIPTION
+.Nm rpcinfo
 makes an
-.SM RPC
+.Tn RPC
 call to an
-.SM RPC
+.Tn RPC
 server and reports what it finds.
-.SH OPTIONS
-.TP
-.B \-p
+.Sh OPTIONS
+.Bl -tag -width indent
+.It Fl p
 Probe the portmapper on
-.IR host ,
+.Ar host ,
 and print a list of all registered
-.SM RPC
+.Tn RPC
 programs.  If
-.I host
+.Ar host
 is not specified, it defaults to the value returned by
-.BR hostname (1).
-.TP
-.B \-u
+.Xr hostname 1 .
+.It Fl u
 Make an
-.SM RPC
+.Tn RPC
 call to procedure 0 of
-.I program
+.Ar program
 on the specified
-.I host
+.Ar host
 using
-.SM UDP\s0,
+.Tn UDP ,
 and report whether a response was received.
-.TP
-.B \-t
+.It Fl t
 Make an
-.SM RPC
+.Tn RPC
 call to procedure 0 of
-.I program
+.Ar program
 on the specified
-.I host
+.Ar host
 using
-.SM TCP\s0,
+.Tn TCP ,
 and report whether a response was received.
-.TP
-.B \-n
+.It Fl n
 Use
-.I portnum
+.Ar portnum
 as the port number for the
-.I \-t
+.Fl t
 and
-.I \-u
+.Fl u
 options instead of the port number given by the portmapper.
-.TP
-.B \-b
+.It Fl b
 Make an
-.SM RPC
+.Tn RPC
 broadcast to procedure 0 of the specified
-.I program
+.Ar program
 and
-.I version
+.Ar version
 using
-.SM UDP
+.Tn UDP
 and report all hosts that respond.
-.TP
-.B \-d
+.It Fl d
 Delete registration for the
-.SM RPC
+.Tn RPC
 service of the specified
-.I program
+.Ar program
 and
-.IR version .
+.Ar version .
 This option can be exercised only by the super-user.
-.LP
+.El
+.Pp
 The
-.I program
+.Ar program
 argument can be either a name or a number.
-.LP
+.Pp
 If a
-.I version
+.Ar version
 is specified,
-.B rpcinfo
+.Nm rpcinfo
 attempts to call that version of the specified
-.IR program .
+.Ar program .
 Otherwise,
-.B rpcinfo
+.Nm rpcinfo
 attempts to find all the registered version
 numbers for the specified
-.I program
+.Ar program
 by calling version 0 (which is presumed not
 to exist; if it does exist,
-.B rpcinfo
+.Ar rpcinfo
 attempts to obtain this information by calling
 an extremely high version
 number instead) and attempts to call each registered version.
 Note: the version number is required for
-.B \-b
+.Fl b
 and
-.B \-d
+.Fl d
 options.
-.SH EXAMPLES
+.Sh EXAMPLES
 To show all of the
-.SM RPC
+.Tn RPC
 services registered on the local machine use:
-.IP
-.B example% rpcinfo -p
-.LP
+.Pp
+.Dl example% rpcinfo -p
+.Pp
 To show all of the
-.SM RPC
+.Tn RPC
 services registered on the machine named
-.B klaxon
+.Ar klaxon
 use:
-.IP
-.B example% rpcinfo -p klaxon
-.LP
+.Pp
+.Dl example% rpcinfo -p klaxon
+.Pp
 To show all machines on the local net that are running the Yellow Pages
 service use:
-.IP
-.B "example% rpcinfo -b ypserv 'version' | uniq"
-.LP
+.Pp
+.Dl example% rpcinfo -b ypserv 'version' | uniq
+.Pp
 where 'version' is the current Yellow Pages version obtained from the
 results of the
-.B \-p
+.Fl p
 switch above.
-.LP
+.Pp
 To delete the registration for version 1 of the
-.B walld
+.Nm walld
 service use:
-.IP
-.B example% rpcinfo -d walld 1
-.SH "SEE ALSO"
-.BR rpc (5),
-.BR portmap (8C)
-.LP
-.I "\s-1RPC\s0 Programming Guide"
-.SH BUGS
-In releases prior to Sun\s-1OS\s0
-3.0, the Network File System (\s-1NFS\s0) did not
-register itself with the
-portmapper;
-.B rpcinfo
+.Pp
+.Dl example% rpcinfo -d walld 1
+.Sh SEE ALSO
+.Xr rpc 5 ,
+.Xr portmap 8
+.Rs
+.%T "RPC Programming Guide"
+.Re
+.Sh BUGS
+In releases prior to SunOS 3.0, the Network File System (NFS) did not
+register itself with the portmapper;
+.Nm rpcinfo
 cannot be used to make
-.SM RPC
+.Tn RPC
 calls to the
-.SM NFS
+.Tn NFS
 server on hosts running such releases.
