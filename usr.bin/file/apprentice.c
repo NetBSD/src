@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.1.1.6 2001/03/17 11:06:45 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.1.1.7 2001/07/22 22:31:48 pooka Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -27,6 +27,7 @@
  * 4. This notice may not be removed or altered.
  */
 
+#include "file.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -34,20 +35,36 @@
 #include <errno.h>
 #ifdef QUICK
 #include <fcntl.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #endif
-#include "file.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)Id: apprentice.c,v 1.34 2001/03/11 20:29:16 christos Exp ")
+FILE_RCSID("@(#)Id: apprentice.c,v 1.42 2001/07/22 21:04:15 christos Exp ")
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
 		      isspace((unsigned char) *l))  ++l;}
 #define LOWCASE(l) (isupper((unsigned char) (l)) ? \
 			tolower((unsigned char) (l)) : (l))
+/*
+ * Work around a bug in headers on Digital Unix.
+ * At least confirmed for: OSF1 V4.0 878
+ */
+#if defined(__osf__) && defined(__DECC)
+#ifdef MAP_FAILED
+#undef MAP_FAILED
+#endif
+#endif
 
+#ifndef MAP_FAILED
+#define MAP_FAILED (void *) -1
+#endif
+
+#ifndef MAP_FILE
+#define MAP_FILE 0
+#endif
 
 #ifdef __EMX__
   char PATHSEP=';';
@@ -64,21 +81,48 @@ static void eatsize	__P((char **));
 static int apprentice_1	__P((const char *, int));
 static int apprentice_file	__P((struct magic **, uint32 *,
     const char *, int));
-#ifdef QUICK
 static void byteswap	__P((struct magic *, uint32));
 static void bs1		__P((struct magic *));
 static uint16 swap2	__P((uint16));
 static uint32 swap4	__P((uint32));
-static char * mkdbname	__P((const char *));
+static char *mkdbname	__P((const char *));
 static int apprentice_map	__P((struct magic **, uint32 *,
     const char *, int));
 static int apprentice_compile	__P((struct magic **, uint32 *,
     const char *, int));
-#endif
 
 static int maxmagic = 0;
 
 struct mlist mlist;
+
+#ifdef COMPILE_ONLY
+const char *magicfile;
+char *progname;
+int lineno;
+
+int main __P((int, char *[]));
+
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
+{
+	int ret;
+
+	if ((progname = strrchr(argv[0], '/')) != NULL)
+		progname++;
+	else
+		progname = argv[0];
+
+	if (argc != 2) {
+		(void)fprintf(stderr, "usage: %s file\n", progname);
+		exit(1);
+	}
+	magicfile = argv[1];
+
+	exit(apprentice(magicfile, COMPILE));
+}
+#endif /* COMPILE_ONLY */
 
 
 /*
@@ -94,7 +138,6 @@ apprentice_1(fn, action)
 	struct mlist *ml;
 	int rv = -1;
 
-#ifdef QUICK
 	if (action == COMPILE) {
 		rv = apprentice_file(&magic, &nmagic, fn, action);
 		if (rv == 0)
@@ -102,10 +145,10 @@ apprentice_1(fn, action)
 		else
 			return rv;
 	}
+#ifndef COMPILE_ONLY
 	if ((rv = apprentice_map(&magic, &nmagic, fn, action)) != 0)
 		(void)fprintf(stderr, "%s: Using regular magic file `%s'\n",
 		    progname, fn);
-#endif
 		
 	if (rv != 0)
 		rv = apprentice_file(&magic, &nmagic, fn, action);
@@ -114,7 +157,8 @@ apprentice_1(fn, action)
 		return rv;
 	     
 	if ((ml = malloc(sizeof(*ml))) == NULL) {
-		(void) fprintf(stderr, "%s: Out of memory.\n", progname);
+		(void) fprintf(stderr, "%s: Out of memory (%s).\n", progname,
+		    strerror(errno));
 		if (action == CHECK)
 			return -1;
 	}
@@ -131,6 +175,7 @@ apprentice_1(fn, action)
 	mlist.prev = ml;
 
 	return rv;
+#endif /* COMPILE_ONLY */
 }
 
 
@@ -145,7 +190,8 @@ apprentice(fn, action)
 	mlist.next = mlist.prev = &mlist;
 	mfn = malloc(strlen(fn)+1);
 	if (mfn == NULL) {
-		(void) fprintf(stderr, "%s: Out of memory.\n", progname);
+		(void) fprintf(stderr, "%s: Out of memory (%s).\n", progname,
+		    strerror(errno));
 		if (action == CHECK)
 			return -1;
 		else
@@ -200,7 +246,8 @@ apprentice_file(magicp, nmagicp, fn, action)
         maxmagic = MAXMAGIS;
 	*magicp = (struct magic *) calloc(sizeof(struct magic), maxmagic);
 	if (*magicp == NULL) {
-		(void) fprintf(stderr, "%s: Out of memory.\n", progname);
+		(void) fprintf(stderr, "%s: Out of memory (%s).\n", progname,
+		    strerror(errno));
 		if (action == CHECK)
 			return -1;
 	}
@@ -254,12 +301,16 @@ signextend(m, v)
 		case DATE:
 		case BEDATE:
 		case LEDATE:
+		case LDATE:
+		case BELDATE:
+		case LELDATE:
 		case LONG:
 		case BELONG:
 		case LELONG:
 			v = (int32) v;
 			break;
 		case STRING:
+		case PSTRING:
 			break;
 		default:
 			magwarn("can't happen: m->type=%d\n",
@@ -288,8 +339,8 @@ parse(magicp, nmagicp, l, action)
 		maxmagic += ALLOC_INCR;
 		if ((m = (struct magic *) realloc(*magicp,
 		    sizeof(struct magic) * maxmagic)) == NULL) {
-			(void) fprintf(stderr, "%s: Out of memory.\n",
-			    progname);
+			(void) fprintf(stderr, "%s: Out of memory (%s).\n",
+			    progname, strerror(errno));
 			if (*magicp)
 				free(*magicp);
 			if (action == CHECK)
@@ -316,7 +367,7 @@ parse(magicp, nmagicp, l, action)
 	}
 	if (m->cont_level != 0 && *l == '&') {
                 ++l;            /* step over */
-                m->flag |= ADD;
+                m->flag |= OFFADD;
         }
 
 	/* get offset, then skip over it */
@@ -360,12 +411,46 @@ parse(magicp, nmagicp, l, action)
 			}
 			l++;
 		}
-		s = l;
-		if (*l == '+' || *l == '-') l++;
-		if (isdigit((unsigned char)*l)) {
-			m->in_offset = strtoul(l, &t, 0);
-			if (*s == '-') m->in_offset = - m->in_offset;
+		if (*l == '~') {
+			m->in_op = OPINVERSE;
+			l++;
 		}
+		switch (*l) {
+		case '&':
+			m->in_op |= OPAND;
+			l++;
+			break;
+		case '|':
+			m->in_op |= OPOR;
+			l++;
+			break;
+		case '^':
+			m->in_op |= OPXOR;
+			l++;
+			break;
+		case '+':
+			m->in_op |= OPADD;
+			l++;
+			break;
+		case '-':
+			m->in_op |= OPMINUS;
+			l++;
+			break;
+		case '*':
+			m->in_op |= OPMULTIPLY;
+			l++;
+			break;
+		case '/':
+			m->in_op |= OPDIVIDE;
+			l++;
+			break;
+		case '%':
+			m->in_op |= OPMODULO;
+			l++;
+			break;
+		}
+		if (isdigit((unsigned char)*l)) 
+			m->in_offset = strtoul(l, &t, 0);
 		else
 			t = l;
 		if (*t++ != ')') 
@@ -389,6 +474,10 @@ parse(magicp, nmagicp, l, action)
 #define NLESHORT	7
 #define NLELONG		6
 #define NLEDATE		6
+#define NPSTRING	7
+#define NLDATE		5
+#define NBELDATE	7
+#define NLELDATE	7
 
 	if (*l == 'u') {
 		++l;
@@ -432,18 +521,80 @@ parse(magicp, nmagicp, l, action)
 	} else if (strncmp(l, "ledate", NLEDATE)==0) {
 		m->type = LEDATE;
 		l += NLEDATE;
+	} else if (strncmp(l, "pstring", NPSTRING)==0) {
+		m->type = PSTRING;
+		l += NPSTRING;
+	} else if (strncmp(l, "ldate", NLDATE)==0) {
+		m->type = LDATE;
+		l += NLDATE;
+	} else if (strncmp(l, "beldate", NBELDATE)==0) {
+		m->type = BELDATE;
+		l += NBELDATE;
+	} else if (strncmp(l, "leldate", NLELDATE)==0) {
+		m->type = LELDATE;
+		l += NLELDATE;
 	} else {
 		magwarn("type %s invalid", l);
 		return -1;
 	}
 	/* New-style anding: "0 byte&0x80 =0x80 dynamically linked" */
-	if (*l == '&') {
+	/* New and improved: ~ & | ^ + - * / % -- exciting, isn't it? */
+	if (*l == '~') {
+		if (STRING != m->type && PSTRING != m->type)
+			m->mask_op = OPINVERSE;
+		++l;
+	}
+	switch (*l) {
+	case '&':
+		m->mask_op |= OPAND;
 		++l;
 		m->mask = signextend(m, strtoul(l, &l, 0));
 		eatsize(&l);
-	} else if (STRING == m->type) {
-		m->mask = 0L;
-		if (*l == '/') { 
+		break;
+	case '|':
+		m->mask_op |= OPOR;
+		++l;
+		m->mask = signextend(m, strtoul(l, &l, 0));
+		eatsize(&l);
+		break;
+	case '^':
+		m->mask_op |= OPXOR;
+		++l;
+		m->mask = signextend(m, strtoul(l, &l, 0));
+		eatsize(&l);
+		break;
+	case '+':
+		m->mask_op |= OPADD;
+		++l;
+		m->mask = signextend(m, strtoul(l, &l, 0));
+		eatsize(&l);
+		break;
+	case '-':
+		m->mask_op |= OPMINUS;
+		++l;
+		m->mask = signextend(m, strtoul(l, &l, 0));
+		eatsize(&l);
+		break;
+	case '*':
+		m->mask_op |= OPMULTIPLY;
+		++l;
+		m->mask = signextend(m, strtoul(l, &l, 0));
+		eatsize(&l);
+		break;
+	case '%':
+		m->mask_op |= OPMODULO;
+		++l;
+		m->mask = signextend(m, strtoul(l, &l, 0));
+		eatsize(&l);
+		break;
+	case '/':
+		if (STRING != m->type && PSTRING != m->type) {
+			m->mask_op |= OPDIVIDE;
+			++l;
+			m->mask = signextend(m, strtoul(l, &l, 0));
+			eatsize(&l);
+		} else {
+			m->mask = 0L;
 			while (!isspace(*++l)) {
 				switch (*l) {
 				case CHAR_IGNORE_LOWERCASE:
@@ -463,8 +614,10 @@ parse(magicp, nmagicp, l, action)
 				}
 			}
 		}
-	} else
-		m->mask = ~0L;
+		break;
+	}
+	/* We used to set mask to all 1's here, instead let's just not do anything 
+	   if mask = 0 (unless you have a better idea) */
 	EATAB;
   
 	switch (*l) {
@@ -482,7 +635,7 @@ parse(magicp, nmagicp, l, action)
 		}
 		break;
 	case '!':
-		if (m->type != STRING) {
+		if (m->type != STRING && m->type != PSTRING) {
 			m->reln = *l;
 			++l;
 			break;
@@ -544,7 +697,7 @@ getvalue(m, p)
 {
 	int slen;
 
-	if (m->type == STRING) {
+	if (m->type == STRING || m->type == PSTRING) {
 		*p = getstr(*p, m->value.s, sizeof(m->value.s), &slen);
 		m->vallen = slen;
 	} else
@@ -766,7 +919,6 @@ eatsize(p)
 	*p = l;
 }
 
-#ifdef QUICK
 /*
  * handle an mmaped file.
  */
@@ -784,6 +936,9 @@ apprentice_map(magicp, nmagicp, fn, action)
 	int needsbyteswap;
 	char *dbname = mkdbname(fn);
 
+	if (dbname == NULL)
+		return -1;
+
 	if ((fd = open(dbname, O_RDONLY)) == -1)
 		return -1;
 
@@ -793,13 +948,27 @@ apprentice_map(magicp, nmagicp, fn, action)
 		goto error;
 	}
 
+#ifdef QUICK
 	if ((*magicp = mmap(0, (size_t)st.st_size, PROT_READ|PROT_WRITE,
 	    MAP_PRIVATE|MAP_FILE, fd, (off_t)0)) == MAP_FAILED) {
 		(void)fprintf(stderr, "%s: Cannot map `%s' (%s)\n",
 		    progname, dbname, strerror(errno));
 		goto error;
 	}
+#else
+	if ((*magicp = malloc((size_t)st.st_size)) == NULL) {
+		(void) fprintf(stderr, "%s: Out of memory (%s).\n", progname,
+		     strerror(errno));
+		goto error;
+	}
+	if (read(fd, *magicp, (size_t)st.st_size) != (size_t)st.st_size) {
+		(void) fprintf(stderr, "%s: Read failed (%s).\n", progname,
+		    strerror(errno));
+		goto error;
+	}
+#endif
 	(void)close(fd);
+	fd = -1;
 	ptr = (uint32 *) *magicp;
 	if (*ptr != MAGICNO) {
 		if (swap4(*ptr) != MAGICNO) {
@@ -817,7 +986,7 @@ apprentice_map(magicp, nmagicp, fn, action)
 	if (version != VERSIONNO) {
 		(void)fprintf(stderr, 
 		    "%s: version mismatch (%d != %d) in `%s'\n",
-		    progname, version, VERSION, dbname);
+		    progname, version, VERSIONNO, dbname);
 		goto error;
 	}
 	*nmagicp = (st.st_size / sizeof(struct magic)) - 1;
@@ -829,9 +998,13 @@ apprentice_map(magicp, nmagicp, fn, action)
 error:
 	if (fd != -1)
 		(void)close(fd);
-	if (*magicp)
+	if (*magicp) {
+#ifdef QUICK
 		(void)munmap(*magicp, (size_t)st.st_size);
-	else {
+#else
+		free(*magicp);
+#endif
+	} else {
 		*magicp = NULL;
 		*nmagicp = 0;
 	}
@@ -853,6 +1026,9 @@ apprentice_compile(magicp, nmagicp, fn, action)
 	static const uint32 ar[] = {
 	    MAGICNO, VERSIONNO
 	};
+
+	if (dbname == NULL) 
+		return -1;
 
 	if ((fd = open(dbname, O_WRONLY|O_CREAT|O_TRUNC, 0644)) == -1) {
 		(void)fprintf(stderr, "%s: Cannot open `%s' (%s)\n",
@@ -897,6 +1073,11 @@ mkdbname(fn)
 		buf = malloc(len);
 	else
 		buf = realloc(buf, len);
+	if (buf == NULL) {
+		(void) fprintf(stderr, "%s: Out of memory (%s).\n", progname,
+		    strerror(errno));
+		return NULL;
+	}
 	(void)strcpy(buf, fn);
 	(void)strcat(buf, ext);
 	return buf;
@@ -961,4 +1142,3 @@ void bs1(m)
 		m->value.l = swap4(m->value.l);
 	m->mask = swap4(m->mask);
 }
-#endif
