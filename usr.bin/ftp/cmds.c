@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.82 2000/01/31 22:01:03 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.83 2000/04/13 08:13:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.82 2000/01/31 22:01:03 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.83 2000/04/13 08:13:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2380,7 +2380,7 @@ restart(argc, argv)
 		char *ep;
 
 #ifndef NO_QUAD
-		rp = strtoq(argv[1], &ep, 10);
+		rp = strtoll(argv[1], &ep, 10);
 #else
 		rp = strtol(argv[1], &ep, 10);
 #endif
