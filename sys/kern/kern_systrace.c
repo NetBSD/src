@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.4 2002/07/02 16:16:33 thorpej Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.5 2002/07/02 16:22:28 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.4 2002/07/02 16:16:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.5 2002/07/02 16:22:28 thorpej Exp $");
 
 #include "opt_systrace.h"
 
@@ -704,10 +704,12 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 	if (fst) {
 		SYSTRACE_UNLOCK(fst, p);
 	}
-	if (error == 0)
-		strp->oldemul = p->p_emul;
-	else
-		strp->oldemul = NULL;
+	if (strp != NULL) {
+		if (error == 0)
+			strp->oldemul = p->p_emul;
+		else
+			strp->oldemul = NULL;
+	}
 	return error;
 }
 
