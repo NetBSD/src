@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.9 1994/02/14 23:03:54 mycroft Exp $
+ *	$Id: if_le.c,v 1.10 1994/02/16 20:20:18 mycroft Exp $
  */
 
 #include "le.h"
@@ -212,8 +212,8 @@ leattach(hd)
 	ifp->if_ioctl = leioctl;
 	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST |
-			IFF_NOTRAILERS;
+	ifp->if_flags =
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
@@ -225,11 +225,11 @@ leattach(hd)
  * Set up the logical address filter
  */
 void
-lesetladrf(sc)
-	struct le_softc *sc;
+lesetladrf(ac, af)
+	struct arpcom *ac;
+	u_long *af;
 {
-	u_long *af = sc->sc_r2->ler2_ladrf;
-	struct ifnet *ifp = &sc->sc_if;
+	struct ifnet *ifp = &ac->ac_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
 	register u_long crc;
@@ -244,13 +244,14 @@ lesetladrf(sc)
 	 * the word.
 	 */
 
-	if (ifp->if_flags & IFF_ALLMULTI) {
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		af[0] = af[1] = 0xffffffff;
 		return;
 	}
 
 	af[0] = af[1] = 0;
-	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
+	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
@@ -262,6 +263,7 @@ lesetladrf(sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
+			ifp->if_flags |= IFF_ALLMULTI;
 			af[0] = af[1] = 0xffffffff;
 			return;
 		}
@@ -287,6 +289,7 @@ lesetladrf(sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
 }
 
 void
@@ -336,7 +339,7 @@ lereset(sc)
 	ler2->ler2_padr[3] = sc->sc_addr[2];
 	ler2->ler2_padr[4] = sc->sc_addr[5];
 	ler2->ler2_padr[5] = sc->sc_addr[4];
-	lesetladrf(sc);
+	lesetladrf(&sc->sc_arpcom, ler2->ler2_ladrf);
 	ledrinit(ler2);
 	sc->sc_rmd = sc->sc_tmd = sc->sc_txcnt = 0;
 
