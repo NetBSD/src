@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2003/10/13 18:45:59 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2003/10/14 22:33:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2003/10/13 18:45:59 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2003/10/14 22:33:29 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -192,6 +192,7 @@ vaddr_t lkm_start, lkm_end;
 static struct vm_map lkm_map_store;
 extern struct vm_map *lkm_map;
 #endif
+vaddr_t kern_end;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -1337,8 +1338,9 @@ init_x86_64(first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 
+	kern_end = KERNBASE + first_avail;
 #ifdef LKM
-	lkm_start = KERNBASE + first_avail;
+	lkm_start = kern_end;
 	lkm_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 #endif
 

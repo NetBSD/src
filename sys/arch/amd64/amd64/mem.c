@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 2003/08/07 16:26:35 agc Exp $	*/
+/*	$NetBSD: mem.c,v 1.4 2003/10/14 22:33:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.3 2003/08/07 16:26:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.4 2003/10/14 22:33:29 fvdl Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -89,6 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.3 2003/08/07 16:26:35 agc Exp $");
 #include <sys/proc.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
+#ifdef LKM
+#include <sys/lkm.h>
+#endif
 
 #include <machine/cpu.h>
 
@@ -97,6 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.3 2003/08/07 16:26:35 agc Exp $");
 extern char *vmmap;            /* poor name! */
 caddr_t zeropage;
 extern int start, end, etext;
+extern vaddr_t kern_end;
+#ifdef LKM
+extern vaddr_t lkm_start, lkm_end;
+#endif
 
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
@@ -159,11 +166,21 @@ mmrw(dev, uio, flags)
 		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (v >= (vaddr_t)&start && (v + c) < (vaddr_t)&end) {
+			if (v >= (vaddr_t)&start && v <
+			    (vaddr_t)kern_end) {
 				if (v < (vaddr_t)&etext &&
 				    uio->uio_rw == UIO_WRITE)
 					return EFAULT;
-			} else {
+			}
+#ifdef LKM
+			else if (v >= lkm_start && v < lkm_end) {
+				if (!uvm_map_checkprot(lkm_map, v, v + c,
+				    uio->uio_rw == UIO_READ ?
+				    VM_PROT_READ: VM_PROT_WRITE))
+					return EFAULT;
+			}
+#endif
+			else {
 				if (!uvm_kernacc((caddr_t)v, c,
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return EFAULT;
