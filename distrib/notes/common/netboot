@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.14 2002/12/09 14:03:54 scw Exp $
+.\"	$NetBSD: netboot,v 1.15 2003/06/01 17:57:12 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -216,12 +216,12 @@ ddns-update-style none;
 allow bootp;    # Allow bootp requests, thus the dhcp server
                 # will act as a bootp server.
                 #
-authoritative;  # This is the authoritative DHCP server for this subnet
+authoritative;  # master DHCP server for this subnet
                 #
 subnet 192.168.1.0 netmask 255.255.255.0 {
-                # Which network interface the server will listen on.
-		# The zeros indicate which range of addresses are
-		# allowed to connect.
+                # Which network interface to listen on.
+                # The zeros indicate the range of addresses
+                # that are allowed to connect.
 }
 group {
                 # Set of parameters common to all clients
@@ -270,7 +270,7 @@ group {
                 #
                 # The path on the NFS server.
                 #
-                option root-path        "/export/client/root";
+                option root-path "/export/client/root";
 .if \n[next68k] \{\
 
                 #
@@ -279,7 +279,8 @@ group {
                 always-reply-rfc1048 false;
 .\}
         }
- #you may paste another "host" entry here for additional clients on this network
+ #you may paste another "host" entry here for additional 
+ #clients on this network
 }
 .disp)
 .Pp
@@ -357,7 +358,7 @@ Next, edit
 .Pa /etc/inetd.conf
 and uncomment the line with the TFTP daemon:
 .(disp
-tftp            dgram   udp     wait    root    /usr/libexec/tftpd tftpd -l  -s /tftpboot
+tftp  dgram  udp  wait  root  /usr/libexec/tftpd tftpd -l -s /tftpboot 
 .disp)
 .Pp
 Now, restart
@@ -723,17 +724,17 @@ your server, make sure the following lines are present in your
 .Pa /etc/rc.conf :
 .(disp
 .if \n[hp300] \{\
-rbootd=YES              rbootd_flags=""
+rbootd=YES       rbootd_flags=""
 .\}
 .if \n[hp300]:\n[macppc]:\n[next68k]:\n[sparc] \{\
-dhcpd=YES               dhcpd_flags="-q"
+dhcpd=YES        dhcpd_flags="-q"
 .\}
 .if \n[sparc] \{\
-rarpd=YES               rarpd_flags="-a"
+rarpd=YES        rarpd_flags="-a"
 .\}
-nfs_server=YES                                  # enable server daemons
+nfs_server=YES         # enable server daemons
 mountd=YES
-rpcbind=YES             rpcbind_flags="-l"      # -l logs libwrap
+rpcbind=YES      rpcbind_flags="-l"   # -l logs libwrap
 .disp)
 .Pp
 .if !\n[hp300] \{\
