@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.24 1998/03/31 11:32:53 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.25 1998/07/12 06:26:37 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -104,6 +104,9 @@
 
 #include <machine/pmioctl.h>
 #include <pmax/dev/fbreg.h>
+
+/*  turn on SFB-driver debugging  */
+/* #define SFBDEBUG */
 
 /*
  * These need to be mapped into user space.
@@ -223,6 +226,9 @@ sfbinit(fi, base, unit, silent)
 	int silent;
 {
 
+	int h_setup, v_setup;
+	int x_pixels, y_pixels;	/* visible pixel dimensions */
+
 	/*
 	 * If this device is being intialized as the console, malloc()
 	 * is not yet up and we must use statically-allocated space.
@@ -243,21 +249,30 @@ sfbinit(fi, base, unit, silent)
 	if (badaddr(base + SFB_OFFSET_VRAM, 4))
 		return (0);
 
+	/* fetch sfb h_setup and v_setup for pixel dimensions */
+	h_setup = * (u_int32_t*) ( ((caddr_t)fi->fi_base) + 0x0064);
+	v_setup = * (u_int32_t*) ( ((caddr_t)fi->fi_base) + 0x0068);
+	x_pixels = (h_setup & 0x01ff) << 2;
+	y_pixels = (v_setup & 0x07ff);
+#if defined(DEBUG) || defined(SFBDEBUG)
+	printf(" (%d x %d pixels) ", x_pixels, y_pixels);
+#endif
+
 	/* Fill in main frame buffer info struct. */
 	fi->fi_unit = unit;
 	fi->fi_pixels = (caddr_t)(base + SFB_OFFSET_VRAM);
-	fi->fi_pixelsize = 1280 * 1024;
+	fi->fi_pixelsize = x_pixels * y_pixels;
 	fi->fi_base = (caddr_t)(base + SFB_ASIC_OFFSET);
 	fi->fi_vdac = (caddr_t)(base + SFB_OFFSET_BT459);
 	fi->fi_size = (fi->fi_pixels + SFB_FB_SIZE) - fi->fi_base;
-	fi->fi_linebytes = 1280;
+	fi->fi_linebytes = x_pixels;
 	fi->fi_driver = &sfb_driver;
 	fi->fi_blanked = 0;
 
 	/* Fill in Frame Buffer Type struct. */
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_SFB;
-	fi->fi_type.fb_height = 1024;
-	fi->fi_type.fb_width = 1280;
+	fi->fi_type.fb_width = 	x_pixels;
+	fi->fi_type.fb_height = y_pixels;
 	fi->fi_type.fb_depth = 8;
 	fi->fi_type.fb_cmsize = 256;
 	fi->fi_type.fb_size = SFB_FB_SIZE;
@@ -282,9 +297,13 @@ sfbinit(fi, base, unit, silent)
 		MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(&sfbu));
 
 	/* This is glass-tty state but it's in the shared structure. Ick. */
-	fi->fi_fbu->scrInfo.max_row = 67;
+	fi->fi_fbu->scrInfo.max_row = fi->fi_type.fb_width / 15;
 	fi->fi_fbu->scrInfo.max_col = 80;
 
+#if defined(DEBUG) || defined(SFBDEBUG)
+	printf(" (tty %d rows by %d cols) ", 
+	       fi->fi_fbu->scrInfo.max_row, fi->fi_fbu->scrInfo.max_col);
+#endif
 	init_pmaxfbu(fi);
 
 	/*
