@@ -1,4 +1,4 @@
-/*	$NetBSD: infinity.c,v 1.6 1999/06/21 22:31:32 tron Exp $	*/
+/*	$NetBSD: infinity.c,v 1.7 2000/04/18 22:07:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -35,4 +35,4 @@
 
 /* Bytes for +infinity on an arm32 (IEEE double precision) */
 
-const char __infinity[] = { 0, 0, (char)0xf0, 0x7f, 0, 0, 0, 0 };
+const char __infinity[] __attribute__((__aligned__(4))) = { 0, 0, (char)0xf0, 0x7f, 0, 0, 0, 0 };
