@@ -1,4 +1,4 @@
-.\"	$NetBSD: nohup.1,v 1.5 1995/08/31 23:35:24 jtc Exp $
+.\"	$NetBSD: nohup.1,v 1.6 1997/10/19 10:23:25 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,12 +43,12 @@
 .Nm nohup
 .Nd invoke a command immune to hangups
 .Sh SYNOPSIS
-.Nm nohup
+.Nm
 .Ar utility
 .Op Ar arg ...
 .Sh DESCRIPTION
 The
-.Nm nohup
+.Nm
 utility invokes
 .Ar command
 with
@@ -64,20 +64,20 @@ If standard error is a terminal, it is directed to the same place
 as the standard output.
 .Sh ENVIRONMENT
 The following variable is utilized by
-.Nm nohup .
+.Nm "" .
 .Bl -tag -width flag
 .It Ev HOME
 If the output file
 .Pa nohup.out
 cannot be created in the current directory, the
-.Nm nohup
+.Nm
 utility uses the directory named by
 .Ev HOME
 to create the file.
 .El
 .Sh DIAGNOSTICS
 The
-.Nm nohup
+.Nm
 utility shall exit with one of the following values:
 .Bl -tag -width Ds 
 .It 126
@@ -88,18 +88,18 @@ was found but could not be invoked.
 The
 .Ar utility
 could not be found or an error occurred in 
-.Nm nohup.
+.Nm "" .
 .El
 .Pp
 Otherwise, the exit status of 
-.Nm nohup
+.Nm
 shall be that of 
 .Ar utility .
 .Sh SEE ALSO
 .Xr signal 3
 .Sh STANDARDS
 The
-.Nm nohup
+.Nm
 command is expected to be
 .St -p1003.2
 compatible.
