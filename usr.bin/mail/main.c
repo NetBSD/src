@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2002/03/04 03:07:26 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2002/03/04 03:16:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.14 2002/03/04 03:07:26 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2002/03/04 03:16:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,10 +93,10 @@ main(int argc, char *argv[])
 	 * first of these users.
 	 */
 	ef = NULL;
-	to = NIL;
-	cc = NIL;
-	bcc = NIL;
-	smopts = NIL;
+	to = NULL;
+	cc = NULL;
+	bcc = NULL;
+	smopts = NULL;
 	subject = NULL;
 	while ((i = getopt(argc, argv, "~EINT:b:c:dfins:u:v")) != -1) {
 		switch (i) {
@@ -211,11 +211,11 @@ Usage: mail [-EiInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	/*
 	 * Check for inconsistent arguments.
 	 */
-	if (to == NIL && (subject != NULL || cc != NIL || bcc != NIL)) {
+	if (to == NULL && (subject != NULL || cc != NULL || bcc != NULL)) {
 		fputs("You must specify direct recipients with -s, -c, or -b.\n", stderr);
 		exit(1);
 	}
-	if (ef != NULL && to != NIL) {
+	if (ef != NULL && to != NULL) {
 		fprintf(stderr, "Cannot give -f and people to send to.\n");
 		exit(1);
 	}

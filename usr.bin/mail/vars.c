@@ -1,4 +1,4 @@
-/*	$NetBSD: vars.c,v 1.8 2002/03/02 15:27:52 wiz Exp $	*/
+/*	$NetBSD: vars.c,v 1.9 2002/03/04 03:16:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vars.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: vars.c,v 1.8 2002/03/02 15:27:52 wiz Exp $");
+__RCSID("$NetBSD: vars.c,v 1.9 2002/03/04 03:16:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ assign(char name[], char values[])
 
 	h = hash(name);
 	vp = lookup(name);
-	if (vp == NOVAR) {
+	if (vp == NULL) {
 		vp = (struct var *) calloc(sizeof *vp, 1);
 		vp->v_name = vcopy(name);
 		vp->v_link = variables[h];
@@ -115,7 +115,7 @@ value(char name[])
 {
 	struct var *vp;
 
-	if ((vp = lookup(name)) == NOVAR)
+	if ((vp = lookup(name)) == NULL)
 		return(getenv(name));
 	return(vp->v_value);
 }
@@ -130,10 +130,10 @@ lookup(char name[])
 {
 	struct var *vp;
 
-	for (vp = variables[hash(name)]; vp != NOVAR; vp = vp->v_link)
+	for (vp = variables[hash(name)]; vp != NULL; vp = vp->v_link)
 		if (*vp->v_name == *name && equal(vp->v_name, name))
 			return(vp);
-	return(NOVAR);
+	return(NULL);
 }
 
 /*
@@ -145,10 +145,10 @@ findgroup(char name[])
 {
 	struct grouphead *gh;
 
-	for (gh = groups[hash(name)]; gh != NOGRP; gh = gh->g_link)
+	for (gh = groups[hash(name)]; gh != NULL; gh = gh->g_link)
 		if (*gh->g_name == *name && equal(gh->g_name, name))
 			return(gh);
-	return(NOGRP);
+	return(NULL);
 }
 
 /*
@@ -160,12 +160,12 @@ printgroup(char name[])
 	struct grouphead *gh;
 	struct group *gp;
 
-	if ((gh = findgroup(name)) == NOGRP) {
+	if ((gh = findgroup(name)) == NULL) {
 		printf("\"%s\": not a group\n", name);
 		return;
 	}
 	printf("%s\t", gh->g_name);
-	for (gp = gh->g_list; gp != NOGE; gp = gp->ge_link)
+	for (gp = gh->g_list; gp != NULL; gp = gp->ge_link)
 		printf(" %s", gp->ge_name);
 	putchar('\n');
 }

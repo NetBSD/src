@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.14 2002/03/04 03:07:25 wiz Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.15 2002/03/04 03:16:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd3.c,v 1.14 2002/03/04 03:07:25 wiz Exp $");
+__RCSID("$NetBSD: cmd3.c,v 1.15 2002/03/04 03:16:10 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,7 @@ _respond(int *msgvec)
 	else if ((cp = skin(hfield("to", mp))) != NULL)
 		np = extract(cp, GTO);
 	else
-		np = NIL;
+		np = NULL;
 	np = elide(np);
 	/*
 	 * Delete my name from the reply list,
@@ -235,9 +235,9 @@ _respond(int *msgvec)
 	if (altnames)
 		for (ap = altnames; *ap; ap++)
 			np = delname(np, *ap);
-	if (np != NIL && replyto == NULL)
+	if (np != NULL && replyto == NULL)
 		np = cat(np, extract(rcv, GTO));
-	else if (np == NIL) {
+	else if (np == NULL) {
 		if (replyto != NULL)
 			printf("Empty reply-to field -- replying to author\n");
 		np = extract(rcv, GTO);
@@ -254,9 +254,9 @@ _respond(int *msgvec)
 				np = delname(np, *ap);
 		head.h_cc = np;
 	} else
-		head.h_cc = NIL;
-	head.h_bcc = NIL;
-	head.h_smopts = NIL;
+		head.h_cc = NULL;
+	head.h_bcc = NULL;
+	head.h_smopts = NULL;
 	mail1(&head, 1);
 	return(0);
 }
@@ -370,11 +370,11 @@ set(void *v)
 
 	if (*arglist == NULL) {
 		for (h = 0, s = 1; h < HSHSIZE; h++)
-			for (vp = variables[h]; vp != NOVAR; vp = vp->v_link)
+			for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 				s++;
 		ap = (char **) salloc(s * sizeof *ap);
 		for (h = 0, p = ap; h < HSHSIZE; h++)
-			for (vp = variables[h]; vp != NOVAR; vp = vp->v_link)
+			for (vp = variables[h]; vp != NULL; vp = vp->v_link)
 				*p++ = vp->v_name;
 		*p = NULL;
 		sort(ap);
@@ -416,7 +416,7 @@ unset(void *v)
 
 	errs = 0;
 	for (ap = arglist; *ap != NULL; ap++) {
-		if ((vp2 = lookup(*ap)) == NOVAR) {
+		if ((vp2 = lookup(*ap)) == NULL) {
 			if (getenv(*ap)) {
 				unsetenv(*ap);
 			} else if (!sourcing) {
@@ -458,11 +458,11 @@ group(void *v)
 
 	if (*argv == NULL) {
 		for (h = 0, s = 1; h < HSHSIZE; h++)
-			for (gh = groups[h]; gh != NOGRP; gh = gh->g_link)
+			for (gh = groups[h]; gh != NULL; gh = gh->g_link)
 				s++;
 		ap = (char **) salloc(s * sizeof *ap);
 		for (h = 0, p = ap; h < HSHSIZE; h++)
-			for (gh = groups[h]; gh != NOGRP; gh = gh->g_link)
+			for (gh = groups[h]; gh != NULL; gh = gh->g_link)
 				*p++ = gh->g_name;
 		*p = NULL;
 		sort(ap);
@@ -476,10 +476,10 @@ group(void *v)
 	}
 	gname = *argv;
 	h = hash(gname);
-	if ((gh = findgroup(gname)) == NOGRP) {
+	if ((gh = findgroup(gname)) == NULL) {
 		gh = (struct grouphead *) calloc(sizeof *gh, 1);
 		gh->g_name = vcopy(gname);
-		gh->g_list = NOGE;
+		gh->g_list = NULL;
 		gh->g_link = groups[h];
 		groups[h] = gh;
 	}
@@ -600,7 +600,7 @@ _Respond(int msgvec[])
 	int *ap;
 	char *cp;
 
-	head.h_to = NIL;
+	head.h_to = NULL;
 	for (ap = msgvec; *ap != 0; ap++) {
 		mp = &message[*ap - 1];
 		touch(mp);
@@ -609,15 +609,15 @@ _Respond(int msgvec[])
 			cp = skin(nameof(mp, 2));
 		head.h_to = cat(head.h_to, extract(cp, GTO));
 	}
-	if (head.h_to == NIL)
+	if (head.h_to == NULL)
 		return 0;
 	mp = &message[msgvec[0] - 1];
 	if ((head.h_subject = hfield("subject", mp)) == NULL)
 		head.h_subject = hfield("subj", mp);
 	head.h_subject = reedit(head.h_subject);
-	head.h_cc = NIL;
-	head.h_bcc = NIL;
-	head.h_smopts = NIL;
+	head.h_cc = NULL;
+	head.h_bcc = NULL;
+	head.h_smopts = NULL;
 	mail1(&head, 1);
 	return 0;
 }
