@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sysent.c,v 1.41 1998/01/09 06:26:52 thorpej Exp $	*/
+/*	$NetBSD: svr4_sysent.c,v 1.42 1998/01/22 17:34:17 mycroft Exp $	*/
 
 /*
  * System call switch table.
@@ -31,12 +31,6 @@
 #define compat_09(func) __CONCAT(compat_09_,func)
 #else
 #define compat_09(func) sys_nosys
-#endif
-
-#ifdef COMPAT_10
-#define compat_10(func) __CONCAT(compat_10_,func)
-#else
-#define compat_10(func) sys_nosys
 #endif
 
 #define	s(type)	sizeof(type)
