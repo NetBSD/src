@@ -1,3 +1,4 @@
+/*	$NetBSD: disklabel.h,v 1.60.4.2 2001/05/01 12:26:56 he Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -53,16 +54,34 @@
  */
 #define	MAXMAXPARTITIONS	22
 #if MAXPARTITIONS > MAXMAXPARTITIONS
-#warn beware: MAXPARTITIONS bigger than MAXMAXPARTITIONS
+#warning beware: MAXPARTITIONS bigger than MAXMAXPARTITIONS
 #endif
+
+/*
+ * Ports can switch their MAXPARTITIONS once, as follows:
+ *
+ * - define OLDMAXPARTITIONS in <machine/disklabel.h> as the old number
+ * - define MAXPARTITIONS as the new number
+ * - define DISKUNIT, DISKPART and DISKMINOR macros in <machine/disklabel.h>
+ *   as appropriate for the port (see the i386 one for an example).
+ * - define __HAVE_OLD_DISKLABEL in <machine/types.h>
+ */
+
+#if defined(_KERNEL) && defined(__HAVE_OLD_DISKLABEL) && \
+	   (MAXPARTITIONS < OLDMAXPARTITIONS)
+#error "can only grow disklabel size"
+#endif
+
 
 /*
  * Translate between device numbers and major/disk unit/disk partition.
  */
+#ifndef __HAVE_OLD_DISKLABEL
 #define	DISKUNIT(dev)	(minor(dev) / MAXPARTITIONS)
 #define	DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
 #define	DISKMINOR(unit, part) \
     (((unit) * MAXPARTITIONS) + (part))
+#endif
 #define	MAKEDISKDEV(maj, unit, part) \
     (makedev((maj), DISKMINOR((unit), (part))))
 
@@ -165,6 +184,60 @@ struct disklabel {
 #define	p_sgs	__partition_u1.sgs
 	} d_partitions[MAXPARTITIONS];	/* actually may be more */
 };
+
+#ifdef __HAVE_OLD_DISKLABEL
+/*
+ * Same as above, but with OLDMAXPARTITIONS partitions. For use in
+ * the old DIOC* ioctl calls.
+ */
+struct olddisklabel {
+	u_int32_t d_magic;
+	u_int16_t d_type;
+	u_int16_t d_subtype;
+	char	  d_typename[16];
+	union {
+		char	un_d_packname[16];
+		struct {
+			char *un_d_boot0;
+			char *un_d_boot1;
+		} un_b;
+	} d_un;
+	u_int32_t d_secsize;
+	u_int32_t d_nsectors;
+	u_int32_t d_ntracks;
+	u_int32_t d_ncylinders;
+	u_int32_t d_secpercyl;
+	u_int32_t d_secperunit;
+	u_int16_t d_sparespertrack;
+	u_int16_t d_sparespercyl;
+	u_int32_t d_acylinders;
+	u_int16_t d_rpm;
+	u_int16_t d_interleave;
+	u_int16_t d_trackskew;
+	u_int16_t d_cylskew;
+	u_int32_t d_headswitch;
+	u_int32_t d_trkseek;
+	u_int32_t d_flags;
+	u_int32_t d_drivedata[NDDATA];
+	u_int32_t d_spare[NSPARE];
+	u_int32_t d_magic2;
+	u_int16_t d_checksum;
+	u_int16_t d_npartitions;
+	u_int32_t d_bbsize;
+	u_int32_t d_sbsize;
+	struct	opartition {
+		u_int32_t p_size;
+		u_int32_t p_offset;
+		u_int32_t p_fsize;
+		u_int8_t p_fstype;
+		u_int8_t p_frag;
+		union {
+			u_int16_t cpg;
+			u_int16_t sgs;
+		} __partition_u1;
+	} d_partitions[OLDMAXPARTITIONS];
+};
+#endif /* __HAVE_OLD_DISKLABEL */
 #else /* _LOCORE */
 	/*
 	 * offsets for asm boot files.
