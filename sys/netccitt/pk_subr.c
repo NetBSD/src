@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.21 2001/06/19 07:37:16 jdolecek Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.22 2001/10/18 20:17:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -211,7 +211,7 @@ pk_template(lcn, type)
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 	if (m == 0)
 		panic("pk_template");
-	m->m_act = 0;
+	m->m_nextpkt = 0;
 
 	/*
 	 * Efficiency hack: leave a four byte gap at the beginning
@@ -1175,7 +1175,7 @@ pk_fragment(lcp, m0, qbit, mbit, wait)
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("pk_fragment");
 	totlen = m->m_pkthdr.len;
-	m->m_act = 0;
+	m->m_nextpkt = 0;
 	sb = lcp->lcd_so ? &lcp->lcd_so->so_snd : &lcp->lcd_sb;
 	do {
 		if (totlen > psize) {
@@ -1188,7 +1188,7 @@ pk_fragment(lcp, m0, qbit, mbit, wait)
 		if (m == 0)
 			goto abort;
 		*mp = m;
-		mp = &m->m_act;
+		mp = &m->m_nextpkt;
 		*mp = 0;
 		xp = mtod(m, struct x25_packet *);
 		0[(char *) xp] = 0;
@@ -1204,8 +1204,8 @@ pk_fragment(lcp, m0, qbit, mbit, wait)
 			SMBIT(xp, 1);
 	} while ((m = next) != NULL);
 	for (m = head; m; m = next) {
-		next = m->m_act;
-		m->m_act = 0;
+		next = m->m_nextpkt;
+		m->m_nextpkt = 0;
 		sbappendrecord(sb, m);
 	}
 	return 0;
@@ -1215,7 +1215,7 @@ abort:
 	if (next)
 		m_freem(next);
 	for (m = head; m; m = next) {
-		next = m->m_act;
+		next = m->m_nextpkt;
 		m_freem(m);
 	}
 	return ENOBUFS;
