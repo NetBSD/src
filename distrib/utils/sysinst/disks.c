@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.36 2000/10/31 16:02:06 fvdl Exp $ */
+/*	$NetBSD: disks.c,v 1.37 2000/11/14 13:27:49 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -356,8 +356,8 @@ int make_fstab(void)
 
 
 static struct lookfor fstabbuf[] = {
-	{"/dev/", "/dev/%s %s ffs", "c", NULL, 0, 0, foundffs},
-	{"/dev/", "/dev/%s %s ufs", "c", NULL, 0, 0, foundffs},
+	{"/dev/", "/dev/%s %s ffs %s", "c", NULL, 0, 0, foundffs},
+	{"/dev/", "/dev/%s %s ufs %s", "c", NULL, 0, 0, foundffs},
 };
 static int numfstabbuf = sizeof(fstabbuf) / sizeof(struct lookfor);
 
@@ -370,7 +370,8 @@ static int  devcnt = 0;
 static void
 foundffs(struct data *list, int num)
 {
-	if (strcmp(list[1].u.s_val, "/") != 0) {
+	if (strcmp(list[1].u.s_val, "/") != 0 &&
+	    strstr(list[2].u.s_val, "noauto") == NULL) {
 		strncpy(dev[devcnt], list[0].u.s_val, SSTRSIZE);
 		strncpy(mnt[devcnt], list[1].u.s_val, STRSIZE);
 		devcnt++;
