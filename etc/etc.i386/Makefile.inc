@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile.inc,v 1.28 2001/07/21 13:38:22 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2001/09/13 18:08:13 jdolecek Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
 
 # These are packaged and distributed
-EXTRA_KERNELS+= GENERIC_TINY GENERIC_LAPTOP GENERIC_DIAGNOSTIC
+EXTRA_KERNELS+= GENERIC_TINY GENERIC_LAPTOP GENERIC_DIAGNOSTIC GENERIC_PS2TINY
 
 # These are for use by the bootfloppy construction tools
 BUILD_KERNELS+= INSTALL INSTALL_SMALL INSTALL_TINY INSTALL_LAPTOP INSTALL_PS2
-EXTRA_KERNEL_SETS=tiny laptop
+EXTRA_KERNEL_SETS=tiny laptop ps2tiny
 INSTALLATION_DIRS += installation/misc
 
 # mkisofs arguments to generate bootable iso image
