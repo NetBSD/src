@@ -1,3 +1,5 @@
-/*	$NetBSD: types.h,v 1.10 1996/12/17 21:11:12 gwr Exp $	*/
+/*	$NetBSD: types.h,v 1.11 2000/02/05 00:13:25 cgd Exp $	*/
 
 #include <m68k/types.h>
+
+#define __BROKEN_CONFIG_UNIT_USAGE
