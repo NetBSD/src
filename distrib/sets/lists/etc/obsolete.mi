@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.12 2002/11/17 02:48:09 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.13 2003/01/16 22:04:50 lukem Exp $
 ./etc/default
 ./etc/default/daily.conf
 ./etc/default/monthly.conf
@@ -25,4 +25,5 @@
 ./etc/rc.d/kerberos
 ./etc/rc.d/systemfs
 ./etc/rc.d/xntpd
+./etc/rc.d/ypset
 ./etc/rc.wscons
