@@ -1,4 +1,4 @@
-.\"	$NetBSD: revnetgroup.8,v 1.8 2003/02/25 10:36:24 wiz Exp $
+.\"	$NetBSD: revnetgroup.8,v 1.9 2005/02/26 16:28:40 thorpej Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -55,7 +55,7 @@ with a particular member. This information is used to generate the
 .Pa netgroup.byuser
 and
 .Pa netgroup.byhosts
-.Tn YP
+.Tn NIS
 maps. These reverse netgroup maps are used to help speed up
 netgroup lookups, particularly for the
 .Fn innetgr
@@ -77,7 +77,7 @@ to users and hosts; this allows netgroup username lookups
 and netgroup hostname lookups to be performed using independent keyspaces.
 .Pp
 By constructing these reverse netgroup databases (and the corresponding
-.Tn YP
+.Tn NIS
 maps) in advance, the
 .Xr getnetgrent 3
 library functions are spared from having to work out the dependencies
@@ -91,7 +91,7 @@ command prints its results on the standard output. It is usually called
 only by
 .Pa /var/yp/\*[Lt]domain\*[Gt]/Makefile
 when rebuilding the
-.Tn YP
+.Tn NIS
 netgroup maps.
 .Sh OPTIONS
 The
@@ -128,18 +128,18 @@ The Makefile that calls
 and
 .Nm revnetgroup
 to build the
-.Tn YP
+.Tn NIS
 databases.
 .It Pa /etc/netgroup
 The default netgroup database file. This file is most often found
 only on the
-.Tn YP
+.Tn NIS
 master server.
 .El
 .Sh SEE ALSO
 .Xr getnetgrent 3 ,
 .Xr netgroup 5 ,
 .Xr makedbm 8 ,
-.Xr yp 8
+.Xr nis 8
 .Sh AUTHORS
 .An Bill Paul Aq wpaul@ctr.columbia.edu

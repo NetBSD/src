@@ -1,4 +1,4 @@
-.\"	$NetBSD: netid.5,v 1.7 2002/06/12 21:48:09 wiz Exp $
+.\"	$NetBSD: netid.5,v 1.8 2005/02/26 16:27:44 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -29,17 +29,17 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 13, 1996
+.Dd February 26, 2005
 .Dt NETID 5
 .Os
 .Sh NAME
 .Nm netid
-.Nd YP network credential file
+.Nd NIS network credential file
 .Sh DESCRIPTION
 Files in
 .Nm
 format are rare. One lives in the
-.Tn YP
+.Tn NIS
 map
 .Pa netid.byname .
 The format is rather simple. Each row consists of two
@@ -74,6 +74,6 @@ unix.jodie@kaka 0:jodie
 .Ed
 .Sh SEE ALSO
 .Xr mknetid 8 ,
-.Xr yp 8
+.Xr nis 8
 .Sh AUTHORS
 .An Mats O Jansson Aq moj@stacken.kth.se

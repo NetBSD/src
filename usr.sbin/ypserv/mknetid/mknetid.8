@@ -1,4 +1,4 @@
-.\"	$NetBSD: mknetid.8,v 1.8 2003/02/25 10:36:24 wiz Exp $
+.\"	$NetBSD: mknetid.8,v 1.9 2005/02/26 16:27:44 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Os
 .Sh NAME
 .Nm mknetid
-.Nd a YP filter program
+.Nd a NIS filter program
 .Sh SYNOPSIS
 .Nm
 .Op Fl q
@@ -69,7 +69,7 @@ file.
 The options are as follows:
 .Bl -tag -width "-p passwdfile"
 .It Fl d Ar domain
-.Tn YP
+.Tn NIS
 domain to use instead of the default domain.
 .It Fl g Ar groupfile
 Alternate
@@ -110,7 +110,7 @@ Keep quiet about multiple occurrences of a uid; ignore all but the first.
 .Xr group 5 ,
 .Xr hosts 5 ,
 .Xr netid 5 ,
+.Xr nis 8
 .Xr passwd 5 ,
-.Xr yp 8
 .Sh AUTHORS
 .An Mats O Jansson Aq moj@stacken.kth.se
