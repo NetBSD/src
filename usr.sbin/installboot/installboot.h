@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.14 2002/06/02 10:44:57 isaki Exp $	*/
+/*	$NetBSD: installboot.h,v 1.15 2002/10/03 05:31:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ typedef enum {
 
 				/* flags from -o options */
 	IB_ALPHASUM =	1<<8,		/* set Alpha checksum */
-	IB_APPEND =	1<<9,		/* clear boot block */
+	IB_APPEND =	1<<9,		/* append stage 1 to EO(regular)F */
 	IB_SUNSUM =	1<<10,		/* set Sun checksum */
 	IB_STAGE1START=	1<<11,		/* start block for stage 1 provided */
 	IB_STAGE2START=	1<<12,		/* start block for stage 2 provided */
