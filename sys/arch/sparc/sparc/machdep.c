@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 1997/03/27 21:01:50 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.77 1997/04/02 20:56:30 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -849,6 +849,7 @@ dumpsys()
 		printf("error %d\n", error);
 		break;
 	}
+	snapshot(cpcb);
 }
 
 /*
