@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: trad-core.c,v 1.1 1994/01/28 12:38:14 pk Exp $
+	$Id: trad-core.c,v 1.2 1994/05/19 15:55:35 pk Exp $
 */
 
 /* To use this file on a particular host, configure the host with these
@@ -216,7 +216,11 @@ trad_unix_core_file_p (abfd)
      0 is at the place pointed to by u_ar0 (by setting the vma of the start
      of the section to -u_ar0).  GDB uses this info to locate the regs,
      using minor trickery to get around the offset-or-absolute-addr problem. */
+#ifdef TRAD_CORE_REGPOS
+  core_regsec (abfd)->vma = TRAD_CORE_REGPOS(abfd);
+#else
   core_regsec (abfd)->vma = 0 - (int) u.u_ar0;
+#endif
 
   core_datasec (abfd)->filepos = NBPG * UPAGES;
 #ifdef TRAD_CORE_STACK_FILEPOS
