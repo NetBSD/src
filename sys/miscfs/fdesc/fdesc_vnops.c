@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.48 1999/07/08 01:26:26 wrstuden Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.49 1999/07/19 23:00:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -826,10 +826,13 @@ fdesc_read(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 	int error = EOPNOTSUPP;
+	struct vnode *vp = ap->a_vp;
 
-	switch (VTOFDESC(ap->a_vp)->fd_type) {
+	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
+		VOP_UNLOCK(vp, 0);
 		error = cttyread(devctty, ap->a_uio, ap->a_ioflag);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
 	default:
@@ -851,10 +854,13 @@ fdesc_write(v)
 		struct ucred *a_cred;
 	} */ *ap = v;
 	int error = EOPNOTSUPP;
+	struct vnode *vp = ap->a_vp;
 
-	switch (VTOFDESC(ap->a_vp)->fd_type) {
+	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
+		VOP_UNLOCK(vp, 0);
 		error = cttywrite(devctty, ap->a_uio, ap->a_ioflag);
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
 
 	default:
