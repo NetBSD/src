@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.10 2002/11/16 04:55:06 itohy Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.11 2002/11/17 05:58:51 itohy Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 16, 2002
+.Dd November 17, 2002
 .Dt MAKEDEV 8 dreamcast
 .Os
 .Sh NAME
@@ -111,7 +111,8 @@ SCSI tapes, see
 .It Disks :
 . Bl -tag -width 0123456789 -compact
 . It Ar gdrom#
-Dreamcast ``gigadisc'' CD-ROM drive
+Dreamcast ``gigadisc'' CD-ROM drive, see
+.Xr \&gdrom 4
 . It Ar wd#
 ``winchester'' disk drives (ST506,IDE,ESDI,RLL,...), see
 .Xr \&wd 4
@@ -175,14 +176,17 @@ Set of 62 master and slave pseudo terminals, see
 . It Ar opty
 First 16 ptys, to save inodes on install media
 . El
-.It Maple Bus devices :
+.It Maple bus devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar maple
-Maple control devices
+Maple bus control devices, see
+.Xr \&maple 4
 . It Ar mlcd#
-Maple LCD devices
+Maple bus LCD devices, see
+.Xr \&mlcd 4
 . It Ar mmem#
-Maple storage devices
+Maple bus storage devices, see
+.Xr \&mmem 4
 . El
 .It Special purpose devices :
 . Bl -tag -width 0123456789 -compact
