@@ -1,7 +1,7 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.22 1994/01/16 01:38:07 cgd Exp $
+#	$Id: PAIN,v 1.23 1994/03/09 21:22:40 ws Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -40,6 +40,7 @@ options		MACHINE_NONCONTIG
 options		USER_LDT
 
 # every file system known to man
+options		FFS
 options		MFS
 options		NFSSERVER,NFSCLIENT
 options		MSDOSFS,ISOFS

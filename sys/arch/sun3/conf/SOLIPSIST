@@ -14,6 +14,7 @@ options		"TCP_COMPAT_42"
 
 # Options for all SUN3 machines
 options		KTRACE
+options		FFS
 config		netbsd swap generic
 
 le0 at obio? addr ? priority 3
