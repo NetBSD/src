@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.72 1998/04/18 01:19:40 thorpej Exp $
+# $NetBSD: ALPHA,v 1.73 1998/04/24 18:18:41 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -196,8 +196,8 @@ mcclock* at	isa? port 0x70
 pckbc*	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
 psm*	at	pckbc?				# PS/2-style mouse (aux port)
-pcppi*		at	isa?				# PC prog. periph. interface
-spkr0		at	pcppi?				# IBM BASIC emulation
+pcppi*	at	isa?				# PC prog. periph. interface
+spkr0	at	pcppi?				# IBM BASIC emulation
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
@@ -255,11 +255,11 @@ sd*	at	atapibus? drive ?		# ATAPI disk devices
 cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 
 # Workstation Console attachments
-#wsdisplay* at	cfb?
+#wsdisplay*	at	cfb?
 wsdisplay*	at	vga?
-#wsdisplay* at	sfb?
+#wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
-wskbd*	at	pckbd?
+wskbd*		at	pckbd?
 wsmouse*	at	psm?
 
 pseudo-device	bpfilter	16

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL-FLOPPY,v 1.4 1998/04/15 21:19:22 drochner Exp $
+# $NetBSD: INSTALL-FLOPPY,v 1.5 1998/04/24 18:18:41 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -155,7 +155,7 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 # Workstation Console attachments
 wsdisplay*	at	vga?
 wsdisplay*	at	tga?
-wskbd*	at	pckbd?
+wskbd*		at	pckbd?
 
 pseudo-device	loop		1
 pseudo-device	md		1
