@@ -1,4 +1,4 @@
-.\"     $NetBSD: nslookup.8,v 1.2 2004/05/20 00:26:44 wiz Exp $
+.\"     $NetBSD: nslookup.8,v 1.3 2004/05/20 00:37:51 wiz Exp $
 .\"
 .\"
 .\" ++Copyright++ 1985, 1989
@@ -63,9 +63,9 @@
 .Op Fl option Ar ...
 .Op Ar host-to-find | Fl Op Ar server
 .Sh DESCRIPTION
-.Ic Nslookup
+.Nm
 is a program to query Internet domain name servers.
-.Ic Nslookup
+.Nm
 has two modes: interactive and non-interactive.
 Interactive mode allows the user to query name servers for
 information about various hosts and domains or to print a list of hosts
@@ -74,17 +74,20 @@ Non-interactive mode is used to print just the name and requested information
 for a host or domain.
 .Sh ARGUMENTS
 Interactive mode is entered in the following cases:
-.Bl -tag -width "a)  "
-.It a)
+.Bl -enum
+.It
 when no arguments are given (the default name server will be used),
-.It b)
-when the first argument is a hyphen (-) and the second argument
+.It
+when the first argument is a hyphen
+.Pq Sq \&-
+and the second argument
 is the host name or Internet address of a name server.
 .El
 .Pp
 Non-interactive mode is used when the name or Internet address
 of the host to be looked up
-is given as the first argument. The optional second argument specifies
+is given as the first argument.
+The optional second argument specifies
 the host name or address of a name server.
 .Pp
 The options listed under the
@@ -93,9 +96,10 @@ command below can be specified in
 the
 .Pa .nslookuprc
 file in the user's home directory if they are listed
-one per line.  Options can also be specified
-on the command line if they precede the arguments and are prefixed with
-a hyphen.  For example, to change the default query type to host information,
+one per line.
+Options can also be specified on the command line if they precede
+the arguments and are prefixed with a hyphen.
+For example, to change the default query type to host information,
 and the initial timeout to 10 seconds, type:
 .Bd -literal -offset indent
 	nslookup -query=hinfo  -timeout=10
@@ -110,7 +114,7 @@ The command line length must be less than 256 characters.
 To treat a built-in command as a host name,
 precede it with an escape character
 .Pq Sq \e .
-.Sy N.B.:  An unrecognized command will be interpreted as a host name.
+.Em N.B.:  An unrecognized command will be interpreted as a host name.
 .Bl -tag -width "lserver"
 .It Ar host Op Ar server
 Look up information for
@@ -128,7 +132,8 @@ the name of the host is returned.
 If
 .Ar host
 is a name and does not have a trailing period, the default
-domain name is appended to the name.  (This behavior depends on the state of the
+domain name is appended to the name.
+(This behavior depends on the state of the
 .Ic set
 options
 .Ic domain , srchlist , defname ,
@@ -160,10 +165,10 @@ The name of the root server can be changed with the
 .Dq Ic set root
 command.
 .It Xo Ic finger Op Ar name
-.Op Ic > Ar filename
+.Op Ic \*[Gt] Ar filename
 .Xc
 .It Xo Ic finger Op Ar name
-.Op Ic >> Ar filename
+.Op Ic \*[Gt]\*[Gt] Ar filename
 .Xc
 Connects with the finger server on the current host.
 The current host is defined when a previous lookup for a host
@@ -173,15 +178,15 @@ command).
 The
 .Ar name
 is optional.
-.Ic >
+.Ic \*[Gt]
 and
-.Ic >>
+.Ic \*[Gt]\*[Gt]
 can be used to redirect output in the usual manner.
 .It Xo Ic ls Op Ar option
-.Ar domain Op Ic > Ar filename
+.Ar domain Op Ic \*[Gt] Ar filename
 .Xc
 .It Xo Ic ls Op Ar option
-.Ar domain Op Ic >> Ar filename
+.Ar domain Op Ic \*[Gt]\*[Gt] Ar filename
 .Xc
 List the information available for
 .Ar domain ,
@@ -258,7 +263,8 @@ abbreviation =
 .It Xo
 .Oo Ic no Oc Ns Ic debug
 .Xc
-Turn debugging mode on.  A lot more information is printed about the
+Turn debugging mode on.
+A lot more information is printed about the
 packet sent to the server and the resulting answer.
 .Pp
 (Default =
@@ -313,7 +319,9 @@ Change the default domain name to
 and the domain search list
 to
 .Ar name1 , name2 ,
-etc.  A maximum of 6 names separated by slashes (/)
+etc.
+A maximum of 6 names separated by slashes
+.Pq Sq /
 can be specified.
 For example,
 .Bd -literal -offset indent
@@ -440,7 +448,8 @@ abbreviation =
 .It Ic timeout Ns = Ns Ar number
 Change the initial timeout interval for waiting for a reply to
 .Ar number
-seconds. Each retry doubles the timeout period.
+seconds.
+Each retry doubles the timeout period.
 .Pp
 (Default = 5 seconds; abbreviation =
 .Ic ti )
@@ -463,6 +472,22 @@ Ignore packet truncation errors.
 abbreviation =
 .Oo Ic no Oc Ns Ic ig )
 .El
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width "HOSTALIASESXXXX" -compact
+.It Ev HOSTALIASES
+file containing host aliases
+.It Ev LOCALDOMAIN
+overrides default domain
+.El
+.Sh FILES
+.Bl -tag -width "/usr/share/misc/nslookup.helpXXX" -compact
+.It Pa /etc/resolv.conf
+initial domain name and name server addresses
+.It Pa $HOME/.nslookuprc
+user's initial options
+.It Pa /usr/share/misc/nslookup.help
+summary of commands
 .El
 .Sh DIAGNOSTICS
 If the lookup request was not successful, an error message is printed.
@@ -505,29 +530,21 @@ The name server found that the request packet was not in the proper format.
 It may indicate an error in
 .Nm nslookup .
 .El
-.Sh FILES
-.Bl -tag -width "/usr/share/misc/nslookup.helpXXX" -compact
-.It Pa /etc/resolv.conf
-initial domain name and name server addresses
-.It Pa $HOME/.nslookuprc
-user's initial options
-.It Pa /usr/share/misc/nslookup.help
-summary of commands
-.El
-.Sh ENVIRONMENT
-.Bl -tag -width "HOSTALIASESXXXX" -compact
-.It Ev HOSTALIASES
-file containing host aliases
-.It Ev LOCALDOMAIN
-overrides default domain
-.El
 .Sh SEE ALSO
-.Xr named 8 ,
 .Xr resolver 3 ,
-.Xr resolv.conf 5 ;
-RFC-1034,
-.Dq Domain Names - Concepts and Facilities ;
-RFC-1035,
-.Dq Domain Names - Implementation and Specification .
-.Sh AUTHOR
+.Xr resolv.conf 5 ,
+.Xr named 8
+.Rs
+.%A P.V. Mockapetris
+.%T Domain Names - Concepts and Facilities
+.%R RFC 1034
+.%D Nov 1, 1987
+.Re
+.Rs
+.%A P.V. Mockapetris
+.%T Domain Names - Implementation and Specification
+.%R RFC 1035
+.%D Nov 1, 1987
+.Re
+.Sh AUTHORS
 Andrew Cherenson
