@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.11 1997/08/24 20:06:34 augustss Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.12 1997/08/25 22:17:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -82,9 +82,16 @@ sb_isa_match(parent, match, aux)
 #endif
 	void *aux;
 {
-	struct sbdsp_softc probesc;
+	struct sbdsp_softc probesc, *sc = &probesc;
 
-	return sbfind(parent, &probesc, aux);
+	bzero(sc, sizeof *sc);
+#ifdef __BROKEN_INDIRECT_CONFIG
+	sc->sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
+#else
+	sc->sc_dev.dv_cfdata = match;
+#endif
+	strcpy(sc->sc_dev.dv_xname, "sb");
+	return sbfind(parent, sc, aux);
 }
 
 static int

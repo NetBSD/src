@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.34 1997/08/24 20:03:51 augustss Exp $	*/
+/*	$NetBSD: wss.c,v 1.35 1997/08/25 22:17:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -220,6 +220,12 @@ wssprobe(parent, match, aux)
 {
     struct wss_softc probesc, *sc = &probesc;
 
+    bzero(sc, sizeof *sc);
+#ifdef __BROKEN_INDIRECT_CONFIG
+    sc->sc_dev.dv_cfdata = ((struct device *)match)->dv_cfdata;
+#else
+    sc->sc_dev.dv_cfdata = match;
+#endif
     if (wssfind(parent, sc, aux)) {
         bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);
         ad1848_unmap(&sc->sc_ad1848);
