@@ -1,4 +1,4 @@
-/*	$NetBSD: blowfish.c,v 1.2 2003/04/17 00:31:04 thorpej Exp $	*/
+/*	$NetBSD: blowfish.c,v 1.3 2003/08/06 08:34:32 jdolecek Exp $	*/
 /* $OpenBSD: blowfish.c,v 1.16 2002/02/19 19:39:36 millert Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
@@ -45,6 +45,8 @@
  * __bcrypt().  Also note that this file is actually included
  * directly by bcrypt.c, not built separately.
  */
+
+__RCSID("$NetBSD: blowfish.c,v 1.3 2003/08/06 08:34:32 jdolecek Exp $");
 
 #include <sys/types.h>
 
