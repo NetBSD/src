@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext_dummy.c,v 1.1 2000/11/02 10:24:48 itojun Exp $	*/
+/*	$NetBSD: gettext_dummy.c,v 1.2 2003/03/09 01:02:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext_dummy.c,v 1.1 2000/11/02 10:24:48 itojun Exp $");
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: gettext_dummy.c,v 1.2 2003/03/09 01:02:35 lukem Exp $");
 
 /* 
  * The symbol is referenced by gettext.m4 (autoconf m4 macro fragment
