@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.80 1998/03/01 02:22:36 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.81 1998/03/01 09:51:29 ross Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -166,11 +166,8 @@ int bdevvp __P((dev_t, struct vnode **));
 int cdevvp __P((dev_t, struct vnode **));
 int getdevvp __P((dev_t, struct vnode **, enum vtype));
 struct vnode *checkalias __P((struct vnode *, dev_t, struct mount *));
-void vref __P((struct vnode *));
 void vput __P((struct vnode *));
 void vrele __P((struct vnode *));
-void vhold __P((struct vnode *));
-void holdrele __P((struct vnode *));
 int vflush __P((struct mount *, struct vnode *, int));
 void vgoneall __P((struct vnode *));
 void vgone __P((struct vnode *));
@@ -415,7 +412,9 @@ getnewvnode(tag, mp, vops, vpp)
 {
 	struct proc *p = curproc;	/* XXX */
 	struct vnode *vp;
+#ifdef DIAGNOSTIC
 	int s;
+#endif
 
 	simple_lock(&vnode_free_list_slock);
 	if ((vnode_free_list.tqh_first == NULL &&
@@ -893,21 +892,6 @@ vget(vp, flags)
 }
 
 /*
- * Vnode reference.
- */
-void
-vref(vp)
-	struct vnode *vp;
-{
-
-	simple_lock(&vp->v_interlock);
-	if (vp->v_usecount <= 0)
-		panic("vref used where vget required");
-	vp->v_usecount++;
-	simple_unlock(&vp->v_interlock);
-}
-
-/*
  * vput(), just unlock and vrele()
  */
 void
@@ -1005,6 +989,21 @@ holdrele(vp)
 	if (vp->v_holdcnt <= 0)
 		panic("holdrele: holdcnt");
 	vp->v_holdcnt--;
+	simple_unlock(&vp->v_interlock);
+}
+
+/*
+ * Vnode reference.
+ */
+void
+vref(vp)
+	struct vnode *vp;
+{
+
+	simple_lock(&vp->v_interlock);
+	if (vp->v_usecount <= 0)
+		panic("vref used where vget required");
+	vp->v_usecount++;
 	simple_unlock(&vp->v_interlock);
 }
 #endif /* DIAGNOSTIC */
