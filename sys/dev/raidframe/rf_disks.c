@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.27 2000/03/31 02:05:24 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.28 2000/05/28 05:23:42 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -425,6 +425,21 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 		}
 #endif
 	}
+	/* close the device for the ones that don't match */
+
+	ac = auto_config;
+	while(ac!=NULL) {
+		if (ac->clabel->mod_counter != mod_counter) {
+			VOP_CLOSE(ac->vp, FREAD, NOCRED, 0);
+			vput(ac->vp);
+			ac->vp = NULL;
+#if DEBUG 
+			printf("Ignoring %s due to low mod_counter.\n",
+			       ac->devname);
+#endif
+		}
+		ac = ac->next;
+	}
 
 	for (r = 0; r < raidPtr->numRow; r++) {
 		numFailuresThisRow = 0;
@@ -442,7 +457,8 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 					goto fail;
 				}
 				if ((ac->clabel->row == r) &&
-				    (ac->clabel->column == c)) {
+				    (ac->clabel->column == c) &&
+				    (ac->clabel->mod_counter == mod_counter)) {
 					/* it's this one... */
 #if DEBUG
 					printf("Found: %s at %d,%d\n",

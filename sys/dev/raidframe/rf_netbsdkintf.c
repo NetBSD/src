@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.85 2000/05/28 03:00:31 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.86 2000/05/28 05:23:41 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2907,28 +2907,9 @@ rf_create_auto_sets(ac_list)
 			cset = config_sets;
 			while(cset!=NULL) {
 				if (rf_does_it_fit(cset, ac)) {
-					/* looks like it matches... how about
-					   the mod_counter? */
-
-					if (cset->ac->clabel->mod_counter ==
-					    ac->clabel->mod_counter) {
-						ac->next = cset->ac;
-						cset->ac = ac;
-					} else {
-						/* else we ignore this, as
-						   it used to belong to a
-						   valid set, but is no
-						   longer in sync.  It's
-						   effectively a renegade,
-						   and we don't want to add
-						   it *anywhere*.  Close it,
-						   and carry on.
-						*/
-						VOP_CLOSE(ac->vp, FREAD, 
-							   NOCRED, 0);
-						vput(ac->vp);
-						
-					}
+					/* looks like it matches... */
+					ac->next = cset->ac;
+					cset->ac = ac;
 					break;
 				}
 				cset = cset->next;
@@ -3025,6 +3006,7 @@ rf_have_enough_components(cset)
 	int num_rows;
 	int num_cols;
 	int num_missing;
+	int mod_counter;
 
 	/* check to see that we have enough 'live' components
 	   of this set.  If so, we can configure it if necessary */
@@ -3033,6 +3015,17 @@ rf_have_enough_components(cset)
 	num_cols = cset->ac->clabel->num_columns;
 
 	/* XXX Check for duplicate components!?!?!? */
+
+	/* Determine what the mod_counter is supposed to be for this set. */
+
+	mod_counter = -1;
+	ac = cset->ac;
+	while(ac!=NULL) {
+		if (ac->clabel->mod_counter > mod_counter) {
+			mod_counter = ac->clabel->mod_counter;
+		}
+		ac = ac->next;
+	}
 
 	num_missing = 0;
 	auto_config = cset->ac;
@@ -3046,7 +3039,8 @@ rf_have_enough_components(cset)
 					goto fail;
 				}
 				if ((ac->clabel->row == r) &&
-				    (ac->clabel->column == c)) {
+				    (ac->clabel->column == c) && 
+				    (ac->clabel->mod_counter == mod_counter)) {
 					/* it's this one... */
 #if DEBUG
 					printf("Found: %s at %d,%d\n",
@@ -3182,6 +3176,7 @@ rf_release_all_vps(cset)
 		if (ac->vp) {
 			VOP_CLOSE(ac->vp, FREAD, NOCRED, 0);
 			vput(ac->vp);
+			ac->vp = NULL;
 		}
 		ac = ac->next;
 	}
