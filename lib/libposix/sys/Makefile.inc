@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.8 1998/02/14 20:44:06 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.9 1999/02/24 15:10:17 drochner Exp $
 
 # sys sources
-.PATH: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
+.PATH: ${ARCHDIR}/sys ${.CURDIR}/sys
 
 # stubs providing an entry "foo" but calling "__posix_foo()"
 PSEUDO=	chown.o fchown.o lchown.o rename.o
@@ -10,7 +10,7 @@ SPSEUDO=${PSEUDO:.o=.so}
 
 OBJS+=	${PSEUDO}
 
-${PPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
+${PPSEUDO}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
@@ -19,7 +19,7 @@ ${PPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${SPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
+${SPSEUDO}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
@@ -27,7 +27,7 @@ ${SPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
 	    ${CPP} ${CPPPICFLAGS} ${CPPFLAGS:M-[ID]*} ${AINC} | \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
-${PSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
+${PSEUDO}: ${ARCHDIR}/SYS.h \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
