@@ -1,11 +1,12 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
-.\" $Id: krb5_init_context.3,v 1.4 2001/06/19 22:39:58 assar Exp $
+.\" $Id: krb5_init_context.3,v 1.5 2001/09/17 12:32:38 assar Exp $
 .Dd January 21, 2001
 .Dt KRB5_CONTEXT 3
 .Os
 .Sh NAME
 .Nm krb5_init_context ,
 .Nm krb5_free_context
+.Nd create and delete krb5_context structures
 .Sh SYNOPSIS
 .Fd #include <krb5.h>
 .Ft krb5_error_code
@@ -33,6 +34,6 @@ Failure means either that something bad happened during initialization
 or that Kerberos should not be used
 .Bq ENXIO .
 .Sh SEE ALSO
-.Xr krb5_context 3 ,
 .Xr errno 2 ,
+.Xr krb5_context 3 ,
 .Xr kerberos 8
