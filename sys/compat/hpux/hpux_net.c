@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.20.2.9 2002/12/29 19:49:52 thorpej Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.20.2.10 2003/01/10 04:52:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.20.2.9 2002/12/29 19:49:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.20.2.10 2003/01/10 04:52:27 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -153,7 +153,6 @@ hpux_sys_netioctl(l, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_netioctl_args *uap = v;
-	struct proc *p = l->l_proc;
 	int *args, i;
 	int code;
 	int error;
