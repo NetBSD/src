@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.123 2002/03/22 18:10:22 thorpej Exp $
+#	$NetBSD: Makefile,v 1.124 2002/04/27 16:37:19 atatat Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -18,7 +18,7 @@ SUBDIR=	apply apropos asa at audio banner basename biff \
 	pagesize passwd paste patch pkill pmc pr printenv printf quota \
 	radioctl rdist renice rev rlogin rpcgen rpcinfo rs rsh rup \
 	ruptime rusers rwall rwho script sed shar shlock \
-	showmount shuffle soelim sort split \
+	showmount shuffle soelim sort split stat \
 	su systat tail talk tcopy tee telnet tftp time \
 	tip tn3270 top touch tput tr true tset tsort tty ul \
 	uname unexpand unifdef uniq units unvis usbhidaction usbhidctl users \
