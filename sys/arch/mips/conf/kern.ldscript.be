@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.be,v 1.1 2000/05/21 02:50:13 soren Exp $	*/
+/* $NetBSD: kern.ldscript.be,v 1.2 2000/05/21 02:51:58 soren Exp $ */
 
 /*  ldscript for NetBSD/mipseb kernels */
 OUTPUT_FORMAT("elf32-bigmips", "elf32-bigmips",
