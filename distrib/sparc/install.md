@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.2 1996/02/28 00:50:28 thorpej Exp $
+#	$NetBSD: install.md,v 1.3 1996/05/21 18:54:40 pk Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -109,6 +109,9 @@ in case you have defined less than eight partitions.
 [End of example]
 
 __md_prep_disklabel_1
+
+	disklabel -W $1
+	disklabel -e $1
 }
 
 md_welcome_banner() {
@@ -179,3 +182,6 @@ system has halted, reset the machine and boot from the disk.
 
 __congratulations_1
 }
+
+md_native_fstype () {}
+md_native_fsopts () {}
