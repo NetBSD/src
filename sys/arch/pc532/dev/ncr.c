@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.31 1996/11/24 13:32:50 matthias Exp $	*/
+/*	$NetBSD: ncr.c,v 1.32 1996/12/23 08:37:04 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -43,6 +43,7 @@
 #include <dev/ic/ncr5380var.h>
 #include <machine/cpufunc.h>
 
+
 /*
  * Function declarations:
  */
@@ -51,7 +52,7 @@ static int ncr_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));
 static void ncr_minphys __P((struct buf *bp));
 static void ncr_intr __P((void *));
 static void ncr_attach __P((struct device *, struct device *, void *));
-static int ncr_match __P((struct device *, void *, void *));
+static int ncr_match __P((struct device *, struct cfdata *, void *));
 
 /*
  * Some constants.
@@ -93,15 +94,16 @@ struct cfattach ncr_ca = {
 };
 
 struct cfdriver ncr_cd = {
-	NULL, "ncr", DV_DULL, NULL, 0,
+	NULL, "ncr", DV_DULL
 };
 
 static int
 ncr_match(parent, cf, aux)
-	struct device	*parent;
-	void		*cf, *aux;
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
-	int unit = ((struct cfdata *)cf)->cf_unit;
+	int unit = cf->cf_unit;
 	
 	if (unit != 0)	/* Only one unit */
 		return(0);
@@ -110,8 +112,8 @@ ncr_match(parent, cf, aux)
 
 static void
 ncr_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	struct ncr5380_softc *sc = (struct ncr5380_softc *) self;
 	int flags;
@@ -163,7 +165,7 @@ ncr_attach(parent, self, aux)
 	sc->sc_parity_disable = flags >> 8;
 
 	intr_establish(IR_SCSI1, ncr_intr, (void *)sc, sc->sc_dev.dv_xname,
-		IPL_BIO, RISING_EDGE);
+		IPL_BIO, IPL_BIO, RISING_EDGE);
 	printf(" addr 0x%x, irq %d\n", NCR5380, IR_SCSI1);
 
 	/*
@@ -178,11 +180,9 @@ static void
 ncr_intr(arg)
 	void *arg;
 {
-	register struct ncr5380_softc *sc = arg;
-	int s;
+	struct ncr5380_softc *sc = arg;
 
 	if (*sc->sci_csr & SCI_CSR_INT) {
-		s = splbio();
 		if (ncr5380_intr(sc) == 0) {
 			printf("%s: ", sc->sc_dev.dv_xname);
 			if ((*sc->sci_bus_csr & ~SCI_BUS_RST) == 0)
@@ -191,7 +191,6 @@ ncr_intr(arg)
 				printf("spurious interrupt\n");
 			SCI_CLR_INTR(sc);
 		}
-		splx(s);
 	}
 }
 
@@ -209,7 +208,13 @@ ncr_intr(arg)
 #define R1(n)	*(data + n) = *byte_data
 #define R4(n)	*((u_long *)data + n) = *long_data
 
-#define TSIZE	512
+#ifndef NCR_TSIZE_OUT
+#define NCR_TSIZE_OUT	512
+#endif
+
+#ifndef NCR_TSIZE_IN
+#define NCR_TSIZE_IN	128
+#endif
 
 #define TIMEOUT	1000000
 
@@ -217,7 +222,7 @@ static __inline int
 ncr_ready(sc)
 	struct ncr5380_softc *sc;
 {
-	register int i;
+	int i;
 
 	for (i = TIMEOUT; i > 0; i--) {
 		if ((*sc->sci_csr & (SCI_CSR_DREQ | SCI_CSR_PHASE_MATCH)) ==
@@ -238,40 +243,38 @@ ncr_pdma_in(sc, phase, datalen, data)
 	int phase, datalen;
 	u_char *data;
 {
-	register volatile u_char *pdma = PDMA_ADDRESS;
-	register int resid, s, ready = 1;
-
-	if (datalen < TSIZE)
-		return(ncr5380_pio_in(sc, phase, datalen, data));
+	volatile u_char *pdma = PDMA_ADDRESS;
+	int resid, s;
 
 	s = splbio();
 	*sc->sci_mode |= SCI_MODE_DMA;
 	*sc->sci_irecv = 0;
 
-	resid = datalen;
-	while (resid >= TSIZE) {
+	for (resid = datalen; resid >= NCR_TSIZE_IN; resid -= NCR_TSIZE_IN) {
 		if (ncr_ready(sc) == 0) {
-			ready = 0;
-			break;
+			goto interrupt;
 		}
 		di();
-		movsd((u_char *)pdma, data, TSIZE / 4);
-		resid -= TSIZE;
+		movsd((u_char *)pdma, data, NCR_TSIZE_IN / 4);
 		ei();
 	}
 
-	if (resid && ready) {
-		di();
-		while (resid > 0) {
-			if (ncr_ready(sc) == 0)
-				break;
-			R1(0);
-			data++;
-			resid--;
+	if (resid) {
+		int t;
+		if (ncr_ready(sc) == 0) {
+			goto interrupt;
 		}
-		ei();
-	}
+		t = resid / sizeof(int);
+		di();
+		movsd((u_char *)pdma, data, t);
+		t *= sizeof(int);
+		resid -= t;
 
+		movsb((u_char *)pdma, data, resid);
+		ei();
+		resid = 0;
+	}
+interrupt:
 	SCI_CLR_INTR(sc);
 	*sc->sci_mode &= ~SCI_MODE_DMA;
 	splx(s);
@@ -282,14 +285,11 @@ static int
 ncr_pdma_out(sc, phase, datalen, data)
 	struct ncr5380_softc *sc;
 	int phase, datalen;
-	u_char *data;
+	u_char *data; 
 {
-	register volatile u_char *pdma = PDMA_ADDRESS;
-	register int i, s, resid, ready = 1;
-	register u_char icmd;
-
-	if (datalen < TSIZE)
-		return(ncr5380_pio_out(sc, phase, datalen, data));
+	volatile u_char *pdma = PDMA_ADDRESS;
+	int i, s, resid, ready = 1;
+	u_char icmd;
 
 	s = splbio();
 	icmd = *(sc->sci_icmd) & SCI_ICMD_RMASK;
@@ -298,44 +298,47 @@ ncr_pdma_out(sc, phase, datalen, data)
 	*sc->sci_dma_send = 0;
 
 	resid = datalen;
-	while (resid >= TSIZE) {
-		if (ncr_ready(sc) == 0) {
-			ready = 0;
-			break;
-		}
-		di();
-		W1(0);
-
-		/*
-		 * The second ready is to compensate for DMA-prefetch.
-		 * Since we adjust resid only at the end of the block,
-		 * there is no need to correct the residue.
+	if (ncr_ready(sc) == 0) {
+		goto interrupt;
+	}
+	if (resid > NCR_TSIZE_OUT) {
+		/* Because of the chips DMA prefetch, phase changes
+		 * etc, won't be detected until we have written at
+		 * least one byte more. We pre-write 4 bytes so
+		 * subsequent transfers will be aligned to a 4 byte
+		 * boundary. Assuming disconects will only occur on
+		 * block boundaries, we then correct for the pre-write
+		 * when and if we get a phase change. If the chip had
+		 * DMA byte counting hardware, the assumption would not
+		 * be necessary.
 		 */
-		if (ncr_ready(sc) == 0) {
-			ready = 0;
-			break;
-		}
-		W1(1); W2(1);
+		W4(0);
 		data += 4;
-		movsd(data, (u_char *)pdma, TSIZE / 4 - 1);
-		ei();
-		resid -= TSIZE;
-	}
-
-	if (resid && ready) {
-		if (ncr_ready(sc) == 1) {
-			di();
-			while (resid > 0) {
-				W1(0);
-				if (ncr_ready(sc) == 0)
-					break;
-				data++;
-				resid--;
+		resid -= 4;
+		
+		for (; resid >= NCR_TSIZE_OUT; resid -= NCR_TSIZE_OUT) {
+			if (ncr_ready(sc) == 0) {
+				resid += 4; /* Overshot */
+				goto interrupt;
 			}
-			ei();
+			movsd(data, (u_char *)pdma, NCR_TSIZE_OUT / 4);
+		}
+		if (ncr_ready(sc) == 0) {
+			resid += 4; /* Overshot */
+			goto interrupt;
 		}
 	}
 
+	if (resid) {
+		int t;
+		t = resid / sizeof(int);
+		movsd(data, (u_char *)pdma, t);
+		t *= sizeof(int);
+		resid -= t;
+
+		movsb(data, (u_char *)pdma, resid);
+		resid = 0;
+	}
 	for (i = TIMEOUT; i > 0; i--) {
 		if ((*sc->sci_csr & (SCI_CSR_DREQ|SCI_CSR_PHASE_MATCH))
 		    != SCI_CSR_DREQ)
@@ -347,9 +350,11 @@ ncr_pdma_out(sc, phase, datalen, data)
 		printf("%s: timeout waiting for final SCI_DSR_DREQ.\n",
 			sc->sc_dev.dv_xname);
 
+interrupt:
 	SCI_CLR_INTR(sc);
 	*sc->sci_mode &= ~SCI_MODE_DMA;
 	*sc->sci_icmd = icmd;
 	splx(s);
 	return(datalen - resid);
 }
+
