@@ -1,5 +1,5 @@
 /*
-**	$Id: parse.c,v 1.5 1995/05/21 00:39:13 mycroft Exp $
+**	$Id: parse.c,v 1.6 1996/01/02 22:01:55 jtc Exp $
 **
 ** parse.c                         This file contains the protocol parser
 **
@@ -355,7 +355,7 @@ int parse(fp, laddr, faddr)
 	syslog(LOG_WARNING, "getpwuid() could not map uid (%d) to name",
 	       uid);
 
-      printf("%d , %d : USERID : OTHER%s%s : %d\r\n",
+      printf("%d , %d : USERID : OTHER%s%s :%d\r\n",
 	     lport, fport,
 	     charset_name ? " , " : "",
 	     charset_name ? charset_name : "",
@@ -384,13 +384,13 @@ int parse(fp, laddr, faddr)
     }
 
     if (number_flag)
-      printf("%d , %d : USERID : OTHER%s%s : %d\r\n",
+      printf("%d , %d : USERID : OTHER%s%s :%d\r\n",
 	     lport, fport,
 	     charset_name ? " , " : "",
 	     charset_name ? charset_name : "",
 	     uid);
     else
-      printf("%d , %d : USERID : %s%s%s : %s\r\n",
+      printf("%d , %d : USERID : %s%s%s :%s\r\n",
 	     lport, fport,
 	     other_flag ? "OTHER" : "UNIX",
 	     charset_name ? " , " : "",
