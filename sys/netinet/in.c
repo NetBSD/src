@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.76.4.2 2003/06/30 02:20:32 grant Exp $	*/
+/*	$NetBSD: in.c,v 1.76.4.3 2003/07/02 14:10:36 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.76.4.2 2003/06/30 02:20:32 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.76.4.3 2003/07/02 14:10:36 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -578,6 +578,11 @@ in_purgeif(ifp)
 		in_purgeaddr(ifa, ifp);
 	}
 	in_purgemkludge(ifp);
+
+	igmp_purgeif(ifp);
+#ifdef MROUTING
+	ip_mrouter_detach(ifp);
+#endif
 }
 
 /*
@@ -1062,11 +1067,6 @@ in_savemkludge(oia)
 		TAILQ_INSERT_TAIL(&in_mk, oia, ia_list);
 		IFAREF(&oia->ia_ifa);
 	}
-
-	igmp_purgeif(ifp);
-#ifdef MROUTING
-	ip_mrouter_detach(ifp);
-#endif
 }
 
 /*
