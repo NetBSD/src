@@ -1,4 +1,4 @@
-# $NetBSD: NOSY,v 1.25 1998/04/15 21:19:22 drochner Exp $
+# $NetBSD: NOSY,v 1.26 1998/05/04 04:38:29 thorpej Exp $
 #
 # Kernel for nostromo.nas.nasa.gov.
 #
@@ -13,8 +13,6 @@ options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 # Standard system options
 options 	KTRACE			# System call tracing support
 options 	NTP			# NTP PLL
-options 	UVM			# new VM system
-options 	PMAP_NEW		# new PMAP interface for UVM
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
