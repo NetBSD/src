@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.8 2003/04/10 15:23:19 scw Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.9 2003/04/30 18:31:30 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -996,6 +996,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	struct gfe_txqueue * const txq = sc->sc_txq[txprio];
 	volatile struct gt_eth_desc * const txd = &txq->txq_descs[txq->txq_lo];
 	uint32_t intrmask = sc->sc_intrmask;
+	size_t buflen;
 	struct mbuf *m;
 
 	GE_FUNC_ENTER(sc, "gfe_tx_enqueue");
@@ -1058,11 +1059,13 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 		GE_DPRINTF(sc, ("%%"));
 	}
 
+	buflen = roundup(m->m_pkthdr.len, dcache_line_size);
+
 	/*
 	 * If this packet would wrap around the end of the buffer, reset back
 	 * to the beginning.
 	 */
-	if (txq->txq_outptr + m->m_pkthdr.len > GE_TXBUF_SIZE) {
+	if (txq->txq_outptr + buflen > GE_TXBUF_SIZE) {
 		txq->txq_ei_gapcount += GE_TXBUF_SIZE - txq->txq_outptr;
 		txq->txq_outptr = 0;
 	}
@@ -1072,7 +1075,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	 * what we've already given the GT.
 	 */
 	if (txq->txq_nactive > 0 && txq->txq_outptr <= txq->txq_inptr &&
-	    txq->txq_outptr + m->m_pkthdr.len > txq->txq_inptr) {
+	    txq->txq_outptr + buflen > txq->txq_inptr) {
 		intrmask |= txq->txq_intrbits &
 		    (ETH_IR_TxBufferHigh|ETH_IR_TxBufferLow);
 		if (sc->sc_intrmask != intrmask) {
@@ -1094,7 +1097,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	m_copydata(m, 0, m->m_pkthdr.len,
 	    txq->txq_buf_mem.gdm_kva + txq->txq_outptr);
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_buf_mem.gdm_map,
-	    txq->txq_outptr, m->m_pkthdr.len, BUS_DMASYNC_PREWRITE);
+	    txq->txq_outptr, buflen, BUS_DMASYNC_PREWRITE);
 	txd->ed_bufptr = htogt32(txq->txq_buf_busaddr + txq->txq_outptr);
 	txd->ed_lencnt = htogt32(m->m_pkthdr.len << 16);
 	GE_TXDPRESYNC(sc, txq, txq->txq_lo);
@@ -1103,7 +1106,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	 * Request a buffer interrupt every 2/3 of the way thru the transmit
 	 * buffer.
 	 */
-	txq->txq_ei_gapcount += m->m_pkthdr.len + 7;
+	txq->txq_ei_gapcount += buflen;
 	if (txq->txq_ei_gapcount > 2 * GE_TXBUF_SIZE / 3) {
 		txd->ed_cmdsts = htogt32(TX_CMD_FIRST|TX_CMD_LAST|TX_CMD_EI);
 		txq->txq_ei_gapcount = 0;
@@ -1117,7 +1120,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 #endif
 	GE_TXDPRESYNC(sc, txq, txq->txq_lo);
 
-	txq->txq_outptr += roundup(m->m_pkthdr.len, dcache_line_size);
+	txq->txq_outptr += buflen;
 	/*
 	 * Tell the SDMA engine to "Fetch!"
 	 */
