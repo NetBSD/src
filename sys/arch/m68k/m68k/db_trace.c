@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.28 2000/05/27 16:44:41 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.29 2000/08/10 08:02:36 scw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,6 +28,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/systm.h>
 
 #include <machine/db_machdep.h>
@@ -85,16 +86,9 @@ db_var_short(varp, valp, op)
 
 #define	MAXINT	0x7fffffff
 
-#if 0
-#define	INKERNEL(va)	(((vaddr_t)(va)) >= VM_MIN_KERNEL_ADDRESS && \
-			 (((vaddr_t)(va)) < (USRSTACK - MAXSSIZ) || \
-			  ((vaddr_t)(va)) >= USRSTACK))
-#else
-/* XXX - Slight hack... */
-extern int curpcb;
-#define	INKERNEL(va)	(((int)(va) > curpcb) && \
-			 ((int)(va) < (curpcb + USPACE)))
-#endif
+extern struct pcb *curpcb;
+#define	INKERNEL(va,pcb)	(((u_int)(va) > (u_int)(pcb)) && \
+				 ((u_int)(va) < ((u_int)(pcb) + USPACE)))
 
 #define	get(addr, space) \
 		(db_get_value((db_addr_t)(addr), sizeof(int), FALSE))
@@ -117,7 +111,7 @@ struct stackpos {
 
 static void findentry __P((struct stackpos *, void (*)(const char *, ...)));
 static void findregs __P((struct stackpos *, db_addr_t));
-static int  nextframe __P((struct stackpos *, int,
+static int  nextframe __P((struct stackpos *, struct pcb *, int,
     void (*)(const char *, ...)));
 static void stacktop __P((db_regs_t *, struct stackpos *,
     void (*)(const char *, ...)));
@@ -187,8 +181,9 @@ struct nlist *	trampsym = 0;
 struct nlist *	funcsym = 0;
 
 static int
-nextframe(sp, kerneltrace, pr)
+nextframe(sp, pcb, kerneltrace, pr)
 	struct stackpos *sp;
+	struct pcb *pcb;
 	int kerneltrace;
 	void (*pr) __P((const char *, ...));
 {
@@ -251,7 +246,7 @@ nextframe(sp, kerneltrace, pr)
 		 * Don't dig around in user stack to find no. of args and
 		 * entry point if just tracing the kernel
 		 */
-		if (kerneltrace && !INKERNEL(sp->k_fp)) {
+		if (kerneltrace && !INKERNEL(sp->k_fp, pcb)) {
 			sp->k_nargs = 0;
 			sp->k_entry = MAXINT;
 		} else
@@ -484,7 +479,9 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_addr_t	regp;
 	char *		name;
 	struct stackpos pos;
+	struct pcb	*pcb = curpcb;
 	boolean_t	kernel_only = TRUE;
+	boolean_t	trace_thread = FALSE;
 	int		fault_pc = 0;
 
 	{
@@ -492,6 +489,9 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		char c;
 
 		while ((c = *cp++) != 0)
+			if (c == 't')
+				trace_thread = TRUE;
+			else
 			if (c == 'u')
 				kernel_only = FALSE;
 	}
@@ -517,15 +517,41 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	}
 #endif
 	else {
-		pos.k_flags = 0;
-		pos.k_fp = addr;
+		if (trace_thread) {
+			struct proc *p;
+			struct user *u;
+			(*pr)("trace: pid %d ", (int)addr);
+			p = pfind(addr);
+			if (p == NULL) {
+				(*pr)("not found\n");
+				return;
+			}
+			if (!(p->p_flag & P_INMEM)) {
+				(*pr)("swapped out\n");
+				return;
+			}
+			u = p->p_addr;
+			pos.k_fp = u->u_pcb.pcb_regs[PCB_REGS_FP];
+			/*
+			 * Note: The following only works because cpu_switch()
+			 * doesn't push anything on the stack before it saves
+			 * the process' context in the pcb.
+			 */
+			pos.k_pc = get(u->u_pcb.pcb_regs[PCB_REGS_SP], DSP);
+			(*pr)("at %p\n", (void *)pos.k_fp);
+			pcb = &u->u_pcb;
+		} else {
+			pos.k_fp = addr;
+			pos.k_pc = MAXINT;
+		}
 
+		pos.k_flags = 0;
 		pos.k_nargs = 0;
-		pos.k_pc = MAXINT;
 		pos.k_entry = MAXINT;
-		/* sorry, we cannot find our registers without knowing our pc */
+
 		for (i = 0; i < NREGISTERS; i++)
 			pos.k_regloc[i] = 0;
+
 		findentry(&pos, pr);
 	}
 
@@ -536,6 +562,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		if (pos.k_pc == MAXINT) {
 			name = "?";
 			pos.k_pc = 0;
+			val = MAXINT;
 		} else {
 			db_find_sym_and_offset(pos.k_pc, &name, &val);
 			if (name == 0) {
@@ -555,7 +582,13 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		 * NOTE: If the argument list for 'trap()' ever changes,
 		 * we lose.
 		 */
-		if ( strcmp("_trap", name) == 0 ) {
+		if ( strcmp(
+#ifndef __ELF__
+		    "_trap",
+#else
+		    "trap",
+#endif
+		    name) == 0 ) {
 			int tfp;
 
 			/* Point to 'trap()'s 4th argument (frame structure) */
@@ -613,9 +646,9 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		 * Stop tracing if frame ptr no longer points into kernel
 		 * stack.
 		 */
-		if (kernel_only && !INKERNEL(pos.k_fp))
+		if (kernel_only && !INKERNEL(pos.k_fp, pcb))
 			break;
-		if (nextframe(&pos, kernel_only, pr) == 0)
+		if (nextframe(&pos, pcb, kernel_only, pr) == 0)
 			break;
 	}
 }
