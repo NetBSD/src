@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.20 1999/02/18 21:22:52 scottr Exp $
+#	$NetBSD: Makefile,v 1.21 1999/07/12 22:11:38 thorpej Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
+SRCTOP=	../..
+.include <bsd.crypto.mk>
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c getpwent.c
@@ -16,6 +18,10 @@ BINOWN=	root
 BINMODE=4555
 .if defined(notyet)
 INSTALLFLAGS=-fschg
+.endif
+
+.if defined(CRYPTOPATH)
+.include "${CRYPTOPATH}/usr.bin/passwd/Makefile.frag"
 .endif
 
 .include <bsd.prog.mk>
