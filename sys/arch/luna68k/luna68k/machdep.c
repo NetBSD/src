@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4 2000/01/19 20:05:37 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.5 2000/03/26 20:42:28 kleink Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2000/01/19 20:05:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2000/03/26 20:42:28 kleink Exp $");
 
 #include "opt_ddb.h"
 
@@ -360,7 +360,7 @@ cpu_startup()
 	 * XXX Should just change KERNBASE and VM_MIN_KERNEL_ADDRESS,
 	 * XXX but not right now.
 	 */
-	if (uvm_map_protect(kernel_map, 0, round_page(&kernel_text),
+	if (uvm_map_protect(kernel_map, 0, round_page((vaddr_t)&kernel_text),
 	    UVM_PROT_NONE, TRUE) != KERN_SUCCESS)
 		panic("can't mark pre-text pages off-limits");
 
@@ -368,8 +368,8 @@ cpu_startup()
 	 * Tell the VM system that writing to kernel text isn't allowed.
 	 * If we don't, we might end up COW'ing the text segment!
 	 */
-	if (uvm_map_protect(kernel_map, trunc_page(&kernel_text),
-	    trunc_page(&etext), UVM_PROT_READ|UVM_PROT_EXEC, TRUE)
+	if (uvm_map_protect(kernel_map, trunc_page((vaddr_t)&kernel_text),
+	    trunc_page((vaddr_t)&etext), UVM_PROT_READ|UVM_PROT_EXEC, TRUE)
 	    != KERN_SUCCESS)
 		panic("can't protect kernel text");
 

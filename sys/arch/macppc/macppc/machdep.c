@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2000/03/24 17:05:33 ws Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2000/03/26 20:42:30 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -827,7 +827,7 @@ kvtop(addr)
 	if (addr < end)
 		return (int)addr;
 
-	va = trunc_page(addr);
+	va = trunc_page((vaddr_t)addr);
 	off = (int)addr - va;
 
 	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE) {

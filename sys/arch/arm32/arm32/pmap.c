@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 1999/11/17 08:43:53 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.67 2000/03/26 20:42:25 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -337,7 +337,7 @@ pmap_free_pv(pv)
 {
 	struct pv_page *pvp;
 
-	pvp = (struct pv_page *) trunc_page(pv);
+	pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 	switch (++pvp->pvp_pgi.pgi_nfree) {
 	case 1:
 		TAILQ_INSERT_TAIL(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
@@ -386,7 +386,7 @@ pmap_collect_pv()
 			continue;
 		s = splimp();
 		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
-			pvp = (struct pv_page *) trunc_page(pv);
+			pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
 				pvp = pv_page_freelist.tqh_first;
 				if (--pvp->pvp_pgi.pgi_nfree == 0) {
