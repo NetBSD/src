@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2001/11/27 00:53:11 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2002/02/10 23:01:45 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -58,8 +58,9 @@
 
 #include "podulebus.h"
 
-struct device *booted_device;
 int booted_partition;
+struct device *booted_device;
+extern char *booted_kernel;
 
 extern dev_t dumpdev;
 
@@ -122,8 +123,8 @@ set_root_device()
 {
 	char *ptr;
             
-	if (boot_file)
-		get_device(boot_file);
+	if (booted_kernel)
+		get_device(booted_kernel);
 	if (boot_args &&
 	    get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr))
 		get_device(ptr);
