@@ -1,4 +1,0 @@
-Using this form you may edit any number of tunable kernel parameters supplied
-in NetBSD.  More information on what these values mean can be found in
-the sysctl(8) and sysctl(3) manpages.  It is recommended that you understand
-what it is that you are tuning, before you fiddle with these values.
