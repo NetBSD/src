@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.14 1999/12/06 19:25:59 drochner Exp $ */
+/* $NetBSD: xcfb.c,v 1.15 2000/03/14 06:25:21 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.14 1999/12/06 19:25:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.15 2000/03/14 06:25:21 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.14 1999/12/06 19:25:59 drochner Exp $");
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
+
+#include <dev/rasops/rasops.h>
+#include <dev/wsfont/wsfont.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicreg.h>
@@ -67,9 +68,9 @@ struct fb_devconfig {
 	int	dc_depth;		/* depth, bits per pixel */
 	int	dc_rowbytes;		/* bytes in a FB scan line */
 	vaddr_t dc_videobase;		/* base of flat frame buffer */
-	struct raster	dc_raster;	/* raster description */
-	struct rcons	dc_rcons;	/* raster blitter control info */
 	int	   dc_blanked;		/* currently has video disabled */
+
+	struct rasops_info rinfo;
 };
 
 struct hwcmap256 {
@@ -120,21 +121,9 @@ static void xcfb_getdevconfig __P((tc_addr_t, struct fb_devconfig *));
 static void xcfbinit __P((struct fb_devconfig *));
 int xcfb_cnattach __P((void));
 
-static const struct wsdisplay_emulops xcfb_emulops = {
-	rcons_cursor,
-	rcons_mapchar,
-	rcons_putchar,
-	rcons_copycols,
-	rcons_erasecols,
-	rcons_copyrows,
-	rcons_eraserows,
-	rcons_alloc_attr
-};
-
 struct wsscreen_descr xcfb_stdscreen = {
-	"std",
-	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
-	&xcfb_emulops,
+	"std", 0, 0,
+	0, /* textops */
 	0, 0,
 	WSSCREEN_REVERSE
 };
@@ -244,9 +233,7 @@ xcfb_getdevconfig(dense_addr, dc)
 	tc_addr_t dense_addr;
 	struct fb_devconfig *dc;
 {
-	struct raster *rap;
-	struct rcons *rcp;
-	int i;
+	int i, cookie;
 
 	dc->dc_vaddr = dense_addr;
 	dc->dc_paddr = MIPS_KSEG1_TO_PHYS(dc->dc_vaddr + XCFB_FB_OFFSET);
@@ -265,24 +252,36 @@ xcfb_getdevconfig(dense_addr, dc)
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
 		*(u_int32_t *)(dc->dc_videobase + i) = 0;
 
-	/* initialize the raster */
-	rap = &dc->dc_raster;
-	rap->width = dc->dc_wid;
-	rap->height = dc->dc_ht;
-	rap->depth = dc->dc_depth;
-	rap->linelongs = dc->dc_rowbytes / sizeof(u_int32_t);
-	rap->pixels = (u_int32_t *)dc->dc_videobase;
+	dc->rinfo.ri_depth = dc->dc_depth;
+	dc->rinfo.ri_bits = (void *)dc->dc_videobase;
+	dc->rinfo.ri_width = dc->dc_wid;
+	dc->rinfo.ri_height = dc->dc_ht;
+	dc->rinfo.ri_stride = dc->dc_rowbytes;
+	dc->rinfo.ri_hw = NULL;
 
-	/* initialize the raster console blitter */
-	rcp = &dc->dc_rcons;
-	rcp->rc_sp = rap;
-	rcp->rc_crow = rcp->rc_ccol = -1;
-	rcp->rc_crowp = &rcp->rc_crow;
-	rcp->rc_ccolp = &rcp->rc_ccol;
-	rcons_init(rcp, 34, 80);
+	wsfont_init();
+	/* prefer 8 pixel wide font */
+	if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0);
+	if (cookie <= 0) {
+		printf("xcfb: font table is empty\n");
+		return;
+	}
 
-	xcfb_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
-	xcfb_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
+	if (wsfont_lock(cookie, &dc->rinfo.ri_font,
+	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0) {
+		printf("xcfb: couldn't lock font\n");
+		return;
+	}
+	dc->rinfo.ri_wsfcookie = cookie;
+
+	rasops_init(&dc->rinfo, 34, 80);
+
+	/* XXX shouldn't be global */
+	xcfb_stdscreen.nrows = dc->rinfo.ri_rows;
+	xcfb_stdscreen.ncols = dc->rinfo.ri_cols;
+	xcfb_stdscreen.textops = &dc->rinfo.ri_ops;
+	xcfb_stdscreen.capabilities = dc->rinfo.ri_caps;
 }
 
 static void
@@ -328,18 +327,15 @@ xcfbattach(parent, self, aux)
 int
 xcfb_cnattach()
 {
-        tc_addr_t addr = MIPS_PHYS_TO_KSEG1(XINE_PHYS_CFB_START);
-        struct fb_devconfig *dcp = &xcfb_console_dc;
-        long defattr;
+	tc_addr_t addr = MIPS_PHYS_TO_KSEG1(XINE_PHYS_CFB_START);
+	struct fb_devconfig *dcp = &xcfb_console_dc;
+	long defattr;
 
-        xcfb_getdevconfig(addr, dcp);
- 
-        rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
-
-        wsdisplay_cnattach(&xcfb_stdscreen, &dcp->dc_rcons,
-                           0, 0, defattr);
-        xcfb_consaddr = addr;
-        return (0);
+	xcfb_getdevconfig(addr, dcp);
+	(*dcp->rinfo.ri_ops.alloc_attr)(&dcp->rinfo, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&xcfb_stdscreen, &dcp->rinfo, 0, 0, defattr);
+	xcfb_consaddr = addr;
+	return (0);
 }
 
 static void
@@ -463,7 +459,7 @@ xcfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return ENOTTY;
+	return (ENOTTY);
 }
 
 static int
@@ -475,7 +471,7 @@ xcfbmmap(v, offset, prot)
 	struct xcfb_softc *sc = v;
 
 	if (offset >= XCFB_FB_SIZE || offset < 0)
-		return -1;
+		return (-1);
 	return mips_btop(sc->sc_dc->dc_paddr + offset);
 }
 
@@ -493,10 +489,10 @@ xcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
+	*cookiep = &sc->sc_dc->rinfo; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	(*sc->sc_dc->rinfo.ri_ops.alloc_attr)(&sc->sc_dc->rinfo, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
@@ -536,7 +532,7 @@ xcfbintr(v)
 	intr = *(u_int32_t *)(ioasic_base + IOASIC_INTR);
 	intr &= ~XINE_INTR_VINT;
 	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = intr;
-	return 1;
+	return (1);
 }
 
 static void
