@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsconscfg.8,v 1.5 1999/05/15 14:45:06 drochner Exp $
+.\"	$NetBSD: wsconscfg.8,v 1.6 1999/07/29 18:24:09 augustss Exp $
 .\"
 .Dd January 12, 1999
 .Os
@@ -11,6 +11,7 @@
 .Op Fl f Ar <ctldev>
 .Op Fl d Op Fl F
 .Op Fl k
+.Op Fl m
 .Op Fl t Ar <type>
 .Op Fl e Ar <emul>
 .Ar index
@@ -48,8 +49,12 @@ graphics program (X server) cannot be deleted. With the
 .Fl k
 flag, the keyboard specified by
 .Dq index
-(or the currently connected one, if none is given) will be detached from
-the wscons display.
+will be detached from the wscons display.
+With the
+.Fl m
+flag, the multiplexor specified by
+.Dq index
+will be detached from the wscons display.
 .It Fl F
 Force deleting of a terminal even if it is in use by a user space program.
 .It Fl k
@@ -57,6 +62,9 @@ Do keyboard related operations instead of virtual screen configuration.
 Without other flags, a keyboard will be attached to the display device. The
 .Dq index
 argument can be omitted, in this case the first free keyboard will be used.
+.It Fl m
+Do multiplexor related operations instead of virtual screen configuration.
+Without other flags, a multiplexor will be attached to the display device.
 .It Fl t Ar type
 Specify a screen type to use. Screen types refer to display format, colour
 depth and other low-level display properties. Valid
