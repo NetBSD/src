@@ -11,7 +11,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_is.c,v 1.10 1993/08/02 17:52:32 mycroft Exp $
+ *	$Id: if_is.c,v 1.11 1993/08/03 05:06:49 mycroft Exp $
  */
 
 /* TODO
@@ -172,7 +172,7 @@ int is_reset(int unit)
 	s = splnet();
 	printf("is%d: reset\n", unit);
 	is_init(unit);
-	s = splx();
+	splx(s);
 }
  
 /*
