@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.8 2003/09/02 12:01:14 junyoung Exp $
+#	$NetBSD: TODO,v 1.9 2003/09/05 14:52:26 simonb Exp $
 
 THINGS TO BE DONE:
 
@@ -33,7 +33,7 @@ High Kernel:
     swap fixes:
 	swap to file of dynamic size; see apollo
     nfs:
-	kernel suport for lockd(8), lockf(3)
+	kernel support for lockd(8), lockf(3)
     clean up support for LKM and protections checking (cgd)
 
 User programs:
