@@ -1,4 +1,4 @@
-/*	$NetBSD: srec.c,v 1.1 1996/09/07 19:21:32 thorpej Exp $	*/
+/*	$NetBSD: srec.c,v 1.2 2000/07/10 21:30:31 jdolecek Exp $	*/
 
 /*
  * Public domain, believed to be by Mike Price.
@@ -18,6 +18,7 @@ int checksum();
 int mask;
 int size;
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
