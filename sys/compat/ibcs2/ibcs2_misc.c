@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.59 2002/03/16 20:43:51 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.59.6.1 2004/12/16 05:11:20 jmc Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.59 2002/03/16 20:43:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.59.6.1 2004/12/16 05:11:20 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,6 +648,10 @@ ibcs2_sys_getgroups(p, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	gidsetsize = SCARG(uap, gidsetsize);
+	if (SCARG(uap, gidsetsize) > NGROUPS_MAX ||
+	    SCARG(uap, gidsetsize) < 0 )
+		return EINVAL;
+	SCARG(&sa, gidsetsize) = SCARG(uap, gidsetsize);
 	if (gidsetsize > NGROUPS_MAX)
 		return EINVAL;
 	

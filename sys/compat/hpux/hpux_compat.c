@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.59.6.1 2002/08/07 01:31:58 lukem Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.59.6.2 2004/12/16 05:11:13 jmc Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.59.6.1 2002/08/07 01:31:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.59.6.2 2004/12/16 05:11:13 jmc Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -322,6 +322,9 @@ hpux_sys_readv(p, v, retval)
 {
 	struct hpux_sys_readv_args *uap = v;
 	int error;
+
+	if (SCARG(uap, fd) < 0)
+		return EBADF;
 
 	error = sys_readv(p, (struct sys_readv_args *) uap, retval);
 	if (error == EWOULDBLOCK) {
