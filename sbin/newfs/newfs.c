@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.37 1999/01/19 19:34:50 tron Exp $	*/
+/*	$NetBSD: newfs.c,v 1.38 1999/05/19 00:25:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.37 1999/01/19 19:34:50 tron Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.38 1999/05/19 00:25:59 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -494,6 +494,10 @@ havelabel:
 		bsize = pp->p_frag * pp->p_fsize;
 		if (bsize <= 0)
 			bsize = MIN(DFL_BLKSIZE, 8 * fsize);
+	}
+	if (cpgflg == 0) {
+		if (pp->p_cpg != 0)
+			cpg = pp->p_cpg;
 	}
 	/*
 	 * Maxcontig sets the default for the maximum number of blocks
