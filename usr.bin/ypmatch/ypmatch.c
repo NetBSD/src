@@ -1,4 +1,4 @@
-/*	$NetBSD: ypmatch.c,v 1.13 2001/02/19 23:03:54 cgd Exp $	*/
+/*	$NetBSD: ypmatch.c,v 1.14 2003/04/12 09:13:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypmatch.c,v 1.13 2001/02/19 23:03:54 cgd Exp $");
+__RCSID("$NetBSD: ypmatch.c,v 1.14 2003/04/12 09:13:29 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -75,13 +75,13 @@ main(argc, argv)
 {
 	char *domainname;
 	char *inkey, *inmap, *outbuf;
-	int outbuflen, key, notrans;
-	int c, r, i;
+	int outbuflen, key, null, notrans;
+	int c, r, i, len;
 	int rval;
 
 	domainname = NULL;
-	notrans = key = 0;
-	while ((c = getopt(argc, argv, "xd:kt")) != -1) {
+	notrans = key = null = 0;
+	while ((c = getopt(argc, argv, "xd:ktz")) != -1) {
 		switch (c) {
 		case 'x':
 			for(i = 0;
@@ -101,6 +101,10 @@ main(argc, argv)
 
 		case 'k':
 			key++;
+			break;
+
+		case 'z':
+			null++;
 			break;
 
 		default:
@@ -128,13 +132,17 @@ main(argc, argv)
 	for(i = 0; i < (argc - 1); i++) {
 		inkey = argv[i];
 
-		r = yp_match(domainname, inmap, inkey, strlen(inkey),
+		len = strlen(inkey);
+		if (null)
+			len++;
+		r = yp_match(domainname, inmap, inkey, len,
 		    &outbuf, &outbuflen);
 		switch (r) {
 		case 0:
 			if (key)
 				printf("%s: ", inkey);
-			printf("%*.*s\n", outbuflen, outbuflen, outbuf);
+			fwrite(outbuf, outbuflen, 1, stdout);
+			putc('\n', stdout);
 			break;
 
 		case YPERR_YPBIND:
@@ -155,7 +163,7 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage: %s [-d domain] [-t] [-k] key [key ...] "
+	fprintf(stderr, "Usage: %s [-d domain] [-tkz] key [key ...] "
 	    "mapname\n", getprogname());
 	fprintf(stderr, "       %s -x\n", getprogname());
 	exit(1);
