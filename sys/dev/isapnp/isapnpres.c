@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpres.c,v 1.11 2001/11/13 07:56:41 lukem Exp $	*/
+/*	$NetBSD: isapnpres.c,v 1.12 2004/12/13 13:46:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.11 2001/11/13 07:56:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnpres.c,v 1.12 2004/12/13 13:46:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,9 +524,13 @@ parse:
 				goto bad;
 		}
 
-		if (isapnp_process_tag(tag, len, buf, &card, &dev, &conf) == -1)
+		if (isapnp_process_tag(tag, len, buf, &card, &dev,
+		    &conf) == -1) {
 			printf("%s: No current device for tag, card %d\n",
 			    sc->sc_dev.dv_xname, c + 1);
+			if (++warned == 10)
+				goto bad;
+		}
 	}
 	while (tag != ISAPNP_TAG_END);
 	return isapnp_flatten(card);
