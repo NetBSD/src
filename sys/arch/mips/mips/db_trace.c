@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.14 2000/05/27 02:18:12 enami Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.15 2000/06/26 14:59:03 mrg Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/param.h>
-#include <vm/vm_param.h>		/* XXX boolean_t */
+#include <uvm/uvm_param.h>		/* XXX boolean_t */
 
 #include <mips/mips_opcode.h>
 
