@@ -1,4 +1,4 @@
-/*	$NetBSD: clocktypes.c,v 1.4 1998/08/12 14:11:49 christos Exp $	*/
+/*	$NetBSD: clocktypes.c,v 1.5 1999/07/02 15:58:36 simonb Exp $	*/
 
 /*
  * Data for pretty printing clock types
@@ -84,7 +84,7 @@ clockname(num)
 	int num;
 {
 	register struct clktype *clk;
-  
+
 	for (clk = clktypes; clk->code != -1; clk++) {
 		if (num == clk->code)
 			return (clk->abbrev);

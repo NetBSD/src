@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.6 1999/05/09 16:03:10 christos Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.7 1999/07/02 16:15:33 simonb Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -6,16 +6,16 @@
   * network numbers) and daemon process names. When a match is found the
   * search is terminated, and depending on whether PROCESS_OPTIONS is defined,
   * a list of options is executed or an optional shell command is executed.
-  * 
+  *
   * Host and user names are looked up on demand, provided that suitable endpoint
   * information is available as sockaddr_in structures or TLI netbufs. As a
   * side effect, the pattern matching process may change the contents of
   * request structure fields.
-  * 
+  *
   * Diagnostics are reported through syslog(3).
-  * 
+  *
   * Compile with -DNETGROUP if your library provides support for netgroups.
-  * 
+  *
   * Author: Wietse Venema, Eindhoven University of Technology, The Netherlands.
   */
 
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.20 96/02/11 17:01:27";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.6 1999/05/09 16:03:10 christos Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.7 1999/07/02 16:15:33 simonb Exp $");
 #endif
 #endif
 
@@ -114,7 +114,7 @@ struct request_info *request;
      * client) pair is matched by an entry in the file /etc/hosts.deny,
      * access is denied. Otherwise, access is granted. A non-existent
      * access-control file is treated as an empty file.
-     * 
+     *
      * After a rule has been matched, the optional language extensions may
      * decide to grant or refuse service anyway. Or, while a rule is being
      * processed, a serious error is found, and it seems better to play safe
@@ -264,7 +264,7 @@ struct host_info *host;
     /*
      * This code looks a little hairy because we want to avoid unnecessary
      * hostname lookups.
-     * 
+     *
      * The KNOWN pattern requires that both address AND name be known; some
      * patterns are specific to host names or to host addresses; all other
      * patterns are satisfied when either the address OR the name match.
@@ -306,7 +306,7 @@ char   *rbl_hostaddr;				/* hostaddr */
     unsigned long host_address;
     int ret = NO;
     size_t len = strlen(rbl_domain) + (4 * 4) + 2;
- 
+
     if (dot_quad_addr(rbl_hostaddr, &host_address) != 0) {
 	tcpd_warn("unable to convert %s to address", rbl_hostaddr);
 	return (NO);
