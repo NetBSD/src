@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_std.c,v 1.5 2003/07/12 15:39:20 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv_std.c,v 1.6 2003/09/01 06:16:13 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv_std.c,v 1.5 2003/07/12 15:39:20 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iconv_std.c,v 1.6 2003/09/01 06:16:13 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -463,7 +463,7 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict cv,
 	if (in==NULL || *in==NULL) {
 		/* special cases */
 		if (out!=NULL && *out!=NULL) {
-			/* init output state */
+			/* init output state and store the shift sequence */
 			save_encoding_state(&sc->sc_src_encoding);
 			save_encoding_state(&sc->sc_dst_encoding);
 			szrout = 0;
@@ -481,9 +481,11 @@ _citrus_iconv_std_iconv_convert(struct _citrus_iconv * __restrict cv,
 			}
 			*out += szrout;
 			*outbytes -= szrout;
-		}
-		*invalids = 0;
+		} else
+			/* otherwise, discard the shift sequence */
+			init_encoding_state(&sc->sc_dst_encoding);
 		init_encoding_state(&sc->sc_src_encoding);
+		*invalids = 0;
 		return 0;
 	}
 
