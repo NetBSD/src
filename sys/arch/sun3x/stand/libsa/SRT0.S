@@ -1,4 +1,4 @@
-|	$NetBSD: SRT0.S,v 1.1.1.1 1997/03/13 16:27:27 gwr Exp $
+|	$NetBSD: SRT0.S,v 1.2 1997/03/13 17:52:48 gwr Exp $
 
 | Copyright (c) 1995 Gordon W. Ross
 | All rights reserved.
@@ -82,6 +82,13 @@ _reset:
 	.globl	_getvbr
 _getvbr:
 	movc	vbr, d0
+	rts
+
+| function to flush the ATC of cached entries.
+	.globl	_mmu_atc_flush
+_mmu_atc_flush:
+	movl	sp@(4),a0
+	pflush	#0,#0,a0@		| flush address from both sides
 	rts
 
 | The end.
