@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.60 2002/07/07 06:36:33 junyoung Exp $ */
+/* $NetBSD: vga.c,v 1.61 2002/07/07 07:34:54 junyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.60 2002/07/07 06:36:33 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.61 2002/07/07 07:34:54 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,7 +563,7 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
         vh->vh_memt = memt;
 
         if (bus_space_map(vh->vh_iot, 0x3c0, 0x10, 0, &vh->vh_ioh_vga))
-                panic("vga_common_setup: couldn't map vga io");
+                panic("vga_init: couldn't map vga io");
 
 	/* read "misc output register" */
 	mor = bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, 0xc);
@@ -571,15 +571,15 @@ vga_init(struct vga_config *vc, bus_space_tag_t iot, bus_space_tag_t memt)
 
 	if (bus_space_map(vh->vh_iot, (vh->vh_mono ? 0x3b0 : 0x3d0), 0x10, 0,
 			  &vh->vh_ioh_6845))
-                panic("vga_common_setup: couldn't map 6845 io");
+                panic("vga_init: couldn't map 6845 io");
 
         if (bus_space_map(vh->vh_memt, 0xa0000, 0x20000, 0, &vh->vh_allmemh))
-                panic("vga_common_setup: couldn't map memory");
+                panic("vga_init: couldn't map memory");
 
         if (bus_space_subregion(vh->vh_memt, vh->vh_allmemh,
 				(vh->vh_mono ? 0x10000 : 0x18000), 0x8000,
 				&vh->vh_memh))
-                panic("vga_common_setup: mem subrange failed");
+                panic("vga_init: mem subrange failed");
 
 	/* should only reserve the space (no need to map - save KVM) */
 	vc->vc_biostag = memt;
