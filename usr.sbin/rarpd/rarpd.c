@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.17 1997/03/23 00:48:15 cgd Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.18 1997/06/21 14:30:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -27,7 +27,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: rarpd.c,v 1.17 1997/03/23 00:48:15 cgd Exp $";
+static char rcsid[] = "$NetBSD: rarpd.c,v 1.18 1997/06/21 14:30:04 lukem Exp $";
 #endif
 
 
@@ -127,7 +127,7 @@ main(argc, argv)
 		++name;
 
 	/* All error reporting is done through syslogs. */
-	openlog(name, LOG_PID | LOG_CONS, LOG_DAEMON);
+	openlog(name, LOG_PID, LOG_DAEMON);
 
 	opterr = 0;
 	while ((op = getopt(argc, argv, "adf")) != EOF) {
@@ -362,7 +362,8 @@ rarp_check(p, len)
 	struct ether_arp *ap = (struct ether_arp *) (p + sizeof(*ep));
 #endif
 
-	(void) debug("got a packet");
+	if (dflag)
+		fprintf(stderr, "got a packet\n");
 
 	if (len < sizeof(*ep) + sizeof(*ap)) {
 		err(NONFATAL, "truncated request");
@@ -568,14 +569,23 @@ rarp_process(ii, pkt)
 	struct ether_header *ep;
 	struct hostent *hp;
 	u_long  target_ipaddr;
-	char    ename[256];
+	char    ename[MAXHOSTNAMELEN + 1];
 	struct	in_addr in;
 
 	ep = (struct ether_header *) pkt;
 
-	if (ether_ntohost(ename, (struct ether_addr *)&ep->ether_shost) != 0 ||
-	    (hp = gethostbyname(ename)) == 0)
+	if (ether_ntohost(ename, (struct ether_addr *)&ep->ether_shost) != 0) {
+		debug("no IP address for %s",
+		    ether_ntoa((struct ether_addr *)&ep->ether_shost));
 		return;
+	}
+	ename[sizeof(ename)-1] = '\0';
+
+	if ((hp = gethostbyname(ename)) == 0) {
+		debug("gethostbyname(%s) failed: %s", ename,
+		    hstrerror(h_errno));
+		return;
+	}
 
 	/* Choose correct address from list. */
 	if (hp->h_addrtype != AF_INET) {
@@ -595,6 +605,10 @@ rarp_process(ii, pkt)
 	if (rarp_bootable(htonl(target_ipaddr)))
 #endif
 		rarp_reply(ii, ep, target_ipaddr);
+#ifdef REQUIRE_TFTPBOOT
+	else
+		debug("%08X not bootable", htonl(target_ipaddr));
+#endif
 }
 /*
  * Lookup the ethernet address of the interface attached to the BPF
@@ -639,10 +653,9 @@ lookup_eaddr(ifname, eaddr)
 			continue;
 		if (!strncmp(ifr->ifr_name, ifname, sizeof(ifr->ifr_name))) {
 			bcopy((caddr_t)LLADDR(sdl), (caddr_t)eaddr, 6);
-			if (dflag)
-				fprintf(stderr, "%s: %x:%x:%x:%x:%x:%x\n",
-				    ifr->ifr_name, eaddr[0], eaddr[1],
-				    eaddr[2], eaddr[3], eaddr[4], eaddr[5]);
+			debug("%s: %x:%x:%x:%x:%x:%x",
+			    ifr->ifr_name, eaddr[0], eaddr[1],
+			    eaddr[2], eaddr[3], eaddr[4], eaddr[5]);
 			return;
 		}
 	}
@@ -881,15 +894,16 @@ va_dcl
 {
 	va_list ap;
 
-	if (dflag) {
 #if __STDC__
-		va_start(ap, fmt);
+	va_start(ap, fmt);
 #else
-		va_start(ap);
+	va_start(ap);
 #endif
+	if (dflag) {
 		(void) fprintf(stderr, "rarpd: ");
 		(void) vfprintf(stderr, fmt, ap);
-		va_end(ap);
 		(void) fprintf(stderr, "\n");
 	}
+	vsyslog(LOG_WARNING, fmt, ap);
+	va_end(ap);
 }
