@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7 1996/04/04 06:37:00 phil Exp $  */
+/*	$NetBSD: intr.c,v 1.8 1996/10/09 07:45:05 matthias Exp $  */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -41,7 +41,7 @@
 struct iv ivt[INTS];
 static int next_sir = 16;
 unsigned int imask[NIPL] = {0xffffffff};
-unsigned int Cur_pl = 0xffffffff, idisabled, sirpending, astpending;
+unsigned int Cur_pl = 0xffffffff, sirpending, astpending;
 
 static void softnet();
 static void badhard(struct intrframe *);
@@ -64,24 +64,23 @@ intr_init()
 
 	intr_establish(SOFTINT, softclock, NULL, "softclock", IPL_CLOCK, 0);
 	intr_establish(SOFTINT, softnet,   NULL, "softnet",   IPL_NET,   0);
-
-	for (i = 1; i < NIPL; i++)
-		imask[i] |= SIR_ALLMASK;
 }
 
 /*
  * Handle pending software interrupts.
  * This function has to be entered with interrupts disabled and
- * it will return with interrupts disabled.
+ * it will return with interrupts disabled. While the function
+ * runs interrupts are enabled.
  */
 void
-check_sir()
+check_sir(not_cpl)
+	int not_cpl;
 {
 	register unsigned int cirpending, mask;
 	register struct iv *iv;
 
-	while (cirpending = sirpending) {
-		sirpending = 0;
+	while (cirpending = (sirpending & not_cpl)) {
+		sirpending &= ~not_cpl;
 		ei();
 		for (iv = ivt + 16, mask = 0x10000;
 		     cirpending & -mask; mask <<= 1, iv++) {
@@ -104,17 +103,14 @@ int
 intr_establish(int intr, void (*vector)(), void *arg, char *use,
 		int level, int mode)
 {
+	di();
 	if (intr == SOFTINT) {
 		if (next_sir >= INTS)
 			panic("No software interrupts left");
-		di();
 		intr = next_sir++;
 	} else {
-		if (ivt[intr].iv_vec != badhard) {
-			printf("Interrupt %d already allocated\n", intr);
-			return(-1);
-		}
-		di();
+		if (ivt[intr].iv_vec != badhard)
+			panic("Interrupt %d already allocated\n", intr);
 		switch (mode) {
 		case RISING_EDGE:
 			ICUW(TPL)  |=  (1 << intr);
@@ -143,20 +139,30 @@ intr_establish(int intr, void (*vector)(), void *arg, char *use,
 	ei();
 	if (level > IPL_ZERO)
 		imask[level] |= 1 << intr;
-#include "sl.h"
-#include "ppp.h"
-#if NSL > 0 || NPPP > 0
-	/* In the presence of SLIP or PPP, splimp > spltty. */
-	imask[IPL_IMP] |= imask[IPL_TTY];
-#endif
+
 	/*
-	 * There are network and disk drivers that use free() at interrupt
-	 * time, so imp > (net | bio).
+	 * Since run queues may be manipulated by both the statclock and tty,
+	 * network, and disk drivers, statclock > (tty | net | bio).
 	 */
-	imask[IPL_IMP] |= imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_CLOCK] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
+
+	/*
+	 * There are tty, network and disk drivers that use free() at interrupt
+	 * time, so imp > (tty | net | bio).
+	 */
+	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
+
+	/*
+	 * Enforce a hierarchy that gives slow devices a better chance at not
+	 * dropping data.
+	 */
+	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_NET] |= imask[IPL_BIO];
+
 	imask[IPL_ZERO] &= ~(1 << intr);
 	return(intr);
 }
+
 
 /*
  * Network software interrupt routine
