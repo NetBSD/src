@@ -1,9 +1,18 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.5 1994/05/09 04:09:21 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/05/16 05:31:19 chopps Exp $
 
 LIB=	kvm
 CFLAGS+=-DLIBC_SCCS
-SRCS=	kvm.c kvm_${MACHINE_ARCH}.c kvm_file.c kvm_getloadavg.c kvm_proc.c
+
+.if (${MACHINE_ARCH} == "m68k")
+CFLAGS+=-D${MACHINE}
+SRCS=	kvm_o${MACHINE_ARCH}.c
+.else
+SRCS=	kvm_${MACHINE_ARCH}.c
+.endif
+
+
+SRCS+=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
 
 MAN3=	kvm.0 kvm_geterr.0 kvm_getfiles.0 kvm_getloadavg.0 kvm_getprocs.0 \
 	kvm_nlist.0 kvm_open.0 kvm_read.0
