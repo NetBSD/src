@@ -1,4 +1,4 @@
-/*	$NetBSD: vmevar.h,v 1.2 1998/01/25 15:53:18 pk Exp $	*/
+/*	$NetBSD: vmevar.h,v 1.3 1998/02/04 00:50:44 pk Exp $	*/
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,8 @@ typedef void		*vme_intr_handle_t;
 struct vme_chipset_tag {
 	void	*cookie;
 	int	(*vct_probe) __P((void *, bus_space_tag_t, vme_addr_t,
-				  vme_size_t, vme_mod_t));
+				  vme_size_t, vme_mod_t,
+				  int (*) __P((void *, void *)), void *));
 
 	int	(*vct_map) __P((void *, vme_addr_t, vme_size_t, vme_mod_t,
 				bus_space_tag_t, bus_space_handle_t *));
@@ -81,8 +82,8 @@ struct vme_chipset_tag {
 };
 typedef struct vme_chipset_tag *vme_chipset_tag_t;
 
-#define vme_bus_probe(ct, bt, addr, size, mod) \
-	(*ct->vct_probe)(ct->cookie, bt, addr, size, mod)
+#define vme_bus_probe(ct, bt, addr, size, mod, callback, arg) \
+	(*ct->vct_probe)(ct->cookie, bt, addr, size, mod, callback, arg)
 #define vme_bus_map(ct, addr, size, mod, bt, bhp) \
 	(*ct->vct_map)(ct->cookie, addr, size, mod, bt, bhp)
 #define vme_bus_mmap_cookie(ct, addr, mod, bt, hp) \
