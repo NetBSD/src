@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.7 2000/01/08 03:49:37 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.8 2000/03/04 03:22:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -67,8 +67,6 @@
 #define RF_RECON_STATS     1
 
 #define RF_INCLUDE_QUEUE_RANDOM 0
-
-#define RF_KEEP_DISKSTATS 1
 
 #include "rf_options.h"
 
