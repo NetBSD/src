@@ -39,26 +39,25 @@
  * from: Utah $Hdr: mem.c 1.14 90/10/12$
  *
  *	from: @(#)mem.c	7.5 (Berkeley) 5/7/91
- *	$Id: mem.c,v 1.2 1993/11/29 00:40:56 briggs Exp $
+ *	$Id: mem.c,v 1.3 1994/04/18 02:59:16 briggs Exp $
  */
 
 /*
  * Memory special file
  */
 
-#include "param.h"
-#include "conf.h"
-#include "buf.h"
-#include "systm.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
-#include "vm/vm_param.h"
-#include "vm/lock.h"
-#include "vm/vm_statistics.h"
-#include "vm/pmap.h"
-#include "vm/vm_prot.h"
+#include <vm/vm_param.h>
+#include <vm/lock.h>
+#include <vm/pmap.h>
+#include <vm/vm_prot.h>
 
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
