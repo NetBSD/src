@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.3 1999/11/03 13:55:41 enami Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.4 1999/11/05 04:28:14 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -308,9 +308,14 @@ vrkiu_intr(arg)
 		 __FILE__, __LINE__,
 		 vrkiu_read(sc->sc_chip, KIUINT) & 7));
 
-	detect_key(sc->sc_chip);
-
+	/*
+	 * First, we must clear the interrupt register because
+	 * detect_key() may takes long time if a bitmap screen
+	 * scrolls up and it makes us to miss some key release
+	 * event.
+	 */
 	vrkiu_write(sc->sc_chip, KIUINT, 0x7); /* Clear all interrupt */
+	detect_key(sc->sc_chip);
 
 	return 0;
 }
