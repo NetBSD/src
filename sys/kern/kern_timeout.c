@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.12 2003/10/27 16:52:01 thorpej Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.13 2003/10/30 04:32:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.12 2003/10/27 16:52:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.13 2003/10/30 04:32:56 thorpej Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -224,22 +224,6 @@ callout_init(struct callout *c)
 {
 
 	memset(c, 0, sizeof(*c));
-}
-
-/*
- * callout_setfunc:
- *
- *	Initialize a callout structure and set the function and
- *	argument.
- *
- *	NOTE: THE CALLOUT STRUCTURE MUST ALREADY BE INITIALIZED!
- */
-void
-callout_setfunc(struct callout *c, void (*func)(void *), void *arg)
-{
-
-	c->c_func = func;
-	c->c_arg = arg;
 }
 
 /*
