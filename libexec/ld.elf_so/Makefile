@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2002/02/04 00:25:30 thorpej Exp $
+#	$NetBSD: Makefile,v 1.48 2002/03/01 20:15:16 tv Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -46,7 +46,11 @@ CPPFLAGS+= -DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 .endif
 
 LDADD+=	-L${CLIBOBJ} -L${DESTDIR}${LIBDIR} -non_shared -lc_pic
-DPADD+=	${LIBC_PIC}
+DPADD+=	${CLIBOBJ}/libc_pic.a ${LIBC_PIC}
+
+# One of these may not exist at link time, so avoid make errors.
+${DPADD}:
+	@true
 
 STRIPFLAG=
 
