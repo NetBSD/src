@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_netgroup.c,v 1.4 2003/01/28 22:35:24 wiz Exp $ */
+/*	$NetBSD: parse_netgroup.c,v 1.5 2003/07/14 05:55:39 itojun Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse_netgroup.c,v 1.4 2003/01/28 22:35:24 wiz Exp $");
+__RCSID("$NetBSD: parse_netgroup.c,v 1.5 2003/07/14 05:55:39 itojun Exp $");
 #endif
 
 /*
@@ -115,11 +115,8 @@ rng_setnetgrent(const char *group)
 		rng_endnetgrent();
 		if (parse_netgrp(group))
 			rng_endnetgrent();
-		else {
-			grouphead.grname = (char *)
-				malloc(strlen(group) + 1);
-			strcpy(grouphead.grname, group);
-		}
+		else
+			grouphead.grname = strdup(group);
 	}
 	nextgrp = grouphead.gr;
 }
@@ -305,7 +302,7 @@ read_for_group(const char *group)
 	char *data = NULL;
 
 	data = lookup (gtable, group);
-	sprintf(line, "%s %s", group, data);
+	snprintf(line, sizeof(line), "%s %s", group, data);
 	pos = (char *)&line;
 #ifdef CANT_HAPPEN
 	if (*pos == '#')
