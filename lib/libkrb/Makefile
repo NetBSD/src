@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2001/05/26 08:07:54 wiz Exp $
+# $NetBSD: Makefile,v 1.10 2001/09/17 12:34:42 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -85,6 +85,7 @@ SRCS=	\
 	krb_net_write.c \
 	one.c \
 	parse_name.c \
+	random_block.c \
 	rd_err.c \
 	rd_priv.c \
 	rd_req.c \
@@ -119,14 +120,17 @@ INCS=	krb.h					\
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/krb4/lib/krb			\
-	-I${DIST}/openssl/crypto/des		\
+	-I${DIST}/openssl/crypto		\
 	-I${DIST}/heimdal/lib/com_err		\
 	-I${.CURDIR}/../../include/heimdal	\
 	-I${.CURDIR}/../libroken		\
 	-I${DIST}/heimdal/lib/roken		\
 	-DHAVE_CONFIG_H
 
-CLEANFILES = $(ERR_FILES) krb_err.h ktypes.h
+CLEANFILES = $(ERR_FILES) krb_err.h ktypes.h krb.h
+
+krb.h:	krb.h.in
+	sed 's,@DES_H@,openssl/des.h,' < ${.ALLSRC} > ${.TARGET}
 
 ktypes.h:
 	cp ${.CURDIR}/../../include/heimdal/$@ $@

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2001/02/11 18:02:05 assar Exp $
+# $NetBSD: Makefile,v 1.9 2001/09/17 12:34:42 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -52,8 +52,7 @@ CPPFLAGS+= -I.					\
 	 -I${KRB5}				\
 	 -I${DIST}/heimdal/lib/krb5		\
 	 -I${DIST}/heimdal/lib/asn1		\
-	 -I${DIST}/openssl/crypto/rc4		\
-	 -I${DIST}/openssl/crypto/des		\
+	 -I${DIST}/openssl/crypto		\
 	 -I${HDB}				\
 	 -I${DIST}/heimdal/lib/hdb		\
 	 -I${DIST}/heimdal/lib/asn1		\
