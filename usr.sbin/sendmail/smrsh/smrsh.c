@@ -79,7 +79,7 @@ static char sccsid[] = "@(#)smrsh.c	8.4 (Berkeley) 11/11/95";
 
 /* directory in which all commands must reside */
 #ifndef CMDDIR
-# define CMDDIR		"/usr/adm/sm.bin"
+# define CMDDIR		"/usr/libexec/sm.bin"
 #endif
 
 /* characters disallowed in the shell "-c" argument */
