@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: view.c,v 1.4 1994/02/13 21:11:07 chopps Exp $
+ *	$Id: view.c,v 1.5 1994/02/17 09:10:59 chopps Exp $
  */
 
 /* The view major device is a placeholder device.  It serves
@@ -68,7 +68,7 @@ int viewprobe ();
 struct driver view_driver = { viewprobe, "view" };
 
 struct view_softc views[NVIEW];
-static int inited;
+int view_inited;			/* also checked in ite_cc.c */
 
 int view_default_x;
 int view_default_y;
@@ -88,16 +88,16 @@ viewconfig ()
 
 viewprobe ()
 {
-    if (!inited) {
+    if (!view_inited) {
     	int i;
 
-    	inited = 1;
+    	view_inited = 1;
     	for (i=0; i<NVIEW; i++) {
     	    views[i].view = NULL;
     	    views[i].flags = 0;
     	}
     }
-    return (1);
+    return (view_inited);
 }
 
 

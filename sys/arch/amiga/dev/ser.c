@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
- *	$Id: ser.c,v 1.10 1994/02/13 21:11:01 chopps Exp $
+ *	$Id: ser.c,v 1.11 1994/02/17 09:10:56 chopps Exp $
  */
 
 #include "ser.h"
@@ -882,7 +882,7 @@ sermctl(dev, bits, how)
 /*
  * Following are all routines needed for SER to act as console
  */
-#include <amiga/amiga/cons.h>
+#include <dev/cons.h>
 
 sercnprobe(cp)
 	struct consdev *cp;
@@ -898,13 +898,6 @@ sercnprobe(cp)
 
   /* initialize required fields */
   cp->cn_dev = makedev(sermajor, unit);
-#if 0
-  /* on ser it really doesn't matter whether we're later
-     using the tty interface or single-character io thru
-     cnputc, so don't reach out to later on remember that
-     our console is here (see ite.c) */
-  cp->cn_tp = ser_tty[unit];
-#endif
   cp->cn_pri = CN_NORMAL;
 
   /*

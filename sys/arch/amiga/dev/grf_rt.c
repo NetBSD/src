@@ -1,5 +1,5 @@
 /*
- *	$Id: grf_rt.c,v 1.7 1994/02/13 21:10:27 chopps Exp $
+ *	$Id: grf_rt.c,v 1.8 1994/02/17 09:10:35 chopps Exp $
  */
 
 #include "grf.h"
@@ -18,6 +18,10 @@
 #include <amiga/dev/device.h>
 
 extern caddr_t ZORRO2ADDR;
+
+/* marked true early so that retina_cnprobe() can tell if we are alive. */
+int	retina_inited;
+
 
 /* NOTE: this driver for the MacroSystem Retina board was only possible,
          because MacroSystem provided information about the pecularities
@@ -723,7 +727,11 @@ int rt_init (struct grf_softc *gp, struct amiga_device *ad, struct amiga_hw *ahw
 
   current_mon = monitor_defs + retina_default_mon;
 
-  return rt_load_mon (gp, current_mon);
+  if (rt_load_mon (gp, current_mon))
+	  retina_inited = rt_load_mon(gp, current_mon);
+	  
+  return(retina_inited);		/* XXX Markus maybe you */
+					/* XXX can make this cleaner. */
 }
 
 static int 
