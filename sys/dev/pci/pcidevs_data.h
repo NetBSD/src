@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.362 2001/09/28 22:06:26 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.363 2001/10/01 00:28:02 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.359 2001/09/28 22:06:04 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.360 2001/10/01 00:27:33 thorpej Exp 
  */
 
 /*
@@ -4448,6 +4448,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Realtek Semiconductor",
 	    "8129 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139B,
+	    0,
+	    "Realtek Semiconductor",
+	    "8139B 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
