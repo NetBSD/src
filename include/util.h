@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.17 2000/07/07 10:35:58 ad Exp $	*/
+/*	$NetBSD: util.h,v 1.18 2000/09/18 16:37:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -54,39 +54,38 @@
 #define	FPARSELN_UNESCALL	0x0f
 
 __BEGIN_DECLS
-struct utmp;
+struct iovec;
 struct passwd;
 struct termios;
-struct termios;
+struct utmp;
 struct winsize;
-struct iovec;
 
+pid_t	forkpty(int *, char *, struct termios *, struct winsize *);
+char   *fparseln(FILE *, size_t *, size_t *, const char[3], int);
+int	getmaxpartitions(void);
+int	getrawpartition(void);
 void	login(const struct utmp *);
 int	login_tty(int);
 int	logout(const char *);
 void	logwtmp(const char *, const char *, const char *);
-void	pw_getconf(char *data, size_t max, const char *key, const char *option);
-int	pw_lock(int);
-int	pw_mkdb(void);
-int	pw_abort(void);
-void	pw_init(void);
-void	pw_edit(int, const char *);
-void	pw_prompt(void);
-void	pw_copy(int, int, struct passwd *, struct passwd *);
-void	pw_error(const char *, int, int);
-int	openpty(int *, int *, char *, struct termios *, struct winsize *);
-char   *fparseln(FILE *, size_t *, size_t *, const char[3], int);
-pid_t	forkpty(int *, char *, struct termios *, struct winsize *);
-int	getmaxpartitions(void);
-int	getrawpartition(void);
 int	opendisk(const char *, int, char *, size_t, int);
+int	openpty(int *, int *, char *, struct termios *, struct winsize *);
 void	pidfile(const char *);
 int	pidlock(const char *, int, pid_t *, const char *);
-int	ttylock(const char *, int, pid_t *);
-int	ttyunlock(const char *);
+int	pw_abort(void);
+void	pw_copy(int, int, struct passwd *, struct passwd *);
+void	pw_edit(int, const char *);
+void	pw_error(const char *, int, int);
+void	pw_getconf(char *, size_t, const char *, const char *);
+void	pw_init(void);
+int	pw_lock(int);
+int	pw_mkdb(void);
+void	pw_prompt(void);
+int	secure_path(const char *);
 int	ttyaction(const char *, const char *, const char *);
+int	ttylock(const char *, int, pid_t *);
 char   *ttymsg(struct iovec *, int, const char *, int);
-int	secure_path(char *);
+int	ttyunlock(const char *);
 __END_DECLS
 
 #endif /* !_UTIL_H_ */
