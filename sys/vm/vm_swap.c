@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.25 1994/10/20 04:27:32 cgd Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.26 1995/01/09 02:47:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -289,7 +289,7 @@ swapon(p, uap, retval)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, name), p);
 	if (error = namei(&nd))
-                return (error);
+		return (error);
 	vp = nd.ni_vp;
 	if (vp->v_type != VBLK) {
 		vrele(vp);
