@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.141.2.2 2001/05/06 20:49:00 he Exp $	*/
+/*	$NetBSD: cd.c,v 1.141.2.3 2002/06/26 17:03:15 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1544,7 +1544,7 @@ dvd_auth(cd, a)
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 8;
 		cmd.bytes[9] = 0 | (0 << 6);
-		error = scsipi_command(cd->sc_link, &cmd, 16, buf, 8,
+		error = scsipi_command(cd->sc_link, &cmd, 12, buf, 8,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1556,7 +1556,7 @@ dvd_auth(cd, a)
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 16;
 		cmd.bytes[9] = 1 | (a->lsc.agid << 6);
-		error = scsipi_command(cd->sc_link, &cmd, 16, buf, 16,
+		error = scsipi_command(cd->sc_link, &cmd, 12, buf, 16,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1568,7 +1568,7 @@ dvd_auth(cd, a)
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 12;
 		cmd.bytes[9] = 2 | (a->lsk.agid << 6);
-		error = scsipi_command(cd->sc_link, &cmd, 16, buf, 12,
+		error = scsipi_command(cd->sc_link, &cmd, 12, buf, 12,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1581,7 +1581,7 @@ dvd_auth(cd, a)
 		_lto4b(a->lstk.lba, &cmd.bytes[1]);
 		cmd.bytes[8] = 12;
 		cmd.bytes[9] = 4 | (a->lstk.agid << 6);
-		error = scsipi_command(cd->sc_link, &cmd, 16, buf, 12,
+		error = scsipi_command(cd->sc_link, &cmd, 12, buf, 12,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1596,7 +1596,7 @@ dvd_auth(cd, a)
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[8] = 8;
 		cmd.bytes[9] = 5 | (a->lsasf.agid << 6);
-		error = scsipi_command(cd->sc_link, &cmd, 16, buf, 8,
+		error = scsipi_command(cd->sc_link, &cmd, 12, buf, 8,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1610,7 +1610,7 @@ dvd_auth(cd, a)
 		cmd.bytes[9] = 1 | (a->hsc.agid << 6);
 		buf[1] = 14;
 		dvd_copy_challenge(&buf[4], a->hsc.chal);
-		error = scsipi_command(cd->sc_link, &cmd, 16, buf, 16,
+		error = scsipi_command(cd->sc_link, &cmd, 12, buf, 16,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_OUT|XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error)
@@ -1624,7 +1624,7 @@ dvd_auth(cd, a)
 		cmd.bytes[9] = 3 | (a->hsk.agid << 6);
 		buf[1] = 10;
 		dvd_copy_key(&buf[4], a->hsk.key);
-		error = scsipi_command(cd->sc_link, &cmd, 16, buf, 12,
+		error = scsipi_command(cd->sc_link, &cmd, 12, buf, 12,
 		    CDRETRIES, 30000, NULL,
 		    XS_CTL_DATA_OUT|XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 		if (error) {
@@ -1637,7 +1637,7 @@ dvd_auth(cd, a)
 	case DVD_INVALIDATE_AGID:
 		cmd.opcode = GPCMD_REPORT_KEY;
 		cmd.bytes[9] = 0x3f | (a->lsa.agid << 6);
-		error = scsipi_command(cd->sc_link, &cmd, 16, buf, 16,
+		error = scsipi_command(cd->sc_link, &cmd, 12, buf, 16,
 		    CDRETRIES, 30000, NULL, 0);
 		if (error)
 			return (error);
@@ -1666,7 +1666,7 @@ dvd_read_physical(cd, s)
 	_lto2b(sizeof(buf), &cmd.bytes[7]);
 
 	cmd.bytes[5] = s->physical.layer_num;
-	error = scsipi_command(cd->sc_link, &cmd, 16, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_link, &cmd, 12, buf, sizeof(buf),
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
@@ -1706,7 +1706,7 @@ dvd_read_copyright(cd, s)
 	_lto2b(sizeof(buf), &cmd.bytes[7]);
 
 	cmd.bytes[5] = s->copyright.layer_num;
-	error = scsipi_command(cd->sc_link, &cmd, 16, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_link, &cmd, 12, buf, sizeof(buf),
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
@@ -1731,7 +1731,7 @@ dvd_read_disckey(cd, s)
 	_lto2b(sizeof(buf), &cmd.bytes[7]);
 
 	cmd.bytes[9] = s->disckey.agid << 6;
-	error = scsipi_command(cd->sc_link, &cmd, 16, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_link, &cmd, 12, buf, sizeof(buf),
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
@@ -1754,7 +1754,7 @@ dvd_read_bca(cd, s)
 	cmd.bytes[6] = s->type;
 	_lto2b(sizeof(buf), &cmd.bytes[7]);
 
-	error = scsipi_command(cd->sc_link, &cmd, 16, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_link, &cmd, 12, buf, sizeof(buf),
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
@@ -1780,7 +1780,7 @@ dvd_read_manufact(cd, s)
 	cmd.bytes[6] = s->type;
 	_lto2b(sizeof(buf), &cmd.bytes[7]);
 
-	error = scsipi_command(cd->sc_link, &cmd, 16, buf, sizeof(buf),
+	error = scsipi_command(cd->sc_link, &cmd, 12, buf, sizeof(buf),
 	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
