@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.34 2004/03/20 18:22:22 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.35 2004/04/14 04:37:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -227,9 +227,11 @@ struct addrinfo {
     defined(_NETBSD_SOURCE)
 #define	AI_PASSIVE	0x00000001 /* get address to use bind() */
 #define	AI_CANONNAME	0x00000002 /* fill ai_canonname */
-#define	AI_NUMERICHOST	0x00000004 /* prevent name resolution */
-/* valid flags for addrinfo */
-#define	AI_MASK		(AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST)
+#define	AI_NUMERICHOST	0x00000004 /* prevent host name resolution */
+#define	AI_NUMERICSERV	0x00000008 /* prevent service name resolution */
+/* valid flags for addrinfo (not a standard def, apps should not use it) */
+#define	AI_MASK	\
+    (AI_PASSIVE | AI_CANONNAME | AI_NUMERICHOST | AI_NUMERICSERV)
 #endif
 
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
