@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.26 1994/12/18 15:38:55 pk Exp $
+ *	$Id: rtld.c,v 1.27 1994/12/18 16:05:49 pk Exp $
  */
 
 #include <sys/param.h>
@@ -38,9 +38,8 @@
 #include <sys/resource.h>
 #include <sys/errno.h>
 #include <sys/mman.h>
-#ifndef BSD
+#ifndef MAP_COPY
 #define MAP_COPY	MAP_PRIVATE
-#define MAP_ANON	0
 #endif
 #include <err.h>
 #include <fcntl.h>
@@ -58,8 +57,19 @@
 
 #include "ld.h"
 
-#ifndef BSD		/* Need do better than this */
-#define NEED_DEV_ZERO	1
+#ifndef MAP_ANON
+#define MAP_ANON	0
+#define anon_open() do {					\
+	if ((anon_fd = open("/dev/zero", O_RDWR, 0)) == -1)	\
+		err("open: %s", "/dev/zero");			\
+} while (0)
+#define anon_close() do {	\
+	(void)close(anon_fd);	\
+	anon_fd = -1;		\
+} while (0)
+#else
+#define anon_open()
+#define anon_close()
 #endif
 
 /*
@@ -132,6 +142,7 @@ static int		careful;
 static char		__main_progname[] = "main";
 static char		*main_progname = __main_progname;
 static char		us[] = "/usr/libexec/ld.so";
+static int		anon_fd = -1;
 
 struct so_map		*link_map_head, *main_map;
 struct so_map		**link_map_tail = &link_map_head;
@@ -246,6 +257,7 @@ struct _dynamic		*dp;
 	if (getenv("LD_NOSTD_PATH") == NULL)
 		std_search_path();
 
+	anon_open();
 	/* Load required objects into the process address space */
 	load_objects(crtp, dp);
 
@@ -300,6 +312,7 @@ struct _dynamic		*dp;
 
 	/* Close our file descriptor */
 	(void)close(crtp->crt_ldfd);
+	anon_close();
 	return 0;
 }
 
@@ -433,7 +446,7 @@ map_object(sodp, smp)
 {
 	struct _dynamic	*dp;
 	char		*path, *name = (char *)(sodp->sod_name + LM_LDBASE(smp));
-	int		fd, zfd;
+	int		fd;
 	caddr_t		addr;
 	struct exec	hdr;
 	int		usehints = 0;
@@ -484,23 +497,13 @@ again:
 		return NULL;
 	}
 
-	zfd = -1;
-#ifdef NEED_DEV_ZERO
-	if ((zfd = open("/dev/zero", O_RDWR, 0)) == -1)
-		warn("open: %s", "/dev/zero");
-#endif
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data + hdr.a_bss,
 			 PROT_READ|PROT_WRITE|PROT_EXEC,
 			 MAP_ANON|MAP_COPY,
-			 zfd, 0)) == (caddr_t)-1) {
-		(void)close(zfd);
+			 anon_fd, 0)) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
-
-#ifdef NEED_DEV_ZERO
-	close(zfd);
-#endif
 
 	if (mmap(addr, hdr.a_text + hdr.a_data,
 	         PROT_READ|PROT_EXEC,
@@ -1283,4 +1286,3 @@ char	*fmt;
 	(void)write(1, buf, strlen(buf));
 	va_end(ap);
 }
-
