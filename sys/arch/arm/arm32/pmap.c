@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 2002/03/24 06:07:00 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65 2002/03/24 18:05:45 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2002/03/24 06:07:00 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2002/03/24 18:05:45 chris Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1912,13 +1912,13 @@ pmap_copy_page(src, dest)
 	 * the cache for the appropriate page. Invalidate the TLB
 	 * as required.
 	 */
-	*csrc_pte = L2_PTE(src & PG_FRAME, AP_KRW);
+	*csrc_pte = L2_PTE(src & PG_FRAME, AP_KR);
 	*cdst_pte = L2_PTE(dest & PG_FRAME, AP_KRW);
 	cpu_tlb_flushD_SE(csrcp);
 	cpu_tlb_flushD_SE(cdstp);
 	cpu_cpwait();
 	bcopy_page(csrcp, cdstp);
-	cpu_dcache_wbinv_range(csrcp, NBPG);
+	cpu_dcache_inv_range(csrcp, NBPG);
 	cpu_dcache_wbinv_range(cdstp, NBPG);
 }
 
