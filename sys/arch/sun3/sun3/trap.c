@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86 1999/10/26 00:20:40 itohy Exp $	*/
+/*	$NetBSD: trap.c,v 1.87 1999/12/05 11:56:36 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -539,7 +539,7 @@ trap(type, code, v, tf)
 			if (rv == KERN_SUCCESS) {
 				unsigned nss;
 
-				nss = clrnd(btoc((u_int)(USRSTACK-va)));
+				nss = btoc((u_int)(USRSTACK-va));
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (rv == KERN_PROTECTION_FAILURE)

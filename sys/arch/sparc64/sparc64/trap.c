@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.32 1999/11/20 18:12:00 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.33 1999/12/05 11:56:36 ragge Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1089,7 +1089,7 @@ data_access_fault(type, addr, pc, tf)
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = clrnd(btoc(USRSTACK - va));
+			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
@@ -1355,7 +1355,7 @@ DEBUGGER(type, tf);
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = clrnd(btoc(USRSTACK - va));
+			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
@@ -1497,7 +1497,7 @@ text_access_fault(type, pc, tf)
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = clrnd(btoc(USRSTACK - va));
+			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
@@ -1662,7 +1662,7 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = clrnd(btoc(USRSTACK - va));
+			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)

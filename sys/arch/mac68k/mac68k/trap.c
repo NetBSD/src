@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 1999/11/13 00:30:37 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.77 1999/12/05 11:56:32 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -613,7 +613,7 @@ copyfault:
 			if (rv == KERN_SUCCESS) {
 				u_int nss;
 
-				nss = clrnd(btoc(USRSTACK - (u_int)va));
+				nss = btoc(USRSTACK - (u_int)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (rv == KERN_PROTECTION_FAILURE)

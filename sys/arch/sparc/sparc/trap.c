@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86 1999/09/17 20:04:54 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.87 1999/12/05 11:56:35 ragge Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -800,7 +800,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 #endif
 	    ) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = clrnd(btoc(USRSTACK - va));
+			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
@@ -1041,7 +1041,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		if (rv == KERN_SUCCESS) {
-			unsigned nss = clrnd(btoc(USRSTACK - va));
+			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		} else if (rv == KERN_PROTECTION_FAILURE)
