@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.115 2004/05/25 14:55:46 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.116 2004/06/20 18:25:54 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.115 2004/05/25 14:55:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.116 2004/06/20 18:25:54 hannken Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -666,7 +666,7 @@ ufs_link(void *v)
 	struct vnode		*vp, *dvp;
 	struct componentname	*cnp;
 	struct inode		*ip;
-	struct direct		newdir;
+	struct direct		*newdir;
 	int			error;
 
 	dvp = ap->a_dvp;
@@ -709,8 +709,10 @@ ufs_link(void *v)
 		softdep_change_linkcnt(ip);
 	error = VOP_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
-		ufs_makedirentry(ip, cnp, &newdir);
-		error = ufs_direnter(dvp, vp, &newdir, cnp, NULL);
+		newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+		ufs_makedirentry(ip, cnp, newdir);
+		error = ufs_direnter(dvp, vp, newdir, cnp, NULL);
+		pool_put(&ufs_direct_pool, newdir);
 	}
 	if (error) {
 		ip->i_ffs_effnlink--;
@@ -744,7 +746,7 @@ ufs_whiteout(void *v)
 	} */ *ap = v;
 	struct vnode		*dvp;
 	struct componentname	*cnp;
-	struct direct		newdir;
+	struct direct		*newdir;
 	int			error;
 
 	dvp = ap->a_dvp;
@@ -766,13 +768,15 @@ ufs_whiteout(void *v)
 			panic("ufs_whiteout: old format filesystem");
 #endif
 
-		newdir.d_ino = WINO;
-		newdir.d_namlen = cnp->cn_namelen;
-		memcpy(newdir.d_name, cnp->cn_nameptr,
+		newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+		newdir->d_ino = WINO;
+		newdir->d_namlen = cnp->cn_namelen;
+		memcpy(newdir->d_name, cnp->cn_nameptr,
 		    (size_t)cnp->cn_namelen);
-		newdir.d_name[cnp->cn_namelen] = '\0';
-		newdir.d_type = DT_WHT;
-		error = ufs_direnter(dvp, NULL, &newdir, cnp, NULL);
+		newdir->d_name[cnp->cn_namelen] = '\0';
+		newdir->d_type = DT_WHT;
+		error = ufs_direnter(dvp, NULL, newdir, cnp, NULL);
+		pool_put(&ufs_direct_pool, newdir);
 		break;
 
 	case DELETE:
@@ -835,7 +839,7 @@ ufs_rename(void *v)
 	struct vnode		*tvp, *tdvp, *fvp, *fdvp;
 	struct componentname	*tcnp, *fcnp;
 	struct inode		*ip, *xp, *dp;
-	struct direct		newdir;
+	struct direct		*newdir;
 	int			doingdirectory, oldparent, newparent, error;
 
 	tvp = ap->a_tvp;
@@ -1031,8 +1035,10 @@ ufs_rename(void *v)
 				goto bad;
 			}
 		}
-		ufs_makedirentry(ip, tcnp, &newdir);
-		error = ufs_direnter(tdvp, NULL, &newdir, tcnp, NULL);
+		newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+		ufs_makedirentry(ip, tcnp, newdir);
+		error = ufs_direnter(tdvp, NULL, newdir, tcnp, NULL);
+		pool_put(&ufs_direct_pool, newdir);
 		if (error != 0) {
 			if (doingdirectory && newparent) {
 				dp->i_ffs_effnlink--;
@@ -1230,7 +1236,7 @@ ufs_mkdir(void *v)
 	struct inode		*ip, *dp;
 	struct buf		*bp;
 	struct dirtemplate	dirtemplate;
-	struct direct		newdir;
+	struct direct		*newdir;
 	int			error, dmode, blkoff;
 	int dirblksiz = DIRBLKSIZ;
 	if (UFS_MPISAPPLEUFS(ap->a_dvp->v_mount)) {
@@ -1367,8 +1373,10 @@ ufs_mkdir(void *v)
 			(void)VOP_BWRITE(bp);
 		goto bad;
 	}
-	ufs_makedirentry(ip, cnp, &newdir);
-	error = ufs_direnter(dvp, tvp, &newdir, cnp, bp);
+	newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+	ufs_makedirentry(ip, cnp, newdir);
+	error = ufs_direnter(dvp, tvp, newdir, cnp, bp);
+	pool_put(&ufs_direct_pool, newdir);
  bad:
 	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
@@ -2049,7 +2057,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	struct componentname *cnp)
 {
 	struct inode	*ip, *pdir;
-	struct direct	newdir;
+	struct direct	*newdir;
 	struct vnode	*tvp;
 	int		error;
 
@@ -2108,8 +2116,11 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	 */
 	if ((error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
-	ufs_makedirentry(ip, cnp, &newdir);
-	if ((error = ufs_direnter(dvp, tvp, &newdir, cnp, NULL)) != 0)
+	newdir = pool_get(&ufs_direct_pool, PR_WAITOK);
+	ufs_makedirentry(ip, cnp, newdir);
+	error = ufs_direnter(dvp, tvp, newdir, cnp, NULL);
+	pool_put(&ufs_direct_pool, newdir);
+	if (error)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(cnp->cn_pnbuf);

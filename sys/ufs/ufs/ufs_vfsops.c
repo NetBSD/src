@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.19 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.20 2004/06/20 18:25:54 hannken Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.19 2004/04/27 17:37:31 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.20 2004/06/20 18:25:54 hannken Exp $");
 
 #include "opt_quota.h"
 
@@ -58,6 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.19 2004/04/27 17:37:31 jrf Exp $");
 
 /* how many times ufs_init() was called */
 int ufs_initcount = 0;
+
+POOL_INIT(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
+    &pool_allocator_nointr);
 
 /*
  * Make a filesystem operational.
@@ -227,6 +230,11 @@ ufs_init()
 	if (ufs_initcount++ > 0)
 		return;
 
+#ifdef _LKM
+	pool_init(ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
+	    &pool_allocator_nointr);
+#endif
+
 	ufs_ihashinit();
 #ifdef QUOTA
 	dqinit();
@@ -254,5 +262,8 @@ ufs_done()
 	ufs_ihashdone();
 #ifdef QUOTA
 	dqdone();
+#endif
+#ifdef _LKM
+	pool_destroy(&ufs_direct_pool);
 #endif
 }

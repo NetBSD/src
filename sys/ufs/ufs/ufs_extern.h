@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.40 2004/05/25 14:55:46 hannken Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.41 2004/06/20 18:25:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -53,6 +53,8 @@ struct ufsmount;
 struct uio;
 struct vattr;
 struct vnode;
+
+extern struct pool ufs_direct_pool;	/* memory pool for directs */
 
 __BEGIN_DECLS
 #define	ufs_abortop	genfs_abortop
