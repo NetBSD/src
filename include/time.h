@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.28 2002/06/23 19:41:04 perry Exp $	*/
+/*	$NetBSD: time.h,v 1.29 2002/06/30 09:45:39 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -104,13 +104,19 @@ time_t time __P((time_t *));
 
 #if !defined(_ANSI_SOURCE)
 
+#ifdef __LIBC12_SOURCE__
+#define CLK_TCK 100
+#else
+
 /*
  * CLK_TCK uses libc's internal __sysconf() to retrieve the machine's
- * HZ. The value of _SC_CLK_TCK is 3 -- we hard code it so we do not
+ * HZ. The value of _SC_CLK_TCK is 39 -- we hard code it so we do not
  * need to include unistd.h
  */
 long __sysconf __P((int));
-#define CLK_TCK		(__sysconf(3))
+#define CLK_TCK		(__sysconf(39))
+
+#endif
 
 extern __aconst char *tzname[2];
 void tzset __P((void));

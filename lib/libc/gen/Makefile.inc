@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.111 2002/05/24 04:01:43 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.112 2002/06/30 09:45:39 bjh21 Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -20,11 +20,11 @@ SRCS+= 	_errno.c alarm.c arc4random.c assert.c basename.c clock.c closedir.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
 	shquote.c shquotev.c siginterrupt.c __siglist14.c siglist.c signal.c \
 	__signame14.c signame.c __sigsetops14.c sigsetops.c sleep.c \
-	stringlist.c sysconf.c sysctl.c syslog.c telldir.c time.c times.c \
-	timezone.c toascii.c tolower_.c ttyname.c ttyslot.c toupper_.c \
-	ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmpx.c valloc.c \
-	vis.c wait.c wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c \
-	verrx.c
+	stringlist.c sysconf.c sysctl.c syslog.c telldir.c time.c __times13.c \
+	times.c timezone.c toascii.c tolower_.c ttyname.c ttyslot.c \
+	toupper_.c ualarm.c ulimit.c uname.c unvis.c usleep.c utime.c utmpx.c \
+	valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c vwarn.c \
+	vwarnx.c verr.c verrx.c
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.19 2002/01/31 00:32:48 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.20 2002/06/30 09:45:40 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -121,7 +121,7 @@
 /* configurable system variables */
 #define	_SC_ARG_MAX		 1
 #define	_SC_CHILD_MAX		 2
-#define	_SC_CLK_TCK		 3
+#define	_O_SC_CLK_TCK		 3 /* Old version, always 100 */
 #define	_SC_NGROUPS_MAX		 4
 #define	_SC_OPEN_MAX		 5
 #define	_SC_JOB_CONTROL		 6
@@ -158,6 +158,7 @@
 #define	_SC_MEMORY_PROTECTION	36
 #define	_SC_LOGIN_NAME_MAX	37
 #define	_SC_MONOTONIC_CLOCK	38
+#define	_SC_CLK_TCK		39 /* New, variable version */
 
 /* configurable system strings */
 #define	_CS_PATH		 1

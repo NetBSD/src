@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.15 2002/06/23 19:19:01 perry Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.16 2002/06/30 09:45:40 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.15 2002/06/23 19:19:01 perry Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.16 2002/06/30 09:45:40 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,6 +91,12 @@ sysconf(name)
 		break;
 	case _SC_CHILD_MAX:
 		return (getrlimit(RLIMIT_NPROC, &rl) ? -1 : (long)rl.rlim_cur);
+	case _O_SC_CLK_TCK:
+		/*
+		 * For applications compiled when CLK_TCK was a compile-time
+		 * constant.
+		 */
+		return 100;
 	case _SC_CLK_TCK:
 		/*
 		 * Has to be handled specially because it returns a
