@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.148 2003/01/22 18:32:18 hannken Exp $	*/
+/*	$NetBSD: pmap.c,v 1.149 2003/02/03 23:16:30 chris Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2003/01/22 18:32:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2003/02/03 23:16:30 chris Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1411,7 +1411,7 @@ pmap_free_pvs(pmap, pvs)
 	 * Can't free the PV page if the PV entries were associated with
 	 * the kernel pmap; the pmap is already locked.
 	 */
-	if (pv_nfpvents > PVE_HIWAT && pv_unusedpgs.tqh_first != NULL &&
+	if (pv_nfpvents > PVE_HIWAT && TAILQ_FIRST(&pv_unusedpgs) != NULL &&
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
