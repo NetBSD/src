@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.39 2000/12/06 03:37:30 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.40 2000/12/16 06:17:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -562,6 +562,7 @@ uvn_flush(uobj, start, stop, flags)
 
 			if (flags & PGO_DEACTIVATE) {
 				if ((pp->pqflags & PQ_INACTIVE) == 0 &&
+				    (pp->flags & PG_BUSY) == 0 &&
 				    pp->wire_count == 0) {
 					pmap_page_protect(pp, VM_PROT_NONE);
 					uvm_pagedeactivate(pp);
@@ -753,6 +754,7 @@ ReTry:
 
 			if (flags & PGO_DEACTIVATE) {
 				if ((pp->pqflags & PQ_INACTIVE) == 0 &&
+				    (pp->flags & PG_BUSY) == 0 &&
 				    pp->wire_count == 0) {
 					pmap_page_protect(ptmp, VM_PROT_NONE);
 					uvm_pagedeactivate(ptmp);
