@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.5 1998/09/04 18:03:56 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.6 1999/02/02 09:40:46 thorpej Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1928,7 +1928,7 @@ void script_write_params (ip, prefix, lease)
 					       lease -> options [i].len);
 					if (len > sizeof dbuf) {
 						warn ("no space to %s %s",
-						      "prepend option",
+						      "append option",
 						      dhcp_options [i].name);
 						goto supersede;
 					}
