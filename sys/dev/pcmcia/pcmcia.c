@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.56 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.57 2004/08/10 18:43:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.56 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.57 2004/08/10 18:43:50 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -304,7 +304,7 @@ pcmcia_print(arg, pnp)
 
 	pcmcia_devinfo(card, !!pnp, devinfo, sizeof(devinfo));
 
-	aprint_normal(" function %d: %s", pa->pf->number, devinfo);
+	aprint_normal(" function %d: %s\n", pa->pf->number, devinfo);
 
 	return (UNCONF);
 }

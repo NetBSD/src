@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.13 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.14 2004/08/10 18:43:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.13 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.14 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,6 @@ tr_pcmcia_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	bus_size_t offset;
 
-	printf("\n");
 	psc->sc_pf = pa->pf;
 
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);

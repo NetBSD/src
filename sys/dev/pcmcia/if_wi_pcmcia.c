@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.56 2004/08/10 18:39:08 mycroft Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.57 2004/08/10 18:43:49 mycroft Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.56 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.57 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,6 @@ wi_pcmcia_attach(parent, self, aux)
 	int haveaddr;
 	int error;
 
-	aprint_normal("\n");
 	psc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, wi_pcmcia_validate_config);
