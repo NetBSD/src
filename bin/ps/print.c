@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)print.c	5.9 (Berkeley) 7/1/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/ps/print.c,v 1.6 1993/06/02 22:02:27 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/ps/print.c,v 1.7 1993/06/18 09:32:27 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -45,6 +45,7 @@ static char rcsid[] = "$Header: /cvsroot/src/bin/ps/print.c,v 1.6 1993/06/02 22:
 #include <tzfile.h>
 #include <stddef.h>
 #include <string.h>
+#include <vis.h>
 #include "ps.h"
 
 #ifdef SPPWAIT
@@ -86,34 +87,52 @@ command(k, v, next)
 	VAR *v;
 {
 	extern int termwidth, totwidth;
+	char *vis_env, *vis_args;
+
+	vis_args = (char *)malloc(strlen(k->ki_args)*4 + 1);
+	if (vis_args == NULL)
+		err("out of memory");
+	strvis(vis_args, k->ki_args, VIS_TAB|VIS_NL|VIS_NOSLASH);
+
+	if (k->ki_env) {
+		vis_env = (char *)malloc(strlen(k->ki_env)*4 + 1);
+		if (vis_env == NULL)
+			err("out of memory");
+		strvis(vis_env, k->ki_env, VIS_TAB|VIS_NL|VIS_NOSLASH);
+	} else {
+		vis_env = NULL;
+	}
 
 	if (next == NULL) {
 		/* last field */
 		if (termwidth == UNLIMITED) {
-			if (k->ki_env)
-				(void)printf("%s ", k->ki_env);
-			(void) printf("%s", k->ki_args);
+			if (vis_env)
+				(void)printf("%s ", vis_env);
+			(void) printf("%s", vis_args);
 		} else {
 			register int left = termwidth - (totwidth - v->width);
 			register char *cp;
 
 			if (left < 1) /* already wrapped, just use std width */
 				left = v->width;
-                        cp = k->ki_env;
+                        cp = vis_env;
 			if (cp != 0) {
 				while (--left >= 0 && *cp)
 					(void)putchar(*cp++);
 				if (--left >= 0)
 					putchar(' ');
 			}
-			cp = k->ki_args;
+			cp = vis_args;
 			while (--left >= 0 && *cp)
 				(void) putchar(*cp++);
 		}
 	} else
 		/* XXX environment strings? */
-		(void) printf("%-*.*s", v->width, v->width, k->ki_args);
+		(void) printf("%-*.*s", v->width, v->width, vis_args);
 
+	free(vis_args);
+	if (vis_env != NULL)
+		free(vis_env);
 }
 
 ucomm(k, v)
