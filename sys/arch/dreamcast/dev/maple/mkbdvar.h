@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbdvar.h,v 1.3 2002/03/25 18:59:40 uch Exp $	*/
+/*	$NetBSD: mkbdvar.h,v 1.4 2002/11/15 13:30:21 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,6 +33,7 @@
  */
 
 struct mkbd_condition {
+	u_int32_t func_code;	/* function code (big endian) */
 	u_int8_t shift;
 	u_int8_t led;
 	u_int8_t key[6];
@@ -46,7 +47,7 @@ struct mkbd_softc {
 	struct device	*sc_wskbddev;
 	struct device *sc_parent;
 
-	int sc_port, sc_subunit;
+	struct maple_unit *sc_unit;
 	struct mkbd_condition sc_condition;
 };
 
