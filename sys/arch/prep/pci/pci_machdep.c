@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.18 2003/07/15 02:54:51 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.19 2005/01/13 23:57:04 kleink Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -192,7 +192,7 @@ prep_pci_conf_interrupt(void *v, int bus, int dev, int pin,
     int swiz, int *iline)
 {
 
-	(*platform->pci_intr_fixup)(bus, dev, iline);
+	(*platform->pci_intr_fixup)(bus, dev, swiz, iline);
 }
 
 int
