@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.42 2000/04/24 23:46:37 fair Exp $
+#	$NetBSD: security,v 1.43 2000/05/05 18:28:53 itojun Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -291,12 +291,14 @@ if checkyesno check_ftpusers; then
 	fi
 fi
 
-# Uudecode should not be in the /etc/aliases file.
+# Uudecode should not be in the /etc/mail/aliases file.
 #
 if checkyesno check_aliases; then
-	if egrep '^[^#]*(uudecode|decode).*\|' /etc/aliases; then
-		printf "\nEntry for uudecode in /etc/aliases file.\n"
-	fi
+	for f in /etc/mail/aliases /etc/aliases; do
+		if [ -f $f ] && egrep '^[^#]*(uudecode|decode).*\|' $f; then
+			printf "\nEntry for uudecode in $f file.\n"
+		fi
+	done
 fi
 
 # Files that should not have + signs.
