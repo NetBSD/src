@@ -1,4 +1,4 @@
-/*	$NetBSD: qdivrem.c,v 1.7 1999/09/10 13:21:14 drochner Exp $	*/
+/*	$NetBSD: qdivrem.c,v 1.8 2000/12/12 17:44:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qdivrem.c,v 1.7 1999/09/10 13:21:14 drochner Exp $");
+__RCSID("$NetBSD: qdivrem.c,v 1.8 2000/12/12 17:44:04 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -258,8 +258,8 @@ __qdivrem(uq, vq, arq)
 	if (arq) {
 		if (d) {
 			for (i = m + n; i > m; --i)
-				u[i] = ((u_long)u[i] >> d) |
-				    LHALF((u_long)u[i - 1] << (HALF_BITS - d));
+				u[i] = (digit)(((u_long)u[i] >> d) |
+				    LHALF((u_long)u[i - 1] << (HALF_BITS - d)));
 			u[i] = 0;
 		}
 		tmp.ul[H] = COMBINE(uspace[1], uspace[2]);
@@ -283,7 +283,7 @@ shl(digit *p, int len, int sh)
 	int i;
 
 	for (i = 0; i < len; i++)
-		p[i] = LHALF((u_long)p[i] << sh) |
-		    (p[i + 1] >> (HALF_BITS - sh));
-	p[i] = (digit)LHALF(p[i] << sh);
+		p[i] = (digit)(LHALF((u_long)p[i] << sh) |
+		    ((u_long)p[i + 1] >> (HALF_BITS - sh)));
+	p[i] = (digit)(LHALF((u_long)p[i] << sh));
 }
