@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_shutdown.c,v 1.6 2000/01/13 23:41:18 oster Exp $	*/
+/*	$NetBSD: rf_shutdown.c,v 1.7 2001/09/26 02:52:57 oster Exp $	*/
 /*
  * rf_shutdown.c
  */
@@ -34,6 +34,7 @@
  */
 
 #include "rf_types.h"
+#include "rf_archs.h"
 #include "rf_threadstuff.h"
 #include "rf_shutdown.h"
 #include "rf_debugMem.h"
