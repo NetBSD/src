@@ -1,4 +1,4 @@
-/* $NetBSD: gzio.c,v 1.18 2003/03/18 20:47:47 jdolecek Exp $ */
+/* $NetBSD: gzio.c,v 1.19 2003/03/18 20:51:24 jdolecek Exp $ */
 
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2002 Jean-loup Gailly.
@@ -7,10 +7,10 @@
  * Compile this file with -DNO_DEFLATE to avoid the compression code.
  */
 
-/* @(#) $Id: gzio.c,v 1.18 2003/03/18 20:47:47 jdolecek Exp $ */
+/* @(#) $Id: gzio.c,v 1.19 2003/03/18 20:51:24 jdolecek Exp $ */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gzio.c,v 1.18 2003/03/18 20:47:47 jdolecek Exp $");
+__RCSID("$NetBSD: gzio.c,v 1.19 2003/03/18 20:51:24 jdolecek Exp $");
 
 #include <stdio.h>
 
@@ -701,7 +701,7 @@ z_off_t ZEXPORT gzseek (file, offset, whence)
 	/* map to fseek */
 	s->stream.avail_in = 0;
 	s->stream.next_in = s->inbuf;
-        if (fseek(s->file, offset, SEEK_SET) < 0) return -1L;
+        if (fseeko(s->file, offset, SEEK_SET) < 0) return -1L;
 
 	s->stream.total_in = s->stream.total_out = (uLong)offset;
 	return offset;
