@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.306 2001/02/03 02:35:07 jwise Exp $
+#	$NetBSD: mi,v 1.307 2001/02/03 02:44:15 jwise Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1456,18 +1456,18 @@
 ./usr/share/ldscripts/sun4.xn		comp-util-share
 ./usr/share/ldscripts/sun4.xr		comp-util-share
 ./usr/share/ldscripts/sun4.xu		comp-util-share
-./usr/share/locale/da/LC_MESSAGES/gettext.mo		comp-c-locale
-./usr/share/locale/de/LC_MESSAGES/gettext.mo		comp-c-locale
-./usr/share/locale/es/LC_MESSAGES/gettext.mo		comp-c-locale
-./usr/share/locale/fr/LC_MESSAGES/gettext.mo		comp-c-locale
-./usr/share/locale/ko/LC_MESSAGES/gettext.mo		comp-c-locale
-./usr/share/locale/nl/LC_MESSAGES/gettext.mo		comp-c-locale
-./usr/share/locale/no/LC_MESSAGES/gettext.mo		comp-c-locale
-./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-c-locale
-./usr/share/locale/pl/LC_MESSAGES/gettext.mo		comp-c-locale
-./usr/share/locale/pt/LC_MESSAGES/gettext.mo		comp-c-locale
-./usr/share/locale/sl/LC_MESSAGES/gettext.mo		comp-c-locale
-./usr/share/locale/sv/LC_MESSAGES/gettext.mo		comp-c-locale
+./usr/share/locale/da/LC_MESSAGES/gettext.mo		comp-c_locale-da
+./usr/share/locale/de/LC_MESSAGES/gettext.mo		comp-c_locale-de
+./usr/share/locale/es/LC_MESSAGES/gettext.mo		comp-c_locale-es
+./usr/share/locale/fr/LC_MESSAGES/gettext.mo		comp-c_locale-fr
+./usr/share/locale/ko/LC_MESSAGES/gettext.mo		comp-c_locale-ko
+./usr/share/locale/nl/LC_MESSAGES/gettext.mo		comp-c_locale-nl
+./usr/share/locale/no/LC_MESSAGES/gettext.mo		comp-c_locale-no
+./usr/share/locale/no@nynorsk/LC_MESSAGES/gettext.mo	comp-c_locale-no
+./usr/share/locale/pl/LC_MESSAGES/gettext.mo		comp-c_locale-pl
+./usr/share/locale/pt/LC_MESSAGES/gettext.mo		comp-c_locale-pt
+./usr/share/locale/sl/LC_MESSAGES/gettext.mo		comp-c_locale-sl
+./usr/share/locale/sv/LC_MESSAGES/gettext.mo		comp-c_locale-sv
 ./usr/share/man/cat1/addr2line.0	comp-debug-catman
 ./usr/share/man/cat1/ar.0		comp-util-catman
 ./usr/share/man/cat1/as.0		comp-util-catman
