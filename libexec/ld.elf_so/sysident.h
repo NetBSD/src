@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.7 2000/12/15 06:49:19 mycroft Exp $ */
+/* $NetBSD: sysident.h,v 1.8 2001/05/24 17:42:48 christos Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -55,6 +55,11 @@
  * These are used by the kernel to determine if this binary is really a
  * NetBSD binary, or some other OS's.
  */
+
+/* XXX: NetBSD 1.5 compatibility only! */
+#if __NetBSD_Version__ < 105010000
+#define	ELF_NOTE_TYPE_NETBSD_TAG	1
+#endif
 
 #define	__S(x)	__STRING(x)
 __asm("
