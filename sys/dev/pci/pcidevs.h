@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.415 2002/03/01 13:48:59 kleink Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.416 2002/03/11 23:19:01 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.410 2002/03/01 13:47:30 kleink Exp 
+ *	NetBSD: pcidevs,v 1.411 2002/03/11 23:17:37 joda Exp 
  */
 
 /*
@@ -857,6 +857,10 @@
 #define	PCI_PRODUCT_ATI_RAGE4PCIT	0x5056		/* Rage 128 Pro PCI (TMDS) */
 #define	PCI_PRODUCT_ATI_RAGE4AGP2XT	0x5057		/* Rage 128 Pro AGP 2x (TMDS) */
 #define	PCI_PRODUCT_ATI_RAGE4AGP4XT	0x5058		/* Rage 128 Pro AGP 4x (TMDS) */
+#define	PCI_PRODUCT_ATI_RADEON_7200	0x5144		/* Radeon 7200 */
+#define	PCI_PRODUCT_ATI_RADEON_8500	0x514c		/* Radeon 8500 */
+#define	PCI_PRODUCT_ATI_RADEON_7500	0x5157		/* Radeon 7500 */
+#define	PCI_PRODUCT_ATI_RADEON_7000	0x5159		/* Radeon 7000/VE */
 #define	PCI_PRODUCT_ATI_RAGEGLPCI	0x5245		/* Rage 128 GL PCI */
 #define	PCI_PRODUCT_ATI_RAGEGLAGP	0x5246		/* Rage 128 GL AGP 2x */
 #define	PCI_PRODUCT_ATI_RAGEVRPCI	0x524b		/* Rage 128 VR PCI */
@@ -1306,6 +1310,8 @@
 #define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
 #define	PCI_PRODUCT_INTEL_82840_AGP	0x1a23		/* 82840 AGP */
 #define	PCI_PRODUCT_INTEL_82840_PCI	0x1a24		/* 82840 PCI */
+#define	PCI_PRODUCT_INTEL_82845_HB	0x1a30		/* 82845 Host */
+#define	PCI_PRODUCT_INTEL_82845_AGP	0x1a31		/* 82845 AGP */
 #define	PCI_PRODUCT_INTEL_82801AA_LPC	0x2410		/* 82801AA LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801AA_IDE	0x2411		/* 82801AA IDE Controller */
 #define	PCI_PRODUCT_INTEL_82801AA_USB	0x2412		/* 82801AA USB Controller */
