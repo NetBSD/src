@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.10 2000/12/03 01:54:48 minoura Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.11 2001/04/12 03:48:13 briggs Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,25 +70,6 @@ the real geometry.  The two geometries are:
 
 disklabel:	%d cylinders, %d heads, %d sectors 
 real geometry:	%d cylinders, %d heads, %d sectors 
-}
-
-message nobiosgeom
-{It appears that your disk, %s, did not have a valid Master Boot
-Record (MBR). This program gets the BIOS geometry of your disk by
-reading the MBR, so the BIOS geometry of your disk could not
-be determined in this case.  Your options are:
-
-* Abort the install. You can determine the actual BIOS geometry in your
-BIOS setup and then come back and enter the values. Or you can use
-another setup program to initialize the MBR first.
-
-* Enter the BIOS geometry values yourself. Sysinst will initialize the MBR
-for you.
-
-WARNING: Entering a new geometry will cause this program to initialize
-your master boot record (MBR) and destroy any boot program you may
-have installed.
-
 }
 
 message diagcyl
