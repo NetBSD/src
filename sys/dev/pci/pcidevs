@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.207 2000/04/17 00:26:22 thorpej Exp $
+$NetBSD: pcidevs,v 1.208 2000/04/18 16:37:00 cgd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -524,6 +524,7 @@ vendor DELTA		0x1500	Delta Electronics
 vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
+vendor SIBYTE		0x166d	SiByte, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
