@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_filter.c,v 1.3 2000/01/17 07:21:54 bgrayson Exp $	*/
+/*	$NetBSD: pt_filter.c,v 1.4 2001/01/10 03:33:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pt_filter.c,v 1.3 2000/01/17 07:21:54 bgrayson Exp $");
+__RCSID("$NetBSD: pt_filter.c,v 1.4 2001/01/10 03:33:16 lukem Exp $");
 #endif				/* not lint */
 
 #include <stdio.h>
@@ -117,7 +117,7 @@ portal_rfilter(pcr, key, v, kso, fdp)
 		syslog(LOG_ERR,
 		    "rfilter: got strip-key of %s, and command start of %s\n",
 		    v[1], v[2]);
-		exit(-1);
+		exit(1);
 	}
 	/*
 	 * Format for rfilter in config file:
@@ -164,7 +164,7 @@ portal_rfilter(pcr, key, v, kso, fdp)
 	if (getuid() == 0) {
 		if ((seteuid((uid_t) 0) < 0) || (setegid((gid_t) 0) < 0)) {
 			error = errno;
-			syslog(LOG_ERR, "setcred: %m");
+			syslog(LOG_WARNING, "setcred: %m");
 			if (fp) {
 				fclose(fp);
 				fp = NULL;
@@ -219,7 +219,7 @@ portal_wfilter(pcr, key, v, kso, fdp)
 	if (getuid() == 0) {
 		if ((seteuid((uid_t) 0) < 0) || (setegid((gid_t) 0) < 0)) {
 			error = errno;
-			syslog(LOG_ERR, "setcred: %m");
+			syslog(LOG_WARNING, "setcred: %m");
 			if (fp) {
 				fclose(fp);
 				fp = NULL;
