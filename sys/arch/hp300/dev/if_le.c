@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.3 1994/01/24 00:25:21 deraadt Exp $
+ *	$Id: if_le.c,v 1.4 1994/01/30 18:42:47 mycroft Exp $
  */
 
 #include "le.h"
@@ -523,8 +523,8 @@ leread(unit, buf, len)
 
 #define	ledataaddr(et, off, type)	((type)(((caddr_t)((et)+1)+(off))))
 	etype = ntohs(et->ether_type);
-	if (etype) >= ETHERTYPE_TRAIL &&
-	    etype) < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
+	if (etype >= ETHERTYPE_TRAIL &&
+	    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
 		off = (etype - ETHERTYPE_TRAIL) * 512;
 		if (off >= ETHERMTU)
 			return;		/* sanity */
