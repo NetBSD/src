@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.19 2003/07/29 01:46:13 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.20 2003/07/29 06:08:18 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -44,6 +44,7 @@ linkfarmprog=/usr/sbin/linkfarm
 lnprog=/bin/ln
 mkdirprog=/bin/mkdir
 paxprog=/bin/pax
+pkginfoprog=/usr/sbin/pkg_info
 rmprog=/bin/rm
 rmdirprog=/bin/rmdir
 sedprog=/usr/bin/sed
@@ -55,7 +56,7 @@ usage() {
 }
 
 version() {
-	echo "20030728"
+	$pkginfoprog -V
 	exit 0
 }
 
