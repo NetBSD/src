@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.6 1993/10/15 03:21:11 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.7 1993/10/15 13:11:29 mycroft Exp $
  */
 
 /*
@@ -150,7 +150,7 @@ int pmapvacflush = 0;
 /*
  * Get PDEs and PTEs for user/kernel address space
  */
-#define	pmap_pde(m, v)	(&((m)->pm_pdir[((vm_offset_t)(v) >> PD_SHIFT)&1023]))
+#define	pmap_pde(m, v)	(&((m)->pm_pdir[((vm_offset_t)(v) >> PDSHIFT)&1023]))
 
 #define pmap_pte_pa(pte)	(*(int *)(pte) & PG_FRAME)
 
@@ -226,7 +226,7 @@ pmap_bootstrap(virtual_start)
 	/* XXX: allow for msgbuf */
 	avail_end -= i386_round_page(sizeof(struct msgbuf));
 
-	mem_size = physmem << PG_SHIFT;
+	mem_size = physmem << PGSHIFT;
 	virtual_avail = virtual_start;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 	i386pagesperpage = PAGE_SIZE / I386_PAGE_SIZE;
@@ -558,7 +558,7 @@ pmap_remove(pmap, sva, eva)
 	
 	/* this is essential since we must check the PDE(sva) for precense */
 	while (sva <= eva && !pmap_pde_v(pmap_pde(pmap, sva)))
-		sva = (sva & PD_MASK) + (1<<PD_SHIFT);
+		sva = (sva & PD_MASK) + (1 << PDSHIFT);
 	sva = i386_btop(sva);
 	eva = i386_btop(eva);
 
@@ -813,7 +813,7 @@ pmap_protect(pmap, sva, eva, prot)
 
 		ix = 0;
 		i386prot = pte_prot(pmap, prot);
-		if (va < UPT_MAX_ADDRESS)	/* see also pmap_enter() */
+		if (va < VM_MIN_KERNEL_ADDRESS)	/* see also pmap_enter() */
 			i386prot |= PG_u;
 		do {
 			/* clear VAC here if PG_RO? */
@@ -1016,7 +1016,7 @@ validate:
 
 	if (va < VM_MAXUSER_ADDRESS)	/* i.e. below USRSTACK */
 		npte |= PG_u;
-	else if (va < UPT_MAX_ADDRESS)
+	else if (va < VM_MIN_KERNEL_ADDRESS)
 		/* pagetables need to be user RW, for some reason, and the
 		 * user area must be writable too.  Anything above
 		 * VM_MAXUSER_ADDRESS is protected from user access by
@@ -1310,7 +1310,7 @@ pmap_zero_page(phys)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%x)", phys);
 #endif
-	phys >>= PG_SHIFT;
+	phys >>= PGSHIFT;
 	ix = 0;
 	do {
 		clearseg(phys++);
@@ -1333,8 +1333,8 @@ pmap_copy_page(src, dst)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%x, %x)", src, dst);
 #endif
-	src >>= PG_SHIFT;
-	dst >>= PG_SHIFT;
+	src >>= PGSHIFT;
+	dst >>= PGSHIFT;
 	ix = 0;
 	do {
 		physcopyseg(src++, dst++);
@@ -1391,8 +1391,6 @@ pmap_pageable(pmap, sva, eva, pageable)
 		if (!pmap_valid_page(pa))
 			return;
 		pv = pa_to_pvh(pa);
-		/*if (!ispt(pv->pv_va))
-			return;*/
 #ifdef DEBUG
 		if (pv->pv_va != sva || pv->pv_next) {
 			pg("pmap_pageable: bad PT page va %x next %x\n",
@@ -1698,9 +1696,9 @@ pads(pm) pmap_t pm; {
 		if(pm->pm_pdir[i].pd_v)
 			for (j = 0; j < 1024 ; j++) {
 				va = (i<<22)+(j<<12);
-				if (pm == kernel_pmap && va < 0xfe000000)
+				if (pm == kernel_pmap && va < KERNBASE)
 						continue;
-				if (pm != kernel_pmap && va > UPT_MAX_ADDRESS)
+				if (pm != kernel_pmap && va > VM_MIN_KERNEL_ADDRESS)
 						continue;
 				ptep = pmap_pte(pm, va);
 				if(pmap_pte_v(ptep)) 

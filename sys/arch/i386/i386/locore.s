@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.15 1993/10/13 10:55:24 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.16 1993/10/15 13:11:24 mycroft Exp $
  */
 
 
@@ -45,17 +45,18 @@
  *		Written by William F. Jolitz, 386BSD Project
  */
 
-#include "errno.h"
-#include "sys/syscall.h"
-
 #include "npx.h"
 #include "assym.s"
 
+#include "sys/errno.h"
+#include "sys/syscall.h"
+
 #include "machine/cputypes.h"
+#include "machine/param.h"
 #include "machine/psl.h"
 #include "machine/pte.h"
-#include "machine/trap.h"
 #include "machine/specialreg.h"
+#include "machine/trap.h"
 
 #include "i386/isa/debug.h"
 #include "i386/isa/isa.h"
@@ -83,8 +84,8 @@
  * that may be fixed in newer versions of gas. Perhaps newer versions
  * will have more pleasant appearance.
  */
-	.set	SYSPDROFF,(KERNBASE>>PD_SHIFT)	# page dir index of System Base
-	.set	SYSPDRSIZE,(KERNSIZE>>PD_SHIFT)	# size of kernel part of page dir
+	.set	SYSPDOFF,(KERNBASE>>PDSHIFT)	# page dir index of System Base
+	.set	SYSPDSIZE,(KERNSIZE>>PDSHIFT)	# size of kernel part of page dir
 
 /*
  * PTmap is recursive pagemap at top of virtual address space.
@@ -93,8 +94,8 @@
 	.globl	_PTmap,_PTD,_PTDpde,_Sysmap
 	.set	_PTmap,0xFDC00000
 	.set	_PTD,0xFDFF7000
-	.set	PDRPDROFF,(_PTmap>>PD_SHIFT)	# Page dir index of Page dir
-	.set	_PTDpde,_PTD+4*PDRPDROFF
+	.set	PDPDOFF,(_PTmap>>PDSHIFT)	# Page dir index of Page dir
+	.set	_PTDpde,_PTD+4*PDPDOFF
 	.set	_Sysmap,0xFDFF8000
 
 /*
@@ -104,8 +105,8 @@
 	.globl	_APTmap,_APTD,_APTDpde
 	.set	_APTmap,0xFF800000
 	.set	_APTD,0xFFBFE000
-	.set	APDRPDROFF,(_APTmap>>PD_SHIFT)	# Page dir index of Page dir
-	.set	_APTDpde,_PTD+4*APDRPDROFF
+	.set	APDPDOFF,(_APTmap>>PDSHIFT)	# Page dir index of Page dir
+	.set	_APTDpde,_PTD+4*APDPDOFF
 
 /*
  * Access to each process's kernel stack is via a region of
@@ -114,8 +115,8 @@
  */
 	.set	_kstack,USRSTACK
 	.globl	_kstack
-	.set	PPDROFF,(_kstack>>PD_SHIFT)
-	.set	PPTEOFF,NPTEPG-UPAGES
+	.set	PPDOFF,(_kstack>>PDSHIFT)
+	.set	PPTEOFF,NPTEPD-UPAGES
 
 #define	ENTRY(name)	.globl _/**/name; ALIGN_TEXT; _/**/name:
 #define	ALTENTRY(name)	.globl _/**/name; _/**/name:
@@ -214,8 +215,8 @@ start:	movw	$0x1234,0x472	# warm boot
 	subl	$(KERNBASE),%ecx
 #endif
 1:	movl	%ecx,%edi	# edi= end || esym
-	addl	$(NBPG-1),%ecx	# page align up
-	andl	$~(NBPG-1),%ecx
+	addl	$(PGOFSET),%ecx	# page align up
+	andl	$~(PGOFSET),%ecx
 	movl	%ecx,%esi	# esi=start of tables
 	subl	%edi,%ecx
 	addl	$(UPAGES+5)*NBPG,%ecx	# size of tables
@@ -278,19 +279,19 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	%eax,(%esi)		# which is where temp maps!
 
 	/* kernel pde's */
-	movl	$(SYSPDRSIZE),%ecx		# for this many pde s,
-	lea	(SYSPDROFF*4)(%esi),%ebx	# offset of pde for kernel
+	movl	$(SYSPDSIZE),%ecx	# for this many pde s,
+	lea	(SYSPDOFF*4)(%esi),%ebx	# offset of pde for kernel
 	fillkpt
 
 	/* install a pde recursively mapping page directory as a page table! */
-	movl	%esi,%eax			# phys address of ptd in proc 0
-	orl	$(PG_V|PG_UW),%eax		# pde entry is valid
-	movl	%eax,(PDRPDROFF*4)(%esi)	# which is where PTmap maps!
+	movl	%esi,%eax		# phys address of ptd in proc 0
+	orl	$(PG_V|PG_UW),%eax	# pde entry is valid
+	movl	%eax,(PDPDOFF*4)(%esi)	# which is where PTmap maps!
 
 	/* install a pde to map kernel stack for proc 0 */
 	lea	(3*NBPG)(%esi),%eax	# physical address of pt in proc 0
 	orl	$(PG_V|PG_KW),%eax	# pde entry is valid
-	movl	%eax,(PPDROFF*4)(%esi)	# which is where kernel stack maps!
+	movl	%eax,(PPDOFF*4)(%esi)	# which is where kernel stack maps!
 
 	/* copy and convert stuff from old gdt and idt for debugger */
 
@@ -670,7 +671,7 @@ ENTRY(copyout)
 
 			/* compute number of pages */
 	movl	%edi,%ecx
-	andl	$(NBPG-1),%ecx
+	andl	$(PGOFSET),%ecx
 	addl	%ebx,%ecx
 	decl	%ecx
 	shrl	$(PGSHIFT),%ecx
@@ -835,7 +836,7 @@ ENTRY(copyoutstr)
 
 2:			/* copy up to end of this page */
 	movl	%edi,%eax
-	andl	$(NBPG-1),%eax
+	andl	$(PGOFSET),%eax
 	movl	$(NBPG),%ecx
 	subl	%eax,%ecx	/* ecx = NBPG - (src % NBPG) */
 	cmpl	%ecx,%edx
