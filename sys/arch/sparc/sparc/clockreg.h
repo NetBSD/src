@@ -42,7 +42,7 @@
  *	@(#)clockreg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clockreg.h,v 1.6 92/11/26 03:04:48 torek Exp  (LBL)
- * $Id: clockreg.h,v 1.1 1993/10/02 10:24:08 deraadt Exp $
+ * $Id: clockreg.h,v 1.2 1994/07/01 09:23:58 deraadt Exp $
  */
 
 /*
@@ -60,10 +60,10 @@ struct sun4c_idprom {
 	u_char	id_format;		/* format identifier (= 1) */
 	u_char	id_machine;		/* machine type (see cpu.h) */
 	u_char	id_ether[6];		/* ethernet address */
-	long	id_xxx0;		/* ??? */
+	long	id_date;		/* date of manufacture */
 	u_char	id_hostid[3];		/* ``host id'' bytes */
 	u_char	id_checksum;		/* xor of everything else */
-	char	id_xxx1[16];		/* ??? */
+	char	id_undef[16];		/* undefined */
 };
 
 /*
