@@ -1,4 +1,41 @@
-/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.23 1997/10/25 01:21:57 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.24 1998/06/06 22:44:46 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -159,6 +196,10 @@ void		__C(CHIP,_io_copy_region_4) __P((void *, bus_space_handle_t,
 void		__C(CHIP,_io_copy_region_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
 
+/* Internal */
+void		__C(CHIP,_io_mapit) __P((void *, bus_addr_t,
+		    bus_space_handle_t *));
+
 #ifndef	CHIP_IO_EX_STORE
 static long
     __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
@@ -275,6 +316,44 @@ __C(CHIP,_bus_io_init)(t, v)
 	CHIP_IO_EXTENT(v) = ex;
 }
 
+void
+__C(CHIP,_io_mapit)(v, ioaddr, iohp)
+	void *v;
+	bus_addr_t ioaddr;
+	bus_space_handle_t *iohp;
+{
+
+#ifdef CHIP_IO_W1_BUS_START
+	if (ioaddr >= CHIP_IO_W1_BUS_START(v) &&
+	    ioaddr <= CHIP_IO_W1_BUS_END(v)) {
+		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W1_SYS_START(v)) >> 5) +
+		    (ioaddr - CHIP_IO_W1_BUS_START(v));
+	} else
+#endif
+#ifdef CHIP_IO_W2_BUS_START
+	if (ioaddr >= CHIP_IO_W2_BUS_START(v) &&
+	    ioaddr <= CHIP_IO_W2_BUS_END(v)) {
+		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W2_SYS_START(v)) >> 5) +
+		    (ioaddr - CHIP_IO_W2_BUS_START(v));
+	} else
+#endif
+	{
+		printf("\n");
+#ifdef CHIP_IO_W1_BUS_START
+		printf("%s: window[1]=0x%lx-0x%lx\n",
+		    __S(__C(CHIP,_io_map)), CHIP_IO_W1_BUS_START(v),
+		    CHIP_IO_W1_BUS_END(v));
+#endif
+#ifdef CHIP_IO_W2_BUS_START
+		printf("%s: window[2]=0x%lx-0x%lx\n",
+		    __S(__C(CHIP,_io_map)), CHIP_IO_W2_BUS_START(v),
+		    CHIP_IO_W2_BUS_END(v));
+#endif
+		panic("%s: don't know how to map %lx",
+		    __S(__C(CHIP,_io_mapit)), ioaddr);
+	}
+}
+
 int
 __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp)
 	void *v;
@@ -305,35 +384,7 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp)
 		return (error);
 	}
 
-#ifdef CHIP_IO_W1_BUS_START
-	if (ioaddr >= CHIP_IO_W1_BUS_START(v) &&
-	    ioaddr <= CHIP_IO_W1_BUS_END(v)) {
-		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W1_SYS_START(v)) >> 5) +
-		    (ioaddr - CHIP_IO_W1_BUS_START(v));
-	} else
-#endif
-#ifdef CHIP_IO_W2_BUS_START
-	if (ioaddr >= CHIP_IO_W2_BUS_START(v) &&
-	    ioaddr <= CHIP_IO_W2_BUS_END(v)) {
-		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W2_SYS_START(v)) >> 5) +
-		    (ioaddr - CHIP_IO_W2_BUS_START(v));
-	} else
-#endif
-	{
-		printf("\n");
-#ifdef CHIP_IO_W1_BUS_START
-		printf("%s: window[1]=0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_io_map)), CHIP_IO_W1_BUS_START(v),
-		    CHIP_IO_W1_BUS_END(v));
-#endif
-#ifdef CHIP_IO_W2_BUS_START
-		printf("%s: window[2]=0x%lx-0x%lx\n",
-		    __S(__C(CHIP,_io_map)), CHIP_IO_W2_BUS_START(v),
-		    CHIP_IO_W2_BUS_END(v));
-#endif
-		panic("%s: don't know how to map %lx",
-		    __S(__C(CHIP,_io_map)), ioaddr);
-	}
+	__C(CHIP,_io_mapit)(v, ioaddr, iohp);
 
 	return (0);
 }
@@ -418,9 +469,41 @@ __C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, flags,
 	int flags;
 	bus_space_handle_t *bshp;
 {
+	int linear = flags & BUS_SPACE_MAP_LINEAR;
+	bus_addr_t ioaddr;
+	int error;
 
-	/* XXX XXX XXX XXX XXX XXX */
-	panic("%s not implemented", __S(__C(CHIP,_io_alloc)));
+	/*
+	 * Can't map i/o space linearly.
+	 */
+	if (linear)
+		return (EOPNOTSUPP);
+
+	/*
+	 * Do the requested allocation.
+	 */
+#ifdef EXTENT_DEBUG
+	printf("io: allocating from 0x%lx to 0x%lx\n", rstart, rend);
+#endif
+	error = extent_alloc_subregion(CHIP_IO_EXTENT(v), rstart, rend,
+	    size, align, boundary,
+	    EX_FAST | EX_NOWAIT | (CHIP_EX_MALLOC_SAFE(v) ? EX_MALLOCOK : 0),
+	    &ioaddr);
+	if (error) {
+#ifdef EXTENT_DEBUG
+		printf("io: allocation failed (%d)\n", error);
+		extent_print(CHIP_IO_EXTENT(v));
+#endif
+		return (error);
+	}
+
+#ifdef EXTENT_DEBUG
+	printf("io: allocated 0x%lx to 0x%lx\n", ioaddr, ioaddr + size - 1);
+#endif
+
+	__C(CHIP,_io_mapit)(v, ioaddr, bshp);
+
+	return (0);
 }
 
 void
@@ -430,8 +513,8 @@ __C(CHIP,_io_free)(v, bsh, size)
 	bus_size_t size;
 {
 
-	/* XXX XXX XXX XXX XXX XXX */
-	panic("%s not implemented", __S(__C(CHIP,_io_free)));
+	/* Unmap does all we need to do. */
+	__C(CHIP,_io_unmap)(v, bsh, size);
 }
 
 inline void
