@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.114 2000/07/27 14:34:09 mrg Exp $
+# 	$NetBSD: GENERIC,v 1.115 2000/07/27 17:53:39 mason Exp $
 
 include "arch/sparc/conf/std.sparc"
 
-#ident 		"GENERIC-$Revision: 1.114 $"
+#ident 		"GENERIC-$Revision: 1.115 $"
 
 maxusers	32
 
@@ -568,7 +568,7 @@ tctrl0 at obio0
 ## number still requires you to run /dev/MAKEDEV to create the files
 ## for the ptys.
 
-pseudo-device	pty		32	# pseudo-ttys (for network, etc.)
+pseudo-device	pty		64	# pseudo-terminals
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.

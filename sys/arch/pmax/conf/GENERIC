@@ -1,11 +1,11 @@
 #
-# 	$NetBSD: GENERIC,v 1.80 2000/07/19 10:42:22 tsutsui Exp $
+# 	$NetBSD: GENERIC,v 1.81 2000/07/27 17:53:39 mason Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
 include		"arch/pmax/conf/std.pmax"
 
-#ident 		"GENERIC-$Revision: 1.80 $"
+#ident 		"GENERIC-$Revision: 1.81 $"
 
 maxusers	64
 
@@ -187,7 +187,7 @@ include 	"arch/pmax/conf/scsi.pmax"
 pseudo-device	loop		 1	# network loopback
 pseudo-device	sl		 4	# serial-line IP ports
 pseudo-device	ppp		 2	# serial-line IP ports
-pseudo-device	pty		64	# pseudo ptys
+pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	gre		 2	# generic L3 over IP tunnel
