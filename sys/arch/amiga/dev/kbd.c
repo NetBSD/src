@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.13 1995/02/12 19:19:15 chopps Exp $	*/
+/*	$NetBSD: kbd.c,v 1.14 1995/04/10 09:10:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -139,13 +139,6 @@ int
 kbdread (dev_t dev, struct uio *uio, int flags)
 {
   return ev_read (&kbd_softc.k_events, uio, flags);
-}
-
-/* this routine should not exist, but is convenient to write here for now */
-int
-kbdwrite (dev_t dev, struct uio *uio, int flags)
-{
-  return EOPNOTSUPP;
 }
 
 int

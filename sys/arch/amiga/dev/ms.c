@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.6 1994/12/01 17:25:29 chopps Exp $	*/
+/*	$NetBSD: ms.c,v 1.7 1995/04/10 09:10:21 mycroft Exp $	*/
 
 /*
  * based on:
@@ -360,19 +360,6 @@ msread(dev, uio, flags)
 
 	ms = &ms_softc[minor(dev)];
 	return(ev_read(&ms->ms_events, uio, flags));
-}
-
-/*
- * XXX this routine should not exist,
- * but is convenient to write here for now
- */
-int
-mswrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-	return(EOPNOTSUPP);
 }
 
 int
