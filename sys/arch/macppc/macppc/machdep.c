@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 1999/07/08 18:08:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 1999/07/20 17:31:59 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -81,14 +81,9 @@
 #endif
 
 #include <machine/bat.h>
-#include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
-
 #include <machine/bus.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
@@ -196,9 +191,15 @@ initppc(startkernel, endkernel, args)
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
 
 	/* BAT1 statically maps obio devices */
-	/* 0xf0000000-0xf7ffffff (128MB) --> 0xf0000000- */
-	asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-		      :: "r"(0xf0000002 | BAT_I), "r"(0xf0000ffe));
+	if (OF_finddevice("/pci") != -1) {
+		/* 0xfe000000-0xfeffffff (16MB) --> 0xfe000000- */
+		asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
+			      :: "r"(0xfe000002 | BAT_I), "r"(0xfe0001fe));
+	} else {
+		/* 0xf0000000-0xf7ffffff (128MB) --> 0xf0000000- */
+		asm volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
+			      :: "r"(0xf0000002 | BAT_I), "r"(0xf0000ffe));
+	}
 
 	chosen = OF_finddevice("/chosen");
 	save_ofw_mapping();
