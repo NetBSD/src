@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.66 1997/04/28 04:49:28 mycroft Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.67 1997/10/16 02:45:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1075,8 +1075,17 @@ coredump(p)
 	VOP_LEASE(vp, p, cred, LEASE_WRITE);
 	VOP_SETATTR(vp, &vattr, cred, p);
 	p->p_acflag |= ACORE;
+#if 0
+	/*
+	 * XXX
+	 * It would be nice if we at least dumped the signal state (and made it
+	 * available at run time to the debugger, as well), but this code
+	 * hasn't actually had any effect for a long time, since we don't dump
+	 * the user area.  For now, it's dead.
+	 */
 	bcopy(p, &p->p_addr->u_kproc.kp_proc, sizeof(struct proc));
 	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc);
+#endif
 
 	core.c_midmag = 0;
 	strncpy(core.c_name, p->p_comm, MAXCOMLEN);
