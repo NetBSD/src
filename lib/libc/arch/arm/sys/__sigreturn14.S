@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.3 2003/08/07 16:42:03 agc Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.4 2004/03/26 20:35:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,4 +37,4 @@
  * We must preserve the state of the registers as the user has set them up.
  */
 
-RSYSCALL(__sigreturn14)
+PSEUDO(__sigreturn14,compat_16___sigreturn14)

@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.2 2003/08/07 16:42:20 agc Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.3 2004/03/26 20:35:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __sigreturn14.S,v 1.2 2003/08/07 16:42:20 agc Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.3 2004/03/26 20:35:37 drochner Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -45,6 +45,4 @@
  * We must preserve the state of the registers as the user has set them up.
  */
 
-SYSCALL(__sigreturn14)
-	rts
-	nop
+PSEUDO(__sigreturn14,compat_16___sigreturn14)
