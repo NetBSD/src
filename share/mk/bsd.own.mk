@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.51 1997/09/30 22:19:22 is Exp $
+#	$NetBSD: bsd.own.mk,v 1.52 1997/10/03 19:20:56 mycroft Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
 .include "${MAKECONF}"
@@ -32,7 +32,7 @@ MANDIR?=	/usr/share/man
 MANGRP?=	bin
 MANOWN?=	bin
 MANMODE?=	${NONBINMODE}
-MANINSTALL?=	catinstall
+MANINSTALL?=	maninstall catinstall
 
 LIBDIR?=	/usr/lib
 LINTLIBDIR?=	/usr/libdata/lint
