@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 1996/02/10 00:13:27 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 1996/02/14 21:49:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -35,12 +35,19 @@ struct vnode;
 struct code;
 struct ucred;
 struct core;
+struct buf;
+struct disklabel;
+struct device;
+struct disk;
 __BEGIN_DECLS
 
 void	consinit __P((void));
 void	boot __P((int));
 void	pagemove __P((caddr_t, caddr_t, size_t));
 void	delay __P((unsigned));
+int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
+int	dk_establish __P((struct disk *, struct device *));
+
 
 void	cpu_exit __P((struct proc *));
 void	cpu_startup __P((void));
