@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.24 1995/10/07 22:58:52 pk Exp $
+#	$NetBSD: Makefile,v 1.25 1995/10/09 02:11:28 thorpej Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
