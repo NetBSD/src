@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.702 2004/05/21 02:29:07 christos Exp $
+#	$NetBSD: mi,v 1.703 2004/05/25 14:54:55 hannken Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4640,6 +4640,7 @@
 ./usr/share/man/cat9/VFS_MOUNT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_QUOTACTL.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_ROOT.0			comp-sys-catman		.cat
+./usr/share/man/cat9/VFS_SNAPSHOT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_START.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_STATFS.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_SYNC.0			comp-sys-catman		.cat
@@ -5369,6 +5370,7 @@
 ./usr/share/man/cat9/tprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tprintf_close.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tprintf_open.0		comp-sys-catman		.cat
+./usr/share/man/cat9/transferlockers.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/trapsignal.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tsleep.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ttyprintf.0		comp-sys-catman		.cat
@@ -8356,6 +8358,7 @@
 ./usr/share/man/man9/VFS_MOUNT.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_QUOTACTL.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_ROOT.9			comp-sys-man		.man
+./usr/share/man/man9/VFS_SNAPSHOT.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_START.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_STATFS.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_SYNC.9			comp-sys-man		.man
@@ -9085,6 +9088,7 @@
 ./usr/share/man/man9/tprintf.9			comp-sys-man		.man
 ./usr/share/man/man9/tprintf_close.9		comp-sys-man		.man
 ./usr/share/man/man9/tprintf_open.9		comp-sys-man		.man
+./usr/share/man/man9/transferlockers.9		comp-sys-man		.man
 ./usr/share/man/man9/trapsignal.9		comp-sys-man		.man
 ./usr/share/man/man9/tsleep.9			comp-sys-man		.man
 ./usr/share/man/man9/ttyprintf.9		comp-sys-man		.man

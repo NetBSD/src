@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.5 2004/02/24 15:12:51 wiz Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.6 2004/05/25 14:54:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -144,6 +144,7 @@ struct fss_softc {
 #define FSS_BS_THREAD	0x04		/* Kernel thread is running */
 #define FSS_EXCL	0x08		/* Exclusive access granted */
 #define FSS_BS_ALLOC	0x10		/* Allocate backing store */
+#define FSS_PERSISTENT	0x20		/* File system internal snapshot */
 	struct mount	*sc_mount;	/* Mount point */
 	char		sc_mntname[MNAMELEN]; /* Mount point */
 	struct timeval	sc_time;	/* Time this snapshot was taken */

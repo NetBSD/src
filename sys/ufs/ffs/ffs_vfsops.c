@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.148 2004/05/25 04:44:44 atatat Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.149 2004/05/25 14:54:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.148 2004/05/25 04:44:44 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.149 2004/05/25 14:54:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -108,6 +108,7 @@ struct vfsops ffs_vfsops = {
 	NULL,
 	ffs_mountroot,
 	ufs_check_export,
+	ffs_snapshot,
 	ffs_vnodeopv_descs,
 };
 
@@ -395,6 +396,8 @@ ffs_mount(mp, path, data, ndp, p)
 				if (error)
 					return (error);
 			}
+			if (fs->fs_snapinum[0] != 0)
+				ffs_snapshot_mount(mp);
 		}
 		if (args.fspec == 0) {
 			/*
@@ -598,6 +601,8 @@ ffs_reload(mountp, cred, p)
 	}
 	if ((fs->fs_flags & FS_DOSOFTDEP))
 		softdep_mount(devvp, mountp, fs, cred);
+	if (fs->fs_snapinum[0] != 0)
+		ffs_snapshot_mount(mountp);
 	/*
 	 * We no longer know anything about clusters per cylinder group.
 	 */
@@ -791,6 +796,7 @@ ffs_mountfs(devvp, mp, p)
 
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset(ump, 0, sizeof *ump);
+	TAILQ_INIT(&ump->um_snapshots);
 	ump->um_fs = fs;
 
 #ifdef FFS_EI
@@ -949,6 +955,8 @@ ffs_mountfs(devvp, mp, p)
 			goto out;
 		}
 	}
+	if (ronly == 0 && fs->fs_snapinum[0] != 0)
+		ffs_snapshot_mount(mp);
 	return (0);
 out:
 	if (fs)
@@ -1185,6 +1193,9 @@ ffs_flushfiles(mp, flags, p)
 		 */
 	}
 #endif
+	if ((error = vflush(mp, 0, SKIPSYSTEM | flags)) != 0)
+		return (error);
+	ffs_snapshot_unmount(mp);
 	/*
 	 * Flush all the files.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.38 2004/05/20 06:34:33 atatat Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.39 2004/05/25 14:54:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -86,9 +86,10 @@ int ffs_reallocblks __P((void *));
 int ffs_valloc __P((void *));
 daddr_t ffs_blkpref_ufs1 __P((struct inode *, daddr_t, int, int32_t *));
 daddr_t ffs_blkpref_ufs2 __P((struct inode *, daddr_t, int, int64_t *));
-void ffs_blkfree __P((struct inode *, daddr_t, long));
+void ffs_blkfree __P((struct fs *, struct vnode *, daddr_t, long, ino_t));
 int ffs_vfree __P((void *));
 void ffs_clusteracct __P((struct fs *, struct cg *, int32_t, int));
+int ffs_checkfreefile __P((struct fs *, struct vnode *, ino_t));
 
 /* ffs_balloc.c */
 int ffs_balloc __P((void *));
@@ -159,6 +160,16 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
 __END_DECLS
 
  
+/*
+ * Snapshot function prototypes.
+ */
+int	ffs_snapblkfree(struct fs *, struct vnode *, daddr_t, long, ino_t);
+void	ffs_snapremove(struct vnode *);
+int	ffs_snapshot(struct mount *, struct vnode *, struct timespec *);
+void	ffs_snapshot_mount(struct mount *);
+void	ffs_snapshot_unmount(struct mount *);
+void	ffs_snapgone(struct inode *);
+
 /*
  * Soft dependency function prototypes.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.77 2004/02/14 00:00:56 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.78 2004/05/25 14:54:57 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.77 2004/02/14 00:00:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.78 2004/05/25 14:54:57 hannken Exp $");
 
 #include "fs_union.h"
 
@@ -831,7 +831,7 @@ vn_restorerecurse(vp, flags)
 
 int
 vn_cow_establish(struct vnode *vp,
-    void (*func)(void *, struct buf *), void *cookie)
+    int (*func)(void *, struct buf *), void *cookie)
 {
 	int s;
 	struct spec_cow_entry *e;
@@ -859,7 +859,7 @@ vn_cow_establish(struct vnode *vp,
 
 int
 vn_cow_disestablish(struct vnode *vp,
-    void (*func)(void *, struct buf *), void *cookie)
+    int (*func)(void *, struct buf *), void *cookie)
 {
 	int s;
 	struct spec_cow_entry *e;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fssconfig.8,v 1.3 2004/01/11 19:05:27 hannken Exp $	*/
+.\"	$NetBSD: fssconfig.8,v 1.4 2004/05/25 14:55:47 hannken Exp $	*/
 .\"
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 10, 2003
+.Dd May 25, 2004
 .Dt FSSCONFIG 8
 .Os
 .Sh NAME
@@ -43,13 +43,13 @@
 .Nd configure file system snapshot devices
 .Sh SYNOPSIS
 .Nm
-.Op Fl cx
+.Op Fl cxv
 .Ar device
 .Ar path
 .Ar backup
 .Op Ar cluster Op Ar size
 .Nm
-.Fl u
+.Fl u Op Fl v
 .Ar device
 .Nm
 .Fl l Op Fl v
