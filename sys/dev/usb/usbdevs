@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.275 2002/09/29 19:55:52 augustss Exp $
+$NetBSD: usbdevs,v 1.276 2002/10/01 17:13:17 soren Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -346,6 +346,7 @@ vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor DLINK		0x2001	D-Link
+vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
@@ -1084,6 +1085,9 @@ product PORTGEAR EA9		0x0009	Ethernet Adapter
 
 /* Portsmith products */
 product PORTSMITH EEA		0x3003	Express Ethernet Adapter
+
+/* PQI products */
+product PQI TRAVELFLASH		0x0001	Travel Flash Drive
 
 /* Primax products */
 product PRIMAX G2X300		0x0300	G2-200 scanner
