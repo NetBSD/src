@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.15 2005/01/27 18:12:47 drochner Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.16 2005/02/06 04:48:58 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.15 2005/01/27 18:12:47 drochner Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.16 2005/02/06 04:48:58 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,13 +73,13 @@ struct kvmvars {
 
 int	bflag, hflag, kflag, rflag, pflag;
 int	debug = 0;
-void	setprof __P((struct kvmvars *kvp, int state));
-void	dumpstate __P((struct kvmvars *kvp));
-void	reset __P((struct kvmvars *kvp));
-int	openfiles __P((char *, char *, struct kvmvars *));
-int	getprof __P((struct kvmvars *));
-void	kern_readonly __P((int));
-int	getprofhz __P(( struct kvmvars *));
+void	setprof(struct kvmvars *kvp, int state);
+void	dumpstate(struct kvmvars *kvp);
+void	reset(struct kvmvars *kvp);
+int	openfiles(char *, char *, struct kvmvars *);
+int	getprof(struct kvmvars *);
+void	kern_readonly(int);
+int	getprofhz(struct kvmvars *);
 
 int
 main(int argc, char **argv)
@@ -166,10 +166,7 @@ main(int argc, char **argv)
  * Check that profiling is enabled and open any ncessary files.
  */
 int
-openfiles(system, kmemf, kvp)
-	char *system;
-	char *kmemf;
-	struct kvmvars *kvp;
+openfiles(char *system, char *kmemf, struct kvmvars *kvp)
 {
 	int mib[3], state, openmode;
 	size_t size;
@@ -226,8 +223,7 @@ openfiles(system, kmemf, kvp)
  * Suppress options that require a writable kernel.
  */
 void
-kern_readonly(mode)
-	int mode;
+kern_readonly(int mode)
 {
 
 	(void)fprintf(stderr, "kgmon: kernel read-only: ");
@@ -246,8 +242,7 @@ kern_readonly(mode)
  * Get the state of kernel profiling.
  */
 int
-getprof(kvp)
-	struct kvmvars *kvp;
+getprof(struct kvmvars *kvp)
 {
 	int mib[3];
 	size_t size;
@@ -275,9 +270,7 @@ getprof(kvp)
  * Enable or disable kernel profiling according to the state variable.
  */
 void
-setprof(kvp, state)
-	struct kvmvars *kvp;
-	int state;
+setprof(struct kvmvars *kvp, int state)
 {
 	struct gmonparam *p = (struct gmonparam *)nl[N_GMONPARAM].n_value;
 	int mib[3], oldstate;
@@ -310,10 +303,9 @@ bad:
  * Build the gmon.out file.
  */
 void
-dumpstate(kvp)
-	struct kvmvars *kvp;
+dumpstate(struct kvmvars *kvp)
 {
-	register FILE *fp;
+	FILE *fp;
 	struct rawarc rawarc;
 	struct tostruct *tos;
 	u_long frompc;
@@ -444,8 +436,7 @@ dumpstate(kvp)
  * Get the profiling rate.
  */
 int
-getprofhz(kvp)
-	struct kvmvars *kvp;
+getprofhz(struct kvmvars *kvp)
 {
 	int mib[2], profrate;
 	size_t size;
@@ -473,8 +464,7 @@ getprofhz(kvp)
  * Reset the kernel profiling date structures.
  */
 void
-reset(kvp)
-	struct kvmvars *kvp;
+reset(struct kvmvars *kvp)
 {
 	char *zbuf;
 	u_long biggest;
