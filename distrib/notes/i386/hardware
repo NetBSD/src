@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.45.2.5 2000/01/31 19:09:04 he Exp $	
+.\"	$NetBSD: hardware,v 1.45.2.6 2000/02/06 17:48:57 he Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -157,7 +157,7 @@ Supported devices include:
 			Compaq Deskpro 4000 5233MMX (untested)
 			Texas Instruments TravelMate 5000 series laptop
 				docking station Ethernet board
-		VIA VT3043(Rhine) and VT86C100A(Rhine-II) based ethernet boards [*] [+]:
+		VIA VT3043(Rhine) and VT86C100A(Rhine-II) based ethernet boards:
 			D-Link DFE530TX
 	FDDI adapters:
 		Digital DEFPA PCI FDDI adapters [*] [+]
