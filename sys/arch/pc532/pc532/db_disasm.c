@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.3 1996/10/09 07:44:56 matthias Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.4 1997/03/20 12:00:37 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -46,6 +46,7 @@
 #define STATIC static
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <machine/db_machdep.h>
 
@@ -577,7 +578,7 @@ char fmt3_table[8][7] = {
     "bicpsr",	/* bit clear in PSR */
     "jump",	/* jump */
     "bispsr",	/* bit set in PSR */
-    "??3??",	/* UNDEFINED */
+    "?3?",	/* UNDEFINED */
     "adjsp",	/* adjust stack pointer */
     "jsr",	/* jump to subroutine */
     "case"	/* case branch */
@@ -644,13 +645,13 @@ char fmt6_table[16][6] = {
     "ash",	/* arithmetic shift */
     "cbit",	/* clear bit */
     "cbiti",	/* clear bit interlocked */
-    "??6??",	/* undefined */
+    "?6?",	/* undefined */
     "lsh",	/* logical shift */
     "sbit",	/* set bit */
     "sbiti",	/* set bit interlocked */
     "neg",	/* negate */
     "not",	/* not */
-    "??6??",	/* undefined */
+    "?6?",	/* undefined */
     "subp",	/* subtract packed decimal */
     "abs",	/* absolute value */
     "com",	/* complement */
@@ -664,7 +665,10 @@ char fmt6_table[16][6] = {
 #define FMT6_CBITI  0x3 /* clear bit interlocked */
 #define FMT6_UNDEF1 0x4 /* undefined */
 #define FMT6_LSH    0x5 /* logical shift */
-#define FMT6_SBIT   0x6 /* s#define FMT6_NOT	0x9 /* not */
+#define FMT6_SBIT   0x6 /* set bit */
+#define FMT6_SBITI  0x7 /* set bit interlocked */
+#define FMT6_NEG    0x8 /* negate */
+#define FMT6_NOT    0x9 /* not */
 #define FMT6_UNDEF2 0xa /* undefined */
 #define FMT6_SUBP   0xb /* subtract packed decimal */
 #define FMT6_ABS    0xc /* absolute value */
@@ -718,7 +722,7 @@ char fmt8_table[8][6] = {
     "index",	/* calculate index */
     "ffs",	/* find first set bit */
     "mov",	/* move supervisor to/from user space */
-    "??8??"	/* undefined */
+    "?8?"	/* undefined */
 };
 
 #define FMT8_EXT    0x0 /* extract field */
@@ -821,11 +825,11 @@ char fmt14_table[][6] = {
     "wrval",	/* validate address for writing */
     "lmr",	/* load memory managemnet register */
     "smr",	/* store memory management register */
-    "???",
-    "???",
-    "???",
-    "???",
-    "???",
+    "?14?",
+    "?14?",
+    "?14?",
+    "?14?",
+    "?14?",
     "cinv",
 };
 
@@ -964,7 +968,17 @@ STATIC unsigned char mmuRegTable [] = {
     REG_PTB0,  REG_PTB1,REG_IVAR0,   REG_IVAR1,
 };
 
-void db_reverseBits();
+void	db_reverseBits __P((int *));
+void	db_formatOperand __P((struct operand *, db_addr_t));
+void	db_formatAsm __P((struct insn *, db_addr_t, boolean_t));
+void	db_initInsn __P((struct insn *));
+int	db_disp __P((db_addr_t, long *));
+int	db_decode_operand __P((db_addr_t,  unsigned char byte,
+				struct operand *, unsigned char));
+int	db_gen __P(( struct insn *, db_addr_t, int,
+				unsigned char, unsigned char));
+int	db_dasm_ns32k __P((struct insn *, db_addr_t));
+void	db_reverseBits __P((int *));
 
 #define get_byte(l) ((unsigned char) db_get_value(l, 1, FALSE))
 
@@ -1319,7 +1333,7 @@ int db_gen(insn, loc, mask, byte0, byte1)
 	    opr++;
 	
 	if (mask & 0x1) {
-		if (insn->i_opr[opr].o_iscale = GetGenSI(gen0)) {
+		if ((insn->i_opr[opr].o_iscale = GetGenSI(gen0)) != 0) {
 			ScaledFields(get_byte(loc),
 				     insn->i_opr[opr].o_ireg, gen0);
 			consumed++;
