@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.278 2002/03/28 06:59:39 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.279 2002/03/30 21:53:27 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -15,8 +15,7 @@ NEED_OWN_INSTALL_TARGET?=	yes
 # List all the platforms that have NOT switched, since the majority have.
 .if !(${MACHINE_ARCH} == "arm32" || \
       ${MACHINE_ARCH} == "ns32k" || \
-      ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el" || \
-      (${MACHINE_ARCH} == "vax" && ${OBJECT_FMT} != "ELF"))
+      ${MACHINE_ARCH} == "sh3eb" || ${MACHINE_ARCH} == "sh3el")
 USE_NEW_TOOLCHAIN=nowarn
 .endif
 
