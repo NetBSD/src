@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.46 2003/04/03 19:28:07 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.47 2003/05/15 20:25:32 kristerw Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.46 2003/04/03 19:28:07 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.47 2003/05/15 20:25:32 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1908,9 +1908,9 @@ softdep_setup_freeblocks(ip, length, flags)
 			ip->i_ffs2_ib[i] = 0;
 		}
 	}
-	DIP(ip, blocks) = 0;
+	DIP_ASSIGN(ip, blocks, 0);
 	ip->i_size = 0;
-	DIP(ip, size) = 0;
+	DIP_ASSIGN(ip, size, 0);
 	/*
 	 * If the file was removed, then the space being freed was
 	 * accounted for then (see softdep_filereleased()). If the
@@ -3174,7 +3174,7 @@ handle_workitem_remove(dirrem)
 	 */
 	if ((dirrem->dm_state & RMDIR) == 0) {
 		ip->i_nlink--;
-		DIP(ip, nlink) = ip->i_nlink;
+		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
 		if (ip->i_nlink < ip->i_ffs_effnlink)
 			panic("handle_workitem_remove: bad file delta");
@@ -3193,7 +3193,7 @@ handle_workitem_remove(dirrem)
 	 * the parent decremented to account for the loss of "..".
 	 */
 	ip->i_nlink -= 2;
-	DIP(ip, nlink) -= 2;
+	DIP_ADD(ip, nlink, -2);
 	ip->i_flag |= IN_CHANGE;
 	if (ip->i_nlink < ip->i_ffs_effnlink)
 		panic("handle_workitem_remove: bad dir delta");
