@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.1 1995/11/23 02:41:18 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1996/11/06 23:09:13 cgd Exp $
 
 .PATH:	${.CURDIR}/..
 
-PROG = installboot
-NOMAN =
-BINDIR = /usr/mdec
+PROG=	installboot
+BINDIR=	/usr/mdec
 
-CFLAGS += -g
+MAN=	installboot.8
+MANSUBDIR=/alpha
+
+CFLAGS+= -g
 
 .include <bsd.prog.mk>
