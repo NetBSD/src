@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 1997/09/02 11:19:02 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 1998/01/16 09:17:48 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -82,7 +82,38 @@ void	bus_space_write_multi_4 __P((bus_space_tag_t, bus_space_handle_t,
 				int, u_int32_t *, int));
 void	bus_space_write_multi_8 __P((bus_space_tag_t, bus_space_handle_t,
 				int, u_int64_t *, int));
-
+void	bus_space_read_region_1 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int8_t *, size_t));
+void	bus_space_read_region_2 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int16_t *, size_t));
+void	bus_space_read_region_4 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int32_t *, size_t));
+void	bus_space_read_region_8 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int64_t *, size_t));
+void	bus_space_write_region_1 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, const u_int8_t *, size_t));
+void	bus_space_write_region_2 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, const u_int16_t *, size_t));
+void	bus_space_write_region_4 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, const u_int32_t *, size_t));
+void	bus_space_write_region_8 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, const u_int64_t *, size_t));
+void	bus_space_set_multi_1 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int8_t, size_t));
+void	bus_space_set_multi_2 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int16_t, size_t));
+void	bus_space_set_multi_4 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int32_t, size_t));
+void	bus_space_set_multi_8 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int64_t, size_t));
+void	bus_space_set_region_1 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int8_t, size_t));
+void	bus_space_set_region_2 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int16_t, size_t));
+void	bus_space_set_region_4 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int32_t, size_t));
+void	bus_space_set_region_8 __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int64_t, size_t));
 /*
  * Check accesibility of the location for various sized bus accesses
  */
@@ -199,4 +230,231 @@ bus_space_write_multi_8(t, h, o, a, c)
 	for (; c; a++, c--)
 		bus_space_write_8(t, h, o, *a);
 }
+
+/*
+ *	void bus_space_read_region_N __P((bus_space_tag_t tag,
+ *		bus_space_handle_t bsh, bus_size_t offset,
+ *		u_intN_t *addr, size_t count));
+ *
+ * Read `count' 1, 2, 4, or 8 byte quantities from bus space
+ * described by tag/handle and starting at `offset' and copy into
+ * buffer provided.
+ */
+extern __inline__ void
+bus_space_read_region_1(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int8_t		*a;
+	size_t			c;
+{
+	for (; c; a++, o++, c--)
+		*a = bus_space_read_1(t, h, o);
+}
+
+extern __inline__ void
+bus_space_read_region_2(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int16_t		*a;
+	size_t			c;
+{
+	for (; c; a++, o += 2, c--)
+		*a = bus_space_read_2(t, h, o);
+}
+
+extern __inline__ void
+bus_space_read_region_4(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int32_t		*a;
+	size_t			c;
+{
+	for (; c; a++, o += 4, c--)
+		*a = bus_space_read_4(t, h, o);
+}
+
+extern __inline__ void
+bus_space_read_region_8(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int64_t		*a;
+	size_t			c;
+{
+	for (; c; a++, o += 8, c--)
+		*a = bus_space_read_8(t, h, o);
+}
+
+/*
+ *	void bus_space_write_region_N __P((bus_space_tag_t tag,
+ *		bus_space_handle_t bsh, bus_size_t offset,
+ *		u_intN_t *addr, size_t count));
+ *
+ * Copy `count' 1, 2, 4, or 8 byte quantities from the buffer provided
+ * into the bus space described by tag/handle and starting at `offset'.
+ */
+extern __inline__ void
+bus_space_write_region_1(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	const u_int8_t		*a;
+	size_t			c;
+{
+	for (; c; a++, o++, c--)
+		bus_space_write_1(t, h, o, *a);
+}
+
+extern __inline__ void
+bus_space_write_region_2(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	const u_int16_t		*a;
+	size_t			c;
+{
+	for (; c; a++, o += 2, c--)
+		bus_space_write_2(t, h, o, *a);
+}
+
+extern __inline__ void
+bus_space_write_region_4(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	const u_int32_t		*a;
+	size_t			c;
+{
+	for (; c; a++, o += 4, c--)
+		bus_space_write_4(t, h, o, *a);
+}
+
+extern __inline__ void
+bus_space_write_region_8(t, h, o, a, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	const u_int64_t		*a;
+	size_t			c;
+{
+	for (; c; a++, o += 8, c--)
+		bus_space_write_8(t, h, o, *a);
+}
+
+/*
+ *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
+ *		bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *		size_t count));
+ *
+ * Write the 1, 2, 4, or 8 byte value `val' to bus space described
+ * by tag/handle/offset `count' times.
+ */
+
+extern __inline__ void
+bus_space_set_multi_1(t, h, o, v, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int8_t		v;
+	size_t			c;
+{
+	for (; c; c--)
+		bus_space_write_1(t, h, o, v);
+}
+
+extern __inline__ void
+bus_space_set_multi_2(t, h, o, v, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int16_t		v;
+	size_t			c;
+{
+	for (; c; c--)
+		bus_space_write_2(t, h, o, v);
+}
+
+extern __inline__ void
+bus_space_set_multi_4(t, h, o, v, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int32_t		v;
+	size_t			c;
+{
+	for (; c; c--)
+		bus_space_write_4(t, h, o, v);
+}
+
+extern __inline__ void
+bus_space_set_multi_8(t, h, o, v, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int64_t		v;
+	size_t			c;
+{
+	for (; c; c--)
+		bus_space_write_8(t, h, o, v);
+}
+
+/*
+ *	void bus_space_set_region_N __P((bus_space_tag_t tag,
+ *		bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *		size_t count));
+ *
+ * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
+ * by tag/handle starting at `offset'.
+ */
+extern __inline__ void
+bus_space_set_region_1(t, h, o, v, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int8_t		v;
+	size_t			c;
+{
+	for (; c; o++, c--)
+		bus_space_write_1(t, h, o, v);
+}
+
+extern __inline__ void
+bus_space_set_region_2(t, h, o, v, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int16_t		v;
+	size_t			c;
+{
+	for (; c; o += 2, c--)
+		bus_space_write_2(t, h, o, v);
+}
+
+extern __inline__ void
+bus_space_set_region_4(t, h, o, v, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int32_t		v;
+	size_t			c;
+{
+	for (; c; o += 4, c--)
+		bus_space_write_4(t, h, o, v);
+}
+
+extern __inline__ void
+bus_space_set_region_8(t, h, o, v, c)
+	bus_space_tag_t		t;
+	bus_space_handle_t	h;
+	bus_size_t		o;
+	u_int64_t		v;
+	size_t			c;
+{
+	for (; c; o += 8, c--)
+		bus_space_write_8(t, h, o, v);
+}
+
 #endif /* _ATARI_BUS_H_ */
