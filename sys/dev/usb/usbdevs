@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.56 1999/10/28 06:41:13 augustss Exp $
+$NetBSD: usbdevs,v 1.57 1999/11/10 12:31:01 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ vendor CONNECTIX	0x0478	Connectix Corp.
 vendor LUCENT		0x047e	Lucent
 vendor STMICRO		0x0483	STMicroelectronics
 vendor ACER		0x04a5	Acer Peripheral Inc.
+vendor CANON		0x04a9	Canon Inc.
 vendor CYPRESS		0x04b4	Cypress Semiconductor
 vendor EPSON		0x04b8	Seiko Epson Corp.
 vendor 3COM		0x04c1	U.S. Robotics
@@ -74,6 +75,7 @@ vendor BELKIN		0x050d	Belkin Components
 vendor KAWATSU		0x050f	Kawatsu Semiconductor, Inc.
 vendor APC		0x051d	American Power Conversion
 vendor AKS		0x0529	Fast Security AG
+vendor UNIACCESS	0x0540	Universal Access
 vendor ANCHOR		0x0547	Anchor Chips Inc.
 vendor VISION		0x0553	VLSI Vision Ltd.
 vendor ATEN		0x0557	ATEN International Corp. Ltd.
@@ -176,6 +178,9 @@ product STMICRO COMMUNICATOR	0x7554	USB Communicator
 /* Acer products */
 product ACER ACERSCAN_C310U	0x12a6	Acerscan C310U
 
+/* Canon Inc. products */
+product CANON S10		0x3041	PowerShot S10
+
 /* Cypress Semiconductor products */
 product CYPRESS MOUSE		0x0001	mouse
 product CYPRESS THERMO		0x0002	thermometer
@@ -212,6 +217,9 @@ product APC UPSPRO500		0x0002	Back-UPS Pro 500
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
+
+/* Universal Access products */
+product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
 
 /* Anchor products */
 product ANCHOR EZUSB		0x2131	EZUSB
