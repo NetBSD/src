@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2002/09/18 05:41:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2003/07/24 14:22:57 itojun Exp $
 
 NOMAN=		# defined
 
@@ -7,7 +7,7 @@ SRCS=		rsa_test.c
 DPADD+=		${LIBCRYPTO}
 LDADD+=		-lcrypto
 
-CPPFLAGS+=	-I${CRYPTODIST}/..
+CPPFLAGS+=	-I${OPENSSLSRC}
 
 regress:	${PROG}
 	@echo "==> running ${PROG}"
@@ -15,4 +15,4 @@ regress:	${PROG}
 
 .include <bsd.prog.mk>
 
-.PATH:	${CRYPTODIST}/rsa
+.PATH:	${OPENSSLSRC}/crypto/rsa
