@@ -1,3 +1,5 @@
+/*	$NetBSD: srvr_nfs.c,v 1.8 1997/10/26 00:25:23 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: srvr_nfs.c,v 1.7 1997/10/10 16:11:12 christos Exp $
+ * Id: srvr_nfs.c,v 5.2.2.1 1992/02/09 15:09:06 jsp beta 
  *
  */
 
@@ -727,18 +729,15 @@ find_nfs_srvr(mntfs *mf)
     }
 
     if (!nfs_version) {
-#if 0
-      free((voidp)ip);
-      ip = 0;			/* Server probably down - no ping responce */
-#else
       /*
-       * Server is down or does not support the portmapper call
-       * We mark it as version 2 and we let the nfs code deal
-       * with the case that is down.
+       * If the NFS server is down or does not support the portmapper call
+       * (such as certain Novell NFS servers) we mark it as version 2 and we
+       * let the nfs code deal with the case that is down.  If when the
+       * server comes back up, it can support NFS V.3 and/or TCP, it will
+       * use those.
        */
       nfs_version = NFS_VERSION;
       nfs_proto = "udp";
-#endif
     }
    
 #else /* not HAVE_FS_NFS3 */

@@ -1,3 +1,5 @@
+/*	$NetBSD: conf.c,v 1.4 1997/10/26 00:24:52 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: conf.c,v 1.3 1997/09/22 22:10:14 christos Exp $
+ * Id: conf.c,v 5.2.2.1 1992/02/09 15:08:23 jsp beta 
  *
  */
 

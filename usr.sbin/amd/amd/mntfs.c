@@ -1,3 +1,5 @@
+/*	$NetBSD: mntfs.c,v 1.7 1997/10/26 00:25:03 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mntfs.c,v 1.6 1997/09/26 17:00:05 christos Exp $
+ * Id: mntfs.c,v 5.2.2.2 1992/08/02 10:42:21 jsp Exp 
  *
  */
 

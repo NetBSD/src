@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/16 05:18:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/26 00:24:41 christos Exp $
 SUBDIR= libamu amd amq hlfsd fixmount fsinfo mk-amd-map wire-test
 
 all-amd all-amq all-hlfsd all-fixmount all-fsinfo all-mk-amd-map \

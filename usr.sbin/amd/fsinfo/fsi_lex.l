@@ -1,4 +1,6 @@
 %{
+/*	$NetBSD: fsi_lex.l,v 1.9 1997/10/26 00:25:39 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
@@ -39,7 +41,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: fsi_lex.l,v 1.8 1997/10/23 06:29:16 lukem Exp $
+ * Id: fsi_lex.l,v 5.2.2.1 1992/02/09 15:09:36 jsp beta 
  *
  */
 
