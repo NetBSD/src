@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1.1.1 2000/06/16 23:32:37 thorpej Exp $
-DIST=		${.CURDIR}/../../dist
+# $NetBSD: Makefile,v 1.2 2000/06/16 23:41:40 thorpej Exp $
+DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kdc
 
 WARNS?=  1
@@ -16,6 +16,7 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/krb5		\
 	-I${.CURDIR}/../../include/heimdal	\
 	-I${DIST}/heimdal/lib/asn1		\
+	-I${DESTDIR}/usr/include/kerberosIV	\
 	-I${DESTDIR}/usr/include/krb5		\
 	-I${DIST}/openssl/crypto/md4		\
 	-I${DIST}/openssl/crypto/md5		\
