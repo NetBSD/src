@@ -1,4 +1,4 @@
-/*	$NetBSD: viapm.c,v 1.12 2004/09/13 12:55:48 drochner Exp $	*/
+/*	$NetBSD: viapm.c,v 1.13 2004/09/14 18:57:35 drochner Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.12 2004/09/13 12:55:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.13 2004/09/14 18:57:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,12 +135,12 @@ viapm_attach(struct device * parent, struct device * self, void *aux)
 
 	vaa.va_type = VIAPM_HWMON;
 	vaa.va_offset = 0x70;
-	config_found(self, "viapm", &vaa, viapm_print);
+	config_found_ia(self, "viapm", &vaa, viapm_print);
 
 #if 0
 	vaa.va_type = VIAPM_SMBUS;
 	vaa.va_offset = 0x93;
-	config_found(self, "viapm", &vaa, viapm_print);
+	config_found_ia(self, "viapm", &vaa, viapm_print);
 #endif
 }
 
