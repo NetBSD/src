@@ -1,30 +1,30 @@
-#	$NetBSD: Makefile.inc,v 1.10 2002/12/24 19:47:47 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2004/02/07 05:10:44 lukem Exp $
 
 .include <bsd.own.mk>
 
 WARNS?=	0
 
-IDIST=	${NETBSDSRCDIR}/gnu/dist/postfix
+PFIX_DISTDIR=	${NETBSDSRCDIR}/gnu/dist/postfix
 
 CPPFLAGS+= -DNETBSD1 -I${DIST} \
-	-I${IDIST}/src/dns -I${IDIST}/src/global -I${IDIST}/src/master \
-	-I${IDIST}/src/util
+	-I${PFIX_DISTDIR}/src/dns -I${PFIX_DISTDIR}/src/global \
+	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util
 # IPv6
 #CPPFLAGS+= -DINET6
 
-DOBJDIR!=	cd $(.CURDIR)/../dns && ${PRINTOBJDIR}
-LIBPDNS=	${DOBJDIR}/libdns.a
+PFIX_SRCDIR=	${NETBSDSRCDIR}/gnu/usr.sbin/postfix
 
-MOBJDIR!=	cd $(.CURDIR)/../masterlib && ${PRINTOBJDIR}
-LIBPMASTER=	${MOBJDIR}/libmaster.a
+.for _LD _LL in	dns dns masterlib master global global util util
+.if !defined(POBJDIR.${_LL})
+POBJDIR.${_LL}!=cd ${PFIX_SRCDIR}/${_LD} && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=POBJDIR.${_LL}
+.endif
+LIBP${_LL:tu}=	${POBJDIR.${_LL}}/lib${_LL}.a
+.endfor
 
-GOBJDIR!=	cd $(.CURDIR)/../global && ${PRINTOBJDIR}
-LIBPGLOBAL=	${GOBJDIR}/libglobal.a
-
-UOBJDIR!=	cd $(.CURDIR)/../util && ${PRINTOBJDIR}
-LIBPUTIL=	${UOBJDIR}/libutil.a
 
 # Directories to install into.
+#
 PFIX_LIBEXECDIR=/usr/libexec/postfix
 PFIX_ETCDIR=	/etc/postfix
 PFIX_EXAMPLEDIR=/usr/share/examples/postfix
