@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.6 2000/11/25 19:21:50 scw Exp $
+#	$NetBSD: RAMDISK,v 1.7 2001/05/28 18:39:45 scw Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -49,10 +49,8 @@ config netbsd		root on ? type ?
 options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 
 pseudo-device	sl
-pseudo-device	ppp 2
+pseudo-device	ppp 1
 pseudo-device	loop
-pseudo-device	bpfilter
-pseudo-device	pty			# pseudo-terminals
 pseudo-device 	md 1
 
 mainbus0	at root
@@ -63,26 +61,24 @@ clock0		at pcc? ipl 5
 zsc*		at pcc? ipl 4
 le0		at pcc? ipl 3
 wdsc0		at pcc? ipl 2
-lpt0		at pcc? ipl 1
 
 # MVME1x2 and MVME1x7 shared devices
 pcctwo0		at mainbus0
 clock0		at pcctwo? ipl 5
 ie0		at pcctwo? ipl 3
-ncrsc0		at pcctwo? ipl 2
+siop0		at pcctwo? ipl 2
 
 # MVME162/MVME172 specific devices
 zsc*		at pcctwo? ipl 4
 
 # MVME167/MVME177 specific devices
 clmpcc0		at pcctwo? ipl 4
-lpt0		at pcctwo? ipl 1
 
 # Common front-end for MVME147 and MVME1x2 `zs' device
 zstty*		at zsc? channel ?
 
 scsibus*	at wdsc?
-scsibus*	at ncrsc?
+scsibus*	at siop?
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
 cd*		at scsibus? target ? lun ?
