@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.11 1999/01/08 18:10:35 augustss Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.12 1999/01/09 03:05:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -330,24 +330,28 @@ again:
 			if (drvp->drive_flags & DRIVE_CAP32) {
 				bus_space_write_multi_4(chp->data32iot,
 				    chp->data32ioh, 0,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int32_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    ata_bio->nbytes >> 2);
 			} else {
 				bus_space_write_multi_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int16_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    ata_bio->nbytes >> 1);
 			}
 		} else {
 			if (drvp->drive_flags & DRIVE_CAP32) {
 				bus_space_write_multi_stream_4(chp->data32iot,
 				    chp->data32ioh, 0,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int32_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    ata_bio->nbytes >> 2);
 			} else {
 				bus_space_write_multi_stream_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int16_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    ata_bio->nbytes >> 1);
 			}
 		}
@@ -481,24 +485,28 @@ wdc_ata_bio_intr(chp, xfer)
 			if (drvp->drive_flags & DRIVE_CAP32) {
 				bus_space_read_multi_4(chp->data32iot,
 				    chp->data32ioh, 0,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int32_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    ata_bio->nbytes >> 2);
 			} else {
 				bus_space_read_multi_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int16_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    ata_bio->nbytes >> 1);
 			}
 		} else {
 			if (drvp->drive_flags & DRIVE_CAP32) {
 				bus_space_read_multi_stream_4(chp->data32iot,
 				    chp->data32ioh, 0,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int32_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    ata_bio->nbytes >> 2);
 			} else {
 				bus_space_read_multi_stream_2(chp->cmd_iot,
 				    chp->cmd_ioh, wd_data,
-				    (char *)xfer->databuf + xfer->c_skip,
+				    (u_int16_t *)((char *)xfer->databuf +
+				                  xfer->c_skip),
 				    ata_bio->nbytes >> 1);
 			}
 		}
