@@ -1004,8 +1004,9 @@ non_logical_u_cint_operand (op, mode)
 	      && CONST_DOUBLE_HIGH (op) == 0
 	      && (CONST_DOUBLE_LOW (op) & (~ (HOST_WIDE_INT) 0xffff)) != 0
 	      && (CONST_DOUBLE_LOW (op)
-		  & (~ (unsigned HOST_WIDE_INT) 0xffff0000u)) != 0));
+		  & (~ (unsigned HOST_WIDE_INT) 0xffff0000u)) != 0)
 #endif
+	  );
 }
 
 /* Return 1 if C is a constant that can be encoded in a 32-bit mask on the
