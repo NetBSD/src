@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.5 2001/12/29 22:15:32 augustss Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.6 2001/12/29 23:17:50 augustss Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -208,6 +208,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 	struct command *cmd;
 	struct hid_data *d;
 	struct hid_item h;
+	int u, lo, hi, range;
 
 	f = fopen(conf, "r");
 	if (f == NULL)
@@ -256,22 +257,35 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 				continue;
 			switch (h.kind) {
 			case hid_input:
-				snprintf(usage, sizeof usage,  "%s:%s",
-					 hid_usage_page(HID_PAGE(h.usage)), 
-					 hid_usage_in_page(h.usage));
-				if (verbose > 2)
-					printf("usage %s\n", usage);
-				if (strcasecmp(usage, name) == 0)
-					goto foundhid;
-				if (coll[0]) {
-					snprintf(usage, sizeof usage,
-					    "%s.%s:%s", coll+1,
-					    hid_usage_page(HID_PAGE(h.usage)), 
-					    hid_usage_in_page(h.usage));
+				if (h.usage_minimum != 0 ||
+				    h.usage_maximum != 0) {
+					lo = h.usage_minimum;
+					hi = h.usage_maximum;
+					range = 1;
+				} else {
+					lo = h.usage;
+					hi = h.usage;
+					range = 0;
+				}
+				for (u = lo; u <= hi; u++) {
+					snprintf(usage, sizeof usage,  "%s:%s",
+						 hid_usage_page(HID_PAGE(u)), 
+						 hid_usage_in_page(u));
 					if (verbose > 2)
 						printf("usage %s\n", usage);
-					if (strcasecmp(usage, name) == 0)
+					if (!strcasecmp(usage, name))
 						goto foundhid;
+					if (coll[0]) {
+						snprintf(usage, sizeof usage,
+						  "%s.%s:%s", coll+1,
+						  hid_usage_page(HID_PAGE(u)), 
+						  hid_usage_in_page(u));
+						if (verbose > 2)
+							printf("usage %s\n",
+							       usage);
+						if (!strcasecmp(usage, name))
+							goto foundhid;
+					}
 				}
 				break;
 			case hid_collection:
@@ -301,6 +315,12 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 		cmd->item = h;
 		cmd->name = strdup(name);
 		cmd->action = strdup(action);
+		if (range) {
+			if (cmd->value == 1)
+				cmd->value = u - lo;
+			else
+				cmd->value = -1;
+		}
 
 		if (verbose)
 			printf("PARSE:%d %s, %d, '%s'\n", cmd->line, name,
