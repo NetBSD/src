@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.52 2001/11/13 02:08:57 lukem Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.53 2003/01/18 21:21:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.52 2001/11/13 02:08:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.53 2003/01/18 21:21:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.52 2001/11/13 02:08:57 lukem Exp $"
 #include <sys/mman.h>
 #include <sys/mount.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -64,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.52 2001/11/13 02:08:57 lukem Exp $"
  * Linux directly passes the pointer.
  */
 int
-linux_sys_pipe(p, v, retval)
-	struct proc *p;
+linux_sys_pipe(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -74,7 +75,7 @@ linux_sys_pipe(p, v, retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = sys_pipe(p, 0, retval)))
+	if ((error = sys_pipe(l, 0, retval)))
 		return error;
 
 	/* Assumes register_t is an int */

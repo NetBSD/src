@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.24 2002/03/29 20:49:41 christos Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.25 2003/01/18 21:21:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.24 2002/03/29 20:49:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.25 2003/01/18 21:21:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.24 2002/03/29 20:49:41 christ
 #include <sys/vnode.h>
 #include <sys/device.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -118,8 +119,8 @@ static const struct {
  * make and take appropriate action.
  */
 int
-linux_sys_socketcall(p, v, retval)
-	struct proc *p;
+linux_sys_socketcall(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -142,55 +143,55 @@ linux_sys_socketcall(p, v, retval)
 
 	switch (SCARG(uap, what)) {
 	case LINUX_SYS_socket:
-		error = linux_sys_socket(p, (void *)&lda, retval);
+		error = linux_sys_socket(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_bind:
-		error = linux_sys_bind(p, (void *)&lda, retval);
+		error = linux_sys_bind(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_connect:
-		error = linux_sys_connect(p, (void *)&lda, retval);
+		error = linux_sys_connect(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_listen:
-		error = sys_listen(p, (void *)&lda, retval);
+		error = sys_listen(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_accept:
-		error = linux_sys_accept(p, (void *)&lda, retval);
+		error = linux_sys_accept(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_getsockname:
-		error = linux_sys_getsockname(p, (void *)&lda, retval);
+		error = linux_sys_getsockname(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_getpeername:
-		error = linux_sys_getpeername(p, (void *)&lda, retval);
+		error = linux_sys_getpeername(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_socketpair:
-		error = linux_sys_socketpair(p, (void *)&lda, retval);
+		error = linux_sys_socketpair(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_send:
-		error = linux_sys_send(p, (void *)&lda, retval);
+		error = linux_sys_send(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_recv:
-		error = linux_sys_recv(p, (void *)&lda, retval);
+		error = linux_sys_recv(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_sendto:
-		error = linux_sys_sendto(p, (void *)&lda, retval);
+		error = linux_sys_sendto(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_recvfrom:
-		error = linux_sys_recvfrom(p, (void *)&lda, retval);
+		error = linux_sys_recvfrom(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_shutdown:
-		error = sys_shutdown(p, (void *)&lda, retval);
+		error = sys_shutdown(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_setsockopt:
-		error = linux_sys_setsockopt(p, (void *)&lda, retval);
+		error = linux_sys_setsockopt(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_getsockopt:
-		error = linux_sys_getsockopt(p, (void *)&lda, retval);
+		error = linux_sys_getsockopt(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_sendmsg:
-		error = linux_sys_sendmsg(p, (void *)&lda, retval);
+		error = linux_sys_sendmsg(l, (void *)&lda, retval);
 		break;
 	case LINUX_SYS_recvmsg:
-		error = linux_sys_recvmsg(p, (void *)&lda, retval);
+		error = linux_sys_recvmsg(l, (void *)&lda, retval);
 		break;
 	default:
 		error = ENOSYS;
