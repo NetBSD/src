@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.3 2000/09/08 10:15:24 tsubai Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.4 2001/10/16 02:07:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -129,7 +129,7 @@ boolean_t
 inst_call(inst)
 	int inst;
 {
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 	inst >>= 16;
 #endif
 	return (inst & M_BSR) == I_BSR || (inst & M_BSRF) == I_BSRF ||
@@ -140,7 +140,7 @@ boolean_t
 inst_return(inst)
 	int inst;
 {
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 	inst >>= 16;
 #endif
 	return (inst & M_RTS) == I_RTS;
@@ -150,7 +150,7 @@ boolean_t
 inst_trap_return(inst)
 	int inst;
 {
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == BIG_ENDIAN
 	inst >>= 16;
 #endif
 	return (inst & M_RTE) == I_RTE;
