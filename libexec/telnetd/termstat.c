@@ -1,4 +1,4 @@
-/*	$NetBSD: termstat.c,v 1.13 2003/08/07 09:46:52 agc Exp $	*/
+/*	$NetBSD: termstat.c,v 1.14 2005/02/06 05:58:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termstat.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: termstat.c,v 1.13 2003/08/07 09:46:52 agc Exp $");
+__RCSID("$NetBSD: termstat.c,v 1.14 2005/02/06 05:58:21 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ static int _terminit = 0;
  *	   is on.
  */
 void
-localstat()
+localstat(void)
 {
 	int need_will_echo = 0;
 
@@ -348,7 +348,7 @@ done:
  * Check for changes to flow control
  */
 void
-flowstat()
+flowstat(void)
 {
 	if (his_state_is_will(TELOPT_LFLOW)) {
 		if (tty_flowmode() != flowmode) {
@@ -378,8 +378,7 @@ flowstat()
  * affected.
  */
 void
-clientstat(code, parm1, parm2)
-	register int code, parm1, parm2;
+clientstat(int code, int parm1, int parm2)
 {
 
 	/*
@@ -454,7 +453,7 @@ clientstat(code, parm1, parm2)
 
 	case LM_MODE:
 	    {
-		register int ack, changed;
+		int ack, changed;
 
 		/*
 		 * Client has sent along a mode mask.  If it agrees with
@@ -580,7 +579,7 @@ clientstat(code, parm1, parm2)
  * It calls other functions that do things that were deferred in each module.
  */
 void
-defer_terminit()
+defer_terminit(void)
 {
 
 	/*
@@ -613,7 +612,7 @@ defer_terminit()
  * Returns true if the pty state has been processed yet.
  */
 int
-terminit()
+terminit(void)
 {
 	return(_terminit);
 

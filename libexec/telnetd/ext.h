@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.18 2003/08/07 09:46:51 agc Exp $	*/
+/*	$NetBSD: ext.h,v 1.19 2005/02/06 05:58:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -77,99 +77,99 @@ extern int	SYNCHing;		/* we are in TELNET SYNCH mode */
 #include <sys/cdefs.h>
 
 extern void
-	_termstat __P((void)),
-	add_slc __P((int, int, int)),
-	check_slc __P((void)),
-	change_slc __P((int, int, int)),
-	cleanup __P((int)),
-	clientstat __P((int, int, int)),
-	copy_termbuf __P((char *, int)),
-	deferslc __P((void)),
-	defer_terminit __P((void)),
-	do_opt_slc __P((unsigned char *, int)),
-	doeof __P((void)),
-	dooption __P((int)),
-	dontoption __P((int)),
-	edithost __P((char *, char *)),
-	fatal __P((int, const char *)),
-	fatalperror __P((int, const char *)),
-	get_slc_defaults __P((void)),
-	init_env __P((void)),
-	init_termbuf __P((void)),
-	interrupt __P((void)),
-	localstat __P((void)),
-	flowstat __P((void)),
-	netclear __P((void)),
-	netflush __P((void)),
+	_termstat(void),
+	add_slc(char, char, cc_t),
+	check_slc(void),
+	change_slc(int, int, cc_t),
+	cleanup(int),
+	clientstat(int, int, int),
+	copy_termbuf(char *, int),
+	deferslc(void),
+	defer_terminit(void),
+	do_opt_slc(unsigned char *, int),
+	doeof(void),
+	dooption(int),
+	dontoption(int),
+	edithost(char *, char *),
+	fatal(int, const char *),
+	fatalperror(int, const char *),
+	get_slc_defaults(void),
+	init_env(void),
+	init_termbuf(void),
+	interrupt(void),
+	localstat(void),
+	flowstat(void),
+	netclear(void),
+	netflush(void),
 #ifdef DIAGNOSTICS
-	printoption __P((const char *, int)),
-	printdata __P((char *, char *, int)),
+	printoption(const char *, int),
+	printdata(char *, char *, int),
 #ifndef ENCRYPTION
-	printsub __P((int, unsigned char *, int)),
+	printsub(int, unsigned char *, int),
 #endif
 #endif
-	ptyflush __P((void)),
-	putchr __P((int)),
-	recv_ayt __P((void)),
-	send_do __P((int, int)),
-	send_dont __P((int, int)),
-	send_slc __P((void)),
-	send_status __P((void)),
-	send_will __P((int, int)),
-	send_wont __P((int, int)),
-	sendbrk __P((void)),
-	sendsusp __P((void)),
-	set_termbuf __P((void)),
-	start_login __P((char *, int, char *)),
-	start_slc __P((int)),
-	startslave __P((char *, int, char *)),
-	suboption __P((void)),
-	telrcv __P((void)),
-	ttloop __P((void)),
-	tty_binaryin __P((int)),
-	tty_binaryout __P((int));
+	ptyflush(void),
+	putchr(int),
+	recv_ayt(void),
+	send_do(int, int),
+	send_dont(int, int),
+	send_slc(void),
+	send_status(void),
+	send_will(int, int),
+	send_wont(int, int),
+	sendbrk(void),
+	sendsusp(void),
+	set_termbuf(void),
+	start_login(char *, int, char *),
+	start_slc(int),
+	startslave(char *, int, char *),
+	suboption(void),
+	telrcv(void),
+	ttloop(void),
+	tty_binaryin(int),
+	tty_binaryout(int);
 
 extern char *
-	putf __P((char *, char *));
+	putf(char *, char *);
 
 extern int
-	end_slc __P((unsigned char **)),
-	getnpty __P((void)),
-	getpty __P((int *)),
-	spcset __P((int, cc_t *, cc_t **)),
-	stilloob __P((int)),
-	terminit __P((void)),
-	termstat __P((void)),
-	tty_flowmode __P((void)),
-	tty_restartany __P((void)),
-	tty_isbinaryin __P((void)),
-	tty_isbinaryout __P((void)),
-	tty_iscrnl __P((void)),
-	tty_isecho __P((void)),
-	tty_isediting __P((void)),
-	tty_islitecho __P((void)),
-	tty_isnewmap __P((void)),
-	tty_israw __P((void)),
-	tty_issofttab __P((void)),
-	tty_istrapsig __P((void)),
-	tty_linemode __P((void));
+	end_slc(unsigned char **),
+	getnpty(void),
+	getpty(int *),
+	spcset(int, cc_t *, cc_t **),
+	stilloob(int),
+	terminit(void),
+	termstat(void),
+	tty_flowmode(void),
+	tty_restartany(void),
+	tty_isbinaryin(void),
+	tty_isbinaryout(void),
+	tty_iscrnl(void),
+	tty_isecho(void),
+	tty_isediting(void),
+	tty_islitecho(void),
+	tty_isnewmap(void),
+	tty_israw(void),
+	tty_issofttab(void),
+	tty_istrapsig(void),
+	tty_linemode(void);
 
 extern void
-	tty_rspeed __P((int)),
-	tty_setecho __P((int)),
-	tty_setedit __P((int)),
-	tty_setlinemode __P((int)),
-	tty_setlitecho __P((int)),
-	tty_setsig __P((int)),
-	tty_setsofttab __P((int)),
-	tty_tspeed __P((int)),
-	willoption __P((int)),
-	wontoption __P((int)),
-	writenet __P((unsigned char *, int));
+	tty_rspeed(int),
+	tty_setecho(int),
+	tty_setedit(int),
+	tty_setlinemode(int),
+	tty_setlitecho(int),
+	tty_setsig(int),
+	tty_setsofttab(int),
+	tty_tspeed(int),
+	willoption(int),
+	wontoption(int),
+	writenet(unsigned char *, int);
 
-extern int output_data __P((const char *, ...))
+extern int output_data(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
-extern int output_datalen __P((const char *, size_t));
+extern int output_datalen(const char *, size_t);
 
 #ifdef	ENCRYPTION
 extern char	*nclearto;

@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.24 2003/08/07 09:46:51 agc Exp $	*/
+/*	$NetBSD: state.c,v 1.25 2005/02/06 05:58:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.24 2003/08/07 09:46:51 agc Exp $");
+__RCSID("$NetBSD: state.c,v 1.25 2005/02/06 05:58:21 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: state.c,v 1.24 2003/08/07 09:46:51 agc Exp $");
 
 #include "telnetd.h"
 
-static int envvarok __P((char *));
+static int envvarok(char *);
 
 unsigned const char	doopt[] = { IAC, DO, '%', 'c', 0 };
 unsigned const char	dont[] = { IAC, DONT, '%', 'c', 0 };
@@ -86,9 +86,9 @@ unsigned char *subsave;
 #define	TS_DONT		8	/* dont " */
 
 void
-telrcv()
+telrcv(void)
 {
-	register int c;
+	int c;
 	static int state = TS_DATA;
 
 	while (ncc > 0) {
@@ -419,8 +419,7 @@ gotiac:			switch (c) {
  *
  */
 void
-send_do(option, init)
-	int option, init;
+send_do(int option, int init)
 {
 	if (init) {
 		if ((do_dont_resp[option] == 0 && his_state_is_will(option)) ||
@@ -443,23 +442,22 @@ send_do(option, init)
 }
 
 #ifdef	LINEMODE
-extern void doclientstat __P((void));
+extern void doclientstat(void);
 #endif
 #if 0
 #ifdef	AUTHENTICATION
-extern void auth_request __P((void));	/* libtelnet */
+extern void auth_request(void);	/* libtelnet */
 #endif
 #ifdef	ENCRYPTION
-extern void encrypt_send_support __P((void));
+extern void encrypt_send_support(void);
 #endif	/* ENCRYPTION */
 #endif
 
 void
-willoption(option)
-	int option;
+willoption(int option)
 {
 	int changeok = 0;
-	void (*func) __P((void)) = 0;
+	void (*func)(void) = 0;
 
 	/*
 	 * process input from peer.
@@ -649,8 +647,7 @@ willoption(option)
 }  /* end of willoption */
 
 void
-send_dont(option, init)
-	int option, init;
+send_dont(int option, int init)
 {
 	if (init) {
 		if ((do_dont_resp[option] == 0 && his_state_is_wont(option)) ||
@@ -665,8 +662,7 @@ send_dont(option, init)
 }
 
 void
-wontoption(option)
-	int option;
+wontoption(int option)
 {
 	/*
 	 * Process client input.
@@ -799,8 +795,7 @@ wontoption(option)
 }  /* end of wontoption */
 
 void
-send_will(option, init)
-	int option, init;
+send_will(int option, int init)
 {
 	if (init) {
 		if ((will_wont_resp[option] == 0 && my_state_is_will(option))||
@@ -826,8 +821,7 @@ int turn_on_sga = 0;
 #endif
 
 void
-dooption(option)
-	int option;
+dooption(int option)
 {
 	int changeok = 0;
 
@@ -955,8 +949,7 @@ dooption(option)
 }  /* end of dooption */
 
 void
-send_wont(option, init)
-	int option, init;
+send_wont(int option, int init)
 {
 	if (init) {
 		if ((will_wont_resp[option] == 0 && my_state_is_wont(option)) ||
@@ -971,8 +964,7 @@ send_wont(option, init)
 }
 
 void
-dontoption(option)
-	int option;
+dontoption(int option)
 {
 	/*
 	 * Process client input.
@@ -1066,8 +1058,7 @@ int env_ovalue = -1;
 /* envvarok(char*) */
 /* check that variable is safe to pass to login or shell */
 static int
-envvarok(varp)
-	char *varp;
+envvarok(char *varp)
 {
 
 	if (strcmp(varp, "TERMCAP") &&	/* to prevent a security hole */
@@ -1116,16 +1107,16 @@ envvarok(varp)
  *	Terminal speed
  */
 void
-suboption()
+suboption(void)
 {
-    register int subchar;
+    int subchar;
 
     DIAG(TD_OPTIONS, {netflush(); printsub('<', subpointer, SB_LEN()+2);});
 
     subchar = SB_GET();
     switch (subchar) {
     case TELOPT_TSPEED: {
-	register int xspeed, rspeed;
+	int xspeed, rspeed;
 
 	if (his_state_is_wont(TELOPT_TSPEED))	/* Ignore if option disabled */
 		break;
@@ -1163,7 +1154,7 @@ suboption()
 
 	while ((terminaltype < (terminalname + sizeof terminalname-1)) &&
 								    !SB_EOF()) {
-	    register int c;
+	    int c;
 
 	    c = SB_GET();
 	    if (isupper(c)) {
@@ -1177,7 +1168,7 @@ suboption()
     }  /* end of case TELOPT_TTYPE */
 
     case TELOPT_NAWS: {
-	register int xwinsize, ywinsize;
+	int xwinsize, ywinsize;
 
 	if (his_state_is_wont(TELOPT_NAWS))	/* Ignore if option disabled */
 		break;
@@ -1202,7 +1193,7 @@ suboption()
 
 #ifdef	LINEMODE
     case TELOPT_LINEMODE: {
-	register int request;
+	int request;
 
 	if (his_state_is_wont(TELOPT_LINEMODE))	/* Ignore if option disabled */
 		break;
@@ -1280,8 +1271,8 @@ suboption()
 
     case TELOPT_NEW_ENVIRON:
     case TELOPT_OLD_ENVIRON: {
-	register int c;
-	register char *cp, *varp, *valp;
+	int c;
+	char *cp, *varp, *valp;
 
 	if (SB_EOF())
 		return;
@@ -1310,7 +1301,7 @@ suboption()
 	     * reversed.
 	     */
 	    if (env_ovar < 0) {
-		register int last = -1;		/* invalid value */
+		int last = -1;		/* invalid value */
 		int empty = 0;
 		int got_var = 0, got_value = 0, got_uservar = 0;
 
@@ -1537,14 +1528,14 @@ suboption()
 
 #ifdef LINEMODE
 void
-doclientstat()
+doclientstat(void)
 {
 	clientstat(TELOPT_LINEMODE, WILL, 0);
 }
 #endif /* LINEMODE */
 
 void
-send_status()
+send_status(void)
 {
 #define	ADD(c) \
 	do { \
@@ -1560,8 +1551,8 @@ send_status()
 
 	unsigned char statusbuf[256];
 	unsigned char *ep;
-	register unsigned char *ncp;
-	register unsigned char i;
+	unsigned char *ncp;
+	unsigned char i;
 
 	ncp = statusbuf;
 	ep = statusbuf + sizeof(statusbuf);
