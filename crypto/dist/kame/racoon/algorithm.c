@@ -1,4 +1,4 @@
-/*	$KAME: algorithm.c,v 1.24 2002/05/20 13:10:04 itojun Exp $	*/
+/*	$KAME: algorithm.c,v 1.25 2002/06/10 20:01:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -363,7 +363,7 @@ alg_oakley_hmacdef_one(doi, key, buf)
 
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
-	syslog(LOG_NOTICE, "%s(%s size=%d): %8.6f", __FUNCTION__,
+	syslog(LOG_NOTICE, "%s(%s size=%d): %8.6f", __func__,
 		f->name, buf->l, timedelta(&start, &end));
 #endif
 
@@ -462,7 +462,7 @@ alg_oakley_encdef_decrypt(doi, buf, key, iv)
 
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
-	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __FUNCTION__,
+	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __func__,
 		f->name, key->l << 3, buf->l, timedelta(&start, &end));
 #endif
 	return res;
@@ -491,7 +491,7 @@ alg_oakley_encdef_encrypt(doi, buf, key, iv)
 
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
-	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __FUNCTION__,
+	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __func__,
 		f->name, key->l << 3, buf->l, timedelta(&start, &end));
 #endif
 	return res;

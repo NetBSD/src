@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2002/09/18 03:54:36 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2002/11/20 03:35:58 itojun Exp $
 
 .include <bsd.own.mk>		# for NETBSDSRCDIR & MKDYNAMICROOT definition
 
@@ -19,6 +19,6 @@ LDSTATIC?=      -static
 
 DBG=	-g
 
-PKGVERSION=	netbsd-20020507
+PKGVERSION=	netbsd-20021120
 
 .include "../Makefile.inc"
