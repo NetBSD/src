@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.7 1994/09/15 03:42:42 mycroft Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.8 1994/09/15 03:47:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,7 +128,7 @@ portal_mount(mp, path, data, ndp, p)
 	(void)copyinstr(args.pa_config,
 	    mp->mnt_stat.f_mntfromname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-	(void)portal_statfs(mp, &mp->mp_mnt_stat, p);
+	(void)portal_statfs(mp, &mp->mnt_stat, p);
 	return (0);
 }
 
