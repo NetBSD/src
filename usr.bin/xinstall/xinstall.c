@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.33 1999/02/04 11:56:48 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.34 1999/03/24 15:13:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.33 1999/02/04 11:56:48 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.34 1999/03/24 15:13:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -248,7 +248,7 @@ main(argc, argv)
 			    to_sb.st_flags & ~(NOCHANGEBITS));
 		if (dobackup)
 			backup(to_name);
-		else
+		else if (!dorename)
 			(void)unlink(to_name);
 	}
 	install(*argv, to_name, fset, iflags);
