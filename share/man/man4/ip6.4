@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip6.4,v 1.7 2001/06/12 12:00:20 wiz Exp $
+.\"	$NetBSD: ip6.4,v 1.8 2001/09/22 00:57:41 wiz Exp $
 .\"	$KAME: ip6.4,v 1.11 2000/05/07 06:21:41 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
@@ -128,7 +128,7 @@ multicasting is supported only on
 sockets of type
 .Dv SOCK_DGRAM
 and
-.Dv SOCK_RAW,
+.Dv SOCK_RAW ,
 and only on networks where the interface driver supports multicasting.
 .Pp
 The
@@ -646,14 +646,14 @@ The ancillary data items were improperly formed, or option name was unknown.
 .\"
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
+.Xr recv 2 ,
 .Xr send 2 ,
 .Xr setsockopt 2 ,
-.Xr recv 2 ,
 .Xr inet6_option_space 3 ,
 .Xr inet6_rthdr_space 3 ,
-.Xr intro 4 ,
 .Xr icmp6 4 ,
-.Xr inet6 4
+.Xr inet6 4 ,
+.Xr intro 4
 .Rs
 .%A W. Stevens
 .%A M. Thomas

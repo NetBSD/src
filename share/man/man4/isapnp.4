@@ -1,4 +1,4 @@
-.\"	$NetBSD: isapnp.4,v 1.18 2001/09/11 22:52:53 wiz Exp $
+.\"	$NetBSD: isapnp.4,v 1.19 2001/09/22 00:57:41 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -50,7 +50,6 @@ devices on an ISA bus.
 .Nx
 includes machine-independent ISAPNP drivers, sorted by function
 and driver name:
-.Pp
 .Ss SCSI interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It aha
@@ -62,22 +61,16 @@ Adaptec AHA-1520B
 .Tn SCSI
 interfaces.
 .El
-.\"
-.Pp
 .Ss Disk controllers
 .Bl -tag -width pcdisplay -offset indent
 .It wdc
 Standard IDE and ATAPI drive controller.
 .El
-.\"
-.Pp
 .Ss Serial and parallel interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It com
 8250/16450/16550-compatible ISA PnP serial cards and internal modems.
 .El
-.\"
-.Pp
 .Ss Network interfaces
 .Bl -tag -width pcdisplay -offset indent
 .It an
@@ -115,7 +108,6 @@ with Crystal Semiconductor chips.
 .It ym
 Yamaha OPL3-SAx sound cards.
 .El
-.Pp
 .Ss Miscellaneous devices
 .Bl -tag -width pcdisplay -offset indent
 .It pcic
@@ -142,7 +134,6 @@ The manual pages for each individual
 driver also list
 the supported front-ends for other buses.
 .Sh SEE ALSO
-.Xr intro 4 ,
 .Xr aha 4 ,
 .Xr aic 4 ,
 .Xr an 4 ,
@@ -150,6 +141,7 @@ the supported front-ends for other buses.
 .Xr ep 4 ,
 .Xr ess 4 ,
 .Xr guspnp 4 ,
+.Xr intro 4 ,
 .Xr isa 4 ,
 .Xr le 4 ,
 .Xr ne 4 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.4,v 1.9 2001/09/11 22:52:53 wiz Exp $
+.\"	$NetBSD: inet.4,v 1.10 2001/09/22 00:57:40 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -157,12 +157,12 @@ Get interface network mask.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr socket 2 ,
+.Xr icmp 4 ,
 .Xr intro 4 ,
+.Xr ip 4 ,
 .Xr netintro 4 ,
 .Xr tcp 4 ,
-.Xr udp 4 ,
-.Xr ip 4 ,
-.Xr icmp 4
+.Xr udp 4
 .Rs
 .%T "An Introductory 4.3 BSD Interprocess Communication Tutorial"
 .%B PS1
@@ -173,13 +173,13 @@ Get interface network mask.
 .%B PS1
 .%N 8
 .Re
-.Sh BUGS
-The Internet protocol support is subject to change as
-the Internet protocols develop.  Users should not depend
-on details of the current implementation, but rather
-the services exported.
 .Sh HISTORY
 The
 .Nm
 protocol interface appeared in
 .Bx 4.2 .
+.Sh BUGS
+The Internet protocol support is subject to change as
+the Internet protocols develop.  Users should not depend
+on details of the current implementation, but rather
+the services exported.

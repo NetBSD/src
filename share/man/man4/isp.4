@@ -1,4 +1,4 @@
-.\"	$NetBSD: isp.4,v 1.8 2001/09/11 00:08:28 wiz Exp $
+.\"	$NetBSD: isp.4,v 1.9 2001/09/22 00:57:41 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 1999
 .\" 	Matthew Jacob, for NASA/Ames Research Center
@@ -111,6 +111,16 @@ Performance Technology ISP2100 variants.
 .It Antares P-0033
 Antares Microsystems ISP2100 variants.
 .El
+.Sh SEE ALSO
+.Xr cd 4 ,
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr sd 4 ,
+.Xr st 4
+.Sh AUTHORS
+The
+.Nm
+driver was written by Matthew Jacob for NASA/Ames Research Center.
 .Sh BUGS
 The driver currently ignores some NVRAM settings.
 .Pp
@@ -123,13 +133,3 @@ see an announcement that the loop state has a value of 0x1. To unwedge
 the system, unplug and replug the fibre channel connection, or otherwise
 cause a LIP (Loop Initialization Primitive sequence)- this will kick the f/w
 into getting unstuck.
-.Sh SEE ALSO
-.Xr intro 4 ,
-.Xr cd 4 ,
-.Xr scsi 4 ,
-.Xr sd 4 ,
-.Xr st 4
-.Sh AUTHORS
-The
-.Nm
-driver was written by Matthew Jacob for NASA/Ames Research Center.

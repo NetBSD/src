@@ -1,4 +1,4 @@
-.\" $NetBSD: ipip.4,v 1.7 2001/09/11 00:08:28 wiz Exp $
+.\" $NetBSD: ipip.4,v 1.8 2001/09/22 00:57:41 wiz Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,7 +48,9 @@ The
 network interface is a pseudo device that allows to encapsulate datagrams
 into IP. These encapsulated datagrams are routed to a destination host,
 where they are decapsulated and further routed to their final destination.
-The so called ``tunnel'' appears to the inner datagrams like one hop.
+The so called
+.Dq tunnel
+appears to the inner datagrams like one hop.
 Encapsulation is according to RFC 2003. The outer datagram header is of
 IP type 4 (IPIP).
 .Pp
@@ -63,7 +65,6 @@ Note that the IP addresses of the tunnel endpoints may be the same as the
 ones defined with
 .Ic ifconfig
 for the interface (as if IP is encapsulated), but need not be.
-.Pp
 .Sh EXAMPLES
 Configuration example:
 .Bd -literal
@@ -71,16 +72,17 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
           \\                                          |
            \\                                        /
              +------Host B----------Host C----------+
-
 .Ed
-   On host A (NetBSD):
-
+On host A
+.Ns ( Nx ) :
+.Bd -literal
    # route add default B
    # ifconfig ipipN  A D netmask 0xffffffff  up
    # route add E D
-
-   On Host D (Cisco):
-
+.Ed
+.Pp
+On Host D (Cisco):
+.Bd -literal
    Interface TunnelX
     ip unnumbered D   ! e.g. address from Ethernet interface
     tunnel source D   ! e.g. address from Ethernet interface
@@ -88,22 +90,23 @@ Host X-- Host A  ----------------tunnel---------- cisco D------Host E
    ip route C <some interface and mask>
    ip route A mask C
    ip route X mask tunnelX
-
-   OR
-
-   On Host D (NetBSD):
-
+.Ed
+.Pp
+or on Host D
+.Ns ( Nx ) :
+.Bd -literal
    # route add default C
    # ifconfig ipipN D A
+.Ed
 .Pp
 If all goes well, you should see packets flowing ;-)
 .Pp
 If you want to reach Host A over the tunnel (from the Cisco D), then
 you have to have an alias on Host A for e.g. the Ethernet interface like:
-     ifconfig <etherif> alias Y
- and on the cisco
-     ip route Y mask tunnelX
-.Sh NOTE
+.Ic ifconfig Ar <etherif> alias Y
+and on the cisco
+.Ic ip Ar route Y mask tunnelX .
+.Sh NOTES
 For correct operation, the
 .Nm
 device needs a route to the destination, that is less specific than the
@@ -113,12 +116,13 @@ does not run over the tunnel, as this would be a loop ..)
 .Pp
 In order to get
 .Ic ifconfig
-to actually mark the interface as up, the keyword ``up'' must be given
-last on its command line.
+to actually mark the interface as up, the keyword
+.Ar up
+must be given last on its command line.
 .Pp
 The kernel must be set to forward datagrams by either option
-``GATEWAY'' in the kernel config file or by issuing the appropriate
-option to
+.Dq GATEWAY
+in the kernel config file or by issuing the appropriate option to
 .Xr sysctl 8 .
 .Sh SEE ALSO
 .Xr atalk 4 ,
@@ -138,4 +142,4 @@ IP-address to provoke the search for a less specific route than the
 one directly over the tunnel to prevent loops. This is possibly not
 the best solution.
 .Pp
-Traceroute does not work yet over the tunnel :(
+Traceroute does not work yet over the tunnel.
