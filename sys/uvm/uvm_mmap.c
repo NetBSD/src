@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.31 1999/07/10 20:29:24 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.32 1999/07/10 20:40:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -214,8 +214,8 @@ sys_mincore(p, v, retval)
 			}
 		}
 
-		uobj = entry->object.uvm_obj;	/* top layer */
-		amap = entry->aref.ar_amap;	/* bottom layer */
+		amap = entry->aref.ar_amap;	/* top layer */
+		uobj = entry->object.uvm_obj;	/* bottom layer */
 
 		if (amap != NULL)
 			amap_lock(amap);
