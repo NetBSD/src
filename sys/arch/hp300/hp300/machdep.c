@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.129 1999/07/31 19:52:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130 1999/08/01 18:17:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -490,6 +490,7 @@ identifycpu()
 				continue;
 			t = hp300_models[i].name;
 			s = hp300_models[i].speed;
+			break;
 		}
 	}
 	if (t == NULL) {
