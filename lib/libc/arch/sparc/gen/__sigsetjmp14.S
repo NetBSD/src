@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigsetjmp14.S,v 1.2 1998/10/16 13:28:39 christos Exp $	*/
+/*	$NetBSD: __sigsetjmp14.S,v 1.3 1998/10/16 14:11:53 christos Exp $	*/
 /*
  * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
@@ -62,13 +62,13 @@ ENTRY(__siglongjmp14)
 ENTRY(__sigsetjmp14)
 	cmp %o1,0
 	be _C_LABEL(_setjmp)
-	st %o1,[%o0+40]		! jmpbuf[JBLEN]
+	st %o1,[%o0+56]		! jmpbuf[JBLEN]
 	nop
 	ba,a _C_LABEL(__setjmp14)
 	unimp 0
 
 ENTRY(__siglongjmp14)
-	ld [%o0+40],%g1
+	ld [%o0+56],%g1
 	cmp %g1,0
 	be _C_LABEL(_longjmp)
 	nop
