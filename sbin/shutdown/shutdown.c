@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.37 2000/07/25 18:59:44 jdolecek Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.38 2000/12/20 00:31:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.37 2000/07/25 18:59:44 jdolecek Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.38 2000/12/20 00:31:41 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -483,7 +483,7 @@ void
 dorcshutdown()
 {
 	(void)printf("\r\nAbout to run shutdown hooks...\r\n");
-	(void)system(__CONCAT(". ", _PATH_RCSHUTDOWN));
+	(void)system(". " _PATH_RCSHUTDOWN);
 	(void)sleep(5);		/* Give operator a chance to abort this. */
 	(void)printf("\r\nDone running shutdown hooks.\r\n");
 }
