@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.100 1999/12/05 22:54:35 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.101 1999/12/11 00:56:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.100 1999/12/05 22:54:35 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.101 1999/12/11 00:56:13 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1206,10 +1206,11 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			if (rate_get)
 				(void)gettimeofday(&then, NULL);
 			bufrem = rate_get ? rate_get : bufsize;
+			if (ischunked)
+				bufrem = MIN(chunksize, bufrem);
 			while (bufrem > 0) {
 				len = fread(xferbuf, sizeof(char),
-				    ischunked ? MIN(chunksize, bufrem)
-					    : bufsize, fin);
+				    MIN(bufsize, bufrem), fin);
 				if (len <= 0)
 					goto chunkdone;
 				bytes += len;
@@ -1219,18 +1220,18 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 					warn("Writing `%s'", savefile);
 					goto cleanup_fetch_url;
 				}
-			}
-			if (hash && !progress) {
-				while (bytes >= hashbytes) {
-					(void)putc('#', ttyout);
-					hashbytes += mark;
+				if (hash && !progress) {
+					while (bytes >= hashbytes) {
+						(void)putc('#', ttyout);
+						hashbytes += mark;
+					}
+					(void)fflush(ttyout);
 				}
-				(void)fflush(ttyout);
-			}
-			if (ischunked) {
-				chunksize -= len;
-				if (chunksize <= 0)
-					goto chunkdone;
+				if (ischunked) {
+					chunksize -= len;
+					if (chunksize <= 0)
+						break;
+				}
 			}
 			if (rate_get) {
 				while (1) {
@@ -1241,6 +1242,8 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 					usleep(1000000 - td.tv_usec);
 				}
 			}
+			if (ischunked && chunksize <= 0)
+				break;
 		}
 					/* read CRLF after chunk*/
  chunkdone:
