@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.63 1996/02/04 02:18:37 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.64 1996/02/07 16:55:56 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1257,38 +1257,16 @@ sys_lstat(p, v, retval)
 	    SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	/*
-	 * For symbolic links, always return the attributes of its
-	 * containing directory, except for mode, size, and links.
-	 */
 	vp = nd.ni_vp;
 	dvp = nd.ni_dvp;
-	if (vp->v_type != VLNK) {
-		if (dvp == vp)
-			vrele(dvp);
-		else
-			vput(dvp);
-		error = vn_stat(vp, &sb, p);
-		vput(vp);
-		if (error)
-			return (error);
-	} else {
-		error = vn_stat(dvp, &sb, p);
+	if (dvp == vp)
+		vrele(dvp);
+	else
 		vput(dvp);
-		if (error) {
-			vput(vp);
-			return (error);
-		}
-		error = vn_stat(vp, &sb1, p);
-		vput(vp);
-		if (error)
-			return (error);
-		sb.st_mode &= ~S_IFDIR;
-		sb.st_mode |= S_IFLNK;
-		sb.st_nlink = sb1.st_nlink;
-		sb.st_size = sb1.st_size;
-		sb.st_blocks = sb1.st_blocks;
-	}
+	error = vn_stat(vp, &sb, p);
+	vput(vp);
+	if (error)
+		return (error);
 	error = copyout((caddr_t)&sb, (caddr_t)SCARG(uap, ub), sizeof (sb));
 	return (error);
 }
