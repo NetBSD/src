@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.25 2001/09/13 23:15:08 thorpej Exp $
+# $NetBSD: shl.elf,v 1.26 2002/01/01 11:55:25 augustss Exp $
 ./usr/lib/crtbegin.o		comp-c-lib
 ./usr/lib/crtbeginS.o		comp-c-lib
 ./usr/lib/crtend.o		comp-c-lib
@@ -43,7 +43,7 @@
 ./usr/lib/libtelnet.so		comp-c-lib
 ./usr/lib/libtermcap.so		comp-c-lib
 ./usr/lib/libtermlib.so		comp-c-lib
-./usr/lib/libusb.so		comp-c-lib
+./usr/lib/libusbhid.so		comp-c-lib
 ./usr/lib/libutil.so		comp-c-lib
 ./usr/lib/libwrap.so		comp-c-lib
 ./usr/lib/libz.so		comp-c-lib
