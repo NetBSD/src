@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.289 2001/01/12 05:13:47 itojun Exp $
+$NetBSD: pcidevs,v 1.290 2001/01/15 23:29:04 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1332,6 +1332,7 @@ product SYMBIOS 875	0x000f	53c875/876
 product SYMBIOS 1510	0x0010	53c1510
 product SYMBIOS 895A	0x0012	53c895A
 product SYMBIOS 1010	0x0020	53c1010
+product SYMBIOS 1010_2	0x0021	53c1010 (66MHz)
 product SYMBIOS 875J	0x008f	53c875J
 
 /* Packet Engines products */
