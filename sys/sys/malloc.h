@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.76 2002/01/07 01:02:19 deberg Exp $	*/
+/*	$NetBSD: malloc.h,v 1.77 2002/01/12 00:00:39 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -189,7 +189,8 @@
 #define	M_SMBNODENAME	130	/* SMBFS node name */
 #define	M_SMBFSDATA	131	/* SMBFS private data */
 #define	M_SMBFSHASH	132	/* SMBFS hash table */
-#define	M_LAST		133	/* Must be last type + 1 */
+#define	M_SA		133	/* Scheduler activations */
+#define	M_LAST		134	/* Must be last type + 1 */
 
 /* added something?  don't forget to update malloc.9 */
 
@@ -327,7 +328,8 @@
 	"smbnodename",	/* 130 M_SMBNODENAME */ \
 	"smbfsdata",	/* 131 M_SMBFSDATA */ \
 	"smbfshash",	/* 132 M_SMBFSHASH */ \
-	NULL,		/* 133 */ \
+	"sa",		/* 133 M_SA */ \
+	NULL,		/* 134 */ \
 }
 
 struct kmemstats {
