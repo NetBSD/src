@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.37 1993/11/02 23:08:20 cgd Exp $
+#	$Id: bsd.lib.mk,v 1.38 1993/11/02 23:14:50 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -100,7 +100,8 @@ lib${LIB}_pic.a:: ${SOBJS}
 	@${AR} cTq lib${LIB}_pic.a `lorder ${SOBJS} | tsort` ${LDADD}
 	${RANLIB} lib${LIB}_pic.a
 
-lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}:
+lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a
+	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 	$(LD) -Bshareable -Bforcearchive \
 	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a
