@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.24.2.1 2000/09/04 17:53:13 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.24.2.2 2000/09/09 02:11:30 toshii Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -314,6 +314,9 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 							  sc->sc_portno);
 			if (error) {
 				ucom_cleanup(sc);
+				sc->sc_opening = 0;
+				wakeup(&sc->sc_opening);
+				splx(s);
 				return (error);
 			}
 		}
@@ -364,7 +367,7 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 			DPRINTF(("%s: open bulk out error (addr %d), err=%s\n",
 				 USBDEVNAME(sc->sc_dev), sc->sc_bulkin_no, 
 				 usbd_errstr(err)));
-			return (EIO);
+			goto fail_0;
 		}
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_no,
 				     USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
@@ -372,43 +375,28 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 			DPRINTF(("%s: open bulk in error (addr %d), err=%s\n",
 				 USBDEVNAME(sc->sc_dev), sc->sc_bulkout_no,
 				 usbd_errstr(err)));
-			usbd_close_pipe(sc->sc_bulkin_pipe);
-			return (EIO);
+			goto fail_1;
 		}
 		
 		/* Allocate a request and an input buffer and start reading. */
 		sc->sc_ixfer = usbd_alloc_xfer(sc->sc_udev);
-		if (sc->sc_ixfer == NULL) {
-			usbd_close_pipe(sc->sc_bulkin_pipe);
-			usbd_close_pipe(sc->sc_bulkout_pipe);
-			return (ENOMEM);
-		}
+		if (sc->sc_ixfer == NULL)
+			goto fail_2;
+
 		sc->sc_ibuf = usbd_alloc_buffer(sc->sc_ixfer,
 						sc->sc_ibufsizepad);
-		if (sc->sc_ibuf == NULL) {
-			usbd_free_xfer(sc->sc_ixfer);
-			usbd_close_pipe(sc->sc_bulkin_pipe);
-			usbd_close_pipe(sc->sc_bulkout_pipe);
-			return (ENOMEM);
-		}
+		if (sc->sc_ibuf == NULL)
+			goto fail_3;
 
 		sc->sc_oxfer = usbd_alloc_xfer(sc->sc_udev);
-		if (sc->sc_oxfer == NULL) {
-			usbd_free_xfer(sc->sc_ixfer);
-			usbd_close_pipe(sc->sc_bulkin_pipe);
-			usbd_close_pipe(sc->sc_bulkout_pipe);
-			return (ENOMEM);
-		}
+		if (sc->sc_oxfer == NULL)
+			goto fail_3;
+
 		sc->sc_obuf = usbd_alloc_buffer(sc->sc_oxfer,
 						sc->sc_obufsize +
 						sc->sc_opkthdrlen);
-		if (sc->sc_obuf == NULL) {
-			usbd_free_xfer(sc->sc_oxfer);
-			usbd_free_xfer(sc->sc_ixfer);
-			usbd_close_pipe(sc->sc_bulkin_pipe);
-			usbd_close_pipe(sc->sc_bulkout_pipe);
-			return (ENOMEM);
-		}
+		if (sc->sc_obuf == NULL)
+			goto fail_4;
 
 		ucomstartread(sc);
 	}
@@ -425,6 +413,26 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 		goto bad;
 
 	return (0);
+
+fail_4:
+	usbd_free_xfer(sc->sc_oxfer);
+fail_3:
+	usbd_free_xfer(sc->sc_ixfer);
+fail_2:
+	usbd_close_pipe(sc->sc_bulkin_pipe);
+	usbd_close_pipe(sc->sc_bulkout_pipe);
+	sc->sc_opening = 0;
+	wakeup(&sc->sc_opening);
+	splx(s);
+	return (ENOMEM);
+
+fail_1:
+	usbd_close_pipe(sc->sc_bulkin_pipe);
+fail_0:
+	sc->sc_opening = 0;
+	wakeup(&sc->sc_opening);
+	splx(s);
+	return (EIO);
 
 bad:
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
