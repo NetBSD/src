@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.41 1994/10/20 04:28:13 cgd Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.42 1994/12/13 16:18:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -917,12 +917,7 @@ nfs_writerpc(vp, uiop, cred, ioflags)
 		if (nmp->nm_flag & NFSMNT_NQNFS) {
 			txdr_hyper(&uiop->uio_offset, tl);
 			tl += 2;
-#ifdef notyet
-			if (ioflags & IO_APPEND)
-				*tl++ = txdr_unsigned(1);
-			else
-#endif
-				*tl++ = 0;
+			*tl++ = 0;
 		} else {
 			*++tl = txdr_unsigned(uiop->uio_offset);
 			tl += 2;
