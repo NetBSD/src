@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.93 2003/09/08 06:51:56 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.94 2003/09/09 21:58:26 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.93 2003/09/08 06:51:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.94 2003/09/09 21:58:26 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -727,8 +727,6 @@ key_allocsa(family, src, dst, proto, spi)
 	matchidx = _ARRAYLEN(saorder_state_valid);
 	LIST_FOREACH(sav, &spihash[spi % SPIHASHSIZE], spihash) {
 		if (sav->spi != spi)
-			continue;
-		if (sav->state != state)
 			continue;
 		if (proto != sav->sah->saidx.proto)
 			continue;
