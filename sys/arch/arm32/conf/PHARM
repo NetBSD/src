@@ -30,6 +30,7 @@ options		ARMFPE		# ARM Ltd FPE
 file-system	FFS		# UFS
 #file-system	LFS		# log-structured file system
 file-system	MFS		# memory file system
+file-system	NFS
 
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
@@ -48,7 +49,6 @@ options		NFSSERVER
 
 # Networking options
 
-options		NFSCLIENT
 options		GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
 #options	NS		# XNS
