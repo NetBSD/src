@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 1998/01/24 16:46:40 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 1998/02/19 04:18:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -772,7 +772,7 @@ dumpsys()
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int error;
 
-	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
+	msgbufenabled = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
 

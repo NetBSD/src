@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 1998/02/19 00:31:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 1998/02/19 04:18:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 1998/02/19 00:31:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 1998/02/19 04:18:33 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -124,7 +124,6 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 caddr_t	msgbufaddr;
-int	msgbufmapped = 0;	/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 
@@ -601,7 +600,7 @@ dumpsys()
 	/* Save registers. */
 	savectx(&dumppcb);
 
-	msgbufmapped = 0;
+	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	/*

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.51 1998/01/24 16:46:50 mycroft Exp $	 */
+/* $NetBSD: machdep.c,v 1.52 1998/02/19 04:18:34 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -607,7 +607,7 @@ void
 dumpsys()
 {
 
-	msgbufmapped = 0;
+	msgbufenabled = 0;
 	if (dumpdev == NODEV)
 		return;
 	/*

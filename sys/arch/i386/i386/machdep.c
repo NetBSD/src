@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.292 1998/02/18 03:04:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.293 1998/02/19 04:18:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1480,7 +1480,7 @@ dumpsys()
 	/* Save registers. */
 	savectx(&dumppcb);
 
-	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
+	msgbufenabled = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
 
