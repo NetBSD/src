@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.c,v 1.4 2001/11/11 00:25:23 perry Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.5 2001/11/13 07:41:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
 /*
  * Common module for bit-bang'ing the MII.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.5 2001/11/13 07:41:37 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
