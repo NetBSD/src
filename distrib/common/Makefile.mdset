@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.12 2002/05/03 15:22:57 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.13 2002/05/05 13:02:44 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -11,7 +11,7 @@
 #				KERNEL	IMAGE	FILENAME
 #
 #			The kernel is ${MDSETIMAGE} with ${IMAGE},
-#			${STRIP}ped (with the symbols are stored in
+#			${STRIP}ped (after the symbols are stored in
 #			${FILENAME}.symbols.gz), and gzipped into
 #			${FILENAME}.gz.
 #
@@ -20,6 +20,9 @@
 #
 # Optional variables:
 #	MDSET_RELEASEDIR		Where to install release kernels.
+#
+#	MDSET.${FILENAME}.nosymbols	If defined, don't generate
+#					${FILENAME}.symbols.gz
 #
 #	MDSET.${FILENAME}.post		For each kernel named ${FILENAME},
 #					execute this after ${NM} / ${STRIP}.
@@ -35,7 +38,7 @@
 #
 # Variables modified by this:
 #	KERNELS			List of kernel .gz files to build
-#	KERNELSYMS		List of kernel .symbol files to build
+#	KERNELSYMS		List of kernel .symbol.gz files to build
 #	_KERNEL.${KERNEL}	Target filename for ${KERNEL}
 #
 
@@ -54,7 +57,9 @@ KERNELS+=	${_KERNEL.${_K}}.gz
 KERNELS+=	${_KERNEL.${_K}}.${suf}.gz
 CLEANFILES+=	${_KERNEL.${_K}}.${suf}
 .endfor
+.if !defined(MDSET.${_FILENAME}.nosymbols)
 KERNELSYMS+=	${_KERNEL.${_K}}.symbols.gz
+.endif
 
 .if defined(MDSET.${_FILENAME}.post)
 _POST.${_KERNEL.${_K}}:= ${MDSET.${_FILENAME}.post}
@@ -67,7 +72,9 @@ ${_KERNEL.${_K}}.gz: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
 	@rm -f ${.TARGET:R} ${.TARGET:R}.symbols.gz
 	@cp ${KERNOBJDIR}/${_K}/netbsd ${.TARGET:R}
 	${MDSETIMAGE} -v ${.TARGET:R} ${_I}
+.if !defined(MDSET.${_FILENAME}.nosymbols)
 	${NM} ${.TARGET:R} | gzip -9 > ${.TARGET:R}.symbols.gz
+.endif
 	${STRIP} ${.TARGET:R}
 .if defined(_POST.${.TARGET:R})
 	${_POST.${.TARGET:R}}
