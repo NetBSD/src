@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.31.2.2 1998/01/29 09:08:16 mellon Exp $	*/
+/*     $NetBSD: login.c,v 1.31.2.3 1998/01/29 09:11:33 mellon Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.31.2.2 1998/01/29 09:08:16 mellon Exp $");
+__RCSID("$NetBSD: login.c,v 1.31.2.3 1998/01/29 09:11:33 mellon Exp $");
 #endif /* not lint */
 
 /*
@@ -122,6 +122,12 @@ extern krb5_context kcontext;
 struct	passwd *pwd;
 int	failures;
 char	term[64], *envinit[1], *hostname, *username, *tty;
+
+static const char copyrightstr[] = "\
+Copyright (c) 1996, 1997, 1998
+\tThe NetBSD Foundation, Inc.  All rights reserved.
+Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994
+\tThe Regents of the University of California.  All rights reserved.\n\n";
 
 int
 main(argc, argv)
@@ -497,12 +503,7 @@ main(argc, argv)
 #endif
 
 	if (!quietlog) {
-		(void)printf("%s  %s\n%s\n\t%s  %s\n\n",
- 	    "Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.",
-	    "All rights reserved.",
-	    "Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994",
-		    "The Regents of the University of California. ",
-		    "All rights reserved.");
+		(void)printf(copyrightstr);
 		motd();
 		(void)snprintf(tbuf,
 		    sizeof(tbuf), "%s/%s", _PATH_MAILDIR, pwd->pw_name);
