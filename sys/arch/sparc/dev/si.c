@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.23 1996/03/31 22:38:49 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.24 1996/05/13 01:53:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -191,7 +191,7 @@ struct si_softc {
 #define	SI_OPTIONS_MASK	(SI_ENABLE_DMA|SI_DMA_INTR|SI_DO_RESELECT)
 #define SI_OPTIONS_BITS	"\10\3RESELECT\2DMA_INTR\1DMA"
 int si_options = SI_ENABLE_DMA;
-int sw_options = 0;
+int sw_options = SI_ENABLE_DMA;
 
 /* How long to wait for DMA before declaring an error. */
 int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
