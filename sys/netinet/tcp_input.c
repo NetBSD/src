@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.49 1998/04/03 08:02:45 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.50 1998/04/07 05:09:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1646,6 +1646,8 @@ syn_cache_insert(sc, prevp, headp)
 		tcpstat.tcps_sc_bucketoverflow++;
 		sc2 = scp->sch_first;
 		scp->sch_first = sc2->sc_next;
+		if (sc2->sc_ipopts)
+			(void) m_free(sc2->sc_ipopts);
 		FREE(sc2, M_PCB);
 	} else if (syn_cache_count >= tcp_syn_cache_limit) {
 		tcpstat.tcps_sc_overflowed++;
@@ -1665,6 +1667,8 @@ syn_cache_insert(sc, prevp, headp)
 		}
 		sc2 = scp2->sch_first;
 		if (sc2 == NULL) {
+			if (sc->sc_ipopts)
+				(void) m_free(sc->sc_ipopts);
 			FREE(sc, M_PCB);
 			return;
 		}
@@ -1672,6 +1676,8 @@ syn_cache_insert(sc, prevp, headp)
 			scp2->sch_last = NULL;
 		else
 			sc2->sc_next->sc_timer += sc2->sc_timer;
+		if (sc2->sc_ipopts)
+			(void) m_free(sc2->sc_ipopts);
 		FREE(sc2, M_PCB);
 	} else {
 		scp->sch_length++;
@@ -1761,6 +1767,8 @@ syn_cache_timer(interval)
 			scn = sc->sc_next;
 			tcpstat.tcps_sc_timed_out++;
 			syn_cache_count--;
+			if (sc->sc_ipopts)
+				(void) m_free(sc->sc_ipopts);
 			FREE(sc, M_PCB);
 			scp->sch_length--;
 			if ((sc = scn) == NULL)
@@ -1889,9 +1897,11 @@ syn_cache_get(so, m)
 	inp->inp_laddr = sc->sc_dst;
 	inp->inp_lport = sc->sc_dport;
 	in_pcbstate(inp, INP_BOUND);
-#if BSD>=43
 	inp->inp_options = ip_srcroute();
-#endif
+	if (inp->inp_options == NULL) {
+		inp->inp_options = sc->sc_ipopts;
+		sc->sc_ipopts = NULL;
+	}
 
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
 	if (am == NULL)
@@ -1965,6 +1975,8 @@ syn_cache_get(so, m)
 	tp->last_ack_sent = tp->rcv_nxt;
 
 	tcpstat.tcps_sc_completed++;
+	if (sc->sc_ipopts)
+		(void) m_free(sc->sc_ipopts);
 	FREE(sc, M_PCB);
 	return (so);
 
@@ -1974,6 +1986,8 @@ resetandabort:
 abort:
 	if (so != NULL)
 		(void) soabort(so);
+	if (sc->sc_ipopts)
+		(void) m_free(sc->sc_ipopts);
 	FREE(sc, M_PCB);
 	tcpstat.tcps_sc_aborted++;
 	return ((struct socket *)(-1));
@@ -2005,6 +2019,8 @@ syn_cache_reset(ti)
 	SYN_CACHE_RM(sc, sc_prev, head);
 	splx(s);
 	tcpstat.tcps_sc_reset++;
+	if (sc->sc_ipopts)
+		(void) m_free(sc->sc_ipopts);
 	FREE(sc, M_PCB);
 }
 
@@ -2036,6 +2052,8 @@ syn_cache_unreach(ip, th)
 	SYN_CACHE_RM(sc, sc_prev, head);
 	splx(s);
 	tcpstat.tcps_sc_unreach++;
+	if (sc->sc_ipopts)
+		(void) m_free(sc->sc_ipopts);
 	FREE(sc, M_PCB);
 }
 
@@ -2061,6 +2079,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 	long win;
 	struct syn_cache *sc, **sc_prev;
 	struct syn_cache_head *scp;
+	struct mbuf *ipopts;
 	extern int tcp_do_rfc1323;
 
 	tp = sototcpcb(so);
@@ -2083,6 +2102,11 @@ syn_cache_add(so, m, optp, optlen, oi)
 	if (win > TCP_MAXWIN)
 		win = TCP_MAXWIN;
 
+	/*
+	 * Remember the IP options, if any.
+	 */
+	ipopts = ip_srcroute();
+
 	if (optp) {
 		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 		tcp_dooptions(&tb, optp, optlen, ti, oi);
@@ -2098,6 +2122,17 @@ syn_cache_add(so, m, optp, optlen, oi)
 	if ((sc = syn_cache_lookup(ti, &sc_prev, &scp)) != NULL) {
 		tcpstat.tcps_sc_dupesyn++;
 		sc->sc_flags |= SCF_SYNACK_REXMT;
+
+		if (ipopts) {
+			/*
+			 * If we were remembering a previous source route,
+			 * forget it and use the new one we've been given.
+			 */
+			if (sc->sc_ipopts)
+				(void) m_free(sc->sc_ipopts);
+			sc->sc_ipopts = ipopts;
+		}
+
 		if (syn_cache_respond(sc, m, ti, win, tb.ts_recent) == 0) {
 			tcpstat.tcps_sndacks++;
 			tcpstat.tcps_sndtotal++;
@@ -2106,10 +2141,14 @@ syn_cache_add(so, m, optp, optlen, oi)
 	}
 
 	MALLOC(sc, struct syn_cache *, sizeof(*sc), M_PCB, M_NOWAIT);
-	if (sc == NULL)
+	if (sc == NULL) {	
+		if (ipopts)
+			(void) m_free(ipopts);
 		return (0);
+	}
+
 	/*
-	 * Fill in the cache, and put the necessary TCP
+	 * Fill in the cache, and put the necessary IP and TCP
 	 * options into the reply.
 	 */
 	sc->sc_src.s_addr = ti->ti_src.s_addr;
@@ -2117,6 +2156,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 	sc->sc_sport = ti->ti_sport;
 	sc->sc_dport = ti->ti_dport;
 	sc->sc_flags = 0;
+	sc->sc_ipopts = ipopts;
 	sc->sc_irs = ti->ti_seq;
 	sc->sc_iss = tcp_new_iss(sc, sizeof(struct syn_cache), 0);
 	sc->sc_peermaxseg = oi->maxseg;
@@ -2140,6 +2180,8 @@ syn_cache_add(so, m, optp, optlen, oi)
 		tcpstat.tcps_sndacks++;
 		tcpstat.tcps_sndtotal++;
 	} else {
+		if (sc->sc_ipopts)
+			(void) m_free(sc->sc_ipopts);
 		FREE(sc, M_PCB);
 		tcpstat.tcps_sc_dropped++;
 	}
