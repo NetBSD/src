@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.8 1997/01/09 20:20:46 tls Exp $	*/
+/*	$NetBSD: modstat.c,v 1.9 1997/05/07 16:35:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$NetBSD: modstat.c,v 1.8 1997/01/09 20:20:46 tls Exp $
+ *	$NetBSD: modstat.c,v 1.9 1997/05/07 16:35:34 mrg Exp $
  */
 
 #include <stdio.h>
@@ -76,6 +76,7 @@ dostat(devfd, modnum, modname)
 
 	if (modname != NULL)
 		strncpy(sbuf.name, modname, sizeof sbuf.name);
+	sbuf.name[sizeof(sbuf.name) - 1] = '\0';
 
 	sbuf.id = modnum;
 
