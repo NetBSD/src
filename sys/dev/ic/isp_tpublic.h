@@ -1,4 +1,4 @@
-/* $NetBSD: isp_tpublic.h,v 1.6 2001/03/14 05:10:38 mjacob Exp $ */
+/* $NetBSD: isp_tpublic.h,v 1.7 2001/05/16 03:58:03 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -251,11 +251,12 @@ typedef struct tmd_cmd {
 	u_int8_t		cd_reserved[_TMD_PAD_LEN];
 } tmd_cmd_t;
 
-#define	CDFL_BUSY	0x01		/* this command is not on a free list */
+#define	CDFL_SNSVALID	0x01		/* sense data (from f/w) valid */
 #define	CDFL_NODISC	0x02		/* disconnects disabled */
 #define	CDFL_SENTSENSE	0x04		/* last action sent sense data */
 #define	CDFL_SENTSTATUS	0x08		/* last action sent status */
 #define	CDFL_ERROR	0x10		/* last action ended in error */
+#define	CDFL_BUSY	0x40		/* this command is not on a free list */
 #define	CDFL_PRIVATE_0	0x80		/* private layer flags */
 
 #define	CDFH_SNSVALID	0x01		/* sense data valid */
