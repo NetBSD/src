@@ -12,13 +12,16 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: bt742a.c,v 1.6 1993/05/22 08:01:05 cgd Exp $
+ *	$Id: bt742a.c,v 1.7 1993/06/09 22:36:49 deraadt Exp $
  */
 
 /*
  * HISTORY
  * $Log: bt742a.c,v $
- * Revision 1.6  1993/05/22 08:01:05  cgd
+ * Revision 1.7  1993/06/09 22:36:49  deraadt
+ * minor silliness related to two or more controllers
+ *
+ * Revision 1.6  1993/05/22  08:01:05  cgd
  * add rcsids to everything and clean up headers
  *
  * Revision 1.5  1993/05/04  08:32:44  deraadt
@@ -663,7 +666,7 @@ struct	isa_dev	*dev;
 		&dev->id_physid, &dev->id_unit, dev->id_flags);
 
 	/* only one for all boards */
-	if(firsttime==0 && masunit==0) {
+	if(firsttime==0) {
 		firsttime = 1;
 		bt_timeout(0);
 	}
