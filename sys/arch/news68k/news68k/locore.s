@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.13 2000/11/09 14:17:20 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.14 2000/11/18 20:46:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -124,7 +124,8 @@ GLOBAL(kernel_text)
 ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
 
-	movl	#0x0	,%a5		| RAM starts at 0 (%a5)
+	movl	#0x0, %a5		| RAM starts at 0 (%a5)
+	movl	#0x0, %a6		| clear %fp to terminate debug trace
 
 	RELOC(bootdev,%a0)
 	movl	%d6, %a0@		| save bootdev
