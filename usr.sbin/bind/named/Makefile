@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.4.2 2000/11/13 22:16:41 tv Exp $
+#	$NetBSD: Makefile,v 1.8.4.3 2002/07/01 17:17:21 he Exp $
 
 .include "../Makefile.inc"
 .PATH:		${BIND_DIST_DIR}/bin/named \
@@ -29,7 +29,8 @@ FILESDIR=	/usr/share/examples/named
 
 HOSTNAMECMD=	hostname
 
-tmp_version.c: ${BIND_DIST_DIR}/bin/named/version.c Makefile ../Makefile
+tmp_version.c: ${BIND_DIST_DIR}/bin/named/version.c Makefile ../Makefile \
+		${BIND_DIST_DIR}/Version
 	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
 	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
 	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
