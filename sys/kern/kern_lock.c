@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.35 2000/08/07 22:10:53 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.36 2000/08/08 19:55:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -102,7 +102,8 @@
  */
 #include <machine/stdarg.h>
 
-void	lock_printf(const char *fmt, ...);
+void	lock_printf(const char *fmt, ...)
+    __kprintf_attribute__((__format__(__kprintf__,1,2)));
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #endif
@@ -973,7 +974,7 @@ simple_lock_switchcheck(void)
 	     alp = TAILQ_NEXT(alp, list)) {
 		if (alp->lock_holder == cpu_id) {
 			lock_printf("switching with held simple_lock %p "
-			    "CPU %lu %s:%s\n",
+			    "CPU %lu %s:%d\n",
 			    alp, alp->lock_holder, alp->lock_file,
 			    alp->lock_line);
 			SLOCK_DEBUGGER();
