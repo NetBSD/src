@@ -1,4 +1,4 @@
-/* $NetBSD: ciavar.h,v 1.7.2.1 1997/05/23 21:35:04 thorpej Exp $ */
+/* $NetBSD: ciavar.h,v 1.7.2.2 1997/06/03 07:07:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
-#include <alpha/pci/pci_dma_sgmap.h>
+#include <alpha/pci/pci_pte64_sgmap.h>
 
 /*
  * A 21171 chipset's configuration.
@@ -46,7 +46,7 @@ struct cia_config {
 	struct alpha_bus_dma_tag cc_dmat_direct;
 	struct alpha_bus_dma_tag cc_dmat_sgmap;
 
-	struct alpha_pci_sgmap cc_sgmap;
+	struct alpha_sgmap cc_sgmap;
 
 	u_int32_t cc_hae_mem;
 	u_int32_t cc_hae_io;

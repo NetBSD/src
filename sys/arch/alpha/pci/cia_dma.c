@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.1.2.1 1997/05/23 21:44:42 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.1.2.2 1997/06/03 07:07:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.1.2.1 1997/05/23 21:44:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.1.2.2 1997/06/03 07:07:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,12 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.1.2.1 1997/05/23 21:44:42 thorpej Exp 
 
 bus_dma_tag_t cia_dma_get_tag __P((bus_dma_tag_t, alpha_bus_t));
 
-int	cia_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
 int	cia_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
 	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
 
-void	cia_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
+void	cia_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 int	cia_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int));
@@ -86,7 +84,7 @@ int	cia_bus_dmamap_load_raw_direct __P((bus_dma_tag_t, bus_dmamap_t,
 int	cia_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
 
-void	cia_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
+void	cia_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 /*
  * The direct-mapped DMA window begins at this PCI address.
@@ -121,13 +119,13 @@ cia_dma_init(ccp)
 	t = &ccp->cc_dmat_direct;
 	t->_cookie = ccp;
 	t->_get_tag = cia_dma_get_tag;
-	t->_dmamap_create = cia_bus_dmamap_create;
-	t->_dmamap_destroy = cia_bus_dmamap_destroy;
+	t->_dmamap_create = _bus_dmamap_create;
+	t->_dmamap_destroy = _bus_dmamap_destroy;
 	t->_dmamap_load = cia_bus_dmamap_load_direct;
 	t->_dmamap_load_mbuf = cia_bus_dmamap_load_mbuf_direct;
 	t->_dmamap_load_uio = cia_bus_dmamap_load_uio_direct;
 	t->_dmamap_load_raw = cia_bus_dmamap_load_raw_direct;
-	t->_dmamap_unload = cia_bus_dmamap_unload;
+	t->_dmamap_unload = _bus_dmamap_unload;
 	t->_dmamap_sync = NULL;		/* Nothing to do. */
 
 	t->_dmamem_alloc = _bus_dmamem_alloc;
@@ -143,12 +141,12 @@ cia_dma_init(ccp)
 	t->_cookie = ccp;
 	t->_get_tag = cia_dma_get_tag;
 	t->_dmamap_create = cia_bus_dmamap_create_sgmap;
-	t->_dmamap_destroy = cia_bus_dmamap_destroy;
+	t->_dmamap_destroy = cia_bus_dmamap_destroy_sgmap;
 	t->_dmamap_load = cia_bus_dmamap_load_sgmap;
 	t->_dmamap_load_mbuf = cia_bus_dmamap_load_mbuf_sgmap;
 	t->_dmamap_load_uio = cia_bus_dmamap_load_uio_sgmap;
 	t->_dmamap_load_raw = cia_bus_dmamap_load_raw_sgmap;
-	t->_dmamap_unload = cia_bus_dmamap_unload;
+	t->_dmamap_unload = cia_bus_dmamap_unload_sgmap;
 	t->_dmamap_sync = NULL;		/* Nothing to do. */
 
 	t->_dmamem_alloc = _bus_dmamem_alloc;
@@ -168,8 +166,9 @@ cia_dma_init(ccp)
 	 * Initialize the SGMAP if safe to do so.
 	 */
 	if (ccp->cc_mallocsafe) {
-		pci_dma_sgmap_init(t, &ccp->cc_sgmap, "cia_sgmap",
-		    CIA_SGMAP_MAPPED_BASE, (8*1024*1024));
+		alpha_sgmap_init(t, &ccp->cc_sgmap, "cia_sgmap",
+		    CIA_SGMAP_MAPPED_BASE, 0, (8*1024*1024),
+		    sizeof(u_int64_t), NULL);
 
 		/* Remember the MEMCS value. */
 		alpha_mb();
@@ -240,43 +239,8 @@ cia_dma_get_tag(t, bustype)
 }
 
 /*
- * Create a CIA DMA map.
+ * Create a CIA SGMAP-mapped DMA map.
  */
-int
-cia_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
-{
-	struct alpha_pci_dma_cookie *a;
-	bus_dmamap_t map;
-	int error;
-
-	/* Call common function to create the basic map. */
-	error = _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary,
-	    flags, dmamp);
-	if (error)
-		return (error);
-
-	map = *dmamp;
-
-	/* Allocate PCI-specific housekeeping stuff. */
-	a = malloc(sizeof(struct alpha_pci_dma_cookie), M_DEVBUF,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
-	if (a == NULL) {
-		_bus_dmamap_destroy(t, map);
-		return (ENOMEM);
-	}
-	bzero(a, sizeof(struct alpha_pci_dma_cookie));
-	map->_dm_cookie = a;
-
-	return (0);
-}
-
 int
 cia_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
     flags, dmamp)
@@ -289,40 +253,51 @@ cia_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 	bus_dmamap_t *dmamp;
 {
 	struct cia_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a;
+	struct alpha_sgmap_cookie *a;
 	bus_dmamap_t map;
 	int error;
 
-	error = cia_bus_dmamap_create(t, size, nsegments, maxsegsz,
+	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
 	    boundary, flags, dmamp);
 	if (error)
 		return (error);
 
 	map = *dmamp;
-	a = map->_dm_cookie;
 
-	if (flags & BUS_DMA_ALLOCNOW)
-		error = pci_dma_sgmap_alloc(map, round_page(size),
-		    &ccp->cc_sgmap, a, flags);
+	a = malloc(sizeof(struct alpha_sgmap_cookie), M_DEVBUF,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
+	if (a == NULL) {
+		_bus_dmamap_destroy(t, map);
+		return (ENOMEM);
+	}
+	bzero(a, sizeof(struct alpha_sgmap_cookie));
+	map->_dm_sgcookie = a;
+
+	if (flags & BUS_DMA_ALLOCNOW) {
+		error = alpha_sgmap_alloc(map, round_page(size),
+		    &ccp->cc_sgmap, flags);
+		if (error)
+			cia_bus_dmamap_destroy_sgmap(t, map);
+	}
 
 	return (error);
 }
 
 /*
- * Destroy a CIA DMA map.
+ * Destroy a CIA SGMAP-mapped DMA map.
  */
 void
-cia_bus_dmamap_destroy(t, map)
+cia_bus_dmamap_destroy_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
 	struct cia_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
+	struct alpha_sgmap_cookie *a = map->_dm_sgcookie;
 
 	if (a->apdc_flags & APDC_HAS_SGMAP)
-		pci_dma_sgmap_free(&ccp->cc_sgmap, a);
+		alpha_sgmap_free(&ccp->cc_sgmap, a);
 
-	free(map->_dm_cookie, M_DEVBUF);
+	free(a, M_DEVBUF);
 	_bus_dmamap_destroy(t, map);
 }
 
@@ -356,11 +331,10 @@ cia_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 	int flags;
 {
 	struct cia_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
 	int error;
 
-	error = pci_dma_sgmap_load(t, map, buf, buflen, p, flags,
-	    &ccp->cc_sgmap, a);
+	error = pci_pte64_sgmap_load(t, map, buf, buflen, p, flags,
+	    &ccp->cc_sgmap);
 	if (error == 0)
 		CIA_TLB_INVALIDATE();
 
@@ -393,10 +367,9 @@ cia_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 	int flags;
 {
 	struct cia_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
 	int error;
 
-	error = pci_dma_sgmap_load_mbuf(t, map, m, flags, &ccp->cc_sgmap, a);
+	error = pci_pte64_sgmap_load_mbuf(t, map, m, flags, &ccp->cc_sgmap);
 	if (error == 0)
 		CIA_TLB_INVALIDATE();
 
@@ -429,10 +402,9 @@ cia_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 	int flags;
 {
 	struct cia_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
 	int error;
 
-	error = pci_dma_sgmap_load_uio(t, map, uio, flags, &ccp->cc_sgmap, a);
+	error = pci_pte64_sgmap_load_uio(t, map, uio, flags, &ccp->cc_sgmap);
 	if (error == 0)
 		CIA_TLB_INVALIDATE();
 
@@ -469,11 +441,10 @@ cia_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
 	int flags;
 {
 	struct cia_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
 	int error;
 
-	error = pci_dma_sgmap_load_raw(t, map, segs, nsegs, size, flags,
-	    &ccp->cc_sgmap, a);
+	error = pci_pte64_sgmap_load_raw(t, map, segs, nsegs, size, flags,
+	    &ccp->cc_sgmap);
 	if (error == 0)
 		CIA_TLB_INVALIDATE();
 
@@ -484,21 +455,18 @@ cia_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
  * Unload a CIA DMA map.
  */
 void
-cia_bus_dmamap_unload(t, map)
+cia_bus_dmamap_unload_sgmap(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
 	struct cia_config *ccp = t->_cookie;
-	struct alpha_pci_dma_cookie *a = map->_dm_cookie;
 
 	/*
 	 * Invalidate any SGMAP page table entries used by this
 	 * mapping.
 	 */
-	if (a->apdc_flags & APDC_USING_SGMAP) {
-		pci_dma_sgmap_unload(t, map, &ccp->cc_sgmap, a);
-		CIA_TLB_INVALIDATE();
-	}
+	pci_pte64_sgmap_unload(t, map, &ccp->cc_sgmap);
+	CIA_TLB_INVALIDATE();
 
 	/*
 	 * Do the generic bits of the unload.
