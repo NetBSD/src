@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.32 1999/01/20 02:59:37 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.33 1999/01/25 01:09:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,12 +39,15 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.32 1999/01/20 02:59:37 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.33 1999/01/25 01:09:34 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
 #include <sys/types.h>
+
+#include <errno.h>
 #include <grp.h>
 #include <limits.h>
 #include <nsswitch.h>
@@ -52,6 +55,7 @@ __RCSID("$NetBSD: getgrent.c,v 1.32 1999/01/20 02:59:37 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+
 #ifdef HESIOD
 #include <hesiod.h>
 #endif
@@ -237,6 +241,12 @@ _dns_grscan(rv, cb_data, ap)
 	const char	*name = va_arg(ap, const char *);
 
 	char		**hp;
+	void		 *context;
+	int		  r;
+
+	r = NS_UNAVAIL;
+	if (hesiod_init(&context) == -1)
+		return (r);
 
 	for (;;) {
 		if (search) {
@@ -251,33 +261,33 @@ _dns_grscan(rv, cb_data, ap)
 		}
 
 		line[sizeof(line) - 1] = '\0';
-		hp = hes_resolve(line, "group");
+		hp = hesiod_resolve(context, line, "group");
 		if (hp == NULL) {
-			switch (hes_error()) {
-			case HES_ER_NOTFOUND:
+			if (errno == ENOENT) {
 				if (!search) {
 					__gr_hesnum = 0;
 					_gr_nomore = 1;
-					return NS_SUCCESS;
-				}
-				return NS_NOTFOUND;
-			case HES_ER_OK:
-				abort();
-				break;
-			default:
-				return NS_UNAVAIL;
+					r = NS_SUCCESS;
+				} else
+					r = NS_NOTFOUND;
 			}
+			break;
 		}
 
 						/* only check first elem */
 		strncpy(line, hp[0], sizeof(line));
 		line[sizeof(line) - 1] = '\0';
-		hes_free(hp);
-		if (matchline(search, gid, name))
-			return NS_SUCCESS;
-		else if (search)
-			return NS_NOTFOUND;
+		hesiod_free_list(context, hp);
+		if (matchline(search, gid, name)) {
+			r = NS_SUCCESS;
+			break;
+		} else if (search) {
+			r = NS_NOTFOUND;
+			break;
+		}
 	}
+	hesiod_end(context);
+	return (r);
 }
 #endif
 
