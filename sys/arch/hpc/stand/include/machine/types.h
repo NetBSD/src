@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2001/03/04 16:59:47 uch Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2001/04/30 13:41:33 uch Exp $	*/
 
 /* Windows CE architecture */
 
@@ -7,6 +7,12 @@
 
 #include <sys/cdefs.h>
 #include <machine/int_types.h>
+
+/* BSD types. */
+typedef	unsigned char		u_char;
+typedef	unsigned short		u_short;
+typedef	unsigned int		u_int;
+typedef	unsigned long		u_long;
 
 typedef unsigned char		u_int8_t;
 typedef unsigned short		u_int16_t;
