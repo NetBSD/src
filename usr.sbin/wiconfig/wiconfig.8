@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.8 2000/07/03 10:16:10 enami Exp $
+.\"	$NetBSD: wiconfig.8,v 1.9 2000/07/04 05:20:03 itojun Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -42,25 +42,57 @@
 .Nm wiconfig
 .Ar interface
 .Op Fl o
+.Bk -words
 .Op Fl e Ar 0|1
+.Ek
+.Bk -words
 .Oo
 .Fl k Ar key
 .Op Fl v Ar 1|2|3|4
 .Oc
+.Ek
+.Bk -words
 .Op Fl t Ar tx rate
+.Ek
+.Bk -words
 .Op Fl n Ar network name
+.Ek
+.Bk -words
 .Op Fl s Ar station name
+.Ek
+.Bk -words
 .Op Fl c Ar 0|1
+.Ek
+.Bk -words
 .Op Fl q Ar SSID
+.Ek
+.Bk -words
 .Op Fl p Ar port type
+.Ek
+.Bk -words
 .Op Fl a Ar access point density
+.Ek
+.Bk -words
 .Op Fl m Ar MAC address
+.Ek
+.Bk -words
 .Op Fl d Ar max data length
+.Ek
+.Bk -words
 .Op Fl r Ar RTS threshold
+.Ek
+.Bk -words
 .Op Fl f Ar frequency
+.Ek
+.Bk -words
 .Op Fl P Ar 0|1
+.Ek
+.Bk -words
 .Op Fl S Ar max sleep duration
+.Ek
+.Bk -words
 .Op Fl T Ar 1|2|3|4
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -85,17 +117,16 @@ argument given to
 should be the logical interface name associated with the WaveLAN/IEEE
 device (wi0, wi1, etc...).
 .Sh OPTIONS
+With no extra options,
+.Nm
+will display the current settings of the specified WaveLAN/IEEE interface.
+.Pp
 The options are as follows:
 .Pp
 .Bl -tag -width Fl
 .It Fl o
-Display the current settings of the specified WaveLAN/IEEE interface.
-This retrieves the current card settings from the driver and prints them
-out. Using the additional
-.Fl o
-flag will cause
-.Nm
-to print out the statistics counters instead of the card settings.
+Print out the statistics counters instead of the card settings.
+Note that, however, the statictics will only be updated every 1 minutes or so.
 .It Fl e Ar 0|1
 Enable or disable WEP encryption. Permitted values are
 .Ar 0
