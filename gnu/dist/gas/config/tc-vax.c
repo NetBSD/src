@@ -1013,10 +1013,10 @@ md_assemble (instruction_string)
 			       */
 			      p = frag_var (rs_machine_dependent, 5, 2,
 #ifndef OBJ_VMS
-			       (flag_want_pic && (*(unsigned char *)opcode_low_byteP == 0xfa 
+			       (flag_want_pic && !at && (*(unsigned char *)opcode_low_byteP == 0xfa 
 				       || *(unsigned char *)opcode_low_byteP == 0xfb))
 				 ? ENCODE_RELAX (STATE_PC_RELATIVE_CALL, STATE_UNDF) :
-			       ((flag_want_pic && (*(unsigned char *)opcode_low_byteP == 0x16 
+			       ((flag_want_pic && !at && (*(unsigned char *)opcode_low_byteP == 0x16 
 				       || *(unsigned char *)opcode_low_byteP == 0x17))
 				 ? ENCODE_RELAX (STATE_PC_RELATIVE_JMP, STATE_UNDF) :
 #endif
