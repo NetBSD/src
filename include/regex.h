@@ -20,7 +20,7 @@ typedef struct {
 
 
 /* === regcomp.c === */
-extern int regcomp __P((regex_t *preg, const char *pattern, int cflags));
+extern int regcomp __P((regex_t *, const char *, int));
 #define	REG_BASIC	0000
 #define	REG_EXTENDED	0001
 #define	REG_ICASE	0002
@@ -50,12 +50,11 @@ extern int regcomp __P((regex_t *preg, const char *pattern, int cflags));
 #define	REG_INVARG	16
 #define	REG_ATOI	255	/* convert name to number (!) */
 #define	REG_ITOA	0400	/* convert number to name (!) */
-extern size_t regerror __P((int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size));
-static char *regatoi __P((const regex_t *preg, char *localbuf));
+extern size_t regerror __P((int, const regex_t *, char *, size_t));
 
 
 /* === regexec.c === */
-extern int regexec __P((const regex_t *preg, const char *string, size_t nmatch, regmatch_t pmatch[], int eflags));
+extern int regexec __P((const regex_t *, const char *, size_t, regmatch_t [], int));
 #define	REG_NOTBOL	00001
 #define	REG_NOTEOL	00002
 #define	REG_STARTEND	00004
@@ -65,7 +64,7 @@ extern int regexec __P((const regex_t *preg, const char *string, size_t nmatch, 
 
 
 /* === regfree.c === */
-extern void regfree __P((regex_t *preg));
+extern void regfree __P((regex_t *));
 
 #ifdef __cplusplus
 }
