@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.1.2.1 1997/02/07 18:06:57 is Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.1.2.2 1997/02/18 13:27:44 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -115,14 +115,14 @@ int	ether_delmulti __P((struct ifreq *, struct ethercom *));
  * Ethernet multicast address structure.  There is one of these for each
  * multicast address or range of multicast addresses that we are supposed
  * to listen to on a particular interface.  They are kept in a linked list,
- * rooted in the interface's arpcom structure.  (This really has nothing to
+ * rooted in the interface's ethercom structure.  (This really has nothing to
  * do with ARP, or with the Internet address family, but this appears to be
  * the minimally-disrupting place to put it.)
  */
 struct ether_multi {
 	u_int8_t enm_addrlo[ETHER_ADDR_LEN]; /* low  or only address of range */
 	u_int8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
-	struct	 ethercom *enm_ec;	/* back pointer to arpcom */
+	struct	 ethercom *enm_ec;	/* back pointer to ethercom */
 	u_int	 enm_refcount;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
 };
@@ -137,7 +137,7 @@ struct ether_multistep {
 
 /*
  * Macro for looking up the ether_multi record for a given range of Ethernet
- * multicast addresses connected to a given arpcom structure.  If no matching
+ * multicast addresses connected to a given ethercom structure.  If no matching
  * record is found, "enm" returns NULL.
  */
 #define ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm)			\
@@ -170,7 +170,7 @@ struct ether_multistep {
 
 #define ETHER_FIRST_MULTI(step, ec, enm) \
 	/* struct ether_multistep step; */ \
-	/* struct arpcom *ac; */ \
+	/* struct ethercom *ec; */ \
 	/* struct ether_multi *enm; */ \
 { \
 	(step).e_enm = (ec)->ec_multiaddrs.lh_first; \

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.21.4.3 1997/02/12 16:52:14 is Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.21.4.4 1997/02/18 13:27:42 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -349,7 +349,6 @@ ether_input(ifp, eh, m)
 	int s;
 #if defined (ISO) || defined (LLC)
 	register struct llc *l;
-	struct ethercom *ac = (struct ethercom *)ifp;
 #endif
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -451,9 +450,11 @@ ether_input(ifp, eh, m)
 				sa.sa_len = sizeof(sa);
 				eh2 = (struct ether_header *)sa.sa_data;
 				for (i = 0; i < 6; i++) {
-					eh2->ether_shost[i] = c = eh->ether_dhost[i];
+					eh2->ether_shost[i] = c = 
+					    eh->ether_dhost[i];
 					eh2->ether_dhost[i] = 
-						eh->ether_dhost[i] = eh->ether_shost[i];
+					    eh->ether_dhost[i] =
+					    eh->ether_shost[i];
 					eh->ether_shost[i] = c;
 				}
 				ifp->if_output(ifp, m, &sa, NULL);
