@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.22 2002/09/24 20:27:07 mycroft Exp $	 */
+/*	$NetBSD: symbol.c,v 1.23 2002/10/03 20:35:20 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -74,7 +74,7 @@ _rtld_elf_hash(name)
 }
 
 const Elf_Sym *
-_rtld_symlook_list(const char *name, unsigned long hash, Objlist *objlist,
+_rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
   const Obj_Entry **defobj_out, bool in_plt)
 {
 	const Elf_Sym *symp;
@@ -85,6 +85,7 @@ _rtld_symlook_list(const char *name, unsigned long hash, Objlist *objlist,
 	def = NULL;
 	defobj = NULL;
 	SIMPLEQ_FOREACH(elm, objlist, link) {
+		rdbg(("search object %p (%s)", elm->obj, elm->obj->path));
 		if ((symp = _rtld_symlook_obj(name, hash, elm->obj, in_plt))
 		    != NULL) {
 			if ((def == NULL) ||
@@ -127,6 +128,7 @@ _rtld_symlook_obj(name, hash, obj, in_plt)
 		assert(symnum < obj->nchains);
 		symp = obj->symtab + symnum;
 		strp = obj->strtab + symp->st_name;
+		rdbg(("check %s vs %s in %p", name, strp, obj));
 		if (name[1] == strp[1] && !strcmp(name, strp)) {
 			if (symp->st_shndx != SHN_UNDEF)
 				return symp;
@@ -192,6 +194,7 @@ _rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
 	
 	/* Search all objects loaded at program start up. */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+		rdbg(("search _rtld_list_main"));
 		symp = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, in_plt);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
@@ -204,6 +207,7 @@ _rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
 	SIMPLEQ_FOREACH(elm, &refobj->dldags, link) {
 		if (def != NULL && ELF_ST_BIND(def->st_info) != STB_WEAK)
 			break;
+		rdbg(("search DAG with root %p (%s)", elm->obj, elm->obj->path));
 		symp = _rtld_symlook_list(name, hash, &elm->obj->dagmembers, &obj, in_plt);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
@@ -214,6 +218,7 @@ _rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
 	
 	/* Search all RTLD_GLOBAL objects. */
 	if (def == NULL || ELF_ST_BIND(def->st_info) == STB_WEAK) {
+		rdbg(("search _rtld_list_global"));
 		symp = _rtld_symlook_list(name, hash, &_rtld_list_global, &obj, in_plt);
 		if (symp != NULL &&
 		    (def == NULL || ELF_ST_BIND(symp->st_info) != STB_WEAK)) {
@@ -234,8 +239,10 @@ _rtld_find_symdef(symnum, refobj, defobj_out, in_plt)
 	
 	if (def != NULL)
 		*defobj_out = defobj;
-	else
+	else {
+		rdbg(("lookup failed"));
 		_rtld_error("%s: Undefined %ssymbol \"%s\" (symnum = %ld)",
 		    refobj->path, in_plt ? "PLT " : "", name, symnum);
+	}
 	return def;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.61 2002/10/03 01:09:21 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.62 2002/10/03 20:35:20 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -115,6 +115,7 @@ typedef struct _rtld_library_xform_t {
 
 #define RTLD_MAGIC	0xd550b87a
 #define RTLD_VERSION	1
+#define	RTLD_MAIN	0x800
 
 typedef struct Struct_Obj_Entry {
 	Elf32_Word      magic;		/* Magic number (sanity check) */
@@ -183,7 +184,8 @@ typedef struct Struct_Obj_Entry {
 					 * "-Bsymbolic" */
 			printed:1,	/* True if ldd has printed it */
 			isdynamic:1,	/* True if this is a pure PIC object */
-			main:1;		/* True if on _rtld_list_main */
+			mainref:1,	/* True if on _rtld_list_main */
+			globalref:1;	/* True if on _rtld_list_global */
 
 	struct link_map linkmap;	/* for GDB */
 
@@ -258,7 +260,7 @@ const Elf_Sym *_rtld_symlook_obj __P((const char *, unsigned long,
 const Elf_Sym *_rtld_find_symdef __P((unsigned long, const Obj_Entry *,
     const Obj_Entry **, bool));
 const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
-  Objlist *, const Obj_Entry **, bool);
+    const Objlist *, const Obj_Entry **, bool);
 
 /* map_object.c */
 Obj_Entry *_rtld_map_object __P((char *, int, const struct stat *));
