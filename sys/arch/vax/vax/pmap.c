@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 2002/03/21 22:08:08 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.112 2002/04/02 09:47:34 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -587,10 +587,12 @@ rmspace(struct pmap *pm)
 		}
 	}
 
-	extent_free(ptemap, (u_long)pm->pm_p0br,
-	    pm->pm_p0lr * PPTESZ, EX_WAITOK);
-	extent_free(ptemap, (u_long)pm->pm_p1ap,
-	    (NPTEPERREG - pm->pm_p1lr) * PPTESZ, EX_WAITOK);
+	if (pm->pm_p0lr != 0)
+		extent_free(ptemap, (u_long)pm->pm_p0br,
+		    pm->pm_p0lr * PPTESZ, EX_WAITOK);
+	if (pm->pm_p1lr != NPTEPERREG)
+		extent_free(ptemap, (u_long)pm->pm_p1ap,
+		    (NPTEPERREG - pm->pm_p1lr) * PPTESZ, EX_WAITOK);
 	pm->pm_p0br = pm->pm_p1br = (struct pte *)KERNBASE;
 	pm->pm_p0lr = 0;
 	pm->pm_p1lr = NPTEPERREG;
