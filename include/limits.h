@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)limits.h	5.9 (Berkeley) 4/3/91
+ *	@(#)limits.h	8.2 (Berkeley) 1/4/94
  */
 
 #ifndef _LIMITS_H_
@@ -46,6 +46,9 @@
 #define	_POSIX_OPEN_MAX		16
 #define	_POSIX_PATH_MAX		255
 #define	_POSIX_PIPE_BUF		512
+#define	_POSIX_SSIZE_MAX	32767
+#define	_POSIX_STREAM_MAX	8
+#define	_POSIX_TZNAME_MAX	3
 
 #define	_POSIX2_BC_BASE_MAX	99
 #define	_POSIX2_BC_DIM_MAX	2048
