@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.16 2003/07/12 13:47:44 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.17 2003/07/12 13:53:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.16 2003/07/12 13:47:44 itojun Exp $");
+__RCSID("$NetBSD: util.c,v 1.17 2003/07/12 13:53:08 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -458,7 +458,10 @@ fetchname(char *at, int strip_leading, int assume_exists)
 		size_t pathlen = filebase - name;
 
 		/* Put any leading path into `tmpbuf'. */
+		if (pathlen >= sizeof(tmpbuf))
+			return NULL;
 		strncpy(tmpbuf, name, pathlen);
+		tmpbuf[pathlen] = '\0';
 
 #define try(f, a1, a2) \
     (Sprintf(tmpbuf + pathlen, f, a1, a2), stat(tmpbuf, &filestat) == 0)
