@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpf.c,v 1.1.1.5 1997/11/14 08:04:37 mrg Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.1.1.6 1998/05/17 16:29:54 veego Exp $	*/
 
 /*
  * (C)opyright 1995-1997 Darren Reed. (from tcplog)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.1.1.6 1997/11/14 08:06:16 mrg Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.1.1.7 1998/05/17 16:30:03 veego Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT

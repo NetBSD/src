@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.1.1.3 1997/11/14 08:06:19 mrg Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.1.1.4 1998/05/17 16:30:03 veego Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -7,17 +7,17 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_log.c,v 2.0.2.13.2.2 1997/11/12 10:52:21 darrenr Exp 
+ * Id: ip_log.c,v 2.0.2.13.2.3 1997/11/20 12:41:40 darrenr Exp 
  */
 #ifdef	IPFILTER_LOG
 # ifndef SOLARIS
 #  define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 # endif
 
+# if defined(KERNEL) && !defined(_KERNEL)
+#  define       _KERNEL
+# endif
 # ifdef  __FreeBSD__
-#  if defined(KERNEL) && !defined(_KERNEL)
-#   define       _KERNEL
-#  endif
 #  if defined(_KERNEL) && !defined(IPFILTER_LKM)
 #   include <sys/osreldate.h>
 #  else

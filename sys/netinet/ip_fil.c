@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.1.1.8 1997/11/14 08:05:39 mrg Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.1.1.9 1998/05/17 16:30:00 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.0.2.44.2.2 1997/11/12 10:49:25 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.0.2.44.2.7 1998/05/03 10:55:49 darrenr Exp ";
 #endif
 
 #ifndef	SOLARIS
@@ -166,7 +166,7 @@ struct devsw iplsw = {
 };
 #endif /* _BSDI_VERSION >= 199510  && _KERNEL */
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)  || (_BSDI_VERSION >= 199701)
 # include <sys/conf.h>
 # if defined(NETBSD_PF)
 #  include <net/pfil.h>
@@ -277,7 +277,7 @@ int ipldetach()
 
 	fr_checkp = fr_savep;
 	inetsw[0].pr_slowtimo = fr_saveslowtimo;
-	frflush(IPL_LOGIPF, (caddr_t)&i);
+	frflush(IPL_LOGIPF, &i);
 	ipl_inited = 0;
 
 # ifdef NETBSD_PF
@@ -341,7 +341,7 @@ struct proc *p;
 )
 #endif
 dev_t dev;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__) || (_BSDI_VERSION >= 199701)
 u_long cmd;
 #else
 int cmd;
@@ -353,7 +353,7 @@ int mode;
 #if defined(_KERNEL) && !SOLARIS
 	int s;
 #endif
-	int error = 0, unit = 0;
+	int error = 0, unit = 0, tmp;
 
 #ifdef	_KERNEL
 	unit = GET_MINOR(dev);
@@ -462,8 +462,11 @@ int mode;
 	case	SIOCIPFFL :
 		if (!(mode & FWRITE))
 			error = EPERM;
-		else
-			frflush(unit, data);
+		else {
+			IRCOPY(data, (caddr_t)&tmp, sizeof(tmp));
+			frflush(unit, &tmp);
+			IWCOPY((caddr_t)&tmp, data, sizeof(tmp));
+		}
 		break;
 #ifdef	IPFILTER_LOG
 	case	SIOCIPFFB :
@@ -788,7 +791,7 @@ struct tcpiphdr *ti;
 	struct tcpiphdr *tp;
 	struct tcphdr *tcp;
 	struct mbuf *m;
-	int tlen = 0;
+	int tlen = 0, err;
 	ip_t *ip;
 # if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
 	struct route ro;
@@ -839,16 +842,16 @@ struct tcpiphdr *ti;
 
 # if defined(__FreeBSD_version) && (__FreeBSD_version >= 220000)
 	bzero((char *)&ro, sizeof(ro));
-	(void) ip_output(m, (struct mbuf *)0, &ro, 0, 0);
+	err = ip_output(m, (struct mbuf *)0, &ro, 0, 0);
 	if (ro.ro_rt)
 		RTFREE(ro.ro_rt);
 # else
 	/*
 	 * extra 0 in case of multicast
 	 */
-	(void) ip_output(m, (struct mbuf *)0, 0, 0, 0);
+	err = ip_output(m, (struct mbuf *)0, 0, 0, 0);
 # endif
-	return 0;
+	return err;
 }
 
 
@@ -932,7 +935,8 @@ frdest_t *fdp;
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = (struct sockaddr_in *)&ro->ro_rt->rt_gateway;
 	}
-	ro->ro_rt->rt_use++;
+	if (ro->ro_rt)
+		ro->ro_rt->rt_use++;
 
 	/*
 	 * For input packets which are being "fastrouted", they won't

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.1.1.8 1997/11/14 08:05:50 mrg Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.1.1.9 1998/05/17 16:30:01 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.

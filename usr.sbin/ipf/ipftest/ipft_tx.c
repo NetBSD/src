@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_tx.c,v 1.1.1.8 1997/11/14 08:03:23 mrg Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.1.1.9 1998/05/17 16:29:45 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -45,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.0.2.11.2.1 1997/11/12 10:56:11 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.0.2.11.2.2 1998/04/08 14:31:16 darrenr Exp ";
 #endif
 
 extern	int	opts;
@@ -91,7 +91,7 @@ int	*resolved;
 			fprintf(stderr, "can't resolve hostname: %s\n", host);
 			return 0;
 		}
-		return np->n_net;
+		return htonl(np->n_net);
 	}
 	return *(u_32_t *)hp->h_addr;
 }
