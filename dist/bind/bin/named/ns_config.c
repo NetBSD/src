@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_config.c,v 1.1.1.1 1999/11/20 18:53:59 veego Exp $	*/
+/*	$NetBSD: ns_config.c,v 1.2 1999/11/20 19:13:29 veego Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: ns_config.c,v 8.104 1999/11/08 23:09:42 vixie Exp";
@@ -1700,7 +1700,7 @@ static struct res_sym order_table [] = {
  */
 const char *
 p_order(int order) {
-	return (__sym_ntos(order_table, order, (int *)0));
+	return (sym_ntos(order_table, order, (int *)0));
 }
 
 /*
