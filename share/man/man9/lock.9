@@ -1,4 +1,4 @@
-.\"     $NetBSD: lock.9,v 1.18 2003/06/30 12:31:51 wiz Exp $
+.\"     $NetBSD: lock.9,v 1.19 2004/05/22 18:00:30 yamt Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -276,8 +276,17 @@ when the lock is acquired.
 .It Fn lockstatus "lock"
 Determine the status of lock
 .Fa lock .
-Returns LK_EXCLUSIVE or LK_SHARED for exclusive-access and
-shared-access locks respectively.
+Returns one of the followings:
+.Bl -tag -width compact
+.It LK_EXCLUSIVE
+The current lwp or cpu holds an exclusive-access lock.
+.It LK_EXCLOTHER
+The other lwp or cpu holds an exclusive-access lock.
+.It LK_SHARED
+Someone holds shared-access lock.
+.It 0
+Not locked.
+.El
 .It Fn lockmgr_printinfo "lock"
 Print out information about state of lock
 .Fa lock .
