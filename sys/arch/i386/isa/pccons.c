@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.14 1993/10/26 12:14:11 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.15 1993/10/26 14:17:55 mycroft Exp $
  */
 
 /*
@@ -422,7 +422,7 @@ pcforceintr(aux)
 }
 
 static void
-pcattach(self, parent, aux)
+pcattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
