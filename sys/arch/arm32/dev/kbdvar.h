@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdvar.h,v 1.1 1997/10/14 19:35:40 mark Exp $	*/
+/*	$NetBSD: kbdvar.h,v 1.2 1998/01/18 03:51:13 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -71,6 +71,7 @@ struct kbd_softc {
 
 /* function prototypes used by attach routines */
 
+int kbdreset __P((struct kbd_softc *sc));
 int kbdintr __P((void *arg));
 
 /* End of kbdvar.h */
