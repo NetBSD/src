@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.128 2004/04/28 05:21:55 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.129 2004/04/28 05:23:25 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1368,3 +1368,9 @@ sys/dev/acpi/acpica/Osd/OsdHardware.c		1.8
 
 	Fix 16bit-wide access to PCI configuration space.
 	[kochi, ticket #189]
+
+sys/dev/acpi/acpica/Subsystem/acobject.h	1.9
+sys/dev/acpi/acpica/Subsystem/exmutex.c		1.13
+
+	A bugfix for Mutex handling.
+	[kochi, ticket #190]
