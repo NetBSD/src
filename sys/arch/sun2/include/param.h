@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2001/04/10 12:24:05 fredette Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2001/05/14 20:35:58 fredette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,22 +53,22 @@
 #define	MACHINE_ARCH	"m68000"
 #define	MID_MACHINE	MID_M680002K
 
+#define PGSHIFT		11		/* LOG2(NBPG) */
+
 #ifdef MSGBUFSIZE
 #error "MSGBUFSIZE is not user-adjustable for this arch"
 #endif
-#define MSGBUFOFF	0x200
-#define MSGBUFSIZE	(NBPG - MSGBUFOFF)
+#define MSGBUFOFF	0x0
+#define MSGBUFSIZE	((NBPG * 4) - MSGBUFOFF)
 
 /* This is needed by ps (actually USPACE). */
 #define	UPAGES		(16384 / NBPG)		/* pages of u-area */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 
-#define	KERNBASE	0x00008000	/* start of kernel virtual */
-#define	KERNTEXTOFF	0x0000C000	/* start of kernel text */
+#define	KERNBASE	0x00006000	/* start of kernel virtual */
 #define	KERN_END	0x00E00000	/* end of kernel virtual */
 
-#define PGSHIFT		11		/* LOG2(NBPG) */
 #define SEGSHIFT	15	        /* LOG2(NBSG) */
 #define NBSG		(1 << SEGSHIFT)	/* bytes/segment */
 #define	SEGOFSET	(NBSG-1)	/* byte offset into segment */
