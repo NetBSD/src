@@ -37,7 +37,8 @@
  *
  * from: Utah $Hdr: frame.h 1.8 92/12/20$
  *
- *	@(#)frame.h	8.1 (Berkeley) 6/10/93
+ *	from: @(#)frame.h	8.1 (Berkeley) 6/10/93
+ *	$Id: frame.h,v 1.7 1994/05/23 06:32:35 mycroft Exp $
  */
 
 struct frame {
