@@ -1,4 +1,4 @@
-/*	$NetBSD: cypher.c,v 1.15 2000/09/21 17:44:34 jsm Exp $	*/
+/*	$NetBSD: cypher.c,v 1.16 2000/09/22 08:19:21 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: cypher.c,v 1.15 2000/09/21 17:44:34 jsm Exp $");
+__RCSID("$NetBSD: cypher.c,v 1.16 2000/09/22 08:19:21 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,8 +54,6 @@ cypher()
 	char   *filename, *rfilename;
 	size_t	filename_len;
 
-	while (wordtype[wordnumber] == ADJS)
-		wordnumber++;
 	while (wordnumber <= wordcount) {
 		switch (wordvalue[wordnumber]) {
 

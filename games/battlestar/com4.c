@@ -1,4 +1,4 @@
-/*	$NetBSD: com4.c,v 1.10 2000/09/17 23:04:17 jsm Exp $	*/
+/*	$NetBSD: com4.c,v 1.11 2000/09/22 08:19:21 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com4.c,v 1.10 2000/09/17 23:04:17 jsm Exp $");
+__RCSID("$NetBSD: com4.c,v 1.11 2000/09/22 08:19:21 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -57,7 +57,7 @@ take(from)
 		wordvalue[wordnumber] = TAKEOFF;
 		return (cypher());
 	} else {
-		while (wordtype[++wordnumber] == ADJS);
+		wordnumber++;
 		while (wordnumber <= wordcount && wordtype[wordnumber] == OBJECT) {
 			value = wordvalue[wordnumber];
 			printf("%s:\n", objsht[value]);
@@ -222,8 +222,7 @@ throw(name)
 			deposit = location[position].down;
 			break;
 		}
-		wordnumber = first;
-		while (wordtype[++wordnumber] == ADJS);
+		wordnumber = first + 1;
 		while (wordnumber <= wordcount) {
 			value = wordvalue[wordnumber];
 			if (deposit && testbit(location[position].objects, value)) {
@@ -275,7 +274,7 @@ drop(name)
 	int     firstnumber, value;
 
 	firstnumber = wordnumber;
-	while (wordtype[++wordnumber] == ADJS);
+	wordnumber++;
 	while (wordnumber <= wordcount && (wordtype[wordnumber] == OBJECT || wordtype[wordnumber] == NOUNS)) {
 		value = wordvalue[wordnumber];
 		printf("%s:\n", objsht[value]);
@@ -337,7 +336,7 @@ eat()
 	int     firstnumber, value;
 
 	firstnumber = wordnumber;
-	while (wordtype[++wordnumber] == ADJS);
+	wordnumber++;
 	while (wordnumber <= wordcount) {
 		value = wordvalue[wordnumber];
 		switch (value) {
