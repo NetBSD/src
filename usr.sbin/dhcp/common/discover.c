@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.4.2.2 2000/10/18 04:11:03 tv Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.4.2.3 2000/12/13 22:47:04 he Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -669,6 +669,7 @@ isc_result_t got_one (h)
 	struct sockaddr_in from;
 	struct hardware hfrom;
 	struct iaddr ifrom;
+	isc_result_t status;
 	int result;
 	union {
 		unsigned char packbuf [4095]; /* Packet input buffer.
@@ -682,30 +683,37 @@ isc_result_t got_one (h)
 		return ISC_R_INVALIDARG;
 	ip = (struct interface_info *)h;
 
-	if ((result =
-	     receive_packet (ip, u.packbuf, sizeof u, &from, &hfrom)) < 0) {
-		log_error ("receive_packet failed on %s: %m", ip -> name);
-		return ISC_R_UNEXPECTED;
+	for (status = ISC_R_UNEXPECTED; ; status = ISC_R_SUCCESS) {
+		if ((result = receive_packet (ip, u.packbuf, sizeof u, &from,
+		    &hfrom)) < 0) {
+			if (errno != EWOULDBLOCK) {
+				log_error ("receive_packet failed on %s: %m",
+				    ip -> name);
+				return ISC_R_UNEXPECTED;
+			} else
+				return status;
+		}
+		if (result == 0)
+			return status;
+
+		/* If we didn't at least get the fixed portion of the BOOTP
+		   packet, drop the packet.  We're allowing packets with no
+		   sname or filename, because we're aware of at least one
+		   client that sends such packets, but this definitely falls
+		   into the category of being forgiving. */
+		if (result <
+		    DHCP_FIXED_NON_UDP - DHCP_SNAME_LEN - DHCP_FILE_LEN)
+			continue;
+
+		if (bootp_packet_handler) {
+			ifrom.len = 4;
+			memcpy (ifrom.iabuf, &from.sin_addr, ifrom.len);
+
+			(*bootp_packet_handler) (ip, &u.packet,
+						 (unsigned)result,
+						 from.sin_port, ifrom, &hfrom);
+		}
 	}
-	if (result == 0)
-		return ISC_R_UNEXPECTED;
-
-	/* If we didn't at least get the fixed portion of the BOOTP
-	   packet, drop the packet.  We're allowing packets with no
-	   sname or filename, because we're aware of at least one
-	   client that sends such packets, but this definitely falls
-	   into the category of being forgiving. */
-	if (result < DHCP_FIXED_NON_UDP - DHCP_SNAME_LEN - DHCP_FILE_LEN)
-		return ISC_R_UNEXPECTED;
-
-	if (bootp_packet_handler) {
-		ifrom.len = 4;
-		memcpy (ifrom.iabuf, &from.sin_addr, ifrom.len);
-
-		(*bootp_packet_handler) (ip, &u.packet, (unsigned)result,
-					 from.sin_port, ifrom, &hfrom);
-	}
-	return ISC_R_SUCCESS;
 }
 
 isc_result_t interface_set_value (omapi_object_t *h,
