@@ -1,4 +1,4 @@
-/*	$NetBSD: netcryptvoid.c,v 1.5 1999/04/12 20:48:07 pk Exp $	*/
+/*	$NetBSD: netcryptvoid.c,v 1.6 2000/12/13 23:00:32 scw Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -53,7 +53,7 @@
  ***    G L O B A L   V A R I A B L E S    ***
  *********************************************/
 
-int cryptflag = 0;		/* whether to encrypt/decrypt data */
+int cryptflag;			/* whether to encrypt/decrypt data */
 char *cryptbuf;			/* buffer for data encryption/decryption */
 
 int netcrypt (pword)
