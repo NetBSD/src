@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.8 1998/05/17 19:00:56 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.9 1998/05/22 09:26:33 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -61,27 +61,6 @@ static	void	ka410_reboot __P((int));
 
 extern  short *clk_page;
 
-static	struct uc_map ka410_map[] = {
-	{ KA410_CFGTST,		KA410_CFGTST+1023,	1024,	0 },
-	{ KA410_ROM_BASE,	KA410_ROM_END,	KA410_ROM_SIZE, 0 },
-	{ (int)KA410_CPU_BASE,	KA410_CPU_END,	KA410_CPU_SIZE, 0 },
-	{ KA410_NWA_BASE,	KA410_NWA_END,	KA410_NWA_SIZE, 0 },
-	{ KA410_SER_BASE,	KA410_SER_END,	KA410_SER_SIZE, 0 },
-	{ (int)KA410_WAT_BASE,	KA410_WAT_END,	KA410_WAT_SIZE, 0 },
-#if 0
-	{ KA410_SCS_BASE,	KA410_SCS_END,	KA410_SCS_SIZE, 0 },
-#else
-	{ 0x200C0000,		0x200C01FF,	0x200,		0 },
-#endif
-	{ KA410_LAN_BASE,	KA410_LAN_END,	KA410_LAN_SIZE, 0 },
-	{ KA410_CUR_BASE,	KA410_CUR_END,	KA410_CUR_SIZE, 0 },
-	{ KA410_DMA_BASE,	KA410_DMA_END,	KA410_DMA_SIZE, 0 },
-	/*
-	 * there's more to come, eg. framebuffers (mono + GPX)
-	 */
-	{0, 0, 0, 0},
-};
-
 /* 
  * Declaration of 410-specific calls.
  */
@@ -94,10 +73,6 @@ struct	cpu_dep ka410_calls = {
 	chip_clkread,
 	chip_clkwrite,
 	1,      /* ~VUPS */
-	(void*)KA410_INTREQ,      /* Used by vaxstation */
-	(void*)KA410_INTCLR,      /* Used by vaxstation */
-	(void*)KA410_INTMSK,      /* Used by vaxstation */
-	ka410_map,
 	ka410_halt,
 	ka410_reboot,
 };
@@ -186,17 +161,6 @@ ka410_steal_pages()
 
 	if (((int)le_iomem & ~KERNBASE) > 0xffffff)
 		parctl = PARCTL_DMA;
-	/*
-	 * VAXstation 2000 and MicroVAX 2000: 
-	 * since there's no bus, we have to map in anything which 
-	 * could be neccessary/used/interesting...
-	 * 
-	 * MAPVIRT(ptr,count) reserves a virtual area with the requested size
-	 *			and initializes ptr to point at this location
-	 * pmap_map(ptr,...)  inserts a pair of virtual/physical addresses
-	 *			into the system maptable (Sysmap)
-	 */
-	uvax_fillmap();
 
 	/*
 	 * Clear restart and boot in progress flags

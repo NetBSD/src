@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.8 1998/01/12 20:52:58 thorpej Exp $	*/
+/*	$NetBSD: ka780.c,v 1.9 1998/05/22 09:26:33 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -75,9 +75,6 @@ struct	cpu_dep ka780_calls = {
 	generic_clkread,
 	generic_clkwrite,
 	2,	/* ~VUPS */
-	0,	/* Used by vaxstation */
-	0,	/* Used by vaxstation */
-	0,	/* Used by vaxstation */
 };
 
 /*

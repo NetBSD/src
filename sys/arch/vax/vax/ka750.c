@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.23 1998/04/13 12:10:27 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.24 1998/05/22 09:26:33 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -71,10 +71,6 @@ struct	cpu_dep	ka750_calls = {
 	generic_clkread,
 	generic_clkwrite,
 	1,      /* ~VUPS */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-	0,      /* Used by vaxstation */
-	0,	/* Used by vaxstation */
 	0,	/* halt call */
 	0,	/* Reboot call */
 	ka750_clrf,
