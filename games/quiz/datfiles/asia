@@ -4,16 +4,16 @@ Bahrein:Manama
 Bangladesh:Dacca
 Bhutan:Thimbu
 Burma:Rangoon
+Cambodia|Khmer:P{h}nom Penh
 China:Peking
 Cyprus:Nicosia
 India:New Delhi
-Indonesia:Djakarta
+Indonesia:Jakarta|Djakarta
 Iran:Tehran
 Iraq:Baghdad
 Israel:Jerusalem
 Japan:Tokyo
 Jordan:Amman
-Khmer|Cambodia:P{h}nom Penh
 Kuwait:Al-kuwait
 Laos:Vientiane
 Lebanon:Beirut
@@ -26,7 +26,7 @@ North Yemen:San{'}a
 Oman:Muscat
 Pakistan:Islamabad
 Papua[-| ]New Guinea:Port Moresby
-Philippines:Quezon City
+Philippines:Manila
 Qatar:Doha
 Saudi Arabia:Riyadh|J{ei}ddah
 Singapore:Singapore
