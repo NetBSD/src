@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.16 1993/10/27 17:23:13 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.17 1993/10/27 19:33:26 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -78,6 +78,7 @@ enum fdc_state {
 	MOTORWAIT,
 	DOSEEK,
 	SEEKWAIT,
+	SEEKTIMEDOUT,
 	SEEKCOMPLETE,
 	DOIO,
 	IOCOMPLETE,
@@ -86,6 +87,7 @@ enum fdc_state {
 	RESETCOMPLETE,
 	DORECAL,
 	RECALWAIT,
+	RECALTIMEDOUT,
 	RECALCOMPLETE,
 };
 
@@ -612,7 +614,7 @@ fd_timeout(fdc)
 	bp = dp->b_actf;
 
 	if (bp) {
-		fdc->sc_state = IOTIMEDOUT;
+		fdc->sc_state++;
 	} else {
 		fdc->sc_afd = NULL;
 		fdc->sc_state = DEVIDLE;
@@ -710,7 +712,7 @@ fdcstate(fdc)
 			out_fdc(iobase, bp->b_cylin);
 			fd->sc_track = -1;
 			fdc->sc_state = SEEKWAIT;
-			timeout((timeout_t)fd_timeout, (caddr_t)fdc, 2 * hz);
+			timeout((timeout_t)fd_timeout, (caddr_t)fdc, 4 * hz);
 			return 0;
 		}
 
@@ -760,6 +762,8 @@ fdcstate(fdc)
 
 	    case IOTIMEDOUT:
 		at_dma_abort(fdc->sc_drq);
+	    case SEEKTIMEDOUT:
+	    case RECALTIMEDOUT:
 		return fdcretry(fdc);
 
 	    case IOCOMPLETE: /* IO DONE, post-analyze */
@@ -818,12 +822,14 @@ fdcstate(fdc)
 		out_fdc(iobase, NE7CMD_RECAL);	/* recalibrate function */
 		out_fdc(iobase, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
+		timeout((timeout_t)fd_timeout, (caddr_t)fdc, 10 * hz);
 		return 0;			/* will return later */
 
 	    case RECALWAIT:
+		untimeout((timeout_t)fd_timeout, (caddr_t)fdc);
+		fdc->sc_state = RECALCOMPLETE;
 		/* allow 1/30 second for heads to settle */
 		timeout((timeout_t)fd_pseudointr, (caddr_t)fdc, hz/30);
-		fdc->sc_state = RECALCOMPLETE;
 		return 0;			/* will return later */
 
 	    case RECALCOMPLETE:
@@ -867,11 +873,19 @@ fdcretry(fdc)
 	    case 0:
 	    case 1:
 	    case 2:
+		/* try again */
+		fdc->sc_state = SEEKCOMPLETE;
+		break;
+
 	    case 3:
+	    case 4:
+	    case 5:
+		/* didn't work; try recalibrating */
 		fdc->sc_state = DORECAL;
 		break;
 
-	    case 4:
+	    case 6:
+		/* still no go; reset the bastard */
 		fdc->sc_state = DORESET;
 		break;
 
