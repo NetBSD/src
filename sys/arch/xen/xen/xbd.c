@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.12.6.2 2005/03/19 08:33:26 yamt Exp $ */
+/* $NetBSD: xbd.c,v 1.12.6.3 2005/03/19 09:06:56 yamt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.12.6.2 2005/03/19 08:33:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.12.6.3 2005/03/19 09:06:56 yamt Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -439,8 +439,8 @@ get_vbd_info(vdisk_t *disk_info)
 	blkif_response_t rsp;
 	paddr_t pa;
 
-	buf = (vdisk_t *)uvm_km_kmemalloc1(kmem_map, NULL,
-	    PAGE_SIZE, PAGE_SIZE, UVM_UNKNOWN_OFFSET, 0);
+	buf = (vdisk_t *)uvm_km_alloc(kmem_map, PAGE_SIZE, PAGE_SIZE,
+	    UVM_KMF_WIRED);
 	pmap_extract(pmap_kernel(), (vaddr_t)buf, &pa);
 	/* Probe for disk information. */
 	memset(&req, 0, sizeof(req));
@@ -456,7 +456,7 @@ get_vbd_info(vdisk_t *disk_info)
 
 	memcpy(disk_info, buf, nr * sizeof(vdisk_t));
 
-	uvm_km_free(kmem_map, (vaddr_t)buf, PAGE_SIZE);
+	uvm_km_free(kmem_map, (vaddr_t)buf, PAGE_SIZE, UVM_KMF_WIRED);
 
 	return nr;
 }
@@ -519,7 +519,8 @@ free_interface(void)
 
 	/* Free resources associated with old device channel. */
 	if (blk_ring) {
-		uvm_km_free(kmem_map, (vaddr_t)blk_ring, PAGE_SIZE);
+		uvm_km_free(kmem_map, (vaddr_t)blk_ring, PAGE_SIZE,
+		    UVM_KMF_WIRED);
 		blk_ring = NULL;
 	}
 
@@ -547,8 +548,8 @@ disconnect_interface(void)
 {
 
 	if (blk_ring == NULL)
-		blk_ring = (blkif_ring_t *)uvm_km_kmemalloc1(kmem_map, NULL,
-		    PAGE_SIZE, PAGE_SIZE, UVM_UNKNOWN_OFFSET, 0);
+		blk_ring = (blkif_ring_t *)uvm_km_alloc(kmem_map,
+		    PAGE_SIZE, PAGE_SIZE, UVM_KMF_WIRED);
 	memset(blk_ring, 0, PAGE_SIZE);
 	blk_ring->req_prod = blk_ring->resp_prod = resp_cons = req_prod =
 		last_req_prod = 0;
