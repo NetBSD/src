@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.22 2002/06/22 13:04:00 toshii Exp $
+#	$NetBSD: JORNADA720,v 1.23 2002/07/18 20:03:41 manu Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 # estimated number of users
 maxusers	32
@@ -167,6 +167,30 @@ wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 #mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 #com*	at mhzc?
 #sm*	at mhzc?
+
+# MII/PHY support
+acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
+amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
+bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
+dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
+glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphyter* at mii? phy ?			# NS83843 PHYs
+pnaphy*	at mii? phy ?			# generic HomePNA PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # RTC device via IIC bus
 #rtc*	at iic? addr 0xa0
