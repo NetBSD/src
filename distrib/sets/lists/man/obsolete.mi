@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.47 2002/06/06 23:05:38 thorpej Exp $
+# $NetBSD: obsolete.mi,v 1.48 2002/06/09 19:31:44 itojun Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
 /usr/share/man/cat1/i386
@@ -98,6 +98,7 @@
 /usr/share/man/cat8/arm32/MAKEDEV.0
 /usr/share/man/cat8/arm32/makedev.0
 /usr/share/man/cat8/gettable.0
+/usr/share/man/cat8/greconfig.0
 /usr/share/man/cat8/htable.0
 /usr/share/man/cat8/i386/apmd.0
 /usr/share/man/cat8/i386/bad144.0
@@ -224,6 +225,7 @@
 /usr/share/man/man8/arm32/MAKEDEV.8
 /usr/share/man/man8/arm32/makedev.8
 /usr/share/man/man8/gettable.8
+/usr/share/man/man8/greconfig.8
 /usr/share/man/man8/htable.8
 /usr/share/man/man8/i386/apmd.8
 /usr/share/man/man8/i386/bad144.8

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.487 2002/06/06 23:05:37 thorpej Exp $
+# $NetBSD: mi,v 1.488 2002/06/09 19:31:44 itojun Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1353,7 +1353,6 @@
 ./usr/share/man/cat8/getNAME.0			man-man-catman
 ./usr/share/man/cat8/getencstat.0		man-sysutil-catman
 ./usr/share/man/cat8/getty.0			man-sysutil-catman
-./usr/share/man/cat8/greconfig.0		man-netutil-catman
 ./usr/share/man/cat8/grfconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/group.0			man-sysutil-catman
 ./usr/share/man/cat8/groupadd.0			man-sysutil-catman
@@ -3072,7 +3071,6 @@
 ./usr/share/man/man8/getNAME.8			man-man-man
 ./usr/share/man/man8/getencstat.8		man-sysutil-man
 ./usr/share/man/man8/getty.8			man-sysutil-man
-./usr/share/man/man8/greconfig.8		man-netutil-man
 ./usr/share/man/man8/grfconfig.8		man-sysutil-man
 ./usr/share/man/man8/group.8			man-sysutil-man
 ./usr/share/man/man8/groupadd.8			man-sysutil-man
