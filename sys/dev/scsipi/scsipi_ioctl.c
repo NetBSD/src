@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.38 2001/04/25 17:53:40 bouyer Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.39 2001/07/18 18:21:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ si_get()
 	int s;
 
 	si = malloc(sizeof(struct scsi_ioctl), M_TEMP, M_WAITOK);
-	bzero(si, sizeof(struct scsi_ioctl));
+	memset(si, 0, sizeof(struct scsi_ioctl));
 	s = splbio();
 	LIST_INSERT_HEAD(&si_head, si, si_list);
 	splx(s);

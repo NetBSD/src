@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.34 2001/04/25 17:53:39 bouyer Exp $	*/
+/*	$NetBSD: if_se.c,v 1.35 2001/07/18 18:21:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -465,7 +465,7 @@ se_ifstart(ifp)
 			printf("se: packet size %d (%d) < %d\n", len,
 			    cp - (u_char *)sc->sc_tbuf, SEMINSIZE);
 #endif
-		bzero(cp, SEMINSIZE - len);
+		memset(cp, 0, SEMINSIZE - len);
 		len = SEMINSIZE;
 	}
 

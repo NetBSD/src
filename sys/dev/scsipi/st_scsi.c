@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.2 2001/06/18 09:05:05 bouyer Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.3 2001/07/18 18:21:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ st_scsibus_read_block_limits(st, flags)
 	/*
 	 * do a 'Read Block Limits'
 	 */
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ_BLOCK_LIMITS;
 
 	/*
@@ -272,7 +272,7 @@ st_scsibus_mode_select(st, flags)
 	/*
 	 * Set up for a mode select
 	 */
-	bzero(&scsi_select, scsi_select_len);
+	memset(&scsi_select, 0, scsi_select_len);
 	scsi_select.header.blk_desc_len = sizeof(struct scsi_blk_desc);
 	scsi_select.header.dev_spec &= ~SMH_DSP_BUFF_MODE;
 	scsi_select.blk_desc.density = st->density;
@@ -323,7 +323,7 @@ st_scsibus_cmprss(st, flags, onoff)
 	 * Do the MODE SENSE command...
 	 */
 again:
-	bzero(&scsi_pdata, scsi_dlen);
+	memset(&scsi_pdata, 0, scsi_dlen);
 	error = scsipi_mode_sense(periph, byte2, page,
 	    &scsi_pdata.header, scsi_dlen, flags | XS_CTL_DATA_ONSTACK,
 	    ST_RETRIES, ST_CTL_TIME);
