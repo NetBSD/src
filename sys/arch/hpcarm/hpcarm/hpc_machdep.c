@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.8 2001/03/23 08:58:14 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.9 2001/04/06 05:38:01 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -116,10 +116,10 @@ BootConfig bootconfig;		/* Boot config storage */
 struct bootinfo *bootinfo, bootinfo_storage;
 char booted_kernel[80];
 
-vm_offset_t physical_start;
-vm_offset_t physical_freestart;
-vm_offset_t physical_freeend;
-vm_offset_t physical_end;
+paddr_t physical_start;
+paddr_t physical_freestart;
+paddr_t physical_freeend;
+paddr_t physical_end;
 u_int free_pages;
 int physmem = 0;
 
@@ -159,7 +159,7 @@ extern int pmap_debug_level;
 #define	KERNEL_PT_IO		3	/* Page table for mapping IO */
 #define	KERNEL_PT_VMDATA	4	/* Page tables for mapping kernel VM */
 #define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
-#define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM + 1)
+#define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
 
@@ -214,7 +214,6 @@ extern int db_trapper();
 extern void dump_spl_masks	__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
-extern void parse_mi_bootargs	__P((char *args));
 
 extern void dumpsys	__P((void));
 
@@ -320,10 +319,10 @@ initarm(argc, argv, bi)
 	set_cpufuncs();
 
 	/* Put the processer in SVC mode */
-	__asm("mov r0, sp; mov r1, ip; mrs r2, cpsr_all;");
+	__asm("mov r0, sp; mov r1, lr; mrs r2, cpsr_all;");
 	/* PSR_MODE, PSR_SVC32_MODE" */
 	__asm("bic r2, r2, #31; orr r2, r2, #19;");
-	__asm("msr cpsr_all, r2; mov sp, r0; mov ip, r1;");
+	__asm("msr cpsr_all, r2; mov sp, r0; mov lr, r1;");
 
 #ifdef DEBUG_BEFOREMMU
 	/*
@@ -451,7 +450,7 @@ initarm(argc, argv, bi)
 
 
 	valloc_pages(kernel_l1pt, PD_SIZE / NBPG);
-	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
+	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
 		alloc_pages(kernel_pt_table[loop], PT_SIZE / NBPG);
 	}
 
@@ -675,6 +674,7 @@ initarm(argc, argv, bi)
 	/* Disable PID virtual address mapping */ 
 	asm("mcr 15, 0, %0, c13, c0, 0" : : "r" (0));
 #ifdef BOOT_DUMP
+	dumppages((char *)0xc0000000, 16 * NBPG);
 	dumppages((char *)0xb0100000, 64); /* XXX */
 #endif
 	/* Enable MMU, I-cache, D-cache, write buffer. */
