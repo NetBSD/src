@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.10 1996/10/16 15:21:49 christos Exp $	*/
+/*	$NetBSD: shell.h,v 1.11 2000/05/13 20:50:15 elric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,6 +46,8 @@
  *	define SYSV if you are running under System V.
  *	define DEBUG=1 to compile in debugging (set global "debug" to turn on)
  *	define DEBUG=2 to compile in and turn on debugging.
+ *	define DO_SHAREDVFORK to indicate that vfork(2) shares its address
+ *	       with its parent.
  *
  * When debugging is on, debugging info will be written to $HOME/trace and
  * a quit signal will generate a core dump.
@@ -55,6 +57,12 @@
 #define JOBS 1
 #ifndef BSD
 #define BSD 1
+#endif
+
+#ifndef DO_SHAREDVFORK
+#if __NetBSD_Version__ >= 104000000
+#define DO_SHAREDVFORK
+#endif
 #endif
 
 #ifdef __STDC__
