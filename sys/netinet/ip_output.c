@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.26 1995/06/12 00:47:44 mycroft Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.27 1995/07/01 03:44:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -505,7 +505,7 @@ ip_ctloutput(op, so, level, optname, mp)
 		case IP_RECVOPTS:
 		case IP_RECVRETOPTS:
 		case IP_RECVDSTADDR:
-			if (m->m_len != sizeof(int))
+			if (m == NULL || m->m_len != sizeof(int))
 				error = EINVAL;
 			else {
 				optval = *mtod(m, int *);
