@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.15 2000/06/28 03:01:16 mrg Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.16 2000/06/30 19:43:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ ipflow_fastforward(
 	struct ip *ip;
 	struct ipflow *ipf;
 	struct rtentry *rt;
+	struct sockaddr *dst;
 	int error;
 	int iplen;
 
@@ -227,8 +228,13 @@ ipflow_fastforward(
 	 */
 	ipf->ipf_uses++;
 	PRT_SLOW_ARM(ipf->ipf_timer, IPFLOW_TIMER);
-	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m,
-	    &ipf->ipf_ro.ro_dst, rt)) != 0) {
+
+	if (rt->rt_flags & RTF_GATEWAY)
+		dst = rt->rt_gateway;
+	else
+		dst = &ipf->ipf_ro.ro_dst;
+
+	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m, dst, rt)) != 0) {
 		if (error == ENOBUFS)
 			ipf->ipf_dropped++;
 		else
