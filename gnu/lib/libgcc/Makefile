@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2001/12/02 12:23:52 jmc Exp $
+#	$NetBSD: Makefile,v 1.31 2001/12/11 23:43:04 thorpej Exp $
 
 REQUIRETOOLS=	yes
 
@@ -38,14 +38,14 @@ CLEANFILES+=	${LIB2FUNCS} ${CXX_LIB2FUNCS} dp-bit.c fp-bit.c
 ${LIB2FUNCS}: ${.CURDIR}/Makefile
 	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
 
-${G_LIB2FUNCS_EH:=.o}: libgcc2.c
-	${COMPILE.c} -fexceptions -DL$* -o $@ ${>:M*.c}
+${G_LIB2FUNCS_EH:=.o}:
+	${COMPILE.c} -fexceptions -o $@ ${>:M*.c}
 
-${G_LIB2FUNCS_EH:=.po}: libgcc2.c
-	${COMPILE.c} -pg -fexceptions -DL$* -o $@ ${>:M*.c}
+${G_LIB2FUNCS_EH:=.po}:
+	${COMPILE.c} -pg -fexceptions -o $@ ${>:M*.c}
 
-${G_LIB2FUNCS_EH:=.so}: libgcc2.c
-	${COMPILE.c} ${CPICFLAGS} -fexceptions -DL$* -o $@ ${>:M*.c}
+${G_LIB2FUNCS_EH:=.so}:
+	${COMPILE.c} ${CPICFLAGS} -fexceptions -o $@ ${>:M*.c}
 
 ${CXX_LIB2FUNCS}: ${.CURDIR}/Makefile
 	printf '#define L_op_${.PREFIX:S/^op//}\n#include <new1.cc>\n#include <new2.cc>\n' >${.TARGET}
