@@ -27,6 +27,7 @@ Boston, MA 02111-1307, USA.  */
 #include "runtime.h"
 #include "typedstream.h"
 #include "encoding.h"
+#include <limits.h>		/* for CHAR_MIN */
 
 extern int fflush(FILE*);
 
@@ -93,6 +94,11 @@ objc_write_unsigned_char (struct objc_typed_stream* stream,
 static __inline__ int
 __objc_code_char (unsigned char* buf, char val)
 {
+#if (CHAR_MIN == 0)
+  /* char is unsigned on this machine */
+  return __objc_code_unsigned_char (buf, val);
+#else
+  /* char is signed on this machine */
   if (val >= 0)
     return __objc_code_unsigned_char (buf, val);
   else
@@ -101,6 +107,7 @@ __objc_code_char (unsigned char* buf, char val)
       buf[1] = -val;
       return 2;
     }
+#endif
 }
 
 int
