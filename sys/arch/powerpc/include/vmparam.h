@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.4.1 1997/02/12 12:25:35 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,12 +53,6 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
-
-/*
- * Min & Max swap space allocation chunks
- */
-#define	DMMIN		32
-#define	DMMAX		4096
 
 /*
  * Size of shared memory map

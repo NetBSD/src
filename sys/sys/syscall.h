@@ -240,8 +240,7 @@
 
 				/* 84 is compat_43 owait */
 
-/* syscall: "swapon" ret: "int" args: "const char *" */
-#define	SYS_swapon	85
+				/* 85 is compat_12 swapon */
 
 /* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval *" */
 #define	SYS_getitimer	86
@@ -568,4 +567,7 @@
 /* syscall: "clock_getres" ret: "int" args: "clockid_t" "struct timespec *" */
 #define	SYS_clock_getres	234
 
-#define	SYS_MAXSYSCALL	241
+/* syscall: "swapon" ret: "int" args: "int" "void *" "int" */
+#define	SYS_swapon	241
+
+#define	SYS_MAXSYSCALL	242
