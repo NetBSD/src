@@ -1,4 +1,4 @@
-#	$NetBSD: BISHOP,v 1.3 1998/04/16 04:11:50 thorpej Exp $
+#	$NetBSD: BISHOP,v 1.4 1998/04/24 18:18:41 thorpej Exp $
 #
 # Kernel for bishop.nas.nasa.gov and ripley.nas.nasa.gov (AlphaStation 500
 # and AlphaStation 600, respectively).
@@ -148,11 +148,11 @@ st*	at	scsibus? target ? lun ?		# SCSI tape drives
 fd*	at	fdc? drive ?
 
 # Workstation Console attachments
-#wsdisplay* at	cfb?
+#wsdisplay*	at	cfb?
 wsdisplay*	at	vga?
-#wsdisplay* at	sfb?
+#wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
-wskbd*	at	pckbd?
+wskbd*		at	pckbd?
 wsmouse*	at	psm?
 
 pseudo-device	bpfilter	16
