@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.2 1999/02/07 17:23:40 christos Exp $	*/
+/*	$NetBSD: xprintf.c,v 1.3 1999/02/27 21:52:23 scottr Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -32,8 +32,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-static __inline long long xva_arg __P((va_list *, int));
-
 #define SZ_SHORT	0x01
 #define	SZ_INT		0x02
 #define	SZ_LONG		0x04
@@ -41,31 +39,6 @@ static __inline long long xva_arg __P((va_list *, int));
 #define	SZ_UNSIGNED	0x10
 #define	SZ_MASK		0x0f
 
-static __inline long long
-xva_arg(ap, size)
-	va_list *ap;
-	int size;
-{
-	switch (size) {
-	case SZ_SHORT:
-		return va_arg(*ap, short);
-	default:
-	case SZ_INT:
-		return va_arg(*ap, int);
-	case SZ_LONG:
-		return va_arg(*ap, long);
-	case SZ_QUAD:
-		return va_arg(*ap, long long);
-	case SZ_SHORT|SZ_UNSIGNED:
-		return va_arg(*ap, unsigned short);
-	case SZ_INT|SZ_UNSIGNED:
-		return va_arg(*ap, unsigned int);
-	case SZ_LONG|SZ_UNSIGNED:
-		return va_arg(*ap, unsigned long);
-	case SZ_QUAD|SZ_UNSIGNED:
-		return va_arg(*ap, unsigned long long);
-	}
-}
 /*
  * Non-mallocing printf, for use by malloc and rtld itself.
  * This avoids putting in most of stdio.
@@ -113,9 +86,20 @@ rflag:	    switch (fmt[1]) {
 		long long sval;
 		unsigned long long uval;
 		char digits[sizeof(int) * 3], *dp = digits;
+#define	SARG() \
+	(size & SZ_SHORT ? va_arg(ap, short) : \
+	    size & SZ_LONG ? va_arg(ap, long) : \
+	    size & SZ_QUAD ? va_arg(ap, long long) : \
+	    va_arg(ap, int))
+#define	UARG() \
+	(size & SZ_SHORT ? va_arg(ap, unsigned short) : \
+	    size & SZ_LONG ? va_arg(ap, unsigned long) : \
+	    size & SZ_QUAD ? va_arg(ap, unsigned long long) : \
+	    va_arg(ap, unsigned int))
+#define	ARG()	(size & SZ_UNSIGNED ? UARG() : SARG())
 
 		if (fmt[1] == 'd') {
-		    sval = xva_arg(&ap, size);
+		    sval = ARG();
 		    if (sval < 0) {
 			if ((sval << 1) == 0) {
 			    /*
@@ -134,7 +118,7 @@ rflag:	    switch (fmt[1]) {
 			uval = sval;
 		    }
 		} else {
-		    uval = xva_arg(&ap, size);
+		    uval = ARG();
 		}
 		do {
 		    *dp++ = '0' + (uval % 10);
