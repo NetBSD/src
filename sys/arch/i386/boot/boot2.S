@@ -95,6 +95,7 @@ ENTRY(boot2)
 	subl	%eax, %eax
 	mov	%ax, %es
 
+#ifdef BDB
 	/* fix up GDT entries for bdb */
 	data32
 	movl	$4*DEBUG_VECTOR, %esi
@@ -126,6 +127,7 @@ ENTRY(boot2)
 	shrl	$4, %eax
 	mov	%ax, %es
 
+/* XXX appears to be broken */
 	/* fix up IDT entries for bdb */
 	subl	$2, %ebx
 	movl	%es:(%edi), %eax	/* actually movw %es:(%bx), %ax */
@@ -136,6 +138,7 @@ ENTRY(boot2)
 	movl	%es:(%edi), %eax	/* actually movw %es:(%bx), %ax */
 	addr32
 	movl	%eax, EXT(Idt)+8*BREAKPOINT_VECTOR	/* actually movw %ax */
+#endif
 
 	/* finished with groping in real mode segments */
 	pop	%es
