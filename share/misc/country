@@ -1,4 +1,4 @@
-# $NetBSD: country,v 1.7 2002/02/26 13:11:05 kleink Exp $
+# $NetBSD: country,v 1.8 2002/02/26 13:20:22 kleink Exp $
 #
 # ISO 3166-1 Country Codes
 #
@@ -8,7 +8,7 @@
 # Further information can be found at the ISO 3166 Maintenance Agency
 # (ISO 3166/MA) web site,
 # <http://www.iso.org/iso/en/prods-services/iso3166ma/index.html>.
-# This list is up-to-date as of 1999-10-01.
+# This list is up-to-date as of 2002-02-20.
 #
 Afghanistan	AF	AFG	004
 Albania	AL	ALB	008
