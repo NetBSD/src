@@ -1,5 +1,5 @@
-/*	$NetBSD: policy_parse.y,v 1.8 2002/07/31 07:00:22 itojun Exp $	*/
-/*	$KAME: policy_parse.y,v 1.10 2000/05/07 05:25:03 itojun Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.9 2003/06/27 03:40:44 itojun Exp $	*/
+/*	$KAME: policy_parse.y,v 1.14 2003/06/27 03:39:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -302,6 +302,7 @@ init_x_policy()
 		__ipsec_errcode = EIPSEC_NO_BUFS;
 		return -1;
 	}
+	memset(pbuf, 0, tlen);
 	p = (struct sadb_x_policy *)pbuf;
 	p->sadb_x_policy_len = 0;	/* must update later */
 	p->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
