@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.21 2002/02/23 05:44:24 thorpej Exp $	*/
+/*	$NetBSD: open.c,v 1.22 2003/02/01 14:54:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -146,15 +146,16 @@ fnd:
 	error = FS_OPEN(&file_system[i])(file, f);
 	if (error == 0)
 		return (fd);
-	else if (error == EINVAL)
+	if (error == EINVAL)
 		error = ENOENT;
 #endif
 
-	if ((f->f_flags & F_NODEV) == 0)
+	if ((f->f_flags & F_NODEV) == 0) {
 #if !defined(LIBSA_SINGLE_DEVICE)
 		if (DEV_CLOSE(f->f_dev) != NULL)
 #endif
 			(void)DEV_CLOSE(f->f_dev)(f);
+	}
 err:
 	f->f_flags = 0;
 	errno = error;
