@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.47 1998/11/29 17:34:49 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.48 1998/12/02 10:52:25 bouyer Exp $ */
 
 
 /*
@@ -726,6 +726,7 @@ wdc_probe_caps(drvp)
 	struct wdc_softc *wdc = chp->wdc;
 	int i, printed;
 	char *sep = "";
+	int cf_flags;
 
 	if (ata_get_params(drvp, AT_POLL, &params) != CMD_OK) {
 		/* IDENTIFY failed. Can't tell more about the device */
@@ -793,6 +794,7 @@ wdc_probe_caps(drvp)
 			if ((wdc->cap & WDC_CAPABILITY_MODE) == 0 ||
 			    wdc->pio_mode >= i + 3) {
 				drvp->PIO_mode = i + 3;
+				drvp->PIO_cap = i + 3;
 				break;
 			}
 		}
@@ -823,6 +825,7 @@ wdc_probe_caps(drvp)
 				    wdc->dma_mode < i)
 					continue;
 				drvp->DMA_mode = i;
+				drvp->DMA_cap = i;
 				drvp->drive_flags |= DRIVE_DMA;
 			}
 			break;
@@ -846,12 +849,43 @@ wdc_probe_caps(drvp)
 				 */
 				if (wdc->cap & WDC_CAPABILITY_UDMA) {
 					drvp->UDMA_mode = i;
+					drvp->UDMA_cap = i;
 					drvp->drive_flags |= DRIVE_UDMA;
 				}
 				break;
 			}
 		}
 		printf("\n");
+	}
+	cf_flags = drv_dev->dv_cfdata->cf_flags;
+	if (cf_flags & ATA_CONFIG_PIO_SET) {
+		drvp->PIO_mode =
+		    (cf_flags & ATA_CONFIG_PIO_MODES) >> ATA_CONFIG_PIO_OFF;
+		drvp->drive_flags |= DRIVE_MODE;
+	}
+	if ((wdc->cap & WDC_CAPABILITY_DMA) == 0) {
+		/* don't care about DMA modes */
+		return;
+	}
+	if (cf_flags & ATA_CONFIG_DMA_SET) {
+		if ((cf_flags & ATA_CONFIG_DMA_MODES) ==
+		    ATA_CONFIG_DMA_DISABLE) {
+			drvp->drive_flags &= ~DRIVE_DMA;
+		} else {
+			drvp->DMA_mode = (cf_flags & ATA_CONFIG_DMA_MODES) >>
+			    ATA_CONFIG_DMA_OFF;
+			drvp->drive_flags |= DRIVE_DMA | DRIVE_MODE;
+		}
+	}
+	if (cf_flags & ATA_CONFIG_UDMA_SET) {
+		if ((cf_flags & ATA_CONFIG_UDMA_MODES) ==
+		    ATA_CONFIG_UDMA_DISABLE) {
+			drvp->drive_flags &= ~DRIVE_UDMA;
+		} else {
+			drvp->UDMA_mode = (cf_flags & ATA_CONFIG_UDMA_MODES) >>
+			    ATA_CONFIG_UDMA_OFF;
+			drvp->drive_flags |= DRIVE_UDMA | DRIVE_MODE;
+		}
 	}
 }
 

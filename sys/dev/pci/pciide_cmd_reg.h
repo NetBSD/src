@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_cmd_reg.h,v 1.3 1998/11/09 09:21:10 bouyer Exp $	*/
+/*	$NetBSD: pciide_cmd_reg.h,v 1.4 1998/12/02 10:52:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -67,6 +67,12 @@
 		((drive) == 0) ? 0x54: 0x56 \
 		: \
 		((drive) == 0) ? 0x58 : 0x5b)
+
+/* DMA master read mode select */
+#define CMD_DMA_MODE 0x71
+#define CMD_DMA			0x00
+#define CMD_DMA_MULTIPLE	0x01
+#define CMD_DMA_LINE		0x10
 		
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.19 1998/11/24 19:54:20 drochner Exp $	*/
+/*	$NetBSD: pciide.c,v 1.20 1998/12/02 10:52:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -1762,13 +1762,6 @@ cmd0643_6_setup_chip(sc, pc, tag)
 
 end:			pciide_pci_write(pc, tag,
 			    CMD_DATA_TIM(channel, drive), tim);
-			printf("%s(%s:%d:%d): using PIO mode %d",
-			    drvp->drv_softc->dv_xname,
-			    sc->sc_wdcdev.sc_dev.dv_xname,
-			    channel, drive, drvp->PIO_mode);
-			if (drvp->drive_flags & DRIVE_DMA)
-			    printf(", DMA mode %d", drvp->DMA_mode);
-			printf("\n");
 		}
 		if (idedma_ctl != 0) {
 			/* Add software bits in status register */
@@ -1777,9 +1770,13 @@ end:			pciide_pci_write(pc, tag,
 			    idedma_ctl);
 		}
 	}
+	/* print modes */
+	pciide_print_modes(sc);
+	/* configure for DMA read multiple */
+	pciide_pci_write(pc, tag, CMD_DMA_MODE, CMD_DMA_MULTIPLE);
 	WDCDEBUG_PRINT(("cmd0643_6_setup_chip: timings reg now 0x%x 0x%x\n",
-		pci_conf_read(pc, tag, 0x54), pci_conf_read(pc, tag, 0x58)),
-		DEBUG_PROBE);
+	    pci_conf_read(pc, tag, 0x54), pci_conf_read(pc, tag, 0x58)),
+	    DEBUG_PROBE);
 }
 
 void
