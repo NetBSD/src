@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.56 2002/11/27 18:40:34 grant Exp $	*/
+/*	$NetBSD: options.c,v 1.57 2002/12/08 01:35:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.56 2002/11/27 18:40:34 grant Exp $");
+__RCSID("$NetBSD: options.c,v 1.57 2002/12/08 01:35:13 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -715,6 +715,8 @@ struct option tar_longopts[] = {
 						OPT_FORCE_LOCAL },
 	{ "insecure",		no_argument,		0,
 						OPT_INSECURE },
+	{ "exclude",		required_argument,	0,
+						OPT_EXCLUDE },
 #if 0 /* Not implemented */
 	{ "catenate",		no_argument,		0,	'A' },	/* F */
 	{ "concatenate",	no_argument,		0,	'A' },	/* F */
@@ -754,8 +756,6 @@ struct option tar_longopts[] = {
 	{ "version",		no_argument,		0,
 						OPT_VERSION },
 	{ "verify",		no_argument,		0,	'W' },
-	{ "exclude",		required_argument,	0,
-						OPT_EXCLUDE },
 	{ "block-compress",	no_argument,		0,
 						OPT_BLOCK_COMPRESS },
 	{ "norecurse",		no_argument,		0,
@@ -1027,6 +1027,10 @@ tar_options(int argc, char **argv)
 		case OPT_STRICT:
 			/* disable gnu extensions */
 			is_gnutar = 0;
+			break;
+		case OPT_EXCLUDE:
+			if (tar_gnutar_minus_minus_exclude(optarg) != 0)
+				tar_usage();
 			break;
 		default:
 			tar_usage();
