@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.16 1999/05/03 15:20:28 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.17 1999/05/04 13:51:39 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.16 1999/05/03 15:20:28 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.17 1999/05/04 13:51:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -994,13 +994,10 @@ _dns_gethtbyname(rv, cb_data, ap)
 	int n, type;
 	struct hostent *hp;
 	const char *name;
-	int len, af;
+	int af;
 
 	name = va_arg(ap, char *);
-	len = va_arg(ap, int);
-#ifdef __GNUC__	/* to shut up gcc warnings */
-	(void)&len;
-#endif
+	/* NOSTRICT skip len */(void)va_arg(ap, int);
 	af = va_arg(ap, int);
 
 	switch (af) {
@@ -1047,9 +1044,6 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 
 	uaddr = va_arg(ap, unsigned char *);
 	len = va_arg(ap, int);
-#ifdef __GNUC__ /* to shut up gcc warnings */
-	(void)&len;
-#endif
 	af = va_arg(ap, int);
 
 	switch (af) {
@@ -1196,13 +1190,10 @@ _yp_gethtbyaddr(rv, cb_data, ap)
 	int __ypcurrentlen, r;
 	char name[sizeof("xxx.xxx.xxx.xxx") + 1];
 	const unsigned char *uaddr;
-	int len, af;
+	int af;
 
 	uaddr = va_arg(ap, unsigned char *);
-	len = va_arg(ap, int);
-#ifdef __GNUC__	/* to shut up gcc warnings */
-	(void)&len;
-#endif
+	/* NOSTRICT skip len */(void)va_arg(ap, int);
 	af = va_arg(ap, int);
 	
 	if (!__ypdomain) {
@@ -1245,13 +1236,10 @@ _yp_gethtbyname(rv, cb_data, ap)
 	static char *__ypcurrent;
 	int __ypcurrentlen, r;
 	const char *name;
-	int len, af;
+	int af;
 
 	name = va_arg(ap, char *);
-	len = va_arg(ap, int);
-#ifdef __GNUC__ /* to shut up gcc warnings */
-	(void)&len;
-#endif
+	/* NOSTRICT skip len */(void)va_arg(ap, int);
 	af = va_arg(ap, int);
 
 	if (!__ypdomain) {
