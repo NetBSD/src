@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.593 2003/07/09 09:35:42 dsl Exp $
+# $NetBSD: mi,v 1.594 2003/07/09 09:38:05 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -3280,7 +3280,6 @@
 ./usr/share/man/man8/i386/boot.8		man-sys-man
 ./usr/share/man/man8/i386/boot_console.8	man-sys-man
 ./usr/share/man/man8/i386/dosboot.8		man-sys-man
-./usr/share/man/man8/i386/installboot.8		man-sysutil-man
 ./usr/share/man/man8/i386/makedev.8		man-sysutil-man
 ./usr/share/man/man8/i386/pxeboot.8		man-sys-man
 ./usr/share/man/man8/i386/w95boot.8		man-sys-man
