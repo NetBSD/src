@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.9 2001/12/01 18:25:23 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.10 2001/12/10 00:24:12 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.9 2001/12/01 18:25:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.10 2001/12/10 00:24:12 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -200,8 +200,7 @@ pppoe_clone_create(ifc, unit)
 	sprintf(sc->sc_sppp.pp_if.if_xname, "pppoe%d", unit);
 	sc->sc_sppp.pp_if.if_softc = sc;
 	sc->sc_sppp.pp_if.if_mtu = ETHERMTU - PPPOE_HEADERLEN - 2; /* two byte PPP protocol discriminator, then IP data */
-	sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX | IFF_POINTOPOINT
-	    | IFF_MULTICAST | IFF_LINK1;	/* auto "dial" */
+	sc->sc_sppp.pp_if.if_flags = IFF_SIMPLEX|IFF_POINTOPOINT|IFF_MULTICAST;
 	sc->sc_sppp.pp_if.if_type = IFT_PPP;
 	sc->sc_sppp.pp_if.if_hdrlen = sizeof(struct ether_header)+PPPOE_HEADERLEN;
 	sc->sc_sppp.pp_if.if_dlt = DLT_PPP_ETHER;
@@ -800,9 +799,7 @@ pppoe_timeout(void *arg)
 		splx(x);
 		break;
 	case PPPOE_STATE_CLOSING:
-		x = splnet();
 		pppoe_disconnect(sc);
-		splx(x);
 		break;
 	default:
 		return;	/* all done, work in peace */
