@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.8 2002/07/14 00:07:00 wiz Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.9 2002/07/14 00:30:02 wiz Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootptest.c,v 1.8 2002/07/14 00:07:00 wiz Exp $");
+__RCSID("$NetBSD: bootptest.c,v 1.9 2002/07/14 00:30:02 wiz Exp $");
 #endif
 
 char *usage = "bootptest [-h] server-name [vendor-data-template-file]";
@@ -453,9 +453,9 @@ send_request(int s)
  * Return true if truncated.
  */
 int
-printfn(register u_char *s, register u_char *ep)
+printfn(u_char *s, u_char *ep)
 {
-	register u_char c;
+	u_char c;
 
 	putchar('"');
 	while ((c = *s++) != 0) {
