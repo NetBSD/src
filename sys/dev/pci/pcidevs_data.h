@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.6 2000/08/22 02:12:47 enami Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.7 2000/09/13 16:51:39 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.6 2000/08/22 02:08:40 enami Exp 
+ *	NetBSD: pcidevs,v 1.236.2.7 2000/09/13 16:48:25 tron Exp 
  */
 
 /*
@@ -4274,6 +4274,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT82C686A AC-97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
+	    0,
+	    "VIA Technologies",
+	    "VT6102 (Rhine II) 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97,
