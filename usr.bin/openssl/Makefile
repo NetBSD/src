@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.17 2002/09/27 07:08:29 itojun Exp $
+#	$NetBSD: Makefile,v 1.18 2003/07/24 14:20:59 itojun Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.17 2002/09/27 07:08:29 itojun Exp $
+#	$Id: Makefile,v 1.18 2003/07/24 14:20:59 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -33,8 +33,8 @@ SRCS+=	verify.c asn1pars.c req.c dgst.c dh.c dhparam.c enc.c passwd.c gendh.c er
 	pkcs7.c crl2p7.c crl.c \
 	rsa.c rsautl.c dsa.c dsaparam.c \
 	x509.c genrsa.c gendsa.c s_server.c s_client.c speed.c \
-	s_time.c $(A_SRC) $(S_SRC) $(RAND_SRC) version.c sess_id.c \
-	ciphers.c nseq.c pkcs12.c pkcs8.c spkac.c smime.c rand.c
+	s_time.c version.c sess_id.c \
+	ciphers.c nseq.c pkcs12.c pkcs8.c spkac.c smime.c rand.c engine.c ocsp.c
 
 CPPFLAGS+= -DMONOLITH -DUSE_SSL -I${OPENSSLSRC}
 
@@ -69,65 +69,42 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 .PATH:	${OPENSSLSRC}/apps
 
-#LINKS= 	openssl verify \
-#	openssl asn1parse \
+#LINKS=	openssl verify \
+#	openssl asn1pars \
 #	openssl req \
 #	openssl dgst \
 #	openssl dh \
+#	openssl dhparam \
 #	openssl enc \
+#	openssl passwd \
 #	openssl gendh \
-#	openssl gendsa \
 #	openssl errstr \
 #	openssl ca \
 #	openssl crl \
+#	openssl rsa \
+#	openssl rsautl \
 #	openssl dsa \
 #	openssl dsaparam \
 #	openssl x509 \
+#	openssl genrsa \
+#	openssl gendsa \
 #	openssl s_server \
 #	openssl s_client \
-#	openssl sess_id \
-#	openssl ciphers \
-#	openssl s_filter \
 #	openssl speed \
-#	openssl hashdir \
 #	openssl s_time \
-#	openssl s_mult \
 #	openssl version \
 #	openssl pkcs7 \
 #	openssl crl2pkcs7 \
-#	openssl md2 \
-#	openssl sha \
-#	openssl sha1 \
-#	openssl base64 \
-#	openssl des \
-#	openssl des3 \
-#	openssl rc4 \
-#	openssl rc2 \
-#	openssl des-ecb \
-#	openssl des-ede \
-#	openssl des-ede3 \
-#	openssl des-cbc \
-#	openssl des-ede-cbc \
-#	openssl des-ede3-cbc \
-#	openssl des-cfb \
-#	openssl des-ede-cfb \
-#	openssl des-ede3-cfb \
-#	openssl des-ofb \
-#	openssl des-ede-ofb \
-#	openssl des-ede3-ofb \
-#	openssl rc2-cbc \
-#	openssl rc2-ecb \
-#	openssl rc2-cfb \
-#	openssl rc2-ofb \
-
-#LINKS+=	openssl rsa \
-#	openssl rsa-cbc \
-#	openssl rsa-ecb \
-#	openssl rsa-cfb \
-#	openssl rsa-ofb
-
-ssleay.o:	ssleay.c
-	${CC} ${CFLAGS} -UMONOLITH -o ${.TARGET} -c ${.IMPSRC}
+#	openssl sess_id \
+#	openssl ciphers \
+#	openssl nseq \
+#	openssl pkcs12 \
+#	openssl pkcs8 \
+#	openssl spkac \
+#	openssl smime \
+#	openssl rand \
+#	openssl engine \
+#	openssl ocsp
 
 .if ${MKSHARE} != "no"
 FILES=  CA.sh CA.pl der_chop openssl.cnf
