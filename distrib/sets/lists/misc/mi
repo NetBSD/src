@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.113 2005/03/16 12:52:53 he Exp $
+# $NetBSD: mi,v 1.114 2005/03/26 00:33:44 christos Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -532,7 +532,7 @@
 ./usr/share/examples/named/named.conf		misc-obsolete		obsolete
 ./usr/share/examples/openssl/CA.pl		misc-crypto-examples	crypto,share
 ./usr/share/examples/openssl/CA.sh		misc-crypto-examples	crypto,share
-./usr/share/examples/openssl/der_chop		misc-crypto-examples	crypto,share
+./usr/share/examples/openssl/der_chop		misc-crypto-examples	obsolete
 ./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples	crypto,share
 ./usr/share/examples/pf/ackpri			misc-netutil-examples	pf,share
 ./usr/share/examples/pf/faq-example1		misc-netutil-examples	pf,share
