@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.196 2003/10/08 10:58:12 bouyer Exp $
+#	$NetBSD: files.pci,v 1.197 2003/10/08 11:51:59 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -191,9 +191,72 @@ file	dev/pci/gtp.c			gtp
 #file	dev/pci/sf64pcr.c		sf4r
 
 # PCI IDE controllers
-device	pciide {[channel = -1]}: cy82c693, wdc_base
+define pciide_common
+file dev/pci/pciide_common.c pciide_common
+
+device	pciide {[channel = -1]}: wdc_base, pciide_common
 attach	pciide at pci
 file	dev/pci/pciide.c		pciide
+
+# Acard IDE controllers
+device	acardide {[channel = -1]}: wdc_base, pciide_common
+attach	acardide at pci
+file	dev/pci/acardide.c		acardide
+
+# Acer Lab IDE controllers
+device	aceride {[channel = -1]}: wdc_base, pciide_common
+attach	aceride at pci
+file	dev/pci/aceride.c		aceride
+
+# CMD tech IDE controllers
+device	cmdide {[channel = -1]}: wdc_base, pciide_common
+attach	cmdide at pci
+file	dev/pci/cmdide.c		cmdide
+
+# Cypress IDE controllers
+device	cypide {[channel = -1]}: wdc_base, pciide_common, cy82c693
+attach	cypide at pci
+file	dev/pci/cypide.c		cypide
+
+# Triones/HighPoint IDE controllers
+device	hptide {[channel = -1]}: wdc_base, pciide_common
+attach	hptide at pci
+file	dev/pci/hptide.c		hptide
+
+# Opti IDE controllers
+device	optiide {[channel = -1]}: wdc_base, pciide_common
+attach	optiide at pci
+file	dev/pci/optiide.c		optiide
+
+# Intel IDE controllers
+device	piixide {[channel = -1]}: wdc_base, pciide_common
+attach	piixide at pci
+file	dev/pci/piixide.c		piixide
+
+# Promise IDE controllers
+device	pdcide {[channel = -1]}: wdc_base, pciide_common
+attach	pdcide at pci
+file	dev/pci/pdcide.c		pdcide
+
+# SiS IDE controllers
+device	siside {[channel = -1]}: wdc_base, pciide_common
+attach	siside at pci
+file	dev/pci/siside.c		siside
+
+# Symphony Labs IDE controllers
+device	slide {[channel = -1]}: wdc_base, pciide_common
+attach	slide at pci
+file	dev/pci/slide.c		slide
+
+# ServerWorks IDE controllers
+#device	swide {[channel = -1]}: wdc_base, pciide_common
+#attach	swide at pci
+#file	dev/pci/swide.c		swide
+
+# VIA/AMD/Nvidia IDE controllers
+device	viaide {[channel = -1]}: wdc_base, pciide_common
+attach	viaide at pci
+file	dev/pci/viaide.c	viaide
 
 # PCI-PCI bridge chips
 device	ppb: pcibus
