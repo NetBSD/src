@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19 1995/05/11 23:05:27 chopps Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 1995/05/12 00:18:09 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,16 +56,6 @@
 #include <vm/vm_kern.h>
 #include <machine/pte.h>
 
-struct trapframe {
-	int	f_regs[16];
-	short	f_pad;
-	short	f_stackadj;
-	u_short	f_sr;
-	u_int	f_pc;
-	u_short	f_format:4,
-		f_vector:12;
-};
-
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the kernel stack and pcb, making the child
@@ -95,10 +85,10 @@ cpu_fork(p1, p2)
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	p1stack = (u_long *)
-	    ((caddr_t)p1->p_addr + (ctob(UPAGES) - sizeof(struct trapframe)));
+	    ((caddr_t)p1->p_addr + (ctob(UPAGES) - sizeof(struct stdframe)));
 	p2stack = (u_long *)
-	    ((caddr_t)p2->p_addr + (ctob(UPAGES) - sizeof(struct trapframe)));
-	bcopy(p1stack, p2stack, sizeof(struct trapframe));	/* copy frame */
+	    ((caddr_t)p2->p_addr + (ctob(UPAGES) - sizeof(struct stdframe)));
+	bcopy(p1stack, p2stack, sizeof(struct stdframe));	/* copy frame */
 	p2->p_md.md_regs = (int *)p2stack;		/* frame pointer */
 	*--p2stack = (u_long)call_finish_child;		/* resume pc */
 	p2->p_addr->u_pcb.pcb_regs[11] =(u_long)p2stack;	/* set ksp */
@@ -130,7 +120,7 @@ cpu_set_kpc(p, pc)
 	pcbp = &p->p_addr->u_pcb;
 	stack = (u_long *)pcbp->pcb_regs[11];	/* get current stack pointer */
 	pcbp->pcb_regs[6] = pc;			/* function in a2 */
-	pcbp->pcb_regs[7] = p;			/* arg in a3 */
+	pcbp->pcb_regs[7] = (int)p;		/* arg in a3 */
 	*stack = (u_long)proc_trampoline;	/* resume at tramp code */
 }
 
