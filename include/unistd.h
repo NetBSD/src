@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.38 1997/07/20 19:06:07 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.39 1997/07/20 19:18:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -127,7 +127,6 @@ int	 getpagesize __P((void));
 char	*getpass __P((const char *));
 char	*getusershell __P((void));
 char	*getwd __P((char *));			/* obsoleted by getcwd() */
-char	*group_from_gid __P((u_int, int));
 int	 initgroups __P((const char *, gid_t));
 int	 iruserok __P((u_int32_t, int, const char *, const char *));
 int	 mknod __P((const char *, mode_t, dev_t));
@@ -174,7 +173,6 @@ int	 truncate __P((const char *, off_t));
 int	 ttyslot __P((void));
 u_int	 ualarm __P((u_int, u_int));
 int	 undelete __P((const char *));
-char	*user_from_uid __P((u_int, int));
 void	 usleep __P((u_int));
 void	*valloc __P((size_t));			/* obsoleted by malloc() */
 pid_t	 vfork __P((void));
