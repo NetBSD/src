@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.11 2002/08/13 18:16:31 pooka Exp $       */
+/*      $NetBSD: sushi.c,v 1.12 2002/08/13 18:21:25 pooka Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -86,6 +86,16 @@ main(int argc, char **argv)
 	else
 		lang_id = strdup(getenv("LANG"));
 
+	if (initscr() == NULL)
+		errx(1, "%s", "Cannot initialize curses");
+		
+	cdkscreen = initCDKScreen(stdscr);
+
+	ioctl(0, TIOCGWINSZ, &ws);
+
+	initCDKColor();
+	raw();
+
 	parse_config();
 	tree_init();
 	i = 0;
@@ -102,16 +112,6 @@ main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 	}
-
-	if (initscr() == NULL)
-		errx(1, "%s", "Cannot initialize curses");
-		
-	cdkscreen = initCDKScreen(stdscr);
-
-	ioctl(0, TIOCGWINSZ, &ws);
-
-	initCDKColor();
-	raw();
 
 	if (mte == NULL)
 		navigate_menu(cqMenuHeadp, "sushi_topmenu", 
