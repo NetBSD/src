@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-alg-fst.c,v 1.3 2001/05/22 23:45:41 kleink Exp $	*/
+/*	$NetBSD: rijndael-alg-fst.c,v 1.4 2001/05/23 00:02:24 kleink Exp $	*/
 /*	$KAME: rijndael-alg-fst.c,v 1.6 2000/10/02 17:14:26 itojun Exp $	*/
 
 /*
@@ -15,6 +15,11 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#ifdef _KERNEL
+#include <sys/systm.h>
+#else
+#include <string.h>
+#endif
 #include <crypto/rijndael/rijndael-alg-fst.h>
 #include <crypto/rijndael/rijndael_local.h>
 
