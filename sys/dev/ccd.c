@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.41 1997/06/26 04:25:50 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.42 1997/06/26 16:28:34 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1088,9 +1088,10 @@ ccdioctl(dev, cmd, data, flag, p)
 	/* Must be initialized for these... */
 	switch (cmd) {
 	case CCDIOCCLR:
-	case DIOCSDINFO: 
-	case DIOCWDINFO: 
-	case DIOCGPART:  
+	case DIOCGDINFO:
+	case DIOCSDINFO:
+	case DIOCWDINFO:
+	case DIOCGPART:
 	case DIOCWLABEL:
 		if ((cs->sc_flags & CCDF_INITED) == 0)
 			return (ENXIO);
