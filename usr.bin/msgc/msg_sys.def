@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.4 1999/06/19 00:13:19 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.5 1999/06/19 00:40:29 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -183,7 +183,7 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 	if (count != 0) {
 		ibuf[count] = '\0';
 		strcpy(val, ibuf);		/* size known to be OK */
-	} else if (val != def) {
+	} else if (def != NULL && val != def) {
 		strncpy(val, def, max_chars);
 		val[max_chars - 1] = '\0';
 	}
