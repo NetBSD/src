@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.7 2001/04/04 11:01:51 wiz Exp $
+.\" $NetBSD: wsdisplay.4,v 1.8 2001/06/10 15:43:56 wiz Exp $
 .Dd March 20, 1999
 .Os
 .Dt WSDISPLAY 4
@@ -67,16 +67,16 @@ and the
 .Dq smg
 display drivers provide this ability.)
 Screens have different minor device numbers and separate tty instances.
-One screen posesses the
+One screen possesses the
 .Dq focus ,
 this means it is displayed on the display and its tty device will get
 the keyboard input. (In some cases - if no screen is set up or if a screen
 was just deleted - it is possible that no focus is present at all.)
 The focus can be switched by either special keyboard input (typically
-CTL-ALT-Fn) or an ioctl command issued by a user program.
+CTRL-ALT-Fn) or an ioctl command issued by a user program.
 Screens are set up or deleted through the
 .Pa /dev/ttyEcfg
-control decice (preferrably using the
+control device (preferably using the
 .Xr wsconscfg 8
 utility). Alternatively, the compile-time option
 .Cd WSDISPLAY_DEFAULTSCREENS=N
