@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.14 2001/01/04 15:30:15 lukem Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.15 2001/01/05 05:40:38 enami Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -72,7 +72,7 @@ static	int	status(int);
 
 
 #define BUFMAGIC	64	/* a magic number for buffer sizes */
-#define MAXUNIT	4
+#define MAXUNIT		4
 
 #define READ(fd)	(Ctp[fd][0])
 #define WRITE(fd)	(Ptc[fd][1])
@@ -114,7 +114,7 @@ command(int fildes, char *buf)
 	pstat = signal(SIGPIPE, SIG_IGN);
 	if (write(WRITE(fildes), buf, blen) == blen) {
 		signal(SIGPIPE, pstat);
-		return(0);
+		return (0);
 	}
 
 /*
@@ -125,7 +125,7 @@ command(int fildes, char *buf)
 	rmtabort(fildes);
 
 	errno = EIO;
-	return(-1);
+	return (-1);
 }
 
 
@@ -147,7 +147,7 @@ status(int fildes)
 		if (read(READ(fildes), cp, 1) != 1) {
 			rmtabort(fildes);
 			errno = EIO;
-			return(-1);
+			return (-1);
 		}
 		if (*cp == '\n') {
 			*cp = 0;
@@ -158,7 +158,7 @@ status(int fildes)
 	if (i == BUFMAGIC) {
 		rmtabort(fildes);
 		errno = EIO;
-		return(-1);
+		return (-1);
 	}
 
 /*
@@ -178,7 +178,7 @@ status(int fildes)
 		if (*cp == 'F')
 			rmtabort(fildes);
 
-		return(-1);
+		return (-1);
 	}
 
 /*
@@ -188,10 +188,10 @@ status(int fildes)
 	if (*cp != 'A') {
 		rmtabort(fildes);
 		errno = EIO;
-		return(-1);
+		return (-1);
 	}
 
-	return(atoi(cp + 1));
+	return (atoi(cp + 1));
 }
 
 
@@ -221,14 +221,14 @@ _rmt_rexec(const char *host, const char *user)
 	/* user may be NULL */
 
 	rexecserv = getservbyname("exec", "tcp");
-	if (NULL == rexecserv) {
+	if (rexecserv == NULL) {
 		fprintf(stderr, "? exec/tcp: service not available.");
 		exit(-1);
 	}
 	if ((user != NULL) && *user == '\0')
-		user = (char *) NULL;
+		user = NULL;
 	return (rexec(&host, rexecserv->s_port, user, NULL,
-			"/etc/rmt", (int *)NULL));
+	    "/etc/rmt", NULL));
 }
 #endif /* USE_REXEC */
 
@@ -270,7 +270,7 @@ _rmt_open(const char *path, int oflag, int mode)
 
 	if (i == MAXUNIT) {
 		errno = EMFILE;
-		return(-1);
+		return (-1);
 	}
 
 /*
@@ -322,17 +322,17 @@ _rmt_open(const char *path, int oflag, int mode)
  */
 	READ(i) = WRITE(i) = _rmt_rexec(system, login);
 	if (READ(i) < 0)
-		return -1;
+		return (-1);
 #else
 /*
  *	setup the pipes for the 'rsh' command and fork
  */
 
 	if (pipe(Ptc[i]) == -1 || pipe(Ctp[i]) == -1)
-		return(-1);
+		return (-1);
 
 	if ((rc = fork()) == -1)
-		return(-1);
+		return (-1);
 
 	if (rc == 0) {
 		char	*rshpath, *rsh;
@@ -355,10 +355,10 @@ _rmt_open(const char *path, int oflag, int mode)
 
 		if (*login) {
 			execl(rshpath, rsh, system, "-l", login,
-				_PATH_RMT, (char *) 0);
+			    _PATH_RMT, NULL);
 		} else {
 			execl(rshpath, rsh, system,
-				_PATH_RMT, (char *) 0);
+			    _PATH_RMT, NULL);
 		}
 
 /*
@@ -378,9 +378,9 @@ _rmt_open(const char *path, int oflag, int mode)
 
 	(void)snprintf(buffer, sizeof(buffer), "O%s\n%d\n", device, oflag);
 	if (command(i, buffer) == -1 || status(i) == -1)
-		return(-1);
+		return (-1);
 
-	return(i);
+	return (i);
 }
 
 
@@ -396,10 +396,10 @@ _rmt_close(int fildes)
 		rc = status(fildes);
 
 		rmtabort(fildes);
-		return(rc);
+		return (rc);
 	}
 
-	return(-1);
+	return (-1);
 }
 
 
@@ -417,7 +417,7 @@ _rmt_read(int fildes, void *buf, size_t nbyte)
 
 	(void)snprintf(buffer, sizeof buffer, "R%d\n", nbyte);
 	if (command(fildes, buffer) == -1 || (rc = status(fildes)) == -1)
-		return(-1);
+		return (-1);
 
 	p = buf;
 	for (i = 0; i < rc; i += nbyte, p += nbyte) {
@@ -425,11 +425,11 @@ _rmt_read(int fildes, void *buf, size_t nbyte)
 		if (nbyte <= 0) {
 			rmtabort(fildes);
 			errno = EIO;
-			return(-1);
+			return (-1);
 		}
 	}
 
-	return(rc);
+	return (rc);
 }
 
 
@@ -446,18 +446,18 @@ _rmt_write(int fildes, const void *buf, size_t nbyte)
 
 	(void)snprintf(buffer, sizeof buffer, "W%d\n", nbyte);
 	if (command(fildes, buffer) == -1)
-		return(-1);
+		return (-1);
 
 	pstat = signal(SIGPIPE, SIG_IGN);
 	if (write(WRITE(fildes), buf, nbyte) == nbyte) {
 		signal(SIGPIPE, pstat);
-		return(status(fildes));
+		return (status(fildes));
 	}
 
 	signal(SIGPIPE, pstat);
 	rmtabort(fildes);
 	errno = EIO;
-	return(-1);
+	return (-1);
 }
 
 
@@ -472,9 +472,9 @@ _rmt_lseek(int fildes, off_t offset, int whence)
 	(void)snprintf(buffer, sizeof buffer, "L%lld\n%d\n", (long long)offset,
 	    whence);
 	if (command(fildes, buffer) == -1)
-		return(-1);
+		return (-1);
 
-	return(status(fildes));
+	return (status(fildes));
 }
 
 
@@ -500,8 +500,8 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
 		    ((struct mtop *)arg)->mt_op,
 		    ((struct mtop *)arg)->mt_count);
 		if (command(fildes, buffer) == -1)
-			return(-1);
-		return(status(fildes));
+			return (-1);
+		return (status(fildes));
 	}
 
 /*
@@ -510,7 +510,7 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
 
 	if (op != MTIOCGET) {
 		errno = EINVAL;
-		return(-1);
+		return (-1);
 	}
 
 /*
@@ -522,7 +522,7 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
  */
 
 	if (command(fildes, "S") == -1 || (rc = status(fildes)) == -1)
-		return(-1);
+		return (-1);
 
 	p = arg;
 	for (; rc > 0; rc -= cnt, p += cnt) {
@@ -530,7 +530,7 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
 		if (cnt <= 0) {
 			rmtabort(fildes);
 			errno = EIO;
-			return(-1);
+			return (-1);
 		}
 	}
 
@@ -542,7 +542,7 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
  */
 
 	if (((struct mtget *) p)->mt_type < 256)
-		return(0);
+		return (0);
 
 	for (cnt = 0; cnt < rc; cnt += 2) {
 		c = p[cnt];
@@ -550,8 +550,8 @@ _rmt_ioctl(int fildes, unsigned long op, void *arg)
 		p[cnt+1] = c;
 	}
 
-	return(0);
-  }
+	return (0);
+}
 #endif /* RMTIOCTL */
 
 
@@ -708,6 +708,7 @@ rmtwrite(int fildes, const void *buf, size_t nbyte)
 off_t
 rmtlseek(int fildes, off_t offset, int whence)
 {
+
 	if (isrmt(fildes)) {
 		return (_rmt_lseek(fildes - REM_BIAS, offset, whence));
 	} else {
@@ -722,6 +723,7 @@ rmtlseek(int fildes, off_t offset, int whence)
 int
 rmtclose(int fildes)
 {
+
 	if (isrmt(fildes)) {
 		return (_rmt_close(fildes - REM_BIAS));
 	} else {
@@ -765,6 +767,7 @@ rmtioctl(int fildes, unsigned long request, ...)
 int
 rmtdup(int fildes)
 {
+
 	if (isrmt(fildes)) {
 		errno = EOPNOTSUPP;
 		return (-1);		/* For now (fnf) */
