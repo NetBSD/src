@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.101 1998/08/18 18:17:17 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.102 1998/08/28 07:44:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -393,36 +393,6 @@ audio_attach_mi(ahwp, hdlp, dev)
 	arg.hwif = ahwp;
 	arg.hdl = hdlp;
 	(void)config_found(dev, &arg, audioprint);
-}
-
-int
-audioprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct audio_attach_args *arg = aux;
-	const char *type;
-
-	if (pnp != NULL) {
-		switch (arg->type) {
-		case AUDIODEV_TYPE_AUDIO:
-			type = "audio";
-			break;
-		case AUDIODEV_TYPE_MIDI:
-			type = "midi";
-			break;
-		case AUDIODEV_TYPE_OPL:
-			type = "opl";
-			break;
-		case AUDIODEV_TYPE_MPU:
-			type = "mpu";
-			break;
-		default:
-			panic("audioprint: unknown type %d", arg->type);
-		}
-		printf("%s at %s", type, pnp);
-	}
-	return (UNCONF);
 }
 
 #ifdef AUDIO_DEBUG
@@ -2814,4 +2784,39 @@ mixer_ioctl(dev, cmd, addr, flag, p)
 		 IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff, error));
 	return (error);
 }
-#endif
+#endif /* NAUDIO > 0 */
+
+#include "midi.h"
+
+#if NAUDIO > 0 || NMIDI > 0
+int
+audioprint(aux, pnp)
+	void *aux;
+	const char *pnp;
+{
+	struct audio_attach_args *arg = aux;
+	const char *type;
+
+	if (pnp != NULL) {
+		switch (arg->type) {
+		case AUDIODEV_TYPE_AUDIO:
+			type = "audio";
+			break;
+		case AUDIODEV_TYPE_MIDI:
+			type = "midi";
+			break;
+		case AUDIODEV_TYPE_OPL:
+			type = "opl";
+			break;
+		case AUDIODEV_TYPE_MPU:
+			type = "mpu";
+			break;
+		default:
+			panic("audioprint: unknown type %d", arg->type);
+		}
+		printf("%s at %s", type, pnp);
+	}
+	return (UNCONF);
+}
+
+#endif /* NAUDIO > 0 || NMIDI > 0 */
