@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.28.2.2 1993/09/24 08:45:45 mycroft Exp $
+ *	$Id: locore.s,v 1.28.2.3 1993/10/09 08:41:37 mycroft Exp $
  */
 
 
@@ -1870,20 +1870,17 @@ IDTVEC(fpu)
 	 */
 	pushl	$0		/* dummy error code */
 	pushl	$T_ASTFLT
-	pushal
-#ifdef I386_CPU
-	nop			/* silly, the bug is for popal and it only
-				 * bites when the next instruction has a
-				 * complicated address mode */
-#endif
 	pushl	%ds
 	pushl	%es		/* now the stack frame is a trap frame */
+	pushal
 	movl	$KDSEL,%eax
 	movl	%ax,%ds
 	movl	%ax,%es
 	pushl	_cpl
 	pushl	$0		/* dummy unit to finish building intr frame */
 	incl	_cnt+V_TRAP
+	movl	%esp,%eax	/* pointer to frame */
+	pushl	%eax
 	call	_npxintr
 	jmp	doreti
 #else
@@ -1923,12 +1920,9 @@ IDTVEC(rsvd14)
 
 	SUPERALIGN_TEXT
 alltraps:
-	pushal
-#ifdef I386_CPU
-	nop
-#endif
 	pushl	%ds
 	pushl	%es
+	pushal
 	movl	$KDSEL,%eax
 	movl	%ax,%ds
 	movl	%ax,%es
@@ -1941,7 +1935,7 @@ calltrap:
 	 */
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* new trap type (err code not used) */
 	pushl	_cpl
-	pushl	$0			/* dummy unit */
+	pushl	$0				/* dummy unit */
 	jmp	doreti
 
 #ifdef KGDB
@@ -1951,12 +1945,9 @@ calltrap:
  */
 	ALIGN_TEXT
 bpttraps:
-	pushal
-#ifdef I386_CPU
-	nop
-#endif
 	pushl	%ds
 	pushl	%es
+	pushal
 	movl	$KDSEL,%eax
 	movl	%ax,%ds
 	movl	%ax,%es
@@ -1973,21 +1964,18 @@ bpttraps:
 
 	SUPERALIGN_TEXT
 IDTVEC(syscall)
-	pushfl		# Room for tf_err
-	pushfl		# Room for tf_trapno
-	pushal
-#ifdef I386_CPU
-	nop
-#endif
+	pushfl				# Room for tf_err
+	pushfl				# Room for tf_trapno
 	pushl	%ds
 	pushl	%es
+	pushal
 	movl	$KDSEL,%eax		# switch to kernel segments
 	movl	%ax,%ds
 	movl	%ax,%es
 	movl	TF_ERR(%esp),%eax	# copy eflags from tf_err to tf_eflags
 	movl	%eax,TF_EFLAGS(%esp)
 	movl	$0,TF_ERR(%esp)
-	incl	_cnt+V_SYSCALL  # kml 3/25/93
+	incl	_cnt+V_SYSCALL
 	call	_syscall
 	/*
 	 * Return through doreti to handle ASTs.
