@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/07/25 16:32:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2003/07/25 17:19:23 mrg Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -10,8 +10,7 @@ LIB=		backend
 SRCS=		${G_OBJS:.o=.c} ${G_out_file:T}
 
 CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
-		-DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\" \
-		-DTARGET_CPU_DEFAULT=${G_target_cpu_default}
+		-DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
 HOST_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 
 .include <bsd.lib.mk>
@@ -30,15 +29,13 @@ CLEANFILES+=	gengenrtl gengenrtl.o genrtl.c genrtl.h \
 		gt-*.h *.o \
 		config.h cs-config.h \
 
-LIBIBERTYOBJ!=	cd ${.CURDIR}/../host-libiberty && ${PRINTOBJDIR}
-LIBIBERTY=	${LIBIBERTYOBJ}/libiberty/libiberty.a
-
 #
 # These files have special needs
 #
 COPTS.prefix.o=			-DPREFIX=\"$(prefix)\"
 COPTS.toplev.o=			-DTARGET_NAME=\"$(target_alias)\"
 COPTS.insn-conditions.c=	-DGENERATOR_FILE
+COPTS.sparc.o=			-DTARGET_CPU_DEFAULT=${G_target_cpu_default}
 
 #
 # Generate the various header files we need.
@@ -49,19 +46,19 @@ genrtl.c genrtl.h: gengenrtl
 gengenrtl.o: gengenrtl.c
 	${HOST_COMPILE.c} $>
 gengenrtl: gengenrtl.o
-	${HOST_LINK.c} -o gengenrtl $> ${NBCOMPATLIB} ${LIBIBERTY}
+	${HOST_LINK.c} -o gengenrtl $> ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
 tm-preds.h: genpreds
 	./genpreds > tm-preds.h
 genpreds.o: genpreds.c
 	${HOST_COMPILE.c} $>
 genpreds: genpreds.o
-	${HOST_LINK.c} -o genpreds $> ${NBCOMPATLIB} ${LIBIBERTY}
+	${HOST_LINK.c} -o genpreds $> ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
 #gencheck.o: gencheck.c
 #	${HOST_COMPILE.c} $>
 tree-check.h: gencheck.c
-	${HOST_LINK.c} -o gencheck $> ${NBCOMPATLIB} ${LIBIBERTY}
+	${HOST_LINK.c} -o gencheck $> ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 	./gencheck >$@
 
 gtype-desc.c: gtype-desc.h
@@ -77,7 +74,7 @@ gengtype-lex.o: gengtype-lex.c
 gengtype-yacc.o: gengtype-yacc.c
 	${HOST_COMPILE.c} $>
 gengtype: gengtype.o gtyp-gen.h gengtype-lex.o gengtype-yacc.o config.h
-	${HOST_LINK.c} -o gengtype gengtype.o gengtype-lex.o gengtype-yacc.o ${NBCOMPATLIB} ${LIBIBERTY}
+	${HOST_LINK.c} -o gengtype gengtype.o gengtype-lex.o gengtype-yacc.o ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
 gtyp-gen.h: Makefile
 	(	echo "static const char *srcdir = \"$(G_GTFILES_SRCDIR)\";"		; \
@@ -170,7 +167,7 @@ gen${f:R}.o: gen${f:R}.c
 insn-${f:R}.o:
 	${HOST_COMPILE.c} ${COPTS.${.IMPSRC:T}} insn-${f:R}.c
 insn-${f}: genrtl.h ${G_md_file} ${EXTRADEPENDSEARLY:.c=.o} gen${f:R}.o
-	${HOST_LINK.c} -o gen${f:R} gen${f:R}.o ${EXTRADEPENDSEARLY:.c=.o} ${NBCOMPATLIB} ${LIBIBERTY}
+	${HOST_LINK.c} -o gen${f:R} gen${f:R}.o ${EXTRADEPENDSEARLY:.c=.o} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 	./gen${f:R} ${G_md_file} >$@
 .endfor
 
@@ -190,7 +187,7 @@ CLEANFILES+=		gen${f:R} insn-${f}
 gen${f:R}.o: gen${f:R}.c
 	${HOST_COMPILE.c} $>
 insn-${f}: genrtl.h ${G_md_file} ${EXTRADEPENDS:.c=.o} gen${f:R}.o
-	${HOST_LINK.c} -o gen${f:R} gen${f:R}.o ${EXTRADEPENDS:.c=.o} ${NBCOMPATLIB} ${LIBIBERTY}
+	${HOST_LINK.c} -o gen${f:R} gen${f:R}.o ${EXTRADEPENDS:.c=.o} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 	./gen${f:R} ${G_md_file} >$@
 .endfor
 
@@ -203,7 +200,7 @@ genattrtab.o: genattrtab.c
 genautomata.o: genautomata.c
 	${HOST_COMPILE.c} $>
 insn-attrtab.c: genrtl.h ${G_md_file} ${EXTRADEPENDS:.c=.o} ${G_HOST_VARRAY:.c=.o} genattrtab.o genautomata.o
-	${HOST_LINK.c} -o genattrtab genattrtab.o genautomata.o ${EXTRADEPENDS:.c=.o} ${G_HOST_VARRAY:.c=.o} ${NBCOMPATLIB} ${LIBIBERTY} -lm
+	${HOST_LINK.c} -o genattrtab genattrtab.o genautomata.o ${EXTRADEPENDS:.c=.o} ${G_HOST_VARRAY:.c=.o} ${NBCOMPATLIB} ${HOSTLIBIBERTY} -lm
 	./genattrtab ${G_md_file} >$@
 
 #
