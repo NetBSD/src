@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.3 2003/07/22 11:46:53 mrg Exp $
+# $NetBSD: md.i386,v 1.4 2003/10/26 09:50:20 tron Exp $
 ./usr/X11R6/bin/dga
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/inb
@@ -28,6 +28,9 @@
 ./usr/X11R6/include/X11/pixmaps/monitor.xpm
 ./usr/X11R6/include/X11/pixmaps/mouse.xpm
 ./usr/X11R6/lib/X11/Options
+./usr/X11R6/lib/libXxf86dga.so
+./usr/X11R6/lib/libXxf86dga.so.1
+./usr/X11R6/lib/libXxf86dga.so.1.0
 ./usr/X11R6/man/cat1/dga.0
 ./usr/X11R6/man/cat1/gtf.0
 ./usr/X11R6/man/cat1/pcitweak.0
