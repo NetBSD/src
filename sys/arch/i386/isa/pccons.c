@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.29 1993/08/29 13:47:05 deraadt Exp $
+ *	$Id: pccons.c,v 1.30 1993/09/05 17:56:58 mycroft Exp $
  */
 
 /*
@@ -768,6 +768,7 @@ static sputc(c, ka)
 					break;
 				case 'A': /* back cx rows */
 					if (vs.cx <= 0) vs.cx = 1;
+					vs.cx %= vs.nrow;
 					pos = crtat - Crtat;
 					pos -= vs.ncol * vs.cx;
 					if (pos < 0)
@@ -777,6 +778,7 @@ static sputc(c, ka)
 					break;
 				case 'B': /* down cx rows */
 					if (vs.cx <= 0) vs.cx = 1;
+					vs.cx %= vs.nrow;
 					pos = crtat - Crtat;
 					pos += vs.ncol * vs.cx;
 					if (pos >= vs.nrow * vs.ncol) 
@@ -787,6 +789,7 @@ static sputc(c, ka)
 				case 'C': /* right cursor */
 					if (vs.cx <= 0)
 						vs.cx = 1;
+					vs.cx %= vs.ncol;
 					pos = crtat - Crtat;
 					pos += vs.cx; vs.col += vs.cx;
 					if (vs.col >= vs.ncol) {
@@ -799,6 +802,7 @@ static sputc(c, ka)
 				case 'D': /* left cursor */
 					if (vs.cx <= 0)
 						vs.cx = 1;
+					vs.cx %= vs.ncol;
 					pos = crtat - Crtat;
 					pos -= vs.cx; vs.col -= vs.cx;
 					if (vs.col < 0) {
@@ -851,21 +855,33 @@ static sputc(c, ka)
 						crtat = Crtat;
 						vs.col = 0;
 					} else {
+						if (vs.cx > vs.nrow)
+							vs.cx = vs.nrow;
+						if (vs.cy > vs.ncol)
+							vs.cy = vs.ncol;
 						crtat = Crtat + (vs.cx - 1) * vs.ncol + vs.cy - 1;
 						vs.col = vs.cy - 1;
 					}
 					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
 					break;
 				case 'S':  /* scroll up cx lines */
-					if (vs.cx <= 0) vs.cx = 1;
-					bcopy(Crtat+vs.ncol*vs.cx, Crtat, vs.ncol*(vs.nrow-vs.cx)*CHR);
+					if (vs.cx <= 0)
+						vs.cx = 1;
+					if (vs.cx > vs.nrow)
+						vs.cx = vs.nrow;
+					if (vs.cx < vs.nrow)
+						bcopy(Crtat+vs.ncol*vs.cx, Crtat, vs.ncol*(vs.nrow-vs.cx)*CHR);
 					fillw((at <<8)+' ', Crtat+vs.ncol*(vs.nrow-vs.cx), vs.ncol*vs.cx);
 					/* crtat -= vs.ncol*vs.cx; /* XXX */
 					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
 					break;
 				case 'T':  /* scroll down cx lines */
-					if (vs.cx <= 0) vs.cx = 1;
-					bcopy(Crtat, Crtat+vs.ncol*vs.cx, vs.ncol*(vs.nrow-vs.cx)*CHR);
+					if (vs.cx <= 0)
+						vs.cx = 1;
+					if (vs.cx > vs.nrow)
+						vs.cx = vs.nrow;
+					if (vs.cx < vs.nrow)
+						bcopy(Crtat, Crtat+vs.ncol*vs.cx, vs.ncol*(vs.nrow-vs.cx)*CHR);
 					fillw((at <<8)+' ', Crtat, vs.ncol*vs.cx);
 					/* crtat += vs.ncol*vs.cx; /* XXX */
 					vs.esc = 0; vs.ebrac = 0; vs.eparm = 0;
