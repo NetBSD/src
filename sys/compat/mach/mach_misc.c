@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.18 2003/03/29 11:04:09 manu Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.19 2003/11/16 01:12:30 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.18 2003/03/29 11:04:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.19 2003/11/16 01:12:30 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,26 +202,6 @@ mach_sys_macx_triggers(struct lwp *l, void *v, register_t *r) {
 	DPRINTF(("mach_sys_macx_triggers(%d, %d, %d, 0x%x);\n",
 	    SCARG(ap, hi_water), SCARG(ap, low_water), SCARG(ap, flags),
 	    SCARG(ap, alert_port)));
-	return 0;
-}
-
-
-int
-mach_sys_swtch_pri(struct lwp *l, void *v, register_t *r) {
-#ifdef DEBUG_MACH
-	struct mach_sys_swtch_pri_args *ap = v;
-#endif
-	*r = 0;
-	DPRINTF(("mach_sys_swtch_pri(%d);\n",
-	    SCARG(ap, pri)));
-	return 0;
-}
-
-
-int
-mach_sys_swtch(struct lwp *l, void *v, register_t *r) {
-	*r = 0;
-	DPRINTF(("mach_sys_swtch();\n"));
 	return 0;
 }
 
