@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2001/02/28 18:15:43 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 2001/04/20 18:08:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -215,6 +215,9 @@ extern struct cpu_info cpu_info_store;
 
 #ifndef _LOCORE
 extern int current_intr_depth;
+
+struct device;
+void	cpu_attach	__P((struct device *));
 
 /*
  * Preempt the current process if in interrupt from user mode,
