@@ -122,7 +122,7 @@ kdbprinttrap(type, code)
 		printf("type %d", type);
 	else
 		printf("%s", trap_type[type]);
-	printf(" trap, code=%x\n");
+	printf(" trap\n");
 }
 
 /*
