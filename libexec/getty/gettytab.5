@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.22 1999/03/22 18:25:44 garbled Exp $
+.\"	$NetBSD: gettytab.5,v 1.23 2000/01/04 13:43:36 ad Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,6 +82,7 @@ no entry in the table obtained, nor one in the special
 table.
 .Bl -column Namexx /usr/bin/login Default
 .It Sy Name	Type	Default	Description
+.It "al	str	unused	user to auto-login instead of prompting"
 .It "ap	bool	false	terminal uses any parity"
 .It "bk	str	0377	alternative end of line character (input break)"
 .It "c0	num	unused	tty control flags to write messages"
@@ -124,6 +125,7 @@ hangup line on last close
 .It "i0	num	unused	tty input flags to write messages"
 .It "i1	num	unused	tty input flags to read login name"
 .It "i2	num	unused	tty input flags to leave terminal as"
+.It "if	str	unused	display named file before prompt, like /etc/issue"
 .It "ig	bool	false	ignore garbage characters in login name"
 .It "im	str" Ta Dv NULL Ta
 .No "initial (banner) message"
