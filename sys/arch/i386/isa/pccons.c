@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.100 1996/05/30 23:59:11 cgd Exp $	*/
+/*	$NetBSD: pccons.c,v 1.101 1996/09/02 06:43:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -729,12 +729,12 @@ out:
 	splx(s);
 }
 
-int
+void
 pcstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	return 0;
+
 }
 
 void

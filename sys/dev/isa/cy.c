@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.13 1996/05/30 18:24:16 cgd Exp $	*/
+/*	$NetBSD: cy.c,v 1.14 1996/09/02 06:44:49 mycroft Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -1443,7 +1443,7 @@ cystart(struct tty *tp)
 } /* end of cystart() */
 
 
-int
+void
 cystop(struct tty *tp, int flag)
 {
 	u_char		unit = UNIT(tp->t_dev);
@@ -1461,8 +1461,6 @@ cystop(struct tty *tp, int flag)
 	*(base + CD1400_SRER) = ip->intr_enable;
 
 	splx(s);
-
-	return 0;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.35 1996/06/06 04:47:36 mhitch Exp $	*/
+/*	$NetBSD: ser.c,v 1.36 1996/09/02 06:43:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -891,7 +891,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
-int
+void
 serstop(tp, flag)
 	struct tty *tp;
 	int flag;
@@ -904,7 +904,6 @@ serstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
-	return 0;
 }
 
 int

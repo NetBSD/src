@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.42 1996/06/06 04:47:31 mhitch Exp $	*/
+/*	$NetBSD: ite.c,v 1.43 1996/09/02 06:43:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -536,12 +536,12 @@ itetty(dev)
 	return (getitesp(dev)->tp);
 }
 
-int
+void
 itestop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	return (0);
+
 }
 
 int

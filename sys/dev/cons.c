@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
+/*	$NetBSD: cons.c,v 1.31 1996/09/02 06:44:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -152,12 +152,12 @@ cnwrite(dev, uio, flag)
 	return ((*cdevsw[major(dev)].d_write)(dev, uio, flag));
 }
 
-int
+void
 cnstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	return (0);
+
 }
  
 int

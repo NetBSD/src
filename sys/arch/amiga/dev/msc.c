@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.7 1996/06/06 04:47:34 mhitch Exp $ */
+/*	$NetBSD: msc.c,v 1.8 1996/09/02 06:43:30 mycroft Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -1154,7 +1154,7 @@ out:
  * Stop output on a line.
  */
 /*ARGSUSED*/
-int
+void
 mscstop(tp, flag)
 	register struct tty *tp;
 	int flag;			/* defaulted to int anyway */
@@ -1178,7 +1178,6 @@ mscstop(tp, flag)
 		}
 	}
 	splx(s);
-	return 0;
 }
  
 /*
