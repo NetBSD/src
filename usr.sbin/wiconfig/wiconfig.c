@@ -29,7 +29,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: wiconfig.c,v 1.5 2000/05/23 09:04:33 enami Exp $
+ *	$Id: wiconfig.c,v 1.5.4.1 2000/06/26 01:26:16 sommerfeld Exp $
  */
 
 #include <sys/types.h>
@@ -67,7 +67,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.5 2000/05/23 09:04:33 enami Exp $";
+	"@(#) $Id: wiconfig.c,v 1.5.4.1 2000/06/26 01:26:16 sommerfeld Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -642,7 +642,7 @@ int main(argc, argv)
 	}
 
 	while ((ch = getopt(argc, argv,
-	    "hoc:d:f:p:r:q:t:n:s:i:m:P:S:T:e:k:v:")) != -1) {
+	    "hoa:c:d:f:p:r:q:t:n:s:i:m:P:S:T:e:k:v:")) != -1) {
 		switch (ch) {
 		case 'o':
 			wi_dumpstats(iface);
@@ -651,6 +651,10 @@ int main(argc, argv)
 		case 'i':
 			if (iface == NULL)
 				iface = optarg;
+			break;
+		case 'a':
+			wi_setword(iface, WI_RID_SYSTEM_SCALE, atoi(optarg));
+			exit(0);
 			break;
 		case 'c':
 			wi_setword(iface, WI_RID_CREATE_IBSS, atoi(optarg));
