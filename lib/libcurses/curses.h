@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.22 1999/04/13 14:08:17 mrg Exp $	*/
+/*	$NetBSD: curses.h,v 1.23 1999/06/28 12:32:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -261,7 +261,6 @@ typedef struct __window {		/* Window structure. */
 	__LINE **lines;			/* Array of pointers to the lines */
 	__LINE  *lspace;		/* line space (for cleanup) */
 	__LDATA *wspace;		/* window space (for cleanup) */
-	int	delay;			/* delay for getch() */
 
 #define	__ENDLINE	0x00001		/* End of screen. */
 #define	__FLUSH		0x00002		/* Fflush(stdout) after refresh. */
@@ -283,8 +282,9 @@ typedef struct __window {		/* Window structure. */
 						(excluding standout). */
 #define	__KEYPAD	0x10000		/* If interpreting keypad codes */
 #define	__NOTIMEOUT	0x20000		/* Wait indefinitely for func keys */
+	unsigned int flags;
 
-	u_int32_t	flags;
+	int	delay;			/* delay for getch() */
 } WINDOW;
 
 /* Curses external declarations. */
