@@ -168,7 +168,7 @@ typedef rp__list *rpcblist_ptr;		/* results of RPCBPROC_DUMP */
 %#ifdef __cplusplus
 %extern "C" {
 %#endif
-%#ifdef __STDC__
+%#if __STDC__
 %extern  bool_t xdr_rpcblist(XDR *, rpcblist**);
 %#else /* K&R C */
 %bool_t xdr_rpcblist();
