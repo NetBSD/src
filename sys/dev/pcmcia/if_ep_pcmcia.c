@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.24 1999/10/11 17:49:21 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.25 2000/02/02 07:23:28 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@
 int	ep_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	ep_pcmcia_attach __P((struct device *, struct device *, void *));
 int	ep_pcmcia_detach __P((struct device *, int));
+int	ep_pcmcia_activate __P((struct device *, enum devact));
 
 int	ep_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
 int	ep_pcmcia_enable __P((struct ep_softc *));
@@ -138,7 +139,7 @@ struct ep_pcmcia_softc {
 
 struct cfattach ep_pcmcia_ca = {
 	sizeof(struct ep_pcmcia_softc), ep_pcmcia_match, ep_pcmcia_attach,
-	    ep_pcmcia_detach, ep_activate
+	    ep_pcmcia_detach, ep_pcmcia_activate
 };
 
 struct ep_pcmcia_product {
@@ -264,6 +265,7 @@ ep_pcmcia_disable(sc)
 
 	ep_pcmcia_disable1(sc);
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+	sc->sc_ih = 0;
 }
 
 void
@@ -379,11 +381,37 @@ ep_pcmcia_attach(parent, self, aux)
 }
 
 int
+ep_pcmcia_activate(dev, act)
+	struct device *dev;
+	enum devact act;
+{
+	struct ep_pcmcia_softc *sc = (struct ep_pcmcia_softc *)dev;
+	int s;
+	int rv = 0;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (sc->sc_ep.sc_ih != NULL)
+			ep_pcmcia_disable((void *)sc);
+		break;
+	}
+	splx(s);
+	return (rv);
+}
+
+int
 ep_pcmcia_detach(self, flags)
 	struct device *self;
 	int flags;
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *)self;
+	struct ep_softc *sc = &psc->sc_ep;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/* Unmap our i/o window. */
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
@@ -391,16 +419,11 @@ ep_pcmcia_detach(self, flags)
 	/* Free our i/o space. */
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 
-#ifdef notyet
-	/*
-	 * Our softc is about to go away, so drop our reference
-	 * to the ifnet.
-	 */
-	if_delref(psc->sc_ep.sc_ethercom.ec_if);
+	bpfdetach(ifp);
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
 	return (0);
-#else
-	return (EBUSY);
-#endif
 }
 
 int
