@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 2002/03/15 05:24:31 gmcgarry Exp $ */
+/*	$NetBSD: md.c,v 1.3 2002/03/17 05:38:11 gmcgarry Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -101,15 +101,15 @@ md_get_info(void)
 		exit(1);
 	}
 
-	/* preserve first 64 sectors for system. */
-	ptstart = 64;
+	/* preserve first cylinder for system. */
+	ptstart = disklabel.d_secpercyl;
 
 	close(fd);
 
 	/* Compute minimum NetBSD partition sizes (in sectors). */
 	minfsdmb = STDNEEDMB * (MEG / sectorsize);
 
-	return 1;
+	return (1);
 }
 
 /*
