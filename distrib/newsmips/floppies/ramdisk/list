@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 2002/04/26 15:50:42 lukem Exp $
+#	$NetBSD: list,v 1.12 2002/05/20 16:13:39 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -49,7 +49,7 @@ PROG	usr/bin/more
 PROG	usr/bin/sed
 PROG	usr/bin/tset
 
-PROG	usr/mdec/installboot
+PROG	usr/sbin/installboot
 
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
@@ -67,9 +67,6 @@ SPECIAL	mount		srcdir	distrib/utils/x_mount
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
-
-# we have not switched to MI usr.sbin/installboot yet.
-SPECIAL	installboot	srcdir	sys/arch/${MACHINE}/stand/installboot
 
 LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz
 
