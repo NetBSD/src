@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.28 1996/10/01 18:21:48 cgd Exp $	*/
+/*	$NetBSD: savecore.c,v 1.29 1997/04/21 12:50:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.3 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: savecore.c,v 1.28 1996/10/01 18:21:48 cgd Exp $";
+static char rcsid[] = "$NetBSD: savecore.c,v 1.29 1997/04/21 12:50:43 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -370,6 +370,7 @@ save_core()
 	 * Get the current number and update the bounds file.  Do the update
 	 * now, because may fail later and don't want to overwrite anything.
 	 */
+	umask(002);
 	(void)snprintf(path, sizeof(path), "%s/bounds", dirname);
 	if ((fp = fopen(path, "r")) == NULL)
 		goto err1;
