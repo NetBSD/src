@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.25 2004/04/03 20:55:13 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.26 2004/04/03 23:57:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.25 2004/04/03 20:55:13 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.26 2004/04/03 23:57:32 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -248,8 +248,8 @@ readheaders(void)
 			cont = 0;
 			if (!strncmp(buf, "From ", 5))
 				getfrom(buf + 5);
-			if ((fflag & FROM_FROM) == 0 ||
-			    strncmp(buf, "From:", 5))
+			if ((fflag & FROM_FROM) != 0 &&
+			    strncmp(buf, "From:", 5) == 0)
 				getfrom(buf + 5);
 			break;
 		case 'P':		/* "Precedence:" */
@@ -293,14 +293,14 @@ readheaders(void)
 			goto findme;
 		case 'R':		/* "Return-Path:" */
 			cont = 0;
-			if ((fflag & RETURN_PATH_FROM) == 0 ||
-			    strncmp(buf, "Return-Path:", 12))
+			if ((fflag & RETURN_PATH_FROM) != 0 &&
+			    strncmp(buf, "Return-Path:", 12) == 0)
 				getfrom(buf + 12);
 			break;
 		case 'S':		/* "Sender:" */
 			cont = 0;
-			if ((fflag & SENDER_FROM) == 0 ||
-			    strncmp(buf, "Sender:", 7))
+			if ((fflag & SENDER_FROM) != 0 &&
+			    strncmp(buf, "Sender:", 7) == 0)
 				getfrom(buf + 7);
 			break;
 		default:
