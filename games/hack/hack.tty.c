@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.tty.c,v 1.7 2000/07/10 10:19:25 itojun Exp $	*/
+/*	$NetBSD: hack.tty.c,v 1.8 2001/02/05 00:37:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char     sccsid[] = "@(#)hack.tty.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hack.tty.c,v 1.7 2000/07/10 10:19:25 itojun Exp $");
+__RCSID("$NetBSD: hack.tty.c,v 1.8 2001/02/05 00:37:43 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: hack.tty.c,v 1.7 2000/07/10 10:19:25 itojun Exp $");
  */
 
 #include <termios.h>
+#include <termcap.h>
 #include "hack.h"
 #include "extern.h"
 
@@ -73,7 +74,6 @@ struct termios  inittyb, curttyb;
 void
 gettty()
 {
-	extern speed_t ospeed;
 	if (tcgetattr(0, &inittyb) < 0)
 		perror("Hack (gettty)");
 	curttyb = inittyb;
