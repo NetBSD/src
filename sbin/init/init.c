@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.37 2000/03/19 23:21:46 soren Exp $	*/
+/*	$NetBSD: init.c,v 1.38 2000/12/30 14:46:21 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.37 2000/03/19 23:21:46 soren Exp $");
+__RCSID("$NetBSD: init.c,v 1.38 2000/12/30 14:46:21 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -634,9 +634,15 @@ single_user()
 
 #ifdef ALTSHELL
 		fprintf(stderr, "Enter pathname of shell or RETURN for sh: ");
-		fgets(altshell, sizeof(altshell), stdin);
-		/* nuke \n */
-		altshell[strlen(altshell) - 1] = '\0';
+		if (fgets(altshell, sizeof(altshell), stdin) == NULL) {
+			altshell[0] = '\0';
+		} else {
+			/* nuke \n */
+			char *p;
+
+			if ((p = strchr(altshell, '\n')) == NULL)
+				*p = '\0';
+		}
 
 		if (altshell[0])
 			shell = altshell;
