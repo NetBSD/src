@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.10 1998/07/05 06:49:11 jonathan Exp $ */
+/* $NetBSD: lemac.c,v 1.11 1999/02/28 17:10:53 explorer Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -1065,7 +1065,8 @@ lemac_ifattach(
 #endif
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dv.dv_xname, RND_TYPE_NET);
+	rnd_attach_source(&sc->rnd_source, sc->sc_dv.dv_xname,
+			  RND_TYPE_NET, 0);
 #endif
 
 	ifmedia_init(&sc->sc_ifmedia, 0,

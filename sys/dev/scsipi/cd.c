@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.123 1999/02/15 18:41:04 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.124 1999/02/28 17:14:57 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -173,7 +173,8 @@ cdattach(parent, cd, sc_link, ops)
 	printf("\n");
 
 #if NRND > 0
-	rnd_attach_source(&cd->rnd_source, cd->sc_dev.dv_xname, RND_TYPE_DISK);
+	rnd_attach_source(&cd->rnd_source, cd->sc_dev.dv_xname,
+			  RND_TYPE_DISK, 0);
 #endif
 }
 

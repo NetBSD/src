@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.21 1999/02/17 03:40:59 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.22 1999/02/28 17:10:52 explorer Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -149,7 +149,8 @@ dp8390_config(sc, media, nmedia, defmedia)
 #endif
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET, 0);
 #endif
 
 	/* Print additional info when attached. */

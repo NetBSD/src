@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.31 1999/02/18 19:24:39 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.32 1999/02/28 17:08:52 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -490,7 +490,7 @@ fxp_attach(parent, self, aux)
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_NET);
+			  RND_TYPE_NET, 0);
 #endif
 
 	/*

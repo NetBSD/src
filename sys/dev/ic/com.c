@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.154 1999/02/12 12:45:48 drochner Exp $	*/
+/*	$NetBSD: com.c,v 1.155 1999/02/28 17:10:52 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -534,7 +534,7 @@ com_attach_subr(sc)
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-			  RND_TYPE_TTY);
+			  RND_TYPE_TTY, 0);
 #endif
 
 	/* if there are no enable/disable functions, assume the device

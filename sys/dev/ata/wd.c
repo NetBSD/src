@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.192 1999/02/21 00:15:42 hubertf Exp $ */
+/*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -345,7 +345,8 @@ wdattach(parent, self, aux)
 		printf("%s: WARNING: unable to establish shutdown hook\n",
 		    wd->sc_dev.dv_xname); 
 #if NRND > 0
-	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname, RND_TYPE_DISK);
+	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname,
+			  RND_TYPE_DISK, 0);
 #endif
 }
 

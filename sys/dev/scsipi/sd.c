@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.143 1999/02/10 12:29:50 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.144 1999/02/28 17:14:57 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -212,7 +212,8 @@ sdattach(parent, sd, sc_link, ops)
 	/*
 	 * attach the device into the random source list
 	 */
-	rnd_attach_source(&sd->rnd_source, sd->sc_dev.dv_xname, RND_TYPE_DISK);
+	rnd_attach_source(&sd->rnd_source, sd->sc_dev.dv_xname,
+			  RND_TYPE_DISK, 0);
 #endif
 }
 

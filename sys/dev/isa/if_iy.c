@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.31 1999/02/16 23:34:13 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.32 1999/02/28 17:09:26 explorer Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -369,7 +369,8 @@ iyattach(parent, self, aux)
 	    IPL_NET, iyintr, sc);
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET, 0);
 #endif
 
 	temp = bus_space_read_1(iot, ioh, INT_NO_REG);

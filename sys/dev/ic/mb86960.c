@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.30 1999/02/17 03:41:01 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.31 1999/02/28 17:10:53 explorer Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -266,7 +266,7 @@ mb86960_config(sc, media, nmedia, defmedia)
 #endif
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
-	    RND_TYPE_NET);
+			  RND_TYPE_NET, 0);
 #endif
 	/* Print additional info when attached. */
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,

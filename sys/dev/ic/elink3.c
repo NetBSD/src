@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.52 1999/02/17 03:41:00 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.53 1999/02/28 17:10:53 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -453,7 +453,8 @@ epconfig(sc, chipset, enaddr)
 #endif
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET, 0);
 #endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.14 1999/02/17 03:41:01 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.15 1999/02/28 17:10:53 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -263,7 +263,8 @@ smc91cxx_attach(sc, myea)
 #endif
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET, 0);
 #endif
 }
 
