@@ -32,27 +32,29 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)scroll.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: scroll.c,v 1.2 1993/08/01 18:35:24 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)scroll.c	5.6 (Berkeley) 8/31/92";*/
+static char rcsid[] = "$Id: scroll.c,v 1.3 1993/08/07 05:49:06 mycroft Exp $";
 #endif /* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
+#include <termios.h>
 
 /*
- *	This routine scrolls the window up a line.
- *
+ * scroll --
+ *	Scroll the window up a line.
  */
+int
 scroll(win)
-register  WINDOW	*win;
+	register WINDOW *win;
 {
-	register int	oy, ox;
+	register int oy, ox;
 
-# ifdef DEBUG
-	fprintf(outf, "SCROLL(%0.2o)\n", win);
-# endif
+#ifdef DEBUG
+	__TRACE("scroll: (%0.2o)\n", win);
+#endif
 
 	if (!win->_scroll)
-		return ERR;
+		return (ERR);
 
 	getyx(win, oy, ox);
 	wmove(win, 0, 0);
@@ -60,11 +62,12 @@ register  WINDOW	*win;
 	wmove(win, oy, ox);
 
 	if (win == curscr) {
-		_putchar('\n');
-		if (!NONL)
+		putchar('\n');
+		if (origtermio.c_oflag & ONLCR)
 			win->_curx = 0;
-# ifdef DEBUG
-		fprintf(outf, "SCROLL: win == curscr\n");
-# endif
+#ifdef DEBUG
+		__TRACE("scroll: win == curscr\n");
+#endif
 	}
+	return (OK);
 }

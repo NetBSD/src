@@ -1,17 +1,20 @@
-#	from: @(#)Makefile	5.10 (Berkeley) 6/24/90
-#	$Id: Makefile,v 1.2 1993/08/01 05:40:25 mycroft Exp $
+#	from: @(#)Makefile	5.12 (Berkeley) 8/23/92
+#	$Id: Makefile,v 1.3 1993/08/07 05:48:37 mycroft Exp $
 
+CFLAGS+=#-g -DDEBUG -DTFILE=\"/dev/ttyp0\"
+CFLAGS+=-D_CURSES_PRIVATE -I${.CURDIR}
 LIB=	curses
 SRCS=	addbytes.c addch.c addstr.c box.c clear.c clrtobot.c clrtoeol.c \
-	cr_put.c cr_tty.c curses.c delch.c deleteln.c delwin.c endwin.c \
-	erase.c fullname.c getch.c getstr.c idlok.c id_subwins.c initscr.c \
-	insch.c insertln.c longname.c move.c mvprintw.c mvscanw.c mvwin.c \
-	newwin.c overlay.c overwrite.c printw.c putchar.c refresh.c scanw.c \
-	scroll.c toucholap.c standout.c touchwin.c tstp.c unctrl.c
+	cr_put.c curses.c delch.c deleteln.c delwin.c erase.c fullname.c \
+	getch.c getstr.c id_subwins.c idlok.c initscr.c insch.c insertln.c \
+	longname.c move.c mvwin.c newwin.c overlay.c overwrite.c printw.c \
+	putchar.c refresh.c scanw.c scroll.c setterm.c standout.c \
+	toucholap.c touchwin.c trace.c tstp.c tty.c unctrl.c
 MAN3=	curses.0
 
 beforeinstall:
-	-cd ${.CURDIR}; cmp -s curses.h ${DESTDIR}/usr/include/curses.h || \
+	-cd ${.CURDIR}; cmp -s curses.h ${DESTDIR}/usr/include/curses.h > \
+	    /dev/null 2>&1 || \
 	    install -c -o ${BINOWN} -g ${BINGRP} -m 444 curses.h \
 	    ${DESTDIR}/usr/include
 

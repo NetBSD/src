@@ -32,26 +32,26 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mvwin.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: mvwin.c,v 1.2 1993/08/01 18:35:31 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)mvwin.c	5.5 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: mvwin.c,v 1.3 1993/08/07 05:49:00 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
 
 /*
- * relocate the starting position of a window
- *
+ * mvwin --
+ *	Relocate the starting position of a window.
  */
-
+int
 mvwin(win, by, bx)
-reg WINDOW	*win;
-reg int		by, bx; {
-
-	register WINDOW	*orig;
-	register int	dy, dx;
+	register WINDOW *win;
+	register int by, bx;
+{
+	register WINDOW *orig;
+	register int dy, dx;
 
 	if (by + win->_maxy > LINES || bx + win->_maxx > COLS)
-		return ERR;
+		return (ERR);
 	dy = by - win->_begy;
 	dx = bx - win->_begx;
 	orig = win->_orig;
@@ -60,20 +60,19 @@ reg int		by, bx; {
 		do {
 			win->_begy += dy;
 			win->_begx += dx;
-			_swflags_(win);
+			__swflags(win);
 			win = win->_nextp;
 		} while (win != orig);
-	}
-	else {
+	} else {
 		if (by < orig->_begy || win->_maxy + dy > orig->_maxy)
-			return ERR;
+			return (ERR);
 		if (bx < orig->_begx || win->_maxx + dx > orig->_maxx)
-			return ERR;
+			return (ERR);
 		win->_begy = by;
 		win->_begx = bx;
-		_swflags_(win);
-		_set_subwin_(orig, win);
+		__swflags(win);
+		__set_subwin(orig, win);
 	}
 	touchwin(win);
-	return OK;
+	return (OK);
 }

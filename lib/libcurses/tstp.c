@@ -32,43 +32,52 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)tstp.c	5.6 (Berkeley) 3/3/91";*/
-static char rcsid[] = "$Id: tstp.c,v 1.2 1993/08/01 18:35:20 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)tstp.c	5.7 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: tstp.c,v 1.3 1993/08/07 05:49:09 mycroft Exp $";
 #endif /* not lint */
 
-# include	<signal.h>
-
-# include	"curses.ext"
+#include <curses.h>
+#include <errno.h>
+#include <signal.h>
+#include <termios.h>
+#include <unistd.h>
 
 /*
- * handle stop and start signals
- *
- * @(#)tstp.c	5.6 (Berkeley) 3/3/91
+ * tstp --
+ *	Handle stop and start signals.
  */
 void
-tstp() {
+tstp(signo)
+	int signo;
+{
+	struct termios save;
+	sigset_t set;
 
-# ifdef SIGTSTP
+	/* Get the current terminal state. */
+	if (tcgetattr(STDIN_FILENO, &save))
+		return;
 
-	SGTTY	tty;
-	int	omask;
-# ifdef DEBUG
-	if (outf)
-		fflush(outf);
-# endif
-	tty = _tty;
+	/* Move the cursor to the end of the screen. */
 	mvcur(0, COLS - 1, LINES - 1, 0);
+
+	/* End the window. */
 	endwin();
-	fflush(stdout);
-	/* reset signal handler so kill below stops us */
-	signal(SIGTSTP, SIG_DFL);
-#define	mask(s)	(1 << ((s)-1))
-	omask = sigsetmask(sigblock(0) &~ mask(SIGTSTP));
-	kill(0, SIGTSTP);
-	sigblock(mask(SIGTSTP));
-	signal(SIGTSTP, tstp);
-	_tty = tty;
-	ioctl(_tty_ch, TIOCSETP, &_tty);
+
+	/* Stop ourselves. */
+	(void)sigemptyset(&set);
+	(void)sigaddset(&set, SIGTSTP);
+	(void)sigprocmask(SIG_UNBLOCK, &set, NULL);
+	(void)signal(SIGTSTP, SIG_DFL);
+	(void)kill(0, SIGTSTP);
+
+	/* Time passes ... */
+
+	/* Reset the signal handler. */
+	(void)signal(SIGTSTP, tstp);
+
+	/* Reset the terminal state. */
+	(void)tcsetattr(STDIN_FILENO, TCSADRAIN, &save);
+
+	/* Restart the screen. */
 	wrefresh(curscr);
-# endif	SIGTSTP
 }

@@ -32,23 +32,22 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)clrtoeol.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: clrtoeol.c,v 1.3 1993/08/01 18:35:51 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)clrtoeol.c	5.5 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: clrtoeol.c,v 1.4 1993/08/07 05:48:43 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
 
 /*
- *	This routine clears up to the end of line
- *
+ * wclrtoeol --
+ *	Clear up to the end of line.
  */
+int
 wclrtoeol(win)
-reg WINDOW	*win; {
-
-	reg chtype      *sp, *end;
-	reg int		y, x;
-	reg chtype      *maxx;
-	reg int		minx;
+	register WINDOW *win;
+{
+	register int minx, x, y;
+	register char *end, *maxx, *sp;
 
 	y = win->_cury;
 	x = win->_curx;
@@ -62,11 +61,10 @@ reg WINDOW	*win; {
 				minx = sp - win->_y[y];
 			*sp = ' ';
 		}
-	/*
-	 * update firstch and lastch for the line
-	 */
-	touchline(win, y, win->_curx, win->_maxx - 1);
-# ifdef DEBUG
-	fprintf(outf, "CLRTOEOL: minx = %d, maxx = %d, firstch = %d, lastch = %d\n", minx, maxx - win->_y[y], win->_firstch[y], win->_lastch[y]);
-# endif
+#ifdef DEBUG
+	__TRACE("CLRTOEOL: minx = %d, maxx = %d, firstch = %d, lastch = %d\n",
+	    minx, maxx - win->_y[y], win->_firstch[y], win->_lastch[y]);
+#endif
+	/* Update firstch and lastch for the line. */
+	return (touchline(win, y, win->_curx, win->_maxx - 1));
 }

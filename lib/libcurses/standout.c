@@ -32,40 +32,37 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)standout.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: standout.c,v 1.2 1993/08/01 18:35:23 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)standout.c	5.5 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: standout.c,v 1.3 1993/08/07 05:49:07 mycroft Exp $";
 #endif /* not lint */
 
-/*
- * routines dealing with entering and exiting standout mode
- *
- */
-
-# include	"curses.ext"
+#include <curses.h>
 
 /*
- * enter standout mode
+ * wstandout
+ *	Enter standout mode.
  */
 char *
 wstandout(win)
-reg WINDOW	*win;
+	register WINDOW *win;
 {
 	if (!SO && !UC)
-		return FALSE;
+		return (0);
 
 	win->_flags |= _STANDOUT;
 	return (SO ? SO : UC);
 }
 
 /*
- * exit standout mode
+ * wstandend --
+ *	Exit standout mode.
  */
 char *
 wstandend(win)
-reg WINDOW	*win;
+	register WINDOW *win;
 {
 	if (!SO && !UC)
-		return FALSE;
+		return (0);
 
 	win->_flags &= ~_STANDOUT;
 	return (SE ? SE : UC);
