@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.44 2000/01/10 16:58:38 kleink Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.45 2000/03/06 18:32:23 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -68,8 +68,19 @@ typedef struct {
 	long rem;		/* remainder */
 } ldiv_t;
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if !defined(_ANSI_SOURCE) && \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+typedef struct {
+	/* LONGLONG */
+	long long int quot;	/* quotient */
+	/* LONGLONG */
+	long long int rem;	/* remainder */
+} lldiv_t;
+#endif
+
+#if !defined(_ANSI_SOURCE) && !defined(_ISOC99_SOURCE) && \
+    !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 typedef struct {
 	quad_t quot;		/* quotient */
 	quad_t rem;		/* remainder */
@@ -189,6 +200,22 @@ int	 ttyslot __P((void));
 void	*valloc __P((size_t));		/* obsoleted by malloc() */
 #endif
 
+/*
+ * ISO C99
+ */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L
+/* LONGLONG */
+long long int	atoll __P((const char *));
+/* LONGLONG */
+long long int	llabs __P((long long int));
+/* LONGLONG */
+lldiv_t		lldiv __P((long long int, long long int));
+/* LONGLONG */
+long long int	strtoll __P((const char *, char **, int));
+/* LONGLONG */
+unsigned long long int	strtoull __P((const char *, char **, int));
+#endif
 
 /*
  * Implementation-defined extensions
