@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.79 2002/05/30 21:44:07 msaitoh Exp $
+#	$NetBSD: bsd.sys.mk,v 1.80 2002/06/11 16:25:11 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -62,6 +62,7 @@ HOST_AR?=	ar
 HOST_RANLIB?=	ranlib
 
 CAP_MKDB?=	cap_mkdb
+CAT?=		cat
 CKSUM?=		cksum
 CONFIG?=	config
 CRUNCHGEN?=	crunchgen
