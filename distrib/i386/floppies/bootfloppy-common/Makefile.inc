@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 1999/03/04 20:32:19 wrstuden Exp $
+#	$NetBSD: Makefile.inc,v 1.15 1999/03/13 19:19:03 sommerfe Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -46,7 +46,7 @@ all:	netbsd.ram.gz
 	@echo "installing new bootblocks"
 	-rm -f ${MOUNT_POINT}/boot
 	umount ${MOUNT_POINT}
-	/usr/mdec/installboot -v -f /usr/mdec/biosboot.sym ${VND_RDEV}
+	${MDEC}/installboot -v -f ${MDEC}/biosboot.sym ${VND_RDEV}
 	vnconfig -u ${VND_CDEV}
 
 unconfig:
