@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.9.2.4 2004/10/30 06:42:14 skrll Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.9.2.5 2005/01/13 08:33:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.9.2.4 2004/10/30 06:42:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.9.2.5 2005/01/13 08:33:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ irix_usema_ioctl(v)
 		if ((iur = iur_lookup_by_vn(vp)) == NULL)
 			return EBADF;
 		
-		(void *)iur_proc_queue(iur, ap->a_p);
+		(void *)iur_proc_queue(iur, ap->a_l->l_proc);
 		break;
 
 	case IRIX_UIOCAUNBLOCKQ: /* semaphore has been unblocked */
@@ -250,7 +250,7 @@ irix_usema_ioctl(v)
 		isp = (struct irix_semaphore *)((u_long)(isp) -
 		    (u_long)(&isp->is_oid) + (u_long)iui.iui_oidp);
 
-		if ((iur_insert(isp, vp, ap->a_p)) == NULL)
+		if ((iur_insert(isp, vp, ap->a_l->l_proc)) == NULL)
 			return EFAULT;
 		break;
 	}
@@ -286,7 +286,7 @@ irix_usema_poll(v)
 	if ((iur = iur_lookup_by_vn(vp)) == NULL)
 		return 0;
 
-	if (iur_proc_isreleased(iur, ap->a_p) == 0)
+	if (iur_proc_isreleased(iur, ap->a_l->l_proc) == 0)
 		return 0;
 		
 	return (events & check);
@@ -352,7 +352,7 @@ irix_usema_setattr(v)
 #ifdef DEBUG_IRIX
 	printf("irix_usema_setattr()\n");
 #endif
-	error = VOP_SETATTR(vp, ap->a_vap, ap->a_cred, ap->a_p);
+	error = VOP_SETATTR(vp, ap->a_vap, ap->a_cred, ap->a_l);
 
 	/* Silently ignore any error */
 	return 0;
@@ -368,7 +368,7 @@ irix_usema_inactive(v)
 	} */ *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0);
-	vrecycle(ap->a_vp, NULL, ap->a_p);
+	vrecycle(ap->a_vp, NULL, ap->a_l);
 
 	return 0;
 }

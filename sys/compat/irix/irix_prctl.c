@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.21.2.4 2004/11/02 07:51:07 skrll Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.21.2.5 2005/01/13 08:33:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.21.2.4 2004/11/02 07:51:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.21.2.5 2005/01/13 08:33:11 skrll Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -357,7 +357,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 		if ((isg = ied->ied_share_group) == NULL)
 			panic("irix_sproc: NULL ied->ied_share_group");
 
-		IRIX_VM_SYNC(p, error = (*vmc.ev_proc)(p, &vmc));
+		IRIX_VM_SYNC(p, error = (*vmc.ev_proc)(l, &vmc));
 		if (error)
 			return error;
 
@@ -671,14 +671,16 @@ irix_prda_init(p)
 	struct exec_vmcmd evc;
 	struct irix_prda *ip;
 	struct irix_prda_sys ips;
+	struct lwp *l;
 
 	bzero(&evc, sizeof(evc));
 	evc.ev_addr = (u_long)IRIX_PRDA;
 	evc.ev_len = sizeof(struct irix_prda);
 	evc.ev_prot = UVM_PROT_RW;
 	evc.ev_proc = *vmcmd_map_zero;
+	l = proc_representative_lwp(p);
 
-	if ((error = (*evc.ev_proc)(p, &evc)) != 0)
+	if ((error = (*evc.ev_proc)(l, &evc)) != 0)
 		return error;
 
 	ip = (struct irix_prda *)IRIX_PRDA;

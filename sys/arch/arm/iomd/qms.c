@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.4.6.4 2004/09/21 13:13:19 skrll Exp $	*/
+/*	$NetBSD: qms.c,v 1.4.6.5 2005/01/13 08:33:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.4.6.4 2004/09/21 13:13:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qms.c,v 1.4.6.5 2005/01/13 08:33:11 skrll Exp $");
 
 #include <sys/callout.h>
 #include <sys/device.h>
@@ -88,7 +88,7 @@ static int  qms_match(struct device *, struct cfdata *, void *);
 static void qms_attach(struct device *, struct device *, void *);
 
 static int qms_enable(void *);
-static int qms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+static int qms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 static void qms_disable(void *cookie);
 static void qms_intr(void *arg);
 
@@ -166,7 +166,7 @@ qms_disable(void *cookie)
 
 
 static int
-qms_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct proc *p)
+qms_ioctl(void *cookie, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 
 	switch (cmd) {

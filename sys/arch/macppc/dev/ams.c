@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.15.6.3 2004/09/21 13:18:19 skrll Exp $	*/
+/*	$NetBSD: ams.c,v 1.15.6.4 2005/01/13 08:33:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.15.6.3 2004/09/21 13:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.15.6.4 2005/01/13 08:33:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,7 +66,7 @@ CFATTACH_DECL(ams, sizeof(struct ams_softc),
     amsmatch, amsattach, NULL, NULL);
 
 int ams_enable __P((void *));
-int ams_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int ams_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
 void ams_disable __P((void *));
 
 const struct wsmouse_accessops ams_accessops = {
@@ -532,12 +532,12 @@ ams_enable(v)
 }
 
 int
-ams_ioctl(v, cmd, data, flag, p)
+ams_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	return EPASSTHROUGH;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.36.2.3 2004/09/21 13:25:16 skrll Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.36.2.4 2005/01/13 08:33:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.36.2.3 2004/09/21 13:25:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.36.2.4 2005/01/13 08:33:11 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -87,7 +87,7 @@ void	ELFNAME(load_psection)(struct exec_vmcmd_set *, struct vnode *,
 	    const Elf_Phdr *, Elf_Addr *, u_long *, int *, int);
 
 static int irix_syssgi_mapelf __P((int, Elf_Phdr *, int, 
-    struct proc *, register_t *));
+    struct lwp *, register_t *));
 static int irix_syssgi_sysconf __P((int name, struct lwp *, register_t *));
 static int irix_syssgi_pathconf __P((char *, int, struct lwp *, register_t *));
 
@@ -243,7 +243,7 @@ irix_sys_syssgi(l, v, retval)
 		 arg2 = SCARG(uap, arg2); /* ptr to ELF program header array */
 		 arg3 = SCARG(uap, arg3); /* array's length */
 		return irix_syssgi_mapelf((int)arg1, (Elf_Phdr *)arg2, 
-		    (int)arg3, p, retval);
+		    (int)arg3, l, retval);
 		break;
 
 	case IRIX_SGI_USE_FP_BCOPY:	/* bcopy and bzero can use FPU or not */
@@ -286,11 +286,11 @@ irix_sys_syssgi(l, v, retval)
 }
 
 static int
-irix_syssgi_mapelf(fd, ph, count, p, retval)
+irix_syssgi_mapelf(fd, ph, count, l, retval)
 	int fd;
 	Elf_Phdr *ph;
 	int count;
-	struct proc *p;
+	struct lwp *l;
 	register_t *retval;
 {
 	Elf_Phdr *kph;
@@ -345,7 +345,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 		 * Check that the default load addresses are free.
 		 * If not, we will have to perform a relocation
 		 */
-		ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
+		ret = uvm_map_findspace(&l->l_proc->p_vmspace->vm_map, 
 		    pht->p_vaddr, pht->p_memsz, (vaddr_t *)(void *)&uaddr,
 		    NULL, 0, 0, UVM_FLAG_FIXED);
 		if (ret == NULL)
@@ -367,7 +367,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 		    ELF_TRUNC(kph->p_vaddr, kph->p_align);
 
 		/* Find a free place for the sections */
-		ret = uvm_map_findspace(&p->p_vmspace->vm_map, 
+		ret = uvm_map_findspace(&l->l_proc->p_vmspace->vm_map, 
 		    IRIX_MAPELF_RELOCATE, size, (vaddr_t *)(void *)&uaddr,
 			NULL, 0, kph->p_align, 0);
 
@@ -393,7 +393,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	}
 
 	/* Find the file's vnode */
-	fdp = p->p_fd;
+	fdp = l->l_proc->p_fd;
 	fp = fd_getfile(fdp, fd);
 	if (fp == NULL) {
 		error = EBADF;
@@ -434,7 +434,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 				   
 				vcp->ev_addr += base_vcp->ev_addr;
 			}
-			IRIX_VM_SYNC(p, error = (*vcp->ev_proc)(p, vcp));
+			IRIX_VM_SYNC(l->l_proc, error = (*vcp->ev_proc)(l, vcp));
 			if (error)
 				goto bad_unuse;
 		}
@@ -444,7 +444,7 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 	*retval = (register_t)kph->p_vaddr;
 
 bad_unuse:	
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 bad:
 	free(kph, M_TEMP);
 	return error;

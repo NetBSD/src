@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.11.2.3 2004/09/21 13:25:13 skrll Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.11.2.4 2005/01/13 08:33:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.11.2.3 2004/09/21 13:25:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.11.2.4 2005/01/13 08:33:11 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -194,7 +194,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	if (SCARG(uap, eof) != NULL)
 		error = copyout(&eofflag, SCARG(uap, eof), sizeof(int));
 	return error;
@@ -347,7 +347,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	if (SCARG(uap, eof) != NULL)
 		error = copyout(&eofflag, SCARG(uap, eof), sizeof(int));
 	return error;

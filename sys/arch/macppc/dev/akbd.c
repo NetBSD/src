@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.29.6.3 2004/09/21 13:18:19 skrll Exp $	*/
+/*	$NetBSD: akbd.c,v 1.29.6.4 2005/01/13 08:33:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.29.6.3 2004/09/21 13:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.29.6.4 2005/01/13 08:33:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,7 +81,7 @@ extern struct cfdriver akbd_cd;
 
 int akbd_enable __P((void *, int));
 void akbd_set_leds __P((void *, int));
-int akbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+int akbd_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
 
 struct wskbd_accessops akbd_accessops = {
 	akbd_enable,
@@ -446,12 +446,12 @@ akbd_set_leds(v, on)
 }
 
 int
-akbd_ioctl(v, cmd, data, flag, p)
+akbd_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct akbd_softc *sc = (struct akbd_softc *) v;

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.6 2003/01/22 12:58:22 rafal Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.6.2.1 2005/01/13 08:33:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.6 2003/01/22 12:58:22 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.6.2.1 2005/01/13 08:33:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -141,16 +141,16 @@ irix_sys_ioctl(l, v, retval)
 		if ((error = copyout(&iiu, iiup, sizeof(iiu))) != 0) 
 			goto out;
 
-		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, l);
 out:
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 		return error;
 	}
 
 	switch (cmd) {
 	case IRIX_SIOCNREAD: /* number of bytes to read */
 		return (*(fp->f_ops->fo_ioctl))(fp, FIONREAD, 
-		    SCARG(uap, data), p);
+		    SCARG(uap, data), l);
 		break;	
 
 	case IRIX_MTIOCGETBLKSIZE: /* get tape block size in 512B units */
@@ -171,7 +171,7 @@ out:
 			error = EINVAL;
 			break;
 		case VBLK:
-			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
+			error = VOP_GETATTR(vp, &vattr, p->p_ucred, l);
 			if (error == 0) {
 				val = vattr.va_blocksize / 512;
 				error = copyout(&val, data, sizeof(int));
@@ -182,7 +182,7 @@ out:
 			break;
 		}
 
-		FILE_UNUSE(fp, p);
+		FILE_UNUSE(fp, l);
 		return error;
 		break;
 

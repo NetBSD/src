@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.12 2003/01/22 12:58:22 rafal Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.12.2.1 2005/01/13 08:33:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.12 2003/01/22 12:58:22 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.12.2.1 2005/01/13 08:33:11 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -267,7 +267,7 @@ fd_truncate(l, fd, whence, start, retval)
 		break;
 
 	case SEEK_END:
-		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, l)) != 0)
 			return error;
 		SCARG(&ft, length) = vattr.va_size + start;
 		break;
@@ -329,8 +329,8 @@ irix_sys_open(l, v, retval)
 		if ((error = getnewvnode(VCHR, vp->v_mount, 
 		    irix_usema_vnodeop_p, 
 		    (struct vnode **)&fp->f_data)) != 0) {
-			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
-			FILE_UNUSE(fp, p);
+			(void) vn_close(vp, fp->f_flag, fp->f_cred, l);
+			FILE_UNUSE(fp, l);
 			ffree(fp);
 			fdremove(p->p_fd, fd);
 			return error;
@@ -350,7 +350,7 @@ irix_sys_open(l, v, retval)
 		nvp->v_data = (void *)vp;
 		vref(vp);
 	}
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 
 	return 0;
 }

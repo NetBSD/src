@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.16.2.4 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: sunms.c,v 1.16.2.5 2005/01/13 08:33:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.16.2.4 2004/09/21 13:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.16.2.5 2005/01/13 08:33:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ struct  linesw sunms_disc =
 	  sunmsinput, ttstart, nullmodem, ttpoll };	/* 8- SUNMOUSEDISC */
 
 int	sunms_enable(void *);
-int	sunms_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	sunms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 void	sunms_disable(void *);
 
 const struct wsmouse_accessops	sunms_accessops = {
@@ -228,12 +228,12 @@ sunmsinput(c, tp)
 }
 
 int
-sunms_ioctl(v, cmd, data, flag, p)
+sunms_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 /*	struct ms_softc *sc = v; */
 
