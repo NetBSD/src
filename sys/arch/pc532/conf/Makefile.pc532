@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.17 1996/02/02 02:37:10 mycroft Exp $
+#	$NetBSD: Makefile.pc532,v 1.18 1996/02/02 13:38:24 mycroft Exp $
 
 # Copyright 1990 W. Jolitz
 # 	@(#)Makefile.i386	7.1 5/10/91
@@ -129,10 +129,6 @@ tags:
 ioconf.o: ioconf.c $S/sys/param.h $S/sys/buf.h \
     ${PC532}/dev/device.h  machine/icu.h
 	${CC} -c ${CFLAGS} ioconf.c
-
-conf.o: $S/sys/param.h $S/sys/systm.h $S/sys/buf.h $S/sys/ioctl.h \
-	$S/sys/tty.h $S/sys/conf.h ${PC532}/pc532/conf.c
-	${CC} -traditional -c ${CFLAGS} ${PC532}/pc532/conf.c
 
 param.c: $S/conf/param.c
 	-rm -f param.c

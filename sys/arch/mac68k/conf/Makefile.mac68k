@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.29 1996/02/02 02:36:48 mycroft Exp $
+#	$NetBSD: Makefile.mac68k,v 1.30 1996/02/02 13:38:10 mycroft Exp $
 
 # Makefile for NetBSD for the mac
 #	Derived from makefile for hp300 from NetBSD
@@ -162,9 +162,6 @@ tags:
 
 ioconf.o: ioconf.c
 	${CC} -c ${CFLAGS} ioconf.c
-
-conf.o: ${MAC68K}/mac68k/conf.c
-	${NORMAL_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c

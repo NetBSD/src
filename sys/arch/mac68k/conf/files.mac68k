@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.37 1995/11/21 05:06:28 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.38 1996/02/02 13:38:05 mycroft Exp $
 
 # mac68k-specific configuration info
 
@@ -49,6 +49,7 @@ include "../../m68k/fpe/files.fpe"
 
 file	arch/mac68k/mac68k/autoconf.c
 file	arch/mac68k/mac68k/clock.c
+file	arch/mac68k/mac68k/conf.c
 file	arch/mac68k/mac68k/disksubr.c		disk
 file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/macrom.c

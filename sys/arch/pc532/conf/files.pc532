@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.16 1995/11/30 00:58:42 jtc Exp $
+#	$NetBSD: files.pc532,v 1.17 1996/02/02 13:38:19 mycroft Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -61,6 +61,7 @@ file	scsi/scsiconf.c			scsi
 file	scsi/scsi_base.c		scsi
 file	scsi/scsi_ioctl.c		scsi
 file	arch/pc532/pc532/autoconf.c
+file	arch/pc532/pc532/conf.c
 file	arch/pc532/pc532/db_disasm.c	ddb
 file	arch/pc532/pc532/db_interface.c	ddb
 file	arch/pc532/pc532/db_trace.c	ddb

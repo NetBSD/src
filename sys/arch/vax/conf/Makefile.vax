@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.13 1996/02/01 22:33:21 mycroft Exp $
+#	$NetBSD: Makefile.vax,v 1.14 1996/02/02 13:38:29 mycroft Exp $
 
 #	@(#)Makefile.vax	7.18 (Berkeley) 12/16/90
 #
@@ -110,9 +110,6 @@ param.c: $S/conf/param.c
 
 param.o: param.c Makefile
 	${CC} -O -c ${CFLAGS} ${PARAM} param.c
-
-conf.o: ${VAX}/vax/conf.c
-	${CC} -O -c ${CFLAGS} ${PARAM} ${VAX}/vax/conf.c
 
 newvers:
 	sh $S/conf/newvers.sh
