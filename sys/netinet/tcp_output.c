@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.102 2003/10/21 21:17:20 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.103 2003/10/23 17:02:23 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.102 2003/10/21 21:17:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.103 2003/10/23 17:02:23 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -456,7 +456,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 	   )
 	{
 #ifdef FAST_MBSEARCH
-		TCP_OUTPUT_COUNTER_INCR(&tcp_output_predict_hit);
+		TCP_OUTPUT_COUNTER_INCR(&tcp_output_predict_miss);
 #endif
 		/*
 		 * Either a new packet or a retransmit.
@@ -466,7 +466,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 		tp->t_inoff = off;
 	} else {
 #ifdef FAST_MBSEARCH
-		TCP_OUTPUT_COUNTER_INCR(&tcp_output_predict_miss);
+		TCP_OUTPUT_COUNTER_INCR(&tcp_output_predict_hit);
 #endif
 		tp->t_inoff += tp->t_lastlen;
 	}
