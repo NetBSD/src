@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.24 1996/09/27 17:08:32 cgd Exp $
+#	$NetBSD: ALPHA,v 1.25 1996/11/12 18:05:54 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -12,6 +12,7 @@ options		DEC_3000_300	# Pelican etc:	3000/300*
 options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 options		DEC_KN20AA	# KN20AA:	AlphaStation 600
 options		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
+options		DEC_EB164	# EB164
 #options	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 
 # needs to be set per system
