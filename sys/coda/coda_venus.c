@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.15 2003/06/29 22:29:09 fvdl Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.16 2003/08/27 17:49:49 drochner Exp $	*/
 
 /*
  * 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.15 2003/06/29 22:29:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.16 2003/08/27 17:49:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.15 2003/06/29 22:29:09 fvdl Exp $")
 #include <coda/cnode.h>
 #include <coda/coda_venus.h>
 #include <coda/coda_pioctl.h>
+
+#include "opt_coda_compat.h"
 
 #define DECL_NO_IN(name) 				\
     struct coda_in_hdr *inp;				\
@@ -95,11 +97,14 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.15 2003/06/29 22:29:09 fvdl Exp $")
     ((char*)inp + (int)inp->struc)[len++] = 0; \
     Isize += len
 
+#ifdef CODA_COMPAT_5
+
 #define INIT_IN(in, op, ident, p) \
 	  (in)->opcode = (op); \
 	  (in)->pid = p ? p->p_pid : -1; \
           (in)->pgid = p ? p->p_pgid : -1; \
-          (in)->sid = (p && p->p_session && p->p_session->s_leader) ? (p->p_session->s_leader->p_pid) : -1; \
+          (in)->sid = (p && p->p_session && p->p_session->s_leader) ? \
+		(p->p_session->s_leader->p_pid) : -1; \
           if (ident != NOCRED) {                              \
 	      (in)->cred.cr_uid = ident->cr_uid;              \
 	      (in)->cred.cr_groupid = ident->cr_gid;          \
@@ -108,6 +113,20 @@ __KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.15 2003/06/29 22:29:09 fvdl Exp $")
 	      (in)->cred.cr_uid = -1;                         \
 	      (in)->cred.cr_groupid = -1;                     \
           }                                                   \
+
+#else
+
+#define INIT_IN(in, op, ident, p) 		\
+	  (in)->opcode = (op); 			\
+	  (in)->pid = p ? p->p_pid : -1;        \
+          (in)->pgid = p ? p->p_pgid : -1;	\
+          if (ident != NOCRED) {                \
+	      (in)->uid = ident->cr_uid;        \
+          } else {                              \
+	      (in)->uid = -1;                   \
+          }                                                   \
+
+#endif
 
 #define	CNV_OFLAG(to, from) 				\
     do { 						\
@@ -168,7 +187,7 @@ int coda_kernel_version = CODA_KERNEL_VERSION;
 int
 venus_root(void *mdp,
 	struct ucred *cred, struct proc *p,
-/*out*/	ViceFid *VFid)
+/*out*/	CodaFid *VFid)
 {
     DECL_NO_IN(coda_root);		/* sets Isize & Osize */
     ALLOC_NO_IN(coda_root);		/* sets inp & outp */
@@ -178,14 +197,14 @@ venus_root(void *mdp,
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
     if (!error)
-	*VFid = outp->VFid;
+	*VFid = outp->Fid;
 
     CODA_FREE(inp, coda_root_size);
     return error;
 }
 
 int
-venus_open(void *mdp, ViceFid *fid, int flag,
+venus_open(void *mdp, CodaFid *fid, int flag,
 	struct ucred *cred, struct proc *p,
 /*out*/	dev_t *dev, ino_t *inode)
 {
@@ -195,7 +214,7 @@ venus_open(void *mdp, ViceFid *fid, int flag,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_OPEN, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
     CNV_OFLAG(cflag, flag);
     inp->flags = cflag;
 
@@ -210,7 +229,7 @@ venus_open(void *mdp, ViceFid *fid, int flag,
 }
 
 int
-venus_close(void *mdp, ViceFid *fid, int flag,
+venus_close(void *mdp, CodaFid *fid, int flag,
 	struct ucred *cred, struct proc *p)
 {
     int cflag;
@@ -218,7 +237,7 @@ venus_close(void *mdp, ViceFid *fid, int flag,
     ALLOC_NO_OUT(coda_close);		/* sets inp & outp */
 
     INIT_IN(&inp->ih, CODA_CLOSE, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
     CNV_OFLAG(cflag, flag);
     inp->flags = cflag;
 
@@ -247,7 +266,7 @@ venus_write(void)
  * normal files.
  */
 int
-venus_ioctl(void *mdp, ViceFid *fid,
+venus_ioctl(void *mdp, CodaFid *fid,
 	int com, int flag, caddr_t data,
 	struct ucred *cred, struct proc *p)
 {
@@ -259,7 +278,7 @@ venus_ioctl(void *mdp, ViceFid *fid,
     ALLOC(coda_ioctl);			/* sets inp & outp */
 
     INIT_IN(&inp->ih, CODA_IOCTL, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
 
     /* command was mutated by increasing its size field to reflect the  
      * path and follow args. we need to subtract that out before sending
@@ -301,7 +320,7 @@ venus_ioctl(void *mdp, ViceFid *fid,
 }
 
 int
-venus_getattr(void *mdp, ViceFid *fid,
+venus_getattr(void *mdp, CodaFid *fid,
 	struct ucred *cred, struct proc *p,
 /*out*/	struct vattr *vap)
 {
@@ -310,7 +329,7 @@ venus_getattr(void *mdp, ViceFid *fid,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_GETATTR, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
     if (!error) {
@@ -322,7 +341,7 @@ venus_getattr(void *mdp, ViceFid *fid,
 }
 
 int
-venus_setattr(void *mdp, ViceFid *fid, struct vattr *vap,
+venus_setattr(void *mdp, CodaFid *fid, struct vattr *vap,
 	struct ucred *cred, struct proc *p)
 {
     DECL_NO_OUT(coda_setattr);		/* sets Isize & Osize */
@@ -330,7 +349,7 @@ venus_setattr(void *mdp, ViceFid *fid, struct vattr *vap,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_SETATTR, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
     CNV_V2VV_ATTR(&inp->attr, vap);
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
@@ -340,7 +359,7 @@ venus_setattr(void *mdp, ViceFid *fid, struct vattr *vap,
 }
 
 int
-venus_access(void *mdp, ViceFid *fid, int mode,
+venus_access(void *mdp, CodaFid *fid, int mode,
 	struct ucred *cred, struct proc *p)
 {
     DECL_NO_OUT(coda_access);		/* sets Isize & Osize */
@@ -348,7 +367,7 @@ venus_access(void *mdp, ViceFid *fid, int mode,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_ACCESS, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
     inp->flags = mode;
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
@@ -358,7 +377,7 @@ venus_access(void *mdp, ViceFid *fid, int mode,
 }
 
 int
-venus_readlink(void *mdp, ViceFid *fid,
+venus_readlink(void *mdp, CodaFid *fid,
 	struct ucred *cred, struct proc *p,
 /*out*/	char **str, int *len)
 {
@@ -368,7 +387,7 @@ venus_readlink(void *mdp, ViceFid *fid,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_READLINK, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
 
     Osize += CODA_MAXPATHLEN;
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
@@ -383,7 +402,7 @@ venus_readlink(void *mdp, ViceFid *fid,
 }
 
 int
-venus_fsync(void *mdp, ViceFid *fid,
+venus_fsync(void *mdp, CodaFid *fid,
 	struct ucred *cred, struct proc *p)
 {
     DECL_NO_OUT(coda_fsync);		/* sets Isize & Osize */
@@ -391,7 +410,7 @@ venus_fsync(void *mdp, ViceFid *fid,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_FSYNC, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
 
@@ -400,10 +419,10 @@ venus_fsync(void *mdp, ViceFid *fid,
 }
 
 int
-venus_lookup(void *mdp, ViceFid *fid,
+venus_lookup(void *mdp, CodaFid *fid,
     	const char *nm, int len,
 	struct ucred *cred, struct proc *p,
-/*out*/	ViceFid *VFid, int *vtype)
+/*out*/	CodaFid *VFid, int *vtype)
 {
     DECL(coda_lookup);			/* sets Isize & Osize */
     coda_lookup_size += len + 1;
@@ -411,7 +430,7 @@ venus_lookup(void *mdp, ViceFid *fid,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_LOOKUP, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
 
     /* NOTE:
      * Between version 1 and version 2 we have added an extra flag field
@@ -428,7 +447,7 @@ venus_lookup(void *mdp, ViceFid *fid,
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
     if (!error) {
-	*VFid = outp->VFid;
+	*VFid = outp->Fid;
 	*vtype = outp->vtype;
     }
 
@@ -437,10 +456,10 @@ venus_lookup(void *mdp, ViceFid *fid,
 }
 
 int
-venus_create(void *mdp, ViceFid *fid,
+venus_create(void *mdp, CodaFid *fid,
     	const char *nm, int len, int exclusive, int mode, struct vattr *va,
 	struct ucred *cred, struct proc *p,
-/*out*/	ViceFid *VFid, struct vattr *attr)
+/*out*/	CodaFid *VFid, struct vattr *attr)
 {
     DECL(coda_create);			/* sets Isize & Osize */
     coda_create_size += len + 1;
@@ -448,7 +467,7 @@ venus_create(void *mdp, ViceFid *fid,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_CREATE, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
     inp->excl = exclusive ? C_O_EXCL : 0;
     inp->mode = mode<<6;
     CNV_V2VV_ATTR(&inp->attr, va);
@@ -458,7 +477,7 @@ venus_create(void *mdp, ViceFid *fid,
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
     if (!error) {
-	*VFid = outp->VFid;
+	*VFid = outp->Fid;
 	CNV_VV2V_ATTR(attr, &outp->attr);
     }
 
@@ -467,7 +486,7 @@ venus_create(void *mdp, ViceFid *fid,
 }
 
 int
-venus_remove(void *mdp, ViceFid *fid,
+venus_remove(void *mdp, CodaFid *fid,
         const char *nm, int len,
 	struct ucred *cred, struct proc *p)
 {
@@ -477,7 +496,7 @@ venus_remove(void *mdp, ViceFid *fid,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_REMOVE, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
 
     inp->name = Isize;
     STRCPY(name, nm, len);		/* increments Isize */
@@ -489,7 +508,7 @@ venus_remove(void *mdp, ViceFid *fid,
 }
 
 int
-venus_link(void *mdp, ViceFid *fid, ViceFid *tfid,
+venus_link(void *mdp, CodaFid *fid, CodaFid *tfid,
         const char *nm, int len,
 	struct ucred *cred, struct proc *p)
 {
@@ -512,7 +531,7 @@ venus_link(void *mdp, ViceFid *fid, ViceFid *tfid,
 }
 
 int
-venus_rename(void *mdp, ViceFid *fid, ViceFid *tfid,
+venus_rename(void *mdp, CodaFid *fid, CodaFid *tfid,
         const char *nm, int len, const char *tnm, int tlen,
 	struct ucred *cred, struct proc *p)
 {
@@ -538,10 +557,10 @@ venus_rename(void *mdp, ViceFid *fid, ViceFid *tfid,
 }
 
 int
-venus_mkdir(void *mdp, ViceFid *fid,
+venus_mkdir(void *mdp, CodaFid *fid,
     	const char *nm, int len, struct vattr *va,
 	struct ucred *cred, struct proc *p,
-/*out*/	ViceFid *VFid, struct vattr *ova)
+/*out*/	CodaFid *VFid, struct vattr *ova)
 {
     DECL(coda_mkdir);			/* sets Isize & Osize */
     coda_mkdir_size += len + 1;
@@ -549,7 +568,7 @@ venus_mkdir(void *mdp, ViceFid *fid,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_MKDIR, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
     CNV_V2VV_ATTR(&inp->attr, va);
 
     inp->name = Isize;
@@ -557,7 +576,7 @@ venus_mkdir(void *mdp, ViceFid *fid,
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
     if (!error) {
-	*VFid = outp->VFid;
+	*VFid = outp->Fid;
 	CNV_VV2V_ATTR(ova, &outp->attr);
     }
 
@@ -566,7 +585,7 @@ venus_mkdir(void *mdp, ViceFid *fid,
 }
 
 int
-venus_rmdir(void *mdp, ViceFid *fid,
+venus_rmdir(void *mdp, CodaFid *fid,
     	const char *nm, int len,
 	struct ucred *cred, struct proc *p)
 {
@@ -576,7 +595,7 @@ venus_rmdir(void *mdp, ViceFid *fid,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_RMDIR, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
 
     inp->name = Isize;
     STRCPY(name, nm, len);		/* increments Isize */
@@ -588,7 +607,7 @@ venus_rmdir(void *mdp, ViceFid *fid,
 }
 
 int
-venus_symlink(void *mdp, ViceFid *fid,
+venus_symlink(void *mdp, CodaFid *fid,
         const char *lnm, int llen, const char *nm, int len, struct vattr *va,
 	struct ucred *cred, struct proc *p)
 {
@@ -598,7 +617,7 @@ venus_symlink(void *mdp, ViceFid *fid,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_SYMLINK, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
     CNV_V2VV_ATTR(&inp->attr, va);
 
     inp->srcname = Isize;
@@ -614,7 +633,7 @@ venus_symlink(void *mdp, ViceFid *fid,
 }
 
 int
-venus_readdir(void *mdp, ViceFid *fid,
+venus_readdir(void *mdp, CodaFid *fid,
     	int count, int offset,
 	struct ucred *cred, struct proc *p,
 /*out*/	char *buffer, int *len)
@@ -625,7 +644,7 @@ venus_readdir(void *mdp, ViceFid *fid,
 
     /* send the open to venus. */
     INIT_IN(&inp->ih, CODA_READDIR, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
     inp->count = count;
     inp->offset = offset;
 
@@ -660,20 +679,20 @@ venus_statfs(void *mdp, struct ucred *cred, struct proc *p,
 }
 
 int
-venus_fhtovp(void *mdp, ViceFid *fid,
+venus_fhtovp(void *mdp, CodaFid *fid,
 	struct ucred *cred, struct proc *p,
-/*out*/	ViceFid *VFid, int *vtype)
+/*out*/	CodaFid *VFid, int *vtype)
 {
     DECL(coda_vget);			/* sets Isize & Osize */
     ALLOC(coda_vget);			/* sets inp & outp */
 
     /* Send the open to Venus. */
     INIT_IN(&inp->ih, CODA_VGET, cred, p);
-    inp->VFid = *fid;
+    inp->Fid = *fid;
 
     error = coda_call(mdp, Isize, &Osize, (char *)inp);
     if (!error) {
-	*VFid = outp->VFid;
+	*VFid = outp->Fid;
 	*vtype = outp->vtype;
     }
 

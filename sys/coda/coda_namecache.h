@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.h,v 1.6 1999/10/17 23:39:15 cgd Exp $	*/
+/*	$NetBSD: coda_namecache.h,v 1.7 2003/08/27 17:49:49 drochner Exp $	*/
 
 /*
  * 
@@ -142,11 +142,11 @@ extern void coda_nc_init(void);
 extern void coda_nc_enter(struct cnode *, const char *, int, struct ucred *, struct cnode *);
 extern struct cnode *coda_nc_lookup(struct cnode *, const char *, int, struct ucred *);
 
-extern void coda_nc_zapParentfid(ViceFid *, enum dc_status);
-extern void coda_nc_zapfid(ViceFid *, enum dc_status);
-extern void coda_nc_zapvnode(ViceFid *, struct ucred *, enum dc_status);
+extern void coda_nc_zapParentfid(CodaFid *, enum dc_status);
+extern void coda_nc_zapfid(CodaFid *, enum dc_status);
+extern void coda_nc_zapvnode(CodaFid *, struct ucred *, enum dc_status);
 extern void coda_nc_zapfile(struct cnode *, const char *, int);
-extern void coda_nc_purge_user(vuid_t, enum dc_status);
+extern void coda_nc_purge_user(uid_t, enum dc_status);
 extern void coda_nc_flush(enum dc_status);
 
 extern void print_coda_nc(void);
