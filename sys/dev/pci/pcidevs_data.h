@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.92 1998/10/05 20:38:18 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.93 1998/10/19 12:13:58 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.86 1998/10/05 20:34:39 tron Exp 
+ *	NetBSD: pcidevs,v 1.87 1998/10/19 12:11:50 bouyer Exp 
  */
 
 /*
@@ -2254,10 +2254,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C561",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586A_IDE,
 	    0,
 	    "VIA Technologies",
-	    "VT82C586 (Apollo VP) IDE Controller",
+	    "VT82C586A IDE Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C576,
@@ -2308,10 +2308,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C570M (Apollo) PCI-ISA Bridge",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C416MV,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
 	    0,
 	    "VIA Technologies",
-	    "VT82C416MV",
+	    "VT82C586 (Apollo VP) IDE Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595_2,
