@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/07/24 01:51:44 mycroft Exp $
+#	$NetBSD: Makefile,v 1.18 2000/07/25 21:53:55 mycroft Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -74,7 +74,7 @@ machine:
 	ln -s ../../include machine
 
 vers.c: version
-	sh ${CURDIR}/../newvers.sh ${CURDIR}/version ${NEWVERSWHAT}
+	sh ${S}/conf/newvers_stand.sh ${CURDIR}/version "sparc64" ${NEWVERSWHAT}
 
 .if CROSS
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
