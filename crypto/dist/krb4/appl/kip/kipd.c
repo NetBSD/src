@@ -33,7 +33,7 @@
 
 #include "kip.h"
 
-RCSID("$Id: kipd.c,v 1.1.1.2 2000/12/29 01:42:24 assar Exp $");
+RCSID("$Id: kipd.c,v 1.2 2001/01/11 03:01:29 lukem Exp $");
 
 static int
 recv_conn (int sock, des_cblock *key, des_key_schedule schedule,
@@ -163,7 +163,7 @@ main (int argc, char **argv)
     int optind = 0;
 
     set_progname (argv[0]);
-    roken_openlog(__progname, LOG_PID|LOG_CONS, LOG_DAEMON);
+    roken_openlog(__progname, LOG_PID, LOG_DAEMON);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
 		&optind))

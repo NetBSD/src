@@ -318,7 +318,7 @@ static void xcloselog(BIO* bp)
 
 static void xopenlog(BIO* bp, const char* name, int level)
 {
-	openlog(name, LOG_PID|LOG_CONS, level);
+	openlog(name, LOG_PID, level);
 }
 
 static void xsyslog(BIO *bp, int priority, const char *string)
