@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.404 2001/11/21 05:53:03 gmcgarry Exp $
+#	$NetBSD: mi,v 1.405 2001/11/23 06:25:45 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -2665,6 +2665,7 @@
 ./usr/share/man/cat3/usb.0	comp-c-catman
 ./usr/share/man/cat3/user_from_uid.0	comp-c-catman
 ./usr/share/man/cat3/usleep.0	comp-c-catman
+./usr/share/man/cat3/util.0	comp-c-catman
 ./usr/share/man/cat3/utime.0	comp-c-catman
 ./usr/share/man/cat3/va_arg.0	comp-c-catman
 ./usr/share/man/cat3/va_copy.0	comp-c-catman
@@ -5108,6 +5109,7 @@
 ./usr/share/man/man3/usb.3		comp-c-man
 ./usr/share/man/man3/user_from_uid.3		comp-c-man
 ./usr/share/man/man3/usleep.3		comp-c-man
+./usr/share/man/man3/util.3		comp-c-man
 ./usr/share/man/man3/utime.3		comp-c-man
 ./usr/share/man/man3/va_arg.3		comp-c-man
 ./usr/share/man/man3/va_copy.3		comp-c-man
