@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.18 2000/02/19 09:22:51 mycroft Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.19 2000/03/27 02:55:14 nisimura Exp $	*/
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -34,15 +34,9 @@
 #define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
-#ifdef MIPS_16K_PAGE			/* enable kernel support for 16k pages  */
-#define	NBPG		(1024*16)	/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	PGSHIFT		14		/* LOG2(NBPG) */
-#else
 #define	NBPG		4096		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#endif
 #define	NPTEPG		(NBPG/4)
 
 #define NBSEG		0x400000	/* bytes/segment */
