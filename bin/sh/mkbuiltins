@@ -35,7 +35,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)mkbuiltins	8.1 (Berkeley) 5/31/93
-#	$Id: mkbuiltins,v 1.9 1994/06/24 07:33:19 jtc Exp $
+#	$Id: mkbuiltins,v 1.10 1994/07/07 16:24:34 mycroft Exp $
 
 temp=/tmp/ka$$
 havejobs=0
@@ -43,7 +43,7 @@ if grep '^#define JOBS[	 ]*1' shell.h > /dev/null
 then	havejobs=1
 fi
 havehist=1
-if [ "$1" = "-h" ]; then
+if [ "X$1" = "X-h" ]; then
 	havehist=0
 	shift
 fi
