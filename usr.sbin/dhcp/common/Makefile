@@ -33,7 +33,6 @@ LIB=dhcp
 SRCS   = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
 	 packet.c memory.c print.c options.c inet.c convert.c \
 	 tree.c tables.c hash.c alloc.c errwarn.c inet_addr.c
-CFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
 
 NOPROFILE=
 NOPIC=
