@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.15 1999/03/24 05:51:14 mrg Exp $	*/
+/*	$NetBSD: dvma.c,v 1.16 1999/05/26 19:16:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ dvma_init()
 	 * remainder will be used as the DVMA page pool.
 	 */
 	phys_map = uvm_map_create(pmap_kernel(),
-		DVMA_MAP_BASE, DVMA_MAP_END, 1);
+		DVMA_MAP_BASE, DVMA_MAP_END, 0);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 1999/05/25 23:14:07 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.151 1999/05/26 19:16:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-                                 16*NCARGS, TRUE, FALSE, NULL);
+                                 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	if (CPU_ISSUN4OR4C) {
 		/*
@@ -283,7 +283,7 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
         mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, FALSE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
 
 	/*
 	 * Initialize callouts

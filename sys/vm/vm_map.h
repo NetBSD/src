@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.24 1999/04/10 13:52:11 drochner Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.25 1999/05/26 19:16:37 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -140,11 +140,15 @@ struct vm_map {
 	vm_map_entry_t		hint;		/* hint for quick lookups */
 	simple_lock_data_t	hint_lock;	/* lock for hint storage */
 	vm_map_entry_t		first_free;	/* First free space hint */
-	boolean_t		entries_pageable; /* map entries pageable?? */
+	int			flags;		/* flags (read-only) */
 	unsigned int		timestamp;	/* Version number */
 #define	min_offset		header.start
 #define max_offset		header.end
 };
+
+/* vm_map flags */
+#define	VM_MAP_PAGEABLE		0x01		/* entries are pageable */
+#define	VM_MAP_INTRSAFE		0x02		/* interrupt safe map */
 
 /*
  *	Macros:		vm_map_lock, etc.

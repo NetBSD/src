@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 1999/05/25 23:14:08 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.42 1999/05/26 19:16:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -281,7 +281,7 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
         exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-                                 16*NCARGS, TRUE, FALSE, NULL);
+                                 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a map for physio.  Others use a submap of the kernel
@@ -290,7 +290,7 @@ cpu_startup()
 	 */
 	dvma_base = DVMA_BASE;
 	dvma_end = DVMA_END;
-	phys_map = uvm_map_create(pmap_kernel(), dvma_base, dvma_end, 1);
+	phys_map = uvm_map_create(pmap_kernel(), dvma_base, dvma_end, 0);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
 	/*
@@ -307,7 +307,7 @@ cpu_startup()
 	 * Finally, allocate mbuf cluster submap.
 	 */
         mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, FALSE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
 	/*
 	 * Initialize callouts
 	 */

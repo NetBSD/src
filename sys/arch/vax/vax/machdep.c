@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.83 1999/05/20 08:21:47 lukem Exp $	 */
+/* $NetBSD: machdep.c,v 1.84 1999/05/26 19:16:35 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -242,14 +242,14 @@ cpu_startup()
 	 * the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16 * NCARGS, TRUE, FALSE, NULL);
+				 16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 #if VAX410 || VAX43
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, TRUE, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 #endif
 	/*
 	 * Initialize callouts

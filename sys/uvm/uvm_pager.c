@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.19 1999/05/26 06:42:57 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.20 1999/05/26 19:16:36 thorpej Exp $	*/
 
 /*
  *
@@ -91,7 +91,7 @@ uvm_pager_init()
 	 */
 
 	 pager_map = uvm_km_suballoc(kernel_map, &uvm.pager_sva, &uvm.pager_eva,
-	 			PAGER_MAP_SIZE, FALSE, FALSE, NULL);
+	 			PAGER_MAP_SIZE, 0, FALSE, NULL);
 	 simple_lock_init(&pager_map_wanted_lock);
 	 pager_map_wanted = FALSE;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 1999/04/22 04:24:52 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65 1999/05/26 19:16:29 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -606,8 +606,8 @@ pmap_init()
 	 * Allocate the segment table map and the page table map.
 	 */
 	s = maxproc * AMIGA_STSIZE;
-	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
-	    FALSE, &st_map_store);
+	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0, FALSE,
+	    &st_map_store);
 
 	addr = amiga_uptbase;
 	if ((AMIGA_UPTMAXSIZE / AMIGA_UPTSIZE) < maxproc) {
@@ -621,7 +621,7 @@ pmap_init()
 		maxproc = (AMIGA_UPTMAXSIZE / AMIGA_UPTSIZE);
 	} else
 		s = (maxproc * AMIGA_UPTSIZE);
-	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, TRUE,
+	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, VM_MAP_PAGEABLE,
 	    TRUE, &pt_map_store);
 
 #if defined(M68040) || defined(M68060)
