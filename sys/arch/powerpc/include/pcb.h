@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.18 2004/04/16 23:58:08 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.19 2005/02/22 02:59:46 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,8 +47,10 @@ struct pcb {
 	struct pmap *pcb_pm;	/* pmap of our vmspace */
 	register_t pcb_sp;	/* saved SP */
 	int pcb_flags;
-#define	PCB_FPU		1	/* Process had FPU initialized */
-#define	PCB_ALTIVEC	2	/* Process had AltiVec initialized */
+#define	PCB_OWNFPU	1	/* Process owns FPU resources */
+#define	PCB_OWNALTIVEC	2	/* Process owns AltiVec resources */
+#define	PCB_FPU		4	/* Process had FPU initialized */
+#define	PCB_ALTIVEC	8	/* Process had AltiVec initialized */
 #define	PCB_FE1		PSL_FE1	/* 0x100 */
 #define	PCB_FE0		PSL_FE0	/* 0x800 */
 	struct cpu_info * __volatile pcb_fpcpu; /* CPU with our FP state */
