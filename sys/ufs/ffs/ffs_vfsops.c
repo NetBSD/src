@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.63 2000/05/29 18:04:30 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.64 2000/05/29 18:28:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -879,7 +879,7 @@ ffs_sync(mp, waitfor, cred, p)
 	 */
 	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nvp) {
+	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
@@ -887,12 +887,12 @@ loop:
 		if (vp->v_mount != mp)
 			goto loop;
 		simple_lock(&vp->v_interlock);
-		nvp = vp->v_mntvnodes.le_next;
+		nvp = LIST_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
 		if (vp->v_type == VNON ||
 		    ((ip->i_flag &
 		      (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFIED | IN_ACCESSED)) == 0 &&
-		     vp->v_dirtyblkhd.lh_first == NULL))
+		     LIST_EMPTY(&vp->v_dirtyblkhd)))
 		{
 			simple_unlock(&vp->v_interlock);
 			continue;
@@ -933,7 +933,8 @@ loop:
 	if (fs->fs_fmod != 0) {
 		fs->fs_fmod = 0;
 		fs->fs_time = time.tv_sec;
-		allerror = ffs_cgupdate(ump, waitfor);
+		if ((error = ffs_cgupdate(ump, waitfor)))
+			allerror = error;
 	}
 	return (allerror);
 }
