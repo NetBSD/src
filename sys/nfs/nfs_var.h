@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.28 2003/02/02 02:34:53 christos Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.29 2003/03/28 15:13:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -264,9 +264,9 @@ int nfs_loadattrcache __P((struct vnode **, struct nfs_fattr *,
 			   struct vattr *, int flags));
 int nfs_getattrcache __P((struct vnode *, struct vattr *));
 void nfs_delayedtruncate __P((struct vnode *));
-int nfs_namei __P((struct nameidata *, fhandle_t *, int, struct nfssvc_sock *,
-		   struct mbuf *, struct mbuf **, caddr_t *, struct vnode **,
-		   struct proc *, int, int));
+int nfs_namei __P((struct nameidata *, fhandle_t *, uint32_t,
+		   struct nfssvc_sock *, struct mbuf *, struct mbuf **,
+		   caddr_t *, struct vnode **, struct proc *, int, int));
 void nfsm_adj __P((struct mbuf *, int, int));
 void nfsm_srvwcc __P((struct nfsrv_descript *, int, struct vattr *, int,
 		      struct vattr *, struct mbuf **, char **));
