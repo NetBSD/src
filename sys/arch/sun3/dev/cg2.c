@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.13.4.3 2002/01/10 19:49:45 thorpej Exp $	*/
+/*	$NetBSD: cg2.c,v 1.13.4.4 2002/06/28 08:22:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,7 +112,7 @@ static int	cg2getcmap __P((struct fbdevice *, void *));
 static int	cg2putcmap __P((struct fbdevice *, void *));
 
 static struct fbdriver cg2fbdriver = {
-	cg2open, cg2close, cg2mmap, cg2gattr,
+	cg2open, cg2close, cg2mmap, cg2kqfilter, cg2gattr,
 	cg2gvideo, cg2svideo,
 	cg2getcmap, cg2putcmap };
 
@@ -253,6 +253,31 @@ cg2mmap(dev, off, prot)
 	 * getting horribly broken behaviour with it on.
 	 */
 	return ((sc->sc_phys + off) | sc->sc_pmtype);
+}
+
+static void
+filt_cg2detach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+static const struct filterops cg2_filtops =
+	{ 1, NULL, filt_cg2detach, filt_seltrue };
+
+int
+cg2kqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &cg2_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 /*

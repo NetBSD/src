@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.21.4.2 2002/01/10 19:49:45 thorpej Exp $	*/
+/*	$NetBSD: cg4.c,v 1.21.4.3 2002/06/28 08:22:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,7 +141,7 @@ static void	cg4b_init   __P((struct cg4_softc *));
 static void	cg4b_ldcmap __P((struct cg4_softc *));
 
 static struct fbdriver cg4_fbdriver = {
-	cg4open, cg4close, cg4mmap, cg4gattr,
+	cg4open, cg4close, cg4mmap, cg4kqfilter, cg4gattr,
 	cg4gvideo, cg4svideo,
 	cg4getcmap, cg4putcmap };
 
@@ -405,6 +405,31 @@ cg4mmap(dev, off, prot)
 	 * getting horribly broken behaviour without it.
 	 */
 	return ((physbase + off) | PMAP_NC);
+}
+
+static void
+filt_cg4detach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+static const struct filterops cg4_filtops =
+	{ 1, NULL, filt_cg4detach, filt_seltrue };
+
+int
+cg4kqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &cg4_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 /*

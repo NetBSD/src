@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.6.4.1 2002/01/10 19:49:45 thorpej Exp $ */
+/*	$NetBSD: fb.c,v 1.6.4.2 2002/06/28 08:22:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -121,6 +121,14 @@ fbmmap(dev, off, prot)
 	int prot;
 {
 	return ((*devfb->fb_driver->fbd_mmap)(dev, off, prot));
+}
+
+int
+fbkqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	return ((*devfb->fb_driver->fbd_kqfilter)(dev, kn));
 }
 
 /*
