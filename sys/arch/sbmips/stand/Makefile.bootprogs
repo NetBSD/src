@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.4 2003/10/26 07:25:37 lukem Exp $
+# $NetBSD: Makefile.bootprogs,v 1.4.2.1 2004/06/22 07:53:35 tron Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -148,4 +148,4 @@ LIBSA=		${SALIB}
 
 cleandir: cleandirlocal
 cleandirlocal:
-	rm -rf lib
+	-rm -rf lib

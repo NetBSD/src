@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.1.2.1 2004/05/22 15:59:58 he Exp $
+#	$NetBSD: Makefile.xen,v 1.1.2.2 2004/06/22 07:53:35 tron Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -65,7 +65,7 @@ vector.o: ${XEN}/${XEN_BUILD}/vector.S assym.h
 	rm -f ${A}
 	ln -s $S/arch/${A}/include ${A}
 .endfor
-	rm -rf xen-ma
+	-rm -rf xen-ma
 	mkdir xen-ma
 	ln -s ../${XEN_BUILD} xen-ma/machine
 .endif
