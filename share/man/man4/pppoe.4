@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.1 2001/12/10 20:49:30 martin Exp $
+.\"	$NetBSD: pppoe.4,v 1.2 2001/12/11 00:08:52 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Martin Husemann. All rights reserved.
 .\"
@@ -36,28 +36,28 @@ The
 .Nm
 interface encapsulatates
 .Em Point-to-Point Protocol (PPP)
-packets inside ehternet frames as defined by 
+packets inside ethernet frames as defined by
 .Li RFC2516 .
 .Pp
 This is often used to connect a router via a DSL modem to
-an access concentrator. The
+an access concentrator.  The
 .Nm
 interface does not by itself transmit or receive frames,
-but needs an ethernet interface to do so. This ethernet interface
+but needs an ethernet interface to do so.  This ethernet interface
 is connected to the
 .Nm
 interface via
 .Xr pppoectl 8 .
-The ethernet interface needs to be marked UP, but does not need to have an 
+The ethernet interface needs to be marked UP, but does not need to have an
 IP address.
 .Pp
 There are two basic modes of operation, controlled via the
 .Em link1
-switch. The default mode,
+switch.  The default mode,
 .Em link1
 not being set, tries to keep the configured session open all the
-time. If the session is disconnected, a new connection attempt is started
-imediately. The
+time.  If the session is disconnected, a new connection attempt is started
+immediately.  The
 .Dq dial on demand
 mode, selected by setting
 .Em link1 ,
@@ -65,24 +65,28 @@ only establishes a connection when data is being sent to the interface.
 .Pp
 Before a
 .Nm
-interface is useable, it needs to be configured. The following steps
+interface is usable, it needs to be configured.  The following steps
 are necessary:
 .Bl -bullet
 .It
 create the interface
 .It
 connect an ethernet interface
-This interface is used for the physical communication. As noted above it
+This interface is used for the physical communication.  As noted above it
 must be marked UP, but need not have an IP address.
 .It
 configure authentication
-The PPP session needs to identify the client to the peer. For more details
+The PPP session needs to identify the client to the peer.  For more details
 on the available options see
 .Xr pppoectl 8 .
 .El
-This all is typically done in an /etc/ifconfig.pppoe0 file.
+This all is typically done in an
+.Pa /etc/ifconfig.pppoe0
+file.
 .Sh EXAMPLES
-A typical /etc/ifconfig.pppoe0 file looks like this:
+A typical
+.Pa /etc/ifconfig.pppoe0
+file looks like this:
 .Bd -literal
 create
 ! /sbin/ifconfig ne0 up
@@ -94,45 +98,49 @@ up
 .Ed
 The commented out call to
 .Xr route 8
-may be ommited and the route added in the ip-up script called by
-.Xr ifwatchd 8 ,
-when the real IP address is known. This is easy in the
+may be omitted and the route added in the ip-up script called by
+.Xr ifwatchd 8
+when the real IP address is known.  This is easy in the
 .Dq connect always
 mode (link1 not set), but hard to acomplish in the
 .Dq dial on demand
-mode (link1 set). In the latter case adding an iface route is an easy
+mode (link1 set).  In the latter case adding an iface route is an easy
 workaround.
 .Pp
-The 
+The
 .Nm
 interfaces operate completely inside the kernel, without any userland
-support. Because of this, a special deamon is used to fire ip-up or
+support.  Because of this, a special daemon is used to fire ip-up or
 down scripts to execute arbitrary code when the PPP session is established
-and addresses of the interface become available. To enable the useage of
-/etc/ppp/ip-up and /etc/ppp/ip-down for this purpose, simply add
+and addresses of the interface become available.  To enable the usage of
+.Pa /etc/ppp/ip-up
+and
+.Pa /etc/ppp/ip-down
+for this purpose, simply add
 .Bd -literal
 ifwatchd=YES
 .Ed
-to /etc/rc.conf. See
+to
+.Pa /etc/rc.conf .
+See
 .Xr ifwatchd 8
-for details and parameters passed to this scripts.
+for details and parameters passed to these scripts.
 .Pp
 Since this is a PPP interface, the addresses assigned to the interface
-may change during PPP negotiation. There is no fine grained control available,
-which addresses are acceptable and which are not. For the local side and the
-remote address there is exactly one choice: hard code address or wildcard.
+may change during PPP negotiation.  There is no fine grained control available
+for deciding which addresses are acceptable and which are not.  For the local
+side and the
+remote address there is exactly one choice: hard coded address or wildcard.
 If a real address is assigned to one side of the connection, PPP negotiation
-will only aggree to exactly this address. If one side is wildcarded, every
+will only agree to exactly this address.  If one side is wildcarded, every
 address suggested by the peer will be accepted.
 .Pp
 To wildcard the local address set it to 0.0.0.0, to wildcard the remote
 address set it to 0.0.0.1. Wildcarding is not available (nor necessary)
 for IPv6 operation.
-.Sh BUGS
-This implementation is client side only.
 .Sh SEE ALSO
-.Xr pppoectl 8 ,
-.Xr ifwatchd 8
+.Xr ifwatchd 8 ,
+.Xr pppoectl 8
 .Rs
 .%R RFC
 .%N 2516
@@ -144,3 +152,5 @@ The
 .Nm
 device appeared in
 .Nx 1.6 .
+.Sh BUGS
+This implementation is client side only.
