@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.1 1995/10/10 01:19:30 mycroft Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.2 1995/11/07 22:27:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -60,7 +60,7 @@ convert_from_freebsd_mount_type(type)
 {
 	static char *netbsd_mount_type[] = {
 		NULL,     /*  0 = MOUNT_NONE */
-		"ufs",	  /*  1 = UNIX "Fast" Filesystem */
+		"ffs",	  /*  1 = "Fast" Filesystem */
 		"nfs",	  /*  2 = Network Filesystem */
 		"mfs",	  /*  3 = Memory Filesystem */
 		"msdos",  /*  4 = MSDOS Filesystem */
