@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.9 2003/04/30 18:31:30 matt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.10 2003/04/30 20:49:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -1226,9 +1226,9 @@ gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 			txq->txq_fi = 0;
 		txq->txq_inptr = gt32toh(txd->ed_bufptr) - txq->txq_buf_busaddr;
 		pktlen = (gt32toh(txd->ed_lencnt) >> 16) & 0xffff;
-		txq->txq_inptr += roundup(pktlen, dcache_line_size);
 		bus_dmamap_sync(sc->sc_dmat, txq->txq_buf_mem.gdm_map,
 		    txq->txq_inptr, pktlen, BUS_DMASYNC_POSTWRITE);
+		txq->txq_inptr += roundup(pktlen, dcache_line_size);
 
 		/* statistics */
 		ifp->if_opackets++;
