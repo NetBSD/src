@@ -1,5 +1,5 @@
-.\" $NetBSD: authpf.8,v 1.4 2004/06/25 16:02:49 wiz Exp $
-.\" $OpenBSD: authpf.8,v 1.31 2003/12/10 04:10:37 beck Exp $
+.\" $NetBSD: authpf.8,v 1.5 2004/11/14 11:26:48 yamt Exp $
+.\" $OpenBSD: authpf.8,v 1.36 2004/08/15 10:40:50 canacar Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -61,6 +61,10 @@ can add filter and translation rules using the syntax described in
 requires that the
 .Xr pf 4
 system be enabled before use.
+.Nm
+can also maintain the list of IP address of connected users
+in the "authpf_users"
+.Pa table .
 .Pp
 .Nm
 is meant to be used with users who can connect via
@@ -94,11 +98,16 @@ in order to cause evaluation of any
 .Nm
 rules:
 .Bd -literal -offset indent
-nat-anchor authpf
-rdr-anchor authpf
-binat-anchor authpf
-anchor authpf
+nat-anchor "authpf/*"
+rdr-anchor "authpf/*"
+binat-anchor "authpf/*"
+anchor "authpf/*"
 .Ed
+.Pp
+The "/*" at the end of the anchor name is required for
+.Xr pf 4
+to process the rulesets attached to the anchor by
+.Nm authpf .
 .Sh FILTER AND TRANSLATION RULES
 Filter and translation rules for
 .Nm
@@ -155,6 +164,10 @@ Currently, the allowed values are as follows:
 Use the specified
 .Pa anchor
 name instead of "authpf".
+.It table=name
+Use the specified
+.Pa table
+name instead of "authpf_users".
 .El
 .Sh USER MESSAGES
 On successful invocation,
@@ -400,15 +413,15 @@ Example
 # ssh and use us as a dns server.
 internal_if="fxp1"
 gateway_addr="10.0.1.1"
-nat-anchor authpf
-rdr-anchor authpf
-binat-anchor authpf
+nat-anchor "authpf/*"
+rdr-anchor "authpf/*"
+binat-anchor "authpf/*"
 block in on $internal_if from any to any
 pass in quick on $internal_if proto tcp from any to $gateway_addr \e
       port = ssh
 pass in quick on $internal_if proto udp from any to $gateway_addr \e
       port = domain
-anchor authpf
+anchor "authpf/*"
 .Ed
 .Pp
 .Sy For a switched, wired net
@@ -471,8 +484,35 @@ from the ruleset name.
 .Bd -literal
 # tcpdump -n -e -ttt -i pflog0
 Oct 31 19:42:30.296553 rule 0.bbeck(20267).1/0(match): pass out on fxp1: \e
-129.128.11.10.60539 \*[Gt] 198.137.240.92.22: S 2131494121:2131494121(0) win \e
-16384 \*[Lt]mss 1460,nop,nop,sackOK\*[Gt] (DF)
+129.128.11.10.60539 > 198.137.240.92.22: S 2131494121:2131494121(0) win \e
+16384 <mss 1460,nop,nop,sackOK> (DF)
+.Ed
+.Pp
+.Sy Using the authpf_users table
+\- Simple
+.Nm
+settings can be implemented without an anchor by just using the "authpf_users"
+.Pa table .
+For example, the following
+.Xr pf.conf 5
+lines will give SMTP and IMAP access to logged in users:
+.Bd -literal
+table <authpf_users> persist
+pass in on $ext_if proto tcp from <authpf_users> \e
+        to port { smtp imap } keep state
+.Ed
+.Pp
+It is also possible to use the "authpf_users"
+.Pa table
+in combination with anchors.
+For example,
+.Xr pf 4
+processing can be sped up by looking up the anchor
+only for packets coming from logged in users:
+.Bd -literal
+table <authpf_users> persist
+anchor "authpf/*" from <authpf_users>
+rdr-anchor "authpf/*" from <authpf_users>
 .Ed
 .Sh SEE ALSO
 .Xr pf 4 ,
