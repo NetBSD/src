@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.3 2001/08/28 15:22:30 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.4 2001/09/02 13:17:54 enami Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -1775,7 +1775,7 @@ pcn_rxdrain(struct pcn_softc *sc)
 
 	for (i = 0; i < PCN_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
-		if (rxs->rxs_mbuf == NULL) {
+		if (rxs->rxs_mbuf != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
 			m_freem(rxs->rxs_mbuf);
 			rxs->rxs_mbuf = NULL;
