@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.129 2002/09/29 20:58:25 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.130 2002/09/29 20:59:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.129 2002/09/29 20:58:25 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.130 2002/09/29 20:59:30 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3368,13 +3368,8 @@ ohci_device_isoc_close(usbd_pipe_handle pipe)
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
 	ohci_softc_t *sc = (ohci_softc_t *)pipe->device->bus;
-	int s;
 
 	DPRINTF(("ohci_device_isoc_close: pipe=%p\n", pipe));
-
-	s = splusb();
-	ohci_rem_ed(opipe->sed, sc->sc_isoc_head);
-	splx(s);
 	ohci_close_pipe(pipe, sc->sc_isoc_head);
 #ifdef DIAGNOSTIC
 	opipe->tail.itd->isdone = 1;
