@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 1999/11/13 00:30:28 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66 1999/11/17 08:43:53 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2000,7 +2000,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	int bank, off;
 	struct pv_entry *pv = NULL;
 	vm_offset_t opa;
-	int flags;
+	int nflags;
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	PDEBUG(5, printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, wired = %d\n",
@@ -2074,11 +2074,11 @@ pmap_enter(pmap, va, pa, prot, flags)
 #endif
 	}
 
-	flags = 0;
+	nflags = 0;
 	if (prot & VM_PROT_WRITE)
-		flags |= PT_Wr;
+		nflags |= PT_Wr;
 	if (wired)
-		flags |= PT_W;
+		nflags |= PT_W;
 
 	/* More debugging info */
 	PDEBUG(5, printf("pmap_enter: pte for V%08lx = V%p (%08x)\n", va, pte,
@@ -2103,7 +2103,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
 				pv = &vm_physmem[bank].pmseg.pvent[off];
 				(void) pmap_modify_pv(pmap, va, pv,
-				    PT_Wr | PT_W, flags);
+				    PT_Wr | PT_W, nflags);
  			}
 		} else {
 			/* We are replacing the page with a new one. */
@@ -2136,7 +2136,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		 */
 		if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
 			pv = &vm_physmem[bank].pmseg.pvent[off];
-			pmap_enter_pv(pmap, va, pv, flags);
+			pmap_enter_pv(pmap, va, pv, nflags);
 		}
 	}
 
