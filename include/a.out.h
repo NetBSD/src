@@ -59,15 +59,16 @@
 
 /* Address of the bottom of the data segment. */
 #define N_DATADDR(ex) \
-	N_ALIGN(ex, N_TXTADDR(x) + (ex).a_text)
+	N_ALIGN(ex, N_TXTADDR(ex) + (ex).a_text)
 
 /* Text segment offset. */
 #define	N_TXTOFF(ex) \
-	((ex).a_magic == ZMAGIC ? __LDPGSZ : sizeof(struct exec))
+	((ex).a_magic == ZMAGIC ? __LDPGSZ \
+	 : ((ex).a_magic == QMAGIC ? 0 : sizeof(struct exec)))
 
 /* Data segment offset. */
 #define	N_DATOFF(ex) \
-	N_ALIGN(ex, N_TXTOFF(x) + (ex).a_text)
+	N_ALIGN(ex, N_TXTOFF(ex) + (ex).a_text)
 
 /* Symbol table offset. */
 #define N_SYMOFF(ex) \
