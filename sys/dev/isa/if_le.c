@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.26 1995/04/19 22:42:51 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.27 1995/05/10 14:04:14 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -1022,15 +1022,8 @@ leioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			leinit(sc);	/* before arpwhohas */
-			/*
-			 * See if another station has *our* IP address.
-			 * i.e.: There is an address conflict! If a
-			 * conflict exists, a message is sent to the
-			 * console.
-			 */
-			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
+			leinit(sc);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 #ifdef NS
