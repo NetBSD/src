@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.68 2003/05/14 16:52:53 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.69 2003/05/14 16:57:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 Stephen Deering
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.68 2003/05/14 16:52:53 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.69 2003/05/14 16:57:03 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -243,7 +243,7 @@ static int pim_assert;
  * Type of service parameter to be added in the future!!!
  */
 
-#define MFCFIND(o, g, rt) { \
+#define MFCFIND(o, g, rt) do { \
 	struct mfc *_rt; \
 	(rt) = 0; \
 	++mrtstat.mrts_mfc_lookups; \
@@ -257,13 +257,13 @@ static int pim_assert;
 	} \
 	if ((rt) == 0) \
 		++mrtstat.mrts_mfc_misses; \
-}
+} while (/*CONSTCOND*/ 0)
 
 /*
  * Macros to compute elapsed time efficiently
  * Borrowed from Van Jacobson's scheduling code
  */
-#define TV_DELTA(a, b, delta) { \
+#define TV_DELTA(a, b, delta) do { \
 	int xxs; \
 	delta = (a).tv_usec - (b).tv_usec; \
 	xxs = (a).tv_sec - (b).tv_sec; \
@@ -280,7 +280,7 @@ static int pim_assert;
 		delta += (1000000 * xxs); \
 		break; \
 	} \
-}
+} while (/*CONSTCOND*/ 0)
 
 #ifdef UPCALL_TIMING
 u_int32_t upcall_data[51];
