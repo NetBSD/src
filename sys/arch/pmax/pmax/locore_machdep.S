@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.15 2000/07/26 11:42:41 ad Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.16 2001/08/22 08:23:10 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -172,15 +172,11 @@ END(dec_mips1_wbflush)
  */
 	.data
 EXPORT(intrnames)
-	.asciiz	"softclock"
-	.asciiz	"softnet"
 	.asciiz	"serial0"
 	.asciiz	"serial1"
 	.asciiz	"ether"
 	.asciiz	"scsi"
 	.asciiz	"memory"
-	.asciiz	"clock"
-	.asciiz	"fpu"
 	.asciiz	"optslot0"
 	.asciiz	"optslot1"
 	.asciiz	"optslot2"
