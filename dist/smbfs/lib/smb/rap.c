@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rap.c,v 1.4 2003/10/21 02:36:06 fvdl Exp $");
+__RCSID("$NetBSD: rap.c,v 1.5 2004/10/29 19:18:32 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -81,7 +81,7 @@ smb_rap_parserqparam(const char *s, char **next, int *rlen)
 	    default:
 		return EINVAL;
 	}
-	if (isdigit(*s)) {
+	if (isdigit((unsigned char)*s)) {
 		len *= strtoul(s, &np, 10);
 		s = np;
 	}
@@ -111,7 +111,7 @@ smb_rap_parserpparam(const char *s, char **next, int *rlen)
 	    default:
 		return EINVAL;
 	}
-	if (isdigit(*s)) {
+	if (isdigit((unsigned char)*s)) {
 		len *= strtoul(s, &np, 10);
 		s = np;
 	}
@@ -142,7 +142,7 @@ smb_rap_parserpdata(const char *s, char **next, int *rlen)
 	    default:
 		return EINVAL;
 	}
-	if (isdigit(*s)) {
+	if (isdigit((unsigned char)*s)) {
 		len *= strtoul(s, &np, 10);
 		s = np;
 	}
