@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.63 2004/11/01 08:21:34 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.64 2004/11/10 04:11:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.63 2004/11/01 08:21:34 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.64 2004/11/10 04:11:34 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,8 +133,6 @@ __RCSID("$NetBSD: getpwent.c,v 1.63 2004/11/01 08:21:34 lukem Exp $");
 #include "pw_private.h"
 
 #define	_PASSWD_COMPAT	/* "passwd" defaults to compat, so always provide it */
-
-#define	GETPW_R_SIZE_MAX	1024	/* XXXLUKEM: move to {pwd,unistd}.h ? */
 
 #ifdef __weak_alias
 __weak_alias(endpwent,_endpwent)
@@ -414,7 +412,7 @@ struct files_state {
 static struct files_state	_files_state;
 					/* storage for non _r functions */
 static struct passwd		_files_passwd;
-static char			_files_passwdbuf[GETPW_R_SIZE_MAX];
+static char			_files_passwdbuf[_GETPW_R_SIZE_MAX];
 
 static int
 _files_start(struct files_state *state)
@@ -710,7 +708,7 @@ struct dns_state {
 static struct dns_state		_dns_state;
 					/* storage for non _r functions */
 static struct passwd		_dns_passwd;
-static char			_dns_passwdbuf[GETPW_R_SIZE_MAX];
+static char			_dns_passwdbuf[_GETPW_R_SIZE_MAX];
 
 static int
 _dns_start(struct dns_state *state)
@@ -1042,7 +1040,7 @@ struct nis_state {
 static struct nis_state		_nis_state;
 					/* storage for non _r functions */
 static struct passwd		_nis_passwd;
-static char			_nis_passwdbuf[GETPW_R_SIZE_MAX];
+static char			_nis_passwdbuf[_GETPW_R_SIZE_MAX];
 
 	/* macros for deciding which NIS maps to use. */
 #define	PASSWD_BYNAME(x)	((x)->maptype == NISMAP_MASTER \
@@ -1471,14 +1469,15 @@ struct compat_state {
 	char		*user;		/* COMPAT_USER "+name" */
 	DB		*exclude;	/* compat exclude DB */
 	struct passwd	 proto;		/* proto passwd entry */
-	char		 protobuf[GETPW_R_SIZE_MAX]; /* buffer for proto ptrs */
+	char		 protobuf[_GETPW_R_SIZE_MAX];
+					/* buffer for proto ptrs */
 	int		 protoflags;	/* proto passwd flags */
 };
 
 static struct compat_state	_compat_state;
 					/* storage for non _r functions */
 static struct passwd		_compat_passwd;
-static char			_compat_passwdbuf[GETPW_R_SIZE_MAX];
+static char			_compat_passwdbuf[_GETPW_R_SIZE_MAX];
 
 static int
 _compat_start(struct compat_state *state)
@@ -1770,7 +1769,7 @@ _compat_pwscan(int *retval, struct passwd *pw, char *buffer, size_t buflen,
 		    state->mode != COMPAT_NONE) {
 						/* doing a compat lookup */
 			struct passwd	cpw;
-			char		cbuf[GETPW_R_SIZE_MAX];
+			char		cbuf[_GETPW_R_SIZE_MAX];
 
 			switch (state->mode) {
 
