@@ -24,6 +24,7 @@ B<openssl> B<rsa>
 [B<-check>]
 [B<-pubin>]
 [B<-pubout>]
+[B<-engine id>]
 
 =head1 DESCRIPTION
 
@@ -117,6 +118,13 @@ by default a private key is output: with this option a public
 key will be output instead. This option is automatically set if
 the input is a public key.
 
+=item B<-engine id>
+
+specifying an engine (by it's unique B<id> string) will cause B<req>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
+
 =back
 
 =head1 NOTES
@@ -136,7 +144,7 @@ and Microsoft IIS .key files, this uses unsalted RC4 for its encryption.
 It is not very secure and so should only be used when necessary.
 
 Some newer version of IIS have additional data in the exported .key
-files. To use thse with the utility view the file with a binary editor
+files. To use these with the utility, view the file with a binary editor
 and look for the string "private-key", then trace back to the byte
 sequence 0x30, 0x82 (this is an ASN1 SEQUENCE). Copy all the data
 from this point onwards to another file and use that as the input

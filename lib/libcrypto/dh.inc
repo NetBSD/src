@@ -1,4 +1,4 @@
-#	$NetBSD: dh.inc,v 1.3 2000/07/16 07:16:22 mrg Exp $
+#	$NetBSD: dh.inc,v 1.4 2003/07/24 14:16:32 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,6 +9,4 @@
 
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/dh
 
-SRCS+= dh_gen.c dh_key.c dh_lib.c dh_check.c dh_err.c
-
-
+SRCS+= dh_asn1.c dh_gen.c dh_key.c dh_lib.c dh_check.c dh_err.c

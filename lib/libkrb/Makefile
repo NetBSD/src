@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2003/07/23 20:30:34 itojun Exp $
+# $NetBSD: Makefile,v 1.27 2003/07/24 14:16:54 itojun Exp $
 
 NOLINT=		# defined
 
@@ -129,7 +129,7 @@ CPPFLAGS+= -I.					\
 CLEANFILES=	${ERR_FILES} krb_err.h krb.h
 
 krb.h:	krb.h.in
-	sed 's,@DES_H@,openssl/des.h,' < ${.ALLSRC} > ${.TARGET}
+	sed 's,@DES_H@,des.h,' < ${.ALLSRC} > ${.TARGET}
 
 ${SRCS:.c=.o}: krb_err.h
 
@@ -145,6 +145,9 @@ INFOFLAGS=	-I${DIST}/krb4/doc
 		false; \
 	fi
 .endif
+
+LDADD+=	-ldes
+DPADD+=	${LIBDES}
 
 .include <bsd.lib.mk>
 .include <bsd.info.mk>

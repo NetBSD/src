@@ -63,7 +63,6 @@
 extern "C" {
 #endif
 
-
 #define RC5_ENCRYPT	1
 #define RC5_DECRYPT	0
 

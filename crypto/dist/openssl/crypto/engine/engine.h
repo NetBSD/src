@@ -61,21 +61,12 @@
 
 #include <openssl/opensslconf.h>
 
-#ifdef OPENSSL_NO_ENGINE
-#error ENGINE is disabled.
-#endif
 
 #include <openssl/ossl_typ.h>
 #include <openssl/bn.h>
-#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
-#endif
-#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
-#endif
 #include <openssl/rand.h>
 #include <openssl/ui.h>
 #include <openssl/symhacks.h>
@@ -86,15 +77,6 @@ extern "C" {
 #endif
 
 /* Fixups for missing algorithms */
-#ifdef OPENSSL_NO_RSA
-typedef void RSA_METHOD;
-#endif
-#ifdef OPENSSL_NO_DSA
-typedef void DSA_METHOD;
-#endif
-#ifdef OPENSSL_NO_DH
-typedef void DH_METHOD;
-#endif
 
 /* These flags are used to control combinations of algorithm (methods)
  * by bitwise "OR"ing. */

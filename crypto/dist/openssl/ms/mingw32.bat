@@ -1,7 +1,7 @@
 @rem OpenSSL with Mingw32+GNU as
 @rem ---------------------------
 
-perl Configure Mingw32 %1 %2 %3 %4 %5 %6 %7 %8
+perl Configure mingw %1 %2 %3 %4 %5 %6 %7 %8
 
 @echo off
 
@@ -12,7 +12,8 @@ echo Generating x86 for GNU assember
 
 echo Bignum
 cd crypto\bn\asm
-perl x86.pl gaswin > bn-win32.s
+perl bn-586.pl gaswin > bn-win32.s
+perl co-586.pl gaswin > co-win32.s
 cd ..\..\..
 
 echo DES
@@ -65,21 +66,16 @@ cd ..\..\..
 echo Generating makefile
 perl util\mkfiles.pl >MINFO
 perl util\mk1mf.pl gaswin Mingw32 >ms\mingw32a.mak
-perl util\mk1mf.pl gaswin Mingw32-files >ms\mingw32f.mak
 echo Generating DLL definition files
 perl util\mkdef.pl 32 libeay >ms\libeay32.def
 if errorlevel 1 goto end
 perl util\mkdef.pl 32 ssleay >ms\ssleay32.def
 if errorlevel 1 goto end
 
-rem Create files -- this can be skipped if using the GNU file utilities
-make -f ms/mingw32f.mak
-echo You can ignore the error messages above
-
-copy ms\tlhelp32.h outinc
+rem copy ms\tlhelp32.h outinc
 
 echo Building the libraries
-make -f ms/mingw32a.mak
+mingw32-make -f ms/mingw32a.mak
 if errorlevel 1 goto end
 
 echo Generating the DLLs and input libraries

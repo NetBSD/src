@@ -63,6 +63,7 @@
 #include <stdarg.h>
 
 #include <openssl/crypto.h>
+#include <openssl/e_os2.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -177,7 +178,7 @@ extern "C" {
 #define BIO_retry_type(a)		((a)->flags & BIO_FLAGS_RWS)
 #define BIO_should_retry(a)		((a)->flags & BIO_FLAGS_SHOULD_RETRY)
 
-/* The next two are used in conjunction with the
+/* The next three are used in conjunction with the
  * BIO_should_io_special() condition.  After this returns true,
  * BIO *BIO_get_retry_BIO(BIO *bio, int *reason); will walk the BIO 
  * stack and return the 'reason' for the special and the offending BIO.
@@ -186,6 +187,8 @@ extern "C" {
 #define BIO_RR_SSL_X509_LOOKUP		0x01
 /* Returned from the connect BIO when a connect would have blocked */
 #define BIO_RR_CONNECT			0x02
+/* Returned from the accept BIO when an accept would have blocked */
+#define BIO_RR_ACCEPT			0x03
 
 /* These are passed by the BIO callback */
 #define BIO_CB_FREE	0x01
@@ -446,8 +449,9 @@ int BIO_read_filename(BIO *b,const char *name);
 size_t BIO_ctrl_pending(BIO *b);
 size_t BIO_ctrl_wpending(BIO *b);
 #define BIO_flush(b)		(int)BIO_ctrl(b,BIO_CTRL_FLUSH,0,NULL)
-#define BIO_get_info_callback(b,cbp) (int)BIO_ctrl(b,BIO_CTRL_GET_CALLBACK,0,(bio_info_cb **)(cbp))
-#define BIO_set_info_callback(b,cb) (int)BIO_callback_ctrl(b,BIO_CTRL_SET_CALLBACK,(bio_info_cb *)(cb))
+#define BIO_get_info_callback(b,cbp) (int)BIO_ctrl(b,BIO_CTRL_GET_CALLBACK,0, \
+						   cbp)
+#define BIO_set_info_callback(b,cb) (int)BIO_callback_ctrl(b,BIO_CTRL_SET_CALLBACK,cb)
 
 /* For the BIO_f_buffer() type */
 #define BIO_buffer_get_num_lines(b) BIO_ctrl(b,BIO_CTRL_GET,0,NULL)
@@ -489,6 +493,7 @@ int	BIO_read(BIO *b, void *data, int len);
 int	BIO_gets(BIO *bp,char *buf, int size);
 int	BIO_write(BIO *b, const void *data, int len);
 int	BIO_puts(BIO *bp,const char *buf);
+int	BIO_indent(BIO *b,int indent,int max);
 long	BIO_ctrl(BIO *bp,int cmd,long larg,void *parg);
 long BIO_callback_ctrl(BIO *b, int cmd, void (*fp)(struct bio_st *, int, const char *, int, long, long));
 char *	BIO_ptr_ctrl(BIO *bp,int cmd,long larg);
@@ -541,7 +546,7 @@ struct hostent *BIO_gethostbyname(const char *name);
  * and an appropriate error code is set).
  */
 int BIO_sock_error(int sock);
-int BIO_socket_ioctl(int fd, long type, unsigned long *arg);
+int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd,int mode);
 int BIO_get_port(const char *str, unsigned short *port_ptr);
 int BIO_get_host_ip(const char *str, unsigned char *ip);
@@ -565,7 +570,7 @@ int BIO_new_bio_pair(BIO **bio1, size_t writebuf1,
 
 void BIO_copy_next_retry(BIO *b);
 
-long BIO_ghbn_ctrl(int cmd,int iarg,char *parg);
+/*long BIO_ghbn_ctrl(int cmd,int iarg,char *parg);*/
 
 int BIO_printf(BIO *bio, const char *format, ...);
 int BIO_vprintf(BIO *bio, const char *format, va_list args);
@@ -606,6 +611,7 @@ void ERR_load_BIO_strings(void);
 #define BIO_F_CONN_CTRL					 127
 #define BIO_F_CONN_STATE				 115
 #define BIO_F_FILE_CTRL					 116
+#define BIO_F_FILE_READ					 130
 #define BIO_F_LINEBUFFER_CTRL				 129
 #define BIO_F_MEM_READ					 128
 #define BIO_F_MEM_WRITE					 117
@@ -632,6 +638,7 @@ void ERR_load_BIO_strings(void);
 #define BIO_R_NO_HOSTNAME_SPECIFIED			 112
 #define BIO_R_NO_PORT_DEFINED				 113
 #define BIO_R_NO_PORT_SPECIFIED				 114
+#define BIO_R_NO_SUCH_FILE				 128
 #define BIO_R_NULL_PARAMETER				 115
 #define BIO_R_TAG_MISMATCH				 116
 #define BIO_R_UNABLE_TO_BIND_SOCKET			 117
