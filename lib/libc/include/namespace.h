@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.25 1998/10/16 12:39:54 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.26 1998/10/16 12:47:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -297,6 +297,7 @@
 #define shm_open		_shm_open
 #define shm_unlink		_shm_unlink
 #define siginterrupt		_siginterrupt
+#define signal			_signal
 #define sl_add			_sl_add
 #define sl_find			_sl_find
 #define sl_free			_sl_free
