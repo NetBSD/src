@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.2 2003/10/06 22:53:48 fvdl Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.3 2003/10/08 22:43:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,9 +95,11 @@ typedef struct {
 
 #define _UC_UCONTEXT_ALIGN	(~0xf)
 
-#ifdef _KERNEL
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_URSP])
-#endif
+#define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_RIP])
+#define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_RAX])
+
+#define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 /*
  * mcontext extensions to handle signal delivery.
