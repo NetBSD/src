@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 2002/04/13 15:58:30 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 2002/04/19 20:56:56 kleink Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -84,6 +84,7 @@
 
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
+#include <powerpc/spr.h>
 #if __NetBSD_Version__ > 105010000
 #include <powerpc/mpc6xx/bat.h>
 #else
@@ -282,6 +283,7 @@ unsigned int pmapdebug = 0;
 #define	EIEIO()		__asm __volatile("eieio")
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	__asm __volatile("mtmsr %0" :: "r"(psl))
+#define	MFPVR()		mfpvr()
 #define	MFSRIN(va)	mfsrin(va)
 #define	MFTB()		mftb()
 
@@ -299,6 +301,14 @@ mftb(void)
 	u_int tb;
 	__asm __volatile("mftb %0" : "=r"(tb) : );
 	return tb;
+}
+
+static __inline u_int
+mfpvr(void)
+{
+	u_int pvr;
+	__asm __volatile("mfspr %0,%1" : "=r"(pvr) : "n"(SPR_PVR));
+	return pvr;
 }
 
 static __inline sr_t
@@ -2208,19 +2218,22 @@ void
 pmap_print_mmuregs(void)
 {
 	int i;
+	u_int cpuvers;
 	vaddr_t addr;
 	sr_t soft_sr[16];
 	struct bat soft_ibat[4];
 	struct bat soft_dbat[4];
 	u_int32_t sdr1;
 	
+	cpuvers = MFPVR() >> 16;
+
 	__asm __volatile ("mfsdr1 %0" : "=r"(sdr1));
 	for (i=0; i<16; i++) {
 		soft_sr[i] = MFSRIN(addr);
 		addr += (1 << ADDR_SR_SHFT);
 	}
 
-	/* read iBAT registers */
+	/* read iBAT (601: uBAT) registers */
 	__asm __volatile ("mfibatu %0,0" : "=r"(soft_ibat[0].batu));
 	__asm __volatile ("mfibatl %0,0" : "=r"(soft_ibat[0].batl));
 	__asm __volatile ("mfibatu %0,1" : "=r"(soft_ibat[1].batu));
@@ -2231,45 +2244,49 @@ pmap_print_mmuregs(void)
 	__asm __volatile ("mfibatl %0,3" : "=r"(soft_ibat[3].batl));
 
 
-	/* read dBAT registers */
-	__asm __volatile ("mfdbatu %0,0" : "=r"(soft_dbat[0].batu));
-	__asm __volatile ("mfdbatl %0,0" : "=r"(soft_dbat[0].batl));
-	__asm __volatile ("mfdbatu %0,1" : "=r"(soft_dbat[1].batu));
-	__asm __volatile ("mfdbatl %0,1" : "=r"(soft_dbat[1].batl));
-	__asm __volatile ("mfdbatu %0,2" : "=r"(soft_dbat[2].batu));
-	__asm __volatile ("mfdbatl %0,2" : "=r"(soft_dbat[2].batl));
-	__asm __volatile ("mfdbatu %0,3" : "=r"(soft_dbat[3].batu));
-	__asm __volatile ("mfdbatl %0,3" : "=r"(soft_dbat[3].batl));
+	if (cpuvers != MPC601) {
+		/* read dBAT registers */
+		__asm __volatile ("mfdbatu %0,0" : "=r"(soft_dbat[0].batu));
+		__asm __volatile ("mfdbatl %0,0" : "=r"(soft_dbat[0].batl));
+		__asm __volatile ("mfdbatu %0,1" : "=r"(soft_dbat[1].batu));
+		__asm __volatile ("mfdbatl %0,1" : "=r"(soft_dbat[1].batl));
+		__asm __volatile ("mfdbatu %0,2" : "=r"(soft_dbat[2].batu));
+		__asm __volatile ("mfdbatl %0,2" : "=r"(soft_dbat[2].batl));
+		__asm __volatile ("mfdbatu %0,3" : "=r"(soft_dbat[3].batu));
+		__asm __volatile ("mfdbatl %0,3" : "=r"(soft_dbat[3].batl));
+	}
 
 	printf("SDR1:\t0x%x\n", sdr1);
 	printf("SR[]:\t");
 	addr = 0;
 	for (i=0; i<4; i++)
-		printf("0x%06x,   ", soft_sr[i]);
+		printf("0x%08x,   ", soft_sr[i]);
 	printf("\n\t");
 	for ( ; i<8; i++)
-		printf("0x%06x,   ", soft_sr[i]);
+		printf("0x%08x,   ", soft_sr[i]);
 	printf("\n\t");
 	for ( ; i<12; i++)
-		printf("0x%06x,   ", soft_sr[i]);
+		printf("0x%08x,   ", soft_sr[i]);
 	printf("\n\t");
 	for ( ; i<16; i++)
-		printf("0x%06x,   ", soft_sr[i]);
+		printf("0x%08x,   ", soft_sr[i]);
 	printf("\n");
 
-	printf("iBAT[]:\t");
+	printf("%cBAT[]:\t", cpuvers == MPC601 ? 'u' : 'i');
 	for (i=0; i<4; i++) {
 		printf("0x%08x 0x%08x, ",
 			soft_ibat[i].batu, soft_ibat[i].batl);
 		if (i == 1)
 			printf("\n\t");
 	}
-	printf("\ndBAT[]:\t");
-	for (i=0; i<4; i++) {
-		printf("0x%08x 0x%08x, ",
-			soft_dbat[i].batu, soft_dbat[i].batl);
-		if (i == 1)
-			printf("\n\t");
+	if (cpuvers != MPC601) {
+		printf("\ndBAT[]:\t");
+		for (i=0; i<4; i++) {
+			printf("0x%08x 0x%08x, ",
+				soft_dbat[i].batu, soft_dbat[i].batl);
+			if (i == 1)
+				printf("\n\t");
+		}
 	}
 	printf("\n");
 }
