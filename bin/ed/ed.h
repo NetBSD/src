@@ -248,6 +248,5 @@ void unmark_line_node __P((line_t *));
 void unset_active_nodes __P((line_t *, line_t *));
 long write_file __P((long, long, char *, char *));
 
-extern char *sys_errlist[];
 extern int mutex;
 extern int sigflags;
