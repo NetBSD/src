@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.58 1998/12/01 04:31:01 thorpej Exp $	*/
+/*	$NetBSD: icu.s,v 1.59 1999/01/26 14:28:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ IDTVEC(spllower)
  */
 IDTVEC(doreti)
 	popl	%ebx			# get previous priority
-	movl	%ebx,_cpl
+	movl	%ebx,_C_LABEL(cpl)
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax
 	notl	%eax
