@@ -1,4 +1,4 @@
-/*	$NetBSD: netdate.c,v 1.16 1998/07/28 03:47:15 mycroft Exp $	*/
+/*	$NetBSD: netdate.c,v 1.17 1998/11/04 12:50:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.16 1998/07/28 03:47:15 mycroft Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.17 1998/11/04 12:50:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,9 @@ netsettime(tval)
 	}
 
 	(void)memset(&dest, 0, sizeof(dest));
+#ifdef BSD4_4
 	dest.sin_len = sizeof(struct sockaddr_in);
+#endif
 	dest.sin_family = AF_INET;
 	dest.sin_port = sp->s_port;
 	dest.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -113,7 +115,9 @@ netsettime(tval)
 #endif
 
 	(void)memset(&sin, 0, sizeof(sin));
+#ifdef BSD4_4
 	sin.sin_len = sizeof(struct sockaddr_in);
+#endif
 	sin.sin_family = AF_INET;
 	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		warn("bind");
