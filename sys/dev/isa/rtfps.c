@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.4 1994/11/04 19:01:59 mycroft Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.5 1994/11/07 09:03:51 mycroft Exp $	*/
 
 /*
  * Multi-port serial card interrupt demuxing support.
@@ -13,9 +13,6 @@
 
 #include <machine/pio.h>
 
-#ifndef NEWCONFIG
-#include <i386/isa/isa_device.h>
-#endif
 #include <i386/isa/isavar.h>
 
 struct rtfps_softc {
@@ -23,7 +20,7 @@ struct rtfps_softc {
 	struct intrhand sc_ih;
 
 	u_short sc_iobase;
-	u_short sc_irq;
+	u_short sc_irqport;
 	int sc_alive;		/* mask of slave units attached */
 	void *sc_slaves[4];	/* com device unit numbers */
 };
@@ -34,7 +31,7 @@ int rtfpsintr __P((struct rtfps_softc *));
 void rt_resetintr __P((/*u_short*/));
 
 struct cfdriver rtfpscd = {
-	NULL, "rtfps", rtfpsprobe, rtfpsattach, DV_TTY, sizeof(struct rtfps_softc)
+	NULL, "rtfps", rtfpsprobe, rtfpsattach, DV_TTY, sizeof(struct rtfps_softc), 1
 };
 
 int
@@ -54,57 +51,34 @@ rtfpsprobe(parent, self, aux)
 }
 
 struct rtfps_attach_args {
-	u_short ra_iobase;
 	int ra_slave;
 };
 
 int
-rtfpssubmatch(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+rtfpssubmatch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	struct rtfps_softc *sc = (void *)parent;
-	struct rtfps_attach_args *aa = aux;
+	struct device *self = match;
+	struct isa_attach_args *ia = aux;
+	struct rtfps_attach_args *ra = ia->ia_aux;
 	struct cfdata *cf = self->dv_cfdata;
-	int found, frobbed = 0;
-#ifdef NEWCONFIG
 
-#define cf_slave cf_loc[6]
-	if (cf->cf_slave != -1 && cf->cf_slave != aa->ra_slave)
-		return 0;
-	if (cf->cf_iobase == IOBASEUNK) {
-		frobbed = 1;
-		cf->cf_iobase = aa->ra_iobase;
-	}
-#undef cf_slave
-#else
-	struct isa_device *id = (void *)cf->cf_loc;
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ra->ra_slave)
+		return (0);
+	return ((*cf->cf_driver->cd_match)(parent, match, ia));
+}
 
-	if (id->id_physid != -1 && id->id_physid != aa->ra_slave)
-		return 0;
-	if (id->id_iobase == 0) {
-		frobbed = 1;
-		id->id_iobase = aa->ra_iobase;
-	}
-#endif
-	found = isasubmatch(parent, self, aux);
-	if (found) {
-		sc->sc_slaves[aa->ra_slave] = self;
-		sc->sc_alive |= 1 << aa->ra_slave;
-	}
-	/*
-	 * If we changed the iobase, we have to set it back now, because it
-	 * might be a clone device, and the iobase wouldn't get set properly on
-	 * the next iteration.
-	 */
-#ifdef NEWCONFIG
-	if (frobbed)
-		cf->cf_iobase = IOBASEUNK;
-#else
-	if (frobbed)
-		id->id_iobase = 0;
-#endif
-	return found;
+int
+rtfpsprint(aux, rtfps)
+	void *aux;
+	char *rtfps;
+{
+	struct isa_attach_args *ia = aux;
+	struct rtfps_attach_args *ra = ia->ia_aux;
+
+	printf(" slave %d", ra->ra_slave);
 }
 
 void
@@ -114,19 +88,39 @@ rtfpsattach(parent, self, aux)
 {
 	struct rtfps_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	struct rtfps_attach_args aa;
+	struct rtfps_attach_args ra;
+	struct isa_attach_args isa;
+	static u_short irqport[] = {
+		-1,    -1,    -1,    -1,
+		-1,    -1,    -1,    -1,
+		-1, 0x2f2, 0x6f2, 0x6f3,
+		-1,    -1,    -1,    -1
+	};
 
 	sc->sc_iobase = ia->ia_iobase;
-	sc->sc_irq = ia->ia_irq;
 
-	rt_resetintr(ia->ia_irq);
+	if (ia->ia_irq >= 16 || irqport[ia->ia_irq] == (u_short)-1)
+		panic("rtfpsattach: invalid irq");
+	sc->sc_irqport = irqport[ia->ia_irq];
+
+	outb(sc->sc_irqport, 0);
 
 	printf("\n");
 
-	for (aa.ra_slave = 0, aa.ra_iobase = sc->sc_iobase;
-	    aa.ra_slave < 4;
-	    aa.ra_slave++, aa.ra_iobase += 8)
-		config_search(rtfpssubmatch, self, &aa);
+	isa.ia_aux = &ra;
+	for (ra.ra_slave = 0; ra.ra_slave < 4; ra.ra_slave++) {
+		void *match;
+		isa.ia_iobase = sc->sc_iobase + 8 * ra.ra_slave;
+		isa.ia_iosize = 0x666;
+		isa.ia_irq = IRQUNK;
+		isa.ia_drq = DRQUNK;
+		isa.ia_msize = 0;
+		if ((match = config_search(rtfpssubmatch, self, &isa)) != 0) {
+			sc->sc_slaves[ra.ra_slave] = match;
+			sc->sc_alive |= 1 << ra.ra_slave;
+			config_attach(self, match, &isa, rtfpsprint);
+		}
+	}
 
 	sc->sc_ih.ih_fun = rtfpsintr;
 	sc->sc_ih.ih_arg = sc;
@@ -141,7 +135,7 @@ rtfpsintr(sc)
 	u_short iobase = sc->sc_iobase;
 	int alive = sc->sc_alive;
 
-	rt_resetintr(sc->sc_irq);
+	outb(sc->sc_irqport, 0);
 
 #define	TRY(n) \
 	if (alive & (1 << (n))) \
@@ -152,25 +146,5 @@ rtfpsintr(sc)
 	TRY(3);
 #undef TRY
 
-	return 1;
-}
-
-void
-rt_resetintr(irq)
-	u_short irq;
-{
-
-	switch (irq) {
-	case 9:
-		outb(0x2f2, 0);
-		break;
-	case 10:
-		outb(0x6f2, 0);
-		break;
-	case 11:
-		outb(0x6f3, 0);
-		break;
-	default:
-		panic("rt_resetintr: invalid irq");
-	}
+	return (1);
 }
