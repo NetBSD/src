@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.13 2000/10/18 05:43:13 matt Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.14 2000/11/01 20:21:58 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -508,7 +508,6 @@ bmac_rint(v)
 			ifp->if_ierrors++;
 			goto next;
 		}
-		m->m_flags |= M_HASFCS;
 
 #if NBPFILTER > 0
 		/*
