@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.23 2000/07/03 03:26:19 matt Exp $	*/
+/*	$NetBSD: error.c,v 1.24 2002/05/15 16:33:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.23 2000/07/03 03:26:19 matt Exp $");
+__RCSID("$NetBSD: error.c,v 1.24 2002/05/15 16:33:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -226,6 +226,7 @@ STATIC const struct errname errormsg[] = {
 	{ EINTR,	ALL,	"interrupted" },
 	{ EACCES,	ALL,	"permission denied" },
 	{ EIO,		ALL,	"I/O error" },
+	{ EEXIST,	ALL,	"file exists" },
 	{ ENOENT,	E_OPEN,	"no such file" },
 	{ ENOENT,	E_CREAT,"directory nonexistent" },
 	{ ENOENT,	E_EXEC,	"not found" },
