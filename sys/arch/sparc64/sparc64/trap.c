@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 2000/04/18 02:07:57 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.39 2000/05/24 16:48:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -437,18 +437,9 @@ userret(p, pc, oticks)
 	}
 	if (want_resched) {
 		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we put ourselves on the run queue
-		 * but before we switched, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		(void) splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		(void) spl0();
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}

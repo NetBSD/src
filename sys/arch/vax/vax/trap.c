@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 2000/03/19 14:56:54 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.49 2000/05/24 16:48:44 thorpej Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -273,16 +273,9 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 	if (want_resched) {
 #endif
 		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we setrunqueue ourselves but before
-		 * we swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
+		 * We are being preempted.
 		 */
-		splstatclock();
-		setrunqueue(p);
-		mi_switch();
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
@@ -403,16 +396,9 @@ bad:
 	if (want_resched) {
 #endif
 		/*
-		 * Since we are curproc, clock will normally just change
-		 * our priority without moving us from one queue to another
-		 * (since the running process is not on a queue.)
-		 * If that happened after we setrunqueue ourselves but before
-		 * we swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
+		 * We are being preempted.
 		 */
-		splstatclock();
-		setrunqueue(p);
-		mi_switch();
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}

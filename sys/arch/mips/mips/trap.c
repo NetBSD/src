@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.129 2000/05/15 06:45:44 nisimura Exp $	*/
+/*	$NetBSD: trap.c,v 1.130 2000/05/24 16:48:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.129 2000/05/15 06:45:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.130 2000/05/24 16:48:39 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
@@ -197,20 +197,10 @@ userret(p, pc, sticks)
 		postsig(sig);
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
-		int s;
 		/*
-		 * Since we are curproc, a clock interrupt could
-		 * change our priority without changing run queues
-		 * (the running process is not kept on a run queue).
-		 * If this happened after we setrunqueue ourselves but
-		 * before we switch()'ed, we might not be on the queue
-		 * indicated by our priority.
+		 * We are being preempted.
 		 */
-		s = splstatclock();
-		setrunqueue(p);
-		p->p_stats->p_ru.ru_nivcsw++;
-		mi_switch();
-		splx(s);
+		preempt(NULL);
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
 	}
