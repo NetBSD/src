@@ -1835,6 +1835,9 @@ EOF
   powerpc-*-aix4*)	COREFILE=rs6000-core.o ;;
   powerpc-*-aix*)	COREFILE=rs6000-core.o ;;
   powerpc-*-beos*)	;;
+  powerpc-*-netbsd*)
+	COREFILE=netbsd-core.o
+	;;
   sparc-*-netbsd* | sparc-*-openbsd*)
 	COREFILE=netbsd-core.o
 	;;
