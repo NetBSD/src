@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.65 1997/11/04 01:37:04 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.66 1998/01/22 00:39:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -44,6 +44,8 @@
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
+
+#include "opt_user_ldt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

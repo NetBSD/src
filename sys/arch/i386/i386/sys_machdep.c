@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.36 1998/01/15 22:26:00 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.37 1998/01/22 00:39:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -41,6 +41,7 @@
  */
 
 #include "opt_vm86.h"
+#include "opt_user_ldt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
