@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1997/11/09 15:54:16 phil Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1997/11/21 12:08:06 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,6 +39,7 @@
 /* main sysinst program. */
 
 #include <stdio.h>
+#include <signal.h>
 #include <curses.h>
 #include <unistd.h>
 
@@ -50,6 +51,7 @@
 
 int main(int argc, char **argv);
 void usage (void);
+void inthandler (int);
 
 int main(int argc, char **argv)
 {
@@ -89,6 +91,9 @@ int main(int argc, char **argv)
 		*r = 0;
 	}
 
+	/* Watch for SIGINT and clean up */
+	(void) signal(SIGINT, inthandler);
+
 	/* Menu processing */
 	process_menu (MENU_netbsd);
 	
@@ -102,5 +107,14 @@ void
 usage(void)
 {
 	(void)fprintf (stderr, msg_string(MSG_usage));
+	exit(1);
+}
+
+/* ARGSUSED */
+void
+inthandler(int notused)
+{
+	endwin();
+	fprintf(stderr, "\n\n sysinst terminated.\n");
 	exit(1);
 }
