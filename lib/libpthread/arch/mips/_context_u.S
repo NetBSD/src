@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.1 2001/11/28 10:43:56 wdk Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.2 2001/11/29 11:03:25 wdk Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@
 	beq	t0, zero, 1f				; \
 	 nop						; \
 	REG_PROLOGUE					; \
-	REG_L	ra, (UC_REGS + _REG_RA * SZREG)(reg)	; \
 	REG_L	s0, (UC_REGS + _REG_S0 * SZREG)(reg)	; \
 	REG_L	s1, (UC_REGS + _REG_S1 * SZREG)(reg)	; \
 	REG_L	s2, (UC_REGS + _REG_S2 * SZREG)(reg)	; \
@@ -92,13 +91,16 @@
 	REG_L	s5, (UC_REGS + _REG_S5 * SZREG)(reg)	; \
 	REG_L	s6, (UC_REGS + _REG_S6 * SZREG)(reg)	; \
 	REG_L	s7, (UC_REGS + _REG_S7 * SZREG)(reg)	; \
+	REG_L	s8, (UC_REGS + _REG_S8 * SZREG)(reg)	; \
+	REG_L	t9, (UC_REGS + _REG_EPC * SZREG)(reg)	; \
 	REG_L	gp, (UC_REGS + _REG_GP * SZREG)(reg)	; \
 	REG_L	sp, (UC_REGS + _REG_SP * SZREG)(reg)	; \
+	REG_L	ra, (UC_REGS + _REG_RA * SZREG)(reg)	; \
 	REG_EPILOGUE					; \
 							; \
 	/* part procedure call, part RET */		; \
-	j	ra					; \
-	 lw	s8, (UC_REGS + _REG_S8 * SZREG)(reg)	; \
+	j	t9					; \
+	nop						; \
 	/* NOTREACHED */				; \
 1:	move	a0, reg					; \
 	PIC_CALL(setcontext, t9)
