@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.19 2001/05/02 10:32:21 scw Exp $	*/
+/*	$NetBSD: com.c,v 1.20 2001/05/05 01:52:56 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,21 +151,16 @@ struct callout com_poll_ch = CALLOUT_INITIALIZER;
 
 int comprobe __P((struct device *, struct cfdata *, void *));
 void comattach __P((struct device *, struct device *, void *));
-int comprobe1 __P((int));
-int comopen __P((dev_t, int, int, struct proc *));
-int comclose __P((dev_t, int, int, struct proc *));
-int comread __P((dev_t, struct uio *, int));
-int comwrite __P((dev_t, struct uio *, int));
-int comioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-struct tty *comtty __P((dev_t));
-void comstop __P((struct tty *, int));
-void comdiag __P((void *));
-int comintr __P((void *));
-void compollin __P((void *));
-int comparam __P((struct tty *, struct termios *));
-void comstart __P((struct tty *));
-void cominit __P((int, int));
-int comspeed __P((long));
+cdev_decl(com);
+
+static int comprobe1 __P((int));
+static void comdiag __P((void *));
+static int comintr __P((void *));
+static void compollin __P((void *));
+static int comparam __P((struct tty *, struct termios *));
+static void comstart __P((struct tty *));
+static void cominit __P((int, int));
+static int comspeed __P((long));
 
 static u_char tiocm_xxx2mcr __P((int));
 
@@ -206,7 +201,7 @@ extern int kgdb_debug_init;
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
 
-int
+static int
 comspeed(speed)
 	long speed;
 {
@@ -231,7 +226,7 @@ comspeed(speed)
 #undef	divrnd(n, q)
 }
 
-int
+static int
 comprobe1(iobase)
 	int iobase;
 {
@@ -777,7 +772,7 @@ comioctl(dev, cmd, data, flag, p)
 	return 0;
 }
 
-int
+static int
 comparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
@@ -890,7 +885,7 @@ comparam(tp, t)
 
 int comdebug = 0;
 
-void
+static void
 comstart(tp)
 	struct tty *tp;
 {
@@ -970,7 +965,7 @@ comstop(tp, flag)
 	splx(s);
 }
 
-void
+static void
 comdiag(arg)
 	void *arg;
 {
@@ -992,7 +987,7 @@ comdiag(arg)
 	    floods, floods == 1 ? "" : "s");
 }
 
-void
+static void
 compollin(arg)
 	void *arg;
 {
@@ -1072,7 +1067,7 @@ out:
 	callout_reset(&com_poll_ch, 1, compollin, NULL);
 }
 
-int
+static int
 comintr(arg)
 	void *arg;
 {
@@ -1208,7 +1203,7 @@ comcninit(cp)
 	comconsinit = 0;
 }
 
-void
+static void
 cominit(unit, rate)
 	int unit, rate;
 {
