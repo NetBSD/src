@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.8 1997/10/31 07:59:55 mycroft Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.9 1997/11/18 11:31:07 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ joy_isapnp_match(parent, match, aux)
 	struct isapnp_attach_args *ipa = aux;
 
 	if (strcmp(ipa->ipa_devcompat, "PNPB02F") &&
+ 	    strcmp(ipa->ipa_devlogic, "CTL7002") &&
 	    strcmp(ipa->ipa_devlogic, "ESS0001") &&
 	    strcmp(ipa->ipa_devlogic, "OPT0001"))
 		return (0);
