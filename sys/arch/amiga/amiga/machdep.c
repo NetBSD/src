@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1995/05/16 20:59:07 chopps Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 1995/07/04 06:51:05 paulus Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,6 +95,8 @@
 #include "fd.h"
 #include "ser.h"
 #include "ether.h"
+
+#include "ppp.h"
 
 /* vm_map_t buffer_map; */
 extern vm_offset_t avail_end;
@@ -1060,6 +1062,12 @@ netintr()
 	if (netisr & (1 << NETISR_ISO)) {
 		netisr &= ~(1 << NETISR_ISO);
 		clnlintr();
+	}
+#endif
+#if NPPP > 0
+	if (netisr & (1 << NETISR_PPP)) {
+		netisr &= ~(1 << NETISR_PPP);
+		pppintr();
 	}
 #endif
 }
