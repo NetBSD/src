@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.70 2000/10/08 18:51:31 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.71 2000/10/10 22:30:15 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1459,3 +1459,72 @@ dist/bind/bin/host/host.c			1.3
 usr.bin/passwd/yp_passwd.c			patch
 
   Make this program actually able to change the YP password.
+
+dist/bind/bin/named/db_dump.c			1.2
+dist/bind/bin/named/db_glue.c			1.2
+dist/bind/bin/named/db_load.c			1.2
+dist/bind/bin/named/db_update.c			1.2
+dist/bind/bin/named/ns_ctl.c			1.2
+dist/bind/bin/named/ns_forw.c			1.2
+dist/bind/bin/named/ns_func.h			1.3
+dist/bind/bin/named/ns_glob.h			1.2
+dist/bind/bin/named/ns_glue.c			1.2
+dist/bind/bin/named/ns_ixfr.c			1.2
+dist/bind/bin/named/ns_lexer.c			1.2
+dist/bind/bin/named/ns_lexer.h			1.2
+dist/bind/bin/named/ns_main.c			1.6
+dist/bind/bin/named/ns_maint.c			1.2
+dist/bind/bin/named/ns_parser.y			1.2
+dist/bind/bin/named/ns_resp.c			1.2
+dist/bind/bin/named/ns_stats.c			1.2
+dist/bind/bin/named/ns_update.c			1.2
+dist/bind/bin/named-xfer/named-xfer.c		1.2
+dist/bind/bin/ndc/ndc.c				1.2
+dist/bind/include/isc/ctl.h			1.2
+dist/bind/include/isc/logging.h			1.2
+dist/bind/lib/dst/dst_api.c			1.2
+dist/bind/lib/dst/dst_internal.h		1.2
+dist/bind/lib/irs/irp_p.h			1.2
+dist/bind/lib/isc/ev_files.c			1.2
+dist/bind/lib/isc/ev_timers.c			1.2
+dist/bind/lib/isc/ev_waits.c			1.2
+dist/bind/lib/isc/eventlib.c			1.2
+dist/bind/lib/isc/eventlib_p.h			1.2
+dist/bind/lib/resolv/res_findzonecut.c		1.2
+dist/bind/lib/resolv/res_send.c			1.2
+dist/bind/lib/resolv/res_update.c		1.2
+dist/ipf/ipt.h					1.3
+lib/Makefile.inc				1.2
+lib/libc/time/private.h				1.15
+lib/libpcap/bpf_image.c				1.6
+libexec/Makefile.inc				1.5
+libexec/ld.elf_so/rtld.h			1.28
+libexec/mail.local/mail.local.c			1.17
+libexec/rexecd/rexecd.c				1.7
+libexec/rmail/rmail.c				1.14
+libexec/rshd/rshd.c				1.20 via patch
+libexec/telnetd/state.c				1.13
+libexec/telnetd/utility.c			1.15
+sbin/Makefile.inc				1.14
+sbin/atactl/atactl.c				1.10
+sbin/ccdconfig/ccdconfig.c			1.32
+sbin/disklabel/disklabel.c			1.89 via patch
+sbin/dump/dump.h				1.20
+sbin/dump/optr.c				1.14
+sbin/fsck/fsutil.c				1.8
+sbin/fsck_ext2fs/utilities.c			1.5
+sbin/fsck_ffs/utilities.c			1.27
+sbin/fsck_lfs/utilities.c			1.6
+sbin/fsck_msdos/ext.h				1.7
+sbin/fsck_msdos/fat.c				1.12 via patch
+sbin/fsdb/fsdb.c				1.17
+sbin/mount/mount.c				1.50 via patch
+sbin/newfs/newfs.c				1.39
+sbin/newfs_lfs/extern.h				1.3
+sbin/ping/ping.c				1.57 via patch
+sbin/raidctl/rf_configure.c			1.11 via patch
+sbin/restore/extern.h				1.7
+sbin/route/show.c				1.15
+sbin/routed/main.c				1.25
+
+  Format string cleanup.
