@@ -1,22 +1,28 @@
-#	$NetBSD: Makefile.inc,v 1.5 1999/02/24 15:05:21 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2001/03/19 04:13:17 atatat Exp $
 
 .include <bsd.own.mk>
 
-# MD4/MD5 sources
+# MD2/MD4/MD5 sources
 .PATH: ${ARCHDIR}/md ${.CURDIR}/md
 
-SRCS+=	md4c.c md5c.c md4hl.c md5hl.c
+SRCS+=	md2c.c md4c.c md5c.c md2hl.c md4hl.c md5hl.c
 
-MAN+=	md4.3 md5.3
+MAN+=	md2.3 md4.3 md5.3
 
+MLINKS+=md2.3 MD2Init.3 md2.3 MD2Update.3 md2.3 MD2Final.3
+MLINKS+=md2.3 MD2End.3  md2.3 MD2File.3   md2.3 MD2Data.3
 MLINKS+=md4.3 MD4Init.3 md4.3 MD4Update.3 md4.3 MD4Final.3
 MLINKS+=md4.3 MD4End.3  md4.3 MD4File.3   md4.3 MD4Data.3
 MLINKS+=md5.3 MD5Init.3 md5.3 MD5Update.3 md5.3 MD5Final.3
 MLINKS+=md5.3 MD5End.3  md5.3 MD5File.3   md5.3 MD5Data.3
 
-CLEANFILES+=	md[45]hl.c md[45].3
+CLEANFILES+=	md[245]hl.c md[245].3
 
 .if ${MKMAN} != "no"
+md2.3: mdX.3
+	sed -e 's/mdX/md2/g' -e 's/MDX/MD2/g' $> > $@
+	cat ${>:H}/md2.copyright >> $@
+
 md4.3: mdX.3
 	sed -e 's/mdX/md4/g' -e 's/MDX/MD4/g' $> > $@
 	cat ${>:H}/md4.copyright >> $@
