@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.47 2003/01/01 00:28:58 thorpej Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.48 2003/01/20 05:29:59 simonb Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.47 2003/01/01 00:28:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.48 2003/01/20 05:29:59 simonb Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -300,7 +300,7 @@ rt_load_mon(struct grf_softc *gp, struct MonDef *md)
 	if (clksel < 0)
 		return(0);
 
-	ba = gp->g_regkva;;
+	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
 
 	FW = 0;

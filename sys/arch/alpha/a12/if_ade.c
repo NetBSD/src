@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.17 2002/10/02 04:06:36 thorpej Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.18 2003/01/20 05:29:58 simonb Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -2342,7 +2342,7 @@ tulip_identify_asante_nic(
 	mi->mi_gpr_length = 0;
 	mi->mi_gpr_offset = 0;
 	mi->mi_reset_length = 0;
-	mi->mi_reset_offset = 0;;
+	mi->mi_reset_offset = 0;
 
 	mi->mi_phyaddr = tulip_mii_get_phyaddr(sc, 0);
 	if (mi->mi_phyaddr == TULIP_MII_NOPHY)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.108 2002/10/02 16:51:19 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.109 2003/01/20 05:30:07 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.108 2002/10/02 16:51:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.109 2003/01/20 05:30:07 simonb Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -2408,7 +2408,7 @@ tulip_identify_asante_nic(
 	mi->mi_gpr_length = 0;
 	mi->mi_gpr_offset = 0;
 	mi->mi_reset_length = 0;
-	mi->mi_reset_offset = 0;;
+	mi->mi_reset_offset = 0;
 
 	mi->mi_phyaddr = TULIP_MII_NOPHY;
 	for (idx = 20; idx > 0 && mi->mi_phyaddr == TULIP_MII_NOPHY; idx--) {

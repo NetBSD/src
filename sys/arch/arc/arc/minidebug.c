@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.11 2003/01/19 10:06:13 tsutsui Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.12 2003/01/20 05:30:00 simonb Exp $	*/
 /*	$OpenBSD: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $	*/
 
 /*-
@@ -200,7 +200,7 @@ gethex(u_int *val, u_int dotval)
 			return(c);
 		}
 		else if(c == '.') {
-			*val = dotval;;
+			*val = dotval;
 			cnputc(c);
 		}
 	}

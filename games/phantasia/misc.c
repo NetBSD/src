@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 2000/04/27 00:30:53 jdc Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 2003/01/20 05:29:55 simonb Exp $	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -790,7 +790,7 @@ adjuststats()
 
 	/* calculate effective quickness */
 	dtemp = ((Player.p_gold + Player.p_gems / 2.0) - 1000.0) / Statptr->c_goldtote
-	    - Player.p_level;;
+	    - Player.p_level;
 	dtemp = MAX(0.0, dtemp);/* gold slows player down */
 	Player.p_speed = Player.p_quickness + Player.p_quksilver - dtemp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lf.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
+/*	$NetBSD: lf.c,v 1.3 2003/01/20 05:30:01 simonb Exp $	*/
 
 /*	$OpenBSD: lf.c,v 1.3 1999/04/20 20:01:02 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
 int
 lfopen(struct open_file *f, ...)
 {
-	struct hppa_dev *dp = f->f_devdata;;
+	struct hppa_dev *dp = f->f_devdata;
 
 	if (!(dp->pz_dev = pdc_findev(-1, PCL_NET_MASK|PCL_SEQU)))
 		return ENXIO;

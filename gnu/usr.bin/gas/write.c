@@ -21,7 +21,7 @@
 /* This thing should be set up to do byteordering correctly.  But... */
 
 #ifndef lint
-static char rcsid[] = "$Id: write.c,v 1.12 1996/04/14 11:31:38 pk Exp $";
+static char rcsid[] = "$Id: write.c,v 1.13 2003/01/20 05:29:56 simonb Exp $";
 #endif
 
 #include "as.h"
@@ -241,7 +241,7 @@ void write_object_file()
 		data_last_frag = NULL;
 		data_frag_root = NULL;
 		if (text_fix_root) {
-			for (tmp = text_fix_root; tmp->fx_next; tmp = tmp->fx_next) ;;
+			for (tmp = text_fix_root; tmp->fx_next; tmp = tmp->fx_next) ;
 			tmp->fx_next = data_fix_root;
 		} else
 		    text_fix_root = data_fix_root;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.10 2002/07/26 01:00:46 wiz Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.11 2003/01/20 05:30:14 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -435,7 +435,7 @@ do_lock(fl, block)
 		syslog(LOG_NOTICE, "fhopen failed (from %s): %s",
 		    fl->client_name, strerror(errno));
 		LIST_REMOVE(fl, lcklst);
-		return error;;
+		return error;
 	}
 	if (fstat(fl->fd, &st) < 0) {
 		syslog(LOG_NOTICE, "fstat failed (from %s): %s",
