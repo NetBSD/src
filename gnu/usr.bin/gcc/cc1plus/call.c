@@ -2469,7 +2469,16 @@ build_method_call (instance, name, parms, basetype_path, flags)
 
 #if 1
   /* Is it a synthesized method that needs to be synthesized?  */
+#ifdef GCC_27_ARM32_PIC_SUPPORT
+  /*
+   * This is a patch for a bug found when implementing arm32 PIC support
+   * that should be fixed in 2.8
+   * Fixes code generation problems with optimisation and -fhandle-exceptions
+   */
+  if (DECL_ARTIFICIAL (function) && ! flag_no_inline && !flag_handle_exceptions
+#else
   if (DECL_ARTIFICIAL (function) && ! flag_no_inline
+#endif
       && ! DECL_INITIAL (function)
       /* Kludge: don't synthesize for default args.  */
       && current_function_decl)
