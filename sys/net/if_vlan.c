@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.1 2000/09/27 22:40:54 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.2 2000/09/28 06:13:35 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -122,8 +122,6 @@ static int	vlan_setmulti(struct ifnet *);
 static void	vlan_start(struct ifnet *);
 static int	vlan_unconfig(struct ifnet *);
 void	vlanattach(int);
-
-void	ether_input(struct ifnet *, struct mbuf *);	/* XXX */
 
 /* XXX This should be a hash table with the tag as the basis of the key. */
 static LIST_HEAD(, ifvlan) ifv_list;
