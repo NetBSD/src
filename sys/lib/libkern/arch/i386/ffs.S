@@ -1,3 +1,5 @@
+/*	$NetBSD: ffs.S,v 1.3 1994/10/26 06:39:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
  * All rights reserved.
@@ -26,13 +28,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: ffs.S,v 1.2 1994/01/28 23:47:55 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: ffs.S,v 1.2 1994/01/28 23:47:55 jtc Exp $"
+	.asciz "$NetBSD: ffs.S,v 1.3 1994/10/26 06:39:08 cgd Exp $"
 #endif
 
 #include "DEFS.h"

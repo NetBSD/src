@@ -1,3 +1,5 @@
+/*	$NetBSD: mcount.c,v 1.2 1994/10/26 06:42:32 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: setjmp.S,v 1.5 1994/10/26 06:39:14 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,13 +35,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90
- *	$Id: setjmp.S,v 1.4 1993/10/21 01:48:16 jtc Exp $
+ *	@(#)setjmp.s	5.1 (Berkeley) 4/23/90
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: setjmp.S,v 1.4 1993/10/21 01:48:16 jtc Exp $"
+	.asciz "$NetBSD: setjmp.S,v 1.5 1994/10/26 06:39:14 cgd Exp $"
 #endif
 
 /*

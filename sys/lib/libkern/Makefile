@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.15 1994/09/16 01:27:58 deraadt Exp $
+#	$NetBSD: Makefile,v 1.16 1994/10/26 06:42:11 cgd Exp $
 
 LIB=	kern
 NOPIC=

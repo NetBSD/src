@@ -1,3 +1,5 @@
+/*	$NetBSD: htonl.S,v 1.2 1994/10/26 06:39:58 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,12 +36,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: htonl.s,v 1.1 92/06/25 12:47:05 torek Exp
- * $Id: htonl.S,v 1.1 1994/06/30 06:53:07 deraadt Exp $
+ * Header: htonl.s,v 1.1 92/06/25 12:47:05 torek Exp
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#ifdef notdef
 	.asciz "@(#)htonl.s	8.1 (Berkeley) 6/4/93"
+#endif
+	.asciz "$NetBSD: htonl.S,v 1.2 1994/10/26 06:39:58 cgd Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* netorder = htonl(hostorder) */

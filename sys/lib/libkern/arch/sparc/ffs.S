@@ -1,3 +1,5 @@
+/*	$NetBSD: ffs.S,v 1.2 1994/10/26 06:39:57 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,12 +36,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Header: ffs.s,v 1.3 92/07/07 00:23:57 torek Exp
- * $Id: ffs.S,v 1.1 1994/06/30 06:53:03 deraadt Exp $
+ * Header: ffs.s,v 1.3 92/07/07 00:23:57 torek Exp
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#ifdef notdef
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
+#endif
+	.asciz "$NetBSD: ffs.S,v 1.2 1994/10/26 06:39:57 cgd Exp $"
 #endif  /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"

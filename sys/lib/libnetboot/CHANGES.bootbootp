@@ -1,3 +1,5 @@
+$NetBSD: CHANGES.bootbootp,v 1.2 1994/10/26 06:42:57 cgd Exp $
+
 A large piece of the netboot code is from 'bootbootp', a LBL produced
 code that provides bootp/nfs diskless support for sparcstations
 running sunos and bsd 4.4
@@ -18,7 +20,4 @@ Fix: leres used and supplied a printf that supports the %m option for
 NOTE: netboot does not incorporate the main loop from 'bootbootp'
       because it is a wreck and lacks the features we needed
 
-Adam Glass 					$Revision: 1.1 $
-
-
-
+Adam Glass

@@ -1,3 +1,5 @@
+/*	$NetBSD: SYS.h,v 1.2 1994/10/26 06:39:23 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$Id: SYS.h,v 1.1 1994/03/29 07:14:44 chopps Exp $
+ *	@(#)SYS.h	5.5 (Berkeley) 5/7/91
  */
 
 #include <sys/syscall.h>

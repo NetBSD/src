@@ -1,3 +1,5 @@
+/*	$NetBSD: htonl.S,v 1.2 1994/10/26 06:39:27 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,8 +39,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	/*.asciz "from: @(#)htonl.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: htonl.S,v 1.1 1994/03/29 07:14:48 chopps Exp $"
+#ifdef notdef
+	.asciz "@(#)htonl.s	5.1 (Berkeley) 5/12/90"
+#endif
+	.asciz "$NetBSD: htonl.S,v 1.2 1994/10/26 06:39:27 cgd Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* netorder = htonl(hostorder) */

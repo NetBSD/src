@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.5 1994/02/24 00:41:00 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1994/10/26 06:39:03 cgd Exp $
 
 SRCS+=	__main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
 	bcmp.S bzero.S ffs.S strcat.S strcmp.S strcpy.S strlen.S strncmp.c \

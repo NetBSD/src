@@ -1,3 +1,5 @@
+/*	$NetBSD: ntohs.S,v 1.2 1994/10/26 06:39:12 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,13 +35,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ntohs.s	5.2 (Berkeley) 12/17/90
- *	$Id: ntohs.S,v 1.1 1993/12/04 03:06:42 cgd Exp $
+ *	@(#)ntohs.s	5.2 (Berkeley) 12/17/90
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: ntohs.S,v 1.1 1993/12/04 03:06:42 cgd Exp $"
+	.asciz "$NetBSD: ntohs.S,v 1.2 1994/10/26 06:39:12 cgd Exp $"
 #endif
 
 /* hostorder = ntohs(netorder) */

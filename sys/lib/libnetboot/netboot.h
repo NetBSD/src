@@ -1,3 +1,5 @@
+/*	$NetBSD: netboot.h,v 1.3 1994/10/26 06:43:13 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1992 Regents of the University of California.
@@ -34,8 +36,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: netboot.h,v 1.2 1993/10/16 07:57:44 cgd Exp $
  */
 
 #include "exec_var.h"

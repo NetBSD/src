@@ -1,3 +1,5 @@
+/*	$NetBSD: DEFS.h,v 1.2 1994/10/26 06:39:41 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,11 +36,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)DEFS.h	5.1 (Berkeley) 4/23/90
- *
- *	$Id: DEFS.h,v 1.1 1993/10/07 00:20:03 cgd Exp $
- *
- *  Modified for the ns532 by Phil Nelson, 12/1/92
- *
  */
 
 #ifdef PROF

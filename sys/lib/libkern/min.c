@@ -1,3 +1,5 @@
+/*	$NetBSD: min.c,v 1.2 1994/10/26 06:42:33 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1991 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)subr_xxx.c	7.10 (Berkeley) 4/20/91
- *	$Id: min.c,v 1.1 1993/10/13 05:40:44 cgd Exp $
+ *	@(#)subr_xxx.c	7.10 (Berkeley) 4/20/91
  */
 
 unsigned int

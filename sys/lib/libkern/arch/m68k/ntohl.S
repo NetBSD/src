@@ -1,3 +1,5 @@
+/*	$NetBSD: ntohl.S,v 1.2 1994/10/26 06:39:29 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -37,8 +39,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	/*.asciz "from: @(#)ntohl.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: ntohl.S,v 1.1 1994/03/29 07:14:51 chopps Exp $"
+#ifdef notdef
+	.asciz "@(#)ntohl.s	5.1 (Berkeley) 5/12/90"
+#endif
+	.asciz "$NetBSD: ntohl.S,v 1.2 1994/10/26 06:39:29 cgd Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* hostorder = ntohl(netorder) */

@@ -1,3 +1,5 @@
+/*	$NetBSD: libkern.h,v 1.3 1994/10/26 06:42:26 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

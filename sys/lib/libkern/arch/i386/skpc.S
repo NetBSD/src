@@ -1,3 +1,5 @@
+/*	$NetBSD: skpc.S,v 1.2 1994/10/26 06:39:15 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
@@ -25,8 +27,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: skpc.S,v 1.1 1994/02/24 00:41:06 mycroft Exp $
  */
 
 #include "DEFS.h"

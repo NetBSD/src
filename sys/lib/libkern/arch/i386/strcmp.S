@@ -1,3 +1,5 @@
+/*	$NetBSD: strcmp.S,v 1.4 1994/10/26 06:39:17 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
  * All rights reserved.
@@ -26,13 +28,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: strcmp.S,v 1.3 1994/02/15 13:42:32 mycroft Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: strcmp.S,v 1.3 1994/02/15 13:42:32 mycroft Exp $"
+	.asciz "$NetBSD: strcmp.S,v 1.4 1994/10/26 06:39:17 cgd Exp $"
 #endif
 
 #include "DEFS.h"
