@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.1 2000/04/23 16:47:45 thorpej Exp $	*/
+/*	$NetBSD: fdc_isa.c,v 1.2 2000/05/02 03:33:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,8 +98,14 @@
 int	fdc_isa_probe(struct device *, struct cfdata *, void *);
 void	fdc_isa_attach(struct device *, struct device *, void *);
 
+struct fdc_isa_softc {
+	struct fdc_softc sc_fdc;	/* base fdc device */
+
+	bus_space_handle_t sc_baseioh;	/* base I/O handle */
+};
+
 struct cfattach fdc_isa_ca = {
-	sizeof(struct fdc_softc), fdc_isa_probe, fdc_isa_attach
+	sizeof(struct fdc_isa_softc), fdc_isa_probe, fdc_isa_attach
 };
 
 #ifdef NEWCONFIG
@@ -113,7 +119,7 @@ fdc_isa_probe(struct device *parent,
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
-	bus_space_handle_t ioh, ctl_ioh;
+	bus_space_handle_t ioh, ctl_ioh, base_ioh;
 	int rv;
 
 	iot = ia->ia_iot;
@@ -124,11 +130,16 @@ fdc_isa_probe(struct device *parent,
 		return (0);
 
 	/* Map the I/O space. */
-	if (bus_space_map(iot, ia->ia_iobase, 6 /* FDC_NPORT */, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, 6 /* FDC_NPORT */, 0, &base_ioh))
 		return (0);
 
-	if (bus_space_map(iot, ia->ia_iobase + fdctl, 1, 0, &ctl_ioh)) {
-		bus_space_unmap(iot, ioh, 6);
+	if (bus_space_subregion(iot, base_ioh, 2, 4, &ioh)) {
+		bus_space_unmap(iot, base_ioh, 6);
+		return (0);
+	}
+
+	if (bus_space_map(iot, ia->ia_iobase + fdctl + 2, 1, 0, &ctl_ioh)) {
+		bus_space_unmap(iot, base_ioh, 6);
 		return (0);
 	}
 
@@ -167,7 +178,7 @@ fdc_isa_probe(struct device *parent,
 	ia->ia_msize = 0;
 
  out:
-	bus_space_unmap(iot, ioh, 6 /* FDC_NPORT */);
+	bus_space_unmap(iot, base_ioh, 6 /* FDC_NPORT */);
 	return (rv);
 }
 
@@ -198,6 +209,7 @@ fdc_isa_attach(struct device *parent,
     void *aux)
 {
 	struct fdc_softc *fdc = (void *) self;
+	struct fdc_isa_softc *isc = (void *) self;
 	struct isa_attach_args *ia = aux;
 
 	printf("\n");
@@ -207,12 +219,19 @@ fdc_isa_attach(struct device *parent,
 	fdc->sc_drq = ia->ia_drq;
 
 	if (bus_space_map(fdc->sc_iot, ia->ia_iobase, 6 /* FDC_NPORT */, 0,
-	    &fdc->sc_ioh)) {
+	    &isc->sc_baseioh)) {
 		printf("%s: unable to map I/O space\n", fdc->sc_dev.dv_xname);
 		return;
 	}
 
-	if (bus_space_map(fdc->sc_iot, ia->ia_iobase + fdctl, 1, 0,
+	if (bus_space_subregion(fdc->sc_iot, isc->sc_baseioh, 2, 4,
+	    &fdc->sc_ioh)) {
+		printf("%s: unable to subregion I/O space\n",
+		    fdc->sc_dev.dv_xname);
+		return;
+	}
+
+	if (bus_space_map(fdc->sc_iot, ia->ia_iobase + fdctl + 2, 1, 0,
 	    &fdc->sc_fdctlioh)) {
 		printf("%s: unable to map CTL I/O space\n",
 		    fdc->sc_dev.dv_xname);
