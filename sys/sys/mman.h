@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.8 1994/07/18 07:22:07 cgd Exp $	*/
+/*	$NetBSD: mman.h,v 1.9 1994/07/31 08:47:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -61,8 +61,9 @@
 #define	MAP_HASSEMAPHORE 0x0200	/* region may contain semaphores */
 
 /*
- * Mapping type; default is map from file.
+ * Mapping type
  */
+#define	MAP_FILE	0x0000	/* map from file (default) */
 #define	MAP_ANON	0x1000	/* allocated from memory, swap space */
 
 /*
