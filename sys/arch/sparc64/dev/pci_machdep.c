@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.36 2003/05/04 21:36:26 martin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.37 2003/05/05 07:51:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -56,7 +56,6 @@ int sparc_pci_debug = 0x0;
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
@@ -66,6 +65,7 @@ int sparc_pci_debug = 0x0;
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>
+#include <sparc64/sparc64/cache.h>
 
 /* this is a base to be copied */
 struct sparc_pci_chipset _sparc_pci_chipset = {
@@ -286,7 +286,7 @@ pci_enumerate_bus(struct pci_softc *sc,
 	pcitag_t tag;
 	pcireg_t class, csr, bhlc, ic;
 	int node, b, d, f, ret;
-	int bus_frequency, lt, cl;
+	int bus_frequency, lt, cl, cacheline;
 	char name[30];
 	extern int pci_config_dump;
 
@@ -296,6 +296,15 @@ pci_enumerate_bus(struct pci_softc *sc,
 		node = pc->rootnode;
 
 	bus_frequency = pci_bus_frequency(node);
+
+	/*
+	 * Make sure the cache line size is at least as big as the
+	 * ecache line and the streaming cache (64 byte).
+	 */
+	cacheline = max(cacheinfo.ec_linesize, 64);
+	KASSERT((cacheline/64)*64 == cacheline &&
+	    (cacheline/cacheinfo.ec_linesize)*cacheinfo.ec_linesize == cacheline &&
+	    (cacheline/4)*4 == cacheline);
 
 	/* Turn on parity for the bus. */
 	tag = ofpci_make_tag(pc, node, sc->sc_bus, 0, 0);
@@ -362,7 +371,7 @@ pci_enumerate_bus(struct pci_softc *sc,
 
 		cl = PCI_CACHELINE(bhlc);
 		if (cl == 0)
-			cl = 0x10;
+			cl = cacheline;
 
 		bhlc &= ~((PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT) |
 			  (PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT));
