@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.9 2000/01/24 00:00:25 mycroft Exp $	*/
+/*	$NetBSD: mmap.c,v 1.10 2000/01/24 00:39:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ main(argc, argv)
 	 * TEST MLOCKALL'ING AN ANONYMOUS MEMORY RANGE.
 	 */
 
-	npgs = 8;
+	npgs = 128;
 
 	printf(">>> MAPPING %d PAGE ANONYMOUS REGION <<<\n", npgs);
 
@@ -216,6 +216,14 @@ main(argc, argv)
 	}
 
 	printf("    UNLOCKING ALL\n");
+
+	printf("    CHECKING RESIDENCY\n");
+
+	if (check_residency(addr, npgs) != npgs ||
+	    check_residency(addr2, npgs) != npgs) {
+		printf("    RESIDENCY CHECK FAILED!\n");
+		ecode = 1;
+	}
 
 	(void) munlockall();
 
@@ -348,7 +356,7 @@ main(argc, argv)
 
 	printf("    ZEROING SEGMENT\n");
 
-	memset(addr, 0, npgs * pgsize);
+	memset(addr, 0xff, npgs * pgsize);
 
 	printf("    CHECKING RESIDENCY\n");
 
