@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.6 2003/03/29 20:45:33 dmcmahill Exp $
+#	$NetBSD: RESPONSIBLE,v 1.7 2003/03/30 13:12:39 grant Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -111,7 +111,7 @@ networking:
 ipfilter	darrenr, ?
 kame/ipv6	itojun
 general net	thorpej, matt
-
+pppoe		martin
 
 Portmasters:
 
@@ -174,4 +174,11 @@ buildlink2	jlam
 bulk build	hubertf, dmcmahill
 README.html generation	dmcmahill
 
+Pkgsrc platforms:
 
+Solaris		seb, salo, grant
+Darwin		schmonz, grant
+IRIX		jschauma
+Linux		jschauma
+OpenBSD		cjep
+FreeBSD		grant
