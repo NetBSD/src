@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.15 1997/10/18 08:52:23 lukem Exp $	*/
+/*	$NetBSD: lpd.c,v 1.16 1998/07/06 07:03:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.15 1997/10/18 08:52:23 lukem Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.16 1998/07/06 07:03:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,6 +135,7 @@ main(argc, argv)
 	uid = getuid();
 	options = 0;
 	gethostname(host, sizeof(host));
+	host[sizeof(host) - 1] = '\0';
 	name = argv[0];
 
 	errs = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: recover.c,v 1.4 1998/01/09 08:07:04 perry Exp $	*/
+/*	$NetBSD: recover.c,v 1.5 1998/07/06 07:01:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -351,7 +351,7 @@ rcv_mailfile(sp, issync, cp_path)
 #ifndef MAXHOSTNAMELEN
 #define	MAXHOSTNAMELEN	1024
 #endif
-	char host[MAXHOSTNAMELEN];
+	char host[MAXHOSTNAMELEN + 1];
 
 	if ((pw = getpwuid(uid = getuid())) == NULL) {
 		msgq(sp, M_ERR,
@@ -400,6 +400,7 @@ rcv_mailfile(sp, issync, cp_path)
 		++p;
 	(void)time(&now);
 	(void)gethostname(host, sizeof(host));
+	host[sizeof(host) - 1] = '\0';
 	len = snprintf(buf, sizeof(buf),
 	    "%s%s\n%s%s\n%s\n%s\n%s%s\n%s%s\n%s\n\n",
 	    VI_FHEADER, t,			/* Non-standard. */

@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.18 1998/05/08 19:03:41 kleink Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.19 1998/07/06 06:58:44 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -254,6 +254,7 @@ main(argc, argv)
 	consfile.f_type = F_CONSOLE;
 	(void)strcpy(consfile.f_un.f_fname, ctty);
 	(void)gethostname(LocalHostName, sizeof(LocalHostName));
+	LocalHostName[sizeof(LocalHostName) - 1] = '\0';
 	if ((p = strchr(LocalHostName, '.')) != NULL) {
 		*p++ = '\0';
 		LocalDomain = p;
