@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ppp,v 1.7 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: ppp,v 1.8 2004/10/11 15:00:51 christos Exp $
 #
 
 # PROVIDE: ppp
@@ -45,7 +45,7 @@ ppp_start()
 
 ppp_hup()
 {
-	pids="`check_process pppd`"
+	pids="$(check_process pppd)"
 	if [ -n "$pids" ]; then
 		for pid in $pids; do
 			kill $sig_hup $pid
@@ -55,7 +55,7 @@ ppp_hup()
 
 ppp_stop()
 {
-	pids="`check_process pppd`"
+	pids="$(check_process pppd)"
 	if [ -n "$pids" ]; then
 		for pid in $pids; do
 			kill $sig_stop $pid

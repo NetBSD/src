@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: downinterfaces,v 1.4 2002/08/16 18:05:19 martin Exp $
+# $NetBSD: downinterfaces,v 1.5 2004/10/11 15:00:51 christos Exp $
 #
 
 # PROVIDE: downinterfaces
@@ -10,7 +10,7 @@ if [ "x$1" = "xstop" ]; then
 
 . /etc/rc.conf
 
-tmp=`ifconfig -lu`
+tmp=$(ifconfig -lu)
 iflist=""
 for int in $tmp; do
 	case $int in

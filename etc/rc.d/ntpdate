@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpdate,v 1.16 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: ntpdate,v 1.17 2004/10/11 15:00:51 christos Exp $
 #
 
 # PROVIDE: ntpdate
@@ -17,14 +17,14 @@ stop_cmd=":"
 ntpdate_start()
 {
 	if [ -z "$ntpdate_hosts" ]; then
-		ntpdate_hosts=`awk '
+		ntpdate_hosts=$(awk '
 			/^#/				{ next }
 			/^(server|peer)[ \t]*127.127/	{ next }
 			/^(server|peer)/		{ if ($2 ~ /^-[46]/)
 							    print $3
 							  else
 							    print $2 }
-		' </etc/ntp.conf`
+		' </etc/ntp.conf)
 	fi
 	if [ -n "$ntpdate_hosts"  ]; then
 		echo "Setting date via ntp."

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ypbind,v 1.7 2004/10/11 14:11:43 lukem Exp $
+# $NetBSD: ypbind,v 1.8 2004/10/11 15:00:51 christos Exp $
 #
 
 # PROVIDE: ypbind
@@ -16,7 +16,7 @@ start_precmd="ypbind_precmd"
 
 ypbind_precmd()
 {
-	_domain=`domainname`
+	_domain=$(domainname)
 	if [ -z "$_domain" ]; then
 		warn "domainname(1) is not set."
 		return 1
