@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.98 2002/01/27 12:41:08 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.99 2002/01/27 13:33:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.98 2002/01/27 12:41:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.99 2002/01/27 13:33:36 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -352,11 +352,11 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_MAXVNODES:
 		old_vnodes = desiredvnodes;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &desiredvnodes);
-		if (old_vnodes > desiredvnodes) {
-		        desiredvnodes = old_vnodes;
-			return (EINVAL);
-		}
-		if (error == 0) {
+		if (newp && !error) {
+			if (old_vnodes > desiredvnodes) {
+				desiredvnodes = old_vnodes;
+				return (EINVAL);
+			}
 			vfs_reinit();
 			nchreinit();
 		}
@@ -391,7 +391,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case KERN_HOSTID:
 		inthostid = hostid;  /* XXX assumes sizeof long <= sizeof int */
 		error =  sysctl_int(oldp, oldlenp, newp, newlen, &inthostid);
-		hostid = inthostid;
+		if (newp && !error)
+			hostid = inthostid;
 		return (error);
 	case KERN_CLOCKRATE:
 		return (sysctl_clockrate(oldp, oldlenp));
@@ -550,7 +551,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		int new_sbmax = sb_max;
 
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &new_sbmax);
-		if (error == 0) {
+		if (newp && !error) {
 			if (new_sbmax < (16 * 1024)) /* sanity */
 				return (EINVAL);
 			sb_max = new_sbmax;
