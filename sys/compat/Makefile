@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1998/10/01 16:23:25 erh Exp $
+#	$NetBSD: Makefile,v 1.2 1998/10/03 20:30:50 christos Exp $
 
-#SUBIDR= common freebsd hpux ibcs2 linux m68k4k osf1 ossaudio sunos svr2 ultrix
-SUBDIR=	linux
+#SUBDIR= common freebsd hpux ibcs2 linux m68k4k osf1 ossaudio sunos svr2 ultrix
 
 KDIR=	/sys/compat
 INCSDIR= /usr/include/compat
