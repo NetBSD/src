@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.19 2003/05/14 14:06:07 martin Exp $
+.\"	$NetBSD: install,v 1.20 2004/05/12 13:40:09 tron Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -561,7 +561,7 @@ You should now mount your
 root and
 .Pa /usr partitions under
 Solaris so that you can populate the file systems with
-.Nx NetBSD
+.Nx
 binaries.
 .Pp
 .Dl # Ic "mount /dev/dsk/c1t2d0s0 /mnt"
