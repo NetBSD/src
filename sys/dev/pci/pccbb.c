@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.106 2004/08/15 20:19:14 mycroft Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.107 2004/08/16 14:48:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.106 2004/08/15 20:19:14 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.107 2004/08/16 14:48:56 mycroft Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1381,18 +1381,6 @@ pccbb_power(ct, command)
 		pci_conf_write(sc->sc_pc, sc->sc_tag, TOPIC_REG_CTRL, reg_ctrl);
 	}
 
-#if 0
-	/*
-	 * XXX delay 300 ms: though the standard defines that the Vcc set-up
-	 * time is 20 ms, some PC-Card bridge requires longer duration.
-	 */
-#if 0	/* XXX called on interrupt context */
-	DELAY_MS(300, sc);
-#else
-	delay(300 * 1000);
-#endif
-#endif
-
 	return 1;		       /* power changed correctly */
 }
 
@@ -2449,9 +2437,6 @@ pccbb_pcmcia_socket_enable(pch)
 	if (pccbb_power(sc, voltage) == 0)
 		return;
 
-	power |= PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_VPP1_VCC;
-	Pcic_write(ph, PCIC_PWRCTL, power);
-
 	/*
 	 * wait 100ms until power raise (Tpr) and 20ms to become
 	 * stable (Tsu(Vcc)).
@@ -2461,6 +2446,7 @@ pccbb_pcmcia_socket_enable(pch)
 	 */
 	pccbb_pcmcia_delay(ph, 100 + 20 + 300, "pccen1");
 
+	power = Pcic_read(ph, PCIC_PWRCTL);
 	power |= PCIC_PWRCTL_OE;
 	Pcic_write(ph, PCIC_PWRCTL, power);
 
