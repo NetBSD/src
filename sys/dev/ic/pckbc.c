@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.18 2001/12/06 19:54:02 christos Exp $ */
+/* $NetBSD: pckbc.c,v 1.19 2001/12/06 20:00:58 augustss Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.18 2001/12/06 19:54:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.19 2001/12/06 20:00:58 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,6 +302,7 @@ pckbc_attach_slot(sc, slot)
 {
 	struct pckbc_internal *t = sc->id;
 	struct pckbc_attach_args pa;
+	void *sdata;
 	int found;
 	int alloced = 0;
 
@@ -309,8 +310,13 @@ pckbc_attach_slot(sc, slot)
 	pa.pa_slot = slot;
 
 	if (t->t_slotdata[slot] == NULL) {
-		t->t_slotdata[slot] = malloc(sizeof(struct pckbc_slotdata),
-		    M_DEVBUF, M_WAITOK);
+		sdata = malloc(sizeof(struct pckbc_slotdata),
+		    M_DEVBUF, M_NOWAIT);
+		if (sdata == NULL) {
+			printf("%s: no memory\n", sc->sc_dv.dv_xname);
+			return (0);
+		}
+		t->t_slotdata[slot] = sdata;
 		pckbc_init_slotdata(t->t_slotdata[slot]);
 		alloced++;
 	}
