@@ -1142,7 +1142,7 @@ SSMMMM::1100--1188              NNaammee SSeerrvveerr OOppe
       nnddoottss::_n
            sets the lower threshold (measured in ``number of
            dots'') on names given to _r_e_s___q_u_e_r_y()  such  that
-           names  with more than this number of dots will be
+           names  with  at least this number of dots will be
            tried as absolute names before  any  _l_o_c_a_l_-_d_o_m_a_i_n
            or  _s_e_a_r_c_h_-_l_i_s_t  processing is done.  The default
            for this internal variable is ``1''.
