@@ -95,12 +95,12 @@ from the machine description file `md'.  */
 #define HAVE_negdf2 (TARGET_80387)
 #define HAVE_abssf2 (TARGET_80387)
 #define HAVE_absdf2 (TARGET_80387)
-#define HAVE_sqrtsf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
-#define HAVE_sqrtdf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
-#define HAVE_sindf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
-#define HAVE_sinsf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
-#define HAVE_cosdf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
-#define HAVE_cossf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math))
+#define HAVE_sqrtsf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && NOTDEF)
+#define HAVE_sqrtdf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && NOTDEF)
+#define HAVE_sindf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && NOTDEF)
+#define HAVE_sinsf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && NOTDEF)
+#define HAVE_cosdf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && NOTDEF)
+#define HAVE_cossf2 (TARGET_80387 && (TARGET_IEEE_FP || flag_fast_math) && NOTDEF)
 #define HAVE_one_cmplsi2 1
 #define HAVE_one_cmplhi2 1
 #define HAVE_one_cmplqi2 1
