@@ -41,6 +41,23 @@ genfs_fsync(v)
 }
 
 int
+genfs_seek(v)
+	void *v;
+{
+	struct vop_seek_args /* {
+		struct vnode *a_vp;
+		off_t a_oldoff;
+		off_t a_newoff;
+		struct ucred *a_ucred;
+	} */ *ap = v;
+
+	if (ap->a_newoff < 0)
+		return (EINVAL);
+
+	return (0);
+}
+
+int
 genfs_abortop(v)
 	void *v;
 {

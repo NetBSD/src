@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
+/*	$NetBSD: advnops.c,v 1.33 1997/04/11 21:52:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -80,7 +80,7 @@ int	lease_check __P((void *));
 #else
 #define adosfs_lease_check 	genfs_nullop
 #endif
-#define adosfs_seek 	genfs_nullop
+#define adosfs_seek 	genfs_seek
 #define adosfs_vfree 	genfs_nullop
 
 #define adosfs_advlock 	genfs_eopnotsupp
