@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.7 2001/01/16 02:50:31 cgd Exp $	*/
+/*	$NetBSD: file.c,v 1.8 2002/02/18 22:00:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,28 +31,37 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: file.c,v 1.7 2001/01/16 02:50:31 cgd Exp $");
+__RCSID("$NetBSD: file.c,v 1.8 2002/02/18 22:00:36 thorpej Exp $");
 #endif
 
 #include "os.h"
 #include "common.h"
 #include "file.h"
 #include "mopdef.h"
+#include <stddef.h>
 
 #ifndef NOAOUT
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#include <sys/exec_aout.h>
-#endif
-#if defined(__bsdi__)
-#define NOAOUT
-#endif
-#if defined(__FreeBSD__)
-#include <sys/imgact_aout.h>
-#endif
-#if !defined(MID_VAX)
-#define MID_VAX 140
-#endif
-#endif
+# if defined(__NetBSD__) || defined(__OpenBSD__)
+#  include <sys/exec_aout.h>
+# endif
+# if defined(__bsdi__)
+#  define NOAOUT
+# endif
+# if defined(__FreeBSD__)
+#  include <sys/imgact_aout.h>
+# endif
+# if !defined(MID_VAX)
+#  define MID_VAX 140
+# endif
+#endif /* NOAOUT */
+
+#ifndef NOELF
+# if defined(__NetBSD__)
+#  include <sys/exec_elf.h>
+# else
+#  define NOELF
+# endif
+#endif /* NOELF */
 
 int	getCLBYTES __P((int));
 int	getMID __P((int, int));
@@ -161,15 +170,14 @@ CheckMopFile(fd)
 }
 
 int
-GetMopFileInfo(fd, load, xfr)
-	int		fd;
-	u_int32_t      *load, *xfr;
+GetMopFileInfo(dl)
+	struct		dllist *dl;
 {
 	u_char		header[512];
 	short		image_type;
 	u_int32_t	load_addr, xfr_addr, isd, iha, hbcnt, isize;
 
-	if (read(fd, header, 512) != 512)
+	if (read(dl->ldfd, header, 512) != 512)
 		return(-1);
 
 	image_type = (u_short)(header[IHD_W_ALIAS+1]*256 +
@@ -266,13 +274,9 @@ GetMopFileInfo(fd, load, xfr)
 			return(-1);
 	}
 
-	if (load != NULL) {
-		*load = load_addr;
-	}
-
-	if (xfr != NULL) {
-		*xfr  = xfr_addr;
-	}
+	dl->image_type = IMAGE_TYPE_MOP;
+	dl->loadaddr = load_addr;
+	dl->xferaddr = xfr_addr;
 
 	return(0);
 }
@@ -397,6 +401,217 @@ getCLBYTES(mid)
 #endif
 
 int
+CheckElfFile(fd)
+	int	fd;
+{
+#ifdef NOELF
+	return(-1);
+#else
+	Elf32_Ehdr ehdr;
+
+	(void)lseek(fd, (off_t) 0, SEEK_SET);
+
+	if (read(fd, (char *)&ehdr, sizeof(ehdr)) != sizeof(ehdr))
+		return(-1);
+
+	if (ehdr.e_ident[0] != ELFMAG0 ||
+	    ehdr.e_ident[1] != ELFMAG1 ||
+	    ehdr.e_ident[2] != ELFMAG2 ||
+	    ehdr.e_ident[3] != ELFMAG3)
+		return(-1);
+
+	/* Must be Elf32... */
+	if (ehdr.e_ident[EI_CLASS] != ELFCLASS32)
+		return(-1);
+
+	return(0);
+#endif /* NOELF */
+}
+
+int
+GetElfFileInfo(dl)
+	struct dllist	*dl;
+{
+#ifdef NOELF
+	return(-1);
+#else
+	Elf32_Ehdr ehdr;
+	Elf32_Phdr phdr;
+	uint32_t e_machine, e_entry;
+	uint32_t e_phoff, e_phentsize, e_phnum;
+	int ei_data, i;
+
+	(void)lseek(dl->ldfd, (off_t) 0, SEEK_SET);
+
+	if (read(dl->ldfd, (char *)&ehdr, sizeof(ehdr)) != sizeof(ehdr))
+		return(-1);
+
+	if (ehdr.e_ident[0] != ELFMAG0 ||
+	    ehdr.e_ident[1] != ELFMAG1 ||
+	    ehdr.e_ident[2] != ELFMAG2 ||
+	    ehdr.e_ident[3] != ELFMAG3)
+		return(-1);
+
+	/* Must be Elf32... */
+	if (ehdr.e_ident[EI_CLASS] != ELFCLASS32)
+		return(-1);
+
+	ei_data = ehdr.e_ident[EI_DATA];
+
+	switch (ei_data) {
+	case ELFDATA2LSB:
+		e_machine = mopFileGetLX((u_char *) &ehdr,
+		    offsetof(Elf32_Ehdr, e_machine),
+		    sizeof(ehdr.e_machine));
+		e_entry = mopFileGetLX((u_char *) &ehdr,
+		    offsetof(Elf32_Ehdr, e_entry),
+		    sizeof(ehdr.e_entry));
+
+		e_phoff = mopFileGetLX((u_char *) &ehdr,
+		    offsetof(Elf32_Ehdr, e_phoff),
+		    sizeof(ehdr.e_phoff));
+		e_phentsize = mopFileGetLX((u_char *) &ehdr,
+		    offsetof(Elf32_Ehdr, e_phentsize),
+		    sizeof(ehdr.e_phentsize));
+		e_phnum = mopFileGetLX((u_char *) &ehdr,
+		    offsetof(Elf32_Ehdr, e_phnum),
+		    sizeof(ehdr.e_phnum));
+		break;
+
+	case ELFDATA2MSB:
+		e_machine = mopFileGetBX((u_char *) &ehdr,
+		    offsetof(Elf32_Ehdr, e_machine),
+		    sizeof(ehdr.e_machine));
+		e_entry = mopFileGetBX((u_char *) &ehdr,
+		    offsetof(Elf32_Ehdr, e_entry),
+		    sizeof(ehdr.e_entry));
+
+		e_phoff = mopFileGetBX((u_char *) &ehdr,
+		    offsetof(Elf32_Ehdr, e_phoff),
+		    sizeof(ehdr.e_phoff));
+		e_phentsize = mopFileGetBX((u_char *) &ehdr,
+		    offsetof(Elf32_Ehdr, e_phentsize),
+		    sizeof(ehdr.e_phentsize));
+		e_phnum = mopFileGetBX((u_char *) &ehdr,
+		    offsetof(Elf32_Ehdr, e_phnum),
+		    sizeof(ehdr.e_phnum));
+		break;
+
+	default:
+		return(-1);
+	}
+
+	dl->image_type = IMAGE_TYPE_ELF32;
+	dl->loadaddr = e_entry;		/* We assume the standalone program */
+	dl->xferaddr = e_entry;		/* will relocate itself if necessary */
+
+	if (e_phnum > SEC_MAX)
+		return(-1);
+	dl->e_nsec = e_phnum;
+	for (i = 0; i < dl->e_nsec; i++) {
+		if (lseek(dl->ldfd, (off_t) e_phoff + (i * e_phentsize),
+		    SEEK_SET) == (off_t) -1)
+			return(-1);
+		if (read(dl->ldfd, (char *) &phdr, sizeof(phdr)) !=
+		    sizeof(phdr))
+			return(-1);
+
+		switch (ei_data) {
+		case ELFDATA2LSB:
+			dl->e_sections[i].s_foff =
+			    mopFileGetLX((u_char *) &phdr,
+			    offsetof(Elf32_Phdr, p_offset),
+			    sizeof(phdr.p_offset));
+			dl->e_sections[i].s_vaddr =
+			    mopFileGetLX((u_char *) &phdr,
+			    offsetof(Elf32_Phdr, p_vaddr),
+			    sizeof(phdr.p_vaddr));
+			dl->e_sections[i].s_fsize =
+			    mopFileGetLX((u_char *) &phdr,
+			    offsetof(Elf32_Phdr, p_filesz),
+			    sizeof(phdr.p_filesz));
+			dl->e_sections[i].s_msize =
+			    mopFileGetLX((u_char *) &phdr,
+			    offsetof(Elf32_Phdr, p_memsz),
+			    sizeof(phdr.p_memsz));
+			break;
+
+		case ELFDATA2MSB:
+			dl->e_sections[i].s_foff =
+			    mopFileGetBX((u_char *) &phdr,
+			    offsetof(Elf32_Phdr, p_offset),
+			    sizeof(phdr.p_offset));
+			dl->e_sections[i].s_vaddr =
+			    mopFileGetBX((u_char *) &phdr,
+			    offsetof(Elf32_Phdr, p_vaddr),
+			    sizeof(phdr.p_vaddr));
+			dl->e_sections[i].s_fsize =
+			    mopFileGetBX((u_char *) &phdr,
+			    offsetof(Elf32_Phdr, p_filesz),
+			    sizeof(phdr.p_filesz));
+			dl->e_sections[i].s_msize =
+			    mopFileGetBX((u_char *) &phdr,
+			    offsetof(Elf32_Phdr, p_memsz),
+			    sizeof(phdr.p_memsz));
+			break;
+
+		default:
+			return(-1);
+		}
+	}
+	/*
+	 * In addition to padding between segments, this also
+	 * takes care of memsz > filesz.
+	 */
+	for (i = 0; i < dl->e_nsec - 1; i++) {
+		dl->e_sections[i].s_pad =
+		    dl->e_sections[i + 1].s_vaddr -
+		    (dl->e_sections[i].s_vaddr + dl->e_sections[i].s_fsize);
+	}
+	dl->e_sections[dl->e_nsec - 1].s_pad =
+	    dl->e_sections[dl->e_nsec - 1].s_msize -
+	    dl->e_sections[dl->e_nsec - 1].s_fsize;
+	/*
+	 * Now compute the logical offsets for each section.
+	 */
+	dl->e_sections[0].s_loff = 0;
+	for (i = 1; i < dl->e_nsec; i++) {
+		dl->e_sections[i].s_loff =
+		    dl->e_sections[i - 1].s_loff +
+		    dl->e_sections[i - 1].s_fsize +
+		    dl->e_sections[i - 1].s_pad;
+	}
+
+	/* Print info about the image. */
+	printf("Elf32 image (");
+	switch (e_machine) {
+#ifdef EM_VAX
+	case EM_VAX:
+		printf("VAX");
+		break;
+#endif
+	default:
+		printf("machine %d", e_machine);
+		break;
+	}
+	printf(")\n");
+	printf("Transfer Address:   %08x\n", dl->xferaddr);
+	printf("Program Sections:   %d\n", dl->e_nsec);
+	for (i = 0; i < dl->e_nsec; i++) {
+		printf(" S%d File Size:      %08x\n", i,
+		    dl->e_sections[i].s_fsize);
+		printf(" S%d Pad Size:       %08x\n", i,
+		    dl->e_sections[i].s_pad);
+	}
+
+	dl->e_curpos = 0;
+	dl->e_cursec = 0;
+
+	return(0);
+#endif /* NOELF */
+}
+
+int
 CheckAOutFile(fd)
 	int	fd;
 {
@@ -431,12 +646,8 @@ CheckAOutFile(fd)
 }
 
 int
-GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
-		a_data, a_data_fill, a_bss, a_bss_fill, aout)
-	int		 fd;
-	u_int32_t	*load, *xfr, *a_text, *a_text_fill;
-	u_int32_t	*a_data, *a_data_fill, *a_bss, *a_bss_fill;
-	int		 *aout;
+GetAOutFileInfo(dl)
+	struct dllist	*dl;
 {
 #ifdef NOAOUT
 	return(-1);
@@ -445,12 +656,13 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 	u_int32_t	mid = -1;
 	u_int32_t	magic, clbytes, clofset;
 
-	if (read(fd, (char *)&ex, sizeof(ex)) != sizeof(ex))
+	if (read(dl->ldfd, (char *)&ex, sizeof(ex)) != sizeof(ex))
 		return(-1);
 
-	(void)lseek(fd, (off_t) 0, SEEK_SET);
+	(void)lseek(dl->ldfd, (off_t) 0, SEEK_SET);
 
-	if (read(fd, (char *)&ex_swap, sizeof(ex_swap)) != sizeof(ex_swap))
+	if (read(dl->ldfd, (char *)&ex_swap,
+		 sizeof(ex_swap)) != sizeof(ex_swap))
 		return(-1);
 
 	mopFileSwapX((u_char *)&ex_swap, 0, 4);
@@ -600,106 +812,76 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 	clbytes = getCLBYTES(mid);
 	clofset = clbytes - 1;
 
-	if (load != NULL) {
-		*load   = 0;
-	}
+	dl->image_type = IMAGE_TYPE_AOUT;
+	dl->loadaddr = 0;
+	dl->xferaddr = ex.a_entry;
 
-	if (xfr != NULL) {
-		*xfr    = ex.a_entry;
+	dl->a_text = ex.a_text;
+	if (magic == ZMAGIC || magic == NMAGIC) {
+		dl->a_text_fill = clbytes - (ex.a_text & clofset);
+		if (dl->a_text_fill == clbytes)
+			dl->a_text_fill = 0;
+	} else
+		dl->a_text_fill = 0;
+	dl->a_data = ex.a_data;
+	if (magic == ZMAGIC || magic == NMAGIC) {
+		dl->a_data_fill = clbytes - (ex.a_data & clofset);
+		if (dl->a_data_fill == clbytes)
+			dl->a_data_fill = 0;
+	} else
+		dl->a_data_fill = 0;
+	dl->a_bss = ex.a_bss;
+	if (magic == ZMAGIC || magic == NMAGIC) {
+		dl->a_bss_fill = clbytes - (ex.a_bss & clofset);
+		if (dl->a_bss_fill == clbytes)
+			dl->a_bss_fill = 0;
+	} else {
+		dl->a_bss_fill = clbytes -
+		    ((ex.a_text+ex.a_data+ex.a_bss) & clofset);
+		if (dl->a_bss_fill == clbytes)
+			dl->a_bss_fill = 0;
 	}
-
-	if (a_text != NULL) {
-		*a_text = ex.a_text;
-	}
-
-	if (a_text_fill != NULL) {
-		if (magic == ZMAGIC || magic == NMAGIC) {
-			*a_text_fill = clbytes - (ex.a_text & clofset);
-			if (*a_text_fill == clbytes) {
-				*a_text_fill = 0;
-			}
-		} else {
-			*a_text_fill = 0;
-	        }
-	}
-
-	if (a_data != NULL) {
-		*a_data = ex.a_data;
-	}
-
-	if (a_data_fill != NULL) {
-		if (magic == ZMAGIC || magic == NMAGIC) {
-			*a_data_fill = clbytes - (ex.a_data & clofset);
-			if (*a_data_fill == clbytes) {
-				*a_data_fill = 0;
-			}
-		} else {
-			*a_data_fill = 0;
-	        }
-	}
-
-	if (a_bss != NULL) {
-		*a_bss  = ex.a_bss;
-	}
-
-	if (a_bss_fill != NULL) {
-		if (magic == ZMAGIC || magic == NMAGIC) {
-			*a_bss_fill = clbytes - (ex.a_bss & clofset);
-			if (*a_bss_fill == clbytes) {
-				*a_bss_fill = 0;
-			}
-		} else {
-			*a_bss_fill = clbytes -
-				((ex.a_text+ex.a_data+ex.a_bss) & clofset);
-			if (*a_text_fill == clbytes) {
-				*a_text_fill = 0;
-			}
-	        }
-	}
-
-	if (aout != NULL) {
-		*aout = mid;
-	}
+	dl->a_mid = mid;
 
 	return(0);
 #endif /* NOAOUT */
 }
 
 int
-GetFileInfo(fd, load, xfr, aout,
-	    a_text, a_text_fill, a_data, a_data_fill, a_bss, a_bss_fill)
-	int	fd, *aout;
-	u_int32_t	*load, *xfr, *a_text, *a_text_fill;
-	u_int32_t	*a_data, *a_data_fill, *a_bss, *a_bss_fill;
+GetFileInfo(dl)
+	struct dllist	*dl;
 {
 	int	err;
 
-	err = CheckAOutFile(fd);
-
+	err = CheckElfFile(dl->ldfd);
 	if (err == 0) {
-		err = GetAOutFileInfo(fd, load, xfr,
-				      a_text, a_text_fill,
-				      a_data, a_data_fill,
-				      a_bss, a_bss_fill,
-				      aout);
+		err = GetElfFileInfo(dl);
 		if (err != 0) {
 			return(-1);
 		}
-	} else {
-		err = CheckMopFile(fd);
-		
-		if (err == 0) {
-			err = GetMopFileInfo(fd, load, xfr);
-			if (err != 0) {
-				return(-1);
-			}
-			*aout = -1;
-		} else {
-			return(-1);
-		}
+		return (0);
 	}
 
-	return(0);
+	err = CheckAOutFile(dl->ldfd);
+	if (err == 0) {
+		err = GetAOutFileInfo(dl);
+		if (err != 0) {
+			return(-1);
+		}
+		return (0);
+	}
+
+	err = CheckMopFile(dl->ldfd);
+	if (err == 0) {
+		err = GetMopFileInfo(dl);
+		if (err != 0) {
+			return(-1);
+		}
+		return (0);
+	}
+
+	/* Unknown file format. */
+	return(-1);
 }
 
 ssize_t
@@ -708,12 +890,70 @@ mopFileRead(dlslot, buf)
 	u_char	*buf;
 {
 	ssize_t len, outlen;
-	int	bsz;
+	int	bsz, sec;
 	int32_t	pos, notdone, total;
+	uint32_t secoff;
 
-	if (dlslot->aout == -1) {
+	switch (dlslot->image_type) {
+	case IMAGE_TYPE_MOP:
 		len = read(dlslot->ldfd,buf,dlslot->dl_bsz);
-	} else {
+		break;
+
+	case IMAGE_TYPE_ELF32:
+		sec = dlslot->e_cursec;
+
+		/*
+		 * We're pretty simplistic here.  We do only file-backed
+		 * or only zero-fill.
+		 */
+
+		/* Determine offset into section. */
+		secoff = dlslot->e_curpos - dlslot->e_sections[sec].s_loff;
+
+		/*
+		 * If we're in the file-backed part of the section,
+		 * transmit some of the file.
+		 */
+		if (secoff < dlslot->e_sections[sec].s_fsize) {
+			bsz = dlslot->e_sections[sec].s_fsize - secoff;
+			if (bsz > dlslot->dl_bsz)
+				bsz = dlslot->dl_bsz;
+			if (lseek(dlslot->ldfd,
+			    dlslot->e_sections[sec].s_foff + secoff,
+			    SEEK_SET) == (off_t) -1)
+				return (-1);
+			len = read(dlslot->ldfd, buf, bsz);
+		}
+		/*
+		 * Otherwise, if we're in the zero-fill part of the
+		 * section, transmit some zeros.
+		 */
+		else if (secoff < (dlslot->e_sections[sec].s_fsize +
+				   dlslot->e_sections[sec].s_pad)) {
+			bsz = dlslot->e_sections[sec].s_pad -
+			    (secoff - dlslot->e_sections[sec].s_fsize);
+			if (bsz > dlslot->dl_bsz)
+				bsz = dlslot->dl_bsz;
+			memset(buf, 0, (len = bsz));
+		}
+		/*
+		 * ...and if we haven't hit either of those cases,
+		 * that's the end of the image.
+		 */
+		else {
+			return (0);
+		}
+		/*
+		 * Advance the logical image pointer.
+		 */
+		dlslot->e_curpos += bsz;
+		if (dlslot->e_curpos >= (dlslot->e_sections[sec].s_loff +
+					 dlslot->e_sections[sec].s_fsize +
+					 dlslot->e_sections[sec].s_pad))
+			dlslot->e_cursec++;
+		break;
+
+	case IMAGE_TYPE_AOUT:
 		bsz = dlslot->dl_bsz;
 		pos = dlslot->a_lseek;
 		len = 0;
@@ -807,7 +1047,7 @@ mopFileRead(dlslot, buf)
 		}
 		
 		dlslot->a_lseek = pos;
-
+		break;
 	}
 
 	return(len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.3 1997/10/16 23:24:37 lukem Exp $	*/
+/*	$NetBSD: file.h,v 1.4 2002/02/18 22:00:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: file.h,v 1.3 1997/10/16 23:24:37 lukem Exp $
+ *	$NetBSD: file.h,v 1.4 2002/02/18 22:00:36 thorpej Exp $
  *
  */
 
@@ -36,21 +36,23 @@
 #define _FILE_H_
 
 __BEGIN_DECLS
-void		mopFilePutLX __P((u_char *, int, u_int32_t, int));
-void		mopFilePutBX __P((u_char *, int, u_int32_t, int));
-u_int32_t	mopFileGetLX __P((u_char *, int, int));
-u_int32_t	mopFileGetBX __P((u_char *, int, int));
-ssize_t		mopFileRead __P((struct dllist *, u_char *));
-void		mopFileSwapX __P((u_char *, int, int));
-int		CheckMopFile __P((int));
-int		GetMopFileInfo __P((int, u_int32_t *, u_int32_t *));
-int		CheckAOutFile __P((int));
-int		GetAOutFileInfo __P((int, u_int32_t *, u_int32_t *,
-		    u_int32_t *, u_int32_t *, u_int32_t *, u_int32_t *,
-		    u_int32_t *, u_int32_t *, int *));
-int		GetFileInfo __P((int, u_int32_t *, u_int32_t *, int *,
-		     u_int32_t *, u_int32_t *, u_int32_t *, u_int32_t *,
-		     u_int32_t *, u_int32_t *));
+void		mopFilePutLX(u_char *, int, u_int32_t, int);
+void		mopFilePutBX(u_char *, int, u_int32_t, int);
+u_int32_t	mopFileGetLX(u_char *, int, int);
+u_int32_t	mopFileGetBX(u_char *, int, int);
+ssize_t		mopFileRead(struct dllist *, u_char *);
+void		mopFileSwapX(u_char *, int, int);
+
+int		CheckMopFile(int);
+int		GetMopFileInfo(struct dllist *);
+
+int		CheckElfFile(int);
+int		GetElfFileInfo(struct dllist *);
+
+int		CheckAOutFile(int);
+int		GetAOutFileInfo(struct dllist *);
+
+int		GetFileInfo(struct dllist *);
 __END_DECLS
 
 #endif /* _FILE_H_ */

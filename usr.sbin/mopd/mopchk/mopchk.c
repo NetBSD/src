@@ -1,4 +1,4 @@
-/*	$NetBSD: mopchk.c,v 1.8 2001/02/19 23:22:45 cgd Exp $	*/
+/*	$NetBSD: mopchk.c,v 1.9 2002/02/18 22:00:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopchk.c,v 1.8 2001/02/19 23:22:45 cgd Exp $");
+__RCSID("$NetBSD: mopchk.c,v 1.9 2002/02/18 22:00:37 thorpej Exp $");
 #endif
 
 /*
@@ -68,10 +68,11 @@ main(argc, argv)
 	int     argc;
 	char  **argv;
 {
-	int     op, i, fd;
+	struct dllist dl;
+	int     op, i;
 	char   *filename;
 	struct if_info *ii;
-	int	err, aout;
+	int	err;
 
 	/* All error reporting is done through syslogs. */
 	openlog("mopchk", LOG_PID, LOG_DAEMON);
@@ -121,27 +122,28 @@ main(argc, argv)
 		i++;
 		filename = argv[optind++];
 		printf("Checking: %s\n", filename);
-		fd = open(filename, O_RDONLY, 0);
-		if (fd == -1)
+		dl.ldfd = open(filename, O_RDONLY, 0);
+		if (dl.ldfd == -1)
 			printf("Unknown file.\n");
 		else {
-			err = CheckAOutFile(fd);
-			if (err == 0) {
-				if (GetAOutFileInfo(fd, 0, 0, 0, 0,
-						    0, 0, 0, 0, &aout) < 0) {
+			if ((err = CheckElfFile(dl.ldfd)) == 0) {
+				if (GetElfFileInfo(&dl) < 0) {
+					printf(
+					"Some failure in GetElfFileInfo\n");
+				}
+			} else if ((err = CheckAOutFile(dl.ldfd)) == 0) {
+				if (GetAOutFileInfo(&dl) < 0) {
 					printf(
 					"Some failure in GetAOutFileInfo\n");
-					aout = -1;
 				}
-			} else
-				aout = -1;
-			if (aout == -1)
-				err = CheckMopFile(fd);
-			if (aout == -1 && err == 0)
-				if (GetMopFileInfo(fd, 0, 0) < 0)
+			} else if ((err = CheckMopFile(dl.ldfd)) == 0) {
+				if (GetMopFileInfo(&dl) < 0) {
 					printf(
 					    "Some failure in GetMopFileInfo\n");
+				}
+			}
 		}
+		(void) close(dl.ldfd);
 	}
 	return (0);
 }
