@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.63 2004/11/22 04:53:46 soren Exp $
+#	$NetBSD: daily,v 1.64 2005/01/09 13:07:14 sketch Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -273,7 +273,7 @@ if checkyesno run_security; then
 	fi
 	if [ -s "$SECOUT" ]; then
 		mail -s "$host daily insecurity output for $date" \
-		    $MAILTO < "$SECOUT"
+		    "$MAILTO" < "$SECOUT"
 	fi
 fi
 
