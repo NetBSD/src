@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2000/05/27 14:45:36 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16.4.1 2000/10/17 19:59:25 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -184,6 +184,7 @@ extern	int cpuspeed;
 extern	char *intiobase, *intiolimit;
 extern	u_int intiobase_phys, intiotop_phys;
 extern	u_long ether_data_buff_size;
+extern	u_char mvme_ea[6];
 
 struct frame;
 void	doboot __P((int)) 
@@ -198,7 +199,6 @@ void	iounmap __P((void *, size_t));
 paddr_t	kvtop __P((caddr_t));
 void	loadustp __P((paddr_t));
 void	child_return __P((void *));
-void	myetheraddr	__P((u_char *));
 
 /* Prototypes from sys_machdep.c: */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
