@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.65 2004/10/29 12:57:18 yamt Exp $	*/
+/*	$NetBSD: auich.c,v 1.66 2004/10/31 05:50:58 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.65 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.66 2004/10/31 05:50:58 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	/* enable bus mastering */
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    v | PCI_COMMAND_MASTER_ENABLE);
+	    v | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_BACKTOBACK_ENABLE);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -1142,7 +1142,7 @@ auich_intr(void *v)
 	}
 #endif
 
-	gsts = bus_space_read_2(sc->iot, sc->aud_ioh, ICH_GSTS);
+	gsts = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GSTS);
 	DPRINTF(ICH_DEBUG_INTR, ("auich_intr: gsts=0x%x\n", gsts));
 
 	if (gsts & ICH_POINT) {
@@ -1157,7 +1157,7 @@ auich_intr(void *v)
 		}
 
 		i = bus_space_read_1(sc->iot, sc->aud_ioh, ICH_PCMO + ICH_CIV);
-		if (sts & (ICH_LVBCI | ICH_CELV)) {
+		if (sts & (ICH_BCIS | ICH_LVBCI | ICH_CELV)) {
 			struct auich_dmalist *q;
 
 			qptr = sc->ptr_pcmo;
@@ -1179,21 +1179,20 @@ auich_intr(void *v)
 
 				if (++qptr == ICH_DMALIST_MAX)
 					qptr = 0;
+				if (sc->sc_pintr)
+					sc->sc_pintr(sc->sc_parg);
+
 			}
 
 			sc->ptr_pcmo = qptr;
 			bus_space_write_1(sc->iot, sc->aud_ioh,
-			    ICH_PCMO + ICH_LVI,
-			    (sc->ptr_pcmo - 1) & ICH_LVI_MASK);
+			    ICH_PCMO + ICH_LVI, (qptr - 1) & ICH_LVI_MASK);
 		}
-
-		if (sts & ICH_BCIS && sc->sc_pintr)
-			sc->sc_pintr(sc->sc_parg);
 
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMO +
-		    sc->sc_sts_reg, sts & (ICH_LVBCI | ICH_BCIS | ICH_FIFOE));
-		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_POINT);
+		    sc->sc_sts_reg, sts & (ICH_CELV | ICH_LVBCI | ICH_BCIS | ICH_FIFOE));
+		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_POINT);
 		ret++;
 	}
 
@@ -1209,7 +1208,7 @@ auich_intr(void *v)
 		}
 
 		i = bus_space_read_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CIV);
-		if (sts & (ICH_LVBCI | ICH_CELV)) {
+		if (sts & (ICH_BCIS | ICH_LVBCI | ICH_CELV)) {
 			struct auich_dmalist *q;
 
 			qptr = sc->ptr_pcmi;
@@ -1231,21 +1230,19 @@ auich_intr(void *v)
 
 				if (++qptr == ICH_DMALIST_MAX)
 					qptr = 0;
+				if (sc->sc_rintr)
+					sc->sc_rintr(sc->sc_rarg);
 			}
 
 			sc->ptr_pcmi = qptr;
 			bus_space_write_1(sc->iot, sc->aud_ioh,
-			    ICH_PCMI + ICH_LVI,
-			    (sc->ptr_pcmi - 1) & ICH_LVI_MASK);
+			    ICH_PCMI + ICH_LVI, (qptr - 1) & ICH_LVI_MASK);
 		}
-
-		if (sts & ICH_BCIS && sc->sc_rintr)
-			sc->sc_rintr(sc->sc_rarg);
 
 		/* int ack */
 		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_PCMI +
-		    sc->sc_sts_reg, sts & (ICH_LVBCI | ICH_BCIS | ICH_FIFOE));
-		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_PIINT);
+		    sc->sc_sts_reg, sts & (ICH_CELV | ICH_LVBCI | ICH_BCIS | ICH_FIFOE));
+		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_PIINT);
 		ret++;
 	}
 
@@ -1259,7 +1256,7 @@ auich_intr(void *v)
 
 		/* TODO mic input DMA */
 
-		bus_space_write_2(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_MIINT);
+		bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GSTS, ICH_MIINT);
 	}
 
 	return ret;
