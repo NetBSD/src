@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.11 1997/04/01 19:59:59 scottr Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.12 1997/04/02 22:41:34 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -498,8 +498,8 @@ hpux_sendsig(catcher, sig, mask, code)
 
 #ifdef DEBUG
 	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
-		printf("hpux_sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
+		printf("hpux_sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
+		       p->p_pid, sig, &oonstack, fp, &fp->hsf_sc, ft);
 #endif
 
 	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
@@ -574,10 +574,11 @@ hpux_sendsig(catcher, sig, mask, code)
 	}
 
 #ifdef DEBUG
-	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
-		printf("hpux_sendsig(%d): copy out FP state (%x) to %x\n",
-		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
-		       &kfp->sf_state.ss_fpstate);
+	if ((hpuxsigdebug & SDB_FPSTATE) &&
+	    *(char *)&kfp->hsf_sigstate.hss_fpstate)
+		printf("hpux_sendsig(%d): copy out FP state (%x) to %p\n",
+		       p->p_pid, *(u_int *)&kfp->hsf_sigstate.hss_fpstate,
+		       &kfp->hsf_sigstate.hss_fpstate);
 #endif
 
 	/*
@@ -602,9 +603,9 @@ hpux_sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if (hpuxsigdebug & SDB_FOLLOW) {
 		printf(
-		  "hpux_sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
-		   p->p_pid, sig, kfp->sf_scp, fp,
-		   kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
+		  "hpux_sendsig(%d): sig %d scp %p fp %p sc_sp %x sc_ap %x\n",
+		   p->p_pid, sig, kfp->hsf_scp, fp,
+		   kfp->hsf_sc.hsc_sp, kfp->hsf_sc._hsc_ap);
 	}
 #endif
 
@@ -650,7 +651,7 @@ hpux_sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (hpuxsigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
 		return (EINVAL);
@@ -707,9 +708,9 @@ hpux_sys_sigreturn(p, v, retval)
 		return (EJUSTRETURN);
 #ifdef DEBUG
 	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
-		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
-		       (flags & HSS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
+		printf("sigreturn(%d): ssp %p usp %x scp %p ft %d\n",
+		       p->p_pid, &flags, scp->hsc_sp, SCARG(uap, sigcntxp),
+		       (flags & HSS_RTEFRAME) ? tstate.hss_frame.f_format : -1);
 #endif
 	/*
 	 * Restore most of the users registers except for A6 and SP
@@ -739,7 +740,7 @@ hpux_sys_sigreturn(p, v, retval)
 #ifdef DEBUG
 		if (hpuxsigdebug & SDB_FOLLOW)
 			printf("sigreturn(%d): copy in %d of frame type %d\n",
-			       p->p_pid, sz, tstate.ss_frame.f_format);
+			       p->p_pid, sz, tstate.hss_frame.f_format);
 #endif
 	}
 
@@ -750,10 +751,10 @@ hpux_sys_sigreturn(p, v, retval)
 		m68881_restore(&tstate.hss_fpstate);
 
 #ifdef DEBUG
-	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
-		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
-		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
-		       &tstate.ss_fpstate);
+	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&tstate.hss_fpstate)
+		printf("sigreturn(%d): copied in FP state (%x) at %p\n",
+		       p->p_pid, *(u_int *)&tstate.hss_fpstate,
+		       &tstate.hss_fpstate);
 
 	if ((hpuxsigdebug & SDB_FOLLOW) ||
 	    ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid))

@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.15 1997/03/31 07:32:20 scottr Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.16 1997/04/02 22:37:29 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -475,8 +475,8 @@ fhpibdone(hs)
 	hs->sc_addr += cnt;
 	hs->sc_count -= cnt;
 #ifdef DEBUG
-	if ((fhpibdebug & FDB_DMA) && fhpibdebugunit == unit)
-		printf("fhpibdone: addr %x cnt %d\n",
+	if ((fhpibdebug & FDB_DMA) && fhpibdebugunit == sc->sc_dev.dv_unit)
+		printf("fhpibdone: addr %p cnt %d\n",
 		       hs->sc_addr, hs->sc_count);
 #endif
 	if (hs->sc_flags & HPIBF_READ) {
@@ -513,9 +513,6 @@ fhpibintr(arg)
 	struct fhpibdevice *hd = sc->sc_regs;
 	struct hpibqueue *hq;
 	int stat0;
-#ifdef DEBUG
-	int unit = sc->sc_dev.dv_unit;
-#endif
 
 	stat0 = hd->hpib_ids;
 	if ((stat0 & (IDS_IE|IDS_IR)) != (IDS_IE|IDS_IR)) {
@@ -535,7 +532,7 @@ fhpibintr(arg)
 		return(0);
 	}
 #ifdef DEBUG
-	if ((fhpibdebug & FDB_DMA) && fhpibdebugunit == unit)
+	if ((fhpibdebug & FDB_DMA) && fhpibdebugunit == sc->sc_dev.dv_unit)
 		printf("fhpibintr: flags %x\n", hs->sc_flags);
 #endif
 	hq = hs->sc_queue.tqh_first;
@@ -563,7 +560,8 @@ fhpibintr(arg)
 		hd->hpib_imask = 0;
 #ifdef DEBUG
 		stat0 = fhpibppoll(hs);
-		if ((fhpibdebug & FDB_PPOLL) && unit == fhpibdebugunit)
+		if ((fhpibdebug & FDB_PPOLL) &&
+		    fhpibdebugunit == sc->sc_dev.dv_unit)
 			printf("fhpibintr: got PPOLL status %x\n", stat0);
 		if ((stat0 & (0x80 >> hq->hq_slave)) == 0) {
 			/*
@@ -573,9 +571,10 @@ fhpibintr(arg)
 			DELAY(fhpibppolldelay);
 			stat0 = fhpibppoll(hs);
 			if ((stat0 & (0x80 >> hq->hq_slave)) == 0 &&
-			    (fhpibdebug & FDB_PPOLL) && unit == fhpibdebugunit)
+			    (fhpibdebug & FDB_PPOLL) &&
+			    fhpibdebugunit == sc->sc_dev.dv_unit)
 				printf("fhpibintr: PPOLL: unit %d slave %d stat %x\n",
-				       unit, dq->dq_slave, stat0);
+				       sc->sc_dev.dv_unit, hq->hq_slave, stat0);
 		}
 #endif
 		hs->sc_flags &= ~HPIBF_PPOLL;
@@ -619,7 +618,7 @@ fhpibwait(hd, x)
 	if (timo == 0) {
 #ifdef DEBUG
 		if (fhpibdebug & FDB_FAIL)
-			printf("fhpibwait(%x, %x) timeout\n", hd, x);
+			printf("fhpibwait(%p, %x) timeout\n", hd, x);
 #endif
 		return(-1);
 	}
