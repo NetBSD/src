@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4.2.1 2002/07/15 16:05:55 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.4.2.2 2002/07/15 16:37:11 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -95,7 +95,6 @@ EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
     {"kern-GENERIC_INDY",	1, NULL, "Indy/I2 Kernel: "},
-    {"kern-GENERIC",		0, NULL, "O2 Kernel     : "},
     {"base",			1, NULL, "Base          : "},
     {"etc",			1, NULL, "System (/etc) : "},
     {"comp",			1, NULL, "Compiler      : "},
