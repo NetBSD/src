@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.18 2002/03/20 17:06:51 christos Exp $ */
+/* $NetBSD: psm.c,v 1.19 2002/03/28 15:21:50 christos Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.18 2002/03/20 17:06:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.19 2002/03/28 15:21:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,14 +547,14 @@ pmsinput(vsc, data)
 			DPRINTF(("pms: packet: 0x%02x%02x%02x\n",
 			    sc->packet[0], sc->packet[1], sc->packet[2]));
 		} else {
-			DPRINTFN(("pms: packet: 0x%02x%02x%02x%02x\n",
+			DPRINTF(("pms: packet: 0x%02x%02x%02x%02x\n",
 			    sc->packet[0], sc->packet[1], sc->packet[2],
 			    sc->packet[3]));
 		}
 #endif
 		if (dx || dy || dz || changed) {
 #ifdef PMSDEBUG
-			DPRINTFN(("pms: x %+03d y %+03d z %+03d "
+			DPRINTF(("pms: x %+03d y %+03d z %+03d "
 			    "buttons 0x%02x\n",	dx, dy, dz, sc->buttons));
 #endif
 			wsmouse_input(sc->sc_wsmousedev,
