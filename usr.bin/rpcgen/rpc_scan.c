@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_scan.c,v 1.8 2002/01/31 19:36:49 tv Exp $	*/
+/*	$NetBSD: rpc_scan.c,v 1.8.4.1 2004/06/22 07:20:43 tron Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,12 +29,16 @@
  * Mountain View, California  94043
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rpc_scan.c 1.11 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_scan.c,v 1.8 2002/01/31 19:36:49 tv Exp $");
+__RCSID("$NetBSD: rpc_scan.c,v 1.8.4.1 2004/06/22 07:20:43 tron Exp $");
 #endif
 #endif
 
