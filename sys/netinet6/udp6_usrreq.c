@@ -1,5 +1,5 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.39 2001/02/10 04:14:29 itojun Exp $	*/
-/*	$KAME: udp6_usrreq.c,v 1.62 2000/10/19 01:11:05 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.40 2001/02/11 06:49:53 itojun Exp $	*/
+/*	$KAME: udp6_usrreq.c,v 1.84 2001/02/07 07:38:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -467,15 +467,19 @@ udp6_ctlinput(cmd, sa, d)
 	struct sockaddr *sa;
 	void *d;
 {
-	struct udphdr *uhp;
 	struct udphdr uh;
-	struct sockaddr_in6 sa6;
 	struct ip6_hdr *ip6;
+	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
 	struct mbuf *m;
 	int off;
-	struct in6_addr s;
-	struct in6_addr finaldst;
+	void *cmdarg;
+	struct ip6ctlparam *ip6cp = NULL;
+	const struct sockaddr_in6 *sa6_src = NULL;
 	void (*notify) __P((struct in6pcb *, int)) = udp6_notify;
+	struct udp_portonly {
+		u_int16_t uh_sport;
+		u_int16_t uh_dport;
+	} *uhp;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -494,29 +498,18 @@ udp6_ctlinput(cmd, sa, d)
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
-		struct ip6ctlparam *ip6cp = (struct ip6ctlparam *)d;
+		ip6cp = (struct ip6ctlparam *)d;
 		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
 		off = ip6cp->ip6c_off;
-
-		/* translate addresses into internal form */
-		bcopy(ip6cp->ip6c_finaldst, &finaldst, sizeof(finaldst));
-		if (IN6_IS_ADDR_LINKLOCAL(&finaldst)) {
-			finaldst.s6_addr16[1] =
-			    htons(m->m_pkthdr.rcvif->if_index);
-		}
-		bcopy(&ip6->ip6_src, &s, sizeof(s));
-		if (IN6_IS_ADDR_LINKLOCAL(&s))
-			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+		cmdarg = ip6cp->ip6c_cmdarg;
+		sa6_src = ip6cp->ip6c_src;
 	} else {
 		m = NULL;
 		ip6 = NULL;
+		cmdarg = NULL;
+		sa6_src = &sa6_any;
 	}
-
-	/* translate addresses into internal form */
-	sa6 = *(struct sockaddr_in6 *)sa;
-	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr) && m && m->m_pkthdr.rcvif)
-		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 
 	if (ip6) {
 		/*
@@ -525,28 +518,23 @@ udp6_ctlinput(cmd, sa, d)
 		 */
 
 		/* check if we can safely examine src and dst ports */
-		if (m->m_pkthdr.len < off + sizeof(uh))
+		if (m->m_pkthdr.len < off + sizeof(*uhp))
 			return;
 
-		if (m->m_len < off + sizeof(uh)) {
-			/*
-			 * this should be rare case,
-			 * so we compromise on this copy...
-			 */
-			m_copydata(m, off, sizeof(uh), (caddr_t)&uh);
-			uhp = &uh;
-		} else
-			uhp = (struct udphdr *)(mtod(m, caddr_t) + off);
+		bzero(&uh, sizeof(uh));
+		m_copydata(m, off, sizeof(*uhp), (caddr_t)&uh);
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;
+
 			/*
 			 * Check to see if we have a valid UDP socket
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			if (in6_pcblookup_connect(&udb6, &finaldst,
-			    uhp->uh_dport, &s, uhp->uh_sport, 0))
+			if (in6_pcblookup_connect(&udb6, &sa6->sin6_addr,
+			    uh.uh_dport, (struct in6_addr *)&sa6_src->sin6_addr,
+			    uh.uh_sport, 0))
 				valid++;
 #if 0
 			/*
@@ -556,28 +544,35 @@ udp6_ctlinput(cmd, sa, d)
 			 * We should at least check if the local address (= s)
 			 * is really ours.
 			 */
-			else if (in6_pcblookup_bind(&udb6, &finaldst,
-			    uhp->uh_dport, 0))
+			else if (in6_pcblookup_bind(&udb6, &sa6->sin6_addr,
+						    uh.uh_dport, 0))
 				valid++;
 #endif
 
 			/*
-			 * Now that we've validated that we are actually
-			 * communicating with the host indicated in the ICMPv6
-			 * message, recalculate the new MTU, and create the
-			 * corresponding routing entry.
+			 * Depending on the value of "valid" and routing table
+			 * size (mtudisc_{hi,lo}wat), we will:
+			 * - recalcurate the new MTU and create the
+			 *   corresponding routing entry, or
+			 * - ignore the MTU change notification.
 			 */
 			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 
-			return;
+			/*
+			 * regardless of if we called icmp6_mtudisc_update(),
+			 * we need to call in6_pcbnotify(), to notify path
+			 * MTU change to the userland (2292bis-02), because
+			 * some unconnected sockets may share the same
+			 * destination and want to know the path MTU.
+			 */
 		}
 
-		(void) in6_pcbnotify(&udb6, (struct sockaddr *)&sa6,
-					uhp->uh_dport, &s,
-					uhp->uh_sport, cmd, notify);
+		(void) in6_pcbnotify(&udb6, sa, uh.uh_dport,
+		    (struct sockaddr *)sa6_src, uh.uh_sport, cmd, cmdarg,
+		    notify);
 	} else {
-		(void) in6_pcbnotify(&udb6, (struct sockaddr *)&sa6, 0,
-					&zeroin6_addr, 0, cmd, notify);
+		(void) in6_pcbnotify(&udb6, sa, 0, (struct sockaddr *)sa6_src,
+		    0, cmd, cmdarg, notify);
 	}
 }
 
