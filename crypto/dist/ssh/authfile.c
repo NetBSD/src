@@ -1,4 +1,4 @@
-/*	$NetBSD: authfile.c,v 1.15 2003/04/03 06:21:32 itojun Exp $	*/
+/*	$NetBSD: authfile.c,v 1.16 2003/05/14 18:17:02 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfile.c,v 1.52 2003/03/13 11:42:18 markus Exp $");
+RCSID("$OpenBSD: authfile.c,v 1.53 2003/05/11 16:56:48 markus Exp $");
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -627,9 +627,18 @@ key_load_public(const char *filename, char **commentp)
 	Key *pub;
 	char file[MAXPATHLEN];
 
+	/* try rsa1 private key */
 	pub = key_load_public_type(KEY_RSA1, filename, commentp);
 	if (pub != NULL)
 		return pub;
+
+	/* try rsa1 public key */
+	pub = key_new(KEY_RSA1);
+	if (key_try_load_public(pub, filename, commentp) == 1)
+		return pub;
+	key_free(pub);
+
+	/* try ssh2 public key */
 	pub = key_new(KEY_UNSPEC);
 	if (key_try_load_public(pub, filename, commentp) == 1)
 		return pub;
