@@ -29,18 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00032
- * --------------------         -----   ----------------------
- *
- * 05 Aug 92	David Greenman		Fix kernel namelist db create/use
  */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nlist.c	5.4 (Berkeley) 4/27/91";*/
-static char rcsid[] = "$Id: nlist.c,v 1.5 1993/08/01 17:59:19 mycroft Exp $";
+static char rcsid[] = "$Id: nlist.c,v 1.6 1993/08/02 18:17:24 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

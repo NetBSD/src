@@ -29,18 +29,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00096
- * --------------------         -----   ----------------------
- *
- * 15 Feb 93	Julian Elischer		Allow comments (leading #) in device file
  */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkswapconf.c	5.10 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: mkswapconf.c,v 1.4 1993/08/01 18:00:12 mycroft Exp $";
+static char rcsid[] = "$Id: mkswapconf.c,v 1.5 1993/08/02 18:17:29 mycroft Exp $";
 #endif /* not lint */
 
 /*
