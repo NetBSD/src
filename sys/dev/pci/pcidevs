@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.589 2003/10/23 15:54:13 fvdl Exp $
+$NetBSD: pcidevs,v 1.590 2003/10/25 16:21:31 chs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -481,6 +481,7 @@ vendor SPECIALIX	0x11cb	Specialix Research
 vendor MKC		0x11cc	Michels & Kleberhoff Computer
 vendor HAL		0x11cd 	HAL Computer Systems
 vendor AURAVISION	0x11d1 	Auravision
+vendor ANALOG		0x11d4	Analog Devices
 vendor SEGA		0x11db	SEGA Enterprises
 vendor ZORAN		0x11de	Zoran Corporation
 vendor COMPEX		0x11f6	Compex
@@ -530,6 +531,7 @@ vendor LEVELONE		0x1394	Level One
 vendor COLOGNECHIP	0x1397	Cologne Chip Designs
 vendor HIFN		0x13a3	Hifn
 vendor 3WARE		0x13c1	3ware
+vendor NETBOOST		0x13dc	NetBoost
 vendor SUNDANCETI	0x13f0	Sundance Technology
 vendor CMEDIA		0x13f6	C-Media Electronics, Inc.
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
@@ -831,6 +833,9 @@ product AMD PBC8111_AC		0x746d	AMD8111 AC97 Audio
 product AMI MEGARAID	0x9010	MegaRAID
 product AMI MEGARAID2	0x9060	MegaRAID 2
 product AMI MEGARAID3	0x1960	MegaRAID 3
+
+/* Analog Devices, Inc. products */
+product ANALOG SAFENET	0x2f44	SafeNet Crypto Accelerator ADSP-2141
 
 /* Antares Microsystems, Inc. products */
 product ANTARES TC9021	0x1021	Antares Gigabit Ethernet
@@ -1309,6 +1314,15 @@ product ENE CB1420	0x1420	CB1420 Cardbus Controller
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 product ENSONIQ AUDIOPCI97	0x1371	AudioPCI 97
 product ENSONIQ CT5880		0x5880	CT5880
+
+/* Equinox Systems product */
+product EQUINOX SST64P		0x0808	SST-64P adapter
+product EQUINOX SST128P		0x1010	SST-128P adapter
+product EQUINOX SST16P_1	0x80c0	SST-16P adapter
+product EQUINOX SST16P_2	0x80c4	SST-16P adapter
+product EQUINOX SST16P_3	0x80c8	SST-16P adapter
+product EQUINOX SST4P		0x8888	SST-4P adapter
+product EQUINOX SST8P		0x9090	SST-8P adapter
 
 /* Essential Communications products */
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
@@ -1841,6 +1855,9 @@ product NDC NCP130A2		0x0131 NCP130 rev A2 Wireless NIC
 
 /* NetVin products - XXX better descriptions */
 product NETVIN 5000	0x5000	5000 Ethernet
+
+/* NetBoost (now Intel) products */
+product NETBOOST POLICY	0x0000	Policy Accelerator
 
 /* Newbridge / Tundra products */
 product NEWBRIDGE CA91CX42		0x0000	Universe VME bridge
