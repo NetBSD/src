@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.18 2003/09/12 11:09:33 itojun Exp $	*/
+/*	$NetBSD: keydb.h,v 1.19 2003/09/20 05:12:46 itojun Exp $	*/
 /*	$KAME: keydb.h,v 1.23 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -73,12 +73,6 @@ struct secashead {
 #define sa_route sa_u.sau_route
 };
 
-#ifdef FAST_IPSEC
-struct xformsw;
-struct enc_xform;
-struct auth_hash;
-struct comp_algo;
-#endif
 
 /* Security Association */
 struct secasvar {
@@ -114,19 +108,6 @@ struct secasvar {
 	struct secashead *sah;		/* back pointer to the secashead */
 
 	u_int32_t id;			/* SA id */
-
-#ifdef FAST_IPSEC
-	/*
-	 * NB: Fields with a tdb_ prefix are part of the "glue" used
-	 *     to interface to the OpenBSD crypto support.  This was done
-	 *     to distinguish this code from the mainline KAME code.
-	 */
-	struct xformsw *tdb_xform;	/* transform */
-	struct enc_xform *tdb_encalgxform;	/* encoding algorithm */
-	struct auth_hash *tdb_authalgxform;	/* authentication algorithm */
-	struct comp_algo *tdb_compalgxform;	/* compression algorithm */
-	u_int64_t tdb_cryptoid;		/* crypto session id */
-#endif
 };
 
 /* replay prevention */
