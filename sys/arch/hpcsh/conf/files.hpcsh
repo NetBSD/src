@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.31 2003/10/18 01:40:05 uwe Exp $
+#	$NetBSD: files.hpcsh,v 1.32 2003/10/19 02:21:40 uwe Exp $
 #
 maxpartitions 8
 
@@ -65,6 +65,12 @@ include	"arch/sh3/conf/files.shb"
 device	j6x0pwr
 attach	j6x0pwr at adc
 file	arch/hpcsh/dev/j6x0pwr.c		j6x0pwr
+
+include "dev/hpc/files.hpctp"
+
+device	j6x0tp: tpcalib, wsmousedev
+attach	j6x0tp at adc
+file	arch/hpcsh/dev/j6x0tp.c			j6x0tp
 
 device	pfckbd: hpckbdif
 attach	pfckbd at mainbus
