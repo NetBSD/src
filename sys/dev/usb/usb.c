@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.40 2000/03/14 23:13:12 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.41 2000/03/16 00:46:38 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.c,v 1.20 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ static usbd_status usb_discover __P((struct usb_softc *));
 static void	usb_create_event_thread __P((void *));
 static void	usb_event_thread __P((void *));
 
-#define USB_MAX_EVENTS 50
+#define USB_MAX_EVENTS 100
 struct usb_event_q {
 	struct usb_event ue;
 	SIMPLEQ_ENTRY(usb_event_q) next;
