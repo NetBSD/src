@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.2 1999/03/16 13:07:45 mycroft Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.3 1999/03/18 20:55:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,8 +86,7 @@ ess_isa_probe(parent, match, aux)
 	sc->sc_audio1.irq = ia->ia_irq;
 	sc->sc_audio1.ist = IST_EDGE;
 	sc->sc_audio1.drq = ia->ia_drq;
-	sc->sc_audio2.irq = ia->ia_irq;
-	sc->sc_audio2.ist = IST_EDGE;
+	sc->sc_audio2.irq = -1;
 	sc->sc_audio2.drq = ia->ia_drq2;
 
 	ret = essmatch(sc);
@@ -123,11 +122,10 @@ void ess_isa_attach(parent, self, aux)
 	sc->sc_audio1.irq = ia->ia_irq;
 	sc->sc_audio1.ist = IST_EDGE;
 	sc->sc_audio1.drq = ia->ia_drq;
-	sc->sc_audio2.irq = ia->ia_irq;
-	sc->sc_audio2.ist = IST_EDGE;
-	sc->sc_audio2.drq = ia->ia_drq;
+	sc->sc_audio2.irq = -1;
+	sc->sc_audio2.drq = ia->ia_drq2;
 
-	printf("%s:", sc->sc_dev.dv_xname);
+	printf("%s", sc->sc_dev.dv_xname);
 
 	essattach(sc);
 }
