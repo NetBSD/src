@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.48 2001/07/19 00:15:32 taca Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.49 2001/11/06 05:39:27 kim Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.48 2001/07/19 00:15:32 taca Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.49 2001/11/06 05:39:27 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -1143,7 +1143,7 @@ die(signo)
 	}
 	errno = 0;
 	if (signo)
-		logerror("Exiting on signal %d\n", signo);
+		logerror("Exiting on signal %d", signo);
 	else
 		logerror("Fatal error, exiting");
 	for (p = LogPaths; p && *p; p++)
