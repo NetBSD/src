@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.1 2000/07/03 23:30:33 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.2 2000/07/04 01:29:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
-#include <sparc/dev/sireg.h>
+#include <dev/vme/sireg.h>
 
 /*
  * Transfers smaller than this are done using PIO
