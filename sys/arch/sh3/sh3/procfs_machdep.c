@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.2 2001/01/18 17:48:01 tv Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.3 2002/03/27 10:44:39 uch Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
