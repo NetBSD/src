@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.25 2002/03/25 17:56:08 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.26 2002/06/06 19:44:57 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.25 2002/03/25 17:55:22 he Exp 
+ *	NetBSD: pcidevs,v 1.236.2.26 2002/06/06 19:44:09 he Exp 
  */
 
 /*
@@ -2180,6 +2180,54 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "InBusiness Fast Ethernet LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_0,
+	    0,
+	    "Intel",
+	    "PRO/100 VE Network Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_1,
+	    0,
+	    "Intel",
+	    "PRO/100 VE Network Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_0,
+	    0,
+	    "Intel",
+	    "PRO/100 VM Network Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_1,
+	    0,
+	    "Intel",
+	    "PRO/100 VM Network Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_0,
+	    0,
+	    "Intel",
+	    "82562EH HomePNA Network Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_1,
+	    0,
+	    "Intel",
+	    "82562EH HomePNA Network Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_2,
+	    0,
+	    "Intel",
+	    "82562EH HomePNA Network Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_2,
+	    0,
+	    "Intel",
+	    "PRO/100 VM Network Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER,
