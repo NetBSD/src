@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.17 2001/09/16 12:13:33 wiz Exp $ */
+/* $NetBSD: chio.c,v 1.18 2002/05/02 13:07:01 enami Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,12 +46,12 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.17 2001/09/16 12:13:33 wiz Exp $");
+__RCSID("$NetBSD: chio.c,v 1.18 2002/05/02 13:07:01 enami Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
-#include <sys/chio.h> 
+#include <sys/chio.h>
 #include <sys/cdio.h>	/* for ATAPI CD changer; too bad it uses a lame API */
 
 #include <ctype.h>
@@ -101,7 +101,7 @@ const struct changer_command commands[] = {
 	  do_move },
 
 	{ "exchange",	" <src ET> <src EU> <dst1 ET> <dst1 EU>\n"
-	                "\t\t [<dst2 ET> <dst2 EU>] [inv1] [inv2]",
+			"\t\t [<dst2 ET> <dst2 EU>] [inv1] [inv2]",
 	  do_exchange },
 
 	{ "position",	" <to ET> <to EU> [inv]", do_position },
@@ -122,7 +122,7 @@ const struct changer_command commands[] = {
 	  do_ielem },
 
 	{ "cdlu",	" load|unload <slot>\n"
-	                "\t     abort",
+			"\t     abort",
 	  do_cdlu },
 
 	{ NULL,		NULL,
@@ -184,7 +184,7 @@ main(int argc, char *argv[])
 
 	/* Skip over the command name and call handler. */
 	++argv; --argc;
-	exit ((*commands[i].cc_handler)(commands[i].cc_name, argc, argv));
+	exit((*commands[i].cc_handler)(commands[i].cc_name, argc, argv));
 	/* NOTREACHED */
 }
 
@@ -469,7 +469,7 @@ do_status(const char *cname, int argc, char **argv)
 	int i, chet, count, echet, flags, have_ucount, have_unit;
 	int schet, ucount, unit;
 	size_t size;
-	
+
 	flags = 0;
 	have_ucount = 0;
 	have_unit = 0;
@@ -668,6 +668,7 @@ do_status(const char *cname, int argc, char **argv)
 static int
 do_ielem(const char *cname, int argc, char **argv)
 {
+
 	if (ioctl(changer_fd, CHIOIELEM, NULL))
 		err(1, "%s: CHIOIELEM", changer_name);
 
@@ -805,6 +806,7 @@ bits_to_string(int v, const char *cp)
 static void
 cleanup(void)
 {
+
 	/* Simple enough... */
 	(void)close(changer_fd);
 }
@@ -816,7 +818,7 @@ usage(void)
 
 	(void)fprintf(stderr, "Usage: %s command arg1 arg2 ...\n",
 	    getprogname());
-	
+
 	(void)fprintf(stderr, "Where command (and args) are:\n");
 	for (i = 0; commands[i].cc_name != NULL; i++)
 		(void)fprintf(stderr, "\t%s%s\n", commands[i].cc_name,
