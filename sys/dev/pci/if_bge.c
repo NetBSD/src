@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.31 2003/01/31 05:00:24 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.32 2003/02/09 10:06:16 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -42,7 +42,7 @@
  *
  *	Frank van der Linden <fvdl@wasabisystems.com>
  *	Jason Thorpe <thorpej@wasabisystems.com>
- *	jonathan Stone <joanthan@dsg.stanford.edu>
+ *	Jonathan Stone <jonathan@dsg.stanford.edu>
  *
  * Originally written for FreeBSD by Bill Paul <wpaul@windriver.com>
  * Senior Engineer, Wind River Systems
