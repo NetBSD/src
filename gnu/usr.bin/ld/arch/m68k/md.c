@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.4 1994/04/07 19:43:57 pk Exp $
+ *	$Id: md.c,v 1.5 1994/06/10 15:17:07 pk Exp $
  */
 
 #include <sys/param.h>
@@ -83,7 +83,8 @@ unsigned char		*addr;
 		put_long(addr, relocation);
 		break;
 	default:
-		fatal("Unsupported relocation size: %x", RELOC_TARGET_SIZE(rp));
+		errx(1, "Unsupported relocation size: %x",
+		     RELOC_TARGET_SIZE(rp));
 	}
 }
 

@@ -27,12 +27,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.19 1994/05/25 10:14:37 pk Exp $
+ *	$Id: rtld.c,v 1.20 1994/06/10 15:17:26 pk Exp $
  */
 
 #include <sys/param.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -44,10 +42,14 @@
 #define MAP_COPY	MAP_PRIVATE
 #define MAP_ANON	0
 #endif
+#include <err.h>
 #include <fcntl.h>
 #include <a.out.h>
 #include <stab.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #if __STDC__
 #include <stdarg.h>
 #else
@@ -121,7 +123,9 @@ struct somap_private {
 #define LM_PARENT(smp)	(LM_PRIVATE(smp)->spd_parent)
 
 char			**environ;
+char			*__progname;
 int			errno;
+
 static uid_t		uid, euid;
 static gid_t		gid, egid;
 static int		careful;
@@ -143,14 +147,13 @@ static struct ld_entry	ld_entry = {
 };
 
        void		xprintf __P((char *, ...));
-static void		init_brk __P((void));
 static void		load_objects __P((	struct crt_ldso *,
 						struct _dynamic *));
 static struct so_map	*map_object __P((struct sod *, struct so_map *));
 static struct so_map	*alloc_link_map __P((	char *, struct sod *,
 						struct so_map *, caddr_t,
 						struct _dynamic *));
-static void inline	check_text_reloc __P((	struct relocation_info *,
+static inline void	check_text_reloc __P((	struct relocation_info *,
 						struct so_map *,
 						caddr_t));
 static void		reloc_map __P((struct so_map *));
@@ -188,7 +191,6 @@ struct _dynamic		*dp;
 	int			n;
 	int			nreloc;		/* # of ld.so relocations */
 	struct relocation_info	*reloc;
-	char			**envp;
 	struct so_debug		*ddp;
 	struct so_map		*smp;
 
@@ -217,7 +219,7 @@ struct _dynamic		*dp;
 		md_relocate_simple(reloc, crtp->crt_ba, addr);
 	}
 
-	progname = "ld.so";
+	__progname = "ld.so";
 	if (version >= CRT_VERSION_BSD_3)
 		main_progname = crtp->crt_prog;
 
@@ -237,7 +239,10 @@ struct _dynamic		*dp;
 	}
 
 	/* Setup directory search */
-	std_search_dirs(getenv("LD_LIBRARY_PATH"));
+	add_search_path(getenv("LD_RUN_PATH"));
+	add_search_path(getenv("LD_LIBRARY_PATH"));
+	if (getenv("LD_NOSTD_PATH") == NULL)
+		std_search_path();
 
 	/* Load required objects into the process address space */
 	load_objects(crtp, dp);
@@ -275,12 +280,12 @@ struct _dynamic		*dp;
 		/* Set breakpoint for the benefit of debuggers */
 		if (mprotect(addr, PAGSIZ,
 				PROT_READ|PROT_WRITE|PROT_EXEC) == -1) {
-			perror("mprotect"),
-			fatal("Cannot set breakpoint (%s)\n", main_progname);
+			err(1, "Cannot set breakpoint (%s)", main_progname);
 		}
-		md_set_breakpoint(crtp->crt_bp, &ddp->dd_bpt_shadow);
+		md_set_breakpoint((long)crtp->crt_bp, (long *)&ddp->dd_bpt_shadow);
 		if (mprotect(addr, PAGSIZ, PROT_READ|PROT_EXEC) == -1) {
-			perror("mprotect");
+			err(1, "Cannot re-protect breakpoint (%s)",
+				main_progname);
 		}
 
 		ddp->dd_bpt_addr = crtp->crt_bp;
@@ -335,12 +340,11 @@ struct _dynamic	*dp;
 					char *name = (char *)
 					    (sodp->sod_name + LM_LDBASE(smp));
 					char *fmt = sodp->sod_library ?
-						"%s: lib%s.so.%d.%d: %s\n" :
-						"%s: %s: %s\n";
-					fatal(fmt, main_progname, name,
+						"%s: lib%s.so.%d.%d" :
+						"%s: %s";
+					err(1, fmt, main_progname, name,
 						sodp->sod_major,
-						sodp->sod_minor,
-						strerror(errno));
+						sodp->sod_minor);
 				}
 				newmap = alloc_link_map(NULL, sodp, smp, 0, 0);
 			}
@@ -364,10 +368,10 @@ struct _dynamic	*dp;
 			path = "not found";
 
 		if (sodp->sod_library)
-			printf("\t-l%s.%d => %s (%#x)\n", name,
+			printf("\t-l%s.%d => %s (%p)\n", name,
 					sodp->sod_major, path, smp->som_addr);
 		else
-			printf("\t%s => %s (%#x)\n", name, path, smp->som_addr);
+			printf("\t%s => %s (%p)\n", name, path, smp->som_addr);
 	}
 
 	exit(0);
@@ -476,16 +480,23 @@ again:
 	}
 
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data,
-				PROT_READ|PROT_EXEC,
-				MAP_COPY, fd, 0)) == (caddr_t)-1) {
+	     PROT_READ|PROT_EXEC,
+	     MAP_COPY, fd, 0)) == (caddr_t)-1) {
 		(void)close(fd);
 		return NULL;
 	}
 
+#if 0
 	if (mmap(addr + hdr.a_text, hdr.a_data,
-				PROT_READ|PROT_WRITE|PROT_EXEC,
-				MAP_FIXED|MAP_COPY,
-				fd, hdr.a_text) == (caddr_t)-1) {
+	    PROT_READ|PROT_WRITE|PROT_EXEC,
+	    MAP_FIXED|MAP_COPY,
+	    fd, hdr.a_text) == (caddr_t)-1) {
+		(void)close(fd);
+		return NULL;
+	}
+#endif
+	if (mprotect(addr + hdr.a_text, hdr.a_data,
+	    PROT_READ|PROT_WRITE|PROT_EXEC) != 0) {
 		(void)close(fd);
 		return NULL;
 	}
@@ -495,7 +506,7 @@ again:
 	fd = -1;
 #ifdef NEED_DEV_ZERO
 	if ((fd = open("/dev/zero", O_RDWR, 0)) == -1)
-		perror("/dev/zero");
+		warn("open: %s", "/dev/zero");
 #endif
 	if (hdr.a_bss && mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
 				PROT_READ|PROT_WRITE|PROT_EXEC,
@@ -516,7 +527,7 @@ again:
 	return alloc_link_map(path, sodp, smp, addr, dp);
 }
 
-static void inline
+static inline void
 check_text_reloc(r, smp, addr)
 struct relocation_info	*r;
 struct so_map		*smp;
@@ -543,8 +554,7 @@ caddr_t			addr;
 				LD_TEXTSZ(smp->som_dynamic),
 				PROT_READ|PROT_WRITE|PROT_EXEC) == -1) {
 
-		perror("mprotect"),
-		fatal("Cannot enable writes to %s:%s\n",
+		err(1, "Cannot enable writes to %s:%s",
 					main_progname, smp->som_path);
 	}
 
@@ -592,7 +602,7 @@ reloc_map(smp)
 
 			np = lookup(sym, &src_map, 0/*XXX-jumpslots!*/);
 			if (np == NULL)
-				fatal("Undefined symbol \"%s\" in %s:%s\n",
+				errx(1, "Undefined symbol \"%s\" in %s:%s\n",
 					sym, main_progname, smp->som_path);
 
 			/*
@@ -636,8 +646,7 @@ reloc_map(smp)
 				LD_TEXTSZ(smp->som_dynamic),
 				PROT_READ|PROT_EXEC) == -1) {
 
-			perror("mprotect"),
-			fatal("Cannot disable writes to %s:%s\n",
+			err(1, "Cannot disable writes to %s:%s\n",
 						main_progname, smp->som_path);
 		}
 		smp->som_write = 0;
@@ -681,7 +690,7 @@ static struct rt_symbol 	*rt_symtab[RTC_TABSIZE];
 /*
  * Compute hash value for run-time symbol table
  */
-	static int inline
+	static inline int
 hash_string(key)
 	char *key;
 {
@@ -912,7 +921,7 @@ binder(jsp)
 	}
 
 	if (smp == NULL)
-		fatal("Call to binder from unknown location: %#x\n", jsp);
+		errx(1, "Call to binder from unknown location: %#x\n", jsp);
 
 	index = jsp->reloc_index & JMPSLOT_RELOC_MASK;
 
@@ -922,7 +931,7 @@ binder(jsp)
 
 	np = lookup(sym, &src_map, 1);
 	if (np == NULL)
-		fatal("Undefined symbol \"%s\" called from %s:%s at %#x",
+		errx(1, "Undefined symbol \"%s\" called from %s:%s at %#x",
 				sym, main_progname, smp->som_path, jsp);
 
 	/* Fixup jmpslot so future calls transfer directly to target */
