@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.5 1999/09/24 15:22:32 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.6 1999/09/29 15:58:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -82,15 +82,16 @@ struct ntnode {
 #define	FN_VALID	0x0002
 #define	FN_AATTRNAME	0x0004	/* space allocated for f_attrname */
 struct fnode {
-	struct lock	f_lock;		/* Must be first */
+#ifdef __FreeBSD__
+	struct lock	f_lock;	/* fnode lock >Keep this first< */
+#endif
 	
 	LIST_ENTRY(fnode) f_fnlist;
 	struct vnode   *f_vp;		/* Associatied vnode */
-	struct ntnode  *f_ip;
+	struct ntnode  *f_ip;		/* Associated ntnode */
 	u_long		f_flag;
-	struct vnode   *f_devvp;
-	struct ntfsmount *f_mp;
-	dev_t           f_dev;
+	struct vnode   *f_devvp;	/* vnode of blk dev we live on */
+	dev_t           f_dev;		/* Device associated with the inode. */
 	enum vtype      f_type;
 
 	ntfs_times_t	f_times;	/* $NAME/dirinfo */

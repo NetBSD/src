@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.14 1999/09/29 15:36:08 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.15 1999/09/29 15:58:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -947,7 +947,9 @@ ntfs_vgetex(
 	}
 	dprintf(("ntfs_vget: vnode: %p for ntnode: %d\n", vp,ino));
 
+#ifdef __FreeBSD__
 	lockinit(&fp->f_lock, PINOD, "fnode", 0, 0);
+#endif
 	fp->f_vp = vp;
 	vp->v_data = fp;
 	vp->v_type = fp->f_type;

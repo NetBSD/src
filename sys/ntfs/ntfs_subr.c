@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.15 1999/09/29 15:36:08 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.16 1999/09/29 15:58:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -765,7 +765,6 @@ ntfs_fget(
 
 	fp->f_devvp = ntmp->ntm_devvp;
 	fp->f_dev = ntmp->ntm_dev;
-	fp->f_mp = ntmp;
 
 	fp->f_ip = ip;
 	fp->f_attrname = attrname;
