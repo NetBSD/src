@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.92 2000/08/02 22:24:40 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.93 2000/08/10 18:33:47 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -4073,8 +4073,11 @@ setup_sparcintr:
 	mov	%g6, %o1
 	GLOBTOLOC
 	clr	%g4
+	rdpr	%pil, %l0
 	call	prom_printf
-	 rdpr	%pil, %o2
+	 mov	%l0, %o2
+	wrpr	%g0, 15, %pil
+	ta	1
 	LOCTOGLOB
 	restore
 #endif
@@ -6427,8 +6430,8 @@ _C_LABEL(sigcode):
 	stda	%f48, [%l0] ASI_BLK_P
 2:
 	membar	#StoreLoad
-	lduw	[%fp + BIAS + CC64FSZ], %o0	! sig
-	lduw	[%fp + BIAS + CC64FSZ + 4], %o1	! code
+	lduw	[%fp + BIAS + 128], %o0	! sig
+	lduw	[%fp + BIAS + 128 + 4], %o1	! code
 	call	%g1			! (*sa->sa_handler)(sig,code,scp)
 	 add	%fp, BIAS + 128 + 8, %o2	! scp
 
