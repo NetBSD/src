@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.5 2000/04/29 03:31:46 thorpej Exp $ */
+/* $NetBSD: lock.h,v 1.6 2000/05/02 04:41:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -44,20 +44,22 @@
 #ifndef _ALPHA_LOCK_H_
 #define	_ALPHA_LOCK_H_
 
+typedef	__volatile int		__cpu_simple_lock_t;
+
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
 
-static __inline void __cpu_simple_lock_init __P((__volatile int *))
+static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static __inline void __cpu_simple_lock __P((__volatile int *))
+static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static __inline int __cpu_simple_lock_try __P((__volatile int *))
+static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock __P((__volatile int *))
+static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 
 static __inline void
-__cpu_simple_lock_init(__volatile int *alp)
+__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 
 	__asm __volatile(
@@ -69,7 +71,7 @@ __cpu_simple_lock_init(__volatile int *alp)
 }
 
 static __inline void
-__cpu_simple_lock(__volatile int *alp)
+__cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	unsigned long t0;
 
@@ -100,7 +102,7 @@ __cpu_simple_lock(__volatile int *alp)
 }
 
 static __inline int
-__cpu_simple_lock_try(__volatile int *alp)
+__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	unsigned long t0, v0;
 
@@ -126,7 +128,7 @@ __cpu_simple_lock_try(__volatile int *alp)
 }
 
 static __inline void
-__cpu_simple_unlock(__volatile int *alp)
+__cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
 	__asm __volatile(
