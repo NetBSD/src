@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.46 2005/01/17 04:54:14 atatat Exp $	*/
+/*	$NetBSD: pmap.h,v 1.46.2.1 2005/03/26 18:19:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -180,8 +180,10 @@ void	pmap_prefer(vaddr_t, vaddr_t *, int);
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
  */
-#define	PMAP_MAP_POOLPAGE(pa)	MIPS_PHYS_TO_KSEG0((pa))
-#define	PMAP_UNMAP_POOLPAGE(va)	MIPS_KSEG0_TO_PHYS((va))
+vaddr_t mips_pmap_map_poolpage(paddr_t);
+paddr_t mips_pmap_unmap_poolpage(vaddr_t);
+#define	PMAP_MAP_POOLPAGE(pa)	mips_pmap_map_poolpage(pa)
+#define	PMAP_UNMAP_POOLPAGE(va)	mips_pmap_unmap_poolpage(va)
 
 /*
  * Other hooks for the pool allocator.

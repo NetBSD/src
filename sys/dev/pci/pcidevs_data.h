@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.687.2.3 2005/03/19 08:35:12 yamt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.687.2.4 2005/03/26 18:19:19 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701 2005/03/16 06:58:56 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.704 2005/03/24 13:17:08 tron Exp
  */
 
 /*
@@ -2896,6 +2896,10 @@ const struct pci_product pci_products[] = {
 	    "ASR-2200S",
 	},
 	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2410SA,
+	    "ASR-2410SA",
+	},
+	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAR2810SA,
 	    "AAR-2810SA",
 	},
@@ -3640,6 +3644,14 @@ const struct pci_product pci_products[] = {
 	    "Radeon 9600TX",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9700_PRO,
+	    "Radeon 9700 Pro",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9800_PRO,
+	    "Radeon 9800 Pro",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_MOB_T2,
 	    "Radeon Mobility T2 (M10) NT",
 	},
@@ -3654,6 +3666,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_2,
 	    "Radeon 9600TX Secondary",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9800_PRO_2,
+	    "Radeon 9800 Pro Secondary",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCI,
@@ -5622,6 +5638,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_SERDES,
 	    "i82546GB Gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541PI,
+	    "i82541PI Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
@@ -10116,4 +10136,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1950;
+const int pci_nproducts = 1955;

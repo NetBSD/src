@@ -1,7 +1,7 @@
-/*	$NetBSD: esl.c,v 1.15 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: esl.c,v 1.15.4.1 2005/03/26 18:19:19 yamt Exp $	*/
 
 /*
- * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
+ * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.15 2005/01/15 15:19:52 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.15.4.1 2005/03/26 18:19:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

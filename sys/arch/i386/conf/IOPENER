@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.54.6.2 2005/03/19 08:33:01 yamt Exp $
+#	$NetBSD: IOPENER,v 1.54.6.3 2005/03/26 18:19:17 yamt Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.54.6.2 $"
+#ident 		"IOPENER-$Revision: 1.54.6.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -248,6 +248,7 @@ wsdisplay*	at vga? console ?
 wskbd* 		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
 

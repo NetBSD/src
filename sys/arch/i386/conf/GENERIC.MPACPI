@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.17.2.2 2005/03/19 08:33:01 yamt Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.17.2.3 2005/03/26 18:19:17 yamt Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.17.2.2 $"
+#ident 		"GENERIC-$Revision: 1.17.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -301,6 +301,7 @@ acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
+attimer*	at acpi?		# AT Timer
 com* 		at acpi?		# Serial communications interface
 fdc* 		at acpi?		# Floppy disk controller
 joy*		at acpi?		# Joystick/Game port
@@ -308,6 +309,7 @@ lpt* 		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
+pcppi*          at acpi?                # AT-style speaker sound
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 # Sony Vaio jog dial
@@ -454,6 +456,7 @@ wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
 

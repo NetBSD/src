@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.4.1 2005/03/19 08:33:13 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.4.2 2005/03/26 18:19:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.4.1 2005/03/19 08:33:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.4.2 2005/03/26 18:19:17 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -865,9 +865,7 @@ void mips_machdep_cache_config(void)
 #if defined(MIPS3)
 	case MIPS_R5000:
 	case MIPS_RM5200:
-		mips_sdcache_forceinv = 1;
 		break;
-
 #endif
 	}
 }

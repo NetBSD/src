@@ -1,4 +1,4 @@
-# $NetBSD: VIRTUALPC,v 1.15.2.2 2005/03/19 08:33:02 yamt Exp $
+# $NetBSD: VIRTUALPC,v 1.15.2.3 2005/03/26 18:19:17 yamt Exp $
 #
 # VIRTUALPC machine description file --
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VIRTUALPC-$Revision: 1.15.2.2 $"
+#ident 		"VIRTUALPC-$Revision: 1.15.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -361,6 +361,7 @@ wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
 

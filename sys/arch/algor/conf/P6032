@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.25.6.2 2005/03/19 08:32:44 yamt Exp $
+#	$NetBSD: P6032,v 1.25.6.3 2005/03/26 18:19:16 yamt Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.25.6.2 $"
+#ident 		"P6032-$Revision: 1.25.6.3 $"
 
 maxusers 32
 
@@ -213,6 +213,7 @@ mcclock* at	isa? port 0x70
 #pckbc*	at	isa?				# PC keyboard controller
 #pckbd*	at	pckbc?				# PC keyboard (kbd port)
 #pms*	at	pckbc?				# PS/2-style mouse (aux port)
+#attimer*	at	isa?			# AT Timer
 #pcppi*	at	isa?				# PC prog. periph. interface
 #spkr0	at	pcppi?				# IBM BASIC emulation
 #isabeep0 at	pcppi?				# "keyboard" beep

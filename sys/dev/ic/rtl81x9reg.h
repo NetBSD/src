@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.9.4.1 2005/03/19 08:34:03 yamt Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.9.4.2 2005/03/26 18:19:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -553,12 +553,11 @@ struct rtk_stats {
 };
 
 #define RTK_RX_DESC_CNT		64
-#define RTK_TX_DESC_CNT		64
+#define RTK_TX_DESC_CNT_8139	64
+#define RTK_TX_DESC_CNT_8169	1024
 #define RTK_RX_LIST_SZ		(RTK_RX_DESC_CNT * sizeof(struct rtk_desc))
-#define RTK_TX_LIST_SZ		(RTK_TX_DESC_CNT * sizeof(struct rtk_desc))
 #define RTK_RING_ALIGN		256
 #define RTK_IFQ_MAXLEN		512
-#define RTK_DESC_INC(x)		(x = (x + 1) % RTK_TX_DESC_CNT)
 #define RTK_OWN(x)		(le32toh((x)->rtk_cmdstat) & RTK_RDESC_STAT_OWN)
 #define RTK_RXBYTES(x)		(le32toh((x)->rtk_cmdstat) & sc->rtk_rxlenmask)
 #define RTK_PKTSZ(x)		((x)/* >> 3*/)

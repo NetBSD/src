@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.83.6.1 2005/03/19 08:34:32 yamt Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.83.6.2 2005/03/26 18:19:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.83.6.1 2005/03/19 08:34:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.83.6.2 2005/03/26 18:19:19 yamt Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -5050,7 +5050,7 @@ fwohci_ir_read(struct device *dev, ieee1394_ir_tag_t tag, struct uio *uio,
 	}
 #endif /* USEDRAIN */
 
-	fd = irc->irc_readtop;
+	fdprev = fd = irc->irc_readtop;
 
 #if 0
 	if ((irc->irc_status & IRC_STATUS_RECEIVE) == 0
@@ -5058,7 +5058,6 @@ fwohci_ir_read(struct device *dev, ieee1394_ir_tag_t tag, struct uio *uio,
 		unsigned int s;
 		int i = 0;
 
-		fdprev = fd;
 		while (fd->fd_status != 0) {
 			s = data[14] << 8;
 			s |= data[15];
