@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.184 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.185 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -437,3 +437,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	sysinst: New disk editing menus and general rototil. [dsl 20030728]
 	ftp(1): $FTPUSERAGENT overrides the default HTTP User-Agent.
 		[lukem 20030731]
+	hp300: Switch to MI SCSI at last. [tsutsui 20030801]
