@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.16 1999/05/12 18:50:51 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.17 1999/08/25 02:04:05 christos Exp $	*/
 /*	Id: if_ppp.h,v 1.16 1997/04/30 05:46:04 paulus Exp 	*/
 
 /*
@@ -39,10 +39,12 @@
 #define SC_LOG_OUTPKT	0x00040000	/* log contents of pkts sent */
 #define SC_LOG_RAWIN	0x00080000	/* log all chars received */
 #define SC_LOG_FLUSH	0x00100000	/* log all chars flushed */
+#define SC_SYNC		0x00200000	/* synchronous HDLC */
 #define SC_RCV_B7_0	0x01000000	/* have rcvd char with bit 7 = 0 */
 #define SC_RCV_B7_1	0x02000000	/* have rcvd char with bit 7 = 1 */
 #define SC_RCV_EVNP	0x04000000	/* have rcvd char with even parity */
 #define SC_RCV_ODDP	0x08000000	/* have rcvd char with odd parity */
+
 #define	SC_MASK		0x0fff00ff	/* bits that user can change */
 
 /*
