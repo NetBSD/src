@@ -1,4 +1,4 @@
-/*	$NetBSD: ca.c,v 1.7.2.1 2000/06/21 10:39:33 ad Exp $	*/
+/*	$NetBSD: ca.c,v 1.7.2.2 2001/05/01 17:05:50 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.7.2.1 2000/06/21 10:39:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.7.2.2 2001/05/01 17:05:50 he Exp $");
 
 #include "rnd.h"
 
@@ -322,6 +322,9 @@ caioctl(dev, cmd, addr, flag, p)
 {
 	struct ca_softc *sc;
 	int part, unit, error;
+#ifdef __HAVE_OLD_DISKLABEL
+	struct disklabel newlabel;
+#endif
 
 	unit = CAUNIT(dev);
 	part = CAPART(dev);
@@ -332,6 +335,15 @@ caioctl(dev, cmd, addr, flag, p)
 	case DIOCGDINFO:
 		memcpy(addr, sc->sc_dk.dk_label, sizeof(struct disklabel));
 		return (0);
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDINFO:
+		newlabel = *(sc->sc_dk.dk_label);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			return ENOTTY;
+		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
+		return (0);
+#endif
+
 
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = sc->sc_dk.dk_label;
@@ -341,6 +353,13 @@ caioctl(dev, cmd, addr, flag, p)
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCWDINFO:
+	case ODIOCSDINFO:
+#endif
+	{
+		struct disklabel *lp;
+
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
@@ -348,16 +367,29 @@ caioctl(dev, cmd, addr, flag, p)
 			return (error);
 		sc->sc_flags |= CAF_LABELLING;
 
-		error = setdisklabel(sc->sc_dk.dk_label,
-		    (struct disklabel *)addr, /*sc->sc_dk.dk_openmask : */0,
-		    sc->sc_dk.dk_cpulabel);
-		if (error == 0 && cmd == DIOCWDINFO)
+#ifdef __HAVE_OLD_DISKLABEL
+		if (cmd == ODIOCSDINFO || cmd == ODIOCWDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
+			lp = &newlabel;
+		} else
+#endif
+		lp = (struct disklabel *)addr;
+
+		error = setdisklabel(sc->sc_dk.dk_label, lp,
+		    /*sc->sc_dk.dk_openmask : */0, sc->sc_dk.dk_cpulabel);
+		if (error == 0 && (cmd == DIOCWDINFO
+#ifdef __HAVE_OLD_DISKLABEL
+		    || cmd == ODIOCWDINFO)
+#endif
+		    )
 			error = writedisklabel(CALABELDEV(dev), castrategy, 
 			    sc->sc_dk.dk_label, sc->sc_dk.dk_cpulabel);
 
 		sc->sc_flags &= ~CAF_LABELLING;
 		caunlock(sc);
 		break;
+	}
 
 	case DIOCKLABEL:
 		/* XXX */
@@ -371,6 +403,15 @@ caioctl(dev, cmd, addr, flag, p)
 		else
 			sc->sc_flags &= ~CAF_WLABEL;
 		break;
+
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDEFLABEL:
+		cagetdefaultlabel(sc, &newlabel);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			return ENOTTY;
+		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
+		break;
+#endif
 
 	case DIOCGDEFLABEL:
 		cagetdefaultlabel(sc, (struct disklabel *)addr);
