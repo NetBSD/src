@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.105 2004/04/20 20:29:22 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.106 2004/04/21 03:12:52 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1055,3 +1055,10 @@ sys/netinet/tcp_var.h				patch
 	Rate-limit ACKs against RSTs and SYNs.
 	If SYN is coming and RCV.NXT == SEG.SEQ, then ACK with value - 1.
 	[itojun, ticket #169]
+
+sys/compat/svr4_32/svr4_32_stat.c		1.14
+sys/compat/svr4/svr4_stat.c			1.51
+
+	Fix the sysinfo(SI_HW_SERIAL, emulation so that we actually get the
+	hostid of the machine rather than always getting "0"
+	[dmcmahill, ticket #161]
