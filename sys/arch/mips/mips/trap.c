@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54 1997/05/25 09:56:48 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.55 1997/05/25 10:01:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1040,7 +1040,7 @@ interrupt(statusReg, causeReg, pc /* XXX what, args */ )
 	/* process network interrupt if we trapped or will very soon */
 	/* XXX fixme: operator precedence botch? */
 	if ((mask & MACH_SOFT_INT_MASK_1) ||
-	    netisr && (statusReg & MACH_SOFT_INT_MASK_1)) {
+	    (netisr && (statusReg & MACH_SOFT_INT_MASK_1))) {
 		clearsoftnet();
 		cnt.v_soft++;
 		intrcnt[SOFTNET_INTR]++;
