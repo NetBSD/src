@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.4 2004/04/01 09:24:58 martin Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.5 2004/04/22 01:01:41 matt Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -79,8 +79,6 @@ MALLOC_DEFINE(M_IPFILTER, "IP Filter", "IP Filter packet filter data structures"
 #if __NetBSD_Version__ >= 105009999
 # define	csuminfo	csum_flags
 #endif
-
-extern	struct	protosw	inetsw[];
 
 static	int	(*fr_savep) __P((ip_t *, int, void *, int, struct mbuf **));
 static	int	fr_send_ip __P((fr_info_t *, mb_t *, mb_t **));
