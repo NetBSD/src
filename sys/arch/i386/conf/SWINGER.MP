@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER.MP,v 1.2 2002/10/01 12:56:45 fvdl Exp $
+#	$NetBSD: SWINGER.MP,v 1.3 2003/01/07 18:55:36 fvdl Exp $
 #
 #	SWINGER.MP -- Swinger, plus enable Multiprocessor support.
 #
@@ -11,6 +11,7 @@ options 	COM_MPLOCK	# com MP locking; REQUIRED on MP i386
 #options 	LOCKDEBUG
 options 	MPDEBUG
 options 	MPVERBOSE
+options 	MPBIOS
 #options 	DEBUG
 
 ioapic*		at mainbus? apid ?
