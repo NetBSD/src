@@ -3,11 +3,13 @@
 ./usr/include/machine/asm.h
 ./usr/include/machine/cdefs.h
 ./usr/include/machine/cpu.h
+./usr/include/machine/cpufunc.h
 ./usr/include/machine/db_machdep.h
 ./usr/include/machine/disklabel.h
 ./usr/include/machine/endian.h
 ./usr/include/machine/exec.h
 ./usr/include/machine/float.h
+./usr/include/machine/fpu.h
 ./usr/include/machine/frame.h
 ./usr/include/machine/icu.h
 ./usr/include/machine/ieeefp.h
@@ -20,6 +22,7 @@
 ./usr/include/machine/proc.h
 ./usr/include/machine/profile.h
 ./usr/include/machine/psl.h
+./usr/include/machine/pte.h
 ./usr/include/machine/ptrace.h
 ./usr/include/machine/reg.h
 ./usr/include/machine/setjmp.h
