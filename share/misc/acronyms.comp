@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.46 2004/07/16 01:07:02 xtraeme Exp $
+$NetBSD: acronyms.comp,v 1.47 2004/11/11 08:42:27 grant Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
@@ -153,6 +153,7 @@ PROM	programmable read only memory
 PTE	page table entry
 PTLA	pseudo top level aggregator
 PTP	page table page
+QOS	quality of service
 RAID	redundant array of inexpensive disks
 RAM	random access memory
 RCS	revision control system
