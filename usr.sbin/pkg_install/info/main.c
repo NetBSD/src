@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.36 2003/06/19 08:54:29 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2003/09/02 07:34:57 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.36 2003/06/19 08:54:29 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2003/09/02 07:34:57 jlam Exp $");
 #endif
 #endif
 
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: main.c,v 1.36 2003/06/19 08:54:29 agc Exp $");
 #include "lib.h"
 #include "info.h"
 
-static const char Options[] = "aBbcDde:fFhIikLl:mnpqRrsSvV";
+static const char Options[] = "aBbcDde:fFhIiK:kLl:mNnpqRrsSvV";
 
 int     Flags = 0;
 Boolean AllInstalled = FALSE;
@@ -55,7 +55,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "%s\n%s\n%s\n",
-	    "usage: pkg_info [-BbcDdFfIikLmnpqRrSsVvh] [-e package] [-l prefix]",
+	    "usage: pkg_info [-BbcDdFfIikLmNnpqRrSsVvh] [-e package] [-l prefix]",
 	    "                pkg-name [pkg-name ...]",
 	    "       pkg_info -a [flags]");
 	exit(1);
@@ -115,6 +115,10 @@ main(int argc, char **argv)
 			Flags |= SHOW_INSTALL;
 			break;
 
+		case 'K':
+			_pkgdb_setPKGDB_DIR(optarg);
+			break;
+
 		case 'k':
 			Flags |= SHOW_DEINSTALL;
 			break;
@@ -129,6 +133,10 @@ main(int argc, char **argv)
 
 		case 'm':
 			Flags |= SHOW_MTREE;
+			break;
+
+		case 'N':
+			Flags |= SHOW_BLD_DEPENDS;
 			break;
 
 		case 'n':
@@ -164,7 +172,7 @@ main(int argc, char **argv)
 			/* Reasonable definition of 'everything' */
 			Flags = SHOW_COMMENT | SHOW_DESC | SHOW_PLIST | SHOW_INSTALL |
 			    SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE |
-			    SHOW_REQBY | SHOW_DEPENDS | SHOW_PKG_SIZE | SHOW_ALL_SIZE;
+			    SHOW_REQBY | SHOW_BLD_DEPENDS | SHOW_DEPENDS | SHOW_PKG_SIZE | SHOW_ALL_SIZE;
 			break;
 
 		case 'V':
@@ -244,9 +252,8 @@ main(int argc, char **argv)
 					errx(EXIT_FAILURE, "No matching pkg for %s.", *argv);
 			} else {
 				char   *dbdir;
-				char   *tmp;
 
-				dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
+				dbdir = _pkgdb_getPKGDB_DIR();
 				if (**argv == '/' && strncmp(*argv, dbdir, strlen(dbdir)) == 0) {
 					*argv += strlen(dbdir) + 1;
 					if ((*argv)[strlen(*argv) - 1] == '/') {

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.46 2003/07/14 06:17:55 itojun Exp $	*/
+/*	$NetBSD: perform.c,v 1.47 2003/09/02 07:34:58 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.46 2003/07/14 06:17:55 itojun Exp $");
+__RCSID("$NetBSD: perform.c,v 1.47 2003/09/02 07:34:58 jlam Exp $");
 #endif
 #endif
 
@@ -118,11 +118,8 @@ pkg_do(char *pkg)
 	         * It's not an uninstalled package, try and find it among the
 	         * installed
 	         */
-		char   *tmp;
-
 		(void) snprintf(log_dir, sizeof(log_dir), "%s/%s",
-		    (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-		    pkg);
+		    _pkgdb_getPKGDB_DIR(), pkg);
 		if (!fexists(log_dir) || !isdir(log_dir)) {
 			{
 				/* Check if the given package name matches
@@ -184,6 +181,9 @@ pkg_do(char *pkg)
 		}
 		if (Flags & SHOW_DEPENDS) {
 			show_depends("Requires:\n", &plist);
+		}
+		if (Flags & SHOW_BLD_DEPENDS) {
+			show_bld_depends("Built using:\n", &plist);
 		}
 		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME)) {
 			show_file("Required by:\n", REQUIRED_BY_FNAME);
@@ -313,19 +313,19 @@ int
 pkg_perform(lpkg_head_t *pkghead)
 {
 	struct dirent *dp;
-	char   *tmp;
+	char   *dbdir;
 	DIR    *dirp;
 	int     err_cnt = 0;
 
 	signal(SIGINT, cleanup);
 
-	tmp = _pkgdb_getPKGDB_DIR();
+	dbdir = _pkgdb_getPKGDB_DIR();
 
 	/* Overriding action? */
 	if (CheckPkg) {
-		err_cnt += CheckForPkg(CheckPkg, tmp);
+		err_cnt += CheckForPkg(CheckPkg, dbdir);
 	} else if (AllInstalled) {
-		if (!(isdir(tmp) || islinktodir(tmp)))
+		if (!(isdir(dbdir) || islinktodir(dbdir)))
 			return 1;
 
 		if (File2Pkg) {
@@ -335,7 +335,7 @@ pkg_perform(lpkg_head_t *pkghead)
 
 		} else {
 			/* Show all packges with description */
-			if ((dirp = opendir(tmp)) != (DIR *) NULL) {
+			if ((dirp = opendir(dbdir)) != (DIR *) NULL) {
 				while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
 					char    tmp2[FILENAME_MAX];
 
@@ -344,7 +344,7 @@ pkg_perform(lpkg_head_t *pkghead)
 						continue;
 
 					(void) snprintf(tmp2, sizeof(tmp2), "%s/%s",
-					    tmp, dp->d_name);
+					    dbdir, dp->d_name);
 					if (isfile(tmp2))
 						continue;
 
