@@ -192,7 +192,7 @@ struct disklabel {
 #define	DTYPE_VND		12		/* vnode pseudo-disk */
 #define DTYPE_ATAPI		13		/* ATAPI */
 #define	DTYPE_RAID		14		/* RAIDframe */
-#define	DTYPE_LSU		15		/* logical storage unit */
+#define	DTYPE_LD		15		/* logical disk */
 
 #ifdef DKTYPENAMES
 static const char *const dktypenames[] = {
@@ -211,7 +211,7 @@ static const char *const dktypenames[] = {
 	"vnd",
 	"ATAPI",
 	"RAID",
-	"lsu",
+	"ld",
 	NULL
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)

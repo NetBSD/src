@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.136 2000/11/19 14:23:34 tsutsui Exp $
+# $NetBSD: ALPHA,v 1.137 2000/11/26 17:44:07 ad Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.136 $"
+ident		"ALPHA-$Revision: 1.137 $"
 
 maxusers 32
 
@@ -406,7 +406,7 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 fd*	at	fdc? drive ?
 
 # Hardware RAID devices
-lsu*	at	cac? unit ?
+ld*	at	cac? unit ?
 
 # USB bus support
 usb*	at uhci?
