@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 2002/08/10 16:28:49 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42 2002/08/10 18:49:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -350,6 +350,7 @@ vmapbuf(bp, len)
 	vaddr_t faddr, taddr;
 	vsize_t off;
 	paddr_t pa;
+	int prot = VM_PROT_READ | ((bp->b_flags & B_READ) ? VM_PROT_WRITE : 0);
 
 #ifdef	DIAGNOSTIC
 	if (!(bp->b_flags & B_PHYS))
@@ -370,8 +371,7 @@ vmapbuf(bp, len)
 		 * Use pmap_enter so the referenced and modified bits are
 		 * appropriately set.
 		 */
-		pmap_enter(pmap_kernel(), taddr, pa,
-		    VM_PROT_READ|VM_PROT_WRITE, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_enter(pmap_kernel(), taddr, pa, prot, prot|PMAP_WIRED);
 		faddr += NBPG;
 		taddr += NBPG;
 	}
