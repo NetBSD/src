@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: reg.h,v 1.2 1999/05/12 01:11:54 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,7 +132,6 @@ struct reg {
 	int64_t	r_tstate;	/* tstate register */
 	int64_t	r_pc;		/* return pc */
 	int64_t	r_npc;		/* return npc */
-	char	r_tl;		/* trap level register -- 3 bits */
 	int	r_y;		/* %y register -- 32-bits */
 	int64_t	r_global[8];	/* global registers in trap's caller */
 	int64_t	r_out[8];	/* output registers in trap's caller */
@@ -169,6 +168,16 @@ struct fpstate {
 struct fpreg {
 	u_int	fr_regs[64];		/* our view is 64 32-bit registers */
 	int64_t	fr_fsr;			/* %fsr */
+	int	fr_qsize;		/* actual queue depth */
+	struct	fp_qentry fr_queue[FP_QSIZE];	/* queue contents */
+};
+
+/*
+ * 32-bit fpreg used by 32-bit sparc CPUs
+ */
+struct fpreg32 {
+	u_int	fr_regs[32];		/* our view is 32 32-bit registers */
+	int	fr_fsr;			/* %fsr */
 	int	fr_qsize;		/* actual queue depth */
 	struct	fp_qentry fr_queue[FP_QSIZE];	/* queue contents */
 };
