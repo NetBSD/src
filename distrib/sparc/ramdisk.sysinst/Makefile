@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.8 2000/08/22 14:11:45 abs Exp $
+#	$NetBSD: Makefile,v 1.9 2000/08/24 13:38:33 abs Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
 HACKSRC=	${TOP}/../utils/libhack
 SRCROOT=	${TOP}/../..
 WARNS=1
-COPTS+=-Os
 
 .if ${MACHINE_ARCH} == "i386"
 RAW_PART=	d
