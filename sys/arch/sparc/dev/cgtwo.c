@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.23 1998/01/12 20:23:45 thorpej Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.24 1998/01/25 16:38:01 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,9 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 #include <machine/fbvar.h>
+
+#include <dev/vme/vmevar.h>
+
 #if defined(SUN4)
 #include <machine/eeprom.h>
 #endif
@@ -79,8 +82,9 @@
 struct cgtwo_softc {
 	struct	device sc_dev;		/* base device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
-	struct rom_reg	sc_phys;	/* display RAM (phys addr) */
-	int	sc_bustype;		/* type of bus we live on */
+	vme_addr_t		sc_paddr;
+	vme_chipset_tag_t	sc_ct;
+	bus_space_tag_t		sc_bt;
 	volatile struct cg2statusreg *sc_reg;	/* CG2 control registers */
 	volatile u_short *sc_cmap;
 #define sc_redmap(sc)	((sc)->sc_cmap)
@@ -121,74 +125,57 @@ cgtwomatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
-#if defined(SUN4)
-	caddr_t tmp;
-#endif
+	struct vme_attach_args	*va = aux;
+	vme_chipset_tag_t	ct = va->vma_chipset_tag;
+	bus_space_tag_t		bt = va->vma_bustag;
+	vme_mod_t		mod;
 
 	/*
 	 * Mask out invalid flags from the user.
 	 */
 	cf->cf_flags &= FB_USERMASK;
 
-	if (ca->ca_bustype != BUS_VME16)
-		return (0);
+	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
+	if (vme_bus_probe(ct, bt, va->vma_reg[0] + CG2_CTLREG_OFF, 2, mod)) {
+		return (1);
+	}
 
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
-		return (0);
-
-#if defined(SUN4)
-	if (!CPU_ISSUN4 || cf->cf_unit != 0)
-		return (0);
-
-	/* XXX - Must do our own mapping at CG2_CTLREG_OFF */
-	bus_untmp();
-	tmp = (caddr_t)mapdev(ra->ra_reg, TMPMAP_VA, CG2_CTLREG_OFF, NBPG);
-	if (probeget(tmp, 2) != -1)
-		return 1;
-#endif
-	return 0;
+	return (0);
 }
 
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-cgtwoattach(parent, self, args)
+cgtwoattach(parent, self, aux)
 	struct device *parent, *self;
-	void *args;
+	void *aux;
 {
+	struct vme_attach_args	*va = aux;
+	vme_chipset_tag_t	ct = va->vma_chipset_tag;
+	bus_space_tag_t		bt = va->vma_bustag;
+	bus_space_handle_t	bh;
+	vme_mod_t		mod;
 	register struct cgtwo_softc *sc = (struct cgtwo_softc *)self;
-	register struct confargs *ca = args;
 	register int node = 0;
 	int isconsole = 0;
 	char *nam = NULL;
 
+	sc->sc_ct = ct;
+	sc->sc_bt = bt;
 	sc->sc_fb.fb_driver = &cgtwofbdriver;
 	sc->sc_fb.fb_device = &sc->sc_dev;
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2COLOR;
 	sc->sc_fb.fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
-	switch (ca->ca_bustype) {
-	case BUS_VME16:
-		node = 0;
-		nam = "cgtwo";
-		break;
-
-	default:
-		panic("cgtwoattach: impossible bustype");
-		/* NOTREACHED */
-	}
-
 	sc->sc_fb.fb_type.fb_depth = 8;
 	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
-	    1152, 900, node, ca->ca_bustype);
+	    1152, 900, node, BUS_VME16 /* XXX*/);
 
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = roundup(CG2_MAPPED_SIZE, NBPG);
 	printf(": %s, %d x %d", nam,
-	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
+	       sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 
 	/*
 	 * When the ROM has mapped in a cgtwo display, the address
@@ -209,29 +196,32 @@ cgtwoattach(parent, self, args)
 			isconsole = 0;
 	}
 #endif
-	sc->sc_phys = ca->ca_ra.ra_reg[0];
-	/* Apparently, the pixels are 32-bit data space */
-	sc->sc_phys.rr_iospace = PMAP_VME32;
-	sc->sc_bustype = ca->ca_bustype;
 
-	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
-		/* this probably cannot happen, but what the heck */
-		sc->sc_fb.fb_pixels = mapiodev(&sc->sc_phys, CG2_PIXMAP_OFF,
-					       CG2_PIXMAP_SIZE);
+	sc->sc_paddr = va->vma_reg[0];
+	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D;
+
+	if (isconsole) {
+		if (vme_bus_map(ct, sc->sc_paddr + CG2_PIXMAP_OFF,
+				CG2_PIXMAP_SIZE, mod, bt, &bh) != 0)
+			panic("cgtwo: vme_map pixels");
+
+		sc->sc_fb.fb_pixels = (caddr_t)bh;
 	}
+
 #ifndef offsetof
 #define	offsetof(type, member)  ((size_t)(&((type *)0)->member))
 #endif
+	if (vme_bus_map(ct, sc->sc_paddr + CG2_ROPMEM_OFF +
+				offsetof(struct cg2fb, status.reg),
+			sizeof(struct cg2statusreg), mod, bt, &bh) != 0)
+		panic("cgtwo: vme_map status");
+	sc->sc_reg = (volatile struct cg2statusreg *)bh;
 
-	sc->sc_reg = (volatile struct cg2statusreg *)
-	    mapiodev(ca->ca_ra.ra_reg,
-		     CG2_ROPMEM_OFF + offsetof(struct cg2fb, status.reg),
-		     sizeof(struct cg2statusreg));
-
-	sc->sc_cmap = (volatile u_short *)
-	    mapiodev(ca->ca_ra.ra_reg,
-		     CG2_ROPMEM_OFF + offsetof(struct cg2fb, redmap[0]),
-		     3 * CG2_CMSIZE);
+	if (vme_bus_map(ct, sc->sc_paddr + CG2_ROPMEM_OFF +
+				offsetof(struct cg2fb, redmap[0]),
+			3 * CG2_CMSIZE, mod, bt, &bh) != 0)
+		panic("cgtwo: vme_map cmap");
+	sc->sc_cmap = (volatile u_short *)bh;
 
 	if (isconsole) {
 		printf(" (console)\n");
@@ -432,6 +422,8 @@ cgtwommap(dev, off, prot)
 	int off, prot;
 {
 	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
+	vme_mod_t mod;
+	int handle;
 
 	if (off & PGOFSET)
 		panic("cgtwommap");
@@ -439,5 +431,12 @@ cgtwommap(dev, off, prot)
 	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 
-	return (REG2PHYS(&sc->sc_phys, off) | PMAP_NC);
+	/* Apparently, the pixels are in 32-bit data space */
+	mod = VMEMOD_A24 | VMEMOD_S | VMEMOD_D | VMEMOD_D32;
+
+	if (vme_bus_mmap_cookie(sc->sc_ct, sc->sc_paddr + off,
+				mod, sc->sc_bt, &handle) != 0)
+		panic("cgtwommap");
+
+	return (handle);
 }
