@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/18 05:59:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2001/04/19 14:41:33 wiz Exp $
+
+.include "../Makefile.lib"
+
+DIST=		${IDIST}/src/utils/pfbtops
+.PATH:		${DIST}
 
 PROG=		pfbtops
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)
 
-.include "../../Makefile.inc"
-.include "../Makefile.cfg"
 .include <bsd.prog.mk>

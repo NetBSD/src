@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/25 10:12:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2001/04/19 14:41:41 wiz Exp $
+
+.include "../Makefile.lib"
+
+DIST=		${IDIST}/src/preproc/soelim
+.PATH:		${DIST}
 
 PROG=		soelim
 SRCS=		soelim.cc
-CPPFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)
 
-.include "../../Makefile.inc"
-.include "../Makefile.cfg"
 .include <bsd.prog.mk>

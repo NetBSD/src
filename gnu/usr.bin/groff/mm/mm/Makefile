@@ -1,4 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2000/01/23 22:19:27 mycroft Exp $
+#	$NetBSD: Makefile,v 1.7 2001/04/19 14:41:32 wiz Exp $
+
+.include "../../Makefile.path"
+
+DIST=		${IIDIST}/contrib/mm/mm
+.PATH:		${DIST}
 
 .include <bsd.own.mk>
 

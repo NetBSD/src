@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.7 1997/05/09 04:46:29 mycroft Exp $
+#	$NetBSD: Makefile,v 1.8 2001/04/19 14:40:42 wiz Exp $
+
+.include "../Makefile.path"
+
+DIST=		${IDIST}/src/utils/afmtodit
+.PATH:		${DIST}
 
 MAN=		afmtodit.1
-SCRIPT=afmtodit.pl
+SCRIPTS=	afmtodit.pl
+SCRIPTSNAME=	afmtodit
 
-.include "../../Makefile.inc"
-.include "../Makefile.cfg"
 .include <bsd.prog.mk>

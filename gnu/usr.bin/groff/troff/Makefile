@@ -1,22 +1,27 @@
-#	$NetBSD: Makefile,v 1.16 1999/02/13 02:54:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2001/04/19 14:41:47 wiz Exp $
 
-.include <bsd.own.mk>
+.include "../Makefile.lib"
+
+DIST=		${IDIST}/src/roff/troff
+.PATH:		${DIST}
 
 PROG=		troff
-SRCS=		env.cc node.cc input.cc div.cc symbol.cc dictionary.cc reg.cc \
-		number.cc majorminor.cc
-CPPFLAGS+=	-I$(.CURDIR)/../include
+SRCS=		column.cc dictionary.cc div.cc env.cc input.cc node.cc \
+		number.cc reg.cc symbol.cc majorminor.cc
 LDADD+=		$(LIBGROFF) -lm
 DPADD+=		$(LIBGROFF) $(LIBM)
 
 CLEANFILES+=	majorminor.cc
-majorminor.cc: $(.CURDIR)/../VERSION
+majorminor.cc: $(IDIST)/VERSION
 	@echo Making $@
 	@-rm -f $@
 	@echo const char \*major_version = \
-	\"`sed -e 's/^\([^.]*\)\..*$$/\1/' $(.CURDIR)/../VERSION`\"\; >$@
+	\"`sed -e 's/^\([^.]*\)\..*$$/\1/' $(IDIST)/VERSION`\"\; >$@
 	@echo const char \*minor_version = \
-	\"`sed -e 's/^[^.]*\.\([0-9]*\).*$$/\1/' $(.CURDIR)/../VERSION`\"\; >>$@
+	\"`sed -e 's/^[^.]*\.\([0-9]*\).*$$/\1/' $(IDIST)/VERSION`\"\; >>$@
+	@echo const char \*revision = \"`cat $(IDIST)/REVISION`\"\; >>$@
+
+.include <bsd.own.mk>
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR=/usr/share/tmac
@@ -26,6 +31,4 @@ FILES=hyphen.us
 FILESDIR=${TMACDIR}
 .endif
 
-.include "../../Makefile.inc"
-.include "../Makefile.cfg"
 .include <bsd.prog.mk>
