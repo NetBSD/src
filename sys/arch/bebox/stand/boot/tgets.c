@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.1 1998/01/16 04:18:04 sakamoto Exp $	*/
+/*	$NetBSD: tgets.c,v 1.2 1998/01/19 03:01:04 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ tgets(buf)
 	register char *lp;
 
 #ifdef	USE_SCAN
-#define	SCANWAIT	20000
+#define	SCANWAIT	10000
 #define	PWAIT		500
 	for (i = 0; i < PWAIT; i++) {
 		if ((c = cnscan()) != -1)
