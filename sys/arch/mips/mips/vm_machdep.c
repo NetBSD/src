@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.29.2.1 1998/10/15 03:16:49 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29.2.2 1998/11/14 15:44:41 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29.2.1 1998/10/15 03:16:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29.2.2 1998/11/14 15:44:41 drochner Exp $");
 
 #include "opt_uvm.h"
 
@@ -111,11 +111,15 @@ cpu_fork(p1, p2)
 }
 
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
+	p->p_addr->u_pcb.pcb_context[10] =
+	    (int)proc_trampoline;			/* RA */
 	p->p_addr->u_pcb.pcb_context[0] = (int)pc;	/* S0 */
+	p->p_addr->u_pcb.pcb_context[1] = (int)arg;	/* S1 */
 }
 
 /*
