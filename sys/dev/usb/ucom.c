@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.23 2000/04/27 15:26:47 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.24 2000/06/01 14:28:59 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -121,23 +121,21 @@ struct ucom_softc {
 
 cdev_decl(ucom);
 
-Static void	ucom_cleanup	__P((struct ucom_softc *));
-Static void	ucom_hwiflow	__P((struct ucom_softc *));
-Static int	ucomparam	__P((struct tty *, struct termios *));
-Static void	ucomstart	__P((struct tty *));
-Static void	ucom_shutdown	__P((struct ucom_softc *));
-Static int	ucom_do_ioctl	__P((struct ucom_softc *, u_long, caddr_t,
-				     int, struct proc *));
-Static void	ucom_dtr	__P((struct ucom_softc *, int));
-Static void	ucom_rts	__P((struct ucom_softc *, int));
-Static void	ucom_break	__P((struct ucom_softc *, int));
-Static usbd_status ucomstartread __P((struct ucom_softc *));
-Static void	ucomreadcb	__P((usbd_xfer_handle, usbd_private_handle, 
-				     usbd_status status));
-Static void	ucomwritecb	__P((usbd_xfer_handle, usbd_private_handle, 
-				     usbd_status status));
-Static void	tiocm_to_ucom	__P((struct ucom_softc *, int, int));
-Static int	ucom_to_tiocm	__P((struct ucom_softc *));
+Static void	ucom_cleanup(struct ucom_softc *);
+Static void	ucom_hwiflow(struct ucom_softc *);
+Static int	ucomparam(struct tty *, struct termios *);
+Static void	ucomstart(struct tty *);
+Static void	ucom_shutdown(struct ucom_softc *);
+Static int	ucom_do_ioctl(struct ucom_softc *, u_long, caddr_t,
+			      int, struct proc *);
+Static void	ucom_dtr(struct ucom_softc *, int);
+Static void	ucom_rts(struct ucom_softc *, int);
+Static void	ucom_break(struct ucom_softc *, int);
+Static usbd_status ucomstartread(struct ucom_softc *);
+Static void	ucomreadcb(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	ucomwritecb(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	tiocm_to_ucom(struct ucom_softc *, int, int);
+Static int	ucom_to_tiocm(struct ucom_softc *);
 
 USB_DECLARE_DRIVER(ucom);
 
@@ -227,9 +225,7 @@ USB_DETACH(ucom)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-ucom_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+ucom_activate(device_ptr_t self, enum devact act)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)self;
 
@@ -247,8 +243,7 @@ ucom_activate(self, act)
 #endif
 
 void
-ucom_shutdown(sc)
-	struct ucom_softc *sc;
+ucom_shutdown(struct ucom_softc *sc)
 {
 	struct tty *tp = sc->sc_tty;
 
@@ -264,10 +259,7 @@ ucom_shutdown(sc)
 }
 
 int
-ucomopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = UCOMUNIT(dev);
 	usbd_status err;
@@ -445,10 +437,7 @@ bad:
 }
 
 int
-ucomclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+ucomclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -481,10 +470,7 @@ ucomclose(dev, flag, mode, p)
 }
  
 int
-ucomread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ucomread(dev_t dev, struct uio *uio, int flag)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -501,10 +487,7 @@ ucomread(dev, uio, flag)
 }
  
 int
-ucomwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+ucomwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -521,8 +504,7 @@ ucomwrite(dev, uio, flag)
 }
 
 struct tty *
-ucomtty(dev)
-	dev_t dev;
+ucomtty(dev_t dev)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -531,12 +513,7 @@ ucomtty(dev)
 }
 
 int
-ucomioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	int error;
@@ -549,12 +526,8 @@ ucomioctl(dev, cmd, data, flag, p)
 }
 
 Static int
-ucom_do_ioctl(sc, cmd, data, flag, p)
-	struct ucom_softc *sc;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
+	      int flag, struct proc *p)
 {
 	struct tty *tp = sc->sc_tty;
 	int error;
@@ -634,9 +607,7 @@ ucom_do_ioctl(sc, cmd, data, flag, p)
 }
 
 Static void
-tiocm_to_ucom(sc, how, ttybits)
-	struct ucom_softc *sc;
-	int how, ttybits;
+tiocm_to_ucom(struct ucom_softc *sc, int how, int ttybits)
 {
 	u_char combits;
 
@@ -666,8 +637,7 @@ tiocm_to_ucom(sc, how, ttybits)
 }
 
 Static int
-ucom_to_tiocm(sc)
-	struct ucom_softc *sc;
+ucom_to_tiocm(struct ucom_softc *sc)
 {
 	u_char combits;
 	int ttybits = 0;
@@ -710,9 +680,7 @@ ucom_break(sc, onoff)
 }
 
 Static void
-ucom_dtr(sc, onoff)
-	struct ucom_softc *sc;
-	int onoff;
+ucom_dtr(struct ucom_softc *sc, int onoff)
 {
 	DPRINTF(("ucom_dtr: onoff=%d\n", onoff));
 
@@ -722,9 +690,7 @@ ucom_dtr(sc, onoff)
 }
 
 Static void
-ucom_rts(sc, onoff)
-	struct ucom_softc *sc;
-	int onoff;
+ucom_rts(struct ucom_softc *sc, int onoff)
 {
 	DPRINTF(("ucom_rts: onoff=%d\n", onoff));
 
@@ -734,8 +700,7 @@ ucom_rts(sc, onoff)
 }
 
 void
-ucom_status_change(sc)
-	struct ucom_softc *sc;
+ucom_status_change(struct ucom_softc *sc)
 {
 	if (sc->sc_methods->ucom_get_status != NULL) {
 		sc->sc_methods->ucom_get_status(sc->sc_parent, sc->sc_portno,
@@ -747,9 +712,7 @@ ucom_status_change(sc)
 }
 
 Static int
-ucomparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+ucomparam(struct tty *tp, struct termios *t)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
 	int error;
@@ -820,8 +783,7 @@ XXX what if the hardware is not open
  * (un)block input via hw flowcontrol
  */
 Static void
-ucom_hwiflow(sc)
-	struct ucom_softc *sc;
+ucom_hwiflow(struct ucom_softc *sc)
 {
 	DPRINTF(("ucom_hwiflow:\n"));
 #if 0
@@ -844,8 +806,7 @@ XXX
 }
 
 Static void
-ucomstart(tp)
-	struct tty *tp;
+ucomstart(struct tty *tp)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(tp->t_dev)];
 	usbd_status err;
@@ -911,9 +872,7 @@ out:
 }
 
 void
-ucomstop(tp, flag)
-	struct tty *tp;
-	int flag;
+ucomstop(struct tty *tp, int flag)
 {
 	DPRINTF(("ucomstop: flag=%d\n", flag));
 #if 0
@@ -932,10 +891,7 @@ ucomstop(tp, flag)
 }
 
 Static void
-ucomwritecb(xfer, p, status)
-	usbd_xfer_handle xfer;
-	usbd_private_handle p;
-	usbd_status status;
+ucomwritecb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
 	struct tty *tp = sc->sc_tty;
@@ -968,8 +924,7 @@ ucomwritecb(xfer, p, status)
 }
 
 Static usbd_status
-ucomstartread(sc)
-	struct ucom_softc *sc;
+ucomstartread(struct ucom_softc *sc)
 {
 	usbd_status err;
 
@@ -988,14 +943,11 @@ ucomstartread(sc)
 }
  
 Static void
-ucomreadcb(xfer, p, status)
-	usbd_xfer_handle xfer;
-	usbd_private_handle p;
-	usbd_status status;
+ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
 	struct tty *tp = sc->sc_tty;
-	int (*rint) __P((int c, struct tty *tp)) = linesw[tp->t_line].l_rint;
+	int (*rint)(int c, struct tty *tp) = linesw[tp->t_line].l_rint;
 	usbd_status err;
 	u_int32_t cc;
 	u_char *cp;
@@ -1038,8 +990,7 @@ ucomreadcb(xfer, p, status)
 }
 
 Static void
-ucom_cleanup(sc)
-	struct ucom_softc *sc;
+ucom_cleanup(struct ucom_softc *sc)
 {
 	DPRINTF(("ucom_cleanup: closing pipes\n"));
 
@@ -1055,9 +1006,7 @@ ucom_cleanup(sc)
 #endif /* NUCOM > 0 */
 
 int
-ucomprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+ucomprint(void *aux, const char *pnp)
 {
 
 	if (pnp)
@@ -1066,10 +1015,7 @@ ucomprint(aux, pnp)
 }
 
 int
-ucomsubmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ucomsubmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ucom_attach_args *uca = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.44 2000/04/27 15:26:48 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.45 2000/06/01 14:29:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -81,8 +81,8 @@ struct uhub_softc {
 	u_char			sc_running;
 };
 
-Static usbd_status uhub_explore __P((usbd_device_handle hub));
-Static void uhub_intr __P((usbd_xfer_handle, usbd_private_handle,usbd_status));
+Static usbd_status uhub_explore(usbd_device_handle hub);
+Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
 
 #if defined(__FreeBSD__)
 Static bus_child_detached_t uhub_child_detached;
@@ -316,8 +316,7 @@ USB_ATTACH(uhub)
 }
 
 usbd_status
-uhub_explore(dev)
-	usbd_device_handle dev;
+uhub_explore(usbd_device_handle dev)
 {
 	usb_hub_descriptor_t *hd = &dev->hub->hubdesc;
 	struct uhub_softc *sc = dev->hub->hubsoftc;
@@ -454,9 +453,7 @@ uhub_explore(dev)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-uhub_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+uhub_activate(device_ptr_t self, enum devact act)
 {
 	struct uhub_softc *sc = (struct uhub_softc *)self;
 	struct usbd_hub *hub = sc->sc_hub->hub;
@@ -527,9 +524,7 @@ USB_DETACH(uhub)
 #if defined(__FreeBSD__)
 /* Called when a device has been detached from it */
 Static void
-uhub_child_detached(self, child)
-       device_t self;
-       device_t child;
+uhub_child_detached(device_t self, device_t child)
 {
        struct uhub_softc *sc = device_get_softc(self);
        usbd_device_handle devhub = sc->sc_hub;
@@ -565,10 +560,7 @@ uhub_child_detached(self, child)
  * to be explored again.
  */
 void
-uhub_intr(xfer, addr, status)
-	usbd_xfer_handle xfer;
-	usbd_private_handle addr;
-	usbd_status status;
+uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 {
 	struct uhub_softc *sc = addr;
 
