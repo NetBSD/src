@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.25 1996/10/11 00:47:15 christos Exp $ */
+/*	$NetBSD: cpu.c,v 1.26 1996/10/13 03:00:31 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -201,7 +201,7 @@ cpu_attach(parent, dev, aux)
 		vactype = VAC_WRITEBACK;
 		switch (cpumod) {
 		case SUN4_100:
-			ksprintf(cpu_model, "SUN-4/100 series (%s FPU)", fpuname);
+			sprintf(cpu_model, "SUN-4/100 series (%s FPU)", fpuname);
 			vactype = VAC_NONE;
 			cacheinfo.c_totalsize = 0;
 			cacheinfo.c_hwflush = 0;
@@ -209,14 +209,14 @@ cpu_attach(parent, dev, aux)
 			cacheinfo.c_l2linesize = 0;
 			break;
 		case SUN4_200:
-			ksprintf(cpu_model, "SUN-4/200 series (%s FPU)", fpuname);
+			sprintf(cpu_model, "SUN-4/200 series (%s FPU)", fpuname);
 	        	cacheinfo.c_totalsize = 128*1024;
 			cacheinfo.c_hwflush = 0;
 			cacheinfo.c_linesize = 16;
 			cacheinfo.c_l2linesize = 4;
 			break;
 		case SUN4_300:
-			ksprintf(cpu_model, "SUN-4/300 series (%s FPU)", fpuname);
+			sprintf(cpu_model, "SUN-4/300 series (%s FPU)", fpuname);
 			bug = 1;
 	        	cacheinfo.c_totalsize = 128*1024;
 			cacheinfo.c_hwflush = 0;
@@ -224,14 +224,14 @@ cpu_attach(parent, dev, aux)
 			cacheinfo.c_l2linesize = 4;
 			break;
 		case SUN4_400:
-			ksprintf(cpu_model, "SUN-4/400 series (%s FPU)", fpuname);
+			sprintf(cpu_model, "SUN-4/400 series (%s FPU)", fpuname);
 			cacheinfo.c_totalsize = 128 * 1024;
 			cacheinfo.c_hwflush = 0;
 			cacheinfo.c_linesize = 32;
 			cacheinfo.c_l2linesize = 5;
 			break;
 		}
-		kprintf(": %s\n", cpu_model);
+		printf(": %s\n", cpu_model);
 	}
 #endif /* SUN4 */
 
@@ -245,16 +245,16 @@ cpu_attach(parent, dev, aux)
 			clk = getpropint(findroot(), "clock-frequency", 0);
 		}
 		if (CPU_ISSUN4C)
-			ksprintf(cpu_model, "%s (%s @ %s MHz, %s FPU)",
+			sprintf(cpu_model, "%s (%s @ %s MHz, %s FPU)",
 				getpropstring(node, "name"),
 				psrtoname(impl, vers, fver, iubuf),
 				clockfreq(clk), fpuname);
 		else
 			/* On sun4m, the "name" property identifies CPU */
-			ksprintf(cpu_model, "%s @ %s MHz, %s FPU",
+			sprintf(cpu_model, "%s @ %s MHz, %s FPU",
 				getpropstring(node, "name"),
 				clockfreq(clk), fpuname);
-		kprintf(": %s\n", cpu_model);
+		printf(": %s\n", cpu_model);
 
 		/*
 		 * Fill in the cache info.  Note, vac-hwflush is spelled
@@ -325,7 +325,7 @@ cpu_attach(parent, dev, aux)
 					cacheinfo.dc_totalsize;
 				break;
 			case SUN4M_MMU_HS:
-				kprintf("Warning, guessing on HyperSPARC cache...\n");
+				printf("Warning, guessing on HyperSPARC cache...\n");
 				cacheinfo.c_split = 0;
 				i = lda(SRMMU_PCR, ASI_SRMMU);
 				if (i & SRMMU_PCR_CS)
@@ -342,7 +342,7 @@ cpu_attach(parent, dev, aux)
 				cacheinfo.c_l2linesize = i;
 				break;
 			default:
-				kprintf("warning: couldn't identify cache\n");
+				printf("warning: couldn't identify cache\n");
 				cacheinfo.c_totalsize = 0;
 			}
 		} else
@@ -375,7 +375,7 @@ cpu_attach(parent, dev, aux)
 
 	if (bug) {
 		kvm_uncache((caddr_t)trapbase, 1);
-		kprintf("%s: cache chip bug; trap page uncached\n",
+		printf("%s: cache chip bug; trap page uncached\n",
 		    dev->dv_xname);
 	}
 
@@ -383,7 +383,7 @@ cpu_attach(parent, dev, aux)
 		return;
 
 	if (!cacheinfo.c_physical) {
-		kprintf("%s: %d byte write-%s, %d bytes/line, %cw flush ",
+		printf("%s: %d byte write-%s, %d bytes/line, %cw flush ",
 		    dev->dv_xname, cacheinfo.c_totalsize,
 		    (vactype == VAC_WRITETHROUGH) ? "through" : "back",
 		    cacheinfo.c_linesize,
@@ -392,27 +392,27 @@ cpu_attach(parent, dev, aux)
 	} else {
 		sep = " ";
 		if (cacheinfo.c_split) {
-			kprintf("%s: physical", dev->dv_xname);
+			printf("%s: physical", dev->dv_xname);
 			if (cacheinfo.ic_totalsize > 0) {
-				kprintf("%s%dK instruction (%d b/l)", sep,
+				printf("%s%dK instruction (%d b/l)", sep,
 				    cacheinfo.ic_totalsize/1024,
 				    cacheinfo.ic_linesize);
 				    sep = ", ";
 			}
 			if (cacheinfo.dc_totalsize > 0) {
-				kprintf("%s%dK data (%d b/l)", sep,
+				printf("%s%dK data (%d b/l)", sep,
 				    cacheinfo.dc_totalsize/1024,
 				    cacheinfo.dc_linesize);
 				    sep = ", ";
 			}
 			if (cacheinfo.ec_totalsize > 0) {
-				kprintf("%s%dK external (%d b/l)", sep,
+				printf("%s%dK external (%d b/l)", sep,
 				    cacheinfo.ec_totalsize/1024,
 				    cacheinfo.ec_linesize);
 			}
-			kprintf(" ");
+			printf(" ");
 		} else
-			kprintf("%s: physical %dK combined cache (%d bytes/"
+			printf("%s: physical %dK combined cache (%d bytes/"
 				"line) ", dev->dv_xname,
 				cacheinfo.c_totalsize/1024,
 				cacheinfo.c_linesize);
@@ -469,7 +469,7 @@ psrtoname(impl, vers, fver, buf)
 			return (p->name);
 
 	/* Not found. */
-	ksprintf(buf, "IU impl 0x%x vers 0x%x", impl, vers);
+	sprintf(buf, "IU impl 0x%x vers 0x%x", impl, vers);
 	return (buf);
 }
 #endif /* SUN4C || SUN4M */
@@ -531,6 +531,6 @@ fsrtoname(impl, vers, fver, buf)
 		    (p->iu_vers == vers || p->iu_vers == ANY) &&
 		    (p->fpu_vers == fver))
 			return (p->name);
-	ksprintf(buf, "version %x", fver);
+	sprintf(buf, "version %x", fver);
 	return (buf);
 }

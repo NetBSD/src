@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.4 1996/10/11 00:47:07 christos Exp $ */
+/*	$NetBSD: fpu.c,v 1.5 1996/10/13 03:00:21 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,7 +135,7 @@ fpu_cleanup(p, fs)
 		goto out;
 
 	default:
-		kprintf("fsr=%x\n", fsr);
+		printf("fsr=%x\n", fsr);
 		panic("fpu error");
 	}
 
