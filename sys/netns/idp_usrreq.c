@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_usrreq.c,v 1.22 2003/08/07 16:33:44 agc Exp $	*/
+/*	$NetBSD: idp_usrreq.c,v 1.23 2004/04/19 00:10:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.22 2003/08/07 16:33:44 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idp_usrreq.c,v 1.23 2004/04/19 00:10:48 matt Exp $");
 
 #include "opt_ns.h"			/* NSIP: Xerox NS over IP */
 
@@ -69,13 +69,7 @@ struct	sockaddr_ns idp_ns = { sizeof(idp_ns), AF_NS };
  *  This may also be called for raw listeners.
  */
 void
-#if __STDC__
 idp_input(struct mbuf *m, ...)
-#else
-idp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct nspcb *nsp;
 	struct idp *idp = mtod(m, struct idp *);
@@ -121,8 +115,7 @@ bad:
 }
 
 void
-idp_abort(nsp)
-	struct nspcb *nsp;
+idp_abort(struct nspcb *nsp)
 {
 	struct socket *so = nsp->nsp_socket;
 
@@ -134,9 +127,7 @@ idp_abort(nsp)
  * the specified error.
  */
 void
-idp_drop(nsp, errno)
-	struct nspcb *nsp;
-	int errno;
+idp_drop(struct nspcb *nsp, int errno)
 {
 	struct socket *so = nsp->nsp_socket;
 
@@ -157,13 +148,7 @@ idp_drop(nsp, errno)
 }
 
 int
-#if __STDC__
 idp_output(struct mbuf *m0, ...)
-#else
-idp_output(m0, va_alist)
-	struct mbuf *m0;
-	va_dcl
-#endif
 {
 	struct nspcb *nsp;
 	struct mbuf *m;
@@ -243,11 +228,8 @@ idp_output(m0, va_alist)
 }
 /* ARGSUSED */
 int
-idp_ctloutput(req, so, level, name, value)
-	int req, level;
-	struct socket *so;
-	int name;
-	struct mbuf **value;
+idp_ctloutput(int req, struct socket *so, int level, int name,
+	struct mbuf **value)
 {
 	struct mbuf *m;
 	struct nspcb *nsp = sotonspcb(so);
@@ -357,11 +339,8 @@ u_long	idp_recvspace = 2048;
 
 /*ARGSUSED*/
 int
-idp_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+idp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct proc *p)
 {
 	struct nspcb *nsp;
 	int s;
@@ -496,11 +475,8 @@ release:
 
 /*ARGSUSED*/
 int
-idp_raw_usrreq(so, req, m, nam, control, p)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *nam, *control;
-	struct proc *p;
+idp_raw_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct proc *p)
 {
 	int error = 0;
 	struct nspcb *nsp = sotonspcb(so);
@@ -530,4 +506,3 @@ idp_raw_usrreq(so, req, m, nam, control, p)
 	}
 	return (error);
 }
-
