@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.41 2003/08/07 16:29:13 agc Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.42 2003/12/13 23:04:38 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.41 2003/08/07 16:29:13 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.42 2003/12/13 23:04:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,11 +124,18 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.41 2003/08/07 16:29:13 agc Exp $");
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/memc.h>
 
+#ifdef WSCONS
+#include <dev/ic/z8530sc.h>
+#include <dev/tc/zs_ioasicvar.h>
+#include <pmax/pmax/cons.h>
+#include "wsdisplay.h"
+#else
 #include <pmax/dev/xcfbvar.h>
 #include <pmax/dev/dtopvar.h>
 #include <pmax/tc/sccvar.h>
-
 #include "rasterconsole.h"
+#endif
+
 #include "xcfb.h"
 
 void		dec_maxine_init __P((void));		/* XXX */
@@ -221,13 +228,25 @@ static void
 dec_maxine_cons_init()
 {
 	int kbd, crt, screen;
-	extern int tcfb_cnattach __P((int));		/* XXX */
 
 	kbd = crt = screen = 0;
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NRASTERCONSOLE > 0
+#if NWSDISPLAY > 0
+#if NXCFB > 0
+		if (crt == 3) {
+			xcfb_cnattach((tc_addr_t)XINE_PHYS_CFB_START);
+			dtkbd_cnattach();
+			return;
+		}
+#endif
+		if (tcfb_cnattach(crt) > 0) {
+			dtkbd_cnattach();
+			return;
+		}
+#elif NRASTERCONSOLE > 0
+		extern int tcfb_cnattach __P((int));		/* XXX */
 		if (crt == 3) {
 #if NXCFB > 0
 			xcfb_cnattach();
@@ -250,7 +269,11 @@ dec_maxine_cons_init()
 	 */
 	DELAY(160000000 / 9600);        /* XXX */
 
+#ifdef WSCONS
+	zs_ioasic_cnattach(ioasic_base, 0x100000, 0);
+#else
 	scc_cnattach(ioasic_base, 0x100000);
+#endif
 }
 
 static void
