@@ -5,7 +5,7 @@
  *
  * This software is provided ``AS IS'' without any warranties of any kind.
  *
- *	$Id: sysv_sem.c,v 1.4 1994/02/13 09:57:12 mycroft Exp $
+ *	$Id: sysv_sem.c,v 1.5 1994/02/13 10:20:02 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -24,22 +24,23 @@ static struct proc *semlock_holder = NULL;
 int
 seminit()
 {
-    register int i;
-    vm_offset_t whocares1, whocares2;
+	register int i;
+	vm_offset_t whocares1, whocares2;
 
-    if (sema == NULL)
-	panic("sema is NULL");
-    for (i = 0; i < seminfo.semmni; i += 1) {
-	sema[i].sem_base = 0;
-	sema[i].sem_perm.mode = 0;
-    }
-    if (semu == NULL)
-	panic("semu is NULL");
-    for (i = 0; i < seminfo.semmnu; i += 1) {
-	register struct sem_undo *suptr = SEMU(i);
-	suptr->un_proc = NULL;
-    }
-    semu_list = NULL;
+	if (sema == NULL)
+		panic("sema is NULL");
+	if (semu == NULL)
+		panic("semu is NULL");
+
+	for (i = 0; i < seminfo.semmni; i++) {
+		sema[i].sem_base = 0;
+		sema[i].sem_perm.mode = 0;
+	}
+	for (i = 0; i < seminfo.semmnu; i++) {
+		register struct sem_undo *suptr = SEMU(i);
+		suptr->un_proc = NULL;
+	}
+	semu_list = NULL;
 }
 
 /*
@@ -56,8 +57,9 @@ semsys(p, uap, retval)
 	struct semsys_args *uap;
 	int *retval;
 {
+
 	while (semlock_holder != NULL && semlock_holder != p)
-	    sleep((caddr_t)&semlock_holder, (PZERO - 4));
+		sleep((caddr_t)&semlock_holder, (PZERO - 4));
 
 	if (uap->which >= sizeof(semcalls)/sizeof(semcalls[0]))
 		return (EINVAL);
@@ -89,24 +91,25 @@ semconfig(p, uap, retval)
 	struct semconfig_args *uap;
 	int *retval;
 {
-    int eval = 0;
+	int eval = 0;
 
-    switch (uap->flag) {
-    case SEM_CONFIG_FREEZE:
-	semlock_holder = p;
-	break;
-    case SEM_CONFIG_THAW:
-	semlock_holder = NULL;
-	wakeup((caddr_t)&semlock_holder);
-	break;
-    default:
-	printf("semconfig:  unknown flag parameter value (%d) - ignored\n",uap->flag);
-	eval = EINVAL;
-	break;
-    }
+	switch (uap->flag) {
+	case SEM_CONFIG_FREEZE:
+		semlock_holder = p;
+		break;
+	case SEM_CONFIG_THAW:
+		semlock_holder = NULL;
+		wakeup((caddr_t)&semlock_holder);
+		break;
+	default:
+		printf("semconfig: unknown flag parameter value (%d) - ignored\n",
+		    uap->flag);
+		eval = EINVAL;
+		break;
+	}
 
-    *retval = 0;
-    return(eval);
+	*retval = 0;
+	return(eval);
 }
 
 /*
@@ -115,67 +118,68 @@ semconfig(p, uap, retval)
  */
 
 struct sem_undo *
-semu_alloc(struct proc *p)
+semu_alloc(p)
+	struct proc *p;
 {
-    register int i;
-    register struct sem_undo *suptr;
-    register struct sem_undo **supptr;
-    int attempt;
-
-    /*
-     * Try twice to allocate something.
-     * (we'll purge any empty structures after the first pass so
-     * two passes are always enough)
-     */
-
-    for (attempt = 0; attempt < 2; attempt += 1) {
-	/*
-	 * Look for a free structure.
-	 * Fill it in and return it if we find one.
-	 */
-
-	for (i = 0; i < seminfo.semmnu; i += 1) {
-	    suptr = SEMU(i);
-	    if (suptr->un_proc == NULL) {
-		suptr->un_next = semu_list;
-		semu_list = suptr;
-		suptr->un_cnt = 0;
-		suptr->un_proc = p;
-		return(suptr);
-	    }
-	}
+	register int i;
+	register struct sem_undo *suptr;
+	register struct sem_undo **supptr;
+	int attempt;
 
 	/*
-	 * We didn't find a free one, if this is the first attempt
-	 * then try to free some structures.
+	 * Try twice to allocate something.
+	 * (we'll purge any empty structures after the first pass so
+	 * two passes are always enough)
 	 */
 
-	if (attempt == 0) {
-	    /* All the structures are in use - try to free some */
-	    int did_something = 0;
+	for (attempt = 0; attempt < 2; attempt++) {
+		/*
+		 * Look for a free structure.
+		 * Fill it in and return it if we find one.
+		 */
 
-	    supptr = &semu_list;
-	    while ((suptr = *supptr) != NULL) {
-		if (suptr->un_cnt == 0)  {
-		    suptr->un_proc = NULL;
-		    *supptr = suptr->un_next;
-		    did_something = 1;
-		} else
-		    supptr = &(suptr->un_next);
-	    }
+		for (i = 0; i < seminfo.semmnu; i++) {
+			suptr = SEMU(i);
+			if (suptr->un_proc == NULL) {
+				suptr->un_next = semu_list;
+				semu_list = suptr;
+				suptr->un_cnt = 0;
+				suptr->un_proc = p;
+				return(suptr);
+			}
+		}
 
-	    /* If we didn't free anything then just give-up */
-	    if (!did_something)
-		return(NULL);
-	} else {
-	    /*
-	     * The second pass failed even though we freed
-	     * something after the first pass!
-	     * This is IMPOSSIBLE!
-	     */
-	    panic("semu_alloc - second attempt failed");
+		/*
+		 * We didn't find a free one, if this is the first attempt
+		 * then try to free some structures.
+		 */
+
+		if (attempt == 0) {
+			/* All the structures are in use - try to free some */
+			int did_something = 0;
+
+			supptr = &semu_list;
+			while ((suptr = *supptr) != NULL) {
+				if (suptr->un_cnt == 0)  {
+					suptr->un_proc = NULL;
+					*supptr = suptr->un_next;
+					did_something = 1;
+				} else
+					supptr = &(suptr->un_next);
+			}
+
+			/* If we didn't free anything then just give-up */
+			if (!did_something)
+				return(NULL);
+		} else {
+			/*
+			 * The second pass failed even though we freed
+			 * something after the first pass!
+			 * This is IMPOSSIBLE!
+			 */
+			panic("semu_alloc - second attempt failed");
+		}
 	}
-    }
 }
 
 /*
@@ -183,66 +187,74 @@ semu_alloc(struct proc *p)
  */
 
 int
-semundo_adjust(register struct proc *p,struct sem_undo **supptr,int semid,int semnum,int adjval)
+semundo_adjust(p, supptr, semid, semnum, adjval)
+	register struct proc *p;
+	struct sem_undo **supptr;
+	int semid, semnum;
+	int adjval;
 {
-    register struct sem_undo *suptr;
-    register struct undo *sunptr;
-    int i;
+	register struct sem_undo *suptr;
+	register struct undo *sunptr;
+	int i;
 
-    /* Look for and remember the sem_undo if the caller doesn't provide it */
+	/* Look for and remember the sem_undo if the caller doesn't provide
+	   it */
 
-    suptr = *supptr;
-    if (suptr == NULL) {
-	for (suptr = semu_list; suptr != NULL; suptr = suptr->un_next) {
-	    if (suptr->un_proc == p) {
-		*supptr = suptr;
-		break;
-	    }
-	}
+	suptr = *supptr;
 	if (suptr == NULL) {
-	    if (adjval == 0)
-		return(0);	/* Don't create it if it doesn't exist */
-	    suptr = semu_alloc(p);
-	    if (suptr == NULL)
-		return(ENOSPC);
-	    *supptr = suptr;
+		for (suptr = semu_list; suptr != NULL;
+		    suptr = suptr->un_next) {
+			if (suptr->un_proc == p) {
+				*supptr = suptr;
+				break;
+			}
+		}
+		if (suptr == NULL) {
+			if (adjval == 0)
+				return(0);
+			suptr = semu_alloc(p);
+			if (suptr == NULL)
+				return(ENOSPC);
+			*supptr = suptr;
+		}
 	}
-    }
 
-    /* Look for the requested entry and adjust it (delete if adjval becomes 0) */
-    sunptr = &(suptr->un_ent[0]);
-    for (i = 0; i < suptr->un_cnt; i += 1, sunptr += 1) {
-	if (sunptr->un_id == semid && sunptr->un_num == semnum) {
-	    /* Found the right entry - adjust it */
-	    if (adjval == 0)
-		sunptr->un_adjval = 0;
-	    else
-		sunptr->un_adjval += adjval;
-	    if (sunptr->un_adjval == 0) {
-		suptr->un_cnt -= 1;
-		if (i < suptr->un_cnt)
-		    suptr->un_ent[i] = suptr->un_ent[suptr->un_cnt];
-	    }
-	    return(0);
+	/* Look for the requested entry and adjust it (delete if adjval becomes
+	   0) */
+	sunptr = &(suptr->un_ent[0]);
+	for (i = 0; i < suptr->un_cnt; i++, sunptr++) {
+		if (sunptr->un_id == semid && sunptr->un_num == semnum) {
+			/* Found the right entry - adjust it */
+			if (adjval == 0)
+				sunptr->un_adjval = 0;
+			else
+				sunptr->un_adjval += adjval;
+			if (sunptr->un_adjval == 0) {
+				suptr->un_cnt--;
+				if (i < suptr->un_cnt)
+					suptr->un_ent[i] =
+					    suptr->un_ent[suptr->un_cnt];
+			}
+			return(0);
+		}
 	}
-    }
 
-    /* Didn't find the right entry - create it */
-    if (adjval == 0)
+	/* Didn't find the right entry - create it */
+	if (adjval == 0)
+		return(0);
+	if (suptr->un_cnt != SEMUME) {
+		sunptr = &(suptr->un_ent[suptr->un_cnt]);
+		suptr->un_cnt++;
+		sunptr->un_adjval = adjval;
+		sunptr->un_id = semid; sunptr->un_num = semnum;
+	} else
+		return(EINVAL);
 	return(0);
-    if (suptr->un_cnt != SEMUME) {
-	/* printf("adjust:  %08x allocating entry %d as %d:%d(%d)\n",suptr->un_proc,suptr->un_cnt,semid,semnum,adjval); */
-	sunptr = &(suptr->un_ent[suptr->un_cnt]);
-	suptr->un_cnt += 1;
-	sunptr->un_adjval = adjval;
-	sunptr->un_id = semid; sunptr->un_num = semnum;
-    } else
-	return(EINVAL);
-    return(0);
 }
 
 void
-semundo_clear(int semid,int semnum)
+semundo_clear(semid, semnum)
+	int semid, semnum;
 {
     register struct sem_undo *suptr;
 
@@ -256,7 +268,7 @@ semundo_clear(int semid,int semnum)
 	    if (sunptr->un_id == semid) {
 		if (semnum == -1 || sunptr->un_num == semnum) {
 		    /* printf("clear:  %08x %d:%d(%d)\n",suptr->un_proc,semid,sunptr->un_num,sunptr->un_adjval); */
-		    suptr->un_cnt -= 1;
+		    suptr->un_cnt--;
 		    if (i < suptr->un_cnt) {
 			suptr->un_ent[i] = suptr->un_ent[suptr->un_cnt];
 			advance = 0;
@@ -267,8 +279,8 @@ semundo_clear(int semid,int semnum)
 	    }
 
 	    if (advance) {
-		i += 1;
-		sunptr += 1;
+		i++;
+		sunptr++;
 	    }
 	}
     }
@@ -325,10 +337,10 @@ semctl(p, uap, retval)
 	semaptr->sem_perm.cuid = cred->cr_uid;
 	semaptr->sem_perm.uid = cred->cr_uid;
 	semtot -= semaptr->sem_nsems;
-	for (i = semaptr->sem_base - sem; i < semtot; i += 1)
+	for (i = semaptr->sem_base - sem; i < semtot; i++)
 	    sem[i] = sem[i + semaptr->sem_nsems];
 	/* printf("\n"); */
-	for (i = 0; i < seminfo.semmni; i += 1) {
+	for (i = 0; i < seminfo.semmni; i++) {
 	    if ((sema[i].sem_perm.mode & SEM_ALLOC) && sema[i].sem_base > semaptr->sem_base)
 		sema[i].sem_base -= semaptr->sem_nsems;
 	}
@@ -400,7 +412,7 @@ semctl(p, uap, retval)
 	if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 	    return(eval);
 	/* printf("%d semaphores\n",semaptr->sem_nsems); */
-	for (i = 0; i < semaptr->sem_nsems; i += 1) {
+	for (i = 0; i < semaptr->sem_nsems; i++) {
 	    /* printf("copyout to 0x%x\n",&real_arg.array[i]); */
 	    eval =
 		copyout((caddr_t)&semaptr->sem_base[i].semval,
@@ -450,7 +462,7 @@ semctl(p, uap, retval)
 	rval = 0;
 	if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 	    return(eval);
-	for (i = 0; i < semaptr->sem_nsems; i += 1) {
+	for (i = 0; i < semaptr->sem_nsems; i++) {
 	    eval =
 		copyin(&real_arg.array[i],
 		(caddr_t)&semaptr->sem_base[i].semval,
@@ -500,7 +512,7 @@ semget(p, uap, retval)
 #endif
 	semid = seminfo.semmni;
     } else {
-	for (semid = 0; semid < seminfo.semmni; semid += 1) {
+	for (semid = 0; semid < seminfo.semmni; semid++) {
 	    if ((sema[semid].sem_perm.mode & SEM_ALLOC) && sema[semid].sem_perm.key == key)
 		break;
 	}
@@ -548,7 +560,7 @@ semget(p, uap, retval)
 #endif
 		return(ENOSPC);
 	    }
-	    for (semid = 0; semid < seminfo.semmni; semid += 1) {
+	    for (semid = 0; semid < seminfo.semmni; semid++) {
 		if ((sema[semid].sem_perm.mode & SEM_ALLOC) == 0)
 		    break;
 	    }
@@ -668,10 +680,9 @@ semop(p, uap, retval)
     do_undos = 0;
 
     while (1) {
-
 	do_wakeup = 0;
 
-	for (i = 0; i < nsops; i += 1) {
+	for (i = 0; i < nsops; i++) {
 	    sopptr = &sops[i];
 
 	    if (sopptr->sem_num >= semaptr->sem_nsems)
@@ -727,7 +738,7 @@ semop(p, uap, retval)
 #ifdef SEM_DEBUG
 	    printf("semop:  rollback 0 through %d\n",i-1);
 #endif
-	    for (j = 0; j < i; j += 1)
+	    for (j = 0; j < i; j++)
 		semaptr->sem_base[sops[j].sem_num].semval -= sops[j].sem_op;
 
 	    /*
@@ -739,9 +750,9 @@ semop(p, uap, retval)
 		return(EAGAIN);
 
 	    if (sopptr->sem_op == 0)
-		semptr->semzcnt += 1;
+		semptr->semzcnt++;
 	    else
-		semptr->semncnt += 1;
+		semptr->semncnt++;
 
 #ifdef SEM_DEBUG
 	    printf("semop:  good night!\n");
@@ -783,9 +794,9 @@ semop(p, uap, retval)
 	     */
 
 	    if (sopptr->sem_op == 0)
-		semptr->semzcnt -= 1;
+		semptr->semzcnt--;
 	    else
-		semptr->semncnt -= 1;
+		semptr->semncnt--;
 	} else {
 	    /*
 	     * Yes ... we're done.
@@ -793,7 +804,7 @@ semop(p, uap, retval)
 	     */
 
 	    if (do_undos) {
-		for (i = 0; i < nsops; i += 1) {
+		for (i = 0; i < nsops; i++) {
 		    /* We only need to deal with SEM_UNDO's for non-zero op's */
 		    int adjval;
 
@@ -811,7 +822,7 @@ semop(p, uap, retval)
 			     * out of space as we roll things back out.
 			     */
 
-			    for (j = i - 1; j >= 0; j -= 1) {
+			    for (j = i - 1; j >= 0; j--) {
 				if ((sops[i].sem_flg & SEM_UNDO) != 0 && (adjval = sops[i].sem_op) != 0) {
 				    if (semundo_adjust(p,&suptr,semid,sops[j].sem_num,adjval) != 0) {
 					/* This is impossible!  */
@@ -820,7 +831,7 @@ semop(p, uap, retval)
 				}
 			    } /* loop backwards through sops */
 
-			    for (j = 0; j < nsops; j += 1)
+			    for (j = 0; j < nsops; j++)
 				semaptr->sem_base[sops[j].sem_num].semval -= sops[j].sem_op;
 
 #ifdef SEM_DEBUG
@@ -834,7 +845,7 @@ semop(p, uap, retval)
 
 	    /* We're definitely done - set the sempid's */
 
-	    for (i = 0; i < nsops; i += 1) {
+	    for (i = 0; i < nsops; i++) {
 		sopptr = &sops[i];
 		semptr = &semaptr->sem_base[sopptr->sem_num];
 		semptr->sempid = p->p_pid;
@@ -898,73 +909,71 @@ semexit(p)
      */
 
     for (supptr = &semu_list; (suptr = *supptr) != NULL; supptr = &(suptr->un_next)) {
-
-	if (suptr->un_proc == p) {
-
-#ifdef SEM_DEBUG
-	    printf("proc @%08x has undo structure with %d entries\n",p,suptr->un_cnt);
-#endif
-
-	    /*
-	     * If there are any active undo elements then process them.
-	     */
-
-	    if (suptr->un_cnt > 0) {
-		int ix;
-
-		for (ix = 0; ix < suptr->un_cnt; ix += 1) {
-		    int semid = suptr->un_ent[ix].un_id;
-		    int semnum = suptr->un_ent[ix].un_num;
-		    int adjval = suptr->un_ent[ix].un_adjval;
-		    struct semid_ds *semaptr;
-
-		    semaptr = &sema[semid];
-		    if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0)
-			panic("semexit - semid not allocated");
-		    if (semnum >= semaptr->sem_nsems)
-			panic("semexit - semnum out of range");
+	if (suptr->un_proc != p)
+	    continue;
 
 #ifdef SEM_DEBUG
-		    printf("semexit:  %08x id=%d num=%d(adj=%d) ; sem=%d\n",suptr->un_proc,
-		    suptr->un_ent[ix].un_id,suptr->un_ent[ix].un_num,suptr->un_ent[ix].un_adjval,
-		    semaptr->sem_base[semnum].semval);
+	printf("proc @%08x has undo structure with %d entries\n",p,suptr->un_cnt);
 #endif
 
-		    if (adjval < 0) {
-			if (semaptr->sem_base[semnum].semval < -adjval)
-			    semaptr->sem_base[semnum].semval = 0;
-			else
-			    semaptr->sem_base[semnum].semval += adjval;
-		    } else
+	/*
+	 * If there are any active undo elements then process them.
+	 */
+
+	if (suptr->un_cnt > 0) {
+	    int ix;
+
+	    for (ix = 0; ix < suptr->un_cnt; ix++) {
+		int semid = suptr->un_ent[ix].un_id;
+		int semnum = suptr->un_ent[ix].un_num;
+		int adjval = suptr->un_ent[ix].un_adjval;
+		struct semid_ds *semaptr;
+
+		semaptr = &sema[semid];
+		if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0)
+		    panic("semexit - semid not allocated");
+		if (semnum >= semaptr->sem_nsems)
+		    panic("semexit - semnum out of range");
+
+#ifdef SEM_DEBUG
+		printf("semexit:  %08x id=%d num=%d(adj=%d) ; sem=%d\n",suptr->un_proc,
+		suptr->un_ent[ix].un_id,suptr->un_ent[ix].un_num,suptr->un_ent[ix].un_adjval,
+		semaptr->sem_base[semnum].semval);
+#endif
+
+		if (adjval < 0) {
+		    if (semaptr->sem_base[semnum].semval < -adjval)
+			semaptr->sem_base[semnum].semval = 0;
+		    else
 			semaptr->sem_base[semnum].semval += adjval;
+		} else
+		    semaptr->sem_base[semnum].semval += adjval;
 
-		    /* printf("semval now %d\n",semaptr->sem_base[semnum].semval); */
+		/* printf("semval now %d\n",semaptr->sem_base[semnum].semval); */
 
 #ifdef SEM_WAKEUP
-		    sem_wakeup((caddr_t)semaptr);	/* A little sloppy (we should KNOW if anybody is waiting). */
+		sem_wakeup((caddr_t)semaptr);	/* A little sloppy (we should KNOW if anybody is waiting). */
 #else
-		    wakeup((caddr_t)semaptr);		/* A little sloppy (we should KNOW if anybody is waiting). */
+		wakeup((caddr_t)semaptr);		/* A little sloppy (we should KNOW if anybody is waiting). */
 #endif
 #ifdef SEM_DEBUG
-		    printf("semexit:  back from wakeup\n");
+		printf("semexit:  back from wakeup\n");
 #endif
-		}
 	    }
+	}
 
-	    /*
-	     * Deallocate the undo vector.
-	     */
+	/*
+	 * Deallocate the undo vector.
+	 */
 
 #ifdef SEM_DEBUG
-	    printf("removing vector\n");
+	printf("removing vector\n");
 #endif
-	    suptr->un_proc = NULL;
-	    *supptr = suptr->un_next;
+	suptr->un_proc = NULL;
+	*supptr = suptr->un_next;
 
-	    /* Done. */
-
-	    break;
-	}
+	/* Done. */
+	break;
     }
 
     /*
