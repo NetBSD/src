@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.3 1997/12/20 19:15:51 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.4 1998/07/29 02:26:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,8 +55,9 @@
 
 #define EL_BUFSIZ	1024		/* Maximum line size		*/
 
-#define HANDLE_SIGNALS	1
-#define NO_TTY		2
+#define HANDLE_SIGNALS	1<<0
+#define NO_TTY		1<<1
+#define EDIT_DISABLED	1<<2
 
 typedef int bool_t;			/* True or not			*/
 
@@ -128,5 +129,7 @@ struct editline {
     el_search_t	  el_search;	/* Search stuff				*/
     el_signal_t	  el_signal;	/* Signal handling stuff		*/
 };
+
+protected int		el_editmode	__P((EditLine *, int, char **));
 
 #endif /* _h_el */

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.7 1998/01/21 11:12:35 lukem Exp $	*/
+/*	$NetBSD: parse.c,v 1.8 1998/07/29 02:26:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.7 1998/01/21 11:12:35 lukem Exp $");
+__RCSID("$NetBSD: parse.c,v 1.8 1998/07/29 02:26:01 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: parse.c,v 1.7 1998/01/21 11:12:35 lukem Exp $");
  *
  *	bind
  *	echotc
+ *	edit
  *	gettc
  *	history
  *	settc
@@ -67,6 +68,7 @@ private struct {
 } cmds[] = {
     {	"bind",		map_bind 	},
     {	"echotc",	term_echotc 	},
+    {	"edit",		el_editmode 	},
     {	"history",	hist_list	},
     {	"telltc",	term_telltc 	},
     {	"settc",	term_settc	},

@@ -1,4 +1,4 @@
-.\"	$NetBSD: editrc.5,v 1.5 1997/07/30 23:57:39 jtc Exp $
+.\"	$NetBSD: editrc.5,v 1.6 1998/07/29 02:26:00 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -217,6 +217,10 @@ returns an emptry string for non-existant capabilities, rather than
 causing an error.
 .Fl v
 causes messages to be verbose.
+.It Ic edit Op Li on | Li off
+Enable or disable the
+.Nm editline
+functionality in a program.
 .It Ic history
 List the history.
 .It Ic telltc
