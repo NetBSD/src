@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.7.2.1 1998/11/09 06:06:39 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.7.2.2 1999/02/25 04:25:05 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -41,6 +41,8 @@
 #ifndef _UVM_UVM_PAGER_H_
 #define _UVM_UVM_PAGER_H_
 
+#include <sys/buf.h>
+
 /*
  * uvm_pager.h
  */
@@ -54,10 +56,15 @@ TAILQ_HEAD(uvm_aiohead, uvm_aiodesc);
 struct uvm_aiodesc {
 	void (*aiodone) __P((struct uvm_aiodesc *));
 						/* aio done function */
-	vaddr_t kva;			/* KVA of mapped page(s) */
+	vaddr_t kva;				/* KVA of mapped page(s) */
 	int npages;				/* # of pages in I/O req */
 	void *pd_ptr;				/* pager-dependent pointer */
 	TAILQ_ENTRY(uvm_aiodesc) aioq;		/* linked list of aio's */
+};
+
+struct uvm_aiobuf {
+	struct buf buf;
+	struct uvm_aiodesc aio;
 };
 
 /*
