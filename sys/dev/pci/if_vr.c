@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.48 2001/06/12 22:28:16 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.49 2001/07/07 16:40:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1520,7 +1520,7 @@ vr_attach(parent, self, aux)
 	printf("%s: Ethernet address: %s\n",
 		sc->vr_dev.dv_xname, ether_sprintf(eaddr));
 
-	bcopy(eaddr, sc->vr_enaddr, ETHER_ADDR_LEN);
+	memcpy(sc->vr_enaddr, eaddr, ETHER_ADDR_LEN);
 
 	sc->vr_dmat = pa->pa_dmat;
 
@@ -1599,7 +1599,7 @@ vr_attach(parent, self, aux)
 	ifp->if_stop = vr_stop;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	bcopy(sc->vr_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->vr_dev.dv_xname);
 
 	/*
 	 * Initialize MII/media info.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.40 2001/06/21 16:33:33 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.41 2001/07/07 16:40:24 thorpej Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -437,7 +437,7 @@ tl_pci_attach(parent, self, aux)
 	} else
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-	bcopy(sc->sc_dev.dv_xname, sc->tl_if.if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	sc->tl_if.if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_ioctl = tl_ifioctl;
@@ -1124,7 +1124,7 @@ tl_ifioctl(ifp, cmd, data)
 				ina->x_host  = 
 				    *(union ns_host*) LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
 					ifp->if_addrlen);
 			break;
 		}
@@ -1483,11 +1483,13 @@ static void tl_ticks(v)
 #ifdef TLDEBUG
 				printf("tl_ticks: sending LLC test pkt\n");
 #endif
-				bcopy(sc->tl_enaddr,
+				memcpy(
 				    mtod(m, struct ether_header *)->ether_dhost,
+				    sc->tl_enaddr,
 				    6);
-				bcopy(sc->tl_enaddr,
+				memcpy(
 				    mtod(m, struct ether_header *)->ether_shost,
+				    sc->tl_enaddr,
 				    6);
 				mtod(m, struct ether_header *)->ether_type =
 				    htons(3);
