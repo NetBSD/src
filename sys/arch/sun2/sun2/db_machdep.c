@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.2 2001/06/11 21:35:59 fredette Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.3 2003/04/01 15:47:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 #include <machine/promlib.h>
@@ -125,7 +127,7 @@ db_mach_pagemap(addr, have_addr, count, modif)
 	db_printf("0x%08lx [%02x] 0x%08x", va, sme, pte);
 
 	pte_print(pte);
-	db_next = va + NBPG;
+	db_next = va + PAGE_SIZE;
 }
 
 static void
