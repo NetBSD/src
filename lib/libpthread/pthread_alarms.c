@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_alarms.c,v 1.3 2003/01/18 18:45:53 christos Exp $	*/
+/*	$NetBSD: pthread_alarms.c,v 1.4 2003/02/15 04:37:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <assert.h>
 #include <err.h>
 #include <sys/time.h>
 #include <stdlib.h>
@@ -47,8 +46,6 @@
 timer_t pthread_alarmtimer;
 PTQ_HEAD(, pt_alarm_t) pthread_alarmqueue = PTQ_HEAD_INITIALIZER;
 pthread_spin_t pthread_alarmqlock;
-
-#define PTHREAD_ALARM_DEBUG
 
 #ifdef PTHREAD_ALARM_DEBUG
 #define SDPRINTF(x) DPRINTF(x)
@@ -136,7 +133,7 @@ pthread__alarm_del(pthread_t self, struct pt_alarm_t *alarm)
 			    self, it.it_value.tv_sec, it.it_value.tv_nsec/1000));
 			retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, &it, 
 			    NULL);
-			assert(retval == 0);
+			pthread__assert(retval == 0);
 			if (retval)
 				err(1, "timer_settime");
 		}
@@ -194,7 +191,7 @@ pthread__alarm_process(pthread_t self, void *arg)
 		SDPRINTF(("(pro %p) resetting alarm timer to %d.%09d\n", self,
 		    it.it_value.tv_sec, it.it_value.tv_nsec));
 		retval = timer_settime(pthread_alarmtimer, TIMER_ABSTIME, &it, NULL);
-		assert(retval == 0);
+		pthread__assert(retval == 0);
 		if (retval)
 			err(1, "timer_settime");
 	}
