@@ -39,10 +39,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)locore2.c	8.1 (Berkeley) 6/11/93
+ *	@(#)locore2.c	8.4 (Berkeley) 12/10/93
  *
- * from: Header: locore2.c,v 1.8 92/11/26 03:05:01 mccanne Exp  (LBL)
- * $Id: locore2.c,v 1.3 1994/05/13 20:12:59 deraadt Exp $
+ * from: Header: locore2.c,v 1.8 92/11/26 03:05:01 mccanne Exp (LBL)
+ * $Id: locore2.c,v 1.4 1994/05/19 07:12:59 deraadt Exp $
  */
 
 /*
@@ -69,7 +69,7 @@ setrunqueue(p)
 	register int which = p->p_priority >> 2;
 
 	if (p->p_back != NULL)
-		panic("setrq");
+		panic("setrunqueue");
 	q = &qs[which];
 	whichqs |= 1 << which;
 	p->p_forw = (struct proc *)q;

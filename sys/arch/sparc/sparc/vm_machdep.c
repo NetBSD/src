@@ -42,7 +42,7 @@
  *	@(#)vm_machdep.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: vm_machdep.c,v 1.10 92/11/26 03:05:11 torek Exp  (LBL)
- * $Id: vm_machdep.c,v 1.2 1993/10/11 02:16:27 deraadt Exp $
+ * $Id: vm_machdep.c,v 1.3 1994/05/19 07:13:10 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -190,7 +190,7 @@ cpu_fork(p1, p2)
 	 * snapshot() also sets the given pcb's pcb_sp and pcb_psr
 	 * to the current %sp and %psr, and sets pcb_pc to a stub
 	 * which returns 1.  We then copy the whole pcb to p2;
-	 * when swtch() selects p2 to run, it will run at the stub,
+	 * when switch() selects p2 to run, it will run at the stub,
 	 * rather than at the copying code below, and cpu_fork
 	 * will return 1.
 	 *
@@ -262,7 +262,7 @@ cpu_exit(p)
 		free((void *)fs, M_SUBPROC);
 	}
 	vmspace_free(p->p_vmspace);
-	swtchexit(kernel_map, p->p_addr, round_page(ctob(UPAGES)));
+	switchexit(kernel_map, p->p_addr, round_page(ctob(UPAGES)));
 	/* NOTREACHED */
 }
 

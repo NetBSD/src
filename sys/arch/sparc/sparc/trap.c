@@ -1,4 +1,3 @@
-#undef DEBUG_SCALL
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,7 +42,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.17 1994/05/13 20:13:00 deraadt Exp $
+ * $Id: trap.c,v 1.18 1994/05/19 07:13:09 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -185,7 +184,7 @@ userret(struct proc *p, int pc, u_quad_t oticks)
 		(void) splstatclock();
 		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
+		mi_switch();
 		(void) spl0();
 		while ((sig = CURSIG(p)) != 0)
 			postsig(sig);
@@ -699,10 +698,6 @@ syscall(code, tf, pc)
 #endif
 	sticks = p->p_sticks;
 	p->p_md.md_tf = tf;
-#ifdef DEBUG_SCALL
-printf("sc[%d] %s%d/X%x(", p->p_pid, p->p_emul == 1 ? "sunos" : "netbsd",
-code, code);
-#endif
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	switch (p->p_emul) {
@@ -767,17 +762,7 @@ code, code);
 			i = nap;
 		}
 		copywords(ap, args.i, i * 4);
-#ifdef DEBUG_SCALL
-{
-int asdf;
-for(asdf=0; asdf<i; asdf++)
-printf("%x%s", args.i[asdf], (asdf+1<i) ? ", " : "");
-}
-#endif
 	}
-#ifdef DEBUG_SCALL
-printf(") = ");
-#endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
 		ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
@@ -807,9 +792,6 @@ printf(") = ");
 				error = EINVAL;
 				goto bad;
 			}
-#ifdef DEBUG_SCALL
-printf("[new]");
-#endif
 		} else {
 			/* old system call convention: clear C on success */
 			tf->tf_psr &= ~PSR_C;	/* success */
@@ -817,14 +799,8 @@ printf("[new]");
 		}
 		tf->tf_pc = i;
 		tf->tf_npc = i + 4;
-#ifdef DEBUG_SCALL
-printf("%d", rval[0]);
-#endif
 	} else if (error > 0 /*error != ERESTART && error != EJUSTRETURN*/) {
 bad:
-#ifdef DEBUG_SCALL
-printf("errno %d", error);
-#endif
 		tf->tf_out[0] = error;
 		tf->tf_psr |= PSR_C;	/* fail */
 		i = tf->tf_npc;
@@ -839,7 +815,4 @@ printf("errno %d", error);
 		ktrsysret(p->p_tracep, code, error, rval[0]);
 #endif
 	share_fpu(p, tf);
-#ifdef DEBUG_SCALL
-printf("\n");
-#endif
 }
