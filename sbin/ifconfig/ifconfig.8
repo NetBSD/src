@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.30 2000/01/31 17:22:28 itojun Exp $
+.\"	$NetBSD: ifconfig.8,v 1.31 2000/01/31 18:02:01 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -180,6 +180,11 @@ was no longer needed.
 If you have incorrectly set an NS address having the side effect
 of specifying the host portion, removing all NS addresses will
 allow you to respecify the host portion.
+.Cm delete
+does not work for IPv6 addresses.
+Use
+.Fl alias
+with explicit IPv6 address instead.
 .It Cm dest_address
 Specify the address of the correspondent on the other end
 of a point to point link.
