@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.39 2002/03/21 00:43:42 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.40 2002/12/10 12:24:06 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ struct sparc_bus_space_tag {
 		int, int));
 
 	void	*(*sparc_intr_establish) __P((bus_space_tag_t, int, int, int,
-		int (*) __P((void *)), void *));
+		int (*) __P((void *)), void *, void (*)__P((void))));
 
 };
 
@@ -319,7 +319,7 @@ bus_intr_establish(t, p, l, f, h, a)
 	int	(*h)__P((void *));
 	void	*a;
 {
-	_BS_CALL(t, sparc_intr_establish)(t, p, l, f, h, a);
+	_BS_CALL(t, sparc_intr_establish)(t, p, l, f, h, a, NULL);
 }
 
 /* XXXX Things get complicated if we use unmapped register accesses. */
@@ -336,10 +336,6 @@ bus_intr_establish(t, p, l, f, h, a)
 #define	BUS_SPACE_MAP_BUS3		0x0400
 #define	BUS_SPACE_MAP_BUS4		0x0800
 
-
-/* flags for intr_establish() */
-#define BUS_INTR_ESTABLISH_FASTTRAP	1
-#define BUS_INTR_ESTABLISH_SOFTINTR	2
 
 /* flags for bus_space_barrier() */
 #define	BUS_SPACE_BARRIER_READ	0x01		/* force read barrier */
