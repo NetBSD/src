@@ -1,4 +1,4 @@
-.\"	$NetBSD: csh.1,v 1.31 2001/10/17 21:50:57 wiz Exp $
+.\"	$NetBSD: csh.1,v 1.32 2001/12/12 13:10:44 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2003,10 +2003,51 @@ Builtin commands that fail return exit status `1',
 all other builtin commands set status to `0'.
 .It Ic time
 Controls automatic timing of commands.
-If set, then any command that takes more than this many cpu seconds
-will cause a line giving user, system, and real times and a utilization
-percentage which is the ratio of user plus system times to real time
-to be printed when it terminates.
+This setting allows two parameters.  The first specifies the CPU time
+threshold at which reporting should be done for a process, and the optional
+second specifies the output format.  The following format strings are
+available:
+.Pp
+.Bl -tag -width Ds -compact -offset indent
+.It Li \&%c
+Number of involuntary context switches.
+.It Li \&%D
+Average unshared data size.
+.It Li \&%E
+Elapsed (wall\-clock) time.
+.It Li \&%F
+Page faults.
+.It Li \&%I
+Filesystem blocks in.
+.It Li \&%K
+Average total data memory used.
+.It Li \&%k
+Number of signals received.
+.It Li \&%M
+Maximum Resident Set Size.
+.It Li \&%O
+Filesystem blocks out.
+.It Li \&%P
+Total percent time spent running.
+.It Li \&%R
+Page reclaims.
+.It Li \&%r
+Socket messages received.
+.It Li \&%S
+Total system CPU time used.
+.It Li \&%s
+Socket messages sent.
+.It Li \&%U
+Total user CPU time used.
+.It Li \&%W
+Number of swaps.
+.It Li \&%w
+Number of voluntary context switches (waits).
+.It Li \&%X
+Average shared text size.
+.El
+.Pp
+The default summary is "%Uu %Ss %E %P %X+%Dk %I+%Oio %Fpf+%Ww"
 .It Ic verbose
 Set by the
 .Fl v
@@ -2141,7 +2182,7 @@ substitutions on a single line to 20.
 .Xr tty 4 ,
 .Xr a.out 5 ,
 .Xr environ 7 ,
-.Xr sysctl 8 ,
+.Xr sysctl 8
 .br
 .Em "An introduction to the C shell"
 .Sh HISTORY
