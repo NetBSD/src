@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.13 2004/04/27 17:37:31 jrf Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.14 2004/05/28 18:55:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -110,5 +110,6 @@ int	layer_lookup __P((void *));
 int	layer_setattr __P((void *));
 int	layer_access __P((void *));
 int	layer_open __P((void *));
+int	layer_remove __P((void *));
 int	layer_getpages __P((void *));
 int	layer_putpages __P((void *));
