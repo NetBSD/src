@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2001/09/10 21:19:31 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63.2.1 2001/11/12 02:14:27 shin Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -88,6 +88,7 @@
 #include <mips/locore.h>
 #include <mips/cpuregs.h>
 #include <mips/psl.h>
+#include <mips/cache.h>
 #ifdef DDB
 #include <mips/db_machdep.h>
 #include <ddb/db_extern.h>
@@ -448,7 +449,7 @@ mach_init(argc, argv, envv)
 void
 machine_ConfigCache()
 {
-	mips_L2CacheSize = arc_cpu_l2cache_size;
+	mips_sdcache_size = arc_cpu_l2cache_size;
 }
 
 /*
