@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.21 2002/11/24 18:16:45 fvdl Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.22 2002/11/24 18:19:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -267,7 +267,7 @@ _rtld_bind(obj, reloff)
 
 	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
 	if (def == NULL)
-		return -1;
+		_rtld_die();
 
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value +
 	    rela->r_addend);
