@@ -1,4 +1,4 @@
-.\" $NetBSD: lpt.4,v 1.5 2004/01/28 19:54:15 jdolecek Exp $
+.\" $NetBSD: lpt.4,v 1.6 2004/02/03 21:35:57 jdolecek Exp $
 .\"
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -57,28 +57,16 @@ The parallel port bus is reserved by
 when the printer device is opened and released when the device is
 closed.
 .Pp
-Ports can be configured to use DMA, IEEE negotiations, and IEEE
+Ports can be configured to use interrupts, DMA, IEEE negotiations, and IEEE
 compliant transfer modes by using the
 .Xr lptctl 8
 command, with modes depending on the hardware available.
-.Ss Minor bit
-The minor bit selects some device features:
-.Bl -column "Minor Bit" "Function" -offset indent
-.It Em "Minor Bit"	Function
-.It 128	Do no use interrupts (polled accesses).
-.It 64	Do not initialize printer when opened.
-.It 32	Automatic LF on CR.
-.El
-.Pp
-.Xr mknod 8
-can be used to create such devices if necessary (see
-.Sx BUGS ) .
 .Sh FILES
-.Bl -tag -width "/dev/lpt0xx" -compact
+.Bl -tag -width "/dev/lpt0xxxx" -compact
 .It Pa /dev/lpt?
-interrupt-driven ports (minor number 0)
-.It Pa /dev/lpa?
-polled ports (minor number 128)
+parallel port device
+.It Pa /dev/lpt?ctl
+parallel port control device
 .El
 .Sh SEE ALSO
 .Xr atppc 4 ,
@@ -86,17 +74,19 @@ polled ports (minor number 128)
 .Xr lptctl 8 ,
 .Xr mknod 8
 .Sh HISTORY
-This driver is derived from drivers which appear in
+This driver is derived from
 .Fx
-and
-.Nx .
-The
-.Fx
-driver is used for
-.Xr ppbus 4
-usage while the
+ppbus and also from historic
 .Nx
-driver's behavior is emulated as much as possible for compatibility.
+driver.
+.Pp
+The
+.Nm
+driver used to assign special meaning for some bits of device minor.
+This was dropped in ppbus based
+.Nm
+in favour of configuration via
+.Xr lptctl 8 .
 .Sh AUTHORS
 This manual page was based on the
 .Fx
@@ -105,16 +95,3 @@ manual page.
 The information has been updated for the
 .Nx
 port by Gary Thorpe.
-.Sh BUGS
-If a printer is not connected and on-line,
-.Pa /dev/lpt?
-and
-.Pa /dev/lpa?
-cannot be used with
-.Xr lptctl 8 .
-An lpt device with minor number
-.Em 64
-must be used in this case because it skips the initialization
-sequence.
-.Pp
-Testing has been limited by hardware availability.
