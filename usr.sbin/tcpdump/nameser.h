@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.1 2001/01/28 07:51:33 itojun Exp $	*/
+/*	$NetBSD: nameser.h,v 1.2 2001/02/21 05:59:25 itojun Exp $	*/
 
 /* @(#) Header: /tcpdump/master/tcpdump/nameser.h,v 1.6 2001/01/28 07:47:56 itojun Exp (LBL) */
 /*
@@ -157,6 +157,9 @@
 #define T_UNSPEC	103		/* Unspecified format (binary data) */
 #define T_UNSPECA	104		/* "unspecified ascii". Ugly MIT hack */
 	/* Query type values which do not appear in resource records */
+#define T_TKEY		249		/* Transaction Key [RFC2930] */
+#define T_TSIG		250		/* Transaction Signature [RFC2845] */
+#define T_IXFR		251		/* incremental transfer [RFC1995] */
 #define T_AXFR		252		/* transfer zone of authority */
 #define T_MAILB		253		/* transfer mailbox records */
 #define T_MAILA		254		/* transfer mail agent records */

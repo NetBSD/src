@@ -1,4 +1,4 @@
-/*	$NetBSD: print-domain.c,v 1.10 2001/01/28 07:56:56 itojun Exp $	*/
+/*	$NetBSD: print-domain.c,v 1.11 2001/02/21 05:59:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-domain.c,v 1.39 97/06/13 12:56:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-domain.c,v 1.10 2001/01/28 07:56:56 itojun Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.11 2001/02/21 05:59:25 itojun Exp $");
 #endif
 #endif
 
@@ -54,15 +54,15 @@ __RCSID("$NetBSD: print-domain.c,v 1.10 2001/01/28 07:56:56 itojun Exp $");
 #include "extract.h"                    /* must come after interface.h */
 
 static char *ns_ops[] = {
-	"", " inv_q", " stat", " op3", " notify", " op5", " op6", " op7",
+	"", " inv_q", " stat", " op3", " notify", " update", " op6", " op7",
 	" op8", " updataA", " updateD", " updateDA",
 	" updateM", " updateMA", " zoneInit", " zoneRef",
 };
 
 static char *ns_resp[] = {
 	"", " FormErr", " ServFail", " NXDomain",
-	" NotImp", " Refused", " Resp6", " Resp7",
-	" Resp8", " Resp9", " Resp10", " Resp11",
+	" NotImp", " Refused", " YXDomain", " YXRRSet",
+	" NXRRSet", " NotAuth", " NotZone", " Resp11",
 	" Resp12", " Resp13", " Resp14", " NoChange",
 };
 
@@ -245,7 +245,7 @@ ns_cprint(register const u_char *cp, register const u_char *bp)
 	return (cp + i);
 }
 
-static struct tok type2str[] = {
+struct tok ns_type2str[] = {
 	{ T_A,		"A" },
 	{ T_NS,		"NS" },
 	{ T_MD,		"MD" },
@@ -289,6 +289,9 @@ static struct tok type2str[] = {
 	{ T_GID,	"GID" },
 	{ T_UNSPEC,	"UNSPEC" },
 	{ T_UNSPECA,	"UNSPECA" },
+	{ T_TKEY,	"TKEY" },
+	{ T_TSIG,	"TSIG" },
+	{ T_IXFR,	"IXFR" },
 	{ T_AXFR,	"AXFR" },
 	{ T_MAILB,	"MAILB" },
 	{ T_MAILA,	"MAILA" },
@@ -296,7 +299,7 @@ static struct tok type2str[] = {
 	{ 0,		NULL }
 };
 
-static struct tok class2str[] = {
+struct tok ns_class2str[] = {
 	{ C_IN,		"IN" },		/* Not used */
 	{ C_CHAOS,	"CHAOS" },
 	{ C_HS,		"HS" },
@@ -319,11 +322,11 @@ ns_qprint(register const u_char *cp, register const u_char *bp)
 	/* print the qtype and qclass (if it's not IN) */
 	i = *cp++ << 8;
 	i |= *cp++;
-	printf(" %s", tok2str(type2str, "Type%d", i));
+	printf(" %s", tok2str(ns_type2str, "Type%d", i));
 	i = *cp++ << 8;
 	i |= *cp++;
 	if (i != C_IN)
-		printf(" %s", tok2str(class2str, "(Class %d)", i));
+		printf(" %s", tok2str(ns_class2str, "(Class %d)", i));
 
 	fputs("? ", stdout);
 	cp = ns_nprint(np, bp);
@@ -354,7 +357,7 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 	class = *cp++ << 8;
 	class |= *cp++;
 	if (class != C_IN && typ != T_OPT)
-		printf(" %s", tok2str(class2str, "(Class %d)", class));
+		printf(" %s", tok2str(ns_class2str, "(Class %d)", class));
 
 	/* ignore ttl */
 	cp += 4;
@@ -364,7 +367,7 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 
 	rp = cp + len;
 
-	printf(" %s", tok2str(type2str, "Type%d", typ));
+	printf(" %s", tok2str(ns_type2str, "Type%d", typ));
 	if (rp > snapend)
 		return(NULL);
 
@@ -462,6 +465,28 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 			return(NULL);
 		fn_printn(cp, len, snapend);
 		break;
+
+	case T_TSIG:
+	    {
+		if (cp + len > snapend)
+			return(NULL);
+		if (!vflag)
+			break;
+		putchar(' ');
+		if ((cp = ns_nprint(cp, bp)) == NULL)
+			return(NULL);
+		cp += 6;
+		printf(" fudge=%u", EXTRACT_16BITS(cp));
+		cp += 2;
+		printf(" maclen=%u", EXTRACT_16BITS(cp));
+		cp += 2 + EXTRACT_16BITS(cp);
+		printf(" origid=%u", EXTRACT_16BITS(cp));
+		cp += 2;
+		printf(" error=%u", EXTRACT_16BITS(cp));
+		cp += 2;
+		printf(" otherlen=%u", EXTRACT_16BITS(cp));
+		cp += 2;
+	    }
 	}
 	return (rp);		/* XXX This isn't always right */
 }
@@ -494,16 +519,21 @@ ns_print(register const u_char *bp, u_int length)
 		if (qdcount != 1)
 			printf(" [%dq]", qdcount);
 		/* Print QUESTION section on -vv */
-		if (vflag > 1) {
-			fputs(" q:", stdout);
-			if ((cp = ns_qprint((const u_char *)(np + 1), bp))
-			    == NULL)
-				goto trunc;
-		} else {
-			if ((cp = ns_nskip((const u_char *)(np + 1), bp))
-			    == NULL)
-				goto trunc;
-			cp += 4;
+		cp = (const u_char *)(np + 1);
+		while (qdcount--) {
+			if (qdcount < ntohs(np->qdcount) - 1)
+				putchar(',');
+			if (vflag > 1) {
+				fputs(" q:", stdout);
+				if ((cp = ns_qprint((const u_char *)(np + 1), bp))
+				    == NULL)
+					goto trunc;
+			} else {
+				if ((cp = ns_nskip((const u_char *)(np + 1), bp))
+				    == NULL)
+					goto trunc;
+				cp += 4;	/* skip QTYPE and QCLASS */
+			}
 		}
 		printf(" %d/%d/%d", ancount, nscount, arcount);
 		if (ancount--) {
