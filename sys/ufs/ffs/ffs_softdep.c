@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.45 2003/04/02 10:39:37 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.46 2003/04/03 19:28:07 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.45 2003/04/02 10:39:37 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.46 2003/04/03 19:28:07 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -548,6 +548,7 @@ workitem_free(item, type)
  * Workitem queue management
  */
 static struct workhead softdep_workitem_pending;
+static struct worklist *worklist_tail;
 static int softdep_worklist_busy;
 static int max_softdeps;	/* maximum number of structs before slowdown */
 static int tickdelay = 2;	/* number of ticks to pause during slowdown */
@@ -597,8 +598,6 @@ static void
 add_to_worklist(wk)
 	struct worklist *wk;
 {
-	static struct worklist *worklist_tail;
-
 	if (wk->wk_state & ONWORKLIST)
 		panic("add_to_worklist: already on list");
 	wk->wk_state |= ONWORKLIST;
@@ -623,7 +622,7 @@ softdep_process_worklist(matchmnt)
 	struct mount *matchmnt;
 {
 	struct proc *p = CURPROC;
-	struct worklist *wk;
+	struct worklist *wk, *wkend;
 	struct fs *matchfs;
 	int matchcnt;
 
@@ -667,7 +666,20 @@ softdep_process_worklist(matchmnt)
 	}
 	ACQUIRE_LOCK(&lk);
 	while ((wk = LIST_FIRST(&softdep_workitem_pending)) != 0) {
+		/*
+		 * Remove the item to be processed. If we are removing the last
+		 * item on the list, we need to recalculate the tail pointer.
+		 * As this happens rarely and usually when the list is short,
+		 * we just run down the list to find it rather than tracking it
+		 * in the above loop.
+		 */
 		WORKLIST_REMOVE(wk);
+		if (wk == worklist_tail) {
+			LIST_FOREACH(wkend, &softdep_workitem_pending, wk_list)
+				if (LIST_NEXT(wkend, wk_list) == NULL)
+					break;
+			worklist_tail = wkend;
+		}
 		FREE_LOCK(&lk);
 		switch (wk->wk_type) {
 
