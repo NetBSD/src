@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.h,v 1.2 2002/01/04 02:39:45 deberg Exp $	*/
+/*	$NetBSD: smb_trantcp.h,v 1.3 2003/02/21 20:12:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -69,19 +69,20 @@ struct nbpcb {
 #define	NBF_RECVLOCK	0x0004
 
 	enum nbstate	nbp_state;
-	struct timeval	nbp_timo;
-	int		nbp_sndbuf;
-	int		nbp_rcvbuf;
 	void *		nbp_selectid;
-
-/*	LIST_ENTRY(nbpcb) nbp_link;*/
 };
 
 /*
  * Nominal space allocated per a NETBIOS socket.
  */
-#define	NB_SNDQ		(10 * 1024)
-#define	NB_RCVQ		(20 * 1024)
+#define	NB_SNDQ		(64 * 1024)
+#define	NB_RCVQ		(64 * 1024)
+
+/*
+ * Timeouts used for send/receive. XXX Sysctl this?
+ */
+#define NB_SNDTIMEO	(5 * hz)
+#define NB_RCVTIMEO	(5 * hz)
 
 extern struct smb_tran_desc smb_tran_nbtcp_desc;
 

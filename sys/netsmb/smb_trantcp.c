@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.5 2003/02/15 23:26:57 jdolecek Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.6 2003/02/21 20:12:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -64,13 +64,14 @@
 
 #define M_NBDATA	M_PCB
 
-static int smb_tcpsndbuf = 10 * 1024;
-static int smb_tcprcvbuf = 10 * 1024;
+static int nb_tcpsndbuf = NB_SNDQ;
+static int nb_tcprcvbuf = NB_RCVQ;
+static const struct timeval nb_timo = { 15, 0 };	/* XXX sysctl? */
 
 #ifndef __NetBSD__
 SYSCTL_DECL(_net_smb);
-SYSCTL_INT(_net_smb, OID_AUTO, tcpsndbuf, CTLFLAG_RW, &smb_tcpsndbuf, 0, "");
-SYSCTL_INT(_net_smb, OID_AUTO, tcprcvbuf, CTLFLAG_RW, &smb_tcprcvbuf, 0, "");
+SYSCTL_INT(_net_smb, OID_AUTO, tcpsndbuf, CTLFLAG_RW, &nb_tcpsndbuf, 0, "");
+SYSCTL_INT(_net_smb, OID_AUTO, tcprcvbuf, CTLFLAG_RW, &nb_tcprcvbuf, 0, "");
 #endif
 
 #ifndef __NetBSD__
@@ -109,51 +110,49 @@ nb_poll(struct nbpcb *nbp, int events, struct proc *p)
         return nbp->nbp_tso->so_proto->pr_usrreqs->pru_sopoll(nbp->nbp_tso,
             events, NULL, p);
 #else
-        register struct socket *so = nbp->nbp_tso;
-        int revents = 0;
-        register int s = splsoftnet();
+	/* XXX this is exactly equal to soo_poll() */
+	struct socket *so = nbp->nbp_tso;
+	int revents = 0;
+	int s = splsoftnet();
 
-        if (events & (POLLIN | POLLRDNORM))
-                if (soreadable(so))
-                        revents |= events & (POLLIN | POLLRDNORM);
+	if (events & (POLLIN | POLLRDNORM))
+		if (soreadable(so))
+			revents |= events & (POLLIN | POLLRDNORM);
 
-        if (events & (POLLOUT | POLLWRNORM))
-                if (sowritable(so))
-                        revents |= events & (POLLOUT | POLLWRNORM);
+	if (events & (POLLOUT | POLLWRNORM))
+		if (sowritable(so))
+			revents |= events & (POLLOUT | POLLWRNORM);
 
-        if (events & (POLLPRI | POLLRDBAND))
-                if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
-                        revents |= events & (POLLPRI | POLLRDBAND);
+	if (events & (POLLPRI | POLLRDBAND))
+		if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
+			revents |= events & (POLLPRI | POLLRDBAND);
 
-        if (revents == 0) {
-                if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
-                        selrecord(p, &so->so_rcv.sb_sel);
-                        so->so_rcv.sb_flags |= SB_SEL;
-                }
+	if (revents == 0) {
+		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
+			selrecord(p, &so->so_rcv.sb_sel);
+			so->so_rcv.sb_flags |= SB_SEL;
+		}
 
-                if (events & (POLLOUT | POLLWRNORM)) {
-                        selrecord(p, &so->so_snd.sb_sel);
-                        so->so_snd.sb_flags |= SB_SEL;
-                }
-        }
+		if (events & (POLLOUT | POLLWRNORM)) {
+			selrecord(p, &so->so_snd.sb_sel);
+			so->so_snd.sb_flags |= SB_SEL;
+		}
+	}
 
-        splx(s);
-        return (revents);
+	splx(s);
+	return (revents);
 #endif
 }
 
-#ifdef __NetBSD__
-#define PROC_LOCK(p) /*XXX*/
-#define PROC_UNLOCK(p) /*XXX*/
-#endif
-
 static int
-nbssn_rselect(struct nbpcb *nbp, struct timeval *tv, int events,
+nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 	struct proc *p)
 {
-	struct timeval atv, rtv, ttv;
+	struct timeval atv;
+	extern int nselcoll;
+	int ncoll;
 	int timo, error;
-	int s, sl;
+	int s;
 	struct lwp *l = curlwp;
 
 	if (tv) {
@@ -164,67 +163,46 @@ nbssn_rselect(struct nbpcb *nbp, struct timeval *tv, int events,
 		}
 		s = splclock();
 		timeradd(&atv, &time, &atv);
-		timo = hzto(&atv);
-		if (timo == 0)
-			timo = 1;
 		splx(s);
+		timo = hzto(&atv);
+		if (timo <= 0)
+			return (EWOULDBLOCK);
 	} else 
 		timo = 0;
 
-	PROC_LOCK(p);
-	SCHED_LOCK(sl);
+ retry:
+	ncoll = nselcoll;
 	l->l_flag |= L_SELECT;
-	SCHED_UNLOCK(sl);
-	PROC_UNLOCK(p);
 	error = nb_poll(nbp, events, p);
-	PROC_LOCK(p);
 	if (error) {
 		error = 0;
 		goto done;
 	}
 	if (tv) {
-		s = splclock();
-		if (timercmp(&time, &atv, >=)) {
-			splx(s);
-			/*
-			 * An event of our interest may occur during locking a process.
-			 * In order to avoid missing the event that occured during locking
-			 * the process, test L_SELECT and rescan file descriptors if
-			 * necessary.
-			 */
-			SCHED_LOCK(sl);
-			if ((l->l_flag & L_SELECT) == 0) {
-				l->l_flag |= L_SELECT;
-				SCHED_UNLOCK(sl);
-				PROC_UNLOCK(p);
-				error = nb_poll(nbp, events, p);
-				PROC_LOCK(p);
-			} else
-				SCHED_UNLOCK(sl);
+		/*
+		 * We have to recalculate the timeout on every retry.
+		 */
+		timo = hzto(&atv);
+		if (timo <= 0) {
+			error = EWOULDBLOCK;
 			goto done;
-		} else {
-			splx(s);
 		}
-		ttv = atv;
-		timersub(&ttv, &rtv, &ttv);
-		timo = hzto(&ttv);
-	}
-	SCHED_LOCK(sl);
-	l->l_flag &= ~L_SELECT;
-	SCHED_UNLOCK(sl);
-	if (timo > 0)
-		error = tsleep((caddr_t)&selwait, PSOCK, "nbssn_rselect", 
-			       timo);
-	else {
-		tsleep((caddr_t)&selwait, PSOCK, "nbssn_rselect", 0);
-		error = 0;
 	}
 
-done:
-	SCHED_LOCK(sl);
+	s = splsched();
+	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
+		splx(s);
+		goto retry;
+	}
 	l->l_flag &= ~L_SELECT;
-	SCHED_UNLOCK(sl);
-	PROC_UNLOCK(p);
+	error = tsleep((caddr_t)&selwait, PSOCK, "nbssn_rselect", timo);
+	splx(s);
+
+	if (error == 0)
+		goto retry;
+
+done:
+	l->l_flag &= ~L_SELECT;
 
 done_noproclock:
 	if (error == ERESTART)
@@ -295,9 +273,9 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct proc *p)
 	so->so_upcallarg = (caddr_t)nbp;
 	so->so_upcall = nb_upcall;
 	so->so_rcv.sb_flags |= SB_UPCALL;
-	so->so_rcv.sb_timeo = (5 * hz);
-	so->so_snd.sb_timeo = (5 * hz);
-	error = soreserve(so, nbp->nbp_sndbuf, nbp->nbp_rcvbuf);
+	so->so_rcv.sb_timeo = NB_SNDTIMEO;
+	so->so_snd.sb_timeo = NB_RCVTIMEO;
+	error = soreserve(so, nb_tcpsndbuf, nb_tcprcvbuf);
 	if (error)
 		goto bad;
 	nb_setsockopt_int(so, SOL_SOCKET, SO_KEEPALIVE, 1);
@@ -344,7 +322,6 @@ nbssn_rq_request(struct nbpcb *nbp, struct proc *p)
 	struct mbchain mb, *mbp = &mb;
 	struct mdchain md, *mdp = &md;
 	struct mbuf *m0;
-	struct timeval tv;
 	struct sockaddr_in sin;
 	u_short port;
 	u_int8_t rpcode;
@@ -354,8 +331,8 @@ nbssn_rq_request(struct nbpcb *nbp, struct proc *p)
 	if (error)
 		return error;
 	mb_put_uint32le(mbp, 0);
-	nb_put_name(mbp, nbp->nbp_paddr);
-	nb_put_name(mbp, nbp->nbp_laddr);
+	(void) nb_put_name(mbp, nbp->nbp_paddr);
+	(void) nb_put_name(mbp, nbp->nbp_laddr);
 	nb_sethdr(mbp->mb_top, NB_SSN_REQUEST, mb_fixhdr(mbp) - 4);
 	error = nb_sosend(nbp->nbp_tso, mbp->mb_top, 0, p);
 	if (!error) {
@@ -365,9 +342,7 @@ nbssn_rq_request(struct nbpcb *nbp, struct proc *p)
 	mb_done(mbp);
 	if (error)
 		return error;
-	tv.tv_sec = nbp->nbp_timo.tv_sec;
-	tv.tv_usec = nbp->nbp_timo.tv_usec;
-	error = nbssn_rselect(nbp, &tv, POLLIN, p);
+	error = nbssn_rselect(nbp, &nb_timo, POLLIN, p);
 	if (error == EWOULDBLOCK) {	/* Timeout */
 		NBDEBUG("initial request timeout\n");
 		return ETIMEDOUT;
@@ -547,12 +522,9 @@ smb_nbst_create(struct smb_vc *vcp, struct proc *p)
 	struct nbpcb *nbp;
 
 	MALLOC(nbp, struct nbpcb *, sizeof *nbp, M_NBDATA, M_WAITOK);
-	bzero(nbp, sizeof *nbp);
-	nbp->nbp_timo.tv_sec = 15;	/* XXX: sysctl ? */
+	memset(nbp, 0, sizeof *nbp);
 	nbp->nbp_state = NBST_CLOSED;
 	nbp->nbp_vc = vcp;
-	nbp->nbp_sndbuf = smb_tcpsndbuf;
-	nbp->nbp_rcvbuf = smb_tcprcvbuf;
 	vcp->vc_tdata = nbp;
 	return 0;
 }
@@ -612,7 +584,6 @@ smb_nbst_connect(struct smb_vc *vcp, struct sockaddr *sap, struct proc *p)
 	struct nbpcb *nbp = vcp->vc_tdata;
 	struct sockaddr_in sin;
 	struct sockaddr_nb *snb;
-	struct timeval tv1, tv2;
 	int error, slen;
 
 	NBDEBUG("\n");
@@ -632,18 +603,9 @@ smb_nbst_connect(struct smb_vc *vcp, struct sockaddr *sap, struct proc *p)
 		return ENOMEM;
 	nbp->nbp_paddr = snb;
 	sin = snb->snb_addrin;
-	microtime(&tv1);
 	error = nb_connect_in(nbp, &sin, p);
 	if (error)
 		return error;
-	microtime(&tv2);
-	timersub(&tv2, &tv1, &tv2);
-	if (tv2.tv_sec == 0 && tv2.tv_usec == 0)
-		tv2.tv_sec = 1;
-	nbp->nbp_timo = tv2;
-	timeradd(&nbp->nbp_timo, &tv2, &nbp->nbp_timo);
-	timeradd(&nbp->nbp_timo, &tv2, &nbp->nbp_timo);
-	timeradd(&nbp->nbp_timo, &tv2, &nbp->nbp_timo);	/*  * 4 */
 	error = nbssn_rq_request(nbp, p);
 	if (error)
 		smb_nbst_disconnect(vcp, p);
@@ -709,7 +671,8 @@ smb_nbst_recv(struct smb_vc *vcp, struct mbuf **mpp, struct proc *p)
 static void
 smb_nbst_timo(struct smb_vc *vcp)
 {
-	return;
+
+	/* Nothing */
 }
 
 static void
@@ -726,19 +689,17 @@ smb_nbst_intr(struct smb_vc *vcp)
 static int
 smb_nbst_getparam(struct smb_vc *vcp, int param, void *data)
 {
-	struct nbpcb *nbp = vcp->vc_tdata;
-
 	switch (param) {
-	    case SMBTP_SNDSZ:
-		*(int*)data = nbp->nbp_sndbuf;
+	case SMBTP_SNDSZ:
+		*(int*)data = nb_tcpsndbuf;
 		break;
-	    case SMBTP_RCVSZ:
-		*(int*)data = nbp->nbp_rcvbuf;
+	case SMBTP_RCVSZ:
+		*(int*)data = nb_tcprcvbuf;
 		break;
-	    case SMBTP_TIMEOUT:
-		*(struct timeval*)data = nbp->nbp_timo;
+	case SMBTP_TIMEOUT:
+		*(struct timeval*)data = nb_timo;
 		break;
-	    default:
+	default:
 		return EINVAL;
 	}
 	return 0;
