@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.648 2004/09/10 13:56:32 darrenr Exp $
+$NetBSD: pcidevs,v 1.649 2004/09/16 13:08:51 ragge Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -583,6 +583,7 @@ vendor CAVIUM		0x177d	Cavium
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor HAWKING		0x17b3	Hawking Technology
 vendor SANDBURST	0x17ba	Sandburst, Inc.
+vendor S2IO		0x17d5	S2io Technologies
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor HINT		0x3388	HiNT
@@ -2296,6 +2297,9 @@ product RISCOM N2	0x5568	N2
 
 /* RNS products */
 product RNS FDDI	0x2200	2200 FDDI
+
+/* S2io products */
+product	S2IO XFRAME	0x5831	Xframe 10 Gigabit ethernet adapter
 
 /* S3 products */
 product S3 VIRGE	0x5631	ViRGE
