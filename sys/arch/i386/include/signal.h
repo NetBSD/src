@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)signal.h	7.16 (Berkeley) 3/17/91
- *	$Id: signal.h,v 1.1 1993/09/19 18:57:48 brezak Exp $
+ *	$Id: signal.h,v 1.2 1994/10/09 12:39:06 mycroft Exp $
  */
 
-#ifndef _MACHINE_SIGNAL_H_
-#define _MACHINE_SIGNAL_H_
+#ifndef _I386_SIGNAL_H_
+#define _I386_SIGNAL_H_
 
 typedef int sig_atomic_t;
 
@@ -54,26 +54,26 @@ typedef int sig_atomic_t;
 struct	sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore */
-	int	sc_esp;			/* machine state */
-        int     sc_ebp;
-        int     sc_isp;
-        int     sc_eip;
-        int     sc_efl;
-        int     sc_es;
-        int     sc_ds;
-        int     sc_cs;
-        int     sc_ss;
-        int     sc_edi;
-        int     sc_esi;
-        int     sc_ebx;
-        int     sc_edx;
-        int     sc_ecx;
-        int     sc_eax;
+
+	int	sc_es;
+	int	sc_ds;
+	int	sc_edi;
+	int	sc_esi;
+	int	sc_ebp;
+	int	sc_ebx;
+	int	sc_edx;
+	int	sc_ecx;
+	int	sc_eax;
+	int	sc_eip;
+	int	sc_cs;
+	int	sc_eflags;
+	int	sc_esp;
+	int	sc_ss;
 };
 
 #define sc_sp sc_esp
 #define sc_fp sc_ebp
 #define sc_pc sc_eip
-#define sc_ps sc_efl
+#define sc_ps sc_eflags
 
-#endif	/* _MACHINE_SIGNAL_H_ */
+#endif	/* _I386_SIGNAL_H_ */
