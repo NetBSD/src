@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-dss.c,v 1.10 2002/06/24 05:48:36 itojun Exp $	*/
+/*	$NetBSD: ssh-dss.c,v 1.11 2002/10/01 14:07:42 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-dss.c,v 1.15 2002/06/23 03:30:17 deraadt Exp $");
+RCSID("$OpenBSD: ssh-dss.c,v 1.17 2002/07/04 10:41:47 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
@@ -47,7 +47,7 @@ ssh_dss_sign(Key *key, u_char **sigp, u_int *lenp,
 	DSA_SIG *sig;
 	const EVP_MD *evp_md = EVP_sha1();
 	EVP_MD_CTX md;
-	u_char *ret, digest[EVP_MAX_MD_SIZE], sigblob[SIGBLOB_LEN];
+	u_char digest[EVP_MAX_MD_SIZE], sigblob[SIGBLOB_LEN];
 	u_int rlen, slen, len, dlen;
 	Buffer b;
 
@@ -80,25 +80,25 @@ ssh_dss_sign(Key *key, u_char **sigp, u_int *lenp,
 	DSA_SIG_free(sig);
 
 	if (datafellows & SSH_BUG_SIGBLOB) {
-		ret = xmalloc(SIGBLOB_LEN);
-		memcpy(ret, sigblob, SIGBLOB_LEN);
 		if (lenp != NULL)
 			*lenp = SIGBLOB_LEN;
-		if (sigp != NULL)
-			*sigp = ret;
+		if (sigp != NULL) {
+			*sigp = xmalloc(SIGBLOB_LEN);
+			memcpy(*sigp, sigblob, SIGBLOB_LEN);
+		}
 	} else {
 		/* ietf-drafts */
 		buffer_init(&b);
 		buffer_put_cstring(&b, "ssh-dss");
 		buffer_put_string(&b, sigblob, SIGBLOB_LEN);
 		len = buffer_len(&b);
-		ret = xmalloc(len);
-		memcpy(ret, buffer_ptr(&b), len);
-		buffer_free(&b);
 		if (lenp != NULL)
 			*lenp = len;
-		if (sigp != NULL)
-			*sigp = ret;
+		if (sigp != NULL) {
+			*sigp = xmalloc(len);
+			memcpy(*sigp, buffer_ptr(&b), len);
+		}
+		buffer_free(&b);
 	}
 	return 0;
 }
