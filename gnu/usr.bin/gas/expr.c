@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: expr.c,v 1.3 1993/10/02 20:57:26 pk Exp $";
+static char rcsid[] = "$Id: expr.c,v 1.4 1996/04/01 10:57:35 pk Exp $";
 #endif
 
 #include <ctype.h>
@@ -126,7 +126,7 @@ register expressionS *	expressionP;
 		/* likewise for the b's.  xoxorich. */
 		if ((c == 'f' || c == 'b' || c == 'B')
 		    && (!*input_line_pointer ||
-			(!strchr("+-.0123456789",*input_line_pointer) &&
+			(!strchr("+-.0123456789iInN",*input_line_pointer) &&
 			 !strchr(EXP_CHARS,*input_line_pointer)))) {
 		    maxdig = radix = 10;
 		    too_many_digits = 11;
