@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.12 2003/09/08 16:19:40 itojun Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.13 2003/09/08 20:54:48 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.12 2003/09/08 16:19:40 itojun Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.13 2003/09/08 20:54:48 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
@@ -156,7 +156,7 @@ login_getpwclass(const struct passwd *pwd)
 char *
 login_getcapstr(login_cap_t *lc, char *cap, char *def, char *e)
 {
-	char *res;
+	char *res = NULL;
 	int status;
 
 	errno = 0;
@@ -192,7 +192,7 @@ quad_t
 login_getcaptime(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
-	char *res, *sres;
+	char *res = NULL, *sres;
 	int status;
 	quad_t q, r;
 
@@ -278,7 +278,7 @@ quad_t
 login_getcapnum(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
-	char *res;
+	char *res = NULL;
 	int status;
 	quad_t q;
 
@@ -332,7 +332,7 @@ quad_t
 login_getcapsize(login_cap_t *lc, char *cap, quad_t def, quad_t e)
 {
 	char *ep;
-	char *res;
+	char *res = NULL;
 	int status;
 	quad_t q;
 
