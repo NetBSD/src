@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.11 2003/08/29 01:28:51 thorpej Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.12 2003/08/29 01:37:11 thorpej Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -41,7 +41,7 @@
  *
  * Id: //depot/aic7xxx/aic7xxx/aic79xx.c#193 $
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.15 2003/05/26 21:26:51 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.c,v 1.16 2003/05/26 21:43:29 gibbs Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.11 2003/08/29 01:28:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.12 2003/08/29 01:37:11 thorpej Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -8325,7 +8325,7 @@ sized:
 }
 
 void
-ahd_dump_all_cards_state()
+ahd_dump_all_cards_state(void)
 {
 	struct ahd_softc *list_ahd;
 
