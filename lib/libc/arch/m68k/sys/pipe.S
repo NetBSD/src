@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.3 1999/10/25 23:48:17 thorpej Exp $	*/
+/*	$NetBSD: pipe.S,v 1.3.6.1 2000/09/29 09:05:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,11 +43,15 @@
 #if 0
 	RCSID("from: @(#)pipe.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: pipe.S,v 1.3 1999/10/25 23:48:17 thorpej Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.3.6.1 2000/09/29 09:05:18 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-SYSCALL(pipe)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(pipe, _pipe)
+#endif
+
+_SYSCALL(_pipe, pipe)
 	movl	%sp@(4),%a0
 	movl	%d0,%a0@+
 	movl	%d1,%a0@
