@@ -1,4 +1,4 @@
-.\"	$NetBSD: up.4,v 1.6 1999/03/16 01:19:24 garbled Exp $
+.\"	$NetBSD: up.4,v 1.7 1999/12/15 23:44:55 abs Exp $
 .\"
 .\" Copyright (c) 1991, 1993, 19801988
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,10 +38,10 @@
 .Os
 .Sh NAME
 .Nm up
-.Nd unibus storage module controller/drives
+.Nd unibus storage module controller/disk drives
 .Sh SYNOPSIS
-.Cd "controller sc0 at uba? csr 0176700 vector upintr
-.Cd "disk up0 at sc0 drive 0"
+.Cd "sc0 at uba? csr 0176700 vector upintr
+.Cd "up0 at sc0 drive 0"
 .Sh DESCRIPTION
 This is a generic
 .Tn UNIBUS
