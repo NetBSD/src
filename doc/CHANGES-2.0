@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.162 2004/04/29 05:20:07 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.163 2004/04/29 05:52:36 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1606,3 +1606,63 @@ x11/bin/xdm/Makefile				1.6-1.7
 	Add -DARC4_RANDOM to the global CPPFLAGS and X11EXTRAMANDEFS.
 	Remove -DDEV_RANDOM, since ARC4_RANDOM takes precedence anyway.
 	[lukem, ticket #226]
+
+distrib/sets/lists/base/mi			1.474
+distrib/sets/lists/xbase/mi			1.41
+distrib/sets/lists/xcomp/mi			1.24
+distrib/sets/lists/xfont/mi			1.20
+etc/mtree/NetBSD.dist				1.260
+x11/TODO					1.10
+x11/bin/Makefile				1.6
+x11/bin/fonttosfnt/Makefile			0-1.1
+x11/bin/xclock/Makefile				1.4
+x11/bin/xedit/modules/progmodes/Makefile	1.3
+x11/bin/xkbcomp/geometry/Makefile		1.4
+x11/bin/xkbcomp/geometry/ibm/Makefile		0-1.1
+x11/bin/xkbcomp/symbols/pc/Makefile		1.3
+x11/bin/xkbcomp/symbols/sun/Makefile		1.3
+x11/bin/xkbcomp/types/Makefile			1.3
+x11/lib/XRes/Makefile				1.4
+x11/lib/Xfontcache/Makefile			1.4
+x11/lib/Xss/Makefile				1.5
+x11/lib/Xxf86dga/Makefile			1.5
+x11/lib/expat/Makefile				1.6-1.7
+x11/lib/expat/Makefile.expatdefs		1.1-0
+x11/lib/fontconfig/Makefile			1.8
+x11/lib/freetype2/Makefile			1.6
+x11/share/fonts/encodings/Makefile		1.3
+x11/share/fonts/scaled/TTF/Makefile		1.3
+x11/share/nls/XI18N_OBJS/Makefile		1.3
+x11/share/nls/XLC_LOCALE/Makefile		1.4
+x11/tools/fc-cache/Makefile			1.8
+
+	Fix up botches in X userland from upgrade from XFree86 4.3.0 -> 4.4.0.
+	* Obsolete:
+	        bin/fontconfig-config
+
+	* Add directories:
+	        lib/X11/locale/zh_CN.UTF-8 
+	        lib/X11/xkb/geometry/ibm
+        
+	* Rename include/freetype2/ft2build.h to include/ft2build.h and 
+	  obsolete former
+        
+	* Add files:
+	        fonttosfnt(1) program & man page
+	        include/expat.h
+	        lib/X11/app-defaults/XClock-color
+	        lib/X11/fonts/TTF/Vera*.ttf     
+	        some font encodings
+	        zn_CN.UTF-8 locale
+	        some font encodings
+	        various xkb config files
+	        lib/X11/xedit/lisp/progmodes/patch.lsp
+	        Xfontcache(3) and various links
+	        XDGA(3) and various links    
+	        XRes(3) and various links
+	        Xss(3) and various XScreenSaver*(3) links
+        
+	* Add some more TODO items
+
+	* Clean up lib/expat build now that the version is hard coded.
+	[lukem, ticket #224]
