@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.24 2003/10/03 16:38:44 pooka Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.25 2004/03/28 14:27:26 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.24 2003/10/03 16:38:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.25 2004/03/28 14:27:26 pooka Exp $");
 
 #include "isdn.h"
 
@@ -555,6 +555,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			d = isdn_find_l3_by_isdnif(isdnif);
 			if (d != NULL) {
 				mcir->tei = d->tei;
+				mcir->nbch = d->nbch;
 				strncpy(mcir->devname, d->devname, sizeof(mcir->devname)-1);
 				strncpy(mcir->cardname, d->card_name, sizeof(mcir->cardname)-1);
 			} else {
