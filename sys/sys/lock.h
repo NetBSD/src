@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.29 2000/06/07 13:50:40 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.30 2000/06/07 16:25:15 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -286,6 +286,10 @@ void	lockmgr_printinfo __P((__volatile struct lock *));
 #define	spinlockmgr(lkp, flags, intrlk)					\
 	lockmgr((lkp), (flags) | LK_SPIN, (intrlk))
 
+#endif /* _KERNEL */
+
+#if defined(_KERNEL) || defined(_EXTENT_TESTING)
+
 #if defined(LOCKDEBUG)
 void	_simple_lock __P((__volatile struct simplelock *, const char *, int));
 int	_simple_lock_try __P((__volatile struct simplelock *, const char *,
@@ -311,6 +315,7 @@ void	simple_lock_freecheck __P((void *, void *));
 #define	simple_unlock(alp)		/* nothing */
 #endif
 
-#endif /* _KERNEL */
+#endif /* defined(_KERNEL) || defined(_EXTENT_TESTING) */
 
 #endif /* _SYS_LOCK_H_ */
+
