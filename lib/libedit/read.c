@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.34 2004/07/08 00:51:36 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.35 2005/03/09 23:55:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.34 2004/07/08 00:51:36 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.35 2005/03/09 23:55:02 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -366,6 +366,9 @@ read_prepare(EditLine *el)
 	re_clear_display(el);	/* reset the display stuff */
 	ch_reset(el);
 	re_refresh(el);		/* print the prompt */
+
+	if (el->el_flags & UNBUFFERED)
+		term__flush();
 }
 
 protected void
