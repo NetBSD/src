@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.8 1996/12/20 12:49:42 leo Exp $ */
+/*	$NetBSD: lpt.c,v 1.9 1996/12/20 16:21:13 leo Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -136,7 +136,7 @@ struct cfdriver lpt_cd = {
 static	int
 lptmatch(pdp, cfp, auxp)
 struct	device	*pdp;
-struct	cfdata	*pdp;
+struct	cfdata	*cfp;
 void		*auxp;
 {
 	if (!strcmp((char *)auxp, "lpt") && cfp->cf_unit == 0)
