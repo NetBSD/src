@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipcrm.1,v 1.2 1997/01/09 20:20:21 tls Exp $
+.\"	$NetBSD: ipcrm.1,v 1.3 1997/10/19 03:18:18 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Adam Glass
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\" 
-.\" $NetBSD: ipcrm.1,v 1.2 1997/01/09 20:20:21 tls Exp $
+.\" $NetBSD: ipcrm.1,v 1.3 1997/10/19 03:18:18 lukem Exp $
 .\""
 .Dd August 8th, 1994
 .Dt ipcrm 1
@@ -33,7 +33,7 @@
 .Nd remove the specified message queues, semaphore sets, and shared memory
 segments
 .Sh SYNOPSIS
-.Nm ipcrm
+.Nm
 .Op Fl q Ar msqid
 .Op Fl m Ar shmid
 .Op Fl s Ar semid
@@ -42,7 +42,7 @@ segments
 .Op Fl S Ar semkey
 .Ar ...
 .Sh DESCRIPTION
-.Nm ipcrm
+.Nm
 removes the specified message queues, semaphores and shared memory
 segments.  These System V IPC objects can be specified by their
 creation id or any associated key.
@@ -51,29 +51,29 @@ The following options are used to specify which IPC objects will be removed.  An
 .Bl -tag -width indent
 .It Fl q Ar msqid
 Remove the message queue associated with the id
-.Nm msqid
+.Ar msqid
 from the system.
 .It Fl m Ar shmid
 Mark the shared memory segment associated with id 
-.Nm shmid
+.Ar shmid
 for removal.
 This marked segment will be destroyed after the last detach.
 .It Fl s Ar semid
 Removes the semaphore set associated with id
-.Nm semid
+.Ar semid
 from the system.
 .It Fl Q Ar msgkey
 Remove the message queue associated with key 
-.Nm msgkey
+.Ar msgkey
 from the system.
 .It Fl M Ar shmkey
 Mark the shared memory segment associated with key 
-.Nm shmkey
+.Ar shmkey
 for removal.
 This marked segment will be destroyed after the last detach.
 .It Fl S Ar semkey
 Remove the semaphore set associated with key
-.Nm semkey
+.Ar semkey
 from the system.
 .El
 .Pp
