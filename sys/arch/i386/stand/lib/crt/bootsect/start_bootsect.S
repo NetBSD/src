@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.1.1.1 1997/03/14 02:40:34 perry Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.2 1997/09/17 18:10:51 drochner Exp $	*/
 	
 /* BIOS bootsector startup
  parts from netbsd:sys/arch/i386/boot/start.S
@@ -94,18 +94,6 @@ start1:
 
 	/*** set up %es, (where we will load boot2 to) ***/
 	movl	%ax, %es
-
-#ifdef SERIAL
-	# Initialize the serial port to 9600 baud, 8N1.
-	data32
-	pushl	%edx
-	data32
-	movl	$0x00e3, %eax
-	xorl	%edx, %edx
-	int	$0x14
-	data32
-	popl	%edx
-#endif
 
 	# bootstrap passes us drive number in %dl
 	cmpb	$0x80, %dl
@@ -211,18 +199,11 @@ err_stop:
 
 message:
 /*
-#ifndef SERIAL
 # BIOS call "INT 10H Function 0Eh" to write character to console
 #	Call with	%ah = 0x0e
 #			%al = character
 #			%bh = page
 #			%bl = foreground color
-#else
-# BIOS call "INT 14H Function 01h" to write character to console
-#	Call with	%ah = 0x01
-#			%al = character
-#			%dx = port number
-#endif
 */
 	data32
 	pushl	%eax
@@ -238,16 +219,10 @@ nextb:
 	data32
 	jz	done
 
-#ifndef SERIAL
 	movb	$0x0e, %ah
 	data32
 	movl	$0x0001, %ebx
 	int	$0x10
-#else
-	movb	$0x01, %ah
-	xorl	%edx, %edx
-	int	$0x14
-#endif
 
 	data32
 	jmp	nextb
