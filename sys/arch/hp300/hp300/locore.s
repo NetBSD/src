@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.50 1996/02/14 02:56:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.51 1996/05/16 23:53:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,10 +43,19 @@
  */
 
 #include "assym.h"
-#include <hp300/hp300/vectors.s>
 
 #define MMUADDR(ar)	movl	_MMUbase,ar
 #define CLKADDR(ar)	movl	_CLKbase,ar
+
+/*
+ * This is for kvm_mkdb, and should be the address of the beginning
+ * of the kernel text segment (not necessarily the same as kernbase).
+ */
+	.text
+	.globl  _kernel_text
+_kernel_text:
+
+#include <hp300/hp300/vectors.s>
 
 /*
  * Temporary stack for a variety of purposes.
