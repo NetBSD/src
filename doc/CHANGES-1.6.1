@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.119 2003/02/23 09:15:05 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.120 2003/02/26 18:58:28 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3754,3 +3754,11 @@ distrib/utils/sysinst/msg.mi.fr			1.43.2.2->1.43.2.1 (downgrade)
 	Rollback changes from ticket 1115 so the prompts look correct.
 
 Moved RC2 tags for these 2 files
+
+share/tmac/doc					1.28
+
+	Make .Nm without arguments, but with punctuation, work.
+	Makes man pages from -current format correctly on 1.6.x
+	[wiz, ticket #1184]
+
+Moved RC2 tag for this file
