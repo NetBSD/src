@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.3 1996/05/20 00:32:24 pk Exp $
+#	$NetBSD: install.sh,v 1.4 1996/05/21 00:10:57 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -207,8 +207,7 @@ while [ "X$resp" != X"done" ]; do
 				_first_char=`firstchar ${_mount_point}`
 			fi
 		done
-		echo "${_device_name}	${_mount_point}" >> \
-		    ${FILESYSTEMS}
+		echo "${_device_name}	${_mount_point}" >> ${FILESYSTEMS}
 		resp="X"	# force loop to repeat
 		;;
 	esac
@@ -233,8 +232,7 @@ esac
 # Loop though the file, place filesystems on each device.
 echo	"Creating filesystems..."
 (
-	while read line; do
-		_device_name=`echo $line | awk '{print $1}'`
+	while read _device_name _junk; do
 		newfs /dev/r${_device_name}
 		echo ""
 	done
@@ -353,12 +351,15 @@ esac
 
 # Now that the network has been configured, it is safe to configure the
 # fstab.
-awk '{
-	if ($2 == "/")
-		printf("/dev/%s %s ffs rw 1 1\n", $1, $2)
-	else
-		printf("/dev/%s %s ffs rw 1 2\n", $1, $2)
-}' < ${FILESYSTEMS} > /tmp/fstab
+(
+	while read _dev _mp; do
+		if [ "$mp" = "/" ]; then
+			echo /dev/$_dev $_mp ffs rw 1 1
+		else
+			echo /dev/$_dev $_mp ffs rw 1 2
+		fi
+	done
+) < ${FILESYSTEMS} > /tmp/fstab
 
 echo	"The fstab is configured as follows:"
 echo	""
