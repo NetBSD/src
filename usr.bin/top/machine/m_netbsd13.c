@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd13.c,v 1.5 1999/06/28 22:13:04 tron Exp $	*/
+/*	$NetBSD: m_netbsd13.c,v 1.6 1999/07/22 18:23:01 thorpej Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.5 1999/06/28 22:13:04 tron Exp $
+ * $Id: m_netbsd13.c,v 1.6 1999/07/22 18:23:01 thorpej Exp $
  */
 #define UVM
 
@@ -479,7 +479,7 @@ get_process_info(si, sel, compare)
 	{
 	    total_procs++;
 	    process_states[(unsigned char) PP(pp, p_stat)]++;
-	    if ((PP(pp, p_stat) != SZOMB) &&
+	    if ((PP(pp, p_stat) != SZOMB && PP(pp, p_stat) != SDYING) &&
 		(show_idle || (PP(pp, p_pctcpu) != 0) || 
 		 (PP(pp, p_stat) == SRUN)) &&
 		(!show_uid || EP(pp, e_pcred.p_ruid) == (uid_t)sel->uid))
@@ -690,10 +690,11 @@ getkval(offset, ptr, size, refstr)
 
 static int sorted_state[] = {
     0,	/*  (not used)	  ?	*/
-    4,	/* "start"	SIDL	*/
-    5,	/* "run"	SRUN	*/
-    2,	/* "sleep"	SSLEEP	*/
+    5,	/* "start"	SIDL	*/
+    4,	/* "run"	SRUN	*/
+    3,	/* "sleep"	SSLEEP	*/
     3,	/* "stop"	SSTOP	*/
+    2,	/* "dying"	SDYING	*/
     1,	/* "zomb"	SZOMB	*/
 };
 

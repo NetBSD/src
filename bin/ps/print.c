@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.41 1999/05/03 00:17:30 mrg Exp $	*/
+/*	$NetBSD: print.c,v 1.42 1999/07/22 18:16:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.41 1999/05/03 00:17:30 mrg Exp $");
+__RCSID("$NetBSD: print.c,v 1.42 1999/07/22 18:16:05 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,6 +251,7 @@ state(k, ve)
 		break;
 
 	case SZOMB:
+	case SDYING:
 		*cp = 'Z';
 		break;
 
@@ -267,7 +268,7 @@ state(k, ve)
 		*cp++ = 'N';
 	if (flag & P_TRACED)
 		*cp++ = 'X';
-	if (flag & P_WEXIT && p->p_stat != SZOMB)
+	if (flag & P_WEXIT && P_ZOMBIE(p) == 0)
 		*cp++ = 'E';
 	if (flag & P_PPWAIT)
 		*cp++ = 'V';
@@ -510,7 +511,7 @@ cputime(k, ve)
 	char obuff[128];
 
 	v = ve->var;
-	if (KI_PROC(k)->p_stat == SZOMB || !k->ki_u.u_valid) {
+	if (P_ZOMBIE(KI_PROC(k)) || k->ki_u.u_valid == 0) {
 		secs = 0;
 		psecs = 0;
 	} else {
@@ -555,8 +556,8 @@ getpcpu(k)
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
 	/* XXX - I don't like this */
-	if (p->p_swtime == 0 || (p->p_flag & P_INMEM) == 0
-	    || p->p_stat == SZOMB)
+	if (p->p_swtime == 0 || (p->p_flag & P_INMEM) == 0 ||
+	    P_ZOMBIE(p))
 		return (0.0);
 	if (rawcpu)
 		return (100.0 * fxtofl(p->p_pctcpu));
