@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.207 2004/04/20 08:38:41 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.208 2004/04/28 12:36:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -919,7 +919,7 @@ trapbase_sun4m:
 /* trap 0 is special since we cannot receive it */
 	b dostart; nop; nop; nop	! 00 = reset (fake)
 	VTRAP(T_TEXTFAULT, memfault_sun4m)	! 01 = instr. fetch fault
-	TRAP(T_ILLINST)			! 02 = illegal instruction
+	VTRAP(T_ILLINST, illinst4m)	! 02 = illegal instruction
 	TRAP(T_PRIVINST)		! 03 = privileged instruction
 	TRAP(T_FPDISABLED)		! 04 = fp instr, but EF bit off in psr
 	WINDOW_OF			! 05 = window overflow
@@ -2069,6 +2069,59 @@ normal_mem_fault:
 	b	return_from_trap	! go return
 	 wr	%l0, 0, %psr		! (but first disable traps again)
 
+illinst4m:
+	/*
+	 * Cypress CPUs like to generate an Illegal Instruction trap
+	 * for FLUSH instructions. Since we turn FLUSHes into no-ops
+	 * (see also trap.c/emul.c), we check for this case here in
+	 * the trap window, saving the overhead of a slow trap.
+	 *
+	 * We have to be careful not to incur a trap while probing
+	 * for the instruction in user space. Use the Inhibit Fault
+	 * bit in the PCR register to prevent that.
+	 */
+
+	btst	PSR_PS, %l0		! slowtrap() if from kernel
+	bnz	slowtrap
+	 EMPTY
+
+	! clear fault status
+	set	SRMMU_SFSR, %l7
+	lda	[%l7]ASI_SRMMU, %g0
+
+	! turn on the fault inhibit in PCR
+	!set	SRMMU_PCR, reg			- SRMMU_PCR == 0, so use %g0
+	lda	[%g0]ASI_SRMMU, %l4
+	or	%l4, SRMMU_PCR_NF, %l5
+	sta	%l5, [%g0]ASI_SRMMU
+
+	! load the insn word as if user insn fetch
+	lda	[%l1]ASI_USERI, %l5
+
+	sta	%l4, [%g0]ASI_SRMMU		! restore PCR
+
+	! check fault status; if we have a fault, take a regular trap
+	set	SRMMU_SFAR, %l6
+	lda	[%l6]ASI_SRMMU, %g0		! fault VA; must be read first
+	lda	[%l7]ASI_SRMMU, %l6		! fault status
+	andcc	%l6, SFSR_FAV, %l6		! get fault status bits
+	bnz	slowtrap
+	 EMPTY
+
+	! we got the insn; check whether it was a FLUSH
+	! instruction format: op=2, op3=0x3b (see also instr.h)
+	set	((3 << 30) | (0x3f << 19)), %l7	! extract op & op3 fields
+	and	%l5, %l7, %l6
+	set	((2 << 30) | (0x3b << 19)), %l7	! any FLUSH opcode
+	cmp	%l6, %l7
+	bne	slowtrap
+	 nop
+
+	mov	%l2, %l1			! ADVANCE <pc,npc>
+	mov	%l0, %psr			! and return from trap
+	 add	%l2, 4, %l2
+	RETT
+	
 
 /*
  * fp_exception has to check to see if we are trying to save
