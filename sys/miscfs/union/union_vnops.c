@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.16 1994/12/15 19:06:50 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.17 1994/12/15 19:15:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -681,8 +681,11 @@ union_setattr(ap)
 	if ((vp = un->un_uppervp) == NULLVP &&
 	    /* assert(un->un_lowervp != NULLVP) */
 	    un->un_lowervp->v_type == VREG) {
-		return (union_copyup(un, (ap->a_vap->va_size != 0),
-						ap->a_cred, ap->a_p));
+		error = union_copyup(un, (ap->a_vap->va_size != 0),
+						ap->a_cred, ap->a_p);
+		if (error)
+			return (error);
+		vp = un->un_uppervp;
 	}
 
 	/*
@@ -1220,9 +1223,9 @@ union_readdir(ap)
 	} */ *ap;
 {
 	register struct union_node *un = VTOUNION(ap->a_vp);
-	register struct vnode *vp = un->un_uppervp;
+	register struct vnode *vp;
 
-	if (vp == NULLVP)
+	if ((vp = un->un_uppervp) == NULLVP)
 		return (0);
 
 	FIXUP(un);
