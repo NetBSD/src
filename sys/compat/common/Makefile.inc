@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1996/08/08 15:06:40 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1996/08/08 15:15:16 mycroft Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -12,8 +12,7 @@ COMPATMAKE= \
 	cd ${COMPATDIR} && MAKEOBJDIR=${COMPATDST} ${MAKE} \
 	    CC='${CC}' CFLAGS='${CFLAGS}' \
 	    LD='${LD}' \
-	    COMPATCPPFLAGS='${CPPFLAGS}' \
-	    COMPATDIR='${COMPATDIR}'
+	    COMPATCPPFLAGS='${CPPFLAGS}'
 
 ${COMPATLIB}:		.NOTMAIN __always_make_compatlib
 	@echo making sure the compat library is up to date...

@@ -1,13 +1,15 @@
-#	$NetBSD: Makefile,v 1.28 1996/08/08 15:06:42 mycroft Exp $
+#	$NetBSD: Makefile,v 1.29 1996/08/08 15:15:18 mycroft Exp $
 
 LIB=	kern
 NOPIC=
 
-CPPFLAGS=	-I${.CURDIR}/arch/${MACHINE_ARCH} ${KERNCPPFLAGS}
+M=	${.CURDIR}/arch/${MACHINE_ARCH}
 
-.if exists (${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc)
-.PATH:	${.CURDIR}/arch/${MACHINE_ARCH}
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
+CPPFLAGS=	-I$M ${KERNCPPFLAGS}
+
+.if exists ($M/Makefile.inc)
+.PATH:	$M
+.include "$M/Makefile.inc"
 .endif
 
 .if (${MACHINE_ARCH} != "alpha")
