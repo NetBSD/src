@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.216 2005/01/31 23:06:41 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.217 2005/01/31 23:39:02 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.216 2005/01/31 23:06:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.217 2005/01/31 23:39:02 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -2210,11 +2210,11 @@ try_again:
 	}
 
 	if (big)
-		page = (void *)((uint32_t)&data.header.big +
+		page = (void *)((char *) &data.header.big +
 				sizeof data.header.big +
 				_2btol(data.header.big.blk_desc_len));
 	else
-		page = (void *)((uint32_t)&data.header.small +
+		page = (void *)((char *) &data.header.small +
 				sizeof data.header.small +
 				data.header.small.blk_desc_len);
 
@@ -2256,11 +2256,11 @@ try_again:
 	}
 
 	if (big)
-		page = (void *)((uint32_t)&data.header.big +
+		page = (void *)((char *) &data.header.big +
 				sizeof data.header.big +
 				_2btol(data.header.big.blk_desc_len));
 	else
-		page = (void *)((uint32_t)&data.header.small +
+		page = (void *)((char *) &data.header.small +
 				sizeof data.header.small +
 				data.header.small.blk_desc_len);
 
@@ -2301,11 +2301,11 @@ try_again:
 	}
 
 	if (big)
-		page = (void *)((uint32_t)&data.header.big +
+		page = (void *)((char *) &data.header.big +
 				sizeof data.header.big +
 				_2btol(data.header.big.blk_desc_len));
 	else
-		page = (void *)((uint32_t)&data.header.small +
+		page = (void *)((char *) &data.header.small +
 				sizeof data.header.small +
 				data.header.small.blk_desc_len);
 
@@ -2347,17 +2347,17 @@ try_again:
 		return (error);
 
 	if (big) {
-		page = (void *)((uint32_t)&data.header.big +
+		page = (void *)((char *) &data.header.big +
 				sizeof data.header.big +
 				_2btol(data.header.big.blk_desc_len));
-		page2 = (void *)((uint32_t)&mask.header.big +
+		page2 = (void *)((char *) &mask.header.big +
 				sizeof mask.header.big +
 				_2btol(mask.header.big.blk_desc_len));
 	} else {
-		page = (void *)((uint32_t)&data.header.small +
+		page = (void *)((char *) &data.header.small +
 				sizeof data.header.small +
 				data.header.small.blk_desc_len);
-		page2 = (void *)((uint32_t)&mask.header.small +
+		page2 = (void *)((char *) &mask.header.small +
 				sizeof mask.header.small +
 				mask.header.small.blk_desc_len);
 	}

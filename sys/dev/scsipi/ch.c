@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.65 2005/01/31 23:06:41 reinoud Exp $	*/
+/*	$NetBSD: ch.c,v 1.66 2005/01/31 23:39:02 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.65 2005/01/31 23:06:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.66 2005/01/31 23:39:02 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -765,7 +765,7 @@ ch_ousergetelemstatus(struct ch_softc *sc, int chet, uint8_t *uptr)
 		goto done;
 
 	st_hdrp = (struct read_element_status_header *)data;
-	pg_hdrp = (struct read_element_status_page_header *)((uint32_t)st_hdrp +
+	pg_hdrp = (struct read_element_status_page_header *)((char *) st_hdrp +
 	    sizeof(struct read_element_status_header));
 	desclen = _2btol(pg_hdrp->edl);
 
@@ -778,7 +778,7 @@ ch_ousergetelemstatus(struct ch_softc *sc, int chet, uint8_t *uptr)
 		printf("%s: warning, READ ELEMENT STATUS avail != count\n",
 		    sc->sc_dev.dv_xname);
 
-	desc = (struct read_element_status_descriptor *)((uint32_t)data +
+	desc = (struct read_element_status_descriptor *)((char *) data +
 	    sizeof(struct read_element_status_header) +
 	    sizeof(struct read_element_status_page_header));
 	for (i = 0; i < avail; ++i) {
@@ -786,7 +786,7 @@ ch_ousergetelemstatus(struct ch_softc *sc, int chet, uint8_t *uptr)
 		error = copyout(&user_data, &uptr[i], avail);
 		if (error)
 			break;
-		desc = (struct read_element_status_descriptor *)((uint32_t)desc
+		desc = (struct read_element_status_descriptor *)((char *) desc
 		    + desclen);
 	}
 
@@ -863,7 +863,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 		goto done;
 
 	st_hdrp = (struct read_element_status_header *)data;
-	pg_hdrp = (struct read_element_status_page_header *)((uint32_t)st_hdrp +
+	pg_hdrp = (struct read_element_status_page_header *)((char *) st_hdrp +
 	    sizeof(struct read_element_status_header));
 	desclen = _2btol(pg_hdrp->edl);
 
@@ -1003,7 +1003,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 			    sizeof(uvendptr));
 			if (error)
 				goto done;
-			error = copyout((void *)((uint32_t)desc + stddesclen),
+			error = copyout((void *)((char *) desc + stddesclen),
 			    uvendptr, ces.ces_vendor_len);
 			if (error)
 				goto done;
