@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.24 2004/03/15 03:38:39 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.25 2004/03/15 23:38:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.24 2004/03/15 03:38:39 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.25 2004/03/15 23:38:16 uwe Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -1135,7 +1135,7 @@ hd64461video_off(struct hd64461video_chip *vc)
 
 	/* turn off the LCD */
 	config_hook_call(CONFIG_HOOK_POWERCONTROL,
-			 CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
+			 CONFIG_HOOK_POWERCONTROL_LCD,
 			 (void *)0);
 }
 
@@ -1146,7 +1146,7 @@ hd64461video_on(struct hd64461video_chip *vc)
 
 	/* turn on the LCD */
 	err = config_hook_call(CONFIG_HOOK_POWERCONTROL,
-			       CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
+			       CONFIG_HOOK_POWERCONTROL_LCD,
 			       (void *)1);
 
 	if (err == 0)
