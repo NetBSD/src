@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.17 1999/03/25 01:16:11 lukem Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.18 1999/05/03 15:32:13 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_udp.c,v 1.17 1999/03/25 01:16:11 lukem Exp $");
+__RCSID("$NetBSD: clnt_udp.c,v 1.18 1999/05/03 15:32:13 christos Exp $");
 #endif
 #endif
 
@@ -248,7 +248,7 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	XDR *xdrs;
 	size_t outlen;
 	int inlen;
-	int fromlen;
+	socklen_t fromlen;
 	struct pollfd fd;
 	int milliseconds = (int)((cu->cu_wait.tv_sec * 1000) +
 	    (cu->cu_wait.tv_usec / 1000));
@@ -284,7 +284,7 @@ call_again:
 
 send_again:
 	if (sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,
-	    (struct sockaddr *)(void *)&(cu->cu_raddr), cu->cu_rlen)
+	    (struct sockaddr *)(void *)&(cu->cu_raddr), (socklen_t)cu->cu_rlen)
 	    != outlen) {
 		cu->cu_error.re_errno = errno;
 		return (cu->cu_error.re_status = RPC_CANTSEND);
