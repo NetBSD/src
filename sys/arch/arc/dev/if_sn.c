@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.9 1997/04/19 17:19:52 pefo Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.12 1999/05/13 15:44:48 jason Exp $	*/
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -377,7 +377,6 @@ snioctl(ifp, cmd, data)
 		if (((ifp->if_flags ^ sc->sc_iflags) & IFF_PROMISC) &&
 		    (ifp->if_flags & IFF_RUNNING)) {
 			sc->sc_iflags = ifp->if_flags;
-			printf("change in flags\n");
 			temp = sc->sc_if.if_flags & IFF_UP;
 			snreset(sc);
 			sc->sc_if.if_flags |= temp;
@@ -822,7 +821,7 @@ camprogram(sc)
 		continue;
 	if (timeout == 0) {
 		/* XXX */
-		panic("sonic: CAM initialisation failed\n");
+		panic("sonic: CAM initialisation failed");
 	}
 	timeout = 10000;
 	while ((csr->s_isr & ISR_LCD) == 0 && timeout--)
@@ -1030,10 +1029,7 @@ sonictxint(sc)
 		mtd_free(mtd);
 
 		if ((SRD(txp->status) & TCR_PTX) == 0) {
-			printf("sonic: Tx packet status=0x%x\n", txp->status);
-
 			if (mtdhead != mtdnext) {
-				printf("resubmitting remaining packets\n");
 				csr->s_ctda = LOWER(v_tda + (mtdhead->mtd_txp - p_tda));
 				csr->s_cr = CR_TXP;
 				wbflush();
@@ -1178,15 +1174,9 @@ sonic_read(sc, rxp)
 	 * If so, hand off the raw packet to enet, then discard things
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
-	if (sc->sc_if.if_bpf) {
+	if (sc->sc_if.if_bpf)
 		bpf_tap(sc->sc_if.if_bpf, pkt,
 		    len + sizeof(struct ether_header));
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (et->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(et->ether_dhost, sc->sc_enaddr,
-			    sizeof(et->ether_dhost)) != 0)
-			return(0);
-	}
 #endif
 	m = sonic_get(sc, et, len);
 	if (m == NULL)

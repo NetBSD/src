@@ -1,5 +1,5 @@
-/*	$OpenBSD: pccons.c,v 1.15 1997/05/19 16:01:07 pefo Exp $	*/
-/*	$NetBSD: pccons.c,v 1.1.1.2 2000/01/23 20:24:27 soda Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
+/*	$NetBSD: pccons.c,v 1.1.1.3 2000/02/22 11:05:07 soda Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -62,6 +62,9 @@
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
+#ifdef DDB
+#include <ddb/db_var.h>
+#endif
 
 #include <dev/cons.h>
 
@@ -71,16 +74,16 @@
 #include <machine/autoconf.h>
 #include <machine/display.h>
 #include <machine/pccons.h>
-#include <arc/arc/arctype.h>
-#include <arc/arc/arcbios.h>
+
+#include <mips/archtype.h>
+#include <arch/mips/mips/arcbios.h>
+
 #include <arc/pica/pica.h>
 #include <arc/dti/desktech.h>
 
 #include <dev/isa/isavar.h>
 #include <arc/isa/isa_machdep.h>
 #include <machine/kbdreg.h>
-
-extern int cputype;
 
 #define	XFREE86_BUG_COMPAT
 
@@ -215,8 +218,6 @@ void sput __P((u_char *, int));
 void	pcstart __P((struct tty *));
 int	pcparam __P((struct tty *, struct termios *));
 static __inline void wcopy __P((void *, void *, u_int));
-
-char	partab[];
 
 extern void fillw __P((int, u_int16_t *, int));
 
@@ -495,6 +496,9 @@ pcprobe(parent, cfdata, aux)
 			return(0);
 	}
 
+	if(system_type == MAGNUM)
+		return(0);	/* Magnums have different graphics */
+
 	/* Enable interrupts and keyboard, etc. */
 	if (!kbc_put8042cmd(CMDBYTE)) {
 		printf("pcprobe: command error\n");
@@ -579,7 +583,7 @@ pcattach(parent, self, aux)
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 
-	switch(cputype) {
+	switch(system_type) {
 	case ACER_PICA_61:
 		BUS_INTR_ESTABLISH(ca, pcintr, (void *)(long)sc);
 		break;
@@ -858,7 +862,9 @@ pccnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(maj, 0);
-	if(cputype == ALGOR_P4032) {
+	if(system_type == ALGOR_P4032 ||
+	   system_type == ALGOR_P5064 ||
+	   system_type == MAGNUM) {
 		cp->cn_pri = CN_DEAD;	/* XXX For now... */
 	}
 	else {
@@ -876,7 +882,7 @@ pccninit(cp)
 	 * For now, don't screw with it.
 	 */
 	/* crtat = 0; */
-	switch(cputype) {
+	switch(system_type) {
 
 	case ACER_PICA_61:
 		mono_base += PICA_V_LOCAL_VIDEO_CTRL;
@@ -888,14 +894,15 @@ pccninit(cp)
 		break;
 
 	case DESKSTATION_TYNE:
-		mono_base += TYNE_V_ISA_IO;
-		mono_buf += TYNE_V_ISA_MEM;
-		cga_base += TYNE_V_ISA_IO;
-		cga_buf += TYNE_V_ISA_MEM;
-		kbd_cmdp = TYNE_V_ISA_IO + 0x64;
-		kbd_datap = TYNE_V_ISA_IO + 0x60;
-		outb(TYNE_V_ISA_IO + 0x3ce, 6);		/* Correct video mode */
-		outb(TYNE_V_ISA_IO + 0x3cf, inb(TYNE_V_ISA_IO + 0x3cf) | 0xc);
+		mono_base += arc_bus_io.bus_base;
+		mono_buf += arc_bus_mem.bus_base;
+		cga_base += arc_bus_io.bus_base;
+		cga_buf += arc_bus_mem.bus_base;
+		kbd_cmdp = arc_bus_io.bus_base + 0x64;
+		kbd_datap = arc_bus_io.bus_base + 0x60;
+		outb(arc_bus_io.bus_base + 0x3ce, 6);	/* Correct video mode */
+		outb(arc_bus_io.bus_base + 0x3cf,
+			inb(arc_bus_io.bus_base + 0x3cf) | 0xc);
 		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
 		break;
 
@@ -907,6 +914,15 @@ pccninit(cp)
 		kbd_cmdp = arc_bus_io.bus_base + 0x64;
 		kbd_datap = arc_bus_io.bus_base + 0x60;
 		kbc_put8042cmd(CMDBYTE);		/* Want XT codes.. */
+		break;
+
+	case SNI_RM200:
+		mono_base += arc_bus_io.bus_base;
+		mono_buf += arc_bus_mem.bus_base;
+		cga_base += arc_bus_io.bus_base;
+		cga_buf += arc_bus_mem.bus_base;
+		kbd_cmdp = arc_bus_io.bus_base + 0x64;
+		kbd_datap = arc_bus_io.bus_base + 0x60;
 		break;
 	}
 }
@@ -1689,7 +1705,8 @@ top:
 #if defined(DDB) && defined(XSERVER_DDB)
 		/* F12 enters the debugger while in X mode */
 		if (dt == 88)
-			Debugger();
+			if (db_console)
+				Debugger();
 #endif
 		capchar[0] = dt;
 		capchar[1] = 0;
@@ -1745,12 +1762,13 @@ top:
 		goto loop;
 	}
 
-#ifdef DEBUG
+#ifdef DDB
 	/*
 	 * Check for cntl-alt-esc.
 	 */
 	if ((dt == 1) && (shift_state & (KB_CTL | KB_ALT)) == (KB_CTL | KB_ALT)) {
-		mdbpanic();
+		if (db_console)
+			Debugger();
 		dt |= 0x80;	/* discard esc (ddb discarded ctl-alt) */
 	}
 #endif
@@ -1896,7 +1914,7 @@ pcmmap(dev, offset, nprot)
 	int nprot;
 {
 
-	switch(cputype) {
+	switch(system_type) {
 
 	case ACER_PICA_61:
 		if (offset >= 0xa0000 && offset < 0xc0000)
@@ -1905,6 +1923,15 @@ pcmmap(dev, offset, nprot)
 			return mips_btop(PICA_P_LOCAL_VIDEO_CTRL + offset);
 		if (offset >= 0x40000000 && offset < 0x40800000)
 			return mips_btop(PICA_P_LOCAL_VIDEO + offset - 0x40000000);
+		return -1;
+
+	case DESKSTATION_RPC44:
+		if (offset >= 0xa0000 && offset < 0xc0000)
+			return mips_btop(RPC44_P_ISA_MEM + offset);
+		if (offset >= 0x0000 && offset < 0x10000)
+			return mips_btop(RPC44_P_ISA_IO + offset);
+		if (offset >= 0x40000000 && offset < 0x40800000)
+			return mips_btop(RPC44_P_ISA_MEM + offset - 0x40000000);
 		return -1;
 
 	case DESKSTATION_TYNE:

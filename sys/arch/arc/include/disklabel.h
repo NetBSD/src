@@ -1,5 +1,5 @@
-/*	$OpenBSD: disklabel.h,v 1.6 1997/04/10 13:06:25 deraadt Exp $	*/
-/*	$NetBSD: disklabel.h,v 1.1.1.2 2000/01/23 20:24:28 soda Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.14 1999/03/23 16:36:17 millert Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.1.1.3 2000/02/22 11:05:21 soda Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,10 @@
 /* DOS partition table -- located in boot block */
 #define	DOSBBSECTOR	0		/* DOS boot block relative sector # */
 #define	DOSPARTOFF	446
+#define DOSACTIVE	0x80
 #define	NDOSPART	4
+#define DOSMBR_SIGNATURE	0xAA55
+#define DOSMBR_SIGNATURE_OFF	0x1FE
 
 struct dos_partition {
 	u_int8_t	dp_flag;	/* bootstrap flags */
@@ -63,12 +66,14 @@ struct dos_partition {
 #define DOSPTYP_FAT16S	0x04		/* 16-bit FAT, less than 32M */
 #define DOSPTYP_EXTEND	0x05		/* Extended; contains sub-partitions */
 #define DOSPTYP_FAT16B	0x06		/* 16-bit FAT, more than 32M */
-#define DOSPTYP_FAT16C	0x0e		/* 16-bit FAT, CHS-mapped */
+#define DOSPTYP_FAT32	0x0b		/* 32-bit FAT */
+#define DOSPTYP_FAT32L	0x0c		/* 32-bit FAT, LBA-mapped */
+#define DOSPTYP_FAT16L	0x0e		/* 16-bit FAT, LBA-mapped */
 #define DOSPTYP_ONTRACK	0x54
 #define	DOSPTYP_LINUX	0x83		/* That other thing */
-#define DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
-#define DOSPTYP_NETBSD	DOSPTYP_386BSD	/* NetBSD partition type (XXX) */
+#define DOSPTYP_FREEBSD	0xa5		/* FreeBSD partition type */
 #define DOSPTYP_OPENBSD	0xa6		/* OpenBSD partition type */
+#define DOSPTYP_NETBSD	0xa9		/* NetBSD partition type */
 
 #include <sys/dkbad.h>
 struct cpu_disklabel {
@@ -76,13 +81,25 @@ struct cpu_disklabel {
 	struct dkbad bad;
 };
 
+#define DKBAD(x) ((x)->bad)
+
 /* Isolate the relevant bits to get sector and cylinder. */
 #define	DPSECT(s)	((s) & 0x3f)
 #define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
 
-#ifdef _KERNEL
-struct disklabel;
-int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
-#endif
+static __inline u_int32_t get_le __P((void *));
+
+static __inline u_int32_t
+get_le(p)
+	void *p;
+{
+	u_int8_t *_p = (u_int8_t *)p;
+	u_int32_t x;
+	x = _p[0];
+	x |= _p[1] << 8;
+	x |= _p[2] << 16;
+	x |= _p[3] << 24;
+	return x;
+}
 
 #endif /* _MACHINE_DISKLABEL_H_ */

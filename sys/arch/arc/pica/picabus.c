@@ -1,5 +1,5 @@
-/*	$OpenBSD: picabus.c,v 1.7 1997/05/24 18:36:26 pefo Exp $	*/
-/*	$NetBSD: picabus.c,v 1.1.1.2 2000/01/23 20:24:30 soda Exp $	*/
+/*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
+/*	$NetBSD: picabus.c,v 1.1.1.3 2000/02/22 11:05:26 soda Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -41,8 +41,8 @@
 #include <machine/pio.h>
 #include <machine/autoconf.h>
 
+#include <mips/archtype.h>
 #include <arc/pica/pica.h>
-#include <arc/arc/arctype.h>
 #include <arc/dev/dma.h>
 
 struct pica_softc {
@@ -69,8 +69,6 @@ caddr_t	pica_cvtaddr __P((struct confargs *));
 int	pica_matchname __P((struct confargs *, char *));
 int	pica_iointr __P((unsigned int, struct clockframe *));
 int	pica_clkintr __P((unsigned int, struct clockframe *));
-
-extern int cputype;
 
 /*
  *  Interrupt dispatch table.
@@ -100,7 +98,6 @@ struct pica_dev {
 	intr_handler_t	ps_handler;
 	void 		*ps_base;
 };
-#ifdef ACER_PICA_61
 struct pica_dev acer_pica_61_cpu[] = {
 	{{ "dallas_rtc",0, 0, },
 	   0,			 pica_intrnull, (void *)PICA_SYS_CLOCK, },
@@ -127,15 +124,15 @@ struct pica_dev acer_pica_61_cpu[] = {
 	{{ NULL,       -1, NULL, },
 	   0, NULL, (void *)NULL, },
 };
-#endif
 
 struct pica_dev *pica_cpu_devs[] = {
         NULL,                   /* Unused */
-#ifdef ACER_PICA_61
         acer_pica_61_cpu,       /* Acer PICA */
-#else
+        acer_pica_61_cpu,       /* MAGNUMS same as Acer PICA */
 	NULL,
-#endif
+	NULL,
+	NULL,
+        acer_pica_61_cpu,       /* NEC-R94 same as MAGNUM */
 };
 int npica_cpu_devs = sizeof pica_cpu_devs / sizeof pica_cpu_devs[0];
 
@@ -156,7 +153,7 @@ picamatch(parent, cfdata, aux)
 
         /* Make sure that unit exists. */
 	if (cf->cf_unit != 0 ||
-	    cputype > npica_cpu_devs || pica_cpu_devs[cputype] == NULL)
+	    system_type > npica_cpu_devs || pica_cpu_devs[system_type] == NULL)
 		return (0);
 
 	return (1);
@@ -175,7 +172,7 @@ picaattach(parent, self, aux)
 	printf("\n");
 
 	/* keep our CPU device description handy */
-	sc->sc_devs = pica_cpu_devs[cputype];
+	sc->sc_devs = pica_cpu_devs[system_type];
 
 	/* set up interrupt handlers */
 	set_intr(INT_MASK_1, pica_iointr, 2);
@@ -281,7 +278,7 @@ int
 pica_intrnull(val)
 	void *val;
 {
-	panic("uncaught PICA intr for slot %d\n", val);
+	panic("uncaught PICA intr for slot %d", val);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.15 1997/05/18 13:45:24 pefo Exp $
+#	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -10,25 +10,19 @@ maxusers 2 8 64
 
 file	arch/arc/arc/autoconf.c
 file	arch/arc/arc/conf.c
-file	arch/arc/arc/cpu_exec.c
-file	arch/arc/arc/disksubr.c
 file	arch/arc/dev/dma.c
 file	arch/arc/arc/machdep.c
-file	arch/arc/arc/minidebug.c
-file	arch/arc/arc/mem.c
 file	arch/arc/arc/pmap.c
-file	arch/arc/arc/process_machdep.c
-file	arch/arc/arc/sys_machdep.c
 file	arch/arc/arc/trap.c
-file	arch/arc/arc/vm_machdep.c
 
-file	arch/arc/arc/arcbios.c
+file	arch/mips/mips/arcbios.c
 
 #
-#	Machine-independent ATAPI drivers 
+# Machine-independent ATAPI drivers
 #
-include "../../../dev/atapi/files.atapi"
-major	{ acd = 5 }
+
+include "../../../dev/atapiscsi/files.atapiscsi"
+include "../../../dev/ata/files.ata"
 
 #
 #	System BUS types
@@ -36,12 +30,12 @@ major	{ acd = 5 }
 define	mainbus {}
 device	mainbus
 attach	mainbus at root
-file	arch/arc/arc/mainbus.c	mainbus
+file	arch/mips/mips/mainbus.c	mainbus
 
 #	Our CPU configurator
 device	cpu
 attach	cpu at mainbus			# not optional
-file arch/arc/arc/cpu.c			cpu
+file arch/mips/mips/cpu.c		cpu
 
 #
 #	PICA bus autoconfiguration devices
@@ -108,7 +102,6 @@ device	clock
 attach	clock at pica with clock_pica
 attach	clock at isa with clock_isa
 attach	clock at algor with clock_algor
-file	arch/arc/arc/clock.c	clock & (clock_isa | clock_pica | clock_algor) needs-flag
 file	arch/arc/arc/clock_mc.c	clock & (clock_isa | clock_pica | clock_algor) needs-flag
 
 #	Console driver on PC-style graphics
@@ -129,14 +122,10 @@ attach	com at pica with com_pica
 attach	com at algor with com_algor
 file	arch/arc/dev/com_lbus.c		com & (com_pica | com_algor)
 
-
-# National Semiconductor DS8390/WD83C690-based boards
-# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-# XXX conflicts with other ports; can't be in files.isa
-device  ed: ether, ifnet
-attach  ed at isa with ed_isa
-attach  ed at pcmcia with ed_pcmcia
-file    dev/isa/if_ed.c                 ed & (ed_isa | ed_pcmcia) needs-flag
+# Game adapter (joystick)
+device  joy
+attach  joy at isa
+file    arch/arc/isa/joy.c             joy needs-flag
 
 # PC parallel ports (XXX what chip?)
 attach	lpt at pica with lpt_pica
@@ -152,6 +141,13 @@ file	arch/arc/dev/lpt_lbus.c		lpt & (lpt_pica | lpt_algor)
 device	pcivga: tty
 attach	pcivga at pci
 file	arch/arc/pci/pci_vga.c		pcivga
+
+#
+# ISA PnP
+#
+
+include "../../../dev/isa/files.isapnp"
+file	arch/arc/isa/isapnp_machdep.c	isapnp
 
 #
 # Specials.

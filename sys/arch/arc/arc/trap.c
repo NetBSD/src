@@ -1,4 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.11 1997/04/19 17:19:48 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,10 +40,10 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.1.1.2 2000/01/23 20:24:25 soda Exp $
  */
 
 #include "ppp.h"
+#include "bridge.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,97 +70,103 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/mips_opcode.h>
+#include <machine/frame.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
 #include <arc/pica/pica.h>
-#include <arc/arc/arctype.h>
+#include <mips/archtype.h>
+
+#ifdef DDB
+#include <mips/db_machdep.h>
+#include <ddb/db_sym.h>
+#endif
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
-extern void MachKernGenException __P((void));
-extern void MachUserGenException __P((void));
-extern void MachKernIntr __P((void));
-extern void MachUserIntr __P((void));
-extern void MachTLBModException __P((void));
-extern void MachTLBInvalidException __P((void));
+extern void MipsKernGenException __P((void));
+extern void MipsUserGenException __P((void));
+extern void MipsKernIntr __P((void));
+extern void MipsUserIntr __P((void));
+extern void MipsTLBModException __P((void));
+extern void MipsTLBInvalidException __P((void));
 
 void (*machExceptionTable[])(void) = {
 /*
  * The kernel exception handlers.
  */
-	MachKernIntr,			/* external interrupt */
-	MachKernGenException,		/* TLB modification */
-	MachTLBInvalidException,	/* TLB miss (load or instr. fetch) */
-	MachTLBInvalidException,	/* TLB miss (store) */
-	MachKernGenException,		/* address error (load or I-fetch) */
-	MachKernGenException,		/* address error (store) */
-	MachKernGenException,		/* bus error (I-fetch) */
-	MachKernGenException,		/* bus error (load or store) */
-	MachKernGenException,		/* system call */
-	MachKernGenException,		/* breakpoint */
-	MachKernGenException,		/* reserved instruction */
-	MachKernGenException,		/* coprocessor unusable */
-	MachKernGenException,		/* arithmetic overflow */
-	MachKernGenException,		/* trap exception */
-	MachKernGenException,		/* viritual coherence exception inst */
-	MachKernGenException,		/* floating point exception */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* watch exception */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* viritual coherence exception data */
+	MipsKernIntr,			/* external interrupt */
+	MipsKernGenException,		/* TLB modification */
+	MipsTLBInvalidException,	/* TLB miss (load or instr. fetch) */
+	MipsTLBInvalidException,	/* TLB miss (store) */
+	MipsKernGenException,		/* address error (load or I-fetch) */
+	MipsKernGenException,		/* address error (store) */
+	MipsKernGenException,		/* bus error (I-fetch) */
+	MipsKernGenException,		/* bus error (load or store) */
+	MipsKernGenException,		/* system call */
+	MipsKernGenException,		/* breakpoint */
+	MipsKernGenException,		/* reserved instruction */
+	MipsKernGenException,		/* coprocessor unusable */
+	MipsKernGenException,		/* arithmetic overflow */
+	MipsKernGenException,		/* trap exception */
+	MipsKernGenException,		/* viritual coherence exception inst */
+	MipsKernGenException,		/* floating point exception */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* watch exception */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* reserved */
+	MipsKernGenException,		/* viritual coherence exception data */
 /*
  * The user exception handlers.
  */
-	MachUserIntr,			/*  0 */
-	MachUserGenException,		/*  1 */
-	MachUserGenException,		/*  2 */
-	MachUserGenException,		/*  3 */
-	MachUserGenException,		/*  4 */
-	MachUserGenException,		/*  5 */
-	MachUserGenException,		/*  6 */
-	MachUserGenException,		/*  7 */
-	MachUserGenException,		/*  8 */
-	MachUserGenException,		/*  9 */
-	MachUserGenException,		/* 10 */
-	MachUserGenException,		/* 11 */
-	MachUserGenException,		/* 12 */
-	MachUserGenException,		/* 13 */
-	MachUserGenException,		/* 14 */
-	MachUserGenException,		/* 15 */
-	MachUserGenException,		/* 16 */
-	MachUserGenException,		/* 17 */
-	MachUserGenException,		/* 18 */
-	MachUserGenException,		/* 19 */
-	MachUserGenException,		/* 20 */
-	MachUserGenException,		/* 21 */
-	MachUserGenException,		/* 22 */
-	MachUserGenException,		/* 23 */
-	MachUserGenException,		/* 24 */
-	MachUserGenException,		/* 25 */
-	MachUserGenException,		/* 26 */
-	MachUserGenException,		/* 27 */
-	MachUserGenException,		/* 28 */
-	MachUserGenException,		/* 29 */
-	MachUserGenException,		/* 20 */
-	MachUserGenException,		/* 31 */
+	MipsUserIntr,			/*  0 */
+	MipsUserGenException,		/*  1 */
+	MipsUserGenException,		/*  2 */
+	MipsUserGenException,		/*  3 */
+	MipsUserGenException,		/*  4 */
+	MipsUserGenException,		/*  5 */
+	MipsUserGenException,		/*  6 */
+	MipsUserGenException,		/*  7 */
+	MipsUserGenException,		/*  8 */
+	MipsUserGenException,		/*  9 */
+	MipsUserGenException,		/* 10 */
+	MipsUserGenException,		/* 11 */
+	MipsUserGenException,		/* 12 */
+	MipsUserGenException,		/* 13 */
+	MipsUserGenException,		/* 14 */
+	MipsUserGenException,		/* 15 */
+	MipsUserGenException,		/* 16 */
+	MipsUserGenException,		/* 17 */
+	MipsUserGenException,		/* 18 */
+	MipsUserGenException,		/* 19 */
+	MipsUserGenException,		/* 20 */
+	MipsUserGenException,		/* 21 */
+	MipsUserGenException,		/* 22 */
+	MipsUserGenException,		/* 23 */
+	MipsUserGenException,		/* 24 */
+	MipsUserGenException,		/* 25 */
+	MipsUserGenException,		/* 26 */
+	MipsUserGenException,		/* 27 */
+	MipsUserGenException,		/* 28 */
+	MipsUserGenException,		/* 29 */
+	MipsUserGenException,		/* 20 */
+	MipsUserGenException,		/* 31 */
 };
 
 char	*trap_type[] = {
@@ -204,7 +211,7 @@ struct {
 
 int cpu_int_mask;	/* External cpu interrupt mask */
 
-#ifdef DEBUG
+#if defined(DDB) || defined(DEBUG)
 #define TRAPSIZE	10
 struct trapdebug {		/* trap history buffer for debugging */
 	u_int	status;
@@ -217,65 +224,62 @@ struct trapdebug {		/* trap history buffer for debugging */
 } trapdebug[TRAPSIZE], *trp = trapdebug;
 
 void trapDump __P((char *));
-#endif	/* DEBUG */
 
-#ifdef DEBUG	/* stack trace code, also useful for DDB one day */
-void stacktrace __P((int, int, int, int));
-void logstacktrace __P((int, int, int, int));
+void stacktrace __P((int *));
+void logstacktrace __P((int *));
+int  kdbpeek __P((int *));
+#if defined(DDB)
+int  kdb_trap __P((int, db_regs_t *));
+#endif
 
 /* extern functions printed by name in stack backtraces */
 extern void idle __P((void));
-extern void MachTLBMiss __P((void));
-extern u_int mdbpeek __P((int));
-extern int mdb __P((u_int, u_int, struct proc *, int));
-#endif	/* DEBUG */
+extern void MipsTLBMiss __P((void));
+#endif	/* DDB || DEBUG */
 
 extern const struct callback *callv;
 extern u_long intrcnt[];
-extern u_int cputype;
-extern void MachSwitchFPState __P((struct proc *, int *));
-extern void MachFPTrap __P((u_int, u_int, u_int));
-extern void arpintr __P((void));
-extern void ipintr __P((void));
-extern void pppintr __P((void));
+extern void MipsSwitchFPState __P((struct proc *, int *));
+extern void MipsFPTrap __P((u_int, u_int, u_int));
 
-u_int trap __P((u_int, u_int, u_int, u_int, u_int));
+u_int trap __P((u_int, u_int, u_int, u_int, struct trap_frame));
 void interrupt __P((u_int, u_int, u_int, u_int, u_int));
 void softintr __P((u_int, u_int));
 int cpu_singlestep __P((struct proc *));
-u_int MachEmulateBranch __P((int *, int, int, u_int));
+u_int MipsEmulateBranch __P((int *, int, int, u_int));
 
 /*
  * Handle an exception.
- * Called from MachKernGenException() or MachUserGenException()
+ * Called from MipsKernGenException() or MipsUserGenException()
  * when a processor trap occurs.
  * In the case of a kernel trap, we return the pc where to resume if
  * ((struct pcb *)UADDR)->pcb_onfault is set, otherwise, return old pc.
  */
 u_int
-trap(statusReg, causeReg, vadr, pc, args)
+trap(statusReg, causeReg, vadr, pc, f)
 	u_int statusReg;	/* status register at time of the exception */
 	u_int causeReg;		/* cause register at time of exception */
 	u_int vadr;		/* address (if any) the fault occured on */
 	u_int pc;		/* program counter where to continue */
-	u_int args;
+	struct trap_frame f;
 {
-	register int type, i;
+	int type, i;
 	unsigned ucode = 0;
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	u_quad_t sticks;
 	vm_prot_t ftype;
 	extern unsigned onfault_table[];
 	int typ = 0;
+	union sigval sv;
 
-#ifdef DEBUG
+#if defined(DDB) || defined(DEBUG)
 	trp->status = statusReg;
 	trp->cause = causeReg;
 	trp->vadr = vadr;
 	trp->pc = pc;
-	trp->ra = !USERMODE(statusReg) ? ((int *)&args)[19] :
+	trp->ra = !USERMODE(statusReg) ? f.reg[PC] :
 		p->p_md.md_regs[RA];
-	trp->sp = (int)&args;
+	trp->sp = (int)&f;
 	trp->code = 0;
 	if (++trp == &trapdebug[TRAPSIZE])
 		trp = trapdebug;
@@ -298,9 +302,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 	case T_TLB_MOD:
 		/* check for kernel address */
 		if ((int)vadr < 0) {
-			register pt_entry_t *pte;
-			register unsigned entry;
-			register vm_offset_t pa;
+			pt_entry_t *pte;
+			unsigned int entry;
+			vm_offset_t pa;
 
 			pte = kvtopte(vadr);
 			entry = pte->pt_entry;
@@ -331,9 +335,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 	case T_TLB_MOD+T_USER:
 	    {
-		register pt_entry_t *pte;
-		register unsigned entry;
-		register vm_offset_t pa;
+		pt_entry_t *pte;
+		unsigned int entry;
+		vm_offset_t pa;
 		pmap_t pmap = &p->p_vmspace->vm_pmap;
 
 		if (!(pte = pmap_segmap(pmap, vadr)))
@@ -373,7 +377,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		ftype = (type == T_TLB_ST_MISS) ? VM_PROT_WRITE : VM_PROT_READ;
 		/* check for kernel address */
 		if ((int)vadr < 0) {
-			register vm_offset_t va;
+			vm_offset_t va;
 			int rv;
 
 		kernel_fault:
@@ -406,9 +410,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 		ftype = VM_PROT_WRITE;
 	dofault:
 	    {
-		register vm_offset_t va;
-		register struct vmspace *vm;
-		register vm_map_t map;
+		vm_offset_t va;
+		struct vmspace *vm;
+		vm_map_t map;
 		int rv;
 
 		vm = p->p_vmspace;
@@ -469,8 +473,8 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 	case T_SYSCALL+T_USER:
 	    {
-		register int *locr0 = p->p_md.md_regs;
-		register struct sysent *callp;
+		int *locr0 = p->p_md.md_regs;
+		struct sysent *callp;
 		unsigned int code;
 		int numsys;
 		struct args {
@@ -480,10 +484,12 @@ trap(statusReg, causeReg, vadr, pc, args)
 
 		cnt.v_syscall++;
 		/* compute next PC after syscall instruction */
-		if ((int)causeReg < 0)
-			locr0[PC] = MachEmulateBranch(locr0, pc, 0, 0);
-		else
+		if ((int)causeReg < 0) {	/* Check BD bit */
+			locr0[PC] = MipsEmulateBranch(locr0, pc, 0, 0);
+		}
+		else {
 			locr0[PC] += 4;
+		}
 		callp = p->p_emul->e_sysent;
 		numsys = p->p_emul->e_nsysent;
 		code = locr0[V0];
@@ -598,7 +604,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 		rval[0] = 0;
 		rval[1] = locr0[V1];
-#ifdef DEBUG
+#if defined(DDB) || defined(DEBUG)
 		if (trp == trapdebug)
 			trapdebug[TRAPSIZE - 1].code = code;
 		else
@@ -611,7 +617,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		 */
 		p = curproc;
 		locr0 = p->p_md.md_regs;
-#ifdef DEBUG
+#if defined(DDB) || defined(DEBUG)
 		{ int s;
 		s = splhigh();
 		trp->status = statusReg;
@@ -656,9 +662,15 @@ trap(statusReg, causeReg, vadr, pc, args)
 		goto out;
 	    }
 
+#ifdef DDB
+	case T_BREAK:
+		kdb_trap(type, &f);
+		return(f.reg[PC]);
+#endif
+
 	case T_BREAK+T_USER:
 	    {
-		register unsigned va, instr;
+		unsigned int va, instr;
 		struct uio uio;
 		struct iovec iov;
 
@@ -716,14 +728,14 @@ trap(statusReg, causeReg, vadr, pc, args)
 			typ = ILL_ILLOPC;
 			break;
 		}
-		MachSwitchFPState(machFPCurProcPtr, p->p_md.md_regs);
+		MipsSwitchFPState(machFPCurProcPtr, p->p_md.md_regs);
 		machFPCurProcPtr = p;
 		p->p_md.md_regs[PS] |= SR_COP_1_BIT;
 		p->p_md.md_flags |= MDP_FPUSED;
 		goto out;
 
 	case T_FPE:
-#ifdef DEBUG
+#if defined(DDB) || defined(DEBUG)
 		trapDump("fpintr");
 #else
 		printf("FPU Trap: PC %x CR %x SR %x\n",
@@ -732,7 +744,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 
 	case T_FPE+T_USER:
-		MachFPTrap(statusReg, causeReg, pc);
+		MipsFPTrap(statusReg, causeReg, pc);
 		goto out;
 
 	case T_OVFLOW+T_USER:
@@ -752,52 +764,16 @@ trap(statusReg, causeReg, vadr, pc, args)
 	default:
 	err:
 #ifdef DEBUG
-	    {
-		extern struct pcb mdbpcb;
-
-		if (USERMODE(statusReg))
-			mdbpcb = p->p_addr->u_pcb;
-		else {
-			mdbpcb.pcb_regs[ZERO] = 0;
-			mdbpcb.pcb_regs[AST] = ((int *)&args)[2];
-			mdbpcb.pcb_regs[V0] = ((int *)&args)[3];
-			mdbpcb.pcb_regs[V1] = ((int *)&args)[4];
-			mdbpcb.pcb_regs[A0] = ((int *)&args)[5];
-			mdbpcb.pcb_regs[A1] = ((int *)&args)[6];
-			mdbpcb.pcb_regs[A2] = ((int *)&args)[7];
-			mdbpcb.pcb_regs[A3] = ((int *)&args)[8];
-			mdbpcb.pcb_regs[T0] = ((int *)&args)[9];
-			mdbpcb.pcb_regs[T1] = ((int *)&args)[10];
-			mdbpcb.pcb_regs[T2] = ((int *)&args)[11];
-			mdbpcb.pcb_regs[T3] = ((int *)&args)[12];
-			mdbpcb.pcb_regs[T4] = ((int *)&args)[13];
-			mdbpcb.pcb_regs[T5] = ((int *)&args)[14];
-			mdbpcb.pcb_regs[T6] = ((int *)&args)[15];
-			mdbpcb.pcb_regs[T7] = ((int *)&args)[16];
-			mdbpcb.pcb_regs[T8] = ((int *)&args)[17];
-			mdbpcb.pcb_regs[T9] = ((int *)&args)[18];
-			mdbpcb.pcb_regs[RA] = ((int *)&args)[19];
-			mdbpcb.pcb_regs[MULLO] = ((int *)&args)[21];
-			mdbpcb.pcb_regs[MULHI] = ((int *)&args)[22];
-			mdbpcb.pcb_regs[PC] = pc;
-			mdbpcb.pcb_regs[SR] = statusReg;
-			bzero((caddr_t)&mdbpcb.pcb_regs[F0], 33 * sizeof(int));
-		}
-		if (mdb(causeReg, vadr, p, !USERMODE(statusReg)))
-			return (mdbpcb.pcb_regs[PC]);
-	    }
-#else
-#ifdef DEBUG
-		stacktrace();
+		stacktrace(!USERMODE(statusReg) ? f.reg : p->p_md.md_regs);
 		trapDump("trap");
-#endif
 #endif
 		panic("trap");
 	}
 	p->p_md.md_regs[PC] = pc;
 	p->p_md.md_regs[CAUSE] = causeReg;
 	p->p_md.md_regs[BADVADDR] = vadr;
-	trapsignal(p, i, ucode, typ, (caddr_t)vadr);
+	sv.sival_int = vadr;
+	trapsignal(p, i, ucode, typ, sv);
 out:
 	/*
 	 * Note: we should only get here if returning to user mode.
@@ -842,23 +818,23 @@ out:
 
 /*
  * Handle an interrupt.
- * Called from MachKernIntr() or MachUserIntr()
+ * Called from MipsKernIntr() or MipsUserIntr()
  * Note: curproc might be NULL.
  */
 void
-interrupt(statusReg, causeReg, pc, what, args)
+interrupt(statusReg, causeReg, what, pc, args)
 	u_int statusReg;	/* status register at time of the exception */
 	u_int causeReg;		/* cause register at time of exception */
-	u_int pc;		/* program counter where to continue */
 	u_int what;
+	u_int pc;		/* program counter where to continue */
 	u_int args;
 {
-	register unsigned mask;
-	register int i;
+	unsigned mask;
+	int i;
 	struct clockframe cf;
 
 	cnt.v_trap++;
-#ifdef DEBUG
+#if defined(DDB) || defined(DEBUG)
 	trp->status = statusReg;
 	trp->cause = causeReg;
 	trp->vadr = 0;
@@ -880,7 +856,7 @@ interrupt(statusReg, causeReg, pc, what, args)
 	 *  Check off all enabled interrupts. Called interrupt routine
 	 *  returns mask of interrupts to reenable.
 	 */
-	for(i = 0; i < 5; i++) {
+	for(i = 0; i < 8; i++) {
 		if(cpu_int_tab[i].int_mask & mask) {
 			causeReg &= (*cpu_int_tab[i].int_hand)(mask, &cf);
 		}
@@ -914,6 +890,18 @@ interrupt(statusReg, causeReg, pc, what, args)
 			ipintr();
 		}
 #endif
+#ifdef INET6
+		if (netisr & (1 << NETISR_IPV6)) {
+			netisr &= ~(1 << NETISR_IPV6);
+			ipv6intr();
+		}
+#endif
+#ifdef NETATALK
+		if (netisr & (1 << NETISR_ATALK)) {
+			netisr &= ~(1 << NETISR_ATALK);
+			atintr();
+		}
+#endif
 #ifdef NS
 		if (netisr & (1 << NETISR_NS)) {
 			netisr &= ~(1 << NETISR_NS);
@@ -930,6 +918,12 @@ interrupt(statusReg, causeReg, pc, what, args)
 		if(netisr & (1 << NETISR_PPP)) {
 			netisr &= ~(1 << NETISR_PPP);
 			pppintr();
+		}
+#endif
+#if NBRIDGE > 0
+		if(netisr & (1 << NETISR_BRIDGE)) {
+			netisr &= ~(1 << NETISR_BRIDGE);
+			bridgeintr();
 		}
 #endif
 	}
@@ -951,13 +945,14 @@ set_intr(mask, int_hand, prio)
 	int	(*int_hand)(u_int, struct clockframe *);
 	int	prio;
 {
-	if(prio > 5)
+	if(prio >= 8)
 		panic("set_intr: to high priority");
 
 	if(cpu_int_tab[prio].int_mask != 0 &&
 	   (cpu_int_tab[prio].int_mask != mask ||
-	    cpu_int_tab[prio].int_hand != int_hand))
-		panic("set_intr: int already set");
+	    cpu_int_tab[prio].int_hand != int_hand)) {
+		panic("set_intr: int already set %x", prio);
+	}
 
 	cpu_int_tab[prio].int_hand = int_hand;
 	cpu_int_tab[prio].int_mask = mask;
@@ -966,7 +961,7 @@ set_intr(mask, int_hand, prio)
 	/*
 	 *  Update external interrupt mask but don't enable clock.
 	 */
-	switch(cputype) {
+	switch(system_type) {
 	case ACER_PICA_61:
 	case MAGNUM:
 		out32(R4030_SYS_EXT_IMASK, cpu_int_mask & (~INT_MASK_4 >> 10));
@@ -977,12 +972,13 @@ set_intr(mask, int_hand, prio)
 	case DESKSTATION_RPC44:
 		break;
 	case ALGOR_P4032:
+	case ALGOR_P5064:
 		break;
 	}
 }
 
 /*
- * This is called from MachUserIntr() if astpending is set.
+ * This is called from MipsUserIntr() if astpending is set.
  * This is very similar to the tail of trap().
  */
 void
@@ -990,7 +986,7 @@ softintr(statusReg, pc)
 	unsigned statusReg;	/* status register at time of the exception */
 	unsigned pc;		/* program counter where to continue */
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	int sig;
 
 	cnt.v_soft++;
@@ -1025,12 +1021,12 @@ softintr(statusReg, pc)
 	curpriority = p->p_priority;
 }
 
-#ifdef DEBUG
+#if defined(DDB) || defined(DEBUG)
 void
 trapDump(msg)
 	char *msg;
 {
-	register int i;
+	int i;
 	int s;
 
 	s = splhigh();
@@ -1092,7 +1088,7 @@ arc_errintr()
  * Return the resulting PC as if the branch was executed.
  */
 unsigned
-MachEmulateBranch(regsPtr, instPC, fpcCSR, instptr)
+MipsEmulateBranch(regsPtr, instPC, fpcCSR, instptr)
 	int *regsPtr;
 	int instPC;
 	int fpcCSR;
@@ -1153,7 +1149,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, instptr)
 			break;
 
 		default:
-			panic("MachEmulateBranch: Bad branch cond");
+			panic("MipsEmulateBranch: Bad branch cond");
 		}
 		break;
 
@@ -1227,10 +1223,10 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, instptr)
  */
 int
 cpu_singlestep(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register unsigned va;
-	register int *locr0 = p->p_md.md_regs;
+	unsigned va;
+	int *locr0 = p->p_md.md_regs;
 	int i;
 	int bpinstr = BREAK_SSTEP;
 	int curinstr;
@@ -1253,7 +1249,7 @@ cpu_singlestep(p)
 
 	/* compute next address after current location */
 	if(curinstr != 0) {
-		va = MachEmulateBranch(locr0, locr0[PC], locr0[FSR], curinstr);
+		va = MipsEmulateBranch(locr0, locr0[PC], locr0[FSR], curinstr);
 	}
 	else {
 		va = locr0[PC] + 4;
@@ -1303,55 +1299,55 @@ cpu_singlestep(p)
 	return (0);
 }
 
-#ifdef DEBUG
+#if defined(DDB) || defined(DEBUG)
 #define MIPS_JR_RA	0x03e00008	/* instruction code for jr ra */
 
 /* forward */
 char *fn_name(unsigned addr);
-void stacktrace_subr __P((int, int, int, int, int (*)(const char*, ...)));
+void stacktrace_subr __P((int *, int (*)(const char*, ...)));
 
 /*
  * Print a stack backtrace.
  */
 void
-stacktrace(a0, a1, a2, a3)
-	int a0, a1, a2, a3;
+stacktrace(regs)
+	int *regs;
 {
-	stacktrace_subr(a0, a1, a2, a3, printf);
+	stacktrace_subr(regs, printf);
 }
 
 void
-logstacktrace(a0, a1, a2, a3)
-	int a0, a1, a2, a3;
+logstacktrace(regs)
+	int *regs;
 {
-	stacktrace_subr(a0, a1, a2, a3, addlog);
+	stacktrace_subr(regs, addlog);
 }
 
 void
-stacktrace_subr(a0, a1, a2, a3, printfn)
-	int a0, a1, a2, a3;
+stacktrace_subr(regs, printfn)
+	int *regs;
 	int (*printfn) __P((const char*, ...));
 {
 	unsigned pc, sp, fp, ra, va, subr;
+	unsigned a0, a1, a2, a3;
 	unsigned instr, mask;
 	InstFmt i;
 	int more, stksize;
-	int regs[3];
 	extern char edata[];
-	extern cpu_getregs __P((int *));
 	unsigned int frames =  0;
 
-	cpu_getregs(regs);
-
 	/* get initial values from the exception frame */
-	sp = regs[0];
-	pc = regs[1];
-	ra = 0;
-	fp = regs[2];
+	sp = regs[SP];
+	pc = regs[PC];
+	fp = regs[S8];
+	ra = regs[RA];		/* May be a 'leaf' function */
+	a0 = regs[A0];
+	a1 = regs[A1];
+	a2 = regs[A2];
+	a3 = regs[A3];
 
 /* Jump here when done with a frame, to start a new one */
 loop:
-	ra = 0;
 
 /* Jump here after a nonstandard (interrupt handler) frame */
 specialframe:
@@ -1372,18 +1368,18 @@ specialframe:
 	}
 
 	/* Backtraces should contine through interrupts from kernel mode */
-	if (pc >= (unsigned)MachKernIntr && pc < (unsigned)MachUserIntr) {
-		/* NOTE: the offsets depend on the code in locore.s */
-		(*printfn)("MachKernIntr+%x: (%x, %x ,%x) -------\n",
-		       pc-(unsigned)MachKernIntr, a0, a1, a2);
-		a0 = mdbpeek(sp + 36);
-		a1 = mdbpeek(sp + 40);
-		a2 = mdbpeek(sp + 44);
-		a3 = mdbpeek(sp + 48);
+	if (pc >= (unsigned)MipsKernIntr && pc < (unsigned)MipsUserIntr) {
+		(*printfn)("MipsKernIntr+%x: (%x, %x ,%x) -------\n",
+		       pc-(unsigned)MipsKernIntr, a0, a1, a2);
+		regs = (int *)(sp + STAND_ARG_SIZE);
+		a0 = kdbpeek(&regs[A0]);
+		a1 = kdbpeek(&regs[A1]);
+		a2 = kdbpeek(&regs[A2]);
+		a3 = kdbpeek(&regs[A3]);
 
-		pc = mdbpeek(sp + 20);	/* exc_pc - pc at time of exception */
-		ra = mdbpeek(sp + 92);	/* ra at time of exception */
-		sp = sp + 108;
+		pc = kdbpeek(&regs[PC]); /* exc_pc - pc at time of exception */
+		ra = kdbpeek(&regs[RA]); /* ra at time of exception */
+		sp = kdbpeek(&regs[SP]);
 		goto specialframe;
 	}
 
@@ -1398,14 +1394,14 @@ specialframe:
 	 * have a preceding "j ra" at the tail of the preceding function. 
 	 * Depends on relative ordering of functions in locore.
 	 */
-	if (pcBetween(MachKernGenException, MachUserGenException))
-		subr = (unsigned) MachKernGenException;
-	else if (pcBetween(MachUserGenException,MachKernIntr))
-		subr = (unsigned) MachUserGenException;
-	else if (pcBetween(MachKernIntr, MachUserIntr))
-		subr = (unsigned) MachKernIntr;
-	else if (pcBetween(MachUserIntr, MachTLBInvalidException))
-		subr = (unsigned) MachUserIntr;
+	if (pcBetween(MipsKernGenException, MipsUserGenException))
+		subr = (unsigned) MipsKernGenException;
+	else if (pcBetween(MipsUserGenException,MipsKernIntr))
+		subr = (unsigned) MipsUserGenException;
+	else if (pcBetween(MipsKernIntr, MipsUserIntr))
+		subr = (unsigned) MipsKernIntr;
+	else if (pcBetween(MipsUserIntr, MipsTLBInvalidException))
+		subr = (unsigned) MipsUserIntr;
 	else if (pcBetween(splx, wbflush))
 		subr = (unsigned) splx;
 	else if (pcBetween(cpu_switch, fuword))
@@ -1415,7 +1411,7 @@ specialframe:
 		ra = 0;
 		goto done;
 	}
-	else if (pc >= (unsigned)MachTLBMiss && pc < (unsigned)setsoftclock) {
+	else if (pc >= (unsigned)MipsTLBMiss && pc < (unsigned)setsoftclock) {
 		(*printfn)("<<locore>>");
 		goto done;
 	}
@@ -1433,17 +1429,17 @@ specialframe:
 	 */
 	if (!subr) {
 		va = pc - sizeof(int);
-		while ((instr = mdbpeek(va)) != MIPS_JR_RA)
+		while ((instr = kdbpeek((int *)va)) != MIPS_JR_RA)
 		va -= sizeof(int);
 		va += 2 * sizeof(int);	/* skip back over branch & delay slot */
 		/* skip over nulls which might separate .o files */
-		while ((instr = mdbpeek(va)) == 0)
+		while ((instr = kdbpeek((int *)va)) == 0)
 			va += sizeof(int);
 		subr = va;
 	}
 
 	/*
-	 * Jump here for locore entry pointsn for which the preceding
+	 * Jump here for locore entry points for which the preceding
 	 * function doesn't end in "j ra"
 	 */
 	/* scan forwards to find stack size and any saved registers */
@@ -1455,7 +1451,7 @@ specialframe:
 		/* stop if hit our current position */
 		if (va >= pc)
 			break;
-		instr = mdbpeek(va);
+		instr = kdbpeek((int *)va);
 		i.word = instr;
 		switch (i.JType.op) {
 		case OP_SPECIAL:
@@ -1502,27 +1498,27 @@ specialframe:
 			mask |= (1 << i.IType.rt);
 			switch (i.IType.rt) {
 			case 4: /* a0 */
-				a0 = mdbpeek(sp + (short)i.IType.imm);
+				a0 = kdbpeek((int *)(sp + (short)i.IType.imm));
 				break;
 
 			case 5: /* a1 */
-				a1 = mdbpeek(sp + (short)i.IType.imm);
+				a1 = kdbpeek((int *)(sp + (short)i.IType.imm));
 				break;
 
 			case 6: /* a2 */
-				a2 = mdbpeek(sp + (short)i.IType.imm);
+				a2 = kdbpeek((int *)(sp + (short)i.IType.imm));
 				break;
 
 			case 7: /* a3 */
-				a3 = mdbpeek(sp + (short)i.IType.imm);
+				a3 = kdbpeek((int *)(sp + (short)i.IType.imm));
 				break;
 
 			case 30: /* fp */
-				fp = mdbpeek(sp + (short)i.IType.imm);
+				fp = kdbpeek((int *)(sp + (short)i.IType.imm));
 				break;
 
 			case 31: /* ra */
-				ra = mdbpeek(sp + (short)i.IType.imm);
+				ra = kdbpeek((int *)(sp + (short)i.IType.imm));
 			}
 			break;
 
@@ -1568,10 +1564,10 @@ finish:
 static struct { void *addr; char *name;} names[] = {
 	Name(interrupt),
 	Name(trap),
-	Name(MachKernGenException),
-	Name(MachUserGenException),
-	Name(MachKernIntr),
-	Name(MachUserIntr),
+	Name(MipsKernGenException),
+	Name(MipsUserGenException),
+	Name(MipsKernIntr),
+	Name(MipsUserIntr),
 	Name(splx),
 	Name(idle),
 	Name(cpu_switch),
@@ -1594,4 +1590,4 @@ fn_name(unsigned addr)
 	return (buf);
 }
 
-#endif /* DEBUG */
+#endif /* DDB */

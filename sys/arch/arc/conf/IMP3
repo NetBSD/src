@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 1999/08/29 12:14:03 niklas Exp $
+#	$OpenBSD: IMP3,v 1.2 1999/08/29 12:14:03 niklas Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -57,9 +57,6 @@ ast0		at isa? port 0x1a0 irq 3	# AST 4-port serial cards
 com*		at ast? slave ?
 lpt0		at isa? port 0x378 irq 7
 
-# Joystick driver. Probe is a little strange; add only if you have one.
-# joy0		at isa? port 0x201
-
 # IDE controllers
 wdc0		at isa? port 0x1f0 irq 14 flags 0x00
 wdc1		at isa? port 0x170 irq 15 flags 0x00
@@ -72,15 +69,11 @@ wd*		at wdc? channel ? drive ? flags 0x0000
 atapiscsi*	at wdc? channel ?
 scsibus*	at atapiscsi?
 
-ep0		at isa? port ? irq ?		        # 3C509 ethernet cards
-we0		at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet
-we1		at isa? port 0x300 iomem 0xcc000 irq 10	#
-#we*		at isapnp?
-ec0		at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet
-ne0		at isa? port 0x240 irq 9		# NE[12]000 ethernet
-ne1		at isa? port 0x300 irq 10		# NE[12]000 ethernet
-ne2		at isa? port 0x280 irq 9		# NE[12]000 ethernet
-#ne*		at isapnp?				# NE[12]000 PnP ether
+ep0		at isa? port ? irq ?		# 3C509 ethernet cards
+we0		at isa? port 0x300 iomem 0xd0000 irq 5	# WD/SMC 80x3 ethernet
+ne0		at isa? port 0x300 irq 5	# NE[12]000 ethernet
+# iy0		at isa? port 0x300 irq 11	# Intel etherexpress pro/10+
+joy0		at isa? port 0x201
 
 btl0		at isa? port 0x330 irq ? drq ?
 scsibus* 	at btl?

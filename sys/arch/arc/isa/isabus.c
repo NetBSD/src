@@ -1,5 +1,5 @@
-/*	$OpenBSD: isabus.c,v 1.11 1997/04/19 17:20:01 pefo Exp $	*/
-/*	$NetBSD: isabus.c,v 1.1.1.2 2000/01/23 20:24:29 soda Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
+/*	$NetBSD: isabus.c,v 1.1.1.3 2000/02/22 11:05:24 soda Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -102,7 +102,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 
-#include <arc/arc/arctype.h>
+#include <mips/archtype.h>
 #include <arc/pica/pica.h>
 
 #include <dev/isa/isareg.h>
@@ -140,9 +140,7 @@ void	isabr_intr_disestablish __P((isa_chipset_tag_t, void*));
 int	isabr_iointr __P((unsigned int, struct clockframe *));
 void	isabr_initicu __P((void));
 void	intr_calculatemasks __P((void));
-
-extern int cputype;
-
+int	fakeintr __P((void *));
 
 int
 isabrmatch(parent, cfdata, aux)
@@ -174,8 +172,9 @@ isabrattach(parent, self, aux)
 	isabr_initicu();
 
 	/* set up interrupt handlers */
-	switch(cputype) {
+	switch(system_type) {
 	case ACER_PICA_61:
+	case MAGNUM:
 		set_intr(INT_MASK_2, isabr_iointr, 3);
 		break;
 	case DESKSTATION_TYNE:
@@ -185,7 +184,7 @@ isabrattach(parent, self, aux)
 		set_intr(INT_MASK_2, isabr_iointr, 2);
 		break;
 	default:
-		panic("isabrattach: unkown cputype!");
+		panic("isabrattach: unkown system_type!");
 	}
 
 /*XXX we may remove the abus part of the softc struct... */
@@ -391,8 +390,9 @@ isabr_iointr(mask, cf)
 	int o_imen;
 	char vector;
 
-	switch(cputype) {
+	switch(system_type) {
 	case ACER_PICA_61:
+	case MAGNUM:
 		isa_vector = in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1);
 		break;
 

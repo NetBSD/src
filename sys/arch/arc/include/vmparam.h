@@ -1,5 +1,5 @@
-/*	$OpenBSD: vmparam.h,v 1.3 1997/04/19 17:19:59 pefo Exp $	*/
-/*	$NetBSD: vmparam.h,v 1.1.1.2 2000/01/23 20:24:29 soda Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 1997/08/01 11:22:14 deraadt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.1.3 2000/02/22 11:05:22 soda Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -222,6 +222,8 @@
 #define VM_MAX_ADDRESS		((vm_offset_t)0x80000000)
 #define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xC0000000)
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xFFFFC000)
+
+#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)

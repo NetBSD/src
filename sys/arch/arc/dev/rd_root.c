@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_root.c,v 1.1.1.1 2000/01/23 20:24:27 soda Exp $	*/
+/*	$NetBSD: rd_root.c,v 1.1.1.2 2000/02/22 11:05:06 soda Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -73,8 +73,4 @@ rd_open_hook(unit, rd)
 	int unit;
 	struct rd_conf *rd;
 {
-	if (unit == 0) {
-		/* The root ramdisk only works single-user. */
-		boothowto |= RB_SINGLE;
-	}
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: asc.c,v 1.5 1997/04/19 17:19:50 pefo Exp $	*/
-/*	$NetBSD: asc.c,v 1.1.1.2 2000/01/23 20:24:26 soda Exp $	*/
+/*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
+/*	$NetBSD: asc.c,v 1.1.1.3 2000/02/22 11:05:06 soda Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -138,16 +138,16 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
+#include <mips/archtype.h>
+
 #include <arc/dev/dma.h>
 #include <arc/dev/scsi.h>
 #include <arc/dev/ascreg.h>
 
 #include <arc/pica/pica.h>
-#include <arc/arc/arctype.h>
 
 
 #define	readback(a)	{ register int foo; foo = (a); }
-extern int cputype;
 
 /*
  * In 4ns ticks.
@@ -491,7 +491,9 @@ struct scsi_device asc_dev = {
 
 static int asc_intr __P((void *));
 static int asc_poll __P((struct asc_softc *, int));
+#ifdef DEBUG
 static void asc_DumpLog __P((char *));
+#endif
 
 /*
  * Match driver based on name
@@ -531,8 +533,9 @@ ascattach(parent, self, aux)
 	 * 1) how to do dma
 	 * 2) timing based on chip clock frequency
 	 */
-	switch (cputype) {
+	switch (system_type) {
 	case ACER_PICA_61:
+	case MAGNUM:
 		bufsiz = 63 * 1024; /*XXX check if code handles 0 as 64k */
 		asc->dma = &asc->__dma;
 		asc_dma_init(asc->dma);
@@ -543,8 +546,9 @@ ascattach(parent, self, aux)
 	/*
 	 * Now for timing. The pica has a 25Mhz
 	 */
-	switch (cputype) {
+	switch (system_type) {
 	case ACER_PICA_61:
+	case MAGNUM:
 		asc->min_period = ASC_MIN_PERIOD25;
 		asc->max_period = ASC_MAX_PERIOD25;
 		asc->ccf = ASC_CCF(25);

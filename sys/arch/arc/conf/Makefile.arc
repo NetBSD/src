@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arc,v 1.8 1997/05/21 10:06:49 pefo Exp $
+#	$OpenBSD: Makefile.arc,v 1.13 1999/08/15 20:43:57 niklas Exp $
 
 #	@(#)Makefile.arc	8.2 (Berkeley) 2/16/94
 #
@@ -34,13 +34,15 @@ TOUCH?=	touch -f -c
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 ARC=	../..
+MIPS=	../../../mips
 
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Darc
-CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
-		-Wno-format
+CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
+		-Wno-uninitialized -Wno-format -Wno-main
 
-CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} -mno-abicalls -mips2 -mcpu=r4000
+CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} -mno-abicalls -mips2 -mcpu=r4000 \
+		${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 
 ### find out what to use for libkern
@@ -118,20 +120,19 @@ clean::
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
-	    ${ARC}/arc/Locore.c ${CFILES} \
-	    ioconf.c param.c
+	    ${CFILES} ioconf.c param.c
 
 symbols.sort: ${ARC}/arc/symbols.raw
 	grep -v '^#' ${ARC}/arc/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-locore.o: ${ARC}/arc/locore.S ${ARC}/include/asm.h \
-	${ARC}/include/cpu.h ${ARC}/include/reg.h assym.h
+locore.o: ${ARC}/arc/locore.S ${MIPS}/include/asm.h \
+	${MIPS}/include/cpu.h ${MIPS}/include/reg.h assym.h
 	${NORMAL_S} -mips3 ${ARC}/arc/locore.S
 
-fp.o: ${ARC}/arc/fp.S ${ARC}/include/asm.h \
-	${ARC}/include/cpu.h ${ARC}/include/reg.h assym.h
-	${NORMAL_S} -mips3 ${ARC}/arc/fp.S
+fp.o: ${MIPS}/mips/fp.S ${MIPS}/include/asm.h \
+	${ARC}/include/cpu.h ${MIPS}/include/reg.h assym.h
+	${NORMAL_S} -mips3 ${MIPS}/mips/fp.S
 
 # the following are necessary because the files depend on the types of
 # cpu's included in the system configuration

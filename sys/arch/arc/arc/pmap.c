@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 1997/05/01 15:16:46 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 1999/09/03 18:00:34 art Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.1.1.2 2000/01/23 20:24:25 soda Exp $
+ *      $Id: pmap.c,v 1.1.1.3 2000/02/22 11:05:00 soda Exp $
  */
 
 /*
@@ -130,7 +130,7 @@ struct physseg {
 
 #define pa_to_pvh(pa)	(&pv_table[pa_index(pa)])
 
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 struct {
 	int kernel;	/* entering kernel mapping */
 	int user;	/* entering user mapping */
@@ -170,11 +170,12 @@ struct {
 #define PDB_WIRING	0x4000
 #define PDB_PVDUMP	0x8000
 
-extern int kernel_start[];
-extern int _end[];
 int pmapdebug = 0x0;
 
 #endif /* DEBUG */
+
+extern int kernel_text[];
+extern int _end[];
 
 struct pmap	kernel_pmap_store;
 
@@ -273,7 +274,7 @@ pmap_bootstrap(firstaddr)
 			mem_layout[i].mem_start = 0x20000;  /* Adjust to be above vec's */
 		}
 		/* Adjust for the kernel expansion area (bufs etc) */
-		if((mem_layout[i].mem_start + mem_layout[i].mem_size > CACHED_TO_PHYS(kernel_start)) && 
+		if((mem_layout[i].mem_start + mem_layout[i].mem_size > CACHED_TO_PHYS(kernel_text)) && 
 		   (mem_layout[i].mem_start < CACHED_TO_PHYS(avail_start))) { 
 			mem_layout[i].mem_size -= CACHED_TO_PHYS(avail_start) - mem_layout[i].mem_start;
 			mem_layout[i].mem_start = CACHED_TO_PHYS(avail_start);
@@ -487,8 +488,9 @@ pmap_pinit(pmap)
 		do {
 			mem = vm_page_alloc1();
 			if (mem == NULL) {
-				VM_WAIT;	/* XXX What else can we do */
-			}			/* XXX Deadlock situations? */
+				/* XXX What else can we do?  Deadlocks?  */
+				vm_wait("ppinit");
+			}
 		} while (mem == NULL);
 
 		/* Do zero via cached if No L2 or Snooping L2 */
@@ -991,16 +993,19 @@ pmap_page_cache(pa,mode)
  *	insert this page into the given map NOW.
  */
 void
-pmap_enter(pmap, va, pa, prot, wired)
+pmap_enter(pmap, va, pa, prot, wired, access_type)
 	register pmap_t pmap;
 	vm_offset_t va;
 	register vm_offset_t pa;
 	vm_prot_t prot;
 	boolean_t wired;
+	vm_prot_t access_type;
 {
 	register pt_entry_t *pte;
 	register u_int npte;
+#ifdef DIAGNOSTIC
 	register int i;
+#endif
 	vm_page_t mem;
 
 #ifdef DEBUG
@@ -1055,7 +1060,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 					npte = PG_CWPAGE;
 		}
 
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		enter_stats.managed++;
 #endif
 		/*
@@ -1077,7 +1082,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 			if (pmapdebug & PDB_PVENTRY)
 				printf("pmap_enter: first pv: pmap %x va %x\n",
 					pmap, va);
+#ifdef DIAGNOSTIC
 			enter_stats.firstpv++;
+#endif
 #endif
 			pv->pv_va = va;
 			pv->pv_flags = 0;
@@ -1153,7 +1160,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 			npv->pv_next = pv->pv_next;
 			npv->pv_flags = pv->pv_flags;
 			pv->pv_next = npv;
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 			if (!npv->pv_next)
 				enter_stats.secondpv++;
 #endif
@@ -1166,7 +1173,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * Assumption: if it is not part of our managed memory
 		 * then it must be device memory which may be volitile.
 		 */
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		enter_stats.unmanaged++;
 #endif
 		npte = (prot & VM_PROT_WRITE) ? (PG_IOPAGE & ~PG_G) : (PG_IOPAGE& ~(PG_G | PG_M));
@@ -1211,8 +1218,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 		do {
 			mem = vm_page_alloc1();
 			if (mem == NULL) {
-				VM_WAIT;	/* XXX What else can we do */
-			}			/* XXX Deadlock situations? */
+				/* XXX What else can we do?  Deadlocks?  */
+				vm_wait("penter");
+			}
 		} while (mem == NULL);
 
 		/* Do zero via cached if No L2 or Snooping L2 */

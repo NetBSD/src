@@ -1,5 +1,5 @@
-/*	$OpenBSD: fd.c,v 1.5 1997/04/19 17:19:52 pefo Exp $	*/
-/*	$NetBSD: fd.c,v 1.1.1.2 2000/01/23 20:24:27 soda Exp $	*/
+/*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
+/*	$NetBSD: fd.c,v 1.1.1.3 2000/02/22 11:05:06 soda Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1109,7 +1109,7 @@ fdioctl(dev, cmd, addr, flag)
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(dev, fdstrategy, &buffer, NULL, 0) != NULL)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
