@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.8 1999/09/12 09:02:23 jsm Exp $	*/
+/*	$NetBSD: score.c,v 1.9 2001/08/09 13:02:49 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.8 1999/09/12 09:02:23 jsm Exp $");
+__RCSID("$NetBSD: score.c,v 1.9 2001/08/09 13:02:49 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -369,7 +369,7 @@ insert_score(scores, n_names, n_name, rank, n, monster, other)
 			(void) strcat(buf, "a total winner");
 			break;
 		case KFIRE:
-			(void) strcpy(buf, "killed by fire");
+			(void) strcat(buf, "killed by fire");
 			break;
 		}
 	} else {
