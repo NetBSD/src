@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.13 1994/10/05 17:26:54 jtc Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.14 1994/10/07 14:28:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -124,15 +124,15 @@
 #ifdef __GNUC__
 #ifdef __STDC__
 #define __weak_reference(sym,alias)	\
-	__asm__(".stabs \"" "_" #alias "\",11,0,0,0");	\
-	__asm__(".stabs \"" "_" #sym "\",1,0,0,0)
+	__asm__(".stabs \"_" #alias "\",11,0,0,0");	\
+	__asm__(".stabs \"_" #sym "\",1,0,0,0")
 #define __warn_references(sym,msg)	\
 	__asm__(".stabs \"" msg "\",30,0,0,0");		\
 	__asm__(".stabs \"_" #sym "\",1,0,0,0")
 #else
 #define __weak_reference(sym,alias)	\
-	__asm__(".stabs \"/**/alias\",11,0,0,0");	\
-	__asm__(".stabs \"/**/sym\",1,0,0,0")
+	__asm__(".stabs \"_/**/alias\",11,0,0,0");	\
+	__asm__(".stabs \"_/**/sym\",1,0,0,0")
 #define __warn_references(sym,msg)	\
 	__asm__(".stabs msg,30,0,0,0");			\
 	__asm__(".stabs \"_/**/sym\",1,0,0,0")
