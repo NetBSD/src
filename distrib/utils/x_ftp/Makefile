@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2000/05/18 00:43:07 matt Exp $
+# $NetBSD: Makefile,v 1.9 2000/05/18 01:10:27 matt Exp $
 # Build a smaller ftp (i.e. for boot media)
 
 PROG=	ftp
@@ -18,6 +18,7 @@ CPPFLAGS+= -DNO_EDITCOMPLETE -DNO_ABOUT -I${SRCDIR}
 CPPFLAGS+= -DINET6
 .endif
 COPTS+= -Os
+LDSTATIC?=-static
 
 all: ${PROG}
 
