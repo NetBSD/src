@@ -1,3 +1,38 @@
+2003-12-18  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note syslog of root attempts.
+
+2003-12-18  Derek Price  <derek@ximbiot.com>
+
+	* NEWS: Note that pserver can no longer run as root.
+
+2003-12-07  Mark D. Baushke  <mdb@cvshome.org>
+
+	* configure.in (AC_SYS_LARGEFILE): Remove. More work is needed
+	before AC_SYS_LARGEFILE will work on all platforms.
+	* configure, config.h.in: Regenerated.
+	* NEWS: Remove last note.
+
+	* configure.in (AC_SYS_LARGEFILE): Add. The history file on
+	Solaris boxes can grow beyond 2GB.
+	* configure, config.h.in: Regenerated.
+	* NEWS: Note addition of --disable-largefiles option.
+
+2003-12-05  Derek Price  <derek@ximbiot.com>
+
+	* configure.in: Update to require Automake 1.7.9.
+
+2003-12-04  Derek Price  <derek@ximbiot.com>
+
+	* configure.in: Update for dev version 1.11.10.1.
+	* NEWS: Add Changes since 1.11.10 section.
+	* configure: Regenerated.
+
+2003-12-04  Derek Price  <derek@ximbiot.com>
+
+	* configure.in: Update for release 1.11.10.
+	* configure: Regenerated.
+
 2003-12-03  Derek Price  <derek@ximbiot.com>
 
 	* configure.in: Always AC_LIBOBJ(fncase) when filenames are found to be

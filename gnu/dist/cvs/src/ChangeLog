@@ -1,3 +1,29 @@
+2003-12-18  Derek Price  <derek@ximbiot.com>
+
+	* server.c (switch_to_user): SysLog attempts to root from pserver.
+
+2003-12-18  Derek Price  <derek@ximbiot.com>
+
+	* server.c (switch_to_user): Don't allow CVS to run as root in pserver
+	mode.
+	(Original patch from Wichert Akkerman via Bradley M Kuhn
+         <bkuhn@fsf.org>.)
+	* sanity.sh (pserver): Check for bad root error message.
+
+2003-12-17  Larry Jones  <lawrence.jones@eds.com>
+
+	* run.c (close_on_exec): fcntl is not documented to return 0 for
+	success (and QNX doesn't), only -1 for error.
+	(Patch from George Refseth <george.refseth@arxi.no>.)
+
+2003-12-09  Mark D. Baushke  <mdb@cvshome.org>
+
+	* server.c (template_proc): Fix broken Template protocol code.
+	Must call send buf_send_counted() for Template files to avoid
+	"Protocol error: uncounted data discarded" messages in some
+	circumstances.
+	(Problem reported by "Jim.Hyslop" <Jim.Hyslop@Leitch.com>.)
+	
 2003-12-03  Derek Price  <derek@ximbiot.com>
 
 	* sanity.sh (recase-8csss): rename to...
