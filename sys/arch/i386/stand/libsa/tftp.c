@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.3 1997/06/13 13:36:12 drochner Exp $	 */
+/*	$NetBSD: tftp.c,v 1.4 1997/09/17 16:57:07 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -36,7 +36,7 @@
  * Simple TFTP implementation for libsa.
  * Assumes:
  *  - socket descriptor (int) at open_file->f_devdata
- *  - server host IP in global rootip
+ *  - server host IP in global servip
  * Restrictions:
  *  - read only
  *  - lseek only with SEEK_SET or SEEK_CUR
@@ -55,6 +55,8 @@
 #include "netif.h"
 
 #include "tftp.h"
+
+extern struct in_addr servip;
 
 static int      tftpport = 2000;
 
@@ -116,8 +118,7 @@ recvtftp(d, pkt, len, tleft)
 			 */
 			register struct udphdr *uh;
 			uh = (struct udphdr *) pkt - 1;
-			/* XXX in net.c - geswappt! */
-			d->destport = htons(uh->uh_sport);
+			d->destport = uh->uh_sport;
 		} /* else check uh_sport has not changed??? */
 		got = len - (t->th_data - (char *) t);
 		return got;
@@ -234,7 +235,7 @@ tftp_open(path, f)
 		return (ENOMEM);
 
 	tftpfile->iodesc = io = socktodesc(*(int *) (f->f_devdata));
-	io->destip = rootip;
+	io->destip = servip;
 	tftpfile->off = 0;
 	tftpfile->path = path;	/* XXXXXXX we hope it's static */
 
