@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.8 2003/06/26 12:09:58 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.9 2003/07/16 08:05:28 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.8 2003/06/26 12:09:58 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.9 2003/07/16 08:05:28 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -374,7 +374,7 @@ _citrus_ISO2022_parse_variable(_ISO2022EncodingInfo * __restrict ei,
 			break;
 		if (len>=sizeof(buf))
 			goto parsefail;
-		sprintf(buf, "%.*s", len, v);
+		snprintf(buf, sizeof(buf), "%.*s", len, v);
 
 		if ((ret = get_recommend(ei, buf)) != _NOTMATCH)
 			;
