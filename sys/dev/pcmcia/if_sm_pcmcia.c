@@ -1,7 +1,7 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.6 1998/07/19 17:28:16 christos Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.7 1998/08/14 23:31:22 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -104,6 +104,51 @@ struct cfattach sm_pcmcia_ca = {
 int	sm_pcmcia_enable __P((struct smc91cxx_softc *));
 void	sm_pcmcia_disable __P((struct smc91cxx_softc *));
 
+int	sm_pcmcia_megahertz_enaddr __P((struct device *,
+	    struct pcmcia_attach_args *, u_int8_t *));
+int	sm_pcmcia_newmedia_enaddr __P((struct device *,
+	    struct pcmcia_attach_args *, u_int8_t *));
+
+int	sm_pcmcia_newmedia_ciscallback __P((struct pcmcia_tuple *, void *));
+
+struct sm_pcmcia_product {
+	u_int32_t	spp_vendor;	/* vendor ID */
+	u_int32_t	spp_product;	/* product ID */
+	int		spp_expfunc;	/* expected function */
+	const char	*spp_name;	/* product name */
+	int		(*spp_enaddr)	/* get ethernet address */
+			    __P((struct device *, struct pcmcia_attach_args *,
+			        u_int8_t *));
+} sm_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_MEGAHERTZ2,	PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
+	  0,				PCMCIA_STR_MEGAHERTZ2_XJACK,
+	  sm_pcmcia_megahertz_enaddr },
+
+	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BASICS,
+	  0,				PCMCIA_STR_NEWMEDIA_BASICS,
+	  sm_pcmcia_newmedia_enaddr },
+
+	{ 0,				0,
+	  0,				NULL,
+	  NULL },
+};
+
+struct sm_pcmcia_product *sm_pcmcia_lookup __P((struct pcmcia_attach_args *));
+
+struct sm_pcmcia_product *
+sm_pcmcia_lookup(pa)
+	struct pcmcia_attach_args *pa;
+{
+	struct sm_pcmcia_product *spp;
+
+	for (spp = sm_pcmcia_products; spp->spp_name != NULL; spp++)
+		if (pa->manufacturer == spp->spp_vendor &&
+		    pa->product == spp->spp_product &&
+		    pa->pf->number == spp->spp_expfunc)
+			return (spp);
+	return (NULL);
+}
+
 int
 sm_pcmcia_match(parent, match, aux)
 	struct device *parent;
@@ -112,14 +157,8 @@ sm_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer == PCMCIA_VENDOR_MEGAHERTZ2) {
-		switch (pa->product) {
-		case PCMCIA_PRODUCT_MEGAHERTZ2_XJACK:
-			if (pa->pf->number == 0)
-				return (1);
-		}
-	}
-
+	if (sm_pcmcia_lookup(pa) != NULL)
+		return (1);
 	return (0);
 }
 
@@ -133,7 +172,7 @@ sm_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	u_int8_t myla[ETHER_ADDR_LEN], *enaddr = NULL;
-	const char *model;
+	struct sm_pcmcia_product *spp;
 
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
@@ -167,72 +206,100 @@ sm_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	switch (pa->product) {
-	case PCMCIA_PRODUCT_MEGAHERTZ2_XJACK:
-		model = PCMCIA_STR_MEGAHERTZ2_XJACK;
-		break;
+	spp = sm_pcmcia_lookup(pa);
+	if (spp == NULL)
+		panic("sm_pcmcia_attach: impossible");
 
-	default:
-		model = "Unknown SMC91Cxx Ethernet";
-	}
-	printf(": %s\n", model);
+	printf(": %s\n", spp->spp_name);
 
-	if (pa->product == PCMCIA_PRODUCT_MEGAHERTZ2_XJACK) {
-		char enaddr_str[12];
-		int i = 0, j;
-
-		/*
-		 * The X-JACK's Ethernet address is stored in the fourth
-		 * CIS info string.  We need to parse it and pass it to
-		 * the generic layer.
-		 */
-		if (strlen(pa->pf->sc->card.cis1_info[3]) != 12) {
-			/* Bogus address! */
-			goto out;
-		}
-		bcopy(pa->pf->sc->card.cis1_info[3], enaddr_str, 12);
-		bzero(myla, sizeof(myla));
-		for (i = 0; i < 6; i++) {
-			for (j = 0; j < 2; j++) {
-				/* Convert to upper case. */
-				if (enaddr_str[(i * 2) + j] >= 'a' &&
-				    enaddr_str[(i * 2) + j] <= 'z')
-					enaddr_str[(i * 2) + j] -= 'a' - 'A';
-
-				/* Parse the digit. */
-				if (enaddr_str[(i * 2) + j] >= '0' &&
-				    enaddr_str[(i * 2) + j] <= '9')
-					myla[i] |= enaddr_str[(i * 2) + j]
-					    - '0';
-				else if (enaddr_str[(i * 2) + j] >= 'A' &&
-					 enaddr_str[(i * 2) + j] <= 'F')
-					myla[i] |= enaddr_str[(i * 2) + j]
-					    - 'A' + 10;
-				else {
-					/* Bogus digit!! */
-					goto out;
-				}
-
-				/* Compensate for ordering of digits. */
-				if (j == 0)
-					myla[i] <<= 4;
-			}
-		}
-
- out:
-		if (i >= 6) {
-			/* Successfully parsed. */
-			enaddr = myla;
-		} else {
-			printf("%s: unable to read MAC address from CIS\n",
-			    sc->sc_dev.dv_xname);
-		}
-	}
+	if ((*spp->spp_enaddr)(parent, pa, myla) == 0)
+		printf("%s: unable to get Ethernet address\n",
+		    sc->sc_dev.dv_xname);
+	else
+		enaddr = myla;
 
 	/* Perform generic intialization. */
 	smc91cxx_attach(sc, enaddr);
 
 	pcmcia_function_disable(pa->pf);
+}
+
+int
+sm_pcmcia_megahertz_enaddr(parent, pa, myla)
+	struct device *parent;
+	struct pcmcia_attach_args *pa;
+	u_int8_t *myla;
+{
+	char enaddr_str[12];
+	int i, j;
+
+	/*
+	 * The X-JACK's Ethernet address is stored in the fourth
+	 * CIS info string.  We need to parse it and pass it to
+	 * the generic layer.
+	 */
+	if (strlen(pa->pf->sc->card.cis1_info[3]) != 12) {
+		/* Bogus address! */
+		return (0);
+	}
+	bcopy(pa->pf->sc->card.cis1_info[3], enaddr_str, 12);
+	bzero(myla, sizeof(myla));
+	for (i = 0; i < 6; i++) {
+		for (j = 0; j < 2; j++) {
+			/* Convert to upper case. */
+			if (enaddr_str[(i * 2) + j] >= 'a' &&
+			    enaddr_str[(i * 2) + j] <= 'z')
+				enaddr_str[(i * 2) + j] -= 'a' - 'A';
+
+			/* Parse the digit. */
+			if (enaddr_str[(i * 2) + j] >= '0' &&
+			    enaddr_str[(i * 2) + j] <= '9')
+				myla[i] |= enaddr_str[(i * 2) + j]
+				    - '0';
+			else if (enaddr_str[(i * 2) + j] >= 'A' &&
+				 enaddr_str[(i * 2) + j] <= 'F')
+				myla[i] |= enaddr_str[(i * 2) + j]
+				    - 'A' + 10;
+			else {
+				/* Bogus digit!! */
+				return (0);
+			}
+
+			/* Compensate for ordering of digits. */
+			if (j == 0)
+				myla[i] <<= 4;
+		}
+	}
+
+	return (1);
+}
+
+int
+sm_pcmcia_newmedia_enaddr(parent, pa, myla)
+	struct device *parent;
+	struct pcmcia_attach_args *pa;
+	u_int8_t *myla;
+{
+
+	return (pcmcia_scan_cis(parent, sm_pcmcia_newmedia_ciscallback, myla));
+}
+
+int
+sm_pcmcia_newmedia_ciscallback(tuple, arg)
+	struct pcmcia_tuple *tuple;
+	void *arg;
+{
+	u_int8_t *myla = arg;
+	int i;
+
+	if (tuple->code == 0x22) {	/* Func Extension */
+		if (tuple->length < ETHER_ADDR_LEN)
+			return (0);
+		for (i = 0; i < ETHER_ADDR_LEN; i++)
+			myla[i] = pcmcia_tuple_read_1(tuple, i + 2);
+		return (1);
+	}
+	return (0);
 }
 
 int
