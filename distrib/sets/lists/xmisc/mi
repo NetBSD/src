@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.2.2.2 2000/11/01 02:04:44 tv Exp $
+# $NetBSD: mi,v 1.2.2.3 2001/03/11 22:13:34 he Exp $
 ./usr/X11R6/bin/ssh-askpass
 ./usr/X11R6/lib/X11/app-defaults/SshAskpass
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-1337.ad
@@ -6,3 +6,6 @@
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-default.ad
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-green.ad
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-motif.ad
+./usr/X11R6/share/examples/ssh-askpass
+./usr/X11R6/share/examples
+./usr/X11R6/share
