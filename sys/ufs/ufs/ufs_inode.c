@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.25 2001/09/15 20:36:44 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.26 2001/09/30 02:54:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -267,16 +267,13 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	/*
 	 * clear PG_RDONLY on any pages we are holding
 	 * (since they now have backing store) and unbusy them.
-	 * if we got an error, free any pages we created past the old eob.
+	 * if we got an error, the pages covering the new block
+	 * were already unbusied down in ffs_balloc() to make
+	 * things work out for softdep.
 	 */
 
 out:
 	simple_lock(&uobj->vmobjlock);
-	if (error) {
-		(void) (uobj->pgops->pgo_put)(uobj, round_page(oldeob), 0,
-		    PGO_FREE);
-		simple_lock(&uobj->vmobjlock);
-	}
 	if (pgs1[0] != NULL) {
 		for (i = 0; i < npages1; i++) {
 			pgs1[i]->flags &= ~PG_RDONLY;
@@ -295,7 +292,7 @@ out:
 			simple_lock(&uobj->vmobjlock);
 		}
 	}
-	if (pgs2[0] != NULL) {
+	if (pgs2[0] != NULL && !error) {
 		for (i = 0; i < npages2; i++) {
 			pgs2[i]->flags &= ~PG_RDONLY;
 		}
