@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.62 2001/12/11 04:48:15 uwe Exp $
+#	$NetBSD: MAKEDEV,v 1.63 2001/12/19 18:14:03 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -84,6 +84,9 @@
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ses*    SES/SAF-TE SCSI Devices
+#	ss*	SCSI scanner
+#	uk*	SCSI unknown
+#	ch*	SCSI media changer
 #	pci*	PCI bus access devices
 
 dialin=0
