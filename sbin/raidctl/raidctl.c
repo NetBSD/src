@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.26 2001/02/19 22:56:22 cgd Exp $   */
+/*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ void	do_ioctl __P((int, u_long, void *, const char *));
 static  void rf_configure __P((int, char*, int));
 static  const char *device_status __P((RF_DiskStatus_t));
 static  void rf_get_device_status __P((int));
+static	void rf_output_configuration __P((int, const char *));
 static  void get_component_number __P((int, char *, int *, int *));
 static  void rf_fail_disk __P((int, char *, int));
 static  void usage __P((void));
@@ -97,6 +98,7 @@ main(argc,argv)
 	char name[PATH_MAX];
 	char component[PATH_MAX];
 	char autoconf[10];
+	int do_output;
 	int do_recon;
 	int do_rewrite;
 	int is_clean;
@@ -108,12 +110,13 @@ main(argc,argv)
 
 	num_options = 0;
 	action = 0;
+	do_output = 0;
 	do_recon = 0;
 	do_rewrite = 0;
 	is_clean = 0;
 	force = 0;
 
-	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:iI:l:r:R:sSpPuv")) 
+	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:r:R:sSpPuv")) 
 	       != -1)
 		switch(ch) {
 		case 'a':
@@ -157,6 +160,11 @@ main(argc,argv)
 		case 'g':
 			action = RAIDFRAME_GET_COMPONENT_LABEL;
 			strncpy(component, optarg, PATH_MAX);
+			num_options++;
+			break;
+		case 'G':
+			action = RAIDFRAME_GET_INFO;
+			do_output = 1;
 			num_options++;
 			break;
 		case 'i':
@@ -287,7 +295,10 @@ main(argc,argv)
 		check_status(fd,1);
 		break;
 	case RAIDFRAME_GET_INFO:
-		rf_get_device_status(fd);
+		if (do_output)
+			rf_output_configuration(fd, dev_name);
+		else
+			rf_get_device_status(fd);
 		break;
 	case RAIDFRAME_REBUILD_IN_PLACE:
 		rebuild_in_place(fd, component);
@@ -442,6 +453,74 @@ rf_get_device_status(fd)
 		printf("Parity status: DIRTY\n");
 	}
 	check_status(fd,0);
+}
+
+static void
+rf_output_configuration(fd, name)
+	int fd;
+	const char *name;
+{
+	RF_DeviceConfig_t device_config;
+	void *cfg_ptr;
+	int i;
+	RF_ComponentLabel_t component_label;
+	void *label_ptr;
+	int component_num;
+	int num_cols;
+
+	cfg_ptr = &device_config;
+
+	printf("# raidctl config file for %s\n", name);
+	printf("\n");
+	do_ioctl(fd, RAIDFRAME_GET_INFO, &cfg_ptr, "RAIDFRAME_GET_INFO");
+
+	printf("START array\n");
+	printf("# numRow numCol numSpare\n");
+	printf("%d %d %d\n", device_config.rows, device_config.cols,
+	    device_config.nspares);
+	printf("\n");
+
+	printf("START disks\n");
+	for(i=0; i < device_config.ndevs; i++)
+		printf("%s\n", device_config.devs[i].devname);
+	printf("\n");
+
+	if (device_config.nspares > 0) {
+		printf("START spare\n");
+		for(i=0; i < device_config.nspares; i++)
+			printf("%s\n", device_config.spares[i].devname);
+		printf("\n");
+	}
+
+	for(i=0; i < device_config.ndevs; i++) {
+		if (device_config.devs[i].status == rf_ds_optimal)
+			break;
+	}
+	if (i == device_config.ndevs) {
+		printf("# WARNING: no optimal components; using %s\n",
+		    device_config.devs[0].devname);
+		i = 0;
+	}
+	get_component_number(fd, device_config.devs[i].devname,
+	    &component_num, &num_cols);
+	memset(&component_label, 0, sizeof(RF_ComponentLabel_t));
+	component_label.row = component_num / num_cols;
+	component_label.column = component_num % num_cols;
+	label_ptr = &component_label;
+	do_ioctl(fd, RAIDFRAME_GET_COMPONENT_LABEL, &label_ptr,
+		  "RAIDFRAME_GET_COMPONENT_LABEL");
+
+	printf("START layout\n");
+	printf(
+	    "# sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level_%c\n",
+	    (char) component_label.parityConfig);
+	printf("%d %d %d %c\n", 
+	    component_label.sectPerSU, component_label.SUsPerPU, 
+	    component_label.SUsPerRU, (char) component_label.parityConfig);
+	printf("\n");
+
+	printf("START queue\n");
+	printf("fifo %d\n", device_config.maxqdepth);
 }
 
 static void
@@ -1001,6 +1080,7 @@ usage()
 	fprintf(stderr, "       %s [-v] -f component dev\n", progname);
 	fprintf(stderr, "       %s [-v] -F component dev\n", progname);
 	fprintf(stderr, "       %s [-v] -g component dev\n", progname);
+	fprintf(stderr, "       %s [-v] -G dev\n", progname);
 	fprintf(stderr, "       %s [-v] -i dev\n", progname);
 	fprintf(stderr, "       %s [-v] -I serial_number dev\n", progname);
 	fprintf(stderr, "       %s [-v] -r component dev\n", progname); 
