@@ -126,8 +126,12 @@
 #ifndef USER_SR
 #define	USER_SR			12
 #endif
+#ifndef KERNEL_SR
 #define	KERNEL_SR		13
+#endif
+#ifndef KERNEL2_SR
 #define	KERNEL2_SR		14
+#endif
 #define	KERNEL2_SEGMENT		VSID_MAKE(KERNEL2_SR, KERNEL_VSIDBITS)
 #define	KERNEL_VSIDBITS		0xfffff
 #define	KERNEL_SEGMENT		VSID_MAKE(KERNEL_SR, KERNEL_VSIDBITS)
