@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.c,v 1.8 2000/05/30 09:18:06 haya Exp $	*/
+/*	$NetBSD: rbus.c,v 1.9 2001/07/10 10:33:55 haya Exp $	*/
 /*
  * Copyright (c) 1999 and 2000
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -131,7 +131,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 			/* maybe, the resister is overflowed. */
       
 			if (extent_alloc_subregion(rbt->rb_ext, addr,
-			    addr + size, size, 0, 0, exflags, (u_long *)&result)) {
+			    addr + size, size, 1, 0, exflags, (u_long *)&result)) {
 				return 1;
 			}
 		} else {
