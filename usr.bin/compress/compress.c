@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.9 1995/03/26 09:44:38 glass Exp $	*/
+/*	$NetBSD: compress.c,v 1.10 1996/06/30 12:41:44 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: compress.c,v 1.9 1995/03/26 09:44:38 glass Exp $";
+static char rcsid[] = "$NetBSD: compress.c,v 1.10 1996/06/30 12:41:44 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ void	usage __P((int));
 extern FILE *zopen __P((const char *fname, const char *mode, int bits));
 
 int eval, force, verbose;
+int isstdout, isstdin;
 
 int
 main(argc, argv)
@@ -127,9 +128,13 @@ main(argc, argv)
 	if (argc == 0) {
 		switch(style) {
 		case COMPRESS:
+			isstdout = 1;
+			isstdin = 1;
 			(void)compress("/dev/stdin", "/dev/stdout", bits);
 			break;
 		case DECOMPRESS:
+			isstdout = 1;
+			isstdin = 1;
 			(void)decompress("/dev/stdin", "/dev/stdout", bits);
 			break;
 		}
@@ -140,9 +145,11 @@ main(argc, argv)
 		errx(1, "the -c option permits only a single file argument");
 
 	for (; *argv; ++argv)
+		isstdout = 0;
 		switch(style) {
 		case COMPRESS:
 			if (cat) {
+				isstdout = 1;
 				compress(*argv, "/dev/stdout", bits);
 				break;
 			}
@@ -177,6 +184,8 @@ main(argc, argv)
 				newname[len + 2] = '\0';
 				decompress(newname,
 				    cat ? "/dev/stdout" : *argv, bits);
+				if (cat)
+					isstdout = 1;
 			} else {
 				if (len - 2 > sizeof(newname) - 1) {
 					cwarnx("%s: name too long", *argv);
@@ -186,6 +195,8 @@ main(argc, argv)
 				newname[len - 2] = '\0';
 				decompress(*argv,
 				    cat ? "/dev/stdout" : newname, bits);
+				if (cat)
+					isstdout = 1;
 			}
 			break;
 		}
@@ -203,21 +214,30 @@ compress(in, out, bits)
 	int exists, isreg, oreg;
 	u_char buf[1024];
 
-	exists = !stat(out, &sb);
-	if (!force && exists && S_ISREG(sb.st_mode) && !permission(out))
-		return;
-	isreg = oreg = !exists || S_ISREG(sb.st_mode);
+	if (!isstdout) {
+		exists = !stat(out, &sb);
+		if (!force && exists && S_ISREG(sb.st_mode) && !permission(out))
+			return;
+		oreg = !exists || S_ISREG(sb.st_mode);
+	} else
+		oreg = 1;
 
 	ifp = ofp = NULL;
 	if ((ifp = fopen(in, "r")) == NULL) {
 		cwarn("%s", in);
 		return;
 	}
-	if (stat(in, &isb)) {		/* DON'T FSTAT! */
-		cwarn("%s", in);
-		goto err;
-	}
-	if (!S_ISREG(isb.st_mode))
+
+	if (!isstdin) {
+		if (stat(in, &isb)) {		/* DON'T FSTAT! */
+			cwarn("%s", in);
+			goto err;
+		}
+		if (!S_ISREG(isb.st_mode))
+			isreg = 0;
+		else
+			isreg = 1;
+	} else
 		isreg = 0;
 
 	if ((ofp = zopen(out, "w", bits)) == NULL) {
@@ -293,10 +313,13 @@ decompress(in, out, bits)
 	int exists, isreg, oreg;
 	u_char buf[1024];
 
-	exists = !stat(out, &sb);
-	if (!force && exists && S_ISREG(sb.st_mode) && !permission(out))
-		return;
-	isreg = oreg = !exists || S_ISREG(sb.st_mode);
+	if (!isstdout) {
+		exists = !stat(out, &sb);
+		if (!force && exists && S_ISREG(sb.st_mode) && !permission(out))
+			return;
+		oreg = !exists || S_ISREG(sb.st_mode);
+	} else
+		oreg = 1;
 
 	ifp = ofp = NULL;
 	if ((ofp = fopen(out, "w")) == NULL) {
@@ -308,11 +331,16 @@ decompress(in, out, bits)
 		cwarn("%s", in);
 		goto err;
 	}
-	if (stat(in, &sb)) {
-		cwarn("%s", in);
-		goto err;
-	}
-	if (!S_ISREG(sb.st_mode))
+	if (!isstdin) {
+		if (stat(in, &sb)) {
+			cwarn("%s", in);
+			goto err;
+		}
+		if (!S_ISREG(sb.st_mode))
+			isreg = 0;
+		else
+			isreg = 1;
+	} else
 		isreg = 0;
 
 	while ((nr = fread(buf, 1, sizeof(buf), ifp)) != 0)
