@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1 2003/01/19 23:05:02 scw Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.2 2003/01/20 20:09:59 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1 2003/01/19 23:05:02 scw Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.2 2003/01/20 20:09:59 scw Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: makecontext.c,v 1.1 2003/01/19 23:05:02 scw Exp $");
 #include "extern.h"
 
 #include <stdarg.h>
+#include <machine/fpu.h>
 
 void
 makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
@@ -93,6 +94,11 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	gr[_REG_TR(5)] = 0;
 	gr[_REG_TR(6)] = 0;
 	gr[_REG_TR(7)] = 0;
+
+	/*
+	 * Ensure the FPSCR is valid
+	 */
+	ucp->uc_mcontext.__fpregs.__fp_scr = SH5_FPSCR_DN_FLUSH_ZERO;
 
 	va_start(ap, argc);
 

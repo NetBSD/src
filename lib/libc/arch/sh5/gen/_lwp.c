@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.1 2003/01/19 23:05:01 scw Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.2 2003/01/20 20:09:59 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <ucontext.h>
 #include <lwp.h>
 #include <stdlib.h>
+#include <machine/fpu.h>
 
 void
 _lwp_makecontext(ucontext_t *u, void (*start)(void *),
@@ -87,4 +88,9 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	gr[_REG_TR(5)] = 0;
 	gr[_REG_TR(6)] = 0;
 	gr[_REG_TR(7)] = 0;
+
+	/*
+	 * Ensure the FPSCR is valid
+	 */
+	u->uc_mcontext.__fpregs.__fp_scr = SH5_FPSCR_DN_FLUSH_ZERO;
 }
