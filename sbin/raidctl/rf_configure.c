@@ -1,4 +1,4 @@
-/*      $NetBSD: rf_configure.c,v 1.7 1999/08/07 23:48:11 oster Exp $   */
+/*      $NetBSD: rf_configure.c,v 1.8 1999/08/13 03:37:42 oster Exp $   */
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,6 @@
 #include "rf_general.h"
 #include "rf_decluster.h"
 #include "rf_configure.h"
-#include "rf_sys.h"
 
 /* 
 
