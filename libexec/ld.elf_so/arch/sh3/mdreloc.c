@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.17 2003/07/05 18:18:51 tsutsui Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.18 2003/07/05 20:48:39 marcus Exp $	*/
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -9,7 +9,6 @@
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
-int _rtld_relocate_plt_object(const Obj_Entry *, const Elf_Rela *, caddr_t *);
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -209,30 +208,3 @@ _rtld_bind(obj, reloff)
 	return (caddr_t)new_value;
 }
 
-int
-_rtld_relocate_plt_object(obj, rela, addrp)
-	const Obj_Entry *obj;
-	const Elf_Rela *rela;
-	caddr_t *addrp;
-{
-	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
-	Elf_Addr new_value;
-	const Elf_Sym  *def;
-	const Obj_Entry *defobj;
-
-	assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
-
-	def = _rtld_find_symdef(ELF_R_SYM(rela->r_info), obj, &defobj, true);
-	if (def == NULL)
-		return -1;
-
-	new_value = (Elf_Addr)(defobj->relocbase + def->st_value +
-	    rela->r_addend);
-	rdbg(("bind now/fixup in %s --> old=%p new=%p",
-	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
-	if (*where != new_value)
-		*where = new_value;
-
-	*addrp = (caddr_t)new_value;
-	return 0;
-}
