@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.4 1997/06/15 15:22:48 mrg Exp $
+.\"	$NetBSD: swapctl.8,v 1.5 1997/06/25 23:18:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -39,6 +39,7 @@
 .Nm swapctl
 .Fl A
 .Op Fl p Ar priority
+.Op Fl t Ar blk|noblk
 .Nm swapctl
 .Fl a
 .Op Fl p Ar priority
@@ -88,7 +89,19 @@ This options causes
 to read the
 .Pa /etc/fstab
 file for devices and files with a ``sw'' type, and adds all these entries
-as swap devices.
+as swap devices.  The optional
+.Fl t
+flag allows the type of device to add to be specified.  An argument of
+.Ar blk
+causes all block devices in
+.Pa /etc/fstab
+to be added.  An argument of
+.Ar noblk
+causes all non-block devices in
+.Pa /etc/fstab
+to be added.  This option is useful in early system startup, where swapping
+may be needed before all file systems are available, such as during
+disk checks of large file systems.
 .It Fl a
 The
 .Fl a
