@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.13 1996/10/03 01:25:35 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.14 1996/10/15 22:01:56 thorpej Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -73,8 +73,6 @@ options	COMPAT_HPUX		# HP-UX binary compatibility
 # Debugging options
 options		DDB		# Kernel Dynamic Debugger
 
-# If the kernel isn't named `GENERIC', uncomment the line below.
-#options	GENERIC		# Generic swap support
 config		netbsd swap generic
 
 master		hpib0	at scode7
