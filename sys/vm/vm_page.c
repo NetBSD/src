@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.36 1998/01/09 08:50:00 thorpej Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.37 1998/01/10 03:02:58 thorpej Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -191,7 +191,9 @@ int		page_shift;
  * local prototypes
  */
 
+#if !defined(PMAP_STEAL_MEMORY)
 static boolean_t vm_page_physget __P((vm_offset_t *));
+#endif
 #endif
 
 /*
@@ -410,6 +412,7 @@ vm_bootstrap_steal_memory(size)
 #endif /* PMAP_STEAL_MEMORY */
 }
 
+#if !defined(PMAP_STEAL_MEMORY)
 /*
  * vm_page_physget: "steal" one page from the vm_physmem structure.
  *
@@ -505,6 +508,7 @@ vm_page_physget(paddrp)
 
 	return(FALSE);	/* whoops! */
 }
+#endif /* ! PMAP_STEAL_MEMORY */
 
 /*
  * vm_page_physload: load physical memory into VM system
