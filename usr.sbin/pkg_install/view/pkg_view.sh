@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.23 2003/08/21 01:57:24 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.24 2003/08/21 02:48:31 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -36,6 +36,7 @@
 
 # set up program definitions
 chmodprog=/bin/chmod
+cmpprog=/usr/bin/cmp
 cpprog=/bin/cp
 envprog=/usr/bin/env
 findprog=/usr/bin/find
@@ -181,9 +182,13 @@ while [ $# -gt 0 ]; do
 				echo "Deleting package $1 from $viewstr in ${viewbase}."
 			fi
 			if [ -f ${pkg_dbdir}/$1/+REQUIRED_BY ]; then
-				(echo "pkg_view: package \`$1' is required by other packages:"
-				$sedprog -e 's|^|	|' ${pkg_dbdir}/$1/+REQUIRED_BY) 1>&2
-				exit 1
+				if $cmpprog -s ${pkg_dbdir}/$1/+REQUIRED_BY /dev/null; then
+					: not really required by another pkg
+				else
+					(echo "pkg_view: package \`\`$1'' is required by other packages:"
+					$sedprog -e 's|^|	|' ${pkg_dbdir}/$1/+REQUIRED_BY) 1>&2
+					exit 1
+				fi
 			fi
 			if [ -f ${pkg_dbdir}/$1/+DEINSTALL ]; then
 				$chmodprog +x ${pkg_dbdir}/$1/+DEINSTALL
