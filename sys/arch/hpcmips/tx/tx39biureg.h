@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39biureg.h,v 1.1 1999/11/20 19:56:32 uch Exp $ */
+/*	$NetBSD: tx39biureg.h,v 1.2 1999/12/31 16:07:29 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,7 +69,7 @@
 #define TX39_SYSADDR_MCS1		0x70000000
 #ifdef TX391X
 #define TX39_SYSADDR_MCS2		0x74000000
-#define TX39_SYSADDR_MCS3		0x7c000000
+#define TX39_SYSADDR_MCS3		0x78000000
 #endif /* TX391X */
 /* 64MByte */
 #define TX39_SYSADDR_MCS_SIZE		0x04000000
