@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.16 1998/02/04 00:35:57 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.17 1998/02/04 05:13:39 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -8,7 +8,7 @@
 #endif
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -731,7 +731,8 @@ ahb_done(sc, ecb)
 	 * the data buffer.
 	 */
 	if (xs->datalen) {
-		bus_dmamap_sync(dmat, ecb->dmamap_xfer,
+		bus_dmamap_sync(dmat, ecb->dmamap_xfer, 0,
+		    ecb->dmamap_xfer->dm_mapsize,
 		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(dmat, ecb->dmamap_xfer);
@@ -1067,7 +1068,8 @@ ahb_scsi_cmd(xs)
 			goto bad;
 		}
 
-		bus_dmamap_sync(dmat, ecb->dmamap_xfer,
+		bus_dmamap_sync(dmat, ecb->dmamap_xfer, 0,
+		    ecb->dmamap_xfer->dm_mapsize,
 		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
 		    BUS_DMASYNC_PREWRITE);
 
