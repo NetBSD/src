@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/05/29 04:11:02 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/10/17 02:05:37 lukem Exp $
 
 DBG=		-Os -Wa,-xgot # XXX -xgot workaround for objcopy-crunchide
 
@@ -10,3 +10,4 @@ LISTS+=		${DISTRIBDIR}/common/list.sysinst
 MTREECONF+=	${.CURDIR}/mtree.usr.install
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.vt100 \
 		${DESTDIR}/.profile ${DESTDIR}/etc/disktab
+SMALLPROG_INET6=1

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/07/04 16:56:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 2002/10/17 02:05:37 lukem Exp $
 #
 # Makefile for arc
 #
@@ -10,7 +10,5 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	label.c target.c md.c mbr.c
 
 fdisk.o md.o:	menu_defs.h msg_defs.h
-
-CPPFLAGS+=-DINET6
 
 .include "../../Makefile.inc"
