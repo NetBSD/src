@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262.2.4 1997/11/28 08:50:58 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262.2.5 1997/12/08 05:10:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -369,24 +369,21 @@ cpu_startup()
 		/* don't want to alloc more physical mem than needed */
 		bufpages = btoc(MAXBSIZE) * nbuf;
 	}
-	base = bufpages / nbuf;
-	residual = bufpages % nbuf;
-	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
-		vm_offset_t curbuf;
 
-		/*
-		 * First <residual> buffers get (base+1) physical pages
-		 * allocated for them.  The rest get (base) physical pages.
-		 *
-		 * The rest of each buffer occupies virtual space,
-		 * but has no physical memory allocated for it.
-		 */
-		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base+1 : base);
-		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
-		vm_map_simplify(buffer_map, curbuf);
-	}
+	/*
+	 * XXX We defer allocation of physical pages for buffers until
+	 * XXX after autoconfiguration has run.  We must do this because
+	 * XXX on system with large amounts of memory or with large
+	 * XXX user-configured buffer caches, the buffer cache will eat
+	 * XXX up all of the lower 16M of RAM.  This prevents ISA DMA
+	 * XXX maps from allocating bounce pages.
+	 *
+	 * XXX Note that nothing can use buffer cache buffers until after
+	 * XXX autoconfiguration completes!!
+	 *
+	 * XXX This is a hack, and needs to be replaced with a better
+	 * XXX solution!  --thorpej@netbsd.org, December 6, 1997
+	 */
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -418,11 +415,6 @@ cpu_startup()
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
-	/*
-	 * Set up buffers, so they can be used to read disk labels.
-	 */
-	bufinit();
-
 #if NBIOSCALL > 0
 	/*
 	 * this should be caught at kernel build time, but put it here
@@ -449,6 +441,33 @@ cpu_startup()
 	 */
 	ioport_malloc_safe = 1;
 	configure();
+
+	/*
+	 * XXX Allocate physical pages for buffers; see above.
+	 */
+	base = bufpages / nbuf;
+	residual = bufpages % nbuf;
+	for (i = 0; i < nbuf; i++) {
+		vm_size_t curbufsize;
+		vm_offset_t curbuf;
+
+		/*
+		 * First <residual> buffers get (base+1) physical pages
+		 * allocated for them.  The rest get (base) physical pages.
+		 *
+		 * The rest of each buffer occupies virtual space,
+		 * but has no physical memory allocated for it.
+		 */
+		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbufsize = CLBYTES * (i < residual ? base+1 : base);
+		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
+		vm_map_simplify(buffer_map, curbuf);
+	}
+
+	/*
+	 * Set up buffers, so they can be used to read disk labels.
+	 */
+	bufinit();
 
 #ifdef I586_CPU
 	if (pentium_trap_fixup)
