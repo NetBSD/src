@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.8 2002/10/02 02:09:19 thorpej Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.9 2002/10/02 03:10:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.8 2002/10/02 02:09:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.9 2002/10/02 03:10:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ int	mpu_isa_match __P((struct device *, struct cfdata *, void *));
 void	mpu_isa_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(mpu_isa, sizeof(struct mpu_isa_softc),
-	mpu_isa_match, mpu_isa_attach, NULL, NULL);
+    mpu_isa_match, mpu_isa_attach, NULL, NULL);
 
 int
 mpu_isa_match(parent, match, aux)

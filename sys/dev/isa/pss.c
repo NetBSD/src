@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.62 2002/10/02 02:09:20 thorpej Exp $	*/
+/*	$NetBSD: pss.c,v 1.63 2002/10/02 03:10:49 thorpej Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.62 2002/10/02 02:09:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.63 2002/10/02 03:10:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,17 +258,17 @@ static u_char wss_interrupt_bits[16] = {
 static u_char wss_dma_bits[4] = {1, 2, 0, 3};
 
 CFATTACH_DECL(pss, sizeof(struct pss_softc),
-	pssprobe, pssattach, NULL, NULL);
+    pssprobe, pssattach, NULL, NULL);
 
-CFATTACH_DECL(sp, sizeof(struct sp_softc),
-	spprobe, spattach, NULL, NULL);
+CFATTACH_DECL(sp, sizeof(struct ad1848_isa_softc),
+    spprobe, spattach, NULL, NULL);
 
 #ifdef notyet
 CFATTACH_DECL(mpu, sizeof(struct mpu_softc),
-	mpuprobe, mpuattach, NULL, NULL);
+    mpuprobe, mpuattach, NULL, NULL);
 
 CFATTACH_DECL(pcd, sizeof(struct pcd_softc),
-	pcdprobe, pcdattach, NULL, NULL);
+    pcdprobe, pcdattach, NULL, NULL);
 
 #endif
 

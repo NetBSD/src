@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.14 2002/10/02 02:09:17 thorpej Exp $ */
+/* $NetBSD: ega.c,v 1.15 2002/10/02 03:10:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.14 2002/10/02 02:09:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ega.c,v 1.15 2002/10/02 03:10:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ static int ega_allocattr(void *, int, int, int, long *);
 void ega_copyrows(void *, int, int, int);
 
 CFATTACH_DECL(ega, sizeof(struct ega_softc),
-	ega_match, ega_attach, NULL, NULL);
+    ega_match, ega_attach, NULL, NULL);
 
 const struct wsdisplay_emulops ega_emulops = {
 	pcdisplay_cursor,

@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.76 2002/10/02 02:09:17 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.77 2002/10/02 03:10:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.76 2002/10/02 02:09:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.77 2002/10/02 03:10:46 thorpej Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -444,7 +444,7 @@ int	gusprobe __P((struct device *, struct cfdata *, void *));
 void	gusattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(gus, sizeof(struct gus_softc),
-	gusprobe, gusattach, NULL, NULL);
+    gusprobe, gusattach, NULL, NULL);
 
 /*
  * A mapping from IRQ/DRQ values to the values used in the GUS's internal

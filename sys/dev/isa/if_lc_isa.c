@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.15 2002/10/02 02:09:18 thorpej Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.16 2002/10/02 03:10:48 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.15 2002/10/02 02:09:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.16 2002/10/02 03:10:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,8 @@ static int lemac_isa_find __P((lemac_softc_t *, struct isa_attach_args *,
 static int lemac_isa_probe __P((struct device *, struct cfdata *, void *));
 static void lemac_isa_attach __P((struct device *, struct device *, void *));
 
-CFATTACH_DECL(lc_isa, sizeof(struct lc_isa_softc),
-	lemac_isa_probe, lemac_isa_attach, NULL, NULL);
+CFATTACH_DECL(lc_isa, sizeof(lemac_softc_t),
+    lemac_isa_probe, lemac_isa_attach, NULL, NULL);
 
 static int
 lemac_isa_find(sc, ia, attach)

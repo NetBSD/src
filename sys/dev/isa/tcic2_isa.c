@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.8 2002/10/02 02:09:20 thorpej Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.9 2002/10/02 03:10:50 thorpej Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.8 2002/10/02 02:09:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.9 2002/10/02 03:10:50 thorpej Exp $");
 
 #undef	TCICISADEBUG
 
@@ -117,8 +117,8 @@ void	*tcic_isa_chip_intr_establish __P((pcmcia_chipset_handle_t,
 	    struct pcmcia_function *, int, int (*) (void *), void *));
 void	tcic_isa_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
 
-CFATTACH_DECL(tcic_isa, sizeof(struct tcic_isa_softc),
-	tcic_isa_probe, tcic_isa_attach, NULL, NULL);
+CFATTACH_DECL(tcic_isa, sizeof(struct tcic_softc),
+    tcic_isa_probe, tcic_isa_attach, NULL, NULL);
 
 static struct pcmcia_chip_functions tcic_isa_functions = {
 	tcic_chip_mem_alloc,

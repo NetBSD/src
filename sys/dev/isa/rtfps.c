@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.44 2002/10/02 02:09:20 thorpej Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.45 2002/10/02 03:10:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.44 2002/10/02 02:09:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.45 2002/10/02 03:10:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ int rtfpsintr __P((void *));
 int rtfpsprint __P((void *, const char *));
 
 CFATTACH_DECL(rtfps, sizeof(struct rtfps_softc),
-	rtfpsprobe, rtfpsattach, NULL, NULL);
+    rtfpsprobe, rtfpsattach, NULL, NULL);
 
 int
 rtfpsprobe(parent, self, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.59 2002/10/02 02:09:18 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.60 2002/10/02 03:10:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.59 2002/10/02 02:09:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.60 2002/10/02 03:10:47 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -130,7 +130,7 @@ int egprobe __P((struct device *, struct cfdata *, void *));
 void egattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(eg, sizeof(struct eg_softc),
-	egprobe, egattach, NULL, NULL);
+    egprobe, egattach, NULL, NULL);
 
 int egintr __P((void *));
 void eginit __P((struct eg_softc *));

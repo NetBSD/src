@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.3 2002/10/02 02:09:19 thorpej Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.4 2002/10/02 03:10:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.3 2002/10/02 02:09:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.4 2002/10/02 03:10:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ struct nsclpcsio_softc {
 };
 
 CFATTACH_DECL(nsclpcsio_isa, sizeof(struct nsclpcsio_isa_softc),
-	nsclpcsio_isa_match, nsclpcsio_isa_attach, NULL, NULL);
+    nsclpcsio_isa_match, nsclpcsio_isa_attach, NULL, NULL);
 };
 
 static const struct envsys_range tms_ranges[] = {

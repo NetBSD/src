@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.9 2002/10/02 02:09:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic_isa.c,v 1.10 2002/10/02 03:10:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -73,7 +73,7 @@ static void daic_isa_attach __P((struct device *, struct device *, void *));
 static int daic_isa_intr __P((void *));
 
 CFATTACH_DECL(daic_isa, sizeof(struct daic_isa_softc),
-	daic_isa_probe, daic_isa_attach, NULL, NULL);
+    daic_isa_probe, daic_isa_attach, NULL, NULL);
 
 static int
 #ifdef __BROKEN_INDIRECT_CONFIG
