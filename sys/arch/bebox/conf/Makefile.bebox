@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bebox,v 1.3 1997/11/12 23:12:03 thorpej Exp $
+#	$NetBSD: Makefile.bebox,v 1.4 1998/02/03 03:59:54 sakamoto Exp $
 
 # Makefile for NetBSD
 #
@@ -47,7 +47,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dbebox
 CWARNFLAGS=	-Werror -Wreturn-type
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float 
-AFLAGS=		-D_LOCORE
+AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 0x3100 -e __start
 STRIPFLAGS=	--strip-debug
 
@@ -153,11 +153,11 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${BEBOX}/bebox/locore.S \
+SRCS=	${BEBOX}/bebox/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${BEBOX}/BEBOX/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${BEBOX}/bebox/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
@@ -179,7 +179,7 @@ machdep.o: Makefile
 locore.o machdep.o: Makefile
 
 
-locore.o: ${BEBOX}/bebox/locore.S assym.h
+locore.o: ${BEBOX}/bebox/locore.s assym.h
 	${NORMAL_S}
 
 %RULES
