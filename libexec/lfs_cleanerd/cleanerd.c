@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.45 2003/02/25 23:12:08 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.46 2003/03/02 04:38:20 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.45 2003/02/25 23:12:08 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.46 2003/03/02 04:38:20 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -510,7 +510,7 @@ clean_fs(FS_INFO *fsp, unsigned long (*cost_func)(FS_INFO *, SEGUSE *),
 {
 	struct seglist *segs, *sp;
 	long int to_clean, cleaned_bytes;
-	unsigned long i, total;
+	unsigned long i, j, total;
 	struct rusage ru;
 	fsid_t *fsidp;
 	int error;
@@ -524,7 +524,33 @@ clean_fs(FS_INFO *fsp, unsigned long (*cost_func)(FS_INFO *, SEGUSE *),
 		return;
 	}
 	total = i = choose_segments(fsp, segs, cost_func);
+
+	/*
+	 * If we can get lots of cleaning for free, do it now.
+	 * The theory is that if empty dirty segments exist, we
+	 * can afford to write a bunch of inodes, directory blocks,
+	 * and Ifile blocks in order to clean them.  (If things are
+	 * so bad that we don't have enough segments to do this, though,
+	 * we're in trouble.)
+	 */
 	sp = segs;
+	for (j = 0; j < total && sp->sl_bytes == 0; j++) {
+		if (debug)
+			syslog(LOG_DEBUG,"Not cleaning empty segment %ld",
+				sp->sl_id);
+		++cleaner_stats.segs_empty;
+		sp++;
+		i--;
+	}
+	if (j > 0) {
+		/* Call limited checkpoint to help clean empty segs */
+		fcntl(ifile_fd, LFCNRECLAIM, 0);
+	}
+	if (j > nsegs) {
+		free(segs);
+		return;
+	}
+
 #if 0
 	/* If we relly need to clean a lot, do it now */
 	if(fsp->fi_cip->clean < 2 * fsp->fi_lfs.lfs_minfreeseg)
