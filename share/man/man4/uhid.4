@@ -1,4 +1,4 @@
-.\" $NetBSD: uhid.4,v 1.4 1999/04/13 20:25:29 augustss Exp $
+.\" $NetBSD: uhid.4,v 1.5 1999/04/28 03:08:23 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,16 +49,55 @@ The
 driver provides support for all HID (Human Interface Device) interfaces
 in USB devices that do not have a special driver.
 .Pp
-Use
+The device handles the following
 .Xr ioctl 2
-with USB_GET_REPORT_DESC to get the HID report descriptor.  Using
+calls:
+.Pp
+.Bl -tag -width indent -compact
+.It Dv USB_GET_REPORT_DESC (struct usb_ctl_report_desc)
+Get the HID report descriptor.  Using
 this descriptor the exact layout and meaning of data to/from 
-the device can be found.
+the device can be found.  The report descriptor is delivered
+without any processing.
+.Bd -literal
+struct usb_ctl_report_desc {
+    int     size;
+    u_char  data[1024];	/* filled data size will vary */
+};
+.Ed
+.It Dv USB_SET_IMMED (int)
+Sets the device in a mode where each
+.Xr read 2
+will return the current value of the input report.  Normally
+a
+.Xr read 2
+will only return the data that the device reports on its
+interrupt pipe.  This call may fail if the device does not support
+this feature.
+.It Dv USB_GET_REPORT (struct usb_ctl_report)
+Get a report from the device without waiting for data on
+the interrupt pipe.  The 
+.Dv report
+field indicates which report is requested.  It should be
+.Dv UHID_INPUT_REPORT ,
+.Dv UHID_OUTPUT_REPORT ,
+or
+.Dv UHID_FEATURE_REPORT .
+This call may fail if the device does not support
+this feature.
+.Bd -literal
+struct usb_ctl_report {
+	int report;
+	u_char	data[1024];	/* filled data size will vary */
+};
+.Ed
+.El
 .Pp
 Use
 .Xr read 2
 to get data from the device.  Data should be read in chunks of the
 size prescribed by the report descriptor.
+.Pp
 Use
 .Xr write 2
 send data to the device.  Data should be written in chunks of the
