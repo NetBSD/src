@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.14 2000/12/30 13:50:43 augustss Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.15 2000/12/30 13:57:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,8 @@
 
 #define USBDEV "/dev/usb"
 
-int verbose;
+int verbose = 0;
+int showdevs = 0;
 
 void usage(void);
 void usbdev(int f, int a, int rec);
@@ -72,7 +73,7 @@ void
 usbdev(int f, int a, int rec)
 {
 	struct usb_device_info di;
-	int e, p;
+	int e, p, i;
 
 	di.addr = a;
 	e = ioctl(f, USB_DEVICEINFO, &di);
@@ -102,6 +103,12 @@ usbdev(int f, int a, int rec)
 	} else
 		printf("%s, %s", di.product, di.vendor);
 	printf("\n");
+	if (showdevs) {
+		for (i = 0; i < USB_MAX_DEVNAMES; i++)
+			if (di.devnames[i][0])
+				printf("%*s  %s\n", indent, "",
+				       di.devnames[i]);
+	}
 	if (!rec)
 		return;
 	for (p = 0; p < di.nports; p++) {
@@ -163,10 +170,13 @@ main(int argc, char **argv)
 	int addr = 0;
 	int ncont;
 
-	while ((ch = getopt(argc, argv, "a:f:v")) != -1) {
+	while ((ch = getopt(argc, argv, "a:df:v")) != -1) {
 		switch(ch) {
 		case 'a':
 			addr = atoi(optarg);
+			break;
+		case 'd':
+			showdevs++;
 			break;
 		case 'f':
 			dev = optarg;
