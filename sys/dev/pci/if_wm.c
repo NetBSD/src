@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.25 2002/10/02 16:51:37 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.26 2002/10/21 23:38:12 fair Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -2480,7 +2480,7 @@ wm_tbi_mediainit(struct wm_softc *sc)
 	else
 		sc->sc_tipg = TIPG_LG_DFLT;
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, wm_tbi_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_tbi_mediachange,
 	    wm_tbi_mediastatus);
 
 	/*
@@ -2741,7 +2741,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 
 	wm_gmii_reset(sc);
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, wm_gmii_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_gmii_mediachange,
 	    wm_gmii_mediastatus);
 
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,

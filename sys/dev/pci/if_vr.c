@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.57 2002/10/02 16:51:35 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.58 2002/10/21 23:38:12 fair Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.57 2002/10/02 16:51:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.58 2002/10/21 23:38:12 fair Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1621,7 +1621,8 @@ vr_attach(parent, self, aux)
 	sc->vr_mii.mii_readreg = vr_mii_readreg;
 	sc->vr_mii.mii_writereg = vr_mii_writereg;
 	sc->vr_mii.mii_statchg = vr_mii_statchg;
-	ifmedia_init(&sc->vr_mii.mii_media, 0, vr_ifmedia_upd, vr_ifmedia_sts);
+	ifmedia_init(&sc->vr_mii.mii_media, IFM_IMASK, vr_ifmedia_upd,
+		vr_ifmedia_sts);
 	mii_attach(&sc->vr_dev, &sc->vr_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->vr_mii.mii_phys) == NULL) {
