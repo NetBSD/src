@@ -1,4 +1,4 @@
-#	$NetBSD: std.smdk2800,v 1.8 2003/08/04 12:35:51 bsh Exp $
+#	$NetBSD: std.smdk2800,v 1.9 2004/04/03 04:38:48 bsh Exp $
 #
 # standard NetBSD/evbarm for SMDK2800 options
 
@@ -14,6 +14,7 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
+options 	ARM9_CACHE_WRITE_THROUGH   # we have problem with WB dcache
 #options 	ARM32_NEW_VM_LAYOUT	# Not yet ready for prime-time
 
 options 	SSCOM_S3C2800
