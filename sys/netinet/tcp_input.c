@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.141.4.4 2002/10/21 02:22:26 lukem Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.141.4.5 2002/10/23 12:21:24 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141.4.4 2002/10/21 02:22:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.141.4.5 2002/10/23 12:21:24 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1615,7 +1615,7 @@ after_listen:
 			tcp_established(tp);
 			/* Do window scaling on this connection? */
 			if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
-				(TF_RCVD_SCALE|TF_REQ_SCALE)) {
+			    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
 				tp->snd_scale = tp->requested_s_scale;
 				tp->rcv_scale = tp->request_r_scale;
 			}
@@ -1886,7 +1886,7 @@ after_listen:
 		tcp_established(tp);
 		/* Do window scaling? */
 		if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
-			(TF_RCVD_SCALE|TF_REQ_SCALE)) {
+		    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
 			tp->snd_scale = tp->requested_s_scale;
 			tp->rcv_scale = tp->request_r_scale;
 		}
@@ -3272,10 +3272,10 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 		tp->request_r_scale = sc->sc_request_r_scale;
 		tp->snd_scale = sc->sc_requested_s_scale;
 		tp->rcv_scale = sc->sc_request_r_scale;
-		tp->t_flags |= TF_RCVD_SCALE;
+		tp->t_flags |= TF_REQ_SCALE|TF_RCVD_SCALE;
 	}
 	if (sc->sc_flags & SCF_TIMESTAMP)
-		tp->t_flags |= TF_RCVD_TSTMP;
+		tp->t_flags |= TF_REQ_TSTMP|TF_RCVD_TSTMP;
 	tp->ts_timebase = sc->sc_timebase;
 
 	tp->t_template = tcp_template(tp);
@@ -3551,7 +3551,8 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 	sc->sc_win = win;
 	sc->sc_timebase = tcp_now;	/* see tcp_newtcpcb() */
 	sc->sc_timestamp = tb.ts_recent;
-	if (tcp_do_rfc1323 && (tb.t_flags & TF_RCVD_TSTMP))
+	if ((tb.t_flags & (TF_REQ_TSTMP|TF_RCVD_TSTMP)) ==
+	    (TF_REQ_TSTMP|TF_RCVD_TSTMP))
 		sc->sc_flags |= SCF_TIMESTAMP;
 	if ((tb.t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 	    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
