@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_tc.c,v 1.6 1997/07/21 05:39:05 jonathan Exp $	*/
+/*	$NetBSD: asc_tc.c,v 1.7 1997/07/28 19:39:26 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -45,9 +45,9 @@ struct cfattach asc_tc_ca = {
  * DMA callbacks
  */
 
-static void
+static int
 tc_dma_start __P((struct asc_softc *asc, struct scsi_state *state,
-		  caddr_t cp, int flag));
+		  caddr_t cp, int flag, int len, int off));
 
 static void
 tc_dma_end __P((struct asc_softc *asc, struct scsi_state *state,
@@ -84,7 +84,8 @@ asc_tc_attach(parent, self, aux)
 {
 	register struct tc_attach_args *t = aux;
 	register asc_softc_t asc = (asc_softc_t) self;
-	int bufsiz, speed;
+	u_char *buff;
+	int i, speed;
 
 	void *ascaddr;
 	int unit;
@@ -108,8 +109,21 @@ asc_tc_attach(parent, self, aux)
 	 * Fall through for turbochannel option.
 	 */
 	asc->dmar = (volatile int *)(ascaddr + ASC_OFFSET_DMAR);
-	asc->buff = (u_char *)(ascaddr + ASC_OFFSET_RAM);
-	bufsiz = PER_TGT_DMA_SIZE;
+	buff = (u_char *)(ascaddr + ASC_OFFSET_RAM);
+
+	/*
+	 * Statically partition the DMA buffer between targets.
+	 * This way we will eventually be able to attach/detach
+	 * drives on-fly.  And 18k/target is plenty for normal use.
+	 */
+
+	/*
+	 * Give each target its own DMA buffer region.
+	 * We may want to try ping ponging buffers later.
+	 */
+	for (i = 0; i < ASC_NCMD; i++)
+		asc->st[i].dmaBufAddr = buff + PER_TGT_DMA_SIZE * i;
+
 	asc->dma_start = tc_dma_start;
 	asc->dma_end = tc_dma_end;
 
@@ -132,7 +146,7 @@ asc_tc_attach(parent, self, aux)
 		break;
 	};
 
-	ascattach(asc, bufsiz, speed);
+	ascattach(asc, speed);
 
 	/* tie pseudo-slot to device */
 	tc_intr_establish(parent, t->ta_cookie, TC_IPL_BIO,
@@ -144,18 +158,25 @@ asc_tc_attach(parent, self, aux)
  * DMA handling routines. For a turbochannel device, just set the dmar.
  * For the I/O ASIC, handle the actual DMA interface.
  */
-static void
-tc_dma_start(asc, state, cp, flag)
+static int
+tc_dma_start(asc, state, cp, flag, len, off)
 	asc_softc_t asc;
 	State *state;
 	caddr_t cp;
 	int flag;
+	int len;
+	int off;
 {
 
+	if (len > PER_TGT_DMA_SIZE)
+		len = PER_TGT_DMA_SIZE;
 	if (flag == ASCDMA_WRITE)
-		*asc->dmar = ASC_DMAR_WRITE | ASC_DMA_ADDR(cp);
+		bcopy(cp, state->dmaBufAddr + off, len);
+	if (flag == ASCDMA_WRITE)
+		*asc->dmar = ASC_DMAR_WRITE | ASC_DMA_ADDR(state->dmaBufAddr + off);
 	else
-		*asc->dmar = ASC_DMA_ADDR(cp);
+		*asc->dmar = ASC_DMA_ADDR(state->dmaBufAddr + off);
+	return (len);
 }
 
 static void
@@ -164,5 +185,6 @@ tc_dma_end(asc, state, flag)
 	State *state;
 	int flag;
 {
-
+	if (flag == ASCDMA_READ)
+		bcopy(state->dmaBufAddr, state->buf, state->dmalen);
 }
