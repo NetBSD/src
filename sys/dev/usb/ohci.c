@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.150 2004/07/06 04:53:09 mycroft Exp $	*/
+/*	$NetBSD: ohci.c,v 1.151 2004/07/17 20:24:15 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.150 2004/07/06 04:53:09 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.151 2004/07/17 20:24:15 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1443,6 +1443,7 @@ ohci_softintr(void *v)
 			if (uedir == UE_DIR_IN &&
 			    xfer->status == USBD_NORMAL_COMPLETION)
 				xfer->actlen = actlen;
+			xfer->hcpriv = NULL;
 
 			s = splusb();
 			usb_transfer_complete(xfer);
@@ -1471,7 +1472,6 @@ ohci_device_ctrl_done(usbd_xfer_handle xfer)
 		panic("ohci_device_ctrl_done: not a request");
 	}
 #endif
-	xfer->hcpriv = NULL;
 }
 
 void
@@ -1485,8 +1485,6 @@ ohci_device_intr_done(usbd_xfer_handle xfer)
 
 	DPRINTFN(10,("ohci_device_intr_done: xfer=%p, actlen=%d\n",
 		     xfer, xfer->actlen));
-
-	xfer->hcpriv = NULL;
 
 	if (xfer->pipe->repeat) {
 		data = opipe->tail.td;
@@ -1523,8 +1521,6 @@ ohci_device_bulk_done(usbd_xfer_handle xfer)
 {
 	DPRINTFN(10,("ohci_device_bulk_done: xfer=%p, actlen=%d\n",
 		     xfer, xfer->actlen));
-
-	xfer->hcpriv = NULL;
 }
 
 void
@@ -1564,13 +1560,11 @@ ohci_rhsc(ohci_softc_t *sc, usbd_xfer_handle xfer)
 void
 ohci_root_intr_done(usbd_xfer_handle xfer)
 {
-	xfer->hcpriv = NULL;
 }
 
 void
 ohci_root_ctrl_done(usbd_xfer_handle xfer)
 {
-	xfer->hcpriv = NULL;
 }
 
 /*
@@ -3375,10 +3369,7 @@ ohci_device_isoc_abort(usbd_xfer_handle xfer)
 void
 ohci_device_isoc_done(usbd_xfer_handle xfer)
 {
-
 	DPRINTFN(1,("ohci_device_isoc_done: xfer=%p\n", xfer));
-
-	xfer->hcpriv = NULL;
 }
 
 usbd_status
