@@ -155,19 +155,21 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (strcmp(argv[0], "+") == 0)
-		reuse = 1;
-	else if (strcmp(argv[0], "++") == 0)
-		selfuse = 1;
-	else if (islower(argv[0][0])) {
-		if (strlen(argv[0]) != 16) {
-			usage();
+	/* process boardspec if given */
+	if (argc > 0)
+		if (strcmp(argv[0], "+") == 0)
+			reuse = 1;
+		else if (strcmp(argv[0], "++") == 0)
+			selfuse = 1;
+		else if (islower(argv[0][0])) {
+			if (strlen(argv[0]) != 16) {
+				usage();
 
-			/* This board is assumed to be valid... */
-			bspec = argv[0];
-		} else
-			usage();
-	}
+				/* This board is assumed to be valid... */
+				bspec = argv[0];
+			} else
+				usage();
+       		}
 
 	if (batch && bspec == NULL)
 		errx(1, "must give both -b and a board setup");
