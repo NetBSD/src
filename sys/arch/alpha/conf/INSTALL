@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.54 2001/06/18 22:40:20 thorpej Exp $
+# $NetBSD: INSTALL,v 1.55 2001/07/07 17:09:48 tsutsui Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -177,7 +177,6 @@ gsip*	at	pci? dev ? function ?		# NS DP83820 Gigabit Ethernet
 iha*	at	pci? dev ? function ?		# Initio INIC-940/950 SCSI
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
-#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)
@@ -261,7 +260,6 @@ scsibus* at	bha?
 scsibus* at	dpt?
 scsibus* at	iha?
 scsibus* at	isp?
-#scsibus* at	ncr?
 scsibus* at	siop?
 scsibus* at	pcscp?
 scsibus* at	uha?
