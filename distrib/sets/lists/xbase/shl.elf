@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.7 2004/01/13 06:14:14 lukem Exp $
+# $NetBSD: shl.elf,v 1.8 2004/03/06 03:54:23 rtr Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2
@@ -11,6 +11,8 @@
 ./usr/X11R6/lib/libGL.so.1
 ./usr/X11R6/lib/libGLU.so
 ./usr/X11R6/lib/libGLU.so.1
+./usr/X11R6/lib/libGLw.so
+./usr/X11R6/lib/libGLw.so.1
 ./usr/X11R6/lib/libICE.so.6
 ./usr/X11R6/lib/libOSMesa.so
 ./usr/X11R6/lib/libOSMesa.so.4
@@ -20,12 +22,14 @@
 ./usr/X11R6/lib/libXRes.so.1
 ./usr/X11R6/lib/libXTrap.so
 ./usr/X11R6/lib/libXTrap.so.6
+./usr/X11R6/lib/libXau.so
+./usr/X11R6/lib/libXau.so.6
 ./usr/X11R6/lib/libXaw.so.6
 ./usr/X11R6/lib/libXaw.so.7
 ./usr/X11R6/lib/libXcursor.so
 ./usr/X11R6/lib/libXcursor.so.1
 ./usr/X11R6/lib/libXdmcp.so
-./usr/X11R6/lib/libXdmcp.so.1
+./usr/X11R6/lib/libXdmcp.so.6
 ./usr/X11R6/lib/libXext.so.6
 ./usr/X11R6/lib/libXfont.so
 ./usr/X11R6/lib/libXfont.so.1
@@ -67,7 +71,7 @@
 ./usr/X11R6/lib/libdpstk.so
 ./usr/X11R6/lib/libdpstk.so.1
 ./usr/X11R6/lib/libexpat.so
-./usr/X11R6/lib/libexpat.so.1
+./usr/X11R6/lib/libexpat.so.4
 ./usr/X11R6/lib/libfontconfig.so
 ./usr/X11R6/lib/libfontconfig.so.1
 ./usr/X11R6/lib/libfontenc.so

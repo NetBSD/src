@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.20 2004/01/19 00:32:41 lukem Exp $
+# $NetBSD: md.i386,v 1.21 2004/03/06 03:54:25 rtr Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xnest
@@ -48,7 +48,6 @@
 ./usr/X11R6/lib/X11/doc/LICENSE
 ./usr/X11R6/lib/X11/doc/README
 ./usr/X11R6/lib/X11/doc/README.DECtga
-./usr/X11R6/lib/X11/doc/README.DGA
 ./usr/X11R6/lib/X11/doc/README.DRI
 ./usr/X11R6/lib/X11/doc/README.DRIcomp
 ./usr/X11R6/lib/X11/doc/README.I128
@@ -70,8 +69,6 @@
 ./usr/X11R6/lib/X11/doc/README.rendition
 ./usr/X11R6/lib/X11/doc/README.s3virge
 ./usr/X11R6/lib/X11/doc/RELNOTES
-./usr/X11R6/lib/X11/doc/ServersOnly
-./usr/X11R6/lib/X11/doc/Status
 ./usr/X11R6/lib/X11/doc/Versions
 ./usr/X11R6/lib/X11/doc/VideoBoard98
 ./usr/X11R6/lib/X11/etc/xmodmap.std
@@ -144,6 +141,7 @@
 ./usr/X11R6/lib/modules/drivers/tseng_drv.o
 ./usr/X11R6/lib/modules/drivers/vesa_drv.o
 ./usr/X11R6/lib/modules/drivers/vga_drv.o
+./usr/X11R6/lib/modules/drivers/via_drv.o
 ./usr/X11R6/lib/modules/drivers/vmware_drv.o
 ./usr/X11R6/lib/modules/extensions/libGLcore.a
 ./usr/X11R6/lib/modules/extensions/libdbe.a
@@ -252,6 +250,7 @@
 ./usr/X11R6/man/cat4/tseng.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/vesa.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/vga.0			-unknown-		.cat
+./usr/X11R6/man/cat4/via.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/vmware.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/void.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
@@ -307,6 +306,7 @@
 ./usr/X11R6/man/man4/tseng.4			-unknown-		.man
 ./usr/X11R6/man/man4/vesa.4			-unknown-		.man
 ./usr/X11R6/man/man4/vga.4			-unknown-		.man
+./usr/X11R6/man/man4/via.4			-unknown-		.man
 ./usr/X11R6/man/man4/vmware.4			-unknown-		.man
 ./usr/X11R6/man/man4/void.4			-unknown-		.man
 ./usr/X11R6/man/man4/wacom.4			-unknown-		.man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.21 2004/02/07 12:39:20 rtr Exp $
+# $NetBSD: mi,v 1.22 2004/03/06 03:54:24 rtr Exp $
 ./etc/mtree/set.xcomp			xcomp-sys-root
 ./usr/X11R6/bin/bdftruncate.pl		xcomp-obsolete	obsolete
 ./usr/X11R6/bin/ccmakedep
@@ -220,9 +220,6 @@
 ./usr/X11R6/include/X11/extensions/XEVI.h
 ./usr/X11R6/include/X11/extensions/XEVIstr.h
 ./usr/X11R6/include/X11/extensions/XI.h
-./usr/X11R6/include/X11/extensions/XIE.h
-./usr/X11R6/include/X11/extensions/XIEproto.h
-./usr/X11R6/include/X11/extensions/XIEprotost.h
 ./usr/X11R6/include/X11/extensions/XInput.h
 ./usr/X11R6/include/X11/extensions/XIproto.h
 ./usr/X11R6/include/X11/extensions/XKB.h
@@ -330,7 +327,6 @@
 ./usr/X11R6/include/X11/keysym.h
 ./usr/X11R6/include/X11/keysymdef.h
 ./usr/X11R6/include/X11/xpm.h
-./usr/X11R6/include/expat.h
 ./usr/X11R6/include/fontconfig/fcfreetype.h
 ./usr/X11R6/include/fontconfig/fcprivate.h
 ./usr/X11R6/include/fontconfig/fontconfig.h
@@ -354,22 +350,27 @@
 ./usr/X11R6/include/freetype2/freetype/fterrdef.h
 ./usr/X11R6/include/freetype2/freetype/fterrors.h
 ./usr/X11R6/include/freetype2/freetype/ftglyph.h
+./usr/X11R6/include/freetype2/freetype/ftgzip.h
 ./usr/X11R6/include/freetype2/freetype/ftimage.h
+./usr/X11R6/include/freetype2/freetype/ftincrem.h
 ./usr/X11R6/include/freetype2/freetype/ftlist.h
 ./usr/X11R6/include/freetype2/freetype/ftmac.h
 ./usr/X11R6/include/freetype2/freetype/ftmm.h
 ./usr/X11R6/include/freetype2/freetype/ftmoderr.h
 ./usr/X11R6/include/freetype2/freetype/ftmodule.h
 ./usr/X11R6/include/freetype2/freetype/ftoutln.h
+./usr/X11R6/include/freetype2/freetype/ftpfr.h
 ./usr/X11R6/include/freetype2/freetype/ftrender.h
 ./usr/X11R6/include/freetype2/freetype/ftsizes.h
 ./usr/X11R6/include/freetype2/freetype/ftsnames.h
+./usr/X11R6/include/freetype2/freetype/ftstroker.h
 ./usr/X11R6/include/freetype2/freetype/ftsynth.h
 ./usr/X11R6/include/freetype2/freetype/ftsysio.h
 ./usr/X11R6/include/freetype2/freetype/ftsysmem.h
 ./usr/X11R6/include/freetype2/freetype/ftsystem.h
 ./usr/X11R6/include/freetype2/freetype/fttrigon.h
 ./usr/X11R6/include/freetype2/freetype/fttypes.h
+./usr/X11R6/include/freetype2/freetype/ftwinfnt.h
 ./usr/X11R6/include/freetype2/freetype/ftxf86.h
 ./usr/X11R6/include/freetype2/freetype/internal/autohint.h
 ./usr/X11R6/include/freetype2/freetype/internal/bdftypes.h
@@ -390,6 +391,7 @@
 ./usr/X11R6/include/freetype2/freetype/internal/fttrace.h
 ./usr/X11R6/include/freetype2/freetype/internal/internal.h
 ./usr/X11R6/include/freetype2/freetype/internal/pcftypes.h
+./usr/X11R6/include/freetype2/freetype/internal/pfr.h
 ./usr/X11R6/include/freetype2/freetype/internal/psaux.h
 ./usr/X11R6/include/freetype2/freetype/internal/psglobal.h	xcomp-obsolete	obsolete
 ./usr/X11R6/include/freetype2/freetype/internal/pshints.h
