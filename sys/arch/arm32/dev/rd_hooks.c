@@ -1,4 +1,4 @@
-/* $NetBSD: rd_hooks.c,v 1.1 1996/01/31 23:19:31 mark Exp $ */
+/* $NetBSD: rd_hooks.c,v 1.2 1996/02/02 20:23:00 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -35,6 +35,10 @@
 #include <vm/vm_kern.h>
 
 #include <dev/ramdisk.h>
+
+#ifndef RAMDISK_SIZE
+#define RAMDISK_SIZE 0
+#endif
 
 /*extern int boothowto;*/
 extern u_int ramdisc_size;
