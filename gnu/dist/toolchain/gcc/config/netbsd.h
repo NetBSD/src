@@ -39,7 +39,7 @@
    the GCC option `-posix'.  */
 
 #undef CPP_SPEC
-#define CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
+#define CPP_SPEC "%(cpp_cpu) %{posix:-D_POSIX_SOURCE}"
 
 /* Provide an ASM_SPEC appropriate for NetBSD.  Currently we only deal
    with the options for generating PIC code.  */
