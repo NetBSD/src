@@ -1,5 +1,13 @@
+.\"	$NetBSD: kqueue.2,v 1.1.1.1.2.1 2001/07/10 12:25:12 lukem Exp $
+.\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
+.\"
+.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Portions of this documentation is derived from text contributed by
+.\" Luke Mewburn.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -24,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd April 14, 2000
+.Dd June 3, 2001
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -73,12 +81,14 @@ on a file descriptor will remove any kevents that reference the descriptor.
 creates a new kernel event queue and returns a descriptor.
 The queue is not inherited by a child created with
 .Xr fork 2 .
+.ig
 However, if
 .Xr rfork 2
 is called without the
 .Dv RFFDG
 flag, then the descriptor table is shared,
 which will allow sharing of the kqueue between two processes.
+..
 .Pp
 .Fn kevent
 is used to register events with the queue, and return any pending
@@ -125,9 +135,9 @@ structure is defined as:
 .Bd -literal
 struct kevent {
 	uintptr_t ident;	/* identifier for this event */
-	short	  filter;	/* filter for event */
-	u_short	  flags;	/* action flags for kqueue */
-	u_int	  fflags;	/* filter flag value */
+	uint32_t  filter;	/* filter for event */
+	uint32_t  flags;	/* action flags for kqueue */
+	uint32_t  fflags;	/* filter flag value */
 	intptr_t  data;		/* filter data value */
 	void	  *udata;	/* opaque user data identifier */
 };
@@ -136,14 +146,15 @@ struct kevent {
 The fields of
 .Fa struct kevent
 are:
-.Bl -tag -width XXXfilter
+.Bl -tag -width XXXfilter -offset indent
 .It ident
 Value used to identify this event.
 The exact interpretation is determined by the attached filter,
 but often is a file descriptor.
 .It filter
-Identifies the kernel filter used to process this event.  The pre-defined
-system filters are described below.
+Identifies the kernel filter used to process this event.
+There are pre-defined system filters (which are described below), and
+other filters may be added by kernel subsystems as necessary.
 .It flags
 Actions to perform on the event.
 .It fflags
@@ -157,7 +168,7 @@ Opaque user-defined value passed through the kernel unchanged.
 The
 .Va flags
 field can contain the following values:
-.Bl -tag -width XXXEV_ONESHOT
+.Bl -tag -width XXXEV_ONESHOT -offset indent
 .It EV_ADD
 Adds the event to the kqueue.  Re-adding an existing event
 will modify the parameters of the original event, and not result
@@ -192,12 +203,56 @@ See
 below.
 .El
 .Pp
-The predefined system filters are listed below.
+.Ss Filters
+.Pp
+Filters are identified by a number.
+There are two types of filters; pre-defined filters which
+are described below, and third-party filters that may be added with
+.Xr kfilter_register 2 
+by kernel sub-systems, third-party device drivers, or loadable
+kernel modules.
+.Pp
+As a third-party filter is referenced by a well-known name instead
+of a statically assigned number, two
+.Xr ioctl 2 s
+are supported on the file descriptor returned by
+.Fn kqueue
+to map a filter name to a filter number, and vice-versa (passing
+arguments in a structure described below):
+.Bl -tag -width KFILTER_BYFILTER -offset indent
+.It KFILTER_BYFILTER
+Map
+.Va filter
+to
+.Va name ,
+which is of size
+.Va len .
+.It KFILTER_BYNAME
+Map
+.Va name
+to
+.Va filter .
+.Va len
+is ignored.
+.El
+.Pp
+The following structure is used to pass arguments in and out of the
+.Xr ioctl 2 :
+.Bd -literal -offset indent
+struct kfilter_mapping {
+	char	 *name;		/* name to lookup or return */
+	size_t	 len;		/* length of name */
+	uint32_t filter;	/* filter to lookup or return */
+};
+.Ed
+.Pp
 Arguments may be passed to and from the filter via the 
 .Va fflags
 and
 .Va data
 fields in the kevent structure.
+.Pp
+The predefined system filters are:
 .Bl -tag -width EVFILT_SIGNAL
 .It EVFILT_READ
 Takes a descriptor as the identifier, and returns whenever
@@ -211,7 +266,9 @@ Sockets which have previously been passed to
 .Fn listen
 return when there is an incoming connection pending.
 .Va data
-contains the size of the listen backlog.
+contains the size of the listen backlog (i.e., the number of
+connections ready to be accepted with
+.Xr accept 2 . )
 .Pp
 Other socket descriptors return when there is data to be read,
 subject to the
@@ -264,6 +321,9 @@ Note that this filter is not supported for vnodes.
 For sockets, the low water mark and socket error handling is 
 identical to the EVFILT_READ case.
 .It EVFILT_AIO
+This is not implemented in
+.Nx .
+.ig
 The sigevent portion of the AIO request is filled in, with
 .Va sigev_notify_kqueue 
 containing the descriptor of the kqueue that the event should
@@ -287,6 +347,7 @@ address of the kevent structure placed in the
 .Va aio_lio_opcode
 field of the AIO request.  However, this approach will not work on
 architectures with 64-bit pointers, and should be considered depreciated.
+..
 .It EVFILT_VNODE
 Takes a file descriptor as the identifier and the events to watch for in 
 .Va fflags ,
@@ -351,7 +412,7 @@ On return,
 contains the events which triggered the filter.
 .It EVFILT_SIGNAL
 Takes the signal number to monitor as the identifier and returns
-when the given signal is delivered to the process.
+when the given signal is delivered to the current process.
 This coexists with the
 .Fn signal
 and 
@@ -434,22 +495,27 @@ No memory was available to register the event.
 The specified process to attach to does not exist.
 .El
 .Sh SEE ALSO
-.Xr aio_error 2 ,
-.Xr aio_read 2 ,
-.Xr aio_return 2 ,
+.\" .Xr aio_error 2 ,
+.\" .Xr aio_read 2 ,
+.\" .Xr aio_return 2 ,
+.Xr ioctl 2 ,
 .Xr poll 2 ,
 .Xr read 2 ,
 .Xr select 2 ,
 .Xr sigaction 2 ,
 .Xr write 2 ,
-.Xr signal 3
+.Xr signal 3 ,
+.Xr kfilter_register 9 .
+.Xr knote 9 .
 .Sh HISTORY
 The
 .Fn kqueue
 and
 .Fn kevent
 functions first appeared in
-.Fx 4.1 .
+.Fx 4.1 ,
+and then in
+.Nx 1.6 .
 .Sh AUTHORS
 The
 .Fn kqueue
