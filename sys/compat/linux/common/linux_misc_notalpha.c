@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.54 2000/06/26 15:26:35 mrg Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.55 2000/06/29 02:40:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -51,8 +51,6 @@
 #include <sys/wait.h>
 
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_fcntl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.9 2000/03/30 11:27:16 augustss Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.10 2000/06/29 02:40:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,8 +63,6 @@
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldselect.c,v 1.50 2000/06/26 14:38:57 mrg Exp $	*/
+/*	$NetBSD: linux_oldselect.c,v 1.51 2000/06/29 02:40:39 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,8 +41,6 @@
 #include <sys/mount.h>
 
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_misc.h>
