@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.29 2001/01/18 20:28:27 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.30 2001/11/03 14:53:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -663,8 +663,21 @@ winChkName(un, unlen, wep, chksum)
 	 */
 	i = ((wep->weCnt&WIN_CNT) - 1) * WIN_CHARS;
 	un += i;
-	if ((unlen -= i) <= 0)
+	if ((unlen -= i) < 0)
 		return -1;
+
+	/*
+	 * Ignore redundant winentries (those with only \0\0 on start in them).
+	 * An appearance of such entry is a bug; unknown if in NetBSD msdosfs
+	 * or MS Windows.
+	 */
+	if (unlen == 0) {
+		if (wep->wePart1[0] == '\0' && wep->wePart1[1] == '\0')
+			return chksum;
+		else
+			return -1;
+	}
+
 	if ((wep->weCnt&WIN_LAST) && unlen > WIN_CHARS)
 		return -1;
 
