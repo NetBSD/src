@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.39 2002/05/14 20:03:53 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.39.4.1 2002/06/20 03:51:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -765,6 +765,7 @@ struct segment {
 #define	SEGM_SYNC	0x04		/* wait for segment */
 #define	SEGM_PROT	0x08		/* don't inactivate at segunlock */
 	u_int16_t seg_flags;		/* run-time flags for this segment */
+	u_int32_t seg_iocount;		/* number of ios pending */
 };
 
 struct lfs_cluster {
@@ -773,8 +774,10 @@ struct lfs_cluster {
 	size_t bufsize;        /* Size of kept data */
 #define LFS_CL_MALLOC	0x00000001
 #define LFS_CL_SHIFT	0x00000002
+#define LFS_CL_SYNC	0x00000004
 	u_int32_t flags;       /* Flags */
 	struct lfs *fs;        /* LFS that this belongs to */
+	struct segment *seg;   /* Segment structure, for LFS_CL_SYNC */
 	void *saveaddr;        /* Original contents of saveaddr */
 	char *olddata;		/* Original b_data, if LFS_CL_MALLOC */
 };
