@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5.2.1 2002/05/16 13:22:28 gehenna Exp $	*/
+/*	$NetBSD: conf.c,v 1.5.2.2 2002/07/09 05:11:56 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.

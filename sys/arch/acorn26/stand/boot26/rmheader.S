@@ -1,4 +1,4 @@
-/*	$NetBSD: rmheader.S,v 1.1 2002/03/24 15:47:25 bjh21 Exp $	*/
+/*	$NetBSD: rmheader.S,v 1.1.2.1 2002/07/09 05:03:57 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -34,7 +34,7 @@
 #include <riscoscalls.h>
 
 rmbase:
-	.word	rmstart - rmbase	/* Start code */
+	b	rmstart			/* Start code */
 	.word	0			/* Initialisation code */
 	.word	0			/* Finalisation code */
 	.word	0			/* Service call handler */
