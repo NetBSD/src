@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.12 1995/04/17 12:08:53 cgd Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.13 1995/06/12 00:09:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -414,10 +414,6 @@ eginit(sc)
 	register struct eg_softc *sc;
 {
 	register struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-
-	/* Address not known. */
-	if (ifp->if_addrlist == 0)
-		return;
 
 	/* soft reset the board */
 	outb(sc->eg_ctl, EG_CTL_FLSH);

@@ -1232,15 +1232,6 @@ fe_init(sc)
 	fe_dump(LOG_INFO, sc);
 #endif
 
-	/* We need an address. */
-	if (ifp->if_addrlist == 0) {
-#if FE_DEBUG >= 1
-		log(LOG_ERR, "%s: init() without any address\n",
-		    sc->sc_dev.dv_xname);
-#endif
-		return;
-	}
-
 	/* Start initializing 86960. */
 	s = splimp();
 

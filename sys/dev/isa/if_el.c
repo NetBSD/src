@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.24 1995/06/09 18:09:27 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.25 1995/06/12 00:09:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -268,10 +268,6 @@ el_init(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int iobase = sc->sc_iobase;
 	int s;
-
-	/* If address not known, do nothing. */
-	if (ifp->if_addrlist == 0)
-		return;
 
 	s = splimp();
 
