@@ -1,3 +1,5 @@
+/*	$NetBSD: asc.c,v 1.6 1994/10/26 08:46:02 cgd Exp $	*/
+
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
@@ -29,20 +31,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
-
 
 /*
  * ASC driver code and asc_ringbell() support
- *
- * $Id: asc.c,v 1.5 1994/07/21 00:44:00 briggs Exp $
- *
- * 12/12/93 01:14:45 grantham
- *	initial revision
- *
  */
-
 
 #include <sys/types.h>
 #include <sys/errno.h>

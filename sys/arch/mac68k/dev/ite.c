@@ -1,3 +1,5 @@
+/*	$NetBSD: ite.c,v 1.9 1994/10/26 08:46:13 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: ite.c 1.28 92/12/20$
  *
- *	from: @(#)ite.c	8.2 (Berkeley) 1/12/94
- *	$Id: ite.c,v 1.8 1994/09/29 03:33:13 briggs Exp $
+ *	@(#)ite.c	8.2 (Berkeley) 1/12/94
  */
 
 /*

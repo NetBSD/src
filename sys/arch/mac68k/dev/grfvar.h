@@ -1,3 +1,5 @@
+/*	$NetBSD: grfvar.h,v 1.3 1994/10/26 08:46:09 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: grfvar.h 1.9 91/01/21$
  *
- *	from: from: @(#)grfvar.h	7.3 (Berkeley) 5/7/91
- *	$Id: grfvar.h,v 1.2 1993/11/29 00:32:41 briggs Exp $
+ *	@(#)grfvar.h	7.3 (Berkeley) 5/7/91
  */
 
 /* internal structure of lock page */

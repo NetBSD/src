@@ -1,5 +1,3 @@
-/*
- *	$Id: ansi.h,v 1.3 1994/01/10 23:55:20 briggs Exp $
- */
+/*	$NetBSD: ansi.h,v 1.4 1994/10/26 08:46:24 cgd Exp $	*/
 
 #include <m68k/ansi.h>

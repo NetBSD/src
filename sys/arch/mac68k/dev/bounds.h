@@ -1,3 +1,5 @@
+/*	$NetBSD: bounds.h,v 1.2 1994/10/26 08:46:04 cgd Exp $	*/
+
 #if defined(CHECKBOUNDS)
 
 #undef CHECKBOUNDS

@@ -1,3 +1,5 @@
+/*	$NetBSD: grf_gbreg.h,v 1.3 1994/10/26 08:46:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: grf_gbreg.h 1.1 90/07/09$
  *
- *	from: @(#)grf_gbreg.h	7.2 (Berkeley) 11/4/90
- *	$Id: grf_gbreg.h,v 1.2 1993/11/29 00:32:36 briggs Exp $
+ *	@(#)grf_gbreg.h	7.2 (Berkeley) 11/4/90
  */
 
 /*

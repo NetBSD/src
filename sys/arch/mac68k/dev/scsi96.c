@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi96.c,v 1.5 1994/10/26 08:46:18 cgd Exp $	*/
+
 /*
  * Copyright (C) 1994	Allen K. Briggs
  * All rights reserved.
@@ -23,9 +25,6 @@
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: scsi96.c,v 1.4 1994/07/21 01:33:29 briggs Exp $
- *
  */
 
 /*

@@ -1,3 +1,5 @@
+#	$NetBSD: std.mac68k,v 1.5 1994/10/26 08:45:57 cgd Exp $
+#
 # standard Macintosh information.
 # roughly copied from std.sparc 14 Oct 1993.
 

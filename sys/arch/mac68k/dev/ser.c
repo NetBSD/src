@@ -1,3 +1,5 @@
+/*	$NetBSD: ser.c,v 1.14 1994/10/26 08:46:20 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -68,8 +70,6 @@
  *		added CTS input flow control
  *		added DCD event detection
  *		added software fifo's
- *
- * $Id: ser.c,v 1.13 1994/09/30 00:52:44 briggs Exp $
  *
  *	Mac II serial device interface
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_ioctl.c,v 1.5 1994/10/26 08:47:34 cgd Exp $	*/
+
 /* 
  * Contributed by HD Associates (hd@world.std.com).
  * Copyright (c) 1992, 1993 HD Associates

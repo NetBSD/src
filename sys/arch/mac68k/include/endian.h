@@ -1,5 +1,3 @@
-/*
- *	$Id: endian.h,v 1.4 1994/01/10 23:55:23 briggs Exp $
- */
+/*	$NetBSD: endian.h,v 1.5 1994/10/26 08:46:28 cgd Exp $	*/
 
 #include <m68k/endian.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: asc.h,v 1.2 1994/10/26 08:46:03 cgd Exp $	*/
+
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
@@ -29,23 +31,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
-
 
 /*
  * ASC driver code and asc_ringbell() support header
- *
- * $Id: asc.h,v 1.1 1993/12/21 03:16:06 briggs Exp $
- *
- * 12/12/93 01:14:45 grantham
- *	initial revision
- *
- * $Log: asc.h,v $
- * Revision 1.1  1993/12/21 03:16:06  briggs
- * Add basic sound support and a beeping (instead of flashing) console...
- * from Brad Grantham.
- *
  */
 
 int asc_ringbell();

@@ -1,3 +1,5 @@
+/*	$NetBSD: autoconf.c,v 1.11 1994/10/26 08:46:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -71,8 +73,7 @@
 /*
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
- *	from: from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.10 1994/07/21 00:55:49 briggs Exp $
+ *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
  */
 
 /*

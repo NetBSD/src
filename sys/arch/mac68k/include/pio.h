@@ -1,35 +1,11 @@
+/*	$NetBSD: pio.h,v 1.3 1994/10/26 08:46:38 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1990 Carnegie-Mellon University
  * All rights reserved.  The CMU software License Agreement specifies
  * the terms and conditions for use and redistribution.
  */
-/* 
- * HISTORY
- * pio.h,v
- * Revision 1.1  1993/03/21  18:09:48  cgd
- * after 0.2.2 "stable" patches applied
- *
- * Revision 1.1  1992/05/27  00:48:30  balsup
- * machkern/cor merge
- *
- * Revision 1.1  1991/10/10  20:11:39  balsup
- * Initial revision
- *
- * Revision 2.2  91/04/02  11:52:29  mbj
- * 	[90/08/14            mg32]
- * 
- * 	Now we know how types are factor in.
- * 	Cleaned up a bunch: eliminated ({ for output and flushed unused
- * 	output variables.
- * 	[90/08/14            rvb]
- * 
- * 	This is how its done in gcc:
- * 		Created.
- * 	[90/03/26            rvb]
- * 
- */
-
 
 #define inl(y) \
 ({ unsigned long _tmp__; \

@@ -1,3 +1,5 @@
+/*	$NetBSD: clockreg.h,v 1.3 1994/10/26 08:46:56 cgd Exp $	*/
+
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
@@ -34,7 +36,6 @@
 /*
    Clock defines and things.
    MacII clock characteristics used.
-	"$Id: clockreg.h,v 1.2 1993/11/29 00:40:39 briggs Exp $"
 */
 
 

@@ -1,5 +1,7 @@
-#	from: @(#)files.sparc	8.1 (Berkeley) 7/19/93
-#	$Id: files.mac68k,v 1.15 1994/09/12 03:53:03 briggs Exp $
+#	$NetBSD: files.mac68k,v 1.16 1994/10/26 08:45:56 cgd Exp $
+
+#	@(#)files.sparc	8.1 (Berkeley) 7/19/93
+#
 # files.mac68k.newconf
 # mac68k-specific configuration info
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: nubus.c,v 1.8 1994/10/26 08:46:14 cgd Exp $	*/
+
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
  *			Michael L. Finch, Bradley A. Grantham, and
@@ -29,14 +31,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $Id: nubus.c,v 1.7 1994/06/26 12:59:19 briggs Exp $
- *
  */
-
-/* 
-	MF 8-24-93 first hack at a real nubus driver
-*/
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,6 +1,4 @@
-/*
- *	$Id: types.h,v 1.4 1994/03/14 02:11:09 cgd Exp $
- */
+/*	$NetBSD: types.h,v 1.5 1994/10/26 08:46:50 cgd Exp $	*/
 
 /* Just use the common m68k definition */
 #include <m68k/types.h>

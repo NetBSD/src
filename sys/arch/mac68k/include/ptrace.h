@@ -1,5 +1,3 @@
-/*
- *	$Id: ptrace.h,v 1.1 1994/01/10 23:55:30 briggs Exp $
- */
+/*	$NetBSD: ptrace.h,v 1.2 1994/10/26 08:46:43 cgd Exp $	*/
 
 #include <m68k/ptrace.h>
