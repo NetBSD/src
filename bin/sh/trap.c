@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24.4.1 2001/03/17 10:21:34 wulf Exp $	*/
+/*	$NetBSD: trap.c,v 1.24.4.2 2001/03/18 03:20:11 wulf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.24.4.1 2001/03/17 10:21:34 wulf Exp $");
+__RCSID("$NetBSD: trap.c,v 1.24.4.2 2001/03/18 03:20:11 wulf Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,53 +85,6 @@ char gotsig[NSIG];		/* indicates specified signal received */
 int pendingsigs;			/* indicates some signal received */
 
 static int getsigaction __P((int, sig_t *));
-static int signame_to_signum __P((const char *));
-void printsignals __P((void));
-
-/*
- * return the signal number described by `p' (as a number or a name)
- * or -1 if it isn't one
- */
-
-static int
-signame_to_signum(p)
-	const char *p;
-{
-	int i;
-
-	if (is_number(p))
-		return number(p);
-
-	if (strcasecmp(p, "exit") == 0 )
-		return 0;
-	
-	if (strncasecmp(p, "sig", 3) == 0)
-		p += 3;
-
-	for (i = 0; i < NSIG; ++i)
-		if (strcasecmp (p, sys_signame[i]) == 0)
-			return i;
-	return -1;
-}
-
-/*
- * Print a list of valid signal names
- */
-void
-printsignals(void)
-{
-	int n;
-
-	out1str("EXIT ");
-
-	for (n = 1; n < NSIG; n++) {
-		out1fmt("%s", sys_signame[n]);
-		if ((n == NSIG/2) ||  n == (NSIG - 1))
-			out1str("\n");
-		else
-			out1c(' ');
-	}
-}
 
 /*
  * The trap builtin.
@@ -149,52 +102,24 @@ trapcmd(argc, argv)
 	if (argc <= 1) {
 		for (signo = 0 ; signo <= NSIG ; signo++) {
 			if (trap[signo] != NULL)
-				out1fmt("trap -- '%s' %s\n", trap[signo],
-				    (signo) ? sys_signame[signo] : "EXIT");
+				out1fmt("%d: %s\n", signo, trap[signo]);
 		}
 		return 0;
 	}
 	ap = argv + 1;
-
-	action = NULL;
-
-	if (strcmp(*ap, "--") == 0)
-		if (*++ap == NULL)
-			return 0;
-
-	if (signame_to_signum(*ap) == -1) {
-		if ((*ap)[0] =='-') {
-			if ((*ap)[1] == NULL)
-				ap++;
-			else if ((*ap)[1] == 'l' && (*ap)[2] == NULL) {
-				printsignals();
-				return 0;
-			}
-			else
-				error("bad option %s\n", *ap);
-		}
-		else
-			action = *ap++;
-	}
-
+	if (is_number(*ap))
+		action = NULL;
+	else
+		action = *ap++;
 	while (*ap) {
-		if (is_number(*ap))
-			signo = number(*ap);
-		else
-			signo = signame_to_signum(*ap);
-
-		if (signo < 0 || signo > NSIG)
+		if ((signo = number(*ap)) < 0 || signo > NSIG)
 			error("%s: bad trap", *ap);
-
 		INTOFF;
 		if (action)
 			action = savestr(action);
-
 		if (trap[signo])
 			ckfree(trap[signo]);
-
 		trap[signo] = action;
-
 		if (signo != 0)
 			setsignal(signo);
 		INTON;
