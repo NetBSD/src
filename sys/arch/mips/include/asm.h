@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.18 1999/02/24 18:36:32 drochner Exp $	*/
+/*	$NetBSD: asm.h,v 1.19 1999/03/30 14:26:42 soda Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,41 +58,7 @@
 #ifndef _MIPS_ASM_H
 #define _MIPS_ASM_H
 
-/*
- * Symbolic register names
- */
-#define zero	$0	/* always zero */
-#define AT	$at	/* assembler temporary */
-#define v0	$2	/* return value */
-#define v1	$3
-#define a0	$4	/* argument registers */
-#define a1	$5
-#define a2	$6
-#define a3	$7
-#define t0	$8	/* temp registers (not saved across subroutine calls) */
-#define t1	$9
-#define t2	$10
-#define t3	$11
-#define t4	$12
-#define t5	$13
-#define t6	$14
-#define t7	$15
-#define s0	$16	/* saved across subroutine calls (callee saved) */
-#define s1	$17
-#define s2	$18
-#define s3	$19
-#define s4	$20
-#define s5	$21
-#define s6	$22
-#define s7	$23
-#define t8	$24	/* two more temporary registers */
-#define t9	$25
-#define k0	$26	/* kernel temporary */
-#define k1	$27
-#define gp	$28	/* global pointer */
-#define sp	$29	/* stack pointer */
-#define s8	$30	/* one more callee saved */
-#define ra	$31	/* return address */
+#include <machine/regdef.h>
 
 /*
  * Define -pg profile entry code.
@@ -122,14 +88,7 @@
 #  define _C_LABEL(x)	_ ## x
 # else
 #  define _C_LABEL(x)	_/**/x
-#  define _END_LABEL(x)	x/**/End
 # endif
-#endif
-
-#ifdef __STDC__
-# define _END_LABEL(x)	x ## End
-#else
-# define _END_LABEL(x)	x/**/End
 #endif
 
 #ifdef USE_AENT
@@ -183,7 +142,7 @@ _C_LABEL(x): ;				\
  */
 #define XLEAF(x)			\
 	.globl	_C_LABEL(x);		\
-	.aent	_C_LABEL(x),0;		\
+	AENT (_C_LABEL(x))		\
 _C_LABEL(x):
 
 /*
@@ -214,7 +173,7 @@ _C_LABEL(x): ;				\
  */
 #define XNESTED(x)			\
 	.globl	_C_LABEL(x);		\
-	.aent	_C_LABEL(x),0;		\
+	AENT (_C_LABEL(x))		\
 _C_LABEL(x):
 
 /*
@@ -238,14 +197,6 @@ _C_LABEL(x):
 _C_LABEL(x):
 
 /*
- * ALIAS
- *	Global alias for a function, or alternate entry point
- */
-#define	ALIAS(x)			\
-	.globl	_C_LABEL(x);		\
-_C_LABEL(x):
-
-/*
  * VECTOR
  *	exception vector entrypoint
  */
@@ -253,9 +204,15 @@ _C_LABEL(x):
 	.ent	_C_LABEL(x),0;		\
 	EXPORT(x);			\
 
+#ifdef __STDC__
 #define VECTOR_END(x)			\
 	.end	_C_LABEL(x);		\
-	EXPORT(_END_LABEL(x))
+	EXPORT(_C_LABEL(x) ## End)
+#else
+#define VECTOR_END(x)			\
+	.end	_C_LABEL(x);		\
+	EXPORT(_C_LABEL(x)/**/End)
+#endif
 
 /*
  * Macros to panic and printf from assembly language.
@@ -282,29 +239,10 @@ _C_LABEL(x):
 /*
  * XXX retain dialects XXX
  */
-#define ALEAF(x)			\
-	.globl _C_LABEL(x);		\
-	AENT (_C_LABEL(x))		\
-_C_LABEL(x):
-
-#define NLEAF(x)			\
-	.globl _C_LABEL(x); 		\
-	.ent _C_LABEL(x), 0;		\
-_C_LABEL(x): ; \
-	.frame sp, 0, ra
-
-#define NON_LEAF(x, fsize, retpc)	\
-	.globl _C_LABEL(x);		\
-	.ent _C_LABEL(x), 0;		\
-_C_LABEL(x): ;				\
-	.frame sp, fsize, retpc;	\
-	MCOUNT
-
-#define NNON_LEAF(x, fsize, retpc)	\
-	.globl _C_LABEL(x);		\
-	.ent _C_LABEL(x), 0;		\
-_C_LABEL(x): ;				\
-	.frame sp, fsize, retpc
+#define ALEAF(x)			XLEAF(x)
+#define NLEAF(x)			LEAF_NOPROFILE(x)
+#define NON_LEAF(x, fsize, retpc)	NESTED(x, fsize, retpc)
+#define NNON_LEAF(x, fsize, retpc)	NESTED_NOPROFILE(x, fsize, retpc)
 
 /* 
  *  standard callframe {
