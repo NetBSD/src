@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.25 2000/04/27 00:23:26 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.26 2000/04/27 17:50:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.25 2000/04/27 00:23:26 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.26 2000/04/27 17:50:01 mycroft Exp $");
 #endif
 #endif					/* not lint */
 
@@ -766,9 +766,8 @@ wgetch(WINDOW *win)
 	}
 
 	__restore_termios();
-	if (__echoit) {
+	if (__echoit)
 		waddch(win, (chtype) inp);
-	}
 	if (weset)
 		nocbreak();
 
