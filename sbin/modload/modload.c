@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.28 2001/09/17 01:40:08 assar Exp $	*/
+/*	$NetBSD: modload.c,v 1.29 2001/09/29 21:15:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.28 2001/09/17 01:40:08 assar Exp $");
+__RCSID("$NetBSD: modload.c,v 1.29 2001/09/29 21:15:11 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -157,7 +157,7 @@ cleanup(void)
 }
 
 static int
-verify_entry(char *entry, char *filename)
+verify_entry(const char *entry, char *filename)
 {
 	struct	nlist	names[2];
 	int n;
@@ -165,8 +165,7 @@ verify_entry(char *entry, char *filename)
 
 	memset(names, 0, sizeof(names));
 	s = malloc(strlen(entry) + 2);
-	s[0] = '_';
-	strcpy(s + 1, entry);
+	sprintf(s, "_%s", entry);	/* safe */
 #ifdef	_AOUT_INCLUDE_
 	names[0].n_un.n_name = s;
 #else
@@ -303,15 +302,13 @@ main(int argc, char **argv)
 		/*
 		 * Try <modobj>_init if entry is DFLT_ENTRY.
 		 */
-		if (entry == DFLT_ENTRY) {
+		if (strcmp(entry, DFLT_ENTRY) == 0) {
 			if ((p = strrchr(modout, '/')))
 				p++;
 			else
 				p = modout;
-			entry = malloc(strlen(p) + 
-			    strlen(DFLT_ENTRYEXT) + 1);
-			strcpy(entry, p);
-			strcat(entry, DFLT_ENTRYEXT);
+			entry = malloc(strlen(p) + strlen(DFLT_ENTRYEXT) + 1);
+			sprintf(entry, "%s%s", p, DFLT_ENTRYEXT); /* safe */
 			if (verify_entry(entry, modobj))
 				errx(1, "entry point _%s not found in %s",
 				    entry, modobj);
