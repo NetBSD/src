@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.81 2004/12/30 12:12:16 jdolecek Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.82 2005/01/23 08:41:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.81 2004/12/30 12:12:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.82 2005/01/23 08:41:02 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -273,7 +273,7 @@ lkmunreserve(int delsymtab)
 	if (curp && curp->syms) {
 		if (delsymtab)
 			ksyms_delsymtab(curp->private.lkm_any->lkm_name);
-		uvm_km_free(kernel_map, curp->syms, curp->sym_size);/**/
+		LKM_SPACE_FREE(curp->syms, curp->sym_size);
 		curp->syms = 0;
 	}
 	/*
