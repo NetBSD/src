@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.2 2001/01/04 12:30:37 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.3 2001/01/16 01:02:47 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -736,9 +736,10 @@ _formi_redraw_field(FORM *form, int field)
 		if (cur->start_char > 0)
 			offset += cur->start_char - 1;
 
-		if (flen > cur->hscroll + 1)
-			flen -= cur->hscroll + 1;
-		else
+		if (flen > cur->hscroll + 1) {
+			if (flen > slen)
+				flen -= cur->hscroll + 1;
+		} else
 			flen = 0;
 		
 #ifdef DEBUG
@@ -1492,6 +1493,7 @@ field_sort_compare(const void *one, const void *two)
 	const FIELD *a, *b;
 	int tl;
 	
+	  /* LINTED const castaway; we don't modify these! */	
 	a = (const FIELD *) *((const FIELD **) one);
 	b = (const FIELD *) *((const FIELD **) two);
 

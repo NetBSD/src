@@ -1,4 +1,4 @@
-/*	$NetBSD: form.c,v 1.2 2001/01/04 12:30:37 blymn Exp $	*/
+/*	$NetBSD: form.c,v 1.3 2001/01/16 01:02:47 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -40,6 +40,7 @@ extern FIELD _formi_default_field;
 FORM _formi_default_form = {
 	FALSE, /* true if performing a init or term function */
 	FALSE, /* the form is posted */
+	FALSE, /* make field list circular if true */
 	NULL, /* window for the form */
 	NULL, /* subwindow for the form */
 	NULL, /* user defined pointer */
