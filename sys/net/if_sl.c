@@ -32,7 +32,7 @@
  *
  *	from: if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp
  *	from: @(#)if_sl.c	7.22 (Berkeley) 4/20/91
- *	$Id: if_sl.c,v 1.24 1994/02/02 01:21:32 hpeyerl Exp $
+ *	$Id: if_sl.c,v 1.25 1994/02/05 08:01:22 mycroft Exp $
  */
 
 /*
@@ -198,13 +198,8 @@ slattach()
 		sc->sc_if.if_next = NULL;
 		sc->sc_if.if_unit = i++;
 		sc->sc_if.if_mtu = SLMTU;
-#ifdef __NetBSD__						/* XXX - cgd */
-		sc->sc_if.if_flags = IFF_POINTOPOINT | SC_AUTOCOMP;
-		sc->sc_if.if_flags |= IFF_MULTICAST;
-#else
 		sc->sc_if.if_flags =
 		    IFF_POINTOPOINT | SC_AUTOCOMP | IFF_MULTICAST;
-#endif /* !__NetBSD__ */
 		sc->sc_if.if_type = IFT_SLIP;
 		sc->sc_if.if_ioctl = slioctl;
 		sc->sc_if.if_output = sloutput;
