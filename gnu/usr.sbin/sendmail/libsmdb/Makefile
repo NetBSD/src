@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2000/05/03 10:50:58 itojun Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2002/02/20 23:15:58 he Exp $
+
+NOSHARE=	# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 .include <bsd.own.mk>
 
@@ -10,9 +14,6 @@ LIB=		smdb
 CPPFLAGS+=	-DNOT_SENDMAIL
 
 SRCS=		smdb.c smdb1.c smdb2.c smndbm.c 
-MKSHARE=	no
-MKPIC=		no
-MKPROFILE=	no
 
 libinstall::
 
