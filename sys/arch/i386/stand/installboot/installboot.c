@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.8 1998/12/19 19:17:23 he Exp $	 */
+/* $NetBSD: installboot.c,v 1.9 1999/01/11 22:21:30 kleink Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -44,8 +44,8 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
-#include <sys/errno.h>
 #include <err.h>
+#include <errno.h>
 #include <a.out.h>
 #include <fcntl.h>
 #include <nlist.h>
@@ -324,7 +324,7 @@ save_ffs(diskdev, bootblkname, bp, size)
 	if (size > fraglist->loadsz * DEV_BSIZE) {
 
 		inode = createfileondev(diskdev, bootblkname, bp, size);
-		if (inode == (ino_t) - 1)
+		if (inode == (ino_t)-1)
 			return inode;
 
 		/* paranoia */
@@ -332,7 +332,7 @@ save_ffs(diskdev, bootblkname, bp, size)
 		(void) sleep(3);
 
 		if (setup_ffs_blks(diskdev, inode))
-			return (-1);
+			return (ino_t)(-1);
 	}
 	return inode;
 }
