@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.13 2000/09/09 04:49:54 perseant Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.14 2000/11/25 02:39:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -91,27 +91,27 @@
  * XXX
  * Use the TCP/IP checksum instead.
  */
-u_long
+u_int32_t
 cksum(str, len)
 	void *str;
 	size_t len;
 {
-	u_long sum;
+	u_int32_t sum;
 	
-	len &= ~(sizeof(u_short) - 1);
-	for (sum = 0; len; len -= sizeof(u_short)) {
-		sum ^= *(u_short *)str;
-		str = (void *)((u_short *)str + 1);
+	len &= ~(sizeof(u_int16_t) - 1);
+	for (sum = 0; len; len -= sizeof(u_int16_t)) {
+		sum ^= *(u_int16_t *)str;
+		str = (void *)((u_int16_t *)str + 1);
 	}
 	return (sum);
 }
 
-u_long	
+u_int32_t
 lfs_sb_cksum(fs)
 	struct dlfs *fs;
 {
 	size_t size;  
 	
 	size = (size_t)offsetof(struct dlfs, dlfs_cksum);
-	return cksum(fs,size);
+	return cksum(fs, size);
 }
