@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.9 1997/11/22 08:29:58 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.10 1998/06/30 23:42:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.9 1997/11/22 08:29:58 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.10 1998/06/30 23:42:08 thorpej Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -147,7 +147,7 @@ transfer(buf, fd, eofchars)
 	(void)&p;
 #endif
 
-	pwrite(FD, buf, strlen(buf));
+	xpwrite(FD, buf, strlen(buf));
 	quit = 0;
 	kill(pid, SIGIOT);
 	read(repdes[0], (char *)&ccc, 1);  /* Wait until read process stops */
@@ -156,7 +156,7 @@ transfer(buf, fd, eofchars)
 	 * finish command
 	 */
 	r = '\r';
-	pwrite(FD, &r, 1);
+	xpwrite(FD, &r, 1);
 	do
 		read(FD, &c, 1); 
 	while ((c&STRIP_PAR) != '\n');
@@ -436,7 +436,7 @@ send(c)
 	int retry = 0;
 
 	cc = c;
-	pwrite(FD, &cc, 1);
+	xpwrite(FD, &cc, 1);
 #ifdef notdef
 	if (number(value(CDELAY)) > 0 && c != '\r')
 		nap(number(value(CDELAY)));
@@ -457,7 +457,7 @@ tryagain:
 		printf("\r\ntimeout error (%s)\r\n", ctrl(c));
 		if (retry++ > 3)
 			return;
-		pwrite(FD, &null, 1); /* poke it */
+		xpwrite(FD, &null, 1); /* poke it */
 		goto tryagain;
 	}
 }

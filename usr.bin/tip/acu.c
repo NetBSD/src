@@ -1,4 +1,4 @@
-/*	$NetBSD: acu.c,v 1.5 1997/11/22 07:28:40 lukem Exp $	*/
+/*	$NetBSD: acu.c,v 1.6 1998/06/30 23:42:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: acu.c,v 1.5 1997/11/22 07:28:40 lukem Exp $");
+__RCSID("$NetBSD: acu.c,v 1.6 1998/06/30 23:42:08 thorpej Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -81,7 +81,7 @@ connect()
 
 	if (!DU) {		/* regular connect message */
 		if (CM != NULL)
-			pwrite(FD, CM, strlen(CM));
+			xpwrite(FD, CM, strlen(CM));
 		logent(value(HOST), "", DV, "call completed");
 		return (NULL);
 	}
@@ -116,7 +116,7 @@ connect()
 			
 			if ((conflag = (*acu->acu_dialer)(phnum, CU)) != 0) {
 				if (CM != NULL)
-					pwrite(FD, CM, strlen(CM));
+					xpwrite(FD, CM, strlen(CM));
 				logent(value(HOST), phnum, acu->acu_name,
 					"call completed");
 				return (NULL);
@@ -154,7 +154,7 @@ connect()
 			if ((conflag = (*acu->acu_dialer)(phnum, CU)) != 0) {
 				fclose(fd);
 				if (CM != NULL)
-					pwrite(FD, CM, strlen(CM));
+					xpwrite(FD, CM, strlen(CM));
 				logent(value(HOST), phnum, acu->acu_name,
 					"call completed");
 				return (NULL);

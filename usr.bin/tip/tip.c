@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.19 1997/12/17 17:09:33 mellon Exp $	*/
+/*	$NetBSD: tip.c,v 1.20 1998/06/30 23:42:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.19 1997/12/17 17:09:33 mellon Exp $");
+__RCSID("$NetBSD: tip.c,v 1.20 1998/06/30 23:42:08 thorpej Exp $");
 #endif /* not lint */
 
 /*
@@ -406,7 +406,7 @@ tipin()
 			continue;
 		} else if (gch == '\r') {
 			bol = 1;
-			pwrite(FD, &gch, 1);
+			xpwrite(FD, &gch, 1);
 			if (boolean(value(HALFDUPLEX)))
 				printf("\r\n");
 			continue;
@@ -415,7 +415,7 @@ tipin()
 		bol = any(gch, value(EOL));
 		if (boolean(value(RAISE)) && islower(gch))
 			gch = toupper(gch);
-		pwrite(FD, &gch, 1);
+		xpwrite(FD, &gch, 1);
 		if (boolean(value(HALFDUPLEX)))
 			printf("%c", gch);
 	}
@@ -443,7 +443,7 @@ escape()
 		}
 	/* ESCAPE ESCAPE forces ESCAPE */
 	if (c != gch)
-		pwrite(FD, &c, 1);
+		xpwrite(FD, &c, 1);
 	return (gch);
 }
 
@@ -565,7 +565,7 @@ static char partab[0200];
  * with the right parity and output it.
  */
 void
-pwrite(fd, buf, n)
+xpwrite(fd, buf, n)
 	int fd;
 	char *buf;
 	int n;
