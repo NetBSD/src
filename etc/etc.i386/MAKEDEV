@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.42 1996/09/08 03:12:23 mycroft Exp $
+#	$NetBSD: MAKEDEV,v 1.43 1996/09/08 03:16:28 mycroft Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -77,6 +77,7 @@
 #	joy*	joystick device
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
+#	ch*	SCSI changer
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
