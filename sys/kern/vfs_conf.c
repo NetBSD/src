@@ -100,7 +100,7 @@ struct vfsops *vfssw[] = {
 	(struct vfsops *)0,
 #endif
 #ifdef KERNFS
-	&kernfs_vfsops,		/* 5 = MOUNT_KERNFS */
+	&kernfs_vfsops,		/* 7 = MOUNT_KERNFS */
 #else
 	(struct vfsops *)0,
 #endif
