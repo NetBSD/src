@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.14 1997/11/26 03:10:04 tv Exp $
+#	$NetBSD: MAKEDEV,v 1.15 1998/02/08 14:15:18 ragge Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -20,9 +20,9 @@
 #	hk*	unibus rk06 and rk07
 #	up*	other unibus devices (e.g. on Emulex sc-21v controller)
 #	ra*	MSCP disks (ra??, rd??)
+#	rx*	MSCP floppy disk (rx33/50/...)
 #	rl*	unibus rl02
 #	rb*	730 idc w/ rb80 and/or rb02
-#	rx*	unibus rx211 floppy disk 
 #	ccd*	"concatenated" pseudo-disks
 #	vnd*	"file" pseudo-disks
 #	rd*	HDC9224 rd disks on VS2000
@@ -70,7 +70,7 @@ all)
 	sh $0 std fd vnd0 ccd0 pty0 pty1 lkm random
 	sh $0 mt0 mt1 ts0 ts1 st0 st1 uk0 ss0 cd0
 	sh $0 ra0 ra1 ra2 ra3 hp0 hp1 hp2 hp3 sd0 sd1 sd2 sd3 rd0 rd1 rd2
-	sh $0 dz0 dl0 dhu0
+	sh $0 dz0 dl0 dhu0 rx0 rx1
 	;;
 
 std)
@@ -181,7 +181,7 @@ ht*|tm*|mt*|ts*|ut*|st*)
 	esac
 	;;
 
-hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*)
+hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*|rx*)
 	umask 2
 	case $i in
 	hp*) name=hp;	unit=${i#hp};	blk=0; chr=4;;
@@ -189,6 +189,7 @@ hp*|hk*|up*|ra*|rl*|rb*|ccd*|vnd*|rd*|sd*)
 	up*) name=up;	unit=${i#up};	blk=2; chr=13;;
 	ra*) name=ra;	unit=${i#ra};	blk=9;	chr=9;;
 	rb*) name=rb;	unit=${i#rb};	blk=11; chr=23;;
+	rx*) name=rx;	unit=${i#rx};	blk=12; chr=30;;
 	rl*) name=rl;	unit=${i#rl};	blk=14; chr=32;;
 	ccd*) name=ccd;	unit=${i#ccd};	blk=17; chr=54;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=18; chr=55;;
@@ -273,26 +274,6 @@ md*)
 	mknod r${name}${unit}c  c $chr $(($unit * 8 + 2))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
-	;;
-
-rx*)
-	unit=${i#rx};
-	name=rx; chr=30; blk=12;
-	case $unit in
-	[0-7])
-		rm -f ${name}${unit} r${name}${unit}[a-d]
-		mknod ${name}${unit}	b $blk $(($unit * 8 + 0))
-		mknod r${name}${unit}a	c $chr $(($unit * 8 + 0))
-		mknod r${name}${unit}b	c $chr $(($unit * 8 + 1))
-		mknod r${name}${unit}c	c $chr $(($unit * 8 + 2))
-		mknod r${name}${unit}d	c $chr $(($unit * 8 + 3))
-		chgrp operator ${name}${unit} r${name}${unit}[a-d]
-		chmod 640 ${name}${unit} r${name}${unit}[a-d]
-		;;
-	*)
-		echo bad unit for floppy disk in: $i
-		;;
-	esac
 	;;
 
 uu*)
