@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 2000/07/30 21:38:02 briggs Exp $	*/
+/*	$NetBSD: bus.h,v 1.15 2000/07/30 23:17:23 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -273,9 +273,12 @@ void mac68k_bsrm4_swap __P((bus_space_tag_t t, bus_space_handle_t *h,
 void mac68k_bsrm4_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
 				   bus_size_t o, u_int32_t *a, size_t c));
 
-#define	bus_space_read_multi_1(t, h, o, a, c) (h).bsrm1(t, &(h), o, a, c)
-#define	bus_space_read_multi_2(t, h, o, a, c) (h).bsrm2(t, &(h), o, a, c)
-#define	bus_space_read_multi_4(t, h, o, a, c) (h).bsrm4(t, &(h), o, a, c)
+#define	bus_space_read_multi_1(t, h, o, a, c) \
+	do { if (c) (h).bsrm1(t, &(h), o, a, c); } while (0)
+#define	bus_space_read_multi_2(t, h, o, a, c) \
+	do { if (c) (h).bsrm2(t, &(h), o, a, c); } while (0)
+#define	bus_space_read_multi_4(t, h, o, a, c) \
+	do { if (c) (h).bsrm4(t, &(h), o, a, c); } while (0)
 
 #if 0	/* Cause a link error for bus_space_read_multi_8 */
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
@@ -308,9 +311,12 @@ void mac68k_bsrr4_swap __P((bus_space_tag_t t, bus_space_handle_t *h,
 void mac68k_bsrr4_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
 				   bus_size_t o, u_int32_t *a, size_t c));
 
-#define	bus_space_read_region_1(t, h, o, a, c) (h).bsrr1(t,&(h),o,a,c)
-#define	bus_space_read_region_2(t, h, o, a, c) (h).bsrr2(t,&(h),o,a,c)
-#define	bus_space_read_region_4(t, h, o, a, c) (h).bsrr4(t,&(h),o,a,c)
+#define	bus_space_read_region_1(t, h, o, a, c) \
+	do { if (c) (h).bsrr1(t,&(h),o,a,c); } while (0)
+#define	bus_space_read_region_2(t, h, o, a, c) \
+	do { if (c) (h).bsrr2(t,&(h),o,a,c); } while (0)
+#define	bus_space_read_region_4(t, h, o, a, c) \
+	do { if (c) (h).bsrr4(t,&(h),o,a,c); } while (0)
 
 #if 0	/* Cause a link error for bus_space_read_region_8 */
 #define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
@@ -376,9 +382,12 @@ void mac68k_bswm4_swap __P((bus_space_tag_t t, bus_space_handle_t *h,
 void mac68k_bswm4_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
 			   bus_size_t o, u_int32_t *a, size_t c));
 
-#define	bus_space_write_multi_1(t, h, o, a, c) (h).bswm1(t, &(h), o, a, c)
-#define	bus_space_write_multi_2(t, h, o, a, c) (h).bswm2(t, &(h), o, a, c)
-#define	bus_space_write_multi_4(t, h, o, a, c) (h).bswm4(t, &(h), o, a, c)
+#define	bus_space_write_multi_1(t, h, o, a, c) \
+	do { if (c) (h).bswm1(t, &(h), o, a, c); } while (0)
+#define	bus_space_write_multi_2(t, h, o, a, c) \
+	do { if (c) (h).bswm2(t, &(h), o, a, c); } while (0)
+#define	bus_space_write_multi_4(t, h, o, a, c) \
+	do { if (c) (h).bswm4(t, &(h), o, a, c); } while (0)
 
 #if 0	/* Cause a link error for bus_space_write_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
@@ -411,9 +420,12 @@ void mac68k_bswr4_swap __P((bus_space_tag_t t, bus_space_handle_t *h,
 void mac68k_bswr4_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
 			   bus_size_t o, u_int32_t *a, size_t c));
 
-#define	bus_space_write_region_1(t, h, o, a, c) (h).bswr1(t,&(h),o,a,c)
-#define	bus_space_write_region_2(t, h, o, a, c) (h).bswr2(t,&(h),o,a,c)
-#define	bus_space_write_region_4(t, h, o, a, c) (h).bswr4(t,&(h),o,a,c)
+#define	bus_space_write_region_1(t, h, o, a, c) \
+	do { if (c) (h).bswr1(t,&(h),o,a,c); } while (0)
+#define	bus_space_write_region_2(t, h, o, a, c) \
+	do { if (c) (h).bswr2(t,&(h),o,a,c); } while (0)
+#define	bus_space_write_region_4(t, h, o, a, c) \
+	do { if (c) (h).bswr4(t,&(h),o,a,c); } while (0)
 
 #if 0	/* Cause a link error for bus_space_write_region_8 */
 #define	bus_space_write_region_8					\
@@ -446,9 +458,12 @@ void mac68k_bssm4_swap __P((bus_space_tag_t t, bus_space_handle_t *h,
 void mac68k_bssm4_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
 			   bus_size_t o, u_int32_t v, size_t c));
 
-#define	bus_space_set_multi_1(t, h, o, val, c) (h).bssm1(t,&(h),o,val,c)
-#define	bus_space_set_multi_2(t, h, o, val, c) (h).bssm2(t,&(h),o,val,c)
-#define	bus_space_set_multi_4(t, h, o, val, c) (h).bssm4(t,&(h),o,val,c)
+#define	bus_space_set_multi_1(t, h, o, val, c) \
+	do { if (c) (h).bssm1(t,&(h),o,val,c); } while (0)
+#define	bus_space_set_multi_2(t, h, o, val, c) \
+	do { if (c) (h).bssm2(t,&(h),o,val,c); } while (0)
+#define	bus_space_set_multi_4(t, h, o, val, c) \
+	do { if (c) (h).bssm4(t,&(h),o,val,c); } while (0)
 
 #if 0	/* Cause a link error for bus_space_set_multi_8 */
 #define	bus_space_set_multi_8						\
@@ -481,9 +496,12 @@ void mac68k_bssr4_swap __P((bus_space_tag_t t, bus_space_handle_t *h,
 void mac68k_bssr4_gen __P((bus_space_tag_t t, bus_space_handle_t *h,
 			   bus_size_t o, u_int32_t v, size_t c));
 
-#define	bus_space_set_region_1(t, h, o, val, c) (h).bssr1(t,&(h),o,val,c)
-#define	bus_space_set_region_2(t, h, o, val, c) (h).bssr2(t,&(h),o,val,c)
-#define	bus_space_set_region_4(t, h, o, val, c) (h).bssr4(t,&(h),o,val,c)
+#define	bus_space_set_region_1(t, h, o, val, c) \
+	do { if (c) (h).bssr1(t,&(h),o,val,c); } while (0)
+#define	bus_space_set_region_2(t, h, o, val, c) \
+	do { if (c) (h).bssr2(t,&(h),o,val,c); } while (0)
+#define	bus_space_set_region_4(t, h, o, val, c) \
+	do { if (c) (h).bssr4(t,&(h),o,val,c); } while (0)
 
 #if 0	/* Cause a link error for bus_space_set_region_8 */
 #define	bus_space_set_region_8						\
