@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.21 1997/11/22 04:20:49 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.22 1997/11/26 09:24:18 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1617,7 +1617,7 @@ lib-depends:
 		else \
 			target=${DEPENDS_TARGET}; \
 		fi; \
-		if /sbin/ldconfig -r | ${GREP} -q -e "-l$$lib"; then \
+		if ${LDCONFIG} -r | ${GREP} -q -e "-l$$lib"; then \
 			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$lib - found"; \
 		else \
 			${ECHO_MSG} "===>  ${PKGNAME} depends on shared library: $$lib - not found"; \
@@ -1864,7 +1864,7 @@ ${PLIST}: ${PLIST_SRC}
 		${ECHO} "Package must care for making ${PLIST}!" ; \
 	fi
 .if defined(MANZ)
-	@if [ ! -z "${PLIST_SRC}" ] ; then
+	@if [ ! -z "${PLIST_SRC}" ] ; then \
 		${CAT} ${PLIST_SRC} | ${SED} \
 			-e '/man\/man.*[^g][^z]$$/s/$$/.gz/g' \
 			-e '/man\/cat.*[^g][^z]$$/s/$$/.gz/g' \
