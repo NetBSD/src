@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.11 1997/10/18 12:55:49 lukem Exp $	*/
+/*	$NetBSD: cmp.c,v 1.12 1998/01/12 08:11:19 mikel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: cmp.c,v 1.11 1997/10/18 12:55:49 lukem Exp $");
+__RCSID("$NetBSD: cmp.c,v 1.12 1998/01/12 08:11:19 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,6 +153,6 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: cmp [-l | s] file1 file2 [skip1 [skip2]]\n");
+	    "usage: cmp [-l | -s] file1 file2 [skip1 [skip2]]\n");
 	exit(ERR_EXIT);
 }
