@@ -63,7 +63,6 @@ bsszero: clrl a0@
 	bne bsszero
 	movl #start, sp
 	jsr _sun3_bootstrap
-	jsr _main
 	rts					|should never get here
 .text
 /*

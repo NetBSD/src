@@ -19,10 +19,12 @@ struct prom_softc {
 } prom_softc[NPROM];
 
 #if NPROM > 1
-#error "Can't configure more than one prom tty"
+error: "Can not configure more than one prom tty"
 #endif
 
-promopen(dev, flag, mode, p)
+int promstart __P((struct tty *));
+
+int promopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
@@ -33,7 +35,7 @@ promopen(dev, flag, mode, p)
     int s,error=0;
 
     unit = UNIT(dev);
-    if (unit >= NCOM)
+    if (unit >= NPROM)
 	return ENXIO;
     prom = &prom_softc[unit];
     bzero(&prom->t, sizeof(struct tty));
@@ -74,9 +76,11 @@ promclose(dev, flag, mode, p)
 	struct proc *p;
 {
     struct tty *tp;
+    int unit;
+    struct prom_softc *prom;    
 
     unit = UNIT(dev);
-    if (unit >= NCOM)
+    if (unit >= NPROM)
 	return ENXIO;
     prom = &prom_softc[unit];
     tp = &prom->t;
@@ -89,7 +93,7 @@ promread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &prom_softc[UNIT(dev)]->t;
+	register struct tty *tp = &prom_softc[UNIT(dev)].t;
  
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -97,7 +101,7 @@ promwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp = &prom_softc[UNIT(dev)]->t;
+	register struct tty *tp = &prom_softc[UNIT(dev)].t;
  
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -106,6 +110,7 @@ promwrite(dev, uio, flag)
 promcnprobe(cp)
      struct consdev *cp;
 {
+    int prommajor;
 
     /* locate the major number */
     for (prommajor = 0; prommajor < nchrdev; prommajor++)
@@ -118,17 +123,14 @@ promcnprobe(cp)
 				 */
 }
 
-static void
-promstart(tp)
+int promstart(tp)
      struct tty *tp;
 {
     int s;
+    int c;
 
     s = spltty();
-    if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) {
-	splx(s);
-	return;
-    }
+    if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) goto out;
     if (RB_LEN(&tp->t_out) <= tp->t_lowat) {
 	if (tp->t_state&TS_ASLEEP) {
 	    tp->t_state &= ~TS_ASLEEP;
@@ -141,7 +143,9 @@ promstart(tp)
     c = rbgetc(&tp->t_out);
     tp->t_state |= TS_BUSY;
     mon_putchar(c);
+ out:
     splx(s);
+    return 0;
 }
 
 /*

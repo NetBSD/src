@@ -131,12 +131,15 @@
  */
 #define sun3_round_seg(x)	((((unsigned)(x)) + NBSG - 1) & ~(NBSG-1))
 #define sun3_trunc_seg(x)	((unsigned)(x) & ~(NBSG-1))
+#define sun3_round_up_seg(x)	(sun3_trunc_seg(x) + NBSG)
 #define sun3_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
 #define sun3_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
+#define sun3_round_up_page(x)	(sun3_round_page(x) + NBPG)
 #define sun3_btos(x)		((unsigned)(x) >> SEGSHIFT)
 #define sun3_stob(x)		((unsigned)(x) << SEGSHIFT)
 #define sun3_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define sun3_ptob(x)		((unsigned)(x) << PGSHIFT)
+
 #include <machine/psl.h>
 
 /*

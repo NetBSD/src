@@ -72,7 +72,8 @@ struct	tty *cn_tty;		/* XXX: console tty struct for tprintf */
 
 cninit()
 {
-	register struct consdev *cp;
+    struct consdev *cp;
+    cn_tab = NULL;
 
 
 	/*

@@ -27,7 +27,6 @@ vm_offset_t virtual_avail, virtual_end;
 vm_offset_t avail_start, avail_end;
 int msgbufmapped = 0;
 struct msgbuf *msgbufp = NULL;
-vm_offset_t msgbuf_pa;
 caddr_t vmmap;
 
 
@@ -377,9 +376,9 @@ void pmeg_steal(pmeg_num)
 
     pmegp = pmeg_p(pmeg_num);
     if (pmegp->pmeg_reserved)
-	panic("pmeg_steal: attempt to steal an already reserved pmeg");
+	mon_panic("pmeg_steal: attempt to steal an already reserved pmeg\n");
     if (pmegp->pmeg_owner)
-	panic("pmeg_steal: pmeg is already owned");
+	mon_panic("pmeg_steal: pmeg is already owned\n");
     pmegp->pmeg_owner = NULL;
     pmegp->pmeg_reserved++;	/* keep count, just in case */
     remqueue(&pmeg_free_queue, pmegp);
@@ -764,9 +763,10 @@ void pmap_common_init(pmap)
 
 void pmap_bootstrap()
 {
-    vm_offset_t temp_seg;
+    vm_offset_t temp_seg, va, eva, pte;
     extern vm_size_t page_size;
     extern void vm_set_page_size();
+    unsigned int sme;
 
     page_size = NBPG;
     vm_set_page_size();
@@ -781,12 +781,36 @@ void pmap_bootstrap()
     /* pmeg_init(); done in sun3_vm_init() */
     context_init();
     
+    /*
+     * we need to kill off a segment to handle the stupid non-contexted
+     * pmeg 
+     *
+     */
+    temp_seg = sun3_round_seg(virtual_avail);
+    set_temp_seg_addr(temp_seg);
+    mon_printf("%x virtual bytes lost allocating temporary segment for pmap\n",
+	       temp_seg - virtual_avail); 
+    set_segmap(temp_seg, SEGINV);
+    virtual_avail = temp_seg + NBSG;
+
+    sme = get_segmap(virtual_avail);
+    if (sme == SEGINV)
+	printf("bad pmeg encountered while looking for msgbuf page");
+
+    pmeg_steal(sme);
     /* msgbuf */
     avail_end -= NBPG;
-    msgbuf_pa = avail_end;
     msgbufp = (struct msgbuf *) virtual_avail;
-    virtual_avail += NBPG;
+    /* could use pmap_map(), but i want to make sure.*/
+    pte = PG_VALID | PG_WRITE |PG_SYSTEM | PG_NC | (avail_end >>PGSHIFT);
+    set_pte((vm_offset_t) msgbufp, pte);
+    msgbufmapped = 1;
 
+    virtual_avail +=NBPG;
+    eva = sun3_round_up_seg(virtual_avail);
+    for (va = virtual_avail; va < eva; va += NBPG)
+	set_pte(va, PG_INVAL);
+    
     /* vmmap (used by /dev/mem */
     vmmap = (caddr_t) virtual_avail;
     set_pte((vm_offset_t) vmmap, PG_INVAL);
@@ -795,26 +819,22 @@ void pmap_bootstrap()
     /*
      * vpages array:
      *   just some virtual addresses for temporary mappings
-     *   in the pmap modue
+     *   in the pmap module
      */
 
     tmp_vpages[0] = virtual_avail;
+    set_pte(tmp_vpages[0], PG_INVAL);
     virtual_avail += NBPG;
     tmp_vpages[1] = virtual_avail;
+    set_pte(tmp_vpages[0], PG_INVAL);
     virtual_avail += NBPG;
 
-    /*
-     * we need to kill off a segment to handle the stupid non-contexted
-     * pmeg 
-     *
-     */
+    virtual_avail = eva;
 
-    temp_seg = sun3_round_seg(virtual_avail);
-    mon_printf("%d virtual bytes lost allocating temporary segment for pmap\n",
-	       temp_seg - virtual_avail); 
-    virtual_avail = temp_seg + NBSG;
-    set_temp_seg_addr(temp_seg);
-    
+    mon_printf("kernel virtual address begin:\t %x\n", virtual_avail);
+    mon_printf("kernel virtual address end:\t %x\n", virtual_end);
+    mon_printf("physical memory begin:\t %x\n", avail_start);    
+    mon_printf("physical memory end:\t %x\n", avail_end);
 }
 /*
  *	Initialize the pmap module.
@@ -828,10 +848,6 @@ pmap_init(phys_start, phys_end)
     vm_offset_t tmp,end;
 
     pv_init();
-
-    pmap_enter(kernel_pmap, (vm_offset_t) msgbufp, msgbuf_pa ,
-	       VM_PROT_READ | VM_PROT_WRITE, FALSE);
-    msgbufmapped = 1;
 }
 
 vm_offset_t
@@ -1107,7 +1123,7 @@ void pmap_remove(pmap, sva, eva)
     va = sva;
     pmegp = NULL;
     while (va < eva) {
-	neva = sun3_round_seg(va);
+	neva = sun3_round_up_seg(va);
 	if (neva > eva)
 	    neva = eva;
 	pmap_remove_range(pmap, va, neva);
@@ -1636,7 +1652,7 @@ pmap_protect(pmap, sva, eva, prot)
     pte_proto = pmap_pte_prot(prot);
     va = sva;
     while (va < eva) {
-	neva = sun3_round_seg(va);
+	neva = sun3_round_up_seg(va);
 	if (neva > eva)
 	    neva = eva;
 	pmap_protect_range(pmap, va, neva, pte_proto);
