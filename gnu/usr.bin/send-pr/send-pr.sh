@@ -2,7 +2,7 @@
 # Submit a problem report to a GNATS site.
 # Copyright (C) 1993 Free Software Foundation, Inc.
 # Contributed by Brendan Kehoe (brendan@cygnus.com), based on a
-# version written by Heinz G. Seidl (hgs@ide.com).
+# version written by Heinz G. Seidl (hgs@cygnus.com).
 #
 # This file is part of GNU GNATS.
 #
@@ -21,39 +21,55 @@
 # the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 # The version of this send-pr.
-VERSION=3.01.6
+VERSION=xVERSIONx
 
 # The submitter-id for your site.
-SUBMITTER=net
+SUBMITTER=xSUBMITTERx
 
 # Where the GNATS directory lives, if at all.
 [ -z "$GNATS_ROOT" ] && 
-GNATS_ROOT=/b/gnats
+GNATS_ROOT=xGNATS_ROOTx
 
 # The default mail address for PR submissions. 
-GNATS_ADDR=gnats-bugs@sun-lamp.cs.berkeley.edu
+GNATS_ADDR=xGNATS_ADDRx
 
 # Where the gnats category tree lives.
-DATADIR=/usr/share
+DATADIR=xDATADIRx
 
 # If we've been moved around, try using GCC_EXEC_PREFIX.
 [ ! -d $DATADIR/gnats -a -d "$GCC_EXEC_PREFIX" ] && DATADIR=${GCC_EXEC_PREFIX}..
 
 # The default release for this host.
-DEFAULT_RELEASE=""
+DEFAULT_RELEASE="xDEFAULT_RELEASEx"
 
 # The default organization.
-DEFAULT_ORGANIZATION=""
+DEFAULT_ORGANIZATION="xDEFAULT_ORGANIZATIONx"
 
 # The default site to look for.
-GNATS_SITE=sun-lamp
+GNATS_SITE=xGNATS_SITEx
 
 # Newer config information?
 [ -f ${GNATS_ROOT}/gnats-adm/config ] && . ${GNATS_ROOT}/gnats-adm/config
 
 # What mailer to use.  This must come after the config file, since it is
 # host-dependent.
-MAIL_AGENT="/usr/sbin/sendmail -oi -t"
+MAIL_AGENT="xMAIL_AGENTx"
+
+# How to read the passwd database.
+PASSWD="xPASSWDx"
+
+ECHON=xECHONx
+
+if [ $ECHON = bsd ] ; then
+  ECHON1="echo -n"
+  ECHON2=
+elif [ $ECHON = sysv ] ; then
+  ECHON1=echo
+  ECHON2='\c'
+else
+  ECHON1=echo
+  ECHON2=
+fi
 
 #
 
@@ -75,19 +91,10 @@ if [ -n "$NAME" ]; then
   ORIGINATOR="$NAME"
 elif [ -f $HOME/.fullname ]; then
   ORIGINATOR="`sed -e '1q' $HOME/.fullname`"
-elif [ -f /bin/domainname ]; then
-  if [ "`/bin/domainname`" != "" -a -f /usr/bin/ypcat ]; then
-    # Must use temp file due to incompatibilities in quoting behavior
-    # and to protect shell metacharacters in the expansion of $LOGNAME
-    /usr/bin/ypcat passwd 2>/dev/null | cat - /etc/passwd | grep "^$LOGNAME:" |
-      cut -f5 -d':' | sed -e 's/,.*//' > $TEMP
-    ORIGINATOR="`cat $TEMP`"
-    rm -f $TEMP
-  fi
-fi
-
-if [ "$ORIGINATOR" = "" ]; then
-  grep "^$LOGNAME:" /etc/passwd | cut -f5 -d':' | sed -e 's/,.*//' > $TEMP
+else
+  # Must use temp file due to incompatibilities in quoting behavior
+  # and to protect shell metacharacters in the expansion of $LOGNAME
+  $PASSWD | grep "^$LOGNAME:" | cut -f5 -d':' | sed -e 's/,.*//' > $TEMP
   ORIGINATOR="`cat $TEMP`"
   rm -f $TEMP
 fi
@@ -131,7 +138,7 @@ BATCH=
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    -r | -p) ;; 		# Ignore for backward compat.
+    -r) ;; 		# Ignore for backward compat.
     -t | --to) if [ $# -eq 1 ]; then echo "$USAGE"; exit 1; fi
 	shift ; GNATS_ADDR="$1"
 	EXPLICIT_GNATS_ADDR=true
@@ -144,7 +151,7 @@ while [ $# -gt 0 ]; do
 	fi
 	;;
     -b | --batch) BATCH=true ;;
-    -P | --print) PRINT=true ;;
+    -p | -P | --print) PRINT=true ;;
     -L | --list) FORMAT=norm ;;
     -l | -CL | --lisp) FORMAT=lisp ;;
     --request-id) REQUEST_ID=true ;;
@@ -167,7 +174,7 @@ while [ $# -gt 0 ]; do
  shift
 done
 
-if [ -n "$USER_GNATS_SITE" ]; then
+if [ -n "$USER_GNATS_SITE" ] && [ "$USER_GNATS_SITE" != "$GNATS_SITE" ]; then
   GNATS_SITE=$USER_GNATS_SITE
   GNATS_ADDR=$USER_GNATS_SITE-gnats
 fi
@@ -205,9 +212,14 @@ case "$FORMAT" in
         awk 'BEGIN {printf "( "} {printf "(\"%s\") ",$0} END {printf ")\n"}'
         exit 0
         ;;
-  norm) echo "$CATEGORIES" | \
-        awk 'BEGIN {print "Known categories:"; i = 1 }
-          { printf ("%-12.12s", $0); if ((++i % 5) == 0) { print "" } }
+  norm) l=`echo "$CATEGORIES" | \
+	awk 'BEGIN {max = 0; } { if (length($0) > max) { max = length($0); } }
+	     END {print max + 1;}'`
+	c=`expr 70 / $l`
+	if [ $c -eq 0 ]; then c=1; fi
+	echo "$CATEGORIES" | \
+        awk 'BEGIN {print "Known categories:"; i = 0 }
+          { printf ("%-'$l'.'$l's", $0); if ((++i % '$c') == 0) { print "" } }
             END { print ""; }'
         exit 0
         ;;
@@ -278,11 +290,16 @@ SEND-PR:
 __EOF__
 
       # Format the categories so they fit onto lines.
-      echo "$CATEGORIES" | awk '
-      BEGIN { printf "SEND-PR: "; i = 1 }
-           { printf ("%-12.12s", $0) ;
-	     if ((++i % 5) == 0) { printf "\nSEND-PR: "}}
-      END   { printf "\nSEND-PR:\n" }' >> $file
+	l=`echo "$CATEGORIES" | \
+	awk 'BEGIN {max = 0; } { if (length($0) > max) { max = length($0); } }
+	     END {print max + 1;}'`
+	c=`expr 61 / $l`
+	if [ $c -eq 0 ]; then c=1; fi
+	echo "$CATEGORIES" | \
+        awk 'BEGIN {printf "SEND-PR: "; i = 0 }
+          { printf ("%-'$l'.'$l's", $0);
+	    if ((++i % '$c') == 0) { printf "\nSEND-PR: " } }
+            END { printf "\nSEND-PR:\n"; }' >> $file
 
       cat >> $file << __EOF__
 To: $GNATS_ADDR
@@ -291,29 +308,20 @@ From: $FROM
 Reply-To: $REPLY_TO
 X-send-pr-version: $VERSION
 
->Submitter-Id:   $SUBMITTER
->Originator: 	 $ORIGINATOR
+
+>Submitter-Id:	$SUBMITTER
+>Originator:	$ORIGINATOR
 >Organization:
-`
-  if [ -n "$ORGANIZATION" ]; then
-    echo "$ORGANIZATION"
-  else
-    echo "	$ORGANIZATION_C" ;
-  fi ;
-`
->Confidential:  $CONFIDENTIAL_C
+${ORGANIZATION-"	$ORGANIZATION_C"}
+>Confidential:	$CONFIDENTIAL_C
 >Synopsis:	$SYNOPSIS_C
 >Severity:	$SEVERITY_C
 >Priority:	$PRIORITY_C
->Category: 	$CATEGORY_C
+>Category:	$CATEGORY_C
 >Class:		$CLASS_C
->Release:	 `if [ -n "$DEFAULT_RELEASE" ]; then
-		   echo "$DEFAULT_RELEASE"
-		  else
-		   echo "	$RELEASE_C"
-		  fi; `
+>Release:	${DEFAULT_RELEASE-$RELEASE_C}
 >Environment:
-    	$ENVIRONMENT_C
+	$ENVIRONMENT_C
 `[ -n "$SYSTEM" ] && echo System: $SYSTEM`
 `[ -n "$ARCH" ] && echo Architecture: $ARCH`
 `[ -n "$MACHINE" ] && echo Machine: $MACHINE`
@@ -430,7 +438,7 @@ while [ -z "$REQUEST_ID" ]; do
 
   while true; do
     if [ -z "$BATCH" ]; then
-      echo -n "a)bort, e)dit or s)end? "
+      $ECHON1 "a)bort, e)dit or s)end? $ECHON2"
       read input
     else
       if [ $CNT -eq 5 ]; then
