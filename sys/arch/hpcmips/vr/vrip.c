@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.10 2001/04/30 11:42:19 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.11 2001/06/11 05:56:21 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -86,9 +86,9 @@ struct cfattach vrip_ca = {
 struct vrip_softc *the_vrip_sc = NULL;
 
 static struct intrhand {
-	int	 (*ih_fun) __P((void *));
-	void *ih_arg;
-	int ih_l1line;
+	int	(*ih_fun) __P((void *));
+	void	*ih_arg;
+	int	ih_l1line;
 	int	ih_ipl;
 	bus_addr_t	ih_lreg;
 	bus_addr_t	ih_mlreg;
