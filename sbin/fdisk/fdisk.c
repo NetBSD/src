@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.21.2.1 1997/12/22 02:50:18 perry Exp $	*/
+/*	$NetBSD: fdisk.c,v 1.21.2.2 1998/02/07 09:38:18 mellon Exp $	*/
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.21.2.1 1997/12/22 02:50:18 perry Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.21.2.2 1998/02/07 09:38:18 mellon Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -513,7 +513,8 @@ init_sector0(start)
 	dos(getlong(&partp->dp_start) + getlong(&partp->dp_size) - 1,
 	    &partp->dp_ecyl, &partp->dp_ehd, &partp->dp_esect);
 
-	printf ("DOS partition table initialized.\n");
+	if (!sh_flag)
+		printf ("DOS partition table initialized.\n");
 }
 
 /* Prerequisite: the disklabel parameters and master boot record must
