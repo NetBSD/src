@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.75 1999/07/31 18:41:15 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.76 1999/08/09 10:55:29 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1056,6 +1056,9 @@ tcp6_ctlinput(cmd, sa, ip6, m, off)
 	extern struct in6_addr zeroin6_addr;	/* netinet6/in6_pcb.c */
 	struct sockaddr_in6 sa6;
 
+	if (sa->sa_family != AF_INET6 ||
+	    sa->sa_len != sizeof(struct sockaddr_in6))
+		return;
 	if (cmd == PRC_QUENCH)
 		notify = tcp6_quench;
 	else if (cmd == PRC_MSGSIZE)
@@ -1125,6 +1128,9 @@ tcp_ctlinput(cmd, sa, v)
 	int errno;
 	int nmatch;
 
+	if (sa->sa_family != AF_INET ||
+	    sa->sa_len != sizeof(struct sockaddr_in))
+		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	errno = inetctlerrmap[cmd];
