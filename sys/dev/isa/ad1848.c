@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.51 1998/06/30 07:45:22 mycroft Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.52 1998/07/09 02:26:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -1032,7 +1032,7 @@ ad1848_query_encoding(addr, fp)
 	fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 	break;
     case 7:
-	strcpy(fp->name, AudioEulinear_le);
+	strcpy(fp->name, AudioEulinear_be);
 	fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 	fp->precision = 16;
 	fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
