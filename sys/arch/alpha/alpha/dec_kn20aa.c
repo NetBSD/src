@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn20aa.c,v 1.17.2.1 1997/01/18 03:50:08 thorpej Exp $	*/
+/*	$NetBSD: dec_kn20aa.c,v 1.17.2.2 1997/01/30 05:08:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

@@ -1,10 +1,15 @@
-#	$NetBSD: GENERIC,v 1.33.2.2 1997/01/18 03:55:56 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.33.2.3 1997/01/30 05:15:04 thorpej Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
 include	"arch/alpha/conf/std.alpha"
 
 maxusers 8
+
+# set kernel load address a bit higher to allow kernel to be netbooted.
+# if not netbooting, the "makeoptions LOADADDRESS" line can be commented
+# out to save a fair chunk (~850k) of RAM.
+makeoptions	LOADADDRESS="fffffc0000300000"
 
 # CPU Support
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*

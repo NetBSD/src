@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.10.2.2 1997/01/18 03:55:59 thorpej Exp $
+#	$NetBSD: RAMDISK,v 1.10.2.3 1997/01/30 05:15:08 thorpej Exp $
 #
 # Generic Alpha kernel with built-in RAM disk image.
 

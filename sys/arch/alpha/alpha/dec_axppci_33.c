@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_axppci_33.c,v 1.17.2.1 1997/01/18 03:50:05 thorpej Exp $	*/
+/*	$NetBSD: dec_axppci_33.c,v 1.17.2.2 1997/01/30 05:08:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
