@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.13 2001/09/27 14:38:58 christos Exp $	*/
+/*	$NetBSD: talkd.c,v 1.14 2002/09/19 14:39:51 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.13 2001/09/27 14:38:58 christos Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.14 2002/09/19 14:39:51 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,7 @@ main(argc, argv)
 	signal(SIGALRM, timeout);
 	alarm(TIMEOUT);
 	for (;;) {
+		memset(&response, 0, sizeof(response));
 		cc = recv(0, (char *)mp, sizeof (*mp), 0);
 		if (cc != sizeof (*mp)) {
 			if (cc < 0 && errno != EINTR)
@@ -131,9 +132,15 @@ main(argc, argv)
 		lastmsgtime = time(0);
 		process_request(mp, &response);
 
+		mp->l_name[sizeof(mp->l_name) - 1] = '\0';
+		mp->r_name[sizeof(mp->r_name) - 1] = '\0';
+		mp->r_tty[sizeof(mp->r_tty) - 1] = '\0';
+
 		(void)memcpy(&ctl_addr, &mp->ctl_addr, sizeof(ctl_addr));
 		ctl_addr.sa_family = mp->ctl_addr.sa_family;
 		ctl_addr.sa_len = sizeof(ctl_addr);
+		if (ctl_addr.sa_family != AF_INET)
+			continue;
 
 		/* can block here, is this what I want? */
 		cc = sendto(sockt, (char *)&response, sizeof (response), 0,
@@ -147,8 +154,10 @@ void
 timeout(n)
 	int n;
 {
+	int save_errno = errno;
 
 	if (time(0) - lastmsgtime >= MAXIDLE)
 		_exit(0);
 	alarm(TIMEOUT);
+	errno = save_errno;
 }
