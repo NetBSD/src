@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 2001/06/28 18:33:39 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.50 2001/06/28 21:27:47 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -98,7 +98,8 @@ trap(frame)
 		trapsignal(p, SIGTRAP, EXC_TRC);
 		KERNEL_PROC_UNLOCK(p);
 		break;
-	case EXC_DSI:
+	case EXC_DSI: {
+		faultbuf *fb;
 		/*
 		 * Only query UVM if no interrupts are active (this applies
 		 * "on-fault" as well.
@@ -106,7 +107,6 @@ trap(frame)
 		if (intr_depth < 0) {
 			struct vm_map *map;
 			vaddr_t va;
-			faultbuf *fb;
 
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 			map = kernel_map;
@@ -139,26 +139,24 @@ trap(frame)
 				return;
 			if (rv == EACCES)
 				rv = EFAULT;
-			if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
-				frame->srr0 = (*fb)[0];
-				frame->fixreg[1] = (*fb)[1];
-				frame->fixreg[2] = (*fb)[2];
-				frame->fixreg[3] = rv;
-				frame->cr = (*fb)[3];
-				bcopy(&(*fb)[4], &frame->fixreg[13],
-				      19 * sizeof(register_t));
-				return;
-			}
 		} else {
-			/*
-			 * Make sure err is bogus in interrupt case
-			 */
-			rv = -1;
+			rv = EFAULT;
+		}
+		if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
+			frame->srr0 = (*fb)[0];
+			frame->fixreg[1] = (*fb)[1];
+			frame->fixreg[2] = (*fb)[2];
+			frame->fixreg[3] = rv;
+			frame->cr = (*fb)[3];
+			bcopy(&(*fb)[4], &frame->fixreg[13],
+				      19 * sizeof(register_t));
+			return;
 		}
 		printf("trap: kernel %s DSI @ %#x by %#x (DSISR %#x, err=%d)\n",
 		    (frame->dsisr & DSISR_STORE) ? "write" : "read",
 		    frame->dar, frame->srr0, frame->dsisr, rv);
 		goto brain_damage2;
+	}
 	case EXC_DSI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
 		if (frame->dsisr & DSISR_STORE)
