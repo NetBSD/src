@@ -5,6 +5,7 @@
 DIR=    sha
 TOP=    ../..
 CC=     cc
+CPP=    $(CC) -E
 INCLUDES=
 CFLAG=-g
 INSTALL_PREFIX=
@@ -41,7 +42,8 @@ all:    lib
 
 lib:    $(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB)
+	@echo You may get an error following this line.  Please ignore.
+	- $(RANLIB) $(LIB)
 	@touch lib
 
 # elf

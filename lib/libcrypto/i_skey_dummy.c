@@ -1,4 +1,4 @@
-/* crypto/idea/i_cbc.c */
+/* crypto/idea/i_skey.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -47,7 +47,7 @@
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
  * The licence and distribution terms for any publically available version or
@@ -59,110 +59,37 @@
 #include <openssl/idea.h>
 #include "idea_lcl.h"
 
-void idea_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
-	     IDEA_KEY_SCHEDULE *ks, unsigned char *iv, int encrypt)
-	{
-	register IDEA_INT tin0,tin1;
-	register IDEA_INT tout0,tout1,xor0,xor1;
-	register long l=length;
-	IDEA_INT tin[2];
+#include <sys/cdefs.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-	if (encrypt)
-		{
-		n2l(iv,tout0);
-		n2l(iv,tout1);
-		iv-=8;
-		for (l-=8; l>=0; l-=8)
-			{
-			n2l(in,tin0);
-			n2l(in,tin1);
-			tin0^=tout0;
-			tin1^=tout1;
-			tin[0]=tin0;
-			tin[1]=tin1;
-			idea_encrypt(tin,ks);
-			tout0=tin[0]; l2n(tout0,out);
-			tout1=tin[1]; l2n(tout1,out);
-			}
-		if (l != -8)
-			{
-			n2ln(in,tin0,tin1,l+8);
-			tin0^=tout0;
-			tin1^=tout1;
-			tin[0]=tin0;
-			tin[1]=tin1;
-			idea_encrypt(tin,ks);
-			tout0=tin[0]; l2n(tout0,out);
-			tout1=tin[1]; l2n(tout1,out);
-			}
-		l2n(tout0,iv);
-		l2n(tout1,iv);
-		}
-	else
-		{
-		n2l(iv,xor0);
-		n2l(iv,xor1);
-		iv-=8;
-		for (l-=8; l>=0; l-=8)
-			{
-			n2l(in,tin0); tin[0]=tin0;
-			n2l(in,tin1); tin[1]=tin1;
-			idea_encrypt(tin,ks);
-			tout0=tin[0]^xor0;
-			tout1=tin[1]^xor1;
-			l2n(tout0,out);
-			l2n(tout1,out);
-			xor0=tin0;
-			xor1=tin1;
-			}
-		if (l != -8)
-			{
-			n2l(in,tin0); tin[0]=tin0;
-			n2l(in,tin1); tin[1]=tin1;
-			idea_encrypt(tin,ks);
-			tout0=tin[0]^xor0;
-			tout1=tin[1]^xor1;
-			l2nn(tout0,tout1,out,l+8);
-			xor0=tin0;
-			xor1=tin1;
-			}
-		l2n(xor0,iv);
-		l2n(xor1,iv);
-		}
-	tin0=tin1=tout0=tout1=xor0=xor1=0;
-	tin[0]=tin[1]=0;
-	}
+#ifdef __weak_alias
+#define idea_set_encrypt_key	_idea_set_encrypt_key
+#define idea_set_decrypt_key	_idea_set_decrypt_key
 
-void idea_encrypt(IDEA_INT *d, IDEA_KEY_SCHEDULE *key)
-	{
-	register IDEA_INT *p;
-	register IDEA_INT x1,x2,x3,x4,t0,t1,ul;
+__weak_alias(idea_set_encrypt_key,_idea_set_encrypt_key)
+__weak_alias(idea_set_decrypt_key,_idea_set_decrypt_key)
+#endif
 
-	x2=d[0];
-	x1=(x2>>16);
-	x4=d[1];
-	x3=(x4>>16);
+__warn_references(idea_set_encrypt_key,
+    "IDEA is a patented algorithm; link against libcrypto_idea.a")
+__warn_references(idea_set_decrypt_key,
+    "IDEA is a patented algorithm; link against libcrypto_idea.a")
 
-	p= &(key->data[0][0]);
+void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)
+{
 
-	E_IDEA(0);
-	E_IDEA(1);
-	E_IDEA(2);
-	E_IDEA(3);
-	E_IDEA(4);
-	E_IDEA(5);
-	E_IDEA(6);
-	E_IDEA(7);
+	fprintf(stderr,
+	    "IDEA is a patented algorithm; link against libcrypto_idea.a. "
+	    "Aborting...\n");
+	exit(1);
+}
 
-	x1&=0xffff;
-	idea_mul(x1,x1,*p,ul); p++;
+void idea_set_decrypt_key(IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk)
+{
 
-	t0= x3+ *(p++);
-	t1= x2+ *(p++);
-
-	x4&=0xffff;
-	idea_mul(x4,x4,*p,ul);
-
-	d[0]=(t0&0xffff)|((x1&0xffff)<<16);
-	d[1]=(x4&0xffff)|((t1&0xffff)<<16);
-	}
+	fprintf(stderr,
+	    "IDEA is a patented algorithm; link against libcrypto_idea.a. "
+	    "Aborting...\n");
+	exit(1);
+}
