@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.1 1993/09/05 01:33:35 cgd Exp $
+ *	$Id: exec_aout.c,v 1.1.2.1 1993/10/15 06:23:47 deraadt Exp $
  */
 
 #include "param.h"
@@ -93,8 +93,11 @@ exec_aout_makecmds(p, epp)
 	case (MID_MACHINE << 16) | ZMAGIC:
 		error = exec_aout_prep_zmagic(p, epp);
 		break;
-	case (MID_MACHINE << 16) | OMAGIC:
 	case (MID_MACHINE << 16) | NMAGIC:
+		error = exec_aout_prep_nmagic(p, epp);
+		break;
+	case (MID_MACHINE << 16) | OMAGIC:
+		printf("exec_aout_makecmds: OMAGIC not supported (yet)\n");
 	default:
 		error = cpu_exec_aout_makecmds(p, epp);
 	}
@@ -183,6 +186,94 @@ exec_aout_prep_zmagic(p, epp)
 	    0,
 	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
 	ccmdp = ccmdp->ev_next;
+
+	/*
+	 * set up commands for stack.  note that this takes *two*, one to
+	 * map the part of the stack which we can access, and one to map
+	 * the part which we can't.
+	 *
+	 * arguably, it could be made into one, but that would require the
+	 * addition of another mapping proc, which is unnecessary
+	 *
+	 * note that in memory, things assumed to be: 0 ....... ep_maxsaddr
+	 * <stack> ep_minsaddr
+	 */
+	ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
+	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
+	    epp->ep_maxsaddr,
+	    0,
+	    0,
+	    VM_PROT_NONE);
+	ccmdp = ccmdp->ev_next;
+	ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
+	    epp->ep_ssize,
+	    (epp->ep_minsaddr - epp->ep_ssize),
+	    0,
+	    0,
+	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+
+	return 0;
+}
+
+/*
+ * exec_aout_prep_nmagic(): Prepare a 'native' NMAGIC binary's exec package
+ *
+ * First, set of the various offsets/lengths in the exec package.
+ * Note that the ep_ssize parameter must be set to be the current stack
+ * limit; this is adjusted in the body of execve() to yield the
+ * appropriate stack segment usage once the argument length is
+ * calculated.
+ *
+ * Then, mark the text image busy (so it can be demand paged) or error
+ * out if this is not possible.  Finally, set up vmcmds for the
+ * text, data, bss, and stack segments.
+ */
+
+int
+exec_aout_prep_nmagic(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	struct exec *execp = epp->ep_execp;
+	struct exec_vmcmd *ccmdp;
+	long bsssize;
+
+	epp->ep_taddr = USRTEXT;
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, __LDPGSZ);
+	epp->ep_dsize = execp->a_data + execp->a_bss;
+	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
+	epp->ep_minsaddr = USRSTACK;
+	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_entry = execp->a_entry;
+
+	/* set up command for text segment */
+	epp->ep_vcp = new_vmcmd(vmcmd_map_readvn,
+	    execp->a_text,
+	    epp->ep_taddr,
+	    epp->ep_vp,
+	    sizeof(struct exec),
+	    VM_PROT_READ | VM_PROT_EXECUTE);
+	ccmdp = epp->ep_vcp;
+
+	/* set up command for data segment */
+	ccmdp->ev_next = new_vmcmd(vmcmd_map_readvn,
+	    execp->a_data,
+	    epp->ep_daddr,
+	    epp->ep_vp,
+	    execp->a_text + sizeof(struct exec),
+	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+	ccmdp = ccmdp->ev_next;
+
+	/* set up command for bss segment */
+	bsssize = epp->ep_daddr + execp->a_data + execp->a_bss -
+		roundup(epp->ep_daddr + execp->a_data, __LDPGSZ);
+	if(bsssize > 0) {
+		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
+		    bsssize, roundup(epp->ep_daddr + execp->a_data, __LDPGSZ),
+		    0, 0, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+		ccmdp = ccmdp->ev_next;
+	}
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
