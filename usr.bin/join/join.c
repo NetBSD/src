@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.15 1998/12/19 17:05:30 christos Exp $	*/
+/*	$NetBSD: join.c,v 1.15.2.1 1999/09/26 02:11:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,7 +48,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.15 1998/12/19 17:05:30 christos Exp $");
+__RCSID("$NetBSD: join.c,v 1.15.2.1 1999/09/26 02:11:25 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -317,7 +317,7 @@ slurp(F)
 			if ((F->set = realloc(F->set,
 			    F->setalloc * sizeof(LINE))) == NULL)
 				enomem();
-			memset(F->set + cnt, 0, 100 * sizeof(LINE *));
+			memset(F->set + cnt, 0, 100 * sizeof(LINE));
 		}
 			
 		/*
@@ -347,7 +347,7 @@ slurp(F)
 			    lp->linealloc * sizeof(char))) == NULL)
 				enomem();
 		}
-		memmove(lp->line, bp, len+1);
+		memmove(lp->line, bp, len);
 
 		/* Replace trailing newline, if it exists. */ 
 		if (bp[len - 1] == '\n')
