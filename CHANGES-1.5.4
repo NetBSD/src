@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.111 2003/09/08 07:18:25 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.112 2003/09/09 11:49:06 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2166,7 +2166,6 @@ sys/kern/kern_sysctl.c			1.142 via patch
 	make proc.curproc.* check more strict.
 	[itojun, ticket #74]
 
-
 sys/kern/kern_sysctl.c			1.143 via patch
 
 	Use pfind() in proc_sysctl() to find the target process instead of a
@@ -2184,3 +2183,33 @@ sys/kern/kern_sysctl.c			1.141
 
 	Avoid oldlenp mixup (in-kernel pointer and userland pointer).
 	[itojun, ticket #76]
+
+sys/netinet6/ah_input.c			1.41
+sys/netinet6/esp_input.c		1.33
+
+	m_cat may free mbuf on 2nd arg, so m_pkthdr manipulation has to happen
+	before m_cat call.  from Julian Coleman via kame.
+	[itojun, ticket #63]
+
+sys/netinet6/in6_pcb.c			1.55 via patch
+
+	in6_pcbrtentry() now returns IPv4 rtentry if in6pcb is connected to
+	IPv4 mapped address. Fixes PR 22431 from Andreas Gustafsson.
+	[itojun, ticket #66]
+
+sys/netinet/in_proto.c			1.60 via patch
+sys/netinet/in6_proto.c			1.50
+
+	enforce ipsec policy on raw wildcard.
+	[itojun, ticket #68]
+
+usr.sbin/ypbind/ypbind.c		1.48
+
+	width needs to be updated before each loop, because svc_maxfd may have
+	changed.
+	[bouyer, ticket #77]
+
+sys/netinet/tcp_subr.c			1.153
+
+	Initialize ip_hl for ipsec policy lookup. Fixes PR 22715.
+	[itojun, ticket #78]
