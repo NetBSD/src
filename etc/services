@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.37.2.6 2000/10/01 06:12:56 simonb Exp $
+#	$NetBSD: services,v 1.37.2.7 2001/07/29 18:47:23 he Exp $
 #
 # Network services, Internet style
 #
@@ -124,6 +124,8 @@ ldap		389/tcp			# Lightweight Directory Access Protocol
 ldap		389/udp			# Lightweight Directory Access Protocol
 isakmp		500/tcp			# IPsec Key Management (ISAKMP/Oakley)
 isakmp		500/udp			# IPsec Key Management (ISAKMP/Oakley)
+ripng		521/tcp			# RIP for IPv6
+ripng		521/udp			# RIP for IPv6
 
 #
 # UNIX specific services
@@ -213,15 +215,47 @@ ekshell		545/tcp			# Encrypted kshell
 kerberos-adm	749/tcp			# Kerberos `kadmin' (v5)
 kerberos-iv	750/udp		kdc kerberos4	# Kerberos (server) udp
 kerberos-iv	750/tcp		kdc kerberos4	# Kerberos (server) tcp
-kerberos-master 751/udp			# Kerberos admin server udp
-kerberos-master 751/tcp			# Kerberos admin server tcp
+kerberos-master	751/udp			# Kerberos admin server udp
+kerberos-master	751/tcp			# Kerberos admin server tcp
 hprop		754/tcp			# Heimdal KDC database propagation
 krbupdate	760/tcp		kreg	# BSD Kerberos registration
-kpasswd		761/tcp		kpwd	# BSD Kerberos `passwd'
+kpwd		761/tcp			# old BSD Kerberos `passwd'
+					# (formerly `kpasswd')
 kpop		1109/tcp		# Kerberos POP server
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
 ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
 krb524		4444/udp		# krb5 -> krb4 ticket conversion
+
+#
+# AFS services
+#
+# IANA has these registered as both UDP and TCP, but only the UDP
+# ports are used by the protocol
+#
+afs3-fileserver 7000/tcp		# file server itself
+afs3-fileserver 7000/udp		# file server itself
+afs3-callback	7001/tcp		# callbacks to cache managers
+afs3-callback	7001/udp		# callbacks to cache managers
+afs3-prserver	7002/tcp		# users & groups database
+afs3-prserver	7002/udp		# users & groups database
+afs3-vlserver	7003/tcp		# volume location database
+afs3-vlserver	7003/udp		# volume location database
+afs3-kaserver	7004/tcp		# AFS/Kerberos authentication service
+afs3-kaserver	7004/udp		# AFS/Kerberos authentication service
+afs3-volser	7005/tcp		# volume managment server
+afs3-volser	7005/udp		# volume managment server
+afs3-errors	7006/tcp		# error interpretation service
+afs3-errors	7006/udp		# error interpretation service
+afs3-bos	7007/tcp		# basic overseer process
+afs3-bos	7007/udp		# basic overseer process
+afs3-update	7008/tcp		# server-to-server updater
+afs3-update	7008/udp		# server-to-server updater
+afs3-rmtsys	7009/tcp		# remote cache manager service
+afs3-rmtsys	7009/udp		# remote cache manager service
+afs3-resserver	7010/tcp		# MR-AFS residence server
+afs3-resserver	7010/udp		# MR-AFS residence server
+afs3-remio	7011/tcp		# MR-AFS remote IO server
+afs3-remio	7011/udp		# MR-AFS remote IO server
 
 #
 # Unofficial but necessary (for NetBSD) services
@@ -237,6 +271,8 @@ nfs		2049/udp	nfsd	# Sun NFS
 nfs		2049/tcp	nfsd	# Sun NFS
 X11		6000/tcp		# X Window System
 ircd		6667/tcp		# Often used IRC port (also see 194)
+sstp-2		9801/tcp		# Sakura Script Transfer Protocol-2
+sstp-2		9801/udp		# Sakura Script Transfer Protocol-2
 amanda		10080/udp		# Amanda
 hunt		26740/udp		# multi-player/multi-host maze-wars
 
@@ -252,13 +288,13 @@ echo		4/ddp			# AppleTalk Echo Protocol
 zip		6/ddp			# Zone Information Protocol
 
 # Iana registered Coda filesystem port numbers
-rpc2portmap	369/tcp	   
+rpc2portmap	369/tcp
 rpc2portmap	369/udp			# Coda portmapper
-codaauth2	370/tcp	   
+codaauth2	370/tcp
 codaauth2	370/udp			# Coda authentication server
 
 venus		2430/tcp		# codacon port
-venus		2430/udp		# Venus callback/wbc interface 
+venus		2430/udp		# Venus callback/wbc interface
 venus-se	2431/tcp		# tcp side effects
 venus-se	2431/udp		# udp sftp side effect
 codasrv		2432/tcp		# not used
