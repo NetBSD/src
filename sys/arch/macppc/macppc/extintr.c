@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.43 2004/05/12 00:34:25 wiz Exp $	*/
+/*	$NetBSD: extintr.c,v 1.44 2004/06/20 20:50:13 manu Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.43 2004/05/12 00:34:25 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.44 2004/06/20 20:50:13 manu Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -942,9 +942,19 @@ init_interrupt()
 	heathrow_FCR = (void *)(obio_base + HEATHROW_FCR_OFFSET);
 
 	memset(type, 0, sizeof(type));
-	chosen = OF_finddevice("/chosen");
-	if (OF_getprop(chosen, "interrupt-controller", &ictlr, 4) == 4)
-		OF_getprop(ictlr, "device_type", type, sizeof(type));
+	ictlr = -1;
+
+	/* 
+	 * Look for The interrupt controller. It used to be referenced
+	 * by the "interrupt-controller" property of device "/chosen",
+	 * but this is not true anymore on newer machines (e.g.: iBook G4)
+	 * Device "mpic" is the interrupt controller on theses machines.
+	 */
+	if (((chosen = OF_finddevice("/chosen")) == -1)  ||
+	    (OF_getprop(chosen, "interrupt-controller", &ictlr, 4) != 4))
+		ictlr = OF_finddevice("mpic");
+
+	OF_getprop(ictlr, "device_type", type, sizeof(type));
 
 	if (strcmp(type, "open-pic") != 0) {
 		/*
