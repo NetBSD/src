@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.77 2000/05/10 01:34:15 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.78 2000/05/17 23:35:44 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.77 2000/05/10 01:34:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.78 2000/05/17 23:35:44 soren Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -582,7 +582,7 @@ cpu_identify()
 #endif
 #ifdef MIPS3
 	if (cpu_arch >= 3) {
-		printf("L1 cache: %dKB/%dB Instruction, %dKB/%dB Data",
+		printf("L1 cache: %dKB/%dB instruction, %dKB/%dB data",
 		    mips_L1ICacheSize / 1024, mips_L1ICacheLSize,
 		    mips_L1DCacheSize / 1024, mips_L1DCacheLSize);
 		if (mips3_L1TwoWayCache) {
@@ -604,7 +604,7 @@ cpu_identify()
 				printf("%dKB", mips_L2CacheSize / 1024);
 			else
 				printf("unknown size");
-			printf("/%db %s, %s",
+			printf("/%dB %s, %s",
 			    mips_L2CacheLSize,
 			    mips_L2CacheMixed ? "mixed" : "separated",
 			    mips_L2CacheIsSnooping? "snooping" : "no snooping");
