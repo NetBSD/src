@@ -1,4 +1,4 @@
-	$NetBSD: INSTALL,v 1.70 1998/12/09 07:54:14 cgd Exp $
+	$NetBSD: INSTALL,v 1.71 1998/12/09 08:03:46 scottr Exp $
 #define	_FOR_RELEASE 0			/* 0 == snapshot; 1 == release */
 INSTALLATION NOTES for NetBSD/_MACH _VER
 
@@ -628,7 +628,7 @@ Eduardo Horvath		<eeh@NetBSD.ORG>		(sparc64)
 Paul Kranenburg		<pk@NetBSD.ORG>			(sparc)
 Ted Lemon		<mellon@NetBSD.ORG>		(pmax)
 Anders Magnusson	<ragge@NetBSD.ORG>		(vax)
-Tsubai Masanari		<tsubai@NetBSD.ORG>		(newsmips)
+Tsubai Masanari		<tsubai@NetBSD.ORG>		(macppc, newsmips)
 Phil Nelson		<phil@NetBSD.ORG>		(pc532)
 Masaru Oki		<oki@NetBSD.ORG>		(x68k)
 Scott Reynolds		<scottr@NetBSD.ORG>		(mac68k)
@@ -736,20 +736,6 @@ Krister Walfridsson	<kristerw@NetBSD.ORG>
 Nathan Williams		<nathanw@NetBSD.ORG>
 Colin Wood		<ender@NetBSD.ORG>
 Steve Woodford		<scw@NetBSD.ORG>
-
-
-Dedication:
-----------
-
-   The current release of NetBSD was dedicated by the release
-   engineering team to the memory of the late Koji Imada, who was
-   killed in a motorcycle accident in August, 1997 at the age of
-   28.  A doctoral student in Mathematical Science at Nagoya
-   University, he was a user of NetBSD and a contributor to the
-   project since 1993. Well remembered by his friends, he was also
-   known as a connoisseur of gins, teas, and the motorcycles he
-   loved to ride. His death came as a shock, and he will be greatly
-   missed by all of us. May he rest in peace.
 
 
 Legal Mumbo-jumbo:
