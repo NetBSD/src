@@ -1,13 +1,38 @@
-#	@(#)Makefile	6.3 (Berkeley) 4/30/91
+#	$NetBSD: Makefile,v 1.1.1.2 2001/04/19 14:33:07 wiz Exp $
+
+.include "../../Makefile.path"
+
+.PATH:		${IIDIST}/font/devps
 
 DEVICE=		ps
-FONTFILES=	$(FONTS) $(SUPPORT) DESC eqnchar
-FONTS=		AB ABI AI AR BMB BMBI BMI BMR CB CBI CI CR HB HBI \
-		HI HNB HNBI HNI HNR HR NB NBI NI NR PB PBI PI PR \
-		S SS TB TBI TI TR ZCMI ZD ZDR
-SUPPORT=        download prologue symbolsl.ps text.enc textmap \
-		zapfdr.ps
+FONTFILES=	$(FONTS) $(SUPPORT) $(PSFILES) $(DEVGENFILES) DESC
+FONTS=		S ZD ZDR SS AB ABI AI AR BMB BMBI BMI BMR \
+		CB CBI CI CR HB HBI HI HR HNB HNBI HNI HNR \
+		NB NBI NI NR PB PBI PI PR TB TBI TI TR ZCMI
+SUPPORT=	download
+PSFILES=	prologue symbolsl.pfa text.enc zapfdr.pfa
+DEVGENFILES=	generate/Makefile generate/afmname generate/dingbatsmap \
+		generate/dingbatsrmap generate/lgreekmap generate/symbol.sed \
+		generate/symbolchars generate/symbolsl.afm generate/textmap
 
-clean cleandir:
+CLEANFILES+=	$(PSFILES) DESC
+
+prologue: prologue.ps
+zapfdr.pfa: zapfdr.ps
+symbolsl.pfa: symbolsl.ps
+
+${PSFILES}:
+	@-rm -f $@
+	@sed -f ${IIDIST}/font/devps/psstrip.sed $> > $@
+
+DESC: DESC.in
+	@cat $> >$@
+	@echo broken $(BROKEN_SPOOLER_FLAGS) >>$@
+	@if test "$(PAGE)" = A4; then \
+		echo "paperlength 841890" >>$@; \
+	else \
+		echo "paperlength 792000" >>$@; \
+	fi
+	@test -z '$(PSPRINT)' || echo print '$(PSPRINT)' >>$@
 
 .include "../Makefile.dev"
