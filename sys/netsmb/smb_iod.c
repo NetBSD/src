@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.14 2003/03/24 07:49:49 jdolecek Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.15 2003/03/30 11:27:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.14 2003/03/24 07:49:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.15 2003/03/30 11:27:45 jdolecek Exp $");
  
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,16 +64,15 @@ __KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.14 2003/03/24 07:49:49 jdolecek Exp $"
 
 #define	smb_iod_wakeup(iod)	wakeup(&(iod)->iod_flags)
 
-
 static MALLOC_DEFINE(M_SMBIOD, "SMBIOD", "SMB network io daemon");
 
 static int smb_iod_next;
 
-static int  smb_iod_sendall(struct smbiod *iod);
+static void smb_iod_sendall(struct smbiod *iod);
 static int  smb_iod_disconnect(struct smbiod *iod);
 static void smb_iod_thread(void *);
 
-static __inline void
+static void
 smb_iod_rqprocessed(struct smb_rq *rqp, int error)
 {
 	SMBRQ_SLOCK(rqp);
@@ -132,12 +131,12 @@ smb_iod_connect(struct smbiod *iod)
 
 	SMBIODEBUG("%d\n", iod->iod_state);
 	switch(iod->iod_state) {
-	    case SMBIOD_ST_VCACTIVE:
+	case SMBIOD_ST_VCACTIVE:
 		SMBERROR("called for already opened connection\n");
 		return EISCONN;
-	    case SMBIOD_ST_DEAD:
+	case SMBIOD_ST_DEAD:
 		return ENOTCONN;	/* XXX: last error code ? */
-	    default:
+	default:
 		break;
 	}
 	vcp->vc_genid++;
@@ -217,17 +216,17 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 	struct mbuf *m;
 	int error;
 
-	SMBIODEBUG("iod_state = %d\n", iod->iod_state);
+	SMBIODEBUG("iod_state = %d, rqmid %d\n", iod->iod_state, rqp->sr_mid);
 	switch (iod->iod_state) {
-	    case SMBIOD_ST_NOTCONN:
+	case SMBIOD_ST_NOTCONN:
 		smb_iod_rqprocessed(rqp, ENOTCONN);
 		return 0;
-	    case SMBIOD_ST_DEAD:
+	case SMBIOD_ST_DEAD:
 		iod->iod_state = SMBIOD_ST_RECONNECT;
 		return 0;
-	    case SMBIOD_ST_RECONNECT:
+	case SMBIOD_ST_RECONNECT:
 		return 0;
-	    default:
+	default:
 		break;
 	}
 	if (rqp->sr_sendcnt == 0) {
@@ -288,7 +287,7 @@ smb_iod_sendrq(struct smbiod *iod, struct smb_rq *rqp)
 /*
  * Process incoming packets
  */
-static int
+static void
 smb_iod_recvall(struct smbiod *iod)
 {
 	struct smb_vc *vcp = iod->iod_vc;
@@ -300,13 +299,14 @@ smb_iod_recvall(struct smbiod *iod)
 	int error;
 
 	switch (iod->iod_state) {
-	    case SMBIOD_ST_NOTCONN:
-	    case SMBIOD_ST_DEAD:
-	    case SMBIOD_ST_RECONNECT:
-		return 0;
-	    default:
+	case SMBIOD_ST_NOTCONN:
+	case SMBIOD_ST_DEAD:
+	case SMBIOD_ST_RECONNECT:
+		return;
+	default:
 		break;
 	}
+
 	for (;;) {
 		m = NULL;
 		error = SMB_TRAN_RECV(vcp, &m, p);
@@ -318,11 +318,8 @@ smb_iod_recvall(struct smbiod *iod)
 		}
 		if (error)
 			break;
-		if (m == NULL) {
-			SMBERROR("tran return NULL without error\n");
-			error = EPIPE;
-			continue;
-		}
+		KASSERT(m != NULL);
+
 		m = m_pullup(m, SMB_HDRLEN);
 		if (m == NULL)
 			continue;	/* wait for a good packet */
@@ -375,7 +372,6 @@ smb_iod_recvall(struct smbiod *iod)
 		}
 	}
 	SMB_IOD_RQUNLOCK(iod);
-	return 0;
 }
 
 int
@@ -437,14 +433,18 @@ smb_iod_addrq(struct smb_rq *rqp)
 	}
 
 	switch (iod->iod_state) {
-	    case SMBIOD_ST_NOTCONN:
+	case SMBIOD_ST_NOTCONN:
 		return ENOTCONN;
-	    case SMBIOD_ST_DEAD:
-		error = smb_iod_request(vcp->vc_iod, SMBIOD_EV_CONNECT | SMBIOD_EV_SYNC, NULL);
+	case SMBIOD_ST_DEAD:
+		error = smb_iod_request(iod, SMBIOD_EV_CONNECT | SMBIOD_EV_SYNC, NULL);
 		if (error)
 			return error;
+		/*
+		 * Return error to force the caller reissue the request
+		 * using new connection state.
+		 */ 
 		return EXDEV;
-	    default:
+	default:
 		break;
 	}
 
@@ -515,9 +515,11 @@ smb_iod_waitrq(struct smb_rq *rqp)
 
 	}
 	SMBRQ_SLOCK(rqp);
-	if (rqp->sr_rpgen == rqp->sr_rplast)
+	if (rqp->sr_rpgen == rqp->sr_rplast) {
+		/* XXX interruptible sleep? */
 		ltsleep(&rqp->sr_state, PWAIT, "smbwrq", 0, 
 			SMBRQ_SLOCKPTR(rqp));
+	}
 	rqp->sr_rplast++;
 	SMBRQ_SUNLOCK(rqp);
 	error = rqp->sr_lerror;
@@ -536,7 +538,7 @@ smb_iod_waitrq(struct smb_rq *rqp)
 }
 
 
-static int
+static void
 smb_iod_sendall(struct smbiod *iod)
 {
 	struct smb_rq *rqp;
@@ -578,7 +580,6 @@ smb_iod_sendall(struct smbiod *iod)
 	SMB_IOD_RQUNLOCK(iod);
 	if (herror == ENOTCONN)
 		smb_iod_dead(iod);
-	return 0;
 }
 
 /*
@@ -587,13 +588,13 @@ smb_iod_sendall(struct smbiod *iod)
 static __inline void
 smb_iod_main(struct smbiod *iod)
 {
-/*	struct smb_vc *vcp = iod->iod_vc;*/
+#if 0
+	struct smb_vc *vcp = iod->iod_vc;
+	struct timespec tsnow;
+#endif
 	struct smbiod_event *evp;
-/*	struct timespec tsnow;*/
-	int error;
 
 	SMBIODEBUG("\n");
-	error = 0;
 
 	/*
 	 * Check all interesting events
@@ -609,20 +610,20 @@ smb_iod_main(struct smbiod *iod)
 		evp->ev_type |= SMBIOD_EV_PROCESSING;
 		SMB_IOD_EVUNLOCK(iod);
 		switch (evp->ev_type & SMBIOD_EV_MASK) {
-		    case SMBIOD_EV_CONNECT:
+		case SMBIOD_EV_CONNECT:
 			iod->iod_state = SMBIOD_ST_RECONNECT;
 			evp->ev_error = smb_iod_connect(iod);
 			break;
-		    case SMBIOD_EV_DISCONNECT:
+		case SMBIOD_EV_DISCONNECT:
 			evp->ev_error = smb_iod_disconnect(iod);
 			break;
-		    case SMBIOD_EV_TREECONNECT:
+		case SMBIOD_EV_TREECONNECT:
 			evp->ev_error = smb_iod_treeconnect(iod, evp->ev_ident);
 			break;
-		    case SMBIOD_EV_SHUTDOWN:
+		case SMBIOD_EV_SHUTDOWN:
 			iod->iod_flags |= SMBIOD_SHUTDOWN;
 			break;
-		    case SMBIOD_EV_NEWRQ:
+		case SMBIOD_EV_NEWRQ:
 			break;
 		}
 		if (evp->ev_type & SMBIOD_EV_SYNC) {
@@ -643,7 +644,6 @@ smb_iod_main(struct smbiod *iod)
 #endif
 	smb_iod_sendall(iod);
 	smb_iod_recvall(iod);
-	return;
 }
 
 void
@@ -655,14 +655,13 @@ smb_iod_thread(void *arg)
 	 * Here we assume that the thread structure will be the same
 	 * for an entire kthread (kproc, to be more precise) life.
 	 */
-	iod->iod_p = curproc;
+	KASSERT(iod->iod_p == curproc);
 	smb_makescred(&iod->iod_scred, iod->iod_p, NULL);
 	while ((iod->iod_flags & SMBIOD_SHUTDOWN) == 0) {
 		smb_iod_main(iod);
-		SMBIODEBUG("going to sleep for %d ticks\n",
-			SMBIOD_SLEEP_TIMO * hz);
 		if (iod->iod_flags & SMBIOD_SHUTDOWN)
 			break;
+		SMBIODEBUG("going to sleep\n");
 		tsleep(&iod->iod_flags, PWAIT, "smbidle", SMBIOD_SLEEP_TIMO * hz);
 	}
 	kthread_exit(0);
@@ -725,4 +724,3 @@ smb_iod_done(void)
 	return 0;
 }
 #endif
-
