@@ -45,7 +45,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tty_ring.c,v 1.6 1993/05/22 11:41:50 cgd Exp $
+ *	$Id: tty_ring.c,v 1.7 1993/05/27 09:29:40 deraadt Exp $
  */
 
 #include "param.h"
@@ -155,6 +155,7 @@ int n;
 {
 	while(n--)
 		*ss++ = (rbchar)(*s++);
+	return n;
 }
 
 rbunpack(ss, s, n)
@@ -164,6 +165,7 @@ int n;
 {
 	while(n--)
 		*s++ = (char)(*ss++);
+	return n;
 }
 
 /*
