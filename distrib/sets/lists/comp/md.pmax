@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.42 2001/04/14 12:40:10 kleink Exp $
+# $NetBSD: md.pmax,v 1.43 2001/04/14 22:53:35 kleink Exp $
 ./usr/include/pmax	comp-c-include
 ./usr/include/pmax/_G_config.h	comp-c-include
 ./usr/include/pmax/ansi.h	comp-c-include
@@ -24,6 +24,7 @@
 ./usr/include/pmax/float.h	comp-c-include
 ./usr/include/pmax/ieee.h	comp-c-include
 ./usr/include/pmax/ieeefp.h	comp-c-include
+./usr/include/pmax/int_const.h	comp-c-include
 ./usr/include/pmax/int_mwgwtypes.h	comp-c-include
 ./usr/include/pmax/int_types.h	comp-c-include
 ./usr/include/pmax/intr.h	comp-c-include

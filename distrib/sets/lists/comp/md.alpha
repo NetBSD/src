@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.32 2001/04/14 12:40:10 kleink Exp $
+# $NetBSD: md.alpha,v 1.33 2001/04/14 22:53:34 kleink Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -26,6 +26,7 @@
 ./usr/include/alpha/frame.h	comp-c-include
 ./usr/include/alpha/ieee.h	comp-c-include
 ./usr/include/alpha/ieeefp.h	comp-c-include
+./usr/include/alpha/int_const.h	comp-c-include
 ./usr/include/alpha/int_mwgwtypes.h	comp-c-include
 ./usr/include/alpha/int_types.h	comp-c-include
 ./usr/include/alpha/intr.h	comp-c-include

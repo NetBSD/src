@@ -1,4 +1,4 @@
-# $NetBSD: md.next68k,v 1.17 2001/04/14 12:40:10 kleink Exp $
+# $NetBSD: md.next68k,v 1.18 2001/04/14 22:53:35 kleink Exp $
 ./usr/include/next68k	comp-c-include
 ./usr/include/next68k/_G_config.h	comp-c-include
 ./usr/include/next68k/ansi.h	comp-c-include
@@ -20,6 +20,7 @@
 ./usr/include/next68k/frame.h	comp-c-include
 ./usr/include/next68k/ieee.h	comp-c-include
 ./usr/include/next68k/ieeefp.h	comp-c-include
+./usr/include/next68k/int_const.h	comp-c-include
 ./usr/include/next68k/int_mwgwtypes.h	comp-c-include
 ./usr/include/next68k/int_types.h	comp-c-include
 ./usr/include/next68k/intr.h	comp-c-include
