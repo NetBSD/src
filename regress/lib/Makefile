@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5.10.2 2000/10/07 03:19:18 itojun Exp $
+#	$NetBSD: Makefile,v 1.5.10.3 2001/12/09 17:25:46 he Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= libc libposix
+SUBDIR+= csu libc libposix
 
 .if ${MKCRYPTO} == "yes"
 SUBDIR+= libcrypto 
