@@ -1,7 +1,7 @@
-/*	$NetBSD: isadma.c,v 1.42 1999/03/22 07:06:09 mycroft Exp $	*/
+/*	$NetBSD: isadma.c,v 1.43 2000/02/07 22:07:31 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -152,6 +152,7 @@ _isa_dmainit(ids, bst, dmat, dev)
 	bus_dma_tag_t dmat;
 	struct device *dev;
 {
+	int chan;
 
 	ids->ids_dev = dev;
 
@@ -189,6 +190,17 @@ _isa_dmainit(ids, bst, dmat, dev)
 		 * All 8 DMA channels start out "masked".
 		 */
 		ids->ids_masked = 0xff;
+
+		/*
+		 * Initialize the max transfer size for each channel, if
+		 * it is not initialized already (i.e. by a bus-dependent
+		 * front-end).
+		 */
+		for (chan = 0; chan < 8; chan++) {
+			if (ids->ids_maxsize[chan] == 0)
+				ids->ids_maxsize[chan] =
+				    ISA_DMA_MAXSIZE_DEFAULT(chan);
+		}
 
 		ids->ids_initialized = 1;
 
@@ -237,6 +249,20 @@ _isa_dmacascade(ids, chan)
 	return (0);
 }
 
+bus_size_t
+_isa_dmamaxsize(ids, chan)
+	struct isa_dma_state *ids;
+	int chan;
+{
+
+	if (chan < 0 || chan > 7) {
+		printf("%s: bogus drq %d\n", ids->ids_dev->dv_xname, chan);
+		return (0);
+	}
+
+	return (ids->ids_maxsize[chan]);
+}
+
 int
 _isa_dmamap_create(ids, chan, size, flags)
 	struct isa_dma_state *ids;
@@ -244,7 +270,6 @@ _isa_dmamap_create(ids, chan, size, flags)
 	bus_size_t size;
 	int flags;
 {
-	bus_size_t maxsize;
 	int error;
 
 	if (chan < 0 || chan > 7) {
@@ -252,12 +277,7 @@ _isa_dmamap_create(ids, chan, size, flags)
 		return (EINVAL);
 	}
 
-	if (chan & 4)
-		maxsize = (1 << 17);
-	else
-		maxsize = (1 << 16);
-
-	if (size > maxsize)
+	if (size > ids->ids_maxsize[chan])
 		return (EINVAL);
 
 	if (ISA_DMA_DRQ_ISFREE(ids, chan) == 0) {
@@ -268,8 +288,8 @@ _isa_dmamap_create(ids, chan, size, flags)
 
 	ISA_DMA_DRQ_ALLOC(ids, chan);
 
-	error = bus_dmamap_create(ids->ids_dmat, size, 1, size, maxsize,
-	    flags, &ids->ids_dmamaps[chan]);
+	error = bus_dmamap_create(ids->ids_dmat, size, 1, size,
+	    ids->ids_maxsize[chan], flags, &ids->ids_dmamaps[chan]);
 
 	if (error)
 		ISA_DMA_DRQ_FREE(ids, chan);

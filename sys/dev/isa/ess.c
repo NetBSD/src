@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.49 2000/01/18 22:11:05 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.50 2000/02/07 22:07:31 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -903,8 +903,9 @@ essattach(sc)
 		    sc->sc_dev.dv_xname, sc->sc_audio1.irq);
 	} else
 		printf("%s: audio1 polled\n", sc->sc_dev.dv_xname);
+	sc->sc_audio1.maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_audio1.drq);
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_audio1.drq,
-	    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+	    sc->sc_audio1.maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
 		       sc->sc_dev.dv_xname, sc->sc_audio1.drq);
 		return;
@@ -920,8 +921,10 @@ essattach(sc)
 			    sc->sc_dev.dv_xname, sc->sc_audio2.irq);
 		} else
 			printf("%s: audio2 polled\n", sc->sc_dev.dv_xname);
+		sc->sc_audio2.maxsize = isa_dmamaxsize(sc->sc_ic,
+		    sc->sc_audio2.drq);
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_audio2.drq,
-		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+		    sc->sc_audio2.maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
 			       sc->sc_dev.dv_xname, sc->sc_audio2.drq);
 			return;
@@ -2185,8 +2188,16 @@ ess_round_buffersize(addr, direction, size)
 	int direction;
 	size_t size;
 {
-	if (size > MAX_ISADMA)
-		size = MAX_ISADMA;
+	struct ess_softc *sc = addr;
+	bus_size_t maxsize;
+
+	if ((!ESS_USE_AUDIO1(sc->sc_model)) && direction == AUMODE_PLAY)
+		maxsize = sc->sc_audio2.maxsize;
+	else
+		maxsize = sc->sc_audio1.maxsize;
+
+	if (size > maxsize)
+		size = maxsize;
 	return (size);
 }
 
