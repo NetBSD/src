@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 2000/06/11 14:20:46 minoura Exp $	*/
+/*	$NetBSD: conf.c,v 1.20 2000/07/13 17:40:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -240,7 +240,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCCD,ccd),	/* 34: concatenated disk driver */
 	cdev_scanner_init(NSS,ss),	/* 35: SCSI scanner */
 	cdev_ch_init(NCH,ch),		/* 36: SCSI changer device */
-	cdev_ch_init(NUK,uk),		/* 37: SCSI unknown device */
+	cdev_uk_init(NUK,uk),		/* 37: SCSI unknown device */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 38: IP filter device */
 	cdev_rnd_init(NRND,rnd),	/* 39: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 40: SCSI bus */
