@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.4 2001/09/22 03:34:17 tv Exp $
+# $NetBSD: Makefile.bootxx,v 1.5 2003/08/29 12:56:59 dsl Exp $
 
 SRCS = start.S bootxx.c booted_dev.c blkdev.c prom.c prom_disp.S \
        putstr.c panic_putstr.c
@@ -19,7 +19,7 @@ CPPFLAGS += ${PRIMARY_CPPFLAGS} \
 		-DLIBSA_NO_DISKLABEL_MSGS \
 		-DLIBSA_USE_MEMCPY
 
-CLEANFILES+= ${PROG}.sym
+CLEANFILES+= ${PROG}.sym ${PROG}.map
 
 ${PROG}: ${PROG}.sym
 	@echo creating ${PROG} from ${PROG}.sym...
@@ -34,6 +34,6 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=no
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBKERN}
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
-	    ${OBJS} ${LIBSA} ${LIBKERN}
+	    ${OBJS} ${LIBSA} ${LIBKERN} -Map ${PROG}.map
 	@chmod 644 ${PROG}.sym
 	@${SIZE} ${PROG}.sym
