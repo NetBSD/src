@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.10 2002/03/08 21:57:33 kristerw Exp $	*/
+/*	$NetBSD: patch.c,v 1.11 2002/03/11 18:47:51 kristerw Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.10 2002/03/08 21:57:33 kristerw Exp $");
+__RCSID("$NetBSD: patch.c,v 1.11 2002/03/11 18:47:51 kristerw Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 
     setbuf(stderr, serrbuf);
     for (i = 0; i<MAXFILEC; i++)
-	filearg[i] = Nullch;
+	filearg[i] = NULL;
 
     myuid = getuid();
 
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
     {
       /* Directory for temporary files.  */
       char *tmpdir;
-      int tmpname_len;
+      size_t tmpname_len;
 
       tmpdir = getenv ("TMPDIR");
       if (tmpdir == NULL) {
@@ -96,32 +96,32 @@ main(int argc, char *argv[])
       }
       tmpname_len = strlen (tmpdir) + 20;
 
-      TMPOUTNAME = (char *) malloc (tmpname_len);
+      TMPOUTNAME = malloc (tmpname_len);
       strcpy (TMPOUTNAME, tmpdir);
       strcat (TMPOUTNAME, "/patchoXXXXXX");
       if ((i = mkstemp(TMPOUTNAME)) < 0)
-        pfatal2("can't create %s", TMPOUTNAME);
+        pfatal("can't create %s", TMPOUTNAME);
       Close(i);
 
-      TMPINNAME = (char *) malloc (tmpname_len);
+      TMPINNAME = malloc (tmpname_len);
       strcpy (TMPINNAME, tmpdir);
       strcat (TMPINNAME, "/patchiXXXXXX");
       if ((i = mkstemp(TMPINNAME)) < 0)
-        pfatal2("can't create %s", TMPINNAME);
+        pfatal("can't create %s", TMPINNAME);
       Close(i);
 
-      TMPREJNAME = (char *) malloc (tmpname_len);
+      TMPREJNAME = malloc (tmpname_len);
       strcpy (TMPREJNAME, tmpdir);
       strcat (TMPREJNAME, "/patchrXXXXXX");
       if ((i = mkstemp(TMPREJNAME)) < 0)
-        pfatal2("can't create %s", TMPREJNAME);
+        pfatal("can't create %s", TMPREJNAME);
       Close(i);
 
-      TMPPATNAME = (char *) malloc (tmpname_len);
+      TMPPATNAME = malloc (tmpname_len);
       strcpy (TMPPATNAME, tmpdir);
       strcat (TMPPATNAME, "/patchpXXXXXX");
       if ((i = mkstemp(TMPPATNAME)) < 0)
-        pfatal2("can't create %s", TMPPATNAME);
+        pfatal("can't create %s", TMPPATNAME);
       Close(i);
     }
 
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 	reinitialize_almost_everything()
     ) {					/* for each patch in patch file */
 
-	if (outname == Nullch)
+	if (outname == NULL)
 	    outname = savestr(filearg[0]);
     
 	/* for ed script just up and do it and exit */
@@ -193,7 +193,7 @@ main(int argc, char *argv[])
 						/* dwim for reversed patch? */
 			if (!pch_swap()) {
 			    if (fuzz == Nulline)
-				say1(
+				say(
 "Not enough memory to try swapped hunk!  Assuming unswapped.\n");
 			    continue;
 			}
@@ -201,37 +201,37 @@ main(int argc, char *argv[])
 			where = locate_hunk(fuzz);  /* try again */
 			if (where == Nulline) {	    /* didn't find it swapped */
 			    if (!pch_swap())         /* put it back to normal */
-				fatal1("lost hunk on alloc error!\n");
+				fatal("lost hunk on alloc error!\n");
 			    reverse = !reverse;
 			}
 			else if (noreverse) {
 			    if (!pch_swap())         /* put it back to normal */
-				fatal1("lost hunk on alloc error!\n");
+				fatal("lost hunk on alloc error!\n");
 			    reverse = !reverse;
-			    say1(
+			    say(
 "Ignoring previously applied (or reversed) patch.\n");
 			    skip_rest_of_patch = TRUE;
 			}
 			else if (batch) {
 			    if (verbose)
-				say3(
+				say(
 "%seversed (or previously applied) patch detected!  %s -R.",
 				reverse ? "R" : "Unr",
 				reverse ? "Assuming" : "Ignoring");
 			}
 			else {
-			    ask3(
+			    ask(
 "%seversed (or previously applied) patch detected!  %s -R? [y] ",
 				reverse ? "R" : "Unr",
 				reverse ? "Assume" : "Ignore");
 			    if (*buf == 'n') {
-				ask1("Apply anyway? [n] ");
+				ask("Apply anyway? [n] ");
 				if (*buf != 'y')
 				    skip_rest_of_patch = TRUE;
 				where = Nulline;
 				reverse = !reverse;
 				if (!pch_swap())  /* put it back to normal */
-				    fatal1("lost hunk on alloc error!\n");
+				    fatal("lost hunk on alloc error!\n");
 			    }
 			}
 		    }
@@ -240,7 +240,7 @@ main(int argc, char *argv[])
 
 		if (skip_rest_of_patch) {		/* just got decided */
 		    Fclose(ofp);
-		    ofp = Nullfp;
+		    ofp = NULL;
 		}
 	    }
 
@@ -249,24 +249,24 @@ main(int argc, char *argv[])
 		abort_hunk();
 		failed++;
 		if (verbose)
-		    say3("Hunk #%d ignored at %ld.\n", hunk, newwhere);
+		    say("Hunk #%d ignored at %ld.\n", hunk, newwhere);
 	    }
 	    else if (where == Nulline) {
 		abort_hunk();
 		failed++;
 		if (verbose)
-		    say3("Hunk #%d failed at %ld.\n", hunk, newwhere);
+		    say("Hunk #%d failed at %ld.\n", hunk, newwhere);
 	    }
 	    else {
 		apply_hunk(where);
 		if (verbose) {
-		    say3("Hunk #%d succeeded at %ld", hunk, newwhere);
+		    say("Hunk #%d succeeded at %ld", hunk, newwhere);
 		    if (fuzz)
-			say2(" with fuzz %ld", fuzz);
+			say(" with fuzz %ld", fuzz);
 		    if (last_offset)
-			say3(" (offset %ld line%s)",
+			say(" (offset %ld line%s)",
 			    last_offset, last_offset==1L?"":"s");
-		    say1(".\n");
+		    say(".\n");
 		}
 	    }
 	}
@@ -274,13 +274,13 @@ main(int argc, char *argv[])
 	if (out_of_mem && using_plan_a) {
 	    Argc = Argc_last;
 	    Argv = Argv_last;
-	    say1("\n\nRan out of memory using Plan A--trying again...\n\n");
+	    say("\n\nRan out of memory using Plan A--trying again...\n\n");
 	    if (ofp)
 	        Fclose(ofp);
-	    ofp = Nullfp;
+	    ofp = NULL;
 	    if (rejfp)
 	        Fclose(rejfp);
-	    rejfp = Nullfp;
+	    rejfp = NULL;
 	    continue;
 	}
     
@@ -307,36 +307,24 @@ main(int argc, char *argv[])
 	    if (remove_empty_files && stat(realout, &statbuf) == 0
 		&& statbuf.st_size == 0) {
 		if (verbose)
-		    say2("Removing %s (empty after patching).\n", realout);
+		    say("Removing %s (empty after patching).\n", realout);
 	        while (unlink(realout) >= 0) ; /* while is for Eunice.  */
 	    }
 	}
 	Fclose(rejfp);
-	rejfp = Nullfp;
+	rejfp = NULL;
 	if (failed) {
 	    failtotal += failed;
 	    if (!*rejname) {
 		Strcpy(rejname, outname);
-#ifndef FLEXFILENAMES
-		{
-		    char *s = strrchr(rejname,'/');
-
-		    if (!s)
-			s = rejname;
-		    if (strlen(s) > 13)
-			if (s[12] == '.')	/* try to preserve difference */
-			    s[12] = s[13];	/* between .h, .c, .y, etc. */
-			s[13] = '\0';
-		}
-#endif
 		Strcat(rejname, REJEXT);
 	    }
 	    if (skip_rest_of_patch) {
-		say4("%d out of %d hunks ignored--saving rejects to %s\n",
+		say("%d out of %d hunks ignored--saving rejects to %s\n",
 		    failed, hunk, rejname);
 	    }
 	    else {
-		say4("%d out of %d hunks failed--saving rejects to %s\n",
+		say("%d out of %d hunks failed--saving rejects to %s\n",
 		    failed, hunk, rejname);
 	    }
 	    if (move_file(TMPREJNAME, rejname) < 0)
@@ -359,23 +347,23 @@ reinitialize_almost_everything(void)
     last_frozen_line = 0;
 
     filec = 0;
-    if (filearg[0] != Nullch && !out_of_mem) {
+    if (filearg[0] != NULL && !out_of_mem) {
 	free(filearg[0]);
-	filearg[0] = Nullch;
+	filearg[0] = NULL;
     }
 
-    if (outname != Nullch) {
+    if (outname != NULL) {
 	free(outname);
-	outname = Nullch;
+	outname = NULL;
     }
 
     last_offset = 0;
 
     diff_type = 0;
 
-    if (revision != Nullch) {
+    if (revision != NULL) {
 	free(revision);
-	revision = Nullch;
+	revision = NULL;
     }
 
     reverse = reverse_flag_specified;
@@ -384,14 +372,14 @@ reinitialize_almost_everything(void)
     get_some_switches();
 
     if (filec >= 2)
-	fatal1("you may not change to a different patch file\n");
+	fatal("you may not change to a different patch file\n");
 }
 
 static char *
 nextarg(void)
 {
     if (!--Argc)
-	fatal2("missing argument after `%s'\n", *Argv);
+	fatal("missing argument after `%s'\n", *Argv);
     return *++Argv;
 }
 
@@ -450,7 +438,7 @@ decode_long_option(char *opt)
     struct option key, *found;
 
     key.long_opt = opt;
-    found = (struct option *)bsearch(&key, options,
+    found = bsearch(&key, options,
 	sizeof(options) / sizeof(options[0]), sizeof(options[0]), optcmp);
 
     return found ? found->short_opt : '\0';
@@ -475,9 +463,9 @@ get_some_switches(void)
 	}
 	if (*s != '-' || !s[1]) {
 	    if (filec == MAXFILEC)
-		fatal1("too many file arguments\n");
-	    if (filec == 1 && filearg[filec] != Nullch)
-		fatal1("-i option and patchfile argument are mutually\
+		fatal("too many file arguments\n");
+	    if (filec == 1 && filearg[filec] != NULL)
+		fatal("-i option and patchfile argument are mutually\
 exclusive\n");
 	    filearg[filec++] = savestr(s);
 	}
@@ -505,14 +493,14 @@ exclusive\n");
 		if (!*++s)
 		    s = nextarg();
 		if (chdir(s) < 0)
-		    pfatal2("can't cd to %s", s);
+		    pfatal("can't cd to %s", s);
 		break;
 	    case 'D':
 	    	do_defines = TRUE;
 		if (!*++s)
 		    s = nextarg();
 		if (!isalpha((unsigned char)*s) && '_' != *s)
-		    fatal1("argument to -D is not an identifier\n");
+		    fatal("argument to -D is not an identifier\n");
 		Sprintf(if_defined, "#ifdef %s\n", s);
 		Sprintf(not_defined, "#ifndef %s\n", s);
 		Sprintf(end_defined, "#endif /* %s */\n", s);
@@ -532,7 +520,7 @@ exclusive\n");
 		maxfuzz = atoi(s);
 		break;
 	    case 'i':
-		if (filearg[1] != Nullch)
+		if (filearg[1] != NULL)
 		    free(filearg[1]);
 		filearg[1] = savestr(nextarg());
 		break;
@@ -625,7 +613,7 @@ locate_hunk(LINENUM fuzz)
 	if (check_after && patch_match(first_guess, offset, fuzz)) {
 #ifdef DEBUGGING
 	    if (debug & 1)
-		say3("Offset changing from %ld to %ld\n", last_offset, offset);
+		say("Offset changing from %ld to %ld\n", last_offset, offset);
 #endif
 	    last_offset = offset;
 	    return first_guess+offset;
@@ -633,7 +621,7 @@ locate_hunk(LINENUM fuzz)
 	else if (check_before && patch_match(first_guess, -offset, fuzz)) {
 #ifdef DEBUGGING
 	    if (debug & 1)
-		say3("Offset changing from %ld to %ld\n", last_offset, -offset);
+		say("Offset changing from %ld to %ld\n", last_offset, -offset);
 #endif
 	    last_offset = -offset;
 	    return first_guess-offset;
@@ -684,7 +672,7 @@ abort_hunk(void)
 	    fprintf(rejfp, "%c %s", pch_char(i), pfetch(i));
 	    break;
 	default:
-	    fatal1("fatal internal error in abort_hunk\n"); 
+	    fatal("fatal internal error in abort_hunk\n"); 
 	}
     }
 }
@@ -745,11 +733,11 @@ apply_hunk(LINENUM where)
 	    new++;
 	}
 	else if (pch_char(new) != pch_char(old)) {
-	    say3("Out-of-sync patch, lines %ld,%ld--mangled text or line numbers, maybe?\n",
+	    say("Out-of-sync patch, lines %ld,%ld--mangled text or line numbers, maybe?\n",
 		pch_hunk_beg() + old,
 		pch_hunk_beg() + new);
 #ifdef DEBUGGING
-	    say3("oldchar = '%c', newchar = '%c'\n",
+	    say("oldchar = '%c', newchar = '%c'\n",
 		pch_char(old), pch_char(new));
 #endif
 	    my_exit(1);
@@ -814,8 +802,8 @@ static void
 init_output(char *name)
 {
     ofp = fopen(name, "w");
-    if (ofp == Nullfp)
-	pfatal2("can't create %s", name);
+    if (ofp == NULL)
+	pfatal("can't create %s", name);
 }
 
 /* Open a file to put hunks we can't locate. */
@@ -824,8 +812,8 @@ static void
 init_reject(char *name)
 {
     rejfp = fopen(name, "w");
-    if (rejfp == Nullfp)
-	pfatal2("can't create %s", name);
+    if (rejfp == NULL)
+	pfatal("can't create %s", name);
 }
 
 /* Copy input file to output, up to wherever hunk is to be applied. */
@@ -836,7 +824,7 @@ copy_till(LINENUM lastline)
     LINENUM R_last_frozen_line = last_frozen_line;
 
     if (R_last_frozen_line > lastline)
-	fatal1("misordered hunks! output would be garbled\n");
+	fatal("misordered hunks! output would be garbled\n");
     while (R_last_frozen_line < lastline) {
 	dump_line(++R_last_frozen_line);
     }
@@ -850,12 +838,12 @@ spew_output(void)
 {
 #ifdef DEBUGGING
     if (debug & 256)
-	say3("il=%ld lfl=%ld\n",input_lines,last_frozen_line);
+	say("il=%ld lfl=%ld\n",input_lines,last_frozen_line);
 #endif
     if (input_lines)
 	copy_till(input_lines);		/* dump remainder of file */
     Fclose(ofp);
-    ofp = Nullfp;
+    ofp = NULL;
 }
 
 /* Copy one line from input to output. */

@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.9 2002/03/08 21:57:33 kristerw Exp $	*/
+/*	$NetBSD: util.c,v 1.10 2002/03/11 18:47:51 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.9 2002/03/08 21:57:33 kristerw Exp $");
+__RCSID("$NetBSD: util.c,v 1.10 2002/03/11 18:47:51 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -9,12 +9,8 @@ __RCSID("$NetBSD: util.c,v 1.9 2002/03/08 21:57:33 kristerw Exp $");
 #include "INTERN.h"
 #include "util.h"
 #include "backupfile.h"
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -34,14 +30,14 @@ move_file(char *from, char *to)
     if (strEQ(to, "-")) {
 #ifdef DEBUGGING
 	if (debug & 4)
-	    say2("Moving %s to stdout.\n", from);
+	    say("Moving %s to stdout.\n", from);
 #endif
 	fromfd = open(from, 0);
 	if (fromfd < 0)
-	    pfatal2("internal error, can't reopen %s", from);
+	    pfatal("internal error, can't reopen %s", from);
 	while ((i=read(fromfd, buf, sizeof buf)) > 0)
 	    if (write(1, buf, i) != 1)
-		pfatal1("write failed");
+		pfatal("write failed");
 	Close(fromfd);
 	return 0;
     }
@@ -53,7 +49,7 @@ move_file(char *from, char *to)
 #ifndef NODIR
 	char *backupname = find_backup_file_name(to);
 	if (backupname == (char *) 0)
-	    fatal1("out of memory\n");
+	    fatal("out of memory\n");
 	Strcpy(bakname, backupname);
 	free(backupname);
 #else /* NODIR */
@@ -86,7 +82,7 @@ move_file(char *from, char *to)
 	while (unlink(bakname) >= 0) ;	/* while() is for benefit of Eunice */
 #ifdef DEBUGGING
 	if (debug & 4)
-	    say3("Moving %s to %s.\n", to, bakname);
+	    say("Moving %s to %s.\n", to, bakname);
 #endif
 	if (link(to, bakname) < 0) {
 	    /* Maybe `to' is a symlink into a different file system.
@@ -97,16 +93,16 @@ move_file(char *from, char *to)
 
 	    bakfd = creat(bakname, 0666);
 	    if (bakfd < 0) {
-		say4("Can't backup %s, output is in %s: %s\n", to, from,
-		     strerror(errno));
+		say("Can't backup %s, output is in %s: %s\n", to, from,
+		    strerror(errno));
 		return -1;
 	    }
 	    tofd = open(to, 0);
 	    if (tofd < 0)
-		pfatal2("internal error, can't open %s", to);
+		pfatal("internal error, can't open %s", to);
 	    while ((i=read(tofd, buf, sizeof buf)) > 0)
 		if (write(bakfd, buf, i) != i)
-		    pfatal1("write failed");
+		    pfatal("write failed");
 	    Close(tofd);
 	    Close(bakfd);
 	}
@@ -114,23 +110,23 @@ move_file(char *from, char *to)
     }
 #ifdef DEBUGGING
     if (debug & 4)
-	say3("Moving %s to %s.\n", from, to);
+	say("Moving %s to %s.\n", from, to);
 #endif
     if (link(from, to) < 0) {		/* different file system? */
 	int tofd;
 	
 	tofd = creat(to, 0666);
 	if (tofd < 0) {
-	    say4("Can't create %s, output is in %s: %s\n",
+	    say("Can't create %s, output is in %s: %s\n",
 	      to, from, strerror(errno));
 	    return -1;
 	}
 	fromfd = open(from, 0);
 	if (fromfd < 0)
-	    pfatal2("internal error, can't reopen %s", from);
+	    pfatal("internal error, can't reopen %s", from);
 	while ((i=read(fromfd, buf, sizeof buf)) > 0)
 	    if (write(tofd, buf, i) != i)
-		pfatal1("write failed");
+		pfatal("write failed");
 	Close(fromfd);
 	Close(tofd);
     }
@@ -149,13 +145,13 @@ copy_file(char *from, char *to)
     
     tofd = creat(to, 0666);
     if (tofd < 0)
-	pfatal2("can't create %s", to);
+	pfatal("can't create %s", to);
     fromfd = open(from, 0);
     if (fromfd < 0)
-	pfatal2("internal error, can't reopen %s", from);
+	pfatal("internal error, can't reopen %s", from);
     while ((i=read(fromfd, buf, sizeof buf)) > 0)
 	if (write(tofd, buf, i) != i)
-	    pfatal2("write to %s failed", to);
+	    pfatal("write to %s failed", to);
     Close(fromfd);
     Close(tofd);
 }
@@ -172,12 +168,12 @@ savestr(char *s)
 	s = "Oops";
     t = s;
     while (*t++);
-    rv = malloc((MEM) (t - s));
-    if (rv == Nullch) {
+    rv = malloc(t - s);
+    if (rv == NULL) {
 	if (using_plan_a)
 	    out_of_mem = TRUE;
 	else
-	    fatal1("out of memory\n");
+	    fatal("out of memory\n");
     }
     else {
 	t = rv;
@@ -186,38 +182,13 @@ savestr(char *s)
     return rv;
 }
 
-#if defined(lint) && defined(CANVARARG)
-
-/*VARARGS ARGSUSED*/
-say(pat) char *pat; { ; }
-/*VARARGS ARGSUSED*/
-fatal(pat) char *pat; { ; }
-/*VARARGS ARGSUSED*/
-pfatal(pat) char *pat; { ; }
-/*VARARGS ARGSUSED*/
-ask(pat) char *pat; { ; }
-
-#else
-
 /* Vanilla terminal output (buffered). */
 
 void
-#ifdef __STDC__
 say(const char *pat, ...)
-#else
-say(va_alist)
-	va_dcl
-#endif
 {
     va_list ap;
-#ifdef __STDC__
     va_start(ap, pat);
-#else
-    const char *pat;
-
-    va_start(ap);
-    pat = va_arg(ap, const char *);
-#endif
 	
     vfprintf(stderr, pat, ap);
     va_end(ap);
@@ -227,22 +198,10 @@ say(va_alist)
 /* Terminal output, pun intended. */
 
 void				/* very void */
-#ifdef __STDC__
 fatal(const char *pat, ...)
-#else
-fatal(va_alist)
-	va_dcl
-#endif
 {
     va_list ap;
-#ifdef __STDC__
     va_start(ap, pat);
-#else
-    const char *pat;
-
-    va_start(ap);
-    pat = va_arg(ap, const char *);
-#endif
 	
     fprintf(stderr, "patch: **** ");
     vfprintf(stderr, pat, ap);
@@ -253,23 +212,11 @@ fatal(va_alist)
 /* Say something from patch, something from the system, then silence . . . */
 
 void				/* very void */
-#ifdef __STDC__
 pfatal(const char *pat, ...)
-#else
-pfatal(va_alist)
-	va_dcl
-#endif
 {
     va_list ap;
     int errnum = errno;
-#ifdef __STDC__
     va_start(ap, pat);
-#else
-    const char *pat;
-
-    va_start(ap);
-    pat = va_arg(ap, const char *);
-#endif
 	
     fprintf(stderr, "patch: **** ");
     vfprintf(stderr, pat, ap);
@@ -280,25 +227,13 @@ pfatal(va_alist)
 /* Get a response from the user, somehow or other. */
 
 void
-#ifdef __STDC__
 ask(const char *pat, ...)
-#else
-ask(va_alist)
-	va_dcl
-#endif
 {
     int ttyfd;
     int r;
     bool tty2 = isatty(2);
     va_list ap;
-#ifdef __STDC__
     va_start(ap, pat);
-#else
-    const char *pat;
-
-    va_start(ap);
-    pat = va_arg(ap, const char *);
-#endif
 
     (void) vsprintf(buf, pat, ap);
     va_end(ap);
@@ -332,41 +267,26 @@ ask(va_alist)
     else
 	buf[r] = '\0';
     if (!tty2)
-	say2("%s",buf);
+	say("%s",buf);
 }
-#endif /* lint */
 
 /* How to handle certain events when not in a critical region. */
 
 void
 set_signals(int reset)
 {
-#ifndef lint
-#ifdef VOIDSIG
-    static void (*hupval) __P((int)),(*intval) __P((int));
-#else
-    static int (*hupval) __P((int)),(*intval)__P((int));
-#endif
+    static void (*hupval)(int),(*intval)(int);
 
     if (!reset) {
 	hupval = signal(SIGHUP, SIG_IGN);
 	if (hupval != SIG_IGN)
-#ifdef VOIDSIG
 	    hupval = my_exit;
-#else
-	    hupval = (int(*) __P((int)))my_exit;
-#endif
 	intval = signal(SIGINT, SIG_IGN);
 	if (intval != SIG_IGN)
-#ifdef VOIDSIG
 	    intval = my_exit;
-#else
-	    intval = (int(*) __P((int)))my_exit;
-#endif
     }
     Signal(SIGHUP, hupval);
     Signal(SIGINT, intval);
-#endif
 }
 
 /* How to handle certain events when in a critical region. */
@@ -437,17 +357,17 @@ fetchname(char *at, int strip_leading, int assume_exists)
     int sleading = strip_leading;
 
     if (!at)
-	return Nullch;
+	return NULL;
     while (isspace((unsigned char)*at))
 	at++;
 #ifdef DEBUGGING
     if (debug & 128)
-	say4("fetchname %s %d %d\n",at,strip_leading,assume_exists);
+	say("fetchname %s %d %d\n",at,strip_leading,assume_exists);
 #endif
     filename_is_dev_null = FALSE;
     if (strnEQ(at, "/dev/null", 9)) {	/* so files can be created by diffing */
         filename_is_dev_null = TRUE;
-	return Nullch;			/*   against /dev/null. */
+	return NULL;			/*   against /dev/null. */
     }
     name = fullname = t = savestr(at);
 
@@ -489,7 +409,7 @@ fetchname(char *at, int strip_leading, int assume_exists)
 	    || try(     "%s%s", SCCSPREFIX, filebase))
 	  return name;
 	free(name);
-	name = Nullch;
+	name = NULL;
     }
 
     return name;
