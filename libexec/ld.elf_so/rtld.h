@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.32 2001/12/14 00:53:07 thorpej Exp $	 */
+/*	$NetBSD: rtld.h,v 1.33 2001/12/28 05:44:22 lukem Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -45,7 +45,9 @@
 
 #if defined(_RTLD_SOURCE)
 
+#ifndef	RTLD_DEFAULT_LIBRARY_PATH
 #define	RTLD_DEFAULT_LIBRARY_PATH	"/usr/lib"
+#endif
 #define _PATH_LD_HINTS			"/etc/ld.so.conf"
 
 #if 0
