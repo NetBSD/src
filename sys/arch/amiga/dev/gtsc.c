@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: gtsc.c,v 1.3 1994/05/16 05:09:02 chopps Exp $
+ *	$Id: gtsc.c,v 1.4 1994/05/25 21:55:04 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,11 +120,13 @@ gtscattach(pdp, dp, auxp)
 	gap = auxp;
 	sc = (struct sbic_softc *)dp;
 	sc->sc_cregs = rp = gap->zargs.va;	
+
 	/*
 	 * disable ints and reset bank register
 	 */
 	rp->CNTR = 0;
-	rp->bank = 0;
+	if ((gap->flags & GVP_NOBANK) == 0)
+		rp->bank = 0;
 	
 	sc->sc_dmago =  gtsc_dmago;
 	sc->sc_dmafree = gtsc_dmafree;
@@ -148,7 +150,8 @@ gtscattach(pdp, dp, auxp)
 		sc->sc_dmamask = ~0x07ffffff;
 	printf(" dmamask 0x%x", ~sc->sc_dmamask);
 	
-	sc->gtsc_bankmask = (~sc->sc_dmamask >> 18) & 0x01c0;
+	if ((gap->flags & GVP_NOBANK) == 0)
+		sc->gtsc_bankmask = (~sc->sc_dmamask >> 18) & 0x01c0;
 
 
 	/*
@@ -268,7 +271,8 @@ gtsc_dmago(dev, addr, count, flags)
 	sdp->CNTR = dev->sc_dmacmd;
 	sdp->ACR = (u_int) dev->sc_cur->dc_addr;
 	if (dev->gtsc_bankmask)
-	sdp->bank = dev->gtsc_bankmask & (((u_int) dev->sc_cur->dc_addr) >> 18);
+		sdp->bank = 
+		    dev->gtsc_bankmask & (((u_int)dev->sc_cur->dc_addr) >> 18);
 	sdp->ST_DMA = 1;
 
 	/*
