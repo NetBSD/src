@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoul.c,v 1.4 1999/11/29 22:51:19 simonb Exp $	*/
+/*	$NetBSD: strtoul.c,v 1.5 2000/05/25 01:22:41 msaitoh Exp $	*/
 
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>
@@ -22,7 +22,7 @@ strtoul(s, ptr, base)
 	u_long maxdiv, maxrem;
 
 	if (s == NULL) {
-		if (!ptr)
+		if (ptr != NULL)
 			*ptr = (char *)start;
 		return 0L;
 	}
