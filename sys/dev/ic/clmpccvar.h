@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpccvar.h,v 1.1 1999/02/13 17:05:20 scw Exp $ */
+/*	$NetBSD: clmpccvar.h,v 1.2 1999/02/20 00:27:30 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,20 +60,31 @@ struct clmpcc_softc;
 struct clmpcc_chan {
 	struct tty	*ch_tty;	/* This channel's tty structure */
 	struct clmpcc_softc *ch_sc;	/* Pointer to chip's softc structure */
-	int		ch_car;		/* Channel number (CD2400_REG_CAR) */
+	u_char		ch_car;		/* Channel number (CD2400_REG_CAR) */
 	u_char		ch_openflags;	/* Persistant TIOC flags */
-	u_char		ch_flags;	/* Various channel-specific flags */
-#define	CLMPCC_FLG_IS_CONSOLE	0x01	/* Channel is system console */
-#define CLMPCC_FLG_CARRIER_CHNG	0x02
-#define CLMPCC_FLG_START_BREAK 	0x04
-#define CLMPCC_FLG_END_BREAK 	0x08
-#define CLMPCC_FLG_START 	0x10
-#define CLMPCC_FLG_STOP 	0x20
-#define CLMPCC_FLG_SEND_NULL 	0x40
-#define CLMPCC_FLG_FIFO_CLEAR	0x80
+	u_short		ch_flags;	/* Various channel-specific flags */
+#define	CLMPCC_FLG_IS_CONSOLE	0x0001	/* Channel is system console */
+#define CLMPCC_FLG_CARRIER_CHNG	0x0002
+#define CLMPCC_FLG_START_BREAK 	0x0004
+#define CLMPCC_FLG_END_BREAK 	0x0008
+#define CLMPCC_FLG_START 	0x0010
+#define CLMPCC_FLG_STOP 	0x0020
+#define CLMPCC_FLG_FIFO_CLEAR	0x0040
+#define CLMPCC_FLG_UPDATE_PARMS	0x0080
+#define CLMPCC_FLG_NEED_INIT	0x0100
 
-	u_char		ch_fifo;	/* Current Rx Fifo threshold */
 	u_char		ch_control;
+
+	/* New port parameters wait here until written by the Tx ISR */
+	u_char		ch_tcor;
+	u_char		ch_tbpr;
+	u_char		ch_rcor;
+	u_char		ch_rbpr;
+	u_char		ch_cor1;
+	u_char		ch_cor2;
+	u_char		ch_cor3;
+	u_char		ch_cor4;	/* Current Rx Fifo threshold */
+	u_char		ch_cor5;
 
 	u_int8_t	*ch_ibuf;	/* Start of input ring buffer */
 	u_int8_t	*ch_ibuf_end;	/* End of input ring buffer */
