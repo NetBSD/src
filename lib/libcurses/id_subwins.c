@@ -1,4 +1,4 @@
-/*	$NetBSD: id_subwins.c,v 1.9 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: id_subwins.c,v 1.10 2000/04/11 13:57:09 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)id_subwins.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: id_subwins.c,v 1.9 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: id_subwins.c,v 1.10 2000/04/11 13:57:09 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * __id_subwins --

@@ -1,4 +1,4 @@
-/*	$NetBSD: timeout.c,v 1.1 1999/04/13 14:08:19 mrg Exp $	*/
+/*	$NetBSD: timeout.c,v 1.2 2000/04/11 13:57:10 blymn Exp $	*/
 
 /*
  * Copyright (c) 1999 Julian. D. Coleman
@@ -26,6 +26,7 @@
  */
 
 #include "curses.h"
+#include "curses_private.h"
 
 /*
  * timeout --
@@ -37,9 +38,11 @@ wtimeout(win, delay)
 	int	delay;
 {
 
-	if (delay < 0) {
+	if (delay < 0)
 		win->delay = -1;
-	} else {
+	else if (!delay)
+		win->delay = delay;
+	else {
 		/* timeout granularity is ms but VTIME is 0.1s */
 		win->delay = delay / 100;
 	}
