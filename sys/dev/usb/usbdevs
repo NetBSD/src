@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.237 2002/03/19 15:07:05 augustss Exp $
+$NetBSD: usbdevs,v 1.238 2002/03/24 17:15:42 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -744,6 +744,7 @@ product KEISOKUGIKEN USBDAQ	0x0068	HKS-0200 USBDAQ
 product KENSINGTON ORBIT	0x1003	Orbit USB/PS2 trackball
 product KENSINGTON TURBOBALL	0x1005	TurboBall
 product KENSINGTON ORBIT_MAC	0x1009	Orbit USB trackball for Mac
+product KENSINGTON VIDEOCAM_VGA	0x5002	VideoCAM VGA
 
 /* Keyspan products */
 product KEYSPAN USA28		0x0101	USA-28 serial adapter
@@ -752,6 +753,7 @@ product KEYSPAN USA19		0x0103	USA-19 serial adapter
 product KEYSPAN USA18X		0x0105	USA-18X serial adapter
 product KEYSPAN USA19W		0x0106	USA-19W serial adapter
 product KEYSPAN USA49W		0x0109	USA-49W serial adapter
+product KEYSPAN USA19Q		0x010b	USA-19Q serial adapter
 product KEYSPAN UIA10_NF	0x0201	UIA-10 remote control
 
 /* Kingston products */
