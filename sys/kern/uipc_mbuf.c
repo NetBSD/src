@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.49 2000/08/18 14:23:48 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.50 2000/08/18 16:19:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -406,7 +406,6 @@ m_copym(m, off0, len, wait)
 	return m_copym0(m, off0, len, wait, 0);	/* shallow copy on M_EXT */
 }
 
-#if 0	/*not ready yet - makes false assumption on cluster mbuf*/
 struct mbuf *
 m_dup(m, off0, len, wait)
 	struct mbuf *m;
@@ -415,7 +414,6 @@ m_dup(m, off0, len, wait)
 {
 	return m_copym0(m, off0, len, wait, 1);	/* deep copy */
 }
-#endif
 
 static struct mbuf *
 m_copym0(m, off0, len, wait, deep)
@@ -429,10 +427,6 @@ m_copym0(m, off0, len, wait, deep)
 	struct mbuf *top;
 	int copyhdr = 0;
 
-#if 1	/*not ready yet - makes false assumption on cluster mbuf*/
-	if (deep)
-		panic("m_copym0 with deep == 1 is unsupported");
-#endif
 	if (off < 0 || len < 0)
 		panic("m_copym: off %d, len %d", off, len);
 	if (off == 0 && m->m_flags & M_PKTHDR)
@@ -473,15 +467,15 @@ m_copym0(m, off0, len, wait, deep)
 				MCLADDREFERENCE(m, n);
 			} else {
 				/*
-				 * XXX the code falsely assumes that, if mbufs
-				 * are with M_EXT, the cluster region was
-				 * allocated with MCLGET() and is with the size
-				 * of MCLBYTES.
-				 * this is not the case.  for counter example,
-				 * see MEXTMALLOC() and MEXTADD().
+				 * we are unsure about the way m was allocated.
+				 * copy into multiple MCLBYTES cluster mbufs.
 				 */
 				MCLGET(n, wait);
-				memcpy(mtod(n, caddr_t), mtod(m, caddr_t)+off,
+				n->m_len = 0;
+				n->m_len = M_TRAILINGSPACE(n);
+				n->m_len = min(n->m_len, len);
+				n->m_len = min(n->m_len, m->m_len - off);
+				memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off,
 				    (unsigned)n->m_len);
 			}
 		} else
@@ -489,8 +483,15 @@ m_copym0(m, off0, len, wait, deep)
 			    (unsigned)n->m_len);
 		if (len != M_COPYALL)
 			len -= n->m_len;
-		off = 0;
-		m = m->m_next;
+		off += n->m_len;
+#ifdef DIAGNOSTIC
+		if (off > m->m_len)
+			panic("m_copym0 overrun");
+#endif
+		if (off == m->m_len) {
+			m = m->m_next;
+			off = 0;
+		}
 		np = &n->m_next;
 	}
 	if (top == 0)
