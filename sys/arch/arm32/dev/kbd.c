@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.13 1996/10/13 03:06:22 christos Exp $ */
+/* $NetBSD: kbd.c,v 1.14 1996/10/15 19:47:04 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -58,6 +58,7 @@
 #include <sys/fcntl.h>
 #include <sys/signalvar.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 
 #include <machine/irqhandler.h>
 #include <machine/iomd.h>
@@ -678,7 +679,7 @@ kbdprobe(parent, match, aux)
 
 	switch (id) {
 	case RPC600_IOMD_ID:
-	case RC7500_IOC_ID:
+	case ARM7500_IOC_ID:
 		return(1);
 		break;
 	default:
@@ -841,7 +842,7 @@ kbdread(dev, uio, flag)
 	return error;
 }
 
-
+#if 0
 int
 kbdselect(dev, rw, p)
 	dev_t dev;
@@ -867,7 +868,31 @@ kbdselect(dev, rw, p)
 	splx(s);
 	return ret;
 }
+#else
 
+int
+kbdpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct kbd_softc *sc = kbd_cd.cd_devs[KBDUNIT(dev)];
+	int revents = 0;
+	int s = spltty();
+
+	if (KBDFLAG(dev) == KBDFLAG_CONUNIT)
+		return(ENXIO);
+
+	if (events & (POLLIN | POLLRDNORM))
+		if (sc->sc_q.c_cc > 0)
+			revents |= events & (POLLIN | POLLRDNORM);
+		else
+			selrecord(p, &sc->sc_rsel);
+
+	splx(s);
+	return (revents);
+}
+#endif
 
 int
 kbdioctl(dev, cmd, data, flag, p)
@@ -1205,7 +1230,8 @@ kbdintr(sc)
 
 	if (key != 0)
 		kbddecodekey(sc, key);
-	return(1);
+
+	return(1);	/* Claim interrupt */
 }
 
 
