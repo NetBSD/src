@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.35 2004/06/20 22:20:17 jmc Exp $ */
+/* $NetBSD: xlint.c,v 1.36 2005/02/09 21:24:48 dsl Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.35 2004/06/20 22:20:17 jmc Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.36 2005/02/09 21:24:48 dsl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -358,8 +358,6 @@ main(int argc, char *argv[])
 
 	appdef(&cflags, "lint");
 
-	appcstrg(&lcflags, "-Wtraditional");
-
 	appcstrg(&deflibs, "c");
 
 	if (signal(SIGHUP, terminate) == SIG_IGN)
@@ -444,6 +442,7 @@ main(int argc, char *argv[])
 				usage();
 			freelst(&lcflags);
 			appcstrg(&lcflags, "-traditional");
+			appcstrg(&lcflags, "-Wtraditional");
 			appstrg(&lcflags, concat2("-D", MACHINE));
 			appstrg(&lcflags, concat2("-D", MACHINE_ARCH));
 			appcstrg(&l1flags, "-t");
