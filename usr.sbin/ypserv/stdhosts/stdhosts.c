@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.1.1.1 1996/08/09 10:14:58 thorpej Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.2 1996/11/24 20:16:43 chuck Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -55,7 +55,7 @@ main(argc, argv)
 	FILE *data_file;
 	char data_line[_POSIX2_LINE_MAX];
 	int line_no = 0, len;
-	char *p, *k, *v, *addr_string, *fname;
+	char *k, *v, *addr_string, *fname;
 	struct in_addr host_addr;
 
 	if (argc > 2)
@@ -75,11 +75,7 @@ main(argc, argv)
 		line_no++;
 		len = strlen(data_line);
 
-		if (len > 1) {
-			if (data_line[0] == '#') {
-				continue;
-			}
-		} else
+		if (len < 1 || data_line[0] == '#')
 			continue;
 
 		/*
@@ -92,27 +88,13 @@ main(argc, argv)
 		} else
 			data_line[len - 1] = '\0';
 
-		p = data_line;
+		v = data_line;
 
 		/* Find the key, replace trailing whitespace will <NUL> */
-		for (k = p; isspace(*p) == 0; p++);
-		while (isspace(*p))
-			*p++ = '\0';
-
-		/* Get first hostname. */
-		for (v = p; ;) {
-			/* Check for EOL */
-			if (*p == '\0')
-				break;
-
-			if (isspace(*p) == 0)
-				p++;
-			else {
-				/* Got it. */
-				*p = '\0';
-				break;
-			}
-		}
+		for (k = v; isspace(*v) == 0; v++)
+			/*null*/;
+		while (isspace(*v))
+			*v++ = '\0';
 
 		if (inet_aton(k, &host_addr) == 0 ||
 		    (addr_string = inet_ntoa(host_addr)) == NULL)
