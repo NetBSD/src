@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.3 1998/10/03 12:02:45 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.4 1999/01/06 12:01:09 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <dev/wscons/wsksymvar.h>
 #include <dev/pckbc/wskbdmap_mfii.h>
 
-#define KC(n)		(0xe000 | (n))  /* see wsksymvar.h */
+#define KC(n) KS_KEYCODE(n)
 
 static const keysym_t pckbd_keydesc_us[] = {
 /*  pos      command		normal		shifted */
@@ -276,6 +276,26 @@ static const keysym_t pckbd_keydesc_it[] = {
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
+static const keysym_t pckbd_keydesc_uk[] = {
+/*  pos      normal             shifted         altgr           shift-altgr */
+    KC(2),   KS_1,              KS_exclam,      KS_plusminus,   KS_exclamdown,
+    KC(3),   KS_2,              KS_quotedbl,    KS_twosuperior, KS_cent,
+    KC(4),   KS_3,              KS_sterling,    KS_threesuperior,
+    KC(5),   KS_4,              KS_dollar,      KS_acute,       KS_currency,
+    KC(6),   KS_5,              KS_percent,     KS_mu,          KS_yen,
+    KC(7),   KS_6,              KS_asciicircum, KS_paragraph,
+    KC(8),   KS_7,              KS_ampersand,   KS_periodcentered, KS_brokenbar,
+    KC(9),   KS_8,              KS_asterisk,    KS_cedilla,     KS_ordfeminine,
+    KC(10),  KS_9,              KS_parenleft,   KS_onesuperior, KS_diaeresis,
+    KC(11),  KS_0,              KS_parenright,  KS_masculine,   KS_copyright,
+    KC(12),  KS_minus,          KS_underscore,  KS_hyphen,      KS_ssharp,
+    KC(13),  KS_equal,          KS_plus,        KS_onehalf,    KS_guillemotleft,
+    KC(40),  KS_apostrophe,     KS_at,          KS_section,     KS_Agrave,
+    KC(41),  KS_grave,          KS_grave,       KS_agrave,      KS_agrave,
+    KC(43),  KS_numbersign,     KS_asciitilde,  KS_sterling,    KS_thorn,
+    KC(86),  KS_backslash,      KS_bar,         KS_Udiaeresis,
+};
+
 static const keysym_t pckbd_keydesc_us_declk[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(1),	KS_grave,	KS_asciitilde, /* replace escape */
@@ -326,6 +346,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_DK,			KB_US,	pckbd_keydesc_dk),
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	pckbd_keydesc_dk_nodead),
 	KBD_MAP(KB_IT,			KB_US,	pckbd_keydesc_it),
+	KBD_MAP(KB_UK,			KB_US,	pckbd_keydesc_uk),
 	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_us_declk),
 	{0, 0, 0, 0}
 };
