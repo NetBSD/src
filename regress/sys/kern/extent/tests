@@ -1,4 +1,4 @@
-# $NetBSD: tests,v 1.8 2002/02/21 03:59:25 mrg Exp $
+# $NetBSD: tests,v 1.9 2005/03/15 18:27:23 bouyer Exp $
 
 #fill up an extent, should coalesce into one allocation
 extent test1 0 0x4f
@@ -83,4 +83,18 @@ print
 free 0xc0020000 0x2000
 print
 alloc_subregion 0xc0002000 0xffffe000 0x10000
+print
+#If we have something like that in the EX_NOCOALESCE case:
+#extent `test11' (0x10 - 0x20), flags = 0x2
+#  0x10 - 0x13
+#  0x1e - 0x1f
+#  0x20 - 0x20
+#then a new extent of size 1 could be allocated at 0x20.
+# fixed in 1.51
+extent test11 0x10 0x20 EX_NOCOALESCE
+alloc_subregion 0x10 0x13 0x4
+alloc_subregion 0x1e 0x1f 0x2
+alloc_subregion 0x20 0x20 0x1
+alloc_subregion 0x20 0x20 0x1
+alloc_subregion 0x10 0x20 0x1
 print

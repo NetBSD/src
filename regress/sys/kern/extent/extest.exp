@@ -1,4 +1,4 @@
-# $NetBSD: extest.exp,v 1.8 2002/02/21 03:59:25 mrg Exp $
+# $NetBSD: extest.exp,v 1.9 2005/03/15 18:27:23 bouyer Exp $
 # real output must start in line 4
 
 output for test1
@@ -63,3 +63,14 @@ result: 0xc0022000
 extent `test10' (0xc0002000 - 0xffffe000), flags = 0x0
      0xc0010000 - 0xc0011fff
      0xc0022000 - 0xc0031fff
+output for test11
+result: 0x10
+result: 0x1e
+result: 0x20
+error: Resource temporarily unavailable
+result: 0x14
+extent `test11' (0x10 - 0x20), flags = 0x2
+     0x10 - 0x13
+     0x14 - 0x14
+     0x1e - 0x1f
+     0x20 - 0x20
