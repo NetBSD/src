@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.2 1997/10/29 20:00:47 veego Exp $	*/
+/*	$NetBSD: grf_cv3d.c,v 1.3 1997/11/09 23:30:47 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -325,18 +325,16 @@ grfcv3dmatch(pdp, cfp, auxp)
 #endif
 			 return (0);
 
-	/* Distinct between ZorroII or ZorroIII mode */
-	cv3d_zorroIII = iszthreepa(zap->pa);
+	/*
+	 * Distinct between ZorroII or ZorroIII mode.
+	 * Note that iszthreepa(x) is true for the Z2 bus on the DraCo;
+	 * therefore we check for the size instead.
+	 */
+	cv3d_zorroIII = zap->size > 4*1024*1024;
 
 	/* Lets be Paranoid: Test man and prod id */
 	if (zap->manid != 8512 || zap->prodid != 67)
 		return (0);
-
-	/* ONLY attach this driver on boards in zorroIII mode */
-	if (cv3d_zorroIII != 1) {
-		printf("grfcv3d: Unsupported ZorroII mode.\n");
-		return (0);
-	}
 
 	cv3d_boardaddr = zap->va;
 
@@ -382,7 +380,7 @@ grfcv3dattach(pdp, dp, auxp)
 		bcopy(&congrf.g_display, &gp->g_display,
 			(char *) &gp[1] - (char *) &gp->g_display);
 	} else {
-		if (cv3d_zorroIII == 1) {
+		if (cv3d_zorroIII) {
 			gp->g_fbkva =
 			    (volatile caddr_t)cv3d_boardaddr + 0x04800000;
 			cv3d_memory_io_base =
@@ -427,8 +425,8 @@ grfcv3dattach(pdp, dp, auxp)
 	 */
 	if (amiga_config_found(cfdata, &gp->g_device, gp, grfcv3dprint)) {
 		if (dp != NULL)
-			printf("grfcv3d: CyberVision64/3D with %dMB being used\n",
-			    cv3d_fbsize / 0x100000);
+			printf("%s: CyberVision64/3D with %dMB being used\n",
+			    dp->dv_xname, cv3d_fbsize / 0x100000);
 		attachflag = 1;
 	} else {
 		if (!attachflag)
@@ -514,7 +512,7 @@ cv3d_boardinit(gp)
 	ba = gp->g_regkva;
 
 	/* PCI config */
-	if (cv3d_zorroIII == 1) {
+	if (cv3d_zorroIII) {
 		special = (cv3d_special_register_base + 0x000E0000);
 	} else {
 		special = (cv3d_special_register_base);
@@ -694,6 +692,7 @@ cv3d_boardinit(gp)
 	/* colors initially set to greyscale */
 
 	vgawio(cv3d_boardaddr, VDAC_ADDRESS_W, 0);
+
 	for (i = 255; i >= 0 ; i--) {
 		vgawio(cv3d_boardaddr, VDAC_DATA, i);
 		vgawio(cv3d_boardaddr, VDAC_DATA, i);
@@ -729,6 +728,7 @@ cv3d_boardinit(gp)
 
 	/* Enable Video Display (Set Bit 5) */
 	WAttr(ba, 0x33, 0);
+
 
 	gi = &gp->g_display;
 	gi->gd_regaddr	= (caddr_t) kvtop (ba);
@@ -1422,7 +1422,7 @@ cv3d_load_mon(gp, md)
 		break;
 	}
 
-	if (cv3d_zorroIII == 1) {
+	if (cv3d_zorroIII) {
 		gp->g_fbkva = (volatile caddr_t)cv3d_boardaddr + 0x04000000 +
 				(0x00400000 * fb_flag);
 	} else {
