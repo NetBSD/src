@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fereg.h,v 1.2 1998/01/05 07:31:09 perry Exp $	*/
+/*	$NetBSD: if_fereg.h,v 1.3 2002/09/28 17:09:20 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -97,18 +97,3 @@
 #define FE_ATI_MODEL_AT1700BT	0x01
 #define FE_ATI_MODEL_AT1700FT	0x02
 #define FE_ATI_MODEL_AT1700AT	0x03
-
-/*
- * Registers on MBH10302.
- */
-
-#define FE_MBH0		0x10	/* ???  Including interrupt.	*/
-#define FE_MBH1		0x11	/* ???				*/
-#define FE_MBH10	0x1A	/* Station address.  (10 - 15)	*/
-
-/* Values to be set in MBH0 register.  */
-#define FE_MBH0_MAGIC	0x0D	/* Just a magic constant?	*/
-#define FE_MBH0_INTR	0x10	/* Master interrupt control.	*/
-
-#define FE_MBH0_INTR_ENABLE	0x10	/* Enable interrupts.	*/
-#define FE_MBH0_INTR_DISABLE	0x00	/* Disable interrupts.	*/
