@@ -1,4 +1,4 @@
-.\"	$NetBSD: ps.1,v 1.34 2000/02/22 06:47:27 dbj Exp $
+.\"	$NetBSD: ps.1,v 1.35 2000/04/10 06:37:37 chs Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -125,6 +125,11 @@ and command.
 Extract values associated with the name list from the specified core
 instead of the default
 .Dq Pa /dev/kmem .
+The
+.Fl M
+option implies the
+.Fl K
+option.
 .It Fl m
 Sort by memory usage, instead of by process
 .Tn ID .
@@ -207,11 +212,9 @@ Also display information about processes without controlling terminals.
 If
 .Nm
 is unable to extract process information directly from the
-kernel (e.g., due to incorrect 
-.Fl M
-or
+kernel (e.g., due to an incorrect
 .Fl N
-options or kvm-based reasons), it currently uses an experimental
+option or kvm-based reasons), it currently uses an experimental
 fallback method to gather as much information as possible through the
 limited
 .Dq Pa /proc
