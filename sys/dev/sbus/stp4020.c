@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $ */
+/*	$NetBSD: stp4020.c,v 1.24 2002/09/04 16:17:52 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.24 2002/09/04 16:17:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,9 +323,9 @@ stp4020attach(parent, self, aux)
 			continue;
 
 		if (sbus_bus_map(sa->sa_bustag,
-				 sa->sa_reg[i].sbr_slot,
-				 sa->sa_reg[i].sbr_offset,
-				 sa->sa_reg[i].sbr_size,
+				 sa->sa_reg[i].oa_space,
+				 sa->sa_reg[i].oa_base,
+				 sa->sa_reg[i].oa_size,
 				 0, &bh) != 0) {
 			printf("%s: attach: cannot map registers\n",
 				self->dv_xname);
@@ -355,10 +355,10 @@ stp4020attach(parent, self, aux)
 	 * the lower level for PC card I/O.
 	 */
 	if (sa->sa_nintr != 0) {
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].sbi_pri,
+		bus_intr_establish(sa->sa_bustag, sa->sa_intr[1].oi_pri,
 				   IPL_NONE, 0, stp4020_statintr, sc);
 
-		bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].sbi_pri,
+		bus_intr_establish(sa->sa_bustag, sa->sa_intr[0].oi_pri,
 				   IPL_NONE, 0, stp4020_iointr, sc);
 	}
 
@@ -696,7 +696,7 @@ stp4020_map_window(struct stp4020_socket *h, int win, int speed)
 	 * seem to propagate timing information, so we use that
 	 * everywhere.
 	 */
-	stp4020_calc_speed(speed, 300, &length, &delay);
+	stp4020_calc_speed(speed, (win==STP_WIN_ATTR)? 300 : 100, &length, &delay);
 
 	/*
 	 * Fill in the Address Space Select and Base Address
