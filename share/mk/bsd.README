@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.88 2002/01/01 01:38:25 thorpej Exp $
+#	$NetBSD: bsd.README,v 1.89 2002/01/01 01:44:29 thorpej Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -200,6 +200,10 @@ BINGRP		Binary group. [wheel]
 BINOWN		Binary owner. [root]
 
 BINMODE		Binary mode. [555]
+
+HAVE_GCC3	If defined, causes <bsd.own.mk> to set MKLINT to "no",
+		since GCC 3.x's C pre-processor lacks the necessary
+		support for NetBSD's lint(1).
 
 NONBINMODE	Mode for non-executable files. [444]
 
