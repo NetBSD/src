@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.4,v 1.3.2.2 2000/04/13 21:52:38 jhawk Exp $
+.\"	$NetBSD: wdc.4,v 1.3.2.3 2000/04/13 21:55:56 jhawk Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -56,12 +56,12 @@ driver provides the basic functions for the
 and
 .Nm atapi
 drivers. This driver supports IDE and EIDE controllers, as well as MFM, RLL
-and ESDI on the ISA bus. PCI IDE controllers in legacy mode are also supported,
+and ESDI on the ISA bus. PCI IDE controllers in legaty mode are also supported,
 but the
 .Xr pciide 4
-driver may provide more functionality.
+driver may provide more functionalities.
 
-For the ISA front-end, the 0x01 flag enables 32-bit I/O negotiation in
+For the ISA front-end, the 0x01 flag enables the 32 bits I/O negociation in
 the driver. This is known to cause problems with some motherboards.
 .Sh SEE ALSO
 .Xr intro 4
