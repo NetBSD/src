@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.62.10.4 2003/07/10 15:30:18 tron Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.62.10.5 2004/06/05 19:46:25 jdc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.62.10.4 2003/07/10 15:30:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.62.10.5 2004/06/05 19:46:25 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1391,8 +1391,12 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				if (exclusive_flag) {
 					exclusive_flag = 0;
 					VATTR_NULL(&va);
-					memcpy((caddr_t)&va.va_atime, cverf,
-						NFSX_V3CREATEVERF);
+					/*
+					 * XXX
+					 * assuming NFSX_V3CREATEVERF
+					 * == sizeof(nfstime3)
+					 */
+					fxdr_nfsv3time(cverf, &va.va_atime);
 					error = VOP_SETATTR(nd.ni_vp, &va, cred,
 						procp);
 				}
@@ -1459,9 +1463,16 @@ nfsrv_create(nfsd, slp, procp, mrq)
 		vput(vp);
 	}
 	if (v3) {
-		if (exclusive_flag && !error &&
-			memcmp(cverf, (caddr_t)&va.va_atime, NFSX_V3CREATEVERF))
-			error = EEXIST;
+		if (exclusive_flag && !error) {
+			/*
+			 * XXX assuming NFSX_V3CREATEVERF == sizeof(nfstime3)
+			 */
+			char oldverf[NFSX_V3CREATEVERF];
+
+			txdr_nfsv3time(&va.va_atime, oldverf);
+			if (memcmp(cverf, oldverf, NFSX_V3CREATEVERF))
+				error = EEXIST;
+		}
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, procp);
 		vrele(dirp);
 	}
