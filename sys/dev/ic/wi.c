@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.178 2004/07/22 20:34:52 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.179 2004/07/22 20:36:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.178 2004/07/22 20:34:52 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.179 2004/07/22 20:36:11 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2409,7 +2409,7 @@ wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 	for (i = 500; i > 0; i--) {	/* 5s */
 		if ((CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY) == 0)
 			break;
-		DELAY(10*1000);	/* 10 m sec */
+		DELAY(1000);	/* 1 m sec */
 	}
 	if (i == 0) {
 		printf("%s: wi_cmd: busy bit won't clear.\n",
@@ -2501,7 +2501,7 @@ wi_seek_bap(struct wi_softc *sc, int id, int off)
 			sc->sc_bap_off = WI_OFF_ERR;	/* invalidate */
 			return ETIMEDOUT;
 		}
-		DELAY(1);
+		DELAY(2);
 	}
 #ifdef WI_HISTOGRAM
 	if (i < 100)
