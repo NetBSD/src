@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1997/12/04 15:33:23 tv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 1998/01/24 16:46:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -633,9 +633,13 @@ dumpsys()
 	 */
 	if (dumpsize == 0)
 		cpu_dumpconf();
-	if (dumplo < 0)
+	if (dumplo <= 0) {
+		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
+		    minor(dumpdev));
 		return;
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	}
+	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
+	    minor(dumpdev), dumplo);
 
 #if defined(DDB) || defined(PANICWAIT)
 	printf("Do you want to dump memory? [y]");
