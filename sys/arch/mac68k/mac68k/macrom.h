@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.5 1995/09/17 21:28:37 briggs Exp $	*/
+/*	$NetBSD: macrom.h,v 1.6 1996/02/28 04:14:17 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -71,6 +71,12 @@ extern u_int32_t	HwCfgFlags3;	/* more hardware config flags */
 extern u_int32_t	ADBReInit_JTBL;	/* pointer to patch table */
 extern void		(*jClkNoMem)(); /* pointer to ClkNoMem */
 extern u_char		SysParam[20];	/* Place where PRam data gets stored */
+extern caddr_t		ExpandMem;	/* pointer to Expanded Memory used by */
+					/*  newer ADB routines (since LCIII) */
+extern u_int16_t	VBLQueue;	/* Vertical blanking Queue, unused ? */
+extern caddr_t		VBLQueue_head;	/* Vertical blanking Queue, head */
+extern caddr_t		VBLQueue_tail;	/* Vertical blanking Queue, tail */
+
 	/* Types */
 
 typedef caddr_t Ptr;
@@ -136,6 +142,14 @@ Handle GetResource(
 	short	theID);
 short ResError(
 	void);
+void mrg_CountResources(
+	void);
+void mrg_GetIndResource(
+	void);
+
+/* Trap management */
+int mrg_SetOSTrapAddress(
+	void);
 
 
 	/* Mac ROM Glue globals for BSD kernel */
@@ -181,6 +195,8 @@ typedef struct romvec_s {
 	caddr_t jClkNoMem;
 	caddr_t ADBAlternateInit;	/* more fundamental than ABDReInit */
 	caddr_t InitEgret;	/* Set up Buffer for Egret routines */
+	caddr_t FixDiv;
+	caddr_t FixMul;
 } romvec_t;
 void mrg_setvectors(romvec_t *rom_vectors);
 int mrg_romready(void);

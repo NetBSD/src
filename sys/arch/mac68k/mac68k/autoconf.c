@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 1996/02/03 22:49:52 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 1996/02/28 04:14:05 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,9 +134,11 @@ configure()
 
 	mrg_init();		/* Init Mac ROM Glue */
 
+	startrtclock();		/* swapped with adb_init (WRU) */
+	
 	adb_init();		/* ADB device subsystem & driver */
 
-	startrtclock();
+     /*	startrtclock(); 	   swapped with adb_init (WRU) */
 
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("No main device!");
