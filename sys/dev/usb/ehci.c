@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.54.2.11 2004/07/02 17:12:34 he Exp $	*/
+/*	$NetBSD: ehci.c,v 1.54.2.12 2004/07/07 17:00:38 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.11 2004/07/02 17:12:34 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.12 2004/07/07 17:00:38 tron Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2111,13 +2111,12 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 printf("status=%08x toggle=%d\n", epipe->sqh->qh.qh_qtd.qtd_status,
     epipe->nexttoggle);
 #endif
-	qtdstatus = htole32(
-	    EHCI_QTD_ACTIVE |
+	qtdstatus = EHCI_QTD_ACTIVE |
 	    EHCI_QTD_SET_PID(rd ? EHCI_QTD_PID_IN : EHCI_QTD_PID_OUT) |
 	    EHCI_QTD_SET_CERR(3)
 	    /* IOC set below */
 	    /* BYTES set below */
-	    );
+	    ;
 	mps = UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize);
 	tog = epipe->nexttoggle;
 	qtdstatus |= EHCI_QTD_SET_TOGGLE(tog);
@@ -2189,7 +2188,7 @@ printf("status=%08x toggle=%d\n", epipe->sqh->qh.qh_qtd.qtd_status,
 		cur->nextqtd = next;
 		cur->qtd.qtd_next = cur->qtd.qtd_altnext = nextphys;
 		cur->qtd.qtd_status =
-		    qtdstatus | htole32(EHCI_QTD_SET_BYTES(curlen));
+		    htole32(qtdstatus | EHCI_QTD_SET_BYTES(curlen));
 		cur->xfer = xfer;
 		cur->len = curlen;
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: cbp=0x%08x end=0x%08x\n",
