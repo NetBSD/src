@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 2002/09/27 20:36:39 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.22 2002/10/01 05:32:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -100,9 +100,8 @@ void clock_intr __P((struct clockframe));
 static int  clock_match __P((struct device *, struct cfdata *, void *args));
 static void clock_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach clock_ca = {
-	sizeof(struct device), clock_match, clock_attach
-};
+CFATTACH_DECL(clock, sizeof(struct device),
+    clock_match, clock_attach, NULL, NULL)
 
 #ifdef	SUN3_470
 
@@ -117,9 +116,8 @@ const struct cfattach clock_ca = {
 static int  oclock_match __P((struct device *, struct cfdata *, void *args));
 static void oclock_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach oclock_ca = {
-	sizeof(struct device), oclock_match, oclock_attach
-};
+CFATTACH_DECL(oclock, sizeof(struct device),
+    oclock_match, oclock_attach, NULL, NULL)
 
 /*
  * Is there an intersil clock?

@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_mbmem.c,v 1.4 2002/09/27 20:36:19 thorpej Exp $	*/
+/*	$NetBSD: sc_mbmem.c,v 1.5 2002/10/01 05:39:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -105,9 +105,8 @@ static int	sunsc_mbmem_match __P((struct device *, struct cfdata *, void *));
 static void	sunsc_mbmem_attach __P((struct device *, struct device *, void *));
 static int	sunsc_mbmem_intr __P((void *));
 
-const struct cfattach sc_mbmem_ca = {
-	sizeof(struct sunscpal_softc), sunsc_mbmem_match, sunsc_mbmem_attach
-};
+CFATTACH_DECL(sc_mbmem, sizeof(struct sunscpal_softc),
+    sunsc_mbmem_match, sunsc_mbmem_attach, NULL, NULL)
 
 /*
  * Options for parity, DMA, and interrupts.
