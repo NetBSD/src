@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.6 1993/10/07 00:23:55 cgd Exp $
+#	$Id: Makefile.inc,v 1.7 1993/10/07 19:53:35 brezak Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/stdlib ${.CURDIR}/stdlib
@@ -7,7 +7,9 @@
 SRCS+=	abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c div.c exit.c \
 	getenv.c getopt.c heapsort.c labs.c ldiv.c malloc.c multibyte.c \
 	putenv.c qsort.c radixsort.c rand.c random.c setenv.c strtod.c \
-	strtol.c strtoul.c system.c
+	strtol.c strtoul.c system.c \
+	_rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
+	mrand48.c nrand48.c seed48.c srand48.c
 
 .if   (${MACHINE} == "hp300")
 SRCS+=	abs.s atof.c
