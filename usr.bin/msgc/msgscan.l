@@ -1,4 +1,4 @@
-/*	$NetBSD: msgscan.l,v 1.1.1.1 1997/09/26 21:16:38 phil Exp $	*/
+/*	$NetBSD: msgscan.l,v 1.2 1998/04/09 00:32:38 tv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,7 +42,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "defs.h"
-#include "y.tab.h"
+#include "msgparse.h"
 
 static int level; 	/* For nested comments. */
 

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.11 1998/02/22 15:40:40 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.12 1998/04/09 00:32:38 tv Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan.l,v 1.11 1998/02/22 15:40:40 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.12 1998/04/09 00:32:38 tv Exp $");
 #endif
 
 #include <stdlib.h>
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: scan.l,v 1.11 1998/02/22 15:40:40 christos Exp $");
 #include <err.h>
 
 #include "lint1.h"
-#include "y.tab.h"
+#include "cgram.h"
 
 #define CHAR_MASK	(~(~0 << CHAR_BIT))
 #define YY_NO_UNPUT

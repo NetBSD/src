@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1998/03/02 19:46:47 cgd Exp $
+#	$NetBSD: Makefile,v 1.17 1998/04/09 00:32:35 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,5 @@ LDADD+=	-lgnumalloc
 DPADD+=	${LIBGNUMALLOC}
 
 MAN=tar.1
-CLEANFILES+=y.tab.h
 
 .include <bsd.prog.mk>

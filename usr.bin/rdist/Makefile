@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/18 14:34:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 1998/04/09 00:32:38 tv Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 7/19/93
 
 PROG=	rdist
-SRCS=	docmd.c expand.c lookup.c main.c server.c
-OBJS+=	gram.o
-CLEANFILES=y.tab.h
+SRCS=	docmd.c expand.c gram.y lookup.c main.c server.c
 
 .include <bsd.prog.mk>
