@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.39 1998/03/01 02:25:58 fvdl Exp $	*/
+/*	$NetBSD: pstat.c,v 1.40 1998/03/21 04:40:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.39 1998/03/01 02:25:58 fvdl Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.40 1998/03/21 04:40:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -701,7 +701,6 @@ struct {
 	int flag;
 	char val;
 } ttystates[] = {
-	{ TS_WOPEN,	'W'},
 	{ TS_ISOPEN,	'O'},
 	{ TS_CARR_ON,	'C'},
 	{ TS_TIMEOUT,	'T'},
@@ -738,6 +737,8 @@ ttyprt(tp)
 	for (i = j = 0; ttystates[i].flag; i++)
 		if (tp->t_state&ttystates[i].flag)
 			state[j++] = ttystates[i].val;
+	if (tp->t_wopen)
+		state[j++] = 'W';
 	if (j == 0)
 		state[j++] = '-';
 	state[j] = '\0';
