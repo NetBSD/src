@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.10 2002/01/12 16:29:31 tsutsui Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.10.8.1 2002/05/16 11:31:51 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.10 2002/01/12 16:29:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.10.8.1 2002/05/16 11:31:51 gehenna Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -113,12 +113,6 @@ void	zs_putc __P((struct zs_chanstate *, int));
  * Some warts needed by z8530tty.c
  */
 int zs_def_cflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-#if defined(__alpha__) || defined(alpha)
-int zs_major = 15;
-#endif
-#if defined(pmax)
-int zs_major = 17;
-#endif
 
 /*
  * ZS chips are feeded a 7.372 MHz clock.
@@ -820,6 +814,7 @@ zs_ioasic_cnattach(ioasic_addr, zs_offset, channel)
 	int channel;
 {
 	struct zs_chanstate *cs = &zs_ioasic_conschanstate_store;
+	extern const struct cdevsw zstty_cdevsw;
 
 	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
 	cs->cs_defspeed = 9600;
@@ -828,7 +823,8 @@ zs_ioasic_cnattach(ioasic_addr, zs_offset, channel)
 	/* Point the console at the SCC. */
 	cn_tab = &zs_ioasic_cons;
 	cn_tab->cn_pri = CN_REMOTE;
-	cn_tab->cn_dev = makedev(zs_major, (zs_offset == 0x100000) ? 0 : 1);
+	cn_tab->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw),
+				 (zs_offset == 0x100000) ? 0 : 1);
 }
 
 /*
