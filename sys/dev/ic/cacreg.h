@@ -1,4 +1,4 @@
-/*	$NetBSD: cacreg.h,v 1.4 2000/09/01 12:10:21 ad Exp $	*/
+/*	$NetBSD: cacreg.h,v 1.5 2001/01/10 16:48:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,8 @@
 #define	CAC_42REG_DONE_FIFO		0x44
 #define	CAC_42REG_INTR_MASK		0x34
 #define	CAC_42REG_STATUS		0x30
-#define	CAC_42REG_INTR_PENDING		0x08
+
+#define	CAC_42_EXTINT			0x08
 
 #define	CAC_EISAREG_INTR_MASK		0x01
 #define	CAC_EISAREG_LOCAL_MASK		0x04
