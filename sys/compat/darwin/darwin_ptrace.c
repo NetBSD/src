@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.1 2003/11/20 07:12:34 manu Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.2 2003/12/04 23:59:50 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.1 2003/11/20 07:12:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.2 2003/12/04 23:59:50 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -152,5 +152,36 @@ darwin_sys_ptrace(l, v, retval)
 		break;
 	}
 	
+	return 0;
+}
+
+int
+darwin_sys_kdebug_trace(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct darwin_sys_kdebug_trace_args /* {
+		syscallarg(int) debugid;
+		syscallarg(int) arg1;
+		syscallarg(int) arg2;
+		syscallarg(int) arg3;
+		syscallarg(int) arg4;
+		syscallarg(int) arg5;
+	} */ *uap = v;
+	int args[4];
+	char *str;
+
+	args[0] = SCARG(uap, arg1);
+	args[1] = SCARG(uap, arg2);
+	args[2] = SCARG(uap, arg3);
+	args[3] = 0;
+	str = (char*)args;
+
+#ifdef DEBUG_DARWIN
+	printf("darwin_sys_kdebug_trace(%x, (%x %x %x)/\"%s\", %x, %x)\n",
+	    SCARG(uap, debugid), SCARG(uap, arg1), SCARG(uap, arg2), 
+	    SCARG(uap, arg3), str, SCARG(uap, arg4), SCARG(uap, arg5));
+#endif
 	return 0;
 }
