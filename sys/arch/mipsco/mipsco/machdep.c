@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2001/04/22 18:21:50 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2001/04/23 23:50:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2001/04/22 18:21:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2001/04/23 23:50:23 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -342,6 +342,11 @@ mach_init(argc, argv, envp, bim, bip)
 	mips_init_msgbuf();
 
 	/*
+	 * Initialize the virtual memory system.
+	 */
+	pmap_bootstrap();
+
+	/*
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
@@ -365,11 +370,6 @@ mach_init(argc, argv, envp, bim, bip)
 	 */
 
 	pizazz_init();
-
-	/*
-	 * Initialize the virtual memory system.
-	 */
-	pmap_bootstrap();
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2001/04/22 18:21:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 2001/04/23 23:50:22 thorpej Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -733,6 +733,11 @@ mach_init(argc, argv, envv)
 	mips_init_msgbuf();
 
 	/*
+	 * Initialize the virtual memory system.
+	 */
+	pmap_bootstrap();
+
+	/*
 	 * Allocate space for proc0's USPACE.
 	 */
 	v = (caddr_t)uvm_pageboot_alloc(USPACE); 
@@ -751,11 +756,6 @@ mach_init(argc, argv, envv)
 	v = (caddr_t)uvm_pageboot_alloc(size); 
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
-
-	/*
-	 * Initialize the virtual memory system.
-	 */
-	pmap_bootstrap();
 }
 
 void

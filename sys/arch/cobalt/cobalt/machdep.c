@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2001/04/22 18:21:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2001/04/23 23:50:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -202,6 +202,8 @@ mach_init(memsize)
 	 */
 	mips_init_msgbuf();
 
+	pmap_bootstrap();
+
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
@@ -221,8 +223,6 @@ mach_init(memsize)
 	v = (caddr_t)uvm_pageboot_alloc(size); 
 	if ((allocsys(v, NULL) - v) != size)
 		panic("mach_init: table size inconsistency");
-
-	pmap_bootstrap();
 }
 
 /*
