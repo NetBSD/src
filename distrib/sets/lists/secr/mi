@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.20 2000/02/20 03:26:16 mycroft Exp $
+# $NetBSD: mi,v 1.21 2000/04/14 23:00:26 thorpej Exp $
 ./bin/ed
 ./etc/openssl/openssl.cnf
 ./sbin/init
@@ -200,7 +200,6 @@
 ./usr/libdata/lint/llib-ltelnet.ln
 ./usr/libexec/kpropd
 ./usr/libexec/telnetd
-./usr/sbin/eaytest
 ./usr/sbin/kadmin
 ./usr/sbin/kadmin.local
 ./usr/sbin/kadmind
@@ -209,12 +208,10 @@
 ./usr/sbin/kdb_init
 ./usr/sbin/kdb_util
 ./usr/sbin/kdb5_util
-./usr/sbin/kmpstat
 ./usr/sbin/kprop
 ./usr/sbin/krb5kdc
 ./usr/sbin/ksrvutil
 ./usr/sbin/kstash
-./usr/sbin/racoon
 ./usr/share/examples/openssl/CA.pl
 ./usr/share/examples/openssl/CA.sh
 ./usr/share/examples/openssl/der_chop
@@ -279,7 +276,6 @@
 ./usr/share/man/cat3/tf_util.0
 ./usr/share/man/cat5/krb.conf.0
 ./usr/share/man/cat5/krb.realms.0
-./usr/share/man/cat5/racoon.conf.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
 ./usr/share/man/cat8/kdb_destroy.0
@@ -291,7 +287,6 @@
 ./usr/share/man/cat8/krb5kdc.0
 ./usr/share/man/cat8/ksrvutil.0
 ./usr/share/man/cat8/kstash.0
-./usr/share/man/cat8/racoon.0
 ./usr/share/man/man1/bdes.1
 ./usr/share/man/man1/compile_et.1
 ./usr/share/man/man1/kdestroy.1
@@ -353,7 +348,6 @@
 ./usr/share/man/man3/tf_util.3
 ./usr/share/man/man5/krb.conf.5
 ./usr/share/man/man5/krb.realms.5
-./usr/share/man/man5/racoon.conf.5
 ./usr/share/man/man8/kadmin.8
 ./usr/share/man/man8/kadmind.8
 ./usr/share/man/man8/kdb_destroy.8
@@ -365,5 +359,4 @@
 ./usr/share/man/man8/krb5kdc.8
 ./usr/share/man/man8/ksrvutil.8
 ./usr/share/man/man8/kstash.8
-./usr/share/man/man8/racoon.8
 ./usr/share/man/whatis.db
