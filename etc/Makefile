@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.99 1999/02/11 18:19:21 cjs Exp $
+#	$NetBSD: Makefile,v 1.100 1999/02/11 22:48:11 cjs Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -199,14 +199,12 @@ distrib-dirs:
 	-mtree -def mtree/NetBSD.dist -p ${DESTDIR}/ -u
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 
-release: snapshot
-
 .if !defined(RELEASEDIR)
 snapshot snap_pre:
 	@echo setenv RELEASEDIR before doing that!
 	@false
 .else
-snapshot: distribution snap_pre snap_md snap_kern 
+release snapshot: distribution snap_pre snap_md snap_kern 
 	sh ../distrib/sets/maketars -s ../distrib/sets \
 		-d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
 	(cd ${RELEASEDIR}/binary/sets && \
