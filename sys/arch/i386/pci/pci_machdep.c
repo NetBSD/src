@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.10 1995/01/27 05:46:39 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11 1995/04/10 13:15:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -310,7 +310,7 @@ pci_map_mem(tag, reg, vap, pap)
 	/* Map the space into the kernel page table. */
 	cachable = !!(data & PCI_MAP_MEMORY_CACHABLE);
 	while (size) {
-		pmap_enter(kernel_pmap, va, pa, VM_PROT_READ | VM_PROT_WRITE,
+		pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ | VM_PROT_WRITE,
 		    TRUE);
 		if (!cachable)
 			pmap_changebit(pa, PG_N, ~0);

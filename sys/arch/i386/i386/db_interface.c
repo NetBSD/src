@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.16 1995/01/15 02:19:12 mycroft Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.17 1995/04/10 13:14:20 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -167,14 +167,14 @@ db_write_bytes(addr, size, data)
 
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
 	    addr < (vm_offset_t)&etext) {
-		ptep0 = pmap_pte(kernel_pmap, addr);
+		ptep0 = pmap_pte(pmap_kernel(), addr);
 		oldmap0 = *ptep0;
 		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
 
 		addr1 = i386_trunc_page(addr + size - 1);
 		if (i386_trunc_page(addr) != addr1) {
 			/* data crosses a page boundary */
-			ptep1 = pmap_pte(kernel_pmap, addr1);
+			ptep1 = pmap_pte(pmap_kernel(), addr1);
 			oldmap1 = *ptep1;
 			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
 		}

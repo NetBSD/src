@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 1994/12/22 03:24:10 phil Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8 1995/04/10 13:15:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -43,7 +43,7 @@
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.7 1994/12/22 03:24:10 phil Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.8 1995/04/10 13:15:56 mycroft Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ cpu_fork(p1, p2)
 	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
 	for (i=0; i < UPAGES; i++)
 	  pmap_enter(&p2->p_vmspace->vm_pmap, USRSTACK+i*NBPG,
-	     pmap_extract(kernel_pmap, ((int)p2->p_addr)+i*NBPG),
+	     pmap_extract(pmap_kernel(), ((int)p2->p_addr)+i*NBPG),
 	     VM_PROT_READ, TRUE);
 
 	pmap_activate(&p2->p_vmspace->vm_pmap, &up->u_pcb);
@@ -263,7 +263,7 @@ kvtop(addr)
 	register caddr_t addr;
 {
 	vm_offset_t va;
-	va = pmap_extract(kernel_pmap, (vm_offset_t)addr);
+	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
 	if (va == 0)
 		panic("kvtop: zero page frame");
 	return((int)va);
