@@ -1,4 +1,4 @@
-.\"	$NetBSD: cksum.1,v 1.18 2002/09/30 11:08:58 grant Exp $
+.\"	$NetBSD: cksum.1,v 1.19 2002/10/18 20:30:12 atatat Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,6 +50,7 @@
 .Nd display file checksums and block counts
 .Sh SYNOPSIS
 .Nm
+.Op Fl n
 .Oo
 .Fl m |
 .Fl 1 |
@@ -63,30 +64,35 @@
 .Nm sum
 .Op Ar
 .Nm md2
+.Op Fl n
 .Op Fl p
 .Op Fl t
 .Op Fl x
 .Op Fl s Ar string
 .Op Ar
 .Nm md4
+.Op Fl n
 .Op Fl p
 .Op Fl t
 .Op Fl x
 .Op Fl s Ar string
 .Op Ar
 .Nm md5
+.Op Fl n
 .Op Fl p
 .Op Fl t
 .Op Fl x
 .Op Fl s Ar string
 .Op Ar
 .Nm sha1
+.Op Fl n
 .Op Fl p
 .Op Fl t
 .Op Fl x
 .Op Fl s Ar string
 .Op Ar
 .Nm rmd160
+.Op Fl n
 .Op Fl p
 .Op Fl t
 .Op Fl x
@@ -198,12 +204,15 @@ Partial blocks are rounded up.
 The following options apply only when using the one of the message
 digest algorithms:
 .Bl -tag -width indent
-.It Fl s Ar string
-Print the hash of the given string
-.Ar string .
+.It Fl n
+Print the hash and the filename in the normal sum output form, with
+the hash at the left and the filename following on the right.
 .It Fl p
 Echo input from standard input to standard output, and append the
 selected message digest.
+.It Fl s Ar string
+Print the hash of the given string
+.Ar string .
 .It Fl t
 Run a built-in message digest time trial.
 .It Fl x
