@@ -32,25 +32,27 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)getstr.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: getstr.c,v 1.3 1993/08/01 18:35:41 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)getstr.c	5.5 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: getstr.c,v 1.4 1993/08/07 05:48:53 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
 
 /*
- *	This routine gets a string starting at (_cury,_curx)
- *
+ * wgetstr --
+ *	Get a string starting at (_cury,_curx).
  */
-wgetstr(win,str)
-reg WINDOW	*win; 
-reg char	*str; {
-	int c;
-
-	while ((c = wgetch(win)) != ERR && c != EOF && c != '\n')
-		*str++ = c;
+int
+wgetstr(win, str)
+	register WINDOW *win;
+	register char *str;
+{
+	while ((*str = wgetch(win)) != ERR && *str != '\n')
+		str++;
+	if (*str == ERR) {
 		*str = '\0';
-	if (c == ERR)
-		return ERR;
-	return OK;
+		return (ERR);
+	}
+	*str = '\0';
+	return (OK);
 }

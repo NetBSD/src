@@ -32,20 +32,24 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)addch.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: addch.c,v 1.3 1993/08/01 18:35:57 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)addch.c	5.7 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: addch.c,v 1.4 1993/08/07 05:48:39 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
 
 /*
- *	This routine adds the character to the current position
+ * waddch --
+ *	Add the character to the current position in the given window.
  *
  */
-waddch(win, c)
-WINDOW	*win;
-char c;
+int
+waddch(win, ch)
+	WINDOW *win;
+	int ch;
 {
-    chtype ch = (unsigned char) c;
-    return _waddbytes(win, &ch, 1);
+	static char buf[2];
+
+	buf[0] = ch;
+	return (waddbytes(win, buf, 1));
 }

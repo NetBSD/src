@@ -32,26 +32,29 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)delwin.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: delwin.c,v 1.2 1993/08/01 18:35:45 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)delwin.c	5.6 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: delwin.c,v 1.3 1993/08/07 05:48:49 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
+#include <stdlib.h>
 
 /*
- *	This routine deletes a window and releases it back to the system.
- *
+ * delwin --
+ *	Delete a window and release it back to the system.
  */
+int
 delwin(win)
-reg WINDOW	*win; {
+	register WINDOW *win;
+{
 
-	reg int		i;
-	reg WINDOW	*wp, *np;
+	register WINDOW *wp, *np;
+	register int i;
 
 	if (win->_orig == NULL) {
 		/*
-		 * If we are the original window, delete the space for
-		 * all the subwindows, and the array of space as well.
+		 * If we are the original window, delete the space for all
+		 * the subwindows, and the array of space as well.
 		 */
 		for (i = 0; i < win->_maxy && win->_y[i]; i++)
 			free(win->_y[i]);
@@ -63,13 +66,12 @@ reg WINDOW	*win; {
 			delwin(wp);
 			wp = np;
 		}
-	}
-	else {
+	} else {
 		/*
-		 * If we are a subwindow, take ourselves out of the
-		 * list.  NOTE: if we are a subwindow, the minimum list
-		 * is orig followed by this subwindow, so there are
-		 * always at least two windows in the list.
+		 * If we are a subwindow, take ourselves out of the list.
+		 * NOTE: if we are a subwindow, the minimum list is orig
+		 * followed by this subwindow, so there are always at least
+		 * two windows in the list.
 		 */
 		for (wp = win->_nextp; wp->_nextp != win; wp = wp->_nextp)
 			continue;
@@ -77,4 +79,5 @@ reg WINDOW	*win; {
 	}
 	free(win->_y);
 	free(win);
+	return (OK);
 }

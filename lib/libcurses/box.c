@@ -32,35 +32,36 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)box.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: box.c,v 1.3 1993/08/01 18:35:56 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)box.c	5.5 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: box.c,v 1.4 1993/08/07 05:48:41 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
 
 /*
- *	This routine draws a box around the given window with "vert"
- * as the vertical delimiting char, and "hor", as the horizontal one.
- *
+ * box --
+ *	Draw a box around the given window with "vert" as the vertical
+ *	delimiting char, and "hor", as the horizontal one.
  */
+int
 box(win, vert, hor)
-reg WINDOW	*win;
-char vert, hor; {
-
-	reg int		i;
-	reg int		endy, endx;
-	reg chtype      *fp, *lp;
+	register WINDOW *win;
+	int vert, hor;
+{
+	register int endy, endx, i;
+	register char *fp, *lp;
 
 	endx = win->_maxx;
 	endy = win->_maxy - 1;
 	fp = win->_y[0];
 	lp = win->_y[endy];
 	for (i = 0; i < endx; i++)
-		fp[i] = lp[i] = (unsigned char) hor;
+		fp[i] = lp[i] = hor;
 	endx--;
 	for (i = 0; i <= endy; i++)
-		win->_y[i][0] = (win->_y[i][endx] = (unsigned char) vert);
-	if (!win->_scroll && (win->_flags&_SCROLLWIN))
+		win->_y[i][0] = (win->_y[i][endx] = vert);
+	if (!win->_scroll && (win->_flags & _SCROLLWIN))
 		fp[0] = fp[endx] = lp[0] = lp[endx] = ' ';
 	touchwin(win);
+	return (OK);
 }

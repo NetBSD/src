@@ -32,29 +32,24 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)addstr.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: addstr.c,v 1.3 1993/08/01 18:35:56 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)addstr.c	5.7 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: addstr.c,v 1.4 1993/08/07 05:48:40 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
+#include <string.h>
 
 /*
- *	This routine adds a string starting at (_cury,_curx)
- *
+ * waddstr --
+ *	Add a string to the given window starting at (_cury, _curx).
  */
-waddstr(win,str)
-reg WINDOW	*win; 
-char        *str;
+int
+waddstr(win, str)
+	WINDOW *win;
+	char *str;
 {
-	chtype c;
-	reg char *s;
-# ifdef DEBUG
-	fprintf(outf, "WADDSTR(\"%s\")\n", str);
-# endif
-	for (s = str; *s;) {
-		c = (unsigned char) *s++;
-		if (_waddbytes(win, &c, 1) == ERR)
-			return ERR;
-	}
-	return OK;
+#ifdef DEBUG
+	__TRACE("waddstr: (\"%s\")\n", str);
+#endif
+	return (waddbytes(win, str, strlen(str)));
 }

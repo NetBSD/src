@@ -32,38 +32,37 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)insch.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: insch.c,v 1.3 1993/08/01 18:35:36 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)insch.c	5.5 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: insch.c,v 1.4 1993/08/07 05:48:56 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
 
 /*
- *	This routine performs an insert-char on the line, leaving
- * (_cury,_curx) unchanged.
- *
+ * winsch --
+ *	Do an insert-char on the line, leaving (_cury,_curx) unchanged.
  */
-winsch(win, c)
-reg WINDOW	*win;
-char c; {
+int
+winsch(win, ch)
+	register WINDOW *win;
+	int ch;
+{
 
-	reg chtype      *temp1, *temp2;
-	reg chtype      *end;
+	register char *end, *temp1, *temp2;
 
 	end = &win->_y[win->_cury][win->_curx];
 	temp1 = &win->_y[win->_cury][win->_maxx - 1];
 	temp2 = temp1 - 1;
 	while (temp1 > end)
 		*temp1-- = *temp2--;
-	*temp1 = (unsigned char) c;
+	*temp1 = ch;
 	touchline(win, win->_cury, win->_curx, win->_maxx - 1);
-	if (win->_cury == LINES - 1 && win->_y[LINES-1][COLS-1] != ' ')
+	if (win->_cury == LINES - 1 && win->_y[LINES - 1][COLS - 1] != ' ')
 		if (win->_scroll) {
 			wrefresh(win);
 			scroll(win);
 			win->_cury--;
-		}
-		else
-			return ERR;
-	return OK;
+		} else
+			return (ERR);
+	return (OK);
 }

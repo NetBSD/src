@@ -32,22 +32,22 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)clrtobot.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: clrtobot.c,v 1.3 1993/08/01 18:35:52 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)clrtobot.c	5.6 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: clrtobot.c,v 1.4 1993/08/07 05:48:42 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
 
 /*
- *	This routine erases everything on the window.
- *
+ * wclrtobot --
+ *	Erase everything on the window.
  */
+int
 wclrtobot(win)
-reg WINDOW	*win; {
-
-	reg int		y;
-	reg chtype      *sp, *end, *maxx;
-	reg int		startx, minx;
+	register WINDOW *win;
+{
+	register int minx, startx, y;
+	register char *sp, *end, *maxx;
 
 	startx = win->_curx;
 	for (y = win->_cury; y < win->_maxy; y++) {
@@ -64,4 +64,5 @@ reg WINDOW	*win; {
 			touchline(win, y, minx, maxx - &win->_y[y][0]);
 		startx = 0;
 	}
+	return (OK);
 }

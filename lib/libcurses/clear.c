@@ -32,20 +32,23 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)clear.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: clear.c,v 1.2 1993/08/01 18:35:53 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)clear.c	5.5 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: clear.c,v 1.3 1993/08/07 05:48:42 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
 
 /*
- *	This routine clears the window.
- *
+ * wclear --
+ *	Clear the window.
  */
+int
 wclear(win)
-reg WINDOW	*win; {
-
-	werase(win);
-	win->_clear = TRUE;
-	return OK;
+	register WINDOW *win;
+{
+	if (werase(win) == OK) {
+		win->_clear = 1;
+		return (OK);
+	}
+	return (ERR);
 }

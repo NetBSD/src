@@ -32,25 +32,29 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)scanw.c	5.7 (Berkeley) 4/15/91";*/
-static char rcsid[] = "$Id: scanw.c,v 1.2 1993/08/01 18:35:25 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)scanw.c	5.10 (Berkeley) 8/31/92";*/
+static char rcsid[] = "$Id: scanw.c,v 1.3 1993/08/07 05:49:05 mycroft Exp $";
+#endif	/* not lint */
 
 /*
- * scanw and friends
- *
+ * scanw and friends.
  */
+
+#include <curses.h>
 
 #if __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
-#include "curses.ext"
+
+static int __sscans __P((WINDOW *, const char *, va_list));
 
 /*
- *	This routine implements a scanf on the standard screen.
+ * scanw --
+ *	Implement a scanf on the standard screen.
  */
+int
 #if __STDC__
 scanw(const char *fmt, ...)
 #else
@@ -67,14 +71,16 @@ scanw(fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	ret = _sscans(stdscr, fmt, ap);
+	ret = __sscans(stdscr, fmt, ap);
 	va_end(ap);
-	return ret;
+	return (ret);
 }
 
 /*
- *	This routine implements a scanf on the given window.
+ * wscanw --
+ *	Implements a scanf on the given window.
  */
+int
 #if __STDC__
 wscanw(WINDOW *win, const char *fmt, ...)
 #else
@@ -92,25 +98,81 @@ wscanw(win, fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	ret = _sscans(win, fmt, ap);
+	ret = __sscans(win, fmt, ap);
 	va_end(ap);
-	return ret;
+	return (ret);
 }
 
 /*
+ * mvscanw, mvwscanw -- 
+ *	Implement the mvscanw commands.  Due to the variable number of
+ *	arguments, they cannot be macros.  Another sigh....
+ */
+int
+#if __STDC__
+mvscanw(register int y, register int x, const char *fmt,...)
+#else
+mvscanw(y, x, fmt, va_alist)
+	register int y, x;
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+	int ret;
+
+	if (move(y, x) != OK)
+		return (ERR);
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	ret = __sscans(stdscr, fmt, ap);
+	va_end(ap);
+	return (ret);
+}
+
+int
+#if __STDC__
+mvwscanw(register WINDOW * win, register int y, register int x,
+    const char *fmt, ...)
+#else
+mvwscanw(win, y, x, fmt, va_alist)
+	register WINDOW *win;
+	register int y, x;
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+	int ret;
+
+	if (move(y, x) != OK)
+		return (ERR);
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	ret = __sscans(win, fmt, ap);
+	va_end(ap);
+	return (ret);
+}
+
+/*
+ * __sscans --
  *	This routine actually executes the scanf from the window.
  *	THIS SHOULD BE RENAMED vwscanw AND EXPORTED
  */
-_sscans(win, fmt, ap)
+static int
+__sscans(win, fmt, ap)
 	WINDOW *win;
-#if __STDC__
 	const char *fmt;
-#else
-	char *fmt;
-#endif
 	va_list ap;
 {
-	char buf[100];
 
-	return wgetstr(win, buf) == OK ? vsscanf(buf, fmt, ap) : ERR;
+	char buf[1024];
+
+	return (wgetstr(win, buf) == OK ? vsscanf(buf, fmt, ap) : ERR);
 }

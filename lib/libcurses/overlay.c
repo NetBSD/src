@@ -32,47 +32,48 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)overlay.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: overlay.c,v 1.3 1993/08/01 18:35:29 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)overlay.c	5.7 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: overlay.c,v 1.4 1993/08/07 05:49:01 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
-
-# define	min(a,b)	(a < b ? a : b)
-# define	max(a,b)	(a > b ? a : b)
+#include <ctype.h>
+#include <curses.h>
 
 /*
- *	This routine writes win1 on win2 non-destructively.
- *
+ * overlay --
+ *	Writes win1 on win2 non-destructively.
  */
+int
 overlay(win1, win2)
-reg WINDOW	*win1, *win2; {
+	register WINDOW *win1, *win2;
+{
 
-	reg chtype      *sp, *end;
-	reg int		x, y, endy, endx, starty, startx;
-	reg int 	y1,y2;
+	register int x, y, y1, y2, endy, endx, starty, startx;
+	register char *sp, *end;
 
-# ifdef DEBUG
-	fprintf(outf, "OVERLAY(%0.2o, %0.2o);\n", win1, win2);
-# endif
+#ifdef DEBUG
+	__TRACE("overlay: (%0.2o, %0.2o);\n", win1, win2);
+#endif
 	starty = max(win1->_begy, win2->_begy);
 	startx = max(win1->_begx, win2->_begx);
 	endy = min(win1->_maxy + win1->_begy, win2->_maxy + win2->_begx);
 	endx = min(win1->_maxx + win1->_begx, win2->_maxx + win2->_begx);
-# ifdef DEBUG
-	fprintf(outf, "OVERLAY:from (%d,%d) to (%d,%d)\n", starty, startx, endy, endx);
-# endif
+#ifdef DEBUG
+	__TRACE("overlay: from (%d,%d) to (%d,%d)\n",
+	    starty, startx, endy, endx);
+#endif
 	if (starty >= endy || startx >= endx)
-		return;
+		return (OK);
 	y1 = starty - win1->_begy;
 	y2 = starty - win2->_begy;
 	for (y = starty; y < endy; y++, y1++, y2++) {
 		end = &win1->_y[y1][endx - win1->_begx];
 		x = startx - win2->_begx;
 		for (sp = &win1->_y[y1][startx - win1->_begx]; sp < end; sp++) {
-			if (*sp != ' ')
+			if (!isspace(*sp))
 				mvwaddch(win2, y2, x, *sp);
 			x++;
 		}
 	}
+	return (OK);
 }

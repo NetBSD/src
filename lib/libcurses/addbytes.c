@@ -32,118 +32,103 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)addbytes.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: addbytes.c,v 1.4 1993/08/01 18:35:58 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)addbytes.c	5.8 (Berkeley) 8/28/92";*/
+static char rcsid[] = "$Id: addbytes.c,v 1.5 1993/08/07 05:48:38 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
+#include <termios.h>
 
-waddbytes(win, bytes, count)
-reg WINDOW	*win;
-reg char        *bytes;
-int         count;
-{
-	chtype c;
-	reg int i;
-
-	for (i = 0; i < count; i++) {
-		c = (unsigned char) *bytes++;
-		if (_waddbytes(win, &c, 1) == ERR)
-			return ERR;
-	}
-	return OK;
-}
+#define	SYNCH_IN	{y = win->_cury; x = win->_curx;}
+#define	SYNCH_OUT	{win->_cury = y; win->_curx = x;}
 
 /*
- *	This routine adds the character to the current position
- *
+ * waddbytes --
+ *	Add the character to the current position in the given window.
  */
-_waddbytes(win, bytes, count)
-reg WINDOW	*win;
-reg chtype      *bytes;
-reg int		count;
+int
+waddbytes(win, bytes, count)
+	register WINDOW *win;
+	register char *bytes;
+	register int count;
 {
-#define	SYNCH_OUT()	{win->_cury = y; win->_curx = x;}
-#define	SYNCH_IN()	{y = win->_cury; x = win->_curx;}
-	reg int		x, y;
-	reg int		newx;
+	static char blanks[] = "        ";
+	register int c, newx, x, y;
 
-	SYNCH_IN();
+	SYNCH_IN;
+
+#ifdef DEBUG
+	__TRACE("ADDBYTES('%c') at (%d, %d)\n", c, y, x);
+#endif
 	while (count--) {
-	    register chtype c;
-	    static chtype blanks[] = {' ',' ',' ',' ',' ',' ',' ',' '};
+		c = *bytes++;
+		switch (c) {
+		case '\t':
+			SYNCH_OUT;
+			if (waddbytes(win, blanks, 8 - (x % 8)) == ERR)
+				return (ERR);
+			SYNCH_IN;
+			break;
 
-	    c = *bytes++;
-	    switch (c) {
-	      case '\t':
-		    SYNCH_OUT();
-		    if (_waddbytes(win, blanks, 8-(x%8)) == ERR) {
-			return ERR;
-		    }
-		    SYNCH_IN();
-		    break;
-
-	      default:
-# ifdef FULLDEBUG
-		    fprintf(outf, "ADDBYTES: 1: y = %d, x = %d, firstch = %d, lastch = %d\n", y, x, win->_firstch[y], win->_lastch[y]);
-# endif
-		    if (win->_flags & _STANDOUT)
-			    c |= _STANDOUT;
-		    {
-# ifdef	FULLDEBUG
-			    fprintf(outf, "ADDBYTES(%0.2o, %d, %d)\n", win, y, x);
-# endif
-			    if (win->_y[y][x] != c) {
-				    newx = x + win->_ch_off;
-				    if (win->_firstch[y] == _NOCHANGE) {
-					    win->_firstch[y] =
-							    win->_lastch[y] = newx;
-				    } else if (newx < win->_firstch[y])
-					    win->_firstch[y] = newx;
-				    else if (newx > win->_lastch[y])
+		default:
+#ifdef DEBUG
+	__TRACE("ADDBYTES: 1: y = %d, x = %d, firstch = %d, lastch = %d\n",
+	    y, x, win->_firstch[y], win->_lastch[y]);
+#endif
+			if (win->_flags & _STANDOUT)
+				c |= _STANDOUT;
+#ifdef DEBUG
+	__TRACE("ADDBYTES(%0.2o, %d, %d)\n", win, y, x);
+#endif
+			if (win->_y[y][x] != c) {
+				newx = x + win->_ch_off;
+				if (win->_firstch[y] == _NOCHANGE)
+					win->_firstch[y] =
 					    win->_lastch[y] = newx;
-# ifdef FULLDEBUG
-				    fprintf(outf, "ADDBYTES: change gives f/l: %d/%d [%d/%d]\n",
-					    win->_firstch[y], win->_lastch[y],
-					    win->_firstch[y] - win->_ch_off,
-					    win->_lastch[y] - win->_ch_off);
-# endif
-			    }
-		    }
-		    win->_y[y][x++] = c;
-		    if (x >= win->_maxx) {
-			    x = 0;
-    newline:
-			    if (++y >= win->_maxy)
-				    if (win->_scroll) {
-					    --y;
-					    SYNCH_OUT();
-					    scroll(win);
-					    SYNCH_IN();
-				    }
-				    else
-					    return ERR;
-		    }
-# ifdef FULLDEBUG
-		    fprintf(outf, "ADDBYTES: 2: y = %d, x = %d, firstch = %d, lastch = %d\n", y, x, win->_firstch[y], win->_lastch[y]);
-# endif
-		    break;
-	      case '\n':
-		    SYNCH_OUT();
-		    wclrtoeol(win);
-		    SYNCH_IN();
-		    if (!NONL)
-			    x = 0;
-		    goto newline;
-	      case '\r':
-		    x = 0;
-		    break;
-	      case '\b':
-		    if (--x < 0)
-			    x = 0;
-		    break;
-	    }
-    }
-    SYNCH_OUT();
-    return OK;
+				else if (newx < win->_firstch[y])
+					win->_firstch[y] = newx;
+				else if (newx > win->_lastch[y])
+					win->_lastch[y] = newx;
+#ifdef DEBUG
+	__TRACE("ADDBYTES: change gives f/l: %d/%d [%d/%d]\n",
+	    win->_firstch[y], win->_lastch[y],
+	    win->_firstch[y] - win->_ch_off,
+	    win->_lastch[y] - win->_ch_off);
+#endif
+			}
+			win->_y[y][x] = c;
+			if (++x >= win->_maxx) {
+				x = 0;
+newline:			if (++y >= win->_maxy)
+					if (win->_scroll) {
+						SYNCH_OUT;
+						scroll(win);
+						SYNCH_IN;
+						--y;
+					} else
+						return (ERR);
+			}
+#ifdef DEBUG
+	__TRACE("ADDBYTES: 2: y = %d, x = %d, firstch = %d, lastch = %d\n",
+	    y, x, win->_firstch[y], win->_lastch[y]);
+#endif
+			break;
+		case '\n':
+			SYNCH_OUT;
+			wclrtoeol(win);
+			SYNCH_IN;
+			if (origtermio.c_oflag & ONLCR)
+				x = 0;
+			goto newline;
+		case '\r':
+			x = 0;
+			break;
+		case '\b':
+			if (--x < 0)
+				x = 0;
+			break;
+		}
+	}
+	SYNCH_OUT;
+	return (OK);
 }

@@ -32,44 +32,42 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)deleteln.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: deleteln.c,v 1.3 1993/08/01 18:35:46 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)deleteln.c	5.7 (Berkeley) 8/23/92";*/
+static char rcsid[] = "$Id: deleteln.c,v 1.4 1993/08/07 05:48:49 mycroft Exp $";
+#endif	/* not lint */
 
-# include	"curses.ext"
+#include <curses.h>
+#include <string.h>
 
 /*
- *	This routine deletes a line from the screen.  It leaves
- * (_cury,_curx) unchanged.
- *
+ * wdeleteln --
+ *	Delete a line from the screen.  It leaves (_cury, _curx) unchanged.
  */
+int
 wdeleteln(win)
-reg WINDOW	*win;
+	register WINDOW *win;
 {
-	reg chtype      *temp;
-	reg int		y;
-	reg chtype      *end;
-	reg int		x;
+	register int y;
+	register char *temp;
 
-# ifdef DEBUG
-	fprintf(outf, "DELETELN(%0.2o)\n", win);
-# endif
+#ifdef DEBUG
+	__TRACE("deleteln: (%0.2o)\n", win);
+#endif
 	temp = win->_y[win->_cury];
 	for (y = win->_cury; y < win->_maxy - 1; y++) {
 		if (win->_orig == NULL)
 			win->_y[y] = win->_y[y + 1];
 		else
-			bcopy(win->_y[y + 1], win->_y[y], win->_maxx * sizeof(chtype));
+			bcopy(win->_y[y + 1], win->_y[y], win->_maxx);
 		touchline(win, y, 0, win->_maxx - 1);
 	}
 	if (win->_orig == NULL)
 		win->_y[y] = temp;
 	else
 		temp = win->_y[y];
-	for (end = &temp[win->_maxx]; temp < end; )
-		*temp++ = ' ';
-	touchline(win, y, 0, win->_maxx - 1);
+	(void)memset(temp, ' ', &temp[win->_maxx] - temp);
+	touchline(win, win->_cury, 0, win->_maxx - 1);
 	if (win->_orig == NULL)
-		_id_subwins(win);
-	return OK;
+		__id_subwins(win);
+	return (OK);
 }

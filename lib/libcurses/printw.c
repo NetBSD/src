@@ -32,9 +32,17 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)printw.c	5.8 (Berkeley) 4/15/91";*/
-static char rcsid[] = "$Id: printw.c,v 1.3 1993/08/01 18:35:28 mycroft Exp $";
-#endif /* not lint */
+/*static char sccsid[] = "from: @(#)printw.c	5.11 (Berkeley) 8/31/92";*/
+static char rcsid[] = "$Id: printw.c,v 1.4 1993/08/07 05:49:03 mycroft Exp $";
+#endif	/* not lint */
+
+#include <curses.h>
+
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 /*
  * printw and friends.
@@ -43,16 +51,14 @@ static char rcsid[] = "$Id: printw.c,v 1.3 1993/08/01 18:35:28 mycroft Exp $";
  * is not in effect.
  */
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-#include "curses.ext"
+static int __sprintw __P((WINDOW *, const char *, va_list));
+static int __winwrite __P((void *, const char *, int));
 
 /*
- *	This routine implements a printf on the standard screen.
+ * printw --
+ *	Printf on the standard screen.
  */
+int
 #if __STDC__
 printw(const char *fmt, ...)
 #else
@@ -61,24 +67,26 @@ printw(fmt, va_alist)
 	va_dcl
 #endif
 {
-	va_list	ap;
-	int	ret;
+	va_list ap;
+	int ret;
 
 #if __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
-	ret = _sprintw(stdscr, fmt, ap);
+	ret = __sprintw(stdscr, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
 
 /*
- *	This routine implements a printf on the given window.
+ * wprintw --
+ *	Printf on the given window.
  */
+int
 #if __STDC__
-wprintw(WINDOW *win, const char *fmt, ...)
+wprintw(WINDOW * win, const char *fmt, ...)
 #else
 wprintw(win, fmt, va_alist)
 	WINDOW *win;
@@ -86,56 +94,111 @@ wprintw(win, fmt, va_alist)
 	va_dcl
 #endif
 {
-	va_list	ap;
-	int	ret;
+	va_list ap;
+	int ret;
 
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
-	ret = _sprintw(win, fmt, ap);
+	ret = __sprintw(win, fmt, ap);
 	va_end(ap);
 	return (ret);
 }
 
 /*
- *	Internal write-buffer-to-window function.
+ * mvprintw, mvwprintw --
+ *	Implement the mvprintw commands.  Due to the variable number of
+ *	arguments, they cannot be macros.  Sigh....
  */
-static int
-_winwrite(cookie, buf, n)
-	void *cookie;
-	register char *buf;
-	int n;
+int
+#if __STDC__
+mvprintw(register int y, register int x, const char *fmt, ...)
+#else
+mvprintw(y, x, fmt, va_alist)
+	register int y, x;
+	char *fmt;
+	va_dcl
+#endif
 {
-	register WINDOW *win = (WINDOW *)cookie;
-	register int c = n;
+	va_list ap;
+	int ret;
 
-	while (--c >= 0) {
-		if (waddch(win, (unsigned char) *buf++) == ERR)
-			return (-1);
-	}
-	return n;
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	if (move(y, x) != OK)
+		return (ERR);
+	ret = __sprintw(stdscr, fmt, ap);
+	va_end(ap);
+	return (ret);
+}
+
+int
+#if __STDC__
+mvwprintw(register WINDOW * win, register int y, register int x,
+    const char *fmt, ...)
+#else
+mvwprintw(win, y, x, fmt, va_alist)
+	register WINDOW *win;
+	register int y, x;
+	char *fmt;
+	va_dcl
+#endif
+{
+	va_list ap;
+	int ret;
+
+#if __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	if (wmove(win, y, x) != OK)
+		return (ERR);
+
+	ret = __sprintw(win, fmt, ap);
+	va_end(ap);
+	return (ret);
 }
 
 /*
+ * Internal write-buffer-to-window function.
+ */
+static int
+__winwrite(cookie, buf, n)
+	void *cookie;
+	register const char *buf;
+	int n;
+{
+	register WINDOW *win;
+	register int c;
+
+	for (c = n, win = cookie; --c >= 0;)
+		if (waddch(win, *buf++) == ERR)
+			return (-1);
+	return (n);
+}
+
+/*
+ * __sprintw --
  *	This routine actually executes the printf and adds it to the window.
  *	It must not be declared static as it is used in mvprintw.c.
  *	THIS SHOULD BE RENAMED vwprintw AND EXPORTED
  */
-_sprintw(win, fmt, ap)
+static int
+__sprintw(win, fmt, ap)
 	WINDOW *win;
-#if __STDC__
 	const char *fmt;
-#else
-	char *fmt;
-#endif
-	va_list	ap;
+	va_list ap;
 {
 	FILE *f;
 
-	if ((f = fwopen((void *)win, _winwrite)) == NULL)
-		return ERR;
-	(void) vfprintf(f, fmt, ap);
-	return fclose(f) ? ERR : OK;
+	if ((f = funopen(win, NULL, __winwrite, NULL, NULL)) == NULL)
+		return (ERR);
+	(void)vfprintf(f, fmt, ap);
+	return (fclose(f) ? ERR : OK);
 }
