@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.20 1998/10/29 20:24:58 bad Exp $
+#	$NetBSD: special,v 1.21 1999/01/29 00:55:16 cjs Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -149,7 +149,7 @@ pub		type=dir mode=0777 uname=root gname=wheel ignore optional
 ..	#var/spool/ftp
 mqueue		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/spool/mqueue
-news		type=dir mode=0755 uname=root gname=wheel ignore optional
+news		type=dir mode=0755 uname=news gname=news ignore optional
 ..	#var/spool/news
 output		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#var/spool/output
