@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.11 1999/11/29 02:28:19 jun Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.12 2000/02/02 09:34:51 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -249,6 +249,11 @@ mbe_pcmcia_detach(self, flags)
 	int flags;
 {
 	struct mbe_pcmcia_softc *psc = (struct mbe_pcmcia_softc *)self;
+	int error;
+
+	error =  mb86960_detach(&psc->sc_mb86960);
+	if (error != 0)
+		return (error);
 
 	/* Unmap our i/o window. */
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
@@ -256,16 +261,7 @@ mbe_pcmcia_detach(self, flags)
 	/* Free our i/o space. */
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 
-#ifdef notyet
-	/*
-	 * Our softc is about to go away, so drop our reference
-	 * to the ifnet.
-	 */
-	if_delref(psc->sc_mb86960.sc_ec.ec_if);
 	return (0);
-#else
-	return (EBUSY);
-#endif
 }
 
 int
