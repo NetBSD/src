@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.h,v 1.16 1998/01/06 08:36:23 thorpej Exp $	*/
+/*	$NetBSD: vm.h,v 1.17 1998/02/06 00:14:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -61,10 +61,12 @@ typedef struct pager_struct *vm_pager_t;
 /*
  *	MACH VM locking type mappings to kernel types
  */
+#if !defined(UVM)
 typedef struct simplelock	simple_lock_data_t;
 typedef struct simplelock	*simple_lock_t;
 typedef struct lock		lock_data_t;
 typedef struct lock		*lock_t;
+#endif
 
 #include <sys/vmmeter.h>
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.c,v 1.39 1998/01/31 04:02:44 ross Exp $	*/
+/*	$NetBSD: vm_page.c,v 1.40 1998/02/06 00:14:54 mrg Exp $	*/
 
 #define	VM_PAGE_ALLOC_MEMORY_STATS
 
@@ -173,7 +173,6 @@ simple_lock_data_t	vm_page_queue_free_lock;
 boolean_t vm_page_startup_initialized;
 
 vm_page_t	vm_page_array;
-int		vm_page_count;
 #if defined(MACHINE_NEW_NONCONTIG)
 	/* NOTHING NEEDED HERE */
 #elif defined(MACHINE_NONCONTIG)
