@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1995/03/21 15:08:39 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1996/10/18 02:45:34 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	cribbage
@@ -9,7 +9,7 @@ MAN=	cribbage.6
 HIDEGAME=hidegame
 
 beforeinstall: 
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/cribbage.n \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/cribbage.n \
 	    ${DESTDIR}/usr/share/games/cribbage.instr
 
 .include <bsd.prog.mk>
