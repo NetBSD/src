@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_dma.c,v 1.1 2000/12/21 20:51:55 thorpej Exp $ */
+/* $NetBSD: ttwoga_dma.c,v 1.2 2001/01/03 19:16:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.1 2000/12/21 20:51:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.2 2001/01/03 19:16:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.1 2000/12/21 20:51:55 thorpej Exp $
 #include <alpha/pci/ttwogavar.h>
 
 bus_dma_tag_t ttwoga_dma_get_tag(bus_dma_tag_t, alpha_bus_t);
-
-int	ttwoga_bus_dmamap_create_sgmap(bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
-
-void	ttwoga_bus_dmamap_destroy_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
 int	ttwoga_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int);
@@ -148,8 +143,8 @@ ttwoga_dma_init(struct ttwoga_config *tcp)
 	t->_boundary = 0;
 	t->_sgmap = &tcp->tc_sgmap;
 	t->_get_tag = ttwoga_dma_get_tag;
-	t->_dmamap_create = ttwoga_bus_dmamap_create_sgmap;
-	t->_dmamap_destroy = ttwoga_bus_dmamap_destroy_sgmap;
+	t->_dmamap_create = alpha_sgmap_dmamap_create;
+	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
 	t->_dmamap_load = ttwoga_bus_dmamap_load_sgmap;
 	t->_dmamap_load_mbuf = ttwoga_bus_dmamap_load_mbuf_sgmap;
 	t->_dmamap_load_uio = ttwoga_bus_dmamap_load_uio_sgmap;
@@ -281,46 +276,6 @@ ttwoga_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 	default:
 		panic("ttwoga_dma_get_tag: shouldn't be here, really...");
 	}
-}
-
-/*
- * Create a T2 SGMAP-mapped DMA map.
- */
-int
-ttwoga_bus_dmamap_create_sgmap(bus_dma_tag_t t, bus_size_t size, int nsegments,
-    bus_size_t maxsegsz, bus_size_t boundary, int flags, bus_dmamap_t *dmamp)
-{
-	bus_dmamap_t map;
-	int error;
-
-	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
-	    boundary, flags, dmamp);
-	if (error)
-		return (error);
-
-	map = *dmamp;
-
-	if (flags & BUS_DMA_ALLOCNOW) {
-		error = alpha_sgmap_alloc(map, round_page(size),
-		    t->_sgmap, flags);
-		if (error)
-			ttwoga_bus_dmamap_destroy_sgmap(t, map);
-	}
-
-	return (error);
-}
-
-/*
- * Destroy a T2 SGMAP-mapped DMA map.
- */
-void
-ttwoga_bus_dmamap_destroy_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
-{
-
-	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
-		alpha_sgmap_free(map, t->_sgmap);
-
-	_bus_dmamap_destroy(t, map);
 }
 
 /*
