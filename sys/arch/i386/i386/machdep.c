@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.324 1998/10/03 18:08:39 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.325 1998/10/03 21:38:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -2577,6 +2577,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
+	map->_dm_bounce_thresh = t->_bounce_thresh;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
@@ -2991,7 +2992,8 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		 * If we're beyond the bounce threshold, notify
 		 * the caller.
 		 */
-		if (t->_bounce_thresh != 0 && curaddr >= t->_bounce_thresh)
+		if (map->_dm_bounce_thresh != 0 &&
+		    curaddr >= map->_dm_bounce_thresh)
 			return (EINVAL);
 
 		/*
