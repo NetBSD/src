@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/12/23 09:06:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2001/01/02 12:30:14 simonb Exp $
 
 PROG=   crunchide
 SRCS=	crunchide.c exec_aout.c exec_coff.c exec_ecoff.c exec_elf32.c \
@@ -11,7 +11,8 @@ CPPFLAGS+=-DNLIST_ELF64 -DNLIST_ECOFF
 	${MACHINE_ARCH} == "mipsel" || \
 	${MACHINE_ARCH} == "mipseb" || \
 	${MACHINE_ARCH} == "powerpc" || \
-	${MACHINE} == "mvme68k"
+	${MACHINE} == "mvme68k" || \
+	${MACHINE} == "hp300"
 CPPFLAGS+=-DNLIST_ELF32
 .elif	${MACHINE_ARCH} == "sh3"
 CPPFLAGS+=-DNLIST_ELF32 -DNLIST_COFF
