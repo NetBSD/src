@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 1998/07/13 19:27:13 tsubai Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 1998/07/17 18:31:56 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,6 +52,9 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
+#define _MACPPC_BUS_DMA_PRIVATE
+#include <machine/bus.h>
+
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
@@ -59,10 +62,26 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 
-#if 0
-#define	PCI_MODE1_ADDRESS_REG	0xf2800000
-#define	PCI_MODE1_DATA_REG	0xf2c00000
-#endif
+/*
+ * PCI doesn't have any special needs; just use the generic versions
+ * of these functions.
+ */
+struct macppc_bus_dma_tag pci_bus_dma_tag = {
+	0,			/* _bounce_thresh */
+	_bus_dmamap_create, 
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	NULL,			/* _dmamap_sync */
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap,
+};
 
 void
 pci_attach_hook(parent, self, pba)
@@ -81,7 +100,7 @@ pci_bus_maxdevs(pc, busno)
 	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
 	 * use, can have devices 0-32 (i.e. the `normal' range).
 	 */
-	return (32);
+	return 32;
 }
 
 pcitag_t
@@ -94,14 +113,7 @@ pci_make_tag(pc, bus, device, function)
 	if (bus >= 256 || device >= 32 || function >= 8)
 		panic("pci_make_tag: bad request");
 
-	if (pc == PCI_CHIPSET_MPC106) {
-		tag = 0x80000000 |
-			(bus << 16) | (device << 11) | (function << 8);
-	} else {
-		if (device < 11)
-			return 0;
-		tag = (1 << device);
-	}
+	tag = 0x80000000 | (bus << 16) | (device << 11) | (function << 8);
 
 	return tag;
 }
@@ -112,21 +124,13 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 	pcitag_t tag;
 	int *bp, *dp, *fp;
 {
-	if (pc == PCI_CHIPSET_MPC106) {
-		if (bp != NULL)
-			*bp = (tag >> 16) & 0xff;
-		if (dp != NULL)
-			*dp = (tag >> 11) & 0x1f;
-		if (fp != NULL)
-			*fp = (tag >> 8) & 0x7;
-	} else {
-		if (bp != NULL)
-			*bp = 0;
-		if (dp != NULL)
-			*dp = ffs(tag) - 1;
-		if (fp != NULL)
-			*fp = 0;
-	}
+	if (bp != NULL)
+		*bp = (tag >> 16) & 0xff;
+	if (dp != NULL)
+		*dp = (tag >> 11) & 0x1f;
+	if (fp != NULL)
+		*fp = (tag >> 8) & 0x7;
+
 	return;
 }
 
@@ -146,12 +150,23 @@ pci_conf_read(pc, tag, reg)
 		data = in32rb(r->data);
 		out32rb(r->addr, 0);
 	} else {
+		int bus, dev, func;
+
+		pci_decompose_tag(pc, tag, &bus, &dev, &func);
+
+		/*
+		 * bandit's minimum device number is 11.  So we behave
+		 * as if there is no device when dev < 11.
+		 */
+		if (dev < 11) {
+			if (reg == PCI_ID_REG)
+				return 0xffffffff;
+			panic("pci_conf_read");
+		}
+
 		r = &pci_bridges[pc];
 
-		if (tag == 0)
-			return 0xffffffff;
-
-		out32rb(r->addr, tag | reg);
+		out32rb(r->addr, (1 << dev) | reg);
 		DELAY(10);
 		data = in32rb(r->data);
 		DELAY(10);
@@ -178,9 +193,16 @@ pci_conf_write(pc, tag, reg, data)
 		out32rb(r->data, data);
 		out32rb(r->addr, 0);
 	} else {
+		int bus, dev, func;
+
+		pci_decompose_tag(pc, tag, &bus, &dev, &func);
+
+		if (dev < 11)
+			panic("pci_conf_read");
+
 		r = &pci_bridges[pc];
 
-		out32rb(r->addr, tag | reg);
+		out32rb(r->addr, (1 << dev) | reg);
 		DELAY(10);
 		out32rb(r->data, data);
 		DELAY(10);
