@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.52 1994/07/06 04:09:55 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.53 1994/08/09 13:04:28 pk Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -109,7 +109,7 @@ lib${LIB}_pic.a:: ${SOBJS}
 lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-	$(LD) -Bshareable -Bforcearchive \
+	$(LD) -x -Bshareable -Bforcearchive \
 	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
 
 llib-l${LIB}.ln: ${SRCS}
