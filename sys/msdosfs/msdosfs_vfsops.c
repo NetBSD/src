@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.28 1995/03/09 12:06:04 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.29 1995/03/27 12:59:56 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -254,11 +254,6 @@ msdosfs_mountfs(devvp, mp, p)
 		goto error_exit;
 	}
 #endif
-	if ( bsp->bs50.bsJump[0] != 0xe9 &&
-	    (bsp->bs50.bsJump[0] != 0xeb || bsp->bs50.bsJump[2] != 0x90)) {
-		error = EINVAL;
-		goto error_exit;
-	}
 
 	pmp = malloc(sizeof *pmp, M_MSDOSFSMNT, M_WAITOK);
 	bzero((caddr_t)pmp, sizeof *pmp);
@@ -282,8 +277,7 @@ msdosfs_mountfs(devvp, mp, p)
 
 	/* XXX - We should probably check more values here */
     	if (!pmp->pm_BytesPerSec || !pmp->pm_SectPerClust ||
-	    !pmp->pm_Heads || pmp->pm_Heads > 255 ||
-	    !pmp->pm_SecPerTrack || pmp->pm_SecPerTrack > 63) {
+	    pmp->pm_Heads > 255 || pmp->pm_SecPerTrack > 63) {
 		error = EINVAL;
 		goto error_exit;
 	}
