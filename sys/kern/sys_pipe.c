@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.53 2004/03/03 22:00:34 dsl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.54 2004/03/24 15:34:53 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.53 2004/03/03 22:00:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.54 2004/03/24 15:34:53 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1472,32 +1472,39 @@ pipe_fcntl(fp, cmd, data, p)
 SYSCTL_SETUP(sysctl_kern_pipe_setup, "sysctl kern.pipe subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "pipe", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_PIPE, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxkvasz", NULL,
 		       NULL, 0, &maxpipekva, 0,
 		       CTL_KERN, KERN_PIPE, KERN_PIPE_MAXKVASZ, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxloankvasz", NULL,
 		       NULL, 0, &limitpipekva, 0,
 		       CTL_KERN, KERN_PIPE, KERN_PIPE_LIMITKVA, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxbigpipes", NULL,
 		       NULL, 0, &maxbigpipes, 0,
 		       CTL_KERN, KERN_PIPE, KERN_PIPE_MAXBIGPIPES, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "nbigpipes", NULL,
 		       NULL, 0, &nbigpipe, 0,
 		       CTL_KERN, KERN_PIPE, KERN_PIPE_NBIGPIPES, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "kvasize", NULL,
 		       NULL, 0, &amountpipekva, 0,
 		       CTL_KERN, KERN_PIPE, KERN_PIPE_KVASIZE, CTL_EOL);

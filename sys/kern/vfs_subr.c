@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.217 2004/03/23 13:22:33 junyoung Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.218 2004/03/24 15:34:53 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.217 2004/03/23 13:22:33 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.218 2004/03/24 15:34:53 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2044,27 +2044,32 @@ SYSCTL_SETUP(sysctl_vfs_setup, "sysctl vfs subtree setup")
 	extern int nmountcompatnames;
 #endif
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "generic", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, VFS_GENERIC, CTL_EOL);
 
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "maxtypenum", NULL,
 		       NULL, nmountcompatnames, NULL, 0,
 		       CTL_VFS, VFS_GENERIC, VFS_MAXTYPENUM, CTL_EOL);
 #endif
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "usermount", NULL,
 		       NULL, 0, &dovfsusermount, 0,
 		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "conf", NULL,
 		       sysctl_vfs_generic_conf, 0, NULL,
 		       sizeof(struct vfsconf),

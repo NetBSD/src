@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.96 2004/03/21 00:54:46 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.97 2004/03/24 15:34:53 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.96 2004/03/21 00:54:46 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.97 2004/03/24 15:34:53 atatat Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1756,7 +1756,14 @@ sysctl_kern_somaxkva(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_kern_somaxkva_setup, "sysctl kern.somaxkva setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_KERN, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "somaxkva", NULL,
 		       sysctl_kern_somaxkva, 0, NULL, 0,
 		       CTL_KERN, KERN_SOMAXKVA, CTL_EOL);

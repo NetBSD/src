@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.551 2004/03/21 15:37:02 junyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.551 2004/03/21 15:37:02 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -481,64 +481,79 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "machdep", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "biosbasemem", NULL,
 		       NULL, 0, &biosbasemem, 0,
 		       CTL_MACHDEP, CPU_BIOSBASEMEM, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "biosextmem", NULL,
 		       NULL, 0, &biosextmem, 0,
 		       CTL_MACHDEP, CPU_BIOSEXTMEM, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "nkpde", NULL,
 		       NULL, 0, &nkpde, 0,
 		       CTL_MACHDEP, CPU_NKPDE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "booted_kernel", NULL,
 		       sysctl_machdep_booted_kernel, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "diskinfo", NULL,
 		       sysctl_machdep_diskinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "fpu_present", NULL,
 		       NULL, 0, &i386_fpu_present, 0,
 		       CTL_MACHDEP, CPU_FPU_PRESENT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "osfxsr", NULL,
 		       NULL, 0, &i386_use_fxsave, 0,
 		       CTL_MACHDEP, CPU_OSFXSR, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "sse", NULL,
 		       NULL, 0, &i386_has_sse, 0,
 		       CTL_MACHDEP, CPU_SSE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "sse2", NULL,
 		       NULL, 0, &i386_has_sse2, 0,
 		       CTL_MACHDEP, CPU_SSE2, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "tm_longrun_mode", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_TMLR_MODE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "tm_longrun_frequency", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_TMLR_FREQUENCY, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "tm_longrun_voltage", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_TMLR_VOLTAGE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "tm_longrun_percentage", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_TMLR_PERCENTAGE, CTL_EOL);

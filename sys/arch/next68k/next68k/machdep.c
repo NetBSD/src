@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2004/03/24 02:20:09 dbj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 2004/03/24 15:34:51 atatat Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2004/03/24 02:20:09 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2004/03/24 15:34:51 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -537,13 +537,15 @@ identifycpu()
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "machdep", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
 
 #if 0
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.15 2003/12/04 19:45:19 atatat Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.16 2004/03/24 15:34:56 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.15 2003/12/04 19:45:19 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.16 2004/03/24 15:34:56 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,6 +71,26 @@ sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	size_t oldlen, savelen;
 	int error;
 
+	if (getenv("SYSCTL_TRACE") != NULL) {
+		char trb[128];
+		uint l, i;
+
+		l = snprintf(trb, sizeof(trb), "sysctl(%p {", name);
+		write(2, &trb[0], l);
+		for (i = 0; i < namelen; i++) {
+			l = snprintf(trb, sizeof(trb), "%s%d", i ? "." : "",
+				     name[i]);
+			write(2, &trb[0], l);
+		}
+		l = snprintf(trb, sizeof(trb), "}, %d, %p, %p (%lu), %p, %lu)\n",
+			     namelen,
+			     oldp,
+			     oldlenp, (ulong)(oldlenp ? *oldlenp : 0),
+			     newp,
+			     (ulong)newlen);
+		write(2, &trb[0], l);
+	}
+
 	if (name[0] != CTL_USER)
 		/* LINTED will fix when sysctl interface gets corrected */
 		/* XXX when will that be? */
@@ -106,8 +126,8 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	size_t *oldlenp, newlen;
 {
 #define _INT(s, n, v) {						\
-	.sysctl_flags = SYSCTL_IMMEDIATE|SYSCTL_PERMANENT|SYSCTL_READONLY| \
-			SYSCTL_TYPE(CTLTYPE_INT),		\
+	.sysctl_flags = CTLFLAG_IMMEDIATE|CTLFLAG_PERMANENT|	\
+			CTLTYPE_INT|SYSCTL_VERSION,		\
 	.sysctl_size = sizeof(int),				\
 	.sysctl_name = (s),					\
 	.sysctl_num = (n),					\
@@ -124,8 +144,8 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		0
 #else /* !lint */
 		{
-			.sysctl_flags = SYSCTL_READONLY|SYSCTL_PERMANENT|
-				SYSCTL_TYPE(CTLTYPE_STRING),
+			.sysctl_flags = SYSCTL_VERSION|CTLFLAG_PERMANENT|
+				CTLTYPE_STRING,
 			.sysctl_size = sizeof(_PATH_STDPATH),
 			.sysctl_name = "cs_path",
 			.sysctl_num = USER_CS_PATH,
@@ -221,7 +241,7 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (EOPNOTSUPP);
 
 	node = &node[ni];
-	if (node->sysctl_flags & SYSCTL_IMMEDIATE) {
+	if (node->sysctl_flags & CTLFLAG_IMMEDIATE) {
 		switch (SYSCTL_TYPE(node->sysctl_flags)) {
 		case CTLTYPE_INT:
 			newp = &node->sysctl_idata;

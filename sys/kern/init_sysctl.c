@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.23 2004/03/17 10:21:59 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.24 2004/03/24 15:34:52 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.23 2004/03/17 10:21:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.24 2004/03/24 15:34:52 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -158,31 +158,38 @@ static void fill_lwp(struct lwp *l, struct kinfo_lwp *kl);
 SYSCTL_SETUP(sysctl_root_setup, "sysctl base setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vm", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VM, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "debug", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_DEBUG, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "hw", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_HW, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "machdep", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
@@ -190,23 +197,28 @@ SYSCTL_SETUP(sysctl_root_setup, "sysctl base setup")
 	 * this node is inserted so that the sysctl nodes in libc can
 	 * operate.
 	 */
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "user", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_USER, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ddb", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_DDB, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "proc", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_PROC, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_NODE, "vendor", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VENDOR, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "emul", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_EMUL, CTL_EOL);
@@ -221,87 +233,107 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 	extern fixpt_t ccpu;		/* defined in kern/kern_synch.c */
 	extern int dumponpanic;		/* defined in kern/subr_prf.c */
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "ostype", NULL,
 		       NULL, 0, &ostype, 0,
 		       CTL_KERN, KERN_OSTYPE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "osrelease", NULL,
 		       NULL, 0, &osrelease, 0,
 		       CTL_KERN, KERN_OSRELEASE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "osrevision", NULL,
 		       NULL, __NetBSD_Version__, NULL, 0,
 		       CTL_KERN, KERN_OSREV, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "version", NULL,
 		       NULL, 0, &version, 0,
 		       CTL_KERN, KERN_VERSION, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxvnodes", NULL,
 		       sysctl_kern_maxvnodes, 0, NULL, 0,
 		       CTL_KERN, KERN_MAXVNODES, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxproc", NULL,
 		       sysctl_kern_maxproc, 0, NULL, 0,
 		       CTL_KERN, KERN_MAXPROC, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxfiles", NULL,
 		       NULL, 0, &maxfiles, 0,
 		       CTL_KERN, KERN_MAXFILES, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "argmax", NULL,
 		       NULL, ARG_MAX, NULL, 0,
 		       CTL_KERN, KERN_ARGMAX, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "securelevel", NULL,
 		       sysctl_kern_securelevel, 0, &securelevel, 0,
 		       CTL_KERN, KERN_SECURELVL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "hostname", NULL,
 		       sysctl_setlen, 0, &hostname, MAXHOSTNAMELEN,
 		       CTL_KERN, KERN_HOSTNAME, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "hostid", NULL,
 		       sysctl_kern_hostid, 0, NULL, 0,
 		       CTL_KERN, KERN_HOSTID, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "clockrate", NULL,
 		       sysctl_kern_clockrate, 0, NULL,
 		       sizeof(struct clockinfo),
 		       CTL_KERN, KERN_CLOCKRATE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "vnode", NULL,
 		       sysctl_kern_vnode, 0, NULL, 0,
 		       CTL_KERN, KERN_VNODE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "file", NULL,
 		       sysctl_kern_file, 0, NULL, 0,
 		       CTL_KERN, KERN_FILE, CTL_EOL);
 #ifndef GPROF
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "profiling", NULL,
 		       sysctl_notavail, 0, NULL, 0,
 		       CTL_KERN, KERN_PROF, CTL_EOL);
 #endif
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix1version", NULL,
 		       NULL, _POSIX_VERSION, NULL, 0,
 		       CTL_KERN, KERN_POSIX1, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "ngroups", NULL,
 		       NULL, NGROUPS_MAX, NULL, 0,
 		       CTL_KERN, KERN_NGROUPS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "job_control", NULL,
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, KERN_JOB_CONTROL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "saved_ids", NULL, NULL,
 #ifdef _POSIX_SAVED_IDS
 		       1,
@@ -309,51 +341,63 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       0,
 #endif /* _POSIX_SAVED_IDS */
 		       NULL, 0, CTL_KERN, KERN_SAVED_IDS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "boottime", NULL,
 		       NULL, 0, &boottime, sizeof(boottime),
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "domainname", NULL,
 		       sysctl_setlen, 0, &domainname, MAXHOSTNAMELEN,
 		       CTL_KERN, KERN_DOMAINNAME, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "maxpartitions", NULL,
 		       NULL, MAXPARTITIONS, NULL, 0,
 		       CTL_KERN, KERN_MAXPARTITIONS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "rawpartition", NULL,
 		       NULL, RAW_PART, NULL, 0,
 		       CTL_KERN, KERN_RAWPARTITION, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "timex", NULL,
 		       sysctl_notavail, 0, NULL, 0,
 		       CTL_KERN, KERN_TIMEX, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "autonicetime", NULL,
 		       sysctl_kern_autonice, 0, &autonicetime, 0,
 		       CTL_KERN, KERN_AUTONICETIME, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "autoniceval", NULL,
 		       sysctl_kern_autonice, 0, &autoniceval, 0,
 		       CTL_KERN, KERN_AUTONICEVAL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "rtc_offset", NULL,
 		       sysctl_kern_rtc_offset, 0, &rtc_offset, 0,
 		       CTL_KERN, KERN_RTC_OFFSET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "root_device", NULL,
 		       sysctl_root_device, 0, NULL, 0,
 		       CTL_KERN, KERN_ROOT_DEVICE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "msgbufsize", NULL,
 		       sysctl_msgbuf, 0, &msgbufp->msg_bufs, 0,
 		       CTL_KERN, KERN_MSGBUFSIZE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "fsync", NULL,
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, KERN_FSYNC, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "sysvmsg", NULL, NULL,
 #ifdef SYSVMSG
 		       1,
@@ -361,7 +405,8 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       0,
 #endif /* SYSVMSG */
 		       NULL, 0, CTL_KERN, KERN_SYSVMSG, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "sysvsem", NULL, NULL,
 #ifdef SYSVSEM
 		       1,
@@ -369,7 +414,8 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       0,
 #endif /* SYSVSEM */
 		       NULL, 0, CTL_KERN, KERN_SYSVSEM, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "sysvshm", NULL, NULL,
 #ifdef SYSVSHM
 		       1,
@@ -377,113 +423,139 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       0,
 #endif /* SYSVSHM */
 		       NULL, 0, CTL_KERN, KERN_SYSVSHM, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "synchronized_io", NULL,
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, KERN_SYNCHRONIZED_IO, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "iov_max", NULL,
 		       NULL, IOV_MAX, NULL, 0,
 		       CTL_KERN, KERN_IOV_MAX, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "mapped_files", NULL,
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, KERN_MAPPED_FILES, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "memlock", NULL,
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, KERN_MEMLOCK, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "memlock_range", NULL,
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, KERN_MEMLOCK_RANGE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "memory_protection", NULL,
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, KERN_MEMORY_PROTECTION, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "login_name_max", NULL,
 		       NULL, LOGIN_NAME_MAX, NULL, 0,
 		       CTL_KERN, KERN_LOGIN_NAME_MAX, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "defcorename", NULL,
 		       sysctl_kern_defcorename, 0, defcorename, MAXPATHLEN,
 		       CTL_KERN, KERN_DEFCORENAME, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "logsigexit", NULL,
 		       NULL, 0, &kern_logsigexit, 0,
 		       CTL_KERN, KERN_LOGSIGEXIT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "fscale", NULL,
 		       NULL, FSCALE, NULL, 0,
 		       CTL_KERN, KERN_FSCALE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "ccpu", NULL,
 		       NULL, 0, &ccpu, 0,
 		       CTL_KERN, KERN_CCPU, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "cp_time", NULL,
 		       sysctl_kern_cptime, 0, NULL, 0,
 		       CTL_KERN, KERN_CP_TIME, CTL_EOL);
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "sysvipc_info", NULL,
 		       sysctl_kern_sysvipc, 0, NULL, 0,
 		       CTL_KERN, KERN_SYSVIPC_INFO, CTL_EOL);
 #endif /* SYSVMSG || SYSVSEM || SYSVSHM */
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "msgbuf", NULL,
 		       sysctl_msgbuf, 0, NULL, 0,
 		       CTL_KERN, KERN_MSGBUF, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "consdev", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_KERN, KERN_CONSDEV, CTL_EOL);
 #if NPTY > 0
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "maxptys", NULL,
 		       sysctl_kern_maxptys, 0, NULL, 0,
 		       CTL_KERN, KERN_MAXPTYS, CTL_EOL);
 #endif /* NPTY > 0 */
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "maxphys", NULL,
 		       NULL, MAXPHYS, NULL, 0,
 		       CTL_KERN, KERN_MAXPHYS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "sbmax", NULL,
 		       sysctl_kern_sbmax, 0, NULL, 0,
 		       CTL_KERN, KERN_SBMAX, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "monotonic_clock", NULL,
 		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_MONOTONIC_CLOCK, NULL, 0,
 		       CTL_KERN, KERN_MONOTONIC_CLOCK, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "urandom", NULL,
 		       sysctl_kern_urnd, 0, NULL, 0,
 		       CTL_KERN, KERN_URND, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "labelsector", NULL,
 		       NULL, LABELSECTOR, NULL, 0,
 		       CTL_KERN, KERN_LABELSECTOR, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "labeloffset", NULL,
 		       NULL, LABELOFFSET, NULL, 0,
 		       CTL_KERN, KERN_LABELOFFSET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "lwp", NULL,
 		       sysctl_kern_lwp, 0, NULL, 0,
 		       CTL_KERN, KERN_LWP, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "forkfsleep", NULL,
 		       sysctl_kern_forkfsleep, 0, NULL, 0,
 		       CTL_KERN, KERN_FORKFSLEEP, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_threads", NULL,
 		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_THREADS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_THREADS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_semaphores", NULL, NULL,
 #ifdef P1003_1B_SEMAPHORE
 		       200112,
@@ -491,35 +563,42 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       0,
 #endif /* P1003_1B_SEMAPHORE */
 		       NULL, 0, CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_barriers", NULL,
 		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_BARRIERS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_BARRIERS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_timers", NULL,
 		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_TIMERS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_TIMERS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_spin_locks", NULL,
 		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_SPIN_LOCKS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_SPIN_LOCKS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_reader_writer_locks", NULL,
 		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_READER_WRITER_LOCKS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_READER_WRITER_LOCKS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "dump_on_panic", NULL,
 		       NULL, 0, &dumponpanic, 0,
 		       CTL_KERN, KERN_DUMP_ON_PANIC, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "root_partition", NULL,
 		       sysctl_kern_root_partition, 0, NULL, 0,
 		       CTL_KERN, KERN_ROOT_PARTITION, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "drivers", NULL,
 		       sysctl_kern_drivers, 0, NULL, 0,
 		       CTL_KERN, KERN_DRIVERS, CTL_EOL);
@@ -529,20 +608,24 @@ SYSCTL_SETUP(sysctl_kern_proc_setup,
 	     "sysctl kern.proc/proc2/proc_args subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "proc", NULL,
 		       sysctl_doeproc, 0, NULL, 0,
 		       CTL_KERN, KERN_PROC, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "proc2", NULL,
 		       sysctl_doeproc, 0, NULL, 0,
 		       CTL_KERN, KERN_PROC2, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "proc_args", NULL,
 		       sysctl_kern_proc_args, 0, NULL, 0,
 		       CTL_KERN, KERN_PROC_ARGS, CTL_EOL);
@@ -569,67 +652,82 @@ SYSCTL_SETUP(sysctl_hw_setup, "sysctl hw subtree setup")
 	u_int u;
 	u_quad_t q;
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "hw", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_HW, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine", NULL,
 		       NULL, 0, machine, 0,
 		       CTL_HW, HW_MACHINE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "model", NULL,
 		       NULL, 0, cpu_model, 0,
 		       CTL_HW, HW_MODEL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "ncpu", NULL,
 		       sysctl_hw_ncpu, 0, NULL, 0,
 		       CTL_HW, HW_NCPU, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "byteorder", NULL,
 		       NULL, BYTE_ORDER, NULL, 0,
 		       CTL_HW, HW_BYTEORDER, CTL_EOL);
 	u = ((u_int)physmem > (UINT_MAX / PAGE_SIZE)) ?
 		UINT_MAX : physmem * PAGE_SIZE;
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "physmem", NULL,
 		       NULL, u, NULL, 0,
 		       CTL_HW, HW_PHYSMEM, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "usermem", NULL,
 		       sysctl_hw_usermem, 0, NULL, 0,
 		       CTL_HW, HW_USERMEM, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "pagesize", NULL,
 		       NULL, PAGE_SIZE, NULL, 0,
 		       CTL_HW, HW_PAGESIZE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "disknames", NULL,
 		       sysctl_hw_disknames, 0, NULL, 0,
 		       CTL_HW, HW_DISKNAMES, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "diskstats", NULL,
 		       sysctl_hw_diskstats, 0, NULL, 0,
 		       CTL_HW, HW_DISKSTATS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine_arch", NULL,
 		       NULL, 0, machine_arch, 0,
 		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "alignbytes", NULL,
 		       NULL, ALIGNBYTES, NULL, 0,
 		       CTL_HW, HW_ALIGNBYTES, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE|SYSCTL_HEX,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_HEX,
 		       CTLTYPE_STRING, "cnmagic", NULL,
 		       sysctl_hw_cnmagic, 0, NULL, CNS_LEN,
 		       CTL_HW, HW_CNMAGIC, CTL_EOL);
 	q = (u_quad_t)physmem * PAGE_SIZE;
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_QUAD, "physmem64", NULL,
 		       NULL, q, NULL, 0,
 		       CTL_HW, HW_PHYSMEM64, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "usermem64", NULL,
 		       sysctl_hw_usermem, 0, NULL, 0,
 		       CTL_HW, HW_USERMEM64, CTL_EOL);
@@ -677,7 +775,8 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 
 	 */
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "debug", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_DEBUG, CTL_EOL);
@@ -688,19 +787,23 @@ SYSCTL_SETUP(sysctl_debug_setup, "sysctl debug subtree setup")
 			continue;
 
 		snprintf(nodename, sizeof(nodename), "debug%d", i);
-		sysctl_createv(SYSCTL_PERMANENT|SYSCTL_HIDDEN,
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_HIDDEN,
 			       CTLTYPE_NODE, nodename, NULL,
 			       NULL, 0, NULL, 0,
 			       CTL_DEBUG, i, CTL_EOL);
-		sysctl_createv(SYSCTL_PERMANENT|SYSCTL_HIDDEN,
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_HIDDEN,
 			       CTLTYPE_STRING, "name", NULL,
 			       NULL, 0, cdp->debugname, 0,
 			       CTL_DEBUG, i, CTL_DEBUG_NAME, CTL_EOL);
-		sysctl_createv(SYSCTL_PERMANENT|SYSCTL_HIDDEN,
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_HIDDEN,
 			       CTLTYPE_INT, "value", NULL,
 			       NULL, 0, cdp->debugvar, 0,
 			       CTL_DEBUG, i, CTL_DEBUG_VALUE, CTL_EOL);
-		sysctl_createv(SYSCTL_PERMANENT,
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
 			       CTLTYPE_INT, cdp->debugname, NULL,
 			       NULL, 0, cdp->debugvar, 0,
 			       CTL_DEBUG, CTL_CREATE, CTL_EOL);

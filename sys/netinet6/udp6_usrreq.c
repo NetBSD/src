@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.61 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.62 2004/03/24 15:34:55 atatat Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.61 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.62 2004/03/24 15:34:55 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -414,25 +414,30 @@ release:
 
 SYSCTL_SETUP(sysctl_net_inet6_udp6_setup, "sysctl net.inet6.udp6 subtree setup")
 {
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet6", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET6, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "udp6", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_UDP, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "sendspace", NULL,
 		       NULL, 0, &udp6_sendspace, 0,
 		       CTL_NET, PF_INET6, IPPROTO_UDP, UDP6CTL_SENDSPACE,
 		       CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "recvspace", NULL,
 		       NULL, 0, &udp6_recvspace, 0,
 		       CTL_NET, PF_INET6, IPPROTO_UDP, UDP6CTL_RECVSPACE,

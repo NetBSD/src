@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2004/01/04 16:19:43 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2004/03/24 15:34:48 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2004/01/04 16:19:43 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2004/03/24 15:34:48 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -150,12 +150,14 @@ sysctl_machdep_loadandreset(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "machdep", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
@@ -164,7 +166,8 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 <atatat> pick a number.
 <kjk> 98752.
 */
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "load_and_reset", NULL,
 		       sysctl_machdep_loadandreset, 98752, NULL, 0,
 		       CTL_MACHDEP, CPU_LOADANDRESET, CTL_EOL);

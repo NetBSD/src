@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.10 2004/03/17 00:17:45 jonathan Exp $	*/
+/*	$NetBSD: key.c,v 1.11 2004/03/24 15:34:55 atatat Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.10 2004/03/17 00:17:45 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.11 2004/03/24 15:34:55 atatat Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7585,64 +7585,79 @@ sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "keyv2", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_KEY_V2, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "debug", NULL,
 		       NULL, 0, &key_debug_level, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_DEBUG_LEVEL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "spi_try", NULL,
 		       NULL, 0, &key_spi_trycnt, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_SPI_TRY, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "spi_min_value", NULL,
 		       NULL, 0, &key_spi_minval, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_SPI_MIN_VALUE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "spi_max_value", NULL,
 		       NULL, 0, &key_spi_maxval, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_SPI_MAX_VALUE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "random_int", NULL,
 		       NULL, 0, &key_int_random, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_RANDOM_INT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "larval_lifetime", NULL,
 		       NULL, 0, &key_larval_lifetime, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_LARVAL_LIFETIME, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "blockacq_count", NULL,
 		       NULL, 0, &key_blockacq_count, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_BLOCKACQ_COUNT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "blockacq_lifetime", NULL,
 		       NULL, 0, &key_blockacq_lifetime, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_BLOCKACQ_LIFETIME, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "esp_keymin", NULL,
 		       NULL, 0, &ipsec_esp_keymin, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_ESP_KEYMIN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "esp_auth", NULL,
 		       NULL, 0, &ipsec_esp_auth, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_ESP_AUTH, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "ah_keymin", NULL,
 		       NULL, 0, &ipsec_ah_keymin, 0,
 		       CTL_NET, PF_KEY_V2, KEYCTL_AH_KEYMIN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "dumpsa", NULL,
 		       sysctl_net_key_dumpsa, 0, NULL, 0,
 		       CTL_NET, PF_KEY, KEYCTL_DUMPSA, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "dumpsp", NULL,
 		       sysctl_net_key_dumpsp, 0, NULL, 0,
 		       CTL_NET, PF_KEY, KEYCTL_DUMPSP, CTL_EOL);

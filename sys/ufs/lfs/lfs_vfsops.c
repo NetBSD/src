@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.144 2004/02/26 22:56:55 oster Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.145 2004/03/24 15:34:56 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.144 2004/02/26 22:56:55 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.145 2004/03/24 15:34:56 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1696,11 +1696,13 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs setup")
 {
 	extern int lfs_writeindir, lfs_dostats, lfs_clean_vnhead;
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "lfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 5, CTL_EOL);
@@ -1710,15 +1712,18 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs setup")
 	 * "2" is the order as taken from sys/mount.h
 	 */
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "flushindir", NULL,
 		       NULL, 0, &lfs_writeindir, 0,
 		       CTL_VFS, 5, LFS_WRITEINDIR, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "clean_vnhead", NULL,
 		       NULL, 0, &lfs_clean_vnhead, 0,
 		       CTL_VFS, 5, LFS_CLEAN_VNHEAD, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "dostats", NULL,
 		       sysctl_lfs_dostats, 0, &lfs_dostats, 0,
 		       CTL_VFS, 5, LFS_DOSTATS, CTL_EOL);

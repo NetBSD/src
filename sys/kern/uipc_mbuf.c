@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.79 2004/03/23 13:22:05 junyoung Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.80 2004/03/24 15:34:53 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.79 2004/03/23 13:22:05 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.80 2004/03/24 15:34:53 atatat Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -200,8 +200,8 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 	switch (rnode->sysctl_num) {
 	case MBUF_NMBCLUSTERS:
 		if (mb_map != NULL) {
-			node.sysctl_flags &= ~SYSCTL_READWRITE;
-			node.sysctl_flags |= SYSCTL_READONLY;
+			node.sysctl_flags &= ~CTLFLAG_READWRITE;
+			node.sysctl_flags |= CTLFLAG_READONLY;
 		}
 		/* FALLTHROUGH */
 	case MBUF_MBLOWAT:
@@ -275,41 +275,50 @@ sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_kern_mbuf_setup, "sysctl kern.mbuf subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "mbuf", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_MBUF, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "msize", NULL,
 		       NULL, msize, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MSIZE, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_IMMEDIATE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "mclbytes", NULL,
 		       NULL, mclbytes, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MCLBYTES, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "nmbclusters", NULL,
 		       sysctl_kern_mbuf, 0, &nmbclusters, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_NMBCLUSTERS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mblowat", NULL,
 		       sysctl_kern_mbuf, 0, &mblowat, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MBLOWAT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mcllowat", NULL,
 		       sysctl_kern_mbuf, 0, &mcllowat, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MCLLOWAT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats", NULL,
 		       NULL, 0, &mbstat, sizeof(mbstat),
 		       CTL_KERN, KERN_MBUF, MBUF_STATS, CTL_EOL);
 #ifdef MBUFTRACE
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "mowners", NULL,
 		       sysctl_kern_mbuf_mowners, 0, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MOWNERS, CTL_EOL);

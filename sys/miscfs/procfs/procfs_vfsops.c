@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.51 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.52 2004/03/24 15:34:54 atatat Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.51 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.52 2004/03/24 15:34:54 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -115,6 +115,7 @@ int	procfs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int	procfs_checkexp __P((struct mount *, struct mbuf *, int *,
 			   struct ucred **));
 int	procfs_vptofh __P((struct vnode *, struct fid *));
+
 /*
  * VFS Operations.
  *
@@ -336,11 +337,13 @@ procfs_done()
 SYSCTL_SETUP(sysctl_vfs_procfs_setup, "sysctl vfs.procfs subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "procfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 12, CTL_EOL);

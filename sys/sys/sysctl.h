@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.109 2004/02/19 03:56:30 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.110 2004/03/24 15:34:55 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -81,33 +81,41 @@ struct ctlname {
 /*
  * Flags that apply to each node, governing access and other features
  */
-#define SYSCTL_READONLY		0x00000000
-#define SYSCTL_READONLY1	0x00000010
-#define SYSCTL_READONLY2	0x00000020
-/* #define SYSCTL_READ*		0x00000040 */
-#define SYSCTL_READWRITE	0x00000070
-#define SYSCTL_ANYWRITE		0x00000080
-#define SYSCTL_PRIVATE		0x00000100
-#define SYSCTL_PERMANENT	0x00000200
-#define SYSCTL_OWNDATA		0x00000400
-#define SYSCTL_IMMEDIATE	0x00000800
-#define SYSCTL_HEX		0x00001000
-#define SYSCTL_ROOT		0x00002000
-#define SYSCTL_ANYNUMBER	0x00004000
-#define SYSCTL_HIDDEN		0x00008000
-#define SYSCTL_ALIAS		0x00010000
-#define SYSCTL_MMAP		0x00020000
+#define CTLFLAG_READONLY	0x00000000
+#define CTLFLAG_READONLY1	0x00000010
+#define CTLFLAG_READONLY2	0x00000020
+/* #define CTLFLAG_READ*	0x00000040 */
+#define CTLFLAG_READWRITE	0x00000070
+#define CTLFLAG_ANYWRITE	0x00000080
+#define CTLFLAG_PRIVATE		0x00000100
+#define CTLFLAG_PERMANENT	0x00000200
+#define CTLFLAG_OWNDATA		0x00000400
+#define CTLFLAG_IMMEDIATE	0x00000800
+#define CTLFLAG_HEX		0x00001000
+#define CTLFLAG_ROOT		0x00002000
+#define CTLFLAG_ANYNUMBER	0x00004000
+#define CTLFLAG_HIDDEN		0x00008000
+#define CTLFLAG_ALIAS		0x00010000
+#define CTLFLAG_MMAP		0x00020000
+
+/*
+ * sysctl API version
+ */
+#define SYSCTL_VERS_MASK	0xff000000
+#define SYSCTL_VERS_0		0x00000000
+#define SYSCTL_VERSION		SYSCTL_VERS_0
+#define SYSCTL_VERS(f)		((f) & SYSCTL_VERS_MASK)
 
 /*
  * Flags that can be set by a create request from user-space
  */
-#define SYSCTL_USERFLAGS	(SYSCTL_READWRITE|\
-				SYSCTL_ANYWRITE|\
-				SYSCTL_PRIVATE|\
-				SYSCTL_OWNDATA|\
-				SYSCTL_IMMEDIATE|\
-				SYSCTL_HEX|\
-				SYSCTL_HIDDEN)
+#define SYSCTL_USERFLAGS	(CTLFLAG_READWRITE|\
+				CTLFLAG_ANYWRITE|\
+				CTLFLAG_PRIVATE|\
+				CTLFLAG_OWNDATA|\
+				CTLFLAG_IMMEDIATE|\
+				CTLFLAG_HEX|\
+				CTLFLAG_HIDDEN)
 
 /*
  * Accessor macros
@@ -824,6 +832,16 @@ struct buf_sysctl {
 
 #ifdef	_KERNEL
 /*
+ * A log of nodes created by a setup function or set of setup
+ * functions so that they can be torn down in one "transaction"
+ * when no longer needed.
+ *
+ * Users of the log merely pass a pointer to a pointer, and the sysctl
+ * infrastructure takes care of the rest.
+ */
+struct sysctllog;
+
+/*
  * CTL_DEBUG variables.
  *
  * These are declared as separate variables so that they can be
@@ -867,20 +885,20 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	oname, l, (struct sysctlnode *)node
 
 #ifdef SYSCTL_DEBUG_SETUP
-#define SYSCTL_SETUP(name, desc)			\
-	static void __CONCAT(___,name)(void);		\
-	static void name(void) {			\
-		printf("%s\n", desc);			\
-		__CONCAT(___,name)(); }			\
-	__link_set_add_text(sysctl_funcs, name);	\
-	static void __CONCAT(___,name)(void)
-#else
-#define SYSCTL_SETUP(name, desc)			\
-	static void name(void);				\
-	__link_set_add_text(sysctl_funcs, name);	\
-	static void name(void)
-#endif
-typedef void (*sysctl_setup_func)(void);
+#define SYSCTL_SETUP(name, desc)				\
+	static void __CONCAT(___,name)(struct sysctllog **);	\
+	static void name(struct sysctllog **clog) {		\
+		printf("%s\n", desc);				\
+		__CONCAT(___,name)(clog); }			\
+	__link_set_add_text(sysctl_funcs, name);		\
+	static void __CONCAT(___,name)(struct sysctllog **clog)
+#else /* SYSCTL_DEBUG_SETUP */
+#define SYSCTL_SETUP(name, desc)				\
+	static void name(struct sysctllog **);			\
+	__link_set_add_text(sysctl_funcs, name);		\
+	static void name(struct sysctllog **clog)
+#endif /* SYSCTL_DEBUG_SETUP */
+typedef void (*sysctl_setup_func)(struct sysctllog **);
 
 /*
  * Internal sysctl function calling convention:
@@ -929,7 +947,9 @@ int	sysctl_lookup(SYSCTLFN_RWPROTO);
 /*
  * simple variadic interface for adding/removing nodes
  */
-int	sysctl_createv(int, int, const char *, struct sysctlnode **,
+int	sysctl_createv(struct sysctllog **, int,
+		       struct sysctlnode **, struct sysctlnode **,
+		       int, int, const char *, const char *,
 		       sysctlfn, u_quad_t, void *, size_t, ...);
 int	sysctl_destroyv(struct sysctlnode *, ...);
 
@@ -969,7 +989,6 @@ MALLOC_DECLARE(M_SYSCTLDATA);
 #include <sys/cdefs.h>
 
 typedef void *sysctlfn;
-struct sysctlnode;
 
 __BEGIN_DECLS
 int	sysctl __P((int *, u_int, void *, size_t *, const void *, size_t));

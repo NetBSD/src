@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.13 2004/03/09 03:11:39 atatat Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.14 2004/03/24 15:34:52 atatat Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.13 2004/03/09 03:11:39 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.14 2004/03/24 15:34:52 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.13 2004/03/09 03:11:39 atatat 
 #endif
 
 struct sysctlnode netbsd32_sysctl_root = {
-	.sysctl_flags = SYSCTL_ROOT|CTLTYPE_NODE,
+	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
 	.sysctl_num = 0,
 	.sysctl_size = sizeof(struct sysctlnode),
 	.sysctl_name = "(netbsd32_root)",
@@ -103,41 +103,41 @@ netbsd32_sysctl_vm_loadavg(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(netbsd32_sysctl_emul_setup, "sysctl netbsd32 shadow tree setup")
 {
+	struct sysctlnode *_root = &netbsd32_sysctl_root;
 	extern char machine_arch32[];
-	struct sysctlnode *r;
 
-	r = &netbsd32_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "kern", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	r = &netbsd32_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRUCT, "boottime", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "boottime", NULL,
 		       netbsd32_sysctl_kern_boottime, 0, NULL,
 		       sizeof(struct netbsd32_timeval),
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
 
-	r = &netbsd32_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "vm", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vm", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VM, CTL_EOL);
-	r = &netbsd32_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRUCT, "loadavg", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "loadavg", NULL,
 		       netbsd32_sysctl_vm_loadavg, 0, NULL,
 		       sizeof(struct netbsd32_loadavg),
 		       CTL_VM, VM_LOADAVG, CTL_EOL);
 
-	r = &netbsd32_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_NODE, "hw", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "hw", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_HW, CTL_EOL);
-	r = &netbsd32_sysctl_root;
-	sysctl_createv(SYSCTL_PERMANENT,
-		       CTLTYPE_STRING, "machine_arch", &r,
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "machine_arch", NULL,
 		       NULL, 0, machine_arch32, 0,
 		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.81 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.82 2004/03/24 15:34:54 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.81 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.82 2004/03/24 15:34:54 atatat Exp $");
 
 #include "opt_ipsec.h"
 
@@ -958,41 +958,49 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
 {
 
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "icmp", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP, CTL_EOL);
 
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maskrepl", NULL,
 		       NULL, 0, &icmpmaskrepl, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP,
 		       ICMPCTL_MASKREPL, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "returndatabytes", NULL,
 		       sysctl_net_inet_icmp_returndatabytes, 0,
 		       &icmpreturndatabytes, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP,
 		       ICMPCTL_RETURNDATABYTES, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "errppslimit", NULL,
 		       NULL, 0, &icmperrppslim, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP,
 		       ICMPCTL_ERRPPSLIMIT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "rediraccept", NULL,
 		       NULL, 0, &icmp_rediraccept, 0,
 		       CTL_NET, PF_INET, IPPROTO_ICMP,
 		       ICMPCTL_REDIRACCEPT, CTL_EOL);
-	sysctl_createv(SYSCTL_PERMANENT|SYSCTL_READWRITE,
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "redirtimeout", NULL,
 		       sysctl_net_inet_icmp_redirtimeout, 0,
 		       &icmp_redirtimeout, 0,
