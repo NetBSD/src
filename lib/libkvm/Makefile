@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2003/01/18 10:40:41 thorpej Exp $
+#	$NetBSD: Makefile,v 1.40 2003/03/01 06:10:39 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -39,5 +39,22 @@ MLINKS+=kvm_open.3 kvm_openfiles.3 kvm_open.3 kvm_close.3
 MLINKS+=kvm_read.3 kvm_write.3
 MLINKS+=kvm_dump.3 kvm_dump_mkheader.3 kvm_dump.3 kvm_dump_wrtheader.3
 MLINKS+=kvm_dump.3 kvm_dump_inval.3
+
+# This fixes building with MACHINE==sparc64, MACHINE_ARCH==sparc
+# XXX:	this is a hack, but until the sparc MD headers are separated
+#	out from the sparc AD headers, it's the easiest solution.
+#
+.if (${MACHINE_ARCH} == "sparc")	# {
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@([ -h machine ] || \
+	    ln -fs ${NETBSDSRCDIR}/sys/arch/sparc/include machine)
+	@([ -h sparc ] || ln -fs ${NETBSDSRCDIR}/sys/arch/sparc/include sparc)
+.NOPATH: machine sparc
+.endif
+CLEANFILES+=	machine sparc
+CPPFLAGS+=	-I.
+.endif					# }
+
 
 .include <bsd.lib.mk>
