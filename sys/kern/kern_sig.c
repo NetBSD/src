@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.88 1999/04/30 18:43:00 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.89 1999/04/30 21:23:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -64,6 +64,8 @@
 #include <sys/core.h>
 #include <sys/ptrace.h>
 #include <sys/filedesc.h>
+#include <sys/malloc.h>
+#include <sys/pool.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -80,6 +82,8 @@ void killproc __P((struct proc *, char *));
 
 sigset_t contsigmask, stopsigmask, sigcantmask;
 
+struct pool sigacts_pool;	/* memory pool for sigacts structures */
+
 /*
  * Can process p, with pcred pc, send the signal signum to process q?
  */
@@ -90,6 +94,80 @@ sigset_t contsigmask, stopsigmask, sigcantmask;
 	    (pc)->p_ruid == (q)->p_ucred->cr_uid || \
 	    (pc)->pc_ucred->cr_uid == (q)->p_ucred->cr_uid || \
 	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
+
+/*
+ * Initialize signal-related data structures.
+ */
+void
+signal_init()
+{
+
+	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+}
+
+/*
+ * Create an initial sigacts structure, using the same signal state
+ * as p.
+ */
+struct sigacts *
+sigactsinit(p)
+	struct proc *p;
+{
+	struct sigacts *ps;
+
+	ps = pool_get(&sigacts_pool, PR_WAITOK);
+	memcpy(ps, p->p_sigacts, sizeof(struct sigacts));
+	ps->ps_refcnt = 1;
+	return (ps);
+}
+
+/*
+ * Make p2 share p1's sigacts.
+ */
+void
+sigactsshare(p1, p2)
+	struct proc *p1, *p2;
+{
+
+	p2->p_sigacts = p1->p_sigacts;
+	p1->p_sigacts->ps_refcnt++;
+}
+
+/*
+ * Make this process not share its sigacts, maintaining all
+ * signal state.
+ */
+void
+sigactsunshare(p)
+	struct proc *p;
+{
+	struct sigacts *newps;
+
+	if (p->p_sigacts->ps_refcnt == 1)
+		return;
+
+	newps = sigactsinit(p);
+	sigactsfree(p);
+	p->p_sigacts = newps;
+}
+
+/*
+ * Release a sigacts structure.
+ */
+void
+sigactsfree(p)
+	struct proc *p;
+{
+	struct sigacts *ps = p->p_sigacts;
+
+	if (--ps->ps_refcnt > 0)
+		return;
+
+	p->p_sigacts = NULL;
+
+	pool_put(&sigacts_pool, ps);
+}
 
 int
 sigaction1(p, signum, nsa, osa)
@@ -238,6 +316,9 @@ siginit(p)
 	ps->ps_sigstk.ss_flags = SS_DISABLE;
 	ps->ps_sigstk.ss_size = 0;
 	ps->ps_sigstk.ss_sp = 0;
+
+	/* One reference. */
+	ps->ps_refcnt = 1;
 }
 
 /*

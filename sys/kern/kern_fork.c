@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.55 1999/04/30 18:42:59 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.56 1999/04/30 21:23:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -58,6 +58,7 @@
 #include <sys/ktrace.h>
 #include <sys/vmmeter.h>
 #include <sys/sched.h>
+#include <sys/signalvar.h>
 
 #include <sys/syscallargs.h>
 
@@ -312,6 +313,11 @@ again:
 	}
 #endif
 	scheduler_fork_hook(p1, p2);
+
+	/*
+	 * Create signal actions for the child process.
+	 */
+	p2->p_sigacts = sigactsinit(p1);
 
 	/*
 	 * This begins the section where we must prevent the parent

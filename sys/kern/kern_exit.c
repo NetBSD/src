@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.66 1999/04/30 20:54:04 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.67 1999/04/30 21:23:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -299,6 +299,11 @@ exit1(p, rv)
 		if (pp->p_children.lh_first == NULL)
 			wakeup((caddr_t)pp);
 	}
+
+	/*
+	 * Release the process's signal state.
+	 */
+	sigactsfree(p);
 
 	/*
 	 * Clear curproc after we've done all operations

@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.21 1998/10/03 14:29:02 drochner Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.22 1999/04/30 21:23:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -55,6 +55,7 @@ struct	sigacts {
 	int	ps_sig;			/* for core dump/debugger XXX */
 	long	ps_code;		/* for core dump/debugger XXX */
 	void	*ps_sigcode;		/* address of signal trampoline */
+	int	ps_refcnt;		/* reference count */
 };
 
 /* signal flags */
@@ -161,6 +162,13 @@ void	sigpending1 __P((struct proc *p, sigset_t *ss));
 int	sigsuspend1 __P((struct proc *p, const sigset_t *ss));
 int	sigaltstack1 __P((struct proc *p, \
 	    const struct sigaltstack *nss, struct sigaltstack *oss));
+
+void	signal_init __P((void));
+
+struct sigacts *sigactsinit __P((struct proc *));
+void	sigactsshare __P((struct proc *, struct proc *));
+void	sigactsunshare __P((struct proc *));
+void	sigactsfree __P((struct proc *));
 
 /*
  * Machine-dependent functions:

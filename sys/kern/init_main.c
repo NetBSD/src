@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.148 1999/04/30 18:42:59 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.149 1999/04/30 21:23:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -118,6 +118,7 @@ struct	filedesc0 filedesc0;
 struct	cwdinfo cwdi0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
+struct	sigacts sigacts0;
 #ifndef curproc
 struct	proc *curproc = &proc0;
 #endif
@@ -294,11 +295,10 @@ main()
 	p->p_addr = proc0paddr;				/* XXX */
 
 	/*
-	 * We continue to place resource usage info and signal
-	 * actions in the user struct so they're pageable.
+	 * We continue to place resource usage info in the
+	 * user struct so they're pageable.
 	 */
 	p->p_stats = &p->p_addr->u_stats;
-	p->p_sigacts = &p->p_addr->u_sigacts;
 
 	/*
 	 * Charge root for one process.
@@ -395,7 +395,12 @@ main()
 	p->p_stats->p_start = runtime = mono_time = boottime = time;
 	p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
 
-	/* Initialize signal state for process 0. */
+	/*
+	 * Initialize signal-related data structures, and signal state
+	 * for proc0.
+	 */
+	signal_init();
+	p->p_sigacts = &sigacts0;
 	siginit(p);
 
 	/* Create process 1 (init(8)). */
