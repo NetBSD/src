@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.18.2.1 2005/02/23 09:11:30 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.18.2.2 2005/02/23 10:14:24 yamt Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.18.2.1 2005/02/23 09:11:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.18.2.2 2005/02/23 10:14:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -258,13 +258,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		/*
 		 * Initialize Sysptmap
 		 */
-		pte = ((u_int *)kstpa)[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE*2];
-		epte = &pte[NPTEPG/SG4_LEV3SIZE];
-		protoste = kptmpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
-		}
 		pte = (u_int *)kptmpa;
 		epte = &pte[nptpages];
 		protopte = kptpa | PG_RW | PG_CI | PG_U | PG_V;
@@ -399,8 +392,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 	protopte = INTIOBASE | PG_RW | PG_CI | PG_U | PG_M | PG_V;
 	epte = &pte[IIOMAPSIZE];
-	RELOC(intiobase, char *) = PTE2VA(pte);
-	RELOC(intiolimit, char *) = PTE2VA(epte);
+	RELOC(intiobase, char *) = (char *)PTE2VA(pte);
+	RELOC(intiolimit, char *) = (char *)PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
@@ -410,8 +403,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 	protopte = MONOBASE | PG_RW | PG_CWT | PG_U | PG_M | PG_V;
 	epte = &pte[MONOMAPSIZE];
-	RELOC(monobase, char *) = PTE2VA(pte);
-	RELOC(monolimit, char *) = PTE2VA(epte);
+	RELOC(monobase, char *) = (char *)PTE2VA(pte);
+	RELOC(monolimit, char *) = (char *)PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
@@ -420,8 +413,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	/* validate the color fb space PTEs */
 	protopte = COLORBASE | PG_RW | PG_CWT | PG_U | PG_M | PG_V;
 	epte = &pte[COLORMAPSIZE];
-	RELOC(colorbase, char *) = PTE2VA(pte);
-	RELOC(colorlimit, char *) = PTE2VA(epte);
+	RELOC(colorbase, char *) = (char *)PTE2VA(pte);
+	RELOC(colorlimit, char *) = (char *)PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
