@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 1996/12/18 12:35:45 leo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 1997/01/03 22:54:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,7 +141,7 @@ extern int	want_resched;	/* resched() was called */
 #define	ATARI_ANYMACH	(ATARI_TT|ATARI_FALCON|ATARI_HADES)
 
 #ifdef _KERNEL
-extern int machineid, cpu040;
+extern int machineid;
 #endif
 
 /*

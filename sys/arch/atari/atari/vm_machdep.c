@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 1996/06/29 20:24:28 leo Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10 1997/01/03 22:54:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -189,7 +189,7 @@ physaccess(vaddr, paddr, size, prot)
 	u_int *pte;
 	register u_int page;
 
-	if (cpu040 && (prot & PG_CI) == 0)	/* if cache not inhibited */
+	if (mmutype == MMU_68040 && (prot & PG_CI) == 0)
 		prot |= PG_CCB;		/*   set cacheable, copyback */
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
