@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.21 1998/05/29 20:24:36 veego Exp $	*/
+/*	$NetBSD: fil.c,v 1.22 1998/05/31 19:39:13 cgd Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -1039,7 +1039,7 @@ int len;
 #endif /* SOLARIS */
 		if (len < 2)
 			break;
-		if((u_32_t)sp & 1) {
+		if((u_long)sp & 1) {
 			bcopy((char *)sp++, (char *)&bytes.s, sizeof(bytes.s));
 			sum += bytes.s;
 		} else
