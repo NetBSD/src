@@ -49,8 +49,11 @@ OPTS=""
 INCS="-nostdinc"
 FOUNDFILES=no
 
-for A
+while [ $# -gt 0 ]
 do
+	A="$1"
+	shift
+
 	case $A in
 	-nostdinc)
 		NSI=yes
@@ -62,6 +65,10 @@ do
 		;;
 	-U__GNUC__)
 		ALST=`echo $ALST | sed -e 's/-D__GNUC__//'`
+		;;
+	-imacros|-include|-idirafter|-iprefix|-iwithprefix)
+		INCS="$INCS '$A' '$1'"
+		shift
 		;;
 	-*)
 		OPTS="$OPTS '$A'"
