@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.2 1994/10/26 08:02:17 cgd Exp $	*/
+/*	$NetBSD: nexus.h,v 1.3 1995/02/13 00:43:25 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -89,6 +89,12 @@ struct	nexus {
 	long	nex_pad[NEXSIZE / sizeof (long) - 1];
 };
 
+struct sbi_attach_args {
+	u_int	nexnum;
+	u_int	type;
+	void	*nexaddr;
+};
+
 struct iobus {
         int io_type;
         int io_addr;
@@ -108,11 +114,6 @@ struct nexusconnect {
 extern caddr_t *nex_vec;
 #define nex_vec_num(ipl, nexnum) nex_vec[(ipl-14)*16+nexnum]
 
-/* XXX
-#ifdef	KERNEL
-struct nexus nexus[MAXNNEXUS];
-#endif
-*/
 #endif
 
 /*

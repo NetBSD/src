@@ -1,4 +1,4 @@
-/*      $NetBSD: pte.h,v 1.3 1994/11/25 19:08:59 ragge Exp $      */
+/*      $NetBSD: pte.h,v 1.4 1995/02/13 00:43:30 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -40,7 +40,6 @@
 /*
  * VAX page table entries
  */
-
 struct pte {
   unsigned int	pg_pfn:21;	/* Page Frame Number or 0 */
   unsigned int	pg_u:1;         /* Uniform bit, does WHAT?? XXX */
@@ -54,7 +53,7 @@ struct pte {
 };
 
 
-typedef struct pte	pt_entry_t;	/* Mach page table entry */
+typedef unsigned int	pt_entry_t;	/* Mach page table entry */
 
 #endif ASSEMBLER
 
@@ -65,6 +64,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define PG_PROT         0x78000000
 #define PG_RW           0x20000000
 #define PG_KW           0x10000000
+#define PG_KR           0x18000000
 #define PG_RO           0x78000000
 #define PG_NONE         0x00000000
 #define PG_M            0x04000000
@@ -80,7 +80,7 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define VAX_MAX_KPTSIZE VM_KERNEL_PT_PAGES
 
 #ifndef ASSEMBLER
-extern struct pte *Sysmap;
+extern pt_entry_t *Sysmap;
 /*
  * Kernel virtual address to page table entry and to physical address.
  */
