@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.3 2002/01/04 12:24:33 martin Exp $ 
+ *	$Id: isdnd.h,v 1.4 2002/03/16 17:03:43 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -555,7 +555,7 @@ struct monitor_rights {
  *---------------------------------------------------------------------------*/
 #ifdef MAIN
 
-int isdnfd;					/* file handle, /dev/i4b */
+int isdnfd;					/* file handle, /dev/isdn */
 
 char mailto[MAXPATHLEN] = "";			/* panic mail address */
 char mailer[MAXPATHLEN] = "";			/* panic mail address */

@@ -27,7 +27,7 @@
  *	i4b daemon - location of files
  *	------------------------------
  *
- *	$Id: pathnames.h,v 1.1.1.1 2001/01/06 13:00:23 martin Exp $ 
+ *	$Id: pathnames.h,v 1.2 2002/03/16 17:03:43 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
 #ifndef _PATHNAMES_H_
 #define _PATHNAMES_H_
 
-#define I4BDEVICE	"/dev/i4b"
+#define I4BDEVICE	"/dev/isdn"
 
 #define ETCPATH		"/etc/isdn"
 
