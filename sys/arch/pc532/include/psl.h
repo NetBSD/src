@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.15 1996/02/01 22:32:00 mycroft Exp $	*/
+/*	$NetBSD: psl.h,v 1.16 1996/10/09 07:28:52 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,9 +100,9 @@ struct iv {
 	char *iv_use;
 };
 
-extern unsigned int imask[], Cur_pl, idisabled, sirpending, astpending;
+extern unsigned int imask[], Cur_pl, sirpending, astpending;
 extern void intr_init();
-extern void check_sir();
+extern void check_sir(int);
 extern int intr_establish(int, void (*)(), void *, char *, int, int);
 extern struct iv ivt[];
 
@@ -112,22 +112,6 @@ extern struct iv ivt[];
 #define di() /* Removing the nop will give you *BIG* trouble */ \
 	__asm __volatile("bicpsrw 0x800 ; nop" : : : "cc")
 #define ei() __asm __volatile("bispsrw 0x800" : : : "cc")
-
-/*
- * Globaly disable/enable specific interrupts
- * (overriding spl0)
- */
-#define intr_disable(ir) do { \
-		di(); \
-		ICUW(IMSK) = Cur_pl | (idisabled |= (1 << ir)); \
-		ei(); \
-	} while(0)
-
-#define intr_enable(ir) do { \
-		di(); \
-		ICUW(IMSK) = Cur_pl | (idisabled &= ~(1 << ir)); \
-		ei(); \
-	} while(0)
 
 /*
  * Add a mask to Cur_pl, and return the old value of Cur_pl.
@@ -143,14 +127,14 @@ splraise(register int ncpl)
 	di();
 	ocpl = Cur_pl;
 	ncpl |= ocpl;
-	ICUW(IMSK) = ncpl | idisabled;
+	ICUW(IMSK) = ncpl;
 	Cur_pl = ncpl;
 	ei();
 	return(ocpl);
 }
 
 /*
- * Restore a value to Cur_pl (unmasking interrupts).
+ * Restore a value to Cur_pl (cpu interrupts will get unmasked).
  *
  * NOTE: We go to the trouble of returning the old value of cpl for
  * the benefit of some splsoftclock() callers.  This extra work is
@@ -168,35 +152,38 @@ splx(register int ncpl)
 	register int ocpl;
 	di();
 	ocpl = Cur_pl;
-	ICUW(IMSK) = ncpl | idisabled;
+	ICUW(IMSK) = ncpl;
 	Cur_pl = ncpl;
-	if (sirpending && ncpl == imask[IPL_ZERO]) {
-		Cur_pl |= SIR_ALLMASK;
-		check_sir();
+	if (sirpending & ~ncpl) {
+		Cur_pl |= SIR_ALLMASK;	/* avoid reentering check_sir */
+		check_sir(~ncpl);
 		Cur_pl = ncpl;
 	}
 	ei();
-	return (ocpl);
+	return(ocpl);
 }
 
 /*
- * This special version of splx returns with interrupts disabled.
+ * This special version of splx should be entered with cpu interrupts
+ * disabled. It will return with interrupts disabled.
+ * It checks for pending software interrupts *before* setting the
+ * new processor priority. This is done to avoid kernelstack overflows
+ * due to reentering device interrupts.
+ * This routine should be used *only* by interrupt() in locore.s.
  */
 # ifdef DEFINE_SPLX
 int
 splx_di(register int ncpl)
 {
-	register int ocpl;
-	di();
-	ocpl = Cur_pl;
-	ICUW(IMSK) = ncpl | idisabled;
-	Cur_pl = ncpl;
-	if (sirpending && ncpl == imask[IPL_ZERO]) {
-		Cur_pl |= SIR_ALLMASK;
-		check_sir();
-		Cur_pl = ncpl;
+	register int ocpl = Cur_pl;
+	if (sirpending & ~ncpl) {
+		Cur_pl |= SIR_ALLMASK;	/* avoid reentering check_sir */
+		check_sir(~ncpl);
 	}
-	return (ocpl);
+	di();
+	ICUW(IMSK) = ncpl;
+	Cur_pl = ncpl;
+	return(ocpl);
 }
 # endif
 #endif
