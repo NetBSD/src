@@ -1,6 +1,9 @@
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+.\"     $NetBSD: ping6.8,v 1.7 2000/05/18 13:21:49 itojun Exp $
+.\"     $KAME: ping6.8,v 1.19 2000/05/18 13:19:09 itojun Exp $
+.\"
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -12,7 +15,7 @@
 .\" 3. Neither the name of the project nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -24,9 +27,6 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\"
-.\"     $NetBSD: ping6.8,v 1.6 2000/02/28 13:50:04 itojun Exp $
-.\"     KAME Id: ping6.8,v 1.13 2000/02/28 13:33:19 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt PING6 8
@@ -74,14 +74,16 @@ The options are as follows:
 .Bl -tag -width Ds
 .\" old ipsec
 .\" .It Fl A
-.\" Enables transport-mode IPsec authentication header. (experimental)
+.\" Enables transport-mode IPsec authentication header
+.\" .Pq experimental .
 .It Fl a Ar addrtype
 Generate ICMPv6 Node Information Node Addresses query, rather than echo-request.
 .Ar addrtype
-must be a string constructed of the following charaters.
+must be a string constructed of the following characters.
 .Bl -tag -width Ds -compact
 .It Ic a
-requests all the responder's unicast addresses. If the charater is ommited,
+requests all the responder's unicast addresses.
+If the charater is ommited,
 only those addresses which belong to the interface which has the
 responder's address are requests.
 .It Ic c
@@ -93,11 +95,12 @@ requests responder's site-local addresses.
 .It Ic l
 requests responder's link-local addresses.
 .It Ic A
-requests responder's anycast addresses. Without this character, the responder
-will return unicast addresses only. With this character, the responder
-will return anycast addresses only.
+requests responder's anycast addresses.
+Without this character, the responder will return unicast addresses only.
+With this character, the responder will return anycast addresses only.
 Note that the specification does not specify how to get responder's
-anycast addresses. This is an experimental option.
+anycast addresses.
+This is an experimental option.
 .El
 .It Fl b Ar bufsiz
 Set socket buffer size.
@@ -112,14 +115,15 @@ Set the
 .Dv SO_DEBUG
 option on the socket being used.
 .\" .It Fl E
-.\" Enables transport-mode IPsec encapsulated security payload. (experimental)
+.\" Enables transport-mode IPsec encapsulated security payload
+.\" .Pq experimental .
 .It Fl f
 Flood ping.
 Outputs packets as fast as they come back or one hundred times per second,
 whichever is more.
 For every
 .Tn ECHO_REQUEST
-sent a period 
+sent a period
 .Dq \&.
 is printed, while for every
 .Tn ECHO_REPLY
@@ -165,7 +169,7 @@ For example,
 will cause the sent packet to be filled with all
 ones.
 .Fl Q
-flag, 
+flag,
 .Nm
 prints out any ICMP error messages caused by its own ECHO_REQUEST
 messages.
@@ -199,7 +203,7 @@ If the outgoing interface is specified by the
 .Fl I
 option as well, the address must be assinged to the specified interface.
 .It Fl s Ar packetsize
-Specifies the number of data bytes to be sent.  
+Specifies the number of data bytes to be sent.
 The default is 56, which translates into 64
 .Tn ICMP
 data bytes when combined
@@ -240,7 +244,7 @@ When using
 .Nm
 for fault isolation, it should first be run on the local host, to verify
 that the local network interface is up and running.
-Then, hosts and gateways further and further away should be 
+Then, hosts and gateways further and further away should be
 .Dq pinged .
 Round-trip times and packet loss statistics are computed.
 If duplicate packets are received, they are not included in the packet
@@ -332,20 +336,14 @@ using the
 option of
 .Nm Ns .
 .Sh RETURN VALUES
-The
 .Nm
-command returns an exit status of zero if at least one response was
-heard from the specified
-.Ar host ;
-a status of two if the transmission was successful but no responses
-were received; or another value
-.Pq from Aq Pa sysexits.h
-if an error occurred.
+returns 0 on success (the host is alive),
+and non-zero if the arguments are incorrect or the host is not responding.
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr ifconfig 8 ,
-.Xr routed 8 ,
 .Xr ping 8 ,
+.Xr routed 8 ,
 .Xr traceroute 8 ,
 .Xr traceroute6 8
 .Rs
@@ -355,13 +353,19 @@ if an error occurred.
 .%N RFC2463
 .%D December 1998
 .Re
+.Rs
+.%A Matt Crawford
+.%T "IPv6 Node Information Queries"
+.%N draft-ietf-ipngwg-icmp-name-lookups-05.txt
+.%D October 22, 1999
+.%O work in progress material
+.Re
 .Sh HISTORY
 The
 .Nm ping
 command appeared in
 .Bx 4.3 .
-.Nm Ping6
+The
+.Nm
 command with IPv6 support first appeared in WIDE Hydrangea IPv6 protocol stack
 kit.
-.\" .Sh BUGS
-.\" (to be written)
