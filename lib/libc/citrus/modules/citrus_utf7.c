@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf7.c,v 1.1 2005/03/05 18:05:15 tnozaki Exp $	*/
+/*	$NetBSD: citrus_utf7.c,v 1.2 2005/03/14 03:43:10 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2004, 2005 Citrus Project,
@@ -29,7 +29,7 @@
  
 #include <sys/cdefs.h>
 #if defined(LIB_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf7.c,v 1.1 2005/03/05 18:05:15 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_utf7.c,v 1.2 2005/03/14 03:43:10 tnozaki Exp $");
 #endif /* LIB_SCCS and not lint */
 
 #include <assert.h>
@@ -62,19 +62,11 @@ typedef struct {
 
 typedef struct {
 	unsigned int
-		chlen: 3,	/* need to hold 0 - 4 */
 		mode: 1,	/* whether base64 mode */
 		bits: 4,	/* need to hold 0 - 15 */
 		cache: 22,	/* 22 = BASE64_BIT + UTF16_BIT */
-		surrogate: 1,	/* whether surrogate pair or not */
-		unused: 1;
-} _UTF7StatePriv;
-
-typedef struct {
-	union {
-		uint32_t	chlen;
-		_UTF7StatePriv	state;
-	};
+		surrogate: 1;	/* whether surrogate pair or not */
+	int chlen;
 	char ch[4]; /* BASE64_IN, 3 * 6 = 18, most closed to UTF16_BIT */
 } _UTF7State;
 
@@ -197,7 +189,7 @@ _mbtoutf16(_UTF7EncodingInfo * __restrict ei,
 	uint16_t * __restrict u16, const char ** __restrict s, size_t n,
 	_UTF7State * __restrict psenc, size_t * __restrict nresult)
 {
-	_UTF7StatePriv *st, sv;
+	_UTF7State sv;
 	const char *s0;
 	int i, done, len;
  
@@ -206,27 +198,27 @@ _mbtoutf16(_UTF7EncodingInfo * __restrict ei,
 	_DIAGASSERT(psenc != NULL);
 
 	s0 = *s;
-	sv = *(st = &psenc->state);
+	sv = *psenc;
 
 	for (i = 0, done = 0; done == 0; i++) {
-		_DIAGASSERT(i <= st->chlen);
-		if (i == st->chlen) {
+		_DIAGASSERT(i <= psenc->chlen);
+		if (i == psenc->chlen) {
 			if (n-- < 1) {
 				*nresult = (size_t)-2;
 				*s = s0;
-				sv.chlen = st->chlen;
-				*st = sv;
+				sv.chlen = psenc->chlen;
+				*psenc = sv;
 				return (0);
 			}
-			psenc->ch[st->chlen++] = *s0++;
+			psenc->ch[psenc->chlen++] = *s0++;
 		}
 		if (SHIFT7BIT((int)psenc->ch[i]))
 			goto ilseq;
-		if (!st->mode) {
-			if (st->bits > 0 || st->cache > 0)
+		if (!psenc->mode) {
+			if (psenc->bits > 0 || psenc->cache > 0)
 				return (EINVAL);
 			if (psenc->ch[i] == BASE64_IN) {
-				st->mode = 1;
+				psenc->mode = 1;
 			} else {
 				if (!ISDIRECT(ei, (int)psenc->ch[i]))
 					goto ilseq;
@@ -235,18 +227,18 @@ _mbtoutf16(_UTF7EncodingInfo * __restrict ei,
 				continue;
 			}
 		} else {
-			if (psenc->ch[i] == BASE64_OUT && st->cache == 0) {
-				st->mode = 0;
+			if (psenc->ch[i] == BASE64_OUT && psenc->cache == 0) {
+				psenc->mode = 0;
 				*u16 = (uint16_t)BASE64_IN;
 				done = 1;
 				continue;
 			}
 			len = FINDLEN(ei, (int)psenc->ch[i]);
 			if (len < 0) {
-				if (st->bits >= BASE64_BIT)
+				if (psenc->bits >= BASE64_BIT)
 					return (EINVAL);
-				st->mode = 0;
-				st->bits = st->cache = 0;
+				psenc->mode = 0;
+				psenc->bits = psenc->cache = 0;
 				if (psenc->ch[i] != BASE64_OUT) {
 					if (!ISDIRECT(ei, (int)psenc->ch[i]))
 						goto ilseq;
@@ -254,16 +246,16 @@ _mbtoutf16(_UTF7EncodingInfo * __restrict ei,
 					done = 1;
 				}
 			} else {
-				st->cache = (st->cache << BASE64_BIT) | len;
-				switch (st->bits) {
+				psenc->cache = (psenc->cache << BASE64_BIT) | len;
+				switch (psenc->bits) {
 				case 0: case 2: case 4: case 6: case 8:
-					st->bits += BASE64_BIT;
+					psenc->bits += BASE64_BIT;
 					break;
 				case 10: case 12: case 14:
-					st->bits -= (UTF16_BIT - BASE64_BIT);
-					*u16 = (st->cache >> st->bits)
+					psenc->bits -= (UTF16_BIT - BASE64_BIT);
+					*u16 = (psenc->cache >> psenc->bits)
 					    & UTF16_MAX;
-					CHECK_SRG(st, *u16, goto ilseq);
+					CHECK_SRG(psenc, *u16, goto ilseq);
 					done = 1;
 					break;
 				default:
@@ -273,9 +265,9 @@ _mbtoutf16(_UTF7EncodingInfo * __restrict ei,
 		}
 	}
 
-	if (st->chlen > i)
+	if (psenc->chlen > i)
 		return (EINVAL);
-	st->chlen = 0;
+	psenc->chlen = 0;
 	*nresult = (size_t)((*u16 == 0) ? 0 : s0 - *s);
 	*s = s0;
 
@@ -291,7 +283,6 @@ _citrus_UTF7_mbrtowc_priv(_UTF7EncodingInfo * __restrict ei,
 	wchar_t * __restrict pwc, const char ** __restrict s, size_t n,
 	_UTF7State * __restrict psenc, size_t * __restrict nresult)
 {
-	_UTF7StatePriv *st;
 	uint32_t u32;
 	uint16_t hi, lo;
 	size_t siz;
@@ -308,9 +299,8 @@ _citrus_UTF7_mbrtowc_priv(_UTF7EncodingInfo * __restrict ei,
 		return (0);
 	}
 
-	st = &psenc->state;
-	if (st->surrogate) {
-		hi = (st->cache >> 2) & UTF16_MAX;
+	if (psenc->surrogate) {
+		hi = (psenc->cache >> 2) & UTF16_MAX;
 		if (hi >= HISRG_MIN && hi <= HISRG_MAX)
 			return (EINVAL);
 		siz = 0;
@@ -321,7 +311,7 @@ _citrus_UTF7_mbrtowc_priv(_UTF7EncodingInfo * __restrict ei,
 		n -= *nresult;
 		siz = *nresult;
 	}
-	if (!st->surrogate) {
+	if (!psenc->surrogate) {
 		u32 = (uint32_t)hi;
 	} else {
 		err = _mbtoutf16(ei, &lo, s, n, psenc, nresult);
@@ -344,47 +334,45 @@ static __inline int
 _utf16tomb(_UTF7EncodingInfo * __restrict ei,
 	uint16_t u16, _UTF7State * __restrict psenc)
 {
-	_UTF7StatePriv *st;
 	int bits, i;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(psenc != NULL);
 
-	st = &psenc->state;
-	if (st->chlen != 0 || st->bits > BASE64_BIT)
+	if (psenc->chlen != 0 || psenc->bits > BASE64_BIT)
 		return (EINVAL);
-	CHECK_SRG(st, u16, return (EILSEQ));
+	CHECK_SRG(psenc, u16, return (EILSEQ));
 
 	if (ISSAFE(ei, u16)) {
-		if (st->mode) {
-			if (st->bits > 0) {
-				bits = BASE64_BIT - st->bits;
-				i = (st->cache << bits) & BASE64_MAX;
-				psenc->ch[st->chlen++] = base64[i];
-				st->bits = st->cache = 0;
+		if (psenc->mode) {
+			if (psenc->bits > 0) {
+				bits = BASE64_BIT - psenc->bits;
+				i = (psenc->cache << bits) & BASE64_MAX;
+				psenc->ch[psenc->chlen++] = base64[i];
+				psenc->bits = psenc->cache = 0;
 			}
 			if (u16 == BASE64_OUT || FINDLEN(ei, u16) >= 0)
-				psenc->ch[st->chlen++] = BASE64_OUT;
-			st->mode = 0;
+				psenc->ch[psenc->chlen++] = BASE64_OUT;
+			psenc->mode = 0;
 		}
-		if (st->bits != 0)
+		if (psenc->bits != 0)
 			return (EINVAL);
-		psenc->ch[st->chlen++] = (char)u16;
+		psenc->ch[psenc->chlen++] = (char)u16;
 		if (u16 == BASE64_IN)
-			psenc->ch[st->chlen++] = BASE64_OUT;
+			psenc->ch[psenc->chlen++] = BASE64_OUT;
 	} else {
-		if (!st->mode) {
-			if (st->bits > 0)
+		if (!psenc->mode) {
+			if (psenc->bits > 0)
 				return (EINVAL);
-			psenc->ch[st->chlen++] = BASE64_IN;
-			st->mode = 1;
+			psenc->ch[psenc->chlen++] = BASE64_IN;
+			psenc->mode = 1;
 		}
-		st->cache = (st->cache << UTF16_BIT) | u16;
-		bits = UTF16_BIT + st->bits;
-		st->bits = bits % BASE64_BIT;
+		psenc->cache = (psenc->cache << UTF16_BIT) | u16;
+		bits = UTF16_BIT + psenc->bits;
+		psenc->bits = bits % BASE64_BIT;
 		while ((bits -= BASE64_BIT) >= 0) {
-			i = (st->cache >> bits) & BASE64_MAX;
-			psenc->ch[st->chlen++] = base64[i];
+			i = (psenc->cache >> bits) & BASE64_MAX;
+			psenc->ch[psenc->chlen++] = base64[i];
 		}
 	}
 
@@ -396,7 +384,7 @@ _citrus_UTF7_wcrtomb_priv(_UTF7EncodingInfo * __restrict ei,
 	char * __restrict s, size_t n, wchar_t wchar,
 	_UTF7State * __restrict psenc, size_t * __restrict nresult)
 {
-	_UTF7StatePriv sv, *st;
+	_UTF7State sv;
 	uint32_t u32;
 	uint16_t u16[2];
 	int err, len, i;
@@ -421,15 +409,15 @@ _citrus_UTF7_wcrtomb_priv(_UTF7EncodingInfo * __restrict ei,
 		return (EILSEQ);
 	}
 
-	sv = *(st = &psenc->state);
+	sv = *psenc;
 	nr = 0;
 	for (i = 0; i < len; i++) {
 		err = _utf16tomb(ei, u16[i], psenc);
 		switch (err) {
 		case 0:
-			if (st->chlen <= n)
+			if (psenc->chlen <= n)
 				break;
-			*st = sv;
+			*psenc = sv;
 			err = (E2BIG);
 		case EILSEQ:
 			*nresult = (size_t)-1;
@@ -437,11 +425,11 @@ _citrus_UTF7_wcrtomb_priv(_UTF7EncodingInfo * __restrict ei,
 		default:
 			return (err);
 		}
-		n -= st->chlen;
-		memcpy(s, psenc->ch, st->chlen);
-		s += st->chlen;
-		nr += st->chlen;
-		st->chlen = 0;
+		n -= psenc->chlen;
+		memcpy(s, psenc->ch, psenc->chlen);
+		s += psenc->chlen;
+		nr += psenc->chlen;
+		psenc->chlen = 0;
 	}
 	*nresult = nr;
 
@@ -454,7 +442,6 @@ _citrus_UTF7_put_state_reset(_UTF7EncodingInfo * __restrict ei,
 	char * __restrict s, size_t n, _UTF7State * __restrict psenc,
 	size_t * __restrict nresult)
 {
-	_UTF7StatePriv *st;
 	int bits, pos;
 
 	_DIAGASSERT(ei != NULL);
@@ -462,32 +449,31 @@ _citrus_UTF7_put_state_reset(_UTF7EncodingInfo * __restrict ei,
 	_DIAGASSERT(psenc != NULL);
 	_DIAGASSERT(nresult != NULL);
 
-	st = &psenc->state;
-	if (st->chlen != 0 || st->bits > BASE64_BIT || st->surrogate)
+	if (psenc->chlen != 0 || psenc->bits > BASE64_BIT || psenc->surrogate)
 		return (EINVAL);
 
-	if (st->mode) {
-		if (st->bits > 0) {
+	if (psenc->mode) {
+		if (psenc->bits > 0) {
 			if (n-- < 1)
 				return (E2BIG);
-			bits = BASE64_BIT - st->bits;
-			pos = (st->cache << bits) & BASE64_MAX;
-			psenc->ch[st->chlen++] = base64[pos];
-			psenc->ch[st->chlen++] = BASE64_OUT;
-			st->bits = st->cache = 0;
+			bits = BASE64_BIT - psenc->bits;
+			pos = (psenc->cache << bits) & BASE64_MAX;
+			psenc->ch[psenc->chlen++] = base64[pos];
+			psenc->ch[psenc->chlen++] = BASE64_OUT;
+			psenc->bits = psenc->cache = 0;
 		}
-		st->mode = 0;
+		psenc->mode = 0;
 	}
-	if (st->bits != 0)
+	if (psenc->bits != 0)
 		return (EINVAL);
 	if (n-- < 1)
 		return (E2BIG);
 
-	_DIAGASSERT(n >= st->chlen);
-	*nresult = (size_t)st->chlen;
-	if (st->chlen > 0) {
-		memcpy(s, psenc->ch, st->chlen);
-		st->chlen = 0;
+	_DIAGASSERT(n >= psenc->chlen);
+	*nresult = (size_t)psenc->chlen;
+	if (psenc->chlen > 0) {
+		memcpy(s, psenc->ch, psenc->chlen);
+		psenc->chlen = 0;
 	}
 
 	return (0);
