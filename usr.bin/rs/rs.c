@@ -31,14 +31,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: rs.c,v 1.4 1997/10/19 14:22:16 lukem Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -48,6 +52,7 @@ static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
  */
 
 #include <ctype.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -96,6 +101,7 @@ int	  getline __P((void));
 char	 *getlist __P((short **, char *));
 char	 *getnum __P((int *, char *, int));
 char	**getptrs __P((char **));
+int	  main __P((int, char **));
 void	  prepfile __P((void));
 void	  prints __P((char *, int));
 void	  putfile __P((void));
@@ -124,9 +130,9 @@ main(argc, argv)
 void
 getfile()
 {
-	register char *p;
-	register char *endp;
-	register char **ep = 0;
+	char *p;
+	char *endp;
+	char **ep = 0;
 	int multisep = (flags & ONEISEPONLY ? 0 : 1);
 	int nullpad = flags & NULLPAD;
 	char **padto;
@@ -190,8 +196,8 @@ getfile()
 void
 putfile()
 {
-	register char **ep;
-	register int i, j, n;
+	char **ep;
+	int i, j, n;
 
 	ep = elem;
 	if (flags & TRANSPOSE) {
@@ -217,8 +223,8 @@ prints(s, col)
 	char *s;
 	int col;
 {
-	register int n;
-	register char *p = s;
+	int n;
+	char *p = s;
 
 	while (*p)
 		p++;
@@ -245,14 +251,15 @@ usage(msg, s)
 void
 prepfile()
 {
-	register char **ep;
-	register int  i;
-	register int  j;
+	char **ep;
+	int  i;
+	int  j;
 	char **lp;
 	int colw;
 	int max = 0;
 	int n;
 
+	ep = NULL;
 	if (!nelem)
 		exit(0);
 	gutter += maxlen * propgutter / 100.0;
@@ -339,8 +346,8 @@ getline()	/* get line; maintain curline, curlen; manage storage */
 {
 	static	int putlength;
 	static	char *endblock = ibuf + BSIZE;
-	register char *p;
-	register int c, i;
+	char *p;
+	int c, i;
 
 	if (!irows) {
 		curline = ibuf;
@@ -371,7 +378,7 @@ char **
 getptrs(sp)
 	char **sp;
 {
-	register char **p;
+	char **p;
 
 	allocsize += allocsize;
 	p = (char **)realloc(elem, allocsize * sizeof(char *));
@@ -388,7 +395,7 @@ getargs(ac, av)
 	int ac;
 	char *av[];
 {
-	register char *p;
+	char *p;
 
 	if (ac == 1) {
 		flags |= NOARGS | TRANSPOSE;
@@ -499,8 +506,8 @@ getlist(list, p)
 	short **list;
 	char *p;
 {
-	register int count = 1;
-	register char *t;
+	int count = 1;
+	char *t;
 
 	for (t = p + 1; *t; t++) {
 		if (!isdigit(*t))
@@ -532,7 +539,7 @@ getnum(num, p, strict)	/* num = number p points to; if (strict) complain */
 	int *num, strict;	/* returns pointer to end of num */
 	char *p;
 {
-	register char *t = p;
+	char *t = p;
 
 	if (!isdigit(*++t)) {
 		if (strict || *t == '-' || *t == '+')
