@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.39 2003/09/11 23:18:10 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.40 2003/11/03 22:17:42 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.39 2003/09/11 23:18:10 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.40 2003/11/03 22:17:42 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -342,7 +342,7 @@ mach_port_set_attributes(args)
 	case MACH_PORT_DNREQUESTS_SIZE:
 		break;
 	default:
-		uprintf("mach_port_get_attributes: unknown flavor %d\n",
+		uprintf("mach_port_set_attributes: unknown flavor %d\n",
 		    req->req_flavor);
 		break;
 	}
@@ -355,6 +355,86 @@ mach_port_set_attributes(args)
 	rep->rep_trailer.msgh_trailer_size = 8;
 
 	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int 
+mach_port_get_attributes(args)
+	struct mach_trap_args *args;
+{
+	mach_port_get_attributes_request_t *req = args->smsg;
+	mach_port_get_attributes_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_msg_error(args, EPERM);
+
+	switch (req->req_flavor) {
+	case MACH_PORT_LIMITS_INFO: {
+		struct mach_port_limits *mpl;
+
+		if (req->req_count < sizeof(*mpl))
+			return mach_msg_error(args, EINVAL);
+
+		mpl = (struct mach_port_limits *)&rep->rep_info[0];
+		mpl->mpl_qlimit = MACH_PORT_QLIMIT_DEFAULT; /* XXX fake limit */
+
+		rep->rep_count = sizeof(*mpl);
+
+		break;
+	}
+
+	case MACH_PORT_RECEIVE_STATUS: {
+		struct mach_port_status *mps;
+		struct mach_port *mp;
+
+		if (req->req_count < sizeof(*mps))
+			return mach_msg_error(args, EINVAL);
+
+		mps = (struct mach_port_status *)&rep->rep_info[0];
+		memset(mps, 0, sizeof(*mps));
+
+		if (mr->mr_sethead != NULL)
+			mps->mps_pset = mr->mr_sethead->mr_name;
+		mps->mps_seqno = 0; /* XXX */
+		mps->mps_mscount = mp->mp_refcount; /* XXX */
+		mps->mps_qlimit = MACH_PORT_QLIMIT_DEFAULT; /* XXX fake limit */
+		if ((mp = mr->mr_port) != NULL)
+			mps->mps_msgcount = mp->mp_count;
+		mps->mps_sorights = 0; /* XXX */
+		mps->mps_srights =  0; /* XXX */
+		if (mr->mr_notify_destroyed != NULL)
+			mps->mps_pdrequest = 1;
+		if (mr->mr_notify_no_senders != NULL)
+			mps->mps_nsrequest = 1;
+		mps->mps_flags = 0; /* XXX */
+
+		rep->rep_count = sizeof(*mps);
+		break;
+	}
+
+	default:
+		printf("mach_port_get_attributes: unknwo flavor %d\n",
+		    req->req_flavor);
+		return mach_msg_error(args, EINVAL);
+
+		break;
+	};
+
+	*msglen = sizeof(*rep) - 10 + rep->rep_count;
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_retval = 0;
+	rep->rep_info[rep->rep_count + 1] = 8;
+
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.27 2003/11/03 20:58:18 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.28 2003/11/03 22:17:42 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@
 #define MACH_PORT_TYPE_REF_RIGHTS \
     (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE | MACH_PORT_TYPE_DEAD_NAME)
 	
-
 /* port_deallocate */
 
 typedef struct {
@@ -128,9 +127,12 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_type_reply_t;  
 
-/* port_get_attributes */
+/* port_set_attributes */
 
 #define MACH_PORT_LIMITS_INFO 1
+#define MACH_PORT_RECEIVE_STATUS 2
+#define MACH_PORT_DNREQUESTS_SIZE 3
+
 typedef struct mach_port_status {
 	mach_port_name_t	mps_pset;
 	mach_port_seqno_t	mps_seqno;
@@ -143,11 +145,10 @@ typedef struct mach_port_status {
 	mach_boolean_t		mps_nsrequest;
 	unsigned int		mps_flags;
 } mach_port_status_t;
-#define MACH_PORT_RECEIVE_STATUS 2
+
 typedef struct mach_port_limits {
 	mach_port_msgcount_t	mpl_qlimit;
 } mach_port_limits_t;
-#define MACH_PORT_DNREQUESTS_SIZE 3
 
 typedef struct {
 	mach_msg_header_t req_msgh;
@@ -165,6 +166,28 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_set_attributes_reply_t;
 	
+/* port_get_attributes */
+
+#define MACH_PORT_QLIMIT_DEFAULT ((mach_port_msgcount_t) 5)
+#define MACH_PORT_QLIMIT_MAX ((mach_port_msgcount_t) 16)
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_port_name_t req_name;
+	mach_port_flavor_t req_flavor;
+	mach_msg_type_number_t req_count;
+} mach_port_get_attributes_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_count;
+	mach_integer_t rep_info[10];
+	mach_msg_trailer_t rep_trailer;
+} mach_port_get_attributes_reply_t;
+
 /* port_insert_member */
 
 typedef struct {
@@ -231,6 +254,7 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_request_notification_reply_t;
 
+
 int mach_port_deallocate(struct mach_trap_args *);
 int mach_port_allocate(struct mach_trap_args *);
 int mach_port_insert_right(struct mach_trap_args *);
@@ -240,6 +264,7 @@ int mach_port_insert_member(struct mach_trap_args *);
 int mach_port_move_member(struct mach_trap_args *);
 int mach_port_destroy(struct mach_trap_args *);
 int mach_port_request_notification(struct mach_trap_args *);
+int mach_port_get_attributes(struct mach_trap_args *);
 
 extern struct mach_port *mach_clock_port;
 extern struct mach_port *mach_io_master_port;
