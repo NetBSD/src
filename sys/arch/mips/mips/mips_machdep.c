@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.118 2001/06/11 23:52:39 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.119 2001/10/16 16:31:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.118 2001/06/11 23:52:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.119 2001/10/16 16:31:38 uch Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -84,6 +84,10 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.118 2001/06/11 23:52:39 thorpej E
 #include <mips/pte.h>
 #include <machine/cpu.h>		/* declaration of of cpu_id */
 
+#ifdef MIPS3_5900
+#include <mips/r5900/locore.h>
+#endif
+
 /* Internal routines. */
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
@@ -93,7 +97,7 @@ int	cpu_dump __P((void));
 static void	mips1_vector_init __P((void));
 #endif
 
-#ifdef MIPS3
+#if defined(MIPS3) && !defined(MIPS3_5900)
 static void	mips3_vector_init __P((int));
 #endif
 
@@ -174,8 +178,7 @@ mips1_vector_init()
 }
 #endif /* MIPS1 */
 
-
-#ifdef MIPS3
+#if defined(MIPS3) && !defined(MIPS3_5900)
 /*
  * MIPS III locore function vector
  */
@@ -324,7 +327,7 @@ mips3_vector_init(mips3_csizebase)
 	/* Clear BEV in SR so we start handling our own exceptions */
 	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
 }
-#endif	/* MIPS3 */
+#endif	/* MIPS3 && !MIPS3_5900 */
 
 
 /*
@@ -350,7 +353,7 @@ mips3_vector_init(mips3_csizebase)
 void
 mips_vector_init()
 {
-#ifdef MIPS3
+#if defined(MIPS3) && !defined(MIPS3_5900)
 	int mips3_csizebase = MIPS3_CONFIG_C_DEFBASE;
 #endif
 
@@ -431,7 +434,13 @@ mips_vector_init()
 		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
 		mips3_L1TwoWayCache = 1;
 		break;
-
+#ifdef MIPS3_5900
+	case MIPS_R5900:
+		cpu_arch = CPU_ARCH_MIPS3;
+		mips_num_tlb_entries = MIPS3_TLB_NUM_TLB_ENTRIES;
+		mips3_L1TwoWayCache = 1;		
+		break;
+#endif
 	case MIPS_R10000:
 	case MIPS_R12000:
 	case MIPS_R14000:
@@ -485,6 +494,10 @@ mips_vector_init()
 		mips3_cp0_wired_write(0);
 		mips3_TBIA(mips_num_tlb_entries);
 		mips3_cp0_wired_write(MIPS3_TLB_WIRED_UPAGES);
+
+#ifdef MIPS3_5900
+		r5900_init();
+#else /* MIPS3_5900 */
 		if (mips3_L1TwoWayCache) {
 			mips3_locore_vec.flushCache = mips3_FlushCache_2way;
 			mips3_locore_vec.flushDCache = mips3_FlushDCache_2way;
@@ -497,6 +510,7 @@ mips_vector_init()
 				    mips3_HitFlushDCache_2way;
 		}
 		mips3_vector_init(mips3_csizebase);
+#endif	/* MIPS3_5900 */
 		memcpy(mips_locoresw, mips3_locoresw, sizeof(mips_locoresw));
 
 		/*
@@ -515,7 +529,7 @@ mips_vector_init()
 			uvmexp.ncolors >>= 1;
 	} else
 
-#endif
+#endif /* MIPS3 */
 	{
 		printf("cpu_arch 0x%x: not supported\n", cpu_arch);
 		cpu_reboot(RB_HALT, NULL);
@@ -564,6 +578,7 @@ struct pridtab cputab[] = {
 	{ MIPS_RM5200,	"QED RM5200 CPU",	},
 	{ MIPS_RC64470,	"IDT RC64474/RC64475 CPU",	},
 	{ MIPS_R5400,	"NEC VR5400 CPU",	},
+	{ MIPS_R5900,	"Toshiba R5900 CPU",	},
 #if 0 /* ID collisions */
 	/*
 	 * According to documents from Toshiba and QED, PRid 0x22 is
@@ -731,6 +746,7 @@ cpu_identify()
 	 * Install power-saving idle routines.
 	 */
 	switch (MIPS_PRID_IMPL(cpu_id)) {
+#ifndef MIPS3_5900
 #ifdef MIPS3
 	case MIPS_RM5200:
 	case MIPS_RM7000:
@@ -741,6 +757,7 @@ cpu_identify()
 		break;
 	    }
 #endif /* MIPS3 */
+#endif /* MIPS3_5900 */
 	default:
 		/* Nothing. */
 		break;
