@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2004/12/29 15:04:06 lukem Exp $
+# $NetBSD: Makefile,v 1.5 2005/01/03 06:15:02 lukem Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 # Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -35,7 +35,11 @@
 #
 # $FreeBSD: src/lib/libpam/modules/pam_unix/Makefile,v 1.19 2004/11/13 20:40:29 bz Exp $
 
-.include <bsd.own.mk>	# XXX: fubars mod.mk's NOxxx
+NOLINT=		# don't build a lint library
+NOPROFILE=	# don't build a profile library
+NOPICINSTALL=	# don't install _pic.a library
+
+.include <bsd.own.mk>
 
 LIB=	pam_unix
 SRCS=	pam_unix.c
