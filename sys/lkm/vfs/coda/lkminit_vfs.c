@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.5 2002/12/11 12:13:11 scw Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.6 2003/09/06 08:45:18 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5 2002/12/11 12:13:11 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.6 2003/09/06 08:45:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5 2002/12/11 12:13:11 scw Exp $");
 #include <sys/file.h>
 #include <sys/errno.h>
 
-int coda_lkmentry __P((struct lkm_table *, int, int));
+int coda_lkmentry(struct lkm_table *, int, int);
 
 /*
  * This is the vfsops table for the file system in question
@@ -85,10 +85,7 @@ struct lkm_dev coda_lkm_dev = {
  * entry point
  */
 int
-coda_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
-	int cmd;
-	int ver;
+coda_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
 {
 	int error = 0;
 
