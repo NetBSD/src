@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2000/10/10 20:39:42 jeffs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2000/10/31 21:21:11 jeffs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2000/10/10 20:39:42 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2000/10/31 21:21:11 jeffs Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1956,8 +1956,8 @@ pmap_enter_pv(pmap, va, pa, npte)
 					/*
 					 * Check cache aliasing incompatibility
 					 */
-					if ((npv->pv_va & mips_CacheAliasMask)
-					    != (va & mips_CacheAliasMask)) {
+					if (mips_indexof(npv->pv_va)
+					    != mips_indexof(va)) {
 						pmap_page_cache(pa,PV_UNCACHED);
 						MachFlushDCache(pv->pv_va, PAGE_SIZE);
 						*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
@@ -2111,7 +2111,7 @@ pmap_remove_pv(pmap, va, pa)
 		 */
 		pv = pa_to_pvh(pa);
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-			if ((pv->pv_va ^ npv->pv_va) & mips_CacheAliasMask)
+			if (mips_indexof(pv->pv_va ^ npv->pv_va))
 				break;
 		}
 		if (npv == NULL)
