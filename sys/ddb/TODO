@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.5 2000/07/07 21:51:38 jhawk Exp $
+$NetBSD: TODO,v 1.6 2000/07/10 00:50:22 eeh Exp $
 
 In rough order.
 
@@ -36,7 +36,7 @@ done	"set" should display the old value as "write" does.
 6.	Enable DDB in GENERIC on all architectures not starved for
 	space.
 
-7.	Numbers starting with [a-f] should work, but symbols
+done	Numbers starting with [a-f] should work, but symbols
 	of the same name should have priority.
 
 8.	Implement the unimplemented C operators, especially bitwise-OR (|).
