@@ -255,3 +255,5 @@ sense buffer.
 [ make(1) ] Fix many bugs in make.
 
 [ write(1) ] Fix a security bug.
+
+[ kernel/i386 ] Fix bug that caused arguments to be left on the stack.
