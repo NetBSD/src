@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.80 2002/09/29 17:38:39 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.81 2002/10/29 05:30:23 lukem Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -927,7 +927,6 @@
 /usr/share/man/cat9/sleep.0
 /usr/share/man/cat9/uvm_vnp_sync.0
 /usr/share/man/cat9/uvm_vnp_terminate.0
-/usr/share/man/cat9/vn_marktext.0
 /usr/share/man/cat9/vslock.0
 /usr/share/man/cat9/vsunlock.0
 /usr/share/man/man2/arm32_drain_writebuf.2
@@ -1012,7 +1011,6 @@
 /usr/share/man/man9/sleep.9
 /usr/share/man/man9/uvm_vnp_sync.9
 /usr/share/man/man9/uvm_vnp_terminate.9
-/usr/share/man/man9/vn_marktext.9
 /usr/share/man/man9/vslock.9
 /usr/share/man/man9/vsunlock.9
 /usr/share/misc/gprof.callg
