@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.c,v 1.16 2002/06/30 00:10:34 sommerfeld Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.17 2002/11/01 12:47:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -131,9 +131,11 @@ dkswap(void)
 			continue;
 
 		/* Delta Values. */
-		SWAP(dk_xfer[i]);
+		SWAP(dk_rxfer[i]);
+		SWAP(dk_wxfer[i]);
 		SWAP(dk_seek[i]);
-		SWAP(dk_bytes[i]);
+		SWAP(dk_rbytes[i]);
+		SWAP(dk_wbytes[i]);
 
 		/* Delta Time. */
 		timerclear(&tmp_timer);
@@ -178,14 +180,17 @@ dkreadstats(void)
 	if (memf == NULL) {
 		mib[0] = CTL_HW;
 		mib[1] = HW_DISKSTATS;
+		mib[2] = sizeof(struct disk_sysctl);
 
 		size = dk_ndrive * sizeof(struct disk_sysctl);
 		if (sysctl(mib, 2, dk_drives, &size, NULL, 0) < 0)
 			err(1, "sysctl hw.diskstats failed");
 		for (i = 0; i < dk_ndrive; i++) {
-			cur.dk_xfer[i] = dk_drives[i].dk_xfer;
+			cur.dk_rxfer[i] = dk_drives[i].dk_rxfer;
+			cur.dk_wxfer[i] = dk_drives[i].dk_wxfer;
 			cur.dk_seek[i] = dk_drives[i].dk_seek;
-			cur.dk_bytes[i] = dk_drives[i].dk_bytes;
+			cur.dk_rbytes[i] = dk_drives[i].dk_rbytes;
+			cur.dk_wbytes[i] = dk_drives[i].dk_wbytes;
 			cur.dk_time[i].tv_sec = dk_drives[i].dk_time_sec;
 			cur.dk_time[i].tv_usec = dk_drives[i].dk_time_usec;
 		}
@@ -204,9 +209,11 @@ dkreadstats(void)
 	} else {
 		for (i = 0; i < dk_ndrive; i++) {
 			deref_kptr(p, &cur_disk, sizeof(cur_disk));
-			cur.dk_xfer[i] = cur_disk.dk_xfer;
+			cur.dk_rxfer[i] = cur_disk.dk_rxfer;
+			cur.dk_wxfer[i] = cur_disk.dk_wxfer;
 			cur.dk_seek[i] = cur_disk.dk_seek;
-			cur.dk_bytes[i] = cur_disk.dk_bytes;
+			cur.dk_rbytes[i] = cur_disk.dk_rbytes;
+			cur.dk_wbytes[i] = cur_disk.dk_wbytes;
 			timerset(&(cur_disk.dk_time), &(cur.dk_time[i]));
 			p = cur_disk.dk_link.tqe_next;
 		}
@@ -240,7 +247,7 @@ dkinit(int select)
 	struct disklist_head disk_head;
 	struct disk	cur_disk, *p;
 	struct clockinfo clockinfo;
-	char		errbuf[_POSIX2_LINE_MAX];
+	char		errbuf[_POSIX2_LINE_MAX], *names, *s;
 	size_t		size;
 	static int	once = 0;
 	int		i, mib[2];
@@ -265,10 +272,26 @@ dkinit(int select)
 			hz = clockinfo.hz;
 
 		mib[0] = CTL_HW;
+		mib[1] = HW_DISKNAMES;
+		if (sysctl(mib, 2, NULL, &size, NULL, 0) == -1)
+			err(1, "sysctl hw.disknames failed");
+		names = (char *)malloc(size);
+		if (names == NULL)
+			errx(1, "Memory allocation failure.");
+		mib[0] = CTL_HW;
+		mib[1] = HW_DISKNAMES;
+		if (sysctl(mib, 2, names, &size, NULL, 0) == -1)
+			err(1, "sysctl hw.disknames failed");
+		dk_ndrive = 0;
+		for (s = names; *s; s++)
+			if (*s == ' ')
+				dk_ndrive++;
+		free(names);
+
+		mib[0] = CTL_HW;
 		mib[1] = HW_DISKSTATS;
 		if (sysctl(mib, 2, NULL, &size, NULL, 0) == -1)
 			err(1, "sysctl hw.diskstats failed");
-		dk_ndrive = size / sizeof(struct disk_sysctl);
 
 		if (size == 0) {
 			warnx("No drives attached.");
@@ -308,20 +331,26 @@ dkinit(int select)
 
 	/* Allocate space for the statistics. */
 	cur.dk_time = calloc(dk_ndrive, sizeof(struct timeval));
-	cur.dk_xfer = calloc(dk_ndrive, sizeof(u_int64_t));
+	cur.dk_rxfer = calloc(dk_ndrive, sizeof(u_int64_t));
+	cur.dk_wxfer = calloc(dk_ndrive, sizeof(u_int64_t));
 	cur.dk_seek = calloc(dk_ndrive, sizeof(u_int64_t));
-	cur.dk_bytes = calloc(dk_ndrive, sizeof(u_int64_t));
+	cur.dk_rbytes = calloc(dk_ndrive, sizeof(u_int64_t));
+	cur.dk_wbytes = calloc(dk_ndrive, sizeof(u_int64_t));
 	last.dk_time = calloc(dk_ndrive, sizeof(struct timeval));
-	last.dk_xfer = calloc(dk_ndrive, sizeof(u_int64_t));
+	last.dk_rxfer = calloc(dk_ndrive, sizeof(u_int64_t));
+	last.dk_wxfer = calloc(dk_ndrive, sizeof(u_int64_t));
 	last.dk_seek = calloc(dk_ndrive, sizeof(u_int64_t));
-	last.dk_bytes = calloc(dk_ndrive, sizeof(u_int64_t));
+	last.dk_rbytes = calloc(dk_ndrive, sizeof(u_int64_t));
+	last.dk_wbytes = calloc(dk_ndrive, sizeof(u_int64_t));
 	cur.dk_select = calloc(dk_ndrive, sizeof(int));
 	cur.dk_name = calloc(dk_ndrive, sizeof(char *));
 
-	if (cur.dk_time == NULL|| cur.dk_xfer == NULL ||
-	    cur.dk_seek == NULL || cur.dk_bytes == NULL ||
-	    last.dk_time == NULL || last.dk_xfer == NULL ||
-	    last.dk_seek == NULL || last.dk_bytes == NULL ||
+	if (cur.dk_time == NULL || cur.dk_rxfer == NULL ||
+	    cur.dk_wxfer == NULL || cur.dk_seek == NULL ||
+	    cur.dk_rbytes == NULL || cur.dk_wbytes == NULL ||
+	    last.dk_time == NULL || last.dk_rxfer == NULL ||
+	    last.dk_wxfer == NULL || last.dk_seek == NULL ||
+	    last.dk_rbytes == NULL || last.dk_wbytes == NULL ||
 	    cur.dk_select == NULL || cur.dk_name == NULL)
 		errx(1, "Memory allocation failure.");
 
@@ -333,7 +362,8 @@ dkinit(int select)
 	if (memf == NULL) {
 		mib[0] = CTL_HW;		/* Should be still set from */
 		mib[1] = HW_DISKSTATS;		/* ... above, but be safe... */
-		if (sysctl(mib, 2, dk_drives, &size, NULL, 0) == -1)
+		mib[2] = sizeof(struct disk_sysctl);
+		if (sysctl(mib, 3, dk_drives, &size, NULL, 0) == -1)
 			err(1, "sysctl hw.diskstats failed");
 		for (i = 0; i < dk_ndrive; i++) {
 			cur.dk_name[i] = dk_drives[i].dk_name;

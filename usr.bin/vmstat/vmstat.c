@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.103 2002/09/18 23:24:13 mycroft Exp $ */
+/* $NetBSD: vmstat.c,v 1.104 2002/11/01 12:47:56 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.103 2002/09/18 23:24:13 mycroft Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.104 2002/11/01 12:47:56 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,7 @@ __RCSID("$NetBSD: vmstat.c,v 1.103 2002/09/18 23:24:13 mycroft Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "dkstats.h"
 
@@ -574,7 +575,7 @@ dovmstat(struct timespec *interval, int reps)
 		    total.t_rq - 1, total.t_dw + total.t_pw, total.t_sw);
 #define	pgtok(a) (long)((a) * (pagesize >> 10))
 #define	rate(x)	(u_long)(((x) + halfuptime) / uptime)	/* round */
-		(void)printf(" %5ld %5ld ",
+		(void)printf(" %6ld %6ld ",
 		    pgtok(total.t_avm), pgtok(total.t_free));
 		(void)printf("%4lu ", rate(uvmexp.faults - ouvmexp.faults));
 		(void)printf("%3lu ", rate(uvmexp.pdreact - ouvmexp.pdreact));
@@ -609,7 +610,7 @@ printhdr(void)
 {
 	int i;
 
-	(void)printf(" procs   memory     page%*s", 23, "");
+	(void)printf(" procs    memory      page%*s", 23, "");
 	if (ndrives > 0)
 		(void)printf("%s %*sfaults      cpu\n",
 		    ((ndrives > 1) ? "disks" : "disk"),
@@ -618,7 +619,7 @@ printhdr(void)
 		(void)printf("%*s  faults   cpu\n",
 		    ndrives * 3, "");
 
-	(void)printf(" r b w   avm   fre  flt  re  pi   po   fr   sr ");
+	(void)printf(" r b w    avm    fre  flt  re  pi   po   fr   sr ");
 	for (i = 0; i < dk_ndrive; i++)
 		if (dk_select[i])
 			(void)printf("%c%c ", dr_name[i][0],
@@ -788,7 +789,8 @@ dkstats(void)
 	for (dn = 0; dn < dk_ndrive; ++dn) {
 		if (!dk_select[dn])
 			continue;
-		(void)printf("%2.0f ", cur.dk_xfer[dn] / etime);
+		(void)printf("%2.0f ",
+		    (cur.dk_rxfer[dn] + cur.dk_wxfer[dn]) / etime);
 	}
 }
 

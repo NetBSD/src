@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.42 2002/09/25 13:50:40 christos Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.43 2002/11/01 12:47:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.42 2002/09/25 13:50:40 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.43 2002/11/01 12:47:58 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -630,10 +630,12 @@ dinfo(int dn, int c)
 	atime = (double)cur.dk_time[dn].tv_sec +
 		((double)cur.dk_time[dn].tv_usec / (double)1000000);
 
-	words = cur.dk_bytes[dn] / 1024.0;	/* # of k transferred */
+	/* # of k transferred */
+	words = (cur.dk_rbytes[dn] | cur.dk_wbytes[dn]) / 1024.0;
 
 	putint((int)((float)cur.dk_seek[dn]/etime+0.5), DISKROW + 1, c, 5);
-	putint((int)((float)cur.dk_xfer[dn]/etime+0.5), DISKROW + 2, c, 5);
+	putint((int)((float)(cur.dk_rxfer[dn]+cur.dk_wxfer[dn])/etime+0.5),
+	    DISKROW + 2, c, 5);
 	puthumanint((int)(words/etime + 0.5), DISKROW + 3, c, 5);
 	if (atime*100.0/etime >= 100)
 		putint(100, DISKROW + 4, c, 5);
