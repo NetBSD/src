@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.75 2001/09/10 21:19:29 chris Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.76 2002/03/04 02:43:25 simonb Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -308,8 +308,6 @@ iounaccess(vaddr, npgs)
 		pte[i] = 0;
 	mtpr(0, PR_TBIA);
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.
