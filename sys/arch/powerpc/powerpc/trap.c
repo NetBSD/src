@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.94 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.95 2003/11/06 08:49:13 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.94 2003/11/04 10:33:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2003/11/06 08:49:13 he Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -400,7 +400,7 @@ trap(struct trapframe *frame)
 		ci->ci_ev_pgm.ev_count++;
 		KERNEL_PROC_LOCK(l);
 		if (frame->srr1 & 0x00020000) {	/* Bit 14 is set if trap */
-			if (p->p_nras == 0 ||
+			if (LIST_EMPTY(&p->p_raslist) ||
 			    ras_lookup(p, (caddr_t)frame->srr0) == (caddr_t) -1) {
 				KSI_INIT_TRAP(&ksi);
 				ksi.ksi_signo = SIGTRAP;
