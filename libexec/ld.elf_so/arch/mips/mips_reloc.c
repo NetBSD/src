@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.44 2003/09/24 10:25:26 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.45 2003/11/19 19:41:57 simonb Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -42,6 +42,31 @@
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind(Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
+
+/*
+ * It is possible for the compiler to emit relocations for unaligned data.
+ * We handle this situation with these inlines.
+ */
+#define	RELOC_ALIGNED_P(x) \
+	(((uintptr_t)(x) & (sizeof(void *) - 1)) == 0)
+
+static __inline Elf_Addr
+load_ptr(void *where)
+{
+	Elf_Addr res;
+
+	memcpy(&res, where, sizeof(res));
+
+	return res;
+}
+
+static __inline void
+store_ptr(void *where, Elf_Addr val)
+{
+
+	memcpy(where, &val, sizeof(val));
+}
+
 
 void
 _rtld_setup_pltgot(const Obj_Entry *obj)
@@ -114,37 +139,17 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 			sym = symtab + ELF_R_SYM(rel->r_info);
 			assert(sym->st_info ==
 			    ELF_ST_INFO(STB_LOCAL, STT_SECTION));
-			*where += (Elf_Addr)(sym->st_value + relocbase);
+			if (__predict_true(RELOC_ALIGNED_P(where)))
+				*where += (Elf_Addr)(sym->st_value + relocbase);
+			else
+				store_ptr(where, load_ptr(where) +
+				    (Elf_Addr)(sym->st_value + relocbase));
 			break;
 
 		default:
 			abort();
 		}
 	}
-}
-
-/*
- * It is possible for the compiler to emit relocations for unaligned data.
- * We handle this situation with these inlines.
- */
-#define	RELOC_ALIGNED_P(x) \
-	(((uintptr_t)(x) & (sizeof(void *) - 1)) == 0)
-
-static __inline Elf_Addr
-load_ptr(void *where)
-{
-	Elf_Addr res;
-
-	memcpy(&res, where, sizeof(res));
-
-	return (res);
-}
-
-static __inline void
-store_ptr(void *where, Elf_Addr val)
-{
-
-	memcpy(where, &val, sizeof(val));
 }
 
 int
@@ -252,9 +257,15 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 			def = obj->symtab + symnum;
 
 			if (symnum >= obj->gotsym) {
-				tmp = *where;
+				if (__predict_true(RELOC_ALIGNED_P(where)))
+					tmp = *where;
+				else
+					tmp = load_ptr(where);
 				tmp += got[obj->local_gotno + symnum - obj->gotsym];
-				*where = tmp;
+				if (__predict_true(RELOC_ALIGNED_P(where)))
+					*where = tmp;
+				else
+					store_ptr(where, tmp);
 
 				rdbg(("REL32/G %s in %s --> %p in %s",
 				    obj->strtab + def->st_name, obj->path,
@@ -276,7 +287,10 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 				 *
 				 * --rkb, Oct 6, 2001
 				 */
-				tmp = *where;
+				if (__predict_true(RELOC_ALIGNED_P(where)))
+					tmp = *where;
+				else
+					tmp = load_ptr(where);
 
 				if (def->st_info ==
 				    ELF_ST_INFO(STB_LOCAL, STT_SECTION)
@@ -287,7 +301,10 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 					tmp += (Elf_Addr)def->st_value;
 
 				tmp += (Elf_Addr)obj->relocbase;
-				*where = tmp;
+				if (__predict_true(RELOC_ALIGNED_P(where)))
+					*where = tmp;
+				else
+					store_ptr(where, tmp);
 
 				rdbg(("REL32/L %s in %s --> %p in %s",
 				    obj->strtab + def->st_name, obj->path,
