@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.19 2001/09/01 21:52:32 atatat Exp $
+# 	$NetBSD: GENERIC32,v 1.20 2001/09/16 00:14:35 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.19 $"
+#ident 		"GENERIC-$Revision: 1.20 $"
 
 maxusers	64
 
@@ -385,6 +385,7 @@ epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet UT
 esh*	at pci? dev ? function ?	# Essential HIPPI card UT
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B UT
+gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet UT
 # XXX uses vtophys()
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
@@ -419,33 +420,41 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI USB controllers
-#ohci*	at pci? dev ? function ?			# Open Host Controller
+ohci*	at pci? dev ? function ?			# Open Host Controller
 
-#usb*	at ohci?					# USB bus support
-#uhub*	at usb?						# USB Hubs
-#uhub*	at uhub? port ? configuration ? interface ?
+usb*	at ohci?					# USB bus support
+uhub*	at usb?						# USB Hubs
+uhub*	at uhub? port ? configuration ? interface ?
 
-#uhid*	at uhub? port ? configuration ? interface ?	# USB Generic HID
-#ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
+uhid*	at uhub? port ? configuration ? interface ?	# USB Generic HID
+ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 
-#umodem*	at uhub? port ? configuration ?			# USB Modem
-#ucom*	at umodem?
+umodem*	at uhub? port ? configuration ?			# USB Modem
+ucom*	at umodem?
 
-#umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
-#atapibus* at umass? channel ?
-#scsibus* at umass? channel ?
+umass*	at uhub? port ? configuration ? interface ?	# USB Mass Storage
+atapibus* at umass? channel ?
+scsibus* at umass? channel ?
 
-#uaudio*	at uhub? port ? configuration ?			# USB audio
+uaudio*	at uhub? port ? configuration ?			# USB audio
 
 # USB Ethernet adapters
-#aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-#cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
-#kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
-#uscanner* at uhub? port ?				# USB scanners
-#uyap* at uhub? port ?					# Y@P firmware loader
-#ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
+uscanner* at uhub? port ?				# USB scanners
+uyap* at uhub? port ?					# Y@P firmware loader
+ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 
+# PCI IEEE1394 controllers
+fwohci* at pci? dev ? function ?        # IEEE1394 Open Host Controller
+#fwlynx* at pci? dev ? function ?       # IEEE1394 TI Lynx Controller
+fw*     at fwbus?                       # IP over 1394
+
+# IEEE1394 nodes
+#fwnode* at fwbus? oui ? devhi ? devlo ?
+#scsibus* at fwnode?
 
 ## Loopback network interface; required
 pseudo-device	loop
