@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.2 2001/10/29 23:38:42 augustss Exp $ */
+/* $NetBSD: moused.c,v 1.3 2001/11/21 21:05:41 gmcgarry Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -45,9 +45,10 @@
  ** 
  **/
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static const char rcsid[] =
-  "$FreeBSD: src/usr.sbin/moused/moused.c,v 1.53 2001/08/09 18:12:07 dougb Exp $";
+__RCSID("$NetBSD: moused.c,v 1.3 2001/11/21 21:05:41 gmcgarry Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -2831,4 +2832,3 @@ kidspad(u_char rxc, mousestatus_t *act)
     b_prev = buf[0] ;
     return act->flags ;
 }
-
