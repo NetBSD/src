@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.46 2000/06/08 21:06:46 jhawk Exp $	*/
+/*	$NetBSD: db_command.c,v 1.47 2000/06/10 16:31:42 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -647,6 +647,12 @@ db_reboot_cmd(addr, have_addr, count, modif)
 	    db_error("?\n");
 	    /*NOTREACHED*/
 	}
+	/*
+	 * We are leaving DDB, never to return upward.
+	 * Clear db_recover so that we can debug faults in functions
+	 * called from cpu_reboot.
+	 */
+	db_recover = 0;
 	cpu_reboot((int)bootflags, NULL);
 }
 
@@ -704,6 +710,11 @@ db_sync_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-
+	/*
+	 * We are leaving DDB, never to return upward.
+	 * Clear db_recover so that we can debug faults in functions
+	 * called from cpu_reboot.
+	 */
+	db_recover = 0;
 	cpu_reboot(RB_DUMP, NULL);
 }
