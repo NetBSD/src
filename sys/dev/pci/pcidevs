@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.601 2003/12/14 04:57:16 tsutsui Exp $
+$NetBSD: pcidevs,v 1.602 2003/12/17 09:17:07 tls Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -566,6 +566,7 @@ vendor NDC		0x15e8	National Datacomm Corp.
 vendor ACTIONTEC	0x1668	Action Tec Electronics, Inc.
 vendor ATHEROS		0x168c	Atheros Communications, Inc.
 vendor GLOBALSUN	0x16ab	Global Sun Tech
+vendor LINKSYS		0x1737	Linksys
 vendor ALTIMA		0x173b	Altima
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor SANDBURST	0x17ba	Sandburst, Inc.
@@ -1285,6 +1286,7 @@ product DIAMOND VIPER	0x9001	Viper/PCI
 product DLINK DL1002		0x1002	DL-1002 10/100 Ethernet
 product DLINK DFE530TXPLUS	0x1300	DFE-530TXPLUS 10/100 Ethernet
 product DLINK DL4000		0x4000	DL-4000 Gigabit Ethernet
+product DLINK DGE530T		0x4c00	DGE-530T Gigabit Ethernet
 
 /* Distributed Processing Technology products */
 product DPT SC_RAID	0xa400	SmartCache/SmartRAID (EATA)
@@ -1759,6 +1761,9 @@ product LEVELONE LXT1001	0x0001	LXT-1001 10/100/1000 Ethernet
 product LINEARSYS DVB_TX	0x7629	DVB Transmitter
 product LINEARSYS DVB_RX	0x7630	DVB Receiver
 
+/* Linksys products */
+product LINKSYS EG1032		0x1032	EG1032 v2 Instant Gigabit Network Adapter
+product LINKSYS EG1064		0x1064	EG1064 v2 Instant Gigabit Network Adapter
 /* Lite-On products */
 product LITEON 82C168	0x0002	82C168/82C169 (PNIC) 10/100 Ethernet
 product LITEON 82C115	0xc115	82C115 (PNIC II) 10/100 Ethernet
