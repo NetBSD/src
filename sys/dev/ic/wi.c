@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.115 2003/03/27 07:22:47 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.116 2003/04/08 04:31:24 kml Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.115 2003/03/27 07:22:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.116 2003/04/08 04:31:24 kml Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.115 2003/03/27 07:22:47 dyoung Exp $");
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_llc.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/if_ieee80211.h>
@@ -135,6 +136,7 @@ static int  wi_read_rid(struct wi_softc *, int, void *, int *);
 static int  wi_write_rid(struct wi_softc *, int, void *, int);
 
 static int  wi_newstate(void *, enum ieee80211_state);
+static int  wi_set_tim(struct ieee80211com *, int, int);
 
 static int  wi_scan_ap(struct wi_softc *);
 static void wi_scan_result(struct wi_softc *, int, int);
@@ -245,6 +247,8 @@ wi_attach(struct wi_softc *sc)
 	ic->ic_flags = IEEE80211_F_HASPMGT | IEEE80211_F_HASAHDEMO;
 	ic->ic_state = IEEE80211_S_INIT;
 	ic->ic_newstate = wi_newstate;
+	ic->ic_set_tim = wi_set_tim;
+	ic->ic_max_aid = WI_MAX_AID;
 
 	/* Find available channel */
 	buflen = sizeof(val);
@@ -738,8 +742,7 @@ wi_start(struct ifnet *ifp)
 	memset(&frmhdr, 0, sizeof(frmhdr));
 	cur = sc->sc_txnext;
 	for (;;) {
-		IF_POLL(&ic->ic_mgtq, m0);
-		if (m0 != NULL) {
+		if (!IF_IS_EMPTY(&ic->ic_mgtq)) {
 			if (sc->sc_txd[cur].d_len != 0) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
@@ -749,6 +752,31 @@ wi_start(struct ifnet *ifp)
 			    (caddr_t)&frmhdr.wi_ehdr);
 			frmhdr.wi_ehdr.ether_type = 0;
                         wh = mtod(m0, struct ieee80211_frame *);
+		} else if (!IF_IS_EMPTY(&ic->ic_pwrsaveq)) {
+			struct llc *llc;
+
+			/* 
+			 * Should these packets be processed after the
+			 * regular packets or before?  Since they are being
+			 * probed for, they are probably less time critical
+			 * than other packets, but, on the other hand,
+			 * we want the power saving nodes to go back to
+			 * sleep as quickly as possible to save power...
+			 */
+
+			if (ic->ic_state != IEEE80211_S_RUN)
+				break;
+
+			if (sc->sc_txd[cur].d_len != 0) {
+				ifp->if_flags |= IFF_OACTIVE;
+				break;
+			}
+			IF_DEQUEUE(&ic->ic_pwrsaveq, m0);
+                        wh = mtod(m0, struct ieee80211_frame *);
+			llc = (struct llc *) (wh + 1);
+			m_copydata(m0, 4, ETHER_ADDR_LEN * 2,
+			    (caddr_t)&frmhdr.wi_ehdr);
+			frmhdr.wi_ehdr.ether_type = llc->llc_snap.ether_type;
 		} else {
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
@@ -773,19 +801,23 @@ wi_start(struct ifnet *ifp)
 				continue;
 			}
                         wh = mtod(m0, struct ieee80211_frame *);
+			if (ic->ic_flags & IEEE80211_F_WEPON)
+				wh->i_fc[1] |= IEEE80211_FC1_WEP;
 			if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 			    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 			    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-			    IEEE80211_FC0_TYPE_DATA &&
-			    ((ni = ieee80211_find_node(ic, wh->i_addr1)) ==
-			    NULL || ni->ni_associd == 0)) {
-				m_freem(m0);
-				ifp->if_oerrors++;
-				continue;
+			    IEEE80211_FC0_TYPE_DATA) {
+				ni = ieee80211_find_node(ic, wh->i_addr1);
+				if (ni == NULL || ni->ni_associd == 0) {
+					m_freem(m0);
+					ifp->if_oerrors++;
+					continue;
+				}
+				if (ni->ni_pwrsave & IEEE80211_PS_SLEEP) {
+					ieee80211_pwrsave(ic, ni, m0);
+					continue;
+				}
 			}
-			if (ic->ic_flags & IEEE80211_F_WEPON)
-				wh->i_fc[1] |= IEEE80211_FC1_WEP;
-
 		}
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf)
@@ -2234,6 +2266,18 @@ wi_newstate(void *arg, enum ieee80211_state nstate)
 
 	/* skip standard ieee80211 handling */
 	return EINPROGRESS;
+}
+
+static int
+wi_set_tim(struct ieee80211com *ic, int aid, int which)
+{
+	struct wi_softc *sc = ic->ic_softc;
+
+	aid &= ~0xc000;
+	if (which)
+		aid |= 0x8000;
+
+	return wi_write_val(sc, WI_RID_SET_TIM, aid);
 }
 
 static int
