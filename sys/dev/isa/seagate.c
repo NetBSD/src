@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.38 2000/07/06 02:02:49 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.39 2000/12/17 19:35:23 bouyer Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -896,7 +896,7 @@ sea_reselect(sea)
 	phase = PH_MSGIN;
 	sea_transfer_pio(sea, &phase, &len, &data); 
 
-	if (MSG_ISIDENTIFY(msg[0])) {
+	if (!MSG_ISIDENTIFY(msg[0])) {
 		printf("%s: expecting IDENTIFY message, got 0x%x\n",
 		    sea->sc_dev.dv_xname, msg[0]);
 		abort = 1;
