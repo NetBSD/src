@@ -1,4 +1,4 @@
-/*	$NetBSD: wereg.h,v 1.1 2001/03/23 17:34:41 jdolecek Exp $	*/
+/*	$NetBSD: wereg.h,v 1.2 2001/07/04 11:14:10 jdolecek Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -9,26 +9,6 @@
  * the author responsible for the proper functioning of this software, nor does
  * the author assume any responsibility for damages incurred with its use.
  */
-
-/*
- * Compile-time config flags
- */
-/*
- * This sets the default for enabling/disablng the tranceiver.
- */
-#define WE_FLAGS_DISABLE_TRANCEIVER	0x0001
-
-/*
- * This forces the board to be used in 8/16-bit mode even if it autoconfigs
- * differently.
- */
-#define WE_FLAGS_FORCE_8BIT_MODE	0x0002
-#define WE_FLAGS_FORCE_16BIT_MODE	0x0004
-
-/*
- * This disables the use of double transmit buffers.
- */
-#define WE_FLAGS_NO_MULTI_BUFFERING	0x0008
 
 /*
  *		Definitions for Western digital/SMC WD80x3 series ASIC
