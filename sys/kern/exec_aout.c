@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.1.2.1 1993/10/15 06:23:47 deraadt Exp $
+ *	$Id: exec_aout.c,v 1.1.2.2 1993/10/15 14:53:22 mycroft Exp $
  */
 
 #include "param.h"
@@ -223,10 +223,6 @@ exec_aout_prep_zmagic(p, epp)
  * limit; this is adjusted in the body of execve() to yield the
  * appropriate stack segment usage once the argument length is
  * calculated.
- *
- * Then, mark the text image busy (so it can be demand paged) or error
- * out if this is not possible.  Finally, set up vmcmds for the
- * text, data, bss, and stack segments.
  */
 
 int
