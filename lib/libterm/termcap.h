@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.h,v 1.4 1998/07/27 01:57:26 mycroft Exp $	*/
+/*	$NetBSD: termcap.h,v 1.4.2.1 2000/02/22 22:34:38 he Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,6 +40,8 @@
 
 #ifndef _TERMCAP_H_
 #define _TERMCAP_H_
+
+#include <sys/types.h>
 
 __BEGIN_DECLS
 int   tgetent	__P((char *, const char *));
