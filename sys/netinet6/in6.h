@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.11 2000/02/17 10:59:39 darrenr Exp $	*/
+/*	$NetBSD: in6.h,v 1.12 2000/02/19 17:32:07 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,8 +142,8 @@ struct in6_addr {
 #define SIN6_LEN
 #endif
 struct sockaddr_in6 {
-	u_char		sin6_len;	/* length of this struct(sa_family_t)*/
-	u_char		sin6_family;	/* AF_INET6 (sa_family_t) */
+	u_int8_t	sin6_len;	/* length of this struct(sa_family_t)*/
+	u_int8_t	sin6_family;	/* AF_INET6 (sa_family_t) */
 	u_int16_t	sin6_port;	/* Transport layer port # (in_port_t)*/
 	u_int32_t	sin6_flowinfo;	/* IP6 flow information */
 	struct in6_addr	sin6_addr;	/* IP6 address */
