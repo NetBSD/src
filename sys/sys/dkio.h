@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.1 1996/01/30 18:21:48 thorpej Exp $	*/
+/*	$NetBSD: dkio.h,v 1.2 1997/10/08 21:18:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -58,5 +58,9 @@
 #define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */
 #define DIOCEJECT	_IO('d', 112)		/* eject removable disk */
 #define DIOCLOCK	_IOW('d', 113, int)	/* lock/unlock pack */
+
+		/* get default label, clear label */
+#define	DIOCGDEFLABEL	_IOR('d', 114, struct disklabel)
+#define	DIOCCLRLABEL	_IO('d', 115)
 
 #endif /* _SYS_DKIO_H_ */
