@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.7 1997/10/12 00:54:21 lukem Exp $	*/
+/*	$NetBSD: move.c,v 1.8 1999/03/29 05:12:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.7 1997/10/12 00:54:21 lukem Exp $");
+__RCSID("$NetBSD: move.c,v 1.8 1999/03/29 05:12:39 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,10 +48,6 @@ __RCSID("$NetBSD: move.c,v 1.7 1997/10/12 00:54:21 lukem Exp $");
 #ifndef	unctrl
 #include	"unctrl.h"
 #endif
-
-# ifdef	attron
-#	include	<term.h>
-# endif	attron
 
 /*
  * @(#)move.c	1.2 (Berkeley) 3/28/83

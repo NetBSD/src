@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.c,v 1.6 1997/10/12 00:54:07 lukem Exp $	*/
+/*	$NetBSD: mille.c,v 1.7 1999/03/29 05:12:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -43,15 +43,12 @@ __COPYRIGHT("@(#) Copyright (c) 1982, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: mille.c,v 1.6 1997/10/12 00:54:07 lukem Exp $");
+__RCSID("$NetBSD: mille.c,v 1.7 1999/03/29 05:12:39 mrg Exp $");
 #endif
 #endif /* not lint */
 
 # include	"mille.h"
 # include	<signal.h>
-# ifdef attron
-#	include	<term.h>
-# endif	attron
 
 /*
  * @(#)mille.c	1.3 (Berkeley) 5/10/83
