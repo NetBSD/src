@@ -1,4 +1,4 @@
-/*	$NetBSD: gfmt.c,v 1.14 1999/06/10 14:59:50 mrg Exp $	*/
+/* $NetBSD: gfmt.c,v 1.15 2003/06/16 17:22:01 perry Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gfmt.c	8.6 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: gfmt.c,v 1.14 1999/06/10 14:59:50 mrg Exp $");
+__RCSID("$NetBSD: gfmt.c,v 1.15 2003/06/16 17:22:01 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,11 +51,10 @@ __RCSID("$NetBSD: gfmt.c,v 1.14 1999/06/10 14:59:50 mrg Exp $");
 #include "stty.h"
 #include "extern.h"
 
-static void gerr __P((char *));
+static void gerr(char *);
 
 static void
-gerr(s)
-	char *s;
+gerr(char *s)
 {
 	if (s)
 		errx(1, "illegal gfmt1 option -- %s", s);
@@ -64,8 +63,7 @@ gerr(s)
 }
 
 void
-gprint(tp)
-	struct termios *tp;
+gprint(struct termios *tp)
 {
 	const struct cchar *cp;
 
@@ -77,9 +75,7 @@ gprint(tp)
 }
 
 void
-gread(tp, s) 
-	struct termios *tp;
-	char *s;
+gread(struct termios *tp, char *s) 
 {
 	const struct cchar *cp;
 	char *ep, *p;
