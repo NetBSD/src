@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.9 1996/10/13 02:32:51 christos Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.10 1997/04/02 18:42:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -79,19 +79,9 @@ lf_advlock(head, size, id, op, fl, flags)
 	int error;
 
 	/*
-	 * Avoid the common case of unlocking when inode has no locks.
-	 */
-	if (*head == (struct lockf *)0) {
-		if (op != F_SETLK) {
-			fl->l_type = F_UNLCK;
-			return (0);
-		}
-	}
-	/*
 	 * Convert the flock structure into a start and end.
 	 */
 	switch (fl->l_whence) {
-
 	case SEEK_SET:
 	case SEEK_CUR:
 		/*
@@ -110,6 +100,17 @@ lf_advlock(head, size, id, op, fl, flags)
 	}
 	if (start < 0)
 		return (EINVAL);
+
+	/*
+	 * Avoid the common case of unlocking when inode has no locks.
+	 */
+	if (*head == (struct lockf *)0) {
+		if (op != F_SETLK) {
+			fl->l_type = F_UNLCK;
+			return (0);
+		}
+	}
+
 	if (fl->l_len == 0)
 		end = -1;
 	else
