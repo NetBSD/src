@@ -1,4 +1,4 @@
-#	$NetBSD: rc.subr,v 1.7 1999/04/01 03:58:44 cjs Exp $
+#	$NetBSD: rc.subr,v 1.8 1999/04/13 02:15:49 cjs Exp $
 # functions used by various rc scripts
 
 #
@@ -72,8 +72,6 @@ islocalfs() {
 			esac
 		fi
 	done < $fstab
-	# We didn't find the FS. Return local to show error as
-	# early in boot sequence as possible.
-	echo "WARNING: islocalfs() in rc.subr doesn't recognise fstype $fs"
+	# Quietly ignore not-found filesystems.
 	return 1;
 }
