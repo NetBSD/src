@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.31 2003/10/13 08:02:02 dyoung Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.32 2003/11/16 09:41:01 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.");
-__RCSID("$NetBSD: wiconfig.c,v 1.31 2003/10/13 08:02:02 dyoung Exp $");
+__RCSID("$NetBSD: wiconfig.c,v 1.32 2003/11/16 09:41:01 dyoung Exp $");
 #endif
 
 struct wi_table {
@@ -180,8 +180,8 @@ static void wi_apscan(iface)
 	wreq.wi_type = WI_RID_SCAN_APS;
 	wreq.wi_len = 4;
 	/* note chan. 1 is the least significant bit */
-	wreq.wi_val[0] = 0x3fff;	/* 1 bit per channel, 1-14 */
-	wreq.wi_val[1] = 0xf;		/* tx rate */
+	wreq.wi_val[0] = htole16(0x3fff);	/* 1 bit per channel, 1-14 */
+	wreq.wi_val[1] = htole16(0xf);		/* tx rate */
 
 	/* write the request */
 	wi_setval(iface, &wreq);
@@ -490,7 +490,7 @@ void wi_printvendor(wreq)
 	if (wreq->wi_len < 4)
 		return;
 
-	switch (wreq->wi_val[1]) {
+	switch (le16toh(wreq->wi_val[1])) {
 	case WI_RID_STA_IDENTITY_LUCENT:
 		vendor = "Lucent";
 		break;
@@ -504,8 +504,8 @@ void wi_printvendor(wreq)
 		vendor = "D-Link";
 		break;
 	}
-	printf("[ %s ID: %d version: %d.%d ]", vendor,
-	       wreq->wi_val[0], wreq->wi_val[2], wreq->wi_val[3]);
+	printf("[ %s ID: %d version: %d.%d ]", vendor, le16toh(wreq->wi_val[0]),
+	    le16toh(wreq->wi_val[2]), le16toh(wreq->wi_val[3]));
 	return;
 }	
 
