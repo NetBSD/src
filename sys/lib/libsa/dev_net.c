@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.14 1998/06/29 20:25:59 gwr Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.15 1999/03/26 15:41:38 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -164,13 +164,22 @@ net_close(f)
 }
 
 int
-net_ioctl()
+net_ioctl(f, cmd, data)
+	struct open_file *f;
+	u_long cmd;
+	void *data;
 {
 	return EIO;
 }
 
 int
-net_strategy()
+net_strategy(devdata, rw, blk, size, buf, rsize)
+	void *devdata;
+	int rw;
+	daddr_t blk;
+	size_t size;
+	void *buf;
+	size_t *rsize;
 {
 	return EIO;
 }
