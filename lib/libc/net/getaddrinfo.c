@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.70 2004/05/21 02:30:03 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.71 2004/05/23 16:54:12 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.70 2004/05/21 02:30:03 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.71 2004/05/23 16:54:12 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -1728,16 +1728,13 @@ res_searchN(const char *name,	/* domain name */ struct res_target *target)
 	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
 	res_state res = __res_get_state();
 
+	if (res == NULL)
+		return -1;
+
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(target != NULL);
 
 	hp = (HEADER *)(void *)target->answer;	/*XXX*/
-
-	if ((res->options & RES_INIT) == 0 && res_ninit(res) == -1) {
-		h_errno = NETDB_INTERNAL;
-		__res_put_state(res);
-		return (-1);
-	}
 
 	errno = 0;
 	h_errno = HOST_NOT_FOUND;	/* default, if we never query */
