@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2000/01/28 19:32:45 itojun Exp $
+# $NetBSD: Makefile,v 1.2 2000/02/25 06:27:32 itojun Exp $
 
 PROG=	pim6sd
 SRCS=	mld6.c mld6_proto.c \
@@ -8,7 +8,7 @@ SRCS=	mld6.c mld6_proto.c \
 CFLAGS+= -g
 CPPFLAGS+=-I.
 CPPFLAGS+=-DINET6 -DPIM -DIOCTL_OK_ON_RAW_SOCKET
-CPPFLAGS+=-DHAVE_STDARG_H -DYY_NO_UNPUT
+CPPFLAGS+=-DHAVE_STDARG_H -DYY_NO_UNPUT -DHAVE_GETIFADDRS
 LDADD+=-ly -ll
 YFLAGS+=-d
 CLEANFILES+=	y.tab.h
