@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.34 2001/08/27 02:00:17 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.35 2001/09/18 16:15:19 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -133,7 +133,7 @@ dec_3100_init()
 }
 
 /*
- * Initalize the memory system and I/O buses.
+ * Initialize the memory system and I/O buses.
  */
 static void
 dec_3100_bus_reset()
