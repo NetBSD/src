@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.45 2002/09/06 06:27:22 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.46 2002/09/09 08:06:36 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1429,3 +1429,9 @@ usr.bin/patch/pch.c				1.13 via patch
 
 dist/bind/bin/dig/dig.c				1.6
   fix dig -x ip6addr.  PR 18193.
+
+sys/arch/i386/pci/pci_machdep.c			1.46
+  Add quirk for Connectix Virtual PC 5 (for Windows at least) emulated
+  PCI bridge (440BX).
+  Note that there's still a problem that emulated 21140 cannot be driven
+  by if_tlp.  Workaround is to use if_de.
