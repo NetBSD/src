@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.20 2001/12/09 05:00:49 atatat Exp $
+#	$NetBSD: Makefile.powerpc,v 1.21 2002/01/05 17:58:48 dbj Exp $
 #
 # Makefile for NetBSD
 #
@@ -47,7 +47,7 @@ AFLAGS+=	${AOPTS}
 ##
 MD_OBJS=	locore.o
 MD_CFILES=
-MS_SFILES=	${THISPPC}/${MACHINE}/locore.S
+MD_SFILES=	${THISPPC}/${MACHINE}/locore.S
 
 locore.o: ${THISPPC}/${MACHINE}/locore.S assym.h
 	${NORMAL_S}
