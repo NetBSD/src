@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.31 1999/07/29 10:37:19 augustss Exp $
+#	$NetBSD: GENERIC,v 1.32 1999/07/29 19:37:00 augustss Exp $
 #
 # POWERMAC config file
 #
@@ -138,7 +138,7 @@ zstty*	at zsc? channel ?
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
-wsmouse0 at ams?
+wsmouse0 at ams? mux 0
 
 scsibus* at adv?
 scsibus* at ahc?
@@ -176,11 +176,11 @@ uhub*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
 ums*	at uhub? port ? configuration ? interface ?
-wsmouse* at ums?
+wsmouse* at ums? mux 0
 
 # USB Keyboards
 ukbd*	at uhub? port ? configuration ? interface ?
-wskbd*	at ukbd? console ?
+wskbd*	at ukbd? console ? mux 1
 
 # USB Generic HID devices
 uhid*	at uhub? port ? configuration ? interface ?
@@ -203,6 +203,7 @@ pseudo-device	sl		2	# Serial Line IP
 pseudo-device	tun		4	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	pty		64	# pseudo-terminals
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
