@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.32 2000/12/02 02:15:34 hubertf Exp $
+.\"	$NetBSD: inetd.8,v 1.33 2001/01/25 21:49:31 jlam Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -387,32 +387,32 @@ creates a file
 .Em /var/run/inetd.pid
 that contains its process identifier.
 .Ss IPsec
-The implementation includes tiny hack to support IPsec policy setting for
-each of the socket.
-A special form of comment line, starting with
+The implementation includes a tiny hack to support IPsec policy settings for
+each socket.
+A special form of the comment line, starting with
 .Dq Li "#@" ,
-will work as policy specifier.
-The content of the above comment line will be treated as IPsec policy string,
+is used as a policy specifier.
+The content of the above comment line will be treated as a IPsec policy string,
 as described in
 .Xr ipsec_set_policy 3 .
-You can specify multiple IPsec policy string by using semicolon
-as separator.
-If conflicting strings are found in a single line,
+Multiple IPsec policy strings may be specified by using a semicolon
+as a separator.
+If conflicting policy strings are found in a single line,
 the last string will take effect.
 A
 .Li "#@"
-line will affect all the following lines in
+line affects all of the following lines in
 .Pa inetd.conf ,
-so you may want to reset IPsec policy by using a comment line with
-.Li "#@"
+so you may want to reset the IPsec policy by using a comment line containing
 only
+.Li "#@"
 .Pq with no policy string .
 .Pp
-If invalid IPsec policy string appears on
+If an invalid IPsec policy string appears in
 .Pa inetd.conf ,
 .Nm
-will leave error message using
-.Xr syslog 3 ,
+logs an error message using
+.Xr syslog 3
 and terminates itself.
 .Ss IPv6 TCP/UDP behavior
 If you wish to run a server for IPv4 and IPv6 traffic,
