@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.4 2000/11/30 22:26:26 scw Exp $
+#	$NetBSD: Makefile.booters,v 1.5 2000/12/04 21:25:57 scw Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -46,8 +46,11 @@ beforedepend:	machine m68k
 
 .else
 
-${PROG}: machine m68k ${OBJS} ${LIBS} ${BUGCRT} ${SRTOBJ}
-	${LD} -N -Ttext ${RELOC} -o $@ ${SRTOBJ} ${BUGCRT} ${OBJS} ${LIBS}
+PROGDEPENDS?=	${SRTOBJ} ${BUGCRT} ${OBJS} ${LIBS}
+PROGLINKOBJS?=	${PROGDEPENDS}
+
+${PROG}: machine m68k ${PROGDEPENDS}
+	${LD} -N -Ttext ${RELOC} -o $@ ${PROGLINKOBJS}
 
 LIB_SA_DIR=	${.CURDIR}/../libsa
 LIBSA_DIR!=cd ${LIB_SA_DIR}; \

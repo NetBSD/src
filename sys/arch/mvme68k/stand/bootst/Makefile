@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$NetBSD: Makefile,v 1.11 2000/11/30 22:26:27 scw Exp $
+#	$NetBSD: Makefile,v 1.12 2000/12/04 21:25:58 scw Exp $
 
 CLEANFILES+=stboot bootst bootst.bug
 
@@ -7,7 +7,7 @@ PROG=bootst.bug
 SRCS=   boot.c conf.c dev_tape.c rawfs.c
 LIBS=	${LIBSA} ${LIBBUG}
 SRTOBJ=
-DPADD=	${WRTVID}
+DPADD=	${LIBS} ${WRTVID}
 
 bootst stboot: ${PROG} ${WRTVID}
 	@${SIZE} bootst.bug
