@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.10 1997/10/19 19:31:16 mycroft Exp $	*/
+/*	$NetBSD: defs.h,v 1.11 1998/04/02 10:51:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -48,6 +48,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "pathnames.h"
 
