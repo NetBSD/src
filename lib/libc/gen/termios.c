@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,19 +32,21 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)termios.c	5.9 (Berkeley) 5/20/91";*/
-static char *rcsid = "$Id: termios.c,v 1.6 1993/12/22 18:59:39 jtc Exp $";
+/*static char *sccsid = "from: @(#)termios.c	8.2 (Berkeley) 2/21/94";*/
+static char *rcsid = "$Id: termios.c,v 1.7 1994/05/23 00:55:25 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
-#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#define KERNEL	/* XXX - FREAD and FWRITE was ifdef'd KERNEL*/
+#include <sys/time.h>
+#define KERNEL			/* XXX - FREAD and FWRITE ifdef'd KERNEL*/
 #include <sys/fcntl.h>
 #undef KERNEL
-#include <termios.h>
+
+#include <errno.h>
 #include <stdio.h>
+#include <termios.h>
 #include <unistd.h>
 
 int
@@ -53,7 +55,7 @@ tcgetattr(fd, t)
 	struct termios *t;
 {
 
-	return(ioctl(fd, TIOCGETA, t));
+	return (ioctl(fd, TIOCGETA, t));
 }
 
 int
@@ -67,13 +69,18 @@ tcsetattr(fd, opt, t)
 		localterm = *t;
 		localterm.c_cflag |= CIGNORE;
 		t = &localterm;
-		opt &= ~TCSASOFT;
 	}
-	if (opt == TCSANOW)
+	switch (opt & ~TCSASOFT) {
+	case TCSANOW:
 		return (ioctl(fd, TIOCSETA, t));
-	else if (opt == TCSADRAIN)
+	case TCSADRAIN:
 		return (ioctl(fd, TIOCSETAW, t));
-	return (ioctl(fd, TIOCSETAF, t));
+	case TCSAFLUSH:
+		return (ioctl(fd, TIOCSETAF, t));
+	default:
+		errno = EINVAL;
+		return (-1);
+	}
 }
 
 int
@@ -88,7 +95,7 @@ tcsetpgrp(fd, pgrp)
 	int s;
 
 	s = pgrp;
-	return(ioctl(fd, TIOCSPGRP, &s));
+	return (ioctl(fd, TIOCSPGRP, &s));
 }
 
 pid_t
@@ -98,9 +105,9 @@ tcgetpgrp(fd)
 	int s;
 
 	if (ioctl(fd, TIOCGPGRP, &s) < 0)
-		return((pid_t)-1);
+		return ((pid_t)-1);
 
-	return((pid_t)s);
+	return ((pid_t)s);
 }
 
 speed_t
@@ -108,7 +115,7 @@ cfgetospeed(t)
 	const struct termios *t;
 {
 
-	return(t->c_ospeed);
+	return (t->c_ospeed);
 }
 
 speed_t
@@ -116,7 +123,7 @@ cfgetispeed(t)
 	const struct termios *t;
 {
 
-	return(t->c_ispeed);
+	return (t->c_ispeed);
 }
 
 int
@@ -124,8 +131,8 @@ cfsetospeed(t, speed)
 	struct termios *t;
 	speed_t speed;
 {
-	t->c_ospeed = speed;
 
+	t->c_ospeed = speed;
 	return (0);
 }
 
@@ -134,23 +141,24 @@ cfsetispeed(t, speed)
 	struct termios *t;
 	speed_t speed;
 {
-	t->c_ispeed = speed;
 
+	t->c_ispeed = speed;
 	return (0);
 }
 
-void
+int
 cfsetspeed(t, speed)
 	struct termios *t;
 	speed_t speed;
 {
+
 	t->c_ispeed = t->c_ospeed = speed;
+	return (0);
 }
 
 /*
- * Make a pre-existing termios structure into "raw" mode:
- * character-at-a-time mode with no characters interpreted,
- * 8-bit data path.
+ * Make a pre-existing termios structure into "raw" mode: character-at-a-time
+ * mode with no characters interpreted, 8-bit data path.
  */
 void
 cfmakeraw(t)
@@ -161,7 +169,7 @@ cfmakeraw(t)
 	t->c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
 	t->c_cflag &= ~(CSIZE|PARENB);
 	t->c_cflag |= CS8;
-	/* set MIN/TIME */
+	/* XXX set MIN/TIME */
 }
 
 int
@@ -174,10 +182,9 @@ tcsendbreak(fd, len)
 	sleepytime.tv_usec = 400000;
 	if (ioctl(fd, TIOCSBRK, 0) == -1)
 		return (-1);
-	select(0, 0, 0, 0, &sleepytime);
+	(void)select(0, 0, 0, 0, &sleepytime);
 	if (ioctl(fd, TIOCCBRK, 0) == -1)
 		return (-1);
-
 	return (0);
 }
 
@@ -185,10 +192,8 @@ int
 tcdrain(fd)
 	int fd;
 {
-	if (ioctl(fd, TIOCDRAIN, 0) == -1)
-		return (-1);
 
-	return (0);
+	return (ioctl(fd, TIOCDRAIN, 0));
 }
 
 int
@@ -211,39 +216,32 @@ tcflush(fd, which)
 		errno = EINVAL;
 		return (-1);
 	}
-	if (ioctl(fd, TIOCFLUSH, &com) == -1)
-		return (-1);
-
-	return (0);
+	return (ioctl(fd, TIOCFLUSH, &com));
 }
 
 int
 tcflow(fd, action)
 	int fd, action;
 {
+	struct termios term;
+	u_char c;
+
 	switch (action) {
 	case TCOOFF:
 		return (ioctl(fd, TIOCSTOP, 0));
-		break;
 	case TCOON:
 		return (ioctl(fd, TIOCSTART, 0));
-		break;
+	case TCION:
 	case TCIOFF:
-	case TCION: {		/* these posix functions are STUPID */
-		struct termios term;
-		unsigned char c;
-
 		if (tcgetattr(fd, &term) == -1)
 			return (-1);
 		c = term.c_cc[action == TCIOFF ? VSTOP : VSTART];
-		if (c != _POSIX_VDISABLE && write(fd, &c, 1) == -1)
+		if (c != _POSIX_VDISABLE && write(fd, &c, sizeof(c)) == -1)
 			return (-1);
-		break;
-	}
+		return (0);
 	default:
 		errno = EINVAL;
 		return (-1);
 	}
-
-	return (0);
+	/* NOTREACHED */
 }
