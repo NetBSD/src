@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4 1994/10/26 08:24:37 cgd Exp $	*/
+/*	$NetBSD: proc.h,v 1.5 1996/04/04 06:36:50 phil Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -35,14 +35,14 @@
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
  */
 
-#ifndef _MACHINE_PROC_H_
-#define _MACHINE_PROC_H_
+#ifndef _NS532_PROC_H_
+#define _NS532_PROC_H_
 
 /*
  * Machine-dependent part of the proc structure for the pc532.
  */
 struct mdproc {
-	int	*md_regs;		/* pointer to regs on the stack */
+	struct reg *md_regs;	/* pointer to regs on the stack */
 };
 
-#endif
+#endif /* _NS532_PROC_H_ */

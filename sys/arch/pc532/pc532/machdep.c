@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 1996/02/15 08:39:27 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 1996/04/04 06:37:05 phil Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -84,6 +84,7 @@ static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 19
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
+#include <machine/fpu.h>
 #include <machine/pmap.h>
 
 /*
@@ -360,7 +361,7 @@ sendsig(catcher, sig, mask, code)
 	u_long code;
 {
 	register struct proc *p = curproc;
-	register int *regs;
+	register struct reg *regs;
 	register struct sigframe *fp;
 	struct sigacts *ps = p->p_sigacts;
 	int oonstack;
@@ -378,7 +379,7 @@ sendsig(catcher, sig, mask, code)
 		    ps->ps_sigstk.ss_size - sizeof(struct sigframe));
 		ps->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else {
-		fp = (struct sigframe *)regs[REG_SP] - 1;
+		fp = (struct sigframe *)regs->r_sp - 1;
 	}
 
 	if ((unsigned)fp <= (unsigned)p->p_vmspace->vm_maxsaddr + MAXSSIZ - ctob(p->p_vmspace->vm_ssize)) 
@@ -406,18 +407,25 @@ sendsig(catcher, sig, mask, code)
 	 */
 	fp->sf_sc.sc_onstack = oonstack;
 	fp->sf_sc.sc_mask = mask;
-	fp->sf_sc.sc_fp = regs[REG_FP];
-	fp->sf_sc.sc_sp = regs[REG_SP];
-	fp->sf_sc.sc_pc = regs[REG_PC];
-	fp->sf_sc.sc_ps = regs[REG_PSR];
-	fp->sf_sc.sc_sb = regs[REG_SB];
-	bcopy (regs, fp->sf_sc.sc_reg, 8*sizeof(int));
+	fp->sf_sc.sc_fp = regs->r_fp;
+	fp->sf_sc.sc_sp = regs->r_sp;
+	fp->sf_sc.sc_pc = regs->r_pc;
+	fp->sf_sc.sc_ps = regs->r_psr;
+	fp->sf_sc.sc_sb = regs->r_sb;
+	fp->sf_sc.sc_reg[REG_R7] = regs->r_r7;
+	fp->sf_sc.sc_reg[REG_R6] = regs->r_r6;
+	fp->sf_sc.sc_reg[REG_R5] = regs->r_r5;
+	fp->sf_sc.sc_reg[REG_R4] = regs->r_r4;
+	fp->sf_sc.sc_reg[REG_R3] = regs->r_r3;
+	fp->sf_sc.sc_reg[REG_R2] = regs->r_r2;
+	fp->sf_sc.sc_reg[REG_R1] = regs->r_r1;
+	fp->sf_sc.sc_reg[REG_R0] = regs->r_r0;
 
 	/*
 	 * Build context to run handler in.
 	 */
-	regs[REG_SP] = (int)fp;
-	regs[REG_PC] = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	regs->r_sp = (int)fp;
+	regs->r_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 }
 
 /*
@@ -440,7 +448,7 @@ sys_sigreturn(p, v, retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	register struct sigcontext *scp;
-	register int *regs = p->p_md.md_regs;
+	register struct reg *regs = p->p_md.md_regs;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -454,7 +462,7 @@ sys_sigreturn(p, v, retval)
 	/*
 	 * Check for security violations.
 	 */
-	if (((scp->sc_ps ^ regs[REG_PSR]) & PSL_USERSTATIC) != 0)
+	if (((scp->sc_ps ^ regs->r_psr) & PSL_USERSTATIC) != 0)
 		return (EINVAL);
 
 	if (scp->sc_onstack & 01)
@@ -466,19 +474,26 @@ sys_sigreturn(p, v, retval)
 	/*
 	 * Restore signal context.
 	 */
-	regs[REG_FP]  = scp->sc_fp;
-	regs[REG_SP]  = scp->sc_sp;
-	regs[REG_PC]  = scp->sc_pc;
-	regs[REG_PSR] = scp->sc_ps;
-	regs[REG_SB]  = scp->sc_sb;
-	bcopy (scp->sc_reg, regs, 8*sizeof(int));
+	regs->r_fp  = scp->sc_fp;
+	regs->r_sp  = scp->sc_sp;
+	regs->r_pc  = scp->sc_pc;
+	regs->r_psr = scp->sc_ps;
+	regs->r_sb  = scp->sc_sb;
+	regs->r_r7  = scp->sc_reg[REG_R7];
+	regs->r_r6  = scp->sc_reg[REG_R6];
+	regs->r_r5  = scp->sc_reg[REG_R5];
+	regs->r_r4  = scp->sc_reg[REG_R4];
+	regs->r_r3  = scp->sc_reg[REG_R3];
+	regs->r_r2  = scp->sc_reg[REG_R2];
+	regs->r_r1  = scp->sc_reg[REG_R1];
+	regs->r_r0  = scp->sc_reg[REG_R0];
 
 	return(EJUSTRETURN);
 }
 
 int waittime = -1;
 struct pcb dumppcb;
-struct on_stack dumppcb_onstack;
+struct reg dumppcb_regs;
 
 void
 boot(howto)
@@ -532,15 +547,15 @@ boot(howto)
 		sprd(sp, dumppcb.pcb_ksp);
 		sprd(fp, dumppcb.pcb_kfp);
 		smr(ptb0, dumppcb.pcb_ptb);
-		dumppcb.pcb_onstack = &dumppcb_onstack;
-		sprw(psr, dumppcb_onstack.pcb_psr);
-		sprw(mod, dumppcb_onstack.pcb_mod);
-		lprd(sp, &dumppcb_onstack.pcb_mod);
+		dumppcb.pcb_onstack = &dumppcb_regs;
+		sprw(psr, dumppcb_regs.r_psr);
+		sprw(mod, dumppcb_regs.r_mod);
+		lprd(sp, &dumppcb_regs.r_mod);
 		__asm __volatile("bsr 1f; 1: enter [r0,r1,r2,r3,r4,r5,r6,r7],8");
 		lprd(sp, dumppcb.pcb_ksp);
 		lprd(fp, dumppcb.pcb_kfp);
-		sprd(sb, dumppcb_onstack.pcb_sb);
-		sprd(usp, dumppcb_onstack.pcb_usp);
+		sprd(sb, dumppcb_regs.r_sb);
+		sprd(usp, dumppcb_regs.r_sp);
 		ei();
 		dumpsys();
 	}
@@ -751,21 +766,20 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	struct on_stack *r = (struct on_stack *)p->p_md.md_regs;
+	struct reg *r = p->p_md.md_regs;
 	struct pcb *pcbp = &p->p_addr->u_pcb;
 	extern struct proc *fpu_proc;
 
 	if (p == fpu_proc)
 		fpu_proc = 0;
 
-	r->pcb_usp    = stack;
-	r->pcb_fp     = 0;
-	r->pcb_pc     = pack->ep_entry;
-	r->pcb_psr    = PSL_USERSET;
-	bzero(r->pcb_reg, sizeof(r->pcb_reg));
-	r->pcb_reg[0] = (int)PS_STRINGS;
+	bzero(r, sizeof(*r));
+	r->r_sp  = stack;
+	r->r_pc  = pack->ep_entry;
+	r->r_psr = PSL_USERSET;
+	r->r_r7  = (int)PS_STRINGS;
 
-	pcbp->pcb_fsr = 0;
+	pcbp->pcb_fsr = FPC_UEN;
 	bzero(pcbp->pcb_freg, sizeof(pcbp->pcb_freg));
 
 	retval[1] = 0;
@@ -985,7 +999,7 @@ init532()
 
 	/* Construct an empty syscframe for proc0. */
 	curpcb = &proc0.p_addr->u_pcb;
-	curpcb->pcb_onstack = (struct on_stack *)
+	curpcb->pcb_onstack = (struct reg *)
 			      ((u_int)proc0.p_addr + USPACE) - 1;
 
 	/* Switch to proc0's stack. */

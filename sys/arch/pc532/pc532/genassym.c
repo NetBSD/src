@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.10 1996/02/02 19:43:03 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.11 1996/04/04 06:36:59 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@ main()
 	struct vmmeter *vm = 0;
 	struct pcb *pcb = 0;
 	struct sigframe *sigf = 0;
-	struct on_stack *regs = 0;
+	struct reg *regs = 0;
 	struct iv *iv = 0;
 	register unsigned i;
 
@@ -100,11 +100,11 @@ main()
 	def("PCB_PTB", &pcb->pcb_ptb);
 	def("PCB_ONFAULT", &pcb->pcb_onfault);
 
-	def("ON_STK_SIZE", sizeof(struct on_stack));
-	def("REGS_USP", &regs->pcb_usp);
-	def("REGS_FP", &regs->pcb_fp);
-	def("REGS_SB", &regs->pcb_sb);
-	def("REGS_PSR", &regs->pcb_psr);
+	def("ON_STK_SIZE", sizeof(struct reg));
+	def("REGS_USP", &regs->r_sp);
+	def("REGS_FP", &regs->r_fp);
+	def("REGS_SB", &regs->r_sb);
+	def("REGS_PSR", &regs->r_psr);
 
 	def("SIGF_HANDLER", &sigf->sf_handler);
 	def("SIGF_SC", &sigf->sf_sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.9 1996/01/31 21:34:02 phil Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.10 1996/04/04 06:37:08 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -75,13 +75,6 @@
 
 extern struct proc *fpu_proc;
 
-static inline struct reg *
-process_regs(p)
-	struct proc *p;
-{
-	return ((struct reg *) p->p_md.md_regs);
-}
-
 int
 process_read_regs(p, regs)
 	struct proc *p;
@@ -89,7 +82,7 @@ process_read_regs(p, regs)
 {
 	struct reg *pregs;
 
-	pregs = process_regs(p);
+	pregs = p->p_md.md_regs;
 	if (pregs == NULL)
 		return (EIO);
 
@@ -104,7 +97,7 @@ process_write_regs(p, regs)
 {
 	struct reg *pregs;
 
-	pregs = process_regs(p);
+	pregs = p->p_md.md_regs;
 	if (pregs == NULL)
 		return (EIO);
 
@@ -154,7 +147,7 @@ process_sstep(p, sstep)
 {
 	struct reg *pregs;
 
-	pregs = process_regs(p);
+	pregs = p->p_md.md_regs;
 	if (pregs == NULL)
 		return (EIO);
 
@@ -173,7 +166,7 @@ process_set_pc(p, addr)
 {
 	struct reg *pregs;
 
-	pregs = process_regs(p);
+	pregs = p->p_md.md_regs;
 	if (pregs == NULL)
 		return (EIO);
 
