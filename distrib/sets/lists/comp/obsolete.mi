@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.90 2003/07/10 13:27:27 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.91 2003/07/16 16:23:21 itojun Exp $
 ./usr/bin/genclass
 ./usr/bin/gettextize
 ./usr/include/bfd
@@ -596,10 +596,15 @@
 ./usr/lib/libntp.so
 ./usr/lib/libntp_p.a
 ./usr/lib/libntp_pic.a
+./usr/lib/libtelnet.a
+./usr/lib/libtelnet.so
+./usr/lib/libtelnet_p.a
+./usr/lib/libtelnet_pic.a
 ./usr/lib/libusb.a
 ./usr/lib/libusb_p.a
 ./usr/lib/libusb_pic.a
 ./usr/libdata/lint/llib-lntp.ln
+./usr/libdata/lint/llib-ltelnet.ln
 ./usr/libdata/lint/llib-lusb.ln
 ./usr/libexec/collect2
 ./usr/sbin/config.new
