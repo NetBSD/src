@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.45 1994/05/05 04:47:41 cgd Exp $
+#	$Id: files.i386,v 1.46 1994/05/22 10:06:01 deraadt Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/db_disasm.c	optional ddb
@@ -59,6 +59,10 @@ arch/i386/isa/wd.c		optional wd device-driver requires isa
 arch/i386/isa/wd7000.c		optional wds requires isa scsi
 arch/i386/isa/wt.c		optional wt device-driver requires isa
 dev/cons.c			standard
+compat/svr4/svr4_misc.c		optional compat_svr4
+compat/svr4/svr4_sysent.c	optional compat_svr4
+compat/svr4/svr4_ioctl.c	optional compat_svr4
+compat/svr4/svr4_exec.c		optional compat_svr4
 scsi/cd.c			optional cd device-driver requires scsi
 scsi/ch.c			optional ch device-driver requires scsi
 scsi/scsi_base.c		optional scsi
