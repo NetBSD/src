@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.2 1999/01/04 00:04:06 tron Exp $	*/
+/*	$NetBSD: resolv.h,v 1.3 1999/08/07 12:40:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1989
@@ -127,7 +127,11 @@ struct __res_state {
 		struct in_addr	addr;
 		u_int32_t	mask;
 	} sort_list[MAXRESOLVSORT];
+#if 0
 	char	pad[72];		/* On an i386 this means 512b total. */
+#else
+	char	lookups[4];
+#endif
 };
 
 /*
