@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.100 2002/01/25 14:18:45 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.101 2002/01/27 14:17:10 tsutsui Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -23,6 +23,8 @@ Explanation of bracketted footnote tags [] follows this listing.
 There is complete support (including IDE DMA or Ultra-DMA) for the following
 PCI controllers
 .(bullet -compact
+Acard ATA-850 and 860 based IDE Controllers
+.It
 Acer labs M5229 IDE Controller
 .It
 Advanced Micro Devices AMD-756 and 766 IDE Controllers
