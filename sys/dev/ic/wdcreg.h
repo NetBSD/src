@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.15 1998/01/14 23:42:03 cgd Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.16 1998/04/23 10:37:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -86,8 +86,8 @@
 #define	WDCE_UNC	0x40	/* uncorrectable data error */
 #define	WDCE_MC		0x20	/* media changed */
 #define	WDCE_IDNF	0x10	/* id not found */
-#define	WDCE_ABRT	0x08	/* aborted command */
-#define	WDCE_MCR	0x04	/* media change requested */
+#define	WDCE_MCR	0x08	/* media change requested */
+#define	WDCE_ABRT	0x04	/* aborted command */
 #define	WDCE_TK0NF	0x02	/* track 0 not found */
 #define	WDCE_AMNF	0x01	/* address mark not found */
 #define WDERR_BITS	"\020\010bbk\007unc\006mc\005idnf\004mcr\003abrt\002tk0nf\001amnf"
