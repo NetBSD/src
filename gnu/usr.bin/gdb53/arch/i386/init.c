@@ -153,6 +153,7 @@ initialize_all_files (void)
   _initialize_mipsread ();
   _initialize_stabsread ();
   _initialize_core ();
+  _initialize_kcore_nbsd ();
   _initialize_c_language ();
   _initialize_f_language ();
   _initialize_ui_out ();
