@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.60 1995/02/04 14:44:48 mycroft Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.61 1995/02/22 01:39:56 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -330,8 +330,9 @@ execve(p, uap, retval)
 			cpp++;
 			envc++;
 		}
-		dp = (char *) ALIGN(dp);
 	}
+
+	dp = (char *) ALIGN(dp);
 
 	/* Now check if args & environ fit into new stack */
 	len = ((argc + envc + 2 + pack.ep_setup_arglen) * sizeof(char *) +
