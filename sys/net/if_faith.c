@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.7 1999/12/13 15:17:19 itojun Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.8 1999/12/22 03:58:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -60,7 +60,7 @@
 #include <sys/ioctl.h>
 #endif
 #include <sys/time.h>
-#ifdef __bsdi__
+#if defined(__bsdi__) || defined(__NetBSD__)
 #include <machine/cpu.h>
 #endif
 
