@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_core.c,v 1.1 2001/12/08 00:35:27 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_core.c,v 1.2 2001/12/09 23:08:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.1 2001/12/08 00:35:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.2 2001/12/09 23:08:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_core.c,v 1.1 2001/12/08 00:35:27 thorpej Ex
 #include <sys/core.h>
 
 #include <uvm/uvm.h>
+
+#include "netbsd32.h"
 
 int
 coredump_netbsd32(struct proc *p, struct vnode *vp, struct ucred *cred)
@@ -82,7 +84,7 @@ coredump_netbsd32(struct proc *p, struct vnode *vp, struct ucred *cred)
 	core.c_tsize = (u_long)ctob(vm->vm_tsize);
 	core.c_dsize = (u_long)ctob(vm->vm_dsize);
 	core.c_ssize = (u_long)round_page(ctob(vm->vm_ssize));
-	error = cpu_coredump(p, vp, cred, &core);
+	error = cpu_coredump32(p, vp, cred, &core);
 	if (error)
 		return (error);
 
@@ -142,7 +144,7 @@ coredump_netbsd32(struct proc *p, struct vnode *vp, struct ucred *cred)
 
 		offset += core.c_seghdrsize;
 		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t)cseg.c_addr, (int)cseg.c_size,
+		    (caddr_t)(long)cseg.c_addr, (int)cseg.c_size,
 		    offset, UIO_USERSPACE,
 		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 		if (error)
