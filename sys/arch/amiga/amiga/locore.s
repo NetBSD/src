@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.28 1994/06/15 19:02:35 chopps Exp $
+ *	$Id: locore.s,v 1.29 1994/06/16 15:05:02 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -2156,7 +2156,7 @@ Ldoreset:
 /*
  * Reboot directly into a new kernel image.
  * kernel_reload(image, image_size, entry,
- *		 fastram_start, fastram_size, chipram_start, esym)
+ *		 fastram_start, fastram_size, chipram_start, esym, eclockfreq)
  */
 	.globl	_kernel_reload
 _kernel_reload:
@@ -2181,6 +2181,7 @@ Lreload1:
 	movel	sp@(20),d0
 	movel	sp@(24),d1
 	movel	sp@(28),a4		| esym
+	movel	sp@(32),d4		| eclockfreq
 
 	movel	sp@(12),a6		| find entrypoint (a6)
 
