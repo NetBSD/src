@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.58 1997/03/04 04:11:52 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.59 1997/03/15 18:33:48 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -317,15 +317,6 @@ add_nubus_intr(slot, func, client_data)
 
 	nubus_intr_mask |= (1 << (slot-9));
 
-#ifndef MAC68K_BROKEN_VIDEO
-	/*
-	 * The following should be uncommented and the call in if_ae.c
-	 * removed when we can reliably handle interrupts from the video
-	 * cards.
-	 */
-	enable_nubus_intr();
-#endif
-
 	splx(s);
 
 	return 1;
@@ -334,6 +325,9 @@ add_nubus_intr(slot, func, client_data)
 void
 enable_nubus_intr()
 {
+	if (nubus_intr_mask == 0)
+		return;
+
 	if (VIA2 == VIA2OFF)
 		via2_reg(vIER) = 0x80 | V2IF_SLOTINT;
 	else
