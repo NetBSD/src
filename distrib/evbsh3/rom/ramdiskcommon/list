@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2000/09/18 07:21:02 msaitoh Exp $
+#	$NetBSD: list,v 1.2 2000/09/18 07:25:42 msaitoh Exp $
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../../etc/master.passwd		etc/master.passwd
@@ -25,15 +25,10 @@ COPY	${CURDIR}/../ramdiskcommon/shells		etc/shells
 
 #SYMLINK /mfs/home			home
 
-#SPECIAL ( cd ${CURDIR}/../../../evbsh3/ucd-snmp/mibs/ ; tar --exclude CVS -cf - *.txt ) | ( cd usr/share/snmp/mibs/ ; tar xf - )
-
 # copy the MAKEDEV script and make some devices
 COPY	${CURDIR}/../../../../etc/etc.evbsh3/MAKEDEV	dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 SPECIAL /bin/rm dev/MAKEDEV
-
-#COPY	${CURDIR}/../../../../etc/etc.evbsh3/ipf_supfail.conf boot.evbsh3/ipf_supfail.conf
-#COPY	${CURDIR}/../../../../etc/etc.evbsh3/syslog.conf	boot.evbsh3/syslog.conf
 
 #SPECIAL chmod 755			etc/rc
 
@@ -123,13 +118,8 @@ LINK	ramdiskbin			usr/sbin/pstat
 LINK	ramdiskbin			usr/sbin/sysctl
 LINK	ramdiskbin			usr/sbin/tcpdump
 
-#LINK	ramdiskbin			bin/morse
-#LINK	ramdiskbin			sbin/spppd
 LINK	ramdiskbin			sbin/syslogd
 LINK	ramdiskbin			sbin/telnetd
-#LINK	ramdiskbin			sbin/flashwrite
 #LINK	ramdiskbin			sbin/wdogctl
-#LINK	ramdiskbin			sbin/ipl_getenv
-#LINK	ramdiskbin			sbin/ipl_setenv
 
 #SPECIAL /bin/rm 			ramdiskbin
