@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.14 2005/03/21 10:51:52 xtraeme Exp $ */
+/* $NetBSD: pcppi.c,v 1.15 2005/03/21 14:05:18 xtraeme Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.14 2005/03/21 10:51:52 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.15 2005/03/21 14:05:18 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,24 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.14 2005/03/21 10:51:52 xtraeme Exp $");
 void	pcppi_pckbd_bell(void *, u_int, u_int, u_int, int);
 #endif
 
-struct pcppi_softc {
-	struct device sc_dv;
-
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ppi_ioh, sc_pit1_ioh;
-
-	struct callout sc_bell_ch;
-
-	int sc_bellactive, sc_bellpitch;
-	int sc_slp;
-	int sc_timeout;
-};
-
 int	pcppi_match(struct device *, struct cfdata *, void *);
-void	pcppi_attach(struct device *, struct device *, void *);
+void	pcppi_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcppi, sizeof(struct pcppi_softc),
-    pcppi_match, pcppi_attach, NULL, NULL);
+    pcppi_match, pcppi_isa_attach, NULL, NULL);
 
 static void pcppi_bell_stop(void*);
 
@@ -161,24 +148,31 @@ lose:
 }
 
 void
-pcppi_attach(struct device *parent, struct device *self, void *aux)
+pcppi_isa_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pcppi_softc *sc = (struct pcppi_softc *)self;
-	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot;
-	struct pcppi_attach_args pa;
+        struct pcppi_softc *sc = (struct pcppi_softc *)self;
+        struct isa_attach_args *ia = aux;
+        bus_space_tag_t iot;
 
-	callout_init(&sc->sc_bell_ch);
+        sc->sc_iot = iot = ia->ia_iot;
 
-	sc->sc_iot = iot = ia->ia_iot;
-
-	if (bus_space_map(iot, IO_TIMER1, 4, 0, &sc->sc_pit1_ioh) ||
+        if (bus_space_map(iot, IO_TIMER1, 4, 0, &sc->sc_pit1_ioh) ||
 	    bus_space_map(iot, IO_PPI, 1, 0, &sc->sc_ppi_ioh))
-		panic("pcppi_attach: couldn't map");
+                panic("pcppi_attach: couldn't map");
 
-	printf("\n");
+        printf("\n");
 
-	sc->sc_bellactive = sc->sc_bellpitch = sc->sc_slp = 0;
+        pcppi_attach(sc);
+}
+
+void
+pcppi_attach(struct pcppi_softc *sc)
+{
+        struct pcppi_attach_args pa;
+
+        callout_init(&sc->sc_bell_ch);
+
+        sc->sc_bellactive = sc->sc_bellpitch = sc->sc_slp = 0;
 
 #if NPCKBD > 0
 	/* Provide a beeper for the PC Keyboard, if there isn't one already. */
@@ -186,7 +180,7 @@ pcppi_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	pa.pa_cookie = sc;
-	while (config_found(self, &pa, 0));
+	while (config_found((struct device *)sc, &pa, 0));
 }
 
 void
