@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.h,v 1.8 1997/09/02 19:06:13 thorpej Exp $ */
+/* $NetBSD: pmap.old.h,v 1.9 1997/09/02 23:52:55 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -74,17 +74,6 @@ extern struct pmap	kernel_pmap_store;
 #define pmap_kernel()	(&kernel_pmap_store)
 #define	active_pmap(pm) \
 	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
-
-/*
- * Macros for speed
- */
-#define PMAP_ACTIVATE(pmapp, iscurproc)					\
-	if ((pmapp) != NULL && (pmapp)->pm_stchanged) {			\
-		if (iscurproc)						\
-			loadustp((pmapp)->pm_stpte);			\
-		(pmapp)->pm_stchanged = FALSE;				\
-	}
-#define PMAP_DEACTIVATE(pmapp, pcbp)
 
 /*
  * For each vm_page_t, there is a list of all currently valid virtual
