@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: termout.c,v 1.3 1994/02/25 03:40:25 cgd Exp $";
+static char rcsid[] = "$Id: termout.c,v 1.4 1995/04/29 05:57:04 cgd Exp $";
 #endif /* not lint */
 
 #if defined(unix)
@@ -41,6 +41,7 @@ static char rcsid[] = "$Id: termout.c,v 1.3 1994/02/25 03:40:25 cgd Exp $";
 #include <sgtty.h>
 #endif
 #include <stdio.h>
+#include <string.h>
 #include <curses.h>
 #if	defined(ultrix)
 /* Some version of this OS has a bad definition for nonl() */
@@ -98,6 +99,8 @@ ScreenImage Terminal[MAXSCREENSIZE];
 static int tcflag = -1;			/* transparent mode command flag */
 static int savefd[2];			/* for storing fds during transcom */
 extern int	tin, tout;		/* file descriptors */
+
+static void aborttc();
 #endif	/* defined(unix) */
 
 
@@ -653,7 +656,7 @@ InitTerminal()
 	ClearArray(Terminal);
 	terminalCursorAddress = SetBufferAddress(0,0);
 #if defined(unix)
-	signal(SIGHUP, abort);
+	signal(SIGHUP, (void (*))abort);
 #endif
 
 	TryToSend = FastScreen;
@@ -880,7 +883,6 @@ int		control;	/* To see if we are done */
 #if	defined(unix)
     extern char *transcom;
     int inpipefd[2], outpipefd[2];
-    void aborttc();
 #endif	/* defined(unix) */
 
     while (DoTerminalOutput() == 0) {
@@ -921,7 +923,7 @@ int		control;	/* To see if we are done */
 	     setcommandmode();
 	     tin = inpipefd[0];
 	     tout = outpipefd[1];
-	     (void) signal(SIGCHLD, (int (*)())aborttc);
+	     (void) signal(SIGCHLD, aborttc);
 	     setconnmode();
 	     tcflag = 1;
 	     break;
