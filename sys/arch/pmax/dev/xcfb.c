@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.29 1999/12/15 14:48:25 ad Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.30 1999/12/23 16:07:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -108,7 +108,6 @@ xcfb needs dtop device
 
 #include <pmax/pmax/cons.h>
 
-#include <pmax/dev/xcfbreg.h>
 #include <pmax/dev/xcfbvar.h>
 #include <pmax/dev/ims332.h>
 #include <pmax/pmax/maxine.h>
@@ -116,6 +115,10 @@ xcfb needs dtop device
 #include <pmax/dev/dtopreg.h>
 
 #include <pmax/dev/fbreg.h>
+
+#define	IMS332_ADDRESS		0xbc140000
+#define	VRAM_OFFSET		0x2000000
+#define	IMS332_RESET_ADDRESS	0xbc040100
 
 /*
  * These need to be mapped into user space.
