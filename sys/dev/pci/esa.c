@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.6 2002/01/13 15:07:28 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.7 2002/01/14 19:24:39 pooka Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -55,7 +55,6 @@
 #include <dev/auconv.h>
 #include <dev/ic/ac97var.h>
 #include <dev/ic/ac97reg.h>
-
 
 #include <dev/pci/esareg.h>
 #include <dev/pci/esadsp.h>
@@ -952,7 +951,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* Power up chip */
-	esa_power(sc, ESA_PPMI_D0);
+	esa_power(sc, PCI_PMCSR_STATE_D0);
 
 	/* Init chip */
 	if (esa_init(sc) == -1) {
@@ -1402,12 +1401,15 @@ esa_power(struct esa_softc *sc, int state)
 {
 	pcitag_t tag = sc->sc_tag;
 	pci_chipset_tag_t pc = sc->sc_pct;
-	u_int32_t data;
+	pcireg_t data;
+	int pmcapreg;
 
-	data = pci_conf_read(pc, tag, ESA_CONF_PM_PTR);
-	if (pci_conf_read(pc, tag, data) == 1)
-		pci_conf_write(pc, tag, data + 4, state);
-	
+	if (pci_get_capability(pc, tag, PCI_CAP_PWRMGMT, &pmcapreg, 0)) {
+		data = pci_conf_read(pc, tag, pmcapreg + 4);
+		if ((data && PCI_PMCSR_STATE_MASK) != state)
+			pci_conf_write(pc, tag, pmcapreg + 4, state);
+	}
+		
 	return (0);
 }
 
@@ -1457,7 +1459,7 @@ esa_suspend(struct esa_softc *sc)
 		sc->savemem[index++] = esa_read_assp(sc,
 		    ESA_MEMTYPE_INTERNAL_DATA, i);
 
-	esa_power(sc, ESA_PPMI_D3);
+	esa_power(sc, PCI_PMCSR_STATE_D3);
 
 	return (0);
 }
@@ -1471,7 +1473,7 @@ esa_resume(struct esa_softc *sc) {
 
 	index = 0;
 
-	esa_power(sc, ESA_PPMI_D0);
+	esa_power(sc, PCI_PMCSR_STATE_D0);
 	delay(10000);
 
 	esa_config(sc);
