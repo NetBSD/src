@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.79 1998/09/06 17:26:03 veego Exp $
+$NetBSD: pcidevs,v 1.80 1998/09/18 04:30:10 mark Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -466,6 +466,7 @@ vendor PYRAMID		0x11bb	Pyramid Technologies
 vendor NETPERIPH	0x11bc	Network Peripherals
 vendor PINNACLE		0x11bd	Pinnacle Systems
 vendor IMI		0x11be	International Microcircuts
+vendor FUJITSU4		0x11c1	Fujitsu Limited (4th PCI Vendor ID)
 vendor NEC2		0x11c3	NEC (2nd PCI Vendor ID)
 vendor DOCTECH		0x11c4	Document Technologies
 vendor SHIVA		0x11c5	Shiva
@@ -489,6 +490,7 @@ vendor 3DO		0x1239	The 3D0 Company
 vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
 vendor AURORA		0x125c	Aurora Technologies
+vendor ESSTECH		0x125d	ESS Technology Inc
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
@@ -750,6 +752,9 @@ product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
 
+/* ESS Technology Inc products */
+product ESSTECH	SOLO1	0x1969	SOLO-1 AudioDrive
+
 /* 2 Micro Inc */
 product 2MICRO  OZ6832	0x6832	OZ6832 CardBus Controller
 
@@ -759,6 +764,9 @@ product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
 /* FORE products */
 product FORE PCA200	0x0210	ATM PCA-200
 product FORE PCA200E	0x0300	ATM PCA-200e
+
+/* Fujtsu products */
+product FUJITSU4	LTMODEM	0x0440	K56flex DSVD LTMODEM
 
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
@@ -992,6 +1000,7 @@ product TEKRAM2	DC690C		0x690c	DC-690C
 product	TI	TLAN		0x0500	TLAN
 product TI	PCI1130		0xac12	PCI1130
 product TI	PCI1131		0xac15	PCI1131
+product TI	PCI1250		0xac16	PCI1250
 product TI	PCI2030		0xac20	PCI2030
   
 /* Toshiba products */
@@ -1002,6 +1011,7 @@ product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
 product TRIDENT	TGUI_9350	0x9350	TGUI 9350
 product TRIDENT	TGUI_9360	0x9360	TGUI 9360
+product TRIDENT	CYBER_9397	0x9397	CYBER 9397
 product TRIDENT	TGUI_9420	0x9420	TGUI 9420
 product TRIDENT	TGUI_9440	0x9440	TGUI 9440
 product TRIDENT	TGUI_9660	0x9660	TGUI 9660
