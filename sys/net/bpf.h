@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.29 2001/12/14 23:30:02 thorpej Exp $	*/
+/*	$NetBSD: bpf.h,v 1.30 2002/08/28 09:34:58 onoe Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -123,6 +123,8 @@ struct bpf_version {
 #define BIOCSUDPF	_IOW(B,115, struct bpf_program)
 #define	BIOCGHDRCMPLT	_IOR(B,116, u_int)
 #define	BIOCSHDRCMPLT	_IOW(B,117, u_int)
+#define	BIOCSDLT	_IOW(B,118, u_int)
+#define	BIOCGDLTLIST	_IOWR(B,119, struct bpf_dltlist)
 #else
 #define	BIOCGBLEN	_IOR('B',102, u_int)
 #define	BIOCSBLEN	_IOWR('B',102, u_int)
@@ -141,6 +143,8 @@ struct bpf_version {
 #define BIOCSUDPF	_IOW('B',115, struct bpf_program)
 #define	BIOCGHDRCMPLT	_IOR('B',116, u_int)
 #define	BIOCSHDRCMPLT	_IOW('B',117, u_int)
+#define	BIOCSDLT	_IOW('B',118, u_int)
+#define	BIOCGDLTLIST	_IOWR('B',119, struct bpf_dltlist)
 #endif
 
 /*
@@ -246,11 +250,20 @@ struct bpf_insn {
 #define BPF_STMT(code, k) { (u_int16_t)(code), 0, 0, k }
 #define BPF_JUMP(code, k, jt, jf) { (u_int16_t)(code), jt, jf, k }
 
+/*
+ * Structure to retrieve available DLTs for the interface.
+ */
+struct bpf_dltlist {
+	u_int	bfl_len;	/* number of bfd_list array */
+	u_int	*bfl_list;	/* array of DLTs */
+};
+
 #ifdef _KERNEL
 int	 bpf_validate __P((struct bpf_insn *, int));
 void	 bpf_tap __P((caddr_t, u_char *, u_int));
 void	 bpf_mtap __P((caddr_t, struct mbuf *));
 void	 bpfattach __P((struct ifnet *, u_int, u_int));
+void	 bpfattach2 __P((struct ifnet *, u_int, u_int, caddr_t *));
 void	 bpfdetach __P((struct ifnet *));
 void	 bpf_change_type __P((struct ifnet *, u_int, u_int));
 void	 bpfilterattach __P((int));
