@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.47 2002/05/14 23:58:08 thorpej Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.48 2002/05/22 14:42:37 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.47 2002/05/14 23:58:08 thorpej Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.48 2002/05/22 14:42:37 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -268,9 +268,9 @@ resrcmd(res, ahost, rport, locuser, remuser, cmd, fd2p)
 			int oerrno = errno;
 			char hbuf[NI_MAXHOST];
 #ifdef NI_WITHSCOPEID
-			const u_int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+			const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
 #else
-			const u_int niflags = NI_NUMERICHOST;
+			const int niflags = NI_NUMERICHOST;
 #endif
 
 			hbuf[0] = '\0';
@@ -933,9 +933,9 @@ __icheckhost(raddr, salen, lhost)
 	char h1[NI_MAXHOST], h2[NI_MAXHOST];
 	int error;
 #ifdef NI_WITHSCOPEID
-	const u_int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
 #else
-	const u_int niflags = NI_NUMERICHOST;
+	const int niflags = NI_NUMERICHOST;
 #endif
 
 	_DIAGASSERT(raddr != NULL);
@@ -992,9 +992,9 @@ __gethostloop(raddr, salen)
 	struct addrinfo hints, *res, *r;
 	int error;
 #ifdef NI_WITHSCOPEID
-	const u_int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
 #else
-	const u_int niflags = NI_NUMERICHOST;
+	const int niflags = NI_NUMERICHOST;
 #endif
 
 	_DIAGASSERT(raddr != NULL);
