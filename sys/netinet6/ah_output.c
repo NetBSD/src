@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.4 1999/07/30 10:35:35 itojun Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.5 2000/01/06 07:31:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,9 +33,7 @@
  * RFC1826/2402 authentication header.
  */
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
-#endif
 
 #define ahdprintf(x)	printf x
 
@@ -64,9 +62,7 @@
 
 #ifdef INET6
 #include <netinet6/ip6.h>
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <netinet6/in6_pcb.h>
-#endif
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
 #endif
