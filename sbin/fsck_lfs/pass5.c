@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.6 2000/09/09 04:49:56 perseant Exp $	 */
+/* $NetBSD: pass5.c,v 1.7 2000/11/13 00:30:48 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -59,11 +59,13 @@ pass5()
 	unsigned long   bb; /* total number of used blocks (lower bound) */
 	unsigned long   ubb; /* upper bound number of used blocks */
 	unsigned long   avail; /* blocks available for writing */
+	int             nclean; /* clean segments */
 
 	/*
 	 * Check segment holdings against actual holdings.  Check for
 	 * "clean" segments that contain live data.
 	 */
+	nclean = 0;
 	avail = 0;
 	bb = ubb = 0;
 	for (i = 0; i < sblock.lfs_nseg; i++) {
@@ -96,6 +98,7 @@ pass5()
 			bb += btodb(su->su_nbytes) + su->su_nsums;
 			ubb += btodb(su->su_nbytes) + su->su_nsums + fsbtodb(&sblock, su->su_ninos);
 		} else {
+			nclean++;
 			avail += fsbtodb(&sblock, sblock.lfs_ssize);
 			if (su->su_flags & SEGUSE_SUPERBLOCK)
 				avail -= btodb(LFS_SBPAD);
@@ -114,6 +117,14 @@ pass5()
 		      avail);
 		if (preen || reply("fix")) {
 			sblock.lfs_avail = avail;
+			sbdirty();
+		}
+	}
+	if (nclean != sblock.lfs_nclean) {
+		pwarn("nclean given as %d, should be %d\n", sblock.lfs_nclean,
+		      nclean);
+		if (preen || reply("fix")) {
+			sblock.lfs_nclean = nclean;
 			sbdirty();
 		}
 	}
