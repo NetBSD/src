@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.26 2000/11/27 09:04:59 chs Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.27 2000/12/22 14:45:50 mrg Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -47,7 +47,7 @@
  * If we have LKM support, always include the non-inline versions for
  * LKMs.  Otherwise, do it based on the option.
  */
-#ifdef LKM
+#if defined(LKM) && !defined(VNODE_OP_NOINLINE)
 #define	VNODE_OP_NOINLINE
 #endif
 
