@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.188 2004/01/11 19:39:48 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.189 2004/01/22 01:20:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -466,7 +466,9 @@ void	cpu_idle(void);
 void	cpu_exit(struct lwp *);
 void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
+#ifndef cpu_lwp_free
 void	cpu_lwp_free(struct lwp *, int);
+#endif
 
 void	child_return(void *);
 
