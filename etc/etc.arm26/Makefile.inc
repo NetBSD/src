@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/07/19 16:49:08 bjh21 Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/03/12 14:10:03 wiz Exp $
 #
-#	etc.arm32/Makefile.inc -- arm32-specific etc Makefile targets
+#	etc.arm26/Makefile.inc -- arm26-specific etc Makefile targets
 #
 
 # Set this for any kernels beyond GENERIC you want to include

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2001/02/09 22:25:03 briggs Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/03/12 14:10:04 wiz Exp $
 #
-#	etc.bebox/Makefile.inc -- bebox-specific etc Makefile targets
+#	etc.sandpoint/Makefile.inc -- sandpoint-specific etc Makefile targets
 #
 
 # Set this for any kernels beyond GENERIC you want to include

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.5 2001/01/07 09:31:17 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2001/03/12 14:10:04 wiz Exp $
 #
-#	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
+#	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
 
 TOP= $(.CURDIR)/..
