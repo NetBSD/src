@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.9 1997/10/17 03:44:49 gwr Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.10 1997/12/09 22:25:42 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -203,17 +203,8 @@ ie_vmes_attach(parent, self, args)
 /*
  * MULTIBUS/VME support
  */
-void 
-ie_vmereset(sc)
-	struct ie_softc *sc;
-{
-	volatile struct ievme *iev = (struct ievme *) sc->sc_reg;
-	iev->status = IEVME_RESET;
-	delay(100);		/* XXX could be shorter? */
-	iev->status = 0;
-}
 
-void 
+void
 ie_vmeattend(sc)
 	struct ie_softc *sc;
 {
@@ -223,13 +214,22 @@ ie_vmeattend(sc)
 	iev->status &= ~IEVME_ATTEN;	/* down. */
 }
 
-void 
-ie_vmerun(sc)
+void
+ie_vmereset(sc)
 	struct ie_softc *sc;
 {
 	volatile struct ievme *iev = (struct ievme *) sc->sc_reg;
 
-	iev->status |= (IEVME_ONAIR | IEVME_IENAB | IEVME_PEINT);
+	iev->status = IEVME_RESET;
+	delay(20);
+	iev->status = (IEVME_ONAIR | IEVME_IENAB | IEVME_PEINT);
+}
+
+void
+ie_vmerun(sc)
+	struct ie_softc *sc;
+{
+	/* do it all in reset */
 }
 
 /*
