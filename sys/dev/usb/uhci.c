@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.42 1999/08/22 23:19:56 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.43 1999/08/22 23:41:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1071,7 +1071,7 @@ uhci_alloc_std(sc)
 				 UHCI_TD_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (0);
-		for(i = 0; i < UHCI_STD_CHUNK; i++, std++) {
+		for(i = 0; i < UHCI_STD_CHUNK; i++) {
 			offs = i * UHCI_STD_SIZE;
 			std = (uhci_soft_td_t *)((char *)KERNADDR(&dma) +offs);
 			std->physaddr = DMAADDR(&dma) + offs;
@@ -1117,7 +1117,7 @@ uhci_alloc_sqh(sc)
 				 UHCI_QH_ALIGN, &dma);
 		if (r != USBD_NORMAL_COMPLETION)
 			return 0;
-		for(i = 0; i < UHCI_SQH_CHUNK; i++, sqh++) {
+		for(i = 0; i < UHCI_SQH_CHUNK; i++) {
 			offs = i * UHCI_SQH_SIZE;
 			sqh = (uhci_soft_qh_t *)((char *)KERNADDR(&dma) +offs);
 			sqh->physaddr = DMAADDR(&dma) + offs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.11 1999/08/22 23:19:57 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.12 1999/08/22 23:41:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ struct uhci_soft_td {
  * Make the size such that it is a multiple of UHCI_TD_ALIGN.  This way
  * we can pack a number of soft TD together and have the real TS well
  * aligned.
+ * NOTE: Minimum size is 32 bytes.
  */
 #define UHCI_STD_SIZE ((sizeof (struct uhci_soft_td) + UHCI_TD_ALIGN - 1) / UHCI_TD_ALIGN * UHCI_TD_ALIGN)
 #define UHCI_STD_CHUNK 128 /*(PAGE_SIZE / UHCI_TD_SIZE)*/
@@ -107,9 +108,10 @@ struct uhci_soft_qh {
 	uhci_physaddr_t physaddr;	/* QH's physical address. */
 	int pos;			/* Timeslot position */
 	uhci_intr_info_t *intr_info;	/* Who to call on completion. */
+/* XXX should try to shrink with 4 bytes to fit into 32 bytes */
 };
 /* See comment about UHCI_STD_SIZE. */
-#define UHCI_SQH_SIZE ((sizeof (struct uhci_soft_td) + UHCI_QH_ALIGN - 1) / UHCI_QH_ALIGN * UHCI_QH_ALIGN)
+#define UHCI_SQH_SIZE ((sizeof (struct uhci_soft_qh) + UHCI_QH_ALIGN - 1) / UHCI_QH_ALIGN * UHCI_QH_ALIGN)
 #define UHCI_SQH_CHUNK 128 /*(PAGE_SIZE / UHCI_QH_SIZE)*/
 
 /*
