@@ -1,7 +1,7 @@
-/*	$NetBSD: scsi_changer.h,v 1.12 1998/12/17 22:27:18 gibbs Exp $	*/
+/*	$NetBSD: scsi_changer.h,v 1.13 1999/07/22 17:43:53 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
+ * Copyright (c) 1996, 1999 Jason R. Thorpe <thorpej@and.com>
  * All rights reserved.
  *
  * Partially based on an autochanger driver written by Stefan Grefen
@@ -235,7 +235,19 @@ struct read_element_status_descriptor {
 	 */
 };
 
-/* XXX add data returned by REQUEST VOLUME ELEMENT ADDRESS */
+/*
+ * Volume Tag format:
+ *
+ * Volume Tags are a sequence of ASCII characters, unused portion is
+ * blank-filled.  There should be no blanks in the significant portion
+ * of the tag.  For maximum compatibility, volume tag characters should
+ * be limited to '0'..'9', 'A'..'Z', '_'.
+ */
+struct changer_volume_tag {
+	u_int8_t volid[32];	/* 32 bytes of ASCII, blank-terminated */
+	u_int8_t reserved[2];
+	u_int8_t volseq[2];	/* volume sequence number */
+};
 
 /* Element type codes */
 #define ELEMENT_TYPE_MASK	0x0f	/* Note: these aren't bits */
