@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.c,v 1.6 1994/12/10 12:06:56 jtc Exp $	*/
+/*	$NetBSD: strings.c,v 1.7 1995/02/15 15:49:19 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
 #endif
-static char rcsid[] = "$NetBSD: strings.c,v 1.6 1994/12/10 12:06:56 jtc Exp $";
+static char rcsid[] = "$NetBSD: strings.c,v 1.7 1995/02/15 15:49:19 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -153,12 +153,12 @@ main(argc, argv)
 
 	if (minlen == -1)
 		minlen = DEF_LEN;
-	else {
+	else if (minlen < 1) {
 		(void)fprintf(stderr, "strings: length less than 1\n");
 		exit (1);
 	}
 
-	if (!(bfr = malloc((u_int)minlen))) {
+	if (!(bfr = malloc(minlen))) {
 		(void)fprintf(stderr, "strings: %s\n", strerror(errno));
 		exit(1);
 	}
