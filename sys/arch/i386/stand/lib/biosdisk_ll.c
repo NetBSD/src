@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.14 2003/02/01 14:48:17 dsl Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.15 2003/02/07 00:46:08 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -71,6 +71,7 @@ int
 set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
 {
 	int diskinfo;
+	char buf[512];
 
 	diskinfo = get_diskinfo(d->dev);
 	d->sec = SPT(diskinfo);
@@ -90,7 +91,7 @@ set_geometry(struct biosdisk_ll *d, struct biosdisk_ext13info *ed)
 	 * read sector >= 18. If not, assume 1.44 floppy disk.
 	 */
 	if (d->dev == 0 && SPT(diskinfo) == 36) {
-		if (biosread(d->dev, 0, 0, 18, 1, alloc_diskbuf(0))) {
+		if (biosread(d->dev, 0, 0, 18, 1, buf)) {
 			d->sec = 18;
 			d->chs_sectors /= 2;
 		}			
