@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.17 1997/08/31 21:22:44 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.18 1997/09/01 00:16:31 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -42,12 +42,13 @@
 
 #include <machine/db_machdep.h>
 
+#include <ddb/db_access.h>
+
 #if defined(DDB)
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_extern.h>
-#include <ddb/db_access.h>
 #include <ddb/db_output.h>
 #endif
 
@@ -95,16 +96,18 @@ db_write_bytes(addr, size, data)
 
 }
 
+
+#if defined(DDB)
+
+/*
+ * Data and functions used by DDB only.
+ */
 void
 Debugger()
 {
 	asm("ta 0x81");
 }
 
-#if defined(DDB)
-/*
- * Data and functions used by DDB only.
- */
 static int nil;
 
 struct db_variable db_regs[] = {
