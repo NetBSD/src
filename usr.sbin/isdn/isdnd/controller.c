@@ -27,7 +27,7 @@
  *	i4b daemon - controller state support routines
  *	----------------------------------------------
  *
- *	$Id: controller.c,v 1.3 2002/03/27 13:46:34 martin Exp $
+ *	$Id: controller.c,v 1.4 2002/03/30 07:12:41 martin Exp $
  *
  * $FreeBSD$
  *
@@ -164,6 +164,22 @@ init_active_controller(void)
 #endif
 }	
 
+void
+init_single_controller_protocol ( struct isdn_ctrl_state *ctrl )
+{
+	msg_prot_ind_t mpi;
+
+	memset(&mpi, 0, sizeof mpi);
+	mpi.controller = ctrl->bri;
+	mpi.protocol = ctrl->protocol;
+	
+	if((ioctl(isdnfd, I4B_PROT_IND, &mpi)) < 0)
+	{
+		log(LL_ERR, "init_single_controller_protocol: ioctl I4B_PROT_IND failed: %s", strerror(errno));
+		do_exit(1);
+	}
+}
+
 /*--------------------------------------------------------------------------*
  *	init controller D-channel ISDN protocol
  *--------------------------------------------------------------------------*/
@@ -171,18 +187,9 @@ void
 init_controller_protocol(void)
 {
 	struct isdn_ctrl_state *ctrl;
-	msg_prot_ind_t mpi;
 
-	for (ctrl = get_first_ctrl_state(); ctrl; ctrl = NEXT_CTRL(ctrl)) {
-		mpi.controller = ctrl->bri;
-		mpi.protocol = ctrl->protocol;
-		
-		if((ioctl(isdnfd, I4B_PROT_IND, &mpi)) < 0)
-		{
-			log(LL_ERR, "init_controller_protocol: ioctl I4B_PROT_IND failed: %s", strerror(errno));
-			do_exit(1);
-		}
-	}
+	for (ctrl = get_first_ctrl_state(); ctrl; ctrl = NEXT_CTRL(ctrl))
+		init_single_controller_protocol(ctrl);
 }
 
 /*--------------------------------------------------------------------------*

@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.6 2002/03/27 13:46:35 martin Exp $ 
+ *	$Id: isdnd.h,v 1.7 2002/03/30 07:12:41 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -763,7 +763,7 @@ int exec_connect_prog ( struct cfg_entry *cep, const char *prog, int link_down )
 pid_t exec_prog ( char *prog, char **arglist );
 struct cfg_entry * find_by_device_for_dialout ( int drivertype, int driverunit );
 struct cfg_entry *find_by_device_for_dialoutnumber(int drivertype, int driverunit, int cmdlen, char *cmd);
-struct cfg_entry * find_matching_entry_incoming ( msg_connect_ind_t *mp );
+struct cfg_entry * find_matching_entry_incoming ( msg_connect_ind_t *mp, int len );
 struct cfg_entry * find_active_entry_by_driver ( int drivertype, int driverunit );
 void finish_log ( void );
 char * getlogdatetime ( void );
@@ -780,6 +780,7 @@ void if_down(struct cfg_entry *cep);
 void init_controller ( void );
 void init_new_controller(int bri);
 void init_controller_protocol ( void );
+void init_single_controller_protocol ( struct isdn_ctrl_state *ctrl );
 void init_log ( void );
 void init_screen ( void );
 void log ( int what, const char *fmt, ... );
@@ -788,7 +789,7 @@ void msg_accounting ( msg_accounting_ind_t *mp );
 void msg_alert_ind ( msg_alert_ind_t *mp );
 void msg_charging_ind ( msg_charging_ind_t *mp );
 void msg_connect_active_ind ( msg_connect_active_ind_t *mp );
-void msg_connect_ind ( msg_connect_ind_t *mp );
+void msg_connect_ind ( msg_connect_ind_t *mp, int len );
 void msg_pdeact_ind(msg_pdeact_ind_t *md);
 void msg_negcomplete_ind(msg_negcomplete_ind_t *ind);
 void msg_ifstatechg_ind(msg_ifstatechg_ind_t *ind);
