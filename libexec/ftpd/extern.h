@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.46 2003/02/19 23:12:20 matt Exp $	*/
+/*	$NetBSD: extern.h,v 1.47 2003/02/23 13:04:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -147,9 +147,6 @@ char   *getline(char *, int, FILE *);
 void	init_curclass(void);
 void	logxfer(const char *, off_t, const char *, const char *,
 	    const struct timeval *, const char *);
-#if 0
-void	logwtmp(const char *, const char *, const char *);
-#endif
 struct tab *lookup(struct tab *, const char *);
 void	makedir(const char *);
 void	mlsd(const char *);
@@ -183,6 +180,14 @@ void	store(const char *, const char *, int);
 void	user(const char *);
 char   *xstrdup(const char *);
 void	yyerror(char *);
+
+#ifdef SUPPORT_UTMP
+struct utmp;
+
+void	ftpd_logwtmp(const char *, const char *, const char *);
+void	ftpd_login(const struct utmp *ut);
+int	ftpd_logout(const char *line);
+#endif
 
 #include <netinet/in.h>
 
