@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.3 1999/04/25 01:20:02 thorpej Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.4 1999/09/22 03:32:00 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -242,6 +242,7 @@ pcscp_attach(parent, self, aux)
 	sc->sc_cfg3 = NCRAMDCFG3_IDM | NCRAMDCFG3_FCLK;
 	sc->sc_rev = NCR_VARIANT_AM53C974;
 	sc->sc_features = NCR_F_FASTSCSI;
+	sc->sc_cfg3_fscsi = NCRAMDCFG3_FSCSI;
 	sc->sc_freq = 40; /* MHz */
 
 	/*
