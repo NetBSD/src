@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.25 2003/06/29 22:30:25 fvdl Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.26 2003/09/29 14:10:35 scw Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.25 2003/06/29 22:30:25 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.26 2003/09/29 14:10:35 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ struct wi_pci_softc {
 
 	/* PCI-specific goo */
 	pci_intr_handle_t psc_ih;	
-	struct pci_attach_args *psc_pa;  
+	pci_chipset_tag_t psc_pc;
 
 	void *sc_powerhook;		/* power hook descriptor */
 };
@@ -137,7 +137,7 @@ wi_pci_enable(sc)
 	struct wi_pci_softc *psc = (struct wi_pci_softc *)sc;
 
 	/* establish the interrupt. */
-	sc->sc_ih = pci_intr_establish(psc->psc_pa->pa_pc, 
+	sc->sc_ih = pci_intr_establish(psc->psc_pc, 
 					psc->psc_ih, IPL_NET, wi_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
@@ -157,7 +157,7 @@ wi_pci_disable(sc)
 {
 	struct wi_pci_softc *psc = (struct wi_pci_softc *)sc;
 
-	pci_intr_disestablish(psc->psc_pa->pa_pc, sc->sc_ih);
+	pci_intr_disestablish(psc->psc_pc, sc->sc_ih);
 }
 
 static void
@@ -236,7 +236,7 @@ wi_pci_attach(parent, self, aux)
 	bus_space_tag_t memt, iot, plxt;
 	bus_space_handle_t memh, ioh, plxh;
 
-	psc->psc_pa = pa;
+	psc->psc_pc = pc;
 
 	wpp = wi_pci_lookup(pa);
 #ifdef DIAGNOSTIC
