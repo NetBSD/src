@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.26 1995/12/11 12:45:18 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.27 1996/02/06 22:59:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -559,7 +559,16 @@ clockintr(cap)
 	void *cap;
 {
 	volatile register int discard;
+	int s;
 	extern int rom_console_input;
+
+	/*
+	 * Protect the clearing of the clock interrupt.  If we don't
+	 * do this, and we're interrupted (by the zs, for example),
+	 * the clock stops!
+	 * XXX WHY DOES THIS HAPPEN?
+	 */
+	s = splhigh();
 
 #if defined(SUN4)
 	if (oldclk) {
@@ -572,6 +581,8 @@ clockintr(cap)
 	/* read the limit register to clear the interrupt */
 	discard = TIMERREG->t_c10.t_limit;
 forward:
+	splx(s);
+
 	hardclock((struct clockframe *)cap);
 	if (rom_console_input && cnrom())
 		setsoftint();
