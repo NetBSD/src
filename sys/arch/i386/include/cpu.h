@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57 1999/11/06 01:14:00 enami Exp $	*/
+/*	$NetBSD: cpu.h,v 1.58 1999/12/21 12:34:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -188,6 +188,10 @@ void	vm86_gpfault __P((struct proc *, int));
 
 /* trap.c */
 void	child_return __P((void *));
+
+/* consinit.c */
+void consinit __P((void));
+void kgdb_port_init __P((void));
 
 #endif /* _KERNEL */
 
