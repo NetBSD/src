@@ -1,6 +1,7 @@
-/* $NetBSD: vidcconsole.c,v 1.2 1996/02/05 16:49:08 mark Exp $ */
+/* $NetBSD: vidcconsole.c,v 1.3 1996/02/07 19:11:02 mark Exp $ */
 
 /*
+ * Copyright (c) 1996 Robert Black
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
  * Copyright (c) 1994-1995 RiscBSD kernel team
  * All rights reserved.
@@ -39,9 +40,9 @@
  * Console assembly functions
  *
  * Created      : 17/09/94
- * Last updated : 15/11/95
+ * Last updated : 07/02/96
  *
- *    $Id: vidcconsole.c,v 1.2 1996/02/05 16:49:08 mark Exp $
+ *    $Id: vidcconsole.c,v 1.3 1996/02/07 19:11:02 mark Exp $
  */
 
 /* woo */
@@ -291,6 +292,15 @@ vidcconsole_coldinit(vc)
 
 struct vidc_mode newmode;
 
+static const int bpp_mask_table[] = {
+    0,  /* 1bpp */
+    1,  /* 2bpp */
+    2,  /* 4bpp */
+    3,  /* 8bpp */
+    4,  /* 16bpp */
+    6   /* 32bpp */
+};
+
 void
 vidcconsole_mode(vc, mode)
 	struct vconsole *vc;
@@ -298,6 +308,26 @@ vidcconsole_mode(vc, mode)
 {    
     register int acc;
     int best_r, best_v, best_match;
+    int bpp_mask;
+
+/*
+ * Find out what bit mask we need to or with the vidc20 control register
+ * in order to generate the desired number of bits per pixel.
+ * log_bpp is log base 2 of the number of bits per pixel.
+ */
+    {
+        int log_bpp;
+        int tmp_bpp;
+
+        tmp_bpp = mode->bitsperpixel;
+        if (tmp_bpp < 1 || tmp_bpp > 32)
+            tmp_bpp = 8; /* Set 8 bpp if we get asked for something silly */
+
+        for (log_bpp = 0; tmp_bpp != 1; tmp_bpp >>= 1)
+            log_bpp++;
+
+        bpp_mask = bpp_mask_table[log_bpp];
+    }
 
 /*
     printf ( "res = (%d, %d) rate = %d\n", mode->hder, mode->vder, mode->pixel_rate );
@@ -388,13 +418,13 @@ if ( vc==vconsole_current )
     if ( dispsize>1024*1024 )
     {
 	if ( vidc_currentmode->hder>=800 )
-    	    vidc_write ( VIDC_CONREG, 7<<8 | 3<<5);
+    	    vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
 	else
-    	    vidc_write ( VIDC_CONREG, 6<<8 | 3<<5);
+    	    vidc_write ( VIDC_CONREG, 6<<8 | bpp_mask<<5);
     }
     else
     {
-    	    vidc_write ( VIDC_CONREG, 7<<8 | 3<<5);
+    	    vidc_write ( VIDC_CONREG, 7<<8 | bpp_mask<<5);
     }
 }
 
@@ -1431,6 +1461,7 @@ int vidcconsole_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 	{
 		case CONSOLE_MODE:
     			tp = find_tp(dev);
+			printf ( "mode ioctl called\n" );
 			vidcconsole_mode ( vc, (struct vidc_mode *)data );
     			vc->MODECHANGE ( vc );
 			ws.ws_row=vc->ychars;
