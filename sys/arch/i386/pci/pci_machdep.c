@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.29 1998/04/26 22:37:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -113,7 +113,6 @@ int pci_mode = -1;
  * of these functions.
  */
 struct i386_bus_dma_tag pci_bus_dma_tag = {
-	NULL,			/* _cookie */
 	_bus_dmamap_create, 
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,
