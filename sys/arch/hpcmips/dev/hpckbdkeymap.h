@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.2 2000/09/27 09:30:47 sato Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.3 2000/10/01 03:45:33 takemura Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -28,6 +28,9 @@
 #define UNK	255	/* unknown */
 #define IGN	254	/* ignore */
 #define SPL	253	/* special key */
+#define KC(n)	KS_KEYCODE(n)
+#define CMDMAP(map)	{ map, (sizeof(map)/sizeof(keysym_t)) }
+#define NULLCMDMAP	{ NULL, 0 }
 
 #define KEY_SPECIAL_OFF		0
 #define KEY_SPECIAL_LIGHT	1
@@ -157,7 +160,7 @@ static u_int8_t mcr_jp_keytrans[] = {
 /*28	xfer	;	9	n	5	f	2	k	*/
 /*30	up	[	8	j	4	d	6	-	*/
 /*38	-	@	7	h	3	]	s	-	*/
-/*40	caps	-	-	-	bs	-	f8	f3	*/
+/*40	caps	-	-	-	bs	fnc	f8	f3	*/
 /*48	-	alt	-	-	|	k/h	f7	f4	*/
 /*50	-	-	ctrl	-	f10	pgup	f6	f2	*/
 /*58	-	-	-	shift	del	f9	f5	esc	*/
@@ -170,10 +173,20 @@ static u_int8_t mcr_jp_keytrans[] = {
 /*28*/	121,	 39,	 10,	 49,	  6,	 33,	  3,	 37,
 /*30*/	 72,	 27,	  9,	 36,	  5,	 32,	  7,	IGN,
 /*38*/	 12,	 26,	  8,	 35,	  4,	 43,	 31,	IGN,
-/*40*/	 58,	IGN,	IGN,	IGN,	 14,	IGN,	 66,	 61,
+/*40*/	 58,	IGN,	IGN,	IGN,	 14,	184,	 66,	 61,
 /*48*/	IGN,	 56,	IGN,	IGN,	125,	112,	 65,	 62,
 /*50*/	IGN,	IGN,	 29,	IGN,	 68,	 73,	 64,	 60,
 /*58*/	IGN,	IGN,	IGN,	 42,	 14,	 67,	 63,	  1,
+};
+
+static const keysym_t mcr_jp_cmdmap[] = {
+/*	pos      command		normal		shifted		*/
+	KC(184), KS_Cmd,		KS_Alt_R,	KS_Multi_key,
+	KC(73),  KS_Cmd_BrightnessUp,	KS_KP_Prior,	KS_KP_9,
+	KC(81),  KS_Cmd_BrightnessDown,	KS_KP_Next,	KS_KP_3,
+	KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
+	KC(52),  KS_Cmd_ContrastUp,	KS_period,	KS_greater,
+	KC(57),  KS_Cmd_BacklightToggle,KS_space,
 };
 
 /* IBM WorkPad z50 */
@@ -261,6 +274,13 @@ static u_int8_t mccs_keytrans[] = {
 /*48*/	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,
 /*50*/	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,
 /*58*/	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,	IGN,
+};
+
+static const keysym_t mccs_cmdmap[] = {
+/*	pos      command		normal		shifted		*/
+	KC(51),  KS_Cmd_ContrastDown,	KS_comma,	KS_less,
+	KC(52),  KS_Cmd_ContrastUp,	KS_period,	KS_greater,
+	KC(57),  KS_Cmd_BacklightToggle,KS_space,
 };
 
 static u_int8_t mobilepro_keytrans[] = {
@@ -382,75 +402,96 @@ const struct hpckbd_keymap_table {
 	platid_t	*ht_platform;
 	const u_int8_t	*ht_keymap;
 	const int	*ht_special;
+	struct {
+		const keysym_t	*map;
+		int size;
+	} ht_cmdmap;
 	kbd_t		ht_layout;
 } hpckbd_keymap_table[] = {
 	{	&platid_mask_MACH_COMPAQ_C,
 		tc5165_compaq_c_jp_keymap, 
 		tc5165_compaq_c_jp_special_keymap,
+		NULLCMDMAP,
 		KB_JP },
 	{	&platid_mask_MACH_VICTOR_INTERLINK,
 		m38813c_keymap, 
 		default_special_keymap,
+		NULLCMDMAP,
 		KB_JP },
 	{	&platid_mask_MACH_SHARP_TELIOS,
 		tc5165_telios_jp_keymap, 
 		default_special_keymap,
+		NULLCMDMAP,
 		KB_JP },
 	{	&platid_mask_MACH_SHARP_MOBILON,
 		tc5165_mobilon_keymap, 
 		tc5165_mobilon_special_keymap,
+		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_500A,
 		mobilepro750c_keytrans,
 		NULL,
+		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_520A,
 		mobilepro_keytrans,
 		NULL,
+		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_530A,
 		mobilepro_keytrans,
 		NULL,
+		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_700A,
 		mobilepro_keytrans, 
 		NULL,
+		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_730A,
 		mobilepro_keytrans,
 		NULL,
+		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_MPRO700,
 		mobilepro_keytrans,
 		NULL,
+		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCR_SIGMARION,
 		sigmarion_jp_keytrans,
 		NULL,
+		CMDMAP(mcr_jp_cmdmap),
 		KB_JP },
 	{	&platid_mask_MACH_NEC_MCR,
 		mcr_jp_keytrans,
 		NULL,
+		CMDMAP(mcr_jp_cmdmap),
 		KB_JP },
 	{	&platid_mask_MACH_IBM_WORKPAD_Z50,
 		z50_keytrans,
 		NULL,
+		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_SHARP_TRIPAD,
 		tripad_keytrans,
 		NULL,
+		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_VADEM_CLIO_C,
 		tripad_keytrans,
 		NULL,
+		NULLCMDMAP,
 		KB_US },
 	{	&platid_mask_MACH_NEC_MCCS,
 		mccs_keytrans,
 		NULL,
+		CMDMAP(mccs_cmdmap),
 		KB_JP },
 	{	&platid_mask_MACH_FUJITSU_INTERTOP,
 		intertop_keytrans,
 		NULL,
+		NULLCMDMAP,
 		KB_JP },
 	{ NULL } /* end mark */
 };

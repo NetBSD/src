@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.9 2000/07/02 10:01:31 takemura Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.10 2000/10/01 03:45:33 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -124,7 +124,7 @@ static const struct {
 	[CONFIG_HOOK_BUTTONEVENT_DOWN] =	{ 1,  80, "Down"	},
 	[CONFIG_HOOK_BUTTONEVENT_REC] =		{ 0,   0, "Rec"		},
 	[CONFIG_HOOK_BUTTONEVENT_COVER] =	{ 0,   0, "Cover"	},
-	[CONFIG_HOOK_BUTTONEVENT_LIGHT] =	{ 0,   0, "Light"	},
+	[CONFIG_HOOK_BUTTONEVENT_LIGHT] =	{ 1,  57, "Light"	},
 	[CONFIG_HOOK_BUTTONEVENT_CONTRAST] =	{ 0,   0, "Contrast"	},
 	[CONFIG_HOOK_BUTTONEVENT_APP0] =	{ 1,  67, "Application 0" },
 	[CONFIG_HOOK_BUTTONEVENT_APP1] =	{ 1,  68, "Application 1" },
@@ -136,9 +136,10 @@ static const int n_button_config =
 
 #define KC(n) KS_KEYCODE(n)
 static const keysym_t btnmgr_keydesc_default[] = {
-/*  pos      normal		shifted		altgr		shift-altgr */
+/*  pos				normal			shifted		*/
     KC(1), 			KS_Escape,
     KC(28), 			KS_Return,
+    KC(57),	KS_Cmd,		KS_Cmd_BacklightToggle,
     KC(67), 			KS_f9,
     KC(68), 			KS_f10,
     KC(72), 			KS_KP_Up,
