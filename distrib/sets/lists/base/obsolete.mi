@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.22 2001/03/31 09:35:35 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.23 2001/03/31 11:43:22 aymeric Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -45,6 +45,7 @@
 /usr/sbin/xntpdc
 /usr/share/doc/smm/01.setup/tahoe
 /usr/share/doc/smm/01.setup/vax
+/usr/share/doc/usd/13.ex
 /usr/share/games/ching
 /usr/share/locale/en_US.UTF-2
 /usr/share/locale/en_US.UTF-2/LC_CTYPE
