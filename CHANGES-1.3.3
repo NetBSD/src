@@ -323,9 +323,6 @@ distrib/sets/lists/man/md.sparc			patch
   Build and install fdformat manual pages on all ports, so
   the manual pages really can be shared.  (jonathan)
 
-distrib/notes/pmax/install			patch
-
-  Fix various small typos.  (simonb)
 
 sys/arch/pmax/dev/dtop.c			1.34
 
@@ -1191,14 +1188,14 @@ distrib/notes/pmax/QUICK.INSTALL		1.1-1.2 (new)
 
 distrib/notes/pmax/install			patch
 
-  Mention that Ultrix doesn't have Rock Ridge extenstions so some paths
-  on a CD-ROM will be truncated/mangled.  (PR#6296)  Warn that messages
-  about "using ULTRIX label information" may appear when disklabeling
-  old Ultrix disks.  (PR#6300)  Reference the section on dd'ing a disk
-  image into the swap partition of an Ultrix disk in the "QUICK.INSTALL"
-  notes.  (PR#6299)  Mention that it may be necessary to hand-mount a CD
-  on /mnt2 before starting sysinst.  (Partial fix for PR#6307)
-  Specifically mention that NetBSD/pmax uses rzX devices for CD-ROMs and
-  not cdX like other NetBSD ports, and redo the special CD-ROM
-  installation instructions.  Describe the process of updating the
-  RTC.  (simonb)
+  Fix various typos.  Mention that Ultrix doesn't have Rock Ridge
+  extenstions so some paths on a CD-ROM will be truncated/mangled.
+  (PR#6296)  Warn that messages about "using ULTRIX label information"
+  may appear when disklabeling old Ultrix disks.  (PR#6300)  Reference
+  the section on dd'ing a disk image into the swap partition of an Ultrix
+  disk in the "QUICK.INSTALL" notes.  (PR#6299)  Mention that it may be
+  necessary to hand-mount a CD on /mnt2 before starting sysinst.
+  (Partial fix for PR#6307)  Specifically mention that NetBSD/pmax uses
+  rzX devices for CD-ROMs and not cdX like other NetBSD ports, and redo
+  the special CD-ROM installation instructions.  Describe the process of
+  updating the RTC.  (simonb)
