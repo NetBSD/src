@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)ungetc.c	5.6 (Berkeley) 5/4/91";
+static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -74,7 +74,8 @@ __submore(fp)
 	p = realloc(fp->_ub._base, i << 1);
 	if (p == NULL)
 		return (EOF);
-	(void) bcopy((void *)p, (void *)(p + i), (size_t)i);
+	/* no overlap (hence can use memcpy) because we doubled the size */
+	(void)memcpy((void *)(p + i), (void *)p, (size_t)i);
 	fp->_p = p + i;
 	fp->_ub._base = p;
 	fp->_ub._size = i << 1;
@@ -118,6 +119,7 @@ ungetc(c, fp)
 		fp->_r++;
 		return (c);
 	}
+	fp->_flags &= ~__SEOF;
 
 	/*
 	 * If we can handle this by simply backing up, do so,
