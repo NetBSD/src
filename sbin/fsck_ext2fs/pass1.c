@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.13 2005/01/19 19:31:28 xtraeme Exp $	*/
+/*	$NetBSD: pass1.c,v 1.14 2005/02/09 22:55:45 ws Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.13 2005/01/19 19:31:28 xtraeme Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.14 2005/02/09 22:55:45 ws Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,9 +169,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	mode = fs2h16(dp->e2di_mode) & IFMT;
 	if (mode == 0 || (dp->e2di_dtime != 0 && dp->e2di_nlink == 0)) {
 		if (mode == 0 && (
-			memcmp(dp->e2di_blocks, zino.e2di_blocks,
-			(NDADDR + NIADDR) * sizeof(u_int32_t)) ||
-		    dp->e2di_mode || dp->e2di_size)) {
+		    memcmp(dp->e2di_blocks, zino.e2di_blocks,
+		    (NDADDR + NIADDR) * sizeof(u_int32_t)) ||
+		    dp->e2di_mode || inosize(dp))) {
 			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
 			if (reply("CLEAR") == 1) {
 				dp = ginode(inumber);
@@ -211,24 +211,22 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			inodirty();
 		}
 	}
-	if (/* dp->di_size < 0 || */
-	    fs2h32(dp->e2di_size) + sblock.e2fs_bsize - 1 <
-		fs2h32(dp->e2di_size)) {
+	if (inosize(dp) + sblock.e2fs_bsize - 1 < inosize(dp)) {
 		if (debug)
-			printf("bad size %lu:", (u_long)fs2h32(dp->e2di_size));
+			printf("bad size %llu:", (unsigned long long)inosize(dp));
 		goto unknown;
 	}
 	if (!preen && mode == IFMT && reply("HOLD BAD BLOCK") == 1) {
 		dp = ginode(inumber);
-		dp->e2di_size = h2fs32(sblock.e2fs_bsize);
 		dp->e2di_mode = h2fs16(IFREG|0600);
+		inossize(dp, sblock.e2fs_bsize);
 		inodirty();
 	}
-	ndb = howmany(fs2h32(dp->e2di_size), sblock.e2fs_bsize);
+	ndb = howmany(inosize(dp), sblock.e2fs_bsize);
 	if (ndb < 0) {
 		if (debug)
-			printf("bad size %lu ndb %d:",
-			    (u_long)fs2h32(dp->e2di_size), ndb);
+			printf("bad size %llu ndb %d:",
+			    (unsigned long long)inosize(dp), ndb);
 		goto unknown;
 	}
 	if (mode == IFBLK || mode == IFCHR)
@@ -238,9 +236,9 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		 * Fake ndb value so direct/indirect block checks below
 		 * will detect any garbage after symlink string.
 		 */
-		if (fs2h32(dp->e2di_size) < EXT2_MAXSYMLINKLEN ||
+		if (inosize(dp) < EXT2_MAXSYMLINKLEN ||
 		    (EXT2_MAXSYMLINKLEN == 0 && dp->e2di_blocks == 0)) {
-			ndb = howmany(fs2h32(dp->e2di_size), sizeof(u_int32_t));
+			ndb = howmany(inosize(dp), sizeof(u_int32_t));
 			if (ndb > NDADDR) {
 				j = ndb - NDADDR;
 				for (ndb = 1; j > 1; j--)
@@ -286,7 +284,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		}
 	}
 	if (mode == IFDIR) {
-		if (dp->e2di_size == 0)
+		if (inosize(dp) == 0)
 			statemap[inumber] = DCLEAR;
 		else
 			statemap[inumber] = DSTATE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.12 2005/01/19 19:31:28 xtraeme Exp $	*/
+/*	$NetBSD: dir.c,v 1.13 2005/02/09 22:55:45 ws Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.12 2005/01/19 19:31:28 xtraeme Exp $");
+__RCSID("$NetBSD: dir.c,v 1.13 2005/02/09 22:55:45 ws Exp $");
 #endif
 #endif /* not lint */
 
@@ -399,7 +399,7 @@ linkup(ino_t orphan, ino_t parentdir)
 	lostdir = (fs2h16(dp->e2di_mode) & IFMT) == IFDIR;
 	pwarn("UNREF %s ", lostdir ? "DIR" : "FILE");
 	pinode(orphan);
-	if (preen && fs2h32(dp->e2di_size) == 0)
+	if (preen && inosize(dp) == 0)
 		return (0);
 	if (preen)
 		printf(" (RECONNECTED)\n");
@@ -527,9 +527,8 @@ makeentry(ino_t parent, ino_t ino, char *name)
 	idesc.id_fix = DONTKNOW;
 	idesc.id_name = name;
 	dp = ginode(parent);
-	if (fs2h32(dp->e2di_size) % sblock.e2fs_bsize) {
-		dp->e2di_size =
-			h2fs32(roundup(fs2h32(dp->e2di_size), sblock.e2fs_bsize));
+	if (inosize(dp) % sblock.e2fs_bsize) {
+		inossize(dp, roundup(inosize(dp), sblock.e2fs_bsize));
 		inodirty();
 	}
 	if ((ckinode(dp, &idesc) & ALTERED) != 0)
@@ -556,15 +555,15 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 		exit(8);
 	}
 
-	lastbn = lblkno(&sblock, fs2h32(dp->e2di_size));
+	lastbn = lblkno(&sblock, inosize(dp));
 	if (lastbn >= NDADDR - 1 || fs2h32(dp->e2di_blocks[lastbn]) == 0 ||
-		fs2h32(dp->e2di_size) == 0)
+		inosize(dp) == 0)
 		return (0);
 	if ((newblk = allocblk()) == 0)
 		return (0);
 	dp->e2di_blocks[lastbn + 1] = dp->e2di_blocks[lastbn];
 	dp->e2di_blocks[lastbn] = h2fs32(newblk);
-	dp->e2di_size = h2fs32(fs2h32(dp->e2di_size) + sblock.e2fs_bsize);
+	inossize(dp, inosize(dp) + sblock.e2fs_bsize);
 	dp->e2di_nblock = h2fs32(fs2h32(dp->e2di_nblock) + 1);
 	bp = getdirblk(fs2h32(dp->e2di_blocks[lastbn + 1]),
 		sblock.e2fs_bsize);
@@ -593,7 +592,7 @@ expanddir(struct ext2fs_dinode *dp, char *name)
 bad:
 	dp->e2di_blocks[lastbn] = dp->e2di_blocks[lastbn + 1];
 	dp->e2di_blocks[lastbn + 1] = 0;
-	dp->e2di_size = h2fs32(fs2h32(dp->e2di_size) - sblock.e2fs_bsize);
+	inossize(dp, inosize(dp) - sblock.e2fs_bsize);
 	dp->e2di_nblock = h2fs32(fs2h32(dp->e2di_nblock) - 1);
 	freeblk(newblk);
 	return (0);

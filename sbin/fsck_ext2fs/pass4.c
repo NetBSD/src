@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.6 2005/01/19 19:31:28 xtraeme Exp $	*/
+/*	$NetBSD: pass4.c,v 1.7 2005/02/09 22:55:45 ws Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.6 2005/01/19 19:31:28 xtraeme Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.7 2005/02/09 22:55:45 ws Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ pass4(void)
 
 		case DCLEAR:
 			dp = ginode(inumber);
-			if (dp->e2di_size == 0) {
+			if (inosize(dp) == 0) {
 				clri(&idesc, "ZERO LENGTH", 1);
 				break;
 			}
