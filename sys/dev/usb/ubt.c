@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.7 2003/01/20 21:14:57 augustss Exp $	*/
+/*	$NetBSD: ubt.c,v 1.8 2004/01/01 16:10:13 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.7 2003/01/20 21:14:57 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.8 2004/01/01 16:10:13 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,6 +247,7 @@ USB_ATTACH(ubt)
 
 	bt.bt_methods = &ubt_methods;
 	bt.bt_cb = &sc->sc_cb;
+	bt.bt_handle = sc;
 
 	sc->sc_child = config_found(self, &bt, bt_print);
 
