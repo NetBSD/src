@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.7 2001/06/15 08:09:33 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.8 2001/06/17 13:39:02 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -602,8 +602,8 @@ s_trap:
 trapagain:
 	addi	3,1,8
 	bl	_C_LABEL(trap)
-	.globl	trapexit
-trapexit:
+	.globl	_C_LABEL(trapexit)
+_C_LABEL(trapexit):
 /* Disable interrupts: */
 	mfmsr	3
 	andi.	3,3,~PSL_EE@l
