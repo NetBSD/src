@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.28 1996/10/13 02:32:43 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.29 1998/05/07 18:00:49 kleink Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -547,7 +547,7 @@ sys_semop(p, v, retval)
 	register struct sys_semop_args /* {
 		syscallarg(int) semid;
 		syscallarg(struct sembuf *) sops;
-		syscallarg(u_int) nsops;
+		syscallarg(size_t) nsops;
 	} */ *uap = v;
 	int semid = SCARG(uap, semid);
 	int nsops = SCARG(uap, nsops);
