@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.13 2003/08/07 09:36:50 agc Exp $	*/
+/*	$NetBSD: io.c,v 1.14 2003/09/19 10:01:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.13 2003/08/07 09:36:50 agc Exp $");
+__RCSID("$NetBSD: io.c,v 1.14 2003/09/19 10:01:21 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -313,7 +313,7 @@ rdesc(sect)			/* read description-format msgs */
 				cval[clsses++] = oldloc;
 				break;
 			case 12:	/* magic messages               */
-				if (oldloc > MAGSIZ)
+				if (oldloc >= MAGSIZ)
 					errx(1,"Too many magic msgs");
 				mtext[oldloc].seekadr = seekhere;
 				mtext[oldloc].txtlen = maystart - seekstart;
