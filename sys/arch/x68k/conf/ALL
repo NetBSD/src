@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.10 1997/01/31 02:14:19 thorpej Exp $
+#	$NetBSD: ALL,v 1.11 1997/02/04 10:35:39 oki Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -77,6 +77,7 @@ options 	NS			# XNS
 #options 	EON			# OSI tunneling over IP
 options 	MULTICAST		# multicast
 options 	TUN			# tunnelling
+options 	PFIL_HOOKS		# packet filter hooks
 
 # Options specific to this host.
 #options 	INSECURE		# Disable kernel security.
@@ -89,7 +90,7 @@ options 	ITEKANJI		# Kanji display for console
 options 	PANICBUTTON		# enable interrupt switch
 options 	JUPITER			# support for "JUPITER-X"
 options 	EIOMAPSIZE=0		# do not map PCI address space
-#options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
+options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
 #options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 #options 	KGDB			# support for kernel gdb
 #options 	KGDBRATE=19200		# kernel gdb port rate (default 9600)
