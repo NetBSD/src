@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.97 1996/09/07 22:26:41 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.98 1996/10/10 23:51:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -188,10 +188,10 @@ trap(frame)
 
 #ifdef DEBUG
 	if (trapdebug) {
-		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
+		kprintf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
 		    frame.tf_eflags, rcr2(), cpl);
-		printf("curproc %p\n", curproc);
+		kprintf("curproc %p\n", curproc);
 	}
 #endif
 
@@ -200,6 +200,8 @@ trap(frame)
 		sticks = p->p_sticks;
 		p->p_md.md_regs = &frame;
 	}
+	else
+		sticks = 0;
 
 	switch (type) {
 
@@ -210,11 +212,11 @@ trap(frame)
 			return;
 #endif
 		if (frame.tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame.tf_trapno]);
+			kprintf("fatal %s", trap_type[frame.tf_trapno]);
 		else
-			printf("unknown trap %d", frame.tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
+			kprintf("unknown trap %d", frame.tf_trapno);
+		kprintf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
+		kprintf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    type, frame.tf_err, frame.tf_eip, frame.tf_cs, frame.tf_eflags, rcr2(), cpl);
 
 		panic("trap");
@@ -305,7 +307,7 @@ trap(frame)
 		trapsignal(p, rv, type &~ T_USER);
 		goto out;
 #else
-		printf("pid %d killed due to lack of floating point\n",
+		kprintf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
 		trapsignal(p, SIGKILL, type &~ T_USER);
 		goto out;
@@ -368,7 +370,7 @@ trap(frame)
 
 #ifdef DIAGNOSTIC
 		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %lx\n", va);
+			kprintf("trap: bad kernel access at %lx\n", va);
 			goto we_re_toast;
 		}
 #endif
@@ -414,7 +416,7 @@ trap(frame)
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0)
 				goto copyfault;
-			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
+			kprintf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
@@ -443,7 +445,7 @@ trap(frame)
 	case T_NMI|T_USER:
 #ifdef DDB
 		/* NMI can be hooked up to a pushbutton for debugging */
-		printf ("NMI ... going to debugger\n");
+		kprintf ("NMI ... going to debugger\n");
 		if (kdb_trap (type, 0, &frame))
 			return;
 #endif
