@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.hp300,v 1.9 1993/10/13 08:29:45 cgd Exp $
+#	$Id: Makefile.hp300,v 1.10 1994/01/06 17:29:59 mycroft Exp $
 #
 # Makefile for 4.4 BSD
 #
@@ -78,7 +78,7 @@ SYSTEM_OBJ=	locore.o ${OBJS} param.o ioconf.o ${LIBKERN}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
 SYSTEM_LD=	@strip=-x; [ X${DEBUG} = X-g ] && strip=-X || true; \
-		${LD} -T ${LOAD_ADDRESS} -n -o $@ -e start ${SYSTEM_OBJ} vers.o
+		${LD} $$strip -n -o $@ -e start ${SYSTEM_OBJ} vers.o
 #SYSTEM_LD_TAIL= @echo rearranging symbols;\
 #		symorder symbols.sort $@;\
 SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
