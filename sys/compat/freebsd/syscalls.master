@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.25 1999/08/25 04:48:21 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.26 2000/04/21 16:18:16 minoura Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -493,7 +493,7 @@
 250	UNIMPL		minherit
 251	UNIMPL		rfork
 252	UNIMPL		openbsd_poll
-253	STD		{ int freebsd_sys_issetugid(void); }
+253	NOARGS		{ int sys_issetugid(void); }
 254	STD		{ int freebsd_sys_lchown(const char *path, int uid, \
 			    int gid); }
 255	UNIMPL
