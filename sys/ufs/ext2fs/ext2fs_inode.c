@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.11 1999/03/05 20:47:07 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.12 1999/03/05 21:09:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -101,10 +101,8 @@ ext2fs_inactive(v)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		VOP_VFREE(vp, ip->i_number, ip->i_e2fs_mode);
 	}
-	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) {
-		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		VOP_UPDATE(vp, &ts, &ts, 0);
-	}
+	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE))
+		VOP_UPDATE(vp, NULL, NULL, 0);
 out:
 	VOP_UNLOCK(vp, 0);
 	/*
@@ -200,7 +198,6 @@ ext2fs_truncate(v)
 	struct buf *bp;
 	int offset, size, level;
 	long count, nblocks, vflags, blocksreleased = 0;
-	struct timespec ts;
 	register int i;
 	int aflags, error, allerror;
 	off_t osize;
@@ -209,7 +206,6 @@ ext2fs_truncate(v)
 		return (EINVAL);
 
 	oip = VTOI(ovp);
-	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if (ovp->v_type == VLNK &&
 		(oip->i_e2fs_size < ovp->v_mount->mnt_maxsymlinklen ||
 		 (ovp->v_mount->mnt_maxsymlinklen == 0 &&
@@ -222,11 +218,11 @@ ext2fs_truncate(v)
 			(u_int)oip->i_e2fs_size);
 		oip->i_e2fs_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &ts, &ts, 1));
+		return (VOP_UPDATE(ovp, NULL, NULL, 1));
 	}
 	if (oip->i_e2fs_size == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &ts, &ts, 0));
+		return (VOP_UPDATE(ovp, NULL, NULL, 0));
 	}
 	fs = oip->i_e2fs;
 	osize = oip->i_e2fs_size;
@@ -262,7 +258,7 @@ ext2fs_truncate(v)
 		else
 			bawrite(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &ts, &ts, 1));
+		return (VOP_UPDATE(ovp, NULL, NULL, 1));
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -327,7 +323,7 @@ ext2fs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_e2fs_blocks[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = VOP_UPDATE(ovp, &ts, &ts, 1)) != 0)
+	if ((error = VOP_UPDATE(ovp, NULL, NULL, 1)) != 0)
 		allerror = error;
 	/*
 	 * Having written the new inode to disk, save its new configuration
