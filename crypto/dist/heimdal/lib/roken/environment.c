@@ -35,7 +35,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: environment.c,v 1.1 2000/06/21 02:05:03 assar Exp $"
-        "$NetBSD: environment.c,v 1.1.1.2 2002/09/12 12:41:41 joda Exp $");
+        "$NetBSD: environment.c,v 1.2 2002/09/12 13:19:20 joda Exp $");
 #endif
 
 #include <stdio.h>

@@ -44,7 +44,7 @@ static const char rcsid[] =
 #include "rcp_locl.h"
 
 __RCSID("$Heimdal: util.c,v 1.6 2001/09/04 14:35:58 assar Exp $"
-        "$NetBSD: util.c,v 1.1.1.2 2002/09/12 12:41:33 joda Exp $");
+        "$NetBSD: util.c,v 1.2 2002/09/12 13:18:54 joda Exp $");
 
 char *
 colon(cp)

@@ -34,7 +34,8 @@
 #include "otp_locl.h"
 #include <getarg.h>
 
-RCSID("$Id: otp.c,v 1.2 2002/07/20 08:36:20 grant Exp $");
+__RCSID("$Heimdal: otp.c,v 1.33 2001/02/20 01:44:46 assar Exp $"
+        "$NetBSD: otp.c,v 1.3 2002/09/12 13:18:53 joda Exp $");
 
 static int listp;
 static int deletep;

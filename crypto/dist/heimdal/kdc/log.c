@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997, 1998, 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,18 +32,17 @@
  */
 
 #include "kdc_locl.h"
-RCSID("$Id: log.c,v 1.2 2000/09/10 19:29:44 joda Exp $");
+__RCSID("$Heimdal: log.c,v 1.14 2002/08/19 12:17:49 joda Exp $"
+        "$NetBSD: log.c,v 1.3 2002/09/12 13:19:02 joda Exp $");
 
 static krb5_log_facility *logf;
 
 void
-kdc_openlog(krb5_config_section *cf)
+kdc_openlog(void)
 {
     char **s = NULL, **p;
     krb5_initlog(context, "kdc", &logf);
-    if(cf)
-	s = krb5_config_get_strings(context, cf, "kdc", "logging", NULL);
-
+    s = krb5_config_get_strings(context, NULL, "kdc", "logging", NULL);
     if(s == NULL)
 	s = krb5_config_get_strings(context, NULL, "logging", "kdc", NULL);
     if(s){

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -36,7 +36,8 @@
 #define O_BINARY 0
 #endif
 
-RCSID("$Id: mkey.c,v 1.3 2001/09/17 12:32:38 assar Exp $");
+__RCSID("$Heimdal: mkey.c,v 1.14 2002/08/16 18:59:49 assar Exp $"
+        "$NetBSD: mkey.c,v 1.4 2002/09/12 13:19:09 joda Exp $");
 
 struct hdb_master_key_data {
     krb5_keytab_entry keytab;
@@ -50,7 +51,8 @@ hdb_free_master_key(krb5_context context, hdb_master_key mkey)
     struct hdb_master_key_data *ptr;
     while(mkey) {
 	krb5_kt_free_entry(context, &mkey->keytab);
-	krb5_crypto_destroy(context, mkey->crypto);
+	if (mkey->crypto)
+	    krb5_crypto_destroy(context, mkey->crypto);
 	ptr = mkey;
 	mkey = mkey->next;
 	free(ptr);
@@ -198,6 +200,7 @@ read_master_encryptionkey(krb5_context context, const char *filename,
     krb5_error_code ret;
     unsigned char buf[256];
     ssize_t len;
+    size_t ret_len;
 	       
     fd = open(filename, O_RDONLY | O_BINARY);
     if(fd < 0) {
@@ -216,7 +219,7 @@ read_master_encryptionkey(krb5_context context, const char *filename,
 	return save_errno;
     }
 
-    ret = decode_EncryptionKey(buf, len, &key, &len);
+    ret = decode_EncryptionKey(buf, len, &key, &ret_len);
     memset(buf, 0, sizeof(buf));
     if(ret)
 	return ret;
@@ -490,6 +493,7 @@ hdb_set_master_keyfile (krb5_context context,
     if (ret) {
 	if (ret != ENOENT)
 	    return ret;
+	krb5_clear_error_string(context);
 	return 0;
     }
     db->master_key = key;

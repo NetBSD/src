@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,12 +33,13 @@
 
 #include "hprop.h"
 
-RCSID("$Id: hprop.c,v 1.2 2001/09/18 03:11:22 thorpej Exp $");
+__RCSID("$Heimdal: hprop.c,v 1.70 2002/09/04 18:19:41 joda Exp $"
+        "$NetBSD: hprop.c,v 1.3 2002/09/12 13:19:01 joda Exp $");
 
 static int version_flag;
 static int help_flag;
-static char *ktname = HPROP_KEYTAB;
-static char *database;
+static const char *ktname = HPROP_KEYTAB;
+static const char *database;
 static char *mkeyfile;
 static int to_stdout;
 static int verbose_flag;
@@ -334,10 +335,10 @@ read_block(krb5_context context, int fd, int32_t pos, void *buf, size_t len)
 	krb5_err(context, 1, errno, "lseek(%u)", 64 + pos);
     ret = read(fd, buf, len);
     if(ret < 0)
-	krb5_err(context, 1, errno, "read(%lu)", (unsigned long) len);
+	krb5_err(context, 1, errno, "read(%lu)", (unsigned long)len);
 #endif
     if(ret != len)
-	krb5_errx(context, 1, "read(%lu) = %u", (unsigned long) len, ret);
+	krb5_errx(context, 1, "read(%lu) = %u", (unsigned long)len, ret);
 }
 
 static int
@@ -532,8 +533,12 @@ get_creds(krb5_context context, krb5_ccache *cache)
     ret = krb5_cc_initialize(context, *cache, client);
     if(ret) krb5_err(context, 1, ret, "krb5_cc_initialize");
 
+    krb5_free_principal(context, client);
+
     ret = krb5_cc_store_cred(context, *cache, &creds);
     if(ret) krb5_err(context, 1, ret, "krb5_cc_store_cred");
+
+    krb5_free_creds_contents(context, &creds);
 }
 
 enum hprop_source {
@@ -676,6 +681,7 @@ propagate_database (krb5_context context, int type,
             krb5_realm my_realm;
             krb5_get_default_realm(context,&my_realm);
 
+	    free (*krb5_princ_realm(context, server));
             krb5_princ_set_realm(context,server,&my_realm);
         }
     
@@ -686,7 +692,7 @@ propagate_database (krb5_context context, int type,
 			    HPROP_VERSION,
 			    NULL,
 			    server,
-			    AP_OPTS_MUTUAL_REQUIRED,
+			    AP_OPTS_MUTUAL_REQUIRED | AP_OPTS_USE_SUBKEY,
 			    NULL, /* in_data */
 			    NULL, /* in_creds */
 			    ccache,
@@ -694,12 +700,14 @@ propagate_database (krb5_context context, int type,
 			    NULL,
 			    NULL);
 
+	krb5_free_principal(context, server);
+
 	if(ret) {
 	    krb5_warn(context, ret, "krb5_sendauth");
 	    close(fd);
 	    continue;
 	}
-
+	
 	pd.context      = context;
 	pd.auth_context = auth_context;
 	pd.sock         = fd;
@@ -728,8 +736,8 @@ main(int argc, char **argv)
 {
     krb5_error_code ret;
     krb5_context context;
-    krb5_ccache ccache;
-    HDB *db;
+    krb5_ccache ccache = NULL;
+    HDB *db = NULL;
     int optind = 0;
 
     int type = 0;
@@ -849,5 +857,13 @@ main(int argc, char **argv)
     else
 	propagate_database (context, type, database, 
 			    db, ccache, optind, argc, argv);
+
+    if(ccache != NULL)
+	krb5_cc_destroy(context, ccache);
+	
+    if(db != NULL)
+	(*db->destroy)(context, db);
+
+    krb5_free_context(context);
     return 0;
 }
