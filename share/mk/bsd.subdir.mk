@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.20 1997/05/07 17:06:30 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.21 1997/05/17 16:59:28 christos Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>
@@ -45,5 +45,9 @@ ${dir}: all-${dir}
 .for targ in ${TARGETS}
 ${targ}: _SUBDIRUSE
 .endfor
+
+.if defined(SUBDIR) && !empty(SUBDIR)
+realinstall: ${SUBDIR:S/^/install-/g}
+.endif
 
 .include <bsd.own.mk>
