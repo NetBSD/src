@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.16 1996/01/11 06:33:36 thorpej Exp $	*/
+/*	$NetBSD: pstat.c,v 1.17 1996/02/21 02:27:57 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.16 1996/01/11 06:33:36 thorpej Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.17 1996/02/21 02:27:57 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,8 @@ static char *rcsid = "$NetBSD: pstat.c,v 1.16 1996/01/11 06:33:36 thorpej Exp $"
 #undef NFS
 #undef _KERNEL
 #include <sys/stat.h>
+#include <nfs/nfsproto.h>
+#include <nfs/rpcv2.h>
 #include <nfs/nfsnode.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
