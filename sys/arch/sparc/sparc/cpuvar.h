@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.41 2002/12/16 16:59:11 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.42 2002/12/19 10:30:39 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -221,13 +221,13 @@ struct cpu_info {
 	char		fpu_namebuf[32];/* Buffer for FPU name, if necessary */
 
 	/* various flags to workaround anomalies in chips */
-	int		flags;		/* see CPUFLG_xxx, below */
+	volatile int	flags;		/* see CPUFLG_xxx, below */
 
 	/* Per processor counter register (sun4m only) */
-	struct counter_4m	*counterreg_4m;
+	volatile struct counter_4m	*counterreg_4m;
 
 	/* Per processor interrupt mask register (sun4m only) */
-	struct icr_pi		*intreg_4m;
+	volatile struct icr_pi		*intreg_4m;
 #define raise_ipi(cpi)	do {				\
 	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(15);	\
 } while (0)
@@ -241,7 +241,7 @@ struct cpu_info {
 	struct	proc	*ci_curproc;		/* CPU owner */
 	struct	proc 	*fpproc;		/* FPU owner */
 	/* XXX */
-	void		*ci_ddb_regs;		/* DDB regs */
+	volatile void	*ci_ddb_regs;		/* DDB regs */
 
 	/*
 	 * Idle PCB and Interrupt stack;
@@ -319,7 +319,7 @@ struct cpu_info {
 	void		(*memerr)(unsigned, u_int, u_int, struct trapframe *);
 
 	/* Inter-processor message area */
-	struct xpmsg msg;
+	volatile struct xpmsg msg;
 
 #if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
 	u_long ci_spin_locks;		/* # of spin locks held */
@@ -422,7 +422,8 @@ void pmap_alloc_cpu (struct cpu_info *);
 void pmap_globalize_boot_cpu (struct cpu_info *);
 #if defined(MULTIPROCESSOR)
 void raise_ipi_wait_and_unlock (struct cpu_info *);
-void cross_call (int (*)(int, int, int, int), int, int, int, int, int);
+typedef int (*xcall_func_t)(int, int, int, int);
+void xcall (xcall_func_t, int, int, int, int, int);
 #endif
 
 extern struct cpu_info **cpus;
