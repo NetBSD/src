@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 2001/09/19 07:54:49 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.67 2002/01/02 00:51:36 chs Exp $	*/
 
 /*
  *
@@ -2105,18 +2105,6 @@ pmap_page_remove(pg)
 #endif
 
 		opte = ptes[ns532_btop(pve->pv_va)];
-#if 1 /* XXX Work-around for kern/12554. */
-		if (opte & PG_W) {
-#ifdef DEBUG
-			printf("pmap_page_remove: wired mapping for "
-			    "0x%lx (wire count %d) not removed\n",
-			    VM_PAGE_TO_PHYS(pg), pg->wire_count);
-#endif
-			prevptr = &pve->pv_next;
-			pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
-			continue;
-		}
-#endif /* kern/12554 */
 		ptes[ns532_btop(pve->pv_va)] = 0;		/* zap! */
 
 		if (opte & PG_W)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.132 2002/01/01 22:52:11 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.133 2002/01/02 00:51:35 chs Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2002/01/01 22:52:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.133 2002/01/02 00:51:35 chs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2310,18 +2310,6 @@ pmap_page_remove(pg)
 #endif
 
 		opte = ptes[i386_btop(pve->pv_va)];
-#if 1 /* XXX Work-around for kern/12554. */
-		if (opte & PG_W) {
-#ifdef DEBUG
-			printf("pmap_page_remove: wired mapping for "
-			    "0x%lx (wire count %d) not removed\n",
-			    VM_PAGE_TO_PHYS(pg), pg->wire_count);
-#endif
-			prevptr = &pve->pv_next;
-			pmap_unmap_ptes(pve->pv_pmap);	/* unlocks pmap */
-			continue;
-		}
-#endif /* kern/12554 */
 		ptes[i386_btop(pve->pv_va)] = 0;		/* zap! */
 
 		if (opte & PG_W)

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.188 2001/09/15 20:36:32 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.189 2002/01/02 00:51:33 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188 2001/09/15 20:36:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.189 2002/01/02 00:51:33 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1513,14 +1513,12 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		    pmap_pte_pa(pv->pv_pte) != pa)
 			panic("pmap_page_protect: bad mapping");
 #endif
-		if (pmap_pte_w(pv->pv_pte) == 0) {
-			if (pmap_remove_mapping(pmap, pv->pv_va, pv->pv_pte,
-			    FALSE, cpu_id) == TRUE) {
-				if (pmap == pmap_kernel())
-					needkisync |= TRUE;
-				else
-					PMAP_SYNC_ISTREAM_USER(pmap);
-			}
+		if (pmap_remove_mapping(pmap, pv->pv_va, pv->pv_pte,
+		    FALSE, cpu_id) == TRUE) {
+			if (pmap == pmap_kernel())
+				needkisync |= TRUE;
+			else
+				PMAP_SYNC_ISTREAM_USER(pmap);
 		}
 #ifdef DEBUG
 		else {
