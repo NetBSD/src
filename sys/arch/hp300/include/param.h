@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machparam.h 1.16 92/12/20$
  *
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
- *	$Id: param.h,v 1.14 1994/09/09 23:56:14 mycroft Exp $
+ *	$Id: param.h,v 1.15 1994/09/16 02:39:58 jtc Exp $
  */
 
 /*
@@ -157,7 +157,7 @@
 ({ \
         register int _spl_r; \
 \
-        asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
+        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
                 "&=d" (_spl_r) : "di" (s)); \
         _spl_r; \
 })

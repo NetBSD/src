@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.13 1994/08/24 20:50:35 chopps Exp $
+ *	$Id: param.h,v 1.14 1994/09/16 02:39:36 jtc Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
@@ -158,7 +158,7 @@
 ({ \
         register int _spl_r; \
 \
-        asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
+        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
                 "&=d" (_spl_r) : "di" (s)); \
 	if ((_spl_r&PSL_IPL) > (s&PSL_IPL)) \
 		printf ("%s:%d:spl(%d) ==> spl(%d)!!\n",__FILE__,__LINE__, \
@@ -170,7 +170,7 @@
 ({ \
         register int _spl_r; \
 \
-        asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
+        __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" : \
                 "&=d" (_spl_r) : "di" (s)); \
         _spl_r; \
 })
