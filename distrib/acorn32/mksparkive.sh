@@ -36,8 +36,8 @@
 #
 
 #
-# Creates an uncompressed spark format archive. Some metadata is included,
-# notably filetypes, but CRC calculations and permissions are not. Filename
+# Creates a spark format archive. Some metadata is included, notably
+# filetypes, but CRC calculations and permissions are not. Filename
 # translation is performed according to RISC OS conventions.
 # 
 # This script is intended to provide sufficient functionality to create
@@ -66,6 +66,9 @@ makeheader()
 	statfilename="$2"
 	realfilename="$3"
 	filetype=`printf %03s "$4"`
+	compressed="$5"
+	# length is only passed to length4, so we don't need to worry about
+	# extracting only the length here.
 	length=`wc -c "$filename"`
 	eval `stat -s "$statfilename"`
 	# centiseconds since 1st Jan 1900
@@ -76,7 +79,12 @@ makeheader()
 	lowdate=`expr $timestamp % 4294967296`
 
 	# Header version number
-	printf \\x82
+	if [ "$compressed" -ne 0 ]
+	then
+		printf \\xff
+	else
+		printf \\x82
+	fi
 	# Filename
 	printf %-13.13s "$realfilename" | tr " ." \\0/
 	# Compressed file length
@@ -88,7 +96,12 @@ makeheader()
 	# CRC
 	print2 0
 	# Original file length
-	print4 $length
+	if [ "$compressed" -ne 0 ]
+	then
+		print4 $st_size
+	else
+		print4 $length
+	fi
 	# Load address (FFFtttdd)
 	printf \\x$highdate
 	printf \\x$lowtype
@@ -105,11 +118,16 @@ makearchive()
 {
 	for file in "$@"
 	do
+		temp=`mktemp -t $progname` || exit 1
+		trap "rm -f $temp" 0
 		# Archive marker
 		printf \\x1a
 		if [ -f "$file" ]
 		then
 			case "$file" in
+				-*)	echo "Invalid filename" >&2
+					exit 1
+					;;
 				*,???)	type=`echo "$file" | \
 					    sed "s/.*,\(...\)$/\1/"`
 					filename=`echo "$file" | \
@@ -119,20 +137,44 @@ makearchive()
 					filename="$file"
 					;;
 			esac
-			makeheader "$file" "$file" "$filename" "$type"
-			cat "$file"
+			# The compressed data in a sparkive is the output from
+			# compress, minus the two bytes of magic at the start.
+			# Compress also uses the top bit of the first byte
+			# to indicate its choice of algorithm. Spark doesn't
+			# understand that, so it must be stripped.
+			compress -c "$file" | tail -c +3 >"$temp"
+			size1=`wc -c "$file" | awk '{print $1}'`
+			size2=`wc -c "$temp" | awk '{print $1}'`
+			if [ $size1 -ge $size2 ]
+			then
+				makeheader "$temp" "$file" "$filename" "$type" 1
+				nbits=`dd if="$temp" bs=1 count=1 2>/dev/null| \
+				    od -t d1 | awk '{print $2}'`
+				if [ $nbits -ge 128 ]
+				then
+					nbits=`expr $nbits - 128`
+				fi
+				printf \\x`printf %02x $nbits`
+				tail -c +2 "$temp"
+			else
+				makeheader "$file" "$file" "$filename" "$type" 0
+				cat "$file"
+			fi
 		fi
 		if [ -d "$file" ]
 		then
-			temp=`mktemp -t $progname` || exit 1
 			(
 				cd "$file"
 				makearchive `ls -A` >$temp
 			)
-			makeheader "$temp" "$file" "$file" ddc
+			if [ $? -ne 0 ]
+			then
+				exit 1
+			fi
+			makeheader "$temp" "$file" "$file" ddc 0
 			cat "$temp"
-			rm -f "$temp"
 		fi
+		rm -f "$temp"
 	done
 
 	# Archive marker
