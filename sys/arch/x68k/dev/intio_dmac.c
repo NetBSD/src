@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.2 1999/03/16 16:30:18 minoura Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.3 1999/03/18 12:27:59 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,9 @@ static int dmac_program_arraychain __P((struct device*, struct dmac_dma_xfer*));
 static int dmac_done __P((void*));
 static int dmac_error __P((void*));
 
+#ifdef DMAC_DEBUG
 static int dmac_dump_regs __P((void));
+#endif
 
 /*
  * autoconf stuff
@@ -365,7 +367,6 @@ dmac_program_arraychain(self, xf)
 	struct device *self;
 	struct dmac_dma_xfer *xf;
 {
-	struct dmac_softc *sc = (void*) self;
 	struct dmac_channel_stat *chan = xf->dx_channel;
 	int ch = chan->ch_channel;
 	struct x68k_bus_dmamap *map = xf->dx_dmamap;
