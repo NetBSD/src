@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.60.2.3 2000/08/06 21:40:53 thorpej Exp $
+# $NetBSD: mi,v 1.60.2.4 2000/08/09 19:12:15 lukem Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -65,6 +65,7 @@
 ./etc/rc.conf
 ./etc/rc.d/DAEMON
 ./etc/rc.d/LOGIN
+./etc/rc.d/NETWORK
 ./etc/rc.d/SERVERS
 ./etc/rc.d/accounting
 ./etc/rc.d/amd
@@ -127,7 +128,6 @@
 ./etc/rc.d/sysctl
 ./etc/rc.d/sysdb
 ./etc/rc.d/syslogd
-./etc/rc.d/systemfs
 ./etc/rc.d/timed
 ./etc/rc.d/ttys
 ./etc/rc.d/virecover
