@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.8 1999/08/23 12:32:19 augustss Exp $
+.\" $NetBSD: ugen.4,v 1.9 1999/12/22 23:21:21 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,11 +59,7 @@ number determines which endpoint the device accesses and the rest
 of the bits determines which USB device.
 .Pp
 If an endpoint address is used both for input and output the device
-can be opened for both read or write, but an
-.Xr open 2
-cannot specify
-.Dv O_RDWR
-mode; the endpoint must be opened once for each direction.
+can be opened for both read or write.
 .Pp
 To find out what endpoints that exist there are a series of
 .Xr ioctl 2
