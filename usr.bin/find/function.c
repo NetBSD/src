@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.20 1997/02/01 09:51:48 matthias Exp $	*/
+/*	$NetBSD: function.c,v 1.21 1997/10/19 11:52:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,9 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: function.c,v 1.20 1997/02/01 09:51:48 matthias Exp $";
+#if 0
+static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: function.c,v 1.21 1997/10/19 11:52:32 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,7 +78,32 @@ static char rcsid[] = "$NetBSD: function.c,v 1.20 1997/02/01 09:51:48 matthias E
 	}								\
 }
 
-static PLAN *palloc __P((enum ntype, int (*) __P((PLAN *, FTSENT *))));
+static	long	find_parsenum __P((PLAN *, char *, char *, char *));
+	int	f_always_true __P((PLAN *, FTSENT *));
+	int	f_atime __P((PLAN *, FTSENT *));
+	int	f_ctime __P((PLAN *, FTSENT *));
+	int	f_exec __P((PLAN *, FTSENT *));
+	int	f_fstype __P((PLAN *, FTSENT *));
+	int	f_group __P((PLAN *, FTSENT *));
+	int	f_inum __P((PLAN *, FTSENT *));
+	int	f_links __P((PLAN *, FTSENT *));
+	int	f_ls __P((PLAN *, FTSENT *));
+	int	f_mtime __P((PLAN *, FTSENT *));
+	int	f_name __P((PLAN *, FTSENT *));
+	int	f_newer __P((PLAN *, FTSENT *));
+	int	f_nogroup __P((PLAN *, FTSENT *));
+	int	f_nouser __P((PLAN *, FTSENT *));
+	int	f_path __P((PLAN *, FTSENT *));
+	int	f_perm __P((PLAN *, FTSENT *));
+	int	f_print __P((PLAN *, FTSENT *));
+	int	f_print0 __P((PLAN *, FTSENT *));
+	int	f_prune __P((PLAN *, FTSENT *));
+	int	f_size __P((PLAN *, FTSENT *));
+	int	f_type __P((PLAN *, FTSENT *));
+	int	f_user __P((PLAN *, FTSENT *));
+	int	f_not __P((PLAN *, FTSENT *));
+	int	f_or __P((PLAN *, FTSENT *));
+static	PLAN   *palloc __P((enum ntype, int (*) __P((PLAN *, FTSENT *))));
 
 /*
  * find_parsenum --
@@ -227,11 +256,11 @@ c_depth()
  */
 int
 f_exec(plan, entry)
-	register PLAN *plan;
+	PLAN *plan;
 	FTSENT *entry;
 {
 	extern int dotfd;
-	register int cnt;
+	int cnt;
 	pid_t pid;
 	int status;
 
@@ -277,8 +306,8 @@ c_exec(argvp, isok)
 	int isok;
 {
 	PLAN *new;			/* node returned */
-	register int cnt;
-	register char **argv, **ap, *p;
+	int cnt;
+	char **argv, **ap, *p;
 
 	isoutput = 1;
     
@@ -360,7 +389,7 @@ f_fstype(plan, entry)
 		 */
 		if (entry->fts_info == FTS_SL ||
 		    entry->fts_info == FTS_SLNONE) {
-			if (p = strrchr(entry->fts_accpath, '/'))
+			if ((p = strrchr(entry->fts_accpath, '/')) != NULL)
 				++p;
 			else
 				p = entry->fts_accpath;
@@ -403,7 +432,7 @@ PLAN *
 c_fstype(arg)
 	char *arg;
 {
-	register PLAN *new;
+	PLAN *new;
     
 	ftsoptions &= ~FTS_NOSTAT;
     
@@ -641,8 +670,6 @@ f_nogroup(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	char *group_from_gid();
-
 	return (group_from_gid(entry->fts_statp->st_gid, 1) ? 0 : 1);
 }
  
@@ -665,8 +692,6 @@ f_nouser(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	char *user_from_uid();
-
 	return (user_from_uid(entry->fts_statp->st_uid, 1) ? 0 : 1);
 }
  
@@ -764,7 +789,7 @@ f_print(plan, entry)
 	return(1);
 }
 
-/* ARGSUSED */
+int
 f_print0(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
@@ -977,9 +1002,10 @@ f_expr(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	register PLAN *p;
-	register int state;
+	PLAN *p;
+	int state;
 
+	state = 0;
 	for (p = plan->p_data[0];
 	    p && (state = (p->eval)(p, entry)); p = p->next);
 	return (state);
@@ -993,13 +1019,13 @@ f_expr(plan, entry)
 PLAN *
 c_openparen()
 {
-	return (palloc(N_OPENPAREN, (int (*)())-1));
+	return (palloc(N_OPENPAREN, (int (*) __P((PLAN *, FTSENT *)))-1));
 }
  
 PLAN *
 c_closeparen()
 {
-	return (palloc(N_CLOSEPAREN, (int (*)())-1));
+	return (palloc(N_CLOSEPAREN, (int (*) __P((PLAN *, FTSENT *)))-1));
 }
  
 /*
@@ -1012,9 +1038,10 @@ f_not(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	register PLAN *p;
-	register int state;
+	PLAN *p;
+	int state;
 
+	state = 0;
 	for (p = plan->p_data[0];
 	    p && (state = (p->eval)(p, entry)); p = p->next);
 	return (!state);
@@ -1037,9 +1064,10 @@ f_or(plan, entry)
 	PLAN *plan;
 	FTSENT *entry;
 {
-	register PLAN *p;
-	register int state;
+	PLAN *p;
+	int state;
 
+	state = 0;
 	for (p = plan->p_data[0];
 	    p && (state = (p->eval)(p, entry)); p = p->next);
 
@@ -1064,13 +1092,13 @@ palloc(t, f)
 {
 	PLAN *new;
 
-	if (new = malloc(sizeof(PLAN))) {
+	if ((new = malloc(sizeof(PLAN))) != NULL) {
 		new->type = t;
 		new->eval = f;
 		new->flags = 0;
 		new->next = NULL;
 		return (new);
 	}
-	err(1, NULL);
+	err(1, "malloc");
 	/* NOTREACHED */
 }

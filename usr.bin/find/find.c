@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.8 1997/01/09 20:19:10 tls Exp $	*/
+/*	$NetBSD: find.c,v 1.9 1997/10/19 11:52:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,9 +36,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "from: @(#)find.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: find.c,v 1.8 1997/01/09 20:19:10 tls Exp $";
+#if 0
+static char sccsid[] = "from: @(#)find.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: find.c,v 1.9 1997/10/19 11:52:27 lukem Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -157,10 +161,10 @@ find_execute(plan, paths)
 	register FTSENT *entry;
 	PLAN *p;
     
-	if (!(tree = fts_open(paths, ftsoptions, (int (*)())NULL)))
+	if (!(tree = fts_open(paths, ftsoptions, NULL)))
 		err(1, "ftsopen");
 
-	while (entry = fts_read(tree)) {
+	while ((entry = fts_read(tree)) != NULL) {
 		switch(entry->fts_info) {
 		case FTS_D:
 			if (isdepth)
