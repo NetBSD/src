@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2001/10/13 06:15:18 jmc Exp $
+#	$NetBSD: Makefile,v 1.19 2001/10/21 23:18:14 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -20,12 +20,12 @@ MTREECONF=	mtree.conf
 CRUNCHGEN?=	crunchgen
 MTREE?=		mtree
 
-SIZE=		2048k
+DISKSIZE=	2048k
 DISKTYPE=	floppyinstfs
 DBG=		-Os -mmultiple
 
 all: ${CBIN} 
-	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
+	dd if=/dev/zero of=${IMAGE} bs=${DISKSIZE} count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
 	disklabel -f ${.CURDIR}/disktab -rw ${VND} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i 6144 -c 128 ${VND_RDEV}
