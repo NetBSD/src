@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.6 1996/09/10 22:04:31 jtc Exp $	*/
+/*	$NetBSD: private.h,v 1.7 1996/09/13 17:46:49 jtc Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -50,7 +50,7 @@ static char	privatehid[] = "@(#)private.h	7.43";
 #endif /* !defined HAVE_SETTIMEOFDAY */
 
 #ifndef HAVE_STRERROR
-#define HAVE_STRERROR		0
+#define HAVE_STRERROR		1
 #endif /* !defined HAVE_STRERROR */
 
 #ifndef HAVE_UNISTD_H
