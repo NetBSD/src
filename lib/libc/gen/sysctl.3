@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.123 2003/10/15 20:04:48 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.124 2003/11/23 07:11:04 jhawk Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 27, 2003
+.Dd November 23, 2003
 .Dt SYSCTL 3
 .Os
 .Sh NAME
@@ -883,7 +883,13 @@ Returns 1 if the host accepts source routed packets.
 .It Li ip.subnetsarelocal
 Returns 1 if subnets are to be considered local addresses.
 .It Li ip.mtudisc
-Returns 1 if Path MTU Discovery is enabled.
+If set to 1, Path MTU Discovery (RFC 1191) is enabled.  When Path MTU
+Discovery is enabled, the transmitted TCP segment size will be
+determined by the advertised maximum segment size (MSS) from the
+remote end, as constrained by the path MTU. If MTU Discovery is
+disabled, the transmitted segment size will never be greater than
+.Li tcp.mssdflt
+(the local maximum segment size).
 .It Li ip.anonportmin
 The lowest port number to use for TCP and UDP ephemeral port allocation.
 This cannot be set to less than 1024 or greater than 65535.
@@ -950,8 +956,10 @@ Returns the default TCP send buffer size.
 Returns the default TCP receive buffer size.
 .It Li tcp.mssdflt
 Returns the default maximum segment size both advertized to the peer
-and to use when the peer does not advertize a maximum segment size to
-us during connection setup.
+and to use when either the peer does not advertize a maximum segment size to
+us during connection setup or Path MTU Discovery 
+.Li ( ip.mtudisc )
+is disabled.
 Do not change this value unless you really know what you are doing.
 .It Li tcp.syn_cache_limit
 Returns the maximum number of entries allowed in the TCP compressed state
@@ -1744,6 +1752,7 @@ level is made.
 .El
 .Sh SEE ALSO
 .Xr ipsec 4 ,
+.Xr tcp 4 ,
 .Xr sysctl 8
 .Sh HISTORY
 The
