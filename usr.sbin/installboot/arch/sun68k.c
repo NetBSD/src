@@ -1,4 +1,4 @@
-/*	$NetBSD: sun68k.c,v 1.2 2002/04/22 21:11:46 fredette Exp $ */
+/*	$NetBSD: sun68k.c,v 1.3 2002/04/22 23:24:10 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: sun68k.c,v 1.2 2002/04/22 21:11:46 fredette Exp $");
+__RCSID("$NetBSD: sun68k.c,v 1.3 2002/04/22 23:24:10 bjh21 Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -140,8 +140,8 @@ sun68k_setboot(ib_params *params)
 		goto done;
 	}
 	if (bootstrapsb.st_size > sizeof(bb)) {
-		warnx("`%s' cannot be larger than %d bytes",
-		    params->stage1, sizeof(bb));
+		warnx("`%s' cannot be larger than %lu bytes",
+		    params->stage1, (unsigned long)sizeof(bb));
 		goto done;
 	}
 
