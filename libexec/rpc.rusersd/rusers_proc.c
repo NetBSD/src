@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusers_proc.c,v 1.10 1995/06/24 15:47:49 pk Exp $";
+static char rcsid[] = "$Id: rusers_proc.c,v 1.11 1995/07/09 00:30:15 pk Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -343,7 +343,7 @@ rusers_service(rqstp, transp)
 		int fill;
 	} argument;
 	char *result;
-	bool_t (*xdr_argument) __P((...)), (*xdr_result) __P((...));
+	xdrproc_t xdr_argument, xdr_result;
 	char *(*local) __P((void *, struct svc_req *));
 
 	switch (rqstp->rq_proc) {
@@ -352,8 +352,8 @@ rusers_service(rqstp, transp)
 		goto leave;
 
 	case RUSERSPROC_NUM:
-		xdr_argument = xdr_void;
-		xdr_result = xdr_int;
+		xdr_argument = (xdrproc_t)xdr_void;
+		xdr_result = (xdrproc_t)xdr_int;
 		switch (rqstp->rq_vers) {
 		case RUSERSVERS_3:
 		case RUSERSVERS_IDLE:
@@ -368,8 +368,8 @@ rusers_service(rqstp, transp)
 		break;
 
 	case RUSERSPROC_NAMES:
-		xdr_argument = xdr_void;
-		xdr_result = xdr_utmp_array;
+		xdr_argument = (xdrproc_t)xdr_void;
+		xdr_result = (xdrproc_t)xdr_utmp_array;
 		switch (rqstp->rq_vers) {
 		case RUSERSVERS_3:
 			local = (char *(*) __P((void *, struct svc_req *)))
@@ -377,7 +377,7 @@ rusers_service(rqstp, transp)
 			break;
 
 		case RUSERSVERS_IDLE:
-			xdr_result = xdr_utmpidlearr;
+			xdr_result = (xdrproc_t)xdr_utmpidlearr;
 			local = (char *(*) __P((void *, struct svc_req *)))
 					rusersproc_names_2_svc;
 			break;
@@ -390,8 +390,8 @@ rusers_service(rqstp, transp)
 		break;
 
 	case RUSERSPROC_ALLNAMES:
-		xdr_argument = xdr_void;
-		xdr_result = xdr_utmp_array;
+		xdr_argument = (xdrproc_t)xdr_void;
+		xdr_result = (xdrproc_t)xdr_utmp_array;
 		switch (rqstp->rq_vers) {
 		case RUSERSVERS_3:
 			local = (char *(*) __P((void *, struct svc_req *)))
@@ -399,7 +399,7 @@ rusers_service(rqstp, transp)
 			break;
 
 		case RUSERSVERS_IDLE:
-			xdr_result = xdr_utmpidlearr;
+			xdr_result = (xdrproc_t)xdr_utmpidlearr;
 			local = (char *(*) __P((void *, struct svc_req *)))
 					rusersproc_allnames_2_svc;
 			break;
