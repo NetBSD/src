@@ -1,4 +1,4 @@
-/*	$NetBSD: pccvar.h,v 1.6 2000/08/20 21:51:31 scw Exp $	*/
+/*	$NetBSD: pccvar.h,v 1.7 2000/11/24 09:36:41 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -48,6 +48,8 @@ struct pcc_attach_args {
 	bus_dma_tag_t	pa_dmat;
 	bus_space_tag_t	pa_bust;
 	bus_addr_t	pa_offset;
+
+	bus_addr_t	_pa_base;
 };
 
 /* Shorthand for locators. */
