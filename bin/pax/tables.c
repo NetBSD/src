@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.17 2002/01/31 19:27:54 tv Exp $	*/
+/*	$NetBSD: tables.c,v 1.17.2.1 2004/04/07 06:58:46 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
+#if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.17 2002/01/31 19:27:54 tv Exp $");
+__RCSID("$NetBSD: tables.c,v 1.17.2.1 2004/04/07 06:58:46 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ __RCSID("$NetBSD: tables.c,v 1.17 2002/01/31 19:27:54 tv Exp $");
  * large archives. These database routines carefully combine memory usage and
  * temporary file storage in ways which will not significantly impact runtime
  * performance while allowing the largest possible archives to be handled.
- * Trying to force the fit to the posix databases routines was not considered
+ * Trying to force the fit to the posix database routines was not considered
  * time well spent.
  */
 
@@ -176,8 +176,8 @@ chk_lnk(ARCHD *arcn)
 			 * handle hardlinks to regular files differently than
 			 * other links.
 			 */
-			arcn->ln_nlen = l_strncpy(arcn->ln_name, pt->name,
-				PAXPATHLEN+1);
+			arcn->ln_nlen = strlcpy(arcn->ln_name, pt->name,
+				sizeof(arcn->ln_name));
 			if (arcn->type == PAX_REG)
 				arcn->type = PAX_HRG;
 			else
@@ -317,14 +317,14 @@ lnk_end(void)
  * An append with an -u must read the archive and store the modification time
  * for every file on that archive before starting the write phase. It is clear
  * that this is one HUGE database. To save memory space, the actual file names
- * are stored in a scatch file and indexed by an in memory hash table. The
+ * are stored in a scratch file and indexed by an in-memory hash table. The
  * hash table is indexed by hashing the file path. The nodes in the table store
  * the length of the filename and the lseek offset within the scratch file
- * where the actual name is stored. Since there are never any deletions to this
+ * where the actual name is stored. Since there are never any deletions from this
  * table, fragmentation of the scratch file is never a issue. Lookups seem to
  * not exhibit any locality at all (files in the database are rarely
- * looked up more than once...). So caching is just a waste of memory. The
- * only limitation is the amount of scatch file space available to store the
+ * looked up more than once...), so caching is just a waste of memory. The
+ * only limitation is the amount of scratch file space available to store the
  * path names.
  */
 
@@ -340,9 +340,6 @@ lnk_end(void)
 int
 ftime_start(void)
 {
-	const char *tmpdir;
-	char template[MAXPATHLEN];
-
 	if (ftab != NULL)
 		return(0);
 	if ((ftab = (FTM **)calloc(F_TAB_SZ, sizeof(FTM *))) == NULL) {
@@ -354,16 +351,14 @@ ftime_start(void)
 	 * get random name and create temporary scratch file, unlink name
 	 * so it will get removed on exit
 	 */
-	if ((tmpdir = getenv("TMPDIR")) == NULL)
-		tmpdir = _PATH_TMP;
-	(void)snprintf(template, sizeof(template), "%s/%s", tmpdir, TMPFILE);
-	if ((ffd = mkstemp(template)) == -1) {
+	memcpy(tempbase, _TFILE_BASE, sizeof(_TFILE_BASE));
+	if ((ffd = mkstemp(tempfile)) == -1) {
 		syswarn(1, errno, "Unable to create temporary file: %s",
-		    template);
+		    tempfile);
 		return(-1);
 	}
 
-	(void)unlink(template);
+	(void)unlink(tempfile);
 	return(0);
 }
 
@@ -589,7 +584,7 @@ add_name(char *oname, int onamelen, char *nname)
  */
 
 void
-sub_name(char *oname, int *onamelen)
+sub_name(char *oname, int *onamelen, size_t onamesize)
 {
 	NAMT *pt;
 	u_int indx;
@@ -612,7 +607,7 @@ sub_name(char *oname, int *onamelen)
 			 * found it, replace it with the new name
 			 * and return (we know that oname has enough space)
 			 */
-			*onamelen = l_strncpy(oname, pt->nname, PAXPATHLEN+1);
+			*onamelen = strlcpy(oname, pt->nname, onamesize);
 			return;
 		}
 		pt = pt->fow;
@@ -895,7 +890,7 @@ map_dev(ARCHD *arcn, u_long dev_mask, u_long ino_mask)
  * directory access/mod time reset table routines (for directories READ by pax)
  *
  * The pax -t flag requires that access times of archive files to be the same
- * before being read by pax. For regular files, access time is restored after
+ * as before being read by pax. For regular files, access time is restored after
  * the file has been copied. This database provides the same functionality for
  * directories read during file tree traversal. Restoring directory access time
  * is more complex than files since directories may be read several times until
@@ -981,7 +976,7 @@ add_atdir(char *fname, dev_t dev, ino_t ino, time_t mtime, time_t atime)
 	 * return (the older entry always has the correct time). The only
 	 * way this will happen is when the same subtree can be traversed by
 	 * different args to pax and the -n option is aborting fts out of a
-	 * subtree before all the post-order visits have been made).
+	 * subtree before all the post-order visits have been made.
 	 */
 	indx = ((unsigned)ino) % A_TAB_SZ;
 	if ((pt = atab[indx]) != NULL) {
@@ -1112,24 +1107,19 @@ int
 dir_start(void)
 {
 #ifdef DIRS_USE_FILE
-	const char *tmpdir;
-	char template[MAXPATHLEN];
-
 	if (dirfd != -1)
 		return(0);
 
 	/*
 	 * unlink the file so it goes away at termination by itself
 	 */
-	if ((tmpdir = getenv("TMPDIR")) == NULL)
-		tmpdir = _PATH_TMP;
-	(void)snprintf(template, sizeof(template), "%s/%s", tmpdir, TMPFILE);
-	if ((dirfd = mkstemp(template)) >= 0) {
-		(void)unlink(template);
+	memcpy(tempbase, _TFILE_BASE, sizeof(_TFILE_BASE));
+	if ((dirfd = mkstemp(tempfile)) >= 0) {
+		(void)unlink(tempfile);
 		return(0);
 	}
 	tty_warn(1, "Unable to create temporary file for directory times: %s",
-	    template);
+	    tempfile);
 	return(-1);
 #else
 	return (0);
@@ -1143,7 +1133,7 @@ dir_start(void)
  *	frc_mode is a flag that says whether to force the setting of the mode
  *	(ignoring the user set values for preserving file mode). Frc_mode is
  *	for the case where we created a file and found that the resulting
- *	directory was not writeable and the user asked for file modes to NOT
+ *	directory was not writable and the user asked for file modes to NOT
  *	be preserved. (we have to preserve what was created by default, so we
  *	have to force the setting at the end. this is stated explicitly in the
  *	pax spec)
