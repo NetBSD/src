@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.154 2003/09/25 00:59:31 mycroft Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.155 2003/10/21 21:17:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.154 2003/09/25 00:59:31 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.155 2003/10/21 21:17:20 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -245,6 +245,10 @@ struct evcnt tcp_swcsum = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
 
 struct evcnt tcp_output_bigheader = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "tcp", "output big header");
+struct evcnt tcp_output_predict_hit = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp", "output predict hit");
+struct evcnt tcp_output_predict_miss = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "tcp", "output predict miss");
 struct evcnt tcp_output_copysmall = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
     NULL, "tcp", "output copy small");
 struct evcnt tcp_output_copybig = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
@@ -343,6 +347,8 @@ tcp_init()
 
 #ifdef TCP_OUTPUT_COUNTERS
 	evcnt_attach_static(&tcp_output_bigheader);
+	evcnt_attach_static(&tcp_output_predict_hit);
+	evcnt_attach_static(&tcp_output_predict_miss);
 	evcnt_attach_static(&tcp_output_copysmall);
 	evcnt_attach_static(&tcp_output_copybig);
 	evcnt_attach_static(&tcp_output_refbig);
