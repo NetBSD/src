@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.18 1998/07/27 09:09:27 mycroft Exp $	*/
+/*	$NetBSD: time.h,v 1.19 1998/07/27 11:08:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,6 +43,7 @@
 #ifndef _TIME_H_
 #define	_TIME_H_
 
+#include <sys/cdefs.h>
 #include <machine/ansi.h>
 
 #ifndef	NULL
