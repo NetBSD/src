@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.11 1995/04/22 20:34:15 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.12 1995/05/16 07:30:53 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -377,7 +377,7 @@ syscall(frame)
 	int args[8], rval[2];
 	int code;
 
-/*	cnt.v_syscall++; */
+	cnt.v_syscall++;
 
 	/* is this a user? */
 	if ((frame.sf_psr & PSL_USER) != PSL_USER)

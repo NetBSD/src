@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1995/01/18 08:14:29 phil Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 1995/05/16 07:30:44 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -55,11 +55,7 @@
 #include <sys/malloc.h>
 /* #include <sys/sl.h> */
 
-#ifdef CONFIG_NEW
 #include <sys/device.h>
-#else
-#include <dev/device.h>
-#endif
 
 /*
  * The following several variables are related to
@@ -79,12 +75,12 @@ configure()
 	startrtclock();
 
 	/* Find out what the hardware configuration looks like! */
-#ifdef  CONFIG_NEW
-	if (config_rootfound("membus","membus") == 0)
+	if (config_rootfound("membus", "membus") == 0)
 		panic ("No mem bus found!");
-#else
-	pc532_configure();
-#endif
+
+	printf("zero = %x, bio = %x, net = %x, tty = %x, clock = %x\n",
+		imask[IPL_ZERO], imask[IPL_BIO], imask[IPL_NET],
+		imask[IPL_TTY], imask[IPL_CLOCK]);
 
 	/* select the root device */
 	setroot();
@@ -233,98 +229,30 @@ setroot()
 #endif
 }
 
-#ifndef CONFIG_NEW
-
-pc532_configure()
-{
-	struct pc532_device *dvp;
-	struct pc532_driver *dp;
-	int num;
-
-	splhigh();  /* Just to make sure. */
-	num = 0;
-	for (dvp = pc532_devtab_tty; config_dev(dvp,&num); dvp++);
-	if (num) printf ("\n");
-	num = 0;
-	for (dvp = pc532_devtab_bio; config_dev(dvp,&num); dvp++);
-	if (num) printf ("\n");
-	num = 0;
-	for (dvp = pc532_devtab_net; config_dev(dvp,&num); dvp++);
-	if (num) printf ("\n");
-}
-
-/*
- * Configure a pc532 device.
- */
-config_dev(struct pc532_device *dp, int *num)
-{
-	struct pc532_driver *driv;
- 
-	if (driv = dp->pd_driver) {
-		dp->pd_alive = (*driv->probe)(dp);
-		if (dp->pd_alive)
-			(*driv->attach)(dp);
-		return (1);
-	} else	return(0);
-}
-
-#else
-
 /* mem bus stuff? */
 
-int membusprobe();
-void membusattach();
+static int membusprobe();
+static void membusattach();
 
 struct cfdriver membuscd =
       {	NULL, "membus", membusprobe, membusattach,
 	DV_DULL, sizeof(struct device), NULL, 0 };
 
 static int
-membusprint(aux, name)
-	void	*aux;
-	char	*name;
-{
-	if (name)
-		printf("%s at %s", *(char **)aux, name);
-	return(UNCONF);
-}
-
 membusprobe(parent, cf, aux)
 	struct device	*parent;
 	struct cfdata	*cf;
 	void		*aux;
 {
-  return (strcmp(cf->cf_driver->cd_name, "membus") == 0);
+	return (strcmp(cf->cf_driver->cd_name, "membus") == 0);
 }
 
-static	char *name_list[] =
-	{
-#ifdef RAMD_SIZE
-	 "rd",
-#endif
-	 "scn", "scn", "scn", "scn", "scn", "scn", "scn", "scn",
-	 "ncr", /* "dp", "aic", */
-	 NULL };
-
-void
-membusattach(parent, dev, aux)
-	struct device	*parent, *dev;
- 	void		*aux;
+static void
+membusattach(parent, self, args)
+	struct device *parent, *self;
+ 	void *args;
 {
-	char **name;
-	int	fail=0;
-
 	printf ("\n");
-
-	for (name=name_list ; *name ; name++) {
-		if (!config_found(dev, name, membusprint)) {
-			fail++;
-		}
-	}
-
-	if (fail) {
-		printf("Failed to find %d required devices.\n", fail);
-		panic("Can't continue.");
-	}
+	while (config_found(self, NULL, NULL))
+		;
 }
-#endif
