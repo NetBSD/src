@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.105 2003/08/09 19:02:55 dsl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.106 2003/08/10 09:54:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.105 2003/08/09 19:02:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.106 2003/08/10 09:54:06 dsl Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -76,27 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.105 2003/08/09 19:02:55 dsl Exp $");
 static int ufs_chmod(struct vnode *, int, struct ucred *, struct proc *);
 static int ufs_chown(struct vnode *, uid_t, gid_t, struct ucred *,
 		    struct proc *);
-
-union _qcvt {
-	int64_t	qcvt;
-	int32_t	val[2];
-};
-
-#define SETHIGH(q, h)							\
-do {									\
-	union _qcvt tmp;						\
-	tmp.qcvt = (q);							\
-	tmp.val[_QUAD_HIGHWORD] = (h);					\
-	(q) = tmp.qcvt;							\
-} while (0)
-
-#define SETLOW(q, l)							\
-do {									\
-	union _qcvt tmp;						\
-	tmp.qcvt = (q);							\
-	tmp.val[_QUAD_LOWWORD] = (l);					\
-	(q) = tmp.qcvt;							\
-} while (0)
 
 /*
  * A virgin directory (no blushing please).
@@ -2042,8 +2021,8 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	/*
 	 * Initialize modrev times
 	 */
-	SETHIGH(ip->i_modrev, mono_time.tv_sec);
-	SETLOW(ip->i_modrev, mono_time.tv_usec * 4294);
+	ip->i_modrev = mono_time.tv_sec * 0x100000000ull
+			| mono_time.tv_usec * 4294u;
 	*vpp = vp;
 }
 
