@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.h,v 1.3 1994/08/17 11:03:07 mycroft Exp $	*/
+/*	 $NetBSD: svr4_exec.h,v 1.4 1994/10/24 17:37:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -111,8 +111,29 @@ typedef struct {
 #define Elf32_e_ident "\177ELF"
 #define Elf32_e_siz (sizeof(Elf32_e_ident) - 1)
 
+typedef struct {
+    int au_id;
+    unsigned long au_v;
+} AuxInfo;
+
+enum AuxID {
+    AUX_null 		= 0,
+    AUX_ignore		= 1,
+    AUX_execfd		= 2,
+    AUX_phdr		= 3,		/* &phdr[0] */
+    AUX_phent		= 4,		/* sizeof(phdr[0]) */
+    AUX_phnum		= 5,		/* # phdr entries */
+    AUX_pagesz		= 6,		/* PAGESIZE */
+    AUX_base		= 7,		/* ld.so base addr */
+    AUX_flags		= 8,		/* processor flags */
+    AUX_entry		= 9,		/* a.out entry */
+    AUX_sun_uid		= 2000,		/* euid */
+    AUX_sun_ruid	= 2001,		/* ruid */
+    AUX_sun_gid		= 2002,		/* egid */
+    AUX_sun_rgid	= 2003		/* rgid */
+};
 
 #define	ELF_HDR_SIZE	(sizeof(Elf32_Ehdr))
-int	exec_svr4_elf_makecmds __P((struct proc *, struct exec_package *));
+int	exec_svr4_elf_makecmds	__P((struct proc *, struct exec_package *));
 
 #endif /* !_SVR4_EXEC_H_ */

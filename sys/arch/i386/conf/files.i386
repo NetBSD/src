@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.52 1994/08/23 17:59:33 deraadt Exp $
+#	$Id: files.i386,v 1.53 1994/10/24 17:42:55 deraadt Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/conf.c		standard
@@ -66,9 +66,14 @@ arch/i386/pci/pci.c		optional pci
 arch/i386/pci/pci_machdep.c	optional pci requires isa
 dev/cons.c			standard
 compat/svr4/svr4_exec.c		optional compat_svr4
+compat/svr4/svr4_fcntl.c	optional compat_svr4
 compat/svr4/svr4_ioctl.c	optional compat_svr4
 compat/svr4/svr4_misc.c		optional compat_svr4
+compat/svr4/svr4_signal.c	optional compat_svr4
+compat/svr4/svr4_stat.c		optional compat_svr4
+compat/svr4/svr4_syscalls.c	optional compat_svr4
 compat/svr4/svr4_sysent.c	optional compat_svr4
+compat/svr4/svr4_util.c		optional compat_svr4
 compat/ibcs2/ibcs2_exec.c	optional compat_ibcs2
 compat/ibcs2/ibcs2_ioctl.c	optional compat_ibcs2
 compat/ibcs2/ibcs2_misc.c	optional compat_ibcs2

@@ -1,5 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.3 1994/10/20 04:47:48 cgd Exp $	*/
-
+/*	$NetBSD: svr4_ioctl.c,v 1.4 1994/10/24 17:37:42 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -23,9 +22,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
@@ -33,13 +32,13 @@
 #include <sys/tty.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/mount.h>
 #include <net/if.h>
 
-struct svr4_ioctl_args {
-	int	fd;
-	int	cmd;
-	caddr_t	data;
-};
+#include <sys/syscallargs.h>
+
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_syscallargs.h>
 
 #define	SVR4_IOC_VOID	0x20000000
 #define	SVR4_IOC_OUT	0x40000000
@@ -52,43 +51,43 @@ struct svr4_ioctl_args {
  */
 static void
 svr4_decode_cmd(cmd, dir, c, num, argsiz)
-	int cmd;
-	char **dir, *c;
-	int *num, *argsiz;
+    int cmd;
+    char **dir, *c;
+    int *num, *argsiz;
 {
-	*dir = "";
-	if (cmd & SVR4_IOC_VOID)
-		*dir = "V";
-	if (cmd & SVR4_IOC_INOUT)
-		*dir = "RW";
-	if (cmd & SVR4_IOC_OUT)
-		*dir = "W";
-	if (cmd & SVR4_IOC_IN)
-		*dir = "R";
-	if (cmd & (SVR4_IOC_INOUT|SVR4_IOC_VOID))
-		*argsiz = (cmd >> 16) & 0xff;
-	else
-		*argsiz = -1;
+    *dir = "";
+    if (cmd & SVR4_IOC_VOID)
+	*dir = "V";
+    if (cmd & SVR4_IOC_INOUT)
+	*dir = "RW";
+    if (cmd & SVR4_IOC_OUT)
+	*dir = "W";
+    if (cmd & SVR4_IOC_IN)
+	*dir = "R";
+    if (cmd & (SVR4_IOC_INOUT|SVR4_IOC_VOID))
+	*argsiz = (cmd >> 16) & 0xff;
+    else
+	*argsiz = -1;
 
-	*c = (cmd >> 8) & 0xff;
-	*num = cmd & 0xff;
+    *c = (cmd >> 8) & 0xff;
+    *num = cmd & 0xff;
 }
 #endif
 
 int
 svr4_ioctl(p, uap, retval)
-	register struct proc *p;
-	register struct svr4_ioctl_args *uap;
-	register_t *retval;
+    register struct proc *p;
+    register struct svr4_ioctl_args *uap;
+    register_t *retval;
 {
-	char *dir;
-	char c;
-	int  num;
-	int  argsiz;
+    char *dir;
+    char c;
+    int  num;
+    int  argsiz;
 #ifdef DEBUG_SVR4
-	svr4_decode_cmd(uap->cmd, &dir, &c, &num, &argsiz);
-	printf("svr4_ioctl(%d, _IO%s(%c, %d, %d))\n", uap->fd,
-	       dir, c, num, argsiz);
+    svr4_decode_cmd(SCARG(uap, com), &dir, &c, &num, &argsiz);
+    printf("svr4_ioctl(%d, _IO%s(%c, %d, %d))\n", SCARG(uap, fd),
+	   dir, c, num, argsiz);
 #endif
-	return ENOSYS;
+    return 0;
 }
