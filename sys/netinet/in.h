@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.35 1998/05/04 19:24:53 matt Exp $	*/
+/*	$NetBSD: in.h,v 1.36 1998/09/05 19:03:25 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -239,6 +239,7 @@ struct ip_mreq {
 #define	IP_PORTRANGE_HIGH	1	/* same as DEFAULT (FreeBSD compat) */
 #define	IP_PORTRANGE_LOW	2	/* use privileged range */
 
+#if !defined(_XOPEN_SOURCE)
 /*
  * Definitions for inet sysctl operations.
  *
@@ -309,6 +310,7 @@ struct ip_mreq {
 	{ "mtudisctimeout", CTLTYPE_INT }, \
 	{ "maxflows", CTLTYPE_INT }, \
 }
+#endif /* !_XOPEN_SOURCE */
 
 
 #ifdef _KERNEL
@@ -326,6 +328,6 @@ void	in_socktrim __P((struct sockaddr_in *));
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
 #define	sintosa(sin)	((struct sockaddr *)(sin))
 #define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
-#endif
+#endif /* _KERNEL */
 
 #endif /* !_NETINET_IN_H_ */

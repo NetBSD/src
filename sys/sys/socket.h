@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.37 1998/06/26 14:06:35 hannken Exp $	*/
+/*	$NetBSD: socket.h,v 1.38 1998/09/05 19:03:25 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -208,6 +208,8 @@ struct sockcred {
 #define	SOCKCREDSIZE(ngrps) \
 	(sizeof(struct sockcred) + (sizeof(gid_t) * ((ngrps) - 1)))
 
+
+#if !defined(_XOPEN_SOURCE)
 /*
  * Definitions for network related sysctl, CTL_NET.
  *
@@ -250,7 +252,9 @@ struct sockcred {
 	{ "arp", CTLTYPE_NODE }, \
 	{ "key", CTLTYPE_NODE }, \
 }
+#endif /* !_XOPEN_SOURCE */
 
+#if !defined(_XOPEN_SOURCE)
 /*
  * PF_ROUTE - Routing table
  *
@@ -270,6 +274,7 @@ struct sockcred {
 	{ "flags", CTLTYPE_STRUCT }, \
 	{ "iflist", CTLTYPE_STRUCT }, \
 }
+#endif /* !_XOPEN_SOURCE */
 
 /*
  * Maximum queue length specifiable by listen(2).
