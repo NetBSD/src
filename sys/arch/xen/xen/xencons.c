@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.3 2005/03/10 00:31:48 xtraeme Exp $	*/
+/*	$NetBSD: xencons.c,v 1.4 2005/03/10 21:44:31 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.3 2005/03/10 00:31:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.4 2005/03/10 21:44:31 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -156,6 +156,8 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 
 		if (xen_start_info.flags & SIF_INITDOMAIN) {
 			int irq = bind_virq_to_irq(VIRQ_CONSOLE);
+			aprint_verbose("%s: using irq %d\n",
+			    sc->sc_dev.dv_xname, irq);
 			if (event_set_handler(irq, xencons_intr, sc,
 			    IPL_TTY) != 0)
 				printf("console: "
