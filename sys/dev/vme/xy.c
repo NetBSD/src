@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.25.2.2 2000/07/25 20:41:35 pk Exp $	*/
+/*	$NetBSD: xy.c,v 1.25.2.3 2001/05/01 12:27:49 he Exp $	*/
 
 /*
  *
@@ -911,7 +911,9 @@ xyioctl(dev, command, addr, flag, p)
 	struct xy_softc *xy;
 	struct xd_iocmd *xio;
 	int     error, s, unit;
-
+#ifdef __HAVE_OLD_DISKLABEL
+	struct disklabel newlabel, *lp;
+#endif
 	unit = DISKUNIT(dev);
 
 	if (unit >= xy_cd.cd_ndevs || (xy = xy_cd.cd_devs[unit]) == NULL)
@@ -931,6 +933,14 @@ xyioctl(dev, command, addr, flag, p)
 	case DIOCGDINFO:	/* get disk label */
 		bcopy(xy->sc_dk.dk_label, addr, sizeof(struct disklabel));
 		return 0;
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCGDINFO:
+		newlabel = *(xy->sc_dk.dk_label);
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+			return ENOTTY;
+		memcpy(addr, &newlabel, sizeof (struct olddisklabel));
+		return 0;
+#endif
 
 	case DIOCGPART:	/* get partition info */
 		((struct partinfo *) addr)->disklab = xy->sc_dk.dk_label;
@@ -939,10 +949,20 @@ xyioctl(dev, command, addr, flag, p)
 		return 0;
 
 	case DIOCSDINFO:	/* set disk label */
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCSDINFO:
+		if (command == ODIOCSDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
+			lp = &newlabel;
+		} else
+#endif
+		lp = (struct disklabel *)addr;
+
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(xy->sc_dk.dk_label,
-		    (struct disklabel *) addr, /* xy->sc_dk.dk_openmask : */ 0,
+		    lp, /* xy->sc_dk.dk_openmask : */ 0,
 		    xy->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (xy->state == XY_DRIVE_NOLABEL)
@@ -960,10 +980,20 @@ xyioctl(dev, command, addr, flag, p)
 		return 0;
 
 	case DIOCWDINFO:	/* write disk label */
+#ifdef __HAVE_OLD_DISKLABEL
+	case ODIOCWDINFO:
+		if (command == ODIOCWDINFO) {
+			memset(&newlabel, 0, sizeof newlabel);
+			memcpy(&newlabel, addr, sizeof (struct olddisklabel));
+			lp = &newlabel;
+		} else
+#endif
+		lp = (struct disklabel *)addr;
+
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(xy->sc_dk.dk_label,
-		    (struct disklabel *) addr, /* xy->sc_dk.dk_openmask : */ 0,
+		    lp, /* xy->sc_dk.dk_openmask : */ 0,
 		    xy->sc_dk.dk_cpulabel);
 		if (error == 0) {
 			if (xy->state == XY_DRIVE_NOLABEL)
