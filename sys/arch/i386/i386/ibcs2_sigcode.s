@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_sigcode.s,v 1.3 2001/05/30 12:28:43 mrg Exp $	*/
+/*	$NetBSD: ibcs2_sigcode.s,v 1.4 2001/06/17 21:01:33 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,10 +88,6 @@ NENTRY(ibcs2_sigcode)
 	call    SIGF_HANDLER(%esp)
 	leal    SIGF_SC(%esp),%eax      # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
-	movl    SC_FS(%eax),%ecx
-	movl    SC_GS(%eax),%edx
-	movl    %cx,%fs
-	movl    %dx,%gs
 	pushl   %eax
 	pushl   %eax                    # junk to fake return address
 	movl    $IBCS2_SYS_sigreturn,%eax

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.30 2000/06/29 08:44:51 mrg Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.31 2001/06/17 21:01:32 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -121,6 +121,8 @@ kdb_trap(type, code, regs)
 	db_active--;
 	splx(s);
 
+	regs->tf_gs     = ddb_regs.tf_gs;
+	regs->tf_fs     = ddb_regs.tf_fs;
 	regs->tf_es     = ddb_regs.tf_es;
 	regs->tf_ds     = ddb_regs.tf_ds;
 	regs->tf_edi    = ddb_regs.tf_edi;

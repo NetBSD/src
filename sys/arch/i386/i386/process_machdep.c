@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.32 2000/12/11 17:36:03 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.33 2001/06/17 21:01:35 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -105,7 +105,6 @@ process_read_regs(p, regs)
 	struct reg *regs;
 {
 	struct trapframe *tf = process_frame(p);
-	struct pcb *pcb = &p->p_addr->u_pcb;
 
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM) {
@@ -117,8 +116,8 @@ process_read_regs(p, regs)
 	} else
 #endif
 	{
-		regs->r_gs = pcb->pcb_gs;
-		regs->r_fs = pcb->pcb_fs;
+		regs->r_gs = tf->tf_gs;
+		regs->r_fs = tf->tf_fs;
 		regs->r_es = tf->tf_es;
 		regs->r_ds = tf->tf_ds;
 		regs->r_eflags = tf->tf_eflags;
@@ -178,8 +177,6 @@ process_write_regs(p, regs)
 	struct reg *regs;
 {
 	struct trapframe *tf = process_frame(p);
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 #ifdef VM86
 	if (regs->r_eflags & PSL_VM) {
@@ -214,18 +211,8 @@ process_write_regs(p, regs)
 		    !USERMODE(regs->r_cs, regs->r_eflags))
 			return (EINVAL);
 
-		simple_lock(&pmap->pm_lock);
-
-		if ((regs->r_gs != pcb->pcb_gs && \
-		     !valid_sel(regs->r_gs) && !null_sel(regs->r_gs)) ||
-		    (regs->r_fs != pcb->pcb_fs && \
-		     !valid_sel(regs->r_fs) && !null_sel(regs->r_fs)))
-			return (EINVAL);
-
-		simple_unlock(&pmap->pm_lock);
-
-		pcb->pcb_gs = regs->r_gs;
-		pcb->pcb_fs = regs->r_fs;
+		tf->tf_gs = regs->r_gs;
+		tf->tf_fs = regs->r_fs;
 		tf->tf_es = regs->r_es;
 		tf->tf_ds = regs->r_ds;
 #ifdef VM86

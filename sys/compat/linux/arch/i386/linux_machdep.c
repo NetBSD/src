@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.64 2001/06/14 20:32:43 thorpej Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.65 2001/06/17 21:01:38 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -173,8 +173,8 @@ linux_sendsig(catcher, sig, mask, code)
 	} else
 #endif
 	{
-		__asm("movl %%gs,%w0" : "=r" (frame.sf_sc.sc_gs));
-		__asm("movl %%fs,%w0" : "=r" (frame.sf_sc.sc_fs));
+		frame.sf_sc.sc_gs = tf->tf_gs;
+		frame.sf_sc.sc_fs = tf->tf_fs;		
 		frame.sf_sc.sc_es = tf->tf_es;
 		frame.sf_sc.sc_ds = tf->tf_ds;
 		frame.sf_sc.sc_eflags = tf->tf_eflags;

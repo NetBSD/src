@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.159 2001/06/11 20:04:03 sommerfeld Exp $	*/
+/*	$NetBSD: trap.c,v 1.160 2001/06/17 21:01:36 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -170,6 +170,7 @@ trap(frame)
 	struct pcb *pcb = NULL;
 	extern char fusubail[],
 		    resume_iret[], resume_pop_ds[], resume_pop_es[],
+		    resume_pop_fs[], resume_pop_gs[],
 		    IDTVEC(osyscall)[];
 	struct trapframe *vframe;
 	int resume;
@@ -285,6 +286,20 @@ copyfault:
 			vframe = (void *)((int)&frame.tf_esp -
 			    offsetof(struct trapframe, tf_es));
 			resume = (int)resume_pop_es;
+			break;
+		case 0x0f:	/* 0x0f prefix */
+			switch (*(u_char *)(frame.tf_eip+1)) {
+			case 0xa1:		/* popl %fs */
+				vframe = (void *)((int)&frame.tf_esp - 
+				    offsetof(struct trapframe, tf_fs));
+				resume = (int)resume_pop_fs;
+				break;
+			case 0xa9:		/* popl %gs */
+				vframe = (void *)((int)&frame.tf_esp -
+				    offsetof(struct trapframe, tf_gs));
+				resume = (int)resume_pop_gs;
+				break;
+			}
 			break;
 		default:
 			goto we_re_toast;
