@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)find.h	5.8 (Berkeley) 5/24/91
- *	$Id: find.h,v 1.3 1993/08/01 18:16:17 mycroft Exp $
+ *	$Id: find.h,v 1.4 1993/10/27 17:52:39 jtc Exp $
  */
 
 /* node type */
@@ -43,7 +43,7 @@ enum ntype {
 	N_ATIME, N_CLOSEPAREN, N_CTIME, N_DEPTH, N_EXEC, N_EXPR, N_FOLLOW,
 	N_FSTYPE, N_GROUP, N_INUM, N_LINKS, N_LS, N_MTIME, N_NAME, N_NEWER,
 	N_NOGROUP, N_NOT, N_NOUSER, N_OK, N_OPENPAREN, N_OR, N_PERM, N_PRINT,
-	N_PRUNE, N_SIZE, N_TYPE, N_USER, N_XDEV,
+	N_PRINT0, N_PRUNE, N_SIZE, N_TYPE, N_USER, N_XDEV,
 };
 
 /* node definition */
