@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.219 2004/04/16 09:59:32 pk Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.220 2004/04/19 00:15:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.219 2004/04/16 09:59:32 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.220 2004/04/19 00:15:55 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2036,6 +2036,57 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 #endif
 
 /*
+ * sysctl helper routine to return list of supported fstypes
+ */
+static int
+sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
+{
+	char buf[MFSNAMELEN];
+	char *where = oldp;
+	struct vfsops *v;
+	size_t needed, left, slen;
+	int error, first;
+
+	if (newp != NULL)
+		return (EPERM);
+	if (namelen != 0)
+		return (EINVAL);
+
+	first = 1;
+	error = 0;
+	needed = 0;
+	left = *oldlenp;
+
+	LIST_FOREACH(v, &vfs_list, vfs_list) {
+		if (where == NULL)
+			needed += strlen(v->vfs_name) + 1;
+		else {
+			memset(buf, 0, sizeof(buf));
+			if (first) {
+				strncpy(buf, v->vfs_name, sizeof(buf));
+				first = 0;
+			} else {
+				buf[0] = ' ';
+				strncpy(buf + 1, v->vfs_name, sizeof(buf) - 1);
+			}
+			buf[sizeof(buf)-1] = '\0';
+			slen = strlen(buf);
+			if (left < slen + 1)
+				break;
+			/* +1 to copy out the trailing NUL byte */
+			error = copyout(buf, where, slen + 1);
+			if (error)
+				break;
+			where += slen;
+			needed += slen;
+			left -= slen;
+		}
+	}
+	*oldlenp = needed;
+	return (error);
+}
+
+/*
  * Top level filesystem related information gathering.
  */
 SYSCTL_SETUP(sysctl_vfs_setup, "sysctl vfs subtree setup")
@@ -2067,6 +2118,12 @@ SYSCTL_SETUP(sysctl_vfs_setup, "sysctl vfs subtree setup")
 		       CTLTYPE_INT, "usermount", NULL,
 		       NULL, 0, &dovfsusermount, 0,
 		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "fstypes",
+		       SYSCTL_DESCR("List of file systems present"),
+		       sysctl_vfs_generic_fstypes, 0, NULL, 0,
+		       CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
 #if defined(COMPAT_09) || defined(COMPAT_43) || defined(COMPAT_44)
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -2695,7 +2752,7 @@ vfs_mountroot()
 	/*
 	 * Try each file system currently configured into the kernel.
 	 */
-	for (v = LIST_FIRST(&vfs_list); v != NULL; v = LIST_NEXT(v, vfs_list)) {
+	LIST_FOREACH(v, &vfs_list, vfs_list) {
 		if (v->vfs_mountroot == NULL)
 			continue;
 #ifdef DEBUG
@@ -2729,7 +2786,7 @@ vfs_getopsbyname(name)
 {
 	struct vfsops *v;
 
-	for (v = LIST_FIRST(&vfs_list); v != NULL; v = LIST_NEXT(v, vfs_list)) {
+	LIST_FOREACH(v, &vfs_list, vfs_list) {
 		if (strcmp(v->vfs_name, name) == 0)
 			break;
 	}
