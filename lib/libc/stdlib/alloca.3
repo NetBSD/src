@@ -1,4 +1,4 @@
-.\"	$NetBSD: alloca.3,v 1.3 1995/12/28 08:52:00 thorpej Exp $
+.\"	$NetBSD: alloca.3,v 1.4 1997/07/15 07:03:25 mikel Exp $
 .\"
 .\" Copyright (c) 1980, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -61,10 +61,10 @@ If the allocation failed, a
 pointer is returned.
 .Sh SEE ALSO
 .Xr brk 2 ,
-.Xr pagesize 2
 .Xr calloc 3 ,
+.Xr getpagesize 3 ,
 .Xr malloc 3 ,
-.Xr realloc 3 ,
+.Xr realloc 3
 .Sh BUGS
 The
 .Fn alloca
