@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.4 1995/04/11 02:38:21 mycroft Exp $ */
+/*	$NetBSD: zsvar.h,v 1.5 1995/11/29 23:41:31 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,8 +65,6 @@
  * When the value is a character + RR1 status, the character is in the
  * upper 8 bits of the RR1 status.
  */
-#define ZLRB_RING_SIZE 256		/* ZS line ring buffer size */
-#define	ZLRB_RING_MASK 255		/* mask for same */
 
 /* 0 is reserved (means "no interrupt") */
 #define	ZRING_RINT	1		/* receive data interrupt */
@@ -132,7 +130,8 @@ struct zs_chanstate {
 	 */
 	u_int	cs_rbget;		/* ring buffer `get' index */
 	volatile u_int cs_rbput;	/* ring buffer `put' index */
-	int	cs_rbuf[ZLRB_RING_SIZE];/* type, value pairs */
+	u_int	cs_ringmask;		/* mask, reflecting size of `rbuf' */
+	int	*cs_rbuf;		/* type, value pairs */
 };
 
 /*
