@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_pci.c,v 1.1 2001/02/01 01:04:55 thorpej Exp $	*/
+/*	$NetBSD: gapspci_pci.c,v 1.2 2001/04/24 19:43:25 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -47,6 +47,7 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/shbvar.h>
+#include <machine/sysasicvar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
@@ -180,15 +181,8 @@ void *
 gaps_intr_establish(void *v, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
-	void *rv;
-
-	rv = shb_intr_establish(ih, IST_EDGE /* XXX IST_LEVEL? */,
-	    level, func, arg);
-#if 0
-	if (rv != NULL)
-		*(volatile unsigned int *)(void *)(0xa05f6924) |= 1<<3;
-#endif
-	return (rv);
+	return sysasic_intr_establish(ih, SYSASIC_EVENT_EXT,
+				      level, func, arg);
 }
 
 void
