@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc_run.c,v 1.3 1994/08/23 18:42:12 deraadt Exp $";
+static char *rcsid = "$Id: svc_run.c,v 1.4 1994/12/04 01:13:27 cgd Exp $";
 #endif
 
 /*
@@ -46,7 +46,6 @@ void
 svc_run()
 {
 	fd_set readfds;
-	extern int errno;
 
 	for (;;) {
 		readfds = svc_fdset;

@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$Id: pmap_rmt.c,v 1.2 1994/08/20 00:55:29 deraadt Exp $";
+static char *rcsid = "$Id: pmap_rmt.c,v 1.3 1994/12/04 01:13:20 cgd Exp $";
 #endif
 
 /*
@@ -53,7 +53,6 @@ static char *rcsid = "$Id: pmap_rmt.c,v 1.2 1994/08/20 00:55:29 deraadt Exp $";
 #include <arpa/inet.h>
 #define MAX_BROADCAST_SIZE 1400
 
-extern int errno;
 static struct timeval timeout = { 3, 0 };
 
 
@@ -345,7 +344,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 			stat = RPC_CANTRECV;
 			goto done_broad;
 		}
-		if (inlen < sizeof(u_long))
+		if (inlen < sizeof(u_int32_t))
 			goto recv_again;
 		/*
 		 * see if reply transaction id matches sent id.

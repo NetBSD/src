@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.5 1994/10/26 00:56:55 cgd Exp $	*/
+/*	$NetBSD: auth.h,v 1.6 1994/12/04 01:12:39 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -96,16 +96,21 @@ struct opaque_auth {
 /*
  * Auth handle, interface to client side authenticators.
  */
-typedef struct {
+typedef struct __rpc_auth {
 	struct	opaque_auth	ah_cred;
 	struct	opaque_auth	ah_verf;
 	union	des_block	ah_key;
 	struct auth_ops {
-		void	(*ah_nextverf)();
-		int	(*ah_marshal)();	/* nextverf & serialize */
-		int	(*ah_validate)();	/* validate varifier */
-		int	(*ah_refresh)();	/* refresh credentials */
-		void	(*ah_destroy)();	/* destroy this structure */
+		void	(*ah_nextverf) __P((struct __rpc_auth *));
+		/* nextverf & serialize */
+		int	(*ah_marshal) __P((struct __rpc_auth *, XDR *));
+		/* validate varifier */
+		int	(*ah_validate) __P((struct __rpc_auth *,
+			    struct opaque_auth *));
+		/* refresh credentials */
+		int	(*ah_refresh) __P((struct __rpc_auth *));
+		/* destroy this structure */
+		void	(*ah_destroy) __P((struct __rpc_auth *));
 	} *ah_ops;
 	caddr_t ah_private;
 } AUTH;
@@ -162,10 +167,12 @@ extern struct opaque_auth _null_auth;
  *	int *aup_gids;
  */
 __BEGIN_DECLS
+struct sockaddr_in;
 extern AUTH *authunix_create		__P((char *, int, int, int, int *));
 extern AUTH *authunix_create_default	__P((void));
 extern AUTH *authnone_create		__P((void));
-extern AUTH *authdes_create();
+extern AUTH *authdes_create		__P((char *, u_int,
+					    struct sockaddr_in *, des_block *));
 __END_DECLS
 
 #define AUTH_NONE	0		/* no authentication */

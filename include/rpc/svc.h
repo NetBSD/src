@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.4 1994/10/26 00:57:04 cgd Exp $	*/
+/*	$NetBSD: svc.h,v 1.5 1994/12/04 01:12:43 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -73,16 +73,26 @@ enum xprt_stat {
 /*
  * Server side transport handle
  */
-typedef struct {
+typedef struct __rpc_svcxprt {
 	int		xp_sock;
 	u_short		xp_port;	 /* associated port number */
 	struct xp_ops {
-	    bool_t	(*xp_recv)();	 /* receive incomming requests */
-	    enum xprt_stat (*xp_stat)(); /* get transport status */
-	    bool_t	(*xp_getargs)(); /* get arguments */
-	    bool_t	(*xp_reply)();	 /* send reply */
-	    bool_t	(*xp_freeargs)();/* free mem allocated for args */
-	    void	(*xp_destroy)(); /* destroy this struct */
+		/* receive incomming requests */
+		bool_t	(*xp_recv) __P((struct __rpc_svcxprt *,
+			    struct rpc_msg *));
+		/* get transport status */
+		enum xprt_stat (*xp_stat) __P((struct __rpc_svcxprt *));
+		/* get arguments */
+		bool_t	(*xp_getargs) __P((struct __rpc_svcxprt *, xdrproc_t,
+			    caddr_t));
+		/* send reply */
+		bool_t	(*xp_reply) __P((struct __rpc_svcxprt *,
+			    struct rpc_msg *));
+		/* free mem allocated for args */
+		bool_t	(*xp_freeargs) __P((struct __rpc_svcxprt *, xdrproc_t,
+			    caddr_t));
+		/* destroy this struct */
+		void	(*xp_destroy) __P((struct __rpc_svcxprt *));
 	} *xp_ops;
 	int		xp_addrlen;	 /* length of remote address */
 	struct sockaddr_in xp_raddr;	 /* remote address */
@@ -159,7 +169,8 @@ struct svc_req {
  *	int protocol;  /* like TCP or UDP, zero means do not register 
  */
 __BEGIN_DECLS
-extern bool_t	svc_register __P((SVCXPRT *, u_long, u_long, void (*)(), int));
+extern bool_t	svc_register __P((SVCXPRT *, u_long, u_long,
+		    void (*) __P((struct svc_req *, SVCXPRT *)), int));
 __END_DECLS
 
 /*
@@ -259,7 +270,7 @@ extern int svc_fds;
  * a small program implemented by the svc_rpc implementation itself;
  * also see clnt.h for protocol numbers.
  */
-extern void rpctest_service();
+extern void rpctest_service();				/* XXX relic? */
 
 __BEGIN_DECLS
 extern void	svc_getreq	__P((int));

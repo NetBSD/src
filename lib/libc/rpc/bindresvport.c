@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bindresvport.c 1.8 88/02/08 SMI";*/
 /*static char *sccsid = "from: @(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: bindresvport.c,v 1.1 1993/10/07 07:29:40 cgd Exp $";
+static char *rcsid = "$Id: bindresvport.c,v 1.2 1994/12/04 01:13:12 cgd Exp $";
 #endif
 
 /*
@@ -52,7 +52,6 @@ bindresvport(sd, sin)
 	int res;
 	static short port;
 	struct sockaddr_in myaddr;
-	extern int errno;
 	int i;
 
 #define STARTPORT 600
