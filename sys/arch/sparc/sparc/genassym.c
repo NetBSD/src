@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.12 1995/04/07 19:49:29 pk Exp $ */
+/*	$NetBSD: genassym.c,v 1.13 1995/05/01 14:13:45 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,8 +67,8 @@
 #include <sparc/dev/zsreg.h>
 #include <sparc/dev/zsvar.h>
 #endif
-#include <sparc/dev/bsd_audioreg.h>
-#include <sparc/dev/bsd_audiovar.h>
+#include <dev/ic/amd7930.h>
+#include <sparc/dev/amd7930var.h>
 
 #include <sparc/dev/fdreg.h>
 #include <sparc/dev/fdvar.h>
@@ -180,19 +180,12 @@ main()
 	def("ZSRR1_DO_bit", ffs(ZSRR1_DO) - 1);
 #endif
 	/* audio trap handler fields */
-	def("AUCB_SIZE", AUCB_SIZE);
-	off("CB_HEAD", struct aucb, cb_head);
-	off("CB_TAIL", struct aucb, cb_tail);
-	off("CB_PAUSE", struct aucb, cb_pause);
-	off("CB_DATA", struct aucb, cb_data);
-	off("CB_DROPS", struct aucb, cb_drops);
-	off("CB_PDROPS", struct aucb, cb_drops);
-	off("CB_THRESH", struct aucb, cb_thresh);
-	off("CB_WAKING", struct aucb, cb_waking);
 	off("AU_AMD", struct auio, au_amd);
-	off("AU_RB", struct auio, au_rb);
-	off("AU_WB", struct auio, au_wb);
-	off("AU_STAMP", struct auio, au_stamp);
+	off("AU_RDATA", struct auio, au_rdata);
+	off("AU_REND", struct auio, au_rend);
+	off("AU_PDATA", struct auio, au_pdata);
+	off("AU_PEND", struct auio, au_pend);
+
 	off("AMD_IR", struct amd7930, ir);
 	off("AMD_BBRB", struct amd7930, bbrb);
 	off("AMD_BBTB", struct amd7930, bbtb);
