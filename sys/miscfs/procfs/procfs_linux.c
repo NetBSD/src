@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.21 2005/02/27 22:29:50 christos Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.22 2005/03/01 04:39:59 christos Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.21 2005/02/27 22:29:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.22 2005/03/01 04:39:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,8 +221,6 @@ procfs_docpuinfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 	char *buf = malloc(len, M_TEMP, M_WAITOK);
 	int error;
 
-	
-	len = sizeof buf;
 	if (procfs_getcpuinfstr(buf, &len) < 0) {
 		error = ENOSPC;
 		goto done;
