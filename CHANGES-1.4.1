@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.1,v 1.1.2.1 1999/08/08 07:00:04 cgd Exp $
+#	$NetBSD: CHANGES-1.4.1,v 1.1.2.2 1999/08/08 20:48:41 cgd Exp $
 
 Woefully incomplete partial list of changes from NetBSD 1.4 to NetBSD 1.4.1:
 
@@ -387,3 +387,22 @@ sys/uvm/uvm_mmap.c				1.28
   do proper charging of mmap()'d space against the process's data size
   at this time.  Prevents unreasonably large allocations from from
   succeeding.  This is a band-aid for PR#7897.  (cgd)
+
+sys/dev/rnd.c					patch
+
+  Correctly protect critical section in rnd_extract_data().  (ross)
+
+sys/arch/alpha/pci/sio_pic.c			1.24
+
+  Fix the 16-bytes-of-death bug by generating specific-EOI cycles
+  during sio_intr_setup().  (ross)
+
+sys/arch/alpha/alpha/dec_3000_300.c		1.28
+sys/arch/alpha/alpha/dec_3000_500.c		1.27
+sys/arch/alpha/tc/scc.c				1.46
+sys/arch/alpha/tc/sccvar.h			1.6
+
+  DEC 3000-series machines always use a serial console, even if the
+  firmware was using the display.  Tell users what's happening when
+  we switch, otherwise almost everyone just thinks the installation
+  has locked up.  (ross)
