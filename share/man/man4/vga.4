@@ -1,4 +1,4 @@
-.\" $NetBSD: vga.4,v 1.9 2001/09/11 23:18:55 wiz Exp $
+.\" $NetBSD: vga.4,v 1.10 2002/07/17 22:02:13 hubertf Exp $
 .Dd March 20, 1999
 .Os
 .Dt VGA 4
@@ -6,6 +6,9 @@
 .Nm vga
 .Nd VGA graphics driver for wscons
 .Sh SYNOPSIS
+.Cd options VGA_CONSOLE_SCREENTYPE="??x??"
+.Cd options VGA_CONSOLE_ATI_BROKEN_FONTSEL
+.Pp
 .Cd "vga0 at isa?"
 .Cd "vga* at pci?"
 .Cd "wsdisplay* at vga? console ?"
@@ -95,6 +98,11 @@ was set at compile time. This is only useful with the
 screen types; a font containing the
 .Tn ASCII
 range of characters must be available too on this screen.
+.Pp
+If you have an Ati videocard and you are experiencing problems with
+fonts other than 80x25, you can try to set
+.Cd options VGA_CONSOLE_ATI_BROKEN_FONTSEL
+in you kernel configuration and see if it helps.
 .Sh SEE ALSO
 .Xr isa 4 ,
 .Xr pcdisplay 4 ,
