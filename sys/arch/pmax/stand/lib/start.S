@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.5 1999/01/29 05:37:50 simonb Exp $	*/
+/*	$NetBSD: start.S,v 1.6 1999/01/30 00:40:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@ start:
 	move	s0, a0				# save argc
 	move	s1, a1				# save argv
 #	move	s3, a3				# save call vector
-	beq	a2, 0x30464354, 1f		# jump if boot from DS5000
+	beq	a2, DEC_REX_MAGIC, 1f		# jump if boot from DS5000
 	move	s3, a3				# BDslot: save call vector
 #	nop
 	la	s3, _C_LABEL(callvec)		# init call vector
