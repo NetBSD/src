@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpd.h,v 1.3 1998/01/05 23:54:05 perry Exp $	*/
+/*	$NetBSD: tcpd.h,v 1.4 1999/01/18 19:54:20 christos Exp $	*/
  /*
   * @(#) tcpd.h 1.5 96/03/19 16:22:24
   * 
@@ -222,6 +222,7 @@ extern int fix_recvfrom __P((int, char *, int, int, struct sockaddr *, int *));
 #endif
 
 #ifdef GETPEERNAME_BUG			/* claims success with UDP */
+#include <sys/socket.h>			/* XXX serious hack! */
 #define getpeername fix_getpeername
 extern int fix_getpeername __P((int, struct sockaddr *, int *));
 #endif
