@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.2 2000/12/09 06:34:07 mycroft Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.3 2000/12/09 11:21:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -103,40 +103,12 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#include <machine/userret.h>
 
 #include <compat/ibcs2/ibcs2_errno.h>
 #include <compat/ibcs2/ibcs2_exec.h>
 
-static __inline void userret __P((struct proc *, int, u_quad_t));
 void linux_syscall __P((struct trapframe *));
-
-/*
- * Define the code needed before returning to user mode, for
- * trap and syscall.
- */
-static __inline void
-userret(p, pc, oticks)
-	register struct proc *p;
-	int pc;
-	u_quad_t oticks;
-{
-	int sig;
-
-	/* Take pending signals. */
-	while ((sig = CURSIG(p)) != 0)
-		postsig(sig);
-
-	/*
-	 * If profiling, charge recent system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) { 
-		extern int psratio;
-
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
-	}                   
-
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-}
 
 /*
  * syscall(frame):
