@@ -1,6 +1,6 @@
-.\"     $NetBSD: autoconf.9,v 1.11 2002/10/05 05:39:35 gmcgarry Exp $
+.\"     $NetBSD: autoconf.9,v 1.12 2002/10/13 00:52:50 wiz Exp $
 .\"
-.\" Copyright (c) 2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 17, 2001
+.Dd October 5, 2002
 .Dt AUTOCONF 9
 .Os
 .Sh NAME
@@ -84,14 +84,14 @@
 .Fn config_pending_decr
 .Sh DESCRIPTION
 Autoconfiguration is the process of matching hardware devices with an
-appropriate device driver.  In its most basic form, autoconfiguration
-consists of the recursive process of finding and attaching all devices
-on a bus, including other busses.
+appropriate device driver.
+In its most basic form, autoconfiguration consists of the recursive process
+of finding and attaching all devices on a bus, including other busses.
 .Pp
 The autoconfiguration framework supports
 .Em direct configuration
-where the bus driver can determine the devices present.  The
-autoconfiguration framework also supports
+where the bus driver can determine the devices present.
+The autoconfiguration framework also supports
 .Em indirect configuration
 where the drivers must probe the bus looking for the presence of a device.
 Direct configuration is preferred since it can find hardware
@@ -113,8 +113,9 @@ language, see
 .Xr config 9 .
 .Pp
 Each device must have a name consisting of an alphanumeric string that
-ends with a unit number.  The unit number identifies an instance of
-the driver.  Device data structures are allocated dynamically during
+ends with a unit number.
+The unit number identifies an instance of the driver.
+Device data structures are allocated dynamically during
 autoconfiguration, giving a unique address for each instance.
 .Sh FUNCTIONS
 .Bl -tag -width compact
@@ -124,63 +125,81 @@ Performs indirect configuration of physical devices.
 iterates over all potential children, calling the given
 function
 .Fa func
-for each one.  If
+for each one.
+If
 .Fa func
-is NULL,
+is
+.Dv NULL ,
 .Fn config_search
-applies each child's match function instead.  The argument
+applies each child's match function instead.
+The argument
 .Fa parent
-is the pointer to the parent's device structure.  The given
+is the pointer to the parent's device structure.
+The given
 .Fa aux
 argument describes the device that has been found and is simply passed
 on through
 .Fa func
 to the child.
 .Fn config_search
-returns a pointer to the best-matched child or NULL otherwise.
+returns a pointer to the best-matched child or
+.Dv NULL
+otherwise.
 .Pp
 The role of
 .Fa func
 is to call
 the match function for each device and call
 .Fn config_attach
-for any positive matches.  If
+for any positive matches.
+If
 .Fa func
-is NULL, then the parent should record the return value from
+is
+.Dv NULL ,
+then the parent should record the return value from
 .Fn config_search
 and call
 .Fn config_attach
 itself.
 .Pp
 Note that this function is designed so that it can be used to apply an
-arbitrary function to all potential children.  In this case callers
-may choose to ignore the return value.
+arbitrary function to all potential children.
+In this case callers may choose to ignore the return value.
 .It Fn config_found_sm "parent" "aux" "print" "submatch"
 Performs direct configuration on a physical device.
 .Fn config_found_sm
 is called by the parent and in turn calls the
 .Fa submatch
 function to call the match function as
-determined by the configuration table.  If
+determined by the configuration table.
+If
 .Fa submatch
-is NULL, the driver match functions are called directly.  The argument
+is
+.Dv NULL ,
+the driver match functions are called directly.
+The argument
 .Fa parent
-is the pointer to the parent's device structure.  The given
+is the pointer to the parent's device structure.
+The given
 .Fa aux
-argument describes the device that has been found.  The
+argument describes the device that has been found.
+The
 .Em softc
 structure for the matched device will be allocated, and the
-appropriate driver attach function will be called.  If the device is
-matched, the system prints the name of the child and parent devices,
-and then calls the
+appropriate driver attach function will be called.
+If the device is matched, the system prints the name of the child and
+parent devices, and then calls the
 .Fa print
-function to produce additional information if desired.  If no driver
-takes a match, the same
+function to produce additional information if desired.
+If no driver takes a match, the same
 .Fa print
-function is called to complain.  The print function is called with the
+function is called to complain.
+The print function is called with the
 .Fa aux
 argument and, if the matches failed, the full name (including unit
-number) of the parent device, otherwise NULL.  The
+number) of the parent device, otherwise
+.Dv NULL .
+The
 .Fa print
 function must return an integer value.
 .Pp
@@ -199,24 +218,31 @@ return the value QUIET.
 .Fn config_found_sm
 returns a pointer to the attached device's
 .Em softc
-structure if the device is attached, NULL otherwise.  Most callers can
-ignore this value, since the system will already have printed a
-diagnostic.
+structure if the device is attached,
+.Dv NULL
+otherwise.
+Most callers can ignore this value, since the system will already have
+printed a diagnostic.
 .It Fn config_found "parent" "aux" "print"
 This function is equivalent to calling
 .Fn config_found_sm "parent" "aux" "print" "submatch"
 with
 .Fa submatch
-set to NULL and is provided for compatibility with older drivers.
+set to
+.Dv NULL
+and is provided for compatibility with older drivers.
 .It Fn config_match "parent" "cf" "aux"
-Match a device.  Invokes the drivers match function according to the
-configuration table. The
+Match a device.
+Invokes the drivers match function according to the
+configuration table.
+The
 .Fn config_match
 function returns a nonzero integer indicating the confidence of
 supporting this device and a value of 0 if the driver doesn't support
 the device.
 .It Fn config_attach "parent" "cf" "aux" "print"
-Attach a found device.  Allocates the memory for the
+Attach a found device.
+Allocates the memory for the
 .Em softc
 structure and calls the drivers attach function according to the
 configuration table.
@@ -224,13 +250,15 @@ If successful,
 .Fn config_attach
 returns the
 .Em softc .
-If unsuccessful, it returns NULL.
+If unsuccessful, it returns
+.Dv NULL .
 .It Fn config_detach "dev" "flags"
-Called by the parent to detach the child device.  The second argument
+Called by the parent to detach the child device.
+The second argument
 .Em flags
-contains detachment flags.  Valid values are DETACH_FORCE (force
-detachment (eg. because of hardware removal) and DETACH_QUIET (do not
-print a notice).
+contains detachment flags.
+Valid values are DETACH_FORCE (force detachment (e.g., because of hardware
+removal)) and DETACH_QUIET (do not print a notice).
 .Fn config_detach
 returns zero if successful and an error code otherwise.
 .Fn config_detach
@@ -250,39 +278,43 @@ Called by the parent to deactivate the child device
 .Fn config_deactivate
 is called from interrupt context to immediately relinquish resources
 and notify dependent kernel subsystems that the device is about to be
-detached.  At some later point
+detached.
+At some later point
 .Fn config_detach
 will be called to finalise the removal of the device.
 .It Fn config_defer "dev" "func"
 Called by the child to defer the remainder of its configuration until
-all its parent's devices have been attached.  At this point, the
-function
+all its parent's devices have been attached.
+At this point, the function
 .Fa func
 is called with the argument
 .Fa dev .
 .It Fn config_interrupts "struct device *dev" "void (*func)(struct device *)"
 Called by the child to defer the remainder of its configuration until
-interrupts are enabled.  At this point, the function
+interrupts are enabled.
+At this point, the function
 .Fa func
 is called with the argument
 .Fa dev .
 .It Fn config_pending_incr
 Increment the
 .Va config_pending
-semaphore.  It is used to account for deferred configurations before
+semaphore.
+It is used to account for deferred configurations before
 mounting the root file system.
 .It Fn config_pending_decr
 Decrement the
 .Va config_pending
-semaphore.  It is used to account for deferred configurations before
+semaphore.
+It is used to account for deferred configurations before
 mounting the root file system.
 .El
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-autoconfiguration framework can be found.  All pathnames are relative
-to
+autoconfiguration framework can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The autoconfiguration framework itself is implemented within the file
