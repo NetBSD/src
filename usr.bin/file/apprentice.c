@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.12 1997/01/09 20:18:49 tls Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.13 1997/01/28 00:49:37 christos Exp $	*/
 
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
@@ -36,7 +36,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$NetBSD: apprentice.c,v 1.12 1997/01/09 20:18:49 tls Exp $";
+	"@(#)$NetBSD: apprentice.c,v 1.13 1997/01/28 00:49:37 christos Exp $";
 #endif	/* lint */
 
 #define	EATAB {while (isascii((unsigned char) *l) && \
@@ -135,10 +135,10 @@ int check;			/* non-zero? checking-only run. */
 /*
  * extend the sign bit if the comparison is to be signed
  */
-unsigned long
+uint32
 signextend(m, v)
 struct magic *m;
-unsigned long v;
+uint32 v;
 {
 	if (!(m->flag & UNSIGNED))
 		switch(m->type) {
@@ -161,7 +161,7 @@ unsigned long v;
 		case LONG:
 		case BELONG:
 		case LELONG:
-			v = (long) v;
+			v = (int32) v;
 			break;
 		case STRING:
 			break;
@@ -497,21 +497,16 @@ int	plen, *slen;
 				*p++ = (char)val;
 				break;
 
-			/* \x and up to 3 hex digits */
+			/* \x and up to 2 hex digits */
 			case 'x':
 				val = 'x';	/* Default if no digits */
 				c = hextoint(*s++);	/* Get next char */
 				if (c >= 0) {
 					val = c;
 					c = hextoint(*s++);
-					if (c >= 0) {
+					if (c >= 0)
 						val = (val << 4) + c;
-						c = hextoint(*s++);
-						if (c >= 0) {
-							val = (val << 4) + c;
-						} else
-							--s;
-					} else
+					else
 						--s;
 				} else
 					--s;
