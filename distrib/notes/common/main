@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.137 2001/09/16 19:26:12 gendalia Exp $
+.\"	$NetBSD: main,v 1.138 2001/09/29 13:05:46 seb Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1523,6 +1523,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Matthias Drochner Ta Mt drochner@netbsd.org
 .It Ta Jun Ebihara Ta Mt jun@netbsd.org
 .It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
+.It Ta Stoned Elipot Ta Mt seb@netbsd.org
 .It Ta Enami Tsugutomo Ta Mt enami@netbsd.org
 .It Ta Bernd Ernesti Ta Mt veego@netbsd.org
 .It Ta Erik Fair Ta Mt fair@netbsd.org
