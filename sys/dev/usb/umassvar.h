@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.18 2003/02/16 23:14:08 augustss Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.19 2003/02/22 05:18:50 tsutsui Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -58,8 +58,6 @@ extern int umassdebug;
 #define DIR_NONE	0
 #define DIR_IN		1
 #define DIR_OUT		2
-
-#define MS_TO_TICKS(ms) ((ms) * hz / 1000)
 
 /* Endpoints for umass */
 #define	UMASS_BULKIN	0
