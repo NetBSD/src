@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.2 2000/08/20 17:07:41 scw Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.3 2000/08/20 21:51:31 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ static const char *mvmebus_mod_string(vme_addr_t, vme_size_t,
 
 static int mvmebus_dmamap_load_common(struct mvmebus_softc *, bus_dmamap_t);
 
-static vme_am_t	mvmebus_am_cap[] = {
+vme_am_t	_mvmebus_am_cap[] = {
 	MVMEBUS_AM_CAP_BLKD64 | MVMEBUS_AM_CAP_USER,
 	MVMEBUS_AM_CAP_DATA   | MVMEBUS_AM_CAP_USER,
 	MVMEBUS_AM_CAP_PROG   | MVMEBUS_AM_CAP_USER,
@@ -78,9 +78,6 @@ static vme_am_t	mvmebus_am_cap[] = {
 	MVMEBUS_AM_CAP_PROG   | MVMEBUS_AM_CAP_SUPER,
 	MVMEBUS_AM_CAP_BLK    | MVMEBUS_AM_CAP_SUPER
 };
-
-#define MVMEBUS_AM2CAP(am)	(mvmebus_am_cap[((am) & \
-				    (VME_AM_MODEMASK | VME_AM_PRIVMASK))])
 
 void
 mvmebus_attach(sc)
@@ -183,6 +180,7 @@ mvmebus_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 	struct mvmebus_mapresc *mr;
 	struct mvmebus_range *vr;
 	vme_addr_t end;
+	vme_am_t cap, as;
 	paddr_t paddr;
 	int rv, i;
 
@@ -190,20 +188,19 @@ mvmebus_map(vsc, vmeaddr, len, am, datasize, swap, tag, handle, resc)
 	end = (vmeaddr + len) - 1;
 	paddr = 0;
 	vr = sc->sc_masters;
+	cap = MVMEBUS_AM2CAP(am);
+	as = am & VME_AM_ADRSIZEMASK;
 
-	for (i = 0; i < sc->sc_nmasters; i++, vr++) {
+	for (i = 0; i < sc->sc_nmasters && paddr == 0; i++, vr++) {
 		if (vr->vr_am == MVMEBUS_AM_DISABLED)
 			continue;
 
-		if (am != vr->vr_am || datasize > vr->vr_datasize)
-			continue;
-
-		if (vmeaddr >= vr->vr_vmestart && end < vr->vr_vmeend) {
+		if (cap == (vr->vr_am & cap) &&
+		    as == (vr->vr_am & VME_AM_ADRSIZEMASK) &&
+		    datasize <= vr->vr_datasize &&
+		    vmeaddr >= vr->vr_vmestart && end < vr->vr_vmeend)
 			paddr = vr->vr_locstart + (vmeaddr & vr->vr_mask);
-			break;
-		}
 	}
-
 	if (paddr == 0)
 		return (ENOMEM);
 
@@ -428,18 +425,21 @@ mvmebus_dmamap_create(vsc, len, am, datasize, swap, nsegs,
 	struct mvmebus_softc *sc = vsc;
 	struct mvmebus_dmamap *vmap;
 	struct mvmebus_range *vr;
-	vme_am_t cap, am2;
+	vme_am_t cap, as;
 	int i, rv;
 
 	cap = MVMEBUS_AM2CAP(am);
-	am2 = am & VME_AM_ADRSIZEMASK;
+	as = am & VME_AM_ADRSIZEMASK;
 
 	/*
 	 * Verify that we even stand a chance of satisfying
 	 * the VMEbus address space and datasize requested.
 	 */
 	for (i = 0, vr = sc->sc_slaves; i < sc->sc_nslaves; i++, vr++) {
-		if (am2 == (vr->vr_am & VME_AM_ADRSIZEMASK) &&
+		if (vr->vr_am == MVMEBUS_AM_DISABLED)
+			continue;
+
+		if (as == (vr->vr_am & VME_AM_ADRSIZEMASK) &&
 		    cap == (vr->vr_am & cap) && datasize <= vr->vr_datasize &&
 		    len <= (vr->vr_vmeend - vr->vr_vmestart))
 			break;
@@ -514,6 +514,9 @@ mvmebus_dmamap_load_common(sc, map)
 			goto found;
 
 		for (i = 0, vr = sc->sc_slaves; i < sc->sc_nslaves; i++, vr++) {
+			if (vr->vr_am == MVMEBUS_AM_DISABLED)
+				continue;
+
 			/*
 			 * Filter out any slave images which don't have the
 			 * same VMEbus address modifier and datasize as
@@ -716,6 +719,9 @@ mvmebus_dmamem_alloc(vsc, len, am, datasize, swap, segs, nsegs, rsegs, flags)
 	 * Find a slave mapping in the requested VMEbus address space.
 	 */
 	for (i = 0, vr = sc->sc_slaves; i < sc->sc_nslaves; i++, vr++) {
+		if (vr->vr_am == MVMEBUS_AM_DISABLED)
+			continue;
+
 		if (am == (vr->vr_am & VME_AM_ADRSIZEMASK) &&
 		    cap == (vr->vr_am & cap) && datasize <= vr->vr_datasize &&
 		    len <= (vr->vr_vmeend - vr->vr_vmestart))
@@ -731,11 +737,6 @@ mvmebus_dmamem_alloc(vsc, len, am, datasize, swap, segs, nsegs, rsegs, flags)
 	low = max(vr->vr_locstart, avail_start);
 	high = vr->vr_locstart + (vr->vr_vmeend - vr->vr_vmestart) + 1;
 	bound = (bus_size_t) vr->vr_mask + 1;
-
-#ifdef DEBUG
-	printf("mvmebus_dmamem_alloc: high=0x%08lx,low=0x%08lx,bound=0x%08lx\n",
-		high, low, bound);
-#endif
 
 	/*
 	 * Allocate physical memory.
@@ -849,6 +850,7 @@ mvmebus_mod_string(addr, len, am, ds)
 			strcat(mstring, "B");
 		if (am & MVMEBUS_AM_CAP_BLKD64)
 			strcat(mstring, "6");
+		strcat(mstring, ")");
 	} else {
 		strcat(mstring, ((am & VME_AM_PRIVMASK) == VME_AM_USER) ?
 		    "USER," : "SUPER,");

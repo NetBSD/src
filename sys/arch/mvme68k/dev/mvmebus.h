@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.h,v 1.2 2000/08/20 17:07:41 scw Exp $	*/
+/*	$NetBSD: mvmebus.h,v 1.3 2000/08/20 21:51:31 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@ struct mvmebus_range {
 #define MVMEBUS_AM_CAP_USER	0x1000
 #define MVMEBUS_AM_CAP_SUPER	0x2000
 #define MVMEBUS_AM_HAS_CAP(x)	(((x) & 0x3f00) != 0)
+
+#define MVMEBUS_AM2CAP(am)	(_mvmebus_am_cap[((am) & \
+				    (VME_AM_MODEMASK | VME_AM_PRIVMASK))])
 
 
 /*
@@ -148,5 +151,7 @@ int	mvmebus_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int,
 void	mvmebus_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
 paddr_t	mvmebus_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *, int,
 	    off_t, int, int);
+
+extern vme_am_t _mvmebus_am_cap[];
 
 #endif /* _MVMEBUS_H */
