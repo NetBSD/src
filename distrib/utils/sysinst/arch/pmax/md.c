@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.42 2000/12/21 21:42:02 jdc Exp $	*/
+/*	$NetBSD: md.c,v 1.43 2000/12/22 10:12:15 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,7 @@
 /*
  * temporary hack
  */
-void get_labelname __P((void));
+void get_labelname (void);
 
 void get_labelname(void)
 {
