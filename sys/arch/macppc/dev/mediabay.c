@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.2 1999/10/04 22:58:10 tsubai Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.3 2000/08/23 12:18:17 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -100,7 +100,7 @@ mediabay_attach(parent, self, aux)
 {
 	struct mediabay_softc *sc = (struct mediabay_softc *)self;
 	struct confargs *ca = aux;
-	int irq;
+	int irq, type;
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
@@ -109,9 +109,13 @@ mediabay_attach(parent, self, aux)
 	sc->sc_node = ca->ca_node;
 	sc->sc_baseaddr = ca->ca_baseaddr;
 	irq = ca->ca_intr[0];
+	type = IST_LEVEL;
 
-	printf(" irq %d\n", irq);
-	intr_establish(irq, IST_LEVEL, IPL_BIO, mediabay_intr, sc);
+	if (ca->ca_nintr == 8 && ca->ca_intr[1] == 0)
+		type = IST_EDGE;
+
+	printf(" irq %d %s\n", irq, intr_typename(type));
+	intr_establish(irq, type, IPL_BIO, mediabay_intr, sc);
 
 	kthread_create(mediabay_create_kthread, sc);
 
