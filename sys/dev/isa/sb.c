@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.68 1999/08/02 17:37:42 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.69 1999/10/10 00:08:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
 
-#if NMIDI > 0
+#if NMPU > 0
 struct midi_hw_if sb_midi_hw_if = {
 	sbdsp_midi_open,
 	sbdsp_midi_close,
@@ -237,7 +237,7 @@ sbattach(sc)
 
 	audio_attach_mi(&sb_hw_if, sc, &sc->sc_dev);
 
-#if NMIDI > 0
+#if NMPU > 0
 	if (sc->sc_hasmpu) {
 		arg.type = AUDIODEV_TYPE_MPU;
 		arg.hwif = 0;
