@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.15 1998/05/20 12:34:14 pk Exp $
+#	$NetBSD: Makefile,v 1.16 1998/07/27 02:29:25 tv Exp $
 
 LIB=	cc1
+
+# XXX temporary for mips -> mipsel migration
+TARGET_ARCH=${MACHINE_ARCH:C/^mips.*/mips/}
 
 NOMAN=
 NOPIC=
@@ -12,13 +15,13 @@ COMMON!=cd $(.CURDIR)/../common; \
 	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 CPPFLAGS+=-I${.CURDIR} -I${.CURDIR}/../arch \
-	-I${.CURDIR}/../arch/$(MACHINE_ARCH) -I$(COMMON)
+	-I${.CURDIR}/../arch/$(TARGET_ARCH) -I$(COMMON)
 
-MD= ${.CURDIR}/../arch/${MACHINE_ARCH}/${MACHINE_ARCH}.md
+MD= ${.CURDIR}/../arch/${TARGET_ARCH}/${TARGET_ARCH}.md
 
 BCDEF= ${.CURDIR}/bytecode.def
 
-.PATH:	${.CURDIR}/../arch/${MACHINE_ARCH}
+.PATH:	${.CURDIR}/../arch/${TARGET_ARCH}
 
 SRCS=	bc-arity.h bc-opcode.h bc-opname.h c-parse.h bc-emit.c \
 	bc-optab.c bi-reverse.c c-aux-info.c c-common.c c-convert.c \
@@ -32,7 +35,7 @@ SRCS=	bc-arity.h bc-opcode.h bc-opname.h c-parse.h bc-emit.c \
 	reload1.c reorg.c rtl.c rtlanal.c sched.c \
 	sdbout.c stmt.c stor-layout.c stupid.c toplev.c \
 	tree.c unroll.c varasm.c version.c xcoffout.c \
-	$(MACHINE_ARCH).c insn-attr.h insn-codes.h insn-config.h insn-flags.h \
+	$(TARGET_ARCH).c insn-attr.h insn-codes.h insn-config.h insn-flags.h \
 	insn-peep.c insn-opinit.c insn-recog.c insn-extract.c insn-output.c \
 	insn-emit.c insn-attrtab.c 
 
