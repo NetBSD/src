@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.21 1999/03/25 18:48:50 mrg Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.22 1999/03/26 17:34:16 chs Exp $	*/
 
 /*
  *
@@ -1146,13 +1146,18 @@ ReFault:
 			if (anon)
 				uvm_anfree(anon);
 			uvmfault_unlockall(&ufi, amap, uobj, oanon);
-			if (anon == NULL) {
+#ifdef DIAGNOSTIC
+			if (uvmexp.swpgonly > uvmexp.swpages) {
+				panic("uvmexp.swpgonly botch");
+			}
+#endif
+			if (anon == NULL || uvmexp.swpgonly == uvmexp.swpages) {
 				UVMHIST_LOG(maphist,
 				    "<- failed.  out of VM",0,0,0,0);
 				uvmexp.fltnoanon++;
-				/* XXX: OUT OF VM, ??? */
 				return (KERN_RESOURCE_SHORTAGE);
 			}
+
 			uvmexp.fltnoram++;
 			uvm_wait("flt_noram3");	/* out of RAM, wait for more */
 			goto ReFault;
@@ -1207,6 +1212,7 @@ ReFault:
 
 	if (fault_type == VM_FAULT_WIRE) {
 		uvm_pagewire(pg);
+		uvm_anon_dropswap(anon);
 	} else {
 		/* activate it */
 		uvm_pageactivate(pg);
@@ -1538,13 +1544,18 @@ Case2:
 
 			/* unlock and fail ... */
 			uvmfault_unlockall(&ufi, amap, uobj, NULL);
-			if (anon == NULL) {
+#ifdef DIAGNOSTIC
+			if (uvmexp.swpgonly > uvmexp.swpages) {
+				panic("uvmexp.swpgonly botch");
+			}
+#endif
+			if (anon == NULL || uvmexp.swpgonly == uvmexp.swpages) {
 				UVMHIST_LOG(maphist, "  promote: out of VM",
 				    0,0,0,0);
 				uvmexp.fltnoanon++;
-				/* XXX: out of VM */
 				return (KERN_RESOURCE_SHORTAGE);
 			}
+
 			UVMHIST_LOG(maphist, "  out of RAM, waiting for more",
 			    0,0,0,0);
 			uvm_anfree(anon);
@@ -1625,6 +1636,9 @@ Case2:
 
 	if (fault_type == VM_FAULT_WIRE) {
 		uvm_pagewire(pg);
+		if (pg->pqflags & PQ_AOBJ) {
+			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
+		}
 	} else {
 		
 		/* activate it */
