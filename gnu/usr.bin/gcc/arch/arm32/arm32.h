@@ -372,20 +372,10 @@ extern enum floating_point_type arm_fpu;
     }							\
  if (flag_pic)						\
     {							\
-      fixed_regs[arm_pic_register] = 1;		\
-      call_used_regs[arm_pic_register] = 1;	\
+      fixed_regs[PIC_OFFSET_TABLE_REGNUM] = 1;		\
+      call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 1;	\
     }							\
 }
-
-/* indicate that the pic register is not avail for allocation
-*  fixed_regs[n] ==1     implies that n can not be allocated
-*  call_used_regs[n] ==1 implies that n cannot be allocated over a call
-*  every element of fixed_regs must also be an element of call_used_regs
-*  if(n is not in call_used_regs) and n is used in the proceedure then n mustbe
-*   saved and restored at proc entry/exit
-*/
-
-
 
 /* Return number of consecutive hard regs needed starting at reg REGNO
    to hold something of mode MODE.
