@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.73 2002/11/29 19:11:45 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.74 2002/12/04 22:59:51 martin Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -185,6 +185,22 @@ A string.
 If empty or not set, then the contents of
 .Pa /etc/defaultdomain
 (if it exists) are used.
+.It Sy force_down_interfaces
+A space separated list of interface names.
+This interfaces will be configured down when going from multiuser to singleuser
+mode or on system shutdown.
+.Pp
+This is important for some stateful interfaces, for example PPP over ISDN
+connections that cost money by connection time or PPPoE interfaces which
+have no direct means of noticing 
+.Dq disconnect
+events.
+.Pp
+All active
+.Xr pppoe 4
+and
+.Xr ippp 4
+interfaces will be automatically added to this list.
 .El
 .Ss Boottime file-system and swap configuration
 .Bl -tag -width net_interfaces
