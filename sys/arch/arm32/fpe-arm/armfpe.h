@@ -1,6 +1,6 @@
+/* $NetBSD: armfpe.h,v 1.6 1996/10/15 00:42:46 mark Exp $ */
+
 /*
- * $NetBSD: armfpe.h,v 1.5 1996/08/21 20:06:26 mark Exp $
- *
  * Copyright (c) 1995 Neil A Carson.
  * All rights reserved.
  *
@@ -41,6 +41,11 @@
  * Created      : 04/01/96
  */
 
+#include <machine/fp.h>
+#include <machine/reg.h>
+
+#if 0
+/* Get this from <machine/fp.h> */
 /*
  * An extended precision floating point number
  */
@@ -50,6 +55,9 @@ typedef struct {
 	u_int32_t mantissa_hi;
 	u_int32_t mantissa_lo;
 } fp_extended_precision_t;
+#endif
+
+#ifdef _KERNEL
 
 /*
  * Type for a saved FP context, if we want to translate the context to a
@@ -91,15 +99,19 @@ typedef struct {
 	u_int32_t *fp_post_proc_addr;
 
 	/*
-	 * Numbers that the kernel needs - these are not pointers so do not need to
-	 * be relocated!
+	 * Constants that the kernel needs
 	 */
 
-	u_int32_t WorkspaceLength;
-	u_int32_t ContextLength;
-} arm_fpe_mod_hdr_t;
+	u_int32_t workspacelength;
+	u_int32_t contextlength;
 
-#ifdef _KERNEL
+	/*
+	 * Data pointers for extra information
+	 */
+	u_char *version_addr;
+	u_char *identity_addr;
+
+} arm_fpe_mod_hdr_t;
 
 /* macro to return the FP context for a process */
 
@@ -110,7 +122,7 @@ typedef struct {
 int arm_fpe_boot	__P((cpu_t *cpu));
 int initialise_arm_fpe	__P((cpu_t *cpu));
 void arm_fpe_postproc	__P((u_int fpframe, struct trapframe *frame));
-void arm_fpe_exception	__P((int exception, u_int pc, u_int fpframe));
+void arm_fpe_exception	__P((int exception, u_int fpframe, struct trapframe *frame));
 
 void arm_fpe_core_disable	__P((void));
 void arm_fpe_core_enable	__P((void));
@@ -121,7 +133,9 @@ u_int arm_fpe_core_changecontext	__P((u_int context));
 void arm_fpe_core_shutdown		__P((void));
 void arm_fpe_core_activatecontext	__P((u_int context));
 u_int arm_fpe_core_deactivatecontext	__P((void));
-u_int arm_fpe_core_savecontext	__P((u_int context, int *savearea, int pc));
-void arm_fpe_core_loadcontext	__P((u_int context, int *loadarea));
+u_int arm_fpe_core_savecontext	__P((u_int context, fp_context_frame_t *savearea, int pc));
+void arm_fpe_core_loadcontext	__P((u_int context, fp_context_frame_t *loadarea));
 void arm_fpe_copycontext	__P((u_int c1, u_int c2));
+void arm_fpe_getcontext		__P((struct proc *p, fp_reg_t *fpregs));
+void arm_fpe_setcontext		__P((struct proc *p, fp_reg_t *fpregs));
 #endif	/* _KERNEL */
