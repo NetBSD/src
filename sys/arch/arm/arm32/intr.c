@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7 2002/01/30 03:59:39 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.8 2002/01/31 09:43:42 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -191,7 +191,7 @@ u_int spl_masks[_SPL_LEVELS + 1];
 u_int spl_smasks[_SPL_LEVELS];
 int safepri = _SPL_0;
 
-extern int irqmasks[];
+extern u_int irqmasks[];
 
 void
 set_spl_masks()
