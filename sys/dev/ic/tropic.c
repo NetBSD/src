@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.15 2000/12/12 18:00:24 thorpej Exp $	*/
+/*	$NetBSD: tropic.c,v 1.16 2000/12/14 06:27:26 thorpej Exp $	*/
 
 /* 
  * Ported to NetBSD by Onno van der Linden
@@ -349,6 +349,7 @@ tr_attach(sc)
 		ifp->if_start = tr_oldstart;
 	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
 	ifp->if_watchdog = tr_watchdog;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	switch (MM_INB(sc, TR_MEDIAS_OFFSET)) {
 	case 0xF:
@@ -739,7 +740,7 @@ next:
 		return;
 
 	/* if data in queue, copy mbuf chain to fast path buffers */
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 	if (m0 == 0)
 		return;
@@ -809,8 +810,6 @@ next:
 #endif
 }
 
-
-#define	IF_EMPTYQUEUE(queue) ((queue).ifq_head == 0)
 
 /*
  *  tr_intr - interrupt handler.  Find the cause of the interrupt and
@@ -1127,7 +1126,7 @@ tr_intr(arg)
  * XXX should this be done here ?
  */
 				/* if data on send queue */
-				if (!IF_EMPTYQUEUE(ifp->if_snd))
+				if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 					tr_oldstart(ifp);
 				break;
 
@@ -1361,7 +1360,7 @@ struct tr_softc *sc;
  * XXX what's command here ?  command = 0x0d (always ?)
  */
 		/* if data in queue, copy mbuf chain to DHB */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 != 0) {
 #if NBPFILTER > 0
 			if (ifp->if_bpf)
