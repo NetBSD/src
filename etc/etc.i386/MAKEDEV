@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.67 1998/07/12 20:28:24 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.68 1998/07/27 18:49:43 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -70,8 +70,6 @@
 #	usb*	Bus control devices used by usbd for attach/detach
 #	uhid*	Generic HID devices
 #	ulpt*	Printer devices
-#	ums*	Mice, using the busmouse protocol
-#	ukbd*	Keyboards
 #
 # Call units:
 #
@@ -127,8 +125,6 @@ usbs)
 	sh $0 usb0 usb1 
 	sh $0 uhid0 uhid1 uhid2 uhid3
 	sh $0 ulpt0 ulpt1 
-	sh $0 ums0 ums1 
-	sh $0 ukbd0 ukbd1 
 	;;
 
 std)
@@ -177,26 +173,6 @@ ulpt*)
 	chmod 600 $ulpt
 	;;
 
-ums*)
-	unit=${i#ums}
-	ums=ums$unit
-	major=58
-	rm -f $ums
-	mknod $ums c $major $unit
-	chown root.wheel $ums
-	chmod 600 $ums
-	;;
-
-ukbd*)
-	unit=${i#ukbd}
-	ukbd=ukbd$unit
-	major=59
-	rm -f $ukbd
-	mknod $ukbd c $major $unit
-	chown root.wheel $ukbd
-	chmod 600 $ukbd
-	;;
-
 ttyv*)
 	chr=12; unit=${i#ttyv}
 	rm -f ttyv$unit
@@ -212,6 +188,7 @@ ttyv*)
 
 wscons)
 	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	sh $0 wms0
 	;;
 
 ttyE*)
@@ -219,6 +196,26 @@ ttyE*)
 	rm -f ttyE$unit
 	mknod ttyE$unit c $chr $unit
 	chown root.wheel ttyE$unit
+	;;
+
+wms*)
+	unit=${i#wms}
+	wms=wms$unit
+	major=49
+	rm -f $wms
+	mknod $wms c $major $unit
+	chown root.wheel $wms
+	chmod 600 $wms
+	;;
+
+wkbd*)
+	unit=${i#wkbd}
+	wkbd=wkbd$unit
+	major=48
+	rm -f $wkbd
+	mknod $wkbd c $major $unit
+	chown root.wheel $wkbd
+	chmod 600 $wkbd
 	;;
 
 fd)
