@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.28 2004/03/28 08:44:56 jmc Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.29 2004/04/06 05:24:57 jmc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.31 2004/03/15 05:41:25 jmc Exp 
+ *	NetBSD: pcidevs,v 1.428.2.32 2004/03/28 08:44:27 jmc Exp 
  */
 
 /*
@@ -3536,6 +3536,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "PRO/100 VM Network Controller with 82562ET PHY",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LAN,
+	    0,
+	    "Intel",
+	    "82801EB/ER 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_M,

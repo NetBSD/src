@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.433.2.28 2004/03/28 08:44:56 jmc Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.433.2.29 2004/04/06 05:24:46 jmc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.31 2004/03/15 05:41:25 jmc Exp 
+ *	NetBSD: pcidevs,v 1.428.2.32 2004/03/28 08:44:27 jmc Exp 
  */
 
 /*
@@ -1372,6 +1372,7 @@
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_5	0x103e		/* PRO/100 VM (MOB) Network Controller */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2100	0x1043		/* PRO/Wireless LAN 2100 3B Mini PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_100_VM_6	0x1050		/* PRO/100 VM Network Controller with 82562ET PHY */
+#define	PCI_PRODUCT_INTEL_82801EB_LAN	0x1051		/* 82801EB/ER 10/100 Ethernet */
 #define	PCI_PRODUCT_INTEL_PRO_100_M	0x1059		/* PRO/100 M Network Controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
