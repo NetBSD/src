@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.57 1995/03/07 21:46:06 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.58 1995/03/23 11:33:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -88,7 +88,9 @@ struct cd_softc {
 	int flags;
 #define	CDF_LOCKED	0x01
 #define	CDF_WANTED	0x02
-	struct scsi_link *sc_link;	/* address of scsi low level switch */
+#define	CDF_WLABEL	0x04		/* label is writable */
+#define	CDF_LABELLING	0x08		/* writing label */
+	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct cd_parms {
 		int blksize;
 		u_long disksize;	/* total number sectors */
@@ -185,6 +187,32 @@ cdattach(parent, self, aux)
 		    cd->params.disksize, cd->params.blksize);
 }
 
+int
+cdlockwait(cd)
+	struct cd_softc *cd;
+{
+	int error;
+
+	while ((cd->flags & CDF_LOCKED) != 0) {
+		cd->flags |= CDF_WANTED;
+		if ((error = tsleep(cd, PRIBIO | PCATCH, "cdlck", 0)) != 0)
+			return error;
+	}
+	return 0;
+}
+
+void
+cdunlock(cd)
+	struct cd_softc *cd;
+{
+
+	cd->flags &= ~CDF_LOCKED;
+	if ((cd->flags & CDF_WANTED) != 0) {
+		cd->flags &= ~CDF_WANTED;
+		wakeup(cd);
+	}
+}
+
 /*
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
@@ -212,11 +240,8 @@ cdopen(dev, flag, fmt)
 	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    cdcd.cd_ndevs, part));
 
-	while ((cd->flags & CDF_LOCKED) != 0) {
-		cd->flags |= CDF_WANTED;
-		if ((error = tsleep(cd, PRIBIO | PCATCH, "cdopn", 0)) != 0)
-			return error;
-	}
+	if (error = cdlockwait(cd))
+		return error;
 
 	if (cd->sc_dk.dk_openmask != 0) {
 		/*
@@ -260,11 +285,7 @@ cdopen(dev, flag, fmt)
 			SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated "));
 		}
 
-		cd->flags &= ~CDF_LOCKED;
-		if ((cd->flags & CDF_WANTED) != 0) {
-			cd->flags &= ~CDF_WANTED;
-			wakeup(cd);
-		}
+		cdunlock(cd);
 	}
 
 	/* Check that the partition exists. */
@@ -299,11 +320,7 @@ bad:
 		sc_link->flags &= ~SDEV_OPEN;
 
 bad3:
-		cd->flags &= ~CDF_LOCKED;
-		if ((cd->flags & CDF_WANTED) != 0) {
-			cd->flags &= ~CDF_WANTED;
-			wakeup(cd);
-		}
+		cdunlock(cd);
 	}
 
 	return error;
@@ -333,6 +350,10 @@ cdclose(dev, flag, fmt)
 	cd->sc_dk.dk_openmask = cd->sc_dk.dk_copenmask | cd->sc_dk.dk_bopenmask;
 
 	if (cd->sc_dk.dk_openmask == 0) {
+		/*
+		 * If we're closing the last partition, nobody else could be
+		 * holding the lock, so don't bother to check.
+		 */
 		cd->flags |= CDF_LOCKED;
 
 #if 0
@@ -349,11 +370,7 @@ cdclose(dev, flag, fmt)
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
 		cd->sc_link->flags &= ~SDEV_OPEN;
 
-		cd->flags &= ~CDF_LOCKED;
-		if ((cd->flags & CDF_WANTED) != 0) {
-			cd->flags &= ~CDF_WANTED;
-			wakeup(cd);
-		}
+		cdunlock(cd);
 	}
 
 	return 0;
@@ -396,7 +413,7 @@ cdstrategy(bp)
 	 * If the device has been made invalid, error out
 	 * maybe the media changed
 	 */
-	if (!(cd->sc_link->flags & SDEV_MEDIA_LOADED)) {
+	if ((cd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 		bp->b_error = EIO;
 		goto bad;
 	}
@@ -417,7 +434,8 @@ cdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (bounds_check_with_label(bp, &cd->sc_dk.dk_label, 0) <= 0)
+	if (bounds_check_with_label(bp, &cd->sc_dk.dk_label,
+	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
 		goto done;
 
 	opri = splbio();
@@ -475,8 +493,7 @@ cdstart(cd)
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdstart "));
 	/*
-	 * See if there is a buf to do and we are not already
-	 * doing one
+	 * Check if the device has room for another command
 	 */
 	while (sc_link->openings > 0) {
 		/*
@@ -503,7 +520,7 @@ cdstart(cd)
 		 * reads and writes until all files have been closed and
 		 * re-opened
 		 */
-		if (!(sc_link->flags & SDEV_MEDIA_LOADED)) {
+		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
 			biodone(bp);
@@ -514,8 +531,7 @@ cdstart(cd)
 		 * We have a buf, now we should make a command 
 		 *
 		 * First, translate the block to absolute and put it in terms
-		 * of the logical blocksize of the device.  Really a bit silly
-		 * until we have real partitions, but.
+		 * of the logical blocksize of the device.
 		 */
 		blkno =
 		    bp->b_blkno / (cd->sc_dk.dk_label.d_secsize / DEV_BSIZE);
@@ -564,12 +580,12 @@ cdioctl(dev, cmd, addr, flag, p)
 	struct cd_softc *cd = cdcd.cd_devs[CDUNIT(dev)];
 	int error;
 
-	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdioctl 0x%x ", cmd));
+	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cdioctl 0x%lx ", cmd));
 
 	/*
 	 * If the device is not valid.. abandon ship
 	 */
-	if (!(cd->sc_link->flags & SDEV_MEDIA_LOADED))
+	if ((cd->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
 		return EIO;
 
 	switch (cmd) {
@@ -587,13 +603,30 @@ cdioctl(dev, cmd, addr, flag, p)
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
+
+		if (error = cdlockwait(cd))
+			return error;
+		cd->flags |= CDF_LOCKED | CDF_LABELLING;
+
 		error = setdisklabel(&cd->sc_dk.dk_label,
 		    (struct disklabel *)addr, /*cd->sc_dk.dk_openmask : */0,
 		    &cd->sc_dk.dk_cpulabel);
+		if (error == 0 && cmd == DIOCWDINFO)
+			error = writedisklabel(WDLABELDEV(dev), cdstrategy,
+			    &cd->sc_dk.dk_label, &cd->sc_dk.dk_cpulabel);
+
+		cd->flags &= ~CDF_LABELLING;
+		cdunlock(cd);
 		return error;
 
 	case DIOCWLABEL:
-		return EBADF;
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+		if (*(int *)addr)
+			cd->flags |= CDF_WLABEL;
+		else
+			cd->flags &= ~CDF_WLABEL;
+		return 0;
 
 	case CDIOCPLAYTRACKS: {
 		struct ioc_play_track *args = (struct ioc_play_track *)addr;
@@ -792,6 +825,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		return 0;
 	case CDIOCRESET:
 		return cd_reset(cd);
+
 	default:
 		if (CDPART(dev) != RAW_PART)
 			return ENOTTY;
@@ -1125,8 +1159,21 @@ int
 cdsize(dev)
 	dev_t dev;
 {
+	struct cd_softc *cd;
+	int part;
+	int size;
 
-	return -1;
+	if (cdopen(dev, 0, S_IFBLK) != 0)
+		return -1;
+	cd = cdcd.cd_devs[CDUNIT(dev)];
+	part = CDPART(dev);
+	if (cd->sc_dk.dk_label.d_partitions[part].p_fstype != FS_SWAP)
+		size = -1;
+	else
+		size = cd->sc_dk.dk_label.d_partitions[part].p_size;
+	if (cdclose(dev, 0, S_IFBLK) != 0)
+		return -1;
+	return size;
 }
 
 int
