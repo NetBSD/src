@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1995/03/21 12:14:18 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1995/04/20 02:06:32 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/11/93
 
 SUBDIR=	boggle mkdict mkindex
@@ -9,8 +9,10 @@ MKINDEX!=cd $(.CURDIR)/mkindex; \
 	printf "xxx:\n\techo \$${.OBJDIR}/mkindex\n" | ${MAKE} -r -s -f - xxx
 
 beforeinstall:
+	rm -f ${DESTDIR}/usr/share/games/boggle/dictionary
 	${MKDICT} < /usr/share/dict/words > \
 	    ${DESTDIR}/usr/share/games/boggle/dictionary
+	rm -f ${DESTDIR}/usr/share/games/boggle/dictindex
 	${MKINDEX} < ${DESTDIR}/usr/share/games/boggle/dictionary > \
 	    ${DESTDIR}/usr/share/games/boggle/dictindex
 	chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/share/games/boggle/dictionary
