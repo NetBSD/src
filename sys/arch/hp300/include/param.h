@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 1994/10/26 07:26:30 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.18 1995/03/05 22:06:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,33 +54,32 @@
  * data types (int, long, ...).   The result is u_int and must be cast to
  * any desired pointer type.
  */
-#define	ALIGNBYTES	3
+#define	ALIGNBYTES	(sizeof(int) - 1)
 #define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 
-#define	NBPG		4096		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	NPTEPG		(NBPG / (sizeof (pt_entry_t)))
+#define	NBPG		(1 << PGSHIFT)	/* bytes/page */
+#define	PGOFSET		(NBPG-1)	/* byte offset into page */
+#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-#define NBSEG		0x400000	/* bytes/segment */
-#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
+#define NBSEG		(1 << SEGSHIFT)	/* bytes/segment */
+#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
-#define	DEV_BSIZE	512
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
+#define	DEV_BSIZE	(1 << DEV_BSHIFT)
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* max raw I/O transfer size */
 
-#define	CLSIZE		1
 #define	CLSIZELOG2	0
+#define	CLSIZE		(1 << CLSIZELOG2)
 
 /* NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
-
 #define	UPAGES		2		/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)	/* total size of u-area */
 
@@ -92,9 +91,10 @@
  * of the hardware page size.
  */
 #define	MSIZE		128		/* size of an mbuf */
-#define	MCLBYTES	2048		/* large enough for ether MTU */
 #define	MCLSHIFT	11
+#define	MCLBYTES	(1 << MCLSHIFT)	/* large enough for ether MTU */
 #define	MCLOFSET	(MCLBYTES - 1)
+
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
@@ -107,24 +107,20 @@
  * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(2048*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(2048 * 1024 / CLBYTES)
 #endif
 
 /* pages ("clicks") (4096 bytes) to disk blocks */
-#define	ctod(x)	((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)	((x) >> (PGSHIFT - DEV_BSHIFT))
-#define	dtob(x)	((x) << DEV_BSHIFT)
+#define	ctod(x)		((unsigned)(x) << (PGSHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((unsigned)(x) >> (PGSHIFT - DEV_BSHIFT))
 
 /* pages to bytes */
-#define	ctob(x)	((x) << PGSHIFT)
+#define	ctob(x)		((unsigned)(x) << PGSHIFT)
+#define	btoc(x)		(((unsigned)(x) + PGOFSET) >> PGSHIFT)
 
-/* bytes to pages */
-#define	btoc(x)	(((unsigned)(x) + PGOFSET) >> PGSHIFT)
-
-#define	btodb(bytes)	 		/* calculates (bytes / DEV_BSIZE) */ \
-	((unsigned)(bytes) >> DEV_BSHIFT)
-#define	dbtob(db)			/* calculates (db * DEV_BSIZE) */ \
-	((unsigned)(db) << DEV_BSHIFT)
+/* bytes to disk blocks */
+#define	dbtob(x)	((unsigned)(x) << DEV_BSHIFT)
+#define	btodb(x)	((unsigned)(x) >> DEV_BSHIFT)
 
 /*
  * Map a ``block device block'' to a file system block.
@@ -137,8 +133,8 @@
 /*
  * Mach derived conversion macros
  */
-#define hp300_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define hp300_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
+#define hp300_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
+#define hp300_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
 #define hp300_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define hp300_ptob(x)		((unsigned)(x) << PGSHIFT)
 
