@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.21 2001/01/04 02:43:32 jwise Exp $ */
+/*	$NetBSD: extern.h,v 1.22 2001/01/04 03:51:24 jwise Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,17 +35,10 @@
  *	@(#)externs.h	8.1 (Berkeley) 5/31/93
  */
 
-#include <stdio.h>
-#include <signal.h>
-#include <string.h>
-#include <ctype.h>
-#include <setjmp.h>
-#include <sys/types.h>
 #include "machdep.h"
 
 	/* program mode */
 extern int mode;
-extern jmp_buf restart;
 #define MODE_PLAYER	1
 #define MODE_DRIVER	2
 #define MODE_LOGGER	3

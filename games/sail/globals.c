@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.10 2001/01/04 01:56:28 jwise Exp $	*/
+/*	$NetBSD: globals.c,v 1.11 2001/01/04 03:51:24 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,10 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.10 2001/01/04 01:56:28 jwise Exp $");
+__RCSID("$NetBSD: globals.c,v 1.11 2001/01/04 03:51:24 jwise Exp $");
 #endif
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <setjmp.h>
 #include "extern.h"
 
 struct scenario scene[] = {
