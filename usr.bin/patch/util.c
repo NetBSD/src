@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: util.c,v 1.3 1993/12/07 10:36:16 mycroft Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.4 1996/09/19 06:27:16 thorpej Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
