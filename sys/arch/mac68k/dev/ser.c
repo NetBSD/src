@@ -69,7 +69,7 @@
  *		added DCD event detection
  *		added software fifo's
  *
- * $Id: ser.c,v 1.6.2.2 1994/08/05 22:51:44 mycroft Exp $
+ * $Id: ser.c,v 1.6.2.3 1994/09/29 03:53:17 cgd Exp $
  *
  *	Mac II serial device interface
  *
@@ -105,7 +105,7 @@ volatile unsigned char *sccA = (unsigned char *) 0x4000;
 static void	serstart __P((register struct tty *));
 static int	serparam __P((register struct tty *, register struct termios *));
 static int	serctl   __P((dev_t dev, int bits, int how));
-extern int	serintr  __P((void));
+extern int	ser_intr  __P((void));
 
 static int	ser_active = 0;
 static int	nser = NSER;
@@ -382,55 +382,8 @@ static volatile unsigned int ser_outtail[NSER] = {0,0};
    a software interrupt.
 */
 
-static int outhead = 0, outtail = 0, outlen = 0, write_ack = 0;
-static unsigned char outbuf[OUTBUFLEN];
-
-ser_intr(struct frame *fp)
-{
-   /* This function is called by locore.s on a level 4 interrupt. */
-   int reg0, ch, s;
-   unsigned char c;
-   char str[20];
-
-   if(!mac68k_machine.serial_boot_echo)
-	return(serintr());
-
-#if 0
-   while(*sccA & SER_R0_RXREADY)
-   {
-      ch = *(sccA+4);
-      *sccA = SER_W0_RSTESINTS;  /* Reset external/status interrupt */
-/*      conintr(0, ch); */
-   }
-   reg0 = *sccA;  /* Get status */
-   if(reg0 & SER_R0_TXUNDERRUN)
-   {
-      *sccA = SER_W0_RSTTXUNDERRUN;
-      *sccA = SER_W0_RSTESINTS;
-      /* macconputchar(0, (int)'!'); */
-   }
-   if(reg0 & SER_R0_TXREADY)
-   {
-      write_ack = 0;
-      *sccA = SER_W0_RSTTXPND;
-      *sccA = SER_W0_RSTIUS; /* Reset highest interrupt pending */
-      if (outlen > 0)
-      {
-        c = outbuf[outtail];
-        outtail = (outtail + 1) % OUTBUFLEN;
-        s = splhigh();
-        *(sccA+4) = c;
-        write_ack = 1;
-        outlen--;
-        splx(s);
-      }
-   }
-#endif
-   return(1);
-}
- 
 extern int
-serintr(void)
+ser_intr(void)
 {
     /* serial interrupt code */
     unsigned char reg0, reg1, ch, ch1, c, bits;
@@ -797,7 +750,7 @@ serstart(register struct tty *tp)
 	} else
 		need_start = 0;
 
-	/* put characters into a buffer that serintr() will empty */
+	/* put characters into a buffer that ser_intr() will empty */
 	/* out on transmit-ready interrupts. */
 
 	/* get free space in s/w fifo - this will only get better */
@@ -903,18 +856,65 @@ serctl(dev_t dev, int bits, int how)
  * Console functions.
  */
 
+dev_t	mac68k_serdev;
+
 sercnprobe(struct consdev *cp)
 {
+    int	maj, unit;
+
+    for (maj = 0 ; maj < nchrdev ; maj++) {
+        if (cdevsw[maj].d_open == seropen) {
+            break;
+        }
+    }
+    if (maj == nchrdev)
+        goto nosercon;
+
+    if (!(mac68k_machine.serial_console & 0x01))
+        goto nosercon;
+
+    unit = (mac68k_machine.serial_console & 0x02) ? 1 : 0;
+
+    cp->cn_dev = makedev(maj, unit);
+    cp->cn_pri = CN_REMOTE;
+
+    mac68k_machine.serial_boot_echo = 0;
+    return 0;
+
+nosercon:
+    if (mac68k_machine.serial_boot_echo) {
+	/* major number doesn't really matter. */
+	mac68k_serdev = makedev(maj, 0);
+        serinit(1);
+    }
+
+    return 0;
 }
 
 sercninit(struct consdev *cp)
 {
+    serinit(1);
 }
 
 sercngetc(dev_t dev)
 {
+    int unit, c;
+
+    unit = UNIT(dev);
+
+    while (!(SER_STATUS(unit, 0) & SER_R0_RXREADY));
+    c = SCCRDWR(unit);
+    SER_STATUS(unit, 0) = SER_W0_RSTESINTS;
+
+    return c;
 }
 
 sercnputc(dev_t dev, int c)
 {
+    int	unit;
+
+    unit = UNIT(dev);
+
+    while (!(SER_STATUS(unit, 0) & SER_R0_TXREADY));
+    SCCRDWR(unit) = c;
 }
