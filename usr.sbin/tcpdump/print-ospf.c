@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ospf.c,v 1.4 1997/10/03 19:55:35 christos Exp $	*/
+/*	$NetBSD: print-ospf.c,v 1.5 1999/07/02 11:31:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ospf.c,v 1.24 97/04/26 13:31:46 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ospf.c,v 1.4 1997/10/03 19:55:35 christos Exp $");
+__RCSID("$NetBSD: print-ospf.c,v 1.5 1999/07/02 11:31:35 itojun Exp $");
 #endif
 #endif
 
@@ -514,9 +514,11 @@ ospf_print(register const u_char *bp, register u_int length,
 	op = (struct ospfhdr *)bp;
 	ip = (struct ip *)bp2;
 	/* Print the source and destination address  */
+#if 0
 	(void) printf("%s > %s:",
 	    ipaddr_string(&ip->ip_src),
 	    ipaddr_string(&ip->ip_dst));
+#endif
 
         /* XXX Before we do anything else, strip off the MD5 trailer */
         TCHECK(op->ospf_authtype);

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-domain.c,v 1.5 1997/10/03 19:55:07 christos Exp $	*/
+/*	$NetBSD: print-domain.c,v 1.6 1999/07/02 11:31:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-domain.c,v 1.39 97/06/13 12:56:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-domain.c,v 1.5 1997/10/03 19:55:07 christos Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.6 1999/07/02 11:31:31 itojun Exp $");
 #endif
 #endif
 
@@ -111,6 +111,27 @@ struct rtentry;
 #endif
 #ifndef T_LOC
 #define T_LOC		29		/* Location Information */
+#endif
+#ifndef T_NXT
+#define T_NXT		30		/* Next Valid Name in Zone */
+#endif
+#ifndef T_EID
+#define T_EID		31		/* Endpoint identifier */
+#endif
+#ifndef T_NIMLOC
+#define T_NIMLOC	32		/* Nimrod locator */
+#endif
+#ifndef T_SRV
+#define T_SRV		33		/* Server selection */
+#endif
+#ifndef T_ATMA
+#define T_ATMA		34		/* ATM Address */
+#endif
+#ifndef T_NAPTR
+#define T_NAPTR		35		/* Naming Authority PoinTeR */
+#endif
+#ifndef T_A6
+#define T_A6		38		/* IP6 address (ipngwg-dns-lookups) */
 #endif
 
 #ifndef T_UNSPEC
@@ -230,7 +251,14 @@ static struct tok type2str[] = {
 	{ T_PX,		"PX" },
 	{ T_GPOS,	"GPOS" },
 	{ T_AAAA,	"AAAA" },
-	{ T_LOC ,	"LOC " },
+	{ T_LOC,	"LOC " },
+	{ T_NXT,	"NXT " },
+	{ T_EID,	"EID " },
+	{ T_NIMLOC,	"NIMLOC " },
+	{ T_SRV,	"SRV " },
+	{ T_ATMA,	"ATMA " },
+	{ T_NAPTR,	"NAPTR " },
+	{ T_A6,		"A6 " },
 #ifndef T_UINFO
 #define T_UINFO 100
 #endif
@@ -328,6 +356,9 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 	case T_NS:
 	case T_CNAME:
 	case T_PTR:
+#ifdef T_DNAME
+	case T_DNAME:	/*XXX not checked as there's no server support yet*/
+#endif
 		putchar(' ');
 		(void)ns_nprint(cp, bp);
 		break;
@@ -342,6 +373,25 @@ ns_rprint(register const u_char *cp, register const u_char *bp)
 		putchar(' ');
 		(void)ns_cprint(cp, bp);
 		break;
+
+#ifdef INET6
+	case T_AAAA:
+		printf(" %s", ip6addr_string(cp));
+		break;
+
+	case T_A6:	/*XXX not checked as there's no server support yet*/
+	    {
+		struct in6_addr a;
+		int pbyte;
+
+		pbyte = (*cp + 7) / 8;
+		memset(&a, 0, sizeof(a));
+		memcpy(&a, cp + 1, pbyte);
+		printf(" %u %s ", *cp, ip6addr_string(&a));
+		(void)ns_nprint(cp + 1 + pbyte, bp);
+		break;
+	    }
+#endif /*INET6*/
 
 	case T_UNSPECA:		/* One long string */
 	        printf(" %.*s", len, cp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.10 1999/05/11 02:54:30 thorpej Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.11 1999/07/02 11:31:37 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: tcpdump.c,v 1.10 1999/05/11 02:54:30 thorpej Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.11 1999/07/02 11:31:37 itojun Exp $");
 #endif
 #endif
 
@@ -68,6 +68,7 @@ int Nflag;			/* remove domains from printed host names */
 int Oflag = 1;			/* run filter code optimizer */
 int pflag;			/* don't go promiscuous */
 int qflag;			/* quick (shorter) output */
+int Rflag = 1;			/* print sequence # field in AH/ESP*/
 int Sflag;			/* print raw TCP sequence numbers */
 int tflag = 1;			/* print packet arrival time */
 int vflag;			/* verbose */
@@ -157,7 +158,7 @@ main(int argc, char **argv)
 
 	opterr = 0;
 	while (
-	    (op = getopt(argc, argv, "ac:defF:i:lnNOpqr:s:StT:vw:xY")) != -1)
+	    (op = getopt(argc, argv, "ac:defF:i:lnNOpqr:Rs:StT:vw:xY")) != -1)
 		switch (op) {
 
 		case 'a':
@@ -220,6 +221,10 @@ main(int argc, char **argv)
 
 		case 'r':
 			RFileName = optarg;
+			break;
+
+		case 'R':
+			Rflag = 0;
 			break;
 
 		case 's':
