@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66_intr.s,v 1.1 1998/06/27 10:10:51 thorpej Exp $ */
+/* $NetBSD: pci_eb66_intr.s,v 1.2 2004/09/14 11:27:22 drochner Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -44,7 +44,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb66_intr.s,v 1.1 1998/06/27 10:10:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb66_intr.s,v 1.2 2004/09/14 11:27:22 drochner Exp $");
 
 	.text
 LEAF(eb66_intr_enable,1)
@@ -60,4 +60,4 @@ LEAF(eb66_intr_disable,1)
 	ldiq	a0, 0x35
 	call_pal PAL_cserve
 	RET
-	END(eb66_intr_enable)
+	END(eb66_intr_disable)
