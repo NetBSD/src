@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.150 1999/09/01 11:40:42 drochner Exp $
+$NetBSD: pcidevs,v 1.151 1999/09/08 21:33:59 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -987,7 +987,7 @@ product	LMC SSI		0x0005	SSI
 product LEADTEK S3_805	0x0000	S3 805
 
 /* Lite-On products */
-product LITEON PNIC	0x0002	82C168/82C169 (PNIC) 10/100 Ethernet
+product LITEON 82C168	0x0002	82C168/82C169 (PNIC) 10/100 Ethernet
 
 /* Macronix */
 product MACRONIX MX98713	0x0512	MX98713 (PMAC) 10/100 Ethernet
