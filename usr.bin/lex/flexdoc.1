@@ -2861,21 +2861,6 @@ is (rather surprisingly) truncated to
 does not truncate the action.  Actions that are not enclosed in
 braces are simply terminated at the end of the line.
 .SH DIAGNOSTICS
-If you receive errors when linking a
-.I flex
-scanner complaining about the following missing routines:
-.ds
-    yywrap
-    yy_flex_alloc
-    ...
-.de
-(and various others) then you forgot to link your program with
-.B \-lfl.
-This run-time library is
-.I required
-for all
-.I flex
-scanners.
 .PP
 .I warning, rule cannot be matched
 indicates that the given rule
