@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: cpu.h 1.16 91/03/25
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.3 1993/08/01 19:25:01 mycroft Exp $
+ *	$Id: cpu.h,v 1.4 1994/02/04 23:09:04 mycroft Exp $
  */
 
 /*
@@ -70,8 +70,8 @@
  * leaves on the stack.
  */
 typedef struct intrframe {
-	int	pc;
 	int	ps;
+	int	pc;
 } clockframe;
 
 #define	CLKF_USERMODE(framep)	(((framep)->ps & PSL_S) == 0)

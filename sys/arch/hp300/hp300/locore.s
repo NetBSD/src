@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.14 1994/02/04 22:56:17 mycroft Exp $
+ *	$Id: locore.s,v 1.15 1994/02/04 23:10:11 mycroft Exp $
  */
 
 #include "assym.s"
@@ -550,8 +550,8 @@ Lstackok:
 #ifdef GPROF
 	.globl	_profclock
 	movl	d0,sp@-			| save status so jsr will not clobber
-	movl	a1@,sp@-		| push padded PS
 	movl	a1@(4),sp@-		| push PC
+	movl	a1@,sp@-		| push padded PS
 	movl	sp,sp@-			| push pointer to clockframe
 	jbsr	_profclock		| profclock(pc, ps)
 	lea	sp@(12),sp		| pop params
@@ -578,8 +578,8 @@ Ltimer1:
 #endif
 	movb	a0@(CLKMSB1),d1		| clear timer1 interrupt
 	lea	sp@(16),a1		| get pointer to PS
-	movl	a1@,sp@-		| push padded PS
 	movl	a1@(4),sp@-		| push PC
+	movl	a1@,sp@-		| push padded PS
 	movl	sp,sp@-			| push pointer to clockframe
 	jbsr	_hardclock		| call generic clock int routine
 	lea	sp@(12),sp		| pop params
