@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 1994/12/03 23:34:55 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 1995/01/15 06:29:04 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1113,6 +1113,7 @@ dumpsys()
  * we guarantee that the time will be greater than the value obtained by a
  * previous call.
  */
+void
 microtime(tvp)
 	register struct timeval *tvp;
 {
@@ -2350,7 +2351,7 @@ getenvvars (void)
 
   ROMBase = (caddr_t) getenv("ROMBASE");
   TimeDBRA = getenv("TIMEDBRA");
-  ADBDelay = (caddr_t) getenv("ADBDELAY");
+  ADBDelay = (u_short) getenv("ADBDELAY");
 }
 
 void printenvvars (void)
