@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.2 1997/10/07 04:01:34 phil Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.3 1997/10/15 04:36:09 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,7 +63,8 @@ void do_upgrade(void)
 	if (!fsck_disks())
 		return;
 
-	/* Do any md updating of the file systems ... e.g. bootblocks... */
+	/* Do any md updating of the file systems ... e.g. bootblocks,
+	   copy file systems ... */
 	if (!md_update ())
 		return;
 

@@ -2,7 +2,7 @@
 
 PROG=sysinst
 
-LDADD=-lcurses -ltermcap
+LDADD=-lcurses -ltermcap -lutil
 
 .if exists(${.CURDIR}/../../../../sys/conf/osrelease.sh)
 VER != sh ${.CURDIR}/../../../../sys/conf/osrelease.sh

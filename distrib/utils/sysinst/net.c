@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.4 1997/10/07 04:01:33 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.5 1997/10/15 04:36:01 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -168,6 +168,7 @@ get_via_ftp (void)
 { 
 	char **list;
 	char realdir[STRSIZE];
+	char filename[SSTRSIZE];
 	int  ret;
 
 	while (config_network ()) {
@@ -197,14 +198,15 @@ get_via_ftp (void)
 	list = ftp_list;
 	endwin();
 	while (*list) {
+		snprintf (filename, SSTRSIZE, *list, rels, ftp_postfix);
 		if (strcmp ("ftp", ftp_user) == 0)
-			ret = run_prog("/usr/bin/ftp -a ftp://%s/%s/%s%s%s",
+			ret = run_prog("/usr/bin/ftp -a ftp://%s/%s/%s",
 				       ftp_host, ftp_dir,
-				       *list, rels, ftp_postfix);
+				       filename);
 		else
-			ret = run_prog("/usr/bin/ftp ftp://%s:%s@%s/%s/%s%s%s",
+			ret = run_prog("/usr/bin/ftp ftp://%s:%s@%s/%s/%s",
 				       ftp_user, ftp_pass, ftp_host, ftp_dir,
-				       *list, rels, ftp_postfix);
+				       filename);
 		if (ret) {
 			/* Error getting the file.  Bad host name ... ? */
 			wrefresh (stdscr);
@@ -226,10 +228,28 @@ get_via_ftp (void)
 	return 1;
 }
 
-void
+int
 get_via_nfs(void)
 {
-	config_network ();
+        while (config_network ()) {
+                msg_display (MSG_netnotup);
+                process_menu (MENU_yesno);
+                if (!yesno)
+                        return 0;
+        }
+
 	/* Get server and filepath */
+	process_menu (MENU_nfssource);
+
 	/* Mount it */
+	if (!run_prog ("/sbin/mount -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
+		process_menu (MENU_nfsbadmount);
+		if (!yesno)
+			return 0;
+	}
+
+	/* return location, don't clean... */
+	strcpy (dist_dir, "/mnt2");
+	clean_dist_dir = 0;
+	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 1997/10/07 04:01:36 phil Exp $ */
+/*	$NetBSD: md.c,v 1.3 1997/10/15 04:36:34 phil Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -412,6 +412,7 @@ int
 md_update (void)
 {
 	endwin();
+	md_copy_filesystem ();
 	md_post_newfs();
 	wrefresh(stdscr);
 	return 1;

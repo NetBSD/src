@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.4 1997/10/07 04:01:32 phil Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.5 1997/10/15 04:35:54 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -268,6 +268,18 @@ message passwd
 
 message email
 {e-mail address}
+
+message nfssource
+{Enter the nfs host and directory where the distribution is located.
+Remember, the directory should contain the tar.gz files and be nfs
+mountable.
+
+host:      %s
+directory: %s
+}
+
+message nfsbadmount
+{The directory %s:%s could not be nfs mounted.}
 
 message asknetdev
 {I have found the following network interfaces: %s
