@@ -1,4 +1,4 @@
-/*	$NetBSD: le_poll.c,v 1.1.1.1 1995/07/25 23:12:31 chuck Exp $	*/
+/*	$NetBSD: le_poll.c,v 1.2 2000/07/24 18:40:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -41,8 +41,13 @@ struct {
 	int next_tmd;
 } le_softc; 
 
-void le_error(str, ler1)
-     char *str;
+static void le_error(const char *, struct lereg1 *);
+static void le_reset(u_char *);
+static int le_poll(void *, int);
+
+static void
+le_error(str, ler1)
+     const char *str;
      struct lereg1 *ler1;
 {
     /* ler1->ler1_rap = LE_CSRO done in caller */
@@ -63,7 +68,8 @@ void le_error(str, ler1)
     
 }
 
-void le_reset(myea)
+static void
+le_reset(myea)
      u_char *myea;
 {
     struct lereg1 *ler1 = le_softc.sc_r1;
@@ -139,7 +145,8 @@ void le_reset(myea)
     ler1->ler1_rdp = LE_C0_STRT;
 }
 
-int le_poll(pkt, len)
+static int
+le_poll(pkt, len)
      void *pkt;
      int len;
 {
@@ -198,7 +205,7 @@ int le_put(pkt, len)
     struct lereg1 *ler1 = le_softc.sc_r1;
     struct lereg2 *ler2 = le_softc.sc_r2;
     struct letmd *tmd;
-    int timo = 100000, stat, i;
+    int timo = 100000, stat;
     unsigned int a;
 
     ler1->ler1_rap = LE_CSR0;
@@ -286,7 +293,6 @@ int le_get(pkt, len, timeout)
 
 void le_init()
 {
-    caddr_t addr;
     int *ea = (int *) LANCE_ADDR;
     u_long *eram = (u_long *) ERAM_ADDR;
     u_long e = *ea;

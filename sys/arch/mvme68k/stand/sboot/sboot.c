@@ -1,4 +1,4 @@
-/*	$NetBSD: sboot.c,v 1.3 1998/01/05 07:03:06 perry Exp $	*/
+/*	$NetBSD: sboot.c,v 1.4 2000/07/24 18:40:06 jdolecek Exp $	*/
 
 /*
  *
@@ -37,14 +37,18 @@
 
 #include "sboot.h"
 
-void sboot() 
+void sboot(void);
 
+extern char bootprog_rev[];
+
+void
+sboot() 
 {
-  char * mesg;
   char buf[128], *ebuf;
   buf[0] = '0';
   consinit();
-  printf("\nsboot: serial line bootstrap program (&end = %x)\n\n", &end);
+  printf("\nsboot: serial line bootstrap program (&end = %p) [%s]\n\n", &end,
+	bootprog_rev);
   if (reboot) {  /* global flag from AAstart.s */
     reboot = 0;
     printf("[rebooting...]\n");
@@ -74,9 +78,7 @@ void callrom ()
  */
 
 void do_cmd(buf, ebuf)
-
-char *buf, *ebuf;
-
+	char *buf, *ebuf;
 {
   switch (*buf) {
   case '\0':

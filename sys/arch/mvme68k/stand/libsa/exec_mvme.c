@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_mvme.c,v 1.8 2000/07/24 09:25:53 scw Exp $ */
+/*	$NetBSD: exec_mvme.c,v 1.9 2000/07/24 18:39:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,7 +42,6 @@
 
 #include "stand.h"
 #include "libsa.h"
-
 
 /* This must agree with what locore.s expects */
 typedef void (*kentry_t)(int, u_int, u_int, u_int, int, char *);

@@ -1,0 +1,8 @@
+$NetBSD: version,v 1.1 2000/07/24 18:39:53 jdolecek Exp $
+
+1.1:	Initial bootst import.
+1.2:	Makefile: update from OpenBSD
+	boot.c: update from sun3 port, with changes for my new boot code put in.
+	conf.c: config from openbsd, by Theo de Raadt
+	dev_net.c: update from openbsd (standard dev_net with changes from theo)
+	dev_net.h: proto from openbsd
