@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.161 2005/01/09 09:27:17 mycroft Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.162 2005/01/11 00:19:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.161 2005/01/09 09:27:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.162 2005/01/11 00:19:36 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -356,21 +356,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 
 	update = mp->mnt_flag & MNT_UPDATE;
 
-	/*
-	 * If updating, check whether changing from read-only to
-	 * read/write; if there is no device name, that's all we do.
-	 */
-	if (update) {
-		ump = VFSTOUFS(mp);
-		devvp = ump->um_devvp;
-		if (args.fspec == NULL)
-			vref(devvp);
-	} else {
-		/* New mounts must have a filename for the device */
-		if (args.fspec == NULL)
-			return (EINVAL);
-	}
-
+	/* Check arguments */
 	if (args.fspec != NULL) {
 		/*
 		 * Look up the name and verify that it's sane.
@@ -393,10 +379,22 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 			 * Be sure we're still naming the same device
 			 * used for our initial mount
 			 */
+			ump = VFSTOUFS(mp);
 			if (devvp != ump->um_devvp)
 				error = EINVAL;
 		}
+	} else {
+		if (!update) {
+			/* New mounts must have a filename for the device */
+			return (EINVAL);
+		} else {
+			/* Use the extant mount */
+			ump = VFSTOUFS(mp);
+			devvp = ump->um_devvp;
+			vref(devvp);
+		}
 	}
+
 
 	/*
 	 * If mount by non-root, then verify that user has necessary
@@ -463,6 +461,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		 */
 		vrele(devvp);
 
+		ump = VFSTOUFS(mp);
 		fs = ump->um_lfs;
 		if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*

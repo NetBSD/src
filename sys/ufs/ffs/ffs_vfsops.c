@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.159 2005/01/09 03:11:48 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.160 2005/01/11 00:19:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.159 2005/01/09 03:11:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.160 2005/01/11 00:19:36 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -206,18 +206,6 @@ ffs_mount(mp, path, data, ndp, p)
 	update = mp->mnt_flag & MNT_UPDATE;
 
 	/* Check arguments */
-	if (update) {
-		/* Use the extant mount */
-		ump = VFSTOUFS(mp);
-		devvp = ump->um_devvp;
-		if (args.fspec == NULL)
-			vref(devvp);
-	} else {
-		/* New mounts must have a filename for the device */
-		if (args.fspec == NULL)
-			return (EINVAL);
-	}
-
 	if (args.fspec != NULL) {
 		/*
 		 * Look up the name and verify that it's sane.
@@ -240,8 +228,19 @@ ffs_mount(mp, path, data, ndp, p)
 			 * Be sure we're still naming the same device
 			 * used for our initial mount
 			 */
+			ump = VFSTOUFS(mp);
 			if (devvp != ump->um_devvp)
 				error = EINVAL;
+		}
+	} else {
+		if (!update) {
+			/* New mounts must have a filename for the device */
+			return (EINVAL);
+		} else {
+			/* Use the extant mount */
+			ump = VFSTOUFS(mp);
+			devvp = ump->um_devvp;
+			vref(devvp);
 		}
 	}
 
@@ -317,6 +316,7 @@ ffs_mount(mp, path, data, ndp, p)
 		 */
 		vrele(devvp);
 
+		ump = VFSTOUFS(mp);
 		fs = ump->um_fs;
 		if (fs->fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			/*
