@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.12 2001/05/26 12:31:56 itojun Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.13 2001/05/27 04:57:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-icmp6.c,v 1.12 2001/05/26 12:31:56 itojun Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.13 2001/05/27 04:57:19 itojun Exp $");
 #endif
 #endif
 
@@ -194,15 +194,15 @@ icmp6_print(register const u_char *bp, register const u_char *bp2)
 		TCHECK(oip->ip6_dst);
 		switch (dp->icmp6_code) {
 		case ICMP6_PARAMPROB_HEADER:
-			printf("icmp6: parameter problem errorneous - octet %u\n",
+			printf("icmp6: parameter problem errorneous - octet %u",
 				(u_int32_t)ntohl(dp->icmp6_pptr));
 			break;
 		case ICMP6_PARAMPROB_NEXTHEADER:
-			printf("icmp6: parameter problem next header - octet %u\n",
+			printf("icmp6: parameter problem next header - octet %u",
 				(u_int32_t)ntohl(dp->icmp6_pptr));
 			break;
 		case ICMP6_PARAMPROB_OPTION:
-			printf("icmp6: parameter problem option - octet %u\n",
+			printf("icmp6: parameter problem option - octet %u",
 				(u_int32_t)ntohl(dp->icmp6_pptr));
 			break;
 		default:
@@ -843,7 +843,7 @@ icmp6_nodeinfo_print(int icmp6len, const u_char *bp, const u_char *ep)
 					break;
 				printf(" %s", getname6(bp + i));
 				i += sizeof(struct in6_addr);
-				printf("(%d)", ntohl(*(int32_t *)(bp + i)));
+				printf("(%d)", (int32_t)ntohl(*(int32_t *)(bp + i)));
 				i += sizeof(int32_t);
 			}
 			i = ni6->ni_flags;
@@ -935,7 +935,7 @@ icmp6_rrenum_print(int icmp6len, const u_char *bp, const u_char *ep)
 
 		TCHECK(match->rpm_prefix);
 
-		if (vflag)
+		if (vflag > 1)
 			printf("\n\t");
 		else
 			printf(" ");
@@ -969,7 +969,7 @@ icmp6_rrenum_print(int icmp6len, const u_char *bp, const u_char *ep)
 
 			TCHECK(use->rpu_prefix);
 
-			if (vflag)
+			if (vflag > 1)
 				printf("\n\t");
 			else
 				printf(" ");
