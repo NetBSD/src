@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.7 2001/01/21 03:56:27 itojun Exp $	*/
+/*	$NetBSD: rune.c,v 1.8 2001/01/21 04:34:11 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.7 2001/01/21 03:56:27 itojun Exp $");
+__RCSID("$NetBSD: rune.c,v 1.8 2001/01/21 04:34:11 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -391,6 +391,8 @@ _Read_CTypeAsRune(fp)
 		 *   _B means "isprint but !isgraph", not "isblank" with the
 		 *   incorrect declaration.
 		 * - _X and _CTYPE_X have negligible difference in meaning.
+		 * - we don't set digit value, fearing that it would be
+		 *   too much of hardcoding.  we may need to revisit it.
 		 */
 
 		if (new_ctype[1 + x] & _U)
