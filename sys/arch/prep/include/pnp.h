@@ -220,7 +220,7 @@
 #define L1_8_16bit_mem           0x10   /* 8- and 16-bit supported            */
 #define L1_Decode_Hi             0x04   /* decode supports high address       */
 #define L1_Cache                 0x02   /* read cacheable, write-through      */
-#define L1_Writeable             0x01   /* Memory is writeable                */
+#define L1_Writable              0x01   /* Memory is writable                */
 #define L2_Packet                0x82   /* ANSI ID string                     */
 #define L3_Packet                0x83   /* Unicode ID string                  */
 #define L4_Packet                0x84   /* Vendor defined                     */

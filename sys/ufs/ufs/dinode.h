@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.14 2002/09/28 20:11:09 dbj Exp $	*/
+/*	$NetBSD: dinode.h,v 1.15 2003/01/06 20:30:39 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -118,7 +118,7 @@ struct dinode {
 
 /* File permissions. */
 #define	IEXEC		0000100		/* Executable. */
-#define	IWRITE		0000200		/* Writeable. */
+#define	IWRITE		0000200		/* Writable. */
 #define	IREAD		0000400		/* Readable. */
 #define	ISVTX		0001000		/* Sticky bit. */
 #define	ISGID		0002000		/* Set-gid. */

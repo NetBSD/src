@@ -1,4 +1,4 @@
-/*	$NetBSD: sprint.c,v 1.13 2002/08/20 14:02:45 christos Exp $	*/
+/*	$NetBSD: sprint.c,v 1.14 2003/01/06 20:30:40 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sprint.c,v 1.13 2002/08/20 14:02:45 christos Exp $");
+__RCSID("$NetBSD: sprint.c,v 1.14 2003/01/06 20:30:40 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ sflag_print()
 	 *	login name
 	 *	real name
 	 *	terminal name (the XX of ttyXX)
-	 *	if terminal writeable (add an '*' to the terminal name
+	 *	if terminal writable (add an '*' to the terminal name
 	 *		if not)
 	 *	if logged in show idle time and day logged in, else
 	 *		show last login date and time.  If > 6 months,

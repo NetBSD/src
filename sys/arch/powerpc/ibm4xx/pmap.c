@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2003/01/04 18:04:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2003/01/06 20:30:33 wiz Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -1401,7 +1401,7 @@ pmap_tlbmiss(vaddr_t va, int ctx)
 			return 1;
 		}
 	} else {
-		/* Create a 16MB writeable mapping. */
+		/* Create a 16MB writable mapping. */
 #ifdef PPC_4XX_NOCACHE
 		tte = TTE_PA(va) | TTE_ZONE(ZONE_PRIV) | TTE_SZ_16M | TTE_I | TTE_WR;
 #else

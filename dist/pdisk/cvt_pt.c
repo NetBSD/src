@@ -1,7 +1,7 @@
 /*
  * cvt_pt.c
  *
- *	Covert partition type.	$Revision: 1.2 $
+ *	Covert partition type.	$Revision: 1.3 $
  *
  *	Copyright (c)  1999, Eryk Vershen
  * 
@@ -180,8 +180,8 @@ process(char *filename)
 
     // 3)       verify the type for the partition;
 
-    if (map->writeable == 0) {
-	fatal(-1, "The map is not writeable");
+    if (map->writable == 0) {
+	fatal(-1, "The map is not writable");
         return;
     }
 

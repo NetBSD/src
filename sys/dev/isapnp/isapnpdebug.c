@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpdebug.c,v 1.6 2001/11/13 07:56:41 lukem Exp $	*/
+/*	$NetBSD: isapnpdebug.c,v 1.7 2003/01/06 20:30:37 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnpdebug.c,v 1.6 2001/11/13 07:56:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnpdebug.c,v 1.7 2003/01/06 20:30:37 wiz Exp $");
 
 #ifdef DEBUG_ISAPNP
 
@@ -66,8 +66,8 @@ isapnp_print_mem(str, mem)
 	    (mem->flags & ISAPNP_MEMATTR_HIGH_ADDR) ?
 		"high-addr," : "range-len,",
 	    (mem->flags & ISAPNP_MEMATTR_CACHEABLE) ? "" : "non-",
-	    (mem->flags & ISAPNP_MEMATTR_WRITEABLE) ?
-		"writeable," : "read-only,");
+	    (mem->flags & ISAPNP_MEMATTR_WRITABLE) ?
+		"writable," : "read-only,");
 
 	switch (mem->flags & ISAPNP_MEMWIDTH_MASK) {
 	case ISAPNP_MEMWIDTH_8:
