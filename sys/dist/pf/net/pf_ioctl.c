@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.9 2004/07/27 12:22:59 yamt Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.10 2004/09/06 10:01:39 yamt Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -2761,6 +2761,20 @@ fail:
 int
 pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
+	int error;
+
+	/*
+	 * ensure that mbufs are writable beforehand
+	 * as it's assumed by pf code.
+	 * ip hdr (60 bytes) + tcp hdr (60 bytes) should be enough.
+	 * XXX inefficient
+	 */
+	error = m_makewritable(mp, 0, 60 + 60, M_DONTWAIT);
+	if (error) {
+		m_freem(*mp);
+		*mp = NULL;
+		return error;
+	}
 
 	/*
 	 * If the packet is out-bound, we can't delay checksums
@@ -2787,6 +2801,19 @@ pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 int
 pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
+	int error;
+
+	/*
+	 * ensure that mbufs are writable beforehand
+	 * as it's assumed by pf code.
+	 * XXX inefficient
+	 */
+	error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+	if (error) {
+		m_freem(*mp);
+		*mp = NULL;
+		return error;
+	}
 
 	if (pf_test6(dir == PFIL_OUT ? PF_OUT : PF_IN, ifp, mp) != PF_PASS) {
 		m_freem(*mp);
