@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.36 2003/02/03 23:39:40 nathanw Exp $	*/
+/*	$NetBSD: time.h,v 1.37 2003/02/03 23:47:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,6 +42,7 @@
 #ifdef _KERNEL
 #include <sys/callout.h>
 #include <sys/signal.h>
+#include <sys/queue.h>
 #endif
 
 /*
