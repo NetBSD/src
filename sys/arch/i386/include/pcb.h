@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.17 1995/05/01 08:14:25 mycroft Exp $	*/
+/*	$NetBSD: pcb.h,v 1.18 1995/05/03 00:08:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -70,6 +70,7 @@ struct pcb {
  * Software pcb (extension)
  */
 	int	pcb_flags;
+#define	PCB_USEDFPU	0x01	/* process has used the FPU */
 #define	FP_USESEMC	0x08	/* process uses EMC memory-mapped mode */
 	caddr_t	pcb_onfault;	/* copyin/out fault recovery */
 };
