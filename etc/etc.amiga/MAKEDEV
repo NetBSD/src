@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.81 2003/01/14 20:05:29 is Exp $
+#	$NetBSD: MAKEDEV,v 1.82 2003/01/15 22:06:03 is Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -173,7 +173,7 @@ floppy)
 	makedev grf0 grf1 grf2 grf3 grf4 grf5 grf6 grf7
 	makedev tty00 ttyA0 ttyB0 ttyC0
 	makedev sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
-	makedev cd0 cd1 cd2 st0 st1 st2 wd0 wd1 md0
+	makedev cd0 cd1 cd2 st0 wd0 wd1 md0
 	;;
 
 isdns)
