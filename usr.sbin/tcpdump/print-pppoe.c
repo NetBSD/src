@@ -1,5 +1,10 @@
-/*	$NetBSD: print-pppoe.c,v 1.1 2001/04/14 12:31:34 martin Exp $	*/
+/*	$NetBSD: print-pppoe.c,v 1.2 2001/04/29 10:27:03 martin Exp $	*/
 
+/*
+ * Copied from print-ppp.c, slightly modified to work with the temporary
+ * NetBSD DLT_PPP_ETHER encapsulation.
+ * Copyright of the original:
+ */
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -27,7 +32,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ppp.c,v 1.26 97/06/12 14:21:29 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-pppoe.c,v 1.1 2001/04/14 12:31:34 martin Exp $");
+__RCSID("$NetBSD: print-pppoe.c,v 1.2 2001/04/29 10:27:03 martin Exp $");
 #endif
 #endif
 
