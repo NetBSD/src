@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.3 2004/06/29 04:42:55 itojun Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.4 2004/07/26 13:45:40 yamt Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.11 2004/03/15 11:38:23 cedric Exp $ */
 
 /*
@@ -905,11 +905,8 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 /* from openbsd/sys/kern/kern_subr.c */
 #ifdef __NetBSD__
 static void *
-hook_establish(head, tail, fn, arg)
-	struct hook_desc_head *head;
-	int tail;
-	void (*fn)(void *);
-	void *arg;
+hook_establish(struct hook_desc_head *head, int tail, void (*fn)(void *),
+    void *arg)
 {
 	struct hook_desc *hdp;
 
@@ -928,9 +925,7 @@ hook_establish(head, tail, fn, arg)
 }
 
 static void
-hook_disestablish(head, vhook)
-	struct hook_desc_head *head;
-	void *vhook;
+hook_disestablish(struct hook_desc_head *head, void *vhook)
 {
 	struct hook_desc *hdp;
 
