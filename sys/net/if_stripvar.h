@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stripvar.h,v 1.1 1996/05/19 16:34:38 jonathan Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.2 1996/05/19 22:09:45 jonathan Exp $	*/
 
 /*
  * Definitions for SLIP interface data structures
@@ -8,6 +8,7 @@
  */
 struct st_softc {
 	struct	ifnet sc_if;		/* network-visible interface */
+	int	sc_unit;		/* XXX unit number */
 	struct	ifqueue sc_fastq;	/* interactive output queue */
 	struct	tty *sc_ttyp;		/* pointer to tty structure */
 	u_char	*sc_mp;			/* pointer to next available buf char */

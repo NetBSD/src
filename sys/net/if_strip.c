@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.1 1996/05/19 16:34:36 jonathan Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.2 1996/05/19 22:09:36 jonathan Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -314,10 +314,12 @@ stripattach(n)
 	register int i = 0;
 
 	for (sc = st_softc; i < NSTRIP; sc++) {
-		sc->sc_if.if_name = "st";
-		sc->sc_if.if_unit = i++;
+		sprintf(sc->sc_if.if_xname, "st%d", i++);
+		sc->sc_if.if_softc = sc;
+		sc->sc_unit = i;		/* XXX */
 		sc->sc_if.if_mtu = SLMTU;
 		sc->sc_if.if_flags = 0;
+		sc->sc_if.if_type = IFT_OTHER;
 #if 0
 		sc->sc_if.if_flags |= SC_AUTOCOMP /* | IFF_POINTOPOINT | IFF_MULTICAST*/;
 #endif
@@ -503,7 +505,7 @@ striptioctl(tp, cmd, data, flag)
 
 	switch (cmd) {
 	case SLIOCGUNIT:
-		*(int *)data = sc->sc_if.if_unit;
+		*(int *)data = sc->sc_unit;
 		break;
 
 	default:
@@ -619,7 +621,7 @@ stripoutput(ifp, m, dst, rt)
 	struct sockaddr *dst;
 	struct rtentry *rt;
 {
-	register struct st_softc *sc = &st_softc[ifp->if_unit];
+	register struct st_softc *sc = ifp->if_softc;
 	register struct ip *ip;
 	register struct ifqueue *ifq;
 	register struct st_header *shp;
@@ -684,7 +686,7 @@ stripoutput(ifp, m, dst, rt)
 		 * `Cannot happen' (see stripioctl).  Someday we will extend
 		 * the line protocol to support other address families.
 		 */
-		printf("strip%d: af %d not supported\n", sc->sc_if.if_unit,
+		printf("%s: af %d not supported\n", sc->sc_if.if_xname,
 			dst->sa_family);
 		m_freem(m);
 		sc->sc_if.if_noproto++;
@@ -1257,8 +1259,8 @@ strip_newpacket(sc, ptr, end)
 
 	/* Catch 'OK' responses which show radio has fallen out of starmode */
 	if (len >= 2 && ptr[0] == 'O' && ptr[1] == 'K') {
-		printf("sl%d: Radio is back in AT command mode: will reset\n",
-			sc->sc_if.if_unit);
+		printf("%s: Radio is back in AT command mode: will reset\n",
+			sc->sc_if.if_xname);
 		FORCE_RESET(sc);		/* Do reset ASAP */
 	return 0;
 	}
@@ -1649,7 +1651,7 @@ RecERR_Message(sc, sendername, msg)
 	else if (!strncmp(msg, ERR_004, sizeof(ERR_004)-1)) {
 		CLEAR_RESET_TIMER(sc);
 		/* printf("%s: Received tickle response; clearing watchdog_doreset timer.\n",
-			"st", sc->sc_if.if_unit); */
+			sc->sc_if.if_xname); */
 	}
 	else if (!strncmp(msg, ERR_007, sizeof(ERR_007)-1)) {
 		/* Note: This error knoks the radio back into command mode. */
