@@ -1,7 +1,7 @@
-/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.3 2004/02/27 02:00:32 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.4 2004/08/06 17:21:28 uch Exp $	*/
 
 /*-
- * Copyright(c) 1996, 2001 The NetBSD Foundation, Inc.
+ * Copyright(c) 1996, 2001, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,6 +38,7 @@
 
 #include <console.h>
 #include <file.h>
+#include <limits.h>
 
 __BEGIN_DECLS
 #include <string.h>
@@ -75,7 +76,7 @@ FileManager::open(const TCHAR *name, u_int32_t flags)
 		return FALSE;
 
 	_reset();
-	
+
 	if (inflateInit2(_stream, -15) != Z_OK)
 		goto errout;
 	_stream->next_in = _inbuf;

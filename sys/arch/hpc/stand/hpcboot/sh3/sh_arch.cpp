@@ -1,7 +1,7 @@
-/*	$NetBSD: sh_arch.cpp,v 1.9 2002/02/11 17:08:56 uch Exp $	*/
+/*	$NetBSD: sh_arch.cpp,v 1.10 2004/08/06 17:21:28 uch Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,9 +50,13 @@ int
 SHArchitecture::cpu_type()
 {
 	if (_cpu_type == 0) {
+#if _WIN32_WCE == 101
+		_cpu_type = 3;
+#else
 		SYSTEM_INFO si;
 		GetSystemInfo(&si);
 		_cpu_type = si.wProcessorLevel;
+#endif
 	}
 
 	return _cpu_type;
