@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.22 1999/03/25 23:11:52 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.22.4.1 1999/06/21 00:47:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -1116,12 +1116,13 @@ ie_packet_len(sc)
 }
 
 struct mbuf *
-ieget(struct ie_softc *sc, struct ether_header *ehp, int *to_bpf )
+ieget(struct ie_softc *sc, int *to_bpf )
 {
     struct mbuf *top, **mp, *m;
     int head;
     int resid, totlen, thisrboff, thismboff;
     int len;
+    struct ether_header eh;
 
     totlen = ie_packet_len(sc);
 
@@ -1137,11 +1138,11 @@ ieget(struct ie_softc *sc, struct ether_header *ehp, int *to_bpf )
     head = sc->rbhead;
 
     /* Read the ethernet header */
-    ie2host ( sc, sc->cbuffs[head], (caddr_t)ehp, sizeof *ehp );
+    ie2host ( sc, sc->cbuffs[head], (caddr_t)&eh, sizeof eh );
 
     /* Check if the packet is for us */
 
-    resid = totlen -= (thisrboff = sizeof *ehp);
+    resid = totlen;
 
     MGETHDR ( m, M_DONTWAIT, MT_DATA );
     if ( m==0 )
@@ -1171,7 +1172,17 @@ ieget(struct ie_softc *sc, struct ether_header *ehp, int *to_bpf )
 	    if (m->m_flags & M_EXT)
 		len = MCLBYTES;
 	}
+
+	if (mp == &top) {
+		caddr_t newdata = (caddr_t)
+		    ALIGN(m->m_data + sizeof(struct ether_header)) -
+		    sizeof(struct ether_header);
+		len -= newdata - m->m_data; 
+		m->m_data = newdata;
+	}
+
         m->m_len = len = min(totlen, len);
+
         totlen -= len;
         *mp = m;
         mp = &m->m_next;
@@ -1179,6 +1190,14 @@ ieget(struct ie_softc *sc, struct ether_header *ehp, int *to_bpf )
 
     m = top;
     thismboff = 0;
+
+    /*
+     * Copy the Ethernet header into the mbuf chain.
+     */
+    memcpy(mtod(m, caddr_t), &eh, sizeof(struct ether_header));
+    thismboff = sizeof(struct ether_header);
+    thisrboff = sizeof(struct ether_header);
+    resid -= sizeof(struct ether_header);
 
     /*
      * Now we take the mbuf chain (hopefully only one mbuf most of the
@@ -1271,7 +1290,6 @@ ie_read_frame(sc, num)
     struct ie_recv_frame_desc rfd;
     struct mbuf *m=0;
     struct ifnet *ifp;
-    struct ether_header eh;
     int last;
 
     ifp = &sc->sc_ethercom.ec_if;
@@ -1300,7 +1318,7 @@ ie_read_frame(sc, num)
     sc->rfhead = ( sc->rfhead + 1 ) % NFRAMES;
 
     if ( status & IE_FD_OK ) {
-	m = ieget(sc, &eh, 0);
+	m = ieget(sc, 0);
 	ie_drop_packet_buffer(sc);
     }
 
@@ -1309,18 +1327,13 @@ ie_read_frame(sc, num)
 	return;
     }
 
-/*
-    printf ( "%s: frame from ether %s type %x\n", sc->sc_dev.dv_xname,
-		ether_sprintf(eh.ether_shost), (u_int)eh.ether_type );
-*/
-
 #if NBFILTER > 0
     if ( ifp->if_bpf ) {
 	bpf_mtap(ifp->if_bpf, m );
     };
 #endif
 
-    ether_input ( ifp, &eh, m );
+    (*ifp->if_input)(ifp, m);
     ifp->if_ipackets++;
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.24 1999/02/20 00:44:31 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.24.4.1 1999/06/21 00:52:29 thorpej Exp $
 
 # config file for mvme68k
 
@@ -79,7 +79,6 @@ file arch/mvme68k/dev/vme_two.c			vmetwo
 
 include "../../../dev/scsipi/files.scsipi"
 
-major { vnd = 6 }
 major { sd = 7 }
 major { md = 9 }
 major { cd = 18 }
@@ -121,8 +120,11 @@ file dev/cons.c
 file dev/cninit.c
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
-include "../../../compat/sunos/files.sunos"
+include "compat/sunos/files.sunos"
 file    arch/m68k/m68k/sunos_machdep.c  compat_sunos
+
+# SVR4 Binary Compatibility (COMPAT_SVR4)
+include "compat/svr4/files.svr4"
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"

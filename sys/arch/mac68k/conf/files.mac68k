@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.88 1999/02/18 07:33:44 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.88.6.1 1999/06/21 00:50:58 thorpej Exp $
 
 # mac68k-specific configuration info
 
@@ -160,9 +160,7 @@ file	dev/cninit.c
 file	arch/mac68k/dev/md_root.c	memory_disk_hooks
 
 major	{sd = 4}
-major	{st = 5}
 major	{cd = 6}
-major	{vnd = 8}
 major	{md = 13}
 
 # Compatibility modules
@@ -170,6 +168,9 @@ major	{md = 13}
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# SVR4 Binary Compatibility (COMPAT_SVR4)
+include "compat/svr4/files.svr4"
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"

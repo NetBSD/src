@@ -1,4 +1,4 @@
-#	$NetBSD: UNDERWORLD,v 1.1 1999/03/28 01:09:48 abs Exp $
+#	$NetBSD: UNDERWORLD,v 1.1.4.1 1999/06/21 00:49:56 thorpej Exp $
 #
 #	UNDERWORLD - Convenient config for our ol' Pentium boxes (abs)
 #
@@ -166,7 +166,7 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-#apm0	at mainbus0			# Advanced power management
+apm0	at mainbus0			# Advanced power management
 
 
 # Basic Bus Support
@@ -626,7 +626,6 @@ pseudo-device	pty		64	# pseudo-terminals
 #@ pseudo-device	tb		1	# tablet line discipline
 #@ pseudo-device	sequencer	1	# MIDI sequencer
 
-# rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 

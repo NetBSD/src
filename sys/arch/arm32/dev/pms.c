@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.19 1999/02/02 04:02:26 mark Exp $	*/
+/*	$NetBSD: pms.c,v 1.19.4.1 1999/06/21 00:47:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -614,7 +614,7 @@ pmsintr(arg)
 				sc->sc_state &= ~PMS_ASLP;
 				wakeup((caddr_t)sc);
 			}
-			if (dosignal)
+/*			if (dosignal)*/
 				psignal(sc->sc_proc, SIGIO);
 		}
 

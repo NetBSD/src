@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1998/10/25 17:39:52 tsubai Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5.8.1 1999/06/21 00:51:39 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -55,64 +55,12 @@ extern __volatile int astpending;
 #define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, astpending = 1)
 #define	signotify(p)		(astpending = 1)
 
-#define	CACHELINESIZE	32			/* For now		XXX */
-
-extern __inline void syncicache __P((void *, int));
-extern __inline void flushcache __P((void *, int));
-
-extern __inline void
-syncicache(from, len)
-	void *from;
-	int len;
-{
-	int l, off;
-	char *p;
-
-	off = (int)from & (CACHELINESIZE - 1);
-	from = (char *)from - off;
-	len += off;
-
-	p = from; l = len;
-	do {
-		__asm__ __volatile ("dcbst 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile ("sync");
-
-	p = from; l = len;
-	do {
-		__asm__ __volatile ("icbi 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile ("isync");
-}
-
-extern __inline void
-flushcache(from, len)
-	void *from;
-	int len;
-{
-	int l, off;
-	char *p;
-
-	off = (int)from & (CACHELINESIZE - 1);
-	from = (char *)from - off;
-	len += off;
-
-	l = len; p = from;
-	do {
-		__asm__ __volatile ("dcbf 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile ("sync");
-	l = len; p = from;
-	do {
-		__asm__ __volatile ("icbi 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile ("isync");
-}
-
 extern char *bootpath;
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+#define	CACHELINESIZE	32
+#endif
+
+#include <powerpc/cpu.h>
 
 #endif	/* _MACHINE_CPU_H_ */

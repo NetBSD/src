@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.227.2.1 1999/04/16 16:19:01 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.227.2.1.2.1 1999/06/21 00:51:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,10 +77,8 @@
  */
 
 #include "opt_adb.h"
-#include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
-#include "opt_sysv.h"
 #include "zsc.h"
 
 #include <sys/param.h>
@@ -107,15 +105,6 @@
 #include <sys/syscallargs.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
-#endif
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
 #endif
 
 #include <machine/db_machdep.h>
@@ -190,26 +179,6 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-/*
- * Declare these as initialized data so we can patch them.
- */
-int	nswbuf = 0;
-#ifdef	NBUF
-int	nbuf = NBUF;
-#else
-int	nbuf = 0;
-#endif
-#ifdef	BUFPAGES
-int	bufpages = BUFPAGES;
-#else
-int	bufpages = 0;
-#endif
-#ifdef BUFCACHE
-int	bufcache = BUFCACHE;
-#else
-int	bufcache = 0;
-#endif
-
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
@@ -276,6 +245,20 @@ mac68k_init()
 			    atop(low[i]), atop(high[i]),
 			    VM_FREELIST_DEFAULT);
 	}
+
+	/*
+	 * Initialize the I/O mem extent map.
+	 * Note: we don't have to check the return value since
+	 * creation of a fixed extent map will never fail (since
+	 * descriptor storage has already been allocated).
+	 *
+	 * N.B. The iomem extent manages _all_ physical addresses
+	 * on the machine.  When the amount of RAM is found, all
+	 * extents of RAM are allocated from the map.
+	 */
+	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
+	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
 
 	/* Initialize the interrupt handlers. */
 	intr_init();
@@ -357,13 +340,14 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	caddr_t v, firstaddr;
+	caddr_t v;
 	unsigned i;
 	int vers;
 	int base, residual;
 	vaddr_t minaddr, maxaddr;
-	vm_size_t size = 0;	/* To avoid compiler warning */
+	vsize_t size = 0;	/* To avoid compiler warning */
 	int delay;
+	char pbuf[9];
 
 	/*
 	 * Initialize the kernel crash dump header.
@@ -389,107 +373,17 @@ cpu_startup(void)
 		printf("this kernel.\n\n");
 		for (delay = 0; delay < 1000000; delay++);
 	}
-	printf("real mem = %d\n", ctob(physmem));
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	/*
-	 * Allocate space for system data structures.
-	 * The first available real memory address is in "firstaddr".
-	 * The first available kernel virtual address is in "v".
-	 * As pages of kernel virtual memory are allocated, "v" is incremented.
-	 * As pages of memory are allocated and cleared,
-	 * "firstaddr" is incremented.
-	 * An index into the kernel page table corresponding to the
-	 * virtual memory address maintained in "v" is kept in "mapaddr".
+	 * Find out how much space we need, allocate it,
+	 * and then give everything true virtual addresses.
 	 */
-	/*
-	 * Make two passes.  The first pass calculates how much memory is
-	 * needed and allocates it.  The second pass assigns virtual
-	 * addresses to the various data structures.
-	 */
-	firstaddr = 0;
-again:
-	v = (caddr_t)firstaddr;
-
-#define	valloc(name, type, num) \
-	    (name) = (type *)v; v = (caddr_t)((name)+(num))
-#define	valloclim(name, type, num, lim) \
-	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns);
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-	/*
-	 * Determine the number of pages to use for the buffer cache
-	 * (minimum 16).  Allocate 3/4 as many swap buffer headers as
-	 * file I/O buffers.
-	 */
-	if (bufpages == 0) {
-		if (bufcache == 0) {	/* use old algorithm */
-			/*
-			 * Determine how many buffers to allocate. We use 10%
-			 * of the first 2MB of memory, and 5% of the rest.
-			 */
-			if (physmem < btoc(2 * 1024 * 1024))
-				bufpages = physmem / (10 * CLSIZE);
-			else
-				bufpages = (btoc(2 * 1024 * 1024) + physmem) /
-				    (20 * CLSIZE);
-		} else {
-			/*
-			 * Set size of buffer cache to physmem/bufcache * 100
-			 * (i.e., bufcache % of physmem).
-			 */
-			if (bufcache < 5 || bufcache > 95) {
-				printf("warning: unable to set bufcache "
-				    "to %d%% of RAM, using 10%%", bufcache);
-				bufcache = 10;
-			}
-			bufpages = physmem / (CLSIZE * 100) * bufcache;
-		}
-	}
-
-	if (nbuf == 0) {
-		nbuf = bufpages;
-		if (nbuf < 16)
-			nbuf = 16;
-	}
-
-	if (nswbuf == 0) {
-		nswbuf = (nbuf * 3 / 4) & ~1;	/* force even */
-		if (nswbuf > 256)
-			nswbuf = 256;	/* sanity */
-	}
-	valloc(buf, struct buf, nbuf);
-
-	/*
-	 * End of first pass, size has been calculated so allocate memory
-	 */
-	if (firstaddr == 0) {
-		size = (vm_size_t)(v - firstaddr);
-		firstaddr = (caddr_t)uvm_km_alloc(kernel_map, round_page(size));
-		if (firstaddr == 0)
-			panic("startup: no room for tables");
-		goto again;
-	}
-	/*
-	 * End of second pass, addresses have been assigned
-	 */
-	if ((vm_size_t)(v - firstaddr) != size)
+	size = (vm_size_t)allocsys(NULL, NULL);
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(size))) == 0)
+		panic("startup: no room for tables");
+	if (allocsys(v, NULL) - v != size)
 		panic("startup: table size inconsistency");
 
 	/*
@@ -505,7 +399,7 @@ again:
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
 	for (i = 0; i < nbuf; i++) {
-		vm_size_t curbufsize;
+		vsize_t curbufsize;
 		vaddr_t curbuf;
 		struct vm_page *pg;
 
@@ -535,19 +429,19 @@ again:
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, TRUE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, TRUE, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
 
 	/*
 	 * Initialize callouts
@@ -556,9 +450,10 @@ again:
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
 
-	printf("avail mem = %ld\n", ptoa(uvmexp.free));
-	printf("using %d buffers containing %d bytes of memory\n",
-	    nbuf, bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	printf("avail memory = %s\n", pbuf);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -2305,20 +2200,6 @@ mac68k_set_io_offsets(base)
 	vaddr_t base;
 {
 	extern volatile u_char *sccA;
-
-	/*
-	 * Initialize the I/O mem extent map.
-	 * Note: we don't have to check the return value since
-	 * creation of a fixed extent map will never fail (since
-	 * descriptor storage has already been allocated).
-	 *
-	 * N.B. The iomem extent manages _all_ physical addresses
-	 * on the machine.  When the amount of RAM is found, all
-	 * extents of RAM are allocated from the map.
-	 */
-	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
-	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
 
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ:

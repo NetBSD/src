@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10.2.1 1999/04/20 14:31:10 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.10.2.1.2.1 1999/06/21 00:46:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.9.2.1 1999/04/09 17:11:29 drochner Exp $	 */
+/*	$NetBSD: exec.c,v 1.9.2.1.2.1 1999/06/21 00:50:04 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -60,6 +60,8 @@
 #include "bootinfo.h"
 
 #ifdef COMPAT_OLDBOOT
+static int dev2major __P((char *, int *));
+
 static int
 dev2major(devname, major)
 	char           *devname;
@@ -105,7 +107,8 @@ exec_netbsd(file, loadaddr, boothowto)
 #endif
 
 #ifdef	DEBUG
-	printf("exec: file=%s loadaddr=0x%lx\n", file, loadaddr);
+	printf("exec: file=%s loadaddr=0x%lx\n",
+	       file ? file : "NULL", loadaddr);
 #endif
 
 	BI_ALLOC(6); /* ??? */
@@ -131,7 +134,7 @@ exec_netbsd(file, loadaddr, boothowto)
 		 * Get the size of the kernel
 		 */
 		marks[MARK_START] = loadaddr;
-		if ((fd = loadfile(file, marks, COUNT_ALL)) == -1)
+		if ((fd = loadfile(file, marks, COUNT_KERNEL)) == -1)
 			goto out;
 		close(fd);
 
@@ -144,7 +147,7 @@ exec_netbsd(file, loadaddr, boothowto)
 	}
 #endif
 	marks[MARK_START] = loadaddr;
-	if ((fd = loadfile(file, marks, LOAD_ALL)) == -1)
+	if ((fd = loadfile(file, marks, LOAD_KERNEL)) == -1)
 		goto out;
 
 	boot_argv[0] = boothowto;

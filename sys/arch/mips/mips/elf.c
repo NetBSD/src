@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.12 1998/09/05 15:28:08 christos Exp $	*/
+/*	$NetBSD: elf.c,v 1.12.10.1 1999/06/21 00:52:06 thorpej Exp $	*/
 /* from: NetBSD: exec_elf.c,v 1.3 1995/09/16 00:28:08 thorpej Exp 	*/
 
 /*       mips elf shared-library support from Per Fogelstrom's OpenBSD code */
@@ -99,7 +99,7 @@ void * elf_copyargs __P((struct exec_package *pack,
  */
 
 extern char sigcode[], esigcode[];
-#ifdef SYSCALL_DEBUG  
+#ifdef SYSCALL_DEBUG
 extern char *syscallnames[];
 #endif
 
@@ -115,9 +115,9 @@ struct emul emul_elf = {
 #else
 	NULL,
 #endif
-	sizeof(Aux32Info) * 8,
+	sizeof(Aux32Info) * 8,			/* XXX cgd */
 	elf_copyargs,
-	setregs, 
+	setregs,
 	sigcode,
 	esigcode,
 };
@@ -257,7 +257,7 @@ elf_check_header(eh, type)
 
 /*
  * elf_load_psection():
- * 
+ *
  * Load a psection at the appropriate address
  */
 static void
@@ -381,7 +381,7 @@ elf_set_segment(epp, vaddr, size, prot)
 /*XXX DEBUG*/	printf("elf_set_segment(): prot %x, bad rw size  %x\n",
 			prot, epp->ep_dsize);
 
-			if (epp->ep_daddr > vaddr)	
+			if (epp->ep_daddr > vaddr)
 				epp->ep_daddr = vaddr;
 
 			diff = (vaddr + size) - (epp->ep_daddr + epp->ep_dsize);
@@ -691,7 +691,7 @@ exec_elf_makecmds(p, epp)
 	free((char *) ph, M_TEMP);
 	epp->ep_vp->v_flag |= VTEXT;
 	return exec_aout_setup_stack(p, epp);
-#endif	
+#endif
 
 bad:
 	free((char *) ph, M_TEMP);

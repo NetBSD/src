@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.1 1999/04/19 21:22:59 kleink Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.1.2.1 1999/06/21 00:50:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: adosglue.h,v 1.4.26.1 1999/04/28 22:44:58 perry Exp $	*/
+/*	$NetBSD: adosglue.h,v 1.4.26.1.2.1 1999/06/21 00:46:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
