@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.6 2003/06/29 22:32:15 fvdl Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.6 2003/06/29 22:32:15 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.7 2003/10/30 01:43:10 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,6 @@ nfs_kqpoll(void *arg)
 {
 	struct kevq *ke;
 	struct vattr attr;
-	int error;
 	struct proc *p = pnfskq;
 	u_quad_t osize;
 
@@ -123,7 +122,7 @@ nfs_kqpoll(void *arg)
 			/* save v_size, nfs_getattr() updates it */
 			osize = ke->vp->v_size;
 
-			error = VOP_GETATTR(ke->vp, &attr, p->p_ucred, p);
+			(void) VOP_GETATTR(ke->vp, &attr, p->p_ucred, p);
 
 			/* following is a bit fragile, but about best
 			 * we can get */
