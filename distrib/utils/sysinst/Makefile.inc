@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.34 2004/02/29 18:46:43 jschauma Exp $
+#	$NetBSD: Makefile.inc,v 1.35 2004/04/12 03:49:24 grant Exp $
 #
 # Makefile for sysinst
 
@@ -94,18 +94,18 @@ msgtouch: ${DISTRIBVERDEP}
 
 msg.def: msg.mi.${SYSINSTLANG} ${MSG_MD} msgtouch
 	${_MKTARGET_CREATE}
-	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} | \
+	sed "s/@@VERSION@@/${DISTRIBVER}/" ${.ALLSRC} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
 menus.def: menus.mi ${MENUS_MD} msgtouch
 	${_MKTARGET_CREATE}
-	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} | \
+	sed "s/@@VERSION@@/${DISTRIBVER}/" ${.ALLSRC} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
 .for LANG in ${LANGUAGES:N${SYSINSTLANG}}
 sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgtouch msg_defs.h
 	${_MKTARGET_CREATE}
-	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC:M*.${LANG}} | \
+	sed "s/@@VERSION@@/${DISTRIBVER}/" ${.ALLSRC:M*.${LANG}} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
 	${HOST_SH} ${MSG_XLAT_SH} > ${.TARGET}
 
