@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: install.sh,v 1.4 1994/10/18 07:03:02 glass Exp $
+#	$Id: install.sh,v 1.5 1995/10/30 02:14:04 tls Exp $
 
 #	NetBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -38,7 +38,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.0
+VERSION=1.1
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {
@@ -447,18 +447,18 @@ $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 
 echo	""
 echo -n	"Creating an fstab..."
-echo /dev/${drivename}a / ufs rw 1 1 | sed -e s,//,/, > $FSTAB
+echo /dev/${drivename}a / ffs rw 1 1 | sed -e s,//,/, > $FSTAB
 if [ "$ename" != "" ]; then
-	echo /dev/${drivename}e /$ename ufs rw 1 2 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}e /$ename ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
 fi
 if [ "$fname" != "" ]; then
-	echo /dev/${drivename}f /$fname ufs rw 1 3 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}f /$fname ffs rw 1 3 | sed -e s,//,/, >> $FSTAB
 fi
 if [ "$gname" != "" ]; then
-	echo /dev/${drivename}g /$gname ufs rw 1 4 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}g /$gname ffs rw 1 4 | sed -e s,//,/, >> $FSTAB
 fi
 if [ "$hname" != "" ]; then
-	echo /dev/${drivename}h /$hname ufs rw 1 5 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}h /$hname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
 fi
 sync
 echo	" done."
