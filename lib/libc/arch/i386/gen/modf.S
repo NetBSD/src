@@ -32,13 +32,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)modf.s	5.5 (Berkeley) 3/18/91
+ *	$Id: modf.S,v 1.2 1993/10/21 01:40:01 jtc Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.text
-	/*.asciz "from: @(#)modf.s	5.5 (Berkeley) 3/18/91"*/
-	.asciz "$Id: modf.S,v 1.1 1993/10/07 00:19:08 cgd Exp $"
-#endif /* LIBC_SCCS and not lint */
+	.asciz "$Id: modf.S,v 1.2 1993/10/21 01:40:01 jtc Exp $"
+#endif
 
 #include "DEFS.h"
 

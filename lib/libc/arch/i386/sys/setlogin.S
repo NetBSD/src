@@ -34,11 +34,11 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.text
 	/*.asciz "from: @(#)setlogin.s	5.2 (Berkeley) 4/12/91"*/
-	.asciz "$Id: setlogin.S,v 1.1 1993/10/07 00:19:52 cgd Exp $"
-#endif /* LIBC_SCCS and not lint */
+	.asciz "$Id: setlogin.S,v 1.2 1993/10/21 01:40:47 jtc Exp $"
+#endif
 
 #include "SYS.h"
 

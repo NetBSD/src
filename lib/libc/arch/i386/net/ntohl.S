@@ -32,13 +32,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)ntohl.s	5.2 (Berkeley) 12/17/90
+ *	$Id: ntohl.S,v 1.2 1993/10/21 01:40:12 jtc Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.text
-	/*.asciz "from: @(#)ntohl.s	5.2 (Berkeley) 12/17/90"*/
-	.asciz "$Id: ntohl.S,v 1.1 1993/10/07 00:19:15 cgd Exp $"
-#endif /* LIBC_SCCS and not lint */
+	.asciz "$Id: ntohl.S,v 1.2 1993/10/21 01:40:12 jtc Exp $"
+#endif
 
 /* hostorder = ntohl(netorder) */
 

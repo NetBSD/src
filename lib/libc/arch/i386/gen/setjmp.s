@@ -32,13 +32,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90
+ *	$Id: setjmp.s,v 1.3 1993/10/21 01:40:02 jtc Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.text
-	/*.asciz "from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90"*/
-	.asciz "$Id: setjmp.s,v 1.2 1993/10/20 18:50:17 jtc Exp $"
-#endif /* LIBC_SCCS and not lint */
+	.asciz "$Id: setjmp.s,v 1.3 1993/10/21 01:40:02 jtc Exp $"
+#endif
 
 /*
  * C library -- _setjmp, _longjmp

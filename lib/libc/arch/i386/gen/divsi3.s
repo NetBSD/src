@@ -32,13 +32,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)divsi3.s	5.1 (Berkeley) 5/15/90
+ *	$Id: divsi3.s,v 1.2 1993/10/21 01:39:57 jtc Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.text
-	/*.asciz "from: @(#)divsi3.s	5.1 (Berkeley) 5/15/90"*/
-	.asciz "$Id: divsi3.s,v 1.1 1993/10/07 00:19:00 cgd Exp $"
-#endif /* LIBC_SCCS and not lint */
+	.asciz "$Id: divsi3.s,v 1.2 1993/10/21 01:39:57 jtc Exp $"
+#endif
 
 	.globl ___divsi3
 ___divsi3:

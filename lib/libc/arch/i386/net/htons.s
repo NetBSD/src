@@ -32,13 +32,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)htons.s	5.2 (Berkeley) 12/17/90
+ *	$Id: htons.s,v 1.2 1993/10/21 01:40:12 jtc Exp $
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
+#if defined(LIBC_SCCS)
 	.text
-	/*.asciz "from: @(#)htons.s	5.2 (Berkeley) 12/17/90"*/
-	.asciz "$Id: htons.s,v 1.1 1993/10/07 00:19:14 cgd Exp $"
-#endif /* LIBC_SCCS and not lint */
+	.asciz "$Id: htons.s,v 1.2 1993/10/21 01:40:12 jtc Exp $"
+#endif
 
 /* netorder = htons(hostorder) */
 
