@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.120 2000/08/19 22:09:08 fredb Exp $
+#	$NetBSD: Makefile,v 1.121 2000/10/07 17:18:17 deberg Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -86,10 +86,18 @@ buildmsg:
 	@echo -n "Build started at: "
 	@date
 
+# If sharesrc is around, use its share/mk files to bootstrap until the
+# mk files are installed (first step of make build).  If installing to
+# DESTDIR, don't bother, since the build will fail later on anyway.
+
 beforeinstall:
 .ifndef NODISTRIBDIRS
 .ifndef DESTDIR
+.if exists(share/mk)
+	(cd ${.CURDIR}/etc && ${MAKE} -m ${.CURDIR}/share/mk DESTDIR=/ distrib-dirs)
+.else
 	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
+.endif
 .else
 	(cd ${.CURDIR}/etc && ${MAKE} distrib-dirs)
 .endif
