@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.4.4.2 2002/02/09 16:56:35 he Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.4.4.3 2002/02/13 21:40:50 he Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.4.4.2 2002/02/09 16:56:35 he Exp $");
+__KERNEL_RCSID(2, "$NetBSD: ip_rcmd_pxy.c,v 1.4.4.3 2002/02/13 21:40:50 he Exp $");
 
 /*
  * Id: ip_rcmd_pxy.c,v 1.4.2.5 2001/10/30 16:38:14 darrenr Exp
