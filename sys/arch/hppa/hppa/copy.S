@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.1 2002/06/05 01:04:19 fredette Exp $	*/
+/*	$NetBSD: copy.S,v 1.2 2003/08/31 01:26:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -110,9 +110,9 @@
 LEAF_ENTRY(name)				! \
 	ldil	L%VM_MAXUSER_ADDRESS, t1	! \
 	comb,>>= arg0, t1, fusubadaddr		! \
-	ldil	L%curproc, t1			! \
-	ldw	R%curproc(t1), t1		! \
-	ldw	P_ADDR(t1), t1			! \
+	ldil	L%curlwp, t1			! \
+	ldw	R%curlwp(t1), t1		! \
+	ldw	L_ADDR(t1), t1			! \
 	ldil	L%fusufault, t2			! \
 	ldo	R%fusufault(t2), t2		! \
 	ldw	U_PCB+PCB_ONFAULT(t1), t3	! \
@@ -167,9 +167,9 @@ EXIT(_copy_on_fault)
  */
 LEAF_ENTRY(spstrcpy)
 	/* setup fault handler */
-	ldil	L%curproc, r31
-	ldw	R%curproc(r31), r31
-	ldw	P_ADDR(r31), r31
+	ldil	L%curlwp, r31
+	ldw	R%curlwp(r31), r31
+	ldw	L_ADDR(r31), r31
 	ldil	L%_copy_on_fault, t2
 	ldo	R%_copy_on_fault(t2), t2
 	stw	t2, PCB_ONFAULT+U_PCB(r31)
@@ -238,9 +238,9 @@ EXIT(name)
 
 /* This loads curproc's space into the given register. */
 #define SPACE_CURPROC(reg)			  \
-	ldil	L%curproc, reg			! \
-	ldw	R%curproc(reg), reg		! \
-	ldw	P_ADDR(reg), reg		! \
+	ldil	L%curlwp, reg			! \
+	ldw	R%curlwp(reg), reg		! \
+	ldw	L_ADDR(reg), reg		! \
 	ldw	U_PCB+PCB_SPACE(reg), reg
 
 /* This loads the kernel's space into the given register. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 2002/08/14 16:18:12 fredette Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 2003/08/31 01:26:32 chs Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -130,10 +130,10 @@
 	.import	boothowto, data
 	.import	bootdev, data
 	.import	esym, data
-	.import	curproc, data
+	.import	curlwp, data
 	.import	want_resched, data
 	.import virtual_avail, data
-	.import	proc0, data
+	.import	lwp0, data
 	.import	proc0paddr, data
 	.import	kpsw, data
 	.import	panic, code
@@ -204,8 +204,8 @@ ENTRY(start,0)
 	ldil	L%$global$,dp
 	ldo	R%$global$(dp),dp
 
-	/* zero fake trapframe and proc0 u-area */
-	/* XXX - we should create a real trapframe for proc0 */
+	/* zero fake trapframe and lwp0 u-area */
+	/* XXX - we should create a real trapframe for lwp0 */
 	copy	arg3, t2
 	ldi	NBPG+TRAPFRAME_SIZEOF, t1
 $start_zero_tf
@@ -227,10 +227,10 @@ $start_zero_tf
 	add	arg3, arg0, arg0
 	ldil	L%proc0paddr, t1
 	stw	arg3, R%proc0paddr(t1)
-	ldil	L%proc0, t2
-	stw	arg3, R%proc0+P_ADDR(t2)
+	ldil	L%lwp0, t2
+	stw	arg3, R%lwp0+L_ADDR(t2)
 	ldo	NBPG(arg3), t1
-	stw	t1, R%proc0+P_MD_REGS(t2)
+	stw	t1, R%lwp0+L_MD_REGS(t2)
 
 	ldil	L%TFF_LAST, t1
 	stw	t1, TF_FLAGS-TRAPFRAME_SIZEOF(sp)
@@ -729,25 +729,29 @@ EXIT(microtime)
 /* Include the support functions. */
 #include <hppa/hppa/support.S>
 
+	.align	32
+ENTRY(cpu_switchto,128)
+EXIT(cpu_switchto)
+
 /*
  * cpu_switch()
- * Find the highest priority process and resume it.
+ * Find the highest priority LWP and resume it.
  */
 	.align	32
 ENTRY(cpu_switch,128)
 
 	/*
-	 * Clear curproc so that we don't accumulate system time while idle.
+	 * Clear curlwp so that we don't accumulate system time while idle.
 	 */
-	ldil	L%curproc, t1
-	ldw	R%curproc(t1), arg2
-	stw	r0, R%curproc(t1)
-	/* remain on the old (curproc)'s stack until we have a better choice */
+	ldil	L%curlwp, t1
+	ldw	R%curlwp(t1), arg2
+	stw	r0, R%curlwp(t1)
+	/* remain on the old (curlwp)'s stack until we have a better choice */
 
 	/*
 	 * arg3: spl
 	 * t1:	&sched_whichqs
-	 * t2:	old curproc
+	 * t2:	old curlwp
 	 *
 	 */
 
@@ -758,7 +762,7 @@ switch_search
 	copy	%sp, %r3
 	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
 
-	/* save cpl and old curproc */
+	/* save cpl and old curlwp */
 	ldil	L%cpl, %arg0
 	ldw	R%cpl(%arg0), %arg0
 	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)
@@ -806,15 +810,15 @@ idle_loop
 	nop
 
 gotprocs
-	/* recover old curproc */
+	/* recover old curlwp */
 	ldw	HPPA_FRAME_ARG(1)(%r3), %arg2
 
 #if 0
-	/* XXX debugging - break if old curproc is NULL */
-	comb,<>,n %arg2, %r0, curprocok
+	/* XXX debugging - break if old curlwp is NULL */
+	comb,<>,n %arg2, %r0, curlwpok
 	nop
 	break	0, 5
-curprocok
+curlwpok
 #endif
 
 	/* end stack calling convention */
@@ -832,7 +836,7 @@ getbit
 	ldo	R%sched_qs(t2), t2
 	sh3add	t4, t2, t2
 
-	ldw	P_FORW(t2), arg1
+	ldw	L_FORW(t2), arg1
 #ifdef DIAGNOSTIC
 	comb,<>	t2, arg1, link_ok
 	nop
@@ -852,10 +856,10 @@ Lcspstr
 	.align	8
 link_ok
 #endif
-	ldw	P_FORW(arg1), arg0
-	stw	arg0, P_FORW(t2)
-	stw	t2, P_BACK(arg0)
-	stw	r0, P_BACK(arg1)
+	ldw	L_FORW(arg1), arg0
+	stw	arg0, L_FORW(t2)
+	stw	t2, L_BACK(arg0)
+	stw	r0, L_BACK(arg1)
 
 	comb,<> arg0, t2, sw_qnempty
 	nop
@@ -869,21 +873,21 @@ sw_qnempty
 	stw	r0, R%want_resched(t3)
 
 #ifdef DIAGNOSTIC
-	/* The new process must have no wait channel. */
-	ldw	P_WCHAN(arg1), t1
+	/* The new LWP must have no wait channel. */
+	ldw	L_WCHAN(arg1), t1
 	comb,<>,n r0, t1, switch_error
 	copy	arg1, t2
-	/* The new process' state must be SRUN. */
-	ldb	P_STAT(arg1), t1
-	comib,<>,n SRUN, t1, switch_error
+	/* The new LWP's state must be LSRUN. */
+	ldw	L_STAT(arg1), t1
+	comib,<>,n LSRUN, t1, switch_error
 	copy	arg1, t2
 	/*
-	 * Either we must be switching to the same process, or
-	 * the the new process' kernel stack must be reasonable.
+	 * Either we must be switching to the same LWP, or
+	 * the the new LWP's kernel stack must be reasonable.
 	 */
 	comb,=,n arg1, arg2, kstack_ok
-	ldw	P_MD_REGS(arg1), t1
-	ldw	P_ADDR(arg1), arg0
+	ldw	L_MD_REGS(arg1), t1
+	ldw	L_ADDR(arg1), arg0
 	ldw	TF_R30(t1), t1
 	ldo	NBPG(arg0), arg0
 	comb,>>,n arg0, t1, switch_error
@@ -895,21 +899,21 @@ sw_qnempty
 	copy	arg1, t2
 kstack_ok
 #endif
-	ldi	SONPROC, t1
-	stb	t1, P_STAT(arg1)
-	ldil	L%curproc, t1
+	ldi	LSONPROC, t1
+	stw	t1, L_STAT(arg1)
+	ldil	L%curlwp, t1
 	/*
 	 * Disable interrupts while we're doing the real
 	 * switch.  Is this just being paranoid?
 	 */
 	mfctl	eiem, arg3
 	mtctl	r0, eiem
-	stw	arg1, R%curproc(t1)
+	stw	arg1, R%curlwp(t1)
 
-	/* Skip context switch if same process. */
+	/* Skip context switch if same LWP. */
 	comb,=,n arg1, arg2, switch_return
 
-	/* If old process exited, don't bother. */
+	/* If old LWP exited, don't bother. */
 	comb,=,n r0, arg2, switch_exited
 
 	/*
@@ -917,7 +921,7 @@ kstack_ok
 	 *
 	 * arg2: old proc
 	 */
-	ldw	P_MD(arg2), t1
+	ldw	L_MD(arg2), t1
 	copy	sp, t2
 	ldo	HPPA_FRAME_SIZE+16*4(sp), sp
 	ldw	TF_R30(t1), t3
@@ -944,14 +948,14 @@ kstack_ok
 	stw	r17, 14*4(t2)
 	stw	r18, 15*4(t2)
 
-	/* don't need old curproc (arg2) starting from here */
+	/* don't need old curlwp (arg2) starting from here */
 switch_exited
 	/*
 	 * 3. restore new proc context
 	 *
 	 * arg1: new proc
 	 */
-	ldw	P_MD(arg1), t1
+	ldw	L_MD(arg1), t1
 	ldw	TF_CR30(t1), t2
 	ldw	TF_R30(t1), sp
 	ldw	TF_CR9(t1), t3
@@ -991,10 +995,10 @@ ALTENTRY(hppa_fpu_nop1)
 	b,n	switch_return
 
 	/*
-	 * We do have a hardware FPU.  If the process 
+	 * We do have a hardware FPU.  If the LWP 
 	 * that we just switched to has its state in the
 	 * FPU, enable the FPU, else disable it, so if 
-	 * the process does try to use the coprocessor 
+	 * the LWP does try to use the coprocessor 
 	 * we'll get an assist emulation trap to swap 
 	 * states.
 	 */
@@ -1015,8 +1019,8 @@ EXIT(cpu_switch)
 
 /*
  * switch_exit(struct proc *p)
- * restore proc0 context and go into cpu_switch to select the next runable
- * process.
+ * restore lwp0 context and go into cpu_switch to select the next runable
+ * LWP.
  */
 	.import	kernel_map, data
 	.import	uvmspace_free, code
@@ -1071,7 +1075,7 @@ ENTRY(switch_exit,0)
 EXIT(switch_exit)
 
 /*
- * This is the first code run in a new process after
+ * This is the first code run in a new LWP after
  * cpu_switch() has switched to it for the first time.
  * This happens courtesy of the setup in cpu_fork(),
  * which also makes sure that %t3 is the address of
@@ -1115,14 +1119,14 @@ ENTRY(switch_trampoline,64)
 
 	/*
 	 * Since the first kernel function returned,
-	 * this process was created by the fork()
+	 * this LWP was created by the fork()
 	 * syscall, which we now return from.
 	 */
-	ldil	L%curproc, t1
-	ldw	R%curproc(t1), t2
+	ldil	L%curlwp, t1
+	ldw	R%curlwp(t1), t2
 	.call
 	b	$syscall_return
-	ldw	P_MD(t2), t3
+	ldw	L_MD(t2), t3
 EXIT(switch_trampoline)
 
 /* Include the signal code. */

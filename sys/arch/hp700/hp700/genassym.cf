@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2002/09/26 18:56:33 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.5 2003/08/31 01:26:31 chs Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -62,7 +62,6 @@ include <hp700/hp700/intr.h>
 include <hppa/hppa/hpt.h>
 
 # general constants
-export	NBPG
 export	PGSHIFT
 export	USRSTACK
 export	HPPA_PID_KERNEL
@@ -178,18 +177,20 @@ member	TF_CR30		tf_cr30
 
 # proc fields and values
 struct	proc
-member	P_FORW		p_forw
-member	P_BACK		p_back
-member	P_ADDR		p_addr
-member	P_PRIORITY	p_priority
-member	P_STAT		p_stat
-member	P_WCHAN		p_wchan
 member	P_MD		p_md
-member	P_MD_FLAGS		p_md.md_flags
-member	P_MD_REGS		p_md.md_regs
 
-export	SRUN
-export	SONPROC
+struct	lwp
+member	L_FORW		l_forw
+member	L_BACK		l_back
+member	L_ADDR		l_addr
+member	L_PRIORITY	l_priority
+member	L_STAT		l_stat
+member	L_WCHAN		l_wchan
+member	L_MD		l_md
+member	L_MD_REGS	l_md.md_regs
+
+export	LSRUN
+export	LSONPROC
 
 struct	pcb
 member	PCB_FPREGS	pcb_fpregs

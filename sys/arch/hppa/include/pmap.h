@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2002/09/22 07:53:42 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 2003/08/31 01:26:37 chs Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -129,7 +129,7 @@ do { if (pmap) { \
 #define pmap_release(pmap)
 #define pmap_copy(dpmap,spmap,da,len,sa)
 #define	pmap_update(p)
-void	pmap_activate __P((struct proc *));
+void	pmap_activate __P((struct lwp *));
 #define	pmap_deactivate(p)
 
 #define pmap_phys_address(x)	((x) << PGSHIFT)

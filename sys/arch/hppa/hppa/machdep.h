@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.4 2002/08/25 20:19:59 fredette Exp $	*/
+/*	$NetBSD: machdep.h,v 1.5 2003/08/31 01:26:35 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -78,8 +78,8 @@ extern u_int fpu_version;
 extern u_int fpu_csw;
 extern paddr_t fpu_cur_uspace;
 void hppa_fpu_bootstrap __P((u_int));
-void hppa_fpu_flush __P((struct proc *));
-void hppa_fpu_emulate __P((struct trapframe *, struct proc *));
+void hppa_fpu_flush __P((struct lwp *));
+void hppa_fpu_emulate __P((struct trapframe *, struct lwp *));
 
 /* Interrupt dispatching. */
 extern u_int hppa_intr_depth;
