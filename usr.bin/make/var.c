@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.17 1996/12/31 18:03:30 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.17 1996/12/31 18:03:30 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1838,7 +1838,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 
 		    error = regcomp(&pattern.re, re, REG_EXTENDED);
 		    free(re);
-		    if (err)  {
+		    if (error)  {
+			*lengthPtr = cp - start + 1;
 			VarREError(error, &pattern.re, "RE substitution error");
 			free(pattern.replace);
 			return (var_Error);
