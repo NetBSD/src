@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.13 1996/02/22 07:25:05 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.14 1996/02/23 07:24:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -67,7 +67,8 @@
  * for lots of helpful tips and suggestions.  Thanks also to Paul Kranenburg
  * and Chris Torek for bits of insight needed along the way.  Thanks to
  * David Gilbert and Andrew Gillham who risked filesystem life-and-limb
- * for the sake of testing.
+ * for the sake of testing.  Andrew Gillham helped work out the bugs
+ * the the 4/100 DMA code.
  */
 
 /*
@@ -116,6 +117,8 @@
 #define DEBUG XXX
 #endif
 
+#define COUNT_SW_LEFTOVERS	XXX	/* See sw DMA completion code */
+
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
@@ -134,10 +137,6 @@
  * to avoid buf/cluster remap problems.  (paranoid?)
  */
 #define	MAX_DMA_LEN 0xE000
-
-#ifndef DEBUG
-#define DEBUG XXX
-#endif
 
 #ifdef	DEBUG
 int si_debug = 0;
@@ -1289,6 +1288,19 @@ si_obio_dma_eop(ncr_sc)
 	/* Not needed - DMA was stopped prior to examining sci_csr */
 }
 
+#if (defined(DEBUG) || defined(DIAGNOSTIC)) && !defined(COUNT_SW_LEFTOVERS)
+#define COUNT_SW_LEFTOVERS
+#endif
+#ifdef COUNT_SW_LEFTOVERS
+/*
+ * Let's find out how often these occur.  Read these with DDB from time
+ * to time.
+ */
+int	sw_3_leftover = 0;
+int	sw_2_leftover = 0;
+int	sw_1_leftover = 0;
+int	sw_0_leftover = 0;
+#endif
 
 void
 si_obio_dma_stop(ncr_sc)
@@ -1311,7 +1323,23 @@ si_obio_dma_stop(ncr_sc)
 	/* First, halt the DMA engine. */
 	si->sw_csr &= ~SI_CSR_DMA_EN;
 
+	/*
+	 * XXX HARDWARE BUG!
+	 * Apparently, some early 4/100 SCSI controllers had a hardware
+	 * bug that caused the controller to do illegal memory access.
+	 * We see this as SI_CSR_DMA_BUS_ERR (makes sense).  To work around
+	 * this, we simply need to clean up after ourselves ... there will
+	 * be as many as 3 bytes left over.  Since we clean up "left-over"
+	 * bytes on every read anyway, we just continue to chug along
+	 * if SI_CSR_DMA_BUS_ERR is asserted.  (This was probably worked
+	 * around in hardware later with the "left-over byte" indicator
+	 * in the VME controller.)
+	 */
+#if 0
 	if (si->sw_csr & (SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)) {
+#else
+	if (si->sw_csr & (SI_CSR_DMA_CONFLICT)) {
+#endif
 		printf("sw: DMA error, csr=0x%x, reset\n", si->sw_csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
@@ -1363,19 +1391,34 @@ si_obio_dma_stop(ncr_sc)
 
 		switch (Dma_addr & 3) {
 		case 3:
-			cp[-3] = (si->sw_bpr & 0xff000000) >> 24;
-			cp[-2] = (si->sw_bpr & 0x00ff0000) >> 16;
-			cp[-1] = (si->sw_bpr & 0x0000ff00) >> 8;
+			cp[0] = (si->sw_bpr & 0xff000000) >> 24;
+			cp[1] = (si->sw_bpr & 0x00ff0000) >> 16;
+			cp[2] = (si->sw_bpr & 0x0000ff00) >> 8;
+#ifdef COUNT_SW_LEFTOVERS
+			++sw_3_leftover;
+#endif
 			break;
 
 		case 2:
-			cp[-2] = (si->sw_bpr & 0xff000000) >> 24;
-			cp[-1] = (si->sw_bpr & 0x00ff0000) >> 16;
+			cp[0] = (si->sw_bpr & 0xff000000) >> 24;
+			cp[1] = (si->sw_bpr & 0x00ff0000) >> 16;
+#ifdef COUNT_SW_LEFTOVERS
+			++sw_2_leftover;
+#endif
 			break;
 
 		case 1:
-			cp[-1] = (si->sw_bpr & 0xff000000) >> 24;
+			cp[0] = (si->sw_bpr & 0xff000000) >> 24;
+#ifdef COUNT_SW_LEFTOVERS
+			++sw_1_leftover;
+#endif
 			break;
+
+#ifdef COUNT_SW_LEFTOVERS
+		default:
+			++sw_0_leftover;
+			break;
+#endif
 		}
 	}
 
