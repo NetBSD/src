@@ -54,7 +54,9 @@ static char rcsid[] = "parse.c,v 3.42 1997/01/19 14:37:19 kardel Exp";
 
 #include "ntp_stdlib.h"
 
+#ifdef STREAM
 #include <sys/parsestreams.h>
+#endif
 
 #if defined(PARSESTREAM) && (defined(SYS_SUNOS4) || defined(SYS_SOLARIS)) && defined(STREAM)
 /*
