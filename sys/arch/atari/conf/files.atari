@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.95 2002/04/16 20:50:18 thorpej Exp $
+#	$NetBSD: files.atari,v 1.95.2.1 2002/05/16 13:31:57 gehenna Exp $
 
 maxpartitions 16
 
@@ -254,3 +254,5 @@ include "compat/ossaudio/files.ossaudio"
 include	"dev/pckbc/files.pckbc"
 include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
+
+include "arch/atari/conf/majors.atari"

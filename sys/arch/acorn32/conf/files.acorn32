@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.11 2002/04/24 17:52:48 bjh21 Exp $
+#	$NetBSD: files.acorn32,v 1.11.2.1 2002/05/16 13:31:50 gehenna Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -330,3 +330,4 @@ include "dev/i2o/files.i2o"
 #
 include "dev/pckbc/files.pckbc"
 
+include "arch/acorn32/conf/majors.acorn32"

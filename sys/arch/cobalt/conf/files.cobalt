@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.12 2002/04/16 20:50:18 thorpej Exp $
+#	$NetBSD: files.cobalt,v 1.12.2.1 2002/05/16 13:32:03 gehenna Exp $
 
 maxpartitions 16
 
@@ -64,3 +64,5 @@ major {wd = 6}
 
 major {raid = 5}
 major {ld = 10}
+
+include "arch/cobalt/conf/majors.cobalt"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.51 2002/03/24 18:10:14 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.51.2.1 2002/05/16 13:32:26 gehenna Exp $
 
 # config file for mvme68k
 
@@ -133,3 +133,5 @@ file arch/m68k/m68k/linux_trap.c		compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
+
+include	"arch/mvme68k/conf/majors.mvme68k"

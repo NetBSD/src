@@ -1,4 +1,4 @@
-#	$NetBSD: files.playstation2,v 1.8 2002/04/16 20:50:22 thorpej Exp $
+#	$NetBSD: files.playstation2,v 1.8.2.1 2002/05/16 13:32:39 gehenna Exp $
 
 maxpartitions 8
 
@@ -104,3 +104,5 @@ major	{cd = 5}
 
 include "dev/ata/files.ata"
 major	{wd = 1}
+
+include "arch/playstation2/conf/majors.playstation2"

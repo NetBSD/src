@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.155 2002/04/16 20:50:17 thorpej Exp $
+# $NetBSD: files.alpha,v 1.155.2.1 2002/05/16 13:31:53 gehenna Exp $
 #
 # alpha-specific configuration info
 
@@ -600,3 +600,5 @@ include "dev/usb/files.usb"
 # Machine-independent IEEE 1394 device support
 #
 include "dev/ieee1394/files.ieee1394"
+
+include	"arch/alpha/conf/majors.alpha"

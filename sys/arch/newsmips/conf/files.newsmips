@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.19 2002/04/16 20:50:22 thorpej Exp $
+#	$NetBSD: files.newsmips,v 1.19.2.1 2002/05/16 13:32:32 gehenna Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -140,3 +140,5 @@ major { cd = 16 }
 # RAIDframe
 #
 major { raid = 32 }
+
+include "arch/newsmips/conf/majors.newsmips"

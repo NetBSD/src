@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbsh3,v 1.14 2002/04/16 20:50:19 thorpej Exp $
+#	$NetBSD: files.evbsh3,v 1.14.2.1 2002/05/16 13:32:06 gehenna Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -55,3 +55,5 @@ attach cpu at mainbus
 file	arch/sh3/sh3/cpu.c			cpu
 
 include	"arch/sh3/conf/files.shb"
+
+include "arch/evbsh3/conf/majors.evbsh3"

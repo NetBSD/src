@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.38 2002/04/16 20:50:17 thorpej Exp $
+#	$NetBSD: files.arc,v 1.38.2.1 2002/05/16 13:31:56 gehenna Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -291,3 +291,5 @@ file	dev/cons.c
 #file	dev/cninit.c
 #file	netinet/in_cksum.c
 #file	netns/ns_cksum.c			ns
+
+include "arch/arc/conf/majors.arc"

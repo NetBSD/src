@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.15 2001/11/28 10:21:17 lukem Exp $
+#	$NetBSD: files.news68k,v 1.15.8.1 2002/05/16 13:32:31 gehenna Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -154,3 +154,5 @@ include "compat/aout/files.aout"
 
 # OSS audio driver compatibility
 include	"compat/ossaudio/files.ossaudio"
+
+include "arch/news68k/conf/majors.news68k"

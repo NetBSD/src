@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvmeppc,v 1.2 2002/04/16 20:50:21 thorpej Exp $
+#	$NetBSD: files.mvmeppc,v 1.2.2.1 2002/05/16 13:32:27 gehenna Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #
@@ -100,3 +100,5 @@ file	arch/mvmeppc/isa/isadma_machdep.c	isa
 device	mkclock: mk48txx
 attach	mkclock at isa with mkclock_isa
 file	arch/mvmeppc/isa/mkclock_isa.c	mkclock_isa
+
+include "arch/mvmeppc/conf/majors.mvmeppc"

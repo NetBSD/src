@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.11 2002/04/16 20:50:22 thorpej Exp $
+#	$NetBSD: files.sandpoint,v 1.11.2.1 2002/05/16 13:32:43 gehenna Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -115,3 +115,5 @@ file	dev/isa/fdc_isa.c		fdc_isa
 device	fd: disk
 attach	fd at fdc
 major	{fd = 2}
+
+include "arch/sandpoint/conf/majors.sandpoint"

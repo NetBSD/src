@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.46 2002/04/22 09:41:21 augustss Exp $
+#	$NetBSD: files.x68k,v 1.46.2.1 2002/05/16 13:32:58 gehenna Exp $
 #
 # new style config file for x68k architecture
 #
@@ -205,3 +205,5 @@ file arch/m68k/m68k/linux_trap.c	compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
+
+include	"arch/x68k/conf/majors.x68k"

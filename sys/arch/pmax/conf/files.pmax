@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.101 2002/04/03 13:16:13 simonb Exp $
+#	$NetBSD: files.pmax,v 1.101.2.1 2002/05/16 13:32:40 gehenna Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -221,3 +221,5 @@ file	arch/pmax/dev/bt459.c			cfb | sfb
 #
 defpseudo	fb
 file	arch/pmax/dev/fb.c		fb needs-count
+
+include "arch/pmax/conf/majors.pmax"
