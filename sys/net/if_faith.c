@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.19 2001/05/08 10:15:14 itojun Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.20 2001/05/08 11:06:21 itojun Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -349,11 +349,7 @@ faithprefix(in6)
 	sin6.sin6_family = AF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *in6;
-#ifdef __FreeBSD__
-	rt = rtalloc1((struct sockaddr *)&sin6, 0, 0UL);
-#else
 	rt = rtalloc1((struct sockaddr *)&sin6, 0);
-#endif
 	if (rt && rt->rt_ifp && rt->rt_ifp->if_type == IFT_FAITH &&
 	    (rt->rt_ifp->if_flags & IFF_UP) != 0)
 		ret = 1;
