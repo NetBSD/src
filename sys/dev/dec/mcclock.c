@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.14 2001/11/23 01:04:11 simonb Exp $ */
+/* $NetBSD: mcclock.c,v 1.15 2001/12/05 10:54:51 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.14 2001/11/23 01:04:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.15 2001/12/05 10:54:51 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -86,8 +86,6 @@ mcclock_init(dev)
 	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
 	int rate;
 
-printf("%s: try to set hz to %d\n", sc->sc_dev.dv_xname, hz);
-
 again:
 	switch (hz) {
 	case 32:
@@ -132,7 +130,6 @@ again:
 	mc146818_write(sc, MC_REGA, rate);
 	mc146818_write(sc, MC_REGB,
 	    MC_REGB_PIE | MC_REGB_SQWE | MC_REGB_BINARY | MC_REGB_24HR);
-printf("%s: hz set to %d\n", sc->sc_dev.dv_xname, hz);
 }
 
 /*
