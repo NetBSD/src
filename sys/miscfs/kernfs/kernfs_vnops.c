@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kernfs_vnops.c	8.6 (Berkeley) 2/10/94
- *	$Id: kernfs_vnops.c,v 1.24 1994/06/15 03:30:44 mycroft Exp $
+ *	$Id: kernfs_vnops.c,v 1.25 1994/06/15 17:52:32 mycroft Exp $
  */
 
 /*
@@ -226,6 +226,8 @@ kernfs_lookup(ap)
 		return (0);
 	}
 #endif
+
+	*vpp = NULL;
 
 	for (error = ENOENT, kt = kern_targets, i = 0; i < nkern_targets;
 	     kt++, i++) {
