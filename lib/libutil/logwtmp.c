@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.11 2000/07/05 11:46:41 ad Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.12 2002/07/27 23:49:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logwtmp.c,v 1.11 2000/07/05 11:46:41 ad Exp $");
+__RCSID("$NetBSD: logwtmp.c,v 1.12 2002/07/27 23:49:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,12 +46,14 @@ __RCSID("$NetBSD: logwtmp.c,v 1.11 2000/07/05 11:46:41 ad Exp $");
 #include <sys/file.h>
 #include <sys/time.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <assert.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <utmp.h>
+#include <utmpx.h>
 #include <util.h>
 
 void
@@ -76,4 +78,27 @@ logwtmp(const char *line, const char *name, const char *host)
 			(void) ftruncate(fd, buf.st_size);
 	}
 	(void) close(fd);
+}
+
+void
+logwtmpx(const char *line, const char *name, const char *host, int status,
+    int type)
+{
+	struct utmpx ut;
+
+	_DIAGASSERT(line != NULL);
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(host != NULL);
+
+	(void)memset(&ut, 0, sizeof(ut));
+	(void)strncpy(ut.ut_line, line, sizeof(ut.ut_line));
+	(void)strncpy(ut.ut_name, name, sizeof(ut.ut_name));
+	(void)strncpy(ut.ut_host, host, sizeof(ut.ut_host));
+	ut.ut_type = type;
+	if (WIFEXITED(status))
+		ut.ut_exit.e_exit = (uint16_t)WEXITSTATUS(status);
+	if (WIFSIGNALED(status))
+		ut.ut_exit.e_termination = (uint16_t)WTERMSIG(status);
+	(void)gettimeofday(&ut.ut_tv, NULL);
+	(void)updwtmpx(_PATH_WTMPX, &ut);
 }
