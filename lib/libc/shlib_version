@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.150 2004/04/21 01:05:32 christos Exp $
+#	$NetBSD: shlib_version,v 1.151 2004/04/28 00:11:44 kleink Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -13,6 +13,7 @@
 # - infinity{,f,l}.c, math.h: __infinity -> __huge_val
 # - libc/gen/is{inf,nan}d_ieee754.c: remove is{inf,nan} aliases
 # - libc/arch/vax/gen/is{inf,nan}.c: remove
+# - libc/db/hash/ndbm.c: remove; __ndbm13 -> ndbm
 #
 major=12
-minor=116
+minor=117
