@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.42 2004/05/21 21:13:57 ross Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.43 2004/06/10 00:29:58 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -64,9 +64,9 @@ OBJHOSTMACHINE=	# set
 .if defined(HOSTPROG)
 SRCS?=		${HOSTPROG}.c
 
-DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
+_YHPSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+DPSRCS+=	${_YHPSRCS}
+CLEANFILES+=	${_YHPSRCS}
 
 .if !empty(SRCS:N*.h:N*.sh)
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.lo/g}
@@ -74,7 +74,7 @@ LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
 .if defined(OBJS) && !empty(OBJS)
-.NOPATH: ${OBJS} ${HOSTPROG} ${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+.NOPATH: ${OBJS} ${HOSTPROG} ${_YHPSRCS}
 
 ${OBJS} ${LOBJS}: ${DPSRCS}
 ${HOSTPROG}: ${OBJS} ${DPADD}
