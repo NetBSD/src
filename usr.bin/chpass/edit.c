@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.12 1998/07/26 21:25:16 mycroft Exp $	*/
+/*	$NetBSD: edit.c,v 1.13 2002/08/08 04:49:26 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: edit.c,v 1.12 1998/07/26 21:25:16 mycroft Exp $");
+__RCSID("$NetBSD: edit.c,v 1.13 2002/08/08 04:49:26 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,6 @@ edit(tempname, pw)
 			(*Pw_error)(tempname, 1, 1);
 		if (begin.st_mtime == end.st_mtime) {
 			warnx("no changes made");
-			unlink(tempname);
 			(*Pw_error)(NULL, 0, 0);
 		}
 		if (verify(tempname, pw))

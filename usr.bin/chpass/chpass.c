@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.24 2002/08/07 23:20:30 soren Exp $	*/
+/*	$NetBSD: chpass.c,v 1.25 2002/08/08 04:49:26 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-__RCSID("$NetBSD: chpass.c,v 1.24 2002/08/07 23:20:30 soren Exp $");
+__RCSID("$NetBSD: chpass.c,v 1.25 2002/08/08 04:49:26 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,10 +66,9 @@ __RCSID("$NetBSD: chpass.c,v 1.24 2002/08/07 23:20:30 soren Exp $");
 #include "chpass.h"
 #include "pathnames.h"
 
-char *tempname;
+static char tempname[] = "/etc/pw.XXXXXX";
 uid_t uid;
 int use_yp;
-int yflag;
 
 void	(*Pw_error) __P((const char *, int, int));
 
@@ -78,6 +77,7 @@ extern	int _yp_check __P((char **));	/* buried deep inside libc */
 #endif
 
 void	baduser __P((void));
+void	cleanup __P((void));
 int	main __P((int, char **));
 void	usage __P((void));
 
@@ -88,8 +88,8 @@ main(argc, argv)
 {
 	enum { NEWSH, LOADENTRY, EDITENTRY } op;
 	struct passwd *pw, lpw, old_pw;
-	int ch, pfd, tfd, dfd;
-	char *arg, *username = NULL, tempname[] = "/etc/pw.XXXXXX";
+	int ch, dfd, pfd, tfd, yflag;
+	char *arg, *username = NULL;
 
 #ifdef __GNUC__
 	pw = NULL;		/* XXX gcc -Wuninitialized */
@@ -101,7 +101,7 @@ main(argc, argv)
 
 	op = EDITENTRY;
 	while ((ch = getopt(argc, argv, "a:s:ly")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'a':
 			op = LOADENTRY;
 			arg = optarg;
@@ -164,8 +164,9 @@ main(argc, argv)
 			if (pw != NULL)
 				use_yp = 0;
 			else {
-				errx(1, "master YP server not running yppasswd daemon.\n\t%s\n",
-				    "Can't change password.");
+				warnx("master YP server not running yppasswd"
+				    " daemon.");
+				errx(1, "Can't change password.");
 			}
 		}
 	}
@@ -180,7 +181,8 @@ main(argc, argv)
 
 #ifdef	YP
 	if (op == LOADENTRY && use_yp)
-		errx(1, "cannot load entry using YP.\n\tUse the -l flag to load local.");
+		errx(1, "cannot load entry using YP.\n"
+		    "\tUse the -l flag to load local.");
 #endif
 
 	if (op == EDITENTRY || op == NEWSH) {
@@ -222,9 +224,12 @@ main(argc, argv)
 		dfd = mkstemp(tempname);
 		if (dfd < 0 || fcntl(dfd, F_SETFD, 1) < 0)
 			(*Pw_error)(tempname, 1, 1);
+		if (atexit(cleanup)) {
+			cleanup();
+			errx(1, "couldn't register cleanup");
+		}
 		display(tempname, dfd, pw);
 		edit(tempname, pw);
-		(void)unlink(tempname);
 	}
 
 #ifdef	YP
@@ -284,8 +289,16 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: %s [-a list] [-s shell] [-l] [user]\n"
-			      "       %s [-a list] [-s shell] [-y] [user]\n",
-			getprogname(), getprogname());
+	(void)fprintf(stderr,
+	    "usage: %s [-a list] [-s shell] [-l] [user]\n"
+	    "       %s [-a list] [-s shell] [-y] [user]\n",
+	    getprogname(), getprogname());
 	exit(1);
+}
+
+void
+cleanup()
+{
+
+	(void)unlink(tempname);
 }
