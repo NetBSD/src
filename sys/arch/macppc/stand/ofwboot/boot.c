@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 2001/05/03 13:11:25 soren Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 2001/07/22 11:29:48 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -165,9 +165,9 @@ chain(entry, args, ssym, esym)
 	 * strings.
 	 */
 	l = strlen(args) + 1;
-	bcopy(&ssym, args + l, sizeof(ssym));
+	memcpy(args + l, &ssym, sizeof(ssym));
 	l += sizeof(ssym);
-	bcopy(&esym, args + l, sizeof(esym));
+	memcpy(args + l, &esym, sizeof(esym));
 	l += sizeof(esym);
 
 	OF_chain((void *)RELOC, end - (char *)RELOC, entry, args, l);
@@ -203,7 +203,7 @@ main()
 	if ((openprom = OF_finddevice("/openprom")) != -1) {
 		char model[32];
 
-		bzero(model, sizeof model);
+		memset(model, 0, sizeof model);
 		OF_getprop(openprom, "model", model, sizeof model);
 		for (cp = model; *cp; cp++)
 			if (*cp >= '0' && *cp <= '9') {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32 2001/06/28 15:23:39 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -125,7 +125,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 */
 	stktop1 = (caddr_t)trapframe(p1);
 	stktop2 = (caddr_t)trapframe(p2);
-	bcopy(stktop1, stktop2, sizeof(struct trapframe));
+	memcpy(stktop2, stktop1, sizeof(struct trapframe));
 
 	/*
 	 * If specified, give the child a different stack.
@@ -156,7 +156,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 */
 	stktop2 -= roundup(sizeof *sf, 16);	/* must match SFRAMELEN in genassym */
 	sf = (struct switchframe *)stktop2;
-	bzero((void *)sf, sizeof *sf);		/* just in case */
+	memset((void *)sf, 0, sizeof *sf);		/* just in case */
 	sf->sp = (int)cf;
 #ifndef PPC_IBM4XX
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
@@ -260,7 +260,7 @@ cpu_coredump(p, vp, cred, chdr)
 #endif
 		md_core.fpstate = pcb->pcb_fpu;
 	} else
-		bzero(&md_core.fpstate, sizeof(md_core.fpstate));
+		memset(&md_core.fpstate, 0, sizeof(md_core.fpstate));
 
 #ifdef ALTIVEC
 	if (pcb->pcb_flags & PCB_ALTIVEC) {
@@ -269,7 +269,7 @@ cpu_coredump(p, vp, cred, chdr)
 		md_core.vstate = *pcb->pcb_vr;
 	} else
 #endif
-		bzero(&md_core.vstate, sizeof(md_core.vstate));
+		memset(&md_core.vstate, 0, sizeof(md_core.vstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;

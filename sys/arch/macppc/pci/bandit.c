@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.15 2000/02/04 07:48:11 tsubai Exp $	*/
+/*	$NetBSD: bandit.c,v 1.16 2001/07/22 11:29:48 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -118,7 +118,7 @@ bandit_attach(parent, self, aux)
 
 	bandit_init(sc);
 
-	bzero(&pba, sizeof(pba));
+	memset(&pba, 0, sizeof(pba));
 	pba.pba_busname = "pci";
 	pba.pba_memt = pc->memt;
 	pba.pba_iot = pc->iot;
