@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.8 2000/12/11 16:49:15 mycroft Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.9 2000/12/11 17:36:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -105,17 +105,6 @@ svr4_syscall_plain(frame)
 	callp = svr4_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
 
-#ifdef VM86
-	/*
-	 * VM86 mode application found our syscall trap gate by accident; let
-	 * it get a SIGSYS and have the VM86 handler in the process take care
-	 * of it.
-	 */
-	if (frame.tf_eflags & PSL_VM)
-		code = -1;
-	else
-#endif /* VM86 */
-
 	switch (code) {
 	case SYS_syscall:
 		/*
@@ -193,17 +182,6 @@ svr4_syscall_fancy(frame)
 	code = frame.tf_eax;
 	callp = svr4_sysent;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
-
-#ifdef VM86
-	/*
-	 * VM86 mode application found our syscall trap gate by accident; let
-	 * it get a SIGSYS and have the VM86 handler in the process take care
-	 * of it.
-	 */
-	if (frame.tf_eflags & PSL_VM)
-		code = -1;
-	else
-#endif /* VM86 */
 
 	switch (code) {
 	case SYS_syscall:

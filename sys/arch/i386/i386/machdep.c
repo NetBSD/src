@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.421 2000/11/29 09:56:02 aymeric Exp $	*/
+/*	$NetBSD: machdep.c,v 1.422 2000/12/11 17:36:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1190,6 +1190,7 @@ sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
 		frame.sf_sc.sc_eflags = get_vflags(p);
+		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
 	{
@@ -1291,11 +1292,14 @@ sys___sigreturn14(p, v, retval)
 	tf = p->p_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
+		void syscall_vm86 __P((struct trapframe));
+
 		tf->tf_vm86_gs = context.sc_gs;
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
 		set_vflags(p, context.sc_eflags);
+		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
 	{
