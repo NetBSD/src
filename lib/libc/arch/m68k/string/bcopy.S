@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.7 1995/11/17 20:21:12 thorpej Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.8 1995/11/28 23:40:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,15 +37,15 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.7 1995/11/17 20:21:12 thorpej Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.8 1995/11/28 23:40:49 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
-
-#include "DEFS.h"
 
 /*
  * This is probably not the best we can do, but it is still 2-10 times
