@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.9 2001/01/23 20:47:02 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.10 2001/02/11 15:37:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -147,7 +147,8 @@ twe_match(struct device *parent, struct cfdata *cfdata, void *aux)
 	pa = aux;
 
 	return (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_3WARE &&	 
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_ESCALADE);
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_ESCALADE ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_ESCALADE_ASIC));
 }
 
 /*
