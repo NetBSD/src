@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27 1997/06/28 19:56:12 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.28 1997/07/06 23:53:22 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -138,7 +138,7 @@ TAILQ_HEAD(mmuhd,mmuentry);
 struct pmap {
 	union	ctxinfo *pm_ctx;	/* current context, if any */
 	int	pm_ctxnum;		/* current context's number */
-#if NCPUS > 1
+#if defined(DEBUG) || NCPUS > 1
 	simple_lock_data_t pm_lock;	/* spinlock */
 #endif
 	int	pm_refcount;		/* just what it says */
