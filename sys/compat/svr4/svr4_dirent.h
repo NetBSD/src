@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_dirent.h,v 1.4 1995/10/07 06:27:37 mycroft Exp $	 */
+/*	$NetBSD: svr4_dirent.h,v 1.5 1997/07/21 23:02:34 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -35,6 +35,13 @@
 struct svr4_dirent {
 	svr4_ino_t	d_ino;
 	svr4_off_t	d_off;
+	u_short		d_reclen;
+	char		d_name[SVR4_MAXNAMLEN + 1];
+};
+
+struct svr4_dirent64 {
+	svr4_ino64_t	d_ino;
+	svr4_off64_t	d_off;
 	u_short		d_reclen;
 	char		d_name[SVR4_MAXNAMLEN + 1];
 };
