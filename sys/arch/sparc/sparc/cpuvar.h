@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.2 1997/03/15 18:10:41 is Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.3 1997/03/20 23:26:23 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ struct module_info {
 	void (*vcache_flush_segment)__P((int, int));
 	void (*vcache_flush_region)__P((int));
 	void (*vcache_flush_context)__P((void));
+	void (*pcache_flush_line)__P((int, int));
 };
 
 
@@ -116,17 +117,7 @@ struct cpu_softc {
 	int		ctx_kickdir;	/* ctx_kick roves both directions */
 
 	/* MMU tables that map `cpuinfo'' on each CPU */
-	int		*L1_ptps;
-	int		L1_ptps_phys;
-	int		*L2_ptps;
-	int		L2_ptps_phys;
-	int		*L3_ptps;
-	int		L3_ptps_phys;
-
-#if 1 /*temp:shorten recompilations because of cpuinfo size changes*/
-	int		xxx5;
-	int		xxx6;
-#endif
+	int		*L1_ptps;	/* XXX */
 
 /* XXX - of these, we currently use only cpu_type */
 	int		arch;		/* Architecture: CPU_SUN4x */
@@ -178,6 +169,7 @@ struct cpu_softc {
 	void	(*vcache_flush_segment)__P((int vreg, int vseg));
 	void	(*vcache_flush_region)__P((int vreg));
 	void	(*vcache_flush_context)__P((void));
+	void	(*pcache_flush_line) __P((int, int));
 
 #ifdef SUN4M
 	/* hardware-assisted block operation routines */
