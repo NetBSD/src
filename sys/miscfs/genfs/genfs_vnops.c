@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.46 2002/01/26 02:44:27 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.47 2002/02/12 01:08:12 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.46 2002/01/26 02:44:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.47 2002/02/12 01:08:12 enami Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1166,6 +1166,12 @@ genfs_putpages(v)
 			if (nback) {
 				memmove(&pgs[0], &pgs[npages - nback],
 				    nback * sizeof(pgs[0]));
+				if (npages - nback < nback)
+					memset(&pgs[nback], 0,
+					    (npages - nback) * sizeof(pgs[0]));
+				else
+					memset(&pgs[npages - nback], 0,
+					    nback * sizeof(pgs[0]));
 			}
 			n -= nback;
 
