@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_cksum.c	7.3 (Berkeley) 6/28/90
- *	$Id: in_cksum.c,v 1.6 1994/01/09 01:06:10 mycroft Exp $
+ *	$Id: in_cksum.c,v 1.7 1994/01/10 23:20:07 mycroft Exp $
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mbuf.h>
 
 /*
@@ -48,7 +48,7 @@
 #define	REDUCE {l_util.l = sum; sum = l_util.s[0] + l_util.s[1]; ADDCARRY(sum);}
 
 int
-in_cksum_c(m, len)
+in_cksum(m, len)
 	register struct mbuf *m;
 	register int len;
 {
