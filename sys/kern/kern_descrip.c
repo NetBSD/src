@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.79.2.4 2002/02/11 20:10:22 jdolecek Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.79.2.5 2002/03/15 19:13:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.79.2.4 2002/02/11 20:10:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.79.2.5 2002/03/15 19:13:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -456,6 +456,7 @@ finishdup(struct proc *p, int old, int new, register_t *retval)
 
 	if (delfp != NULL) {
 		FILE_USE(delfp);
+		/* XXXLUKEM jdolecek: knote_fdclose() call needed */
 		(void) closef(delfp, p);
 	}
 	return (0);
@@ -1009,7 +1010,7 @@ fdfree(struct proc *p)
 			*fpp = NULL;
 			FILE_USE(fp);
 			if (i < fdp->fd_knlistsize)
-				knote_fdclose(p, i);
+				knote_fdclose(p, fdp->fd_lastfile - i);
 			(void) closef(fp, p);
 		}
 	}
