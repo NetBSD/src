@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.286 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.287 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -635,5 +635,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	fdisk(8): Preserve the Drive Serial Number at bytes 440-443 of the MBR.
 		[lukem 20040322]
 	libcurses: add KEY_RESIZE, SIGWINCH handler and support for more
-		colour pairs. [jdc 20030322]
+		colour pairs. [jdc 20040322]
 	file(1): update to 4.08.  [pooka 20040323]
