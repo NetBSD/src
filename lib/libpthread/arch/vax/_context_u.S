@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1 2003/01/19 21:01:55 matt Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.2 2003/01/19 21:31:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -58,14 +58,20 @@ getc:
 	movpsl	(UC_GREGS + _REG_PSL)(%r0)		/* psl(high) */
 	movw	6(%fp),(UC_GREGS + _REG_PSL)(%r0)	/* psl(low) */
 
-	bisl2	$(_UC_CPU),(UC_FLAGS)(%r0)
+	bisl2	$(_UC_CPU+_UC_USER),(UC_FLAGS)(%r0)
 	clrl	%r0
 	jmp	(%r3)
 
 ENTRY(_setcontext_u, 0)
 	movl	4(%ap),%r1
 setc:
-	movl	(UC_GREGS + _REG_R0)(%r1),%r0		/* r0 */
+	bitl	$(_UC_USER),(UC_FLAGS)(%r1)
+	bneq	1f
+	pushl	%r1
+	calls	$1,_C_LABEL(setcontext)
+	halt
+
+1:	movl	(UC_GREGS + _REG_R0)(%r1),%r0		/* r0 */
 	movq	(UC_GREGS + _REG_R6)(%r1),%r6		/* r6/r7 */
 	movq	(UC_GREGS + _REG_R8)(%r1),%r8		/* r8/r9 */
 	movq	(UC_GREGS + _REG_R10)(%r1),%r10		/* r10/r11 */
