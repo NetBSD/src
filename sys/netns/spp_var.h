@@ -30,8 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)spp_var.h	7.7 (Berkeley) 6/28/90
+ *	from: @(#)spp_var.h	7.7 (Berkeley) 6/28/90
+ *	$Id: spp_var.h,v 1.2 1993/05/21 07:44:05 cgd Exp $
  */
+
+#ifndef _NETNS_SPP_VAR_H_
+#define _NETNS_SPP_VAR_H_
 
 /*
  * Sp control block, one per connection
@@ -213,3 +217,5 @@ short xnsCbug;
 #define	SSEQ_GT(a,b)	(((short)((a)-(b))) > 0)
 #define	SSEQ_GEQ(a,b)	(((short)((a)-(b))) >= 0)
 #endif
+
+#endif /* !_NETNS_SPP_VAR_H_ */
