@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 1995/01/18 06:49:12 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 1995/02/01 04:53:13 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1518,6 +1518,10 @@ struct drivers_map {
 	{ "DTOP    ",	"dtop"},	/* (*) maxine desktop bus */
 	{ "AMD79c30",	"isdn"},	/* (*) maxine ISDN chip */
 	{ "XINE-FRC",	"frc"},		/* (*) maxine free-running counter */
+	{ "PMAF-AA ",   "fza"},		/* slow FDDI */
+	{ "T3PKT   ",   "tt"},		/* DECWRL turbochannel T3 */
+	{ "T1D4PKT ",   "ds"},		/* DECWRL turbochannel T1 */
+	{ "FORE_ATM",   "fa"},		/* Fore t??-100 ATM */
 	{ "", 0}			/* list end */
 };
 
