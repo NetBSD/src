@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.36.2.6 2002/01/09 02:53:30 nathanw Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.36.2.7 2002/04/01 21:31:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.36.2.6 2002/01/09 02:53:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.36.2.7 2002/04/01 21:31:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ procfs_rw(v)
 		return (procfs_domap(curp, p, pfs, uio, 1));
 
 	case Pmem:
-		return (procfs_domem(curp, l, pfs, uio));
+		return (procfs_domem(curp, p, pfs, uio));
 
 	case Pcmdline:
 		return (procfs_docmdline(curp, p, pfs, uio));

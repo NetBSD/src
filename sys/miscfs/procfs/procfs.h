@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.33.2.5 2002/01/09 02:53:57 nathanw Exp $	*/
+/*	$NetBSD: procfs.h,v 1.33.2.6 2002/04/01 21:31:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -139,7 +139,7 @@ int procfs_doregs __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
 int procfs_dofpregs __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
-int procfs_domem __P((struct proc *, struct lwp *, struct pfsnode *,
+int procfs_domem __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
 int procfs_doctl __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));

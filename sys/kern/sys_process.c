@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.11 2002/04/01 07:47:57 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.12 2002/04/01 21:31:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.11 2002/04/01 07:47:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.12 2002/04/01 21:31:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ sys_ptrace(l, v, retval)
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_procp = p;
-		error = procfs_domem(p, lt, NULL, &uio);
+		error = procfs_domem(p, t, NULL, &uio);
 		if (!write)
 			*retval = tmp;
 		return (error);

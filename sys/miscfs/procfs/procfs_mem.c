@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_mem.c,v 1.27.2.3 2002/02/28 04:14:57 nathanw Exp $	*/
+/*	$NetBSD: procfs_mem.c,v 1.27.2.4 2002/04/01 21:31:35 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.27.2.3 2002/02/28 04:14:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.27.2.4 2002/04/01 21:31:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,14 +71,13 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_mem.c,v 1.27.2.3 2002/02/28 04:14:57 nathanw 
 int
 procfs_domem(curp, l, pfs, uio)
 	struct proc *curp;		/* tracer */
-	struct lwp *l;			/* traced */
+	struct proc *p;			/* traced */
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
 	int error;
 
 	size_t len;
-	struct proc *p = l->l_proc;
 #ifdef PMAP_NEED_PROCWR
 	vaddr_t	addr;
 #endif
