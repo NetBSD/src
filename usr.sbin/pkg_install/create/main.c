@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.19 2001/05/21 09:17:30 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2001/05/28 07:59:53 joda Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2001/05/21 09:17:30 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2001/05/28 07:59:53 joda Exp $");
 #endif
 #endif
 
@@ -56,7 +56,7 @@ Boolean File2Pkg = FALSE;
 static void
 usage(void)
 {
-	fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n",
+	fprintf(stderr, "%s\n%s\n%s\n%s\n%s\n%s\n",
 	    "usage: pkg_create [-ORUhlVv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
 	    "                  [-i iscript] [-k dscript] [-r rscript] [-t template]",
 	    "                  [-X excludefile] [-D displayfile] [-m mtreefile]",
