@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.19 1995/07/06 05:35:34 pk Exp $ */
+/*	$NetBSD: kbd.c,v 1.20 1996/02/12 21:05:18 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -599,10 +599,11 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 	case KIOCGETKEY:
 		if (((struct okiockey *)data)->kio_station == 118) {
 			/*
-			 * This is X11 asking if a type 3 keyboard is
-			 * really a type 3 keyboard.  Say yes.
+			 * This is X11 asking (in an inappropriate fashion)
+			 * if a type 3 keyboard is really a type 3 keyboard.
+			 * Say yes (inappropriately).
 			 */
-			((struct okiockey *)data)->kio_entry = HOLE;
+			((struct okiockey *)data)->kio_entry = (u_char)HOLE;
 			return (0);
 		}
 		break;
