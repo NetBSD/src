@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3x,v 1.14 1997/10/04 17:15:49 gwr Exp $
+#	$NetBSD: Makefile.sun3x,v 1.15 1997/10/23 01:41:40 gwr Exp $
 
 # Makefile for NetBSD
 #
@@ -124,7 +124,8 @@ LINKFLAGS+=	-S
 
 # Use awk to cross-build assym.h from the genassym.s file.
 assym.h: genassym.o $S/kern/genassym.awk
-	awk -f $S/kern/genassym.awk < genassym.s > $@
+	awk -f $S/kern/genassym.awk < genassym.s > assym.h.tmp
+	mv -f assym.h.tmp $@
 
 # The above rule lists genassym.o as a prerequisite so that the
 # generated .depend rule is effective, even though we actually
@@ -209,6 +210,9 @@ db_machdep.o dvma.o machdep.o pmap.o _startup.o vm_machdep.o: Makefile
 
 # depends on KGDBDEV, KGDBRATE
 kgdb_stub.o: Makefile
+
+# depends on DDB, etc.
+stub.o: Makefile
 
 locore.o: ${SUN3X}/sun3x/locore.s
 	${NORMAL_S}
