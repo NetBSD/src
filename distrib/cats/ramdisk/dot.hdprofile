@@ -1,4 +1,4 @@
-# $NetBSD: dot.hdprofile,v 1.1 2002/04/11 16:33:59 skrll Exp $
+# $NetBSD: dot.hdprofile,v 1.2 2003/03/23 13:47:00 chris Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -53,7 +53,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 38400
 	echo ''
 
 	TERMCAP=/.termcap ; export TERMCAP
