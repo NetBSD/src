@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.26 1994/07/31 19:57:11 chopps Exp $
+#	$Id: GENERIC,v 1.27 1994/10/08 09:53:15 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -135,20 +135,21 @@ otgsc0		at ztwobus0		# 12 gauge scsi
 zssc0		at ztwobus0		# Zeus scsi
 mgnsc0		at ztwobus0		# Magnum scsi
 wesc0		at zthreebus0		# Warp Engine scsi
-idesc0		at mainbus0		# A4000(A1200?) IDE
+idesc0		at mainbus0		# A4000 & A1200 IDE
+afsc0		at zthreebus0		# 4091 scsi
 
 scsibus0	at gtsc0
 scsibus1	at ahsc0
 scsibus2	at atzsc0
-scsibus2	at wstsc0
-scsibus3	at ivsc0
-scsibus4	at mlhsc0
-scsibus5	at otgsc0
-scsibus6	at zssc0
-scsibus7	at mgnsc0
-scsibus8	at wesc0
-scsibus9	at idesc0
-
+scsibus3	at wstsc0
+scsibus4	at ivsc0
+scsibus5	at mlhsc0
+scsibus6	at otgsc0
+scsibus7	at zssc0
+scsibus8	at mgnsc0
+scsibus9	at wesc0
+scsibus10	at idesc0
+scsibus11	at afsc0
 # each hard drive from low target to high
 # will configure to the next available sd unit number
 sd*	at scsibus? target ? lun ?	# scsi disks
