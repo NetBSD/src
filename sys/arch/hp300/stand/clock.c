@@ -1,7 +1,9 @@
+/*	$NetBSD: clock.c,v 1.3 1995/02/20 00:12:09 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -35,9 +37,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: clock.c 1.18 91/01/21
- *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.2 1995/02/19 23:53:19 mycroft Exp $
+ * from: Utah $Hdr: clock.c 1.18 91/01/21$
+ *
+ *	@(#)clock.c	8.2 (Berkeley) 1/12/94
  */
 
 #include <sys/param.h>
