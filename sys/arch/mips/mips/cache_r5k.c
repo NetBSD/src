@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.7 2003/02/17 12:32:13 simonb Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.8 2003/03/08 04:43:25 rafal Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,6 +39,7 @@
 
 #include <mips/cache.h>
 #include <mips/cache_r4k.h>
+#include <mips/cache_r5k.h>
 #include <mips/locore.h>
 
 /*
@@ -581,3 +582,57 @@ r5k_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 #undef trunc_line16
 #undef round_line
 #undef trunc_line
+
+/*
+ * Cache operations for R5000-style secondary caches:
+ *
+ *	- Direct-mapped
+ *	- Write-through
+ *	- Physically indexed, physically tagged
+ *
+ */
+
+
+__asm(".set mips3");
+
+#define R5K_Page_Invalidate_S   0x17
+
+void
+r5k_sdcache_wbinv_all(void)
+{
+	vaddr_t va = MIPS_PHYS_TO_KSEG0(0);
+	vaddr_t eva = va + mips_sdcache_size;
+
+	while (va < eva) {
+		cache_op_r4k_line(va, R5K_Page_Invalidate_S);
+		va += (128 * 32);
+	}
+}
+
+/* XXX: want wbinv_range_index here instead? */
+void
+r5k_sdcache_wbinv_rangeall(vaddr_t va, vsize_t size)
+{
+	r5k_sdcache_wbinv_all();
+}
+
+#define	round_page(x)		(((x) + (128 * 32 - 1)) & ~(128 * 32 - 1))
+#define	trunc_page(x)		((x) & ~(128 * 32 - 1))
+
+void
+r5k_sdcache_wbinv_range(vaddr_t va, vsize_t size)
+{
+	vaddr_t eva = round_page(va + size);
+	va = trunc_page(va);
+
+	while (va < eva) {
+		cache_op_r4k_line(va, R5K_Page_Invalidate_S);
+		va += (128 * 32);
+	}
+}
+
+void
+r5k_sdcache_wb_range(vaddr_t va, vsize_t size)
+{
+	/* Write-through cache, no need to WB */
+}
