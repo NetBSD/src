@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 1995/05/12 13:03:23 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 1995/05/12 18:24:46 mycroft Exp $	*/
 
 #undef STACKCHECK	/* doesn't work any more */
 
@@ -1119,20 +1119,16 @@ Lnocache0:
 
 	jra	_main			| main()
 
-	.globl	_return_to_user
-_return_to_user:
+	.globl	_proc_trampoline
+_proc_trampoline:
+	movl	a3,sp@-
+	jbsr	a2@
+	addql	#4,sp
 	movl	sp@(FR_SP),a0		| grab and load
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most user regs
 	addql	#8,sp			| toss SP and stack adjust
 	jra	rei			| and return
-
-	.globl	_proc_trampoline
-_proc_trampoline:
-	movl	_curproc,sp@-
-	jbsr	a2@
-	addql	#4,sp
-	jra	a3@
 
 /*
  * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().

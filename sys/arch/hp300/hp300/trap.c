@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 1995/04/22 20:49:42 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.36 1995/05/12 18:24:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -996,11 +996,6 @@ syscall(code, frame)
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
-		/*
-		 * Reinitialize proc pointer `p' as it may be different
-		 * if this is a child returning from fork syscall.
-		 */
-		p = curproc;
 		frame.f_regs[D0] = rval[0];
 		frame.f_regs[D1] = rval[1];
 		frame.f_sr &= ~PSL_C;	/* carry bit */
@@ -1036,5 +1031,22 @@ syscall(code, frame)
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
+#endif
+}
+
+void
+child_return(p, frame)
+	struct proc *p;
+	struct frame frame;
+{
+
+	frame.f_regs[D0] = 0;
+	frame.f_sr &= ~PSL_C;
+	frame.f_format = FMT0;
+
+	userret(p, &frame, p->p_sticks, (u_int)0, 0);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
 #endif
 }
