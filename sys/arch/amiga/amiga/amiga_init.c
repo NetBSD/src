@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.28 1995/05/07 16:54:51 chopps Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.29 1995/05/11 23:04:31 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -169,7 +169,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	u_int pt, ptpa, ptsize, ptextra;
 	u_int Sysseg_pa, Sysptmap_pa, umap_pa, Sysseg1_pa;
 	u_int sg_proto, pg_proto;
-	u_int p0_ptpa, p0_u_area_pa, tc, end_loaded, ncd, i;
+	u_int tc, end_loaded, ncd, i;
 	u_int *sg, *pg, *pg2;
 
 	boot_fphystart = fphystart;
@@ -264,7 +264,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	PAGE_SHIFT = PG_SHIFT;
 
 	/*
-	 * assume KVA_MIN == 0
+	 * assume KVA_MIN == 0.  We subtract the kernel code (and
+	 * the configdev's and memlists) from the virtual and 
+	 * phsical starts and ends.
 	 */
 	vend   = fphysize;
 	avail  = vend;
@@ -328,9 +330,20 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	avail -= NBPG;
 
 	/*
-	 * set Sysmap; mapped after page table pages
+	 * pt maps the first N megs of ram Sysptmap comes directly
+	 * after pt (ptpa) and so it must map >= N meg + Its one
+	 * page and so it must map 8M of space.  Specifically
+	 * Sysptmap holds the pte's that map the kerne page tables. 
+	 * 
+	 * We want Sysmap to be the first address mapped by Sysptmap.
+	 * this will be the address just above what pt,pt+ptsize maps.
+	 * pt[0] maps address 0 so:
+	 *
+	 *		ptsize
+	 * Sysmap  =	------ * NBPG
+	 *		  4
 	 */
-	Sysmap = (u_int *)(ptsize * NPTEPG);
+	Sysmap = (u_int *)(ptsize * (NBPG / 4));
 
 	/*
 	 * initialize segment table and page table map
@@ -357,7 +370,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 			*sg++ = sg_proto;
 			if (pg_proto < pstart)
 				*pg++ = pg_proto;
-			else if (pg < (u_int *) (Sysptmap_pa + NBPG))
+			else if (pg < (u_int *)pstart)
 				*pg++ = PG_NV;
 			sg_proto += AMIGA_040PTSIZE;
 			pg_proto += NBPG;
@@ -367,33 +380,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		 */
 		do {
 			*sg++ = SG_NV;
-			if (pg < (u_int *)(Sysptmap_pa + NBPG))
+			if (pg < (u_int *)pstart)
 				*pg++ = PG_NV;
 		} while (sg < (u_int *)(Sysseg_pa + AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE));
-		/* the end of the last segment (0xFFFC0000) 
-		 * of KVA space is used to map the u-area of
-		 * the current process (u + kernel stack).
-		 */
-		umap_pa  = pstart;
-		/*
-		 * use next available slot
-		 */
-		sg_proto = (pstart + NBPG - AMIGA_040PTSIZE) | SG_RW | SG_V;
-		umap_pa  = pstart;	/* remember for later map entry */
-		/*
-		 * enter the page into the level 2 segment table
-		 */
-		sg = (u_int *)(Sysseg_pa + AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE);
-		while (sg_proto > pstart) {
-			*--sg = sg_proto;
-			sg_proto -= AMIGA_040PTSIZE;
-		}
-		/*
-		 * enter the page into the page table map
-		 */
-		pg_proto = pstart | PG_RW | PG_CI | PG_V;
-		pg = (u_int *) (Sysptmap_pa + 1024);	/*** fix constant ***/
-		*--pg = pg_proto;
 	} else
 #endif /* M68040 */
 	{
@@ -412,44 +401,17 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		}
 		/* 
 		 * invalidate the remainder of the tables
-		 * (except last entry)
 		 */
 		do {
 			*sg++ = SG_NV;
 			*pg++ = PG_NV;
-		} while (sg < (u_int *)(Sysseg_pa + AMIGA_STSIZE - 4));
-
-		/*
-		 * the end of the last segment (0xFF000000) 
-		 * of KVA space is used to map the u-area of
-		 * the current process (u + kernel stack).
-		 */
-		sg_proto = pstart | SG_RW | SG_V; /* use next availabe PA */
-		pg_proto = pstart | PG_RW | PG_CI | PG_V;
-		umap_pa  = pstart;	/* remember for later map entry */
-		/*
-		 * enter the page into the segment table 
-		 * (and page table map)
-		 */
-		*sg++     = sg_proto;
-		*pg++     = pg_proto;
+		} while (sg < (u_int *)(Sysseg_pa + AMIGA_STSIZE));
 	}
-	/*
-	 * invalidate all pte's (will validate u-area afterwards)
-	 */
-	for (pg = (u_int *) pstart; pg < (u_int *) (pstart + NBPG); )
-		*pg++ = PG_NV;
-	/*
-	 * account for the allocated page
-	 */
-	pstart   += NBPG;
-	vstart   += NBPG;
-	avail    -= NBPG;
 
 	/*
 	 * record KVA at which to access current u-area PTE(s)
 	 */
-	Umap = (u_int)Sysmap + AMIGA_MAX_PTSIZE - UPAGES * 4;
+	/* Umap = (u_int)Sysmap + AMIGA_MAX_PTSIZE - UPAGES * 4; */
 
 	/*
 	 * initialize kernel page table page(s) (assume load at VA 0)
@@ -469,11 +431,10 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 #endif
 	/*
 	 * go till end of data allocated so far
-	 * plus proc0 PT/u-area (to be allocated)
+	 * plus proc0 u-area (to be allocated)
 	 */
-	for (; i < vstart + (UPAGES + 1)*NBPG; i += NBPG, pg_proto += NBPG)
+	for (; i < vstart + USPACE; i += NBPG, pg_proto += NBPG)
 		*pg++ = pg_proto;
-
 	/*
 	 * invalidate remainder of kernel PT
 	 */
@@ -512,50 +473,17 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 *[ following page tables MAY be allocated to ZORRO3 space,
 	 * but they're then later mapped in autoconf.c ]
 	 */
-	/*
-	 * Setup page table for process 0.
-	 * We set up page table access for the kernel via Usrptmap (usrpt)
-	 * [no longer used?] and access to the u-area itself via Umap (u).
-	 * First available page (vstart/pstart) is used for proc0 page table.
-	 * Next UPAGES page(s) following are for u-area.
-	 */
 
-	p0_ptpa = pstart;
-	pstart += NBPG;
-	vstart += NBPG;
-	avail -= NBPG;
-
-	p0_u_area_pa = pstart;		/* base of u-area and end of PT */
+	/* zero out proc0 user area */
+	bzero ((u_char *)pstart, USPACE);
 
 	/*
-	 * invalidate entire page table
-	 */
-	for (pg = (u_int *) p0_ptpa; pg < (u_int *) p0_u_area_pa; )
-		*pg++ = PG_NV;
-
-	/*
-	 * now go back and validate u-area PTE(s) in PT and in Umap
-	 */
-	pg -= UPAGES;
-	pg2 = (u_int *) (umap_pa + 4*(NPTEPG - UPAGES));
-	pg_proto = p0_u_area_pa | PG_RW | PG_V;
-#ifdef M68040
-	if (cpu040)
-		pg_proto |= PG_CCB;
-#endif
-	for (i = 0; i < UPAGES; i++, pg_proto += NBPG) {
-		*pg++  = pg_proto;
-		*pg2++ = pg_proto;
-	}
-	bzero ((u_char *) p0_u_area_pa, UPAGES * NBPG);
-
-	/*
-	 * save KVA of proc0 u-area
+	 * save KVA of proc0 u-area and allocate it.
 	 */
 	proc0paddr = vstart;
-	pstart += UPAGES * NBPG;
-	vstart += UPAGES * NBPG;
-	avail -= UPAGES * NBPG;
+	pstart += USPACE;
+	vstart += USPACE;
+	avail -= USPACE;
 
 	/*
 	 * init mem sizes
