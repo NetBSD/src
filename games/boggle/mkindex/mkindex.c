@@ -1,4 +1,4 @@
-/*	$NetBSD: mkindex.c,v 1.6 1999/09/18 20:50:29 jsm Exp $	*/
+/*	$NetBSD: mkindex.c,v 1.7 1999/12/07 07:47:08 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkindex.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mkindex.c,v 1.6 1999/09/18 20:50:29 jsm Exp $");
+__RCSID("$NetBSD: mkindex.c,v 1.7 1999/12/07 07:47:08 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ char *nextword __P((FILE *, char *, int *, int *));
 int
 main(void)
 {
-	int clen, rlen, prev;
+	int clen, rlen, prev, i;
 	long off, start;
 	char buf[MAXWORDLEN + 1];
 
@@ -70,14 +70,24 @@ main(void)
 	off = start = 0L;
 	while (nextword(stdin, buf, &clen, &rlen) != NULL) {
 		if (*buf != prev) {
+			/*
+			 * Boggle expects a full index even if the dictionary
+			 * had no words beginning with some letters.
+			 * So we write out entries for every letter from prev
+			 * to *buf.
+			 */
 			if (prev != '\0')
 				printf("%c %6ld %6ld\n", prev, start, off - 1);
+			for (i = (prev ? prev + 1 : 'a'); i < *buf; i++)
+				printf("%c %6ld %6ld\n", i, off, off - 1);
 			prev = *buf;
 			start = off;
 		}
 		off += clen + 1;
 	}
 	printf("%c %6ld %6ld\n", prev, start, off - 1);
+	for (i = prev + 1; i <= 'z'; i++)
+		printf("%c %6ld %6ld\n", i, off, off - 1);
 	fflush(stdout);
 	if (ferror(stdout))
 		err(1, "writing standard output");
