@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.35.2.6 2002/11/24 22:33:47 tron Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.35.2.7 2002/11/24 22:35:07 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.35.2.6 2002/11/24 22:33:47 tron Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.35.2.7 2002/11/24 22:35:07 tron Exp $");
 #endif
 
 /*
@@ -219,14 +219,11 @@ expect(int fd, const char *str, int *ftprc)
 int
 ftp_cmd(const char *cmd, const char *expectstr)
 {
-    int rc=0, verbose_ftp=0;
+    int rc=0;
     int len;
 
-    if (Verbose)
-	    verbose_ftp=1;
-    
-    if (verbose_ftp)
-	    fprintf(stderr, "\n[1mftp> %s[0m", cmd);
+    if (Verboase)
+	    fprintf(stderr, "\nftp> %s", cmd);
     
     fflush(stdout);
     len = write(ftpio.command, cmd, strlen(cmd));
@@ -304,7 +301,7 @@ setupCoproc(const char *base)
 	    setbuf(stdout, NULL);
 	    
 	    if (Verbose)
-		    fprintf(stderr, "[1mftp -detv %s[0m\n", base);
+		    fprintf(stderr, "ftp -detv %s\n", base);
 	    rc1 = execlp(FTP_CMD, argv0, "-detv", base, NULL);
 	    warn("setupCoproc: execlp() failed");
 	    exit(1);
