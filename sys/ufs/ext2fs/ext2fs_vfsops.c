@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.43.6.1 2001/09/18 19:14:01 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.43.6.2 2001/09/26 15:28:26 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -157,8 +157,10 @@ ext2fs_mountroot()
 	if (bdevvp(rootdev, &rootvp))
 		panic("ext2fs_mountroot: can't setup bdevvp's");
 
+	vn_lock(rootvp, LK_EXCLUSIVE | LK_RETRY);
+
 	if ((error = vfs_rootmountalloc(MOUNT_EXT2FS, "root_device", &mp))) {
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
 
@@ -166,9 +168,12 @@ ext2fs_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
+
+	VOP_UNLOCK(rootvp, 0);
+
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
@@ -284,6 +289,9 @@ ext2fs_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (ENXIO);
 	}
+
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
@@ -292,11 +300,9 @@ ext2fs_mount(mp, path, data, ndp, p)
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		VOP_UNLOCK(devvp, 0);
 		if (error) {
-			vrele(devvp);
+			vput(devvp);
 			return (error);
 		}
 	}
@@ -309,9 +315,12 @@ ext2fs_mount(mp, path, data, ndp, p)
 			vrele(devvp);
 	}
 	if (error) {
-		vrele(devvp);
+		vput(devvp);
 		return (error);
 	}
+
+	VOP_UNLOCK(devvp, 0);
+
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
 	(void) copyinstr(path, fs->e2fs_fsmnt, sizeof(fs->e2fs_fsmnt) - 1,
@@ -508,9 +517,7 @@ ext2fs_mountfs(devvp, mp, p)
 		return (error);
 	if (vcount(devvp) > 1 && devvp != rootvp)
 		return (EBUSY);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
-	VOP_UNLOCK(devvp, 0);
 	if (error)
 		return (error);
 
@@ -518,10 +525,12 @@ ext2fs_mountfs(devvp, mp, p)
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p, NULL);
 	if (error)
 		return (error);
+	VOP_UNLOCK(devvp, 0);
 	if (VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart, FREAD, cred, p) != 0)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 
 	bp = NULL;
 	ump = NULL;
@@ -608,9 +617,7 @@ ext2fs_mountfs(devvp, mp, p)
 out:
 	if (bp)
 		brelse(bp);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		free(ump->um_e2fs, M_UFSMNT);
 		free(ump, M_UFSMNT);

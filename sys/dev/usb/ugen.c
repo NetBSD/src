@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.45.6.1 2001/09/07 04:45:33 thorpej Exp $	*/
+/*	$NetBSD: ugen.c,v 1.45.6.2 2001/09/26 15:28:19 fvdl Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -284,8 +284,8 @@ int
 ugenopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
 	struct ugen_softc *sc;
-	int unit = UGENUNIT(devvp->v_rdev);
-	int endpt = UGENENDPOINT(devvp->v_rdev);
+	int unit;
+	int endpt;
 	usb_endpoint_descriptor_t *edesc;
 	struct ugen_endpoint *sce;
 	int dir, isize;
@@ -293,6 +293,13 @@ ugenopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	usbd_xfer_handle xfer;
 	void *buf;
 	int i, j;
+	dev_t rdev;
+
+	rdev = vdev_rdev(devvp);
+	sc = vdev_privdata(devvp);
+
+	unit = UGENUNIT(rdev);
+	endpt = UGENENDPOINT(rdev);
 
 	USB_GET_SC_OPEN(ugen, unit, sc);
 
@@ -305,7 +312,7 @@ ugenopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	if (sc->sc_is_open[endpt])
 		return (EBUSY);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	if (endpt == USB_CONTROL_ENDPOINT) {
 		sc->sc_is_open[USB_CONTROL_ENDPOINT] = 1;
@@ -417,13 +424,14 @@ ugenopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 int
 ugenclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	int endpt = UGENENDPOINT(devvp->v_rdev);
+	int endpt;
 	struct ugen_softc *sc;
 	struct ugen_endpoint *sce;
 	int dir;
 	int i;
 
-	sc = devvp->v_devcookie;
+	endpt = UGENENDPOINT(vdev_rdev(devvp));
+	sc = vdev_privdata(devvp);
 
 	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
 		     flag, mode, UGENUNIT(dev), endpt));
@@ -624,11 +632,12 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 int
 ugenread(struct vnode *devvp, struct uio *uio, int flag)
 {
-	int endpt = UGENENDPOINT(devvp->v_rdev);
+	int endpt;
 	struct ugen_softc *sc;
 	int error;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
+	endpt = UGENENDPOINT(vdev_rdev(devvp));
 
 	sc->sc_refcnt++;
 	error = ugen_do_read(sc, endpt, uio, flag);
@@ -699,11 +708,12 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 int
 ugenwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
-	int endpt = UGENENDPOINT(devvp->v_rdev);
+	int endpt;
 	struct ugen_softc *sc;
 	int error;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
+	endpt = UGENENDPOINT(vdev_rdev(devvp));
 
 	sc->sc_refcnt++;
 	error = ugen_do_write(sc, endpt, uio, flag);
@@ -1239,11 +1249,12 @@ int
 ugenioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int flag,
     struct proc *p)
 {
-	int endpt = UGENENDPOINT(devvp->v_rdev);
+	int endpt;
 	struct ugen_softc *sc;
 	int error;
 
-	sc = devvp->v_devcookie;
+	endpt = UGENENDPOINT(vdev_rdev(devvp));
+	sc = vdev_privdata(devvp);
 
 	sc->sc_refcnt++;
 	error = ugen_do_ioctl(sc, endpt, cmd, addr, flag, p);
@@ -1260,13 +1271,13 @@ ugenpoll(struct vnode *devvp, int events, struct proc *p)
 	int revents = 0;
 	int s;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_dying)
 		return (EIO);
 
 	/* XXX always IN */
-	sce = &sc->sc_endpoints[UGENENDPOINT(devvp->v_rdev)][IN];
+	sce = &sc->sc_endpoints[UGENENDPOINT(vdev_rdev(devvp))][IN];
 	if (sce == NULL)
 		return (EINVAL);
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.77.4.1 2001/09/07 04:45:26 thorpej Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.77.4.2 2001/09/26 15:28:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -425,7 +425,9 @@ struct tty *
 zstty(devvp)
 	struct vnode *devvp;
 {
-	struct zstty_softc *zst = devvp->v_devcookie;
+	struct zstty_softc *zst;
+
+	zst = vdev_privdata(devvp);
 
 	return (zst->zst_tty);
 }
@@ -495,12 +497,14 @@ zsopen(devvp, flags, mode, p)
 	struct tty *tp;
 	int s, s2;
 	int error;
+	dev_t rdev;
 
-	zst = device_lookup(&zstty_cd, ZSUNIT(devvp->v_rdev));
+	rdev = vdev_rdev(devvp);
+	zst = device_lookup(&zstty_cd, ZSUNIT(rdev));
 	if (zst == NULL)
 		return (ENXIO);
 
-	devvp->v_devcookie = zst;
+	vdev_setprivdata(devvp, zst);
 
 	tp = zst->zst_tty;
 	cs = zst->zst_cs;
@@ -610,7 +614,7 @@ zsopen(devvp, flags, mode, p)
 
 	splx(s);
 
-	error = ttyopen(tp, ZSDIALOUT(devvp->v_rdev), ISSET(flags, O_NONBLOCK));
+	error = ttyopen(tp, ZSDIALOUT(rdev), ISSET(flags, O_NONBLOCK));
 	if (error)
 		goto bad;
 
@@ -642,8 +646,11 @@ zsclose(devvp, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct zstty_softc *zst = devvp->v_devcookie;
-	struct tty *tp = zst->zst_tty;
+	struct zstty_softc *zst;
+	struct tty *tp;
+
+	zst = vdev_privdata(devvp);
+	tp = zst->zst_tty;
 
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
@@ -673,8 +680,11 @@ zsread(devvp, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct zstty_softc *zst = devvp->v_devcookie;
-	struct tty *tp = zst->zst_tty;
+	struct zstty_softc *zst;
+	struct tty *tp;
+
+	zst = vdev_privdata(devvp);
+	tp = zst->zst_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flags));
 }
@@ -685,8 +695,11 @@ zswrite(devvp, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct zstty_softc *zst = devvp->v_devcookie;
-	struct tty *tp = zst->zst_tty;
+	struct zstty_softc *zst;
+	struct tty *tp;
+
+	zst = vdev_privdata(devvp);
+	tp = zst->zst_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flags));
 }
@@ -697,8 +710,11 @@ zspoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct zstty_softc *zst = devvp->v_devcookie;
-	struct tty *tp = zst->zst_tty;
+	struct zstty_softc *zst;
+	struct tty *tp;
+
+	zst = vdev_privdata(devvp);
+	tp = zst->zst_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
@@ -711,11 +727,15 @@ zsioctl(devvp, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct zstty_softc *zst = devvp->v_devcookie;
-	struct zs_chanstate *cs = zst->zst_cs;
-	struct tty *tp = zst->zst_tty;
+	struct zstty_softc *zst;
+	struct zs_chanstate *cs;
+	struct tty *tp;
 	int error;
 	int s;
+
+	zst = vdev_privdata(devvp);
+	cs = zst->zst_cs;
+	tp = zst->zst_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
@@ -930,9 +950,12 @@ static void
 zsstart(tp)
 	struct tty *tp;
 {
-	struct zstty_softc *zst = tp->t_devvp->v_devcookie;
-	struct zs_chanstate *cs = zst->zst_cs;
+	struct zstty_softc *zst;
+	struct zs_chanstate *cs;
 	int s;
+
+	zst = vdev_privdata(devvp);
+	cs = zst->zst_cs;
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
@@ -993,8 +1016,10 @@ zsstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct zstty_softc *zst = tp->t_devvp->v_devcookie;
+	struct zstty_softc *zst;
 	int s;
+
+	zst = vdev_privdata(tp->t_devvp);
 
 	s = splzs();
 	if (ISSET(tp->t_state, TS_BUSY)) {
@@ -1017,11 +1042,15 @@ zsparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct zstty_softc *zst = tp->t_devvp->v_devcookie;
-	struct zs_chanstate *cs = zst->zst_cs;
+	struct zstty_softc *zst;
+	struct zs_chanstate *cs;
 	int ospeed, cflag;
 	u_char tmp3, tmp4, tmp5;
 	int s, error;
+
+	zst = vdev_privdata(tp->t_devvp);
+
+	cs = zst->zst_cs;
 
 	ospeed = t->c_ospeed;
 	cflag = t->c_cflag;
@@ -1317,9 +1346,13 @@ zshwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct zstty_softc *zst = tp->t_devvp->v_devcookie;
-	struct zs_chanstate *cs = zst->zst_cs;
-	int s;
+	struct zstty_softc *zst;
+	struct zs_chanstate *cs;
+	int s, error;
+
+	zst = vdev_privdata(tp->t_devvp);
+
+	cs = zst->zst_cs;
 
 	if (cs->cs_wr5_rts == 0)
 		return (0);
@@ -1391,6 +1424,9 @@ zstty_rxint(cs)
 	u_char *put, *end;
 	u_int cc;
 	u_char rr0, rr1, c;
+
+	if (zst->zst_tty->t_devvp->v_type == VBAD)
+		return (0);
 
 	end = zst->zst_ebuf;
 	put = zst->zst_rbput;
@@ -1515,6 +1551,9 @@ zstty_stint(cs, force)
 
 	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
+
+	if (zst->zst_tty->t_devvp->v_type == VBAD)
+		return (0);
 
 	/*
 	 * Check here for console break, so that we can abort

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.8.2.1 2001/09/07 04:45:27 thorpej Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.8.2.2 2001/09/26 15:28:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -259,10 +259,15 @@ void
 edmcastrategy(bp)
 	struct buf *bp;
 {
-	struct ed_softc *wd = bp->b_devvp->v_devcookie;
-	struct disklabel *lp = wd->sc_dk.dk_label;
+	struct ed_softc *wd;
+	struct disklabel *lp;
 	daddr_t blkno;
 	int s;
+	dev_t rdev;
+
+	wd = vdev_privdata(bp->b_devvp);
+	rdev = vdev_rdev(bp->b_devvp);
+	lp = wd->sc_dk.dk_label;
 
 	WDCDEBUG_PRINT(("edmcastrategy (%s)\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
@@ -289,7 +294,7 @@ edmcastrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (DISKPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	if (DISKPART(rdev) != RAW_PART &&
 	    (bp->b_flags & B_DKLABEL) == 0 &&
 	    bounds_check_with_label(bp, wd->sc_dk.dk_label,
 	    (wd->sc_flags & (WDF_WLABEL|WDF_LABELLING)) != 0) <= 0)
@@ -304,10 +309,10 @@ edmcastrategy(bp)
 	else
 		blkno = bp->b_blkno * (DEV_BSIZE / lp->d_secsize);
 
-	if (DISKPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	if (DISKPART(rdev) != RAW_PART &&
 	    (bp->b_flags & B_DKLABEL) == 0)
 		blkno +=
-		    lp->d_partitions[DISKPART(bp->b_devvp->v_rdev)].p_offset;
+		    lp->d_partitions[DISKPART(rdev)].p_offset;
 
 	bp->b_rawblkno = blkno;
 
@@ -525,13 +530,15 @@ edmcaopen(devvp, flag, fmt, p)
 {
 	struct ed_softc *wd;
 	int part, error;
+	dev_t rdev;
 
 	WDCDEBUG_PRINT(("edopen\n"), DEBUG_FUNCS);
-	wd = device_lookup(&ed_cd, DISKUNIT(devvp->v_rdev));
+	rdev = vdev_rdev(devvp);
+	wd = device_lookup(&ed_cd, DISKUNIT(rdev));
 	if (wd == NULL || (wd->sc_flags & EDF_INIT) == 0)
 		return (ENXIO);
 
-	devvp->v_devcookie = wd;
+	vdev_setprivdata(devvp, wd);
 
 	if ((error = ed_lock(wd)) != 0)
 		goto bad4;
@@ -557,7 +564,7 @@ edmcaopen(devvp, flag, fmt, p)
 		}
 	}
 
-	part = DISKPART(devvp->v_rdev);
+	part = DISKPART(rdev);
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
@@ -598,9 +605,13 @@ edmcaclose(devvp, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct ed_softc *wd = devvp->v_devcookie;
-	int part = DISKPART(devvp->v_rdev);
+	struct ed_softc *wd;
+	int part;
 	int error;
+
+	wd = vdev_privdata(devvp);
+	part = DISKPART(vdev_rdev(devvp));
+	
 
 	WDCDEBUG_PRINT(("edmcaclose\n"), DEBUG_FUNCS);
 	if ((error = ed_lock(wd)) != 0)
@@ -673,11 +684,14 @@ static void
 edgetdisklabel(devvp)
 	struct vnode *devvp;
 {
-	struct ed_softc *wd = devvp->v_devcookie;
-	struct disklabel *lp = wd->sc_dk.dk_label;
+	struct ed_softc *wd;
+	struct disklabel *lp;
 	char *errstring;
 
 	WDCDEBUG_PRINT(("edgetdisklabel\n"), DEBUG_FUNCS);
+
+	wd = vdev_privdata(devvp);
+	lp = wd->sc_dk.dk_label;
 
 	memset(wd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 
@@ -728,13 +742,15 @@ edmcaioctl(devvp, xfer, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct ed_softc *wd = devvp->v_devcookie;
+	struct ed_softc *wd;
 	int error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
 
 	WDCDEBUG_PRINT(("edioctl\n"), DEBUG_FUNCS);
+
+	wd = vdev_privdata(devvp);
 
 	if ((wd->sc_flags & WDF_LOADED) == 0)
 		return EIO;
@@ -765,7 +781,7 @@ edmcaioctl(devvp, xfer, addr, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = wd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
-		    &wd->sc_dk.dk_label->d_partitions[DISKPART(devvp->v_rdev)];
+		  &wd->sc_dk.dk_label->d_partitions[DISKPART(vdev_rdev(devvpv)];
 		return 0;
 
 	case DIOCWDINFO:

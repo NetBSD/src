@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.40.4.3 2001/09/20 11:15:42 fvdl Exp $	*/
+/*	$NetBSD: cons.c,v 1.40.4.4 2001/09/26 15:28:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,7 +67,7 @@ cnopen(devvp, mode, flag, p)
 	struct proc *p;
 {
 	int error;
-	dev_t cndev;
+	dev_t cndev, rdev;
 	struct vnode *vp;
 
 	if (cn_tab == NULL)
@@ -88,7 +88,8 @@ cnopen(devvp, mode, flag, p)
 		 */
 		panic("cnopen: cn_tab->cn_dev == NODEV\n");
 	}
-	if (devvp->v_rdev == cndev) {
+	rdev = vdev_rdev(devvp);
+	if (rdev == cndev) {
 		/*
 		 * This causes cnopen() to be called recursively, which
 		 * is generally a bad thing.  It is often caused when
@@ -105,7 +106,8 @@ cnopen(devvp, mode, flag, p)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	} else
 		vget(vp, LK_EXCLUSIVE | LK_RETRY);
-	devvp->v_devcookie = vp;
+
+	vdev_setprivdata(devvp, vp);
 
 	error = VOP_OPEN(vp, mode, p->p_ucred, p, NULL);
 	VOP_UNLOCK(vp, 0);
@@ -126,7 +128,7 @@ cnclose(devvp, flag, mode, p)
 	if (cn_tab == NULL)
 		return (0);
 
-	vp = devvp->v_devcookie;
+	vp = vdev_privdata(devvp);
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(vp, flag, p->p_ucred, p);
@@ -157,7 +159,8 @@ cnread(devvp, uio, flag)
 	else if (cn_tab == NULL)
 		return ENXIO;
 
-	vp = devvp->v_devcookie;
+	vp = vdev_privdata(devvp);
+
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READ(vp, uio, flag, p->p_ucred);
 	VOP_UNLOCK(vp, 0);
@@ -184,7 +187,8 @@ cnwrite(devvp, uio, flag)
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else
-		vp = devvp->v_devcookie;
+		vp = vdev_privdata(devvp);
+
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_WRITE(vp, uio, flag, p->p_ucred);
 	VOP_UNLOCK(vp, 0);
@@ -233,7 +237,7 @@ cnioctl(devvp, cmd, data, flag, p)
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else
-		vp = devvp->v_devcookie;
+		vp = vdev_privdata(devvp);
 
 	return VOP_IOCTL(vp, cmd, data, flag, p->p_ucred, p);
 }
@@ -257,7 +261,7 @@ cnpoll(devvp, events, p)
 	else if (cn_tab == NULL)
 		return ENXIO;
 	else
-		vp = devvp->v_devcookie;
+		vp = vdev_privdata(devvp);
 
 	return VOP_POLL(vp, events, p);
 }

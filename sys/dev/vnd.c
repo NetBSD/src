@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.72.4.1 2001/09/07 04:45:23 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.72.4.2 2001/09/26 15:28:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -206,20 +206,25 @@ vndopen(devvp, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	int unit = vndunit(devvp->v_rdev);
+	int unit;
 	struct vnd_softc *sc;
-	int error = 0, part, pmask;
+	int error, part, pmask;
 	struct disklabel *lp;
+	dev_t rdev;
+
+	rdev = vdev_rdev(devvp);
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", devvp->v_rdev,
+		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", rdev,
 		    flags, mode, p);
 #endif
+	unit = vndunit(rdev);
 	if (unit >= numvnd)
 		return (ENXIO);
 	sc = &vnd_softc[unit];
-	devvp->v_devcookie = sc;
+
+	vdev_setprivdata(devvp, sc);
 
 	if ((error = vndlock(sc)) != 0)
 		return (error);
@@ -271,19 +276,23 @@ vndclose(devvp, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	struct vnd_softc *sc = devvp->v_devcookie;
-	int error = 0, part;
+	struct vnd_softc *sc;
+	int error, part;
+	dev_t rdev;
+
+	rdev = vdev_rdev(devvp);
+	sc = vdev_privdata(devvp);
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", devvp->v_rdev,
+		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n",rdev,
 		    flags, mode, p);
 #endif
 
 	if ((error = vndlock(sc)) != 0)
 		return (error);
 
-	part = DISKPART(devvp->v_rdev);
+	part = DISKPART(rdev);
 
 	/* ...that much closer to allowing unconfiguration... */
 	switch (mode) {
@@ -309,7 +318,7 @@ void
 vndstrategy(bp)
 	struct buf *bp;
 {
-	struct vnd_softc *vnd = bp->b_devvp->v_devcookie;
+	struct vnd_softc *vnd;
 	struct vndxfer *vnx;
 	int s, bsize, resid;
 	off_t bn;
@@ -317,17 +326,21 @@ vndstrategy(bp)
 	int sz, flags, error, wlabel;
 	struct disklabel *lp;
 	struct partition *pp;
+	dev_t rdev;
 
-#ifdef DEBUG
-	if (vnddebug & VDB_FOLLOW)
-		printf("vndstrategy(%p): unit %d\n", bp,
-		    DISKUNIT(bp->b_devvp->v_rdev));
-#endif
+	rdev = vdev_rdev(bp->b_devvp);
+	vnd = vdev_privdata(bp->b_devvp);
+
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		goto done;
 	}
+
+#ifdef DEBUG
+	if (vnddebug & VDB_FOLLOW)
+		printf("vndstrategy(%p): unit %d\n", bp, DISKUNIT(rdev));
+#endif
 
 	/* If it's a nil transfer, wake up the top half now. */
 	if (bp->b_bcount == 0)
@@ -349,7 +362,7 @@ vndstrategy(bp)
 	 * the bounds check will flag that for us.
 	 */
 	wlabel = vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING);
-	if (DISKPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	if (DISKPART(rdev) != RAW_PART &&
 	    (bp->b_flags & B_DKLABEL) == 0)
 		if (bounds_check_with_label(bp, lp, wlabel) <= 0)
 			goto done;
@@ -365,10 +378,9 @@ vndstrategy(bp)
 	/*
 	 * Translate the partition-relative block number to an absolute.
 	 */
-	if (DISKPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	if (DISKPART(rdev) != RAW_PART &&
 	    (bp->b_flags & B_DKLABEL) == 0) {
-		pp = &vnd->sc_dkdev.dk_label->d_partitions[
-		    DISKPART(bp->b_devvp->v_rdev)];
+		pp = &vnd->sc_dkdev.dk_label->d_partitions[DISKPART(rdev)];
 		bn += pp->p_offset;
 	}
 
@@ -539,8 +551,10 @@ vndiodone(bp)
 	struct vndbuf *vbp = (struct vndbuf *) bp;
 	struct vndxfer *vnx = (struct vndxfer *)vbp->vb_xfer;
 	struct buf *pbp = vnx->vx_bp;
-	struct vnd_softc *vnd = pbp->b_devvp->v_devcookie;
+	struct vnd_softc *vnd;
 	int s, resid;
+
+	vnd = vdev_privdata(pbp->b_devvp);
 
 	s = splbio();
 #ifdef DEBUG
@@ -616,11 +630,13 @@ vndread(devvp, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct vnd_softc *sc = devvp->v_devcookie;
+	struct vnd_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndread(0x%x, %p)\n", devvp->v_rdev, uio);
+		printf("vndread(0x%x, %p)\n", vdev_rdev(devvp), uio);
 #endif
 
 	if ((sc->sc_flags & VNF_INITED) == 0)
@@ -636,11 +652,13 @@ vndwrite(devvp, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct vnd_softc *sc = devvp->v_devcookie;
+	struct vnd_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndwrite(0x%x, %p)\n", devvp->v_rdev, uio);
+		printf("vndwrite(0x%x, %p)\n", vdev_rdev(devvp), uio);
 #endif
 
 	if ((sc->sc_flags & VNF_INITED) == 0)
@@ -658,7 +676,7 @@ vndioctl(devvp, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct vnd_softc *vnd = devvp->v_devcookie;
+	struct vnd_softc *vnd;
 	struct vnd_ioctl *vio;
 	struct vattr vattr;
 	struct nameidata nd;
@@ -667,12 +685,15 @@ vndioctl(devvp, cmd, data, flag, p)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
+	dev_t rdev;
 
+	rdev = vdev_rdev(devvp);
+	vnd = vdev_privdata(devvp);
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndioctl(0x%x, 0x%lx, %p, 0x%x, %p): unit %d\n",
-		    devvp->v_rdev, cmd, data, flag, p,
-		    DISKUNIT(devvp->v_rdev));
+		    rdev, cmd, data, flag, p,
+		    DISKUNIT(rdev));
 #endif
 	error = suser(p->p_ucred, &p->p_acflag);
 	if (error)
@@ -834,7 +855,7 @@ vndioctl(devvp, cmd, data, flag, p)
 		/* Attach the disk. */
 		memset(vnd->sc_xname, 0, sizeof(vnd->sc_xname)); /* XXX */
 		sprintf(vnd->sc_xname, "vnd%d",			 /* XXX */
-		    DISKUNIT(devvp->v_rdev));
+		    DISKUNIT(rdev));
 		vnd->sc_dkdev.dk_name = vnd->sc_xname;
 		disk_attach(&vnd->sc_dkdev);
 
@@ -860,7 +881,7 @@ vndioctl(devvp, cmd, data, flag, p)
 		 * or if both the character and block flavors of this
 		 * partition are open.
 		 */
-		part = DISKPART(devvp->v_rdev);
+		part = DISKPART(rdev);
 		pmask = (1 << part);
 		if ((vnd->sc_dkdev.dk_openmask & ~pmask) ||
 		    ((vnd->sc_dkdev.dk_bopenmask & pmask) &&
@@ -902,7 +923,7 @@ vndioctl(devvp, cmd, data, flag, p)
 	case DIOCGPART:
 		((struct partinfo *)data)->disklab = vnd->sc_dkdev.dk_label;
 		((struct partinfo *)data)->part =
-		 &vnd->sc_dkdev.dk_label->d_partitions[DISKPART(devvp->v_rdev)];
+		 &vnd->sc_dkdev.dk_label->d_partitions[DISKPART(rdev)];
 		break;
 
 	case DIOCWDINFO:
@@ -1170,11 +1191,15 @@ void
 vndgetdisklabel(devvp)
 	struct vnode *devvp;
 {
-	struct vnd_softc *sc = devvp->v_devcookie;
+	struct vnd_softc *sc;
 	char *errstring;
-	struct disklabel *lp = sc->sc_dkdev.dk_label;
-	struct cpu_disklabel *clp = sc->sc_dkdev.dk_cpulabel;
+	struct disklabel *lp;
+	struct cpu_disklabel *clp;
 	int i;
+
+	sc = vdev_privdata(devvp);
+	lp = sc->sc_dkdev.dk_label;
+	clp = sc->sc_dkdev.dk_cpulabel;
 
 	memset(clp, 0, sizeof(*clp));
 

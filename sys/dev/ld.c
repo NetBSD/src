@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.11.2.1 2001/09/07 04:45:23 thorpej Exp $	*/
+/*	$NetBSD: ld.c,v 1.11.2.2 2001/09/26 15:28:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -244,15 +244,18 @@ ldopen(struct vnode *devvp, int flags, int fmt, struct proc *p)
 {
 	struct ld_softc *sc;
 	int unit, part;
+	dev_t rdev;
 
-	unit = DISKUNIT(devvp->v_rdev);
+	rdev = vdev_rdev(devvp);
+
+	unit = DISKUNIT(rdev);
 	if ((sc = device_lookup(&ld_cd, unit))== NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (ENODEV);
-	part = DISKPART(devvp->v_rdev);
+	part = DISKPART(rdev);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	ldlock(sc);
 
@@ -286,8 +289,12 @@ ldopen(struct vnode *devvp, int flags, int fmt, struct proc *p)
 int
 ldclose(struct vnode *devvp, int flags, int fmt, struct proc *p)
 {
-	struct ld_softc *sc = devvp->v_devcookie;
-	int part = DISKPART(devvp->v_rdev);
+	struct ld_softc *sc;
+	int part;
+
+	sc = vdev_privdata(devvp);
+
+	part = DISKPART(vdev_rdev(devvp));
 
 	ldlock(sc);
 
@@ -332,14 +339,16 @@ int
 ldioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int32_t flag,
     struct proc *p)
 {
-	struct ld_softc *sc = devvp->v_devcookie;
+	struct ld_softc *sc;
 	int part, error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
 	struct disklabel *lp;
 
-	part = DISKPART(devvp->v_rdev);
+	sc = vdev_privdata(devvp);
+
+	part = DISKPART(vdev_rdev(devvp));
 	error = 0;
 
 	switch (cmd) {
@@ -432,8 +441,10 @@ ldioctl(struct vnode *devvp, u_long cmd, caddr_t addr, int32_t flag,
 void
 ldstrategy(struct buf *bp)
 {
-	struct ld_softc *sc = bp->b_devvp->v_devcookie;
+	struct ld_softc *sc;
 	int s;
+
+	sc = vdev_privdata(bp->b_devvp);
 
 	s = splbio();
 	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt) {
@@ -459,7 +470,7 @@ ldstart(struct ld_softc *sc, struct buf *bp)
 		return (-1);
 	}
 
-	part = DISKPART(bp->b_devvp->v_rdev);
+	part = DISKPART(vdev_rdev(devvp));
 	lp = sc->sc_dk.dk_label;
 
 	/*
@@ -597,8 +608,10 @@ ldsize(dev_t dev)
 static void
 ldgetdisklabel(struct vnode *devvp)
 {
-	struct ld_softc *sc = devvp->v_devcookie;
+	struct ld_softc *sc;
 	const char *errstring;
+
+	sc = vdev_privdata(devvp);
 
 	ldgetdefaultlabel(sc, sc->sc_dk.dk_label);
 
@@ -740,7 +753,9 @@ lddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 static void
 ldminphys(struct buf *bp)
 {
-	struct ld_softc *sc = bp->b_devvp->v_devcookie;
+	struct ld_softc *sc;
+
+	sc = vdev_privdata(bp->b_devvp);
 
 	if (bp->b_bcount > sc->sc_maxxfer)
 		bp->b_bcount = sc->sc_maxxfer;

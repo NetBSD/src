@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.18.6.1 2001/09/07 04:45:19 thorpej Exp $ */
+/* $NetBSD: promcons.c,v 1.18.6.2 2001/09/26 15:28:04 fvdl Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18.6.1 2001/09/07 04:45:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.18.6.2 2001/09/26 15:28:04 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ struct callout prom_ch = CALLOUT_INITIALIZER;
 int
 promopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	int unit = minor(devvp->v_rdev);
+	int unit = minor(vdev_rdev(devvp));
 	struct tty *tp;
 	int s;
 	int error = 0, setuptimeout = 0;
@@ -85,7 +85,7 @@ promopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	} else
 		tp = prom_tty[unit];
 
-	devvp->v_devcookie = tp;
+	vdev_setprivdata(devvp, tp);
 
 	tp->t_oproc = promstart;
 	tp->t_param = promparam;
@@ -121,7 +121,9 @@ promopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 int
 promclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	struct tty *tp = devvp->v_devcookie;
+	struct tty *tp;
+
+	tp = vdev_getprivdata(devvp);
 
 	callout_stop(&prom_ch);
 	(*tp->t_linesw->l_close)(tp, flag);
@@ -132,7 +134,9 @@ promclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 int
 promread(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct tty *tp = devvp->v_devcookie;
+	struct tty *tp;
+
+	tp = vdev_getprivdata(devvp);
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
@@ -140,7 +144,9 @@ promread(struct vnode *devvp, struct uio *uio, int flag)
 int
 promwrite(struct vnode *devvp, struct uio *uio, int flag)
 {
-	struct tty *tp = devvp->v_devcookie;
+	struct tty *tp;
+
+	tp = vdev_getprivdata(devvp);
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
@@ -148,7 +154,10 @@ promwrite(struct vnode *devvp, struct uio *uio, int flag)
 int
 prompoll(struct vnode *devvp, int events, struct proc *p)
 {
-	struct tty *tp = devvp->v_devcookie;
+	int error;
+	struct tty *tp;
+
+	tp = vdev_getprivdata(devvp);
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
@@ -157,9 +166,10 @@ int
 promioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
     struct proc *p)
 {
-	struct tty *tp = devvp->v_devcookie;
+	struct tty *tp;
 	int error;
 
+	tp = vdev_getprivdata(devvp);
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return error;
@@ -194,7 +204,7 @@ promstart(struct tty *tp)
 	}
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0)
-		promcnputc(tp->t_devvp->v_rdev, getc(&tp->t_outq));
+		promcnputc(vdev_rdev(tp->t_devvp), getc(&tp->t_outq));
 	tp->t_state &= ~TS_BUSY;
 out:
 	splx(s);
@@ -221,7 +231,7 @@ promtimeout(void *v)
 	struct tty *tp = v;
 	u_char c;
 
-	while (promcnlookc(tp->t_devvp->v_rdev, &c)) {
+	while (promcnlookc(vdev_rdev(tp->t_devvp), &c)) {
 		if (tp->t_state & TS_ISOPEN)
 			(*tp->t_linesw->l_rint)(c, tp);
 	}
@@ -232,7 +242,7 @@ struct tty *
 promtty(struct vnode *devvp)
 {
 
-	if (minor(devvp->v_rdev) != 0)
+	if (minor(vdev_rdev(devvp)) != 0)
 		panic("promtty: bogus");
 
 	return prom_tty[0];

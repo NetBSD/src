@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.110 2001/06/14 20:32:45 thorpej Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.110.4.1 2001/09/26 15:28:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -912,7 +912,7 @@ sunos_sys_vhangup(p, v, retval)
 
 	(void) ttywait(sp->s_ttyp);
 	if (sp->s_ttyvp)
-		VOP_REVOKE(sp->s_ttyvp, REVOKEALL);
+		VOP_REVOKE(sp->s_ttyvp, REVOKEALIAS);
 	if (sp->s_ttyvp)
 		vrele(sp->s_ttyvp);
 	sp->s_ttyvp = NULL;

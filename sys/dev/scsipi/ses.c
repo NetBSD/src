@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.11.2.1 2001/09/07 04:45:32 thorpej Exp $ */
+/*	$NetBSD: ses.c,v 1.11.2.2 2001/09/26 15:28:18 fvdl Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -299,7 +299,7 @@ sesopen(devvp, flags, fmt, p)
 	struct ses_softc *softc;
 	int error, unit;
 
-	unit = SESUNIT(devvp->v_rdev);
+	unit = SESUNIT(vdev_rdev(devvp));
 	if (unit >= ses_cd.cd_ndevs)
 		return (ENXIO);
 	softc = ses_cd.cd_devs[unit];
@@ -323,7 +323,7 @@ sesopen(devvp, flags, fmt, p)
 	if (error != 0)
                 goto out;
 
-	devvp->v_devcookie = softc;
+	vdev_setprivdata(devvp, softc);
 
 	softc->ses_flags |= SES_FLAG_OPEN;
 	if ((softc->ses_flags & SES_FLAG_INITIALIZED) == 0) {
@@ -345,8 +345,9 @@ sesclose(devvp, flags, fmt, p)
 	int fmt;
 	struct proc *p;
 {
-	struct ses_softc *softc = devvp->v_devcookie;
+	struct ses_softc *softc;
 
+	softc = vdev_privdata(devvp);
 	scsipi_wait_drain(softc->sc_periph);
 	scsipi_adapter_delref(softc->sc_periph->periph_channel->chan_adapter);
 	softc->ses_flags &= ~SES_FLAG_OPEN;
@@ -364,9 +365,11 @@ sesioctl(devvp, cmd, arg_addr, flag, p)
 	ses_encstat tmp;
 	ses_objstat objs;
 	ses_object obj, *uobj;
-	struct ses_softc *ssc = devvp->v_devcookie;
+	struct ses_softc *ssc;
 	void *addr;
 	int error, i;
+
+	ssc = vdev_privdata(devvp);
 
 
 	if (arg_addr)

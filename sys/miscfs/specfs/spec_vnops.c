@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.56.2.2 2001/09/18 19:13:57 fvdl Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.56.2.3 2001/09/26 15:28:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,6 +51,7 @@
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
 #include <sys/conf.h>
+#include <sys/malloc.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -127,12 +128,14 @@ const struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 const struct vnodeopv_desc spec_vnodeop_opv_desc =
 	{ &spec_vnodeop_p, spec_vnodeop_entries };
 
+static int spec_clonevnode(struct vnode *, struct vnode **, dev_t, int,
+			   struct proc *);
+
 /*
  * Trivial lookup routine that always fails.
  */
 int
-spec_lookup(v)
-	void *v;
+spec_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode *a_dvp;
@@ -149,8 +152,7 @@ spec_lookup(v)
  */
 /* ARGSUSED */
 int
-spec_open(v)
-	void *v;
+spec_open(void *v)
 {
 	struct vop_open_args /* {
 		struct vnode *a_vp;
@@ -211,13 +213,10 @@ spec_open(v)
 		 */
 		VOP_UNLOCK(vp, 0);
 		if (iscloningcdev(dev) && vpp != NULL) {
-			error = cdevvp(dev, vpp);
-			if (error != 0) {
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			error = spec_clonevnode(vp, vpp, dev, VCHR, p);
+			if (error != 0)
 				return error;
-			}
 			vp = *vpp;
-			VOP_UNLOCK(vp, 0);
 		}
 		error = (*cdevsw[maj].d_open)(vp, ap->a_mode, S_IFCHR, p);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -244,16 +243,16 @@ spec_open(v)
 		 * a character device open but not for a block device??
 		 * This can't be right.
 		 */
+		VOP_UNLOCK(vp, 0);
 		if (iscloningbdev(dev) && vpp != NULL) {
-			VOP_UNLOCK(vp, 0);
-			error = bdevvp(dev, vpp);
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			error = spec_clonevnode(vp, vpp, dev, VBLK, p);
 			if (error != 0)
 				return error;
 			vp = *vpp;
 		}
 		error = (*bdevsw[maj].d_open)(vp, ap->a_mode, S_IFBLK, p);
 		if (error) {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			return error;
 		}
 		error = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp,
@@ -262,6 +261,7 @@ spec_open(v)
 			vp->v_uvm.u_size = (voff_t)pi.disklab->d_secsize *
 			    pi.part->p_size;
 		}
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return 0;
 
 	case VNON:
@@ -281,8 +281,7 @@ spec_open(v)
  */
 /* ARGSUSED */
 int
-spec_read(v)
-	void *v;
+spec_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -367,8 +366,7 @@ spec_read(v)
  */
 /* ARGSUSED */
 int
-spec_write(v)
-	void *v;
+spec_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -459,8 +457,7 @@ spec_write(v)
  */
 /* ARGSUSED */
 int
-spec_ioctl(v)
-	void *v;
+spec_ioctl(void *v)
 {
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
@@ -497,8 +494,7 @@ spec_ioctl(v)
 
 /* ARGSUSED */
 int
-spec_poll(v)
-	void *v;
+spec_poll(void *v)
 {
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
@@ -523,8 +519,7 @@ spec_poll(v)
  */
 /* ARGSUSED */
 int
-spec_fsync(v)
-	void *v;
+spec_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
@@ -545,8 +540,7 @@ spec_fsync(v)
  * Just call the device strategy routine
  */
 int
-spec_strategy(v)
-	void *v;
+spec_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
@@ -562,8 +556,7 @@ spec_strategy(v)
 }
 
 int
-spec_inactive(v)
-	void *v;
+spec_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -578,8 +571,7 @@ spec_inactive(v)
  * This is a noop, simply returning what one has been given.
  */
 int
-spec_bmap(v)
-	void *v;
+spec_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -603,8 +595,7 @@ spec_bmap(v)
  */
 /* ARGSUSED */
 int
-spec_close(v)
-	void *v;
+spec_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -647,8 +638,7 @@ spec_close(v)
 		 * of forcably closing the device, otherwise we only
 		 * close on last reference.
 		 */
-		if (count > 1 && (flags & VXLOCK) == 0 &&
-		    !iscloningcdev(dev))
+		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
 		devclose = cdevsw[major(dev)].d_close;
 		mode = S_IFCHR;
@@ -672,8 +662,7 @@ spec_close(v)
 		 * sum of the reference counts on all the aliased
 		 * vnodes descends to one, we are on last close.
 		 */
-		if (count > 1 && (flags & VXLOCK) == 0 && 
-		    !iscloningbdev(dev))
+		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
 		devclose = bdevsw[major(dev)].d_close;
 		mode = S_IFBLK;
@@ -683,28 +672,7 @@ spec_close(v)
 		panic("spec_close: not special");
 	}
 
-	flags1 = ap->a_fflag;
-
-	/*
-	 * if VXLOCK is set, then we're going away soon, so make this
-	 * non-blocking. Also ensures that we won't wedge in vn_lock below.
-	 */
-	if (flags & VXLOCK)
-		flags1 |= FNONBLOCK;
-
-	/*
-	 * If we're able to block, release the vnode lock & reaquire. We
-	 * might end up sleaping for someone else who wants our queues. They
-	 * won't get them if we hold the vnode locked. Also, if VXLOCK is set,
-	 * don't release the lock as we won't be able to regain it.
-	 */
-	if (!(flags1 & FNONBLOCK))
-		VOP_UNLOCK(vp, 0);
-
 	error =  (*devclose)(vp, flags1, mode, ap->a_p);
-
-	if (!(flags1 & FNONBLOCK))
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	return (error);
 }
@@ -713,8 +681,7 @@ spec_close(v)
  * Print out the contents of a special device vnode.
  */
 int
-spec_print(v)
-	void *v;
+spec_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode *a_vp;
@@ -729,8 +696,7 @@ spec_print(v)
  * Return POSIX pathconf information applicable to special devices.
  */
 int
-spec_pathconf(v)
-	void *v;
+spec_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -770,8 +736,7 @@ spec_pathconf(v)
  * Advisory record locking support.
  */
 int
-spec_advlock(v)
-	void *v;
+spec_advlock(void *v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
@@ -789,8 +754,7 @@ spec_advlock(v)
  * glue for genfs_{get,put}pages()
  */
 int
-spec_size(v)
-	void *v;
+spec_size(void *v)
 {
 	struct vop_size_args /* {
 		struct vnode *a_vp;
@@ -800,4 +764,76 @@ spec_size(v)
 
 	*ap->a_eobp = ap->a_size;
 	return 0;
+}
+
+int
+spec_access(void *v)
+{
+	struct vop_access_args /* {
+		struct vnode *a_vp;
+		int a_mode;
+		struct ucred *a_cred;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *vp;
+
+	vp = ap->a_vp;
+
+	if ((vp->v_flag & VCLONED) == 0)
+		return EBADF;
+
+	return vaccess(vp->v_type, vp->v_cloneattr->va_mode & ALLPERMS,
+	    vp->v_cloneattr->va_uid, vp->v_cloneattr->va_gid, ap->a_mode,
+	    ap->a_cred);
+}
+
+int
+spec_getattr(void *v)
+{
+	struct vop_getattr_args /* {
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		struct ucred *a_cred;
+		struct prof *a_p;
+	} */ *ap = v;
+	struct vnode *vp;
+
+	vp = ap->a_vp;
+
+	if ((vp->v_flag & VCLONED) == 0)
+		return EBADF;
+
+	*ap->a_vap = *vp->v_cloneattr;
+	ap->a_vap->va_rdev = vp->v_rdev;
+	return 0;
+}
+
+/*
+ * Create a clone of a vnode.
+ * vp is passed in unlocked, it's locked on exit.
+ */
+static int
+spec_clonevnode(struct vnode *vp, struct vnode **vpp, dev_t dev, int type,
+		struct proc *p)
+{
+	int error;
+	struct vattr *vap;
+
+	error = type == VCHR ? cdevvp(dev, vpp) : bdevvp(dev, vpp);
+	if (error != 0)
+		goto out;
+	vap = malloc(sizeof (struct vattr), M_VNODE, M_WAITOK);
+	error = VOP_GETATTR(vp, vap, p->p_ucred, p);
+	if (error != 0) {
+		vrele(*vpp);
+		free(vap, M_VNODE);
+		goto out;
+	}
+out:
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (error == 0) {
+		(*vpp)->v_cloneattr = vap;
+		(*vpp)->v_flag |= VCLONED;
+	}
+	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.36.4.1 2001/09/18 19:13:59 fvdl Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.36.4.2 2001/09/26 15:28:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -167,8 +167,10 @@ ntfs_mountroot()
 	if (bdevvp(rootdev, &rootvp))
 		panic("ntfs_mountroot: can't setup rootvp");
 
+	vn_lock(rootvp, LK_EXCLUSIVE | LK_RETRY);
+
 	if ((error = vfs_rootmountalloc(MOUNT_NTFS, "root_device", &mp))) {
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
 
@@ -181,9 +183,11 @@ ntfs_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
+
+	VOP_UNLOCK(rootvp, 0);
 
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
@@ -314,6 +318,7 @@ ntfs_mount (
 	}
 
 	devvp = ndp->ni_vp;
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 
 	if (devvp->v_type != VBLK) {
 		err = ENOTBLK;
@@ -395,13 +400,15 @@ dostatfs:
 	 */
 	(void)VFS_STATFS(mp, &mp->mnt_stat, p);
 
+	VOP_UNLOCK(devvp, 0);
+
 	goto success;
 
 
 error_2:	/* error with devvp held*/
 
 	/* release devvp before failing*/
-	vrele(devvp);
+	vput(devvp);
 
 error_1:	/* no state to back out*/
 
@@ -608,14 +615,7 @@ out:
 	if (bp)
 		brelse(bp);
 
-#if defined __NetBSD__
-	/* lock the device vnode before calling VOP_CLOSE() */
-	VN_LOCK(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP__UNLOCK(devvp, 0, p);
-#else
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-#endif
 	
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.45.2.1 2001/09/07 04:45:42 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.45.2.2 2001/09/26 15:28:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -130,11 +130,11 @@ tunopen(devvp, flag, mode, p)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 
-	if ((unit = minor(devvp->v_rdev)) >= NTUN)
+	if ((unit = minor(vdev_rdev(devvp))) >= NTUN)
 		return (ENXIO);
 	tp = &tunctl[unit];
 
-	devvp->v_devcookie = tp;
+	vdev_setprivdata(devvp, tp);
 
 	if (tp->tun_flags & TUN_OPEN)
 		return ENXIO;
@@ -155,10 +155,13 @@ tunclose(devvp, flag, mode, p)
 	int	mode;
 	struct proc *p;
 {
-	struct tun_softc *tp = devvp->v_devcookie;
-	struct ifnet	*ifp = &tp->tun_if;
+	struct tun_softc *tp;
+	struct ifnet	*ifp;
 	struct mbuf	*m;
 	int s;
+
+	tp = vdev_privdata(devvp);
+	ifp = &tp->tun_if;
 
 	tp->tun_flags &= ~TUN_OPEN;
 
@@ -399,8 +402,10 @@ tunioctl(devvp, cmd, data, flag, p)
 	int		flag;
 	struct proc	*p;
 {
-	struct tun_softc *tp = devvp->v_devcookie;
+	struct tun_softc *tp;
 	int s;
+
+	tp = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case TUNSDEBUG:
@@ -485,10 +490,14 @@ tunread(devvp, uio, ioflag)
 	struct uio	*uio;
 	int		ioflag;
 {
-	struct tun_softc *tp = devvp->v_devcookie;
-	struct ifnet	*ifp = &tp->tun_if;
+	struct tun_softc *tp;
+	struct ifnet	*ifp;
 	struct mbuf	*m, *m0;
-	int		error=0, len, s;
+	int		error, len, s;
+
+	tp = vdev_privdata(devvp);
+	ifp = &tp->tun_if;
+	error = 0;
 
 	TUNDEBUG ("%s: read\n", ifp->if_xname);
 	if ((tp->tun_flags & TUN_READY) != TUN_READY) {
@@ -541,12 +550,16 @@ tunwrite(devvp, uio, ioflag)
 	struct uio	*uio;
 	int		ioflag;
 {
-	struct tun_softc *tp = devvp->v_devcookie;
-	struct ifnet	*ifp = &tp->tun_if;
+	struct tun_softc *tp;
+	struct ifnet	*ifp;
 	struct mbuf	*top, **mp, *m;
 	struct ifqueue	*ifq;
 	struct sockaddr	dst;
-	int		isr, error=0, s, tlen, mlen;
+	int		isr, error, s, tlen, mlen;
+
+	tp = vdev_privdata(devvp);
+	ifp = &tp->tun_if;
+	error = 0;
 
 	TUNDEBUG("%s: tunwrite\n", ifp->if_xname);
 
@@ -665,9 +678,13 @@ tunpoll(devvp, events, p)
 	int		events;
 	struct proc	*p;
 {
-	struct tun_softc *tp = devvp->v_devcookie;
-	struct ifnet	*ifp = &tp->tun_if;
-	int		s, revents = 0;
+	struct tun_softc *tp;
+	struct ifnet	*ifp;
+	int		s, revents;
+
+	tp = vdev_privdata(devvp);
+	ifp = &tp->tun_if;
+	revents = 0;
 
 	s = splnet();
 	TUNDEBUG("%s: tunpoll\n", ifp->if_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.56.4.1 2001/09/18 19:13:52 fvdl Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.56.4.2 2001/09/26 15:28:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -128,9 +128,11 @@ cd9660_mountroot()
 	if (bdevvp(rootdev, &rootvp))
 		panic("cd9660_mountroot: can't setup rootvp");
 
+	vn_lock(rootvp, LK_EXCLUSIVE | LK_RETRY);
+
 	if ((error = vfs_rootmountalloc(MOUNT_CD9660, "root_device", &mp))
 			!= 0) {
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
 
@@ -139,9 +141,10 @@ cd9660_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
+	VOP_UNLOCK(rootvp, 0);
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
@@ -203,16 +206,17 @@ cd9660_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return ENXIO;
 	}
+
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
 	if (p->p_ucred->cr_uid != 0) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
-		VOP_UNLOCK(devvp, 0);
 		if (error) {
-			vrele(devvp);
+			vput(devvp);
 			return (error);
 		}
 	}
@@ -225,9 +229,10 @@ cd9660_mount(mp, path, data, ndp, p)
 			vrele(devvp);
 	}
 	if (error) {
-		vrele(devvp);
+		vput(devvp);
 		return error;
 	}
+	VOP_UNLOCK(devvp, 0);
 	imp = VFSTOISOFS(mp);
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
@@ -329,7 +334,9 @@ iso_mountfs(devvp, mp, p, argp)
 	 */
 	iso_bsize = ISO_DEFAULT_BLOCK_SIZE;
 
+	VOP_UNLOCK(devvp, 0);
 	error = VOP_IOCTL(devvp, CDIOREADMSADDR, (caddr_t)&sess, 0, FSCRED, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	if (error)
 		sess = 0;	/* never mind */
 #if 0
@@ -485,9 +492,7 @@ out:
 	if (supbp)
 		brelse(supbp);
 	if (needclose) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-		VOP_UNLOCK(devvp, 0);
 	}
 	if (isomp) {
 		free((caddr_t)isomp, M_ISOFSMNT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.156.2.3 2001/09/21 15:00:12 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.156.2.4 2001/09/26 15:28:22 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1064,10 +1064,12 @@ getdevvp(dev, vpp, type)
 	vp = nvp;
 	vp->v_type = type;
 	if ((nvp = checkalias(vp, dev, NULL)) != 0) {
-		vput(vp);
+		vrele(vp);
 		vp = nvp;
 	}
 	*vpp = vp;
+	if (VOP_ISLOCKED(vp))
+		panic("getdevvp: vnode locked");
 	return (0);
 }
 
@@ -1728,7 +1730,9 @@ vgonel(vp, p)
 	 * if it is on one.
 	 */
 	if ((vp->v_type == VBLK || vp->v_type == VCHR) && vp->v_specinfo != 0) {
-		vdevremhash(vp);
+		vdev_remhash(vp);
+		if ((vp->v_flag & VCLONED) != 0 && vp->v_cloneattr != NULL)
+			FREE(vp->v_cloneattr, M_VNODE);
 		FREE(vp->v_specinfo, M_VNODE);
 		vp->v_specinfo = NULL;
 	}
@@ -1797,11 +1801,11 @@ vdevgone(maj, minl, minh, type)
 
 	for (mn = minl; mn <= minh; mn++)
 		if (vfinddev(makedev(maj, mn), type, &vp))
-			VOP_REVOKE(vp, REVOKEALL);
+			VOP_REVOKE(vp, REVOKEALIAS | REVOKECLONE);
 }
 
 void
-vdevinshash(vp, dev)
+vdev_inshash(vp, dev)
 	struct vnode *vp;
 	dev_t dev;
 {
@@ -1849,7 +1853,7 @@ loop:
 }
 
 void
-vdevremhash(vp)
+vdev_remhash(vp)
 	struct vnode *vp;
 {
 	struct vnode *vq;
@@ -1891,6 +1895,17 @@ vdevremhash(vp)
 	simple_unlock(&spechash_slock);
 }
 
+int
+vdev_reassignvp(struct vnode *vp, dev_t dev)
+{
+	if (vp->v_type != VCHR && vp->v_type != VBLK) {
+		return EINVAL;
+	}
+	vdev_remhash(vp);
+	vdev_inshash(vp, dev);
+	return 0;
+}
+
 /*
  * Calculate the total number of references to a special device.
  */
@@ -1902,7 +1917,7 @@ vcount(vp)
 	int count;
 
 loop:
-	if ((vp->v_flag & VALIASED) == 0)
+	if ((vp->v_flag & VALIASED) == 0 || (vp->v_flag & VCLONED) != 0)
 		return (vp->v_usecount);
 	simple_lock(&spechash_slock);
 	for (count = 0, vq = *vp->v_hashchain; vq; vq = vnext) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.9.8.3 2001/09/20 11:15:04 fvdl Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.9.8.4 2001/09/26 15:28:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -221,12 +221,12 @@ wsmuxopen(devvp, flags, mode, p)
 	struct vnode *vp2;
 	int unit, error, nopen, lasterror;
 
-	unit = minor(devvp->v_rdev);
+	unit = minor(vdev_rdev(devvp));
 	if (unit >= nwsmux ||	/* make sure it was attached */
 	    (sc = wsmuxdevs[unit]) == NULL)
 		return (ENXIO);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	DPRINTF(("wsmuxopen: %s: sc=%p\n", sc->sc_dv.dv_xname, sc));
 	if (!(flags & FREAD)) {
@@ -255,6 +255,7 @@ wsmuxopen(devvp, flags, mode, p)
 			    &m->sc_pdevvp);
 			if (error == 0) {
 				vp2 = NULL;
+				vn_lock(m->sc_pdevvp, LK_EXCLUSIVE | LK_RETRY);
 				error = VOP_OPEN(m->sc_pdevvp, flags,
 				    p->p_ucred, p, &vp2);
 				if (error == 0 && vp2 != NULL) {
@@ -292,7 +293,7 @@ wsmuxclose(devvp, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	return wsmuxdoclose(devvp->v_devcookie, flags, mode, p);
+	return wsmuxdoclose(vdev_privdata(devvp), flags, mode, p);
 }
 
 int
@@ -301,7 +302,9 @@ wsmuxread(devvp, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct wsmux_softc *sc = devvp->v_devcookie;
+	struct wsmux_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	if (!sc->sc_events.io)
 		return (EACCES);
@@ -317,7 +320,7 @@ wsmuxioctl(devvp, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	return wsmuxdoioctl(devvp->v_devcookie, cmd, data, flag, p);
+	return wsmuxdoioctl(vdev_privdata(devvp), cmd, data, flag, p);
 }
 
 int
@@ -326,7 +329,9 @@ wsmuxpoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct wsmux_softc *sc = devvp->v_devcookie;
+	struct wsmux_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	if (!sc->sc_events.io)
 		return (EACCES);
@@ -456,6 +461,7 @@ wsmux_attach_sc(sc, type, dsc, ev, psp, ops, pmajor)
 		error = cdevvp(makedev(m->pmajor, m->sc->dv_unit),
 		    &m->sc_pdevvp);
 		if (error == 0) {
+			vn_lock(m->sc_pdevvp, LK_EXCLUSIVE | LK_RETRY);
 			vp2 = NULL;
 			error = VOP_OPEN(m->sc_pdevvp, sc->sc_flags,
 			    sc->sc_p->p_ucred, sc->sc_p, &vp2);

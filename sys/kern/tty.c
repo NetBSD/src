@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.128.4.2 2001/09/18 19:13:53 fvdl Exp $	*/
+/*	$NetBSD: tty.c,v 1.128.4.3 2001/09/26 15:28:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -240,6 +240,9 @@ int
 ttylopen(struct vnode *devvp, struct tty *tp)
 {
 	int	s;
+
+	if (devvp->v_type != VCHR)
+		return EIO;
 
 	s = spltty();
 	tp->t_devvp = devvp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.161.2.1 2001/09/07 04:45:31 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.161.2.2 2001/09/26 15:28:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -877,7 +877,7 @@ scsibusopen(devvp, flag, fmt, p)
 	struct proc *p;
 {
 	struct scsibus_softc *sc;
-	int error, unit = minor(devvp->v_rdev);
+	int error, unit = minor(vdev_rdev(devvp));
 
 	if (unit >= scsibus_cd.cd_ndevs ||
 	    (sc = scsibus_cd.cd_devs[unit]) == NULL)
@@ -886,7 +886,7 @@ scsibusopen(devvp, flag, fmt, p)
 	if (sc->sc_flags & SCSIBUSF_OPEN)
 		return (EBUSY);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	if ((error = scsipi_adapter_addref(sc->sc_channel->chan_adapter)) != 0)
 		return (error);
@@ -902,7 +902,9 @@ scsibusclose(devvp, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct scsibus_softc *sc = devvp->v_devcookie;
+	struct scsibus_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	scsipi_adapter_delref(sc->sc_channel->chan_adapter);
 
@@ -919,9 +921,12 @@ scsibusioctl(devvp, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct scsibus_softc *sc = devvp->v_devcookie;
-	struct scsipi_channel *chan = sc->sc_channel;
+	struct scsibus_softc *sc;
+	struct scsipi_channel *chan;
 	int error;
+
+	sc = vdev_privdata(devvp);
+	chan = sc->sc_channel;
 
 	/*
 	 * Enforce write permission for ioctls that change the

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.91 2001/07/18 19:10:27 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.91.2.1 2001/09/26 15:28:21 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@ exit1(struct proc *p, int rv)
 				 * if we blocked.
 				 */
 				if (sp->s_ttyvp)
-					VOP_REVOKE(sp->s_ttyvp, REVOKEALL);
+					VOP_REVOKE(sp->s_ttyvp, REVOKEALIAS);
 			}
 			if (sp->s_ttyvp)
 				vrele(sp->s_ttyvp);

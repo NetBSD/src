@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.52.2.1 2001/09/07 04:45:34 thorpej Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.52.2.2 2001/09/26 15:28:20 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.52.2.1 2001/09/07 04:45:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.52.2.2 2001/09/26 15:28:20 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -694,19 +694,22 @@ wsdisplayopen(devvp, flag, mode, p)
 	struct tty *tp;
 	int newopen, error;
 	struct wsscreen *scr;
+	dev_t rdev;
 
-	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(devvp->v_rdev));
+	rdev = vdev_rdev(devvp);
+
+	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(rdev));
 	if (sc == NULL)			/* make sure it was attached */
 		return (ENXIO);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
-	if (ISWSDISPLAYCTL(devvp->v_rdev))
+	if (ISWSDISPLAYCTL(rdev))
 		return (0);
 
-	if (WSDISPLAYSCREEN(devvp->v_rdev) >= WSDISPLAY_MAXSCREEN)
+	if (WSDISPLAYSCREEN(rdev) >= WSDISPLAY_MAXSCREEN)
 		return (ENXIO);
-	scr = sc->sc_scr[WSDISPLAYSCREEN(devvp->v_rdev)];
+	scr = sc->sc_scr[WSDISPLAYSCREEN(rdev)];
 	if (!scr)
 		return (ENXIO);
 
@@ -754,14 +757,18 @@ wsdisplayclose(devvp, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct wsdisplay_softc *sc = devvp->v_devcookie;
+	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	struct wsscreen *scr;
+	dev_t rdev;
 
-	if (ISWSDISPLAYCTL(devvp->v_rdev))
+	rdev = vdev_rdev(devvp);
+	sc = vdev_privdata(devvp);
+
+	if (ISWSDISPLAYCTL(rdev))
 		return (0);
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(devvp->v_rdev)];
+	scr = sc->sc_scr[WSDISPLAYSCREEN(rdev)];
 
 	if (WSSCREEN_HAS_TTY(scr)) {
 		if (scr->scr_hold_screen) {
@@ -809,14 +816,18 @@ wsdisplayread(devvp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct wsdisplay_softc *sc = devvp->v_devcookie;
+	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	struct wsscreen *scr;
+	dev_t rdev;
 
-	if (ISWSDISPLAYCTL(devvp->v_rdev))
+	rdev = vdev_rdev(devvp);
+	sc = vdev_privdata(devvp);
+
+	if (ISWSDISPLAYCTL(rdev))
 		return (0);
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(devvp->v_rdev)];
+	scr = sc->sc_scr[WSDISPLAYSCREEN(rdev)];
 
 	if (!WSSCREEN_HAS_TTY(scr))
 		return (ENODEV);
@@ -831,14 +842,18 @@ wsdisplaywrite(devvp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct wsdisplay_softc *sc = devvp->v_devcookie;
+	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	struct wsscreen *scr;
+	dev_t rdev;
 
-	if (ISWSDISPLAYCTL(devvp->v_rdev))
+	rdev = vdev_rdev(devvp);
+	sc = vdev_privdata(devvp);
+
+	if (ISWSDISPLAYCTL(rdev))
 		return (0);
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(devvp->v_rdev)];
+	scr = sc->sc_scr[WSDISPLAYSCREEN(rdev)];
 
 	if (!WSSCREEN_HAS_TTY(scr))
 		return (ENODEV);
@@ -853,14 +868,18 @@ wsdisplaypoll(devvp, events, p)
 	int events;
 	struct proc *p;
 {
-	struct wsdisplay_softc *sc = devvp->v_devcookie;
+	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	struct wsscreen *scr;
+	dev_t rdev;
 
-	if (ISWSDISPLAYCTL(devvp->v_rdev))
+	rdev = vdev_rdev(devvp);
+	sc = vdev_privdata(devvp);
+
+	if (ISWSDISPLAYCTL(rdev))
 		return (0);
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(devvp->v_rdev)];
+	scr = sc->sc_scr[WSDISPLAYSCREEN(rdev)];
 
 	if (!WSSCREEN_HAS_TTY(scr))
 		return (ENODEV);
@@ -873,13 +892,17 @@ struct tty *
 wsdisplaytty(devvp)
 	struct vnode *devvp;
 {
-	struct wsdisplay_softc *sc = devvp->v_devcookie;
+	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
+	dev_t rdev;
 
-	if (ISWSDISPLAYCTL(devvp->v_rdev))
+	rdev = vdev_rdev(devvp);
+	sc = vdev_privdata(devvp);
+
+	if (ISWSDISPLAYCTL(rdev))
 		panic("wsdisplaytty() on ctl device");
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(devvp->v_rdev)];
+	scr = sc->sc_scr[WSDISPLAYSCREEN(rdev)];
 
 	return (scr->scr_tty);
 }
@@ -892,10 +915,14 @@ wsdisplayioctl(devvp, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct wsdisplay_softc *sc = devvp->v_devcookie;
+	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	int error;
 	struct wsscreen *scr;
+	dev_t rdev;
+
+	rdev = vdev_rdev(devvp);
+	sc = vdev_privdata(devvp);
 
 #ifdef WSDISPLAY_COMPAT_USL
 	error = wsdisplay_usl_ioctl1(sc, cmd, data, flag, p);
@@ -903,10 +930,10 @@ wsdisplayioctl(devvp, cmd, data, flag, p)
 		return (error);
 #endif
 
-	if (ISWSDISPLAYCTL(devvp->v_rdev))
+	if (ISWSDISPLAYCTL(rdev))
 		return (wsdisplay_cfg_ioctl(sc, cmd, data, flag, p));
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(devvp->v_rdev)];
+	scr = sc->sc_scr[WSDISPLAYSCREEN(rdev)];
 
 	if (WSSCREEN_HAS_TTY(scr)) {
 		tp = scr->scr_tty;
@@ -1148,13 +1175,17 @@ wsdisplaymmap(devvp, offset, prot)
 	off_t offset;
 	int prot;
 {
-	struct wsdisplay_softc *sc = devvp->v_devcookie;
+	struct wsdisplay_softc *sc;
 	struct wsscreen *scr;
+	dev_t rdev;
 
-	if (ISWSDISPLAYCTL(devvp->v_rdev))
+	rdev = vdev_rdev(devvp);
+	sc = vdev_privdata(devvp);
+
+	if (ISWSDISPLAYCTL(rdev))
 		return (-1);
 
-	scr = sc->sc_scr[WSDISPLAYSCREEN(devvp->v_rdev)];
+	scr = sc->sc_scr[WSDISPLAYSCREEN(rdev)];
 
 	if (!(scr->scr_flags & SCR_GRAPHICS))
 		return (-1);
@@ -1177,8 +1208,9 @@ wsdisplaystart(tp)
 		splx(s);
 		return;
 	}
-	sc = tp->t_devvp->v_devcookie;
-	scr = sc->sc_scr[WSDISPLAYSCREEN(tp->t_devvp->v_rdev)];
+	sc = vdev_privdata(tp->t_devvp);
+
+	scr = sc->sc_scr[WSDISPLAYSCREEN(vdev_rdev(tp->t_devvp))];
 	if (scr->scr_hold_screen) {
 		tp->t_state |= TS_TIMEOUT;
 		splx(s);

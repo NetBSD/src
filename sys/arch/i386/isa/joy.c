@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.11.6.1 2001/09/07 04:45:20 thorpej Exp $	*/
+/*	$NetBSD: joy.c,v 1.11.6.2 2001/09/26 15:28:06 fvdl Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -110,9 +110,13 @@ joyopen(devvp, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = JOYUNIT(devvp->v_rdev);
-	int i = JOYPART(devvp->v_rdev);
+	int unit, i;
 	struct joy_softc *sc;
+	dev_t rdev;
+
+	rdev = vdev_rdev(devvp);
+	unit = JOYUNIT(rdev);
+	i = JOYPART(rdev);
 
 	if (unit >= joy_cd.cd_ndevs)
 		return (ENXIO);
@@ -120,7 +124,7 @@ joyopen(devvp, flag, mode, p)
 	if (sc == 0)
 		return (ENXIO);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	if (sc->timeout[i])
 		return (EBUSY);
@@ -136,10 +140,10 @@ joyclose(devvp, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	int i = JOYPART(devvp->v_rdev);
-	struct joy_softc *sc = devvp->v_devcookie;
+	struct joy_softc *sc;
 
-	sc->timeout[i] = 0;
+	sc = vdev_privdata(devvp);
+	sc->timeout[JOYPART(vdev_rdev(devvp))] = 0;
 	return (0);
 }
 
@@ -149,21 +153,25 @@ joyread(devvp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct joy_softc *sc = devvp->v_devcookie;
+	struct joy_softc *sc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct joystick c;
 	int i, t0, t1;
 	int state = 0, x = 0, y = 0;
+	dev_t rdev;
+
+	rdev = vdev_rdev(devvp);
+	sc = vdev_privdata(devvp);
 
 	disable_intr();
 	bus_space_write_1(iot, ioh, 0, 0xff);
 	t0 = get_tick();
 	t1 = t0;
-	i = USEC2TICKS(sc->timeout[JOYPART(devvp->v_rdev)]);
+	i = USEC2TICKS(sc->timeout[JOYPART(rdev)]);
 	while (t0 - t1 < i) {
 		state = bus_space_read_1(iot, ioh, 0);
-		if (JOYPART(devvp->v_rdev) == 1)
+		if (JOYPART(rdev) == 1)
 			state >>= 2;
 		t1 = get_tick();
 		if (t1 > t0)
@@ -176,9 +184,9 @@ joyread(devvp, uio, flag)
 			break;
 	}
 	enable_intr();
-	c.x = x ? sc->x_off[JOYPART(devvp->v_rdev)] + TICKS2USEC(t0 - x) :
+	c.x = x ? sc->x_off[JOYPART(rdev)] + TICKS2USEC(t0 - x) :
 	    0x80000000;
-	c.y = y ? sc->y_off[JOYPART(devvp->v_rdev)] + TICKS2USEC(t0 - y) :
+	c.y = y ? sc->y_off[JOYPART(rdev)] + TICKS2USEC(t0 - y) :
 	    0x80000000;
 	state >>= 4;
 	c.b1 = ~state & 1;
@@ -194,9 +202,11 @@ joyioctl(devvp, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct joy_softc *sc = devvp->v_devcookie;
-	int i = JOYPART(devvp->v_rdev);
-	int x;
+	struct joy_softc *sc;
+	int x, i;
+
+	sc = vdev_privdata(devvp);
+	i = JOYPART(vdev_rdev(devvp));
 
 	switch (cmd) {
 	case JOY_SETTIMEOUT:

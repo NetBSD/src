@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.57.6.1 2001/09/07 04:45:25 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.57.6.2 2001/09/26 15:28:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -126,17 +126,21 @@ lptopen(devvp, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	u_char flags = LPTFLAGS(devvp->v_rdev);
+	u_char flags;
 	struct lpt_softc *sc;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	u_char control;
 	int error;
 	int spin;
+	dev_t rdev;
 
-	sc = device_lookup(&lpt_cd, LPTUNIT(devvp->v_rdev));
+	rdev = vdev_rdev(devvp);
+	sc = device_lookup(&lpt_cd, LPTUNIT(rdev));
 	if (!sc || !sc->sc_dev_ok)
 		return ENXIO;
+
+	flags = LPTFLAGS(rdev);
 
 #if 0	/* XXX what to do? */
 	if (sc->sc_irq == IRQUNK && (flags & LPT_NOINTR) == 0)
@@ -152,7 +156,7 @@ lptopen(devvp, flag, mode, p)
 	if (sc->sc_state)
 		return EBUSY;
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
@@ -253,9 +257,13 @@ lptclose(devvp, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct lpt_softc *sc = devvp->v_devcookie;
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh = sc->sc_ioh;
+	struct lpt_softc *sc;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+
+	sc = vdev_privdata(devvp);
+	iot = sc->sc_iot;
+	ioh = sc->sc_ioh;
 
 	if (sc->sc_count)
 		(void) lptpushbytes(sc);
@@ -346,9 +354,11 @@ lptwrite(devvp, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct lpt_softc *sc = devvp->v_devcookie;
+	struct lpt_softc *sc;
 	size_t n;
 	int error = 0;
+
+	sc = vdev_privdata(devvp);
 
 	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf, n, uio);

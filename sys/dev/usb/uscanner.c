@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.15.4.1 2001/09/07 04:45:34 thorpej Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.15.4.2 2001/09/26 15:28:20 fvdl Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -340,8 +340,10 @@ uscanneropen(devvp, flag, mode, p)
 	struct proc *p;
 {
 	struct uscanner_softc *sc;
-	int unit = USCANNERUNIT(devvp->v_rdev);
+	int unit;
 	usbd_status err;
+
+	unit = USCANNERUNIT(vdev_rdev(devvp));
 
 	USB_GET_SC_OPEN(uscanner, unit, sc);
 
@@ -354,7 +356,7 @@ uscanneropen(devvp, flag, mode, p)
 	if (sc->sc_state & USCANNER_OPEN)
 		return (EBUSY);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_state |= USCANNER_OPEN;
 
@@ -406,10 +408,10 @@ uscannerclose(devvp, flag, mode, p)
 {
 	struct uscanner_softc *sc;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	DPRINTFN(5, ("uscannerclose: flag=%d, mode=%d, unit=%d\n",
-		     flag, mode, USCANNERUNIT(devvp->v_rdev)));
+		     flag, mode, USCANNERUNIT(vdev_rdev(devvp))));
 
 #ifdef DIAGNOSTIC
 	if (!(sc->sc_state & USCANNER_OPEN)) {
@@ -509,7 +511,7 @@ uscannerread(devvp, uio, flag)
 	struct uscanner_softc *sc;
 	int error;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	sc->sc_refcnt++;
 	error = uscanner_do_read(sc, uio, flag);
@@ -565,7 +567,7 @@ uscannerwrite(devvp, uio, flag)
 	struct uscanner_softc *sc;
 	int error;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	sc->sc_refcnt++;
 	error = uscanner_do_write(sc, uio, flag);
@@ -660,7 +662,7 @@ uscannerpoll(devvp, events, p)
 	struct uscanner_softc *sc;
 	int revents = 0;
 
-	sc = devvp->v_devcookie;
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_dying)
 		return (EIO);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.157.2.1 2001/09/07 04:45:30 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.157.2.2 2001/09/26 15:28:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -329,23 +329,25 @@ cdopen(devvp, flag, fmt, p)
 	struct cd_sub_channel_info data;
 	int unit, part;
 	int error;
+	dev_t rdev;
 
-	unit = CDUNIT(devvp->v_rdev);
+	rdev = vdev_rdev(devvp);
+	unit = CDUNIT(rdev);
 	if (unit >= cd_cd.cd_ndevs)
 		return (ENXIO);
 	cd = cd_cd.cd_devs[unit];
 	if (cd == NULL)
 		return (ENXIO);
 
-	devvp->v_devcookie = cd;
+	vdev_setprivdata(devvp, cd);
 
 	periph = cd->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
-	part = CDPART(devvp->v_rdev);
+	part = CDPART(rdev);
 
 	SC_DEBUG(periph, SCSIPI_DB1,
 	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n",
-	    devvp->v_rdev, unit, cd_cd.cd_ndevs, CDPART(devvp->v_rdev)));
+	    rdev, unit, cd_cd.cd_ndevs, CDPART(rdev)));
 
 	/*
 	 * If this is the first open of this device, add a reference
@@ -486,11 +488,16 @@ cdclose(devvp, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct cd_softc *cd = devvp->v_devcookie;
-	struct scsipi_periph *periph = cd->sc_periph;
-	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
-	int part = CDPART(devvp->v_rdev);
+	struct cd_softc *cd;
+	struct scsipi_periph *periph;
+	struct scsipi_adapter *adapt;
+	int part;
 	int error;
+
+	cd = vdev_privdata(devvp);
+	periph = cd->sc_periph;
+	adapt = periph->periph_channel->chan_adapter;
+	part = CDPART(vdev_rdev(devvp));
 
 	if ((error = cdlock(cd)) != 0)
 		return (error);
@@ -532,11 +539,16 @@ void
 cdstrategy(bp)
 	struct buf *bp;
 {
-	struct cd_softc *cd = bp->b_devvp->v_devcookie;
+	struct cd_softc *cd;
 	struct disklabel *lp;
-	struct scsipi_periph *periph = cd->sc_periph;
+	struct scsipi_periph *periph;
 	daddr_t blkno;
 	int s;
+	dev_t rdev;
+
+	cd = vdev_privdata(bp->b_devvp);
+	rdev = vdev_rdev(bp->b_devvp);
+	periph = cd->sc_periph;
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2, ("cdstrategy "));
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB1,
@@ -574,7 +586,7 @@ cdstrategy(bp)
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
 	 */
-	if (CDPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	if (CDPART(rdev) != RAW_PART &&
 	    (bp->b_flags & B_DKLABEL) == 0 &&
 	    bounds_check_with_label(bp, lp,
 	    (cd->flags & (CDF_WLABEL|CDF_LABELLING)) != 0) <= 0)
@@ -585,9 +597,9 @@ cdstrategy(bp)
 	 * terms of the device's logical block size.
 	 */
 	blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
-	if (CDPART(bp->b_devvp->v_rdev) != RAW_PART &&
+	if (CDPART(rdev) != RAW_PART &&
 	    (bp->b_flags & B_DKLABEL) == 0)
-		blkno += lp->d_partitions[CDPART(bp->b_devvp->v_rdev)].p_offset;
+		blkno += lp->d_partitions[CDPART(rdev)].p_offset;
 
 	bp->b_rawblkno = blkno;
 
@@ -864,9 +876,11 @@ cdbounce(bp)
 		 * XXXX any of this write stuff?
 		 */
 		if (bp->b_flags & B_READ) {
-			struct cd_softc *cd = bp->b_devvp->v_devcookie;
+			struct cd_softc *cd;
 			struct buf *nbp;
 			int s;
+
+			cd = vdev_privdata(bp->b_devvp);
 
 			/* Read part of RMW complete. */
 			memcpy(bp->b_data+obp->b_rawblkno, obp->b_data,
@@ -975,8 +989,10 @@ void
 cdminphys(bp)
 	struct buf *bp;
 {
-	struct cd_softc *cd = bp->b_devvp->v_devcookie;
+	struct cd_softc *cd;
 	long max;
+
+	cd = vdev_privdata(bp->b_devvp);
 
 	/*
 	 * If the device is ancient, we want to make sure that
@@ -1059,13 +1075,16 @@ cdioctl(devvp, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct cd_softc *cd = devvp->v_devcookie;
-	struct scsipi_periph *periph = cd->sc_periph;
-	int part = CDPART(devvp->v_rdev);
+	struct cd_softc *cd;
+	struct scsipi_periph *periph;
+	int part = CDPART(vdev_rdev(devvp));
 	int error;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
+
+	cd = vdev_privdata(devvp);
+	periph = cd->sc_periph;
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2, ("cdioctl 0x%lx ", cmd));
 
@@ -1471,9 +1490,12 @@ void
 cdgetdisklabel(devvp)
 	struct vnode *devvp;
 {
-	struct cd_softc *cd = devvp->v_devcookie;
-	struct disklabel *lp = cd->sc_dk.dk_label;
+	struct cd_softc *cd;
+	struct disklabel *lp;
 	char *errstring;
+
+	cd = vdev_privdata(devvp);
+	lp = cd->sc_dk.dk_label;
 
 	memset(cd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 

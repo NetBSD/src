@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.30.4.1 2001/09/07 04:45:33 thorpej Exp $	*/
+/*	$NetBSD: uk.c,v 1.30.4.2 2001/09/26 15:28:19 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -173,21 +173,23 @@ ukopen(devvp, flag, fmt, p)
 	struct uk_softc *uk;
 	struct scsipi_periph *periph;
 	struct scsipi_adapter *adapt;
+	dev_t rdev;
 
-	unit = UKUNIT(devvp->v_rdev);
+	rdev = vdev_rdev(devvp);
+	unit = UKUNIT(rdev);
 	if (unit >= uk_cd.cd_ndevs)
 		return (ENXIO);
 	uk = uk_cd.cd_devs[unit];
 	if (uk == NULL)
 		return (ENXIO);
 
-	devvp->v_devcookie = uk;
+	vdev_setprivdata(devvp, uk);
 
 	periph = uk->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("ukopen: dev=0x%x (unit %d (of %d))\n", devvp->v_rdev, unit,
+	    ("ukopen: dev=0x%x (unit %d (of %d))\n", rdev, unit,
 		uk_cd.cd_ndevs));
 
 	/*
@@ -216,9 +218,13 @@ ukclose(devvp, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct uk_softc *uk = devvp->v_devcookie;
-	struct scsipi_periph *periph = uk->sc_periph;
-	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
+	struct uk_softc *uk;
+	struct scsipi_periph *periph;
+	struct scsipi_adapter *adapt;
+
+	uk = vdev_privdata(devvp);
+	periph = uk->sc_periph;
+	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(uk->sc_periph, SCSIPI_DB1, ("closing\n"));
 
@@ -242,7 +248,9 @@ ukioctl(devvp, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct uk_softc *uk = devvp->v_devcookie;
+	struct uk_softc *uk;
+
+	uk = vdev_privdata(devvp);
 
 	return (scsipi_do_ioctl(uk->sc_periph, devvp, cmd, addr, flag, p));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.19.4.1 2001/09/07 04:45:28 thorpej Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.19.4.2 2001/09/26 15:28:15 fvdl Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
@@ -1619,7 +1619,7 @@ bktr_open(struct vnode *devvp, int flags, int fmt, struct proc *p)
 	bktr_ptr_t	bktr;
 	int		unit;
 
-	unit = UNIT(devvp->v_rdev);
+	unit = UNIT(vdev_rdev(devvp));
 
 	/* unit out of range */
 	if ((unit > bktr_cd.cd_ndevs) || (bktr_cd.cd_devs[unit] == NULL))
@@ -1630,9 +1630,9 @@ bktr_open(struct vnode *devvp, int flags, int fmt, struct proc *p)
 	if (!(bktr->flags & METEOR_INITALIZED)) /* device not found */
 		return(ENXIO);	
 
-	devvp->v_devcookie = bktr;
+	vdev_setprivdata(devvp, bktr);
 
-	switch (FUNCTION(devvp->v_rdev)) {
+	switch (FUNCTION(vdev_rdev(devvp))) {
 	case VIDEO_DEV:
 		return(video_open(bktr));
 	case TUNER_DEV:
@@ -1653,9 +1653,9 @@ bktr_close(struct vnode *devvp, int flags, int fmt, struct proc *p)
 {
 	bktr_ptr_t	bktr;
 
-	bktr = devvp->v_devcookie;
+	bktr = vdev_privdata(devvp);
 
-	switch (FUNCTION(devvp->v_rdev)) {
+	switch (FUNCTION(vdev_rdev(devvp))) {
 	case VIDEO_DEV:
 		return(video_close(bktr));
 	case TUNER_DEV:
@@ -1675,12 +1675,14 @@ bktr_read(struct vnode *devvp, struct uio *uio, int ioflag)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
+	dev_t		rdev;
 	
-	bktr = devvp->v_devcookie;
+	bktr = vdev_privdata(devvp);
+	rdev = vdev_rdev(devvp);
 
-	switch (FUNCTION(devvp->v_rdev)) {
+	switch (FUNCTION(rdev)) {
 	case VIDEO_DEV:
-		return(video_read(bktr, unit, devvp->v_rdev, uio));
+		return(video_read(bktr, unit, rdev, uio));
 	case VBI_DEV:
 		return(vbi_read(bktr, uio, ioflag));
 	}
@@ -1708,13 +1710,15 @@ bktr_ioctl(struct vnode *devvp, ioctl_cmd_t cmd, caddr_t arg, int flag,
 {
 	bktr_ptr_t	bktr;
 	int		unit;
+	dev_t		rdev;
 
-	bktr = devvp->v_devcookie;
+	bktr = vdev_privdata(devvp);
+	rdev = vdev_rdev(devvp);
 
 	if (bktr->bigbuf == 0)	/* no frame buffer allocated (ioctl failed) */
 		return(ENOMEM);
 
-	switch (FUNCTION(devvp->v_rdev)) {
+	switch (FUNCTION(rdev)) {
 	case VIDEO_DEV:
 		return(video_ioctl(bktr, unit, cmd, arg, pr));
 	case TUNER_DEV:
@@ -1732,10 +1736,10 @@ bktr_mmap(struct vnode *devvp, off_t offset, int nprot)
 {
 	bktr_ptr_t	bktr;
 
-	if (FUNCTION(devvp->v_rdev) > 0)/* only allow mmap on /dev/bktr[n] */
+	if (FUNCTION(vdev_rdev(devvp)) > 0)/* only allow mmap on /dev/bktr[n] */
 		return(-1);
 
-	bktr = devvp->v_devcookie;
+	bktr = vdev_privdata(devvp);
 
 	if ((vaddr_t)offset < 0)
 		return(-1);

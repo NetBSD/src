@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.36.2.1 2001/09/07 04:45:32 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.36.2.2 2001/09/26 15:28:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -233,19 +233,19 @@ ssopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	struct scsipi_periph *periph;
 	struct scsipi_adapter *adapt;
 
-	unit = SSUNIT(devvp->v_rdev);
+	unit = SSUNIT(vdev_rdev(devvp));
 	if (unit >= ss_cd.cd_ndevs)
 		return (ENXIO);
 	ss = ss_cd.cd_devs[unit];
 	if (!ss)
 		return (ENXIO);
 
-	devvp->v_devcookie = ss;
+	vdev_setprivdata(devvp, ss);
 
 	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENODEV);
 
-	ssmode = SSMODE(devvp->v_rdev);
+	ssmode = SSMODE(vdev_rdev(devvp));
 
 	periph = ss->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
@@ -300,14 +300,18 @@ bad:
 int
 ssclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 {
-	struct ss_softc *ss = devvp->v_devcookie;
-	struct scsipi_periph *periph = ss->sc_periph;
-	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
+	struct ss_softc *ss;
+	struct scsipi_periph *periph;
+	struct scsipi_adapter *adapt;
 	int error;
+
+	ss = vdev_privdata(devvp);
+	periph = ss->sc_periph;
+	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1, ("closing\n"));
 
-	if (SSMODE(devvp->v_rdev) == MODE_REWIND) {
+	if (SSMODE(vdev_rdev(devvp)) == MODE_REWIND) {
 		if (ss->special && ss->special->rewind_scanner) {
 			/* call special handler to rewind/abort scan */
 			error = (ss->special->rewind_scanner)(ss);
@@ -337,8 +341,11 @@ ssclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 void
 ssminphys(struct buf *bp)
 {
-	struct ss_softc *ss = bp->b_devvp->v_devcookie;
-	struct scsipi_periph *periph = ss->sc_periph;
+	struct ss_softc *ss;
+	struct scsipi_periph *periph;
+
+	ss = vdev_privdata(bp->b_devvp);
+	periph = ss->sc_periph;
 
 	(*periph->periph_channel->chan_adapter->adapt_minphys)(bp);
 
@@ -363,8 +370,10 @@ ssread(devvp, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct ss_softc *ss = devvp->v_devcookie;
+	struct ss_softc *ss;
 	int error;
+
+	ss = vdev_privdata(devvp);
 
 	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENODEV);
@@ -391,9 +400,12 @@ void
 ssstrategy(bp)
 	struct buf *bp;
 {
-	struct ss_softc *ss = bp->b_devvp->v_devcookie;
-	struct scsipi_periph *periph = ss->sc_periph;
+	struct ss_softc *ss;
+	struct scsipi_periph *periph;
 	int s;
+
+	ss = vdev_privdata(bp->b_devvp);
+	periph = ss->sc_periph;
 
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
 	    ("ssstrategy %ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
@@ -515,9 +527,11 @@ ssioctl(devvp, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct ss_softc *ss = devvp->v_devcookie;
+	struct ss_softc *ss;
 	int error = 0;
 	struct scan_io *sio;
+
+	ss = vdev_privdata(devvp);
 
 	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENODEV);

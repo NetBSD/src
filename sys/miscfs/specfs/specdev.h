@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.20.2.2 2001/09/18 19:13:57 fvdl Exp $	*/
+/*	$NetBSD: specdev.h,v 1.20.2.3 2001/09/26 15:28:24 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -36,41 +36,6 @@
  */
 
 /*
- * This structure defines the information maintained about
- * special devices. It is allocated in checkalias and freed
- * in vgone.
- */
-struct specinfo {
-	struct	vnode **si_hashchain;
-	struct	vnode *si_specnext;
-	struct	mount *si_mountpoint;
-	dev_t	si_rdev;
-	struct	lockf *si_lockf;
-	void	*si_devcookie;
-	void	(*si_callback)(struct vnode *, int, void *);
-	void	*si_cbarg;
-};
-
-/*
- * Values to the int arg of the callback function. Only a call to
- * spec_close can lead to a callback for now.
- */
-#define VN_CB_CLOSE		1
-
-/*
- * Exported shorthand
- */
-#define v_rdev		v_specinfo->si_rdev
-#define v_hashchain	v_specinfo->si_hashchain
-#define v_specnext	v_specinfo->si_specnext
-#define v_speclockf	v_specinfo->si_lockf
-#define v_specmountpoint v_specinfo->si_mountpoint
-#define	v_devcookie	v_specinfo->si_devcookie
-#define v_callback	v_specinfo->si_callback
-#define v_cbarg		v_specinfo->si_cbarg
-
-
-/*
  * Special device management
  */
 #define	SPECHSZ	64
@@ -93,23 +58,23 @@ struct	flock;
 struct	buf;
 struct	uio;
 
-int	spec_lookup	__P((void *));
+int	spec_lookup	(void *);
 #define	spec_create	genfs_badop
 #define	spec_mknod	genfs_badop
-int	spec_open	__P((void *));
-int	spec_close	__P((void *));
-#define	spec_access	genfs_ebadf
-#define	spec_getattr	genfs_ebadf
-#define	spec_setattr	genfs_ebadf
-int	spec_read	__P((void *));
-int	spec_write	__P((void *));
+int	spec_open	(void *);
+int	spec_close	(void *);
+int	spec_access	(void *);
+int	spec_getattr	(void *);
+#define	spec_setattr	genfs_ebadf		/* XXX allow for clones? */
+int	spec_read	(void *);
+int	spec_write	(void *);
 #define	spec_lease_check genfs_nullop
 #define spec_fcntl	genfs_fcntl
-int	spec_ioctl	__P((void *));
-int	spec_poll	__P((void *));
+int	spec_ioctl	(void *);
+int	spec_poll	(void *);
 #define spec_revoke	genfs_revoke
 #define	spec_mmap	genfs_mmap
-int	spec_fsync	__P((void *));
+int	spec_fsync	(void *);
 #define	spec_seek	genfs_nullop		/* XXX should query device */
 #define	spec_remove	genfs_badop
 #define	spec_link	genfs_badop
@@ -121,15 +86,15 @@ int	spec_fsync	__P((void *));
 #define	spec_readlink	genfs_badop
 #define	spec_abortop	genfs_badop
 #define	spec_reclaim	genfs_nullop
-int	spec_inactive	__P((void *));
+int	spec_inactive	(void *);
 #define	spec_lock	genfs_nolock
 #define	spec_unlock	genfs_nounlock
-int	spec_bmap	__P((void *));
-int	spec_strategy	__P((void *));
-int	spec_print	__P((void *));
+int	spec_bmap	(void *);
+int	spec_strategy	(void *);
+int	spec_print	(void *);
 #define	spec_islocked	genfs_noislocked
-int	spec_pathconf	__P((void *));
-int	spec_advlock	__P((void *));
+int	spec_pathconf	(void *);
+int	spec_advlock	(void *);
 #define	spec_blkatoff	genfs_badop
 #define	spec_valloc	genfs_badop
 #define	spec_reallocblks genfs_badop
@@ -139,4 +104,4 @@ int	spec_advlock	__P((void *));
 #define	spec_bwrite	vn_bwrite
 #define	spec_getpages	genfs_getpages
 #define	spec_putpages	genfs_putpages
-int	spec_size	__P((void *));
+int	spec_size	(void *);

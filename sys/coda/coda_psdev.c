@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.17.2.1 2001/09/07 04:45:20 thorpej Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.17.2.2 2001/09/26 15:28:07 fvdl Exp $	*/
 
 /*
  * 
@@ -129,18 +129,22 @@ vc_nb_open(devvp, flag, mode, p)
     struct proc *p;             /* NetBSD only */
 {
     struct vcomm *vcp;
+    dev_t rdev;
+    int unit;
     
     ENTRY;
 
-    if (minor(devvp->v_rdev) >= NVCODA || minor(devvp->v_rdev) < 0)
+    unit = minor(vdev_rdev(devvp));
+
+    if (unit >= NVCODA || unit < 0)
 	return(ENXIO);
     
     if (!coda_nc_initialized)
 	coda_nc_init();
     
-    vcp = &coda_mnttbl[minor(devvp->v_rdev)].mi_vcomm;
+    vcp = &coda_mnttbl[unit].mi_vcomm;
 
-    devvp->v_devcookie = &coda_mnttbl[minor(devvp->v_rdev)];
+    vdev_setprivdata(devvp, &coda_mnttbl[unit]);
 
     if (VC_OPEN(vcp))
 	return(EBUSY);
@@ -150,14 +154,14 @@ vc_nb_open(devvp, flag, mode, p)
     INIT_QUEUE(vcp->vc_replys);
     MARK_VC_OPEN(vcp);
     
-    coda_mnttbl[minor(devvp->v_rdev)].mi_vfsp = NULL;
-    coda_mnttbl[minor(devvp->v_rdev)].mi_rootvp = NULL;
+    coda_mnttbl[unit].mi_vfsp = NULL;
+    coda_mnttbl[unit].mi_rootvp = NULL;
 
     return(0);
 }
 
 int 
-vc_nb_close (devvp, flag, mode, p)    
+vc_nb_close(devvp, flag, mode, p)    
     struct vnode *devvp;
     int          flag;     
     int          mode;     
@@ -166,11 +170,15 @@ vc_nb_close (devvp, flag, mode, p)
     struct vcomm *vcp;
     struct vmsg *vmp, *nvmp = NULL;
     struct coda_mntinfo *mi;
-    int                 err;
+    int err;
+    dev_t rdev;
 	
     ENTRY;
 
-    mi = devvp->v_devcookie;
+    rdev = vdev_rdev(devvp);
+    mi = vdev_privdata(devvp);
+    if (err != 0)
+	return err;
     vcp = &(mi->mi_vcomm);
     
     if (!VC_OPEN(vcp))
@@ -241,7 +249,7 @@ vc_nb_close (devvp, flag, mode, p)
     err = dounmount(mi->mi_vfsp, flag, p);
     if (err)
 	myprintf(("Error %d unmounting vfs in vcclose(%d)\n", 
-	           err, minor(devvp->v_rdev)));
+	           err, minor(rdev)));
     return 0;
 }
 
@@ -254,11 +262,11 @@ vc_nb_read(devvp, uiop, flag)
     struct vcomm *	vcp;
     struct vmsg *vmp;
     struct coda_mntinfo *mi;
-    int error = 0;
+    int error;
     
     ENTRY;
 
-    mi = devvp->v_devcookie;
+    mi = vdev_privdata(devvp);
     vcp = &mi->mi_vcomm;
     /* Get message at head of request queue. */
     if (EMPTY(vcp->vc_requests))
@@ -311,11 +319,11 @@ vc_nb_write(devvp, uiop, flag)
     u_long seq;
     u_long opcode;
     int buf[2];
-    int error = 0;
+    int error;
 
     ENTRY;
 
-    mi = devvp->v_devcookie;
+    mi = vdev_privdata(devvp);
     vcp = &mi->mi_vcomm;
     
     /* Peek at the opcode, unique without transfering the data. */
@@ -459,11 +467,11 @@ vc_nb_poll(devvp, events, p)
 {
     struct coda_mntinfo *mi;
     struct vcomm *vcp;
-    int event_msk = 0;
+    int event_msk;
 
     ENTRY;
 
-    mi = devvp->v_devcookie;
+    mi = vdev_privdata(devvp);
     vcp = &mi->mi_vcomm;
     
     event_msk = events & (POLLIN|POLLRDNORM);

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.13.6.1 2001/09/07 04:45:35 thorpej Exp $ */
+/* $NetBSD: wsmouse.c,v 1.13.6.2 2001/09/26 15:28:20 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13.6.1 2001/09/07 04:45:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.13.6.2 2001/09/26 15:28:20 fvdl Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -452,7 +452,7 @@ wsmouseopen(devvp, flags, mode, p)
 	struct wsmouse_softc *sc;
 	int error, unit;
 
-	unit = minor(devvp->v_rdev);
+	unit = minor(vdev_rdev(devvp));
 	if (unit >= wsmouse_cd.cd_ndevs ||	/* make sure it was attached */
 	    (sc = wsmouse_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
@@ -472,7 +472,7 @@ wsmouseopen(devvp, flags, mode, p)
 	if (sc->sc_events.io)			/* and that it's not in use */
 		return (EBUSY);
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	sc->sc_events.io = p;
 	wsevent_init(&sc->sc_events);		/* may cause sleep */
@@ -504,7 +504,7 @@ wsmouseclose(devvp, flags, mode, p)
 	struct proc *p;
 {
 #if NWSMOUSE > 0
-	return (wsmousedoclose(devvp->v_devcookie, flags, mode, p));
+	return (wsmousedoclose(vdev_privdata(devvp), flags, mode, p));
 #else
 	return (ENXIO);
 #endif /* NWSMOUSE > 0 */
@@ -538,8 +538,10 @@ wsmouseread(devvp, uio, flags)
 	int flags;
 {
 #if NWSMOUSE > 0
-	struct wsmouse_softc *sc = devvp->v_devcookie;
+	struct wsmouse_softc *sc;
 	int error;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -565,7 +567,7 @@ wsmouseioctl(devvp, cmd, data, flag, p)
 	struct proc *p;
 {
 #if NWSMOUSE > 0
-	return (wsmousedoioctl(devvp->v_devcookie, cmd, data, flag, p));
+	return (wsmousedoioctl(vdev_privdata(devvp), cmd, data, flag, p));
 #else
 	return (ENXIO);
 #endif /* NWSMOUSE > 0 */
@@ -638,7 +640,7 @@ wsmousepoll(devvp, events, p)
 	struct proc *p;
 {
 #if NWSMOUSE > 0
-	struct wsmouse_softc *sc = devvp->v_devcookie;
+	struct wsmouse_softc *sc = vdev_privdata(devvp);
 
 	return (wsevent_poll(&sc->sc_events, events, p));
 #else

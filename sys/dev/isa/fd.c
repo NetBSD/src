@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.18.4.1 2001/09/07 04:45:27 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.18.4.2 2001/09/26 15:28:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -580,9 +580,11 @@ void
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
-	struct fd_softc *fd = bp->b_devvp->v_devcookie;
+	struct fd_softc *fd;
 	int sz;
  	int s;
+
+	fd = vdev_privdata(bp->b_devvp);
 
 	/* Valid unit, controller, and request? */
 	if (bp->b_blkno < 0 ||
@@ -824,12 +826,14 @@ fdopen(devvp, flags, mode, p)
 {
 	struct fd_softc *fd;
 	const struct fd_type *type;
+	dev_t rdev;
 
-	fd = device_lookup(&fd_cd, FDUNIT(devvp->v_rdev));
+	rdev = vdev_rdev(devvp);
+	fd = device_lookup(&fd_cd, FDUNIT(rdev));
 	if (fd == NULL)
 		return (ENXIO);
 
-	type = fd_dev_to_type(fd, devvp->v_rdev);
+	type = fd_dev_to_type(fd, rdev);
 	if (type == NULL)
 		return ENXIO;
 
@@ -837,7 +841,7 @@ fdopen(devvp, flags, mode, p)
 	    memcmp(fd->sc_type, type, sizeof(*type)))
 		return EBUSY;
 
-	devvp->v_devcookie = fd;
+	vdev_setprivdata(devvp, fd);
 
 	fd->sc_type_copy = *type;
 	fd->sc_type = &fd->sc_type_copy;
@@ -854,8 +858,9 @@ fdclose(devvp, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct fd_softc *fd = devvp->v_devcookie;
+	struct fd_softc *fd;
 
+	fd = vdev_privdata(devvp);
 	fd->sc_flags &= ~FD_OPEN;
 	fd->sc_opts &= ~(FDOPT_NORETRY|FDOPT_SILENT);
 	return 0;
@@ -1329,7 +1334,7 @@ fdioctl(devvp, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct fd_softc *fd = devvp->v_devcookie;
+	struct fd_softc *fd;
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb *fd_formb;
@@ -1341,6 +1346,8 @@ fdioctl(devvp, cmd, addr, flag, p)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
+
+	fd = vdev_privdata(devvp);
 
 	switch (cmd) {
 	case DIOCGDINFO:
@@ -1537,9 +1544,12 @@ fdformat(devvp, finfo, p)
 	struct proc *p;
 {
 	int rv = 0, s;
-	struct fd_softc *fd = devvp->v_devcookie;
-	struct fd_type *type = fd->sc_type;
+	struct fd_softc *fd;
+	struct fd_type *type;
 	struct buf *bp;
+
+	fd = vdev_privdata(devvp);
+	type = fd->sc_type;
 
 	/* set up a buffer header for fdstrategy() */
 	bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.74.4.1 2001/09/18 19:13:58 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.74.4.2 2001/09/26 15:28:24 fvdl Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -186,9 +186,10 @@ msdosfs_mountroot()
 	if (bdevvp(rootdev, &rootvp))
 		panic("msdosfs_mountroot: can't setup rootvp");
 
+	vn_lock(rootvp, LK_EXCLUSIVE | LK_RETRY);
 
 	if ((error = vfs_rootmountalloc(MOUNT_MSDOS, "root_device", &mp))) {
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
 
@@ -202,7 +203,7 @@ msdosfs_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
 
@@ -210,9 +211,11 @@ msdosfs_mountroot()
 		(void)msdosfs_unmount(mp, 0, p);
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
+		vput(rootvp);
 		return (error);
 	}
+
+	VOP_UNLOCK(rootvp, 0);
 
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
@@ -312,6 +315,9 @@ msdosfs_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (ENXIO);
 	}
+
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+
 	/*
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
@@ -320,11 +326,9 @@ msdosfs_mount(mp, path, data, ndp, p)
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
-		VOP_UNLOCK(devvp, 0);
 		if (error) {
-			vrele(devvp);
+			vput(devvp);
 			return (error);
 		}
 	}
@@ -340,14 +344,17 @@ msdosfs_mount(mp, path, data, ndp, p)
 			vrele(devvp);
 	}
 	if (error) {
-		vrele(devvp);
+		vput(devvp);
 		return (error);
 	}
 
 	if ((error = update_mp(mp, &args)) != 0) {
 		msdosfs_unmount(mp, MNT_FORCE, p);
+		vput(devvp);
 		return error;
 	}
+
+	VOP_UNLOCK(devvp, 0);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
@@ -412,8 +419,10 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		 * that the size of a disk block will always be 512 bytes.
 		 * Let's check it...
 		 */
+		VOP_UNLOCK(devvp, 0);
 		error = VOP_IOCTL(devvp, DIOCGPART, (caddr_t)&dpart,
 				  FREAD, NOCRED, p);
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
 			goto error_exit;
 		tmp   = dpart.part->p_fstype;
@@ -720,9 +729,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 error_exit:;
 	if (bp)
 		brelse(bp);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void) VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP_UNLOCK(devvp, 0);
 	if (pmp) {
 		if (pmp->pm_inusemap)
 			free(pmp->pm_inusemap, M_MSDOSFSFAT);

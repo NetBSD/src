@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.143.2.1 2001/09/07 04:45:32 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.143.2.2 2001/09/26 15:28:18 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -463,24 +463,26 @@ stopen(devvp, flags, mode, p)
 	struct st_softc *st;
 	struct scsipi_periph *periph;
 	struct scsipi_adapter *adapt;
+	dev_t rdev;
 
-	unit = STUNIT(devvp->v_rdev);
+	rdev = vdev_rdev(devvp);
+	unit = STUNIT(rdev);
 	if (unit >= st_cd.cd_ndevs)
 		return (ENXIO);
 	st = st_cd.cd_devs[unit];
 	if (st == NULL)
 		return (ENXIO);
 
-	stmode = STMODE(devvp->v_rdev);
-	dsty = STDSTY(devvp->v_rdev);
+	stmode = STMODE(rdev);
+	dsty = STDSTY(rdev);
 
 	periph = st->sc_periph;
 	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(periph, SCSIPI_DB1, ("open: dev=0x%x (unit %d (of %d))\n",
-	    devvp->v_rdev, unit, st_cd.cd_ndevs));
+	    rdev, unit, st_cd.cd_ndevs));
 
-	devvp->v_devcookie = st;
+	vdev_setprivdata(devvp, st);
 
 	/*
 	 * Only allow one at a time
@@ -647,9 +649,13 @@ stclose(devvp, flags, mode, p)
 	struct proc *p;
 {
 	int stxx, error = 0;
-	struct st_softc *st = devvp->v_devcookie;
-	struct scsipi_periph *periph = st->sc_periph;
-	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
+	struct st_softc *st;
+	struct scsipi_periph *periph;
+	struct scsipi_adapter *adapt;
+
+	st = vdev_privdata(devvp);
+	periph = st->sc_periph;
+	adapt = periph->periph_channel->chan_adapter;
 
 	SC_DEBUG(st->sc_periph, SCSIPI_DB1, ("closing\n"));
 
@@ -675,7 +681,7 @@ stclose(devvp, flags, mode, p)
 		error = st_check_eod(st, FALSE, &nm, 0);
 	}
 
-	switch (STMODE(devvp->v_rdev)) {
+	switch (STMODE(vdev_rdev(devvp))) {
 	case NORMAL_MODE:
 		st_unmount(st, NOEJECT);
 		break;
@@ -739,12 +745,16 @@ st_mount_tape(devvp, flags)
 {
 	/* int unit; */
 	u_int dsty;
-	struct st_softc *st = devvp->v_devcookie;
+	struct st_softc *st;
 	struct scsipi_periph *periph;
 	int error = 0;
+	dev_t rdev;
 
-	/* unit = STUNIT(devvp->v_rdev); */
-	dsty = STDSTY(devvp->v_rdev);
+	st = vdev_privdata(devvp);
+	rdev = vdev_rdev(devvp);
+
+	/* unit = STUNIT(rdev); */
+	dsty = STDSTY(rdev);
 	periph = st->sc_periph;
 
 	if (st->flags & ST_MOUNTED)
@@ -994,8 +1004,10 @@ void
 ststrategy(bp)
 	struct buf *bp;
 {
-	struct st_softc *st = bp->b_devvp->v_devcookie;
+	struct st_softc *st;
 	int s;
+
+	st = vdev_privdata(bp->b_devvp);
 
 	SC_DEBUG(st->sc_periph, SCSIPI_DB1,
 	    ("ststrategy %ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
@@ -1224,7 +1236,9 @@ stread(devvp, uio, iomode)
 	struct uio *uio;
 	int iomode;
 {
-	struct st_softc *st = devvp->v_devcookie;
+	struct st_softc *st;
+
+	st = vdev_privdata(devvp);
 
 	return (physio(ststrategy, NULL, devvp, B_READ,
 	    st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio));
@@ -1236,7 +1250,9 @@ stwrite(devvp, uio, iomode)
 	struct uio *uio;
 	int iomode;
 {
-	struct st_softc *st = devvp->v_devcookie;
+	struct st_softc *st;
+
+	st = vdev_privdata(devvp);
 
 	return (physio(ststrategy, NULL, devvp, B_WRITE,
 	    st->sc_periph->periph_channel->chan_adapter->adapt_minphys, uio));
@@ -1258,17 +1274,21 @@ stioctl(devvp, cmd, arg, flag, p)
 	int unit;
 	int number, nmarks, dsty;
 	int flags;
-	struct st_softc *st = devvp->v_devcookie;
+	struct st_softc *st;
 	int hold_blksize;
 	u_int8_t hold_density;
 	struct mtop *mt = (struct mtop *) arg;
+	dev_t rdev;
+
+	rdev = vdev_rdev(devvp);
+	st = vdev_privdata(devvp);
 
 	/*
 	 * Find the device that the user is talking about
 	 */
 	flags = 0;		/* give error messages, act on errors etc. */
-	unit = STUNIT(devvp->v_rdev);
-	dsty = STDSTY(devvp->v_rdev);
+	unit = STUNIT(rdev);
+	dsty = STDSTY(rdev);
 	hold_blksize = st->blksize;
 	hold_density = st->density;
 
@@ -1285,7 +1305,7 @@ stioctl(devvp, cmd, arg, flag, p)
 			 * Ignore the error if in control mode;
 			 * this is mandated by st(4).
 			 */
-			if (STMODE(devvp->v_rdev) != CTRL_MODE)
+			if (STMODE(rdev) != CTRL_MODE)
 				break;
 			error = 0;
 		}
@@ -1460,7 +1480,7 @@ try_new_value:
 	 * If in control mode, we can make (persistent) mode changes
 	 * even if no medium is loaded (see st(4)).
 	 */
-	if ((STMODE(devvp->v_rdev) != CTRL_MODE ||
+	if ((STMODE(rdev) != CTRL_MODE ||
 	    (st->flags & ST_MOUNTED) != 0) &&
 	    (error = st->ops(st, ST_OPS_MODESELECT, 0)) != 0) {
 		/* put it back as it was */
@@ -1481,7 +1501,7 @@ try_new_value:
 	 * if the device was opened in Control Mode, the values
 	 * are persistent now across mounts.
 	 */
-	if (STMODE(devvp->v_rdev) == CTRL_MODE) {
+	if (STMODE(rdev) == CTRL_MODE) {
 		switch ((short) (mt->mt_op)) {
 		case MTSETBSIZ:
 			st->modes[dsty].blksize = st->blksize;

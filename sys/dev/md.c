@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26.4.1 2001/09/07 04:45:23 thorpej Exp $	*/
+/*	$NetBSD: md.c,v 1.26.4.2 2001/09/26 15:28:09 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -227,20 +227,23 @@ mdopen(devvp, flag, fmt, proc)
 {
 	int unit;
 	struct md_softc *sc;
+	dev_t rdev;
 
-	unit = MD_UNIT(devvp->v_rdev);
+	rdev = vdev_rdev(devvp);
+
+	unit = MD_UNIT(rdev);
 	if (unit >= ramdisk_ndevs)
 		return ENXIO;
 	sc = ramdisk_devs[unit];
 	if (sc == NULL)
 		return ENXIO;
 
-	devvp->v_devcookie = sc;
+	vdev_setprivdata(devvp, sc);
 
 	/*
 	 * The raw partition is used for ioctl to configure.
 	 */
-	if (DISKPART(devvp->v_rdev) == RAW_PART)
+	if (DISKPART(rdev) == RAW_PART)
 		return 0;
 
 #ifdef	MEMORY_DISK_HOOKS
@@ -274,7 +277,9 @@ mdread(devvp, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct md_softc *sc = devvp->v_devcookie;
+	struct md_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
@@ -288,7 +293,9 @@ mdwrite(devvp, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct md_softc *sc = devvp->v_devcookie;
+	struct md_softc *sc;
+
+	sc = vdev_privdata(devvp);
 
 	if (sc->sc_type == MD_UNCONFIGURED)
 		return ENXIO;
@@ -308,7 +315,7 @@ mdstrategy(bp)
 	caddr_t	addr;
 	size_t off, xfer;
 
-	sc = bp->b_devvp->v_devcookie;
+	sc = vdev_privdata(bp->b_devvp);
 
 	if (sc->sc_type == MD_UNCONFIGURED) {
 		bp->b_error = ENXIO;
@@ -370,11 +377,13 @@ mdioctl(devvp, cmd, data, flag, proc)
 	caddr_t data;
 	struct proc *proc;
 {
-	struct md_softc *sc = devvp->v_devcookie;
+	struct md_softc *sc;
 	struct md_conf *umd;
 
+	sc = vdev_getprivdata(devvp);
+
 	/* If this is not the raw partition, punt! */
-	if (DISKPART(devvp->v_rdev) != RAW_PART)
+	if (DISKPART(vdev_rdev(devvp)) != RAW_PART)
 		return ENOTTY;
 
 	umd = (struct md_conf *)data;

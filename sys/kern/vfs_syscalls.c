@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.168.2.1 2001/09/18 19:13:54 fvdl Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.168.2.2 2001/09/26 15:28:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -3077,7 +3077,7 @@ sys_revoke(p, v, retval)
 	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		goto out;
 	if (vp->v_usecount > 1 || (vp->v_flag & (VALIASED | VLAYER)))
-		VOP_REVOKE(vp, REVOKEALL);
+		VOP_REVOKE(vp, REVOKEALIAS);
 out:
 	vrele(vp);
 	return (error);

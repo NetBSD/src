@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.23.4.1 2001/09/07 04:45:25 thorpej Exp $	*/
+/*	$NetBSD: cy.c,v 1.23.4.2 2001/09/26 15:28:12 fvdl Exp $	*/
 
 /*
  * cy.c
@@ -267,13 +267,15 @@ cyopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 	struct cy_port *cy;
 	struct tty *tp;
 	int s, error;
+	dev_t rdev;
 
-	cy = CY_PORT(devvp->v_rdev);
+	rdev = vdev_rdev(devvp);
+	cy = CY_PORT(rdev);
 	if (cy == NULL)
 		return (ENXIO);
 	sc = CY_BOARD(cy);
 
-	devvp->v_devcookie = cy;
+	vdev_setprivdata(devvp, cy);
 
 	s = spltty();
 	if (cy->cy_tty == NULL) {
@@ -356,7 +358,7 @@ cyopen(struct vnode *devvp, int flag, int mode, struct proc *p)
 		cd_write_reg(sc, cy->cy_chip, CD1400_SRER,
 		    CD1400_SRER_MDMCH | CD1400_SRER_RXDATA);
 
-		if (CY_DIALOUT(devvp->v_rdev) ||
+		if (CY_DIALOUT(rdev) ||
 		    ISSET(cy->cy_openflags, TIOCFLAG_SOFTCAR) ||
 		    ISSET(tp->t_cflag, MDMBUF) ||
 		    ISSET(cy->cy_carrier_stat, CD1400_MSVR2_CD))
@@ -399,7 +401,7 @@ cyclose(struct vnode *devvp, int flag, int mode, struct proc *p)
 	struct tty *tp;
 	int s;
 
-	cy = devvp->v_devcookie;
+	cy = vdev_privdata(devvp);
 	sc = CY_BOARD(cy);
 	tp = cy->cy_tty;
 
@@ -435,7 +437,7 @@ cyread(struct vnode *devvp, struct uio *uio, int flag)
 	struct cy_port *cy;
 	struct tty *tp;
 
-	cy = devvp->v_devcookie;
+	cy = vdev_privdata(devvp);
 	tp = cy->cy_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
@@ -450,7 +452,7 @@ cywrite(struct vnode *devvp, struct uio *uio, int flag)
 	struct cy_port *cy;
 	struct tty *tp;
 
-	cy = devvp->v_devcookie;
+	cy = vdev_privdata(devvp);
 	tp = cy->cy_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
@@ -468,7 +470,7 @@ cypoll(devvp, events, p)
 	struct cy_port *cy;
 	struct tty *tp;
 
-	cy = devvp->v_devcookie;
+	cy = vdev_privdata(devvp);
 	tp = cy->cy_tty;
  
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
@@ -482,7 +484,7 @@ cytty(struct vnode *devvp)
 {
 	struct cy_port *cy;
 
-	cy = devvp->v_devcookie;
+	cy = vdev_privdata(devvp);
 
 	return (cy->cy_tty);
 }
@@ -498,8 +500,10 @@ cyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 	struct cy_port *cy;
 	struct tty *tp;
 	int error;
+	dev_t rdev;
 
-	cy = devvp->v_devcookie;
+	cy = vdev_privdata(devvp);
+	rdev = vdev_rdev(devvp);
 	sc = CY_BOARD(cy);
 	tp = cy->cy_tty;
 
@@ -550,7 +554,7 @@ cyioctl(struct vnode *devvp, u_long cmd, caddr_t data, int flag,
 
 	case TIOCGFLAGS:
 		*((int *) data) = cy->cy_openflags |
-			(CY_DIALOUT(devvp->v_rdev) ? TIOCFLAG_SOFTCAR : 0);
+			(CY_DIALOUT(rdev) ? TIOCFLAG_SOFTCAR : 0);
 		break;
 
 	case TIOCSFLAGS:
@@ -580,7 +584,7 @@ cystart(struct tty *tp)
 	struct cy_port *cy;
 	int s;
 
-	cy = tp->t_devvp->v_devcookie;
+	cy = CY_PORT(vdev_rdev(tp->t_devvp));
 	sc = cy->cy_softc;
 
 	s = spltty();
@@ -617,7 +621,7 @@ cystop(struct tty *tp, int flag)
 	struct cy_port *cy;
 	int s;
 
-	cy = tp->t_devvp->v_devcookie;
+	cy = vdev_privdata(tp->t_devvp);
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY)) {
@@ -644,7 +648,7 @@ cyparam(struct tty *tp, struct termios *t)
 	struct cy_port *cy;
 	int ibpr, obpr, i_clk_opt, o_clk_opt, s, opt;
 
-	cy = tp->t_devvp->v_devcookie;
+	cy = CY_PORT(vdev_rdev(tp->t_devvp));
 	sc = CY_BOARD(cy);
 
 	if (t->c_ospeed != 0 && cy_speed(t->c_ospeed, &o_clk_opt, &obpr, cy->cy_clock) < 0)
@@ -1001,7 +1005,7 @@ cy_poll(void *arg)
 				    "(card %d, port %d, carrier %d)\n",
 				    card, port, carrier);
 #endif
-				if (CY_DIALOUT(tp->t_devvp->v_rdev) == 0 &&
+				if (CY_DIALOUT(vdev_rdev(tp->t_devvp)) == 0 &&
 				    !(*tp->t_linesw->l_modem)(tp, carrier))
 					cy_modem_control(sc, cy,
 					    TIOCM_DTR, DMBIC);
