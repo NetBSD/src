@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.23 2004/05/14 22:04:01 christos Exp $	*/
+/*	$NetBSD: ldd.c,v 1.24 2004/05/23 06:51:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -316,7 +316,7 @@ fmtprint(const char *libname, Obj_Entry *obj, const char *fmt1,
 				printf("%s", libpath);
 				break;
 			case 'x':
-				/* XXX: not supported for elf */
+				printf("%p", obj->mapbase);
 				break;
 			}
 			break;
