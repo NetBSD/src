@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.13 2000/09/13 04:44:27 thorpej Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.14 2000/09/20 22:59:44 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -347,7 +347,7 @@
 
 /* Memory Ordering */
 #define	PMC6_LD_BLOCKS			0x03
-#define	PMC6_DB_DRAINS			0x04
+#define	PMC6_SB_DRAINS			0x04
 #define	PMC6_MISALIGN_MEM_REF		0x05
 #define	PMC6_EMON_KNI_PREF_DISPATCHED	0x07	/* P-III only */
 #define	PMC6_EMON_KNI_PREF_MISS		0x4b	/* P-III only */
