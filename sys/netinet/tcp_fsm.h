@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_fsm.h,v 1.9 1998/07/03 05:39:56 thorpej Exp $	*/
+/*	$NetBSD: tcp_fsm.h,v 1.10 1998/07/09 05:49:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -75,7 +75,7 @@
 u_char	tcp_outflags[TCP_NSTATES] = {
     TH_RST|TH_ACK, 0, TH_SYN, TH_SYN|TH_ACK,
     TH_ACK, TH_ACK,
-    TH_FIN|TH_ACK, TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
+    TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
 };
 #endif
 
