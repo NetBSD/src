@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.h,v 1.4 1999/07/06 12:23:26 itojun Exp $	*/
+/*	$NetBSD: key_debug.h,v 1.5 2000/01/31 14:19:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,18 +29,12 @@
  * SUCH DAMAGE.
  */
 
-/* KAME Id: key_debug.h,v 1.1.6.2.6.1 1999/05/17 17:03:16 itojun Exp */
+/* KAME Id: key_debug.h,v 1.3 2000/01/29 06:21:02 itojun Exp */
 
 #ifndef _NETKEY_KEY_DEBUG_H_
 #define _NETKEY_KEY_DEBUG_H_
 
-#ifdef __NetBSD__
-# ifdef _KERNEL
-#  define KERNEL
-# endif
-#endif
-
-#if !defined(KERNEL) || (defined(KERNEL) && defined(IPSEC_DEBUG))
+#if !defined(_KERNEL) || (defined(_KERNEL) && defined(IPSEC_DEBUG))
 
 /* debug flags */
 #define KEYDEBUG_STAMP		0x00000001 /* path */
@@ -63,27 +57,29 @@
 
 #define KEYDEBUG(lev,arg) if ((key_debug_level & (lev)) == (lev)) { arg; }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern u_int32_t key_debug_level;
-#endif /*KERNEL*/
+#endif /*_KERNEL*/
 
 struct sadb_msg;
 struct sadb_ext;
 extern void kdebug_sadb __P((struct sadb_msg *));
 extern void kdebug_sadb_x_policy __P((struct sadb_ext *));
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct secpolicy;
-struct secindex;
-struct secas;
+struct secpolicyindex;
+struct secasindex;
+struct secasvar;
 struct secreplay;
 struct mbuf;
-extern void kdebug_secindex __P((struct secindex *));
 extern void kdebug_secpolicy __P((struct secpolicy *));
-extern void kdebug_secas __P((struct secas *));
+extern void kdebug_secpolicyindex __P((struct secpolicyindex *));
+extern void kdebug_secasindex __P((struct secasindex *));
+extern void kdebug_secasv __P((struct secasvar *));
 extern void kdebug_mbufhdr __P((struct mbuf *));
 extern void kdebug_mbuf __P((struct mbuf *));
-#endif /*KERNEL*/
+#endif /*_KERNEL*/
 
 struct sockaddr;
 extern void kdebug_sockaddr __P((struct sockaddr *));
@@ -92,7 +88,7 @@ extern void kdebug_sockaddr __P((struct sockaddr *));
 
 #define KEYDEBUG(lev,arg)
 
-#endif /*!defined(KERNEL) || (defined(KERNEL) && defined(IPSEC_DEBUG))*/
+#endif /*!defined(_KERNEL) || (defined(_KERNEL) && defined(IPSEC_DEBUG))*/
 
 extern void ipsec_hexdump __P((caddr_t, int));
 extern void ipsec_bindump __P((caddr_t, int));

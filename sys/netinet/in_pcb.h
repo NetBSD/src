@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.h,v 1.27 1999/07/01 08:12:50 itojun Exp $	*/
+/*	$NetBSD: in_pcb.h,v 1.28 2000/01/31 14:18:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,9 +95,7 @@ struct inpcb {
 	int	  inp_errormtu;		/* MTU of last xmit status = EMSGSIZE */
 	struct	  inpcbtable *inp_table;
 #if 1 /*IPSEC*/
-	struct secpolicy *inp_sp;	/* security policy. It may not be
-					 * used according to policy selection.
-					 */
+	struct inpcbpolicy *inp_sp;     /* security policy. */
 #endif
 };
 #define	inp_faddr	inp_ip.ip_dst
