@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.6 1995/01/18 06:52:46 mellon Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.7 1995/09/25 20:36:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,8 @@
 #include <vm/vm_page.h>
 
 #include <machine/pte.h>
+#include <machine/vmparam.h>
+#include <machine/machConst.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -317,4 +319,68 @@ vunmapbuf(bp)
 	kmem_free_wakeup(phys_map, kva, sz);
 	bp->b_un.b_addr = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
+}
+
+/*XXX*/
+
+/*
+ * Map a (kernel) virtual address to a physical address.
+ * There are four cases: 
+ * A kseg0 kernel "virtual address" for the   cached physical address space;
+ * A kseg1 kernel "virtual address" for the uncached physical address space;
+ * A kseg2 normal kernel "virtual address" for the kernel stack or
+ *   "u area".  These ARE NOT necessarily in sysmap, since processes 0
+ *    and 1 are handcrafted before the sysmap is set up.
+ * A kseg2 normal kernel "virtual address" mapped via the TLB, which
+ *   IS NOT in Sysmap (eg., an mbuf).
+ * The first two are so cheap they could just be macros. The last two
+ * overlap, so we must check for UADDR pages first.
+ *
+ * XXX the u-area mappng should all change anyway.
+ */
+vm_offset_t
+kvtophys(vm_offset_t kva)
+{
+	pt_entry_t *pte;
+	vm_offset_t phys;
+
+        if (kva >= MACH_CACHED_MEMORY_ADDR && kva < MACH_UNCACHED_MEMORY_ADDR)
+	{
+		return (MACH_CACHED_TO_PHYS(kva));
+	}
+	else if (kva >= MACH_UNCACHED_MEMORY_ADDR && kva < MACH_KSEG2_ADDR) {
+		return (MACH_UNCACHED_TO_PHYS(kva));
+	}
+	else if (kva >= UADDR && kva < KERNELSTACK) {
+		int upage = (kva - UADDR) >> PGSHIFT;
+
+		pte = (pt_entry_t *)&curproc->p_md.md_upte[upage];
+		phys = (pte->pt_entry & PG_FRAME) |
+			(kva & PGOFSET);
+	}
+	else if (kva >= MACH_KSEG2_ADDR /*&& kva < VM_MAX_KERNEL_ADDRESS*/) {
+		pte = kvtopte(kva);
+
+		if ((pte - Sysmap) > Sysmapsize)  {
+			printf("oops: Sysmap overrun, max %d index %d\n",
+			       Sysmapsize, pte - Sysmap);
+		}
+kernelmapped:
+		if ((pte->pt_entry & PG_V) == 0) {
+			printf("kvtophys: pte not valid for %x\n", kva);
+		}
+		phys = (pte->pt_entry & PG_FRAME) |
+			(kva & PGOFSET);
+#ifdef DEBUG_VIRTUAL_TO_PHYSICAL
+		printf("kvtophys: kv %x, phys %x", kva, phys);
+#endif
+	}
+	else {
+		printf("Virtual address %x: cannot map to physical\n",
+		       kva);
+                phys = 0;
+		/*panic("non-kernel address to kvtophys\n");*/
+		return(kva); /* XXX -- while debugging ASC */
+        }
+        return(phys);
 }
