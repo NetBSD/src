@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.50 2000/07/26 04:36:16 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.51 2000/12/05 05:02:36 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -115,7 +115,10 @@
 #define   NUBUS_DRSW_HDS	0x0102
 #define    NUBUS_DRHW_HDS	0x0102
 
-#define NUBUS_CATEGORY_FONT	0x0009	/* KanjiTalk Font Card? */
+#define NUBUS_CATEGORY_MEMORY	0x0009	/* Also KanjiTalk Font Card? */
+#define  NUBUS_TYPE_RAMCACHE	0x010C	/* From Apple PDS card */
+#define   NUBUS_DRSW_AWGSPDS	0x0100
+#define    NUBUS_DRHW_AWGSPDS	0x0100
 
 #define NUBUS_CATEGORY_CPU	0x000A
 #define  NUBUS_TYPE_68000	0x0002
@@ -125,8 +128,12 @@
 
 #define NUBUS_CATEGORY_INTBUS	0x000C
 #define  NUBUS_TYPE_SCSI	0x0008
+#define   NUBUS_DRSW_AWGSPDS	0x0006
+#define    NUBUS_DRHW_AWGSPDS	0x0100
 #define   NUBUS_DRSW_PLI	0x0108
 #define    NUBUS_DRHW_PLI	0x0100
+#define   NUBUS_DRSW_FWB	0x010C
+#define    NUBUS_DRHW_FWB	0x0100
 
 /*
  * This is the same as Apple's Format Block for a card, with the
