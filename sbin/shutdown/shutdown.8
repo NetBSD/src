@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.11 1998/01/20 23:24:46 mycroft Exp $
+.\"	$NetBSD: shutdown.8,v 1.12 1998/03/23 05:00:15 fair Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd close down the system at a given time
 .Sh SYNOPSIS
 .Nm
-.Op Fl dfhkrn
+.Op Fl Ddfhkrn
 .Ar time
 .Op Ar message ... | Ar -
 .Sh DESCRIPTION
@@ -101,6 +101,12 @@ when
 .Nm
 execs
 .Xr reboot 8 .
+.It Fl D
+Prevents
+.Nm
+from detaching from the tty with
+.Xr fork 2 /
+.Xr exit 3 .
 .It Ar time
 .Ar Time
 is the time at which
