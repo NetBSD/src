@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.2 1999/03/22 23:01:37 bad Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.3 1999/04/30 15:29:24 bad Exp $	*/
 
 #undef TRTCMISADEBUG
 /*
@@ -235,8 +235,10 @@ trtcm_isa_probe(parent, match, aux)
 	 */
 	tcm = (struct tcm_isa_done_probe *)
 	    malloc(sizeof(struct tcm_isa_done_probe), M_DEVBUF, M_NOWAIT);
-	if (tcm == NULL)
-		panic("tcmtrprobe: can't allocate state storage");
+	if (tcm == NULL) {
+		printf("trtcm_isa_probe: can't allocate state storage");
+		return 0;
+	}
 
 	tcm->tcm_bus = bus;
 	LIST_INSERT_HEAD(&tcm_isa_all_probes, tcm, tcm_link);
