@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.78 1996/03/08 20:36:21 cgd Exp $	*/
+/*	$NetBSD: isa.c,v 1.79 1996/03/17 00:53:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -42,8 +42,12 @@
 int isamatch __P((struct device *, void *, void *));
 void isaattach __P((struct device *, struct device *, void *));
 
-struct cfdriver isacd = {
-	NULL, "isa", isamatch, isaattach, DV_DULL, sizeof(struct isa_softc), 1
+struct cfattach isa_ca = {
+	sizeof(struct isa_softc), isamatch, isaattach
+};
+
+struct cfdriver isa_cd = {
+	NULL, "isa", DV_DULL, 1
 };
 
 int
@@ -121,7 +125,7 @@ isascan(parent, match)
 	ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4];
 	ia.ia_drq = cf->cf_loc[5];
 
-	if ((*cf->cf_driver->cd_match)(parent, dev, &ia) > 0)
+	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0)
 		config_attach(parent, dev, &ia, isaprint);
 	else
 		free(dev, M_DEVBUF);

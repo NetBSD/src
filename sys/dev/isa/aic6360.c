@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.38 1995/12/24 02:31:08 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.39 1996/03/17 00:53:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -592,8 +592,12 @@ void	aic_dump_driver();
 void	aic_dump6360();
 #endif
 
-struct cfdriver aiccd = {
-	NULL, "aic", aicprobe, aicattach, DV_DULL, sizeof(struct aic_softc)
+struct cfattach aic_ca = {
+	sizeof(struct aic_softc), aicprobe, aicattach
+};
+
+struct cfdriver aic_cd = {
+	NULL, "aic", DV_DULL
 };
 
 struct scsi_adapter aic_switch = {
@@ -2472,7 +2476,7 @@ void
 aic_print_active_acb()
 {
 	struct aic_acb *acb;
-	struct aic_softc *sc = aiccd.cd_devs[0];
+	struct aic_softc *sc = aic_cd.cd_devs[0];
 
 	printf("ready list:\n");
 	for (acb = sc->ready_list.tqh_first; acb != NULL;

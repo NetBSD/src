@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.38 1995/12/24 02:31:35 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.39 1996/03/17 00:53:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -82,7 +82,7 @@
 
 char *card_type[] = {"unknown", "BICC Isolan", "NE2100", "DEPCA", "PCnet-ISA", "PCnet-PCI"};
 
-#define	LE_SOFTC(unit)	lecd.cd_devs[unit]
+#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
 #define	LE_DELAY(x)	delay(x)
 
 int leprobe __P((struct device *, void *, void *));
@@ -95,8 +95,17 @@ int leintr __P((void *));
 int leintredge __P((void *));
 void leshutdown __P((void *));
 
-struct cfdriver lecd = {
-	NULL, "le", leprobe, leattach, DV_IFNET, sizeof(struct le_softc)
+/* XXX the following two structs should be different. */
+struct cfattach le_isa_ca = {
+	sizeof(struct le_softc), leprobe, leattach
+};
+
+struct cfattach le_pci_ca = {
+	sizeof(struct le_softc), leprobe, leattach
+};
+
+struct cfdriver le_cd = {
+	NULL, "le", DV_IFNET
 };
 
 integrate void
@@ -127,10 +136,10 @@ leprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct le_softc *sc = match;
-	extern struct cfdriver isacd, pcicd;
+	extern struct cfdriver isa_cd, pci_cd;
 
 #if NISA > 0
-	if (parent->dv_cfdata->cf_driver == &isacd) {
+	if (parent->dv_cfdata->cf_driver == &isa_cd) {
 		struct isa_attach_args *ia = aux;
 
 		if (bicc_probe(sc, ia))
@@ -143,7 +152,7 @@ leprobe(parent, match, aux)
 #endif
 
 #if NPCI > 0
-	if (parent->dv_cfdata->cf_driver == &pcicd) {
+	if (parent->dv_cfdata->cf_driver == &pci_cd) {
 		struct pci_attach_args *pa = aux;
 
 		if (pa->pa_id == 0x20001022)
@@ -312,10 +321,10 @@ leattach(parent, self, aux)
 	void *aux;
 {
 	struct le_softc *sc = (void *)self;
-	extern struct cfdriver isacd, pcicd;
+	extern struct cfdriver isa_cd, pci_cd;
 
 #if NPCI > 0
-	if (parent->dv_cfdata->cf_driver == &pcicd) {
+	if (parent->dv_cfdata->cf_driver == &pci_cd) {
 		struct pci_attach_args *pa = aux;
 		int iobase;
 
@@ -385,13 +394,13 @@ leattach(parent, self, aux)
 	sc->sc_copyfrombuf = copyfrombuf_contig;
 	sc->sc_zerobuf = zerobuf_contig;
 
-	sc->sc_arpcom.ac_if.if_name = lecd.cd_name;
+	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
 	leconfig(sc);
 
 	printf("%s: type %s\n", sc->sc_dev.dv_xname, card_type[sc->sc_card]);
 
 #if NISA > 0
-	if (parent->dv_cfdata->cf_driver == &isacd) {
+	if (parent->dv_cfdata->cf_driver == &isa_cd) {
 		struct isa_attach_args *ia = aux;
 
 		if (ia->ia_drq != DRQUNK)
@@ -403,7 +412,7 @@ leattach(parent, self, aux)
 #endif
 
 #if NPCI > 0
-	if (parent->dv_cfdata->cf_driver == &pcicd) {
+	if (parent->dv_cfdata->cf_driver == &pci_cd) {
 		struct pci_attach_args *pa = aux;
 
 		pci_conf_write(pa->pa_tag, PCI_COMMAND_STATUS_REG,

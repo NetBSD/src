@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.11 1995/12/24 02:31:45 mycroft Exp $	*/
+/*	$NetBSD: pss.c,v 1.12 1996/03/17 00:53:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -237,20 +237,36 @@ static u_char wss_dma_bits[4] = {1, 2, 0, 3};
 #define at_dma(flags, ptr, cc, chan)	isa_dmastart(flags, ptr, cc, chan)
 #endif
 
-struct cfdriver psscd = {
-	NULL, "pss", pssprobe, pssattach, DV_DULL, sizeof(struct pss_softc), 1
+struct cfattach pss_ca = {
+	sizeof(struct pss_softc), pssprobe, pssattach
 };
 
-struct cfdriver spcd = {
-	NULL, "sp", spprobe, spattach, DV_DULL, sizeof(struct ad1848_softc)
+struct cfdriver pss_cd = {
+	NULL, "pss", DV_DULL, 1
 };
 
-struct cfdriver mpucd = {
-	NULL, "mpu", mpuprobe, mpuattach, DV_DULL, sizeof(struct mpu_softc)
+struct cfattach sp_ca = {
+	sizeof(struct ad1848_softc), spprobe, spattach
 };
 
-struct cfdriver pcdcd = {
-	NULL, "pcd", pcdprobe, pcdattach, DV_DULL, sizeof(struct cd_softc)
+struct cfdriver sp_cd = {
+	NULL, "sp", DV_DULL
+};
+
+struct cfattach mpu_ca = {
+	sizeof(struct mpu_softc), mpuprobe, mpuattach
+};
+
+struct cfdriver mpu_cd = {
+	NULL, "mpu", DV_DULL
+};
+
+struct cfattach pcd_ca = {
+	sizeof(struct cd_softc), pcdprobe, pcdattach
+};
+
+struct cfdriver pcd_cd = {
+	NULL, "pcd", DV_DULL
 };
 
 struct audio_device pss_device = {
@@ -1144,10 +1160,10 @@ spopen(dev, flags)
     struct ad1848_softc *sc;
     int unit = AUDIOUNIT(dev);
     
-    if (unit >= spcd.cd_ndevs)
+    if (unit >= sp_cd.cd_ndevs)
 	return ENODEV;
     
-    sc = spcd.cd_devs[unit];
+    sc = sp_cd.cd_devs[unit];
     if (!sc)
 	return ENXIO;
     

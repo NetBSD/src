@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.17 1996/03/10 09:01:28 cgd Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.18 1996/03/17 00:53:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -62,8 +62,12 @@ int rtfpsprobe();
 void rtfpsattach();
 int rtfpsintr __P((void *));
 
-struct cfdriver rtfpscd = {
-	NULL, "rtfps", rtfpsprobe, rtfpsattach, DV_TTY, sizeof(struct rtfps_softc)
+struct cfattach rtfps_ca = {
+	sizeof(struct rtfps_softc), rtfpsprobe, rtfpsattach
+};
+
+struct cfdriver rtfps_cd = {
+	NULL, "rtfps", DV_TTY
 };
 
 int

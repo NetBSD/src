@@ -227,8 +227,12 @@ void	fe_loadmar	__P((struct fe_softc *));
 void	fe_dump		__P((int, struct fe_softc *));
 #endif
 
-struct cfdriver fecd = {
-	NULL, "fe", feprobe, feattach, DV_IFNET, sizeof(struct fe_softc)
+struct cfattach fe_ca = {
+	sizeof(struct fe_softc), feprobe, feattach
+};
+
+struct cfdriver fe_cd = {
+	NULL, "fe", DV_IFNET
 };
 
 /* Ethernet constants.  To be defined in if_ehter.h?  FIXME. */
@@ -993,7 +997,7 @@ feattach(parent, self, aux)
 
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = fecd.cd_name;
+	ifp->if_name = fe_cd.cd_name;
 	ifp->if_start = fe_start;
 	ifp->if_ioctl = fe_ioctl;
 	ifp->if_watchdog = fe_watchdog;
@@ -1198,7 +1202,7 @@ void
 fe_watchdog(unit)
 	int unit;
 {
-	struct fe_softc *sc = fecd.cd_devs[unit];
+	struct fe_softc *sc = fe_cd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 #if FE_DEBUG >= 3
@@ -1420,7 +1424,7 @@ void
 fe_start(ifp)
 	struct ifnet *ifp;
 {
-	struct fe_softc *sc = fecd.cd_devs[ifp->if_unit];
+	struct fe_softc *sc = fe_cd.cd_devs[ifp->if_unit];
 	struct mbuf *m;
 
 #if FE_DEBUG >= 1
@@ -1919,7 +1923,7 @@ fe_ioctl(ifp, command, data)
 	u_long command;
 	caddr_t data;
 {
-	struct fe_softc *sc = fecd.cd_devs[ifp->if_unit];
+	struct fe_softc *sc = fe_cd.cd_devs[ifp->if_unit];
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
