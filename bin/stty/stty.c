@@ -1,4 +1,4 @@
-/*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
+/*	$NetBSD: stty.c,v 1.12 1997/06/04 04:38:37 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $";
+static char rcsid[] = "$NetBSD: stty.c,v 1.12 1997/06/04 04:38:37 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,6 +161,6 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: stty: [-a|-e|-g] [-f file] [options]\n");
+	(void)fprintf(stderr, "usage: stty [-a|-e|-g] [-f file] [options]\n");
 	exit (1);
 }
