@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.3 1995/03/21 15:03:50 cgd Exp $	*/
+/*	$NetBSD: extern.c,v 1.4 1995/04/27 21:22:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: extern.c,v 1.3 1995/03/21 15:03:50 cgd Exp $";
+static char rcsid[] = "$NetBSD: extern.c,v 1.4 1995/04/27 21:22:19 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ C_SCREEN		screen, *sp = &screen;
 
 LIST		air, ground;
 
-struct sgttyb	tty_start, tty_new;
+struct termios	tty_start, tty_new;
 
 DISPLACEMENT	displacement[MAXDIR] = {
 		{  0, -1 },

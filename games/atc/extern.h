@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1995/03/21 15:03:54 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1995/04/27 21:22:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -57,7 +57,7 @@ extern C_SCREEN		screen, *sp;
 
 extern LIST		air, ground;
 
-extern struct sgttyb	tty_start, tty_new;
+extern struct termios	tty_start, tty_new;
 
 extern DISPLACEMENT	displacement[MAXDIR];
 

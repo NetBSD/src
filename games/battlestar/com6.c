@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.4 1995/03/28 17:20:22 jtc Exp $	*/
+/*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: com6.c,v 1.4 1995/03/28 17:20:22 jtc Exp $";
+static char rcsid[] = "$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,8 +109,11 @@ char ch;
 	FILE *fp;
 	struct timeval tv;
 	char *date, *ctime();
-	int s = sigblock(sigmask(SIGINT));
+	sigset_t sigset, osigset;
 
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGINT);
+	sigprocmask(SIG_BLOCK, &sigset, &osigset);
 	gettimeofday(&tv, (struct timezone *)0);	/* can't call time */
 	date = ctime(&tv.tv_sec);
 	date[24] = '\0';
@@ -124,7 +127,7 @@ char ch;
 			fprintf(fp, "\n");
 	} else
 		perror(_PATH_SCORE);
-	sigsetmask(s);
+	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 }
 
 char *

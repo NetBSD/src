@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.3 1995/03/21 15:04:12 cgd Exp $	*/
+/*	$NetBSD: input.c,v 1.4 1995/04/27 21:22:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.3 1995/03/21 15:04:12 cgd Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.4 1995/04/27 21:22:24 mycroft Exp $";
 #endif
 #endif not lint
 
@@ -253,10 +253,10 @@ getcommand()
 
 	do {
 		c = gettoken();
-		if (c == tty_new.sg_erase) {
+		if (c == tty_new.c_cc[VERASE]) {
 			if (pop() < 0)
 				noise();
-		} else if (c == tty_new.sg_kill) {
+		} else if (c == tty_new.c_cc[VKILL]) {
 			while (pop() >= 0)
 				;
 		} else {
@@ -347,8 +347,8 @@ gettoken()
 			}
 
 			wait(0);
+			tcsetattr(fileno(stdin), TCSADRAIN, &tty_new);
 #ifdef BSD
-			ioctl(fileno(stdin), TIOCSETP, &tty_new);
 			itv.it_value.tv_sec = 0;
 			itv.it_value.tv_usec = 1;
 			itv.it_interval.tv_sec = sp->update_secs;
@@ -356,7 +356,6 @@ gettoken()
 			setitimer(ITIMER_REAL, &itv, NULL);
 #endif
 #ifdef SYSV
-			ioctl(fileno(stdin), TCSETAW, &tty_new);
 			alarm(aval);
 #endif
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.3 1995/03/21 15:04:37 cgd Exp $	*/
+/*	$NetBSD: update.c,v 1.4 1995/04/27 21:22:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -49,7 +49,7 @@
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: update.c,v 1.3 1995/03/21 15:04:37 cgd Exp $";
+static char rcsid[] = "$NetBSD: update.c,v 1.4 1995/04/27 21:22:26 mycroft Exp $";
 #endif
 #endif not lint
 
@@ -60,9 +60,6 @@ update()
 	int	i, dir_diff, mask, unclean;
 	PLANE	*pp, *p1, *p2, *p;
 
-#ifdef BSD
-	mask = sigblock(sigmask(SIGINT));
-#endif
 #ifdef SYSV
 	alarm(0);
 	signal(SIGALRM, update);
@@ -217,9 +214,6 @@ update()
 	if ((rand() % sp->newplane_time) == 0)
 		addplane();
 
-#ifdef BSD
-	sigsetmask(mask);
-#endif
 #ifdef SYSV
 	alarm(sp->update_secs);
 #endif
