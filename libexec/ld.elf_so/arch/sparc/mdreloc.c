@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.21 2002/09/06 15:32:56 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.22 2002/09/06 15:51:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -273,10 +273,11 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 		value = rela->r_addend;
 
 		/*
-		 * Handle relative relocs here, because we might not
-		 * be able to access globals yet.
+		 * Handle relative relocs here, because we might not be able to
+		 * access the reloc_target_{flags,bitmask}[] tables while
+		 * relocating ourself.
 		 */
-		if (self && type == R_TYPE(RELATIVE)) {
+		if (type == R_TYPE(RELATIVE)) {
 			*where += (Elf_Addr)(obj->relocbase + value);
 			continue;
 		}
