@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.10 2002/03/27 08:01:23 onoe Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.11 2002/03/30 15:53:26 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -277,7 +277,8 @@ struct wi_ltv_keys {
  * NIC information
  */
 #define WI_RID_DNLD_BUF		0xFD01
-#define WI_RID_MEMSZ		0xFD02 /* memory size info */
+#define WI_RID_MEMSZ		0xFD02 /* memory size info (XXX Lucent) */
+#define	WI_RID_PRI_IDENTITY	0xFD02 /* primary funcs firmware ident (PRISM2) */
 #define WI_RID_PRI_SUP_RANGE	0xFD03 /* primary supplier compatibility */
 #define WI_RID_CIF_ACT_RANGE	0xFD04 /* controller sup. compatibility */
 #define WI_RID_SERIALNO		0xFD0A /* card serial number */
