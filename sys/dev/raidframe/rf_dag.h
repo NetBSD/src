@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.6 2002/08/02 03:42:33 oster Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.7 2002/09/23 23:53:54 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -191,20 +191,6 @@ struct RF_DagList_s {
 	RF_AccTraceEntry_t tracerec;	/* perf mon info for dags (not user
 					 * info) */
 };
-/* resets a node so that it can be fired again */
-#define RF_ResetNode(_n_)  { \
-  (_n_)->status = rf_wait;   \
-  (_n_)->numAntDone = 0;     \
-  (_n_)->numSuccFired = 0;   \
-  (_n_)->numSuccDone = 0;    \
-  (_n_)->next = NULL;        \
-}
-
-#define RF_ResetDagHeader(_h_) { \
-  (_h_)->numNodesCompleted = 0;  \
-  (_h_)->numCommits = 0;         \
-  (_h_)->status = rf_enable;     \
-}
 
 /* convience macro for declaring a create dag function */
 
