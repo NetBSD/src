@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.18 1998/01/13 02:10:37 thorpej Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.19 1998/05/24 18:19:29 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -402,11 +402,7 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 
 	if (l < 512)
 		set_link(n, (vm_offset_t)p, l, SFAS_CHAIN_BUMP);
-	else if ((p >= (void *)0xFF000000)
-#if M68040
-		 && ((mmutype == MMU_68040) && (p >= (void *)0xFFFC0000))
-#endif
-		 ) {
+	else if (p >= (void *)0xFF000000) {
 		while(l != 0) {
 			len = ((l > sc->sc_bump_sz) ? sc->sc_bump_sz : l);
 	  
