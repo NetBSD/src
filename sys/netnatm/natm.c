@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.3 1996/10/10 23:18:38 christos Exp $	*/
+/*	$NetBSD: natm.c,v 1.4 1996/10/13 02:00:00 christos Exp $	*/
 
 /*
  *
@@ -207,7 +207,7 @@ struct proc *p;
     case PRU_DISCONNECT:		/* disconnect from peer */
 
       if ((npcb->npcb_flags & NPCB_CONNECTED) == 0) {
-        kprintf("natm: disconnected check\n");
+        printf("natm: disconnected check\n");
         error = EIO;
 	break;
       }
@@ -273,7 +273,7 @@ struct proc *p;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
       bcopy(npcb->npcb_ifp->if_xname, snatm->snatm_if, sizeof(snatm->snatm_if));
 #elif defined(__FreeBSD__)
-      ksprintf(snatm->snatm_if, "%s%d", npcb->npcb_ifp->if_name,
+      sprintf(snatm->snatm_if, "%s%d", npcb->npcb_ifp->if_name,
 	npcb->npcb_ifp->if_unit);
 #endif
       snatm->snatm_vci = npcb->npcb_vci;
@@ -322,7 +322,7 @@ struct proc *p;
     case PRU_PROTOSEND:			/* send to below */
     case PRU_SOCKADDR:			/* fetch socket's address */
 #ifdef DIAGNOSTIC
-      kprintf("natm: PRU #%d unsupported\n", req);
+      printf("natm: PRU #%d unsupported\n", req);
 #endif
       error = EOPNOTSUPP;
       break;

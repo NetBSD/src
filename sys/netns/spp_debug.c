@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.c,v 1.7 1996/10/10 23:25:54 christos Exp $	*/
+/*	$NetBSD: spp_debug.c,v 1.8 1996/10/13 01:59:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -102,10 +102,10 @@ spp_trace(act, ostate, sp, si, req)
 	if (ostate >= TCP_NSTATES) ostate = 0;
 	if (act >= SA_DROP) act = SA_DROP;
 	if (sp)
-		kprintf("%x %s:", sp, tcpstates[ostate]);
+		printf("%x %s:", sp, tcpstates[ostate]);
 	else
-		kprintf("???????? ");
-	kprintf("%s ", sanames[act]);
+		printf("???????? ");
+	printf("%s ", sanames[act]);
 	switch (act) {
 
 	case SA_RESPOND:
@@ -125,48 +125,48 @@ spp_trace(act, ostate, sp, si, req)
 			len = ntohs(len);
 		}
 #ifndef lint
-#define p1(f)  { kprintf("%s = %x, ", "f", f); }
+#define p1(f)  { printf("%s = %x, ", "f", f); }
 		p1(seq); p1(ack); p1(alo); p1(len);
 #endif
 		flags = si->si_cc;
 		if (flags) {
 			char *cp = "<";
 #ifndef lint
-#define pf(f) { if (flags&SP_/**/f) { kprintf("%s%s", cp, "f"); cp = ","; } }
+#define pf(f) { if (flags&SP_/**/f) { printf("%s%s", cp, "f"); cp = ","; } }
 			pf(SP); pf(SA); pf(OB); pf(EM);
 #else
 			cp = cp;
 #endif
-			kprintf(">");
+			printf(">");
 		}
 #ifndef lint
-#define p2(f)  { kprintf("%s = %x, ", "f", si->si_/**/f); }
+#define p2(f)  { printf("%s = %x, ", "f", si->si_/**/f); }
 		p2(sid);p2(did);p2(dt);p2(pt);
 #endif
 		ns_printhost(&si->si_sna);
 		ns_printhost(&si->si_dna);
 
 		if (act==SA_RESPOND) {
-			kprintf("idp_len = %x, ",
+			printf("idp_len = %x, ",
 				((struct idp *)si)->idp_len);
 		}
 		break;
 
 	case SA_USER:
-		kprintf("%s", prurequests[req&0xff]);
+		printf("%s", prurequests[req&0xff]);
 		if ((req & 0xff) == PRU_SLOWTIMO)
-			kprintf("<%s>", spptimers[req>>8]);
+			printf("<%s>", spptimers[req>>8]);
 		break;
 	}
 	if (sp)
-		kprintf(" -> %s", tcpstates[sp->s_state]);
+		printf(" -> %s", tcpstates[sp->s_state]);
 	/* print out internal state of sp !?! */
-	kprintf("\n");
+	printf("\n");
 	if (sp == 0)
 		return;
 #ifndef lint
-#define p3(f)  { kprintf("%s = %x, ", "f", sp->s_/**/f); }
-	kprintf("\t"); p3(rack);p3(ralo);p3(smax);p3(flags); kprintf("\n");
+#define p3(f)  { printf("%s = %x, ", "f", sp->s_/**/f); }
+	printf("\t"); p3(rack);p3(ralo);p3(smax);p3(flags); printf("\n");
 #endif
 #endif
 #endif
