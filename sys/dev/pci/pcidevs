@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.28 1997/05/13 14:44:54 jtk Exp $
+$NetBSD: pcidevs,v 1.29 1997/06/24 05:04:10 kml Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -477,6 +477,7 @@ vendor HAL		0x11cd 	HAL Computer Systems
 vendor ZORAN		0x11de	Zoran Corporation
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
+vendor ESSENTIAL	0x120f	Essential Communications
 vendor ARIEL		0x1220	Ariel
 vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
@@ -667,6 +668,10 @@ product DPT SC_RAID	0xa400	SmartCache/Raid
 
 /* Emulex products */
 product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
+
+/* Essential Communications products */
+product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
+product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
 
 /* Evans & Sutherland products */
 product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
