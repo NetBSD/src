@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.13 1998/08/17 00:49:02 mycroft Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.14 1998/09/08 07:32:42 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,14 +172,20 @@ struct scsipi_link {
 #define	SDEV_OPEN	 	0x08	/* at least 1 open session */
 #define	SDEV_DBX		0xf0	/* debuging flags (scsipi_debug.h) */
 	u_int16_t quirks;		/* per-device oddities */
-#define	SDEV_AUTOSAVE		0x0001	/* do implicit SAVEDATAPOINTER on
-					   disconnect */
-#define	SDEV_NOSYNCWIDE		0x0002	/* does not grok SDTR or WDTR */
-#define	SDEV_NOLUNS		0x0004	/* does not grok LUNs */
-#define	SDEV_FORCELUNS		0x0008	/* prehistoric drive/ctlr groks LUNs */
-#define SDEV_NOMODESENSE	0x0010	/* removable media/optical drives */
-#define SDEV_NOSTARTUNIT	0x0020	/* do not issue start unit requests
-					   in sd.c */
+#define	SDEV_AUTOSAVE		0x0001	/*
+					 * Do implicit SAVEDATAPOINTER on
+					 * disconnect (ancient).
+					 */
+#define	SDEV_NOSYNC		0x0002	/* does not grok SDTR */
+#define	SDEV_NOWIDE		0x0004	/* does not grok WDTR */
+#define	SDEV_NOTAG		0x0008	/* does not do command tagging */
+#define	SDEV_NOLUNS		0x0010	/* does not grok LUNs */
+#define	SDEV_FORCELUNS		0x0020	/* prehistoric drive/ctlr groks LUNs */
+#define SDEV_NOMODESENSE	0x0040	/* removable media/optical drives */
+#define SDEV_NOSTARTUNIT	0x0080	/*
+					 * Do not issue START UNIT
+					 * requests in sd.c
+					 */
 #define ADEV_CDROM		0x0100	/* device is a CD-ROM */
 #define ADEV_LITTLETOC		0x0200	/* Audio TOC uses wrong byte order */
 #define ADEV_NOCAPACITY		0x0400	/* no READ_CD_CAPACITY command */
