@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.15 2000/03/27 12:54:59 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.16 2000/03/27 12:58:01 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -924,6 +924,7 @@ awi_init(sc)
 	struct ether_multistep step;
 #endif
 
+	/* reinitialize muticast filter */
 	n = 0;
 	ifp->if_flags |= IFF_ALLMULTI;
 	sc->sc_mib_local.Accept_All_Multicast_Dis = 0;
@@ -932,7 +933,6 @@ awi_init(sc)
 		goto set_mib;
 	}
 	sc->sc_mib_mac.aPromiscuous_Enable = 0;
-	ifp->if_flags &= ~IFF_ALLMULTI;
 #ifdef __FreeBSD__
 	if (ifp->if_amcount != 0)
 		goto set_mib;
@@ -960,6 +960,8 @@ awi_init(sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 #endif
+	for (; n < AWI_GROUP_ADDR_SIZE; n++)
+		memset(sc->sc_mib_addr.aGroup_Addresses[n], 0, ETHER_ADDR_LEN);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	sc->sc_mib_local.Accept_All_Multicast_Dis = 1;
 
