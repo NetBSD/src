@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.4.2.5 2002/07/02 04:20:05 lukem Exp $
+.\"	$NetBSD: netboot,v 1.4.2.6 2002/07/11 18:41:44 thorpej Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@ attached disk, or you may run your system entirely over the network.
 .Pp
 .ie !\n[walnut] \{\
 Briefly, the netboot
-process involves discovery, bootstrap, kernel and filesystem stages.
+process involves discovery, bootstrap, kernel and file system stages.
 In the first stage, the client discovers information
 about where to find the bootstrap program.
 Next, it downloads and executes the bootstrap program.
@@ -68,13 +68,13 @@ Once the kernel is loaded, it starts executing.
 .\}
 .el \{\
 Briefly, the netboot
-process involves discovery, kernel and filesystem stages.
+process involves discovery, kernel and file system stages.
 In the first stage, the client discovers information
 about where to find the kernel image.
 Once the kernel is loaded, it starts executing.
 .\}
 .ie !\n[next68k] \{\
-For RAM disk kernels, it mounts the RAM disk filesystem and begins
+For RAM disk kernels, it mounts the RAM disk file system and begins
 executing the installer from the RAM disk.
 For normal (non-RAM disk) kernels, the
 .\}
@@ -117,7 +117,7 @@ the kernel via the on-board Ethernet card by the firmware.
 Thus,
 .Nx
 support for the on-board card is not needed in this step.
-For NFS mounting a filesystem on the other hand,
+For NFS mounting a file system on the other hand,
 .Nx
 support for the Ethernet card is needed, and the on-board one
 will not suffice; you have to provide a second Ethernet card
@@ -126,7 +126,7 @@ supported by
 .\}
 .\} \" ! !\n[hp300]
 .if !\n[walnut] \{\
-NFS is used in both the kernel and filesystem stages to download the
+NFS is used in both the kernel and file system stages to download the
 kernel, and to access files on the file server.
 .\} \" !\n[walnut]
 .Pp
@@ -149,7 +149,7 @@ You should, of course, replace all of these with the names, addresses,
 and paths appropriate to your environment.
 .Pp
 You should set up each netboot stage in order (i.e. discovery,
-bootstrap, kernel, and then filesystem) so that you can test them as you
+bootstrap, kernel, and then file system) so that you can test them as you
 proceed.
 .Pp
 .It
@@ -525,7 +525,7 @@ the traditional miniroot-based installer
 or the experimental RAM disk-based installer
 .Pa binary/kernel/netbsd.RAMDISK.gz .
 .Pp
-To use the miniroot-based installer, mount the miniroot filesystem on your
+To use the miniroot-based installer, mount the miniroot file system on your
 netboot server.
 This procedure does
 .Em not
@@ -533,7 +533,7 @@ work on any operating system other than
 .Nx .
 You'll also need to either set up a new NFS share point or an FTP server
 for the distribution files, as they won't fit inside the miniroot
-filesystem.
+file system.
 .Pp
 .(disp
 .No # Ic "gunzip miniroot.fs.gz"
@@ -619,7 +619,7 @@ If you are running your \*M diskless, simply use
 .Pa binary/kernel/netbsd.img-WALNUT.gz .
 .\}
 .It
-Client filesystem
+Client file system
 .Pp
 .ie !\n[next68k] \{\
 You can skip this step if you do not plan to run your client
@@ -695,7 +695,7 @@ net_interfaces=""
 .disp)
 .Pp
 Make sure rc does not reconfigure the network device since it will lose
-its connection to the NFS server with your root filesystem.
+its connection to the NFS server with your root file system.
 .Pp
 .It
 Set up the client's

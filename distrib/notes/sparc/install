@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.47.2.1 2002/07/02 04:20:17 lukem Exp $
+.\"	$NetBSD: install,v 1.47.2.2 2002/07/11 18:41:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,12 +56,12 @@ and search for
 .Dq openboot reference
 (without quotes).
 .
-.Ss2 Installing NetBSD by placing a bootable filesystem on a partitioned hard drive
+.Ss2 Installing NetBSD by placing a bootable file system on a partitioned hard drive
 .
 .Pa installation/miniroot/miniroot.fs.gz
 is a compressed, self-contained
 .Nx
-filesystem holding all utilities necessary to install
+file system holding all utilities necessary to install
 .Nx
 onto a disk attached to your system.
 It is distributed as a compressed plain
@@ -69,7 +69,7 @@ file you will transfer to a raw disk partition.
 You will then boot this installer using the appropriate PROM command.
 The simplest case is where you place the
 .Pa miniroot.fs
-filesystem on the swap partition of your disk.
+file system on the swap partition of your disk.
 Alternatively, you can place
 it on any other unused partition on any disk (such as a Zip disk).
 Be forewarned that you will not be able to install
@@ -78,7 +78,7 @@ onto the partition that contains the
 .Pa miniroot.fs
 as this partition is needed during the install process.
 .Pp
-Loading the filesystem onto a raw partition is straightforward.
+Loading the file system onto a raw partition is straightforward.
 First, download
 .Pa miniroot.fs
 to your system.
@@ -105,7 +105,7 @@ If you decide to place
 on a non-swap partition, it will overwrite all of the contents of that
 partition, but you will not need to reboot into single-user mode to write it.
 .Pp
-After transferring the filesystem to disk, bring the system down by:
+After transferring the file system to disk, bring the system down by:
 .Pp
 .(disp
 .No # Ic halt
@@ -132,7 +132,7 @@ command at the PROM prompt (this example is for the swap partition):
 The monitor boot command will load the
 .Nx
 kernel contained in the
-filesystem image.
+file system image.
 After the initial probe messages you'll be
 asked to start the install or upgrade procedure.
 Proceed to the section
@@ -441,7 +441,7 @@ checking/creation of the partition information on the disk
 .It
 creating and mounting the
 .Nx
-filesystems
+file systems
 .It
 setup of network configuration
 .It
@@ -456,7 +456,7 @@ Initially we'd suggest you
 then try multiuser after that.
 If you boot single-user the
 .Nx
-incantation to make the root filesystem writable is
+incantation to make the root file system writable is
 .Pp
 .(disp
 .No # Ic "mount -u /dev/sd0a /"
