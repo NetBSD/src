@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.46 1996/03/31 21:36:40 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.47 1996/04/03 20:46:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -130,15 +130,19 @@ void	*hashinit __P((int count, int type, u_long *hashmask));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 void	panic __P((const char *, ...)) 
-    __attribute__((__noreturn__,__format__(__kprintf__,1,2)));
+#ifdef __KPRINTF_ATTRIBUTE__
+    __kprintf_attribute__((__noreturn__,__format__(__kprintf__,1,2)));
+#else
+    __attribute__((__noreturn__));
+#endif
 void	printf __P((const char *, ...))
-    __attribute__((__format__(__kprintf__,1,2))); 
+    __kprintf_attribute__((__format__(__kprintf__,1,2))); 
 void	uprintf __P((const char *, ...))
-    __attribute__((__format__(__kprintf__,1,2))); 
+    __kprintf_attribute__((__format__(__kprintf__,1,2))); 
 int	sprintf __P((char *buf, const char *, ...))
-    __attribute__((__format__(__kprintf__,2,3)));
+    __kprintf_attribute__((__format__(__kprintf__,2,3)));
 void	ttyprintf __P((struct tty *, const char *, ...))
-    __attribute__((__format__(__kprintf__,2,3)));
+    __kprintf_attribute__((__format__(__kprintf__,2,3)));
 
 void	tablefull __P((const char *));
 
