@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkstr.1,v 1.3 1995/09/28 06:22:19 tls Exp $
+.\"	$NetBSD: mkstr.1,v 1.4 1997/10/19 05:13:09 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,23 +40,23 @@
 .Nm mkstr
 .Nd create an error message file by massaging C source
 .Sh SYNOPSIS
-.Nm mkstr
+.Nm
 .Op Fl
 .Ar messagefile
 .Ar prefix file ...
 .Sh DESCRIPTION
-.Nm Mkstr
+.Nm
 creates files containing error messages extracted from C source,
 and restructures the same C source, to utilize the created error message
 file.
 The intent of
-.Nm mkstr
+.Nm
 was to reduce the size of large programs and
 reduce swapping (see
 .Sx BUGS
 section below).
 .Pp
-.Nm Mkstr
+.Nm
 processes each of the specified
 .Ar files ,
 placing a restructured version of the input in a file whose name
@@ -64,7 +64,7 @@ consists of the specified
 .Ar prefix
 and the original name.
 A typical usage of
-.Nm mkstr
+.Nm
 is
 .Bd -literal -offset indent
 mkstr pistrings xx *.c
@@ -82,12 +82,12 @@ Options:
 .It Fl
 Error messages are placed at the end of the specified
 message file for recompiling part of a large
-.Nm mkstr
+.Nm
 ed
 program.
 .El
 .Pp
-.Nm mkstr
+.Nm
 finds error messages in the source by
 searching for the string
 .Li \&`error("'
@@ -124,11 +124,11 @@ oops:
 .Xr lseek 2 ,
 .Xr xstr 1
 .Sh HISTORY
-.Nm Mkstr
+.Nm
 appeared in
 .Bx 3.0 .
 .Sh BUGS
-.Nm mkstr
+.Nm
 was intended for the limited architecture of the PDP 11 family.
 Very few programs actually use it. The pascal interpreter,
 .Xr \&pi 1
