@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.736 2004/11/09 08:46:08 yamt Exp $
+#	$NetBSD: mi,v 1.737 2004/11/10 04:52:30 lukem Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3074,7 +3074,9 @@
 ./usr/share/man/cat3/getfstype.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getgrent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getgrgid.0			comp-c-catman		.cat
+./usr/share/man/cat3/getgrgid_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getgrnam.0			comp-c-catman		.cat
+./usr/share/man/cat3/getgrnam_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getgrouplist.0		comp-c-catman		.cat
 ./usr/share/man/cat3/gethostbyaddr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/gethostbyname.0		comp-c-catman		.cat
@@ -3117,7 +3119,9 @@
 ./usr/share/man/cat3/getpw.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/getpwent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getpwnam.0			comp-c-catman		.cat
+./usr/share/man/cat3/getpwnam_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getpwuid.0			comp-c-catman		.cat
+./usr/share/man/cat3/getpwuid_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getrawpartition.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getrpcbyname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/getrpcbynumber.0		comp-c-catman		.cat
@@ -6838,7 +6842,9 @@
 ./usr/share/man/man3/getfstype.3		comp-c-man		.man
 ./usr/share/man/man3/getgrent.3			comp-c-man		.man
 ./usr/share/man/man3/getgrgid.3			comp-c-man		.man
+./usr/share/man/man3/getgrgid_r.3		comp-c-man		.man
 ./usr/share/man/man3/getgrnam.3			comp-c-man		.man
+./usr/share/man/man3/getgrnam_r.3		comp-c-man		.man
 ./usr/share/man/man3/getgrouplist.3		comp-c-man		.man
 ./usr/share/man/man3/gethostbyaddr.3		comp-c-man		.man
 ./usr/share/man/man3/gethostbyname.3		comp-c-man		.man
@@ -6881,7 +6887,9 @@
 ./usr/share/man/man3/getpw.3			comp-obsolete		obsolete
 ./usr/share/man/man3/getpwent.3			comp-c-man		.man
 ./usr/share/man/man3/getpwnam.3			comp-c-man		.man
+./usr/share/man/man3/getpwnam_r.3		comp-c-man		.man
 ./usr/share/man/man3/getpwuid.3			comp-c-man		.man
+./usr/share/man/man3/getpwuid_r.3		comp-c-man		.man
 ./usr/share/man/man3/getrawpartition.3		comp-c-man		.man
 ./usr/share/man/man3/getrpcbyname.3		comp-c-man		.man
 ./usr/share/man/man3/getrpcbynumber.3		comp-c-man		.man
