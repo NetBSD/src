@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.c,v 1.11 1998/08/09 21:35:03 mycroft Exp $	*/
+/*	$NetBSD: mulaw.c,v 1.12 1998/08/09 21:41:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -295,8 +295,8 @@ mulaw_to_ulinear16(v, p, cc)
 	while (--cc >= 0) {
 		--p;
 		q -= 2;
-		q[LO] = mulawtolin16[*p][0];
-		q[HI] = mulawtolin16[*p][1];
+		q[HI] = mulawtolin16[*p][0];
+		q[LO] = mulawtolin16[*p][1];
 	}
 }
 
@@ -313,8 +313,8 @@ mulaw_to_slinear16(v, p, cc)
 	while (--cc >= 0) {
 		--p;
 		q -= 2;
-		q[LO] = mulawtolin16[*p][0] ^ 0x80;
-		q[HI] = mulawtolin16[*p][1];
+		q[HI] = mulawtolin16[*p][0] ^ 0x80;
+		q[LO] = mulawtolin16[*p][1];
 	}
 }
 
@@ -381,8 +381,8 @@ alaw_to_ulinear16(v, p, cc)
 	while (--cc >= 0) {
 		--p;
 		q -= 2;
-		q[LO] = alawtolin16[*p][0];
-		q[HI] = alawtolin16[*p][1];
+		q[HI] = alawtolin16[*p][0];
+		q[LO] = alawtolin16[*p][1];
 	}
 }
 
@@ -399,8 +399,8 @@ alaw_to_slinear16(v, p, cc)
 	while (--cc >= 0) {
 		--p;
 		q -= 2;
-		q[LO] = alawtolin16[*p][0] ^ 0x80;
-		q[HI] = alawtolin16[*p][1];
+		q[HI] = alawtolin16[*p][0] ^ 0x80;
+		q[LO] = alawtolin16[*p][1];
 	}
 }
 
