@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.11 1997/01/05 10:06:40 cjs Exp $	*/
+/*	$NetBSD: chpass.c,v 1.12 1997/07/24 08:53:06 phil Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: chpass.c,v 1.11 1997/01/05 10:06:40 cjs Exp $";
+static char rcsid[] = "$NetBSD: chpass.c,v 1.12 1997/07/24 08:53:06 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ main(argc, argv)
 	char **argv;
 {
 	enum { NEWSH, LOADENTRY, EDITENTRY } op;
-	struct passwd *pw, lpw;
+	struct passwd *pw, lpw, old_pw;
 	int ch, pfd, tfd, dfd;
 	char *arg, *username = NULL, tempname[] = "/etc/pw.XXXXXX";
 
@@ -221,19 +221,9 @@ main(argc, argv)
 			exit(1);
 	}
 
-	if (!use_yp) {
-		/*
-		 * Get the passwd lock file and open the passwd file for
-		 * reading.
-		 */
-		pw_init();
-		tfd = pw_lock(0);
-		if (tfd < 0)
-			errx(1, "the passwd file is busy.");
-		pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-		if (pfd < 0)
-			pw_error(_PATH_MASTERPASSWD, 1, 1);
-	}
+	/* Make a copy for later verification */
+	old_pw = *pw;
+	old_pw.pw_gecos = strdup(old_pw.pw_gecos);
 
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
@@ -252,12 +242,31 @@ main(argc, argv)
 			yppw_error((char *)NULL, 0, 1);
 		else
 			exit(0);
+		/* Will not exit from this if. */
 	}
-	else
 #endif	/* YP */
 
+
+	/*
+	 * Get the passwd lock file and open the passwd file for
+	 * reading.
+	 */
+	pw_init();
+	tfd = pw_lock(0);
+	if (tfd < 0) {
+		warnx ("The passwd file is busy, waiting...");
+		tfd = pw_lock(10);
+		if (tfd < 0)
+			errx(1, "The passwd file is still busy, "
+			     "try again later.");
+	}
+
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	if (pfd < 0)
+		pw_error(_PATH_MASTERPASSWD, 1, 1);
+
 	/* Copy the passwd file to the lock file, updating pw. */
-	pw_copy(pfd, tfd, pw);
+	pw_copy(pfd, tfd, pw, &old_pw);
 
 	/* Now finish the passwd file update. */
 	if (pw_mkdb() < 0)
