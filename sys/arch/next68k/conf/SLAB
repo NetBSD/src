@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.2 2000/09/24 15:59:36 jdolecek Exp $
+# $NetBSD: SLAB,v 1.3 2000/09/29 06:33:17 deberg Exp $
 #
 # deberg's development machine
 #
@@ -28,7 +28,7 @@ options 	DDB
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 
 # ... or these for KGDB (gdb remote target)
-#makeoptions DEBUG="-g"		# debugging symbols for gdb
+makeoptions DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB		# support for kernel gdb
 #options 	KGDBDEV=0xc01	# kgdb device number (dev_t)
 #options 	KGDBRATE=0x2580	# baud rate
@@ -115,6 +115,7 @@ options 	NFS_BOOT_DHCP
 
 # wscons options
 options         RCONS_2BPP              # necessary for nextdisplay
+options         RCONS_16BPP             # necessary for nextdisplay
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
@@ -149,7 +150,7 @@ zsc0    at intio? ipl 5
 
 xe*     at intio? ipl 3         # ethernet
 
-esp0    at intio? ipl 3         flags 0xff00 # Turn off sync negotiation
+#esp0    at intio? ipl 3         flags 0xff00 # Turn off sync negotiation
 
 #
 # Serial ports
