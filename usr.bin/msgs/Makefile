@@ -1,8 +1,8 @@
-#	from: @(#)Makefile	5.8 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.5 1994/05/23 05:32:40 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1995/09/28 06:57:37 tls Exp $
+#	@(#)Makefile	8.2 (Berkeley) 4/28/95
 
 PROG=	msgs
-DPADD=	${LIBTERM} ${LIBCOMPAT}
-LDADD=	-ltermlib -lcompat
+DPADD=	${LIBTERM}
+LDADD=	-ltermlib
 
 .include <bsd.prog.mk>
