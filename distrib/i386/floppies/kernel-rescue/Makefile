@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2002/02/03 16:22:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2002/02/08 04:40:51 lukem Exp $
 
-.include "../Makefile.inc"
+TOP=	${.CURDIR}/..
+
+.include "${TOP}/Makefile.inc"
 .include <bsd.kernobj.mk>
 .include <bsd.own.mk>
 
@@ -10,7 +12,7 @@ RAMDISKS=	RAMDISK_S	ramdisk-rescuesmall	\
 		RAMDISK_T	ramdisk-rescuetiny
 
 .for V F in ${RAMDISKS}
-${V}!=		cd ${.CURDIR}/../${F}/; \
+${V}!=		cd ${TOP}/${F}/; \
 	        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/${F}.fs\n" | \
 		${MAKE} -s -f-
 .endfor
