@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.7 1999/10/04 17:11:53 mycroft Exp $	*/
+/*	$NetBSD: position.c,v 1.8 1999/10/09 00:43:32 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: position.c,v 1.7 1999/10/04 17:11:53 mycroft Exp $");
+__RCSID("$NetBSD: position.c,v 1.8 1999/10/09 00:43:32 jtk Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ pos_in()
 {
 	int bcnt, cnt, nr, warned;
 
-	/* If not a character, pipe or tape device, try to seek on it. */
+	/* If not a pipe or tape device, try to seek on it. */
 	if (!(in.flags & (ISPIPE|ISTAPE))) {
 		if (lseek(in.fd, (off_t)in.offset * (off_t)in.dbsz, SEEK_CUR)
 		    == -1)
