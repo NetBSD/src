@@ -295,6 +295,10 @@ extern char *var_send_canon_maps;
 #define DEF_RCPT_CANON_MAPS	""
 extern char *var_rcpt_canon_maps;
 
+#define VAR_CANON_ENV_RCPT	"canonicalize_envelope_recipient"
+#define DEF_CANON_ENV_RCPT	1
+extern bool var_canon_env_rcpt;
+
 #define VAR_TRANSPORT_MAPS	"transport_maps"
 #define DEF_TRANSPORT_MAPS	""
 extern char *var_transport_maps;
