@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950var.h,v 1.1 2005/04/03 11:21:44 jdolecek Exp $	*/
+/*	$NetBSD: mb86950var.h,v 1.2 2005/04/03 11:37:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -46,13 +46,14 @@ struct mb86950_softc {
 	bus_space_handle_t sc_bsh;
 
 	/* Transmission buffer management. */
-    /* XXX not used */
+	int	txb_sched;	/* number of scheduled packets */
+#if 0
+    	/* XXX not used */
 	int	txb_free;	/* free TX buffers */
 	int	txb_size;	/* total size of TX buffer */
 	int	txb_count;	/* number of TX buffers in use */
-	int	txb_sched;	/* number of scheduled packets */
 	int	rxb_size;   /* size of receive buffer */
-	/* XXX          */
+#endif
 	int txb_num_pkt;    /* max number of outstanding transmit packets allowed */
 	int rxb_num_pkt;    /* max number of packets that could be in receive buffer */
 
@@ -64,7 +65,7 @@ struct mb86950_softc {
 
 	u_int32_t sc_stat;	/* driver status */
 
-#define ESTAR_STAT_ENABLED		0x0001	/* power enabled on interface */
+#define ESTAR_STAT_ENABLED	0x0001	/* power enabled on interface */
 #define ESTAR_STAT_ATTACHED	0x0002	/* attach has succeeded */
 
 	int	(*sc_enable) __P((struct mb86950_softc *));
