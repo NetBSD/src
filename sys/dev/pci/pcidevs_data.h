@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.145 1999/07/27 17:55:01 castor Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.146 1999/07/28 22:38:00 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.140 1999/07/27 17:52:59 castor Exp 
+ *	NetBSD: pcidevs,v 1.141 1999/07/28 22:36:10 soren Exp 
  */
 
 /*
@@ -216,38 +216,38 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710,
 	    0,
-	    "ACARD",
+	    "Acard",
 	    "AEC6710 SCSI",
 	},
 	{
 	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712UW,
 	    0,
-	    "ACARD",
+	    "Acard",
 	    "AEC6712UW SCSI",
 	},
 	{
 	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712U,
 	    0,
-	    "ACARD",
+	    "Acard",
 	    "AEC6712U SCSI",
 	},
 	{
 	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712S,
 	    0,
-	    "ACARD",
+	    "Acard",
 	    "AEC6712S SCSI",
 	},
 	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712D,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710D,
 	    0,
-	    "ACARD",
-	    "AEC6712D SCSI",
+	    "Acard",
+	    "AEC6710D SCSI",
 	},
 	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712SUW,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6715UW,
 	    0,
-	    "ACARD",
-	    "AEC6712SUW SCSI",
+	    "Acard",
+	    "AEC6715UW SCSI",
 	},
 	{
 	    PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_MPX5030,
@@ -1414,37 +1414,37 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "J2585A",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0002,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE,
 	    0,
 	    "IBM",
 	    "MCA Bridge",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0005,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_ALTALITE,
 	    0,
 	    "IBM",
 	    "CPU Bridge - Alta Lite",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0007,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_ALTAMP,
 	    0,
 	    "IBM",
 	    "CPU Bridge - Alta MP",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x000a,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_ISABRIDGE,
 	    0,
 	    "IBM",
 	    "ISA Bridge w/PnP",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0017,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CPUBRIDGE,
 	    0,
 	    "IBM",
 	    "CPU Bridge",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0018,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_LANSTREAMER,
 	    0,
 	    "IBM",
 	    "Auto LANStreamer",
@@ -1456,7 +1456,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "GXT-150P 2D Accelerator",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0020,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE2,
 	    0,
 	    "IBM",
 	    "MCA Bridge",
@@ -1468,10 +1468,28 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82351 PCI-PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_0x0036,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID,
+	    0,
+	    "IBM",
+	    "ServeRAID",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC,
+	    0,
+	    "IBM",
+	    "Token Ring",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MIAMI,
 	    0,
 	    "IBM",
 	    "Miami/PCI",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_TURBOWAYS25,
+	    0,
+	    "IBM",
+	    "Turboways 25 ATM",
 	},
 	{
 	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
@@ -1988,6 +2006,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Symbios Logic",
 	    "Packet Engines G-NIC Ethernet",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB,
+	    0,
+	    "NEC",
+	    "USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_POWERVR2,
@@ -2656,22 +2680,34 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "TC35856F ATM (\"Meteor\")",
 	},
 	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_HOST,
+	    0,
+	    "Toshiba America Info Systems",
+	    "Host Bridge/Controller",
+	},
+	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95,
 	    0,
-	    "Toshiba Info Systems (2nd PCI Vendor ID)",
+	    "Toshiba America Info Systems",
 	    "ToPIC95 CardBus-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95B,
 	    0,
-	    "Toshiba Info Systems (2nd PCI Vendor ID)",
+	    "Toshiba America Info Systems",
 	    "ToPIC95B CardBus-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC97,
 	    0,
-	    "Toshiba Info Systems (2nd PCI Vendor ID)",
+	    "Toshiba America Info Systems",
 	    "ToPIC97 CardBus-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_FIRO,
+	    0,
+	    "Toshiba America Info Systems",
+	    "Fast Infrared Type O",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
@@ -5376,7 +5412,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_TOSHIBA2, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Toshiba Info Systems (2nd PCI Vendor ID)",
+	    "Toshiba America Info Systems",
 	    NULL,
 	},
 	{
@@ -5478,7 +5514,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ACARD, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "ACARD",
+	    "Acard",
 	    NULL,
 	},
 	{
