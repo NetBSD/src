@@ -260,6 +260,7 @@ cd*|mcd*)
 vnd*)
 	unit=`expr $i : '...\(.*\)'`
 	name=vnd; blk=14; chr=41
+	rm -f ${name}${unit}c r${name}${unit}c
 	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
 	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
 	chgrp operator ${name}${unit}c r${name}${unit}c
