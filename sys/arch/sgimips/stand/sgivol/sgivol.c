@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.2 2001/11/20 23:07:17 thorpej Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.3 2001/11/20 23:09:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -272,7 +272,8 @@ read_file(void)
 
 	printf("Reading file %s\n", vfilename);
 	for (i = 0; i < 15; ++i) {
-		if (strcmp(vfilename, volhdr->voldir[i].name) == NULL)
+		if (strncmp(vfilename, volhdr->voldir[i].name,
+		    sizeof(volhdr->voldir[i].name)) == NULL)
 			break;
 	}
 	if (i >= 15) {
