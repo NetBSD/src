@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.4 1998/02/05 04:57:21 gwr Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.5 1998/03/15 02:28:19 fair Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -42,7 +42,7 @@
 
 #include <sys/types.h>
 #include <machine/mon.h>
-#include <machine/saio.h>
+#include "saio.h"
 
 #include <stand.h>
 
