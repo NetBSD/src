@@ -1,4 +1,4 @@
-/*	$NetBSD: xdrtest.c,v 1.1 2001/02/18 21:57:17 bjh21 Exp $	*/
+/*	$NetBSD: xdrtest.c,v 1.2 2001/07/24 15:32:02 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -44,6 +44,6 @@ main(int argc, char **argv)
 	xdrmem_create(&x, xdrdata, sizeof(xdrdata), XDR_DECODE);
 	xdr_double(&x, &d);
 	if (d != 1.0)
-		errx(1, "double 1.0 decoded wrongly.");
+		errx(1, "double 1.0 decoded as %g.", d);
 	exit(0);
 }
