@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.1 1997/04/27 20:37:08 thorpej Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.2 1997/05/01 05:26:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -61,10 +61,10 @@
 /* values for mmuid - used to differentiate similar CPU/cache combos */
 #define	MMUID_345	1	/* 345 */
 #define	MMUID_375	3	/* 375 */
-#define	MMUID_425_T	7	/* 425t - 25MHz Trailways */
-#define	MMUID_425_S	5	/* 425s - 25MHz Strider */
-#define	MMUID_433_T	6	/* 433t - 33MHz Trailways */
-#define	MMUID_433_S	4	/* 433s - 33MHz Strider */
+#define	MMUID_425_T	5	/* 425t - 25MHz Trailways */
+#define	MMUID_425_S	7	/* 425s - 25MHz Strider */
+#define	MMUID_433_T	4	/* 433t - 33MHz Trailways */
+#define	MMUID_433_S	6	/* 433s - 33MHz Strider */
 
 #define	MMUID_SHIFT	8	/* left shift by this... */
 #define	MMUID_MASK	0xff	/* ...and mask with this to get mmuid */
