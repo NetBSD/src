@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.h,v 1.15 2004/06/26 14:09:58 dsl Exp $	*/
+/*	$NetBSD: expand.h,v 1.16 2004/07/13 15:05:59 seb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,6 +63,7 @@ void expari(int);
 int patmatch(char *, char *, int);
 void rmescapes(char *);
 int casematch(union node *, char *);
+int wordexpcmd(int, char **);
 
 /* From arith.y */
 int arith(const char *);
