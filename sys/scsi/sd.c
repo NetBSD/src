@@ -1,7 +1,7 @@
-/*	$NetBSD: sd.c,v 1.55 1995/01/26 11:56:57 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.56 1995/01/26 12:05:54 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

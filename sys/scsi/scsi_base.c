@@ -1,7 +1,7 @@
-/*	$NetBSD: scsi_base.c,v 1.27 1995/01/26 11:56:53 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.28 1995/01/26 12:05:51 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
