@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.53 2003/10/05 21:13:23 pk Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.54 2004/03/22 12:28:02 nakayama Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.53 2003/10/05 21:13:23 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.54 2004/03/22 12:28:02 nakayama Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -588,8 +588,8 @@ svr4_trap(type, l)
 
 			tm = (u_quad_t) tv.tv_sec * 1000000000 +
 			    (u_quad_t) tv.tv_usec * 1000;
-			tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffffULL;
-			tf->tf_out[1] = tm & 0x00000000ffffffffffULL;
+			tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffUL;
+			tf->tf_out[1] = tm & 0x00000000ffffffffUL;
 		}
 		break;
 
@@ -618,8 +618,8 @@ svr4_trap(type, l)
 			                tv.tv_usec -
 			                    spc->spc_runtime.tv_usec)
 			                * 1000;
-			tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffffULL;
-			tf->tf_out[1] = tm & 0x00000000ffffffffffULL;
+			tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffUL;
+			tf->tf_out[1] = tm & 0x00000000ffffffffUL;
 		}
 		break;
 
