@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.1.1.1 1996/08/09 10:14:57 thorpej Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.1.1.1.2.1 1997/03/09 18:09:46 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -35,8 +35,8 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/if_ether.h>
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
