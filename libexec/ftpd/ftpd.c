@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.28 1997/06/22 22:33:13 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.29 1997/07/21 05:13:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.28 1997/06/22 22:33:13 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.29 1997/07/21 05:13:10 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,7 +245,7 @@ main(argc, argv, envp)
 	debug = 0;
 
 	/* set this here so klogin can use it... */
-	(void)sprintf(ttyline, "ftp%d", getpid());
+	(void)snprintf(ttyline, sizeof ttyline, "ftp%d", getpid());
 
 	while ((ch = getopt(argc, argv, "a:dlt:T:u:v")) != EOF) {
 		switch (ch) {
@@ -759,7 +759,7 @@ retrieve(cmd, name)
 	if (cmd) {
 		char line[BUFSIZ];
 
-		(void) sprintf(line, cmd, name), name = line;
+		(void)snprintf(line, sizeof line, cmd, name), name = line;
 		fin = ftpd_popen(line, "r", 1), closefunc = ftpd_pclose;
 		st.st_size = -1;
 		st.st_blksize = BUFSIZ;
@@ -939,9 +939,10 @@ dataconn(name, size, mode)
 	file_size = size;
 	byte_count = 0;
 	if (size != (off_t) -1)
-		(void) sprintf(sizebuf, " (%qd bytes)", (long long)size);
+		(void)snprintf(sizebuf, sizeof sizebuf, " (%qd bytes)",
+		    (long long)size);
 	else
-		(void) strcpy(sizebuf, "");
+		sizebuf[0] = '\0';
 	if (pdata >= 0) {
 		struct sockaddr_in from;
 		int s, fromlen = sizeof(from);
@@ -1594,6 +1595,9 @@ pasv_error:
  * Generate unique name for file with basename "local".
  * The file named "local" is already known to exist.
  * Generates failure reply on error.
+ *
+ * XXX this function should under go changes similar to
+ * the mktemp(3)/mkstemp(3) changes.
  */
 static char *
 gunique(local)
@@ -1601,7 +1605,7 @@ gunique(local)
 {
 	static char new[MAXPATHLEN];
 	struct stat st;
-	int count;
+	int count, len;
 	char *cp;
 
 	cp = strrchr(local, '/');
@@ -1614,10 +1618,11 @@ gunique(local)
 	if (cp)
 		*cp = '/';
 	(void) strcpy(new, local);
-	cp = new + strlen(new);
+	len = strlen(new);
+	cp = new + len;
 	*cp++ = '.';
 	for (count = 1; count < 100; count++) {
-		(void)sprintf(cp, "%d", count);
+		(void)snprintf(cp, sizeof(new) - len - 2, "%d", count);
 		if (stat(new, &st) < 0)
 			return (new);
 	}
@@ -1732,7 +1737,8 @@ send_file_list(whichf)
 			    dir->d_namlen == 2)
 				continue;
 
-			sprintf(nbuf, "%s/%s", dirname, dir->d_name);
+			(void)snprintf(nbuf, sizeof nbuf, "%s/%s", dirname,
+			    dir->d_name);
 
 			/*
 			 * We have to do a stat to insure it's
