@@ -2,6 +2,7 @@
 
 DIR=	usd/13.ex
 SRCS=	ex.rm
+EXTRA=	ex.summary
 MACROS=	-msU
 CLEANFILES=summary.*
 
