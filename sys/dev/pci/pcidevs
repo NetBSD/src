@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.449 2002/07/05 13:59:14 enami Exp $
+$NetBSD: pcidevs,v 1.450 2002/07/07 19:48:41 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1830,6 +1830,11 @@ product	S3 SONICVIBES	0xca00	SonicVibes
 
 /* Samsung Semiconductor products */
 product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
+
+/* Sandburst products */
+product SANDBURST	QE1000	0x0180	QE1000
+product SANDBURST	FE1000	0x0200	FE1000
+/*product SANDBURST	SE1600	0x0100	SE1600*/
 
 /* SEGA Enterprises products */
 product	SEGA	BROADBAND	0x1234	Broadband Adapter
