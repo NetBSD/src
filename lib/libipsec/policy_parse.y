@@ -1,4 +1,4 @@
-/*	$NetBSD: policy_parse.y,v 1.3 2000/06/12 10:40:52 itojun Exp $	*/
+/*	$NetBSD: policy_parse.y,v 1.4 2001/02/04 19:50:51 christos Exp $	*/
 /*	$KAME: policy_parse.y,v 1.10 2000/05/07 05:25:03 itojun Exp $	*/
 
 /*
@@ -85,8 +85,10 @@ static void policy_parse_request_init __P((void));
 static caddr_t policy_parse __P((char *msg, int msglen));
 
 extern void __policy__strbuffer__init__ __P((char *msg));
-extern int yyparse __P((void));
 extern int yylex __P((void));
+
+extern char *__libyytext;	/*XXX*/
+
 
 %}
 
@@ -210,8 +212,6 @@ void
 yyerror(msg)
 	char *msg;
 {
-	extern char *__libyytext;	/*XXX*/
-
 	fprintf(stderr, "libipsec: %s while parsing \"%s\"\n",
 		msg, __libyytext);
 
