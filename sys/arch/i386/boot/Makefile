@@ -22,7 +22,7 @@
 # any improvements or extensions that they make and grant Carnegie Mellon
 # the rights to redistribute these changes.
 #
-#	$Id: Makefile,v 1.9 1993/10/18 13:34:26 pk Exp $
+#	$Id: Makefile,v 1.10 1993/10/18 14:41:31 pk Exp $
 #
 
 wd0:
@@ -50,7 +50,7 @@ OBJS = start.o table.o boot2.o boot.o asm.o bios.o io.o disk.o sys.o
 	$(CC)  $(CFLAGS) -c $<
 
 boot: $(OBJS)
-	$(LD) -Bstatic -e _boot1 -N -T 0 -o boot $(OBJS) $(LIBS)
+	$(LD) -Bstatic -e start -N -T 0 -o boot $(OBJS) $(LIBS)
 	cp boot boot.sym
 	@strip boot
 	@sh ${.CURDIR}/rmaouthdr boot boot.tmp
