@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.1 2002/11/09 06:20:41 cgd Exp $ */
+/* $NetBSD: dev_net.c,v 1.2 2003/03/19 17:21:42 drochner Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -87,12 +87,7 @@ struct	in_addr gateip;		/* swap ip address */
 n_long	netmask;		/* subnet or net mask */
 
 char rootpath[FNAME_SIZE];
-
-int hostnamelen;
 char hostname[FNAME_SIZE];
-
-int domainnamelen;
-char domainname[FNAME_SIZE];
 
 /*
  * Local things...
