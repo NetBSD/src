@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.16 1996/06/13 17:02:23 cgd Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.17 1996/12/18 20:24:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -78,7 +78,7 @@ m_clalloc(ncl, nowait)
 	register int ncl;
 	int nowait;
 {
-	volatile static struct timeval lastlogged;
+	static volatile struct timeval lastlogged;
 	struct timeval curtime, logdiff;
 	register caddr_t p;
 	register int i;
