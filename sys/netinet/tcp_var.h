@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.37 1998/03/31 22:49:10 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.38 1998/04/03 07:54:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -208,13 +208,7 @@ struct tcp_opt_info {
 };
 
 /*
- * This structure should not exceed 32 bytes.
- * XXX On the Alpha, it's already 36-bytes, which rounds to 40.
- * XXX Need to eliminate the pointer.
- *
- * XXX We've blown 32 bytes on non-Alpha systems, too, since we're
- * XXX storing the maxseg we advertised to the peer.  Should we
- * XXX create another malloc bucket?  Should we care?
+ * Data for the TCP compressed state engine.
  */
 struct syn_cache {
 	struct syn_cache *sc_next;
