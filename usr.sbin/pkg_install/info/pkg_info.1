@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.38 2004/04/19 18:43:26 itojun Exp $
+.\" $NetBSD: pkg_info.1,v 1.39 2004/05/07 16:40:30 jlam Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -40,6 +40,11 @@
 .Bk -words
 .Op Fl a Ar flags
 .Ek
+.Nm
+.Bk -words
+.Op Fl Q Ar variable
+.Ek
+.Ar pkg-name ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -140,6 +145,12 @@ Show which packages each package was built with (exact dependencies), if any.
 Show which packages each package needs (depends upon), if any.
 .It Fl p
 Show the installation prefix for each package.
+.It Fl Q
+Show the definition of
+.Ar variable
+from the build information for each package.
+An empty string is returned if no such variable definition is found for
+the package(s).
 .It Fl q
 Be ``quiet'' in emitting report headers and such, just dump the
 raw info (basically, assume a non-human reading).
