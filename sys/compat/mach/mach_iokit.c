@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.21 2003/07/01 19:15:47 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.22 2003/09/11 23:16:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.21 2003/07/01 19:15:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.22 2003/09/11 23:16:18 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -395,7 +395,32 @@ mach_io_connect_set_notification_port(args)
 {
 	mach_io_connect_set_notification_port_request_t *req = args->smsg;
 	mach_io_connect_set_notification_port_reply_t *rep = args->rmsg;
+	struct lwp *l = args->l;
 	size_t *msglen = args->rsize; 
+	mach_port_t mnn, mn;
+	struct mach_right *mrn;
+	struct mach_right *mr;
+	struct mach_iokit_devclass *mid;
+
+#ifdef DEBUG_DARWIN
+	printf("mach_io_connect_set_notification_port\n");
+#endif
+	mnn = req->req_port.name;
+	if ((mrn = mach_right_check(mnn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_msg_error(args, EINVAL);
+		
+	mn = req->req_msgh.msgh_remote_port;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
+		return mach_msg_error(args, EINVAL);
+
+	if (mr->mr_port->mp_datatype != MACH_MP_IOKIT_DEVCLASS)
+		return mach_msg_error(args, EINVAL);
+
+#ifdef DEBUG_DARWIN
+	printf("notification on right %p, name %x\n", mrn, mrn->mr_name);
+#endif
+	mid = (struct mach_iokit_devclass *)mr->mr_port->mp_data;
+	mid->mid_notify = mrn;
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -1077,4 +1102,19 @@ mach_io_registry_entry_get_parent_iterator(args)
 
 	*msglen = sizeof(*rep);
 	return 0;
+}
+
+void 
+mach_iokit_cleanup_notify(mr)
+	struct mach_right *mr;
+{
+	int i;
+	struct mach_iokit_devclass *mid; 
+	
+	i = 0;
+	while ((mid = mach_iokit_devclasses[i++]) != NULL) 
+		if (mid->mid_notify == mr)
+			mid->mid_notify = NULL;
+
+	return;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.6 2003/09/07 09:07:19 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.7 2003/09/11 23:16:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,6 +42,32 @@
 extern struct mach_iokit_devclass darwin_iohidsystem_devclass;
 
 /* Events and event queue */
+#define DARWIN_NX_NULLEVENT	0
+#define DARWIN_NX_LMOUSEDOWN	1
+#define DARWIN_NX_LMOUSEUP	2
+#define DARWIN_NX_RMOUSEDOWN	3
+#define DARWIN_NX_RMOUSEUP	4
+#define DARWIN_NX_MOUSEMOVED	5
+#define DARWIN_NX_LMOUSEDRAGGED	6
+#define DARWIN_NX_RMOUSEDRAGGED	7
+#define DARWIN_NX_MOUSEENTERED	8
+#define DARWIN_NX_MOUSEEXITED	9
+#define DARWIN_NX_KEYDOWN	10
+#define DARWIN_NX_KEYUP		11
+#define DARWIN_NX_FLAGSCHANGED	12
+
+#define DARWIN_NX_LMOUSEDOWN_MASK	(1 << DARWIN_NX_LMOUSEDOWN)
+#define DARWIN_NX_LMOUSEUP_MASK		(1 << DARWIN_NX_LMOUSEUP)
+#define DARWIN_NX_RMOUSEDOWN_MASK	(1 << DARWIN_NX_RMOUSEDOWN)
+#define DARWIN_NX_RMOUSEUP_MASK		(1 << DARWIN_NX_RMOUSEUP)
+#define DARWIN_NX_MOUSEMOVED_MASK	(1 << DARWIN_NX_MOUSEMOVED)
+#define DARWIN_NX_LMOUSEDRAGGED_MASK	(1 << DARWIN_NX_LMOUSEDRAGGED)
+#define DARWIN_NX_RMOUSEDRAGGED_MASK	(1 << DARWIN_NX_RMOUSEDRAGGED)
+#define DARWIN_NX_MOUSEENTERED_MASK	(1 << DARWIN_NX_MOUSEENTERED)
+#define DARWIN_NX_MOUSEEXITED_MASK	(1 << DARWIN_NX_MOUSEEXITED)
+#define DARWIN_NX_KEYDOWN_MASK		(1 << DARWIN_NX_KEYDOWN)
+#define DARWIN_NX_KEYUP_MASK		(1 << DARWIN_NX_KEYUP)
+#define DARWIN_NX_FLAGSCHANGED_MASK	(1 << DARWIN_NX_FLAGSCHANGED)
 
 typedef struct {
 	uint16_t tabletid;
@@ -197,39 +223,39 @@ typedef struct {
 #define DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN 240
 
 struct darwin_iohidsystem_evglobals {
-	darwin_ev_lock_data_t die_cursor_sem;
-	int die_event_head;
-	int die_event_tail;
-	int die_event_last;
-	int die_uniq_mouseid;
-	int die_buttons;
-	int die_event_flags;
-	int die_event_time;
-	darwin_iogpoint die_cursor_loc;
-	int die_cursor_frame;
-	darwin_iogbounds die_all_screen;
-	darwin_iogbounds die_mouse_rect;
-	int die_version;
-	int die_struct_size;
-	int die_last_frame;
-	unsigned int die_reserved1[31];
-	unsigned die_reserved2:27;
-	unsigned die_want_pressure:1;
-	unsigned die_want_precision:1;
-	unsigned die_dontwant_coalesce:1;
-	unsigned die_dont_coalesce:1;
-	unsigned die_mouserect_valid:1;
-	int die_moved_mask;
-	int die_lastevent_sent;
-	int die_lastevent_consumed;
-	darwin_ev_lock_data_t die_waitcursor_sem;
-	int die_waitcursor;
-	char die_waitcursor_timeout;
-	char die_waitcursor_enabled;
-	char die_globalwaitcursor_enabled;
-	int die_waitcursor_threshold;
+	darwin_ev_lock_data_t evg_cursor_sem;
+	int evg_event_head;
+	int evg_event_tail;
+	int evg_event_last;
+	int evg_uniq_mouseid;
+	int evg_buttons;
+	int evg_event_flags;
+	int evg_event_time;
+	darwin_iogpoint evg_cursor_loc;
+	int evg_cursor_frame;
+	darwin_iogbounds evg_all_screen;
+	darwin_iogbounds evg_mouse_rect;
+	int evg_version;
+	int evg_struct_size;
+	int evg_last_frame;
+	unsigned int evg_reserved1[31];
+	unsigned evg_reserved2:27;
+	unsigned evg_want_pressure:1;
+	unsigned evg_want_precision:1;
+	unsigned evg_dontwant_coalesce:1;
+	unsigned evg_dont_coalesce:1;
+	unsigned evg_mouserect_valid:1;
+	int evg_moved_mask;
+	int evg_lastevent_sent;
+	int evg_lastevent_consumed;
+	darwin_ev_lock_data_t evg_waitcursor_sem;
+	int evg_waitcursor;
+	char evg_waitcursor_timeout;
+	char evg_waitcursor_enabled;
+	char evg_globalwaitcursor_enabled;
+	int evg_waitcursor_threshold;
 	darwin_iohidsystem_event_item 
-	    die_evqueue[DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN];
+	    evg_evqueue[DARWIN_IOHIDSYSTEM_EVENTQUEUE_LEN];
 };
 
 /* Shared memory between the IOHIDSystem driver and userland */
@@ -246,5 +272,12 @@ struct  darwin_iohidsystem_shmem {
 
 int darwin_iohidsystem_connect_method_scalari_scalaro(struct mach_trap_args *);
 int darwin_iohidsystem_connect_map_memory(struct mach_trap_args *);
+
+/* I/O notifications: XXX not checked on Darwin */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_msg_trailer_t req_trailer;
+} mach_notify_iohidsystem_request_t;
 
 #endif /* _DARWIN_IOHIDSYSTEM_H_ */
