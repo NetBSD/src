@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.77 2000/01/18 20:23:42 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.78 2000/01/19 01:02:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -796,7 +796,7 @@ uhci_lock_frames(sc)
 {
 	int s = splusb();
 
-	while (sc->sc_vflock) {
+	while (sc->sc_vflock & UHCI_HAS_LOCK) {
 		sc->sc_vflock |= UHCI_WANT_LOCK;
 		tsleep(&sc->sc_vflock, PRIBIO, "uhcqhl", 0);
 	}
