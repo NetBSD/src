@@ -22,8 +22,8 @@ static int remove_force_fileproc PROTO ((void *callerdat,
 					 struct file_info *finfo));
 #endif
 static int remove_fileproc PROTO ((void *callerdat, struct file_info *finfo));
-static Dtype remove_dirproc PROTO ((void *callerdat, char *dir,
-				    char *repos, char *update_dir,
+static Dtype remove_dirproc PROTO ((void *callerdat, const char *dir,
+				    const char *repos, const char *update_dir,
 				    List *entries));
 
 static int force;
@@ -274,9 +274,9 @@ cannot remove file `%s' which has a sticky date of `%s'",
 static Dtype
 remove_dirproc (callerdat, dir, repos, update_dir, entries)
     void *callerdat;
-    char *dir;
-    char *repos;
-    char *update_dir;
+    const char *dir;
+    const char *repos;
+    const char *update_dir;
     List *entries;
 {
     if (!quiet)
