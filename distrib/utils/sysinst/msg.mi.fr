@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.16 1999/04/13 14:49:56 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.17 1999/04/13 20:17:47 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -257,6 +257,43 @@ destination et plus particulièrement sur les partitions / et /usr
 abandonnez maintenant.
 Si les systèmes de fichiers cibles semblent bons, l'étape suivant consiste a
 recopier les différents composants. Appuyer sur <entrée> pour continuer.
+}
+
+message openfail
+{Je n'ai pas pu ouvrir %s, le message d'erreur était: %s.
+}
+
+message statfail
+{Je n'ai pas pu avoir les propriétées de %s, le message d'erreur
+etait: %s.
+}
+
+message unlink_fail
+{Je n'ai pas pu effacer %s, le message d'erreur était: %s.
+}
+
+message rename_fail
+{je n'ai pas pu renomer %s en %s, le message d'erreur était: %s.
+}
+
+message deleting_files
+{Pour la procédure de mise à jour, les fichiers suivant doivent etre
+supprimés:
+}
+
+message deleting_dirs
+{Pour la procédude de mise à jour, les répertoires suivants doivent
+etre supprimés (je renomerais ceux qui ne sont pas vides):
+}
+
+message renamed_dir
+{Le répertoire %s a été renomé en %s.
+}
+
+message cleanup_warn
+{Les ajustements nécessaire à la mise à niveau de l'installation
+existante ont échouées. Cela peut empêcher l'extraction du composant
+suivant.
 }
 
 message nomount
