@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.35.2.10 2002/11/24 22:36:03 tron Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.35.2.11 2003/02/08 07:52:23 jmc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.35.2.10 2002/11/24 22:36:03 tron Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.35.2.11 2003/02/08 07:52:23 jmc Exp $");
 #endif
 
 /*
@@ -113,12 +113,12 @@ expect(int fd, const char *str, int *ftprc)
 #if EXPECT_DEBUG
     vstr=malloc(2*sizeof(buf));
     if (vstr == NULL)
-	err(1, "expect: malloc() failed");
+	err(EXIT_FAILURE, "expect: malloc() failed");
     strvis(vstr, str, VIS_NL|VIS_SAFE|VIS_CSTYLE);
 #endif /* EXPECT_DEBUG */
 	    
     if (regcomp(&rstr, str, REG_EXTENDED) != 0)
-	err(1, "expect: regcomp() failed");
+	err(EXIT_FAILURE, "expect: regcomp() failed");
 
 #if EXPECT_DEBUG
     if (expect_debug)
@@ -294,14 +294,14 @@ setupCoproc(const char *base)
 	    (void) close(command_pipe[1]);
 	    rc1 = dup2(command_pipe[0], 0);
             if (rc1 == -1) {
-                    err(1, "setupCoproc: dup2 failed (command_pipe[0])");
+                    err(EXIT_FAILURE, "setupCoproc: dup2 failed (command_pipe[0])");
             }
 	    (void) close(command_pipe[0]);
 	    
 	    (void) close(answer_pipe[0]);
 	    rc1 = dup2(answer_pipe[1], 1);
             if (rc1 == -1) {
-                    err(1, "setupCoproc: dup2 failed (answer_pipe[1])");
+                    err(EXIT_FAILURE, "setupCoproc: dup2 failed (answer_pipe[1])");
             }
 	    (void) close(answer_pipe[1]);
 	    
@@ -431,7 +431,7 @@ ftp_start(char *base)
 	fileURLHost(base, newHost, sizeof(newHost));
 	urllen = URLlength(base);
 	if (urllen < 0 || !(newDir = strchr(base + URLlength(base), '/')))
-		errx(1, "ftp_start: bad URL '%s'", base);
+		errx(EXIT_FAILURE, "ftp_start: bad URL '%s'", base);
 	newDir++;
 	if (currentHost
 	    && currentDir
@@ -661,16 +661,16 @@ unpackURL(const char *url, const char *dir)
 
 	{
 		/* Verify if the url is really ok */
-		char exp[FILENAME_MAX];
+		char expnd[FILENAME_MAX];
 
-		rc=expandURL(exp, url);
+		rc=expandURL(expnd, url);
 		if (rc == -1) {
 			warnx("unpackURL: verification expandURL failed");
 			return -1;
 		}
-		if (strcmp(exp, url) != 0) {
+		if (strcmp(expnd, url) != 0) {
 			warnx("unpackURL: verification expandURL failed, '%s'!='%s'",
-			      exp, url);
+			      expnd, url);
 			return -1;
 		}
 	}
@@ -846,7 +846,7 @@ miscstuff(const char *url)
 static void
 usage(void)
 {
-  errx(1, "Usage: foo [-v] ftp://-pattern");
+  errx(EXIT_FAILURE, "Usage: foo [-v] ftp://-pattern");
 }
 
 
