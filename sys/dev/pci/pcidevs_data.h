@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.96 1998/11/27 10:43:53 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.97 1998/11/29 01:54:16 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.90 1998/11/27 10:39:16 drochner Exp 
+ *	NetBSD: pcidevs,v 1.92 1998/11/29 01:54:02 thorpej Exp 
  */
 
 /*
@@ -1726,12 +1726,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "8139 10/100 Ethernet",
 	},
 	{
-	    PCI_VENDOR_REALTEK2, PCI_PRODUCT_REALTEK2_RT8139_2,
-	    0,
-	    "Realtek Semiconductor (2nd PCI Vendor ID)",
-	    "8139 10/100 Ethernet (2nd PCI Device ID)",
-	},
-	{
 	    PCI_VENDOR_RISCOM, PCI_PRODUCT_RISCOM_N2,
 	    0,
 	    "RISCom",
@@ -2354,6 +2348,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT83C572 USB Controller",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE,
+	    0,
+	    "VIA Technologies",
+	    "VIA Rhine 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
+	    0,
+	    "VIA Technologies",
+	    "VT86C100A (Rhine-II) 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR,
@@ -5155,12 +5161,6 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSENTIAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Essential Communications",
-	    NULL,
-	},
-	{
-	    PCI_VENDOR_REALTEK2, 0,
-	    PCI_KNOWNDEV_NOPROD,
-	    "Realtek Semiconductor (2nd PCI Vendor ID)",
 	    NULL,
 	},
 	{
