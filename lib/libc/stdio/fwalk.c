@@ -1,4 +1,4 @@
-/*	$NetBSD: fwalk.c,v 1.4 1995/02/02 02:09:49 jtc Exp $	*/
+/*	$NetBSD: fwalk.c,v 1.5 1996/03/29 23:29:12 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fwalk.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: fwalk.c,v 1.4 1995/02/02 02:09:49 jtc Exp $";
+static char rcsid[] = "$NetBSD: fwalk.c,v 1.5 1996/03/29 23:29:12 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <errno.h>
@@ -48,6 +48,7 @@ static char rcsid[] = "$NetBSD: fwalk.c,v 1.4 1995/02/02 02:09:49 jtc Exp $";
 #include "local.h"
 #include "glue.h"
 
+int
 _fwalk(function)
 	register int (*function)();
 {
