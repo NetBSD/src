@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.58 2003/09/17 16:01:19 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.59 2003/09/22 12:17:24 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.58 2003/09/17 16:01:19 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.59 2003/09/22 12:17:24 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ STATIC void expbackq(union node *, int, int);
 STATIC int subevalvar(char *, char *, int, int, int, int);
 STATIC char *evalvar(char *, int);
 STATIC int varisset(char *, int);
-STATIC void varvalue(char *, int, int);
+STATIC void varvalue(char *, int, int, int);
 STATIC void recordregion(int, int, int);
 STATIC void removerecordregions(int); 
 STATIC void ifsbreakup(char *, struct arglist *);
@@ -643,8 +643,7 @@ again: /* jump here after setting a variable with ${var=text} */
 	if (set && subtype != VSPLUS) {
 		/* insert the value of the variable */
 		if (special) {
-			varvalue(var, varflags & VSQUOTE,
-			    flag & (EXP_FULL|EXP_CASE));
+			varvalue(var, varflags & VSQUOTE, subtype, flag);
 			if (subtype == VSLENGTH) {
 				varlen = expdest - stackblock() - startloc;
 				STADJUST(-varlen, expdest);
@@ -810,7 +809,7 @@ varisset(char *name, int nulok)
  */
 
 STATIC void
-varvalue(char *name, int quoted, int allow_split)
+varvalue(char *name, int quoted, int subtype, int flag)
 {
 	int num;
 	char *p;
@@ -821,7 +820,7 @@ varvalue(char *name, int quoted, int allow_split)
 
 #define STRTODEST(p) \
 	do {\
-	if (allow_split) { \
+	if (flag & (EXP_FULL | EXP_CASE) && subtype != VSLENGTH) { \
 		syntax = quoted? DQSYNTAX : BASESYNTAX; \
 		while (*p) { \
 			if (syntax[(int)*p] == CCTL) \
@@ -856,7 +855,7 @@ numvar:
 		}
 		break;
 	case '@':
-		if (allow_split && quoted) {
+		if (flag & EXP_FULL && quoted) {
 			for (ap = shellparam.p ; (p = *ap++) != NULL ; ) {
 				STRTODEST(p);
 				if (*ap)
