@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_pci_mem.c,v 1.3 2001/07/17 17:46:42 thorpej Exp $	*/
+/*	$NetBSD: alpha_pci_mem.c,v 1.4 2002/07/19 22:03:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -88,19 +88,31 @@ alpha_pci_mem_map(bus_addr_t memaddr, bus_size_t memsize, int flags,
 		    (memaddr + (memsize - 1)) > abw->abw_abst.abst_bus_end)
 			continue;
 
-		/* If we want linear, the window must be dense. */
-		if (linear && (abw->abw_abst.abst_flags & ABST_DENSE) == 0)
+		/*
+		 * Prefetchable memory must be mapped in dense space;
+		 * otherwise use sparse space.
+		 */
+		if (prefetchable &&
+		    (abw->abw_abst.abst_flags & ABST_DENSE) == 0)
+			continue;
+		if (!prefetchable &&
+		    (abw->abw_abst.abst_flags & ABST_DENSE) != 0)
 			continue;
 
 		/* Looks like we have a winner! */
 		goto found;
 	}
 
+	/* Not found in any of the windows. */
+	return (MAP_FAILED);
+
  found:
 	fd = open(_PATH_MEM, O_RDWR, 0600);
 	if (fd == -1)
 		return (MAP_FAILED);
 
+	if (prefetchable)
+		abw->abw_abst.abst_addr_shift = 0;
 	memsize <<= abw->abw_abst.abst_addr_shift;
 	offset = (memaddr - abw->abw_abst.abst_bus_start) <<
 	    abw->abw_abst.abst_addr_shift;
