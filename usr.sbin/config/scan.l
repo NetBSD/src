@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.39 2003/09/03 18:56:38 thorpej Exp $	*/
+/*	$NetBSD: scan.l,v 1.40 2003/09/08 17:50:12 cl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -201,7 +201,6 @@ curdir_push(const char *fname)
 
 	/* Set up the initial "current directory" for include directives. */
 	d = dirname(f = estrdup(fname));
-	free(f);
 	if (*d == '/')
 		p = estrdup(d);
 	else {
@@ -212,6 +211,7 @@ curdir_push(const char *fname)
 		p = emalloc(strlen(cwd) + strlen(d) + 2);
 		sprintf(p, "%s/%s", cwd, d);
 	}
+	free(f);
 	pf = emalloc(sizeof(*pf));
 	pf->pf_prefix = p;
 	SLIST_INSERT_HEAD(&curdirs, pf, pf_next);
