@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.12 1998/02/03 01:30:17 perry Exp $	*/
+/*	$NetBSD: getopt.c,v 1.13 1999/01/09 20:31:07 kleink Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.12 1998/02/03 01:30:17 perry Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.13 1999/01/09 20:31:07 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,7 +82,8 @@ getopt(nargc, nargv, ostr)
 			place = EMSG;
 			return (-1);
 		}
-		if (place[1] && *++place == '-') {	/* found "--" */
+		if (place[1] && *++place == '-'	/* found "--" */
+		    && place[1] == '\0') {
 			++optind;
 			place = EMSG;
 			return (-1);
