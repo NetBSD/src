@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cc_copper.h,v 1.2 1994/01/29 06:58:48 chopps Exp $
+ *	$Id: cc_copper.h,v 1.3 1994/01/30 08:50:19 chopps Exp $
  */
 #if ! defined (_CC_COPPER_H)
 #define _CC_COPPER_H
@@ -65,6 +65,10 @@ typedef struct copper_list {
 		        } while(0)
 #define CSKIP(c,h,v) do { \
 			    c->cp.data=((CI_SKIP(h,v)<<16)|CD_SKIP(0xffff)); \
+		            CBUMP (c); \
+		        } while(0)
+#define CEND(c) do { \
+			    c->cp.data=0xfffffffe; \
 		            CBUMP (c); \
 		        } while(0)
 
