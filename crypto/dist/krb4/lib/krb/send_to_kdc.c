@@ -22,7 +22,7 @@ or implied warranty.
 #include "krb_locl.h"
 #include <base64.h>
 
-RCSID("$Id: send_to_kdc.c,v 1.1.1.2 2000/12/29 01:43:19 assar Exp $");
+RCSID("$Id: send_to_kdc.c,v 1.2 2000/12/29 02:52:36 assar Exp $");
 
 struct host {
     struct sockaddr_in addr;
@@ -143,7 +143,6 @@ send_to_kdc(KTEXT pkt, KTEXT rpkt, const char *realm)
 	char **addr_list;
 	int j;
 	int n_addrs;
-	struct host *tmp;
 
 	if (k_host->proto == PROTO_HTTP && proxy != NULL) {
 	    n_addrs = 1;
