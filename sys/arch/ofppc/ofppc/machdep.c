@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 1999/12/04 21:21:09 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 1999/12/18 01:37:00 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -173,8 +173,8 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Set up initial BAT table to only map the lowest 256 MB area
 	 */
-	battable[0].batl = BATL(0x00000000, BAT_M);
-	battable[0].batu = BATU(0x00000000);
+	battable[0].batl = BATL(0x00000000, BAT_M, BAT_PP_RW);
+	battable[0].batu = BATU(0x00000000, BAT_BL_256M, BAT_Vs);
 
 	/*
 	 * Now setup fixed bat registers
