@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.26 2000/01/05 11:24:02 drochner Exp $	*/
+/*	$NetBSD: scan.l,v 1.27 2000/01/23 23:37:42 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,6 +101,7 @@ dumps		return DUMPS;
 file		return XFILE;
 file-system	return FILE_SYSTEM;
 flags		return FLAGS;
+ident		return IDENT;
 include		return INCLUDE;
 machine		return XMACHINE;
 major		return MAJOR;

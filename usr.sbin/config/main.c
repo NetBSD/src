@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.44 1999/09/24 04:23:36 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.45 2000/01/23 23:37:42 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,7 @@ static	int	crosscheck __P((void));
 static	int	badstar __P((void));
 	int	main __P((int, char **));
 static	int	mksymlinks __P((void));
+static	int	mkident __P((void));
 static	int	hasparent __P((struct devi *));
 static	int	cfcrosscheck __P((struct config *, const char *,
 		    struct nvlist *));
@@ -185,6 +186,7 @@ usage:
 	initintern();
 	initfiles();
 	initsem();
+	ident=NULL;
 	devbasetab = ht_new();
 	devatab = ht_new();
 	selecttab = ht_new();
@@ -275,7 +277,7 @@ usage:
 	 * Ready to go.  Build all the various files.
 	 */
 	if (mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
-	    mkioconf())
+	    mkioconf() || mkident())
 		stop();
 	(void)printf("Don't forget to run \"make depend\"\n");
 	exit(0);
@@ -958,4 +960,32 @@ setupdirs()
 			      srcdir);
 		exit(2);
 	}
+}
+
+/*
+ * Write identifier from "ident" directive into file, for
+ * newvers.sh to pick it up.
+ */
+int
+mkident()
+{
+	FILE *fp;
+
+	(void)unlink("ident");
+
+	if (ident == NULL)
+		return (0);
+	
+	if ((fp = fopen("ident", "w")) == NULL) {
+		(void)fprintf(stderr, "config: cannot write ident: %s\n",
+		    strerror(errno));
+		return (1);
+	}
+	if (vflag)
+		(void)printf("using ident '%s'\n", ident);
+	if (fprintf(fp, "%s\n", ident) < 0)
+		return (1);
+	(void)fclose(fp);
+
+	return (0);
 }

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.27 1999/07/09 06:44:58 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.28 2000/01/23 23:37:42 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,7 +103,7 @@ static	struct nvlist *mk_ns __P((const char *, struct nvlist *));
 
 %token	AND AT ATTACH BUILD CINCLUDE COMPILE_WITH CONFIG DEFFS DEFINE DEFOPT 
 %token	DEFPARAM DEFFLAG DEFPSEUDO DEVICE DEVCLASS DUMPS ENDFILE XFILE XOBJECT
-%token	FILE_SYSTEM FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
+%token	FILE_SYSTEM FLAGS IDENT INCLUDE XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PREFIX PSEUDO_DEVICE ROOT
 %token	SOURCE TYPE WITH NEEDS_COUNT NEEDS_FLAG
 %token	<val> NUMBER
@@ -386,6 +386,7 @@ config_spec:
 	OPTIONS opt_list |
 	MAKEOPTIONS mkopt_list |
 	MAXUSERS NUMBER			{ setmaxusers($2); } |
+	IDENT WORD			{ setident($2); } |
 	CONFIG conf root_spec sysparam_list
 					{ addconf(&conf); } |
 	PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); } |

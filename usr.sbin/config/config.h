@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.46 1999/09/22 14:23:03 ws Exp $	*/
+/*	$NetBSD: config.h,v 1.47 2000/01/23 23:37:42 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -316,6 +316,7 @@ const char *machinearch;	/* machine arch, e.g., "sparc" or "m68k" */
 const char *srcdir;		/* path to source directory (rel. to build) */
 const char *builddir;		/* path to build directory */
 const char *defbuilddir;	/* default build directory */
+const char *ident;		/* kernel "ident"ification string */
 int	errors;			/* counts calls to error() */
 int	minmaxusers;		/* minimum "maxusers" parameter */
 int	defmaxusers;		/* default "maxusers" parameter */
