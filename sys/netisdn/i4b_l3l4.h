@@ -27,7 +27,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.3 2002/03/17 09:46:01 martin Exp $
+ *	$Id: i4b_l3l4.h,v 1.4 2002/03/17 11:08:32 martin Exp $
  *
  * $FreeBSD$
  *
@@ -149,8 +149,8 @@ typedef struct
 
 	int	bprot;			/* B channel protocol BPROT_XXX */
 
-	int	driver;			/* driver to use for B channel	*/
-	int	driver_unit;		/* unit for above driver number	*/
+	int	bchan_driver_index;	/* driver to use for B channel	*/
+	int	bchan_driver_unit;	/* unit for above driver number	*/
 	
 	cause_t	cause_in;		/* cause value from NT	*/
 	cause_t	cause_out;		/* cause value to NT	*/
