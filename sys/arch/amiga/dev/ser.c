@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
- *	$Id: ser.c,v 1.20 1994/06/16 14:28:55 chopps Exp $
+ *	$Id: ser.c,v 1.21 1994/08/31 02:13:01 chopps Exp $
  */
 /*
  * XXX This file needs major cleanup it will never ervice more than one
@@ -427,11 +427,7 @@ ser_fastint()
 	 */
 	if (sbwpt + 1 == sbrpt || 
 	    (sbwpt == serbuf + SERIBUF_SIZE - 1 && sbrpt == serbuf)) {
-#if 0
-		log(LOG_WARNING, "ser_fastint: buffer overflow!");
-#else
 		++sbovfl;
-#endif
 		return;
 	}
 	/*
@@ -476,7 +472,8 @@ serintr(unit)
 		}
 		splx(s2);
 		if (ovfl != 0)
-			log(LOG_WARNING, "ser_fastint: %d buffer overflow!\n", ovfl);
+			log(LOG_WARNING, "ser0: %d ring buffer overflows.\n",
+			    ovfl);
 	}
 	splx(s1);
 }
