@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.15 1999/03/16 16:30:23 minoura Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.16 1999/03/17 12:29:56 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -69,7 +69,7 @@ u_int8_t *intiobase = (u_int8_t *) PHYS_IODEV;
 
 void	pmap_bootstrap __P((paddr_t, paddr_t));
 
-#ifdef MACHINE_NONCONTIG
+#ifdef EXTENDED_MEMORY
 static int mem_exists __P((caddr_t, u_long));
 static void setmemrange __P((paddr_t));
 
@@ -163,7 +163,7 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += NBPG;
 	p0upa = nextpa;
 	nextpa += USPACE;
-#ifdef MACHINE_NONCONTIG
+#ifdef EXTENDED_MEMORY
 	setmemrange(firstpa);
 #if 0
 	if (nextpa > high[0]) {
@@ -451,7 +451,7 @@ pmap_bootstrap(nextpa, firstpa)
 		m68k_ptob(RELOC(maxmem, int))
 			/* XXX allow for msgbuf */
 			- m68k_round_page(MSGBUFSIZE);
-#ifdef MACHINE_NONCONTIG
+#ifdef EXTENDED_MEMORY
 	{
 		int i;
 		psize_t av_rem = 0;
@@ -571,7 +571,7 @@ pmap_bootstrap(nextpa, firstpa)
 	}
 }
 
-#ifdef MACHINE_NONCONTIG
+#ifdef EXTENDED_MEMORY
 static struct memlist {
 	caddr_t base;
 	psize_t min;
