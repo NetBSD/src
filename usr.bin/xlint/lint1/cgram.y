@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.23 2002/01/31 19:36:53 tv Exp $ */
+/* $NetBSD: cgram.y,v 1.24 2002/02/05 03:04:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.23 2002/01/31 19:36:53 tv Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.24 2002/02/05 03:04:27 thorpej Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1641,18 +1641,18 @@ yyerror(char *msg)
 	return (0);
 }
 
-static inline int uq_gt(u_quad_t, u_quad_t);
-static inline int q_gt(quad_t, quad_t);
+static inline int uq_gt(uint64_t, uint64_t);
+static inline int q_gt(int64_t, int64_t);
 
 static inline int
-uq_gt(u_quad_t a, u_quad_t b)
+uq_gt(uint64_t a, uint64_t b)
 {
 
 	return (a > b);
 }
 
 static inline int
-q_gt(quad_t a, quad_t b)
+q_gt(int64_t a, int64_t b)
 {
 
 	return (a > b);
@@ -1692,13 +1692,14 @@ toicon(tnode_t *tn)
 	} else {
 		i = (int)v->v_quad;
 		if (isutyp(t)) {
-			if (uq_gt((u_quad_t)v->v_quad, (u_quad_t)INT_MAX)) {
+			if (uq_gt((uint64_t)v->v_quad,
+				  (uint64_t)INT_MAX)) {
 				/* integral constant too large */
 				warning(56);
 			}
 		} else {
-			if (q_gt(v->v_quad, (quad_t)INT_MAX) ||
-			    q_lt(v->v_quad, (quad_t)INT_MIN)) {
+			if (q_gt(v->v_quad, (int64_t)INT_MAX) ||
+			    q_lt(v->v_quad, (int64_t)INT_MIN)) {
 				/* integral constant too large */
 				warning(56);
 			}
