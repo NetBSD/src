@@ -1,4 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/12 01:48:54 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2002/09/18 13:31:54 lukem Exp $
+
+NOLINKLIB=# defined
+NOMAN=	# defined
+NOPIC=	# defined
+NOLINT=	# defined
 
 LIB=	ntp
 SRCS=	a_md5encrypt.c adjtime.c atoint.c atolfp.c atouint.c \
@@ -14,10 +19,5 @@ SRCS=	a_md5encrypt.c adjtime.c atoint.c atolfp.c atouint.c \
 	mfp_mul.c binio.c ieee754io.c gpstolfp.c recvbuff.c iosignal.c \
 	icom.c audio.c
 NTPSRCDIR=lib${LIB}
-
-NOLINKLIB=# defined
-NOMAN=	# defined
-NOPIC=	# defined
-NOLINT=	# defined
 
 .include <bsd.lib.mk>

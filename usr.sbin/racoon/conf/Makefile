@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2001/12/12 01:48:55 tv Exp $
+#	$NetBSD: Makefile,v 1.5 2002/09/18 13:31:55 lukem Exp $
+
+NOOBJ=# defined
 
 FILES=	psk.txt.sample racoon.conf.sample racoon.conf.sample-gssapi
 FILES+=	README.certificate README.gssapi
-
-NOOBJ=# defined
 
 .include <bsd.prog.mk>
 
