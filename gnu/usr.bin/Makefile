@@ -1,14 +1,10 @@
-#	$NetBSD: Makefile,v 1.94 2000/06/17 17:59:28 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.94.2.1 2000/08/07 03:20:11 mrg Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
 
-SUBDIR+=	bc binutils cpio dc diff diff3 egcs gas.new gawk grep gprof
+SUBDIR+=	bc binutils cpio dc diff diff3 egcs gas.new gawk gdb grep gprof
 SUBDIR+=	groff gzip ld.new rcs sdiff send-pr sort tar texinfo
-
-.if (${MACHINE_ARCH} != "sparc64")
-SUBDIR+=	gdb
-.endif
 
 .if (${MACHINE_ARCH} == "m68k" && ${OBJECT_FMT} != "ELF") ||	\
     (${MACHINE_ARCH} == "ns32k")
