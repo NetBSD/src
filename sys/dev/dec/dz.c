@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.11 2003/10/18 12:10:53 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.12 2003/12/09 14:30:55 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,9 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.11 2003/10/18 12:10:53 ragge Exp $");
-
-#include "opt_ddb.h"
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.12 2003/12/09 14:30:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +205,7 @@ dzrint(void *arg)
 {
 	struct dz_softc *sc = arg;
 	struct tty *tp;
-	int cc, line;
+	int cc, mcc, line;
 	unsigned c;
 	int overrun = 0;
 
@@ -223,7 +221,12 @@ dzrint(void *arg)
 		    (*sc->sc_dz[line].dz_catch)(sc->sc_dz[line].dz_private, cc))
 			continue;
 
-		cn_check_magic(tp->t_dev, cc, dz_cnm_state);
+		if ((c & (DZ_RBUF_FRAMING_ERR | 0xff)) == DZ_RBUF_FRAMING_ERR)
+			mcc = CNC_BREAK;
+		else
+			mcc = cc;
+
+		cn_check_magic(tp->t_dev, mcc, dz_cnm_state);
 
 		if (!(tp->t_state & TS_ISOPEN)) {
 			wakeup((caddr_t)&tp->t_rawq);
@@ -235,16 +238,7 @@ dzrint(void *arg)
 			    sc->sc_dev.dv_xname, line);
 			overrun = 1;
 		}
-#if defined(pmax) && defined(DDB)
-		else if (line == sc->sc_consline) {
-			/*
-			 * A BREAK key will appear as a NUL with a framing
-			 * error.
-			 */
-			if (cc == 0 && (c & DZ_RBUF_FRAMING_ERR) != 0)
-				Debugger();
-		}
-#endif
+
 		if (c & DZ_RBUF_FRAMING_ERR)
 			cc |= TTY_FE;
 		if (c & DZ_RBUF_PARITY_ERR)
