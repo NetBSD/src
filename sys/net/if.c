@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.71 2000/10/01 23:16:07 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.72 2000/10/04 21:12:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@
 #ifdef INET6
 /*XXX*/
 #include <netinet/in.h>
+#include <netinet6/in6_var.h>
 #endif
 
 int	ifqmaxlen = IFQ_MAXLEN;
@@ -1141,6 +1142,16 @@ ifioctl(so, cmd, data, p)
 		}
 		break;
 	}
+	case SIOCSIFPHYADDR:
+	case SIOCDIFPHYADDR:
+#ifdef INET6
+	case SIOCSIFPHYADDR_IN6:
+#endif
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+			return (error);
+		error = (*ifp->if_ioctl)(ifp, cmd, data);
+		break;
+
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
