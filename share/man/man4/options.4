@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.22 1997/08/28 07:12:35 mikel Exp $
+.\"	$NetBSD: options.4,v 1.23 1997/08/29 10:38:02 kleink Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -100,9 +100,10 @@ be replaced with a post 1.1 style label.
 Enable binary compatibility with
 .Nx 1.2 .
 This allows the use of old syscalls for
-.Fn reboot , and
+.Fn reboot
+and
 .Fn swapon .
-The syscall numbers was changed post 1.2 to add functionality to the
+The syscall numbers were changed post 1.2 to add functionality to the
 reboot syscall, and the new
 .Fn swapctl
 interface was introduced.
@@ -126,7 +127,7 @@ On those architectures that support it, this enables binary
 compatibility with
 .At V.4
 applications built for the same architecture.  This currently includes
-the sparc, and i386.
+the sparc and i386.
 .It Cd options COMPAT_LINUX
 On those architectures that support it, this enables binary
 compatibility with Linux ELF and a.out
@@ -245,7 +246,7 @@ and is provided here for compatibility. Some of the specific features
 of
 .Em EXT2FS 
 like the "behavior on errors" are not implemented. This file system can't be
-used with UID or GID greather than 65535. See
+used with UID or GID greater than 65535. See
 .Xr mount_ext2fs 8
 for details.
 .It Cd file-system LFS
@@ -544,7 +545,7 @@ set to
 .Pa /dev/fd/* .
 What this option allows as far as security is
 concerned, is the ability to safely ensure that the correct script
-it run by the interpreter, as it is passed as an already open file.
+is run by the interpreter, as it is passed as an already open file.
 .It Cd options RTC_OFFSET=integer
 The kernel (and typically the hardware battery backed-up clock on
 those machines that have one) keeps time in
@@ -743,7 +744,7 @@ for details.
 .It Cd options IPFILTER
 This option enables the IP filtering on the packet level using the
 ip-filter package.  This option requies that the
-.Em PFIL_HOOK
+.Em PFIL_HOOKS
 option also be included.
 .It Cd options IPFILTER_LOG
 This option, in conjuction with
@@ -851,7 +852,7 @@ panics.
 .It Cd options NBUF=value
 .It Cd options BUFPAGES=value
 These option set the number of pages available for the buffer cache.
-Their default value is a machine depedant value, often calculated as
+Their default value is a machine dependent value, often calculated as
 between 5% and 10% of total available RAM.
 .El
 .\" The following requests should be uncommented and used where appropriate.
