@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.18 1996/03/07 23:25:50 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.19 1996/03/09 23:38:34 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -1055,8 +1055,13 @@ uba_attach(parent, self, aux)
 		sc->uh_mr = (void *)ubar->uba_map;
 		sc->uh_type = DW780;
 		sc->uh_physuba = (struct uba_regs *)kvtophys(sa->nexaddr);
-		ubaphys = UMEM780(sa->nexinfo);
-		ubaiophys = UMEM780(sa->nexinfo) + (UBAPAGES * NBPG);
+		if (parent->dv_unit == 0) {
+			ubaphys = UMEMA8600(sa->nexinfo);
+			ubaiophys = UMEMA8600(sa->nexinfo) + (UBAPAGES * NBPG);
+		} else {
+			ubaphys = UMEMB8600(sa->nexinfo);
+			ubaiophys = UMEMB8600(sa->nexinfo) + (UBAPAGES * NBPG);
+		}
 		bcopy(&idsptch, &sc->uh_dw780, sizeof(struct ivec_dsp));
 		sc->uh_dw780.pushlarg = sc->uh_dev.dv_unit;
 		sc->uh_dw780.hoppaddr = uba_dw780int;
