@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: sys.c,v 1.9 1994/07/21 18:06:26 mycroft Exp $
+ *	$Id: sys.c,v 1.10 1994/07/21 19:05:31 mycroft Exp $
  */
 
 #include "boot.h"
@@ -115,7 +115,7 @@ loop:
 		}
 		dp = (struct dirent *)(iodest + off);
 		if (dp->d_reclen < 8) {
-			printf("directory corrupted\n");
+			printf("directory corrupted (possible geometry mismatch)\n");
 			return 0;
 		}
 		loc += dp->d_reclen;
