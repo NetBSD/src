@@ -6,7 +6,7 @@
 PROG=		pic
 SRCS=           common.cc main.cc object.cc output.cc \
 		pic.y key.cc lex.cc tex.cc troff.cc
-LDADD+=		$(.CURDIR)/../libgroff/obj/libgroff.a
+LDADD+=		$(.CURDIR)/../libgroff/obj/libgroff.a -lm
 # Delete the -Ig++-include after we fix libg++ and install it
 GXXFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../libgroff \
 		-I$(.CURDIR)/../../../lib/libg++/g++-include
