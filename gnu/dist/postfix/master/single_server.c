@@ -229,7 +229,7 @@ static void single_server_wakeup(int fd)
 
 static void single_server_accept_local(int unused_event, char *context)
 {
-    int     listen_fd = (int) context;
+    int     listen_fd = (int) (long) context;
     int     time_left = -1;
     int     fd;
 
@@ -262,7 +262,7 @@ static void single_server_accept_local(int unused_event, char *context)
 
 static void single_server_accept_inet(int unused_event, char *context)
 {
-    int     listen_fd = (int) context;
+    int     listen_fd = (int) (long) context;
     int     time_left = -1;
     int     fd;
 
@@ -526,7 +526,7 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
     if (var_idle_limit > 0)
 	event_request_timer(single_server_timeout, (char *) 0, var_idle_limit);
     for (fd = MASTER_LISTEN_FD; fd < MASTER_LISTEN_FD + socket_count; fd++) {
-	event_enable_read(fd, single_server_accept, (char *) fd);
+	event_enable_read(fd, single_server_accept, (char *) (long) fd);
 	close_on_exec(fd, CLOSE_ON_EXEC);
     }
     event_enable_read(MASTER_STATUS_FD, single_server_abort, (char *) 0);
