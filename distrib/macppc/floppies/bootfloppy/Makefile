@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2002/05/04 01:34:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.25 2002/05/15 14:03:53 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,8 +15,7 @@ MDEC=		${DESTDIR}/usr/mdec
 KERNOBJ!=	cd ${.CURDIR}/../md-kernel && ${PRINTOBJDIR}
 FLOPPY_NETBSD=	${KERNOBJ}/netbsd.INSTALL.gz
 FLOPPY_BOOT=	${MDEC}/ofwboot
-#	XXXDISTRIB: need MI installboot for macppc
-FLOPPYINSTBOOT=	"${MDEC}/installboot -v -b 17 boot ${MDEC}/bootxx @IMAGE@"
+FLOPPYINSTBOOT=	"${INSTALLBOOT} -v -m ${MACHINE} -t raw -B 17 @IMAGE@ ${MDEC}/bootxx ${FLOPPY_BOOT}"
 
 .include "${DISTRIBDIR}/common/Makefile.tarfloppy"
 
