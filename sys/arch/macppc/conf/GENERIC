@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.129.4.5 2003/06/19 11:16:05 grant Exp $
+# $NetBSD: GENERIC,v 1.129.4.6 2003/06/19 11:39:35 grant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129.4.5 $"
+#ident 		"GENERIC-$Revision: 1.129.4.6 $"
 
 maxusers	32
 
@@ -127,8 +127,9 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 # wscons options
-#options 	WSEMUL_SUN		# sun terminal emulation
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSEMUL_SUN			# sun terminal emulation
+options 	WSEMUL_VT100			# VT100 / VT220 emulation
+#options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	FONT_GALLANT12x22
 
 # Kernel root file system and dump configuration.
