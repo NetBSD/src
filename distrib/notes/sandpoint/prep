@@ -1,19 +1,20 @@
-.\"	$NetBSD: prep,v 1.1 2001/10/24 18:30:35 briggs Exp $
+.\"	$NetBSD: prep,v 1.2 2002/06/30 12:32:02 lukem Exp $
 .
 When installing NetBSD for your
 .Nx \*V
 system, you have to decide where you want your root partition and
-how you'll be downloading your kernel.  Since the
+how you'll be downloading your kernel.
+Since the
 .Tn IBM
 ROM rather limits your boot options, you won't be able to have the
-machine boot independently.  Once you load the kernel, however,
-you may have the root filesystem on a local disk or you can configure
-a diskless setup.
+machine boot independently.
+Once you load the kernel, however, you may have the root filesystem on a
+local disk or you can configure a diskless setup.
 .Pp
 In either case, you'll need to set up to boot the kernel over the network
 or over a serial line.
 .
 .Ss2 Booting over a serial line
 .
-This is not currently documented or supported.  If you would like to
-attempt this and supply documentation, please do!
+This is not currently documented or supported.
+If you would like to attempt this and supply documentation, please do!
