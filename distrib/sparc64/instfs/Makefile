@@ -1,37 +1,28 @@
-#	$NetBSD: Makefile,v 1.8 2002/05/02 18:02:55 lukem Exp $
-#
-# instfs.tgz is the filesystem image for disk 2 of the floppy based
-# installation method.
-# It is constructed by tarring up the contents of the miniroot with
-# the exeption of the kernel and boot program.
-#
+#	$NetBSD: Makefile,v 1.9 2002/05/07 14:41:37 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-TOP=		${.CURDIR}/..
-MINIROOT=	${.CURDIR}/../xminiroot
+.include <bsd.kernobj.mk>
 
-.include "${TOP}/Makefile.inc"
+.include "${.CURDIR}/../instfs/Makefile.instfs"
+IMAGE=			install.fs
+IMAGESIZE=		3m
 
-MINIROOT_DIR!=	cd ${MINIROOT} && ${PRINTOBJDIR}
-MINIROOT_IMAGE=	${MINIROOT_DIR}/miniroot.fs
-MINIROOT_KERNEL=${MINIROOT_DIR}/netbsd.INSTALL
+IMAGETAR=		instfs.tgz
+IMAGETAR_RELEASEDIR=	installation/misc
 
-MOUNT_POINT?=	${MINIROOT_DIR}/mountpoint
-INSTFS?=	instfs.tgz
+MDSETTARGETS=		INSTALL	${IMAGE} -
+MDSET_RELEASEDIR=	binary/kernel
 
-all: ${INSTFS}
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=	${DISTRIBDIR}/utils/libhack
+.include	"${HACKSRC}/Makefile.inc"
+${CRUNCHBIN}:	libhack.o
 
-${INSTFS}: ${MINIROOT_IMAGE}
-	(cd ${MOUNT_POINT}; \
-		tar -z -X ${.CURDIR}/exclude -c -f ${.OBJDIR}/${.TARGET} .)
-
-clean cleandir distclean:
-	/bin/rm -f *.core ${INSTFS}
-
-release: check_RELEASEDIR .WAIT ${INSTFS} ${MINIROOT_KERNEL}
-	${RELEASE_INSTALL} ${INSTFS} $(RELEASEDIR)/installation/misc
-	gzip -9 -c ${MINIROOT_KERNEL} > $(RELEASEDIR)/binary/kernel/netbsd.INSTALL.gz
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+.include "${DISTRIBDIR}/common/Makefile.mdset"
 
 .include <bsd.prog.mk>

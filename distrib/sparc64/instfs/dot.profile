@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile.m4,v 1.1 2001/01/07 09:30:20 mrg Exp $
+# $NetBSD: dot.profile,v 1.1 2002/05/07 14:41:37 lukem Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -36,8 +36,7 @@
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 
-ifelse(MACHINE,i386,TERM=pc3)
-ifelse(MACHINE,sparc,TERM=sun)
+TERM=sun
 export TERM
 HOME=/
 export HOME
