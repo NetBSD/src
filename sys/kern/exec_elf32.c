@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.26 1997/05/08 16:20:05 mycroft Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.27 1998/02/09 01:29:10 scottb Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -64,6 +64,10 @@
 #include <compat/svr4/svr4_exec.h>
 #endif
 
+#ifdef COMPAT_IBCS2
+#include <compat/ibcs2/ibcs2_exec.h>
+#endif
+
 #define	CONCAT(x,y)	__CONCAT(x,y)
 #define	ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
 #define	ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
@@ -107,6 +111,9 @@ int (*ELFNAME(probe_funcs)[]) __P((struct proc *, struct exec_package *,
 #endif
 #if defined(COMPAT_SVR4) && (ELFSIZE == 32)
 	ELFNAME2(svr4,probe),			/* XXX not 64-bit safe */
+#endif
+#if defined(COMPAT_IBCS2) && (ELFSIZE == 32)
+	ELFNAME2(ibcs2,probe),			/* XXX not 64-bit safe */
 #endif
 };
 
@@ -525,7 +532,7 @@ ELFNAME2(exec,makecmds)(p, epp)
 	/*
 	 * On the same architecture, we may be emulating different systems.
 	 * See which one will accept this executable. This currently only
-	 * applies to Linux and SVR4 on the i386.
+	 * applies to Linux, SVR4, and IBCS2 on the i386.
 	 *
 	 * Probe functions would normally see if the interpreter (if any)
 	 * exists. Emulation packages may possibly replace the interpreter in
@@ -591,8 +598,10 @@ ELFNAME2(exec,makecmds)(p, epp)
 			break;
 
 		case Elf_pt_shlib:
+#ifndef COMPAT_IBCS2			/* SCO has these sections */
 			error = ENOEXEC;
 			goto bad;
+#endif
 
 		case Elf_pt_interp:
 			/* Already did this one */
