@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.622 2003/10/24 23:52:00 jdolecek Exp $
+# $NetBSD: mi,v 1.623 2003/10/25 10:51:59 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1730,6 +1730,7 @@
 ./usr/share/man/cat8/sparc/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/sparc/tadpolectl.0		man-sysutil-catman
 ./usr/share/man/cat8/sparc64/boot.0		man-sys-catman
+./usr/share/man/cat8/sparc64/ofwboot.0		man-sys-catman
 ./usr/share/man/cat8/sparc64/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/spawn.0			man-postfix-catman
 ./usr/share/man/cat8/spray.0			man-netutil-catman
@@ -3530,6 +3531,7 @@
 ./usr/share/man/man8/sparc/makedev.8		man-sysutil-man
 ./usr/share/man/man8/sparc/tadpolectl.8		man-sysutil-man
 ./usr/share/man/man8/sparc64/boot.8		man-sys-man
+./usr/share/man/man8/sparc64/ofwboot.8		man-sys-man
 ./usr/share/man/man8/sparc64/makedev.8		man-sysutil-man
 ./usr/share/man/man8/spawn.8			man-postfix-man
 ./usr/share/man/man8/spray.8			man-netutil-man
