@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.27 1998/03/27 19:18:04 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.28 1998/03/28 19:44:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -139,13 +139,6 @@
 /*
  *	Manages physical address maps.
  *
- *	In addition to hardware address maps, this
- *	module is called upon to provide software-use-only
- *	maps which may or may not be stored in the same
- *	form as hardware maps.  These pseudo-maps are
- *	used to store intermediate results from copy
- *	operations to and from address spaces.
- *
  *	Since the information managed by this module is
  *	also stored by the logical address mapping module,
  *	this module may throw away valid virtual-to-physical
@@ -168,7 +161,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 1998/03/27 19:18:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 1998/03/28 19:44:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
