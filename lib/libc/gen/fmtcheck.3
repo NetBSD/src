@@ -1,4 +1,4 @@
-.\"	$NetBSD: fmtcheck.3,v 1.3 2002/10/01 16:48:34 wiz Exp $
+.\"	$NetBSD: fmtcheck.3,v 1.4 2002/10/01 19:47:40 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,7 +84,7 @@ Also, any text other than the format specifiers is completely ignored.
 .Pp
 Note that the formats may be quite different as long as they accept the
 same parameters.
-For example, ".Dq %p %o %30s %#llx %-10.*e %n" is
+For example, "%p %o %30s %#llx %-10.*e %n" is
 compatible with "This number %lu %d%% and string %s has %qd numbers
 and %.*g floats (%n)."
 However, "%o" is not equivalent to "%lx" because
