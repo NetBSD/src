@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: search.h,v 1.4 1994/01/29 01:55:56 jtc Exp $
+ *	$Id: search.h,v 1.5 1994/05/21 09:41:59 cgd Exp $
  */
 
 #ifndef _SEARCH_H_
@@ -35,9 +35,9 @@
 #include <sys/cdefs.h>
 #include <machine/ansi.h>
 
-#ifdef	_SIZE_T_
-typedef	_SIZE_T_	size_t;
-#undef	_SIZE_T_
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
 __BEGIN_DECLS

@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)time.h	5.12 (Berkeley) 3/9/91
- *	$Id: time.h,v 1.7 1994/05/16 10:59:01 cgd Exp $
+ *	$Id: time.h,v 1.8 1994/05/21 09:42:41 cgd Exp $
  */
 
 #ifndef _TIME_H_
@@ -49,19 +49,19 @@
 #define	NULL	0
 #endif
 
-#ifdef	_CLOCK_T_
-typedef	_CLOCK_T_	clock_t;
-#undef	_CLOCK_T_
+#ifdef	_BSD_CLOCK_T_
+typedef	_BSD_CLOCK_T_	clock_t;
+#undef	_BSD_CLOCK_T_
 #endif
 
-#ifdef	_TIME_T_
-typedef	_TIME_T_	time_t;
-#undef	_TIME_T_
+#ifdef	_BSD_TIME_T_
+typedef	_BSD_TIME_T_	time_t;
+#undef	_BSD_TIME_T_
 #endif
 
-#ifdef	_SIZE_T_
-typedef	_SIZE_T_	size_t;
-#undef	_SIZE_T_
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
 #define CLOCKS_PER_SEC	100
