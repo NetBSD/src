@@ -1,4 +1,4 @@
-.\" $NetBSD: sysinst,v 1.1 1999/01/13 08:18:45 ross Exp $
+.\" $NetBSD: sysinst,v 1.2 1999/02/01 16:16:09 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,6 +113,15 @@ This problem will impact some, but not all, users of
 If this bug is affecting you, watch the
 .Bq Tn PCMCIA
 notes that will appear in this document.
+.if r_i386 \{\
+.Pp
+If the kernel by default allocates an interrupt for PCMCIA which is
+allocated to other (typically undetected) hardware, you may use a
+workaround by booting the install kernel with "boot -d" to drop into
+DDB (the in-kernel debugger) and set pcic_isa_intr_alloc_mask to mask
+out the offending interrupt before continuing.  By default the kernel
+masks out IRQ 10, and the corresponding mask is 0xfbff.
+.\}
 .It_need
 .Em General
 .Pp
@@ -147,6 +156,7 @@ What you need.
 The distribution sets (in this example, they are on CD).
 .It_need
 .ie r_alpha Two floppy disks.
+.ie r_i386 Two 1.44M 3.5" floppy disks.
 .el One 1.44M 3.5\" floppy.
 .It_need
 .if r_i386 A PC with a 386 or newer processor.
@@ -170,8 +180,8 @@ the X window system as well, you will need at least
 .El
 .if r_i386 \{\
 .It_need
-Creating a Bootfloppy.
-You can create the floppy needed for installation
+Creating the boot floppies.
+You can create the floppies needed for installation
 under DOS or Windows. Supposing your 1.44M floppy
 drive is drive A:, and your CD is drive E: do the
 following from an MS-DOS command prompt:
@@ -179,27 +189,32 @@ following from an MS-DOS command prompt:
 .D1 Ic "\&cd \eNetBSD-\*V\einstallation\emisc
 .D1 Ic "\&rawrite
 When asked for a source filename, answer
-.if r_i386 .D1 Ic \&..\efloppy\eboot.fs
+.if r_i386 .D1 Ic \&..\efloppy\eboot1.fs for the first diskette and
+.if r_i386 .D1 Ic \&..\efloppy\eboot2.fs for the second diskette
 .if r_alpha .D1 Em \&(...alpha installation root) Ns Ic \efloppy\edisk1of2
 When asked for a destination drive answer
 .D1 Ic a
 .It_need
-To create the bootfloppy under
+To create a bootfloppy under
 .Nx
 or other UNIX-like system, you
 would type something like:
-.D1 Ic "dd if=.../boot.fs bs=18k of=/dev/rfd0a
+.D1 Ic "dd if=.../boot1.fs bs=18k of=/dev/rfd0a
 .\}
 .It_need
 The Quick Installation
 .Bl -hyphen
 .It_need
-Insert the boot floppy you just created.
+Insert the
+.ie r_i386 first
+.ie r_alpha first
+boot floppy you just created.
 .ie r_i386 Restart
 .el Boot
 the computer.
 .if r_alpha Type
 .if r_alpha .Dl \&\*>\*>\*> Ic "B DVA0
+.if r_i386 When prompted, insert the second boot floppy.
 The main menu will be displayed.
 .It_need
 If you wish, you can configure some network settings
