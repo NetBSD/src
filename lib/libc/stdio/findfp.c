@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.14 2001/12/07 11:47:41 yamt Exp $	*/
+/*	$NetBSD: findfp.c,v 1.15 2002/03/12 22:56:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.14 2001/12/07 11:47:41 yamt Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.15 2002/03/12 22:56:16 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,10 +61,12 @@ int	__sdidinit;
 #define	NDYNAMIC 10		/* add ten more whenever necessary */
 
 #define	std(flags, file) \
-	{0,0,0,flags,file,{0},0,__sF+file,__sclose,__sread,__sseek,__swrite, \
-	{(void*)(__sFext+file)}}
-/*	 p r w flags file _bf z  cookie      close    read    seek    write,
-	_ext */
+/*	  p     r  w  flags  file  bf     lfbsize  cookie       close */ \
+	{ NULL, 0, 0, flags, file, { NULL, 0 }, 0, __sF + file, __sclose, \
+/*	  read      seek     write     ext                              up */ \
+	  __sread,  __sseek, __swrite, { (void *)(__sFext + file), 0 }, NULL, \
+/*	  ur ubuf,                 nbuf      lb     blksize  offset */ \
+	  0, { '\0', '\0', '\0' }, { '\0' }, { NULL, 0 }, 0, (fpos_t)0 }
 
 				/* the usual - (stdin + stdout + stderr) */
 static FILE usual[FOPEN_MAX - 3];
