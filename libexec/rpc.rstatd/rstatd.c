@@ -1,4 +1,4 @@
-/*	$NetBSD: rstatd.c,v 1.11 2000/06/03 18:48:24 fvdl Exp $	*/
+/*	$NetBSD: rstatd.c,v 1.12 2000/06/03 18:58:22 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rstatd.c,v 1.11 2000/06/03 18:48:24 fvdl Exp $");
+__RCSID("$NetBSD: rstatd.c,v 1.12 2000/06/03 18:58:22 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,16 +49,15 @@ __RCSID("$NetBSD: rstatd.c,v 1.11 2000/06/03 18:48:24 fvdl Exp $");
 #include <stdlib.h>
 #include <rpcsvc/rstat.h>
 
-extern void rstat_service __P((struct svc_req *, SVCXPRT *));
-void cleanup __P((int));
-int main __P((int, char *[]));
+extern void rstat_service(struct svc_req *, SVCXPRT *);
+void cleanup(int);
+int main(int, char *[]);
 
 int from_inetd = 1;     /* started from inetd ? */
 int closedown = 20;	/* how long to wait before going dormant */
 
 void
-cleanup(dummy)
-	int dummy;
+cleanup(int dummy)
 {
         (void) rpcb_unset(RSTATPROG, RSTATVERS_TIME, NULL);
         (void) rpcb_unset(RSTATPROG, RSTATVERS_SWTCH, NULL);
@@ -67,9 +66,7 @@ cleanup(dummy)
 }
 
 int
-main(argc, argv)
-        int argc;
-        char *argv[];
+main(int argc, char *argv[])
 {
 	SVCXPRT *transp;
 	struct sockaddr_in from;
