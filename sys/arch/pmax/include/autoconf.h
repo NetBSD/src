@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 1995/08/04 00:34:15 jonathan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 1995/09/20 04:33:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -35,14 +35,14 @@ struct confargs;
 
 /* Handle device interrupt for  given unit of a driver */
 
-typedef int handler_arg_t;
-typedef int (*intr_handler_t) __P((handler_arg_t));
+typedef void* intr_arg_t;		/* pointer to some softc */
+typedef int (*intr_handler_t) __P((intr_arg_t));
 
 struct abus {
 	struct	device *ab_dv;		/* back-pointer to device */
 	int	ab_type;		/* bus type (see below) */
 	void	(*ab_intr_establish)	/* bus's set-handler function */
-		    __P((struct confargs *, intr_handler_t, handler_arg_t));
+		    __P((struct confargs *, intr_handler_t, intr_arg_t));
 	void	(*ab_intr_disestablish)	/* bus's unset-handler function */
 		    __P((struct confargs *));
 	caddr_t	(*ab_cvtaddr)		/* convert slot/offset to address */
@@ -74,6 +74,7 @@ struct confargs {
 	int	ca_offset;		/* Offset into slot. */
 	struct	abus *ca_bus;		/* bus device resides on. */
 };
+
 
 #ifndef pmax
 void	set_clockintr __P((void (*)(struct clockframe *)));
