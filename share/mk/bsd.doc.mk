@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.47 2000/06/06 09:22:00 mycroft Exp $
+#	$NetBSD: bsd.doc.mk,v 1.48 2000/06/06 09:53:29 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -58,13 +58,15 @@ docinstall:: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
 .PHONY: ${ALLFILES:@F@${DESTDIR}${DOCDIR}/${DIR}/${F}@}
 .endif
 
+__docinstall: .USE
+	${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${DOCOWN} \
+	    -g ${DOCGRP} -m ${DOCMODE} ${.ALLSRC} ${.TARGET}
+
 .for F in ${ALLFILES}
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${DESTDIR}${DOCDIR}/${DIR}/${F}: .MADE
 .endif
-${DESTDIR}${DOCDIR}/${DIR}/${F}: ${F}
-	${INSTALL} ${RENAME} ${PRESERVE} ${INSTPRIV} -c -o ${DOCOWN} \
-	    -g ${DOCGRP} -m ${DOCMODE} ${.ALLSRC} ${.TARGET}
+${DESTDIR}${DOCDIR}/${DIR}/${F}: ${F} __docinstall
 .endfor
 .endif
 
