@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.40 1997/10/09 08:35:13 drochner Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.41 1998/01/03 02:50:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -51,14 +51,13 @@
 #include <vm/vm_kern.h>
 
 struct shmid_ds *shm_find_segment_by_shmid __P((int));
-void shmexit __P((struct proc *));
 
 /*
  * Provides the following externally accessible functions:
  *
- * shminit(void);		           initialization
- * shmexit(struct proc *)                  cleanup
- * shmfork(struct proc *, struct proc *)   fork handling
+ * shminit(void);		                 initialization
+ * shmexit(struct vmspace *)                     cleanup
+ * shmfork(struct vmspace *, struct vmspace *)   fork handling
  * shmsys(arg1, arg2, arg3, arg4);         shm{at,ctl,dt,get}(arg2, arg3, arg4)
  *
  * Structures:
@@ -84,7 +83,7 @@ struct shmmap_state {
 
 static int shm_find_segment_by_key __P((key_t));
 static void shm_deallocate_segment __P((struct shmid_ds *));
-static int shm_delete_mapping __P((struct proc *, struct shmmap_state *));
+static int shm_delete_mapping __P((struct vmspace *, struct shmmap_state *));
 static int shmget_existing __P((struct proc *, struct sys_shmget_args *,
 				int, int, register_t *));
 static int shmget_allocate_segment __P((struct proc *, struct sys_shmget_args *,
@@ -139,8 +138,8 @@ shm_deallocate_segment(shmseg)
 }
 
 static int
-shm_delete_mapping(p, shmmap_s)
-	struct proc *p;
+shm_delete_mapping(vm, shmmap_s)
+	struct vmspace *vm;
 	struct shmmap_state *shmmap_s;
 {
 	struct shmid_ds *shmseg;
@@ -150,7 +149,7 @@ shm_delete_mapping(p, shmmap_s)
 	segnum = IPCID_TO_IX(shmmap_s->shmid);
 	shmseg = &shmsegs[segnum];
 	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
-	result = vm_map_remove(&p->p_vmspace->vm_map,
+	result = vm_map_remove(&vm->vm_map,
 			       shmmap_s->va, shmmap_s->va + size);
 	if (result != KERN_SUCCESS)
 		return EINVAL;
@@ -186,7 +185,7 @@ sys_shmdt(p, v, retval)
 			break;
 	if (i == shminfo.shmseg)
 		return EINVAL;
-	return shm_delete_mapping(p, shmmap_s);
+	return shm_delete_mapping(p->p_vmspace, shmmap_s);
 }
 
 int
@@ -500,42 +499,42 @@ sys_shmget(p, v, retval)
 }
 
 void
-shmfork(p1, p2)
-	struct proc *p1, *p2;
+shmfork(vm1, vm2)
+	struct vmspace *vm1, *vm2;
 {
 	struct shmmap_state *shmmap_s;
 	size_t size;
 	int i;
 
-	if (p1->p_vmspace->vm_shm == NULL) {
-		p2->p_vmspace->vm_shm = NULL;
+	if (vm1->vm_shm == NULL) {
+		vm2->vm_shm = NULL;
 		return;
 	}
-		
+
 	size = shminfo.shmseg * sizeof(struct shmmap_state);
 	shmmap_s = malloc(size, M_SHM, M_WAITOK);
-	bcopy((caddr_t)p1->p_vmspace->vm_shm, (caddr_t)shmmap_s, size);
-	p2->p_vmspace->vm_shm = (caddr_t)shmmap_s;
+	bcopy(vm1->vm_shm, shmmap_s, size);
+	vm2->vm_shm = (caddr_t)shmmap_s;
 	for (i = 0; i < shminfo.shmseg; i++, shmmap_s++)
 		if (shmmap_s->shmid != -1)
 			shmsegs[IPCID_TO_IX(shmmap_s->shmid)].shm_nattch++;
 }
 
 void
-shmexit(p)
-	struct proc *p;
+shmexit(vm)
+	struct vmspace *vm;
 {
 	struct shmmap_state *shmmap_s;
 	int i;
 
-	shmmap_s = (struct shmmap_state *)p->p_vmspace->vm_shm;
+	shmmap_s = (struct shmmap_state *)vm->vm_shm;
 	if (shmmap_s == NULL)
 		return;
 	for (i = 0; i < shminfo.shmseg; i++, shmmap_s++)
 		if (shmmap_s->shmid != -1)
-			shm_delete_mapping(p, shmmap_s);
-	free((caddr_t)p->p_vmspace->vm_shm, M_SHM);
-	p->p_vmspace->vm_shm = NULL;
+			shm_delete_mapping(vm, shmmap_s);
+	free(vm->vm_shm, M_SHM);
+	vm->vm_shm = NULL;
 }
 
 void
