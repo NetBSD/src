@@ -1,4 +1,4 @@
-/* $NetBSD: cosc.c,v 1.3 1996/12/10 21:27:32 thorpej Exp $ */
+/*	$NetBSD: cosc.c,v 1.4 1997/01/28 04:21:01 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -84,7 +84,7 @@ struct cfdriver cosc_cd = {
 	NULL, "cosc", DV_DULL, NULL, 0
 };
 
-int cosc_intr		 __P((struct esc_softc *dev));
+int cosc_intr		 __P((void *arg));
 int cosc_setup_dma	 __P((struct esc_softc *sc, void *ptr, int len,
 			      int mode));
 int cosc_build_dma_chain __P((struct esc_softc *sc,
@@ -314,9 +314,10 @@ cosc_led(sc, mode)
 
 
 int
-cosc_intr(dev)
-	struct esc_softc *dev;
+cosc_intr(arg)
+	void *arg;
 {
+	struct esc_softc *dev = arg;
 	cosc_regmap_p	      rp;
 	int		      quickints;
 
