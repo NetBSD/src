@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1995/05/16 07:30:51 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 1995/06/09 06:00:06 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -804,7 +804,8 @@ setregs(p, entry, stack, retval)
 	r->pcb_fp = stack;
 	r->pcb_pc = entry->ep_entry;
 	r->pcb_psr = PSL_USERSET;
-	for (i=0; i<8; i++) r->pcb_reg[i] = 0;
+	r->pcb_reg[0] = (int)PS_STRINGS;
+	for (i=1; i<8; i++) r->pcb_reg[i] = 0;
 
 	p->p_addr->u_pcb.pcb_flags = 0;
 }
