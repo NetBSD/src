@@ -116,21 +116,21 @@ distribution sets are as follows:
 		the source for the compiler, assembler, groff,
 		and the other GNU utilities in the binary distribution
 		sets.
-		[ XXXM gzipped, XXXM uncompressed ]
+		[ 7.7M gzipped, 32.0M uncompressed ]
 
 	ksrc10	This set contains the sources to the NetBSD 1.0
 		kernel, config(8), config.new(8) and dbsym(8).
-		[ XXXM gzipped, XXXM uncompressed ]
+		[ 4.5M gzipped, 20.8M uncompressed ]
 
 	ssrc10	This set contains the "share" sources, which include
 		the sources for the man pages not associated with
 		any particular program, the sources for the
 		typesettable document set, the dictionaries, and more.
-		[ XXXM gzipped, XXXM uncompressed ]
+		[ 2.3M gzipped, 8.5M uncompressed ]
 
 	src10	This set contains all of the NetBSD 1.0 sources which
 		are not mentioned above.
-		[ XXXM gzipped, XXXM uncompressed ]
+		[ 7.1M gzipped, 33.4M uncompressed ]
 
 It is worth noting that unless all of the source distribution sets
 are installed, you can't rebuild and install the system from scratch,
