@@ -5,6 +5,7 @@
 
 .include "../../Makefile.fontdir"
 
+NOOBJ=
 DEVICEDIR?=	$(FONTDIR)/dev$(DEVICE)
 FONTOWN?=	bin
 FONTGRP?=	bin
