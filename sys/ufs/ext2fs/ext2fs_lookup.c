@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.8 1998/09/13 15:14:40 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.9 1998/12/02 10:44:52 bouyer Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -302,11 +302,12 @@ ext2fs_lookup(v)
 	/*
 	 * Check accessiblity of directory.
 	 */
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
+		return (error);
+
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
 		return (EROFS);
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
-		return (error);
 
 	/*
 	 * We now have a segment name to search for, and a directory to search.
@@ -394,7 +395,7 @@ ext2fs_lookup(v)
 	} else {
 		dp->i_offset = dp->i_diroff;
 		if ((entryoffsetinblock = dp->i_offset & bmask) &&
-			(error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp)))
+		    (error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp)))
 			return (error);
 		numdirpasses = 2;
 	}
@@ -410,7 +411,8 @@ searchloop:
 		if ((dp->i_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp);
-			error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset, NULL, &bp);
+			error = VOP_BLKATOFF(vdp, (off_t)dp->i_offset,
+			    NULL, &bp);
 			if (error != 0)
 				return (error);
 			entryoffsetinblock = 0;
@@ -434,10 +436,12 @@ searchloop:
 		ep = (struct ext2fs_direct *)
 			((char *)bp->b_data + entryoffsetinblock);
 		if (ep->e2d_reclen == 0 ||
-			(dirchk && ext2fs_dirbadentry(vdp, ep, entryoffsetinblock))) {
+		    (dirchk &&
+		    ext2fs_dirbadentry(vdp, ep, entryoffsetinblock))) {
 			int i;
 			ufs_dirbad(dp, dp->i_offset, "mangled entry");
-			i = dirblksize - (entryoffsetinblock & (dirblksize - 1));
+			i = dirblksize -
+			    (entryoffsetinblock & (dirblksize - 1));
 			dp->i_offset += i;
 			entryoffsetinblock += i;
 			continue;
@@ -647,7 +651,8 @@ found:
 	 */
 	if (nameiop == RENAME && wantparent &&
 		(flags & ISLASTCN)) {
-		if ((error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc)) != 0)
+		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_proc);
+		if (error)
 			return (error);
 		/*
 		 * Careful about locking second inode.
@@ -655,7 +660,8 @@ found:
 		 */
 		if (dp->i_number == dp->i_ino)
 			return (EISDIR);
-		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0)
+		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		if (error)
 			return (error);
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
@@ -686,12 +692,13 @@ found:
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
-		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0) {
+		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		if (error) {
 			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN) &&
-		    (error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY)) != 0) {
+		    (error = vn_lock(pdp, LK_EXCLUSIVE))) {
 			vput(tdp);
 			return (error);
 		}
@@ -746,14 +753,16 @@ ext2fs_dirbadentry(dp, de, entryoffsetinblock)
 				error_msg = "reclen is too small for name_len";
 		else if (entryoffsetinblock + reclen > dirblksize)
 				error_msg = "directory entry across blocks";
-		else if (fs2h32(de->e2d_ino) > VTOI(dp)->i_e2fs->e2fs.e2fs_icount)
+		else if (fs2h32(de->e2d_ino) >
+		    VTOI(dp)->i_e2fs->e2fs.e2fs_icount)
 				error_msg = "inode out of bounds";
 
 		if (error_msg != NULL) {
 			printf( "bad directory entry: %s\n"
-						"offset=%d, inode=%lu, rec_len=%d, name_len=%d \n",
-						error_msg, entryoffsetinblock, 
-			(unsigned long) fs2h32(de->e2d_ino), reclen, namlen);
+			    "offset=%d, inode=%lu, rec_len=%d, name_len=%d \n",
+			    error_msg, entryoffsetinblock,
+			    (unsigned long) fs2h32(de->e2d_ino),
+			    reclen, namlen);
 			panic("ext2fs_dirbadentry");
 		}
 		return error_msg == NULL ? 0 : 1;
@@ -782,7 +791,7 @@ ext2fs_direnter(ip, dvp, cnp)
 	u_int dsize;
 	int error, loc, newentrysize, spacefree;
 	char *dirbuf;
-	int	 dirblksize = ip->i_e2fs->e2fs_bsize;
+	int dirblksize = ip->i_e2fs->e2fs_bsize;
 
 
 #ifdef DIAGNOSTIC
@@ -878,7 +887,7 @@ ext2fs_direnter(ip, dvp, cnp)
 #ifdef DIAGNOSTIC
 		if (spacefree < newentrysize) {
 			printf("ext2fs_direnter: compact2 %u %u",
-						(u_int)spacefree, (u_int)newentrysize);
+			    (u_int)spacefree, (u_int)newentrysize);
 			panic("ext2fs_direnter: compact2");
 		}
 #endif
@@ -891,7 +900,7 @@ ext2fs_direnter(ip, dvp, cnp)
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (!error && dp->i_endoff && dp->i_endoff < dp->i_e2fs_size)
 		error = VOP_TRUNCATE(dvp, (off_t)dp->i_endoff, IO_SYNC,
-			cnp->cn_cred, cnp->cn_proc);
+		    cnp->cn_cred, cnp->cn_proc);
 	return (error);
 }
 
@@ -922,7 +931,8 @@ ext2fs_dirremove(dvp, cnp)
 		/*
 		 * First entry in block: set d_ino to zero.
 		 */
-		error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset, (char **)&ep, &bp);
+		error = VOP_BLKATOFF(dvp, (off_t)dp->i_offset,
+		    (char **)&ep, &bp);
 		if (error != 0)
 			return (error);
 		ep->e2d_ino = 0;
@@ -934,7 +944,7 @@ ext2fs_dirremove(dvp, cnp)
 	 * Collapse new free space into previous entry.
 	 */
 	error = VOP_BLKATOFF(dvp, (off_t)(dp->i_offset - dp->i_count),
-			(char **)&ep, &bp);
+	    (char **)&ep, &bp);
 	if (error != 0)
 		return (error);
 	ep->e2d_reclen = h2fs16(fs2h16(ep->e2d_reclen) + dp->i_reclen);
@@ -1092,4 +1102,3 @@ out:
 		vput(vp);
 	return (error);
 }
-
