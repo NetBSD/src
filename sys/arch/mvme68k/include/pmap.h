@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1.1.1 1995/07/25 23:12:16 chuck Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 1997/06/21 11:05:34 scw Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -50,9 +50,6 @@
 #else
 #define HP_SEG_SIZE	NBSEG
 #endif
-
-#define m68k_trunc_seg(x)	(((unsigned)(x)) & ~(HP_SEG_SIZE-1))
-#define m68k_round_seg(x)	m68k_trunc_seg((unsigned)(x) + HP_SEG_SIZE-1)
 
 /*
  * Pmap stuff
