@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.29 1998/10/10 00:28:34 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.30 1998/11/19 21:53:32 thorpej Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -199,6 +199,7 @@ struct sea_softc {
 	caddr_t	maddr_dr;		/* Address of data register */
 
 	struct scsipi_link sc_link;	/* prototype for subdevs */
+	struct scsipi_adapter sc_adapter;
 	TAILQ_HEAD(, sea_scb) free_list, ready_list, nexus_list;
 	struct sea_scb *nexus;		/* currently connected command */
 	int numscbs;			/* number of scsi control blocks */
@@ -289,12 +290,6 @@ int sea_select __P((struct sea_softc *sea, struct sea_scb *scb));
 int sea_transfer_pio __P((struct sea_softc *sea, u_char *phase,
     int *count, u_char **data));
 int sea_abort __P((struct sea_softc *, struct sea_scb *scb));
-
-struct scsipi_adapter sea_switch = {
-	sea_scsi_cmd,
-	minphys,	/* no special minphys(), since driver uses PIO */
-	NULL,		/* scsipi_ioctl */
-};
 
 /* the below structure is so we have a default dev struct for our link struct */
 struct scsipi_device sea_dev = {
@@ -447,12 +442,18 @@ seaattach(parent, self, aux)
 	sea_init(sea);
 
 	/*
+	 * Fill in the adapter.
+	 */
+	sea->sc_adapter.scsipi_cmd = sea_scsi_cmd;
+	sea->sc_adapter.scsipi_minphys = minphys;
+
+	/*
 	 * fill in the prototype scsipi_link.
 	 */
 	sea->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sea->sc_link.adapter_softc = sea;
 	sea->sc_link.scsipi_scsi.adapter_target = sea->our_id;
-	sea->sc_link.adapter = &sea_switch;
+	sea->sc_link.adapter = &sea->sc_adapter;
 	sea->sc_link.device = &sea_dev;
 	sea->sc_link.openings = 1;
 	sea->sc_link.scsipi_scsi.max_target = 7;

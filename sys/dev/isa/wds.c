@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.35 1998/10/10 00:28:35 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.36 1998/11/19 21:53:32 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -163,6 +163,7 @@ struct wds_softc {
 	TAILQ_HEAD(, wds_scb) sc_free_scb, sc_waiting_scb;
 	int sc_numscbs, sc_mbofull;
 	struct scsipi_link sc_link;	/* prototype for subdevs */
+	struct scsipi_adapter sc_adapter;
 
 	LIST_HEAD(, scsipi_xfer) sc_queue;
 	struct scsipi_xfer *sc_queuelast;
@@ -205,12 +206,6 @@ void	wds_timeout __P((void *));
 int	wds_create_scbs __P((struct wds_softc *, void *, size_t));
 void	wds_enqueue __P((struct wds_softc *, struct scsipi_xfer *, int));
 struct scsipi_xfer *wds_dequeue __P((struct wds_softc *));
-
-struct scsipi_adapter wds_switch = {
-	wds_scsi_cmd,		/* scsipi_cmd */
-	wdsminphys,		/* scsipi_minphys */
-	NULL,			/* scsipi_ioctl */
-};
 
 /* the below structure is so we have a default dev struct for our link struct */
 struct scsipi_device wds_dev = {
@@ -431,12 +426,18 @@ wds_attach(sc, wpd)
 	wds_inquire_setup_information(sc);
 
 	/*
+	 * Fill in the adapter.
+	 */
+	sc->sc_adapter.scsipi_cmd = wds_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys;
+
+	/*
 	 * fill in the prototype scsipi_link.
 	 */
 	sc->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.scsipi_scsi.adapter_target = wpd->sc_scsi_dev;
-	sc->sc_link.adapter = &wds_switch;
+	sc->sc_link.adapter = &sc->sc_adapter;
 	sc->sc_link.device = &wds_dev;
 	/* XXX */
 	/* I don't think the -ASE can handle openings > 1. */

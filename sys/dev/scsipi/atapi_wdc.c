@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.8 1998/11/17 14:45:39 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.9 1998/11/19 21:54:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -92,12 +92,6 @@ int   wdc_atapi_send_cmd __P((struct scsipi_xfer *sc_xfer));
 
 #define MAX_SIZE MAXPHYS
 
-static struct scsipi_adapter wdc_switch  = {
-	wdc_atapi_send_cmd,
-	wdc_atapi_minphys,
-	NULL,                   /* scsipi_ioctl */
-};
-
 void
 wdc_atapibus_attach(chp)
 	struct channel_softc *chp;
@@ -106,12 +100,18 @@ wdc_atapibus_attach(chp)
 	int channel = chp->channel;
 	struct ata_atapi_attach aa_link;
 
+	/*
+	 * Fill in the adapter.
+	 */
+	wdc->sc_atapi_adapter.scsipi_cmd = wdc_atapi_send_cmd;
+	wdc->sc_atapi_adapter.scsipi_minphys = wdc_atapi_minphys;
+
 	memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
 	aa_link.aa_type = T_ATAPI;
 	aa_link.aa_channel = channel;
 	aa_link.aa_openings = 1;
 	aa_link.aa_drv_data = chp->ch_drive; /* pass the whole array */
-	aa_link.aa_bus_private = &wdc_switch;
+	aa_link.aa_bus_private = &wdc->sc_atapi_adapter;
 	(void)config_found(&wdc->sc_dev, (void *)&aa_link, atapi_print);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.15 1998/10/10 00:28:34 thorpej Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.16 1998/11/19 21:53:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,12 +137,6 @@ void	esp_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach esp_isa_ca = {
 	sizeof(struct esp_softc), esp_isa_match, esp_isa_attach
-};
-
-struct scsipi_adapter esp_switch = {
-	ncr53c9x_scsi_cmd,
-	minphys,		/* no max at this level; handled by DMA code */
-	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device esp_dev = {
@@ -424,7 +418,9 @@ esp_isa_attach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
+	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
+	sc->sc_adapter.scsipi_minphys = minphys;
+	ncr53c9x_attach(sc, &esp_dev);
 }
 
 /*

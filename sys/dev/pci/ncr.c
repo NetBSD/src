@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.74 1998/10/10 00:28:29 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.75 1998/11/19 21:53:48 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1165,6 +1165,7 @@ struct ncb {
 	*/
 #ifdef __NetBSD__
 	struct scsipi_link	sc_link;
+	struct scsipi_adapter	sc_adapter;
 #else
 	struct scsi_link	sc_link;
 #endif
@@ -1434,7 +1435,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.74 1998/10/10 00:28:29 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.75 1998/11/19 21:53:48 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -1499,23 +1500,18 @@ DATA_SET (pcidevice_set, ncr_device);
 
 #endif /* !__NetBSD__ */
 
+#ifndef __NetBSD__
 static struct scsipi_adapter ncr_switch =
 {
 	ncr_start,
-#ifndef __NetBSD__
 	ncr_min_phys,
-#else
-	ncr_minphys,
-#endif
-#ifndef __NetBSD__
 	0,
 	0,
 	ncr_info,
 	"ncr",
-#else
 	NULL,			/* scsipi_ioctl */
-#endif /* !__NetBSD__ */
 };
+#endif /* !__NetBSD__ */
 
 static struct scsipi_device ncr_dev =
 {
@@ -4149,19 +4145,23 @@ static void ncr_attach (pcici_t config_id, int unit)
 	*/
 
 #ifdef __NetBSD__
+	np->sc_adapter.scsipi_cmd = ncr_start;
+	np->sc_adapter.scsipi_minphys = ncr_minphys;
+
 	np->sc_link.adapter_softc = np;
 	np->sc_link.scsipi_scsi.adapter_target = np->myaddr;
 	np->sc_link.openings = 1;
 	np->sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 	np->sc_link.scsipi_scsi.max_target   = np->maxwide ? 15 : 7;
 	np->sc_link.type = BUS_SCSI;
+	np->sc_link.adapter      = &np->sc_adapter;
 #else /* !__NetBSD__ */
 	np->sc_link.adapter_unit = unit;
 	np->sc_link.adapter_softc = np;
 	np->sc_link.adapter_targ = np->myaddr;
 	np->sc_link.fordriver	 = 0;
-#endif /* !__NetBSD__ */
 	np->sc_link.adapter      = &ncr_switch;
+#endif /* !__NetBSD__ */
 	np->sc_link.device       = &ncr_dev;
 	np->sc_link.flags	 = 0;
 
