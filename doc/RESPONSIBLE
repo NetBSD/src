@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.40 2004/06/28 18:38:14 mycroft Exp $
+#	$NetBSD: RESPONSIBLE,v 1.41 2004/08/28 16:42:02 schmonz Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -230,7 +230,7 @@ pkgsrc platforms:
 
 bootstrap	grant
 Solaris		seb, salo, grant
-Darwin		grant
+Darwin		grant, schmonz
 IRIX		jschauma
 Linux		jschauma, grant
 FreeBSD		grant
