@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.15 2000/03/29 03:36:32 simonb Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.16 2000/03/29 04:56:47 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -128,7 +128,7 @@ struct	ether_header {
 struct	ethercom {
 	struct	 ifnet ec_if;			/* network-visible interface */
 	LIST_HEAD(, ether_multi) ec_multiaddrs;	/* list of ether multicast addrs */
-	int	 ec_multicnt;			/* length of ac_multiaddrs list */
+	int	 ec_multicnt;			/* length of ec_multiaddrs list */
 };
 
 #ifdef	_KERNEL
