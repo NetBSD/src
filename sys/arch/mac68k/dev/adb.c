@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.33 1999/11/28 10:10:51 scottr Exp $	*/
+/*	$NetBSD: adb.c,v 1.34 2000/02/14 07:01:45 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,8 +46,7 @@
 
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
-#include <mac68k/dev/itevar.h>
-#include <mac68k/dev/kbdvar.h>
+#include <mac68k/dev/akbdvar.h>
 
 #include "aed.h"		/* ADB Event Device for compatibility */
 
@@ -66,7 +65,11 @@ extern void	adb_jadbproc __P((void));
  */
 int	adb_polling = 0;	/* Are we polling?  (Debugger mode) */
 #ifdef ADB_DEBUG
+#if 1
+int	adb_debug = 0xff;
+#else
 int	adb_debug = 0;		/* Output debugging messages */
+#endif
 #endif /* ADB_DEBUG */
 
 extern struct	mac68k_machine_S mac68k_machine;
@@ -124,7 +127,7 @@ adb_config_interrupts(self)
 #ifdef MRG_ADB
 	/* 
 	 * Even if serial console only, some models require the
-         * ADB in order to get the date/time and do soft power.
+	 * ADB in order to get the date/time and do soft power.
 	 */
 	if ((mac68k_machine.serial_console & 0x03)) {
 		printf(": using serial console\n");
@@ -197,8 +200,8 @@ adb_config_interrupts(self)
 
 int
 adbprint(args, name)
-        void *args;
-        const char *name;
+	void *args;
+	const char *name;
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)args;
 	int rv = UNCONF;
@@ -261,7 +264,7 @@ adbprint(args, name)
 #endif /* DIAGNOSTIC */
 		}
 	} else		/* a device matched and was configured */
-                printf(" addr %d: ", aa_args->origaddr);
+		printf(" addr %d: ", aa_args->origaddr);
 
 	return (rv);
 }
