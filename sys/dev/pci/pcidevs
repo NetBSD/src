@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.475 2002/10/21 13:40:14 grant Exp $
+$NetBSD: pcidevs,v 1.476 2002/10/21 14:45:00 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2035,7 +2035,7 @@ product	TI	TSB43AA22A	0x8023	TSB43AA22/A OHCI IEEE 1394 Host Controller
 product	TI	TSB43AA23	0x8024	TSB43AA23 OHCI IEEE 1394 Host Controller
 product TI	TSB43AB21	0x8026	TSB43AA21 OHCI IEEE 1394 Host Controller
 product TI	PCI4451LYNX	0x8027	PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
-product TI	DL520P		0x8400	DL520 Airplus Wireless Ethernet
+product TI	ACX100		0x8400	ACX100 802.11b
 product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-PCMCIA Bridge
 product TI	PCI1131		0xac15	PCI1131 PCI-CardBus Bridge
