@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2000/01/27 05:39:50 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2000/02/24 06:33:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,8 +62,3 @@ void       sttyclearflags __P((struct termios *tp, int flags));
 void       sttysetflags __P((struct termios *tp, int flags));
 void       sttyclearlflags __P((struct termios *tp, int flags));
 void       sttysetlflags __P((struct termios *tp, int flags));
-
-/* XXX from libc/net/rcmd.c */
-struct sockaddr;
-int        __ivaliduser_sa __P((FILE *, struct sockaddr *, const char *,
-		const char *));
