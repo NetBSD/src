@@ -7,13 +7,10 @@
 
 ENTRY(fpsetsticky)
 	movel d2,sp@-
-	fmovel fpsr,d0
-	movel d0,d1
-	andl #248,d0
-	subl d0,d1
+	fmovel fpsr,d1
 	movel sp@(8),d2
-	andl #248,d2
-	addl d2,d1
-	fmovel d1,fpsr
+	bfextu d1{#24:#5},d0
+	bfins d2,d1{#24:#5}
 	movel sp@+,d2
+	fmovel d1,fpsr
 	rts

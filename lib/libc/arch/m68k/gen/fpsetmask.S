@@ -7,15 +7,10 @@
 
 ENTRY(fpsetmask)
 	movel d2,sp@-
-	fmovel fpcr,d0
-	rorl #6,d0
-	movel d0,d1
-	andl #248,d0
-	subl d0,d1
+	fmovel fpcr,d1
 	movel sp@(8),d2
-	andl #248,d2
-	addl d2,d1
-	roll #6,d1
-	fmovel d1,fpcr
+	bfextu d1{#18:#5},d0
+	bfins d2,d1{#18:#5}
 	movel sp@+,d2
+	fmovel d1,fpcr
 	rts
