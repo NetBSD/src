@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.11 2004/07/29 18:39:00 drochner Exp $ */
+/* $NetBSD: vme.c,v 1.12 2004/08/02 13:04:58 drochner Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.11 2004/07/29 18:39:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.12 2004/08/02 13:04:58 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,11 +333,15 @@ _vme_space_get(sc, len, ams, align, addr)
 	vme_addr_t *addr;
 {
 	struct extent *ex;
+	u_long help;
+	int res;
 
 	ex = vme_select_map(sc, ams);
 	if (!ex)
 		return (EINVAL);
 
-	return (extent_alloc(ex, len, align, EX_NOBOUNDARY, EX_NOWAIT,
-			     (u_long *)addr));
+	res = extent_alloc(ex, len, align, EX_NOBOUNDARY, EX_NOWAIT, &help);
+	if (!res)
+		*addr = help;
+	return (res);
 }
