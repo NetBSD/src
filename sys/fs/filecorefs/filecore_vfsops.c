@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.10 2004/04/21 01:05:37 christos Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.11 2004/04/27 17:37:30 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.10 2004/04/21 01:05:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.11 2004/04/27 17:37:30 jrf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -480,7 +480,7 @@ filecore_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 

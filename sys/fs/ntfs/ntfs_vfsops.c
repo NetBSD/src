@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.18 2004/04/21 01:05:38 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.19 2004/04/27 17:37:30 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.18 2004/04/21 01:05:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.19 2004/04/27 17:37:30 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ static int	ntfs_mount __P((struct mount *, char *, caddr_t,
 static int	ntfs_mount __P((struct mount *, const char *, void *,
 				struct nameidata *, struct proc *));
 #endif
-static int	ntfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
+static int	ntfs_quotactl __P((struct mount *, int, uid_t, void *,
 				   struct proc *));
 static int	ntfs_root __P((struct mount *, struct vnode **));
 static int	ntfs_start __P((struct mount *, int, struct proc *));
@@ -750,7 +750,7 @@ ntfs_quotactl (
 	struct mount *mp,
 	int cmds,
 	uid_t uid,
-	caddr_t arg,
+	void *arg,
 	struct proc *p)
 {
 

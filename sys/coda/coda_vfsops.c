@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.35 2004/04/21 02:41:52 christos Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.36 2004/04/27 17:37:30 jrf Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.35 2004/04/21 02:41:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.36 2004/04/27 17:37:30 jrf Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -410,7 +410,7 @@ coda_quotactl(vfsp, cmd, uid, arg, p)
     struct mount *vfsp;
     int cmd;
     uid_t uid;
-    caddr_t arg;
+    void *arg;
     struct proc *p;
 {
     ENTRY;

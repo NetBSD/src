@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.12 2004/04/21 01:05:37 christos Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.13 2004/04/27 17:37:30 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.12 2004/04/21 01:05:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.13 2004/04/27 17:37:30 jrf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -604,7 +604,7 @@ cd9660_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 

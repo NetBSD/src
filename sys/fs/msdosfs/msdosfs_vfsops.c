@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.15 2004/04/27 17:25:50 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.16 2004/04/27 17:37:30 jrf Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.15 2004/04/27 17:25:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.16 2004/04/27 17:37:30 jrf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -87,7 +87,7 @@ int msdosfs_mount __P((struct mount *, const char *, void *,
 int msdosfs_start __P((struct mount *, int, struct proc *));
 int msdosfs_unmount __P((struct mount *, int, struct proc *));
 int msdosfs_root __P((struct mount *, struct vnode **));
-int msdosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+int msdosfs_quotactl __P((struct mount *, int, uid_t, void *, struct proc *));
 int msdosfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int msdosfs_vget __P((struct mount *, ino_t, struct vnode **));
@@ -860,7 +860,7 @@ msdosfs_quotactl(mp, cmds, uid, arg, p)
 	struct mount *mp;
 	int cmds;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 

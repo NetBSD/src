@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.60 2004/04/21 02:41:16 christos Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.61 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.60 2004/04/21 02:41:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.61 2004/04/27 17:37:31 jrf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -73,7 +73,7 @@ int	kernfs_mount __P((struct mount *, const char *, void *,
 int	kernfs_start __P((struct mount *, int, struct proc *));
 int	kernfs_unmount __P((struct mount *, int, struct proc *));
 int	kernfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
-int	kernfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
+int	kernfs_quotactl __P((struct mount *, int, uid_t, void *,
 			     struct proc *));
 int	kernfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int	kernfs_vget __P((struct mount *, ino_t, struct vnode **));
@@ -217,7 +217,7 @@ kernfs_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 

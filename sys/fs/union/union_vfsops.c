@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.12 2004/04/21 01:05:38 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.13 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.12 2004/04/21 01:05:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.13 2004/04/27 17:37:31 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ int union_mount __P((struct mount *, const char *, void *, struct nameidata *,
 int union_start __P((struct mount *, int, struct proc *));
 int union_unmount __P((struct mount *, int, struct proc *));
 int union_root __P((struct mount *, struct vnode **));
-int union_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+int union_quotactl __P((struct mount *, int, uid_t, void *, struct proc *));
 int union_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int union_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int union_vget __P((struct mount *, ino_t, struct vnode **));
@@ -466,7 +466,7 @@ union_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 

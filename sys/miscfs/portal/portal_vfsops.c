@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.42 2004/04/21 02:40:42 christos Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.43 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.42 2004/04/21 02:40:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.43 2004/04/27 17:37:31 jrf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -73,7 +73,7 @@ int	portal_mount __P((struct mount *, const char *, void *,
 int	portal_start __P((struct mount *, int, struct proc *));
 int	portal_unmount __P((struct mount *, int, struct proc *));
 int	portal_root __P((struct mount *, struct vnode **));
-int	portal_quotactl __P((struct mount *, int, uid_t, caddr_t,
+int	portal_quotactl __P((struct mount *, int, uid_t, void *,
 			     struct proc *));
 int	portal_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int	portal_sync __P((struct mount *, int, struct ucred *, struct proc *));
@@ -252,7 +252,7 @@ portal_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 

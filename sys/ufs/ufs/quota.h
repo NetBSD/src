@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.17 2003/08/07 16:34:44 agc Exp $	*/
+/*	$NetBSD: quota.h,v 1.18 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -198,7 +198,7 @@ int	quotaoff __P((struct proc *, struct mount *, int));
 int	quotaon __P((struct proc *, struct mount *, int, caddr_t));
 int	setquota __P((struct mount *, u_long, int, caddr_t));
 int	setuse __P((struct mount *, u_long, int, caddr_t));
-int	ufs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+int	ufs_quotactl __P((struct mount *, int, uid_t, void *, struct proc *));
 __END_DECLS
 
 #ifdef DIAGNOSTIC
