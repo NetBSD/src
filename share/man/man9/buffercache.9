@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.7 2003/09/10 13:54:08 wiz Exp $
+.\"     $NetBSD: buffercache.9,v 1.8 2003/09/15 13:14:34 yamt Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -161,6 +161,14 @@ The
 .Nm
 interface is used by each filesystems to improve I/O performance using
 in-core caches of filesystem blocks.
+.Pp
+The kernel memory used to cache a block is called a buffer and described by
+.Em buf
+structure.
+In addition to describing a cached block,
+.Em buf
+structure is also used to describe an I/O request as a part of
+the disk driver interface.
 .\" XXX struct buf, B_ flags, MP locks, etc
 .\" ------------------------------------------------------------
 .Sh FUNCTIONS
