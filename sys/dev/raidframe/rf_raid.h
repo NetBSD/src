@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.19 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.20 2003/12/29 05:58:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -239,8 +239,7 @@ struct RF_Raid_s {
 	int     numFullReconBuffers;
 	RF_AccTraceEntry_t *recon_tracerecs;
 	unsigned long accumXorTimeUs;
-	RF_ReconDoneProc_t *recon_done_procs;
-	        RF_DECLARE_MUTEX(recon_done_proc_mutex)
+
 	/*
          * nAccOutstanding, waitShutdown protected by desc freelist lock
          * (This may seem strange, since that's a central serialization point

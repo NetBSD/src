@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.77 2003/12/29 05:52:58 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.78 2003/12/29 05:58:34 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.77 2003/12/29 05:52:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.78 2003/12/29 05:58:34 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -370,8 +370,6 @@ rf_Configure(raidPtr, cfgPtr, ac)
 	raidPtr->quiescent_cond = 0;
 
 	raidPtr->waitForReconCond = 0;
-
-	DO_RAID_MUTEX(&raidPtr->recon_done_proc_mutex);
 
 	if (ac!=NULL) {
 		/* We have an AutoConfig structure..  Don't do the
