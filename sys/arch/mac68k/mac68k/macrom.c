@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.14 1995/09/16 12:35:57 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.15 1995/09/17 18:51:40 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -515,6 +515,20 @@ mrg_setvectors(rom)
 	if (0 == jClkNoMem) {
 		printf("Help. Got NULL vector for jClkNoMem.\n");
 		panic("Please get this pointer in the sources (machdep.c) and comile a new kernel.\n");
+	}
+
+
+
+	mrg_OStraps[0x38] = rom->WriteParam;	/* WriteParam */
+	mrg_OStraps[0x3a] = rom->SetDateTime;	/* SetDateTime */
+	mrg_OStraps[0x3f] = rom->InitUtil;	/* InitUtil */
+	mrg_OStraps[0x51] = rom->ReadXPRam;	/* ReadXPRam */
+	mrg_OStraps[0x52] = rom->WriteXPRam;	/* WriteXPRam */
+        jClkNoMem = (void (*)) rom->jClkNoMem;
+
+	if (0 == jClkNoMem) {
+		printf("WARNING: don't have a value for jClkNoMem, please contact:  walter@ghpc8.ihf.rwth-aachen.de\n");
+		printf("Can't read RTC without it. Using MacOS boot time.\n");
 	}
 
 
