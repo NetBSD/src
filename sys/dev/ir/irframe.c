@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.13 2001/12/14 12:57:30 augustss Exp $	*/
+/*	$NetBSD: irframe.c,v 1.14 2001/12/26 10:56:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -209,11 +209,11 @@ irframeclose(dev_t dev, int flag, int mode, struct proc *p)
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
+	sc->sc_open = 0;
 	if (sc->sc_methods->im_close != NULL)
 		error = sc->sc_methods->im_close(sc->sc_handle, flag, mode, p);
 	else
 		error = 0;
-	sc->sc_open = 0;
 	return (error);
 }
 
@@ -225,7 +225,7 @@ irframeread(dev_t dev, struct uio *uio, int flag)
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
 		return (EIO);
 	if (uio->uio_resid < sc->sc_params.maxsize) {
 #ifdef DIAGNOSTIC
@@ -245,7 +245,7 @@ irframewrite(dev_t dev, struct uio *uio, int flag)
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
 		return (EIO);
 	if (uio->uio_resid > sc->sc_params.maxsize) {
 #ifdef DIAGNOSTIC
@@ -338,7 +338,7 @@ irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
 		return (EIO);
 
 	switch (cmd) {
@@ -378,7 +378,7 @@ irframepoll(dev_t dev, int events, struct proc *p)
 	sc = device_lookup(&irframe_cd, IRFRAMEUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
 		return (EIO);
 
 	return (sc->sc_methods->im_poll(sc->sc_handle, events, p));
