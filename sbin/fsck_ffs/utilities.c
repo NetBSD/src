@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.24 1998/03/30 02:09:40 mrg Exp $	*/
+/*	$NetBSD: utilities.c,v 1.25 1998/05/06 02:45:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.24 1998/03/30 02:09:40 mrg Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.25 1998/05/06 02:45:09 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -583,10 +583,12 @@ dofix(idesc, msg)
 	return (0);
 }
 
-void copyback_cg(blk)
+void
+copyback_cg(blk)
 	struct bufarea *blk;
 {
-	memcpy(blk->b_un.b_cg, cgrp, SBSIZE);
+
+	memcpy(blk->b_un.b_cg, cgrp, sblock->fs_cgsize);
 	if (needswap)
 		swap_cg(cgrp, blk->b_un.b_cg);
 }
