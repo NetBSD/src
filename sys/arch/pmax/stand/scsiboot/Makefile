@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1999/03/31 07:43:39 simonb Exp $
+#	$NetBSD: Makefile,v 1.13 1999/04/01 06:05:05 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 S=	${.CURDIR}/../../../..
@@ -8,19 +8,27 @@ RELOC=	80700000	# Room for an almost 7MB kernel
 VERS_O=			# no version info in first stage
 MKMAN=	no
 
-SRCS=	start.S alloc.c bootxx.c clear_cache.S memcpy.c memset.c printf.S \
-	strcmp.S strcpy.S strlen.S
+SRCS=	start.S bootxx.c clear_cache.S printf.S strcmp.S strcpy.S \
+	strlen.S
 
-# from sys/lib/libsa:
-SRCS+=	disklabel.c dkcksum.c errno.c lseek.c open.c read.c ufs.c
-# from sys/lib/libkern:
-SRCS+=	bcmp.c
 CLEANFILES+=${PROG}.aout ${PROG}.map mkboot ${ALL}
-.PATH:  ${.CURDIR}/../lib $S/lib/libsa $S/lib/libkern
+.PATH:  ${.CURDIR}/../lib
 
-BOOTDEFADD+=-DBOOTXX -DRELOC=0x${RELOC} \
-	-DLIBSA_NO_FS_CLOSE -DLIBSA_NO_FS_SYMLINK \
-	-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET -DLIBSA_NO_TWIDDLE
+# Don't compile in sanity checks for old file systems.
+SAMISCCPPFLAGS=	-DLIBSA_NO_COMPAT_UFS
+
+BOOTDEFADD+=	-DBOOTXX -DRELOC=0x${RELOC} \
+		-DLIBSA_NO_FS_CLOSE -DLIBSA_NO_FS_SYMLINK -DLIBSA_NO_FS_WRITE \
+		-DLIBSA_NO_DEV_CLOSE -DLIBSA_NO_RAW_ACCESS -DLIBSA_NO_TWIDDLE \
+		-DALLOC_FIRST_FIT \
+		-DLIBSA_USE_MEMCPY -DLIBSA_USE_MEMSET
+# The following will gain more space if needed (in rough order of
+# preference):
+# -DLIBSA_SINGLE_FILESYSTEM=ufs
+# -DLIBSA_SINGLE_DEVICE=rz -D"rzioctl(x,y,z)=EINVAL" -D"rzclose(f)=0"
+# -DLIBSA_FS_SINGLECOMPONENT
+# -DLIBSA_NO_DISKLABEL_MSGS
+
 
 ALL=	rzboot bootrz
 
