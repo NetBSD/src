@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.164 1999/10/11 17:33:52 hannken Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.165 1999/10/29 08:01:57 haya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.159 1999/10/11 17:31:52 hannken Exp 
+ *	NetBSD: pcidevs,v 1.160 1999/10/29 07:57:38 haya Exp 
  */
 
 /*
@@ -2410,37 +2410,37 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "8139 10/100 Ethernet",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C465,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C465,
 	    0,
 	    "Ricoh",
 	    "5C465 PCI-CardBus bridge",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C466,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C466,
 	    0,
 	    "Ricoh",
 	    "5C466 PCI-CardBus bridge",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C475,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C475,
 	    0,
 	    "Ricoh",
 	    "5C475 PCI-CardBus bridge",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C476,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RL5C476,
 	    0,
 	    "Ricoh",
 	    "5C476 PCI-CardBus bridge",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C477,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C477,
 	    0,
 	    "Ricoh",
 	    "5C477 PCI-CardBus bridge",
 	},
 	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RF5C478,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C478,
 	    0,
 	    "Ricoh",
 	    "5C478 PCI-CardBus bridge",
