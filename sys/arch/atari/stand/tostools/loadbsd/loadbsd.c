@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.14 1999/05/27 09:08:25 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.15 1999/06/23 19:26:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -45,6 +45,13 @@
 #include "libtos.h"
 #include "loader.h"
 
+#ifdef COMPRESSED_READ
+#define	open	copen
+#define	read	cread
+#define	lseek	clseek
+#define	close	cclose
+#endif /* COMPRESSED_READ */
+
 char	*Progname;		/* How are we called		*/
 int	d_flag  = 0;		/* Output debugging output?	*/
 int	h_flag  = 0;		/* show help			*/
@@ -52,7 +59,7 @@ int	s_flag  = 0;		/* St-ram only			*/
 int	t_flag  = 0;		/* Just test, do not execute	*/
 int	v_flag  = 0;		/* show version			*/
 
-const char version[] = "$Revision: 1.14 $";
+const char version[] = "$Revision: 1.15 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -164,7 +171,8 @@ char	**argv;
 	kparam.entry    = ehdr.a_entry;
 
 	if (ehdr.a_syms) {
-	  if (lseek(fd,ehdr.a_text+ehdr.a_data+ehdr.a_syms+sizeof(ehdr),0) <= 0)
+	  if (lseek(fd,ehdr.a_text+ehdr.a_data+ehdr.a_syms+sizeof(ehdr),0)
+									<= 0)
 		fatal(-1, "Cannot seek to string table in '%s'", kname);
 	  if (read(fd, (char *)&stringsz, sizeof(long)) != sizeof(long))
 		fatal(-1, "Cannot read string-table size");
@@ -180,7 +188,7 @@ char	**argv;
 	 * Read text & data, clear bss
 	 */
 	if ((read(fd, (char *)kparam.kp, ehdr.a_text) != ehdr.a_text)
-	    || (read(fd,(char *)(kparam.kp+textsz),ehdr.a_data) != ehdr.a_data))
+	    ||(read(fd,(char *)(kparam.kp+textsz),ehdr.a_data) != ehdr.a_data))
 		fatal(-1, "Unable to read kernel image\n");
 	memset(kparam.kp + textsz + ehdr.a_data, 0, ehdr.a_bss);
 
