@@ -5,14 +5,16 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_scalb.S,v 1.4 1995/05/11 23:03:44 jtc Exp $")
+RCSID("$NetBSD: e_scalb.S,v 1.5 1999/08/15 18:45:18 kleink Exp $")
 
 ENTRY(__ieee754_scalb)
 	fmoved	sp@(4),fp0
 	fbeq	Ldone
 	fscaled	sp@(12),fp0
 Ldone:
+#ifndef __SVR4_ABI__
 	fmoved	fp0,sp@-
 	movel	sp@+,d0
 	movel	sp@+,d1
+#endif
 	rts

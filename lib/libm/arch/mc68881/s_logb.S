@@ -40,7 +40,7 @@
 ;_sccsid:
 ;.asciz	"from: @(#)support.s	5.2 (Berkeley) 5/17/90"
 
-RCSID("$NetBSD: s_logb.S,v 1.4 1995/05/09 02:37:09 jtc Exp $")
+RCSID("$NetBSD: s_logb.S,v 1.5 1999/08/15 18:45:18 kleink Exp $")
 
 | logb(x)
 | returns the unbiased exponent of x, a signed integer in double precision,
@@ -63,7 +63,9 @@ Lfinite:
 Lnonz:
 	fgetexpx	fp0	| get exponent
 Ldone:
+#ifndef __SVR4_ABI__
 	fmoved	fp0,sp@-
 	movel	sp@+,d0
 	movel	sp@+,d1
+#endif
 	rts
