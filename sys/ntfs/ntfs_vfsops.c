@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.27 2000/03/30 12:47:02 augustss Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.28 2000/06/25 13:26:21 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -43,11 +43,7 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/vm_prot.h>
-#include <vm/vm_page.h>
 #include <vm/vm_object.h>
-#include <vm/vm_extern.h>
 
 #include <miscfs/specfs/specdev.h>
 
