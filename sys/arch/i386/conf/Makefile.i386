@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.133.2.1 2004/04/18 02:21:57 jmc Exp $
+#	$NetBSD: Makefile.i386,v 1.133.2.2 2004/07/15 19:26:49 he Exp $
 
 # Makefile for NetBSD
 #
@@ -106,16 +106,14 @@ clock.o: config_time.h
 .if !empty(OBJS:M\/athhal-elf.o)
 OBJS:=${OBJS:C/\/athhal-elf.o/athhal-elf.o/}
  
-UUDECODE_FILES=athhal-elf-o
-UUDECODE_FILES_RENAME_athhal-elf-o=athhal-elf.o
-
-athhal-elf.o: athhal-elf-o
-
-EXTRA_CLEAN+= athhal-elf-o
-
 .PATH: $S/../contrib/sys/arch/i386/dev
-
-.include <bsd.files.mk>
+ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
+		${_MKSHECHO}\
+		${UUDECODE} -p $> \> ${.TARGET}; \
+		rm -f ${.TARGET}; \
+		${UUDECODE} -p $> > ${.TARGET}
+athhal-elf.o: athhal-elf-o.uue
+	${ATH_UUDEC}
 .endif
 
 ##
