@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 2002/04/26 15:50:47 lukem Exp $
+#	$NetBSD: list,v 1.6 2003/12/27 21:30:28 martin Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -55,7 +55,7 @@ ARGVLN	sh -sh
 
 SPECIAL	ping	srcdir	distrib/utils/x_ping
 
-LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
+LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz
 
 # we need the boot blocks /usr/mdec
 #COPY	${DESTDIR}/usr/mdec/ofwboot	usr/mdec/ofwboot
