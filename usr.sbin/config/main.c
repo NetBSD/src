@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.78 2003/06/25 06:42:40 heas Exp $	*/
+/*	$NetBSD: main.c,v 1.79 2003/06/25 07:02:04 heas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -865,14 +865,15 @@ void
 addmkoption(const char *name, const char *value)
 {
 
-	(void)do_option(mkopttab, &nextmkopt, name, value, "mkoptions");
+	(void)do_option(mkopttab, &nextmkopt, name, value, "makeoptions");
 }
 
 void
 delmkoption(const char *name)
 {
 
-	(void)undo_option(mkopttab, &mkoptions, &nextmkopt, name, "mkoptions");
+	(void)undo_option(mkopttab, &mkoptions, &nextmkopt, name,
+	    "makeoptions");
 }
 
 /*
