@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_unixtime.h,v 1.2 1998/01/09 06:06:16 perry Exp $	*/
+
 /*
  * ntp_unixtime.h - contains constants and macros for converting between
  *		    NTP time stamps (l_fp) and Unix times (struct timeval)

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_intres.c,v 1.2 1998/01/09 06:06:37 perry Exp $	*/
+
 /*
  * ripped off from ../xnptres/xntpres.c by Greg Troxel 4/2/92
  * routine callable from xntpd, rather than separate program

@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_conf.c,v 1.2 1998/01/09 06:06:55 perry Exp $	*/
+
 /*
  * refclock_conf.c - reference clock configuration
  */

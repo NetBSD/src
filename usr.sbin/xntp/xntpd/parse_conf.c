@@ -1,3 +1,5 @@
+/*	$NetBSD: parse_conf.c,v 1.2 1998/01/09 06:06:49 perry Exp $	*/
+
 /*
  * /src/NTP/REPOSITORY/v4/libparse/parse_conf.c,v 3.24 1997/01/19 12:44:45 kardel Exp
  *  

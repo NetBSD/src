@@ -1,3 +1,5 @@
+/*	$NetBSD: ntptrace.h,v 1.2 1998/01/09 06:06:26 perry Exp $	*/
+
 /*
  * ntptrace.h - declarations for the ntptrace program
  */

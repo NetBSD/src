@@ -1,3 +1,5 @@
+/*	$NetBSD: clk_trimtsip.c,v 1.2 1998/01/09 06:06:32 perry Exp $	*/
+
 /*
  * /src/NTP/REPOSITORY/v4/libparse/clk_trimtsip.c,v 1.7 1997/01/19 12:44:42 kardel Exp
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: clk_computime.c,v 1.2 1998/01/09 06:06:27 perry Exp $	*/
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_acts.c,v 1.2 1998/01/09 06:06:49 perry Exp $	*/
+
 /*
  * refclock_acts - clock driver for the NIST/PTB Automated Computer Time
  *	Service aka Amalgamated Containerized Trash Service (ACTS)

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_unixclock.c,v 1.3 1998/01/09 06:06:46 perry Exp $	*/
+
 /*
  * ntp_unixclock.c - routines for reading and adjusting a 4BSD-style
  *		     system clock.  Emacs has hide-ifdef-mode ...

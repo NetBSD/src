@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_proto.c,v 1.2 1998/01/09 06:06:41 perry Exp $	*/
+
 /*
  * ntp_proto.c - NTP version 3 protocol machinery
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_arbiter.c,v 1.2 1998/01/09 06:06:50 perry Exp $	*/
+
 /*
  * refclock_arbiter - clock driver for Arbiter 1088A/B Satellite
  *	Controlled Clock

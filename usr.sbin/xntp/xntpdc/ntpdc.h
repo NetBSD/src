@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpdc.h,v 1.2 1998/01/09 06:07:16 perry Exp $	*/
+
 /*
  * ntpdc.h - definitions of interest to xntpdc
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_machine.h,v 1.2 1998/01/09 06:06:10 perry Exp $	*/
+
 /*
  * Collect all machine dependent idiosyncrasies in one place.
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_monitor.c,v 1.2 1998/01/09 06:06:40 perry Exp $	*/
+
 /*
  * ntp_monitor.c - monitor who is using the xntpd server
  */

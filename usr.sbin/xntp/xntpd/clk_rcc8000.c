@@ -1,3 +1,5 @@
+/*	$NetBSD: clk_rcc8000.c,v 1.2 1998/01/09 06:06:30 perry Exp $	*/
+
 /*
  * /src/NTP/REPOSITORY/v4/libparse/clk_rcc8000.c,v 3.5 1997/01/19 12:44:40 kardel Exp
  *  

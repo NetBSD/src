@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_syslog.h,v 1.2 1998/01/09 06:06:15 perry Exp $	*/
+
 /*
  * A hack for platforms which require specially built syslog facilities
  */

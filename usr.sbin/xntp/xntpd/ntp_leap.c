@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_leap.c,v 1.2 1998/01/09 06:06:38 perry Exp $	*/
+
 /*
  * ntp_leap - maintain leap bits and take action when a leap occurs
  */

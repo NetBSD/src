@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_gpsvme.c,v 1.2 1998/01/09 06:06:57 perry Exp $	*/
+
 /*
  * refclock_gpsvme.c  NTP clock driver for the TrueTime GPS-VME
  * R. Schmidt, Time Service, US Naval Obs.  res@tuttle.usno.navy.mil

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_string.h,v 1.2 1998/01/09 06:06:14 perry Exp $	*/
+
 /*
  * Define string ops: strchr strrchr memcmp memmove memset 
  */

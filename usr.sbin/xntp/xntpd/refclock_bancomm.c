@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_bancomm.c,v 1.2 1998/01/09 06:06:53 perry Exp $	*/
+
 /*
  * refclock_bancomm.c - clock driver for the  Datum/Bancomm
  * bc635VME Time and Frequency Processor. 

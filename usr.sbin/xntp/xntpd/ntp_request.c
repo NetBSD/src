@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_request.c,v 1.2 1998/01/09 06:06:43 perry Exp $	*/
+
 /*
  * ntp_request.c - respond to information requests
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_local.c,v 1.2 1998/01/09 06:07:01 perry Exp $	*/
+
 /* wjm 17-aug-1995: add a hook for special treatment of VMS_LOCALUNIT */
 
 /*

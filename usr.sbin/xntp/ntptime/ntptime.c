@@ -1,3 +1,5 @@
+/*	$NetBSD: ntptime.c,v 1.5 1998/01/09 06:06:25 perry Exp $	*/
+
 /*
  * NTP test program
  *
