@@ -1,4 +1,4 @@
-/*	$NetBSD: upap.h,v 1.8 1997/09/26 19:53:24 christos Exp $	*/
+/*	$NetBSD: upap.h,v 1.8.12.1 2000/07/18 16:15:15 tron Exp $	*/
 
 /*
  * upap.h - User/Password Authentication Protocol definitions.
@@ -18,13 +18,13 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: upap.h,v 1.6 1996/07/01 01:21:45 paulus Exp 
+ * Id: upap.h,v 1.7 1999/11/15 01:51:54 paulus Exp 
  */
 
 /*
  * Packet header = Code, id, length.
  */
-#define UPAP_HEADERLEN	(sizeof (u_char) + sizeof (u_char) + sizeof (u_short))
+#define UPAP_HEADERLEN	4
 
 
 /*

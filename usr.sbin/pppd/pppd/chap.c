@@ -1,4 +1,4 @@
-/*	$NetBSD: chap.c,v 1.14 1999/08/25 02:07:42 christos Exp $	*/
+/*	$NetBSD: chap.c,v 1.14.8.1 2000/07/18 16:15:07 tron Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -38,9 +38,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-define RCSID	"Id: chap.c,v 1.23 1999/08/13 06:46:11 paulus Exp "
+define RCSID	"Id: chap.c,v 1.24 1999/11/15 01:51:50 paulus Exp "
 #else
-__RCSID("$NetBSD: chap.c,v 1.14 1999/08/25 02:07:42 christos Exp $");
+__RCSID("$NetBSD: chap.c,v 1.14.8.1 2000/07/18 16:15:07 tron Exp $");
 #endif
 #endif
 
@@ -752,7 +752,7 @@ ChapGenChallenge(cstate)
 {
     int chal_len;
     u_char *ptr = cstate->challenge;
-    unsigned int i;
+    int i;
 
     /* pick a random challenge length between MIN_CHALLENGE_LENGTH and 
        MAX_CHALLENGE_LENGTH */  
@@ -764,7 +764,7 @@ ChapGenChallenge(cstate)
     cstate->chal_transmits = 0;
 
     /* generate a random string */
-    for (i = 0; i < chal_len; i++ )
+    for (i = 0; i < chal_len; i++)
 	*ptr++ = (char) (drand48() * 0xff);
 }
 

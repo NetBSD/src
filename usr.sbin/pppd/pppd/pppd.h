@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.19 1999/08/25 02:07:45 christos Exp $	*/
+/*	$NetBSD: pppd.h,v 1.19.8.1 2000/07/18 16:15:14 tron Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: pppd.h,v 1.45 1999/08/24 05:31:11 paulus Exp 
+ * Id: pppd.h,v 1.49 1999/12/23 01:29:42 paulus Exp 
  */
 
 /*
@@ -35,7 +35,7 @@
 #include <sys/time.h>		/* for struct timeval */
 #include <net/ppp_defs.h>
 
-#if __STDC__
+#if defined(__STDC__)
 #include <stdarg.h>
 #define __V(x)	x
 #else
@@ -45,7 +45,7 @@
 #define volatile
 #endif
 
-#if INET6
+#ifdef INET6
 #include "eui64.h"
 #endif
 
@@ -161,12 +161,19 @@ extern GIDSET_TYPE groups[NGROUPS_MAX];	/* groups the user is in */
 extern int	ngroups;	/* How many groups valid in groups */
 extern struct pppd_stats link_stats; /* byte/packet counts etc. for link */
 extern int	link_stats_valid; /* set if link_stats is valid */
+extern int	link_connect_time; /* time the link was up for */
 extern int	using_pty;	/* using pty as device (notty or pty opt.) */
 extern int	log_to_fd;	/* logging to this fd as well as syslog */
 extern char	*no_ppp_msg;	/* message to print if ppp not in kernel */
 extern volatile int status;	/* exit status for pppd */
 extern int	devnam_fixed;	/* can no longer change devnam */
 extern int	unsuccess;	/* # unsuccessful connection attempts */
+extern int	do_callback;	/* set if we want to do callback next */
+extern int	doing_callback;	/* set if this is a callback */
+
+/* Values for do_callback and doing_callback */
+#define CALLBACK_DIALIN		1	/* we are expecting the call back */
+#define CALLBACK_DIALOUT	2	/* we are dialling out to call back */
 
 /*
  * Variables set by command-line options.
@@ -184,8 +191,8 @@ extern bool	lockflag;	/* Create lock file to lock the serial dev */
 extern bool	nodetach;	/* Don't detach from controlling tty */
 extern bool	updetach;	/* Detach from controlling tty when link up */
 extern char	*initializer;	/* Script to initialize physical link */
-extern char	*connector;	/* Script to establish physical link */
-extern char	*disconnector;	/* Script to disestablish physical link */
+extern char	*connect_script; /* Script to establish physical link */
+extern char	*disconnect_script; /* Script to disestablish physical link */
 extern char	*welcomer;	/* Script to welcome client after connection */
 extern char	*ptycommand;	/* Command to run on other side of pty */
 extern int	maxconnect;	/* Maximum connect time (seconds) */
@@ -202,11 +209,14 @@ extern char	*ipparam;	/* Extra parameter for ip up/down scripts */
 extern bool	cryptpap;	/* Others' PAP passwords are encrypted */
 extern int	idle_time_limit;/* Shut down link if idle for this long */
 extern int	holdoff;	/* Dead time before restarting */
+extern bool	holdoff_specified; /* true if user gave a holdoff value */
 extern bool	notty;		/* Stdin/out is not a tty */
 extern char	*record_file;	/* File to record chars sent/received */
 extern bool	sync_serial;	/* Device is synchronous serial device */
 extern int	maxfail;	/* Max # of unsuccessful connection attempts */
 extern char	linkname[MAXPATHLEN]; /* logical name for link */
+extern bool	tune_kernel;	/* May alter kernel settings as necessary */
+extern int	connect_delay;	/* Time to delay after connect script */
 
 #ifdef PPP_FILTER
 /* Filter for packets to pass */
@@ -238,8 +248,10 @@ extern char *option_source;	/* string saying where the option came from */
 #define PHASE_AUTHENTICATE	5
 #define PHASE_CALLBACK		6
 #define PHASE_NETWORK		7
-#define PHASE_TERMINATE		8
-#define PHASE_HOLDOFF		9
+#define PHASE_RUNNING		8
+#define PHASE_TERMINATE		9
+#define PHASE_DISCONNECT	10
+#define PHASE_HOLDOFF		11
 
 /*
  * The following struct gives the addresses of procedures to call
@@ -302,6 +314,7 @@ void reopen_log __P((void));	/* (re)open the connection to syslog */
 void update_link_stats __P((int)); /* Get stats at link termination */
 void script_setenv __P((char *, char *));	/* set script env var */
 void script_unsetenv __P((char *));		/* unset script env var */
+void new_phase __P((int));	/* signal start of new phase */
 
 /* Procedures exported from utils.c. */
 void log_packet __P((u_char *, int, char *, int));
@@ -339,7 +352,7 @@ void auth_withpeer_success __P((int, int));
 void auth_check_options __P((void));
 				/* check authentication options supplied */
 void auth_reset __P((int));	/* check what secrets we have */
-int  check_passwd __P((int, char *, int, char *, int, char **, int *));
+int  check_passwd __P((int, char *, int, char *, int, char **));
 				/* Check peer-supplied username/password */
 int  get_secret __P((int, char *, char *, char *, int *, int));
 				/* get "secret" for chap */
@@ -404,9 +417,7 @@ int  sifaddr __P((int, u_int32_t, u_int32_t, u_int32_t));
 				/* Configure IPv4 addresses for i/f */
 int  cifaddr __P((int, u_int32_t, u_int32_t));
 				/* Reset i/f IP addresses */
-#if INET6
-int  sif6up __P((int));		/* Configure i/f up (for IPv6) */
-int  sif6down __P((int));	/* Configure i/f down (for IPv6) */
+#ifdef INET6
 int  sif6addr __P((int, eui64_t, eui64_t));
 				/* Configure IPv6 addresses for i/f */
 int  cif6addr __P((int, eui64_t, eui64_t));
@@ -454,6 +465,7 @@ void option_error __P((char *fmt, ...));
 				/* Print an error message about an option */
 int int_option __P((char *, int *));
 				/* Simplified number_option for decimal ints */
+void add_options __P((option_t *)); /* Add extra options */
 
 /*
  * This structure is used to store information about certain
@@ -468,10 +480,25 @@ struct option_info {
 
 extern struct option_info devnam_info;
 extern struct option_info initializer_info;
-extern struct option_info connector_info;
-extern struct option_info disconnector_info;
+extern struct option_info connect_script_info;
+extern struct option_info disconnect_script_info;
 extern struct option_info welcomer_info;
 extern struct option_info ptycommand_info;
+
+/*
+ * Hooks to enable plugins to change various things.
+ */
+extern int (*new_phase_hook) __P((int));
+extern int (*idle_time_hook) __P((struct ppp_idle *));
+extern int (*holdoff_hook) __P((void));
+extern int (*pap_check_hook) __P((void));
+extern int (*pap_auth_hook) __P((char *user, char *passwd, char **msgp,
+				 struct wordlist **paddrs,
+				 struct wordlist **popts));
+extern void (*pap_logout_hook) __P((void));
+extern int (*pap_passwd_hook) __P((char *user, char *passwd));
+extern void (*ip_up_hook) __P((void));
+extern void (*ip_down_hook) __P((void));
 
 /*
  * Inline versions of get/put char/short/long.

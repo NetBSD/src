@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.20 1999/08/25 02:07:43 christos Exp $	*/
+/*	$NetBSD: lcp.c,v 1.20.8.1 2000/07/18 16:15:10 tron Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: lcp.c,v 1.44 1999/08/13 06:46:14 paulus Exp "
+#define RCSID	"Id: lcp.c,v 1.47 1999/12/23 01:27:28 paulus Exp "
 #else
-__RCSID("$NetBSD: lcp.c,v 1.20 1999/08/25 02:07:43 christos Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.20.8.1 2000/07/18 16:15:10 tron Exp $");
 #endif
 #endif
 
@@ -129,9 +129,9 @@ lcp_options lcp_allowoptions[NUM_PPP];	/* Options we allow peer to request */
 lcp_options lcp_hisoptions[NUM_PPP];	/* Options that we ack'd */
 u_int32_t xmit_accm[NUM_PPP][8];		/* extended transmit ACCM */
 
-static u_int32_t lcp_echos_pending = 0;	/* Number of outstanding echo msgs */
-static u_int32_t lcp_echo_number   = 0;	/* ID number of next echo frame */
-static u_int32_t lcp_echo_timer_running = 0;  /* set if a timer is running */
+static int lcp_echos_pending = 0;	/* Number of outstanding echo msgs */
+static int lcp_echo_number   = 0;	/* ID number of next echo frame */
+static int lcp_echo_timer_running = 0;  /* set if a timer is running */
 
 static u_char nak_buffer[PPP_MRU];	/* where we construct a nak packet */
 
@@ -220,10 +220,10 @@ int lcp_loopbackfail = DEFLOOPBACKFAIL;
  */
 #define CILEN_VOID	2
 #define CILEN_CHAR	3
-#define CILEN_SHORT	4	/* CILEN_VOID + sizeof(short) */
-#define CILEN_CHAP	5	/* CILEN_VOID + sizeof(short) + 1 */
-#define CILEN_LONG	6	/* CILEN_VOID + sizeof(long) */
-#define CILEN_LQR	8	/* CILEN_VOID + sizeof(short) + sizeof(long) */
+#define CILEN_SHORT	4	/* CILEN_VOID + 2 */
+#define CILEN_CHAP	5	/* CILEN_VOID + 2 + 1 */
+#define CILEN_LONG	6	/* CILEN_VOID + 4 */
+#define CILEN_LQR	8	/* CILEN_VOID + 2 + 4 */
 #define CILEN_CBCP	3
 
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
@@ -347,7 +347,7 @@ lcp_close(unit, reason)
     fsm *f = &lcp_fsm[unit];
 
     if (phase != PHASE_DEAD)
-	phase = PHASE_TERMINATE;
+	new_phase(PHASE_TERMINATE);
     if (f->state == STOPPED && f->flags & (OPT_PASSIVE|OPT_SILENT)) {
 	/*
 	 * This action is not strictly according to the FSM in RFC1548,
@@ -468,7 +468,7 @@ lcp_rprotrej(f, inp, len)
     struct protent *protp;
     u_short prot;
 
-    if (len < sizeof (u_short)) {
+    if (len < 2) {
 	LCPDEBUG(("lcp_rprotrej: Rcvd short Protocol-Reject packet!"));
 	return;
     }
@@ -930,11 +930,18 @@ lcp_nakci(f, p, len)
 	    if (go->neg_chap) {
 		/*
 		 * We were asking for CHAP/MD5; they must want a different
-		 * algorithm.  If they can't do MD5, we'll have to stop
+		 * algorithm.  If they can't do MD5, we can ask for M$-CHAP
+		 * if we support it, otherwise we'll have to stop
 		 * asking for CHAP.
 		 */
-		if (cichar != go->chap_mdtype)
-		    try.neg_chap = 0;
+		if (cichar != go->chap_mdtype) {
+#ifdef CHAPMS
+		    if (cichar == CHAP_MICROSOFT)
+			go->chap_mdtype = CHAP_MICROSOFT;
+		    else
+#endif /* CHAPMS */
+			try.neg_chap = 0;
+		}
 	    } else {
 		/*
 		 * Stop asking for PAP if we were asking for it.
@@ -1335,7 +1342,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    GETSHORT(cishort, p);
 
 	    /*
-	     * Authtype must be UPAP or CHAP.
+	     * Authtype must be PAP or CHAP.
 	     *
 	     * Note: if both ao->neg_upap and ao->neg_chap are set,
 	     * and the peer sends a Configure-Request with two
@@ -1358,6 +1365,8 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		    PUTCHAR(CILEN_CHAP, nakp);
 		    PUTSHORT(PPP_CHAP, nakp);
 		    PUTCHAR(ao->chap_mdtype, nakp);
+		    /* XXX if we can do CHAP_MICROSOFT as well, we should
+		       probably put in another option saying so */
 		    break;
 		}
 		ho->neg_upap = 1;
@@ -1863,7 +1872,9 @@ LcpEchoTimeout (arg)
 static void
 lcp_received_echo_reply (f, id, inp, len)
     fsm *f;
-    int id; u_char *inp; int len;
+    int id;
+    u_char *inp;
+    int len;
 {
     u_int32_t magic;
 
