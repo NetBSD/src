@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.11 1997/11/14 12:58:17 mrg Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.12 1997/12/20 20:18:47 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -235,7 +235,7 @@ void *ptr;
 		else
 			printf("%s", inet_ntoa(np->in_in[1]));
 		printf(" -> %s/", inet_ntoa(np->in_out[0]));
-		bits = countbits(ntohl(np->in_out[1].s_addr));
+		bits = countbits(np->in_out[1].s_addr);
 		if (bits != -1)
 			printf("%d ", bits);
 		else
