@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3.8.2 2002/05/16 12:58:25 gehenna Exp $	*/
+/*	$NetBSD: defs.h,v 1.3.8.3 2002/05/16 13:00:43 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -401,6 +401,7 @@ void	initfiles(void);
 void	checkfiles(void);
 int	fixfiles(void);		/* finalize */
 int	fixobjects(void);
+int	fixdevsw(void);
 void	addfile(const char *, struct nvlist *, int, const char *);
 void	addobject(const char *, struct nvlist *, int);
 
