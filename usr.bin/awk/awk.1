@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.5 2001/02/05 19:33:36 jdolecek Exp $
+.\"	$NetBSD: awk.1,v 1.6 2001/02/08 20:54:50 jdolecek Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -33,7 +33,7 @@
 .Op Fl F Ar fs
 .Op Fl v Ar var=value
 .Op Fl safe
-.Op Fl d[N]
+.Op Fl d Ns Op Ar N
 .Op Ar prog | Fl f Ar filename
 .Ar
 .Nm ""
@@ -74,7 +74,7 @@ and is executed at the time it would have been opened if it were a filename.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
-.It Fl d[N]
+.It Fl d Ns Op Ar N
 Set debug level to specified number
 .Ar N .
 If the number is omitted, debug level is set to 1.
@@ -97,7 +97,7 @@ fields number.
 Potentially unsafe functions such as
 .Fn system
 make the program abort (with a warning message).
-.It Fl v
+.It Fl v Ar var Ns = Ns Ar value
 Assign the value
 .Ar value
 to the variable
@@ -146,7 +146,9 @@ stands for
 String constants are quoted \&\f(CW"\ "\fR,
 with the usual C escapes recognized within.
 Expressions take on string or numeric values as appropriate,
-and are built using the Operators (see next subsection).
+and are built using the
+.Sx Operators
+(see next subsection).
 Variables may be scalars, array elements
 (denoted
 .Va x[i] )
@@ -218,7 +220,7 @@ Assignment and Operator-Assignment
 .Ss Control Statements
 The control statements are as follows:
 .Pp
-.Bl -hang -offset indent -width "" -compact
+.Bl -hang -offset indent -width indent -compact
 .It Xo
 .Ic if \&( Ar expression Ic \&) Ar statement
 .Bq Ic else Ar statement
@@ -380,7 +382,61 @@ and returns the previous seed.
 AWK has the following string functions built-in:
 .Pp
 .Bl -tag -width indent
-.It Fn gsub
+.It Fn gensub r s h [t]
+Search the target string
+.Ar t
+for matches of the regular expression
+.Ar r .
+If
+.Ar h
+is a string beginning with
+.Ic g
+or
+.Ic G ,
+then replace all matches of
+.Ar r
+with
+.Ar s .
+Otherwise,
+.Ar h
+is a number indicating which match of
+.Ar r
+to replace. If no
+.Ar t
+is supplied,
+.Va $0
+is used instead.
+.\"Within the replacement text
+.\".Ar s ,
+.\"the sequence
+.\".Ar \en ,
+.\"where
+.\".Ar n
+.\"is a digit from 1 to 9, may be used to indicate just the text that
+.\"matched the
+.\".Ar n Ap th
+.\"parenthesized subexpression. The sequence
+.\".Ic \e0
+.\"represents the entire text, as does the character
+.\".Ic & .
+Unlike
+.Fn sub
+and
+.Fn gsub ,
+the modified string is returned as the result of the function,
+and the original target is
+.Em not
+changed.
+Note that the
+.Ar \en
+sequences within replacement string
+.Ar s
+supported by GNU
+.Nm
+are
+.Em not
+supported at this moment.
+.It Fn gsub r t "[s]"
 same as
 .Fn sub
 except that all occurrences of the regular expression
@@ -452,7 +508,7 @@ is not given,
 is used.
 .It Fn substr s m [n]
 Returns the at most
-.Ar n -character
+.Ar n Ns No -character
 substring of
 .Ar s
 starting at position
@@ -472,6 +528,36 @@ returns a copy of
 .Ar str
 with all lower-case characters translated to their
 corresponding upper-case equivalents.
+.El
+.Ss Time Functions
+This
+.Nm
+provides the following two functions for obtaining time
+stamps and formatting them:
+.Bl -tag -width indent
+.It Fn systime
+Returns the value of time in seconds since the start of
+.Tn Unix
+Epoch (Midnight, January 1, 1970, Coordinated Universal Time).
+See also
+.Xr time 3 .
+.It Fn strftime "[format [, timestamp]]"
+Formats the time
+.Ar timestamp
+according to the string
+.Ar format .
+.Ar timestamp
+should be in same form as value returned by
+.Fn systime .
+If
+.Ar timestamp
+is missing, current time is used. If
+.Ar format
+is missing, a default format equivalent to the output of
+.Xr date 1
+would be used. See the specification of ANSI C
+.Xr strftime 3
+for the format conversions which are supported.
 .El
 .Ss Other built-in functions
 .Pp
@@ -577,6 +663,14 @@ output field separator (default blank)
 output record separator (default newline)
 .It Va RS
 input record separator (default newline)
+.It Va RSTART
+Position of the first character matched by
+.Fn match ;
+0 if not match.
+.It Va RLENGTH
+Length of the string matched by
+.Fn match ;
+-1 if no match.
 .It Va SUBSEP
 separates multiple subscripts (default 034)
 .El
@@ -618,17 +712,29 @@ Print all lines between start/stop pairs.
 .It Ic "\ \ \ \ " exit }
 .El
 .Sh SEE ALSO
+.Xr egrep 1 ,
 .Xr lex 1 ,
-.Xr sed 1
+.Xr sed 1 ,
+.Xr atan2 3 ,
+.Xr cos 3 ,
+.Xr exp 3 ,
+.Xr log 3 ,
+.Xr sin 3 ,
+.Xr sqrt 3 ,
+.Xr strftime 3 ,
+.Xr time 3
 .Pp
 A. V. Aho, B. W. Kernighan, P. J. Weinberger,
 .Em The AWK Programming Language ,
 Addison-Wesley, 1988.  ISBN 0-201-07981-X
+.Pp
+.Em AWK Language Programming ,
+Edition 1.0, published by the Free Software Foundation, 1995
 .Sh BUGS
 There are no explicit conversions between numbers and strings.
 To force an expression to be treated as a number add 0 to it;
 to force it to be treated as a string concatenate
-\&\f(CW""\fP to it.
+\&"\&" to it.
 .br
 The scope rules for variables in functions are a botch;
 the syntax is worse.
