@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.1.1.1 1996/08/09 10:15:06 thorpej Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.2 1996/08/15 22:17:57 chuck Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -126,8 +126,12 @@ main(argc,argv)
 			break;
 
 		case 'C':
+			if (optind + 3 >= argc) {
+				need_usage = 1;
+				optind = argc;
+				break;
+			}
 			Cflag = 1;
-			break;
 			tid = optarg;
 			prog = argv[optind++];
 			ipadd = argv[optind++];
