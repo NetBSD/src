@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigarray.c,v 1.1 2001/08/26 16:33:01 manu Exp $ */
+/*	$NetBSD: linux_sigarray.c,v 1.2 2001/09/02 07:25:58 manu Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
 
 #include <compat/linux/common/linux_signal.h>
 
+/* 
+ * From Linux's include/asm-mips/signal.h 
+ */
 const int linux_to_native_sig[LINUX__NSIG] = {
 	0,				/* 0 */
 	SIGHUP,
