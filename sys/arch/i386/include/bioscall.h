@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.h,v 1.8 2003/04/02 07:35:59 thorpej Exp $ */
+/*	$NetBSD: bioscall.h,v 1.9 2003/10/27 13:44:20 junyoung Exp $ */
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -104,6 +104,6 @@ struct bioscallregs {
 
 #define ES	r_es.biosreg_half[BIOSREG_LO]
 
-void bioscall __P((int /* function*/ , struct bioscallregs * /* regs */));
+void bioscall(int /* function*/ , struct bioscallregs * /* regs */);
 #endif
 #endif /* __I386_BIOSCALL_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.4 2003/08/07 16:28:00 agc Exp $	*/
+/*	$NetBSD: userret.h,v 1.5 2003/10/27 13:44:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  *
  */
 
-static __inline void userret __P((register struct lwp *));
+static __inline void userret(register struct lwp *);
 
 /*
  * Define the code needed before returning to user mode, for

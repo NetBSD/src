@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2003/10/16 22:56:29 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2003/10/27 13:43:48 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -111,11 +111,11 @@ struct intrhand {
 #define IMASK(ci,level) (ci)->ci_imask[(level)]
 #define IUNMASK(ci,level) (ci)->ci_iunmask[(level)]
 
-extern void Xspllower __P((int));
+extern void Xspllower(int);
 
-static __inline int splraise __P((int));
-static __inline void spllower __P((int));
-static __inline void softintr __P((int));
+static __inline int splraise(int);
+static __inline void spllower(int);
+static __inline void softintr(int);
 
 /*
  * Convert spl level to local APIC level

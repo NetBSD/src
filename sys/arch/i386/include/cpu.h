@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.108 2003/10/10 13:02:34 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.109 2003/10/27 13:44:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -118,9 +118,9 @@ struct cpu_info {
 	u_int64_t	ci_tsc_freq;	 /* cpu cycles/second */
 
 	struct cpu_functions *ci_func;  /* start/stop functions */
-	void (*cpu_setup) __P((struct cpu_info *));
+	void (*cpu_setup)(struct cpu_info *);
  					/* proc-dependant init */
-	void (*ci_info)	__P((struct cpu_info *));
+	void (*ci_info)(struct cpu_info *);
 
 	int		ci_want_resched;
 	int		ci_astpending;
@@ -216,14 +216,14 @@ curcpu()
 
 extern	struct cpu_info *cpu_info[X86_MAXPROCS];
 
-void cpu_boot_secondary_processors __P((void));
-void cpu_init_idle_pcbs __P((void));
+void cpu_boot_secondary_processors(void);
+void cpu_init_idle_pcbs(void);
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-extern void need_resched __P((struct cpu_info *));
+extern void need_resched(struct cpu_info *);
 
 #else /* !MULTIPROCESSOR */
 
@@ -296,9 +296,9 @@ extern u_int32_t cpus_attached;
 /*
  * We need a machine-independent name for this.
  */
-extern void (*delay_func) __P((int));
+extern void (*delay_func)(int);
 struct timeval;
-extern void (*microtime_func) __P((struct timeval *));
+extern void (*microtime_func)(struct timeval *);
 
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
@@ -314,9 +314,9 @@ struct cpu_nocpuid_nameclass {
 	const char *cpu_vendorname;
 	const char *cpu_name;
 	int cpu_class;
-	void (*cpu_setup) __P((struct cpu_info *));
-	void (*cpu_cacheinfo) __P((struct cpu_info *));
-	void (*cpu_info) __P((struct cpu_info *));
+	void (*cpu_setup)(struct cpu_info *);
+	void (*cpu_cacheinfo)(struct cpu_info *);
+	void (*cpu_info)(struct cpu_info *);
 };
 
 
@@ -327,9 +327,9 @@ struct cpu_cpuid_nameclass {
 	struct cpu_cpuid_family {
 		int cpu_class;
 		const char *cpu_models[CPU_MAXMODEL+2];
-		void (*cpu_setup) __P((struct cpu_info *));
-		void (*cpu_probe) __P((struct cpu_info *));
-		void (*cpu_info) __P((struct cpu_info *));
+		void (*cpu_setup)(struct cpu_info *);
+		void (*cpu_probe)(struct cpu_info *);
+		void (*cpu_info)(struct cpu_info *);
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
@@ -346,12 +346,12 @@ extern int i386_has_sse;
 extern int i386_has_sse2;
 
 /* machdep.c */
-void	dumpconf __P((void));
-int	cpu_maxproc __P((void));
-void	cpu_reset __P((void));
-void	i386_init_pcb_tss_ldt __P((struct cpu_info *));
-void	i386_proc0_tss_ldt_init __P((void));
-void	i386_bufinit __P((void));
+void	dumpconf(void);
+int	cpu_maxproc(void);
+void	cpu_reset(void);
+void	i386_init_pcb_tss_ldt(struct cpu_info *);
+void	i386_proc0_tss_ldt_init(void);
+void	i386_bufinit(void);
 
 /* identcpu.c */
 extern int tmx86_has_longrun;
@@ -362,71 +362,71 @@ extern u_int crusoe_percentage;
 extern u_int tmx86_set_longrun_mode(u_int);
 void tmx86_get_longrun_status_all(void);
 u_int tmx86_get_longrun_mode(void);
-void identifycpu __P((struct cpu_info *));
+void identifycpu(struct cpu_info *);
 
 /* vm_machdep.c */
-void	cpu_proc_fork __P((struct proc *, struct proc *));
+void	cpu_proc_fork(struct proc *, struct proc *);
 
 /* locore.s */
 struct region_descriptor;
-void	lgdt __P((struct region_descriptor *));
-void	fillw __P((short, void *, size_t));
+void	lgdt(struct region_descriptor *);
+void	fillw(short, void *, size_t);
 
 struct pcb;
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *, void (*)(struct lwp *)));
-void	proc_trampoline __P((void));
+void	savectx(struct pcb *);
+void	switch_exit(struct lwp *, void (*)(struct lwp *));
+void	proc_trampoline(void);
 
 /* clock.c */
-void	initrtclock __P((void));
-void	startrtclock __P((void));
-void	i8254_delay __P((int));
-void	i8254_microtime __P((struct timeval *));
-void	i8254_initclocks __P((void));
+void	initrtclock(void);
+void	startrtclock(void);
+void	i8254_delay(int);
+void	i8254_microtime(struct timeval *);
+void	i8254_initclocks(void);
 
 /* kern_microtime.c */
 
 extern struct timeval cc_microset_time;
-void	cc_microtime __P((struct timeval *));
-void	cc_microset __P((struct cpu_info *));
+void	cc_microtime(struct timeval *);
+void	cc_microset(struct cpu_info *);
 
 /* cpu.c */
 
-void	cpu_probe_features __P((struct cpu_info *));
+void	cpu_probe_features(struct cpu_info *);
 
 /* npx.c */
-void	npxsave_lwp __P((struct lwp *, int));
-void	npxsave_cpu __P((struct cpu_info *, int));
+void	npxsave_lwp(struct lwp *, int);
+void	npxsave_cpu(struct cpu_info *, int);
 
 /* vm_machdep.c */
-int kvtop __P((caddr_t));
+int kvtop(caddr_t);
 
 #ifdef MATH_EMULATE
 /* math_emulate.c */
-int	math_emulate __P((struct trapframe *, ksiginfo_t *));
+int	math_emulate(struct trapframe *, ksiginfo_t *);
 #endif
 
 #ifdef USER_LDT
 /* sys_machdep.h */
-int	i386_get_ldt __P((struct lwp *, void *, register_t *));
-int	i386_set_ldt __P((struct lwp *, void *, register_t *));
+int	i386_get_ldt(struct lwp *, void *, register_t *);
+int	i386_set_ldt(struct lwp *, void *, register_t *);
 #endif
 
 /* isa_machdep.c */
-void	isa_defaultirq __P((void));
-int	isa_nmi __P((void));
+void	isa_defaultirq(void);
+int	isa_nmi(void);
 
 #ifdef VM86
 /* vm86.c */
-void	vm86_gpfault __P((struct lwp *, int));
+void	vm86_gpfault(struct lwp *, int);
 #endif /* VM86 */
 
 /* consinit.c */
-void kgdb_port_init __P((void));
+void kgdb_port_init(void);
 
 /* bus_machdep.c */
-void x86_bus_space_init __P((void));
-void x86_bus_space_mallocok __P((void));
+void x86_bus_space_init(void);
+void x86_bus_space_mallocok(void);
 
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 

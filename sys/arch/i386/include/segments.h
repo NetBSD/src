@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.38 2003/08/24 17:52:33 chs Exp $	*/
+/*	$NetBSD: segments.h,v 1.39 2003/10/27 13:44:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -167,17 +167,17 @@ struct region_descriptor {
 extern union descriptor *gdt, *ldt;
 extern struct gate_descriptor *idt;
 
-void setgate __P((struct gate_descriptor *, void *, int, int, int, int));
-void setregion __P((struct region_descriptor *, void *, size_t));
-void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
-    int, int));
-void setgdt __P((int, void *, size_t, int, int, int, int));
-void unsetgate __P((struct gate_descriptor *));
-void cpu_init_idt __P((void));
+void setgate(struct gate_descriptor *, void *, int, int, int, int);
+void setregion(struct region_descriptor *, void *, size_t);
+void setsegment(struct segment_descriptor *, void *, size_t, int, int,
+    int, int);
+void setgdt(int, void *, size_t, int, int, int, int);
+void unsetgate(struct gate_descriptor *);
+void cpu_init_idt(void);
 
-int idt_vec_alloc __P((int, int));
-void idt_vec_set __P((int, void (*)(void)));
-void idt_vec_free __P((int));
+int idt_vec_alloc(int, int);
+void idt_vec_set(int, void (*)(void));
+void idt_vec_free(int);
 
 #endif /* _KERNEL */
 
