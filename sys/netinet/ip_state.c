@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.3 1997/03/29 00:55:04 thorpej Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.4 1997/05/25 12:40:19 darrenr Exp $	*/
 
 /*
  * (C)opyright 1995 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_state.c,v 1.3 1997/03/29 00:55:04 thorpej Exp $";
+static	char	rcsid[] = "$Id: ip_state.c,v 1.4 1997/05/25 12:40:19 darrenr Exp $";
 #endif
 
 #if !defined(_KERNEL) && !defined(KERNEL)
@@ -19,17 +19,24 @@ static	char	rcsid[] = "$Id: ip_state.c,v 1.3 1997/03/29 00:55:04 thorpej Exp $";
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/time.h>
 #include <sys/file.h>
-#include <sys/ioctl.h>
+#if defined(KERNEL) && (__FreeBSD_version >= 220000)
+# include <sys/filio.h>
+# include <sys/fcntl.h>
+#else
+# include <sys/ioctl.h>
+#endif
 #include <sys/uio.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#ifdef	_KERNEL
+#ifdef _KERNEL
 # include <sys/systm.h>
 #endif
 #if !defined(__SVR4) && !defined(__svr4__)
 # include <sys/mbuf.h>
 #else
+# include <sys/filio.h>
 # include <sys/byteorder.h>
 # include <sys/dditypes.h>
 # include <sys/stream.h>
@@ -50,9 +57,10 @@ static	char	rcsid[] = "$Id: ip_state.c,v 1.3 1997/03/29 00:55:04 thorpej Exp $";
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
-#include <netinet/ip_compat.h>
-#include <netinet/ip_fil.h>
-#include <netinet/ip_state.h>
+#include "netinet/ip_compat.h"
+#include "netinet/ip_fil.h"
+#include "netinet/ip_nat.h"
+#include "netinet/ip_state.h"
 #ifndef	MIN
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
@@ -62,11 +70,8 @@ static	char	rcsid[] = "$Id: ip_state.c,v 1.3 1997/03/29 00:55:04 thorpej Exp $";
 ipstate_t *ips_table[IPSTATE_SIZE];
 int	ips_num = 0;
 ips_stat_t ips_stats;
-#if	SOLARIS
+#if	SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_state;
-# if	!defined(_KERNEL)
-#define	bcopy(a,b,c)	memmove(b,a,c)
-# endif
 #endif
 
 
@@ -89,10 +94,27 @@ ips_stat_t *fr_statetstats()
 }
 
 
-#define	PAIRS(s1,d1,s2,d2)	((((s1) == (s2)) && ((d1) == (d2))) ||\
-				 (((s1) == (d2)) && ((d1) == (s2))))
-#define	IPPAIR(s1,d1,s2,d2)	PAIRS((s1).s_addr, (d1).s_addr, \
-				      (s2).s_addr, (d2).s_addr)
+int fr_state_ioctl(data, cmd, mode)
+caddr_t data;
+int cmd;
+int mode;
+{
+	switch (cmd)
+	{
+	case SIOCGIPST :
+		IWCOPY((caddr_t)fr_statetstats(), data, sizeof(ips_stat_t));
+		break;
+	case FIONREAD :
+#ifdef	IPFILTER_LOG
+		*(int *)data = iplused[IPL_LOGSTATE];
+#endif
+		break;
+	default :
+		return -1;
+	}
+	return 0;
+}
+
 
 /*
  * Create a new ipstate structure and hang it off the hash table.
@@ -203,7 +225,12 @@ u_int pass;
 	if (pass & FR_LOGFIRST)
 		is->is_pass &= ~(FR_LOGFIRST|FR_LOG);
 	ips_num++;
+#ifdef	IPFILTER_LOG
+	ipstate_log(is, ISL_NEW);
+#endif
 	MUTEX_EXIT(&ipf_state);
+	if (fin->fin_fi.fi_fl & FI_FRAG)
+		ipfr_newfrag(ip, fin, pass ^ FR_KEEPSTATE);
 	return 0;
 }
 
@@ -275,6 +302,8 @@ u_short sport;
 			is->is_dwin = ntohs(tcp->th_win);
 		}
 		ips_stats.iss_hits++;
+		is->is_pkts++;
+		is->is_bytes += ip->ip_len;
 		/*
 		 * Nearing end of connection, start timeout.
 		 */
@@ -336,8 +365,9 @@ fr_info_t *fin;
 				is->is_pkts++;
 				is->is_bytes += ip->ip_len;
 				ips_stats.iss_hits++;
+				pass = is->is_pass;
 				MUTEX_EXIT(&ipf_state);
-				return is->is_pass;
+				return pass;
 			}
 		MUTEX_EXIT(&ipf_state);
 		break;
@@ -354,27 +384,18 @@ fr_info_t *fin;
 			    PAIRS(sport, dport, is->is_sport, is->is_dport) &&
 			    IPPAIR(src, dst, is->is_src, is->is_dst))
 				if (fr_tcpstate(is, fin, ip, tcp, sport)) {
-/*
- * XXX This was "#ifdef _KERNEL", but that seemed clearly wrong.
- * XXX --thorpej
- */
-#ifndef	_KERNEL
+					pass = is->is_pass;
+#ifdef	_KERNEL
 					MUTEX_EXIT(&ipf_state);
-					/*
-					 * XXX This is never initialized!
-					 * XXX --thorpej
-					 */
-					return pass;
 #else
-					int pass = is->is_pass;
 
 					if (tcp->th_flags & TCP_CLOSE) {
 						*isp = is->is_next;
 						isp = &ips_table[hv];
 						KFREE(is);
 					}
-					return pass;
 #endif
+					return pass;
 				}
 		}
 		MUTEX_EXIT(&ipf_state);
@@ -455,6 +476,9 @@ void fr_timeoutstate()
 					ips_stats.iss_fin++;
 				else
 					ips_stats.iss_expire++;
+#ifdef	IPFILTER_LOG
+				ipstate_log(is, ISL_EXPIRE);
+#endif
 				KFREE(is);
 				ips_num--;
 			} else
@@ -550,3 +574,51 @@ int dir;
 		break;
 	}
 }
+
+
+#ifdef	IPFILTER_LOG
+void ipstate_log(is, type)
+struct ipstate *is;
+u_short type;
+{
+	struct	ipslog	ipsl;
+
+	if (iplused[IPL_LOGSTATE] + sizeof(ipsl) > IPLLOGSIZE) {
+		ips_stats.iss_logfail++;
+		return;
+	}
+
+        if (iplh[IPL_LOGSTATE] == iplbuf[IPL_LOGSTATE] + IPLLOGSIZE)
+                iplh[IPL_LOGSTATE] = iplbuf[IPL_LOGSTATE];
+
+# ifdef	sun
+	uniqtime(&ipsl);
+# endif
+# if BSD >= 199306 || defined(__FreeBSD__)
+	microtime((struct timeval *)&ipsl);
+# endif
+	ipsl.isl_pkts = is->is_pkts;
+	ipsl.isl_bytes = is->is_bytes;
+	ipsl.isl_src = is->is_src;
+	ipsl.isl_dst = is->is_dst;
+	ipsl.isl_p = is->is_p;
+	ipsl.isl_flags = is->is_flags;
+	ipsl.isl_type = type;
+	if (ipsl.isl_p == IPPROTO_TCP || ipsl.isl_p == IPPROTO_UDP) {
+		ipsl.isl_sport = is->is_sport;
+		ipsl.isl_dport = is->is_dport;
+	} else if (ipsl.isl_p == IPPROTO_ICMP)
+		ipsl.isl_itype = is->is_icmp.ics_type;
+	else {
+		ipsl.isl_ps.isl_filler[0] = 0;
+		ipsl.isl_ps.isl_filler[1] = 0;
+	}
+
+	if (!fr_copytolog(IPL_LOGSTATE, (char *)&ipsl, sizeof(ipsl))) {
+		iplused[IPL_LOGSTATE] += sizeof(ipsl);
+		ips_stats.iss_logged++;
+	} else
+		ips_stats.iss_logfail++;
+	wakeup(iplbuf[IPL_LOGSTATE]);
+}
+#endif
