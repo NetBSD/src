@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.6 2002/06/11 14:00:00 drochner Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.7 2002/06/11 14:27:21 drochner Exp $ Copyright (c) 1995-2001 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -215,7 +215,7 @@ int main (argc, argv, envp)
 			nowait = 1;
  		} else if (argv [i][0] == '-') {
  		    usage ();
- 		} else {
+		} else {
  		    struct interface_info *tmp = (struct interface_info *)0;
 		    status = interface_allocate (&tmp, MDL);
  		    if (status != ISC_R_SUCCESS)
