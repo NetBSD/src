@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.61 2002/07/30 09:11:27 lukem Exp $
+#	$NetBSD: special,v 1.62 2002/08/27 02:01:37 cjs Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -48,7 +48,7 @@
 ./etc/dhcpd.conf		type=file mode=0644 optional
 ./etc/disktab			type=file mode=0644
 ./etc/dm.conf			type=file mode=0644
-./etc/dumpdates			type=file mode=0664 gname=operator optional
+./etc/dumpdates			type=file mode=0664 gname=operator optional tags=exclude
 ./etc/ethers			type=file mode=0644 optional
 ./etc/exports			type=file mode=0644 optional
 ./etc/floppytab			type=file mode=0644
