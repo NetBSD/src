@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 2000/04/18 16:25:59 mhitch Exp $	 */
+/*	$NetBSD: clock.c,v 1.34 2000/05/28 05:17:25 matt Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -47,7 +47,9 @@
 #include "opt_vax780.h"
 #include "opt_vax630.h"
 #include "opt_vax650.h"
+#include "opt_vax660.h"
 #include "opt_vax670.h"
+#include "opt_vax680.h"
 #include "opt_vax8500.h"
 #include "opt_vax8200.h"
 #include "opt_vax410.h"
@@ -225,7 +227,7 @@ numtoyear(num)
 	return y;
 }
 
-#if VAX750 || VAX780 || VAX8600 || VAX650
+#if VAX750 || VAX780 || VAX8600 || VAX650 || VAX660 || VAX670 || VAX680
 /*
  * Reads the TODR register; returns a (probably) true tick value,
  * or CLKREAD_BAD if failed. The year is based on the argument
