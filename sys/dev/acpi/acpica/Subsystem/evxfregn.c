@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evxfregn.c,v 1.6 2003/03/04 17:25:16 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evxfregn.c,v 1.7 2003/10/30 17:46:08 mycroft Exp $");
 
 #define __EVXFREGN_C__
 
@@ -491,7 +491,6 @@ AcpiRemoveAddressSpaceHandler (
             /*
              * Now we can delete the handler object
              */
-            AcpiUtRemoveReference (HandlerObj);
             AcpiUtRemoveReference (HandlerObj);
 
             goto UnlockAndExit;
