@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_tape.h,v 1.12 1997/10/01 01:19:01 enami Exp $	*/
+/*	$NetBSD: scsi_tape.h,v 1.12.2.1 1998/09/30 01:59:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -213,6 +213,15 @@ struct scsi_tape_read_position {
 };
 
 #define	LOCATE		0x2B
+struct scsi_tape_locate {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t reserved1;
+	u_int8_t blkaddr[4];
+	u_int8_t reserved2;
+	u_int8_t partition;
+	u_int8_t control;
+};
 
 /**********************************************************************
 			from the scsi2 spec
