@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.2 2000/03/30 12:45:32 augustss Exp $ */
+/*      $NetBSD: sgec.c,v 1.3 2000/05/20 18:33:18 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -416,6 +416,7 @@ sgec_intr(sc)
 		while ((zc->zc_recv[sc->sc_nextrx].ze_framelen &
 		    ZE_FRAMELEN_OW) == 0) {
 
+			ifp->if_ipackets++;
 			m = sc->sc_rxmbuf[sc->sc_nextrx];
 			len = zc->zc_recv[sc->sc_nextrx].ze_framelen;
 			ze_add_rxbuf(sc, sc->sc_nextrx);
@@ -460,6 +461,7 @@ sgec_intr(sc)
 				sc->sc_lastack = 0;
 
 			/* XXX collect statistics */
+			ifp->if_opackets++;
 			if ((zc->zc_xmit[idx].ze_tdes1 & ZE_TDES1_DT) ==
 			    ZE_TDES1_DT_SETUP)
 				continue;
