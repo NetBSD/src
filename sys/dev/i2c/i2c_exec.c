@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.2 2003/10/25 21:33:36 christos Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.3 2003/10/29 00:34:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -60,7 +60,7 @@ iic_exec(i2c_tag_t tag, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 {
 	const uint8_t *cmd = vcmd;
 	uint8_t *buf = vbuf;
-	int error = 0;
+	int error;
 	size_t len;
 
 	/*
@@ -102,7 +102,7 @@ iic_exec(i2c_tag_t tag, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 			if ((len + 1) == buflen && cmdlen == 0 &&
 			    (error = iic_initiate_xfer(tag, addr, flags)) != 0)
 				goto bad;
-			if ((error == iic_write_byte(tag, *buf++, flags)) != 0)
+			if ((error = iic_write_byte(tag, *buf++, flags)) != 0)
 				goto bad;
 		}
 	}
