@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.26 1998/09/07 19:52:49 mhitch Exp $	*/
+/*	$NetBSD: sfb.c,v 1.27 1998/09/10 10:00:39 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -297,7 +297,7 @@ sfbinit(fi, base, unit, silent)
 		MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(&sfbu));
 
 	/* This is glass-tty state but it's in the shared structure. Ick. */
-	fi->fi_fbu->scrInfo.max_row = fi->fi_type.fb_height / 15;
+	fi->fi_fbu->scrInfo.max_row = fi->fi_type.fb_height / 15 - 1;
 	fi->fi_fbu->scrInfo.max_col = 80;
 
 #if defined(DEBUG) || defined(SFBDEBUG)
