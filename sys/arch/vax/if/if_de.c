@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.6 1995/04/11 06:16:33 mycroft Exp $	*/
+/*	$NetBSD: if_de.c,v 1.7 1995/07/05 08:19:05 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -300,7 +300,7 @@ deinit(unit)
 	ifp = &ds->ds_if;
 
 	/* not yet, if address still unknown */
-	if (ifp->if_addrlist == (struct ifaddr *)0)
+	if (ifp->if_addrlist.tqh_first == (struct ifaddr *)0)
 		return;
 
 	if (ds->ds_flags & DSF_RUNNING)
