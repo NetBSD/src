@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.17 1997/05/21 01:51:39 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.18 1997/05/22 03:24:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.17 1997/05/21 01:51:39 lukem Exp $";
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.18 1997/05/22 03:24:37 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -159,11 +160,13 @@ endgrent()
 
 static int
 grscan(search, gid, name)
-	int search, gid;
+	int search;
+	gid_t gid;
 	const char *name;
 {
 	char *cp, **m;
-	char *bp;
+	char *bp, *ep;
+	unsigned long id;
 #ifdef YP
 	char *key, *data;
 	int keylen, datalen;
@@ -278,7 +281,8 @@ grscan(search, gid, name)
 							     &data, &datalen);
 					} else {
 						char buf[20];
-						sprintf(buf, "%d", gid);
+						snprintf(buf, sizeof(buf),
+						    "%u", gid);
 						r = yp_match(__ypdomain,
 							     "group.bygid",
 							     buf, strlen(buf),
@@ -298,8 +302,13 @@ grscan(search, gid, name)
 					    strsep(&bp, ":\n");
 					if (!(cp = strsep(&bp, ":\n")))
 						continue;
-					_gr_group.gr_gid =
-					    name ? atoi(cp) : gid;
+					if (name) {
+						id = strtoul(cp, &ep, 10);
+						if (id > GID_MAX || *ep == '\0')
+							continue;
+						_gr_group.gr_gid = (gid_t)id;
+					} else
+						_gr_group.gr_gid = gid;
 					goto found_it;
 				}
 				break;
@@ -326,7 +335,10 @@ parse:
 		_gr_group.gr_passwd = strsep(&bp, ":\n");
 		if (!(cp = strsep(&bp, ":\n")))
 			continue;
-		_gr_group.gr_gid = atoi(cp);
+		id = strtoul(cp, &ep, 10);
+		if (id > GID_MAX || *ep == '\0')
+			continue;
+		_gr_group.gr_gid = (gid_t)id;
 		if (search && name == NULL && _gr_group.gr_gid != gid)
 			continue;
 	found_it:

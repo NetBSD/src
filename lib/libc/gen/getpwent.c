@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.19 1997/05/22 03:14:42 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.20 1997/05/22 03:24:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpwent.c,v 1.19 1997/05/22 03:14:42 lukem Exp $";
+static char rcsid[] = "$NetBSD: getpwent.c,v 1.20 1997/05/22 03:24:38 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -659,7 +659,7 @@ struct passwd *
 getpwuid(uid_t uid)
 #else
 getpwuid(uid)
-	int uid;
+	uid_t uid;
 #endif
 {
 	DBT key;
