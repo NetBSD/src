@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.46.4.3 2002/08/17 05:35:48 lukem Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.46.4.4 2002/08/17 05:49:31 lukem Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.3 2002/08/17 05:35:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.46.4.4 2002/08/17 05:49:31 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -2265,8 +2265,12 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 			if (debug)
 				addlog(" [non-empty]");
 			/* suggest a zero one */
+#ifndef BROKEN_98 /* XXX - broken Win98 drivers INSIST on having an ASYNC_MAP */
 			p[2] = p[3] = p[4] = p[5] = 0;
 			break;
+#else
+			continue;
+#endif
 
 		case LCP_OPT_MRU:
 			/*
@@ -5020,8 +5024,8 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 			sp->hisauth.name = NULL;
 			return error;
 		    }
-		    sp->hisauth.name[cfg->hisname_length-1] = 0;
-		    sp->hisauth.name_len = cfg->hisname_length;
+		    sp->hisauth.name_len = cfg->hisname_length - 1;
+		    sp->hisauth.name[sp->hisauth.name_len] = 0;
 		}
 		if (cfg->hissecret != NULL && cfg->hissecret_length > 0) {
 		    if (cfg->hissecret_length >= MCLBYTES)
@@ -5033,8 +5037,8 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		    	sp->hisauth.secret = NULL;
 			return error;
 		    }
-		    sp->hisauth.secret[cfg->hissecret_length-1] = 0;
-		    sp->hisauth.secret_len = cfg->hissecret_length;
+		    sp->hisauth.secret_len = cfg->hissecret_length - 1;
+		    sp->hisauth.secret[sp->hisauth.secret_len] = 0;
 		}
 		if (cfg->myname != NULL && cfg->myname_length > 0) {
 		    if (cfg->myname_length >= MCLBYTES)
@@ -5046,8 +5050,8 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 			sp->myauth.name = NULL;
 			return error;
 		    }
-		    sp->myauth.name[cfg->myname_length-1] = 0;
-		    sp->myauth.name_len = cfg->myname_length;
+		    sp->myauth.name_len = cfg->myname_length - 1;
+		    sp->myauth.name[sp->myauth.name_len] = 0;
 		}
 		if (cfg->mysecret != NULL && cfg->mysecret_length > 0) {
 		    if (cfg->mysecret_length >= MCLBYTES)
@@ -5059,8 +5063,8 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		    	sp->myauth.secret = NULL;
 			return error;
 		    }
-		    sp->myauth.secret[cfg->mysecret_length-1] = 0;
-		    sp->myauth.secret_len = cfg->mysecret_length;
+		    sp->myauth.secret_len = cfg->mysecret_length - 1;
+		    sp->myauth.secret[sp->myauth.secret_len] = 0;
 		}
 		sp->myauth.flags = cfg->myauthflags;
 		if (cfg->myauth)
@@ -5069,6 +5073,10 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 		if (cfg->hisauth)
 		    sp->hisauth.proto = (cfg->hisauth == SPPP_AUTHPROTO_PAP) ? PPP_PAP : PPP_CHAP;
 		sp->pp_auth_failures = 0;
+		if (sp->hisauth.proto != 0) 
+		    sp->lcp.opts |= (1 << LCP_OPT_AUTH_PROTO);
+		else
+		    sp->lcp.opts &= ~(1 << LCP_OPT_AUTH_PROTO);
 	    }
 	    break;
 	case SPPPGETLCPCFG:
