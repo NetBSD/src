@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.21 1996/04/11 07:47:48 mycroft Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.22 1996/05/03 19:42:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -80,7 +80,10 @@
 #include <machine/vm86.h>
 #endif
 
-static inline struct trapframe *
+static __inline struct trapframe *process_frame __P((struct proc *));
+static __inline struct save87 *process_fpframe __P((struct proc *));
+
+static __inline struct trapframe *
 process_frame(p)
 	struct proc *p;
 {
@@ -88,7 +91,7 @@ process_frame(p)
 	return (p->p_md.md_regs);
 }
 
-static inline struct save87 *
+static __inline struct save87 *
 process_fpframe(p)
 	struct proc *p;
 {

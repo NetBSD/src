@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.11 1996/04/03 09:15:26 mycroft Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.12 1996/05/03 19:42:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,10 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 
+#include <dev/cons.h>
+
 #include <machine/pte.h>
+#include <machine/cpu.h>
 
 #include "wdc.h"
 #include "fdc.h"
@@ -107,8 +110,8 @@ struct	genericconf {
 	{ 0 }
 };
 
-extern int ffs_mountroot();
-int (*mountroot)() = ffs_mountroot;
+extern int ffs_mountroot __P((void *));
+int (*mountroot) __P((void *)) = ffs_mountroot;
 
 void gets __P((char *));
 

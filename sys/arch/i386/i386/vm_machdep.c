@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60 1996/04/25 01:15:41 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -54,6 +54,7 @@
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
+#include <sys/ptrace.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -67,6 +68,8 @@
 #if NNPX > 0
 extern struct proc *npxproc;
 #endif
+
+void	setredzone __P((u_short *, caddr_t));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -84,7 +87,6 @@ cpu_fork(p1, p2)
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
 	register struct switchframe *sf;
-	extern void proc_trampoline(), child_return();
 
 #if NNPX > 0
 	/*
@@ -262,6 +264,7 @@ cpu_coredump(p, vp, cred, chdr)
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
+void
 setredzone(pte, vaddr)
 	u_short *pte;
 	caddr_t vaddr;

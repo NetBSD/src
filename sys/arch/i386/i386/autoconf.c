@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 1996/03/29 01:15:04 mycroft Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,10 +57,10 @@
 #include <sys/device.h>
 
 #include <machine/pte.h>
+#include <machine/cpu.h>
 
-void	setroot __P((void));
-void	swapconf __P((void));
-void	dumpconf __P((void));
+void swapconf __P((void));
+void setroot __P((void));
 
 /*
  * The following several variables are related to
@@ -131,11 +131,11 @@ swapconf()
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 
 static	char devname[][2] = {
-	'w','d',	/* 0 = wd */
-	's','w',	/* 1 = sw */
-	'f','d',	/* 2 = fd */
-	'w','t',	/* 3 = wt */
-	's','d',	/* 4 = sd -- new SCSI system */
+	{ 'w','d' },	/* 0 = wd */
+	{ 's','w' },	/* 1 = sw */
+	{ 'f','d' },	/* 2 = fd */
+	{ 'w','t' },	/* 3 = wt */
+	{ 's','d' },	/* 4 = sd -- new SCSI system */
 };
 
 /*
@@ -147,10 +147,15 @@ void
 setroot()
 {
 	int  majdev, mindev, unit, part, adaptor;
-	dev_t temp, orootdev;
+	dev_t orootdev;
+#ifdef DOSWAP
+	dev_t temp = 0;
+#endif
 	struct swdevt *swp;
 
-/*printf("howto %x bootdev %x ", boothowto, bootdev);*/
+#if 0
+	printf("howto %x bootdev %x ", boothowto, bootdev);
+#endif
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
