@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.47 2000/10/05 15:19:58 itojun Exp $
+#	$NetBSD: services,v 1.48 2000/10/29 07:59:07 veego Exp $
 #
 # Network services, Internet style
 #
@@ -215,11 +215,11 @@ ekshell		545/tcp			# Encrypted kshell
 kerberos-adm	749/tcp			# Kerberos `kadmin' (v5)
 kerberos-iv	750/udp		kdc kerberos4	# Kerberos (server) udp
 kerberos-iv	750/tcp		kdc kerberos4	# Kerberos (server) tcp
-kerberos-master 751/udp			# Kerberos admin server udp
-kerberos-master 751/tcp			# Kerberos admin server tcp
+kerberos-master	751/udp			# Kerberos admin server udp
+kerberos-master	751/tcp			# Kerberos admin server tcp
 hprop		754/tcp			# Heimdal KDC database propagation
 krbupdate	760/tcp		kreg	# BSD Kerberos registration
-kpwd		761/tcp			# old BSD Kerberos `passwd' 
+kpwd		761/tcp			# old BSD Kerberos `passwd'
 					# (formerly `kpasswd')
 kpop		1109/tcp		# Kerberos POP server
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
@@ -255,13 +255,13 @@ echo		4/ddp			# AppleTalk Echo Protocol
 zip		6/ddp			# Zone Information Protocol
 
 # Iana registered Coda filesystem port numbers
-rpc2portmap	369/tcp	   
+rpc2portmap	369/tcp
 rpc2portmap	369/udp			# Coda portmapper
-codaauth2	370/tcp	   
+codaauth2	370/tcp
 codaauth2	370/udp			# Coda authentication server
 
 venus		2430/tcp		# codacon port
-venus		2430/udp		# Venus callback/wbc interface 
+venus		2430/udp		# Venus callback/wbc interface
 venus-se	2431/tcp		# tcp side effects
 venus-se	2431/udp		# udp sftp side effect
 codasrv		2432/tcp		# not used
