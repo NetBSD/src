@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.46 2001/12/12 15:36:09 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.47 2002/03/17 18:02:52 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.46 2001/12/12 15:36:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.47 2002/03/17 18:02:52 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -757,7 +757,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	m = c->kue_mbuf;
 	/* copy data to mbuf */
-	memcpy(mtod(m, char*), c->kue_buf, total_len);
+	memcpy(mtod(m, char *), c->kue_buf, total_len);
 
 	/* No errors; receive the packet. */
 	total_len = UGETW(mtod(m, u_int8_t *));
