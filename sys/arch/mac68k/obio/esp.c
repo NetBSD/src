@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.5 1996/12/10 21:27:39 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.6 1996/12/16 16:17:04 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -201,7 +201,7 @@ dma_intr(sc)
 int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
-/*static*/ int	espmatch	__P((struct device *, void *, void *));
+/*static*/ int	espmatch	__P((struct device *, struct cfdata *, void *));
 /*static*/ u_int	esp_adapter_info __P((struct esp_softc *));
 /*static*/ void	espreadregs	__P((struct esp_softc *));
 /*static*/ void	esp_select	__P((struct esp_softc *, struct esp_ecb *));
@@ -250,11 +250,11 @@ struct scsi_device esp_dev = {
 };
 
 int
-espmatch(parent, vcf, aux)
+espmatch(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = vcf;
 #ifdef SPARC_DRIVER
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;

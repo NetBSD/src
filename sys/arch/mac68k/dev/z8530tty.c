@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.8 1996/10/15 06:57:44 scottr Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.9 1996/12/16 16:17:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -86,7 +86,7 @@ struct zstty_stats z8530tty_stats;
 
 
 /* Definition of the driver for autoconfig. */
-static int	zstty_match(struct device *, void *, void *);
+static int	zstty_match(struct device *, struct cfdata *, void *);
 static void	zstty_attach(struct device *, struct device *, void *);
 
 struct cfattach zstty_ca = {
@@ -116,11 +116,11 @@ static int	zsgetbaud __P((register struct zs_chanstate *,
  * zstty_match: how is this zs channel configured?
  */
 int 
-zstty_match(parent, match, aux)
+zstty_match(parent, cf, aux)
 	struct device *parent;
-	void   *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = match;
 	struct zsc_attach_args *args = aux;
 
 	/* Exact match is better than wildcard. */

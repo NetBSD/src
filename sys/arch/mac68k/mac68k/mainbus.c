@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 1996/10/21 01:59:32 briggs Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 1996/12/16 16:17:17 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -104,17 +104,15 @@
  * Just prints out the final (non-default) locators.
  */
 int
-bus_scan(parent, child, aux)
+bus_scan(parent, cf, aux)
 	struct device *parent;
-	void *child, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = child;
 	struct confargs *ca = aux;
 	cfmatch_t mf;
 
 #ifdef	DIAGNOSTIC
-	if (parent->dv_cfdata->cf_driver->cd_indirect)
-		panic("bus_scan: indirect?");
 	if (cf->cf_fstate == FSTATE_STAR)
 		panic("bus_scan: FSTATE_STAR");
 #endif
@@ -249,14 +247,15 @@ bus_mapin(bustype, paddr, sz)
 	return ((char*)retval);
 }	
 
-static int	mainbus_match __P((struct device *, void *, void *));
+static int	mainbus_match __P((struct device *, struct cfdata *, void *));
 static void	mainbus_attach __P((struct device *parent,
 					struct device *self, void *aux));
 
 static int
-mainbus_match(parent, match, aux)
-	struct device	*parent;
-	void		*match, *aux;
+mainbus_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	return 1;
 }

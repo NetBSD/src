@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.3 1996/09/14 05:43:25 scottr Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.4 1996/12/16 16:17:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -56,7 +56,7 @@ void	setconf __P((void));
 void	configure __P((void));
 
 /* mainbus.c */
-int	bus_scan __P((struct device *, void *, void *));
+int	bus_scan __P((struct device *, struct cfdata *, void *));
 int	bus_print __P((void *, const char *));
 int	bus_peek __P((int, vm_offset_t, int));
 char	*bus_mapin __P((int, int, int));
