@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.33 2000/12/14 06:27:25 thorpej Exp $	*/
+/*	$NetBSD: i82586.c,v 1.34 2001/01/22 22:28:45 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ Mode of operation:
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.33 2000/12/14 06:27:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.34 2001/01/22 22:28:45 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -305,19 +305,23 @@ i82586_cmd_wait(sc)
 {
 	/* spin on i82586 command acknowledge; wait at most 0.9 (!) seconds */
 	int i, off;
+	u_int16_t cmd;
 
 	for (i = 0; i < 900000; i++) {
 		/* Read the command word */
 		off = IE_SCB_CMD(sc->scb);
-		bus_space_barrier(sc->bt, sc->bh, off, 2,
-				  BUS_SPACE_BARRIER_READ);
-		if ((sc->ie_bus_read16)(sc, off) == 0)
+
+		IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_READ);
+		if ((cmd = sc->ie_bus_read16(sc, off)) == 0)
 			return (0);
 		delay(1);
 	}
 
-	printf("i82586_cmd_wait: timo(%ssync): scb status: 0x%x\n",
-		sc->async_cmd_inprogress?"a":"", sc->ie_bus_read16(sc, off));
+	off = IE_SCB_STATUS(sc->scb);
+	printf("i82586_cmd_wait: timo(%ssync): scb status: 0x%x, cmd: 0x%x\n",
+		sc->async_cmd_inprogress?"a":"", 
+		sc->ie_bus_read16(sc, off), cmd);
+
 	return (1);	/* Timeout */
 }
 
@@ -353,8 +357,8 @@ i82586_start_cmd(sc, cmd, iecmdbuf, mask, async)
 	}
 
 	off = IE_SCB_CMD(sc->scb);
-	(sc->ie_bus_write16)(sc, off, cmd);
-	bus_space_barrier(sc->bt, sc->bh, off, 2, BUS_SPACE_BARRIER_WRITE);
+	sc->ie_bus_write16(sc, off, cmd);
+	IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_WRITE);
 	(sc->chan_attn)(sc);
 
 	if (async != 0) {
@@ -373,9 +377,8 @@ i82586_start_cmd(sc, cmd, iecmdbuf, mask, async)
 		for (i = 0; i < 369000; i++) {
 			/* Read the command status */
 			off = IE_CMD_COMMON_STATUS(iecmdbuf);
-			bus_space_barrier(sc->bt, sc->bh, off, 2,
-					  BUS_SPACE_BARRIER_READ);
-			status = (sc->ie_bus_read16)(sc, off);
+			IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_READ);
+			status = sc->ie_bus_read16(sc, off);
 			if (status & mask)
 				return (0);
 			delay(1);
@@ -402,8 +405,8 @@ ie_ack(sc, mask)
 {
 	u_int status;
 
-	bus_space_barrier(sc->bt, sc->bh, 0, 0, BUS_SPACE_BARRIER_READ);
-	status = (sc->ie_bus_read16)(sc, IE_SCB_STATUS(sc->scb));
+	IE_BUS_BARRIER(sc, 0, 0, BUS_SPACE_BARRIER_READ);
+	status = sc->ie_bus_read16(sc, IE_SCB_STATUS(sc->scb));
 	i82586_start_cmd(sc, status & mask, 0, 0, 0);
 	if (sc->intrhook)
 		sc->intrhook(sc, INTR_ACK);
@@ -461,7 +464,7 @@ i82586_intr(v)
 		(sc->intrhook)(sc, INTR_ENTER);
 
 	off = IE_SCB_STATUS(sc->scb);
-	bus_space_barrier(sc->bt, sc->bh, off, 2, BUS_SPACE_BARRIER_READ);
+	IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_READ);
 	status = sc->ie_bus_read16(sc, off) & IE_ST_WHENCE;
 
 	if ((status & IE_ST_WHENCE) == 0) {
@@ -496,10 +499,14 @@ loop:
 	/*
 	 * Interrupt ACK was posted asynchronously; wait for
 	 * completion here before reading SCB status again.
+	 * 
+	 * If ACK fails, try to reset the chip, in hopes that
+	 * it helps.
 	 */
-	i82586_cmd_wait(sc);
+	if (i82586_cmd_wait(sc) != 0)
+		goto reset;
 
-	bus_space_barrier(sc->bt, sc->bh, off, 2, BUS_SPACE_BARRIER_READ);
+	IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_READ);
 	status = sc->ie_bus_read16(sc, off);
 	if ((status & IE_ST_WHENCE) != 0)
 		goto loop;
@@ -538,8 +545,7 @@ static	int timesthru = 1024;
 
 		i = sc->rfhead;
 		off = IE_RFRAME_STATUS(sc->rframes, i);
-		bus_space_barrier(sc->bt, sc->bh, off, 2,
-				  BUS_SPACE_BARRIER_READ);
+		IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_READ);
 		status = sc->ie_bus_read16(sc, off);
 
 #if I82586_DEBUG
@@ -774,8 +780,7 @@ i82586_get_rbd_list(sc, start, end, pktlen)
 
 	do {
 		off = IE_RBD_STATUS(rbbase, rbindex);
-		bus_space_barrier(sc->bt, sc->bh, off, 2,
-				  BUS_SPACE_BARRIER_READ);
+		IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_READ);
 		rbdstatus = sc->ie_bus_read16(sc, off);
 		if ((rbdstatus & IE_RBD_USED) == 0) {
 			/*
@@ -1132,8 +1137,7 @@ iexmit(sc)
 				       IE_CMD_XMIT_ADDR(sc->xmit_cmds, cur));
 
 		off = IE_SCB_STATUS(sc->scb);
-		bus_space_barrier(sc->bt, sc->bh, off, 2,
-				  BUS_SPACE_BARRIER_READ);
+		IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_READ);
 		if ((sc->ie_bus_read16(sc, off) & IE_CUS_ACTIVE) == 0) {
 			printf("iexmit: CU not active\n");
 			i82586_start_transceiver(sc);
@@ -1147,8 +1151,7 @@ iexmit(sc)
 
 		off = IE_SCB_CMDLST(sc->scb);
 		sc->ie_bus_write16(sc, off, IE_CMD_XMIT_ADDR(sc->xmit_cmds, cur));
-		bus_space_barrier(sc->bt, sc->bh, off, 2,
-				  BUS_SPACE_BARRIER_WRITE);
+		IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_READ);
 
 		if (i82586_start_cmd(sc, IE_CUC_START, 0, 0, 1))
 			printf("%s: iexmit: start xmit command timed out\n",
@@ -1252,13 +1255,13 @@ i82586_proberam(sc)
 
 	/* Put in 16-bit mode */
 	off = IE_SCP_BUS_USE(sc->scp);
-	(sc->ie_bus_write16)(sc, off, 0);
-	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_WRITE);
+	sc->ie_bus_write16(sc, off, 0);
+	IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_WRITE);
 
 	/* Set the ISCP `busy' bit */
 	off = IE_ISCP_BUSY(sc->iscp);
-	(sc->ie_bus_write16)(sc, off, 1);
-	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_WRITE);
+	sc->ie_bus_write16(sc, off, 1);
+	IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_WRITE);
 
 	if (sc->hwreset)
 		(sc->hwreset)(sc, CHIP_PROBE);
@@ -1269,8 +1272,8 @@ i82586_proberam(sc)
 
 	/* Read back the ISCP `busy' bit; it should be clear by now */
 	off = IE_ISCP_BUSY(sc->iscp);
-	bus_space_barrier(sc->bt, sc->bh, off, 1, BUS_SPACE_BARRIER_READ);
-	result = (sc->ie_bus_read16)(sc, off) == 0;
+	IE_BUS_BARRIER(sc, off, 2, BUS_SPACE_BARRIER_READ);
+	result = sc->ie_bus_read16(sc, off) == 0;
 
 	/* Acknowledge any interrupts we may have caused. */
 	ie_ack(sc, IE_ST_WHENCE);
@@ -1346,7 +1349,7 @@ ie_run_tdr(sc, cmd)
 	int result;
 
 	setup_simple_command(sc, IE_CMD_TDR, cmd);
-	(sc->ie_bus_write16)(sc, IE_CMD_TDR_TIME(cmd), 0);
+	sc->ie_bus_write16(sc, IE_CMD_TDR_TIME(cmd), 0);
 
 	if (i82586_start_cmd(sc, IE_CUC_START, cmd, IE_STAT_COMPL, 0) ||
 	    (sc->ie_bus_read16(sc, IE_CMD_COMMON_STATUS(cmd)) & IE_STAT_OK) == 0)
@@ -1499,12 +1502,12 @@ i82586_setup_bufs(sc)
 	 * step 4: all xmit no-op commands loopback onto themselves
 	 */
 	for (n = 0; n < NTXBUF; n++) {
-		(sc->ie_bus_write16)(sc, IE_CMD_NOP_STATUS(sc->nop_cmds, n), 0);
+		sc->ie_bus_write16(sc, IE_CMD_NOP_STATUS(sc->nop_cmds, n), 0);
 
-		(sc->ie_bus_write16)(sc, IE_CMD_NOP_CMD(sc->nop_cmds, n),
+		sc->ie_bus_write16(sc, IE_CMD_NOP_CMD(sc->nop_cmds, n),
 					 IE_CMD_NOP);
 
-		(sc->ie_bus_write16)(sc, IE_CMD_NOP_LINK(sc->nop_cmds, n),
+		sc->ie_bus_write16(sc, IE_CMD_NOP_LINK(sc->nop_cmds, n),
 					 IE_CMD_NOP_ADDR(sc->nop_cmds, n));
 	}
 
@@ -1564,8 +1567,7 @@ ie_cfg_setup(sc, cmd, promiscuous, manchester)
 	*IE_CMD_CFG_JUNK(buf)      = 0xff;
 	sc->memcopyout(sc, buf, cmd, IE_CMD_CFG_SZ);
 	setup_simple_command(sc, IE_CMD_CONFIG, cmd);
-	bus_space_barrier(sc->bt, sc->bh, cmd, IE_CMD_CFG_SZ,
-			  BUS_SPACE_BARRIER_WRITE);
+	IE_BUS_BARRIER(sc, cmd, IE_CMD_CFG_SZ, BUS_SPACE_BARRIER_WRITE);
 
 	cmdresult = i82586_start_cmd(sc, IE_CUC_START, cmd, IE_STAT_COMPL, 0);
 	status = sc->ie_bus_read16(sc, IE_CMD_COMMON_STATUS(cmd));
