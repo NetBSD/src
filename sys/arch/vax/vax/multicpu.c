@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.13 2002/09/27 15:36:59 provos Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.14 2003/04/01 15:23:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -122,7 +122,7 @@ cpu_slavesetup(struct device *dev)
 	ci->ci_dev = dev;
 	ci->ci_exit = scratch;
 	(u_long)ci->ci_pcb = (u_long)pcb & ~KERNBASE;
-	ci->ci_istack = istackbase + NBPG;
+	ci->ci_istack = istackbase + PAGE_SIZE;
 	pcb->KSP = (u_long)pcb + USPACE; /* Idle kernel stack */
 	pcb->SSP = (u_long)ci;
 	pcb->PC = (u_long)slaverun + 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.23 2001/09/11 20:37:13 chs Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.24 2003/04/01 15:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ void bus_tmapout(vp)
 		return;
 
 	s = splvm();
-	pmap_kremove(pgva, NBPG);
+	pmap_kremove(pgva, PAGE_SIZE);
 	pmap_update(pmap_kernel());
 	--tmp_vpages_inuse;
 	splx(s);

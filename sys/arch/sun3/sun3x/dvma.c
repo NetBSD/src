@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.25 2002/09/27 15:36:57 provos Exp $	*/
+/*	$NetBSD: dvma.c,v 1.26 2003/04/01 15:28:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@ dvma_mapin(kmem_va, len, canwait)
 	 */
 	dvma_addr = (void *) (tva + off);
 
-	for (;npf--; kva += NBPG, tva += NBPG) {
+	for (;npf--; kva += PAGE_SIZE, tva += PAGE_SIZE) {
 		/*
 		 * Retrieve the physical address of each page in the buffer
 		 * and enter mappings into the I/O MMU so they may be seen

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.15 2002/10/02 16:02:32 thorpej Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.16 2003/04/01 15:23:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -237,7 +237,7 @@ le_vsbus_attach(parent, self, aux)
          */
 
 #define ALLOCSIZ (64 * 1024)
-        err = bus_dmamem_alloc(va->va_dmat, ALLOCSIZ, NBPG, 0, 
+        err = bus_dmamem_alloc(va->va_dmat, ALLOCSIZ, PAGE_SIZE, 0, 
             &seg, 1, &rseg, BUS_DMA_NOWAIT);
         if (err) {
                 printf(": unable to alloc buffer block: err %d\n", err);

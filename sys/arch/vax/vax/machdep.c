@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.133 2003/03/01 21:51:59 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.134 2003/04/01 15:23:07 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2002, Hugh Graham.
@@ -207,7 +207,7 @@ cpu_startup()
 		 * physical memory allocated for it.
 		 */
 		curbuf = (vaddr_t) buffers + i * MAXBSIZE;
-		curbufsize = NBPG * (i < residual ? base + 1 : base);
+		curbufsize = PAGE_SIZE * (i < residual ? base + 1 : base);
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
@@ -215,8 +215,8 @@ cpu_startup()
 				    "not enough RAM for buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
 			    VM_PROT_READ | VM_PROT_WRITE);
-			curbuf += NBPG;
-			curbufsize -= NBPG;
+			curbuf += PAGE_SIZE;
+			curbufsize -= PAGE_SIZE;
 		}
 	}
 	pmap_update(kernel_map->pmap);
@@ -240,7 +240,7 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -283,11 +283,11 @@ cpu_dumpconf()
 			dumplo = nblks - btodb(ctob(dumpsize));
 	}
 	/*
-	 * Don't dump on the first NBPG (why NBPG?) in case the dump
+	 * Don't dump on the first PAGE_SIZE (why PAGE_SIZE?) in case the dump
 	 * device includes a disk label.
 	 */
-	if (dumplo < btodb(NBPG))
-		dumplo = btodb(NBPG);
+	if (dumplo < btodb(PAGE_SIZE))
+		dumplo = btodb(PAGE_SIZE);
 }
 
 int

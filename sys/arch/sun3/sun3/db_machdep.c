@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.17 2001/05/28 22:00:12 chs Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.18 2003/04/01 15:31:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ db_mach_pagemap(addr, have_addr, count, modif)
 #endif /* SUN3X */
 
 	pte_print(pte);
-	db_next = va + NBPG;
+	db_next = va + PAGE_SIZE;
 }
 
 #ifdef	_SUN3_
