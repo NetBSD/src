@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.50 1996/12/17 07:22:30 scottr Exp $
+#	$NetBSD: GENERIC,v 1.51 1997/01/11 09:11:41 mikel Exp $
 #
 # GENERIC
 
@@ -97,6 +97,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 pseudo-device	pty		16
 pseudo-device	bpfilter	12
 pseudo-device	vnd		2
+pseudo-device	ccd		2
 pseudo-device	ppp		2
 pseudo-device	loop
 pseudo-device	sl

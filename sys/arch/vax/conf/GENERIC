@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.17 1996/08/20 14:05:16 ragge Exp $
+#	$NetBSD: GENERIC,v 1.18 1997/01/11 09:11:42 mikel Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
@@ -146,3 +146,4 @@ pseudo-device	ppp	2
 pseudo-device	tun	2
 pseudo-device	tb	1
 pseudo-device	vnd	4
+pseudo-device	ccd	4
