@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.6 1997/05/09 18:37:48 mycroft Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.7 1997/06/20 06:42:20 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <fnmatch.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -60,7 +61,7 @@
 #endif
 
 static char *actfile = _PATH_TTYACTION;
-static char *pathenv = "PATH=" _PATH_STDPATH;
+static char *pathenv = __CONCAT("PATH=",_PATH_STDPATH);
 
 int
 ttyaction(tty, act, user)
