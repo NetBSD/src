@@ -1,3 +1,4 @@
+#	$NetBSD: primes,v 1.2 2001/05/26 23:26:59 itojun Exp $
 #	$OpenBSD: primes,v 1.2 2001/01/28 23:31:27 niklas Exp $
 
 # Time Type Tests Tries Size Generator Modulus
