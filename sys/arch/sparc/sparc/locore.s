@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.17 1994/09/02 08:13:20 pk Exp $
+ * $Id: locore.s,v 1.18 1994/09/20 07:48:24 deraadt Exp $
  */
 
 #define	LOCORE
@@ -180,6 +180,16 @@ _cpcb:	.word	_u0
 	.globl	_cputyp
 _cputyp:
 	.word	1
+#if defined(SUN4C) || defined(SUN4M)
+_cputypval:
+	.asciz	"sun4c"
+	.ascii	"     "
+_cputypvar:
+	.asciz	"compatibility"
+_cputypvallen = _cputypvar - _cputypval
+	ALIGN
+#endif
+
 /*
  * There variables are pointed to by the cpp symbols PGSHIFT, NBPG,
  * and PGOFSET.
@@ -2356,12 +2366,32 @@ dostart:
 	/*
 	 * are we on a sun4c or a sun4m?
 	 */
-	rd	%psr, %g4		! hack: if the cpu version number is
-	srl	%g4, 24, %g4		! 4, we have a sun4m machine of some
-	and	%g4, 0xf, %g4		! ilk, with some SRMMU thingy instead
-	cmp	%g4, 0x4
-	bne	is_sun4c
+	ld	[%g7 + 0x1c], %o4	! node = pv->pv_nodeops->no_nextnode(0)
+	ld	[%o4], %o4
+	call	%o4
+	 mov	0, %o0			! node
+	set	_cputypvar, %o1		! name = "compatibility"
+	set	_cputypval, %o2		! buffer ptr (assume buffer long enough)
+	ld	[%g7 + 0x1c], %o4	! (void)pv->pv_nodeops->no_getprop(...)
+	ld	[%o4 + 0x0c], %o4
+	call	 %o4
 	 nop
+
+	set	_cputypval, %o2		! buffer ptr
+	ldub	[%o2 + 4], %o0		! which is it... "sun4c", "sun4m", "sun4d"?
+	cmp	%o0, 'c'
+	beq	is_sun4c
+	 nop
+	cmp	%o0, 'm'
+	beq	is_sun4m
+	 nop
+
+	! ``on a sun4d?!  hell no!''
+	ld	[%g7 + 0x74], %o1	! by this kernel, then halt
+	call	%o1
+	 nop
+
+is_sun4m:
 #if defined(SUN4M)
 	mov	SUN4CM_PGSHIFT, %g5
 	b	start_havetype
