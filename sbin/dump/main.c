@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.46 2001/12/23 12:54:54 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.47 2001/12/23 14:42:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.46 2001/12/23 12:54:54 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.47 2001/12/23 14:42:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,8 @@ main(int argc, char *argv[])
 	char *new_time_format;
 
 	spcl.c_date = 0;
-	(void)time((time_t *)&spcl.c_date);
+	(void)time(&tnow);
+	spcl.c_date = tnow;
 	tzset(); /* set up timezone for strftime */
 	if ((new_time_format = getenv("TIMEFORMAT")) != NULL)
 		time_string = new_time_format;
