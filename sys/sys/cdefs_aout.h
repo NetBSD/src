@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.8 2001/12/05 21:06:51 atatat Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.9 2001/12/14 23:30:02 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -39,7 +39,7 @@
 #define	__warn_references(sym,msg)
 #endif /* __GNUC__ */
 
-#if defined(__sh3__)		/* XXX SH COFF */
+#if defined(__sh__)		/* XXX SH COFF */
 #undef __indr_reference(sym,alias)
 #undef __warn_references(sym,msg)
 #define __warn_references(sym,msg)
