@@ -1,20 +1,18 @@
-/*	$NetBSD: memcpy.S,v 1.2 1999/01/15 08:44:27 castor Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.3 1999/03/15 07:04:04 jonathan Exp $	*/
 /* XXXX We need to define this in a way which supports multiple architectures */
 
-#include <machine/cdefs.h>
 #include <mips/asm.h>
 #include <machine/endian.h>
-
-	.sdata
-	.globl	__no_memcpy
-__no_memcpy:	.word 0
 
 .set	push
 .set noreorder
 
+	.text
 /*
  * memcpy(to, from, len)
  */
+
+ALEAF(memmove)
 LEAF(memcpy)
 	move	v0, a0			# swap from and to
 	move	a0, a1
