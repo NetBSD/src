@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.23 1997/01/05 18:50:27 ragge Exp $
+#       $NetBSD: files.vax,v 1.24 1997/01/21 09:50:59 thorpej Exp $
 #
 # new style config file for vax architecture
 #
@@ -120,8 +120,6 @@ major	{ st = 21 }
 major	{ cd = 22 }
 
 # Memory Disk for install floppy
-pseudo-device md
-file	dev/md.c			md needs-flag
 major	{ md = 23 }
 
 # builtin NCR5380 SCSI-controller on VAXstation 
