@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.11 1998/10/18 18:53:38 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.12 1999/01/01 21:43:19 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -88,8 +88,8 @@ struct cfattach cpu_bi_ca = {
 #ifdef notyet
 extern struct pte BRAMmap[];
 extern struct pte EEPROMmap[];
-char bootram[KA820_BRPAGES * NBPG];
-char eeprom[KA820_EEPAGES * NBPG];
+char bootram[KA820_BRPAGES * VAX_NBPG];
+char eeprom[KA820_EEPAGES * VAX_NBPG];
 #endif
 
 struct ivec_dsp nollhanterare;
@@ -131,17 +131,17 @@ ka820_steal_pages()
 	clk_tweak = 1; 		/* ...but not exactly in each short */
 	MAPVIRT(clk_page, 1);
 	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA820_CLOCKADDR,
-	    KA820_CLOCKADDR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    KA820_CLOCKADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(ka820port_ptr, 1);
 	pmap_map((vm_offset_t)ka820port_ptr, (vm_offset_t)KA820_PORTADDR,
-	    KA820_PORTADDR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    KA820_PORTADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(rx50device_ptr, 1);
 	pmap_map((vm_offset_t)rx50device_ptr, (vm_offset_t)KA820_RX50ADDR,
-	    KA820_RX50ADDR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    KA820_RX50ADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-	MAPVIRT(bi_nodebase, NNODEBI * (sizeof(struct bi_node) / NBPG));
+	MAPVIRT(bi_nodebase, NNODEBI * (sizeof(struct bi_node) / VAX_NBPG));
 	pmap_map((vm_offset_t)bi_nodebase, (vm_offset_t)BI_BASE(0,0),
 	    BI_BASE(0,0) + sizeof(struct bi_node) * NNODEBI,
 	    VM_PROT_READ|VM_PROT_WRITE);

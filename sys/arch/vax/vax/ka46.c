@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.2 1998/08/11 17:52:58 ragge Exp $ */
+/*	$NetBSD: ka46.c,v 1.3 1999/01/01 21:43:19 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -163,26 +163,26 @@ ka46_steal_pages()
 	clk_tweak = 2;          /* ...and shift two */
 	MAPVIRT(clk_page, 1);
 	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA410_WAT_BASE,
-	    (vm_offset_t)KA410_WAT_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)KA410_WAT_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/* LANCE CSR & DMA memory */
 	MAPVIRT(lance_csr, 1);
 	pmap_map((vm_offset_t)lance_csr, (vm_offset_t)NI_BASE,
-	    (vm_offset_t)NI_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)NI_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(vs_cpu, 1);
 	pmap_map((vm_offset_t)vs_cpu, (vm_offset_t)VS_REGS,
-	    (vm_offset_t)VS_REGS + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)VS_REGS + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(dz_regs, 2);
 	pmap_map((vm_offset_t)dz_regs, (vm_offset_t)DZ_CSR,
-	    (vm_offset_t)DZ_CSR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)DZ_CSR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(lance_addr, 1);
 	pmap_map((vm_offset_t)lance_addr, (vm_offset_t)NI_ADDR,
-	    (vm_offset_t)NI_ADDR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)NI_ADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-	MAPPHYS(le_iomem, (NI_IOSIZE/NBPG), VM_PROT_READ|VM_PROT_WRITE);
+	MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
 
 	/* Turn on caches (to speed up execution a bit) */
 	ka46_cache_enable();
@@ -201,7 +201,7 @@ ka46_steal_pages()
 		avail_end &= ~0x3ffff;
 		lio_map = (int *)avail_end;
 		*(int *)(VS_REGS + 8) = avail_end & 0x07fe0000;
-		MAPVIRT(io_map, (0x20000 / NBPG));
+		MAPVIRT(io_map, (0x20000 / VAX_NBPG));
 		pmap_map((vm_offset_t)io_map, (vm_offset_t)avail_end,
 		    (vm_offset_t)avail_end + 0x20000, VM_PROT_READ|VM_PROT_WRITE);
 		for (i = 0; i < 0x8000; i++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.14 1998/11/29 14:48:53 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.15 1999/01/01 21:43:19 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -125,19 +125,19 @@ uvaxIII_steal_pages()
 
 	MAPVIRT(ka650merr_ptr, 1); /* mem err & mem config regs */
 	pmap_map((vm_offset_t)ka650merr_ptr, (vm_offset_t)KA650_MERR,
-	    KA650_MERR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    KA650_MERR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(ka650cbd_ptr, 1); /* cache control & boot/diag regs */
 	pmap_map((vm_offset_t)ka650cbd_ptr, (vm_offset_t)KA650_CBD,
-	    KA650_CBD + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    KA650_CBD + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(ka650ssc_ptr, 3); /* SSC regs (& console prog mail box) */
 	pmap_map((vm_offset_t)ka650ssc_ptr, (vm_offset_t)KA650_SSC,
-	    KA650_SSC + NBPG * 3, VM_PROT_READ|VM_PROT_WRITE);
+	    KA650_SSC + VAX_NBPG * 3, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(ka650ipcr_ptr, 1); /* InterProcessor Com Regs */
 	pmap_map((vm_offset_t)ka650ipcr_ptr, (vm_offset_t)KA650_IPCR,
-	    KA650_IPCR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    KA650_IPCR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(KA650_CACHE_ptr, 128); /* Cache Diagnostic space (for flush) */
 	pmap_map((vm_offset_t)KA650_CACHE_ptr, (vm_offset_t)KA650_CACHE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka410.c,v 1.13 1998/08/10 14:31:08 ragge Exp $ */
+/*	$NetBSD: ka410.c,v 1.14 1999/01/01 21:43:19 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -158,33 +158,33 @@ ka410_steal_pages()
 	clk_tweak = 2;          /* ...and shift two */
 	MAPVIRT(clk_page, 1);
 	pmap_map((vm_offset_t)clk_page, (vm_offset_t)KA410_WAT_BASE,
-	    (vm_offset_t)KA410_WAT_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)KA410_WAT_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	/* LANCE CSR & DMA memory */
 	MAPVIRT(lance_csr, 1);
 	pmap_map((vm_offset_t)lance_csr, (vm_offset_t)NI_BASE,
-	    (vm_offset_t)NI_BASE + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)NI_BASE + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(vs_cpu, 1);
 	pmap_map((vm_offset_t)vs_cpu, (vm_offset_t)VS_REGS,
-	    (vm_offset_t)VS_REGS + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)VS_REGS + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(dz_regs, 2);
 	pmap_map((vm_offset_t)dz_regs, (vm_offset_t)DZ_CSR,
-	    (vm_offset_t)DZ_CSR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)DZ_CSR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
 	MAPVIRT(lance_addr, 1);
 	pmap_map((vm_offset_t)lance_addr, (vm_offset_t)NI_ADDR,
-	    (vm_offset_t)NI_ADDR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+	    (vm_offset_t)NI_ADDR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 
-	MAPPHYS(le_iomem, (NI_IOSIZE/NBPG), VM_PROT_READ|VM_PROT_WRITE);
+	MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
 
 	if (((int)le_iomem & ~KERNBASE) > 0xffffff)
 		parctl = PARCTL_DMA;
 
 #if NSMG > 0
 	if ((vax_confdata & KA420_CFG_MULTU) == 0) {
-		MAPVIRT(sm_addr, (SMSIZE / NBPG));
+		MAPVIRT(sm_addr, (SMSIZE / VAX_NBPG));
 		pmap_map((vm_offset_t)sm_addr, (vm_offset_t)SMADDR,
 		    (vm_offset_t)SMADDR + SMSIZE, VM_PROT_READ|VM_PROT_WRITE);
 		((struct vs_cpu *)VS_REGS)->vc_vdcorg = 0;
@@ -193,16 +193,16 @@ ka410_steal_pages()
 #if NRD || NRX || NNCR
 	MAPVIRT(sca_regs, 1);
 	pmap_map((vm_offset_t)sca_regs, (vm_offset_t)KA410_DKC_BASE,
-	    (vm_offset_t)KA410_DKC_BASE + NBPG,
+	    (vm_offset_t)KA410_DKC_BASE + VAX_NBPG,
 	    VM_PROT_READ|VM_PROT_WRITE);
 
 	if (vax_boardtype == VAX_BTYP_410) {
-		MAPVIRT(dma_area, (KA410_DMA_SIZE / NBPG));
+		MAPVIRT(dma_area, (KA410_DMA_SIZE / VAX_NBPG));
 		pmap_map((vm_offset_t)dma_area, (vm_offset_t)KA410_DMA_BASE,
 		    (vm_offset_t)KA410_DMA_BASE + KA410_DMA_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE);
 	} else {
-		MAPVIRT(dma_area, (KA420_DMA_SIZE / NBPG));
+		MAPVIRT(dma_area, (KA420_DMA_SIZE / VAX_NBPG));
 		pmap_map((vm_offset_t)dma_area, (vm_offset_t)KA420_DMA_BASE,
 		    (vm_offset_t)KA420_DMA_BASE + KA420_DMA_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE);
@@ -210,13 +210,13 @@ ka410_steal_pages()
 #endif
 	if ((vax_cputype == VAX_TYP_CVAX) &&
 	    (vax_confdata & KA420_CFG_CACHPR)) {
-		MAPVIRT(l2cache, (KA420_CH2_SIZE / NBPG));
+		MAPVIRT(l2cache, (KA420_CH2_SIZE / VAX_NBPG));
 		pmap_map((vm_offset_t)l2cache, (vm_offset_t)KA420_CH2_BASE,
 		    (vm_offset_t)KA420_CH2_BASE + KA420_CH2_SIZE,
 		    VM_PROT_READ|VM_PROT_WRITE);
 		MAPVIRT(cacr, 1);
 		pmap_map((vm_offset_t)cacr, (vm_offset_t)KA420_CACR,
-		    (vm_offset_t)KA420_CACR + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+		    (vm_offset_t)KA420_CACR + VAX_NBPG, VM_PROT_READ|VM_PROT_WRITE);
 	}
 		
 	/*

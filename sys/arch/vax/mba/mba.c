@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.14 1998/05/21 13:16:14 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.15 1999/01/01 21:43:18 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -290,7 +290,7 @@ mbastart(sc)
 	disk_reallymapin(md->md_q.b_actf, sc->sc_mbareg->mba_map, 0, PG_V);
 
 	sc->sc_state = SC_ACTIVE;
-	mr->mba_var = ((u_int)bp->b_un.b_addr & PGOFSET);
+	mr->mba_var = ((u_int)bp->b_un.b_addr & VAX_PGOFSET);
 	mr->mba_bc = (~bp->b_bcount) + 1;
 	(*md->md_start)(md);		/* machine-dependent start */
 }

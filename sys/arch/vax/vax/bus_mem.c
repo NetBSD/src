@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_mem.c,v 1.1 1998/10/27 21:19:48 matt Exp $ */
+/*	$NetBSD: bus_mem.c,v 1.2 1999/01/01 21:43:19 ragge Exp $ */
 /*
  * Copyright (c) 1998 Matt Thomas
  * All rights reserved.
@@ -67,9 +67,9 @@ vax_mem_add_mapping(
 	if (va == 0)
 		return (ENOMEM);
 
-	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
+	*bshp = (bus_space_handle_t)(va + (bpa & VAX_PGOFSET));
 
-	for (; pa < endpa; pa += NBPG, va += NBPG) {
+	for (; pa < endpa; pa += VAX_NBPG, va += VAX_NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
 	}

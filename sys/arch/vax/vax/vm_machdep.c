@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.43 1998/11/29 15:01:49 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.44 1999/01/01 21:43:19 ragge Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -77,7 +77,7 @@ pagemove(from, to, size)
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 
-	stor = (size >> PGSHIFT) * sizeof(struct pte);
+	stor = (size >> VAX_PGSHIFT) * sizeof(struct pte);
 	bcopy(fpte, tpte, stor);
 	bzero(fpte, stor);
 	mtpr(0, PR_TBIA);
@@ -115,7 +115,7 @@ cpu_fork(p1, p2)
 	pmap = p2->p_vmspace->vm_map.pmap;
 
 	/* Mark page invalid */
-	pt = kvtopte((u_int)p2->p_addr + NBPG);
+	pt = kvtopte((u_int)p2->p_addr + VAX_NBPG);
 	pt->pg_v = 0; 
 
 	/*
@@ -273,7 +273,7 @@ cpu_swapin(p)
 		}
 	}
 
-	pt = kvtopte(uarea + NBPG);
+	pt = kvtopte(uarea + VAX_NBPG);
 	pt->pg_v = 0; /* Set kernel stack red zone */
 }
 
@@ -304,16 +304,16 @@ vmapbuf(bp, len)
 	bp->b_data = (caddr_t)(taddr + off);
 	fmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	tmap = vm_map_pmap(phys_map);
-	len = len >> PGSHIFT;
+	len = len >> VAX_PGSHIFT;
 	while (len--) {
 		pa = pmap_extract(fmap, faddr);
 		if (pa == 0)
 			panic("vmapbuf: null page frame for %x", (u_int)faddr);
 
-		pmap_enter(tmap, taddr, pa & ~(NBPG - 1),
+		pmap_enter(tmap, taddr, pa & ~(VAX_NBPG - 1),
 			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
-		faddr += NBPG;
-		taddr += NBPG;
+		faddr += VAX_NBPG;
+		taddr += VAX_NBPG;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.38 1998/11/29 14:48:53 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.39 1999/01/01 21:43:18 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -146,7 +146,7 @@ dw780_attach(parent, self, aux)
 	sc->uh_ubainit = dw780_init;
 	sc->uh_type = DW780;
 	sc->uh_memsize = UBAPAGES;
-	sc->uh_iarea = (void *)scb + NBPG + ubaddr * NBPG;
+	sc->uh_iarea = (void *)scb + VAX_NBPG + ubaddr * VAX_NBPG;
 	sc->uh_mr = sc->uh_uba->uba_map;
 
 	bcopy(&idsptch, &sc->uh_dw780, sizeof(struct ivec_dsp));
@@ -157,7 +157,7 @@ dw780_attach(parent, self, aux)
 	    = scb->scb_nexvec[3][sa->nexnum] = &sc->uh_dw780;
 
 	uba_attach(sc, (parent->dv_unit ? UMEMB8600(ubaddr) :
-	    UMEMA8600(ubaddr)) + (UBAPAGES * NBPG));
+	    UMEMA8600(ubaddr)) + (UBAPAGES * VAX_NBPG));
 }
 
 void
@@ -347,10 +347,10 @@ dw750_attach(parent, self, aux)
 	sc->uh_ubainit = dw750_init;
 	sc->uh_type = DW750;
 	sc->uh_memsize = UBAPAGES;
-	sc->uh_iarea = (void *)scb + NBPG + ubaddr * NBPG;
+	sc->uh_iarea = (void *)scb + VAX_NBPG + ubaddr * VAX_NBPG;
 	sc->uh_mr = sc->uh_uba->uba_map;
 
-	uba_attach(sc, UMEM750(ubaddr) + (UBAPAGES * NBPG));
+	uba_attach(sc, UMEM750(ubaddr) + (UBAPAGES * VAX_NBPG));
 }
 
 void
@@ -424,7 +424,7 @@ qba_attach(parent, self, aux)
 	sc->uh_ubainit = qba_init;
 	sc->uh_type = QBA;
 	sc->uh_memsize = QBAPAGES;
-	sc->uh_iarea = (void *)scb + NBPG;
+	sc->uh_iarea = (void *)scb + VAX_NBPG;
 	/*
 	 * Map in the UBA page map into kernel space. On other UBAs,
 	 * the map registers are in the bus IO space.
@@ -595,7 +595,7 @@ ubasetup(uh, bp, flags)
 	if (uh->uh_nbdp == 0)
 		flags &= ~UBA_NEEDBDP;
 
-	o = (int)bp->b_un.b_addr & PGOFSET;
+	o = (int)bp->b_un.b_addr & VAX_PGOFSET;
 	npf = vax_btoc(bp->b_bcount + o) + 1;
 	if (npf > UBA_MAXNMR)
 		panic("uba xfer too big");
@@ -847,12 +847,12 @@ uba_attach(sc, iopagephys)
 	 * never used in the vm system. Is it OK to do so?
 	 */
 #if defined(UVM)
-	(void)uvm_km_suballoc(kernel_map, &mini, &maxi, UBAIOPAGES * NBPG,
+	(void)uvm_km_suballoc(kernel_map, &mini, &maxi, UBAIOPAGES * VAX_NBPG,
 	    FALSE, FALSE, NULL);
 #else
-	(void)kmem_suballoc(kernel_map, &mini, &maxi, UBAIOPAGES * NBPG, FALSE);
+	(void)kmem_suballoc(kernel_map, &mini, &maxi, UBAIOPAGES * VAX_NBPG, FALSE);
 #endif
-	pmap_map(mini, iopagephys, iopagephys + UBAIOPAGES * NBPG,
+	pmap_map(mini, iopagephys, iopagephys + UBAIOPAGES * VAX_NBPG,
 	    VM_PROT_READ|VM_PROT_WRITE);
 	sc->uh_iopage = (void *)mini;
 	/*

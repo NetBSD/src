@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.2 1996/09/02 06:44:28 mycroft Exp $	*/
+/*	$NetBSD: qv.c,v 1.3 1999/01/01 21:43:18 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -167,7 +167,7 @@ u_short	qvstd[] = { 0 };
 struct	uba_driver qvdriver =
 	{ qvprobe, 0, qvattach, 0, qvstd, "qv", qvinfo };
 
-extern	char qvmem[][512*NBPG];
+extern	char qvmem[][512*VAX_NBPG];
 extern	struct pte QVmap[][512];
 
 /*
@@ -1230,12 +1230,12 @@ qvcons_init()
          * Map the device registers.
          */
 	qb = (struct qbus *)pcpu->pc_io->io_details;
-	ioaccess(qb->qb_iopage, UMEMmap[0] + qb->qb_memsize, UBAIOPAGES * NBPG);
+	ioaccess(qb->qb_iopage, UMEMmap[0] + qb->qb_memsize, UBAIOPAGES * VAX_NBPG);
 
         /*
          * See if the qvss is there.
          */
-        devptr = (short *)((char *)umem[0] + (qb->qb_memsize * NBPG));
+        devptr = (short *)((char *)umem[0] + (qb->qb_memsize * VAX_NBPG));
         qvaddr = (struct qvdevice *)((u_int)devptr + ubdevreg(QVSSCSR));
         if (badaddr((caddr_t)qvaddr, sizeof(short)))
                 return 0;
@@ -1281,7 +1281,7 @@ int probed;
 	qb = (struct qbus *)pcpu->pc_io->io_details;
 
         i = (u_int)(qvaddr->qv_csr & QV_MEM_BANK) << 7;
-	ioaccess(qb->qb_maddr + i, QVmap[unit], 512 * NBPG);
+	ioaccess(qb->qb_maddr + i, QVmap[unit], 512 * VAX_NBPG);
 	qvssmem = qvmem[unit];
         pte = (int *)(QVmap[unit]);
         for (i=0; i < 512; i++, pte++)
