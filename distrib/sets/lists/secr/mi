@@ -4,6 +4,8 @@
 ./usr/bin/kdestroy
 ./usr/bin/kinit
 ./usr/bin/klist
+./usr/bin/telnet
+./usr/bin/tn3270
 ./usr/include/kerberosIV/adm_locl.h
 ./usr/include/kerberosIV/com_err.h
 ./usr/include/kerberosIV/des.h
@@ -46,6 +48,9 @@
 ./usr/lib/libkrb_p.a
 ./usr/lib/libss.a
 ./usr/lib/libss_p.a
+./usr/lib/libtelnet.a
+./usr/lib/libtelnet_p.a
+./usr/libexec/telnetd
 ./usr/sbin/ext_srvtab
 ./usr/sbin/kadmin
 ./usr/sbin/kadmind
@@ -58,6 +63,7 @@
 ./usr/sbin/kpropd
 ./usr/sbin/ksrvutil
 ./usr/sbin/kstash
+./usr/share/man/cat1/bdes.0
 ./usr/share/man/cat1/kdestroy.0
 ./usr/share/man/cat1/kerberos.0
 ./usr/share/man/cat1/kinit.0
@@ -71,10 +77,12 @@
 ./usr/share/man/cat3/cbc_cksum.0
 ./usr/share/man/cat3/cbc_encrypt.0
 ./usr/share/man/cat3/com_err.0
+./usr/share/man/cat3/crypt.0
 ./usr/share/man/cat3/des_crypt.0
 ./usr/share/man/cat3/des_read_password.0
 ./usr/share/man/cat3/des_set_key.0
 ./usr/share/man/cat3/ecb_encrypt.0
+./usr/share/man/cat3/encrypt.0
 ./usr/share/man/cat3/kerberos.0
 ./usr/share/man/cat3/krb_ck_repl.0
 ./usr/share/man/cat3/krb_get_admhst.0
@@ -102,6 +110,7 @@
 ./usr/share/man/cat3/pcbc_encrypt.0
 ./usr/share/man/cat3/quad_cksum.0
 ./usr/share/man/cat3/random_key.0
+./usr/share/man/cat3/setkey.0
 ./usr/share/man/cat3/string_to_key.0
 ./usr/share/man/cat3/tf_close.0
 ./usr/share/man/cat3/tf_get_cred.0
