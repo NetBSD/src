@@ -1,4 +1,4 @@
-/*	$NetBSD: pim6_proto.c,v 1.3 1999/09/03 04:49:24 itojun Exp $	*/
+/*	$NetBSD: pim6_proto.c,v 1.4 1999/12/10 06:13:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -63,7 +63,7 @@
  *  Questions concerning this software should be directed to 
  *  Kurt Windisch (kurtw@antc.uoregon.edu)
  *
- *  KAME Id: pim6_proto.c,v 1.3 1999/08/24 10:04:56 jinmei Exp
+ *  KAME Id: pim6_proto.c,v 1.4 1999/10/27 11:40:30 jinmei Exp
  */
 /*
  * Part of this program has been derived from PIM sparse-mode pimd.
@@ -312,7 +312,7 @@ delete_pim6_nbr(nbr_delete)
 		if(srcentry_ptr->upstream == nbr_delete) 
 			if (set_incoming(srcentry_ptr, PIM_IIF_SOURCE) == FALSE) {
 				/*
-				 * Coudn't reset it. Sorry, the next hop router
+				 * Couldn't reset it. Sorry, the next hop router
 				 * toward that source is probably not
 				 * a PIM router, or cannot find route at all,
 				 * hence I cannot handle this source and have to
@@ -468,7 +468,7 @@ delayed_join_job(arg)
 	if(mrtentry_ptr->upstream)
 		send_pim6_jp(mrtentry_ptr, PIM_ACTION_JOIN,
 			     mrtentry_ptr->incoming,
-			     &mrtentry_ptr->upstream->address, 0);
+			     &mrtentry_ptr->upstream->address, 0, 0);
 
 	free(cbk);
 }
@@ -500,7 +500,7 @@ schedule_delayed_join(mrtentry_ptr, target)
 	if(random_delay == 0 && mrtentry_ptr->upstream) {
 		send_pim6_jp(mrtentry_ptr, PIM_ACTION_JOIN,
 			     mrtentry_ptr->incoming,
-			     &mrtentry_ptr->upstream->address, 0);
+			     &mrtentry_ptr->upstream->address, 0, 0);
 		return;
 	}
 
@@ -882,7 +882,7 @@ receive_pim6_join_prune(src, pim_message, datalen)
 
 					send_pim6_jp(mrtentry_ptr,
 						     PIM_ACTION_PRUNE, mifi,
-						     &target, holdtime);
+						     &target, holdtime, 1);
 					schedule_delayed_prune(mrtentry_ptr,
 							       mifi, holdtime);
 				}
@@ -895,19 +895,20 @@ receive_pim6_join_prune(src, pim_message, datalen)
 
 
 int
-send_pim6_jp(mrtentry_ptr, action, mifi, target_addr, holdtime)
+send_pim6_jp(mrtentry_ptr, action, mifi, target_addr, holdtime, echo)
 	mrtentry_t *mrtentry_ptr;
 	int action;           /* PIM_ACTION_JOIN or PIM_ACTION_PRUNE */
 	mifi_t mifi;          /* vif to send join/prune on */
 	struct sockaddr_in6 *target_addr;  /* encoded unicast target neighbor */
 	u_int16 holdtime;     /* holdtime */
+	int echo;
 {
 	u_int8 *data_ptr, *data_start_ptr;
 	
 	data_ptr = (u_int8 *)(pim6_send_buf + sizeof(struct pim));
 	data_start_ptr = data_ptr;
 
-	if(mrtentry_ptr->upstream == (pim_nbr_entry_t *)NULL) {
+	if(echo == 0 && mrtentry_ptr->upstream == (pim_nbr_entry_t *)NULL) {
 		/* No upstream neighbor - don't send */
 		return(FALSE);
 	}
@@ -944,7 +945,8 @@ send_pim6_jp(mrtentry_ptr, action, mifi, target_addr, holdtime)
 		    0, data_ptr);
 
 	/* Cancel active graft */
-	delete_pim6_graft_entry(mrtentry_ptr);
+	if (echo == 0)
+		delete_pim6_graft_entry(mrtentry_ptr);
     
 	send_pim6(pim6_send_buf, &uvifs[mifi].uv_linklocal->pa_addr,
 		  &allpim6routers_group, PIM_JOIN_PRUNE,
@@ -985,7 +987,7 @@ receive_pim6_assert(src, pim_message, datalen)
 	u_int32 local_metric;
 	u_int32 local_preference;
 	u_int8  local_wins;
-	if_set new_pruned_oifs;
+	if_set new_pruned_oifs, new_leaves;
 	int state_change;
     
 	if ((mifi = find_vif_direct(src)) == NO_VIF) {
@@ -1122,7 +1124,7 @@ receive_pim6_assert(src, pim_message, datalen)
 		/* Send a join for the S,G if oiflist is non-empty */
 		if(!(IF_ISEMPTY(&mrtentry_ptr->oifs))) 
 			send_pim6_jp(mrtentry_ptr, PIM_ACTION_JOIN,
-				     mrtentry_ptr->incoming, src, 0);
+				     mrtentry_ptr->incoming, src, 0, 0);
 
 	} /* if assert on iif */
 
@@ -1156,12 +1158,24 @@ receive_pim6_assert(src, pim_message, datalen)
 			SET_TIMER(mrtentry_ptr->prune_timers[mifi], 
 				  PIM_JOIN_PRUNE_HOLDTIME);
 
-			state_change = 
-				change_interfaces(mrtentry_ptr,
-						  mrtentry_ptr->incoming,
-						  &new_pruned_oifs,
-						  &mrtentry_ptr->leaves,
-						  &mrtentry_ptr->asserted_oifs);
+			if (IF_ISSET(mifi, &mrtentry_ptr->leaves)) {
+				IF_COPY(&mrtentry_ptr->leaves, &new_leaves);
+				IF_CLR(mifi, &new_leaves);
+				state_change =
+					change_interfaces(mrtentry_ptr,
+							  mrtentry_ptr->incoming,
+							  &new_pruned_oifs,
+							  &mrtentry_ptr->leaves,
+							  &new_leaves);
+			}
+			else {
+				state_change =
+					change_interfaces(mrtentry_ptr,
+							  mrtentry_ptr->incoming,
+							  &new_pruned_oifs,
+							  &mrtentry_ptr->leaves,
+							  &mrtentry_ptr->asserted_oifs);
+			}
 
 			/* Handle transition to negative cache */
 			if(state_change == -1)
@@ -1187,7 +1201,7 @@ receive_pim6_assert(src, pim_message, datalen)
 				 */
 				send_pim6_jp(mrtentry_ptr, PIM_ACTION_PRUNE,
 					     mifi, &v->uv_linklocal->pa_addr,
-					     PIM_JOIN_PRUNE_HOLDTIME);
+					     PIM_JOIN_PRUNE_HOLDTIME, 0);
 				schedule_delayed_prune(mrtentry_ptr, mifi, 
 						       PIM_JOIN_PRUNE_HOLDTIME);
 			}
