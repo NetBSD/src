@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rtreg.h,v 1.9 2000/03/13 23:52:27 soren Exp $	*/
+/*	$NetBSD: grf_rtreg.h,v 1.10 2001/07/26 15:05:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -49,7 +49,7 @@
  * This code offers low-level routines to access the Retina graphics-board
  * manufactured by MS MacroSystem GmbH from within NetBSD for the Amiga.
  * 
- * Thanks to MacroSystem for providing me with the neccessary information
+ * Thanks to MacroSystem for providing me with the necessary information
  * to create theese routines. The sparse documentation of this code
  * results from the agreements between MS and me.
  */
