@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.18 2002/06/21 14:49:40 agc Exp $
+# $NetBSD: Makefile.inc,v 1.19 2002/08/02 17:04:55 seb Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
@@ -24,7 +24,7 @@ WARNS=2
 .elif ${OPSYS} == "SunOS"
 LOCALBASE?= /usr/pkg
 TAR_CMD?= tar
-FTP_CMD?= tar
+FTP_CMD?= ftp
 ZOULARISBASE?=	${LOCALBASE}/bsd
 TAR_FULLPATHNAME?= ${ZOULARISBASE}/bin/${TAR_CMD}
 FTP_FULLPATHNAME?= ${ZOULARISBASE}/bin/${FTP_CMD}
