@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.11 1994/12/20 10:35:44 cgd Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.12 1998/05/06 18:01:23 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,6 +43,8 @@
 #ifndef _SETJMP_H_
 #define _SETJMP_H_
 
+#include <sys/featuretest.h>
+
 #include <machine/setjmp.h>
 
 #ifndef _ANSI_SOURCE
@@ -62,11 +64,15 @@ int	sigsetjmp __P((sigjmp_buf, int));
 void	siglongjmp __P((sigjmp_buf, int));
 #endif /* not ANSI */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
+    defined(_XOPEN_SOURCE)
 int	_setjmp __P((jmp_buf));
 void	_longjmp __P((jmp_buf, int));
+#endif
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE)
 void	longjmperror __P((void));
-#endif /* neither ANSI nor POSIX */
+#endif
 __END_DECLS
 
 #endif /* !_SETJMP_H_ */
