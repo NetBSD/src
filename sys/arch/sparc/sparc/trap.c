@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.105 2001/06/08 09:40:32 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.106 2001/07/07 20:12:54 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -452,10 +452,12 @@ badtrap:
 			if (cpi != NULL) {
 				if (cpi->mid == cpuinfo.mid)
 					panic("FPU on module %d\n", mid);
+				LOCK_XPMSG();
 				simple_lock(&cpi->fplock);
 				simple_lock(&cpi->msg.lock);
 				cpi->msg.tag = XPMSG_SAVEFPU;
 				raise_ipi_wait_and_unlock(cpi);
+				UNLOCK_XPMSG();
 			}
 			loadfpstate(fs);
 			cpuinfo.fpproc = p;		/* now we do have it */
