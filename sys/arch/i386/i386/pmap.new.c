@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.9 1998/04/07 18:32:10 thorpej Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.10 1998/05/19 19:00:16 thorpej Exp $	*/
 
 /*
  *
@@ -417,6 +417,9 @@ static boolean_t	 pmap_try_steal_pv __P((struct pv_head *,
 						struct pv_entry *,
 						struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
+
+void			pmap_pinit __P((pmap_t));
+void			pmap_release __P((pmap_t));
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
