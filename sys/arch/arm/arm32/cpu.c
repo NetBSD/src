@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 2002/01/27 14:43:47 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15 2002/02/17 19:53:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -68,11 +68,11 @@ volatile int undefined_test;	/* Used for FPA test */
 extern int cpuctrl;		/* cpu control register value */
 
 /* Prototypes */
-void identify_master_cpu __P((struct device *dv, int cpu_number));
-void identify_arm_cpu	__P((struct device *dv, int cpu_number));
-void identify_arm_fpu	__P((struct device *dv, int cpu_number));
-int fpa_test __P((u_int, u_int, trapframe_t *, int));
-int fpa_handler __P((u_int, u_int, trapframe_t *, int));
+void identify_master_cpu(struct device *dv, int cpu_number);
+void identify_arm_cpu(struct device *dv, int cpu_number);
+void identify_arm_fpu(struct device *dv, int cpu_number);
+int fpa_test(u_int, u_int, trapframe_t *, int);
+int fpa_handler(u_int, u_int, trapframe_t *, int);
 
 /*
  * void cpusattach(struct device *parent, struct device *dev, void *aux)
@@ -81,9 +81,9 @@ int fpa_handler __P((u_int, u_int, trapframe_t *, int));
  */
   
 void
-cpu_attach(dv)
-	struct device *dv;
+cpu_attach(struct device *dv)
 {
+
 	identify_master_cpu(dv, CPU_MASTER);
 }
 
@@ -95,11 +95,7 @@ cpu_attach(dv)
  */
 
 int
-fpa_test(address, instruction, frame, fault_code)
-	u_int address;
-	u_int instruction;
-	trapframe_t *frame;
-	int fault_code;
+fpa_test(u_int address, u_int instruction, trapframe_t *frame, int fault_code)
 {
 
 	frame->tf_pc += INSN_SIZE;
@@ -114,15 +110,15 @@ fpa_test(address, instruction, frame, fault_code)
  */
 
 int
-fpa_handler(address, instruction, frame, fault_code)
-	u_int address;
-	u_int instruction;
-	trapframe_t *frame;
-	int fault_code;
+fpa_handler(u_int address, u_int instruction, trapframe_t *frame,
+    int fault_code)
 {
 	u_int fpsr;
     
-	__asm __volatile("stmfd sp!, {r0}; .word 0xee300110; mov %0, r0; ldmfd sp!, {r0}" : "=r" (fpsr));
+	__asm __volatile("stmfd sp!, {r0};"
+	    ".word 0xee300110;"
+	    "mov %0, r0;"
+	    "ldmfd sp!, {r0}" : "=r" (fpsr));
 
 	printf("FPA exception: fpsr = %08x\n", fpsr);
 
@@ -136,9 +132,7 @@ fpa_handler(address, instruction, frame, fault_code)
  */
  
 void
-identify_master_cpu(dv, cpu_number)
-	struct device *dv;
-	int cpu_number;
+identify_master_cpu(struct device *dv, int cpu_number)
 {
 	u_int fpsr;
 	void *uh;
@@ -166,16 +160,16 @@ identify_master_cpu(dv, cpu_number)
 		printf(" clock:%s", (clock & 1) ? " dynamic" : "");
 		printf("%s", (clock & 2) ? " sync" : "");
 		switch ((clock >> 2) & 3) {
-		case 0 :
+		case 0:
 			fclk = "bus clock";
 			break;
-		case 1 :
+		case 1:
 			fclk = "ref clock";
 			break;
-		case 3 :
+		case 3:
 			fclk = "pll";
 			break;
-		default :
+		default:
 			fclk = "illegal";
 			break;
 		}
@@ -201,18 +195,21 @@ identify_master_cpu(dv, cpu_number)
 
 	undefined_test = 0;
 
-	__asm __volatile("stmfd sp!, {r0}; .word 0xee300110; mov %0, r0; ldmfd sp!, {r0}" : "=r" (fpsr));
+	__asm __volatile("stmfd sp!, {r0};"
+	    ".word 0xee300110;"
+	    "mov %0, r0;"
+	    "ldmfd sp!, {r0}" : "=r" (fpsr));
 
 	remove_coproc_handler(uh);
 
 	if (undefined_test == 0) {
 		cpus[cpu_number].fpu_type = (fpsr >> 24);
 	        switch (fpsr >> 24) {
-		case 0x81 :
+		case 0x81:
 			cpus[cpu_number].fpu_class = FPU_CLASS_FPA;
 			break;
 
-		default :
+		default:
 			cpus[cpu_number].fpu_class = FPU_CLASS_FPU;
 			break;
 		}
@@ -401,9 +398,7 @@ static const char *wtnames[] = {
 };
 
 void
-identify_arm_cpu(dv, cpu_number)
-	struct device *dv;
-	int cpu_number;
+identify_arm_cpu(struct device *dv, int cpu_number)
 {
 	cpu_t *cpu;
 	u_int cpuid;
@@ -547,9 +542,7 @@ identify_arm_cpu(dv, cpu_number)
  */
 
 void
-identify_arm_fpu(dv, cpu_number)
-	struct device *dv;
-	int cpu_number;
+identify_arm_fpu(struct device *dv, int cpu_number)
 {
 	cpu_t *cpu;
 
