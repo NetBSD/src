@@ -42,15 +42,15 @@ int
 getpagesize()
 {
 static	int pagsz;
-	int mib[2], value;
+	int mib[2];
 	size_t size;
 
-	if (pagsz != 0)
-		return pagsz;
-	mib[0] = CTL_HW;
-	mib[1] = HW_PAGESIZE;
-	size = sizeof value;
-	if (sysctl(mib, 2, &value, &size, NULL, 0) == -1)
-		return (-1);
-	return (pagsz = value);
+	if (pagsz == 0) {
+		mib[0] = CTL_HW;
+		mib[1] = HW_PAGESIZE;
+		size = sizeof value;
+		if (sysctl(mib, 2, &pagsz, &size, NULL, 0) == -1)
+			return (-1);
+	}
+	return (pagsz);
 }
