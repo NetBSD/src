@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.68 2000/03/30 12:45:27 augustss Exp $	*/
+/*	$NetBSD: ccd.c,v 1.69 2000/04/05 04:03:20 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -294,6 +294,17 @@ ccdinit(cs, cpaths, vpp, p)
 #endif
 			goto out;
 		}
+
+/*
+ * This diagnostic test is disabled (for now?) since not all port supports
+ * on-disk BSD disklabel.
+ */
+#if 0 /* def DIAGNOSTIC */
+		/* Check fstype field of component. */
+		if (dpart.part->p_fstype != FS_CCD)
+			printf("%s: WARNING: %s: fstype %d != FS_CCD\n",
+			    cs->sc_xname, ci->ci_path, dpart.part->p_fstype);
+#endif
 
 		/*
 		 * Calculate the size, truncating to an interleave
