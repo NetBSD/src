@@ -523,6 +523,11 @@
 ./usr/sbin/fixmount
 ./usr/sbin/fsinfo
 ./usr/sbin/greconfig
+./usr/sbin/group
+./usr/sbin/groupadd
+./usr/sbin/groupdel
+./usr/sbin/groupinfo
+./usr/sbin/groupmod
 ./usr/sbin/hlfsd
 ./usr/sbin/inetd
 ./usr/sbin/iostat
@@ -626,6 +631,11 @@
 ./usr/sbin/update
 ./usr/sbin/usbd
 ./usr/sbin/usbdevs
+./usr/sbin/user
+./usr/sbin/useradd
+./usr/sbin/userdel
+./usr/sbin/userinfo
+./usr/sbin/usermod
 ./usr/sbin/vipw
 ./usr/sbin/vnconfig
 ./usr/sbin/wire-test
