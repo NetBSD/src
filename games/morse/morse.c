@@ -1,4 +1,4 @@
-/*	$NetBSD: morse.c,v 1.4 1997/10/10 16:38:40 lukem Exp $	*/
+/*	$NetBSD: morse.c,v 1.5 1998/11/18 09:06:26 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morse.c,v 1.4 1997/10/10 16:38:40 lukem Exp $");
+__RCSID("$NetBSD: morse.c,v 1.5 1998/11/18 09:06:26 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: morse [string ...]");
+			fprintf(stderr, "usage: morse [-s] [string ...]\n");
 			exit(1);
 		}
 	argc -= optind;
