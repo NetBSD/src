@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.22.2.3 1999/12/17 23:21:56 he Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.22.2.4 2000/01/15 17:51:09 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ lfs_update(v)
 			printf("lfs_update: sleeping on inode %d (dirops)\n",ip->i_number);
 #endif
 			if(fs->lfs_dirops==0)
-				lfs_flush_fs(vp->v_mount,0);
+				lfs_flush_fs(vp->v_mount,SEGM_SYNC);
 			else
 				tsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync", 0);
 			/* XXX KS - by falling out here, are we writing the vn
