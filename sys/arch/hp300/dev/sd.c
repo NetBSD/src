@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.27 1996/10/14 07:14:20 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.28 1997/01/07 09:29:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -582,7 +582,7 @@ sdopen(dev, flags, mode, p)
 {
 	register int unit = sdunit(dev);
 	register struct sd_softc *sc = &sd_softc[unit];
-	int error, mask;
+	int error, mask, part;
 
 	if (unit >= NSD || (sc->sc_flags & SDF_ALIVE) == 0)
 		return(ENXIO);
@@ -607,12 +607,27 @@ sdopen(dev, flags, mode, p)
 			return(error);
 	}
 
-	mask = 1 << sdpart(dev);
-	if (mode == S_IFCHR)
+	part = sdpart(dev);
+	mask = 1 << part;
+
+	/* Check that the partition exists. */
+	if (part != RAW_PART &&
+	    (part >= sc->sc_dkdev.dk_label->d_npartitions ||
+	     sc->sc_dkdev.dk_label->d_partitions[part].p_fstype == FS_UNUSED))
+		return (ENXIO);
+
+	/* Ensure only one open at a time. */
+	switch (mode) {
+	case S_IFCHR:
 		sc->sc_dkdev.dk_copenmask |= mask;
-	else
+		break;
+	case S_IFBLK:
 		sc->sc_dkdev.dk_bopenmask |= mask;
-	sc->sc_dkdev.dk_openmask |= mask;
+		break;
+	}
+	sc->sc_dkdev.dk_openmask =
+	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
+
 	return(0);
 }
 
@@ -763,6 +778,7 @@ sdstrategy(bp)
 	register struct partition *pinfo;
 	register daddr_t bn;
 	register int sz, s;
+	int offset;
 
 	if (sc->sc_format_pid >= 0) {
 		if (sc->sc_format_pid != curproc->p_pid) {	/* XXX */
@@ -778,28 +794,40 @@ sdstrategy(bp)
 		bn = bp->b_blkno;
 		sz = howmany(bp->b_bcount, DEV_BSIZE);
 		pinfo = &sc->sc_dkdev.dk_label->d_partitions[sdpart(bp->b_dev)];
-		if (bn < 0 || bn + sz > pinfo->p_size) {
-			sz = pinfo->p_size - bn;
-			if (sz == 0) {
-				bp->b_resid = bp->b_bcount;
-				goto done;
+
+		/* Don't perform partition translation on RAW_PART. */
+		offset = (sdpart(bp->b_dev) == RAW_PART) ? 0 : pinfo->p_offset;
+
+		if (sdpart(bp->b_dev) != RAW_PART) {
+			/*
+			 * XXX This block of code belongs in
+			 * XXX bounds_check_with_label()
+			 */
+
+			if (bn < 0 || bn + sz > pinfo->p_size) {
+				sz = pinfo->p_size - bn;
+				if (sz == 0) {
+					bp->b_resid = bp->b_bcount;
+					goto done;
+				}
+				if (sz < 0) {
+					bp->b_error = EINVAL;
+					goto bad;
+				}
+				bp->b_bcount = dbtob(sz);
 			}
-			if (sz < 0) {
-				bp->b_error = EINVAL;
+			/*
+			 * Check for write to write protected label
+			 */
+			if (bn + offset <= LABELSECTOR &&
+#if LABELSECTOR != 0
+			    bn + offset + sz > LABELSECTOR &&
+#endif
+			    !(bp->b_flags & B_READ) &&
+			    !(sc->sc_flags & SDF_WLABEL)) {
+				bp->b_error = EROFS;
 				goto bad;
 			}
-			bp->b_bcount = dbtob(sz);
-		}
-		/*
-		 * Check for write to write protected label
-		 */
-		if (bn + pinfo->p_offset <= LABELSECTOR &&
-#if LABELSECTOR != 0
-		    bn + pinfo->p_offset + sz > LABELSECTOR &&
-#endif
-		    !(bp->b_flags & B_READ) && !(sc->sc_flags & SDF_WLABEL)) {
-			bp->b_error = EROFS;
-			goto bad;
 		}
 		/*
 		 * Non-aligned or partial-block transfers handled specially.
@@ -809,7 +837,7 @@ sdstrategy(bp)
 			sdlblkstrat(bp, sc->sc_blksize);
 			goto done;
 		}
-		bp->b_cylin = (bn + pinfo->p_offset) >> sc->sc_bshift;
+		bp->b_cylin = (bn + offset) >> sc->sc_bshift;
 	}
 	s = splbio();
 	disksort(dp, bp);
