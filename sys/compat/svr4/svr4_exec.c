@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.23 1996/10/13 00:08:26 christos Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.23.14.1 1998/01/29 12:04:28 mellon Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -71,7 +71,7 @@ struct emul emul_svr4 = {
 	svr4_syscallnames,
 	SVR4_AUX_ARGSIZ,
 	svr4_copyargs,
-	setregs,
+	svr4_setregs,
 	svr4_sigcode,
 	svr4_esigcode,
 };
