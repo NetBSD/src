@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.34 2001/06/26 09:24:36 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.35 2001/06/26 09:36:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -610,7 +610,7 @@ ntfs_readdir(ap)
 
 	/* Simulate .. in every dir including ROOT */
 	if (uio->uio_offset < 2 * sizeof(struct dirent)) {
-		cde->d_fileno = ip->i_number;
+		cde->d_fileno = NTFS_ROOTINO;	/* XXX */
 		cde->d_reclen = sizeof(struct dirent);
 		cde->d_type = DT_DIR;
 		cde->d_namlen = 2;
