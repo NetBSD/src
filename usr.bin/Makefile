@@ -1,10 +1,10 @@
 #	@(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 #
-# $Header: /cvsroot/src/usr.bin/Makefile,v 1.15 1993/04/29 12:39:24 cgd Exp $
+# $Header: /cvsroot/src/usr.bin/Makefile,v 1.16 1993/04/29 20:52:21 cgd Exp $
 
 SUBDIR=	ar biff basename cal calendar \
 	checknr chpass cksum cmp col colcrt colrm column comm compress \
-	cpio crontab ctags cut dirname du egrep elvis elvisrecover \
+	cpio crontab ctags cut dirname du elvis elvisrecover \
 	env error expand false file find finger fmt fold fpr from \
 	fsplit fstat ftp gprof groups head hexdump \
 	id indent ktrace last lastcomm leave locate lock logger \
