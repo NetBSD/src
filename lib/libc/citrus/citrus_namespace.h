@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_namespace.h,v 1.3 2003/07/12 15:39:20 tshiozak Exp $	*/
+/*	$NetBSD: citrus_namespace.h,v 1.4 2004/07/21 14:16:34 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -105,6 +105,8 @@
 
 /* citrus_lookup */
 #ifndef _CITRUS_DB_NO_NAMESPACE
+#define _LOOKUP_CASE_SENSITIVE	_CITRUS_LOOKUP_CASE_SENSITIVE
+#define _LOOKUP_CASE_IGNORE	_CITRUS_LOOKUP_CASE_IGNORE
 #define _lookup			_citrus_lookup
 #define _lookup_simple		_citrus_lookup_simple
 #define _lookup_alias		_citrus_lookup_alias
