@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.29 1999/01/05 14:35:19 hwr Exp $
+#	$NetBSD: services,v 1.30 1999/01/13 13:32:22 hwr Exp $
 #
 # Network services, Internet style
 #
@@ -146,6 +146,9 @@ rdist		541/tcp		rdistd		# rdist daemon
 afpovertcp	548/tcp				# AppleshareIP protocol
 afpovertcp	548/udp				# AppleshareIP protocol
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
+#
+ldaps		636/tcp			# ldap protocol over TLS/SSL (was sldap)
+ldaps		636/udp			# ldap protocol over TLS/SSL (was sldap)
 #
 webster		765/tcp				# Network dictionary
 webster		765/udp
