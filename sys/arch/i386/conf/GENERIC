@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.15 1995/04/17 22:44:38 brezak Exp $
+#	$NetBSD: GENERIC,v 1.16 1995/05/12 03:18:05 cgd Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -14,6 +14,7 @@ options		MATH_EMULATE	# floating point emulation
 
 #options	DUMMY_NOPS	# speed hack; recommanded
 options		XSERVER,UCONSOLE
+options		INSECURE	# insecure; allow /dev/mem writing for X
 options		MACHINE_NONCONTIG
 
 maxusers	32		# estimated number of users
@@ -47,7 +48,8 @@ options		COMPAT_LINUX	# binary compatibility with Linux
 options		USER_LDT	# user-settable LDT; used by WINE
 options		LKM		# loadable kernel modules
 
-options		FFS,QUOTA	# UFS and quotas
+options		FFS		# UFS
+options		QUOTA		# UFS quotas
 options		LFS		# log-structured file system
 options		MFS		# memory file system
 
@@ -125,6 +127,7 @@ uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
 scsibus* at uha?
+
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
