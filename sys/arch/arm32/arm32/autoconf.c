@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 2000/06/06 20:17:34 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.37 2001/05/13 13:53:08 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -137,13 +137,9 @@ set_root_device()
             
 	if (boot_file)
 		get_device(boot_file);
-	if (boot_args) {
-		ptr = strstr(boot_args, "root=");
-		if (ptr) {
-			ptr += 5;
-			get_device(ptr);
-		}
-	}
+	if (boot_args &&
+	    get_bootconf_option(boot_args, "root", BOOTOPT_TYPE_STRING, &ptr))
+		get_device(ptr);
 }
 #endif
 
