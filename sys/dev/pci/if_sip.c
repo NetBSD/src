@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.12 2000/06/28 16:08:45 mrg Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.13 2000/08/04 09:30:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -1691,6 +1691,7 @@ sip_read_eeprom(sc, word, wordcnt, data)
 			if (bus_space_read_4(st, sh, SIP_EROMAR) & EROMAR_EEDO)
 				data[i] |= (1 << (x - 1));
 			bus_space_write_4(st, sh, SIP_EROMAR, reg);
+			delay(4);
 		}
 
 		/* Clear CHIP SELECT. */
