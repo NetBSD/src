@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.21 2001/01/03 15:33:34 pk Exp $ */
+/*	$NetBSD: db_trace.c,v 1.22 2001/07/07 15:16:14 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -38,6 +38,7 @@
 #include <ddb/db_interface.h>
 #include <ddb/db_output.h>
 
+void db_dump_fpstate __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_window __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_stack __P((db_expr_t, int, db_expr_t, char *));
 void db_dump_trap __P((db_expr_t, int, db_expr_t, char *));
@@ -414,6 +415,97 @@ db_dump_trap(addr, have_addr, count, modif)
 #endif
 }
 
+void
+db_dump_fpstate(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	struct fpstate64 *fpstate;
+
+	/* Use our last trapframe? */
+	fpstate = &ddb_regs.ddb_fpstate;
+	/* Or an arbitrary trapframe */
+	if (have_addr)
+		fpstate = (struct fpstate *)addr;
+
+	db_printf("fpstate %p: fsr = %llx gsr = %lx\nfpregs:\n",
+		fpstate, (unsigned long long)fpstate->fs_fsr,
+		(unsigned long)fpstate->fs_gsr);
+	db_printf(" 0: %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		(unsigned int)fpstate->fs_regs[0],
+		(unsigned int)fpstate->fs_regs[1],
+		(unsigned int)fpstate->fs_regs[2],
+		(unsigned int)fpstate->fs_regs[3],
+		(unsigned int)fpstate->fs_regs[4],
+		(unsigned int)fpstate->fs_regs[5],
+		(unsigned int)fpstate->fs_regs[6],
+		(unsigned int)fpstate->fs_regs[7]);
+	db_printf(" 8: %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		(unsigned int)fpstate->fs_regs[8],
+		(unsigned int)fpstate->fs_regs[9],
+		(unsigned int)fpstate->fs_regs[10],
+		(unsigned int)fpstate->fs_regs[11],
+		(unsigned int)fpstate->fs_regs[12],
+		(unsigned int)fpstate->fs_regs[13],
+		(unsigned int)fpstate->fs_regs[14],
+		(unsigned int)fpstate->fs_regs[15]);
+	db_printf("16: %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		(unsigned int)fpstate->fs_regs[16],
+		(unsigned int)fpstate->fs_regs[17],
+		(unsigned int)fpstate->fs_regs[18],
+		(unsigned int)fpstate->fs_regs[19],
+		(unsigned int)fpstate->fs_regs[20],
+		(unsigned int)fpstate->fs_regs[21],
+		(unsigned int)fpstate->fs_regs[22],
+		(unsigned int)fpstate->fs_regs[23]);
+	db_printf("24: %08x %08x %08x %08x %08x %08x %08x %08x\n",
+		(unsigned int)fpstate->fs_regs[24],
+		(unsigned int)fpstate->fs_regs[25],
+		(unsigned int)fpstate->fs_regs[26],
+		(unsigned int)fpstate->fs_regs[27],
+		(unsigned int)fpstate->fs_regs[28],
+		(unsigned int)fpstate->fs_regs[29],
+		(unsigned int)fpstate->fs_regs[30],
+		(unsigned int)fpstate->fs_regs[31]);
+	db_printf("32: %08x%08x %08x%08x %08x%08x %08x%08x\n",
+		(unsigned int)fpstate->fs_regs[32],
+		(unsigned int)fpstate->fs_regs[33],
+		(unsigned int)fpstate->fs_regs[34],
+		(unsigned int)fpstate->fs_regs[35],
+		(unsigned int)fpstate->fs_regs[36],
+		(unsigned int)fpstate->fs_regs[37],
+		(unsigned int)fpstate->fs_regs[38],
+		(unsigned int)fpstate->fs_regs[39]);
+	db_printf("40: %08x%08x %08x%08x %08x%08x %08x%08x\n",
+		(unsigned int)fpstate->fs_regs[40],
+		(unsigned int)fpstate->fs_regs[41],
+		(unsigned int)fpstate->fs_regs[42],
+		(unsigned int)fpstate->fs_regs[43],
+		(unsigned int)fpstate->fs_regs[44],
+		(unsigned int)fpstate->fs_regs[45],
+		(unsigned int)fpstate->fs_regs[46],
+		(unsigned int)fpstate->fs_regs[47]);
+	db_printf("48: %08x%08x %08x%08x %08x%08x %08x%08x\n",
+		(unsigned int)fpstate->fs_regs[48],
+		(unsigned int)fpstate->fs_regs[49],
+		(unsigned int)fpstate->fs_regs[50],
+		(unsigned int)fpstate->fs_regs[51],
+		(unsigned int)fpstate->fs_regs[52],
+		(unsigned int)fpstate->fs_regs[53],
+		(unsigned int)fpstate->fs_regs[54],
+		(unsigned int)fpstate->fs_regs[55]);
+	db_printf("56: %08x%08x %08x%08x %08x%08x %08x%08x\n",
+		(unsigned int)fpstate->fs_regs[56],
+		(unsigned int)fpstate->fs_regs[57],
+		(unsigned int)fpstate->fs_regs[58],
+		(unsigned int)fpstate->fs_regs[59],
+		(unsigned int)fpstate->fs_regs[60],
+		(unsigned int)fpstate->fs_regs[61],
+		(unsigned int)fpstate->fs_regs[62],
+		(unsigned int)fpstate->fs_regs[63]);
+}
 
 void
 db_dump_ts(addr, have_addr, count, modif)
