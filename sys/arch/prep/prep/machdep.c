@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2001/06/02 18:09:20 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2001/06/15 15:24:03 nonaka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -93,7 +93,6 @@
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 #endif
-#include "pckbd.h" /* for pckbc_machdep_cnattach */
 
 #include "com.h"
 #if (NCOM > 0)
@@ -680,25 +679,6 @@ dokbd:
 #endif
 	panic("invalid console device %s", consinfo->devname);
 }
-
-#if (NPCKBC > 0) && (NPCKBD == 0)
-/*
- * glue code to support old console code with the
- * mi keyboard controller driver
- */
-int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
-{
-
-#if (NPC > 0) && (NPCCONSKBD > 0)
-	return (pcconskbd_cnattach(kbctag, kbcslot));
-#else
-	return (ENXIO);
-#endif
-}
-#endif
 
 void
 dumpsys()
