@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi96.c,v 1.8 1995/01/15 06:27:56 briggs Exp $	*/
+/*	$NetBSD: scsi96.c,v 1.9 1995/04/21 02:48:04 briggs Exp $	*/
 
 /*
  * Copyright (C) 1994	Allen K. Briggs
@@ -52,24 +52,23 @@
 /* Support for the NCR 53C96 SCSI processor--primarily for '040 Macs. */
 
 #ifdef DDB
-int Debugger();
+int     Debugger();
 #else
 #define Debugger() panic("Should call Debugger here (mac/dev/scsi96.c).")
 #endif
 
 #define NNCR53C96	1
 
-static volatile unsigned char	*ncr53c96base =
-		(volatile unsigned char *) 0xF000; /* Offset from IOBase */
+static volatile unsigned char *ncr53c96base =
+(volatile unsigned char *) 0xF000;	/* Offset from IOBase */
 
 struct ncr53c96_data {
-	struct device		sc_dev;
+	struct device sc_dev;
 
-	void			*reg_base;
-	int			adapter_target;
-	struct scsi_link	sc_link;
-} *ncr53c96data[NNCR53C96];
-
+	void   *reg_base;
+	int     adapter_target;
+	struct scsi_link sc_link;
+}      *ncr53c96data[NNCR53C96];
 #define WAIT_FOR(reg, val) { \
 	int	timeo=100000; \
 	while (!(reg & val)) { \
@@ -80,69 +79,65 @@ struct ncr53c96_data {
 	} \
 }
 
-static unsigned int	ncr53c96_adapter_info(struct ncr53c96_data *ncr53c96);
-static void		ncr53c96_minphys(struct buf *bp);
-static int		ncr53c96_scsi_cmd(struct scsi_xfer *xs);
+static unsigned int ncr53c96_adapter_info(struct ncr53c96_data * ncr53c96);
+static void ncr53c96_minphys(struct buf * bp);
+static int ncr53c96_scsi_cmd(struct scsi_xfer * xs);
 
-static int		ncr53c96_show_scsi_cmd(struct scsi_xfer *xs);
-static int		ncr53c96_reset_target(int adapter, int target);
-static int		ncr53c96_poll(int adapter, int timeout);
-static int		ncr53c96_send_cmd(struct scsi_xfer *xs);
+static int ncr53c96_show_scsi_cmd(struct scsi_xfer * xs);
+static int ncr53c96_reset_target(int adapter, int target);
+static int ncr53c96_poll(int adapter, int timeout);
+static int ncr53c96_send_cmd(struct scsi_xfer * xs);
 
-struct scsi_adapter	ncr53c96_switch = {
-	ncr53c96_scsi_cmd,		/* scsi_cmd()		*/
-	ncr53c96_minphys,		/* scsi_minphys()	*/
-	0,				/* open_target_lu()	*/
-	0,				/* close_target_lu()	*/
+struct scsi_adapter ncr53c96_switch = {
+	ncr53c96_scsi_cmd,	/* scsi_cmd()		 */
+	ncr53c96_minphys,	/* scsi_minphys()	 */
+	0,			/* open_target_lu()	 */
+	0,			/* close_target_lu()	 */
 };
-
 /* This is copied from julian's bt driver */
 /* "so we have a default dev struct for our link struct." */
 struct scsi_device ncr53c96_dev = {
-	NULL,		/* Use default error handler.	    */
-	NULL,		/* have a queue, served by this (?) */
-	NULL,		/* have no async handler.	    */
-	NULL,		/* Use default "done" routine.	    */
+	NULL,			/* Use default error handler.	    */
+	NULL,			/* have a queue, served by this (?) */
+	NULL,			/* have no async handler.	    */
+	NULL,			/* Use default "done" routine.	    */
 };
 
-extern int	matchbyname();
-static int	ncr96probe();
-static void	ncr96attach();
+extern int matchbyname();
+static int ncr96probe();
+static void ncr96attach();
 
 struct cfdriver ncr96scsicd =
-      {	NULL, "ncr96scsi", ncr96probe, ncr96attach,
-	DV_DULL, sizeof(struct ncr53c96_data), NULL, 0 };
+{NULL, "ncr96scsi", ncr96probe, ncr96attach,
+DV_DULL, sizeof(struct ncr53c96_data), NULL, 0};
 
 static int
 ncr96_print(aux, name)
-	void *aux;
-	char *name;
+	void   *aux;
+	char   *name;
 {
-	/* printf("%s: (sc_link = 0x%x)", name, (int) aux); 
-	return UNCONF;*/
+	/* printf("%s: (sc_link = 0x%x)", name, (int) aux); return UNCONF; */
 }
 
 static int
 ncr96probe(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata	*cf;
-	void		*aux;
+	struct device *parent;
+	struct cfdata *cf;
+	void   *aux;
 {
-static	int			probed = 0;
-	int			unit = cf->cf_unit;
-	struct ncr53c96_data	*ncr53c96;
+	static int probed = 0;
+	int     unit = cf->cf_unit;
+	struct ncr53c96_data *ncr53c96;
 
 	if (!mac68k_machine.scsi96) {
 		return 0;
 	}
-
 	if (strcmp(*((char **) aux), ncr96scsicd.cd_name)) {
 		return 0;
 	}
-
- 	if (unit >= NNCR53C96) {
+	if (unit >= NNCR53C96) {
 		printf("ncr53c96attach: unit %d more than %d configured.\n",
-			unit+1, NNCR53C96);
+		    unit + 1, NNCR53C96);
 		return 0;
 	}
 	ncr53c96 = malloc(sizeof(struct ncr53c96_data), M_TEMP, M_NOWAIT);
@@ -150,32 +145,30 @@ static	int			probed = 0;
 		printf("ncr53c96attach: Can't malloc.\n");
 		return 0;
 	}
-
 	bzero(ncr53c96, sizeof(*ncr53c96));
 	ncr53c96data[unit] = ncr53c96;
 
 	if (!probed) {
-		int	i;
+		int     i;
 
 		probed = 1;
 		ncr53c96base += IOBase;
 	}
-
 	return 1;
 }
 
 static void
 ncr96attach(parent, dev, aux)
-	struct device	*parent, *dev;
-	void		*aux;
+	struct device *parent, *dev;
+	void   *aux;
 {
-	int				unit = dev->dv_unit;
-	struct ncr53c96_data		*ncr53c96 = ncr53c96data[unit];
-	int				r;
+	int     unit = dev->dv_unit;
+	struct ncr53c96_data *ncr53c96 = ncr53c96data[unit];
+	int     r;
 
 	bcopy((char *) ncr53c96 + sizeof(struct device),
-	      (char *) dev + sizeof(struct device),
-	      sizeof(struct ncr53c96_data) - sizeof(struct device));
+	    (char *) dev + sizeof(struct device),
+	    sizeof(struct ncr53c96_data) - sizeof(struct device));
 	free(ncr53c96, M_TEMP);
 
 	ncr53c96data[unit] = ncr53c96 = (struct ncr53c96_data *) dev;
@@ -196,50 +189,49 @@ ncr96attach(parent, dev, aux)
 }
 
 static unsigned int
-ncr53c96_adapter_info(struct ncr53c96_data *ncr53c96)
+ncr53c96_adapter_info(struct ncr53c96_data * ncr53c96)
 {
 	return 1;
 }
-
-#define MIN_PHYS	65536	/*BARF!!!!*/
+#define MIN_PHYS	65536	/* BARF!!!! */
 static void
-ncr53c96_minphys(struct buf *bp)
+ncr53c96_minphys(struct buf * bp)
 {
 	if (bp->b_bcount > MIN_PHYS) {
 		printf("Uh-oh...  ncr53c96_minphys setting bp->b_bcount "
-			"= %x.\n", MIN_PHYS);
+		    "= %x.\n", MIN_PHYS);
 		bp->b_bcount = MIN_PHYS;
 	}
 }
 #undef MIN_PHYS
 
 static int
-ncr53c96_scsi_cmd(struct scsi_xfer *xs)
+ncr53c96_scsi_cmd(struct scsi_xfer * xs)
 {
-	int flags, s, r;
+	int     flags, s, r;
 
 	flags = xs->flags;
-	if (xs->bp) flags |= (SCSI_NOSLEEP);
-	if ( flags & ITSDONE ) {
+	if (xs->bp)
+		flags |= (SCSI_NOSLEEP);
+	if (flags & ITSDONE) {
 		printf("Already done?");
 		xs->flags &= ~ITSDONE;
 	}
-	if ( ! ( flags & INUSE ) ) {
+	if (!(flags & INUSE)) {
 		printf("Not in use?");
 		xs->flags |= INUSE;
 	}
-
-	if ( flags & SCSI_RESET ) {
+	if (flags & SCSI_RESET) {
 		printf("flags & SCSIRESET.\n");
-		if ( ! ( flags & SCSI_NOSLEEP ) ) {
+		if (!(flags & SCSI_NOSLEEP)) {
 			s = splbio();
 			ncr53c96_reset_target(xs->sc_link->scsibus,
-						xs->sc_link->target);
+			    xs->sc_link->target);
 			splx(s);
-			return(SUCCESSFULLY_QUEUED);
+			return (SUCCESSFULLY_QUEUED);
 		} else {
 			ncr53c96_reset_target(xs->sc_link->scsibus,
-						xs->sc_link->target);
+			    xs->sc_link->target);
 			if (ncr53c96_poll(xs->sc_link->scsibus, xs->timeout)) {
 				return (COMPLETE);
 			}
@@ -262,14 +254,15 @@ ncr53c96_scsi_cmd(struct scsi_xfer *xs)
 	r = ncr53c96_send_cmd(xs);
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
-	switch(r) {
-		case COMPLETE: case SUCCESSFULLY_QUEUED:
-			r = SUCCESSFULLY_QUEUED;
-			if (xs->flags&SCSI_POLL)
-				r = COMPLETE;
-			break;
-		default:
-			break;
+	switch (r) {
+	case COMPLETE:
+	case SUCCESSFULLY_QUEUED:
+		r = SUCCESSFULLY_QUEUED;
+		if (xs->flags & SCSI_POLL)
+			r = COMPLETE;
+		break;
+	default:
+		break;
 	}
 	return r;
 /*
@@ -286,27 +279,27 @@ ncr53c96_scsi_cmd(struct scsi_xfer *xs)
 }
 
 static int
-ncr53c96_show_scsi_cmd(struct scsi_xfer *xs)
+ncr53c96_show_scsi_cmd(struct scsi_xfer * xs)
 {
-	u_char	*b = (u_char *) xs->cmd;
-	int	i  = 0;
+	u_char *b = (u_char *) xs->cmd;
+	int     i = 0;
 
-	if ( ! ( xs->flags & SCSI_RESET ) ) {
+	if (!(xs->flags & SCSI_RESET)) {
 		printf("ncr53c96(%d:%d:%d)-",
-			xs->sc_link->scsibus, xs->sc_link->target,
-						xs->sc_link->lun);
+		    xs->sc_link->scsibus, xs->sc_link->target,
+		    xs->sc_link->lun);
 		while (i < xs->cmdlen) {
-			if (i) printf(",");
-			printf("%x",b[i++]);
+			if (i)
+				printf(",");
+			printf("%x", b[i++]);
 		}
 		printf("-\n");
 	} else {
 		printf("ncr53c96(%d:%d:%d)-RESET-\n",
-			xs->sc_link->scsibus, xs->sc_link->target,
-						xs->sc_link->lun);
+		    xs->sc_link->scsibus, xs->sc_link->target,
+		    xs->sc_link->lun);
 	}
 }
-
 /*
  * Actual chip control.
  */
@@ -341,23 +334,23 @@ ncr53c96_poll(int adapter, int timeout)
 }
 
 static int
-do_send_cmd(struct scsi_xfer *xs)
+do_send_cmd(struct scsi_xfer * xs)
 {
-	struct ncr53c96regs	*ncr = (struct ncr53c96regs *) ncr53c96base;
-	u_char			*cmd;
-	int			i, stat, is, intr;
-	int			status, msg, phase;
+	struct ncr53c96regs *ncr = (struct ncr53c96regs *) ncr53c96base;
+	u_char *cmd;
+	int     i, stat, is, intr;
+	int     status, msg, phase;
 
-	xs->resid=0;
-	i = (int) ncr->statreg;			/* clear interrupts */
+	xs->resid = 0;
+	i = (int) ncr->statreg;	/* clear interrupts */
 	ncr->cmdreg = NCR96_CMD_CLRFIFO;	/* and fifo */
 
 	cmd = (u_char *) xs->cmd;
-	for (i = 0 ; i < xs->cmdlen ; i++)
+	for (i = 0; i < xs->cmdlen; i++)
 		ncr->fifo = *cmd++;
 	ncr->tcreg_lsb = xs->cmdlen;
 	ncr->tcreg_msb = 0;
-	ncr->stimreg = 122; /* XXX */
+	ncr->stimreg = 122;	/* XXX */
 	ncr->sdidreg = xs->sc_link->target;
 /*	ncr->ctrlreg1 = 0x47; from the mac -- inherited*/
 	ncr->cmdreg = NCR96_CMD_SEL;
@@ -367,50 +360,50 @@ do_send_cmd(struct scsi_xfer *xs)
 	stat = ncr->statreg;
 	is = ncr->isreg;
 	intr = ncr->instreg;
-	if ((is&0x07) != 0x4 || intr != 0x18) {
-		if ((is&0x7) != 0x0 || intr != 0x20) {
+	if ((is & 0x07) != 0x4 || intr != 0x18) {
+		if ((is & 0x7) != 0x0 || intr != 0x20) {
 			printf("scsi96: stat = 0x%x, is = 0x%x, intr = 0x%x\n",
-				stat, is, intr);
+			    stat, is, intr);
 		}
 		goto have_error;
 	}
-
 	printf("scsi96: before loop: stat = 0x%x, is = 0x%x, intr = 0x%x, "
-		"datalen = %d\n", stat, is, intr, xs->datalen);
+	    "datalen = %d\n", stat, is, intr, xs->datalen);
 	phase = ncr->statreg & NCR96_STAT_PHASE;
 	if (((phase == 0x01) || (phase == 0x00)) && xs->datalen) {
-	printf("data = 0x%x, datalen = 0x%x.\n", xs->data, xs->datalen);
-	stat = ncr->statreg;
-	is = ncr->isreg;
-	intr = ncr->instreg;
-	printf("entering info xfer...stat = 0x%x, is = 0x%x, intr = 0x%x\n",
-				stat, is, intr);
-	ncr->tcreg_lsb = (xs->datalen & 0xff);
-	ncr->tcreg_msb = (xs->datalen >> 8) & 0xff;
-	ncr->cmdreg = 0x80 | NCR96_CMD_INFOXFER;
-	printf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
-	i=0;
-	while (i < xs->datalen) {
-		int d, stat;
-
-		WAIT_FOR(ncr->statreg, NCR96_STAT_INT);
-
+		printf("data = 0x%x, datalen = 0x%x.\n", xs->data, xs->datalen);
 		stat = ncr->statreg;
-
-for (d=1000000 ; d && !(via_reg(VIA2, vIFR) & 0x01);d--);
-if (d<=0) printf("read timeout.\n");
-		d = ncr->fifostatereg & NCR96_CF_MASK;
-
-		while (d--) {
-			xs->data[i++] = ncr->fifo;
-			printf("0x%x,",xs->data[i-1]);
-		}
-
+		is = ncr->isreg;
 		intr = ncr->instreg;
-		printf("\nin loop.  stat = 0x%x, intr = 0x%x, cnt = %d.  ",
-			stat, intr, cnt);
+		printf("entering info xfer...stat = 0x%x, is = 0x%x, intr = 0x%x\n",
+		    stat, is, intr);
+		ncr->tcreg_lsb = (xs->datalen & 0xff);
+		ncr->tcreg_msb = (xs->datalen >> 8) & 0xff;
+		ncr->cmdreg = 0x80 | NCR96_CMD_INFOXFER;
 		printf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
-	}
+		i = 0;
+		while (i < xs->datalen) {
+			int     d, stat;
+
+			WAIT_FOR(ncr->statreg, NCR96_STAT_INT);
+
+			stat = ncr->statreg;
+
+			for (d = 1000000; d && !(via_reg(VIA2, vIFR) & 0x01); d--);
+			if (d <= 0)
+				printf("read timeout.\n");
+			d = ncr->fifostatereg & NCR96_CF_MASK;
+
+			while (d--) {
+				xs->data[i++] = ncr->fifo;
+				printf("0x%x,", xs->data[i - 1]);
+			}
+
+			intr = ncr->instreg;
+			printf("\nin loop.  stat = 0x%x, intr = 0x%x, cnt = %d.  ",
+			    stat, intr, cnt);
+			printf("rem... %d.\n", ncr->tcreg_lsb | (ncr->tcreg_msb << 8));
+		}
 /*	} else {
 		WAIT_FOR(ncr->statreg, NCR96_STAT_INT); */
 	}
@@ -418,7 +411,7 @@ if (d<=0) printf("read timeout.\n");
 	is = ncr->isreg;
 	intr = ncr->instreg;
 	printf("past loop...stat = 0x%x, is = 0x%x, intr = 0x%x\n",
-				stat, is, intr);
+	    stat, is, intr);
 
 	ncr->cmdreg = NCR96_CMD_ICCS;
 
@@ -447,18 +440,19 @@ have_error:
 }
 
 static int
-ncr53c96_send_cmd(struct scsi_xfer *xs)
+ncr53c96_send_cmd(struct scsi_xfer * xs)
 {
-	int	r=COMPLETE;
+	int     r = COMPLETE;
 
-	if (xs->sc_link->target >= 5) ncr53c96_show_scsi_cmd(xs);
+	if (xs->sc_link->target >= 5)
+		ncr53c96_show_scsi_cmd(xs);
 	switch (xs->cmd->opcode) {
-		case 0:	/* TUN */
-		case 0x12:/* INQUIRY */
-			r = do_send_cmd(xs);
-		default:
-			xs->error = XS_DRIVER_STUFFUP;
-			r = COMPLETE;
+	case 0:		/* TUN */
+	case 0x12:		/* INQUIRY */
+		r = do_send_cmd(xs);
+	default:
+		xs->error = XS_DRIVER_STUFFUP;
+		r = COMPLETE;
 	}
 	return r;
 }

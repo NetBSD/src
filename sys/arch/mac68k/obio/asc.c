@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.6 1994/10/26 08:46:02 cgd Exp $	*/
+/*	$NetBSD: asc.c,v 1.7 1995/04/21 02:47:45 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -47,7 +47,7 @@
 
 
 /* Global ASC location */
-volatile unsigned char *ASCBase = (unsigned char *)0x14000;
+volatile unsigned char *ASCBase = (unsigned char *) 0x14000;
 
 
 /* bell support data */
@@ -56,19 +56,19 @@ static int bell_length = 10;
 static int bell_volume = 100;
 static int bell_ringing = 0;
 
-static int	ascprobe(struct device *, struct cfdata *, void *);
-static void	ascattach(struct device *, struct device *, void *);
-extern int	matchbyname(struct device *, struct cfdata *, void *);
+static int ascprobe(struct device *, struct cfdata *, void *);
+static void ascattach(struct device *, struct device *, void *);
+extern int matchbyname(struct device *, struct cfdata *, void *);
 
 struct cfdriver asccd =
-	{ NULL, "asc", matchbyname, ascattach,
-	  DV_DULL, sizeof(struct device), NULL, 0 };
+{NULL, "asc", matchbyname, ascattach,
+DV_DULL, sizeof(struct device), NULL, 0};
 
 static int
 ascprobe(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata	*cf;
-	void		*aux;
+	struct device *parent;
+	struct cfdata *cf;
+	void   *aux;
 {
 	if (strcmp(*((char **) aux), asccd.cd_name))
 		return 0;
@@ -79,106 +79,110 @@ ascprobe(parent, cf, aux)
 
 static void
 ascattach(parent, dev, aux)
-	struct device	*parent, *dev;
-	void		*aux;
+	struct device *parent, *dev;
+	void   *aux;
 {
 	printf(" Apple sound chip.\n");
 
 	ASCBase = IOBase + ASCBase;
 }
 
-int asc_setbellparams(
-	int freq,
-	int length,
-	int volume)
+int 
+asc_setbellparams(
+    int freq,
+    int length,
+    int volume)
 {
 	/* I only perform these checks for sanity. */
 	/* I suppose someone might want a bell that rings */
 	/* all day, but then the can make kernel mods themselves. */
 
-	if(freq < 10 || freq > 40000)
-		return(EINVAL);
-	if(length < 0 || length > 3600)
-		return(EINVAL);
-	if(volume < 0 || volume > 100)
-		return(EINVAL);
+	if (freq < 10 || freq > 40000)
+		return (EINVAL);
+	if (length < 0 || length > 3600)
+		return (EINVAL);
+	if (volume < 0 || volume > 100)
+		return (EINVAL);
 
 	bell_freq = freq;
 	bell_length = length;
 	bell_volume = volume;
 
-	return(0);
+	return (0);
 }
 
 
-int asc_getbellparams(
-	int *freq,
-	int *length,
-	int *volume)
+int 
+asc_getbellparams(
+    int *freq,
+    int *length,
+    int *volume)
 {
 	*freq = bell_freq;
 	*length = bell_length;
 	*volume = bell_volume;
 
-	return(0);
+	return (0);
 }
 
 
-void asc_bellstop(
-	int param)
+void 
+asc_bellstop(
+    int param)
 {
-	if(bell_ringing > 1000 || bell_ringing < 0)
+	if (bell_ringing > 1000 || bell_ringing < 0)
 		panic("bell got out of synch?????");
-	if(--bell_ringing == 0){
+	if (--bell_ringing == 0) {
 		ASCBase[0x801] = 0;
 	}
 	/* disable ASC */
 }
 
 
-int asc_ringbell()
+int 
+asc_ringbell()
 {
-	int i;
+	int     i;
 	unsigned long freq;
 
-	if(bell_ringing == 0){
-		for(i = 0; i < 0x800; i++)
+	if (bell_ringing == 0) {
+		for (i = 0; i < 0x800; i++)
 			ASCBase[i] = 0;
-	
-		for(i = 0; i < 256;i++){
+
+		for (i = 0; i < 256; i++) {
 			ASCBase[i] = i / 4;
 			ASCBase[i + 512] = i / 4;
 			ASCBase[i + 1024] = i / 4;
 			ASCBase[i + 1536] = i / 4;
-		}/* up part of wave, four voices ? */
-		for(i = 0; i < 256;i++){
+		}		/* up part of wave, four voices ? */
+		for (i = 0; i < 256; i++) {
 			ASCBase[i + 256] = 0x3f - (i / 4);
 			ASCBase[i + 768] = 0x3f - (i / 4);
 			ASCBase[i + 1280] = 0x3f - (i / 4);
 			ASCBase[i + 1792] = 0x3f - (i / 4);
-		}/* down part of wave, four voices ? */
+		}		/* down part of wave, four voices ? */
 
-		 /* Fix this.  Need to find exact ASC sampling freq */
+		/* Fix this.  Need to find exact ASC sampling freq */
 		freq = 65536 * bell_freq / 466;
 
-		/* printf("beep: from %d, %02x %02x %02x %02x\n", cur_beep.freq,
-			(freq >> 24) & 0xff, (freq >> 16) & 0xff,
-			(freq >> 8) & 0xff, (freq) & 0xff);*/
-		for(i = 0; i < 8; i++){
+		/* printf("beep: from %d, %02x %02x %02x %02x\n",
+		 * cur_beep.freq, (freq >> 24) & 0xff, (freq >> 16) & 0xff,
+		 * (freq >> 8) & 0xff, (freq) & 0xff); */
+		for (i = 0; i < 8; i++) {
 			ASCBase[0x814 + 8 * i] = (freq >> 24) & 0xff;
 			ASCBase[0x815 + 8 * i] = (freq >> 16) & 0xff;
 			ASCBase[0x816 + 8 * i] = (freq >> 8) & 0xff;
 			ASCBase[0x817 + 8 * i] = (freq) & 0xff;
-		}/* frequency; should put cur_beep.freq in here somewhere. */
-	
-		ASCBase[0x807] = 3; /* 44 ? */
-		ASCBase[0x806] = 255 * bell_volume / 100;
-		ASCBase[0x805] = 0; 
-		ASCBase[0x80f] = 0; 
-		ASCBase[0x802] = 2; /* sampled */
-		ASCBase[0x801] = 2; /* enable sampled */
-	}
+		}		/* frequency; should put cur_beep.freq in here
+				 * somewhere. */
 
+		ASCBase[0x807] = 3;	/* 44 ? */
+		ASCBase[0x806] = 255 * bell_volume / 100;
+		ASCBase[0x805] = 0;
+		ASCBase[0x80f] = 0;
+		ASCBase[0x802] = 2;	/* sampled */
+		ASCBase[0x801] = 2;	/* enable sampled */
+	}
 	bell_ringing++;
 	timeout((void *) asc_bellstop, 0, bell_length);
 }
