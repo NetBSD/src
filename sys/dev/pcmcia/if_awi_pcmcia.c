@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.31 2004/08/10 18:39:08 mycroft Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.32 2004/08/10 18:43:49 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.31 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.32 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,6 @@ awi_pcmcia_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	int error;
 
-	aprint_normal("\n");
 	psc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, awi_pcmcia_validate_config);

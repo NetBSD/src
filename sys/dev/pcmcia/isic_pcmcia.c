@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.24 2004/08/09 18:51:32 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.25 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -217,7 +217,7 @@ isic_pcmcia_attach(parent, self, aux)
 		    psc->sc_isic.sc_dev.dv_xname);
 		return;
 	}
-	printf(": %s\n", cde->name);
+	printf("%s: %s\n", cde->name, self->dv_xname);
 
 	/* Enable the card */
 	pcmcia_function_init(pa->pf, cfe);

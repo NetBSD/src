@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.131 2004/08/10 16:04:16 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.132 2004/08/10 18:43:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.131 2004/08/10 16:04:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.132 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -558,7 +558,6 @@ ne_pcmcia_attach(parent, self, aux)
 	const char *typestr = "";
 	int error;
 
-	aprint_normal("\n");
 	psc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, ne_pcmcia_validate_config);

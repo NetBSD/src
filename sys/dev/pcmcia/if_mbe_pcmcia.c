@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.32 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.33 2004/08/10 18:43:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.32 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.33 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,8 +170,6 @@ mbe_pcmcia_attach(parent, self, aux)
 	struct mbe_pcmcia_get_enaddr_args pgea;
 	const struct mbe_pcmcia_product *mpp;
 	int rv;
-
-	printf("\n");
 
 	mpp = pcmcia_product_lookup(pa, mbe_pcmcia_products,
 	    mbe_pcmcia_nproducts, sizeof(mbe_pcmcia_products[0]), NULL);

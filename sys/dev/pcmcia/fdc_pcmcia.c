@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.12 2004/08/10 18:39:08 mycroft Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.13 2004/08/10 18:43:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.12 2004/08/10 18:39:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.13 2004/08/10 18:43:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,6 @@ fdc_pcmcia_attach(parent, self, aux)
 	struct pcmcia_function *pf = pa->pf;
 	struct fdc_attach_args fa;
 
-	printf("\n");
 	psc->sc_pf = pf;
 
 	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
