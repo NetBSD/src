@@ -1,4 +1,4 @@
-/*	$NetBSD: xprintf.c,v 1.7 2000/07/03 03:32:57 matt Exp $	 */
+/*	$NetBSD: xprintf.c,v 1.8 2001/08/14 20:13:56 eeh Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -64,7 +64,7 @@ xvsnprintf(buf, buflen, fmt, ap)
 	char *const ep = buf + buflen - 4;
 	int size;
 
-	while (*fmt != NULL && bp < ep) {
+	while (*fmt != '\0' && bp < ep) {
 		switch (*fmt) {
 		case '\\':{
 			if (fmt[1] != '\0')
