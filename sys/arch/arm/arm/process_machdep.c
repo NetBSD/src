@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.4 2001/02/27 17:44:34 bjh21 Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.5 2001/02/27 17:57:55 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -66,14 +66,12 @@
  *	Set the process's program counter.
  */
 
-#include "opt_progmode.h"
-#ifndef arm26
 #include "opt_armfpe.h"
-#endif
+#include "opt_progmode.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.4 2001/02/27 17:44:34 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.5 2001/02/27 17:57:55 bjh21 Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
