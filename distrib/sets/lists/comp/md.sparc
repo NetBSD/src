@@ -28,6 +28,7 @@
 ./usr/include/machine/kbio.h
 ./usr/include/machine/kcore.h
 ./usr/include/machine/limits.h
+./usr/include/machine/mbppio.h
 ./usr/include/machine/oldmon.h
 ./usr/include/machine/openpromio.h
 ./usr/include/machine/param.h
