@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm10.S,v 1.1 2003/09/06 09:12:29 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm10.S,v 1.2 2004/08/23 20:53:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 ARM Limited
@@ -48,7 +48,7 @@ ENTRY(arm10_setttb)
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
 	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
-	bx	lr
+	RET
 
 /*
  * TLB functions
@@ -56,11 +56,11 @@ ENTRY(arm10_setttb)
 ENTRY(arm10_tlb_flushID_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
-	bx	lr
+	RET
 
 ENTRY(arm10_tlb_flushI_SE)
 	mcr	p15, 0, r0, c8, c5, 1	/* flush I tlb single entry */
-	bx	lr
+	RET
 	
 
 /*
@@ -88,7 +88,7 @@ ENTRY_NP(arm10_icache_sync_range)
 	subs	r1, r1, ip
 	bpl	.Larm10_sync_next
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	bx	lr
+	RET
 
 ENTRY_NP(arm10_icache_sync_all)
 .Larm10_icache_sync_all:
@@ -114,7 +114,7 @@ ENTRY_NP(arm10_icache_sync_all)
 	subs	s_max, s_max, s_inc
 	bpl	.Lnext_set		/* Next set */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	bx	lr
+	RET
 
 .Larm10_line_size:
 	.word	_C_LABEL(arm_pdcache_line_size)
@@ -134,7 +134,7 @@ ENTRY(arm10_dcache_wb_range)
 	subs	r1, r1, ip
 	bpl	.Larm10_wb_next
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	bx	lr
+	RET
 	
 ENTRY(arm10_dcache_wbinv_range)
 	ldr	ip, .Larm10_line_size
@@ -151,7 +151,7 @@ ENTRY(arm10_dcache_wbinv_range)
 	subs	r1, r1, ip
 	bpl	.Larm10_wbinv_next
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	bx	lr
+	RET
 	
 /*
  * Note, we must not invalidate everything.  If the range is too big we
@@ -172,7 +172,7 @@ ENTRY(arm10_dcache_inv_range)
 	subs	r1, r1, ip
 	bpl	.Larm10_inv_next
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	bx	lr
+	RET
 
 ENTRY(arm10_idcache_wbinv_range)
 	ldr	ip, .Larm10_line_size
@@ -190,7 +190,7 @@ ENTRY(arm10_idcache_wbinv_range)
 	subs	r1, r1, ip
 	bpl	.Larm10_id_wbinv_next
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	bx	lr
+	RET
 
 ENTRY_NP(arm10_idcache_wbinv_all)
 .Larm10_idcache_wbinv_all:
@@ -217,7 +217,7 @@ ENTRY(arm10_dcache_wbinv_all)
 	subs	s_max, s_max, s_inc
 	bpl	.Lnext_set_inv		/* Next set */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
-	bx	lr
+	RET
 
 .Larm10_cache_data:
 	.word	_C_LABEL(arm10_dcache_sets_max)
@@ -244,7 +244,7 @@ ENTRY(arm10_context_switch)
 	nop
 	nop
 	nop
-	bx	lr
+	RET
 
 	.bss
 
