@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.7 2000/04/16 21:49:49 pk Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.8 2001/09/18 18:15:53 wiz Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ extern void rcons_bell(struct rconsole *);
 #endif
 #define RCONS_ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 
-/* Initalize our operations set */
+/* Initialize our operations set */
 void
 rcons_init_ops(rc)
 	struct rconsole *rc;
