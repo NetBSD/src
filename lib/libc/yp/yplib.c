@@ -1,5 +1,3 @@
-#ifdef YP
-
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -736,5 +734,3 @@ char **dom;
 		return 1;
 	return 0;
 }
-
-#endif /* YP */
