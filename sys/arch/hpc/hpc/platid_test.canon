@@ -8,3 +8,27 @@ NEC_MCR:	O
 NEC_MCR_5XX:	O
 NEC_MCR_500:	O
 NEC_MCR_510:	X
+#
+# platid_search_data() test
+#
+search MC-R700 in no default table: MC-R700
+search MC-R500 in no default table: MC-R500
+search MC/R530 in no default table: MC/R530
+search non exist MC-R300 in no default table: NULL
+search MC-R700 in default table: MC-R700
+search MC-R500 in default table: MC-R500
+search MC/R530 in default table: MC/R530
+search non exist MC-R300 in default table: default
+#
+# platid_search() test
+#
+# table contains:  MC-R, MC-R300 series, MC-R300, MC-R330
+search MC-R300: MC-R300
+search MC-R: MC-R
+search MC-R700: MC-R
+search MC-R320: MC-R300 series
+search MC-CS12: not found
+#
+# platid_name() test
+#
+ok
