@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn20aa.c,v 1.3 1996/04/12 06:07:22 cgd Exp $	*/
+/*	$NetBSD: dec_kn20aa.c,v 1.4 1996/04/15 18:58:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/termios.h>
 #include <dev/cons.h>
 
 #include <machine/rpb.h>
@@ -97,6 +98,7 @@ dec_kn20aa_consinit(constype)
 			if (bus_io_map(comconsbc, comconsaddr, COM_NPORTS,
 			    &comconsioh))
 				panic("can't map serial console I/O ports");
+			comconscflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
 			cominit(comconsbc, comconsioh, comdefaultrate);
 
 			cn_tab = &comcons;
