@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.239 2004/07/05 07:28:45 pk Exp $	*/
+/*	$NetBSD: init_main.c,v 1.240 2004/10/01 16:30:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.239 2004/07/05 07:28:45 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.240 2004/10/01 16:30:52 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -561,6 +561,7 @@ main(void)
 	proclist_lock_read();
 	s = splsched();
 	LIST_FOREACH(p, &allproc, p_list) {
+		KASSERT((p->p_flag & P_MARKER) == 0);
 		p->p_stats->p_start = mono_time = boottime = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if (l->l_cpu != NULL)
