@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.79 2004/11/11 03:06:21 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.80 2004/11/13 15:00:48 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.79 2004/11/11 03:06:21 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.80 2004/11/13 15:00:48 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,6 +221,10 @@ struct auich_softc {
 	struct sysctllog *sc_log;
 	uint32_t sc_ac97_clock;
 	int sc_ac97_clock_mib;
+
+#define AUICH_NFORMATS	3
+	struct audio_format sc_formats[AUICH_NFORMATS];
+	struct audio_encoding_set *sc_encodings;
 };
 
 /* Debug */
@@ -311,6 +315,17 @@ int	auich_read_codec(void *, u_int8_t, u_int16_t *);
 int	auich_write_codec(void *, u_int8_t, u_int16_t);
 int	auich_reset_codec(void *);
 
+#define AUICH_FORMATS_4CH	1
+#define AUICH_FORMATS_6CH	2
+static const struct audio_format auich_formats[AUICH_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {8000, 48000}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
+};
+
 #define PCI_ID_CODE0(v, p)	PCI_ID_CODE(PCI_VENDOR_##v, PCI_PRODUCT_##v##_##p)
 #define PCIID_ICH		PCI_ID_CODE0(INTEL, 82801AA_ACA)
 #define PCIID_ICH0		PCI_ID_CODE0(INTEL, 82801AB_ACA)
@@ -334,18 +349,18 @@ static const struct auich_devtype {
 	const char	*shortname;	/* must be less than 11 characters */
 } auich_devices[] = {
 	{ PCIID_ICH,	"i82801AA (ICH) AC-97 Audio",	"ICH" },
-	{ PCIID_ICH0, 	"i82801AB (ICH0) AC-97 Audio",	"ICH0" },
-	{ PCIID_ICH2, 	"i82801BA (ICH2) AC-97 Audio",	"ICH2" },
-	{ PCIID_440MX, 	"i82440MX AC-97 Audio",		"440MX" },
-	{ PCIID_ICH3, 	"i82801CA (ICH3) AC-97 Audio",	"ICH3" },
-	{ PCIID_ICH4,	"i82801DB/DBM (ICH4/ICH4M) AC-97 Audio",	"ICH4" },
-	{ PCIID_ICH5, 	"i82801EB (ICH5) AC-97 Audio",	"ICH5" },
-	{ PCIID_ICH6, 	"i82801FB (ICH6) AC-97 Audio",	"ICH6" },
-	{ PCIID_SIS7012, "SiS 7012 AC-97 Audio",		"SiS7012" },
+	{ PCIID_ICH0,	"i82801AB (ICH0) AC-97 Audio",	"ICH0" },
+	{ PCIID_ICH2,	"i82801BA (ICH2) AC-97 Audio",	"ICH2" },
+	{ PCIID_440MX,	"i82440MX AC-97 Audio",		"440MX" },
+	{ PCIID_ICH3,	"i82801CA (ICH3) AC-97 Audio",	"ICH3" },
+	{ PCIID_ICH4,	"i82801DB/DBM (ICH4/ICH4M) AC-97 Audio", "ICH4" },
+	{ PCIID_ICH5,	"i82801EB (ICH5) AC-97 Audio",	"ICH5" },
+	{ PCIID_ICH6,	"i82801FB (ICH6) AC-97 Audio",	"ICH6" },
+	{ PCIID_SIS7012, "SiS 7012 AC-97 Audio",	"SiS7012" },
 	{ PCIID_NFORCE,	"nForce MCP AC-97 Audio",	"nForce" },
 	{ PCIID_NFORCE2, "nForce2 MCP-T AC-97 Audio",	"nForce2" },
 	{ PCIID_NFORCE3, "nForce3 MCP-T AC-97 Audio",	"nForce3" },
-	{ PCIID_NFORCE3_250,	"nForce3 250 MCP-T AC-97 Audio",	"nForce3" },
+	{ PCIID_NFORCE3_250, "nForce3 250 MCP-T AC-97 Audio", "nForce3" },
 	{ PCIID_AMD768,	"AMD768 AC-97 Audio",		"AMD768" },
 	{ PCIID_AMD8111,"AMD8111 AC-97 Audio",		"AMD8111" },
 	{ 0,		NULL,				NULL },
@@ -386,7 +401,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	const struct auich_devtype *d;
 	struct sysctlnode *node;
-	int err, node_mib;
+	int err, node_mib, i;
 
 	aprint_naive(": Audio controller\n");
 
@@ -506,6 +521,24 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 
 	if (ac97_attach(&sc->host_if) != 0)
 		return;
+
+	/* setup audio_format */
+	memcpy(sc->sc_formats, auich_formats, sizeof(auich_formats));
+	if (!AC97_IS_4CH(sc->codec_if))
+		AUFMT_INVALIDATE(&sc->sc_formats[AUICH_FORMATS_4CH]);
+	if (!AC97_IS_6CH(sc->codec_if))
+		AUFMT_INVALIDATE(&sc->sc_formats[AUICH_FORMATS_6CH]);
+	if (AC97_IS_FIXED_RATE(sc->codec_if)) {
+		for (i = 0; i < AUICH_NFORMATS; i++) {
+			sc->sc_formats[i].frequency_type = 1;
+			sc->sc_formats[i].frequency[0] = 48000;
+		}
+	}
+
+	if (0 != auconv_create_encodings(sc->sc_formats, AUICH_NFORMATS,
+					 &sc->sc_encodings)) {
+		return;
+	}
 
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
@@ -710,37 +743,10 @@ auich_close(void *v)
 int
 auich_query_encoding(void *v, struct audio_encoding *aep)
 {
-	static const struct auich_encoding {
-		const char *name;
-		int encoding, precision, flags;
-	} *p, auich_encoding[] = {
-		{AudioEulinear,    AUDIO_ENCODING_ULINEAR,
-					      8, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEmulaw,      AUDIO_ENCODING_ULAW,
-					      8, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEalaw,       AUDIO_ENCODING_ALAW,
-					      8, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEslinear,    AUDIO_ENCODING_SLINEAR,
-					      8, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEslinear_le, AUDIO_ENCODING_SLINEAR_LE,
-					     16, 0},
-		{AudioEulinear_le, AUDIO_ENCODING_ULINEAR_LE,
-					     16, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEslinear_be, AUDIO_ENCODING_SLINEAR_BE,
-					     16, AUDIO_ENCODINGFLAG_EMULATED},
-		{AudioEulinear_be, AUDIO_ENCODING_ULINEAR_BE,
-					     16, AUDIO_ENCODINGFLAG_EMULATED},
-	};
+	struct auich_softc *sc;
 
-	if (aep->index >= 8)
-		return (EINVAL);
-
-	p = &auich_encoding[aep->index];
-	strcpy(aep->name, p->name);
-	aep->encoding = p->encoding;
-	aep->precision = p->precision;
-	aep->flags = p->flags;
-	return (0);
+	sc = (struct auich_softc *)v;
+	return auconv_query_encoding(sc->sc_encodings, aep);
 }
 
 int
@@ -775,7 +781,7 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 {
 	struct auich_softc *sc = v;
 	struct audio_params *p;
-	int mode;
+	int mode, index;
 	u_int32_t control;
 
 	for (mode = AUMODE_RECORD; mode != -1;
@@ -791,127 +797,19 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		    p->sample_rate > 48000)
 			return (EINVAL);
 
-		if (p->precision == 8)
-			p->factor = 2;
-		else
-			p->factor = 1;
-
-		p->sw_code = NULL;
-		/* setup hardware formats */
-		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
-		p->hw_precision = 16;
-
-		if (mode == AUMODE_RECORD) {
-			if (p->channels < 1 || p->channels > 2)
-				return EINVAL;
-		} else {
-			switch (p->channels) {
-			case 1:
-				break;
-			case 2:
-				break;
-			case 4:
-				if (!AC97_IS_4CH(sc->codec_if))
-					return EINVAL;
-				break;
-			case 6:
-				if (!AC97_IS_6CH(sc->codec_if))
-					return EINVAL;
-				break;
-			default:
-				return EINVAL;
-			}
-		}
-		/* If monaural is requested, aurateconv expands a monaural
-		 * stream to stereo. */
-		if (p->channels == 1)
-			p->hw_channels = 2;
-
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16) {
-				p->sw_code = swap_bytes;
-			} else {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = linear8_to_linear16_le;
-				else
-					p->sw_code = linear16_to_linear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision != 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = linear8_to_linear16_le;
-				else
-					p->sw_code = linear16_to_linear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code =
-					    swap_bytes_change_sign16_le;
-				else
-					p->sw_code =
-					    change_sign16_swap_bytes_le;
-			} else {
-				if (mode == AUMODE_PLAY)
-					p->sw_code =
-					    ulinear8_to_slinear16_le;
-				else
-					p->sw_code =
-					    slinear16_to_ulinear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16) {
-				p->sw_code = change_sign16_le;
-			} else {
-				if (mode == AUMODE_PLAY)
-					p->sw_code =
-					    ulinear8_to_slinear16_le;
-				else
-					p->sw_code =
-					    slinear16_to_ulinear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = mulaw_to_slinear16_le;
-			} else {
-				p->sw_code = slinear16_to_mulaw_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = alaw_to_slinear16_le;
-			} else {
-				p->sw_code = slinear16_to_alaw_le;
-			}
-			break;
-
-		default:
-			return (EINVAL);
-		}
-
-		if (AC97_IS_FIXED_RATE(sc->codec_if)) {
-			p->hw_sample_rate = AC97_SINGLE_RATE;
-			/* If hw_sample_rate is changed, aurateconv works. */
-		} else {
-			if (auich_set_rate(sc, mode, p->sample_rate))
-				return EINVAL;
-		}
+		index = auconv_set_converter(sc->sc_formats, AUICH_NFORMATS,
+					     mode, p, TRUE);
+		if (index < 0)
+			return EINVAL;
+		if (sc->sc_formats[index].frequency_type != 1
+		    && auich_set_rate(sc, mode, p->hw_sample_rate))
+			return EINVAL;
 		if (mode == AUMODE_PLAY) {
 			control = bus_space_read_4(sc->iot, sc->aud_ioh, ICH_GCTRL);
 			control &= ~ICH_PCM246_MASK;
-			if (p->channels == 4) {
+			if (p->hw_channels == 4) {
 				control |= ICH_PCM4;
-			} else if (p->channels == 6) {
+			} else if (p->hw_channels == 6) {
 				control |= ICH_PCM6;
 			}
 			bus_space_write_4(sc->iot, sc->aud_ioh, ICH_GCTRL, control);

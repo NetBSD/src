@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
+/*	$NetBSD: auacer.c,v 1.4 2004/11/13 15:00:48 kent Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.4 2004/11/13 15:00:48 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,10 @@ struct auacer_softc {
 	/* Power Management */
 	void *sc_powerhook;
 	int sc_suspend;
+
+#define AUACER_NFORMATS	3
+	struct audio_format sc_formats[AUACER_NFORMATS];
+	struct audio_encoding_set *sc_encodings;
 };
 
 #define READ1(sc, a) bus_space_read_1(sc->iot, sc->aud_ioh, a)
@@ -229,6 +233,17 @@ struct audio_hw_if auacer_hw_if = {
 	NULL,			/* dev_ioctl */
 };
 
+#define AUACER_FORMATS_4CH	1
+#define AUACER_FORMATS_6CH	2
+static const struct audio_format auacer_formats[AUACER_NFORMATS] = {
+	{NULL, AUMODE_PLAY /*| AUMODE_RECORD*/, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {8000, 48000}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 4, AUFMT_SURROUND4, 0, {8000, 48000}},
+	{NULL, AUMODE_PLAY, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 6, AUFMT_DOLBY_5_1, 0, {8000, 48000}},
+};
+
 int	auacer_attach_codec(void *, struct ac97_codec_if *);
 int	auacer_read_codec(void *, u_int8_t, u_int16_t *);
 int	auacer_write_codec(void *, u_int8_t, u_int16_t);
@@ -254,6 +269,7 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t aud_size;
 	pcireg_t v;
 	const char *intrstr;
+	int i;
 
 	aprint_normal(": Acer Labs M5455 Audio controller\n");
 
@@ -314,6 +330,24 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 
 	if (ac97_attach(&sc->host_if) != 0)
 		return;
+
+	/* setup audio_format */
+	memcpy(sc->sc_formats, auacer_formats, sizeof(auacer_formats));
+	if (!AC97_IS_4CH(sc->codec_if))
+		AUFMT_INVALIDATE(&sc->sc_formats[AUACER_FORMATS_4CH]);
+	if (!AC97_IS_6CH(sc->codec_if))
+		AUFMT_INVALIDATE(&sc->sc_formats[AUACER_FORMATS_6CH]);
+	if (AC97_IS_FIXED_RATE(sc->codec_if)) {
+		for (i = 0; i < AUACER_NFORMATS; i++) {
+			sc->sc_formats[i].frequency_type = 1;
+			sc->sc_formats[i].frequency[0] = 48000;
+		}
+	}
+
+	if (0 != auconv_create_encodings(sc->sc_formats, AUACER_NFORMATS,
+					 &sc->sc_encodings)) {
+		return;
+	}
 
 	/* Watch for power change */
 	sc->sc_suspend = PWR_RESUME;
@@ -468,60 +502,11 @@ auacer_close(void *v)
 int
 auacer_query_encoding(void *v, struct audio_encoding *aep)
 {
-	DPRINTF(ALI_DEBUG_API, ("auacer_query_encoding\n"));
+	struct auacer_softc *sc;
 
-	switch (aep->index) {
-	case 0:
-		strcpy(aep->name, AudioEulinear);
-		aep->encoding = AUDIO_ENCODING_ULINEAR;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 1:
-		strcpy(aep->name, AudioEmulaw);
-		aep->encoding = AUDIO_ENCODING_ULAW;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 2:
-		strcpy(aep->name, AudioEalaw);
-		aep->encoding = AUDIO_ENCODING_ALAW;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 3:
-		strcpy(aep->name, AudioEslinear);
-		aep->encoding = AUDIO_ENCODING_SLINEAR;
-		aep->precision = 8;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 4:
-		strcpy(aep->name, AudioEslinear_le);
-		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		aep->precision = 16;
-		aep->flags = 0;
-		return (0);
-	case 5:
-		strcpy(aep->name, AudioEulinear_le);
-		aep->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 6:
-		strcpy(aep->name, AudioEslinear_be);
-		aep->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	case 7:
-		strcpy(aep->name, AudioEulinear_be);
-		aep->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		aep->precision = 16;
-		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		return (0);
-	default:
-		return (EINVAL);
-	}
+	DPRINTF(ALI_DEBUG_API, ("auacer_query_encoding\n"));
+	sc = v;
+	return auconv_query_encoding(sc->sc_encodings, aep);
 }
 
 int
@@ -558,7 +543,7 @@ auacer_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 	struct auacer_softc *sc = v;
 	struct audio_params *p;
 	uint32_t control;
-	int mode;
+	int mode, index;
 
 	DPRINTF(ALI_DEBUG_API, ("auacer_set_params\n"));
 
@@ -582,121 +567,13 @@ auacer_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 		    (p->sample_rate != 48000))
 			return (EINVAL);
 
-		p->factor = 1;
-		if (p->precision == 8)
-			p->factor *= 2;
-
-		p->sw_code = NULL;
-		/* setup hardware formats */
-		p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
-		p->hw_precision = 16;
-
-		if (mode == AUMODE_RECORD) {
-			if (p->channels < 1 || p->channels > 2)
-				return EINVAL;
-		} else {
-			switch (p->channels) {
-			case 1:
-				break;
-			case 2:
-				break;
-			case 4:
-				if (!AC97_IS_4CH(sc->codec_if))
-					return EINVAL;
-				break;
-			case 6:
-				if (!AC97_IS_6CH(sc->codec_if))
-					return EINVAL;
-				break;
-			default:
-				return EINVAL;
-			}
-		}
-		/* If monaural is requested, aurateconv expands a monaural
-		 * stream to stereo. */
-		if (p->channels == 1)
-			p->hw_channels = 2;
-
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->precision == 16) {
-				p->sw_code = swap_bytes;
-			} else {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = linear8_to_linear16_le;
-				else
-					p->sw_code = linear16_to_linear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->precision != 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code = linear8_to_linear16_le;
-				else
-					p->sw_code = linear16_to_linear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16) {
-				if (mode == AUMODE_PLAY)
-					p->sw_code =
-					    swap_bytes_change_sign16_le;
-				else
-					p->sw_code =
-					    change_sign16_swap_bytes_le;
-			} else {
-				if (mode == AUMODE_PLAY)
-					p->sw_code =
-					    ulinear8_to_slinear16_le;
-				else
-					p->sw_code =
-					    slinear16_to_ulinear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->precision == 16) {
-				p->sw_code = change_sign16_le;
-			} else {
-				if (mode == AUMODE_PLAY)
-					p->sw_code =
-					    ulinear8_to_slinear16_le;
-				else
-					p->sw_code =
-					    slinear16_to_ulinear8_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = mulaw_to_slinear16_le;
-			} else {
-				p->sw_code = slinear16_to_mulaw_le;
-			}
-			break;
-
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY) {
-				p->sw_code = alaw_to_slinear16_le;
-			} else {
-				p->sw_code = slinear16_to_alaw_le;
-			}
-			break;
-
-		default:
-			return (EINVAL);
-		}
-
-		if (AC97_IS_FIXED_RATE(sc->codec_if)) {
-			p->hw_sample_rate = AC97_SINGLE_RATE;
-			/* If hw_sample_rate is changed, aurateconv works. */
-		} else {
-			if (auacer_set_rate(sc, mode, p->sample_rate))
-				return EINVAL;
-		}
-
+		index = auconv_set_converter(sc->sc_formats, AUACER_NFORMATS,
+					     mode, p, TRUE);
+		if (index < 0)
+			return EINVAL;
+		if (sc->sc_formats[index].frequency_type != 1
+		    && auacer_set_rate(sc, mode, p->hw_sample_rate))
+			return EINVAL;
 		if (mode == AUMODE_PLAY) {
 			control = READ4(sc, ALI_SCR);
 			control &= ~ALI_SCR_PCM_246_MASK;

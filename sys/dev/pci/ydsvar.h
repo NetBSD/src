@@ -1,4 +1,4 @@
-/*	$NetBSD: ydsvar.h,v 1.3 2004/11/08 12:10:22 kent Exp $	*/
+/*	$NetBSD: ydsvar.h,v 1.4 2004/11/13 15:00:48 kent Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -109,6 +109,8 @@ struct yds_softc {
 	bus_space_handle_t	sc_opl_ioh;
 	struct device		*sc_mpu;
 	bus_space_handle_t	sc_mpu_ioh;
+
+	struct audio_encoding_set *sc_encodings;
 };
 #define sc_opl_iot	sc_legacy_iot
 #define sc_mpu_iot	sc_legacy_iot
