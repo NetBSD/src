@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.61 1999/10/14 00:08:45 phil Exp $ */
+/*	$NetBSD: conf.c,v 1.62 1999/12/15 08:03:43 garbled Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,7 @@
 #include "cgfourteen.h"
 #include "pnozz.h"
 #include "fb.h"
+#include "tctrl.h"
 
 #include "xd.h"
 #include "xy.h"
@@ -204,7 +205,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 68 */
 	cdev_gen_init(NAUDIO,audio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
-	cdev_notdef(),			/* 71 */
+	cdev_tctrl_init(NTCTRL,tctrl),	/* 71: /dev/tctrl */
 	cdev_notdef(),			/* 72 */
 	cdev_notdef(),			/* 73 */
 	cdev_notdef(),			/* 74 */
