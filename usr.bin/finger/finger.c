@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.8 1997/09/09 02:41:08 mrg Exp $	*/
+/*	$NetBSD: finger.c,v 1.9 1997/10/18 14:49:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -54,7 +54,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$NetBSD: finger.c,v 1.8 1997/09/09 02:41:08 mrg Exp $";
+static char rcsid[] = "$NetBSD: finger.c,v 1.9 1997/10/18 14:49:48 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -94,7 +94,7 @@ main(argc, argv)
 
 	oflag = 1;		/* default to old "office" behavior */
 
-	while ((ch = getopt(argc, argv, "lmpshog")) != EOF)
+	while ((ch = getopt(argc, argv, "lmpshog")) != -1)
 		switch(ch) {
 		case 'l':
 			lflag = 1;		/* long format */
