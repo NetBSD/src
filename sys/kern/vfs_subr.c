@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.63 1997/04/09 21:12:15 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.64 1997/04/23 20:18:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -1509,9 +1509,17 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 {
 	mode_t mask;
 	
-	/* User id 0 always gets access. */
-	if (cred->cr_uid == 0)
-		return 0;
+	/*
+	 * Super-user always gets read/write access, but execute access depends
+	 * on at least one execute bit being set.
+	 */
+	if (cred->cr_uid == 0) {
+		if (acc_mode == VEXEC &&
+		    (file_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0)
+			return (EACCES);
+		else
+			return (0);
+	}
 	
 	mask = 0;
 	
@@ -1523,7 +1531,7 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 			mask |= S_IRUSR;
 		if (acc_mode & VWRITE)
 			mask |= S_IWUSR;
-		return (file_mode & mask) == mask ? 0 : EACCES;
+		return ((file_mode & mask) == mask ? 0 : EACCES);
 	}
 	
 	/* Otherwise, check the groups. */
@@ -1534,7 +1542,7 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 			mask |= S_IRGRP;
 		if (acc_mode & VWRITE)
 			mask |= S_IWGRP;
-		return (file_mode & mask) == mask ? 0 : EACCES;
+		return ((file_mode & mask) == mask ? 0 : EACCES);
 	}
 	
 	/* Otherwise, check everyone else. */
@@ -1544,7 +1552,7 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 		mask |= S_IROTH;
 	if (acc_mode & VWRITE)
 		mask |= S_IWOTH;
-	return (file_mode & mask) == mask ? 0 : EACCES;
+	return ((file_mode & mask) == mask ? 0 : EACCES);
 }
 
 /*
