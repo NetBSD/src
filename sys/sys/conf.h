@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.21 1995/04/10 06:32:14 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.22 1995/04/12 06:01:03 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -282,6 +282,13 @@ extern struct cdevsw cdevsw[];
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, (dev_type_reset((*))) nullop, 0, \
 	(dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev, 0 }
+
+/* open, close, ioctl, mmap */
+#define	cdev_fb_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, (dev_type_reset((*))) nullop, 0, \
+	seltrue, dev_init(c,n,mmap), 0 }
 
 /* open, close, read, write, ioctl */
 #define cdev_audio_init(c,n) { \
