@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.9 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: itevar.h,v 1.10 2005/01/19 02:13:02 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -104,6 +104,7 @@ enum ite_flags {
 	ITE_ISOPEN = 0x8,		/* ite has been opened		*/
 	ITE_INGRF  = 0x10,		/* ite is in graphics mode	*/
 	ITE_ACTIVE = 0x20,		/* ite is an active terminal	*/
+	ITE_ATTACHED = 0x40,		/* ite is attached		*/
 };
 
 enum ite_replrules {
@@ -194,7 +195,7 @@ void	ite_cnfinish __P((struct ite_softc *));
 void	iteinit __P((dev_t));
 
 /* ite functions */
-int	ite_on __P((dev_t, int));
+void	ite_on __P((dev_t, int));
 void	ite_off __P((dev_t, int));
 void	ite_reinit __P((dev_t));
 int	ite_param __P((struct tty *, struct termios *));
