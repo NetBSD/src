@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.87 2003/02/13 11:47:27 tron Exp $	*/
+/*	$NetBSD: inetd.c,v 1.88 2003/02/16 17:57:34 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.87 2003/02/13 11:47:27 tron Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.88 2003/02/16 17:57:34 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,7 +277,7 @@ int	debug;
 #ifdef LIBWRAP
 int	lflag;
 #endif
-int	nsock, maxsock;
+int	maxsock;
 int	kq;
 int	options;
 int	timingout;
@@ -446,13 +446,13 @@ u_int16_t bad_ports[] =  { 7, 9, 13, 19, 37, 0 };
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
 
-static int my_signals[] = { SIGALRM, SIGHUP, SIGCHLD, SIGTERM, SIGINT };
+static int my_signals[] =
+    { SIGALRM, SIGHUP, SIGCHLD, SIGTERM, SIGINT, SIGPIPE };
 
 int
 main(int argc, char *argv[])
 {
 	int		ch, n, reload = 1;
-	struct kevent	*ev;
 
 	while ((ch = getopt(argc, argv,
 #ifdef LIBWRAP
@@ -503,16 +503,23 @@ main(int argc, char *argv[])
 #endif
 
 	for (n = 0; n < A_CNT(my_signals); n++) {
-		(void) signal(my_signals[n], SIG_IGN);
-		ev = allocchange();
-		EV_SET(ev, my_signals[n], EVFILT_SIGNAL, EV_ADD | EV_ENABLE,
-		    0, 0, NULL);
+		int	signum;
+
+		signum = my_signals[n];
+		(void) signal(signum, SIG_IGN);
+
+		if (signum != SIGPIPE) {
+			struct kevent	*ev;
+
+			ev = allocchange();
+			EV_SET(ev, signum, EVFILT_SIGNAL, EV_ADD | EV_ENABLE,
+			    0, 0, NULL);
+		}
 	}
-	(void) signal(SIGPIPE, SIG_IGN);
 
 	for (;;) {
 		int		ctrl;
-		struct kevent	eventbuf[64];
+		struct kevent	eventbuf[64], *ev;
 		struct servtab	*sep;
 
 		if (reload) {
@@ -520,12 +527,6 @@ main(int argc, char *argv[])
 			config();
 		}
 
-		if (nsock == 0) {
-			(void) sigblock(SIGBLOCK);
-			while (nsock == 0)
-				sigpause(0L);
-			(void) sigsetmask(0L);
-		}
 		n = my_kevent(changebuf, changes, eventbuf, A_CNT(eventbuf));
 		changes = 0;
 
@@ -582,7 +583,6 @@ spawn(struct servtab *sep, int ctrl)
 {
 	int dofork;
 	pid_t pid;
-	struct sigvec sv;
 
 	pid = 0;
 #ifdef LIBWRAP_INTERNAL
@@ -632,13 +632,12 @@ spawn(struct servtab *sep, int ctrl)
 			ev = allocchange();
 			EV_SET(ev, sep->se_fd, EVFILT_READ,
 			    EV_DELETE, 0, 0, 0);
-			nsock--;
 		}
 		if (pid == 0) {
-			memset(&sv, 0, sizeof(sv));
-			sv.sv_mask = 0L;
-			sv.sv_handler = SIG_DFL;
-			sigvec(SIGPIPE, &sv, NULL);
+			int	n;
+
+			for (n = 0; n < A_CNT(my_signals); n++)
+				(void) signal(my_signals[n], SIG_DFL);
 			if (debug)
 				setsid();
 		}
@@ -794,7 +793,6 @@ reapchild(void)
 				ev = allocchange();
 				EV_SET(ev, sep->se_fd, EVFILT_READ,
 				    EV_ADD | EV_ENABLE, 0, 0, (intptr_t)sep);
-				nsock++;
 				if (debug)
 					fprintf(stderr, "restored %s, fd %d\n",
 					    sep->se_service, sep->se_fd);
@@ -1133,7 +1131,6 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 	ev = allocchange();
 	EV_SET(ev, sep->se_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
 	    (intptr_t)sep);
-	nsock++;
 	if (sep->se_fd > maxsock) {
 		maxsock = sep->se_fd;
 		if (maxsock > rlim_ofile_cur - FD_MARGIN)
@@ -1151,17 +1148,10 @@ static void
 close_sep(struct servtab *sep)
 {
 	if (sep->se_fd >= 0) {
-		nsock--;
 		(void) close(sep->se_fd);
 		sep->se_fd = -1;
 	}
 	sep->se_count = 0;
-	/*
-	 * Don't keep the pid of this running daemon: when reapchild()
-	 * reaps this pid, it would erroneously increment nsock.
-	 */
-	if (sep->se_wait > 1)
-		sep->se_wait = 1;
 }
 
 static void
