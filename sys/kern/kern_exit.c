@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.125 2003/11/03 22:34:51 cl Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.126 2003/11/06 09:16:22 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.125 2003/11/03 22:34:51 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.126 2003/11/06 09:16:22 dsl Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -226,7 +226,7 @@ exit1(struct lwp *l, int rv)
 	 */
 	if (p->p_flag & P_PPWAIT) {
 		p->p_flag &= ~P_PPWAIT;
-		wakeup((caddr_t)p->p_pptr);
+		wakeup(p->p_pptr);
 	}
 	sigfillset(&p->p_sigctx.ps_sigignore);
 	sigemptyset(&p->p_sigctx.ps_siglist);
@@ -303,7 +303,7 @@ exit1(struct lwp *l, int rv)
 	 */
 	q = LIST_FIRST(&p->p_children);
 	if (q)		/* only need this if any child is S_ZOMB */
-		wakeup((caddr_t)initproc);
+		wakeup(initproc);
 	for (; q != 0; q = nq) {
 		nq = LIST_NEXT(q, p_sibling);
 
@@ -411,7 +411,7 @@ exit1(struct lwp *l, int rv)
 		 * continue.
 		 */
 		if (LIST_FIRST(&pp->p_children) == NULL)
-			wakeup((caddr_t)pp);
+			wakeup(pp);
 	}
 
 	/*
@@ -607,7 +607,7 @@ reaper(void *arg)
 				pool_put(&lwp_pool, l);
 			} else {
 				p->p_nzlwps++;
-				wakeup((caddr_t)&p->p_nlwps);
+				wakeup(&p->p_nlwps);
 			}
 			/* XXXNJW where should this be with respect to 
 			 * the wakeup() above? */
@@ -632,7 +632,7 @@ reaper(void *arg)
 			if ((p->p_flag & P_FSTRACE) == 0 && p->p_exitsig != 0)
 				exit_psignal(p, p->p_pptr);
 			KERNEL_PROC_UNLOCK(curlwp);
-			wakeup((caddr_t)p->p_pptr);
+			wakeup(p->p_pptr);
 		}
 	}
 }
@@ -670,15 +670,13 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 	if (child->p_stat == SZOMB) {
 		if (SCARG(uap, status)) {
 			status = child->p_xstat;	/* convert to int */
-			error = copyout((caddr_t)&status,
-					(caddr_t)SCARG(uap, status),
+			error = copyout(&status, SCARG(uap, status),
 					sizeof(status));
 			if (error)
 				return (error);
 		}
 		if (SCARG(uap, rusage)) {
-			error = copyout((caddr_t)child->p_ru,
-				    (caddr_t)SCARG(uap, rusage),
+			error = copyout(child->p_ru, SCARG(uap, rusage),
 				    sizeof(struct rusage));
 			if (error)
 				return (error);
@@ -691,9 +689,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 	/* child state must be SSTOP */
 	if (SCARG(uap, status)) {
 		status = W_STOPCODE(child->p_xstat);
-		return copyout((caddr_t)&status,
-				(caddr_t)SCARG(uap, status),
-				sizeof(status));
+		return copyout(&status, SCARG(uap, status), sizeof (status));
 	}
 	return 0;
 }
@@ -749,7 +745,7 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 			*child_p = NULL;
 			return 0;
 		}
-		error = tsleep((caddr_t)parent, PWAIT | PCATCH, "wait", 0);
+		error = tsleep(parent, PWAIT | PCATCH, "wait", 0);
 		if (error != 0)
 			return error;
 	}
@@ -781,7 +777,7 @@ proc_free(struct proc *p)
 		p->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 		if (p->p_exitsig != 0)
 			exit_psignal(p, parent);
-		wakeup((caddr_t)parent);
+		wakeup(parent);
 		return;
 	}
 
