@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetstr.c,v 1.1 2004/04/21 00:01:57 christos Exp $	*/
+/*	$NetBSD: fgetstr.c,v 1.2 2004/05/10 16:47:11 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetstr.c,v 1.1 2004/04/21 00:01:57 christos Exp $");
+__RCSID("$NetBSD: fgetstr.c,v 1.2 2004/05/10 16:47:11 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,10 +49,6 @@ __RCSID("$NetBSD: fgetstr.c,v 1.1 2004/04/21 00:01:57 christos Exp $");
 #include <string.h>
 #include "reentrant.h"
 #include "local.h"
-
-#ifdef __weak_alias
-__weak_alias(fgetstr,_fgetstr)
-#endif
 
 int __slbexpand __P((FILE *, size_t));
 
@@ -92,7 +88,7 @@ __slbexpand(fp, newsize)
  * it if they wish.  Thus, we set __SMOD in case the caller does.
  */
 char *
-fgetstr(fp, lenp, sep)
+__fgetstr(fp, lenp, sep)
 	FILE *fp;
 	size_t *lenp;
 	int sep;
@@ -104,12 +100,9 @@ fgetstr(fp, lenp, sep)
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(lenp != NULL);
 
-	FLOCKFILE(fp);
-
 	/* make sure there is input */
 	if (fp->_r <= 0 && __srefill(fp)) {
 		*lenp = 0;
-		FUNLOCKFILE(fp);
 		return (NULL);
 	}
 
@@ -128,7 +121,6 @@ fgetstr(fp, lenp, sep)
 		fp->_flags |= __SMOD;
 		fp->_r -= len;
 		fp->_p = p;
-		FUNLOCKFILE(fp);
 		return (ret);
 	}
 
@@ -176,11 +168,9 @@ fgetstr(fp, lenp, sep)
 #ifdef notdef
 	fp->_lb._base[len] = 0;
 #endif
-	FUNLOCKFILE(fp);
 	return ((char *)fp->_lb._base);
 
 error:
 	*lenp = 0;		/* ??? */
-	FUNLOCKFILE(fp);
 	return (NULL);		/* ??? */
 }
