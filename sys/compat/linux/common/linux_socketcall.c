@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.19 1999/03/25 04:26:45 sommerfe Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.20 2001/06/22 08:27:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ linux_sys_socketcall(p, v, retval)
 	struct linux_socketcall_dummy_args lda;
 	int error;
 
-	if (SCARG(uap, what) > LINUX_MAX_SOCKETCALL)
+	if (SCARG(uap, what) < 0 || SCARG(uap, what) > LINUX_MAX_SOCKETCALL)
 		return ENOSYS;
 
 	if ((error = copyin((caddr_t) SCARG(uap, args), (caddr_t) &lda,
