@@ -1,4 +1,4 @@
-/* $NetBSD: signal.h,v 1.3 1996/03/14 23:11:47 mark Exp $ */
+/* $NetBSD: signal.h,v 1.4 1996/10/14 23:02:53 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -83,6 +83,42 @@ struct	sigcontext {
 };
 
 #endif
+
+/* Signals codes */
+
+/*
+ * SIGFPE codes
+ *
+ * see ieeefp.h for definition of FP exception codes
+ */
+
+#define SIG_CODE_FPE_CODE_MASK	0x00000f00	/* Mask for exception code */
+#define SIG_CODE_FPE_CODE_SHIFT	8		/* Shift for exception code */
+#define SIG_CODE_FPE_TYPE_MASK	0x000000ff	/* Mask for specific code */
+
+/*
+ * SIGILL codes
+ *
+ * the signal code is the instruction that raised the signal
+ */
+
+/*
+ * SIGBUS and SIGSEGV codes
+ *
+ * The signal code is combination of the fault address and the fault code.
+ *
+ * The fault code is the coproc #15 fault status code
+ *
+ * The exception to this is a SIGBUS or SIGSEGV from a prefetch abort.
+ * In this case the fault status code is not valid so the TYPE_MASK
+ * should be treated as undefined (in practice it is the bottom 4 bits
+ * of the fault address).
+ */
+
+#define SIG_CODE_BUS_ADDR_MASK	0xfffffff0
+#define SIG_CODE_BUS_TYPE_MASK	0x0000000f
+#define SIG_CODE_SEGV_ADDR_MASK	SIG_CODE_BUS_ADDR_MASK
+#define SIG_CODE_SEGV_TYPE_MASK	SIG_CODE_BUS_TYPE_MASK
 
 #endif	/* _ARM_SIGNAL_H_ */
 
