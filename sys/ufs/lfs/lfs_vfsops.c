@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.4 1994/12/15 19:51:06 mycroft Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.5 1995/01/18 06:19:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -347,11 +347,8 @@ lfs_unmount(mp, mntflags, p)
 	int i, error, flags, ronly;
 
 	flags = 0;
-	if (mntflags & MNT_FORCE) {
-		if (!doforce || (mp->mnt_flag & MNT_ROOTFS))
-			return (EINVAL);
+	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-	}
 
 	ump = VFSTOUFS(mp);
 	fs = ump->um_lfs;

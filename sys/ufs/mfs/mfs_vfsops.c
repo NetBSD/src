@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.3 1994/12/15 19:51:39 mycroft Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.4 1995/01/18 06:19:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -130,8 +130,7 @@ mfs_mountroot()
 		free(mfsp, M_MFSNODE);
 		return (error);
 	}
-	TAILQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_flag |= MNT_ROOTFS;
+	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mp->mnt_vnodecovered = NULLVP;
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
