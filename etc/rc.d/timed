@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: timed,v 1.3 2000/05/13 08:45:09 lukem Exp $
+# $NetBSD: timed,v 1.3.4.1 2000/10/02 01:08:58 lukem Exp $
 #
 
 # PROVIDE: timed
@@ -9,6 +9,7 @@
 . /etc/rc.subr
 
 name="timed"
+rcvar=$name
 command="/usr/sbin/${name}"
 
 load_rc_config $name

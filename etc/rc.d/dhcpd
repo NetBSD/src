@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhcpd,v 1.3 2000/05/13 08:45:06 lukem Exp $
+# $NetBSD: dhcpd,v 1.3.4.1 2000/10/02 01:08:53 lukem Exp $
 #
 
 # PROVIDE: dhcpd
@@ -9,6 +9,7 @@
 . /etc/rc.subr
 
 name="dhcpd"
+rcvar=$name
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 required_files="/etc/${name}.conf /var/db/${name}.leases"
