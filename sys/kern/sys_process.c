@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66.2.21 2002/10/10 22:27:15 nathanw Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.22 2002/10/17 00:27:46 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.21 2002/10/10 22:27:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.66.2.22 2002/10/17 00:27:46 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,7 @@ sys_ptrace(l, v, retval)
 			if (lt == NULL)
 				return (ESRCH);
 		}
-		if (!process_validregs(lt))
+		if (!process_validregs(t))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);
@@ -461,7 +461,7 @@ sys_ptrace(l, v, retval)
 			if (lt == NULL)
 				return (ESRCH);
 		}
-		if (!process_validfpregs(lt))
+		if (!process_validfpregs(t))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);
@@ -538,12 +538,12 @@ process_doregs(curp, l, uio)
 }
 
 int
-process_validregs(l)
-	struct lwp *l;
+process_validregs(p)
+	struct proc *p;
 {
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
+	return ((p->p_flag & P_SYSTEM) == 0);
 #else
 	return (0);
 #endif
@@ -596,12 +596,12 @@ process_dofpregs(curp, l, uio)
 }
 
 int
-process_validfpregs(l)
-	struct lwp *l;
+process_validfpregs(p)
+	struct proc *p;
 {
 
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
+	return ((p->p_flag & P_SYSTEM) == 0);
 #else
 	return (0);
 #endif
