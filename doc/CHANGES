@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.441 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.442 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -240,3 +240,9 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		[matt 20050309]
 	xen: updated to support the xen 2.0 kernel, including domain0 support
 		(this drops support for xen 1.2) [bouyer 20050309]
+	rcp(1): Add -4 and -6 options, used to limit host addresses to
+		IPv4 or IPv6 respectively. [ginsbach 20050309]
+	rsh(1), rlogin(1): Add -4 and -6 options, used to limit host
+		addresses to IPv4 or IPv6 respectively. [ginsbach 20050311]
+	rcp(1): Add support for specifying the rhost as an IPv6 address
+		string. [ginsbach 20050311]
