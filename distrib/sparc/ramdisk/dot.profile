@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.17 2002/07/20 07:06:28 lukem Exp $
+# $NetBSD: dot.profile,v 1.18 2003/07/11 12:16:56 pk Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -83,9 +83,10 @@ floppy()
 	local dev rval
 
 	rval=0
+	dev="/dev/rfd0a"
 
 	echo "Ejecting floppy disk"
-	eject floppy
+	eject $dev
 
 	cat <<EOF
 Remove the boot disk from the floppy station and insert the second disk of
@@ -94,7 +95,6 @@ the floppy installation set into the disk drive.
 The question below allows you to specify the device name of the floppy
 drive.  Usually, the default device will do just fine.
 EOF
-	dev="/dev/rfd0a"
 	echo -n "Floppy device to load the installation utilities from [$dev]: "
 	getresp "$dev"; dev="$_resp"
 
@@ -102,7 +102,7 @@ EOF
 	(cd $INSTFS_MP && tar zxpf $dev) || rval=1
 
 	echo "Ejecting floppy disk"
-	eject floppy
+	eject $dev
 	return $rval
 }
 
