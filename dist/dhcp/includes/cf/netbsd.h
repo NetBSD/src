@@ -82,6 +82,14 @@ extern int h_errno;
 #define _PATH_DHCLIENT_DB "/var/db/dhclient.leases"
 #endif
 
+/*
+ * If building "SMALL" (e.g. for an installation disk), do not configure
+ * for DNS update functionality -- overrides default set in ../site.h.
+ */
+#if defined(SMALL) && defined(NSUPDATE)
+#undef NSUPDATE
+#endif
+
 #define EOL	'\n'
 #define VOIDPTR void *
 
@@ -95,9 +103,12 @@ extern int h_errno;
 
 #if defined (USE_DEFAULT_NETWORK)
 #  define USE_BPF
+#  define NETBSD_FDDI
+#  define FDDI_HEADER_SIZE 16
+#  include <net/if_types.h>
 #endif
 
-#ifdef __alpha__
+#if defined(__alpha__) || defined(__sparc_v9__)
 #define PTRSIZE_64BIT
 #endif
 

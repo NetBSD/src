@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.1.1.1 2001/08/03 11:35:32 drochner Exp $ Copyright (c) 2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.2 2001/08/03 13:07:04 drochner Exp $ Copyright (c) 2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -224,6 +224,9 @@ isc_result_t dns_zone_lookup (struct dns_zone **zone, const char *name)
 		return ISC_R_NOTFOUND;
 
 	len = strlen (name);
+	if (len == 0)
+		return ISC_R_NOTFOUND;
+
 	if (name [len - 1] != '.') {
 		tname = dmalloc ((unsigned)len + 2, MDL);
 		if (!tname)
@@ -281,8 +284,10 @@ int dns_zone_dereference (ptr, file, line)
 
 	if (dns_zone -> name)
 		dfree (dns_zone -> name, file, line);
+#if !defined (SMALL)
 	if (dns_zone -> key)
 		omapi_auth_key_dereference (&dns_zone -> key, file, line);
+#endif
 	if (dns_zone -> primary)
 		option_cache_dereference (&dns_zone -> primary, file, line);
 	if (dns_zone -> secondary)
