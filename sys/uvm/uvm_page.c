@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.74.4.1 2002/03/12 00:03:58 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.74.4.2 2002/03/12 00:14:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.74.4.1 2002/03/12 00:03:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.74.4.2 2002/03/12 00:14:25 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -249,7 +249,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 
 	TAILQ_INIT(&uvm.page_active);
 	TAILQ_INIT(&uvm.page_inactive);
-	simple_lock_init(&uvm.pageqlock);
+	mutex_init(&uvm.pageq_mutex, MUTEX_DEFAULT, 0);
 
 	/* The free page list can be accessed from interrupt handlers. */
 	mutex_init(&uvm.fpageq_mutex, MUTEX_SPIN, IPL_VM);
@@ -1197,7 +1197,7 @@ uvm_pagefree(pg)
 {
 
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
-	LOCK_ASSERT(simple_lock_held(&uvm.pageqlock) ||
+	LOCK_ASSERT(mutex_owned(&uvm.pageq_mutex) ||
 		    (pg->pqflags & (PQ_ACTIVE|PQ_INACTIVE)) == 0);
 	LOCK_ASSERT(pg->uobject == NULL ||
 		    simple_lock_held(&pg->uobject->vmobjlock));
