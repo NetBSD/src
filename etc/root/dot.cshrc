@@ -1,10 +1,10 @@
-#	$NetBSD: dot.cshrc,v 1.7 1997/10/28 03:33:18 mrg Exp $
+#	$NetBSD: dot.cshrc,v 1.8 1997/12/17 01:45:13 mrg Exp $
 
 set history=1000
-set path=(/sbin /usr/sbin /usr/local/sbin /bin /usr/bin /usr/local/bin)
+set path=(/sbin /usr/sbin /bin /usr/bin /usr/pkg/sbin /usr/pkg/bin /usr/X11R6/bin /usr/local/sbin /usr/local/bin)
 
 # directory stuff: cdpath/cd/back
-set cdpath=(/sys /usr/src/{bin,sbin,usr.{bin,sbin},lib,libexec,share,contrib,local,games,old,gnu/{usr.bin,libexec,lib,games}})
+set cdpath=(/sys /usr/src/{bin,sbin,usr.{bin,sbin},lib,libexec,share,local,games,gnu/{usr.bin,libexec,lib,games}})
 
 setenv BLOCKSIZE 1k
 
