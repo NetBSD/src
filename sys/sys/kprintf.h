@@ -1,4 +1,4 @@
-/*	$NetBSD: kprintf.h,v 1.1 2002/12/31 16:53:26 thorpej Exp $	*/
+/*	$NetBSD: kprintf.h,v 1.2 2003/02/17 22:19:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -78,11 +78,12 @@ do {									\
 #endif /* MULTIPROCESSOR */
 
 /* flags for kprintf */
-#define	TOCONS		0x01	/* to the console */
-#define	TOTTY		0x02	/* to the process' tty */
-#define	TOLOG		0x04	/* to the kernel message buffer */
-#define	TOBUFONLY	0x08	/* to the buffer (only) [for snprintf] */
-#define	TODDB		0x10	/* to ddb console */
+#define	TOCONS		0x0001	/* to the console */
+#define	TOTTY		0x0002	/* to the process' tty */
+#define	TOLOG		0x0004	/* to the kernel message buffer */
+#define	TOBUFONLY	0x0008	/* to the buffer (only) [for snprintf] */
+#define	TODDB		0x0010	/* to ddb console */
+#define	NOLOCK		0x1000	/* don't acquire a tty lock */
 
 /*
  * NOTE: the kprintf mutex must be held when these functions are called!
