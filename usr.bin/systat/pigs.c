@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.8 1998/05/17 17:18:28 mycroft Exp $	*/
+/*	$NetBSD: pigs.c,v 1.9 1998/05/17 18:18:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.8 1998/05/17 17:18:28 mycroft Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.9 1998/05/17 18:18:18 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -213,7 +213,7 @@ fetchpigs()
 		pp = &kpp[i].kp_proc;
 		pctp = &pt[i].pt_pctcpu;
 		time = pp->p_swtime;
-		if (p->p_stat == SZOMB ||
+		if (pp->p_stat == SZOMB ||
 		    time == 0 || (pp->p_flag & P_INMEM) == 0)
 			*pctp = 0;
 		else
