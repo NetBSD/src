@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.28 2003/07/18 13:45:15 fredb Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.29 2003/07/27 07:56:37 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -447,7 +447,9 @@ int	 cgetustr(char *, const char *, char **);
 
 /* <sys/endian.h> */
 
-#ifndef HAVE_SYS_ENDIAN_H
+#ifdef HAVE_SYS_ENDIAN_H
+#include <sys/endian.h>
+#else
 #if WORDS_BIGENDIAN
 #define htobe16(x)	(x)
 #define htobe32(x)	(x)
