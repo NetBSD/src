@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.52 2003/02/25 23:12:07 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.53 2003/02/27 07:10:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -653,7 +653,7 @@ struct segsum {
 	(((lbn) >= NDADDR || (ip)->i_ffs_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
 	    ? (fs)->lfs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (ip)->i_ffs_size))))
-#define	blkoff(fs, loc)		((int)(loc) & (fs)->lfs_bmask)
+#define	blkoff(fs, loc)		((int)((loc) & (fs)->lfs_bmask))
 #define fragoff(fs, loc)    /* calculates (loc % fs->lfs_fsize) */ \
     ((int)((loc) & (fs)->lfs_ffmask))
 #define	fsbtodb(fs, b)		((b) << (fs)->lfs_fsbtodb)
@@ -675,9 +675,9 @@ struct segsum {
 #define numfrags(fs, loc)	/* calculates (loc / fs->lfs_fsize) */	\
 	((loc) >> (fs)->lfs_ffshift)
 #define blkroundup(fs, size)	/* calculates roundup(size, fs->lfs_bsize) */ \
-	((int)(((size) + (fs)->lfs_bmask) & (~(fs)->lfs_bmask)))
+	((off_t)(((size) + (fs)->lfs_bmask) & (~(fs)->lfs_bmask)))
 #define fragroundup(fs, size)	/* calculates roundup(size, fs->lfs_fsize) */ \
-	((int)(((size) + (fs)->lfs_ffmask) & (~(fs)->lfs_ffmask)))
+	((off_t)(((size) + (fs)->lfs_ffmask) & (~(fs)->lfs_ffmask)))
 #define fragstoblks(fs, frags)	/* calculates (frags / fs->lfs_frag) */ \
 	((frags) >> (fs)->lfs_fbshift)
 #define blkstofrags(fs, blks)	/* calculates (blks * fs->lfs_frag) */ \
