@@ -48,13 +48,13 @@ macro_prefix=${macro_prefix-"_G_"}
 rootdir=`pwd`/..
 gccdir=${gccdir-${rootdir}/gcc}
 binutilsdir=${binutilsdir-${rootdir}/binutils}
-CC=${CC-`if [ -f ${gccdir}/xgcc ] ; \
+CC="${CC-`if [ -f ${gccdir}/xgcc ] ; \
 	then echo ${gccdir}/xgcc -B${gccdir}/ ; \
-	else echo cc ; fi`}
-CXX=${CXX-`if [ -f ${gccdir}/xgcc ] ; \
+	else echo cc ; fi`} ${CPPFLAGS}"
+CXX="${CXX-`if [ -f ${gccdir}/xgcc ] ; \
 	then echo ${gccdir}/xgcc -B${gccdir}/ ; \
-	else echo gcc ; fi`}
-CPP=${CPP-`echo ${CC} -E`}
+	else echo gcc ; fi`} ${CPPFLAGS}"
+CPP="${CPP-`echo ${CC} -E`} ${CPPFLAGS}"
 CONFIG_NM=${CONFIG_NM-`if [ -f ${binutilsdir}/nm.new ] ; \
 	then echo ${binutilsdir}/nm.new ; \
 	else echo nm ; fi`}
@@ -190,7 +190,7 @@ int clog;
 main () {}
 !EOF!
 
-if ${CC} dummy.c -lm 2>&1 >/dev/null | grep clog >/dev/null; then
+if ${CC} ${LDPRE} dummy.c -lm ${LDSUF} 2>&1 >/dev/null | grep clog >/dev/null; then
   echo "#define ${macro_prefix}CLOG_CONFLICT 1"
 fi
 
@@ -543,7 +543,7 @@ int main()
   atexit (0);
 }
 !EOF!
-  if ${CC} dummy.c >/dev/null 2>&1 ; then
+  if ${CC} ${LDPRE} dummy.c ${LDSUF} >/dev/null 2>&1 ; then
     echo "#define ${macro_prefix}HAVE_ATEXIT 1"
   else
     echo "#define ${macro_prefix}HAVE_ATEXIT 0"
@@ -570,7 +570,7 @@ else
   }
 !EOF!
   # Note: We link because some systems have sys/resource, but not getrusage().
-  if ${CC} dummy.c >/dev/null 2>&1 ; then
+  if ${CC} ${LDPRE} dummy.c ${LDSUF} >/dev/null 2>&1 ; then
     echo "#define ${macro_prefix}HAVE_SYS_RESOURCE 1"
   else
     echo "#define ${macro_prefix}HAVE_SYS_RESOURCE 0"
@@ -711,7 +711,7 @@ int main()
 }
 EOF
 
-if ${CC} dummy.c >/dev/null 2>&1 ; then
+if ${CC} ${LDPRE} dummy.c ${LDSUF} >/dev/null 2>&1 ; then
   echo "#define ${macro_prefix}HAVE_PRINTF_FP 1"
   echo "#define ${macro_prefix}HAVE_LONG_DOUBLE_IO 1"
 else
