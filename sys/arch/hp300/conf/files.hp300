@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.64 2003/03/06 18:28:52 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.65 2003/05/24 06:21:21 gmcgarry Exp $
 #
 # hp300-specific configuration info
 
@@ -136,7 +136,8 @@ file	arch/hp300/dev/if_le.c		le
 define	hpibdev { }
 
 device	nhpib: hpibdev
-attach	nhpib at dio
+attach	nhpib at intio with nhpib_intio
+attach	nhpib at dio with nhpib_dio
 file	arch/hp300/dev/nhpib.c		nhpib
 
 device	fhpib: hpibdev
