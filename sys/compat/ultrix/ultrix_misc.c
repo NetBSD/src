@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.26 1996/10/10 17:52:04 christos Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.27 1996/10/13 00:46:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -264,7 +264,7 @@ ultrix_sys_select(p, v, retval)
 #ifdef DEBUG
 		/* Ultrix clients sometimes give negative timeouts? */
 		if (atv.tv_sec < 0 || atv.tv_usec < 0)
-			kprintf("ultrix select( %ld, %ld): negative timeout\n",
+			printf("ultrix select( %ld, %ld): negative timeout\n",
 			    atv.tv_sec, atv.tv_usec);
 		/*tvp = (timeval *)STACKGAPBASE;*/
 #endif
@@ -272,7 +272,7 @@ ultrix_sys_select(p, v, retval)
 	}
 	error = sys_select(p, (void*) uap, retval);
 	if (error == EINVAL)
-		kprintf("ultrix select: bad args?\n");
+		printf("ultrix select: bad args?\n");
 
 done:
 	return error;
@@ -573,7 +573,7 @@ ultrix_sys_sigreturn(p, v, retval)
 	struct ultrix_sys_sigcleanup_args *uap = v;
 
 #ifdef DEBUG
-	kprintf("ultrix sigreturn\n");
+	printf("ultrix sigreturn\n");
 #endif
 	return sys_sigreturn(p, (struct sys_sigreturn_args  *)uap, retval);
 }

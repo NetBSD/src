@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_util.h,v 1.4 1996/10/10 17:51:53 christos Exp $	 */
+/*	$NetBSD: hpux_util.h,v 1.5 1996/10/13 00:46:50 christos Exp $	 */
 
 /*
  * Copyright (c) 1995 Christos Zoulas
@@ -41,7 +41,7 @@ extern const char hpux_emul_path[];
 	CHECK_ALT_CREAT(p, sgp, hpux_emul_path, path)
 
 #ifdef DEBUG_HPUX
-#define DPRINTF(a)	kprintf a;
+#define DPRINTF(a)	printf a;
 #else
 #define DPRINTF(a)
 #endif
