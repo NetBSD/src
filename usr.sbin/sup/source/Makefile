@@ -42,7 +42,7 @@
 #
 SITE			= NETBSD
 #SITE			= CMUCS
-NETBSD_DEFINES		= -UMACH -DVAR_TMP
+NETBSD_DEFINES		= -UMACH -DVAR_TMP -DHAS_DAEMON
 AFS_DEFINES		= -DAFS -I/usr/afsws/include
 OSF_DEFINES		= -UMACH -DOSF -D_BSD -noshrlib -g -DNEED_VSNPRINTF -DVAR_TMP
 CMUCS_DEFINES		= -DMACH -DDOPRINT_VA -DNEED_VPRINTF
@@ -76,9 +76,9 @@ USE_CRYPT		= yes
 .endif
 
 .if defined(USE_CRYPT)
-NETBSD_LIBS		= -lcrypt
+NETBSD_LIBS		= -lcrypt -lutil
 .else
-NETBSD_LIBS		=
+NETBSD_LIBS		= -lutil
 .endif
 CMUCS_LIBS		= -lsys
 OSF_LIBS		= -lbsd
