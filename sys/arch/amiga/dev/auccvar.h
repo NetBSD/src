@@ -1,4 +1,4 @@
-/*	$NetBSD: auccvar.h,v 1.2 1997/06/20 21:45:13 is Exp $	*/
+/*	$NetBSD: auccvar.h,v 1.3 1997/07/04 21:00:18 is Exp $	*/
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.
@@ -50,6 +50,7 @@ typedef struct aucc_data {
 				   together with this one */
 	void    (*nd_intr)(void *); /* interrupt routine */
 	void   *nd_intrdata;	/* interrupt data */
+	int	nd_doublebuf;	/* double buffering */
 } aucc_data_t;
 
 
