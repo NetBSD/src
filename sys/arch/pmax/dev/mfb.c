@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.50 2003/08/07 16:29:09 agc Exp $	*/
+/*	$NetBSD: mfb.c,v 1.51 2003/10/31 03:32:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.50 2003/08/07 16:29:09 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.51 2003/10/31 03:32:19 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -697,12 +697,9 @@ bt455_video_off(fi)
 {
 	int i;
 	bt455_regmap_t *regs = (bt455_regmap_t *)(fi -> fi_vdac);
-	u_char *cmap;
 
 	if (fi -> fi_blanked)
 		return 0;
-
-	cmap = (u_char *)(fi -> fi_cmap_bits);
 
 	/* Zap colormap entries 0 (background) and 1 (foreground) */
 	BT455_SELECT_ENTRY(regs, 0);

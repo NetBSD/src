@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.206 2003/09/26 16:00:28 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.207 2003/10/31 03:32:19 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.206 2003/09/26 16:00:28 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2003/10/31 03:32:19 simonb Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -207,7 +207,6 @@ mach_init(argc, argv, code, cv, bim, bip)
 	caddr_t kernend, v;
 	unsigned size;
 #if NKSYMS || defined(DDB) || defined(LKM)
-	int nsym = 0;
 	caddr_t ssym = 0;
 	struct btinfo_symtab *bi_syms;
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
@@ -236,7 +235,6 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 	/* Was it a valid bootinfo symtab info? */
 	if (bi_syms != NULL) {
-		nsym = bi_syms->nsym;
 		ssym = (caddr_t)bi_syms->ssym;
 		esym = (caddr_t)bi_syms->esym;
 		kernend = (caddr_t)mips_round_page(esym);
@@ -247,7 +245,6 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 */
 	/* Exec header and symbols? */
 	else if (aout->a_midmag == 0x07018b00 && (i = aout->a_syms) != 0) {
-		nsym = *(long *)end = i;
 		ssym = end;
 		i += (*(long *)(end + i + 4) + 3) & ~3;		/* strings */
 		esym = end + i + 4;

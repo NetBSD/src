@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.11 2003/09/26 13:34:56 simonb Exp $ */
+/* $NetBSD: sbmac.c,v 1.12 2003/10/31 03:32:19 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.11 2003/09/26 13:34:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.12 2003/10/31 03:32:19 simonb Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -832,7 +832,6 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 	int hwidx;
 	sbdmadscr_t *dsc;
 	struct mbuf *m;
-	struct ether_header *eh;
 	int len;
 
 	struct ifnet *ifp = &(sc->sc_ethercom.ec_if);
@@ -888,7 +887,6 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			m->m_pkthdr.len = m->m_len = len;
 
 			ifp->if_ipackets++;
-			eh = mtod(m, struct ether_header *);
 			m->m_pkthdr.rcvif = ifp;
 
 
@@ -951,7 +949,6 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 {
 	int curidx;
 	int hwidx;
-	sbdmadscr_t *dsc;
 	struct mbuf *m;
 
 	struct ifnet *ifp = &(sc->sc_ethercom.ec_if);
@@ -986,7 +983,6 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		 * Otherwise, get the packet's mbuf ptr back
 		 */
 
-		dsc = &(d->sbdma_dscrtable[curidx]);
 		m = d->sbdma_ctxtable[curidx];
 		d->sbdma_ctxtable[curidx] = NULL;
 
