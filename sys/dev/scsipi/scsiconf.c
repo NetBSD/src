@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.111 1998/10/10 01:14:26 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.112 1998/10/10 02:34:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/scsiio.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -775,6 +776,17 @@ scsibusioctl(dev, cmd, addr, flag, p)
 	int error;
 
 	switch (cmd) {
+	case SCBUSIOSCAN:
+	    {
+		struct scbusioscan_args *a =
+		    (struct scbusioscan_args *)addr;
+
+		/* XXX Change interface to this function. */
+		error = scsi_probe_busses(minor(dev), a->sa_target,
+		    a->sa_lun);
+		break;
+	    }
+
 	default:
 		error = ENOTTY;
 	}
