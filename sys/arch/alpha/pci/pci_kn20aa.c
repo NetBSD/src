@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_kn20aa.c,v 1.9 1996/08/07 04:33:21 cgd Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.10 1996/08/14 05:44:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -161,12 +161,12 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 		kn20aa_irq = 8;
 		break;
 
-	case 8:
-		kn20aa_irq = 16;
-		break;
-
 	case 9:
 		kn20aa_irq = 12;
+		break;
+
+	case 8:
+		kn20aa_irq = 16;
 		break;
 
 	default:
