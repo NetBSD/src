@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.5 2000/04/05 06:21:14 mrg Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.6 2000/07/24 01:49:37 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -45,6 +45,7 @@
 #ifdef NETBOOT
 #include <lib/libsa/nfs.h>
 #endif
+#include <lib/libkern/libkern.h>
 
 #include <dev/sun/disklabel.h>
 #include <sparc64/stand/ofwboot/ofdev.h>

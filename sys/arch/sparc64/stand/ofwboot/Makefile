@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2000/07/21 22:06:11 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.16 2000/07/24 01:49:37 mycroft Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -18,6 +18,7 @@ CEXTRAFLAGS?=	-nostdinc
 .else
 CEXTRAFLAGS?=	-D_LP64
 .endif
+CWARNFLAGS+=	-Wno-main
 CFLAGS+=	${COPTS} -DNETIF_DEBUG -D__ELF__ ${CEXTRAFLAGS} -D_STANDALONE
 
 MKMAN=		no
