@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.25 2001/01/27 04:49:34 itojun Exp $	*/
+/*	$NetBSD: route.h,v 1.26 2001/01/27 10:39:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -109,6 +109,7 @@ struct rtentry {
 	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
+	struct	rtentry *rt_parent;	/* parent of cloned route */
 };
 
 /*
