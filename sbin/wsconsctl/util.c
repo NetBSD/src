@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.6 1999/12/21 16:54:16 drochner Exp $ */
+/*	$NetBSD: util.c,v 1.7 2000/03/13 10:43:15 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,10 +71,10 @@ static struct nameint mstype_tab[] = {
 
 static struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_UNKNOWN,	"unknown" },
-	{ WSDISPLAY_TYPE_PM_MONO,	"dec-?mono" },
-	{ WSDISPLAY_TYPE_PM_COLOR,	"dec-?color" },
+	{ WSDISPLAY_TYPE_PM_MONO,	"dec-pm-mono" },
+	{ WSDISPLAY_TYPE_PM_COLOR,	"dec-pm-color" },
 	{ WSDISPLAY_TYPE_CFB,		"dec-cfb" },
-	{ WSDISPLAY_TYPE_XCFB,		"dec-?xcfb" },
+	{ WSDISPLAY_TYPE_XCFB,		"dec-xcfb" },
 	{ WSDISPLAY_TYPE_MFB,		"dec-mfb" },
 	{ WSDISPLAY_TYPE_SFB,		"dec-sfb" },
 	{ WSDISPLAY_TYPE_ISAVGA,	"vga-isa" },
@@ -82,6 +82,11 @@ static struct nameint dpytype_tab[] = {
 	{ WSDISPLAY_TYPE_TGA,		"dec-tga-pci" },
 	{ WSDISPLAY_TYPE_SFBP,		"dec-sfb+" },
 	{ WSDISPLAY_TYPE_PCIMISC,	"generic-pci" },
+	{ WSDISPLAY_TYPE_NEXTMONO,	"next-mono" },
+	{ WSDISPLAY_TYPE_PX,		"dex-px" },
+	{ WSDISPLAY_TYPE_PXG,		"dex-pxg" },
+	{ WSDISPLAY_TYPE_TX,		"dex-tx" },
+	{ WSDISPLAY_TYPE_HPCFB,		"generic-hpc" },
 };
 
 static struct nameint kbdenc_tab[] = {
