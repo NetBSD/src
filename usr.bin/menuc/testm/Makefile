@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.11 1999/02/13 02:54:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2000/12/30 14:54:40 sommerfeld Exp $
 
-MENUC!=cd $(.CURDIR)/..; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/menuc\n" | ${MAKE} -s -f-
+MENUCDIR!=	cd $(.CURDIR)/..; ${PRINTOBJDIR}
+MENUC=	${MENUCDIR}/menuc
 ${MENUC}:
 	cd ${.CURDIR}/..; ${MAKE}
 

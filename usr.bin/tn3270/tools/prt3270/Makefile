@@ -1,12 +1,15 @@
-#	$NetBSD: Makefile,v 1.7 1999/07/14 21:36:39 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.8 2000/12/30 14:54:41 sommerfeld Exp $
+
+.include <bsd.own.mk>
 
 HOSTPROG=	prt3270
 SRCS=	prt3270.c asc_ebc.c ebc_disp.c astosc.c
 DPSRCS=	kbd.out astosc.out
 HOST_CPPFLAGS+=-I.
 
-MKHITS!=cd $(.CURDIR)/../mkhits; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkhits\n" | ${MAKE} -s -f-
+MKHITSDIR!=cd $(.CURDIR)/../mkhits && ${PRINTOBJDIR}
+MKHITS=${MKHITSDIR}/mkhits
+
 ${MKHITS}:
 	cd ${.CURDIR}/../mkhits; ${MAKE}
 
@@ -18,8 +21,9 @@ kbd.out: ${.CURDIR}/../../ctlr/hostctlr.h ${.CURDIR}/../../ctlr/${KBD} ${MKHITS}
 	rm -f TMPfunc.out
 	mv -f kbd.tmp ${.TARGET}
 
-MKASTOSC!=cd $(.CURDIR)/../mkastosc; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkastosc\n" | ${MAKE} -s -f-
+MKASTOSCDIR!=cd ${.CURDIR}/../mkastosc && ${PRINTOBJDIR}
+MKASTOSC= ${MKASTOSCDIR}/mkastosc
+
 ${MKASTOSC}:
 	cd ${.CURDIR}/../mkastosc; ${MAKE}
 

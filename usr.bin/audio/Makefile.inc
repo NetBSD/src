@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.1 1999/03/26 14:02:39 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/12/30 14:54:39 sommerfeld Exp $
 
-LIBAUDIO != cd ${.CURDIR}/../common;\
-    printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
+.include <bsd.own.mk>
+
+LIBAUDIO != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../common
 DPADD+=	${LIBAUDIO}/libaudio.a
 LDADD+=	-L${LIBAUDIO} -laudio

@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.30 1999/03/06 16:21:58 itohy Exp $
+#	$NetBSD: Makefile,v 1.31 2000/12/30 14:54:41 sommerfeld Exp $
+
+.include <bsd.own.mk>
 
 CPPFLAGS+=-I${.CURDIR}/../../../lib -I${.CURDIR}/../../telnet
 LDADD+=	-lcurses -lcrypt
@@ -12,23 +14,27 @@ SRCS=	api.c api_bsd.c api_exch.c apilib.c asc_ebc.c astosc.c commands.c \
 	termout.c tn3270.c utilities.c
 DPSRCS=	asc_disp.out astosc.out disp_asc.out kbd.out
 
-MKASTOSC!=cd $(.CURDIR)/../tools/mkastosc; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkastosc\n" | ${MAKE} -s -f-
+MKASTOSCDIR !=cd $(.CURDIR)/../tools/mkastosc && ${PRINTOBJDIR}
+MKASTOSC= ${MKASTOSCDIR}/mkastosc
+
 ${MKASTOSC}:
 	cd ${.CURDIR}/../tools/mkastosc; ${MAKE}
 
-MKASTODS!=cd $(.CURDIR)/../tools/mkastods; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkastods\n" | ${MAKE} -s -f-
+MKASTODSDIR!=cd $(.CURDIR)/../tools/mkastods && ${PRINTOBJDIR}
+MKASTODS= ${MKASTODSDIR}/mkastods
+
 ${MKASTODS}:
 	cd ${.CURDIR}/../tools/mkastods; ${MAKE}
 
-MKDSTOAS!=cd $(.CURDIR)/../tools/mkdstoas; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkdstoas\n" | ${MAKE} -s -f-
+MKDSTOASDIR!=cd $(.CURDIR)/../tools/mkdstoas && ${PRINTOBJDIR}
+MKDSTOAS= ${MKDSTOASDIR}/mkdstoas
+
 ${MKDSTOAS}:
 	cd ${.CURDIR}/../tools/mkdstoas; ${MAKE}
 
-MKHITS!=cd $(.CURDIR)/../tools/mkhits; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkhits\n" | ${MAKE} -s -f-
+MKHITSDIR!=cd $(.CURDIR)/../tools/mkhits && ${PRINTOBJDIR}
+MKHITS= ${MKHITSDIR}/mkhits
+
 ${MKHITS}:
 	cd ${.CURDIR}/../tools/mkhits; ${MAKE}
 
