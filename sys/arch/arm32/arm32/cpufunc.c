@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.16 2001/03/06 22:29:13 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.17 2001/03/10 20:03:51 bjh21 Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -362,7 +362,8 @@ set_cpufuncs()
 #endif	/* CPU_ARM6 */
 #ifdef CPU_ARM7
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
-	    (cputype & 0x0000f000) == 0x00007000) {
+	    CPU_ID_IS7(cputype) &&
+	    (cputype & CPU_ID_7ARCH_MASK) == CPU_ID_7ARCH_V3) {
 		cpufuncs = arm7_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
 		return 0;
