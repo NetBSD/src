@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.84 2001/01/29 01:49:43 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.85 2001/02/20 15:35:20 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1199,6 +1199,7 @@ ifioctl(so, cmd, data, p)
 #ifdef INET6
 	case SIOCSIFPHYADDR_IN6:
 #endif
+	case SIOCSLIFPHYADDR:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
@@ -1207,6 +1208,7 @@ ifioctl(so, cmd, data, p)
 		/* FALLTHROUGH */
 	case SIOCGIFPSRCADDR:
 	case SIOCGIFPDSTADDR:
+	case SIOCGLIFPHYADDR:
 	case SIOCGIFMEDIA:
 		if (ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
