@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)compile.c	5.6 (Berkeley) 11/2/92";*/
-static char rcsid[] = "$Id: compile.c,v 1.6 1993/11/04 01:36:29 andrew Exp $";
+static char rcsid[] = "$Id: compile.c,v 1.7 1993/11/20 22:24:17 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -209,6 +209,7 @@ nonsel:		/* Now parse the command */
 				p = NULL;
 			cmd2 = xmalloc(sizeof(struct s_command));
 			cmd2->code = '}';
+			cmd2->a1 = cmd2->a2 = NULL;
 			*compile_stream("}", &cmd->u.c, p) = cmd2;
 			cmd->next = cmd2;
 			link = &cmd2->next;
