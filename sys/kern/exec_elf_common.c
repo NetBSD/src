@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf_common.c,v 1.15 2002/05/31 16:49:12 atatat Exp $	*/
+/*	$NetBSD: exec_elf_common.c,v 1.16 2002/11/17 22:53:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_elf_common.c,v 1.15 2002/05/31 16:49:12 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_elf_common.c,v 1.16 2002/11/17 22:53:46 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -62,6 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: exec_elf_common.c,v 1.15 2002/05/31 16:49:12 atatat 
 int
 exec_elf_setup_stack(struct proc *p, struct exec_package *epp)
 {
+	u_long max_stack_size;
+	u_long access_linear_min, access_size;
+	u_long noaccess_linear_min, noaccess_size;
 
 #ifndef	USRSTACK32
 #define USRSTACK32	(0x00000000ffffffffL&~PGOFSET)
@@ -69,11 +72,13 @@ exec_elf_setup_stack(struct proc *p, struct exec_package *epp)
 
 	if (epp->ep_flags & EXEC_32) {
 		epp->ep_minsaddr = USRSTACK32;
-		epp->ep_maxsaddr = epp->ep_minsaddr - MAXSSIZ;
+		max_stack_size = MAXSSIZ;
 	} else {
-		epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
 		epp->ep_minsaddr = USRSTACK;
+		max_stack_size = MAXSSIZ;
 	}
+	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, 
+		max_stack_size);
 	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
@@ -83,15 +88,16 @@ exec_elf_setup_stack(struct proc *p, struct exec_package *epp)
 	 *
 	 * arguably, it could be made into one, but that would require the
 	 * addition of another mapping proc, which is unnecessary
-	 *
-	 * note that in memory, things assumed to be: 0 ... ep_maxsaddr
-	 * <stack> ep_minsaddr
 	 */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
-	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
-	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
-	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
+	access_size = epp->ep_ssize;
+	access_linear_min = (u_long)STACK_ALLOC(epp->ep_minsaddr, access_size);
+	noaccess_size = max_stack_size - access_size;
+	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr, 
+	    access_size), noaccess_size);
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
+	    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE);
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
+	    access_linear_min, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return 0;
