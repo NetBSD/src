@@ -1,4 +1,4 @@
-/*	$NetBSD: t3000.c,v 1.7 1998/03/30 02:31:44 mrg Exp $	*/
+/*	$NetBSD: t3000.c,v 1.8 1998/07/12 09:14:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: t3000.c,v 1.7 1998/03/30 02:31:44 mrg Exp $");
+__RCSID("$NetBSD: t3000.c,v 1.8 1998/07/12 09:14:20 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -229,7 +229,6 @@ t3000_connect()
 		return (0);
 	f = signal(SIGALRM, sigALRM);
 again:
-	nc = 0; nl = sizeof(dialer_buf)-1;
 	memset(dialer_buf, 0, sizeof(dialer_buf));
 	timeout = 0;
 	for (nc = 0, nl = sizeof(dialer_buf)-1 ; nl > 0 ; nc++, nl--) {
@@ -340,6 +339,7 @@ t3000_write(fd, cp, n)
 	char *cp;
 	int n;
 {
+
 #ifdef notdef
 	if (boolean(value(VERBOSE)))
 		write(1, cp, n);
@@ -412,5 +412,6 @@ static void
 t3000_napx(dummy)
 	int dummy;
 {
+
         ringring = 1;
 }
