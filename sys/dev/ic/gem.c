@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.11 2001/11/17 00:56:04 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.12 2002/01/19 03:16:38 eeh Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.11 2001/11/17 00:56:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.12 2002/01/19 03:16:38 eeh Exp $");
 
 #include "bpfilter.h"
 
@@ -827,7 +827,6 @@ gem_init_regs(struct gem_softc *sc)
 	bus_space_handle_t h = sc->sc_h;
 
 	/* These regs are not cleared on reset */
-	sc->sc_inited = 0;
 	if (!sc->sc_inited) {
 
 		/* Wooo.  Magic values. */
