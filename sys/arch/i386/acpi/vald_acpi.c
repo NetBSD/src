@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.15 2003/11/03 06:03:47 kochi Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.16 2003/11/03 17:54:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.15 2003/11/03 06:03:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.16 2003/11/03 17:54:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,37 +202,33 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	rv = acpi_eval_integer(ACPI_ROOT_OBJECT,
 		"\\_SB_.ADP1._PSR",&sc->sc_ac_status);
 	if (rv != AE_OK)
-		printf("%s: Unable to evaluate _PSR error %x\n",
-		    sc->sc_dev.dv_xname, rv);
+		printf("%s: Unable to evaluate _PSR: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 	else
 		printf("AC adaptor status %sconnected\n", 
 		    (sc->sc_ac_status == 0 ? "not ": ""));
 
 	/* Get LCD backlight status. */
 	rv = vald_acpi_ghci_get(sc, GHCI_BACKLIGHT, &value, &result);
-	if (rv != AE_OK)
-		printf("%s: Unable to evaluate GHCI\n", sc->sc_dev.dv_xname);
-	if (result != 0)
-		printf("%s: Can't get status of LCD backlight error=%x\n",
-		    sc->sc_dev.dv_xname, result);
-	else 
-		printf("LCD backlight status %s\n",
-		    ((value == GHCI_ON) ? "on" : "off"));
+	if (rv == AE_OK) {
+		if (result != 0)
+			printf("%s: can't get backlight status error=%d\n",
+			    sc->sc_dev.dv_xname, result);
+		else
+			printf("LCD backlight status %s\n",
+			    ((value == GHCI_ON) ? "on" : "off"));
+	}
 
 	/* Enable SystemEventFIFO,HotkeyEvent */
 	rv = vald_acpi_ghci_set(sc, GHCI_SYSTEM_EVENT_FIFO, GHCI_ENABLE,
 	    &result); 
-	if (rv != AE_OK) 
-		printf("%s: unable to evaluate GHCI\n", sc->sc_dev.dv_xname);
-	if (result != 0)
-		printf("%s: Can't enable SystemEventFIFO error=%d\n",
+	if (rv == AE_OK && result != 0)
+		printf("%s: can't enable SystemEventFIFO error=%d\n",
 		    sc->sc_dev.dv_xname, result);
 
 	rv = vald_acpi_ghci_set(sc, GHCI_HOTKEY_EVENT, GHCI_ENABLE, &result); 
-	if (rv != AE_OK) 
-		printf("%s: unable to evaluate GHCI\n", sc->sc_dev.dv_xname);
-	if (result != 0)
-		printf("%s: Can't enable HotkeyEvent error=%d\n",
+	if (rv == AE_OK && result != 0)
+		printf("%s: can't enable HotkeyEvent error=%d\n",
 		    sc->sc_dev.dv_xname, result);
 
 	/* Check SystemFIFO events. */
@@ -249,8 +245,8 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, vald_acpi_notify_handler, sc);
 	if (rv != AE_OK)
-		printf("%s: Can't install notify handler (%04x)\n",
-		    sc->sc_dev.dv_xname, (uint)rv);
+		printf("%s: can't install DEVICE NOTIFY handler: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 }
 
 /*
@@ -275,13 +271,14 @@ vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		    vald_acpi_event, sc);
 
 		if (ACPI_FAILURE(rv))
-			printf("%s : WARNING: unable to queue vald change "
-			    "event: %04x\n", sc->sc_dev.dv_xname, (uint)rv);
+			printf("%s: WARNING: unable to queue vald change "
+			    "event: %s\n", sc->sc_dev.dv_xname,
+			    AcpiFormatException(rv));
 		break;
 
 	default:
-		printf("vald_acpi_notify_handler: unknown event: %04"
-		    PRIu32 "\n", notify);
+		printf("%s: received unknown notify messages: 0x%x\n",
+		    sc->sc_dev.dv_xname, notify);
 		break;
 	}
 }
@@ -364,8 +361,8 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, 
 	    "GHCI", &ArgList, &buf);
 	if (rv != AE_OK) {
-		printf("%s: failed to evaluate GHCI: 0x%x\n",
-		    sc->sc_dev.dv_xname, rv);
+		printf("%s: failed to evaluate GHCI: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (rv);
 	}	
 
@@ -422,10 +419,11 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, 
 	    "GHCI", &ArgList, &buf);	
 	if (rv != AE_OK) {
-		printf("%s: failed to evaluate GHCI: 0x%x\n",
-		    sc->sc_dev.dv_xname, rv);
+		printf("%s: failed to evaluate GHCI: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return (rv);
 	}
+
 	*result = GHCI_NOT_SUPPORT;	
 	param = (ACPI_OBJECT *)buf.Pointer;
 	if (param->Type == ACPI_TYPE_PACKAGE) {
@@ -507,7 +505,7 @@ vald_acpi_libright_get(struct vald_acpi_softc *sc)
 {
 	ACPI_HANDLE parent;
 
-	printf("%s: Get LCD brightness via _BCL\n", sc->sc_dev.dv_xname);
+	printf("%s: get LCD brightness via _BCL\n", sc->sc_dev.dv_xname);
 
 #ifdef ACPI_DEBUG
 	printf("acpi_libright_get: start\n");
@@ -537,11 +535,8 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 
 	/* Get LCD backlight status. */
 	rv = vald_acpi_ghci_get(sc, GHCI_BACKLIGHT, &backlight, &result);
-	if (rv != AE_OK)
-		printf("%s: unable to evaluate GHCI\n", sc->sc_dev.dv_xname);
-	if (result != 0)
-		printf("%s: Can't get LCD backlight status error=%x\n",	
-		    sc->sc_dev.dv_xname, result);
+	if (rv != AE_OK || result != 0)
+		return;
 
 	/* Figure up next status. */
 	backlight_new = backlight;
@@ -573,11 +568,8 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 	if (backlight_new != backlight) {
 		rv = vald_acpi_ghci_set(sc, GHCI_BACKLIGHT, backlight_new,
 		    &result);
-		if (rv != AE_OK)
-			printf("%s: unable to evaluate GHCI\n", 
-			    sc->sc_dev.dv_xname);
-		if (result != 0)
-			printf("%s: Can't set LCD backlight %s error=%x\n",
+		if (rv == AE_OK && result != 0)
+			printf("%s: can't set LCD backlight %s error=%x\n",
 			    sc->sc_dev.dv_xname, 
 			    ((backlight_new == 1) ? "on" : "off"), result);
 	}
@@ -589,7 +581,8 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 
 		rv = vald_acpi_bcm_set(sc->lcd_handle, bright);
 		if (rv != AE_OK)
-			printf("Unable to evaluate _BCM: %d\n", rv);
+			printf("%s: unable to evaluate _BCM: %s\n",
+			    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 	} else { 
 		bright = 0;
 	}
@@ -615,10 +608,12 @@ vald_acpi_video_switch(struct vald_acpi_softc *sc)
 	/* Get video status. */
 	rv = vald_acpi_ghci_get(sc, GHCI_DISPLAY_DEVICE, &value, &result);
 	if (rv != AE_OK)
-		printf("%s: unable to evaluate GHCI\n", sc->sc_dev.dv_xname);
-	if (result != 0)
-		printf("%s: Can't get video status  error=%x\n",
+		return;
+	if (result != 0) {
+		printf("%s: can't get video status  error=%x\n",
 		    sc->sc_dev.dv_xname, result);
+		return;
+	}
 
 #ifdef ACPI_DEBUG
 	printf("Toggle LCD/CRT\n");
@@ -638,7 +633,8 @@ vald_acpi_video_switch(struct vald_acpi_softc *sc)
 
 	rv = vald_acpi_dssx_set(value);
 	if (rv != AE_OK)
-		printf("Unable to evaluate DSSX: %d\n", rv);
+		printf("%s: unable to evaluate DSSX: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 
 }
 
@@ -702,10 +698,12 @@ vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 	/* Get FAN status */
 	rv = vald_acpi_ghci_get(sc, GHCI_FAN, &value, &result); 
 	if (rv != AE_OK) 
-		printf("%s: unable to evaluate GHCI\n", sc->sc_dev.dv_xname);
-	if (result != 0)
-		printf("%s: Can't get FAN status error=%d\n",
+		return;
+	if (result != 0) {
+		printf("%s: can't get FAN status error=%d\n",
 		    sc->sc_dev.dv_xname, result);
+		return;
+	}
 
 #ifdef ACPI_DEBUG
 	printf("Toggle FAN on/off\n");
@@ -722,10 +720,12 @@ vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 	/* Set FAN new status. */
 	rv = vald_acpi_ghci_set(sc, GHCI_FAN, value, &result); 
 	if (rv != AE_OK) 
-		printf("%s: unable to evaluate GHCI\n", sc->sc_dev.dv_xname);
-	if (result != 0) 
-		printf("%s: Can't set FAN status error=%d\n",
+		return;
+	if (result != 0) {
+		printf("%s: can't set FAN status error=%d\n",
 		    sc->sc_dev.dv_xname, result);
+		return;
+	}
 
 #ifdef ACPI_DEBUG
 	printf("\t After toggle, FAN status %s\n", 
