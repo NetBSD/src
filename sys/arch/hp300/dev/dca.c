@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dca.c	7.12 (Berkeley) 6/27/91
- *	$Id: dca.c,v 1.4 1993/05/27 09:35:10 deraadt Exp $
+ *	$Id: dca.c,v 1.5 1993/05/29 19:41:40 cgd Exp $
  */
 
 #include "dca.h"
@@ -227,7 +227,7 @@ dcaopen(dev, flag, mode, p)
 	while ((flag&O_NONBLOCK) == 0 && (tp->t_cflag&CLOCAL) == 0 &&
 	       (tp->t_state & TS_CARR_ON) == 0) {
 		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
+		if (error = ttysleep(tp, (caddr_t)&tp->t_raw, TTIPRI | PCATCH,
 		    ttopen, 0))
 			break;
 	}
