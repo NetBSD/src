@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.21 2002/10/09 22:28:03 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.22 2002/10/12 12:20:10 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -214,13 +214,16 @@ ENTRY(remrunqueue)
 .Lcurproc:
 	/* FIXME: This is bogus in the general case. */
 	.word	_C_LABEL(cpu_info_store) + CI_CURPROC
+
+.Lcurpcb:
+	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
 #else
 .Lcurproc:
 	.word	_C_LABEL(curproc)
-#endif
 
 .Lcurpcb:
 	.word	_C_LABEL(curpcb)
+#endif
 
 .Lwant_resched:
 	.word	_C_LABEL(want_resched)
@@ -228,11 +231,13 @@ ENTRY(remrunqueue)
 .Lcpufuncs:	
 	.word	_C_LABEL(cpufuncs)
 	
+#ifndef MULTIPROCESSOR
 	.data
 	.global	_C_LABEL(curpcb)
 _C_LABEL(curpcb):
 	.word	0x00000000
 	.text
+#endif
 
 .Lblock_userspace_access:
 	.word	_C_LABEL(block_userspace_access)

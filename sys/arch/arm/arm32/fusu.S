@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.6 2002/08/17 16:36:33 thorpej Exp $	*/
+/*	$NetBSD: fusu.S,v 1.7 2002/10/12 12:20:10 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -32,11 +32,19 @@
  * SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include "assym.h"
 #include <machine/asm.h>
 
+#ifdef MULTIPROCESSOR
+	/* FIXME: This is bogus in the general case. */
+.Lcurpcb:
+	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
+#else
 .Lcurpcb:
 	.word	_C_LABEL(curpcb)
+#endif
 
 /*
  * fuword(caddr_t uaddr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.5 2002/08/17 16:36:31 thorpej Exp $	*/
+/*	$NetBSD: copystr.S,v 1.6 2002/10/12 12:20:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -38,17 +38,25 @@
  * Created      : 16/05/95
  */
 
+#include "opt_multiprocessor.h"
+	
 #include "assym.h"
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copystr.S,v 1.5 2002/08/17 16:36:31 thorpej Exp $")
+RCSID("$NetBSD: copystr.S,v 1.6 2002/10/12 12:20:09 bjh21 Exp $")
 
 #include <sys/errno.h>
 
 	.text
 	.align	0
+#ifdef MULTIPROCESSOR
+	/* FIXME: This is bogus in the general case. */
+.Lcurpcb:
+	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
+#else
 .Lcurpcb:
 	.word	_C_LABEL(curpcb)
+#endif
 
 /*
  * r0 - from
