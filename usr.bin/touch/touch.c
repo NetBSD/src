@@ -39,21 +39,22 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)touch.c	5.5 (Berkeley) 3/7/93";*/
-static char rcsid[] = "$Id: touch.c,v 1.7 1993/09/16 21:44:35 cgd Exp $";
+static char rcsid[] = "$Id: touch.c,v 1.8 1993/12/31 19:33:02 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <time.h>
 #include <unistd.h>
+#include <err.h>
 
 int	rw __P((char *, struct stat *, int));
 void	stime_arg1 __P((char *, struct timeval *));
@@ -74,6 +75,8 @@ main(argc, argv)
 	struct timeval tv[2];
 	int aflag, cflag, fflag, mflag, ch, fd, len, rval, timeset;
 	char *p;
+
+	setlocale(LC_ALL, "");
 
 	aflag = cflag = fflag = mflag = timeset = 0;
 	if (gettimeofday(&tv[0], NULL))
@@ -174,6 +177,7 @@ main(argc, argv)
 		if (timeset) {
 			rval = 1;
 			warn("%s", *argv);
+			continue;
 		}
 
 		/*
