@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.1 1997/05/17 13:56:06 matthias Exp $	*/
+/*	$NetBSD: md.c,v 1.2 1997/11/18 01:19:22 phil Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -44,7 +44,7 @@
 
 #ifndef MD_START
 extern u_char stext[];
-#define MD_START ((void *)((((int)stext) & 0xffffff00) - 78 * 18 * 1024))
+#define MD_START ((void *)((((int)stext) & 0xffffff00) - 2800 * 512))
 #endif
 
 int
