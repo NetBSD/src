@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2002/03/29 04:45:38 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2002/03/29 22:14:20 matt Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
@@ -25,3 +25,19 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 	cd ${.CURDIR}/../distrib/vax && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
+
+iso-image_md_pre:
+	cp -f ${RELEASEDIR}/installation/netboot/netbsd.ram.gz \
+		${RELEASEDIR}/netbsd
+	cp -f ${DESTDIR}/usr/mdec/boot ${RELEASEDIR}
+
+iso-image_md_post:
+.if ${USETOOLS} == "yes"
+	${TOOLDIR}/bin/nbvax-installboot \
+		${RELEASEDIR}/installation/cdrom/netbsd-${MACHINE}.iso \
+		${DESTDIR}/usr/mdec/xxboot
+.else
+	${DESTDIR}/usr/mdec/installboot \
+		${RELEASEDIR}/installation/cdrom/netbsd-${MACHINE}.iso \
+		${DESTDIR}/usr/mdec/xxboot
+.endif
