@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32.h,v 1.1 1998/08/26 10:20:34 mrg Exp $	*/
+/*	$NetBSD: sparc32.h,v 1.2 1998/09/07 01:38:03 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -433,7 +433,7 @@ struct sparc32_sigcontext {
 #define SPARC32TO64(s32uap, uap, name) \
 	    SCARG(uap, name) = SCARG(s32uap, name)
 #define SPARC32TOP(s32uap, uap, name, type) \
-	    SCARG(uap, name) = (type *)(u_long)SCARG(s32uap, name)
+	    SCARG(uap, name) = (type *)(u_long)(u_int)SCARG(s32uap, name)
 #define SPARC32TOX(s32uap, uap, name, type) \
 	    SCARG(uap, name) = (type)SCARG(s32uap, name)
 #define SPARC32TOX64(s32uap, uap, name, type) \
