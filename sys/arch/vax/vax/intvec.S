@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.4 2003/01/19 22:29:23 ragge Exp $   */
+/*	$NetBSD: intvec.S,v 1.5 2003/03/28 20:25:40 he Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -243,7 +243,7 @@ SCBENTRY(transl_v)		# 20: Translation violation
 	addl2	$8,%sp
 	rei
 1:	popr	$0x3f
-	brb	Xaccess_v
+	brw	Xaccess_v
 
 SCBENTRY(access_v)			# 24: Access cntrl viol fault
 	blbs	(%sp), ptelen
