@@ -1,95 +1,76 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.6 2002/04/11 12:22:58 lukem Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.7 2002/04/16 05:23:40 lukem Exp $
+#
+# Makefile snippet to create a set of USTAR floppies
+#
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
 
-# needs the following set:
-#	IMAGE		image name
-#	KERNELDIR	where kernel is grabbed from
-#	KERNEL		kernel name
-#	DISKSIZE	size of image in 0.5K blocks
+#
+# Required variables:
+#	_SRC_TOP_	Top level of src tree (set by <bsd.own.mk>)
+#	FLOPPYBASE	Basename of floppies. Floppy number ${n} will
+#			be generated as ${FLOPPYBASE}${n}.fs
+#	FLOPPYKERNEL	Kernel to copy 
+#	FLOPPYKERNDIR	${FLOPPYKERNEL} is from ${.CURDIR}/../${FLOPPYKERNDIR}
 
-FSTMP=		ustar.tmp
-MDEC=		${DESTDIR}/usr/mdec
-BOOTCODE?=	${MDEC}/biosboot.sym
-#BOOTCODE=	${MDEC}/biosboot_com0.sym	# Serial output
+#
+# Optional variables:
+#	FLOPPYSIZE	Size of floppy in 512 byte blocks.	[2880]
+#	FLOPPYMAX	Maximum number of floppies to build.	[1]
+#			If 1, final image is installed as ${FLOPPYBASE}.fs
+#	FLOPPYBOOTCODE	Boot blocks to use.  [${DESTDIR}/usr/mdec/biosboot.sym]
+#	FLOPPYMETA	ustar metafile (written between "boot" & "netbsd")
+#	FLOPPYPAD	If defined, pad the last floppy to ${FLOPPYSIZE}
+#
 
-CLEANFILES+=	netbsd boot ustar.tmp ${METAFILE} ${IMAGE} ${IMAGE}.tmp
+FLOPPYSIZE?=	2880
+FLOPPYMAX?=	1
+FLOPPYBOOTCODE?=${DESTDIR}/usr/mdec/biosboot.sym
+FLOPPYFILES=	boot ${FLOPPYMETA} netbsd
 
-realall:	${IMAGE}
+FLOPPYKERNOBJ!=	cd ${.CURDIR}/../${FLOPPYKERNDIR} && ${PRINTOBJDIR}
 
-${IMAGE}:	netbsd boot
-	if test "${METAFILE}" != ""; then \
-		touch ${METAFILE}; \
-	fi
-	${PAX} -wvf ${FSTMP} boot ${METAFILE} netbsd
-	@echo
-	@echo Making disk number one
-	rm -rf empty
-	mkdir -m 755 empty
-	${MAKEFS} -s ${DISKSIZE}b ${IMAGE}.tmp empty
-	dd bs=8k seek=1 count=$$((${DISKSIZE} / 16 - 1)) \
-	    if=${FSTMP} of=${IMAGE}.tmp
-	@echo "installing new bootblocks"
-	${MDEC}/installboot -b 17 -v -f ${BOOTCODE} ${IMAGE}.tmp
-		# XXXDISTRIB
-	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
-		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
-		disks=$$(($$size / $$dksize + 1)); \
-		if test $$size -gt $$dksize; then \
-                	bytes=$$(($$size - $$dksize));    \
-			echo "Image is $$bytes ($$(($$bytes / 1024))K) too big\
-				to fit on one disk."; \
-			exit 1; \
-		else \
-			dd seek=$$(($${size} / 512 + 15)) count=1 \
-				if=/dev/zero of=${IMAGE}.tmp; \
-		fi; \
-		echo; \
-                bytes=$$(($$dksize * $$disks - $$size));    \
-		if test "${PAD}" = "yes"; then \
-			size=$$(($$size + 8 * 1024)); \
-			echo "Padding image with $$bytes bytes from $$size"; \
-			sectors=$$(($$bytes / 512)); \
-			ssize=$$(($$size / 512)); \
-			dd if=/dev/zero bs=512 seek=$${ssize} of=${IMAGE}.tmp \
-				count=$${sectors}; \
-                else \
-			echo "There are $$bytes ($$(($$bytes / 1024))K) bytes\
-				free on disk $$disks."; \
-		fi; \
-	)
-	mv -f ${IMAGE}.tmp ${IMAGE}
+boot: ${FLOPPYBOOTCODE}
+	@echo "Copying ${FLOPPYBOOTCODE} to boot"
+	@rm -f boot
+	@cp ${FLOPPYBOOTCODE} boot
+	@${STRIP} boot
 
-# Let the kernel on the diskette be called "netbsd" although
-# it is compressed.  This is because the boot code will search
-# for "netbsd" first, and calling it "netbsd" instead of "netbsd.gz"
-# we avoid scanning all the diskettes before reading the file.
+netbsd: ${FLOPPYKERNOBJ}/${FLOPPYKERNEL}
+	@echo "Copying ${FLOPPYKERNOBJ}/${FLOPPYKERNEL} to netbsd"
+	@rm -f netbsd
+	@cp ${FLOPPYKERNOBJ}/${FLOPPYKERNEL} netbsd
 
-KERNELOBJDIR!=	cd ${.CURDIR}/../${KERNELDIR} && ${PRINTOBJDIR}
+.if defined(FLOPPYMETA)
+${FLOPPYMETA}:
+	echo "Creating ${FLOPPYMETA}"
+	@rm -f ${FLOPPYMETA}
+	@touch ${FLOPPYMETA}
+.endif
 
-netbsd: ${KERNELOBJDIR}/${KERNEL}
-	rm -f netbsd
-	cp ${KERNELOBJDIR}/${KERNEL} netbsd
+${FLOPPYBASE}1.fs: ${FLOPPYFILES}
+	@echo "Creating ${FLOPPYBASE}1.fs from ${FLOPPYFILES}
+#		XXXDISTRIB; need MI installboot for i386
+	sh ${DISTRIBDIR}/common/buildfloppies.sh \
+	    -i "${DESTDIR}/usr/mdec/installboot -b 17 -f ${FLOPPYBOOTCODE} @IMAGE@" \
+	    ${FLOPPYMAX:D-m "${FLOPPYMAX}"} ${FLOPPYPAD:D-p} \
+	    ${FLOPPYBASE} ${FLOPPYSIZE} ${FLOPPYFILES}
 
-# This is "cheating", just so that we have the available
-# space at the start of the tar file.  Installboot will overwrite
-# the start of the bootcode with the tail end of the "real", aligned
-# second-stage boot loader when it is run (which is quite a bit shorter
-# than the entire ${BOOTCODE} file, even when symbols are removed.
-# (the first 15*512 bytes are put into the first 8K filesystem block,
-# around the disklabel)
+CLEANFILES+=	${FLOPPYFILES} ${FLOPPYBASE}?.fs
 
-boot: ${BOOTCODE}
-	rm -f boot
-	cp ${BOOTCODE} boot
-	${STRIP} boot
 
-release: check_RELEASEDIR
+realall: ${FLOPPYBASE}1.fs
+
+release: check_RELEASEDIR .WAIT ${FLOPPYBASE}1.fs
 	-mkdir -p ${RELEASEDIR}/installation/floppy
-	${RELINSTALL} ${IMAGE} ${RELEASEDIR}/installation/floppy
+	if [ -e ${FLOPPYBASE}2.fs ]; then \
+		${RELINSTALL} ${FLOPPYBASE}?.fs \
+		    ${RELEASEDIR}/installation/floppy; \
+	else \
+		${RELINSTALL} ${FLOPPYBASE}1.fs \
+		    ${RELEASEDIR}/installation/floppy/${FLOPPYBASE}.fs; \
+	fi
 
-clean cleandir distclean:
-	rm -rf empty
 
 .include <bsd.prog.mk>
