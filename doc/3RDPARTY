@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.278 2005/02/12 05:48:57 martti Exp $
+#	$NetBSD: 3RDPARTY,v 1.279 2005/02/13 06:14:00 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -473,12 +473,12 @@ Responsible:	christos
 Notes:
 
 Package:	OpenSSH
-Version:	3.6.1 around 20030403
+Version:	3.9
 Current Vers:	3.9 / portable 3.9p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Mailing List:	openssh-unix-announce@mindrot.org
-Responsible:	thorpej, jwise, itojun
+Responsible:	thorpej, jwise, itojun, christos
 Notes:
 imported from OpenBSD usr.bin/ssh (it is not from the portable OpenSSH)
 into crypto/dist/openssh.  use openssh2netbsd before import.
@@ -487,14 +487,10 @@ markus is very cooperative about it):
 - default for PermitRootLogin is set to "no"
 - IgnoreRootRhosts added
 - look at login.conf to check valid user/access list
-- ssh{,d}_config -> ssh{,d}.conf (can't bring it back) (1.5 branch only)
-1.5 branch uses /etc for configuration files, while current/1.6 uses /etc/ssh.
-http://www.openbsd.org/advisories/ssh_channelalloc.txt is integrated
-manually to 1.5 branch.  version date "20020307" identifies the fix.
-http://www.openssh.com/txt/preauth.adv is integrated manually to 1.5 branch.
-version date "20020626" identifies the fix.
-official openssh releases dropped kerberosIV support already, therefore
-if we need to keep it we need to maintain it ourselves.
+- krb4 and krb5 support re-added
+- hack in cipher.c #ifdef NEW_OPENSSL because we are missing EVP_acss
+  when someone imports openssl, we can remove this.
+- uidswap.c changed order of set{e,}{u,g}id so that it works on NetBSD
 
 Package:	OpenSSL
 Version:	0.9.7d
