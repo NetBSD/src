@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.12 1998/12/03 18:24:30 bouyer Exp $	*/
+/*	$NetBSD: rapide.c,v 1.13 2001/02/27 20:27:17 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -78,6 +78,7 @@
 #include <machine/bus.h>
 #include <machine/bootconfig.h>
 #include <arm32/iomd/iomdreg.h>
+#include <arm32/iomd/iomdvar.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/podules.h>
 #include <arm32/podulebus/rapidereg.h>
