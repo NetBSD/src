@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.93 1999/09/10 00:02:06 tron Exp $	*/
+/*	$NetBSD: systm.h,v 1.94 1999/09/10 00:03:52 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -192,12 +192,6 @@ int	format_bytes __P((char *, size_t, u_int64_t));
 
 void	tablefull __P((const char *));
 
-/* XXX b*() are now macros. should remove these prototypes soon */
-#if 0
-void	bcopy __P((const void *, void *, size_t));
-void	bzero __P((void *, size_t));
-int	bcmp __P((const void *, const void *, size_t));
-#endif
 int	kcopy __P((const void *, void *, size_t));
 
 #define bcopy(src, dst, len)	memcpy(dst, src, len)
