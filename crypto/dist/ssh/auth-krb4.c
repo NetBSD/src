@@ -144,7 +144,7 @@ auth_krb4_password(struct passwd * pw, const char *password)
 kerberos_auth_failure:
 		krb4_cleanup_proc(NULL);
 
-		if (!options.kerberos_or_local_passwd)
+		if (!options.krb4_or_local_passwd)
 			return 0;
 	} else {
 		/* Logging in as root or no local Kerberos realm. */
@@ -283,7 +283,7 @@ auth_krb4(const char *server_user, KTEXT auth, char **client)
 
 #ifdef AFS
 int
-auth_kerberos_tgt(struct passwd *pw, const char *string)
+auth_krb4_tgt(struct passwd *pw, const char *string)
 {
 	CREDENTIALS creds;
 

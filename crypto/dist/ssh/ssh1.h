@@ -66,6 +66,9 @@
 #define SSH_CMSG_HAVE_KERBEROS_TGT		44	/* credentials (s) */
 #define SSH_CMSG_HAVE_AFS_TOKEN			65	/* token (s) */
 
+/* Kerberos IV tickets can't be forwarded. This is an AFS hack! */ 
+#define SSH_CMSG_HAVE_KRB4_TGT SSH_CMSG_HAVE_KERBEROS_TGT /* credentials (s) */
+
 /*
  * Authentication methods.  New types can be added, but old types should not
  * be removed for compatibility.  The maximum allowed value is 31.

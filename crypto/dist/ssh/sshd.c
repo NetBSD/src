@@ -82,6 +82,10 @@ int deny_severity = LOG_WARNING;
 #define O_NOCTTY	0
 #endif
 
+#ifdef KRB5
+#include <krb5.h>
+#endif /* KRB5 */
+
 extern char *__progname;
 
 /* Server configuration options. */
@@ -1126,7 +1130,7 @@ main(int ac, char **av)
 		    "originating port not trusted.");
 		options.rhosts_authentication = 0;
 	}
-#ifdef KRB4
+#if defined(KRB4) && !defined(KRB5)
 	if (!packet_connection_is_ipv4() &&
 	    options.kerberos_authentication) {
 		debug("Kerberos Authentication disabled, only available for IPv4.");
@@ -1155,7 +1159,7 @@ main(int ac, char **av)
 
 #ifdef KRB4
 	/* Cleanup user's ticket cache file. */
-	if (options.kerberos_ticket_cleanup)
+	if (options.krb4_ticket_cleanup)
 		(void) dest_tkt();
 #endif /* KRB4 */
 
@@ -1229,12 +1233,16 @@ do_ssh1_kex(void)
 		auth_mask |= 1 << SSH_AUTH_RHOSTS_RSA;
 	if (options.rsa_authentication)
 		auth_mask |= 1 << SSH_AUTH_RSA;
-#ifdef KRB4
+#if defined(KRB4) || defined(KRB5)
 	if (options.kerberos_authentication)
 		auth_mask |= 1 << SSH_AUTH_KERBEROS;
 #endif
+#ifdef KRB5
+	if (options.krb5_tgt_passing)
+	  	auth_mask |= 1 << SSH_PASS_KERBEROS_TGT;
+#endif /* KRB5 */
 #ifdef AFS
-	if (options.kerberos_tgt_passing)
+	if (options.krb4_tgt_passing)
 		auth_mask |= 1 << SSH_PASS_KERBEROS_TGT;
 	if (options.afs_token_passing)
 		auth_mask |= 1 << SSH_PASS_AFS_TOKEN;
