@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.150 2003/02/26 21:28:24 fvdl Exp $	*/
+/*	$NetBSD: pmap.c,v 1.151 2003/04/01 20:54:23 thorpej Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.150 2003/02/26 21:28:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2003/04/01 20:54:23 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -406,7 +406,7 @@ struct pool pmap_pmap_pool;
 
 #ifdef MULTIPROCESSOR
 #define PTESLEW(pte, id) ((pte)+(id)*NPTECL)
-#define VASLEW(va,id) ((va)+(id)*NPTECL*NBPG)
+#define VASLEW(va,id) ((va)+(id)*NPTECL*PAGE_SIZE)
 #else
 #define PTESLEW(pte, id) (pte)
 #define VASLEW(va,id) (va)

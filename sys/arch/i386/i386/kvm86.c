@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.5 2003/01/20 18:43:18 drochner Exp $ */
+/* $NetBSD: kvm86.c,v 1.6 2003/04/01 20:54:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.5 2003/01/20 18:43:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.6 2003/04/01 20:54:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,7 @@ extern int kvm86_call(struct trapframe *);
 extern void kvm86_ret(struct trapframe *, int);
 
 struct kvm86_data {
-#define PGTABLE_SIZE	((1024 + 64) * 1024 / NBPG)
+#define PGTABLE_SIZE	((1024 + 64) * 1024 / PAGE_SIZE)
 	pt_entry_t pgtbl[PGTABLE_SIZE]; /* must be aliged */
 
 	struct segment_descriptor sd;
@@ -79,16 +79,16 @@ kvm86_init()
 	struct pcb *pcb;
 	int i;
 
-	vmdsize = round_page(sizeof(struct kvm86_data)) + NBPG;
+	vmdsize = round_page(sizeof(struct kvm86_data)) + PAGE_SIZE;
 
 	buf = malloc(vmdsize, M_DEVBUF, M_NOWAIT);
-	if ((u_long)buf & (NBPG - 1)) {
+	if ((u_long)buf & (PAGE_SIZE - 1)) {
 		printf("struct kvm86_data unaligned\n");
 		return;
 	}
 	memset(buf, 0, vmdsize);
 	/* first page is stack */
-	vmd = (struct kvm86_data *)(buf + NBPG);
+	vmd = (struct kvm86_data *)(buf + PAGE_SIZE);
 	pcb = &vmd->pcb;
 
 	/*
@@ -112,11 +112,11 @@ kvm86_init()
 
 	/* prepare VM for BIOS calls */
 	kvm86_mapbios(vmd);
-	bioscallscratchpage = malloc(NBPG, M_DEVBUF, M_NOWAIT);
+	bioscallscratchpage = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
 	kvm86_map(vmd, vtophys((vaddr_t)bioscallscratchpage),
 		  BIOSCALLSCRATCHPAGE_VMVA);
 	bioscallvmd = vmd;
-	bioscalltmpva = uvm_km_valloc(kernel_map, NBPG);
+	bioscalltmpva = uvm_km_valloc(kernel_map, PAGE_SIZE);
 }
 
 /*
@@ -166,7 +166,7 @@ kvm86_mapbios(vmd)
 	kvm86_map(vmd, 0, 0);
 
 	/* map ISA hole */
-	for (pa = 0xa0000; pa < 0x100000; pa += NBPG)
+	for (pa = 0xa0000; pa < 0x100000; pa += PAGE_SIZE)
 		kvm86_map(vmd, pa, pa);
 }
 
@@ -179,8 +179,8 @@ kvm86_bios_addpage(vmva)
 	if (bioscallvmd->pgtbl[vmva >> 12]) /* allocated? */
 		return (0);
 
-	mem = malloc(NBPG, M_DEVBUF, M_NOWAIT);
-	if ((u_long)mem & (NBPG - 1)) {
+	mem = malloc(PAGE_SIZE, M_DEVBUF, M_NOWAIT);
+	if ((u_long)mem & (PAGE_SIZE - 1)) {
 		printf("kvm86_bios_addpage: unaligned");
 		return (0);
 	}
@@ -210,15 +210,15 @@ kvm86_bios_read(vmva, buf, len)
 
 	todo = len;
 	while (todo > 0) {
-		now = min(todo, NBPG - (vmva & (NBPG - 1)));
+		now = min(todo, PAGE_SIZE - (vmva & (PAGE_SIZE - 1)));
 
 		if (!bioscallvmd->pgtbl[vmva >> 12])
 			break;
-		vmpa = bioscallvmd->pgtbl[vmva >> 12] & ~(NBPG - 1);
+		vmpa = bioscallvmd->pgtbl[vmva >> 12] & ~(PAGE_SIZE - 1);
 		pmap_kenter_pa(bioscalltmpva, vmpa, VM_PROT_READ);
 		pmap_update(pmap_kernel());
 
-		memcpy(buf, (void *)(bioscalltmpva + (vmva & (NBPG - 1))),
+		memcpy(buf, (void *)(bioscalltmpva + (vmva & (PAGE_SIZE - 1))),
 		       now);
 		buf += now;
 		todo -= now;
@@ -245,7 +245,7 @@ kvm86_bioscall(intno, tf)
 
 	tf->tf_eip = BIOSCALLSCRATCHPAGE_VMVA;
 	tf->tf_cs = 0;
-	tf->tf_esp = BIOSCALLSCRATCHPAGE_VMVA + NBPG - 2;
+	tf->tf_esp = BIOSCALLSCRATCHPAGE_VMVA + PAGE_SIZE - 2;
 	tf->tf_ss = 0;
 	tf->tf_eflags = PSL_USERSET | PSL_VM;
 #ifdef KVM86_IOPL3

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.12 2003/03/03 22:14:15 fvdl Exp $ */
+/* $NetBSD: cpu.c,v 1.13 2003/04/01 20:54:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -749,7 +749,7 @@ mp_cpu_start(struct cpu_info *ci)
 
 	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
 	memcpy ((u_int8_t *) 0x467, dwordptr, 4);
-	pmap_kremove (0, NBPG);
+	pmap_kremove (0, PAGE_SIZE);
 
 #if NLAPIC > 0
 	/*
@@ -764,13 +764,15 @@ mp_cpu_start(struct cpu_info *ci)
 
 		if (cpu_feature & CPUID_APIC) {
 
-			if ((error = x86_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
-			    LAPIC_DLMODE_STARTUP)) != 0)
+			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
+					     ci->ci_apicid,
+					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);
 
-			if ((error = x86_ipi(MP_TRAMPOLINE/NBPG,ci->ci_apicid,
-			    LAPIC_DLMODE_STARTUP)) != 0)
+			if ((error = x86_ipi(MP_TRAMPOLINE/PAGE_SIZE,
+					     ci->ci_apicid,
+					     LAPIC_DLMODE_STARTUP)) != 0)
 				return error;
 			delay(200);
 		}

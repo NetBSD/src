@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2 2002/07/01 16:10:03 fredette Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.3 2003/04/01 20:50:12 thorpej Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -166,7 +166,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register_t sp, osp;
 
 #ifdef DIAGNOSTIC
-	if (round_page(sizeof(struct user)) > NBPG)
+	if (round_page(sizeof(struct user)) > PAGE_SIZE)
 		panic("USPACE too small for user");
 #endif
 
@@ -177,7 +177,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	pcbp = &p2->p_addr->u_pcb;
 	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
 
-	sp = (register_t)p2->p_addr + NBPG;
+	sp = (register_t)p2->p_addr + PAGE_SIZE;
 	p2->p_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
 	bcopy(p1->p_md.md_regs, tf, sizeof(*tf));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2002/12/14 05:23:19 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2003/04/01 20:48:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -497,8 +497,8 @@ hppa_init(start)
 	ptlball();
 	fcacheall();
 
-	totalphysmem = PAGE0->imm_max_mem / NBPG;
-	resvmem = resvmem / NBPG;
+	totalphysmem = PAGE0->imm_max_mem / PAGE_SIZE;
+	resvmem = resvmem / PAGE_SIZE;
 
 	/* calculate HPT size */
 	/* for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2); */
@@ -927,7 +927,7 @@ cpu_startup()
 	 * This page is handed to pmap_enter() therefore
 	 * it has to be in the normal kernel VA range.
 	 */
-	vmmap = uvm_km_valloc_wait(kernel_map, NBPG);
+	vmmap = uvm_km_valloc_wait(kernel_map, PAGE_SIZE);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -1372,7 +1372,7 @@ hp700_pagezero_unmap(int was_mapped_before)
 
 	if (!was_mapped_before) {
 		s = splhigh();
-		pmap_kremove(0, NBPG);
+		pmap_kremove(0, PAGE_SIZE);
 		pagezero_mapped = 0;
 		splx(s);
 	}
@@ -1615,7 +1615,7 @@ cpu_dump()
 /*
  * Dump the kernel's image to the swap partition.
  */
-#define	BYTES_PER_DUMP	NBPG
+#define	BYTES_PER_DUMP	PAGE_SIZE
 
 void
 dumpsys()

@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $	*/
+/*	$NetBSD: elan520.c,v 1.5 2003/04/01 20:55:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,12 +47,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.4 2002/10/02 05:47:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.5 2003/04/01 20:55:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/wdog.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 
@@ -220,7 +222,7 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	printf(": AMD Elan SC520 System Controller\n");
 
 	sc->sc_memt = pa->pa_memt;
-	if (bus_space_map(sc->sc_memt, MMCR_BASE_ADDR, NBPG, 0,
+	if (bus_space_map(sc->sc_memt, MMCR_BASE_ADDR, PAGE_SIZE, 0,
 	    &sc->sc_memh) != 0) {
 		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6 2002/12/21 16:23:58 manu Exp $	*/
+/*	$NetBSD: trap.c,v 1.7 2003/04/01 20:50:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -441,7 +441,7 @@ do {							\
 			uspace_size = USPACE;
 #endif
 			SANITY(p == NULL ||
-				((tf->tf_sp >= (u_int)(p->p_addr) + NBPG &&
+				((tf->tf_sp >= (u_int)(p->p_addr) + PAGE_SIZE &&
 				  tf->tf_sp < (u_int)(p->p_addr) + uspace_size)));
 		}
 	} else {
@@ -741,7 +741,7 @@ trap(type, frame)
 		 */
 		if (va >= (vaddr_t)vm->vm_maxsaddr + vm->vm_ssize) {
 			if (ret == 0) {
-				vsize_t nss = btoc(va - USRSTACK + NBPG);
+				vsize_t nss = btoc(va - USRSTACK + PAGE_SIZE);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
 			} else if (ret == EACCES)
