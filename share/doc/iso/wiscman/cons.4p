@@ -1,4 +1,4 @@
-.\"	$NetBSD: cons.4p,v 1.3 2000/03/13 23:03:36 soren Exp $
+.\"	$NetBSD: cons.4p,v 1.4 2001/06/19 13:20:35 wiz Exp $
 .\"
 .TH CONS 4P "9 December 1988"
 .ds ]W Wisconsin ARGO 1.0
@@ -73,7 +73,7 @@ OSINET and EAN at this writing.
 Interoperability with other networks will be established in the future.
 .PP
 The coprocessor that implements the X.25 link and packet layers
-is the Eicon Technologies Access/X.25 Stand-Alone Network Adaper 
+is the Eicon Technologies Access/X.25 Stand-Alone Network Adapter 
 (see \fIecn(4)\fR).
 .PP
 The glue module provides two interfaces to higher layers:
@@ -108,7 +108,7 @@ provides an expanded perror() to handle the additional error return codes.
 .PP
 The error codes returned by the CONS are taken from
 the diagnostic code of the X.25 level 3 packets, as
-descibed in figure 14-B of ISO 8208 (the ISO standard which
+described in figure 14-B of ISO 8208 (the ISO standard which
 is equivalent to CCITT X.25).
 The actual error value returned in 
 \fIerrno\fR
@@ -161,7 +161,7 @@ Whether or not this is done depends on the compile-time option -DX25_1984.
 .SS Incoming path:
 The X.25 Call Request User Data field and the
 1984 X.25 Address Extension Facility are used
-to determing the incoming path through the network layer.
+to determine the incoming path through the network layer.
 The NSAP addresses passed up along with the packet are taken from the
 Address Extension facility, if present.
 If the facility is absent, the glue creates two type-37 NSAP-addresses,
