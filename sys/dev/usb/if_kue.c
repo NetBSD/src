@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.39 2001/01/30 15:04:23 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.40 2001/04/08 02:10:57 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -152,6 +152,7 @@ Static const struct kue_type kue_devs[] = {
 	{ USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_EA101 },
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_ENET },
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_ENET2 },
+	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_ENET3 },
 	{ USB_VENDOR_ENTREGA, USB_PRODUCT_ENTREGA_E45 },
 	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C19250 },
 	{ USB_VENDOR_3COM, USB_PRODUCT_3COM_3C460 },
