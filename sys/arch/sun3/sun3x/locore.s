@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.26 1998/02/05 04:57:58 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.27 1998/06/09 20:47:17 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,8 @@
  *	from: Utah $Hdr: locore.s 1.66 92/12/22$
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
+
+#include "opt_uvm.h"
 
 #include "assym.h"
 #include <machine/asm.h>
@@ -661,7 +663,11 @@ ENTRY(switch_exit)
 	movl	#USPACE,sp@-		| size of u-area
 	movl	a0@(P_ADDR),sp@-	| address of process's u-area
 	movl	_C_LABEL(kernel_map),sp@-	| map it was allocated in
+#if defined(UVM)
+	jbsr	_C_LABEL(uvm_km_free)	| deallocate it
+#else
 	jbsr	_C_LABEL(kmem_free)		| deallocate it
+#endif
 	lea	sp@(12),sp		| pop args
 
 	jra	_C_LABEL(cpu_switch)
