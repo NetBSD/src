@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1 1995/02/13 23:07:59 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.2 1995/02/16 03:08:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -56,11 +56,7 @@ typedef	unsigned long	vm_size_t;
  * not possible for a machine/compiler combination.
  */
 #define __BIT_TYPES_DEFINED__
-#ifdef __GNUC__
 typedef	__signed char		   int8_t;
-#else
-typedef	signed char		   int8_t;
-#endif
 typedef	unsigned char		 u_int8_t;
 typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
