@@ -2,8 +2,6 @@ Things to do for scheduler activations/LWP code.
 
 Bugs:
  
-- MD bug: i386 code needs to handle SSE format FP.
-
 - MD bug: i386 npx handling. cpu_getcontext() may call npxsave(), which
   can only be run at spl0, which is a problem. Options
    * Change npxsave to avoid that requirement.
@@ -15,9 +13,6 @@ Bugs:
 
 - Implement better management of the lwp cache for a sa process. High-water 
   mark needed, at the very least.
-
-- Prevent multiple PREEMPTED upcalls from being delivered before a
-  process ever returns to userspace.
 
 Wishlist:
 
