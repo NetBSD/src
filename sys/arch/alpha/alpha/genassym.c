@@ -1,4 +1,4 @@
-/* $NetBSD: genassym.c,v 1.18 1998/09/13 01:51:29 thorpej Exp $ */
+/* $NetBSD: genassym.c,v 1.19 1998/09/29 06:22:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__RCSID("$NetBSD: genassym.c,v 1.18 1998/09/13 01:51:29 thorpej Exp $");
+__RCSID("$NetBSD: genassym.c,v 1.19 1998/09/29 06:22:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -196,6 +196,9 @@ struct nv assyms[] = {
 	/* Important other addresses */
 	def1(HWRPB_ADDR),		/* Restart parameter block */
 	def1(VPTBASE),			/* Virtual Page Table base */
+
+	/* Offsets into the HWRPB. */
+	off(RPB_PRIMARY_CPU_ID, struct rpb, rpb_primary_cpu_id),
 
 	/* Kernel entries */
 	def1(ALPHA_KENTRY_ARITH),
