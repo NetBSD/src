@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.159.2.2 2004/07/23 23:26:50 he Exp $	*/
+/*	$NetBSD: wi.c,v 1.159.2.2.2.1 2005/01/24 21:39:18 he Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.159.2.2 2004/07/23 23:26:50 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.159.2.2.2.1 2005/01/24 21:39:18 he Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1291,7 +1291,7 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    ether_addmulti(ifr, &sc->sc_ic.ic_ec) :
 		    ether_delmulti(ifr, &sc->sc_ic.ic_ec);
 		if (error == ENETRESET) {
-			if (sc->sc_enabled) {
+			if (ifp->if_flags & IFF_RUNNING) {
 				/* do not rescan */
 				error = wi_write_multi(sc);
 			} else
@@ -1307,7 +1307,7 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		error = wi_set_cfg(ifp, cmd, data);
 		if (error == ENETRESET) {
-			if (sc->sc_enabled)
+			if (ifp->if_flags & IFF_RUNNING)
 				error = wi_init(ifp);
 			else
 				error = 0;
