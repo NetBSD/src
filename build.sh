@@ -1,10 +1,10 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.32 2001/12/11 20:45:31 tv Exp $
+#  $NetBSD: build.sh,v 1.33 2001/12/11 21:13:35 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
 # This script should run on any POSIX-compliant shell.  For systems
-# with a strange /bin/sh, "ksh" may be an ample alternative.
+# with a strange /bin/sh, "ksh" or "bash" may be an ample alternative.
 #
 
 bomb () {
@@ -132,7 +132,7 @@ if type getopts >/dev/null 2>&1; then
 	getoptcmd='getopts $opts opt && opt=-$opt'
 	optargcmd=':'
 else
-	type getopt >/dev/null 2>&1 || bomb "/bin/sh shell is too old; try ksh"
+	type getopt >/dev/null 2>&1 || bomb "/bin/sh shell is too old; try ksh or bash"
 
 	# Use old-style getopt(1) (doesn't handle whitespace in args).
 	args="`getopt $opts $*`"
@@ -235,7 +235,7 @@ if $do_rebuildmake; then
 	$runcmd ${HOST_CC-cc} ${HOST_CFLAGS} -DMAKE_BOOTSTRAP \
 		-o nbmake -I$cwd/usr.bin/make \
 		$cwd/usr.bin/make/*.c $cwd/usr.bin/make/lst.lib/*.c \
-		|| bomb "build of nbmake failed"
+		${HOST_LDFLAGS} || bomb "build of nbmake failed"
 
 	make=$tmpdir/nbmake
 	$runcmd cd $cwd
@@ -343,7 +343,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.32 2001/12/11 20:45:31 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.33 2001/12/11 21:13:35 tv Exp $
 #
 
 EOF
