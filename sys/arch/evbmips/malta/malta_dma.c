@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_dma.c,v 1.1 2002/03/07 14:44:04 simonb Exp $	*/
+/*	$NetBSD: malta_dma.c,v 1.2 2002/03/18 01:21:12 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-#define	_EVBMIPS_BUS_DMA_PRIVATE
+#define	_MIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
