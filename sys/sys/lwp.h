@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.11 2001/12/17 20:37:35 nathanw Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.12 2002/03/28 22:07:57 ragge Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -143,12 +143,18 @@ do {									\
 
 void	preempt (struct lwp *);
 int	mi_switch (struct lwp *, struct lwp *);
+#ifndef remrunqueue
 void	remrunqueue (struct lwp *);
+#endif
 void	resetpriority (struct lwp *);
 void	setrunnable (struct lwp *);
+#ifndef setrunqueue
 void	setrunqueue (struct lwp *);
+#endif
 void	unsleep (struct lwp *);
+#ifndef cpu_switch
 int	cpu_switch (struct lwp *);
+#endif
 void	cpu_preempt (struct lwp *, struct lwp *);
 
 int newlwp(struct lwp *, struct proc *, vaddr_t, int,
