@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.394 2003/04/04 07:53:09 jdolecek Exp $
+# $NetBSD: mi,v 1.395 2003/04/07 15:04:53 kleink Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -2048,6 +2048,7 @@
 ./usr/share/zoneinfo/Antarctica/Mawson		base-sys-share
 ./usr/share/zoneinfo/Antarctica/McMurdo		base-sys-share
 ./usr/share/zoneinfo/Antarctica/Palmer		base-sys-share
+./usr/share/zoneinfo/Antarctica/Rothera		base-sys-share
 ./usr/share/zoneinfo/Antarctica/South_Pole		base-sys-share
 ./usr/share/zoneinfo/Antarctica/Syowa		base-sys-share
 ./usr/share/zoneinfo/Antarctica/Vostok		base-sys-share
