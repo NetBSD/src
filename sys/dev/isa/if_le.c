@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.31 1995/07/24 02:02:58 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.32 1995/07/24 02:29:59 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -106,7 +106,7 @@ void lestop __P((struct le_softc *));
 void letint __P((struct le_softc *));
 void lerint __P((struct le_softc *));
 void leread __P((struct le_softc *, u_char *, int));
-struct mbuf *leget __P((u_char *, int, struct ifnet *));
+struct mbuf *leget __P((struct le_softc *, u_char *, int));
 #ifdef LEDEBUG
 void recv_print __P((struct le_softc *, int));
 void xmit_print __P((struct le_softc *, int));
@@ -905,7 +905,7 @@ leread(sc, buf, len)
 	}
 
 	/* Pull packet off interface. */
-	m = leget(buf, len, ifp);
+	m = leget(sc, buf, len);
 	if (m == 0) {
 		ifp->if_ierrors++;
 		return;
@@ -955,11 +955,12 @@ leread(sc, buf, len)
  * we copy into clusters.
  */
 struct mbuf *
-leget(buf, totlen, ifp)
+leget(sc, buf, totlen)
+	struct le_softc *sc;
 	u_char *buf;
 	int totlen;
-	struct ifnet *ifp;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *top, **mp, *m;
 	int len;
 
