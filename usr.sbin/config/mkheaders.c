@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.14 1997/03/14 00:14:14 jtk Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.15 1997/07/18 11:27:37 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -217,6 +217,12 @@ locators_print(name, value, arg)
 
 	a = value;
 	if (a->a_locs) {
+		if (strchr(name, ' ') != NULL || strchr(name, '\t') != NULL)
+			/*
+			 * name contains a space; we can't generate
+			 * usable defines, so ignore it.
+			 */
+			return 0;
 		locdup = strdup(name);
 		for (cp = locdup; *cp; cp++)
 			if (islower(*cp))
@@ -225,6 +231,13 @@ locators_print(name, value, arg)
 			    name) < 0)
 			return 1;
 		for (i = 0, nv = a->a_locs; nv; nv = nv->nv_next, i++) {
+			if (strchr(nv->nv_name, ' ') != NULL ||
+			    strchr(nv->nv_name, '\t') != NULL)
+				/*
+				 * name contains a space; we can't generate
+				 * usable defines, so ignore it.
+				 */
+				continue;
 			namedup = strdup(nv->nv_name);
 			for (cp = namedup; *cp; cp++)
 				if (islower(*cp))
