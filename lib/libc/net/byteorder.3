@@ -1,4 +1,4 @@
-.\"	$NetBSD: byteorder.3,v 1.11 2003/08/07 16:43:07 agc Exp $
+.\"	$NetBSD: byteorder.3,v 1.11.2.1 2004/06/14 04:07:48 jmc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)byteorder.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd June 10, 2004
 .Dt BYTEORDER 3
 .Os
 .Sh NAME
@@ -41,26 +41,18 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.In sys/types.h
-.Ft in_addr_t
-.Fn htonl "in_addr_t host32"
-.Ft in_port_t
-.Fn htons "in_port_t host16"
-.Ft in_addr_t
-.Fn ntohl "in_addr_t net32"
-.Ft in_port_t
-.Fn ntohs "in_port_t net16"
+.In arpa/inet.h
+.Ft uint32_t
+.Fn htonl "uint32_t host32"
+.Ft uint16_t
+.Fn htons "uint16_t host16"
+.Ft uint32_t
+.Fn ntohl "uint32_t net32"
+.Ft uint16_t
+.Fn ntohs "uint16_t net16"
 .Sh DESCRIPTION
 These routines convert 16 and 32 bit quantities between network
-byte order and host byte order. The types
-.Ft in_addr_t
-and
-.Ft in_port_t
-are defined by X/Open as:
-.Bd -literal -offset indent
-typedef u_int32_t in_addr_t;
-typedef u_int16_t in_port_t;
-.Ed
+byte order and host byte order.
 .Pp
 On machines which have a byte order which is the same as the network
 order, routines are defined as null macros.
@@ -73,6 +65,21 @@ and
 .Sh SEE ALSO
 .Xr gethostbyname 3 ,
 .Xr getservent 3
+.Sh STANDARDS
+The
+.Fn htonl ,
+.Fn htons ,
+.Fn ntohl ,
+and
+.Fn ntohs
+functions conform to
+.St -p1003.1-2001 .
+Their use of the fixed-width intger types
+.Fa uint16_t
+and
+.Fa uint32_t
+first appeared in
+.St -xns5 .
 .Sh HISTORY
 The
 .Nm byteorder
