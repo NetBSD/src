@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.33 1999/03/24 05:51:29 mrg Exp $	*/
+/*	$NetBSD: buf.h,v 1.34 1999/04/07 00:18:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -111,13 +111,10 @@ struct buf {
 #define	B_INVAL		0x00002000	/* Does not contain valid info. */
 #define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	B_NOCACHE	0x00008000	/* Do not cache block after use. */
-#define	B_PAGET		0x00010000	/* Page in/out of page table space. */
-#define	B_PGIN		0x00020000	/* Pagein op, so swap() can count it. */
 #define	B_PHYS		0x00040000	/* I/O to user memory. */
 #define	B_RAW		0x00080000	/* Set by physio for raw transfers. */
 #define	B_READ		0x00100000	/* Read buffer. */
 #define	B_TAPE		0x00200000	/* Magnetic tape I/O. */
-#define	B_UAREA		0x00400000	/* Buffer describes Uarea I/O. */
 #define	B_WANTED	0x00800000	/* Process wants this buffer. */
 #define	B_WRITE		0x00000000	/* Write buffer (pseudo flag). */
 #define	B_WRITEINPROG	0x01000000	/* Write in progress. */
