@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.13 2002/12/16 01:56:49 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.14 2002/12/16 02:15:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include <sys/user.h>
 #include <sys/sched.h>
 #include <sys/proc.h>
+#include <sys/ras.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -137,6 +138,15 @@ cpu_switch_search(struct proc *oldproc)
 	if (p != oldproc) {
 		curpcb = p->p_md.md_pcb;
 		pmap_activate(p);
+
+		/* Check for Restartable Atomic Sequences. */
+		if (p->p_nras != 0) {
+			caddr_t pc;
+
+			pc = ras_lookup(p, (caddr_t) p->p_md.md_regs->tf_spc);
+			if (pc != (caddr_t) -1)
+				p->p_md.md_regs->tf_spc = (int) pc;
+		}
 	}
 	curproc = p;
 
