@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.4 1996/04/18 08:51:57 leo Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.5 1996/09/16 06:43:36 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -46,6 +46,7 @@
 #include <atari/atari/device.h>
 #include <atari/atari/stalloc.h>
 #include <atari/dev/grfabs_reg.h>
+#include <atari/dev/grfabs_tt.h>
 
 /*
  * Function decls
@@ -71,13 +72,31 @@ struct grfabs_sw tt_vid_sw = {
 	tt_use_colormap
 };
 
+struct tt_hwregs {
+	u_short		tt_reg;	/* video mode-register TT	*/
+};
+#define vm_reg(dm)	(((struct tt_hwregs*)(dm->data))->tt_reg)
+
+/*
+ * Note that the order of this table *must* match the order of
+ * the table below!
+ */
+static struct tt_hwregs tt_hwregs[] = {
+	{ RES_STHIGH },
+	{ RES_TTHIGH },
+	{ RES_STMID  },
+	{ RES_STLOW  },
+	{ RES_TTMID  },
+	{ RES_TTLOW  }
+};
+
 static dmode_t vid_modes[] = {
-    { { NULL, NULL }, "sthigh", { 640,  400 }, 1, {RES_STHIGH}, &tt_vid_sw },
-    { { NULL, NULL }, "tthigh", { 1280, 960 }, 1, {RES_TTHIGH}, &tt_vid_sw },
-    { { NULL, NULL }, "stmid",  { 640,  200 }, 2, {RES_STMID }, &tt_vid_sw },
-    { { NULL, NULL }, "stlow",  { 320,  200 }, 4, {RES_STLOW }, &tt_vid_sw },
-    { { NULL, NULL }, "ttmid",  { 640,  480 }, 4, {RES_TTMID }, &tt_vid_sw },
-    { { NULL, NULL }, "ttlow",  { 320,  480 }, 8, {RES_TTLOW }, &tt_vid_sw },
+    { { NULL, NULL }, "sthigh", { 640,  400 }, 1, NULL, &tt_vid_sw },
+    { { NULL, NULL }, "tthigh", { 1280, 960 }, 1, NULL, &tt_vid_sw },
+    { { NULL, NULL }, "stmid",  { 640,  200 }, 2, NULL, &tt_vid_sw },
+    { { NULL, NULL }, "stlow",  { 320,  200 }, 4, NULL, &tt_vid_sw },
+    { { NULL, NULL }, "ttmid",  { 640,  480 }, 4, NULL, &tt_vid_sw },
+    { { NULL, NULL }, "ttlow",  { 320,  480 }, 8, NULL, &tt_vid_sw },
     { { NULL, NULL }, NULL,  }
 };
 
@@ -85,6 +104,7 @@ static dmode_t vid_modes[] = {
  * XXX: called from ite console init routine.
  * Initialize list of posible video modes.
  */
+
 void
 tt_probe_video(modelp)
 MODES	*modelp;
@@ -102,9 +122,10 @@ MODES	*modelp;
 	has_mono = (MFP->mf_gpip & IA_MONO) == 0;
 
 	for (i = 0; (dm = &vid_modes[i])->name != NULL; i++) {
-		if (has_mono && (dm->vm_reg != RES_TTHIGH))
+		dm->data = (void *)&tt_hwregs[i];
+		if (has_mono && (vm_reg(dm) != RES_TTHIGH))
 			continue;
-		if (!has_mono && (dm->vm_reg == RES_TTHIGH))
+		if (!has_mono && (vm_reg(dm) == RES_TTHIGH))
 			continue;
 		LIST_INSERT_HEAD(modelp, dm, link);
 	}
@@ -132,7 +153,7 @@ view_t *v;
 	tt_use_colormap(v, v->colormap);
 
 	/* XXX: should use vbl for this	*/
-	VIDEO->vd_tt_res = dm->vm_reg;
+	VIDEO->vd_tt_res = vm_reg(dm);
 	VIDEO->vd_raml   =  (u_long)bm->hw_address & 0xff;
 	VIDEO->vd_ramm   = ((u_long)bm->hw_address >>  8) & 0xff;
 	VIDEO->vd_ramh   = ((u_long)bm->hw_address >> 16) & 0xff;
@@ -195,7 +216,7 @@ colormap_t	*cm;
 	 * First figure out where the actual colormap resides and
 	 * howmany colors are in it.
 	 */
-	switch (dm->vm_reg) {
+	switch (vm_reg(dm)) {
 		case RES_STLOW:
 			creg  = &VIDEO->vd_tt_rgb[0];
 			ncreg = 16;
@@ -333,6 +354,9 @@ u_char	depth;
 	bm->bytes_per_row = (width * depth) / NBBY;
 	bm->rows          = height;
 	bm->depth         = depth;
+	bm->regs          = NULL;
+	bm->hw_regs       = NULL;
+	bm->reg_size      = 0;
 
 	bzero(bm->plane, bm_size);
 	return (bm);
@@ -354,7 +378,7 @@ dmode_t		*dm;
 	colormap_t	*cm;
 	u_char		type = CM_COLOR;
 
-	switch (dm->vm_reg) {
+	switch (vm_reg(dm)) {
 		case RES_STLOW:
 		case RES_TTMID:
 			nentries = 16;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.5 1996/08/23 11:14:59 leo Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.6 1996/09/16 06:43:33 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -47,6 +47,7 @@
 #include <atari/atari/device.h>
 #include <atari/atari/stalloc.h>
 #include <atari/dev/grfabs_reg.h>
+#include <atari/dev/grfabs_fal.h>
 
 /*
  * Function decls
@@ -74,17 +75,42 @@ struct grfabs_sw fal_vid_sw = {
 	falcon_use_colormap
 };
 
+struct falcon_hwregs {
+	u_short		fal_mode;	/* falcon mode		  */
+	struct videl	*fal_regs;	/* videl register values  */
+};
+#define vm_mode(dm)	(((struct falcon_hwregs*)(dm->data))->fal_mode)
+#define vm_regs(dm)	(((struct falcon_hwregs*)(dm->data))->fal_regs)
+
+/*
+ * Note that the order of this table *must* match the order of
+ * the table below!
+ */
+static struct falcon_hwregs fal_hwregs[] = {
+	{ RES_FALAUTO    },
+	{ RES_FAL_STHIGH },
+	{ RES_FAL_STMID  },
+	{ RES_FAL_STLOW  },
+	{ RES_FAL_TTLOW  },
+	{ RES_VGA2       },
+	{ RES_VGA4       },
+	{ RES_VGA16      },
+	{ RES_VGA256     },
+	{ RES_DIRECT     }
+};
+	
+
 static dmode_t vid_modes[] = {
-    { {NULL,NULL}, "falauto", {   0,  0 },  0, {RES_FALAUTO   }, &fal_vid_sw},
-    { {NULL,NULL}, "sthigh",  { 640,400 },  1, {RES_FAL_STHIGH}, &fal_vid_sw},
-    { {NULL,NULL}, "stmid",   { 640,200 },  2, {RES_FAL_STMID }, &fal_vid_sw},
-    { {NULL,NULL}, "stlow",   { 320,200 },  4, {RES_FAL_STLOW }, &fal_vid_sw},
-    { {NULL,NULL}, "ttlow",   { 320,480 },  8, {RES_FAL_TTLOW }, &fal_vid_sw},
-    { {NULL,NULL}, "vga2",    { 640,480 },  1, {RES_VGA2      }, &fal_vid_sw},
-    { {NULL,NULL}, "vga4",    { 640,480 },  2, {RES_VGA4      }, &fal_vid_sw},
-    { {NULL,NULL}, "vga16",   { 640,480 },  4, {RES_VGA16     }, &fal_vid_sw},
-    { {NULL,NULL}, "vga256",  { 640,480 },  8, {RES_VGA256    }, &fal_vid_sw},
-    { {NULL,NULL}, "highcol", { 320,200 }, 16, {RES_DIRECT    }, &fal_vid_sw},
+    { {NULL,NULL}, "falauto", {   0,  0 },  0, NULL, &fal_vid_sw},
+    { {NULL,NULL}, "sthigh",  { 640,400 },  1, NULL, &fal_vid_sw},
+    { {NULL,NULL}, "stmid",   { 640,200 },  2, NULL, &fal_vid_sw},
+    { {NULL,NULL}, "stlow",   { 320,200 },  4, NULL, &fal_vid_sw},
+    { {NULL,NULL}, "ttlow",   { 320,480 },  8, NULL, &fal_vid_sw},
+    { {NULL,NULL}, "vga2",    { 640,480 },  1, NULL, &fal_vid_sw},
+    { {NULL,NULL}, "vga4",    { 640,480 },  2, NULL, &fal_vid_sw},
+    { {NULL,NULL}, "vga16",   { 640,480 },  4, NULL, &fal_vid_sw},
+    { {NULL,NULL}, "vga256",  { 640,480 },  8, NULL, &fal_vid_sw},
+    { {NULL,NULL}, "highcol", { 320,200 }, 16, NULL, &fal_vid_sw},
     { {NULL,NULL},  NULL,  }
 };
 
@@ -167,14 +193,15 @@ MODES	*modelp;
 	 */
 
 	for (i = 0; (dm = &vid_modes[i])->name != NULL; i++) {
-		if (dm->vm_mode == RES_FALAUTO) {
-			dm->vm_regs = falcon_getreg(RES_FALAUTO);
+		dm->data = (void *)&fal_hwregs[i];
+		if (vm_mode(dm) == RES_FALAUTO) {
+			vm_regs(dm) = falcon_getreg(RES_FALAUTO);
 			falcon_detect(dm);
 			LIST_INSERT_HEAD(modelp, dm, link);
 		} else {
-			vregs = falcon_getreg(dm->vm_mode | mon_type);
+			vregs = falcon_getreg(vm_mode(dm) | mon_type);
 			if (vregs) {
-				dm->vm_regs = vregs;
+				vm_regs(dm) = vregs;
 				LIST_INSERT_HEAD(modelp, dm, link);
 			}
 		}
@@ -206,7 +233,7 @@ falcon_detect(dm)
 dmode_t *dm;
 {
 	u_short	falshift, stshift;
-	struct videl *vregs = dm->vm_regs;
+	struct videl *vregs = vm_regs(dm);
 
 	/*
 	 * First get the the videl register values
@@ -278,7 +305,7 @@ view_t *v;
 {
 	dmode_t	*dm = v->mode;
 	bmap_t	*bm = v->bitmap;
-	struct videl *vregs = v->mode->vm_regs;
+	struct videl *vregs = vm_regs(v->mode);
 
 	if (dm->current_view) {
 		/*
@@ -512,6 +539,7 @@ u_char	depth;
 	bm->bytes_per_row = (width * depth) / NBBY;
 	bm->rows          = height;
 	bm->depth         = depth;
+	bm->regs = bm->hw_regs = bm->reg_size = 0;
 
 	bzero(bm->plane, bm_size);
 	return (bm);

@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.8 1996/04/18 08:52:11 leo Exp $	*/
+/*	$NetBSD: view.c,v 1.9 1996/09/16 06:43:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -112,14 +112,19 @@ view_display (vu)
 	if (vu == NULL)
 		return;
 	
-	s = spltty ();
+	s = spltty();
 
 	/*
 	 * mark views that share this monitor as not displaying 
 	 */
-	for (i=0; i<NVIEW; i++) {
-		if(views[i].flags & VUF_DISPLAY)
+	for (i = 0; i < NVIEW; i++) {
+		if(views[i].flags & VUF_DISPLAY) {
+			if (vu->view && (vu->view == views[i].view)) {
+				splx(s);
+				return;
+			}
 			views[i].flags &= ~VUF_DISPLAY;
+		}
 	}
 
 	vu->flags |= VUF_ADDED;
@@ -369,6 +374,8 @@ struct proc	*p;
 		if (p != NOPROC) {
 			bm->plane      = NULL;
 			bm->hw_address = NULL;
+			bm->regs       = NULL;
+			bm->hw_regs    = NULL;
 		}
 		break;
 	case VIOCGCMAP:
