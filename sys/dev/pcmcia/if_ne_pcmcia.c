@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.2 1997/10/16 23:27:26 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.3 1997/10/18 10:56:28 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -218,7 +218,7 @@ struct ne2000dev {
    ((ne2000devs[(n)].cis1_info0) && (ne2000devs[(n)].cis1_info1) && \
     (strcmp((card)->cis1_info[0], ne2000devs[(n)].cis1_info0) == 0) && \
     (strcmp((card)->cis1_info[1], ne2000devs[(n)].cis1_info1) == 0))) && \
-  (pa->pf->number == ne2000devs[(n)].function))? \
+  ((fct) == ne2000devs[(n)].function))? \
  &ne2000devs[(n)]:NULL)
 
 int
