@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.35 1999/05/24 13:05:12 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.36 1999/08/24 17:47:44 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -221,9 +221,6 @@ struct ne2000dev {
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
        any of them, they're not compiled in until I do. */
-    { "Allied Telesis LA-PCM",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0ff0, { 0x00, 0x00, 0xf4 } },
     { "APEX MultiCard",
       0x0000, 0x0000, NULL, NULL, 0,
       0x03f4, { 0x00, 0x20, 0xe5 } },
@@ -309,6 +306,11 @@ struct ne2000dev {
       0x0000, 0x0000, NULL, NULL, 0,
       0x0060, { 0x00, 0x40, 0x05 } },
 #endif
+
+    { PCMCIA_STR_ALLIEDTELESIS_LA_PCM,
+      PCMCIA_VENDOR_ALLIEDTELESIS, PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM,
+      PCMCIA_CIS_ALLIEDTELESIS_LA_PCM,
+      0, 0x0ff0, { 0x00, 0x00, 0xf4 } },
 };
 
 #define	NE2000_NDEVS	(sizeof(ne2000devs) / sizeof(ne2000devs[0]))
@@ -383,8 +385,12 @@ ne_pcmcia_attach(parent, self, aux)
 
 	if (cfe->num_iospace == 1) {
 		if (cfe->iospace[0].length != NE2000_NPORTS) {
+#if 0
 			printf(": unexpected I/O space configuration\n");
 			return;
+#else
+			printf(": unexpected I/O space configuration (continued): ");
+#endif
 		}
 	} else if (cfe->num_iospace == 2) {
 		/*

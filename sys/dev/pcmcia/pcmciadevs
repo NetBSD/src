@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.42 1999/08/14 13:43:03 tron Exp $
+$NetBSD: pcmciadevs,v 1.43 1999/08/24 17:47:45 tron Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,9 @@ vendor DAYNA			0x0194	Dayna Corporation
 vendor IODATA			0x01bf	I-O DATA
 vendor LASAT			0x3401	Lasat Communications A/S
 vendor COMPEX			0x8a01	Compex Corporation
+vendor CONTEC			0xc001	Contec
 vendor COREGA			0xc00f	Corega K.K.
+vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 
 /*
@@ -154,6 +156,12 @@ product NEWMEDIA BUSTOASTER	0xc102 New Media BusToaster SCSI Host Adapter
 /* Standard Microsystems Corporation Products */
 product SMC 8016		0x0105 SMC 8016 EtherCard
 product SMC EZCARD		0x8022 SMC EXCard 10 PCMCIA
+
+/* Contec C-NET(PC) */
+product CONTEC CNETPC		0x0000 Contec C-NET(PC)C
+
+/* Allied Telesis K.K. */
+product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
 
 /* Lucent WaveLAN/IEEE */
 product LUCENT WAVELAN_IEEE	0x0002	WaveLAN/IEEE
