@@ -1,4 +1,4 @@
-/*	$NetBSD: iswctype.c,v 1.5 2000/12/21 12:13:28 itojun Exp $	*/
+/*	$NetBSD: iswctype.c,v 1.6 2001/01/20 17:40:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,13 +40,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype.c,v 1.5 2000/12/21 12:13:28 itojun Exp $");
+__RCSID("$NetBSD: iswctype.c,v 1.6 2001/01/20 17:40:10 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 #include <wctype.h>
 #include <ctype.h>
+#include "rune.h"
 #include "runetype.h"
+#include "rune_local.h"
 
 #ifdef lint
 #define __inline
