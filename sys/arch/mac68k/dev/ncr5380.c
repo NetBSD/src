@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.45.2.2 2001/03/27 13:16:22 bouyer Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.45.2.3 2001/03/29 10:13:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -303,7 +303,8 @@ ncr5380_scsi_request(chan, req, arg)
 		 */
 		if (flags & XS_CTL_RESET) {
 			scsi_reset_verbose(sc, "Got reset-command");
-			return (COMPLETE);
+			scsipi_done(xs);
+			return;
 		}
 
 		/*
@@ -425,6 +426,7 @@ ncr5380_scsi_request(chan, req, arg)
 	case ADAPTER_REQ_SET_XFER_MODE:
 		/* XXX Not supported. */
 		return;
+	}
 }
 
 static void
@@ -719,7 +721,7 @@ int	code;
 	u_int8_t		targ_bit;
 	struct ncr_softc	*sc;
 
-	sc = reqp->xs->xs_periph->periph_channel->chan_adapter->adapt_dev;
+	sc = (void *)reqp->xs->xs_periph->periph_channel->chan_adapter->adapt_dev;
 	DBG_SELPRINT ("Starting arbitration\n", 0);
 	PID("scsi_select1");
 

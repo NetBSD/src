@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.53.2.2 2001/03/27 13:16:23 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.53.2.3 2001/03/29 10:13:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -154,7 +154,7 @@ target_to_unit(bus, target, lun)
 	u_long bus, target, lun;
 {
 	struct scsibus_softc	*scsi;
-	struct scsipi_periph	*sc_periph;
+	struct scsipi_periph	*periph;
 	struct device		*sc_dev;
 extern	struct cfdriver		scsibus_cd;
 
