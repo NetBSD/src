@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.68 2004/10/28 20:04:24 heas Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69 2004/10/30 15:53:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.68 2004/10/28 20:04:24 heas Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69 2004/10/30 15:53:25 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -645,7 +645,7 @@ printline(char *hname, char *msg)
 	p = msg;
 	if (*p == '<') {
 		pri = 0;
-		while (isdigit(*++p))
+		while (isdigit((unsigned char)*++p))
 			pri = 10 * pri + (*p - '0');
 		if (*p == '>')
 			++p;
@@ -698,7 +698,7 @@ printsys(char *msg)
 		pri = DEFSPRI;
 		if (*p == '<') {
 			pri = 0;
-			while (isdigit(*++p))
+			while (isdigit((unsigned char)*++p))
 				pri = 10 * pri + (*p - '0');
 			if (*p == '>')
 				++p;
@@ -1236,11 +1236,11 @@ init(void)
 		 * check for end-of-section, comments, strip off trailing
 		 * spaces and newline character.
 		 */
-		for (p = cline; isspace(*p); ++p)
+		for (p = cline; isspace((unsigned char)*p); ++p)
 			continue;
 		if (*p == '\0' || *p == '#')
 			continue;
-		for (p = strchr(cline, '\0'); isspace(*--p);)
+		for (p = strchr(cline, '\0'); isspace((unsigned char)*--p);)
 			continue;
 		*++p = '\0';
 		f = (struct filed *)calloc(1, sizeof(*f));
@@ -1499,12 +1499,12 @@ decode(const char *name, CODE *codetab)
 	CODE *c;
 	char *p, buf[40];
 
-	if (isdigit(*name))
+	if (isdigit((unsigned char)*name))
 		return (atoi(name));
 
 	for (p = buf; *name && p < &buf[sizeof(buf) - 1]; p++, name++) {
-		if (isupper(*name))
-			*p = tolower(*name);
+		if (isupper((unsigned char)*name))
+			*p = tolower((unsigned char)*name);
 		else
 			*p = *name;
 	}

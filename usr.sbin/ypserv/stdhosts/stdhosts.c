@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.16 2002/11/30 03:10:59 lukem Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.17 2004/10/30 16:01:48 dsl Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdhosts.c,v 1.16 2002/11/30 03:10:59 lukem Exp $");
+__RCSID("$NetBSD: stdhosts.c,v 1.17 2004/10/30 16:01:48 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -103,9 +103,9 @@ main(int argc, char *argv[])
 			continue;
 
 		v = line;
-		for (k = v; *v && !isspace(*v); v++)
+		for (k = v; *v && !isspace((unsigned char)*v); v++)
 			;
-		while (*v && isspace(*v))
+		while (*v && isspace((unsigned char)*v))
 			*v++ = '\0';
 
 		memset(&hints, 0, sizeof(hints));

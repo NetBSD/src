@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.39 2004/04/05 10:25:12 wiz Exp $       */
+/*      $NetBSD: scanform.c,v 1.40 2004/10/30 15:51:20 dsl Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -818,7 +818,7 @@ process_preform(FORM *form, char *path)
 				args[i] = strdup(field_buffer(f[lcnt], 0));
 			if (args[i] != NULL) {
 				p = &args[i][strlen(args[i]) - 1];
-				while(isspace(*p))
+				while(isspace((unsigned char)*p))
 					*p-- = '\0';
 			}
 			i++;
@@ -940,7 +940,7 @@ process_form(FORM *form, char *path)
 				args[i] = strdup(field_buffer(f[lcnt], 0));
 			if (args[i] != NULL) {
 				p = &args[i][strlen(args[i]) - 1];
-				while(isspace(*p))
+				while(isspace((unsigned char)*p))
 					*p-- = '\0';
 			}
 			i++;

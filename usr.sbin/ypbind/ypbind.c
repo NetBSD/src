@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.52 2004/09/07 13:20:40 jrf Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.53 2004/10/30 15:57:43 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.52 2004/09/07 13:20:40 jrf Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.53 2004/10/30 15:57:43 dsl Exp $");
 #endif
 
 #include <sys/param.h>
@@ -880,7 +880,7 @@ direct(char *buf, int outlen)
 		}
 		*p = '\0';
 		p = line;
-		while (isspace(*p))
+		while (isspace((unsigned char)*p))
 			p++;
 		if (*p == '#')
 			continue;
