@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";*/
-static char *rcsid = "$Id: if.c,v 1.11 1995/07/03 03:16:57 mycroft Exp $";
+static char *rcsid = "$Id: if.c,v 1.12 1995/09/28 06:22:54 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ intpr(interval, ifnetaddr)
 	}
 	if (kread(ifnetaddr, (char *)&ifnetaddr, sizeof ifnetaddr))
 		return;
-	printf("%-5.5s %-5.5s %-11.11s %-15.15s %8.8s %5.5s %8.8s %5.5s",
+	printf("%-5.5s %-5.5s %-11.11s %-15.15s %10.10s %5.5s %8.8s %5.5s",
 		"Name", "Mtu", "Network", "Address", "Ipkts", "Ierrs",
 		"Opkts", "Oerrs");
 	printf(" %5s", "Coll");
@@ -138,7 +138,7 @@ intpr(interval, ifnetaddr)
 			switch (sa->sa_family) {
 			case AF_UNSPEC:
 				printf("%-11.11s ", "none");
-				printf("%-15.15s ", "none");
+				printf("%-17.17s ", "none");
 				break;
 			case AF_INET:
 				sin = (struct sockaddr_in *)sa;
@@ -155,7 +155,7 @@ intpr(interval, ifnetaddr)
 				    netname(ifaddr.in.ia_subnet,
 				    ifaddr.in.ia_subnetmask));
 #endif
-				printf("%-15.15s ",
+				printf("%-17.17s ",
 				    routename(sin->sin_addr.s_addr));
 
 				if (aflag) {
@@ -183,7 +183,7 @@ intpr(interval, ifnetaddr)
 		sprintf(netnum, "%lxH", ntohl(net));
 				upHex(netnum);
 				printf("ns:%-8s ", netnum);
-				printf("%-15s ",
+				printf("%-17s ",
 				    ns_phost((struct sockaddr *)sns));
 				}
 				break;
@@ -206,7 +206,7 @@ intpr(interval, ifnetaddr)
 				while (--n >= 0)
 					m += printf("%x%c", *cp++ & 0xff,
 						    n > 0 ? '.' : ' ');
-				m = 28 - m;
+				m = 30 - m;
 				while (m-- > 0)
 					putchar(' ');
 				break;
