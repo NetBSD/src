@@ -1036,12 +1036,25 @@ void convert_iif() {
 	char type;
 	char size = 0;
 	int size_so_far = 0; /* used to calculate pcrel_adjust */
+	int   pcrel_symbols=0;	/* kludge by jkp@hut.fi to make
+ 				   movd _foo(pc),_bar(pc) work.
+ 				   It should be done with two frags
+ 				   for one insn, but I don't understand
+ 				   enough to make it work */
 	
 	rem_size=iif.instr_size;
 	memP=frag_more(iif.instr_size); /* make sure we have enough bytes for instruction */
 	inst_opcode=memP;
 	inst_offset=(char*)(memP-frag_now->fr_literal);
 	inst_frag=frag_now;
+	for (i=0;i<IIF_ENTRIES;i++) { /* jkp kludge alert */
+	  if (iif.iifP[i].type && iif.iifP[i].size == 0 &&
+	      iif.iifP[i].pcrel) {
+	    evaluate_expr(&exprP,(char*)iif.iifP[i].object);
+	    if (exprP.X_add_symbol || exprP.X_subtract_symbol)
+	      pcrel_symbols++;
+	  }	   
+	}
 	for (i=0;i<IIF_ENTRIES;i++) {
 		if (type=iif.iifP[i].type) {			/* the object exist, so handle it */
 			switch (size=iif.iifP[i].size) {
@@ -1156,8 +1169,8 @@ void convert_iif() {
 				{
 					int temp;
 					segment = evaluate_expr(&exprP, (char*)iif.iifP[i].object);
-					if ((exprP.X_add_symbol || exprP.X_subtract_symbol) &&
-					    !iif.iifP[i].pcrel) { /* OVE: hack, clamp to 4 bytes */
+					if (((exprP.X_add_symbol || exprP.X_subtract_symbol) &&
+					    !iif.iifP[i].pcrel) || pcrel_symbols >= 2 /*jkp*/) { /* OVE: hack, clamp to 4 bytes */
 						size=4; /* we dont wan't to frag this, use 4 so it reaches */
 						fix_new_ns32k(frag_now,
 							      (long)(memP-frag_now->fr_literal),
@@ -1165,7 +1178,7 @@ void convert_iif() {
 							      exprP.X_add_symbol,
 							      exprP.X_subtract_symbol,
 							      exprP.X_add_number,
-							      0, /* never iif.iifP[i].pcrel, */
+							      pcrel_symbols >= 2 ? iif.iifP[i].pcrel : 0, /*jkp*//* never iif.iifP[i].pcrel, */
 							      (char)size_so_far, /*iif.iifP[i].pcrel_adjust,*/
 							      1, /* always iif.iifP[i].im_disp, */
 							      0,0);
