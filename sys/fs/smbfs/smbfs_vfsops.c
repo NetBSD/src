@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.18 2003/02/25 09:09:31 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.19 2003/02/25 22:17:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.18 2003/02/25 09:09:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.19 2003/02/25 22:17:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,7 +375,6 @@ smbfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 /*
  * Flush out the buffer cache
  */
-/* ARGSUSED */
 int
 smbfs_sync(mp, waitfor, cred, p)
 	struct mount *mp;
@@ -383,33 +382,46 @@ smbfs_sync(mp, waitfor, cred, p)
 	struct ucred *cred;
 	struct proc *p;
 {
-	struct vnode *vp;
+	struct vnode *vp, *nvp;
+	struct smbnode *np;
 	int error, allerror = 0;
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
+	simple_lock(&mntvnode_slock);
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first;
-	     vp != NULL;
-	     vp = vp->v_mntvnodes.le_next) {
+	for (vp = LIST_FIRST(&mp->mnt_vnodelist); vp != NULL; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) || 
-		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     vp->v_uobj.uo_npages == 0))
+		simple_lock(&vp->v_interlock);
+		nvp = LIST_NEXT(vp, v_mntvnodes);
+		np = VTOSMB(vp);
+		if ((np->n_flag & NMODIFIED) == 0 &&
+		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
+		     vp->v_uobj.uo_npages == 0) {
+			simple_unlock(&vp->v_interlock);
 			continue;
-		if (vget(vp, LK_EXCLUSIVE))
-			goto loop;
+		}
+		simple_unlock(&mntvnode_slock);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		if (error) {
+			simple_lock(&mntvnode_slock);
+			if (error == ENOENT)
+				goto loop;
+			continue;
+		}
 		error = VOP_FSYNC(vp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0, p);
 		if (error)
 			allerror = error;
 		vput(vp);
+		simple_lock(&mntvnode_slock);
 	}
+	simple_unlock(&mntvnode_slock);
 	return (allerror);
 }
 
