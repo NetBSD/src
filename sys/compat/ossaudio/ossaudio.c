@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.9 1997/05/07 19:24:30 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.10 1997/05/19 17:29:12 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -337,13 +337,12 @@ getdevinfo(fp, p)
 /*		{ AudioNheadphone,	?? },*/
 		{ AudioNoutput,		OSS_SOUND_MIXER_OGAIN },
 		{ AudioNinput,		OSS_SOUND_MIXER_IGAIN },
-/*		{ AudioNmaster,		OSS_SOUND_MIXER_MASTER },*/
+		{ AudioNmaster,		OSS_SOUND_MIXER_SPEAKER },
 /*		{ AudioNstereo,		?? },*/
 /*		{ AudioNmono,		?? },*/
-/*		{ AudioNsource,		?? },*/
 		{ AudioNfmsynth,	OSS_SOUND_MIXER_SYNTH },
 /*		{ AudioNwave,		OSS_SOUND_MIXER_PCM },*/
-/*		{ AudioNmidi,		?? },*/
+		{ AudioNmidi,		OSS_SOUND_MIXER_SYNTH },
 /*		{ AudioNmixerout,	?? },*/
 		{ 0, -1 }
 	};
@@ -397,9 +396,8 @@ getdevinfo(fp, p)
 			if (strcmp(mi.label.name, AudioNsource) == 0) {
 				int j;
 				di->source = i;
-				for(j = 0; j < mi.un.e.num_mem; j++) {
+				for(j = 0; j < mi.un.e.num_mem; j++)
 					di->recmask |= 1 << di->rdevmap[mi.un.e.member[j].ord];
-				}
 				di->caps = OSS_SOUND_CAP_EXCL_INPUT;
 			}
 			break;
@@ -410,7 +408,7 @@ getdevinfo(fp, p)
 				for(j = 0; j < mi.un.s.num_mem; j++) {
 					int k, mask = mi.un.s.member[j].mask;
 					if (mask) {
-						for(k = 0; !(mask & (1<<k)); k++)
+						for(k = 0; !(mask & 1); mask >>= 1, k++)
 							;
 						di->recmask |= 1 << di->rdevmap[k];
 					}
@@ -479,7 +477,8 @@ oss_ioctl_mixer(p, uap, retval)
 				return error;
 			idat = 0;
 			for(mask = mc.un.mask, k = 0; mask; mask >>= 1, k++)
-				idat |= 1 << di->rdevmap[k];
+				if (mask & 1)
+					idat |= 1 << di->rdevmap[k];
 		}
 		break;
 	case OSS_SOUND_MIXER_READ_DEVMASK:
@@ -512,12 +511,13 @@ oss_ioctl_mixer(p, uap, retval)
 			mc.un.ord = di->devmap[i];
 		} else {
 			mc.type = AUDIO_MIXER_SET;
-			for(i = 0; i < OSS_SOUND_MIXER_NRDEVICES; i++)
+			for(i = 0; i < OSS_SOUND_MIXER_NRDEVICES; i++) {
 				if (idat & (1 << i)) {
 					if (di->devmap[i] == -1)
 						return EINVAL;
 					mc.un.mask |= 1 << di->devmap[i];
 				}
+			}
 		}
 		return ioctlf(fp, AUDIO_MIXER_WRITE, (caddr_t)&mc, p);
 	default:
