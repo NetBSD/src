@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 1997/06/04 13:54:08 leo Exp $
+#	$NetBSD: Makefile,v 1.73 1997/06/22 18:50:33 christos Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -14,7 +14,7 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes biff cal calendar \
 	nfsstat nice nohup pagesize passwd paste patch pr printenv printf \
 	quota rdist renice rev rlogin rpcgen rpcinfo rs \
 	rsh rup ruptime rusers rwall rwho \
-	script sed shar showmount skey skeyinit soelim split strings \
+	script sed shar showmount skey skeyinfo skeyinit soelim split strings \
 	su systat tail talk tcopy tee tftp time \
 	tip tn3270 touch tput tr true tset tsort tty ul uname unexpand \
 	unifdef uniq units unvis users uudecode uuencode \
