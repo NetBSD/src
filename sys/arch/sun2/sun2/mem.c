@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 2001/04/24 04:31:13 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.3 2001/06/14 16:32:45 fredette Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -142,15 +142,19 @@ mmrw(dev, uio, flags)
 			 * region of physical memory that is "managed" by
 			 * the pmap system, then we are not allowed to
 			 * call pmap_enter with that physical address.
-			 * Everything from zero to avail_start is mapped
-			 * linearly with physical zero at virtual KERNBASE,
+			 * Physical 0x0 -> physical 0x2000 is unmapped.
+			 * Everything from 0x2000 to avail_start is mapped
+			 * linearly with physical 0x2000 at virtual 0x2000,
 			 * so redirect the access to /dev/kmem instead.
 			 * This is a better alternative than hacking the
 			 * pmap to deal with requests on unmanaged memory.
 			 * Also note: unlock done at end of function.
 			 */
+			if (v < 0x2000) {
+				error = EFAULT;
+				goto unlock;
+			}
 			if (v < avail_start) {
-				v += KERNBASE;
 				goto use_kmem;
 			}
 			/* Temporarily map the memory at vmmap. */
@@ -269,8 +273,8 @@ mmmmap(dev, off, prot)
 	case 6: 	/* dev/vme24d16 */
 		if (off & 0xff000000)
 			break;
-		off |= 0xff000000;
-		/* fall through */
+		return (off | (off & 0x800000 ? PMAP_VME8: PMAP_VME0));
+
 	}
 
 	return (-1);
