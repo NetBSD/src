@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.158 1995/05/04 19:39:18 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.159 1995/05/06 20:30:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -894,7 +894,7 @@ struct soft_segment_descriptor gdt_segs[] = {
 	0, 0,
 	1,			/* default 32 vs 16 bit size */
 	1  			/* limit granularity (byte/page units) */ },
-	/* LDT Descriptor */
+	/* LDT descriptor */
 {	(int) ldt,		/* segment base address */
 	sizeof(ldt)-1,		/* length - all address space */
 	SDT_SYSLDT,		/* segment type */
@@ -903,7 +903,25 @@ struct soft_segment_descriptor gdt_segs[] = {
 	0, 0,
 	0,			/* unused - default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units) */ },
-	/* Proc 0 Tss Descriptor */
+	/* User code descriptor */
+{	0x0,			/* segment base address */
+	0xfffff,		/* length - all address space */
+	SDT_MEMERA,		/* segment type */
+	SEL_UPL,		/* segment descriptor privilege level */
+	1,			/* segment descriptor present */
+	0, 0,
+	1,			/* default 32 vs 16 bit size */
+	1  			/* limit granularity (byte/page units) */ },
+	/* User data descriptor */
+{	0x0,			/* segment base address */
+	0xfffff,		/* length - all address space */
+	SDT_MEMRWA,		/* segment type */
+	SEL_UPL,		/* segment descriptor privilege level */
+	1,			/* segment descriptor present */
+	0, 0,
+	1,			/* default 32 vs 16 bit size */
+	1  			/* limit granularity (byte/page units) */ },
+	/* Proc 0 TSS descriptor */
 {	(int) USRSTACK,		/* segment base address */
 	sizeof(tss)-1,		/* length - all address space */
 	SDT_SYS386TSS,		/* segment type */
@@ -912,7 +930,7 @@ struct soft_segment_descriptor gdt_segs[] = {
 	0, 0,
 	0,			/* unused - default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units) */ },
-	/* User LDT Descriptor per process */
+	/* User LDT descriptor per process */
 {	(int) ldt,		/* segment base address */
 	(512 * sizeof(union descriptor)-1),		/* length */
 	SDT_SYSLDT,		/* segment type */
@@ -924,7 +942,7 @@ struct soft_segment_descriptor gdt_segs[] = {
 };
 
 struct soft_segment_descriptor ldt_segs[] = {
-	/* Null Descriptor - overwritten by call gate */
+	/* Null descriptor - overwritten by call gate */
 {	0x0,			/* segment base address */
 	0x0,			/* length */
 	0,			/* segment type */
@@ -933,7 +951,7 @@ struct soft_segment_descriptor ldt_segs[] = {
 	0, 0,
 	0,			/* default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units) */ },
-	/* Null Descriptor - overwritten by call gate */
+	/* Null descriptor - overwritten by call gate */
 {	0x0,			/* segment base address */
 	0x0,			/* length */
 	0,			/* segment type */
@@ -959,7 +977,8 @@ struct soft_segment_descriptor ldt_segs[] = {
 	1,			/* segment descriptor present */
 	0, 0,
 	1,			/* default 32 vs 16 bit size */
-	1  			/* limit granularity (byte/page units) */ } };
+	1  			/* limit granularity (byte/page units) */ },
+};
 
 void
 setgate(gdp, func, args, typ, dpl)
