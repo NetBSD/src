@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.8 2001/10/25 14:46:41 augustss Exp $ */
+/* $NetBSD: wsevent.c,v 1.9 2001/11/13 06:17:47 lukem Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,9 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.8 2001/10/25 14:46:41 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.8 2001/10/25 14:46:41 augustss Exp $")
 /*
  * Internal "wscons_event" queue interface for the keyboard and mouse drivers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.9 2001/11/13 06:17:47 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>

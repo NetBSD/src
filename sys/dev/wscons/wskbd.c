@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.57 2001/11/10 17:14:52 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.58 2001/11/13 06:17:47 lukem Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -32,9 +32,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.57 2001/11/10 17:14:52 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,6 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.57 2001/11/10 17:14:52 augustss Exp $");
  * Keyboard driver (/dev/wskbd*).  Translates incoming bytes to ASCII or
  * to `wscons_events' and passes them up to the appropriate reader.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.58 2001/11/13 06:17:47 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

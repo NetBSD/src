@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rops.c,v 1.7 2001/10/13 15:56:15 augustss Exp $ */
+/* $NetBSD: wscons_rops.c,v 1.8 2001/11/13 06:17:46 lukem Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -43,6 +43,9 @@
  *
  *	@(#)rcons_subr.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wscons_rops.c,v 1.8 2001/11/13 06:17:46 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
