@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.80 2004/11/13 15:00:48 kent Exp $	*/
+/*	$NetBSD: auich.c,v 1.81 2004/11/17 15:14:38 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.80 2004/11/13 15:00:48 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.81 2004/11/17 15:14:38 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,6 @@ struct auich_softc {
 	/* 440MX workaround */
 	int  sc_dmamap_flags;
 
-
 	/* Power Management */
 	void *sc_powerhook;
 	int sc_suspend;
@@ -238,47 +237,51 @@ int auich_debug = 0xfffe;
 #define	DPRINTF(x,y)	/* nothing */
 #endif
 
-int	auich_match(struct device *, struct cfdata *, void *);
-void	auich_attach(struct device *, struct device *, void *);
-int	auich_intr(void *);
+static int	auich_match(struct device *, struct cfdata *, void *);
+static void	auich_attach(struct device *, struct device *, void *);
+static int	auich_intr(void *);
 
 CFATTACH_DECL(auich, sizeof(struct auich_softc),
     auich_match, auich_attach, NULL, NULL);
 
-int	auich_open(void *, int);
-void	auich_close(void *);
-int	auich_query_encoding(void *, struct audio_encoding *);
-int	auich_set_params(void *, int, int, struct audio_params *,
-	    struct audio_params *);
-int	auich_round_blocksize(void *, int);
-int	auich_halt_output(void *);
-int	auich_halt_input(void *);
-int	auich_getdev(void *, struct audio_device *);
-int	auich_set_port(void *, mixer_ctrl_t *);
-int	auich_get_port(void *, mixer_ctrl_t *);
-int	auich_query_devinfo(void *, mixer_devinfo_t *);
-void	*auich_allocm(void *, int, size_t, struct malloc_type *, int);
-void	auich_freem(void *, void *, struct malloc_type *);
-size_t	auich_round_buffersize(void *, int, size_t);
-paddr_t	auich_mappage(void *, void *, off_t, int);
-int	auich_get_props(void *);
-int	auich_trigger_output(void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *);
-int	auich_trigger_input(void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *);
+static int	auich_open(void *, int);
+static void	auich_close(void *);
+static int	auich_query_encoding(void *, struct audio_encoding *);
+static int	auich_set_params(void *, int, int, struct audio_params *,
+		    struct audio_params *);
+static int	auich_round_blocksize(void *, int);
+static int	auich_halt_output(void *);
+static int	auich_halt_input(void *);
+static int	auich_getdev(void *, struct audio_device *);
+static int	auich_set_port(void *, mixer_ctrl_t *);
+static int	auich_get_port(void *, mixer_ctrl_t *);
+static int	auich_query_devinfo(void *, mixer_devinfo_t *);
+static void	*auich_allocm(void *, int, size_t, struct malloc_type *, int);
+static void	auich_freem(void *, void *, struct malloc_type *);
+static size_t	auich_round_buffersize(void *, int, size_t);
+static paddr_t	auich_mappage(void *, void *, off_t, int);
+static int	auich_get_props(void *);
+static int	auich_trigger_output(void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *);
+static int	auich_trigger_input(void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *);
 
-int	auich_alloc_cdata(struct auich_softc *);
+static int	auich_alloc_cdata(struct auich_softc *);
 
-int	auich_allocmem(struct auich_softc *, size_t, size_t,
-	    struct auich_dma *);
-int	auich_freemem(struct auich_softc *, struct auich_dma *);
+static int	auich_allocmem(struct auich_softc *, size_t, size_t,
+		    struct auich_dma *);
+static int	auich_freemem(struct auich_softc *, struct auich_dma *);
 
-void	auich_powerhook(int, void *);
-int	auich_set_rate(struct auich_softc *, int, u_long);
+static void	auich_powerhook(int, void *);
+static int	auich_set_rate(struct auich_softc *, int, u_long);
 static int	auich_sysctl_verify(SYSCTLFN_ARGS);
-void	auich_finish_attach(struct device *);
-void	auich_calibrate(struct auich_softc *);
+static void	auich_finish_attach(struct device *);
+static void	auich_calibrate(struct auich_softc *);
 
+static int	auich_attach_codec(void *, struct ac97_codec_if *);
+static int	auich_read_codec(void *, u_int8_t, u_int16_t *);
+static int	auich_write_codec(void *, u_int8_t, u_int16_t);
+static int	auich_reset_codec(void *);
 
 const struct audio_hw_if auich_hw_if = {
 	auich_open,
@@ -309,11 +312,6 @@ const struct audio_hw_if auich_hw_if = {
 	auich_trigger_input,
 	NULL,			/* dev_ioctl */
 };
-
-int	auich_attach_codec(void *, struct ac97_codec_if *);
-int	auich_read_codec(void *, u_int8_t, u_int16_t *);
-int	auich_write_codec(void *, u_int8_t, u_int16_t);
-int	auich_reset_codec(void *);
 
 #define AUICH_FORMATS_4CH	1
 #define AUICH_FORMATS_6CH	2
@@ -379,7 +377,7 @@ auich_lookup(struct pci_attach_args *pa)
 	return (NULL);
 }
 
-int
+static int
 auich_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -390,7 +388,7 @@ auich_match(struct device *parent, struct cfdata *match, void *aux)
 	return (0);
 }
 
-void
+static void
 auich_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct auich_softc *sc = (struct auich_softc *)self;
@@ -579,7 +577,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 }
 
 #if 0
-int
+static int
 auich_detach(struct device *self, int flags)
 {
 	struct auich_softc *sc;
@@ -620,7 +618,7 @@ auich_sysctl_verify(SYSCTLFN_ARGS)
 	return 0;
 }
 
-void
+static void
 auich_finish_attach(struct device *self)
 {
 	struct auich_softc *sc = (void *)self;
@@ -632,7 +630,7 @@ auich_finish_attach(struct device *self)
 }
 
 #define ICH_CODECIO_INTERVAL	10
-int
+static int
 auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
 {
 	struct auich_softc *sc = v;
@@ -665,7 +663,7 @@ auich_read_codec(void *v, u_int8_t reg, u_int16_t *val)
 	}
 }
 
-int
+static int
 auich_write_codec(void *v, u_int8_t reg, u_int16_t val)
 {
 	struct auich_softc *sc = v;
@@ -687,7 +685,7 @@ auich_write_codec(void *v, u_int8_t reg, u_int16_t val)
 	}
 }
 
-int
+static int
 auich_attach_codec(void *v, struct ac97_codec_if *cif)
 {
 	struct auich_softc *sc = v;
@@ -696,7 +694,7 @@ auich_attach_codec(void *v, struct ac97_codec_if *cif)
 	return 0;
 }
 
-int
+static int
 auich_reset_codec(void *v)
 {
 	struct auich_softc *sc = v;
@@ -729,18 +727,18 @@ auich_reset_codec(void *v)
 	return 0;
 }
 
-int
+static int
 auich_open(void *v, int flags)
 {
 	return 0;
 }
 
-void
+static void
 auich_close(void *v)
 {
 }
 
-int
+static int
 auich_query_encoding(void *v, struct audio_encoding *aep)
 {
 	struct auich_softc *sc;
@@ -749,7 +747,7 @@ auich_query_encoding(void *v, struct audio_encoding *aep)
 	return auconv_query_encoding(sc->sc_encodings, aep);
 }
 
-int
+static int
 auich_set_rate(struct auich_softc *sc, int mode, u_long srate)
 {
 	int ret;
@@ -775,7 +773,7 @@ auich_set_rate(struct auich_softc *sc, int mode, u_long srate)
 	return ret;
 }
 
-int
+static int
 auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
     struct audio_params *rec)
 {
@@ -819,14 +817,14 @@ auich_set_params(void *v, int setmode, int usemode, struct audio_params *play,
 	return (0);
 }
 
-int
+static int
 auich_round_blocksize(void *v, int blk)
 {
 
 	return (blk & ~0x3f);		/* keep good alignment */
 }
 
-int
+static int
 auich_halt_output(void *v)
 {
 	struct auich_softc *sc = v;
@@ -839,7 +837,7 @@ auich_halt_output(void *v)
 	return (0);
 }
 
-int
+static int
 auich_halt_input(void *v)
 {
 	struct auich_softc *sc = v;
@@ -856,7 +854,7 @@ auich_halt_input(void *v)
 	return (0);
 }
 
-int
+static int
 auich_getdev(void *v, struct audio_device *adp)
 {
 	struct auich_softc *sc = v;
@@ -865,7 +863,7 @@ auich_getdev(void *v, struct audio_device *adp)
 	return (0);
 }
 
-int
+static int
 auich_set_port(void *v, mixer_ctrl_t *cp)
 {
 	struct auich_softc *sc = v;
@@ -873,7 +871,7 @@ auich_set_port(void *v, mixer_ctrl_t *cp)
 	return (sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp));
 }
 
-int
+static int
 auich_get_port(void *v, mixer_ctrl_t *cp)
 {
 	struct auich_softc *sc = v;
@@ -881,7 +879,7 @@ auich_get_port(void *v, mixer_ctrl_t *cp)
 	return (sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp));
 }
 
-int
+static int
 auich_query_devinfo(void *v, mixer_devinfo_t *dp)
 {
 	struct auich_softc *sc = v;
@@ -889,7 +887,7 @@ auich_query_devinfo(void *v, mixer_devinfo_t *dp)
 	return (sc->codec_if->vtbl->query_devinfo(sc->codec_if, dp));
 }
 
-void *
+static void *
 auich_allocm(void *v, int direction, size_t size, struct malloc_type *pool,
     int flags)
 {
@@ -916,7 +914,7 @@ auich_allocm(void *v, int direction, size_t size, struct malloc_type *pool,
 	return (KERNADDR(p));
 }
 
-void
+static void
 auich_freem(void *v, void *ptr, struct malloc_type *pool)
 {
 	struct auich_softc *sc = v;
@@ -932,7 +930,7 @@ auich_freem(void *v, void *ptr, struct malloc_type *pool)
 	}
 }
 
-size_t
+static size_t
 auich_round_buffersize(void *v, int direction, size_t size)
 {
 
@@ -942,7 +940,7 @@ auich_round_buffersize(void *v, int direction, size_t size)
 	return size;
 }
 
-paddr_t
+static paddr_t
 auich_mappage(void *v, void *mem, off_t off, int prot)
 {
 	struct auich_softc *sc = v;
@@ -959,7 +957,7 @@ auich_mappage(void *v, void *mem, off_t off, int prot)
 	    off, prot, BUS_DMA_WAITOK));
 }
 
-int
+static int
 auich_get_props(void *v)
 {
 	struct auich_softc *sc = v;
@@ -976,7 +974,7 @@ auich_get_props(void *v)
 	return props;
 }
 
-int
+static int
 auich_intr(void *v)
 {
 	struct auich_softc *sc = v;
@@ -1117,7 +1115,7 @@ auich_intr(void *v)
 	return ret;
 }
 
-int
+static int
 auich_trigger_output(void *v, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, struct audio_params *param)
 {
@@ -1185,7 +1183,7 @@ auich_trigger_output(void *v, void *start, void *end, int blksize,
 	return (0);
 }
 
-int
+static int
 auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	void *v;
 	void *start, *end;
@@ -1259,7 +1257,7 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 	return (0);
 }
 
-int
+static int
 auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
     struct auich_dma *p)
 {
@@ -1297,7 +1295,7 @@ auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
 	return (error);
 }
 
-int
+static int
 auich_freemem(struct auich_softc *sc, struct auich_dma *p)
 {
 
@@ -1308,7 +1306,7 @@ auich_freemem(struct auich_softc *sc, struct auich_dma *p)
 	return (0);
 }
 
-int
+static int
 auich_alloc_cdata(struct auich_softc *sc)
 {
 	bus_dma_segment_t seg;
@@ -1368,7 +1366,7 @@ auich_alloc_cdata(struct auich_softc *sc)
 	return (error);
 }
 
-void
+static void
 auich_powerhook(int why, void *addr)
 {
 	struct auich_softc *sc = (struct auich_softc *)addr;
@@ -1406,7 +1404,7 @@ auich_powerhook(int why, void *addr)
 /*
  * Calibrate card (some boards are overclocked and need scaling)
  */
-void
+static void
 auich_calibrate(struct auich_softc *sc)
 {
 	struct timeval t1, t2;
