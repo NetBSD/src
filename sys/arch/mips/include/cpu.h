@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 1997/06/16 06:17:26 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 1997/06/16 09:50:29 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -113,26 +113,6 @@ struct clockframe {
 
 int	astpending;	/* need to trap before returning to user mode */
 int	want_resched;	/* resched() was called */
-
-/*
- * CPU identification, from PRID register.
- */
-union cpuprid {
-	int	cpuprid;
-	struct {
-#if BYTE_ORDER == BIG_ENDIAN
-		u_int	pad1:16;	/* reserved */
-		u_int	cp_imp:8;	/* implementation identifier */
-		u_int	cp_majrev:4;	/* major revision identifier */
-		u_int	cp_minrev:4;	/* minor revision identifier */
-#else
-		u_int	cp_minrev:4;	/* minor revision identifier */
-		u_int	cp_majrev:4;	/* major revision identifier */
-		u_int	cp_imp:8;	/* implementation identifier */
-		u_int	pad1:16;	/* reserved */
-#endif
-	} cpu;
-};
 
 /*
  * CTL_MACHDEP definitions.
