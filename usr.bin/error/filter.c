@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.4 1997/10/18 14:44:28 lukem Exp $	*/
+/*	$NetBSD: filter.c,v 1.5 1998/11/06 23:10:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.4 1997/10/18 14:44:28 lukem Exp $");
+__RCSID("$NetBSD: filter.c,v 1.5 1998/11/06 23:10:08 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -200,7 +200,7 @@ discardit(errorp)
 			}
 		}
 		/* check if the argument to the error message is to be ignored*/
-		if (ispunct(lastchar(errorp->error_text[2])))
+		if (ispunct((unsigned char)lastchar(errorp->error_text[2])))
 			clob_last(errorp->error_text[2], '\0');
 		if (search_ignore(errorp->error_text[errorclass == C_NONSPEC ? 0 : 2]) >= 0){
 			return(C_NULLED);

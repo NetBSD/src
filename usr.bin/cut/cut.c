@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.12 1998/08/25 20:59:36 ross Exp $	*/
+/*	$NetBSD: cut.c,v 1.13 1998/11/06 23:07:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.12 1998/08/25 20:59:36 ross Exp $");
+__RCSID("$NetBSD: cut.c,v 1.13 1998/11/06 23:07:39 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -160,13 +160,13 @@ get_list(list)
 			++p;
 			setautostart = 1;
 		}
-		if (isdigit(*p)) {
+		if (isdigit((unsigned char)*p)) {
 			start = stop = strtol(p, &p, 10);
 			if (setautostart && start > autostart)
 				autostart = start;
 		}
 		if (*p == '-') {
-			if (isdigit(p[1]))
+			if (isdigit((unsigned char)p[1]))
 				stop = strtol(p + 1, &p, 10);
 			if (*p == '-') {
 				++p;
