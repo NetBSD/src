@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.3 1998/07/29 18:33:27 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.4 1998/08/21 14:13:47 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ static int qec_bus_map __P((
 		bus_addr_t,		/*offset*/
 		bus_size_t,		/*size*/
 		int,			/*flags*/
-		vm_offset_t,		/*preferred virtual address */
+		vaddr_t,		/*preferred virtual address */
 		bus_space_handle_t *));
 
 struct cfattach qec_ca = {
@@ -228,7 +228,7 @@ qec_bus_map(t, btype, offset, size, flags, vaddr, hp)
 	bus_addr_t offset;
 	bus_size_t size;
 	int	flags;
-	vm_offset_t vaddr;
+	vaddr_t vaddr;
 	bus_space_handle_t *hp;
 {
 	struct qec_softc *sc = t->cookie;
