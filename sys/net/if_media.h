@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.8 1998/08/06 02:38:19 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.9 1998/08/06 19:16:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -215,6 +215,9 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 #define	IFM_ISHIFT	28		/* Instance shift */
 #define	IFM_OMASK	0x0000ff00	/* Type specific options */
 #define	IFM_GMASK	0x0ff00000	/* Global options */
+
+#define	IFM_NMIN	IFM_ETHER	/* lowest Network type */
+#define	IFM_NMAX	IFM_NMASK	/* highest Network type */
 
 /*
  * Status bits
