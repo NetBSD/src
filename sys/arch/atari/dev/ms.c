@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.8 1996/10/11 00:09:29 christos Exp $	*/
+/*	$NetBSD: ms.c,v 1.9 1996/10/13 04:11:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -95,7 +95,7 @@ int
 mouseattach(cnt)
 	int cnt;
 {
-	kprintf("1 mouse configured\n");
+	printf("1 mouse configured\n");
 	ms_softc[0].ms_emul3b = 1;
 	return(NMOUSE);
 }

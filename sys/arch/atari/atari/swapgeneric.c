@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.7 1996/10/11 00:09:05 christos Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.8 1996/10/13 04:10:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -122,24 +122,24 @@ char	*bp;
 	struct genericconf	*gc;
 
 	for(;;) {
-		kprintf("format: <dev-name><unit> [ ':'<part> ] [ * ]\n");
-		kprintf("root device> ");
+		printf("format: <dev-name><unit> [ ':'<part> ] [ * ]\n");
+		printf("root device> ");
 		gets(bp);
 		for (gc = genericconf; gc->gc_driver; gc++)
 			if (gc->gc_driver->cd_name[0] == bp[0] &&
 			   gc->gc_driver->cd_name[1] == bp[1])
 				break;
 		if (gc->gc_driver == NULL) {
-			kprintf("use one of:");
+			printf("use one of:");
 			for (gc = genericconf; gc->gc_driver; gc++)
-				kprintf(" %s%%d", gc->gc_driver->cd_name);
-			kprintf("\n");
+				printf(" %s%%d", gc->gc_driver->cd_name);
+			printf("\n");
 			continue;
 		}
 		cp = bp + 2;
 		if (*cp >= '0' && *cp <= '9')
 			break;
-		kprintf("bad/missing unit number\n");
+		printf("bad/missing unit number\n");
 	}
 	return (gc);
 }
@@ -188,7 +188,7 @@ setconf()
 		gc = guess_gc(1, &unit);
 
 		if (gc == NULL) {
-			kprintf("no suitable root\n");
+			printf("no suitable root\n");
 			asm("stop #0x2700");
 		}
 		/*NOTREACHED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 1996/10/11 00:09:07 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.21 1996/10/13 04:10:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -210,7 +210,7 @@ again:
 		if (beenhere) {
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED)
-				kprintf(fromtrap ?
+				printf(fromtrap ?
 		"pid %d(%s): writeback aborted, pc=%x, fa=%x\n" :
 		"pid %d(%s): writeback aborted in sigreturn, pc=%x\n",
 				    p->p_pid, p->p_comm, fp->f_pc, faultaddr);
@@ -234,7 +234,7 @@ panictrap(type, code, v, fp)
 {
 	static int panicing = 0;
 	if (panicing++ == 0) {
-		kprintf("trap type %d, code = %x, v = %x\n", type, code, v);
+		printf("trap type %d, code = %x, v = %x\n", type, code, v);
 		regdump(fp, 128);
 	}
 	type &= ~T_USER;
@@ -402,7 +402,7 @@ trap(type, code, v, frame)
 		 */
 		type |= T_USER;
 #ifdef DEBUG
-		kprintf("pid %d: kernel %s exception\n", p->p_pid,
+		printf("pid %d: kernel %s exception\n", p->p_pid,
 		    type==T_COPERR ? "coprocessor" : "format");
 #endif
 		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
@@ -505,7 +505,7 @@ trap(type, code, v, frame)
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
-		kprintf("trap: T_MMUFLT pid=%d, code=%x, v=%x, pc=%x, sr=%x\n",
+		printf("trap: T_MMUFLT pid=%d, code=%x, v=%x, pc=%x, sr=%x\n",
 		       p->p_pid, code, v, frame.f_pc, frame.f_sr);
 #endif
 		/*
@@ -528,14 +528,14 @@ trap(type, code, v, frame)
 		va = trunc_page((vm_offset_t)v);
 #ifdef DEBUG
 		if (map == kernel_map && va == 0) {
-			kprintf("trap: bad kernel access at %x\n", v);
+			printf("trap: bad kernel access at %x\n", v);
 			panictrap(type, code, v, &frame);
 		}
 #endif
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			kprintf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 #endif
 		/*
@@ -570,9 +570,9 @@ trap(type, code, v, frame)
 				trapcpfault(p, &frame);
 				return;
 			}
-			kprintf("vm_fault(%p, %lx, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
-			kprintf("  type %x, code [mmu,,ssw]: %x\n",
+			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
 			panictrap(type, code, v, &frame);
 		}
@@ -621,7 +621,7 @@ writeback(fp, docachepush)
 
 #ifdef DEBUG
 	if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid)) {
-		kprintf(" pid=%d, fa=%x,", p->p_pid, f->f_fa);
+		printf(" pid=%d, fa=%x,", p->p_pid, f->f_fa);
 		dumpssw(f->f_ssw);
 	}
 	wbstats.calls++;
@@ -637,13 +637,13 @@ writeback(fp, docachepush)
 		 */
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid)) {
-			kprintf(" pushing %s to PA %x, data %x",
+			printf(" pushing %s to PA %x, data %x",
 			       f7sz[(f->f_ssw & SSW4_SZMASK) >> 5],
 			       f->f_fa, f->f_pd0);
 			if ((f->f_ssw & SSW4_SZMASK) == SSW4_SZLN)
-				kprintf("/%x/%x/%x",
+				printf("/%x/%x/%x",
 				       f->f_pd1, f->f_pd2, f->f_pd3);
-			kprintf("\n");
+			printf("\n");
 		}
 		if (f->f_wb1s & SSW4_WBSV)
 			panic("writeback: cache push with WB1S valid");
@@ -662,7 +662,7 @@ writeback(fp, docachepush)
 			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
 				    (vm_offset_t)&vmmap[NBPG]);
 		} else
-			kprintf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
+			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
 			       p->p_pid, p->p_comm, p->p_ucred->cr_uid);
 	} else if ((f->f_ssw & (SSW4_RW|SSW4_TTMASK)) == SSW4_TTM16) {
 		/*
@@ -672,7 +672,7 @@ writeback(fp, docachepush)
 		 */
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
-			kprintf(" MOVE16 to VA %x(%x), data %x/%x/%x/%x\n",
+			printf(" MOVE16 to VA %x(%x), data %x/%x/%x/%x\n",
 			       f->f_fa, f->f_fa & ~0xF, f->f_pd0, f->f_pd1,
 			       f->f_pd2, f->f_pd3);
 		if (f->f_wb1s & SSW4_WBSV)
@@ -687,7 +687,7 @@ writeback(fp, docachepush)
 			fa = f->f_fa & ~0xF;
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED)
-				kprintf(wberrstr, p->p_pid, p->p_comm,
+				printf(wberrstr, p->p_pid, p->p_comm,
 				       "MOVE16", fp->f_pc, f->f_fa,
 				       f->f_fa & ~0xF, f->f_pd0);
 #endif
@@ -739,7 +739,7 @@ writeback(fp, docachepush)
 			fa = f->f_wb1a;
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED)
-				kprintf(wberrstr, p->p_pid, p->p_comm,
+				printf(wberrstr, p->p_pid, p->p_comm,
 				       "#1", fp->f_pc, f->f_fa,
 				       f->f_wb1a, f->f_wb1d);
 #endif
@@ -783,7 +783,7 @@ writeback(fp, docachepush)
 			fa = f->f_wb2a;
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED) {
-				kprintf(wberrstr, p->p_pid, p->p_comm,
+				printf(wberrstr, p->p_pid, p->p_comm,
 				       "#2", fp->f_pc, f->f_fa,
 				       f->f_wb2a, f->f_wb2d);
 				dumpssw(f->f_ssw);
@@ -827,7 +827,7 @@ writeback(fp, docachepush)
 			fa = f->f_wb3a;
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED)
-				kprintf(wberrstr, p->p_pid, p->p_comm,
+				printf(wberrstr, p->p_pid, p->p_comm,
 				       "#3", fp->f_pc, f->f_fa,
 				       f->f_wb3a, f->f_wb3d);
 #endif
@@ -859,24 +859,24 @@ static void
 dumpssw(ssw)
 	register u_short ssw;
 {
-	kprintf(" SSW: %x: ", ssw);
+	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
-		kprintf("CP,");
+		printf("CP,");
 	if (ssw & SSW4_CU)
-		kprintf("CU,");
+		printf("CU,");
 	if (ssw & SSW4_CT)
-		kprintf("CT,");
+		printf("CT,");
 	if (ssw & SSW4_CM)
-		kprintf("CM,");
+		printf("CM,");
 	if (ssw & SSW4_MA)
-		kprintf("MA,");
+		printf("MA,");
 	if (ssw & SSW4_ATC)
-		kprintf("ATC,");
+		printf("ATC,");
 	if (ssw & SSW4_LK)
-		kprintf("LK,");
+		printf("LK,");
 	if (ssw & SSW4_RW)
-		kprintf("RW,");
-	kprintf(" SZ=%s, TT=%s, TM=%s\n",
+		printf("RW,");
+	printf(" SZ=%s, TT=%s, TM=%s\n",
 	       f7sz[(ssw & SSW4_SZMASK) >> 5],
 	       f7tt[(ssw & SSW4_TTMASK) >> 3],
 	       f7tm[ssw & SSW4_TMMASK]);
@@ -891,16 +891,16 @@ dumpwb(num, s, a, d)
 	register struct proc *p = curproc;
 	vm_offset_t pa;
 
-	kprintf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
+	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
 	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 	       f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
-	kprintf("               PA ");
+	printf("               PA ");
 	pa = pmap_extract(&p->p_vmspace->vm_pmap, (vm_offset_t)a);
 	if (pa == 0)
-		kprintf("<invalid address>");
+		printf("<invalid address>");
 	else
-		kprintf("%x, current value %x", pa, fuword((caddr_t)a));
-	kprintf("\n");
+		printf("%x, current value %x", pa, fuword((caddr_t)a));
+	printf("\n");
 }
 #endif /* DEBUG  */
 #endif /* M68040 */

@@ -312,7 +312,7 @@ kgdbifinit(kip, unit)
 						      pcfp,
 						      kip)
 			    >= 0) {
-				kprintf("KGDB on %s at address %x\n",
+				printf("KGDB on %s at address %x\n",
 				    kip->name, kip->port);
 				if (cfp->cf_loc[0]) /* disable interface fro system */
 					pcfp->cf_fstate = FSTATE_FOUND;
