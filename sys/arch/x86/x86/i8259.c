@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.1 2003/02/26 21:26:11 fvdl Exp $	*/
+/*	$NetBSD: i8259.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -90,8 +90,11 @@
 #include <machine/i8259.h>
 
 
+#ifndef __x86_64__
+#include "mca.h"
 #if NMCA > 0
 #include <machine/mca_machdep.h>                /* for MCA_system */
+#endif
 #endif
 
 static void i8259_hwmask(struct pic *, int);
