@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: makeobsolete,v 1.19 2003/11/25 07:19:46 dyoung Exp $
+# $NetBSD: makeobsolete,v 1.20 2003/12/09 17:57:42 matt Exp $
 #
 # Print out the obsolete files for a set
 # Usage: makeobsolete [-b] [-x] [-a arch] [-m machine] [-s setsdir] \
@@ -96,7 +96,8 @@ for setname in $lists; do
 	if [ -f $setd/lists/$setname/obsolete.${machine} ]; then
 		awk -- '{print $1}' $setd/lists/$setname/obsolete.${machine}
 	fi
-	if [ "$have_gcc3" = yes -a -f $setd/lists/$setname/obsolete.gcc ]; then
+	if [ "$use_tools_toolchain" != yes -a \
+	    -f $setd/lists/$setname/obsolete.gcc ]; then
 		awk -- '{print $1}' $setd/lists/$setname/obsolete.gcc
 	fi
 	) | egrep -v '^#' | sort -ru > $file
