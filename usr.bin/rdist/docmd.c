@@ -33,12 +33,13 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: docmd.c,v 1.7 1996/07/12 00:06:32 thorpej Exp $";
+static char *rcsid = "$Id: docmd.c,v 1.8 1996/07/12 00:38:53 thorpej Exp $";
 #endif /* not lint */
 
 #include "defs.h"
 #include <setjmp.h>
 #include <netdb.h>
+#include <regex.h>
 
 FILE	*lfp;			/* log file for recording files updated */
 struct	subcmd *subcmds;	/* list of sub-commands for current cmd */
@@ -233,7 +234,7 @@ makeconn(rhost)
 		ruser = user;
 	if (!qflag)
 		printf("updating host %s\n", rhost);
-	(void) snprintf(buf, BUFSIZ, "%s -Server%s", _PATH_RDIST,
+	(void) snprintf(buf, sizeof(buf), "%s -Server%s", _PATH_RDIST,
 	    qflag ? " -q" : "");
 	if (port < 0) {
 		struct servent *sp;
@@ -531,7 +532,7 @@ notify(file, rhost, to, lmod)
 	/*
 	 * Create a pipe to mailling program.
 	 */
-	(void)snprintf(buf, BUFSIZ, "%s -oi -t", _PATH_SENDMAIL);
+	(void)snprintf(buf, sizeof(buf), "%s -oi -t", _PATH_SENDMAIL);
 	pf = popen(buf, "w");
 	if (pf == NULL) {
 		error("notify: \"%s\" failed\n", _PATH_SENDMAIL);
@@ -594,6 +595,8 @@ except(file)
 {
 	register struct	subcmd *sc;
 	register struct	namelist *nl;
+	int err;
+	regex_t s;
 
 	if (debug)
 		printf("except(%s)\n", file);
@@ -607,8 +610,12 @@ except(file)
 					return(1);
 				continue;
 			}
-			re_comp(nl->n_name);
-			if (re_exec(file) > 0)
+			if ((err = regcomp(&s, nl->n_name, 0)) != 0) {
+				char ebuf[BUFSIZ];
+				(void) regerror(err, &s, ebuf, sizeof(ebuf));
+				error("%s: %s\n", nl->n_name, ebuf);
+			}
+			if (regexec(&s, file, 0, NULL, 0) == 0)
 				return(1);
 		}
 	}
