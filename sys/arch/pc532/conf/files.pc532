@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.18 1996/02/15 08:37:58 phil Exp $
+#	$NetBSD: files.pc532,v 1.19 1996/03/11 23:09:11 phil Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -26,9 +26,12 @@ file	arch/pc532/dev/scn.c		scn needs-flag
 device  lpt at membus: ether, ifnet
 file    arch/pc532/dev/lpt.c            lpt needs-count
 
-define	scsi {}
+include "../../../scsi/files.scsi"
+major	{sd = 0}
+major	{st = 2}
+major	{cd = 4}
 
-device	ncr at membus: scsi
+device	ncr at membus: scsi, ncr5380sbc
 file	arch/pc532/dev/ncr.c		ncr needs-count
 device	oldncr at membus: scsi
 file	arch/pc532/dev/oldncr.c		oldncr needs-count
@@ -37,29 +40,8 @@ file	arch/pc532/dev/dp.c		dp needs-count
 device	aic at membus: scsi
 file	arch/pc532/dev/aic.c		aic needs-count
 
-device	scsibus at scsi {target = -1, lun = -1}
-
-device	cd at scsibus: disk
-file	scsi/cd.c			cd needs-flag
-major	{cd = 4}
-device	sd at scsibus: disk
-file	scsi/sd.c			sd needs-flag
-major	{sd = 0}
-device	st at scsibus: tape
-file	scsi/st.c			st needs-flag
-major	{st = 2}
-device	ch at scsibus: disk
-file	scsi/ch.c			ch needs-flag
-device	uk at scsibus: disk
-file	scsi/uk.c			uk needs-flag
-device	su at scsibus: disk
-file	scsi/su.c			su needs-flag
-
 file	dev/cons.c
 file	dev/cninit.c
-file	scsi/scsiconf.c			scsi
-file	scsi/scsi_base.c		scsi
-file	scsi/scsi_ioctl.c		scsi
 file	arch/pc532/pc532/autoconf.c
 file	arch/pc532/pc532/conf.c
 file	arch/pc532/pc532/db_disasm.c	ddb
