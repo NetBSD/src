@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.44 2000/06/30 20:45:39 fvdl Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.45 2000/07/03 18:22:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -941,7 +941,7 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 	if (error != 0 || *vpp != NULL)
 		return (error);
 
-	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, vpp)) != 0) {
+	if ((error = getnewvnode(VT_LFS, mp, lfs_vnodeop_p, &vp)) != 0) {
 		*vpp = NULL;
 		return (error);
 	}
