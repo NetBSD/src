@@ -10,7 +10,7 @@
 
 #include <machine/pio.h>
 
-#include <i386/isa/isa.h>
+#include <i386/isa/isareg.h>
 #include <i386/isa/dmavar.h>
 #include <i386/isa/dmareg.h>
 

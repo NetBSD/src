@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.18 1994/04/07 06:51:05 mycroft Exp $
+ *	$Id: npx.c,v 1.19 1994/04/24 01:34:12 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -56,7 +56,7 @@
 
 #include <i386/isa/icu.h>
 #include <i386/isa/isavar.h>
-#include <i386/isa/isa.h>
+#include <i386/isa/isareg.h>
 
 /*
  * 387 and 287 Numeric Coprocessor Extension (NPX) Driver.
