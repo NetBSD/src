@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.40 1998/07/28 17:58:29 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.41 1998/07/31 15:38:58 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -205,10 +205,12 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 			return (EINVAL);
 		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
-	} else {
+	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
 		needfree = NULL;
-	}
+	} else
+		return (EINVAL);
+
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
@@ -404,10 +406,12 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 			return (EINVAL);
 		MALLOC(iov, struct iovec *, iovlen, M_IOV, M_WAITOK);
 		needfree = iov;
-	} else {
+	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
 		needfree = NULL;
-	}
+	} else
+		return (EINVAL);
+
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_WRITE;
