@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.31 1998/09/07 07:11:11 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.32 1998/09/19 15:49:50 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@
 
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <vm/vm.h>
@@ -130,6 +131,9 @@ void	sbus_attach_mainbus __P((struct device *, struct device *, void *));
 void	sbus_attach_iommu __P((struct device *, struct device *, void *));
 void	sbus_attach_xbox __P((struct device *, struct device *, void *));
 
+static	int sbus_error __P((void));
+int	(*sbuserr_handler) __P((void));
+
 struct cfattach sbus_mainbus_ca = {
 	sizeof(struct sbus_softc), sbus_match_mainbus, sbus_attach_mainbus
 };
@@ -141,6 +145,9 @@ struct cfattach sbus_xbox_ca = {
 };
 
 extern struct cfdriver sbus_cd;
+
+/* The "primary" Sbus */
+struct sbus_softc *sbus_sc;
 
 /* If the PROM does not provide the `ranges' property, we make up our own */
 struct sbus_range sbus_translations[] = {
@@ -277,6 +284,18 @@ sbus_attach_mainbus(parent, self, aux)
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
 
+	if (ma->ma_size == 0)
+		printf("%s: no Sbus registers", self->dv_xname);
+
+	if (bus_space_map2(ma->ma_bustag,
+			  (bus_type_t)ma->ma_iospace,
+			  (bus_addr_t)ma->ma_paddr,
+			  (bus_size_t)ma->ma_size,
+			  BUS_SPACE_MAP_LINEAR,
+			  0, &sc->sc_bh) != 0) {
+		panic("%s: can't map sbusbusreg", self->dv_xname);
+	}
+
 	/* Setup interrupt translation tables */
 	sc->sc_intr2ipl = CPU_ISSUN4C
 				? intr_sbus2ipl_4c
@@ -289,8 +308,11 @@ sbus_attach_mainbus(parent, self, aux)
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
+	sbus_sc = sc;
+	sbuserr_handler = sbus_error;
 	sbus_attach_common(sc, "sbus", node, ma->ma_bp, NULL);
 }
+
 
 void
 sbus_attach_iommu(parent, self, aux)
@@ -305,6 +327,18 @@ sbus_attach_iommu(parent, self, aux)
 	sc->sc_bustag = ia->iom_bustag;
 	sc->sc_dmatag = ia->iom_dmatag;
 
+	if (ia->iom_nreg == 0)
+		panic("%s: no Sbus registers", self->dv_xname);
+
+	if (bus_space_map2(ia->iom_bustag,
+			  (bus_type_t)ia->iom_reg[0].ior_iospace,
+			  (bus_addr_t)ia->iom_reg[0].ior_pa,
+			  (bus_size_t)ia->iom_reg[0].ior_size,
+			  BUS_SPACE_MAP_LINEAR,
+			  0, &sc->sc_bh) != 0) {
+		panic("%s: can't map sbusbusreg", self->dv_xname);
+	}
+
 	/* Setup interrupt translation tables */
 	sc->sc_intr2ipl = CPU_ISSUN4C ? intr_sbus2ipl_4c : intr_sbus2ipl_4m;
 
@@ -315,6 +349,8 @@ sbus_attach_iommu(parent, self, aux)
 	sc->sc_clockfreq = getpropint(node, "clock-frequency", 25*1000*1000);
 	printf(": clock = %s MHz\n", clockfreq(sc->sc_clockfreq));
 
+	sbus_sc = sc;
+	sbuserr_handler = sbus_error;
 	sbus_attach_common(sc, "sbus", node, ia->iom_bp, NULL);
 }
 
@@ -441,10 +477,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 	struct bootpath		*bp;
 	struct sbus_attach_args	*sa;
 {
-	/*struct	rom_reg romreg;*/
-	/*int	base;*/
-	int	error;
-	int n;
+	int n, error;
 
 	bzero(sa, sizeof(struct sbus_attach_args));
 	error = getprop(node, "name", 1, &n, (void **)&sa->sa_name);
@@ -732,4 +765,36 @@ sbus_alloc_bustag(sc)
 	sbt->sparc_bus_mmap = sbus_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
 	return (sbt);
+}
+
+int
+sbus_error()
+{
+	struct sbus_softc *sc = sbus_sc;
+	bus_space_handle_t bh = sc->sc_bh;
+	u_int32_t afsr, afva;
+	char bits[64];
+static	int straytime, nstray;
+	int timesince;
+
+	afsr = bus_space_read_4(sc->sc_bustag, bh, SBUS_AFSR_REG);
+	afva = bus_space_read_4(sc->sc_bustag, bh, SBUS_AFAR_REG);
+	printf("sbus error:\n\tAFSR %s\n",
+		bitmask_snprintf(afsr, SBUS_AFSR_BITS, bits, sizeof(bits)));
+	printf("\taddress: 0x%x%x\n", afsr & SBUS_AFSR_PAH, afva);
+
+	/* For now, do the same dance as on stray interrupts */
+	timesince = time.tv_sec - straytime;
+	if (timesince <= 10) {
+		if (++nstray > 9)
+			panic("too many SBus errors");
+	} else {
+		straytime = time.tv_sec;
+		nstray = 1;
+	}
+
+	/* Unlock registers and clear interrupt */
+	bus_space_write_4(sc->sc_bustag, bh, SBUS_AFSR_REG, afsr);
+
+	return (0);
 }
