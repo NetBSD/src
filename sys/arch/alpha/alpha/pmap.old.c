@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.46 1998/03/07 01:10:05 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.47 1998/03/07 01:43:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.46 1998/03/07 01:10:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.47 1998/03/07 01:43:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,21 +234,48 @@ int pmapdebug = PDB_PARANOIA;
 int	protection_codes[2][8];
 
 /*
- * The Alpha's level-1 page table.
+ * Lev1map:
+ *
+ *	Kernel level 1 page table.  This maps all kernel level 2
+ *	page table pages, and is used as a template for all user
+ *	pmap level 1 page tables.  When a new user level 1 page
+ *	table is allocated, all Lev1map PTEs for kernel addresses
+ *	are copied to the new map.
+ *
+ * Lev2map:
+ *
+ *	Initial set of kernel level 2 page table pages.  These
+ *	map the kernel level 3 page table pages.  As kernel
+ *	level 3 page table pages are added, more level 2 page
+ *	table pages may be added to map them.  These pages are
+ *	never freed.
+ *
+ * Lev3map:
+ *
+ *	Initial set of kernel level 3 page table pages.  These
+ *	map pages in K1SEG.  More level 3 page table pages may
+ *	be added at run-time if additional K1SEG address space
+ *	is required.  These pages are never freed.
+ *
+ * Lev2mapsize:
+ *
+ *	Number of entries in the initial Lev2map.
+ *
+ * Lev3mapsize:
+ *
+ *	Number of entries in the initial Lev3map.
+ *
+ * NOTE: When mappings are inserted into the kernel pmap, all
+ * level 2 and level 3 page table pages must already be allocated
+ * and mapped into the parent page table.
  */
-pt_entry_t	*Lev1map;
+pt_entry_t	*Lev1map, *Lev2map, *Lev3map;
+vm_size_t	Lev2mapsize, Lev3mapsize;
 
 /*
- * Kernel segment/page table and page table map.
- * The page table map gives us a level of indirection we need to dynamically
- * expand the page table.  It is essentially a copy of the segment table
- * with PTEs instead of STEs.  All are initialized in locore at boot time.
  * Segtabzero is an empty segment table which all processes share til they
  * reference something.
  */
-pt_entry_t	*Sysptmap;
-pt_entry_t	*Sysmap;
-vm_size_t	Sysptmapsize, Sysmapsize;
 pt_entry_t	*Segtabzero, Segtabzeropte;
 
 struct pmap	kernel_pmap_store;
@@ -393,14 +420,14 @@ pmap_bootstrap(ptaddr)
 	 * This should be kept in sync.
 	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
-	Sysmapsize = (VM_KMEM_SIZE + VM_MBUF_SIZE + VM_PHYS_SIZE +
+	Lev3mapsize = (VM_KMEM_SIZE + VM_MBUF_SIZE + VM_PHYS_SIZE +
 		nbuf * MAXBSIZE + 16 * NCARGS) / NBPG + 512 + 256;
-        Sysmapsize += maxproc * (btoc(ALPHA_STSIZE) + btoc(ALPHA_MAX_PTSIZE));
+        Lev3mapsize += maxproc * (btoc(ALPHA_STSIZE) + btoc(ALPHA_MAX_PTSIZE));
 
 #ifdef SYSVSHM
-	Sysmapsize += shminfo.shmall;
+	Lev3mapsize += shminfo.shmall;
 #endif
-	Sysmapsize = roundup(Sysmapsize, NPTEPG);
+	Lev3mapsize = roundup(Lev3mapsize, NPTEPG);
 
 	/*
 	 * Allocate a level 1 PTE table for the kernel.
@@ -415,16 +442,16 @@ pmap_bootstrap(ptaddr)
 	 * These must map all of the level3 PTEs.
 	 * IF THIS IS NOT A MULTIPLE OF NBPG, ALL WILL GO TO HELL.
 	 */
-	Sysptmapsize = roundup(howmany(Sysmapsize, NPTEPG), NPTEPG);
-	Sysptmap = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * Sysptmapsize, NULL, NULL);
+	Lev2mapsize = roundup(howmany(Lev3mapsize, NPTEPG), NPTEPG);
+	Lev2map = (pt_entry_t *)
+	    pmap_steal_memory(sizeof(pt_entry_t) * Lev2mapsize, NULL, NULL);
 
 	/*
 	 * Allocate a level 3 PTE table for the kernel.
-	 * Contains Sysmapsize PTEs.
+	 * Contains Lev3mapsize PTEs.
 	 */
-	Sysmap = (pt_entry_t *)
-	    pmap_steal_memory(sizeof(pt_entry_t) * Sysmapsize, NULL, NULL);
+	Lev3map = (pt_entry_t *)
+	    pmap_steal_memory(sizeof(pt_entry_t) * Lev3mapsize, NULL, NULL);
 
 	/*
 	 * Allocate memory for page attributes and pv_table entries.
@@ -474,8 +501,8 @@ pmap_bootstrap(ptaddr)
 #endif
 
 	/* Map all of the level 2 pte pages */
-	for (i = 0; i < howmany(Sysptmapsize, NPTEPG); i++) {
-		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Sysptmap) +
+	for (i = 0; i < howmany(Lev2mapsize, NPTEPG); i++) {
+		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Lev2map) +
 		    (i*PAGE_SIZE)) >> PGSHIFT) << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
 		Lev1map[l1pte_index(VM_MIN_KERNEL_ADDRESS +
@@ -492,16 +519,16 @@ pmap_bootstrap(ptaddr)
 	 * Set up level 2 page table.
 	 */
 	/* Map all of the level 3 pte pages */
-	for (i = 0; i < howmany(Sysmapsize, NPTEPG); i++) {
-		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Sysmap) +
+	for (i = 0; i < howmany(Lev3mapsize, NPTEPG); i++) {
+		pte = (ALPHA_K0SEG_TO_PHYS(((vm_offset_t)Lev3map) +
 		    (i*PAGE_SIZE)) >> PGSHIFT) << PG_SHIFT;
 		pte |= PG_V | PG_ASM | PG_KRE | PG_KWE | PG_WIRED;
-		Sysptmap[l2pte_index(VM_MIN_KERNEL_ADDRESS+
+		Lev2map[l2pte_index(VM_MIN_KERNEL_ADDRESS+
 		    (i*PAGE_SIZE*NPTEPG))] = pte;
 	}
 
 	/*
-	 * Set up level three page table (Sysmap)
+	 * Set up level three page table (Lev3map)
 	 */
 	/* Nothing to do; it's already zero'd */
 
@@ -513,7 +540,7 @@ pmap_bootstrap(ptaddr)
 	avail_start = ptoa(vm_physmem[0].start);
 	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
 	virtual_avail = VM_MIN_KERNEL_ADDRESS;
-	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
+	virtual_end = VM_MIN_KERNEL_ADDRESS + Lev3mapsize * NBPG;
 
 #if 0
 	printf("avail_start = 0x%lx\n", avail_start);
@@ -531,8 +558,8 @@ pmap_bootstrap(ptaddr)
 	 * Initialize kernel pmap.
 	 */
 	pmap_kernel()->pm_lev1map = Lev1map;
-	pmap_kernel()->pm_stab = Sysptmap;
-	pmap_kernel()->pm_ptab = Sysmap;
+	pmap_kernel()->pm_stab = Lev2map;
+	pmap_kernel()->pm_ptab = Lev3map;
 	pmap_kernel()->pm_count = 1;
 	simple_lock_init(&pmap_kernel()->pm_lock);
 	LIST_INSERT_HEAD(&pmap_all_pmaps, pmap_kernel(), pm_list);
