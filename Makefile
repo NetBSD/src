@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.137 2001/10/19 02:35:45 tv Exp $
+#	$NetBSD: Makefile,v 1.138 2001/10/19 03:19:01 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -70,7 +70,7 @@
 _J=		-j${NBUILDJOBS}
 .endif
 
-.if ${USETOOLS} != "no"
+.if ${USETOOLS} == "yes"
 _SUBDIR+=	tools
 .endif
 _SUBDIR+=	lib include gnu bin games libexec sbin usr.bin \
@@ -104,7 +104,7 @@ BUILDTARGETS+=	obj
 .if !defined(UPDATE) && !defined(NOCLEANDIR)
 BUILDTARGETS+=	cleandir
 .endif
-.if ${USETOOLS} != "no"
+.if ${USETOOLS} == "yes"
 BUILDTARGETS+=	do-make-tools
 .endif
 .if !defined(NODISTRIBDIRS)
