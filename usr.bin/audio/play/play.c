@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.4 1999/03/27 05:14:38 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.5 1999/03/27 18:16:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -311,6 +311,14 @@ usage()
 {
 	extern char *__progname;
 
-	fprintf(stderr, "Usage: %s [-iqVh] [-v vol] [-b bal] [-p port] [-d dev]\n\t[-c ctl] [file ...]\n", __progname);
+	fprintf(stderr, "Usage: %s [-hiqV] [options] files\n", __progname);
+	fprintf(stderr, "Options:\n\t"
+	    "-C audio control device\n\t"
+	    "-b balance (0-63)\n\t"
+	    "-d audio device\n\t"
+	    "-i header information\n\t"
+	    "-m monitor volume\n\t"
+	    "-p output port\n\t"
+	    "-v volume\n");
 	exit(0);
 }
