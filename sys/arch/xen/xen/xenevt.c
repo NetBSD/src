@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.1.2.1 2005/01/31 17:21:16 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.1.2.2 2005/02/12 22:33:52 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -38,6 +38,7 @@
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/poll.h>
+#include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 
@@ -91,6 +92,7 @@ struct xenevt_d {
 	u_int ring_write; /* pointer of the writer */
 	u_int flags;
 #define XENEVT_F_OVERFLOW 0x01 /* ring overflow */
+	struct selinfo sel; /* used by poll */
 };
 
 /* event -> user device mapping */
@@ -120,11 +122,13 @@ xenevt_event(int port)
 		if (devevent[port]->ring_read ==
 		    ((devevent[port]->ring_write + 1) & XENEVT_RING_MASK)) {
 			devevent[port]->flags |= XENEVT_F_OVERFLOW;
-			return;
+			printf("xenevt_event: ring overflow port %d\n", port);
+		} else {
+			devevent[port]->ring[devevent[port]->ring_write] = port;
+			devevent[port]->ring_write =
+			    (devevent[port]->ring_write + 1) & XENEVT_RING_MASK;
 		}
-		devevent[port]->ring[devevent[port]->ring_write] = port;
-		devevent[port]->ring_write =
-		    (devevent[port]->ring_write + 1) & XENEVT_RING_MASK;
+		selnotify(&devevent[port]->sel, 1);
 		wakeup(&devevent[port]->ring_read);
 	}
 }
@@ -176,8 +180,8 @@ xenevt_read(struct file *fp, off_t *offp, struct uio *uio,
 		if (d->flags & XENEVT_F_OVERFLOW)
 			return EFBIG;
 		/* nothing to read */
-		if (fp->f_flag & FNONBLOCK) {
-			return (EWOULDBLOCK);
+		if (/* fp->f_flag & FNONBLOCK */ 1) {
+			return (EAGAIN);
 		}
 		error = tsleep(&d->ring_read, PRIBIO | PCATCH, "xenevt", 0);
 		if (error == EINTR || error == ERESTART) {
@@ -232,8 +236,9 @@ xenevt_write(struct file *fp, off_t *offp, struct uio *uio,
 		return error;
 	for (i = 0; i < nentries; i++) {
 		if (chans[i] < NR_EVENT_CHANNELS &&
-		    devevent[chans[i]] == d)
+		    devevent[chans[i]] == d) {
 			hypervisor_unmask_event(chans[i]);
+		}
 	}
 	return 0;
 }
@@ -265,6 +270,8 @@ xenevt_ioctl(struct file *fp, u_long cmd, void *addr, struct proc *p)
 		devevent[*arg] = NULL;
 		hypervisor_mask_event(*arg);
 		break;
+	case FIONBIO:
+		break;
 	default:
 		return EINVAL;
 	}
@@ -274,7 +281,7 @@ xenevt_ioctl(struct file *fp, u_long cmd, void *addr, struct proc *p)
 /*      
  * Support for poll() system call  
  *
- * Return true iff the specific operation will not block indefinitely.
+ * Return true if the specific operation will not block indefinitely.
  */      
 
 static int
@@ -286,8 +293,10 @@ xenevt_poll(struct file *fp, int events, struct proc *p)
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (d->ring_read != d->ring_write) {
 			revents |= events & (POLLIN | POLLRDNORM);
+		} else {
+			/* Record that someone is waiting */
+			selrecord(p, &d->sel);
 		}
 	}
 	return (revents);
 }
-
