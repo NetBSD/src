@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/03/29 11:40:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/08/28 15:31:30 tv Exp $
 
 NOPROG=	yes
 
-INCS=	bastring.h complext.h dcomplex.h fcomplex.h ldcomplex.h straits.h
+INCS=	bastring.cc bastring.h complext.cc complext.h dcomplex.h fcomplex.h \
+	ldcomplex.h straits.h
 INCSDIR=/usr/include/g++/std
 
-.PATH: $(.CURDIR)/../../../dist/libstdc++/std
+.PATH: ${.CURDIR}/../../../dist/libstdc++/std
 
 .include <bsd.prog.mk>

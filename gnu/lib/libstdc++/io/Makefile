@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/03/29 11:40:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1998/08/28 15:31:30 tv Exp $
 
 NOPROG=	yes
 
@@ -8,6 +8,6 @@ INCS=	PlotFile.h SFile.h builtinbuf.h editbuf.h floatio.h fstream.h \
 	procbuf.h stdiostream.h stream.h streambuf.h strfile.h strstream.h
 INCSDIR=/usr/include/g++
 
-.PATH: $(.CURDIR)/../../../dist/libio
+.PATH: ${.CURDIR}/../../../dist/libio
 
 .include <bsd.prog.mk>

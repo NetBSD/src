@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 1998/04/12 14:18:42 tv Exp $
+#	$NetBSD: Makefile,v 1.4 1998/08/28 15:31:30 tv Exp $
 
 NOPROG=	yes
+
 INCS=	algorithm deque functional hash_map hash_set iterator list map \
 	memory numeric pthread_alloc queue rope set slist stack utility \
-	vector
-INCS+=	algo.h algobase.h alloc.h bvector.h defalloc.h deque.h function.h \
+	vector \
+	algo.h algobase.h alloc.h bvector.h defalloc.h deque.h function.h \
 	hash_map.h hash_set.h hashtable.h heap.h iterator.h list.h map.h \
 	multimap.h multiset.h pair.h pthread_alloc.h rope.h ropeimpl.h set.h \
 	slist.h stack.h stl_algo.h stl_algobase.h stl_alloc.h stl_bvector.h \
@@ -17,10 +18,8 @@ INCS+=	algo.h algobase.h alloc.h bvector.h defalloc.h deque.h function.h \
 	tempbuf.h tree.h type_traits.h vector.h
 INCSDIR=/usr/include/g++
 
-.PATH: $(.CURDIR)/../../../dist/libstdc++/stl
+.PATH: ${.CURDIR}/../../../dist/libstdc++/stl
 
-# XXX Workaround the .cc -> (NULL) extension rule
-.cc:
-	@true
+.SUFFIXES:
 
 .include <bsd.prog.mk>
