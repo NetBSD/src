@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.40 1998/07/07 03:04:34 scottr Exp $	*/
+/*	$NetBSD: macrom.c,v 1.41 1998/09/12 02:42:27 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -947,14 +947,15 @@ mrg_init()
 	Lvl1DT[0] = (void (*)(void))mrg_1sec_timer_tick;
 	Lvl1DT[2] = (void (*)(void))mrg_romadbintr;
 	Lvl1DT[4] = (void (*)(void))mrg_rompmintr;
-	JADBProc = mrg_jadbprocpanic; /* Fake JADBProc for the time being */
-	jSwapMMU = mrg_jswapmmupanic; /* Fake jSwapMMU for the time being */
-	JKybdTask = mrg_jkybdtaskpanic; /* Fake jSwapMMU for the time being */
+	JADBProc = mrg_jadbprocpanic;	/* Fake JADBProc for the time being */
+	jSwapMMU = mrg_jswapmmupanic;	/* Fake jSwapMMU for the time being */
+	JKybdTask = mrg_jkybdtaskpanic;	/* Fake JKybdTask for the time being */
 
-	jADBOp = (void (*)(void))
-			mrg_OStraps[0x7c]; /* probably very dangerous */
+	/* probably very dangerous */
+	jADBOp = (void (*)(void))mrg_OStraps[0x7c];
+
 	mrg_VIA2 = (caddr_t)(Via1Base + VIA2 * 0x2000);	/* see via.h */
-	SCCRd = (caddr_t)(IOBase + sccA);   /* ser.c ; we run before serinit */
+	SCCRd = (caddr_t)sccA;		/* ser.c ; we run before serinit */
 
 	jDTInstall = (caddr_t)mrg_DTInstall;
 
