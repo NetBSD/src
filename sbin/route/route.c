@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.31 1999/07/02 15:29:03 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.32 1999/07/06 23:15:48 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.31 1999/07/02 15:29:03 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.32 1999/07/06 23:15:48 mjacob Exp $");
 #endif
 #endif /* not lint */
 
@@ -1200,7 +1200,7 @@ monitor()
 		exit(0);
 	}
 	for(;;) {
-		long now;
+		time_t now;
 		n = read(s, msg, 2048);
 		now = time(NULL);
 		(void) printf("got message of size %d on %s", n, ctime(&now));
