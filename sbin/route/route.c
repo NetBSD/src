@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.55 2002/06/04 22:20:00 itojun Exp $	*/
+/*	$NetBSD: route.c,v 1.56 2002/06/05 22:10:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.55 2002/06/04 22:20:00 itojun Exp $");
+__RCSID("$NetBSD: route.c,v 1.56 2002/06/05 22:10:44 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1109,14 +1109,17 @@ inet6_makenetandmask(sin6)
 		memset(&in6, 0, sizeof(in6));
 		if (!memcmp(&sin6->sin6_addr.s6_addr[8], &in6.s6_addr[8], 8))
 			plen = "64";
+		else
+			plen = "128";
 	}
 
-	if (plen) {
+	if (!plen || strcmp(plen, "128") == 0)
+		return 1;
+	else {
 		rtm_addrs |= RTA_NETMASK;
-		return prefixlen(plen);
+		(void)prefixlen(plen);
+		return 0;
 	}
-
-	return -1;
 }
 #endif
 
@@ -1212,8 +1215,7 @@ getaddr(which, s, hpp)
 #endif
 		freeaddrinfo(res);
 		if (which == RTA_DST)
-			if (inet6_makenetandmask(&su->sin6) == 128)
-				return 1;
+			return inet6_makenetandmask(&su->sin6);
 		return 0;
 	    }
 #endif
