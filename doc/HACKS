@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.26 2003/12/07 12:52:33 simonb Exp $
+# $NetBSD: HACKS,v 1.27 2003/12/07 19:58:25 scw Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -289,6 +289,36 @@ port	sh5
 		scope due to being defined within an asm() statement (without
 		being declared .globl in that statement). Work around it by
 		adding the .globl.
+	kcah
+
+	hack	gcc 3.3.2 on sh5 - ICE compiling reload1.c at -O2
+	cdate	Sun Dec  7 19:44:05 GMT 2003
+	who	scw
+	file	gnu/usr.bin/gcc3/backend/Makefile : 1.13
+	descr
+		Gcc3 for sh5 gets an ICE compiling reload1.c at -O2.
+		Drop to -O1 for now when building for sh5.
+	kcah
+
+	hack	gcc 3.3.2 on sh5 - fatal warning compiling function.c
+	cdate	Sun Dec  7 19:44:05 GMT 2003
+	who	scw
+	file	gnu/usr.bin/gcc3/backend/Makefile : 1.13
+	descr
+		Gcc3 for sh5 issues a warning:
+		.../gnu/dist/gcc/gcc/function.c:4742: warning: `and' of
+		    mutually exclusive equal-tests is always 0.
+		This causes the build to fail because of -Werror.
+		Work-around by defining NOGCCERROR when building for sh5.
+	kcah
+
+	hack	gcc 3.3.2 on sh5 - ICE compiling dist/bind/bin/named/ns_main.c
+	cdate	Sun Dec  7 19:44:05 GMT 2003
+	who	scw
+	file	usr.sbin/bind/named/Makefile : 1.15
+	descr
+		Gcc3 for sh5 gets an ICE compiling ns_main.c at -O2.
+		Drop to -O1 for now when building for sh5.
 	kcah
 
 
