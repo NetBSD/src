@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.14 2001/09/08 01:32:56 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.15 2002/01/12 22:06:08 enami Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -161,13 +161,13 @@ Motherboard parallel port
 .It ISDN devices :
 . Bl -tag -width 0123456789 -compact
 . It Ar i4b
-Comunication between userland isdnd and kernel
+Communication between userland isdnd and kernel
 . It Ar i4bctl
 Control device
 . It Ar i4brbch#
 Raw b-channel access
 . It Ar i4btel#
-Telephonie device
+Telephony device
 . It Ar i4btrc#
 Trace device
 . El
@@ -203,18 +203,21 @@ Power management device, see
 . It Ar bell#
 OPM bell device
 . It Ar ch#
-SCSI changer device, see
+SCSI media changer, see
 .Xr \&ch 4
 . It Ar uk#
-SCSI unknown device, see
+Unknown SCSI device, see
 .Xr \&uk 4
 . It Ar ss#
-SCSI scanner device, see
+SCSI scanner, see
 .Xr \&ss 4
 . It Ar scsibus#
 SCSI busses, see
-.Xr \&scsictl 8 ,
-.Xr \&scsi 4
+.Xr \&scsi 4 ,
+.Xr \&scsictl 8
+. It Ar clockctl
+Clock control for non root users, see
+.Xr \&clockctl 4
 . El
 .El
 .Sh FILES
