@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.1 2003/07/25 21:12:45 jonathan Exp $ */
+/*	$NetBSD: deflate.c,v 1.2 2003/08/27 00:12:37 thorpej Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.1 2003/07/25 21:12:45 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.2 2003/08/27 00:12:37 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -53,6 +53,21 @@ int window_deflate = -12;
  * This function takes a block of data and (de)compress it using the deflate
  * algorithm
  */
+
+static void *
+ocf_zalloc(void *nil, u_int type, u_int size)
+{
+	void *ptr;
+
+	ptr = malloc(type *size, M_CRYPTO_DATA, M_NOWAIT);
+	return ptr;
+}
+
+static void
+ocf_zfree(void *nil, void *ptr)
+{
+	free(ptr, M_CRYPTO_DATA);
+}
 
 u_int32_t
 deflate_global(data, size, decomp, out)
@@ -74,8 +89,8 @@ deflate_global(data, size, decomp, out)
 		buf[j].flag = 0;
 
 	zbuf.next_in = data;	/* data that is going to be processed */
-	zbuf.zalloc = z_alloc;
-	zbuf.zfree = z_free;
+	zbuf.zalloc = ocf_zalloc;
+	zbuf.zfree = ocf_zfree;
 	zbuf.opaque = Z_NULL;
 	zbuf.avail_in = size;	/* Total length of data to be processed */
 
@@ -172,22 +187,4 @@ bad:
 	else
 		deflateEnd(&zbuf);
 	return 0;
-}
-
-void *
-z_alloc(nil, type, size)
-	void *nil;
-	u_int type, size;
-{
-	void *ptr;
-
-	ptr = malloc(type *size, M_CRYPTO_DATA, M_NOWAIT);
-	return ptr;
-}
-
-void
-z_free(nil, ptr)
-	void *nil, *ptr;
-{
-	free(ptr, M_CRYPTO_DATA);
 }
