@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.2 1998/08/13 02:10:47 eeh Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.3 1998/08/23 15:52:43 eeh Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -63,14 +63,14 @@ void dk_cleanup __P((void));
 static int dk_match_ffs __P((void));
 #endif
 
-static int mmuh = -1, memh = -1;
+static u_int mmuh = -1, memh = -1;
 
-static int get_mmu_handle __P((void));
-static int get_memory_handle __P((void));
+static u_int get_mmu_handle __P((void));
+static u_int get_memory_handle __P((void));
 
-static int 
+static u_int 
 get_mmu_handle() {
-	int chosen;
+	u_int chosen;
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
 		prom_printf("get_mmu_handle: cannot get /chosen\r\n");
 		return -1;
@@ -82,9 +82,9 @@ get_mmu_handle() {
 	return mmuh;
 }
 
-static int 
+static u_int 
 get_memory_handle() {
-	int chosen;
+	u_int chosen;
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
 		prom_printf("get_mmu_handle: cannot get /chosen\r\n");
 		return -1;
@@ -104,19 +104,17 @@ int
 prom_set_trap_table(tba)
 vaddr_t tba;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		u_int64_t tba;
-	} args = {
-		0,"SUNW,set-trap-table",
-		1,
-		0,
-		NULL
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t tba;
+	} args;
 
-	args.tba = tba;
+	args.name = ADR2CELL(&"SUNW,set-trap-table");
+	args.nargs = 1;
+	args.nreturns = 0;
+	args.tba = ADR2CELL(tba);
 	return openfirmware(&args);
 }
 
@@ -125,51 +123,43 @@ vaddr_t tba;
  *
  * Only works while the prom is actively mapping us.
  */
-u_int64_t
+paddr_t
 prom_vtop(vaddr)
 vaddr_t vaddr;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t vaddr;
-		int64_t status;
-		int64_t retaddr;
-		int64_t mode;
-		u_int64_t paddr_hi;
-		u_int64_t paddr_lo;
-	} args = {
-		0,"call-method",
-		3,
-		5,
-		0,"translate",
-		0, 0,
-		0, NULL,
-		0
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t vaddr;
+		cell_t status;
+		cell_t retaddr;
+		cell_t mode;
+		cell_t phys_hi;
+		cell_t phys_lo;
+	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
 		prom_printf("prom_vtop: cannot get mmuh\r\n");
-		return 0LL;
+		return 0;
 	}
-	args.ihandle = mmuh;
-	args.vaddr = vaddr;
+	args.name = ADR2CELL(&"call-method");
+	args.nargs = 3;
+	args.nreturns = 5;
+	args.method = ADR2CELL(&"translate");
+	args.ihandle = HDL2CELL(mmuh);
+	args.vaddr = ADR2CELL(vaddr);
 	if(openfirmware(&args) != 0)
-		return 0LL;
+		return 0;
 #if 0
 	prom_printf("Called \"translate\", mmuh=%x, vaddr=%x, status=%x %x,\r\n retaddr=%x %x, mode=%x %x, phys_hi=%x %x, phys_lo=%x %x\r\n",
 		    mmuh, vaddr, (int)(args.status>>32), (int)args.status, (int)(args.retaddr>>32), (int)args.retaddr, 
-		    (int)(args.mode>>32), (int)args.mode, (int)(args.paddr_hi>>32), (int)args.paddr_hi,
-		    (int)(args.paddr_lo>>32), (int)args.paddr_lo);
+		    (int)(args.mode>>32), (int)args.mode, (int)(args.phys_hi>>32), (int)args.phys_hi,
+		    (int)(args.phys_lo>>32), (int)args.phys_lo);
 #endif
-#ifdef INT_IS_64_BITS
-	return (u_int64_t)((((u_int64_t)args.paddr_hi)<<32)|(u_int64_t)args.paddr_lo); 
-#else
-	return args.paddr_lo; /* Kluge till we go 64-bit */
-#endif
+	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo); 
 }
 
 /* 
@@ -182,40 +172,34 @@ prom_claim_virt(vaddr, len)
 vaddr_t vaddr;
 int len;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t align;
-		u_int64_t len;
-		u_int64_t vaddr;
-		int64_t status;
-		int64_t retaddr;
-	} args = {
-		0,"call-method",
-		5,
-		2,
-		0,"claim",
-		0, 0,
-		0,
-		0, 
-		NULL,
-		0,
-		0
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t align;
+		cell_t len;
+		cell_t vaddr;
+		cell_t status;
+		cell_t retaddr;
+	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
 		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
-		return 0LL;
+		return 0;
 	}
-	args.ihandle = mmuh;
-	args.vaddr = vaddr;
+	args.name = ADR2CELL(&"call-method");
+	args.nargs = 5;
+	args.nreturns = 2;
+	args.method = ADR2CELL(&"claim");
+	args.ihandle = HDL2CELL(mmuh);
+	args.align = 0;
 	args.len = len;
+	args.vaddr = ADR2CELL(vaddr);
 	if(openfirmware(&args) != 0)
-		return 0LL;
-	return args.retaddr; /* Kluge till we go 64-bit */
+		return 0;
+	return (paddr_t)args.retaddr;
 }
 
 /* 
@@ -229,37 +213,32 @@ int len;
 int align;
 {
 	static int retaddr;
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t align;
-		u_int64_t len;
-		int64_t status;
-		int pad4; void* retaddr;
-	} args = {
-		0,"call-method",
-		4,
-		2,
-		0,"claim",
-		0, 0,
-		0,
-		0, 
-		0,
-		0, &retaddr
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t align;
+		cell_t len;
+		cell_t status;
+		cell_t retaddr;
+	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
 		prom_printf("prom_alloc_virt: cannot get mmuh\r\n");
 		return -1LL;
 	}
-	args.ihandle = mmuh;
+	args.name = ADR2CELL(&"call-method");
+	args.nargs = 4;
+	args.nreturns = 2;
+	args.method = ADR2CELL(&"claim");
+	args.ihandle = HDL2CELL(mmuh);
 	args.align = align;
 	args.len = len;
+	args.retaddr = ADR2CELL(&retaddr);
 	if(openfirmware(&args) != 0)
-		return -1LL;
+		return -1;
 	return retaddr; /* Kluge till we go 64-bit */
 }
 
@@ -273,30 +252,26 @@ prom_free_virt(vaddr, len)
 vaddr_t vaddr;
 int len;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t len;
-		u_int64_t vaddr;
-	} args = {
-		0,"call-method",
-		4,
-		0,
-		0,"release",
-		0, 0,
-		0,
-		NULL
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t len;
+		cell_t vaddr;
+	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
 		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
 		return -1;
 	}
-	args.ihandle = mmuh;
-	args.vaddr = vaddr;
+	args.name = ADR2CELL(&"call-method");
+	args.nargs = 4;
+	args.nreturns = 0;
+	args.method = ADR2CELL(&"release");
+	args.ihandle = HDL2CELL(mmuh);
+	args.vaddr = ADR2CELL(vaddr);
 	args.len = len;
 	return openfirmware(&args);
 }
@@ -312,30 +287,26 @@ prom_unmap_virt(vaddr, len)
 vaddr_t vaddr;
 int len;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t len;
-		u_int64_t vaddr;
-	} args = {
-		0,"call-method",
-		4,
-		0,
-		0,"unmap",
-		0, 0,
-		0,
-		NULL
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t len;
+		cell_t vaddr;
+	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
 		prom_printf("prom_claim_virt: cannot get mmuh\r\n");
 		return -1;
 	}
-	args.ihandle = mmuh;
-	args.vaddr = vaddr;
+	args.name = ADR2CELL(&"call-method");
+	args.nargs = 4;
+	args.nreturns = 0;
+	args.method = ADR2CELL(&"unmap");
+	args.ihandle = HDL2CELL(mmuh);
+	args.vaddr = ADR2CELL(vaddr);
 	args.len = len;
 	return openfirmware(&args);
 }
@@ -347,54 +318,41 @@ int len;
  */
 int
 prom_map_phys(paddr, size, vaddr, mode)
-u_int64_t paddr;
+paddr_t paddr;
 off_t size;
 vaddr_t vaddr;
 int mode;
 {
-	int phys_hi, phys_lo;
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		int64_t mode;
-		u_int64_t size;
-		u_int64_t vaddr;
-		int pad4; int paddr_hi;
-		int pad6; int paddr_lo;
-		int64_t status;
-		int64_t retaddr;
-	} args = {
-		0,"call-method",
-		7,
-		1,
-		0,"map",
-		0, 0,
-		0, 0,
-		0, NULL,
-		0, NULL,
-		0, NULL
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t mode;
+		cell_t size;
+		cell_t vaddr;
+		cell_t phys_hi;
+		cell_t phys_lo;
+		cell_t status;
+		cell_t retaddr;
+	} args;
 
 	if (mmuh == -1 && ((mmuh = get_mmu_handle()) == -1)) {
 		prom_printf("prom_map_phys: cannot get mmuh\r\n");
-		return 0LL;
+		return 0;
 	}
-#ifdef INT_IS_64_BITS
-	phys_hi = paddr>>32; 
-#else
-	phys_hi = 0; /* This is what Solaris does.  We gotta fix this for 64-bits */
-#endif
-	phys_lo = paddr;
-
-	args.ihandle = mmuh;
+	args.name = ADR2CELL(&"call-method");
+	args.nargs = 7;
+	args.nreturns = 1;
+	args.method = ADR2CELL(&"map");
+	args.ihandle = HDL2CELL(mmuh);
 	args.mode = mode;
 	args.size = size;
-	args.vaddr = vaddr;
-	args.paddr_hi = phys_hi;
-	args.paddr_lo = phys_lo;
+	args.vaddr = ADR2CELL(vaddr);
+	args.phys_hi = HDL2CELL(paddr>>32); 
+	args.phys_lo = HDL2CELL(paddr);
+
 	if (openfirmware(&args) == -1)
 		return -1;
 	if (args.status)
@@ -408,43 +366,38 @@ int mode;
  *
  * Only works while the prom is actively mapping us.
  */
-u_int64_t
+paddr_t
 prom_alloc_phys(len, align)
 int len;
 int align;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t align;
-		u_int64_t len;
-		int64_t status;
-		u_int64_t phys_hi;
-		u_int64_t phys_lo;
-	} args = {
-		0,"call-method",
-		4,
-		3,
-		0,"claim",
-		0, 0,
-		0,
-		0, 
-		0,
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t align;
+		cell_t len;
+		cell_t status;
+		cell_t phys_hi;
+		cell_t phys_lo;
+	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_alloc_phys: cannot get memh\r\n");
-		return 0LL;
+		return 0;
 	}
-	args.ihandle = memh;
+	args.name = ADR2CELL(&"call-method");
+	args.nargs = 4;
+	args.nreturns = 3;
+	args.method = ADR2CELL(&"claim");
+	args.ihandle = HDL2CELL(memh);
 	args.align = align;
 	args.len = len;
 	if(openfirmware(&args) != 0)
-		return 0LL;
-	return args.phys_lo; /* Kluge till we go 64-bit */
+		return 0;
+	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo);
 }
 
 /* 
@@ -452,48 +405,42 @@ int align;
  *
  * Only works while the prom is actively mapping us.
  */
-u_int64_t
+paddr_t
 prom_claim_phys(phys, len)
 paddr_t phys;
 int len;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t align;
-		u_int64_t len;
-		int pad4; u_int32_t phys_hi;
-		int pad5; u_int32_t phys_lo;
-		int64_t status;
-		int64_t res;
-		u_int64_t rphys_hi;
-		u_int64_t rphys_lo;
-	} args = {
-		0,"call-method",
-		6,
-		4,
-		0,"claim",
-		0, 0,
-		0,
-		0, 
-		0, NULL,
-		0, NULL,
-		0
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t align;
+		cell_t len;
+		cell_t phys_hi;
+		cell_t phys_lo;
+		cell_t status;
+		cell_t res;
+		cell_t rphys_hi;
+		cell_t rphys_lo;
+	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_alloc_phys: cannot get memh\r\n");
-		return 0LL;
+		return 0;
 	}
-	args.ihandle = memh;
+	args.name = ADR2CELL(&"call-method");
+	args.nargs = 6;
+	args.nreturns = 4;
+	args.method = ADR2CELL(&"claim");
+	args.ihandle = HDL2CELL(memh);
 	args.len = len;
-	args.phys_lo = phys;
+	args.phys_hi = HDL2CELL(phys>>32);
+	args.phys_lo = HDL2CELL(phys);
 	if(openfirmware(&args) != 0)
-		return 0LL;
-	return args.rphys_lo; /* Kluge till we go 64-bit */
+		return 0;
+	return (paddr_t)((((paddr_t)args.phys_hi)<<32)|(int)args.phys_lo);
 }
 
 /* 
@@ -506,33 +453,29 @@ prom_free_phys(phys, len)
 paddr_t phys;
 int len;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t len;
-		int pad4; u_int32_t phys_hi;
-		int pad5; u_int32_t phys_lo;
-	} args = {
-		0,"call-method",
-		5,
-		0,
-		0,"release",
-		0, 0,
-		0, 
-		0, NULL,
-		0, NULL,
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t len;
+		cell_t phys_hi;
+		cell_t phys_lo;
+	} args;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_free_phys: cannot get memh\r\n");
 		return -1;
 	}
-	args.ihandle = memh;
+	args.name = ADR2CELL(&"call-method");
+	args.nargs = 5;
+	args.nreturns = 0;
+	args.method = ADR2CELL(&"release");
+	args.ihandle = HDL2CELL(memh);
 	args.len = len;
-	args.phys_lo = phys;
+	args.phys_hi = HDL2CELL(phys>>32);
+	args.phys_lo = HDL2CELL(phys);
 	return openfirmware(&args);
 }
 
@@ -541,58 +484,52 @@ int len;
  *
  * Only works while the prom is actively mapping us.
  */
-u_int64_t
+paddr_t
 prom_get_msgbuf(len, align)
 int len;
 int align;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t align;
-		u_int64_t len;
-		int pad3; char *id;
-		int64_t status;
-		int pad4; u_int32_t phys_hi;
-		int pad5; u_int32_t phys_lo;
-	} args = {
-		0,"call-method",
-		5,
-		3,
-		0,"SUNW,retain",
-		0, 0,
-		0,
-		0,
-		0, "msgbuf",
-		-1,
-		0, 0,
-		0, 0
-	};
-	u_int64_t addr;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t align;
+		cell_t len;
+		cell_t id;
+		cell_t status;
+		cell_t phys_hi;
+		cell_t phys_lo;
+	} args;
+	paddr_t addr;
 
 	if (memh == -1 && ((memh = get_memory_handle()) == -1)) {
 		prom_printf("prom_get_msgbuf: cannot get memh\r\n");
-		return -1LL;
+		return -1;
 	}
-	args.ihandle = memh;
-	args.len = len;
-	args.align = align;
 	if (OF_test("test-method") == 0) {
 		if (OF_test_method(memh, "SUNW,retain") != 0) {
+			args.name = ADR2CELL(&"call-method");
+			args.nargs = 5;
+			args.nreturns = 3;
+			args.method = ADR2CELL(&"SUNW,retain");
+			args.id = ADR2CELL(&"msgbuf");
+			args.ihandle = HDL2CELL(memh);
+			args.len = len;
+			args.align = align;
+			args.status = -1;
 			if (openfirmware(&args) == 0 && args.status == 0) {
-				return (((u_int64_t)args.phys_hi<<32)|args.phys_lo);
+				return (((paddr_t)args.phys_hi<<32)|args.phys_lo);
 			} else prom_printf("prom_get_msgbuf: SUNW,retain failed\r\n");
 		} else prom_printf("prom_get_msgbuf: test-method failed\r\n");
 	} else prom_printf("prom_get_msgbuf: test failed\r\n");
-	/* Allocate random memory */
+	/* Allocate random memory -- page zero avail?*/
 	addr = prom_claim_phys(0x2000, len);
 	prom_printf("prom_get_msgbuf: allocated new buf at %08x\r\n", (int)addr); 
 	if( !addr ) {
 		prom_printf("prom_get_msgbuf: cannot get allocate physmem\r\n");
-		return -1LL;
+		return -1;
 	}
 	prom_printf("prom_get_msgbuf: claiming new buf at %08x\r\n", (int)addr); 	
 	return addr; /* Kluge till we go 64-bit */
@@ -602,14 +539,14 @@ int align;
  * Low-level prom I/O routines.
  */
 
-static int stdin = NULL;
-static int stdout = NULL;
+static u_int stdin = NULL;
+static u_int stdout = NULL;
 
 int 
 OF_stdin() 
 {
 	if( stdin == NULL ) {
-		int chosen;
+		u_int chosen;
 		
 		chosen = OF_finddevice("/chosen");
 		OF_getprop(chosen, "stdout", &stdin, sizeof(stdin));
@@ -621,7 +558,7 @@ int
 OF_stdout()
 {
 	if( stdout == NULL ) {
-		int chosen;
+		u_int chosen;
 		
 		chosen = OF_finddevice("/chosen");
 		OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.3 1998/08/13 02:10:47 eeh Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.4 1998/08/23 15:52:44 eeh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,29 +40,23 @@
 
 #define min(x,y)	((x<y)?(x):(y))
 
-/* Prolly never used */
-void ofbcopy __P((const void *src, void *dst, size_t len));
-
 
 int
 OF_peer(phandle)
 	int phandle;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int phandle;
-		int pad2; int sibling;
-	} args = {
-		0, "peer",
-		1,
-		1,
-		0, 0,
-		0, 0
-	};
-	
-	args.phandle = phandle;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t sibling;
+	} args;
+
+	args.name = ADR2CELL(&"peer");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
 	if (openfirmware(&args) == -1)
 		return 0;
 	return args.sibling;
@@ -72,21 +66,18 @@ int
 OF_child(phandle)
 	int phandle;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int phandle;
-		int pad2; int child;
-	} args = {
-		0, "child",
-		1,
-		1,
-		0, 0,
-		0, 0
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t child;
+	} args;
 	
-	args.phandle = phandle;
+	args.name = ADR2CELL(&"child");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
 	if (openfirmware(&args) == -1)
 		return 0;
 	return args.child;
@@ -96,21 +87,18 @@ int
 OF_parent(phandle)
 	int phandle;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int phandle;
-		int pad2; int parent;
-	} args = {
-		0, "parent",
-		1,
-		1,
-		0, 0,
-		0, 0
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t parent;
+	} args;
 	
-	args.phandle = phandle;
+	args.name = ADR2CELL(&"parent");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
 	if (openfirmware(&args) == -1)
 		return 0;
 	return args.parent;
@@ -121,20 +109,17 @@ OF_instance_to_package(ihandle)
 	int ihandle;
 {
 	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int ihandle;
-		int pad2; int phandle;
-	} args = {
-		0, "instance-to-package",
-		1,
-		1,
-		0, 0,
-		0, 0
-	};
-
-	args.ihandle = ihandle;
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t ihandle;
+		cell_t phandle;
+	} args;
+	
+	args.name = ADR2CELL(&"instance-to-package");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.ihandle = HDL2CELL(ihandle);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.phandle;
@@ -145,23 +130,20 @@ OF_getproplen(handle, prop)
 	int handle;
 	char *prop;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int phandle;
-		int pad2; char *prop;
-		int64_t size;
-	} args = {
-		0, "getproplen",
-		2,
-		1,
-		0, 0,
-		0, NULL
-	};
-
-	args.phandle = handle;
-	args.prop = prop;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t prop;
+		cell_t size;
+	} args;
+	
+	args.name = ADR2CELL(&"getproplen");
+	args.nargs = 2;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(handle);
+	args.prop = ADR2CELL(prop);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.size;
@@ -174,29 +156,25 @@ OF_getprop(handle, prop, buf, buflen)
 	void *buf;
 	int buflen;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int phandle;
-		int pad2; char *prop;
-		int pad3; void *buf;
-		int64_t buflen;
-		int64_t size;
-	} args = {
-		0, "getprop",
-		4,
-		1,
-		0, 0,
-		0, NULL,
-		0, NULL
-	};
-
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t prop;
+		cell_t buf;
+		cell_t buflen;
+		cell_t size;
+	} args;
+	
 	if (buflen > NBPG)
 		return -1;
-	args.phandle = handle;
-	args.prop = prop;
-	args.buf = buf;
+	args.name = ADR2CELL(&"getprop");
+	args.nargs = 4;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(handle);
+	args.prop = ADR2CELL(prop);
+	args.buf = ADR2CELL(buf);
 	args.buflen = buflen;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -207,22 +185,18 @@ int
 OF_finddevice(name)
 char *name;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *device;
-		int pad2; int phandle;
-	} args = {
-		0, "finddevice",
-		1,
-		1,
-		0, NULL,
-		0, 0
-	};	
-
-	args.device = name;
-	args.phandle = -1;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t device;
+		cell_t phandle;
+	} args;
+	
+	args.name = ADR2CELL(&"finddevice");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.device = ADR2CELL(name);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.phandle;
@@ -234,26 +208,23 @@ OF_instance_to_path(ihandle, buf, buflen)
 	char *buf;
 	int buflen;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int ihandle;
-		int pad2; char *buf;
-		int64_t buflen;
-		int64_t length;
-	} args = {
-		0,"instance-to-path",
-		3,
-		1,
-		0, 0,
-		0, NULL
-	};
-
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t ihandle;
+		cell_t buf;
+		cell_t buflen;
+		cell_t length;
+	} args;
+	
 	if (buflen > NBPG)
 		return -1;
-	args.ihandle = ihandle;
-	args.buf = buf;
+	args.name = ADR2CELL(&"instance-to-path");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.ihandle = HDL2CELL(ihandle);
+	args.buf = ADR2CELL(buf);
 	args.buflen = buflen;
 	if (openfirmware(&args) < 0)
 		return -1;
@@ -266,32 +237,32 @@ OF_package_to_path(phandle, buf, buflen)
 	char *buf;
 	int buflen;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int phandle;
-		int pad2; char *buf;
-		int64_t buflen;
-		int64_t length;
-	} args = {
-		0,"package-to-path",
-		3,
-		1,
-		0, 0,
-		0, NULL
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t phandle;
+		cell_t buf;
+		cell_t buflen;
+		cell_t length;
+	} args;
 	
 	if (buflen > NBPG)
 		return -1;
-	args.phandle = phandle;
-	args.buf = buf;
+	args.name = ADR2CELL(&"package-to-path");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.phandle = HDL2CELL(phandle);
+	args.buf = ADR2CELL(buf);
 	args.buflen = buflen;
 	if (openfirmware(&args) < 0)
 		return -1;
 	return args.length;
 }
 
+/*
+ * The following two functions may need to be re-worked to be 64-bit clean.
+ */
 int
 #ifdef	__STDC__
 OF_call_method(char *method, int ihandle, int nargs, int nreturns, ...)
@@ -305,37 +276,32 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 #endif
 {
 	va_list ap;
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t args_n_results[12];
-	} args = {
-		0, "call-method",
-		2,
-		1,
-		0, NULL,
-		0, 0
-	};
-	int *ip, n;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t args_n_results[12];
+	} args;
+	long *ip, n;
 	
 	if (nargs > 6)
 		return -1;
+	args.name = ADR2CELL(&"call-method");
 	args.nargs = nargs + 2;
 	args.nreturns = nreturns + 1;
-	args.method = method;
-	args.ihandle = ihandle;
+	args.method = HDL2CELL(method);
+	args.ihandle = HDL2CELL(ihandle);
 	va_start(ap, nreturns);
-	for (ip = (int*)(args.args_n_results + (n = nargs)); --n >= 0;)
-		*--ip = va_arg(ap, int);
+	for (ip = (long*)(args.args_n_results + (n = nargs)); --n >= 0;)
+		*--ip = va_arg(ap, unsigned long);
 	if (openfirmware(&args) == -1)
 		return -1;
 	if (args.args_n_results[nargs])
 		return args.args_n_results[nargs];
-	for (ip = (int*)(args.args_n_results + nargs + (n = args.nreturns)); --n > 0;)
-		*va_arg(ap, int *) = *--ip;
+	for (ip = (long*)(args.args_n_results + nargs + (n = args.nreturns)); --n > 0;)
+		*va_arg(ap, unsigned long *) = *--ip;
 	va_end(ap);
 	return 0;
 }
@@ -352,30 +318,26 @@ OF_call_method_1(method, ihandle, nargs, va_alist)
 #endif
 {
 	va_list ap;
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *method;
-		int pad2; int ihandle;
-		u_int64_t args_n_results[16];
-	} args = {
-		0, "call-method",
-		2,
-		1,
-		0, NULL,
-		0, 0
-	};
-	int *ip, n;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t method;
+		cell_t ihandle;
+		cell_t args_n_results[16];
+	} args;
+	long *ip, n;
 	
 	if (nargs > 6)
 		return -1;
+	args.name = ADR2CELL(&"call-method");
 	args.nargs = nargs + 2;
-	args.method = method;
-	args.ihandle = ihandle;
+	args.nreturns = 1;
+	args.method = HDL2CELL(method);
+	args.ihandle = HDL2CELL(ihandle);
 	va_start(ap, nargs);
-	for (ip = (int*)(args.args_n_results + (n = nargs)); --n >= 0;)
-		*--ip = va_arg(ap, int);
+	for (ip = (long*)(args.args_n_results + (n = nargs)); --n >= 0;)
+		*--ip = va_arg(ap, unsigned long);
 	va_end(ap);
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -388,24 +350,21 @@ int
 OF_open(dname)
 	char *dname;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *dname;
-		int pad2; int handle;
-	} args = {
-		0, "open",
-		1,
-		1,
-		0, NULL,
-		0, 0
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t dname;
+		cell_t handle;
+	} args;
 	int l;
 	
 	if ((l = strlen(dname)) >= NBPG)
 		return -1;
-	args.dname = dname;
+	args.name = ADR2CELL(&"open");	
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.dname = ADR2CELL(dname);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.handle;
@@ -415,19 +374,17 @@ void
 OF_close(handle)
 	int handle;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int handle;
-	} args = {
-		0, "close",
-		1,
-		0,
-		0, 0
-	};
-
-	args.handle = handle;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t handle;
+	} args;
+	
+	args.name = ADR2CELL(&"close");
+	args.nargs = 1;
+	args.nreturns = 0;
+	args.handle = HDL2CELL(handle);
 	openfirmware(&args);
 }
 
@@ -435,20 +392,18 @@ int
 OF_test(service)
 	char* service;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *service;
-		int64_t status;
-	} args = {
-		0, "test",
-		1,
-		1,
-		0, NULL
-	};
-
-	args.service = service;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t service;
+		cell_t status;
+	} args;
+	
+	args.name = ADR2CELL(&"test");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.service = ADR2CELL(service);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.status;
@@ -459,24 +414,20 @@ OF_test_method(service, method)
 	int service;
 	char* method;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int service;
-		int pad2; char *method;
-		int64_t status;
-	} args = {
-		0, "test-method",
-		2,
-		1,
-		0, 0,
-		0, 0,
-		-1
-	};
-
-	args.service = service;
-	args.method = method;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t service;
+		cell_t method;
+		cell_t status;
+	} args;
+	
+	args.name = ADR2CELL(&"test-method");
+	args.nargs = 2;
+	args.nreturns = 1;
+	args.service = HDL2CELL(service);
+	args.method = ADR2CELL(method);
 	openfirmware(&args);
 	return args.status;
 }
@@ -491,25 +442,22 @@ OF_read(handle, addr, len)
 	void *addr;
 	int len;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int ihandle;
-		int pad2; void *addr;
-		int64_t len;
-		int64_t actual;
-	} args = {
-		0, "read",
-		3,
-		1,
-		0, 0,
-		0, NULL
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t ihandle;
+		cell_t addr;
+		cell_t len;
+		cell_t actual;
+	} args;
 	int l, act = 0;
 	
-	args.ihandle = handle;
-	args.addr = addr;
+	args.name = ADR2CELL(&"read");	
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.ihandle = HDL2CELL(handle);
+	args.addr = ADR2CELL(addr);
 	for (; len > 0; len -= l, addr += l) {
 		l = min(NBPG, len);
 		args.len = l;
@@ -533,25 +481,22 @@ OF_write(handle, addr, len)
 	void *addr;
 	int len;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int ihandle;
-		int pad2; void *addr;
-		int64_t len;
-		int64_t actual;
-	} args = {
-		0, "write",
-		3,
-		1,
-		0, 0,
-		0, NULL
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t ihandle;
+		cell_t addr;
+		cell_t len;
+		cell_t actual;
+	} args;
 	int l, act = 0;
-	
-	args.ihandle = handle;
-	args.addr = addr;
+		
+	args.name = ADR2CELL(&"write");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.ihandle = HDL2CELL(handle);
+	args.addr = ADR2CELL(addr);
 	for (; len > 0; len -= l, addr += l) {
 		l = min(NBPG, len);
 		args.len = l;
@@ -569,24 +514,22 @@ OF_seek(handle, pos)
 	int handle;
 	u_quad_t pos;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; int handle;
-		u_int64_t poshi;
-		u_int64_t poslo;
-		int64_t status;
-	} args = {
-		0, "seek",
-		3,
-		1,
-		0, 0
-	};
-
-	args.handle = handle;
-	args.poshi = (unsigned int)(pos >> 32);
-	args.poslo = (unsigned int)pos;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t handle;
+		cell_t poshi;
+		cell_t poslo;
+		cell_t status;
+	} args;
+	
+	args.name = ADR2CELL(&"seek");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.handle = HDL2CELL(handle);
+	args.poshi = HDL2CELL(pos >> 32);
+	args.poslo = HDL2CELL(pos);
 	if (openfirmware(&args) == -1)
 		return -1;
 	return args.status;
@@ -596,22 +539,20 @@ void
 OF_boot(bootspec)
 	char *bootspec;
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; char *bootspec;
-	} args = {
-		0, "boot",
-		1,
-		0,
-		0, NULL
-	};
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t bootspec;
+	} args;
 	int l;
 	
 	if ((l = strlen(bootspec)) >= NBPG)
 		panic("OF_boot");
-	args.bootspec = bootspec;
+	args.name = ADR2CELL(&"boot");	
+	args.nargs = 1;
+	args.nreturns = 0;
+	args.bootspec = ADR2CELL(bootspec);
 	openfirmware(&args);
 	panic("OF_boot failed");
 }
@@ -619,32 +560,30 @@ OF_boot(bootspec)
 void
 OF_enter()
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-	} args = {
-		0, "enter",
-		0,
-		0,
-	};
-
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+	} args;
+	
+	args.name = ADR2CELL(&"enter");
+	args.nargs = 0;
+	args.nreturns = 0;
 	openfirmware(&args);
 }
 
 void
 OF_exit()
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-	} args = {
-		0, "exit",
-		0,
-		0,
-	};
-
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+	} args;
+	
+	args.name = ADR2CELL(&"exit");
+	args.nargs = 0;
+	args.nreturns = 0;
 	openfirmware(&args);
 	panic("OF_exit failed");
 }
@@ -652,16 +591,15 @@ OF_exit()
 void
 OF_poweroff()
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-	} args = {
-		0, "SUNW,power-off",
-		0,
-		0,
-	};
-
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+	} args;
+	
+	args.name = ADR2CELL(&"SUNW,power-off");
+	args.nargs = 0;
+	args.nreturns = 0;
 	openfirmware(&args);
 	panic("OF_poweroff failed");
 }
@@ -670,44 +608,20 @@ void
 (*OF_set_callback(newfunc))()
 	void (*newfunc)();
 {
-	static struct {
-		int pad0; char *name;
-		int64_t nargs;
-		int64_t nreturns;
-		int pad1; void (*newfunc)();
-		int pad2; void (*oldfunc)();
-	} args = {
-		0, "set-callback",
-		1,
-		1,
-		0, NULL,
-		0, NULL,
-	};
-
-	args.newfunc = newfunc;
+	struct {
+		cell_t name;
+		cell_t nargs;
+		cell_t nreturns;
+		cell_t newfunc;
+		cell_t oldfunc;
+	} args;
+	
+	args.name = ADR2CELL(&"set-callback");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.newfunc = ADR2CELL(newfunc);
 	if (openfirmware(&args) == -1)
 		return 0;
-	return args.oldfunc;
+	return (void*)(long)args.oldfunc;
 }
 
-/*
- * This version of bcopy doesn't work for overlapping regions!
- */
-void
-ofbcopy(src, dst, len)
-	const void *src;
-	void *dst;
-	size_t len;
-{
-	const char *sp = src;
-	char *dp = dst;
-
-	if (src == dst)
-		return;
-	
-	/*
-	 * Do some optimization?						XXX
-	 */
-	while (len-- > 0)
-		*dp++ = *sp++;
-}
