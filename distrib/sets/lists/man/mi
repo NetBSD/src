@@ -1,4 +1,3 @@
-./usr/share/man/cat8/fdisk.0
 ./usr/share/man/cat1/Mail.0
 ./usr/share/man/cat1/[.0
 ./usr/share/man/cat1/alias.0
@@ -582,6 +581,7 @@
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
 ./usr/share/man/cat8/ntpdate.0
+./usr/share/man/cat8/ntptime.0
 ./usr/share/man/cat8/ntpq.0
 ./usr/share/man/cat8/ntptrace.0
 ./usr/share/man/cat8/pac.0
