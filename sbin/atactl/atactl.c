@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.34 2004/10/08 18:53:42 soren Exp $	*/
+/*	$NetBSD: atactl.c,v 1.35 2004/11/17 15:40:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.34 2004/10/08 18:53:42 soren Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.35 2004/11/17 15:40:50 fvdl Exp $");
 #endif
 
 
@@ -504,7 +504,7 @@ print_smart_status(void *vbuf, void *tbuf)
 		     aid++)
 			;
 
-		flags = attr->flags;
+		flags = le16toh(attr->flags);
 
 		printf("%3d %3d  %3d     %-3s %-7s %stive    %-24s\t",
 		    i, attr->value, thresh,
@@ -677,7 +677,7 @@ print_selftest_entry(int num, struct ata_smart_selftest *le)
 	if (le->status >> 4 == 15)
 		printf("\tPercent of test remaining: %1d0\n", le->status & 0xf);
 	else if (le->status >> 4 != 0)
-		printf("\tLBA first error: %d\n", le->lba_first_error);
+		printf("\tLBA first error: %d\n", le32toh(le->lba_first_error));
 }
 
 void
@@ -694,7 +694,7 @@ print_selftest(void *buf)
 		return;
 	}
 
-	if (stlog->data_structure_revision != 1) {
+	if (le16toh(stlog->data_structure_revision != 1)) {
 		fprintf(stderr, "Log revision not 1");
 		return;
 	}
@@ -1045,7 +1045,7 @@ device_smart(int argc, char *argv[])
 
 		req.features = WDSM_ENABLE_OPS;
 		req.command = WDCC_SMART;
-		req.cylinder = htole16(WDSMART_CYL);
+		req.cylinder = WDSMART_CYL;
 		req.timeout = 1000;
 
 		ata_command(&req);
@@ -1056,7 +1056,7 @@ device_smart(int argc, char *argv[])
 
 		req.features = WDSM_DISABLE_OPS;
 		req.command = WDCC_SMART;
-		req.cylinder = htole16(WDSMART_CYL);
+		req.cylinder = WDSMART_CYL;
 		req.timeout = 1000;
 
 		ata_command(&req);
@@ -1073,12 +1073,12 @@ device_smart(int argc, char *argv[])
 
 			req.features = WDSM_STATUS;
 			req.command = WDCC_SMART;
-			req.cylinder = htole16(WDSMART_CYL);
+			req.cylinder = WDSMART_CYL;
 			req.timeout = 1000;
 	
 			ata_command(&req);
 
-			if (req.cylinder != htole16(WDSMART_CYL)) {
+			if (req.cylinder != WDSMART_CYL) {
 				fprintf(stderr, "Threshold exceeds condition\n");
 			}
 
@@ -1095,7 +1095,7 @@ device_smart(int argc, char *argv[])
 			req.command = WDCC_SMART;
 			req.databuf = (caddr_t) inbuf;
 			req.datalen = sizeof(inbuf);
-			req.cylinder = htole16(WDSMART_CYL);
+			req.cylinder = WDSMART_CYL;
 			req.timeout = 1000;
 	
 			ata_command(&req);
@@ -1108,7 +1108,7 @@ device_smart(int argc, char *argv[])
 			req.command = WDCC_SMART;
 			req.databuf = (caddr_t) inbuf2;
 			req.datalen = sizeof(inbuf2);
-			req.cylinder = htole16(WDSMART_CYL);
+			req.cylinder = WDSMART_CYL;
 			req.timeout = 1000;
 
 			ata_command(&req);
@@ -1127,7 +1127,7 @@ device_smart(int argc, char *argv[])
 
 		req.features = WDSM_EXEC_OFFL_IMM;
 		req.command = WDCC_SMART;
-		req.cylinder = htole16(WDSMART_CYL);
+		req.cylinder = WDSMART_CYL;
 		req.sec_num = atol(argv[1]);
 		req.timeout = 10000;
 
@@ -1148,7 +1148,7 @@ device_smart(int argc, char *argv[])
 		req.command = WDCC_SMART;
 		req.databuf = (caddr_t) inbuf;
 		req.datalen = sizeof(inbuf);
-		req.cylinder = htole16(WDSMART_CYL);
+		req.cylinder = WDSMART_CYL;
 		req.timeout = 1000;
 		
 		ata_command(&req);
@@ -1170,7 +1170,7 @@ device_smart(int argc, char *argv[])
 		req.command = WDCC_SMART;
 		req.databuf = (caddr_t) inbuf;
 		req.datalen = sizeof(inbuf);
-		req.cylinder = htole16(WDSMART_CYL);
+		req.cylinder = WDSMART_CYL;
 		req.timeout = 1000;
 		
 		ata_command(&req);
