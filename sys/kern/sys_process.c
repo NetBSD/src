@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.36 1994/08/15 16:32:41 cgd Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.37 1994/08/15 16:45:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -230,10 +230,7 @@ ptrace(p, uap, retval)
 		 * Mostly the same as PT_READ_U, but write data instead of
 		 * reading it.  Don't bother filling in the eproc, because
 		 * it won't be used for anything anyway.
-		 * XXX THERE IS A SERIOUS SECURITY HOLE HERE.
 		 */
-
-		/* Check that the address is legal (XXX) */
 		if ((u_long)uap->addr > (ctob(UPAGES) - sizeof(int)) ||
 		    ((u_long)uap->addr & (sizeof(int) - 1)) != 0)
 			return (EINVAL);
