@@ -1,8 +1,8 @@
-/*	$NetBSD: creat.c,v 1.5 1997/07/13 18:50:06 christos Exp $	*/
+/*	$NetBSD: creat.c,v 1.6 1998/02/02 06:26:35 perry Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char *sccsid = "@(#)creat.c	5.3 (Berkeley) 2/24/91";
+static char sccsid[] = "@(#)creat.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: creat.c,v 1.5 1997/07/13 18:50:06 christos Exp $");
+__RCSID("$NetBSD: creat.c,v 1.6 1998/02/02 06:26:35 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
