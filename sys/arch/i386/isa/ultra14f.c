@@ -19,7 +19,7 @@
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  * slight mod to make work with 34F as well: Wed Jun  2 18:05:48 WST 1993
  *
- *      $Id: ultra14f.c,v 1.13.2.4 1993/11/28 22:30:08 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.13.2.5 1993/11/28 23:35:48 mycroft Exp $
  */
 
 #include "uha.h"
@@ -775,7 +775,7 @@ uha_find(uha)
 		uha->dma = 7;
 		break;
 	default:
-		printf("illegal dma jumper setting\n");
+		printf("illegal dma setting %x\n", dma_ch);
 		return EIO;
 	}
 
@@ -793,16 +793,13 @@ uha_find(uha)
 		uha->vect = 15;
 		break;
 	default:
-		printf("illegal int jumper setting\n");
+		printf("illegal int setting %x\n", irq_ch);
 		return EIO;
 	}
 
 	/* who are we on the scsi bus */
 	uha->our_id = uha_id;
 
-	/*
-	 * Note that we are going and return (to probe)
-	 */
 	outb(port + UHA_LINT, UHA_ASRST);
 
 	while (--resetcount) {
@@ -816,6 +813,9 @@ uha_find(uha)
 		return ENXIO;
 	}
 
+	/*
+	 * Note that we are going and return (to probe)
+	 */
 	return 0;
 }
 
@@ -847,12 +847,9 @@ uha_scsi_cmd(xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	struct uha_data *uha = sc_link->adapter_softc;
-	struct scsi_sense_data *s1, *s2;
 	struct mscp *mscp;
 	struct uha_dma_seg *sg;
 	int seg;		/* scatter gather seg being worked on */
-	int i = 0;
-	int rc = 0;
 	int thiskv;
 	u_long thisphys, nextphys;
 	int bytes_this_seg, bytes_this_page, datalen, flags;
