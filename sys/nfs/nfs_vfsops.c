@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.112.10.2 2002/07/29 15:00:57 lukem Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.112.10.3 2003/10/04 08:34:30 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.112.10.2 2002/07/29 15:00:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.112.10.3 2003/10/04 08:34:30 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -171,8 +171,11 @@ nfs_statfs(mp, sbp, p)
 	if (v3)
 		nfsm_postop_attr(vp, retattr);
 	if (error) {
-		if (mrep != NULL)
-			m_free(mrep);
+		if (mrep != NULL) {
+			if (mrep->m_next != NULL)
+				printf("nfs_vfsops: nfs_statfs would loose buffers\n");
+			m_freem(mrep);
+		}
 		goto nfsmout;
 	}
 	nfsm_dissect(sfp, struct nfs_statfs *, NFSX_STATFS(v3));
