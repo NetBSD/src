@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.72 2000/06/30 17:10:18 itojun Exp $
+#	$NetBSD: GENERIC,v 1.73 2000/07/25 01:39:22 wrstuden Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.72 $"
+#ident 		"GENERIC-$Revision: 1.73 $"
 
 maxusers	32
 
@@ -257,7 +257,6 @@ scsibus* at umass? channel ?
 
 # USB audio
 uaudio*	at uhub? port ? configuration ?
-audio*	at uaudio?
 
 # USB Ethernet adapters
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
@@ -266,6 +265,39 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
 # USB Generic driver
 ugen*	at uhub? port ? configuration ? interface ?
+
+# Audio Devices
+
+# PCI audio devices
+#auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
+#clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
+#cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
+eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+#eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+#fms*	at pci? dev ? function ?	# Forte Media FM801
+#sv*	at pci? dev ? function ?	# S3 SonicVibes
+
+# OPL[23] FM synthesizers
+#opl*	at eso?
+#opl*	at fms?
+
+# Audio support
+#audio*	at auvia?
+#audio*	at clcs?
+#audio*	at cmpci?
+audio*	at eap?
+#audio*	at eso?
+#audio*	at fms?
+#audio*	at sv?
+audio*	at uaudio?
+
+# MPU 401 UARTs
+#mpu*	at eso?
+#mpu*	at fms?
+
+# MIDI support
+midi*	at eap?			# 137[01] MIDI port
+#midi*	at mpu?			# MPU 401
 
 pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
