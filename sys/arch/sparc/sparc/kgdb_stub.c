@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.5 1996/04/01 17:36:20 christos Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.6 1996/04/01 19:16:41 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -642,12 +642,15 @@ kgdb_acc(addr, len, rw, usertoo)
 		if (((int)addr >> PG_VSHIFT) != 0 &&
 		    ((int)addr >> PG_VSHIFT) != -1)
 			return (0);
+#if defined(SUN4M)
 		if (CPU_ISSUN4M) {
 			pte = getpte4m(addr);
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE ||
 			    (rw == B_WRITE && (pte & PPROT_WRITE) == 0))
 				return (0);
-		} else {
+		} else
+#endif
+		{
 			pte = getpte4(addr);
 			if ((pte & PG_V) == 0 ||
 			    (rw == B_WRITE && (pte & PG_W) == 0))
@@ -669,10 +672,12 @@ kdb_mkwrite(addr, len)
 
 	addr = (caddr_t)((int)addr & ~PGOFSET);
 	for (; len > 0; len -= NBPG, addr += NBPG)
+#if defined(SUN4M)
 		if (CPU_ISSUN4M)
 			setpte4m((vm_offset_t)addr,
 				 getpte4m(addr) | PPROT_WRITE);
 		else
+#endif
 			setpte4(addr, getpte4(addr) | PG_W);
 }
 #endif
