@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.457 2002/07/26 10:17:22 onoe Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.458 2002/07/29 20:08:51 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.455 2002/07/26 10:14:00 onoe Exp 
+ *	NetBSD: pcidevs,v 1.456 2002/07/29 20:08:25 augustss Exp 
  */
 
 /*
@@ -3022,6 +3022,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "HB1 PCI-PCI Bridge",
 	},
 	{
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB4,
+	    0,
+	    "HiNT",
+	    "HB4 PCI-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE,
 	    0,
 	    "IBM",
@@ -5306,6 +5312,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "PLX Technology",
 	    "9060ES PCI bus controller",
+	},
+	{
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9656,
+	    0,
+	    "PLX Technology",
+	    "9656 I/O Accelerator",
 	},
 	{
 	    PCI_VENDOR_POWERHOUSE, PCI_PRODUCT_POWERHOUSE_POWERTOP,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.459 2002/07/26 10:17:21 onoe Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.460 2002/07/29 20:08:50 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.455 2002/07/26 10:14:00 onoe Exp 
+ *	NetBSD: pcidevs,v 1.456 2002/07/29 20:08:25 augustss Exp 
  */
 
 /*
@@ -1277,6 +1277,7 @@
 
 /* HiNT products */
 #define	PCI_PRODUCT_HINT_HB1	0x0021		/* HB1 PCI-PCI Bridge */
+#define	PCI_PRODUCT_HINT_HB4	0x0022		/* HB4 PCI-PCI Bridge */
 
 /* IBM products */
 #define	PCI_PRODUCT_IBM_MCABRIDGE	0x0002		/* MCA Bridge */
@@ -1756,6 +1757,7 @@
 
 /* PLX Technology products */
 #define	PCI_PRODUCT_PLX_9060ES	0x906e		/* 9060ES PCI bus controller */
+#define	PCI_PRODUCT_PLX_9656	0x9656		/* 9656 I/O Accelerator */
 
 /* Powerhouse Systems products */
 #define	PCI_PRODUCT_POWERHOUSE_POWERTOP	0x6037		/* PowerTop PowerPC system controller */
