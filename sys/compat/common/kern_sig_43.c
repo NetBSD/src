@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.7 1996/03/14 19:31:47 christos Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.8 1998/07/05 08:49:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)kern_sig.c	8.7 (Berkeley) 4/18/94
  */
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/signalvar.h>

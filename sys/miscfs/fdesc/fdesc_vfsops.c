@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.24 1998/03/01 02:21:08 fvdl Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.25 1998/07/05 08:49:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -43,6 +43,10 @@
 /*
  * /dev/fd Filesystem
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.30 1998/06/25 22:50:18 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.31 1998/07/05 08:49:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -37,6 +37,7 @@
  */
 
 #include "opt_compat_freebsd.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/types.h>
 #include <sys/errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.28 1998/03/01 02:25:18 fvdl Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.29 1998/07/05 08:49:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,6 +30,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_compat_netbsd.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>

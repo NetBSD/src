@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.9 1998/07/04 22:18:22 jonathan Exp $	*/
+/*	$NetBSD: pccons.c,v 1.10 1998/07/05 08:49:39 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -44,6 +44,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

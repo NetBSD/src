@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.86 1998/05/18 18:27:43 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.87 1998/07/05 08:49:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -62,6 +62,8 @@
 
 #include "audio.h"
 #if NAUDIO > 0
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/ioctl.h>

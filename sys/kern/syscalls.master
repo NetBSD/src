@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.80 1998/07/02 01:23:33 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -35,6 +35,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
+#include "opt_compat_netbsd.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"

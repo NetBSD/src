@@ -1,4 +1,4 @@
-/*	$NetBSD: syscalls.c,v 1.87 1998/07/02 01:24:25 thorpej Exp $	*/
+/*	$NetBSD: syscalls.c,v 1.88 1998/07/05 08:49:49 jonathan Exp $	*/
 
 /*
  * System call names.
@@ -10,6 +10,7 @@
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
+#include "opt_compat_netbsd.h"
 #include "fs_lfs.h"
 #include "fs_nfs.h"
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.34 1998/02/10 14:11:07 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.35 1998/07/05 08:49:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,7 @@
 
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
+#include "opt_compat_netbsd.h"
 
 /*
  * Memory special file

@@ -81,6 +81,7 @@
  *---------------------------------------------------------------------------*/
 
 #include "pcvt_hdr.h"		/* global include */
+#include "opt_compat_netbsd.h"
 
 static int  s3testwritable( void );
 static int  et4000_col( int );
