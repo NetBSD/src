@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.11 1998/09/18 20:35:11 christos Exp $	*/
+/*	$NetBSD: cond.c,v 1.12 2001/01/14 20:44:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: cond.c,v 1.11 1998/09/18 20:35:11 christos Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.12 2001/01/14 20:44:26 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.11 1998/09/18 20:35:11 christos Exp $");
+__RCSID("$NetBSD: cond.c,v 1.12 2001/01/14 20:44:26 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -78,6 +78,7 @@ __RCSID("$NetBSD: cond.c,v 1.11 1998/09/18 20:35:11 christos Exp $");
  *	T -> exists(file)
  *	T -> empty(varspec)
  *	T -> target(name)
+ *	T -> commands(name)
  *	T -> symbol
  *	T -> $(varspec) op value
  *	T -> $(varspec) == "string"
@@ -112,6 +113,7 @@ static int CondStrMatch __P((ClientData, ClientData));
 static Boolean CondDoMake __P((int, char *));
 static Boolean CondDoExists __P((int, char *));
 static Boolean CondDoTarget __P((int, char *));
+static Boolean CondDoCommands __P((int, char *));
 static Boolean CondCvtArg __P((char *, double *));
 static Token CondToken __P((Boolean));
 static Token CondT __P((Boolean));
@@ -425,6 +427,40 @@ CondDoTarget (argLen, arg)
     return (result);
 }
 
+/*-
+ *-----------------------------------------------------------------------
+ * CondDoCommands --
+ *	See if the given node exists and is an actual target with commands
+ *	associated with it.
+ *
+ * Results:
+ *	TRUE if the node exists as a target and has commands associated with
+ *	it and FALSE if it does not.
+ *
+ * Side Effects:
+ *	None.
+ *
+ *-----------------------------------------------------------------------
+ */
+static Boolean
+CondDoCommands (argLen, arg)
+    int	    argLen;
+    char    *arg;
+{
+    char    savec = arg[argLen];
+    Boolean result;
+    GNode   *gn;
+
+    arg[argLen] = '\0';
+    gn = Targ_FindNode(arg, TARG_NOCREATE);
+    if ((gn != NILGNODE) && !OP_NOP(gn->type) && !Lst_IsEmpty(gn->commands)) {
+	result = TRUE;
+    } else {
+	result = FALSE;
+    }
+    arg[argLen] = savec;
+    return (result);
+}
 
 /*-
  *-----------------------------------------------------------------------
@@ -871,6 +907,19 @@ error:
 		    arglen = CondGetArg(&condExpr, &arg, "target", TRUE);
 		    if (arglen == 0) {
 			condExpr -= 6;
+			goto use_default;
+		    }
+		} else if (strncmp (condExpr, "commands", 8) == 0) {
+		    /*
+		     * Use CondDoCommands to evaluate the argument and
+		     * CondGetArg to extract the argument from the
+		     * 'function call'.
+		     */
+		    evalProc = CondDoCommands;
+		    condExpr += 8;
+		    arglen = CondGetArg(&condExpr, &arg, "commands", TRUE);
+		    if (arglen == 0) {
+			condExpr -= 8;
 			goto use_default;
 		    }
 		} else {
