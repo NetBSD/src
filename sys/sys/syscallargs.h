@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.136 2005/02/19 22:19:02 matt Exp $ */
+/* $NetBSD: syscallargs.h,v 1.137 2005/02/25 19:55:18 matt Exp $ */
 
 /*
  * System call argument lists.
@@ -1572,6 +1572,22 @@ struct sys_extattr_list_link_args {
 	syscallarg(size_t) nbytes;
 };
 
+struct sys_pselect_args {
+	syscallarg(int) nd;
+	syscallarg(fd_set *) in;
+	syscallarg(fd_set *) ou;
+	syscallarg(fd_set *) ex;
+	syscallarg(const struct timespec *) ts;
+	syscallarg(const sigset_t *) mask;
+};
+
+struct sys_pollts_args {
+	syscallarg(struct pollfd *) fds;
+	syscallarg(u_int) nfds;
+	syscallarg(const struct timespec *) ts;
+	syscallarg(const sigset_t *) mask;
+};
+
 /*
  * System call prototypes.
  */
@@ -2230,5 +2246,9 @@ int	sys_extattr_list_fd(struct lwp *, void *, register_t *);
 int	sys_extattr_list_file(struct lwp *, void *, register_t *);
 
 int	sys_extattr_list_link(struct lwp *, void *, register_t *);
+
+int	sys_pselect(struct lwp *, void *, register_t *);
+
+int	sys_pollts(struct lwp *, void *, register_t *);
 
 #endif /* _SYS__SYSCALLARGS_H_ */
