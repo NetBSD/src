@@ -1,4 +1,4 @@
-.\" $NetBSD: clock_settime.2,v 1.13 2002/02/08 01:28:16 ross Exp $
+.\" $NetBSD: clock_settime.2,v 1.14 2002/10/01 18:10:43 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -117,7 +117,8 @@ If the calling user is not the super-user, then the
 function in the standard C library will try to use the
 .Xr clockctl 4
 device if present, thus making possible for non privileged users to
-set the system time. If
+set the system time.
+If
 .Xr clockctl 4
 is not present or not accessible, then
 .Fn clock_settime
@@ -125,7 +126,8 @@ reverts to the
 .Fn clock_settime
 system call, which is restricted to the super user.
 .Sh RETURN VALUES
-A value of 0 is returned on success.  Otherwise, a value of -1 is returned and
+A value of 0 is returned on success.
+Otherwise, a value of -1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

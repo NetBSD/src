@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.25 2002/02/08 01:28:19 ross Exp $
+.\"	$NetBSD: mmap.2,v 1.26 2002/10/01 18:10:45 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -263,7 +263,8 @@ would exceed the offset maximum established in its open file description.
 .Sh BUGS
 The
 .Dv MAP_COPY
-flag is not implemented.  The current
+flag is not implemented.
+The current
 .Dv MAP_COPY
 semantics are the same as those of the
 .Dv MAP_PRIVATE
