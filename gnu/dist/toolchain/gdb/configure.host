@@ -18,6 +18,7 @@ i[3456]86*)		gdb_host_cpu=i386 ;;
 m68*)			gdb_host_cpu=m68k ;;
 m88*)			gdb_host_cpu=m88k ;;
 mipseb*)		gdb_host_cpu=mips ;;
+mipsel*)		gdb_host_cpu=mips ;;
 # OBSOLETE pyramid)		gdb_host_cpu=pyr ;;
 powerpc*)		gdb_host_cpu=powerpc ;;
 sparc64)		gdb_host_cpu=sparc ;;
