@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.61 2003/10/22 07:48:25 briggs Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.62 2003/10/22 15:03:04 briggs Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.61 2003/10/22 07:48:25 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.62 2003/10/22 15:03:04 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,7 +74,6 @@ struct wdc_pcmcia_softc {
 	void *sc_ih;
 	struct pcmcia_function *sc_pf;
 	int sc_flags;
-#define	WDC_PCMCIA_ATTACH	0x0001
 #define WDC_PCMCIA_MEMMODE	0x0002
 };
 
@@ -376,9 +375,11 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_enable =
 	    wdc_pcmcia_enable;
 
-	sc->sc_flags |= WDC_PCMCIA_ATTACH;
 	wdcattach(&sc->wdc_channel);
-	sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
+
+	/* Disable the function */
+	pcmcia_function_disable(sc->sc_pf);
+
 	return;
 
  mapaux_failed:
@@ -433,9 +434,6 @@ wdc_pcmcia_detach(self, flags)
 		}
 	}
 
-	/* Disable the function */
-	pcmcia_function_disable(sc->sc_pf);
-
 	return (0);
 }
 
@@ -456,17 +454,11 @@ wdc_pcmcia_enable(self, onoff)
 			return (EIO);
 		}
 
-		/*
-		 * If attach is in progress, we know that card power is
-		 * enabled.
-		 */
-		if ((sc->sc_flags & WDC_PCMCIA_ATTACH) == 0) {
-			if (pcmcia_function_enable(sc->sc_pf)) {
-				printf("%s: couldn't enable PCMCIA function\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname);
-				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-				return (EIO);
-			}
+		if (pcmcia_function_enable(sc->sc_pf)) {
+			printf("%s: couldn't enable PCMCIA function\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			return (EIO);
 		}
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
