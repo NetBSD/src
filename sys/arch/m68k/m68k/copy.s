@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: (hp300) @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: copy.s,v 1.7 1994/01/22 03:45:03 briggs Exp $
+ *	$Id: copy.s,v 1.8 1994/01/22 13:38:36 briggs Exp $
  */
 
 #include <sys/errno.h>
@@ -57,17 +57,7 @@
 #define	RESTORE_DFC
 #endif
 
-#ifdef GPROF
-#define	ENTRY(name) \
-	.globl _/**/name; _/**/name: link a6,\#0; jbsr mcount; unlk a6
-#define ALTENTRY(name, rname) \
-	ENTRY(name); jra rname+12
-#else
-#define	ENTRY(name) \
-	.globl _/**/name; _/**/name:
-#define ALTENTRY(name, rname) \
-	.globl _/**/name; _/**/name:
-#endif
+#include "m68k/asm.h"
 
 .text
 /*
