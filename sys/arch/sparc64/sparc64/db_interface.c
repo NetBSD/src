@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.41 2000/08/08 19:59:41 tv Exp $ */
+/*	$NetBSD: db_interface.c,v 1.42 2000/08/25 08:12:49 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -57,6 +57,8 @@
 #include <machine/openfirm.h>
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
+
+#include "fb.h"
 
 extern void OF_enter __P((void));
 
@@ -174,7 +176,9 @@ kdb_trap(type, tf)
 	extern int trap_trace_dis;
 
 	trap_trace_dis++;
+#if NFB > 0
 	fb_unblank();
+#endif
 
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
