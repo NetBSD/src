@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.19 2002/03/17 19:40:26 atatat Exp $ */
+/* $NetBSD: promcons.c,v 1.19.4.1 2002/05/16 16:00:54 gehenna Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.19 2002/03/17 19:40:26 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.19.4.1 2002/05/16 16:00:54 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,13 +44,28 @@ __KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.19 2002/03/17 19:40:26 atatat Exp $")
 #include <sys/syslog.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 #include <machine/prom.h>
 
 #ifdef _PMAP_MAY_USE_PROM_CONSOLE
+
+dev_type_open(promopen);
+dev_type_close(promclose);
+dev_type_read(promread);
+dev_type_write(promwrite);
+dev_type_ioctl(promioctl);
+dev_type_stop(promstop);
+dev_type_tty(promtty);
+dev_type_poll(prompoll);
+
+const struct cdevsw prom_cdevsw = {
+	promopen, promclose, promread, promwrite, promioctl,
+	promstop, promtty, prompoll, nommap, D_TTY
+};
 
 #define	PROM_POLL_HZ	50
 
@@ -232,5 +247,17 @@ promtty(dev_t dev)
 
 	return prom_tty[0];
 }
+
+#else /* _PMAP_MAY_USE_PROM_CONSOLE */
+
+/*
+ * If not defined _PMAP_MAY_USE_PROM_CONSOLE,
+ * this fake prom_cdevsw is attached to the kernel.
+ * NEVER REMOVE!
+ */
+const struct cdevsw prom_cdevsw = {
+	noopen, noclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */
