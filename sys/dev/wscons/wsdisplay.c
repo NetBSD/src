@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.22 1999/03/23 15:56:56 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.23 1999/05/14 16:01:11 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.22 1999/03/23 15:56:56 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.23 1999/05/14 16:01:11 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -59,8 +59,6 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/cons.h>
 
 #include "opt_wsdisplay_compat.h"
-
-#include "wsdisplay.h"
 
 struct wsscreen_internal {
 	const struct wsdisplay_emulops *emulops;
@@ -130,9 +128,7 @@ struct wsdisplay_softc {
 #endif
 };
 
-#if NWSDISPLAY > 0
 extern struct cfdriver wsdisplay_cd;
-#endif /* NWSDISPLAY > 0 */
 
 /* Autoconfiguration definitions. */
 static int wsdisplay_emul_match __P((struct device *, struct cfdata *,
@@ -159,10 +155,8 @@ struct cfattach wsdisplay_noemul_ca = {
 /* Exported tty- and cdevsw-related functions. */
 cdev_decl(wsdisplay);
 
-#if NWSDISPLAY > 0
 static void wsdisplaystart __P((struct tty *));
 static int wsdisplayparam __P((struct tty *, struct termios *));
-#endif /* NWSDISPLAY > 0 */
 
 
 /* Internal macros, functions, and variables. */
@@ -648,7 +642,6 @@ wsdisplayopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-#if NWSDISPLAY > 0
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	int unit, newopen, error;
@@ -704,9 +697,6 @@ wsdisplayopen(dev, flag, mode, p)
 
 	scr->scr_flags |= SCR_OPEN;
 	return (0);
-#else
-	return (ENXIO);
-#endif /* NWSDISPLAY > 0 */
 }
 
 int
@@ -715,7 +705,6 @@ wsdisplayclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-#if NWSDISPLAY > 0
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	int unit;
@@ -767,9 +756,6 @@ wsdisplayclose(dev, flag, mode, p)
 	scr->scr_flags &= ~SCR_OPEN;
 
 	return (0);
-#else
-	return (ENXIO);
-#endif /* NWSDISPLAY > 0 */
 }
 
 int
@@ -778,7 +764,6 @@ wsdisplayread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-#if NWSDISPLAY > 0
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	int unit;
@@ -797,9 +782,6 @@ wsdisplayread(dev, uio, flag)
 
 	tp = scr->scr_tty;
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
-#else
-	return (ENXIO);
-#endif /* NWSDISPLAY > 0 */
 }
 
 int
@@ -808,7 +790,6 @@ wsdisplaywrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-#if NWSDISPLAY > 0
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	int unit;
@@ -827,16 +808,12 @@ wsdisplaywrite(dev, uio, flag)
 
 	tp = scr->scr_tty;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
-#else
-	return (ENXIO);
-#endif /* NWSDISPLAY > 0 */
 }
 
 struct tty *
 wsdisplaytty(dev)
 	dev_t dev;
 {
-#if NWSDISPLAY > 0
 	struct wsdisplay_softc *sc;
 	int unit;
 	struct wsscreen *scr;
@@ -850,9 +827,6 @@ wsdisplaytty(dev)
 	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
 
 	return (scr->scr_tty);
-#else
-	return (NULL);
-#endif /* NWSDISPLAY > 0 */
 }
 
 int
@@ -863,7 +837,6 @@ wsdisplayioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-#if NWSDISPLAY > 0
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
 	int unit, error;
@@ -901,9 +874,6 @@ wsdisplayioctl(dev, cmd, data, flag, p)
 
 	error = wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p);
 	return (error != -1 ? error : ENOTTY);
-#else
-	return (ENXIO);
-#endif /* NWSDISPLAY > 0 */
 }
 
 int
@@ -1059,7 +1029,6 @@ wsdisplaymmap(dev, offset, prot)
 	int offset;		/* XXX */
 	int prot;
 {
-#if NWSDISPLAY > 0
 	struct wsdisplay_softc *sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(dev)];
 	struct wsscreen *scr;
 
@@ -1073,9 +1042,6 @@ wsdisplaymmap(dev, offset, prot)
 
 	/* pass mmap to display */
 	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie, offset, prot));
-#else
-	return (-1);
-#endif /* NWSDISPLAY > 0 */
 }
 
 int
@@ -1084,7 +1050,6 @@ wsdisplaypoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-#if NWSDISPLAY > 0
 	struct wsdisplay_softc *sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(dev)];
 	struct wsscreen *scr;
 
@@ -1097,12 +1062,8 @@ wsdisplaypoll(dev, events, p)
 		return (ttpoll(dev, events, p));
 	else
 		return (0);
-#else
-	return (0);
-#endif /* NWSDISPLAY > 0 */
 }
 
-#if NWSDISPLAY > 0
 void
 wsdisplaystart(tp)
 	register struct tty *tp;
@@ -1173,7 +1134,6 @@ wsdisplaystart(tp)
 	}
 	splx(s);
 }
-#endif /* NWSDISPLAY > 0 */
 
 void
 wsdisplaystop(tp, flag)
@@ -1189,7 +1149,6 @@ wsdisplaystop(tp, flag)
 	splx(s);
 }
 
-#if NWSDISPLAY > 0
 /* Set line parameters. */
 int
 wsdisplayparam(tp, t)
@@ -1202,7 +1161,6 @@ wsdisplayparam(tp, t)
 	tp->t_cflag = t->c_cflag;
 	return 0;
 }
-#endif /* NWSDISPLAY > 0 */
 
 /*
  * Callbacks for the emulation code.
