@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.23 2001/09/25 10:28:16 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.23.2.1 2002/06/28 12:42:49 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2001/09/25 10:28:16 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.23.2.1 2002/06/28 12:42:49 lukem Exp $");
 #endif
 #endif
 
@@ -153,6 +153,7 @@ main(int argc, char **argv)
 						    char tmp[FILENAME_MAX];
 						    
 						    snprintf(tmp, sizeof(tmp), "%s/%s", dirname_of(*argv), s);
+							free(s);
 						    
 						    if (Verbose)
 							    printf("Using %s for %s\n", tmp, *argv);
@@ -207,6 +208,7 @@ main(int argc, char **argv)
 						char tmp2[FILENAME_MAX];
 						
 						snprintf(tmp2, sizeof(tmp2), "%s/%s", dirname_of(tmp), s);
+						free(s);
 						
 						if (Verbose)
 							printf("Using %s for %s\n", tmp2, *argv);
