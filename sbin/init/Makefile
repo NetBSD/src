@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2002/08/24 01:05:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.32 2003/05/26 09:34:55 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	init
@@ -16,7 +16,7 @@ LDADD+=		-lcrypt
 .endif
 
 .if defined(RESCUEDIR)
-CPPFLAGS+= -D_PATH_ALTSHELL=\"${RESCUEDIR}/sh\"
+CPPFLAGS+= -DRESCUEDIR=\"${RESCUEDIR}\"
 .endif
 
 .include <bsd.prog.mk>
