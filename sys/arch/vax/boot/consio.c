@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.11 1998/08/08 16:10:41 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.12 1999/03/09 12:57:57 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -162,7 +162,6 @@ setup()
 	case VAX_BTYP_49:
 	case VAX_BTYP_410:	  
 	case VAX_BTYP_420:
-	case VAX_BTYP_440:
 		put_fp = rom_putchar;
 		get_fp = rom_getchar;
 		rom_putc = 0x20040058;		/* 537133144 */
@@ -174,6 +173,7 @@ setup()
 	        break;
 
 	case VAX_BTYP_46:
+	case VAX_BTYP_48:
 		put_fp = rom_putchar;
 		get_fp = rom_getchar;
 		rom_putc = 0x20040068;
