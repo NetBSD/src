@@ -32,8 +32,8 @@
  */
 
 #include "kuser_locl.h"
-__RCSID("$Heimdal: kinit.c,v 1.90.4.4 2004/01/13 10:13:55 lha Exp $"
-        "$NetBSD: kinit.c,v 1.9.2.1 2004/04/21 04:55:39 jmc Exp $");
+__RCSID("$Heimdal: kinit.c,v 1.90.4.5 2004/06/21 08:17:06 lha Exp $"
+        "$NetBSD: kinit.c,v 1.9.2.2 2004/09/17 04:35:58 jmc Exp $");
 
 int forwardable_flag	= -1;
 int proxiable_flag	= -1;
@@ -628,8 +628,6 @@ main (int argc, char **argv)
 		if((fd = mkstemp(s)) >= 0) {
 		    close(fd);
 		    setenv("KRBTKFILE", s, 1);
-		    if (k_hasafs ())
-			k_setpag();
 		}
 	    }
 #endif
@@ -638,6 +636,9 @@ main (int argc, char **argv)
     }
     if (ret)
 	krb5_err (context, 1, ret, "resolving credentials cache");
+
+    if (argc > 1 && k_hasafs ())
+	k_setpag();
 
     if (lifetime) {
 	int tmp = parse_time (lifetime, "s");

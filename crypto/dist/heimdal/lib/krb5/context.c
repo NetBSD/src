@@ -34,8 +34,8 @@
 #include "krb5_locl.h"
 #include <com_err.h>
 
-__RCSID("$Heimdal: context.c,v 1.83 2003/03/10 00:24:13 lha Exp $"
-        "$NetBSD: context.c,v 1.11 2003/05/15 21:36:48 lha Exp $");
+__RCSID("$Heimdal: context.c,v 1.83.2.1 2004/08/20 15:30:24 lha Exp $"
+        "$NetBSD: context.c,v 1.11.2.1 2004/09/17 04:36:24 jmc Exp $");
 
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
@@ -416,6 +416,8 @@ krb5_get_err_text(krb5_context context, krb5_error_code code)
 	p = com_right(context->et_list, code);
     if(p == NULL)
 	p = strerror(code);
+    if (p == NULL)
+	p = "Unknown error";
     return p;
 }
 
