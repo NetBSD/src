@@ -1,4 +1,4 @@
-#	$NetBSD: files.isapnp,v 1.23 1999/03/22 22:33:36 bad Exp $
+#	$NetBSD: files.isapnp,v 1.24 2000/12/17 20:34:40 thorpej Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
 # Included by ports that need it.
@@ -29,6 +29,10 @@ file	dev/isapnp/if_ne_isapnp.c		ne_isapnp
 # TROPIC based Token-Ring (IBM/3COM)
 attach	tr at isapnp with tr_isapnp
 file  dev/isapnp/if_tr_isapnp.c			tr_isapnp
+
+# Aironet 802.11 ISA
+attach	an at isapnp with an_isapnp
+file	dev/isapnp/if_an_isapnp.c		an_isapnp
 
 # serial ports/modems
 attach	com at isapnp with com_isapnp
