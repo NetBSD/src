@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 1998/02/19 23:35:36 thorpej Exp $
+#	$NetBSD: Makefile,v 1.28 1999/02/24 15:10:16 drochner Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	kvm
@@ -11,7 +11,11 @@ SRCS=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
 # If it is necessary to run different code based on ${MACHINE} then
 # the dispatch on ${MACHINE} should be done at run time (see m68k).
 
+.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
+SRCS+=	kvm_mips.c
+.else
 SRCS+=	kvm_${MACHINE_ARCH}.c
+.endif
 
 # Additional modules needed for m68k
 .if (${MACHINE_ARCH} == "m68k")
