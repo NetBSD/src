@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.5 2001/04/22 23:19:30 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6 2001/04/25 17:35:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,9 +86,6 @@ extern segsz_t pmap_wired_pages(pmap_t);
 #define pmap_phys_address(addr) 	(addr)
 
 #define	pmap_update()			/* nothing (yet) */
-
-/* Our memory is contiguous (or nearly so). */
-#define pmap_page_index(pa) (atop(pa))
 
 /* Map a given physical region to a virtual region */
 extern vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
