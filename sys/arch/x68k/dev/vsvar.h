@@ -1,4 +1,4 @@
-/*	$NetBSD: vsvar.h,v 1.5 2005/01/10 22:01:36 kent Exp $	*/
+/*	$NetBSD: vsvar.h,v 1.6 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -82,7 +82,7 @@ struct vs_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_ppi; /* XXX */
-	u_int8_t *sc_addr;
+	uint8_t *sc_addr;
 
 	bus_dma_tag_t sc_dmat;
 	struct dmac_channel_stat *sc_dma_ch;
@@ -97,8 +97,8 @@ struct vs_softc {
 
 	const struct audio_hw_if *sc_hw_if;
 
-	void (*sc_pintr) __P((void *));
-	void (*sc_rintr) __P((void *));
+	void (*sc_pintr)(void *);
+	void (*sc_rintr)(void *);
 	void *sc_parg;
 	void *sc_rarg;
 };

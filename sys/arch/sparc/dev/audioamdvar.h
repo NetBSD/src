@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamdvar.h,v 1.2 2000/05/08 03:11:06 mycroft Exp $	*/
+/*	$NetBSD: audioamdvar.h,v 1.3 2005/01/15 15:19:51 kent Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -37,9 +37,9 @@ struct auio {
 	bus_space_tag_t		au_bt;	/* bus tag */
 	bus_space_handle_t	au_bh;	/* handle to chip registers */
 
-	u_int8_t	*au_rdata;	/* record data */
-	u_int8_t	*au_rend;	/* end of record data */
-	u_int8_t	*au_pdata;	/* play data */
-	u_int8_t	*au_pend;	/* end of play data */
-	struct  evcnt	au_intrcnt;	/* statistics */
+	uint8_t		*au_rdata;	/* record data */
+	uint8_t		*au_rend;	/* end of record data */
+	uint8_t		*au_pdata;	/* play data */
+	uint8_t		*au_pend;	/* end of play data */
+	struct evcnt	au_intrcnt;	/* statistics */
 };

@@ -1,4 +1,4 @@
-/*      $NetBSD: svreg.h,v 1.1 1998/12/10 18:47:19 augustss Exp $ */
+/*      $NetBSD: svreg.h,v 1.2 2005/01/15 15:19:52 kent Exp $ */
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
  * All rights reserved
@@ -42,11 +42,11 @@ enum {
 	SV_GAME_PORTBASE_SLOT = 0x20
 };
 
-/* 
+/*
  * Enhanced CODEC registers
  *     These are offset from the base specified in the PCI configuration area
  */
-enum { 
+enum {
 	SV_CODEC_CONTROL = 0,
 	SV_CODEC_INTMASK = 1,
 	SV_CODEC_STATUS = 2,
@@ -55,7 +55,7 @@ enum {
 };
 
 /*
- * DMA Configuration register 
+ * DMA Configuration register
  */
 
 enum {
@@ -125,7 +125,7 @@ enum {
 	SV_INTSTATUS_MIDI = 0x80
 };
 
-enum { 
+enum {
 	SV_IADDR_MASK = 0x3f,
 	SV_IADDR_MCE = 0x40,
 	/* TRD = DMA Transfer request disable */

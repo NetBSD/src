@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.6 2005/01/10 22:01:36 kent Exp $	*/
+/*	$NetBSD: aica.c,v 1.7 2005/01/15 15:19:51 kent Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.6 2005/01/10 22:01:36 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.7 2005/01/15 15:19:51 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,11 +128,11 @@ const struct audio_device aica_device = {
 __inline static void aica_g2fifo_wait(void);
 void aica_enable(struct aica_softc *);
 void aica_disable(struct aica_softc *);
-void aica_memwrite(struct aica_softc *, bus_size_t, u_int32_t *, int);
-void aica_ch2p16write(struct aica_softc *, bus_size_t, u_int16_t *, int);
-void aica_ch2p8write(struct aica_softc *, bus_size_t, u_int8_t *, int);
-void aica_command(struct aica_softc *, u_int32_t);
-void aica_sendparam(struct aica_softc *, u_int32_t, int, int);
+void aica_memwrite(struct aica_softc *, bus_size_t, uint32_t *, int);
+void aica_ch2p16write(struct aica_softc *, bus_size_t, uint16_t *, int);
+void aica_ch2p8write(struct aica_softc *, bus_size_t, uint8_t *, int);
+void aica_command(struct aica_softc *, uint32_t);
+void aica_sendparam(struct aica_softc *, uint32_t, int, int);
 void aica_play(struct aica_softc *, int, int, int, int);
 void aica_fillbuffer(struct aica_softc *);
 
@@ -207,10 +207,12 @@ aica_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 aica_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct aica_softc *sc = (struct aica_softc *)self;
-	struct g2bus_attach_args *ga = aux;
+	struct aica_softc *sc;
+	struct g2bus_attach_args *ga;
 	int i;
 
+	sc = (struct aica_softc *)self;
+	ga = aux;
 	sc->sc_memt = ga->ga_memt;
 
 	if (bus_space_map(sc->sc_memt, AICA_REG_ADDR, 0x3000, 0,
@@ -278,17 +280,17 @@ aica_g2fifo_wait()
 
 	i = AICA_TIMEOUT;
 	while (--i > 0)
-		if ((*(volatile u_int32_t *)0xa05f688c) & 0x11)
+		if ((*(volatile uint32_t *)0xa05f688c) & 0x11)
 			break;
 }
 
 void
-aica_memwrite(struct aica_softc *sc, bus_size_t offset, u_int32_t *src, int len)
+aica_memwrite(struct aica_softc *sc, bus_size_t offset, uint32_t *src, int len)
 {
 	int n;
 
 	KASSERT((offset & 3) == 0);
-	n = (len + 3) / 4;	/* u_int32_t * n (aligned) */
+	n = (len + 3) / 4;	/* uint32_t * n (aligned) */
 
 	aica_g2fifo_wait();
 	bus_space_write_region_4(sc->sc_memt, sc->sc_aica_memh,
@@ -296,14 +298,14 @@ aica_memwrite(struct aica_softc *sc, bus_size_t offset, u_int32_t *src, int len)
 }
 
 void
-aica_ch2p16write(struct aica_softc *sc, bus_size_t offset, u_int16_t *src,
+aica_ch2p16write(struct aica_softc *sc, bus_size_t offset, uint16_t *src,
     int len)
 {
 	union {
-		u_int32_t w[8];
-		u_int16_t s[16];
+		uint32_t w[8];
+		uint16_t s[16];
 	} buf;
-	u_int16_t *p;
+	uint16_t *p;
 	int i;
 
 	KASSERT((offset & 3) == 0);
@@ -331,7 +333,7 @@ aica_ch2p16write(struct aica_softc *sc, bus_size_t offset, u_int16_t *src,
 		bus_space_write_region_4(sc->sc_memt, sc->sc_aica_memh,
 		    offset, buf.w , 32 / 4);
 
-		offset += sizeof(u_int16_t) * 16;
+		offset += sizeof(uint16_t) * 16;
 		len -= 32;
 	}
 
@@ -348,17 +350,17 @@ aica_ch2p16write(struct aica_softc *sc, bus_size_t offset, u_int16_t *src,
 }
 
 void
-aica_ch2p8write(struct aica_softc *sc, bus_size_t offset, u_int8_t *src,
+aica_ch2p8write(struct aica_softc *sc, bus_size_t offset, uint8_t *src,
     int len)
 {
-	u_int32_t buf[8];
-	u_int8_t *p;
+	uint32_t buf[8];
+	uint8_t *p;
 	int i;
 
 	KASSERT((offset & 3) == 0);
 	while (len >= 32) {
-		p = (u_int8_t *)buf;
-		
+		p = (uint8_t *)buf;
+
 		*p++ = *src++; src++;
 		*p++ = *src++; src++;
 		*p++ = *src++; src++;
@@ -401,7 +403,7 @@ aica_ch2p8write(struct aica_softc *sc, bus_size_t offset, u_int8_t *src,
 	}
 
 	if (len) {
-		p = (u_int8_t *)buf;
+		p = (uint8_t *)buf;
 		for (i = 0; i < len; i++)
 			*p++ = *src++; src++;
 
@@ -414,8 +416,9 @@ aica_ch2p8write(struct aica_softc *sc, bus_size_t offset, u_int8_t *src,
 int
 aica_open(void *addr, int flags)
 {
-	struct aica_softc *sc = addr;
+	struct aica_softc *sc;
 
+	sc = addr;
 	if (sc->sc_open)
 		return EBUSY;
 
@@ -428,8 +431,9 @@ aica_open(void *addr, int flags)
 void
 aica_close(void *addr)
 {
-	struct aica_softc *sc = addr;
+	struct aica_softc *sc;
 
+	sc = addr;
 	sc->sc_open = 0;
 	sc->sc_intr = NULL;
 }
@@ -453,7 +457,7 @@ aica_set_params(void *addr, int setmode, int usemode,
     audio_params_t *play, audio_params_t *rec,
     stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-	struct aica_softc *sc = addr;
+	struct aica_softc *sc;
 	const audio_params_t *hw;
 	int i;
 
@@ -462,6 +466,7 @@ aica_set_params(void *addr, int setmode, int usemode,
 	if (i < 0)
 		return EINVAL;
 	hw = pfil->req_size > 0 ? &pfil->filters[0].param : play;
+	sc = addr;
 	sc->sc_precision = hw->precision;
 	sc->sc_channels = hw->channels;
 	sc->sc_rate = hw->sample_rate;
@@ -472,8 +477,9 @@ aica_set_params(void *addr, int setmode, int usemode,
 int
 aica_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 {
-	struct aica_softc *sc = addr;
+	struct aica_softc *sc;
 
+	sc = addr;
 	switch (sc->sc_precision) {
 	case 4:
 		if (sc->sc_channels == 1)
@@ -511,7 +517,7 @@ aica_round_buffersize(void *addr, int dir, size_t bufsize)
 }
 
 void
-aica_command(struct aica_softc *sc, u_int32_t command)
+aica_command(struct aica_softc *sc, uint32_t command)
 {
 
 	bus_space_write_4(sc->sc_memt, sc->sc_aica_memh,
@@ -522,7 +528,7 @@ aica_command(struct aica_softc *sc, u_int32_t command)
 }
 
 void
-aica_sendparam(struct aica_softc *sc, u_int32_t command,
+aica_sendparam(struct aica_softc *sc, uint32_t command,
     int32_t lparam, int32_t rparam)
 {
 
@@ -558,15 +564,15 @@ aica_fillbuffer(struct aica_softc *sc)
 		if (sc->sc_precision == 16) {
 			aica_ch2p16write(sc,
 			    AICA_DMABUF_LEFT + sc->sc_nextfill,
-			    (u_int16_t *)sc->sc_buffer + 0, sc->sc_blksize / 2);
+			    (uint16_t *)sc->sc_buffer + 0, sc->sc_blksize / 2);
 			aica_ch2p16write(sc,
 			    AICA_DMABUF_RIGHT + sc->sc_nextfill,
-			    (u_int16_t *)sc->sc_buffer + 1, sc->sc_blksize / 2);
+			    (uint16_t *)sc->sc_buffer + 1, sc->sc_blksize / 2);
 		} else if (sc->sc_precision == 8) {
 			aica_ch2p8write(sc, AICA_DMABUF_LEFT + sc->sc_nextfill,
-			    (u_int8_t *)sc->sc_buffer + 0, sc->sc_blksize / 2);
+			    (uint8_t *)sc->sc_buffer + 0, sc->sc_blksize / 2);
 			aica_ch2p8write(sc, AICA_DMABUF_RIGHT + sc->sc_nextfill,
-			    (u_int8_t *)sc->sc_buffer + 1, sc->sc_blksize / 2);
+			    (uint8_t *)sc->sc_buffer + 1, sc->sc_blksize / 2);
 		}
 	} else {
 		aica_memwrite(sc, AICA_DMABUF_MONO + sc->sc_nextfill,
@@ -583,8 +589,9 @@ aica_fillbuffer(struct aica_softc *sc)
 int
 aica_intr(void *arg)
 {
-	struct aica_softc *sc = arg;
+	struct aica_softc *sc;
 
+	sc = arg;
 	aica_fillbuffer(sc);
 
 	/* call audio interrupt handler (audio_pint()) */
@@ -601,8 +608,9 @@ int
 aica_trigger_output(void *addr, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, const audio_params_t *param)
 {
-	struct aica_softc *sc = addr;
+	struct aica_softc *sc;
 
+	sc = addr;
 	aica_command(sc, AICA_COMMAND_INIT);
 	tsleep(aica_trigger_output, PWAIT, "aicawait", hz / 20);
 
@@ -636,10 +644,10 @@ aica_trigger_input(void *addr, void *start, void *end, int blksize,
 int
 aica_halt_output(void *addr)
 {
-	struct aica_softc *sc = addr;
+	struct aica_softc *sc;
 
+	sc = addr;
 	aica_command(sc, AICA_COMMAND_STOP);
-
 	return 0;
 }
 
@@ -661,8 +669,9 @@ aica_getdev(void *addr, struct audio_device *ret)
 int
 aica_set_port(void *addr, mixer_ctrl_t *mc)
 {
-	struct aica_softc *sc = addr;
+	struct aica_softc *sc;
 
+	sc = addr;
 	switch (mc->dev) {
 	case AICA_MASTER_VOL:
 		sc->sc_output_master =
@@ -689,8 +698,9 @@ aica_set_port(void *addr, mixer_ctrl_t *mc)
 int
 aica_get_port(void *addr, mixer_ctrl_t *mc)
 {
-	struct aica_softc *sc = addr;
+	struct aica_softc *sc;
 
+	sc = addr;
 	switch (mc->dev) {
 	case AICA_MASTER_VOL:
 		if (mc->un.value.num_channels != 1)

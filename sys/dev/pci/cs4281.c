@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.22 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.23 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.22 2005/01/10 22:01:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.23 2005/01/15 15:19:52 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ int	cs4281_trigger_input(void *, void *, void *, int, void (*)(void *),
 int     cs4281_reset_codec(void *);
 
 /* Internal functions */
-u_int8_t cs4281_sr2regval(int);
+uint8_t cs4281_sr2regval(int);
 void	 cs4281_set_dac_rate(struct cs428x_softc *, int);
 void	 cs4281_set_adc_rate(struct cs428x_softc *, int);
 int      cs4281_init(struct cs428x_softc *, int);
@@ -140,7 +140,7 @@ const struct audio_hw_if cs4281_hw_if = {
 void	cs4281_midi_close(void*);
 void	cs4281_midi_getinfo(void *, struct midi_info *);
 int	cs4281_midi_open(void *, int, void (*)(void *, int),
-			      void (*)(void *), void *);
+			 void (*)(void *), void *);
 int	cs4281_midi_output(void *, int);
 
 const struct midi_hw_if cs4281_midi_hw_if = {
@@ -163,13 +163,11 @@ struct audio_device cs4281_device = {
 
 
 int
-cs4281_match(parent, match, aux) 
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+cs4281_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	
+	struct pci_attach_args *pa;
+
+	pa = (struct pci_attach_args *)aux;
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_CIRRUS)
 		return 0;
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4281)
@@ -178,20 +176,20 @@ cs4281_match(parent, match, aux)
 }
 
 void
-cs4281_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+cs4281_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct cs428x_softc *sc = (struct cs428x_softc *)self;
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
+	struct cs428x_softc *sc;
+	struct pci_attach_args *pa;
+	pci_chipset_tag_t pc;
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t reg;
 	char devinfo[256];
 	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
 
+	sc = (struct cs428x_softc *)self;
+	pa = (struct pci_attach_args *)aux;
+	pc = pa->pa_pc;
 	aprint_naive(": Audio controller\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
@@ -302,17 +300,18 @@ cs4281_attach(parent, self, aux)
 }
 
 int
-cs4281_intr(p)
-	void *p;
+cs4281_intr(void *p)
 {
-	struct cs428x_softc *sc = p;
-	u_int32_t intr, hdsr0, hdsr1;
+	struct cs428x_softc *sc;
+	uint32_t intr, hdsr0, hdsr1;
 	char *empty_dma;
-	int handled = 0;
+	int handled;
 
+	sc = p;
+	handled = 0;
 	hdsr0 = 0;
 	hdsr1 = 0;
-	
+
 	/* grab interrupt register */
 	intr = BA0READ4(sc, CS4281_HISR);
 
@@ -330,10 +329,10 @@ cs4281_intr(p)
 		hdsr1 = BA0READ4(sc, CS4281_HDSR1); /* clear intr condition */
 	/* clear the interrupt register */
 	BA0WRITE4(sc, CS4281_HICR, HICR_CHGM | HICR_IEV);
-	
+
 	DPRINTF(("intr = 0x%08x, hdsr0 = 0x%08x hdsr1 = 0x%08x\n",
 		 intr, hdsr0, hdsr1));
-	
+
 	/* Playback Interrupt */
 	if (intr & HISR_DMA0) {
 		handled = 1;
@@ -381,9 +380,7 @@ cs4281_intr(p)
 }
 
 int
-cs4281_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
+cs4281_query_encoding(void *addr, struct audio_encoding *fp)
 {
 
 	switch (fp->index) {
@@ -447,11 +444,12 @@ cs4281_set_params(void *addr, int setmode, int usemode,
 		  stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
-	struct cs428x_softc *sc = addr;
+	struct cs428x_softc *sc;
 	audio_params_t *p;
 	stream_filter_list_t *fil;
 	int mode;
 
+	sc = addr;
 	for (mode = AUMODE_RECORD; mode != -1;
 	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
 		if ((setmode & mode) == 0)
@@ -465,7 +463,7 @@ cs4281_set_params(void *addr, int setmode, int usemode,
 			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
 			    (p->precision != 8 && p->precision != 16) ||
 			    (p->channels != 1  && p->channels != 2)) {
-				return (EINVAL);
+				return EINVAL;
 			}
 		} else {
 			DPRINTFN(5, ("rec: sample=%ld precision=%d channels=%d\n",
@@ -473,7 +471,7 @@ cs4281_set_params(void *addr, int setmode, int usemode,
 			if (p->sample_rate < 6023 || p->sample_rate > 48000 ||
 			    (p->precision != 8 && p->precision != 16) ||
 			    (p->channels != 1 && p->channels != 2)) {
-				return (EINVAL);
+				return EINVAL;
 			}
 		}
 		hw = *p;
@@ -499,7 +497,7 @@ cs4281_set_params(void *addr, int setmode, int usemode,
 				    : linear8_to_alaw, &hw);
 			break;
 		default:
-			return (EINVAL);
+			return EINVAL;
 		}
 	}
 
@@ -510,31 +508,29 @@ cs4281_set_params(void *addr, int setmode, int usemode,
 }
 
 int
-cs4281_halt_output(addr)
-	void *addr;
+cs4281_halt_output(void *addr)
 {
-	struct cs428x_softc *sc = addr;
-	
+	struct cs428x_softc *sc;
+
+	sc = addr;
 	BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) | DCRn_MSK);
 	sc->sc_prun = 0;
 	return 0;
 }
 
 int
-cs4281_halt_input(addr)
-	void *addr;
+cs4281_halt_input(void *addr)
 {
-	struct cs428x_softc *sc = addr;
+	struct cs428x_softc *sc;
 
+	sc = addr;
 	BA0WRITE4(sc, CS4281_DCR1, BA0READ4(sc, CS4281_DCR1) | DCRn_MSK);
 	sc->sc_rrun = 0;
 	return 0;
 }
 
 int
-cs4281_getdev(addr, retp)
-     void *addr;
-     struct audio_device *retp;
+cs4281_getdev(void *addr, struct audio_device *retp)
 {
 
 	*retp = cs4281_device;
@@ -542,19 +538,17 @@ cs4281_getdev(addr, retp)
 }
 
 int
-cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr) __P((void *));
-	void *arg;
-	const audio_params_t *param;
+cs4281_trigger_output(void *addr, void *start, void *end, int blksize,
+		      void (*intr)(void *), void *arg,
+		      const audio_params_t *param)
 {
-	struct cs428x_softc *sc = addr;
-	u_int32_t fmt=0;
+	struct cs428x_softc *sc;
+	uint32_t fmt;
 	struct cs428x_dma *p;
 	int dma_count;
 
+	sc = addr;
+	fmt = 0;
 #ifdef DIAGNOSTIC
 	if (sc->sc_prun)
 		printf("cs4281_trigger_output: already running\n");
@@ -572,10 +566,10 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 	DPRINTF(("param: precision=%d channels=%d encoding=%d\n",
 	       param->precision, param->channels, param->encoding));
 	for (p = sc->sc_dmas; p != NULL && BUFADDR(p) != start; p = p->next)
-		;
+		continue;
 	if (p == NULL) {
 		printf("cs4281_trigger_output: bad addr %p\n", start);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	sc->sc_pcount = blksize / sc->hw_blocksize;
@@ -643,19 +637,17 @@ cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
 }
 
 int
-cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr) __P((void *));
-	void *arg;
-	const audio_params_t *param;
+cs4281_trigger_input(void *addr, void *start, void *end, int blksize,
+		     void (*intr)(void *), void *arg,
+		     const audio_params_t *param)
 {
-	struct cs428x_softc *sc = addr;
+	struct cs428x_softc *sc;
 	struct cs428x_dma *p;
-	u_int32_t fmt=0;
+	uint32_t fmt;
 	int dma_count;
 
+	sc = addr;
+	fmt = 0;
 #ifdef DIAGNOSTIC
 	if (sc->sc_rrun)
 		printf("cs4281_trigger_input: already running\n");
@@ -670,10 +662,10 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	BA0WRITE4(sc, CS4281_DCR1, BA0READ4(sc, CS4281_DCR1) | DCRn_MSK);
 
 	for (p = sc->sc_dmas; p && BUFADDR(p) != start; p = p->next)
-		;
+		continue;
 	if (!p) {
 		printf("cs4281_trigger_input: bad addr %p\n", start);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	sc->sc_rcount = blksize / sc->hw_blocksize;
@@ -728,14 +720,13 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 
 /* Power Hook */
 void
-cs4281_power(why, v)
-	int why;
-	void *v;
+cs4281_power(int why, void *v)
 {
-	struct cs428x_softc *sc = (struct cs428x_softc *)v;
-	static u_int32_t dba0 = 0, dbc0 = 0, dmr0 = 0, dcr0 = 0;
-	static u_int32_t dba1 = 0, dbc1 = 0, dmr1 = 0, dcr1 = 0;
+	static uint32_t dba0 = 0, dbc0 = 0, dmr0 = 0, dcr0 = 0;
+	static uint32_t dba1 = 0, dbc1 = 0, dmr1 = 0, dcr1 = 0;
+	struct cs428x_softc *sc;
 
+	sc = (struct cs428x_softc *)v;
 	DPRINTF(("%s: cs4281_power why=%d\n", sc->sc_dev.dv_xname, why));
 	switch (why) {
 	case PWR_SUSPEND:
@@ -805,8 +796,8 @@ int
 cs4281_reset_codec(void *addr)
 {
 	struct cs428x_softc *sc;
-	u_int16_t data;
-	u_int32_t dat32;
+	uint16_t data;
+	uint32_t dat32;
 	int n;
 
 	sc = addr;
@@ -850,7 +841,7 @@ cs4281_reset_codec(void *addr)
 	/* Set the serial timing configuration */
 	/* XXX: undocumented but the Linux driver do this */
 	BA0WRITE4(sc, CS4281_SERMC, SERMC_PTCAC97);
-	
+
 	/* Wait for codec ready signal */
 	n = 0;
 	do {
@@ -865,7 +856,7 @@ cs4281_reset_codec(void *addr)
 
 	/* Enable Valid Frame output on ASDOUT */
 	BA0WRITE4(sc, CS428X_ACCTL, ACCTL_ESYN | ACCTL_VFRM);
-	
+
 	/* Wait until codec calibration is finished. Codec register 26h */
 	n = 0;
 	do {
@@ -893,7 +884,7 @@ cs4281_reset_codec(void *addr)
 		}
 		dat32 = BA0READ4(sc, CS428X_ACISV) & (ACISV_ISV3 | ACISV_ISV4) ;
 	} while (dat32 != (ACISV_ISV3 | ACISV_ISV4));
-	
+
 	/* Start digital data transfer of audio data to the codec */
 	BA0WRITE4(sc, CS428X_ACOSV, (ACOSV_SLV3 | ACOSV_SLV4));
 	return 0;
@@ -903,11 +894,10 @@ cs4281_reset_codec(void *addr)
 /* Internal functions */
 
 /* convert sample rate to register value */
-u_int8_t
-cs4281_sr2regval(rate)
-     int rate;
+uint8_t
+cs4281_sr2regval(int rate)
 {
-	u_int8_t retval;
+	uint8_t retval;
 
 	/* We don't have to change here. but anyway ... */
 	if (rate > 48000)
@@ -941,31 +931,25 @@ cs4281_sr2regval(rate)
 }
 
 void
-cs4281_set_adc_rate(sc, rate)
-	struct cs428x_softc *sc;
-	int rate;
+cs4281_set_adc_rate(struct cs428x_softc *sc, int rate)
 {
 
 	BA0WRITE4(sc, CS4281_ADCSR, cs4281_sr2regval(rate));
 }
 
 void
-cs4281_set_dac_rate(sc, rate)
-	struct cs428x_softc *sc;
-	int rate;
+cs4281_set_dac_rate(struct cs428x_softc *sc, int rate)
 {
 
 	BA0WRITE4(sc, CS4281_DACSR, cs4281_sr2regval(rate));
 }
 
 int
-cs4281_init(sc, init)
-     struct cs428x_softc *sc;
-     int init;
+cs4281_init(struct cs428x_softc *sc, int init)
 {
 	int n;
-	u_int16_t data;
-	u_int32_t dat32;
+	uint16_t data;
+	uint32_t dat32;
 
 	/* set "Configuration Write Protect" register to
 	 * 0x4281 to allow to write */
@@ -984,7 +968,7 @@ cs4281_init(sc, init)
 	BA0WRITE4(sc, CS4281_CLKCR1, 0);
 	/* Start serial ports out in known state */
 	BA0WRITE4(sc, CS4281_SERMC, 0);
-	
+
 	/* Reset codec */
 	BA0WRITE4(sc, CS428X_ACCTL, 0);
 	delay(50);	/* delay 50us */
@@ -1068,7 +1052,7 @@ cs4281_init(sc, init)
 	/* Set the serial timing configuration */
 	/* XXX: undocumented but the Linux driver do this */
 	BA0WRITE4(sc, CS4281_SERMC, SERMC_PTCAC97);
-	
+
 	/* Wait for codec ready signal */
 	n = 0;
 	do {
@@ -1083,7 +1067,7 @@ cs4281_init(sc, init)
 
 	/* Enable Valid Frame output on ASDOUT */
 	BA0WRITE4(sc, CS428X_ACCTL, ACCTL_ESYN | ACCTL_VFRM);
-	
+
 	/* Wait until codec calibration is finished. codec register 26h */
 	n = 0;
 	do {
@@ -1111,13 +1095,13 @@ cs4281_init(sc, init)
 		}
 		dat32 = BA0READ4(sc, CS428X_ACISV) & (ACISV_ISV3 | ACISV_ISV4);
 	} while (dat32 != (ACISV_ISV3 | ACISV_ISV4));
-	
+
 	/* Start digital data transfer of audio data to the codec */
 	BA0WRITE4(sc, CS428X_ACOSV, (ACOSV_SLV3 | ACOSV_SLV4));
-	
+
 	cs428x_write_codec(sc, AC97_REG_HEADPHONE_VOLUME, 0);
 	cs428x_write_codec(sc, AC97_REG_MASTER_VOLUME, 0);
-	
+
 	/* Power on the DAC */
 	cs428x_read_codec(sc, AC97_REG_POWER, &data);
 	cs428x_write_codec(sc, AC97_REG_POWER, data & 0xfdff);
@@ -1131,7 +1115,7 @@ cs4281_init(sc, init)
 		if (data & 0x02)
 			break;
 	}
-	
+
 	/* Power on the ADC */
 	cs428x_read_codec(sc, AC97_REG_POWER, &data);
 	cs428x_write_codec(sc, AC97_REG_POWER, data & 0xfeff);
@@ -1145,7 +1129,7 @@ cs4281_init(sc, init)
 		if (data & 0x01)
 			break;
 	}
-	
+
 #if 0
 	/* Initialize AC-Link features */
 	/* variable sample-rate support */
@@ -1153,7 +1137,7 @@ cs4281_init(sc, init)
 	mem |=  (SERMC_ODSEN1 | SERMC_ODSEN2);
 	BA0WRITE4(sc, CS4281_SERMC, mem);
 	/* XXX: more... */
-	
+
 	/* Initialize SSCR register features */
 	/* XXX: hardware volume setting */
 	BA0WRITE4(sc, CS4281_SSCR, ~SSCR_HVC); /* disable HW volume setting */
@@ -1248,7 +1232,7 @@ cs4281_init(sc, init)
 		0x01 <<  8 |   /* PRSS[4:0] Right PCM Playback */
 		0x00 <<  0;    /* PLSS[4:0] Left  PCM Playback */
 	BA0WRITE4(sc, CS4281_SRCSA, dat32);
-	
+
 	/* Set interrupt to occurred at Half and Full terminal
 	 * count interrupt enable for DMA channel 0 and 1.
 	 * To keep DMA stop, set MSK.
@@ -1256,7 +1240,7 @@ cs4281_init(sc, init)
 	dat32 = DCRn_HTCIE | DCRn_TCIE | DCRn_MSK;
 	BA0WRITE4(sc, CS4281_DCR0, dat32);
 	BA0WRITE4(sc, CS4281_DCR1, dat32);
-	
+
 	/* Set Auto-Initialize Contorl enable */
 	BA0WRITE4(sc, CS4281_DMR0,
 		  DMRn_DMA | DMRn_AUTO | DMRn_TR_READ);

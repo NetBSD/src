@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.46 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: am7930.c,v 1.47 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.46 2005/01/10 22:01:37 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.47 2005/01/15 15:19:52 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -74,7 +74,7 @@ int     am7930debug = 0;
  * elements match sun's gain curve (but with higher resolution):
  * -18 to 0dB in .16dB steps then 0 to 12dB in .08dB steps.
  */
-static const u_short gx_coeff[256] = {
+static const uint16_t gx_coeff[256] = {
 	0x9008, 0x8e7c, 0x8e51, 0x8e45, 0x8d42, 0x8d3b, 0x8c36, 0x8c33,
 	0x8b32, 0x8b2a, 0x8b2b, 0x8b2c, 0x8b25, 0x8b23, 0x8b22, 0x8b22,
 	0x9122, 0x8b1a, 0x8aa3, 0x8aa3, 0x8b1c, 0x8aa6, 0x912d, 0x912b,
@@ -112,7 +112,7 @@ static const u_short gx_coeff[256] = {
 /*
  * second stage play gain.
  */
-static const u_short ger_coeff[] = {
+static const uint16_t ger_coeff[] = {
 	0x431f, /* 5. dB */
 	0x331f, /* 5.5 dB */
 	0x40dd, /* 6. dB */
@@ -142,9 +142,7 @@ static const u_short ger_coeff[] = {
  * Reset chip and set boot-time softc defaults.
  */
 void
-am7930_init(sc, flag)
-	struct am7930_softc *sc;
-	int flag;
+am7930_init(struct am7930_softc *sc, int flag)
 {
 
 	DPRINTF(("am7930_init()\n"));
@@ -194,50 +192,40 @@ am7930_init(sc, flag)
 
 }
 
-
 int
-am7930_open(addr, flags)
-	void *addr;
-	int flags;
+am7930_open(void *addr, int flags)
 {
-	struct am7930_softc *sc = addr;
+	struct am7930_softc *sc;
 
+	sc = addr;
 	DPRINTF(("sa_open: unit %p\n", sc));
-
 	sc->sc_glue->onopen(sc);
-
 	DPRINTF(("saopen: ok -> sc=0x%p\n",sc));
-
-	return (0);
+	return 0;
 }
 
 void
-am7930_close(addr)
-	void *addr;
+am7930_close(void *addr)
 {
-	struct am7930_softc *sc = addr;
+	struct am7930_softc *sc;
 
+	sc = addr;
 	DPRINTF(("sa_close: sc=%p\n", sc));
-
 	sc->sc_glue->onclose(sc);
-
 	DPRINTF(("sa_close: closed.\n"));
 }
-
 
 /*
  * XXX should be extended to handle a few of the more common formats.
  */
 int
-am7930_set_params(addr, setmode, usemode, p, r, pfil, rfil)
-	void *addr;
-	int setmode, usemode;
-	audio_params_t *p, *r;
-	stream_filter_list_t *pfil, *rfil;
+am7930_set_params(void *addr, int setmode, int usemode, audio_params_t *p,
+    audio_params_t *r, stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
-	struct am7930_softc *sc = addr;
+	struct am7930_softc *sc;
 
+	sc = addr;
 	if ((usemode & AUMODE_PLAY) == AUMODE_PLAY) {
 		if (p->sample_rate < 7500 || p->sample_rate > 8500 ||
 			p->encoding != AUDIO_ENCODING_ULAW ||
@@ -271,47 +259,39 @@ am7930_set_params(addr, setmode, usemode, p, r, pfil, rfil)
 }
 
 int
-am7930_query_encoding(addr, fp)
-	void *addr;
-	struct audio_encoding *fp;
+am7930_query_encoding(void *addr, struct audio_encoding *fp)
 {
-	switch (fp->index) {	/* ??? */
-	    case 0:
-		    strcpy(fp->name, AudioEmulaw);
-		    fp->encoding = AUDIO_ENCODING_ULAW;
-		    fp->precision = 8;
-		    fp->flags = 0;
-		    break;
-	    default:
-		    return(EINVAL);
+	switch (fp->index) {
+	case 0:
+		strcpy(fp->name, AudioEmulaw);
+		fp->encoding = AUDIO_ENCODING_ULAW;
+		fp->precision = 8;
+		fp->flags = 0;
+		break;
+	default:
+		return EINVAL;
 		    /*NOTREACHED*/
 	}
-	return(0);
+	return 0;
 }
 
-
 int
-am7930_round_blocksize(addr, blk, mode, param)
-	void *addr;
-	int blk;
-	int mode;
-	const audio_params_t *param;
+am7930_round_blocksize(void *addr, int blk,
+    int mode, const audio_params_t *param)
 {
-	return(blk);
+	return blk;
 }
 
-
 int
-am7930_commit_settings(addr)
-	void *addr;
+am7930_commit_settings(void *addr)
 {
-	struct am7930_softc *sc = addr;
-	u_int16_t ger, gr, gx, stgr;
-	u_int8_t mmr2, mmr3;
+	struct am7930_softc *sc;
+	uint16_t ger, gr, gx, stgr;
+	uint8_t mmr2, mmr3;
 	int s, level;
 
 	DPRINTF(("sa_commit.\n"));
-
+	sc = addr;
 	gx = gx_coeff[sc->sc_rlevel];
 	stgr = gx_coeff[sc->sc_mlevel];
 
@@ -351,45 +331,39 @@ am7930_commit_settings(addr)
 
 	splx(s);
 
-	return(0);
+	return 0;
 }
 
-
 int
-am7930_halt_output(addr)
-	void *addr;
+am7930_halt_output(void *addr)
 {
-	struct am7930_softc *sc = addr;
+	struct am7930_softc *sc;
 
+	sc = addr;
 	/* XXX only halt, if input is also halted ?? */
 	AM7930_IWRITE(sc, AM7930_IREG_INIT,
-		AM7930_INIT_PMS_ACTIVE | AM7930_INIT_INT_DISABLE);
-
-	return(0);
+	    AM7930_INIT_PMS_ACTIVE | AM7930_INIT_INT_DISABLE);
+	return 0;
 }
-
 
 int
-am7930_halt_input(addr)
-	void *addr;
+am7930_halt_input(void *addr)
 {
-	struct am7930_softc *sc = addr;
+	struct am7930_softc *sc;
 
+	sc = addr;
 	/* XXX only halt, if output is also halted ?? */
 	AM7930_IWRITE(sc, AM7930_IREG_INIT,
-		AM7930_INIT_PMS_ACTIVE | AM7930_INIT_INT_DISABLE);
-
-	return(0);
+	    AM7930_INIT_PMS_ACTIVE | AM7930_INIT_INT_DISABLE);
+	return 0;
 }
-
 
 /*
  * XXX chip is full-duplex, but really attach-dependent.
  * For now we know of no half-duplex attachments.
  */
 int
-am7930_get_props(addr)
-	void *addr;
+am7930_get_props(void *addr)
 {
 	return AUDIO_PROP_FULLDUPLEX;
 }
@@ -398,22 +372,20 @@ am7930_get_props(addr)
  * Attach-dependent channel set/query
  */
 int
-am7930_set_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+am7930_set_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct am7930_softc *sc = addr;
+	struct am7930_softc *sc;
 
 	DPRINTF(("am7930_set_port: port=%d", cp->dev));
-
+	sc = addr;
 	if (cp->dev == AUDIOAMD_RECORD_SOURCE ||
 		cp->dev == AUDIOAMD_MONITOR_OUTPUT ||
 		cp->dev == AUDIOAMD_MIC_MUTE) {
 		if (cp->type != AUDIO_MIXER_ENUM)
-			return(EINVAL);
+			return EINVAL;
 	} else if (cp->type != AUDIO_MIXER_VALUE ||
-					cp->un.value.num_channels != 1) {
-		return(EINVAL);
+	    cp->un.value.num_channels != 1) {
+		return EINVAL;
 	}
 
 	switch(cp->dev) {
@@ -441,29 +413,27 @@ am7930_set_port(addr, cp)
 			sc->sc_out_port = cp->un.ord;
 		    break;
 	    default:
-		    return(EINVAL);
+		    return EINVAL;
 		    /* NOTREACHED */
 	}
 	return 0;
 }
 
 int
-am7930_get_port(addr, cp)
-	void *addr;
-	mixer_ctrl_t *cp;
+am7930_get_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct am7930_softc *sc = addr;
+	struct am7930_softc *sc;
 
 	DPRINTF(("am7930_get_port: port=%d\n", cp->dev));
-
+	sc = addr;
 	if (cp->dev == AUDIOAMD_RECORD_SOURCE ||
 		cp->dev == AUDIOAMD_MONITOR_OUTPUT ||
 		cp->dev == AUDIOAMD_MIC_MUTE) {
 		if (cp->type != AUDIO_MIXER_ENUM)
-			return(EINVAL);
+			return EINVAL;
 	} else if (cp->type != AUDIO_MIXER_VALUE ||
 		cp->un.value.num_channels != 1) {
-		return(EINVAL);
+		return EINVAL;
 	}
 
 	switch(cp->dev) {
@@ -487,7 +457,7 @@ am7930_get_port(addr, cp)
 		    cp->un.ord = sc->sc_out_port;
 		    break;
 	    default:
-		    return(EINVAL);
+		    return EINVAL;
 		    /* NOTREACHED */
 	}
 	return 0;
@@ -498,111 +468,109 @@ am7930_get_port(addr, cp)
  * Define mixer control facilities.
  */
 int
-am7930_query_devinfo(addr, dip)
-	void *addr;
-	mixer_devinfo_t *dip;
+am7930_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
 
 	DPRINTF(("am7930_query_devinfo()\n"));
 
 	switch(dip->index) {
-	    case AUDIOAMD_MIC_VOL:
-		    dip->type = AUDIO_MIXER_VALUE;
-		    dip->mixer_class = AUDIOAMD_INPUT_CLASS;
-		    dip->prev =  AUDIO_MIXER_LAST;
-		    dip->next = AUDIOAMD_MIC_MUTE;
-		    strcpy(dip->label.name, AudioNmicrophone);
-		    dip->un.v.num_channels = 1;
-		    strcpy(dip->un.v.units.name, AudioNvolume);
-		    break;
-	    case AUDIOAMD_SPEAKER_VOL:
-		    dip->type = AUDIO_MIXER_VALUE;
-		    dip->mixer_class = AUDIOAMD_OUTPUT_CLASS;
-		    dip->prev = dip->next = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioNspeaker);
-		    dip->un.v.num_channels = 1;
-		    strcpy(dip->un.v.units.name, AudioNvolume);
-		    break;
-	    case AUDIOAMD_HEADPHONES_VOL:
-		    dip->type = AUDIO_MIXER_VALUE;
-		    dip->mixer_class = AUDIOAMD_OUTPUT_CLASS;
-		    dip->prev = dip->next = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioNheadphone);
-		    dip->un.v.num_channels = 1;
-		    strcpy(dip->un.v.units.name, AudioNvolume);
-		    break;
-	    case AUDIOAMD_MONITOR_VOL:
-		    dip->type = AUDIO_MIXER_VALUE;
-		    dip->mixer_class = AUDIOAMD_MONITOR_CLASS;
-		    dip->prev = dip->next = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioNmonitor);
-		    dip->un.v.num_channels = 1;
-		    strcpy(dip->un.v.units.name, AudioNvolume);
-		    break;
-	    case AUDIOAMD_RECORD_SOURCE:
-		    dip->type = AUDIO_MIXER_ENUM;
-		    dip->mixer_class = AUDIOAMD_RECORD_CLASS;
-		    dip->next = dip->prev = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioNsource);
-		    dip->un.e.num_mem = 1;
-		    strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
-		    dip->un.e.member[0].ord = AUDIOAMD_MIC_VOL;
-		    break;
-	    case AUDIOAMD_MONITOR_OUTPUT:
-		    dip->type = AUDIO_MIXER_ENUM;
-		    dip->mixer_class = AUDIOAMD_MONITOR_CLASS;
-		    dip->next = dip->prev = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioNoutput);
-		    dip->un.e.num_mem = 2;
-		    strcpy(dip->un.e.member[0].label.name, AudioNspeaker);
-		    dip->un.e.member[0].ord = AUDIOAMD_SPEAKER_VOL;
-		    strcpy(dip->un.e.member[1].label.name, AudioNheadphone);
-		    dip->un.e.member[1].ord = AUDIOAMD_HEADPHONES_VOL;
-		    break;
-	    case AUDIOAMD_MIC_MUTE:
-		    dip->type = AUDIO_MIXER_ENUM;
-		    dip->mixer_class = AUDIOAMD_INPUT_CLASS;
-		    dip->prev =  AUDIOAMD_MIC_VOL;
-		    dip->next = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioNmute);
-		    dip->un.e.num_mem = 2;
-		    strcpy(dip->un.e.member[0].label.name, AudioNoff);
-		    dip->un.e.member[0].ord = 0;
-		    strcpy(dip->un.e.member[1].label.name, AudioNon);
-		    dip->un.e.member[1].ord = 1;
-		    break;
-	    case AUDIOAMD_INPUT_CLASS:
-		    dip->type = AUDIO_MIXER_CLASS;
-		    dip->mixer_class = AUDIOAMD_INPUT_CLASS;
-		    dip->next = dip->prev = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioCinputs);
-		    break;
-	    case AUDIOAMD_OUTPUT_CLASS:
-		    dip->type = AUDIO_MIXER_CLASS;
-		    dip->mixer_class = AUDIOAMD_OUTPUT_CLASS;
-		    dip->next = dip->prev = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioCoutputs);
-		    break;
-	    case AUDIOAMD_RECORD_CLASS:
-		    dip->type = AUDIO_MIXER_CLASS;
-		    dip->mixer_class = AUDIOAMD_RECORD_CLASS;
-		    dip->next = dip->prev = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioCrecord);
-		    break;
-	    case AUDIOAMD_MONITOR_CLASS:
-		    dip->type = AUDIO_MIXER_CLASS;
-		    dip->mixer_class = AUDIOAMD_MONITOR_CLASS;
-		    dip->next = dip->prev = AUDIO_MIXER_LAST;
-		    strcpy(dip->label.name, AudioCmonitor);
-		    break;
-	    default:
-		    return ENXIO;
-		    /*NOTREACHED*/
+	case AUDIOAMD_MIC_VOL:
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = AUDIOAMD_INPUT_CLASS;
+		dip->prev =  AUDIO_MIXER_LAST;
+		dip->next = AUDIOAMD_MIC_MUTE;
+		strcpy(dip->label.name, AudioNmicrophone);
+		dip->un.v.num_channels = 1;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
+	case AUDIOAMD_SPEAKER_VOL:
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = AUDIOAMD_OUTPUT_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNspeaker);
+		dip->un.v.num_channels = 1;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
+	case AUDIOAMD_HEADPHONES_VOL:
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = AUDIOAMD_OUTPUT_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNheadphone);
+		dip->un.v.num_channels = 1;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
+	case AUDIOAMD_MONITOR_VOL:
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = AUDIOAMD_MONITOR_CLASS;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNmonitor);
+		dip->un.v.num_channels = 1;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
+	case AUDIOAMD_RECORD_SOURCE:
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->mixer_class = AUDIOAMD_RECORD_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNsource);
+		dip->un.e.num_mem = 1;
+		strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+		dip->un.e.member[0].ord = AUDIOAMD_MIC_VOL;
+		break;
+	case AUDIOAMD_MONITOR_OUTPUT:
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->mixer_class = AUDIOAMD_MONITOR_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNoutput);
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, AudioNspeaker);
+		dip->un.e.member[0].ord = AUDIOAMD_SPEAKER_VOL;
+		strcpy(dip->un.e.member[1].label.name, AudioNheadphone);
+		dip->un.e.member[1].ord = AUDIOAMD_HEADPHONES_VOL;
+		break;
+	case AUDIOAMD_MIC_MUTE:
+		dip->type = AUDIO_MIXER_ENUM;
+		dip->mixer_class = AUDIOAMD_INPUT_CLASS;
+		dip->prev =  AUDIOAMD_MIC_VOL;
+		dip->next = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioNmute);
+		dip->un.e.num_mem = 2;
+		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		dip->un.e.member[0].ord = 0;
+		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		dip->un.e.member[1].ord = 1;
+		break;
+	case AUDIOAMD_INPUT_CLASS:
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = AUDIOAMD_INPUT_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioCinputs);
+		break;
+	case AUDIOAMD_OUTPUT_CLASS:
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = AUDIOAMD_OUTPUT_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioCoutputs);
+		break;
+	case AUDIOAMD_RECORD_CLASS:
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = AUDIOAMD_RECORD_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioCrecord);
+		break;
+	case AUDIOAMD_MONITOR_CLASS:
+		dip->type = AUDIO_MIXER_CLASS;
+		dip->mixer_class = AUDIOAMD_MONITOR_CLASS;
+		dip->next = dip->prev = AUDIO_MIXER_LAST;
+		strcpy(dip->label.name, AudioCmonitor);
+		break;
+	default:
+		return ENXIO;
+		/*NOTREACHED*/
 	}
 
 	DPRINTF(("AUDIO_MIXER_DEVINFO: name=%s\n", dip->label.name));
 
-	return(0);
+	return 0;
 }
 
 #endif	/* NAUDIO */

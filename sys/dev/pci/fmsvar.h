@@ -1,4 +1,4 @@
-/*	$NetBSD: fmsvar.h,v 1.1 1999/11/01 21:54:12 augustss Exp $	*/
+/*	$NetBSD: fmsvar.h,v 1.2 2005/01/15 15:19:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
- 
+
+
 #ifndef _DEV_PCI_FMSVAR_H_
 #define _DEV_PCI_FMSVAR_H_
 
@@ -65,14 +65,14 @@ struct fms_softc {
 	bus_addr_t sc_play_start, sc_play_end, sc_play_nextblk;
 	int sc_play_blksize;
 	int sc_play_flip;
-	u_int16_t sc_play_reg;
+	uint16_t sc_play_reg;
 
 	void (*sc_rintr)(void *);
 	void *sc_rarg;
 	bus_addr_t sc_rec_start, sc_rec_end, sc_rec_nextblk;
 	int sc_rec_blksize;
 	int sc_rec_flip;
-	u_int16_t sc_rec_reg;
+	uint16_t sc_rec_reg;
 };
 
-#endif
+#endif	/* !_DEV_PCI_FMSVAR_H_ */

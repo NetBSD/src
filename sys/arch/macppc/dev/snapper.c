@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.3 2005/01/10 22:01:36 kent Exp $	*/
+/*	$NetBSD: snapper.c,v 1.4 2005/01/15 15:19:51 kent Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -287,15 +287,13 @@ struct tas3004_reg {
 #define	GPIO_DATA	0x01	/* Data */
 
 int
-snapper_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+snapper_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct confargs *ca = aux;
+	struct confargs *ca;
 	int soundbus, soundchip;
 	char compat[32];
 
+	ca = aux;
 	if (strcmp(ca->ca_name, "i2s") != 0)
 		return 0;
 
@@ -313,16 +311,15 @@ snapper_match(parent, match, aux)
 }
 
 void
-snapper_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+snapper_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct snapper_softc *sc = (struct snapper_softc *)self;
-	struct confargs *ca = aux;
+	struct snapper_softc *sc;
+	struct confargs *ca;
 	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
 	int soundbus, intr[6];
 
+	sc = (struct snapper_softc *)self;
+	ca = aux;
 #ifdef DIAGNOSTIC
 	if ((vaddr_t)sc->sc_odmacmd & 0x0f) {
 		printf(": bad dbdma alignment\n");
@@ -360,9 +357,10 @@ snapper_attach(parent, self, aux)
 void
 snapper_defer(struct device *dev)
 {
-	struct snapper_softc *sc = (struct snapper_softc *)dev;
+	struct snapper_softc *sc;
 	struct device *dv;
 
+	sc = (struct snapper_softc *)dev;
 	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
 		if (strncmp(dv->dv_xname, "ki2c", 4) == 0 &&
 		    strncmp(dv->dv_parent->dv_xname, "obio", 4) == 0)
@@ -371,7 +369,7 @@ snapper_defer(struct device *dev)
 		printf("%s: unable to find i2c\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	
+
 	/* XXX If i2c was failed to attach, what should we do? */
 
 	audio_attach_mi(&snapper_hw_if, sc, &sc->sc_dev);
@@ -381,14 +379,16 @@ snapper_defer(struct device *dev)
 }
 
 int
-snapper_intr(v)
-	void *v;
+snapper_intr(void *v)
 {
-	struct snapper_softc *sc = v;
-	struct dbdma_command *cmd = sc->sc_odmacmd;
-	int count = sc->sc_opages;
+	struct snapper_softc *sc;
+	struct dbdma_command *cmd;
+	int count;
 	int status;
 
+	sc = v;
+	cmd = sc->sc_odmacmd;
+	count = sc->sc_opages;
 	/* Fill used buffer(s). */
 	while (count-- > 0) {
 		if ((dbdma_ld16(&cmd->d_command) & 0x30) == 0x30) {
@@ -408,11 +408,11 @@ snapper_intr(v)
  * Close function is called at splaudio().
  */
 void
-snapper_close(h)
-	void *h;
+snapper_close(void *h)
 {
-	struct snapper_softc *sc = h;
+	struct snapper_softc *sc;
 
+	sc = h;
 	snapper_halt_output(sc);
 	snapper_halt_input(sc);
 
@@ -421,12 +421,10 @@ snapper_close(h)
 }
 
 int
-snapper_query_encoding(h, ae)
-	void *h;
-	struct audio_encoding *ae;
+snapper_query_encoding(void *h, struct audio_encoding *ae)
 {
-	ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 
+	ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 	switch (ae->index) {
 	case 0:
 		strcpy(ae->name, AudioEslinear);
@@ -471,17 +469,16 @@ snapper_query_encoding(h, ae)
 }
 
 int
-snapper_set_params(h, setmode, usemode, play, rec, pfil, rfil)
-	void *h;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
-	stream_filter_list_t *pfil, *rfil;
+snapper_set_params(void *h, int setmode, int usemode,
+		   audio_params_t *play, audio_params_t *rec,
+		   stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-	struct snapper_softc *sc = h;
+	struct snapper_softc *sc;
 	audio_params_t *p;
 	stream_filter_list_t *fil;
 	int mode;
 
+	sc = h;
 	p = NULL;
 
 	/*
@@ -524,44 +521,41 @@ snapper_set_params(h, setmode, usemode, play, rec, pfil, rfil)
 }
 
 int
-snapper_round_blocksize(h, size, mode, param)
-	void *h;
-	int size;
-	int mode;
-	const audio_params_t *param;
+snapper_round_blocksize(void *h, int size, int mode,
+			const audio_params_t *param)
 {
+
 	if (size < NBPG)
 		size = NBPG;
 	return size & ~PGOFSET;
 }
 
 int
-snapper_halt_output(h)
-	void *h;
+snapper_halt_output(void *h)
 {
-	struct snapper_softc *sc = h;
+	struct snapper_softc *sc;
 
+	sc = h;
 	dbdma_stop(sc->sc_odma);
 	dbdma_reset(sc->sc_odma);
 	return 0;
 }
 
 int
-snapper_halt_input(h)
-	void *h;
+snapper_halt_input(void *h)
 {
-	struct snapper_softc *sc = h;
+	struct snapper_softc *sc;
 
+	sc = h;
 	dbdma_stop(sc->sc_idma);
 	dbdma_reset(sc->sc_idma);
 	return 0;
 }
 
 int
-snapper_getdev(h, retp)
-	void *h;
-	struct audio_device *retp;
+snapper_getdev(void *h, struct audio_device *retp)
 {
+
 	*retp = snapper_device;
 	return 0;
 }
@@ -578,15 +572,13 @@ enum {
 };
 
 int
-snapper_set_port(h, mc)
-	void *h;
-	mixer_ctrl_t *mc;
+snapper_set_port(void *h, mixer_ctrl_t *mc)
 {
-	struct snapper_softc *sc = h;
+	struct snapper_softc *sc;
 	int l, r;
 
 	DPRINTF("snapper_set_port dev = %d, type = %d\n", mc->dev, mc->type);
-
+	sc = h;
 	l = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
 	r = mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
 
@@ -635,14 +627,12 @@ snapper_set_port(h, mc)
 }
 
 int
-snapper_get_port(h, mc)
-	void *h;
-	mixer_ctrl_t *mc;
+snapper_get_port(void *h, mixer_ctrl_t *mc)
 {
-	struct snapper_softc *sc = h;
+	struct snapper_softc *sc;
 
 	DPRINTF("snapper_get_port dev = %d, type = %d\n", mc->dev, mc->type);
-
+	sc = h;
 	switch (mc->dev) {
 	case SNAPPER_OUTPUT_SELECT:
 		mc->un.mask = sc->sc_output_mask;
@@ -671,9 +661,7 @@ snapper_get_port(h, mc)
 }
 
 int
-snapper_query_devinfo(h, dip)
-	void *h;
-	mixer_devinfo_t *dip;
+snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 {
 	switch (dip->index) {
 
@@ -747,51 +735,42 @@ snapper_query_devinfo(h, dip)
 }
 
 size_t
-snapper_round_buffersize(h, dir, size)
-	void *h;
-	int dir;
-	size_t size;
+snapper_round_buffersize(void *h, int dir, size_t size)
 {
+
 	if (size > 65536)
 		size = 65536;
 	return size;
 }
 
 paddr_t
-snapper_mappage(h, mem, off, prot)
-	void *h;
-	void *mem;
-	off_t off;
-	int prot;
+snapper_mappage(void *h, void *mem, off_t off, int prot)
 {
+
 	if (off < 0)
 		return -1;
 	return -1;	/* XXX */
 }
 
 int
-snapper_get_props(h)
-	void *h;
+snapper_get_props(void *h)
 {
 	return AUDIO_PROP_FULLDUPLEX /* | AUDIO_PROP_MMAP */;
 }
 
 int
-snapper_trigger_output(h, start, end, bsize, intr, arg, param)
-	void *h;
-	void *start, *end;
-	int bsize;
-	void (*intr)(void *);
-	void *arg;
-	const audio_params_t *param;
+snapper_trigger_output(void *h, void *start, void *end, int bsize,
+		       void (*intr)(void *), void *arg,
+		       const audio_params_t *param)
 {
-	struct snapper_softc *sc = h;
-	struct dbdma_command *cmd = sc->sc_odmacmd;
+	struct snapper_softc *sc;
+	struct dbdma_command *cmd;
 	vaddr_t va;
 	int i, len, intmode;
 
 	DPRINTF("trigger_output %p %p 0x%x\n", start, end, bsize);
-
+	sc = h;
+	cmd = sc->sc_odmacmd;
 	sc->sc_ointr = intr;
 	sc->sc_oarg = arg;
 	sc->sc_opages = ((char *)end - (char *)start) / NBPG;
@@ -812,13 +791,15 @@ snapper_trigger_output(h, start, end, bsize, intr, arg, param)
 			intmode = DBDMA_INT_ALWAYS;
 		}
 
-		DBDMA_BUILD(cmd, DBDMA_CMD_OUT_MORE, 0, NBPG, vtophys(va), intmode, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+		DBDMA_BUILD(cmd, DBDMA_CMD_OUT_MORE, 0, NBPG, vtophys(va),
+		    intmode, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 		cmd++;
 		va += NBPG;
 	}
 
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0,
-	    0/*vtophys((vaddr_t)sc->sc_odmacmd)*/, 0, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
+	    0/*vtophys((vaddr_t)sc->sc_odmacmd)*/, 0, DBDMA_WAIT_NEVER,
+	    DBDMA_BRANCH_ALWAYS);
 
 	dbdma_st32(&cmd->d_cmddep, vtophys((vaddr_t)sc->sc_odmacmd));
 
@@ -828,23 +809,17 @@ snapper_trigger_output(h, start, end, bsize, intr, arg, param)
 }
 
 int
-snapper_trigger_input(h, start, end, bsize, intr, arg, param)
-	void *h;
-	void *start, *end;
-	int bsize;
-	void (*intr)(void *);
-	void *arg;
-	const audio_params_t *param;
+snapper_trigger_input(void *h, void *start, void *end, int bsize,
+		      void (*intr)(void *), void *arg,
+		      const audio_params_t *param)
 {
-	printf("snapper_trigger_input called\n");
 
+	printf("snapper_trigger_input called\n");
 	return 1;
 }
 
 void
-snapper_set_volume(sc, left, right)
-	struct snapper_softc *sc;
-	int left, right;
+snapper_set_volume(struct snapper_softc *sc, int left, int right)
 {
 	u_char vol[6];
 
@@ -892,15 +867,14 @@ snapper_set_volume(sc, left, right)
 // rate = SCLK / 64    ( = LRCLK = fs)
 
 int
-snapper_set_rate(sc, rate)
-	struct snapper_softc *sc;
-	u_int rate;
+snapper_set_rate(struct snapper_softc *sc, u_int rate)
 {
-	u_int reg = 0;
+	u_int reg;
 	int MCLK;
 	int clksrc, mdiv, sdiv;
 	int mclk_fs;
 
+	reg = 0;
 	switch (rate) {
 	case 8000:
 		clksrc = 18432000;		/* 18MHz */
@@ -1045,10 +1019,7 @@ const char tas3004_regsize[] = {
 };
 
 int
-tas3004_write(sc, reg, data)
-	struct snapper_softc *sc;
-	u_int reg;
-	const void *data;
+tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 {
 	int size;
 
@@ -1063,21 +1034,20 @@ tas3004_write(sc, reg, data)
 }
 
 int
-gpio_read(addr)
-	char *addr;
+gpio_read(char *addr)
 {
+
 	if (*addr & GPIO_DATA)
 		return 1;
 	return 0;
 }
 
 void
-gpio_write(addr, val)
-	char *addr;
-	int val;
+gpio_write(char *addr, int val)
 {
-	u_int data = GPIO_DDR_OUTPUT;
+	u_int data;
 
+	data = GPIO_DDR_OUTPUT;
 	if (val)
 		data |= GPIO_DATA;
 	*addr = data;
@@ -1088,9 +1058,7 @@ gpio_write(addr, val)
 #define amp_active 0		/* XXX OF */
 
 void
-snapper_mute_speaker(sc, mute)
-	struct snapper_softc *sc;
-	int mute;
+snapper_mute_speaker(struct snapper_softc *sc, int mute)
 {
 	u_int x;
 
@@ -1107,9 +1075,7 @@ snapper_mute_speaker(sc, mute)
 }
 
 void
-snapper_mute_headphone(sc, mute)
-	struct snapper_softc *sc;
-	int mute;
+snapper_mute_headphone(struct snapper_softc *sc, int mute)
 {
 	u_int x;
 
@@ -1126,12 +1092,12 @@ snapper_mute_headphone(sc, mute)
 }
 
 int
-snapper_cint(v)
-	void *v;
+snapper_cint(void *v)
 {
-	struct snapper_softc *sc = v;
+	struct snapper_softc *sc;
 	u_int sense;
 
+	sc = v;
 	sense = *headphone_detect;
 	DPRINTF("headphone detect = 0x%x\n", sense);
 
@@ -1156,8 +1122,7 @@ snapper_cint(v)
 	if (tas3004_write(sc, reg, addr)) goto err
 
 int
-tas3004_init(sc)
-	struct snapper_softc *sc;
+tas3004_init(struct snapper_softc *sc)
 {
 
 	/* No reset port.  Nothing to do. */
@@ -1218,19 +1183,17 @@ err:
 #define FCR3C_BITMASK "\020\25I2S1EN\24I2S1CLKEN\16I2S0EN\15I2S0CLKEN"
 
 void
-snapper_init(sc, node)
-	struct snapper_softc *sc;
-	int node;
+snapper_init(struct snapper_softc *sc, int node)
 {
 	int gpio;
-	int headphone_detect_intr = -1, headphone_detect_intrtype;
-
+	int headphone_detect_intr, headphone_detect_intrtype;
 #ifdef SNAPPER_DEBUG
 	char fcr[32];
 
 	bitmask_snprintf(in32rb(0x8000003c), FCR3C_BITMASK, fcr, sizeof fcr);
 	printf("FCR(0x3c) 0x%s\n", fcr);
 #endif
+	headphone_detect_intr = -1;
 
 	gpio = getnodebyname(OF_parent(node), "gpio");
 	DPRINTF(" /gpio 0x%x\n", gpio);

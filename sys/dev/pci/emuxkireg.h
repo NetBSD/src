@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkireg.h,v 1.5 2004/05/27 20:20:53 christos Exp $	*/
+/*	$NetBSD: emuxkireg.h,v 1.6 2005/01/15 15:19:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,12 +39,12 @@
 #ifndef _DEV_PCI_EMUXKIREG_H_
 #define _DEV_PCI_EMUXKIREG_H_
 
-/* 
+/*
  * Register values for Creative EMU10000. The register values have been
  * taken from GPLed SBLive! header file published by Creative. The comments
  * have been stripped to avoid GPL pollution in kernel. The Creative version
  * including comments is available in Linux 2.4.* kernel as file
- * 	drivers/sound/emu10k1/8010.h
+ *	drivers/sound/emu10k1/8010.h
  */
 
 /*
@@ -149,7 +149,7 @@
 #define  EMU_HCFG_GPINPUT0		0x00004000
 #define  EMU_HCFG_GPINPUT1		0x00002000
 #define  EMU_HCFG_GPOUTPUT_MASK		0x00001c00
-#define  EMU_HCFG_JOYENABLE    		0x00000200
+#define  EMU_HCFG_JOYENABLE		0x00000200
 #define  EMU_HCFG_PHASETRACKENABLE	0x00000100
 #define  EMU_HCFG_AC3ENABLE_MASK	0x000000e0
 #define  EMU_HCFG_AC3ENABLE_ZVIDEO	0x00000080
@@ -188,7 +188,7 @@
 
 #define EMU_A2_PTR		0x20
 #define EMU_A2_DATA		0x24
-  
+
 #define EMU_A2_SRCSEL			0x600000
 #define EMU_A2_SRCSEL_ENABLE_SPDIF	0x00000004
 #define EMU_A2_SRCSEL_ENABLE_SRCMULTI	0x00000010
@@ -302,7 +302,7 @@
 #define  EMU_CHAN_DCYSUSV_DECAYTIME_MASK	0x0000007f
 
 
-#define EMU_CHAN_LFOVAL1 	0x13
+#define EMU_CHAN_LFOVAL1	0x13
 #define  EMU_CHAN_LFOVAL_MASK		0x0000ffff
 
 #define EMU_CHAN_ENVVAL		0x14

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.41 2005/01/10 22:01:36 kent Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.42 2005/01/15 15:19:51 kent Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.41 2005/01/10 22:01:36 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.42 2005/01/15 15:19:51 kent Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -224,9 +224,10 @@ vidcaudio_probe(struct device *parent, struct cfdata *cf, void *aux)
 static void
 vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct vidcaudio_softc *sc = (void *)self;
+	struct vidcaudio_softc *sc;
 	struct device *beepdev;
 
+	sc  = (void *)self;
 	switch (IOMD_ID) {
 #ifndef EB7500ATX
 	case RPC600_IOMD_ID:
@@ -278,9 +279,10 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 static void
 vidcaudio_close(void *addr)
 {
-	struct vidcaudio_softc *sc = addr;
+	struct vidcaudio_softc *sc;
 
 	DPRINTF(("DEBUG: vidcaudio_close called\n"));
+	sc = addr;
 	/*
 	 * We do this here rather than in vidcaudio_halt_output()
 	 * because the latter can be called from interrupt context
@@ -299,8 +301,9 @@ vidcaudio_close(void *addr)
 static int
 vidcaudio_query_encoding(void *addr, struct audio_encoding *fp)
 {
-	struct vidcaudio_softc *sc = addr;
+	struct vidcaudio_softc *sc;
 
+	sc = addr;
 	switch (fp->index) {
 	case 0:
 		strcpy(fp->name, AudioEmulaw);
@@ -330,6 +333,7 @@ static stream_filter_t *
 mulaw_to_vidc(struct audio_softc *sc, const audio_params_t *from,
 	      const audio_params_t *to)
 {
+
 	return auconv_nocontext_filter_factory(mulaw_to_vidc_fetch_to);
 }
 
@@ -354,6 +358,7 @@ static stream_filter_t *
 mulaw_to_vidc_stereo(struct audio_softc *sc, const audio_params_t *from,
 		     const audio_params_t *to)
 {
+
 	return auconv_nocontext_filter_factory(mulaw_to_vidc_stereo_fetch_to);
 }
 
@@ -382,12 +387,13 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
     stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	audio_params_t hw;
-	struct vidcaudio_softc *sc = addr;
+	struct vidcaudio_softc *sc;
 	int sample_period, ch;
 
 	if ((setmode & AUMODE_PLAY) == 0)
 		return 0;
 
+	sc = addr;
 	if (sc->sc_is16bit) {
 		/* ARM7500ish, 16-bit, two-channel */
 		hw = *p;
@@ -445,7 +451,7 @@ vidcaudio_round_blocksize(void *addr, int wantblk,
 {
 	int blk;
 
-	/* 
+	/*
 	 * Find the smallest power of two that's larger than the
 	 * requested block size, but don't allow < 32 (DMA burst is 16
 	 * bytes, and single bursts are tricky) or > PAGE_SIZE (DMA is
@@ -453,7 +459,8 @@ vidcaudio_round_blocksize(void *addr, int wantblk,
 	 */
 
 	for (blk = 32; blk < PAGE_SIZE; blk <<= 1)
-		if (blk >= wantblk) return blk;
+		if (blk >= wantblk)
+			return blk;
 	return blk;
 }
 
@@ -461,12 +468,13 @@ static int
 vidcaudio_trigger_output(void *addr, void *start, void *end, int blksize,
     void (*intr)(void *), void *arg, const audio_params_t *params)
 {
-	struct vidcaudio_softc *sc = addr;
+	struct vidcaudio_softc *sc;
 	size_t npages, i;
 
 	DPRINTF(("vidcaudio_trigger_output %p-%p/0x%x\n",
 	    start, end, blksize));
 
+	sc = addr;
 	KASSERT(blksize == vidcaudio_round_blocksize(addr, blksize, 0, NULL));
 	KASSERT((vaddr_t)start % blksize == 0);
 
@@ -510,9 +518,10 @@ vidcaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 static int
 vidcaudio_halt_output(void *addr)
 {
-	struct vidcaudio_softc *sc = addr;
+	struct vidcaudio_softc *sc;
 
 	DPRINTF(("vidcaudio_halt_output\n"));
+	sc = addr;
 	disable_irq(sc->sc_dma_intr);
 	IOMD_WRITE_WORD(IOMD_SD0CR, IOMD_DMACR_CLEAR | IOMD_DMACR_QUADWORD);
 	return 0;
@@ -587,10 +596,11 @@ vidcaudio_stereo(int channel, int position)
 static int
 vidcaudio_intr(void *arg)
 {
-	struct vidcaudio_softc *sc = arg;
+	struct vidcaudio_softc *sc;
 	int status;
 	paddr_t pnext, pend;
 
+	sc = arg;
 	status = IOMD_READ_BYTE(IOMD_SD0ST);
 	DPRINTF(("I[%x]", status));
 	if ((status & IOMD_DMAST_INT) == 0)
@@ -621,7 +631,7 @@ vidcaudio_intr(void *arg)
 	sc->sc_poffset += sc->sc_pblksize;
 	if (sc->sc_poffset >= sc->sc_pbufsize)
 		sc->sc_poffset = 0;
-	
+
 	if (sc->sc_pcountdown > 0)
 		sc->sc_pcountdown--;
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: ydsreg.h,v 1.4 2003/03/12 13:36:23 minoura Exp $	*/
+/*	$NetBSD: ydsreg.h,v 1.5 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -270,56 +270,56 @@ typedef enum {
  * play slot
  */
 union play_slot_table {
-	u_int32_t numofplay;
-	u_int32_t slotbase;
+	uint32_t numofplay;
+	uint32_t slotbase;
 };
 
 struct play_slot_ctrl_bank {
-	u_int32_t format;
+	uint32_t format;
 #define	PSLT_FORMAT_STEREO	0x00010000
 #define	PSLT_FORMAT_8BIT	0x80000000
 #define	PSLT_FORMAT_SRC441	0x10000000
 #define PSLT_FORMAT_RCH		0x00000001
-	u_int32_t loopdefault;
-	u_int32_t pgbase;
-	u_int32_t pgloop;
-	u_int32_t pgloopend;
-	u_int32_t pgloopfrac;
-	u_int32_t pgdeltaend;
-	u_int32_t lpfkend;
-	u_int32_t eggainend;
-	u_int32_t lchgainend;
-	u_int32_t rchgainend;
-	u_int32_t effect1gainend;
-	u_int32_t effect2gainend;
-	u_int32_t effect3gainend;
-	u_int32_t lpfq;
-	u_int32_t status;
+	uint32_t loopdefault;
+	uint32_t pgbase;
+	uint32_t pgloop;
+	uint32_t pgloopend;
+	uint32_t pgloopfrac;
+	uint32_t pgdeltaend;
+	uint32_t lpfkend;
+	uint32_t eggainend;
+	uint32_t lchgainend;
+	uint32_t rchgainend;
+	uint32_t effect1gainend;
+	uint32_t effect2gainend;
+	uint32_t effect3gainend;
+	uint32_t lpfq;
+	uint32_t status;
 #define	PSLT_STATUS_DEND	0x00000001
-	u_int32_t numofframes;
-	u_int32_t loopcount;
-	u_int32_t pgstart;
-	u_int32_t pgstartfrac;
-	u_int32_t pgdelta;
-	u_int32_t lpfk;
-	u_int32_t eggain;
-	u_int32_t lchgain;
-	u_int32_t rchgain;
-	u_int32_t effect1gain;
-	u_int32_t effect2gain;
-	u_int32_t effect3gain;
-	u_int32_t lpfd1;
-	u_int32_t lpfd2;
+	uint32_t numofframes;
+	uint32_t loopcount;
+	uint32_t pgstart;
+	uint32_t pgstartfrac;
+	uint32_t pgdelta;
+	uint32_t lpfk;
+	uint32_t eggain;
+	uint32_t lchgain;
+	uint32_t rchgain;
+	uint32_t effect1gain;
+	uint32_t effect2gain;
+	uint32_t effect3gain;
+	uint32_t lpfd1;
+	uint32_t lpfd2;
 };
 
 /*
  * rec slot
  */
 struct rec_slot_ctrl_bank {
-	u_int32_t pgbase;
-	u_int32_t pgloopendadr;
-	u_int32_t pgstartadr;
-	u_int32_t numofloops;
+	uint32_t pgbase;
+	uint32_t pgloopendadr;
+	uint32_t pgstartadr;
+	uint32_t numofloops;
 };
 
 struct rec_slot {
@@ -332,10 +332,10 @@ struct rec_slot {
  * effect slot
  */
 struct effect_slot_ctrl_bank {
-	u_int32_t pgbase;
-	u_int32_t pgloopend;
-	u_int32_t pgstart;
-	u_int32_t temp;
+	uint32_t pgbase;
+	uint32_t pgloopend;
+	uint32_t pgstart;
+	uint32_t temp;
 };
 
 #endif /* _DEV_PCI_YDSREG_H_ */

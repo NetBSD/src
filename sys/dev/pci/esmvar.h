@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.11 2005/01/10 22:01:37 kent Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.12 2005/01/15 15:19:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -67,15 +67,15 @@
  * This driver allocates a contiguous 256KB region of memory.
  * The Maestro's DMA interface, called the WaveCache, is weak
  * (or at least incorrectly documented), and forces us to keep
- * things very simple.  This region is very carefully divided up 
+ * things very simple.  This region is very carefully divided up
  * into 64KB quarters, making 64KB a fundamental constant for
- * this implementation - and this is as large as we can allow 
+ * this implementation - and this is as large as we can allow
  * the upper-layer playback and record buffers to become.
  */
 #define	MAESTRO_QUARTER_SZ	(64 * 1024)
 
 /*
- * The first quarter of memory is used while recording.  The 
+ * The first quarter of memory is used while recording.  The
  * first 512 bytes of it is reserved as a scratch area for the
  * APUs that want to write (uninteresting, to us) FIFO status
  * information.  After some guard space, another 512 bytes is
@@ -94,7 +94,7 @@
 #define	MAESTRO_PLAYBUF_SZ	MAESTRO_QUARTER_SZ
 
 /*
- * The third quarter of memory is the mono record buffer.  
+ * The third quarter of memory is the mono record buffer.
  * This is the only record buffer that the upper layer knows.
  * When recording in stereo, our driver combines (in software)
  * separately recorded left and right buffers here.
@@ -134,19 +134,19 @@ struct esm_dma {
 #define KERNADDR(p) ((void *)((p)->addr))
 
 struct esm_chinfo {
-	u_int32_t		base;		/* DMA base */
+	uint32_t		base;		/* DMA base */
 	caddr_t			buffer;		/* upper layer buffer */
-	u_int32_t		offset;		/* offset into buffer */
-	u_int32_t		blocksize;	/* block size in bytes */
-	u_int32_t		bufsize;	/* buffer size in bytes */
+	uint32_t		offset;		/* offset into buffer */
+	uint32_t		blocksize;	/* block size in bytes */
+	uint32_t		bufsize;	/* buffer size in bytes */
 	unsigned		num;		/* logical channel number */
-	u_int16_t		aputype;	/* APU channel type */
-	u_int16_t		apubase;	/* first sample number */
-	u_int16_t		apublk;		/* blk size in samples per ch */
-	u_int16_t		apubuf;		/* buf size in samples per ch */
-	u_int16_t		nextirq;	/* pos to trigger next IRQ at */
-	u_int16_t		wcreg_tpl;	/* wavecache tag and format */
-	u_int16_t		sample_rate;
+	uint16_t		aputype;	/* APU channel type */
+	uint16_t		apubase;	/* first sample number */
+	uint16_t		apublk;		/* blk size in samples per ch */
+	uint16_t		apubuf;		/* buf size in samples per ch */
+	uint16_t		nextirq;	/* pos to trigger next IRQ at */
+	uint16_t		wcreg_tpl;	/* wavecache tag and format */
+	uint16_t		sample_rate;
 };
 
 struct esm_softc {
@@ -173,15 +173,15 @@ struct esm_softc {
 	struct esm_chinfo	pch;
 	struct esm_chinfo	rch;
 
-	void (*sc_pintr)(void *);
-	void *sc_parg;
+	void			(*sc_pintr)(void *);
+	void			*sc_parg;
 
-	void (*sc_rintr)(void *);
-	void *sc_rarg;
+	void			(*sc_rintr)(void *);
+	void			*sc_rarg;
 
 	/* Power Management */
-	char	esm_suspend;
-	void   *esm_powerhook;	
+	char			esm_suspend;
+	void			*esm_powerhook;
 };
 
 enum esm_quirk_flags {
@@ -196,8 +196,8 @@ struct esm_quirks {
 	enum esm_quirk_flags	eq_quirks;	/* needed quirks */
 };
 
-int	esm_read_codec(void *, u_int8_t, u_int16_t *);
-int	esm_write_codec(void *, u_int8_t, u_int16_t);
+int	esm_read_codec(void *, uint8_t, uint16_t *);
+int	esm_write_codec(void *, uint8_t, uint16_t);
 int	esm_attach_codec(void *, struct ac97_codec_if *);
 int	esm_reset_codec(void *);
 enum ac97_host_flags	esm_flags_codec(void *);

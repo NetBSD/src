@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkivar.h,v 1.7 2004/05/27 20:20:53 christos Exp $	*/
+/*	$NetBSD: emuxkivar.h,v 1.8 2005/01/15 15:19:52 kent Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,9 +52,9 @@ struct dmamem {
 	bus_size_t      align;
 	bus_size_t      bound;
 	bus_dma_segment_t *segs;
-	int             nsegs;
-	int             rsegs;
-	caddr_t         kaddr;
+	int		nsegs;
+	int		rsegs;
+	caddr_t		kaddr;
 	bus_dmamap_t    map;
 };
 
@@ -83,7 +83,7 @@ struct dmamem {
 struct emuxki_mem {
 	LIST_ENTRY(emuxki_mem) next;
 	struct dmamem  *dmamem;
-	u_int16_t       ptbidx;
+	uint16_t       ptbidx;
 #define	EMU_RMEM		0xFFFF		/* recording memory */
 };
 
@@ -93,84 +93,84 @@ struct emuxki_mem {
 
 struct emuxki_chanparms_fxsend {
 	struct {
-		u_int8_t        level, dest;
+		uint8_t	level, dest;
 	} a, b, c, d, e, f, g, h;
 };
 
 struct emuxki_chanparms_pitch {
-	u_int16_t       initial;/* 4 bits of octave, 12 bits of fractional
+	uint16_t	initial;/* 4 bits of octave, 12 bits of fractional
 				 * octave */
-	u_int16_t       current;/* 0x4000 == unity pitch shift */
-	u_int16_t       target;	/* 0x4000 == unity pitch shift */
-	u_int8_t        envelope_amount;	/* Signed 2's complement, +/-
+	uint16_t	current;/* 0x4000 == unity pitch shift */
+	uint16_t	target;	/* 0x4000 == unity pitch shift */
+	uint8_t		envelope_amount;	/* Signed 2's complement, +/-
 						 * one octave peak extremes */
 };
 
 struct emuxki_chanparms_envelope {
-	u_int16_t       current_state;	/* 0x8000-n == 666*n usec delay */
-	u_int8_t        hold_time;	/* 127-n == n*(volume ? 88.2 :
+	uint16_t	current_state;	/* 0x8000-n == 666*n usec delay */
+	uint8_t		hold_time;	/* 127-n == n*(volume ? 88.2 :
 					 * 42)msec */
-	u_int8_t        attack_time;	/* 0 = infinite, 1 = (volume ? 11 :
+	uint8_t		attack_time;	/* 0 = infinite, 1 = (volume ? 11 :
 					 * 10.9) msec, 0x7f = 5.5msec */
-	u_int8_t        sustain_level;	/* 127 = full, 0 = off, 0.75dB
+	uint8_t		sustain_level;	/* 127 = full, 0 = off, 0.75dB
 					 * increments */
-	u_int8_t        decay_time;	/* 0 = 43.7msec, 1 = 21.8msec, 0x7f =
+	uint8_t		decay_time;	/* 0 = 43.7msec, 1 = 21.8msec, 0x7f =
 					 * 22msec */
 };
 
 struct emuxki_chanparms_volume {
-	u_int16_t current, target;
+	uint16_t current, target;
 	struct emuxki_chanparms_envelope envelope;
 };
 
 struct emuxki_chanparms_filter {
-	u_int16_t       initial_cutoff_frequency;
+	uint16_t       initial_cutoff_frequency;
 	/*
 	 * 6 most  significant bits are semitones, 2 least significant bits
 	 * are fractions
 	 */
-	u_int16_t       current_cutoff_frequency;
-	u_int16_t       target_cutoff_frequency;
-	u_int8_t        lowpass_resonance_height;
-	u_int8_t        interpolation_ROM;	/* 1 = full band, 7 = low
+	uint16_t	current_cutoff_frequency;
+	uint16_t	target_cutoff_frequency;
+	uint8_t		lowpass_resonance_height;
+	uint8_t		interpolation_ROM;	/* 1 = full band, 7 = low
 						 * pass */
-	u_int8_t        envelope_amount;	/* Signed 2's complement, +/-
+	uint8_t		envelope_amount;	/* Signed 2's complement, +/-
 						 * six octaves peak extremes */
-	u_int8_t        LFO_modulation_depth;	/* Signed 2's complement, +/-
+	uint8_t		LFO_modulation_depth;	/* Signed 2's complement, +/-
 						 * three octave extremes */
 };
 
 struct emuxki_chanparms_loop {
-	u_int32_t       start;	/* index in the PTB (in samples) */
-	u_int32_t       end;	/* index in the PTB (in samples) */
+	uint32_t	start;	/* index in the PTB (in samples) */
+	uint32_t	end;	/* index in the PTB (in samples) */
 };
 
 struct emuxki_chanparms_modulation {
 	struct emuxki_chanparms_envelope envelope;
-	u_int16_t       LFO_state;	/* 0x8000-n = 666*n usec delay */
+	uint16_t	LFO_state;	/* 0x8000-n = 666*n usec delay */
 };
 
 struct emuxki_chanparms_vibrato_LFO {
-	u_int16_t       state;		/* 0x8000-n == 666*n usec delay */
-	u_int8_t        modulation_depth;	/* Signed 2's complement, +/-
+	uint16_t	state;		/* 0x8000-n == 666*n usec delay */
+	uint8_t		modulation_depth;	/* Signed 2's complement, +/-
 						 * one octave extremes */
-	u_int8_t        vibrato_depth;	/* Signed 2's complement, +/- one
+	uint8_t		vibrato_depth;	/* Signed 2's complement, +/- one
 					 * octave extremes */
-	u_int8_t        frequency;	/* 0.039Hz steps, maximum of 9.85 Hz */
+	uint8_t		frequency;	/* 0.039Hz steps, maximum of 9.85 Hz */
 };
 
 struct emuxki_channel {
-	u_int8_t        num;	/* voice number */
+	uint8_t		num;	/* voice number */
 	struct emuxki_voice *voice;
 	struct emuxki_chanparms_fxsend fxsend;
 	struct emuxki_chanparms_pitch pitch;
-	u_int16_t       initial_attenuation;	/* 0.375dB steps */
+	uint16_t	initial_attenuation;	/* 0.375dB steps */
 	struct emuxki_chanparms_volume volume;
 	struct emuxki_chanparms_filter filter;
 	struct emuxki_chanparms_loop loop;
 	struct emuxki_chanparms_modulation modulation;
 	struct emuxki_chanparms_vibrato_LFO vibrato_LFO;
-	u_int8_t        tremolo_depth;
+	uint8_t		tremolo_depth;
 };
 
 /*
@@ -187,25 +187,25 @@ typedef enum {
 struct emuxki_voice {
 	struct emuxki_softc *sc;	/* our softc */
 
-	u_int8_t        use;
+	uint8_t		use;
 #define	EMU_VOICE_USE_PLAY		(1 << 0)
-	u_int8_t        state;
+	uint8_t		state;
 #define EMU_VOICE_STATE_STARTED	(1 << 0)
-	u_int8_t        stereo;
+	uint8_t		stereo;
 #define	EMU_VOICE_STEREO_NOTSET	0xFF
-	u_int8_t        b16;
-	u_int32_t       sample_rate;
+	uint8_t		b16;
+	uint32_t	sample_rate;
 	union {
 		struct emuxki_channel *chan[2];
 		emuxki_recsrc_t source;
 	} dataloc;
 	struct emuxki_mem *buffer;
-	u_int16_t       blksize;/* in samples */
-	u_int16_t       trigblk;/* blk on which to trigger inth */
-	u_int16_t       blkmod;	/* Modulo value to wrap trigblk */
-	u_int16_t       timerate;
-	void            (*inth) (void *);
-	void           *inthparam;
+	uint16_t	blksize;/* in samples */
+	uint16_t	trigblk;/* blk on which to trigger inth */
+	uint16_t	blkmod;	/* Modulo value to wrap trigblk */
+	uint16_t	timerate;
+	void		(*inth)(void *);
+	void	       *inthparam;
 	LIST_ENTRY(emuxki_voice) next;
 };
 
@@ -215,8 +215,8 @@ struct emuxki_voice {
  */
 struct emuxki_stream {
 	struct emu10k1			*emu;
-	u_int8_t			nmono;
-	u_int8_t			nstereo;
+	uint8_t				nmono;
+	uint8_t				nstereo;
 	struct emuxki_voice		*mono;
 	struct emuxki_voice		*stereo;
 	LIST_ENTRY(emuxki_stream)	next;
@@ -224,16 +224,16 @@ struct emuxki_stream {
 #endif /* Not yet */
 
 struct emuxki_softc {
-	struct device   sc_dev;
-	audio_device_t sc_audv;
-  	enum {
+	struct device	sc_dev;
+	audio_device_t	sc_audv;
+	enum {
 		EMUXKI_SBLIVE = 0x00, EMUXKI_AUDIGY = 0x01,
 		EMUXKI_AUDIGY2 = 0x02, EMUXKI_LIVE_5_1 = 0x04,
 		EMUXKI_APS = 0x08
-  	} sc_type;
+	} sc_type;
 
 	/* Autoconfig parameters */
-	bus_space_tag_t 	sc_iot;
+	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_iob;
 	bus_size_t		sc_ios;
@@ -253,7 +253,7 @@ struct emuxki_softc {
 	LIST_HEAD(, emuxki_voice) voices;
 	/* LIST_HEAD(, emuxki_stream)	streams; */
 
-	u_int8_t		timerstate;
+	uint8_t			timerstate;
 #define	EMU_TIMER_STATE_ENABLED	1
 
 	struct ac97_host_if	hostif;

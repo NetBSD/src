@@ -1,4 +1,4 @@
-/*	$NetBSD: eslvar.h,v 1.5 2004/08/10 19:55:20 mycroft Exp $	*/
+/*	$NetBSD: eslvar.h,v 1.6 2005/01/15 15:19:52 kent Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -47,7 +47,7 @@
 /* Model numbers */
 #define ESS_UNSUPPORTED -1
 #define ESS_1688	0
-#define	ESS_688	 	1	
+#define	ESS_688		1
 
 /* FIFO Size */
 #define	ESS_FIFO_SIZE	256	/* in bytes */
@@ -74,7 +74,7 @@ struct esl_softc
 };
 
 struct esl_pcmcia_softc {
-        struct esl_softc sc_esl;
+	struct esl_softc sc_esl;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	struct pcmcia_function *sc_pf;
