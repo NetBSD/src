@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 1994/10/26 00:57:07 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.8 1995/04/29 05:28:05 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -38,8 +38,8 @@
 #ifndef _RPC_TYPES_H
 #define _RPC_TYPES_H
 
-#define	bool_t	int
-#define	enum_t	int
+#define	bool_t	int32_t
+#define	enum_t	int32_t
 #define __dontcare__	-1
 
 #ifndef FALSE

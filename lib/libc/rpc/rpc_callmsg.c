@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_callmsg.c,v 1.3 1995/02/25 03:01:54 cgd Exp $	*/
+/*	$NetBSD: rpc_callmsg.c,v 1.4 1995/04/29 05:26:31 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_callmsg.c 1.4 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_callmsg.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_callmsg.c,v 1.3 1995/02/25 03:01:54 cgd Exp $";
+static char *rcsid = "$NetBSD: rpc_callmsg.c,v 1.4 1995/04/29 05:26:31 cgd Exp $";
 #endif
 
 /*
@@ -180,14 +180,14 @@ xdr_callmsg(xdrs, cmsg)
 		}
 	}
 	if (
-	    xdr_u_long(xdrs, &(cmsg->rm_xid)) &&
+	    xdr_u_int32_t(xdrs, &(cmsg->rm_xid)) &&
 	    xdr_enum(xdrs, (enum_t *)&(cmsg->rm_direction)) &&
 	    (cmsg->rm_direction == CALL) &&
-	    xdr_u_long(xdrs, &(cmsg->rm_call.cb_rpcvers)) &&
+	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_rpcvers)) &&
 	    (cmsg->rm_call.cb_rpcvers == RPC_MSG_VERSION) &&
-	    xdr_u_long(xdrs, &(cmsg->rm_call.cb_prog)) &&
-	    xdr_u_long(xdrs, &(cmsg->rm_call.cb_vers)) &&
-	    xdr_u_long(xdrs, &(cmsg->rm_call.cb_proc)) &&
+	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_prog)) &&
+	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_vers)) &&
+	    xdr_u_int32_t(xdrs, &(cmsg->rm_call.cb_proc)) &&
 	    xdr_opaque_auth(xdrs, &(cmsg->rm_call.cb_cred)) )
 	    return (xdr_opaque_auth(xdrs, &(cmsg->rm_call.cb_verf)));
 	return (FALSE);

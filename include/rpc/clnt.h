@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt.h,v 1.5 1994/12/04 01:12:40 cgd Exp $	*/
+/*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -95,12 +95,12 @@ struct rpc_err {
 		int RE_errno;		/* realated system error */
 		enum auth_stat RE_why;	/* why the auth error occurred */
 		struct {
-			u_long low;	/* lowest verion supported */
-			u_long high;	/* highest verion supported */
+			u_int32_t low;	/* lowest verion supported */
+			u_int32_t high;	/* highest verion supported */
 		} RE_vers;
 		struct {		/* maybe meaningful if RPC_FAILED */
-			long s1;
-			long s2;
+			int32_t s1;
+			int32_t s2;
 		} RE_lb;		/* life boot & debugging only */
 	} ru;
 #define	re_errno	ru.RE_errno

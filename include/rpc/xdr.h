@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.6 1994/12/04 01:12:44 cgd Exp $	*/
+/*	$NetBSD: xdr.h,v 1.7 1995/04/29 05:28:06 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -242,6 +242,10 @@ extern bool_t	xdr_long	__P((XDR *, long *));
 extern bool_t	xdr_u_long	__P((XDR *, u_long *));
 extern bool_t	xdr_short	__P((XDR *, short *));
 extern bool_t	xdr_u_short	__P((XDR *, u_short *));
+extern bool_t	xdr_int16_t	__P((XDR *, int16_t *));
+extern bool_t	xdr_u_int16_t	__P((XDR *, u_int16_t *));
+extern bool_t	xdr_int32_t	__P((XDR *, int32_t *));
+extern bool_t	xdr_u_int32_t	__P((XDR *, u_int32_t *));
 extern bool_t	xdr_bool	__P((XDR *, bool_t *));
 extern bool_t	xdr_enum	__P((XDR *, enum_t *));
 extern bool_t	xdr_array	__P((XDR *, char **, u_int *, u_int, u_int, xdrproc_t));
