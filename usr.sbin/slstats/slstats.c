@@ -1,4 +1,4 @@
-/*	$NetBSD: slstats.c,v 1.14 2002/06/18 22:32:16 itojun Exp $	*/
+/*	$NetBSD: slstats.c,v 1.15 2004/10/30 15:44:39 dsl Exp $	*/
 
 /*
  * print serial line IP statistics:
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slstats.c,v 1.14 2002/06/18 22:32:16 itojun Exp $");
+__RCSID("$NetBSD: slstats.c,v 1.15 2004/10/30 15:44:39 dsl Exp $");
 #endif
 
 #define INET
@@ -131,7 +131,7 @@ main(argc, argv)
 		usage();
 
 	while (argc--) {
-		if (isdigit(*argv[0])) {
+		if (isdigit((unsigned char)*argv[0])) {
 			unit = atoi(*argv);
 			if (unit < 0)
 				usage();
