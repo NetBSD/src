@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.77.2.2 1999/04/29 14:52:40 perry Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.77.2.3 1999/05/03 23:51:53 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -2055,6 +2055,7 @@ syn_cache_timer()
 	for (sc = TAILQ_FIRST(&tcp_syn_cache_timeq[TCP_MAXRXTSHIFT]);
 	     sc != NULL && PRT_SLOW_ISEXPIRED(sc->sc_rexmt);
 	     sc = nsc) {
+		nsc = TAILQ_NEXT(sc, sc_timeq);
 		tcpstat.tcps_sc_timed_out++;
 		SYN_CACHE_RM(sc);
 		SYN_CACHE_PUT(sc);
