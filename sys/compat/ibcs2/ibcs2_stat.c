@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.11 1999/02/09 20:48:20 christos Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.11.2.1 2000/09/09 15:54:17 he Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -252,10 +252,10 @@ ibcs2_sys_stat(p, v, retval)
 	struct sys___stat13_args cup;
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
-
+	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+
 	if ((error = sys___stat13(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
@@ -281,9 +281,10 @@ ibcs2_sys_lstat(p, v, retval)
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
+	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
 	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
+
 	if ((error = sys___lstat13(p, &cup, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&cup, ub), &st, sizeof(st))) != 0)
