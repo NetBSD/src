@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.64 2003/05/02 09:00:14 gmcgarry Exp $
+.\"	$NetBSD: sh.1,v 1.65 2003/05/04 01:05:24 gmcgarry Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -1454,6 +1454,11 @@ The
 .Fl r
 option causes the hash command to delete all the entries in the hash table
 except for functions.
+.It inputrc Ar file
+Read the
+.Va file
+to set keybindings as defined by
+.Xr editrc 5 .
 .It jobid Op Ar job
 Print the process id's of the processes in the job.
 If the
@@ -1854,8 +1859,8 @@ The number of lines in the history buffer for the shell.
 .Xr test 1 ,
 .Xr editline 3 ,
 .Xr getopt 3 ,
-.Xr passwd 5 ,
 .Xr editrc 5 ,
+.Xr passwd 5 ,
 .\" .Xr profile 4 ,
 .Xr environ 7 ,
 .Xr nls 7 ,
