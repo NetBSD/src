@@ -1,4 +1,4 @@
-/*	$NetBSD: get_addrs.c,v 1.4 1997/10/20 00:23:18 lukem Exp $	*/
+/*	$NetBSD: get_addrs.c,v 1.5 1998/07/26 22:26:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)get_addrs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_addrs.c,v 1.4 1997/10/20 00:23:18 lukem Exp $");
+__RCSID("$NetBSD: get_addrs.c,v 1.5 1998/07/26 22:26:29 mycroft Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: get_addrs.c,v 1.4 1997/10/20 00:23:18 lukem Exp $");
 
 void
 get_addrs(my_machine_name, his_machine_name)
-	char *my_machine_name, *his_machine_name;
+	const char *my_machine_name, *his_machine_name;
 {
 	struct hostent *hp;
 	struct servent *sp;

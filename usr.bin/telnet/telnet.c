@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.10 1998/07/06 06:56:06 mrg Exp $	*/
+/*	$NetBSD: telnet.c,v 1.11 1998/07/26 22:35:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.10 1998/07/06 06:56:06 mrg Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.11 1998/07/26 22:35:49 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -2175,7 +2175,7 @@ Scheduler(block)
  */
     void
 telnet(user)
-    char *user;
+    const char *user;
 {
     sys_telnet_init();
 
