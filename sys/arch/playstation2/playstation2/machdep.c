@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2002/08/25 20:21:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2003/01/18 06:13:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ cpu_reboot(int howto, char *bootstr)
 	static int waittime = -1;
 
 	/* Take a snapshot before clobbering any registers. */
-	if (curproc)
+	if (curlwp)
 		savectx((struct user *)curpcb);
 
 	if (cold) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.55 2002/10/23 09:11:51 jdolecek Exp $	*/
+/*	$NetBSD: rcons.c,v 1.56 2003/01/18 06:15:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -297,7 +297,7 @@ rasterconsoleattach (n)
 		cdev = cdevsw_lookup(cn_in_dev);
 		if (cdev != NULL) {
 			status = ((*cdev->d_open)(cn_in_dev, O_NONBLOCK,
-						  S_IFCHR, curproc)); /* XXX */
+						  S_IFCHR, curlwp)); /* XXX */
 		} else {
 			status = ENXIO;
 		}
