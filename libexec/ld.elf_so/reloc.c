@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.28 2000/07/14 22:00:33 matt Exp $	 */
+/*	$NetBSD: reloc.c,v 1.29 2000/07/17 02:55:52 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -466,6 +466,9 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 			return -1;
 
 		new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
+#if defined(__vax__)
+		new_value += rela->r_addend;
+#endif
 		rdbg(dodebug, ("bind now %d/fixup in %s --> old=%p new=%p",
 		    (int)bind_now,
 		    defobj->strtab + def->st_name,
@@ -486,8 +489,12 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
          */
 	if (*where != new_value)
 		*where = new_value;
-	if (addrp != NULL)
+	if (addrp != NULL) {
 		*addrp = *(caddr_t *)(obj->relocbase + rela->r_offset);
+#if defined(__vax__)
+		*addrp -= rela->r_addend;
+#endif
+	}
 	return 0;
 }
 #endif /* __sparc__ */
