@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_host.c,v 1.4 2004/11/27 01:24:35 christos Exp $	*/
+/*	$NetBSD: amfs_host.c,v 1.5 2004/11/27 01:39:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Erez Zadok
@@ -479,8 +479,7 @@ amfs_host_mount(am_node *am, mntfs *mf)
     if (ex) {
       strlcpy(rfs_dir, ex->ex_dir, sizeof(fs_name) - (rfs_dir - fs_name));
       make_mntpt(mntpt, sizeof(mntpt), ex, mf->mf_mount);
-      if (do_mount(&fp[j], mntpt, real_mntpt, fs_name, mf->mf_mopts,
-		   am->am_flags & AMF_AUTOFS, mf) == 0)
+      if (do_mount(&fp[j], mntpt, fs_name, mf) == 0)
 	ok = TRUE;
     }
   }

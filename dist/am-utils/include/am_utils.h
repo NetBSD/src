@@ -1,4 +1,4 @@
-/*	$NetBSD: am_utils.h,v 1.8 2004/11/27 01:24:36 christos Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.9 2004/11/27 01:39:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Erez Zadok
@@ -325,6 +325,8 @@ extern voidp xzalloc(int);
 extern int check_pmap_up(char *host, struct sockaddr_in* sin);
 extern u_long get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto);
 extern long get_server_pid(void);
+extern void dplog(const char *fmt, ...);
+
 
 
 #ifdef MOUNT_TABLE_ON_FILE
