@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.25 1994/04/02 08:04:26 mycroft Exp $
+ *      $Id: aha1742.c,v 1.26 1994/04/05 08:53:00 mycroft Exp $
  */
 
 /*
@@ -355,7 +355,7 @@ ahb_send_mbox(ahb, opcode, target, ecb)
 {
 	u_short port = ahb->baseport;
 	u_short stport = port + G2STAT;
-	int wait = 100;	/* 1ms should be enough */
+	int wait = 300;	/* 1ms should be enough */
 	int s = splbio();
 
 	while (--wait) {
