@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.25 2003/08/07 16:28:41 agc Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25.10.1 2005/02/23 10:23:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -165,7 +165,7 @@ extern int mvme68k_pager_map_size;
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
 #define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFF000)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG*2))
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
