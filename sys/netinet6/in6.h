@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.21 2000/10/17 21:46:42 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.22 2001/02/11 06:49:52 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.57 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
@@ -163,6 +163,8 @@ struct sockaddr_in6 {
 #endif
 
 #ifdef _KERNEL
+extern const struct sockaddr_in6 sa6_any;
+
 extern const struct in6_addr in6mask0;
 extern const struct in6_addr in6mask32;
 extern const struct in6_addr in6mask64;

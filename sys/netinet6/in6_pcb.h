@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_pcb.h,v 1.14 2001/02/08 14:56:15 itojun Exp $	*/
-/*	$KAME: in6_pcb.h,v 1.44 2001/02/06 09:16:53 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.15 2001/02/11 06:49:52 itojun Exp $	*/
+/*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -162,7 +162,7 @@ struct	in6pcb *
 			   struct in6_addr *, u_int, struct in6_addr *,
 			   u_int, int));
 int	in6_pcbnotify __P((struct in6pcb *, struct sockaddr *,
-			   u_int, struct in6_addr *, u_int, int,
+			   u_int, struct sockaddr *, u_int, int, void *,
 			   void (*)(struct in6pcb *, int)));
 void	in6_pcbpurgeif __P((struct in6pcb *, struct ifnet *));
 void	in6_rtchange __P((struct in6pcb *, int));
