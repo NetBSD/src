@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2004/06/28 09:13:12 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2004/10/23 21:24:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@ struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	int	ih_level;
+	int	(*ih_realfun)(void *);
+	void	*ih_realarg;
 	struct	intrhand *ih_next;
 	int	ih_pin;
 	int	ih_slot;
