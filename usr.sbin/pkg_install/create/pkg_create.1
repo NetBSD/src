@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.35 2003/01/10 11:55:45 agc Exp $
+.\" $NetBSD: pkg_create.1,v 1.36 2003/06/26 10:09:05 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -346,24 +346,24 @@ is set to
 and the last extracted file was
 .Pa bin/emacs .
 .Bl -tag -width indent -compact
-.It Cm "%F"
+.It Cm "\&%F"
 Expands to the last filename extracted (as specified), in the example case
 .Pa bin/emacs
-.It Cm "%D"
+.It Cm "\&%D"
 Expand to the current directory prefix, as set with
 .Cm @cwd ,
 in the example case
 .Pa /usr/local .
-.It Cm "%B"
+.It Cm "\&%B"
 Expand to the ``basename'' of the fully qualified filename, that
 is the current directory prefix, plus the last filespec, minus
 the trailing filename.
 In the example case, that would be
 .Pa /usr/local/bin .
-.It Cm "%f"
+.It Cm "\&%f"
 Expand to the ``filename'' part of the fully qualified name, or
 the converse of
-.Cm %B ,
+.Cm \&%B ,
 being in the example case,
 .Pa emacs .
 .El
@@ -372,7 +372,7 @@ Execute
 .Ar command
 as part of the deinstallation process.
 Expansion of special
-.Cm %
+.Cm \&%
 sequences is the same as for
 .Cm @exec .
 This command is not executed during the package add, as
