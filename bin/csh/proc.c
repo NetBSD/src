@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.c,v 1.10 1997/01/13 17:53:28 tls Exp $	*/
+/*	$NetBSD: proc.c,v 1.11 1997/07/04 21:24:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: proc.c,v 1.10 1997/01/13 17:53:28 tls Exp $";
+__RCSID("$NetBSD: proc.c,v 1.11 1997/07/04 21:24:07 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1189,7 +1190,7 @@ pfind(cp)
 	}
     if (np)
 	return (np);
-    stderror(ERR_NAME | cp[1] == '?' ? ERR_JOBPAT : ERR_NOSUCHJOB);
+    stderror(ERR_NAME | (cp[1] == '?' ? ERR_JOBPAT : ERR_NOSUCHJOB));
     /* NOTREACHED */
     return (0);
 }

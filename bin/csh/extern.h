@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 1997/07/04 21:24:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -162,7 +162,7 @@ Char	 *globone __P((Char *, int));
 int	  Gmatch __P((Char *, Char *));
 void	  ginit __P((void));
 Char	**globall __P((Char **));
-void	  rscan __P((Char **, void (*)()));
+void	  rscan __P((Char **, void (*)(int)));
 void	  tglob __P((Char **));
 void	  trim __P((Char **));
 #ifdef FILEC

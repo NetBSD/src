@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
+/*	$NetBSD: csh.h,v 1.10 1997/07/04 21:23:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -85,7 +85,7 @@ typedef void *ptr_t;
 
 #include "const.h"
 #include "char.h"
-#include "err.h"
+#include "errnum.h"
 
 #define xmalloc(i)	Malloc(i)
 #define xrealloc(p, i)	Realloc(p, i)
@@ -421,8 +421,6 @@ struct varent {
 #define v_left		v_link[0]
 #define v_right		v_link[1]
 #define v_parent	v_link[2]
-
-struct varent *adrof1();
 
 #define adrof(v)	adrof1(v, &shvhed)
 #define value(v)	value1(v, &shvhed)

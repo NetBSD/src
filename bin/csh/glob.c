@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.11 1997/01/13 17:53:23 tls Exp $	*/
+/*	$NetBSD: glob.c,v 1.12 1997/07/04 21:24:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)glob.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: glob.c,v 1.11 1997/01/13 17:53:23 tls Exp $";
+__RCSID("$NetBSD: glob.c,v 1.12 1997/07/04 21:24:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,6 +90,7 @@ long    pargc = 0;
  *
  */
 static Char	*globtilde __P((Char **, Char *));
+static Char 	*handleone __P((Char *, Char **, int));
 static Char	**libglob __P((Char **));
 static Char	**globexpand __P((Char **));
 static int	globbrace __P((Char *, Char *, Char ***));
@@ -540,7 +542,7 @@ ginit()
 void
 rscan(t, f)
     Char **t;
-    void    (*f) ();
+    void    (*f) __P((int));
 {
     Char *p;
 

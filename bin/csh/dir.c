@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.10 1997/01/13 17:53:16 tls Exp $	*/
+/*	$NetBSD: dir.c,v 1.11 1997/07/04 21:23:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dir.c,v 1.10 1997/01/13 17:53:16 tls Exp $";
+__RCSID("$NetBSD: dir.c,v 1.11 1997/07/04 21:23:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +65,7 @@ static struct directory
 static Char	*dfollow __P((Char *));
 static void	 printdirs __P((void));
 static Char	*dgoto __P((Char *));
+static void 	 skipargs __P((Char ***, char *));
 static void	 dnewcwd __P((struct directory *));
 static void	 dset __P((Char *));
 

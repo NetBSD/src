@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.8 1997/01/13 17:53:31 tls Exp $	*/
+/*	$NetBSD: time.c,v 1.9 1997/07/04 21:24:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: time.c,v 1.8 1997/01/13 17:53:31 tls Exp $";
+__RCSID("$NetBSD: time.c,v 1.9 1997/07/04 21:24:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,7 +251,8 @@ pdeltat(t1, t0)
     struct timeval td;
 
     timersub(t1, t0, &td);
-    (void) fprintf(cshout, "%d.%01d", td.tv_sec, td.tv_usec / 100000);
+    (void) fprintf(cshout, "%ld.%01ld", (long) td.tv_sec,
+	(long) (td.tv_usec / 100000));
 }
 
 #define  P2DIG(i) (void) fprintf(cshout, "%d%d", (i) / 10, (i) % 10)
