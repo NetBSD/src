@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 2002/03/17 17:55:25 uch Exp $	*/
+/*	$NetBSD: types.h,v 1.9 2002/03/24 18:04:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,6 +62,7 @@ typedef int		register_t;
 
 #define	__SWAP_BROKEN
 #define	__HAVE_AST_PERPROC
+#define __HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__BROKEN_CONFIG_UNIT_USAGE	/* scif, sci driver */
 
 #endif	/* !_SH3_TYPES_H_ */
