@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2000/05/26 21:20:14 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2000/06/07 11:23:17 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -207,10 +207,6 @@ int kvtop __P((caddr_t));
 /* math_emulate.c */
 int	math_emulate __P((struct trapframe *));
 #endif
-
-
-/* trap.c */
-void	child_return __P((struct proc *, int, int, int, struct trapframe));
 
 #endif /* _KERNEL */
 
