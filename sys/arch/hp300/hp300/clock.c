@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: clock.c 1.18 91/01/21
  *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.9 1994/05/05 10:11:02 mycroft Exp $
+ *	$Id: clock.c,v 1.10 1994/05/17 10:35:21 cgd Exp $
  */
 
 #include "param.h"
@@ -257,7 +257,8 @@ clockmmap(dev, addrp, p)
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
 	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
-			PAGE_SIZE, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
+			PAGE_SIZE, VM_PROT_ALL, VM_PROT_ALL, flags,
+			(caddr_t)&vn, 0);
 	return(error);
 }
 
@@ -270,7 +271,7 @@ clockunmmap(dev, addr, p)
 
 	if (addr == 0)
 		return(EINVAL);		/* XXX: how do we deal with this? */
-	rv = vm_deallocate(p->p_vmspace->vm_map, (vm_offset_t)addr, PAGE_SIZE);
+	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t)addr, PAGE_SIZE);
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
 }
 
@@ -358,25 +359,6 @@ initprofclock()
 	if (profint > CLK_INTERVAL || (CLK_INTERVAL % profint) != 0)
 		profint = CLK_INTERVAL;
 	profscale = CLK_INTERVAL / profint;
-}
-
-startprofclock()
-{
-	register struct clkreg *clk = (struct clkreg *)clkstd[0];
-
-	clk->clk_msb3 = (profint-1) >> 8 & 0xFF;
-	clk->clk_lsb3 = (profint-1) & 0xFF;
-
-	clk->clk_cr2 = CLK_CR3;
-	clk->clk_cr3 = CLK_IENAB;
-}
-
-stopprofclock()
-{
-	register struct clkreg *clk = (struct clkreg *)clkstd[0];
-
-	clk->clk_cr2 = CLK_CR3;
-	clk->clk_cr3 = 0;
 }
 
 #ifdef GPROF
