@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.1 2002/06/05 03:57:23 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.2 2002/06/10 16:13:21 tv Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -210,7 +210,7 @@ installation section, below.
 .\}
 .
 .if r_macppc \{\
-.		It Pa boot.fs
+.		It Pa floppy/boot.fs
 \*M boot and installation floppy image.  Only usable on models that
 ship with a floppy drive (pre-Open Firmware 3); see below.
 .		It Pa ofwboot.xcf
