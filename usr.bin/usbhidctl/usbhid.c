@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.27 2004/11/05 22:44:57 dsl Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.28 2005/02/09 22:14:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.27 2004/11/05 22:44:57 dsl Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.28 2005/02/09 22:14:13 jdolecek Exp $");
 #endif
 
 #include <sys/types.h>
@@ -594,7 +594,7 @@ devloop(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize)
 	struct hid_data *hdata;
 	size_t collind, dlen;
 	struct hid_item hitem;
-	u_int32_t colls[128];
+	u_int32_t colls[256];
 	struct Sreport inreport;
 
 	allocreport(&inreport, rd, REPORT_INPUT);
@@ -665,7 +665,7 @@ devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
 	struct hid_data *hdata;
 	size_t collind, repind, vlind;
 	struct hid_item hitem;
-	u_int32_t colls[128];
+	u_int32_t colls[256];
 	struct Sreport reports[REPORT_MAXVAL + 1];
 
 
