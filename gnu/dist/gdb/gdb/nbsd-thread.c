@@ -84,7 +84,7 @@ extern int child_suppress_run;
    function, we invoke do_cleanups to restore it. */
 
 static struct cleanup * save_inferior_pid PARAMS ((void));
-static void restore_inferior_pid PARAMS ((void *pid));
+static void restore_inferior_pid PARAMS ((void *));
 
 static int find_active_thread PARAMS ((void));
 static void nbsd_find_new_threads PARAMS ((void));
@@ -96,8 +96,7 @@ save_inferior_pid ()
 }
 
 static void
-restore_inferior_pid (pid)
-     void *pid;
+restore_inferior_pid (void *pid)
 {
   /* XXX terrible type punning, but C doesn't have closures... */
   inferior_pid = (int)(long)pid;
@@ -118,8 +117,7 @@ struct string_map
   };
 
 static char *
-td_err_string (errcode)
-     int errcode;
+td_err_string (int errcode)
 {
   static struct string_map
     td_err_table[] =
@@ -180,9 +178,7 @@ nbsd_thread_deactivate ()
 }
 
 static void
-nbsd_thread_attach (args, from_tty)
-     char *args;
-     int from_tty;
+nbsd_thread_attach (char *args, int from_tty)
 {
   child_ops.to_attach (args, from_tty);
 
@@ -193,8 +189,7 @@ nbsd_thread_attach (args, from_tty)
    and wait for the trace-trap that results from attaching.  */
 
 static void
-nbsd_thread_post_attach (pid)
-	int pid;
+nbsd_thread_post_attach (int pid)
 {
   int val;
 
@@ -214,9 +209,7 @@ nbsd_thread_post_attach (pid)
    started via the normal ptrace (PTRACE_TRACEME).  */
 
 static void
-nbsd_thread_detach (args, from_tty)
-     char *args;
-     int from_tty;
+nbsd_thread_detach (char *args, int from_tty)
 {
   struct cleanup *old_chain;
   old_chain = save_inferior_pid ();
@@ -230,10 +223,7 @@ nbsd_thread_detach (args, from_tty)
 }
 
 static void
-nbsd_thread_resume (pid, step, signo)
-     int pid;
-     int step;
-     enum target_signal signo;
+nbsd_thread_resume (int pid, int step, enum target_signal signo)
 {
   struct cleanup *old_chain;
   old_chain = save_inferior_pid ();
@@ -290,9 +280,7 @@ find_active_thread ()
    to a LWP id, and vice versa on the way out.  */
 
 static int
-nbsd_thread_wait (pid, ourstatus)
-     int pid;
-     struct target_waitstatus *ourstatus;
+nbsd_thread_wait (int pid, struct target_waitstatus *ourstatus)
 {
   int rtnval;
   struct cleanup *old_chain;
@@ -318,8 +306,7 @@ nbsd_thread_wait (pid, ourstatus)
 }
 
 static void
-nbsd_thread_fetch_registers (regno)
-  int regno;
+nbsd_thread_fetch_registers (int regno)
 {
   td_thread_t *thread;
   struct reg gregs;
@@ -358,8 +345,7 @@ nbsd_thread_fetch_registers (regno)
 }
 
 static void
-nbsd_thread_store_registers (regno)
-  int regno;
+nbsd_thread_store_registers (int regno)
 {
   td_thread_t *thread;
   struct reg gregs;
@@ -425,12 +411,8 @@ nbsd_thread_prepare_to_store ()
 
 
 static int
-nbsd_thread_xfer_memory (memaddr, myaddr, len, dowrite, target)
-     CORE_ADDR memaddr;
-     char *myaddr;
-     int len;
-     int dowrite;
-     struct target_ops *target;	/* ignored */
+nbsd_thread_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len, int dowrite,
+     struct mem_attrib *attribs, struct target_ops *target)
 {
   int retval;
   struct cleanup *old_chain;
@@ -441,9 +423,11 @@ nbsd_thread_xfer_memory (memaddr, myaddr, len, dowrite, target)
     inferior_pid = main_pid;
 
   if (target_has_execution)
-    retval = child_ops.to_xfer_memory (memaddr, myaddr, len, dowrite, target);
+    retval = child_ops.to_xfer_memory (memaddr, myaddr, len, dowrite, attribs,
+      target);
   else
-    retval = orig_core_ops.to_xfer_memory (memaddr, myaddr, len, dowrite, target);
+    retval = orig_core_ops.to_xfer_memory (memaddr, myaddr, len, dowrite,
+      attribs, target);
 
   do_cleanups (old_chain);
 
@@ -452,10 +436,7 @@ nbsd_thread_xfer_memory (memaddr, myaddr, len, dowrite, target)
 
 /* ARGSUSED */
 static int
-nbsd_thread_has_exited (pid, wait_status, exit_status)
-     int pid;
-     int wait_status;
-     int *exit_status;
+nbsd_thread_has_exited (int pid, int wait_status, int *exit_status)
 {
   struct cleanup *old_chain;
   int val;
@@ -490,8 +471,7 @@ nbsd_thread_mourn_inferior ()
 /* Convert a pid to printable form. */
 
 char *
-nbsd_pid_to_str (pid)
-     int pid;
+nbsd_pid_to_str (int pid)
 {
   static char buf[100];
   td_thread_t *th;
@@ -527,8 +507,7 @@ nbsd_pid_to_str (pid)
 static void (*target_new_objfile_chain) PARAMS ((struct objfile *));
 
 void
-nbsd_thread_new_objfile (objfile)
-     struct objfile *objfile;
+nbsd_thread_new_objfile (struct objfile *objfile)
 {
   int val;
 
@@ -568,8 +547,7 @@ nbsd_thread_new_objfile (objfile)
 
 
 static int
-nbsd_thread_alive (pid)
-     int pid;
+nbsd_thread_alive (int pid)
 {
   td_thread_t *th;
   td_thread_info_t ti;
@@ -609,9 +587,7 @@ nbsd_thread_alive (pid)
    kernel) thread. */
 
 static int
-nbsd_find_new_threads_callback (th, ignored)
-     td_thread_t *th;
-     void *ignored;
+nbsd_find_new_threads_callback (td_thread_t *th, void *ignored)
 {
   int retval;
   td_thread_info_t ti;
@@ -677,8 +653,7 @@ nbsd_thread_stop ()
 /* Print status information about what we're accessing.  */
 
 static void
-nbsd_thread_files_info (ignore)
-     struct target_ops *ignore;
+nbsd_thread_files_info (struct target_ops *ignore)
 {
   struct cleanup *old_chain;
   old_chain = save_inferior_pid ();
@@ -706,8 +681,7 @@ nbsd_thread_kill_inferior ()
 }
 
 static void
-nbsd_thread_notice_signals (pid)
-     int pid;
+nbsd_thread_notice_signals (int pid)
 {
   struct cleanup *old_chain;
   old_chain = save_inferior_pid ();
@@ -724,10 +698,7 @@ nbsd_thread_notice_signals (pid)
 /* Fork an inferior process, and start debugging it with /proc.  */
 
 static void
-nbsd_thread_create_inferior (exec_file, allargs, env)
-     char *exec_file;
-     char *allargs;
-     char **env;
+nbsd_thread_create_inferior (char *exec_file, char *allargs, char **env)
 {
   int val;
 
@@ -741,9 +712,7 @@ nbsd_thread_create_inferior (exec_file, allargs, env)
 
 
 static int
-waiter_cb (th, s)
-     td_thread_t *th;
-     void *s;
+waiter_cb (td_thread_t *th, void *s)
 {
   int ret;
   td_thread_info_t ti;
@@ -762,9 +731,7 @@ waiter_cb (th, s)
    inferior.  Print anything interesting that we can think of.  */
 
 static int
-info_cb (th, s)
-     td_thread_t *th;
-     void *s;
+info_cb (td_thread_t *th, void *s)
 {
   int ret;
   td_thread_info_t ti, ti2;
@@ -845,9 +812,7 @@ info_cb (th, s)
 /* List some state about each user thread in the inferior.  */
 
 static void
-nbsd_thread_examine_all_cmd (args, from_tty)
-     char *args;
-     int from_tty;
+nbsd_thread_examine_all_cmd (char *args, int from_tty)
 {
   int val;
 
@@ -862,9 +827,7 @@ nbsd_thread_examine_all_cmd (args, from_tty)
 }
 
 static void
-nbsd_thread_examine_cmd (exp, from_tty)
-     char *exp;
-     int from_tty;
+nbsd_thread_examine_cmd (char *exp, int from_tty)
 {
   struct expression *expr;
   struct value *val;
@@ -894,9 +857,7 @@ nbsd_thread_examine_cmd (exp, from_tty)
 
 
 static void
-nbsd_thread_sync_cmd (exp, from_tty)
-     char *exp;
-     int from_tty;
+nbsd_thread_sync_cmd (char *exp, int from_tty)
 {
   struct expression *expr;
   struct value *val;
@@ -965,9 +926,7 @@ nbsd_thread_sync_cmd (exp, from_tty)
 }
 
 int
-tsd_cb (key, destructor)
-     pthread_key_t key;
-     void (*destructor)(void *);
+tsd_cb (pthread_key_t key, void (*destructor)(void *))
 {
   struct minimal_symbol *ms;
   char *name;
@@ -986,18 +945,13 @@ tsd_cb (key, destructor)
 }
 
 static void
-nbsd_thread_tsd_cmd (exp, from_tty)
-     char *exp;
-     int from_tty;
+nbsd_thread_tsd_cmd (char *exp, int from_tty)
 {
   td_tsd_iter (main_ta, tsd_cb, NULL);
 }
 
 static void
-nbsd_add_to_thread_list (abfd, asect, reg_sect_arg)
-     bfd *abfd;
-     asection *asect;
-     PTR reg_sect_arg;
+nbsd_add_to_thread_list (bfd *abfd, asection *asect, PTR reg_sect_arg)
 {
   int regval;
   td_thread_t *dummy;
@@ -1015,9 +969,7 @@ nbsd_add_to_thread_list (abfd, asect, reg_sect_arg)
 }
 
 static void
-nbsd_core_open (filename, from_tty)
-     char *filename;
-     int from_tty;
+nbsd_core_open (char *filename, int from_tty)
 {
   int val;
 
@@ -1040,8 +992,7 @@ nbsd_core_open (filename, from_tty)
 }
 
 static void
-nbsd_core_close (quitting)
-     int quitting;
+nbsd_core_close (int quitting)
 {
   /* XXX Setting these here is a gross hack. It needs to be set to
    * XXX the "current thread ID" when a core file is loaded, but there's
@@ -1062,8 +1013,7 @@ nbsd_core_detach (args, from_tty)
 }
 
 static void
-nbsd_core_files_info (t)
-     struct target_ops *t;
+nbsd_core_files_info (struct target_ops *t)
 {
   orig_core_ops.to_files_info (t);
 }
