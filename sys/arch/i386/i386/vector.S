@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.12 2004/02/20 17:35:01 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.13 2004/03/11 11:39:26 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -967,17 +967,17 @@ NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
 /* LINTSTUB: Var: char resume_pop_ds[1]; */
 NENTRY(resume_pop_ds)
-	pushl	%es
+	movl	%es,TF_ES(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%es
 /* LINTSTUB: Var: char resume_pop_es[1]; */
 NENTRY(resume_pop_es)
-	pushl	%fs
+	movl	%fs,TF_FS(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%fs
 /* LINTSTUB: Var: char resume_pop_fs[1]; */
 NENTRY(resume_pop_fs)
-	pushl	%gs	
+	movl	%gs,TF_GS(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%gs
 /* LINTSTUB: Var: char resume_pop_gs[1]; */
