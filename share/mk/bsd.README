@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.125 2003/07/22 06:53:21 lukem Exp $
+#	$NetBSD: bsd.README,v 1.126 2003/07/23 08:01:44 itojun Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -137,7 +137,11 @@ MKINFO		If "no", don't build or install Info documentation from
 		Texinfo source files.
 		Default: yes
 
-MKKERBEROS	If "no", disables building of Kerberos (v4 or v5)
+MKKERBEROS4	If "no", disables building of Kerberos v4
+		infrastructure (libraries and support programs).
+		Default: yes
+
+MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
 		Default: yes
 
@@ -223,7 +227,12 @@ USE_HESIOD	If set to "no", disables building Hesiod support into
 		If MKHESIOD is set to "no", USE_HESIOD will also be
 		forced to "no".
 
-USE_KERBEROS	If set to "no", disables building Kerberos (v4 or v5)
+USE_KERBEROS4	If set to "no", disables building Kerberos v4
+		support into various system utilities/libraries that
+		support it.  If MKKERBEROS4 is set to "no", USE_KERBEROS4
+		will also be forced to "no".
+
+USE_KERBEROS	If set to "no", disables building Kerberos v4 or v5)
 		support into various system utilities/libraries that
 		support it.  If MKKERBEROS is set to "no", USE_KERBEROS
 		will also be forced to "no".

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2003/07/16 05:42:03 itojun Exp $
+#	$NetBSD: Makefile,v 1.30 2003/07/23 08:01:38 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -56,12 +56,24 @@ CPPFLAGS+=-DINET6
 
 LIBTELNETDIR!=	cd ${.CURDIR}/../../lib/libtelnet; ${PRINTOBJDIR}
 
-.if (${USE_KERBEROS} != "no")
-CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION -DKRB4
-CPPFLAGS+=-DKRB5 -DFORWARD
+.if (${USE_KERBEROS4} != "no" || ${USE_KERBEROS} != "no")
+CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION
 
-LDADD+= -lkrb5 -lkrb -lcrypto -lasn1 -lcom_err -lroken
-DPADD+=	${LIBKRB5} ${LIBKRB} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN}
+.if (${USE_KERBEROS} != "no")
+CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
+CPPFLAGS+=-DKRB5 -DFORWARD
+LDADD+= -lkrb5 
+DPADD+=	${LIBKRB5}
+.endif
+
+.if (${USE_KERBEROS4} != "no")
+CPPFLAGS+= -DKRB4
+LDADD+= -lkrb
+DPADD+=	${LIBKRB}
+.endif
+
+LDADD+= -lcrypto -lasn1 -lcom_err -lroken
+DPADD+=	${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN}
 .endif
 
 .include <bsd.prog.mk>
