@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.9 1999/02/19 19:30:46 drochner Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.10 1999/11/03 12:38:54 mycroft Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -80,6 +80,7 @@ int EtherInit(myadr)
 	/* variables for 3C509 */
 	short *p;
 	struct mtabentry *m;
+	int type;
 
 	/*********************************************************
 			Search for 3Com 590 card
@@ -93,11 +94,15 @@ int EtherInit(myadr)
 	    return(0);
 	}
 
-	if (pcifinddev(0x10b7, 0x5900, &hdl) &&
-	    pcifinddev(0x10b7, 0x9000, &hdl) &&
-	    pcifinddev(0x10b7, 0x9001, &hdl) &&
-	    pcifinddev(0x10b7, 0x9050, &hdl)) {
-		printf("cannot find 3c590 / 3c900\n");
+	if (!pcifinddev(0x10b7, 0x5900, &hdl) ||
+	    !pcifinddev(0x10b7, 0x5950, &hdl))
+		type = 1;
+	else if (!pcifinddev(0x10b7, 0x9000, &hdl) ||
+	    !pcifinddev(0x10b7, 0x9001, &hdl) ||
+	    !pcifinddev(0x10b7, 0x9050, &hdl))
+		type = 2;
+	else {
+		printf("cannot find 3c59x / 3c90x\n");
 		return(0);
 	}
 
@@ -147,9 +152,11 @@ ok:
 
 	epreset();
 
-
 #if defined(_STANDALONE) && !defined(SUPPORT_NO_NETBSD)
-	strncpy(bi_netif.ifname, "ep", sizeof(bi_netif.ifname));
+	if (type == 1)
+		strncpy(bi_netif.ifname, "ep", sizeof(bi_netif.ifname));
+	else if (type == 2)
+		strncpy(bi_netif.ifname, "ex", sizeof(bi_netif.ifname));
 	bi_netif.bus = BI_BUS_PCI;
 	bi_netif.addr.tag = hdl;
 
