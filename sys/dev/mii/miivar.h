@@ -1,7 +1,7 @@
-/*	$NetBSD: miivar.h,v 1.26 2001/05/31 18:44:48 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.27 2001/06/02 21:39:40 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -174,6 +174,15 @@ struct mii_attach_args {
 typedef struct mii_attach_args mii_attach_args_t;
 
 /*
+ * Used to match a PHY.
+ */
+struct mii_phydesc {
+	u_int32_t mpd_oui;		/* the PHY's OUI */
+	u_int32_t mpd_model;		/* the PHY's model */
+	const char *mpd_name;		/* the PHY's name */
+};
+
+/*
  * An array of these structures map MII media types to BMCR/ANAR settings.
  */
 struct mii_media {
@@ -226,6 +235,9 @@ void	mii_down __P((struct mii_data *));
 
 int	mii_phy_activate __P((struct device *, enum devact));
 int	mii_phy_detach __P((struct device *, int));
+
+const struct mii_phydesc *mii_phy_match __P((const struct mii_attach_args *,
+	    const struct mii_phydesc *));
 
 void	mii_phy_add_media __P((struct mii_softc *));
 void	mii_phy_delete_media __P((struct mii_softc *));

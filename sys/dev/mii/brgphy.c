@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.1 2001/06/01 16:49:59 thorpej Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.2 2001/06/02 21:39:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -105,34 +105,19 @@ const struct mii_phy_funcs brgphy_funcs = {
 	brgphy_service, brgphy_status, mii_phy_reset,
 };
 
-const struct brgdev {
-	u_int32_t	oui;
-	u_int32_t	model;
-	const char	*name;
-} brgdevs[] = {
+const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5400,
 	  MII_STR_BROADCOM_BCM5400 },
+
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5401,
 	  MII_STR_BROADCOM_BCM5401 },
+
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5411,
 	  MII_STR_BROADCOM_BCM5411 },
 
 	{ 0,				0,
 	  NULL },
 };
-
-static const struct brgdev *
-brgphy_lookup(const struct mii_attach_args *ma)
-{
-	const struct brgdev *b;
-
-	for (b = brgdevs; b->name != NULL; b++) {
-		if (MII_OUI(ma->mii_id1, ma->mii_id2) == b->oui &&
-		    MII_MODEL(ma->mii_id2) == b->model)
-			return (b);
-	}
-	return (NULL);
-}
 
 int
 brgphymatch(parent, match, aux)
@@ -142,7 +127,7 @@ brgphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (brgphy_lookup(ma) != NULL)
+	if (mii_phy_match(ma, brgphys) != NULL)
 		return (10);
 
 	return (0);
@@ -156,15 +141,10 @@ brgphyattach(parent, self, aux)
 	struct mii_softc *sc = (struct mii_softc *)self;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
-	const struct brgdev *b;
+	const struct mii_phydesc *mpd;
 
-	b = brgphy_lookup(ma);
-	if (b == NULL) {
-		printf("\n");
-		panic("brgphyattach: impossible");
-	}
-
-	printf(": %s, rev. %d\n", b->name, MII_REV(ma->mii_id2));
+	mpd = mii_phy_match(ma, brgphys);
+	printf(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
