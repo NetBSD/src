@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.5 1996/10/13 03:36:14 christos Exp $	*/
+/*	$NetBSD: ncr.c,v 1.6 1997/02/12 17:55:54 ragge Exp $	*/
 
 /* #define DEBUG	/* */
 /* #define TRACE	/* */
@@ -471,7 +471,9 @@ si_minphys(struct buf *bp)
 #ifdef	DEBUG
 		if (si_debug) {
 			printf("si_minphys len = 0x%x.\n", bp->b_bcount);
+#ifdef DDB
 			Debugger();
+#endif
 		}
 #endif
 		bp->b_bcount = MAX_DMA_LEN;
