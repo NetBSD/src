@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.12 2003/03/14 13:46:23 yamt Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.13 2003/03/14 13:53:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -474,10 +474,10 @@ do_lock(fl, block)
 			if(flock(fl->fd, lflags) != 0) {
 				syslog(LOG_NOTICE, "flock failed: %s",
 				    strerror(errno));
-				exit(1);
+				_exit(1);
 			}
 			/* lock granted */	
-			exit(0);
+			_exit(0);
 		default:
 			syslog(LOG_DEBUG, "lock request from %s: forked %d",
 			    fl->client_name, fl->locker);
