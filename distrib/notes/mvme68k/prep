@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.5 1999/04/10 16:16:11 scw Exp $	
+.\"	$NetBSD: prep,v 1.6 2000/10/05 08:54:55 lukem Exp $	
 .
 mvme68k machines usually need little or no preparation before installing
 .Nx "" ,
@@ -10,7 +10,7 @@ The following instructions should make your machine "NetBSD Ready".
 .Pp
 Power-up your MVME147 board. You should have the 
 .Em bug No prompt:
-.Bdlit
+.(disp
 
 COLD Start
 
@@ -18,9 +18,9 @@ Onboard  RAM start = $00000000,  stop = $007FFFFF
 
 147-Bug\*>
 
-.Ed
+.disp)
 Or, if you have an MVME167 board:
-.Bdlit
+.(disp
 
 MVME167 Debugger/Diagnostics Release Version 2.3 - 02/25/94
 COLD Start
@@ -31,7 +31,7 @@ MPU Clock Speed =33Mhz
 
 167-Bug\*>
 
-.Ed
+.disp)
 Make sure the RAM size looks ok (if you've got an 8Mb MVME147 or a
 32Mb MVME167 you should
 have the same value as I do). Also make sure the clock is ticking:
