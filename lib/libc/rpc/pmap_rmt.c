@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.25 2000/02/18 08:26:01 itojun Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.26 2000/05/15 17:06:05 itojun Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.25 2000/02/18 08:26:01 itojun Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.26 2000/05/15 17:06:05 itojun Exp $");
 #endif
 #endif
 
@@ -70,6 +70,8 @@ __RCSID("$NetBSD: pmap_rmt.c,v 1.25 2000/02/18 08:26:01 itojun Exp $");
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_rmt.h>
 
+#include <ifaddrs.h>
+
 #ifdef __weak_alias
 __weak_alias(clnt_broadcast,_clnt_broadcast)
 __weak_alias(pmap_rmtcall,_pmap_rmtcall)
@@ -79,7 +81,7 @@ __weak_alias(xdr_rmtcallres,_xdr_rmtcallres)
 
 #define MAX_BROADCAST_SIZE 1400
 
-static int getbroadcastnets __P((struct in_addr *, int, char *));
+static int getbroadcastnets __P((struct in_addr *, int));
 
 static const struct timeval timeout = { 3, 0 };
 
@@ -197,72 +199,38 @@ xdr_rmtcallres(xdrs, crp)
  */
 
 static int
-getbroadcastnets(addrs, sock, buf)
+getbroadcastnets(addrs, naddrs)
 	struct in_addr *addrs;
-	int sock;  /* any valid socket will do */
-	char *buf;  /* why allocxate more when we can use existing... */
+	int naddrs;
 {
-	struct ifconf ifc;
-        struct ifreq ifreq, *ifr;
+	struct ifaddrs *ifap, *ifa;
+	int i;
 	struct sockaddr_in *sin;
-        char *cp, *cplim;
-        int i = 0;
-	size_t siz;
-	char ifrbuf[8192];
 
 	_DIAGASSERT(addrs != NULL);
 	_DIAGASSERT(buf != NULL);
 
-        ifc.ifc_len = UDPMSGSIZE;
-        ifc.ifc_buf = buf;
-        if (ioctl(sock, SIOCGIFCONF, &ifc) < 0) {
-                warn("getbroadcastnets: ioctl (get interface configuration)");
-                return (0);
-        }
-#define max(a, b) (a > b ? a : b)
-#define size(p)	max((p).sa_len, sizeof(p))
-	cplim = buf + ifc.ifc_len; /*skip over if's with big ifr_addr's */
-	for (cp = buf; cp < cplim; cp += siz) {
-		ifr = (struct ifreq *)(void *)cp;
-		memcpy(ifrbuf, ifr, sizeof(*ifr));
-		siz = ((struct ifreq *)ifrbuf)->ifr_addr.sa_len;
-		if (siz < sizeof(ifr->ifr_addr))
-			siz = sizeof(ifr->ifr_addr);
-		siz += sizeof (ifr->ifr_name);
-		if (siz > sizeof(ifrbuf)) {
-			/* ifr too big */
+	if (getifaddrs(&ifap) != 0) {
+                warn("getbroadcastnets: getifaddrs");
+		return 0;
+	}
+	i = 0;
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (i >= naddrs)
 			break;
-		}
-		memcpy(ifrbuf, ifr, siz);
-		ifr = (struct ifreq *)ifrbuf;
-
-		if (ifr->ifr_addr.sa_family != AF_INET)
+		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
-		ifreq = *ifr;
-		if (ioctl(sock, SIOCGIFFLAGS, &ifreq) < 0) {
-			warn("getbroadcastnets: ioctl (get interface flags)");
-			continue;
-		}
-		if ((ifreq.ifr_flags & IFF_BROADCAST) &&
-		    (ifreq.ifr_flags & IFF_UP)) {
-			sin = (struct sockaddr_in *)(void *)&ifr->ifr_addr;
-#ifdef SIOCGIFBRDADDR   /* 4.3BSD */
-			ifreq = *ifr;
-			if (ioctl(sock, SIOCGIFBRDADDR, &ifreq) < 0) {
-				addrs[i++] =
-				    inet_makeaddr(inet_netof(sin->sin_addr),
-				    (unsigned long)INADDR_ANY);
-			} else {
-				addrs[i++] = ((struct sockaddr_in *)(void *)
-				  &ifreq.ifr_addr)->sin_addr;
+		if ((ifa->ifa_flags & IFF_BROADCAST) &&
+		    (ifa->ifa_flags & IFF_UP)) {
+			if (ifa->ifa_broadaddr && 
+			    ifa->ifa_broadaddr->sa_family == AF_INET) {
+				sin = (struct sockaddr_in *)ifa->ifa_broadaddr;
+				addrs[i++] = sin->sin_addr;
 			}
-#else /* 4.2 BSD */
-			addrs[i++] = inet_makeaddr(inet_netof(sin->sin_addr),
-			    INADDR_ANY);
-#endif
 		}
 	}
-	return (i);
+	freeifaddrs(ifap);
+	return i;
 }
 
 typedef bool_t (*resultproc_t) __P((caddr_t, struct sockaddr_in *));
@@ -319,7 +287,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 #endif /* def SO_BROADCAST */
 	fd.fd = sock;
 	fd.events = POLLIN;
-	nets = getbroadcastnets(addrs, sock, inbuf);
+	nets = getbroadcastnets(addrs, sizeof(addrs) / sizeof(addrs[0]));
 	memset(&baddr, 0, sizeof (baddr));
 	baddr.sin_len = sizeof(struct sockaddr_in);
 	baddr.sin_family = AF_INET;
