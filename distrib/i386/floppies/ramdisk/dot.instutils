@@ -1,4 +1,4 @@
-#	$NetBSD: dot.instutils,v 1.1 1997/06/14 18:56:10 perry Exp $
+#	$NetBSD: dot.instutils,v 1.2 1997/08/04 22:33:58 phil Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -91,7 +91,7 @@ Configure()
 		echo -n "What is the hostname for this interface? [$hname] "
 		read ifname
 		if [ "$ifname" = "" ]; then
-			ifname=$hname
+ 			ifname=$hname
 		fi
 		ifaddr=
 		while [ "$ifaddr" = "" ]; do
@@ -131,7 +131,7 @@ Configure()
 				ifflags=
 				;;
 		esac
-		echo "inet $ifname $ifnetmask $ifflags" > ${ETC}/hostname.$intf
+		echo "inet $ifname $ifnetmask $ifflags" > ${ETC}/ifconfig.$intf
 
 		echo    ""
 		echo -n	"WARNING: if you have any more ethernet interfaces, "
