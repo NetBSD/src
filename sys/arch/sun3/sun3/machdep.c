@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 1994/11/23 06:46:25 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 1994/12/20 05:35:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -95,9 +95,17 @@
 
 #include <net/netisr.h>
 
+#include <setjmp.h>
+
 extern char *cpu_string;
 int physmem;
 int cold;
+/*
+ * safepri is a safe priority for sleep to set for a spin-wait
+ * during autoconfiguration or after a panic.
+ */
+int	safepri = PSL_LOWIPL;
+
 extern char kstack[];
 extern short exframesize[];
 
@@ -1411,6 +1419,39 @@ straytrap(pc, evec)
 {
 	printf("unexpected trap (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
+}
+
+int
+peek_word(addr)
+	register caddr_t addr;
+{
+	jmp_buf		faultbuf;
+	register int x;
+
+	nofault = (int *) &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = (int *) 0;
+		return(-1);
+	}
+	x = *(volatile u_short *)addr;
+	nofault = (int *) 0;
+	return(x);
+}
+
+peek_byte(addr)
+	register caddr_t addr;
+{
+	jmp_buf 	faultbuf;
+	register int x;
+
+	nofault = (int *) &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = (int *) 0;
+		return(-1);
+	}
+	x = *(volatile u_char *)addr;
+	nofault = (int *) 0;
+	return(x);
 }
 
 int
