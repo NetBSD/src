@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.7 2005/03/14 05:45:48 christos Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.8 2005/03/14 23:39:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.7 2005/03/14 05:45:48 christos Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.8 2005/03/14 23:39:26 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -63,7 +63,6 @@ __RCSID("$NetBSD: pam_ssh.c,v 1.7 2005/03/14 05:45:48 christos Exp $");
 #include <openssl/evp.h>
 
 #include "key.h"
-#include "auth.h"
 #include "authfd.h"
 #include "authfile.h"
 
@@ -110,14 +109,9 @@ pam_ssh_load_key(struct passwd *pwd, const char *kfn, const char *passphrase)
 		openpam_log(PAM_LOG_DEBUG, "failed to load key from %s\n", fn);
 		return (NULL);
 	}
-	if (!user_key_allowed(pwd, key)) {
-		openpam_log(PAM_LOG_DEBUG, "key from %s not authorized\n", fn);
-		goto out;
-	}
 
 	openpam_log(PAM_LOG_DEBUG, "loaded '%s' from %s\n", comment, fn);
 	if ((psk = malloc(sizeof(*psk))) == NULL) {
-out:
 		key_free(key);
 		free(comment);
 		return (NULL);
@@ -185,10 +179,12 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 
 	pass = (pam_get_item(pamh, PAM_AUTHTOK,
 	    (const void **)__UNCONST(&passphrase)) == PAM_SUCCESS);
+	printf("pass = %d %s\n", pass, passphrase);
  load_keys:
 	/* get passphrase */
 	pam_err = pam_get_authtok(pamh, PAM_AUTHTOK,
 	    &passphrase, pam_ssh_prompt);
+	printf("passphrase %s\n", passphrase);
 	if (pam_err != PAM_SUCCESS) {
 		openpam_restore_cred(pamh);
 		return (pam_err);
@@ -213,6 +209,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	    openpam_get_option(pamh, "try_first_pass") != NULL) {
 		pam_set_item(pamh, PAM_AUTHTOK, NULL);
 		pass = 0;
+		printf("goto again\n");
 		goto load_keys;
 	}
 
