@@ -1,4 +1,4 @@
-/*	$NetBSD: mktemp.c,v 1.14 1998/07/27 16:05:07 mycroft Exp $	*/
+/*	$NetBSD: mktemp.c,v 1.15 1998/07/27 16:39:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mktemp.c,v 1.14 1998/07/27 16:05:07 mycroft Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.15 1998/07/27 16:39:11 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@ _mktemp(path)
 }
 
 __warn_references(mktemp,
-    "warning: mktemp() possibly used unsafely, consider using mkstemp()")
+    "warning: mktemp() possibly used unsafely, use mkstemp() or mkdtemp()")
 
 char *
 mktemp(path)
