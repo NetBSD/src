@@ -1,4 +1,4 @@
-#	$NetBSD: files.raidframe,v 1.2 2002/08/02 03:47:48 oster Exp $
+#	$NetBSD: files.raidframe,v 1.3 2003/12/29 06:37:47 oster Exp $
 
 defflag			RAID_AUTOCONFIG
 defflag			RAID_DIAGNOSTIC
@@ -62,5 +62,4 @@ file	dev/raidframe/rf_sstf.c			raid
 file	dev/raidframe/rf_states.c		raid
 file	dev/raidframe/rf_stripelocks.c		raid
 file	dev/raidframe/rf_strutils.c		raid
-file	dev/raidframe/rf_threadstuff.c		raid
 file	dev/raidframe/rf_utils.c		raid
