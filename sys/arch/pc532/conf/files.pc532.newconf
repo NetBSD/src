@@ -1,16 +1,14 @@
-#	$NetBSD: files.pc532.newconf,v 1.5 1994/12/05 19:26:57 phil Exp $
+#	$NetBSD: files.pc532.newconf,v 1.6 1995/01/18 08:13:35 phil Exp $
 #
 # new style config file for pc532 architecture
 #
 
 maxusers 2 16 64
 
-device	membus at root {[port = -1], [size = 0],
-		     [iomem = -1], [iosiz = 0],
-		     [irq = -1], [drq = -1]}
+device	membus at root {[iomem = -1], [iosiz = 0]}
 
 device  rd at membus: disk
-major	{rd = 4}
+major	{rd = 3}
 
 #device	timer at membus
 #device	clock at membus
@@ -32,7 +30,7 @@ device	scsibus at scsi {target = -1, lun = -1}
 
 device	cd at scsibus: disk
 file	scsi/cd.c			cd needs-flag
-major	{cd = 3}
+major	{cd = 4}
 device	sd at scsibus: disk
 file	scsi/sd.c			sd needs-flag
 major	{sd = 0}
@@ -46,9 +44,11 @@ file	scsi/uk.c			uk needs-flag
 device	su at scsibus: disk
 file	scsi/su.c			su needs-flag
 
-#pseudo-device rtc
+device  lpt at membus: tty, ether, ifnet
+file    arch/pc532/dev/lpt.c            lpt needs-count
 
 file	dev/cons.c
+file	netinet/in_cksum.c		inet
 file	scsi/scsiconf.c			scsi
 file	scsi/scsi_base.c		scsi
 file	scsi/scsi_ioctl.c		scsi
@@ -58,7 +58,6 @@ file	arch/pc532/pc532/db_interface.c	ddb
 file	arch/pc532/pc532/db_trace.c	ddb
 file	arch/pc532/pc532/disksubr.c	disk
 file	arch/pc532/pc532/icuinit.c
-file	netinet/in_cksum.c		inet
 file	arch/pc532/pc532/machdep.c
 file	arch/pc532/pc532/mem.c
 file	arch/pc532/pc532/ns_cksum.c	ns
