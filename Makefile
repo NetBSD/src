@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.227 2004/01/08 07:01:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.228 2004/01/27 01:45:07 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -123,7 +123,7 @@ SUBDIR+=	${dir}
 .endfor
 
 .if exists(regress)
-regression-tests:
+regression-tests: .PHONY
 	@echo Running regression tests...
 	@(cd ${.CURDIR}/regress && ${MAKE} regress)
 .endif
@@ -132,7 +132,7 @@ regression-tests:
 NOPOSTINSTALL=	# defined
 .endif
 
-afterinstall:
+afterinstall: .PHONY
 .if ${MKMAN} != "no"
 	(cd ${.CURDIR}/share/man && ${MAKE} makedb)
 .endif
@@ -143,17 +143,17 @@ afterinstall:
 	(cd ${.CURDIR} && ${MAKE} postinstall-check)
 .endif
 
-postinstall-check:
+postinstall-check: .PHONY
 	@echo "   === Post installation checks ==="
 	${HOST_SH} ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ check
 	@echo "   ================================"
 
-postinstall-fix: .NOTMAIN
+postinstall-fix: .NOTMAIN .PHONY
 	@echo "   === Post installation fixes ==="
 	${HOST_SH} ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ fix
 	@echo "   ==============================="
 
-postinstall-fix-obsolete: .NOTMAIN
+postinstall-fix-obsolete: .NOTMAIN .PHONY
 	@echo "   === Removing obsolete files ==="
 	${HOST_SH} ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ fix obsolete
 	@echo "   ==============================="
@@ -205,8 +205,8 @@ BUILDTARGETS+=	do-obsolete
 #
 
 .ORDER:		${BUILDTARGETS}
-includes-lib:	includes-include includes-sys
-includes-gnu:	includes-lib
+includes-lib:	.PHONY includes-include includes-sys
+includes-gnu:	.PHONY includes-lib
 
 #
 # Build the system and install into DESTDIR.
@@ -214,7 +214,7 @@ includes-gnu:	includes-lib
 
 START_TIME!=	date
 
-build:
+build: .PHONY
 .if defined(BUILD_DONE)
 	@echo "Build already installed into ${DESTDIR}"
 .else
@@ -232,7 +232,7 @@ build:
 # ${RELEASEDIR}).  "buildworld" enforces a build to ${DESTDIR} != /
 #
 
-distribution buildworld:
+distribution buildworld: .PHONY
 .if make(buildworld) && \
     (!defined(DESTDIR) || ${DESTDIR} == "" || ${DESTDIR} == "/")
 	@echo "Won't make ${.TARGET} with DESTDIR=/"
@@ -256,7 +256,7 @@ distribution buildworld:
 HOST_UNAME_S!=	uname -s
 HOST_UNAME_M!=	uname -m
 
-installworld:
+installworld: .PHONY
 .if (!defined(DESTDIR) || ${DESTDIR} == "" || ${DESTDIR} == "/")
 	@echo "Can't make ${.TARGET} to DESTDIR=/"
 	@false
@@ -284,7 +284,7 @@ installworld:
 #
 
 .for tgt in sets sourcesets
-${tgt}:
+${tgt}: .PHONY
 	(cd ${.CURDIR}/distrib/sets && ${MAKE} $@)
 .endfor
 
@@ -294,7 +294,7 @@ ${tgt}:
 # are made.
 #
 
-release snapshot:
+release snapshot: .PHONY
 	(cd ${.CURDIR} && ${MAKE} NOPOSTINSTALL=1 build)
 	(cd ${.CURDIR}/etc && ${MAKE} INSTALL_DONE=1 release)
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
@@ -304,7 +304,7 @@ release snapshot:
 # Special components of the "make build" process.
 #
 
-check-tools:
+check-tools: .PHONY
 .if ${TOOLCHAIN_MISSING} != "no" && !defined(EXTERNAL_TOOLCHAIN)
 	@echo '*** WARNING:  Building on MACHINE=${MACHINE} with missing toolchain.'
 	@echo '*** May result in a failed build or corrupt binaries!'
@@ -315,7 +315,7 @@ check-tools:
 	@echo '*** WARNING: NBUILDJOBS is obsolete; use -j directly instead!'
 .endif
 
-do-distrib-dirs:
+do-distrib-dirs: .PHONY
 .if !defined(DESTDIR) || ${DESTDIR} == ""
 	(cd ${.CURDIR}/etc && ${MAKE} DESTDIR=/ distrib-dirs)
 .else
@@ -323,18 +323,18 @@ do-distrib-dirs:
 .endif
 
 .for targ in cleandir obj includes
-do-${targ}: ${targ}
+do-${targ}: .PHONY ${targ}
 	@true
 .endfor
 
 .for dir in tools tools/compat lib/csu gnu/lib/libgcc${LIBGCC_EXT} lib/libc lib/libdes lib gnu/lib
-do-${dir:S/\//-/g}:
+do-${dir:S/\//-/g}: .PHONY
 .for targ in dependall install
 	(cd ${.CURDIR}/${dir} && ${MAKE} ${targ})
 .endfor
 .endfor
 
-do-ld.so:
+do-ld.so: .PHONY
 .for targ in dependall install
 .if (${OBJECT_FMT} == "a.out")
 	(cd ${.CURDIR}/libexec/ld.aout_so && ${MAKE} ${targ})
@@ -344,15 +344,15 @@ do-ld.so:
 .endif
 .endfor
 
-do-build:
+do-build: .PHONY
 .for targ in dependall install
 	(cd ${.CURDIR} && ${MAKE} ${targ} BUILD_tools=no BUILD_lib=no)
 .endfor
 
-do-x11:
+do-x11: .PHONY
 	(cd ${.CURDIR}/x11 && ${MAKE} build)
 
-do-obsolete:
+do-obsolete: .PHONY
 	(cd ${.CURDIR}/etc && ${MAKE} install-obsolete-lists)
 
 #
@@ -361,11 +361,11 @@ do-obsolete:
 #
 
 .for dir in bin etc distrib games libexec regress sbin usr.sbin tools
-includes-${dir}:
+includes-${dir}: .PHONY
 	@true
 .endfor
 .for dir in etc distrib regress
-install-${dir}:
+install-${dir}: .PHONY
 	@true
 .endfor
 
@@ -373,7 +373,7 @@ install-${dir}:
 # XXX this needs to change when distrib Makefiles are recursion compliant
 # XXX many distrib subdirs need "cd etc && make snap_pre snap_kern" first...
 #
-dependall-distrib depend-distrib all-distrib:
+dependall-distrib depend-distrib all-distrib: .PHONY
 	@true
 
 .include <bsd.sys.mk>
@@ -381,7 +381,7 @@ dependall-distrib depend-distrib all-distrib:
 .include <bsd.kernobj.mk>
 .include <bsd.subdir.mk>
 
-build-docs: ${.CURDIR}/BUILDING
+build-docs: .PHONY ${.CURDIR}/BUILDING
 ${.CURDIR}/BUILDING: doc/BUILDING.mdoc
 	${TOOL_GROFF} -mdoc -Tascii -P-bou $> >$@
 
@@ -389,7 +389,7 @@ ${.CURDIR}/BUILDING: doc/BUILDING.mdoc
 #
 # Display current make(1) parameters
 #
-params:
+params: .PHONY
 .for var in	BSDSRCDIR BSDOBJDIR BUILDID DESTDIR EXTERNAL_TOOLCHAIN \
 		KERNARCHDIR KERNCONFDIR KERNOBJDIR KERNSRCDIR \
 		MACHINE MACHINE_ARCH MAKECONF MAKEFLAGS \
