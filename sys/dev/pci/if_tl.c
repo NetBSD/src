@@ -1,6 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.49 2002/02/28 00:52:21 christos Exp $	*/
-
-/* XXX ALTQ XXX */
+/*	$NetBSD: if_tl.c,v 1.50 2002/03/05 04:12:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -38,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.49 2002/02/28 00:52:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.50 2002/03/05 04:12:59 itojun Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -453,6 +451,7 @@ tl_pci_attach(parent, self, aux)
 	ifp->if_init = tl_init;
 	ifp->if_stop = tl_stop;
 	ifp->if_timer = 0;
+	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	ether_ifattach(&(sc)->tl_if, (sc)->tl_enaddr);
 }
@@ -1124,7 +1123,7 @@ tl_intr(v)
 				TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 			}
 			sc->tl_if.if_timer = 0;
-			if (sc->tl_if.if_snd.ifq_head != NULL)
+			if (IFQ_IS_EMPTY(&sc->tl_if.if_snd) == 0)
 				tl_ifstart(&sc->tl_if);
 			return 1;
 		}
@@ -1134,7 +1133,7 @@ tl_intr(v)
 		}
 #endif
 		sc->tl_if.if_timer = 0;
-		if (sc->tl_if.if_snd.ifq_head != NULL)
+		if (IFQ_IS_EMPTY(&sc->tl_if.if_snd) == 0)
 			tl_ifstart(&sc->tl_if);
 		break;
 	case TL_INTR_Stat:
@@ -1234,7 +1233,7 @@ txloop:
 		return;
 	}
 	/* Grab a paquet for output */
-	IF_DEQUEUE(&ifp->if_snd, mb_head);
+	IFQ_DEQUEUE(&ifp->if_snd, mb_head);
 	if (mb_head == NULL) {
 #ifdef TLDEBUG_TX
 		printf("tl_ifstart: nothing to send\n");

@@ -1,5 +1,5 @@
-/*	$NetBSD: altq_blue.c,v 1.4 2001/11/12 23:14:21 lukem Exp $	*/
-/*	$KAME: altq_blue.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.5 2002/03/05 04:12:57 itojun Exp $	*/
+/*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
  * Copyright (C) 1997-2000
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.4 2001/11/12 23:14:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.5 2002/03/05 04:12:57 itojun Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -550,46 +550,32 @@ mark_ecn(m, pktattr, flags)
 	case AF_INET:
 		if (flags & BLUEF_ECN4) {
 			struct ip *ip = (struct ip *)pktattr->pattr_hdr;
+			u_int8_t otos;
+			int sum;
 	    
 			if (ip->ip_v != 4)
 				return (0);	/* version mismatch! */
-			if (ip->ip_tos & IPTOS_ECT) {
-				/* ECN-capable, mark ECN bit. */
-				if ((ip->ip_tos & IPTOS_CE) == 0) {
-#if (IPTOS_CE == 0x01)
-					u_short sum;
+			if ((ip->ip_tos & IPTOS_ECN_MASK) == IPTOS_ECN_NOTECT)
+				return (0);	/* not-ECT */
+			if ((ip->ip_tos & IPTOS_ECN_MASK) == IPTOS_ECN_CE)
+				return (1);	/* already marked */
 
-					ip->ip_tos |= IPTOS_CE;
-					/*
-					 * optimized version when IPTOS_CE
-					 * is 0x01.
-					 *   HC' = HC -1   when HC > 0
-					 *       = 0xfffe  when HC = 0
-					 */
-					sum = ntohs(ip->ip_sum);
-					if (sum == 0)
-						sum = 0xfffe;
-					else
-						sum -= 1;
-					ip->ip_sum = htons(sum);
-#else /* IPTOS_CE != 0x01 */
-					long sum;
-
-					ip->ip_tos |= IPTOS_CE;
-					/*
-					 * update checksum (from RFC1624)
-					 *	   HC' = ~(~HC + ~m + m')
-					 */
-					sum = ~ntohs(ip->ip_sum) & 0xffff;
-					sum += 0xffff + IPTOS_CE;
-					sum = (sum >> 16) + (sum & 0xffff);
-					sum += (sum >> 16);  /* add carry */
-
-					ip->ip_sum = htons(~sum & 0xffff);
-#endif /* IPTOS_CE != 0x01 */
-				}
-				return (1);
-			}
+			/*
+			 * ecn-capable but not marked,
+			 * mark CE and update checksum
+			 */
+			otos = ip->ip_tos;
+			ip->ip_tos |= IPTOS_ECN_CE;
+			/*
+			 * update checksum (from RFC1624)
+			 *	   HC' = ~(~HC + ~m + m')
+			 */
+			sum = ~ntohs(ip->ip_sum) & 0xffff;
+			sum += (~otos & 0xffff) + ip->ip_tos;
+			sum = (sum >> 16) + (sum & 0xffff);
+			sum += (sum >> 16);  /* add carry */
+			ip->ip_sum = htons(~sum & 0xffff);
+			return (1);
 		}
 		break;
 #ifdef INET6
@@ -601,12 +587,18 @@ mark_ecn(m, pktattr, flags)
 			flowlabel = ntohl(ip6->ip6_flow);
 			if ((flowlabel >> 28) != 6)
 				return (0);	/* version mismatch! */
-			if (flowlabel & (IPTOS_ECT << 20)) {
-				/* ECN-capable, mark ECN bit. */
-				flowlabel |= (IPTOS_CE << 20);
-				ip6->ip6_flow = htonl(flowlabel);
-				return (1);
-			}
+			if ((flowlabel & (IPTOS_ECN_MASK << 20)) ==
+			    (IPTOS_ECN_NOTECT << 20))
+				return (0);	/* not-ECT */
+			if ((flowlabel & (IPTOS_ECN_MASK << 20)) ==
+			    (IPTOS_ECN_CE << 20))
+				return (1);	/* already marked */
+			/*
+			 * ecn-capable but not marked,  mark CE
+			 */
+			flowlabel |= (IPTOS_ECN_CE << 20);
+			ip6->ip6_flow = htonl(flowlabel);
+			return (1);
 		}
 		break;
 #endif  /* INET6 */

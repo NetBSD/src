@@ -1,5 +1,5 @@
-/*	$NetBSD: altq_conf.c,v 1.5 2001/11/12 23:14:21 lukem Exp $	*/
-/*	$KAME: altq_conf.c,v 1.10 2000/12/14 08:12:45 thorpej Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.6 2002/03/05 04:12:57 itojun Exp $	*/
+/*	$KAME: altq_conf.c,v 1.13 2002/01/29 10:16:01 kjc Exp $	*/
 
 /*
  * Copyright (C) 1997-2000
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.5 2001/11/12 23:14:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.6 2002/03/05 04:12:57 itojun Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -173,9 +173,9 @@ void	altqattach __P((int));
 #define	CDEV_MAJOR 96		/* FreeBSD official number */
 #elif defined(__OpenBSD__)
 #if defined(__i386__)
-#define	CDEV_MAJOR 67		/* OpenBSD i386 (not official) */
+#define	CDEV_MAJOR 74		/* OpenBSD i386 (official) */
 #elif defined(__alpha__)
-#define	CDEV_MAJOR 52		/* OpenBSD alpha (not official) */
+#define	CDEV_MAJOR 53		/* OpenBSD alpha (official) */
 #else
 #error arch not supported
 #endif
@@ -193,10 +193,6 @@ static struct cdevsw altq_cdevsw =
 	  altqioctl,	seltrue,	nommap,		nostrategy,	
 	  "altq",	CDEV_MAJOR,	nodump,		nopsize,  0,  -1 };
 #endif
-#elif defined(__OpenBSD__)
-static struct cdevsw altq_cdevsw = {
-	altqopen, altqclose, 0, 0, altqioctl, 0,
-	0, 0, 0, 0 };
 #endif
 
 #if !defined(__NetBSD__) && !defined(__OpenBSD__)
@@ -298,7 +294,6 @@ altqioctl(dev, cmd, addr, flag, p)
 	return ENXIO;
 }
 
-
 #if !defined(__NetBSD__)
 static int altq_devsw_installed = 0;
 #endif
@@ -354,23 +349,6 @@ altq_drvinit(unused)
 
 SYSINIT(altqdev,SI_SUB_DRIVERS,SI_ORDER_MIDDLE+CDEV_MAJOR,altq_drvinit,NULL)
 
-#elif defined(__OpenBSD__)
-
-void
-altqattach(int unused)
-{
-	if (!altq_devsw_installed) {
-		bcopy(&altq_cdevsw,
-		      &cdevsw[CDEV_MAJOR],
-		      sizeof(struct cdevsw));
-		altq_devsw_installed = 1;
-		printf("altq: major number is %d\n", CDEV_MAJOR);
-	}
-}
-#elif defined(__NetBSD__)
-/* NetBSD requires no altqattach() */
-#else
-#error altqattach()??
 #endif
 
 #ifdef ALTQ_KLD
@@ -458,5 +436,5 @@ altq_module_handler(mod, cmd, arg)
 
 	return(error);
 }
-	
+
 #endif  /* ALTQ_KLD */

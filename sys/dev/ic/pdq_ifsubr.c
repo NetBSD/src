@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.38 2001/12/21 23:21:47 matt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.39 2002/03/05 04:12:58 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.38 2001/12/21 23:21:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.39 2002/03/05 04:12:58 itojun Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -562,6 +562,7 @@ pdq_ifattach(
     ifp->if_output = fddi_output;
 #endif
     ifp->if_start = pdq_ifstart;
+    IFQ_SET_READY(&ifp->if_snd);
 
 #if defined(IFM_FDDI)
     {
