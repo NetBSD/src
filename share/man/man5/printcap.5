@@ -1,4 +1,4 @@
-.\"	$NetBSD: printcap.5,v 1.5 1996/01/15 02:04:05 thorpej Exp $
+.\"	$NetBSD: printcap.5,v 1.6 1998/02/20 11:10:14 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,7 +95,7 @@ format
 .It "if	str" Ta Dv NULL Ta No "name of text filter which does accounting"
 .It "lf	str" Ta Pa /dev/console Ta No "error logging file name"
 .It "lo	str" Ta Pa lock Ta No "name of lock file"
-.It "lp	str" Ta Pa /dev/lp Ta No "device name to open for output"
+.It "lp	str" Ta Pa /dev/lp Ta No "device name to open for output to local printer, or port@host for remote printer/printer on print server"
 .It "ms	str" Ta Dv NULL Ta No "list of terminal modes to set or clear"
 .It "mx	num	1000	maximum file size (in"
 .Dv BUFSIZ
