@@ -1,2 +1,3 @@
 ./etc/fstab.nfs
 ./etc/fstab.sd0
+./etc/ttyaction
