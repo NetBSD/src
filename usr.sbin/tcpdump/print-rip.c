@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rip.c,v 1.4 1995/06/20 23:38:49 christos Exp $	*/
+/*	$NetBSD: print-rip.c,v 1.5 1996/11/04 21:33:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994
@@ -59,6 +59,28 @@ rip_entry_print(register const struct netinfo *ni)
 		struct sockaddr_in sin;
 		sin.sin_addr.s_addr = ni->rip_dst;
 		printf(" %s", ipaddr_string(&sin.sin_addr));
+
+		/* 
+		 * In RIP V1 the dst_mask and next hop fields are
+		 * supposed to be 0. If they are not, we assume that we are
+		 * dealing with a V2 packet. Some routers (eg. annexes),
+		 * in compatibility mode, advertize V1 packets with the V2
+		 * fields filled.
+		 */
+		if (ni->rip_dst_mask != 0) {
+			u_int32_t mask = ni->rip_dst_mask;
+			int bits = 32;
+
+			while (mask)
+				bits--, mask >>= 1;
+			printf("/%d", bits);
+		}
+
+		if (ni->rip_router != 0) {
+			sin.sin_addr.s_addr = ni->rip_router;
+			printf(" -> %s", ipaddr_string(&sin.sin_addr));
+		}
+
 		if (ni->rip_tag)
 			printf(" [port %d]", ni->rip_tag);
 	}
