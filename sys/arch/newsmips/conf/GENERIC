@@ -1,15 +1,16 @@
+# 	$NetBSD: GENERIC,v 1.14 1999/12/22 05:55:25 tsubai Exp $
 #
-# NEWS3400 config file
-#
-# 	$NetBSD: GENERIC,v 1.13 1999/12/17 06:05:37 tsubai Exp $
-#
+#	GENERIC kernel for RISC-NEWS
+
 include		"arch/newsmips/conf/std.newsmips"
 
 maxusers	16
 
 options 	news3400
+options 	news5000
 options 	MIPS1			# R2000/R3000 support
-options 	CPU_SINGLE
+options 	MIPS3			# R4000 support
+options 	CPU_SINGLE		# no I/O processor
 
 # Standard system options
 options 	KTRACE			# system call tracing support
@@ -94,17 +95,23 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 
 #options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 
+options 	NFS_BOOT_BOOTPARAM
+
 config		netbsd	root on ? type ?
 
 mainbus0 at root
 
 cpu0	at mainbus0
-hb0	at mainbus0
+hb0	at mainbus0			# Hyper-bus
+ap0	at mainbus0			# APbus
 
 mkclock0 at hb0 addr 0xbff407f8		# MK48T02 realtime clock
+mkclock0 at ap?
 
 le0	at hb0 addr 0xbff80000 level 1	# built-in LANCE ethernet
-#le1	at hb0 addr 0xb8c30000 level 0
+le1	at hb0 addr 0xb8c30000 level 0
+
+sn*	at ap?				# SONIC Ethernet
 
 kb0	at hb0 addr 0xbfd00000 level 2	# keyboard
 ms0	at hb0 addr 0xbfd00004 level 2	# mouse
@@ -112,12 +119,14 @@ ms0	at hb0 addr 0xbfd00004 level 2	# mouse
 zsc0	at hb0 addr 0xbfec0000 level 1	# on-board
 zsc1	at hb0 addr 0xb8c40100 level 1	# expansion board
 zsc2	at hb0 addr 0xb8c40104 level 1
+zsc0	at ap?
+
 zstty0	at zsc0 channel 0		# tty00
 zstty1	at zsc0 channel 1		# tty01
-#zstty2	at zsc1 channel 0		# tty02
-#zstty3	at zsc1 channel 1		# tty03
-#zstty4	at zsc2 channel 0		# tty04
-#zstty5	at zsc2 channel 1		# tty05
+zstty2	at zsc1 channel 0		# tty02
+zstty3	at zsc1 channel 1		# tty03
+zstty4	at zsc2 channel 0		# tty04
+zstty5	at zsc2 channel 1		# tty05
 
 fb0	at hb0 addr 0x88000000		# frame buffer
 

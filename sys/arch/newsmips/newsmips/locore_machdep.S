@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.6 1999/08/05 18:08:12 thorpej Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.7 1999/12/22 05:55:26 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 #include <machine/machConst.h>
+#include <machine/param.h>
 
 	.set	noreorder
 
@@ -78,97 +79,6 @@ LEAF(to_monitor)
 	syscall
 	nop
 END(to_monitor)
-
-/*
- * Set/clear software interrupt routines.
- */
-
-LEAF(setsoftclock)
-	mfc0	v1, MIPS_COP_0_STATUS_REG	# save status register
-	mtc0	zero, MIPS_COP_0_STATUS_REG	# disable interrupts (2 cycles)
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE_REG	# read cause register
-	nop
-	or	v0, v0, MIPS_SOFT_INT_MASK_0	# set soft clock interrupt
-	mtc0	v0, MIPS_COP_0_CAUSE_REG	# save it
-	mtc0	v1, MIPS_COP_0_STATUS_REG
-	j	ra
-	nop
-END(setsoftclock)
-
-LEAF(clearsoftclock)
-	mfc0	v1, MIPS_COP_0_STATUS_REG	# save status register
-	mtc0	zero, MIPS_COP_0_STATUS_REG	# disable interrupts (2 cycles)
-	nop
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE_REG	# read cause register
-	nop
-	and	v0, v0, ~MIPS_SOFT_INT_MASK_0	# clear soft clock interrupt
-	mtc0	v0, MIPS_COP_0_CAUSE_REG	# save it
-	mtc0	v1, MIPS_COP_0_STATUS_REG
-	j	ra
-	nop
-END(clearsoftclock)
-
-LEAF(setsoftnet)
-	mfc0	v1, MIPS_COP_0_STATUS_REG	# save status register
-	mtc0	zero, MIPS_COP_0_STATUS_REG	# disable interrupts (2 cycles)
-	nop
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE_REG	# read cause register
-	nop
-	or	v0, v0, MIPS_SOFT_INT_MASK_1	# set soft net interrupt
-	mtc0	v0, MIPS_COP_0_CAUSE_REG	# save it
-	mtc0	v1, MIPS_COP_0_STATUS_REG
-	j	ra
-	nop
-END(setsoftnet)
-
-LEAF(clearsoftnet)
-	mfc0	v1, MIPS_COP_0_STATUS_REG	# save status register
-	mtc0	zero, MIPS_COP_0_STATUS_REG	# disable interrupts (2 cycles)
-	nop
-	nop
-	mfc0	v0, MIPS_COP_0_CAUSE_REG	# read cause register
-	nop
-	and	v0, v0, ~MIPS_SOFT_INT_MASK_1	# clear soft net interrupt
-	mtc0	v0, MIPS_COP_0_CAUSE_REG	# save it
-	mtc0	v1, MIPS_COP_0_STATUS_REG
-	j	ra
-	nop
-END(clearsoftnet)
-
-/*
- * Set/change interrupt priority routines.
- */
-
-LEAF(spl0)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	nop
-	or	t0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# enable all interrupts
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(spl0)
-
-LEAF(spllowersoftclock)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~MIPS_SOFT_INT_MASK_0	# disable soft clock
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(spllowersoftclock)
-
-LEAF(splsoftnet)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(splsoftnet)
 
 /*
  * nesting interrupt masks.
@@ -255,99 +165,56 @@ LEAF(cpu_spl5)
 	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 END(cpu_spl5)
 
-/*
- * hardware-level spls for hardware where the interrupt priorites
- * DO NOT map onto levels.  
- */
-LEAF(Mach_spl0)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl0)
+#ifdef MIPS3
+	.set	mips3
+	.set	noat
+	.globl	checkromwork
+checkromwork:
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR
 
-LEAF(Mach_spl1)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_1|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl1)
+	li	k1, 0xfff00000			# NEWS5000 ROM Work: 0xFFF00000~0xFFFFFFFF (1Mbyte)
+	sltu	k1, k0, k1
+	bne	k1, zero, outofworld
 
-LEAF(Mach_spl2)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_2|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl2)
+	li	k1, 0x000fe000			# XXX (depend on 4k page)
+	and	k1, k0, k1			# k1 = (VADDR - 0xFFF00000) & 0xffffe000
 
-LEAF(Mach_spl3)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_3|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl3)
+	la	k0, _C_LABEL(physmem)
+	lw	k0, 0(k0)			# k0 = page of physmem (tail of maxmemory - 0x00100000)
+	sll	k0, k0, PGSHIFT			# k0 = memory tail
+	add	k0, k0, k1			# 0xfff00000+? -> memory tail + ?
 
-LEAF(Mach_spl4)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_4|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl4)
+	srl	k0, k0, 6			# MIPS3_PG_SHIFT
+	li	k1, 0x02|0x18|0x01		# MIPS3_PG_V|MIPS3_PG_CACHED|MIPS3_PG_G
+	or	k0, k0, k1
 
-LEAF(Mach_spl5)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~(MIPS_INT_MASK_5|MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0)
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(Mach_spl5)
+	li	k1, 64				# set ODD page
+	add	k1, k0, k1
 
-/*
- * We define an alternate entry point after mcount is called so it
- * can be used in mcount without causeing a recursive loop.
- */
-LEAF(splhigh)
-	mfc0	v0, MIPS_COP_0_STATUS_REG	# read status register
-	li	t0, ~MIPS_SR_INT_IE	# disable all interrupts
-	and	t0, t0, v0
-	mtc0	t0, MIPS_COP_0_STATUS_REG	# save it
-	nop					# 3 ins to disable on r4x00
-	j	ra
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-END(splhigh)
-
-/*
- * Restore saved interrupt mask.
- */
-LEAF(splx)
-	mfc0	v0, MIPS_COP_0_STATUS_REG
-	li	t0, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
-	and	t0, t0, v0
-	or	t0, t0, a0
-	mtc0	t0, MIPS_COP_0_STATUS_REG
-	nop					# 3 ins to disable
-	j	ra
+	dsll	k0, k0, 34			# get rid of "wired" bit
+	dsrl	k0, k0, 34
+	dmtc0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
+	dsll	k1, k1, 34
+	dsrl	k1, k1, 34
+	dmtc0	k1, MIPS_COP_0_TLB_LO1		# load PTE entry
 	nop
-	.globl	_C_LABEL(splx_end)
-_C_LABEL(splx_end):
-END(splx)
+	nop					# required for QED5230
+	tlbwr					# write TLB
+	nop
+	nop
+	nop
+	nop
+	nop
+	eret
+
+outofworld:
+	/* Ensure we have a valid sp so panic has a chance */
+	move	a1, sp
+	la	sp, start			# set sp to a valid place
+	PANIC("TLB out of universe: ksp was %p")
+
+	.set	at
+#endif /* MIPS3 */
 
 /*
  * Interrupt counters for vmstat.
