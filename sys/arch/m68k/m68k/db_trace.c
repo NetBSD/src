@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.22 1998/05/14 10:15:44 dbj Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.23 1999/01/15 23:15:50 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -169,9 +169,7 @@ stacktop(regs, sp)
 #define JSRPC	0x4eba0000	/* jsr PC@( )    */
 #define LONGBIT 0x00010000
 #define BSR	0x61000000	/* bsr x	 */
-#ifdef	mc68020
 #define BSRL	0x61ff0000	/* bsrl x	 */
-#endif	mc68020
 #define BYTE3	0x0000ff00
 #define LOBYTE	0x000000ff
 #define ADQMSK	0xf1ff0000
@@ -302,12 +300,10 @@ findentry(sp)
 		/* longword offset here */
 		sp->k_caller = addr - 6;
 		sp->k_entry  = nextword;
-#ifdef	mc68020
 	} else if ((instruc & HIWORD) == BSRL) {
 		/* longword self-relative offset */
 		sp->k_caller = addr - 6;
 		sp->k_entry  = nextword + (addr - 4);
-#endif	mc68020
 	} else {
 		instruc = nextword;
 		if ((instruc & HIWORD) == JSR) {
