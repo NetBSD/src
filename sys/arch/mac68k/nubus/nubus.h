@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.43 1998/09/15 16:09:44 scottr Exp $	*/
+/*	$NetBSD: nubus.h,v 1.44 1998/09/27 14:39:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -93,6 +93,7 @@
 #define   NUBUS_DRSW_FARALLON	0x010C
 #define   NUBUS_DRSW_DAYNA2	0x0115
 #define   NUBUS_DRSW_FOCUS	0x011A
+#define   NUBUS_DRSW_TFLLAN	0x011E
 #define    NUBUS_DRHW_INTERLAN	0x0100
 #define    NUBUS_DRHW_KINETICS	0x0106
 #define    NUBUS_DRHW_CABLETRON	0x0109
