@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.13 1999/08/19 19:37:21 hubertf Exp $
+.\" $NetBSD: pkg_delete.1,v 1.14 1999/08/21 02:21:13 hubertf Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -171,7 +171,8 @@ option is specified.
 .Pp
 If a
 .Cm deinstall
-script exists for the package, it is executed before any files are removed.
+script exists for the package, it is executed before and after 
+any files are removed.
 It is this script's responsibility to clean up any additional messy details
 around the package's installation, since all
 .Nm
@@ -184,8 +185,16 @@ script is called as:
 .Ar <pkg-name>
 .Ar DEINSTALL
 .Ed
-Passing the keyword
+before deleting all files and as:
+.Bd -filled -offset indent -compact
+.Cm deinstall
+.Ar <pkg-name>
+.Ar POST-DEINSTALL
+.Ed
+after deleting them. Passing the keywords
 .Ar DEINSTALL
+and
+.Ar POST-DEINSTALL
 lets you potentially write only one program/script that handles all
 aspects of installation and deletion.
 .Pp
