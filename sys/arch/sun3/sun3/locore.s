@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.81.6.2 2001/11/18 19:39:00 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.81.6.3 2001/12/08 04:22:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -133,7 +133,7 @@ L_high_code:
  * Final preparation for calling main.
  *
  * Create a fake exception frame that returns to user mode,
- * and save its address in p->p_md.md_regs for cpu_fork().
+ * and save its address in p->p_md.md_regs for cpu_lwp_fork().
  * The new frames for process 1 and 2 will be adjusted by
  * cpu_set_kpc() to arrange for a call to a kernel function
  * before the new process does its rte out to user mode.
@@ -152,7 +152,7 @@ L_high_code:
 	addql	#4,%sp			| help DDB backtrace
 	trap	#15			| should not get here
 
-| This is used by cpu_fork() to return to user mode.
+| This is used by cpu_lwp_fork() to return to user mode.
 | It is called with SP pointing to a struct trapframe.
 GLOBAL(proc_do_uret)
 	movl	%sp@(FR_SP),%a0		| grab and load

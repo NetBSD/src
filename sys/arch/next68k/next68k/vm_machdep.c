@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26.4.2 2001/11/18 18:43:08 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26.4.3 2001/12/08 04:22:22 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/vm_machdep.c
@@ -90,7 +90,7 @@
  * accordingly.
  */
 void
-cpu_fork(l1, l2, stack, stacksize, func, arg)
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
@@ -109,7 +109,7 @@ cpu_fork(l1, l2, stack, stacksize, func, arg)
 	}
 #ifdef DIAGNOSTIC
 	else if (l1 != &lwp0)
-		panic("cpu_fork: curproc");
+		panic("cpu_lwp_fork: curproc");
 #endif
 	*pcb = l1->l_addr->u_pcb;
 

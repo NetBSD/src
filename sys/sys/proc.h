@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.8 2001/11/27 03:17:19 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.9 2001/12/08 04:22:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -403,7 +403,7 @@ int	fork1(struct lwp *, int, int, void *, size_t,
 void	rqinit(void);
 int	groupmember(gid_t, struct ucred *);
 void	cpu_exit(struct lwp *, int);
-void	cpu_fork(struct lwp *, struct lwp *, void *, size_t,
+void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
 
 		/*

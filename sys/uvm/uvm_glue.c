@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44.2.8 2001/11/14 19:19:05 nathanw Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.9 2001/12/08 04:22:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.8 2001/11/14 19:19:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.44.2.9 2001/12/08 04:22:18 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -278,8 +278,8 @@ uvm_proc_fork(p1, p2, shared)
  *	stack and stacksize
  * - NOTE: the kernel stack may be at a different location in the child
  *	process, and thus addresses of automatic variables may be invalid
- *	after cpu_fork returns in the child process.  We do nothing here
- *	after cpu_fork returns.
+ *	after cpu_lwp_fork returns in the child process.  We do nothing here
+ *	after cpu_lwp_fork returns.
  * - XXXCDC: we need a way for this to return a failure value rather
  *   than just hang
  */
@@ -309,13 +309,13 @@ uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
 		panic("uvm_lwp_fork: uvm_fault_wire failed: %d", error);
 
 	/*
-	 * cpu_fork() copy and update the pcb, and make the child ready
+	 * cpu_lwp_fork() copy and update the pcb, and make the child ready
  	 * to run.  If this is a normal user fork, the child will exit
 	 * directly to user mode via child_return() on its first time
 	 * slice and will not return here.  If this is a kernel thread,
 	 * the specified entry point will be executed.
 	 */
-	cpu_fork(l1, l2, stack, stacksize, func, arg);
+	cpu_lwp_fork(l1, l2, stack, stacksize, func, arg);
 }
 
 /*
