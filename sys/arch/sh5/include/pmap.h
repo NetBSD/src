@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2002/09/28 10:53:57 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 2002/10/04 09:17:57 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,6 +78,7 @@ struct pmap {
 typedef struct pmap *pmap_t;
 
 #define	PMAP_NC		0x1000
+#define	PMAP_UNMANAGED	0x2000
 
 extern struct pmap kernel_pmap_store;
 #define	pmap_kernel()	(&kernel_pmap_store)
@@ -90,6 +91,9 @@ extern vaddr_t pmap_map_poolpage(paddr_t);
 extern paddr_t pmap_unmap_poolpage(vaddr_t);
 #define	PMAP_MAP_POOLPAGE(p)	pmap_map_poolpage((p))
 #define	PMAP_UNMAP_POOLPAGE(v)	pmap_unmap_poolpage((v))
+
+#define	PMAP_STEAL_MEMORY
+extern vaddr_t pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
 
 #define pmap_clear_modify(pg)		(pmap_clear_bit((pg), SH5_PTEL_M))
 #define	pmap_clear_reference(pg)	(pmap_clear_bit((pg), SH5_PTEL_R))
