@@ -1,7 +1,8 @@
-/*	$NetBSD: drcomvar.h,v 1.1 1996/11/30 00:43:04 is Exp $	*/
+/*	$NetBSD: supio.h,v 1.1 1997/08/27 19:32:52 is Exp $ */
 
 /*
- * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1997 Ignatios Souvatzis
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *	for the NetBSD Project.
+ *      This product includes software developed by Ignatios Souvatzis
+ *      for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -30,10 +31,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int comintr __P((void *));
+/*
+ * DraCo multi-io chip bus space stuff definitions
+ */
 
-extern int comconsaddr;
-extern int comconsattached;
-extern bus_chipset_tag_t comconsbc;
-extern bus_io_handle_t comconsioh;
-extern tcflag_t comconscflag;
+struct supio_attach_args {
+	bus_space_tag_t	 supio_iot;
+	char		*supio_name;
+	int		 supio_iobase;
+};

@@ -1,4 +1,4 @@
-#	$NetBSD: DRACO,v 1.14 1997/07/17 23:29:33 is Exp $
+#	$NetBSD: DRACO,v 1.15 1997/08/27 19:32:48 is Exp $
 
 #
 # Macro System GmbH "DraCo", currently 68060-only until FPE is integrated.
@@ -130,8 +130,8 @@ mfcs1		at mfc0 unit 1		# MFC serial
 #mfcp1		at mfc1 unit 0
 
 drbbc0		at mainbus0		# DraCo battery backed clock
-drcom0		at mainbus0		# DraCo serial ports
-drcom1		at mainbus0		# unit 1 normally connected to mouse
+drsupio0	at mainbus0		# DraCo superio chip
+com*		at drsupio? port ?	# DraCo serial
 
 le*		at zbus0		# Lance ethernet.
 ed0		at zbus0		# dp8390 ethernet
@@ -157,5 +157,6 @@ pseudo-device	pty 16			# pseudo terminals
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter 2		# berkeley packet filters
 pseudo-device	tun 2
+pseudo-device	ppp 2			# ppp protocol network drivers
 
 config	netbsd root on ? type ?
