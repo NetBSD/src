@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1999/11/05 03:27:54 sato Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 1999/11/21 07:04:33 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,10 +43,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 1999/11/05 03:27:54 sato Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 1999/11/21 07:04:33 uch Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
-
+#include "opt_vr41x1.h"
+#include "opt_tx39xx.h"
+#include "biconsdev.h"
 #include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_rtc_offset.h"
@@ -103,8 +105,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 1999/11/05 03:27:54 sato Exp $");
 #include <sys/exec_elf.h>
 #endif
 
+#if NBICONSDEV > 0
 #include <hpcmips/dev/biconsvar.h>
 #include <hpcmips/dev/bicons.h>
+#define DPRINTF(arg) printf arg
+#else
+#define DPRINTF(arg)
+#endif
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -119,7 +126,6 @@ vm_map_t phys_map = NULL;
 int	systype;		/* mother board type */
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
-int	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
 int	mem_cluster_cnt;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 
@@ -157,6 +163,8 @@ void	unimpl_cons_init __P((void));
 void	unimpl_device_register __P((struct device *, void *));
 void 	unimpl_iointr __P ((void *, u_long));
 void	unimpl_clockintr __P ((void *));
+void    unimpl_fb_init __P((caddr_t*));
+int     unimpl_mem_init __P((caddr_t));
 
 struct platform platform = {
 	"iobus not set",
@@ -165,10 +173,17 @@ struct platform platform = {
 	unimpl_cons_init,
 	unimpl_device_register,
 	unimpl_iointr,
-	unimpl_clockintr
+	unimpl_clockintr,
+	unimpl_fb_init,
+	unimpl_mem_init
 };
-extern void vr_init __P((void));	/* XXX, We have no sysconf.c,
-					   so call this directly. */
+
+#ifdef VR41X1
+extern void	vr_init __P((void));
+#endif
+#ifdef TX39XX
+extern void	tx_init __P((void));
+#endif
 
 extern caddr_t esym;
 extern struct user *proc0paddr;
@@ -220,13 +235,25 @@ mach_init(argc, argv, bi)
 			platid.dw.dw1 = bootinfo->platid_machine;
 		}
 	}
+	/* Platform Specific Function Hooks */
+#if defined TX39XX && defined VR41X1
+#error misconfiguration
+#elif defined TX39XX
+	tx_init();
+#elif defined VR41X1
+	vr_init();
+#endif
+	/* Initialize frame buffer */
+	(*platform.fb_init)(&kernend);
+	kernend = (caddr_t)mips_round_page(kernend);
 
+#if NBICONSDEV > 0
 	/* Use builtin console output until we initialize a console driver. */
 	cn_tab = &builtincd;
 
 	/* Initialize builtin console. */
 	bicons_init();
-
+#endif
 	/*
 	 * Set the VM page size.
 	 */
@@ -245,14 +272,15 @@ mach_init(argc, argv, bi)
 	 */
 	/* XXX, for debugging. */
 	if (bootinfo) {
-		printf("Bootinfo. available, ");
+		DPRINTF(("Bootinfo. available, "));
 	}
-	printf("args: ");
+	DPRINTF(("args: "));
 	for (i = 0; i < argc; i++) {
-		printf("%s ", argv[i]);
+		DPRINTF(("%s ", argv[i]));
 	}
-	printf("\n");
-	printf("platform ID: %08lx %08lx\n", platid.dw.dw0, platid.dw.dw1);
+
+	DPRINTF(("\n"));
+	DPRINTF(("platform ID: %08lx %08lx\n", platid.dw.dw0, platid.dw.dw1));
 
 #ifndef RTC_OFFSET
 	/*
@@ -315,13 +343,6 @@ mach_init(argc, argv, bi)
 	/* init symbols if present */
 	if (esym)
 		ddb_init(1000, &end, (int*)esym);
-#if 0
-	/*
-	 * XXX, We want to use console !
-	 */
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
 #endif
 	/*
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
@@ -333,55 +354,21 @@ mach_init(argc, argv, bi)
 	memset(kernend, 0, UPAGES * PAGE_SIZE);
 
 	kernend += UPAGES * PAGE_SIZE;
-	/*
-	 * Initialize physmem_boardmax; assume no SIMM-bank limits.
-	 * Adjust later in model-specific code if necessary.
-	 */
-	physmem_boardmax = MIPS_MAX_MEM_ADDR;
 
-	/*
-	 *  XXX, We have no sysconf.c, so call vr_init() directly.
-	 */
-	vr_init();
+	/* Setup interrupt handler */
 	(*platform.os_init)();
+
 	/* Initialize console. */
 	(*platform.cons_init)();
 
-	/*
-	 * XXX, We want to use console !
-	 */
 	if (boothowto & RB_KDB)
 		Debugger();
 
 	/*
-	 * Find out how much memory is available.
-	 * Be careful to save and restore the original contents for msgbuf.
+	 * Find out how much memory is available and clear memory.
 	 */
-	physmem = btoc((paddr_t)kernend - MIPS_KSEG0_START);
-	cp = (char *)MIPS_PHYS_TO_KSEG1(physmem << PGSHIFT);
-	while (cp < (char *)physmem_boardmax) {
-	  	int j;
-		if (badaddr(cp, 4))
-			break;
-		i = *(int *)cp;
-		j = ((int *)cp)[4];
-		*(int *)cp = 0xa5a5a5a5;
-		/*
-		 * Data will persist on the bus if we read it right away.
-		 * Have to be tricky here.
-		 */
-		((int *)cp)[4] = 0x5a5a5a5a;
-		wbflush();
-		if (*(int *)cp != 0xa5a5a5a5)
-			break;
-		*(int *)cp = i;
-		((int *)cp)[4] = j;
-		bzero(cp, NBPG);/* For WindowsCE's sake */
-		cp += NBPG;
-		physmem++;
-	}
-	bzero((char *)KERNBASE + 0x400, KERNTEXTOFF - KERNBASE - 0x800); /* For WindowsCE's sake */
-
+	physmem = btoc((paddr_t)kernend - MIPS_KSEG0_START) + 
+		(*platform.mem_init)(kernend);
 	maxmem = physmem;
 
 	/*
@@ -628,8 +615,11 @@ haltsys:
 
 	/* Finally, halt/reboot the system. */
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
-	while (1)
-	    ;
+#ifdef TX39XX
+	goto *(u_int32_t *)MIPS_RESET_EXC_VEC;
+#endif
+	while(1)
+		;
 	/*NOTREACHED*/
 }
 
@@ -753,6 +743,20 @@ unimpl_intr(mask, pc, statusreg, causereg)
 	u_int causereg;
 {
 	panic("sysconf.init didnt set intr");
+}
+
+int
+unimpl_mem_init(kernend)
+	caddr_t kernend;
+{
+	panic("sysconf.init didnt set memory");
+}
+
+void
+unimpl_fb_init(kernend)
+	caddr_t *kernend;
+{
+	panic("sysconf.init didnt set frame buffer");
 }
 
 unsigned
