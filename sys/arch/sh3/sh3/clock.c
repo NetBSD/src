@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 2001/01/22 07:04:10 itojun Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 2001/01/22 08:23:58 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -349,7 +349,7 @@ void
 inittodr(base)
 	time_t base;
 {
-#ifdef DREAMCAST
+#ifdef dreamcast
 	volatile unsigned int *rtc = (volatile unsigned int *)0xa0710000;
 	unsigned int old = 0, new;
 #else
@@ -371,7 +371,7 @@ inittodr(base)
 		base = 17*SECYR + 186*SECDAY + SECDAY/2;
 	}
 
-#ifdef DREAMCAST
+#ifdef dreamcast
 	for (;;) {
 		int i;
 		for (i = 0; i < 3; i++) {
