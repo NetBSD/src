@@ -29,19 +29,19 @@
 
 #define USE_REL
 
+#define TARGET_LITTLE_SYM               bfd_elf32_littlearm_vec
+#define TARGET_LITTLE_NAME              "elf32-littlearm"
+#define TARGET_BIG_SYM                  bfd_elf32_bigarm_vec
+#define TARGET_BIG_NAME                 "elf32-bigarm"
+
 #define elf_info_to_howto               0
 #define elf_info_to_howto_rel           elf32_arm_info_to_howto
 
 #define ARM_ELF_ABI_VERSION		0
 #define ARM_ELF_OS_ABI_VERSION		ELFOSABI_ARM
 
-#define ARM_ELF_ABI_VERSION_NBSD	0
-#define ARM_ELF_OS_ABI_VERSION_NBSD	ELFOSABI_NETBSD
-
 static reloc_howto_type * elf32_arm_reloc_type_lookup
   PARAMS ((bfd * abfd, bfd_reloc_code_real_type code));
-
-static boolean elf32_arm_object_p PARAMS ((bfd *));
 
 /* Note: code such as elf32_arm_reloc_type_lookup expect to use e.g.
    R_ARM_PC24 as an index into this, and find the R_ARM_PC24 HOWTO
@@ -674,49 +674,4 @@ elf32_arm_reloc_type_lookup (abfd, code)
    }
 }
 
-/* Return nonzero if ABFD represents an ARM ELF32 file.  */
-
-static boolean
-elf32_arm_object_p (abfd)
-     bfd *abfd;
-{
-  Elf_Internal_Ehdr * i_ehdrp;
-
-  i_ehdrp = elf_elfheader (abfd);
-  if (strcmp (bfd_get_target (abfd), "elf32-littlearm-nbsd") == 0
-   || strcmp (bfd_get_target (abfd), "elf32-bigarm-nbsd") == 0)
-    {
-      if (i_ehdrp->e_ident[EI_OSABI] != ARM_ELF_OS_ABI_VERSION_NBSD)
-	return false;
-    }
-  else
-    {
-      if (i_ehdrp->e_ident[EI_OSABI] != ARM_ELF_OS_ABI_VERSION)
-	return false;
-    }
-
-  return true;
-}
-
-#define elf_backend_object_p            elf32_arm_object_p
-
-#define TARGET_LITTLE_SYM               bfd_elf32_littlearm_vec
-#define TARGET_LITTLE_NAME              "elf32-littlearm"
-#define TARGET_BIG_SYM                  bfd_elf32_bigarm_vec
-#define TARGET_BIG_NAME                 "elf32-bigarm"
-
 #include "elf32-arm.h"
-
-#define INCLUDED_TARGET_FILE 1
-
-#undef TARGET_LITTLE_SYM
-#undef TARGET_LITTLE_NAME
-#undef TARGET_BIG_SYM
-#undef TARGET_BIG_NAME
-
-#define TARGET_LITTLE_SYM               bfd_elf32_littlearm_nbsd_vec
-#define TARGET_LITTLE_NAME              "elf32-littlearm-nbsd"
-#define TARGET_BIG_SYM                  bfd_elf32_bigarm_nbsd_vec
-#define TARGET_BIG_NAME                 "elf32-bigarm-nbsd"
-
-#include "elf32-target.h"

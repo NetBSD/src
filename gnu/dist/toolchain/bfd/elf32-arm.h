@@ -3399,16 +3399,6 @@ elf32_arm_post_process_headers (abfd, link_info)
 
   i_ehdrp = elf_elfheader (abfd);
 
-#ifdef ARM_ELF_OS_ABI_VERSION_NBSD
-  if (strcmp (bfd_get_target (abfd), "elf32-littlearm-nbsd") == 0
-   || strcmp (bfd_get_target (abfd), "elf32-bigarm-nbsd") == 0)
-    {
-      i_ehdrp->e_ident[EI_OSABI]      = ARM_ELF_OS_ABI_VERSION_NBSD;
-      i_ehdrp->e_ident[EI_ABIVERSION] = ARM_ELF_ABI_VERSION_NBSD;
-      return;
-    }
-#endif
-
   i_ehdrp->e_ident[EI_OSABI]      = ARM_ELF_OS_ABI_VERSION;
   i_ehdrp->e_ident[EI_ABIVERSION] = ARM_ELF_ABI_VERSION;
 }
