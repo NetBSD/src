@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.85 2000/01/13 00:04:31 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.86 2000/02/14 03:26:06 aidan Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.85 2000/01/13 00:04:31 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.86 2000/02/14 03:26:06 aidan Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,7 +156,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.85 2000/01/13 00:04:31 lukem Exp $");
 #include <skey.h>
 #endif
 #ifdef KERBEROS5
-#include <kerberosIV/com_err.h>
+#include <com_err.h>
 #include <krb5/krb5.h>
 #endif
 
