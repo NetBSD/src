@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_conf.c,v 1.22 1995/11/11 22:00:15 mycroft Exp $	*/
+/*	$NetBSD: vfs_conf.c,v 1.23 1997/01/31 02:36:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -65,7 +65,7 @@ extern	struct vfsops mfs_vfsops;
 extern	struct vfsops msdosfs_vfsops;
 #endif
 
-#ifdef NFSCLIENT
+#ifdef NFS
 extern	struct vfsops nfs_vfsops;
 #endif
 
@@ -120,7 +120,7 @@ struct vfsops *vfssw[] = {
 #else
 	NULL,
 #endif
-#ifdef NFSCLIENT
+#ifdef NFS
 	&nfs_vfsops,		/* 2 = MOUNT_NFS */
 #else
 	NULL,
@@ -255,7 +255,7 @@ struct vnodeopv_desc *vfs_opv_descs[] = {
 #ifdef MFS
 	&mfs_vnodeop_opv_desc,
 #endif
-#ifdef NFSCLIENT
+#ifdef NFS
 	&nfsv2_vnodeop_opv_desc,
 	&spec_nfsv2nodeop_opv_desc,
 #ifdef FIFO
