@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 2004/04/10 23:47:24 cl Exp $	*/
 /*	NetBSD: pmap.h,v 1.79 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -497,6 +497,8 @@ kvtopte(vaddr_t va)
 
 paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
+
+void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
 
 #if defined(USER_LDT)
 void	pmap_ldt_cleanup(struct lwp *);
