@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.17 1995/10/11 04:20:25 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.18 1995/10/11 06:24:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -127,7 +127,6 @@ struct region_descriptor {
 #endif
 
 #ifdef _KERNEL
-extern int currentldt;
 extern union descriptor gdt[], ldt[];
 extern struct gate_descriptor idt[];
 
