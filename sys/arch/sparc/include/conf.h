@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.5 1996/09/07 12:40:39 mycroft Exp $	*/
+/*	$NetBSD: conf.h,v 1.6 1996/09/30 23:45:10 abrown Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -72,6 +72,8 @@ cdev_decl(cgsix);
 cdev_decl(cgeight);
 
 cdev_decl(tcx);
+
+cdev_decl(cgfourteen);
 
 bdev_decl(xd);
 cdev_decl(xd);
