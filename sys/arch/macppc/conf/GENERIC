@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.15 1998/10/18 09:31:40 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.16 1998/10/28 21:06:27 dante Exp $
 #
 # POWERMAC config file
 #
@@ -113,7 +113,10 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 #de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 #ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
+
+scsibus* at adv?
 #scsibus* at ahc?
 
 obio0	at pci? dev ? function ?
