@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$Id: strip.c,v 1.12 1994/02/10 16:48:56 mycroft Exp $";
+static char rcsid[] = "$Id: strip.c,v 1.13 1994/03/28 02:17:50 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -106,8 +106,8 @@ main(argc, argv)
 			(void)close(fd);
 			ERROR(EFTYPE);
 		}
-		if ((ep = (EXEC *)mmap(NULL, sb.st_size, PROT_READ | PROT_WRITE,
-		    MAP_FILE | MAP_SHARED, fd, (off_t)0)) == (EXEC *)-1) {
+		if ((ep = (EXEC *)mmap(NULL, sb.st_size, PROT_READ|PROT_WRITE,
+		    MAP_SHARED, fd, (off_t)0)) == (EXEC *)-1) {
 			(void)close(fd);
 			ERROR(errno);
 		}
