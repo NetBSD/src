@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro PCI
  *	=====================================================================
  *
- *	$Id: isic_pci_elsa_qs1p.c,v 1.7 2002/04/17 17:35:29 martin Exp $
+ *	$Id: isic_pci_elsa_qs1p.c,v 1.8 2002/04/18 15:32:30 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.7 2002/04/17 17:35:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.8 2002/04/18 15:32:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -456,8 +456,13 @@ isic_attach_Eqs1pp(psc, pa)
 	sc->sc_ipac = 1;
 	sc->sc_bfifolen = IPAC_BFIFO_LEN;
 
+	IPAC_WRITE(IPAC_ACFG, 0);	/* outputs are open drain */
+	IPAC_WRITE(IPAC_AOE,		/* aux 5..2 are inputs, 7, 6 outputs */
+		(IPAC_AOE_OE5 | IPAC_AOE_OE4 | IPAC_AOE_OE3 | IPAC_AOE_OE2));
+	IPAC_WRITE(IPAC_ATX, ELSA_NO_LED);	/* set all output lines high */
+
 	/* disable any interrupts */
-	IPAC_WRITE(IPAC_MASK, 0);
+	IPAC_WRITE(IPAC_MASK, 0xff);
         bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x01);
 }
 
@@ -472,12 +477,6 @@ elsa_cmd_req(struct isic_softc *sc, int cmd, void *data)
 		s = splnet();
 		/* enable hscx/isac irq's */
 		IPAC_WRITE(IPAC_MASK, (IPAC_MASK_INT1 | IPAC_MASK_INT0));
-
-		IPAC_WRITE(IPAC_ACFG, 0);	/* outputs are open drain */
-		IPAC_WRITE(IPAC_AOE,		/* aux 5..2 are inputs, 7, 6 outputs */
-			(IPAC_AOE_OE5 | IPAC_AOE_OE4 | IPAC_AOE_OE3 | IPAC_AOE_OE2));
-		IPAC_WRITE(IPAC_ATX, ELSA_NO_LED);	/* set all output lines high */
-
 	        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x41);	/* enable card interrupt */
 		splx(s);
 		break;
@@ -485,7 +484,7 @@ elsa_cmd_req(struct isic_softc *sc, int cmd, void *data)
 		s = splnet();
 		callout_stop(&sc->sc_driver_callout);
 		IPAC_WRITE(IPAC_ATX, ELSA_NO_LED);
-		IPAC_WRITE(IPAC_MASK, 0);
+		IPAC_WRITE(IPAC_MASK, 0xff);
 	        bus_space_write_1(sc->sc_maps[0].t, sc->sc_maps[0].h, 0x4c, 0x01);
 		splx(s);
 		break;
