@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.44 2000/01/12 22:39:28 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.45 2000/03/05 06:12:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.44 2000/01/12 22:39:28 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.45 2000/03/05 06:12:19 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,6 +115,7 @@ __RCSID("$NetBSD: ftpcmd.y,v 1.44 2000/01/12 22:39:28 lukem Exp $");
 #endif
 
 #include "extern.h"
+#include "version.h"
 
 static	int cmd_type;
 static	int cmd_form;
@@ -854,7 +855,8 @@ cmd
 
 	| SYST CRLF
 		{
-			reply(215, "UNIX Type: L%d %s", NBBY, version);
+			reply(215, "UNIX Type: L%d Version: %s", NBBY,
+			    FTPD_VERSION);
 		}
 
 	| STAT check_login SP pathname CRLF
