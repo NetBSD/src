@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.197 2002/07/29 05:54:09 simonb Exp $	*/
+/*	$NetBSD: com.c,v 1.198 2002/07/29 05:57:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.197 2002/07/29 05:54:09 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.198 2002/07/29 05:57:16 simonb Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1744,7 +1744,7 @@ comdiag(void *arg)
 integrate void
 com_rxsoft(struct com_softc *sc, struct tty *tp)
 {
-	int (*rint)(int c, struct tty *tp) = tp->t_linesw->l_rint;
+	int (*rint)(int, struct tty *) = tp->t_linesw->l_rint;
 	u_char *get, *end;
 	u_int cc, scc;
 	u_char lsr;
