@@ -37,7 +37,7 @@
  *
  *	@(#)os-bsd44.h	8.1 (Berkeley) 6/6/93
  *
- * $Id: os-bsd44.h,v 1.6 1994/06/13 19:48:48 mycroft Exp $
+ * $Id: os-bsd44.h,v 1.7 1994/06/13 20:18:00 mycroft Exp $
  *
  * 4.4 BSD definitions for Amd (automounter)
  */
@@ -95,6 +95,10 @@
 #undef MTAB_TYPE_UFS
 #define	MTAB_TYPE_UFS	"ufs"
 #define	MTAB_TYPE_MFS	"mfs"
+#ifdef __NetBSD__
+#undef MTYPE_TYPE
+#define MTYPE_TYPE char *
+#endif
 
 /*
  * How to unmount filesystems
