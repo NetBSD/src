@@ -1,5 +1,5 @@
 #
-# $NetBSD: inetbsd.S,v 1.1 1996/05/15 21:06:23 is Exp $
+# $NetBSD: inetbsd.S,v 1.2 1996/05/15 21:16:44 is Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -288,4 +288,4 @@ _I_CALL_TOP:
 
 # 060 INTEGER KERNEL PACKAGE MUST GO HERE!!!
 
-	.include	"isp.s"
+	.include	"isp.S"
