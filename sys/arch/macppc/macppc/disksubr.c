@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.6 2000/01/18 19:44:18 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.7 2000/02/10 12:33:45 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -522,12 +522,11 @@ readdisklabel(dev, strat, lp, osdep)
 
 	osdep->cd_start = -1;
 
-	if (biowait(bp)) {
+	if (biowait(bp))
 		msg = "I/O error reading block zero";
-	} if (get_netbsd_label(dev, strat, lp, 0)) {
+	else if (get_netbsd_label(dev, strat, lp, 0))
 		osdep->cd_start = 0;
-		msg = "NetBSD disklabel";
-	} else {
+	else {
 		u_int16_t *sbSigp;
 
 		sbSigp = (u_int16_t *)bp->b_un.b_addr;
