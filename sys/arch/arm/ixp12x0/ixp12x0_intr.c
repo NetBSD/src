@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.7 2003/03/25 06:12:46 igy Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.8 2003/06/16 20:00:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.7 2003/03/25 06:12:46 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.8 2003/06/16 20:00:58 thorpej Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -279,16 +279,16 @@ ixp12x0_intr_calculate_masks(void)
 	 * splvm() blocks all interrupts that use the kernel memory
 	 * allocation facilities.
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY];
-	pci_imask[IPL_IMP] |= pci_imask[IPL_TTY];
+	imask[IPL_VM] |= imask[IPL_TTY];
+	pci_imask[IPL_VM] |= pci_imask[IPL_TTY];
 
 	/*
 	 * Audio devices are not allowed to perform memory allocation
 	 * in their interrupt routines, and they have fairly "real-time"
 	 * requirements, so give them a high interrupt priority.
 	 */
-	imask[IPL_AUDIO] |= imask[IPL_IMP];
-	pci_imask[IPL_AUDIO] |= pci_imask[IPL_IMP];
+	imask[IPL_AUDIO] |= imask[IPL_VM];
+	pci_imask[IPL_AUDIO] |= pci_imask[IPL_VM];
 
 	/*
 	 * splclock() must block anything that uses the scheduler.
