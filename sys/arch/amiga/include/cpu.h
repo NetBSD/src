@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 1996/05/16 16:02:15 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 1996/05/16 16:10:11 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -299,10 +299,12 @@ void	physaccess __P((caddr_t,  caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
 void	setredzone __P((u_int *, caddr_t));
 
+#ifdef GENERIC
 /*
  * Prototypes from swapgeneric.c:
  */
 void	setconf __P((void));
+#endif
 
 /*
  * Prototypes from pmap.c:
