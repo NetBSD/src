@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.44 2004/07/22 20:06:05 mycroft Exp $	*/
+/*	$NetBSD: wivar.h,v 1.45 2004/07/22 20:23:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -125,8 +125,8 @@ struct wi_softc	{
 #define	WI_NTXRSS	10
 	struct sc_txdesc {
 		int				d_fid;
-		int				d_len;
 	}			sc_txd[WI_NTXBUF];
+	int			sc_txalloced;
 	int			sc_txnext;
 	int			sc_txcur;
 	struct wi_rssdesc 	sc_rssd[WI_NTXRSS];
