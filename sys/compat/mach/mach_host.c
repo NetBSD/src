@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.18 2002/12/27 09:59:26 manu Exp $ */
+/*	$NetBSD: mach_host.c,v 1.19 2002/12/31 15:47:37 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.18 2002/12/27 09:59:26 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.19 2002/12/31 15:47:37 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -159,7 +159,7 @@ mach_host_get_clock_service(args)
 	struct proc *p = args->p;
 	struct mach_right *mr;
 
-	mr = mach_right_get(mach_clock_port, p, MACH_PORT_TYPE_SEND);
+	mr = mach_right_get(mach_clock_port, p, MACH_PORT_TYPE_SEND, 0);
 
 	rep->rep_msgh.msgh_bits = 
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -168,7 +168,7 @@ mach_host_get_clock_service(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1; /* XXX why? */
-	rep->rep_clock_serv.name = (mach_port_t)mr;
+	rep->rep_clock_serv.name = (mach_port_t)mr->mr_name;
 	rep->rep_clock_serv.disposition = 0x11; /* XXX */
 	rep->rep_trailer.msgh_trailer_size = 8;
 
