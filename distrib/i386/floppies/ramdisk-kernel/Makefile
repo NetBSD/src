@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/08/24 00:41:54 jhawk Exp $
+#	$NetBSD: Makefile,v 1.7 2000/08/24 00:58:02 jhawk Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -8,6 +8,10 @@ TOP=		${.CURDIR}/..
 
 MDEC=		${DESTDIR}/usr/mdec
 STRIP?=		strip
+STRIPFLAGS?=	--strip-unneeded \
+		    -K pcic_isa_alloc_iobase -K pcic_isa_alloc_iosize \
+		    -K pcic_isa_intr_alloc_mask \
+		    -K pcic_irq_probe
 
 COMMONDIR=	${TOP}/bootfloppy-common
 LISTS=		${COMMONDIR}/list
@@ -22,7 +26,7 @@ netbsd.INSTALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL/netbsd ${RAMDISK}
 	cp ${KERNOBJDIR}/INSTALL/netbsd netbsd.tmp
 	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK}
 	nm netbsd.tmp > netbsd.INSTALL.symbols
-	${STRIP} netbsd.tmp
+	${STRIP} ${STRIPFLAGS} netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
@@ -30,7 +34,7 @@ netbsd.INSTALL_TINY.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_TINY/netbsd ${RAMDISK_T}
 	cp ${KERNOBJDIR}/INSTALL_TINY/netbsd netbsd.tmp
 	${DESTDIR}/usr/sbin/mdsetimage -v netbsd.tmp ${RAMDISK_T}
 	nm netbsd.tmp > netbsd.INSTALL_TINY.symbols
-	${STRIP} netbsd.tmp
+	${STRIP} ${STRIPFLAGS} netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
