@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.44 2003/07/17 11:44:27 hannken Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.45 2003/08/22 03:03:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.44 2003/07/17 11:44:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.45 2003/08/22 03:03:20 jonathan Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -132,6 +132,7 @@ void bge_rxeof(struct bge_softc *);
 void bge_tick(void *);
 void bge_stats_update(struct bge_softc *);
 int bge_encap(struct bge_softc *, struct mbuf *, u_int32_t *);
+static __inline int bge_compact_dma_runt(struct mbuf *pkt);
 
 int bge_intr(void *);
 void bge_start(struct ifnet *);
@@ -2750,6 +2751,124 @@ bge_stats_update(sc)
 #endif
 }
 
+
+/*
+ * Compact outbound packets to avoid bug with DMA segments less than 8 bytes.
+ */
+static __inline int
+bge_compact_dma_runt(struct mbuf *pkt)
+{
+	struct mbuf	*m, *prev;
+	int 		totlen, prevlen;
+
+	prev = NULL;
+	totlen = 0;
+	prevlen = -1;
+
+	for (m = pkt; m != NULL; prev = m,m = m->m_next) {
+		int mlen = m->m_len;
+		int shortfall = 8 - mlen ;
+
+		totlen += mlen;
+		if (mlen == 0) {
+			continue;
+		}
+		if (mlen >= 8)
+			continue;
+
+		/* If we get here, mbuf data is too small for DMA engine.
+		 * Try to fix by shuffling data to prev or next in chain.
+		 * If that fails, do a compacting deep-copy of the whole chain.
+		 */
+
+		/* Internal frag. If fits in prev, copy it there. */
+		if (prev && !M_READONLY(prev) &&
+		      M_TRAILINGSPACE(prev) >= m->m_len) {
+		  	bcopy(m->m_data,
+			      prev->m_data+prev->m_len,
+			      mlen);
+			prev->m_len += mlen;
+			m->m_len = 0;
+			/* XXX stitch chain */
+			prev->m_next = m_free(m);
+			m = prev;
+			continue;
+		}
+		else if (m->m_next != NULL && !M_READONLY(m) &&
+			     M_TRAILINGSPACE(m) >= shortfall &&
+			     m->m_next->m_len >= (8 + shortfall)) {
+		    /* m is writable and have enough data in next, pull up. */
+
+		  	bcopy(m->m_next->m_data,
+			      m->m_data+m->m_len,
+			      shortfall);
+			m->m_len += shortfall;
+			m->m_next->m_len -= shortfall;
+			m->m_next->m_data += shortfall;
+		}
+		else if (m->m_next == NULL || 1) {
+		  	/* Got a runt at the very end of the packet.
+			 * borrow data from the tail of the preceding mbuf and
+			 * update its length in-place. (The original data is still
+			 * valid, so we can do this even if prev is not writable.)
+			 */
+
+			/* if we'd make prev a runt, just move all of its data. */
+#ifdef DEBUG
+			KASSERT(prev != NULL /*, ("runt but null PREV")*/);
+			KASSERT(prev->m_len >= 8 /*, ("runt prev")*/);
+#endif
+			if ((prev->m_len - shortfall) < 8)
+				shortfall = prev->m_len;
+			
+#ifdef notyet	/* just do the safe slow thing for now */
+			if (!M_READONLY(m)) {
+				if (M_LEADINGSPACE(m) < shorfall) {
+					void *m_dat;
+					m_dat = (m->m_flags & M_PKTHDR) ?
+					  m->m_pktdat : m->dat;
+					memmove(m_dat, mtod(m, void*), m->m_len);
+					m->m_data = m_dat;
+				    }
+			} else
+#endif	/* just do the safe slow thing */
+			{
+				struct mbuf * n = NULL;
+				int newprevlen = prev->m_len - shortfall;
+
+				MGET(n, M_NOWAIT, MT_DATA);
+				if (n == NULL)
+				   return ENOBUFS;
+				KASSERT(m->m_len + shortfall < MLEN
+					/*,
+					  ("runt %d +prev %d too big\n", m->m_len, shortfall)*/);
+
+				/* first copy the data we're stealing from prev */
+				bcopy(prev->m_data + newprevlen, n->m_data, shortfall);
+
+				/* update prev->m_len accordingly */
+				prev->m_len -= shortfall;
+
+				/* copy data from runt m */
+				bcopy(m->m_data, n->m_data + shortfall, m->m_len);
+
+				/* n holds what we stole from prev, plus m */
+				n->m_len = shortfall + m->m_len;
+
+				/* stitch n into chain and free m */
+				n->m_next = m->m_next;
+				prev->m_next = n;
+				/* KASSERT(m->m_next == NULL); */
+				m->m_next = NULL;
+				m_free(m);
+				m = n;	/* for continuing loop */
+			}
+		}
+		prevlen = m->m_len;
+	}
+	return 0;
+}
+
 /*
  * Encapsulate an mbuf chain in the tx ring  by coupling the mbuf data
  * pointers to descriptors.
@@ -2767,8 +2886,6 @@ bge_encap(sc, m_head, txidx)
 	bus_dmamap_t dmamap;
 	int			i = 0;
 	struct m_tag		*mtag;
-	struct mbuf		*prev, *m;
-	int			totlen, prevlen;
 
 	cur = frag = *txidx;
 
@@ -2786,48 +2903,8 @@ bge_encap(sc, m_head, txidx)
 	 * less than eight bytes.  If we encounter a teeny mbuf 
 	 * at the end of a chain, we can pad.  Otherwise, copy.
 	 */
-	prev = NULL;
-	totlen = 0;
-	for (m = m_head; m != NULL; prev = m,m = m->m_next) {
-		int mlen = m->m_len;
-
-		totlen += mlen;
-		if (mlen == 0) {
-			/* print a warning? */
-			continue;
-		}
-		if (mlen >= 8)
-			continue;
-
-		/* If we get here, mbuf data is too small for DMA engine. */
-		if (m->m_next != 0) {
-			  /* Internal frag. If fits in prev, copy it there. */
-			  if (prev && M_TRAILINGSPACE(prev) >= m->m_len &&
-			      !M_READONLY(prev)) {
-			  	bcopy(m->m_data,
-				      prev->m_data+prev->m_len,
-				      mlen);
-				prev->m_len += mlen;
-				m->m_len = 0;
-				MFREE(m, prev->m_next); /* XXX stitch chain */
-				m = prev;
-				continue;
-			  } else {
-				struct mbuf *n;
-				/* slow copy */
-slowcopy:
-			  	n = m_dup(m_head, 0, M_COPYALL, M_DONTWAIT);
-				m_freem(m_head);
-				if (n == 0)
-					return 0;
-				m_head  = n;
-				goto doit;
-			  }
-		} else if ((totlen -mlen +8) >= 1500) {
-			goto slowcopy;
-		}
-		prevlen = m->m_len;
-	}
+	if (bge_compact_dma_runt(m_head) != 0)
+		return ENOBUFS;
 
 doit:
 	dma = SLIST_FIRST(&sc->txdma_list);
