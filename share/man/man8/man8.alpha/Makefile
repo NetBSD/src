@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1997/10/11 08:22:16 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 1997/11/24 06:32:11 mrg Exp $
 
-MAN=	installboot_cd9660.8 installboot.8 setnetbootinfo.8
+MAN=	installboot.8 setnetbootinfo.8
 MANSUBDIR=/alpha
 
 .include <bsd.man.mk>
