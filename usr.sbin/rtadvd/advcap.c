@@ -1,3 +1,5 @@
+/*	$NetBSD: advcap.c,v 1.2 1999/07/06 13:02:09 itojun Exp $	*/
+
 /*
  * Copyright (c) 1983 The Regents of the University of California.
  * All rights reserved.
@@ -31,12 +33,14 @@
  * SUCH DAMAGE.
  */
 
+#if 0
+#ifndef lint
+static char sccsid[] = "@(#)remcap.c	5.5 (Berkeley) 2/2/91";
+#endif /* not lint */
+#else
 #include <sys/cdefs.h>
 #ifndef lint
-#if 0
-static char sccsid[] = "@(#)remcap.c	5.5 (Berkeley) 2/2/91";
-#else
-__RCSID("@(#)remcap.c	5.5 (Berkeley) 2/2/91");
+__RCSID("$NetBSD");
 #endif
 #endif /* not lint */
 

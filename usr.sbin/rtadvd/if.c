@@ -1,3 +1,5 @@
+/*	$NetBSD: if.c,v 1.2 1999/07/06 13:02:09 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -242,7 +244,7 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 int
 rtbuf_len()
 {
-	int len;
+	size_t len;
 
 	int mib[6] = {CTL_NET, AF_ROUTE, 0, AF_INET6, NET_RT_DUMP, 0};
 
@@ -253,7 +255,7 @@ rtbuf_len()
 }
 
 int
-get_rtinfo(char *buf, int *len)
+get_rtinfo(char *buf, size_t *len)
 {
 	int mib[6] = {CTL_NET, AF_ROUTE, 0, AF_INET6, NET_RT_DUMP, 0};
 
@@ -267,7 +269,7 @@ get_rtinfo(char *buf, int *len)
 #define SIN6(s) ((struct sockaddr_in6 *)(s))
 #define SDL(s) ((struct sockaddr_dl *)(s))
 char *
-get_next_msg(char *buf, char *lim, int ifindex, int *lenp, int filter)
+get_next_msg(char *buf, char *lim, int ifindex, size_t *lenp, int filter)
 {
 	struct rt_msghdr *rtm;
 	struct ifa_msghdr *ifam;

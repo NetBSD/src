@@ -1,3 +1,5 @@
+/*	$NetBSD: advcap.h,v 1.2 1999/07/06 13:02:09 itojun Exp $	*/
+
 /*
  * Copyright (C) 1994,1995 by Andrey A. Chernov, Moscow, Russia.
  * All rights reserved.
