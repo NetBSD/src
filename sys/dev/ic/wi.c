@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.47 2002/03/04 01:30:04 dbj Exp $	*/
+/*	$NetBSD: wi.c,v 1.48 2002/03/04 01:33:17 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.47 2002/03/04 01:30:04 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.48 2002/03/04 01:33:17 dbj Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -489,7 +489,12 @@ void wi_update_stats(sc)
 
 	id = CSR_READ_2(sc, WI_INFO_FID);
 
-	wi_read_data(sc, id, 0, (char *)&gen, 4);
+	if (wi_seek(sc, id, 0, WI_BAP1)) {
+		return;
+	}
+  
+	gen.wi_len = CSR_READ_2(sc, WI_DATA1);
+	gen.wi_type = CSR_READ_2(sc, WI_DATA1);
 
 	switch (gen.wi_type) {
 	case WI_INFO_SCAN_RESULTS:
@@ -508,6 +513,11 @@ void wi_update_stats(sc)
 				for(j=0; j < sizeof(ap2) / 2; j++)
 					((u_int16_t *)&ap2)[j] =
 						CSR_READ_2(sc, WI_DATA1);
+				/* unswap 8 bit data fields: */
+				for(j=0;j<sizeof(ap.wi_bssid)/2;j++)
+					LE16TOH(((u_int16_t *)&ap.wi_bssid[0])[j]);
+				for(j=0;j<sizeof(ap.wi_name)/2;j++)
+					LE16TOH(((u_int16_t *)&ap.wi_name[0])[j]);
 				sc->wi_aps[i].scanreason = ap2_header.wi_reason;
 				memcpy(sc->wi_aps[i].bssid, ap2.wi_bssid, 6);
 				sc->wi_aps[i].channel = ap2.wi_chid;
@@ -532,6 +542,11 @@ void wi_update_stats(sc)
 				for(j=0; j < sizeof(ap) / 2; j++)
 					((u_int16_t *)&ap)[j] =
 						CSR_READ_2(sc, WI_DATA1);
+				/* unswap 8 bit data fields: */
+				for(j=0;j<sizeof(ap.wi_bssid)/2;j++)
+					HTOLE16(((u_int16_t *)&ap.wi_bssid[0])[j]);
+				for(j=0;j<sizeof(ap.wi_name)/2;j++)
+					HTOLE16(((u_int16_t *)&ap.wi_name[0])[j]);
 				memcpy(sc->wi_aps[i].bssid, ap.wi_bssid, 6);
 				sc->wi_aps[i].channel = ap.wi_chid;
 				sc->wi_aps[i].signal  = ap.wi_signal;
@@ -615,6 +630,11 @@ void wi_update_stats(sc)
                         break;
 		for (i=0; i < gen.wi_len - 1; i++)
 			((u_int16_t *)&assoc)[i] = CSR_READ_2(sc, WI_DATA1);
+		/* unswap 8 bit data fields: */
+		for(j=0;j<sizeof(assoc.wi_assoc_sta)/2;j++)
+			HTOLE16(((u_int16_t *)&assoc.wi_assoc_sta[0])[j]);
+		for(j=0;j<sizeof(assoc.wi_assoc_osta)/2;j++)
+			HTOLE16(((u_int16_t *)&assoc.wi_assoc_osta[0])[j]);
 		switch (assoc.wi_assoc_stat) {
 		case ASSOC:
 		case DISASSOC:
