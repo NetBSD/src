@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.12 1998/12/28 20:14:00 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.13 1998/12/29 16:02:55 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,8 @@ struct usbd_device {
 	u_int16_t		power;
 	u_int8_t		self_powered;
 	int			config;
+	int			langid;	/* language to use for strings */
+#define USBD_NOLANG (-1)
 	struct usbd_port       *powersrc;
 	struct usbd_endpoint	def_ep;	/* for pipe 0 */
 	usb_endpoint_descriptor_t def_ep_desc; /* for pipe 0 */
