@@ -1,4 +1,4 @@
-/*	$NetBSD: ascreg.h,v 1.1 2000/12/24 09:25:28 ur Exp $	*/
+/*	$NetBSD: ascreg.h,v 1.2 2003/05/03 18:10:45 wiz Exp $	*/
 /*	$OpenBSD: ascreg.h,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ typedef volatile struct {
 
 /*
  * Transfer Count: access macros
- * That a NOP is required after loading the dma counter
+ * That a NOP is required after loading the DMA counter
  * I learned on the NCR test code. Sic.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.22 2003/04/20 16:54:23 fvdl Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.23 2003/05/03 18:10:49 wiz Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.22 2003/04/20 16:54:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.23 2003/05/03 18:10:49 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,7 +412,7 @@ ahc_isa_attach(parent, self, aux)
 	}
 
 	/*
-	 * Tell the bus-dma interface that we can do 32bit dma
+	 * Tell the bus-DMA interface that we can do 32bit DMA
 	 * NOTE: this variable is first referenced in ahc_init().
 	 */
 	ahc->sc_dmaflags = ISABUS_DMA_32BIT;

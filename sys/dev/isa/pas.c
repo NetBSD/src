@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.56 2002/10/02 03:10:49 thorpej Exp $	*/
+/*	$NetBSD: pas.c,v 1.57 2003/05/03 18:11:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.56 2002/10/02 03:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.57 2003/05/03 18:11:27 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,7 +417,7 @@ pasfind(parent, sc, ia, probing)
 	 * Cannot auto-discover DMA channel.
 	 */
 	if (!SB_DRQ_VALID(ia->ia_drq[0].ir_drq)) {
-		printf("pas: configured dma chan %d invalid\n",
+		printf("pas: configured DMA chan %d invalid\n",
 		    ia->ia_drq[0].ir_drq);
 		goto unmap;
 	}

@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.21 2003/02/22 04:58:43 tsutsui Exp $ */
+/*      $NetBSD: sv.c,v 1.22 2003/05/03 18:11:37 wiz Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.21 2003/02/22 04:58:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.22 2003/05/03 18:11:37 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.21 2003/02/22 04:58:43 tsutsui Exp $");
 /* XXX
  * The SonicVibes DMA is broken and only works on 24-bit addresses.
  * As long as bus_dmamem_alloc_range() is missing we use the ISA
- * dma tag on i386.
+ * DMA tag on i386.
  */
 #if defined(i386)
 #include "isa.h"
@@ -404,7 +404,7 @@ sv_attach(parent, self, aux)
 /* XXX
  * The SonicVibes DMA is broken and only works on 24-bit addresses.
  * As long as bus_dmamem_alloc_range() is missing we use the ISA
- * dma tag on i386.
+ * DMA tag on i386.
  */
 	sc->sc_dmatag = &isa_bus_dma_tag;
 #else
@@ -888,7 +888,7 @@ sv_trigger_output(addr, start, end, blksize, intr, arg, param)
 	}
 
 	dma_count = ((char *)end - (char *)start) - 1;
-	DPRINTF(("sv_trigger_output: dma start loop input addr=%x cc=%d\n", 
+	DPRINTF(("sv_trigger_output: DMA start loop input addr=%x cc=%d\n", 
 	    (int)DMAADDR(p), dma_count));
 
 	bus_space_write_4(sc->sc_iot, sc->sc_dmaa_ioh, SV_DMA_ADDR0,
@@ -947,7 +947,7 @@ sv_trigger_input(addr, start, end, blksize, intr, arg, param)
 	}
 
 	dma_count = (((char *)end - (char *)start) >> 1) - 1;
-	DPRINTF(("sv_trigger_input: dma start loop input addr=%x cc=%d\n", 
+	DPRINTF(("sv_trigger_input: DMA start loop input addr=%x cc=%d\n", 
 	    (int)DMAADDR(p), dma_count));
 
 	bus_space_write_4(sc->sc_iot, sc->sc_dmac_ioh, SV_DMA_ADDR0,

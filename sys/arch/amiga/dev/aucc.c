@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.33 2003/04/06 18:20:10 wiz Exp $ */
+/*	$NetBSD: aucc.c,v 1.34 2003/05/03 18:10:43 wiz Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -53,7 +53,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.33 2003/04/06 18:20:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.34 2003/05/03 18:10:43 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ init_aucc(struct aucc_softc *sc)
 		sc->sc_channel[i].nd_intr=NULL;
 		sc->sc_channel[i].nd_intrdata=NULL;
 		sc->sc_channel[i].nd_doublebuf=0;
-		DPRINTF(("dma buffer for channel %d is %p\n", i,
+		DPRINTF(("DMA buffer for channel %d is %p\n", i,
 		    sc->sc_channel[i].nd_dma));
 	}
 
@@ -337,7 +337,7 @@ init_aucc(struct aucc_softc *sc)
 	sc->sc_encoding=AUDIO_ENCODING_ULAW;
 	sc->sc_decodefunc = aucc_decode_mulaw_1ch;
 
-	/* clear interrupts and dma: */
+	/* clear interrupts and DMA: */
 	custom.intena = AUCC_ALLINTF;
 	custom.dmacon = AUCC_ALLDMAF;
 
@@ -674,12 +674,12 @@ aucc_start_output(void *addr, void *p, int cc, void (*intr)(void *), void *arg)
 	DPRINTF(("dmap is %p %p %p %p, mask=0x%x\n", dmap[0], dmap[1],
 		dmap[2], dmap[3], mask));
 
-	/* disable ints, dma for channels, until all parameters set */
+	/* disable ints, DMA for channels, until all parameters set */
 	/* XXX dont disable DMA! custom.dmacon=mask;*/
 	custom.intreq = mask << INTB_AUD0;
 	custom.intena = mask << INTB_AUD0;
 
-	/* copy data to dma buffer */
+	/* copy data to DMA buffer */
 
 	if (sc->sc_channels == 1) {
 		dmap[0] =
@@ -712,8 +712,8 @@ aucc_start_output(void *addr, void *p, int cc, void (*intr)(void *), void *arg)
 	/* call audio decoding routine */
 	sc->sc_decodefunc (dmap, (u_char *)p, len);
 
-	/* dma buffers: we use same buffer 4 all channels
-	 * write dma location and length
+	/* DMA buffers: we use same buffer 4 all channels
+	 * write DMA location and length
 	 */
 	for (i = k = 0; i < 4; i++) {
 		if (masks2[i] & mask) {
@@ -743,10 +743,10 @@ aucc_start_output(void *addr, void *p, int cc, void (*intr)(void *), void *arg)
 
 	DPRINTF(("enabled ints: 0x%x\n", (masks2[j] << INTB_AUD0)));
 
-	/* enable dma */
+	/* enable DMA */
 	custom.dmacon = DMAF_SETCLR | DMAF_MASTER | mask;
 
-	DPRINTF(("enabled dma, mask=0x%x\n",mask));
+	DPRINTF(("enabled DMA, mask=0x%x\n",mask));
 
 	return(0);
 }
@@ -766,7 +766,7 @@ aucc_halt_output(void *addr)
 	register int i;
 
 	/* XXX only halt, if input is also halted ?? */
-	/* stop dma, etc */
+	/* stop DMA, etc */
 	custom.intena = AUCC_ALLINTF;
 	custom.dmacon = AUCC_ALLDMAF;
 	/* mark every busy unit idle */
@@ -947,7 +947,7 @@ aucc_inthdl(int ch)
 	register int mask=aucc->sc_channel[ch].nd_mask;
 
 	/* for all channels in this maskgroup:
-	   disable dma, int
+	   disable DMA, int
 	   mark idle */
 	DPRINTF(("inthandler called, channel %d, mask 0x%x\n",ch,mask));
 

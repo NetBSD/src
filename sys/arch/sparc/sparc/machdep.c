@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223 2003/04/02 04:35:25 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.224 2003/05/03 18:11:01 wiz Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -339,7 +339,7 @@ cpu_startup()
 
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
-		 * Allocate dma map for 24-bit devices (le, ie)
+		 * Allocate DMA map for 24-bit devices (le, ie)
 		 * [dvma_base - dvma_end] is for VME devices..
 		 */
 		dvmamap24 = extent_create("dvmamap24",
@@ -1564,7 +1564,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	/*
 	 * We now have physical pages, but no DVMA addresses yet. These
 	 * will be allocated in bus_dmamap_load*() routines. Hence we
-	 * save any alignment and boundary requirements in this dma
+	 * save any alignment and boundary requirements in this DMA
 	 * segment.
 	 */
 	segs[0].ds_addr = 0;
@@ -1701,7 +1701,7 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 	return (va);
 }
 
-/* sun4/sun4c dma map functions */
+/* sun4/sun4c DMA map functions */
 int	sun4_dmamap_load __P((bus_dma_tag_t, bus_dmamap_t, void *,
 				bus_size_t, struct proc *, int));
 int	sun4_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
@@ -1741,7 +1741,7 @@ sun4_dmamap_load(t, map, buf, buflen, p, flags)
 
 	if ((map->_dm_flags & BUS_DMA_24BIT) == 0) {
 		/*
-		 * XXX Need to implement "don't dma across this boundry".
+		 * XXX Need to implement "don't DMA across this boundry".
 		 */
 		if (map->_dm_boundary != 0) {
 			bus_addr_t baddr;

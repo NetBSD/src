@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.13 2003/01/31 00:07:42 thorpej Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.14 2003/05/03 18:11:34 wiz Exp $	*/
 /*	$OpenBSD: hifn7751.c,v 1.47 2000/10/11 13:15:41 itojun Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.13 2003/01/31 00:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.14 2003/05/03 18:11:34 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,26 +195,26 @@ hifn_attach(parent, self, aux)
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_dma), PAGE_SIZE, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		aprint_error(": can't alloc dma buffer\n");
+		aprint_error(": can't alloc DMA buffer\n");
 		goto fail_io1;
         }
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(*sc->sc_dma), &kva,
 	    BUS_DMA_NOWAIT)) {
-		aprint_error(": can't map dma buffers (%lu bytes)\n",
+		aprint_error(": can't map DMA buffers (%lu bytes)\n",
 		    (u_long)sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		goto fail_io1;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(*sc->sc_dma), 1,
 	    sizeof(*sc->sc_dma), 0, BUS_DMA_NOWAIT, &dmamap)) {
-		aprint_error(": can't create dma map\n");
+		aprint_error(": can't create DMA map\n");
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 		goto fail_io1;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, dmamap, kva, sizeof(*sc->sc_dma),
 	    NULL, BUS_DMA_NOWAIT)) {
-		aprint_error(": can't load dma map\n");
+		aprint_error(": can't load DMA map\n");
 		bus_dmamap_destroy(sc->sc_dmat, dmamap);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);

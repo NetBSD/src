@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.18 2003/04/01 15:15:26 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.19 2003/05/03 18:11:07 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -459,7 +459,7 @@ intio_set_ivec (vec)
 
 
 /*
- * intio bus dma stuff.  stolen from arch/i386/isa/isa_machdep.c
+ * intio bus DMA stuff.  stolen from arch/i386/isa/isa_machdep.c
  */
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.13 2001/07/19 04:27:37 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.14 2003/05/03 18:10:42 wiz Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ struct alpha_sgmap {
 	bus_addr_t aps_ptpa;		/* page table physical address */
 	bus_addr_t aps_sgvabase;	/* base of the sgva space */
 	bus_size_t aps_sgvasize;	/* size of the sgva space */
-	bus_addr_t aps_wbase;		/* base of the dma window */
+	bus_addr_t aps_wbase;		/* base of the DMA window */
 };
 
 extern	vaddr_t alpha_sgmap_prefetch_spill_page_va;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhareg.h,v 1.8 2000/06/08 18:22:15 cgd Exp $	*/
+/*	$NetBSD: uhareg.h,v 1.9 2003/05/03 18:11:24 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ typedef u_long physlen;
 #define UHA_SBUS_RES_ERR	0xa3	/* scsi bus reset error */
 #define UHA_BAD_SG_LIST		0xff	/* invalid scatter gath list */
 
-#define UHA_NSEG	33	/* number of dma segments supported */
+#define UHA_NSEG	33	/* number of DMA segments supported */
 
 struct uha_dma_seg {
 	physaddr seg_addr;

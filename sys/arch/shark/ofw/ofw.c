@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.27 2003/05/03 03:49:08 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.28 2003/05/03 18:10:58 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -719,7 +719,7 @@ ofw_configisadma(pdma)
 	}
 
 #ifdef DEBUG
-	printf("dma ranges size = %d\n", size);
+	printf("DMA ranges size = %d\n", size);
 
 	for (rangeidx = 0; rangeidx < nOFdmaranges; ++rangeidx) {
 		printf("%08lx %08lx\n", 

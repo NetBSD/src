@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.5 2003/02/01 06:23:38 thorpej Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.6 2003/05/03 18:11:33 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -48,7 +48,7 @@
 /* DMA */
 struct cs428x_dma {
 	bus_dmamap_t map;
-	caddr_t addr;		/* real dma buffer */
+	caddr_t addr;		/* real DMA buffer */
 	caddr_t dum;		/* dummy buffer for audio driver */
 	bus_dma_segment_t segs[1];
 	int nsegs;
@@ -56,7 +56,7 @@ struct cs428x_dma {
 	struct cs428x_dma *next;
 };
 #define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
-#define KERNADDR(p) ((void *)((p)->addr)) /* buffer for real dma */
+#define KERNADDR(p) ((void *)((p)->addr)) /* buffer for real DMA */
 #define BUFADDR(p)  ((void *)((p)->dum))  /* buffer for audio driver */
 
 /*
@@ -85,7 +85,7 @@ struct cs428x_softc {
 	int     type;
 
 	/* playback */
-	void	(*sc_pintr)(void *);	/* dma completion intr handler */
+	void	(*sc_pintr)(void *);	/* DMA completion intr handler */
 	void	*sc_parg;		/* arg for sc_intr() */
 	char	*sc_ps, *sc_pe, *sc_pn;
 	int	sc_pcount;
@@ -97,7 +97,7 @@ struct cs428x_softc {
 	int     sc_prate;               /* playback sample rate */
 
 	/* capturing */
-	void	(*sc_rintr)(void *);	/* dma completion intr handler */
+	void	(*sc_rintr)(void *);	/* DMA completion intr handler */
 	void	*sc_rarg;		/* arg for sc_intr() */
 	char	*sc_rs, *sc_re, *sc_rn;
 	int	sc_rcount;

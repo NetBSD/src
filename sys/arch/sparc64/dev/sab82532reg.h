@@ -1,4 +1,4 @@
-/*	$NetBSD: sab82532reg.h,v 1.1 2002/08/16 08:47:13 petrov Exp $	*/
+/*	$NetBSD: sab82532reg.h,v 1.2 2003/05/03 18:11:02 wiz Exp $	*/
 /*	$OpenBSD: sab82532reg.h,v 1.2 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -162,7 +162,7 @@
 #define	SAB_RBCH_CNT	0x0f	/* ms 4 bits of rx byte count (not used) */
 
 /* SAB_XBCH: transmit byte count high */
-#define	SAB_XBCH_DMA	0x80	/* dma mode: 1:dma, 0:interrupt */
+#define	SAB_XBCH_DMA	0x80	/* DMA mode: 1:DMA, 0:interrupt */
 #define	SAB_XBCH_CAS	0x20	/* carrier detect auto-start */
 #define	SAB_XBCH_XC	0x10	/* transmit continuously */
 #define	SAB_XBCH_CNT	0x0f	/* ms 4 bits of tx byte count */
@@ -218,7 +218,7 @@
 /* clock mode 0b, 2, 3, 4, 5, 6, 7 */
 #define	SAB_CCR2_TOE	0x08	/* tx clock output enable */
 /* clock mode 0a, 0b, 1, 2, 3, 4, 5, 6, 7 */
-#define	SAB_CCR2_RWX	0x04	/* read/write exchange (dma mode only) */
+#define	SAB_CCR2_RWX	0x04	/* read/write exchange (DMA mode only) */
 #define	SAB_CCR2_DIV	0x01	/* data inversion (nrz) */
 
 /* SAB_CCR3: channel configuration register 3 (v2 or greater) */

@@ -1,4 +1,4 @@
-/* $NetBSD: xyreg.h,v 1.1 1995/10/30 20:58:22 gwr Exp $ */
+/* $NetBSD: xyreg.h,v 1.2 2003/05/03 18:11:05 wiz Exp $ */
 
 /*
  *
@@ -146,8 +146,8 @@ struct xy_iopb {
                                  /* section 2.4.5: byte 4 */
   volatile u_char bw:1;		 /* byte(1)/word(0) xfer size */
   volatile u_char intlv:4;	 /* interleave factor (0=1:1, 1=2:1, etc.) */
-  volatile u_char thro:3;	 /* dma throttle (0=2,1=4,2=8, etc...) */
-#define XY_THRO 4		 /* 4 == 32 dma cycles */
+  volatile u_char thro:3;	 /* DMA throttle (0=2,1=4,2=8, etc...) */
+#define XY_THRO 4		 /* 4 == 32 DMA cycles */
                                  /* section 2.4.8: byte 7 */
   volatile u_char sect;		 /* sector # */
                                  /* section 2.4.7: byte 6 */

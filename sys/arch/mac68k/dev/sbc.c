@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.42 2002/09/27 15:36:16 provos Exp $	*/
+/*	$NetBSD: sbc.c,v 1.43 2003/05/03 18:10:50 wiz Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -217,7 +217,7 @@ decode_5380_intr(ncr_sc)
 			printf("%s: select\n", ncr_sc->sc_dev.dv_xname);
 	} else if (((csr & ~SCI_CSR_ACK) == (SCI_CSR_DONE | SCI_CSR_INT)) &&
 	    ((bus_csr & (SCI_BUS_RST | SCI_BUS_BSY | SCI_BUS_SEL)) == SCI_BUS_BSY))
-		printf("%s: dma eop\n", ncr_sc->sc_dev.dv_xname);
+		printf("%s: DMA eop\n", ncr_sc->sc_dev.dv_xname);
 	else if (((csr & ~SCI_CSR_PHASE_MATCH) == SCI_CSR_INT) &&
 	    ((bus_csr & ~SCI_BUS_RST) == 0))
 		printf("%s: bus reset\n", ncr_sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.19 2003/02/04 05:24:51 matt Exp $ */
+/* $NetBSD: bba.c,v 1.20 2003/05/03 18:11:41 wiz Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.19 2003/02/04 05:24:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.20 2003/05/03 18:11:41 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,9 @@ struct bba_mem {
 };
 
 struct bba_dma_state {
-	bus_dmamap_t dmam;		/* dma map */
+	bus_dmamap_t dmam;		/* DMA map */
 	int active;
-	int curseg;			/* current segment in dma buffer */
+	int curseg;			/* current segment in DMA buffer */
 	void (*intr)__P((void *));	/* higher-level audio handler */
 	void *intr_arg;
 };

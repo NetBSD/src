@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.37 2003/02/02 15:08:37 thomas Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.38 2003/05/03 18:10:46 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -111,7 +111,7 @@ volatile u_char	*fdio_addr;
 #define	fdc_ienable()		MFP2->mf_ierb |= IB_DCHG;
 
 /*
- * Interface to the pseudo-dma handler
+ * Interface to the pseudo-DMA handler
  */
 void	fddma_intr(void);
 caddr_t	fddmaaddr  = NULL;
@@ -536,7 +536,7 @@ fdc_ctrl_intr(frame)
 	MFP2->mf_ierb &= ~IB_DCHG;
 
 	/*
-	 * Set fddmalen to zero so no pseudo-dma transfers will
+	 * Set fddmalen to zero so no pseudo-DMA transfers will
 	 * occur.
 	 */
 	fddmalen = 0;
@@ -1003,7 +1003,7 @@ loop:
 
 		out_fdc(NE7CMD_SPECIFY);/* specify command */
 		out_fdc(fd->sc_type->steprate);
-		out_fdc(0x7);	/* XXX head load time == 6ms - non-dma */
+		out_fdc(0x7);	/* XXX head load time == 6ms - non-DMA */
 
 		fdc_ienable();
 
@@ -1053,7 +1053,7 @@ loop:
 		read = bp->b_flags & B_READ ? 1 : 0;
 
 		/*
-		 * Setup pseudo-dma address & count
+		 * Setup pseudo-DMA address & count
 		 */
 		fddmaaddr = bp->b_data + fd->sc_skip;
 		fddmalen  = fd->sc_nbytes;
