@@ -39,7 +39,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	8.52 (Berkeley) 3/11/94";
+static char sccsid[] = "@(#)main.c	8.55 (Berkeley) 4/15/94";
 #endif /* not lint */
 
 #define	_DEFINE
@@ -154,7 +154,7 @@ main(argc, argv, envp)
 	extern char *getcfname();
 	extern char *optarg;
 	extern char **environ;
-	extern void dumpstate();
+	extern void sigusr1();
 
 	/*
 	**  Check to see if we reentered.
@@ -174,7 +174,7 @@ main(argc, argv, envp)
 
 	/* arrange to dump state on signal */
 #ifdef SIGUSR1
-	setsignal(SIGUSR1, dumpstate);
+	setsignal(SIGUSR1, sigusr1);
 #endif
 
 	/* in 4.4BSD, the table can be huge; impose a reasonable limit */
@@ -187,7 +187,7 @@ main(argc, argv, envp)
 	**	But also be sure that 0, 1, & 2 are open.
 	*/
 
-	i = open("/dev/null", O_RDWR);
+	i = open("/dev/null", O_RDWR, 0);
 	if (fstat(STDIN_FILENO, &stb) < 0 && errno != EOPNOTSUPP)
 		(void) dup2(i, STDIN_FILENO);
 	if (fstat(STDOUT_FILENO, &stb) < 0 && errno != EOPNOTSUPP)
@@ -205,10 +205,12 @@ main(argc, argv, envp)
 	}
 	errno = 0;
 
-#ifdef LOG_MAIL
+#ifdef LOG
+# ifdef LOG_MAIL
 	openlog("sendmail", LOG_PID, LOG_MAIL);
-#else 
+# else 
 	openlog("sendmail", LOG_PID);
+# endif
 #endif 
 
 	/* set up the blank envelope */
@@ -985,7 +987,9 @@ main(argc, argv, envp)
 		if (tTd(0, 1))
 			strcat(dtype, "+debugging");
 
+#ifdef LOG
 		syslog(LOG_INFO, "starting daemon (%s): %s", Version, dtype + 1);
+#endif
 #ifdef XLA
 		xla_create_file();
 #endif
@@ -1424,22 +1428,28 @@ auth_warning(e, msg, va_alist)
 	}
 }
 /*
-**  DUMPSTATE -- dump state on user signal
+**  DUMPSTATE -- dump state
 **
 **	For debugging.
 */
 
 void
-dumpstate()
+dumpstate(when)
+	char *when;
 {
 #ifdef LOG
 	register char *j = macvalue('j', CurEnv);
 	register STAB *s;
 
-	syslog(LOG_DEBUG, "--- dumping state on user signal: $j = %s ---", j);
-	s = stab(j, ST_CLASS, ST_FIND);
-	if (s == NULL || !bitnset('w', s->s_class))
-		syslog(LOG_DEBUG, "*** $j not in $=w ***");
+	syslog(LOG_DEBUG, "--- dumping state on %s: $j = %s ---",
+		when,
+		j == NULL ? "<NULL>" : j);
+	if (j != NULL)
+	{
+		s = stab(j, ST_CLASS, ST_FIND);
+		if (s == NULL || !bitnset('w', s->s_class))
+			syslog(LOG_DEBUG, "*** $j not in $=w ***");
+	}
 	syslog(LOG_DEBUG, "--- open file descriptors: ---");
 	printopenfds(TRUE);
 	syslog(LOG_DEBUG, "--- connection cache: ---");
@@ -1459,4 +1469,11 @@ dumpstate()
 	}
 	syslog(LOG_DEBUG, "--- end of state dump ---");
 #endif
+}
+
+
+void
+sigusr1()
+{
+	dumpstate("user signal");
 }
