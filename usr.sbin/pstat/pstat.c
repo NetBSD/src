@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.72 2002/02/24 02:02:59 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.73 2002/09/26 21:30:30 agc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,14 +43,13 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.72 2002/02/24 02:02:59 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.73 2002/09/26 21:30:30 agc Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/vnode.h>
-#include <sys/map.h>
 #include <sys/ucred.h>
 #define _KERNEL
 #include <sys/file.h>
