@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_errno.h,v 1.4 1998/10/04 00:02:30 fvdl Exp $	*/
+/*	$NetBSD: linux_errno.h,v 1.5 1998/10/23 03:53:18 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -85,5 +85,7 @@
 #else
 #error Undefined linux_errno.h machine type.
 #endif
+
+extern int native_to_linux_errno[];
 
 #endif /* !_LINUX_ERRNO_H */

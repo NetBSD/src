@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.34 1998/10/07 22:17:57 erh Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.35 1998/10/23 03:53:18 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@ static void *linux_aout_copyargs __P((struct exec_package *,
 
 #define	LINUX_AOUT_AUX_ARGSIZ	2
 
-extern int linux_error[];
 extern char linux_sigcode[], linux_esigcode[];
 extern struct sysent linux_sysent[];
 extern char *linux_syscallnames[];
@@ -88,7 +87,7 @@ int exec_linux_aout_prep_qmagic __P((struct proc *, struct exec_package *));
 
 struct emul emul_linux_aout = {
 	"linux",
-	linux_error,
+	native_to_linux_errno,
 	linux_sendsig,
 	LINUX_SYS_syscall,
 	LINUX_SYS_MAXSYSCALL,
