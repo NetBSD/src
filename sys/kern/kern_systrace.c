@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.6 2002/07/16 16:40:56 thorpej Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.7 2002/07/16 19:53:37 christos Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.6 2002/07/16 16:40:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.7 2002/07/16 19:53:37 christos Exp $");
 
 #include "opt_systrace.h"
 
@@ -1251,12 +1251,8 @@ systrace_make_msg(struct str_process *strp, int type)
 {
 	struct str_message *msg = &strp->msg;
 	struct fsystrace *fst = strp->parent;
-	struct proc *p = strp->proc;
 	int st;
 
-#if defined(__GNUC__) && defined(__NetBSD__)
-	(void) &p;	/* Sanitize gcc */
-#endif
 	msg->msg_type = type;
 	msg->msg_pid = strp->pid;
 	if (strp->policy)
@@ -1275,7 +1271,7 @@ systrace_make_msg(struct str_process *strp, int type)
 	systrace_wakeup(fst);
 
 	/* Release the lock - XXX */
-	SYSTRACE_UNLOCK(fst, p);
+	SYSTRACE_UNLOCK(fst, strp->proc);
 
 	while (1) {
 		st = tsleep(strp, PWAIT | PCATCH, "systrmsg", 0);
