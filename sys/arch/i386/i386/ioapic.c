@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.8 2003/01/10 14:58:46 fvdl Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.9 2003/01/12 23:20:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -117,8 +117,8 @@ int apic_verbose = 0;
 int ioapic_bsp_id = 0;
 int ioapic_cold = 1;
 
-static struct ioapic_softc *ioapics;	 /* head of linked list */
-static int nioapics = 0;	   	 /* number attached */
+struct ioapic_softc *ioapics;	 /* head of linked list */
+int nioapics = 0;	   	 /* number attached */
 
 static __inline u_long
 ioapic_lock(struct ioapic_softc *sc)
