@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.70 2001/07/12 23:35:43 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.71 2001/07/15 21:57:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70 2001/07/12 23:35:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.71 2001/07/15 21:57:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,6 +265,7 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 {
 	long fidx, tidx;
 	ssize_t todo;
+	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 	if (size % NBPG)
 		panic("pagemove");
@@ -287,6 +288,8 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 		from += NBPG;
 		to += NBPG;
 	}
+
+	PMAP_TLB_SHOOTNOW();
 }
 
 /*
