@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.10 2003/09/06 22:08:14 christos Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.11 2003/10/27 14:11:46 junyoung Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.10 2003/09/06 22:08:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.11 2003/10/27 14:11:46 junyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.10 2003/09/06 22:08:14 christos E
 #include <machine/vm86.h>
 #include <machine/vmparam.h>
 
-void mach_trap __P((struct trapframe));
+void mach_trap(struct trapframe);
 
 /*
  * Fast syscall gate trap...

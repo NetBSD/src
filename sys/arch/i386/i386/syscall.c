@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.25 2003/10/26 10:48:08 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.26 2003/10/27 14:11:47 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25 2003/10/26 10:48:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.26 2003/10/27 14:11:47 junyoung Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -65,11 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25 2003/10/26 10:48:08 yamt Exp $");
 #include <machine/psl.h>
 #include <machine/userret.h>
 
-void syscall_intern __P((struct proc *));
-void syscall_plain __P((struct trapframe *));
-void syscall_fancy __P((struct trapframe *));
+void syscall_intern(struct proc *);
+void syscall_plain(struct trapframe *);
+void syscall_fancy(struct trapframe *);
 #ifdef VM86
-void syscall_vm86 __P((struct trapframe *));
+void syscall_vm86(struct trapframe *);
 #endif
 
 void

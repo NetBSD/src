@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.111 2003/08/07 16:27:57 agc Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.112 2003/10/27 14:11:47 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.111 2003/08/07 16:27:57 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.112 2003/10/27 14:11:47 junyoung Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -109,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.111 2003/08/07 16:27:57 agc Exp $")
 #include "npx.h"
 
 #ifndef NOREDZONE
-static void setredzone __P((struct lwp *l));
+static void setredzone(struct lwp *l);
 #endif
 
 void
@@ -143,7 +143,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 {
 	struct pcb *pcb = &l2->l_addr->u_pcb;
@@ -212,7 +212,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 void
 cpu_setfunc(l, func, arg)
 	struct lwp *l;
-	void (*func) __P((void *));
+	void (*func)(void *);
 	void *arg;
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;

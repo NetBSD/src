@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.541 2003/10/25 18:40:37 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.542 2003/10/27 14:11:46 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.541 2003/10/25 18:40:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.542 2003/10/27 14:11:46 junyoung Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -219,7 +219,7 @@ struct mtrr_funcs *mtrr_funcs;
 #endif
 
 #ifdef COMPAT_NOMID
-static int exec_nomid   __P((struct proc *, struct exec_package *));
+static int exec_nomid  (struct proc *, struct exec_package *);
 #endif  
 
 int	physmem;
@@ -253,9 +253,9 @@ struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 
-void (*delay_func) __P((int)) = i8254_delay;
-void (*microtime_func) __P((struct timeval *)) = i8254_microtime;
-void (*initclock_func) __P((void)) = i8254_initclocks;
+void (*delay_func)(int) = i8254_delay;
+void (*microtime_func)(struct timeval *) = i8254_microtime;
+void (*initclock_func)(void) = i8254_initclocks;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -263,15 +263,15 @@ void (*initclock_func) __P((void)) = i8254_initclocks;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
-int	cpu_dump __P((void));
-int	cpu_dumpsize __P((void));
-u_long	cpu_dump_mempagecnt __P((void));
-void	dumpsys __P((void));
-void	init386 __P((paddr_t));
-void	initgdt __P((union descriptor *));
+int	cpu_dump(void);
+int	cpu_dumpsize(void);
+u_long	cpu_dump_mempagecnt(void);
+void	dumpsys(void);
+void	init386(paddr_t);
+void	initgdt(union descriptor *);
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-void	add_mem_cluster	__P((u_int64_t, u_int64_t, u_int32_t));
+void	add_mem_cluster(u_int64_t, u_int64_t, u_int32_t);
 #endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
 extern int time_adjusted;
@@ -878,7 +878,7 @@ cpu_dump_mempagecnt()
 int
 cpu_dump()
 {
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -989,7 +989,7 @@ dumpsys()
 	int psize;
 	daddr_t blkno;
 	const struct bdevsw *bdev;
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
 
 	/* Save registers. */
@@ -1231,7 +1231,7 @@ setsegment(sd, base, limit, type, dpl, def32, gran)
 }
 
 #define	IDTVEC(name)	__CONCAT(X, name)
-typedef void (vector) __P((void));
+typedef void (vector)(void);
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(osyscall);
 extern vector *IDTVEC(exceptions)[];
@@ -1377,7 +1377,7 @@ init386(first_avail)
 	paddr_t first_avail;
 {
 	union descriptor *tgdt;
-	extern void consinit __P((void));
+	extern void consinit(void);
 	extern struct extent *iomem_ex;
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	struct btinfo_memmap *bim;
@@ -2216,7 +2216,7 @@ cpu_setmcontext(l, mcp, flags)
 			tf->tf_vm86_ds = gr[_REG_DS];
 			set_vflags(l, gr[_REG_EFL]);
 			if (flags & _UC_VM) {
-				void syscall_vm86 __P((struct trapframe *));
+				void syscall_vm86(struct trapframe *);
 				l->l_proc->p_md.md_syscall = syscall_vm86;
 			}
 		} else
@@ -2346,7 +2346,7 @@ idt_vec_alloc(low, high)
 void
 idt_vec_set(vec, function)
 	int vec;
-	void (*function) __P((void));
+	void (*function)(void);
 {
 	/*
 	 * Vector should be allocated, so no locking needed.

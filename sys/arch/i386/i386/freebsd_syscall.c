@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.13 2003/08/20 21:48:36 fvdl Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.14 2003/10/27 14:11:46 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.13 2003/08/20 21:48:36 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.14 2003/10/27 14:11:46 junyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -68,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.13 2003/08/20 21:48:36 fvdl Ex
 #include <machine/freebsd_machdep.h>
 #include <compat/freebsd/freebsd_syscall.h>
 
-void freebsd_syscall_plain __P((struct trapframe *));
-void freebsd_syscall_fancy __P((struct trapframe *));
+void freebsd_syscall_plain(struct trapframe *);
+void freebsd_syscall_fancy(struct trapframe *);
 
 void
 freebsd_syscall_intern(p)

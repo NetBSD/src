@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.40 2003/06/23 11:01:17 martin Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.41 2003/10/27 14:11:46 junyoung Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.40 2003/06/23 11:01:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.41 2003/10/27 14:11:46 junyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -77,7 +77,7 @@ const struct db_command db_machine_command_table[] = {
 	{ (char *)0, },
 };
 
-void kdbprinttrap __P((int, int));
+void kdbprinttrap(int, int);
 #ifdef MULTIPROCESSOR
 extern void ddb_ipi(int, struct trapframe);
 extern void ddb_ipi_tss(struct i386tss *);
@@ -91,7 +91,7 @@ db_regs_t *ddb_regp = 0;
 
 int ddb_cpu = NOCPU;
 
-typedef void (vector) __P((void));
+typedef void (vector)(void);
 extern vector Xintrddbipi;
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.72 2003/10/08 00:28:41 thorpej Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.73 2003/10/27 14:11:47 junyoung Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.72 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.73 2003/10/27 14:11:47 junyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -78,11 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.72 2003/10/08 00:28:41 thorpej Ex
 #include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
-void svr4_fasttrap __P((struct trapframe));
+static void svr4_getsiginfo(union svr4_siginfo *, int, u_long, caddr_t);
+void svr4_fasttrap(struct trapframe);
 
 #ifdef DEBUG_SVR4
-static void svr4_printmcontext __P((const char *, svr4_mcontext_t *));
+static void svr4_printmcontext(const char *, svr4_mcontext_t *);
 
 
 static void
@@ -220,7 +220,7 @@ svr4_setmcontext(l, mc, flags)
 	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (r[SVR4_X86_EFL] & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe *));
+		void syscall_vm86(struct trapframe *);
 
 		tf->tf_vm86_gs = r[SVR4_X86_GS];
 		tf->tf_vm86_fs = r[SVR4_X86_FS];

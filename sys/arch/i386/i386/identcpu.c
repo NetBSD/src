@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.5 2003/07/14 22:13:10 lukem Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.6 2003/10/27 14:11:46 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.5 2003/07/14 22:13:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.6 2003/10/27 14:11:46 junyoung Exp $");
 
 #include "opt_cputype.h"
 
@@ -127,17 +127,17 @@ static const char * const amd_brand[] = {
 u_int cpu_serial[3];
 static char amd_brand_name[48];
 
-void cyrix6x86_cpu_setup __P((struct cpu_info *));
-void winchip_cpu_setup __P((struct cpu_info *));
-void amd_family5_setup __P((struct cpu_info *));
-void transmeta_cpu_setup __P((struct cpu_info *));
+void cyrix6x86_cpu_setup(struct cpu_info *);
+void winchip_cpu_setup(struct cpu_info *);
+void amd_family5_setup(struct cpu_info *);
+void transmeta_cpu_setup(struct cpu_info *);
 
-static void via_cpu_probe __P((struct cpu_info *));
-static void amd_family6_probe __P((struct cpu_info *));
+static void via_cpu_probe(struct cpu_info *);
+static void amd_family6_probe(struct cpu_info *);
 
-static const char *intel_family6_name __P((struct cpu_info *));
+static const char *intel_family6_name(struct cpu_info *);
 
-static void transmeta_cpu_info __P((struct cpu_info *));
+static void transmeta_cpu_info(struct cpu_info *);
 
 static __inline u_char
 cyrix_read_reg(u_char reg)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.9 2003/08/20 21:48:38 fvdl Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.10 2003/10/27 14:11:46 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.9 2003/08/20 21:48:38 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.10 2003/10/27 14:11:46 junyoung Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -65,9 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.9 2003/08/20 21:48:38 fvdl Exp $"
 #include <machine/userret.h>
 #include <compat/mach/mach_syscall.h>
 
-void mach_syscall_intern __P((struct proc *));
-void mach_syscall_plain __P((struct trapframe *));
-void mach_syscall_fancy __P((struct trapframe *));
+void mach_syscall_intern(struct proc *);
+void mach_syscall_plain(struct trapframe *);
+void mach_syscall_fancy(struct trapframe *);
 
 extern struct sysent mach_sysent[];
 

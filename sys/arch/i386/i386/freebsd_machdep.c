@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.41 2003/10/08 00:28:41 thorpej Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.42 2003/10/27 14:11:46 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.41 2003/10/08 00:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.42 2003/10/27 14:11:46 junyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -204,7 +204,7 @@ freebsd_sys_sigreturn(l, v, retval)
 	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (context.sc_efl & PSL_VM) {
-		void syscall_vm86 __P((struct trapframe *));
+		void syscall_vm86(struct trapframe *);
 
 		tf->tf_vm86_gs = context.sc_gs;
 		tf->tf_vm86_fs = context.sc_fs;
