@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.53 2000/11/27 08:40:03 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.54 2000/11/29 09:52:18 simonb Exp $	*/
 
 /*
  *
@@ -251,6 +251,9 @@ struct uvmexp {
 	int inactive;   /* number of pages that we free'd but may want back */
 	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
+	/* XXX: Adding anything before this line will break binary
+	 *      compatibility with top(1) on NetBSD 1.5.
+	 */
 	int zeropages;	/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
 	int reserve_kernel; /* number of pages reserved for kernel */
@@ -332,6 +335,86 @@ struct uvmexp {
 	/* kernel memory objects: managed by uvm_km_kmemalloc() only! */
 	struct uvm_object *kmem_object;
 	struct uvm_object *mb_object;
+};
+
+/*
+ * The following structure is 64-bit alignment safe.  New elements
+ * should only be added to the end of this structure so binary
+ * compatibility can be preserved.
+ */
+struct uvmexp_sysctl {
+	int64_t	pagesize;
+	int64_t	pagemask;
+	int64_t	pageshift;
+	int64_t	npages;
+	int64_t	free;
+	int64_t	active;
+	int64_t	inactive;
+	int64_t	paging;
+	int64_t	wired;
+	int64_t	zeropages;
+	int64_t	reserve_pagedaemon;
+	int64_t	reserve_kernel;
+	int64_t	freemin;
+	int64_t	freetarg;
+	int64_t	inactarg;
+	int64_t	wiredmax;
+	int64_t	nswapdev;
+	int64_t	swpages;
+	int64_t	swpguniq;
+	int64_t	swpginuse;
+	int64_t	swpgonly;
+	int64_t	nswget;
+	int64_t	nanon;
+	int64_t	nanonneeded;
+	int64_t	nfreeanon;
+	int64_t	faults;
+	int64_t	traps;
+	int64_t	intrs;
+	int64_t	swtch;
+	int64_t	softs;
+	int64_t	syscalls;
+	int64_t	pageins;
+	int64_t	swapins;
+	int64_t	swapouts;
+	int64_t	pgswapin;
+	int64_t	pgswapout;
+	int64_t	forks;
+	int64_t	forks_ppwait;
+	int64_t	forks_sharevm;
+	int64_t	pga_zerohit;
+	int64_t	pga_zeromiss;
+	int64_t	zeroaborts;
+	int64_t	fltnoram;
+	int64_t	fltnoanon;
+	int64_t	fltpgwait;
+	int64_t	fltpgrele;
+	int64_t	fltrelck;
+	int64_t	fltrelckok;
+	int64_t	fltanget;
+	int64_t	fltanretry;
+	int64_t	fltamcopy;
+	int64_t	fltnamap;
+	int64_t	fltnomap;
+	int64_t	fltlget;
+	int64_t	fltget;
+	int64_t	flt_anon;
+	int64_t	flt_acow;
+	int64_t	flt_obj;
+	int64_t	flt_prcopy;
+	int64_t	flt_przero;
+	int64_t	pdwoke;
+	int64_t	pdrevs;
+	int64_t	pdswout;
+	int64_t	pdfreed;
+	int64_t	pdscans;
+	int64_t	pdanscan;
+	int64_t	pdobscan;
+	int64_t	pdreact;
+	int64_t	pdbusy;
+	int64_t	pdpageouts;
+	int64_t	pdpending;
+	int64_t	pddeact;
 };
 
 #ifdef _KERNEL
