@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.122 2000/05/19 06:55:42 kleink Exp $ */
+/*	$NetBSD: st.c,v 1.123 2000/06/06 17:16:02 soren Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -488,7 +488,7 @@ stattach(parent, self, aux)
 	    XS_CTL_DISCOVERY | XS_CTL_SILENT | XS_CTL_IGNORE_MEDIA_CHANGE))
 		printf("drive empty\n");
 	else {
-		printf("density code 0x%x, ", st->media_density);
+		printf("density code %d, ", st->media_density);
 		if (st->media_blksize > 0)
 			printf("%d-byte", st->media_blksize);
 		else
@@ -1699,7 +1699,7 @@ st_mode_sense(st, flags)
 	else
 		st->flags &= ~ST_READONLY;
 	SC_DEBUG(sc_link, SDEV_DB3,
-	    ("density code 0x%x, %d-byte blocks, write-%s, ",
+	    ("density code %d, %d-byte blocks, write-%s, ",
 	    st->media_density, st->media_blksize,
 	    st->flags & ST_READONLY ? "protected" : "enabled"));
 	SC_DEBUG(sc_link, SDEV_DB3,
