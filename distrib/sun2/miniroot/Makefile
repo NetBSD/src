@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/04/22 21:17:57 fredette Exp $
+#	$NetBSD: Makefile,v 1.7 2002/04/26 02:51:47 lukem Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -26,7 +26,8 @@ IMAGEDEPENDS=	${KERNEL} install.sub
 realall: ${IMG} ib.stamp
 
 ib.stamp: ${IMG}
-	${INSTALLBOOT} -v ${IMG} ${DESTDIR}/usr/mdec/bootxx /ufsboot
+	${INSTALLBOOT} -m ${MACHINE} -v ${IMG} \
+	    ${DESTDIR}/usr/mdec/bootxx /ufsboot
 	touch ib.stamp
 
 install.sub : ${TOP}/../miniroot/install.sub
@@ -35,15 +36,9 @@ install.sub : ${TOP}/../miniroot/install.sub
 ${IMAGE}.gz: ${IMAGE}
 	gzip -c -9 < ${IMAGE} > ${IMAGE}.gz
 
-.if !defined(RELEASEDIR)
-release:
-	@echo setenv RELEASEDIR before doing that!
-	@false
-.else	# RELEASEDIR
-release: ${IMAGE}.gz
+release: check_RELEASEDIR .WAIT ${IMAGE}.gz
 	-mkdir -p ${RELEASEDIR}/installation/miniroot
 	${RELINSTALL} ${IMAGE}.gz ${RELEASEDIR}/installation/miniroot
-.endif	# RELEASEDIR
 
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .include "${DISTRIBDIR}/common/Makefile.image"
