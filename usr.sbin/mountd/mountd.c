@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.24 1995/06/09 05:26:58 mycroft Exp $	*/
+/*	$NetBSD: mountd.c,v 1.25 1995/06/18 10:59:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c	8.8 (Berkeley) 2/20/94";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.24 1995/06/09 05:26:58 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.25 1995/06/18 10:59:21 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -647,10 +647,10 @@ get_exportlist()
 			struct msdosfs_args da;
 		} targs;
 
-		if (!strcmp(fsp->f_fstypename, MOUNT_MFS) ||
-		    !strcmp(fsp->f_fstypename, MOUNT_UFS) ||
-		    !strcmp(fsp->f_fstypename, MOUNT_MSDOS) ||
-		    !strcmp(fsp->f_fstypename, MOUNT_CD9660)) {
+		if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_UFS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
 			targs.ua.fspec = NULL;
 			targs.ua.export.ex_flags = MNT_DELEXPORT;
 			if (mount(fsp->f_fstypename, fsp->f_mntonname,
