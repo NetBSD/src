@@ -1,4 +1,4 @@
-/*	$NetBSD: atoll.c,v 1.1 2000/03/06 18:32:30 kleink Exp $	*/
+/*	$NetBSD: atoll.c,v 1.2 2000/03/07 20:02:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)atol.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: atoll.c,v 1.1 2000/03/06 18:32:30 kleink Exp $");
+__RCSID("$NetBSD: atoll.c,v 1.2 2000/03/07 20:02:00 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: atoll.c,v 1.1 2000/03/06 18:32:30 kleink Exp $");
 __weak_alias(atoll, _atoll)
 #endif
 
+/* LONGLONG */
 long long int
 atoll(str)
 	const char *str;
