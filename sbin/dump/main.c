@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 1997/09/16 06:41:21 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.17 1997/09/18 03:03:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.16 1997/09/16 06:41:21 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 1997/09/18 03:03:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,15 +83,15 @@ __RCSID("$NetBSD: main.c,v 1.16 1997/09/16 06:41:21 lukem Exp $");
 #define SBOFF (SBLOCK * DEV_BSIZE)
 #endif
 
-int	notify = 0;	/* notify operator flag */
+int	notify = 0;		/* notify operator flag */
 int	blockswritten = 0;	/* number of blocks written on current tape */
-int	tapeno = 0;	/* current tape number */
-int	density = 0;	/* density in bytes/0.1" */
-int	ntrec = NTREC;	/* # tape blocks in each tape record */
-int	cartridge = 0;	/* Assume non-cartridge tape */
-long	dev_bsize = 1;	/* recalculated below */
-long	blocksperfile;	/* output blocks per file */
-char	*host = NULL;	/* remote host (if any) */
+int	tapeno = 0;		/* current tape number */
+int	density = 0;		/* density in bytes/0.1" */
+int	ntrec = NTREC;		/* # tape blocks in each tape record */
+int	cartridge = 0;		/* Assume non-cartridge tape */
+long	dev_bsize = 1;		/* recalculated below */
+long	blocksperfile = 0;	/* output blocks per file */
+char	*host = NULL;		/* remote host (if any) */
 
 int	main __P((int, char *[]));
 static long numarg __P((char *, long, long));
@@ -114,6 +114,7 @@ main(argc, argv)
 	time_t tnow;
 	int dirlist;
 	char *toplevel;
+	int just_estimate = 0;
 
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
@@ -131,7 +132,8 @@ main(argc, argv)
 		usage();
 
 	obsolete(&argc, &argv);
-	while ((ch = getopt(argc, argv, "0123456789B:b:cd:f:h:ns:T:uWw")) != -1)
+	while ((ch = getopt(argc, argv,
+	    "0123456789B:b:cd:f:h:ns:ST:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
@@ -172,6 +174,10 @@ main(argc, argv)
 
 		case 's':		/* tape size, feet */
 			tsize = numarg("tape size", 1L, 0L) * 12 * 10;
+			break;
+
+		case 'S':		/* exit after estimating # of tapes */
+			just_estimate = 1;
 			break;
 
 		case 'T':		/* time of last dump */
@@ -355,9 +361,10 @@ main(argc, argv)
 		spcl.c_date == 0 ? "the epoch\n" : ctime(&spcl.c_date));
  	msg("Date of last level %c dump: %s", lastlevel,
 		spcl.c_ddate == 0 ? "the epoch\n" : ctime(&spcl.c_ddate));
-	msg("Dumping %s ", disk);
-	if (dt != NULL)
-		msgtail("(%s) ", dt->fs_file);
+	msg("Dumping ");
+	if (dt != NULL && dirlist != 0)
+		msgtail("a subset of ");
+	msgtail("%s (%s) ", disk, spcl.c_filesys);
 	if (host)
 		msgtail("to %s on host %s\n", tape, host);
 	else
@@ -448,6 +455,12 @@ main(argc, argv)
 		msg("estimated %ld tape blocks on %3.2f tape(s).\n",
 		    tapesize, fetapes);
 	}
+	/*
+	 * If the user only wants an estimate of the number of
+	 * tapes, exit now.
+	 */
+	if (just_estimate)
+		exit(0);
 
 	/*
 	 * Allocate tape buffer.
@@ -502,9 +515,9 @@ main(argc, argv)
 	for (i = 0; i < ntrec; i++)
 		writeheader(maxino - 1);
 	if (pipeout)
-		msg("DUMP: %ld tape blocks\n",spcl.c_tapea);
+		msg("%ld tape blocks\n",spcl.c_tapea);
 	else
-		msg("DUMP: %ld tape blocks on %d volume%s\n",
+		msg("%ld tape blocks on %d volume%s\n",
 		    spcl.c_tapea, spcl.c_volume,
 		    (spcl.c_volume == 1) ? "" : "s");
 	tnow = do_stats();
@@ -639,7 +652,7 @@ obsolete(argcp, argvp)
 				err(1, "malloc");
 			nargv[0][0] = '-';
 			nargv[0][1] = *ap;
-			(void)strcpy(&nargv[0][2], *argv); /* XXX strcpy is safe */
+			(void)strcpy(&nargv[0][2], *argv); /* XXX safe strcpy */
 			++argv;
 			++nargv;
 			break;
