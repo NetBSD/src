@@ -1,4 +1,4 @@
-|	$NetBSD: SRT0.S,v 1.1.1.2 1995/06/01 20:37:55 gwr Exp $
+|	$NetBSD: SRT0.S,v 1.2 1995/08/12 18:38:55 gwr Exp $
 
 | Copyright (c) 1995 Gordon W. Ross
 | All rights reserved.
@@ -36,19 +36,16 @@ __estack:
 	.globl	start
 start:
 | Check to see if the code is located correctly.
-| This SHOULD do a PC-relative load into a0, but...
-|	lea	start, a0	| current location (0x4000)
-| XXX - GAS version 1.93 gets the above lea wrong!
-	.word	0x41fa
-	.word	0xfffe
-| Now force a long (not PC-relative) load to a1 and compare.
-	lea	start:l, a1	| desired location (LINKADDR)
+| Get current location via PC-relative load, then...
+	lea	pc@(start:w), a0	| current location (0x4000)
+| ...force a long (not PC-relative) load to a1 and compare.
+	lea	start:l, a1		| desired location (LINKADDR)
 	cmpl	a0, a1
 	beqs	restart
 
 | Relocate the code and data to where they belong.
-	movl	#_edata,d0	| Desired end of program
-	subl	a1,d0		| Calculate length, round up.
+	movl	#_edata,d0		| Desired end of program
+	subl	a1,d0			| Calculate length, round up.
 	lsrl	#2,d0
 Lcp:
 	movl	a0@+, a1@+
