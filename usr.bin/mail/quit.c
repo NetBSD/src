@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,12 +32,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)quit.c	5.16 (Berkeley) 2/9/91";
+static char sccsid[] = "@(#)quit.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include "rcv.h"
-#include <sys/stat.h>
-#include <sys/file.h>
+#include <fcntl.h>
+#include "extern.h"
 
 /*
  * Rcv -- receive mail rationally.
@@ -48,6 +48,7 @@ static char sccsid[] = "@(#)quit.c	5.16 (Berkeley) 2/9/91";
 /*
  * The "quit" command.
  */
+int
 quitcmd()
 {
 	/*
@@ -64,7 +65,7 @@ quitcmd()
  * Save all untouched messages back in the system mailbox.
  * Remove the system mailbox, if none saved there.
  */
-
+void
 quit()
 {
 	int mcount, p, modify, autohold, anystat, holdbit, nohold;
@@ -111,7 +112,7 @@ quit()
 		if (rbuf == NULL || fbuf == NULL)
 			goto newmail;
 #ifdef APPEND
-		fseek(fbuf, mailsize, 0);
+		fseek(fbuf, (long)mailsize, 0);
 		while ((c = getc(fbuf)) != EOF)
 			(void) putc(c, rbuf);
 #else
@@ -326,6 +327,7 @@ newmail:
  * saved.  On any error, just return -1.  Else return 0.
  * Incorporate the any new mail that we found.
  */
+int
 writeback(res)
 	register FILE *res;
 {
@@ -379,8 +381,10 @@ writeback(res)
  * Terminate an editing session by attempting to write out the user's
  * file from the temporary.  Save any new stuff appended to the file.
  */
+void
 edstop()
 {
+	extern char *tmpdir;
 	register int gotcha, c;
 	register struct message *mp;
 	FILE *obuf, *ibuf, *readstat;
@@ -415,7 +419,7 @@ edstop()
 		goto done;
 	ibuf = NULL;
 	if (stat(mailname, &statb) >= 0 && statb.st_size > mailsize) {
-		strcpy(tempname, _PATH_TMP);
+		strcpy(tempname, tmpdir);
 		strcat(tempname, "mboxXXXXXX");
 		mktemp(tempname);
 		if ((obuf = Fopen(tempname, "w")) == NULL) {
@@ -430,7 +434,7 @@ edstop()
 			relsesigs();
 			reset(0);
 		}
-		fseek(ibuf, mailsize, 0);
+		fseek(ibuf, (long)mailsize, 0);
 		while ((c = getc(ibuf)) != EOF)
 			(void) putc(c, obuf);
 		Fclose(ibuf);

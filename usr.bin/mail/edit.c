@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)edit.c	5.15 (Berkeley) 6/25/90";
+static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include "rcv.h"
-#include <sys/stat.h>
+#include <fcntl.h>
+#include "extern.h"
 
 /*
  * Mail -- a mail program
@@ -47,7 +48,7 @@ static char sccsid[] = "@(#)edit.c	5.15 (Berkeley) 6/25/90";
 /*
  * Edit a message list.
  */
-
+int
 editor(msgvec)
 	int *msgvec;
 {
@@ -58,7 +59,7 @@ editor(msgvec)
 /*
  * Invoke the visual editor on a message list.
  */
-
+int
 visual(msgvec)
 	int *msgvec;
 {
@@ -71,9 +72,10 @@ visual(msgvec)
  * (which should not exist) and forking an editor on it.
  * We get the editor from the stuff above.
  */
+int
 edit1(msgvec, type)
 	int *msgvec;
-	char type;
+	int type;
 {
 	register int c;
 	int i;
@@ -106,7 +108,7 @@ edit1(msgvec, type)
 		sigint = signal(SIGINT, SIG_IGN);
 		fp = run_editor(setinput(mp), mp->m_size, type, readonly);
 		if (fp != NULL) {
-			(void) fseek(otf, (long) 0, 2);
+			(void) fseek(otf, 0L, 2);
 			size = ftell(otf);
 			mp->m_block = blockof(size);
 			mp->m_offset = offsetof(size);
@@ -139,7 +141,7 @@ FILE *
 run_editor(fp, size, type, readonly)
 	register FILE *fp;
 	off_t size;
-	char type;
+	int type, readonly;
 {
 	register FILE *nf = NULL;
 	register int t;
@@ -184,7 +186,7 @@ run_editor(fp, size, type, readonly)
 	nf = NULL;
 	if ((edit = value(type == 'e' ? "EDITOR" : "VISUAL")) == NOSTR)
 		edit = type == 'e' ? _PATH_EX : _PATH_VI;
-	if (run_command(edit, 0, -1, -1, tempEdit, NOSTR) < 0) {
+	if (run_command(edit, 0, -1, -1, tempEdit, NOSTR, NOSTR) < 0) {
 		(void) unlink(tempEdit);
 		goto out;
 	}

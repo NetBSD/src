@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)strings.c	5.9 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
@@ -44,6 +44,7 @@ static char sccsid[] = "@(#)strings.c	5.9 (Berkeley) 6/1/90";
  */
 
 #include "rcv.h"
+#include "extern.h"
 
 /*
  * Allocate size more bytes of space and return the address of the
@@ -55,6 +56,7 @@ static char sccsid[] = "@(#)strings.c	5.9 (Berkeley) 6/1/90";
 
 char *
 salloc(size)
+	int size;
 {
 	register char *t;
 	register int s;
@@ -95,6 +97,7 @@ salloc(size)
  * Called to free all strings allocated
  * since last reset.
  */
+void
 sreset()
 {
 	register struct strings *sp;
@@ -116,6 +119,7 @@ sreset()
  * Make the string area permanent.
  * Meant to be called in main, after initialization.
  */
+void
 spreserve()
 {
 	register struct strings *sp;
