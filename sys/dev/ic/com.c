@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.205 2003/04/21 03:43:18 gson Exp $	*/
+/*	$NetBSD: com.c,v 1.206 2003/04/28 02:46:09 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.205 2003/04/21 03:43:18 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.206 2003/04/28 02:46:09 briggs Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -562,12 +562,16 @@ com_attach_subr(struct com_softc *sc)
 #ifdef KGDB
 	/*
 	 * Allow kgdb to "take over" this port.  If this is
-	 * the kgdb device, it has exclusive use.
+	 * not the console and is the kgdb device, it has
+	 * exclusive use.  If it's the console _and_ the
+	 * kgdb device, it doesn't.
 	 */
 	if (iot == com_kgdb_iot && iobase == com_kgdb_addr) {
-		com_kgdb_attached = 1;
+		if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+			com_kgdb_attached = 1;
 
-		SET(sc->sc_hwflags, COM_HW_KGDB);
+			SET(sc->sc_hwflags, COM_HW_KGDB);
+		}
 		aprint_normal("%s: kgdb\n", sc->sc_dev.dv_xname);
 	}
 #endif
@@ -2004,7 +2008,7 @@ again:	do {
 				       CNC_BREAK, com_cnm_state);
 			if (cn_trapped)
 				continue;
-#if defined(KGDB)
+#if defined(KGDB) && !defined(DDB)
 			if (ISSET(sc->sc_hwflags, COM_HW_KGDB)) {
 				kgdb_connect(1);
 				continue;
@@ -2383,19 +2387,26 @@ com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
 {
 	int res;
 
-	if (iot == comconstag && iobase == comconsaddr)
+	if (iot == comconstag && iobase == comconsaddr) {
+#if !defined(DDB)
 		return (EBUSY); /* cannot share with console */
+#else
+		com_kgdb_ioh = comconsioh;
+#endif
+	} else {
 
-	res = cominit(iot, iobase, rate, frequency, cflag, &com_kgdb_ioh);
-	if (res)
-		return (res);
+		res = cominit(iot, iobase, rate, frequency, cflag,
+			      &com_kgdb_ioh);
+		if (res)
+			return (res);
 
-	/*
-	 * XXXfvdl this shouldn't be needed, but the cn_magic goo
-	 * expects this to be initialized
-	 */
-	cn_init_magic(&com_cnm_state);
-	cn_set_magic("\047\001");
+		/*
+		 * XXXfvdl this shouldn't be needed, but the cn_magic goo
+		 * expects this to be initialized
+		 */
+		cn_init_magic(&com_cnm_state);
+		cn_set_magic("\047\001");
+	}
 
 	kgdb_attach(com_kgdb_getc, com_kgdb_putc, NULL);
 	kgdb_dev = 123; /* unneeded, only to satisfy some tests */
