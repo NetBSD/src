@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.38 2001/09/10 15:47:03 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.39 2001/09/13 21:33:05 assar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.38 2001/09/10 15:47:03 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.39 2001/09/13 21:33:05 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -898,7 +898,7 @@ waitproc(block, jp, status)
 	int flags = 0;
 
 #if JOBS
-	if (jp->jobctl)
+	if (jp != NULL && jp->jobctl)
 		flags |= WUNTRACED;
 #endif
 	if (block == 0)
