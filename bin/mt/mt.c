@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.6 1995/06/01 16:25:04 ragge Exp $	*/
+/*	$NetBSD: mt.c,v 1.7 1995/08/27 18:31:20 pk Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.6 1995/06/01 16:25:04 ragge Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.7 1995/08/27 18:31:20 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,21 +124,21 @@ main(argc, argv)
 			break;
 	}
 	if ((mtfd = open(tape, comp->c_ronly ? O_RDONLY : O_RDWR)) < 0)
-		err(1, "%s", tape);
+		err(2, "%s", tape);
 	if (comp->c_code != MTNOP) {
 		mt_com.mt_op = comp->c_code;
 		if (*argv) {
 			mt_com.mt_count = strtol(*argv, &p, 10);
 			if (mt_com.mt_count <= 0 || *p)
-				errx(1, "%s: illegal count", *argv);
+				errx(2, "%s: illegal count", *argv);
 		}
 		else
 			mt_com.mt_count = 1;
 		if (ioctl(mtfd, MTIOCTOP, &mt_com) < 0)
-			err(1, "%s: %s", tape, comp->c_name);
+			err(2, "%s: %s", tape, comp->c_name);
 	} else {
 		if (ioctl(mtfd, MTIOCGET, &mt_status) < 0)
-			err(1, "ioctl MTIOCGET");
+			err(2, "ioctl MTIOCGET");
 		status(&mt_status);
 	}
 	exit (0);
