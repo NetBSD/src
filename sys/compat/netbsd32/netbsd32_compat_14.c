@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.5.2.3 2002/05/29 21:32:48 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.5.2.4 2002/08/23 02:37:09 petrov Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.5.2.3 2002/05/29 21:32:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.5.2.4 2002/08/23 02:37:09 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/ipc.h>
@@ -224,8 +224,8 @@ native_to_netbsd32_shmid_ds14(shmbuf, oshmbuf)
  * the compat_14 system calls
  */
 int
-compat_14_netbsd32_msgctl(p, v, retval)
-	struct proc *p;
+compat_14_netbsd32_msgctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -248,7 +248,7 @@ compat_14_netbsd32_msgctl(p, v, retval)
 		netbsd32_msqid_ds14_to_native(&omsqbuf, &msqbuf);
 	}
 
-	error = msgctl1(p, SCARG(uap, msqid), cmd,
+	error = msgctl1(l->l_proc, SCARG(uap, msqid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -261,8 +261,8 @@ compat_14_netbsd32_msgctl(p, v, retval)
 }
 
 int
-compat_14_netbsd32___semctl(p, v, retval)
-	struct proc *p;
+compat_14_netbsd32___semctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -306,7 +306,7 @@ compat_14_netbsd32___semctl(p, v, retval)
 		}
 	}
 
-	error = semctl1(p, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	error = semctl1(l->l_proc, SCARG(uap, semid), SCARG(uap, semnum), cmd,
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {
@@ -318,8 +318,8 @@ compat_14_netbsd32___semctl(p, v, retval)
 }
 
 int
-compat_14_netbsd32_shmctl(p, v, retval)
-	struct proc *p;
+compat_14_netbsd32_shmctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -342,7 +342,7 @@ compat_14_netbsd32_shmctl(p, v, retval)
 		netbsd32_shmid_ds14_to_native(&oshmbuf, &shmbuf);
 	}
 
-	error = shmctl1(p, SCARG(uap, shmid), cmd,
+	error = shmctl1(l->l_proc, SCARG(uap, shmid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {

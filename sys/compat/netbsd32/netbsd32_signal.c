@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.1.4.2 2002/08/01 02:44:20 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.1.4.3 2002/08/23 02:37:11 petrov Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.1.4.2 2002/08/01 02:44:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.1.4.3 2002/08/23 02:37:11 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.1.4.2 2002/08/01 02:44:20 nath
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 int
-netbsd32_sigaction(p, v, retval)
-	struct proc *p;
+netbsd32_sigaction(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -66,7 +66,7 @@ netbsd32_sigaction(p, v, retval)
 		nsa.sa_mask = sa32.sa_mask;
 		nsa.sa_flags = sa32.sa_flags;
 	}
-	error = sigaction1(p, SCARG(uap, signum), 
+	error = sigaction1(l->l_proc, SCARG(uap, signum), 
 			   SCARG(uap, nsa) ? &nsa : 0, 
 			   SCARG(uap, osa) ? &osa : 0,
 			   NULL, 0);
@@ -87,8 +87,8 @@ netbsd32_sigaction(p, v, retval)
 }
 
 int
-netbsd32___sigaltstack14(p, v, retval)
-	struct proc *p;
+netbsd32___sigaltstack14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -108,7 +108,7 @@ netbsd32___sigaltstack14(p, v, retval)
 		nss.ss_size = (size_t)s32.ss_size;
 		nss.ss_flags = s32.ss_flags;
 	}
-	error = sigaltstack1(p,
+	error = sigaltstack1(l->l_proc,
 	    SCARG(uap, nss) ? &nss : 0, SCARG(uap, oss) ? &oss : 0);
 	if (error)
 		return (error);
@@ -125,8 +125,8 @@ netbsd32___sigaltstack14(p, v, retval)
 
 /* ARGSUSED */
 int
-netbsd32___sigaction14(p, v, retval)
-	struct proc *p;
+netbsd32___sigaction14(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -148,7 +148,7 @@ netbsd32___sigaction14(p, v, retval)
 		nsa.sa_mask = sa32.sa_mask;
 		nsa.sa_flags = sa32.sa_flags;
 	}
-	error = sigaction1(p, SCARG(uap, signum),
+	error = sigaction1(l->l_proc, SCARG(uap, signum),
 	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
 	    NULL, 0);
 	if (error)
