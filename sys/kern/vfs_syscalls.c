@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.202 2003/12/10 11:40:12 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.203 2004/02/22 09:56:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.202 2003/12/10 11:40:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.203 2004/02/22 09:56:26 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -249,8 +249,10 @@ sys_mount(l, v, retval)
 		if (vp->v_mount->mnt_flag & MNT_NOEXEC)
 			SCARG(uap, flags) |= MNT_NOEXEC;
 	}
-	if ((error = vinvalbuf(vp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
+	if ((error = vinvalbuf(vp, V_SAVE, p->p_ucred, p, 0, 0)) != 0) {
+		vput(vp);
 		return (error);
+	}
 	if (vp->v_type != VDIR) {
 		vput(vp);
 		return (ENOTDIR);
