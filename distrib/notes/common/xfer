@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.4.4.4 2000/11/14 03:36:43 tv Exp $
+.\"	$NetBSD: xfer,v 1.4.4.5 2001/04/21 20:56:13 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -220,10 +220,10 @@ BOOTPARAMS for netboot installations.
 .\} \" r_vax
 .
 .if r_x68k \{\
-You will have to prepare the installer.
+You will have to prepare the `ramdisk-root' installation system.
 There are two ways to invoke the
 .Nx
-installer;
+installation system;
 .Pp
 .(bullet -compact -offset indent
 Use
@@ -233,31 +233,20 @@ utility to boot
 from
 .Tn Human68k
 .It
-Create a boot floppy which contains the install kernel
+Make a boot floppy which contains the installation system
 .bullet)
 .Pp
-When you chose the first method, you have to put the install kernel
-.Pa netbsdsi
-(for the standard
-.Ic sysinst
-installer) or
+When you chose the first method, you have to put the installation kernel
 .Pa netbsd
-(for the small
-.Ic script
-installer) and
+and the
 .Pa loadbsd.x
-utility.  These files can be found in
+utility to a disk accessible from Human68k.  These files can be found in
 .Pa installation/misc
 directory of the
 .Nx
 distribution.
-The difference between the two installer is described below.
 .Pp
-To invoke the installer, just type
-.Pp
-.Dl Ic "loadbsd.x netbsdsi"
-.Pp
-or
+To invoke the installation system, just type
 .Pp
 .Dl Ic "loadbsd.x netbsd"
 .Pp
@@ -265,22 +254,14 @@ from the
 .Tn Human68k
 command line.
 .Pp
-When you chose the second method, you have to create the boot floppy
+When you chose the second method, you have to make the boot floppy
 from the floppy image
-.Pa sysinst.fs
-(for the standard
-.Ic sysinst
-installer) or
-.Pa boot.fs
-(for the small
-.Ic script
-installer).
-The image files can be found in
+.Pa sysinst.fs .
+The image file can be found in
 .Pa installation/floppy
 directory of the
 .Nx
 distribution.
-The difference between the two installer is described below.
 .Pp
 If you are using a
 .Ul
@@ -310,10 +291,38 @@ images (.fs files) to disks.
 To use the boot floppy, insert the floppy to your floppy drive 0,
 and reboot your computer with OPT.1 key pressed.
 .Pp
+If you have less than 5MB of memory, you have to use the
+`floppy-root' installation system instead of the above
+`ramdisk-root' installation system.  `Floppy-root' installation
+system is composed of two floppies, `kern' and `inst'.  They are
+made from the floppy images
+.Pa kern.fs 
+and
+.Pa inst.fs
+respectively, both of which are found in
+.Pa installation/floppy
+directory of the
+.Nx
+distribution.  See above how to write the images to floppies.
+.Pp
+To start the `floppy-root' installation system, insert the `kern' floppy
+to your floppy drive 0, and reboot your computer with OPT.1 key pressed.
+When you are prompted that `Insert filesystem floppy and press return.',
+replace the `kern' floppy with `inst' floppy and press return key.
+.Pp
+Once booted, the `floppy-root' installation system is identical with
+the `ramdisk-root' installation system, except that the former constantly
+accesses the floppy disk.  Floppy disks are relatively unreliable
+media and cause some warning messages to report access errors, most of
+which are corrected and can be ignored.  With the latter installation
+system the floppy disk is not used once the system has booted off and can
+be removed from the drive.
+.Pp
 .\} \" r_x68k
 .
 .ig
 XXXX
+.\" THIS IS NOT APPLICABLE TO X68K!
 Note that if you are installing or upgrading from a writable media,
 the media can be write-protected if you wish.
 These systems mount a root image from inside the kernel, and will not
