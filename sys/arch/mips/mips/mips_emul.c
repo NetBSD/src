@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.1 2002/07/06 23:59:21 gmcgarry Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.2 2002/07/21 05:47:51 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -69,6 +69,15 @@ void	bcemul_sh(u_int32_t inst, struct frame *, u_int32_t);
 void	bcemul_sw(u_int32_t inst, struct frame *, u_int32_t);
 void	bcemul_swl(u_int32_t inst, struct frame *, u_int32_t);
 void	bcemul_swr(u_int32_t inst, struct frame *f, u_int32_t);
+
+/*
+ * MIPS2 LL instruction emulation state
+ */
+struct {
+	struct proc *proc;
+	vaddr_t addr;
+	u_int32_t value;
+} llstate;
 
 /*
  * Analyse 'next' PC address taking account of branch/jump instructions
@@ -210,7 +219,6 @@ MachEmulateInst(status, cause, opc, frame)
 		inst = fuword((u_int32_t *)opc);
 
 	switch (((InstFmt)inst).FRType.op) {
-#if defined(MIPS1)
 	case OP_LWC0:
 		MachEmulateLWC0(inst, frame, cause);
 		break;
@@ -220,7 +228,6 @@ MachEmulateInst(status, cause, opc, frame)
 	case OP_SPECIAL:
 		MachEmulateSpecial(inst, frame, cause);
 		break;
-#endif
 	case OP_COP1:
 		MachEmulateFP(inst, frame, cause);
 		break;
@@ -268,12 +275,8 @@ update_pc(struct frame *frame, u_int32_t cause)
 		frame->f_regs[PC] += 4;
 }
 
-#if defined(MIPS1)
-
-#define LWLWC0_MAXLOOP	12
-
 /*
- * XXX only on uniprocessor machines
+ * MIPS2 LL instruction
  */
 void
 MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
@@ -281,15 +284,15 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 	u_int32_t	vaddr;
 	int16_t		offset;
 	void		*t;
-	mips_reg_t	pc;
-	int		i;
 
 	offset = inst & 0xFFFF;
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
 	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
-		send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
+		frame->f_regs[CAUSE] = cause;
+		frame->f_regs[BADVADDR] = vaddr;
+		trapsignal(curproc, SIGBUS, vaddr);
 		return;
 	}
 
@@ -300,107 +303,66 @@ MachEmulateLWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 		return;
 	}
 
-	pc = frame->f_regs[PC];
+	llstate.proc = curproc;
+	llstate.addr = vaddr;
+	llstate.value = *((u_int32_t *)t);
+
 	update_pc(frame, cause);
-
-	if (cause & MIPS_CR_BR_DELAY)
-		return;
-
-	for (i = 1; i < LWLWC0_MAXLOOP; i++) {
-		if (mips_btop(frame->f_regs[PC]) != mips_btop(pc))
-			return;
-
-		vaddr = frame->f_regs[PC];	/* XXX truncates to 32 bits */
-		inst = fuiword((u_int32_t *)vaddr);
-		if (((InstFmt)inst).FRType.op != OP_LWC0)
-			return;
-
-		offset = inst & 0xFFFF;
-		vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
-
-		/* segment and alignment check */
-		if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
-			send_sigsegv(vaddr, T_ADDR_ERR_LD, frame, cause);
-			return;
-		}
-
-		t = &(frame->f_regs[(inst>>16)&0x1F]);
-
-		if (copyin((void *)vaddr, t, 4) != 0) {
-			send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
-			return;
-		}
-
-		pc = frame->f_regs[PC];
-		update_pc(frame, cause);
-	}
 }
 
-#define LWSWC0_MAXLOOP	12
-
 /*
- * XXX only on uniprocessor machines
+ * MIPS2 SC instruction
  */
 void
 MachEmulateSWC0(u_int32_t inst, struct frame *frame, u_int32_t cause)
 {
-
-	u_int32_t	vaddr;
+	u_int32_t	vaddr, value;
 	int16_t		offset;
-	void		*t;
-	mips_reg_t	pc;
-	int		i;
+	mips_reg_t	*t;
 
 	offset = inst & 0xFFFF;
 	vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
 
 	/* segment and alignment check */
 	if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
-		send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
+		frame->f_regs[CAUSE] = cause;
+		frame->f_regs[BADVADDR] = vaddr;
+		trapsignal(curproc, SIGBUS, vaddr);
 		return;
 	}
 
-	t = &(frame->f_regs[(inst>>16)&0x1F]);
+	t = (mips_reg_t *)&(frame->f_regs[(inst>>16)&0x1F]);
 
-	if (copyout(t, (void *)vaddr, 4) != 0) {
-		send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
-		return;
+	/*
+	 * Check that the process and address match the last
+	 * LL instruction.
+	 */
+	if (curproc == llstate.proc && vaddr == llstate.addr) {
+		llstate.proc = NULL;
+		/*
+		 * Check that the data at the address hasn't changed
+		 * since the LL instruction.
+		 */
+		if (copyin((void *)vaddr, &value, 4) != 0) {
+			send_sigsegv(vaddr, T_TLB_LD_MISS, frame, cause);
+			return;
+		}
+		if (value == llstate.value) {
+			/* SC successful */
+			if (copyout(t, (void *)vaddr, 4) != 0) {
+				send_sigsegv(vaddr, T_TLB_ST_MISS,
+				    frame, cause);
+				return;
+			}
+			*t = 1;
+			update_pc(frame, cause);
+			return;
+		}
 	}
 
-	pc = frame->f_regs[PC];
+	/* SC failed */
+	*t = 0;
 	update_pc(frame, cause);
-
-	if (cause & MIPS_CR_BR_DELAY)
-		return;
-
-	for (i = 1; i < LWSWC0_MAXLOOP; i++) {
-		if (mips_btop(frame->f_regs[PC]) != mips_btop(pc))
-			return;
-
-		vaddr = frame->f_regs[PC];	/* XXX truncates to 32 bits */
-		inst = fuiword((u_int32_t *)vaddr);
-		if (((InstFmt)inst).FRType.op != OP_SWC0)
-			return;
-
-		offset = inst & 0xFFFF;
-		vaddr = frame->f_regs[(inst>>21)&0x1F] + offset;
-
-		/* segment and alignment check */
-		if (vaddr > VM_MAX_ADDRESS || vaddr & 0x3) {
-			send_sigsegv(vaddr, T_ADDR_ERR_ST, frame, cause);
-			return;
-		}
-
-		t = &(frame->f_regs[(inst>>16)&0x1F]);
-
-		if (copyout(t, (void *)vaddr, 4) != 0) {
-			send_sigsegv(vaddr, T_TLB_ST_MISS, frame, cause);
-			return;
-		}
-
-		pc = frame->f_regs[PC];
-		update_pc(frame, cause);
-	}
 }
 
 void
@@ -418,9 +380,6 @@ MachEmulateSpecial(u_int32_t inst, struct frame *frame, u_int32_t cause)
 
 	update_pc(frame, cause);
 }
-
-#endif /* defined(MIPS1) */
-
 
 #if defined(SOFTFLOAT)
 
