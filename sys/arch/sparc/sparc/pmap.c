@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141.2.1.2.2 1999/07/01 23:22:14 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.141.2.1.2.3 1999/07/31 18:36:33 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1715,17 +1715,7 @@ mmu_pagein(pm, va, prot)
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
-
 	rp = &pm->pm_regmap[vr];
-#ifdef DEBUG
-if (pm == pmap_kernel())
-printf("mmu_pagein: kernel wants map at va 0x%x, vr %d, vs %d\n", va, vr, vs);
-#endif
-#if 0
-#if defined(SUN4_MMU3L)
-printf("mmu_pagein: pm=%p, va 0x%x, vr %d, vs %d, rp=%p, segmap=%p\n", pm, va, vr, vs, rp, rp->rg_segmap);
-#endif
-#endif
 
 	/* return 0 if we have no PMEGs to load */
 	if (rp->rg_segmap == NULL)
