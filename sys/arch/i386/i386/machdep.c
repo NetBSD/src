@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.319 1998/09/11 12:50:06 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.320 1998/09/12 00:47:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1093,6 +1093,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
+#ifdef COMPAT_13
+void native_sigset_to_sigset13 __P((const sigset_t *, sigset13_t *));
+#endif
+
 /*
  * Send an interrupt to process.
  *
@@ -1126,7 +1130,7 @@ sendsig(catcher, sig, mask, code)
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-		    psp->ps_sigstk.ss_size);
+						  psp->ps_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->tf_esp;
 	fp--;
@@ -1172,6 +1176,9 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
+#ifdef COMPAT_13
+	native_sigset_to_sigset13(mask, &frame.sf_sc.sc_oldmask);
+#endif
 	frame.sf_sc.sc_mask = *mask;
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
@@ -1212,12 +1219,12 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-sys_sigreturn(p, v, retval)
+sys___sigreturn14(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_sigreturn_args /* {
+	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, context;

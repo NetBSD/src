@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.82 1998/09/11 12:50:11 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.83 1998/09/12 00:47:13 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -206,7 +206,8 @@
 			    int flags); } osend
 102	COMPAT_43	{ int sys_recv(int s, caddr_t buf, int len, \
 			    int flags); } orecv
-103	STD		{ int sys_sigreturn(struct sigcontext *sigcntxp); }
+103	COMPAT_13	{ int sys_sigreturn(struct sigcontext *sigcntxp); } \
+			    sigreturn13
 104	STD		{ int sys_bind(int s, const struct sockaddr *name, \
 			    int namelen); }
 105	STD		{ int sys_setsockopt(int s, int level, int name, \
@@ -560,3 +561,4 @@
 			    const sigset_t *set, \
 			    sigset_t *oset); }
 294	STD		{ int sys___sigsuspend14(const sigset_t *set); }
+295	STD		{ int sys___sigreturn14(struct sigcontext *sigcntxp); }
