@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.2 2003/08/20 22:33:41 jonathan Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.3 2003/09/12 11:21:00 itojun Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.2 2003/08/20 22:33:41 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.3 2003/09/12 11:21:00 itojun Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.2 2003/08/20 22:33:41 jonathan Ex
 #include <netipsec/ipcomp.h>
 #include <netipsec/ipcomp_var.h>
 
-#include <netipsec/key.h>
-#include <netipsec/key_debug.h>
+#include <netkey/key.h>
+#include <netkey/key_debug.h>
 
 #include <netipsec/ipsec_osdep.h>
 
