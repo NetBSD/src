@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.57 1996/03/22 03:20:53 mrg Exp $
+#	$NetBSD: rc,v 1.58 1996/08/09 10:29:48 thorpej Exp $
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -89,8 +89,16 @@ rm -f /var/spool/uucp/STST/*
 echo -n 'starting rpc daemons:'
 echo -n ' portmap';		portmap
 
-if [ -f /usr/sbin/ypbind -a -d /var/yp ]; then
-	echo -n ' ypbind';		ypbind
+if [ X${ypserv_flags} != X"NO" ]; then
+	echo -n ' ypserv';		ypserv ${ypserv_flags}
+fi
+
+if [ X${yppasswdd_flags} != X"NO" ]; then
+	echo -n ' rpc.yppasswdd';	rpc.yppasswdd ${yppasswdd_flags}
+fi
+
+if [ X${ypbind_flags} != X"NO" ]; then
+	echo -n ' ypbind';		ypbind ${ypbind_flags}
 fi
 
 # $nfs_server is imported from /etc/netstart;

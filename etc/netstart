@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.23 1995/12/30 01:30:03 thorpej Exp $
+#	$NetBSD: netstart,v 1.24 1996/08/09 10:29:44 thorpej Exp $
 #	@(#)netstart	5.9 (Berkeley) 3/30/91
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
@@ -12,6 +12,17 @@ rbootd_flags=NO		# for 'normal' use: rbootd_flags=""
 sendmail_flags=NO	# for 'normal' use: sendmail_flags="-bd -q30m"
 named_flags=NO		# for 'normal' use: named_flags=""
 timed_flags=
+
+# If your system is to be a YP server, you need to enable ypserv
+# and (optionally) rpc.yppasswdd.  Set these variables to "NO"
+# to turn them off, otherwise they're used as flags.
+ypserv_flags=NO		# for 'normal' use: ypserv_flags="-d"
+yppasswdd_flags=NO	# for 'normal' use: yppasswdd_flags=""
+
+# If your system is to be a YP client, you need to enable ypbind.
+# Set these variables to "NO" to turn them off, otherwise they're
+# used as flags.
+ypbind_flags=NO		# for 'normal' use: ypbind_flags=""
 
 # set the following to "YES" to turn them on
 rwhod=NO
