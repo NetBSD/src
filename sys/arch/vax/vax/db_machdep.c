@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.22 2000/06/04 06:16:58 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.22.2.1 2001/03/20 18:32:09 he Exp $	*/
 
 /* 
  * :set tabs=4
@@ -81,16 +81,16 @@ static	int splsave; /* IPL before entering debugger */
  *			ISBN 0-932376-07-X
  */
 typedef struct __vax_frame {
-	u_int	vax_cond;				/* condition handler               */
-	u_int	vax_psw:16;				/* 16 bit processor status word    */
-	u_int	vax_regs:12;			/* Register save mask.             */
-	u_int	vax_zero:1;				/* Always zero                     */
-	u_int	vax_calls:1;			/* True if CALLS, false if CALLG   */
-	u_int	vax_spa:2;				/* Stack pointer alignment         */
-	u_int	*vax_ap;				/* argument pointer                */
-	struct __vax_frame	*vax_fp;	/* frame pointer of previous frame */
-	u_int	vax_pc;					/* program counter                 */
-	u_int	vax_args[1];			/* 0 or more arguments             */
+	u_int	vax_cond;		/* condition handler               */
+	u_int	vax_psw:16;		/* 16 bit processor status word    */
+	u_int	vax_regs:12;		/* Register save mask.             */
+	u_int	vax_zero:1;		/* Always zero                     */
+	u_int	vax_calls:1;		/* True if CALLS, false if CALLG   */
+	u_int	vax_spa:2;		/* Stack pointer alignment         */
+	u_int	*vax_ap;		/* argument pointer                */
+	struct __vax_frame *vax_fp;	/* frame pointer of previous frame */
+	u_int	vax_pc;			/* program counter                 */
+	u_int	vax_args[1];		/* 0 or more arguments             */
 } VAX_CALLFRAME;
 
 /*
@@ -250,6 +250,7 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 	db_expr_t	diff;
 	db_sym_t	sym;
 	char		*symname;
+	extern int	sret;
 
 	(*pr)("Stack traceback : \n");
 	if (IN_USERLAND(fp)) {
@@ -257,14 +258,9 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 		return;
 	}
 
-	while (((u_int)(fp->vax_fp) > stackbase) && 
+	while (((u_int)(fp->vax_fp) > stackbase - 0x100) && 
 			((u_int)(fp->vax_fp) < (stackbase + USPACE))) {
-
-		diff = INT_MAX;
-		symname = NULL;
-		sym = db_search_symbol(fp->vax_pc, DB_STGY_ANY, &diff);
-		db_symbol_values(sym, &symname, 0);
-		(*pr)("%s+0x%lx(", symname, diff);
+		u_int pc = fp->vax_pc;
 
 		/*
 		 * Figure out the arguments by using a bit of subtlety.
@@ -280,6 +276,29 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 		 *    that identifies the number of arguments.
 		 *	arg_base+1 - arg_base+n are the argument pointers/contents.
 		 */
+
+
+		/* If this was due to a trap/fault, pull the correct pc
+		 * out of the trap frame.  */
+		if (pc == (u_int) &sret && fp->vax_fp != 0) {
+			struct trapframe *tf;
+			/* Isolate the saved register bits, and count them */
+			regs = fp->vax_regs;
+			for (arg_base = 0; regs != 0; regs >>= 1) {
+				if (regs & 1)
+					arg_base++;
+			}
+			tf = (struct trapframe *) &fp->vax_args[arg_base + 2];
+			(*pr)("0x%lx: trap type=0x%lx code=0x%lx pc=0x%lx psl=0x%lx\n",
+			      tf, tf->trap, tf->code, tf->pc, tf->psl);
+			pc = tf->pc;
+		}
+
+		diff = INT_MAX;
+		symname = NULL;
+		sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
+		db_symbol_values(sym, &symname, 0);
+		(*pr)("0x%lx: %s+0x%lx(", fp, symname, diff);
 
 		/* First get the frame that called this function ... */
 		tmp_frame = fp->vax_fp;
