@@ -270,9 +270,18 @@ child_resume (pid, step, signal)
   if (errno)
     perror_with_name ("ptrace");
 }
+
 
-#define	kread(addr, p, l) \
-	(target_read_memory((CORE_ADDR)(addr), (char *)(p), (l)))
+/*
+ * kernel_u_size() is not helpful on NetBSD because
+ * the "u" struct is NOT in the core dump file.
+ */
+
+#ifdef	FETCH_KCORE_REGISTERS
+/*
+ * Get registers from a kernel crash dump or live kernel.
+ * Called by kcore-nbsd.c:get_kcore_registers().
+ */
 fetch_kcore_registers (pcbp)
   struct pcb *pcbp;
 {
@@ -304,6 +313,7 @@ fetch_kcore_registers (pcbp)
 	  }
     }
 }
+#endif	/* FETCH_KCORE_REGISTERS */
 
 void
 clear_regs()
