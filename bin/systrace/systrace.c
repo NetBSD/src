@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.8 2002/09/23 04:35:42 itojun Exp $	*/
+/*	$NetBSD: systrace.c,v 1.9 2002/10/08 02:47:59 itojun Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -103,7 +103,7 @@ make_output(char *output, size_t outlen, const char *binname,
 
 		snprintf(p, size, ", %s: %s", tl->name, line);
 		p = output + strlen(output);
-		size = sizeof(output) - strlen(output);
+		size = outlen - strlen(output);
 
 		if (repl != NULL && tl->trans_size)
 			intercept_replace_add(repl, tl->off,
