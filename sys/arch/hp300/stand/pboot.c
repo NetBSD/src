@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)boot.c	8.1 (Berkeley) 6/10/93
- *	     $Id: pboot.c,v 1.1 1994/01/26 02:38:52 brezak Exp $
+ *	     $Id: pboot.c,v 1.1.2.1 1994/09/20 05:07:43 cgd Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: pboot.c,v 1.1 1994/01/26 02:38:52 brezak Exp $";
+static char rcsid[] = "$Id: pboot.c,v 1.1.2.1 1994/09/20 05:07:43 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -62,7 +62,7 @@ char *names[] = {
 };
 #define NUMNAMES	(sizeof(names)/sizeof(char *))
 
-static int bdev, bctlr, bunit, bpart;
+static int bdev, badapt, bctlr, bunit, bpart;
 
 main()
 {
@@ -70,12 +70,13 @@ main()
 	int io;
 
 	printf("\n>> NetBSD BOOT HP9000/%s CPU [%s]\n",
-	       getmachineid(), "$Revision: 1.1 $");
+	       getmachineid(), "$Revision: 1.1.2.1 $");
 
-	bdev  = B_TYPE(bootdev);
-	bctlr = B_CONTROLLER(bootdev);
-	bunit = B_UNIT(bootdev);
-	bpart = B_PARTITION(bootdev);
+	bdev   = B_TYPE(bootdev);
+	badapt = B_ADAPTOR(bootdev);
+	bctlr  = B_CONTROLLER(bootdev);
+	bunit  = B_UNIT(bootdev);
+	bpart  = B_PARTITION(bootdev);
 
 	for (;;) {
 		name = names[currname++];
@@ -109,12 +110,13 @@ copyunix(howto, devtype, io)
 	int i;
 	register char *load;	/* a5 contains load addr for unix */
 	register char *addr;
-	int dev, ctlr, unit, part;
+	int dev, adapt, ctlr, unit, part;
 
-	dev = B_TYPE(opendev);
-	ctlr = B_CONTROLLER(opendev);
-	unit = B_UNIT(opendev);
-	part = B_PARTITION(opendev);
+	dev   = B_TYPE(opendev);
+	adapt = B_ADAPTOR(opendev);
+	ctlr  = B_CONTROLLER(opendev);
+	unit  = B_UNIT(opendev);
+	part  = B_PARTITION(opendev);
 	
 	i = read(io, (char *)&x, sizeof(x));
 	if (i != sizeof(x) ||
@@ -123,7 +125,7 @@ copyunix(howto, devtype, io)
 		return;
 	}
 	printf("Booting %s%d%c:%s @ 0x%x\n",
-	    devsw[dev].dv_name, unit + (8*ctlr), 'a'+part, name, x.a_entry);
+	    devsw[dev].dv_name, ctlr + (8 * adapt), 'a' + part, name, x.a_entry);
 
 	/* Text */
 	printf("%d", x.a_text);
@@ -210,7 +212,7 @@ getbootdev(howto)
 	char c, *ptr = line;
 
 	printf("Boot: [[[%s%d%c:]%s][-s][-a][-d]] :- ",
-	    devsw[bdev].dv_name, bunit + (8 * bctlr), 'a'+bpart, name);
+	    devsw[bdev].dv_name, bctlr + (8 * badapt), 'a' + bpart, name);
 
 	if (tgets(line)) {
 		while (c = *ptr) {
