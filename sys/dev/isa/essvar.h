@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.18 2001/01/06 22:50:02 nathanw Exp $	*/
+/*	$NetBSD: essvar.h,v 1.19 2004/08/04 18:53:55 drochner Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.18 $ (SHARK) $Date: 2001/01/06 22:50:02 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.19 $ (SHARK) $Date: 2004/08/04 18:53:55 $
 **
 **++
 **
@@ -161,9 +161,13 @@ struct ess_softc
 #define ESS_1878	8
 
 	u_int	sc_version;		/* Legacy ES688/ES1688 ID */
+
+	/* game port on es1888 */
+	bus_space_tag_t sc_joy_iot;
+	bus_space_handle_t sc_joy_ioh;
 };
 
 int	essmatch __P((struct ess_softc *));
-void	essattach __P((struct ess_softc *));
+void	essattach __P((struct ess_softc *, int));
 int	ess_config_addr __P((struct ess_softc *));
 
