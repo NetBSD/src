@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 1998/06/05 14:19:22 tsubai Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3 1998/10/06 20:50:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -50,4 +50,3 @@ struct confargs {
 #define cf_addr	cf_loc[0]
 
 int	badaddr __P((void *, u_int));
-void	configure __P((void));

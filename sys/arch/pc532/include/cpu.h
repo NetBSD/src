@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 1998/04/24 20:05:39 matthias Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 1998/10/06 20:50:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,9 +97,6 @@ int	want_resched;	/* resched() was called */
 void	delay __P((int));
 
 #ifdef _KERNEL
-/* autoconf.c */
-void	configure __P((void));
-
 /* ieee_handler.c */
 int	ieee_handle_exception __P((struct proc *));
 
@@ -120,7 +117,7 @@ void	softnet __P((void *));
 void	icu_init __P((u_char *));
 
 /* trap.c */
-void	child_return __P((struct proc *));
+void	child_return __P((struct proc *, void *));
 
 /* vm_machdep.c */
 int	kvtop __P((caddr_t));
