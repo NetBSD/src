@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.220 1998/07/05 22:29:51 jonathan Exp $
+#	$NetBSD: files,v 1.221 1998/07/05 22:48:05 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -37,6 +37,7 @@ defopt	COMPAT_SVR4
 defopt	COMPAT_ULTRIX
 defopt  opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_NOMID
+
 # networking protocols
 defopt	INET
 defopt	opt_atalk.h	NETATALK
@@ -47,6 +48,7 @@ defopt	EON				# ISO clnp over IP
 defopt	CCITT				# 
 defopt	HDLC				# CCITT over HDLC
 defopt	LLC				# CCITT over LLC2 (also IEEE LLC?)
+defopt	NATM				# "native" ATM protocols
 
 # networking options
 defopt	GATEWAY
