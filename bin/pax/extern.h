@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.46 2004/10/17 18:49:55 dsl Exp $	*/
+/*	$NetBSD: extern.h,v 1.47 2004/10/22 21:00:18 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -203,7 +203,9 @@ int opt_add(const char *);
 int bad_opt(void);
 int mkpath(char *);
 char *chdname;
+#if !HAVE_NBTOOL_CONFIG_H
 int do_chroot;
+#endif
 
 /*
  * pat_rep.c
