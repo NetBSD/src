@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.18 2001/09/01 02:39:21 thorpej Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.19 2001/09/02 16:47:45 thorpej Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -281,5 +281,5 @@ union scsi_disk_pages {
 		u_int8_t min_prefetch[2];
 		u_int8_t max_prefetch[2];
 		u_int8_t max_prefetch_ceiling[2];
-	};
+	} caching_params;
 };
