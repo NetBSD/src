@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.49 2001/01/02 21:39:37 joda Exp $	*/
+/*	$NetBSD: savecore.c,v 1.50 2001/01/11 20:27:12 martin Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.49 2001/01/02 21:39:37 joda Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.50 2001/01/11 20:27:12 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ char	panic_mesg[1024];
 long	panicstr;
 char	vers[1024];
 
-int	clear, compress, force, verbose;	/* flags */
+static int	clear, compress, force, verbose;	/* flags */
 
 void	check_kmem(void);
 int	check_space(void);
