@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax.c,v 1.7 2002/05/14 06:18:52 lukem Exp $	*/
+/*	$NetBSD: pmax.c,v 1.8 2002/05/14 06:40:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: pmax.c,v 1.7 2002/05/14 06:18:52 lukem Exp $");
+__RCSID("$NetBSD: pmax.c,v 1.8 2002/05/14 06:40:33 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -120,11 +120,6 @@ __RCSID("$NetBSD: pmax.c,v 1.7 2002/05/14 06:18:52 lukem Exp $");
 #include <unistd.h>
 
 #include <sys/exec_elf.h>
-#if HAVE_CONFIG_H
-#include "../../sys/dev/dec/dec_boot.h"
-#else
-#include <dev/dec/dec_boot.h>
-#endif
 
 #include "installboot.h"
 
