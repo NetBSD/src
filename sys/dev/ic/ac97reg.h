@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97reg.h,v 1.4 2002/02/02 11:13:44 augustss Exp $	*/
+/*	$NetBSD: ac97reg.h,v 1.5 2002/10/06 15:06:05 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 Constantine Sapuntzakis
@@ -52,10 +52,10 @@
 /* AC'97 2.0 extensions -- 0x28-0x3a */
 #define	AC97_REG_EXTENDED_ID		0x28
 #define		AC97_CODEC_DOES_VRA		0x0001
-#define		AC97_CODEC_DOES_MICVRA		0x0004
+#define		AC97_CODEC_DOES_MICVRA		0x0008
 #define	AC97_REG_EXTENDED_STATUS	0x2a
 #define		AC97_ENAB_VRA			0x0001
-#define		AC97_ENAB_MICVRA		0x0004
+#define		AC97_ENAB_MICVRA		0x0008
 #define	AC97_REG_PCM_FRONT_DAC_RATE	0x2c
 #define	AC97_REG_PCM_SURR_DAC_RATE	0x2e
 #define	AC97_REG_PCM_LFE_DAC_RATE	0x30
