@@ -38,8 +38,12 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: (hp300) @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: copy.s,v 1.6 1994/01/21 23:10:13 cgd Exp $
+ *	$Id: copy.s,v 1.7 1994/01/22 03:45:03 briggs Exp $
  */
+
+#include <sys/errno.h>
+
+#include "assym.s"
 
 #ifdef sun3	/* but code this simple prolly won't work for sun3x -- cgd */
 #define	SETUP_SFC	moveq #FC_USERD, d1;   movec d1, sfc
@@ -53,42 +57,63 @@
 #define	RESTORE_DFC
 #endif
 
+#ifdef GPROF
+#define	ENTRY(name) \
+	.globl _/**/name; _/**/name: link a6,\#0; jbsr mcount; unlk a6
+#define ALTENTRY(name, rname) \
+	ENTRY(name); jra rname+12
+#else
+#define	ENTRY(name) \
+	.globl _/**/name; _/**/name:
+#define ALTENTRY(name, rname) \
+	.globl _/**/name; _/**/name:
+#endif
+
 .text
 /*
  * copyinstr(fromaddr, toaddr, maxlength, &lencopied)
  *
  * Copy a null terminated string from the user address space into
  * the kernel address space.
- * NOTE: maxlength must be < 64K
  */
 ENTRY(copyinstr)
+	movl	d2,sp@-			| high counter
 	movl	_curpcb,a0		| current pcb
 	movl	#Lcisflt1,a0@(PCB_ONFAULT) | set up to catch faults
-	movl	sp@(4),a0		| a0 = fromaddr
-	movl	sp@(8),a1		| a1 = toaddr
+	movl	sp@(8),a0		| a0 = fromaddr
+	movl	sp@(12),a1		| a1 = toaddr
 	SETUP_SFC
 	moveq	#0,d0
-	movw	sp@(14),d0		| d0 = maxlength
+	movw	sp@(16),d2		| d2 = maxlength MSW
+	movl	sp@(16),d0		| d0 = maxlength
 	jlt	Lcisflt1		| negative count, error
 	jeq	Lcisdone		| zero count, all done
+	movw	sp@(14),d0		| d0 = maxlength LSW
+	beq	Lcoloop			| low-order word zero
 	subql	#1,d0			| set up for dbeq
 Lcisloop:
 	movsb	a0@+,d1			| grab a byte
 	movb	d1,a1@+			| copy it
 	dbeq	d0,Lcisloop		| if !null and more, continue
-	jne	Lcisflt2		| ran out of room, error
+	jne	Lcoloop			| down to zero...
 	moveq	#0,d0			| got a null, all done
 Lcisdone:
 	RESTORE_SFC
-	tstl	sp@(16)			| return length desired?
+	tstl	sp@(20)			| return length desired?
 	jeq	Lcisret			| no, just return
-	subl	sp@(4),a0		| determine how much was copied
-	movl	sp@(16),a1		| return location
+	subl	sp@(8),a0		| determine how much was copied
+	movl	sp@(20),a1		| return location
 	movl	a0,a1@			| stash it
 Lcisret:
 	movl	_curpcb,a0		| current pcb
 	clrl	a0@(PCB_ONFAULT) 	| clear fault addr
+	movl	sp@+, d2
 	rts
+Lcoloop:
+	subql	#1, d2
+	beq	Lcisflt2
+	movw	#0xffff, d0
+	jra	Lcisloop
 Lcisflt1:
 	moveq	#EFAULT,d0		| copy fault
 	jra	Lcisdone
