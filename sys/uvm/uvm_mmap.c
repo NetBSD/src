@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.47 2001/01/07 06:16:46 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.48 2001/01/08 01:35:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -428,7 +428,7 @@ sys_mmap(p, v, retval)
 		 * now check protection
 		 */
 
-		maxprot = (prot & PROT_EXEC);
+		maxprot = VM_PROT_EXECUTE;
 
 		/* check read access */
 		if (fp->f_flag & FREAD)
@@ -1143,8 +1143,19 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			VREF(vp);
 		} else {
 			uobj = udv_attach((void *) &vp->v_rdev,
-			    (flags & MAP_SHARED) ?
-			    maxprot : (maxprot & ~VM_PROT_WRITE), foff, size);
+			    (flags & MAP_SHARED) ? maxprot :
+			    (maxprot & ~VM_PROT_WRITE), foff, size);
+			/*
+			 * XXX Some devices don't like to be mapped with
+			 * XXX PROT_EXEC, but we don't really have a
+			 * XXX better way of handling this, right now
+			 */
+			if (uobj == NULL && (prot & PROT_EXEC) == 0) {
+				maxprot &= ~VM_PROT_EXECUTE;
+				uobj = udv_attach((void *) &vp->v_rdev,
+				    (flags & MAP_SHARED) ? maxprot :
+				    (maxprot & ~VM_PROT_WRITE), foff, size);
+			}
 			advice = UVM_ADV_RANDOM;
 		}
 		
