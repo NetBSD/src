@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.5 2002/09/27 15:35:59 provos Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.6 2003/07/15 00:24:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -60,6 +60,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.6 2003/07/15 00:24:59 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

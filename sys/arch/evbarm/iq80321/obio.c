@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10 2003/06/16 17:40:53 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.11 2003/07/15 00:25:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * On-board device autoconfiguration support for Intel IQ80321
  * evaluation boards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.11 2003/07/15 00:25:05 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

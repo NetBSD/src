@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.11 2003/04/06 12:56:45 rjs Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.12 2003/07/15 00:24:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -39,6 +39,9 @@
 /*
  * bus_space I/O functions for sa11x0
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.12 2003/07/15 00:24:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

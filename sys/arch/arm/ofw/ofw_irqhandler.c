@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.2 2002/09/27 15:35:49 provos Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.3 2003/07/15 00:24:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,6 +40,9 @@
  *
  * Created      : 30/09/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.3 2003/07/15 00:24:47 lukem Exp $");
 
 #include "opt_irqstats.h"
 

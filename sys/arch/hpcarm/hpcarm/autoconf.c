@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2003/06/16 20:01:00 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.10 2003/07/15 00:25:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -34,6 +34,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.10 2003/07/15 00:25:08 lukem Exp $");
 
 #include "opt_md.h"
 

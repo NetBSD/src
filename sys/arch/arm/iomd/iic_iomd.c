@@ -1,4 +1,4 @@
-/*	$NetBSD: iic_iomd.c,v 1.5 2002/10/02 15:45:11 thorpej Exp $	*/
+/*	$NetBSD: iic_iomd.c,v 1.6 2003/07/15 00:24:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -44,6 +44,9 @@
  *
  * Based of kate/display/iiccontrol.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: iic_iomd.c,v 1.6 2003/07/15 00:24:44 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

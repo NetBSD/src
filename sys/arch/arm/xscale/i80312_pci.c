@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.7 2003/05/23 05:21:26 briggs Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.8 2003/07/15 00:24:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,6 +38,9 @@
 /*
  * PCI configuration support for i80312 Companion I/O chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.8 2003/07/15 00:24:53 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

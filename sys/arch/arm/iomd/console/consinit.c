@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.2 2002/03/22 13:32:51 reinoud Exp $ */
+/*	$NetBSD: consinit.c,v 1.3 2003/07/15 00:24:42 lukem Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,6 +40,9 @@
  * Created      : 17/09/94
  * Updated	: 18/04/01 updated for new wscons
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.3 2003/07/15 00:24:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
