@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.16 2000/04/12 04:21:22 chs Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.17 2000/07/22 05:11:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -147,7 +147,9 @@ m_xhalf(m, k, err)
 	*err = 1;
 	return 0;
 }
-#endif
+#else /* _KERNEL */
+#include <stdlib.h>
+#endif /* !_KERNEL */
 
 #include <net/bpf.h>
 
