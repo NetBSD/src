@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.6 2003/10/24 08:27:26 jdolecek Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.7 2003/10/24 19:57:36 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,10 +46,7 @@
 BEGIN {
 	# top of source tree, used to find major number list in kernel
 	# sources
-	top = ENVIRON["NETBSDSRCDIR"]
-	if (!top)
-		top = ".."
-	top = top "/sys/"
+	top = ETCDIR "/../sys/"
 	if (system("test -d '" top "'") != 0) {
 		print "ERROR: can't find top of kernel source tree ('" top "' not a directory)" > "/dev/stderr"
 		exit 1
@@ -97,9 +94,9 @@ BEGIN {
 	}
 
 	# read MD config file for MD device targets
-	cfgfile = "etc." machine "/MAKEDEV.conf"
+	cfgfile = ETCDIR "/etc." machine "/MAKEDEV.conf"
 	if (system("test -f '" cfgfile "'") != 0) {
-		print "ERROR: no platform MAKEDEV.conf - '" file "' doesn't exist" > "/dev/stderr"
+		print "ERROR: no platform MAKEDEV.conf - '" cfgfile "' doesn't exist" > "/dev/stderr"
 		exit 1
 	}
 	# skip first two lines - RCS Id and blank line
