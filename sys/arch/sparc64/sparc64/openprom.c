@@ -1,4 +1,4 @@
-/*	$NetBSD: openprom.c,v 1.15 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: openprom.c,v 1.16 2004/03/19 14:42:01 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.15 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openprom.c,v 1.16 2004/03/19 14:42:01 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,10 @@ openpromioctl(dev, cmd, data, flags, p)
 	struct proc *p;
 {
 	struct opiocdesc *op;
-	int node, len, ok, error, s;
+	int node, optionsnode, len, ok, error, s;
 	char *name, *value, *nextprop;
+
+	optionsnode = prom_getoptionsnode();
 
 	/* All too easy... */
 	if (cmd == OPIOCGETOPTNODE) {
