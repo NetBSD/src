@@ -1,13 +1,11 @@
-#	$NetBSD: INSTALL,v 1.36 1997/06/05 02:27:45 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.37 1997/06/14 02:07:08 perry Exp $
 #
 #	INSTALL -- an installation kernel config.
-#                     adapters.    This kernel should be GENERICOTHER with lines
-#                     deleted, not commented out, so it is easy to maintain.
+#	This kernel should be derived from GENERIC with ramdisk
+#	support added and some features commented out.
 #
-#		      Install kernels no longer support X,
-#                     soundcards, or non-NetBSD emulation.
-#                     These are commented out, comments above notwithstanding.
-#
+#	Install kernels no longer support X, soundcards, or non-NetBSD
+#	emulation.
 
 include "arch/i386/conf/std.i386"
 
@@ -30,6 +28,13 @@ options		MATH_EMULATE	# floating point emulation
 maxusers	32		# estimated number of users
 options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options	NTP		# NTP phase/frequency locked loop
+
+# Enable the hooks used for initializing the memory-disk.
+options		MEMORY_DISK_HOOKS
+options		MEMORY_DISK_IS_ROOT     # Force root on memory-disk
+options		MEMORY_DISK_SERVER=0	# No user space hooks
+options		MINIROOTSIZE=3074
+#options		MINIROOTSIZE=2880	# 1.44M, same as a floppy
 
 #options	DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
@@ -60,6 +65,7 @@ options		COMPAT_12	# NetBSD 1.2,
 options		LKM		# loadable kernel modules
 
 file-system 	FFS		# UFS
+#file-system 	EXT2FS		# second extended file system (linux)
 #file-system	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
@@ -73,9 +79,11 @@ file-system 	KERNFS		# /kern
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
 
-#options	NFSSERVER	# Network File System server
 #options	QUOTA		# UFS quotas
+#options	NFSSERVER	# Network File System server
 options		FIFO		# FIFOs; RECOMMENDED
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
 
 #options	GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
@@ -97,7 +105,7 @@ eisa0	at mainbus0
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
-pci* at pchb?
+pci*	at pchb?
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
@@ -218,6 +226,9 @@ fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
 #joy0	at isa? port 0x201
 
 include	"arch/i386/conf/GENERIC.local"
+
+# memory-disk (root for install floppy)
+pseudo-device	md	1		# memory-disk
 
 pseudo-device	loop	1		# network loopback
 #pseudo-device	bpfilter 8		# packet filter
