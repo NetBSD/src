@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_5100.c,v 1.5 1999/06/29 21:00:27 ad Exp $	*/
+/* $NetBSD: ibus_pmax.c,v 1.2 1999/11/15 09:50:31 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,88 +32,103 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_5100.c,v 1.5 1999/06/29 21:00:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.2 1999/11/15 09:50:31 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
-
 #include <pmax/ibus/ibusvar.h>
-
+#include <machine/autoconf.h>
 #include <pmax/pmax/kn01.h>
-#include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/pmaxtype.h>
 
 
-int	dec_5100_ibusdev_match
-	    __P((struct device *, struct cfdata *, void *));
-void	dec_5100_ibusdev_attach
-	    __P((struct device *, struct device *, void *));
+static int  ibus_pmax_match __P((struct device *, struct cfdata *, void *));
+static void ibus_pmax_attach __P((struct device *, struct device *, void *));
 
-extern struct cfattach kn01bus_ca;
-struct cfattach kn230bus_ca = {
-	sizeof(struct device), dec_5100_ibusdev_match, dec_5100_ibusdev_attach
+struct cfattach ibus_pmax_ca = {
+	sizeof(struct ibus_softc), ibus_pmax_match, ibus_pmax_attach
 };
 
-extern ibus_intr_establish_t	dec_5100_intr_establish;
-extern ibus_intr_disestablish_t	dec_5100_intr_disestablish;
+extern void dec_3100_intr_establish __P((void * cookie, int level,
+			 int (*handler) __P((void *)), void * arg));
+extern void dec_3100_intr_disestablish __P((struct ibus_attach_args *ia));
 
+extern void dec_5100_intr_establish __P((struct device *, void *,
+		int, int (*)(void *), void *));
+extern void dec_5100_intr_disestablish __P((struct device *, void *));
 
 #define KV(x) MIPS_PHYS_TO_KSEG1(x)
 
-static struct ibus_attach_args kn230_devs[] = {
+static struct ibus_attach_args kn01_devs[] = {
 	/* name     cookie   addr			  */
-
-#if 0	/* Be sure to avoid memory fault probing for pm */
 	{ "pm",		0, KV(KN01_PHYS_FBUF_START)	},
-#endif
-
 	{ "dc",  	1, KV(KN01_SYS_DZ)		},
 	{ "lance", 	2, KV(KN01_SYS_LANCE)		},
 	{ "sii",	3, KV(KN01_SYS_SII)		},
-	{ "mc146818",	4, KV(KN01_SYS_CLOCK),		},
+	{ "mc146818",	4, KV(KN01_SYS_CLOCK)		},
+#ifdef notyet
 	{ "dc",  	5, KV(0x15000000),		},
 	{ "dc",  	6, KV(0x15200000),		},
-#ifdef notyet
 	/*
 	 * XXX Ultrix configures at 0x86400400. the first 0x400 byte are
 	 * used for NVRAM state??
 	 */
-	{ "nvram",	7, KV(0x86400000),		-1, },
+	{ "nvram",	7, KV(0x86400000),		},
 #endif
 };
 
+static int ibus_attached;
+
 int
-dec_5100_ibusdev_match(parent, cfdata, aux)
+ibus_pmax_match(parent, cfdata, aux)
         struct device *parent;
         struct cfdata *cfdata;
-        void *aux;
-
+	void *aux;
 {
-	if (systype == DS_MIPSMATE)
-		return (1);
-	return(0);
+	struct mainbus_attach_args *ma = aux;
+
+	if (ibus_attached)
+		return 0;
+	if (systype != DS_PMAX || systype != DS_MIPSMATE)
+		return 0;
+	if (strcmp(ma->ma_name, "baseboard") != 0)
+		return 0;
+
+	return 1;
 }
 
-
 void
-dec_5100_ibusdev_attach(parent, self, aux)
-        struct device *parent;
-        struct device *self;
+ibus_pmax_attach(parent, self, aux)
+        struct device *parent, *self;
         void *aux;
 {
-	struct ibus_dev_attach_args ibd;
+	struct ibus_dev_attach_args ida;
 
-	printf("\n");
+	ibus_attached = 1;
 
-	ibd.ibd_busname = "ibus";
-	ibd.ibd_devs = kn230_devs;
-	ibd.ibd_ndevs = sizeof(kn230_devs) / sizeof(kn230_devs[0]);
-	ibd.ibd_establish = dec_5100_intr_establish;
-	ibd.ibd_disestablish = dec_5100_intr_disestablish;
-	config_found(self, &ibd, ibusprint);	/* XXX*/
+	ida.ida_busname = "ibus";
+	ida.ida_devs = kn01_devs;
+	ida.ida_ndevs = sizeof(kn01_devs) / sizeof(kn01_devs[0]);
+	switch (systype) {
+#ifdef DEC_3100
+	case DS_PMAX:
+		ida.ida_establish = dec_3100_intr_establish;
+		ida.ida_disestablish = dec_3100_intr_disestablish;
+		break;
+#endif
+#ifdef DEC_5100
+	case DS_MIPSMATE:
+		ida.ida_establish = dec_5100_intr_establish;
+		ida.ida_disestablish = dec_5100_intr_disestablish;
+		break;
+#endif
+	default:
+		panic("ibus device not configured: systype = %d", systype);
+	}
+
+	ibusattach(parent, self, &ida);
 }
