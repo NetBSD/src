@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.16 2004/02/02 07:55:14 soren Exp $ */
+/*	$NetBSD: envstat.c,v 1.17 2004/02/02 10:36:19 soren Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.16 2004/02/02 07:55:14 soren Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.17 2004/02/02 10:36:19 soren Exp $");
 #endif
 
 #include <fcntl.h>
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 				break;
 			case ENVSYS_STEMP: {
 			     	double temp = (etds[i].cur.data_s / 1000000.0)
-				    - 273.16;
+				    - 273.15;
 				if (celsius)
 					printf(": %10.3f degC", temp);
 				else {
@@ -300,7 +300,7 @@ values(size_t width, int celsius, envsys_tre_data_t *etds,
 				break;
 			case ENVSYS_STEMP:
 				temp = (etds[i].cur.data_us / 1000000.0) -
-				    273.16;
+				    273.15;
 				if (!celsius)
 					temp = (9.0 / 5.0) * temp + 32.0;
 				printf(" %*.2f", (int)width, temp);
