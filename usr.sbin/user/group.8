@@ -1,4 +1,4 @@
-.\" $NetBSD: group.8,v 1.3.4.2 2000/01/21 00:00:17 he Exp $ */
+.\" $NetBSD: group.8,v 1.3.4.3 2000/10/25 17:05:24 he Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,27 +39,24 @@
 .Nd manage group information on the system
 .Sh SYNOPSIS
 .Nm ""
-add
+.Cm add
+.Op Fl ov
 .Op Fl g Ar gid
-.Op Fl o
-.Op Fl v
-group
+.Ar group
 .Nm ""
-del
+.Cm del
 .Op Fl v
-group
+.Ar group
 .Nm ""
-info
-.Op Fl e
-.Op Fl v
-group
+.Cm info
+.Op Fl ev
+.Ar group
 .Nm ""
-mod
+.Cm mod
+.Op Fl ov
 .Op Fl g Ar gid
 .Op Fl n Ar newname
-.Op Fl o
-.Op Fl v
-group
+.Ar group
 .Sh DESCRIPTION
 The
 .Nm
@@ -76,6 +73,12 @@ For a full explanation of the options, please see the relevant manual page.
 The
 .Nm
 utility exits 0 on success, and >0 if an error occurs.
+.Sh SEE ALSO
+.Xr group 5 ,
+.Xr groupadd 8 ,
+.Xr groupdel 8 ,
+.Xr groupinfo 8 ,
+.Xr groupmod 8
 .Sh HISTORY
 The
 .Nm
@@ -88,9 +91,3 @@ package by the same author.
 The
 .Nm
 utility was written by Alistair G. Crooks (agc@netbsd.org).
-.Sh SEE ALSO
-.Xr group 5 ,
-.Xr groupadd 8 ,
-.Xr groupdel 8 ,
-.Xr groupinfo 8 ,
-.Xr groupmod 8 .
