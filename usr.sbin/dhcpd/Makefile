@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1996/10/06 18:08:15 cgd Exp $
+#	$NetBSD: Makefile,v 1.3 1996/11/18 10:15:09 mrg Exp $
 
-# XXX - are these useful for users?
+# XXX - is this useful for users?
 #SUBDIR=	dhclient
 
 PROG=	dhcpd 
