@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.246 2000/07/04 16:30:42 enami Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.247 2000/07/08 04:39:50 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.240 2000/07/04 16:27:32 enami Exp 
+ *	NetBSD: pcidevs,v 1.241 2000/07/08 04:38:55 mrg Exp 
  */
 
 /*
@@ -1412,6 +1412,7 @@
 #define	PCI_PRODUCT_SUN_EBUS	0x1000		/* PCIO Ebus2 */
 #define	PCI_PRODUCT_SUN_HMENETWORK	0x1001		/* PCIO Happy Meal Ethernet */
 #define	PCI_PRODUCT_SUN_SIMBA	0x5000		/* Simba PCI bridge */
+#define	PCI_PRODUCT_SUN_MS_IIep	0x9000		/* microSPARC IIep PCI */
 #define	PCI_PRODUCT_SUN_US_IIi	0xa000		/* UltraSPARC IIi PCI */
 
 /* Sundance Technology products */

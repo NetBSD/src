@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.244 2000/07/04 16:30:43 enami Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.245 2000/07/08 04:39:50 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.240 2000/07/04 16:27:32 enami Exp 
+ *	NetBSD: pcidevs,v 1.241 2000/07/08 04:38:55 mrg Exp 
  */
 
 /*
@@ -3674,6 +3674,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sun Microsystems",
 	    "Simba PCI bridge",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_MS_IIep,
+	    0,
+	    "Sun Microsystems",
+	    "microSPARC IIep PCI",
 	},
 	{
 	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIi,
