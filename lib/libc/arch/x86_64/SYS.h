@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.4 2002/05/26 12:24:59 wiz Exp $
+ *	$NetBSD: SYS.h,v 1.5 2002/06/03 18:30:32 fvdl Exp $
  */
 
 /*
@@ -45,9 +45,9 @@
 #include <sys/syscall.h>
 
 #ifdef __STDC__
-#define SYSTRAP(x)	movl $(SYS_ ## x),%eax; int $0x80
+#define SYSTRAP(x)	movl $(SYS_ ## x),%eax; movq %rcx, %r10; syscall
 #else
-#define SYSTRAP(x)	movl $(SYS_/**/x),%eax; int $0x80
+#define SYSTRAP(x)	movl $(SYS_/**/x),%eax; movq %rcx, %r10; syscall
 #endif
 
 #define CERROR		_C_LABEL(__cerror)
