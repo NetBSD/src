@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.31 2005/01/15 16:01:00 chs Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.32 2005/01/16 00:32:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,9 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.31 2005/01/15 16:01:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.32 2005/01/16 00:32:03 chs Exp $");
 
-#ifndef _LKM
+#ifdef _LKM
+#define IWMCF_DRIVE 0
+#else
 #include "locators.h"
 #endif
 
@@ -420,11 +422,7 @@ fd_match(struct device *parent, struct cfdata *match, void *auxp)
 
 	cfp = match;
 	fdParams = (iwmAttachArgs_t *)auxp;
-#ifdef _LKM
-	cfUnit = cfp->cf_loc[0];
-#else
 	cfUnit = cfp->cf_loc[IWMCF_DRIVE];
-#endif
 	matched = (cfUnit == fdParams->unit || cfUnit == -1) ? 1 : 0;
 	if (TRACE_CONFIG) {
 		printf("fdMatch() drive %d ? cfUnit = %d\n",
