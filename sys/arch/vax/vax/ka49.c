@@ -218,8 +218,8 @@ ka49_steal_pages()
 	/*
 	 * Get the soft and hard memory error vectors now.
 	 */
-	scb_vecalloc(0x54, ka49_softmem, 0, 0);
-	scb_vecalloc(0x60, ka49_hardmem, 0, 0);
+	scb_vecalloc(0x54, ka49_softmem, NULL, 0, NULL);
+	scb_vecalloc(0x60, ka49_hardmem, NULL, 0, NULL);
 
 	/* Turn on caches (to speed up execution a bit) */
 	ka49_cache_enable();

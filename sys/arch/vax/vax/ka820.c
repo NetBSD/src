@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.21 2000/04/09 21:05:39 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.22 2000/06/04 02:19:27 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -165,11 +165,11 @@ ka820_conf()
 	ka820_clkpage = (void *)vax_map_physmem(KA820_CLOCKADDR, 1);
 
 	/* Steal the interrupt vectors that are unique for us */
-	scb_vecalloc(KA820_INT_RXCD, rxcdintr, NULL, SCB_ISTACK);
-	scb_vecalloc(0x50, vaxbierr, NULL, SCB_ISTACK);
+	scb_vecalloc(KA820_INT_RXCD, rxcdintr, NULL, SCB_ISTACK, NULL);
+	scb_vecalloc(0x50, vaxbierr, NULL, SCB_ISTACK, NULL);
 
 	/* XXX - should be done somewhere else */
-	scb_vecalloc(SCB_RX50, crxintr, NULL, SCB_ISTACK);
+	scb_vecalloc(SCB_RX50, crxintr, NULL, SCB_ISTACK, NULL);
 	rx50device_ptr = (void *)vax_map_physmem(KA820_RX50ADDR, 1);
 }
 
