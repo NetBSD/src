@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.68 1996/10/07 01:37:20 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.69 1996/10/15 06:31:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1852,6 +1852,31 @@ Ldoboot1:
 	movl	#0x90,a1		| offset of ROM reset routine
 	addl	_ROMBase,a1		| add to ROM base
 	jra	a1@			| and jump to ROM to reset machine
+
+/*
+ * ptest040() does an 040 PTESTR (addr) and returns the 040 MMUSR iff
+ * translation is enabled.  This allows us to find the physical address
+ * corresponding to a MacOS logical address for get_physical().
+ * sar  01-oct-1996
+ */
+	.globl	_ptest040
+_ptest040:
+#if defined(M68040)
+	.long	0x4e7a0003		| movec tc,d0
+	andw	#0x8000,d0
+	jeq	Lget_phys1		| MMU is disabled
+	movc	sfc,d1
+	movql	#1,d0			| FC for ptestr
+	movc	d0,sfc
+	movl	sp@(4),a0		| logical address to look up
+	.word	0xf568			| ptestr (a0)
+	.long	0x4e7a0805		| movec mmusr,d0
+	movc	d1,sfc
+	rts
+Lget_phys1:
+#endif
+	movql	#0,d0			| return failure
+	rts
 
 /*
  * LAK: (7/24/94) This routine was added so that the
