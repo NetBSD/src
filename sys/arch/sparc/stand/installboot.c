@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.12 1996/10/20 16:00:14 pk Exp $ */
+/*	$NetBSD: installboot.c,v 1.13 1996/11/29 14:55:20 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -147,7 +147,7 @@ main(argc, argv)
 	}
 
 	if (strcmp(karch, "sun4") == 0) {
-		hflag = 0;
+		hflag = 1;
 	} else if (strcmp(karch, "sun4c") == 0) {
 		hflag = 1;
 	} else if (strcmp(karch, "sun4m") == 0) {
@@ -282,6 +282,24 @@ loadprotoblocks(fname, size)
 		printf("room for %d filesystem blocks at %#x\n",
 			max_block_count, nl[X_BLOCKTABLE].n_value);
 	}
+
+	/*
+	 * We convert the a.out header in-vitro into something that
+	 * Sun PROMs understand.
+	 * Old-style (sun4) ROMs do not expect a header at all, so
+	 * we turn the first two words into code that gets us past
+	 * the 32-byte header where the actual code begins. In assembly
+	 * speak:
+	 *	.word	MAGIC		! a NOP
+	 *	ba,a	start		!
+	 *	.skip	24		! pad
+	 * start:
+	 */
+
+#define SUN_MAGIC	0x01030107
+#define SUN4_BASTART	0x30800007	/* i.e.: ba,a `start' */
+	*((int *)bp) = SUN_MAGIC;
+	*((int *)bp + 1) = SUN4_BASTART;
 
 	*size = sz;
 	return (hflag ? bp : (bp + sizeof(struct exec)));
