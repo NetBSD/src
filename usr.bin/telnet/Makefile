@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2000/08/03 22:47:43 assar Exp $
+#	$NetBSD: Makefile,v 1.25 2000/08/03 22:58:32 assar Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
