@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.59 2000/09/24 18:37:22 jdolecek Exp $	*/
+/*	$NetBSD: am7990.c,v 1.60 2000/09/28 10:10:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ am7990_meminit(sc)
 	 * Update our private copy of the Ethernet address.
 	 * We NEED the copy so we can ensure its alignment!
 	 */
-	bcopy(LLADDR(ifp->if_sadl), sc->sc_enaddr, 6);
+	bcopy(LLADDR(ifp->if_sadl), sc->sc_enaddr, ETHER_ADDR_LEN);
 	myaddr = sc->sc_enaddr;
 
 	init.init_padr[0] = (myaddr[1] << 8) | myaddr[0];
