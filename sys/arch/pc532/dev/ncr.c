@@ -1,3 +1,5 @@
+/*	$NetBSD: ncr.c,v 1.30 1996/10/15 21:59:03 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1996 Matthias Pfaller.
  * All rights reserved.
