@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.43 2004/03/28 08:45:37 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.44 2004/03/28 08:50:55 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -270,3 +270,8 @@ sys/dev/pci/pcidevs.h			regen
 
 	Add 3com 3c940 Gigabit Ethernet, and VIA KT600 PCI devices. PR#22453
 	[bouyer, ticket #1631]
+
+sys/dev/pci/pciide.c			1.196 via patch
+
+	Add support for VIA VT8237 (KT600) IDE controller. PR#22453
+	[bouyer, ticket #1632]
