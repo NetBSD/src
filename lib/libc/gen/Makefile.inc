@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.117 2003/01/18 11:23:53 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.118 2003/01/21 12:39:08 wiz Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -49,7 +49,7 @@ MAN+=	alarm.3 arc4random.3 basename.3 bswap.3 clock.3 confstr.3 \
 	humanize_number.3 initgroups.3 isalnum.3 isalpha.3 isascii.3 \
 	isblank.3 iscntrl.3 isdigit.3 isgraph.3 isinf.3 islower.3 isprint.3 \
 	ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 \
-	_lwp_makecontext.3 \
+	_lwp_makecontext.3 makecontext.3 \
 	modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
 	raise.3 realpath.3 scandir.3 setjmp.3 setmode.3 \
 	setproctitle.3 shquote.3 sighold.3 sigignore.3 siginterrupt.3 \
@@ -96,6 +96,7 @@ MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
 MLINKS+=isinf.3 isnan.3
+MLINKS+=makecontext.3 swapcontext.3
 MLINKS+=popen.3 pclose.3
 MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3
 MLINKS+=pwcache.3 user_from_uid.3 pwcache.3 group_from_gid.3
