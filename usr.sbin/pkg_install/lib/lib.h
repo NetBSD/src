@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.43.2.7 2003/08/25 20:17:11 jlam Exp $ */
+/* $NetBSD: lib.h,v 1.43.2.8 2003/08/26 22:32:13 jlam Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -220,6 +220,8 @@ uint64_t min_free(char *);
 void    save_dirs(char **c, char **p);
 void    restore_dirs(char *c, char *p);
 void    show_version(void);
+int	fexec(const char *, ...);
+int	fcexec(const char *, const char *, ...);
 
 /* String */
 char   *get_dash_string(char **);
