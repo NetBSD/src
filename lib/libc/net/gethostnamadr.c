@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostnamadr.c,v 1.23 1997/04/26 04:12:08 mrg Exp $	*/
+/*	$NetBSD: gethostnamadr.c,v 1.24 1997/07/13 19:57:33 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -55,12 +55,13 @@
  * --Copyright--
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.20 1996/09/28 06:51:07 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.23 1997/04/26 04:12:08 mrg Exp $";
+__RCSID("$NetBSD: gethostnamadr.c,v 1.24 1997/07/13 19:57:33 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -112,12 +113,6 @@ static u_char host_addr[16];	/* IPv4 or IPv6 */
 static FILE *hostf = NULL;
 static int stayopen = 0;
 
-static void map_v4v6_address __P((const char *src, char *dst));
-static void map_v4v6_hostent __P((struct hostent *hp, char **bp, int *len));
-
-#ifdef RESOLVSORT
-static void addrsort __P((char **, int));
-#endif
 
 #if PACKETSZ > 1024
 #define	MAXPACKET	PACKETSZ
@@ -136,6 +131,40 @@ typedef union {
 } align;
 
 extern int h_errno;
+
+#ifdef DEBUG
+static void dprintf __P((char *, int));
+#endif
+static struct hostent *getanswer __P((const querybuf *, int,
+    const char *, int));
+static void map_v4v6_address __P((const char *, char *));
+static void map_v4v6_hostent __P((struct hostent *, char **, int *));
+#ifdef RESOLVSORT
+static void addrsort __P((char **, int));
+#endif
+
+struct hostent *gethostbyname __P((const char *));
+struct hostent *gethostbyname2 __P((const char *, int));
+struct hostent *gethostbyaddr __P((const char *, int, int ));
+void _sethtent __P((int));
+void _endhtent __P((void));
+struct hostent *_gethtent __P((void));
+struct hostent *_gethtbyname __P((const char *));
+struct hostent *_gethtbyname2 __P((const char *, int));
+struct hostent *_gethtbyaddr __P((const char *, int, int ));
+void ht_sethostent __P((int));
+void ht_endhostent __P((void));
+struct hostent *ht_gethostbyname __P((char *));
+struct hostent *ht_gethostbyaddr __P((const char *, int, int ));
+struct hostent *gethostent __P((void));
+void dns_service __P((void));
+int dn_skipname __P((const u_char *, const u_char *));
+#ifdef YP
+struct hostent *_yphostent __P((char *));
+struct hostent *_yp_gethtbyaddr __P((const char *, int, int ));
+struct hostent *_yp_gethtbyname __P((const char *));
+#endif
+
 
 #ifdef DEBUG
 static void
@@ -439,8 +468,6 @@ gethostbyname2(name, af)
 	const char *cp;
 	char *bp;
 	int n, size, type, len, i;
-	extern struct hostent *_gethtbyname2();
-	extern struct hostent *_gethtbyname(), *_yp_gethtbyname();
 	char lookups[MAXDNSLUS];
 	struct hostent *hp;
 
@@ -582,7 +609,6 @@ gethostbyaddr(addr, len, af)
 	struct hostent *hp;
 	char qbuf[MAXDNAME+1], *qp;
 	char lookups[MAXDNSLUS];
-	extern struct hostent *_gethtbyaddr(), *_yp_gethtbyaddr();
 	
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
 		return (_gethtbyaddr(addr, len, af));
@@ -746,7 +772,7 @@ _gethtent()
 		cp++;
 	host.h_name = cp;
 	q = host.h_aliases = host_aliases;
-	if (cp = strpbrk(cp, " \t"))
+	if ((cp = strpbrk(cp, " \t")) != NULL)
 		*cp++ = '\0';
 	while (cp && *cp) {
 		if (*cp == ' ' || *cp == '\t') {
@@ -755,7 +781,7 @@ _gethtent()
 		}
 		if (q < &host_aliases[MAXALIASES - 1])
 			*q++ = cp;
-		if (cp = strpbrk(cp, " \t"))
+		if ((cp = strpbrk(cp, " \t")) != NULL)
 			*cp++ = '\0';
 	}
 	*q = NULL;
@@ -773,7 +799,6 @@ struct hostent *
 _gethtbyname(name)
 	const char *name;
 {
-	extern struct hostent *_gethtbyname2();
 	struct hostent *hp;
 
 	if (_res.options & RES_USE_INET6) {
@@ -793,7 +818,7 @@ _gethtbyname2(name, af)
 	register char **cp;
 	
 	_sethtent(0);
-	while (p = _gethtent()) {
+	while ((p = _gethtent()) != NULL) {
 		if (p->h_addrtype != af)
 			continue;
 		if (strcasecmp(p->h_name, name) == 0)
@@ -815,7 +840,7 @@ _gethtbyaddr(addr, len, af)
 	register struct hostent *p;
 
 	_sethtent(0);
-	while (p = _gethtent())
+	while ((p = _gethtent()) != NULL)
 		if (p->h_addrtype == af && !bcmp(p->h_addr, addr, len))
 			break;
 	_endhtent();

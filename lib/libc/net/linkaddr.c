@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.5 1995/02/25 06:20:49 cgd Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.6 1997/07/13 19:57:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: linkaddr.c,v 1.5 1995/02/25 06:20:49 cgd Exp $";
+__RCSID("$NetBSD: linkaddr.c,v 1.6 1997/07/13 19:57:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,18 +65,19 @@ link_addr(addr, sdl)
 {
 	register char *cp = sdl->sdl_data;
 	char *cplim = sdl->sdl_len + (char *)sdl;
-	register int byte = 0, state = NAMING, new;
+	register int byte = 0, state = NAMING;
+	register int newaddr = 0;	/* pacify gcc */
 
 	bzero((char *)&sdl->sdl_family, sdl->sdl_len - 1);
 	sdl->sdl_family = AF_LINK;
 	do {
 		state &= ~LETTER;
 		if ((*addr >= '0') && (*addr <= '9')) {
-			new = *addr - '0';
+			newaddr = *addr - '0';
 		} else if ((*addr >= 'a') && (*addr <= 'f')) {
-			new = *addr - 'a' + 10;
+			newaddr = *addr - 'a' + 10;
 		} else if ((*addr >= 'A') && (*addr <= 'F')) {
-			new = *addr - 'A' + 10;
+			newaddr = *addr - 'A' + 10;
 		} else if (*addr == 0) {
 			state |= END;
 		} else if (state == NAMING &&
@@ -99,11 +101,11 @@ link_addr(addr, sdl)
 			/* FALLTHROUGH */
 		case RESET | DIGIT:
 			state = GOTONE;
-			byte = new;
+			byte = newaddr;
 			continue;
 		case GOTONE | DIGIT:
 			state = GOTTWO;
-			byte = new + (byte << 4);
+			byte = newaddr + (byte << 4);
 			continue;
 		default: /* | DELIM */
 			state = RESET;
@@ -120,9 +122,9 @@ link_addr(addr, sdl)
 		break;
 	} while (cp < cplim); 
 	sdl->sdl_alen = cp - LLADDR(sdl);
-	new = cp - (char *)sdl;
-	if (new > sizeof(*sdl))
-		sdl->sdl_len = new;
+	newaddr = cp - (char *)sdl;
+	if (newaddr > sizeof(*sdl))
+		sdl->sdl_len = newaddr;
 	return;
 }
 

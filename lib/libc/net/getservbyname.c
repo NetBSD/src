@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname.c,v 1.4 1995/02/25 06:20:36 cgd Exp $	*/
+/*	$NetBSD: getservbyname.c,v 1.5 1997/07/13 19:57:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getservbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getservbyname.c,v 1.4 1995/02/25 06:20:36 cgd Exp $";
+__RCSID("$NetBSD: getservbyname.c,v 1.5 1997/07/13 19:57:40 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +55,7 @@ getservbyname(name, proto)
 	register char **cp;
 
 	setservent(_serv_stayopen);
-	while (p = getservent()) {
+	while ((p = getservent()) != NULL) {
 		if (strcmp(name, p->s_name) == 0)
 			goto gotname;
 		for (cp = p->s_aliases; *cp; cp++)

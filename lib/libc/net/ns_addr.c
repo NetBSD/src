@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.5 1995/02/25 06:20:51 cgd Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.6 1997/07/13 19:57:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-static char rcsid[] = "$NetBSD: ns_addr.c,v 1.5 1995/02/25 06:20:51 cgd Exp $";
+__RCSID("$NetBSD: ns_addr.c,v 1.6 1997/07/13 19:57:53 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +51,8 @@ static char rcsid[] = "$NetBSD: ns_addr.c,v 1.5 1995/02/25 06:20:51 cgd Exp $";
 #include <string.h>
 
 static struct ns_addr addr, zero_addr;
-
-static void Field(), cvtbase();
+static void Field __P((char *, u_char *, int));
+static void cvtbase __P((long, int, int[], int, unsigned char[], int));
 
 struct ns_addr 
 ns_addr(name)
@@ -70,7 +71,7 @@ ns_addr(name)
 	 * form  2-272.AA001234H.01777, i.e. XDE standard.
 	 * Great efforts are made to insure backward compatability.
 	 */
-	if (hostname = strchr(buf, '#'))
+	if ((hostname = strchr(buf, '#')) != NULL)
 		separator = '#';
 	else {
 		hostname = strchr(buf, '.');

@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.8 1997/03/15 18:33:02 is Exp $	*/
+/*	$NetBSD: ethers.c,v 1.9 1997/07/13 19:57:31 christos Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -18,6 +18,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef YP
+#include <rpcsvc/ypclnt.h>
+#endif
 
 #ifndef _PATH_ETHERS
 #define _PATH_ETHERS "/etc/ethers"

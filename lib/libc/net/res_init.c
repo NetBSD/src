@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.12 1997/04/30 07:02:18 mrg Exp $	*/
+/*	$NetBSD: res_init.c,v 1.13 1997/07/13 19:58:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -53,12 +53,13 @@
  * --Copyright--
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: res_init.c,v 1.12 1997/04/30 07:02:18 mrg Exp $";
+__RCSID("$NetBSD: res_init.c,v 1.13 1997/07/13 19:58:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,6 +73,7 @@ static char rcsid[] = "$NetBSD: res_init.c,v 1.12 1997/04/30 07:02:18 mrg Exp $"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 static void res_setoptions __P((char *, char *));
 static u_int32_t net_mask __P((struct in_addr));
@@ -116,13 +118,14 @@ res_init()
 	register FILE *fp;
 	register char *cp, **pp, *net;
 	register int n;
-	char buf[BUFSIZ], buf2[BUFSIZ];
+	char buf[BUFSIZ];
 	int nserv = 0;    /* number of nameserver records read from file */
 	int haveenv = 0;
 	int havesearch = 0;
 	int nsort = 0;
+#ifdef SEARCH_LOCAL_DOMAINS
 	int dots;
-	u_long mask;
+#endif
 
 	_res.id = res_randomid();
 	_res.nsaddr.sin_len = sizeof(struct sockaddr_in);

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.8 1997/04/13 10:30:47 mrg Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.9 1997/07/13 19:57:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -53,12 +53,13 @@
  * --Copyright--
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_comp.c,v 8.11 1996/12/02 09:17:22 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: res_comp.c,v 1.8 1997/04/13 10:30:47 mrg Exp $";
+__RCSID("$NetBSD: res_comp.c,v 1.9 1997/07/13 19:57:59 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,6 +73,7 @@ static char rcsid[] = "$NetBSD: res_comp.c,v 1.8 1997/04/13 10:30:47 mrg Exp $";
 #include <string.h>
 
 static int dn_find __P((u_char *, u_char *, u_char **, u_char **));
+static int mklower __P((int));
 
 /*
  * Expand compressed domain name 'comp_dn' to full domain name.
@@ -98,7 +100,7 @@ dn_expand(msg, eomorig, comp_dn, exp_dn, length)
 	/*
 	 * fetch next label in domain name
 	 */
-	while (n = *cp++) {
+	while ((n = *cp++) != 0) {
 		/*
 		 * Check for indirection
 		 */
@@ -298,7 +300,7 @@ dn_find(exp_dn, msg, dnptrs, lastdnptr)
 	for (cpp = dnptrs; cpp < lastdnptr; cpp++) {
 		dn = exp_dn;
 		sp = cp = *cpp;
-		while (n = *cp++) {
+		while ((n = *cp++) != 0) {
 			/*
 			 * check for indirection
 			 */
@@ -370,7 +372,7 @@ res_hnok(dn)
 		int nch = *dn++;
 
 		if (periodchar(ch)) {
-			NULL;
+			/* Nothing */
 		} else if (periodchar(pch)) {
 			if (!borderchar(ch))
 				return (0);

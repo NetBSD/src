@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.8 1997/04/13 10:30:53 mrg Exp $	*/
+/*	$NetBSD: res_send.c,v 1.9 1997/07/13 19:58:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -53,12 +53,13 @@
  * --Copyright--
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: res_send.c,v 1.8 1997/04/13 10:30:53 mrg Exp $";
+__RCSID("$NetBSD: res_send.c,v 1.9 1997/07/13 19:58:05 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -149,6 +150,9 @@ static int vc = 0;	/* is the socket a virtual ciruit? */
 	errno = save;
     }
 #endif
+
+void res_send_setqhook __P((res_send_qhook));
+void res_send_setrhook __P((res_send_rhook));
 
 static res_send_qhook Qhook = NULL;
 static res_send_rhook Rhook = NULL;

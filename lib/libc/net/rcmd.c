@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.20 1997/05/26 14:18:29 mrg Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.21 1997/07/13 19:57:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -34,18 +34,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.20 1997/05/26 14:18:29 mrg Exp $";
+__RCSID("$NetBSD: rcmd.c,v 1.21 1997/07/13 19:57:58 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/poll.h>
+#include <sys/wait.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -63,6 +66,7 @@ static char *rcsid = "$NetBSD: rcmd.c,v 1.20 1997/05/26 14:18:29 mrg Exp $";
 #include <syslog.h>
 #include <stdlib.h>
 #include <paths.h>
+#include <err.h>
 
 #include "pathnames.h"
 

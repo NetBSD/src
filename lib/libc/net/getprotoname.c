@@ -1,4 +1,4 @@
-/*	$NetBSD: getprotoname.c,v 1.4 1995/02/25 06:20:36 cgd Exp $	*/
+/*	$NetBSD: getprotoname.c,v 1.5 1997/07/13 19:57:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getprotoname.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getprotoname.c,v 1.4 1995/02/25 06:20:36 cgd Exp $";
+__RCSID("$NetBSD: getprotoname.c,v 1.5 1997/07/13 19:57:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +55,7 @@ getprotobyname(name)
 	register char **cp;
 
 	setprotoent(_proto_stayopen);
-	while (p = getprotoent()) {
+	while ((p = getprotoent()) != NULL) {
 		if (strcmp(p->p_name, name) == 0)
 			break;
 		for (cp = p->p_aliases; *cp != 0; cp++)

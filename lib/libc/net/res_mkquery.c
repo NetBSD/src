@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.7 1997/04/13 10:30:50 mrg Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.8 1997/07/13 19:58:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -53,12 +53,13 @@
  * --Copyright--
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp";
 #else
-static char rcsid[] = "$NetBSD: res_mkquery.c,v 1.7 1997/04/13 10:30:50 mrg Exp $";
+__RCSID("$NetBSD: res_mkquery.c,v 1.8 1997/07/13 19:58:03 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

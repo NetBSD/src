@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyport.c,v 1.4 1995/02/25 06:20:37 cgd Exp $	*/
+/*	$NetBSD: getservbyport.c,v 1.5 1997/07/13 19:57:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getservbyport.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getservbyport.c,v 1.4 1995/02/25 06:20:37 cgd Exp $";
+__RCSID("$NetBSD: getservbyport.c,v 1.5 1997/07/13 19:57:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +55,7 @@ getservbyport(port, proto)
 	register struct servent *p;
 
 	setservent(_serv_stayopen);
-	while (p = getservent()) {
+	while ((p = getservent()) != NULL) {
 		if (p->s_port != port)
 			continue;
 		if (proto == 0 || strcmp(p->s_proto, proto) == 0)
