@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.93 1999/08/31 12:30:35 bouyer Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.94 1999/09/28 14:47:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -79,6 +79,7 @@
 
 void stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
+static int build_corename __P((char *));
 
 sigset_t contsigmask, stopsigmask, sigcantmask;
 
@@ -1264,9 +1265,8 @@ coredump(p)
 	struct nameidata nd;
 	struct vattr vattr;
 	int error, error1;
-	char name[MAXCOMLEN+6];		/* progname.core */
+	char name[MAXPATHLEN];
 	struct core core;
-	extern int shortcorename;
 
 	/*
 	 * Make sure the process has not set-id, to prevent data leaks.
@@ -1293,11 +1293,10 @@ coredump(p)
 	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
 		return (EPERM);
 
-	if (shortcorename) 
-		sprintf(name, "core");
-	else
-		sprintf(name, "%s.core", p->p_comm);
-	
+	error = build_corename(name);
+	if (error)
+		return error;
+
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 	error = vn_open(&nd, O_CREAT | FWRITE | FNOSYMLINK, S_IRUSR | S_IWUSR);
 	if (error)
@@ -1393,4 +1392,52 @@ sys_nosys(p, v, retval)
 
 	psignal(p, SIGSYS);
 	return (ENOSYS);
+}
+
+static int
+build_corename(dst)
+	char *dst;
+{
+	const char *s;
+	char *d;
+	int len, i;
+
+	for (s = curproc->p_limit->pl_corename, len = 0, d = dst;
+	    *s != '\0'; s++) {
+		if (*s == '%') {
+			switch (*(s+1)) {
+			case 'n':
+				i = snprintf(d,MAXPATHLEN - 1 - len, "%s",
+				    curproc->p_comm);
+				break;
+			case 'p':
+				i = snprintf(d, MAXPATHLEN - 1 - len, "%d",
+				    curproc->p_pid);
+				break;
+			case 'u':
+				i = snprintf(d, MAXPATHLEN - 1 - len, "%s",
+				    curproc->p_pgrp->pg_session->s_login);
+				break;
+			case 't':
+				i = snprintf(d, MAXPATHLEN - 1 - len, "%ld",
+				    curproc->p_stats->p_start.tv_sec);
+				break;
+			default:
+				goto copy;
+			}
+			if (i >= MAXPATHLEN - 1 - len)
+				return ENAMETOOLONG;
+			len += i;
+			d += i;
+			s++;
+		} else {
+copy:			*d = *s;
+			d++;
+			len++;
+			if (len >= MAXPATHLEN - 1)
+				return ENAMETOOLONG;
+		}
+	}
+	*d = '\0';
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.83 1999/08/10 23:33:27 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.84 1999/09/28 14:47:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -392,5 +392,6 @@ void	proclist_lock_read __P((void));
 void	proclist_unlock_read __P((void));
 int	proclist_lock_write __P((void));
 void	proclist_unlock_write __P((int));
+void	p_sugid __P((struct proc*));
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

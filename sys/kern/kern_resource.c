@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.52 1999/07/25 06:30:34 thorpej Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.53 1999/09/28 14:47:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -56,7 +56,6 @@
 
 #include <uvm/uvm_extern.h>
 
-void limfree __P((struct plimit *));
 /*
  * Resource controls and accounting.
  */
@@ -225,17 +224,19 @@ sys_setrlimit(p, v, retval)
 	error = copyin(SCARG(uap, rlp), &alim, sizeof(struct rlimit));
 	if (error)
 		return (error);
-	return (dosetrlimit(p, which, &alim));
+	return (dosetrlimit(p, p->p_cred, which, &alim));
 }
 
 int
-dosetrlimit(p, which, limp)
+dosetrlimit(p, cred, which, limp)
 	struct proc *p;
+	struct  pcred *cred;
 	int which;
 	struct rlimit *limp;
 {
 	register struct rlimit *alimp;
 	extern unsigned maxdmap, maxsmap;
+	struct plimit *newplim;
 	int error;
 
 	if ((u_int)which >= RLIM_NLIMITS)
@@ -245,16 +246,22 @@ dosetrlimit(p, which, limp)
 		return (EINVAL);
 
 	alimp = &p->p_rlimit[which];
+	/* if we don't change the value, no need to limcopy() */
+	if (limp->rlim_cur == alimp->rlim_cur &&
+	    limp->rlim_max == alimp->rlim_max)
+		return 0;
+
 	if (limp->rlim_cur > alimp->rlim_max || 
 	    limp->rlim_max > alimp->rlim_max)
-		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		if ((error = suser(cred->pc_ucred, &p->p_acflag)) != 0)
 			return (error);
 	if (limp->rlim_cur > limp->rlim_max)
 		limp->rlim_cur = limp->rlim_max;
 	if (p->p_limit->p_refcnt > 1 &&
 	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
-		p->p_limit->p_refcnt--;
-		p->p_limit = limcopy(p->p_limit);
+		newplim = limcopy(p->p_limit);
+		limfree(p->p_limit);
+		p->p_limit = newplim;
 		alimp = &p->p_rlimit[which];
 	}
 
@@ -458,6 +465,13 @@ limcopy(lim)
 	newlim = pool_get(&plimit_pool, PR_WAITOK);
 	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
 	    sizeof(struct rlimit) * RLIM_NLIMITS);
+	if (lim->pl_corename == defcorename) {
+		newlim->pl_corename = defcorename;
+	} else {
+		newlim->pl_corename = malloc(strlen(lim->pl_corename)+1,
+		    M_TEMP, M_WAITOK);
+		strcpy(newlim->pl_corename, lim->pl_corename);
+	}
 	newlim->p_lflags = 0;
 	newlim->p_refcnt = 1;
 	return (newlim);
@@ -470,5 +484,11 @@ limfree(lim)
 
 	if (--lim->p_refcnt > 0)
 		return;
+#ifdef DIAGNOSTIC
+	if (lim->p_refcnt < 0)
+		panic("limfree");
+#endif
+	if (lim->pl_corename != defcorename)
+		free(lim->pl_corename, M_TEMP);
 	pool_put(&plimit_pool, lim);
 }

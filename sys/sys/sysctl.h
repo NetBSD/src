@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.36 1999/09/27 16:24:40 kleink Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.37 1999/09/28 14:47:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -92,7 +92,8 @@ struct ctlname {
 #define	CTL_MACHDEP	7		/* machine dependent */
 #define	CTL_USER	8		/* user-level */
 #define	CTL_DDB		9		/* in-kernel debugger */
-#define	CTL_MAXID	10		/* number of valid top-level ids */
+#define	CTL_PROC	10		/* per-proc attr */
+#define	CTL_MAXID	11		/* number of valid top-level ids */
 
 #define CTL_NAMES { \
 	{ 0, 0 }, \
@@ -105,6 +106,7 @@ struct ctlname {
 	{ "machdep", CTLTYPE_NODE }, \
 	{ "user", CTLTYPE_NODE }, \
 	{ "ddb", CTLTYPE_NODE }, \
+	{ "proc", CTLTYPE_NODE }, \
 }
 
 /*
@@ -145,7 +147,7 @@ struct ctlname {
 #define	KERN_SYSVMSG		33	/* int: SysV message queue suppoprt */
 #define	KERN_SYSVSEM		34	/* int: SysV semaphore support */
 #define	KERN_SYSVSHM		35	/* int: SysV shared memory support */
-#define	KERN_SHORTCORENAME	36	/* int: programs dump core as "core" */
+#define	KERN_DEFCORENAME	36	/* string: default corename format */
 #define	KERN_SYNCHRONIZED_IO	37	/* int: POSIX synchronized I/O */
 #define	KERN_IOV_MAX		38	/* int: max iovec's for readv(2) etc. */
 #define	KERN_MBUF		39	/* node: mbuf parameters */
@@ -193,7 +195,7 @@ struct ctlname {
 	{ "sysvmsg", CTLTYPE_INT }, \
 	{ "sysvsem", CTLTYPE_INT }, \
 	{ "sysvshm", CTLTYPE_INT }, \
-	{ "shortcorename", CTLTYPE_INT }, \
+	{ "defcorename", CTLTYPE_STRING }, \
 	{ "synchronized_io", CTLTYPE_INT }, \
 	{ "iov_max", CTLTYPE_INT }, \
 	{ "mbuf", CTLTYPE_NODE }, \
@@ -358,6 +360,61 @@ struct kinfo_proc {
 #define	CTL_DEBUG_VALUE		1	/* int: variable value */
 #define	CTL_DEBUG_MAXID		20
 
+/*
+ * CTL_PROC subtype. Either a PID, or a magic value for the current proc.
+ */
+
+#define PROC_CURPROC	(~((u_int)1 << 31))
+
+/*
+ * CTL_PROC tree: either corename (string), or a limit
+ * (rlimit.<type>.{hard,soft}, int).
+ */
+#define PROC_PID_CORENAME	1
+#define	PROC_PID_LIMIT		2
+#define	PROC_PID_MAXID		3
+
+#define	PROC_PID_NAMES { \
+	{ 0, 0 }, \
+	{ "corename", CTLTYPE_STRING }, \
+	{ "rlimit", CTLTYPE_NODE }, \
+}
+
+/* Limit types from <sys/resources.h> */
+#define PROC_PID_LIMIT_CPU	(RLIMIT_CPU+1)
+#define PROC_PID_LIMIT_FSIZE	(RLIMIT_FSIZE+1)
+#define PROC_PID_LIMIT_DATA	(RLIMIT_DATA+1)
+#define PROC_PID_LIMIT_STACK	(RLIMIT_STACK+1)
+#define PROC_PID_LIMIT_CORE	(RLIMIT_CORE+1)
+#define PROC_PID_LIMIT_RSS	(RLIMIT_RSS+1)
+#define PROC_PID_LIMIT_MEMLOCK	(RLIMIT_MEMLOCK+1)
+#define PROC_PID_LIMIT_NPROC	(RLIMIT_NPROC+1)
+#define PROC_PID_LIMIT_NOFILE	(RLIMIT_NOFILE+1)
+#define PROC_PID_LIMIT_MAXID 	10
+
+#define PROC_PID_LIMIT_NAMES { \
+	{ 0, 0 }, \
+	{ "cputime", CTLTYPE_NODE }, \
+	{ "filesize", CTLTYPE_NODE }, \
+	{ "datasize", CTLTYPE_NODE }, \
+	{ "stacksize", CTLTYPE_NODE }, \
+	{ "coredumpsize", CTLTYPE_NODE }, \
+	{ "memoryuse", CTLTYPE_NODE }, \
+	{ "memorylocked", CTLTYPE_NODE }, \
+	{ "maxproc", CTLTYPE_NODE }, \
+	{ "descriptors", CTLTYPE_NODE }, \
+}
+/* for each type, either hard or soft value */
+#define PROC_PID_LIMIT_TYPE_SOFT	1
+#define PROC_PID_LIMIT_TYPE_HARD	2
+#define PROC_PID_LIMIT_TYPE_MAXID	3
+
+#define PROC_PID_LIMIT_TYPE_NAMES { \
+	{0, 0}, \
+	{ "soft", CTLTYPE_QUAD }, \
+	{ "hard", CTLTYPE_QUAD }, \
+}
+
 #ifdef	_KERNEL
 /*
  * CTL_DEBUG variables.
@@ -396,12 +453,14 @@ typedef int (sysctlfn)
 
 int sysctl_int __P((void *, size_t *, void *, size_t, int *));
 int sysctl_rdint __P((void *, size_t *, void *, int));
+int sysctl_quad __P((void *, size_t *, void *, size_t, quad_t *));
+int sysctl_rdquad __P((void *, size_t *, void *, quad_t));
 int sysctl_string __P((void *, size_t *, void *, size_t, char *, int));
 int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
 int sysctl_struct __P((void *, size_t *, void *, size_t, void *, int));
 int sysctl_file __P((char *, size_t *));
-int sysctl_doproc __P((int *, u_int, char *, size_t *));
+int sysctl_doeproc __P((int *, u_int, char *, size_t *));
 struct radix_node;
 struct walkarg;
 int sysctl_dumpentry __P((struct radix_node *, void *));
@@ -423,6 +482,8 @@ int kern_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		     struct proc *));
 int hw_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		   struct proc *));
+int proc_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
+		     struct proc *));
 #ifdef DEBUG
 int debug_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		      struct proc *));

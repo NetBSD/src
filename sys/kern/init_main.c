@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.156 1999/09/17 20:11:56 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.157 1999/09/28 14:47:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -286,6 +286,7 @@ main()
 	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = i;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = i;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = i / 3;
+	limit0.pl_corename = defcorename;
 	limit0.p_refcnt = 1;
 
 	/*

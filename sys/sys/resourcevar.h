@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.13 1998/03/01 02:24:14 fvdl Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.14 1999/09/28 14:47:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -73,6 +73,7 @@ struct pstats {
  */
 struct plimit {
 	struct	rlimit pl_rlimit[RLIM_NLIMITS];
+	char	*pl_corename;
 #define	PL_SHAREMOD	0x01		/* modifications are shared */
 	int	p_lflags;
 	int	p_refcnt;		/* number of references */
@@ -84,12 +85,13 @@ struct plimit {
 	    (p)->p_stats->p_prof.pr_addr, (p)->p_stats->p_prof.pr_ticks)
 
 #ifdef _KERNEL
+extern char defcorename[];
 void	 addupc_intr __P((struct proc *p, u_long pc, u_int ticks));
 void	 addupc_task __P((struct proc *p, u_long pc, u_int ticks));
 void	 calcru __P((struct proc *p, struct timeval *up, struct timeval *sp,
 	    struct timeval *ip));
-struct plimit
-	*limcopy __P((struct plimit *lim));
+struct plimit *limcopy __P((struct plimit *lim));
+void limfree __P((struct plimit *));
 void	 ruadd __P((struct rusage *ru, struct rusage *ru2));
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */

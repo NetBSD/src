@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.73 1999/07/22 21:08:31 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.74 1999/09/28 14:47:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -326,8 +326,7 @@ exit1(p, rv)
 	 * Other substructures are freed from wait().
 	 */
 	curproc = NULL;
-	if (--p->p_limit->p_refcnt == 0)
-		pool_put(&plimit_pool, p->p_limit);
+	limfree(p->p_limit);
 
 	/*
 	 * Finally, call machine-dependent code to switch to a new
