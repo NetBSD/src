@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.71 1999/08/18 01:34:27 wrstuden Exp $	*/
+/*	$NetBSD: param.h,v 1.72 1999/10/06 18:53:55 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -101,7 +101,8 @@
 
 #define	MAXCOMLEN	16		/* max command name remembered */
 #define	MAXINTERP	64		/* max interpreter file name length */
-#define	MAXLOGNAME	16		/* max login name length */
+/* DEPRECATED: use LOGIN_NAME_MAX instead. */
+#define	MAXLOGNAME	(LOGIN_NAME_MAX - 1) /* max login name length */
 #define	NCARGS		ARG_MAX		/* max bytes for an exec function */
 #define	NGROUPS		NGROUPS_MAX	/* max number groups */
 #define	NOFILE		OPEN_MAX	/* max open files per process */
