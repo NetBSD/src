@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.83 2001/06/03 03:24:23 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.84 2001/06/12 15:03:26 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -661,6 +661,26 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
+	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+		/*
+		 * If this is not a simplex interface, drop the packet
+		 * if it came from us.
+		 */
+		if ((ifp->if_flags & IFF_SIMPLEX) == 0 &&
+		    memcmp(LLADDR(ifp->if_sadl), eh->ether_shost,
+		    ETHER_ADDR_LEN) == 0) {
+			m_freem(m);
+			return;
+		}
+
+		if (memcmp(etherbroadcastaddr,
+		    eh->ether_dhost, ETHER_ADDR_LEN) == 0)
+			m->m_flags |= M_BCAST;
+		else
+			m->m_flags |= M_MCAST;
+		ifp->if_imcasts++;
+	}
+
 	/* If the CRC is still on the packet, trim it off. */
 	if (m->m_flags & M_HASFCS) {
 		m_adj(m, -ETHER_CRC_LEN);
@@ -669,14 +689,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
-	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
-		if (memcmp(etherbroadcastaddr,
-		    eh->ether_dhost, ETHER_ADDR_LEN) == 0)
-			m->m_flags |= M_BCAST;
-		else
-			m->m_flags |= M_MCAST;
-		ifp->if_imcasts++;
-	}
 
 #if NBRIDGE > 0
 	/*
