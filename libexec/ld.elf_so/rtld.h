@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.52 2002/09/19 14:05:37 junyoung Exp $	 */
+/*	$NetBSD: rtld.h,v 1.53 2002/09/23 23:56:49 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -269,19 +269,19 @@ int _rtld_relocate_plt_objects __P((const Obj_Entry *));
 void _rtld_setup_pltgot __P((const Obj_Entry *));
 
 /* search.c */
-char *_rtld_find_library __P((const char *, const Obj_Entry *));
+Obj_Entry *_rtld_load_library __P((const char *, const Obj_Entry *, int));
 
 /* symbol.c */
 unsigned long _rtld_elf_hash __P((const char *));
 const Elf_Sym *_rtld_symlook_obj __P((const char *, unsigned long,
-    const Obj_Entry *, bool));
+    const Obj_Entry *));
 const Elf_Sym *_rtld_find_symdef __P((unsigned long, const Obj_Entry *,
     const Obj_Entry **, bool));
 const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
-  Objlist *, const Obj_Entry **, bool in_plt);
+  Objlist *, const Obj_Entry **);
 
 /* map_object.c */
-Obj_Entry *_rtld_map_object __P((const char *, int, const struct stat *));
+Obj_Entry *_rtld_map_object __P((char *, int, const struct stat *));
 void _rtld_obj_free(Obj_Entry *);
 Obj_Entry *_rtld_obj_new(void);
 

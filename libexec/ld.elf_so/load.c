@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.18 2002/09/12 22:56:28 mycroft Exp $	 */
+/*	$NetBSD: load.c,v 1.19 2002/09/23 23:56:46 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -101,9 +101,9 @@ _rtld_load_object(filepath, mode)
 	int fd = -1;
 	struct stat sb;
 
-	for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next)
-		if (strcmp(obj->path, filepath) == 0)
-			break;
+        for (obj = _rtld_objlist->next; obj != NULL; obj = obj->next)
+                if (!strcmp(obj->path, filepath))
+                        break;
 
 	/*
 	 * If we didn't find a match by pathname, open the file and check
@@ -138,7 +138,6 @@ _rtld_load_object(filepath, mode)
 			free(filepath);
 			return NULL;
 		}
-		obj->path = filepath;
 		_rtld_digest_dynamic(obj);
 
 		*_rtld_objtail = obj;
@@ -170,7 +169,6 @@ _rtld_load_by_name(name, obj, needed, mode)
 	Library_Xform *x = _rtld_xforms;
 	Obj_Entry *o = NULL;
 	size_t i, j;
-	char *libpath;
 	bool got = false;
 	union {
 		int i;
@@ -219,16 +217,13 @@ _rtld_load_by_name(name, obj, needed, mode)
 		 * what we loaded in the needed objects */
 		for (j = 0; j < RTLD_MAX_LIBRARY &&
 		    x->entry[i].library[j] != NULL; j++) {
-			libpath = _rtld_find_library(
-			    x->entry[i].library[j], obj);
-			if (libpath == NULL) {
+			o = _rtld_load_library(x->entry[i].library[j], obj,
+			    mode);
+			if (o == NULL) {
 				xwarnx("could not load %s for %s",
 				    x->entry[i].library[j], name);
 				continue;
 			}
-			o = _rtld_load_object(libpath, mode);
-			if (o == NULL)
-				continue;
 			got = true;
 			if (j == 0)
 				(*needed)->obj = o;
@@ -249,10 +244,7 @@ _rtld_load_by_name(name, obj, needed, mode)
 	if (got)
 		return true;
 
-	libpath = _rtld_find_library(name, obj);
-	if (libpath == NULL)
-		return false;
-	return ((*needed)->obj = _rtld_load_object(libpath, mode)) != NULL;
+	return ((*needed)->obj = _rtld_load_library(name, obj, mode)) != NULL;
 }
 
 
