@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 1998/08/27 21:44:28 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.14 1998/11/28 22:44:22 eeh Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -7,7 +7,7 @@ GCC_MAKEFILE_INC=1
 
 # These architectures are Cygnus's default for enabling Haifa
 .if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "powerpc") || \
-    (${MACHINE_ARCH} == "sparc")
+    (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "sparc64")
 USE_EGCS_HAIFA=1
 .endif
 
