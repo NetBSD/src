@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/06/12 15:09:39 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/03/26 10:27:15 tsutsui Exp $
 
+# These are put in ${RELEASEDIR} by "make release" in distrib/sun3
+# after it builds and patches in the installation ramdisk image.
 BUILD_KERNELS+=		INSTALL
-INSTALLATION_DIRS+=	installation
+
+# These are just built and copied to the release area.
+EXTRA_KERNELS+=		GENERIC_TINY
 
 snap_md_post:
 .ifndef UPDATE
