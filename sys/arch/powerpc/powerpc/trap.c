@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 1999/05/03 10:02:20 tsubai Exp $	*/
+/*	$NetBSD: trap.c,v 1.23 2000/01/19 03:30:13 danw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,6 +61,8 @@
 
 volatile int astpending;
 volatile int want_resched;
+
+static int fix_unaligned __P((struct proc *p, struct trapframe *frame));
 
 void
 trap(frame)
@@ -262,8 +264,10 @@ syscall_bad:
 		break;
 
 	case EXC_ALI|EXC_USER:
-/* XXX temporarily */
-		trapsignal(p, SIGBUS, EXC_ALI);
+		if (fix_unaligned(p, frame) != 0)
+			trapsignal(p, SIGBUS, EXC_ALI);
+		else
+			frame->srr0 += 4;
 		break;
 
 	case EXC_PGM|EXC_USER:
@@ -530,4 +534,53 @@ badaddr_read(addr, size, rptr)
 		*rptr = x;
 
 	return 0;
+}
+
+/*
+ * For now, this only deals with the particular unaligned access case
+ * that gcc tends to generate.  Eventually it should handle all of the
+ * possibilities that can happen on a 32-bit PowerPC in big-endian mode.
+ */
+
+static int
+fix_unaligned(p, frame)
+	struct proc *p;
+	struct trapframe *frame;
+{
+	int indicator = EXC_ALI_OPCODE_INDICATOR(frame->dsisr);
+
+	switch (indicator) {
+	case EXC_ALI_LFD:
+	case EXC_ALI_STFD:
+		{
+			int reg = EXC_ALI_RST(frame->dsisr);
+			double *fpr = &p->p_addr->u_pcb.pcb_fpu.fpr[reg];
+
+			/* Juggle the FPU to ensure that we've initialized
+			 * the FPRs, and that their current state is in
+			 * the PCB.
+			 */
+			if (fpuproc != p) {
+				if (fpuproc)
+					save_fpu(fpuproc);
+				enable_fpu(p);
+			}
+			save_fpu(p);
+
+			if (indicator == EXC_ALI_LFD) {
+				if (copyin((void *)frame->dar, fpr,
+				    sizeof(double)) != 0)
+					return -1;
+				enable_fpu(p);
+			} else {
+				if (copyout(fpr, (void *)frame->dar,
+				    sizeof(double)) != 0)
+					return -1;
+			}
+			return 0;
+		}
+		break;
+	}
+
+	return -1;
 }
