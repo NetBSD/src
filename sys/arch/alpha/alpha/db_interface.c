@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.15 2001/04/21 16:27:10 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.16 2001/05/13 01:40:58 ross Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.15 2001/04/21 16:27:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16 2001/05/13 01:40:58 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -147,14 +147,22 @@ const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_
 static int
 db_alpha_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
+	unsigned long *tfaddr;
+	unsigned long zeroval = 0;
+	struct trapframe *f = NULL;
 
+	if (vp->modif != NULL && *vp->modif == 'u') {
+		if (curproc != NULL)
+			f = curproc->p_md.md_tf;
+	} else	f = DDB_REGS;
+	tfaddr = f == NULL ? &zeroval : &f->tf_regs[(u_long)vp->valuep];
 	switch (opcode) {
 	case DB_VAR_GET:
-		*val = DDB_REGS->tf_regs[(u_long)vp->valuep];
+		*val = *tfaddr;
 		break;
 
 	case DB_VAR_SET:
-		DDB_REGS->tf_regs[(u_long)vp->valuep] = *val;
+		*tfaddr = *val;
 		break;
 
 	default:
