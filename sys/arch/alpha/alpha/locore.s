@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.90 2001/04/15 23:07:34 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.91 2001/04/18 00:38:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.90 2001/04/15 23:07:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.91 2001/04/18 00:38:10 thorpej Exp $");
 
 #include "assym.h"
 
@@ -1332,18 +1332,16 @@ NESTED(kcopy, 3, 32, ra, IM_RA|IM_S0|IM_S1, 0)
 	stq	s1, (32-24)(sp)			/* save s1		     */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, s1
+	ldq	s1, 0(v0)			/* s1 = curproc		     */
 	lda	v0, kcopyerr			/* set up fault handler.     */
 	.set noat
-	ldq	at_reg, 0(s1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(s1)
 	ldq	s0, U_PCB_ONFAULT(at_reg)	/* save old handler.	     */
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(bcopy)				/* do the copy.		     */
 	.set noat
-	ldq	at_reg, 0(s1)			/* restore the old handler.  */
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(s1)		/* restore the old handler.  */
 	stq	s0, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (32-8)(sp)			/* restore ra.		     */
@@ -1357,8 +1355,7 @@ NESTED(kcopy, 3, 32, ra, IM_RA|IM_S0|IM_S1, 0)
 LEAF(kcopyerr, 0)
 	LDGP(pv)
 	.set noat
-	ldq	at_reg, 0(s1)			/* restore the old handler.  */
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(s1)		/* restore the old handler.  */
 	stq	s0, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (32-8)(sp)			/* restore ra.		     */
@@ -1379,17 +1376,15 @@ NESTED(copyin, 3, 16, ra, IM_RA|IM_S0, 0)
 	beq	t1, copyerr			/* if it's not, error out.   */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, s0
+	ldq	s0, 0(v0)			/* s0 = curproc		     */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	ldq	at_reg, 0(s0)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(s0)
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(bcopy)				/* do the copy.		     */
 	.set noat
-	ldq	at_reg, 0(s0)			/* kill the fault handler.   */
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(s0)		/* kill the fault handler.   */
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
@@ -1409,17 +1404,15 @@ NESTED(copyout, 3, 16, ra, IM_RA|IM_S0, 0)
 	beq	t1, copyerr			/* if it's not, error out.   */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, s0
+	ldq	s0, 0(v0)			/* s0 = curproc		     */
 	lda	v0, copyerr			/* set up fault handler.     */
 	.set noat
-	ldq	at_reg, 0(s0)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(s0)
 	stq	v0, U_PCB_ONFAULT(at_reg)
 	.set at
 	CALL(bcopy)				/* do the copy.		     */
 	.set noat
-	ldq	at_reg, 0(s0)			/* kill the fault handler.   */
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(s0)		/* kill the fault handler.   */
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	ra, (16-8)(sp)			/* restore ra.		     */
@@ -1454,18 +1447,16 @@ XLEAF(fuiword, 1)
 	beq	t1, fswberr			/* if it's not, error out. */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, t1
+	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	ldq	v0, 0(a0)
 	zap	v0, 0xf0, v0
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	RET
@@ -1479,17 +1470,15 @@ XLEAF(fuisword, 1)
 	beq	t1, fswberr			/* if it's not, error out. */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, t1
+	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX FETCH IT */
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	RET
@@ -1503,17 +1492,15 @@ XLEAF(fuibyte, 1)
 	beq	t1, fswberr			/* if it's not, error out. */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, t1
+	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX FETCH IT */
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	RET
@@ -1526,17 +1513,15 @@ LEAF(suword, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, t1
+	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	stq	a1, 0(a0)			/* do the store. */
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	mov	zero, v0
@@ -1551,17 +1536,15 @@ LEAF(suiword, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, t1
+	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	call_pal PAL_OSF1_imb			/* sync instruction stream */
@@ -1576,17 +1559,15 @@ LEAF(susword, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, t1
+	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	mov	zero, v0
@@ -1600,17 +1581,15 @@ LEAF(suisword, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, t1
+	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	call_pal PAL_OSF1_imb			/* sync instruction stream */
@@ -1626,11 +1605,10 @@ LEAF(subyte, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, t1
+	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	zap	a1, 0xfe, a1			/* kill arg's high bytes */
@@ -1640,8 +1618,7 @@ LEAF(subyte, 2)
 	or	t0, a1, a1			/* put the result together */
 	stq_u	a1, 0(a0)			/* and store it. */
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	mov	zero, v0
@@ -1655,11 +1632,10 @@ LEAF(suibyte, 2)
 	beq	t1, fswberr			/* if it's not, error out. */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, t1
+	ldq	t1, 0(v0)
 	lda	t0, fswberr
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	.set at
 	zap	a1, 0xfe, a1			/* kill arg's high bytes */
@@ -1669,8 +1645,7 @@ LEAF(suibyte, 2)
 	or	t0, a1, a1			/* put the result together */
 	stq_u	a1, 0(a0)			/* and store it. */
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	call_pal PAL_OSF1_imb			/* sync instruction stream */
@@ -1700,18 +1675,16 @@ LEAF(fuswintr, 2)
 	beq	t1, fswintrberr			/* if it's not, error out. */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, t1
+	ldq	t1, 0(v0)
 	lda	t0, fswintrberr
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	stq	a0, U_PCB_ACCESSADDR(at_reg)
 	.set at
 	/* XXX FETCH IT */
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	RET
@@ -1724,18 +1697,16 @@ LEAF(suswintr, 2)
 	beq	t1, fswintrberr			/* if it's not, error out. */
 	/* Note: GET_CURPROC clobbers v0, t0, t8...t11. */
 	GET_CURPROC
-	mov	v0, t1
+	ldq	t1, 0(v0)
 	lda	t0, fswintrberr
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	t0, U_PCB_ONFAULT(at_reg)
 	stq	a0, U_PCB_ACCESSADDR(at_reg)
 	.set at
 	/* XXX STORE IT */
 	.set noat
-	ldq	at_reg, 0(t1)
-	ldq	at_reg, P_ADDR(at_reg)
+	ldq	at_reg, P_ADDR(t1)
 	stq	zero, U_PCB_ONFAULT(at_reg)
 	.set at
 	mov	zero, v0
