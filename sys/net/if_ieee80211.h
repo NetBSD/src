@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.11 2001/09/18 09:10:00 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.12 2001/09/19 04:09:56 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -253,7 +253,8 @@ struct ieee80211_bss {
 	u_int8_t		bs_tstamp[8];
 	u_int16_t		bs_intval;
 	u_int16_t		bs_capinfo;
-	u_int16_t		bs_dwell;
+	u_int16_t		bs_fhdwell;
+	u_int8_t		bs_fhindex;
 	u_int16_t		bs_associd;
 	u_int32_t		bs_timoff;
 	u_int8_t		bs_chan;
@@ -265,6 +266,12 @@ struct ieee80211_bss {
 	int			bs_fails;
 	int			bs_txrate;
 };
+
+/* bs_chan encoding for FH phy */
+#define	IEEE80211_FH_CHANMOD	80
+#define	IEEE80211_FH_CHAN(set,pat)	(((set)-1)*IEEE80211_FH_CHANMOD+(pat))
+#define	IEEE80211_FH_CHANSET(chan)	((chan)/IEEE80211_FH_CHANMOD+1)
+#define	IEEE80211_FH_CHANPAT(chan)	((chan)%IEEE80211_FH_CHANMOD)
 
 struct ieee80211_wepkey {
 	int			wk_len;
