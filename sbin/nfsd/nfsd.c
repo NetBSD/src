@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.20 1996/09/16 17:22:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-static char rcsid[] = "$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $";
+static char rcsid[] = "$NetBSD: nfsd.c,v 1.20 1996/09/16 17:22:04 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -353,6 +353,7 @@ main(argc, argv, envp)
 		inetaddr.sin_addr.s_addr = INADDR_ANY;
 		inetaddr.sin_port = htons(NFS_PORT);
 		inetaddr.sin_len = sizeof(inetaddr);
+		memset(inetaddr.sin_zero, 0, sizeof(inetaddr.sin_zero));
 		if (bind(sock,
 		    (struct sockaddr *)&inetaddr, sizeof(inetaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind udp addr");
@@ -430,6 +431,7 @@ main(argc, argv, envp)
 		inetaddr.sin_addr.s_addr = INADDR_ANY;
 		inetaddr.sin_port = htons(NFS_PORT);
 		inetaddr.sin_len = sizeof(inetaddr);
+		memset(inetaddr.sin_zero, 0, sizeof(inetaddr.sin_zero));
 		if (bind(tcpsock,
 		    (struct sockaddr *)&inetaddr, sizeof (inetaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind tcp addr");
@@ -502,6 +504,7 @@ main(argc, argv, envp)
 		inetaddr.sin_addr.s_addr = INADDR_ANY;
 		inetaddr.sin_port = htons(NFS_PORT);
 		inetaddr.sin_len = sizeof(inetaddr);
+		memset(inetaddr.sin_zero, 0, sizeof(inetaddr.sin_zero));
 		if (bind(tpipsock,
 		    (struct sockaddr *)&inetaddr, sizeof (inetaddr)) < 0) {
 			syslog(LOG_ERR, "can't bind tcp addr");
