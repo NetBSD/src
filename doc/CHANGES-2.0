@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.361 2004/07/28 11:07:18 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.362 2004/07/28 11:35:48 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6233,4 +6233,26 @@ sys/kern/init_sysctl.c				1.31
 	that instead.  Should be fine until someone wants a message buffer
 	larger than two gigabytes.
 	[atatat, ticket #720]
+
+sys/dev/pci/pcidevs				1.624
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/piixide.c				1.9
+
+	Add support for i6300ESB IDE / SATA controllers.
+	[joda, ticket #721]
+
+sys/dev/ld.c					1.28
+sys/dev/ldvar.h					1.8
+sys/ufs/ufs/ufs_bmap.c				1.30 via patch
+sys/ufs/ufs/ufs_vnops.c				1.117
+
+	Avoid corruption in filesystems and ld disks over 1TB.
+	[dbj, ticket #722]
+
+bin/ps/keyword.c				1.41
+
+	For the "lid" keyword, change ULONG to INT32 since it's a 32bit type.
+	From Nicolas Joly in PR bin/26452.
+	[simonb, ticket #723]
 
