@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.2.4 1999/05/16 22:38:11 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.2.5 1999/05/22 09:39:27 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,8 +83,6 @@
 #include "opt_sysv.h"
 #include "akbd.h"
 #include "macfb.h"
-#include "wsdisplay.h"
-#include "wskbd.h"
 #include "zsc.h"
 
 #include <sys/param.h>
@@ -335,7 +333,7 @@ consinit(void)
 	/*
 	 * Generic console: sys/dev/cons.c
 	 *	Initializes either ite or ser as console.
-	 *	Can be called from locore.s and init_main.c.
+	 *	Can be called from locore.s and init_main.c.  (Ugh.)
 	 */
 	static int init;	/* = 0 */
 
@@ -343,11 +341,26 @@ consinit(void)
 		cninit();
 		init = 1;
 	} else {
-#if (NMACFB > 0) && (NWSDISPLAY > 0)
-		macfb_cnattach(mac68k_vidphys);
-#endif
-#if (NAKBD > 0) && (NWSKBD > 0)
-		akbd_cnattach();
+#if NAKBD > 0 && NMACFB > 0
+		/*
+		 * XXX  This is an evil hack on top of an evil hack!
+		 *
+		 * With the graybar stuff, we've got a catch-22:  we need
+		 * to do at least some console setup really early on, even
+		 * before we're running with the mappings we need.  On
+		 * the other hand, we're not nearly ready to do anything
+		 * with wscons or the ADB driver at that point.
+		 *
+		 * To get around this, maccninit() ignores the first call
+		 * it gets (from cninit(), if not on a serial console).
+		 * Once we're here, we call maccninit() again, which sets
+		 * up the console devices and does the appropriate wscons
+		 * initialization.
+		 */
+		if (mac68k_machine.serial_console == 0) {
+			void maccninit __P((struct consdev *));
+			maccninit(NULL);
+		}
 #endif
 
 		mac68k_calibrate_delay();
