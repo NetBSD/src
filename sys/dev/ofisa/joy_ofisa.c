@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_ofisa.c,v 1.2 2001/11/13 07:29:45 lukem Exp $	*/
+/*	$NetBSD: joy_ofisa.c,v 1.3 2002/02/03 23:17:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.2 2001/11/13 07:29:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.3 2002/02/03 23:17:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.2 2001/11/13 07:29:45 lukem Exp $");
 #include <dev/isa/isavar.h>
 #include <dev/ofisa/ofisavar.h>
 
-#include <arm32/isa/joyvar.h>
+#include <dev/ic/joyvar.h>
 
 #define	JOY_NPORTS	1	/* XXX should be in a header file */
 
