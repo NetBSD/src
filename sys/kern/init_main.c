@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.210 2002/11/05 01:24:35 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.211 2002/11/17 22:53:46 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.210 2002/11/05 01:24:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.211 2002/11/17 22:53:46 chs Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -622,14 +622,14 @@ start_init(void *arg)
 	/*
 	 * Need just enough stack to hold the faked-up "execve()" arguments.
 	 */
-	addr = USRSTACK - PAGE_SIZE;
+	addr = (vaddr_t)STACK_ALLOC(USRSTACK, PAGE_SIZE);
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE,
                     NULL, UVM_UNKNOWN_OFFSET, 0,
                     UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 		    UVM_ADV_NORMAL,
                     UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)) != 0)
 		panic("init: couldn't allocate argument space");
-	p->p_vmspace->vm_maxsaddr = (caddr_t)addr;
+	p->p_vmspace->vm_maxsaddr = (caddr_t)STACK_MAX(addr, PAGE_SIZE);
 
 	ipx = 0;
 	while (1) {
@@ -653,7 +653,7 @@ start_init(void *arg)
 				break;
 		}
 
-		ucp = (char *)(addr + PAGE_SIZE);
+		ucp = (char *)USRSTACK;
 
 		/*
 		 * Construct the boot flag argument.
@@ -682,8 +682,9 @@ start_init(void *arg)
 #ifdef DEBUG
 			printf("init: copying out flags `%s' %d\n", flags, i);
 #endif
-			(void)copyout((caddr_t)flags, (caddr_t)(ucp -= i), i);
-			arg1 = ucp;
+			arg1 = STACK_ALLOC(ucp, i);
+			ucp = STACK_MAX(arg1, i);
+			(void)copyout((caddr_t)flags, arg1, i);
 		}
 
 		/*
@@ -696,29 +697,27 @@ start_init(void *arg)
 		if (boothowto & RB_ASKNAME || path != initpaths[0])
 			printf("init: trying %s\n", path);
 #endif
-		(void)copyout((caddr_t)path, (caddr_t)(ucp -= i), i);
-		arg0 = ucp;
+		arg0 = STACK_ALLOC(ucp, i);
+		ucp = STACK_MAX(arg0, i);
+		(void)copyout((caddr_t)path, arg0, i);
 
 		/*
 		 * Move out the arg pointers.
 		 */
-		uap = (char **)((long)ucp & ~ALIGNBYTES);
-		(void)suword((caddr_t)--uap, 0);	/* terminator */
-		if (options != 0)
-			(void)suword((caddr_t)--uap, (long)arg1);
-		slash = strrchr(path, '/');
-		if (slash)
-			(void)suword((caddr_t)--uap,
-			    (long)arg0 + (slash + 1 - path));
-		else
-			(void)suword((caddr_t)--uap, (long)arg0);
-
-		/*
-		 * Point at the arguments.
-		 */
+		ucp = (caddr_t)STACK_ALIGN(ucp, ALIGNBYTES);
+		uap = (char **)STACK_ALLOC(ucp, sizeof(char *) * 3);
 		SCARG(&args, path) = arg0;
 		SCARG(&args, argp) = uap;
 		SCARG(&args, envp) = NULL;
+		slash = strrchr(path, '/');
+		if (slash)
+			(void)suword((caddr_t)uap++,
+			    (long)arg0 + (slash + 1 - path));
+		else
+			(void)suword((caddr_t)uap++, (long)arg0);
+		if (options != 0)
+			(void)suword((caddr_t)uap++, (long)arg1);
+		(void)suword((caddr_t)uap++, 0);	/* terminator */
 
 		/*
 		 * Now try to exec the program.  If can't for any reason

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.152 2002/11/01 12:49:49 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.153 2002/11/17 22:53:46 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -143,6 +143,37 @@
 /* Machine type dependent parameters. */
 #include <machine/param.h>
 #include <machine/limits.h>
+
+/*
+ * Stack macros.  On most architectures, the stack grows down, 
+ * towards lower addresses; it is the rare architecture where 
+ * it grows up, towards higher addresses.
+ * 
+ * STACK_GROW and STACK_SHRINK adjust a stack pointer by some 
+ * size, no questions asked.  STACK_ALIGN aligns a stack pointer.
+ *
+ * STACK_ALLOC returns a pointer to allocated stack space of 
+ * some size; given such a pointer and a size, STACK_MAX gives 
+ * the maximum (in the "maxsaddr" sense) stack address of the 
+ * allocated memory.
+ */
+#ifdef _KERNEL
+#ifdef __MACHINE_STACK_GROWS_UP
+#define	STACK_GROW(sp, _size)		(((caddr_t)(sp)) + (_size))
+#define	STACK_SHRINK(sp, _size)		(((caddr_t)(sp)) - (_size))
+#define	STACK_ALIGN(sp, bytes)	\
+	((caddr_t)((((unsigned long)(sp)) + (bytes)) & ~(bytes)))
+#define	STACK_ALLOC(sp, _size)		((caddr_t)(sp))
+#define	STACK_MAX(p, _size)		(((caddr_t)(p)) + (_size))
+#else
+#define	STACK_GROW(sp, _size)		(((caddr_t)(sp)) - (_size))
+#define	STACK_SHRINK(sp, _size)		(((caddr_t)(sp)) + (_size))
+#define	STACK_ALIGN(sp, bytes)	\
+	((caddr_t)(((unsigned long)(sp)) & ~(bytes)))
+#define	STACK_ALLOC(sp, _size)		(((caddr_t)(sp)) - (_size))
+#define	STACK_MAX(p, _size)		((caddr_t)(p))
+#endif
+#endif /* _KERNEL */
 
 /*
  * Priorities.  Note that with 32 run queues, differences less than 4 are
