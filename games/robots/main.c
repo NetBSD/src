@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1997/10/12 14:09:58 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1997/10/12 14:16:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 1997/10/12 14:09:58 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 1997/10/12 14:16:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ main(ac, av)
 					setgid(getgid());
 					Scorefile = av[0];
 # ifdef	FANCY
-					sp = rindex(Scorefile, '/');
+					sp = strrchr(Scorefile, '/');
 					if (sp == NULL)
 						sp = Scorefile;
 					if (strcmp(sp, "pattern_roll") == 0)
