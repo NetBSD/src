@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.58 2004/10/30 18:08:37 thorpej Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.59 2005/01/02 12:41:03 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.58 2004/10/30 18:08:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.59 2005/01/02 12:41:03 tsutsui Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -100,37 +100,35 @@ __KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.58 2004/10/30 18:08:37 thorpej Exp $")
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 /* Standard driver entry points.  These can be static. */
-void	mb86960_init	__P((struct mb86960_softc *));
-int	mb86960_ioctl	__P((struct ifnet *, u_long, caddr_t));
-void	mb86960_start	__P((struct ifnet *));
-void	mb86960_reset	__P((struct mb86960_softc *));
-void	mb86960_watchdog __P((struct ifnet *));
+void	mb86960_init(struct mb86960_softc *);
+int	mb86960_ioctl(struct ifnet *, u_long, caddr_t);
+void	mb86960_start(struct ifnet *);
+void	mb86960_reset(struct mb86960_softc *);
+void	mb86960_watchdog(struct ifnet *);
 
 /* Local functions.  Order of declaration is confused.  FIXME. */
-int	mb86960_get_packet __P((struct mb86960_softc *, u_int));
-void	mb86960_stop __P((struct mb86960_softc *));
-void	mb86960_tint __P((struct mb86960_softc *, u_int8_t));
-void	mb86960_rint __P((struct mb86960_softc *, u_int8_t));
+int	mb86960_get_packet(struct mb86960_softc *, u_int);
+void	mb86960_stop(struct mb86960_softc *);
+void	mb86960_tint(struct mb86960_softc *, uint8_t);
+void	mb86960_rint(struct mb86960_softc *, uint8_t);
 static __inline__
-void	mb86960_xmit __P((struct mb86960_softc *));
-void	mb86960_write_mbufs __P((struct mb86960_softc *, struct mbuf *));
+void	mb86960_xmit(struct mb86960_softc *);
+void	mb86960_write_mbufs(struct mb86960_softc *, struct mbuf *);
 static __inline__
-void	mb86960_droppacket __P((struct mb86960_softc *));
-void	mb86960_getmcaf __P((struct ethercom *, u_int8_t *));
-void	mb86960_setmode __P((struct mb86960_softc *));
-void	mb86960_loadmar __P((struct mb86960_softc *));
+void	mb86960_droppacket(struct mb86960_softc *);
+void	mb86960_getmcaf(struct ethercom *, uint8_t *);
+void	mb86960_setmode(struct mb86960_softc *);
+void	mb86960_loadmar(struct mb86960_softc *);
 
-int	mb86960_mediachange __P((struct ifnet *));
-void	mb86960_mediastatus __P((struct ifnet *, struct ifmediareq *));
+int	mb86960_mediachange(struct ifnet *);
+void	mb86960_mediastatus(struct ifnet *, struct ifmediareq *);
 
 #if FE_DEBUG >= 1
-void	mb86960_dump __P((int, struct mb86960_softc *));
+void	mb86960_dump(int, struct mb86960_softc *);
 #endif
 
 void
-mb86960_attach(sc, myea)
-	struct mb86960_softc *sc;
-	u_int8_t *myea;
+mb86960_attach(struct mb86960_softc *sc, uint8_t *myea)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -189,9 +187,7 @@ mb86960_attach(sc, myea)
  * Install interface into kernel networking data structures
  */
 void
-mb86960_config(sc, media, nmedia, defmedia)
-	struct mb86960_softc *sc;
-	int *media, nmedia, defmedia;
+mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 {
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
@@ -339,8 +335,7 @@ mb86960_config(sc, media, nmedia, defmedia)
  * Media change callback.
  */
 int
-mb86960_mediachange(ifp)
-	struct ifnet *ifp;
+mb86960_mediachange(struct ifnet *ifp)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 
@@ -353,9 +348,7 @@ mb86960_mediachange(ifp)
  * Media status callback.
  */
 void
-mb86960_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+mb86960_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 
@@ -373,8 +366,7 @@ mb86960_mediastatus(ifp, ifmr)
  * Reset interface.
  */
 void
-mb86960_reset(sc)
-	struct mb86960_softc *sc;
+mb86960_reset(struct mb86960_softc *sc)
 {
 	int s;
 
@@ -391,8 +383,7 @@ mb86960_reset(sc)
  * if any, will be lost by stopping the interface.
  */
 void
-mb86960_stop(sc)
-	struct mb86960_softc *sc;
+mb86960_stop(struct mb86960_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -440,8 +431,7 @@ mb86960_stop(sc)
  * generate an interrupt after a transmit has been started on it.
  */
 void
-mb86960_watchdog(ifp)
-	struct ifnet *ifp;
+mb86960_watchdog(struct ifnet *ifp)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 
@@ -460,8 +450,7 @@ mb86960_watchdog(ifp)
  * Drop (skip) a packet from receive buffer in 86960 memory.
  */
 static __inline__ void
-mb86960_droppacket(sc)
-	struct mb86960_softc *sc;
+mb86960_droppacket(struct mb86960_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -473,8 +462,7 @@ mb86960_droppacket(sc)
  * Initialize device.
  */
 void
-mb86960_init(sc)
-	struct mb86960_softc *sc;
+mb86960_init(struct mb86960_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -632,8 +620,7 @@ mb86960_init(sc)
  * This routine actually starts the transmission on the interface
  */
 static __inline__ void
-mb86960_xmit(sc)
-	struct mb86960_softc *sc;
+mb86960_xmit(struct mb86960_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -669,8 +656,7 @@ mb86960_xmit(sc)
  *     (i.e. that the output part of the interface is idle)
  */
 void
-mb86960_start(ifp)
-	struct ifnet *ifp;
+mb86960_start(struct ifnet *ifp)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 	struct mbuf *m;
@@ -818,9 +804,7 @@ indicate_active:
  * The control flow of this function looks silly.  FIXME.
  */
 void
-mb86960_tint(sc, tstat)
-	struct mb86960_softc *sc;
-	u_int8_t tstat;
+mb86960_tint(struct mb86960_softc *sc, uint8_t tstat)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -959,9 +943,7 @@ mb86960_tint(sc, tstat)
  * Ethernet interface receiver interrupt.
  */
 void
-mb86960_rint(sc, rstat)
-	struct mb86960_softc *sc;
-	u_int8_t rstat;
+mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -1104,14 +1086,13 @@ mb86960_rint(sc, rstat)
  * Ethernet interface interrupt processor
  */
 int
-mb86960_intr(arg)
-	void *arg;
+mb86960_intr(void *arg)
 {
 	struct mb86960_softc *sc = arg;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	u_int8_t tstat, rstat;
+	uint8_t tstat, rstat;
 
 	if ((sc->sc_stat & FE_STAT_ENABLED) == 0 ||
 	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
@@ -1195,10 +1176,7 @@ mb86960_intr(arg)
  * Process an ioctl request.  This code needs some work - it looks pretty ugly.
  */
 int
-mb86960_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+mb86960_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1326,9 +1304,7 @@ mb86960_ioctl(ifp, cmd, data)
  * Returns 0 if success, -1 if error (i.e., mbuf allocation failure).
  */
 int
-mb86960_get_packet(sc, len)
-	struct mb86960_softc *sc;
-	u_int len;
+mb86960_get_packet(struct mb86960_softc *sc, u_int len)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -1378,10 +1354,10 @@ mb86960_get_packet(sc, len)
 	/* Get a packet. */
 	if (sc->sc_flags & FE_FLAGS_SBW_BYTE)
 		bus_space_read_multi_1(bst, bsh, FE_BMPR8,
-		    mtod(m, u_int8_t *), len);
+		    mtod(m, uint8_t *), len);
 	else
 		bus_space_read_multi_stream_2(bst, bsh, FE_BMPR8,
-		    mtod(m, u_int16_t *), (len + 1) >> 1);
+		    mtod(m, uint16_t *), (len + 1) >> 1);
 
 #if NBPFILTER > 0
 	/*
@@ -1414,9 +1390,7 @@ mb86960_get_packet(sc, len)
  * system performance (slightly).
  */
 void
-mb86960_write_mbufs(sc, m)
-	struct mb86960_softc *sc;
-	struct mbuf *m;
+mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -1517,12 +1491,12 @@ mb86960_write_mbufs(sc, m)
 		for (; m != NULL; m = m->m_next) {
 			if (m->m_len) {
 				bus_space_write_multi_1(bst, bsh, FE_BMPR8,
-				    mtod(m, u_int8_t *), m->m_len);
+				    mtod(m, uint8_t *), m->m_len);
 			}
 		}
 	} else {
 		/* a bit trickier in word mode. */
-		u_int8_t *data, savebyte[2];
+		uint8_t *data, savebyte[2];
 		int leftover;
 
 		leftover = 0;
@@ -1532,7 +1506,7 @@ mb86960_write_mbufs(sc, m)
 			len = m->m_len;
 			if (len == 0)
 				continue;
-			data = mtod(m, u_int8_t *);
+			data = mtod(m, uint8_t *);
 			while (len > 0) {
 				if (leftover) {
 					/*
@@ -1544,10 +1518,10 @@ mb86960_write_mbufs(sc, m)
 					savebyte[1] = *data++;
 					len--;
 					bus_space_write_stream_2(bst, bsh,
-					   FE_BMPR8, *(u_int16_t *)savebyte);
+					   FE_BMPR8, *(uint16_t *)savebyte);
 					leftover = 0; 
 				} else if (BUS_SPACE_ALIGNED_POINTER(data,
-				    u_int16_t) == 0) {
+				    uint16_t) == 0) {
 					/*
 					 * Unaligned data; buffer the next byte.
 					 */
@@ -1563,7 +1537,7 @@ mb86960_write_mbufs(sc, m)
 					leftover = len & 1;
 					len &= ~1;
 					bus_space_write_multi_stream_2(bst, bsh,
-					    FE_BMPR8, (u_int16_t *)data,
+					    FE_BMPR8, (uint16_t *)data,
 					    len >> 1);
 					data += len;
 					if (leftover)
@@ -1577,7 +1551,7 @@ mb86960_write_mbufs(sc, m)
 		if (leftover) {
 			savebyte[1] = 0;
 			bus_space_write_stream_2(bst, bsh, FE_BMPR8,
-			    *(u_int16_t *)savebyte);
+			    *(uint16_t *)savebyte);
 		}
 	}
 #if FE_DELAYED_PADDING == 0
@@ -1603,13 +1577,11 @@ mb86960_write_mbufs(sc, m)
  * list of multicast addresses we need to listen to.
  */
 void
-mb86960_getmcaf(ec, af)
-	struct ethercom *ec;
-	u_int8_t *af;
+mb86960_getmcaf(struct ethercom *ec, uint8_t *af)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
-	u_int32_t crc;
+	uint32_t crc;
 	struct ether_multistep step;
 
 	/*
@@ -1662,8 +1634,7 @@ allmulti:
  * receiver in appropriate mode.
  */
 void
-mb86960_setmode(sc)
-	struct mb86960_softc *sc;
+mb86960_setmode(struct mb86960_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -1768,8 +1739,7 @@ mb86960_setmode(sc)
  * a device is RUNNING.  (I mistook the point in previous versions.)
  */
 void
-mb86960_loadmar(sc)
-	struct mb86960_softc *sc;
+mb86960_loadmar(struct mb86960_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
@@ -1805,8 +1775,7 @@ mb86960_loadmar(sc)
  * Enable power on the interface.
  */
 int
-mb86960_enable(sc)
-	struct mb86960_softc *sc;
+mb86960_enable(struct mb86960_softc *sc)
 {
 
 #if FE_DEBUG >= 3
@@ -1829,8 +1798,7 @@ mb86960_enable(sc)
  * Disable power on the interface.
  */
 void
-mb86960_disable(sc)
-	struct mb86960_softc *sc;
+mb86960_disable(struct mb86960_softc *sc)
 {
 
 #if FE_DEBUG >= 3
@@ -1849,9 +1817,7 @@ mb86960_disable(sc)
  *	Handle device activation/deactivation requests.
  */
 int
-mb86960_activate(self, act)
-	struct device *self;
-	enum devact act;
+mb86960_activate(struct device *self, enum devact act)
 {
 	struct mb86960_softc *sc = (struct mb86960_softc *)self;
 	int rv, s;
@@ -1877,8 +1843,7 @@ mb86960_activate(self, act)
  *	Detach a MB86960 interface.
  */
 int
-mb86960_detach(sc)
-	struct mb86960_softc *sc;
+mb86960_detach(struct mb86960_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 
@@ -1904,13 +1869,10 @@ mb86960_detach(sc)
  * Routines to read all bytes from the config EEPROM (93C06) through MB86965A.
  */
 void
-mb86965_read_eeprom(iot, ioh, data)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int8_t *data;
+mb86965_read_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t *data)
 {
 	int addr, op, bit;
-	u_int16_t val;
+	uint16_t val;
 
 	/* Read bytes from EEPROM; two bytes per an iteration. */
 	for (addr = 0; addr < FE_EEPROM_SIZE / 2; addr++) {
@@ -1981,13 +1943,11 @@ mb86965_read_eeprom(iot, ioh, data)
 
 #if FE_DEBUG >= 1
 void
-mb86960_dump(level, sc)
-	int level;
-	struct mb86960_softc *sc;
+mb86960_dump(int level, struct mb86960_softc *sc)
 {
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	u_int8_t save_dlcr7;
+	uint8_t save_dlcr7;
 
 	save_dlcr7 = bus_space_read_1(bst, bsh, FE_DLCR7);
 
