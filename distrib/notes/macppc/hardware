@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.33 2003/03/15 02:16:02 mbw Exp $
+.\"$NetBSD: hardware,v 1.34 2003/06/01 17:50:37 mbw Exp $
 .
 Currently,
 .Nx*M
@@ -30,9 +30,10 @@ The single hardest step of installing
 .Nx*M
 is to set up Open Firmware properly.
 Open Firmware versions 1.0.5 and 2.0.x act similarly
-and the same set of instructions applies to them
+and the same set of instructions applies to them.
 Open Firmware version 2.4 is slightly different with regards to booting.
-Open Firmware version 3 is altogether different.
+Open Firmware version 3 is altogether different, but easier to set up for 
+.Nx .
 .Pp
 At present,
 .Nx*M
@@ -128,21 +129,11 @@ PowerBook G4 (DVI)
 Apple PowerMacintosh G3 (Blue and White)
 .It
 Apple PowerMacintosh (G4 (PCI), G4 (AGP), G4 (Gigabit Ethernet), G4
-(Digital Audio), G4 (Quicksilver), G4 (Quicksilver 2002), and G4 Cube)
+(Digital Audio), G4 (Quicksilver), G4 (Quicksilver 2002), G4 (FW 800), 
+and G4 Cube)
 .It
 Apple Xserve
 .bullet)
-.(Note
-Some iMac (Bondi Blue) and PowerMacintosh G3 (Blue and
-White) machines have keyboard problems.
-There is a workaround for the PowerMacintosh described in the
-.Nx*M
-FAQ.
-There is no known
-workaround for the iMac machines encountering this problem.
-See
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#usb-keyboard-problems
-.Note)
 .tag)
 .
 .Ss2 Unsupported models
@@ -170,11 +161,11 @@ Systems with a Motorola 68k microprocessor (these systems are supported by
 Systems upgraded from any of the above (unless the motherboard is replaced as
 part of the upgrade)
 .It
-Systems released in the second half of 2002 and later (future releases of
+Systems released in the second half of 2003 and later (future releases of
 .Nx*M
 will support these systems)
 .It
-Systems released before the second half of 2002, but not listed
+Systems released before the second half of 2003, but not listed
 above.
 These models might work, but have not been tested as of the release of
 .Nx \*V .
@@ -184,11 +175,8 @@ These models might work, but have not been tested as of the release of
 .(bullet -offset indent
 CPU upgrades
 .(bullet -compact
-Only one CPU in a multiprocessor system is supported with the GENERIC kernel.
-All CPUs are supported with the experimental GENERIC.MP kernel.
-.It
 Most CPU upgrades are supported.
-Some older models will not automatically enable the L2 cache on
+Some older models will not automatically enable the L2 and/or L3 caches on
 a G3 or G4 processor.
 See the FAQ entry
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#cpu-upgrade
@@ -203,16 +191,16 @@ On-board bmac Ethernet interface
 .Pq Em bm0
 .It
 On-board gmac Ethernet interface
-.Pq Em gm0
+.Pq Em gem0
 .It
 Apple PCI Ethernet Card (option for Apple Network Server)
-.Pq Em de
+.Pq Em tlp
 .It
 Asante Mac 10/100 PCI Rev A, part number 09-00169-01
-.Pq Em de
+.Pq Em tlp
 .It
 Farallon Fast EtherTX 10/100, part number PN996L-TX
-.Pq Em de
+.Pq Em tlp
 .It
 SMC Etherpower II (9432TX)
 .Pq Em epic
@@ -249,7 +237,7 @@ D-Link DFE-530TX
 .It
 Many other PCI and Cardbus Ethernet interfaces, such as
 Tulip-compatible
-.Pq Em de No and Em tlp ,
+.Pq Em tlp ,
 3Com
 .Pq Em ep ,
 SMC
@@ -293,7 +281,8 @@ and AIC-78xx
 .(Note
 The 294x models are not bootable in Open Firmware, even though they
 can boot
-.Tn MacOS No Ns .
+.Tn MacOS 
+9 and earlier.
 .Note)
 .Pp
 .It
@@ -480,7 +469,22 @@ FireWire (IEEE 1394)
 Advanced power management (cannot put system to
 .Sq sleep )
 .It
+Full wscons capabilities, such as virtual terminals and color text
+.It
+Multiple processors
+.(Note
+Although
+.Nx*M
+can boot with more than one processor present, it will not use the additional
+CPUs.  The next major release of
+.Nx*M
+will support multiprocessing.
+.Note)
+.Pp
+.It
 On-board video capture
+.It
+AirPort Extreme
 .bullet)
 .
 .Ss2 Supported boot devices and media
