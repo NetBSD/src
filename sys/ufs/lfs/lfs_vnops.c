@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.109 2003/06/29 22:32:42 fvdl Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.110 2003/07/02 13:39:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.109 2003/06/29 22:32:42 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.110 2003/07/02 13:39:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1112,15 +1112,6 @@ lfs_flush_dirops(struct lfs *fs)
 	if (TAILQ_FIRST(&fs->lfs_dchainhd) == NULL)
 		return;
 
-	/* XXX simplelock fs->lfs_dirops */
-	while (fs->lfs_dirops > 0) {
-		++fs->lfs_diropwait;  
-		tsleep(&fs->lfs_writer, PRIBIO+1, "pndirop", 0);
-		--fs->lfs_diropwait; 
-	}
-	/* disallow dirops during flush */
-	fs->lfs_writer++;
-
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
 
@@ -1188,9 +1179,6 @@ lfs_flush_dirops(struct lfs *fs)
 	((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
-	
-	if (--fs->lfs_writer == 0)
-		wakeup(&fs->lfs_dirops);
 }
 
 /*
@@ -1291,6 +1279,14 @@ lfs_fcntl(void *v)
 		 * Flush dirops and write Ifile, allowing empty segments
 		 * to be immediately reclaimed.
 		 */
+		/* XXX simplelock fs->lfs_dirops */
+		while (fs->lfs_dirops > 0) {
+			++fs->lfs_diropwait;  
+			tsleep(&fs->lfs_writer, PRIBIO+1, "pndirop", 0);
+			--fs->lfs_diropwait; 
+		}
+		/* disallow dirops during flush */
+		fs->lfs_writer++;
 		off = fs->lfs_offset;
 		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
 		lfs_flush_dirops(fs);
@@ -1299,6 +1295,8 @@ lfs_fcntl(void *v)
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 		lfs_segwrite(ap->a_vp->v_mount, SEGM_FORCE_CKP);
 		lfs_segunlock(fs);
+		if (--fs->lfs_writer == 0)
+			wakeup(&fs->lfs_dirops);
 
 #ifdef DEBUG_LFS
 		LFS_CLEANERINFO(cip, fs, bp);
