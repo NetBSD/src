@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.2 1996/05/21 15:32:48 oki Exp $	*/
+/*	$NetBSD: spc.c,v 1.3 1996/06/12 12:09:30 oki Exp $	*/
 
 #define	integrate	static inline
 
@@ -710,11 +710,13 @@ spc_scsi_cmd(xs)
 		return SUCCESSFULLY_QUEUED;
 
 	/* Not allowed to use interrupts, use polling instead */
+	s = splbio();
 	if (spc_poll(sc, xs, acb->timeout)) {
 		spc_timeout(acb);
 		if (spc_poll(sc, xs, acb->timeout))
 			spc_timeout(acb);
 	}
+	splx(s);
 	return COMPLETE;
 }
 
