@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.2 2003/07/26 19:25:07 salo Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.3 2003/11/08 21:45:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 	movq	%rax, -32(%r11)					; \
 	movq	(UC_REGS + _REG_RIP * 8)(%rdi), %rax		; \
 	movq	%rax, -16(%r11)					; \
-	movq	(UC_REGS + _REG_RAX)(%rdi), %rax		; \
+	movq	(UC_REGS + _REG_RAX * 8)(%rdi), %rax		; \
 	movq	%rax, -24(%r11)					; \
 	movq	(UC_REGS + _REG_R11 * 8)(%rdi), %rax		; \
 	movq	%rax, -40(%r11)					; \
