@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 2003/09/12 02:10:33 christos Exp $
+	$NetBSD: syscalls.master,v 1.8 2003/09/23 18:31:03 cl Exp $
 ; based on NetBSD: syscalls.master,v 1.128 2003/03/18 18:08:49 christos Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -608,9 +608,13 @@
 290	NOARGS		{ ssize_t sys_pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int pad, off_t offset); }
-291	NOARGS		{ int sys___sigaction14(int signum, \
+#ifdef COMPAT_16
+291	NOARGS		{ int compat_16_sys___sigaction14(int signum, \
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa); }
+#else
+291	EXCL		compat_16_sys___sigaction14
+#endif
 292	NOARGS		{ int sys___sigpending14(sigset_t *set); }
 293	NOARGS		{ int sys___sigprocmask14(int how, \
 			    const sigset_t *set, \
