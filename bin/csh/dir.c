@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dir.c	5.12 (Berkeley) 6/27/91";*/
-static char rcsid[] = "$Id: dir.c,v 1.5 1993/08/01 19:00:49 mycroft Exp $";
+static char rcsid[] = "$Id: dir.c,v 1.6 1994/07/31 09:23:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -123,7 +123,7 @@ dinit(hp)
 		    swd.st_ino == shp.st_ino)
 		    tcp = cwd;
 	    }
-	    cp = dcanon(str2short(tcp), STRNULL);
+	    cp = dcanon(SAVE(tcp), STRNULL);
 	}
     }
 
