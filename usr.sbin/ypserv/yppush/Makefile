@@ -1,11 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1997/07/18 21:57:11 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/02 14:16:42 lukem Exp $
 
 PROG=	yppush
-SRCS=	localhostname.c yppush.c yplib_host.c yppush_svc.c yppush_proc.c \
-	ypdb.c yppush_err.c
+SRCS=	yppush.c yppush_err.c yppush_proc.c yppush_svc.c
 MAN=	yppush.8
-.PATH:	${.CURDIR}/../common ${.CURDIR}/../ypserv
-CFLAGS+=-I${.CURDIR}/../common
-WARNS=1
 
 .include <bsd.prog.mk>
