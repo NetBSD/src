@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 1995/01/12 19:18:41 jtc Exp $
+#	$NetBSD: Makefile,v 1.51 1995/01/15 21:58:40 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
 
@@ -38,7 +38,7 @@ realinstall:
 	done
 	@echo installing ${DIRS}
 	@-for i in ${DIRS}; do \
-		install -d -o ${BINDIR} -g ${BINGRP} -m 755 \
+		install -d -o ${BINOWN} -g ${BINGRP} -m 755 \
 			${DESTDIR}/usr/include/$$i; \
 		(cd $$i; for j in *.[ih]; do \
 			cmp -s $$j ${DESTDIR}/usr/include/$$i/$$j || \
