@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.472 2002/08/13 11:12:05 blymn Exp $
+#	$NetBSD: mi,v 1.473 2002/08/28 08:00:21 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3426,6 +3426,10 @@
 ./usr/share/man/cat9/properties.0	comp-sys-catman
 ./usr/share/man/cat9/psignal.0		comp-sys-catman
 ./usr/share/man/cat9/radio.0		comp-sys-catman
+./usr/share/man/cat9/ras.0		comp-sys-catman
+./usr/share/man/cat9/ras_fork.0		comp-sys-catman
+./usr/share/man/cat9/ras_lookup.0	comp-sys-catman
+./usr/share/man/cat9/ras_purgeall.0	comp-sys-catman
 ./usr/share/man/cat9/rasops.0		comp-sys-catman
 ./usr/share/man/cat9/rasops_init.0		comp-sys-catman
 ./usr/share/man/cat9/rasops_reconfig.0		comp-sys-catman
@@ -6095,6 +6099,10 @@
 ./usr/share/man/man9/properties.9		comp-sys-man
 ./usr/share/man/man9/psignal.9		comp-sys-man
 ./usr/share/man/man9/radio.9		comp-sys-man
+./usr/share/man/man9/ras.9		comp-sys-man
+./usr/share/man/man9/ras_fork.9		comp-sys-man
+./usr/share/man/man9/ras_lookup.9	comp-sys-man
+./usr/share/man/man9/ras_purgeall.9	comp-sys-man
 ./usr/share/man/man9/rasops.9		comp-sys-man
 ./usr/share/man/man9/rasops_init.9		comp-sys-man
 ./usr/share/man/man9/rasops_reconfig.9		comp-sys-man
