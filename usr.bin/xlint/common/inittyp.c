@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.2 2002/01/21 19:49:51 tv Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.3 2002/01/30 06:55:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inittyp.c,v 1.2 2002/01/21 19:49:51 tv Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.3 2002/01/30 06:55:02 thorpej Exp $");
 #endif
 
 #include <ctype.h>
@@ -92,13 +92,13 @@ inittyp(void)
 		{ UQUAD,    { QUAD_SIZE, 8 * CHAR_BIT,
 				      QUAD, UQUAD,
 				      1, 1, 0, 1, 1, "unsigned long long" } },
-		{ FLOAT,    { sizeof (float) * CHAR_BIT, 4 * CHAR_BIT,
+		{ FLOAT,    { FLOAT_SIZE, 4 * CHAR_BIT,
 				      FLOAT, FLOAT,
 				      0, 0, 1, 1, 1, "float" } },
-		{ DOUBLE,   { sizeof (double) * CHAR_BIT, 8 * CHAR_BIT,
+		{ DOUBLE,   { DOUBLE_SIZE, 8 * CHAR_BIT,
 				      DOUBLE, DOUBLE,
 				      0, 0, 1, 1, 1, "double" } },
-		{ LDOUBLE,  { sizeof (ldbl_t) * CHAR_BIT, 10 * CHAR_BIT,
+		{ LDOUBLE,  { LDOUBLE_SIZE, 10 * CHAR_BIT,
 				      LDOUBLE, LDOUBLE,
 				      0, 0, 1, 1, 1, "long double" } },
 		{ VOID,     { -1, -1,
@@ -110,7 +110,7 @@ inittyp(void)
 		{ UNION,    { -1, -1,
 				      UNION, UNION,
 				      0, 0, 0, 0, 0, "union" } },
-		{ ENUM,     { sizeof (int) * CHAR_BIT, 3 * CHAR_BIT,
+		{ ENUM,     { ENUM_SIZE, 3 * CHAR_BIT,
 				      ENUM, ENUM,
 				      1, 0, 0, 1, 1, "enum" } },
 		{ PTR,      { PTR_SIZE, 4 * CHAR_BIT,
