@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.95 2002/08/14 18:31:36 soren Exp $	*/
+/*	$NetBSD: vnode.h,v 1.96 2002/10/05 22:34:06 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -533,7 +533,8 @@ void	vn_syncer_remove_from_worklist(struct vnode *vp);
 int	vn_write(struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags);
 int	vn_writechk(struct vnode *vp);
-void	vn_markexec(struct vnode *vp);
+void	vn_markexec(struct vnode *);
+int	vn_marktext(struct vnode *);
 int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct proc *p);
 struct vnode *
 	checkalias(struct vnode *vp, dev_t nvp_rdev, struct mount *mp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.16 2002/09/27 15:36:42 provos Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.17 2002/10/05 22:34:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -299,20 +299,9 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 	offset = sh.s_scnptr - (sh.s_vaddr - epp->ep_taddr);
 	epp->ep_tsize = sh.s_size + (sh.s_vaddr - epp->ep_taddr);
 
-	/*
-	 * check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if ((ap->a_tsize != 0 || ap->a_dsize != 0) &&
-	    epp->ep_vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0");
-#endif
-		return ETXTBSY;
-	}
-	epp->ep_vp->v_flag |= VTEXT;
+	error = vn_marktext(epp->ep_vp);
+	if (error)
+		return (error);
 
 	DPRINTF(("VMCMD: addr %lx size %lx offset %lx\n", epp->ep_taddr,
 	    epp->ep_tsize, offset));
