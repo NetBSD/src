@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.256 2000/07/02 04:40:39 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.257 2000/07/02 20:59:58 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1983,6 +1983,8 @@ struct intvid_info_t {
 	{ MACH_MACPB500,	0x60000000,	0x0,		512 * 1024 },
 	{ MACH_MACLCIII,	0x60b00000,	0x0,		768 * 1024 },
 	{ MACH_MACLC520,	0x60000000,	0x0,		1024 * 1024 },
+	{ MACH_MACP550,		0x60000000,	0x0,		1024 * 1024 },
+	{ MACH_MACTV,		0x60000000,	0x0,		1024 * 1024 },
 	{ MACH_MACLC475,	0xf9000000,	0x0,		1024 * 1024 },
 	{ MACH_MACLC475_33,	0xf9000000,	0x0,		1024 * 1024 },
 	{ MACH_MACLC575,	0xf9000000,	0x0,		1024 * 1024 },
