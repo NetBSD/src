@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.148 2002/03/09 07:25:41 toshii Exp $	*/
+/*	$NetBSD: audio.c,v 1.149 2002/03/09 20:30:43 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.148 2002/03/09 07:25:41 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.149 2002/03/09 20:30:43 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -776,9 +776,11 @@ audio_initbufs(struct audio_softc *sc)
 
 	DPRINTF(("audio_initbufs: mode=0x%x\n", sc->sc_mode));
 	audio_init_ringbuffer(&sc->sc_rr);
+#if NAURATECONV > 0
 	auconv_init_context(&sc->sc_rconv, sc->sc_rparams.hw_sample_rate,
 			    sc->sc_rparams.sample_rate,
 			    sc->sc_rr.start, sc->sc_rr.end);
+#endif
 	sc->sc_rconvbuffer_begin = 0;
 	sc->sc_rconvbuffer_end = 0;
 	if (hw->init_input && (sc->sc_mode & AUMODE_RECORD)) {
@@ -789,9 +791,11 @@ audio_initbufs(struct audio_softc *sc)
 	}
 
 	audio_init_ringbuffer(&sc->sc_pr);
+#if NAURATECONV > 0
 	auconv_init_context(&sc->sc_pconv, sc->sc_pparams.sample_rate,
 			    sc->sc_pparams.hw_sample_rate,
 			    sc->sc_pr.start, sc->sc_pr.end);
+#endif
 	sc->sc_sil_count = 0;
 	if (hw->init_output && (sc->sc_mode & AUMODE_PLAY)) {
 		error = hw->init_output(sc->hw_hdl, sc->sc_pr.start,
@@ -1235,9 +1239,21 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 			 * The format of data in the ring buffer is
 			 * [hw_sample_rate, hw_encoding, hw_precision, hw_channels]
 			 */
+#if NAURATECONV > 0
 			sc->sc_rconvbuffer_end =
 				auconv_record(&sc->sc_rconv, params,
 					      sc->sc_rconvbuffer, outp, cc);
+#else
+			n = cb->end - outp;
+			if (cc <= n) {
+				memcpy(sc->sc_rconvbuffer, outp, cc);
+			} else {
+				memcpy(sc->sc_rconvbuffer, outp, n);
+				memcpy(sc->sc_rconvbuffer + n, cb->start,
+				       cc - n);
+			}
+			sc->sc_rconvbuffer_end = cc;
+#endif /* !NAURATECONV */
 			/*
 			 * The format of data in sc_rconvbuffer is
 			 * [sample_rate, hw_encoding, hw_precision, channels]
@@ -1627,8 +1643,18 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		 * The format of data in sc_pconvbuffer is:
 		 * [sample_rate, hw_encoding, hw_precision, channels]
 		 */
+#if NAURATECONV > 0
 		cc = auconv_play(&sc->sc_pconv, params, inp,
 				 sc->sc_pconvbuffer, cc);
+#else
+		n = cb->end - inp;
+		if (cc <= n) {
+			memcpy(inp, sc->sc_pconvbuffer, cc);
+		} else {
+			memcpy(inp, sc->sc_pconvbuffer, n);
+			memcpy(cb->start, sc->sc_pconvbuffer + n, cc - n);
+		}
+#endif /* !NAURATECONV */
 		/*
 		 * The format of data in inp is:
 		 * [hw_sample_rate, hw_encoding, hw_precision, hw_channels]
@@ -2563,6 +2589,18 @@ au_get_port(struct audio_softc *sc, struct au_mixer_ports *ports)
 	}
 	return aumask;
 }
+
+#if NAURATECONV <= 0
+/* dummy function for the case that aurateconv is not linked */
+int
+auconv_check_params(const struct audio_params *params)
+{
+	if (params->hw_channels == params->channels
+	    && params->hw_sample_rate == params->sample_rate)
+		return 0;	/* No conversion */
+	return (EINVAL);
+}
+#endif /* !NAURATECONV */
 
 int
 audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
