@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.36 1994/10/26 02:01:56 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.37 1994/12/28 09:04:41 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 #include <amiga/amiga/vectors.s>
 #include <amiga/amiga/custom.h>
 #include "zssc.h"	/* needed for level 6 interrupt */
+#include "mfcs.h"	/* Another level 6 interrupt */
 
 #define CIAAADDR(ar)	movl	_CIAAbase,ar
 #define CIABADDR(ar)	movl	_CIABbase,ar
@@ -482,7 +483,7 @@ Lsigr1:
  */
 
 /* Provide a generic interrupt dispatcher, only handle hardclock (int6)
- * specially, to improve performance
+ * and serial RBF (int5) specially, to improve performance
  */
 
 	.globl	_intrhand, _hardclock
@@ -526,6 +527,11 @@ Lnotdma:
 
 _lev6intr:
 	moveml	#0xC0C0,sp@-
+#if NMFCS > 0
+	jbsr	_mfcsintr6		| check for MultiFaceCard serial int
+	tstl	d0
+	jne	Lskipciab
+#endif
 #if NZSSC > 0
 	jbsr	_siopintr6		| check for siop (53C710) interrupt
 	tstl	d0
@@ -541,14 +547,14 @@ _lev6intr:
 	movl	a1,sp@-			| push pointer to PS, PC
 	jbsr	_hardclock		| call generic clock int routine
 	addql	#4,sp			| pop params
-	addql	#1,_intrcnt+28		| add another system clock interrupt
+	addql	#1,_intrcnt+24		| add another system clock interrupt
 Lskipciab:
 	moveml	sp@+,#0x0303		| restore scratch regs
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
 	jra	rei			| all done
 
 _lev7intr:
-	addql	#1,_intrcnt+32
+	addql	#1,_intrcnt+28
 	/*
 	 * some amiga zorro2 boards seem to generate spurious NMIs. Best
 	 * thing to do is to return as quick as possible. That's the
@@ -671,6 +677,7 @@ _esym:	.long	0
 	.globl	_edata
 	.globl	_etext,_end
 	.globl	start
+	.word	0
 	.word	0x0002			| loadbsd version required
 					| 2: needs a4 = esym
 					| XXX should be a symbol?
@@ -2028,7 +2035,6 @@ Ldoreset:
 	jmp	a0@
 	| NOT REACHED
 
-
 /*
  * Reboot directly into a new kernel image.
  * kernel_reload(image, image_size, entry,
@@ -2101,6 +2107,7 @@ nullrp:	.long	0x7fff0001
 zero:	.long	0
 Ldorebootend:
 
+
 	.data
 	.space	NBPG
 tmpstk:
@@ -2132,11 +2139,10 @@ _intrnames:
 	.asciz	"vbl"
 	.asciz	"lev4"
 	.asciz	"rbf"
-	.asciz	"dunno"
 	.asciz	"clock"
 	.asciz	"nmi"
 _eintrnames:
-	.even
+	.align	2
 _intrcnt:
-	.long	0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0
 _eintrcnt:
