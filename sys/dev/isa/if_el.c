@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.26 1995/07/23 17:05:26 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.27 1995/07/23 17:50:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -76,7 +76,6 @@ struct el_softc {
 
 	struct arpcom sc_arpcom;	/* ethernet common */
 	int sc_iobase;			/* base I/O addr */
-	char sc_pktbuf[EL_BUFSIZ]; 	/* frame buffer */
 };
 
 /*
@@ -312,15 +311,18 @@ el_start(ifp)
 	struct el_softc *sc = elcd.cd_devs[ifp->if_unit];
 	int iobase = sc->sc_iobase;
 	struct mbuf *m, *m0;
-	int s, i, len, retries, done;
+	int s, i, off, retries;
 
 	dprintf(("el_start()...\n"));
 	s = splimp();
 
 	/* Don't do anything if output is active. */
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_OACTIVE)
+	if ((ifp->if_flags & IFF_OACTIVE) != 0) {
+		splx(s);
 		return;
-	sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+	}
+
+	ifp->if_flags |= IFF_OACTIVE;
 
 	/*
 	 * The main loop.  They warned me against endless loops, but would I
@@ -328,59 +330,47 @@ el_start(ifp)
 	 */
 	for (;;) {
 		/* Dequeue the next datagram. */
-		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m0);
+		IF_DEQUEUE(&ifp->if_snd, m0);
 
 		/* If there's nothing to send, return. */
-		if (!m0) {
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
-			splx(s);
-			return;
-		}
+		if (m0 == 0)
+			break;
+
+#if NBPFILTER > 0
+		/* Give the packet to the bpf, if any. */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m0);
+#endif
 
 		/* Disable the receiver. */
 		outb(iobase+EL_AC, EL_AC_HOST);
 		outb(iobase+EL_RBC, 0);
 
-		/* Copy the datagram to the buffer. */
-		len = 0;
-		for (m = m0; m; m = m->m_next) {
-			if (m->m_len == 0)
-				continue;
-			bcopy(mtod(m, caddr_t), sc->sc_pktbuf + len, m->m_len);
-			len += m->m_len;
-		}
-		m_freem(m0);
-
-		len = max(len, ETHER_MIN_LEN);
-
-		/* Give the packet to the bpf, if any. */
-#if NBPFILTER > 0
-		if (sc->sc_arpcom.ac_if.if_bpf)
-			bpf_tap(sc->sc_arpcom.ac_if.if_bpf, sc->sc_pktbuf, len);
-#endif
-
 		/* Transfer datagram to board. */
-		dprintf(("el: xfr pkt length=%d...\n", len));
-		i = EL_BUFSIZ - len;
-		outb(iobase+EL_GPBL, i);
-		outb(iobase+EL_GPBH, i >> 8);
-		outsb(iobase+EL_BUF, sc->sc_pktbuf, len);
+		dprintf(("el: xfr pkt length=%d...\n", m0->m_pkthdr.len));
+		off = EL_BUFSIZ - max(m0->m_pkthdr.len, ETHER_MIN_LEN);
+		outb(iobase+EL_GPBL, off);
+		outb(iobase+EL_GPBH, off >> 8);
+
+		/* Copy the datagram to the buffer. */
+		for (m = m0; m != 0; m = m->m_next)
+			outsb(iobase+EL_BUF, mtod(m, caddr_t), m->m_len);
+
+		m_freem(m0);
 
 		/* Now transmit the datagram. */
 		retries = 0;
-		done = 0;
-		while (!done) {
-			if (el_xmit(sc, len)) {
-				/* Something went wrong. */
-				done = -1;
+		for (;;) {
+			outb(iobase+EL_GPBL, off);
+			outb(iobase+EL_GPBH, off >> 8);
+			if (el_xmit(sc))
 				break;
-			}
 			/* Check out status. */
 			i = inb(iobase+EL_TXS);
 			dprintf(("tx status=0x%x\n", i));
 			if ((i & EL_TXS_READY) == 0) {
 				dprintf(("el: err txs=%x\n", i));
-				sc->sc_arpcom.ac_if.if_oerrors++;
+				ifp->if_oerrors++;
 				if (i & (EL_TXS_COLL | EL_TXS_COLL16)) {
 					if ((i & EL_TXC_DCOLL16) == 0 &&
 					    retries < 15) {
@@ -388,15 +378,12 @@ el_start(ifp)
 						outb(iobase+EL_AC, EL_AC_HOST);
 					}
 				} else
-					done = 1;
+					break;
 			} else {
-				sc->sc_arpcom.ac_if.if_opackets++;
-				done = 1;
+				ifp->if_opackets++;
+				break;
 			}
 		}
-		if (done == -1)
-			/* Packet not transmitted. */
-			continue;
 
 		/*
 		 * Now give the card a chance to receive.
@@ -408,6 +395,9 @@ el_start(ifp)
 		/* Interrupt here. */
 		s = splimp();
 	}
+
+	ifp->if_flags &= ~IFF_OACTIVE;
+	splx(s);
 }
 
 /*
@@ -416,18 +406,13 @@ el_start(ifp)
  * success, non-0 on failure.
  */
 static int
-el_xmit(sc, len)
+el_xmit(sc)
 	struct el_softc *sc;
-	int len;
 {
 	int iobase = sc->sc_iobase;
-	int gpl;
 	int i;
 
-	gpl = EL_BUFSIZ - len;
 	dprintf(("el: xmit..."));
-	outb(iobase+EL_GPBL, gpl);
-	outb(iobase+EL_GPBH, gpl >> 8);
 	outb(iobase+EL_AC, EL_AC_TXFRX);
 	i = 20000;
 	while ((inb(iobase+EL_AS) & EL_AS_TXBUSY) && (i > 0))
@@ -450,7 +435,7 @@ elintr(arg)
 {
 	register struct el_softc *sc = arg;
 	int iobase = sc->sc_iobase;
-	int stat, rxstat, len, done;
+	int stat, rxstat, len;
 
 	dprintf(("elintr: "));
 
@@ -462,19 +447,16 @@ elintr(arg)
 		return 0;
 	}
 
-	done = 0;
-	while (!done) {
+	for (;;) {
 		rxstat = inb(iobase+EL_RXS);
-		if (rxstat & EL_RXS_STALE) {
-			(void)inb(iobase+EL_RXC);
-			outb(iobase+EL_AC, EL_AC_IRQE | EL_AC_RX);
-			return 1;
-		}
+		if (rxstat & EL_RXS_STALE)
+			break;
 
 		/* If there's an overflow, reinit the board. */
 		if ((rxstat & EL_RXS_NOFLOW) == 0) {
 			dprintf(("overflow.\n"));
 			el_hardreset(sc);
+		reset:
 			/* Put board back into receive mode. */
 			if (sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC)
 				outb(iobase+EL_RXC, EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB | EL_RXC_DOFLOW | EL_RXC_PROMISC);
@@ -482,9 +464,7 @@ elintr(arg)
 				outb(iobase+EL_RXC, EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB | EL_RXC_DOFLOW | EL_RXC_ABROAD);
 			(void)inb(iobase+EL_AS);
 			outb(iobase+EL_RBC, 0);
-			(void)inb(iobase+EL_RXC);
-			outb(iobase+EL_AC, EL_AC_IRQE | EL_AC_RX);
-			return 1;
+			break;
 		}
 
 		/* Incoming packet. */
@@ -497,40 +477,22 @@ elintr(arg)
 		 * If packet too short or too long, restore rx mode and return.
 		 */
 		if (len <= sizeof(struct ether_header) ||
-		    len > ETHER_MAX_LEN) {
-			if (sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC)
-				outb(iobase+EL_RXC, EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB | EL_RXC_DOFLOW | EL_RXC_PROMISC);
-			else
-				outb(iobase+EL_RXC, EL_RXC_AGF | EL_RXC_DSHORT | EL_RXC_DDRIB | EL_RXC_DOFLOW | EL_RXC_ABROAD);
-			(void)inb(iobase+EL_AS);
-			outb(iobase+EL_RBC, 0);
-			(void)inb(iobase+EL_RXC);
-			outb(iobase+EL_AC, EL_AC_IRQE | EL_AC_RX);
-			return 1;
-		}
+		    len > ETHER_MAX_LEN)
+			goto reset;
 
 		sc->sc_arpcom.ac_if.if_ipackets++;
 
-		/* Copy the data into our buffer. */
-		outb(iobase+EL_GPBL, 0);
-		outb(iobase+EL_GPBH, 0);
-		insb(iobase+EL_BUF, sc->sc_pktbuf, len);
-		outb(iobase+EL_RBC, 0);
-		outb(iobase+EL_AC, EL_AC_RX);
-		dprintf(("%s-->", ether_sprintf(sc->sc_pktbuf+6)));
-		dprintf(("%s\n", ether_sprintf(sc->sc_pktbuf)));
-
 		/* Pass data up to upper levels. */
-		elread(sc, (caddr_t)sc->sc_pktbuf, len);
+		elread(sc, len);
 
 		/* Is there another packet? */
 		stat = inb(iobase+EL_AS);
 
-		/* If so, do it all again (i.e. don't set done to 1). */
-		if ((stat & EL_AS_RXBUSY) == 0) 
-			dprintf(("<rescan> "));
-		else
-			done = 1;
+		/* If so, do it all again. */
+		if ((stat & EL_AS_RXBUSY) != 0) 
+			break;
+
+		dprintf(("<rescan> "));
 	}
 
 	(void)inb(iobase+EL_RXC);
@@ -542,9 +504,8 @@ elintr(arg)
  * Pass a packet up to the higher levels.
  */
 static inline void
-elread(sc, buf, len)
+elread(sc, len)
 	struct el_softc *sc;
-	caddr_t buf;
 	int len;
 {
 	struct ifnet *ifp;
@@ -553,7 +514,7 @@ elread(sc, buf, len)
 
 	/* Pull packet off interface. */
 	ifp = &sc->sc_arpcom.ac_if;
-	m = elget(buf, len, ifp);
+	m = elget(sc, len, ifp);
 	if (m == 0)
 		return;
 
@@ -597,13 +558,14 @@ elread(sc, buf, len)
  * units are present we copy into clusters.
  */
 struct mbuf *
-elget(buf, totlen, ifp)
-	caddr_t buf;
+elget(sc, totlen, ifp)
+	struct el_softc *sc;
 	int totlen;
 	struct ifnet *ifp;
 {
 	struct mbuf *top, **mp, *m;
 	int len;
+	int iobase = sc->sc_iobase;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
@@ -613,6 +575,9 @@ elget(buf, totlen, ifp)
 	len = MHLEN;
 	top = 0;
 	mp = &top;
+
+	outb(iobase+EL_GPBL, 0);
+	outb(iobase+EL_GPBH, 0);
 
 	while (totlen > 0) {
 		if (top) {
@@ -629,12 +594,14 @@ elget(buf, totlen, ifp)
 				len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		bcopy((caddr_t)cp, mtod(m, caddr_t), len);
-		buf += len;
+		insb(iobase+EL_BUF, mtod(m, caddr_t), len);
 		totlen -= len;
 		*mp = m;
 		mp = &m->m_next;
 	}
+
+	outb(iobase+EL_RBC, 0);
+	outb(iobase+EL_AC, EL_AC_RX);
 
 	return top;
 }
