@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.100 1998/01/26 12:02:50 lukem Exp $
+#	$NetBSD: rc,v 1.101 1998/02/23 05:20:52 lukem Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -179,7 +179,10 @@ fi
 # set time, if requested
 if checkyesno ntpdate; then
 	if [ -z "$ntpdate_hosts" ]; then
-		ntpdate_hosts=`awk '/^server/ {print $2}' </etc/ntp.conf`
+		ntpdate_hosts=`awk '
+		    /^server[ \t]*127.127/	{next}
+		    /^server/			{print $2}
+		' </etc/ntp.conf`
 	fi
 	if [ -n "$ntpdate_hosts"  ]; then
 		echo 'Setting date via ntp.'
