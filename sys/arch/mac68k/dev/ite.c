@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.28 92/12/20$
  *
  *	from: @(#)ite.c	8.2 (Berkeley) 1/12/94
- *	$Id: ite.c,v 1.5 1994/07/31 06:45:50 lkestel Exp $
+ *	$Id: ite.c,v 1.6 1994/08/02 17:55:24 briggs Exp $
  */
 
 /*
@@ -99,7 +99,6 @@ long		videoaddr;
 long		videorowbytes;
 long		videobitdepth;
 unsigned long	videosize;
-char		serial_boot_echo = 0;
 
 /* Calculated in itecninit(): */
 static int	width, height, scrrows, scrcols;
@@ -851,13 +850,10 @@ itecnprobe(struct consdev *cp)
 		panic ("itecnprobe(): did not find iteopen().");
 	}
 
-	cdevsw[maj].d_ttys = &ite_tty;
-
 	unit = 0; /* hardcode first device as console. */
 
 	/* initialize required fields */
 	cp->cn_dev = makedev (maj, unit);
-	cp->cn_tp = ite_tty;
 	cp->cn_pri = CN_INTERNAL;
 }
 
@@ -898,13 +894,6 @@ itecngetc(dev_t dev)
 itecnputc(dev_t dev, int c)
 {
 	int s;
-
-	if (serial_boot_echo) {
-		/* Serial delay is automatic */
-#if 0
-		macserputchar ((unsigned char)c);
-#endif
-	}
 
 /* 	s = splhigh (); */
 
