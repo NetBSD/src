@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.29 1998/07/26 15:03:51 mycroft Exp $	*/
+/*	$NetBSD: route.c,v 1.30 1998/10/23 05:36:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.29 1998/07/26 15:03:51 mycroft Exp $");
+__RCSID("$NetBSD: route.c,v 1.30 1998/10/23 05:36:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,8 +87,8 @@ static void set_metric __P((char *, int));
 static void newroute __P((int, char **));
 static void inet_makenetandmask __P((u_int32_t, struct sockaddr_in *));
 static int getaddr __P((int, char *, struct hostent **));
-#ifndef SMALL
 static void flushroutes __P((int, char *[]));
+#ifndef SMALL
 static int x25_makemask __P((void));
 static void interfaces __P((void));
 static void monitor __P((void));
@@ -109,10 +109,12 @@ union	sockunion {
 	struct	sockaddr sa;
 	struct	sockaddr_in sin;
 	struct	sockaddr_at sat;
+	struct	sockaddr_dl sdl;
+#ifndef SMALL
 	struct	sockaddr_ns sns;
 	struct	sockaddr_iso siso;
-	struct	sockaddr_dl sdl;
 	struct	sockaddr_x25 sx25;
+#endif /* SMALL */
 } so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp;
 
 int	pid, rtm_addrs;
@@ -131,7 +133,7 @@ usage(cp)
 	if (cp)
 		warnx("botched keyword: %s", cp);
 	(void) fprintf(stderr,
-	    "Usage: %s [ -nqv ] cmd [[ -<qualifers> ] args ]\n", __progname);
+	    "Usage: %s [ -fnqv ] cmd [[ -<qualifers> ] args ]\n", __progname);
 	exit(1);
 	/* NOTREACHED */
 }
@@ -150,8 +152,11 @@ main(argc, argv)
 	if (argc < 2)
 		usage(NULL);
 
-	while ((ch = getopt(argc, argv, "nqdtv")) != -1)
+	while ((ch = getopt(argc, argv, "fnqvdt")) != -1)
 		switch(ch) {
+		case 'f':
+			doflush = 1;
+			break;
 		case 'n':
 			nflag = 1;
 			break;
@@ -182,9 +187,15 @@ main(argc, argv)
 	if (s < 0)
 		err(1, "socket");
 
-	if (*argv == NULL)
-		goto no_cmd;
-	switch (keyword(*argv)) {
+	if (*argv == NULL) {
+		if (doflush)
+			ch = K_FLUSH;
+		else
+			goto no_cmd;
+	} else
+		ch = keyword(*argv);
+
+	switch (ch) {
 
 #ifndef SMALL
 	case K_GET:
@@ -192,6 +203,8 @@ main(argc, argv)
 	case K_CHANGE:
 	case K_ADD:
 	case K_DELETE:
+		if (doflush)
+			flushroutes(1, argv);
 		newroute(argc, argv);
 		break;
 
@@ -204,10 +217,10 @@ main(argc, argv)
 		monitor();
 		break;
 
+#endif /* SMALL */
 	case K_FLUSH:
 		flushroutes(argc, argv);
 		break;
-#endif /* SMALL */
 
 	no_cmd:
 	default:
@@ -217,7 +230,6 @@ main(argc, argv)
 	return 0;
 }
 
-#ifndef SMALL
 /*
  * Purge all entries in the routing tables not
  * associated with network interfaces.
@@ -232,6 +244,7 @@ flushroutes(argc, argv)
 	char *buf, *next, *lim;
 	struct rt_msghdr *rtm;
 
+	af = 0;
 	shutdown(s, 0); /* Don't want to read back our messages */
 	if (argc > 1) {
 		argv++;
@@ -243,18 +256,22 @@ flushroutes(argc, argv)
 			case K_ATALK:
 				af = AF_APPLETALK;
 				break;
+#ifndef SMALL
 			case K_XNS:
 				af = AF_NS;
 				break;
+#endif /* SMALL */
 			case K_LINK:
 				af = AF_LINK;
 				break;
+#ifndef SMALL
 			case K_ISO:
 			case K_OSI:
 				af = AF_ISO;
 				break;
 			case K_X25:
 				af = AF_CCITT;
+#endif /* SMALL */
 			default:
 				goto bad;
 		} else
@@ -316,7 +333,6 @@ bad:			usage(*argv);
 		}
 	}
 }
-#endif /* SMALL */
 
 
 static char hexlist[] = "0123456789abcdef";
@@ -404,13 +420,13 @@ routename(sa)
 		(void)snprintf(line, sizeof line, "iso %s",
 		    iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr));
 		break;
+#endif /* SMALL */
 
 	case AF_APPLETALK:
 		(void) snprintf(line, sizeof(line), "atalk %d.%d",
 		    ((struct sockaddr_at *)sa)->sat_addr.s_net,
 		    ((struct sockaddr_at *)sa)->sat_addr.s_node);
 		break;
-#endif /* SMALL */
 
 	default:
 		(void)snprintf(line, sizeof line, "(%d) %s",
@@ -506,13 +522,13 @@ netname(sa)
 		(void)snprintf(line, sizeof line, "iso %s",
 		    iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr));
 		break;
+#endif /* SMALL */
 
 	case AF_APPLETALK:
 		(void) snprintf(line, sizeof(line), "atalk %d.%d",
 		    ((struct sockaddr_at *)sa)->sat_addr.s_net,
 		    ((struct sockaddr_at *)sa)->sat_addr.s_node);
 		break;
-#endif /* SMALL */
 
 	default:
 		(void)snprintf(line, sizeof line, "af %d: %s",
@@ -561,6 +577,7 @@ newroute(argc, argv)
 	struct hostent *hp = 0;
 
 	cmd = argv[0];
+	af = 0;
 	if (*cmd != 'g')
 		shutdown(s, 0); /* Don't want to read back our messages */
 	while (--argc > 0) {
@@ -587,6 +604,7 @@ newroute(argc, argv)
 				aflen = sizeof(struct sockaddr_dl);
 				break;
 
+#ifndef SMALL
 			case K_OSI:
 			case K_ISO:
 				af = AF_ISO;
@@ -602,6 +620,7 @@ newroute(argc, argv)
 				af = AF_NS;
 				aflen = sizeof(struct sockaddr_ns);
 				break;
+#endif /* SMALL */
 
 			case K_IFACE:
 			case K_INTERFACE:
@@ -1181,16 +1200,20 @@ mask_addr()
 	if ((rtm_addrs & RTA_DST) == 0)
 		return;
 	switch (so_dst.sa.sa_family) {
-	case AF_NS:
 	case AF_INET:
-	case AF_CCITT:
 	case AF_APPLETALK:
+#ifndef SMALL
+	case AF_NS:
+	case AF_CCITT:
+#endif /* SMALL */
 	case 0:
 		return;
+#ifndef SMALL
 	case AF_ISO:
 		olen = MIN(so_dst.siso.siso_nlen,
 			   MAX(so_mask.sa.sa_len - 6, 0));
 		break;
+#endif /* SMALL */
 	}
 	cp1 = so_mask.sa.sa_len + 1 + (char *)&so_dst;
 	cp2 = so_dst.sa.sa_len + 1 + (char *)&so_dst;
@@ -1199,11 +1222,13 @@ mask_addr()
 	cp2 = so_mask.sa.sa_len + 1 + (char *)&so_mask;
 	while (cp1 > so_dst.sa.sa_data)
 		*--cp1 &= *--cp2;
+#ifndef SMALL
 	switch (so_dst.sa.sa_family) {
 	case AF_ISO:
 		so_dst.siso.siso_nlen = olen;
 		break;
 	}
+#endif /* SMALL */
 }
 
 char *msgtypes[] = {
