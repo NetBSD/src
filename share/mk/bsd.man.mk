@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.79 2002/10/22 18:48:28 perry Exp $
+#	$NetBSD: bsd.man.mk,v 1.80 2003/06/30 18:49:05 wiz Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -16,13 +16,13 @@ TMACDEPDIR?=	${DESTDIR}/usr/share/tmac
 .endif
 
 HTMLDIR?=	${DESTDIR}/usr/share/man
-CATDEPS?=	${TMACDEPDIR}/tmac.andoc \
-		${TMACDEPDIR}/tmac.doc \
-		${TMACDEPDIR}/tmac.doc-ditroff \
-		${TMACDEPDIR}/tmac.doc-common \
-		${TMACDEPDIR}/tmac.doc-nroff \
-		${TMACDEPDIR}/tmac.doc-syms
-HTMLDEPS?=	${TMACDEPDIR}/tmac.doc2html
+CATDEPS?=	${TMACDEPDIR}/andoc.tmac \
+		${TMACDEPDIR}/doc.tmac \
+		${TMACDEPDIR}/mdoc/doc-common \
+		${TMACDEPDIR}/mdoc/doc-ditroff \
+		${TMACDEPDIR}/mdoc/doc-nroff \
+		${TMACDEPDIR}/mdoc/doc-syms
+HTMLDEPS?=	${TMACDEPDIR}/doc2html.tmac
 MANTARGET?=	cat
 
 GROFF_HTML?=	${GROFF} -Tlatin1 -mdoc2html -P-b -P-o -P-u
