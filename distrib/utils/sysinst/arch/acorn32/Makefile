@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/01/31 00:33:49 reinoud Exp $
+#	$NetBSD: Makefile,v 1.2 2002/01/31 01:56:43 reinoud Exp $
 #
-# Makefile for arm32
+# Makefile for acorn32
 #
 
 # have to have all of them here for crunch ...
