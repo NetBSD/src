@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.648 2004/09/16 13:09:59 ragge Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.649 2004/09/17 16:04:17 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -7308,6 +7308,10 @@ const struct pci_product pci_products[] = {
 	    "Quadro FX 3000",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5700_LE,
+	    "GeForce FX 5700 LE",
+	},
+	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
 	    "Riva 128",
 	},
@@ -9660,4 +9664,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1839;
+const int pci_nproducts = 1840;
