@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.5 2001/03/20 16:03:28 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.6 2001/07/09 18:18:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -32,25 +32,17 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
 #include <sh3/cpufunc.h>
 #include <sh3/intcreg.h>
 #include <sh3/trapreg.h>
 #include <machine/shbvar.h>
 
-#if 0
-#include <dev/isa/isareg.h>
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmareg.h>
-#endif
-
 #include <net/netisr.h>
+#include <hpcsh/hpcsh/debug.h>
 
 int shbmatch __P((struct device *, struct cfdata *, void *));
 void shbattach __P((struct device *, struct device *, void *));
@@ -371,6 +363,7 @@ intrhandler(p1, p2, p3, p4, frame)
 	if (intevt < 0xf00 && intevt != 0x420)
 		printf("INTEVT=%08x INTEVT2=%08x\n", intevt, intevt2);
 #endif
+	__dbg_heart_beat(HEART_BEAT_WHITE);
 
 #if 0
 	printf("intr_handler:int_no %x spc %x ssr %x r15 %x curproc %x\n",
@@ -617,6 +610,8 @@ void comsoft __P((void *));
 void
 Xsoftserial(void)
 {
+	__dbg_heart_beat(HEART_BEAT_BLUE);
+
 #if (NSCI > 0)
 	scisoft(NULL);
 #endif
@@ -633,6 +628,8 @@ void
 Xsoftnet(void)
 {
 	int s, ni;
+
+	__dbg_heart_beat(HEART_BEAT_RED);
 
 	s = splhigh();
 	ni = netisr;
@@ -652,7 +649,7 @@ Xsoftnet(void)
 void
 Xsoftclock(void)
 {
-
+	__dbg_heart_beat(HEART_BEAT_GREEN);
         softclock(NULL);
 }
 
