@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.49 1997/12/20 20:11:55 christos Exp $
+#	$NetBSD: netstart,v 1.50 1998/01/24 19:12:54 veego Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -158,15 +158,6 @@ if [ -f /etc/ifaliases ]; then
 		route add $addr 127.0.0.1
 	done
 ) < /etc/ifaliases
-fi
-
-# Network Address Translation...
-if [ "$ipnat" != NO ] && [ -f /etc/ipnat.conf ]; then
-	echo 'installing NAT rules ... '
-	if [ "$ipfilter" = NO ] || [ ! -f /etc/ipf.conf ]; then
-		ipf -E -Fa
-	fi
-	ipnat -F -f /etc/ipnat.conf
 fi
 
 # /etc/ppp/peers and $ppp_peers contain boot configuration information
