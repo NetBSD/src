@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.140 2004/02/06 15:36:52 itohy Exp $
+# $NetBSD: mi,v 1.140.2.1 2004/04/27 17:57:20 jdc Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -123,6 +123,7 @@
 ./etc/rc.d/dhcrelay				etc-dhcpd-rc
 ./etc/rc.d/dmesg				etc-sys-rc
 ./etc/rc.d/downinterfaces			etc-sys-rc
+./etc/rc.d/fixsb				etc-sys-rc
 ./etc/rc.d/fsck					etc-sys-rc
 ./etc/rc.d/fsck.sh				etc-obsolete		obsolete
 ./etc/rc.d/gated				etc-obsolete		obsolete
