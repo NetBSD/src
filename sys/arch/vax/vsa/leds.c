@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.1 2001/02/18 10:44:21 ragge Exp $	*/
+/*	$NetBSD: leds.c,v 1.2 2001/05/16 05:36:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -75,21 +75,21 @@ void
 ledsattach(int a)
 {
 	switch (vax_boardtype) {
-#if VAX46
+#if VAX46 || VAXANY
 	case VAX_BTYP_46: {
 		extern struct vs_cpu *ka46_cpu;
 		diagreg = (volatile u_short *)(&ka46_cpu->vc_diagdsp);
 		break;
 		}
 #endif
-#if VAX48
+#if VAX48 || VAXANY
 	case VAX_BTYP_48: {
 		extern struct vs_cpu *ka48_cpu;
 		diagreg = (volatile u_short *)(&ka48_cpu->vc_diagdsp);
 		break;
 		}
 #endif
-#if VAX49
+#if VAX49 || VAXANY
 	case VAX_BTYP_49:
 		diagreg = (volatile u_short *)vax_map_physmem(0x25800000, 1);
 		diagreg += 2;

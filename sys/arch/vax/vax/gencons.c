@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.32 2001/05/02 10:32:21 scw Exp $	*/
+/*	$NetBSD: gencons.c,v 1.33 2001/05/16 05:36:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -288,7 +288,7 @@ gencninit(struct consdev *cndev)
 void
 gencnputc(dev_t dev, int ch)
 {
-#ifdef VAX8800
+#if VAX8800 || VAXANY
 	/*
 	 * On KA88 we may get C-S/C-Q from the console.
 	 * XXX - this will cause a loop at spltty() in kernel and will
