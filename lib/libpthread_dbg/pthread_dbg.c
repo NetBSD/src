@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.13 2004/02/02 20:36:19 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.14 2004/02/03 20:26:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.13 2004/02/02 20:36:19 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.14 2004/02/03 20:26:16 nathanw Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -236,7 +236,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	    &tmp, sizeof(tmp))) != 0)
 		return val;
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
+	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
 	if (tmp != tmp1)
@@ -359,7 +359,7 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 	    &tmp, sizeof(tmp))) != 0)
 		return val;
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
+	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
 	if (tmp != tmp1)
@@ -443,7 +443,7 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 	    &tmp, sizeof(tmp))) != 0)
 		return val;
 	if ((val = READ(thread->proc, 
-	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
+	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
 	if (tmp != tmp1)
