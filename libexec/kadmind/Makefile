@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.10 2001/12/12 00:51:07 tv Exp $
+# $NetBSD: Makefile,v 1.11 2002/08/19 13:54:35 lukem Exp $
 
 NOLINT=		# defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../crypto/dist
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/heimdal/kadmin
 
 WARNS?=		1
@@ -21,13 +21,13 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/kadmin		\
 	-I${DIST}/heimdal/lib/krb5		\
 	-I${DIST}/heimdal/lib/asn1		\
-	-I${.CURDIR}/../../include/heimdal	\
+	-I${NETBSDSRCDIR}/include/heimdal	\
 	-I${DESTDIR}/usr/include/kadm5		\
 	-I${DESTDIR}/usr/include/kerberosIV	\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
-VERS!=		cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
+VERS!=		cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
 LDADD=		-lkadm5srv -lhdb -lkrb5 -lkadm -lkrb -lcrypto \
 		-lasn1 -lcom_err -L${VERS} -lvers -lroken -lcrypt -lutil
