@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2.c,v 1.3 1999/04/07 17:58:49 tron Exp $	*/
+/*	$NetBSD: bzip2.c,v 1.4 1999/04/08 18:34:27 tron Exp $	*/
 
 /*-----------------------------------------------------------*/
 /*--- A block-sorting, lossless compressor        bzip2.c ---*/
@@ -772,10 +772,11 @@ Bool notAStandardFile ( Char* name , IntNative allowSymbolicLinks )
    IntNative      i;
    struct MY_STAT statBuf;
 
-   i = MY_LSTAT ( name, &statBuf );
+   i = allowSymbolicLinks ? MY_STAT ( name, &statBuf ) :
+                            MY_LSTAT ( name, &statBuf );
    if (i != 0) return True;
    if (MY_S_IFREG(statBuf.st_mode)) return False;
-   if (allowSymbolicLinks && S_ISLNK(statBuf.st_mode)) return False;
+
    return True;
 }
 
