@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1997/04/19 09:26:09 veego Exp $
+#	$NetBSD: Makefile,v 1.17 1997/04/30 00:49:09 thorpej Exp $
 
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
@@ -10,7 +10,7 @@ SUBDIR+= arch/${MACHINE}
 SUBDIR+= lkm
 .endif
 
-LFILES=	errno.h fcntl.h poll.h syslog.h termios.h
+LFILES=	errno.h fcntl.h md5.h poll.h syslog.h termios.h
 MFILES=	float.h frame.h stdarg.h varargs.h
 LDIRS=	dev net netatalk netinet netccitt netiso netns netnatm nfs sys ufs vm 
 
