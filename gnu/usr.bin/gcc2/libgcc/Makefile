@@ -1,6 +1,6 @@
 LIB=	gcc
 CC=	cc
-CFLAGS=		-I../common
+CFLAGS=		-I../common -I$(.CURDIR)/../$(MACHINE)
 
 SRCS= _mulsi3.c _udivsi3.c _divsi3.c _umodsi3.c _modsi3.c \
    _lshrsi3.c _lshlsi3.c _ashrsi3.c _ashlsi3.c \
