@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.57 2000/11/17 03:06:28 erh Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.58 2000/11/17 05:07:45 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -153,8 +153,6 @@ osf1_sys_set_program_attributes(p, v, retval)
 
 	return (0);
 }
-
-extern int ncpus;
 
 int
 osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
