@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.10 1999/11/11 20:23:16 thorpej Exp $	*/
+/*	$NetBSD: cread.c,v 1.11 1999/11/13 21:17:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -48,6 +48,7 @@
 
 #include "stand.h"
 #ifdef _STANDALONE
+#include <lib/libkern/libkern.h>
 #include <lib/libz/zlib.h>
 #else
 #include <string.h>
