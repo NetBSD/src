@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.6 2003/10/08 11:02:18 bouyer Exp $
+# $NetBSD: INSTALL,v 1.7 2003/10/08 11:55:43 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.6 $"
+#ident 		"INSTALL-$Revision: 1.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -324,7 +324,18 @@ icpsp*	at icp? unit ?			# SCSI pass-through
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
-pciide* at pci? dev ? function ? flags 0x0000
+pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide* at pci? dev ? function ?	# Acard IDE controllers
+aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
+cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* at pci? dev ? function ?	# Cypress IDE controllers
+hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* at pci? dev ? function ?	# Opti IDE controllers
+piixide* at pci? dev ? function ?	# Intel IDE controllers
+pdcide* at pci? dev ? function ?	# Promise IDE controllers
+siside* at pci? dev ? function ?	# SiS IDE controllers
+slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
+viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # PCMCIA IDE controllers
 #wdc*	at pcmcia? function ?
@@ -338,9 +349,19 @@ pciide* at pci? dev ? function ? flags 0x0000
 
 # ATA bus support
 atabus* at pciide? channel ?
+atabus* at acardide? channel ?
+atabus* at aceride? channel ? 
+atabus* at cmdide? channel ? 
+atabus* at cypide? channel ?
+atabus* at hptide? channel ?
+atabus* at optiide? channel ?
+atabus* at piixide? channel ?
+atabus* at pdcide? channel ?
+atabus* at siside? channel ?
+atabus* at slide? channel ?
+atabus* at viaide? channel ?
 #atabus* at wdc? channel ?
 
-# IDE drives
 # Flags are used only with controllers that support DMA operations
 # and mode settings (e.g. some pciide controllers)
 # The lowest order four bits (rightmost digit) of the flags define the PIO

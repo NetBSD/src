@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.162 2003/10/08 11:11:33 bouyer Exp $
+# $NetBSD: GENERIC,v 1.163 2003/10/08 11:55:44 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.162 $"
+#ident 		"GENERIC-$Revision: 1.163 $"
 
 maxusers	32
 
@@ -229,7 +229,18 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 # Other  PCI devices
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 #options 	OFB_ENABLE_CACHE	# Speed up console
-pciide*	at pci? dev ? function ?
+pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide* at pci? dev ? function ?	# Acard IDE controllers
+aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
+cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* at pci? dev ? function ?	# Cypress IDE controllers
+hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* at pci? dev ? function ?	# Opti IDE controllers
+piixide* at pci? dev ? function ?	# Intel IDE controllers
+pdcide* at pci? dev ? function ?	# Promise IDE controllers
+siside* at pci? dev ? function ?	# SiS IDE controllers
+slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
+viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 wdc*	at pci? dev ? function ?	# Kauai ATA
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 obio0	at pci? dev ? function ?
@@ -329,6 +340,17 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 wdc*	at obio? flags 0x1
 atabus* at pciide? channel ?
+atabus* at acardide? channel ?
+atabus* at aceride? channel ? 
+atabus* at cmdide? channel ? 
+atabus* at cypide? channel ?
+atabus* at hptide? channel ?
+atabus* at optiide? channel ?
+atabus* at piixide? channel ?
+atabus* at pdcide? channel ?
+atabus* at siside? channel ?
+atabus* at slide? channel ?
+atabus* at viaide? channel ?
 atabus* at wdc? channel ? 
 wd*	at atabus? drive ? flags 0x0000
 

@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.20 2003/10/08 11:15:49 bouyer Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.21 2003/10/08 11:55:44 bouyer Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -290,8 +290,30 @@ ms0	at com?					# mouse
 #uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 # PCI IDE.
-pciide* at pci ? dev ? function ? flags 0x0000
+pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+acardide* at pci? dev ? function ?	# Acard IDE controllers
+aceride* at pci? dev ? function ?	# Acer Lab IDE controllers
+cmdide* at pci? dev ? function ?	# CMD tech IDE controllers
+cypide* at pci? dev ? function ?	# Cypress IDE controllers
+hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+optiide* at pci? dev ? function ?	# Opti IDE controllers
+piixide* at pci? dev ? function ?	# Intel IDE controllers
+pdcide* at pci? dev ? function ?	# Promise IDE controllers
+siside* at pci? dev ? function ?	# SiS IDE controllers
+slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
+viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 atabus* at pciide? channel ?
+atabus* at acardide? channel ?
+atabus* at aceride? channel ? 
+atabus* at cmdide? channel ? 
+atabus* at cypide? channel ?
+atabus* at hptide? channel ?
+atabus* at optiide? channel ?
+atabus* at piixide? channel ?
+atabus* at pdcide? channel ?
+atabus* at siside? channel ?
+atabus* at slide? channel ?
+atabus* at viaide? channel ?
 wd*	at atabus? drive ? flags 0x0000
 atapibus* at atabus?
 
