@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.14 2000/09/23 04:30:09 augustss Exp $	*/
+/*	$NetBSD: conf.h,v 1.15 2000/11/14 07:13:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -167,3 +167,4 @@ cdev_decl(wskbd);
 cdev_decl(wsmouse);
 cdev_decl(wsmux);
 cdev_decl(scsibus);
+cdev_decl(openfirm);

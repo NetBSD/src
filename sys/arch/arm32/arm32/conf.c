@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.43 2000/09/23 04:30:08 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.44 2000/11/14 07:13:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -194,6 +194,7 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "wsmouse.h"
 #include "wsmux.h"
 #include "scsibus.h"
+#include "openfirm.h"
 
 /* Character devices */
 
@@ -283,6 +284,11 @@ struct cdevsw cdevsw[] = {
 	cdev_tty_init(NUCOM,ucom),	/* 74: USB tty */
 	cdev_usbdev_init(NURIO,urio),	/* 75: Diamond Rio 500 */
 	cdev_ugen_init(NUSCANNER,uscanner),/* 76: USB scanner */
+#if	(defined(OFWGENCFG) || defined(SHARK))
+	cdev_openfirm_init(NOPENFIRM,openfirm),/* 77: openfirmware */
+#else
+	cdev_notdef(),			/* 77: */
+#endif
 };
 
 int nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -401,6 +407,7 @@ static int chrtoblktbl[] = {
     /* 74 */	    NODEV,
     /* 75 */	    NODEV,
     /* 76 */	    NODEV,
+    /* 77 */	    NODEV,
 };
 
 /*
