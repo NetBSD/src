@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.3 1997/06/06 23:46:42 thorpej Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.4 1997/08/03 08:12:26 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -63,7 +63,9 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
 # define ISAPNP_MALLOC(a) malloc(a)
 # define ISAPNP_FREE(a) free(a)
 
+# undef bus_space_map
 # define bus_space_map(a, b, c, d, e)	0
+# undef bus_space_unmap
 # define bus_space_unmap(a, b, c)
 # define panic printf
 
@@ -133,6 +135,7 @@ struct isapnp_attach_args {
 
 	char	ipa_devident[ISAPNP_MAX_IDENT];
 	char	ipa_devlogic[ISAPNP_MAX_DEVCLASS];
+	char	ipa_devcompat[ISAPNP_MAX_DEVCLASS];
 	char	ipa_devclass[ISAPNP_MAX_DEVCLASS];
 
 	u_char	ipa_pref;
