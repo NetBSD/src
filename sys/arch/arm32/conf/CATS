@@ -1,4 +1,4 @@
-#	$NetBSD: CATS,v 1.35 2000/06/14 22:02:20 veego Exp $
+#	$NetBSD: CATS,v 1.36 2000/07/08 01:24:35 tsutsui Exp $
 #
 #	CATS -- CHALTECH CATS Development kernel
 #
@@ -367,6 +367,9 @@ sysbeep0	at pcppi?
 # ISA Plug-and-Play serial interfaces
 com*	at isapnp?			# Modems and serial boards
 
+# ISA Plug-and-Play network interfaces
+ep*	at isapnp?			# 3Com 3c509 Ethernet
+
 # ISA serial interfaces
 com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
@@ -386,6 +389,7 @@ lpt1	at isa? port 0x278 irq 5
 # ISA network interface
 #ne0	at isa? port 0x280 irq 9
 #ne1	at isa? port 0x300 irq 10
+#ep*	at isa? port ? irq ?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?			# PC speaker
