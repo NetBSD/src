@@ -1,44 +1,42 @@
-#	$NetBSD: Makefile,v 1.3 2002/03/06 12:39:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2002/03/06 13:21:00 lukem Exp $
 
-TOP=		${.CURDIR}/..
+.include "${.CURDIR}/../../Makefile.inc"
+.include <bsd.own.mk>
 
-.include "${TOP}/Makefile.inc"
-IMAGEDIR=	${.OBJDIR}/ramdisk-image
-IMAGE=		${.OBJDIR}/ramdisk-${DISTRIBREV}.fs
+IMAGE=		ramdisk.fs
 
-CBIN=		ramdiskbin
+WARNS=		1
 
-LISTS=		list
-CRUNCHCONF=	${CBIN}.conf
-MTREECONF=	mtree.conf
+CRUNCHBIN=	ramdiskbin
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
+MTREECONF=	${DISTRIBDIR}/common/mtree.common
+IMAGEENDIAN=	le
+IMAGEDEPENDS+=	${CRUNCHBIN} \
+		disktab.preinstall dot.hdprofile dot.profile termcap.vt100 \
+		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
+		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
+		${_SRC_TOP_}/etc/services
 
-CRUNCHGEN?=	crunchgen
-MTREE?=		mtree
+MAKEDEVTARGETS=	ramdisk
 
-DISKTYPE=	install-ramdisk
-RDSIZE=		3800
+realall: ${IMAGE}
 
-all: ${CBIN} 
-	rm -rf ${IMAGEDIR}
-	mkdir ${IMAGEDIR}
-	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${IMAGEDIR} -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} \
-	    TARGDIR=${IMAGEDIR} sh ${.CURDIR}/runlist.sh ${.CURDIR}/${LISTS}
-	${MAKEFS} -B le ${IMAGE} ${IMAGEDIR}
-	gzip -c9 ${IMAGE} > ${IMAGE}.gz
+release:
 
-unconfig:
-	-/bin/rm -rf ${IMAGEDIR} ${IMAGE} ${IMAGE}.gz
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=${DISTRIBDIR}/utils/libhack
+.include "${HACKSRC}/Makefile.inc"
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
+# Turn off libhack's gethostby*() as it only supports /etc/hosts
+HACKOBJS:=	${HACKOBJS:Ngethost.o}
 
-clean cleandir distclean:
-	/bin/rm -rf ${AUXCLEAN} *.core ${IMAGEDIR}/* ${IMAGE} ${IMAGE}.gz ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.cro *.c
+# This is listed in ramdiskbin.conf but is built here.
+${CRUNCHBIN}: libhack.o
 
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+
+.include <bsd.prog.mk>
