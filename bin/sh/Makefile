@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.31 1997/06/16 02:42:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.32 1997/07/04 21:00:36 christos Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
+WARNS=	1
 PROG=	sh
 SHSRCS=	alias.c cd.c echo.c error.c eval.c exec.c expand.c \
 	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \
@@ -14,7 +15,7 @@ DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 
 LFLAGS= -8	# 8-bit lex scanner for arithmetic
 
-CFLAGS+=-DSHELL -I. -I${.CURDIR}
+CFLAGS+=-DSHELL -I. -I${.CURDIR} -g
 
 # XXX
 .if (${MACHINE_ARCH} == "powerpc")
@@ -41,18 +42,6 @@ nodes.c nodes.h: mknodes nodetypes nodes.c.pat
 
 syntax.c syntax.h: mksyntax
 	./mksyntax
-
-mkinit: mkinit.c
-	${HOST_COMPILE.c} ${.CURDIR}/mkinit.c
-	${HOST_LINK.c} -o ${.TARGET} mkinit.o
-
-mknodes: mknodes.c
-	${HOST_COMPILE.c} ${.CURDIR}/mknodes.c
-	${HOST_LINK.c} -o ${.TARGET} mknodes.o
-
-mksyntax: mksyntax.c
-	${HOST_COMPILE.c} ${.CURDIR}/mksyntax.c
-	${HOST_LINK.c} -o ${.TARGET} mksyntax.o
 
 .include <bsd.prog.mk>
 
