@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.18 2003/01/18 17:50:30 thorpej Exp $
+# $NetBSD: md.sparc64,v 1.19 2003/01/22 14:21:45 kleink Exp $
 ./usr/include/sparc	comp-c-include
 ./usr/include/sparc/ansi.h	comp-c-include
 ./usr/include/sparc/aout_machdep.h	comp-c-include
@@ -93,7 +93,7 @@
 ./usr/include/sparc64/limits.h	comp-c-include
 ./usr/include/sparc64/lock.h	comp-c-include
 ./usr/include/sparc64/math.h	comp-c-include
-./usr/include/sparc64/mcontext.h.h	comp-c-include
+./usr/include/sparc64/mcontext.h	comp-c-include
 ./usr/include/sparc64/oldmon.h	comp-c-include
 ./usr/include/sparc64/openpromio.h	comp-c-include
 ./usr/include/sparc64/param.h	comp-c-include
