@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.h,v 1.3 2000/06/01 00:04:51 cgd Exp $	*/
+/*	$NetBSD: rbus_machdep.h,v 1.4 2000/06/06 08:20:06 haya Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -46,7 +46,7 @@ void _i386_memio_unmap(bus_space_tag_t, bus_space_handle_t,
 	_i386_memio_unmap((bt), (bsh), (size), (adrp))
 
 
-rbus_tag_t rbus_pccbb_parent_io(struct pci_attach_args *pa);
-rbus_tag_t rbus_pccbb_parent_mem(struct pci_attach_args *pa);
+rbus_tag_t rbus_pccbb_parent_io(struct pci_attach_args *);
+rbus_tag_t rbus_pccbb_parent_mem(struct pci_attach_args *);
 
 #endif /* _ARCH_I386_I386_RBUS_MACHDEP_H_ */
