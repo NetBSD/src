@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_xscale.S,v 1.13 2002/04/09 23:44:00 thorpej Exp $	*/
+/*	$NetBSD: cpufunc_asm_xscale.S,v 1.14 2002/08/09 21:51:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -332,7 +332,10 @@ ENTRY(xscale_cache_clean_minidata)
 1:	ldr	r3, [r0], #32
 	subs	r1, r1, #32
 	bne	1b
-	mov	pc, lr
+
+	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
+
+	CPWAIT_AND_RETURN(r1)
 
 ENTRY(xscale_cache_purgeID_E)
 	mcr	p15, 0, r0, c7, c10, 1	/* clean D cache entry */
@@ -516,7 +519,7 @@ ENTRY(xscale_context_switch)
 	CPWAIT_AND_RETURN(r0)
 
 /*
- * xscale_cpusleep
+ * xscale_cpu_sleep
  *
  * This is called when there is nothing on any of the run queues.
  * We go into IDLE mode so that any IRQ or FIQ will awaken us.
