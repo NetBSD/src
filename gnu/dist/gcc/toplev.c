@@ -986,6 +986,7 @@ documented_lang_options[] =
   { "-Wconversion", "Warn about possibly confusing type conversions" },
   { "-Wno-conversion", "" },
   { "-Wformat", "Warn about printf format anomalies" },
+  { "-Wnetbsd-format-audit", "NetBSD format audit" },
   { "-Wno-format", "" },
   { "-Wimplicit-function-declaration",
     "Warn about implicit function declarations" },
