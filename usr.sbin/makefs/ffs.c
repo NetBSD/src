@@ -1,7 +1,7 @@
-/*	$NetBSD: ffs.c,v 1.2 2001/10/28 13:14:05 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.3 2001/11/02 03:12:48 lukem Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Luke Mewburn for Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: ffs.c,v 1.2 2001/10/28 13:14:05 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.3 2001/11/02 03:12:48 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>

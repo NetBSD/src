@@ -1,7 +1,7 @@
-/*	$NetBSD: walk.c,v 1.4 2001/10/29 07:30:07 lukem Exp $	*/
+/*	$NetBSD: walk.c,v 1.5 2001/11/02 03:12:48 lukem Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Luke Mewburn for Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: walk.c,v 1.4 2001/10/29 07:30:07 lukem Exp $");
+__RCSID("$NetBSD: walk.c,v 1.5 2001/11/02 03:12:48 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
