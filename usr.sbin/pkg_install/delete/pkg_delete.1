@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.37 2005/02/04 15:00:23 wiz Exp $
+.\" $NetBSD: pkg_delete.1,v 1.38 2005/02/04 15:01:41 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -200,7 +200,7 @@ file (see
 then this is executed first as
 .Bd -filled -offset indent -compact
 .Cm require
-.Ar \*[Lt]pkg-name\*[Gt]
+.Aq Ar pkg-name
 .Ar DEINSTALL
 .Ed
 (where
@@ -226,19 +226,19 @@ The
 script is called as:
 .Bd -filled -offset indent -compact
 .Cm deinstall
-.Ar \*[Lt]pkg-name\*[Gt]
+.Aq Ar pkg-name
 .Ar VIEW-DEINSTALL
 .Ed
 before removing the package from a view, and as:
 .Bd -filled -offset indent -compact
 .Cm deinstall
-.Ar \*[Lt]pkg-name\*[Gt]
+.Aq Ar pkg-name
 .Ar DEINSTALL
 .Ed
 before deleting all files and as:
 .Bd -filled -offset indent -compact
 .Cm deinstall
-.Ar \*[Lt]pkg-name\*[Gt]
+.Aq Ar pkg-name
 .Ar POST-DEINSTALL
 .Ed
 after deleting them.
