@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.73.2.1 2000/07/14 18:10:51 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.73.2.2 2000/07/22 04:38:14 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -84,6 +84,8 @@
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
+
+#include <dev/cons.h>
 
 #if defined(DDB)
 #include <ddb/ddbvar.h>
@@ -266,6 +268,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int error, level, inthostid;
 	int old_autonicetime;
 	int old_vnodes;
+	dev_t consdev;
 
 	/* All sysctl names at this level, except for a few, are terminal. */
 	switch (name[0]) {
@@ -462,6 +465,13 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif
 	case KERN_MSGBUF:
 		return (sysctl_msgbuf(oldp, oldlenp));
+	case KERN_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
 	default:
 		return (EOPNOTSUPP);
 	}
