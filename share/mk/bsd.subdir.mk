@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.15 1997/04/15 21:32:40 christos Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.16 1997/04/16 14:09:16 christos Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.own.mk>
@@ -28,7 +28,7 @@ __SUBDIRINTERNALUSE: .USE
 		cd ${.CURDIR}/$${_newdir_}; \
 		${MAKE} _THISDIR_="$${_nextdir_}" $${target}; \
 	else \
-		echo "===> $${_nextdir_} [skipped]"; \
+		echo "===> $${_nextdir_} [skipped: missing]"; \
 	fi)
 
 .for dir in ${SUBDIR}
