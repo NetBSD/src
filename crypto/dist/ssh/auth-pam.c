@@ -48,13 +48,20 @@
 /* Based on $FreeBSD: src/crypto/openssh/auth2-pam-freebsd.c,v 1.11 2003/03/31 13:48:18 des Exp $ */
 #include "includes.h"
 RCSID("Id: auth-pam.c,v 1.114 2004/08/16 13:12:06 dtucker Exp ");
+/*
+ * NetBSD local changes
+ */
+__RCSID("$NetBSD: auth-pam.c,v 1.2 2005/02/13 18:13:34 christos Exp $");
+#undef USE_POSIX_THREADS /* Not yet */
+#define HAVE_PAM_GETENVLIST
+#define HAVE_PAM_PUTENV
+#define mysig_t sig_t
+#define PAM_MSG_MEMBER(msg, n, member) ((*(msg))[(n)].member)
+void sshpam_password_change_required(int);
+/* end NetBSD local changes */
 
 #ifdef USE_PAM
-#if defined(HAVE_SECURITY_PAM_APPL_H)
 #include <security/pam_appl.h>
-#elif defined (HAVE_PAM_PAM_APPL_H)
-#include <pam/pam_appl.h>
-#endif
 
 #include "auth.h"
 #include "auth-pam.h"
@@ -289,7 +296,7 @@ import_environments(Buffer *b)
  * Conversation function for authentication thread.
  */
 static int
-sshpam_thread_conv(int n, struct pam_message **msg,
+sshpam_thread_conv(int n, const struct pam_message **msg,
     struct pam_response **resp, void *data)
 {
 	Buffer buffer;
@@ -389,7 +396,7 @@ sshpam_thread(void *ctxtp)
 	u_int i;
 	const char *pam_user;
 
-	pam_get_item(sshpam_handle, PAM_USER, (void **)&pam_user);
+	pam_get_item(sshpam_handle, PAM_USER, (const void **)(void *)&pam_user);
 	environ[0] = NULL;
 
 	if (sshpam_authctxt != NULL) {
@@ -481,7 +488,7 @@ sshpam_thread_cleanup(void)
 }
 
 static int
-sshpam_null_conv(int n, struct pam_message **msg,
+sshpam_null_conv(int n, const struct pam_message **msg,
     struct pam_response **resp, void *data)
 {
 	debug3("PAM: %s entering, %d messages", __func__, n);
@@ -519,7 +526,7 @@ sshpam_init(Authctxt *authctxt)
 	if (sshpam_handle != NULL) {
 		/* We already have a PAM context; check if the user matches */
 		sshpam_err = pam_get_item(sshpam_handle,
-		    PAM_USER, (void **)&pam_user);
+		    PAM_USER, (const void **)(void *)&pam_user);
 		if (sshpam_err == PAM_SUCCESS && strcmp(user, pam_user) == 0)
 			return (0);
 		pam_end(sshpam_handle, sshpam_err);
@@ -817,7 +824,7 @@ do_pam_setcred(int init)
 }
 
 static int
-sshpam_tty_conv(int n, struct pam_message **msg,
+sshpam_tty_conv(int n, const struct pam_message **msg,
     struct pam_response **resp, void *data)
 {
 	char input[PAM_MAX_MSG_SIZE];
@@ -895,7 +902,7 @@ do_pam_chauthtok(void)
 }
 
 static int
-sshpam_store_conv(int n, struct pam_message **msg,
+sshpam_store_conv(int n, const struct pam_message **msg,
     struct pam_response **resp, void *data)
 {
 	struct pam_response *reply;
@@ -1010,7 +1017,7 @@ free_pam_environment(char **env)
  * display.
  */
 static int
-sshpam_passwd_conv(int n, struct pam_message **msg,
+sshpam_passwd_conv(int n, const struct pam_message **msg,
     struct pam_response **resp, void *data)
 {
 	struct pam_response *reply;
