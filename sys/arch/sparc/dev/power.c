@@ -1,8 +1,8 @@
-/*	$NetBSD: power.c,v 1.1 1996/03/31 22:34:40 pk Exp $ */
+/*	$NetBSD: power.c,v 1.2 1996/05/16 15:56:56 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
- *	The President and Fellows of Harvard University. All rights reserved.
+ *	The President and Fellows of Harvard College. All rights reserved.
  *
  * All advertising materials mentioning features or use of this software
  * must display the following acknowledgement:
@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: power.c,v 1.1 1996/03/31 22:34:40 pk Exp $
+ * $Id: power.c,v 1.2 1996/05/16 15:56:56 abrown Exp $
  */
 
 #include <sys/param.h>

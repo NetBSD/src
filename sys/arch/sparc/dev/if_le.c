@@ -1,8 +1,8 @@
-/*	$NetBSD: if_le.c,v 1.33 1996/05/07 01:27:26 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.34 1996/05/16 15:56:54 abrown Exp $	*/
 
 /*-
  * Copyright (c) 1996
- *	The President and Fellows of Harvard University. All rights reserved.
+ *	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
