@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.4 1998/02/07 12:31:32 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.5 1998/02/08 07:52:28 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -274,7 +274,8 @@ void uvm_map_init()
 {
   static struct vm_map_entry kernel_map_entry[MAX_KMAPENT];
 #if defined(UVMHIST)
-  static char histbuf[sizeof(struct uvm_history_ent) * 100];
+  static struct uvm_history_ent maphistbuf[100];
+  static struct uvm_history_ent pdhistbuf[100];
 #endif
   int lcv;
 
@@ -283,7 +284,8 @@ void uvm_map_init()
    */
 
   UVMHIST_FUNC("uvm_map_init");
-  UVMHIST_INIT_STATIC(maphist, histbuf);
+  UVMHIST_INIT_STATIC(maphist, maphistbuf);
+  UVMHIST_INIT_STATIC(pdhist, pdhistbuf);
   UVMHIST_CALLED(maphist);
   UVMHIST_LOG(maphist,"<starting uvm map system>", 0, 0, 0, 0);
   UVMCNT_INIT(uvm_map_call,  UVMCNT_CNT, 0, "# uvm_map() successful calls", 0);
