@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.13 2001/11/13 13:14:42 lukem Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.14 2002/03/30 13:37:41 tron Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.13 2001/11/13 13:14:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.14 2002/03/30 13:37:41 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ void lm_refresh_sensor_data __P((struct lm_softc *));
 
 static void wb_svolt __P((struct lm_softc *));
 static void wb_stemp __P((struct lm_softc *, struct envsys_tre_data *, int));
+static void wb781_fanrpm __P((struct lm_softc *, struct envsys_tre_data *));
 static void wb_fanrpm __P((struct lm_softc *, struct envsys_tre_data *));
 
 void wb781_refresh_sensor_data __P((struct lm_softc *));
@@ -467,11 +468,14 @@ generic_streinfo_fan(sc, info, n, binfo)
 
 	/* FAN1 and FAN2 can have divisors set, but not FAN3 */
 	if ((sc->info[binfo->sensor].units == ENVSYS_SFANRPM)
-	    && (binfo->sensor != 2)) {
+	    && (n < 2)) {
 		if (binfo->rpms == 0) {
 			binfo->validflags = 0;
 			return (0);
 		}
+
+		/* write back the nominal FAN speed  */
+		info->rpms = binfo->rpms;
 
 		/* 153 is the nominal FAN speed value */
 		divisor = 1350000 / (binfo->rpms * 153);
@@ -491,7 +495,7 @@ generic_streinfo_fan(sc, info, n, binfo)
 		 * in <7:6>
 		 */
 		sdata = lm_readreg(sc, LMD_VIDFAN);
-		if ( binfo->sensor == 0 ) {  /* FAN1 */
+		if ( n == 0 ) {  /* FAN1 */
 		    divisor <<= 4;
 		    sdata = (sdata & 0xCF) | divisor;
 		} else { /* FAN2 */
@@ -535,13 +539,53 @@ wb781_streinfo(sme, binfo)
 	 struct envsys_basic_info *binfo;
 {
 	 struct lm_softc *sc = sme->sme_cookie;
+	 int divisor;
+	 u_int8_t sdata;
+	 int i;
 
 	 if (sc->info[binfo->sensor].units == ENVSYS_SVOLTS_DC)
 		  sc->info[binfo->sensor].rfact = binfo->rfact;
 	 else {
 		if (sc->info[binfo->sensor].units == ENVSYS_SFANRPM) {
-			generic_streinfo_fan(sc, &sc->info[binfo->sensor],
-			    binfo->sensor - 10, binfo);
+			if (binfo->rpms == 0) {
+				binfo->validflags = 0;
+				return (0);
+			}
+
+			/* write back the nominal FAN speed  */
+			sc->info[binfo->sensor].rpms = binfo->rpms;
+
+			/* 153 is the nominal FAN speed value */
+			divisor = 1350000 / (binfo->rpms * 153);
+
+			/* ...but we need lg(divisor) */
+			for (i = 0; i < 7; i++) {
+				if (divisor <= (1 << i))
+				 	break;
+			}
+			divisor = i;
+
+			if (binfo->sensor == 10 || binfo->sensor == 11) {
+				/*
+				 * FAN1 div is in bits <5:4>, FAN2 div
+				 * is in <7:6>
+				 */
+				sdata = lm_readreg(sc, LMD_VIDFAN);
+				if ( binfo->sensor == 10 ) {  /* FAN1 */
+					 sdata = (sdata & 0xCF) |
+					     ((divisor & 0x3) << 4);
+				} else { /* FAN2 */
+					 sdata = (sdata & 0x3F) |
+					     ((divisor & 0x3) << 6);
+				}
+				lm_writereg(sc, LMD_VIDFAN, sdata);
+			} else {
+				/* FAN3 is in WB_PIN <7:6> */
+				sdata = lm_readreg(sc, WB_PIN);
+				sdata = (sdata & 0x3F) |
+				     ((divisor & 0x3) << 6);
+				lm_writereg(sc, WB_PIN, sdata);
+			}
 		}
 		memcpy(sc->info[binfo->sensor].desc, binfo->desc,
 		    sizeof(sc->info[binfo->sensor].desc));
@@ -572,6 +616,9 @@ wb782_streinfo(sme, binfo)
 				return (0);
 			}
 
+			/* write back the nominal FAN speed  */
+			sc->info[binfo->sensor].rpms = binfo->rpms;
+
 			/* 153 is the nominal FAN speed value */
 			divisor = 1350000 / (binfo->rpms * 153);
 
@@ -601,7 +648,7 @@ wb782_streinfo(sme, binfo)
 				sdata = lm_readreg(sc, WB_PIN);
 				sdata = (sdata & 0x3F) |
 				     ((divisor & 0x3) << 6);
-				lm_writereg(sc, LMD_VIDFAN, sdata);
+				lm_writereg(sc, WB_PIN, sdata);
 			}
 			/* Bit 2 of divisor is in WB_BANK0_FANBAT */
 			lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
@@ -760,6 +807,33 @@ wb_stemp(sc, sensors, n)
 }
 
 static void
+wb781_fanrpm(sc, sensors)
+	struct lm_softc *sc;
+	struct envsys_tre_data *sensors;
+{
+	int i, divisor, sdata;
+	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
+	for (i = 0; i < 3; i++) {
+		sdata = lm_readreg(sc, LMD_SENSORBASE + i + 8);
+		DPRINTF(("sdata[fan%d] 0x%x\n", i, sdata));
+		if (i == 0)
+			divisor = (lm_readreg(sc, LMD_VIDFAN) >> 4) & 0x3;
+		else if (i == 1)
+			divisor = (lm_readreg(sc, LMD_VIDFAN) >> 6) & 0x3;
+		else
+			divisor = (lm_readreg(sc, WB_PIN) >> 6) & 0x3;
+
+		DPRINTF(("sdata[%d] 0x%x div 0x%x\n", i, sdata, divisor));
+		if (sdata == 0xff || sdata == 0x00) {
+			sensors[i].cur.data_us = 0;
+		} else {
+			sensors[i].cur.data_us = 1350000 /
+			    (sdata << divisor);
+		}
+	}
+}
+
+static void
 wb_fanrpm(sc, sensors)
 	struct lm_softc *sc;
 	struct envsys_tre_data *sensors;
@@ -798,7 +872,7 @@ wb781_refresh_sensor_data(sc)
 	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
 	wb_stemp(sc, &sc->sensors[7], 3);
 	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
-	generic_fanrpm(sc, &sc->sensors[10]);
+	wb781_fanrpm(sc, &sc->sensors[10]);
 }
 
 void
