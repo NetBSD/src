@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.8 2004/08/13 03:55:17 jmc Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.3.2.9 2004/09/11 11:23:26 he Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -127,8 +127,22 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
-	struct ip *ip = mtod(*mp, struct ip *);
-	int rv, hlen = ip->ip_hl << 2;
+	struct ip *ip;
+	int rv, hlen;
+	int error;
+
+	/*
+	 * ensure that mbufs are writable beforehand
+	 * as it's assumed by ipf code.
+	 * ip hdr (60 bytes) + tcp hdr (60 bytes) should be enough.
+	 * XXX inefficient
+	 */
+	error = m_makewritable(mp, 0, 60 + 60, M_DONTWAIT);
+	if (error) {
+		m_freem(*mp);
+		*mp = NULL;
+		return error;
+	}
 
 #if defined(M_CSUM_TCPv4)
 	/*
@@ -144,6 +158,9 @@ int dir;
 		}
 	}
 #endif /* M_CSUM_TCPv4 */
+
+	ip = mtod(*mp, struct ip *);
+	hlen = ip->ip_hl << 2;
 
 	/*
 	 * We get the packet with all fields in network byte
@@ -179,7 +196,20 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
+	int error;
 	
+	/*
+	 * ensure that mbufs are writable beforehand
+	 * as it's assumed by ipf code.
+	 * XXX inefficient
+	 */
+	error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+	if (error) {
+		m_freem(*mp);
+		*mp = NULL;
+		return error;
+	}
+
 	return (fr_check(mtod(*mp, struct ip *), sizeof(struct ip6_hdr),
 	    ifp, (dir == PFIL_OUT), mp));
 }
