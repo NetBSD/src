@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.3 2001/03/08 21:30:35 bjh21 Exp $ */
+/* $NetBSD: pcb.h,v 1.4 2001/04/16 17:30:32 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -35,6 +35,10 @@
 #define _ARM26_PCB_H
 
 #include <machine/frame.h>
+
+#ifndef _KERNEL
+typedef struct label_t label_t;
+#endif
 
 struct pcb {
 	u_int	pcb_flags;
