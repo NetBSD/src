@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.40 1999/01/25 03:43:04 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.41 1999/02/24 15:05:21 drochner Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/net ${.CURDIR}/net
+.PATH: ${ARCHDIR}/net ${.CURDIR}/net
 
 SRCS+=	base64.c ethers.c gethnamaddr.c getnetnamadr.c getnetent.c getproto.c \
 	getprotoent.c getprotoname.c getservbyname.c getservbyport.c \
@@ -29,7 +29,7 @@ nslexer.c: nsparser.h
 # m-d Makefile.inc must include sources for:
 #	htonl() htons() ntohl() ntohs()
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc"
+.include "${ARCHDIR}/net/Makefile.inc"
 
 MAN+=	byteorder.3 ethers.3 gethostbyname.3 getnetent.3 getprotoent.3 \
 	getservent.3 hesiod.3 inet.3 inet_net.3 iso_addr.3 linkaddr.3 ns.3 \

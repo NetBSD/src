@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.15 1997/07/15 09:22:31 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.16 1999/02/24 15:05:20 drochner Exp $
 
 # locale sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/locale ${.CURDIR}/locale
+.PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
 
 SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 	ctypeio.c localeconv.c nl_langinfo.c setlocale.c

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.96 1999/01/19 06:24:08 abs Exp $
+#	$NetBSD: Makefile.inc,v 1.97 1999/02/24 15:05:20 drochner Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
-.PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
+.PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
 
 SRCS+= 	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
 	confstr.c ctermid.c ctype_.c daemon.c devname.c dirname.c \
@@ -34,7 +34,7 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 #	_setjmp() bswap16() bswap32() bswap64() fabs() frexp() infinity
 #	isinf() ldexp() modf() setjmp() sigsetjmp()
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"
+.include "${ARCHDIR}/gen/Makefile.inc"
 
 MAN+=	alarm.3 basename.3 bswap.3 clock.3 confstr.3 ctermid.3 ctype.3 \
 	daemon.3 devname.3 directory.3 dirname.3 err.3 exec.3 \
