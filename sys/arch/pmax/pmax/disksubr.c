@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16.2.2 1998/11/14 15:59:13 drochner Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.2.3 1999/01/28 04:47:21 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -43,7 +43,29 @@
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 
-#include <pmax/stand/dec_boot.h>
+/*
+ * ULTRIX disklabel 'struct pt' lies at the very end of 31th sector.
+ *	[ 8KB boot block (16 sector) ] + [ 8KB UFS super block (16 sector) ]
+ */
+#define	DEC_LABEL_SECTOR 31
+/*
+ * Structure that is used to determine the partitioning of the disk.
+ * It's location is at the end of the superblock area.
+ * The reason for both the cylinder offset and block offset
+ * is that some of the disk drivers (most notably the uda
+ * driver) require the block offset rather than the cyl. offset.
+ */
+#define PT_MAGIC	0x032957	/* Partition magic number */
+#define PT_VALID	1		/* Indicates if struct is valid */
+struct pt {
+	long	pt_magic;	/* magic no. indicating part. info exits */
+	int	pt_valid;	/* set by driver if pt is current */
+	struct	pt_info {
+		int	pi_nblocks;	/* no. of sectors for the partition */
+		daddr_t pi_blkoff;	/* block offset for start of part. */
+	} pt_part[8];
+};
+
 
 #define	b_cylin	b_resid
 
@@ -65,7 +87,7 @@ readdisklabel(dev, strat, lp, osdep)
 	int i;
 	struct buf *bp;
 	struct disklabel *dlp;
-	struct Dec_DiskLabel *ulp;
+	struct pt *ulp;
 	char *msg = NULL;
 
 	/* minimal requirements for archtypal disk label */
@@ -102,29 +124,43 @@ readdisklabel(dev, strat, lp, osdep)
 			*lp = *dlp;
 		goto done;
 	}
+	bp->b_flags = B_INVAL | B_AGE | B_READ;
+	brelse(bp);
 
-#define	STEP_THROUGH(p, bp, type) \
-    for ((p) = (type *)(bp); \
-	 (p) <= (type *)((bp) + DEV_BSIZE - sizeof(type)); \
-	 (p) = (type *)((char *)(p) + sizeof(long)))
+	/* obtain buffer to probe drive with */
+	bp = geteblk((int)lp->d_secsize);
 
-	/* check for an ULTRIX disk label */
-	STEP_THROUGH(ulp, bp->b_un.b_addr, struct Dec_DiskLabel) {
-	    if (ulp->magic == DEC_LABEL_MAGIC) {
+	/* next, dig out ULTRIX disk label */
+	bp->b_dev = dev;
+	bp->b_blkno = DEC_LABEL_SECTOR;
+	bp->b_cylin = 0;
+	bp->b_bcount = lp->d_secsize;
+	bp->b_flags = B_BUSY | B_READ;
+	(*strat)(bp);
+
+	/* if successful, locate disk label within block and validate */
+	if (biowait(bp)) {
+		msg = "disk label read error";
+		goto done;
+	}
+	/* ULTRIX disklabel resides at the end of superblock area */
+	ulp = (struct pt *)(bp->b_un.b_addr + DEV_BSIZE - sizeof(struct pt));
+	if (ulp->pt_magic == PT_MAGIC) {
 		lp->d_npartitions = MAXPARTITIONS;
 		i = 0;
 		do {
-			lp->d_partitions[i].p_size = ulp->map[i].numBlocks;
-			lp->d_partitions[i].p_offset = ulp->map[i].startBlock;
+			lp->d_partitions[i].p_size
+				= ulp->pt_part[i].pi_nblocks;
+			lp->d_partitions[i].p_offset
+				= ulp->pt_part[i].pi_blkoff;
 			lp->d_partitions[i].p_fsize = 1024;
 			lp->d_partitions[i].p_fstype = FS_BSDFFS;
 			i += 1;
 		} while (i < lp->d_npartitions);
-		lp->d_magic = DEC_LABEL_MAGIC;
+		lp->d_magic = PT_MAGIC;
 		lp->d_npartitions = i;
 		lp->d_partitions[1].p_fstype = FS_SWAP;
 		goto done;
-	    }
 	}
 	msg = "no disk label";
 done:
@@ -187,7 +223,6 @@ writedisklabel(dev, strat, lp, osdep)
 {
 	struct buf *bp;
 	struct disklabel *dlp;
-	struct Dec_DiskLabel *ulp;
 	int error;
 
 	bp = geteblk((int)lp->d_secsize);
@@ -200,16 +235,8 @@ writedisklabel(dev, strat, lp, osdep)
 	if ((error = biowait(bp)))
 		goto done;
 
-	STEP_THROUGH(ulp, bp->b_un.b_addr, struct Dec_DiskLabel) {
-		if (ulp->magic == DEC_LABEL_MAGIC) {
-		    error = EEXIST; /* don't corrupt ULTRIX disk */
-		    goto done;
-		}
-	}
-
 	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
 	*dlp = *lp;
-
 	bp->b_flags = B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);
