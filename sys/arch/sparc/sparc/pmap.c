@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.267 2003/08/16 19:21:21 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.268 2003/08/21 09:36:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.267 2003/08/16 19:21:21 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.268 2003/08/21 09:36:28 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1984,6 +1984,11 @@ mmu_pmeg_lock(int pmeg)
 	struct mmuentry *me = &mmusegments[pmeg];
 	MMUQ_REMOVE(me, me_list);
 	MMUQ_INSERT_TAIL(&segm_locked, me, me_list);
+#ifdef DIAGNOSTIC
+	(*me->me_statp)--;
+	pmap_stats.ps_npmeg_locked++;
+	me->me_statp = &pmap_stats.ps_npmeg_locked;
+#endif
 }
 
 static void
@@ -1992,6 +1997,11 @@ mmu_pmeg_unlock(int pmeg)
 	struct mmuentry *me = &mmusegments[pmeg];
 	MMUQ_REMOVE(me, me_list);
 	MMUQ_INSERT_TAIL(&segm_lru, me, me_list);
+#ifdef DIAGNOSTIC
+	(*me->me_statp)--;
+	pmap_stats.ps_npmeg_lru++;
+	me->me_statp = &pmap_stats.ps_npmeg_lru;
+#endif
 }
 
 static void
@@ -3389,7 +3399,7 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 		/* set up the mmu entry */
 		MMUQ_INSERT_TAIL(&segm_locked, mmuseg, me_list);
 #ifdef DIAGNOSTIC
-		mmuseg->me_statp = NULL;
+		mmuseg->me_statp = &pmap_stats.ps_npmeg_locked;
 #endif
 		TAILQ_INSERT_TAIL(&pmap_kernel()->pm_seglist, mmuseg, me_pmchain);
 		pmap_stats.ps_npmeg_locked++;
@@ -5041,9 +5051,9 @@ pmap_page_protect4_4c(pg, prot)
 			pte = getpte4(pteva);
 #ifdef DIAGNOSTIC
 			if ((pte & PG_V) == 0)
-				panic("pmap_page_protect !PG_V: "
+				panic("pmap_page_protect !PG_V: pg %p "
 				      "ctx %d, va 0x%lx, pte 0x%x",
-				      pm->pm_ctxnum, va, pte);
+				      pg, pm->pm_ctxnum, va, pte);
 #endif
 			flags |= MR4_4C(pte);
 
@@ -5281,7 +5291,8 @@ pmap_page_protect4m(pg, prot)
 {
 	struct pvlist *pv, *npv;
 	struct pmap *pm;
-	int va, vr, vs, tpte;
+	vaddr_t va;
+	int vr, vs, tpte;
 	int flags, nleft, s;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -5347,7 +5358,7 @@ pmap_page_protect4m(pg, prot)
 		    pm->pm_ctx != NULL, pm->pm_ctxnum, PMAP_CPUSET(pm));
 
 		if ((tpte & SRMMU_TETYPE) != SRMMU_TEPTE)
-			panic("pmap_page_protect !PG_V");
+			panic("pmap_page_protect !PG_V: pg %p va %lx", pg, va);
 
 		flags |= MR4M(tpte);
 
@@ -6658,7 +6669,6 @@ pmap_kprotect4m(vaddr_t va, vsize_t size, vm_prot_t prot)
 /*
  * Clear the wiring attribute for a map/virtual-address pair.
  */
-int printunwire=0;
 /* ARGSUSED */
 void
 pmap_unwire(pm, va)
@@ -6669,17 +6679,22 @@ pmap_unwire(pm, va)
 	struct regmap *rp;
 	struct segmap *sp;
 
+	/* For now, `wired page accounting' is only used on sun4/sun4c */
+	if (CPU_HAS_SRMMU)
+		return;
+
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
 	ptep = &sp->sg_pte[VA_VPG(va)];
 	pte = *ptep;
+
+#if defined(SUN4) || defined(SUN4C)
 	if ((pte & PG_WIRED) == 0) {
 		pmap_stats.ps_useless_changewire++;
 		return;
 	}
-if (printunwire) printf("pmap_unwire: pm %p, va %lx\n", pm, va);
 
 	pte &= ~PG_WIRED;
 	*ptep = pte;
@@ -6692,6 +6707,7 @@ if (printunwire) printf("pmap_unwire: pm %p, va %lx\n", pm, va);
 		if (sp->sg_pmeg != seginval)
 			mmu_pmeg_unlock(sp->sg_pmeg);
 	}
+#endif
 }
 
 /*
