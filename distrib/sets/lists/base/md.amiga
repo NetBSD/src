@@ -1,6 +1,5 @@
 ./dev/mouse
 ./sbin/binpatch
-./usr/lib/libstdc++.so.1.0
 ./usr/lkm/adosfs.o
 ./usr/mdec/installboot
 ./usr/mdec/xxboot

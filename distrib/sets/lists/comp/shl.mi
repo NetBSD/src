@@ -1,13 +1,16 @@
 ./usr/lib/libbfd_pic.a
 ./usr/lib/libbz2_pic.a
 ./usr/lib/libc_pic.a
+./usr/lib/libcc1.so.1.1
 ./usr/lib/libcrypt_pic.a
 ./usr/lib/libcurses_pic.a
 ./usr/lib/libedit_pic.a
+./usr/lib/libg2c_pic.a
 ./usr/lib/libgnumalloc_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
 ./usr/lib/libntp_pic.a
+./usr/lib/libobjc_pic.a
 ./usr/lib/libossaudio_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libposix_pic.a

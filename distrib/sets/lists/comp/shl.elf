@@ -5,13 +5,16 @@
 ./usr/lib/libbfd.so
 ./usr/lib/libbz2.so
 ./usr/lib/libc.so
+./usr/lib/libcc1.so.1
 ./usr/lib/libcrypt.so
 ./usr/lib/libcurses.so
 ./usr/lib/libedit.so
+./usr/lib/libg2c.so
 ./usr/lib/libgnumalloc.so
 ./usr/lib/libkvm.so
 ./usr/lib/libm.so
 ./usr/lib/libntp.so
+./usr/lib/libobjc.so
 ./usr/lib/libossaudio.so
 ./usr/lib/libpcap.so
 ./usr/lib/libposix.so
