@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.25 1997/06/06 16:37:41 kleink Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.26 1997/06/06 17:17:56 cjs Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -46,7 +46,7 @@
 #endif
 
 /*
- * Mbufs are of a single size, MSIZE (machine/machparam.h), which
+ * Mbufs are of a single size, MSIZE (machine/param.h), which
  * includes overhead.  An mbuf may add a single "mbuf cluster" of size
  * MCLBYTES (also in machine/machparam.h), which has no additional overhead
  * and is used instead of the internal data area; this is done when
