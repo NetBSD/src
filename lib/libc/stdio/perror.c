@@ -1,4 +1,4 @@
-/*	$NetBSD: perror.c,v 1.14 1998/07/26 13:55:44 mycroft Exp $	*/
+/*	$NetBSD: perror.c,v 1.15 1998/07/28 12:22:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,17 +38,21 @@
 #if 0
 static char sccsid[] = "@(#)perror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: perror.c,v 1.14 1998/07/26 13:55:44 mycroft Exp $");
+__RCSID("$NetBSD: perror.c,v 1.15 1998/07/28 12:22:31 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
+
 #include <sys/types.h>
 #include <sys/uio.h>
-#include <unistd.h>
+
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
-#include <limits.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 /*
@@ -56,6 +60,10 @@ __RCSID("$NetBSD: perror.c,v 1.14 1998/07/26 13:55:44 mycroft Exp $");
  * static buffer, both functions supply their own buffers to the
  * internal function __strerror().
  */
+
+#ifdef __weak_alias
+__weak_alias(perror,_perror);
+#endif
 
 void
 perror(s)
