@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.34 2001/11/16 09:58:16 lukem Exp $
+.\"	$NetBSD: newfs.8,v 1.35 2001/11/16 10:19:07 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,7 +171,7 @@ instead of trying to get the information from a disklabel.
 Pre-zeros the file system image created with
 .Fl F .
 This is necessary if the image is to be used by
-.Xr vnd 4 
+.Xr vnd 4
 (which doesn't support file systems with
 .Sq holes ) .
 .It Fl a Ar maxcontig
@@ -348,9 +348,9 @@ partition is set to
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .Xr fs 5 ,
-.Xr dumpfs 8 ,
 .Xr disklabel 8 ,
 .Xr diskpart 8 ,
+.Xr dumpfs 8 ,
 .\" .Xr format 8 ,
 .Xr fsck_ffs 8 ,
 .Xr fsirand 8 ,
