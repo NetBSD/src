@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.187 2004/02/26 17:18:05 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.188 2004/03/05 16:54:20 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -740,8 +740,8 @@ Responsible:	jtk
 Notes:
 
 Package:	XFree86
-Version:	3.3.6/4.3.0 (2003-12-19 4.3 branch sources)
-Current Vers:	3.3.6/4.4.0RC1
+Version:	3.3.6/4.4.0
+Current Vers:	3.3.6/4.4.0
 Maintainer:	XFree86 consortium
 Archive Site:	ftp://ftp.xfree86.org/pub/XFree86/
 Mailing List:	
