@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.109 2000/12/22 22:59:00 jdolecek Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.110 2001/01/14 22:31:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -381,11 +381,11 @@ sigprocmask1(p, how, nss, oss)
 			break;
 		case SIG_UNBLOCK:
 			sigminusset(nss, &p->p_sigctx.ps_sigmask);
-			p->p_sigctx.ps_sigcheck = 1;
+			CHECKSIGS(p);
 			break;
 		case SIG_SETMASK:
 			p->p_sigctx.ps_sigmask = *nss;
-			p->p_sigctx.ps_sigcheck = 1;
+			CHECKSIGS(p);
 			break;
 		default:
 			(void)spl0();	/* XXXSMP */
@@ -480,7 +480,7 @@ sigsuspend1(p, ss)
 		p->p_sigctx.ps_flags |= SAS_OLDMASK;
 		(void) splsched();	/* XXXSMP */
 		p->p_sigctx.ps_sigmask = *ss;
-		p->p_sigctx.ps_sigcheck = 1;
+		CHECKSIGS(p);
 		sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
 		(void) spl0();		/* XXXSMP */
 	}
@@ -813,6 +813,8 @@ psignal1(p, signum, dolock)
 		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
 
 	sigaddset(&p->p_sigctx.ps_siglist, signum);
+
+	/* CHECKSIGS() is "inlined" here. */
 	p->p_sigctx.ps_sigcheck = 1;
 
 	/*
@@ -935,7 +937,26 @@ psignal1(p, signum, dolock)
 		if (p->p_wchan && p->p_flag & P_SINTR)
 			unsleep(p);
 		goto out;
+#ifdef __HAVE_AST_PERPROC
+	case SONPROC:
+	case SRUN:
+	case SIDL:
+		/*
+		 * SONPROC: We're running, notice the signal when
+		 * we return back to userspace.
+		 *
+		 * SRUN, SIDL: Notice the signal when we run again
+		 * and return to back to userspace.
+		 */
+		signotify(p);
+		goto out;
 
+	default:
+		/*
+		 * SDEAD, SZOMB: The signal will never be noticed.
+		 */
+		goto out;
+#else /* ! __HAVE_AST_PERPROC */
 	case SONPROC:
 		/*
 		 * We're running; notice the signal.
@@ -949,6 +970,7 @@ psignal1(p, signum, dolock)
 		 * It will either never be noticed, or noticed very soon.
 		 */
 		goto out;
+#endif /* __HAVE_AST_PERPROC */
 	}
 	/*NOTREACHED*/
 
@@ -1145,7 +1167,7 @@ issignal(p)
 
 keep:
 	sigaddset(&p->p_sigctx.ps_siglist, signum);	/* leave the signal for later */
-	p->p_sigctx.ps_sigcheck = 1;
+	CHECKSIGS(p);
 	return (signum);
 }
 

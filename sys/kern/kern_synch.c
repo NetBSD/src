@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.100 2001/01/01 16:02:51 sommerfeld Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101 2001/01/14 22:31:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -919,7 +919,7 @@ setrunnable(struct proc *p)
 		 */
 		if ((p->p_flag & P_TRACED) != 0 && p->p_xstat != 0) {
 			sigaddset(&p->p_sigctx.ps_siglist, p->p_xstat);
-			p->p_sigctx.ps_sigcheck = 1;
+			CHECKSIGS(p);
 		}
 	case SSLEEP:
 		unsleep(p);		/* e.g. when sending signals */
