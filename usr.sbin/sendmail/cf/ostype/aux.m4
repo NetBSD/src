@@ -34,10 +34,10 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)hpux.m4	8.4 (Berkeley) 8/24/93')
-
-define(`QUEUE_DIR', /usr/spool/mqueue)dnl
+VERSIONID(`@(#)aux.m4	8.1 (Berkeley) 9/2/93')
 define(`ALIAS_FILE', /usr/lib/aliases)dnl
+define(`QUEUE_DIR', /usr/spool/mqueue)dnl
 define(`STATUS_FILE', /usr/lib/sendmail.st)dnl
-define(`LOCAL_MAILER_FLAGS', `m')dnl
-define(`confTIME_ZONE', `USE_TZ')dnl
+define(`UUCP_MAILER_PATH', /usr/bin/uux)dnl
+define(`LOCAL_MAILER_FLAGS', mn)dnl
+define(`LOCAL_MAILER_ARGS', `mail -d -r $f $u')dnl

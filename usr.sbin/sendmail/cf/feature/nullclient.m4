@@ -1,4 +1,4 @@
-divert(-1)
+PUSHDIVERT(-1)
 #
 # Copyright (c) 1983 Eric P. Allman
 # Copyright (c) 1988, 1993
@@ -32,12 +32,30 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+ifdef(`SMTP_MAILER_FLAGS',,
+	`define(`SMTP_MAILER_FLAGS',
+		`ifdef(`_OLD_SENDMAIL_', `L', `')')')
+define(_NULL_CLIENT_ONLY_, `1')
+ifelse(_ARG_, `', `errprint(`Feature "nullclient" requires argument')',
+	`define(`MAIL_HUB', _ARG_)')
+POPDIVERT
 
-divert(0)
-VERSIONID(`@(#)hpux.m4	8.4 (Berkeley) 8/24/93')
+#
+#  This is used only for relaying mail from a client to a hub when
+#  that client does absolutely nothing else -- i.e., it is a "null
+#  mailer".  In this sense, it acts like the "R" option in Sun
+#  sendmail.
+#
 
-define(`QUEUE_DIR', /usr/spool/mqueue)dnl
-define(`ALIAS_FILE', /usr/lib/aliases)dnl
-define(`STATUS_FILE', /usr/lib/sendmail.st)dnl
-define(`LOCAL_MAILER_FLAGS', `m')dnl
-define(`confTIME_ZONE', `USE_TZ')dnl
+VERSIONID(`@(#)nullclient.m4	8.2 (Berkeley) 8/21/93')
+
+PUSHDIVERT(7)
+############################################
+###   Null Client Mailer specification   ###
+############################################
+
+ifdef(`confRELAY_MAILER',,
+	`define(`confRELAY_MAILER', `nullclient')')dnl
+
+Mnullclient,	P=[IPC], F=CONCAT(mDFMuXa, SMTP_MAILER_FLAGS), A=IPC $h
+POPDIVERT

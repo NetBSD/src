@@ -1,13 +1,7 @@
-#       from: @(#)Makefile	8.1 (Berkeley) 6/7/93
-#	$Id: Makefile,v 1.3 1993/07/30 20:51:12 mycroft Exp $
+#       @(#)Makefile	8.2 (Berkeley) 9/25/93
 
-SUBDIR= mailstats makemap praliases
+SUBDIR= src mailstats makemap praliases
 VER=	XX
-
-# don't trivially install sendmail
-.if !make(install)
-SUBDIR+=src
-.endif
 
 tar: Files.base Files.cf Files.misc Files.xdoc
 	(cd src; ${MAKE})

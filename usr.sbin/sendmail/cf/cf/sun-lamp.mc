@@ -35,14 +35,14 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)sun-lamp.mc	$Revision: 1.1 $')
+VERSIONID(`@(#)sun-lamp.mc	$Revision: 1.2 $')
 OSTYPE(bsd4.4)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
 define(`UUCP_RELAY', ucbvax.Berkeley.EDU)dnl
 define(`BITNET_RELAY', mailhost.Berkeley.EDU)dnl
 define(`CSNET_RELAY', mailhost.Berkeley.EDU)dnl
-define(`confCHECKPOINT_INTERVAL', 4)dnl
+define(`confCHECKPOINT_INTERVAL', 10)dnl
 define(`confAUTO_REBUILD', True)dnl
 Cwlamp
 

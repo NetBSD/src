@@ -1,4 +1,7 @@
-#	@(#)Makefile	8.4 (Berkeley) 10/15/93
+#
+#  Makefile for configuration files.
+#
+#	@(#)Makefile.dist	8.1 (Berkeley) 8/25/93
 
 M4=	m4
 #M4=	/usr/src/usr.bin/m4/obj/m4
@@ -10,7 +13,7 @@ RM=	rm -f
 
 .mc.cf:
 	$(RM) $@
-	(cd ${.CURDIR} && $(M4) ${@:R}.mc > obj/$@)
+	$(M4) $*.mc > $@
 	$(CHMOD) $(ROMODE) $@
 
 ALL=	cs-hidden.cf cs-exposed.cf \
@@ -18,10 +21,9 @@ ALL=	cs-hidden.cf cs-exposed.cf \
 	sunos3.5-cs-exposed.cf sunos3.5-cs-hidden.cf \
 	sunos4.1-cs-exposed.cf sunos4.1-cs-hidden.cf \
 	ultrix4.1-cs-exposed.cf ultrix4.1-cs-hidden.cf \
-	osf1-cs-exposed.cf osf1-cs-hidden.cf \
 	mail.cs.cf mail.eecs.cf ucbvax.cf vangogh.cf \
 	chez.cf knecht.cf cogsci.cf alpha.cf s2k.cf auspex.cf \
-	python.cf sun-lamp.cf boat-anchor.cf trinity.cf\
+	python.cf \
 	clientproto.cf tcpproto.cf uucpproto.cf
 
 all: $(ALL)
@@ -81,5 +83,3 @@ M4FILES=\
 	../siteconfig/uucp.ucbvax.m4 \
 
 $(ALL):  $(M4FILES)
-
-.include <bsd.prog.mk>

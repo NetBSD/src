@@ -34,10 +34,12 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)hpux.m4	8.4 (Berkeley) 8/24/93')
+VERSIONID(`@(#)svr4.m4	8.1 (Berkeley) 8/24/93')
 
-define(`QUEUE_DIR', /usr/spool/mqueue)dnl
-define(`ALIAS_FILE', /usr/lib/aliases)dnl
-define(`STATUS_FILE', /usr/lib/sendmail.st)dnl
-define(`LOCAL_MAILER_FLAGS', `m')dnl
-define(`confTIME_ZONE', `USE_TZ')dnl
+ifdef(`ALIAS_FILE',,`define(`ALIAS_FILE', /usr/ucblib/aliases)')dnl
+ifdef(`HELP_FILE',,`define(`HELP_FILE', /usr/ucblib/sendmail.hf)')dnl
+ifdef(`STATUS_FILE',,`define(`STATUS_FILE', /usr/ucblib/sendmail.st)')dnl
+define(`LOCAL_MAILER_PATH', `/usr/ucblib/binmail')dnl
+define(`LOCAL_MAILER_FLAGS', `rmn')dnl
+define(`LOCAL_SHELL_FLAGS', `ehuP')dnl
+define(`UUCP_MAILER_ARGS', `uux - -r -a$f -gmedium $h!rmail ($u)')dnl

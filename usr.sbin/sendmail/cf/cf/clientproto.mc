@@ -33,11 +33,17 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-divert(0)
-VERSIONID(`@(#)hpux.m4	8.4 (Berkeley) 8/24/93')
+#
+#  This the prototype for a "null client" -- that is, a client that
+#  does nothing except forward all mail to a mail hub.
+#
+#  To use this, you MUST use the nullclient feature with the name of
+#  the mail hub as its argument.  You MAY also define an OSTYPE to
+#  define the location of the queue directories and the like.
+#  Other than these, it should never contain any other lines.
+#
 
-define(`QUEUE_DIR', /usr/spool/mqueue)dnl
-define(`ALIAS_FILE', /usr/lib/aliases)dnl
-define(`STATUS_FILE', /usr/lib/sendmail.st)dnl
-define(`LOCAL_MAILER_FLAGS', `m')dnl
-define(`confTIME_ZONE', `USE_TZ')dnl
+include(`../m4/cf.m4')
+VERSIONID(`@(#)clientproto.mc	8.2 (Berkeley) 8/21/93')
+
+FEATURE(nullclient, mailhost.$m)
