@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.58 2003/09/30 00:35:30 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.59 2003/10/05 14:42:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.58 2003/09/30 00:35:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.59 2003/10/05 14:42:45 tsutsui Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -114,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.58 2003/09/30 00:35:30 thorpej Exp $");
 #endif /* __NetBSD__ */
 
 /* number of transmit/receive buffers */
-#ifndef TL_NBUF 
+#ifndef TL_NBUF
 #define TL_NBUF 10
 #endif
 
@@ -148,7 +148,7 @@ void	tl_mii_sync __P((struct tl_softc *));
 void	tl_mii_sendbits __P((struct tl_softc *, u_int32_t, int));
 
 
-#if defined(TLDEBUG_RX) 
+#if defined(TLDEBUG_RX)
 static void ether_printheader __P((struct ether_header*));
 #endif
 
@@ -321,7 +321,7 @@ tl_pci_attach(parent, self, aux)
 
 	/*
 	 * Map the card space. First we have to find the I/O and MEM
-	 * registers. I/O is supposed to be at 0x10, MEM at 0x14, 
+	 * registers. I/O is supposed to be at 0x10, MEM at 0x14,
 	 * but some boards (Compaq Netflex 3/P PCI) seem to have it reversed.
 	 * The ThunderLAN manual is not consistent about this either (there
 	 * are both cases in code examples).
@@ -436,7 +436,7 @@ tl_pci_attach(parent, self, aux)
 	}
 	/*
 	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
-	 * doing 
+	 * doing
 	 * reboot before the driver initializes.
 	 */
 	(void) shutdownhook_establish(tl_shutdown, ifp);
@@ -458,13 +458,13 @@ tl_pci_attach(parent, self, aux)
 	    tl_mediastatus);
 	mii_attach(self, &sc->tl_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) { 
+	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
 		ifmedia_set(&sc->tl_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-	/* 
+	/*
 	 * We can support 802.1Q VLAN-sized frames.
 	 */
 	sc->tl_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
@@ -536,7 +536,7 @@ static void tl_stop(ifp, disable)
 	tl_softc_t *sc = ifp->if_softc;
 	struct Tx_list *Tx;
 	int i;
-	
+
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 	/* disable interrupts */
@@ -547,7 +547,7 @@ static void tl_stop(ifp, disable)
 	TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_STOP);
 	DELAY(100000);
 
-	/* stop statistics reading loop, read stats */ 
+	/* stop statistics reading loop, read stats */
 	callout_stop(&sc->tl_tick_ch);
 	tl_read_stats(sc);
 
@@ -562,7 +562,7 @@ static void tl_stop(ifp, disable)
 				    sc->Rx_list[i].m_dmamap);
 				m_freem(sc->Rx_list[i].m);
 			}
-			bus_dmamap_destroy(sc->tl_dmatag, 
+			bus_dmamap_destroy(sc->tl_dmatag,
 			    sc->Rx_list[i].m_dmamap);
 			sc->Rx_list[i].m = NULL;
 		}
@@ -654,7 +654,7 @@ static int tl_init(ifp)
 		    sizeof(struct tl_Tx_list) * TL_NBUF, 1,
 		    sizeof(struct tl_Tx_list) * TL_NBUF, 0, BUS_DMA_WAITOK,
 		    &sc->Tx_dmamap);
-	if (error == 0) 
+	if (error == 0)
 		error = bus_dmamap_create(sc->tl_dmatag, ETHER_MIN_TX, 1,
 		    ETHER_MIN_TX, 0, BUS_DMA_WAITOK,
 		    &sc->null_dmamap);
@@ -708,19 +708,19 @@ static int tl_init(ifp)
 			goto bad;
 		}
 		if (i > 0) { /* chain the list */
-			sc->Rx_list[i-1].next = &sc->Rx_list[i];
-			sc->hw_Rx_list[i-1].fwd =
+			sc->Rx_list[i - 1].next = &sc->Rx_list[i];
+			sc->hw_Rx_list[i - 1].fwd =
 			    htole32(sc->Rx_list[i].hw_listaddr);
-			sc->Tx_list[i-1].next = &sc->Tx_list[i];
+			sc->Tx_list[i - 1].next = &sc->Tx_list[i];
 		}
 	}
-	sc->hw_Rx_list[TL_NBUF-1].fwd = 0;
+	sc->hw_Rx_list[TL_NBUF - 1].fwd = 0;
 	sc->Rx_list[TL_NBUF-1].next = NULL;
-	sc->hw_Tx_list[TL_NBUF-1].fwd = 0;
-	sc->Tx_list[TL_NBUF-1].next = NULL;
+	sc->hw_Tx_list[TL_NBUF - 1].fwd = 0;
+	sc->Tx_list[TL_NBUF - 1].next = NULL;
 
 	sc->active_Rx = &sc->Rx_list[0];
-	sc->last_Rx   = &sc->Rx_list[TL_NBUF-1];
+	sc->last_Rx   = &sc->Rx_list[TL_NBUF - 1];
 	sc->active_Tx = sc->last_Tx = NULL;
 	sc->Free_Tx   = &sc->Tx_list[0];
 	bus_dmamap_sync(sc->tl_dmatag, sc->Rx_dmamap, 0,
@@ -1009,7 +1009,7 @@ tl_intr(v)
 	int ack = 0;
 	int size;
 
-	int_reg = TL_HR_READ(sc, TL_HOST_INTR_DIOADR);	
+	int_reg = TL_HR_READ(sc, TL_HOST_INTR_DIOADR);
 	int_type = int_reg  & TL_INTR_MASK;
 	if (int_type == 0)
 		return 0;
@@ -1111,7 +1111,7 @@ tl_intr(v)
 			    "cleared\n", sc->sc_dev.dv_xname);
 			return 0;
 		} else
-#endif			
+#endif
 		{
 		/*
 		 * write adress of Rx list and send Rx GO command, ack
@@ -1208,7 +1208,7 @@ tl_intr(v)
 			    sc->sc_dev.dv_xname, netstat);
 			/* Ack interrupts */
 			tl_intreg_write_byte(sc, TL_INT_NET+TL_INT_NetSts,
-			    netstat);	
+			    netstat);
 			ack++;
 		}
 		break;
@@ -1220,7 +1220,7 @@ tl_intr(v)
 
 	if (ack) {
 		/* Ack the interrupt and enable interrupts */
-		TL_HR_WRITE(sc, TL_HOST_CMD, ack | int_type | HOST_CMD_ACK | 
+		TL_HR_WRITE(sc, TL_HOST_CMD, ack | int_type | HOST_CMD_ACK |
 		    HOST_CMD_IntOn);
 		return 1;
 	}
@@ -1230,15 +1230,15 @@ tl_intr(v)
 }
 
 static int
-tl_ifioctl(ifp, cmd, data) 
-    struct ifnet *ifp;
+tl_ifioctl(ifp, cmd, data)
+	struct ifnet *ifp;
 	ioctl_cmd_t cmd;
 	caddr_t data;
 {
 	struct tl_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
-	
+
 	s = splnet();
 	switch(cmd) {
 	case SIOCSIFMEDIA:
@@ -1265,7 +1265,7 @@ tl_ifstart(ifp)
 	struct Tx_list *Tx;
 	int segment, size;
 	int again, error;
-	
+
 	if ((sc->tl_if.if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 txloop:
@@ -1343,14 +1343,14 @@ tbdinit:
 	for (segment = 0; segment < Tx->m_dmamap->dm_nsegs; segment++) {
 		Tx->hw_list->seg[segment].data_addr =
 		    htole32(Tx->m_dmamap->dm_segs[segment].ds_addr);
-		    Tx->hw_list->seg[segment].data_count =
-			htole32(Tx->m_dmamap->dm_segs[segment].ds_len);
+		Tx->hw_list->seg[segment].data_count =
+		    htole32(Tx->m_dmamap->dm_segs[segment].ds_len);
 	}
 	bus_dmamap_sync(sc->tl_dmatag, Tx->m_dmamap, 0, size,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	/* We are at end of mbuf chain. check the size and
 	 * see if it needs to be extended
- 	 */
+	 */
 	if (size < ETHER_MIN_TX) {
 #ifdef DIAGNOSTIC
 		if (segment >= TL_NSEG) {
@@ -1368,13 +1368,13 @@ tbdinit:
 		segment++;
 	}
 	/* The list is done, finish the list init */
-	Tx->hw_list->seg[segment-1].data_count |=
+	Tx->hw_list->seg[segment - 1].data_count |=
 	    htole32(TL_LAST_SEG);
 	Tx->hw_list->stat = htole32((size << 16) | 0x3000);
 #ifdef TLDEBUG_TX
 	printf("%s: sending, Tx : stat = 0x%x\n", sc->sc_dev.dv_xname,
 	    le32toh(Tx->hw_list->stat));
-#if 0 
+#if 0
 	for(segment = 0; segment < TL_NSEG; segment++) {
 		printf("    seg %d addr 0x%x len 0x%x\n",
 		    segment,
@@ -1512,9 +1512,9 @@ static int tl_add_RxBuff(sc, Rx, oldm)
 	m->m_data += 2;
 
 	Rx->hw_list->stat =
-	    htole32(((Rx->m_dmamap->dm_segs[0].ds_len -2) << 16) | 0x3000);
+	    htole32(((Rx->m_dmamap->dm_segs[0].ds_len - 2) << 16) | 0x3000);
 	Rx->hw_list->seg.data_count =
-	    htole32(Rx->m_dmamap->dm_segs[0].ds_len -2);
+	    htole32(Rx->m_dmamap->dm_segs[0].ds_len - 2);
 	Rx->hw_list->seg.data_addr =
 	    htole32(Rx->m_dmamap->dm_segs[0].ds_addr + 2);
 	return (m != oldm);
@@ -1656,7 +1656,7 @@ static int tl_multicast_hash(a)
 	return hash;
 }
 
-#if defined(TLDEBUG_RX) 
+#if defined(TLDEBUG_RX)
 void
 ether_printheader(eh)
 	struct ether_header *eh;
