@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 1997/06/22 07:42:48 jonathan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 1998/02/19 23:07:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -155,6 +155,13 @@ int	want_resched;	/* resched() was called */
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
 
+/*
+ * Misc prototypes.
+ */
+struct user;
+
+void	dumpsys __P((void));
+int	savectx __P((struct user *));
 
 /*
  * MIPS CPU types (cp_imp).
