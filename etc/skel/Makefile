@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2002/08/06 13:55:03 soren Exp $
+#	$NetBSD: Makefile,v 1.5 2002/12/02 13:33:14 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/8/93
+
+NOOBJ=		# defined
 
 .if make(distribution)
 FILES=		dot.cshrc dot.login dot.profile
@@ -10,7 +12,5 @@ FILESNAME_${F}=	${F:S/dot//}
 
 distribution: filesinstall
 .endif
-
-NOOBJ=		# defined
 
 .include <bsd.prog.mk>
