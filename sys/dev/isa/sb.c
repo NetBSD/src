@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.74 2003/05/03 18:11:28 wiz Exp $	*/
+/*	$NetBSD: sb.c,v 1.75 2003/09/29 03:22:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.74 2003/05/03 18:11:28 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.75 2003/09/29 03:22:58 jdolecek Exp $");
 
 #include "midi.h"
 
@@ -119,11 +119,11 @@ int
 sbmatch(sc)
 	struct sbdsp_softc *sc;
 {
-	static u_char drq_conf[8] = {
+	static const u_char drq_conf[8] = {
 		0x01, 0x02, -1, 0x08, -1, 0x20, 0x40, 0x80
 	};
 
-	static u_char irq_conf[11] = {
+	static const u_char irq_conf[11] = {
 		-1, -1, 0x01, -1, -1, 0x02, -1, 0x04, -1, 0x01, 0x08
 	};
 
@@ -264,8 +264,8 @@ sb_getdev(addr, retp)
 	struct audio_device *retp;
 {
 	struct sbdsp_softc *sc = addr;
-	static char *names[] = SB_NAMES;
-	char *config;
+	static const char * const names[] = SB_NAMES;
+	const char *config;
 
 	if (sc->sc_model == SB_JAZZ)
 		strncpy(retp->name, "MV Jazz16", sizeof(retp->name));
