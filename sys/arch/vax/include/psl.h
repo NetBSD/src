@@ -1,3 +1,5 @@
+/*	$NetBSD: psl.h,v 1.3 1994/10/26 08:02:22 cgd Exp $	*/
+
 /*
  * Rewritten for the VAX port. Based on Berkeley code. /IC
  *
@@ -32,8 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)psl.h	7.2 (Berkeley) 5/4/91
- *	$Id: psl.h,v 1.2 1994/10/08 15:43:57 ragge Exp $
+ *	@(#)psl.h	7.2 (Berkeley) 5/4/91
  */
 
 #ifndef PSL_C

@@ -1,3 +1,5 @@
+/*	$NetBSD: if_dereg.h,v 1.2 1994/10/26 08:01:51 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)if_dereg.h	7.3 (Berkeley) 6/28/90
- *	$Id: if_dereg.h,v 1.1 1994/08/02 20:19:48 ragge Exp $
  */
 
 /*

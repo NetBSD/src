@@ -1,3 +1,5 @@
+/*	$NetBSD: nexus.h,v 1.2 1994/10/26 08:02:17 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nexus.h	7.3 (Berkeley) 5/9/91
- *	$Id: nexus.h,v 1.1 1994/08/02 20:20:39 ragge Exp $
+ *	@(#)nexus.h	7.3 (Berkeley) 5/9/91
  */
 
 /*

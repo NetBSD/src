@@ -1,3 +1,5 @@
+/*	$NetBSD: cpu.h,v 1.3 1994/10/26 08:02:02 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -26,9 +28,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: cpu.h,v 1.2 1994/10/08 15:43:54 ragge Exp $
  */
+
  /* All bugs are subject to removal without further notice */
 
 #include "cdefs.h"
@@ -81,7 +82,7 @@ struct clockops {
  * The following code are from the hp300 port/ragge.
  *      from: Utah Hdr: cpu.h 1.16 91/03/25
  *      from: @(#)cpu.h 7.7 (Berkeley) 6/27/91
- *      $Id: cpu.h,v 1.2 1994/10/08 15:43:54 ragge Exp $
+ *      $Id: cpu.h,v 1.3 1994/10/26 08:02:02 cgd Exp $
  */
 /*
  * Preempt the current process if in interrupt from user mode,

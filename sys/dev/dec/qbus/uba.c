@@ -1,3 +1,5 @@
+/*	$NetBSD: uba.c,v 1.3 1994/10/26 08:02:41 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,9 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)uba.c	7.10 (Berkeley) 12/16/90
- *      also from: @(#)autoconf.c  7.20 (Berkeley) 5/9/91
- *	$Id: uba.c,v 1.2 1994/10/08 15:46:15 ragge Exp $
+ *	@(#)uba.c	7.10 (Berkeley) 12/16/90
+ *      @(#)autoconf.c  7.20 (Berkeley) 5/9/91
  */
 
  /* All bugs are subject to removal without further notice */

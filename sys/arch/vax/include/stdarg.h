@@ -1,3 +1,5 @@
+/*	$NetBSD: stdarg.h,v 1.3 1994/10/26 08:02:29 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      from: @(#)stdarg.h    7.2 (Berkeley) 5/4/91
- *	$Id: stdarg.h,v 1.2 1994/10/15 04:58:13 cgd Exp $
+ *      @(#)stdarg.h    7.2 (Berkeley) 5/4/91
  */
 
 #ifndef _VAX_STDARG_H_

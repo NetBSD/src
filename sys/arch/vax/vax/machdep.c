@@ -1,3 +1,5 @@
+/*	$NetBSD: machdep.c,v 1.4 1994/10/26 08:03:14 cgd Exp $	*/
+
 /* Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
@@ -38,10 +40,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: machdep.c 1.63 91/04/24
- *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	from: machdep.c,v 1.12 1993/10/13 09:36:43 cgd Exp $
- *	$Id: machdep.c,v 1.3 1994/10/08 15:48:09 ragge Exp $
+ * from: Utah Hdr: machdep.c 1.63 91/04/24
+ *
+ *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
  */
 
 #include "sys/param.h"

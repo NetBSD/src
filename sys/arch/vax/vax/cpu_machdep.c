@@ -1,3 +1,5 @@
+/*	$NetBSD: cpu_machdep.c,v 1.2 1994/10/26 08:02:59 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.

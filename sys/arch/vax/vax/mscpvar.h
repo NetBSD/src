@@ -1,3 +1,5 @@
+/*	$NetBSD: mscpvar.h,v 1.3 1994/10/26 08:03:20 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mscpvar.h	7.3 (Berkeley) 6/28/90
- *	$Id: mscpvar.h,v 1.2 1994/10/08 15:48:13 ragge Exp $
+ *	@(#)mscpvar.h	7.3 (Berkeley) 6/28/90
  */
 
 /*
