@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_indirect.c,v 1.2 2002/05/30 16:10:06 nonaka Exp $	*/
+/*	$NetBSD: prep_pciconf_indirect.c,v 1.3 2003/04/05 08:47:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,6 +52,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/pio.h>
 #include <machine/platform.h>
 
 #if defined(OPENPIC)
