@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.4 2001/11/12 15:25:22 lukem Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.5 2002/03/15 20:33:50 eeh Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.4 2001/11/12 15:25:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.5 2002/03/15 20:33:50 eeh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ allocprop(const char *name, size_t len, int wait)
 	size_t dsize, nsize;
 
 	dsize = ALIGN(len);
-	nsize = ALIGN(strlen(name));
+	nsize = ALIGN(strlen(name) + 1);
 
 	DPRINTF(x, ("allocprop: allocating %lu bytes for %s %s\n",
 		(unsigned long)(sizeof(struct kdbprop) + dsize + nsize), name, 
@@ -432,6 +432,7 @@ prop_get(propdb_t db, opaque_t object, const char *name, void *val,
 	}
 	if (!prop) {
 		splx(s);
+		DPRINTF(x, ("prop not found\n"));
 		return (-1);
 	}
 
@@ -443,6 +444,7 @@ prop_get(propdb_t db, opaque_t object, const char *name, void *val,
 	if (type) 
 		*type = prop->kp_type;
 	splx(s);
+	DPRINTF(x, ("copied %d of %d\n", len, prop->kp_len));
 	return (prop->kp_len);
 }
 
