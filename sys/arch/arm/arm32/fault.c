@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.13 2002/03/24 22:03:23 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.14 2002/03/25 01:53:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -410,7 +410,7 @@ copyfault:
 	 * Page/section translation/permission fault -- need to fault in
 	 * the page and possibly the page table page.
 	 */
-	{
+	    {
 		register vaddr_t va;
 		register struct vmspace *vm = p->p_vmspace;
 		register struct vm_map *map;
@@ -532,10 +532,10 @@ copyfault:
 		} else
 			trapsignal(p, SIGSEGV, TRAP_CODE);
 		break;
-	}            
+	    }
 	}
           
-out:
+ out:
 	/* Call userret() if it was a USR mode fault */
 	if (user)
 		userret(p);
@@ -560,10 +560,9 @@ void
 prefetch_abort_handler(frame)
 	trapframe_t *frame;
 {
-	register u_int fault_pc;
-	register struct proc *p;
-	register struct pcb *pcb;
-	u_int fault_instruction;
+	struct proc *p;
+	struct vm_map *map;
+	vaddr_t fault_pc, va;
 	int error;
 
 	/*
@@ -601,25 +600,10 @@ prefetch_abort_handler(frame)
 	if (pmap_debug_level >= 0)
 		printf("prefetch fault in process %p %s\n", p, p->p_comm);
 #endif
-	/*
-	 * can't use curpcb, as it might be NULL; and we have p in a
-	 * register anyway
-	 */
-	pcb = &p->p_addr->u_pcb;
-	if (pcb == 0)
-		panic("prefetch_abort_handler: no pcb ... we're toast !\n");
-
-#ifdef DEBUG
-	if (pcb != curpcb) {
-		printf("data_abort: Alert ! pcb(%p) != curpcb(%p)\n",
-		    pcb, curpcb);
-		printf("data_abort: Alert ! proc(%p), curproc(%p)\n",
-		    p, curproc);
-	}
-#endif	/* DEBUG */
 
 	/* Get fault address */
 	fault_pc = frame->tf_pc;
+	va = trunc_page(fault_pc);
 
 	/* Was the prefectch abort from USR32 mode ? */
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
@@ -629,9 +613,11 @@ prefetch_abort_handler(frame)
 		 * All the kernel code pages are loaded at boot time
 		 * and do not get paged
 		 */
-	        panic("Prefetch abort in non-USR mode (frame=%p PC=0x%08x)\n",
+	        panic("Prefetch abort in non-USR mode (frame=%p PC=0x%08lx)\n",
 	            frame, fault_pc);
 	}
+
+	map = &p->p_vmspace->vm_map;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
@@ -663,7 +649,7 @@ prefetch_abort_handler(frame)
 			if (kernel_debug & 1) {
 				printf("prefetch_abort: page is already "
 				    "mapped - pte=%p *pte=%08x\n", pte, *pte);
-				printf("prefetch_abort: pc=%08x proc=%p "
+				printf("prefetch_abort: pc=%08lx proc=%p "
 				    "process=%s\n", fault_pc, p, p->p_comm);
 				printf("prefetch_abort: far=%08x fs=%x\n",
 				    cpu_faultaddress(), cpu_faultstatus());
@@ -678,15 +664,32 @@ prefetch_abort_handler(frame)
 	}
 #endif /* CPU_SA110 */
 
-	/* Ok read the fault address. This will fault the page in for us */
-	if (fetchuserword(fault_pc, &fault_instruction) != 0) {
-#ifdef DEBUG
-		printf("prefetch: faultin failed for address %08x\n",
-		    fault_pc);
+	if (pmap_handled_emulation(map->pmap, va))
+		goto out;
+
+	if (current_intr_depth > 0) {
+#ifdef DDB
+		printf("Non-emulated prefetch abort with intr_depth > 0\n");
+		kdb_trap(-1, frame);
+		return;
+#else
+		panic("Prefetch Abort with intr_depth > 0");
 #endif
-		trapsignal(p, SIGSEGV, fault_pc);
 	}
 
+	error = uvm_fault(map, va, 0, VM_PROT_READ);
+	if (error == 0)
+		goto out;
+
+	if (error == ENOMEM) {
+		printf("UVM: pid %d (%s), uid %d killed: "
+		    "out of swap\n", p->p_pid, p->p_comm,
+		    p->p_cred && p->p_ucred ?
+		    p->p_ucred->cr_uid : -1);
+		trapsignal(p, SIGKILL, fault_pc);
+	} else
+		trapsignal(p, SIGSEGV, fault_pc);
+ out:
 	userret(p);
 }
 
