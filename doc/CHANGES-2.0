@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.155 2004/04/29 04:30:08 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.156 2004/04/29 04:31:56 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1559,3 +1559,8 @@ gnu/lib/libgcc3/libgcc_s/Makefile		1.6
 	.hidden in libgcc_s.so as well.  Enable it for sh3.  Other CPUs for
 	which gcc uses millicode probably need this too.
 	[uwe, ticket #215]
+
+share/man/man4/termios.4			1.28
+
+	Add missing itemization for CR and NL special characters. PR#25352
+	[uwe, ticket #216]
