@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.10 2001/12/22 13:21:59 gehenna Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.11 2001/12/24 13:25:53 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -153,6 +153,10 @@ struct umass_wire_methods {
 	umass_wire_state	wire_state;
 };
 
+struct umassbus_softc {
+	device_ptr_t		sc_child;	/* child device, for detach */
+};
+
 /* the per device structure */
 struct umass_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
@@ -267,6 +271,7 @@ struct umass_softc {
 	int			sc_xfer_flags;
 	char			sc_dying;
 
-	struct umassbus_softc	bus;
+	struct umassbus_softc	*bus;		 /* bus dependent data */
 };
 
+#define UMASS_MAX_TRANSFER_SIZE	MAXBSIZE
