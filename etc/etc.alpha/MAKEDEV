@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.84 2002/01/19 18:59:17 oster Exp $
+#	$NetBSD: MAKEDEV,v 1.85 2002/01/21 16:19:18 abs Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -133,7 +133,7 @@ do
 case $i in
 
 all)
-	sh $0 std fd sd0 sd1 sd2 sd3 sd4 pty0 pty1 pty2 pty3
+	sh $0 std wscons fd sd0 sd1 sd2 sd3 sd4 pty0 pty1 pty2 pty3
 	sh $0 st0 st1 ch0 cd0 cd1 vnd0 vnd1 vnd2 vnd3
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 md1 ss0 ss1 uk0 uk1
 	sh $0 raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
@@ -145,7 +145,7 @@ all)
 	sh $0 audio0 audio1 audio2 audio3
 	sh $0 random satlink0 speaker mlx0 local
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
-	sh $0 usbs wscons isdn
+	sh $0 usbs isdn
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	sh $0 ttyCZ0 ttyCY0
 	sh $0 agp0
