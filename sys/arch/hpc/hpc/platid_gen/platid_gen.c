@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_gen.c,v 1.3 2001/04/20 10:15:03 sato Exp $	*/
+/*	$NetBSD: platid_gen.c,v 1.4 2001/09/27 16:31:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -64,15 +64,15 @@ struct genctx_t {
 /*
  * function prototypes
  */
-void	gen_list __P((node_t*));
-void	gen_output __P((void));
-void	gen_header __P((void));
-void	gen_mask_h __P((void));
-void	gen_mask_c __P((void));
-void	gen_name_c __P((void));
-void	gen_comment __P((FILE *fp));
-void	enter __P((void));
-void	leave __P((void));
+void	gen_list(node_t *);
+void	gen_output(void);
+void	gen_header(void);
+void	gen_mask_h(void);
+void	gen_mask_c(void);
+void	gen_name_c(void);
+void	gen_comment(FILE *);
+void	enter(void);
+void	leave(void);
 
 /*
  * global data
@@ -113,9 +113,7 @@ char* shift_names[NMODES][MAXNEST] = {
  * program entry
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int i;
 
@@ -126,17 +124,13 @@ main(argc, argv)
 	for (i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-header") == 0) {
 			form = FORM_GENHDR;
-		} else
-		if (strcmp(argv[i], "-mask_h") == 0) {
+		} else if (strcmp(argv[i], "-mask_h") == 0) {
 			form = FORM_MASK_H;
-		} else
-		if (strcmp(argv[i], "-mask_c") == 0) {
+		} else if (strcmp(argv[i], "-mask_c") == 0) {
 			form = FORM_MASK_C;
-		} else
-		if (strcmp(argv[i], "-name_c") == 0) {
+		} else if (strcmp(argv[i], "-name_c") == 0) {
 			form = FORM_NAME_C;
-		} else
-		if (strcmp(argv[i], "-parse_only") == 0) {
+		} else if (strcmp(argv[i], "-parse_only") == 0) {
 			form = FORM_PARSE_ONLY;
 		} else {
 		usage:
@@ -199,11 +193,7 @@ main(argc, argv)
 }
 
 int
-table_getnum(table, s, def, opt)
-	char **table;
-	char *s;
-	int def;
-	int opt;
+table_getnum(char **table, char *s, int def, int opt)
 {
 	int num;
 
@@ -256,8 +246,7 @@ leave()
 }
 
 void
-gen_comment(fp)
-	FILE *fp;
+gen_comment(FILE *fp)
 {
 	fprintf(fp, "/*\n");
 	fprintf(fp, " *  Do not edit.\n");
@@ -265,13 +254,8 @@ gen_comment(fp)
 	fprintf(fp, " */\n");
 }
 
-gen_name(buf, ctx, nest, name, punct, ignr)
-	char *buf;
-	struct genctx_t ctx[];
-	int nest;
-	int name;
-	char *punct;
-	int ignr;
+gen_name(char *buf, struct genctx_t ctx[], int nest, int name, char *punct,
+    int ignr)
 {
 	int i;
 	buf[0] = '\0';
@@ -286,8 +270,7 @@ gen_name(buf, ctx, nest, name, punct, ignr)
 }
 
 void
-gen_list(np)
-	node_t* np;
+gen_list(node_t* np)
 {
 	int i, t;
 
@@ -296,7 +279,7 @@ gen_list(np)
 		case N_LABEL:
 			if ((mode = GET_MODE(np->ptr1)) == MODE_INVALID) {
 				fprintf(stderr, "invalid mode '%s'\n",
-					np->ptr1);
+				    np->ptr1);
 				exit(1);
 			}
 			break;
@@ -304,13 +287,13 @@ gen_list(np)
 			t = GET_ALT(np->ptr1);
 			if (t == MODE_INVALID) {
 				fprintf(stderr, "unknown alternater '%s'\n",
-					np->ptr1);
+				    np->ptr1);
 				exit(1);
 			}
 			if (t == mode) {
 				fprintf(stderr,
-					"invalid alternater '%s' (ignored)\n",
-					np->ptr1);
+				    "invalid alternater '%s' (ignored)\n",
+				    np->ptr1);
 				exit(1);
 			}
 			genctx[mode][nest].alt = np->ptr2;
@@ -319,8 +302,8 @@ gen_list(np)
 			if (np->ptr2 == NULL) {
 				char buf[MAXLEN];
 				sprintf(buf, "%s%s",
-					nest == 0 ? "" : " ",
-					np->ptr1);
+				    nest == 0 ? "" : " ",
+				    np->ptr1);
 		  		np->ptr2 = strdup(buf);
 				if (nest == 3)
 					np->val = 1;
@@ -331,9 +314,9 @@ gen_list(np)
 		  	genctx[mode][nest].node_name[0] = np->ptr1;
 			genctx[mode][nest].node_name[1] = np->ptr2;
 			gen_name(genctx[mode][nest].sym, genctx[mode],
-				 nest, 0, "_", nest == 3 ? 2 : nest);
+			    nest, 0, "_", nest == 3 ? 2 : nest);
 			gen_name(genctx[mode][nest].name, genctx[mode],
-				 nest, 1, "", nest - np->val);
+			    nest, 1, "", nest - np->val);
 			gen_output();
 			break;
 		case N_LIST:
@@ -398,18 +381,18 @@ gen_header()
 	char *name = genctx[mode][nest].sym;
 
 	if (mode == MODE_MACHINE) {
-	fprintf(fp_out, "#ifndef SPEC_PLATFORM\n");
-	fprintf(fp_out, "#define %s_%s_%s\n", "SPEC", prefix, name);
-	fprintf(fp_out, "#endif /* !SPEC_PLATFORM */\n");
+		fprintf(fp_out, "#ifndef SPEC_PLATFORM\n");
+		fprintf(fp_out, "#define %s_%s_%s\n", "SPEC", prefix, name);
+		fprintf(fp_out, "#endif /* !SPEC_PLATFORM */\n");
 	}
 	fprintf(fp_out, "#define %s_%s_%s_NUM\t%d\n", PREFIX, prefix, name,
-		genctx[mode][nest].num);
+	    genctx[mode][nest].num);
 	fprintf(fp_out, "#define %s_%s_%s\t\\\n", PREFIX, prefix, name);
 	fprintf(fp_out, "  ((%s_%s_%s_NUM << %s)", PREFIX, prefix, name,
-		shift_names[mode][nest]);
+	    shift_names[mode][nest]);
 	if (0 < nest) {
 		fprintf(fp_out, "| \\\n    %s_%s_%s",
-			PREFIX, prefix, genctx[mode][nest - 1].sym);
+		    PREFIX, prefix, genctx[mode][nest - 1].sym);
 	}
 	fprintf(fp_out, ")\n");
 }
@@ -428,11 +411,11 @@ gen_mask_h()
 	char *name = genctx[mode][nest].sym;
 
 	fprintf(fp_out, "extern platid_t platid_mask_%s_%s;\n",
-		prefix_names[mode], name);
+	    prefix_names[mode], name);
 	fprintf(fp_out, "#ifdef PLATID_DEFINE_MASK_NICKNAME\n");
 	fprintf(fp_out, "#  define %s%s ((int)&platid_mask_%s_%s)\n",
-		(mode == MODE_CPU)?"GENERIC_":"",
-		name, prefix_names[mode], name);
+	    (mode == MODE_CPU)?"GENERIC_":"",
+	    name, prefix_names[mode], name);
 	fprintf(fp_out, "#endif\n");
 }
 
@@ -450,7 +433,7 @@ gen_mask_c()
 	char *name = genctx[mode][nest].sym;
 
 	fprintf(fp_out, "platid_t platid_mask_%s_%s = {{\n",
-		prefix_names[mode], name);
+	    prefix_names[mode], name);
 	switch (mode) {
 	case MODE_CPU:
 		fprintf(fp_out, "\t%s_CPU_%s,\n", PREFIX, name);
@@ -458,14 +441,14 @@ gen_mask_c()
 			fprintf(fp_out, "\t%s_WILD\n", PREFIX);
 		else
 			fprintf(fp_out, "\t%s_MACH_%s,\n", PREFIX,
-				genctx[mode][nest].alt);
+			    genctx[mode][nest].alt);
 		break;
 	case MODE_MACHINE:
 		if (genctx[mode][nest].alt == NULL)
 			fprintf(fp_out, "\t%s_WILD,\n", PREFIX);
 		else
 			fprintf(fp_out, "\t%s_CPU_%s,\n", PREFIX,
-				genctx[mode][nest].alt);
+			    genctx[mode][nest].alt);
 		fprintf(fp_out, "\t%s_MACH_%s\n", PREFIX, name);
 		break;
 	}
@@ -479,7 +462,7 @@ void
 gen_name_c()
 {
 	fprintf(fp_out, "\t{ &platid_mask_%s_%s,\n",
-		prefix_names[mode], genctx[mode][nest].sym);
+	    prefix_names[mode], genctx[mode][nest].sym);
 	fprintf(fp_out, "\t TEXT(\"%s\") },\n", genctx[mode][nest].name);
 	count++;
 }
