@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.13 2002/10/02 05:10:33 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.14 2003/01/01 01:29:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -105,9 +105,9 @@ ifpga_print(void *aux, const char *pnp)
 	struct ifpga_attach_args *ifa = aux;
 
 	if (ifa->ifa_addr != -1)
-		printf(" addr 0x%lx", (unsigned long)ifa->ifa_addr);
+		aprint_normal(" addr 0x%lx", (unsigned long)ifa->ifa_addr);
 	if (ifa->ifa_irq != -1)
-		printf(" irq %d", ifa->ifa_irq);
+		aprint_normal(" irq %d", ifa->ifa_irq);
 
 	return UNCONF;
 }
@@ -119,9 +119,9 @@ ifpga_pci_print(void *aux, const char *pnp)
 	struct pcibus_attach_args *pci_pba = (struct pcibus_attach_args *)aux;
 
 	if (pnp)
-		printf("%s at %s", pci_pba->pba_busname, pnp);
+		aprint_normal("%s at %s", pci_pba->pba_busname, pnp);
 	if (strcmp(pci_pba->pba_busname, "pci") == 0)
-		printf(" bus %d", pci_pba->pba_bus);
+		aprint_normal(" bus %d", pci_pba->pba_bus);
 
 	return UNCONF;
 }

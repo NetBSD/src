@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2002/10/02 05:33:55 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2003/01/01 01:32:53 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -102,7 +102,7 @@ mainbusprint(void *arg, const char *cp)
 	struct mainbus_attach_args *ma = arg;
 
 	if (cp)
-		printf("%s at %s", ma->ma_name, cp);
+		aprint_normal("%s at %s", ma->ma_name, cp);
 
 	return (UNCONF);
 }

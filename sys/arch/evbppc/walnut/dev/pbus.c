@@ -1,4 +1,4 @@
-/*	$NetBSD: pbus.c,v 1.1 2002/12/09 12:16:24 scw Exp $	*/
+/*	$NetBSD: pbus.c,v 1.2 2003/01/01 01:31:50 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -196,9 +196,9 @@ pbus_print(void *aux, const char *pnp)
 		printf("%s at %s", pba->pb_name, pnp);
 
 	if (pba->pb_addr != PBUSCF_ADDR_DEFAULT)
-		printf(" addr 0x%08lx", pba->pb_addr);
+		aprint_normal(" addr 0x%08lx", pba->pb_addr);
 	if (pba->pb_irq != PBUSCF_IRQ_DEFAULT)
-		printf(" irq %d", pba->pb_irq);
+		aprint_normal(" irq %d", pba->pb_irq);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.12 2002/10/22 15:19:08 scw Exp $	*/
+/*	$NetBSD: superio.c,v 1.13 2003/01/01 01:32:52 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -282,7 +282,7 @@ superioprint(void *arg, const char *cp)
 	struct superio_attach_args *saa = arg;
 
 	if (cp)
-		printf("%s at %s", saa->saa_name, cp);
+		aprint_normal("%s at %s", saa->saa_name, cp);
 
 	return (UNCONF);
 }

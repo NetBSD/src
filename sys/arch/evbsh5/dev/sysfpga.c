@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.16 2002/11/23 09:05:03 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.17 2003/01/01 01:32:52 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -278,9 +278,9 @@ sysfpgaprint(void *arg, const char *cp)
 	struct sysfpga_attach_args *sa = arg;
 
 	if (cp)
-		printf("%s at %s", sa->sa_name, cp);
+		aprint_normal("%s at %s", sa->sa_name, cp);
 
-	printf(" offset 0x%x", sa->sa_offset - sa->_sa_base);
+	aprint_normal(" offset 0x%x", sa->sa_offset - sa->_sa_base);
 
 	return (UNCONF);
 }

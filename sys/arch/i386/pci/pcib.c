@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.30 2002/10/02 05:47:15 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.31 2003/01/01 01:24:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.30 2002/10/02 05:47:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.31 2003/01/01 01:24:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -218,6 +218,6 @@ pcib_print(aux, pnp)
 
 	/* Only ISAs can attach to pcib's; easy. */
 	if (pnp)
-		printf("isa at %s", pnp);
+		aprint_normal("isa at %s", pnp);
 	return (UNCONF);
 }

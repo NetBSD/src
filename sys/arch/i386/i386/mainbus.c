@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.46 2002/12/28 17:36:59 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.47 2003/01/01 01:24:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.46 2002/12/28 17:36:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.47 2003/01/01 01:24:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,8 +300,8 @@ mainbus_print(aux, pnp)
 	union mainbus_attach_args *mba = aux;
 
 	if (pnp)
-		printf("%s at %s", mba->mba_busname, pnp);
+		aprint_normal("%s at %s", mba->mba_busname, pnp);
 	if (strcmp(mba->mba_busname, "pci") == 0)
-		printf(" bus %d", mba->mba_pba.pba_bus);
+		aprint_normal(" bus %d", mba->mba_pba.pba_bus);
 	return (UNCONF);
 }
