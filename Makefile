@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.148 2001/11/01 15:48:39 jmc Exp $
+#	$NetBSD: Makefile,v 1.149 2001/11/01 16:30:53 tv Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -58,8 +58,6 @@
 .MAKEFLAGS: -m ${.CURDIR}/share/mk
 .endif
 
-MKOBJDIRS ?= no
-
 .include <bsd.own.mk>
 
 # Sanity check: make sure that "make build" is not invoked simultaneously
@@ -104,7 +102,7 @@ whatis.db:
 
 # Targets (in order!) called by "make build".
 
-.if ${MKOBJDIRS:Uno} != "no"
+.if ${MKOBJDIRS} != "no"
 BUILDTARGETS+=	obj
 .endif
 .if !defined(UPDATE) && !defined(NOCLEANDIR)
