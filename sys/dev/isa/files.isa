@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.89 1999/09/09 09:54:08 is Exp $
+#	$NetBSD: files.isa,v 1.90 1999/10/05 03:48:27 itohy Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -328,8 +328,15 @@ attach	opl at isa with opl_isa
 file	dev/isa/opl_isa.c		opl_isa
 
 # Yamaha OPL3-SA3
-device	ym: audio, isadma, ad1848, auconv
-file	dev/isa/ym.c			ym needs-flag
+device	ym { }: audio, isadma, ad1848, auconv
+file	dev/isa/ym.c			ym
+defopt	opt_ym.h	YM_POWER_MODE YM_POWER_OFF_SEC
+
+attach	opl at ym with opl_ym
+file	dev/isa/opl_ym.c		opl_ym
+
+attach	mpu at ym with mpu_ym
+file	dev/isa/mpu_ym.c		mpu_ym needs-flag
 
 # Gravis UltraSound & UltraSound MAX.
 # Use the "drq2" keyword in a config file to specify an extra DMA
