@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/05/13 21:01:58 phil Exp $
+#	$NetBSD: Makefile,v 1.10 1997/05/16 21:16:47 mycroft Exp $
 
 LIB=	cc1
 
@@ -33,8 +33,6 @@ SRCS=	bc-arity.h bc-opcode.h bc-opname.h c-parse.h bc-emit.c \
 	$(MACHINE_ARCH).c insn-attr.h insn-codes.h insn-config.h insn-flags.h \
 	insn-peep.c insn-opinit.c insn-recog.c insn-extract.c insn-output.c \
 	insn-emit.c insn-attrtab.c 
-
-all: lib$(LIB).a
 
 insn-attr.h: genattr $(MD)
 	./genattr $(MD) > insn-attr.h
