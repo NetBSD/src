@@ -1,7 +1,7 @@
-/*	$NetBSD: exec_elf32.c,v 1.101 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.102 2005/03/02 11:05:34 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.101 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.102 2005/03/02 11:05:34 mycroft Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
