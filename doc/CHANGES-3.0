@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.8 2005/03/20 12:12:33 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.9 2005/03/20 14:39:48 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -110,4 +110,50 @@ lib/libpthread/shlib_version			1.8
 	Interpose cancellation points in pollts() and pselect(), bringing us
 	to libc.so.12.127 and libpthread.so.0.6.
 	[kleink, ticket #27]
+
+sys/arch/xen/i386/hypervisor_machdep.c		1.5
+
+	Avoid loosing upcalls in stipending() by checking evtchn_upcall_pending
+	with upcalls unmasked.
+	[bouyer, ticket #29]
+
+sys/arch/xen/i386/vector.S			1.7
+
+	When handling a defered event, unmasking it isn't enouth, we also need
+	to check if the corresponding bit needs to be set in
+	evtchn_pending_sel, and eventually force an upcall (if we got a second
+	event when this one what being handled). For now to this by calling
+	hypervisor_enable_irq(), this could be rewritten in inline assembly by
+	someone knowing enouth about i386 assembly :)
+	[bouyer, ticket #30]
+
+sys/arch/xen/xen/ctrl_if.c			1.3
+
+	Print the IRQ used by the domain controller.
+	[bouyer, ticket #31]
+
+sys/arch/xen/xen/evtchn.c			1.4
+
+	Protect various IRQ and event allocation/deallocations with splhigh().
+	Print the IRQ used for debug and misdirect events.
+	[bouyer, ticket #32]
+
+sys/arch/xen/xen/if_xennet.c			1.14
+
+	Convert to ether_ioctl(), and claim IFF_SIMPLEX | IFF_MULTICAST.
+	This allows IPv6 on NetBSD domU.
+	[bouyer, ticket #33]
+
+sys/arch/i386/conf/XEN0				1.2
+
+	Add PCI audio devices from i386/conf/GENERIC.
+	[bouyer, ticket #34]
+
+sys/arch/xen/i386/npx.c				1.4
+
+	npxintr(): this function does the right thing if we don't try to clear
+	the interrupt latch (which is probably done by the hypervisor,
+	linux/xen doesn't do it either). Now the "fputest" configure test from
+	pkgsrc/math/yorick works as expected.
+	[bouyer, ticket #35]
 
