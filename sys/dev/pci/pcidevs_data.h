@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.9 1996/05/13 06:02:18 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.10 1996/05/16 07:04:58 mycroft Exp 
  */
 
 /*
@@ -132,6 +132,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Mach64-GX",
+	},
+	{
+	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_OLD946C,
+	    0,
+	    "BusLogic",
+	    "946C",
 	},
 	{
 	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_946C,
