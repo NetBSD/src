@@ -1,5 +1,5 @@
-/*	$NetBSD: icmp6.h,v 1.16 2000/12/09 01:29:48 itojun Exp $	*/
-/*	$KAME: icmp6.h,v 1.24 2000/10/18 19:24:24 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.17 2001/01/21 15:39:32 itojun Exp $	*/
+/*	$KAME: icmp6.h,v 1.31 2001/01/21 15:32:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -385,12 +385,12 @@ struct icmp6_router_renum {	/* router renumbering header */
 	u_int16_t	rr_maxdelay;
 	u_int32_t	rr_reserved;
 };
-#define ICMP6_RR_FLAGS_SEGNUM		0x80
-#define ICMP6_RR_FLAGS_TEST		0x40
-#define ICMP6_RR_FLAGS_REQRESULT	0x20
-#define ICMP6_RR_FLAGS_FORCEAPPLY	0x10
-#define ICMP6_RR_FLAGS_SPECSITE		0x08
-#define ICMP6_RR_FLAGS_PREVDONE		0x04
+
+#define ICMP6_RR_FLAGS_TEST		0x80
+#define ICMP6_RR_FLAGS_REQRESULT	0x40
+#define ICMP6_RR_FLAGS_FORCEAPPLY	0x20
+#define ICMP6_RR_FLAGS_SPECSITE		0x10
+#define ICMP6_RR_FLAGS_PREVDONE		0x08
 
 #define rr_type		rr_hdr.icmp6_type
 #define rr_code		rr_hdr.icmp6_code
