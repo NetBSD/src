@@ -1,7 +1,7 @@
-/*	$NetBSD: opts.c,v 1.6 1997/10/26 00:25:19 christos Exp $	*/
+/*	$NetBSD: opts.c,v 1.7 1998/08/08 22:33:32 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -78,6 +78,8 @@ struct opt {
   int nlen;			/* Length of option name */
   char **optp;			/* Pointer to option value string */
   char **sel_p;			/* Pointer to selector value string */
+  int (*fxn_p)(char *);		/* Pointer to boolean function */
+  int case_insensitive;		/* How to do selector comparisons */
 };
 
 struct opt_apply {
@@ -115,66 +117,112 @@ static char *opt_path = nullstr;
 static char *vars[8];
 
 
-
 /*
  * Options in something corresponding to frequency of use so that
  * first-match algorithm is sped up.
  */
 static struct opt opt_fields[] = {
-  /* Name and length.   Option value str.               Selector value str. */
-  { S("opts"),		&fs_static.opt_opts,		0 },
-  { S("host"),		0,				&opt_host },
-  { S("hostd"),		0,				&opt_hostd },
-  { S("type"),		&fs_static.opt_type,		0 },
-  { S("rhost"),		&fs_static.opt_rhost,		0 },
-  { S("rfs"),		&fs_static.opt_rfs,		0 },
-  { S("fs"),		&fs_static.opt_fs,		0 },
-  { S("key"),		0,				&opt_key },
-  { S("map"),		0,				&opt_map },
-  { S("sublink"),	&fs_static.opt_sublink,		0 },
-  { S("arch"),		0,				&gopt.arch },
-  { S("dev"),		&fs_static.opt_dev,		0 },
-  { S("pref"),		&fs_static.opt_pref,		0 },
-  { S("autopref"),	&fs_static.opt_autopref,	0 },
-  { S("path"),		0,				&opt_path },
-  { S("autodir"),	0,				&gopt.auto_dir },
-  { S("delay"),		&fs_static.opt_delay,		0 },
-  { S("domain"),	0,				&hostdomain },
-  { S("karch"),		0,				&gopt.karch },
-  { S("cluster"),	0,				&gopt.cluster },
-  /* wire, network, and netnumber: old names -- avoid using */
-  { S("wire"),		0,				&PrimNetName },
-  { S("network"),	0,				&PrimNetName },
-  { S("netnumber"),	0,				&PrimNetNum },
-  { S("byte"),		0,				&endian },
-  { S("os"),		0,				&gopt.op_sys },
-  { S("osver"),		0,				&gopt.op_sys_ver },
-  { S("remopts"),	&fs_static.opt_remopts,		0 },
-  { S("mount"),		&fs_static.opt_mount,		0 },
-  { S("unmount"),	&fs_static.opt_unmount,		0 },
-  { S("cache"),		&fs_static.opt_cache,		0 },
-  { S("user"),		&fs_static.opt_user,		0 },
-  { S("group"),		&fs_static.opt_group,		0 },
-  { S(".key"),		0,				&opt_dkey },
-  { S("key."),		0,				&opt_keyd },
-  { S("maptype"),	&fs_static.opt_maptype,		0 },
-  { S("var0"),		&vars[0],			0 },
-  { S("var1"),		&vars[1],			0 },
-  { S("var2"),		&vars[2],			0 },
-  { S("var3"),		&vars[3],			0 },
-  { S("var4"),		&vars[4],			0 },
-  { S("var5"),		&vars[5],			0 },
-  { S("var6"),		&vars[6],			0 },
-  { S("var7"),		&vars[7],			0 },
-  { 0, 0, 0, 0 },
+  /* Name and length.
+	Option str.		Selector str.	boolean fxn.	flags */
+  { S("opts"),
+       &fs_static.opt_opts,	0,		0, 		FALSE	},
+  { S("host"),
+	0,			&opt_host,	0,		TRUE	},
+  { S("hostd"),
+	0,			&opt_hostd,	0,		TRUE	},
+  { S("type"),
+	&fs_static.opt_type,	0,		0,		FALSE	},
+  { S("rhost"),
+	&fs_static.opt_rhost,	0,		0,		TRUE	},
+  { S("rfs"),
+	&fs_static.opt_rfs,	0,		0,		FALSE	},
+  { S("fs"),
+	&fs_static.opt_fs,	0,		0,		FALSE	},
+  { S("key"),
+	0,			&opt_key,	0,		FALSE	},
+  { S("map"),
+	0,			&opt_map,	0,		FALSE	},
+  { S("sublink"),
+	&fs_static.opt_sublink,	0,		0,		FALSE	},
+  { S("arch"),
+	0,			&gopt.arch,	0,		TRUE	},
+  { S("dev"),
+	&fs_static.opt_dev,	0,		0,		FALSE	},
+  { S("pref"),
+	&fs_static.opt_pref,	0,		0,		FALSE	},
+  { S("autopref"),
+	&fs_static.opt_autopref,0,		0,		FALSE	},
+  { S("path"),
+	0,			&opt_path,	0,		FALSE	},
+  { S("autodir"),
+	0,			&gopt.auto_dir,	0,		FALSE	},
+  { S("delay"),
+	&fs_static.opt_delay,	0,		0,		FALSE	},
+  { S("domain"),
+	0,			&hostdomain,	0,		TRUE	},
+  { S("karch"),
+	0,			&gopt.karch,	0,		TRUE	},
+  { S("cluster"),
+	0,			&gopt.cluster,	0,		TRUE	},
+  { S("wire"),
+	0,			0,		f_in_network,	TRUE	},
+  { S("network"),
+	0,			0,		f_in_network,	TRUE	},
+  { S("netnumber"),
+	0,			0,		f_in_network,	TRUE	},
+  { S("byte"),
+	0,			&endian,	0,		TRUE	},
+  { S("os"),
+	0,			&gopt.op_sys,	0,		TRUE	},
+  { S("osver"),
+	0,			&gopt.op_sys_ver,	0,	TRUE	},
+  { S("remopts"),
+	&fs_static.opt_remopts,	0,		0,		FALSE	},
+  { S("mount"),
+	&fs_static.opt_mount,	0,		0,		FALSE	},
+  { S("unmount"),
+	&fs_static.opt_unmount,	0,		0,		FALSE	},
+  { S("cache"),
+	&fs_static.opt_cache,	0,		0,		FALSE	},
+  { S("user"),
+	&fs_static.opt_user,	0,		0,		FALSE	},
+  { S("group"),
+	&fs_static.opt_group,	0,		0,		FALSE	},
+  { S(".key"),
+	0,			&opt_dkey,	0,		FALSE	},
+  { S("key."),
+	0,			&opt_keyd,	0,		FALSE	},
+  { S("maptype"),
+	&fs_static.opt_maptype,	0,		0,		FALSE	},
+  { S("cachedir"),
+	&fs_static.opt_cachedir, 0,		0,		FALSE	},
+  { S("addopts"),
+       &fs_static.opt_addopts,	0,		0, 		FALSE	},
+  { S("var0"),
+	&vars[0],		0,		0,		FALSE	},
+  { S("var1"),
+	&vars[1],		0,		0,		FALSE	},
+  { S("var2"),
+	&vars[2],		0,		0,		FALSE	},
+  { S("var3"),
+	&vars[3],		0,		0,		FALSE	},
+  { S("var4"),
+	&vars[4],		0,		0,		FALSE	},
+  { S("var5"),
+	&vars[5],		0,		0,		FALSE	},
+  { S("var6"),
+	&vars[6],		0,		0,		FALSE	},
+  { S("var7"),
+	&vars[7],		0,		0,		FALSE	},
+  { 0, 0, 0, 0, 0, FALSE },
 };
 
 static struct functable functable[] = {
-  { "in_network", f_in_network },
-  { "netgrp", f_netgrp },
-  { "exists", f_exists },
-  { "false", f_false },
-  { "true", f_true },
+  { "in_network",	f_in_network },
+  { "netgrp",		f_netgrp },
+  { "exists",		f_exists },
+  { "false",		f_false },
+  { "true",		f_true },
   { 0, 0 },
 };
 
@@ -189,7 +237,7 @@ static opt_apply rhost_expansion[] =
 
 /*
  * List of options which need to be expanded
- * Note that this the order here _may_ be important.
+ * Note that the order here _may_ be important.
  */
 static opt_apply expansions[] =
 {
@@ -200,6 +248,8 @@ static opt_apply expansions[] =
   {&fs_static.opt_remopts, "${opts}"},
   {&fs_static.opt_mount, 0},
   {&fs_static.opt_unmount, 0},
+  {&fs_static.opt_cachedir, 0},
+  {&fs_static.opt_addopts, 0},
   {0, 0},
 };
 
@@ -219,6 +269,8 @@ static opt_apply to_free[] =
   {&fs_static.opt_remopts, 0},
   {&fs_static.opt_mount, 0},
   {&fs_static.opt_unmount, 0},
+  {&fs_static.opt_cachedir, 0},
+  {&fs_static.opt_addopts, 0},
   {&vars[0], 0},
   {&vars[1], 0},
   {&vars[2], 0},
@@ -362,7 +414,7 @@ top:
 
 
 /*
- * These routines add a new style of selector; function-style monadic
+ * These routines add a new style of selector; function-style boolean
  * operators.  To add new ones, just define functions as in true, false,
  * exists (below) and add them to the functable, above.
  *
@@ -418,7 +470,7 @@ eval_opts(char *opts, char *mapkey)
 
       if (!arg || arg[1] == '\0' || arg == f) {
 	/*
-	 * No; just continue
+	 * No, just continue
 	 */
 	plog(XLOG_USER, "key %s: No value component in \"%s\"", mapkey, f);
 	continue;
@@ -434,10 +486,18 @@ eval_opts(char *opts, char *mapkey)
       *fx = '\0';
 
       /*
-       * look up f in functable and pass it arg. func must return 0 on fail,
-       * 1 on succeed */
+       * look up f in functable and pass it arg.
+       * func must return 0 on failure, and 1 on success.
+       */
       if ((func = functable_lookup(f))) {
 	if (!(*func) (arg)) {
+	  return (0);
+	}
+	continue;
+      } else if (NSTREQ(f, "!", 1) && (func = functable_lookup(&f[1]))) {
+	/* then this is a negated prefixed function such as "!exists" */
+	plog(XLOG_USER, "executing negated function %s", &f[1]);
+	if ((*func) (arg)) {
 	  return (0);
 	}
 	continue;
@@ -473,22 +533,40 @@ eval_opts(char *opts, char *mapkey)
     }
 
     /*
-     * For each recognised option
+     * For each recognized option
      */
     for (op = opt_fields; op->name; op++) {
       /*
        * Check whether they match
        */
       if (FSTREQ(op->name, f)) {
+        int selok;
 	switch (vs_opt) {
 	case SelEQ:
 	case SelNE:
-	  if (op->sel_p && (STREQ(*op->sel_p, opt) == (vs_opt == SelNE))) {
+          if ((selok = (op->sel_p != NULL))) {
+            if (op->case_insensitive) {
+              selok = (STRCEQ(*op->sel_p, opt) == (vs_opt == SelNE));
+            } else {
+              selok = (STREQ(*op->sel_p, opt) == (vs_opt == SelNE));
+            }
+          }
+          if (selok) {
 	    plog(XLOG_MAP, "key %s: map selector %s (=%s) did not %smatch %s",
 		 mapkey,
 		 op->name,
 		 *op->sel_p,
-		 vs_opt == SelNE ? "not " : "",
+		 vs_opt == SelNE ? "mis" : "",
+		 opt);
+	    return 0;
+	  }
+	  /* check if to apply a function */
+	  if (op->fxn_p &&
+	      ((*op->fxn_p)(opt) == (vs_opt == SelNE))) {
+	    plog(XLOG_MAP, "key %s: map function %s did not %smatch %s",
+		 mapkey,
+		 op->name,
+		 vs_opt == SelNE ? "mis" : "",
 		 opt);
 	    return 0;
 	  }
@@ -496,18 +574,20 @@ eval_opts(char *opts, char *mapkey)
 
 	case VarAss:
 	  if (op->sel_p) {
-	    plog(XLOG_USER, "key %s: Can't assign to a selector (%s)", mapkey, op->name);
+	    plog(XLOG_USER, "key %s: Can't assign to a selector (%s)",
+		 mapkey, op->name);
 	    return 0;
 	  }
 	  *op->optp = opt;
 	  break;
-	}
-	break;
+
+	} /* end of "switch (vs_opt)" statement */
+	break;			/* break out of for loop */
       }
     }
 
     if (!op->name)
-      plog(XLOG_USER, "key %s: Unrecognised key/option \"%s\"", mapkey, f);
+      plog(XLOG_USER, "key %s: Unrecognized key/option \"%s\"", mapkey, f);
   }
 
   return 1;
@@ -565,7 +645,6 @@ top:
  * Strip any selectors from a string.  Selectors are all assumed to be
  * first in the string.  This is used for the new /defaults method which will
  * use selectors as well.
- * Experimental code!  Erez Zadok <ezk@cs.columbia.edu>
  */
 char *
 strip_selectors(char *opts, char *mapkey)
@@ -632,7 +711,7 @@ strip_selectors(char *opts, char *mapkey)
 
 
 /*****************************************************************************
- *** MONADIC FUNCTIONS (return 0 if false, 1 if true):                     ***
+ *** BOOLEAN FUNCTIONS (return 0 if false, 1 if true):                     ***
  *****************************************************************************/
 
 /* test if arg is any of this host's network names or numbers */
@@ -646,7 +725,8 @@ f_in_network(char *arg)
 
   status = is_network_member(arg);
 #ifdef DEBUG
-  plog(XLOG_USER, "%s is on a local network", arg);
+    plog(XLOG_USER, "%s is %son a local network",
+	 arg, (status ? "" : "not "));
 #endif /* DEBUG */
   return status;
 }
@@ -702,7 +782,7 @@ static void
 free_op(opt_apply *p, int b)
 {
   if (*p->opt) {
-    free(*p->opt);
+    XFREE(*p->opt);
     *p->opt = 0;
   }
 }
@@ -1058,7 +1138,7 @@ expand_opts(opt_apply *p, int sel_p)
      */
     char *s = *p->opt = expand_key(p->val);
     expand_op(p, sel_p);
-    free(s);
+    XFREE(s);
   }
 }
 
@@ -1217,7 +1297,7 @@ eval_fs_opts(am_opts *fo, char *opts, char *g_opts, char *path, char *key, char 
    * Clear defined options
    */
   if (opt_keyd != key && opt_keyd != nullstr)
-    free(opt_keyd);
+    XFREE(opt_keyd);
   opt_keyd = nullstr;
   opt_dkey = NullStr;
   opt_key = opt_map = opt_path = nullstr;

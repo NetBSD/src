@@ -1,7 +1,7 @@
-/*	$NetBSD: info_union.c,v 1.7 1997/10/26 00:24:59 christos Exp $	*/
+/*	$NetBSD: info_union.c,v 1.8 1998/08/08 22:33:30 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,7 +73,7 @@ int
 union_init(mnt_map *m, char *map, time_t *tp)
 {
   *tp = 0;
-  return strncmp(map, UNION_PREFIX, UNION_PREFLEN) == 0 ? 0 : ENOENT;
+  return NSTREQ(map, UNION_PREFIX, UNION_PREFLEN) ? 0 : ENOENT;
 }
 
 
@@ -87,8 +87,8 @@ union_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
   for (p = v; p[1]; p++) ;
   *pval = xmalloc(strlen(*p) + 5);
   sprintf(*pval, "fs:=%s", *p);
-  free(mapd);
-  free(v);
+  XFREE(mapd);
+  XFREE(v);
   return 0;
 }
 
@@ -145,7 +145,7 @@ union_reload(mnt_map *m, char *map, void (*fn) (mnt_map *, char *, char *))
     sprintf(val, "fs:=%s", dir[-1]);
     (*fn) (m, strdup("*"), val);
   }
-  free(mapd);
-  free(v);
+  XFREE(mapd);
+  XFREE(v);
   return 0;
 }

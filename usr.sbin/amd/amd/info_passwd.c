@@ -1,7 +1,7 @@
-/*	$NetBSD: info_passwd.c,v 1.7 1997/10/26 00:24:59 christos Exp $	*/
+/*	$NetBSD: info_passwd.c,v 1.8 1998/08/08 22:33:30 christos Exp $	*/
 
 /*
- * Copyright (c) 1997 Erez Zadok
+ * Copyright (c) 1997-1998 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@ passwd_init(mnt_map *m, char *map, time_t *tp)
   /*
    * Recognize the new format "PASSWD_MAP:pval-format"
    */
-  if (strncmp(map, PASSWD_MAP, sizeof(PASSWD_MAP)-1) != 0)
+  if (!NSTREQ(map, PASSWD_MAP, sizeof(PASSWD_MAP) - 1))
     return ENOENT;
   if (map[sizeof(PASSWD_MAP)-1] != ':')
     return ENOENT;
@@ -191,7 +191,7 @@ passwd_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 
 enoent:
   if (dir)
-    free(dir);
+    XFREE(dir);
 
   return ENOENT;
 }
