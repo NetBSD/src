@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)slattach.8	6.4 (Berkeley) 3/16/91
-.\"	$Id: slattach.8,v 1.5 1993/08/01 07:38:06 mycroft Exp $
+.\"	$Id: slattach.8,v 1.6 1993/12/02 05:44:26 mycroft Exp $
 .\"
 .Dd April 4, 1993
 .Dt SLATTACH 8
@@ -43,6 +43,7 @@
 .Op \-a
 .Op \-c
 .Op \-h
+.Op \-m
 .Op \-n
 .Op \-s baudrate
 .Ar ttyname 
@@ -61,8 +62,12 @@ headers will be used.
 Enables the VJ header compression option.  Note that both ends of the link
 must be able to use VJ header compression for this to work.
 .It Ar \-h
-Turn on cts/rts style flow control on the slip port, by default no flow
+Turn on CTS/RTS style flow control on the slip port, by default no flow
 control is done.
+.It Ar \-m
+Maintain modem control signals after closing the tty.  If not specified,
+HUPCL is set, causing DTR to be dropped on the last close of the tty
+device.
 .It Ar \-n
 Throw away ICMP packets.  The slip interface will ignore ICMP packets
 to prevent slow lines being saturated by ICMP responses.
