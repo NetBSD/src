@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.5 1997/10/04 04:01:21 mhitch Exp $	*/
+/*	$NetBSD: bztzsc.c,v 1.5.2.1 1997/10/24 03:03:35 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -155,7 +155,7 @@ bztzscmatch(parent, cf, aux)
 	volatile u_char *regs;
 
 	zap = aux;
-	if (zap->manid != 0x2140 && zap->prodid != 24)
+	if (zap->manid != 0x2140 || zap->prodid != 24)
 		return(0);
 	regs = &((volatile u_char *)zap->va)[0x1ff00];
 	if (badaddr((caddr_t)regs))
