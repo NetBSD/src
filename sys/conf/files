@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.528 2002/05/18 07:23:04 matt Exp $
+#	$NetBSD: files,v 1.529 2002/05/21 03:01:02 augustss Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -829,6 +829,23 @@ device	fwohci: fwbus
 # Sony Programmable I/O Controller
 device	spic: wsmousedev
 file	dev/ic/spic.c			spic
+
+# IBM CPC700 PowerPC bridge
+define	cpcbus { addr, [irq=-1] }
+device	cpc: cpcbus, pcibus
+file	dev/ic/cpc700.c			cpc
+
+attach	com at cpcbus with com_cpcbus
+file	dev/ic/com_cpcbus.c		com_cpcbus
+
+device	cpctim
+attach	cpctim at cpcbus
+file	dev/ic/timer_cpcbus.c		cpctim
+
+device	iic
+attach	iic at cpcbus with iic_cpcbus
+file	dev/ic/iic_cpcbus.c		iic_cpcbus
+
 
 # Attribute used by various things that need BPF's virtual machine
 #
