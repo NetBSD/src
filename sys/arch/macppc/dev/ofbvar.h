@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbvar.h,v 1.5 2001/06/10 13:56:13 tsubai Exp $	*/
+/*	$NetBSD: ofbvar.h,v 1.6 2002/06/24 21:08:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,6 +36,9 @@ struct ofb_devconfig {
 
 struct ofb_softc {
 	struct	device sc_dev;
+
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_pcitag;
 
 	struct ofb_devconfig *sc_dc;	/* device configuration */
 	int nscreens;
