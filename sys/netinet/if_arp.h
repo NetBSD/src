@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.14 1995/03/29 22:09:27 briggs Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.15 1995/04/10 00:06:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -158,6 +158,7 @@ void	arpwhohas __P((struct arpcom *, struct in_addr *));
 void	arpintr __P((void));
 int	arpresolve __P((struct arpcom *,
 	   struct rtentry *, struct mbuf *, struct sockaddr *, u_char *));
+void	arp_ifinit __P((struct arpcom *, struct ifaddr *));
 void	arp_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 
 int	ether_addmulti __P((struct ifreq *, struct arpcom *));

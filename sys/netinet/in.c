@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.15 1994/11/03 14:57:35 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.16 1995/04/10 00:06:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -426,12 +426,6 @@ in_ifinit(ifp, ia, sin, scrub)
 		ia->ia_addr = oldaddr;
 		return (error);
 	}
-#if NETHER > 0
-	if (ifp->if_output == ether_output) { /* XXX: Another Kludge */
-		ia->ia_ifa.ifa_rtrequest = arp_rtrequest;
-		ia->ia_ifa.ifa_flags |= RTF_CLONING;
-	}
-#endif
 	splx(s);
 	if (scrub) {
 		ia->ia_ifa.ifa_addr = (struct sockaddr *)&oldaddr;
