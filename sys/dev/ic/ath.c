@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.30 2004/07/23 10:15:13 mycroft Exp $	*/
+/*	$NetBSD: ath.c,v 1.31 2004/07/28 08:57:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.30 2004/07/23 10:15:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.31 2004/07/28 08:57:40 dyoung Exp $");
 #endif
 
 /*
@@ -431,6 +431,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	struct ifnet *ifp = &ic->ic_if;
 	struct ath_hal *ah;
 	HAL_STATUS status;
+	HAL_TXQ_INFO qinfo;
 	int error = 0;
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: devid 0x%x\n", __func__, devid));
@@ -483,8 +484,8 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	 * Copy these back; they are set as a side effect
 	 * of constructing the channel list.
 	 */
-	ath_regdomain = ath_hal_getregdomain(ah);
-	ath_countrycode = ath_hal_getcountrycode(ah);
+	ath_hal_getregdomain(ah, &ath_regdomain);
+	ath_hal_getcountrycode(ah, &ath_countrycode);
 
 	/*
 	 * Setup rate tables for all potential media types.
@@ -520,20 +521,17 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	 * allocate more tx queues for splitting management
 	 * frames and for QOS support.
 	 */
-	sc->sc_txhalq = ath_hal_setuptxqueue(ah,
-		HAL_TX_QUEUE_DATA,
-		AH_TRUE			/* enable interrupts */
-	);
-	if (sc->sc_txhalq == (u_int) -1) {
-		if_printf(ifp, "unable to setup a data xmit queue!\n");
-		goto bad2;
-	}
-	sc->sc_bhalq = ath_hal_setuptxqueue(ah,
-		HAL_TX_QUEUE_BEACON,
-		AH_TRUE			/* enable interrupts */
-	);
+	sc->sc_bhalq = ath_hal_setuptxqueue(ah,HAL_TX_QUEUE_BEACON,NULL);
 	if (sc->sc_bhalq == (u_int) -1) {
 		if_printf(ifp, "unable to setup a beacon xmit queue!\n");
+		goto bad2;
+	}
+
+	memset(&qinfo, 0, sizeof(qinfo));
+	qinfo.tqi_subtype = HAL_WME_AC_BE;
+	sc->sc_txhalq = ath_hal_setuptxqueue(ah, HAL_TX_QUEUE_DATA, &qinfo);
+	if (sc->sc_txhalq == (u_int) -1) {
+		if_printf(ifp, "unable to setup a data xmit queue!\n");
 		goto bad2;
 	}
 
@@ -788,13 +786,6 @@ ath_intr1(struct ath_softc *sc)
 	}
 	ath_hal_getisr(ah, &status);		/* NB: clears ISR too */
 	DPRINTF(ATH_DEBUG_INTR, ("%s: status 0x%x\n", __func__, status));
-#ifdef AR_DEBUG
-	if (ath_debug &&
-	    (status & (HAL_INT_FATAL|HAL_INT_RXORN|HAL_INT_BMISS))) {
-		if_printf(ifp, "ath_intr: status 0x%x\n", status);
-		ath_hal_dumpstate(ah);
-	}
-#endif /* AR_DEBUG */
 	status &= sc->sc_imask;			/* discard unasked for bits */
 	if (status & HAL_INT_FATAL) {
 		sc->sc_stats.ast_hardware++;
@@ -1246,10 +1237,6 @@ ath_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer) {
 		if (--sc->sc_tx_timer == 0) {
 			if_printf(ifp, "device timeout\n");
-#ifdef AR_DEBUG
-			if (ath_debug & ATH_DEBUG_WATCHDOG)
-				ath_hal_dumpstate(sc->sc_ah);
-#endif /* AR_DEBUG */
 			ath_reset(sc);
 			ifp->if_oerrors++;
 			sc->sc_stats.ast_watchdog++;
@@ -1332,6 +1319,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				ifr->ifr_data, sizeof (sc->sc_stats));
 		break;
 	case SIOCGATHDIAG: {
+#if 0	/* XXX punt */
 		struct ath_diag *ad = (struct ath_diag *)data;
 		struct ath_hal *ah = sc->sc_ah;
 		void *data;
@@ -1344,6 +1332,9 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				error = copyout(data, ad->ad_data, ad->ad_size);
 		} else
 			error = EINVAL;
+#else
+		error = EINVAL;
+#endif
 		break;
 	}
 	default:
@@ -1769,19 +1760,25 @@ ath_beacon_config(struct ath_softc *sc)
 	struct ath_hal *ah = sc->sc_ah;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
-	u_int32_t nexttbtt;
+	u_int32_t nexttbtt, intval;
 
 	nexttbtt = (LE_READ_4(ni->ni_tstamp + 4) << 22) |
 	    (LE_READ_4(ni->ni_tstamp) >> 10);
 	DPRINTF(ATH_DEBUG_BEACON, ("%s: nexttbtt=%u\n", __func__, nexttbtt));
 	nexttbtt += ni->ni_intval;
+	intval = ni->ni_intval & HAL_BEACON_PERIOD;
 	if (ic->ic_opmode == IEEE80211_M_STA) {
 		HAL_BEACON_STATE bs;
 		u_int32_t bmisstime;
 
 		/* NB: no PCF support right now */
 		memset(&bs, 0, sizeof(bs));
-		bs.bs_intval = ni->ni_intval;
+		/*
+		 * Reset our tsf so the hardware will update the
+		 * tsf register to reflect timestamps found in
+		 * received beacons.
+		 */
+		bs.bs_intval = intval | HAL_BEACON_RESET_TSF;
 		bs.bs_nexttbtt = nexttbtt;
 		bs.bs_dtimperiod = bs.bs_intval;
 		bs.bs_nextdtim = nexttbtt;
@@ -1824,12 +1821,6 @@ ath_beacon_config(struct ath_softc *sc)
 			, bs.bs_sleepduration
 		));
 		ath_hal_intrset(ah, 0);
-		/*
-		 * Reset our tsf so the hardware will update the
-		 * tsf register to reflect timestamps found in
-		 * received beacons.
-		 */
-		ath_hal_resettsf(ah);
 		ath_hal_beacontimers(ah, &bs, 0/*XXX*/, 0, 0);
 		sc->sc_imask |= HAL_INT_BMISS;
 		ath_hal_intrset(ah, sc->sc_imask);
