@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.97 1998/12/10 15:09:19 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.98 1999/02/09 01:57:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1111,12 +1111,6 @@ vclean(vp, flags, p)
 	if (vp->v_flag & VXLOCK)
 		panic("vclean: deadlock");
 	vp->v_flag |= VXLOCK;
-#ifdef UVM
-	/*
-	 * clean out any VM data associated with the vnode.
-	 */
-	uvm_vnp_terminate(vp);
-#endif
 	/*
 	 * Even if the count is zero, the VOP_INACTIVE routine may still
 	 * have the object locked while it cleans it out. The VOP_LOCK
@@ -1126,6 +1120,12 @@ vclean(vp, flags, p)
 	 */
 	VOP_LOCK(vp, LK_DRAIN | LK_INTERLOCK);
 
+#ifdef UVM
+	/*
+	 * clean out any VM data associated with the vnode.
+	 */
+	uvm_vnp_terminate(vp);
+#endif
 	/*
 	 * Clean out any buffers associated with the vnode.
 	 */
