@@ -1,4 +1,4 @@
-/* $NetBSD: awi.c,v 1.5 1999/11/08 13:24:00 sommerfeld Exp $ */
+/* $NetBSD: awi.c,v 1.6 1999/11/08 15:45:00 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -713,6 +713,12 @@ awi_send_authreq (sc)
 
 	m->m_len = tlvptr - mtod(m, u_int8_t *);
 
+	if (sc->sc_ifp->if_flags & IFF_DEBUG) {
+		printf("%s: sending auth request\n",
+		    sc->sc_dev.dv_xname);
+		awi_hexdump("frame", m->m_data, m->m_len);
+	}
+	
 	awi_send_frame(sc, m);
 
 	sc->sc_mgt_timer = 2;
@@ -757,6 +763,13 @@ awi_send_assocreq (sc)
 	tlvptr = awi_add_rates(sc, m, tlvptr);
 
 	m->m_len = tlvptr - mtod(m, u_int8_t *);
+
+
+	if (sc->sc_ifp->if_flags & IFF_DEBUG) {
+		printf("%s: sending assoc request\n",
+		    sc->sc_dev.dv_xname);
+		awi_hexdump("frame", m->m_data, m->m_len);
+	}
 
 	awi_send_frame(sc, m);
 
@@ -884,6 +897,7 @@ awi_rcv_mgt (sc, m, rxts, rssi)
 	u_int8_t subtype;
 	u_int8_t *framehdr, *mgthdr, *end, *timestamp;
 	struct awi_auth_hdr *auhp;
+	struct ifnet *ifp = sc->sc_ifp;
 	
 #define IEEEWL_MGT_NATTR		10 /* XXX */
 	u_int8_t *attr[IEEEWL_MGT_NATTR];
@@ -936,10 +950,11 @@ awi_rcv_mgt (sc, m, rxts, rssi)
 		 *	AId
 		 *	supported rates.
 		 */
-#if 0
-		printf("assoc_resp\n");
-		/* XXX should look in "status" of received message.. */
-#endif
+		if (ifp->if_flags & IFF_DEBUG) {
+			printf("%s: got assoc resp\n",
+			    sc->sc_dev.dv_xname);
+			awi_hexdump("assocresp", m->m_data, m->m_len);
+		}
 		awi_drvstate (sc, AWI_DRV_INFASSOC);
 		sc->sc_state = AWI_ST_RUNNING;
 		sc->sc_mgt_timer = AWI_ASSOC_REFRESH;
@@ -977,6 +992,11 @@ awi_rcv_mgt (sc, m, rxts, rssi)
 		 */
 		timestamp = mgthdr;
 
+		if (ifp->if_flags & IFF_DEBUG) {
+			printf("%s: got probe resp\n",
+			    sc->sc_dev.dv_xname);
+			awi_hexdump("proberesp", m->m_data, m->m_len);
+		}
 		/* now, into the tlv goo.. */
 		mgthdr += 12;	/* XXX magic */
 		awi_parse_tlv (mgthdr, end, attr, attrlen, IEEEWL_MGT_NATTR);
@@ -1025,6 +1045,13 @@ awi_rcv_mgt (sc, m, rxts, rssi)
 		break;
 
 	case IEEEWL_SUBTYPE_BEACON:
+		if ((ifp->if_flags & (IFF_DEBUG|IFF_LINK2)) ==
+		    (IFF_DEBUG|IFF_LINK2)) {
+			printf("%s: beacon from %s\n",
+			    sc->sc_dev.dv_xname,
+			    ether_sprintf(addr2));
+			awi_hexdump("beacon", m->m_data, m->m_len);
+		}
 		/*
 		 * Note that AP is still alive so we don't have to go looking
 		 * for one for a while.
@@ -1049,6 +1076,11 @@ awi_rcv_mgt (sc, m, rxts, rssi)
 		break;
 		
 	case IEEEWL_SUBTYPE_AUTH:
+		if (ifp->if_flags & IFF_DEBUG) {
+			printf("%s: got auth\n",
+			    sc->sc_dev.dv_xname);
+			awi_hexdump("auth", m->m_data, m->m_len);
+		}
 		/*
 		 * woohoo!  somebody likes us!
 		 */
@@ -1064,7 +1096,11 @@ awi_rcv_mgt (sc, m, rxts, rssi)
 		break;
 		
 	case IEEEWL_SUBTYPE_DEAUTH:
-		printf("%s: received deauth\n", sc->sc_dev.dv_xname);
+		if (ifp->if_flags & IFF_DEBUG) {
+			printf("%s: got deauth\n",
+			    sc->sc_dev.dv_xname);
+			awi_hexdump("deauth", m->m_data, m->m_len);
+		}
 		sc->sc_state = AWI_ST_SYNCED;
 		sc->sc_new_bss = 1;
 		awi_send_authreq(sc);
@@ -2252,6 +2288,9 @@ void awi_init_5 (sc, status)
 void awi_restart_scan (sc)
 	struct awi_softc *sc;
 {
+	if (sc->sc_ifp->if_flags & IFF_DEBUG) {
+		printf("%s: starting scan\n", sc->sc_dev.dv_xname);
+	}
 	sc->sc_scan_timer = 2;
 	sc->sc_mgt_timer = 0;
 	awi_set_timer(sc);
@@ -2336,6 +2375,10 @@ awi_try_sync (sc)
 	int i;
 	struct awi_bss_binding *bp = NULL;
 	
+	if (sc->sc_ifp->if_flags & IFF_DEBUG) {
+		printf("%s: looking for best of %d\n",
+		    sc->sc_dev.dv_xname, sc->sc_nbindings);
+	}
 	/* pick one with best rssi */
 	for (i=0; i<sc->sc_nbindings; i++) {
 		bp = &sc->sc_bindings[i];
@@ -2346,11 +2389,14 @@ awi_try_sync (sc)
 		}
 	}
 
-#if 0
-	printf("best: %d\n", best);
-#endif
 	if (bp == NULL) {
+		printf("%s: no beacons seen\n", sc->sc_dev.dv_xname);
+		awi_scan_next(sc);
 		return;
+	}
+
+	if (sc->sc_ifp->if_flags & IFF_DEBUG) {
+		printf("%s: best %d\n", sc->sc_dev.dv_xname, best);
 	}
 	sc->sc_scan_timer = awi_scan_keepalive;
 	
@@ -2396,12 +2442,13 @@ awi_cmd_sync_done (sc, status)
 	 */
 	
 	awi_drvstate (sc, AWI_DRV_INFSY);
-#if 0
-	printf("%s: sync done, setting bss/iss parameters\n",
-	    sc->sc_dev.dv_xname);
-	awi_hexdump ("bss", sc->sc_active_bss.bss_id, ETHER_ADDR_LEN);
-	printf("ssid: %s\n", sc->sc_active_bss.ssid);
-#endif
+	if (sc->sc_ifp->if_flags & IFF_DEBUG) {
+		printf("%s: sync done, setting bss/iss parameters\n",
+		    sc->sc_dev.dv_xname);
+		awi_hexdump ("bss", sc->sc_active_bss.bss_id, ETHER_ADDR_LEN);
+		printf("ssid: %s\n", sc->sc_active_bss.ssid);
+	}
+
 	awi_cmd_set_ss (sc);
 }
 
