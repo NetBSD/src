@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/03/31 13:58:56 itojun Exp $
+#	$NetBSD: Makefile,v 1.7 2001/03/31 14:11:12 itojun Exp $
 #
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
@@ -14,7 +14,7 @@ MKMAN=		no
 
 CLEANFILES+=	${CAT} english.base *.check __ck1 __ck2
 
-all: ${CAT}
+realall: ${CAT}
 
 ${CAT}: english.base ${HOSTPROG}
 	@echo "... $@";							\
