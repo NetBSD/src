@@ -1,4 +1,4 @@
-.\"	$NetBSD: mknod.8,v 1.17 2000/03/22 02:11:51 simonb Exp $
+.\"	$NetBSD: mknod.8,v 1.18 2000/05/17 09:43:33 fair Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,10 +78,9 @@ for a SCSI disk on an HP300 or a
 .Dq pty
 for pseudo-devices.
 .It Cm b | Cm c | Cm p
-Type of device. If the
-device is a block type device such as a tape or disk drive which needs
-both cooked and raw special files,
-the type is
+Type of device.
+If the device is a block type device such as a tape or disk drive
+which needs both cooked and raw special files, the type is
 .Cm b .
 All other devices are character type devices, such as terminal
 and pseudo devices, and are type
@@ -91,8 +90,9 @@ Specifying
 creates fifo files.
 .It Ar major
 The major device number is an integer number which tells the kernel
-which device driver entry point to use.  To learn what
-major device number to use for a particular device, check the file
+which device driver entry point to use.
+To learn what major device number to use for a particular device,
+check the file
 .Pa /dev/MAKEDEV
 to see if the device is known, or check
 the system dependent device configuration file:
@@ -100,43 +100,62 @@ the system dependent device configuration file:
 .Dq Pa /usr/src/sys/arch/<arch>/<arch>/conf.c
 .Ed
 .Pp
-(for example
-.Pa /usr/src/sys/arch/vax/vax/conf.c ) .
+.Po
+e.g.
+.Pa /usr/src/sys/arch/vax/vax/conf.c
+.Pc .
 .It Ar minor
 The minor device number tells the kernel which one of several similar
 devices the node corresponds to; for example, it may be a specific serial
 port or pty.
-.It Ar unit and subunit
+.It Ar unit No and Ar subunit
 The unit and subunit numbers select a subset of a device; for example, the
 unit may specify a particular SCSI disk, and the subunit a partition on
-that disk.  (Currently this form of specification is only supported by the
+that disk.
+.Po
+Currently this form of specification is only supported by the
 .Ar bsdos
 format, for compatibility with the
 .Bsx
-.Xr mknod 8 .)
+.Xr mknod 8
+.Pc .
 .El
 .Pp
-Device numbers for different operating systems may be packed in a different
-format.  To create device nodes that may be used by such an operating system
-(e.g. in an exported file system used for netbooting), the
+The
 .Fl F
-option is used.  The following formats are recognized:
-native,
-386bsd,
-4bsd,
-bsdos,
-freebsd,
-hpux,
-isc,
-linux,
-netbsd,
-osf1,
-sco,
-solaris,
-sunos,
-svr3,
-svr4 and
-ultrix.
+option is used to create device nodes that may be used by an
+operating system which uses device numbers packed in a different
+format than
+.Nx
+uses.
+This is necessary when
+.Nx
+is used as an
+.Tn NFS
+server for netbooted computers running other operating systems.
+.Pp
+The following values for the
+.Ar format
+following
+.Fl F
+are recognized:
+.Sy native ,
+.Sy 386bsd ,
+.Sy 4bsd ,
+.Sy bsdos ,
+.Sy freebsd ,
+.Sy hpux ,
+.Sy isc ,
+.Sy linux ,
+.Sy netbsd ,
+.Sy osf1 ,
+.Sy sco ,
+.Sy solaris ,
+.Sy sunos ,
+.Sy svr3 ,
+.Sy svr4 ,
+and
+.Sy ultrix .
 .Pp
 Alternatively, a single opaque device number may be specified.
 .Sh SEE ALSO
