@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.6 1999/05/15 23:56:36 christos Exp $	*/
+/*	$NetBSD: score.c,v 1.7 1999/05/16 00:03:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.6 1999/05/15 23:56:36 christos Exp $");
+__RCSID("$NetBSD: score.c,v 1.7 1999/05/16 00:03:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,9 @@ int	Max_per_uid = MAX_PER_UID;
 static SCORE	Top[MAXSCORES];
 
 static u_int32_t	numscores, max_uid;
+
+static void read_score __P((int));
+static void write_score __P((int));
 
 /*
  * read_score:

@@ -1,4 +1,4 @@
-/*	$NetBSD: auto.c,v 1.1 1999/05/15 23:56:35 christos Exp $	*/
+/*	$NetBSD: auto.c,v 1.2 1999/05/16 00:03:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,6 +67,16 @@
 
 #define CONSDEBUG(a)
 
+static int distance __P((int, int, int, int));
+static int xinc __P((int));
+static int yinc __P((int));
+static char *find_moves __P((void));
+static COORD *closest_robot __P((int *));
+static COORD *closest_heap __P((int *));
+static char move_towards __P((int, int));
+static char move_away __P((COORD *));
+static char move_between __P((COORD *, COORD *));
+static int between __P((COORD *, COORD *));
 
 /* distance():
  * 	return "move" number distance of the two coordinates
@@ -266,9 +276,7 @@ move_between(rob, hp)
 	COORD *rob;
 	COORD *hp;
 {
-	char ok_moves[10], best_move;
-	char *ptr;
-	int move_judge, cur_judge, dx, dy, mvx, mvy;
+	int dx, dy;
 	float slope, cons;
 
 	/* equation of the line between us and the closest robot */
@@ -377,4 +385,4 @@ automove()
 	
 	return move_between(robot_close, heap_close);
 #endif
-} /* end get_move */
+} /* end automove */
