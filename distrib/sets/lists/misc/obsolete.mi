@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.17 2001/10/19 02:53:02 tv Exp $
+# $NetBSD: obsolete.mi,v 1.18 2002/04/03 15:59:49 wiz Exp $
 /usr/share/doc/smm/03.fsck
 /usr/share/doc/smm/03.fsck/0.t
 /usr/share/doc/smm/03.fsck/1.t
@@ -18,11 +18,17 @@
 /usr/share/doc/usd/13.viref/spell.ok
 /usr/share/doc/xntp
 /usr/share/examples/amd/master
+/usr/share/examples/postfix/sample-pcre.cf
+/usr/share/examples/postfix/sample-regexp.cf
 /usr/share/examples/supfiles/ftp.cs.umn.edu
 /usr/share/examples/supfiles/skarven.itea.unit.no
 /usr/share/examples/supfiles/sup.de.netbsd.org
 /usr/share/examples/supfiles/sup.no.netbsd.org
 /usr/share/examples/supfiles/sup.uk.netbsd.org
+/usr/share/examples/usermgmt
+/usr/share/examples/usermgmt/.cshrc
+/usr/share/examples/usermgmt/.login
+/usr/share/examples/usermgmt/.profile
 /usr/share/misc/sendmail.hf
 /usr/share/postfix
 /usr/share/sendmail/cf/clientproto.mc
