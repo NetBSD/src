@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_alpha.c,v 1.12 1998/06/30 20:29:39 thorpej Exp $	*/
+/*	$NetBSD: kvm_alpha.c,v 1.13 1998/08/01 21:17:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -75,10 +75,10 @@ _kvm_initvtop(kd)
 	cpu_kh = kd->cpu_data;
 
 	/* Compute page_shift. */
-	for (vm->page_shift = 0; (1 << vm->page_shift) < cpu_kh->page_size;
+	for (vm->page_shift = 0; (1L << vm->page_shift) < cpu_kh->page_size;
 	     vm->page_shift++)
 		/* nothing */ ;
-	if ((1 << vm->page_shift) != cpu_kh->page_size) {
+	if ((1L << vm->page_shift) != cpu_kh->page_size) {
 		free(vm);
 		return (-1);
 	}
@@ -95,9 +95,9 @@ _kvm_kvatop(kd, va, pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 	struct vmstate *vm;
-	int rv, page_off;
 	alpha_pt_entry_t pte;
-	off_t pteoff;
+	u_long pteoff, page_off;
+	int rv;
 
         if (ISALIVE(kd)) {
                 _kvm_err(kd, 0, "vatop called in live kernel!");
