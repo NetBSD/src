@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.36 1995/08/31 22:07:25 pk Exp $
+ *	$Id: rtld.c,v 1.37 1995/09/23 22:46:24 pk Exp $
  */
 
 #include <sys/param.h>
@@ -137,16 +137,17 @@ struct somap_private {
 /* Parent of link map */
 #define LM_PARENT(smp)	(LM_PRIVATE(smp)->spd_parent)
 
+static char		__main_progname[] = "main";
+static char		*main_progname = __main_progname;
+static char		us[] = "/usr/libexec/ld.so";
+
 char			**environ;
-char			*__progname;
+char			*__progname = us;
 int			errno;
 
 static uid_t		uid, euid;
 static gid_t		gid, egid;
 static int		careful;
-static char		__main_progname[] = "main";
-static char		*main_progname = __main_progname;
-static char		us[] = "/usr/libexec/ld.so";
 static int		anon_fd = -1;
 
 struct so_map		*link_map_head, *main_map;
@@ -162,9 +163,10 @@ static void		*__dlopen __P((char *, int));
 static int		__dlclose __P((void *));
 static void		*__dlsym __P((void *, char *));
 static int		__dlctl __P((void *, int, void *));
+static void		__dlexit __P((void));
 
 static struct ld_entry	ld_entry = {
-	__dlopen, __dlclose, __dlsym, __dlctl
+	__dlopen, __dlclose, __dlsym, __dlctl, __dlexit
 };
 
        void		xprintf __P((char *, ...));
@@ -223,6 +225,7 @@ rtld(version, crtp, dp)
 	/* Check version */
 	if (		version != CRT_VERSION_BSD_2 &&
 			version != CRT_VERSION_BSD_3 &&
+			version != CRT_VERSION_BSD_4 &&
 			version != CRT_VERSION_SUN)
 		return -1;
 
@@ -245,7 +248,9 @@ rtld(version, crtp, dp)
 		md_relocate_simple(reloc, crtp->crt_ba, addr);
 	}
 
-	__progname = "ld.so";
+	if (version >= CRT_VERSION_BSD_4)
+		__progname = crtp->crt_ldso;
+
 	if (version >= CRT_VERSION_BSD_3)
 		main_progname = crtp->crt_prog;
 
@@ -300,7 +305,11 @@ rtld(version, crtp, dp)
 	}
 
 	/* Fill in some field in main's __DYNAMIC structure */
-	crtp->crt_dp->d_entry = &ld_entry;
+	if (version >= CRT_VERSION_BSD_4)
+		crtp->crt_ldentry = &ld_entry;
+	else
+		crtp->crt_dp->d_entry = &ld_entry;
+
 	crtp->crt_dp->d_un.d_sdt->sdt_loaded = link_map_head->som_next;
 
 	ddp = crtp->crt_dp->d_debug;
@@ -416,7 +425,7 @@ load_objects(crtp, dp)
  * Allocate a new link map for shared object NAME loaded at ADDR as a
  * result of the presence of link object LOP in the link map PARENT.
  */
-	static struct so_map *
+static struct so_map *
 alloc_link_map(path, sodp, parent, addr, dp)
 	char		*path;
 	struct sod	*sodp;
@@ -458,7 +467,7 @@ alloc_link_map(path, sodp, parent, addr, dp)
  * Map object identified by link object LOP which was found
  * in link map LMP.
  */
-	static struct so_map *
+static struct so_map *
 map_object(sodp, smp)
 	struct sod	*sodp;
 	struct so_map	*smp;
@@ -721,7 +730,7 @@ static struct rt_symbol 	*rt_symtab[RTC_TABSIZE];
 /*
  * Compute hash value for run-time symbol table
  */
-	static inline int
+static inline int
 hash_string(key)
 	char *key;
 {
@@ -740,7 +749,7 @@ hash_string(key)
  * Lookup KEY in the run-time common symbol table.
  */
 
-	static inline struct rt_symbol *
+static inline struct rt_symbol *
 lookup_rts(key)
 	char *key;
 {
@@ -760,7 +769,7 @@ lookup_rts(key)
 	return NULL;
 }
 
-	static struct rt_symbol *
+static struct rt_symbol *
 enter_rts(name, value, type, srcaddr, size, smp)
 	char		*name;
 	long		value;
@@ -806,7 +815,7 @@ enter_rts(name, value, type, srcaddr, size, smp)
  * confined to that map. If STRONG is set, the symbol returned must
  * have a proper type (used by binder()).
  */
-	static struct nzlist *
+static struct nzlist *
 lookup(name, src_map, strong)
 	char		*name;
 	struct so_map	**src_map;	/* IN/OUT */
@@ -935,7 +944,7 @@ xprintf("Allocating common: %s size %d at %#x\n", name, common_size, rtsp->rt_sp
  * This routine is called from the jumptable to resolve
  * procedure calls to shared objects.
  */
-	long
+long
 binder(jsp)
 	jmpslot_t	*jsp;
 {
@@ -990,7 +999,7 @@ static char			*hstrtab;
 
 #define HINTS_VALID (hheader != NULL && hheader != (struct hints_header *)-1)
 
-	static void
+static void
 maphints()
 {
 	caddr_t		addr;
@@ -1040,7 +1049,7 @@ maphints()
 	hstrtab = (char *)(addr + hheader->hh_strtab);
 }
 
-	static void
+static void
 unmaphints()
 {
 
@@ -1051,7 +1060,7 @@ unmaphints()
 	}
 }
 
-	int
+int
 hinthash(cp, vmajor, vminor)
 	char	*cp;
 	int	vmajor, vminor;
@@ -1070,7 +1079,7 @@ hinthash(cp, vmajor, vminor)
 #undef major
 #undef minor
 
-	static char *
+static char *
 findhint(name, major, minor, prefered_path)
 	char	*name;
 	int	major, minor;
@@ -1115,7 +1124,7 @@ findhint(name, major, minor, prefered_path)
 	return NULL;
 }
 
-	static char *
+static char *
 rtfindlib(name, major, minor, usehints, ipath)
 	char	*name;
 	int	major, minor;
@@ -1203,7 +1212,7 @@ static struct so_map dlmap = {
 };
 static int dlerrno;
 
-	static void *
+static void *
 __dlopen(name, mode)
 	char	*name;
 	int	mode;
@@ -1248,7 +1257,7 @@ xprintf("%s: %s\n", name, strerror(errno));
 	return smp;
 }
 
-	static int
+static int
 __dlclose(fd)
 	void	*fd;
 {
@@ -1272,7 +1281,7 @@ xprintf("dlclose(%s): refcount = %d\n", smp->som_path, LM_PRIVATE(smp)->spd_refc
 	return 0;
 }
 
-	static void *
+static void *
 __dlsym(fd, sym)
 	void	*fd;
 	char	*sym;
@@ -1299,7 +1308,7 @@ __dlsym(fd, sym)
 	return (void *)addr;
 }
 
-	static int
+static int
 __dlctl(fd, cmd, arg)
 	void	*fd, *arg;
 	int	cmd;
@@ -1313,6 +1322,19 @@ __dlctl(fd, cmd, arg)
 		return -1;
 	}
 	return 0;
+}
+
+static void
+__dlexit()
+{
+	struct so_map	*smp;
+
+	/* Call any object initialization routines. */
+	for (smp = link_map_head; smp; smp = smp->som_next) {
+		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
+			continue;
+		init_map(smp, ".fini");
+	}
 }
 
 void
