@@ -1,4 +1,4 @@
-/ $Id: units.lib,v 1.1 1993/10/27 03:31:54 cgd Exp $
+/ $Id: units.lib,v 1.2 1995/08/13 03:25:54 cgd Exp $
 
 / primitive units
 
@@ -160,7 +160,7 @@ mile			5280 ft
 mi			mile
 
 british			1200|3937 m/ft
-nmile			1852m
+nmile			1852 m
 
 acre			4840 yd2
 
@@ -539,7 +539,7 @@ tun			8 barrel
 water			gram g / cc
 wey			40 bu
 weymass			252 lb
-Xunit			1.00202e-13m
+Xunit			1.00202e-13 m
 k			1.38047e-16 erg/degC
 
 
