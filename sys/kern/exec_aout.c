@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.10 1994/06/29 06:32:06 cgd Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.11 1994/07/01 02:57:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -39,7 +39,6 @@
 #include <sys/resourcevar.h>
 #include <vm/vm.h>
 
-#include <sys/exec_aout.h>
 #include <machine/exec.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.5 1994/06/29 06:32:08 cgd Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.6 1994/07/01 02:57:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -45,7 +45,7 @@
 #endif
 
 #ifdef EXEC_AOUT
-#include <sys/exec_aout.h>
+/*#include <sys/exec_aout.h> -- automatically pulled in */
 #endif
 
 #ifdef EXEC_ECOFF
