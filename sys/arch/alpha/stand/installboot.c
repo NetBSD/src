@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.5 1997/01/18 00:27:50 cgd Exp $ */
+/*	$NetBSD: installboot.c,v 1.6 1997/01/18 01:56:09 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -146,7 +146,6 @@ main(argc, argv)
 	 * into the disk.  If disklabels not supported, assume zero.
 	 */
 	if (ioctl(devfd, DIOCGDINFO, &dl) != -1) {
-		printf("bootsb.st_dev = 0x%lx\n", bootsb.st_dev);
 		partoffset = dl.d_partitions[minor(bootsb.st_dev) %
 		    getmaxpartitions()].p_offset;
 	} else {
