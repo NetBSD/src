@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.358 2003/09/13 19:08:28 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.359 2003/09/18 23:17:57 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -61,6 +61,18 @@ HAVE_GCC3?=	no
 USE_TOOLS_TOOLCHAIN=no
 .endif
 USE_TOOLS_TOOLCHAIN?=yes
+
+#
+# Transitional for toolchain upgrade to GDB5.3
+#
+HAVE_GDB53?=	no
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "sparc" || \
+    ${MACHINE_ARCH} == "sparc64"
+HAVE_GDB53?=	yes
+.else
+HAVE_GDB53?=	no
+.endif
 
 #
 # XXX TEMPORARY: If ns32k and not using an external toolchain, then we have
