@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)vmstat.c	5.31 (Berkeley) 7/2/91";*/
-static char rcsid[] = "$Id: vmstat.c,v 1.8 1993/10/02 03:26:52 cgd Exp $";
+static char rcsid[] = "$Id: vmstat.c,v 1.9 1993/11/10 15:00:41 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -786,7 +786,7 @@ domem()
 	register struct kmemstats *ks;
 	register int i;
 	int size;
-	long totuse = 0, totfree = 0, totreq = 0;
+	long totuse = 0, totfree = 0, totreq = 0, totwaste = 0;
 	struct kmemstats kmemstats[M_LAST + 1];
 	struct kmembuckets buckets[MINBUCKET + 16];
 
@@ -803,6 +803,8 @@ domem()
 			kp->kb_totalfree, kp->kb_calls,
 			kp->kb_highwat, kp->kb_couldfree);
 		totfree += size * kp->kb_totalfree;
+		if (kp->kb_highwat < kp->kb_totalfree)
+			totwaste += (kp->kb_totalfree - kp->kb_highwat) * size;
 	}
 
 	kread(X_KMEMSTAT, kmemstats, sizeof(kmemstats));
@@ -821,9 +823,10 @@ domem()
 		totuse += ks->ks_memuse;
 		totreq += ks->ks_calls;
 	}
-	(void)printf("\nMemory Totals:  In Use    Free    Requests\n");
-	(void)printf("              %7ldK %6ldK    %8ld\n",
-	     (totuse + 1023) / 1024, (totfree + 1023) / 1024, totreq);
+	(void)printf("\nMemory Totals:  In Use    Free   Wasted   Requests\n");
+	(void)printf("              %7ldK %6ldK  %6ldK   %8ld\n",
+	     (totuse + 1023) / 1024, (totfree + 1023) / 1024,
+	     (totwaste + 1023) / 1024, totreq);
 }
 
 /*
