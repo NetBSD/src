@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.12 1996/10/13 01:37:30 christos Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -1066,7 +1066,15 @@ zstty_stint(cs)
 		zst->zst_tx_stopped = 1;
 	}
 
-	cs->cs_rr0_new = rr0;
+	/*
+	 * We have to accumulate status line changes here.
+	 * Otherwise, if we get multiple status interrupts
+	 * before the softint runs, we could fail to notice
+	 * some status line changes in the softint routine.
+	 * Fix from Bill Studenmund, October 1996.
+	 */
+	cs->cs_rr0_delta |= (cs->cs_rr0 ^ rr0);
+	cs->cs_rr0 = rr0;
 	zst->zst_st_check = 1;
 
 	/* Ask for softint() call. */
@@ -1181,9 +1189,9 @@ zstty_softint(cs)
 	if (zst->zst_st_check) {
 		zst->zst_st_check = 0;
 
-		rr0 = cs->cs_rr0_new;
-		delta = rr0 ^ cs->cs_rr0;
-		cs->cs_rr0 = rr0;
+		rr0 = cs->cs_rr0;
+		delta = cs->cs_rr0_delta;
+		cs->cs_rr0_delta = 0;
 		if (delta & ZSRR0_DCD) {
 			c = ((rr0 & ZSRR0_DCD) != 0);
 			if (line->l_modem(tp, c) == 0)
