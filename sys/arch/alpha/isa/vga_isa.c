@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_isa.c,v 1.1 1996/11/19 04:38:34 cgd Exp $	*/
+/*	$NetBSD: vga_isa.c,v 1.2 1996/11/20 20:04:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -61,19 +61,29 @@ int
 vga_isa_probe(iot, memt)
 	bus_space_tag_t iot, memt;
 {
-	bus_space_handle_t memh;
+	bus_space_handle_t ioh, memh;
 	u_int16_t vgadata;
-	int rv;
+	int gotio, gotmem, rv;
 
+	gotio = gotmem = rv = 0;
+
+	if (bus_space_map(iot, 0x3b0, 0x30, 0, &ioh))
+		goto bad;
+	gotio = 1;
 	if (bus_space_map(memt, 0xb8000, 0x8000, 0, &memh))
-		return (0);
+		goto bad;
+	gotmem = 1;
 
 	vgadata = bus_space_read_2(memt, memh, 0);
 	bus_space_write_2(memt, memh, 0, 0xa55a);
 	rv = (bus_space_read_2(memt, memh, 0) == 0xa55a);
 	bus_space_write_2(memt, memh, 0, vgadata);
 
-	bus_space_unmap(memt, memh, 0x8000);
+bad:
+	if (gotmem)
+		bus_space_unmap(memt, memh, 0x8000);
+	if (gotio)
+		bus_space_unmap(iot, ioh, 0x30);
 
 	return (rv);
 }
