@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.33 1998/05/17 19:00:56 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.34 1998/05/21 13:02:20 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -148,7 +148,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include <dev/cons.h>
 
 cons_decl(gen);
-#define dzcnpollc	nullcnpollc
 cons_decl(dz);
 cons_decl(qd);
 #include "qv.h"
