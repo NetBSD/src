@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.11 1999/07/04 22:55:48 cgd Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.12 2001/10/15 22:11:12 bjh21 Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,7 @@
 #include <string.h>
 
 #include "defs.h"
+#include "pathnames.h"
 
 static struct id_rec *head = NULL, *tail = NULL;
 static int msg_no = 0;
@@ -111,7 +112,7 @@ write_msg_file ()
 	/* Open the msg_sys file first. */
 	sys_prefix = getenv ("MSGDEF");
 	if (sys_prefix == NULL)
-		sys_prefix = "/usr/share/misc";
+		sys_prefix = _PATH_DEFSYSPREFIX;
 	snprintf (sname, 1024, "%s/%s", sys_prefix, sys_name);
 	sys_file = fopen (sname, "r");
 	if (sys_file == NULL) {
