@@ -1,3 +1,4 @@
+.\" $NetBSD: amidisplaycc.4,v 1.2 2001/04/11 18:33:06 wiz Exp $
 .Dd September 3, 2000
 .Dt AMIDISPLAYCC 4
 .Sh NAME
@@ -6,17 +7,17 @@
 .\"
 .Sh SYNOPSIS
 .Cd amidisplaycc0 at mainbus0
-.Cd wsdisplay0 at amidisplaycc0 
+.Cd wsdisplay0 at amidisplaycc0
 .\"
 .Sh DESCRIPTION
-This device acts as an adapter between the 
+This device acts as an adapter between the
 .Xr wscons 4
 framework and the Amiga custom chip driver functions.
 It exports the internal
 .Xr wsdisplay 4
 interface and contains the necessary rendering functions to
 operate a text terminal with virtual screens. It uses the
-Amiga abstract graphic driver functions for the low-level 
+Amiga abstract graphic driver functions for the low-level
 display management.
 .Pp
 Currently it does not support running X. You can still run
@@ -25,7 +26,7 @@ in X and when quitting it, it seems to hang. Switching a screen
 then will bring up the text console. As always, we apologise for
 the inconvience.
 .Pp
-What it does support is hilite (bold), underline, reverse and 
+What it does support is hilite (bold), underline, reverse and
 foreground/background colors.
 .Pp
 The number of virtual screens is limited only by
@@ -49,4 +50,3 @@ be changed runtime.
 .Sh SEE ALSO
 .Xr wscons 4
 .Xr wsdisplay 4
-
