@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.3 2003/03/14 06:27:40 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.4 2003/03/15 07:22:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -547,7 +547,7 @@ cpu_config_l2cr(int vers)
 			}
 			
 			if (l3cr & L3CR_L3E) {
-				aprint_normal(", %cMB L3 backside cache at ",
+				aprint_normal(", %cMB L3 cache at ",
 				   l3cr & L3CR_L3SIZ ? '2' : '1');
 				switch (l3cr & L3CR_L3CLK) {
 				case L3CLK_20:
@@ -608,6 +608,19 @@ cpu_config_l2cr(int vers)
 		} else {
 			aprint_normal(" write-back");
 		}
+		switch (l2cr & (L2CR_L2DO|L2CR_L2IO)) {
+		case L2CR_L2DO|L2CR_L2IO:
+			aprint_normal(" locked");
+			break;
+		case L2CR_L2DO:
+			aprint_normal(" data-only");
+			break;
+		case L2CR_L2IO:
+			aprint_normal(" instruction-only");
+			break;
+		case 0:
+			break;
+		}
 		switch (l2cr & L2CR_L2RAM) {
 		case L2RAM_FLOWTHRU_BURST:
 			aprint_normal(" Flow-through synchronous burst SRAM");
@@ -624,7 +637,7 @@ cpu_config_l2cr(int vers)
 
 		if (l2cr & L2CR_L2PE)
 			aprint_normal(" with parity");
-		aprint_normal(" backside cache");
+		aprint_normal(" L2 cache");
 	} else
 		aprint_normal(": L2 cache not enabled");
 
