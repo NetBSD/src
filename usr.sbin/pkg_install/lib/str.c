@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.23.2.1 2000/12/15 04:08:26 he Exp $	*/
+/*	$NetBSD: str.c,v 1.23.2.2 2001/03/20 18:14:44 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.23.2.1 2000/12/15 04:08:26 he Exp $");
+__RCSID("$NetBSD: str.c,v 1.23.2.2 2001/03/20 18:14:44 he Exp $");
 #endif
 #endif
 
@@ -29,6 +29,7 @@ __RCSID("$NetBSD: str.c,v 1.23.2.1 2000/12/15 04:08:26 he Exp $");
  *
  */
 
+#include <assert.h>
 #include <err.h>
 #include <fnmatch.h>
 #include "lib.h"
@@ -109,6 +110,9 @@ deweycmp(char *a, deweyop_t op, char *b)
 	char	*b_nb;
 	int	in_nb = 0;
 	int     cmp;
+
+	assert(a != NULL);
+	assert(b != NULL);
 
 	/* Null out 'n' in any "nb" suffixes for initial pass */
 	if ((a_nb = strstr(a, "nb")))
@@ -287,23 +291,81 @@ int
 findmatchingname(const char *dir, const char *pattern, matchfn match, char *data)
 {
 	struct dirent *dp;
+	char tmp_pattern[256];
 	DIR    *dirp;
 	int     found;
+	char *pat_tgz, *file_tgz;		/* ptr to .tgz */
+	char *pat_tbz, *file_tbz;		/* ptr to .tbz */
+	char *pat_tbgz, *file_tbgz;		/* ptr to .t[bg]z */
+	char pat_sfx[256], file_sfx[256];	/* suffixes */
 
 	found = 0;
 	if ((dirp = opendir(dir)) == (DIR *) NULL) {
 		/* warnx("can't opendir dir '%s'", dir); */
 		return -1;
 	}
+
+	/* chop any possible suffix off of 'pattern' and
+	 * store it in pat_sfx
+	 */
+	strcpy(tmp_pattern, pattern);
+	pat_sfx[0] = '\0';
+	pat_tgz = strstr(tmp_pattern, ".tgz");
+	if (pat_tgz) {
+		/* strip off any ".tgz" */
+		strcpy(pat_sfx, pat_tgz);
+		*pat_tgz = '\0';
+	}
+	pat_tbz = strstr(tmp_pattern, ".tbz");
+	if (pat_tbz) {
+		/* strip off any ".tbz" */
+		strcpy(pat_sfx, pat_tbz);
+		*pat_tbz = '\0';
+	}
+	pat_tbgz = strstr(tmp_pattern, ".t[bg]z");
+	if (pat_tbgz) {
+		/* strip off any ".t[bg]z" */
+		strcpy(pat_sfx, pat_tbgz);
+		*pat_tbgz = '\0';
+	}
+
+	
 	while ((dp = readdir(dirp)) != (struct dirent *) NULL) {
-		char    tmp[FILENAME_MAX];
+		char    tmp_file[FILENAME_MAX];
+		
 		if (strcmp(dp->d_name, ".") == 0 ||
 		    strcmp(dp->d_name, "..") == 0)
 			continue;
 
-		(void) snprintf(tmp, sizeof(tmp), "%s/%s", dir, dp->d_name);
-		
-		if (pmatch(pattern, dp->d_name)) {
+		/* chop any possible suffix off of 'tmp_file' and
+		 * store it in file_sfx
+		 */
+		strcpy(tmp_file, dp->d_name);
+		file_sfx[0] = '\0';
+		file_tgz = strstr(tmp_file, ".tgz");
+		if (file_tgz) {
+			/* strip off any ".tgz" */
+			strcpy(file_sfx, file_tgz);
+			*file_tgz = '\0';
+		}
+		file_tbz = strstr(tmp_file, ".tbz");
+		if (file_tbz) {
+			/* strip off any ".tbz" */
+			strcpy(file_sfx, file_tbz);
+			*file_tbz = '\0';
+		}
+		file_tbgz = strstr(tmp_file, ".t[bg]z");
+		if (file_tbgz) {
+			/* strip off any ".t[bg]z" */
+			strcpy(file_sfx, file_tbgz);
+			*file_tbgz = '\0';
+		}
+
+		/* we need to match pattern and suffix separately, in case
+		 * each is a different pattern class (e.g. dewey and
+		 * character class (.t[bg]z)) */
+		if (pmatch(tmp_pattern, tmp_file)
+		    && pmatch(pat_sfx, file_sfx)) {
 			if (match) {
 				match(dp->d_name, data);
 				/* return value ignored for now */
@@ -335,10 +397,18 @@ findbestmatchingname_fn(const char *found, char *best)
 	char *found_version, *best_version;
 	char *found_tgz, *best_tgz;
 	char *found_tbz, *best_tbz;
+	char *found_tbgz, *best_tbgz;
 	char found_no_sfx[255];
 	char best_no_sfx[255];
 
-	found_version = strrchr(found, '-') + 1;
+	/* The same suffix-hack-off again, but we can't do it
+	 * otherwise without changing the function call interface
+	 */
+	found_version = strrchr(found, '-');
+	if (found_version) {
+		/* skip '-', if any version found */
+		found_version++;
+	}
 	found_tgz = strstr(found, ".tgz");
 	if (found_tgz) {
 		/* strip off any ".tgz" */
@@ -353,10 +423,21 @@ findbestmatchingname_fn(const char *found, char *best)
 		found_no_sfx[found_tbz-found_version] = '\0';
 		found_version = found_no_sfx;
 	}
+	found_tbgz = strstr(found, ".t[bg]z");
+	if (found_tbgz) {
+		/* strip off any ".t[bg]z" */
+		strncpy(found_no_sfx, found_version, found_tbgz-found_version);
+		found_no_sfx[found_tbgz-found_version] = '\0';
+		found_version = found_no_sfx;
+	}
 
 	best_version=NULL;
 	if (best && best[0] != '\0') {
-		best_version = strrchr(best, '-') + 1;
+		best_version = strrchr(best, '-');
+		if (best_version) {
+			/* skip '-' if any version found */
+			best_version++;
+		}
 		best_tgz = strstr(best, ".tgz");
 		if (best_tgz) {
 			/* strip off any ".tgz" */
@@ -371,12 +452,26 @@ findbestmatchingname_fn(const char *found, char *best)
 			best_no_sfx[best_tbz-best_version] = '\0';
 			best_version = best_no_sfx;
 		}
+		best_tbgz = strstr(best, ".t[bg]z");
+		if (best_tbgz) {
+			/* strip off any ".t[bg]z" */
+			strncpy(best_no_sfx, best_version, best_tbgz-best_version);
+			best_no_sfx[best_tbgz-best_version] = '\0';
+			best_version = best_no_sfx;
+		}
 	}
 
-	if (best == NULL || best[0] == '\0' || deweycmp(found_version, GT, best_version)) {
-		/* found pkg(version) is bigger than current "best"
-		 * version - remember! */
-		strcpy(best, found);
+	if (found_version == NULL) {
+		fprintf(stderr, "'%s' is not a usable package(version)\n",
+			found);
+	} else {
+		/* if best_version==NULL only if best==NULL
+		 * (or best[0]='\0') */
+		if (best == NULL || best[0] == '\0' || deweycmp(found_version, GT, best_version)) {
+			/* found pkg(version) is bigger than current "best"
+			 * version - remember! */
+			strcpy(best, found);
+		}
 	}
 
 	return 0;
@@ -388,7 +483,7 @@ findbestmatchingname_fn(const char *found, char *best)
  * Returns pointer to pkg name (which can be free(3)ed),
  * or NULL if no match is available.
  */
-char   *
+char *
 findbestmatchingname(const char *dir, const char *pattern)
 {
 	char    buf[FILENAME_MAX];
