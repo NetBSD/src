@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17 2003/09/10 19:48:49 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.18 2003/09/12 12:39:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -70,16 +70,17 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#include "opt_compat_netbsd.h"
+#include "opt_compat_oldboot.h"
 #include "opt_cputype.h"
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
-#include "opt_vm86.h"
-#include "opt_user_ldt.h"
 #include "opt_dummy_nops.h"
-#include "opt_compat_oldboot.h"
-#include "opt_multiprocessor.h"
+#include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 #include "opt_realmem.h"
+#include "opt_user_ldt.h"
+#include "opt_vm86.h"
 
 #include "npx.h"
 #include "assym.h"
