@@ -1,9 +1,10 @@
-/*	$NetBSD: ipcomp_core.c,v 1.10 2000/08/25 21:25:58 thorpej Exp $	*/
+/*	$NetBSD: ipcomp_core.c,v 1.11 2000/09/20 21:43:52 itojun Exp $	*/
+/*	$KAME: ipcomp_core.c,v 1.14 2000/09/20 21:41:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -76,7 +77,7 @@ static int deflate_decompress __P((struct mbuf *, struct mbuf *, size_t *));
 static int deflate_policy = Z_DEFAULT_COMPRESSION;
 static int deflate_window_out = -12;
 static const int deflate_window_in = -1 * MAX_WBITS;	/* don't change it */
-static int deflate_memlevel = MAX_MEM_LEVEL; 
+static int deflate_memlevel = MAX_MEM_LEVEL;
 
 struct ipcomp_algorithm ipcomp_algorithms[] = {
 	{ NULL, NULL, -1 },
@@ -113,7 +114,7 @@ deflate_common(m, md, lenp, mode)
 {
 	struct mbuf *mprev;
 	struct mbuf *p;
-	struct mbuf *n, *n0 = NULL, **np;
+	struct mbuf *n = NULL, *n0 = NULL, **np;
 	z_stream zs;
 	int error = 0;
 	int zerror;
@@ -177,6 +178,7 @@ deflate_common(m, md, lenp, mode)
 				offset = zs.total_out;
 				*np = n;
 				np = &n->m_next;
+				n = NULL;
 			}
 
 			/* get a fresh reply buffer */
@@ -257,6 +259,7 @@ deflate_common(m, md, lenp, mode)
 		offset = zs.total_out;
 		*np = n;
 		np = &n->m_next;
+		n = NULL;
 	}
 
 	/* switch the mbuf to the new one */
@@ -269,6 +272,8 @@ deflate_common(m, md, lenp, mode)
 fail:
 	if (m)
 		m_freem(m);
+	if (n)
+		m_freem(n);
 	if (n0)
 		m_freem(n0);
 	return error;
