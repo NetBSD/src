@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.9 2001/01/07 17:01:54 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.10 2001/01/12 00:11:42 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.9 2001/01/07 17:01:54 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.10 2001/01/12 00:11:42 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -231,8 +231,17 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
 char const *
 irq_string(struct irq_handler *h)
 {
+	static char irq_string_store[10];
 
-	return irqnames[h->irqnum];
+#if NUNIXBP > 0
+	if (h->irqnum >= IRQ_UNIXBP_BASE)
+		snprintf(irq_string_store, 9, "IRQ 13.%d",
+		    h->irqnum - IRQ_UNIXBP_BASE);
+	else
+#endif
+		snprintf(irq_string_store, 9, "IRQ %d", h->irqnum);
+	irq_string_store[9] = '\0';
+	return irq_string_store;
 }
 
 void
