@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.4 2000/02/02 11:49:55 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.5 2000/02/02 13:19:44 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -83,6 +83,9 @@
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 #include <sys/device.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #endif
 
@@ -640,13 +643,17 @@ USB_ATTACH(cue)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
 		  sizeof(struct ether_header));
 #endif
-#if RND > 0
+#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->cue_dev),
 	    RND_TYPE_NET, 0);
 #endif
 
 #endif /* __NetBSD__ */
 	splx(s);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->cue_udev,
+			   USBDEV(sc->cue_dev));
+
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -664,6 +671,9 @@ USB_DETACH(cue)
 	usb_untimeout(cue_tick, sc, sc->cue_stat_ch);
 
 #if defined(__NetBSD__)
+#if NRND > 0
+	rnd_detach_source(&sc->rnd_source);
+#endif
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
@@ -681,6 +691,9 @@ USB_DETACH(cue)
 #endif
 
 	splx(s);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->cue_udev,
+			   USBDEV(sc->cue_dev));
 
 	return (0);
 }

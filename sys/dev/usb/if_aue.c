@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.18 2000/02/02 11:42:29 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.19 2000/02/02 13:19:44 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -102,6 +102,9 @@
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
 #include <sys/device.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
@@ -864,7 +867,7 @@ USB_ATTACH(aue)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
 		  sizeof(struct ether_header));
 #endif
-#if RND > 0
+#if NRND > 0
 	rnd_attach_source(&sc->rnd_source, USBDEVNAME(sc->aue_dev),
 	    RND_TYPE_NET, 0);
 #endif
@@ -872,6 +875,9 @@ USB_ATTACH(aue)
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 	splx(s);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->aue_udev,
+			   USBDEV(sc->aue_dev));
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -892,6 +898,9 @@ USB_DETACH(aue)
 		aue_stop(sc);
 
 #if defined(__NetBSD__)
+#if NRND > 0
+	rnd_detach_source(&sc->rnd_source);
+#endif
 	mii_detach(&sc->aue_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	ifmedia_delete_instance(&sc->aue_mii.mii_media, IFM_INST_ANY);
 #if NBPFILTER > 0
@@ -911,6 +920,9 @@ USB_DETACH(aue)
 #endif
 
 	splx(s);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->aue_udev, 
+			   USBDEV(sc->aue_dev));
 
 	return (0);
 }

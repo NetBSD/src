@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.3 2000/01/28 00:29:53 augustss Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.4 2000/02/02 13:19:44 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -239,7 +239,9 @@ struct aue_softc {
 #elif defined(__NetBSD__)
 	struct ethercom		aue_ec;
 	struct mii_data		aue_mii;
-	char			aue_dying;
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
 #define GET_IFP(sc) (&(sc)->aue_ec.ec_if)
 #define GET_MII(sc) (&(sc)->aue_mii)
 #endif
@@ -253,6 +255,8 @@ struct aue_softc {
 	u_int8_t		aue_link;
 	int			aue_if_flags;
 	struct aue_cdata	aue_cdata;
+
+	char			aue_dying;
 };
 
 #define AUE_TIMEOUT		1000
