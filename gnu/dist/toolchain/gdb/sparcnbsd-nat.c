@@ -105,6 +105,46 @@ supply_fpregs (fregs)
 }
 
 static void
+unsupply_regs (regs)
+     struct reg *regs;
+{
+}
+
+static void
+unsupply_fpregs (regs)
+     struct reg *regs;
+{
+}
+
+void
+nbsd_reg_to_internal (regs)
+     char *regs;
+{
+  supply_regs (regs);
+}
+
+void
+nbsd_fpreg_to_internal (fregs)
+     char *fregs;
+{
+  supply_fpregs (fregs);
+}
+
+void
+nbsd_internal_to_reg (regs)
+     char *regs;
+{
+  unsupply_regs (regs);
+}
+
+void
+nbsd_internal_to_fpreg (fregs)
+     char *fregs;
+{
+  unsupply_fpregs (fregs);
+}
+
+static void
 fetch_core_registers PARAMS ((char *, unsigned int, int, CORE_ADDR));
 
 /* Fetch one or more registers from the inferior.  REGNO == -1 to get
