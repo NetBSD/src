@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.45 1997/08/11 22:53:30 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.46 1997/12/01 05:40:39 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,7 +103,7 @@ struct cfattach grf_ca = {
 #define GDB_MMAP	0x02
 #define GDB_IOMAP	0x04
 #define GDB_LOCK	0x08
-static int grfdebug = (GDB_DEVNO|GDB_MMAP|GDB_IOMAP|GDB_LOCK);
+int grfdebug = 0;
 #endif
 
 int
