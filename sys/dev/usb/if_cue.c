@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.37 2001/12/03 01:47:12 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.38 2001/12/12 15:36:08 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.37 2001/12/03 01:47:12 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.38 2001/12/12 15:36:08 augustss Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -143,7 +143,7 @@ Static struct usb_devno cue_devs[] = {
 	{ USB_VENDOR_SMARTBRIDGES, USB_PRODUCT_SMARTBRIDGES_SMARTLINK },
 	/* Belkin F5U111 adapter covered by NETMATE entry */
 };
-#define cue_lookup(v, p) ((struct cue_type *)usb_lookup(cue_devs, v, p))
+#define cue_lookup(v, p) (usb_lookup(cue_devs, v, p))
 
 USB_DECLARE_DRIVER(cue);
 
