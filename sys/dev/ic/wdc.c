@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.214 2004/10/25 22:42:09 enami Exp $ */
+/*	$NetBSD: wdc.c,v 1.215 2004/10/26 21:21:59 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.214 2004/10/25 22:42:09 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.215 2004/10/26 21:21:59 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -293,8 +293,7 @@ wdc_drvprobe(struct ata_channel *chp)
 			return;
 
 		/* issue an identify, to try to detect ghosts */
-		error = ata_get_params(&chp->ch_drive[i],
-		    AT_WAIT | AT_POLL, &params);
+		error = ata_get_params(&chp->ch_drive[i], AT_WAIT, &params);
 		if (error != CMD_OK) {
 			tsleep(&params, PRIBIO, "atacnf", mstohz(1000));
 
@@ -303,7 +302,7 @@ wdc_drvprobe(struct ata_channel *chp)
 				return;
 
 			error = ata_get_params(&chp->ch_drive[i],
-			    AT_WAIT | AT_POLL, &params);
+			    AT_WAIT, &params);
 		}
 		if (error == CMD_OK) {
 			/* If IDENTIFY succeeded, this is not an OLD ctrl */
