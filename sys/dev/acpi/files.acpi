@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.28 2004/12/02 09:50:42 xtraeme Exp $
+#	$NetBSD: files.acpi,v 1.29 2004/12/02 14:33:31 xtraeme Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -68,3 +68,7 @@ file	dev/acpi/wss_acpi.c		wss_acpi
 # Roland MPU401 (compatible) MIDI UART
 attach	mpu at acpi with mpu_acpi
 file	dev/acpi/mpu_acpi.c		mpu_acpi
+
+# Joystick/Game port
+attach	joy at acpi with joy_acpi
+file	dev/acpi/joy_acpi.c		joy_acpi
