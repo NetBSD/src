@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8 2000/02/24 17:07:35 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.9 2000/03/20 20:44:32 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -156,7 +156,7 @@ microtime(tvp)
 
 #if 0
 #ifdef USE_RTCCLK
-	/* ticks = (16000 - SHREG_TCNT1)*1000000/16000; */
+	/* ticks = (16384 - SHREG_TCNT1)*1000000/16384; */
 	ticks = 1000000 - SHREG_TCNT1*1000/16;
 #else
 	ticks = (PCLOCK/16 - SHREG_TCNT1)/(PCLOCK/16/1000000);
@@ -199,9 +199,9 @@ clockintr(arg)
 
 	/* clear timer counter under flow interrupt flag */
 #ifdef USE_RTCCLK
-        SHREG_TCR1 = 0x0024;
+        SHREG_TCR1 = TCR_UNIE | TCR_TPSC_RTC;
 #else
-        SHREG_TCR1 = 0x0021;
+        SHREG_TCR1 = TCR_UNIE | TCR_TPSC_P16;
 #endif
 
 	hardclock(frame);
@@ -313,8 +313,8 @@ cpu_initclocks()
         /* enable under flow interrupt, up rising edge, RTCCLK */
 	/* RTCCLK == 16kHz */
 	SHREG_TCR1 = TCR_UNIE | TCR_TPSC_RTC;
-	SHREG_TCOR1 = 16000 / hz - 1; /* about 1/HZ Sec */
-	SHREG_TCNT1 = 16000 / hz - 1; /* about 1/HZ Sec */
+	SHREG_TCOR1 = 16384 / hz - 1; /* about 1/HZ Sec */
+	SHREG_TCNT1 = 16384 / hz - 1; /* about 1/HZ Sec */
 #else
         /* enable under flow interrupt, up rising edge, 1/16 Pcyc */
 	SHREG_TCR1 = TCR_UNIE | TCR_TPSC_P16;
@@ -367,8 +367,9 @@ inittodr(base)
 	}
 
 #ifdef SH4
-#define	FROMBCD2(x)	(((x) >> 12) * 1000 + ((x) >> 8) * 100 + \
-			 ((x) >> 4) * 10 + ((x) & 0xf))
+#define	FROMBCD2(x)	((((x) & 0xf000) >> 12) * 1000 + \
+			 (((x) & 0x0f00) >> 8) * 100 + \
+			 (((x) & 0x00f0) >> 4) * 10 + ((x) & 0xf))
 	dt.dt_year = FROMBCD2(SHREG_RYRCNT);
 #else
 	dt.dt_year = 1900 + FROMBCD(SHREG_RYRCNT);
@@ -464,8 +465,9 @@ resettodr()
 	SHREG_RDAYCNT = TOBCD(dt.dt_day);
 	SHREG_RMONCNT = TOBCD(dt.dt_mon);
 #ifdef SH4
-#define TOBCD2(x)	(((x) / 1000 * 4096) + ((x) / 100 * 256) + \
-			 ((x) / 10 * 16) + ((x) % 10))
+#define TOBCD2(x)	((((x) % 10000) / 1000 * 4096) + \
+			 (((x) % 1000) / 100 * 256) + \
+			 ((((x) % 100) / 10) * 16) + ((x) % 10))
 	SHREG_RYRCNT = TOBCD2(dt.dt_year);
 #else
 	SHREG_RYRCNT = TOBCD(dt.dt_year % 100);
