@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 1999/01/16 20:45:58 chuck Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 1999/02/28 00:26:46 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -1085,7 +1085,12 @@ pmap_virtual_space(start, end)
 	 * Reserve one segment for kernel virtual memory
 	 */
 	vmmap = (caddr_t)(ksegv + 4*MEG); /* Start after our locked TLB entry */
-	*start = (vaddr_t)(vmmap + NBPG);
+#ifdef DIAGNOSTIC
+	/* Let's keep 1 page of redzone after the kernel */
+	vmmap += NBPG;
+#endif
+	/* Reserve two pages for pmap_copy_page && /dev/mem */
+	*start = (vaddr_t)(vmmap + 2*NBPG);
 	*end = VM_MAX_KERNEL_ADDRESS;
 #ifdef NOTDEF_DEBUG
 	prom_printf("pmap_virtual_space: %x-%x\r\n", *start, *end);

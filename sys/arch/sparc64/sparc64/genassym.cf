@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 1998/10/08 02:31:40 eeh Exp $
+#	$NetBSD: genassym.cf,v 1.9 1999/02/28 00:26:46 eeh Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -160,6 +160,8 @@ define	FS_QSIZE	offsetof(struct fpstate, fs_qsize)
 define	FS_QUEUE	offsetof(struct fpstate, fs_queue)
 define	FSR_QNE		FSR_QNE
 define	FPRS_FEF	FPRS_FEF
+define	FPRS_DL		FPRS_DL
+define	FPRS_DU		FPRS_DU
 
 # system calls
 define	SYS___sigreturn14 SYS___sigreturn14
