@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.9 1999/09/09 06:33:38 nisimura Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.10 1999/10/01 09:19:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -86,6 +86,5 @@ void    ioasic_intr_disestablish __P((struct device *, void *));
  */
 int	ioasicprint __P((void *, const char *));
 int	ioasic_submatch __P((struct cfdata *, struct ioasicdev_attach_args *));
-char	*ioasic_lance_ether_address __P((void));
 void	ioasic_attach_devs __P((struct ioasic_softc *sc, 
 	    struct ioasic_dev *ioasic_devs, int ioasic_ndevs));
