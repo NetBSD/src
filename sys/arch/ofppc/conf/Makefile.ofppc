@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ofppc,v 1.1 1996/09/30 16:34:18 ws Exp $
+#	$NetBSD: Makefile.ofppc,v 1.2 1996/12/01 06:12:36 jonathan Exp $
 #
 # Makefile for NetBSD
 #
@@ -28,6 +28,7 @@ LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
 SIZE?=	size
+COPTS?= 	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef	S
@@ -39,7 +40,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
 		-Dpowerpc
 CWARNFLAGS=	-Werror -Wreturn-type
-CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-D_LOCORE
 LINKFLAGS=	-N -Ttext 100000 -e start
 STRIPFLAGS=	-d

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.51 1996/09/09 21:07:08 mycroft Exp $
+#	$NetBSD: Makefile.sun3,v 1.52 1996/12/01 06:12:38 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -25,6 +25,7 @@ CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
+COPTS?= 	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -38,7 +39,7 @@ XDEFS=		-undef -D__NetBSD__ -Dm68k -Dmc68000
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dsun3 ${XDEFS}
 CWARNFLAGS= 	-Werror # -Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS= 	${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
+CFLAGS= 	${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 0E004000 -e start
 STRIPFLAGS=	-d

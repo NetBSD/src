@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.37 1996/09/09 21:07:07 mycroft Exp $
+# 	$NetBSD: Makefile.sparc,v 1.38 1996/12/01 06:12:37 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -25,6 +25,7 @@ CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
+COPTS?= 	-O2
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -35,7 +36,7 @@ SPARC=	$S/arch/sparc
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 
+CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -p -Ttext F8004000 -e start
 STRIPFLAGS=	-d

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.24 1996/10/16 12:53:46 leo Exp $
+#	$NetBSD: Makefile.atari,v 1.25 1996/12/01 06:12:29 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -25,6 +25,7 @@ CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
+COPTS?= 	-O2 -mc68020
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
@@ -36,7 +37,7 @@ INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Datari
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float -mc68020
+CFLAGS=		${DEBUG} ${COPT} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d
