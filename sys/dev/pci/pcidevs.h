@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.578 2003/09/26 07:47:14 matt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.579 2003/10/08 21:17:27 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.580 2003/09/26 07:45:15 matt Exp 
+ *	NetBSD: pcidevs,v 1.581 2003/10/08 21:15:33 jonathan Exp 
  */
 
 /*
@@ -1389,6 +1389,8 @@
 #define	PCI_PRODUCT_HIFN_6500	0x0006		/* 6500 */
 #define	PCI_PRODUCT_HIFN_7811	0x0007		/* 7811 */
 #define	PCI_PRODUCT_HIFN_7951	0x0012		/* 7951 */
+#define	PCI_PRODUCT_HIFN_7955	0x0020		/* 7954/7955 */
+#define	PCI_PRODUCT_HIFN_7956	0x001d		/* 7956 */
 #define	PCI_PRODUCT_HIFN_78XX	0x0014		/* 7814/7851/7854 */
 #define	PCI_PRODUCT_HIFN_8065	0x0016		/* 8065 */
 #define	PCI_PRODUCT_HIFN_8165	0x0017		/* 8165 */
