@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.76 2004/12/11 10:15:02 jdolecek Exp $
+.\"	$NetBSD: pci.4,v 1.77 2005/02/20 18:58:34 jdolecek Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -230,6 +230,8 @@ interfaces.
 Sundance/Tamarack TC9021 based Gigabit
 .Tn Ethernet
 interfaces.
+.It ti
+Alteon Networks Tigon I and Tigon II gigabit Ethernet driver.
 .It tl
 Texas Instruments ThunderLAN-based
 .Tn Ethernet
@@ -238,6 +240,8 @@ interfaces.
 DECchip 21x4x and clone
 .Tn Ethernet
 interfaces.
+.It vge
+VIA Networking Technologies VT6122 PCI Gigabit Ethernet adapter driver.
 .It vr
 VIA VT3043 (Rhine) and VT86C100A (Rhine-II)
 .Tn Ethernet
@@ -404,12 +408,14 @@ VGA graphics boards.
 .Xr ste 4 ,
 .Xr stge 4 ,
 .Xr sv 4 ,
+.Xr ti 4 ,
 .Xr tl 4 ,
 .Xr tlp 4 ,
 .Xr trm 4 ,
 .Xr twe 4 ,
 .Xr uhci 4 ,
 .Xr vga 4 ,
+.Xr vge 4 ,
 .Xr viapm 4 ,
 .Xr vr 4 ,
 .Xr wi 4 ,
