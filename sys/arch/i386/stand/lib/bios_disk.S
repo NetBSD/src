@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.11 2003/02/05 21:41:51 dsl Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.12 2003/03/08 21:09:37 dsl Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -125,29 +125,28 @@ ENTRY(biosread)
 	orb	%al, %cl
 	incb	%cl		# sector; sec starts from 1, not 0
 	movb	8(%ebp), %dl	# device
+	movl	28(%ebp), %ebx	# buffer address (may be >64k)
+	movb	24(%ebp), %al	# number of sectors
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 	.code16
 
-	movl	28(%bp), %ebx	# buffer address (may be >64k)
-	movl	%ebx, %eax
-	shrl	$4, %eax	# max segment
-	andl	$0xf, %ebx	# and min offset - to avoid overrun
+	push	%bx
+	shrl	$4, %ebx	# max segment
 	mov	%ds, %si
-	add	%si, %ax
-	mov	%ax, %es	# %es:%bx now valid buffer address
+	add	%si, %bx
+	mov	%bx, %es	# %es:%bx now valid buffer address
+	pop	%bx
+	and	$0xf, %bx	# and min offset - to avoid overrun
 
 	movb	$0x2, %ah	# subfunction
-	movb	24(%bp), %al	# number of sectors
 	int	$0x13
-	setc	%bl
-	movb	%ah, %bh	# save error code
+	setc	%al		# error code is in %ah
 	
 	calll	_C_LABEL(real_to_prot) # back to protected mode
 	.code32
 
-	xorl	%eax, %eax
-	movw	%bx, %ax	# return value in %ax
+	andl	$0xffff, %eax
 
 	pop	%edi
 	pop	%esi
