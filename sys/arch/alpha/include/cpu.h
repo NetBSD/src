@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.29 1998/11/11 06:41:23 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.30 1998/11/19 01:51:40 ross Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -132,70 +132,9 @@ struct reg;
 struct rpb;
 struct trapframe;
 
-/* Per-CPU info for handling machine checks, an array of which		*/
-/* is allocated early in startup					*/
-struct mchkinfo {
-	volatile u_int		mc_expected;	/* machine check expected */
-	volatile u_int		mc_received;	/* machine check received */
-	/*
-	 * We don't really need more info at this time.
-	 */
-};
-
 extern int cold;
-extern struct proc *fpcurproc;
-extern struct rpb *hwrpb;
-struct mchkinfo *cpu_mchkinfo __P((void));
 
-void	XentArith __P((u_int64_t, u_int64_t, u_int64_t));	/* MAGIC */
-void	XentIF __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
-void	XentInt __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
-void	XentMM __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
-void	XentRestart __P((void));				/* MAGIC */
-void	XentSys __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
-void	XentUna __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
-void	alpha_init __P((u_long, u_long, u_long, u_long, u_long));
-int	alpha_pa_access __P((u_long));
-void	ast __P((struct trapframe *));
 int	badaddr	__P((void *, size_t));
-int	badaddr_read __P((void *, size_t, void *));
-void	child_return __P((void *));
-u_int64_t console_restart __P((u_int64_t, u_int64_t, u_int64_t));
-void	do_sir __P((void));
-void	dumpconf __P((void));
-void	exception_return __P((void));				/* MAGIC */
-void	frametoreg __P((struct trapframe *, struct reg *));
-long	fswintrberr __P((void));				/* MAGIC */
-void	init_bootstrap_console __P((void));
-void	init_prom_interface __P((struct rpb *));
-void	interrupt
-	__P((unsigned long, unsigned long, unsigned long, struct trapframe *));
-void	machine_check
-	__P((unsigned long, struct trapframe *, unsigned long, unsigned long));
-u_int64_t hwrpb_checksum __P((void));
-void	hwrpb_restart_setup __P((void));
-void	regdump __P((struct trapframe *));
-void	regtoframe __P((struct reg *, struct trapframe *));
-void	savectx __P((struct pcb *));
-void	set_iointr __P((void (*)(void *, unsigned long)));
-void    switch_exit __P((struct proc *));			/* MAGIC */
-void	switch_trampoline __P((void));				/* MAGIC */
-void	syscall __P((u_int64_t, struct trapframe *));
-void	trap __P((unsigned long, unsigned long, unsigned long, unsigned long,
-	    struct trapframe *));
-void	trap_init __P((void));
-
-/* Multiprocessor glue; cpu.c */
-struct cpu_softc;
-int	cpu_iccb_send __P((long, const char *));
-void	cpu_iccb_receive __P((void));
-void	cpu_hatch __P((struct cpu_softc *));
-void	cpu_run_spinup_queue __P((void));
-void	cpu_halt_secondary __P((unsigned long));
-void	cpu_spinup_trampoline __P((void));			/* MAGIC */
-void	cpu_pause __P((unsigned long));
-void	cpu_resume __P((unsigned long));
 
 #endif /* _KERNEL */
-
 #endif /* _ALPHA_CPU_H_ */
