@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.27 2000/11/14 23:57:03 is Exp $
+.\"	$NetBSD: install,v 1.28 2001/02/11 11:30:54 is Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,6 +83,12 @@ with
 like so:
 .Pp
 .Dl Ic "loadbsd -b netbsd"
+.Pp
+Be sure to have one of the kernels from the
+.Pa binary/kernel
+directory unpacked as
+.Sq Ic netbsd
+in your current working directory when running this command.
 .Pp
 If you have an AGA machine, and your monitor will handle
 the dblNTSC mode, you may also include the
