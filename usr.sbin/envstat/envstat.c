@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.12 2003/02/20 20:57:08 christos Exp $ */
+/*	$NetBSD: envstat.c,v 1.13 2003/02/21 07:23:43 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.12 2003/02/20 20:57:08 christos Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.13 2003/02/21 07:23:43 martin Exp $");
 #endif
 
 #include <fcntl.h>
@@ -317,13 +317,13 @@ values(size_t width, int celsius, envsys_tre_data_t *etds,
 				    273.15;
 				if (!celsius)
 					temp = (9.0 / 5.0) * temp + 32.0;
-				printf(" %*.2f", width, temp);
+				printf(" %*.2f", (int)width, temp);
 				break;
 			case ENVSYS_SFANRPM:
-				printf(" %*u", width, etds[i].cur.data_us);
+				printf(" %*u", (int)width, etds[i].cur.data_us);
 				break;
 			default:
-				printf(" %*.2f", width, etds[i].cur.data_s /
+				printf(" %*.2f", (int)width, etds[i].cur.data_s /
 				       1000000.0);
 				break;
 			}
