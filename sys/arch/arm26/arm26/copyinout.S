@@ -1,4 +1,4 @@
-/* $NetBSD: copyinout.S,v 1.5 2001/02/28 11:55:39 bjh21 Exp $ */
+/* $NetBSD: copyinout.S,v 1.6 2001/08/20 22:56:10 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: copyinout.S,v 1.5 2001/02/28 11:55:39 bjh21 Exp $")
+RCSID("$NetBSD: copyinout.S,v 1.6 2001/08/20 22:56:10 bjh21 Exp $")
 
 #include <sys/errno.h>
 #include "assym.h"
@@ -49,7 +49,7 @@ RCSID("$NetBSD: copyinout.S,v 1.5 2001/02/28 11:55:39 bjh21 Exp $")
  * slower, but safer.
  */
 
-/* int copyin(const void *uaddr, void *kaddr, size_t len); */
+/* LINTSTUB: Func: int copyin(const void *uaddr, void *kaddr, size_t len) */
 ENTRY(copyin)
 	mov	ip, sp
 	stmfd	sp!, {r4, fp, ip, lr, pc}
@@ -75,7 +75,7 @@ Lcopyinskip:
 	ldmdb	fp, {r4, fp, sp, pc}
 #endif
 
-/* int copyout(const void *kaddr, void *uaddr, size_t len); */
+/* LINTSTUB: Func: int copyout(const void *kaddr, void *uaddr, size_t len) */
 ENTRY(copyout)
 	mov	ip, sp
 	stmfd	sp!, {r4, fp, ip, lr, pc}
@@ -101,7 +101,7 @@ Lcopyoutskip:
 	ldmdb	fp, {r4, fp, sp, pc}
 #endif
 
-/* int kcopy(const void *kfaddr, void *kdaddr, size_t len); */
+/* LINTSTUB: Func: int kcopy(const void *kfaddr, void *kdaddr, size_t len) */
 ENTRY(kcopy)
 	mov	ip, sp
 	stmfd	sp!, {r4, fp, ip, lr, pc}
@@ -137,7 +137,7 @@ Lcopyfault:
 	ldmdb	fp, {r4, fp, sp, pc}
 #endif
 
-/* int copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done); */
+/* LINTSTUB: Func: int copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done) */
 ENTRY(copyinstr)
 	mov	ip, sp
 	stmfd	sp!, {r4, r5, r6, fp, ip, lr, pc}
@@ -167,7 +167,7 @@ Lcopyinstrloop:
 	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
 #endif
 
-/* int copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done); */
+/* LINTSTUB: Func: int copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done) */
 ENTRY(copyoutstr)
 	mov	ip, sp
 	stmfd	sp!, {r4, r5, r6, fp, ip, lr, pc}
@@ -197,7 +197,7 @@ Lcopyoutstrloop:
 	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
 #endif
 
-/* int copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done); */
+/* LINTSTUB: Func: int copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done) */
 ENTRY(copystr)
 	mov	ip, sp
 	stmfd	sp!, {r4, r5, r6, fp, ip, lr, pc}
@@ -236,7 +236,7 @@ Lcopystrfault:
 	ldmdb	fp, {r4, r5, r6, fp, sp, pc}
 #endif
 
-/* int fubyte(void *base); */
+/* LINTSTUB: Func: int fubyte(void *base) */
 ENTRY(fubyte)
 	mov	ip, lr			/* data-abort safety */
 	adr	r1, Lfusufault
@@ -244,6 +244,7 @@ ENTRY(fubyte)
 	ldr	r2, [r2]
 	ldr	r2, [r2, #P_ADDR]
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
+/* XXX Warning: Rn and Rd must be different in LDRT */
 	ldrbt	r0, [r0]
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
@@ -253,7 +254,7 @@ ENTRY(fubyte)
 	mov	pc, ip
 #endif
 
-/* int fuword(void *base); */
+/* LINTSTUB: Func: int fuword(void *base) */
 ENTRY(fuword)
 	mov	ip, lr
 	adr	r1, Lfusufault
@@ -261,6 +262,7 @@ ENTRY(fuword)
 	ldr	r2, [r2]
 	ldr	r2, [r2, #P_ADDR]
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
+/* XXX Warning: Rn and Rd must be different in LDRT */
 	ldrt	r0, [r0]
 	mov	r1, #0
 	str	r1, [r2, #(U_PCB + PCB_ONFAULT)]
@@ -270,7 +272,7 @@ ENTRY(fuword)
 	mov	pc, ip
 #endif
 
-/* int subyte(void *base, int c); */
+/* LINTSTUB: Func: int subyte(void *base, int c) */
 ENTRY(subyte)
 	mov	ip, lr
 	adr	r3, Lfusufault
@@ -287,7 +289,7 @@ ENTRY(subyte)
 	mov	pc, ip
 #endif
 
-/* int suword(void *base, long c); */
+/* LINTSTUB: Func: int suword(void *base, long c) */
 ENTRY(suword)
 	mov	ip, lr
 	adr	r3, Lfusufault
@@ -316,4 +318,3 @@ Lfusufault:
 
 Lcurproc:
 	.word	_C_LABEL(curproc)
-	
