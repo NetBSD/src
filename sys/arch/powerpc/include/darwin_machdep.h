@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.h,v 1.2 2002/11/26 23:54:10 manu Exp $ */
+/*	$NetBSD: darwin_machdep.h,v 1.1 2002/11/26 23:54:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,49 +36,64 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_DARWIN_DARWIN_H_
-#define	_DARWIN_DARWIN_H_
+#ifndef	_DARWIN_MACHDEP_H_
+#define	_DARWIN_MACHDEP_H_
 
-#define DARWIN_SA_USERTRAMP 0x0100
-
-union darwin_sigval {
-	int sigval_int;
-	void *sigval_ptr;
+struct darwin_ppc_exception_state {
+	unsigned long dar;
+	unsigned long dsisr;
+	unsigned long exception;
+	unsigned long pad[5];
 };
 
-typedef struct darwin___siginfo {
-	int si_signo;
-	int si_errno;
-	int si_code;
-	int si_pid;
-	unsigned int si_uid;
-	int si_status;
-	void *si_addr;
-	union darwin_sigval si_value;
-	long si_band;
-	int pad[7];
-} darwin_siginfo_t;
-
-struct darwin_ucontext {
-	int uc_onstack;
-	sigset13_t uc_sigmask;
-	stack_t uc_stack;
-	struct darwin_ucontext *uc_link;
-	size_t uc_mcsize;
-	struct darwin_mcontext *uc_mcontext;
+struct darwin_ppc_thread_state {
+	unsigned int srr0;
+	unsigned int srr1;
+	unsigned int gpreg[32];
+	unsigned int cr;
+	unsigned int xer;
+	unsigned int lr;
+	unsigned int ctr;
+	unsigned int mq;
+	unsigned int vrsave;
 };
 
-struct darwin___sigaction {
-	union {
-		void (*__sa_handler)(int);
-		void (*__sa_sigaction)(int, struct darwin___siginfo *, void *);
-	} sa_handler;
-	void (*sa_tramp)(void *, int, int, darwin_siginfo_t *, void *);
-	sigset13_t sa_mask;
-	int sa_flags;
+struct darwin_ppc_float_state {
+	double  fpregs[32];
+	unsigned int fpscr_pad;
+	unsigned int fpscr;
 };
 
-void darwin_sendsig(int, sigset_t *, u_long);
+struct darwin_ppc_vector_state {
+	unsigned long vr[32][4];
+	unsigned long vscr[4];
+	unsigned int pad1[4];
+	unsigned int vrvalid;
+	unsigned int pad2[7];
+};
 
-#endif /* _DARWIN_DARWIN_H_ */
+struct darwin_mcontext {
+	struct darwin_ppc_exception_state es;   
+	struct darwin_ppc_thread_state ss;
+	struct darwin_ppc_float_state fs;
+	struct darwin_ppc_vector_state vs;			
+};
 
+struct darwin_sigframe {
+	int nocopy1[30];
+	/* struct darwin_mcontext without the vs field */
+	struct darwin__mcontext {
+		struct darwin_ppc_exception_state es;
+		struct darwin_ppc_thread_state ss;
+		struct darwin_ppc_float_state fs;
+	} dmc;
+	int nocopy2[144];
+	/* struct darwin_ucontext with some padding */
+	struct darwin__ucontext {
+		darwin_siginfo_t si;
+		struct darwin_ucontext uctx;
+	} duc;
+	int nocopy3[56];
+};
+
+#endif /* !_DARWIN_MACHDEP_H_ */
