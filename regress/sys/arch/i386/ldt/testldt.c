@@ -1,4 +1,4 @@
-/*	$NetBSD: testldt.c,v 1.11 2003/08/11 17:19:51 drochner Exp $	*/
+/*	$NetBSD: testldt.c,v 1.12 2003/09/12 16:18:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -197,9 +197,9 @@ print_ldt(union descriptor *dp)
 
 /* ARGSUSED */
 static void
-busfault(int signo, int code, struct sigcontext *sc)
+busfault(int signo)
 {
-	errx(1, "\nbus fault - investigate.");
+	errx(1, "%s\n - investigate.", sys_siglist[signo]);
 }
 
 static void
@@ -223,7 +223,7 @@ main(int argc, char *argv[])
 	struct sigaction segv_act;
 	int verbose = 0;
 
-	segv_act.sa_handler = (sig_t) busfault;
+	segv_act.sa_handler = busfault;
 	if (sigaction(SIGBUS, &segv_act, NULL) < 0)
 		err(1, "sigaction");
 
