@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.456 2002/03/23 23:39:57 shin Exp $
+# $NetBSD: mi,v 1.457 2002/03/24 22:21:06 bjh21 Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -434,6 +434,15 @@
 ./usr/share/man/cat1/zgrep.0			man-util-catman
 ./usr/share/man/cat1/zmore.0			man-util-catman
 ./usr/share/man/cat1/znew.0			man-util-catman
+./usr/share/man/cat4/acorn26/arckbd.0		man-sys-catman
+./usr/share/man/cat4/acorn26/arcwskbd.0		man-sys-catman
+./usr/share/man/cat4/acorn26/arcwsmouse.0		man-sys-catman
+./usr/share/man/cat4/acorn26/cpu.0		man-sys-catman
+./usr/share/man/cat4/acorn26/eca.0		man-sys-catman
+./usr/share/man/cat4/acorn26/eh.0			man-sys-catman
+./usr/share/man/cat4/acorn26/ei.0			man-sys-catman
+./usr/share/man/cat4/acorn26/podulebus.0		man-sys-catman
+./usr/share/man/cat4/acorn26/unixbp.0		man-sys-catman
 ./usr/share/man/cat4/acphy.0			man-sys-catman
 ./usr/share/man/cat4/adv.0			man-sys-catman
 ./usr/share/man/cat4/adw.0			man-sys-catman
@@ -494,15 +503,6 @@
 ./usr/share/man/cat4/amiga/zssc.0		man-sys-catman
 ./usr/share/man/cat4/an.0			man-sys-catman
 ./usr/share/man/cat4/aria.0			man-sys-catman
-./usr/share/man/cat4/arm26/arckbd.0		man-sys-catman
-./usr/share/man/cat4/arm26/arcwskbd.0		man-sys-catman
-./usr/share/man/cat4/arm26/arcwsmouse.0		man-sys-catman
-./usr/share/man/cat4/arm26/cpu.0		man-sys-catman
-./usr/share/man/cat4/arm26/eca.0		man-sys-catman
-./usr/share/man/cat4/arm26/eh.0			man-sys-catman
-./usr/share/man/cat4/arm26/ei.0			man-sys-catman
-./usr/share/man/cat4/arm26/podulebus.0		man-sys-catman
-./usr/share/man/cat4/arm26/unixbp.0		man-sys-catman
 ./usr/share/man/cat4/arm32/asc.0		man-sys-catman
 ./usr/share/man/cat4/arm32/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/arm32/beep.0		man-sys-catman
@@ -1198,6 +1198,10 @@
 ./usr/share/man/cat7/symlink.0			man-reference-catman
 ./usr/share/man/cat8/ac.0			man-sysutil-catman
 ./usr/share/man/cat8/accton.0			man-sysutil-catman
+./usr/share/man/cat8/acorn26/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/acorn26/boot.0		man-sys-catman
+./usr/share/man/cat8/acorn26/boot26.0		man-sys-catman
+./usr/share/man/cat8/acorn26/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/acorn32/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/acorn32/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/adduser.0			man-sysutil-catman
@@ -1219,10 +1223,6 @@
 ./usr/share/man/cat8/apmd.0			man-sysutil-catman
 ./usr/share/man/cat8/arc/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/arc/makedev.0		man-sysutil-catman
-./usr/share/man/cat8/arm26/MAKEDEV.0		man-sysutil-catman
-./usr/share/man/cat8/arm26/boot.0		man-sys-catman
-./usr/share/man/cat8/arm26/boot26.0		man-sys-catman
-./usr/share/man/cat8/arm26/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/arm32/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/arm32/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/arp.0			man-netutil-catman
@@ -2110,6 +2110,15 @@
 ./usr/share/man/man1/zgrep.1			man-util-man
 ./usr/share/man/man1/zmore.1			man-util-man
 ./usr/share/man/man1/znew.1			man-util-man
+./usr/share/man/man4/acorn26/arckbd.4		man-sys-man
+./usr/share/man/man4/acorn26/arcwskbd.4		man-sys-man
+./usr/share/man/man4/acorn26/arcwsmouse.4		man-sys-man
+./usr/share/man/man4/acorn26/cpu.4		man-sys-man
+./usr/share/man/man4/acorn26/eca.4		man-sys-man
+./usr/share/man/man4/acorn26/eh.4			man-sys-man
+./usr/share/man/man4/acorn26/ei.4			man-sys-man
+./usr/share/man/man4/acorn26/podulebus.4		man-sys-man
+./usr/share/man/man4/acorn26/unixbp.4		man-sys-man
 ./usr/share/man/man4/acphy.4			man-sys-man
 ./usr/share/man/man4/adv.4			man-sys-man
 ./usr/share/man/man4/adw.4			man-sys-man
@@ -2170,15 +2179,6 @@
 ./usr/share/man/man4/amiga/zssc.4		man-sys-man
 ./usr/share/man/man4/an.4			man-sys-man
 ./usr/share/man/man4/aria.4			man-sys-man
-./usr/share/man/man4/arm26/arckbd.4		man-sys-man
-./usr/share/man/man4/arm26/arcwskbd.4		man-sys-man
-./usr/share/man/man4/arm26/arcwsmouse.4		man-sys-man
-./usr/share/man/man4/arm26/cpu.4		man-sys-man
-./usr/share/man/man4/arm26/eca.4		man-sys-man
-./usr/share/man/man4/arm26/eh.4			man-sys-man
-./usr/share/man/man4/arm26/ei.4			man-sys-man
-./usr/share/man/man4/arm26/podulebus.4		man-sys-man
-./usr/share/man/man4/arm26/unixbp.4		man-sys-man
 ./usr/share/man/man4/arm32/asc.4		man-sys-man
 ./usr/share/man/man4/arm32/autoconf.4		man-sys-man
 ./usr/share/man/man4/arm32/beep.4		man-sys-man
@@ -2874,6 +2874,10 @@
 ./usr/share/man/man7/symlink.7			man-reference-man
 ./usr/share/man/man8/ac.8			man-sysutil-man
 ./usr/share/man/man8/accton.8			man-sysutil-man
+./usr/share/man/man8/acorn26/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/acorn26/boot.8		man-sys-man
+./usr/share/man/man8/acorn26/boot26.8		man-sys-man
+./usr/share/man/man8/acorn26/makedev.8		man-sysutil-man
 ./usr/share/man/man8/acorn32/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/acorn32/makedev.8		man-sysutil-man
 ./usr/share/man/man8/adduser.8			man-sysutil-man
@@ -2895,10 +2899,6 @@
 ./usr/share/man/man8/apmd.8			man-sysutil-man
 ./usr/share/man/man8/arc/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/arc/makedev.8		man-sysutil-man
-./usr/share/man/man8/arm26/MAKEDEV.8		man-sysutil-man
-./usr/share/man/man8/arm26/boot.8		man-sys-man
-./usr/share/man/man8/arm26/boot26.8		man-sys-man
-./usr/share/man/man8/arm26/makedev.8		man-sysutil-man
 ./usr/share/man/man8/arm32/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/arm32/makedev.8		man-sysutil-man
 ./usr/share/man/man8/arp.8			man-netutil-man
