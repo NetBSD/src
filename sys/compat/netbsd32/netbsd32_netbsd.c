@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.18 1999/09/28 14:47:02 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.19 1999/10/11 01:36:23 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -47,6 +47,7 @@
 #include <sys/kernel.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
+#define msg __msg /* Don't ask me! */
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/malloc.h>
@@ -410,8 +411,8 @@ netbsd32_to_ipc_perm(ip32p, ipp)
 	ipp->uid = ip32p->uid;
 	ipp->gid = ip32p->gid;
 	ipp->mode = ip32p->mode;
-	ipp->seq = ip32p->seq;
-	ipp->key = (key_t)ip32p->key;
+	ipp->_seq = ip32p->_seq;
+	ipp->_key = (key_t)ip32p->_key;
 }
 
 static __inline void
@@ -425,8 +426,8 @@ netbsd32_from_ipc_perm(ipp, ip32p)
 	ip32p->uid = ipp->uid;
 	ip32p->gid = ipp->gid;
 	ip32p->mode = ipp->mode;
-	ip32p->seq = ipp->seq;
-	ip32p->key = (netbsd32_key_t)ipp->key;
+	ip32p->_seq = ipp->_seq;
+	ip32p->_key = (netbsd32_key_t)ipp->_key;
 }
 
 static __inline void
@@ -460,9 +461,9 @@ netbsd32_to_msqid_ds(ds32p, dsp)
 {
 
 	netbsd32_to_ipc_perm(&ds32p->msg_perm, &dsp->msg_perm);
-	netbsd32_to_msg((struct netbsd32_msg *)(u_long)ds32p->msg_first, dsp->msg_first);
-	netbsd32_to_msg((struct netbsd32_msg *)(u_long)ds32p->msg_last, dsp->msg_last);
-	dsp->msg_cbytes = (u_long)ds32p->msg_cbytes;
+	netbsd32_to_msg((struct netbsd32_msg *)(u_long)ds32p->_msg_first, dsp->_msg_first);
+	netbsd32_to_msg((struct netbsd32_msg *)(u_long)ds32p->_msg_last, dsp->_msg_last);
+	dsp->_msg_cbytes = (u_long)ds32p->_msg_cbytes;
 	dsp->msg_qnum = (u_long)ds32p->msg_qnum;
 	dsp->msg_qbytes = (u_long)ds32p->msg_qbytes;
 	dsp->msg_lspid = ds32p->msg_lspid;
@@ -479,9 +480,9 @@ netbsd32_from_msqid_ds(dsp, ds32p)
 {
 
 	netbsd32_from_ipc_perm(&dsp->msg_perm, &ds32p->msg_perm);
-	netbsd32_from_msg(dsp->msg_first, (struct netbsd32_msg *)(u_long)ds32p->msg_first);
-	netbsd32_from_msg(dsp->msg_last, (struct netbsd32_msg *)(u_long)ds32p->msg_last);
-	ds32p->msg_cbytes = (netbsd32_u_long)dsp->msg_cbytes;
+	netbsd32_from_msg(dsp->_msg_first, (struct netbsd32_msg *)(u_long)ds32p->_msg_first);
+	netbsd32_from_msg(dsp->_msg_last, (struct netbsd32_msg *)(u_long)ds32p->_msg_last);
+	ds32p->_msg_cbytes = (netbsd32_u_long)dsp->_msg_cbytes;
 	ds32p->msg_qnum = (netbsd32_u_long)dsp->msg_qnum;
 	ds32p->msg_qbytes = (netbsd32_u_long)dsp->msg_qbytes;
 	ds32p->msg_lspid = dsp->msg_lspid;
@@ -505,7 +506,7 @@ netbsd32_to_shmid_ds(ds32p, dsp)
 	dsp->shm_atime = (long)ds32p->shm_atime;
 	dsp->shm_dtime = (long)ds32p->shm_dtime;
 	dsp->shm_ctime = (long)ds32p->shm_ctime;
-	dsp->shm_internal = (void *)(u_long)ds32p->shm_internal;
+	dsp->_shm_internal = (void *)(u_long)ds32p->_shm_internal;
 }
 
 static __inline void
@@ -522,7 +523,7 @@ netbsd32_from_shmid_ds(dsp, ds32p)
 	ds32p->shm_atime = (netbsd32_long)dsp->shm_atime;
 	ds32p->shm_dtime = (netbsd32_long)dsp->shm_dtime;
 	ds32p->shm_ctime = (netbsd32_long)dsp->shm_ctime;
-	ds32p->shm_internal = (netbsd32_voidp)(u_long)dsp->shm_internal;
+	ds32p->_shm_internal = (netbsd32_voidp)(u_long)dsp->_shm_internal;
 }
 
 static __inline void
@@ -532,7 +533,7 @@ netbsd32_to_semid_ds(s32dsp, dsp)
 {
 
 	netbsd32_from_ipc_perm(&dsp->sem_perm, &s32dsp->sem_perm);
-	dsp->sem_base = (struct sem *)(u_long)s32dsp->sem_base;
+	dsp->_sem_base = (struct __sem *)(u_long)s32dsp->_sem_base;
 	dsp->sem_nsems = s32dsp->sem_nsems;
 	dsp->sem_otime = s32dsp->sem_otime;
 	dsp->sem_ctime = s32dsp->sem_ctime;
@@ -545,7 +546,7 @@ netbsd32_from_semid_ds(dsp, s32dsp)
 {
 
 	netbsd32_to_ipc_perm(&s32dsp->sem_perm, &dsp->sem_perm);
-	s32dsp->sem_base = (netbsd32_semp_t)(u_long)dsp->sem_base;
+	s32dsp->_sem_base = (netbsd32_semp_t)(u_long)dsp->_sem_base;
 	s32dsp->sem_nsems = dsp->sem_nsems;
 	s32dsp->sem_otime = dsp->sem_otime;
 	s32dsp->sem_ctime = dsp->sem_ctime;
@@ -559,12 +560,12 @@ netbsd32_from_semid_ds(dsp, s32dsp)
 
 
 int
-compat_netbsd32_exit(p, v, retval)
+netbsd32_exit(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_exit_args /* {
+	struct netbsd32_exit_args /* {
 		syscallarg(int) rval;
 	} */ *uap = v;
 	struct sys_exit_args ua;
@@ -574,12 +575,12 @@ compat_netbsd32_exit(p, v, retval)
 }
 
 int
-compat_netbsd32_read(p, v, retval)
+netbsd32_read(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_read_args /* {
+	struct netbsd32_read_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) nbyte;
@@ -593,12 +594,12 @@ compat_netbsd32_read(p, v, retval)
 }
 
 int
-compat_netbsd32_write(p, v, retval)
+netbsd32_write(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_write_args /* {
+	struct netbsd32_write_args /* {
 		syscallarg(int) fd;
 		syscallarg(const netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) nbyte;
@@ -612,12 +613,12 @@ compat_netbsd32_write(p, v, retval)
 }
 
 int
-compat_netbsd32_close(p, v, retval)
+netbsd32_close(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_close_args /* {
+	struct netbsd32_close_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
 	struct sys_close_args ua;
@@ -627,12 +628,12 @@ compat_netbsd32_close(p, v, retval)
 }
 
 int
-compat_netbsd32_open(p, v, retval)
+netbsd32_open(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_open_args /* {
+	struct netbsd32_open_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) flags;
 		syscallarg(mode_t) mode;
@@ -650,12 +651,12 @@ compat_netbsd32_open(p, v, retval)
 }
 
 int
-compat_netbsd32_wait4(q, v, retval)
+netbsd32_wait4(q, v, retval)
 	struct proc *q;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_wait4_args /* {
+	struct netbsd32_wait4_args /* {
 		syscallarg(int) pid;
 		syscallarg(netbsd32_intp) status;
 		syscallarg(int) options;
@@ -779,12 +780,12 @@ loop:
 }
 
 int
-compat_netbsd32_link(p, v, retval)
+netbsd32_link(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_link_args /* {
+	struct netbsd32_link_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(const netbsd32_charp) link;
 	} */ *uap = v;
@@ -796,12 +797,12 @@ compat_netbsd32_link(p, v, retval)
 }
 
 int
-compat_netbsd32_unlink(p, v, retval)
+netbsd32_unlink(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_unlink_args /* {
+	struct netbsd32_unlink_args /* {
 		syscallarg(const netbsd32_charp) path;
 	} */ *uap = v;
 	struct sys_unlink_args ua;
@@ -812,12 +813,12 @@ compat_netbsd32_unlink(p, v, retval)
 }
 
 int
-compat_netbsd32_chdir(p, v, retval)
+netbsd32_chdir(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_chdir_args /* {
+	struct netbsd32_chdir_args /* {
 		syscallarg(const netbsd32_charp) path;
 	} */ *uap = v;
 	struct sys_chdir_args ua;
@@ -828,12 +829,12 @@ compat_netbsd32_chdir(p, v, retval)
 }
 
 int
-compat_netbsd32_fchdir(p, v, retval)
+netbsd32_fchdir(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_fchdir_args /* {
+	struct netbsd32_fchdir_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
 	struct sys_fchdir_args ua;
@@ -844,12 +845,12 @@ compat_netbsd32_fchdir(p, v, retval)
 }
 
 int
-compat_netbsd32_mknod(p, v, retval)
+netbsd32_mknod(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_mknod_args /* {
+	struct netbsd32_mknod_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(mode_t) mode;
 		syscallarg(dev_t) dev;
@@ -864,12 +865,12 @@ compat_netbsd32_mknod(p, v, retval)
 }
 
 int
-compat_netbsd32_chmod(p, v, retval)
+netbsd32_chmod(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_chmod_args /* {
+	struct netbsd32_chmod_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
@@ -882,12 +883,12 @@ compat_netbsd32_chmod(p, v, retval)
 }
 
 int
-compat_netbsd32_chown(p, v, retval)
+netbsd32_chown(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_chown_args /* {
+	struct netbsd32_chown_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(uid_t) uid;
 		syscallarg(gid_t) gid;
@@ -902,12 +903,12 @@ compat_netbsd32_chown(p, v, retval)
 }
 
 int
-compat_netbsd32_break(p, v, retval)
+netbsd32_break(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_break_args /* {
+	struct netbsd32_break_args /* {
 		syscallarg(netbsd32_charp) nsize;
 	} */ *uap = v;
 	struct sys_obreak_args ua;
@@ -918,12 +919,12 @@ compat_netbsd32_break(p, v, retval)
 }
 
 int
-compat_netbsd32_getfsstat(p, v, retval)
+netbsd32_getfsstat(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getfsstat_args /* {
+	struct netbsd32_getfsstat_args /* {
 		syscallarg(netbsd32_statfsp_t) buf;
 		syscallarg(netbsd32_long) bufsize;
 		syscallarg(int) flags;
@@ -954,12 +955,12 @@ compat_netbsd32_getfsstat(p, v, retval)
 }
 
 int
-compat_netbsd32_mount(p, v, retval)
+netbsd32_mount(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_mount_args /* {
+	struct netbsd32_mount_args /* {
 		syscallarg(const netbsd32_charp) type;
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) flags;
@@ -975,12 +976,12 @@ compat_netbsd32_mount(p, v, retval)
 }
 
 int
-compat_netbsd32_unmount(p, v, retval)
+netbsd32_unmount(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_unmount_args /* {
+	struct netbsd32_unmount_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
@@ -992,12 +993,12 @@ compat_netbsd32_unmount(p, v, retval)
 }
 
 int
-compat_netbsd32_setuid(p, v, retval)
+netbsd32_setuid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setuid_args /* {
+	struct netbsd32_setuid_args /* {
 		syscallarg(uid_t) uid;
 	} */ *uap = v;
 	struct sys_setuid_args ua;
@@ -1007,12 +1008,12 @@ compat_netbsd32_setuid(p, v, retval)
 }
 
 int
-compat_netbsd32_ptrace(p, v, retval)
+netbsd32_ptrace(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_ptrace_args /* {
+	struct netbsd32_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
 		syscallarg(netbsd32_caddr_t) addr;
@@ -1028,12 +1029,12 @@ compat_netbsd32_ptrace(p, v, retval)
 }
 
 int
-compat_netbsd32_recvmsg(p, v, retval)
+netbsd32_recvmsg(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_recvmsg_args /* {
+	struct netbsd32_recvmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_msghdrp_t) msg;
 		syscallarg(int) flags;
@@ -1235,18 +1236,18 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 	if (control)
 		m_freem(control);
  out1:
-	FILE_UNUSE(fp);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
 
 int
-compat_netbsd32_sendmsg(p, v, retval)
+netbsd32_sendmsg(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_sendmsg_args /* {
+	struct netbsd32_sendmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(const netbsd32_msghdrp_t) msg;
 		syscallarg(int) flags;
@@ -1288,12 +1289,12 @@ done:
 }
 
 int
-compat_netbsd32_recvfrom(p, v, retval)
+netbsd32_recvfrom(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_recvfrom_args /* {
+	struct netbsd32_recvfrom_args /* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) len;
@@ -1325,12 +1326,12 @@ compat_netbsd32_recvfrom(p, v, retval)
 }
 
 int
-compat_netbsd32_sendto(p, v, retval)
+netbsd32_sendto(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_sendto_args /* {
+	struct netbsd32_sendto_args /* {
 		syscallarg(int) s;
 		syscallarg(const netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) len;
@@ -1355,12 +1356,12 @@ compat_netbsd32_sendto(p, v, retval)
 }
 
 int
-compat_netbsd32_accept(p, v, retval)
+netbsd32_accept(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_accept_args /* {
+	struct netbsd32_accept_args /* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_sockaddrp_t) name;
 		syscallarg(netbsd32_intp) anamelen;
@@ -1374,12 +1375,12 @@ compat_netbsd32_accept(p, v, retval)
 }
 
 int
-compat_netbsd32_getpeername(p, v, retval)
+netbsd32_getpeername(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getpeername_args /* {
+	struct netbsd32_getpeername_args /* {
 		syscallarg(int) fdes;
 		syscallarg(netbsd32_sockaddrp_t) asa;
 		syscallarg(netbsd32_intp) alen;
@@ -1394,12 +1395,12 @@ compat_netbsd32_getpeername(p, v, retval)
 }
 
 int
-compat_netbsd32_getsockname(p, v, retval)
+netbsd32_getsockname(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getsockname_args /* {
+	struct netbsd32_getsockname_args /* {
 		syscallarg(int) fdes;
 		syscallarg(netbsd32_sockaddrp_t) asa;
 		syscallarg(netbsd32_intp) alen;
@@ -1413,12 +1414,12 @@ compat_netbsd32_getsockname(p, v, retval)
 }
 
 int
-compat_netbsd32_access(p, v, retval)
+netbsd32_access(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_access_args /* {
+	struct netbsd32_access_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
@@ -1434,12 +1435,12 @@ compat_netbsd32_access(p, v, retval)
 }
 
 int
-compat_netbsd32_chflags(p, v, retval)
+netbsd32_chflags(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_chflags_args /* {
+	struct netbsd32_chflags_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_u_long) flags;
 	} */ *uap = v;
@@ -1452,12 +1453,12 @@ compat_netbsd32_chflags(p, v, retval)
 }
 
 int
-compat_netbsd32_fchflags(p, v, retval)
+netbsd32_fchflags(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_fchflags_args /* {
+	struct netbsd32_fchflags_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_u_long) flags;
 	} */ *uap = v;
@@ -1470,12 +1471,12 @@ compat_netbsd32_fchflags(p, v, retval)
 }
 
 int
-compat_netbsd32_kill(p, v, retval)
+netbsd32_kill(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_kill_args /* {
+	struct netbsd32_kill_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) signum;
 	} */ *uap = v;
@@ -1488,12 +1489,12 @@ compat_netbsd32_kill(p, v, retval)
 }
 
 int
-compat_netbsd32_dup(p, v, retval)
+netbsd32_dup(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_dup_args /* {
+	struct netbsd32_dup_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
 	struct sys_dup_args ua;
@@ -1504,12 +1505,12 @@ compat_netbsd32_dup(p, v, retval)
 }
 
 int
-compat_netbsd32_profil(p, v, retval)
+netbsd32_profil(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_profil_args /* {
+	struct netbsd32_profil_args /* {
 		syscallarg(netbsd32_caddr_t) samples;
 		syscallarg(netbsd32_size_t) size;
 		syscallarg(netbsd32_u_long) offset;
@@ -1525,12 +1526,12 @@ compat_netbsd32_profil(p, v, retval)
 }
 
 int
-compat_netbsd32_ktrace(p, v, retval)
+netbsd32_ktrace(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_ktrace_args /* {
+	struct netbsd32_ktrace_args /* {
 		syscallarg(const netbsd32_charp) fname;
 		syscallarg(int) ops;
 		syscallarg(int) facs;
@@ -1546,12 +1547,12 @@ compat_netbsd32_ktrace(p, v, retval)
 }
 
 int
-compat_netbsd32_sigaction(p, v, retval)
+netbsd32_sigaction(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_sigaction_args /* {
+	struct netbsd32_sigaction_args /* {
 		syscallarg(int) signum;
 		syscallarg(const netbsd32_sigactionp_t) nsa;
 		syscallarg(netbsd32_sigactionp_t) osa;
@@ -1588,12 +1589,12 @@ compat_netbsd32_sigaction(p, v, retval)
 }
 
 int
-compat_netbsd32___getlogin(p, v, retval)
+netbsd32___getlogin(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32___getlogin_args /* {
+	struct netbsd32___getlogin_args /* {
 		syscallarg(netbsd32_charp) namebuf;
 		syscallarg(u_int) namelen;
 	} */ *uap = v;
@@ -1605,12 +1606,12 @@ compat_netbsd32___getlogin(p, v, retval)
 }
 
 int
-compat_netbsd32_setlogin(p, v, retval)
+netbsd32_setlogin(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setlogin_args /* {
+	struct netbsd32_setlogin_args /* {
 		syscallarg(const netbsd32_charp) namebuf;
 	} */ *uap = v;
 	struct sys_setlogin_args ua;
@@ -1620,12 +1621,12 @@ compat_netbsd32_setlogin(p, v, retval)
 }
 
 int
-compat_netbsd32_acct(p, v, retval)
+netbsd32_acct(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_acct_args /* {
+	struct netbsd32_acct_args /* {
 		syscallarg(const netbsd32_charp) path;
 	} */ *uap = v;
 	struct sys_acct_args ua;
@@ -1635,12 +1636,12 @@ compat_netbsd32_acct(p, v, retval)
 }
 
 int
-compat_netbsd32_revoke(p, v, retval)
+netbsd32_revoke(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_revoke_args /* {
+	struct netbsd32_revoke_args /* {
 		syscallarg(const netbsd32_charp) path;
 	} */ *uap = v;
 	struct sys_revoke_args ua;
@@ -1654,12 +1655,12 @@ compat_netbsd32_revoke(p, v, retval)
 }
 
 int
-compat_netbsd32_symlink(p, v, retval)
+netbsd32_symlink(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_symlink_args /* {
+	struct netbsd32_symlink_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(const netbsd32_charp) link;
 	} */ *uap = v;
@@ -1672,12 +1673,12 @@ compat_netbsd32_symlink(p, v, retval)
 }
 
 int
-compat_netbsd32_readlink(p, v, retval)
+netbsd32_readlink(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_readlink_args /* {
+	struct netbsd32_readlink_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_charp) buf;
 		syscallarg(netbsd32_size_t) count;
@@ -1695,12 +1696,12 @@ compat_netbsd32_readlink(p, v, retval)
 }
 
 int
-compat_netbsd32_execve(p, v, retval)
+netbsd32_execve(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_execve_args /* {
+	struct netbsd32_execve_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_charpp) argp;
 		syscallarg(netbsd32_charpp) envp;
@@ -1718,12 +1719,12 @@ compat_netbsd32_execve(p, v, retval)
 }
 
 int
-compat_netbsd32_umask(p, v, retval)
+netbsd32_umask(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_umask_args /* {
+	struct netbsd32_umask_args /* {
 		syscallarg(mode_t) newmask;
 	} */ *uap = v;
 	struct sys_umask_args ua;
@@ -1733,12 +1734,12 @@ compat_netbsd32_umask(p, v, retval)
 }
 
 int
-compat_netbsd32_chroot(p, v, retval)
+netbsd32_chroot(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_chroot_args /* {
+	struct netbsd32_chroot_args /* {
 		syscallarg(const netbsd32_charp) path;
 	} */ *uap = v;
 	struct sys_chroot_args ua;
@@ -1748,12 +1749,12 @@ compat_netbsd32_chroot(p, v, retval)
 }
 
 int
-compat_netbsd32_sbrk(p, v, retval)
+netbsd32_sbrk(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_sbrk_args /* {
+	struct netbsd32_sbrk_args /* {
 		syscallarg(int) incr;
 	} */ *uap = v;
 	struct sys_sbrk_args ua;
@@ -1763,12 +1764,12 @@ compat_netbsd32_sbrk(p, v, retval)
 }
 
 int
-compat_netbsd32_sstk(p, v, retval)
+netbsd32_sstk(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_sstk_args /* {
+	struct netbsd32_sstk_args /* {
 		syscallarg(int) incr;
 	} */ *uap = v;
 	struct sys_sstk_args ua;
@@ -1778,12 +1779,12 @@ compat_netbsd32_sstk(p, v, retval)
 }
 
 int
-compat_netbsd32_munmap(p, v, retval)
+netbsd32_munmap(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_munmap_args /* {
+	struct netbsd32_munmap_args /* {
 		syscallarg(netbsd32_voidp) addr;
 		syscallarg(netbsd32_size_t) len;
 	} */ *uap = v;
@@ -1795,12 +1796,12 @@ compat_netbsd32_munmap(p, v, retval)
 }
 
 int
-compat_netbsd32_mprotect(p, v, retval)
+netbsd32_mprotect(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_mprotect_args /* {
+	struct netbsd32_mprotect_args /* {
 		syscallarg(netbsd32_voidp) addr;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(int) prot;
@@ -1814,12 +1815,12 @@ compat_netbsd32_mprotect(p, v, retval)
 }
 
 int
-compat_netbsd32_madvise(p, v, retval)
+netbsd32_madvise(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_madvise_args /* {
+	struct netbsd32_madvise_args /* {
 		syscallarg(netbsd32_voidp) addr;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(int) behav;
@@ -1833,12 +1834,12 @@ compat_netbsd32_madvise(p, v, retval)
 }
 
 int
-compat_netbsd32_mincore(p, v, retval)
+netbsd32_mincore(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_mincore_args /* {
+	struct netbsd32_mincore_args /* {
 		syscallarg(netbsd32_caddr_t) addr;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(netbsd32_charp) vec;
@@ -1852,12 +1853,12 @@ compat_netbsd32_mincore(p, v, retval)
 }
 
 int
-compat_netbsd32_getgroups(p, v, retval)
+netbsd32_getgroups(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getgroups_args /* {
+	struct netbsd32_getgroups_args /* {
 		syscallarg(int) gidsetsize;
 		syscallarg(netbsd32_gid_tp) gidset;
 	} */ *uap = v;
@@ -1884,12 +1885,12 @@ compat_netbsd32_getgroups(p, v, retval)
 }
 
 int
-compat_netbsd32_setgroups(p, v, retval)
+netbsd32_setgroups(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setgroups_args /* {
+	struct netbsd32_setgroups_args /* {
 		syscallarg(int) gidsetsize;
 		syscallarg(const netbsd32_gid_tp) gidset;
 	} */ *uap = v;
@@ -1901,12 +1902,12 @@ compat_netbsd32_setgroups(p, v, retval)
 }
 
 int
-compat_netbsd32_setpgid(p, v, retval)
+netbsd32_setpgid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setpgid_args /* {
+	struct netbsd32_setpgid_args /* {
 		syscallarg(int) pid;
 		syscallarg(int) pgid;
 	} */ *uap = v;
@@ -1918,19 +1919,19 @@ compat_netbsd32_setpgid(p, v, retval)
 }
 
 int
-compat_netbsd32_setitimer(p, v, retval)
+netbsd32_setitimer(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setitimer_args /* {
+	struct netbsd32_setitimer_args /* {
 		syscallarg(int) which;
 		syscallarg(const netbsd32_itimervalp_t) itv;
 		syscallarg(netbsd32_itimervalp_t) oitv;
 	} */ *uap = v;
 	struct netbsd32_itimerval s32it, *itvp;
 	int which = SCARG(uap, which);
-	struct compat_netbsd32_getitimer_args getargs;
+	struct netbsd32_getitimer_args getargs;
 	struct itimerval aitv;
 	int s, error;
 
@@ -1943,7 +1944,7 @@ compat_netbsd32_setitimer(p, v, retval)
 	if (SCARG(uap, oitv) != NULL) {
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
-		if ((error = compat_netbsd32_getitimer(p, &getargs, retval)) != 0)
+		if ((error = netbsd32_getitimer(p, &getargs, retval)) != 0)
 			return (error);
 	}
 	if (itvp == 0)
@@ -1965,12 +1966,12 @@ compat_netbsd32_setitimer(p, v, retval)
 }
 
 int
-compat_netbsd32_getitimer(p, v, retval)
+netbsd32_getitimer(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getitimer_args /* {
+	struct netbsd32_getitimer_args /* {
 		syscallarg(int) which;
 		syscallarg(netbsd32_itimervalp_t) itv;
 	} */ *uap = v;
@@ -2004,12 +2005,12 @@ compat_netbsd32_getitimer(p, v, retval)
 }
 
 int
-compat_netbsd32_fcntl(p, v, retval)
+netbsd32_fcntl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_fcntl_args /* {
+	struct netbsd32_fcntl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(netbsd32_voidp) arg;
@@ -2024,12 +2025,12 @@ compat_netbsd32_fcntl(p, v, retval)
 }
 
 int
-compat_netbsd32_dup2(p, v, retval)
+netbsd32_dup2(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_dup2_args /* {
+	struct netbsd32_dup2_args /* {
 		syscallarg(int) from;
 		syscallarg(int) to;
 	} */ *uap = v;
@@ -2041,12 +2042,12 @@ compat_netbsd32_dup2(p, v, retval)
 }
 
 int
-compat_netbsd32_select(p, v, retval)
+netbsd32_select(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_select_args /* {
+	struct netbsd32_select_args /* {
 		syscallarg(int) nd;
 		syscallarg(netbsd32_fd_setp_t) in;
 		syscallarg(netbsd32_fd_setp_t) ou;
@@ -2155,12 +2156,12 @@ out:
 }
 
 int
-compat_netbsd32_fsync(p, v, retval)
+netbsd32_fsync(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_fsync_args /* {
+	struct netbsd32_fsync_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
 	struct sys_fsync_args ua;
@@ -2170,12 +2171,12 @@ compat_netbsd32_fsync(p, v, retval)
 }
 
 int
-compat_netbsd32_setpriority(p, v, retval)
+netbsd32_setpriority(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setpriority_args /* {
+	struct netbsd32_setpriority_args /* {
 		syscallarg(int) which;
 		syscallarg(int) who;
 		syscallarg(int) prio;
@@ -2189,12 +2190,12 @@ compat_netbsd32_setpriority(p, v, retval)
 }
 
 int
-compat_netbsd32_socket(p, v, retval)
+netbsd32_socket(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_socket_args /* {
+	struct netbsd32_socket_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
@@ -2208,12 +2209,12 @@ compat_netbsd32_socket(p, v, retval)
 }
 
 int
-compat_netbsd32_connect(p, v, retval)
+netbsd32_connect(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_connect_args /* {
+	struct netbsd32_connect_args /* {
 		syscallarg(int) s;
 		syscallarg(const netbsd32_sockaddrp_t) name;
 		syscallarg(int) namelen;
@@ -2227,12 +2228,12 @@ compat_netbsd32_connect(p, v, retval)
 }
 
 int
-compat_netbsd32_getpriority(p, v, retval)
+netbsd32_getpriority(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getpriority_args /* {
+	struct netbsd32_getpriority_args /* {
 		syscallarg(int) which;
 		syscallarg(int) who;
 	} */ *uap = v;
@@ -2244,12 +2245,12 @@ compat_netbsd32_getpriority(p, v, retval)
 }
 
 int
-compat_netbsd32_bind(p, v, retval)
+netbsd32_bind(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_bind_args /* {
+	struct netbsd32_bind_args /* {
 		syscallarg(int) s;
 		syscallarg(const netbsd32_sockaddrp_t) name;
 		syscallarg(int) namelen;
@@ -2263,12 +2264,12 @@ compat_netbsd32_bind(p, v, retval)
 }
 
 int
-compat_netbsd32_setsockopt(p, v, retval)
+netbsd32_setsockopt(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setsockopt_args /* {
+	struct netbsd32_setsockopt_args /* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
@@ -2287,12 +2288,12 @@ compat_netbsd32_setsockopt(p, v, retval)
 }
 
 int
-compat_netbsd32_listen(p, v, retval)
+netbsd32_listen(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_listen_args /* {
+	struct netbsd32_listen_args /* {
 		syscallarg(int) s;
 		syscallarg(int) backlog;
 	} */ *uap = v;
@@ -2304,12 +2305,12 @@ compat_netbsd32_listen(p, v, retval)
 }
 
 int
-compat_netbsd32_gettimeofday(p, v, retval)
+netbsd32_gettimeofday(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_gettimeofday_args /* {
+	struct netbsd32_gettimeofday_args /* {
 		syscallarg(netbsd32_timevalp_t) tp;
 		syscallarg(netbsd32_timezonep_t) tzp;
 	} */ *uap = v;
@@ -2369,12 +2370,12 @@ settime(tv)
 
 
 int
-compat_netbsd32_settimeofday(p, v, retval)
+netbsd32_settimeofday(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_settimeofday_args /* {
+	struct netbsd32_settimeofday_args /* {
 		syscallarg(const netbsd32_timevalp_t) tv;
 		syscallarg(const netbsd32_timezonep_t) tzp;
 	} */ *uap = v;
@@ -2408,12 +2409,12 @@ compat_netbsd32_settimeofday(p, v, retval)
 }
 
 int
-compat_netbsd32_fchown(p, v, retval)
+netbsd32_fchown(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_fchown_args /* {
+	struct netbsd32_fchown_args /* {
 		syscallarg(int) fd;
 		syscallarg(uid_t) uid;
 		syscallarg(gid_t) gid;
@@ -2427,12 +2428,12 @@ compat_netbsd32_fchown(p, v, retval)
 }
 
 int
-compat_netbsd32_fchmod(p, v, retval)
+netbsd32_fchmod(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_fchmod_args /* {
+	struct netbsd32_fchmod_args /* {
 		syscallarg(int) fd;
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
@@ -2444,12 +2445,12 @@ compat_netbsd32_fchmod(p, v, retval)
 }
 
 int
-compat_netbsd32_setreuid(p, v, retval)
+netbsd32_setreuid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setreuid_args /* {
+	struct netbsd32_setreuid_args /* {
 		syscallarg(uid_t) ruid;
 		syscallarg(uid_t) euid;
 	} */ *uap = v;
@@ -2461,12 +2462,12 @@ compat_netbsd32_setreuid(p, v, retval)
 }
 
 int
-compat_netbsd32_setregid(p, v, retval)
+netbsd32_setregid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setregid_args /* {
+	struct netbsd32_setregid_args /* {
 		syscallarg(gid_t) rgid;
 		syscallarg(gid_t) egid;
 	} */ *uap = v;
@@ -2478,12 +2479,12 @@ compat_netbsd32_setregid(p, v, retval)
 }
 
 int
-compat_netbsd32_getrusage(p, v, retval)
+netbsd32_getrusage(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getrusage_args /* {
+	struct netbsd32_getrusage_args /* {
 		syscallarg(int) who;
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */ *uap = v;
@@ -2509,12 +2510,12 @@ compat_netbsd32_getrusage(p, v, retval)
 }
 
 int
-compat_netbsd32_getsockopt(p, v, retval)
+netbsd32_getsockopt(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getsockopt_args /* {
+	struct netbsd32_getsockopt_args /* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
@@ -2532,12 +2533,12 @@ compat_netbsd32_getsockopt(p, v, retval)
 }
 
 int
-compat_netbsd32_readv(p, v, retval)
+netbsd32_readv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_readv_args /* {
+	struct netbsd32_readv_args /* {
 		syscallarg(int) fd;
 		syscallarg(const netbsd32_iovecp_t) iovp;
 		syscallarg(int) iovcnt;
@@ -2645,12 +2646,12 @@ done:
 
 
 int
-compat_netbsd32_writev(p, v, retval)
+netbsd32_writev(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_writev_args /* {
+	struct netbsd32_writev_args /* {
 		syscallarg(int) fd;
 		syscallarg(const netbsd32_iovecp_t) iovp;
 		syscallarg(int) iovcnt;
@@ -2760,12 +2761,12 @@ done:
 
 
 int
-compat_netbsd32_rename(p, v, retval)
+netbsd32_rename(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_rename_args /* {
+	struct netbsd32_rename_args /* {
 		syscallarg(const netbsd32_charp) from;
 		syscallarg(const netbsd32_charp) to;
 	} */ *uap = v;
@@ -2778,12 +2779,12 @@ compat_netbsd32_rename(p, v, retval)
 }
 
 int
-compat_netbsd32_flock(p, v, retval)
+netbsd32_flock(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_flock_args /* {
+	struct netbsd32_flock_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) how;
 	} */ *uap = v;
@@ -2796,12 +2797,12 @@ compat_netbsd32_flock(p, v, retval)
 }
 
 int
-compat_netbsd32_mkfifo(p, v, retval)
+netbsd32_mkfifo(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_mkfifo_args /* {
+	struct netbsd32_mkfifo_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
@@ -2813,12 +2814,12 @@ compat_netbsd32_mkfifo(p, v, retval)
 }
 
 int
-compat_netbsd32_shutdown(p, v, retval)
+netbsd32_shutdown(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_shutdown_args /* {
+	struct netbsd32_shutdown_args /* {
 		syscallarg(int) s;
 		syscallarg(int) how;
 	} */ *uap = v;
@@ -2830,12 +2831,12 @@ compat_netbsd32_shutdown(p, v, retval)
 }
 
 int
-compat_netbsd32_socketpair(p, v, retval)
+netbsd32_socketpair(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_socketpair_args /* {
+	struct netbsd32_socketpair_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
@@ -2852,12 +2853,12 @@ compat_netbsd32_socketpair(p, v, retval)
 }
 
 int
-compat_netbsd32_mkdir(p, v, retval)
+netbsd32_mkdir(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_mkdir_args /* {
+	struct netbsd32_mkdir_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
@@ -2869,12 +2870,12 @@ compat_netbsd32_mkdir(p, v, retval)
 }
 
 int
-compat_netbsd32_rmdir(p, v, retval)
+netbsd32_rmdir(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_rmdir_args /* {
+	struct netbsd32_rmdir_args /* {
 		syscallarg(const netbsd32_charp) path;
 	} */ *uap = v;
 	struct sys_rmdir_args ua;
@@ -2884,12 +2885,12 @@ compat_netbsd32_rmdir(p, v, retval)
 }
 
 int
-compat_netbsd32_utimes(p, v, retval)
+netbsd32_utimes(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_utimes_args /* {
+	struct netbsd32_utimes_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(const netbsd32_timevalp_t) tptr;
 	} */ *uap = v;
@@ -2944,12 +2945,12 @@ change_utimes32(vp, tptr, p)
 }
 
 int
-compat_netbsd32_adjtime(p, v, retval)
+netbsd32_adjtime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_adjtime_args /* {
+	struct netbsd32_adjtime_args /* {
 		syscallarg(const netbsd32_timevalp_t) delta;
 		syscallarg(netbsd32_timevalp_t) olddelta;
 	} */ *uap = v;
@@ -3003,12 +3004,12 @@ compat_netbsd32_adjtime(p, v, retval)
 }
 
 int
-compat_netbsd32_quotactl(p, v, retval)
+netbsd32_quotactl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_quotactl_args /* {
+	struct netbsd32_quotactl_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) cmd;
 		syscallarg(int) uid;
@@ -3025,13 +3026,13 @@ compat_netbsd32_quotactl(p, v, retval)
 
 #if defined(NFS) || defined(NFSSERVER)
 int
-compat_netbsd32_nfssvc(p, v, retval)
+netbsd32_nfssvc(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 #if 0
-	struct compat_netbsd32_nfssvc_args /* {
+	struct netbsd32_nfssvc_args /* {
 		syscallarg(int) flag;
 		syscallarg(netbsd32_voidp) argp;
 	} */ *uap = v;
@@ -3048,12 +3049,12 @@ compat_netbsd32_nfssvc(p, v, retval)
 #endif
 
 int
-compat_netbsd32_statfs(p, v, retval)
+netbsd32_statfs(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_statfs_args /* {
+	struct netbsd32_statfs_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_statfsp_t) buf;
 	} */ *uap = v;
@@ -3077,12 +3078,12 @@ compat_netbsd32_statfs(p, v, retval)
 }
 
 int
-compat_netbsd32_fstatfs(p, v, retval)
+netbsd32_fstatfs(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_fstatfs_args /* {
+	struct netbsd32_fstatfs_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_statfsp_t) buf;
 	} */ *uap = v;
@@ -3103,18 +3104,18 @@ compat_netbsd32_fstatfs(p, v, retval)
 	netbsd32_from_statfs(sp, &s32);
 	error = copyout(&s32, (caddr_t)(u_long)SCARG(uap, buf), sizeof(s32));
  out:
-	FILE_UNUSE(fp);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
 #if defined(NFS) || defined(NFSSERVER)
 int
-compat_netbsd32_getfh(p, v, retval)
+netbsd32_getfh(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getfh_args /* {
+	struct netbsd32_getfh_args /* {
 		syscallarg(const netbsd32_charp) fname;
 		syscallarg(netbsd32_fhandlep_t) fhp;
 	} */ *uap = v;
@@ -3128,30 +3129,30 @@ compat_netbsd32_getfh(p, v, retval)
 #endif
 
 int
-compat_netbsd32_sysarch(p, v, retval)
+netbsd32_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_sysarch_args /* {
+	struct netbsd32_sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(netbsd32_voidp) parms;
 	} */ *uap = v;
 
 	switch (SCARG(uap, op)) {
 	default:
-		printf("(sparc64) compat_netbsd32_sysarch(%d)\n", SCARG(uap, op));
+		printf("(sparc64) netbsd32_sysarch(%d)\n", SCARG(uap, op));
 		return EINVAL;
 	}
 }
 
 int
-compat_netbsd32_pread(p, v, retval)
+netbsd32_pread(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_pread_args /* {
+	struct netbsd32_pread_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) nbyte;
@@ -3173,12 +3174,12 @@ compat_netbsd32_pread(p, v, retval)
 }
 
 int
-compat_netbsd32_pwrite(p, v, retval)
+netbsd32_pwrite(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_pwrite_args /* {
+	struct netbsd32_pwrite_args /* {
 		syscallarg(int) fd;
 		syscallarg(const netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) nbyte;
@@ -3201,12 +3202,12 @@ compat_netbsd32_pwrite(p, v, retval)
 
 #ifdef NTP
 int
-compat_netbsd32_ntp_gettime(p, v, retval)
+netbsd32_ntp_gettime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_ntp_gettime_args /* {
+	struct netbsd32_ntp_gettime_args /* {
 		syscallarg(netbsd32_ntptimevalp_t) ntvp;
 	} */ *uap = v;
 	struct netbsd32_ntptimeval ntv32;
@@ -3293,12 +3294,12 @@ compat_netbsd32_ntp_gettime(p, v, retval)
 }
 
 int
-compat_netbsd32_ntp_adjtime(p, v, retval)
+netbsd32_ntp_adjtime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_ntp_adjtime_args /* {
+	struct netbsd32_ntp_adjtime_args /* {
 		syscallarg(netbsd32_timexp_t) tp;
 	} */ *uap = v;
 	struct netbsd32_timex ntv32;
@@ -3404,12 +3405,12 @@ compat_netbsd32_ntp_adjtime(p, v, retval)
 #endif
 
 int
-compat_netbsd32_setgid(p, v, retval)
+netbsd32_setgid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setgid_args /* {
+	struct netbsd32_setgid_args /* {
 		syscallarg(gid_t) gid;
 	} */ *uap = v;
 	struct sys_setgid_args ua;
@@ -3419,12 +3420,12 @@ compat_netbsd32_setgid(p, v, retval)
 }
 
 int
-compat_netbsd32_setegid(p, v, retval)
+netbsd32_setegid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setegid_args /* {
+	struct netbsd32_setegid_args /* {
 		syscallarg(gid_t) egid;
 	} */ *uap = v;
 	struct sys_setegid_args ua;
@@ -3434,12 +3435,12 @@ compat_netbsd32_setegid(p, v, retval)
 }
 
 int
-compat_netbsd32_seteuid(p, v, retval)
+netbsd32_seteuid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_seteuid_args /* {
+	struct netbsd32_seteuid_args /* {
 		syscallarg(gid_t) euid;
 	} */ *uap = v;
 	struct sys_seteuid_args ua;
@@ -3450,13 +3451,13 @@ compat_netbsd32_seteuid(p, v, retval)
 
 #ifdef LFS
 int
-compat_netbsd32_lfs_bmapv(p, v, retval)
+netbsd32_lfs_bmapv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 #if 0
-	struct compat_netbsd32_lfs_bmapv_args /* {
+	struct netbsd32_lfs_bmapv_args /* {
 		syscallarg(netbsd32_fsid_tp_t) fsidp;
 		syscallarg(netbsd32_block_infop_t) blkiov;
 		syscallarg(int) blkcnt;
@@ -3473,12 +3474,12 @@ compat_netbsd32_lfs_bmapv(p, v, retval)
 }
 
 int
-compat_netbsd32_lfs_markv(p, v, retval)
+netbsd32_lfs_markv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_lfs_markv_args /* {
+	struct netbsd32_lfs_markv_args /* {
 		syscallarg(netbsd32_fsid_tp_t) fsidp;
 		syscallarg(netbsd32_block_infop_t) blkiov;
 		syscallarg(int) blkcnt;
@@ -3488,12 +3489,12 @@ compat_netbsd32_lfs_markv(p, v, retval)
 }
 
 int
-compat_netbsd32_lfs_segclean(p, v, retval)
+netbsd32_lfs_segclean(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_lfs_segclean_args /* {
+	struct netbsd32_lfs_segclean_args /* {
 		syscallarg(netbsd32_fsid_tp_t) fsidp;
 		syscallarg(netbsd32_u_long) segment;
 	} */ *uap = v;
@@ -3501,12 +3502,12 @@ compat_netbsd32_lfs_segclean(p, v, retval)
 }
 
 int
-compat_netbsd32_lfs_segwait(p, v, retval)
+netbsd32_lfs_segwait(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_lfs_segwait_args /* {
+	struct netbsd32_lfs_segwait_args /* {
 		syscallarg(netbsd32_fsid_tp_t) fsidp;
 		syscallarg(netbsd32_timevalp_t) tv;
 	} */ *uap = v;
@@ -3515,12 +3516,12 @@ compat_netbsd32_lfs_segwait(p, v, retval)
 #endif
 
 int
-compat_netbsd32_pathconf(p, v, retval)
+netbsd32_pathconf(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_pathconf_args /* {
+	struct netbsd32_pathconf_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) name;
 	} */ *uap = v;
@@ -3536,12 +3537,12 @@ compat_netbsd32_pathconf(p, v, retval)
 }
 
 int
-compat_netbsd32_fpathconf(p, v, retval)
+netbsd32_fpathconf(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_fpathconf_args /* {
+	struct netbsd32_fpathconf_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) name;
 	} */ *uap = v;
@@ -3557,12 +3558,12 @@ compat_netbsd32_fpathconf(p, v, retval)
 }
 
 int
-compat_netbsd32_getrlimit(p, v, retval)
+netbsd32_getrlimit(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getrlimit_args /* {
+	struct netbsd32_getrlimit_args /* {
 		syscallarg(int) which;
 		syscallarg(netbsd32_rlimitp_t) rlp;
 	} */ *uap = v;
@@ -3575,12 +3576,12 @@ compat_netbsd32_getrlimit(p, v, retval)
 }
 
 int
-compat_netbsd32_setrlimit(p, v, retval)
+netbsd32_setrlimit(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_setrlimit_args /* {
+	struct netbsd32_setrlimit_args /* {
 		syscallarg(int) which;
 		syscallarg(const netbsd32_rlimitp_t) rlp;
 	} */ *uap = v;
@@ -3595,12 +3596,12 @@ compat_netbsd32_setrlimit(p, v, retval)
 }
 
 int
-compat_netbsd32_mmap(p, v, retval)
+netbsd32_mmap(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_mmap_args /* {
+	struct netbsd32_mmap_args /* {
 		syscallarg(netbsd32_voidp) addr;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(int) prot;
@@ -3622,19 +3623,19 @@ compat_netbsd32_mmap(p, v, retval)
 	NETBSD32TOX_UAP(pos, off_t);
 	error = sys_mmap(p, &ua, (register_t *)&rt);
 	if ((long)rt > (long)UINT_MAX)
-		printf("compat_netbsd32_mmap: retval out of range: 0x%qx",
+		printf("netbsd32_mmap: retval out of range: 0x%qx",
 		    rt);
 	*retval = (netbsd32_voidp)(u_long)rt;
 	return (error);
 }
 
 int
-compat_netbsd32_lseek(p, v, retval)
+netbsd32_lseek(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_lseek_args /* {
+	struct netbsd32_lseek_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) pad;
 		syscallarg(off_t) offset;
@@ -3650,12 +3651,12 @@ compat_netbsd32_lseek(p, v, retval)
 }
 
 int
-compat_netbsd32_truncate(p, v, retval)
+netbsd32_truncate(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_truncate_args /* {
+	struct netbsd32_truncate_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) pad;
 		syscallarg(off_t) length;
@@ -3669,12 +3670,12 @@ compat_netbsd32_truncate(p, v, retval)
 }
 
 int
-compat_netbsd32_ftruncate(p, v, retval)
+netbsd32_ftruncate(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_ftruncate_args /* {
+	struct netbsd32_ftruncate_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) pad;
 		syscallarg(off_t) length;
@@ -3688,12 +3689,12 @@ compat_netbsd32_ftruncate(p, v, retval)
 }
 
 int
-compat_netbsd32___sysctl(p, v, retval)
+netbsd32___sysctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32___sysctl_args /* {
+	struct netbsd32___sysctl_args /* {
 		syscallarg(netbsd32_intp) name;
 		syscallarg(u_int) namelen;
 		syscallarg(netbsd32_voidp) old;
@@ -3816,12 +3817,12 @@ compat_netbsd32___sysctl(p, v, retval)
 }
 
 int
-compat_netbsd32_mlock(p, v, retval)
+netbsd32_mlock(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_mlock_args /* {
+	struct netbsd32_mlock_args /* {
 		syscallarg(const netbsd32_voidp) addr;
 		syscallarg(netbsd32_size_t) len;
 	} */ *uap = v;
@@ -3833,12 +3834,12 @@ compat_netbsd32_mlock(p, v, retval)
 }
 
 int
-compat_netbsd32_munlock(p, v, retval)
+netbsd32_munlock(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_munlock_args /* {
+	struct netbsd32_munlock_args /* {
 		syscallarg(const netbsd32_voidp) addr;
 		syscallarg(netbsd32_size_t) len;
 	} */ *uap = v;
@@ -3850,12 +3851,12 @@ compat_netbsd32_munlock(p, v, retval)
 }
 
 int
-compat_netbsd32_undelete(p, v, retval)
+netbsd32_undelete(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_undelete_args /* {
+	struct netbsd32_undelete_args /* {
 		syscallarg(const netbsd32_charp) path;
 	} */ *uap = v;
 	struct sys_undelete_args ua;
@@ -3865,12 +3866,12 @@ compat_netbsd32_undelete(p, v, retval)
 }
 
 int
-compat_netbsd32_futimes(p, v, retval)
+netbsd32_futimes(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_futimes_args /* {
+	struct netbsd32_futimes_args /* {
 		syscallarg(int) fd;
 		syscallarg(const netbsd32_timevalp_t) tptr;
 	} */ *uap = v;
@@ -3883,17 +3884,17 @@ compat_netbsd32_futimes(p, v, retval)
 
 	error = change_utimes32((struct vnode *)fp->f_data, 
 				(struct timeval *)(u_long)SCARG(uap, tptr), p);
-	FILE_UNUSE(fp);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
 int
-compat_netbsd32_getpgid(p, v, retval)
+netbsd32_getpgid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getpgid_args /* {
+	struct netbsd32_getpgid_args /* {
 		syscallarg(pid_t) pid;
 	} */ *uap = v;
 	struct sys_getpgid_args ua;
@@ -3903,12 +3904,12 @@ compat_netbsd32_getpgid(p, v, retval)
 }
 
 int
-compat_netbsd32_reboot(p, v, retval)
+netbsd32_reboot(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_reboot_args /* {
+	struct netbsd32_reboot_args /* {
 		syscallarg(int) opt;
 		syscallarg(netbsd32_charp) bootstr;
 	} */ *uap = v;
@@ -3920,12 +3921,12 @@ compat_netbsd32_reboot(p, v, retval)
 }
 
 int
-compat_netbsd32_poll(p, v, retval)
+netbsd32_poll(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_poll_args /* {
+	struct netbsd32_poll_args /* {
 		syscallarg(netbsd32_pollfdp_t) fds;
 		syscallarg(u_int) nfds;
 		syscallarg(int) timeout;
@@ -3947,13 +3948,13 @@ compat_netbsd32_poll(p, v, retval)
  * XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
  */
 int
-compat_netbsd32___semctl(p, v, retval)
+netbsd32___semctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 #if 0
-	struct compat_netbsd32___semctl_args /* {
+	struct netbsd32___semctl_args /* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
@@ -3991,12 +3992,12 @@ compat_netbsd32___semctl(p, v, retval)
 		semaptr->sem_perm.cuid = cred->cr_uid;
 		semaptr->sem_perm.uid = cred->cr_uid;
 		semtot -= semaptr->sem_nsems;
-		for (i = semaptr->sem_base - sem; i < semtot; i++)
+		for (i = semaptr->_sem_base - sem; i < semtot; i++)
 			sem[i] = sem[i + semaptr->sem_nsems];
 		for (i = 0; i < seminfo.semmni; i++) {
 			if ((sema[i].sem_perm.mode & SEM_ALLOC) &&
-			    sema[i].sem_base > semaptr->sem_base)
-				sema[i].sem_base -= semaptr->sem_nsems;
+			    sema[i]._sem_base > semaptr->_sem_base)
+				sema[i]._sem_base -= semaptr->sem_nsems;
 		}
 		semaptr->sem_perm.mode = 0;
 		semundo_clear(semid, -1);
@@ -4032,7 +4033,7 @@ compat_netbsd32___semctl(p, v, retval)
 			return(eval);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return(EINVAL);
-		rval = semaptr->sem_base[semnum].semncnt;
+		rval = semaptr->_sem_base[semnum].semncnt;
 		break;
 
 	case GETPID:
@@ -4040,7 +4041,7 @@ compat_netbsd32___semctl(p, v, retval)
 			return(eval);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return(EINVAL);
-		rval = semaptr->sem_base[semnum].sempid;
+		rval = semaptr->_sem_base[semnum].sempid;
 		break;
 
 	case GETVAL:
@@ -4048,7 +4049,7 @@ compat_netbsd32___semctl(p, v, retval)
 			return(eval);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return(EINVAL);
-		rval = semaptr->sem_base[semnum].semval;
+		rval = semaptr->_sem_base[semnum].semval;
 		break;
 
 	case GETALL:
@@ -4057,7 +4058,7 @@ compat_netbsd32___semctl(p, v, retval)
 		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 			return(eval);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
-			eval = copyout((caddr_t)&semaptr->sem_base[i].semval,
+			eval = copyout((caddr_t)&semaptr->_sem_base[i].semval,
 			    &real_arg.array[i], sizeof(real_arg.array[0]));
 			if (eval != 0)
 				break;
@@ -4069,7 +4070,7 @@ compat_netbsd32___semctl(p, v, retval)
 			return(eval);
 		if (semnum < 0 || semnum >= semaptr->sem_nsems)
 			return(EINVAL);
-		rval = semaptr->sem_base[semnum].semzcnt;
+		rval = semaptr->_sem_base[semnum].semzcnt;
 		break;
 
 	case SETVAL:
@@ -4079,7 +4080,7 @@ compat_netbsd32___semctl(p, v, retval)
 			return(EINVAL);
 		if ((eval = copyin(arg, &real_arg, sizeof(real_arg))) != 0)
 			return(eval);
-		semaptr->sem_base[semnum].semval = real_arg.val;
+		semaptr->_sem_base[semnum].semval = real_arg.val;
 		semundo_clear(semid, semnum);
 		wakeup((caddr_t)semaptr);
 		break;
@@ -4091,7 +4092,7 @@ compat_netbsd32___semctl(p, v, retval)
 			return(eval);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
 			eval = copyin(&real_arg.array[i],
-			    (caddr_t)&semaptr->sem_base[i].semval,
+			    (caddr_t)&semaptr->_sem_base[i].semval,
 			    sizeof(real_arg.array[0]));
 			if (eval != 0)
 				break;
@@ -4113,12 +4114,12 @@ compat_netbsd32___semctl(p, v, retval)
 }
 
 int
-compat_netbsd32_semget(p, v, retval)
+netbsd32_semget(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_semget_args /* {
+	struct netbsd32_semget_args /* {
 		syscallarg(netbsd32_key_t) key;
 		syscallarg(int) nsems;
 		syscallarg(int) semflg;
@@ -4132,12 +4133,12 @@ compat_netbsd32_semget(p, v, retval)
 }
 
 int
-compat_netbsd32_semop(p, v, retval)
+netbsd32_semop(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_semop_args /* {
+	struct netbsd32_semop_args /* {
 		syscallarg(int) semid;
 		syscallarg(netbsd32_sembufp_t) sops;
 		syscallarg(netbsd32_size_t) nsops;
@@ -4151,12 +4152,12 @@ compat_netbsd32_semop(p, v, retval)
 }
 
 int
-compat_netbsd32_semconfig(p, v, retval)
+netbsd32_semconfig(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_semconfig_args /* {
+	struct netbsd32_semconfig_args /* {
 		syscallarg(int) flag;
 	} */ *uap = v;
 	struct sys_semconfig_args ua;
@@ -4166,13 +4167,13 @@ compat_netbsd32_semconfig(p, v, retval)
 }
 
 int
-compat_netbsd32_msgctl(p, v, retval)
+netbsd32_msgctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 #if 0
-	struct compat_netbsd32_msgctl_args /* {
+	struct netbsd32_msgctl_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(netbsd32_msqid_dsp_t) buf;
@@ -4203,13 +4204,13 @@ compat_netbsd32_msgctl(p, v, retval)
 }
 
 int
-compat_netbsd32_msgget(p, v, retval)
+netbsd32_msgget(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 #if 0
-	struct compat_netbsd32_msgget_args /* {
+	struct netbsd32_msgget_args /* {
 		syscallarg(netbsd32_key_t) key;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
@@ -4224,13 +4225,13 @@ compat_netbsd32_msgget(p, v, retval)
 }
 
 int
-compat_netbsd32_msgsnd(p, v, retval)
+netbsd32_msgsnd(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 #if 0
-	struct compat_netbsd32_msgsnd_args /* {
+	struct netbsd32_msgsnd_args /* {
 		syscallarg(int) msqid;
 		syscallarg(const netbsd32_voidp) msgp;
 		syscallarg(netbsd32_size_t) msgsz;
@@ -4249,13 +4250,13 @@ compat_netbsd32_msgsnd(p, v, retval)
 }
 
 int
-compat_netbsd32_msgrcv(p, v, retval)
+netbsd32_msgrcv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 #if 0
-	struct compat_netbsd32_msgrcv_args /* {
+	struct netbsd32_msgrcv_args /* {
 		syscallarg(int) msqid;
 		syscallarg(netbsd32_voidp) msgp;
 		syscallarg(netbsd32_size_t) msgsz;
@@ -4280,13 +4281,13 @@ compat_netbsd32_msgrcv(p, v, retval)
 }
 
 int
-compat_netbsd32_shmat(p, v, retval)
+netbsd32_shmat(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 #if 0
-	struct compat_netbsd32_shmat_args /* {
+	struct netbsd32_shmat_args /* {
 		syscallarg(int) shmid;
 		syscallarg(const netbsd32_voidp) shmaddr;
 		syscallarg(int) shmflg;
@@ -4307,13 +4308,13 @@ compat_netbsd32_shmat(p, v, retval)
 }
 
 int
-compat_netbsd32_shmctl(p, v, retval)
+netbsd32_shmctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 #if 0
-	struct compat_netbsd32_shmctl_args /* {
+	struct netbsd32_shmctl_args /* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(netbsd32_shmid_dsp_t) buf;
@@ -4344,13 +4345,13 @@ compat_netbsd32_shmctl(p, v, retval)
 }
 
 int
-compat_netbsd32_shmdt(p, v, retval)
+netbsd32_shmdt(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 #if 0
-	struct compat_netbsd32_shmdt_args /* {
+	struct netbsd32_shmdt_args /* {
 		syscallarg(const netbsd32_voidp) shmaddr;
 	} */ *uap = v;
 	struct sys_shmdt_args ua;
@@ -4363,13 +4364,13 @@ compat_netbsd32_shmdt(p, v, retval)
 }
 
 int
-compat_netbsd32_shmget(p, v, retval)
+netbsd32_shmget(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
 #if 0
-	struct compat_netbsd32_shmget_args /* {
+	struct netbsd32_shmget_args /* {
 		syscallarg(netbsd32_key_t) key;
 		syscallarg(netbsd32_size_t) size;
 		syscallarg(int) shmflg;
@@ -4386,12 +4387,12 @@ compat_netbsd32_shmget(p, v, retval)
 }
 
 int
-compat_netbsd32_clock_gettime(p, v, retval)
+netbsd32_clock_gettime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_clock_gettime_args /* {
+	struct netbsd32_clock_gettime_args /* {
 		syscallarg(netbsd32_clockid_t) clock_id;
 		syscallarg(netbsd32_timespecp_t) tp;
 	} */ *uap = v;
@@ -4412,12 +4413,12 @@ compat_netbsd32_clock_gettime(p, v, retval)
 }
 
 int
-compat_netbsd32_clock_settime(p, v, retval)
+netbsd32_clock_settime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_clock_settime_args /* {
+	struct netbsd32_clock_settime_args /* {
 		syscallarg(netbsd32_clockid_t) clock_id;
 		syscallarg(const netbsd32_timespecp_t) tp;
 	} */ *uap = v;
@@ -4446,12 +4447,12 @@ compat_netbsd32_clock_settime(p, v, retval)
 }
 
 int
-compat_netbsd32_clock_getres(p, v, retval)
+netbsd32_clock_getres(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_clock_getres_args /* {
+	struct netbsd32_clock_getres_args /* {
 		syscallarg(netbsd32_clockid_t) clock_id;
 		syscallarg(netbsd32_timespecp_t) tp;
 	} */ *uap = v;
@@ -4476,12 +4477,12 @@ compat_netbsd32_clock_getres(p, v, retval)
 }
 
 int
-compat_netbsd32_nanosleep(p, v, retval)
+netbsd32_nanosleep(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_nanosleep_args /* {
+	struct netbsd32_nanosleep_args /* {
 		syscallarg(const netbsd32_timespecp_t) rqtp;
 		syscallarg(netbsd32_timespecp_t) rmtp;
 	} */ *uap = v;
@@ -4541,12 +4542,12 @@ compat_netbsd32_nanosleep(p, v, retval)
 }
 
 int
-compat_netbsd32_fdatasync(p, v, retval)
+netbsd32_fdatasync(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_fdatasync_args /* {
+	struct netbsd32_fdatasync_args /* {
 		syscallarg(int) fd;
 	} */ *uap = v;
 	struct sys_fdatasync_args ua;
@@ -4557,12 +4558,12 @@ compat_netbsd32_fdatasync(p, v, retval)
 }
 
 int
-compat_netbsd32___posix_rename(p, v, retval)
+netbsd32___posix_rename(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32___posix_rename_args /* {
+	struct netbsd32___posix_rename_args /* {
 		syscallarg(const netbsd32_charp) from;
 		syscallarg(const netbsd32_charp) to;
 	} */ *uap = v;
@@ -4575,12 +4576,12 @@ compat_netbsd32___posix_rename(p, v, retval)
 }
 
 int
-compat_netbsd32_swapctl(p, v, retval)
+netbsd32_swapctl(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_swapctl_args /* {
+	struct netbsd32_swapctl_args /* {
 		syscallarg(int) cmd;
 		syscallarg(const netbsd32_voidp) arg;
 		syscallarg(int) misc;
@@ -4594,12 +4595,12 @@ compat_netbsd32_swapctl(p, v, retval)
 }
 
 int
-compat_netbsd32_getdents(p, v, retval)
+netbsd32_getdents(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getdents_args /* {
+	struct netbsd32_getdents_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_charp) buf;
 		syscallarg(netbsd32_size_t) count;
@@ -4618,18 +4619,18 @@ compat_netbsd32_getdents(p, v, retval)
 			SCARG(uap, count), &done, p, 0, 0);
 	*retval = done;
  out:
-	FILE_UNUSE(fp);
+	FILE_UNUSE(fp, p);
 	return (error);
 }
 
 
 int
-compat_netbsd32_minherit(p, v, retval)
+netbsd32_minherit(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_minherit_args /* {
+	struct netbsd32_minherit_args /* {
 		syscallarg(netbsd32_voidp) addr;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(int) inherit;
@@ -4643,12 +4644,12 @@ compat_netbsd32_minherit(p, v, retval)
 }
 
 int
-compat_netbsd32_lchmod(p, v, retval)
+netbsd32_lchmod(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_lchmod_args /* {
+	struct netbsd32_lchmod_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(mode_t) mode;
 	} */ *uap = v;
@@ -4660,12 +4661,12 @@ compat_netbsd32_lchmod(p, v, retval)
 }
 
 int
-compat_netbsd32_lchown(p, v, retval)
+netbsd32_lchown(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_lchown_args /* {
+	struct netbsd32_lchown_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(uid_t) uid;
 		syscallarg(gid_t) gid;
@@ -4679,12 +4680,12 @@ compat_netbsd32_lchown(p, v, retval)
 }
 
 int
-compat_netbsd32_lutimes(p, v, retval)
+netbsd32_lutimes(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_lutimes_args /* {
+	struct netbsd32_lutimes_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(const netbsd32_timevalp_t) tptr;
 	} */ *uap = v;
@@ -4703,12 +4704,12 @@ compat_netbsd32_lutimes(p, v, retval)
 
 
 int
-compat_netbsd32___msync13(p, v, retval)
+netbsd32___msync13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32___msync13_args /* {
+	struct netbsd32___msync13_args /* {
 		syscallarg(netbsd32_voidp) addr;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(int) flags;
@@ -4722,12 +4723,12 @@ compat_netbsd32___msync13(p, v, retval)
 }
 
 int
-compat_netbsd32___stat13(p, v, retval)
+netbsd32___stat13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32___stat13_args /* {
+	struct netbsd32___stat13_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_statp_t) ub;
 	} */ *uap = v;
@@ -4750,12 +4751,12 @@ compat_netbsd32___stat13(p, v, retval)
 }
 
 int
-compat_netbsd32___fstat13(p, v, retval)
+netbsd32___fstat13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32___fstat13_args /* {
+	struct netbsd32___fstat13_args /* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_statp_t) sb;
 	} */ *uap = v;
@@ -4791,12 +4792,12 @@ compat_netbsd32___fstat13(p, v, retval)
 }
 
 int
-compat_netbsd32___lstat13(p, v, retval)
+netbsd32___lstat13(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32___lstat13_args /* {
+	struct netbsd32___lstat13_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_statp_t) ub;
 	} */ *uap = v;
@@ -4819,12 +4820,12 @@ compat_netbsd32___lstat13(p, v, retval)
 }
 
 int
-compat_netbsd32___sigaltstack14(p, v, retval)
+netbsd32___sigaltstack14(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32___sigaltstack14_args /* {
+	struct netbsd32___sigaltstack14_args /* {
 		syscallarg(const netbsd32_sigaltstackp_t) nss;
 		syscallarg(netbsd32_sigaltstackp_t) oss;
 	} */ *uap = v;
@@ -4856,12 +4857,12 @@ compat_netbsd32___sigaltstack14(p, v, retval)
 }
 
 int
-compat_netbsd32___posix_chown(p, v, retval)
+netbsd32___posix_chown(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32___posix_chown_args /* {
+	struct netbsd32___posix_chown_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(uid_t) uid;
 		syscallarg(gid_t) gid;
@@ -4875,12 +4876,12 @@ compat_netbsd32___posix_chown(p, v, retval)
 }
 
 int
-compat_netbsd32___posix_fchown(p, v, retval)
+netbsd32___posix_fchown(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32___posix_fchown_args /* {
+	struct netbsd32___posix_fchown_args /* {
 		syscallarg(int) fd;
 		syscallarg(uid_t) uid;
 		syscallarg(gid_t) gid;
@@ -4894,12 +4895,12 @@ compat_netbsd32___posix_fchown(p, v, retval)
 }
 
 int
-compat_netbsd32___posix_lchown(p, v, retval)
+netbsd32___posix_lchown(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32___posix_lchown_args /* {
+	struct netbsd32___posix_lchown_args /* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(uid_t) uid;
 		syscallarg(gid_t) gid;
@@ -4913,12 +4914,12 @@ compat_netbsd32___posix_lchown(p, v, retval)
 }
 
 int
-compat_netbsd32_getsid(p, v, retval)
+netbsd32_getsid(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_getsid_args /* {
+	struct netbsd32_getsid_args /* {
 		syscallarg(pid_t) pid;
 	} */ *uap = v;
 	struct sys_getsid_args ua;
@@ -4928,12 +4929,12 @@ compat_netbsd32_getsid(p, v, retval)
 }
 
 int
-compat_netbsd32_fktrace(p, v, retval)
+netbsd32_fktrace(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_fktrace_args /* {
+	struct netbsd32_fktrace_args /* {
 		syscallarg(const int) fd;
 		syscallarg(int) ops;
 		syscallarg(int) facs;
@@ -4949,12 +4950,12 @@ compat_netbsd32_fktrace(p, v, retval)
 }
 
 int
-compat_netbsd32_preadv(p, v, retval)
+netbsd32_preadv(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_preadv_args /* {
+	struct netbsd32_preadv_args /* {
 		syscallarg(int) fd;
 		syscallarg(const netbsd32_iovecp_t) iovp;
 		syscallarg(int) iovcnt;
@@ -4991,12 +4992,12 @@ compat_netbsd32_preadv(p, v, retval)
 }
 
 int
-compat_netbsd32_pwritev(p, v, retval)
+netbsd32_pwritev(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_netbsd32_pwritev_args /* {
+	struct netbsd32_pwritev_args /* {
 		syscallarg(int) fd;
 		syscallarg(const netbsd32_iovecp_t) iovp;
 		syscallarg(int) iovcnt;
@@ -5033,12 +5034,12 @@ compat_netbsd32_pwritev(p, v, retval)
 }
 
 int
-compat_13_compat_netbsd32_sigprocmask(p, v, retval)
+compat_13_netbsd32_sigprocmask(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_13_compat_netbsd32_sigprocmask_args /* {
+	struct compat_13_netbsd32_sigprocmask_args /* {
 		syscallarg(int) how;
 		syscallarg(int) mask;
 	} */ *uap = v;
@@ -5057,12 +5058,12 @@ compat_13_compat_netbsd32_sigprocmask(p, v, retval)
 }
 
 int
-compat_13_compat_netbsd32_sigsuspend(p, v, retval)
+compat_13_netbsd32_sigsuspend(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_13_compat_netbsd32_sigsuspend_args /* {
+	struct compat_13_netbsd32_sigsuspend_args /* {
 		syscallarg(sigset13_t) mask;
 	} */ *uap = v;
 	sigset13_t ess;
