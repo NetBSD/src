@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxvar.h,v 1.19 1998/12/09 08:47:19 thorpej Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.20 2000/01/26 06:04:40 thorpej Exp $	*/
 
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
@@ -334,5 +334,7 @@ void	ahc_intr __P((void *arg));
 #elif defined(__NetBSD__)
 int	ahc_intr __P((void *arg));
 #endif
+
+void	ahc_load_seeprom __P((struct ahc_data *ahc));
 
 #endif  /* _AIC7XXX_H_ */
