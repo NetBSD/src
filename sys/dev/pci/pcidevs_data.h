@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.592 2003/12/05 04:28:47 grant Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.593 2003/12/06 11:20:55 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.596 2003/12/05 04:28:04 grant Exp 
+ *	NetBSD: pcidevs,v 1.597 2003/12/06 11:19:17 jdolecek Exp 
  */
 
 /*
@@ -6434,6 +6434,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Netgear",
 	    "MA301 PCI IEEE 802.11b",
+	},
+	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9805,
+	    0,
+	    "Netmos",
+	    "1284 Printer port",
+	},
+	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9815,
+	    0,
+	    "Netmos",
+	    "Dual 1284 Printer port",
 	},
 	{
 	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,
