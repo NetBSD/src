@@ -3,24 +3,73 @@
  * Public domain.
  */
 
+/*
+ * Modified by Lex Wennmacher <wennmach@NetBSD.org>
+ * Still public domain.
+ */
+
 #include <machine/asm.h>
 
 #include "abi.h"
 
-RCSID("$NetBSD: s_log1pf.S,v 1.7 2003/07/26 19:25:02 salo Exp $")
+RCSID("$NetBSD: s_log1pf.S,v 1.8 2003/09/10 16:45:43 wennmach Exp $")
 
 /*
- * Since the fyl2xp1 instruction has such a limited range:
- *	-(1 - (sqrt(2) / 2)) <= x <= sqrt(2) - 1
- * it's not worth trying to use it.
+ * The log1pf() function is provided to compute an accurate value of
+ * log(1 + x), even for tiny values of x. The i387 FPU provides the
+ * fyl2xp1 instruction for this purpose. However, the range of this
+ * instruction is limited to:
+ * 		-(1 - (sqrt(2) / 2)) <= x <= sqrt(2) - 1
+ *                         -0.292893 <= x <= 0.414214
+ * at least on older processor versions.
+ *
+ * log1pf() is implemented by testing the range of the argument.
+ * If it is appropriate for fyl2xp1, this instruction is used.
+ * Else, we compute log1pf(x) = ln(2)*ld(1 + x) the traditional way
+ * (using fyl2x).
+ *
+ * The range testing costs speed, but as the rationale for the very
+ * existence of this function is accuracy, we accept that.
+ *
+ * In order to reduce the cost for testing the range, we check if
+ * the argument is in the range
+ *                             -0.25 <= x <= 0.25
+ * which can be done with just one conditional branch. If x is
+ * inside this range, we use fyl2xp1. Outside of this range,
+ * the use of fyl2x is accurate enough.
+ * 
  */
 
+.section	.rodata
+	.align 8
+BOUND:
+	.long 0x0,0x3fd00000		/* (double)0.25 */
+
+.text
+	.align 4
 ENTRY(log1pf)
 	XMM_ONE_ARG_FLOAT_PROLOGUE
+	flds	ARG_FLOAT_ONE
+	fabs
+	fldl	BOUND
+	fcompp
+	fnstsw %ax
+	andb $69,%ah
+	jne .l1
+	jmp .l2
+	.align 4
+.l1:
+	fldln2
+        flds	ARG_FLOAT_ONE
+        fld1
+        faddp
+        fyl2x
+	XMM_FLOAT_EPILOGUE
+        ret
+	.align 4
+.l2:
 	fldln2
 	flds	ARG_FLOAT_ONE
-	fld1
-	faddp
-	fyl2x
+	fyl2xp1
 	XMM_FLOAT_EPILOGUE
 	ret
