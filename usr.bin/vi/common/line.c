@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.5 2003/04/18 18:33:41 christos Exp $	*/
+/*	$NetBSD: line.c,v 1.6 2003/04/18 18:46:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)line.c	10.21 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: line.c,v 1.5 2003/04/18 18:33:41 christos Exp $");
+__RCSID("$NetBSD: line.c,v 1.6 2003/04/18 18:46:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,9 @@ err3:		if (lenp != NULL)
 			/*
 			 * This breaks recovery of binary files
 			 */
-			data.size = strlen((const char *)data.data);
+			size_t olen = strlen((const char *)data.data);
+			if (olen < data.size)
+				data.size = olen;
 		}
 	}
 
