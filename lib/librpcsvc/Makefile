@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.22 1997/10/09 14:36:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 1997/10/09 22:26:17 lukem Exp $
 
-# XXX WARNS=0 is temporary until rpcgen(1) is fixed
-WARNS=0
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
 		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x\
 		sm_inter.x spray.x yp.x yppasswd.x
