@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.5 1998/07/05 06:49:16 jonathan Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.6 1998/07/19 17:28:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -82,9 +82,7 @@
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
-
-#define	PCMCIA_MANUFACTURER_MEGAHERTZ	0x128
-#define	PCMCIA_PRODUCT_MEGAHERTZ_XJACK	0x103
+#include <dev/pcmcia/pcmciadevs.h>
 
 int	sm_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	sm_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -114,9 +112,9 @@ sm_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer == PCMCIA_MANUFACTURER_MEGAHERTZ) {
+	if (pa->manufacturer == PCMCIA_VENDOR_MEGAHERTZ2) {
 		switch (pa->product) {
-		case PCMCIA_PRODUCT_MEGAHERTZ_XJACK:
+		case PCMCIA_PRODUCT_MEGAHERTZ2_XJACK:
 			if (pa->pf->number == 0)
 				return (1);
 		}
@@ -170,8 +168,8 @@ sm_pcmcia_attach(parent, self, aux)
 	}
 
 	switch (pa->product) {
-	case PCMCIA_PRODUCT_MEGAHERTZ_XJACK:
-		model = "Megahertz X-JACK Ethernet";
+	case PCMCIA_PRODUCT_MEGAHERTZ2_XJACK:
+		model = PCMCIA_STR_MEGAHERTZ2_XJACK;
 		break;
 
 	default:
@@ -179,7 +177,7 @@ sm_pcmcia_attach(parent, self, aux)
 	}
 	printf(": %s\n", model);
 
-	if (pa->product == PCMCIA_PRODUCT_MEGAHERTZ_XJACK) {
+	if (pa->product == PCMCIA_PRODUCT_MEGAHERTZ2_XJACK) {
 		char enaddr_str[12];
 		int i = 0, j;
 

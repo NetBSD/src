@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.4 1998/02/01 23:38:06 marc Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -145,10 +145,11 @@ struct pcmcia_card {
 	 * indicates no id was found.
 	 */
 	int32_t		manufacturer;
-#define	PCMCIA_MANUFACTURER_INVALID	-1
+#define	PCMCIA_VENDOR_INVALID	-1
 	int32_t		product;
 #define	PCMCIA_PRODUCT_INVALID		-1
 	u_int16_t	error;
+#define	PCMCIA_CIS_INVALID		{ NULL, NULL, NULL, NULL }
 	SIMPLEQ_HEAD(, pcmcia_function) pf_head;
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.6 1998/07/01 07:13:41 marc Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.7 1998/07/19 17:28:16 christos Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -79,7 +79,7 @@ pcmcia_read_cis(sc)
 	state.card->cis1_info[1] = NULL;
 	state.card->cis1_info[2] = NULL;
 	state.card->cis1_info[3] = NULL;
-	state.card->manufacturer = PCMCIA_MANUFACTURER_INVALID;
+	state.card->manufacturer = PCMCIA_VENDOR_INVALID;
 	state.card->product = PCMCIA_PRODUCT_INVALID;
 	SIMPLEQ_INIT(&state.card->pf_head);
 

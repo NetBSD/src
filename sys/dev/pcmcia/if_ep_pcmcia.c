@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.10 1998/07/05 06:49:16 jonathan Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.11 1998/07/19 17:28:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -75,10 +75,7 @@
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
-
-#define	PCMCIA_MANUFACTURER_3COM	0x101
-#define	PCMCIA_PRODUCT_3COM_3C562	0x562
-#define	PCMCIA_PRODUCT_3COM_3C589	0x589
+#include <dev/pcmcia/pcmciadevs.h>
 
 int	ep_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	ep_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -111,7 +108,7 @@ ep_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer == PCMCIA_MANUFACTURER_3COM) {
+	if (pa->manufacturer == PCMCIA_VENDOR_3COM) {
 		switch (pa->product) {
 		case PCMCIA_PRODUCT_3COM_3C562:
 		case PCMCIA_PRODUCT_3COM_3C589:
@@ -270,10 +267,10 @@ ep_pcmcia_attach(parent, self, aux)
 
 	switch (pa->product) {
 	case PCMCIA_PRODUCT_3COM_3C589:
-		model = "3Com 3C589 Ethernet";
+		model = PCMCIA_STR_3COM_3C589:
 		break;
 	case PCMCIA_PRODUCT_3COM_3C562:
-		model = "3Com 3C562 Ethernet";
+		model = PCMCIA_STR_3COM_3C562:
 		break;
 	default:
 		model = "3Com Ethernet, model unknown";

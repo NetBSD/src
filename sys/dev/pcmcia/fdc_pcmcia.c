@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.1 1998/06/21 18:45:41 christos Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.2 1998/07/19 17:28:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Christos Zoulas.  All rights reserved.
@@ -33,6 +33,8 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/disk.h>
+#include <sys/buf.h>
 
 #include <machine/bus.h>
 #include <machine/conf.h>
@@ -40,12 +42,10 @@
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
+#include <dev/pcmcia/pcmciadevs.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/isadmavar.h>
-
-#include <dev/isa/fdcreg.h>
-#include <dev/isa/fdcvar.h>
+#include <dev/ic/fdcreg.h>
+#include <dev/ic/fdcvar.h>
 
 struct fdc_pcmcia_softc {
 	struct fdc_softc sc_fdc;		/* real "fdc" softc */
@@ -59,10 +59,6 @@ struct fdc_pcmcia_softc {
 int fdc_pcmcia_probe __P((struct device *, struct cfdata *, void *));
 void fdc_pcmcia_attach __P((struct device *, struct device *, void *));
 static void fdc_conf __P((struct fdc_softc *));
-
-static struct fd_type fd_types[] = {
-	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_DSR_500KBPS,0xf6,1, "1.44MB"    } /* 1.44MB diskette */
-};
 
 struct cfattach fdc_pcmcia_ca = {
 	sizeof(struct fdc_pcmcia_softc), fdc_pcmcia_probe, fdc_pcmcia_attach
@@ -130,10 +126,11 @@ fdc_pcmcia_probe(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_card *card = pa->card;
+	char *cis[4] = PCMCIA_CIS_YEDATA_EXTERNAL_FDD;
 
 	/* For this card the manufacturer and product are -1 */
-	if (strcmp("Y-E DATA", card->cis1_info[0]) == 0 &&
-	    strcmp("External FDD", card->cis1_info[1]) == 0)
+	if (strcmp(cis[0], card->cis1_info[0]) == 0 &&
+	    strcmp(cis[1], card->cis1_info[1]) == 0)
 		return 1;
 
 	return 0;
@@ -187,7 +184,7 @@ fdc_pcmcia_attach(parent, self, aux)
 
 	fdc->sc_iot = psc->sc_pcioh.iot;
 	fdc->sc_ioh = psc->sc_pcioh.ioh;
-	fdc->sc_drq = -1;
+
 	fdc->sc_flags = 0;
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
@@ -195,7 +192,7 @@ fdc_pcmcia_attach(parent, self, aux)
 	if (!fdcfind(fdc->sc_iot, fdc->sc_ioh, 1))
 		printf(": coundn't find fdc\n%s", fdc->sc_dev.dv_xname);
 
-	printf(": %s, %s\n", pa->card->cis1_info[0], pa->card->cis1_info[1]);
+	printf(": %s\n", PCMCIA_STR_YEDATA_EXTERNAL_FDD);
 
 	fdc_conf(fdc);
 
