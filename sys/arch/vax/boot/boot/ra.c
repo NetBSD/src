@@ -1,4 +1,4 @@
-/*	$NetBSD: ra.c,v 1.5 2000/05/20 13:30:04 ragge Exp $ */
+/*	$NetBSD: ra.c,v 1.6 2000/05/21 09:45:54 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -117,7 +117,6 @@ raopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 		johan2 = (((u_int)ubauda) >> 16) & 077;
 		*ra_ip = 0; /* Start init */
 		bootrpb.csrphy = csrbase;
-// printf("nexaddr %x csrbase %x dunit %x ctlr %d\n", nexaddr, csrbase, dunit, ctlr);
 	} else {
 		paddr_t kdaddr = (paddr_t)nexaddr;
 		volatile int *w;
