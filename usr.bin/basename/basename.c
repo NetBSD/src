@@ -39,13 +39,16 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)basename.c	5.1 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$Id: basename.c,v 1.2 1993/08/01 18:18:23 mycroft Exp $";
+static char rcsid[] = "$Id: basename.c,v 1.3 1993/08/27 22:30:10 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+static void usage();
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -126,6 +129,7 @@ main(argc, argv)
 	exit(0);
 }
 
+static void
 usage()
 {
 	(void)fprintf(stderr, "usage: basename string [suffix]\n");

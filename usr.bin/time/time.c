@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)time.c	4.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: time.c,v 1.3 1993/08/27 19:05:31 jtc Exp $";
+static char rcsid[] = "$Id: time.c,v 1.4 1993/08/27 22:30:47 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,11 +48,14 @@ static char rcsid[] = "$Id: time.c,v 1.3 1993/08/27 19:05:31 jtc Exp $";
 #include <sys/signal.h>
 #include <sys/wait.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <errno.h>
 
 int lflag;
 int portableflag;
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;

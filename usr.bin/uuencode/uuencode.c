@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uuencode.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: uuencode.c,v 1.2 1993/08/01 18:03:38 mycroft Exp $";
+static char rcsid[] = "$Id: uuencode.c,v 1.3 1993/08/27 22:30:57 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -44,16 +44,20 @@ static char rcsid[] = "$Id: uuencode.c,v 1.2 1993/08/01 18:03:38 mycroft Exp $";
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
 
+static void encode();
+static void usage();
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
-	extern int errno;
 	struct stat sb;
 	int mode;
-	char *strerror();
 
 	while (getopt(argc, argv, "") != EOF)
 		usage();
@@ -96,6 +100,7 @@ main(argc, argv)
 /*
  * copy from in to out, encoding as you go along.
  */
+static void
 encode()
 {
 	register int ch, n;
@@ -136,6 +141,7 @@ encode()
 	(void)putchar('\n');
 }
 
+static void
 usage()
 {
 	(void)fprintf(stderr,"usage: uuencode [infile] remotefile\n");

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nice.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: nice.c,v 1.4 1993/08/27 20:22:06 jtc Exp $";
+static char rcsid[] = "$Id: nice.c,v 1.5 1993/08/27 22:30:34 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -50,10 +50,13 @@ static char rcsid[] = "$Id: nice.c,v 1.4 1993/08/27 20:22:06 jtc Exp $";
 #include <ctype.h>
 #include <errno.h>
 #include <err.h>
+#include <unistd.h>
 
 #define	DEFNICE	10
 
-/* ARGSUSED */
+static void usage();
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -97,6 +100,7 @@ main(argc, argv)
 	err ((errno == ENOENT) ? 127 : 126, argv[0]);
 }
 
+static void
 usage()
 {
 	(void)fprintf(stderr,

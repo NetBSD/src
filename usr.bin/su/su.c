@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$Id: su.c,v 1.6 1993/08/01 18:08:12 mycroft Exp $";
+static char rcsid[] = "$Id: su.c,v 1.7 1993/08/27 22:30:44 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,6 +47,7 @@ static char rcsid[] = "$Id: su.c,v 1.6 1993/08/01 18:08:12 mycroft Exp $";
 #include <sys/resource.h>
 #include <syslog.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <pwd.h>
 #include <grp.h>
 #include <string.h>
@@ -66,7 +67,9 @@ int use_kerberos = 1;
 #endif
 
 extern char *crypt();
+int chshell();
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -254,6 +257,7 @@ main(argc, argv)
 	exit(1);
 }
 
+int
 chshell(sh)
 	char *sh;
 {
