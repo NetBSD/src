@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 1999/03/26 06:54:40 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1994 Rolf Grossmann
@@ -103,6 +103,8 @@ struct trapframe {
     short frame;
     char info[0];
 };
+
+int trap __P((struct trapframe *fp));
 
 int
 trap(struct trapframe *fp)
