@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5 2002/07/11 21:23:30 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.6 2002/07/12 19:27:32 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -164,7 +164,7 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = SCARG(uap, sigcntxp);
-	if (ALIGN(scp) != (register_t)scp)
+	if (ALIGN(scp) != (uintptr_t)scp)
 		return (EINVAL);
 
 	if (copyin((caddr_t)scp, &ksc, sizeof(ksc)) != 0)
