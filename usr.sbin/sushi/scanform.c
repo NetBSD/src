@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.35 2004/03/22 19:03:19 jdc Exp $       */
+/*      $NetBSD: scanform.c,v 1.36 2004/03/24 19:10:58 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ form_status(FORM *form)
 
 	wstandout(stdscr);
 	mvwaddstr(stdscr, ws.ws_row-3, 0, catgets(catalog, 4, 9,
-	    "PGUP/PGDN to change page, UP/DOWN switch field, ENTER=Do."));
+	    "PGUP/PGDN to change page, UP/DOWN switch field, ENTER submit."));
 	wstandend(stdscr);
 	snprintf(buf, sizeof(buf), "%s (%d/%d)",
 	    catgets(catalog, 4, 8, "Form Page:"),
@@ -481,10 +481,12 @@ my_driver(FORM * form, int c, char *path)
 		/* NOTREACHED */
 		break;
 	case SHOWHELP:
-	        if (simple_lang_handler(path, HELPFILE, handle_help) == -2)
+		curs_set(0);
+	    if (simple_lang_handler(path, HELPFILE, handle_help) == -2)
 			nohelp();
 		touchwin(stdscr);
 		wrefresh(stdscr);
+	    curs_set(1);
 		return(FALSE);
 		/* NOTREACHED */
 		break;
@@ -500,6 +502,7 @@ my_driver(FORM * form, int c, char *path)
 		if (field_buffer(curfield, 1) == NULL || 
 		    field_buffer(curfield, 0) == NULL)
 			return(FALSE);
+	    curs_set(0);
 		otmp = tmp = strdup(field_buffer(curfield, 1));
 		stripWhiteSpace(vBOTH, tmp);
 		if (*tmp == 'm') {
@@ -545,6 +548,9 @@ my_driver(FORM * form, int c, char *path)
 			destroyCDKScroll(plist);
 			free(otmp);
 		}
+		touchwin(stdscr);
+		wrefresh(stdscr);
+		curs_set(1);
 		return(FALSE);
 		/* NOTREACHED */
 		break;
@@ -859,6 +865,7 @@ process_form(FORM *form, char *path)
 	if (strcmp("pre", form_userptr(form)) == 0)
 		return(process_preform(form, path));
 
+	curs_set(0);
 	*msg = catgets(catalog, 3, 17, "Are you sure? (Y/n)");
 	label = newCDKLabel(cdkscreen, CENTER, CENTER, msg, 1, TRUE, FALSE);
 	activateCDKLabel(label, NULL);
@@ -866,6 +873,7 @@ process_form(FORM *form, char *path)
 	destroyCDKLabel(label);
 	touchwin(stdscr);
 	wrefresh(stdscr);
+	curs_set(1);
 	if (key != 13 && key != 10 && key != 121 && key != 89) /* enter y Y */
 		return -1;
 
@@ -1608,12 +1616,14 @@ tab_help(FORM *form)
 	} else
 		return;
 
+	curs_set(0);
 	label = newCDKLabel(cdkscreen, CENTER, CENTER, msg, lines, TRUE, FALSE);
 	activateCDKLabel(label, NULL);
 	waitCDKLabel(label, 0);
 	destroyCDKLabel(label);
 	touchwin(stdscr);
 	wrefresh(stdscr);
+	curs_set(1);
 }
 
 int
@@ -1639,6 +1649,7 @@ handle_form(char *basedir, char *path, char **args)
 		bailout("malloc: %s", strerror(errno));
 	fflush(NULL);
 
+	curs_set(0);
 	/* generate a label to let the user know we are thinking */
 	msg[0] = catgets(catalog, 4, 2, "Generating form data, please wait");
 	label = newCDKLabel(cdkscreen, CENTER, CENTER, msg, 1, TRUE, FALSE);
@@ -1667,11 +1678,15 @@ handle_form(char *basedir, char *path, char **args)
 	wrefresh(stdscr);
 	wrefresh(boxwin);
 	form_status(menuform);
+	curs_set(1);
 	while (!done) {
+		pos_form_cursor(menuform);
+		wrefresh(formwin);
 		switch (form_driver(menuform, c = get_request(formwin))) {
 		case E_OK:
 			if (c == REQ_NEXT_PAGE || c == REQ_PREV_PAGE ||
-			    c == REQ_FIRST_PAGE || c == REQ_LAST_PAGE)
+			    c == REQ_FIRST_PAGE || c == REQ_LAST_PAGE ||
+				c == REQ_NEXT_FIELD || c == REQ_PREV_FIELD)
 				form_status(menuform);
 			break;
 		case E_UNKNOWN_COMMAND:
@@ -1684,6 +1699,7 @@ handle_form(char *basedir, char *path, char **args)
 			break;
 		}
 	}
+	curs_set(0);
 	fc = field_count(menuform);
 	f = form_fields(menuform);
 	unpost_form(menuform);
@@ -1740,6 +1756,7 @@ handle_preform(char *basedir, char *path)
 		bailout("malloc: %s", strerror(errno));
 	fflush(NULL);
 
+	curs_set(0);
 	/* generate a label to let the user know we are thinking */
 	msg[0] = catgets(catalog, 4, 2, "Generating form data, please wait");
 	label = newCDKLabel(cdkscreen, CENTER, CENTER, msg, 1, TRUE, FALSE);
@@ -1765,11 +1782,15 @@ handle_preform(char *basedir, char *path)
 	post_form(menuform);
 	wrefresh(stdscr);
 	form_status(menuform);
+	curs_set(1);
 	while (!done) {
+		pos_form_cursor(menuform);
+		wrefresh(formwin);
 		switch (form_driver(menuform, c = get_request(formwin))) {
 		case E_OK:
 			if (c == REQ_NEXT_PAGE || c == REQ_PREV_PAGE ||
-			    c == REQ_FIRST_PAGE || c == REQ_LAST_PAGE)
+			    c == REQ_FIRST_PAGE || c == REQ_LAST_PAGE ||
+				c == REQ_NEXT_FIELD || c == REQ_PREV_FIELD)
 				form_status(menuform);
 			break;
 		case E_UNKNOWN_COMMAND:
@@ -1782,6 +1803,7 @@ handle_preform(char *basedir, char *path)
 			break;
 		}
 	}
+	curs_set(0);
 	fc = field_count(menuform);
 	f = form_fields(menuform);
 	unpost_form(menuform);
