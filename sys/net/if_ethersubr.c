@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ethersubr.c	7.13 (Berkeley) 4/20/91
- *	$Id: if_ethersubr.c,v 1.4 1993/12/17 00:12:11 mycroft Exp $
+ *	$Id: if_ethersubr.c,v 1.5 1994/01/23 23:41:14 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ ether_output(ifp, m0, dst, rt)
 	struct sockaddr *dst;
 	struct rtentry *rt;
 {
-	short type;
+	u_short type;
 	int s, error = 0;
  	u_char edst[6];
 	struct in_addr idst;
@@ -210,7 +210,8 @@ ether_output(ifp, m0, dst, rt)
 	case AF_UNSPEC:
 		eh = (struct ether_header *)dst->sa_data;
  		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
-		type = eh->ether_type;
+		/* AF_UNSPEC doesn't swap the byte order of the ether_type */
+		type = ntohs(eh->ether_type);
 		goto gottype;
 
 	default:
@@ -292,6 +293,7 @@ ether_input(ifp, eh, m)
 {
 	register struct ifqueue *inq;
 	register struct llc *l;
+	u_short etype;
 	int s;
 
 	ifp->if_lastchange = time;
@@ -314,7 +316,8 @@ ether_input(ifp, eh, m)
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		ifp->if_imcasts++;
 
-	switch (eh->ether_type) {
+	etype = ntohs(eh->ether_type);
+	switch (etype) {
 #ifdef INET
 	case ETHERTYPE_IP:
 		schednetisr(NETISR_IP);
@@ -334,7 +337,7 @@ ether_input(ifp, eh, m)
 #endif
 	default:
 #ifdef	ISO
-		if (eh->ether_type > ETHERMTU)
+		if (etype > ETHERMTU)
 			goto dropanyway;
 		l = mtod(m, struct llc *);
 		switch (l->llc_control) {
@@ -343,8 +346,8 @@ ether_input(ifp, eh, m)
 		    if ((l->llc_dsap == LLC_ISO_LSAP) &&
 			(l->llc_ssap == LLC_ISO_LSAP)) {
 				/* LSAP for ISO */
-			if (m->m_pkthdr.len > eh->ether_type)
-				m_adj(m, eh->ether_type - m->m_pkthdr.len);
+			if (m->m_pkthdr.len > etype)
+				m_adj(m, etype - m->m_pkthdr.len);
 			m->m_data += 3;		/* XXX */
 			m->m_len -= 3;		/* XXX */
 			m->m_pkthdr.len -= 3;	/* XXX */
