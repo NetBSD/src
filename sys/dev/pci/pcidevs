@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.440 2002/06/21 15:55:52 thorpej Exp $
+$NetBSD: pcidevs,v 1.441 2002/06/22 07:40:59 cjs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1324,6 +1324,12 @@ product INTEL 82562EH_HPNA_0	0x1035	82562EH HomePNA Network Controller
 product INTEL 82562EH_HPNA_1	0x1036	82562EH HomePNA Network Controller
 product INTEL 82562EH_HPNA_2	0x1037	82562EH HomePNA Network Controller
 product INTEL PRO_100_VM_2	0x1038	PRO/100 VM Network Controller
+product INTEL PRO_100_VE_3	0x1039	PRO/100 VE (LOM) Network Controller
+product INTEL PRO_100_VE_4	0x103a	PRO/100 VE (CNR) Network Controller
+product INTEL PRO_100_VM_3	0x103b	PRO/100 VM (LOM) Network Controller
+product INTEL PRO_100_VM_4	0x103c	PRO/100 VM (CNR) Network Controller
+product INTEL PRO_100_VE_5	0x103d	PRO/100 VE (MOB) Network Controller
+product INTEL PRO_100_VM_5	0x103e	PRO/100 VM (MOB) Network Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
