@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.12 2002/11/15 14:32:33 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.13 2003/03/31 16:52:42 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.12 2002/11/15 14:32:33 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.13 2003/03/31 16:52:42 perry Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -235,12 +235,12 @@ em_copy_region(EditLine *el, int c)
 }
 
 
-/* em_gosmacs_traspose():
+/* em_gosmacs_transpose():
  *	Exchange the two characters before the cursor
  *	Gosling emacs transpose chars [^T]
  */
 protected el_action_t
-em_gosmacs_traspose(EditLine *el, int c)
+em_gosmacs_transpose(EditLine *el, int c)
 {
 
 	if (el->el_line.cursor > &el->el_line.buffer[1]) {
