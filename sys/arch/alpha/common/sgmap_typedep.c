@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.22 2001/07/19 18:20:20 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.23 2002/04/26 04:15:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.22 2001/07/19 18:20:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.23 2002/04/26 04:15:18 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -231,6 +231,7 @@ __C(SGMAP_TYPE,_load)(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = 1;
+		map->_dm_window = t;
 	} else {
 		map->_dm_flags &= ~(BUS_DMA_READ|BUS_DMA_WRITE);
 		if (t->_next_window != NULL) {
@@ -284,6 +285,7 @@ __C(SGMAP_TYPE,_load_mbuf)(bus_dma_tag_t t, bus_dmamap_t map,
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
 		map->dm_nsegs = seg;
+		map->_dm_window = t;
 	} else {
 		/* Need to back out what we've done so far. */
 		map->dm_nsegs = seg - 1;
@@ -359,6 +361,7 @@ __C(SGMAP_TYPE,_load_uio)(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	if (error == 0) {
 		map->dm_mapsize = uio->uio_resid;
 		map->dm_nsegs = seg;
+		map->_dm_window = t;
 	} else {
 		/* Need to back out what we've done so far. */
 		map->dm_nsegs = seg - 1;
@@ -441,4 +444,5 @@ __C(SGMAP_TYPE,_unload)(bus_dma_tag_t t, bus_dmamap_t map,
 	/* Mark the mapping invalid. */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	map->_dm_window = NULL;
 }
