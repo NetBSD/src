@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.59 2004/05/13 20:27:38 kleink Exp $	*/
+/*	$NetBSD: ping6.c,v 1.60 2004/06/09 01:59:20 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.59 2004/05/13 20:27:38 kleink Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.60 2004/06/09 01:59:20 itojun Exp $");
 #endif
 #endif
 
@@ -2698,6 +2698,6 @@ usage()
 	    "] [-a [aAclsg]] [-b sockbufsiz] [-c count] \n"
             "\t[-I interface] [-i wait] [-l preload] [-p pattern] "
 	    "[-S sourceaddr]\n"
-            "\t[-s packetsize] [-h hoplimit] [hops...] [-g gateway] host\n");
+            "\t[-s packetsize] [-h hoplimit] [-g gateway] [hops...] host\n");
 	exit(1);
 }
