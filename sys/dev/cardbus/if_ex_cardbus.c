@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.21 2001/07/17 13:55:12 mrg Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.22 2001/07/19 16:13:01 wiz Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -36,7 +36,7 @@
  *
  */
 
-/* #define EX_DEBUG 4 */	/* define to report infomation for debugging */
+/* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
 #include <sys/param.h>
 #include <sys/systm.h>

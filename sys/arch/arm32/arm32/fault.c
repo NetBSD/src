@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.56 2001/06/26 22:09:19 chris Exp $	*/
+/*	$NetBSD: fault.c,v 1.57 2001/07/19 16:13:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -300,7 +300,7 @@ copyfault:
 	we_re_toast:
 		/*
 		 * Were are dead, try and provide some debug
-		 * infomation before dying
+		 * information before dying.
 		 */
 #ifdef DDB
 		printf("Unhandled trap (frame = %p)\n", frame);
