@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.2 1999/09/16 14:42:27 msaitoh Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.3 2000/01/12 14:40:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -49,6 +49,10 @@
 
 #ifdef _KERNEL
 
+void enable_ext_intr __P((void));
+void disable_ext_intr __P((void));
+static __inline void setPageDir __P((int));
+
 static __inline void
 tlbflush(void)
 {
@@ -60,8 +64,10 @@ tlbflush(void)
 }
 
 static __inline void
-setPageDir(int pagedir)
+setPageDir(pagedir)
+	int pagedir;
 {
+
 	PageDirReg = pagedir;
 	tlbflush();
 }
@@ -71,6 +77,7 @@ setPageDir(int pagedir)
 static __inline void
 disable_intr(void)
 {
+
 	__asm __volatile("mov.l r0, @-r15");
 	__asm __volatile("mov.l r1, @-r15");
 	__asm __volatile("mov #0x10, r0");
@@ -86,6 +93,7 @@ disable_intr(void)
 static __inline void
 enable_intr(void)
 {
+
 	__asm __volatile("mov.l r0, @-r15");
 	__asm __volatile("mov.l r1, @-r15");
 	__asm __volatile("mov #0x10, r0");
