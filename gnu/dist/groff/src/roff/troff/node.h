@@ -1,7 +1,8 @@
-/*	$NetBSD: node.h,v 1.1.1.1 2001/04/19 12:51:19 wiz Exp $	*/
+/*	$NetBSD: node.h,v 1.1.1.2 2003/06/30 17:52:10 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -54,17 +55,19 @@ struct node {
   node *last;
   node();
   node(node *n);
-  node *add_char(charinfo *c, environment *, hunits *widthp);
+  node *add_char(charinfo *c, environment *, hunits *widthp, int *spacep);
 
   virtual ~node();
   virtual node *copy() = 0;
+  virtual int set_unformat_flag();
+  virtual int force_tprint() = 0;
   virtual hunits width();
   virtual hunits subscript_correction();
   virtual hunits italic_correction();
   virtual hunits left_italic_correction();
   virtual hunits skew();
   virtual int nspaces();
-  virtual int merge_space(hunits);
+  virtual int merge_space(hunits, hunits, hunits);
   virtual vunits vertical_width();
   virtual node *last_char_node();
   virtual void vertical_extent(vunits *min, vunits *max);
@@ -74,12 +77,13 @@ struct node {
   virtual node *merge_self(node *);
   virtual node *add_discretionary_hyphen();
   virtual node *add_self(node *, hyphen_list **);
-  virtual hyphen_list *get_hyphen_list(hyphen_list *s = 0);
+  virtual hyphen_list *get_hyphen_list(hyphen_list *, int *);
   virtual void ascii_print(ascii_output_file *);
   virtual void asciify(macro *);
   virtual int discardable();
   virtual void spread_space(int *, hunits *);
   virtual void freeze_space();
+  virtual void is_escape_colon();
   virtual breakpoint *get_breakpoints(hunits width, int nspaces,
 				      breakpoint *rest = 0,
 				      int is_inner = 0);
@@ -95,6 +99,8 @@ struct node {
 
   virtual node *merge_glyph_node(glyph_node *);
   virtual tfont *get_tfont();
+  virtual color *get_glyph_color();
+  virtual color *get_fill_color();
   virtual void tprint(troff_output_file *);
   virtual void zero_width_tprint(troff_output_file *);
 
@@ -104,11 +110,13 @@ struct node {
   virtual const char *type() = 0;
 };
 
-inline node::node() : next(0)
+inline node::node()
+: next(0), last(0)
 {
 }
 
-inline node::node(node *n) : next(n)
+inline node::node(node *n)
+: next(n), last(0)
 {
 }
 
@@ -134,6 +142,7 @@ public:
   line_start_node() {}
   node *copy() { return new line_start_node; }
   int same(node *);
+  int force_tprint();
   const char *type();
   void asciify(macro *);
 };
@@ -148,9 +157,11 @@ private:
 protected:
   hunits n;
   char set;
-  space_node(hunits, int, node * = 0);
+  char was_escape_colon;
+  color *col;			/* for grotty */
+  space_node(hunits, int, int, color *, node * = 0);
 public:
-  space_node(hunits d, node *p = 0);
+  space_node(hunits, color *, node * = 0);
 #if 0
   ~space_node();
   void *operator new(size_t);
@@ -159,9 +170,10 @@ public:
   int nspaces();
   hunits width();
   int discardable();
-  int merge_space(hunits);
+  int merge_space(hunits, hunits, hunits);
   void freeze_space();
-  void spread_space(int*, hunits*);
+  void is_escape_colon();
+  void spread_space(int *, hunits *);
   void tprint(troff_output_file *);
   breakpoint *get_breakpoints(hunits width, int nspaces, breakpoint *rest = 0,
 			      int is_inner = 0);
@@ -169,32 +181,58 @@ public:
   void split(int, node **, node **);
   void ascii_print(ascii_output_file *);
   int same(node *);
+  void asciify(macro *);
   const char *type();
+  int force_tprint();
+  hyphenation_type get_hyphenation_type();
+};
+
+struct width_list {
+  hunits width;
+  hunits sentence_width;
+  width_list *next;
+  width_list(hunits, hunits);
+  width_list(width_list *);
 };
 
 class word_space_node : public space_node {
 protected:
-  word_space_node(hunits, int, node * = 0);
+  width_list *orig_width;
+  unsigned char unformat;
+  word_space_node(hunits, int, color *, width_list *, int, node * = 0);
 public:
-  word_space_node(hunits, node * = 0);
+  word_space_node(hunits, color *, width_list *, node * = 0);
+  ~word_space_node();
   node *copy();
+  int reread(int *);
+  int set_unformat_flag();
   void tprint(troff_output_file *);
   int same(node *);
+  void asciify(macro *);
   const char *type();
+  int merge_space(hunits, hunits, hunits);
+  int force_tprint();
 };
 
 class unbreakable_space_node : public word_space_node {
-  unbreakable_space_node(hunits, int, node * = 0);
+  unbreakable_space_node(hunits, int, color *, node * = 0);
 public:
-  unbreakable_space_node(hunits, node * = 0);
+  unbreakable_space_node(hunits, color *, node * = 0);
   node *copy();
+  int reread(int *);
+  void tprint(troff_output_file *);
   int same(node *);
+  void asciify(macro *);
   const char *type();
+  int force_tprint();
   breakpoint *get_breakpoints(hunits width, int nspaces, breakpoint *rest = 0,
 			      int is_inner = 0);
   int nbreaks();
   void split(int, node **, node **);
-  int merge_space(hunits);
+  int merge_space(hunits, hunits, hunits);
+  node *add_self(node *, hyphen_list **);
+  hyphen_list *get_hyphen_list(hyphen_list *, int *);
+  hyphenation_type get_hyphenation_type();
 };
 
 class diverted_space_node : public node {
@@ -205,6 +243,7 @@ public:
   int reread(int *);
   int same(node *);
   const char *type();
+  int force_tprint();
 };
 
 class diverted_copy_file_node : public node {
@@ -216,68 +255,91 @@ public:
   int reread(int *);
   int same(node *);
   const char *type();
+  int force_tprint();
 };
 
 class extra_size_node : public node {
   vunits n;
- public:
+public:
   extra_size_node(vunits i) : n(i) {}
   void set_vertical_size(vertical_size *);
   node *copy();
   int same(node *);
   const char *type();
+  int force_tprint();
 };
 
 class vertical_size_node : public node {
   vunits n;
- public:
+public:
   vertical_size_node(vunits i) : n(i) {}
   void set_vertical_size(vertical_size *);
   void asciify(macro *);
   node *copy();
+  int set_unformat_flag();
   int same(node *);
   const char *type();
+  int force_tprint();
 };
 
 class hmotion_node : public node {
 protected:
   hunits n;
+  unsigned char was_tab;
+  unsigned char unformat;
+  color *col;			/* for grotty */
 public:
-  hmotion_node(hunits i, node *next = 0) : node(next), n(i) {}
+  hmotion_node(hunits i, color *c, node *next = 0)
+    : node(next), n(i), was_tab(0), unformat(0), col(c) {}
+  hmotion_node(hunits i, int flag1, int flag2, color *c, node *next = 0)
+    : node(next), n(i), was_tab(flag1), unformat(flag2), col(c) {}
   node *copy();
+  int reread(int *);
+  int set_unformat_flag();
+  void asciify(macro *);
   void tprint(troff_output_file *);
   hunits width();
   void ascii_print(ascii_output_file *);
   int same(node *);
   const char *type();
+  int force_tprint();
+  node *add_self(node *, hyphen_list **);
+  hyphen_list *get_hyphen_list(hyphen_list *, int *);
+  hyphenation_type get_hyphenation_type();
 };
 
 class space_char_hmotion_node : public hmotion_node {
 public:
-  space_char_hmotion_node(hunits i, node *next = 0);
+  space_char_hmotion_node(hunits, color *, node * = 0);
   node *copy();
   void ascii_print(ascii_output_file *);
   void asciify(macro *);
+  void tprint(troff_output_file *);
   int same(node *);
   const char *type();
+  int force_tprint();
+  node *add_self(node *, hyphen_list **);
+  hyphen_list *get_hyphen_list(hyphen_list *, int *);
+  hyphenation_type get_hyphenation_type();
 };
 
 class vmotion_node : public node {
   vunits n;
- public:
-  vmotion_node(vunits i) : n(i) {}
+  color *col;			/* for grotty */
+public:
+  vmotion_node(vunits i, color *c) : n(i), col(c) {}
   void tprint(troff_output_file *);
   node *copy();
   vunits vertical_width();
   int same(node *);
   const char *type();
+  int force_tprint();
 };
-
 
 class hline_node : public node {
   hunits x;
   node *n;
- public:
+public:
   hline_node(hunits i, node *c, node *next = 0) : node(next), x(i), n(c) {}
   ~hline_node();
   node *copy();
@@ -285,13 +347,14 @@ class hline_node : public node {
   void tprint(troff_output_file *);
   int same(node *);
   const char *type();
+  int force_tprint();
 };
 
 class vline_node : public node {
   vunits x;
   node *n;
- public:
-  vline_node(vunits  i, node *c, node *next= 0) : node(next), x(i), n(c) {}
+public:
+  vline_node(vunits i, node *c, node *next= 0) : node(next), x(i), n(c) {}
   ~vline_node();
   node *copy();
   void tprint(troff_output_file *);
@@ -300,37 +363,41 @@ class vline_node : public node {
   void vertical_extent(vunits *, vunits *);
   int same(node *);
   const char *type();
+  int force_tprint();
 };
 
 
 class dummy_node : public node {
- public:
+public:
   dummy_node(node *nd = 0) : node(nd) {}
   node *copy();
   int same(node *);
   const char *type();
+  int force_tprint();
   hyphenation_type get_hyphenation_type();
 };
 
 class transparent_dummy_node : public node {
 public:
-  transparent_dummy_node() {}
+  transparent_dummy_node(node *nd = 0) : node(nd) {}
   node *copy();
   int same(node *);
   const char *type();
+  int force_tprint();
   int ends_sentence();
   hyphenation_type get_hyphenation_type();
 };
 
 class zero_width_node : public node {
   node *n;
- public:
+public:
   zero_width_node(node *gn);
   ~zero_width_node();
   node *copy();
   void tprint(troff_output_file *);
   int same(node *);
   const char *type();
+  int force_tprint();
   void append(node *);
   int character_type();
   void vertical_extent(vunits *min, vunits *max);
@@ -348,6 +415,7 @@ public:
   node *copy();
   int same(node *);
   const char *type();
+  int force_tprint();
   hunits width();
   node *last_char_node();
   void vertical_extent(vunits *, vunits *);
@@ -360,7 +428,7 @@ public:
   hunits skew();
   hunits italic_correction();
   hunits subscript_correction();
-  hyphen_list *get_hyphen_list(hyphen_list *ss = 0);
+  hyphen_list *get_hyphen_list(hyphen_list *, int *);
   node *add_self(node *, hyphen_list **);
   node *merge_glyph_node(glyph_node *);
 };
@@ -377,6 +445,10 @@ public:
   hunits width();
   int same(node *);
   const char *type();
+  int force_tprint();
+  node *add_self(node *, hyphen_list **);
+  hyphen_list *get_hyphen_list(hyphen_list *, int *);
+  hyphenation_type get_hyphenation_type();
 };
 
 class bracket_node : public node {
@@ -391,36 +463,65 @@ public:
   hunits width();
   int same(node *);
   const char *type();
+  int force_tprint();
 };
 
 class special_node : public node {
   macro mac;
+  tfont *tf;
+  color *gcol;
+  color *fcol;
+  int no_init_string;
   void tprint_start(troff_output_file *);
   void tprint_char(troff_output_file *, unsigned char);
   void tprint_end(troff_output_file *);
 public:
-  special_node(const macro &);
+  special_node(const macro &, int = 0);
+  special_node(const macro &, tfont *, color *, color *, int = 0);
   node *copy();
   void tprint(troff_output_file *);
   int same(node *);
   const char *type();
+  int force_tprint();
+  int ends_sentence();
+  tfont *get_tfont();
 };
 
+class suppress_node : public node {
+  int is_on;
+  int emit_limits;	// must we issue the extent of the area written out?
+  symbol filename;
+  char position;
+  int  image_id;
+public:
+  suppress_node(int, int);
+  suppress_node(symbol f, char p, int id);
+  suppress_node(int, int, symbol f, char p, int id);
+  node *copy();
+  void tprint(troff_output_file *);
+  hunits width();
+  int same(node *);
+  const char *type();
+  int force_tprint();
+private:
+  void put(troff_output_file *out, const char *s);
+};
 
 struct hvpair {
   hunits h;
   vunits v;
-
   hvpair();
 };
 
 class draw_node : public node {
   int npoints;
   font_size sz;
+  color *gcol;
+  color *fcol;
   char code;
   hvpair *point;
 public:
-  draw_node(char, hvpair *, int, font_size);
+  draw_node(char, hvpair *, int, font_size, color *, color *);
   ~draw_node();
   hunits width();
   vunits vertical_width();
@@ -428,6 +529,7 @@ public:
   void tprint(troff_output_file *);
   int same(node *);
   const char *type();
+  int force_tprint();
 };
 
 class charinfo;
@@ -464,11 +566,13 @@ public:
   virtual void flush() = 0;
   virtual void transparent_char(unsigned char) = 0;
   virtual void print_line(hunits x, vunits y, node *n,
-			  vunits before, vunits after) = 0;
+			  vunits before, vunits after, hunits width) = 0;
   virtual void begin_page(int pageno, vunits page_length) = 0;
   virtual void copy_file(hunits x, vunits y, const char *filename) = 0;
   virtual int is_printing() = 0;
-  virtual void put_filename (const char *filename);
+  virtual void put_filename(const char *filename);
+  virtual void on();
+  virtual void off();
 #ifdef COLUMN
   virtual void vjustify(vunits, symbol);
 #endif /* COLUMN */
@@ -487,7 +591,6 @@ class font_family {
   int map_size;
 public:
   const symbol nm;
-
   font_family(symbol);
   ~font_family();
   int make_definite(int);
@@ -495,3 +598,4 @@ public:
 };
 
 font_family *lookup_family(symbol);
+symbol get_font_name(int, environment *);

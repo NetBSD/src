@@ -1,7 +1,8 @@
-/*	$NetBSD: pic.h,v 1.1.1.1 2001/04/19 12:51:31 wiz Exp $	*/
+/*	$NetBSD: pic.h,v 1.1.1.2 2003/06/30 17:52:11 wiz Exp $	*/
 
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+/* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2003
+   Free Software Foundation, Inc.
      Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
@@ -20,8 +21,8 @@ You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
-#include <stdio.h>
-#include <string.h>
+#include "lib.h"
+
 #include <math.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -32,9 +33,32 @@ extern "C" {
 }
 #endif /* NEED_DECLARATION_HYPOT */
 
+#ifdef NEED_DECLARATION_RAND
+#undef rand
+extern "C" {
+  int rand();
+}
+#endif /* NEED_DECLARATION_RAND */
+
+#ifdef NEED_DECLARATION_SRAND
+#undef srand
+extern "C" {
+#ifdef RET_TYPE_SRAND_IS_VOID
+  void srand(unsigned int);
+#else
+  int srand(unsigned int);
+#endif
+}
+#endif /* NEED_DECLARATION_SRAND */
+
+#ifndef HAVE_FMOD
+extern "C" {
+  double fmod(double, double);
+}
+#endif
+
 #include "assert.h"
 #include "cset.h"
-#include "lib.h"
 #include "stringclass.h"
 #include "errarg.h"
 #include "error.h"
@@ -104,3 +128,4 @@ extern int zero_length_line_flag;
 extern int driver_extension_flag;
 extern int compatible_flag;
 extern int safer_flag;
+extern char *graphname;
