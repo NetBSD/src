@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.19 1997/06/16 01:45:30 jonathan Exp $	*/
+/*	$NetBSD: promio.c,v 1.20 1997/10/19 10:25:52 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)cons.c	8.2 (Berkeley) 1/11/94
  */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+__KERNEL_RCSID(0, "$NetBSD: promio.c,v 1.20 1997/10/19 10:25:52 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -303,7 +306,10 @@ consinit()
 			return;
 	    } else
 #endif
-		printf("No crt console device in slot %d\n", crt);
+	    {
+		printf("No supported console device in slot %d. ", crt);
+	    	printf("Switching over to serial console!\n");
+	    }
 	}
 
 
