@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.15 2003/12/29 05:09:08 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.16 2003/12/29 05:22:16 oster Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.15 2003/12/29 05:09:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.16 2003/12/29 05:22:16 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -54,19 +54,6 @@ cond_destroyer(arg)
 	if (rc) {
 		RF_ERRORMSG1("RAIDFRAME: Error %d auto-destroying condition\n", rc);
 	}
-}
-
-int 
-_rf_create_managed_mutex(listp, m, file, line)
-	RF_ShutdownList_t **listp;
-RF_DECLARE_MUTEX(*m)
-	char   *file;
-	int     line;
-{
-
-	rf_mutex_init(m);
-
-	return (0);
 }
 
 #if 0
@@ -125,9 +112,7 @@ _rf_init_managed_threadgroup(listp, g, file, line)
 {
 	int     rc;
 
-	rc = _rf_create_managed_mutex(listp, &g->mutex, file, line);
-	if (rc)
-		return (rc);
+	rf_mutex_init(&g->mutex);
 	rc = _rf_create_managed_cond(listp, &g->cond, file, line);
 	if (rc)
 		return (rc);
