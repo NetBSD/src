@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.5 1998/10/20 14:56:30 tsubai Exp $	*/
+/*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -229,4 +229,14 @@ adbprint(args, name)
                 printf(" addr %d: ", aa_args->origaddr);
 
 	return (rv);
+}
+
+void
+extdms_complete(buffer, compdata, cmd)
+	caddr_t buffer, compdata;
+	int cmd;
+{
+	long *p = (long *)compdata;
+
+	*p= -1;
 }
