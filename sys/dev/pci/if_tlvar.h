@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlvar.h,v 1.3 1999/01/11 22:45:42 tron Exp $	*/
+/*	$NetBSD: if_tlvar.h,v 1.4 2000/03/23 07:01:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -48,6 +48,8 @@ struct tl_softc {
 	const struct tl_product_desc *tl_product;
 	void* tl_ih;
 	struct ethercom tl_ec;
+	struct callout tl_tick_ch;	/* tick callout */
+	struct callout tl_restart_ch;	/* restart callout */
 	u_int8_t tl_enaddr[ETHER_ADDR_LEN];	/* hardware adress */
 	u_int16_t tl_flags;
 #define TL_IFACT 0x0001 /* chip has interface activity */

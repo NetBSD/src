@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.14 2000/01/18 18:49:35 augustss Exp $	*/
+/*	$NetBSD: midi.c,v 1.15 2000/03/23 07:01:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/syslog.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
@@ -137,6 +138,9 @@ midiattach(parent, self, aux)
 		return;
 	}
 #endif
+
+	callout_init(&sc->sc_callout);
+
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
 	midi_attach(sc, parent);
@@ -518,7 +522,8 @@ midi_start_output(sc, intr)
 		psignal(sc->async, SIGIO);
 	if (mb->used > 0) {
 		if (!(sc->props & MIDI_PROP_OUT_INTR))
-			timeout(midi_timeout, sc, midi_wait);
+			callout_reset(&sc->sc_callout, midi_wait,
+			    midi_timeout, sc);
 	} else
 		sc->pbus = 0;
 	splx(s);

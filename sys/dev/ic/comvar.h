@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.31 2000/01/23 21:06:01 soda Exp $	*/
+/*	$NetBSD: comvar.h,v 1.32 2000/03/23 07:01:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,6 +35,7 @@
 #include <sys/rnd.h>
 #endif
 
+#include <sys/callout.h>
 #include <sys/timepps.h>
 
 int comcnattach __P((bus_space_tag_t, int, int, int, tcflag_t));
@@ -62,6 +63,8 @@ struct com_softc {
 	struct device sc_dev;
 	void *sc_si;
 	struct tty *sc_tty;
+
+	struct callout sc_diag_callout;
 
 	int sc_iobase;			/* XXX ISA-centric name */
 	int sc_frequency;

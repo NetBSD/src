@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.66 2000/03/20 22:53:36 enami Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.67 2000/03/23 07:01:28 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -123,6 +123,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -445,12 +446,12 @@ aic_init(sc, bus_reset)
 		sc->sc_state = AIC_CLEANING;
 		if ((acb = sc->sc_nexus) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(aic_timeout, acb);
+			callout_stop(&acb->xs->xs_callout);
 			aic_done(sc, acb);
 		}
 		while ((acb = sc->nexus_list.tqh_first) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(aic_timeout, acb);
+			callout_stop(&acb->xs->xs_callout);
 			aic_done(sc, acb);
 		}
 	}
@@ -1849,8 +1850,9 @@ loop:
 
 			/* On our first connection, schedule a timeout. */
 			if ((acb->xs->xs_control & XS_CTL_POLL) == 0)
-				timeout(aic_timeout, acb,
-				    (acb->timeout * hz) / 1000);
+				callout_reset(&acb->xs->xs_callout,
+				    (acb->timeout * hz) / 1000,
+				    aic_timeout, acb);
 
 			sc->sc_state = AIC_CONNECTED;
 		} else if ((sstat1 & SELTO) != 0) {
@@ -2066,7 +2068,7 @@ reset:
 	return 1;
 
 finish:
-	untimeout(aic_timeout, acb);
+	callout_stop(&acb->xs->xs_callout);
 	aic_done(sc, acb);
 	goto out;
 

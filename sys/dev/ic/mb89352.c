@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.4 1999/09/30 23:04:41 thorpej Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 #ifdef DDB
@@ -375,12 +375,12 @@ spc_init(sc)
 		sc->sc_state = SPC_CLEANING;
 		if ((acb = sc->sc_nexus) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(spc_timeout, acb);
+			callout_stop(&acb->xs->xs_callout);
 			spc_done(sc, acb);
 		}
 		while ((acb = sc->nexus_list.tqh_first) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout(spc_timeout, acb);
+			callout_stop(&acb->xs->xs_callout);
 			spc_done(sc, acb);
 		}
 	}
@@ -1807,7 +1807,9 @@ loop:
 
 			/* On our first connection, schedule a timeout. */
 			if ((acb->xs->xs_control & XS_CTL_POLL) == 0)
-				timeout(spc_timeout, acb, (acb->timeout * hz) / 1000);
+				callout_reset(&acb->xs->xs_callout,
+				    (acb->timeout * hz) / 1000,
+				    spc_timeout, acb);
 
 			sc->sc_state = SPC_CONNECTED;
 		} else if ((ints & INTS_TIMEOUT) != 0) {
@@ -2018,7 +2020,7 @@ reset:
 	return 1;
 
 finish:
-	untimeout(spc_timeout, acb);
+	callout_stop(&acb->xs->xs_callout);
 	bus_space_write_1(iot, ioh, INTS, ints);
 	ints = 0;
 	spc_done(sc, acb);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.10 1999/07/30 10:35:38 itojun Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.11 2000/03/23 07:03:25 thorpej Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -46,6 +46,8 @@
 #ifndef _NET_IF_PPPVAR_H_
 #define _NET_IF_PPPVAR_H_
 
+#include <sys/callout.h>
+
 /*
  * Supported network protocols.  These values are used for
  * indexing sc_npmode.
@@ -65,6 +67,7 @@ struct ppp_softc {
 	void	(*sc_start) __P((struct ppp_softc *));	/* start output proc */
 	void	(*sc_ctlp) __P((struct ppp_softc *)); /* rcvd control pkt */
 	void	(*sc_relinq) __P((struct ppp_softc *)); /* relinquish ifunit */
+	struct	callout sc_timo_ch;	/* timeout callout */
 	u_int16_t sc_mru;		/* max receive unit */
 	pid_t	sc_xfer;		/* used in transferring unit */
 	struct	ifqueue sc_rawq;	/* received packets */

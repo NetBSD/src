@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_prefix.c,v 1.10 2000/02/09 03:34:01 itojun Exp $	*/
+/*	$NetBSD: in6_prefix.c,v 1.11 2000/03/23 07:03:29 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -84,6 +84,8 @@
 #include <netinet6/ip6_var.h>
 
 struct rr_prhead rr_prefix;
+
+struct callout in6_rr_timer_ch;
 
 #include <net/net_osdep.h>
 
@@ -1129,7 +1131,8 @@ in6_rr_timer(void *ignored_arg)
 	struct rr_prefix *rpp;
 	long time_second = time.tv_sec;
 
-	timeout(in6_rr_timer, (caddr_t)0, ip6_rr_prune * hz);
+	callout_reset(&in6_rr_timer_ch, ip6_rr_prune * hz,
+	    in6_rr_timer, NULL);
 
 	s = splsoftnet();
 	/* expire */

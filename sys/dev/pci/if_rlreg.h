@@ -1,4 +1,4 @@
-/* $NetBSD: if_rlreg.h,v 1.1 1999/06/27 15:19:41 drochner Exp $ */
+/* $NetBSD: if_rlreg.h,v 1.2 2000/03/23 07:01:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -359,6 +359,7 @@ struct rl_softc {
 	struct device sc_dev;		/* generic device structures */
 	struct ethercom		ethercom;		/* interface info */
 	struct mii_data		mii;
+	struct callout		rl_tick_ch;	/* tick callout */
 	bus_space_handle_t	rl_bhandle;	/* bus space handle */
 	bus_space_tag_t		rl_btag;	/* bus space tag */
 	u_int8_t		rl_type;

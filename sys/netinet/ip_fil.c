@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.44 2000/03/07 04:58:35 mycroft Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.45 2000/03/23 07:03:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.44 2000/03/07 04:58:35 mycroft Exp $";
+static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.45 2000/03/23 07:03:28 thorpej Exp $";
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.4.2.16 2000/01/16 10:12:42 darrenr Exp";
@@ -165,6 +165,9 @@ int	fr_running = 1;
 int	fr_running = 0;
 #endif
 
+#if defined(__NetBSD__)
+struct callout ipfr_slowtimer_ch;
+#endif
 #if (__FreeBSD_version >= 300000) && defined(_KERNEL)
 struct callout_handle ipfr_slowtimer_ch;
 #endif
@@ -290,7 +293,12 @@ int iplattach()
 # if (__FreeBSD_version >= 300000) && defined(_KERNEL)
 	ipfr_slowtimer_ch = timeout(ipfr_slowtimer, NULL, hz/2);
 # else
+#  if defined(__NetBSD__)
+	callout_init(&ipfr_slowtimer_ch);
+	callout_reset(&ipfr_slowtimer_ch, hz / 2, ipfr_slowtimer, NULL);
+#  else
 	timeout(ipfr_slowtimer, NULL, hz/2);
+#  endif
 # endif
 #endif
 	fr_running = 1;
@@ -317,7 +325,11 @@ int ipldetach()
 #  ifdef __sgi
 	untimeout(ipfr_slowtimer);
 #  else
+#   ifdef __NetBSD__
+	callout_stop(&ipfr_slowtimer_ch);
+#   else
 	untimeout(ipfr_slowtimer, NULL);
+#   endif
 #  endif
 # endif
 #endif

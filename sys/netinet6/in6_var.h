@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.12 2000/02/26 08:39:20 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.13 2000/03/23 07:03:30 thorpej Exp $	*/
 /*	$KAME: in6_var.h,v 1.29 2000/02/25 05:20:58 itojun Exp $	*/
 
 /*
@@ -68,6 +68,8 @@
 #ifndef _NETINET6_IN6_VAR_H_
 #define _NETINET6_IN6_VAR_H_
 
+#include <sys/callout.h>
+
 /*
  * Interface address, Internet version.  One of these structures
  * is allocated for each interface with an Internet address.
@@ -106,6 +108,8 @@ struct	in6_ifaddr {
 
 	struct in6_addrlifetime ia6_lifetime;	/* NULL = infty */
 	struct ifprefix *ia6_ifpr; /* back pointer to ifprefix */
+
+	struct callout ia6_dad_ch;
 };
 
 /*

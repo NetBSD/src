@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.13 2000/03/06 21:02:39 thorpej Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.14 2000/03/23 07:01:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.13 2000/03/06 21:02:39 thorpej Exp $
+ *	$Id: if_wi.c,v 1.14 2000/03/23 07:01:42 thorpej Exp $
  */
 
 /*
@@ -79,6 +79,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
@@ -116,7 +117,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.13 2000/03/06 21:02:39 thorpej Exp $";
+	"$Id: if_wi.c,v 1.14 2000/03/23 07:01:42 thorpej Exp $";
 #endif
 
 #ifdef foo
@@ -257,6 +258,8 @@ wi_attach(parent, self, aux)
 	}
 	sc->wi_btag = sc->sc_pcioh.iot;
 	sc->wi_bhandle = sc->sc_pcioh.ioh;
+
+	callout_init(&sc->wi_inquire_ch);
 
 	/* Make sure interrupts are disabled. */
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
@@ -518,7 +521,7 @@ void wi_inquire(xsc)
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
 		return;
 
-	timeout(wi_inquire, sc, hz * 60);
+	callout_reset(&sc->wi_inquire_ch, hz * 60, wi_inquire, sc);
 
 	/* Don't do this while we're transmitting */
 	if (ifp->if_flags & IFF_OACTIVE)
@@ -1401,7 +1404,7 @@ wi_init(sc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	timeout(wi_inquire, sc, hz * 60);
+	callout_reset(&sc->wi_inquire_ch, hz * 60, wi_inquire, sc);
 }
 
 static void wi_start(ifp)
@@ -1537,7 +1540,8 @@ static void wi_stop(sc)
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
 	wi_cmd(sc, WI_CMD_DISABLE|sc->wi_portnum, 0);
 
-	untimeout(wi_inquire, sc);
+
+	callout_stop(&sc->wi_inquire_ch);
 
 	ifp->if_flags &= ~(IFF_OACTIVE | IFF_RUNNING);
 	ifp->if_timer = 0;
@@ -1603,7 +1607,7 @@ wi_detach(self, flags)
 		/* Nothing to detach. */
 		return (0);
 
-	untimeout(wi_inquire, sc);
+	callout_stop(&sc->wi_inquire_ch);
 	if (sc->sc_sdhook != NULL)
 		shutdownhook_disestablish(sc->sc_sdhook);
 	wi_disable(sc);

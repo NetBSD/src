@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.47 2000/03/22 03:27:56 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.48 2000/03/23 07:01:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -524,8 +525,8 @@ ncr53c9x_select(sc, ecb)
 	 * always possible that the interrupt may never happen.
 	 */
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
-		timeout(ncr53c9x_timeout, ecb,
-		    (ecb->timeout * hz) / 1000);
+		callout_reset(&ecb->xs->xs_callout, (ecb->timeout * hz) / 1000,
+		    ncr53c9x_timeout, ecb);
 
 	/*
 	 * The docs say the target register is never reset, and I
@@ -850,7 +851,7 @@ ncr53c9x_done(sc, ecb)
 
 	NCR_TRACE(("[ncr53c9x_done(error:%x)] ", xs->error));
 
-	untimeout(ncr53c9x_timeout, ecb);
+	callout_stop(&ecb->xs->xs_callout);
 
 	/*
 	 * Now, if we've come here with no error code, i.e. we've kept the
@@ -1674,7 +1675,7 @@ again:
 					goto reset;
 				}
 				printf("sending REQUEST SENSE\n");
-				untimeout(ncr53c9x_timeout, ecb);
+				callout_stop(&ecb->xs->xs_callout);
 				ncr53c9x_sense(sc, ecb);
 				goto out;
 			}
@@ -1740,7 +1741,7 @@ printf("<<RESELECT CONT'd>>");
 			 */
 			if (sc->sc_state == NCR_SELECTING) {
 				NCR_MISC(("backoff selector "));
-				untimeout(ncr53c9x_timeout, ecb);
+				callout_stop(&ecb->xs->xs_callout);
 				sc_link = ecb->xs->sc_link;
 				ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
 				TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
@@ -2169,12 +2170,10 @@ ncr53c9x_abort(sc, ecb)
 			ncr53c9x_sched_msgout(SEND_ABORT);
 
 		/*
-		 * Reschedule timeout. First, cancel a queued timeout (if any)
-		 * in case someone decides to call ncr53c9x_abort() from
-		 * elsewhere.
+		 * Reschedule timeout.
 		 */
-		untimeout(ncr53c9x_timeout, ecb);
-		timeout(ncr53c9x_timeout, ecb, (ecb->timeout * hz) / 1000);
+		callout_reset(&ecb->xs->xs_callout, (ecb->timeout * hz) / 1000,
+		    ncr53c9x_timeout, ecb);
 	} else {
 		/* The command should be on the nexus list */
 		if ((ecb->flags & ECB_NEXUS) == 0) {

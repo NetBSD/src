@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.14 2000/03/05 05:42:33 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.15 2000/03/23 07:03:32 thorpej Exp $	*/
 /*	$KAME: key.c,v 1.67 2000/03/05 02:38:25 itojun Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
@@ -341,6 +342,8 @@ static const char *key_getuserfqdn __P((void));
 #endif
 static void key_sa_chgstate __P((struct secasvar *sav, u_int8_t state));
 static caddr_t key_appendmbuf __P((struct mbuf *, int));
+
+struct callout key_timehandler_ch;
 
 /* %%% IPsec policy management */
 /*
@@ -3518,7 +3521,8 @@ key_timehandler(void)
 
 #ifndef IPSEC_DEBUG2
 	/* do exchange to tick time !! */
-	(void)timeout((void *)key_timehandler, (void *)0, 100);
+	callout_reset(&key_timehandler_ch, hz,
+	    (void *)key_timehandler, (void *)0);
 #endif /* IPSEC_DEBUG2 */
 
 	splx(s);
@@ -5976,6 +5980,8 @@ key_init()
 
 	bzero((caddr_t)&key_cb, sizeof(key_cb));
 
+	callout_init(&key_timehandler_ch);
+
 	for (i = 0; i < IPSEC_DIR_MAX; i++) {
 		LIST_INIT(&sptree[i]);
 	}
@@ -5999,7 +6005,8 @@ key_init()
 #endif
 
 #ifndef IPSEC_DEBUG2
-	timeout((void *)key_timehandler, (void *)0, hz);
+	callout_reset(&key_timehandler_ch, hz,
+	    (void *)key_timehandler, (void *)0);
 #endif /*IPSEC_DEBUG2*/
 
 	/* initialize key statistics */

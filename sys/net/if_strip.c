@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.16 1998/07/07 03:22:03 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.17 2000/03/23 07:03:26 thorpej Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -112,6 +112,7 @@
 #include <sys/conf.h>
 #if __NetBSD__
 #include <sys/systm.h>
+#include <sys/callout.h>
 #endif
 #include <sys/syslog.h>
 
@@ -272,7 +273,7 @@ void	strip_sendbody __P((struct strip_softc *sc, struct mbuf *m));
 int	strip_newpacket __P((struct strip_softc *sc, u_char *ptr, u_char *end));
 struct mbuf * strip_send __P((struct strip_softc *sc, struct mbuf *m0));
 
-static void strip_timeout __P((void *x));
+void	strip_timeout __P((void *x));
 
 
 
@@ -348,6 +349,7 @@ stripattach(n)
 	for (sc = strip_softc; i < NSTRIP; sc++) {
 		sc->sc_unit = i;		/* XXX */
 		sprintf(sc->sc_if.if_xname, "strip%d", i++);
+		callout_init(&sc->sc_timo_ch);
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_mtu = SLMTU;
 		sc->sc_if.if_flags = 0;
@@ -538,7 +540,7 @@ stripclose(tp)
 		sc->sc_txbuf = 0;
 
 		if (sc->sc_flags & SC_TIMEOUT) {
-			untimeout(strip_timeout, (void *) sc);
+			callout_stop(&sc->sc_timo_ch);
 			sc->sc_flags &= ~SC_TIMEOUT;
 		}
 	}
@@ -1029,7 +1031,7 @@ stripstart(tp)
 #if 0
 	/* schedule timeout to start output */
 	if ((sc->sc_flags & SC_TIMEOUT) == 0) {
-		timeout(strip_timeout, (void *) sc, HZ);
+		callout_reset(&sc->sc_timo_ch, hz, strip_timeout, sc);
 		sc->sc_flags |= SC_TIMEOUT;
 	}
 #endif
@@ -1041,7 +1043,7 @@ stripstart(tp)
 	 * after it has drained the t_outq.
 	 */
 	if ((sc->sc_flags & SC_TIMEOUT) == 0) {
-		timeout(strip_timeout, (void *) sc, HZ);
+		callout_reset(&sc->sc_timo_ch, hz, strip_timeout, sc);
 		sc->sc_flags |= SC_TIMEOUT;
 	}
 #endif
@@ -1446,7 +1448,7 @@ static char *strip_statenames[] = {
  * Timeout routine -- try to start more output.
  * Will be needed to make strip work on ptys.
  */
-static void
+void
 strip_timeout(x)
     void *x;
 {

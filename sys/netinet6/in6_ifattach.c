@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.21 2000/03/02 09:45:01 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.22 2000/03/23 07:03:29 thorpej Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.39 2000/03/02 09:24:45 itojun Exp $	*/
 
 /*
@@ -339,6 +339,7 @@ in6_ifattach(ifp, type, laddr, noloop)
 	 */
 	ia = (struct in6_ifaddr *)malloc(sizeof(*ia), M_IFADDR, M_WAITOK);
 	bzero((caddr_t)ia, sizeof(*ia));
+	callout_init(&ia->ia6_dad_ch);
 	ia->ia_ifa.ifa_addr =    (struct sockaddr *)&ia->ia_addr;
 	if (ifp->if_flags & IFF_POINTOPOINT)
 		ia->ia_ifa.ifa_dstaddr = (struct sockaddr *)&ia->ia_dstaddr;

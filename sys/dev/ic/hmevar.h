@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.2 1999/12/18 14:05:37 pk Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.3 2000/03/23 07:01:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include "rnd.h"
 
+#include <sys/callout.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -67,6 +68,7 @@ struct hme_softc {
 	struct ethercom	sc_ethercom;	/* Ethernet common part */
 	struct mii_data	sc_mii;		/* MII media control */
 #define sc_media	sc_mii.mii_media/* shorthand */
+	struct callout	sc_tick_ch;	/* tick callout */
 
 	/* The following bus handles are to be provided by the bus front-end */
 	bus_space_tag_t	sc_bustag;	/* bus tag */

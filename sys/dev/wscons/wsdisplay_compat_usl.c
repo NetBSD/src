@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.11 1999/12/06 18:52:23 drochner Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -62,6 +63,8 @@ struct usl_syncdata {
 	int s_frsig; /* unused */
 	void (*s_callback) __P((void *, int, int));
 	void *s_cbarg;
+	struct callout s_attach_ch;
+	struct callout s_detach_ch;
 };
 
 static int usl_sync_init __P((struct wsscreen *, struct usl_syncdata **,
@@ -113,6 +116,8 @@ usl_sync_init(scr, sdp, p, acqsig, relsig, frsig)
 	sd->s_acqsig = acqsig;
 	sd->s_relsig = relsig;
 	sd->s_frsig = frsig;
+	callout_init(&sd->s_attach_ch);
+	callout_init(&sd->s_detach_ch);
 	res = wsscreen_attach_sync(scr, &usl_syncops, sd);
 	if (res) {
 		free(sd, M_DEVBUF);
@@ -127,11 +132,11 @@ usl_sync_done(sd)
 	struct usl_syncdata *sd;
 {
 	if (sd->s_flags & SF_DETACHPENDING) {
-		untimeout(usl_detachtimeout, sd);
+		callout_stop(&sd->s_detach_ch);
 		(*sd->s_callback)(sd->s_cbarg, 0, 0);
 	}
 	if (sd->s_flags & SF_ATTACHPENDING) {
-		untimeout(usl_attachtimeout, sd);
+		callout_stop(&sd->s_attach_ch);
 		(*sd->s_callback)(sd->s_cbarg, ENXIO, 0);
 	}
 	wsscreen_detach_sync(sd->s_scr);
@@ -185,7 +190,8 @@ usl_detachproc(cookie, waitok, callback, cbarg)
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_DETACHPENDING;
 	psignal(sd->s_proc, sd->s_relsig);
-	timeout(usl_detachtimeout, sd, wscompat_usl_synctimeout * hz);
+	callout_reset(&sd->s_detach_ch, wscompat_usl_synctimeout * hz,
+	    usl_detachtimeout, sd);
 
 	return (EAGAIN);
 }
@@ -200,7 +206,7 @@ usl_detachack(sd, ack)
 		return (EINVAL);
 	}
 
-	untimeout(usl_detachtimeout, sd);
+	callout_stop(&sd->s_detach_ch);
 	sd->s_flags &= ~SF_DETACHPENDING;
 
 	if (sd->s_callback)
@@ -250,7 +256,8 @@ usl_attachproc(cookie, waitok, callback, cbarg)
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_ATTACHPENDING;
 	psignal(sd->s_proc, sd->s_acqsig);
-	timeout(usl_attachtimeout, sd, wscompat_usl_synctimeout * hz);
+	callout_reset(&sd->s_attach_ch, wscompat_usl_synctimeout * hz,
+	    usl_attachtimeout, sd);
 
 	return (EAGAIN);
 }
@@ -265,7 +272,7 @@ usl_attachack(sd, ack)
 		return (EINVAL);
 	}
 
-	untimeout(usl_attachtimeout, sd);
+	callout_stop(&sd->s_attach_ch);
 	sd->s_flags &= ~SF_ATTACHPENDING;
 
 	if (sd->s_callback)

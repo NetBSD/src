@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.46 2000/03/01 12:49:34 itojun Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.47 2000/03/23 07:03:29 thorpej Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -18,6 +18,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -160,6 +161,8 @@ struct ip multicast_encap_iphdr = {
  */
 static vifi_t	   numvifs = 0;
 static int have_encap_tunnel = 0;
+
+static struct callout expire_upcalls_ch;
 
 /*
  * one-back cache used by mrt_ipip_input to locate a tunnel's vif
@@ -415,7 +418,9 @@ ip_mrouter_init(so, m)
 
 	pim_assert = 0;
 
-	timeout(expire_upcalls, (caddr_t)0, EXPIRE_TIMEOUT);
+	callout_init(&expire_upcalls_ch);
+	callout_reset(&expire_upcalls_ch, EXPIRE_TIMEOUT,
+	    expire_upcalls, NULL);
 
 	if (mrtdebug)
 		log(LOG_DEBUG, "ip_mrouter_init\n");
@@ -446,7 +451,7 @@ ip_mrouter_done()
 	numvifs = 0;
 	pim_assert = 0;
 	
-	untimeout(expire_upcalls, (caddr_t)0);
+	callout_stop(&expire_upcalls_ch);
 	
 	/*
 	 * Free all multicast forwarding cache entries.
@@ -607,6 +612,9 @@ add_vif(m)
 	vifp->v_pkt_out = 0;
 	vifp->v_bytes_in = 0;
 	vifp->v_bytes_out = 0;
+
+	callout_init(&vifp->v_repq_ch);
+
 #ifdef RSVP_ISI
 	vifp->v_rsvp_on = 0;
 	vifp->v_rsvpd = 0;
@@ -637,6 +645,8 @@ reset_vif(vifp)
 	register struct mbuf *m, *n;
 	struct ifnet *ifp;
 	struct ifreq ifr;
+
+	callout_stop(&vifp->v_repq_ch);
 
 	for (m = vifp->tbf_q; m != 0; m = n) {
 		n = m->m_nextpkt;
@@ -1204,7 +1214,8 @@ expire_upcalls(v)
 	}
 
 	splx(s);
-	timeout(expire_upcalls, (caddr_t)0, EXPIRE_TIMEOUT);
+	callout_reset(&expire_upcalls_ch, EXPIRE_TIMEOUT,
+	    expire_upcalls, NULL);
 }
 
 /*
@@ -1547,7 +1558,8 @@ tbf_control(vifp, m, ip, len)
 		} else {
 			/* queue packet and timeout till later */
 			tbf_queue(vifp, m);
-			timeout(tbf_reprocess_q, vifp, TBF_REPROCESS);
+			callout_reset(&vifp->v_repq_ch, TBF_REPROCESS,
+			    tbf_reprocess_q, vifp);
 		}
 	} else {
 		if (vifp->tbf_q_len >= vifp->tbf_max_q_len &&
@@ -1634,7 +1646,8 @@ tbf_reprocess_q(arg)
 	tbf_process_q(vifp);
 
 	if (vifp->tbf_q_len != 0)
-		timeout(tbf_reprocess_q, vifp, TBF_REPROCESS);
+		callout_reset(&vifp->v_repq_ch, TBF_REPROCESS,
+		    tbf_reprocess_q, vifp);
 }
 
 /* function that will selectively discard a member of the queue

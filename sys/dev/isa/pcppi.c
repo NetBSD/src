@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.3 2000/03/10 06:10:36 thorpej Exp $ */
+/* $NetBSD: pcppi.c,v 1.4 2000/03/23 07:01:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
@@ -56,6 +57,8 @@ struct pcppi_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ppi_ioh, sc_pit1_ioh;
+
+	struct callout sc_bell_ch;
 
 	int sc_bellactive, sc_bellpitch;
 	int sc_slp;
@@ -150,6 +153,8 @@ pcppi_attach(parent, self, aux)
 	bus_space_tag_t iot;
 	struct pcppi_attach_args pa;
 
+	callout_init(&sc->sc_bell_ch);
+
 	sc->sc_iot = iot = ia->ia_iot;
 
 	if (bus_space_map(iot, IO_TIMER1, 4, 0, &sc->sc_pit1_ioh) ||
@@ -182,7 +187,7 @@ pcppi_bell(self, pitch, period, slp)
 	if (sc->sc_bellactive) {
 		if (sc->sc_timeout) {
 			sc->sc_timeout = 0;
-			untimeout(pcppi_bell_stop, sc);
+			callout_stop(&sc->sc_bell_ch);
 		}
 		if (sc->sc_slp)
 			wakeup(pcppi_bell_stop);
@@ -210,13 +215,12 @@ pcppi_bell(self, pitch, period, slp)
 	sc->sc_bellpitch = pitch;
 
 	sc->sc_bellactive = 1;
-
 	if (slp & PCPPI_BELL_POLL) {
 		delay((period * 1000000) / hz);
 		pcppi_bell_stop(sc);
 	} else {
 		sc->sc_timeout = 1;
-		timeout(pcppi_bell_stop, sc, period);
+		callout_reset(&sc->sc_bell_ch, period, pcppi_bell_stop, sc);
 		if (slp & PCPPI_BELL_SLEEP) {
 			sc->sc_slp = 1;
 			tsleep(pcppi_bell_stop, PCPPIPRI | PCATCH, "bell", 0);

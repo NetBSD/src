@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.18 2000/03/21 23:53:30 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.19 2000/03/23 07:03:30 thorpej Exp $	*/
 /*	$KAME: ip6_input.c,v 1.72 2000/03/21 09:23:19 itojun Exp $	*/
 
 /*
@@ -206,9 +206,11 @@ ip6_init2(dummy)
 	in6_ifattach(&loif[0], IN6_IFT_LOOP, NULL, 0);
 
 	/* nd6_timer_init */
-	timeout(nd6_timer, (caddr_t)0, hz);
+	callout_init(&nd6_timer_ch);
+	callout_reset(&nd6_timer_ch, hz, nd6_timer, NULL);
 	/* router renumbering prefix list maintenance */
-	timeout(in6_rr_timer, (caddr_t)0, hz);
+	callout_init(&in6_rr_timer_ch);
+	callout_reset(&in6_rr_timer_ch, hz, in6_rr_timer, NULL);
 }
 
 /*

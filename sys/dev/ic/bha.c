@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.34 2000/02/12 19:12:53 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.35 2000/03/23 07:01:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -1442,7 +1443,8 @@ bha_start_ccbs(sc)
 		bus_space_write_1(iot, ioh, BHA_CMD_PORT, BHA_START_SCSI);
 
 		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
-			timeout(bha_timeout, ccb, (ccb->timeout * hz) / 1000);
+			callout_reset(&ccb->xs->xs_callout,
+			    (ccb->timeout * hz) / 1000, bha_timeout, ccb);
 
 		++sc->sc_mbofull;
 		mbo = bha_nextmbo(sc, mbo);
@@ -1540,7 +1542,7 @@ bha_finish_ccbs(sc)
 			goto next;
 		}
 
-		untimeout(bha_timeout, ccb);
+		callout_stop(&ccb->xs->xs_callout);
 		bha_done(sc, ccb);
 
 	next:

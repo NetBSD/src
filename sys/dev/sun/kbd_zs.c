@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.3 2000/03/22 16:08:51 pk Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.4 2000/03/23 07:01:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,6 +162,8 @@ kbd_zs_attach(parent, self, aux)
 		printf(" (console input)");
 	}
 	printf("\n");
+
+	callout_init(&k->k_repeat_ch);
 
 	/* Initialize the speed, etc. */
 	s = splzs();

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.58 2000/03/14 08:23:29 nisimura Exp $	*/
+/*	$NetBSD: asc.c,v 1.59 2000/03/23 07:01:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -581,8 +581,9 @@ asc_start(scsicmd)
 	 * Kludge: use a 60 second timeout if data is being transfered,
 	 * otherwise use a 30 minute timeout.
 	 */
-	timeout(asc_timeout, scsicmd, hz * (scsicmd->buflen == 0 ?
-	    1800 : 60));
+	callout_reset(&scsicmd->timo_ch,
+	    hz * (scsicmd->buflen == 0 ? 1800 : 60),
+	    asc_timeout, scsicmd);
 	asc_startcmd(asc, sdp->sd_drive);
 	splx(s);
 }
@@ -1371,7 +1372,7 @@ asc_end(asc, status, ss, ir)
 	scsicmd = asc->cmd[target];
 	asc->cmd[target] = (ScsiCmd *)0;
 	state = &asc->st[target];
-	untimeout(asc_timeout, scsicmd);
+	callout_stop(&scsicmd->timo_ch);
 
 #ifdef DEBUG
 	if (asc_debug > 1) {

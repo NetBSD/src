@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.4 2000/02/05 18:11:56 augustss Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.5 2000/03/23 07:01:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ struct ex_softc {
 
 	u_int ex_connectors;		/* Connectors on this card.	*/
 	mii_data_t ex_mii;		/* mii bus data 		*/
+	struct callout ex_mii_callout;	/* mii callout			*/
 	u_int ex_conf;			/* config flags */
 
 #define EX_CONF_MII		0x0001	/* has MII bus */
