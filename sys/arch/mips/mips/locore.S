@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.36 1997/06/22 07:42:56 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.37 1997/06/28 03:55:05 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1756,7 +1756,7 @@ FPReturn:
 	addu	sp, sp, STAND_FRAME_SIZE
 END(MachFPInterrupt)
 
-#ifdef DEBUG
+#ifdef MDB
 /*
  * Trap into the debugger.
  *
@@ -1771,15 +1771,7 @@ LEAF(mdbpanic)
 	nop
 END(mdbpanic)
 
-
-LEAF(cpu_getregs)
-	sw	sp, 0(a0)
-	sw	ra, 4(a0)
-	j	ra
-	sw	s8, 8(a0)
-END(cpu_getregs)
-
-#endif	/* DEBUG */
+#endif	/* MDB */
 
 #ifdef DEBUG
 /*
@@ -1821,6 +1813,13 @@ NON_LEAF(logstacktrace, 32, ra)
 	addu	sp,sp,32
 	j	ra
 END(stacktrace)
+
+LEAF(cpu_getregs)
+	sw	sp, 0(a0)
+	sw	ra, 4(a0)
+	j	ra
+	sw	s8, 8(a0)
+END(cpu_getregs)
 
 #endif	/* DEBUG */
 
