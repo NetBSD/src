@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.15 1999/01/29 11:36:20 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.16 1999/02/02 12:59:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -328,7 +328,7 @@ wdc_atapi_intr(chp, xfer)
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (xfer->drive << 4));
 	if (wait_for_unbusy(chp, sc_xfer->timeout) != 0) {
-		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
+		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
 		if (xfer->c_flags & C_DMA)
@@ -620,7 +620,9 @@ again:
 				}
 			} else if (dma_err < 0) {
 				drvp->n_dmaerrs++;
-				sc_xfer->error = XS_DRIVER_STUFFUP;
+				sc_xfer->error = XS_RESET;
+				wdc_atapi_reset(chp, xfer);
+				return (1);
 			}
 		}
 		if (xfer->c_bcount != 0) {
@@ -649,7 +651,9 @@ again:
 			sc_xfer->error = XS_SHORTSENSE;
 			sc_xfer->sense.atapi_sense = chp->ch_error;
 		} else {
-			sc_xfer->error = XS_DRIVER_STUFFUP;
+			sc_xfer->error = XS_RESET;
+			wdc_atapi_reset(chp, xfer);
+			return (1);
 		}
 	}
 	WDCDEBUG_PRINT(("wdc_atapi_intr: wdc_atapi_done() (end), error 0x%x "
@@ -800,8 +804,6 @@ wdc_atapi_reset(chp, xfer)
 		    chp->wdc->sc_dev.dv_xname, chp->channel,
 		    xfer->drive);
 		sc_xfer->error = XS_SELTIMEOUT;
-		wdc_atapi_done(chp, xfer);
-		return;
 	}
 	wdc_atapi_done(chp, xfer);
 	return;
