@@ -1,4 +1,4 @@
-/* $NetBSD: wsmuxctl.c,v 1.3 2001/10/24 14:14:03 augustss Exp $ */
+/* $NetBSD: wsmuxctl.c,v 1.4 2001/10/24 18:31:16 augustss Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "Usage: %s [-a dev] -f wsmux [-l] [-r dev]\n",
+	fprintf(stderr, "Usage: %s [-a dev] -f wsmux [-l] [-L] [-r dev]\n",
 		    getprogname());
 	exit(1);
 }
