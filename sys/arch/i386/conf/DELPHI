@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.45 2004/11/24 20:49:21 bouyer Exp $
+#	$NetBSD: DELPHI,v 1.46 2004/12/01 22:27:46 grant Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.45 $"
+ident 		"DELPHI-$Revision: 1.46 $"
 
 maxusers	64		# estimated number of users
 
@@ -414,6 +414,7 @@ artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers

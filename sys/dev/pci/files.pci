@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.224 2004/11/24 20:49:19 bouyer Exp $
+#	$NetBSD: files.pci,v 1.225 2004/12/01 22:27:45 grant Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -236,6 +236,11 @@ file	dev/pci/geodeide.c		geodeide
 device	hptide {[channel = -1]}: ata, pciide_common, wdc_common
 attach	hptide at pci
 file	dev/pci/hptide.c		hptide
+
+# Integrated Technology Express IDE controllers
+device	iteide {[channel = -1]}: ata, pciide_common, wdc_common
+attach	iteide at pci
+file	dev/pci/iteide.c		iteide
 
 # Opti IDE controllers
 device	optiide {[channel = -1]}: ata, pciide_common, wdc_common

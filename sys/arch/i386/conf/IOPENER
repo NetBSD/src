@@ -1,4 +1,4 @@
-#	$NetBSD: IOPENER,v 1.53 2004/11/24 20:49:23 bouyer Exp $
+#	$NetBSD: IOPENER,v 1.54 2004/12/01 22:27:46 grant Exp $
 #
 #	IOPENER -- GENERIC-like kernel for the Netpliance i-opener
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"IOPENER-$Revision: 1.53 $"
+#ident 		"IOPENER-$Revision: 1.54 $"
 
 maxusers	32		# estimated number of users
 
@@ -274,6 +274,7 @@ artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+iteide* 	at pci? dev ? function ?	# IT Express IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
