@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.82 2001/06/03 03:07:39 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.83 2001/06/03 03:24:23 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -653,7 +653,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	/*
 	 * Determine if the packet is within its size limits.
 	 */
-	if (m->m_pkthdr.len > ETHER_MAX_FRAME(etype, m->m_flags & M_HASFCS)) {
+	if (m->m_pkthdr.len >
+	    ETHER_MAX_FRAME(ifp, etype, m->m_flags & M_HASFCS)) {
 		printf("%s: discarding oversize frame (len=%d)\n",
 		    ifp->if_xname, m->m_pkthdr.len);
 		m_freem(m);
