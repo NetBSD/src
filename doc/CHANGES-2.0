@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.500 2004/11/12 04:43:42 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.501 2004/11/12 04:45:57 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7833,3 +7833,8 @@ sbin/init/init.c				1.68
 
 	Be explicit about the perms of mfs /dev.
 	[dan, ticket #914]
+
+distrib/notes/common/main			patch
+
+	Be more explicit about non-exec mapping
+	[daniel, ticket #916]
