@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97 1997/09/18 20:16:45 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.98 1997/09/20 18:14:01 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -6509,28 +6509,33 @@ pm_check_k(s, pm)		/* Note: not as extensive as pm_check_u. */
 #endif
 
 /*
- * Return the number bytes that pmap_dumpmmu() will dump.
- * For each pmeg in the MMU, we'll write NPTESG PTEs.
- * The last page or two contains stuff so libkvm can bootstrap.
+ * Return the number of disk blocks that pmap_dumpmmu() will dump.
  */
 int
 pmap_dumpsize()
 {
-	long	sz;
+	int	sz;
 
 	sz = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
 	sz += npmemarr * sizeof(phys_ram_seg_t);
+	sz += sizeof(kernel_segmap_store);
 
 	if (CPU_ISSUN4OR4C)
+		/* For each pmeg in the MMU, we'll write NPTESG PTEs. */
 		sz += (seginval + 1) * NPTESG * sizeof(int);
 
-	return (btoc(sz));
+	return btodb(sz + DEV_BSIZE - 1);
 }
 
 /*
- * Write the mmu contents to the dump device.
- * This gets appended to the end of a crash dump since
- * there is no in-core copy of kernel memory mappings on a 4/4c machine.
+ * Write the core dump headers and MD data to the dump device.
+ * We dump the following items:
+ * 
+ *	kcore_seg_t		 MI header defined in <sys/kcore.h>)
+ *	cpu_kcore_hdr_t		 MD header defined in <machine/kcore.h>)
+ *	phys_ram_seg_t[npmemarr] physical memory segments
+ *	segmap_t[NKREG*NSEGRG]	 the kernel's segment map
+ *	the MMU pmegs on sun4/sun4c
  */
 int
 pmap_dumpmmu(dump, blkno)
@@ -6541,7 +6546,7 @@ pmap_dumpmmu(dump, blkno)
 	cpu_kcore_hdr_t	*kcpup;
 	phys_ram_seg_t	memseg;
 	register int	error = 0;
-	register int	i, memsegoffset, pmegoffset;
+	register int	i, memsegoffset, segmapoffset, pmegoffset;
 	int		buffer[dbtob(1) / sizeof(int)];
 	int		*bp, *ep;
 #if defined(SUN4C) || defined(SUN4)
@@ -6574,31 +6579,40 @@ pmap_dumpmmu(dump, blkno)
 	/* Fill in MI segment header */
 	ksegp = (kcore_seg_t *)bp;
 	CORE_SETMAGIC(*ksegp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	ksegp->c_size = ctob(pmap_dumpsize()) - ALIGN(sizeof(kcore_seg_t));
+	ksegp->c_size = dbtob(pmap_dumpsize()) - ALIGN(sizeof(kcore_seg_t));
 
 	/* Fill in MD segment header (interpreted by MD part of libkvm) */
 	kcpup = (cpu_kcore_hdr_t *)((int)bp + ALIGN(sizeof(kcore_seg_t)));
 	kcpup->cputype = cputyp;
+	kcpup->kernbase = KERNBASE;
 	kcpup->nmemseg = npmemarr;
 	kcpup->memsegoffset = memsegoffset = ALIGN(sizeof(cpu_kcore_hdr_t));
-	kcpup->npmeg = (CPU_ISSUN4OR4C) ? seginval + 1 : 0; 
-	kcpup->pmegoffset = pmegoffset =
+	kcpup->nsegmap = NKREG*NSEGRG;
+	kcpup->segmapoffset = segmapoffset =
 		memsegoffset + npmemarr * sizeof(phys_ram_seg_t);
 
-	/* Note: we have assumed everything fits in buffer[] so far... */
-	bp = (int *)&kcpup->segmap_store;
-	EXPEDITE(&kernel_segmap_store, sizeof(kernel_segmap_store));
+	kcpup->npmeg = (CPU_ISSUN4OR4C) ? seginval + 1 : 0; 
+	kcpup->pmegoffset = pmegoffset =
+		segmapoffset + kcpup->nsegmap * sizeof(struct segmap);
 
+	/* Note: we have assumed everything fits in buffer[] so far... */
+	bp = (int *)((int)kcpup + ALIGN(sizeof(cpu_kcore_hdr_t)));
+
+#if 0
 	/* Align storage for upcoming quad-aligned segment array */
 	while (bp != (int *)ALIGN(bp)) {
 		int dummy = 0;
 		EXPEDITE(&dummy, 4);
 	}
+#endif
+
 	for (i = 0; i < npmemarr; i++) {
 		memseg.start = pmemarr[i].addr;
 		memseg.size = pmemarr[i].len;
 		EXPEDITE(&memseg, sizeof(phys_ram_seg_t));
 	}
+
+	EXPEDITE(&kernel_segmap_store, sizeof(kernel_segmap_store));
 
 	if (CPU_ISSUN4M)
 		goto out;
