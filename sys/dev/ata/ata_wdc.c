@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.44 2003/12/14 02:45:48 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.45 2003/12/14 02:48:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.44 2003/12/14 02:45:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.45 2003/12/14 02:48:36 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -115,19 +115,20 @@ extern int wdcdebug_wd_mask; /* inited in wd.c */
 
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
 
-int	wdc_ata_bio(struct ata_drive_datas*, struct ata_bio*);
-void	wdc_ata_bio_start(struct channel_softc *,struct wdc_xfer *);
-void	_wdc_ata_bio_start(struct channel_softc *,struct wdc_xfer *);
-int	wdc_ata_bio_intr(struct channel_softc *, struct wdc_xfer *, int);
-void	wdc_ata_bio_kill_xfer(struct channel_softc *,struct wdc_xfer *);
-void	wdc_ata_bio_done(struct channel_softc *, struct wdc_xfer *); 
-int	wdc_ata_err(struct ata_drive_datas *, struct ata_bio *);
+static int	wdc_ata_bio(struct ata_drive_datas*, struct ata_bio*);
+static void	wdc_ata_bio_start(struct channel_softc *,struct wdc_xfer *);
+static void	_wdc_ata_bio_start(struct channel_softc *,struct wdc_xfer *);
+static int	wdc_ata_bio_intr(struct channel_softc *, struct wdc_xfer *,
+				 int);
+static void	wdc_ata_bio_kill_xfer(struct channel_softc *,struct wdc_xfer *);
+static void	wdc_ata_bio_done(struct channel_softc *, struct wdc_xfer *); 
+static int	wdc_ata_err(struct ata_drive_datas *, struct ata_bio *);
 #define WDC_ATA_NOERR 0x00 /* Drive doesn't report an error */
 #define WDC_ATA_RECOV 0x01 /* There was a recovered error */
 #define WDC_ATA_ERR   0x02 /* Drive reports an error */
-int	wdc_ata_addref(struct ata_drive_datas *);
-void	wdc_ata_delref(struct ata_drive_datas *);
-void	wdc_ata_kill_pending(struct ata_drive_datas *);
+static int	wdc_ata_addref(struct ata_drive_datas *);
+static void	wdc_ata_delref(struct ata_drive_datas *);
+static void	wdc_ata_kill_pending(struct ata_drive_datas *);
 
 const struct ata_bustype wdc_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
@@ -169,7 +170,7 @@ int to48(int cmd32)
  * Handle block I/O operation. Return WDC_COMPLETE, WDC_QUEUED, or
  * WDC_TRY_AGAIN. Must be called at splbio().
  */
-int
+static int
 wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 {
 	struct wdc_xfer *xfer;
@@ -196,7 +197,7 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 	return (ata_bio->flags & ATA_ITSDONE) ? WDC_COMPLETE : WDC_QUEUED;
 }
 
-void
+static void
 wdc_ata_bio_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	struct ata_bio *ata_bio = xfer->cmd;
@@ -328,7 +329,7 @@ ctrldone:
 	return;
 }
 
-void
+static void
 _wdc_ata_bio_start(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	int wait_flags = (xfer->c_flags & C_POLL) ? AT_POLL : 0;
@@ -569,7 +570,7 @@ timeout:
 	return;
 }
 
-int
+static int
 wdc_ata_bio_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 {
 	struct ata_bio *ata_bio = xfer->cmd;
@@ -726,7 +727,7 @@ end:
 	return 1;
 }
 
-void
+static void
 wdc_ata_kill_pending(struct ata_drive_datas *drvp)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
@@ -734,7 +735,7 @@ wdc_ata_kill_pending(struct ata_drive_datas *drvp)
 	wdc_kill_pending(chp);
 }
 
-void
+static void
 wdc_ata_bio_kill_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	struct ata_bio *ata_bio = xfer->cmd;
@@ -751,7 +752,7 @@ wdc_ata_bio_kill_xfer(struct channel_softc *chp, struct wdc_xfer *xfer)
 	wddone(chp->ch_drive[drive].drv_softc);
 }
 
-void
+static void
 wdc_ata_bio_done(struct channel_softc *chp, struct wdc_xfer *xfer)
 {
 	struct ata_bio *ata_bio = xfer->cmd;
@@ -778,7 +779,7 @@ wdc_ata_bio_done(struct channel_softc *chp, struct wdc_xfer *xfer)
 	wdcstart(chp);
 }
 
-int
+static int
 wdc_ata_err(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
@@ -815,7 +816,7 @@ wdc_ata_err(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 	return WDC_ATA_NOERR;
 }
 
-int
+static int
 wdc_ata_addref(struct ata_drive_datas *drvp)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
@@ -823,7 +824,7 @@ wdc_ata_addref(struct ata_drive_datas *drvp)
 	return (wdc_addref(chp));
 }
 
-void
+static void
 wdc_ata_delref(struct ata_drive_datas *drvp)
 {
 	struct channel_softc *chp = drvp->chnl_softc;
