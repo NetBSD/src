@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.pmax,v 1.56.2.14 1999/08/04 07:23:03 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.56.2.15 1999/08/09 13:01:52 drochner Exp $
 #
 # DECstation-specific configuration info
 
@@ -120,7 +120,7 @@ attach	dctty at dc
 file	arch/pmax/ibus/dctty.c		dctty needs-flag
 
 # 8530 UARTs using the MI 8530 driver
-device	zsc { channel = -1 }
+device	zsc { [channel = -1] }
 attach	zsc at ioasic with zsc_ioasic	
 file	arch/pmax/tc/zs_ioasic.c	zsc_ioasic
 file	dev/ic/z8530sc.c		zsc
@@ -188,7 +188,7 @@ file	arch/pmax/pmax/machdep.c
 file	arch/pmax/pmax/mainbus.c
 file	arch/pmax/pmax/promcall.c
 file	arch/pmax/pmax/sysconf.c
-file	arch/pmax/stand/lib/callvec.c
+file	arch/pmax/stand/libsa/callvec.c
 file	dev/cons.c
 #file	arch/pmax/pmax/kadb.c		# obsolute kadb
 
