@@ -1,4 +1,4 @@
-/*	$NetBSD: parsestreams.c,v 1.1.1.1 2000/03/29 12:38:52 simonb Exp $	*/
+/*	$NetBSD: parsestreams.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libparse/parsestreams.c,v 4.7 1999/11/28 09:13:53 kardel RELEASE_19991128_A

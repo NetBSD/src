@@ -1,4 +1,4 @@
-/*	$NetBSD: tvtoa.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
+/*	$NetBSD: tvtoa.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * tvtoa - return an asciized representation of a struct timeval

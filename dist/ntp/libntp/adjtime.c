@@ -1,4 +1,4 @@
-/*	$NetBSD: adjtime.c,v 1.1.1.2 2003/12/04 16:05:23 drochner Exp $	*/
+/*	$NetBSD: adjtime.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fptoa.c,v 1.1.1.2 2003/12/04 16:05:24 drochner Exp $	*/
+/*	$NetBSD: fptoa.c,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 /*
  * fptoa - return an asciized representation of an s_fp number

@@ -1,4 +1,4 @@
-/*	$NetBSD: ascii.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: ascii.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 /*
  * /src/NTP/ntp-4/include/ascii.h,v 4.1 1998/07/11 10:05:22 kardel RELEASE_19990228_A

@@ -1,4 +1,4 @@
-/*	$NetBSD: adjtimex.c,v 1.2 2002/05/16 19:53:37 wiz Exp $	*/
+/*	$NetBSD: adjtimex.c,v 1.3 2003/12/04 16:23:36 drochner Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -8,7 +8,7 @@
 
 #ifndef lint
 _sccsid:.asciz  "11/19/91       ULTRIX  @(#)adjtime.c   6.1"
-#endif /* not lint */
+#endif not lint
 
 #include "SYS.h"
 

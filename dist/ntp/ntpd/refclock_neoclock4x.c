@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_neoclock4x.c,v 1.1.1.1 2003/12/04 16:05:30 drochner Exp $	*/
+/*	$NetBSD: refclock_neoclock4x.c,v 1.2 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  *

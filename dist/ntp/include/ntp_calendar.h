@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_calendar.h,v 1.1.1.1 2000/03/29 12:38:48 simonb Exp $	*/
+/*	$NetBSD: ntp_calendar.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
 
 /*
  * ntp_calendar.h - definitions for the calendar time-of-day routine

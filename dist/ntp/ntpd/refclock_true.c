@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_true.c,v 1.3 2001/09/24 13:22:28 wiz Exp $	*/
+/*	$NetBSD: refclock_true.c,v 1.4 2003/12/04 16:23:37 drochner Exp $	*/
 
 /*
  * refclock_true - clock driver for the Kinemetrics Truetime receivers
@@ -14,15 +14,14 @@
 
 #if defined(REFCLOCK) && defined(CLOCK_TRUETIME)
 
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/time.h>
-
 #include "ntpd.h"
 #include "ntp_io.h"
 #include "ntp_refclock.h"
 #include "ntp_unixtime.h"
 #include "ntp_stdlib.h"
+
+#include <stdio.h>
+#include <ctype.h>
 
 /* This should be an atom clock but those are very hard to build.
  *
@@ -64,11 +63,12 @@
  *
  * Quality codes indicate possible error of
  *   468-DC GOES Receiver:
- *   GPS-TM/TMD Receiver:
- *       ?     +/- 500 milliseconds	#     +/- 50 milliseconds
- *       *     +/- 5 milliseconds	.     +/- 1 millisecond
- *     space   less than 1 millisecond
- *   OM-DC OMEGA Receiver:
+ *   GPS-TM/TMD Receiver: (default quality codes for XL-DC)
+ *       ?     +/- 1  milliseconds	#     +/- 100 microseconds
+ *       *     +/- 10 microseconds	.     +/- 1   microsecond
+ *     space   less than 1 microsecond
+ *   OM-DC OMEGA Receiver: (default quality codes for OMEGA)
+ *   WARNING OMEGA navigation system is no longer existent
  *       >     >+- 5 seconds
  *       ?     >+/- 500 milliseconds    #     >+/- 50 milliseconds
  *       *     >+/- 5 milliseconds      .     >+/- 1 millisecond
@@ -110,6 +110,7 @@
  * flag3 - enable ppsclock streams module
  * flag4 - use the PCL-720 (BSD/OS only)
  */
+
 
 /*
  * Definitions
@@ -174,9 +175,6 @@ static	void	true_receive	P((struct recvbuf *));
 static	void	true_poll	P((int, struct peer *));
 static	void	true_send	P((struct peer *, const char *));
 static	void	true_doevent	P((struct peer *, enum true_event));
-static  void    true_debug	P((struct peer *peer, const char *fmt, ...))
-	__attribute__((__format__(__printf__, 2, 3)));
-
 
 #ifdef CLOCK_PPS720
 static	u_long	true_sample720	P((void));
@@ -207,6 +205,7 @@ true_debug(struct peer *peer, const char *fmt, ...)
 	struct refclockproc *pp;
 	struct true_unit *up;
 
+	va_start(ap, fmt);
 	pp = peer->procptr;
 	up = (struct true_unit *)pp->unitptr;
 
@@ -215,11 +214,12 @@ true_debug(struct peer *peer, const char *fmt, ...)
 	if (want_debugging != now_debugging)
 	{
 		if (want_debugging) {
-		    char filename[20];
+		    char filename[40];
+		    int fd;
 
-		    sprintf(filename, "/tmp/true%d.debug", up->unit);
-		    up->debug = fopen(filename, "w");
-		    if (up->debug) {
+		    snprintf(filename, sizeof(filename), "/tmp/true%d.debug", up->unit);
+		    fd = open(filename, O_CREAT | O_WRONLY | O_EXCL, 0600);
+		    if (fd >= 0 && (up->debug = fdopen(fd, "r+"))) {
 #ifdef HAVE_SETVBUF
 			    static char buf[BUFSIZ];
 			    setvbuf(up->debug, buf, _IOLBF, BUFSIZ);
@@ -234,10 +234,8 @@ true_debug(struct peer *peer, const char *fmt, ...)
 	}
 
 	if (up->debug) {
-		va_start(ap, fmt);
 		fprintf(up->debug, "true%d: ", up->unit);
 		vfprintf(up->debug, fmt, ap);
-		va_end(ap);
 	}
 }
 #endif /*STDC*/
@@ -253,13 +251,13 @@ true_start(
 {
 	register struct true_unit *up;
 	struct refclockproc *pp;
-	char device[20];
+	char device[40];
 	int fd;
 
 	/*
 	 * Open serial port
 	 */
-	(void)sprintf(device, DEVICE, unit);
+	(void)snprintf(device, sizeof(device), DEVICE, unit);
 	if (!(fd = refclock_open(device, SPEED232, LDISC_CLK)))
 	    return (0);
 
@@ -331,6 +329,10 @@ true_receive(
 	char synced;
 	int i;
 	int lat, lon, off;	/* GOES Satellite position */
+        /* Use these variable to hold data until we decide its worth keeping */
+        char    rd_lastcode[BMAX];
+        l_fp    rd_tmp;
+        u_short rd_lencode;
 
 	/*
 	 * Get the clock this applies to and pointers to the data.
@@ -342,14 +344,17 @@ true_receive(
 	/*
 	 * Read clock output.  Automatically handles STREAMS, CLKLDISC.
 	 */
-	pp->lencode = refclock_gtlin(rbufp, pp->a_lastcode, BMAX, &pp->lastrec);
+        rd_lencode = refclock_gtlin(rbufp, rd_lastcode, BMAX, &rd_tmp);
+        rd_lastcode[rd_lencode] = '\0';
 
 	/*
 	 * There is a case where <cr><lf> generates 2 timestamps.
 	 */
-	if (pp->lencode == 0)
-	    return;
-	pp->a_lastcode[pp->lencode] = '\0';
+        if (rd_lencode == 0)
+            return;
+        pp->lencode = rd_lencode;
+        strcpy(pp->a_lastcode, rd_lastcode);
+        pp->lastrec = rd_tmp;
 	true_debug(peer, "receive(%s) [%d]\n", pp->a_lastcode, pp->lencode);
 
 	up->pollcnt = 2;
@@ -366,7 +371,8 @@ true_receive(
 	/*
 	 * Clock misunderstood our last command?
 	 */
-	if (pp->a_lastcode[0] == '?') {
+	if (pp->a_lastcode[0] == '?' ||
+	    strcmp(pp->a_lastcode, "ERROR 05 NO SUCH FUNCTION") == 0) {
 		true_doevent(peer, e_Huh);
 		return;
 	}
@@ -406,7 +412,7 @@ true_receive(
 			}
 		}
 		else {
-			refclock_report(peer, CEVNT_BADREPLY);
+			/*refclock_report(peer, CEVNT_BADREPLY);*/
 			label = "UNKNOWN";
 		}
 		true_debug(peer, "GOES: station %s\n", label);
@@ -434,13 +440,14 @@ true_receive(
 	}
 
 	/*
-	 * Timecode: " TRUETIME Mk III"
-	 * (from a TM/TMD clock during initialization.)
+	 * Timecode: " TRUETIME Mk III" or " TRUETIME XL"
+	 * (from a TM/TMD/XL clock during initialization.)
 	 */
-	if (strcmp(pp->a_lastcode, " TRUETIME Mk III") == 0) {
+	if (strcmp(pp->a_lastcode, " TRUETIME Mk III") == 0 ||
+	    strncmp(pp->a_lastcode, " TRUETIME XL", 12) == 0) {
 		true_doevent(peer, e_F18);
 		NLOG(NLOG_CLOCKSTATUS) {
-			msyslog(LOG_INFO, "TM/TMD: %s", pp->a_lastcode);
+			msyslog(LOG_INFO, "TM/TMD/XL: %s", pp->a_lastcode);
 		}
 		return;
 	}
@@ -473,9 +480,12 @@ true_receive(
 
 		/*
 		 * Adjust the synchronize indicator according to timecode
+		 * say were OK, and then say not if we really are not OK
 		 */
-		if (synced != ' ' && synced != '.' && synced != '*')
+		if (synced == '>' || synced == '#' || synced == '?')
 		    pp->leap = LEAP_NOTINSYNC;
+		else
+                    pp->leap = LEAP_NOWARNING;
 
 		true_doevent(peer, e_TS);
 
@@ -495,6 +505,7 @@ true_receive(
 				refclock_report(peer, CEVNT_BADTIME);
 				return;
 			}
+			off.l_uf = 0;
 #endif
 
 			pp->usec = true_sample720();
@@ -533,7 +544,13 @@ true_receive(
 			refclock_report(peer, CEVNT_BADTIME);
 			return;
 		}
+		/*
+		 * If clock is good we send a NOMINAL message so that
+		 * any previous BAD messages are nullified
+		 */
+                pp->lastref = pp->lastrec;
 		refclock_receive(peer);
+		refclock_report(peer, CEVNT_NOMINAL);
 
 		/*
 		 * We have succedded in answering the poll.
