@@ -1,4 +1,4 @@
-#
+# $NetBSD: xdm,v 1.2 2004/12/12 08:54:34 christos Exp $
 # $FreeBSD: src/etc/pam.d/xdm,v 1.9 2004/02/20 21:59:51 des Exp $
 #
 # PAM configuration for the "xdm" service
