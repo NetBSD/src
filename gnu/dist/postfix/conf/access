@@ -76,7 +76,7 @@
 #               octets separated by ".".
 # 
 # ACTIONS
-#        [45]XX text
+#        [45]NN text
 #               Reject the address etc. that matches  the  pattern,
 #               and respond with the numerical code and text.
 # 
@@ -86,7 +86,7 @@
 #        OK     Accept the address etc. that matches the pattern.
 # 
 #        restriction...
-#               Apply the named UCE  restriction  (permit,  reject,
+#               Apply the named UCE restriction(s) (permit, reject,
 #               reject_unauth_destination, and so on).
 # 
 # REGULAR EXPRESSION TABLES

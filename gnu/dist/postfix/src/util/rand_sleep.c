@@ -67,8 +67,8 @@ void    rand_sleep(unsigned delay, unsigned variation)
      * Use the semi-crappy random number generator.
      */
     if (my_pid == 0)
-	srandom((my_pid = getpid()) ^ time((time_t *) 0));
-    usec = (delay - variation / 2) + variation * (double) random() / RAND_MAX;
+	srand((my_pid = getpid()) ^ time((time_t *) 0));
+    usec = (delay - variation / 2) + variation * (double) rand() / RAND_MAX;
     doze(usec);
 }
 

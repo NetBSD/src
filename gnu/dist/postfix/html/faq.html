@@ -24,6 +24,8 @@
 
 <li><a href="#poppers">POP or IMAP problems</a>
 
+<li><a href="#systems">Problems with specific Operating Systems</a>
+
 <li><a href="#warnings">Postfix warnings and error messages</a>
 
 <li><a href="#example_config">Example configurations</a>
@@ -74,8 +76,18 @@
 
 <li><a href="#noalias">What does "fatal: open database /etc/aliases.db" mean?</a>
 
+<li><a href="#noservice">What does "fatal: unknown service: smtp/tcp" mean?</a>
+
 <li><a href="#nosuid">sendmail has set-uid root file permissions, or is run from a set-uid root process</a>
 
+<li><a href="#whoami">sendmail: unable to find out your login name</a>
+
+
+<li><a href="#unknown_virtual_loop">Mail for unknown users in
+virtual domains fails with "mail loops back to myself"</a>
+
+<li><a href="#virtual_relay">Postfix refuses mail for virtual
+domains with "relay access denied"</a>
 </ul>
 
 <p>
@@ -185,6 +197,8 @@ domains with "relay access denied"</a>
 <li><a href="#timeouts">Mail fails consistently with timeout or lost connection</a>
 
 <li><a href="#skip_greeting">Postfix does not try all the MX addresses</a>
+
+<li><a href="#noservice">What does "fatal: unknown service: smtp/tcp" mean?</a>
 
 </ul>
 
@@ -306,6 +320,36 @@ mailbox</a>
 <li><a href="#dbm_dirfno">Undefined symbols: dbm_pagfno, dbm_dirfno etc.</a>
 
 <li><a href="#db">Using third-party DB libraries</a>
+
+<li><a href="#sgistruct">IRIX problems translating IP address to string</a>
+
+</ul>
+
+<p>
+
+<a name="systems"><h3>Problems with specific Operating Systems</h3>
+
+<p>
+
+<ul>
+
+<li><a href="#compaq">Problems with Compaq</a>
+
+<li><a href="#irix">Problems with IRIX</a>
+
+</ul>
+
+<a name="compaq"><h3>Problems with Compaq</h3>
+
+<ul>
+
+<li><a href="#compaq-chmod">Compaq mail blackhole problem</a>
+
+</ul>
+
+<a name="irix"><h3>Problems with IRIX</h3>
+
+<ul>
 
 <li><a href="#sgistruct">IRIX problems translating IP address to string</a>
 
@@ -970,6 +1014,30 @@ PERMISSION_SECURITY="secure local"
 
 <hr>
 
+<a name="whoami"><h3>sendmail: unable to find out your login name</h3>
+
+This message is logged when submitting mail from a process with a
+userid that does not exist in the UNIX password file.  Postfix uses
+this information in order to set the envelope sender address.
+
+<p>
+
+The envelope sender address is also the default value for the From:
+header address, when none is specified in the message.
+
+<p>
+
+To fix, specify the envelope sender address on the sendmail command
+line:
+
+<blockquote>
+<pre>
+sendmail -f user@domain ...
+</pre>
+</blockquote>
+
+<hr>
+
 <a name="moby-freebsd"><h3>Running hundreds of Postfix processes on FreeBSD</h3></a>
 
 With hundreds of Postfix processes, the kernel will eventually
@@ -1112,32 +1180,41 @@ depending on the interface that it is supposed to handle.
 
 <a name="delay"><h3>Postfix responds slowly to incoming SMTP connections</h3></a>
 
-<dl>
+Question:
 
-<dt>Question:
+<blockquote> 
 
-<dd> My Postfix server is too slow. When I telnet to the SMTP port
+My Postfix server is too slow. When I telnet to the SMTP port
 (<tt>telnet hostname 25</tt>), the response comes after 40 seconds.
 On the other hand, when I telnet to the the POP port (<tt>telnet
 hostname 110</tt>) the response comes with no delay.
 
-<p>
-
-<dt>Answer:
-
-<dd>
-
-This is a DNS configuration problem. Postfix tries to resolve the
-SMTP client IP address to a hostname. Apparently, your POP server
-does not look up POP clients.
+</blockquote>
 
 <p>
 
-The fix is to properly configure the naming service. If you can't
-have every host in the DNS, then configure the mail server to look
-in /etc/hosts before the DNS, and specify the clients in /etc/hosts.
+Answer:
 
-</dl>
+<blockquote>
+
+You have a name service problem.
+
+<p>
+
+Postfix calls the C library routines <b>gethostbyname()</b> and
+<b>gethostbyaddr()</b> in order to find out the SMTP client hostname.
+These library routines use several system configuration files in
+order to satisfy the request. They may in fact end up calling the
+DNS for reasons that are not under control by Postfix.
+
+<p>
+
+Depending on your system, these controlling files can be named
+<b>/etc/nsswitch.conf</b>, <b>/etc/svcorder</b>, <b>/etc/host.conf</b>
+or otherwise.  Those files specify whether the C library routines
+will use local <b>/etc/hosts</b> before or after DNS.
+
+</blockquote>
 
 <hr>
 
@@ -1733,6 +1810,35 @@ use the command <b>postconf mail_version</b>.
 Execute the command <b>postfix reload</b> to make the change
 effective immediately.
 
+<a name="noservice"><h3>What does "fatal: unknown service: smtp/tcp"
+mean?</h3>
+
+The Postfix <b>/etc/postfix/master.cf</b> file specifies that the
+Postfix SMTP client runs inside a <b>chroot</b> environment. However,
+the files necessary for that mode of operation are not installed
+below <b>/var/spool/postfix</b>.
+
+<p>
+
+Enabling <b>chroot</b> operation adds a non-trivial barrier for
+system penetrators.
+
+<p>
+
+Two solutions:
+
+<ul>
+
+<li> Disable the <b>chroot</b> in <b>/etc/postfix/master.cf</b>
+(and issue <b>postfix reload</b> when done).
+
+<p>
+
+<li>Install the necessary files for <b>chroot</b> operation.
+Instructions are given in the source code distribution, in the
+<b>examples/chroot-setup</b> directory.
+
+</ul>
 <hr>
 
 <a name="root"> <h3>Root's mail is delivered to nobody</h3>
@@ -2297,6 +2403,11 @@ domains with "relay access denied"</h3></a>
 
 Solution: specify a Postfix-style virtual domain or a Sendmail-style
 virtual domain.
+
+<p>
+
+Sendmail-style virtual domains are not supported in Postfix versions
+released before 20001118.
 
 <p>
 
@@ -2906,6 +3017,36 @@ inet_ntoa() routine from the BIND source code at <a
 href="http://www.isc.org/"> http://www.isc.org/</a>.
 
 </dl>
+
+<hr>
+
+<a name="compaq-chmod"><h3>Compaq mail blackhole problem</h3>
+
+On some Compaq Tru64 UNIX configurations, Postfix will receive mail
+and then nothing happens. The mail does not even show up with the
+<b>mailq</b> command.
+
+<p>
+
+Postfix sets the execute bit on a queue file to indicate that it
+is done receiving a message. As long as a queue file does not have
+the execute bit set, Postfix will ignore it as "mail still being
+received".
+
+<p>
+
+With enhanced security enabled, Compaq Tru64 UNIX has a feature
+that disallows non-superuser attempts to set the execute bit on a
+queuefile.  Unfortunately, Postfix is never informed that such
+attempts fail, and mail seems to disappear into a black hole.
+
+<p>
+
+Postfix could be modified to use some other bit than the execute
+bit, but that might equally well fail on other systems. Another
+possibility is to allow non-superusers to set the execute bit on
+files, and to mount the Postfix queue file system with the
+<b>noexec</b> option or equivalent.
 
 <hr>
 

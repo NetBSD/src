@@ -4919,3 +4919,53 @@ Apologies for any names omitted.
 	Code cleanup: some queue/transport operations need to be
 	moved, after the code cleanup of the recipient/concurrency
 	limit handling. Patrik Rak.  Files: *qmgr/qmgr_message.c.
+
+20010313
+
+	Bugfix: the RFC 822 untokenizer quoted newlines inside
+	comments. File: global/tok822_parse.c.
+
+20010316
+
+	Cleanup: removed an extraneous warning when a queue file
+	write error happened.
+
+20010321
+
+	Workaround: LMTP connection caching never worked for
+	destinations starting with unix: or inet:. File:
+	lmtp/lmtp_connect.c.
+
+20010322
+
+	Portability: Solaris <2.6 does not have srandom() and
+	random() in libc. File: util/rand_sleep.c. It does not have
+	to be cryptographically strong.
+
+	Bugfix: the fast ETRN flush server could not handle [ipaddr]
+	or domain names with one-character hostname part.  This
+	fix changes the destination to logfile name mapping, so
+	that you need to populate the new files with "sendmail -q".
+	The old files go away automatically. File:  flush/flush.c.
+
+20010327
+
+	Speed up mailq (sendmail -bp) display by flushing output
+	after each file.  File: showq/showq.c.
+
+	Portability: missing string.h includes, %p wants (void *),
+	Lamont Jones, HP.
+
+20010328
+
+	Bugfix: swapped logic caused cleanup to stall when the
+	queue file size exceeded the file size limit by less than
+	one the VSTREAM buffer size, so that the "file too big"
+	was detected after flushing the last queue file record.
+	File: cleanup/cleanup.c.
+
+20010329
+
+	Portability: workaround for missing prototype problem in
+	dict_ldap.c. This module should move to the global directory,
+	because it depends on Postfix main.cf parameter information.

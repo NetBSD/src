@@ -182,7 +182,6 @@ static void cleanup_extracted_process(CLEANUP_STATE *state, int type, char *buf,
      * straightforward.
      */
     if (vstream_fflush(state->dst)) {
-	msg_warn("%s: write queue file: %m", state->queue_id);
 	if (errno == EFBIG) {
 	    msg_warn("%s: queue file size limit exceeded", state->queue_id);
 	    state->errs |= CLEANUP_STAT_SIZE;
