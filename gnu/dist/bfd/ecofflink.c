@@ -2085,7 +2085,6 @@ lookup_line (abfd, debug_info, debug_swap, line_info)
 	  pdr_ptr = ((char *) debug_info->external_pdr
 		     + fdr_ptr->ipdFirst * external_pdr_size);
 	  pdr_end = pdr_ptr + fdr_ptr->cpd * external_pdr_size;
-	  (*debug_swap->swap_pdr_in) (abfd, (PTR) pdr_ptr, &pdr);
 	  /* Find PDR that is closest to OFFSET.  If pdr.prof is set,
 	     the procedure entry-point *may* be 0x10 below pdr.adr.  We
 	     simply pretend that pdr.prof *implies* a lower entry-point.
@@ -2093,9 +2092,9 @@ lookup_line (abfd, debug_info, debug_swap, line_info)
 	     in front of the function as belonging to the function.  */
 	  for (pdr_hold = NULL;
 	       pdr_ptr < pdr_end;
-	       (pdr_ptr += external_pdr_size,
-		(*debug_swap->swap_pdr_in) (abfd, (PTR) pdr_ptr, &pdr)))
+	       pdr_ptr += external_pdr_size)
 	    {
+	      (*debug_swap->swap_pdr_in) (abfd, (PTR) pdr_ptr, &pdr);
 	      if (offset >= (pdr.adr - 0x10 * pdr.prof))
 		{
 		  dist = offset - (pdr.adr - 0x10 * pdr.prof);
