@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.50 2001/09/15 16:28:15 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.51 2002/02/27 02:33:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.50 2001/09/15 16:28:15 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.51 2002/02/27 02:33:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,8 +179,7 @@ protopr(off, name)
 			inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name, 0);
 		} else {
 			inetprint(&inpcb.inp_laddr, inpcb.inp_lport, name, 0);
-			inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name, 
-			    inpcb.inp_lport != inpcb.inp_fport);
+			inetprint(&inpcb.inp_faddr, inpcb.inp_fport, name, 0);
 		}
 		if (istcp) {
 			if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
