@@ -68,13 +68,10 @@ shquote(argv)
 		if (*src == 0)
 			continue;
 		strvis(dst, src, VIS_NL | VIS_CSTYLE);
-		while (*dst)
-			dst++;
+		dst += strlen(dst);
 		*dst++ = ' ';
 	}
-	if (dst == buf)
-		return (0);
-	*--dst = '\0';
+	*dst = '\0';
 	return (buf);
 }
 
@@ -97,22 +94,17 @@ fmt_argv(argv, cmd, maxlen)
 	char *ap, *cp;
 
 	if (argv == 0 || argv[0] == 0)
-		ap = 0;
+		ap = "";
 	else
 		ap = shquote(argv);
-	if (ap == 0) {
-		if (cmd == 0)
-			return ("");
-		len = maxlen + 3;
-	} else
-		len = strlen(ap) + maxlen + 4;
-	if ((cp = malloc(len)) == NULL)
+	len = strlen(ap);
+	if ((cp = malloc(len + maxlen + 3)) == NULL)
 		return (NULL);
-	if (ap == NULL)
-		sprintf(cp, "(%.*s)", maxlen, cmd);
-	else if (strncmp(cmdpart(argv[0]), cmd, maxlen) != 0)
-		sprintf(cp, "%s (%.*s)", ap, maxlen, cmd);
-	else
-		(void) strcpy(cp, ap);
+	if (ap[0] == '\0' || strncmp(cmdpart(argv[0]), cmd, maxlen) != 0)
+		sprintf(cp, "%s(%.*s)", ap, maxlen, cmd);
+	else {
+		bcopy(ap, cp, len);
+		cp[len - 1] = '\0';
+	}
 	return (cp);
 }
