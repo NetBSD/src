@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_isa.c,v 1.6 2003/11/01 22:54:46 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_isa.c,v 1.7 2004/03/01 23:49:12 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.6 2003/11/01 22:54:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.7 2004/03/01 23:49:12 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -187,6 +187,7 @@ mkclock_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_nvrd = mkclock_isa_nvrd;
 	sc->sc_nvwr = mkclock_isa_nvwr;
 	mk48txx_attach(sc);
+	printf("\n");
 
 	todr_attach(&sc->sc_handle);
 }
