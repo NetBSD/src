@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.106 1998/02/13 02:09:05 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.107 1998/02/14 00:53:26 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 1998/02/13 02:09:05 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 1998/02/14 00:53:26 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1039,15 +1039,18 @@ int
 cpu_dump()
 {
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	long buf[dbtob(1) / sizeof (long)];
-	kcore_seg_t	*segp;
-	cpu_kcore_hdr_t	*cpuhdrp;
+	char buf[dbtob(1)];
+	kcore_seg_t *segp;
+	cpu_kcore_hdr_t *cpuhdrp;
+	phys_ram_seg_t *memsegp;
 
-        dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdevsw[major(dumpdev)].d_dump;
 
+	bzero(buf, sizeof buf);
 	segp = (kcore_seg_t *)buf;
-	cpuhdrp =
-	    (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp)) / sizeof (long)];
+	cpuhdrp = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp))];
+	memsegp = (phys_ram_seg_t *)&buf[ ALIGN(sizeof(*segp)) +
+	    ALIGN(sizeof(*cpuhdrp))];
 
 	/*
 	 * Generate a segment header.
@@ -1056,12 +1059,17 @@ cpu_dump()
 	segp->c_size = dbtob(1) - ALIGN(sizeof(*segp));
 
 	/*
-	 * Add the machine-dependent header info
+	 * Add the machine-dependent header info.
 	 */
 	cpuhdrp->lev1map_pa = ALPHA_K0SEG_TO_PHYS((vm_offset_t)Lev1map);
 	cpuhdrp->page_size = PAGE_SIZE;
-	cpuhdrp->core_seg.start = ctob(firstusablepage);
-	cpuhdrp->core_seg.size = ctob(physmem);
+	cpuhdrp->nmemsegs = 1;
+
+	/*
+	 * Fill in the memory segment descriptors.
+	 */
+	memsegp[0].start = ctob(firstusablepage);
+	memsegp[0].size = ctob(physmem);
 
 	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
 }
