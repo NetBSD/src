@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.25.2.2 2001/04/21 17:54:23 bouyer Exp $	*/
+/*	$NetBSD: esp.c,v 1.25.2.3 2001/04/24 07:14:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -396,7 +396,9 @@ espattach_intio(parent, self, aux)
 	    sc->sc_dev.dv_xname, "intr");
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	ncr53c9x_attach(sc);
 }
 
 /*
