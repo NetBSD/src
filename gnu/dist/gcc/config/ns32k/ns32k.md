@@ -575,34 +575,6 @@
   ""
   "movmd %a1,%a0,%2")
 
-#ifdef UTEK_ASM
-  if (GET_CODE (operands[2]) == CONST_INT && (INTVAL (operands[2]) & 0x3) == 0)
-    {
-      operands[2] = GEN_INT (INTVAL (operands[2]) >> 2);
-      if ((unsigned) INTVAL (operands[2]) <= 7)
-	return \"movqd %2,r0\;movsd $0\";
-      else 
-	return \"movd %2,r0\;movsd $0\";
-    }
-  else
-    {
-      return \"movd %2,r0\;movsb $0\";
-    }
-#else
-  if (GET_CODE (operands[2]) == CONST_INT && (INTVAL (operands[2]) & 0x3) == 0)
-    {
-      operands[2] = GEN_INT (INTVAL (operands[2]) >> 2);
-      if ((unsigned) INTVAL (operands[2]) <= 7)
-	return \"movqd %2,r0\;movsd\";
-      else 
-	return \"movd %2,r0\;movsd\";
-    }
-  else
-    {
-      return \"movd %2,r0\;movsb\";
-    }
-#endif
-}")
 
 ;; Extension and truncation insns.
 ;; Those for integer source operand
