@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.41 2005/01/04 00:56:51 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.42 2005/01/04 01:45:04 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.41 2005/01/04 00:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.42 2005/01/04 01:45:04 dyoung Exp $");
 #endif
 
 /*
@@ -3524,7 +3524,7 @@ ath_rate_ctl_reset(struct ath_softc *sc, enum ieee80211_state state)
 	ni = ic->ic_bss;
 	an = (struct ath_node *) ni;
 	an->an_tx_ok = an->an_tx_err = an->an_tx_retr = an->an_tx_upper = 0;
-	if (state == IEEE80211_S_RUN) {
+	if (state == IEEE80211_S_RUN && ic->ic_opmode != IEEE80211_M_IBSS) {
 		/* start with highest negotiated rate */
 		KASSERT(ni->ni_rates.rs_nrates > 0,
 			("transition to RUN state w/ no rates!"));
