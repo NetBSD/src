@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.185 1999/11/30 19:31:56 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.186 1999/12/03 07:29:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 1999/11/30 19:31:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.186 1999/12/03 07:29:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2014,8 +2014,16 @@ delay(n)
 {
 	long N = cycles_per_usec * (n);
 
-	while (N > 0)				/* XXX */
-		N -= 3;				/* XXX */
+	/*
+	 * XXX Should be written to use RPCC?
+	 */
+
+	__asm __volatile(
+		"# The 2 corresponds to the insn count\n"
+		"1:	subq	%2, %1, %0	\n"
+		"	bgt	%0, 1b"
+		: "=r" (N)
+		: "i" (2), "0" (N));
 }
 
 #if defined(COMPAT_OSF1) || 1		/* XXX */
