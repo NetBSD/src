@@ -1,4 +1,4 @@
-/*	$NetBSD: tsort.c,v 1.18 2003/08/07 11:16:50 agc Exp $	*/
+/*	$NetBSD: tsort.c,v 1.19 2003/10/16 06:37:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)tsort.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: tsort.c,v 1.18 2003/08/07 11:16:50 agc Exp $");
+__RCSID("$NetBSD: tsort.c,v 1.19 2003/10/16 06:37:22 itojun Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -199,8 +199,11 @@ grow_buf(bp, size)
 	void *bp;
 	int size;
 {
-	if ((bp = realloc(bp, (u_int)size)) == NULL)
+	void *n;
+
+	if ((n = realloc(bp, (u_int)size)) == NULL)
 		err(1, "realloc");
+	bp = n;
 	return (bp);
 }
 
