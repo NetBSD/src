@@ -1,4 +1,4 @@
-/*	$NetBSD: flock.c,v 1.2 2002/01/31 19:23:14 tv Exp $	*/
+/*	$NetBSD: flock.c,v 1.3 2002/03/07 23:14:02 tv Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ int flock(int fd, int op) {
 	}
 
 	fl.l_whence = SEEK_SET;
-	rc = fcntl(fd, op & LOCK_NB ? F_SETLK : F_SETLKW);
+	rc = fcntl(fd, op & LOCK_NB ? F_SETLK : F_SETLKW, &fl);
 
 	if (rc && (errno == EAGAIN))
 		errno = EWOULDBLOCK;
