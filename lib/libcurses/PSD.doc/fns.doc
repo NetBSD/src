@@ -1186,6 +1186,12 @@ Unset the terminal to from nl mode.  See
 .Fn nl .
 .ne 1i
 .Ds
+.Fn noqiflush
+.De
+Unset the terminal flush on interrupt mode.
+This is equivalent to
+.Fn intrflush stdscr FALSE .
+.Ds
 .Fn noraw "" \(dg
 .De
 Unset the terminal from raw mode.  See
@@ -1277,6 +1283,12 @@ It is often advisable to use the field width options of
 .Fn printf
 to avoid leaving things on the window from earlier calls.
 \*(Es
+.Ds
+.Fn qiflush
+.De
+Set the terminal flush on interrupt mode.
+This is equivalent to
+.Fn intrflush stdscr TRUE .
 .Ds
 .Fn raw "" \(dg
 .De
