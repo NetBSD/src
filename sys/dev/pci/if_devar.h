@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.24 1998/02/07 10:27:15 thorpej Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.25 1998/02/07 21:13:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -870,7 +870,8 @@ static void tulip_softintr(void);
 			BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
 #define	TULIP_RXMAP_CREATE(sc, mapp) \
 	bus_dmamap_create((sc)->tulip_dmatag, TULIP_RX_BUFLEN, 2, \
-			  TULIP_DATA_PER_DESC, 0, BUS_DMA_NOWAIT, (mapp))
+			  TULIP_DATA_PER_DESC, 0, \
+			  BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, (mapp))
 #else
 #define TULIP_RXDESC_PRESYNC(sc, di, s)		do { } while (0)
 #define TULIP_RXDESC_POSTSYNC(sc, di, s)	do { } while (0)
