@@ -18,9 +18,10 @@
  *	OMEN US HORN OMIT BACK AHOY
  *	>
  *
- * $Id: skey.c,v 1.2 1994/12/28 23:17:52 cgd Exp $
+ * $Id: skey.c,v 1.3 1995/06/05 19:55:40 pk Exp $
  */
 
+#include <sys/cdefs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,9 +30,9 @@
 #include "md4.h"
 #include "skey.h"
 
-char   *readpass();
-void    usage();
+void    usage __P((char *));
 
+int
 main(argc, argv)
 	int	argc;
 	char	*argv[];
