@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.8 1998/11/05 00:30:44 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.9 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -173,6 +173,25 @@ mii_anar(media)
 		rv = 0;
 		break;
 	}
+
+	return (rv);
+}
+
+/*
+ * Given a BMCR value, return the corresponding ifmedia word.
+ */
+int
+mii_media_from_bmcr(bmcr)
+	int bmcr;
+{
+	int rv = IFM_ETHER;
+
+	if (bmcr & BMCR_S100)
+		rv |= IFM_100_TX;
+	else
+		rv |= IFM_10_T;
+	if (bmcr & IFM_FDX)
+		rv |= IFM_FDX;
 
 	return (rv);
 }

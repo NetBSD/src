@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.15 1998/11/05 00:19:32 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.16 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -377,12 +377,6 @@ nsphy_status(sc)
 		if (par & PAR_FDX)
 			mii->mii_media_active |= IFM_FDX;
 #endif
-	} else {
-		if (bmcr & BMCR_S100)
-			mii->mii_media_active |= IFM_100_TX;
-		else
-			mii->mii_media_active |= IFM_10_T;
-		if (bmcr & BMCR_FDX)
-			mii->mii_media_active |= IFM_FDX;
-	}
+	} else
+		mii->mii_media_active = mii_media_from_bmcr(bmcr);
 }

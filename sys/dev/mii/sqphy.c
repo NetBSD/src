@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.7 1998/11/05 04:01:33 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.8 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -299,12 +299,6 @@ sqphy_status(sc)
 			mii->mii_media_active |= IFM_10_T;
 		if (status & STATUS_DPLX_DET)
 			mii->mii_media_active |= IFM_FDX;
-	} else {
-		if (bmcr & BMCR_S100)
-			mii->mii_media_active |= IFM_100_TX;
-		else
-			mii->mii_media_active |= IFM_10_T;
-		if (bmcr & BMCR_FDX)
-			mii->mii_media_active |= IFM_FDX;
-	}
+	} else
+		mii->mii_media_active = mii_media_from_bmcr(bmcr);
 }

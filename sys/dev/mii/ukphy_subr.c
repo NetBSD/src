@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy_subr.c,v 1.1 1998/11/04 23:59:51 thorpej Exp $	*/
+/*	$NetBSD: ukphy_subr.c,v 1.2 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,12 +107,6 @@ ukphy_status(phy)
 			mii->mii_media_active |= IFM_10_T;
 		else
 			mii->mii_media_active |= IFM_NONE;
-	} else {
-		if (bmcr & BMCR_S100)
-			mii->mii_media_active |= IFM_100_TX;
-		else
-			mii->mii_media_active |= IFM_10_T;
-		if (bmcr & BMCR_FDX)
-			mii->mii_media_active |= IFM_FDX;
-	}
+	} else
+		mii->mii_media_active = mii_media_from_bmcr(bmcr);
 }

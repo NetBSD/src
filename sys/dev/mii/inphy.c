@@ -1,4 +1,4 @@
-/*	$NetBSD: inphy.c,v 1.9 1998/11/05 00:19:32 thorpej Exp $	*/
+/*	$NetBSD: inphy.c,v 1.10 1998/11/05 04:08:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -310,12 +310,6 @@ inphy_status(sc)
 			mii->mii_media_active |= IFM_10_T;
 		if (scr & SCR_FDX)
 			mii->mii_media_active |= IFM_FDX;
-	} else {
-		if (bmcr & BMCR_S100)
-			mii->mii_media_active |= IFM_100_TX;
-		else
-			mii->mii_media_active |= IFM_10_T;
-		if (bmcr & BMCR_FDX)
-			mii->mii_media_active |= IFM_FDX;
-	}
+	} else
+		mii->mii_media_active = mii_media_from_bmcr(bmcr);
 }
