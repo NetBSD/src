@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.22 1997/07/26 18:13:30 scottr Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.23 1997/08/03 06:25:57 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -204,9 +204,8 @@ grfiv_mode(sc, cmd, arg)
 }
 
 static caddr_t
-grfiv_phys(gp, addr)
+grfiv_phys(gp)
 	struct grf_softc *gp;
-	vm_offset_t addr;
 {
 	/*
 	 * If we're using IIsi or similar, this will be 0.

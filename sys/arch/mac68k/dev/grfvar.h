@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.17 1997/07/26 08:28:20 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.18 1997/08/03 06:25:59 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,8 +79,8 @@ struct grf_softc {
 	nubus_slot	*sc_slot;
 					/* mode-change on/off/mode function */
 	int	(*sc_mode) __P((struct grf_softc *, int, void *));
-					/* map virtual addr to physical addr */
-	caddr_t	(*sc_phys) __P((struct grf_softc *, vm_offset_t));
+					/* find framebuffer physical addr */
+	caddr_t	(*sc_phys) __P((struct grf_softc *));
 };
 
 /*
