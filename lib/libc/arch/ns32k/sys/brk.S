@@ -18,22 +18,22 @@
  * 11-May-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: brk.S,v 1.3 1994/05/03 20:40:33 phil Exp $
+ *	$Id: brk.S,v 1.4 1994/06/10 22:46:14 phil Exp $
  */
 
 #include "SYS.h"
 
 	.globl	_curbrk
-	.globl	_minbrk
+	.globl	minbrk
 
 ENTRY(_brk)
 	br	ok2
 
 ENTRY(brk)
 	PIC_PROLOGUE
-	cmpd	PIC_S_ARG0, PIC_GOT(_minbrk)
+	cmpd	PIC_S_ARG0, PIC_GOT(minbrk)
 	bge	ok1
-	movd	PIC_GOT(_minbrk), PIC_S_ARG0
+	movd	PIC_GOT(minbrk), PIC_S_ARG0
 ok1:
 	PIC_EPILOGUE
 ok2:

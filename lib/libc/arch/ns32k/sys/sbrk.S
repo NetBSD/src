@@ -18,7 +18,7 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: sbrk.S,v 1.3 1994/05/03 20:40:37 phil Exp $
+ *	$Id: sbrk.S,v 1.4 1994/06/10 22:46:16 phil Exp $
  */
 
 #include "SYS.h"
@@ -26,9 +26,9 @@
 	.data
 	.globl	_end
 	.globl	_curbrk; .type _curbrk, @object; .size _curbrk, 4
-	.globl	_minbrk; .type _minbrk, @object; .size _minbrk, 4
+	.globl	minbrk; .type minbrk, @object; .size minbrk, 4
 _curbrk:	.long	_end
-_minbrk:	.long	_end
+minbrk:		.long	_end
 
 	.text
 
