@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.23.4.1 1996/07/15 22:15:11 fvdl Exp $	*/
+/*	$NetBSD: spkr.c,v 1.23.4.2 1996/08/03 01:04:35 jtc Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -254,7 +254,7 @@ playstring(cp, slen)
 {
     int		pitch, lastpitch = OCTAVE_NOTES * DFLT_OCTAVE;
 
-#define GETNUM(cp, v)	for(v=0; isdigit(cp[1]) && slen > 0; ) \
+#define GETNUM(cp, v)	for(v=0; slen > 0 && isdigit(cp[1]); ) \
 				{v = v * 10 + (*++cp - '0'); slen--;}
     for (; slen--; cp++)
     {
