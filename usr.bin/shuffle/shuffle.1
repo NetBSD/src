@@ -1,4 +1,4 @@
-.\"	$NetBSD: shuffle.1,v 1.2 1998/09/24 12:28:39 christos Exp $
+.\"	$NetBSD: shuffle.1,v 1.3 2002/03/05 15:06:16 wiz Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -48,7 +48,8 @@ The
 .Nm
 program prints a random permutation (or
 .Dq shuffle )
-of its input lines. This can be useful in shell scripts for selecting a
+of its command line arguments.
+This can be useful in shell scripts for selecting a
 random order in which to do a set of tasks, view a set of files, etc.
 .Pp
 If the
@@ -57,7 +58,6 @@ option is given, the data is taken from that files' contents or if the
 filename is
 .Ar -
 .Dq stdin .
-.Pp
 .Pp
 If the
 .Fl n
