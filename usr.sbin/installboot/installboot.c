@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.6 2002/04/19 07:08:52 lukem Exp $	*/
+/*	$NetBSD: installboot.c,v 1.7 2002/04/30 14:21:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.6 2002/04/19 07:08:52 lukem Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.7 2002/04/30 14:21:17 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 			! params->fstype->match(params))
 			params->fstype++;
 		if (params->fstype->name == NULL)
-			err(1, "File system `%s' is of an unknown type",
+			errx(1, "File system `%s' is of an unknown type",
 			    params->filesystem);
 	}
 
@@ -251,6 +251,9 @@ int
 no_parseopt(ib_params *params, const char *option)
 {
 
+	assert(params != NULL);
+	assert(option != NULL);
+
 		/* all options are unsupported */
 	warnx("Unsupported -o option `%s'", option);
 	return (0);
@@ -259,6 +262,8 @@ no_parseopt(ib_params *params, const char *option)
 int
 no_setboot(ib_params *params)
 {
+
+	assert(params != NULL);
 
 		/* bootstrap installation is not supported */
 	warnx("%s: bootstrap installation is not supported",
@@ -269,6 +274,8 @@ no_setboot(ib_params *params)
 int
 no_clearboot(ib_params *params)
 {
+
+	assert(params != NULL);
 
 		/* bootstrap removal is not supported */
 	warnx("%s: bootstrap removal is not supported",
@@ -284,6 +291,7 @@ getmachine(ib_params *param, const char *mach, const char *provider)
 
 	assert(param != NULL);
 	assert(mach != NULL);
+	assert(provider != NULL);
 
 	for (i = 0; machines[i].name != NULL; i++) {
 		if (strcmp(machines[i].name, mach) == 0) {
@@ -312,6 +320,7 @@ getfstype(ib_params *param, const char *fstype, const char *provider)
 
 	assert(param != NULL);
 	assert(fstype != NULL);
+	assert(provider != NULL);
 
 	for (i = 0; fstypes[i].name != NULL; i++) {
 		if (strcmp(fstypes[i].name, fstype) == 0) {

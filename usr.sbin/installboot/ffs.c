@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.1 2002/04/19 07:08:51 lukem Exp $	*/
+/*	$NetBSD: ffs.c,v 1.2 2002/04/30 14:21:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.1 2002/04/19 07:08:51 lukem Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.2 2002/04/30 14:21:17 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -70,6 +70,8 @@ ffs_read_disk_block(ib_params *params, uint32_t blkno, int size, char *blk)
 {
 	int	rv;
 
+	assert(params != NULL);
+	assert(blk != NULL);
 	assert(params->filesystem != NULL);
 	assert(params->fsfd != -1);
 	assert(blkno > 0);
@@ -113,6 +115,10 @@ ffs_find_disk_blocks(ib_params *params, uint32_t ino,
 		unsigned long	blkcount;
 		char		diskbuf[MAXBSIZE];
 	} level[LEVELS];
+
+	assert(params != NULL);
+	assert(callback != NULL);
+	assert(state != NULL);
 
 	/* Read the superblock. */
 	if (! ffs_read_disk_block(params, SBLOCK, SBSIZE, sbbuf))
@@ -244,6 +250,9 @@ ffs_findstage2_ino(ib_params *params, void *_ino,
 	struct direct	*de, *ede;
 	uint32_t	ino;
 
+	assert(params != NULL);
+	assert(_ino != NULL);
+
 	/* Skip directory holes. */
 	if (blk == 0)
 		return (1);
@@ -284,6 +293,9 @@ ffs_findstage2_blocks(ib_params *params, void *_state,
 {
 	struct findblks_state *state = _state;
 
+	assert(params != NULL);
+	assert(_state != NULL);
+
 	if (state->nblk == state->maxblk) {
 		warnx("Secondary bootstrap `%s' has too many blocks " \
 		    "(max %d)\n", params->stage2, state->maxblk);
@@ -303,6 +315,9 @@ ffs_match(ib_params *params)
 	char		sbbuf[SBSIZE];
 	struct fs	*fs;
 
+	assert(params != NULL);
+	assert(params->stage2 != NULL);
+
 	/* Read and check the superblock. */
 	if (! ffs_read_disk_block(params, SBLOCK, SBSIZE, sbbuf))
 		return (0);
@@ -321,7 +336,10 @@ ffs_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 	uint32_t		ino;
 	struct findblks_state	state;
 
-	assert (params->stage2 != NULL);
+	assert(params != NULL);
+	assert(params->stage2 != NULL);
+	assert(maxblk != NULL);
+	assert(blocks != NULL);
 
 	/* The secondary bootstrap must be clearly in /. */
 	if (params->stage2[0] == '/')
