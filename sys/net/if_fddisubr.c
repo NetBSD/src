@@ -1,4 +1,33 @@
-/*	$NetBSD: if_fddisubr.c,v 1.26 1999/05/18 23:57:20 thorpej Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.27 1999/07/01 08:12:48 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995, 1996
@@ -84,6 +113,14 @@
 #ifdef IPX
 #include <netipx/ipx.h> 
 #include <netipx/ipx_if.h>
+#endif
+
+#ifdef INET6
+#ifndef INET
+#include <netinet/in.h>
+#include <netinet/in_var.h>
+#endif
+#include <netinet6/nd6.h>
 #endif
 
 #ifdef NS
@@ -232,6 +269,13 @@ fddi_output(ifp, m0, dst, rt0)
 		etype = htons(ETHERTYPE_IP);
 		break;
 	}
+#endif
+#ifdef INET6
+	case AF_INET6:
+		if (!nd6_resolve(ifp, rt, m, dst, edst))
+			return (0);	/* if not yet resolved */
+		etype = htons(ETHERTYPE_IPV6);
+		break;
 #endif
 #ifdef AF_ARP
 	case AF_ARP: {
@@ -587,7 +631,7 @@ fddi_input(ifp, m)
 
 	l = mtod(m, struct llc *);
 	switch (l->llc_dsap) {
-#if defined(INET) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
+#if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	case LLC_SNAP_LSAP:
 	{
 		u_int16_t etype;
@@ -647,6 +691,13 @@ fddi_input(ifp, m)
 			schednetisr(NETISR_NS);
 			inq = &nsintrq;
 			break;
+#endif
+#ifdef INET6
+		case ETHERTYPE_IPV6:
+			schednetisr(NETISR_IPV6);
+			inq = &ip6intrq;
+			break;
+
 #endif
 #ifdef DECNET
 		case ETHERTYPE_DECNET:

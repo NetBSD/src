@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.10 1998/09/13 15:45:40 christos Exp $       */
+/*      $NetBSD: if_atm.c,v 1.11 1999/07/01 08:12:49 itojun Exp $       */
 
 /*
  *
@@ -39,7 +39,7 @@
 #include "opt_inet.h"
 #include "opt_natm.h"
 
-#ifdef INET
+#if defined(INET) || defined(INET6)
 
 #include <sys/param.h>
 #include <sys/systm.h>

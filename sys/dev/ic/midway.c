@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.38 1999/02/12 00:57:42 thorpej Exp $	*/
+/*	$NetBSD: midway.c,v 1.39 1999/07/01 08:12:46 itojun Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -46,7 +46,26 @@
  *   I would also like to thank Werner for promptly answering email and being
  *   generally helpful.
  */
-
+/*
+ *  1997/12/02, major update on 1999/04/06 kjc
+ *    new features added:
+ *	- BPF support (link type is DLT_ATM_RFC1483)
+ *	  BPF understands only LLC/SNAP!! (because bpf can't
+ *	  handle variable link header length.)
+ *	  (bpfwrite should work if atm_pseudohdr and LLC/SNAP are prepended.)
+ *	- support vc shaping
+ *	- integrate IPv6 support.
+ *	- support pvc sub interface
+ *
+ *	  initial work on per-pvc-interface for ipv6 was done
+ *	  by Katsushi Kobayashi <ikob@cc.uec.ac.jp> of the WIDE Project.
+ * 	  some of the extensions for pvc subinterfaces are merged from
+ *	  the CAIRN project written by Suresh Bhogavilli (suresh@isi.edu).
+ *
+ *    code cleanup:
+ *	- remove WMAYBE related code.  ENI WMAYBE DMA doen't work.
+ *	- remove updating if_lastchange for every packet.
+ */
 
 #undef	EN_DEBUG
 #undef	EN_DEBUG_RANGE		/* check ranges on en_read/en_write's? */
@@ -133,24 +152,34 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/if_atm.h>
 
 #include <vm/vm.h>
 
-#ifdef INET
+#if defined(INET) || defined(INET6)
+#include <netinet/in.h>
 #include <netinet/if_atm.h>
+#ifdef INET6
+#include <netinet6/in6_var.h>
+#endif
 #endif
 
 #ifdef NATM
+#if !(defined(INET) || defined(INET6))
 #include <netinet/in.h>
+#endif
 #include <netnatm/natm.h>
 #endif
 
 
 #if !defined(__FreeBSD__)
 #include <machine/bus.h>
+
+#define LIST_FOREACH(var, head, field)					\
+	for((var) = (head)->lh_first; (var); (var) = (var)->field.le_next)
 #endif
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -179,6 +208,18 @@
 #endif
 
 #endif	/* __FreeBSD__ */
+
+#include "bpfilter.h"
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#ifdef __FreeBSD__
+#define BPFATTACH(ifp, dlt, hlen)	bpfattach((ifp), (dlt), (hlen))
+#define BPF_MTAP(ifp, m)		bpf_mtap((ifp), (m))
+#else
+#define BPFATTACH(ifp, dlt, hlen)	bpfattach(&(ifp)->if_bpf, (ifp), (dlt), (hlen))
+#define BPF_MTAP(ifp, m)		bpf_mtap((ifp)->if_bpf, (m))
+#endif
+#endif /* NBPFILTER > 0 */
 
 /*
  * params
@@ -304,6 +345,17 @@ STATIC		void en_start __P((struct ifnet *));
 STATIC INLINE	int en_sz2b __P((int)) __attribute__ ((unused));
 STATIC INLINE	void en_write __P((struct en_softc *, u_int32_t,
 		    u_int32_t)) __attribute__ ((unused));
+
+#ifdef ATM_PVCEXT
+static void rrp_add __P((struct en_softc *, struct ifnet *));
+static struct ifnet *en_pvcattach __P((struct ifnet *));
+static int en_txctl __P((struct en_softc *, int, int, int));
+static int en_pvctx __P((struct en_softc *, struct pvctxreq *));
+static int en_pvctxget __P((struct en_softc *, struct pvctxreq *));
+static int en_pcr2txspeed __P((int));
+static int en_txspeed2pcr __P((int));
+static struct ifnet *en_vci2ifp __P((struct en_softc *, int));
+#endif
 
 /*
  * macros/inline
@@ -432,10 +484,8 @@ u_int32_t r;
 {
 
 #ifdef EN_DEBUG_RANGE
-  if (r > MID_MAXOFF || (r % 4)) {
-    printf("en_read out of range, r=0x%x\n", r);
-    panic("en_read");
-  }
+  if (r > MID_MAXOFF || (r % 4))
+    panic("en_read out of range, r=0x%x", r);
 #endif
 
   return(bus_space_read_4(sc->en_memt, sc->en_base, r));
@@ -453,10 +503,8 @@ u_int32_t r, v;
 
 {
 #ifdef EN_DEBUG_RANGE
-  if (r > MID_MAXOFF || (r % 4)) {
-    printf("en_write out of range, r=0x%x\n", r);
-    panic("en_write");
-  }
+  if (r > MID_MAXOFF || (r % 4))
+    panic("en_write out of range, r=0x%x", r);
 #endif
 
   bus_space_write_4(sc->en_memt, sc->en_base, r, v);
@@ -773,6 +821,9 @@ done_probe:
     sz -= (EN_TXSZ * 1024);
     sc->txslot[lcv].stop = ptr;
     sc->txslot[lcv].nref = 0;
+#ifdef ATM_PVCEXT
+    sc->txrrp = NULL;
+#endif
     bzero(&sc->txslot[lcv].indma, sizeof(sc->txslot[lcv].indma));
     bzero(&sc->txslot[lcv].q, sizeof(sc->txslot[lcv].q));
 #ifdef EN_DEBUG
@@ -831,6 +882,9 @@ done_probe:
   printf("%s: %d %dKB receive buffers, %d %dKB transmit buffers allocated\n",
 	sc->sc_dev.dv_xname, sc->en_nrx, EN_RXSZ, EN_NTX, EN_TXSZ);
 
+  printf("%s: End Station Identifier (mac address) %s\n",
+        sc->sc_dev.dv_xname, ether_sprintf(sc->macaddr));
+
   /*
    * final commit
    */
@@ -838,6 +892,12 @@ done_probe:
   if_attach(ifp);
   atm_ifattach(ifp); 
 
+#if NBPFILTER > 0 
+  BPFATTACH(ifp, DLT_ATM_RFC1483, sizeof(struct atmllc));
+#endif
+#ifdef ATM_PVCEXT
+  rrp_add(sc, ifp);
+#endif
 }
 
 
@@ -1121,18 +1181,31 @@ caddr_t data;
 		break;
 #endif
 	case SIOCSIFADDR: 
+#ifdef INET6
+	case SIOCSIFADDR_IN6:
+#endif
 		ifp->if_flags |= IFF_UP;
+		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
-		if (ifa->ifa_addr->sa_family == AF_INET) {
+		case AF_INET:
 			en_reset(sc);
 			en_init(sc);
 			ifa->ifa_rtrequest = atm_rtrequest; /* ??? */
 			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			en_reset(sc);
+			en_init(sc);
+			ifa->ifa_rtrequest = atm_rtrequest; /* ??? */
+			break;
+#endif
+		default:
+			/* what to do if not INET? */
+			en_reset(sc);
+			en_init(sc);
+			break;
 		}
-#endif /* INET */
-		/* what to do if not INET? */
-		en_reset(sc);
-		en_init(sc);
 		break;
 
 	case SIOCGIFADDR: 
@@ -1140,7 +1213,16 @@ caddr_t data;
 		break;
 
 	case SIOCSIFFLAGS: 
+#ifdef ATM_PVCEXT
+	  	/* point-2-point pvc is allowed to change if_flags */
+		if (((ifp->if_flags & IFF_UP) && !(ifp->if_flags & IFF_RUNNING))
+		||  (!(ifp->if_flags & IFF_UP) && (ifp->if_flags & IFF_RUNNING))) {
+			en_reset(sc);
+			en_init(sc);
+		}
+#else
 		error = EINVAL;
+#endif
 		break;
 
 #if defined(SIOCSIFMTU)		/* ??? copied from if_de */
@@ -1163,6 +1245,74 @@ caddr_t data;
 	    en_init(sc);
 	    break;
 #endif /* SIOCSIFMTU */
+
+#ifdef ATM_PVCEXT
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		if (ifp == &sc->enif || ifr == 0) {
+			error = EAFNOSUPPORT;	/* XXX */
+			break;
+		}
+		switch (ifr->ifr_addr.sa_family) {
+#ifdef INET
+		case AF_INET:
+			break;
+#endif
+#ifdef INET6
+		case AF_INET6:
+			break;
+#endif
+		default:
+			error = EAFNOSUPPORT;
+			break;
+		}
+		break;
+
+	case SIOCGPVCSIF:
+		if (ifp != &sc->enif) {
+#ifdef __NetBSD__
+		  strcpy(ifr->ifr_name, sc->enif.if_xname);
+#else
+		  sprintf(ifr->ifr_name, "%s%d",
+			  sc->enif.if_name, sc->enif.if_unit);
+#endif
+		}
+		else
+		  error = EINVAL;
+		break;
+
+	case SIOCSPVCSIF:
+		if (ifp == &sc->enif) {
+		  struct ifnet *sifp;
+		    
+		  if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		    break;
+
+		  if ((sifp = en_pvcattach(ifp)) != NULL) {
+#ifdef __NetBSD__
+		    strcpy(ifr->ifr_name, sifp->if_xname);
+#else
+		    sprintf(ifr->ifr_name, "%s%d",
+			    sifp->if_name, sifp->if_unit);
+#endif
+		  }
+		  else
+		    error = ENOMEM;
+		}
+		else
+		  error = EINVAL;
+		break;
+
+	case SIOCGPVCTX:
+		error = en_pvctxget(sc, (struct pvctxreq *)data);
+		break;
+
+	case SIOCSPVCTX:
+		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) == 0)
+			error = en_pvctx(sc, (struct pvctxreq *)data);
+		break;
+
+#endif /* ATM_PVCEXT */
 
 	default: 
 	    error = EINVAL;
@@ -1357,8 +1507,23 @@ struct en_softc *sc;
 {
   int vc, slot;
   u_int32_t loc;
+#ifdef ATM_PVCEXT
+    struct pvcsif *pvcsif;
+#endif
 
   if ((sc->enif.if_flags & IFF_UP) == 0) {
+#ifdef ATM_PVCEXT
+    LIST_FOREACH(pvcsif, &sc->sif_list, sif_links) {
+      if (pvcsif->sif_if.if_flags & IFF_UP) {
+	/*
+	 * down the device only when there is no active pvc subinterface.
+	 * if there is, we have to go through the init sequence to reflect
+	 * the software states to the device.
+	 */
+	goto up;
+      }
+    }
+#endif
 #ifdef EN_DEBUG
     printf("%s: going down\n", sc->sc_dev.dv_xname);
 #endif
@@ -1367,10 +1532,18 @@ struct en_softc *sc;
     return;
   }
 
+#ifdef ATM_PVCEXT
+ up:
+#endif
 #ifdef EN_DEBUG
   printf("%s: going up\n", sc->sc_dev.dv_xname);
 #endif
   sc->enif.if_flags |= IFF_RUNNING;	/* enable */
+#ifdef ATM_PVCEXT
+  LIST_FOREACH(pvcsif, &sc->sif_list, sif_links) {
+    pvcsif->sif_if.if_flags |= IFF_RUNNING;
+  }
+#endif
 
   if (sc->en_busreset)
     sc->en_busreset(sc);
@@ -1674,6 +1847,8 @@ struct ifnet *ifp;
  * en_mfix: fix a stupid mbuf
  */
 
+#ifndef __FreeBSD__
+
 STATIC int en_mfix(sc, mm, prev)
 
 struct en_softc *sc;
@@ -1748,6 +1923,136 @@ struct mbuf **mm, *prev;
   return(1);
 }
 
+#else /* __FreeBSD__ */
+
+STATIC int en_makeexclusive(struct en_softc *, struct mbuf **, struct mbuf *);
+
+STATIC int en_makeexclusive(sc, mm, prev)
+    struct en_softc *sc;
+    struct mbuf **mm, *prev;
+{
+    struct mbuf *m, *new;
+
+    m = *mm;
+    
+    if (m->m_flags & M_EXT) {
+	if (m->m_ext.ext_free) {
+	    /* external buffer isn't an ordinary mbuf cluster! */
+	    printf("%s: mfix: special buffer! can't make a copy!\n",
+		   sc->sc_dev.dv_xname);
+	    return (0);
+	}
+	
+	if (mclrefcnt[mtocl(m->m_ext.ext_buf)] > 1) {
+	    /* make a real copy of the M_EXT mbuf since it is shared */
+	    MGET(new, M_DONTWAIT, MT_DATA);
+	    if (!new) {
+		EN_COUNT(sc->mfixfail);
+		return(0);
+	    }
+	    if (m->m_flags & M_PKTHDR)
+		M_COPY_PKTHDR(new, m);
+	    MCLGET(new, M_DONTWAIT);
+	    if ((new->m_flags & M_EXT) == 0) {
+		m_free(new);
+		EN_COUNT(sc->mfixfail);
+		return(0);
+	    }
+	    bcopy(m->m_data, new->m_data, m->m_len);	
+	    new->m_len = m->m_len;
+	    new->m_next = m->m_next;
+	    if (prev)
+		prev->m_next = new;
+	    m_free(m);
+	    *mm = new;
+	}
+	else {
+	    /* the buffer is not shared, align the data offset using
+	       this buffer. */
+	    u_char *d = mtod(m, u_char *);
+	    int off = ((u_long)d) % sizeof(u_int32_t);
+
+	    if (off > 0) {
+		bcopy(d, d - off, m->m_len);
+		m->m_data = (caddr_t)d - off;
+	    }
+	}
+    }
+    return (1);
+}
+
+STATIC int en_mfix(sc, mm, prev)
+
+struct en_softc *sc;
+struct mbuf **mm, *prev;
+
+{
+  struct mbuf *m;
+  u_char *d, *cp;
+  int off;
+  struct mbuf *nxt;
+
+  m = *mm;
+
+  EN_COUNT(sc->mfix);			/* count # of calls */
+#ifdef EN_DEBUG
+  printf("%s: mfix mbuf m_data=0x%x, m_len=%d\n", sc->sc_dev.dv_xname,
+	m->m_data, m->m_len);
+#endif
+
+  d = mtod(m, u_char *);
+  off = ((unsigned long) d) % sizeof(u_int32_t);
+
+  if (off) {
+    if ((m->m_flags & M_EXT) == 0) {
+      bcopy(d, d - off, m->m_len);   /* ALIGN! (with costly data copy...) */
+      d -= off;
+      m->m_data = (caddr_t)d;
+    } else {
+      /* can't write to an M_EXT mbuf since it may be shared */
+      if (en_makeexclusive(sc, &m, prev) == 0)
+	  return (0);
+      *mm = m;	/* note: 'd' now invalid */
+    }
+  }
+
+  off = m->m_len % sizeof(u_int32_t);
+  if (off == 0)
+    return(1);
+
+  if (m->m_flags & M_EXT) {
+      /* can't write to an M_EXT mbuf since it may be shared */
+      if (en_makeexclusive(sc, &m, prev) == 0)
+	  return (0);
+      *mm = m;	/* note: 'd' now invalid */
+  }
+
+  d = mtod(m, u_char *) + m->m_len;
+  off = sizeof(u_int32_t) - off;
+  
+  nxt = m->m_next;
+  while (off--) {
+    if (nxt != NULL && nxt->m_len == 0) {
+	/* remove an empty mbuf.  this avoids odd byte padding to an empty
+	   last mbuf.  */
+	m->m_next = nxt = m_free(nxt);
+    }
+    if (nxt == NULL) {		/* out of data, zero fill */
+      *d++ = 0;
+      continue;			/* next "off" */
+    }
+    cp = mtod(nxt, u_char *);
+    *d++ = *cp++;
+    m->m_len++;
+    nxt->m_len--; 
+    nxt->m_data = (caddr_t)cp;
+  }
+  if (nxt != NULL && nxt->m_len == 0)
+      m->m_next = m_free(nxt);
+  return(1);
+}
+
+#endif /* __FreeBSD__ */
 
 /*
  * en_txdma: start trasmit DMA, if possible
@@ -1764,6 +2069,7 @@ int chan;
   struct en_launch launch;
   int datalen = 0, dtqneed, len, ncells;
   u_int8_t *cp;
+  struct ifnet *ifp;
 
 #ifdef EN_DEBUG
   printf("%s: tx%d: starting...\n", sc->sc_dev.dv_xname, chan);
@@ -1910,7 +2216,14 @@ again:
    */
 
   EN_COUNT(sc->launch);
-  sc->enif.if_opackets++;
+#ifdef ATM_PVCEXT
+  /* if there's a subinterface for this vci, override ifp. */
+  ifp = en_vci2ifp(sc, launch.atm_vci);
+#else
+  ifp = &sc->enif;
+#endif
+  ifp->if_opackets++;
+  
   if ((launch.atm_flags & EN_OBHDR) == 0) {
     EN_COUNT(sc->lheader);
     /* store tbd1/tbd2 in host byte order */
@@ -1923,7 +2236,27 @@ again:
   }
 
   en_txlaunch(sc, chan, &launch);
-  
+
+#if NBPFILTER > 0
+  if (ifp->if_bpf) {
+      /*
+       * adjust the top of the mbuf to skip the pseudo atm header
+       * (and TBD, if present) before passing the packet to bpf,
+       * restore it afterwards.
+       */
+      int size = sizeof(struct atm_pseudohdr);
+      if (launch.atm_flags & EN_OBHDR)
+	  size += MID_TBD_SIZE;
+
+      launch.t->m_data += size;
+      launch.t->m_len -= size;
+
+      BPF_MTAP(ifp, launch.t);
+
+      launch.t->m_data -= size;
+      launch.t->m_len += size;
+  }
+#endif /* NBPFILTER > 0 */
   /*
    * do some housekeeping and get the next packet
    */
@@ -2319,6 +2652,7 @@ void *arg;
   struct en_softc *sc = (struct en_softc *) arg;
   struct mbuf *m;
   struct atm_pseudohdr ah;
+  struct ifnet *ifp;
   u_int32_t reg, kick, val, mask, chip, vci, slot, dtq, drq;
   int lcv, idx, need_softserv = 0;
 
@@ -2340,7 +2674,11 @@ void *arg;
 	sc->sc_dev.dv_xname, reg, MID_INTBITS);
 #ifdef EN_DEBUG
 #ifdef DDB
+#ifdef __FreeBSD__
+    Debugger("en: unexpected error");
+#else
     Debugger();
+#endif
 #endif	/* DDB */
     sc->enif.if_flags &= ~IFF_RUNNING; /* FREEZE! */
 #else
@@ -2412,7 +2750,7 @@ void *arg;
 	m_freem(m);
       }
       EN_WRAPADD(0, MID_DTQ_N, idx, 1);
-    }
+    };
     sc->dtq_chip = MID_DTQ_REG2A(val);	/* sync softc */
   }
 
@@ -2453,10 +2791,9 @@ void *arg;
           m = NULL;
         } else {
 	  IF_DEQUEUE(&sc->rxslot[slot].indma, m);
-	  if (!m) {
-	    printf("%s: lost mbuf in slot %d!\n", sc->sc_dev.dv_xname, slot);
-	    panic("enintr: drqsync");
-	  }
+	  if (!m)
+	    panic("enintr: drqsync: %s: lost mbuf in slot %d!",
+		  sc->sc_dev.dv_xname, slot);
         }
 	/* do something with this mbuf */
 	if (sc->rxslot[slot].oth_flags & ENOTHER_DRAIN) {  /* drain? */
@@ -2484,14 +2821,28 @@ void *arg;
 		sc->sc_dev.dv_xname, slot, sc->rxslot[slot].atm_vci, m,
 		EN_DQ_LEN(drq), sc->rxslot[slot].rxhand);
 #endif
-	  sc->enif.if_ipackets++;
 
-	  atm_input(&sc->enif, &ah, m, sc->rxslot[slot].rxhand);
+#ifdef ATM_PVCEXT
+	  /* if there's a subinterface for this vci, override ifp. */
+	  ifp = en_vci2ifp(sc, sc->rxslot[slot].atm_vci);
+	  ifp->if_ipackets++;
+	  m->m_pkthdr.rcvif = ifp;	/* XXX */
+#else
+	  ifp = &sc->enif;
+	  ifp->if_ipackets++;
+#endif
+
+#if NBPFILTER > 0
+	  if (ifp->if_bpf)
+	    BPF_MTAP(ifp, m);
+#endif
+
+	  atm_input(ifp, &ah, m, sc->rxslot[slot].rxhand);
 	}
 
       }
       EN_WRAPADD(0, MID_DRQ_N, idx, 1);
-    }
+    };
     sc->drq_chip = MID_DRQ_REG2A(val);	/* sync softc */
 
     if (sc->need_drqs) {	/* true if we had a DRQ shortage */
@@ -2543,7 +2894,7 @@ void *arg;
       printf("%s: added VCI %d to swslist\n", sc->sc_dev.dv_xname, vci);
 #endif
       }
-    }
+    };
   }
 
   /*
@@ -2676,16 +3027,21 @@ defer:					/* defer processing */
     llc = (aal5 && (sc->rxslot[slot].atm_flags & ATM_PH_LLCSNAP)) ? 1 : 0;
     rbd = EN_READ(sc, cur);
     if (MID_RBD_ID(rbd) != MID_RBD_STDID) 
-      panic("en_service: id mismatch\n");
+      panic("en_service: id mismatch");
 
     if (rbd & MID_RBD_T) {
       mlen = 0;			/* we've got trash */
       fill = MID_RBD_SIZE;
       EN_COUNT(sc->ttrash);
+#ifdef EN_DEBUG
+      printf("RX overflow lost %d cells!\n", MID_RBD_CNT(rbd));
+#endif
     } else if (!aal5) {
       mlen = MID_RBD_SIZE + MID_CHDR_SIZE + MID_ATMDATASZ; /* 1 cell (ick!) */
       fill = 0;
     } else {
+      struct ifnet *ifp;
+
       tlen = (MID_RBD_CNT(rbd) * MID_ATMDATASZ) + MID_RBD_SIZE;
       pdu = cur + tlen - MID_PDU_SIZE;
       if (pdu >= stop)
@@ -2693,12 +3049,29 @@ defer:					/* defer processing */
       pdu = EN_READ(sc, pdu);	/* get PDU in correct byte order */
       fill = tlen - MID_RBD_SIZE - MID_PDU_LEN(pdu);
       if (fill < 0 || (rbd & MID_RBD_CRCERR) != 0) {
-        printf("%s: %s, dropping frame\n", sc->sc_dev.dv_xname,
-	    (rbd & MID_RBD_CRCERR) ? "CRC error" : "invalid AAL5 PDU length");
-        printf("%s: got %d cells (%d bytes), AAL5 len is %d bytes (pdu=0x%x)\n",
-	  sc->sc_dev.dv_xname, MID_RBD_CNT(rbd), tlen - MID_RBD_SIZE,
-		MID_PDU_LEN(pdu), pdu);
+	static int first = 1;
+
+	if (first) {
+	  printf("%s: %s, dropping frame\n", sc->sc_dev.dv_xname,
+		 (rbd & MID_RBD_CRCERR) ?
+		 "CRC error" : "invalid AAL5 PDU length");
+	  printf("%s: got %d cells (%d bytes), AAL5 len is %d bytes (pdu=0x%x)\n",
+		 sc->sc_dev.dv_xname, MID_RBD_CNT(rbd),
+		 tlen - MID_RBD_SIZE, MID_PDU_LEN(pdu), pdu);
+#ifndef EN_DEBUG
+	  printf("CRC error report disabled from now on!\n");
+	  first = 0;
+#endif
+	}
 	fill = tlen;
+
+#ifdef ATM_PVCEXT
+	ifp = en_vci2ifp(sc, vci);
+#else
+	ifp = &sc->enif;
+#endif
+	ifp->if_ierrors++;
+
       }
       mlen = tlen - fill;
     }
@@ -3156,7 +3529,6 @@ int unit, level;
         printf("0x%x ", sc->swslist[cnt]);
       printf("\n");
     }
-
   }
   return(0);
 }
@@ -3193,5 +3565,423 @@ int unit, addr, len;
 }
 #endif
 
+#ifdef ATM_PVCEXT
+/*
+ * ATM PVC extention: shaper control and pvc subinterfaces
+ */
+
+/*
+ * the list of the interfaces sharing the physical device.
+ * in order to avoid starvation, the interfaces are scheduled in
+ * a round-robin fashion when en_start is called from tx complete
+ * interrupts.
+ */
+static void rrp_add(sc, ifp)
+	struct en_softc *sc;
+	struct ifnet *ifp;
+{
+	struct rrp *head, *p, *new;
+
+	head = sc->txrrp;
+	if ((p = head) != NULL) {
+		while (1) {
+			if (p->ifp == ifp) {
+				/* an entry for this ifp already exits */
+				p->nref++;
+				return;
+			}
+			if (p->next == head)
+				break;
+			p = p->next;
+		}
+	}
+	
+	/* create a new entry */
+	MALLOC(new, struct rrp *, sizeof(struct rrp), M_DEVBUF, M_WAITOK);
+	if (new == NULL) {
+		printf("en_rrp_add: malloc failed!\n");
+		return;
+	}
+
+	new->ifp = ifp;
+	new->nref = 1;
+
+	if (p == NULL) {
+		/* this is the only one in the list */
+		new->next = new;
+		sc->txrrp = new;
+	}
+	else {
+		/* add the new entry at the tail of the list */
+		new->next = p->next;
+		p->next = new;
+	}
+}
+
+#if 0 /* not used */
+static void rrp_delete(sc, ifp)
+	struct en_softc *sc;
+	struct ifnet *ifp;
+{
+	struct rrp *head, *p, *prev;
+
+	head = sc->txrrp;
+
+	prev = head;
+	if (prev == NULL) {
+		printf("rrp_delete: no list!\n");
+		return;
+	}
+	p = prev->next;
+
+	while (1) {
+		if (p->ifp == ifp) {
+			p->nref--;
+			if (p->nref > 0)
+				return;
+			/* remove this entry */
+			if (p == prev) {
+				/* this is the only entry in the list */
+				sc->txrrp = NULL;
+			}
+			else {
+				prev->next = p->next;
+				if (head == p)
+					sc->txrrp = p->next;
+			}
+			FREE(p, M_DEVBUF);
+		}
+		prev = p;
+		p = prev->next;
+		if (prev == head) {
+			printf("rrp_delete: no matching entry!\n");
+			return;
+		}
+	}
+}
+#endif
+
+static struct ifnet *
+en_vci2ifp(sc, vci)
+	struct en_softc *sc;
+	int vci;
+{
+	struct pvcsif *pvcsif;
+
+	LIST_FOREACH(pvcsif, &sc->sif_list, sif_links) {
+		if (vci == pvcsif->sif_vci)
+			return (&pvcsif->sif_if);
+	}
+	return (&sc->enif);
+}
+
+/*
+ * create and attach per pvc subinterface
+ * (currently detach is not supported)
+ */
+static struct ifnet *
+en_pvcattach(ifp)
+	struct ifnet *ifp;
+{
+	struct en_softc *sc = (struct en_softc *) ifp->if_softc;
+	struct ifnet *pvc_ifp;
+	int s;
+
+	if ((pvc_ifp = pvcsif_alloc()) == NULL)
+		return (NULL);
+
+	pvc_ifp->if_softc = sc;
+	pvc_ifp->if_ioctl = en_ioctl;
+	pvc_ifp->if_start = en_start;
+	pvc_ifp->if_flags = (IFF_POINTOPOINT|IFF_MULTICAST) |
+		(ifp->if_flags & (IFF_RUNNING|IFF_SIMPLEX|IFF_NOTRAILERS));
+
+	s = splimp();
+	LIST_INSERT_HEAD(&sc->sif_list, (struct pvcsif *)pvc_ifp, sif_links);
+	if_attach(pvc_ifp);
+	atm_ifattach(pvc_ifp); 
+
+#if NBPFILTER > 0 
+	BPFATTACH(pvc_ifp, DLT_ATM_RFC1483, sizeof(struct atmllc));
+#endif
+#ifdef ATM_PVCEXT
+	rrp_add(sc, pvc_ifp);
+#endif
+	splx(s);
+
+	return (pvc_ifp);
+}
+
+
+/* txspeed conversion derived from linux drivers/atm/eni.c
+   by Werner Almesberger, EPFL LRC */
+static const int pre_div[] = { 4,16,128,2048 };
+
+static int en_pcr2txspeed(pcr)
+	int pcr;
+{
+	int pre, res, div;
+
+	if (pcr == 0 || pcr > 347222)
+		pre = res = 0;	/* max rate */
+	else {
+		for (pre = 0; pre < 3; pre++)
+			if (25000000/pre_div[pre]/64 <= pcr)
+				break;
+		div = pre_div[pre]*(pcr);
+#if 1
+		/*
+		 * the shaper value should be rounded down,
+		 * instead of rounded up.
+		 * (which means "res" should be rounded up.)
+		 */
+		res = (25000000 + div -1)/div - 1;
+#else
+		res = 25000000/div-1;
+#endif
+		if (res < 0)
+			res = 0;
+		if (res > 63)
+			res = 63;
+	}
+	return ((pre << 6) + res);
+}
+
+static int en_txspeed2pcr(txspeed)
+	int txspeed;
+{
+	int pre, res, pcr;
+
+	pre = (txspeed >> 6) & 0x3;
+	res = txspeed & 0x3f;
+	pcr = 25000000 / pre_div[pre] / (res+1);
+	return (pcr);
+}
+
+/*
+ * en_txctl selects a hardware transmit channel and sets the shaper value.
+ * en_txctl should be called after enabling the vc by en_rxctl
+ * since it assumes a transmit channel is already assigned by en_rxctl
+ * to the vc.
+ */
+static int en_txctl(sc, vci, joint_vci, pcr)
+	struct en_softc *sc;
+	int vci;
+	int joint_vci;
+	int pcr;
+{
+	int txspeed, txchan, s;
+
+	if (pcr)
+		txspeed = en_pcr2txspeed(pcr);
+	else
+		txspeed = 0;
+
+	s = splimp();
+	txchan = sc->txvc2slot[vci];
+	sc->txslot[txchan].nref--;
+    
+	/* select a slot */
+	if (joint_vci != 0)
+		/* use the same channel */
+		txchan = sc->txvc2slot[joint_vci];
+	else if (pcr == 0)
+		txchan = 0;
+	else {
+		for (txchan = 1; txchan < EN_NTX; txchan++) {
+			if (sc->txslot[txchan].nref == 0)
+				break;
+		}
+	}
+	if (txchan == EN_NTX) {
+#if 1
+		/* no free slot! */
+		splx(s);
+		return (ENOSPC);
+#else
+		/*
+		 * to allow multiple vc's to share a slot,
+		 * use a slot with the smallest reference count
+		 */
+		int slot = 1;
+		txchan = 1;
+		for (slot = 2; slot < EN_NTX; slot++)
+			if (sc->txslot[slot].nref < sc->txslot[txchan].nref)
+				txchan = slot;
+#endif
+	}
+
+	sc->txvc2slot[vci] = txchan;
+	sc->txslot[txchan].nref++;
+
+	/* set the shaper parameter */
+	sc->txspeed[vci] = (u_int8_t)txspeed;
+
+	splx(s);
+#ifdef EN_DEBUG
+	printf("VCI:%d PCR set to %d, tx channel %d\n", vci, pcr, txchan);
+	if (joint_vci != 0)
+		printf("  slot shared with VCI:%d\n", joint_vci);
+#endif
+	return (0);
+}
+
+static int en_pvctx(sc, pvcreq)
+	struct en_softc *sc;
+	struct pvctxreq *pvcreq;
+{
+	struct ifnet *ifp;
+	struct atm_pseudoioctl api;
+	struct atm_pseudohdr *pvc_aph, *pvc_joint;
+	int vci, joint_vci, pcr;
+	int error = 0;
+
+	/* check vpi:vci values */
+	pvc_aph = &pvcreq->pvc_aph;
+	pvc_joint = &pvcreq->pvc_joint;
+
+	vci = ATM_PH_VCI(pvc_aph);
+	joint_vci = ATM_PH_VCI(pvc_joint);
+	pcr = pvcreq->pvc_pcr;
+
+	if (ATM_PH_VPI(pvc_aph) != 0 || vci >= MID_N_VC ||
+	    ATM_PH_VPI(pvc_joint) != 0 || joint_vci >= MID_N_VC)
+		return (EADDRNOTAVAIL);
+
+	if ((ifp = ifunit(pvcreq->pvc_ifname)) == NULL)
+		return (ENXIO);
+
+	if (pcr < 0) {
+		/* negative pcr means disable the vc. */
+		if (sc->rxvc2slot[vci] == RX_NONE)
+			/* already disabled */
+			return 0;
+
+		ATM_PH_FLAGS(&api.aph) = 0;
+		ATM_PH_VPI(&api.aph) = 0;
+		ATM_PH_SETVCI(&api.aph, vci);
+		api.rxhand = NULL;
+
+		error = en_rxctl(sc, &api, 0);
+		
+		if (error == 0 && &sc->enif != ifp) {
+			/* clear vc info of this subinterface */
+			struct pvcsif *pvcsif = (struct pvcsif *)ifp;
+
+			ATM_PH_SETVCI(&api.aph, 0);
+			pvcsif->sif_aph = api.aph;
+			pvcsif->sif_vci = 0;
+		}
+		return (error);
+	}
+
+	if (&sc->enif == ifp) {
+		/* called for an en interface */
+		if (sc->rxvc2slot[vci] == RX_NONE) {
+			/* vc is not active */
+#ifdef __NetBSD__
+			printf("%s: en_pvctx: rx not active! vci=%d\n",
+			       ifp->if_xname, vci);
+#else
+			printf("%s%d: en_pvctx: rx not active! vci=%d\n",
+			       ifp->if_name, ifp->if_unit, vci);
+#endif
+			return (EINVAL);
+		}
+	}
+	else {
+		/* called for a pvc subinterface */
+		struct pvcsif *pvcsif = (struct pvcsif *)ifp;
+
+#ifdef __NetBSD__
+    		strcpy(pvcreq->pvc_ifname, sc->enif.if_xname);
+#else
+    		sprintf(pvcreq->pvc_ifname, "%s%d",
+			sc->enif.if_name, sc->enif.if_unit);
+#endif
+		ATM_PH_FLAGS(&api.aph) =
+			(ATM_PH_FLAGS(pvc_aph) & (ATM_PH_AAL5|ATM_PH_LLCSNAP));
+		ATM_PH_VPI(&api.aph) = 0;
+		ATM_PH_SETVCI(&api.aph, vci);
+		api.rxhand = NULL;
+		pvcsif->sif_aph = api.aph;
+		pvcsif->sif_vci = ATM_PH_VCI(&api.aph);
+
+		if (sc->rxvc2slot[vci] == RX_NONE) {
+			/* vc is not active, enable rx */
+			error = en_rxctl(sc, &api, 1);
+			if (error)
+				return error;
+		}
+		else {
+			/* vc is already active, update aph in softc */
+			sc->rxslot[sc->rxvc2slot[vci]].atm_flags =
+				ATM_PH_FLAGS(&api.aph);
+		}
+	}
+
+	error = en_txctl(sc, vci, joint_vci, pcr);
+
+	if (error == 0) {
+		if (sc->txspeed[vci] != 0)
+			pvcreq->pvc_pcr = en_txspeed2pcr(sc->txspeed[vci]);
+		else
+			pvcreq->pvc_pcr = 0;
+	}
+
+	return error;
+}
+
+static int en_pvctxget(sc, pvcreq)
+	struct en_softc *sc;
+	struct pvctxreq *pvcreq;
+{
+	struct pvcsif *pvcsif;
+	struct ifnet *ifp;
+	int vci, slot;
+
+	if ((ifp = ifunit(pvcreq->pvc_ifname)) == NULL)
+		return (ENXIO);
+
+	if (ifp == &sc->enif) {
+		/* physical interface: assume vci is specified */
+		struct atm_pseudohdr *pvc_aph;
+		
+		pvc_aph = &pvcreq->pvc_aph;
+		vci = ATM_PH_VCI(pvc_aph);
+		if ((slot = sc->rxvc2slot[vci]) == RX_NONE)
+			ATM_PH_FLAGS(pvc_aph) = 0;
+		else
+			ATM_PH_FLAGS(pvc_aph) = sc->rxslot[slot].atm_flags;
+		ATM_PH_VPI(pvc_aph) = 0;
+	}
+	else {
+		/* pvc subinterface */
+#ifdef __NetBSD__
+		strcpy(pvcreq->pvc_ifname, sc->enif.if_xname);
+#else
+		sprintf(pvcreq->pvc_ifname, "%s%d",
+			sc->enif.if_name, sc->enif.if_unit);
+#endif
+
+		pvcsif = (struct pvcsif *)ifp;
+		pvcreq->pvc_aph = pvcsif->sif_aph;
+		vci = pvcsif->sif_vci;
+	}
+
+	if ((slot = sc->rxvc2slot[vci]) == RX_NONE) {
+		/* vc is not active */
+		ATM_PH_FLAGS(&pvcreq->pvc_aph) = 0;
+		pvcreq->pvc_pcr = -1;
+	}
+	else if (sc->txspeed[vci])
+		pvcreq->pvc_pcr = en_txspeed2pcr(sc->txspeed[vci]);
+	else
+		pvcreq->pvc_pcr = 0;
+
+	return (0);
+}
+
+#endif /* ATM_PVCEXT */
 
 #endif /* NEN > 0 || !defined(__FreeBSD__) */
