@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.17 2003/03/25 23:17:30 provos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.18 2003/04/09 17:50:08 provos Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -63,7 +63,7 @@ int noalias = 0;		/* Do not do system call aliasing */
 int iamroot = 0;		/* Set if we are running as root */
 char cwd[MAXPATHLEN];		/* Current working directory */
 char home[MAXPATHLEN];		/* Home directory of user */
-char username[MAXLOGNAME];	/* Username: predicate match and expansion */
+char username[LOGIN_NAME_MAX];	/* Username: predicate match and expansion */
 
 static void child_handler(int);
 static void usage(void);
