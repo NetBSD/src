@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1998/04/15 21:54:05 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1998/05/06 07:40:32 mycroft Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -26,6 +26,8 @@ DPADD+=		${LIBGNUMALLOC}
 # Some GNU architecture names don't match NetBSD architecture names.  Most do.
 .if ${MACHINE_ARCH} == "arm32"
 TARGET_GNU_ARCH=arm
+.elif ${MACHINE_ARCH} == "powerpc"
+TARGET_GNU_ARCH=rs6000
 .else
 TARGET_GNU_ARCH=${MACHINE_ARCH}	
 .endif
