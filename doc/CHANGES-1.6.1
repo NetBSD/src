@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.106 2003/02/10 06:24:32 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.107 2003/02/10 09:41:11 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3604,3 +3604,10 @@ sys/arch/arm/arm/bcopyinout.S			1.2-1.6
 	[chris, ticket #1157]
 
 (RC1 tag synced against everything changed since ticket 1136)
+
+usr.bin/progress/progress.c			1.6
+
+	Fix a race that can abort a sysinst run. PR#20275
+	[ross, ticket #1158]
+
+(RC1 tag moved on file)
