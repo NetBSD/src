@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.16 2000/05/16 05:45:53 thorpej Exp $	*/
+/*	$NetBSD: disk.h,v 1.17 2002/01/27 12:41:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -129,6 +129,24 @@ struct disk {
 	daddr_t		dk_labelsector;		/* sector containing label */
 	struct disklabel *dk_label;	/* label */
 	struct cpu_disklabel *dk_cpulabel;
+};
+
+#define	DK_DISKNAMELEN	16
+
+/* The following structure is 64-bit alignment safe */
+struct disk_sysctl {
+	char		dk_name[DK_DISKNAMELEN];
+	int32_t		dk_busy;
+	int32_t		pad;
+	u_int64_t	dk_xfer;
+	u_int64_t	dk_seek;
+	u_int64_t	dk_bytes;
+	u_int32_t	dk_attachtime_sec;
+	u_int32_t	dk_attachtime_usec;
+	u_int32_t	dk_timestamp_sec;
+	u_int32_t	dk_timestamp_usec;
+	u_int32_t	dk_time_sec;
+	u_int32_t	dk_time_usec;
 };
 
 struct dkdriver {

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.82 2002/01/15 02:36:40 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.83 2002/01/27 12:41:07 simonb Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -204,7 +204,7 @@ The string and integer information available for the CTL_HW level
 is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
-.Bl -column "Second level nameXXXXXX" integerXXX -offset indent
+.Bl -column "Second level nameXXXXXX" "struct disk_sysctlXXX" -offset indent
 .It Sy Pa Second level name	Type	Changeable
 .It HW\_MACHINE	string	no
 .It HW\_MODEL	string	no
@@ -217,6 +217,8 @@ privilege may change the value.
 .\".It HW\_DISKSTATS	struct	no
 .It HW\_MACHINE\_ARCH	string	no
 .It HW\_ALIGNBYTES	integer	no
+.It HW\_DISKNAMES	string	no
+.It HW\_DISKSTATS	struct disk_sysctl	no
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -235,8 +237,16 @@ The bytes of physical memory.
 The bytes of non-kernel memory.
 .It Li HW_PAGESIZE
 The software page size.
-.\".It Fa HW_DISKNAMES
-.\".It Fa HW_DISKSTATS
+.It Li HW_DISKNAMES
+The list of (space separated) disk device names on the system.
+.It Li HW_DISKSTATS
+Return statistical information on the disk devices on the system.
+An array of
+.Va struct disk_sysctl
+structures is returned,
+whose size depends on the current number of such objects in the system.
+The third level name is the size of the
+.Va struct disk_sysctl .
 .It Li HW_MACHINE_ARCH
 The machine cpu class.
 .It Li HW_ALIGNBYTES
