@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2002/08/11 19:39:39 fredette Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2002/08/25 20:20:01 fredette Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -39,18 +39,18 @@
 
 #include <machine/cpufunc.h>
 
-/* addresses in bus space */
+/*
+ * Bus address and size types.
+ */
 typedef u_long bus_addr_t;
 typedef u_long bus_size_t;
-
-/* access methods for bus space */
 typedef u_long bus_space_handle_t;
 
 struct hppa_bus_space_tag {
 	void *hbt_cookie;
 
 	int  (*hbt_map) __P((void *v, bus_addr_t addr, bus_size_t size,
-			     int cacheable, bus_space_handle_t *bshp));
+			     int flags, bus_space_handle_t *bshp));
 	void (*hbt_unmap) __P((void *v, bus_space_handle_t bsh,
 			       bus_size_t size));
 	int  (*hbt_subregion) __P((void *v, bus_space_handle_t bsh,
@@ -58,7 +58,7 @@ struct hppa_bus_space_tag {
 				   bus_space_handle_t *nbshp));
 	int  (*hbt_alloc) __P((void *v, bus_addr_t rstart, bus_addr_t rend,
 			       bus_size_t size, bus_size_t align,
-			       bus_size_t boundary, int cacheable,
+			       bus_size_t boundary, int flags,
 			       bus_addr_t *addrp, bus_space_handle_t *bshp));
 	void (*hbt_free) __P((void *, bus_space_handle_t, bus_size_t));
 	void (*hbt_barrier) __P((void *v, bus_space_handle_t h,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2002/08/19 18:58:26 fredette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2002/08/25 20:19:59 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -510,13 +510,9 @@ pmap_pv_check_alias(paddr_t pa)
 	aliased = FALSE;
 
 	/*
-	 * There's no need to check for aliasing on I/O pages;
-	 * they should always be mapped UNCACHEABLE.
+	 * We should never get called on I/O pages.
 	 */
-	if ((pa & HPPA_IOSPACE) == HPPA_IOSPACE)
-		pv_outer = NULL;
-	else
-		pv_outer = pmap_pv_find_pa(pa);
+	KASSERT(pa < HPPA_IOSPACE);
 
 	/*
 	 * Make an outer loop over the mappings, checking
@@ -525,7 +521,7 @@ pmap_pv_check_alias(paddr_t pa)
 	 * is deemed transitive, this outer loop only needs 
 	 * one iteration.
 	 */
-	for (;
+	for (pv_outer = pmap_pv_find_pa(pa);
 	     pv_outer != NULL;
 	     pv_outer = pv_outer->pv_next) {
 
@@ -572,6 +568,11 @@ _pmap_pv_update(paddr_t pa, struct pv_entry *pv,
 {
 	struct pv_entry *ppv;
 	int no_rw_alias;
+
+	/*
+	 * We should never get called on I/O pages.
+	 */
+	KASSERT(pa < HPPA_IOSPACE);
 
 	/*
 	 * If the TLB protection of this mapping is changing,
@@ -632,41 +633,18 @@ pmap_pv_enter(pmap_t pmap, pa_space_t space, vaddr_t va,
 	struct hpt_entry *hpt = pmap_hpt_hash(space, va);
 	int table_off;
 	struct pv_head *hpv;
-	struct pv_entry *pv;
-
-	/* Get the struct pv_head for this PA. */
-	table_off = pmap_table_find_pa(pa);
-	KASSERT(table_off >= 0);
-	hpv = pv_head_tbl + table_off;
+	struct pv_entry *pv, *pv_other;
 
 #ifdef DIAGNOSTIC
 	/* Make sure this VA isn't already entered. */
 	for (pv = hpt->hpt_entry; pv != NULL; pv = pv->pv_hash)
 		if (pv->pv_va == va && pv->pv_space == space)
 			panic("pmap_pv_enter: VA already entered");
-	for (pv = hpv->pv_head_pvs; pv != NULL; pv = pv->pv_next)
-		if (pmap == pv->pv_pmap && va == pv->pv_va)
-			panic("pmap_pv_enter: VA already in pv_tab");
 #endif /* DIAGNOSTIC */
 
 	/*
-	 * If this mapping is for I/O space, mark the mapping
-	 * uncacheable.  (This is fine even on CPUs that don't 
-	 * support the U-bit; these CPUs don't cache references 
-	 * to I/O space.)
+	 * Allocate a new pv_entry, fill it, and link it into the HPT.
 	 */
-	if ((pa & HPPA_IOSPACE) == HPPA_IOSPACE)
-		tlbprot |= TLB_UNCACHEABLE;
-
-	/*
-	 * If there is an existing mapping for this page, mark
-	 * the mapping with the same TLB_NO_RW_ALIAS status.
-	 */
-	pv = hpv->pv_head_pvs;
-	if (pv != NULL)
-		tlbprot |= (pv->pv_tlbprot & TLB_NO_RW_ALIAS);
-
-	/* Allocate a new pv_entry, fill it, and link it in. */
 	pv = pmap_pv_alloc();
 	pv->pv_va = va;
 	pv->pv_pmap = pmap;
@@ -674,10 +652,54 @@ pmap_pv_enter(pmap_t pmap, pa_space_t space, vaddr_t va,
 	pv->pv_tlbprot = tlbprot;
 	pv->pv_tlbpage = tlbbtop(pa);
 	pv->pv_hpt = hpt;
-	pv->pv_next = hpv->pv_head_pvs;
-	hpv->pv_head_pvs = pv;
 	pv->pv_hash = hpt->hpt_entry;
 	hpt->hpt_entry = pv;
+
+	/*
+	 * If this mapping is for I/O space, mark the mapping
+	 * uncacheable.  (This is fine even on CPUs that don't 
+	 * support the U-bit; these CPUs don't cache references 
+	 * to I/O space.)  Also mark this mapping as having
+	 * no read/write aliasing, and we're done - we don't
+	 * keep PA->VA lists for I/O space.
+	 */
+	if (pa >= HPPA_IOSPACE) {
+		KASSERT(tlbprot & TLB_UNMANAGED);
+		pv->pv_tlbprot |= TLB_UNCACHEABLE | TLB_NO_RW_ALIAS;
+		return pv;
+	}
+
+	/* Get the head of the PA->VA translation list. */
+	table_off = pmap_table_find_pa(pa);
+	KASSERT(table_off >= 0);
+	hpv = pv_head_tbl + table_off;
+
+#ifdef DIAGNOSTIC
+	/* Make sure this VA isn't already entered. */
+	for (pv_other = hpv->pv_head_pvs;
+	     pv_other != NULL;
+	     pv_other = pv_other->pv_next)
+		if (pmap == pv_other->pv_pmap && va == pv_other->pv_va)
+			panic("pmap_pv_enter: VA already in pv_tab");
+#endif /* DIAGNOSTIC */
+
+	/*
+	 * Link this mapping into the PA->VA list.
+	 */
+	pv_other = hpv->pv_head_pvs;
+	pv->pv_next = pv_other;
+	hpv->pv_head_pvs = pv;
+
+	/*
+	 * If there are no other mappings of this page, this
+	 * mapping has no read/write aliasing.  Otherwise, give 
+	 * this mapping the same TLB_NO_RW_ALIAS status as the 
+	 * other mapping (all mappings of the same page must 
+	 * always be marked the same).
+	 */
+	pv->pv_tlbprot |= (pv_other == NULL ?
+			   TLB_NO_RW_ALIAS :
+			   (pv_other->pv_tlbprot & TLB_NO_RW_ALIAS));
 
 	/* Check for read-write aliasing. */
 	if (!PAGE_IS_ALIASED(pa))
@@ -700,18 +722,30 @@ pmap_pv_remove(struct pv_entry *pv)
 
 	PMAP_PRINTF(PDB_PV_REMOVE, ("(%p)\n", pv));
 
-	/* Get the head of the PA->VA translation list. */
-	table_off = pmap_table_find_pa(pa);
-	KASSERT(table_off >= 0);
-	hpv = pv_head_tbl + table_off;
-
-	/* Unlink this pv_entry. */
+	/* Unlink this pv_entry from the HPT. */
 	_pv = &pv->pv_hpt->hpt_entry;
 	while (*_pv != pv) {
 		KASSERT(*_pv != NULL);
 		_pv = &(*_pv)->pv_hash;
 	}
 	*_pv = pv->pv_hash;
+
+	/*
+	 * If this mapping is for I/O space, simply flush the 
+	 * old mapping, free it, and we're done.
+	 */
+	if (pa >= HPPA_IOSPACE) {
+		__pmap_pv_update(pa, pv, 0, 0);
+		pmap_pv_free(pv);
+		return;
+	}
+
+	/* Get the head of the PA->VA translation list. */
+	table_off = pmap_table_find_pa(pa);
+	KASSERT(table_off >= 0);
+	hpv = pv_head_tbl + table_off;
+
+	/* Unlink this pv_entry from the PA->VA translation list. */
 	_pv = &hpv->pv_head_pvs;
 	while (*_pv != pv) {
 		KASSERT(*_pv != NULL);
@@ -1003,8 +1037,6 @@ pmap_bootstrap(vstart, vend)
 		addr = btlb_entry_start[btlb_j] + btlb_entry_size[btlb_j];
 		btlb_j++;
 	} 
-
-	/* XXX PCXS needs two separate inserts in separate btlbs */
 
 	/* Now insert all of the BTLB entries. */
 	for (btlb_i = 0; btlb_i < btlb_j; btlb_i++) {
