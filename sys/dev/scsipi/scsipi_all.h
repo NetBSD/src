@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.11 1998/11/19 03:45:39 thorpej Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.12 1998/12/30 11:17:34 dbj Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -141,8 +141,8 @@ struct scsipi_sense_data {
  * (which is too short for some cases).
  */
 #define	ADD_BYTES_LIM(sp)	\
-	(((int)(sp)->extra_len) < (int) sizeof(struct scsipi_sense_data) - 8)? \
-	((sp)->extra_len) : (sizeof (struct scsipi_sense_data) - 8)
+	((((int)(sp)->extra_len) < (int) sizeof(struct scsipi_sense_data) - 8)? \
+	((sp)->extra_len) : (sizeof (struct scsipi_sense_data) - 8))
 
 
 struct scsipi_sense_data_unextended {
