@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $	*/
+/*	$NetBSD: mount_msdos.c,v 1.17 1997/09/15 05:05:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -30,8 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: mount_msdos.c,v 1.16 1996/10/24 00:12:50 cgd Exp $";
+__RCSID("$NetBSD: mount_msdos.c,v 1.17 1997/09/15 05:05:42 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -58,6 +59,7 @@ const struct mntopt mopts[] = {
 gid_t	a_gid __P((char *));
 uid_t	a_uid __P((char *));
 mode_t	a_mask __P((char *));
+int	main __P((int, char *[]));
 void	usage __P((void));
 
 int
@@ -73,7 +75,7 @@ main(argc, argv)
 	mntflags = set_gid = set_uid = set_mask = 0;
 	(void)memset(&args, '\0', sizeof(args));
 
-	while ((c = getopt(argc, argv, "Gsl9u:g:m:o:")) != EOF) {
+	while ((c = getopt(argc, argv, "Gsl9u:g:m:o:")) != -1) {
 		switch (c) {
 		case 'G':
 			args.flags |= MSDOSFSMNT_GEMDOSFS;
@@ -196,6 +198,7 @@ a_mask(s)
 	char *ep;
 
 	done = 0;
+	rv = -1;
 	if (*s >= '0' && *s <= '7') {
 		done = 1;
 		rv = strtol(optarg, &ep, 8);
