@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.42 2001/10/11 16:31:33 christos Exp $	*/
+/*	$NetBSD: df.c,v 1.43 2002/08/02 08:17:12 soren Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,15 +49,13 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.42 2001/10/11 16:31:33 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.43 2002/08/02 08:17:12 soren Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mount.h>
-
-#include <ufs/ufs/ufsmount.h>
 
 #include <err.h>
 #include <errno.h>
@@ -73,7 +71,6 @@ int	 main(int, char *[]);
 int	 bread(off_t, void *, int);
 char	*getmntpt(char *);
 void	 prtstat(struct statfs *, int);
-int	 ufs_df(char *, struct statfs *);
 int	 selected(const char *);
 void	 maketypelist(char *);
 long	 regetmntinfo(struct statfs **, long);
@@ -81,7 +78,6 @@ void	 usage(void);
 
 int	aflag, iflag, kflag, lflag, mflag, nflag, Pflag;
 char	**typelist = NULL;
-struct	ufs_args mdev;
 
 int
 main(int argc, char *argv[])
@@ -142,36 +138,9 @@ main(int argc, char *argv[])
 					warn("%s", *argv);
 					continue;
 				}
-			} else if (S_ISCHR(stbuf.st_mode)) {
-				if (!ufs_df(*argv, &mntbuf[mntsize]))
-					++mntsize;
-				continue;
 			} else if (S_ISBLK(stbuf.st_mode)) {
-				if ((mntpt = getmntpt(*argv)) == 0) {
-					mntpt = strdup("/tmp/df.XXXXXX");
-					if (!mkdtemp(mntpt)) {
-						warn("%s", mntpt);
-						continue;
-					}
-					mdev.fspec = *argv;
-					if (mount(MOUNT_FFS, mntpt, MNT_RDONLY,
-					    &mdev) != 0) {
-						(void)rmdir(mntpt);
-						if (!ufs_df(*argv,
-						    &mntbuf[mntsize]))
-							++mntsize;
-						continue;
-					} else if (!statfs(mntpt,
-					    &mntbuf[mntsize])) {
-						mntbuf[mntsize].f_mntonname[0] =
-						    '\0';
-						++mntsize;
-					} else
-						warn("%s", *argv);
-					(void)unmount(mntpt, 0);
-					(void)rmdir(mntpt);
-					continue;
-				}
+				if ((mntpt = getmntpt(*argv)) == 0)
+					mntpt = *argv;
 			} else
 				mntpt = *argv;
 			/*
@@ -375,84 +344,6 @@ prtstat(struct statfs *sfsp, int maxwidth)
 	} else
 		(void)printf("  ");
 	(void)printf("  %s\n", sfsp->f_mntonname);
-}
-
-/*
- * This code constitutes the pre-system call Berkeley df code for extracting
- * information from filesystem superblocks.
- */
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
-#include <errno.h>
-#include <fstab.h>
-
-union {
-	struct fs iu_fs;
-	char dummy[SBSIZE];
-} sb;
-#define sblock sb.iu_fs
-
-int	rfd;
-
-int
-ufs_df(char *file, struct statfs *sfsp)
-{
-	char *mntpt;
-	static int synced;
-
-	if (synced++ == 0)
-		sync();
-
-	if ((rfd = open(file, O_RDONLY)) < 0) {
-		warn("%s", file);
-		return (-1);
-	}
-	if (bread((off_t)SBOFF, &sblock, SBSIZE) == 0) {
-		(void)close(rfd);
-		return (-1);
-	}
-	sfsp->f_type = 0;
-	sfsp->f_flags = 0;
-	sfsp->f_bsize = sblock.fs_fsize;
-	sfsp->f_iosize = sblock.fs_bsize;
-	sfsp->f_blocks = sblock.fs_dsize;
-	sfsp->f_bfree = sblock.fs_cstotal.cs_nbfree * sblock.fs_frag +
-	    sblock.fs_cstotal.cs_nffree;
-	sfsp->f_bavail =
-	    ((int64_t)sblock.fs_dsize * (100 - sblock.fs_minfree) / 100) -
-	    (sblock.fs_dsize - sfsp->f_bfree);
-	if (sfsp->f_bavail < 0)
-		sfsp->f_bavail = 0;
-	sfsp->f_files = sblock.fs_ncg * sblock.fs_ipg;
-	sfsp->f_ffree = sblock.fs_cstotal.cs_nifree;
-	sfsp->f_fsid.val[0] = 0;
-	sfsp->f_fsid.val[1] = 0;
-	if ((mntpt = getmntpt(file)) == 0)
-		mntpt = "";
-	(void)memmove(&sfsp->f_mntonname[0], mntpt, MNAMELEN);
-	(void)memmove(&sfsp->f_mntfromname[0], file, MNAMELEN);
-	(void)strncpy(sfsp->f_fstypename, MOUNT_FFS, MFSNAMELEN);
-	(void)close(rfd);
-	return (0);
-}
-
-int
-bread(off, buf, cnt)
-	off_t off;
-	void *buf;
-	int cnt;
-{
-	int nr;
-
-	(void)lseek(rfd, off, SEEK_SET);
-	if ((nr = read(rfd, buf, cnt)) != cnt) {
-		/* Probably a dismounted disk if errno == EIO. */
-		if (errno != EIO)
-			(void)fprintf(stderr, "\ndf: %lld: %s\n",
-			    (long long)off, strerror(nr > 0 ? EIO : errno));
-		return (0);
-	}
-	return (1);
 }
 
 void
