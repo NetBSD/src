@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.25.4.2 2000/10/17 22:41:48 tv Exp $	 */
+/*	$NetBSD: rtld.h,v 1.25.4.3 2001/05/01 12:06:31 he Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -160,12 +160,12 @@ typedef struct Struct_Obj_Entry {
 	Elf_Addr       *pltgot;		/* PLTGOT table */
 	const Elf_Rel  *rel;		/* Relocation entries */
 	const Elf_Rel  *rellim;		/* Limit of Relocation entries */
-	const Elf_RelA *rela;		/* Relocation entries */
-	const Elf_RelA *relalim;	/* Limit of Relocation entries */
+	const Elf_Rela *rela;		/* Relocation entries */
+	const Elf_Rela *relalim;	/* Limit of Relocation entries */
 	const Elf_Rel  *pltrel;		/* PLT relocation entries */
 	const Elf_Rel  *pltrellim;	/* Limit of PLT relocation entries */
-	const Elf_RelA *pltrela;	/* PLT relocation entries */
-	const Elf_RelA *pltrelalim;	/* Limit of PLT relocation entries */
+	const Elf_Rela *pltrela;	/* PLT relocation entries */
+	const Elf_Rela *pltrelalim;	/* Limit of PLT relocation entries */
 	const Elf_Sym  *symtab;		/* Symbol table */
 	const char     *strtab;		/* String table */
 	unsigned long   strsize;	/* Size in bytes of string table */
@@ -268,8 +268,8 @@ int _rtld_do_copy_relocations __P((const Obj_Entry *, bool));
 caddr_t _rtld_bind __P((Obj_Entry *, Elf_Word));
 int _rtld_relocate_objects __P((Obj_Entry *, bool, bool));
 int _rtld_relocate_nonplt_object __P((Obj_Entry *,
-    const Elf_RelA *, bool));
-int _rtld_relocate_plt_object __P((Obj_Entry *, const Elf_RelA *,
+    const Elf_Rela *, bool));
+int _rtld_relocate_plt_object __P((Obj_Entry *, const Elf_Rela *,
     caddr_t *, bool, bool));
 
 /* search.c */
@@ -298,7 +298,7 @@ caddr_t _rtld_bind_mips __P((Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr));
 #if defined(__powerpc__)
 /* ppc_reloc.c */
 caddr_t _rtld_bind_powerpc __P((Obj_Entry *, Elf_Word));
-int _rtld_reloc_powerpc_plt __P((Obj_Entry *, const Elf_RelA *, bool));
+int _rtld_reloc_powerpc_plt __P((Obj_Entry *, const Elf_Rela *, bool));
 void _rtld_setup_powerpc_plt __P((const Obj_Entry *));
 #endif
 
