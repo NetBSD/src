@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.33 2004/03/20 20:28:44 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.34 2004/04/21 01:05:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.33 2004/03/20 20:28:44 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.34 2004/04/21 01:05:33 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -281,16 +281,16 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 
 	case 0:					/* Child. */
 		if ((flags & CHECK_FORCE) == 0) {
-			struct statfs	sfs;
+			struct statvfs	sfs;
 
 				/*
 				 * if mntpt is a mountpoint of a mounted file
 				 * system and it's mounted read-write, skip it
 				 * unless -f is given.
 				 */
-			if ((statfs(mntpt, &sfs) == 0) &&
+			if ((statvfs(mntpt, &sfs) == 0) &&
 			    (strcmp(mntpt, sfs.f_mntonname) == 0) &&
-			    ((sfs.f_flags & MNT_RDONLY) == 0)) {
+			    ((sfs.f_flag & MNT_RDONLY) == 0)) {
 				printf(
 		"%s: file system is mounted read-write on %s; not checking\n",
 				    spec, mntpt);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.15 2003/10/21 01:20:12 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.16 2004/04/21 01:05:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.15 2003/10/21 01:20:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.16 2004/04/21 01:05:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -76,7 +76,7 @@ netbsd32_getfsstat(l, v, retval)
 		syscallarg(int) flags;
 	} */ *uap = v;
 	struct mount *mp, *nmp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	struct netbsd32_statfs sb32;
 	caddr_t sfsp;
 	long count, maxcount, error;
@@ -453,7 +453,7 @@ netbsd32_statfs(l, v, retval)
 		syscallarg(netbsd32_statfsp_t) buf;
 	} */ *uap = v;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	struct netbsd32_statfs s32;
 	int error;
 	struct nameidata nd;
@@ -486,7 +486,7 @@ netbsd32_fstatfs(l, v, retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct mount *mp;
-	struct statfs *sp;
+	struct statvfs *sp;
 	struct netbsd32_statfs s32;
 	int error;
 	struct proc *p = l->l_proc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.220 2004/04/19 00:15:55 lukem Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.221 2004/04/21 01:05:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.220 2004/04/19 00:15:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.221 2004/04/21 01:05:38 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -397,8 +397,8 @@ vfs_getvfs(fsid)
 
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
-		if (mp->mnt_stat.f_fsid.val[0] == fsid->val[0] &&
-		    mp->mnt_stat.f_fsid.val[1] == fsid->val[1]) {
+		if (mp->mnt_stat.f_fsidx.__fsid_val[0] == fsid->__fsid_val[0] &&
+		    mp->mnt_stat.f_fsidx.__fsid_val[1] == fsid->__fsid_val[1]) {
 			simple_unlock(&mountlist_slock);
 			return (mp);
 		}
@@ -420,19 +420,21 @@ vfs_getnewfsid(mp)
 
 	simple_lock(&mntid_slock);
 	mtype = makefstype(mp->mnt_op->vfs_name);
-	mp->mnt_stat.f_fsid.val[0] = makedev(mtype, 0);
-	mp->mnt_stat.f_fsid.val[1] = mtype;
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = makedev(mtype, 0);
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = mtype;
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	if (xxxfs_mntid == 0)
 		++xxxfs_mntid;
-	tfsid.val[0] = makedev(mtype & 0xff, xxxfs_mntid);
-	tfsid.val[1] = mtype;
+	tfsid.__fsid_val[0] = makedev(mtype & 0xff, xxxfs_mntid);
+	tfsid.__fsid_val[1] = mtype;
 	if (!CIRCLEQ_EMPTY(&mountlist)) {
 		while (vfs_getvfs(&tfsid)) {
-			tfsid.val[0]++;
+			tfsid.__fsid_val[0]++;
 			xxxfs_mntid++;
 		}
 	}
-	mp->mnt_stat.f_fsid.val[0] = tfsid.val[0];
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = tfsid.__fsid_val[0];
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
 	simple_unlock(&mntid_slock);
 }
 
@@ -2486,7 +2488,7 @@ vfs_setpublicfs(mp, nep, argp)
 	 * Get real filehandle for root of exported FS.
 	 */
 	memset((caddr_t)&nfs_pub.np_handle, 0, sizeof(nfs_pub.np_handle));
-	nfs_pub.np_handle.fh_fsid = mp->mnt_stat.f_fsid;
+	nfs_pub.np_handle.fh_fsid = mp->mnt_stat.f_fsidx;
 
 	if ((error = VFS_ROOT(mp, &rvp)))
 		return (error);
@@ -2940,21 +2942,21 @@ vfs_write_resume(struct mount *mp)
 }
 
 void
-copy_statfs_info(struct statfs *sbp, const struct mount *mp)
+copy_statvfs_info(struct statvfs *sbp, const struct mount *mp)
 {
-	const struct statfs *mbp;
+	const struct statvfs *mbp;
 
 	if (sbp == (mbp = &mp->mnt_stat))
 		return;
 
-	sbp->f_oflags = mbp->f_oflags;
-	sbp->f_type = mbp->f_type;
-	(void)memcpy(&sbp->f_fsid, &mbp->f_fsid, sizeof(sbp->f_fsid));
+	(void)memcpy(&sbp->f_fsid, &mbp->f_fsidx, sizeof(sbp->f_fsid));
 	sbp->f_owner = mbp->f_owner;
-	sbp->f_flags = mbp->f_flags;
+	sbp->f_flag = mbp->f_flag;
 	sbp->f_syncwrites = mbp->f_syncwrites;
 	sbp->f_asyncwrites = mbp->f_asyncwrites;
-	sbp->f_spare[0] = mbp->f_spare[0];
+	sbp->f_syncreads = mbp->f_syncreads;
+	sbp->f_asyncreads = mbp->f_asyncreads;
+	(void)memcpy(sbp->f_spare, mbp->f_spare, sizeof(mbp->f_spare));
 	(void)memcpy(sbp->f_fstypename, mbp->f_fstypename,
 	    sizeof(sbp->f_fstypename));
 	(void)memcpy(sbp->f_mntonname, mbp->f_mntonname,
@@ -2964,12 +2966,12 @@ copy_statfs_info(struct statfs *sbp, const struct mount *mp)
 }
 
 int
-set_statfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
+set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
     struct mount *mp, struct proc *p)
 {
 	int error;
 	size_t size;
-	struct statfs *sfs = &mp->mnt_stat;
+	struct statvfs *sfs = &mp->mnt_stat;
 	int (*fun)(const void *, void *, size_t, size_t *);
 
 	(void)strncpy(mp->mnt_stat.f_fstypename, mp->mnt_op->vfs_name,
@@ -3185,23 +3187,35 @@ vfs_mount_print(mp, full, pr)
 	(*pr)("wcnt = %d, writeopcountupper = %d, writeopcountupper = %d\n",
 		mp->mnt_wcnt,mp->mnt_writeopcountupper,mp->mnt_writeopcountlower);
 
-	(*pr)("statfs cache:\n");
-	(*pr)("\ttype = %d\n",mp->mnt_stat.f_type);
-	(*pr)("\toflags = 0x%04x\n",mp->mnt_stat.f_oflags);
-	(*pr)("\tbsize = %d\n",mp->mnt_stat.f_bsize);
-	(*pr)("\tiosize = %d\n",mp->mnt_stat.f_iosize);
-	(*pr)("\tblocks = %d\n",mp->mnt_stat.f_blocks);
-	(*pr)("\tbfree = %d\n",mp->mnt_stat.f_bfree);
-	(*pr)("\tbavail = %d\n",mp->mnt_stat.f_bavail);
-	(*pr)("\tfiles = %d\n",mp->mnt_stat.f_files);
-	(*pr)("\tffree = %d\n",mp->mnt_stat.f_ffree);
-	(*pr)("\tf_fsid = { 0x%"PRIx32", 0x%"PRIx32" }\n",
-			mp->mnt_stat.f_fsid.val[0],mp->mnt_stat.f_fsid.val[1]);
+	(*pr)("statvfs cache:\n");
+	(*pr)("\tbsize = %lu\n",mp->mnt_stat.f_bsize);
+	(*pr)("\tfrsize = %lu\n",mp->mnt_stat.f_frsize);
+	(*pr)("\tiosize = %lu\n",mp->mnt_stat.f_iosize);
+
+	(*pr)("\tblocks = "PRIu64"\n",mp->mnt_stat.f_blocks);
+	(*pr)("\tbfree = "PRIu64"\n",mp->mnt_stat.f_bfree);
+	(*pr)("\tbavail = "PRIu64"\n",mp->mnt_stat.f_bavail);
+	(*pr)("\tbresvd = "PRIu64"\n",mp->mnt_stat.f_bresvd);
+
+	(*pr)("\tfiles = "PRIu64"\n",mp->mnt_stat.f_files);
+	(*pr)("\tffree = "PRIu64"\n",mp->mnt_stat.f_ffree);
+	(*pr)("\tfavail = "PRIu64"\n",mp->mnt_stat.f_favail);
+	(*pr)("\tfresvd = "PRIu64"\n",mp->mnt_stat.f_fresvd);
+
+	(*pr)("\tf_fsidx = { 0x%"PRIx32", 0x%"PRIx32" }\n",
+			mp->mnt_stat.f_fsidx.__fsid_val[0],
+			mp->mnt_stat.f_fsidx.__fsid_val[1]);
+
 	(*pr)("\towner = %"PRIu32"\n",mp->mnt_stat.f_owner);
-	bitmask_snprintf(mp->mnt_stat.f_flags, __MNT_FLAG_BITS, sbuf, sizeof(sbuf));
-	(*pr)("\tflags = %s\n",sbuf);
-	(*pr)("\tsyncwrites = %d\n",mp->mnt_stat.f_syncwrites);
-	(*pr)("\tasyncwrites = %d\n",mp->mnt_stat.f_asyncwrites);
+	(*pr)("\tnamemax = %lu\n",mp->mnt_stat.f_namemax);
+
+	bitmask_snprintf(mp->mnt_stat.f_flag, __MNT_FLAG_BITS, sbuf,
+	    sizeof(sbuf));
+	(*pr)("\tflag = %s\n",sbuf);
+	(*pr)("\tsyncwrites = " PRIu64 "\n",mp->mnt_stat.f_syncwrites);
+	(*pr)("\tasyncwrites = " PRIu64 "\n",mp->mnt_stat.f_asyncwrites);
+	(*pr)("\tsyncreads = " PRIu64 "\n",mp->mnt_stat.f_syncreads);
+	(*pr)("\tasyncreads = " PRIu64 "\n",mp->mnt_stat.f_asyncreads);
 	(*pr)("\tfstypename = %s\n",mp->mnt_stat.f_fstypename);
 	(*pr)("\tmntonname = %s\n",mp->mnt_stat.f_mntonname);
 	(*pr)("\tmntfromname = %s\n",mp->mnt_stat.f_mntfromname);

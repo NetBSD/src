@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.125 2003/08/07 16:30:46 agc Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.126 2004/04/21 01:05:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.125 2003/08/07 16:30:46 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.126 2004/04/21 01:05:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -977,7 +977,7 @@ sunos_sys_vhangup(l, v, retval)
 
 static int
 sunstatfs(sp, buf)
-	struct statfs *sp;
+	struct statvfs *sp;
 	caddr_t buf;
 {
 	struct sunos_statfs ssfs;
@@ -990,7 +990,7 @@ sunstatfs(sp, buf)
 	ssfs.f_bavail = sp->f_bavail;
 	ssfs.f_files = sp->f_files;
 	ssfs.f_ffree = sp->f_ffree;
-	ssfs.f_fsid = sp->f_fsid;
+	ssfs.f_fsid = sp->f_fsidx;
 	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
 }	
 

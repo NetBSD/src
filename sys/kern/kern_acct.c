@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.56 2004/03/23 13:22:03 junyoung Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.57 2004/04/21 01:05:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.56 2004/03/23 13:22:03 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.57 2004/04/21 01:05:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,21 +185,24 @@ int
 acct_chkfree()
 {
 	int error;
-	struct statfs sb;
+	struct statvfs sb;
+	int64_t bavail;
 
-	error = VFS_STATFS(acct_vp->v_mount, &sb, NULL);
+	error = VFS_STATVFS(acct_vp->v_mount, &sb, NULL);
 	if (error != 0)
 		return (error);
 
+	bavail = sb.f_bfree - sb.f_bresvd;
+
 	switch (acct_state) {
 	case ACCT_SUSPENDED:
-		if (sb.f_bavail > acctresume * sb.f_blocks / 100) {
+		if (bavail > acctresume * sb.f_blocks / 100) {
 			acct_state = ACCT_ACTIVE;
 			log(LOG_NOTICE, "Accounting resumed\n");
 		}
 		break;
 	case ACCT_ACTIVE:
-		if (sb.f_bavail <= acctsuspend * sb.f_blocks / 100) {
+		if (bavail <= acctsuspend * sb.f_blocks / 100) {
 			acct_state = ACCT_SUSPENDED;
 			log(LOG_NOTICE, "Accounting suspended\n");
 		}
@@ -446,7 +449,7 @@ acctwatch(arg)
 		error = acct_chkfree();
 #ifdef DIAGNOSTIC
 		if (error != 0)
-			printf("acctwatch: failed to statfs, error = %d\n",
+			printf("acctwatch: failed to statvfs, error = %d\n",
 			    error);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.17 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: eject.c,v 1.18 2004/04/21 01:05:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif				/* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.17 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: eject.c,v 1.18 2004/04/21 01:05:47 christos Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -323,7 +323,7 @@ nick2rdev(char *nn)
 void
 unmount_dev(char *name)
 {
-	struct statfs *mounts;
+	struct statvfs *mounts;
 	int i, nmnts, len;
 	char *dn;
 

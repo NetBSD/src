@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.9 2004/01/10 17:41:52 wiz Exp $
+.\"     $NetBSD: vfssubr.9,v 1.10 2004/04/21 01:05:35 christos Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,7 +116,7 @@ Get a new unique file system id type for the file system specified by
 the mount structure
 .Fa mp .
 The file system id type is stored in
-.Em mp-\*[Gt]mnt_stat.f_fsid .
+.Em mp-\*[Gt]mnt_stat.f_fsidx .
 .It Fn vfs_getvfs "fsid"
 Lookup a mount point with the file system identifier
 .Fa fsid .

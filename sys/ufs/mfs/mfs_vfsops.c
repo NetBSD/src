@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.55 2004/03/24 15:34:56 atatat Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.56 2004/04/21 01:05:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.55 2004/03/24 15:34:56 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.56 2004/04/21 01:05:46 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -90,7 +90,7 @@ struct vfsops mfs_vfsops = {
 	ffs_unmount,
 	ufs_root,
 	ufs_quotactl,
-	mfs_statfs,
+	mfs_statvfs,
 	ffs_sync,
 	ffs_vget,
 	ffs_fhtovp,
@@ -213,7 +213,7 @@ mfs_mountroot()
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
-	(void)ffs_statfs(mp, &mp->mnt_stat, p);
+	(void)ffs_statvfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	inittodr((time_t)0);
 	return (0);
@@ -342,7 +342,7 @@ mfs_mount(mp, path, data, ndp, p)
 	}
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
-	error = set_statfs_info(path, UIO_USERSPACE, args.fspec,
+	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec,
 	    UIO_USERSPACE, mp, p);
 	(void)memcpy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname,
 	    sizeof(mp->mnt_stat.f_mntonname));
@@ -416,19 +416,14 @@ mfs_start(mp, flags, p)
  * Get file system statistics.
  */
 int
-mfs_statfs(mp, sbp, p)
+mfs_statvfs(mp, sbp, p)
 	struct mount *mp;
-	struct statfs *sbp;
+	struct statvfs *sbp;
 	struct proc *p;
 {
 	int error;
 
-	error = ffs_statfs(mp, sbp, p);
-#ifdef COMPAT_09
-	sbp->f_type = 3;
-#else
-	sbp->f_type = 0;
-#endif
+	error = ffs_statvfs(mp, sbp, p);
 	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
 	return (error);
 }

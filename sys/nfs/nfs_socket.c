@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.102 2004/03/17 10:40:34 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.103 2004/04/21 01:05:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.102 2004/03/17 10:40:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.103 2004/04/21 01:05:42 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -835,7 +835,7 @@ nfsmout:
 					rt->cwnd = nmp->nm_cwnd;
 					rt->srtt = nmp->nm_srtt[proct[rep->r_procnum] - 1];
 					rt->sdrtt = nmp->nm_sdrtt[proct[rep->r_procnum] - 1];
-					rt->fsid = nmp->nm_mountp->mnt_stat.f_fsid;
+					rt->fsid = nmp->nm_mountp->mnt_stat.f_fsidx;
 					rt->tstamp = time;
 					if (rep->r_flags & R_TIMING)
 						rt->rtt = rep->r_rtt;

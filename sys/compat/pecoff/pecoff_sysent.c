@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_sysent.c,v 1.10 2004/03/26 15:29:29 drochner Exp $ */
+/* $NetBSD: pecoff_sysent.c,v 1.11 2004/04/21 01:05:37 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.10 2004/03/26 15:29:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.11 2004/04/21 01:05:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -68,8 +68,13 @@ struct sysent pecoff_sysent[] = {
 	    pecoff_sys_chown },			/* 16 = chown */
 	{ 1, s(struct sys_obreak_args), 0,
 	    sys_obreak },			/* 17 = break */
-	{ 3, s(struct sys_getfsstat_args), 0,
-	    sys_getfsstat },			/* 18 = getfsstat */
+#ifdef COMPAT_20
+	{ 3, s(struct compat_20_sys_getfsstat_args), 0,
+	    compat_20_sys_getfsstat },		/* 18 = getfsstat */
+#else
+	{ 0, 0, 0,
+	    sys_nosys },			/* 18 = excluded compat_20_sys_getfsstat */
+#endif
 	{ 0, 0, 0,
 	    sys_nosys },			/* 19 = excluded { long sys_lseek ( int fd , long offset , int whence ) ; } olseek */
 #ifdef COMPAT_43
@@ -373,8 +378,13 @@ struct sysent pecoff_sysent[] = {
 	    sys_nosys },			/* 156 = excluded { int sys_getdirentries ( int fd , char * buf , u_int count , long * basep ) ; } ogetdirentries */
 	{ 2, s(struct pecoff_sys_statfs_args), 0,
 	    pecoff_sys_statfs },		/* 157 = statfs */
-	{ 2, s(struct sys_fstatfs_args), 0,
-	    sys_fstatfs },			/* 158 = fstatfs */
+#ifdef COMPAT_20
+	{ 2, s(struct compat_20_sys_fstatfs_args), 0,
+	    compat_20_sys_fstatfs },		/* 158 = fstatfs */
+#else
+	{ 0, 0, 0,
+	    sys_nosys },			/* 158 = excluded compat_20_sys_fstatfs */
+#endif
 	{ 0, 0, 0,
 	    sys_nosys },			/* 159 = unimplemented */
 	{ 0, 0, 0,
@@ -777,8 +787,13 @@ struct sysent pecoff_sysent[] = {
 	    sys_fhopen },			/* 298 = fhopen */
 	{ 2, s(struct sys_fhstat_args), 0,
 	    sys_fhstat },			/* 299 = fhstat */
-	{ 2, s(struct sys_fhstatfs_args), 0,
-	    sys_fhstatfs },			/* 300 = fhstatfs */
+#ifdef COMPAT_20
+	{ 2, s(struct compat_20_sys_fhstatfs_args), 0,
+	    compat_20_sys_fhstatfs },		/* 300 = fhstatfs */
+#else
+	{ 0, 0, 0,
+	    sys_nosys },			/* 300 = excluded compat_20_sys_fhstatfs */
+#endif
 #if defined(SYSVSEM) || !defined(_KERNEL)
 	{ 4, s(struct sys_____semctl13_args), 0,
 	    sys_____semctl13 },			/* 301 = ____semctl13 */

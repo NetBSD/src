@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.39 2003/12/17 09:13:41 yamt Exp $	*/
+/*	$NetBSD: library.c,v 1.40 2004/04/21 01:05:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.39 2003/12/17 09:13:41 yamt Exp $");
+__RCSID("$NetBSD: library.c,v 1.40 2004/04/21 01:05:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,17 +82,17 @@ static int dev_fd = -1;
  * a non-zero value is returned.
  */
 int
-fs_getmntinfo(struct statfs **buf, char *name, const char *type)
+fs_getmntinfo(struct statvfs **buf, char *name, const char *type)
 {
 	/* allocate space for the filesystem info */
-	if ((*buf = malloc(sizeof(struct statfs))) == NULL)
+	if ((*buf = malloc(sizeof(struct statvfs))) == NULL)
 		return 0;
 
 	/* grab the filesystem info */
         if (ifile_fd == -1) {
-		if (statfs(name, *buf) == -1)
+		if (statvfs(name, *buf) == -1)
 			goto bad;
-        } else if(fstatfs(ifile_fd, *buf) == -1)
+        } else if(fstatvfs(ifile_fd, *buf) == -1)
 		goto bad;
 
 	/* check to see if it's the one we want */
@@ -111,7 +111,7 @@ bad:
  * Returns an pointer to an FS_INFO structure, NULL on error.
  */
 FS_INFO *
-get_fs_info(struct statfs *lstatfsp, int use_mmap)
+get_fs_info(struct statvfs *lstatvfsp, int use_mmap)
 {
 	FS_INFO	*fsp;
 
@@ -119,7 +119,7 @@ get_fs_info(struct statfs *lstatfsp, int use_mmap)
 		return NULL;
 	memset(fsp, 0, sizeof(FS_INFO));
 
-	fsp->fi_statfsp = lstatfsp;
+	fsp->fi_statvfsp = lstatvfsp;
 	if (get_superblock(fsp, &fsp->fi_lfs)) {
 		syslog(LOG_ERR, "get_fs_info: get_superblock failed (%m)");
                 exit(1);
@@ -131,19 +131,19 @@ get_fs_info(struct statfs *lstatfsp, int use_mmap)
 /*
  * If we are reading the ifile then we need to refresh it.  Even if
  * we are mmapping it, it might have grown.  Finally, we need to
- * refresh the file system information (statfs) info.
+ * refresh the file system information (statvfs) info.
  */
 void
 reread_fs_info(FS_INFO *fsp, int use_mmap)
 {
 	if (ifile_fd != -1) {
-		if (fstatfs(ifile_fd, fsp->fi_statfsp) == -1) {
-			syslog(LOG_ERR, "reread_fs_info: fstatfs failed (%m)");
+		if (fstatvfs(ifile_fd, fsp->fi_statvfsp) == -1) {
+			syslog(LOG_ERR, "reread_fs_info: fstatvfs failed (%m)");
                 	exit(1);
 		}
-	} else if (statfs(fsp->fi_statfsp->f_mntonname, fsp->fi_statfsp)) {
-		syslog(LOG_ERR, "reread_fs_info: statfs `%s' failed (%m)",
-		    fsp->fi_statfsp->f_mntonname);
+	} else if (statvfs(fsp->fi_statvfsp->f_mntonname, fsp->fi_statvfsp)) {
+		syslog(LOG_ERR, "reread_fs_info: statvfs `%s' failed (%m)",
+		    fsp->fi_statvfsp->f_mntonname);
                 exit(1);
         }
 	get_ifile(fsp, use_mmap);
@@ -158,7 +158,7 @@ getdevfd(FS_INFO *fsp)
 		return dev_fd;
 
 	(void)snprintf(rdev, sizeof(rdev), "/dev/r%s",
-	    fsp->fi_statfsp->f_mntfromname + 5);
+	    fsp->fi_statvfsp->f_mntfromname + 5);
 	if ((dev_fd = open(rdev, O_RDONLY)) == -1) {
 		syslog(LOG_ERR, "Cannot open `%s' (%m)", rdev);
 		exit(1);
@@ -266,13 +266,13 @@ void
 get_ifile(FS_INFO *fsp, int use_mmap)
 {
 	struct stat file_stat;
-	struct statfs statfsbuf;
+	struct statvfs statvfsbuf;
 	caddr_t ifp;
 	char *ifile_name;
 	int count;
 
 	ifp = NULL;
-	asprintf(&ifile_name, "%s/%s", fsp->fi_statfsp->f_mntonname,
+	asprintf(&ifile_name, "%s/%s", fsp->fi_statvfsp->f_mntonname,
 	    IFILE_NAME);
 	if (!ifile_name) {
 		syslog(LOG_ERR, "get_ifile: malloc failed: %m");
@@ -291,9 +291,10 @@ get_ifile(FS_INFO *fsp, int use_mmap)
 
 	if (fstat(ifile_fd, &file_stat) == -1) {
 		/* If the fs was unmounted, don't complain */
-		if (statfs(fsp->fi_statfsp->f_mntonname, &statfsbuf) != -1) {
-			if(memcmp(&statfsbuf.f_fsid, &fsp->fi_statfsp->f_fsid,
-			    sizeof(statfsbuf.f_fsid)) != 0) {
+		if (statvfs(fsp->fi_statvfsp->f_mntonname, &statvfsbuf) != -1) {
+			if(memcmp(&statvfsbuf.f_fsidx,
+			    &fsp->fi_statvfsp->f_fsidx,
+			    sizeof(statvfsbuf.f_fsidx)) != 0) {
 				/* Filesystem still mounted, 
 				 * this error is real
 				 */

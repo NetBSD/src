@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.86 2004/01/05 23:23:38 jmmv Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.87 2004/04/21 01:05:48 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.86 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.87 2004/04/21 01:05:48 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -192,12 +192,12 @@ static int chk_host __P((struct dirlist *, struct sockaddr *, int *, int *));
 static int del_mlist __P((char *, char *, struct sockaddr *));
 static struct dirlist *dirp_search __P((struct dirlist *, char *));
 static int do_mount __P((const char *, size_t, struct exportlist *,
-    struct grouplist *, int, struct uucred *, char *, int, struct statfs *));
+    struct grouplist *, int, struct uucred *, char *, int, struct statvfs *));
 static int do_opt __P((const char *, size_t, char **, char **,
     struct exportlist *, struct grouplist *, int *, int *, struct uucred *));
 static struct exportlist *ex_search __P((fsid_t *));
 static int parse_directory __P((const char *, size_t, struct grouplist *,
-    int, char *, struct exportlist **, struct statfs *));
+    int, char *, struct exportlist **, struct statvfs *));
 static int parse_host_netgroup __P((const char *, size_t, struct exportlist *,
     struct grouplist *, char *, int *, struct grouplist **));
 static struct exportlist *get_exp __P((void));
@@ -497,7 +497,7 @@ mntsrv(rqstp, transp)
 	struct dirlist *dp;
 	struct fhreturn fhr;
 	struct stat     stb;
-	struct statfs   fsb;
+	struct statvfs   fsb;
 	struct addrinfo *ai;
 	char host[NI_MAXHOST], numerichost[NI_MAXHOST];
 	int lookup_failed = 1;
@@ -561,7 +561,7 @@ mntsrv(rqstp, transp)
 		if (realpath(rpcpath, dirpath) == 0 ||
 		    stat(dirpath, &stb) < 0 ||
 		    (!S_ISDIR(stb.st_mode) && !S_ISREG(stb.st_mode)) ||
-		    statfs(dirpath, &fsb) < 0) {
+		    statvfs(dirpath, &fsb) < 0) {
 			(void)chdir("/"); /* Just in case realpath doesn't */
 			if (debug)
 				(void)fprintf(stderr, "-> stat failed on %s\n",
@@ -575,7 +575,7 @@ mntsrv(rqstp, transp)
 			    "-> dirpath: %s\n", dirpath);
 		/* Check in the exports list */
 		(void)sigprocmask(SIG_BLOCK, &sighup_mask, NULL);
-		ep = ex_search(&fsb.f_fsid);
+		ep = ex_search(&fsb.f_fsidx);
 		hostset = defset = 0;
 		if (ep && (chk_host(ep->ex_defdir, saddr, &defset,
 		   &hostset) || ((dp = dirp_search(ep->ex_dirl, dirpath)) &&
@@ -900,13 +900,13 @@ parse_directory(line, lineno, tgrp, got_nondir, cp, ep, fsp)
 	int got_nondir;
 	char *cp;
 	struct exportlist **ep;
-	struct statfs *fsp;
+	struct statvfs *fsp;
 {
 	if (!check_dirpath(line, lineno, cp))
 		return 0;
 
-	if (statfs(cp, fsp) == -1) {
-		syslog(LOG_ERR, "\"%s\", line %ld: statfs for `%s' failed: %m",
+	if (statvfs(cp, fsp) == -1) {
+		syslog(LOG_ERR, "\"%s\", line %ld: statvfs for `%s' failed: %m",
 		    line, (unsigned long)lineno, cp);
 		return 0;
 	}
@@ -918,8 +918,8 @@ parse_directory(line, lineno, tgrp, got_nondir, cp, ep, fsp)
 		return 0;
 	}
 	if (*ep) {
-		if ((*ep)->ex_fs.val[0] != fsp->f_fsid.val[0] ||
-		    (*ep)->ex_fs.val[1] != fsp->f_fsid.val[1]) {
+		if ((*ep)->ex_fs.__fsid_val[0] != fsp->f_fsidx.__fsid_val[0] ||
+		    (*ep)->ex_fs.__fsid_val[1] != fsp->f_fsidx.__fsid_val[1]) {
 			syslog(LOG_ERR,
 			    "\"%s\", line %ld: filesystem ids disagree",
 			    line, (unsigned long)lineno);
@@ -930,20 +930,20 @@ parse_directory(line, lineno, tgrp, got_nondir, cp, ep, fsp)
 		 * See if this directory is already
 		 * in the list.
 		 */
-		*ep = ex_search(&fsp->f_fsid);
+		*ep = ex_search(&fsp->f_fsidx);
 		if (*ep == NULL) {
 			*ep = get_exp();
-			(*ep)->ex_fs = fsp->f_fsid;
+			(*ep)->ex_fs = fsp->f_fsidx;
 			(*ep)->ex_fsdir = estrdup(fsp->f_mntonname);
 			if (debug)
 				(void)fprintf(stderr,
 				    "Making new ep fs=0x%x,0x%x\n",
-				    fsp->f_fsid.val[0], fsp->f_fsid.val[1]);
+				    fsp->f_fsidx.__fsid_val[0], fsp->f_fsidx.__fsid_val[1]);
 		} else {
 			if (debug)
 				(void)fprintf(stderr,
 				    "Found ep fs=0x%x,0x%x\n",
-				    fsp->f_fsid.val[0], fsp->f_fsid.val[1]);
+				    fsp->f_fsidx.__fsid_val[0], fsp->f_fsidx.__fsid_val[1]);
 		}
 	}
 
@@ -963,7 +963,7 @@ get_exportlist(n)
 	struct grouplist *grp, *tgrp;
 	struct exportlist **epp;
 	struct dirlist *dirhead;
-	struct statfs fsb, *fsp;
+	struct statvfs fsb, *fsp;
 	struct addrinfo *ai;
 	struct uucred anon;
 	char *cp, *endcp, *dirp, savedc;
@@ -1024,7 +1024,7 @@ get_exportlist(n)
 			targs.ua.fspec = NULL;
 			targs.ua.export.ex_flags = MNT_DELEXPORT;
 			if (mount(fsp->f_fstypename, fsp->f_mntonname,
-			    fsp->f_flags | MNT_UPDATE, &targs) == -1)
+			    fsp->f_flag | MNT_UPDATE, &targs) == -1)
 				syslog(LOG_ERR, "Can't delete exports for %s",
 				    fsp->f_mntonname);
 		}
@@ -1270,8 +1270,8 @@ ex_search(fsid)
 
 	ep = exphead;
 	while (ep) {
-		if (ep->ex_fs.val[0] == fsid->val[0] &&
-		    ep->ex_fs.val[1] == fsid->val[1])
+		if (ep->ex_fs.__fsid_val[0] == fsid->__fsid_val[0] &&
+		    ep->ex_fs.__fsid_val[1] == fsid->__fsid_val[1])
 			return (ep);
 		ep = ep->ex_next;
 	}
@@ -2001,7 +2001,7 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	struct uucred *anoncrp;
 	char *dirp;
 	int dirplen;
-	struct statfs *fsb;
+	struct statvfs *fsb;
 {
 	struct sockaddr *addrp;
 	struct sockaddr_storage ss;
@@ -2086,7 +2086,7 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		 * exportable file systems and not just MOUNT_FFS.
 		 */
 		while (mount(fsb->f_fstypename, dirp,
-		    fsb->f_flags | MNT_UPDATE, &args) == -1) {
+		    fsb->f_flag | MNT_UPDATE, &args) == -1) {
 			if (cp)
 				*cp-- = savedc;
 			else
