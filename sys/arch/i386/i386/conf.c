@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.64 1995/04/19 19:22:15 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.65 1995/04/19 22:35:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -117,10 +117,10 @@ cdev_decl(ctty);
 cdev_decl(mm);
 cdev_decl(wd);
 #include "pty.h"
-#define	ptstty		pttty
+#define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
 cdev_decl(pts);
-#define	ptctty		pttty
+#define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
