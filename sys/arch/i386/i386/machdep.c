@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.4 2001/07/09 22:37:27 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.5 2001/07/11 05:02:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1765,6 +1765,8 @@ cpu_upcall(struct lwp *l)
 	tf->tf_eip = (int)((caddr_t) p->p_sigctx.ps_sigcode + (
 		(caddr_t)upcallcode - (caddr_t)sigcode));
 	tf->tf_esp = (int) sf;
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
@@ -3061,8 +3063,8 @@ cpu_getmcontext(l, mcp, flags)
 	} else
 #endif
 	{
-		__asm("movl %%gs,%w0" : "=r" (gr[_REG_GS]));
-		__asm("movl %%fs,%w0" : "=r" (gr[_REG_FS]));
+		gr[_REG_GS]  = tf->tf_gs;
+		gr[_REG_FS]  = tf->tf_fs;
 		gr[_REG_ES]  = tf->tf_es;
 		gr[_REG_DS]  = tf->tf_ds;
 		gr[_REG_EFL] = tf->tf_eflags;
@@ -3140,8 +3142,8 @@ cpu_setmcontext(l, mcp, flags)
 				    gr[_REG_EFL], tf->tf_eflags, gr[_REG_CS]);
 				return (EINVAL);
 			}
-			__asm("movl %w0,%%gs" : : "r" (gr[_REG_GS]));
-			__asm("movl %w0,%%fs" : : "r" (gr[_REG_FS]));
+			tf->tf_gs = gr[_REG_GS];
+			tf->tf_fs = gr[_REG_FS];
 			tf->tf_es = gr[_REG_ES];
 			tf->tf_ds = gr[_REG_DS];
 			/* Only change the user-alterable part of eflags */
