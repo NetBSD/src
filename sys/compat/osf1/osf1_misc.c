@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.41 1999/05/01 04:57:15 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.42 1999/05/01 04:59:42 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -78,8 +78,7 @@
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/wait.h>
-#include <vm/vm.h>				/* XXX UVM headers are Cool */
-#include <uvm/uvm.h>				/* XXX see mmap emulation */
+#include <vm/vm.h>
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscall.h>
