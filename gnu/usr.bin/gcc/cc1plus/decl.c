@@ -7184,10 +7184,6 @@ grokfndecl (ctype, type, declarator, virtualp, flags, quals,
       DECL_CLASS_CONTEXT (decl) = ctype;
     }
 
-  /* All function decls start out public; we'll fix their linkage later (at
-     definition or EOF) if appropriate.  */
-  TREE_PUBLIC (decl) = 1;
-
   if (ctype == NULL_TREE && ! strcmp (IDENTIFIER_POINTER (declarator), "main"))
     {
       if (inlinep)
@@ -7198,6 +7194,7 @@ grokfndecl (ctype, type, declarator, virtualp, flags, quals,
       publicp = 1;
     }
 	  
+  TREE_PUBLIC (decl) = publicp;
   if (! publicp)
     DECL_C_STATIC (decl) = 1;
 
