@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.26 2002/03/15 05:55:35 gmcgarry Exp $	*/
+/*	$NetBSD: dma.c,v 1.27 2002/10/20 02:37:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.26 2002/03/15 05:55:35 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.27 2002/10/20 02:37:25 chs Exp $");                                                  
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.26 2002/03/15 05:55:35 gmcgarry Exp $");
 #include <machine/frame.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <m68k/cacheops.h>
 
 #include <hp300/dev/dmareg.h>
 #include <hp300/dev/dmavar.h>

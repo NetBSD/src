@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2002/03/08 20:48:36 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75 2002/10/20 02:37:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@
 #include <machine/pmap.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
+#include <m68k/cacheops.h>
 
 #include <sun3/sun3/cache.h>
 #include <sun3/sun3/machdep.h>

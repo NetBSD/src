@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.64 2002/10/03 16:13:25 uwe Exp $
+#	$NetBSD: files.sun3,v 1.65 2002/10/20 02:37:34 chs Exp $
 
 #
 # sun3-specific configuration info
@@ -46,7 +46,8 @@ file arch/sun3/sun3/sunmon.c
 file arch/sun3/sun3/sys_machdep.c
 file arch/sun3/sun3/trap.c
 file arch/sun3/sun3/vector.c
-file arch/sun3/sun3/vm_machdep.c
+file arch/m68k/m68k/cacheops.c
+file arch/m68k/m68k/vm_machdep.c
 
 include "arch/m68k/fpe/files.fpe"
 

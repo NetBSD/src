@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2002/09/11 01:46:33 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2002/10/20 02:37:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -148,33 +148,6 @@ struct pcb;
 /* locore.s functions */
 void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
-#if 0                           /* it's already in m68k/m68k.h */
-u_long	getdfc __P((void));
-u_long	getsfc __P((void));
-#endif
-
-#if 0 /* {@@@ Use cacheops.h? */
-
-void	DCIA __P((void));
-void	DCIS __P((void));
-void	DCIU __P((void));
-void	ICIA __P((void));
-void	ICPA __P((void));
-void	PCIA __P((void));
-void	TBIA __P((void));
-void	TBIS __P((vm_offset_t));
-void	TBIAS __P((void));
-void	TBIAU __P((void));
-#if defined(M68040)
-void	DCFA __P((void));
-void	DCFP __P((vm_offset_t));
-void	DCFL __P((vm_offset_t));
-void	DCPL __P((vm_offset_t));
-void	DCPP __P((vm_offset_t));
-void	ICPL __P((vm_offset_t));
-void	ICPP __P((vm_offset_t));
-#endif
-#endif /* }@@@ use m68k/cacheops.c */
 
 int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));
@@ -187,6 +160,11 @@ int   	nmihand __P((void *));
 
 /* sys_machdep.c functions */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
+
+/* vm_machdep.c functions */
+void	physaccess __P((caddr_t, caddr_t, int, int));
+void	physunaccess __P((caddr_t, int));
+int	kvtop __P((caddr_t));
 
 /* clock.c functions */
 void	next68k_calibrate_delay __P((void));

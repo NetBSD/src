@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2002/10/14 05:18:46 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2002/10/20 02:37:23 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -108,6 +108,7 @@
 #include <uvm/uvm.h>
 
 #include <machine/cpu.h>
+#include <m68k/cacheops.h>
 
 #ifdef DEBUG
 #define PDB_FOLLOW	0x0001
