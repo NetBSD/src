@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.7 1999/02/05 08:52:50 thorpej Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.8 1999/02/05 09:13:32 thorpej Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -95,6 +95,9 @@ int save_scripts;
 
 static void usage PROTO ((void));
 
+void catch_sighup PROTO ((int));
+void catch_sigterm PROTO ((int));
+
 int main (argc, argv, envp)
 	int argc;
 	char **argv, **envp;
@@ -102,6 +105,7 @@ int main (argc, argv, envp)
 	int i;
 	struct servent *ent;
 	struct interface_info *ip;
+	struct sigaction sa;
 	int seed;
 
 #ifdef SYSLOG_4_2
@@ -170,6 +174,19 @@ int main (argc, argv, envp)
 	/* Set up cleanup function. */
 	if (atexit (cleanup))
 		error ("Unable to register cleanup function.");
+
+	/* Set up SIGHUP and SIGTERM handlers. */
+	sa.sa_handler = catch_sighup;
+	sa.sa_flags = 0;
+	(void) sigemptyset (&sa.sa_mask);
+	if (sigaction (SIGHUP, &sa, NULL))
+		error ("Unable to setup SIGHUP handler.");
+
+	sa.sa_handler = catch_sigterm;
+	sa.sa_flags = 0;
+	(void) sigemptyset (&sa.sa_mask);
+	if (sigaction (SIGTERM, &sa, NULL))
+		error ("Unable to setup SIGTERM handler.");
 
 	/* Discover all the network interfaces. */
 	discover_interfaces (DISCOVER_UNCONFIGURED);
@@ -2069,6 +2086,15 @@ void status_message (header, data)
 	struct sysconf_header *header;
 	void *data;
 {
+	sigset_t mask, omask;
+
+	(void) sigemptyset(&mask);
+	(void) sigaddset(&mask, SIGHUP);
+	(void) sigaddset(&mask, SIGTERM);
+
+	if (sigprocmask (SIG_BLOCK, &mask, &omask))
+		error ("Unable to block signals in sysconf handler.");
+
 	switch (header -> type) {
 	      case NETWORK_LOCATION_CHANGED:
 		client_reinit (1);
@@ -2081,6 +2107,28 @@ void status_message (header, data)
 	      default:
 		break;
 	}
+
+	if (sigprocmask (SIG_SETMASK, &omask, NULL))
+		error ("Unable to restore signals in sysconf handler.");
+}
+
+void catch_sighup (sig)
+	int sig;
+{
+
+	/* Treat this like NETWORK_LOCATION_CHANGED; re-initiialize
+	   the leases. */
+	client_reinit (1);
+}
+
+void catch_sigterm (sig)
+	int sig;
+{
+
+	/* Treat this like RELEASE_CURRENT_DHCP_LEASES; release
+	   leases.  Then exit. */
+	client_reinit (0);
+	exit (0);
 }
 
 void client_reinit (state)
