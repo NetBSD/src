@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.41 1999/04/20 05:54:44 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.42 1999/04/21 12:53:56 simonb Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -100,7 +100,7 @@ options 	"HZ=256"	# RTC rate required
 options 	NFS_BOOT_DHCP	# superset of BOOTP
 
 config		netbsd		root on ? type ?
-config		nfsnetbsd	root on ? type nfs
+#config		nfsnetbsd	root on ? type nfs
 
 
 mainbus0	at root
