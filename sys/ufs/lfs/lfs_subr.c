@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.37 2003/03/11 02:47:41 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.38 2003/03/15 06:58:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.37 2003/03/11 02:47:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.38 2003/03/15 06:58:50 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,20 +319,24 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 {
 	struct segment *sp;
 	
+	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_seglock) {
 		if (fs->lfs_lockpid == curproc->p_pid) {
+			simple_unlock(&fs->lfs_interlock);
 			++fs->lfs_seglock;
 			fs->lfs_sp->seg_flags |= flags;
 			return 0;
-		} else if (flags & SEGM_PAGEDAEMON)
+		} else if (flags & SEGM_PAGEDAEMON) {
+			simple_unlock(&fs->lfs_interlock);
 			return EWOULDBLOCK;
-		else while (fs->lfs_seglock)
-			(void)tsleep(&fs->lfs_seglock, PRIBIO + 1,
-				     "lfs seglock", 0);
+		} else while (fs->lfs_seglock)
+			(void)ltsleep(&fs->lfs_seglock, PRIBIO + 1,
+				      "lfs seglock", 0, &fs->lfs_interlock);
 	}
 	
 	fs->lfs_seglock = 1;
 	fs->lfs_lockpid = curproc->p_pid;
+	simple_unlock(&fs->lfs_interlock);
 	fs->lfs_cleanind = 0;
 
 	/* Drain fragment size changes out */
@@ -429,7 +433,9 @@ lfs_segunlock(struct lfs *fs)
 	
 	sp = fs->lfs_sp;
 
+	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_seglock == 1) {
+		simple_unlock(&fs->lfs_interlock);
 		if ((sp->seg_flags & SEGM_PROT) == 0)
 			lfs_unmark_dirop(fs);
 		sync = sp->seg_flags & SEGM_SYNC;
@@ -473,8 +479,10 @@ lfs_segunlock(struct lfs *fs)
 		 * to complete.
 		 */
 		if (!ckp) {
+			simple_lock(&fs->lfs_interlock);
 			--fs->lfs_seglock;
 			fs->lfs_lockpid = 0;
+			simple_unlock(&fs->lfs_interlock);
 			wakeup(&fs->lfs_seglock);
 		}
 		/*
@@ -505,15 +513,19 @@ lfs_segunlock(struct lfs *fs)
 			if (!(fs->lfs_ivnode->v_mount->mnt_flag & MNT_UNMOUNT))
 				lfs_auto_segclean(fs);
 			fs->lfs_activesb = 1 - fs->lfs_activesb;
+			simple_lock(&fs->lfs_interlock);
 			--fs->lfs_seglock;
 			fs->lfs_lockpid = 0;
+			simple_unlock(&fs->lfs_interlock);
 			wakeup(&fs->lfs_seglock);
 		}
 		/* Reenable fragment size changes */
 		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
 	} else if (fs->lfs_seglock == 0) {
+		simple_unlock(&fs->lfs_interlock);
 		panic ("Seglock not held");
 	} else {
 		--fs->lfs_seglock;
+		simple_unlock(&fs->lfs_interlock);
 	}
 }

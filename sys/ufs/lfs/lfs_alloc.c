@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.64 2003/02/20 04:27:23 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.65 2003/03/15 06:58:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.64 2003/02/20 04:27:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.65 2003/03/15 06:58:50 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -98,8 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.64 2003/02/20 04:27:23 perseant Exp 
 
 extern int lfs_dirvcount;
 extern struct lock ufs_hashlock;
-extern struct simplelock lfs_subsys_lock;
-extern int lfs_subsys_pages;
 
 static int extend_ifile(struct lfs *, struct ucred *);
 static int lfs_ialloc(struct lfs *, struct vnode *, ino_t, int, struct vnode **);
@@ -217,7 +215,8 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 }
 
 /*
- * Called with the Ifile inode locked. 
+ * Add a new block to the Ifile, to accommodate future file creations.
+ * Called with the segment lock held.
  */
 static int
 extend_ifile(struct lfs *fs, struct ucred *cred)
@@ -350,6 +349,9 @@ lfs_valloc(void *v)
 	return lfs_ialloc(fs, ap->a_pvp, new_ino, new_gen, ap->a_vpp);
 }
 
+/*
+ * Finish allocating a new inode, given an inode and generation number.
+ */
 static int
 lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	   struct vnode **vpp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.95 2003/03/08 21:46:06 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.96 2003/03/15 06:58:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.95 2003/03/08 21:46:06 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.96 2003/03/15 06:58:51 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.95 2003/03/08 21:46:06 perseant Exp 
 
 extern pid_t lfs_writer_daemon;
 extern int lfs_subsys_pages;
+extern int lfs_dirvcount;
+extern struct simplelock lfs_subsys_lock;
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -337,7 +339,7 @@ lfs_fsync(void *v)
 					bp->b_flags);
 			printf("\n");
 #endif
-			VTOI(vp)->i_flag |= IN_MODIFIED;
+			LFS_SET_UINO(VTOI(vp), IN_MODIFIED);
 		}
 	} while (wait && error == 0 && !VPISEMPTY(vp));
 
@@ -1051,9 +1053,10 @@ lfs_strategy(void *v)
 		return (0);
 	}
 
-	/* XXX simplelock seglock */
 	slept = 1;
+	simple_lock(&fs->lfs_interlock);
 	while (slept && bp->b_flags & B_READ && fs->lfs_seglock) {
+		simple_unlock(&fs->lfs_interlock);
 		/*
 		 * Look through list of intervals.
 		 * There will only be intervals to look through
@@ -1084,7 +1087,9 @@ lfs_strategy(void *v)
 				break;
 			}
 		}
+		simple_lock(&fs->lfs_interlock);
 	}
+	simple_unlock(&fs->lfs_interlock);
 
 	vp = ip->i_devvp;
 	bp->b_dev = vp->v_rdev;
@@ -1376,8 +1381,11 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				UVM_UNLOCK_AND_WAIT(pg, &vp->v_interlock, 0,
 						    "lfsput", 0);
 				simple_lock(&vp->v_interlock);
-				if (by_list)
+				if (by_list) {
+					if (i > 0)
+						uvm_page_unbusy(pgs, i);
 					goto top;
+				}
 			}
 			pg->flags |= PG_BUSY;
 			UVM_PAGE_OWN(pg, "lfs_putpages");
@@ -1412,10 +1420,12 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				pg->flags &= ~PG_CLEAN;
 				if (flags & PGO_FREE) {
 					/* XXXUBC need better way to update */
+					simple_lock(&lfs_subsys_lock);
 					lfs_subsys_pages += MIN(1, pages_per_block);
+					simple_unlock(&lfs_subsys_lock);
 					/*
-					 * wire the page so that
-					 * pdaemon don't see it again.
+					 * Wire the page so that
+					 * pdaemon doesn't see it again.
 					 */
 					uvm_lock_pageq();
 					uvm_pagewire(pg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.86 2003/03/08 23:18:54 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.87 2003/03/15 06:58:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.86 2003/03/08 23:18:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.87 2003/03/15 06:58:50 perseant Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -105,9 +105,6 @@ int clean_inlocked = 0;
 int verbose_debug = 0;
     
 pid_t lfs_cleaner_pid = 0;
-
-extern int lfs_subsys_pages;
-extern struct simplelock lfs_subsys_lock;
 
 /*
  * Definitions for the buffer free lists.
