@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.5 1996/12/20 12:49:40 leo Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.6 1997/07/09 14:38:02 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -121,19 +121,25 @@ struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
 {
-	static int	must_probe = 1;
+	static int	card_probed = -1;
 	grf_auxp_t	*grf_auxp = auxp;
 
-	if (must_probe) {
-		if(!(machineid & ATARI_HADES))
+	if (card_probed <= 0) {
+		if (card_probed == 0) /* Probed but failed */
 			return 0;
+		card_probed = 0;
+
 		/*
 		 * Check if the layers we depend on exist
 		 */
+		if(!(machineid & ATARI_HADES))
+			return 0;
+		if (!et_probe_card())
+			return 0;
 		if (grfabs_probe(&et_probe_video) == 0)
 			return 0;
 		viewprobe();
-		must_probe = 0;
+		card_probed = 1; /* Probed and found */
 	}
 
 	if (atari_realconfig == 0) {
@@ -141,8 +147,6 @@ void		*auxp;
 		 * Early console init. Only match unit 0.
 		 */
 		if (cfp->cf_unit != 0)
-			return 0;
-		if (!et_probe_card())
 			return 0;
 		if (viewopen(0, 0, 0, NULL))
 			return 0;
