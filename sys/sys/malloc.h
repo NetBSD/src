@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.41 1998/07/24 15:24:11 rvb Exp $	*/
+/*	$NetBSD: malloc.h,v 1.42 1998/08/14 03:29:49 mark Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -140,7 +140,9 @@
 #define	M_USBDEV	88	/* USB permanent */
 #define	M_POOL		89	/* memory pool structs */
 #define	M_CFS		90	/* Coda file system structures and tables. */
-#define	M_LAST		91	/* Must be last type + 1 */
+#define	M_FILECOREMNT	91	/* Filcore FS mount structures */
+#define	M_FILECORENODE	92	/* Filcore FS vnode private part */
+#define	M_LAST		93	/* Must be last type + 1 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -234,7 +236,9 @@
 	"USB device",	/* 88 M_USBDEV */ \
 	"Pool",		/* 89 M_POOL */ \
 	"cfs",		/* 90 M_CFS */ \
-	NULL,		/* 81 */ \
+	"filecore mount", /* 91 M_FILECOREMNT */ \
+	"filecore node", /* 92 M_FILECORENODE */ \
+	NULL,		/* 93 */ \
 }
 
 struct kmemstats {
