@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.95 1997/05/06 21:29:38 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.96 1997/05/07 08:42:19 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -6,7 +6,7 @@
 .endif
 
 .MAIN:		all
-.PHONY:		cleanlib afterdepend beforeinstall libinstall afterinstall
+.PHONY:		cleanlib libinstall
 
 .include <bsd.own.mk>				# for 'NOPIC' definition
 
