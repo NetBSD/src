@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89 2000/04/24 17:18:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90 2000/05/19 04:34:40 thorpej Exp $	*/
 
 /*
  *
@@ -950,7 +950,7 @@ pmap_init()
 		       sizeof(char) * npages);
 	s = round_page(s); /* round up */
 	addr = (vaddr_t) uvm_km_zalloc(kernel_map, s);
-	if (addr == NULL)
+	if (addr == 0)
 		panic("pmap_init: unable to allocate pv_heads");
 
 	/*
@@ -982,7 +982,7 @@ pmap_init()
 	pv_initpage = (struct pv_page *) uvm_km_alloc(kernel_map, NBPG);
 	if (pv_initpage == NULL)
 		panic("pmap_init: pv_initpage");
-	pv_cachedva = NULL;   /* a VA we have allocated but not used yet */
+	pv_cachedva = 0;   /* a VA we have allocated but not used yet */
 	pv_nfpvents = 0;
 	(void) pmap_add_pvpage(pv_initpage, FALSE);
 
@@ -1117,10 +1117,10 @@ pmap_alloc_pvpage(pmap, mode)
 	 */
 
 	s = splimp();   /* must protect kmem_map/kmem_object with splimp! */
-	if (pv_cachedva == NULL) {
+	if (pv_cachedva == 0) {
 		pv_cachedva = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
 		    NBPG, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
-		if (pv_cachedva == NULL) {
+		if (pv_cachedva == 0) {
 			splx(s);
 			goto steal_one;
 		}
@@ -1158,7 +1158,7 @@ pmap_alloc_pvpage(pmap, mode)
 
 	pmap_kenter_pa(pv_cachedva, VM_PAGE_TO_PHYS(pg), VM_PROT_ALL);
 	pvpage = (struct pv_page *) pv_cachedva;
-	pv_cachedva = NULL;
+	pv_cachedva = 0;
 	return(pmap_add_pvpage(pvpage, mode != ALLOCPV_NONEED));
 
 steal_one:

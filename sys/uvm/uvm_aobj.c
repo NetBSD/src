@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.30 2000/04/10 00:32:46 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.31 2000/05/19 04:34:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -300,7 +300,7 @@ uao_find_swslot(aobj, pageidx)
 		if (elt)
 			return(UAO_SWHASH_ELT_PAGESLOT(elt, pageidx));
 		else
-			return(NULL);
+			return(0);
 	}
 
 	/* 

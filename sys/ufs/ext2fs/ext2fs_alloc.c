@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.7 2000/03/30 12:41:09 augustss Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.8 2000/05/19 04:34:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -326,7 +326,7 @@ ext2fs_hashalloc(ip, cg, pref, size, allocator)
 		if (cg == fs->e2fs_ncg)
 			cg = 0;
 	}
-	return (NULL);
+	return (0);
 }
 
 /*
@@ -350,13 +350,13 @@ ext2fs_alloccg(ip, cg, bpref, size)
 
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nbfree == 0)
-		return (NULL);
+		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs,
 		fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	bbp = (char *)bp->b_data;
 
@@ -398,7 +398,7 @@ ext2fs_alloccg(ip, cg, bpref, size)
 
 	bno = ext2fs_mapsearch(fs, bbp, bpref);
 	if (bno < 0)
-		return (NULL);
+		return (0);
 gotit:
 #ifdef DIAGNOSTIC
 	if (isset(bbp, (long)bno)) {
@@ -439,13 +439,13 @@ ext2fs_nodealloccg(ip, cg, ipref, mode)
 	ipref--; /* to avoid a lot of (ipref -1) */
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nifree == 0)
-		return (NULL);
+		return (0);
 	error = bread(ip->i_devvp, fsbtodb(fs,
 		fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
-		return (NULL);
+		return (0);
 	}
 	ibp = (char *)bp->b_data;
 	if (ipref) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.18 2000/05/05 20:59:21 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.19 2000/05/19 04:34:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -234,7 +234,8 @@ lfs_bwrite_ext(bp, flags)
 			
 			wakeup(&lfs_allclean_wakeup);
 			wakeup(&fs->lfs_nextseg);
-			error = tsleep(&fs->lfs_avail, PCATCH | PUSER, "cleaner", NULL);
+			error = tsleep(&fs->lfs_avail, PCATCH | PUSER,
+			    "cleaner", 0);
 			if (error) {
 				/* printf("lfs_bwrite: error in tsleep"); */
 				brelse(bp);
