@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.19 1997/03/27 01:16:01 gwr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.20 1997/03/27 07:30:40 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -1539,6 +1539,7 @@ ncr5380_msg_in(sc)
 	register struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
+	struct scsi_xfer *xs = sr->sr_xs;
 	int n, phase;
 	int act_flags;
 	register u_char icmd;
@@ -1658,12 +1659,6 @@ have_msg:
 		act_flags |= (ACT_DISCONNECT | ACT_CMD_DONE);
 		break;
 
-	case MSG_DISCONNECT:
-		NCR_TRACE("msg_in: DISCONNECT\n", 0);
-		/* Target is about to disconnect. */
-		act_flags |= ACT_DISCONNECT;
-		break;
-
 	case MSG_PARITY_ERROR:
 		NCR_TRACE("msg_in: PARITY_ERROR\n", 0);
 		/* Resend the last message. */
@@ -1686,6 +1681,14 @@ have_msg:
 	case MSG_NOOP:
 		NCR_TRACE("msg_in: NOOP\n", 0);
 		break;
+
+	case MSG_DISCONNECT:
+		NCR_TRACE("msg_in: DISCONNECT\n", 0);
+		/* Target is about to disconnect. */
+		act_flags |= ACT_DISCONNECT;
+		if ((xs->sc_link->quirks & SDEV_AUTOSAVE) == 0)
+			break;
+		/*FALLTHROUGH*/
 
 	case MSG_SAVEDATAPOINTER:
 		NCR_TRACE("msg_in: SAVE_PTRS\n", 0);
