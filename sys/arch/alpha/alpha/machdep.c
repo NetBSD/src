@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.226 2000/11/24 02:21:56 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.227 2000/11/24 03:59:07 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2000/11/24 02:21:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.227 2000/11/24 03:59:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1932,10 +1932,7 @@ microtime(tvp)
 	register struct timeval *tvp;
 {
 	static struct timeval lasttime;
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	static struct simplelock microtime_slock =
-	    SIMPLELOCK_INITIALIZER;
-#endif
+	static struct simplelock microtime_slock = SIMPLELOCK_INITIALIZER;
 	int s;
 
 	s = splclock();
