@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.awk,v 1.1 1997/07/19 10:02:53 cgd Exp $
+# $NetBSD: genassym.awk,v 1.2 1997/07/23 06:21:57 cgd Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
