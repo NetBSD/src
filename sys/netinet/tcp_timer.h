@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.8 1998/05/06 01:24:38 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.9 1998/05/07 01:30:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -120,14 +120,13 @@ char *tcptimers[] =
 	PRT_SLOW_ARM((tp)->t_timer[(timer)], (nticks))
 
 #define	TCP_TIMER_DISARM(tp, timer) \
-	(tp)->t_timer[(timer)] = 0
+	PRT_SLOW_DISARM((tp)->t_timer[(timer)])
 
 #define	TCP_TIMER_ISARMED(tp, timer) \
-	((tp)->t_timer[(timer)] != 0)
+	PRT_SLOW_ISARMED((tp)->t_timer[(timer)])
 
-#define	TCP_TIMER_ISFIRING(tp, timer) \
-	(TCP_TIMER_ISARMED((tp), (timer)) && \
-	 PRT_SLOW_ISEXPIRED((tp)->t_timer[(timer)]))
+#define	TCP_TIMER_ISEXPIRED(tp, timer) \
+	PRT_SLOW_ISEXPIRED((tp)->t_timer[(timer)])
 
 /*
  * Force a time value to be in a certain range.
