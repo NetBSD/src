@@ -1,6 +1,8 @@
+/*	$NetBSD: psignal.c,v 1.8 1995/02/27 04:35:42 cgd Exp $	*/
+
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)psignal.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: psignal.c,v 1.7 1994/10/06 18:16:43 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)psignal.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD: psignal.c,v 1.8 1995/02/27 04:35:42 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*

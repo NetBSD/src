@@ -1,5 +1,7 @@
-.\" Copyright (c) 1983, 1991 Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: psignal.3,v 1.5 1995/02/27 04:35:39 cgd Exp $
+.\"
+.\" Copyright (c) 1983, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)psignal.3	6.2 (Berkeley) 4/19/91
-.\"	$Id: psignal.3,v 1.4 1993/09/08 18:43:20 jtc Exp $
+.\"     @(#)psignal.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 19, 1991
+.Dd June 4, 1993
 .Dt PSIGNAL 3
 .Os BSD 4.2
 .Sh NAME
@@ -50,21 +51,22 @@
 The
 .Fn psignal
 function locates the descriptive message
-string for the given signal
+string for the given signal number
 .Fa sig
-number
-and writes it to the
-.Em stderr .
+and writes it to the standard error.
 .Pp
 If the argument
 .Fa s
 is
 .Pf non- Dv NULL
-it is written to the
-.Em stderr
-prior to the message string.
-The signal number should be from among those found in
-.Aq Pa signal.h .
+it is written to the standard error file descriptor
+prior to the message string,
+immediately followed by a colon and a space.
+If the signal number is not recognized
+.Pq Xr sigaction 2 ,
+the string
+.Dq "Unknown signal
+is produced.
 .Pp
 The message strings can be accessed directly using the external array
 .Va sys_siglist ,
