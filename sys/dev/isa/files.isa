@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.41.2.1 1997/11/05 06:12:11 thorpej Exp $
+#	$NetBSD: files.isa,v 1.41.2.2 1997/11/05 19:10:24 thorpej Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -138,11 +138,10 @@ file	dev/isa/wt.c			wt needs-flag
 define	elink
 file	dev/isa/elink.c			elink
 
-# National Semiconductor DS8390/WD83C690-based boards
-# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503)
-device	ed: ether, ifnet, arp
-attach	ed at isa
-file	dev/isa/if_ed.c			ed
+# 3Com 3C503
+device	ec: ether, ifnet, arp, dp8390nic
+attach	ec at isa
+file	dev/isa/if_ec.c			ec
 
 # 3Com 3C505
 device	eg: ether, ifnet, arp
@@ -203,9 +202,14 @@ file    dev/isa/if_lc_isa.c		lc
 attach	ne at isa with ne_isa
 file	dev/isa/if_ne_isa.c		ne_isa
 
-# SMC91Cxx Ethernet Controllers
+# SMC91Cxx Ethernet Controllers 
 attach	sm at isa with sm_isa
 file	dev/isa/if_sm_isa.c		sm_isa
+
+# WD/SMC 80x3 family, SMC Elite Ultra [8216], SMC EtherEZ
+device	we: ether, ifnet, arp
+attach	we at isa
+file	dev/isa/if_we.c			we
 
 #
 # ISA Sound hardware
