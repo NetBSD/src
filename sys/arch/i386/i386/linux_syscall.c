@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.4 2000/12/09 13:20:05 jdolecek Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.5 2000/12/10 12:23:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -127,7 +127,15 @@ linux_syscall(frame)
 	register_t code, args[8], rval[2];
 	u_quad_t sticks;
 
+	uvmexp.syscalls++;
+#ifdef DEBUG
+	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
+		panic("linux_syscall");
+#endif
+	
 	p = curproc;
+	p->p_md.md_regs = &frame;
+
 	sticks = p->p_sticks;
 	code = frame.tf_eax;
 
@@ -199,8 +207,7 @@ linux_syscall(frame)
 		/* nothing to do */
 		break;
 	default:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
+		error = p->p_emul->e_errno[error];
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;
