@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.6.4.7 1999/04/03 13:43:43 nisimura Exp $ */
+/*	$NetBSD: dec_maxine.c,v 1.6.4.8 1999/04/03 15:21:13 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.7 1999/04/03 13:43:43 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.8 1999/04/03 15:21:13 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.7 1999/04/03 13:43:43 nisimura 
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
 
 #include <dev/tc/tcvar.h>
-#include <pmax/tc/ioasicvar.h>
+#include <dev/tc/ioasicvar.h>
 #include <pmax/tc/ioasicreg.h>
 #include <dev/ic/z8530sc.h>
 #include <pmax/tc/zs_ioasicvar.h>
