@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.21 2004/04/08 01:35:33 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.22 2004/04/08 07:24:26 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: cond.c,v 1.21 2004/04/08 01:35:33 sjg Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.22 2004/04/08 07:24:26 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.21 2004/04/08 01:35:33 sjg Exp $");
+__RCSID("$NetBSD: cond.c,v 1.22 2004/04/08 07:24:26 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -171,8 +171,9 @@ static char 	  *condExpr;	    	/* The expression to parse */
 static Token	  condPushBack=None;	/* Single push-back token used in
 					 * parsing */
 
-#define	MAXIF		30	  /* greatest depth of #if'ing */
+#define	MAXIF		64	  /* greatest depth of #if'ing */
 
+static Boolean	  finalElse[MAXIF+1][MAXIF+1]; /* Seen final else (stack) */
 static Boolean	  condStack[MAXIF]; 	/* Stack of conditionals's values */
 static int  	  condTop = MAXIF;  	/* Top-most conditional */
 static int  	  skipIfLevel=0;    	/* Depth of skipped conditionals */
@@ -1232,6 +1233,7 @@ Cond_Eval(char *line)
 	 * so we return COND_PARSE, unless this endif isn't paired with
 	 * a decent if.
 	 */
+	finalElse[condTop][skipIfLevel] = FALSE;
 	if (skipIfLevel != 0) {
 	    skipIfLevel -= 1;
 	    return (COND_SKIP);
@@ -1266,6 +1268,11 @@ Cond_Eval(char *line)
 	 * of the previous if we parsed.
 	 */
 	if (isElse && (line[0] == 's') && (line[1] == 'e')) {
+	    if (finalElse[condTop][skipIfLevel]) {
+		Parse_Error (PARSE_WARNING, "extra else");
+	    } else {
+		finalElse[condTop][skipIfLevel] = TRUE;
+	    }
 	    if (condTop == MAXIF) {
 		Parse_Error (level, "if-less else");
 		return (COND_INVALID);
@@ -1300,6 +1307,11 @@ Cond_Eval(char *line)
 	     * we're skipping things...
 	     */
 	    skipIfLevel += 1;
+	    if (skipIfLevel >= MAXIF) {
+		Parse_Error (PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
+		return (COND_INVALID);
+	    }
+	    finalElse[condTop][skipIfLevel] = FALSE;
 	    return(COND_SKIP);
 	}
 
@@ -1315,6 +1327,7 @@ Cond_Eval(char *line)
     }
     if (!isElse) {
 	condTop -= 1;
+	finalElse[condTop][skipIfLevel] = FALSE;
     } else if ((skipIfLevel != 0) || condStack[condTop]) {
 	/*
 	 * If this is an else-type conditional, it should only take effect
