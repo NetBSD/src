@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.62 2002/09/22 07:53:49 chs Exp $ */
+/*	$NetBSD: pmap.h,v 1.63 2002/12/21 12:52:55 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -388,13 +388,13 @@ extern void	(*pmap_changeprot_p) __P((pmap_t, vaddr_t, vm_prot_t, int));
  * Macros which implement SRMMU TLB flushing/invalidation
  */
 #define tlb_flush_page_real(va)    \
-	sta(((vaddr_t)(va) & ~0xfff) | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0)
+	sta(((vaddr_t)(va) & 0xfffff000) | ASI_SRMMUFP_L3, ASI_SRMMUFP, 0)
 
-#define tlb_flush_segment_real(vr, vs) \
-	sta(((vr)<<RGSHIFT) | ((vs)<<SGSHIFT) | ASI_SRMMUFP_L2, ASI_SRMMUFP,0)
+#define tlb_flush_segment_real(va) \
+	sta(((vaddr_t)(va) & 0xfffc0000) | ASI_SRMMUFP_L2, ASI_SRMMUFP, 0)
 
-#define tlb_flush_region_real(vr) \
-	sta(((vr) << RGSHIFT) | ASI_SRMMUFP_L1, ASI_SRMMUFP, 0)
+#define tlb_flush_region_real(va) \
+	sta(((vaddr_t)(va) & 0xff000000) | ASI_SRMMUFP_L1, ASI_SRMMUFP, 0)
 
 #define tlb_flush_context_real()	sta(ASI_SRMMUFP_L0, ASI_SRMMUFP, 0)
 #define tlb_flush_all_real()		sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0)
