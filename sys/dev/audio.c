@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.2 1995/03/25 00:04:08 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.3 1995/04/17 23:04:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: audio.c,v 1.2 1995/03/25 00:04:08 mycroft Exp $
+ *	$Id: audio.c,v 1.3 1995/04/17 23:04:31 mycroft Exp $
  */
 
 /*
@@ -123,8 +123,8 @@ char *auzero_block;
 
 struct audio_softc *audio_softc[NAUDIO];
 
-static int audiosetinfo __P((struct audio_softc *, struct audio_info *));
-static int audiogetinfo __P((struct audio_softc *, struct audio_info *));
+int	audiosetinfo __P((struct audio_softc *, struct audio_info *));
+int	audiogetinfo __P((struct audio_softc *, struct audio_info *));
 
 int	audio_open __P((dev_t, int, int, struct proc *));
 int	audio_close __P((dev_t, int, int, struct proc *));
@@ -423,7 +423,7 @@ audioselect(dev, rw, p)
 /*
  * Audio driver
  */
-static void
+void
 audio_init_ring(rp, blksize)
 	struct audio_buffer *rp;
 	int blksize;
@@ -609,7 +609,7 @@ audio_init_play(sc)
 	splx(s);
 }
 
-static int
+int
 audio_drain(sc)
 	struct audio_softc *sc;
 {
@@ -1338,7 +1338,7 @@ audio_rint(sc)
 	}
 }
 
-static int
+int
 audiosetinfo(sc, ai)
 	struct audio_softc *sc;
 	struct audio_info *ai;
@@ -1555,7 +1555,7 @@ audiosetinfo(sc, ai)
 	return (0);
 }
 
-static int
+int
 audiogetinfo(sc, ai)
 	struct audio_softc *sc;
 	struct audio_info *ai;
