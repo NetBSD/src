@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74 2001/01/17 00:03:02 fvdl Exp $	*/
+/*	$NetBSD: npx.c,v 1.75 2001/04/26 17:56:37 thorpej Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -62,6 +62,7 @@
 #include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/specialreg.h>
+#include <machine/pio.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
