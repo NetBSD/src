@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1 2001/11/01 22:50:18 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.2 2002/01/09 23:18:11 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,9 @@
 
 #include <machine/cpu.h>
 
+#include <arm/armreg.h>
+
+#include "cache.h"
 #include "openfirm.h"
 
 static int (*openfirmware_entry) __P((void *));
@@ -42,6 +45,8 @@ static int openfirmware __P((void *));
 
 void startup __P((int (*)(void *), char *, int));
 static void setup __P((void));
+
+void (*cache_syncI)(void);
 
 void abort(void);
 void abort(void)
@@ -59,15 +64,48 @@ openfirmware(arg)
 	openfirmware_entry(arg);
 }
 
+static vaddr_t
+ofw_getcleaninfo(void)
+{
+	int cpu, vclean;
+
+	if ((cpu = OF_finddevice("/cpu")) == -1)
+		panic("no /cpu from OFW");
+
+	if (OF_getprop(cpu, "d-cache-flush-address", &vclean,
+		       sizeof(vclean)) != sizeof(vclean)) {
+		printf("WARNING: no OFW d-cache-flush-address property\n");
+		return (RELOC);
+	}
+
+	return (of_decode_int((unsigned char *)&vclean));
+}
+
 void
 startup(openfirm, arg, argl)
 	int (*openfirm)(void *);
 	char *arg;
 	int argl;
 {
+	u_int cputype = cpufunc_id() & CPU_ID_CPU_MASK;
 
 	openfirmware_entry = openfirm;
 	setup();
+
+	/*
+	 * Determine the CPU type, and set up the appropriate
+	 * I$ sync routine.
+	 */
+	if (cputype == CPU_ID_SA110 || cputype == CPU_ID_SA1100 ||
+	    cputype == CPU_ID_SA1110) {
+		extern vaddr_t sa110_cache_clean_addr;
+		cache_syncI = sa110_cache_syncI;
+		sa110_cache_clean_addr = ofw_getcleaninfo();
+	} else {
+		printf("WARNING: no I$ sync routine for CPU 0x%x\n",
+		    cputype);
+	}
+
 	main();
 	OF_exit();
 }
@@ -459,7 +497,6 @@ OF_milliseconds()
 	return args.ms;
 }
 
-#ifdef	__notyet__
 void
 OF_chain(virt, size, entry, arg, len)
 	void *virt;
@@ -468,7 +505,7 @@ OF_chain(virt, size, entry, arg, len)
 	void *arg;
 	u_int len;
 {
-	static struct {
+	struct {
 		char *name;
 		int nargs;
 		int nreturns;
@@ -477,37 +514,22 @@ OF_chain(virt, size, entry, arg, len)
 		void (*entry)();
 		void *arg;
 		u_int len;
-	} args = {
-		"chain",
-		5,
-		0,
-	};
+	} args;
 
+	args.name = "chain";
+	args.nargs = 5;
+	args.nreturns = 0;
 	args.virt = virt;
 	args.size = size;
 	args.entry = entry;
 	args.arg = arg;
 	args.len = len;
-	openfirmware(&args);
-}
-#else
-void
-OF_chain(virt, size, entry, arg, len)
-	void *virt;
-	u_int size;
-	void (*entry)();
-	void *arg;
-	u_int len;
-{
-	/*
-	 * This is a REALLY dirty hack till the firmware gets this going
-	 */
 #if 1
-	OF_release(virt, size);
+	openfirmware(&args);
+#else
+	entry(openfirmware_entry, arg, len);
 #endif
-	entry(0, 0, openfirmware_entry, arg, len);
 }
-#endif
 
 static int stdin;
 static int stdout;

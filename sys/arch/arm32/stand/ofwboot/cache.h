@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.2 2002/01/09 23:18:11 thorpej Exp $	*/
+/*	$NetBSD: cache.h,v 1.1 2002/01/09 23:18:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -35,40 +35,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#ifndef _OFWBOOT_CACHE_H_
+#define	_OFWBOOT_CACHE_H_
 
-ASENTRY_NP(_start)
-	b	_C_LABEL(startup)
+extern void (*cache_syncI)(void);
 
-ENTRY(cpufunc_id)
-	mrc	p15, 0, r0, c0, c0, 0
-	mov	pc, lr
+u_int	cpufunc_id(void);
 
-	.data
+void	sa110_cache_syncI(void);
 
-	.global	_C_LABEL(sa110_cache_clean_addr)
-_C_LABEL(sa110_cache_clean_addr):
-	.word	0x00000000
-
-	.global	_C_LABEL(sa110_cache_clean_size)
-_C_LABEL(sa110_cache_clean_size):
-	.word	0x00008000
-
-	.text
-Lsa110_cache_clean_addr:
-	.word	_C_LABEL(sa110_cache_clean_addr)
-Lsa110_cache_clean_size:
-	.word	_C_LABEL(sa110_cache_clean_size)
-
-ENTRY(sa110_cache_syncI)
-	ldr	r2, Lsa110_cache_clean_addr
-	ldmia	r2, {r0, r1}
-
-1:	ldr	r2, [r0], #32			/* clean D$ */
-	subs	r1, r1, #32
-	bne	1b
-
-	mcr	p15, 0, r0, c7, c10, 4		/* drain write buffer */
-	mcr	p15, 0, r0, c7, c5, 0		/* flush I$ */
-
-	mov	pc, lr
+#endif /* _OFWBOOT_CACHE_H_ */
