@@ -1,3 +1,5 @@
+.\" $NetBSD: verifiedexec_load.8,v 1.2 2002/10/29 14:11:06 wiz Exp $
+.\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
 .\"
@@ -27,11 +29,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: verifiedexec_load.8,v 1.1 2002/10/29 13:58:02 blymn Exp $
+.\"	$Id: verifiedexec_load.8,v 1.2 2002/10/29 14:11:06 wiz Exp $
 .\"
-.Dd January, 2000
+.Dd October 29, 2002
 .Dt VERIFIEDEXEC_LOAD 8
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm verifiedexec_load
 .Nd load verified exec fingerprints
@@ -41,7 +43,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-command loads the in kernel fingerprint table from the fingerprints
+command loads the in-kernel fingerprint table from the fingerprints
 given in the
 .Ar fingerprints
 file.
@@ -51,35 +53,31 @@ do not match.
 .Pp
 The
 .Ar fingerprints
-file contains lines of fields separated by one or more whitespace
-characters of the form:
-.Pp
-path	fingerprint	type	options
-.Pp
-Where path is the full path to the executable, fingerprint is a
+file contains lines of fields (separated by one or more whitespace
+characters) of the form:
+.Dl path	fingerprint	type	options
+Where path is the full path to the executable and fingerprint is a
 hexadecimal representation of the fingerprint for the executable.
 Type is the type of fingerprint used, currently this may be either
-md5 or sha1, other fingerprints may be available depending on kernel
-support.
+md5 or sha1.
+Other fingerprints may be available depending on kernel support.
 Options are the associated options for the executable.
-Currently
-there are two valid options:
-.Pp
+Currently there are two valid options:
 .Bl -tag -width INDIRECT -compact
 .It Pa INDIRECT
-if this option is set then the executable cannot be invoked directly, it
+If this option is set then the executable cannot be invoked directly, it
 can only be used as an interpreter in shell scripts.
 .It Pa FILE
-indicates that the fingerprint is associated with a file not an
-executable.  Files have their fingerprints verified during
+Indicates that the fingerprint is associated with a file, not an
+executable.
+Files have their fingerprints verified during
 .Xr open 2
 and are automatically made read only.
 .El
-
-  There must be only one
-executable/fingerprint pair per line.  Comments are indicated by the
-first character of a line being a `#' character.
-.Pp
+There must be only one executable/fingerprint pair per line.
+Comments are indicated by the first character of a line being a
+.Sq \&#
+character.
 .Sh FILES
 .Bl -tag -width /dev/verifiedexec -compact
 .It Pa /dev/verifiedexec
@@ -87,9 +85,10 @@ verified executable device node
 .El
 .Sh HISTORY
 .Nm
-first appeared in NetBSD 1.7
+first appeared in
+.Nx 1.7 .
 .Sh NOTES
 .Nm
-requires the kernel to have been configured with the VERIFIED_EXEC
-option and verifiedexec pseudo-device.
-
+requires the kernel to have been configured with the
+.Dv VERIFIED_EXEC
+option and the verifiedexec pseudo-device.
