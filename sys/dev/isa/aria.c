@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.7 1999/11/01 18:12:20 augustss Exp $	*/
+/*	$NetBSD: aria.c,v 1.8 2000/06/28 16:27:52 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -60,7 +60,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.6 1999/01/08 19:22:36 augustss Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.7 2000/06/28 16:27:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@
 #include <net/if_types.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
