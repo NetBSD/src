@@ -32,14 +32,13 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)path.c	5.1 (Berkeley) 4/3/91";*/
-static char rcsid[] = "$Id: path.c,v 1.4 1993/08/01 19:01:01 mycroft Exp $";
+/*static char sccsid[] = "from: @(#)path.c	5.2 (Berkeley) 10/27/91";*/
+static char rcsid[] = "$Id: path.c,v 1.5 1993/08/07 03:14:59 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <stdio.h>
 #include <string.h>
-#include "cp.h"
+#include "extern.h"
 
 /*
  * These functions manipulate paths in PATH_T structures.
@@ -60,13 +59,13 @@ static char rcsid[] = "$Id: path.c,v 1.4 1993/08/01 19:01:01 mycroft Exp $";
  * Move specified string into path.  Convert "" to "." to handle BSD
  * semantics for a null path.  Strip trailing slashes.
  */
+int
 path_set(p, string)
 	register PATH_T *p;
 	char *string;
 {
 	if (strlen(string) > MAXPATHLEN) {
-		(void)fprintf(stderr,
-		    "%s: %s: name too long.\n", progname, string);
+		err("%s: name too long", string);
 		return(0);
 	}
 
@@ -100,8 +99,7 @@ path_append(p, name, len)
 
 	/* The "+ 1" accounts for the '/' between old path and name. */
 	if ((len + p->p_end - p->p_path + 1) > MAXPATHLEN) {
-		(void)fprintf(stderr,
-		    "%s: %s/%s: name too long.\n", progname, p->p_path, name);
+		err("%s/%s: name too long", p->p_path, name);
 		return(0);
 	}
 
