@@ -1,29 +1,13 @@
-/*	$NetBSD: jump.c,v 1.1.1.4 1999/04/06 05:30:34 mrg Exp $	*/
+/*	$NetBSD: jump.c,v 1.1.1.5 2001/07/26 12:00:31 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -39,6 +23,7 @@ extern int jump_sline;
 extern int squished;
 extern int screen_trashed;
 extern int sc_width, sc_height;
+extern int show_attn;
 
 /*
  * Jump to the end of the file.
@@ -84,6 +69,8 @@ jump_back(n)
 	pos = find_pos(n);
 	if (pos != NULL_POSITION && ch_seek(pos) == 0)
 	{
+		if (show_attn)
+			set_attnpos(pos);
 		jump_loc(pos, jump_sline);
 	} else if (n <= 1 && ch_beg_seek() == 0)
 	{
@@ -165,6 +152,8 @@ jump_line_loc(pos, sline)
 			(void) ch_forw_get();
 		pos = ch_tell();
 	}
+	if (show_attn)
+		set_attnpos(pos);
 	jump_loc(pos, sline);
 }
 
@@ -198,6 +187,8 @@ jump_loc(pos, sline)
 			forw(nline, position(BOTTOM_PLUS_ONE), 1, 0, 0);
 		else
 			back(-nline, position(TOP), 1, 0);
+		if (show_attn)
+			repaint_hilite(1);
 		return;
 	}
 
@@ -235,6 +226,8 @@ jump_loc(pos, sline)
 				 * that we can just scroll there after all.
 				 */
 				forw(sc_height-sline+nline-1, bpos, 1, 0, 0);
+				if (show_attn)
+					repaint_hilite(1);
 				return;
 			}
 			pos = back_line(pos);
@@ -282,6 +275,8 @@ jump_loc(pos, sline)
 				 * that we can just scroll there after all.
 				 */
 				back(nline+1, tpos, 1, 0);
+				if (show_attn)
+					repaint_hilite(1);
 				return;
 			}
 		}

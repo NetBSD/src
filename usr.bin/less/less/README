@@ -1,8 +1,27 @@
-=========================================================================
-    This is the distribution of less, version 335, released 03 Apr 1999
-    Please report any problems to the author at marknu@flash.net.
-        (Please note change of email address.)
+
+                            Less, version 358
+
+    This is the distribution of less, version 358, released 08 Jul 2000.
+    This program is part of the GNU project (http://www.gnu.org).
+
+    This program is free software.  You may redistribute it and/or
+    modify it under the terms of either:
+
+    1. The GNU General Public License, as published by the Free
+       Software Foundation; either version 2, or (at your option) any
+       later version.  A copy of this license is in the file COPYING.
+    or
+    2. The Less License, in the file LICENSE.
+
+    Please report any problems to bug-less@gnu.org or marknu@flash.net.
     See http://www.flash.net/~marknu/less for the latest info.
+    You may also contact the author at:
+          Mark Nudelman
+          Greenwood Software
+          PO Box 2402
+          El Granada, CA  94018
+          USA
+
 =========================================================================
 
 This is the distribution of "less", a paginator similar to "more" or "pg".
@@ -21,10 +40,31 @@ INSTALLATION (Unix systems only):
    This will generate a Makefile and a defines.h.
    Warning: if you have a GNU sed, make sure it is version 2.05 or later.
 
+   The file INSTALL describes the usage of the configure program in
+   general.  In addition, these options to configure are supported:
+
+   --with-editor=program
+     Specifies the default editor program used by the "v" command.
+     The default is "vi".
+   --with-regex=lib
+     Specifies the regular expression library used by less for pattern
+     matching.  The default is "auto", which means the configure program 
+     finds a regular expression library automatically.  Other values are:
+        posix          Use the POSIX-compatible regcomp.
+        pcre           Use the PCRE library.
+        regcmp         Use the regcmp library.
+        re_comp        Use the re_comp library.
+        regcomp        Use the V8-compatible regcomp.
+        regcomp-local  Use Henry Spencer's V8-compatible regcomp
+                       (source is supplied with less).
+
 3. It is a good idea to look over the generated Makefile and defines.h
    and make sure they look ok.  If you know of any peculiarities of
    your system that configure might not have detected, you may fix the
-   Makefile now.  
+   Makefile now.  Take particular notice of the list of "terminal" 
+   libraries in the LIBS definition in the Makefile; these may need 
+   to be edited.  The terminal libraries will be some subset of
+       -lncurses  -lcurses  -ltermcap  -ltermlib
 
    If you wish, you may edit defines.h to remove some optional features.
    If you wish to build a "secure" version of less (which disables all
@@ -66,7 +106,7 @@ INSTALLATION (MS-DOS systems only,
    Depending on your compiler, you may need to convert the source 
    to have CR-LF rather than LF as line terminators.
 
-2. If you are using Microsoft C, rename MAKEFILE.DSM to MAKEFILE.
+2. If you are using Microsoft C, rename MAKEFILE.DSU to MAKEFILE.
    If you are using Borland C, rename MAKEFILE.DSB to MAKEFILE.
    If you are using DJGPP, rename MAKEFILE.DSG to MAKEFILE.
 
