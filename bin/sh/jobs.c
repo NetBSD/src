@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.48 2002/09/27 21:04:08 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.49 2002/09/27 21:32:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.48 2002/09/27 21:04:08 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.49 2002/09/27 21:32:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -659,7 +659,6 @@ forkshell(jp, n, mode)
 	int pid;
 
 	TRACE(("forkshell(%%%d, %p, %d) called\n", jp - jobtab, n, mode));
-	INTOFF;
 	switch ((pid = fork())) {
 	case -1:
 		TRACE(("Fork failed, errno=%d", errno));
@@ -704,7 +703,6 @@ forkparent(jp, n, mode, pid)
 		if (iflag && rootshell && n)
 			ps->cmd = commandtext(n);
 	}
-	INTON;
 	TRACE(("In parent shell:  child = %d\n", pid));
 	return pid;
 }
@@ -732,9 +730,6 @@ forkchild(jp, n, mode, vforked)
 				freejob(p);
 	}
 	closescript(vforked);
-	if (!vforked) {
-		INTON;
-	}
 	clear_traps(vforked);
 #if JOBS
 	if (!vforked)

@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.62 2002/09/27 20:24:36 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.63 2002/09/27 21:32:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.62 2002/09/27 20:24:36 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.63 2002/09/27 21:32:25 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -410,18 +410,18 @@ evalsubshell(n, flags)
 	int backgnd = (n->type == NBACKGND);
 
 	expredir(n->nredir.redirect);
+	INTOFF;
 	jp = makejob(n, 1);
 	if (forkshell(jp, n, backgnd) == 0) {
+		INTON;
 		if (backgnd)
 			flags &=~ EV_TESTED;
 		redirect(n->nredir.redirect, 0);
 		evaltree(n->nredir.n, flags | EV_EXIT);	/* never returns */
 	}
-	if (! backgnd) {
-		INTOFF;
+	if (! backgnd)
 		exitstatus = waitforjob(jp);
-		INTON;
-	}
+	INTON;
 }
 
 
@@ -565,6 +565,7 @@ evalbackcmd(n, result)
 #endif
 	{
 		exitstatus = 0;
+		INTOFF;
 		if (pipe(pip) < 0)
 			error("Pipe call failed");
 		jp = makejob(n, 1);
@@ -582,6 +583,7 @@ evalbackcmd(n, result)
 		close(pip[1]);
 		result->fd = pip[0];
 		result->jp = jp;
+		INTON;
 	}
 out:
 	popstackmark(&smark);
@@ -749,7 +751,6 @@ evalcommand(cmd, flags, backcmd)
 		if (cmdentry.cmdtype == CMDNORMAL) {
 			pid_t	pid;
 
-			INTOFF;
 			savelocalvars = localvars;
 			localvars = NULL;
 			for (sp = varlist.list ; sp ; sp = sp->next)

@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.26 2002/09/27 16:56:15 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.27 2002/09/27 21:32:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.26 2002/09/27 16:56:15 christos Exp $");
+__RCSID("$NetBSD: error.c,v 1.27 2002/09/27 21:32:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: error.c,v 1.26 2002/09/27 16:56:15 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include "shell.h"
 #include "main.h"
