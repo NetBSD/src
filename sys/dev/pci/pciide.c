@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68.2.5 2000/07/06 01:20:13 enami Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.6 2000/07/07 11:49:14 bouyer Exp $	*/
 
 
 /*
@@ -1781,6 +1781,8 @@ amd756_setup_channel(chp)
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int rev = PCI_REVISION(
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
 
 	idedma_ctl = 0;
 	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_DATATIM);
@@ -1813,8 +1815,25 @@ amd756_setup_channel(chp)
 			/* can use PIO timings, MW DMA unused */
 			mode = drvp->PIO_mode;
 		} else {
-			/* use Multiword DMA */
+			/* use Multiword DMA, but only if revision is OK */
 			drvp->drive_flags &= ~DRIVE_UDMA;
+#ifndef PCIIDE_AMD756_ENABLEDMA
+			/*
+			 * The workaround doesn't seem to be necessary
+			 * with all drives, so it can be disabled by
+			 * PCIIDE_AMD756_ENABLEDMA. It causes a hard hang if
+			 * triggered. 
+			 */
+			if (AMD756_CHIPREV_DISABLEDMA(rev)) {
+				printf("%s:%d:%d: multi-word DMA disabled due "
+				    "to chip revision\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname,
+				    chp->channel, drive);
+				mode = drvp->PIO_mode;
+				drvp->drive_flags &= ~DRIVE_DMA;
+				goto pio;
+			}
+#endif
 			/* mode = min(pio, dma+2) */
 			if (drvp->PIO_mode <= (drvp->DMA_mode +2))
 				mode = drvp->PIO_mode;
@@ -2830,7 +2849,6 @@ hpt_chip_map(sc, pa)
 
 	sc->sc_wdcdev.set_modes = hpt_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = (revision == HPT366_REV) ? 1 : 2;
 	if (revision == HPT366_REV) {
 		/*
 		 * The 366 has 2 PCI IDE functions, one for primary and one
