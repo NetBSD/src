@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.5 2001/05/22 00:15:54 minoura Exp $	*/
+/*	$NetBSD: vs.c,v 1.6 2001/05/27 05:30:02 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -272,6 +272,7 @@ vs_dmaintr(void *hdl)
 		sc->sc_current.dmap += sc->sc_current.blksize;
 		if (sc->sc_current.dmap + sc->sc_current.blksize
 			> sc->sc_current.bufsize)
+			sc->sc_current.dmap -= sc->sc_current.bufsize;
 		dmac_start_xfer_offset (sc->sc_dma_ch->ch_softc,
 					sc->sc_current.xfer,
 					sc->sc_current.dmap,
@@ -467,8 +468,8 @@ vs_set_po(struct vs_softc *sc, u_long po)
 
 static int
 vs_trigger_output(void *hdl, void *start, void *end, int bsize,
-			void (*intr)(void *), void *arg,
-			struct audio_params *p)
+		  void (*intr)(void *), void *arg,
+		  struct audio_params *p)
 {
 	struct vs_softc *sc = hdl;
 	struct vs_dma *vd;
@@ -516,8 +517,8 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 
 static int
 vs_trigger_input(void *hdl, void *start, void *end, int bsize,
-		       void (*intr)(void *), void *arg,
-		       struct audio_params *p)
+		 void (*intr)(void *), void *arg,
+		 struct audio_params *p)
 {
 	struct vs_softc *sc = hdl;
 	struct vs_dma *vd;
