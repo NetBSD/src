@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.288 2005/02/20 15:54:02 manu Exp $
+#	$NetBSD: 3RDPARTY,v 1.289 2005/02/20 20:07:56 cube Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -567,7 +567,7 @@ Responsible:	perry@NetBSD.org, itojun@NetBSD.org
 Notes:
 
 Package:	ppp
-Version:	2.4.1
+Version:	2.4.3
 Current Vers:	2.4.3
 Maintainer:	Paul Mackerras <paulus@samba.org>
 Archive Site:	ftp://ftp.samba.org/pub/ppp/
@@ -582,10 +582,8 @@ our zlib, and <net/ppp-comp.h> and I now maintain sys-bsd.c. This
 is clearly a pain. I have not tested the modules code, neither our
 makefiles make it easy to construct a module, but I left one there
 as an example.
-CMU copyright clause was updated to follow
-http://www.monkey.org/openbsd/archive/tech/0207/msg00005.html.
-Australian National University copyright clause was updated.
-Eric Rosenquist copyright clause was updated.
+TDB code as found in 2.4.3 is under GPL.  Therefore, we're using
+the version found in 2.4.1.
 
 Package:	rcs
 Version:	5.7
