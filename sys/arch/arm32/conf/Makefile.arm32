@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.51 2000/02/01 05:25:27 tsutsui Exp $
+#	$NetBSD: Makefile.arm32,v 1.52 2000/05/09 00:32:21 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -42,11 +42,14 @@ S!=	cd ../../../..; pwd
 .endif
 ARM32=	$S/arch/arm32
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Darm32
 CWARNFLAGS?=	-Werror -Wall -Wcomment -Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mmeye,v 1.6 2000/02/01 05:25:36 tsutsui Exp $
+#	$NetBSD: Makefile.mmeye,v 1.7 2000/05/09 00:32:24 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -45,12 +45,15 @@ S!=	cd ../../../..; pwd
 SH3=	$S/arch/sh3
 MMEYE=	$S/arch/mmeye
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|2\.9|egcs)" ; echo
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmmeye -Dsh3
 CWARNFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wpointer-arith -Wno-parentheses
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbsh3,v 1.5 2000/02/01 05:25:29 tsutsui Exp $
+#	$NetBSD: Makefile.evbsh3,v 1.6 2000/05/09 00:32:22 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -44,13 +44,16 @@ S!=	cd ../../../..; pwd
 SH3=	$S/arch/sh3
 EVBSH3=	$S/arch/evbsh3
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dsh3
 CWARNFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wpointer-arith -Wno-parentheses
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=    -Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}

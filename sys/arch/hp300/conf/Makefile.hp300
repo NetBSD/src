@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.74 2000/02/01 05:25:30 tsutsui Exp $
+#	$NetBSD: Makefile.hp300,v 1.75 2000/05/09 00:32:22 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -42,12 +42,15 @@ S!=	cd ../../../..; pwd
 .endif
 HP300=	$S/arch/hp300
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dhp300
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float

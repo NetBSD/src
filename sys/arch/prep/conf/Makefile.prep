@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prep,v 1.1 2000/02/29 15:21:25 nonaka Exp $
+#	$NetBSD: Makefile.prep,v 1.2 2000/05/09 00:32:25 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -46,13 +46,16 @@ S!=	cd ../../../..; pwd
 PREP= $S/arch/prep
 POWERPC= $S/arch/powerpc
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dprep
 CWARNFLAGS?=	-Werror -Wreturn-type -Wpointer-arith
 #CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 #		-Wpointer-arith -Wuninitialized
-.if (${HAVE_GCC28} != "")
+# XXX Delete -Wuninitialized for now, since the compiler doesn't
+# XXX always get it right.  --thorpej 
+CWARNFLAGS+=	-Wno-uninitialized
+.if (${HAVE_EGCS} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
