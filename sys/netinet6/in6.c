@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.80 2003/10/15 22:15:25 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.81 2003/10/15 22:55:34 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.80 2003/10/15 22:15:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.81 2003/10/15 22:55:34 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -1882,12 +1882,9 @@ in6_addmulti(maddr6, ifp, errorp)
 		ifr.ifr_addr.sin6_addr = *maddr6;
 		if (ifp->if_ioctl == NULL)
 			*errorp = ENXIO; /* XXX: appropriate? */
-		else {
+		else
 			*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI,
 			    (caddr_t)&ifr);
-			if (*errorp == ENETRESET)
-				*errorp = 0;
-		}
 		if (*errorp) {
 			LIST_REMOVE(in6m, in6m_entry);
 			free(in6m, M_IPMADDR);
