@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.3 1996/10/15 09:16:20 leo Exp $
+.\"	$NetBSD: boot.8,v 1.4 1997/07/10 07:37:23 mikel Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -59,8 +59,8 @@ to shut the system down is with the
 command.
 .Pp
 If the system crashes, it will enter the kernel debugger,
-.Xr ddb 8
-,if it is configured in the kernel.  If the debugger is not present,
+.Xr ddb 4 ,
+if it is configured in the kernel.  If the debugger is not present,
 or the debugger is exited, the system will attempt a dump to the
 configured dump device (which will be automatically recovered with
 .Xr savecore 8
@@ -122,7 +122,7 @@ The default is
 .Pa /netbsd
 .It boot-options
 These options are a subset of the
-.Xr loadbsd
+.Xr loadbsd 8
 options.
 .Bl -tag -width flag -compact
 .It Fl a
@@ -137,7 +137,7 @@ Enter the kernel debugger
 .Sy Booting using the loadbsd program
 .Pp
 When you want (or have to) start NetBSD from GEM, you have to use the
-.Xr loadbsd
+.Xr loadbsd 8
 program that is supplied on the kernel-floppy. The loadbsd command line
 specification is:
 .Bd -ragged -offset indent
@@ -179,7 +179,7 @@ Set the amount of available TT compatible RAM in bytes. Normally this
 value is set automatically from the values initialized by the BIOS.
 .It Fl V
 Print the version of
-.Xr loadbsd
+.Xr loadbsd 8
 that you are using.
 .It Ar kernel-path
 This is a GEMDOS path specification of the kernel to boot.
@@ -196,7 +196,6 @@ programs to fail.
 system kernel
 .El
 .Sh SEE ALSO
-.Xr ddb 8 ,
+.Xr ddb 4 ,
 .Xr savecore 8 ,
 .Xr shutdown 8
-
