@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.74 1999/03/25 04:45:56 sommerfe Exp $	*/
+/*	$NetBSD: proc.h,v 1.75 1999/04/30 18:40:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -114,6 +114,7 @@ struct	proc {
 	/* substructures: */
 	struct	pcred *p_cred;		/* Process owner's identity. */
 	struct	filedesc *p_fd;		/* Ptr to open files structure. */
+	struct	cwdinfo *p_cwdi;	/* cdir/rdir/cmask info */
 	struct	pstats *p_stats;	/* Accounting/statistics (PROC ONLY). */
 	struct	plimit *p_limit;	/* Process limits. */
 	struct	vmspace *p_vmspace;	/* Address space. */
@@ -283,6 +284,9 @@ struct proclist_desc {
  */
 #define	FORK_PPWAIT	0x01		/* block parent until child exit */
 #define	FORK_SHAREVM	0x02		/* share vmspace with parent */
+#define	FORK_SHARECWD	0x04		/* share cdir/rdir/cmask */
+#define	FORK_SHAREFILES	0x08		/* share file descriptors */
+#define	FORK_SHARESIGS	0x10		/* share signal actions */
 
 #define	PIDHASH(pid)	(&pidhashtbl[(pid) & pidhash])
 extern LIST_HEAD(pidhashhead, proc) *pidhashtbl;
