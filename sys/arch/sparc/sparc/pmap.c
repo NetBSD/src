@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.269 2003/08/24 17:52:36 chs Exp $ */
+/*	$NetBSD: pmap.c,v 1.270 2003/08/24 18:10:31 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.269 2003/08/24 17:52:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.270 2003/08/24 18:10:31 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -630,7 +630,7 @@ static void sp_tlb_flush(int va, int ctx, int lvl)
 	/* and turn traps on again */
 	__asm("wr	%o3, 0, %psr");
 	__asm("nop");
-	__asm("retl");
+	__asm("nop");
 	__asm("nop");
 }
 
@@ -858,7 +858,7 @@ setpgt4m_va(va, ptep, pte, pageflush, ctx, cpuset)
 #endif /* MULTIPROCESSOR */
 
 /* Set the page table entry for va to pte. */
-__inline void
+void
 setpte4m(va, pte)
 	vaddr_t va;
 	int pte;
