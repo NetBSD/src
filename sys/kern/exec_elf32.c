@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.65 2001/07/15 20:52:35 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.66 2001/07/29 21:22:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -104,17 +104,17 @@ int ELFNAME2(netbsd,probe)(struct proc *, struct exec_package *,
  * Copy arguments onto the stack in the normal way, but add some
  * extra information in case of dynamic binding.
  */
-void *
+int
 ELFNAME(copyargs)(struct exec_package *pack, struct ps_strings *arginfo,
-    void *stack, void *argp)
+    char **stackp, void *argp)
 {
 	size_t len;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
+	int error;
 
-	stack = copyargs(pack, arginfo, stack, argp);
-	if (!stack)
-		return NULL;
+	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
+		return error;
 
 	a = ai;
 
@@ -161,11 +161,11 @@ ELFNAME(copyargs)(struct exec_package *pack, struct ps_strings *arginfo,
 	a++;
 
 	len = (a - ai) * sizeof(AuxInfo);
-	if (copyout(ai, stack, len))
-		return NULL;
-	stack = (caddr_t)stack + len;
+	if ((error = copyout(ai, *stackp, len)) != 0)
+		return error;
+	*stackp = *stackp + len;
 
-	return stack;
+	return 0;
 }
 
 /*
