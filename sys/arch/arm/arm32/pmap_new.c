@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_new.c,v 1.7 2003/05/02 19:01:00 scw Exp $	*/
+/*	$NetBSD: pmap_new.c,v 1.8 2003/05/02 21:54:38 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.7 2003/05/02 19:01:00 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.8 2003/05/02 21:54:38 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -4045,11 +4045,6 @@ static void
 pmap_alloc_specials(vaddr_t *availp, int pages, vaddr_t *vap, pt_entry_t **ptep)
 {
 	vaddr_t va = *availp;
-
-#ifndef ARM32_NEW_VM_LAYOUT
-	if (ptep)
-		*ptep = ((pt_entry_t *) PTE_BASE) + atop(va);
-#else
 	struct l2_bucket *l2b;
 
 	if (ptep) {
@@ -4060,7 +4055,6 @@ pmap_alloc_specials(vaddr_t *availp, int pages, vaddr_t *vap, pt_entry_t **ptep)
 		if (ptep)
 			*ptep = &l2b->l2b_kva[l2pte_index(va)];
 	}
-#endif
 
 	*vap = va;
 	*availp = va + (PAGE_SIZE * pages);
