@@ -1,0 +1,7 @@
+# $NetBSD: std.sun2,v 1.1 2001/03/29 21:07:59 fredette Exp $
+
+# Standard information for Sun2 machines.
+machine	sun2 m68k
+
+# Standard defines
+options 	EXEC_AOUT, EXEC_SCRIPT
