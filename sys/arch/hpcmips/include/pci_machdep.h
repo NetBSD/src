@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.4 2004/07/29 16:55:25 drochner Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.5 2004/09/17 23:32:09 enami Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -31,7 +31,7 @@
  */
 
 /*
- * We want to contro both device probe order.
+ * We want to control both device probe order.
  */
 #define	__PCI_BUS_DEVORDER
 
