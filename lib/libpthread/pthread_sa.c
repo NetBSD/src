@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.9 2003/05/27 15:24:24 christos Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.10 2003/06/12 21:49:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.9 2003/05/27 15:24:24 christos Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.10 2003/06/12 21:49:42 nathanw Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -74,15 +74,17 @@ int pthread__maxlwps;
 
 void pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, 
     void *arg);
-int pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
-    pthread_t self);
+void pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
+    pthread_t *schedqhead, pthread_t self);
 void pthread__resolve_locks(pthread_t self, pthread_t *interrupted);
 void pthread__recycle_bulk(pthread_t self, pthread_t qhead);
+
+extern void pthread__switch_return_point(void);
 
 void
 pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 {
-	pthread_t t, self, next, intqueue;
+	pthread_t t, self, next, intqueue, schedqueue;
 	int first = 1;
 	siginfo_t *si;
 
@@ -107,17 +109,19 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	 * This includes any upcalls that have been interupted, so
 	 * they can do their own version of this dance.
 	 */
-	intqueue = NULL;
 	if ((ev + intr) >= first) {
-		if (pthread__find_interrupted(sas + first, ev + intr,
-		    &intqueue, self) > 0)
+		pthread__find_interrupted(sas + first, ev + intr,
+		    &intqueue, &schedqueue, self);
+		if (intqueue != self)
 			pthread__resolve_locks(self, &intqueue);
+		/* We can take spinlocks now */
+		if (intqueue != self)
+			pthread__sched_bulk(self, intqueue);
+		if (schedqueue != self)
+			pthread__sched_bulk(self, schedqueue);
 	}
 
-	/* We can take spinlocks now */
 	pthread__sched_idle2(self);
-	if (intqueue)
-		pthread__sched_bulk(self, intqueue);
 
 	switch (type) {
 	case SA_UPCALL_BLOCKED:
@@ -215,17 +219,17 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
  * Determine if any of them were upcalls or lock-holders that
  * need to be continued early.
  */
-int
-pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
-    pthread_t self)
+void
+pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *intqhead,
+    pthread_t *schedqhead, pthread_t self)
 {
 	int i, resume;
-	pthread_t victim, next;
+	pthread_t victim, nextint, nextsched;
 
-	resume = 0;
-	next = self;
+	nextint = nextsched = self;
 
 	for (i = 0; i < nsas; i++) {
+		resume = 0;
 		victim = pthread__sa_id(sas[i]);
 #ifdef PTHREAD__DEBUG
 		victim->preempts++;
@@ -306,15 +310,19 @@ pthread__find_interrupted(struct sa_t *sas[], int nsas, pthread_t *qhead,
 			}
 		}
 		pthread__assert(victim != self);
-		victim->pt_parent = self;
-		victim->pt_next = next;
-		next = victim;
+		if (resume) {
+			victim->pt_parent = self;
+			victim->pt_next = nextint;
+			nextint = victim;
+		} else {
+			victim->pt_next = nextsched;
+			nextsched = victim;
+		}
 		SDPRINTF(("\n"));
 	}
 
-	*qhead = next;
-
-	return resume;
+	*intqhead = nextint;
+	*schedqhead = nextsched;
 }
 
 void
@@ -349,7 +357,10 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 
 			if (victim->pt_type == PT_THREAD_NORMAL) {
 				SDPRINTF((" normal"));
-				if (victim->pt_spinlocks == 0) {
+				if ((victim->pt_spinlocks == 0) &&
+				    ((victim->pt_switchto != NULL) ||
+					(pthread__uc_pc(victim->pt_uc) ==
+					    (intptr_t)pthread__switch_return_point))) {
 					/*
 					 * We can remove this thread
 					 * from the interrupted queue.
