@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.11 1998/07/28 21:25:35 mycroft Exp $	*/
+/*	$NetBSD: pigs.c,v 1.12 1999/02/19 04:59:00 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.11 1998/07/28 21:25:35 mycroft Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.12 1999/02/19 04:59:00 jwise Exp $");
 #endif /* not lint */
 
 /*
@@ -101,8 +101,8 @@ showpigs()
 	struct	eproc *ep;
 	float total;
 	int factor;
-	const char *uname, *pname;
-	char pidname[30];
+	const char *pname;
+	char pidname[30], pidstr[7], usrstr[9];
 
 	if (pt == NULL)
 		return;
@@ -124,20 +124,23 @@ showpigs()
 		i = getmaxy(wnd)-1;
 	for (k = 0; i > 0 && pt[k].pt_pctcpu > 0.01; i--, y++, k++) {
 		if (pt[k].pt_kp == NULL) {
-			uname = "";
 			pname = "<idle>";
+			pidstr[0] = '\0';
+			usrstr[0] = '\0';
 		}
 		else {
 			ep = &pt[k].pt_kp->kp_eproc;
-			uname = user_from_uid(ep->e_ucred.cr_uid, 0);
 			pname = pt[k].pt_kp->kp_proc.p_comm;
+			snprintf(pidstr, sizeof(pidstr), "%5d", pt[k].pt_kp->kp_proc.p_pid);
+			snprintf(usrstr, sizeof(usrstr), "%8s", user_from_uid(ep->e_ucred.cr_uid, 0));
 		}
 		wmove(wnd, y, 0);
 		wclrtoeol(wnd);
-		mvwaddstr(wnd, y, 0, uname);
-		(void)snprintf(pidname, sizeof pidname, "%10.10s", pname);
-		mvwaddstr(wnd, y, 9, pidname);
-		wmove(wnd, y, 20);
+		mvwaddstr(wnd, y, 0, usrstr);
+		mvwaddstr(wnd, y, 9, pidstr);
+		(void)snprintf(pidname, sizeof(pidname), "%9.9s", pname);
+		mvwaddstr(wnd, y, 15, pidname);
+		wmove(wnd, y, 25);
 		for (j = pt[k].pt_pctcpu*factor + 0.5; j > 0; j--)
 			waddch(wnd, 'X');
 	}
@@ -243,8 +246,7 @@ labelpigs()
 {
 	wmove(wnd, 0, 0);
 	wclrtoeol(wnd);
-	mvwaddstr(wnd, 0, 20,
-	    "/0   /10  /20  /30  /40  /50  /60  /70  /80  /90  /100");
+	mvwaddstr(wnd, 0, 25, "/0   /10  /20  /30  /40  /50  /60  /70  /80  /90  /100");
 }
 
 int
