@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.29 2004/05/27 02:23:12 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.30 2004/08/01 21:40:41 bouyer Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.29 2004/05/27 02:23:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.30 2004/08/01 21:40:41 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -41,9 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.29 2004/05/27 02:23:12 thorpej Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/conf.h>
+#include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/errno.h>
+#include <sys/ataio.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -73,6 +76,18 @@ extern int wdcdebug_mask; /* init'ed in wdc.c */
  * ATA controllers attach an atabus instance, which handles probing the bus
  * for drives, etc.
  *****************************************************************************/
+
+dev_type_open(atabusopen);
+dev_type_close(atabusclose);
+dev_type_ioctl(atabusioctl);
+
+const struct cdevsw atabus_cdevsw = {
+	atabusopen, atabusclose, noread, nowrite, atabusioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
+
+extern struct cfdriver atabus_cd;
+
 
 /*
  * atabusprint:
@@ -481,3 +496,81 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 		drvp->n_xfers = 1; /* restart counting from this error */
 	}
 }
+
+/* management of the /dev/atabus* devices */
+int atabusopen(dev, flag, fmt, p)
+	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
+{
+        struct atabus_softc *sc;
+        int error, unit = minor(dev);
+   
+        if (unit >= atabus_cd.cd_ndevs ||
+            (sc = atabus_cd.cd_devs[unit]) == NULL)
+                return (ENXIO);
+ 
+        if (sc->sc_flags & ATABUSCF_OPEN)
+                return (EBUSY);
+
+        if ((error = wdc_addref(sc->sc_chan)) != 0)
+                return (error);
+
+        sc->sc_flags |= ATABUSCF_OPEN;
+
+        return (0);
+}
+
+
+int
+atabusclose(dev, flag, fmt, p)
+        dev_t dev;
+        int flag, fmt;
+        struct proc *p;
+{
+        struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
+
+        wdc_delref(sc->sc_chan);
+
+        sc->sc_flags &= ~ATABUSCF_OPEN;
+
+        return (0);
+}
+
+int
+atabusioctl(dev, cmd, addr, flag, p)
+        dev_t dev;
+        u_long cmd;
+        caddr_t addr;
+        int flag;
+        struct proc *p;
+{
+        struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
+        int error;
+	int s;
+
+        /*
+         * Enforce write permission for ioctls that change the
+         * state of the bus.  Host adapter specific ioctls must
+         * be checked by the adapter driver.
+         */
+        switch (cmd) {
+        case ATABUSIOSCAN:
+        case ATABUSIODETACH:
+        case ATABUSIORESET:
+                if ((flag & FWRITE) == 0)
+                        return (EBADF);
+        }
+
+        switch (cmd) {
+        case ATABUSIORESET:
+		s = splbio();
+		wdc_reset_channel(sc->sc_chan, AT_WAIT | AT_POLL);
+		splx(s);
+		error = 0;
+		break;
+	default:
+		error = ENOTTY;
+	}
+	return (error);
+};
