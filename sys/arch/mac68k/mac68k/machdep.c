@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.245 2000/02/21 02:04:50 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.246 2000/02/21 04:08:21 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -275,6 +275,9 @@ mac68k_init()
 
 	/* Initialize the interrupt handlers. */
 	intr_init();
+
+	/* Initialize the IOPs (if present) */
+	iop_init(1);
 
 	/*
 	 * Initialize error message buffer (at end of core).
