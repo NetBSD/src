@@ -1,4 +1,4 @@
-/*	$NetBSD: type_alnum.c,v 1.2 2001/01/20 11:03:43 blymn Exp $	*/
+/*	$NetBSD: type_alnum.c,v 1.3 2001/01/20 14:48:55 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,6 +31,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 #include <ctype.h>
 #include "form.h"
 #include "internals.h"
