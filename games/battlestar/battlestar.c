@@ -1,4 +1,4 @@
-/*	$NetBSD: battlestar.c,v 1.11 2000/09/08 17:22:01 jsm Exp $	*/
+/*	$NetBSD: battlestar.c,v 1.12 2000/09/21 17:44:34 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: battlestar.c,v 1.11 2000/09/08 17:22:01 jsm Exp $");
+__RCSID("$NetBSD: battlestar.c,v 1.12 2000/09/21 17:44:34 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -96,7 +96,7 @@ start:
 run:
 	next = getcom(mainbuf, sizeof mainbuf, ">-: ",
 	    "Please type in something.");
-	for (wordcount = 0; next && wordcount < 20; wordcount++)
+	for (wordcount = 0; next && wordcount < NWORD - 1; wordcount++)
 		next = getword(next, words[wordcount], -1);
 	parse();
 	switch (cypher()) {
