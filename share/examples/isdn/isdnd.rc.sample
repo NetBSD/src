@@ -3,9 +3,9 @@
 #	example of a configuration file for the isdn daemon
 #	---------------------------------------------------
 #
-#	$Id: isdnd.rc.sample,v 1.2 2001/04/22 22:10:55 wiz Exp $
+#	$Id: isdnd.rc.sample,v 1.3 2002/03/17 21:32:21 martin Exp $
 #
-# $NetBSD: isdnd.rc.sample,v 1.2 2001/04/22 22:10:55 wiz Exp $
+# $NetBSD: isdnd.rc.sample,v 1.3 2002/03/17 21:32:21 martin Exp $
 #
 #	last edit-date: [Wed Jul 19 09:59:42 2000]
 #
@@ -92,7 +92,7 @@ name        		= I4BIP		# name for reference. This name will
 
 					# the network or telephone device
 					# the data traffic should be routed to:
-usrdevicename		= ipr		# ipr, isp, tel, rbch
+usrdevicename		= irip		# irip, ippp, isdntel, isdnbchan
 usrdeviceunit		= 0		# unit number
 
 					# the ISDN controller number to be
@@ -127,7 +127,7 @@ callbackwait		= 1		# no of secs to wait before calling back
 
 					# type of protocol on the B-channel:
 					# hdlc must be specified for IP (the
-					# ipr and isp drivers), raw must be
+					# irip and ippp drivers), raw must be
 					# specified for telephone answering
 b1protocol		= hdlc		# hdlc, raw
 
@@ -166,7 +166,7 @@ entry
                                 
 name        		= I4BIP1	# name for reference
 				
-usrdevicename		= ipr		# ipr, tel, rbch
+usrdevicename		= irip		# irip, isdntel, isdnbchan
 usrdeviceunit		= 1		# unit number
 				
 isdncontroller		= 0		# contoller to use or -1 to use any
@@ -209,7 +209,7 @@ idletime-outgoing	= 30
 entry				
 
 name        		= I4BTEL	# name for reference
-usrdevicename		= tel		# ipr, tel, rbch
+usrdevicename		= isdntel	# irip, ippp, isdntel, isdnbchan
 usrdeviceunit           = 0             # unit number
 				
 isdncontroller		= 0		# contoller to use or -1 to use any
@@ -234,7 +234,7 @@ entry
 
 name			= I4BPPP	# name for reference
 
-usrdevicename		= isp		# ipr, tel, rbch
+usrdevicename		= ippp		# irip, isdntel, isdnbchan
 usrdeviceunit		= 0		# unit number
 
 isdncontroller  	= 0		# controller to use or -1 to use any
@@ -259,7 +259,7 @@ dialout-type            = normal        # normal / calledback
 
                                         # type of protocol on the B-channel:
                                         # hdlc must be specified for IP (the
-                                        # ipr and isp drivers), raw must be
+                                        # irip and ippp drivers), raw must be
                                         # specified for telephone answering
 
 ppp-expect-auth		= chap		# authentication method used by the
