@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.54 1997/02/25 06:36:04 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.55 1997/02/28 07:52:44 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -73,11 +73,11 @@ static inline int ae_ring_copy __P((struct ae_softc *, int, caddr_t, int));
 #define	ETHER_ADDR_LEN	6
 
 #define REG_MAP(sc, reg)	((sc)->regs_rev ? (0x0f-(reg))<<2 : (reg)<<2)
-#define NIC_GET(sc, reg)	(bus_space_read_1((sc)->sc_reg_tag,	\
-				    (sc)->sc_reg_handle, \
+#define NIC_GET(sc, reg)	(bus_space_read_1((sc)->sc_regt,	\
+				    (sc)->sc_regh,			\
 				    (REG_MAP(sc, reg))))
-#define NIC_PUT(sc, reg, val)	(bus_space_write_1((sc)->sc_reg_tag,	\
-				    (sc)->sc_reg_handle,		\
+#define NIC_PUT(sc, reg, val)	(bus_space_write_1((sc)->sc_regt,	\
+				    (sc)->sc_regh,			\
 				    (REG_MAP(sc, reg)), (val)))
 
 struct cfdriver ae_cd = {
@@ -151,11 +151,11 @@ aesetup(sc)
 	sc->mem_ring = sc->rec_page_start << ED_PAGE_SHIFT;
 
 	/* Now zero memory and verify that it is clear. */
-	bus_space_set_region_2(sc->sc_buf_tag, sc->sc_buf_handle, 0,
-	    0, sc->mem_size / 2);
+	bus_space_set_region_2(sc->sc_buft, sc->sc_bufh,
+	    0, 0, sc->mem_size / 2);
 
 	for (i = 0; i < sc->mem_size; ++i)
-		if (bus_space_read_1(sc->sc_buf_tag, sc->sc_buf_handle, i))
+		if (bus_space_read_1(sc->sc_buft, sc->sc_bufh, i))
 printf("%s: failed to clear shared memory - check configuration\n",
 			    sc->sc_dev.dv_xname);
 
@@ -167,7 +167,8 @@ printf("%s: failed to clear shared memory - check configuration\n",
 	ifp->if_softc = sc;
 	ifp->if_start = aestart;
 	ifp->if_ioctl = aeioctl;
-	ifp->if_watchdog = aewatchdog;
+	if (!ifp->if_watchdog)
+		ifp->if_watchdog = aewatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
@@ -224,32 +225,12 @@ aestop(sc)
  * Device timeout/watchdog routine.  Entered if the device neglects to generate
  * an interrupt after a transmit has been started on it.
  */
-static int aeintr_ctr = 0;
 
 void
 aewatchdog(ifp)
 	struct ifnet *ifp;
 {
 	struct ae_softc *sc = ifp->if_softc;
-
-#if 1
-/*
- * This is a kludge!  The via code seems to miss slot interrupts
- * sometimes.  This kludges around that by calling the handler
- * by hand if the watchdog is activated. -- XXX (akb)
- */
-	int     i;
-
-	i = aeintr_ctr;
-
-	(*via2itab[1]) ((void *) 1);
-
-	if (i != aeintr_ctr) {
-		log(LOG_ERR, "%s: device timeout, recovered\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-#endif
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -521,7 +502,7 @@ loop:
 		 * The byte count includes a 4 byte header that was added by
 		 * the NIC.
 		 */
-		bus_space_read_region_1(sc->sc_buf_tag, sc->sc_buf_handle,
+		bus_space_read_region_1(sc->sc_buft, sc->sc_bufh,
 		    packet_ptr, &packet_hdr, sizeof(struct ae_ring));
 		lenp = (u_int8_t *)&packet_hdr.count; /* sigh. */
 		len = lenp[0] | (lenp[1] << 8);
@@ -605,8 +586,6 @@ aeintr(arg, slot)
 	struct ae_softc *sc = (struct ae_softc *)arg;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	u_char isr;
-
-	aeintr_ctr++;
 
 	/* Set NIC to page 0 registers. */
 	NIC_PUT(sc, ED_P0_CR, sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STA);
@@ -941,8 +920,8 @@ ae_ring_copy(sc, src, dst, amount)
 	caddr_t dst;
 	int amount;
 {
-	bus_space_tag_t bst = sc->sc_buf_tag;
-	bus_space_handle_t bsh = sc->sc_buf_handle;
+	bus_space_tag_t bst = sc->sc_buft;
+	bus_space_handle_t bsh = sc->sc_bufh;
 	int tmp_amount;
 
 	/* Does copy wrap to lower addr in ring buffer? */
@@ -1112,8 +1091,8 @@ ae_put(sc, m, buf)
 			/* Finish the last word. */
 			if (wantbyte) {
 				savebyte[1] = *data;
-				bus_space_write_region_2(sc->sc_buf_tag,
-				    sc->sc_buf_handle, buf, savebyte, 1);
+				bus_space_write_region_2(sc->sc_buft,
+				    sc->sc_bufh, buf, savebyte, 1);
 				buf += 2;
 				data++;
 				len--;
@@ -1121,8 +1100,8 @@ ae_put(sc, m, buf)
 			}
 			/* Output contiguous words. */
 			if (len > 1) {
-				bus_space_write_region_2(sc->sc_buf_tag,
-				    sc->sc_buf_handle, buf, data, len >> 1);
+				bus_space_write_region_2(sc->sc_buft,
+				    sc->sc_bufh, buf, data, len >> 1);
 				buf += len & ~1;
 				data += len & ~1;
 				len &= 1;
@@ -1137,7 +1116,7 @@ ae_put(sc, m, buf)
 
 	if (wantbyte) {
 		savebyte[1] = 0;
-		bus_space_write_region_2(sc->sc_buf_tag, sc->sc_buf_handle,
+		bus_space_write_region_2(sc->sc_buft, sc->sc_bufh,
 		    buf, savebyte, 1);
 	}
 	return (totlen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aevar.h,v 1.3 1997/02/25 06:36:07 scottr Exp $	*/
+/*	$NetBSD: if_aevar.h,v 1.4 1997/02/28 07:52:46 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -22,10 +22,10 @@
  */
 struct ae_softc {
 	struct device	sc_dev;
-	bus_space_tag_t	sc_reg_tag;	/* NIC register space tag */
-	bus_space_handle_t sc_reg_handle; /* NIC register space handle */
-	bus_space_tag_t	sc_buf_tag;	/* Buffer space tag */
-	bus_space_handle_t sc_buf_handle; /* Buffer space handle */
+	bus_space_tag_t	sc_regt;	/* NIC register space tag */
+	bus_space_handle_t sc_regh;	/* NIC register space handle */
+	bus_space_tag_t	sc_buft;	/* Buffer space tag */
+	bus_space_handle_t sc_bufh;	/* Buffer space handle */
 
 /*	struct	intrhand sc_ih;	*/
 
