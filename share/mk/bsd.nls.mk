@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.20 2000/01/22 19:31:02 mycroft Exp $
+#	$NetBSD: bsd.nls.mk,v 1.21 2000/02/19 23:02:17 erh Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -22,6 +22,7 @@ cleandir distclean: cleannls
 
 .if defined(NLS) && !empty(NLS)
 NLSALL= ${NLS:.msg=.cat}
+.NOPATH: ${NLSALL}
 .endif
 
 .if !defined(NLSNAME)
