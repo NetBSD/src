@@ -22,11 +22,10 @@ General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-#ifndef lint
-static char rcsid[] = "$Id: libgcc1.c,v 1.2 1993/08/02 17:38:46 mycroft Exp $";
-#endif /* not lint */
+	$Id: libgcc1.c,v 1.3 1993/08/23 09:24:02 cgd Exp $
+*/
 
 /* As a special exception, if you link this library with files
    compiled with GCC to produce an executable, this does not cause
