@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.38 2003/04/17 18:03:17 fvdl Exp $
+#	$NetBSD: MAKEDEV,v 1.39 2003/04/27 13:15:41 ragge Exp $
 #
 ###########################################################################
 #
@@ -118,7 +118,7 @@ init|all)
 	;;
 
 std)
-	rm -f console drum kmem mem reload zero null klog
+	rm -f console drum kmem mem reload zero null klog ksyms
 	mknod console		c 0 0
 	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
@@ -127,6 +127,7 @@ std)
 	mknod zero		c 2 12	; chmod 666 zero
 	mknod null		c 2 2	; chmod 666 null
 	mknod klog		c 6 0	; chmod 600 klog
+	mknod ksyms		c 49 0	; chmod 444 ksyms
 	if $nofdesc; then
 		rm -f tty stdin stdout stderr
 		mknod tty	c 1 0	; chmod 666 tty

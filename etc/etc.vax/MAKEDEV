@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.56 2003/04/23 23:25:02 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.57 2003/04/27 13:15:47 ragge Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -109,7 +109,7 @@ init|all)
 
 std)
 	rm -f console drum floppy crl csa1 cas2 tu0 tu1 g0 g1 g2 g3
-	rm -f kUmem kmem mem null leds zero klog
+	rm -f kUmem kmem mem null leds zero klog ksyms
 	rm -f ipl ipnat ipstate ipauth
 	mknod console		c 0 0
 	mknod ttyg0		c 25 0
@@ -130,6 +130,7 @@ std)
 	mknod zero		c 3 12	; chmod 666 zero
 	mknod leds		c 3 13	; chmod 666 leds
 	mknod klog		c 33 0	; chmod 600 klog
+	mknod ksyms		c 79 0	; chmod 444 ksyms
 	if $nofdesc; then
 		rm -f tty stdin stdout stderr
 		mknod tty	c 2 0	; chmod 666 tty
