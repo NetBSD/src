@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.51 2000/06/29 08:28:23 mrg Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.52 2001/02/01 08:58:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -232,13 +232,6 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	if((reloc_kernel != 0) && (ttphysize >= end_loaded))
 		kbase = ttphystart;
 	else kbase = 0;
-
-	/*
-	 * update these as soon as possible!
-	 */
-	PAGE_SIZE  = NBPG;
-	PAGE_MASK  = NBPG-1;
-	PAGE_SHIFT = PG_SHIFT;
 
 	/*
 	 * Determine the type of machine we are running on. This needs
