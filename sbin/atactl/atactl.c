@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.29 2004/03/28 01:23:15 mycroft Exp $	*/
+/*	$NetBSD: atactl.c,v 1.30 2004/08/01 21:41:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.29 2004/03/28 01:23:15 mycroft Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.30 2004/08/01 21:41:49 bouyer Exp $");
 #endif
 
 
@@ -94,9 +94,9 @@ void	device_idle(int, char *[]);
 void	device_checkpower(int, char *[]);
 void	device_smart(int, char *[]);
 
-void	smart_temp(struct ata_smart_attr *, uint64_t);
+void	device_smart_temp(struct ata_smart_attr *, uint64_t);
 
-struct command commands[] = {
+struct command device_commands[] = {
 	{ "identify",	"",			device_identify },
 	{ "setidle",	"idle-timer",		device_setidle },
 	{ "setstandby",	"standby-timer",	device_setidle },
@@ -105,6 +105,13 @@ struct command commands[] = {
 	{ "sleep",	"",			device_idle },
 	{ "checkpower",	"",			device_checkpower },
 	{ "smart",	"enable|disable|status|selftest-log", device_smart },
+	{ NULL,		NULL,			NULL },
+};
+
+void	bus_reset __P((int, char *[]));
+
+struct command bus_commands[] = {
+	{ "reset",	"",			bus_reset },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -204,7 +211,7 @@ static const struct {
 	{ 191,		"Gsense error rate" },
 	{ 192,		"Power-off retract count" },
 	{ 193,		"Load cycle count" },
-	{ 194,		"Temperature",			smart_temp},
+	{ 194,		"Temperature",			device_smart_temp},
 	{ 195,		"Hardware ECC Recovered" },
 	{ 196,		"Reallocated event count" },
 	{ 197,		"Current pending sector" },
@@ -217,6 +224,7 @@ int
 main(int argc, char *argv[])
 {
 	int i;
+	struct command *commands = NULL;
 
 	/* Must have at least: device command */
 	if (argc < 3)
@@ -255,15 +263,26 @@ main(int argc, char *argv[])
 	dvname = dvname_store;
 
 	/* Look up and call the command. */
-	for (i = 0; commands[i].cmd_name != NULL; i++)
-		if (strcmp(cmdname, commands[i].cmd_name) == 0)
+	for (i = 0; device_commands[i].cmd_name != NULL; i++) {
+		if (strcmp(cmdname, device_commands[i].cmd_name) == 0) {
+			commands = &device_commands[i];
 			break;
-	if (commands[i].cmd_name == NULL)
+		}
+	}
+	if (commands == NULL) {
+		for (i = 0; bus_commands[i].cmd_name != NULL; i++) {
+			if (strcmp(cmdname, bus_commands[i].cmd_name) == 0) {
+				commands = &bus_commands[i];
+				break;
+			}
+		}
+	}
+	if (commands == NULL)
 		errx(1, "unknown command: %s", cmdname);
 
-	argnames = commands[i].arg_names;
+	argnames = commands->arg_names;
 
-	(*commands[i].cmd_func)(argc, argv);
+	(*commands->cmd_func)(argc, argv);
 	exit(0);
 }
 
@@ -276,9 +295,14 @@ usage(void)
 	    getprogname());
 
 	fprintf(stderr, "   Available device commands:\n");
-	for (i=0; commands[i].cmd_name != NULL; i++)
-		fprintf(stderr, "\t%s %s\n", commands[i].cmd_name,
-					    commands[i].arg_names);
+	for (i=0; device_commands[i].cmd_name != NULL; i++)
+		fprintf(stderr, "\t%s %s\n", device_commands[i].cmd_name,
+					    device_commands[i].arg_names);
+
+	fprintf(stderr, "   Available bus commands:\n");
+	for (i=0; bus_commands[i].cmd_name != NULL; i++)
+		fprintf(stderr, "\t%s %s\n", bus_commands[i].cmd_name,
+					    bus_commands[i].arg_names);
 
 	exit(1);
 }
@@ -341,7 +365,7 @@ print_bitinfo(const char *bf, const char *af, u_int bits, struct bitinfo *binfo)
  */
 
 void
-smart_temp(struct ata_smart_attr *attr, uint64_t raw_value)
+device_smart_temp(struct ata_smart_attr *attr, uint64_t raw_value)
 {
 	printf("%" PRIu8, attr->raw[0]);
 	if (attr->raw[0] != raw_value)
@@ -955,4 +979,23 @@ device_smart(int argc, char *argv[])
 		usage();
 	}
 	return;
+}
+
+/*
+ * bus_reset:
+ *	Reset an ATA bus (will reset all devices on the bus)
+ */
+void
+bus_reset(int argc, char *argv[])
+{
+	int error;
+
+	/* no args */
+	if (argc != 0)
+		usage();
+
+	error = ioctl(fd, ATABUSIORESET, NULL);
+
+	if (error == -1)
+		err(1, "ATABUSIORESET failed");
 }
