@@ -1,8 +1,8 @@
-#	$NetBSD: printcap,v 1.4 1997/02/15 10:02:22 mikel Exp $
+#	$NetBSD: printcap,v 1.5 2000/01/17 18:56:08 abs Exp $
 #	from: @(#)printcap	8.1 (Berkeley) 6/9/93
 
 #lp|local line printer:\
-#	:lp=/dev/lp:sd=/var/spool/output/lpd:lf=/var/log/lpd-errs:
+#	:lp=/dev/lp:sd=/var/spool/lpd/lp:lf=/var/log/lpd-errs:
 
 # DecWriter over a tty line.
 #decwriter|LA-180 DecWriter III:\
@@ -10,11 +10,11 @@
 
 # Typical remote printer entry.
 #remote|Line Printer:\
-#	:lp=:rm=remote_machine:sd=/var/spool/output/remotelpd:\
+#	:lp=:rm=remote_machine:sd=/var/spool/lpd/remote:\
 #	:lf=/var/log/lpd-errs:
 
 #varian|Benson Varian:\
-#	:lp=/dev/va0:sd=/var/spool/output/vad:\
+#	:lp=/dev/va0:sd=/var/spool/lpd/varian:\
 #	:mx#2000:pl#58:px#2112:py#1700:tr=\f:\
 #	:of=/usr/libexec/lpr/vpf:if=/usr/libexec/lpr/vpf:\
 #	:tf=/usr/libexec/lpr/rvcat:cf=/usr/libexec/lpr/vdmp:\
@@ -22,7 +22,7 @@
 #	:vf=/usr/libexec/lpr/vpltdmp:lf=/var/log/lpd-errs:
 
 #vp|versatec|Versatec plotter:\
-#	:lp=/dev/vp0:sd=/var/spool/output/vpd:\
+#	:lp=/dev/vp0:sd=/var/spool/lpd/vp:\
 #	:sb:sf:mx#0:pw#106:pl#86:px#7040:py#2400:\
 #	:of=/usr/libexec/lpr/vpfW:if=/usr/libexec/lpr/vpsf:\
 #	:tf=/usr/libexec/lpr/vcat:cf=/usr/libexec/lpr/vdmp:\
