@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.14 1996/05/28 02:07:44 mrg Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.15 1996/12/17 03:35:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-static char *rcsid = "$NetBSD: rcmd.c,v 1.14 1996/05/28 02:07:44 mrg Exp $";
+static char *rcsid = "$NetBSD: rcmd.c,v 1.15 1996/12/17 03:35:52 mrg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/poll.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -72,7 +73,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 {
 	struct hostent *hp;
 	struct sockaddr_in sin, from;
-	fd_set reads;
+	struct pollfd reads[2];
 	int oldmask;
 	pid_t pid;
 	int s, lport, timo;
@@ -152,19 +153,19 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 			(void)close(s2);
 			goto bad;
 		}
-		FD_ZERO(&reads);
-		FD_SET(s, &reads);
-		FD_SET(s2, &reads);
+		reads[0].fd = s;
+		reads[1].fd = s2;
+		reads[0].events = reads[1].events = reads[0].revents =
+						    reads[1].revents = POLLIN;
 		errno = 0;
-		if (select(MAX(s, s2) + 1, &reads, 0, 0, 0) < 1 ||
-		    !FD_ISSET(s2, &reads)) {
+		if (poll(reads, 2, 0) < 1 || (reads[1].revents & POLLIN) == 0) {
 			if (errno != 0)
 				(void)fprintf(stderr,
-				    "rcmd: select (setting up stderr): %s\n",
+				    "rcmd: poll (setting up stderr): %s\n",
 				    strerror(errno));
 			else
 				(void)fprintf(stderr,
-				"select: protocol failure in circuit setup\n");
+				"poll: protocol failure in circuit setup\n");
 			(void)close(s2);
 			goto bad;
 		}
