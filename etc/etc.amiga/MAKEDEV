@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.22 1996/06/24 18:44:28 is Exp $
+#	$NetBSD: MAKEDEV,v 1.23 1996/09/10 23:19:43 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -51,6 +51,7 @@
 # Disks:
 #	fd*	Floppy disks
 #	sd*	SCSI disks, includes flopticals
+#	ss*	SCSI scanner device
 #	cd*	SCSI cdrom discs
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk driver
@@ -92,7 +93,7 @@ all)
 	sh MAKEDEV mouse1 tty00 ttyA0 ttyA1 grf0 grf1 grf2 grf3 grf4 grf5 grf6
 	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
-	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
+	sh MAKEDEV vnd5 vnd6 ss0 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV tun0 tun1 par0 lkm local
 	;;
@@ -238,6 +239,18 @@ sd*|vnd*|ccd*)
 		echo bad unit for disk in: $i
 		;;
 	esac
+	umask 77
+	;;
+
+ss*)
+	umask 2 ; unit=`expr $i : '..\(.*\)'`
+	case $i in
+	ss*) name=ss;  chr=25;;
+	esac
+	rm -f $name$unit
+	mknod ${name}${unit}    c $chr `expr $unit '*' 16 + 0`
+	chgrp operator ${name}${unit}
+	chmod 640 ${name}${unit}
 	umask 77
 	;;
 
