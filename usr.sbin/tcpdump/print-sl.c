@@ -1,4 +1,4 @@
-/*	$NetBSD: print-sl.c,v 1.8 1997/10/03 19:55:41 christos Exp $	*/
+/*	$NetBSD: print-sl.c,v 1.9 1997/10/13 20:44:09 cjs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-sl.c,v 1.42 97/06/12 14:21:35 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-sl.c,v 1.8 1997/10/03 19:55:41 christos Exp $");
+__RCSID("$NetBSD: print-sl.c,v 1.9 1997/10/13 20:44:09 cjs Exp $");
 #endif
 #endif
 
@@ -288,7 +288,7 @@ compressed_sl_print(const u_char *chdr, const struct ip *ip,
 	hlen = ip->ip_hl;
 	hlen += ((struct tcphdr *)&((int32_t *)ip)[hlen])->th_off;
 	lastlen[dir][lastconn] = length - (hlen << 2);
-	printf(" %d (%d)", lastlen[dir][lastconn], cp - chdr);
+	printf(" %d (%d)", lastlen[dir][lastconn], (int)(cp - chdr));
 }
 #else
 #include <sys/types.h>
