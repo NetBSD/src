@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.52 2002/08/09 10:03:08 soren Exp $	 */
+/*	$NetBSD: rtld.c,v 1.53 2002/08/26 21:09:55 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -273,7 +273,8 @@ _rtld(sp)
 	Elf_Addr *sp;
 {
 	const AuxInfo  *pAUX_base, *pAUX_entry, *pAUX_execfd, *pAUX_phdr,
-	               *pAUX_phent, *pAUX_phnum;
+	               *pAUX_phent, *pAUX_phnum, *pAUX_euid, *pAUX_egid,
+		       *pAUX_ruid, *pAUX_rgid;
 #ifdef	VARPSZ
 	const AuxInfo  *pAUX_pagesz;
 #endif
@@ -329,6 +330,7 @@ _rtld(sp)
 
 	pAUX_base = pAUX_entry = pAUX_execfd = NULL;
 	pAUX_phdr = pAUX_phent = pAUX_phnum = NULL;
+	pAUX_euid = pAUX_ruid = pAUX_egid = pAUX_rgid = NULL;
 #ifdef	VARPSZ
 	pAUX_pagesz = NULL;
 #endif
@@ -381,6 +383,18 @@ _rtld(sp)
 		case AT_PHNUM:
 			pAUX_phnum = auxp;
 			break;
+		case AT_EUID:
+			pAUX_euid = auxp;
+			break;
+		case AT_RUID:
+			pAUX_ruid = auxp;
+			break;
+		case AT_EGID:
+			pAUX_egid = auxp;
+			break;
+		case AT_RGID:
+			pAUX_rgid = auxp;
+			break;
 #ifdef	VARPSZ
 		case AT_PAGESZ:
 			pAUX_pagesz = auxp;
@@ -400,7 +414,10 @@ _rtld(sp)
 	__progname = _rtld_objself.path;
 	environ = env;
 
-	_rtld_trust = geteuid() == getuid() && getegid() == getgid();
+	_rtld_trust = ((pAUX_euid ? (uid_t)pAUX_euid->a_v : geteuid()) ==
+	    (pAUX_ruid ? (uid_t)pAUX_ruid->a_v : getuid())) &&
+	    ((pAUX_egid ? (gid_t)pAUX_egid->a_v : getegid()) ==
+	    (pAUX_rgid ? (gid_t)pAUX_rgid->a_v : getgid()));
 
 	ld_bind_now = getenv("LD_BIND_NOW");
 	if (ld_bind_now != NULL && *ld_bind_now != '\0')
