@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.h,v 1.4 2004/02/14 16:59:35 kochi Exp $	*/
+/*	$NetBSD: acpi_madt.h,v 1.5 2004/03/24 12:49:45 kochi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -38,8 +38,6 @@
 #define ACPI_PLATFORM_INT_PMI	1
 #define ACPI_PLATFORM_INT_INIT	2
 #define ACPI_PLATFORM_INT_CERR	3
-
-extern ACPI_TABLE_HEADER *AcpiGbl_MADT;
 
 ACPI_STATUS acpi_madt_map(void);
 void acpi_madt_unmap(void);
