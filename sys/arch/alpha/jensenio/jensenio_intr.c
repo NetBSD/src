@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_intr.c,v 1.1 2000/07/12 20:36:09 thorpej Exp $ */
+/* $NetBSD: jensenio_intr.c,v 1.2 2000/08/14 05:38:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.1 2000/07/12 20:36:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_intr.c,v 1.2 2000/08/14 05:38:23 thorpej Exp $");
 
 #include <sys/types.h> 
 #include <sys/param.h> 
@@ -81,7 +81,9 @@ int	jensenio_eisa_intr_alloc(void *, int, int, int *);
  * We have 16 (E)ISA IRQs, plus 4 hard-wired vectors which we
  * assign to "virtual" IRQs.
  */
-#define	JENSEN_MAX_IRQ	20
+#define	JENSEN_MAX_IRQ		20
+#define	JENSEN_VECT_IRQ_BASE	16
+#define	JENSEN_IRQ_IS_EISA(x)	((x) < 16)
 
 struct alpha_shared_intr *jensenio_eisa_intr;
 
@@ -114,6 +116,17 @@ const int jensenio_intr_deftype[JENSEN_MAX_IRQ] = {
 	IST_EDGE,		/* 19: mouse (vector 0x990) */
 };
 
+static __inline void
+jensenio_specific_eoi(int irq)
+{
+
+	if (irq > 7)
+		bus_space_write_1(pic_iot, pic_ioh[1],
+		    0, 0x20 | (irq & 0x07));
+	bus_space_write_1(pic_iot, pic_ioh[0],
+	    0, 0x20 | (irq > 7 ? 2 : irq));
+}
+
 void
 jensenio_intr_init(struct jensenio_config *jcp)
 {
@@ -135,16 +148,17 @@ jensenio_intr_init(struct jensenio_config *jcp)
 		    i, 0);
 
 		cp = alpha_shared_intr_string(jensenio_eisa_intr, i);
-		if (i > 15) {
-			sprintf(cp, "0x%03x", irq_to_vector[i - 16]);
-			evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-			    jensenio_eisa_intr, i), EVCNT_TYPE_INTR,
-			    NULL, "vector", cp);
-		} else {
+		if (JENSEN_IRQ_IS_EISA(i)) {
 			sprintf(cp, "irq %d", i);
 			evcnt_attach_dynamic(alpha_shared_intr_evcnt(
 			    jensenio_eisa_intr, i), EVCNT_TYPE_INTR,
 			    NULL, "eisa", cp);
+		} else {
+			sprintf(cp, "0x%03x",
+			    irq_to_vector[i - JENSEN_VECT_IRQ_BASE]);
+			evcnt_attach_dynamic(alpha_shared_intr_evcnt(
+			    jensenio_eisa_intr, i), EVCNT_TYPE_INTR,
+			    NULL, "vector", cp);
 		}
 	}
 
@@ -180,7 +194,7 @@ int
 jensenio_eisa_intr_map(void *v, u_int eirq, eisa_intr_handle_t *ihp)
 {
 
-	if (eirq > 15) {
+	if (JENSEN_IRQ_IS_EISA(eirq) == 0) {
 		printf("jensenio_eisa_intr_map: bad EISA IRQ %d\n",
 		    eirq);
 		*ihp = -1;
@@ -203,11 +217,12 @@ jensenio_eisa_intr_string(void *v, int eirq)
 {
 	static char irqstr[64];
 
-	if (eirq > 19)
+	if (eirq >= JENSEN_MAX_IRQ)
 		panic("jensenio_eisa_intr_string: bogus IRQ %d\n", eirq);
 
-	if (eirq > 15)
-		sprintf(irqstr, "vector 0x%03x", irq_to_vector[eirq - 16]);
+	if (JENSEN_IRQ_IS_EISA(eirq) == 0)
+		sprintf(irqstr, "vector 0x%03x",
+		    irq_to_vector[eirq - JENSEN_VECT_IRQ_BASE]);
 	else
 		sprintf(irqstr, "eisa irq %d", eirq);
 
@@ -242,7 +257,7 @@ jensenio_eisa_intr_establish(void *v, int irq, int type, int level,
 	cookie = alpha_shared_intr_establish(jensenio_eisa_intr, irq,
 	    type, level, fn, arg, "eisa irq");
 
-	if (irq > 15)
+	if (JENSEN_IRQ_IS_EISA(irq) == 0)
 		return (cookie);
 
 	if (cookie != NULL &&
@@ -268,7 +283,7 @@ jensenio_eisa_intr_disestablish(void *v, void *cookie)
 	alpha_shared_intr_disestablish(jensenio_eisa_intr, cookie,
 	    "eisa irq");
 
-	if (irq > 15) {
+	if (JENSEN_IRQ_IS_EISA(irq) == 0) {
 		splx(s);
 		return;
 	}
@@ -294,6 +309,7 @@ void
 jensenio_iointr(void *framep, u_long vec)
 {
 	int irq;
+	int need_eoi = 0;
 
 	switch (vec) {
 	case 0x900: irq = 16; break;		/* com0 */
@@ -302,20 +318,20 @@ jensenio_iointr(void *framep, u_long vec)
 	case 0x990: irq = 19; break;		/* mouse */
 	default:
 		if (vec >= 0x800) {
-			if (vec >= 0x800 + (16 << 4))
+			if (vec >= 0x800 + (JENSEN_VECT_IRQ_BASE << 4))
 				panic("jensenio_iointr: vec 0x%lx out of "
 				    "range\n", vec);
 			irq = (vec - 0x800) >> 4;
+			need_eoi = 1;
 		} else
 			panic("jensenio_iointr: wierd vec 0x%lx\n", vec);
 	}
 
-	if (!alpha_shared_intr_dispatch(jensenio_eisa_intr, irq)) {
-		alpha_shared_intr_stray(jensenio_eisa_intr, irq,
-		    "eisa irq");
-		if (ALPHA_SHARED_INTR_DISABLE(jensenio_eisa_intr, irq))
-			jensenio_enable_intr(irq, 0);
-	}
+	if (!alpha_shared_intr_dispatch(jensenio_eisa_intr, irq))
+		alpha_shared_intr_stray(jensenio_eisa_intr, irq, "eisa irq");
+
+	if (need_eoi)
+		jensenio_specific_eoi(irq);
 }
 
 void
