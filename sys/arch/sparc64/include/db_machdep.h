@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2 1998/08/13 02:10:44 eeh Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.3 1998/08/30 15:32:17 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -48,7 +48,7 @@ typedef	long		db_expr_t;	/* expression - signed */
 #if 1
 typedef struct {
 	struct trapframe ddb_tf;
-	struct frame	 ddb_fr;
+	struct frame64	 ddb_fr;
 } db_regs_t;
 #else
 struct trapregs {

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 1998/08/13 02:10:45 eeh Exp $ */
+/*	$NetBSD: clock.c,v 1.3 1998/08/30 15:32:18 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -177,7 +177,7 @@ clock_map(bh, model)
 	struct clockreg *cl;
 
 	pmap_changeprot(pmap_kernel(), (vaddr_t)bh, VM_PROT_READ, 1);
-	cl = (struct clockreg *)((int)bh + CLK_MK48T08_OFF);
+	cl = (struct clockreg *)((long)bh + CLK_MK48T08_OFF);
 
 	return (cl);
 }
@@ -297,9 +297,9 @@ timerattach(parent, self, aux)
 	/* Get address property */
 	if (getpropA(ma->ma_node, "address", sizeof(*va),
 		     &nreg, (void **)&va) == 0) {
-		timerreg_4u.t_timer = (struct timer_4u *)(int)va[0];
-		timerreg_4u.t_clrintr = (int64_t *)(int)va[1];
-		timerreg_4u.t_mapintr = (int64_t *)(int)va[2];
+		timerreg_4u.t_timer = (struct timer_4u *)(long)va[0];
+		timerreg_4u.t_clrintr = (int64_t *)(long)va[1];
+		timerreg_4u.t_mapintr = (int64_t *)(long)va[2];
 	} else {
 		/* Map the system timer -- Not an SBUS device */
 		if (bus_space_map2(ma->ma_bustag, 0,
@@ -312,11 +312,11 @@ timerattach(parent, self, aux)
 		}
 		
 		timerreg_4u.t_timer = (struct timer_4u *)
-			(TIMERREG_VA + (((int)ur[0].ur_paddr)&PGOFSET));
+			(TIMERREG_VA + (((long)ur[0].ur_paddr)&PGOFSET));
 		timerreg_4u.t_clrintr = (int64_t *)
-			(TIMERREG_VA + (((int)ur[1].ur_paddr)&PGOFSET));
+			(TIMERREG_VA + (((long)ur[1].ur_paddr)&PGOFSET));
 		timerreg_4u.t_mapintr = (int64_t *)
-			(TIMERREG_VA + (((int)ur[2].ur_paddr)&PGOFSET));
+			(TIMERREG_VA + (((long)ur[2].ur_paddr)&PGOFSET));
 	}
 
 	cnt = &(timerreg_4u.t_timer[0].t_count);

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.5 1998/08/22 22:45:19 eeh Exp $ */
+/*	$NetBSD: types.h,v 1.6 1998/08/30 15:32:17 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,9 @@ typedef unsigned long		u_int64_t;
 typedef	long long		  int64_t;
 typedef	unsigned long long	u_int64_t;
 #endif
-typedef int32_t			register_t;
+typedef long			register_t;
+typedef int32_t			register32_t;
+typedef int64_t			register64_t;
 
 /* NB: This should probably be if defined(_KERNEL) */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)

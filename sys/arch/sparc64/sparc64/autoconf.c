@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 1998/08/13 02:10:45 eeh Exp $ */
+/*	$NetBSD: autoconf.c,v 1.4 1998/08/30 15:32:17 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -854,7 +854,8 @@ void *
 findzs(zs)
 	int zs;
 {
-	register int node, addr, n;
+	int node, n;
+	unsigned long addr;
 
 	node = firstchild(findroot());
 	/* Ultras have zs on the sbus */

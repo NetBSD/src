@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 1998/08/29 18:16:56 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.7 1998/08/30 15:32:19 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -587,7 +587,7 @@ sendsig(catcher, sig, mask, code)
 	register struct sigacts *psp = p->p_sigacts;
 	register struct sigframe *fp;
 	register struct trapframe *tf;
-	register int addr, oonstack; 
+	vaddr_t addr, oonstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp, /* DEBUG */tmpwin;
 	struct sigframe sf;
 	extern char sigcode[], esigcode[];
@@ -599,7 +599,7 @@ sendsig(catcher, sig, mask, code)
 #endif
 
 	tf = p->p_md.md_tf;
-	oldsp = (struct rwindow32 *)(int)tf->tf_out[6];
+	oldsp = (struct rwindow32 *)tf->tf_out[6];
 	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	/*
 	 * Compute new user stack addresses, subtract off
@@ -612,7 +612,7 @@ sendsig(catcher, sig, mask, code)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)oldsp;
-	fp = (struct sigframe *)((int)(fp - 1) & ~7);
+	fp = (struct sigframe *)((long)(fp - 1) & ~7);
 
 #ifdef DEBUG
 	sigpid = p->p_pid;
@@ -639,7 +639,7 @@ sendsig(catcher, sig, mask, code)
 	 */
 	sf.sf_sc.sc_onstack = oonstack;
 	sf.sf_sc.sc_mask = mask;
-	sf.sf_sc.sc_sp = (int)oldsp;
+	sf.sf_sc.sc_sp = (long)oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
 	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
@@ -655,7 +655,7 @@ sendsig(catcher, sig, mask, code)
 	 * joins seamlessly with the frame it was in when the signal occurred,
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
-	newsp = (struct rwindow32 *)((int)fp - sizeof(struct rwindow32));
+	newsp = (struct rwindow32 *)((vaddr_t)fp - sizeof(struct rwindow32));
 	write_user_windows();
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
@@ -678,7 +678,7 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	    copyin(oldsp, &tmpwin, sizeof(tmpwin)) || copyout(&tmpwin, newsp, sizeof(tmpwin)) ||
 #endif
-	    suword(&(((union rwindow *)newsp)->v8.rw_in[6]), (u_int)oldsp)) {
+	    suword(&(((union rwindow *)newsp)->v8.rw_in[6]), (vaddr_t)oldsp)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -710,16 +710,16 @@ sendsig(catcher, sig, mask, code)
 	 */
 #ifdef COMPAT_SUNOS
 	if (psp->ps_usertramp & sigmask(sig)) {
-		addr = (int)catcher;	/* user does his own trampolining */
+		addr = (vaddr_t)catcher;	/* user does his own trampolining */
 	} else
 #endif
 	{
-		addr = (int)PS_STRINGS - szsigcode;
-		tf->tf_global[1] = (int)catcher;
+		addr = (vaddr_t)PS_STRINGS - szsigcode;
+		tf->tf_global[1] = (vaddr_t)catcher;
 	}
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (u_int64_t)(int)newsp;
+	tf->tf_out[6] = (register64_t)newsp;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sendsig: about to return to catcher %p thru %p\n", 
@@ -777,7 +777,7 @@ sys_sigreturn(p, v, retval)
 	}
 #endif
 	scp = SCARG(uap, sigcntxp);
- 	if ((int)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+ 	if ((vaddr_t)scp & 3 || (copyin((caddr_t)scp, &sc, sizeof sc) != 0))
 #ifdef DEBUG
 	{
 		printf("sigreturn: copyin failed\n");
@@ -1043,8 +1043,8 @@ dumpsys()
 	blkno += pmap_dumpsize();
 #endif
 	for (mp = mem; mp->size; mp++) {
-		register unsigned i = 0, n;
-		register maddr = mp->start;
+		unsigned i = 0, n;
+		paddr_t maddr = mp->start;
 
 		if (maddr == 0) {
 			/* Skip first page at physical address 0 */
@@ -1127,7 +1127,7 @@ trapdump(tf)
 void
 stackdump()
 {
-	struct frame *fp = getfp(), *sfp;
+	struct frame32 *fp = (struct frame32 *)getfp(), *sfp;
 	struct frame64 *fp64;
 
 	sfp = fp;
@@ -1141,14 +1141,14 @@ stackdump()
 			       (long)fp64->fr_pc, fp64->fr_arg[0], fp64->fr_arg[1], fp64->fr_arg[2],
 			       fp64->fr_arg[3], fp64->fr_arg[4], fp64->fr_arg[5], fp64->fr_arg[6],
 			       (long)fp64->fr_fp);
-			fp = (struct frame*)fp64->fr_fp;
+			fp = (struct frame32*)fp64->fr_fp;
 		} else {
 			/* 32-bit frame */
 			printf("  pc = %x  args = (%x, %x, %x, %x, %x, %x, %x) fp = %p\n",
 			       fp->fr_pc, fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2],
 			       fp->fr_arg[3], fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6],
 			       fp->fr_fp);
-			fp = fp->fr_fp;
+			fp = (struct frame32*)fp->fr_fp;
 		}
 	}
 }
@@ -1707,7 +1707,10 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	int r, cbit;
 	size_t oversize;
 	u_long align;
+#if 0
+	/* This went away with dvma_mapin.  We may need it later */
 	extern u_long dvma_cachealign;
+#endif
 
 	if (nsegs != 1)
 		panic("_bus_dmamem_map: nsegs = %d", nsegs);

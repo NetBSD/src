@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.4 1998/08/27 06:23:31 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.5 1998/08/30 15:32:18 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -187,10 +187,27 @@ kdb_trap(type, tf)
 	ddb_regs.ddb_tf = *tf;
 	/* We should do a proper copyin and xlate 64-bit stack frames, but... */
 /*	if (tf->tf_tstate & TSTATE_PRIV) { */
-	if ((unsigned)tf->tf_out[6] > (unsigned)KERNBASE) {
-		ddb_regs.ddb_fr = *(struct frame *)tf->tf_out[6];
+	
+	if (tf->tf_out[6] & 1) {
+		if ((unsigned)(tf->tf_out[6] + BIAS) > (unsigned)KERNBASE)
+			ddb_regs.ddb_fr = *(struct frame64 *)(tf->tf_out[6] + BIAS);
+		else
+			copyin((caddr_t)(tf->tf_out[6] + BIAS), &ddb_regs.ddb_fr, sizeof(struct frame64));
 	} else {
-		copyin(tf->tf_out[6], &ddb_regs.ddb_fr, sizeof(struct frame));
+		struct frame32 tfr;
+		
+		/* First get a local copy of the frame32 */
+		if ((unsigned)(tf->tf_out[6]) > (unsigned)KERNBASE)
+			tfr = *(struct frame32 *)tf->tf_out[6];
+		else
+			copyin((caddr_t)(tf->tf_out[6]), &tfr, sizeof(struct frame32));
+		/* Now copy each field from the 32-bit value to the 64-bit value */
+		for (i=0; i<8; i++)
+			ddb_regs.ddb_fr.fr_local[i] = tfr.fr_local[i];
+		for (i=0; i<6; i++)
+			ddb_regs.ddb_fr.fr_arg[i] = tfr.fr_arg[i];
+		ddb_regs.ddb_fr.fr_fp = (long)tfr.fr_fp;
+		ddb_regs.ddb_fr.fr_pc = tfr.fr_pc;
 	}
 
 	db_active++;
@@ -252,7 +269,6 @@ db_write_bytes(addr, size, data)
 	register size_t	size;
 	register char	*data;
 {
-	extern char	etext[];
 	register char	*dst;
 
 	dst = (char *)addr;
@@ -331,22 +347,22 @@ db_dump_pmap(pm)
 struct pmap* pm;
 {
 	/* print all valid pages in the kernel pmap */
-	int i, j, k, n;
+	long i, j, k, n;
 	paddr_t *pdir, *ptbl;
 	/* Almost the same as pmap_collect() */
 	
 	n = 0;
 	for (i=0; i<STSZ; i++) {
-		if((pdir = (paddr_t *)ldda(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
+		if((pdir = (paddr_t *)ldxa(&pm->pm_segs[i], ASI_PHYS_CACHED))) {
 			db_printf("pdir %d at %x:\n", i, (long)pdir);
 			for (k=0; k<PDSZ; k++) {
-				if (ptbl = (paddr_t)ldda(&pdir[k], ASI_PHYS_CACHED)) {
+				if (ptbl = (paddr_t *)ldxa(&pdir[k], ASI_PHYS_CACHED)) {
 					db_printf("ptable %d:%d at %x:\n", i, k, (long)ptbl);
 					for (j=0; j<PTSZ; j++) {
 						int64_t data0, data1;
-						data0 = ldda(&ptbl[j], ASI_PHYS_CACHED);
+						data0 = ldxa(&ptbl[j], ASI_PHYS_CACHED);
 						j++;
-						data1 = ldda(&ptbl[j], ASI_PHYS_CACHED);
+						data1 = ldxa(&ptbl[j], ASI_PHYS_CACHED);
 						if (data0 || data1) {
 							db_printf("%p: %x:%x\t",
 								  (i<<STSHIFT)|(k<<PDSHIFT)|((j-1)<<PTSHIFT),
@@ -402,7 +418,7 @@ db_pmap_kernel(addr, have_addr, count, modif)
 		db_dump_pmap(&kernel_pmap_);
 	} else {
 		for (j=i=0; i<STSZ; i++) {
-			long seg = ldda(&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
+			long seg = (long)ldxa(&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
 			if (seg)
 				db_printf("seg %ld => %p%c", i, seg, (j++%4)?'\t':'\n');
 		}
@@ -440,7 +456,7 @@ db_pmap_cmd(addr, have_addr, count, modif)
 		db_dump_pmap(pm);
 	} else {
 		for (i=0; i<STSZ; i++) {
-			long seg = ldda(&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
+			long seg = (long)ldxa(&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
 			if (seg)
 				db_printf("seg %ld => %p%c", i, seg, (j++%4)?'\t':'\n');
 		}
@@ -611,7 +627,6 @@ db_setpcb(addr, have_addr, count, modif)
 	struct proc *p, *pp;
 
 	extern struct pcb *cpcb;
-	int i;
 
 	if (!have_addr) {
 		db_printf("What PID do you want to map in?\n");
@@ -650,7 +665,6 @@ db_traptrace(addr, have_addr, count, modif)
 		int tsp;
 		int tpc;
 	} trap_trace[], trap_trace_end[];
-	extern int trap_trace_ptr;
 	int i, j;
 
 	if (have_addr) {
@@ -692,7 +706,6 @@ db_dump_buf(addr, have_addr, count, modif)
 	char *modif;
 {
 	struct buf *buf;
-	int i;
 	char * flagnames = "\20\034VFLUSH\033XXX\032WRITEINPROG\031WRITE\030WANTED"
 		"\027UAREA\026TAPE\025READ\024RAW\023PHYS\022PAGIN\021PAGET"
 		"\020NOCACHE\017LOCKED\016INVAL\015GATHERED\014ERROR\013EINTR"
@@ -712,7 +725,7 @@ db_dump_buf(addr, have_addr, count, modif)
 		  buf->b_dev, buf->b_un.b_addr);
 	db_printf("saveaddr:%p lblkno:%x blkno:%x iodone:%x",
 		  buf->b_saveaddr, buf->b_lblkno, buf->b_blkno, buf->b_iodone);
-	db_printsym((int)buf->b_iodone, DB_STGY_PROC);
+	db_printsym((long)buf->b_iodone, DB_STGY_PROC);
 	db_printf("\nvp:%p dirtyoff:%x dirtyend:%x\n", buf->b_vp, buf->b_dirtyoff, buf->b_dirtyend);
 }
 

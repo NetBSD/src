@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.3 1998/08/13 02:10:42 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.4 1998/08/30 15:32:16 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -672,11 +672,11 @@ sbus_remove(sc, va, len)
 		}
 #ifdef DEBUG
 		if (sbusdebug & SDB_DVMA)
-			printf("sbus_remove: flushed va %p TSB[%x]@%p=%x:%x\n", 	       
-			       (int)va, (int)IOTSBSLOT(va,sc->sc_tsbsize), 
-			       (int)&sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)],
-			       (int)((sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)])>>32), 
-			       (int)(sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)]));
+			printf("sbus_remove: flushed va %p TSB[%x]@%p=%lx:%lx\n", 	       
+			       (long)va, (int)IOTSBSLOT(va,sc->sc_tsbsize), 
+			       (long)&sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)],
+			       (long)((sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)])>>32), 
+			       (long)(sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)]));
 #endif
 		sc->sc_tsb[IOTSBSLOT(va,sc->sc_tsbsize)] = 0;
 #if 0
@@ -722,7 +722,7 @@ sbus_flush(sc)
 	while( !sc->sc_flush && flushtimeout > tick()) membar_sync();
 #ifdef DIAGNOSTIC
 	if( !sc->sc_flush )
-		printf("sbus_remove: flush timeout %x at %x:%x\n", (int)sc->sc_flush, 
+		printf("sbus_remove: flush timeout %p at %x:%x\n", (long)sc->sc_flush, 
 		       (int)(sc->sc_flushpa>>32), (int)sc->sc_flushpa); /* panic? */
 #endif
 	return (sc->sc_flush);
