@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.7 2003/12/26 15:06:16 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.8 2003/12/26 15:15:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.7 2003/12/26 15:06:16 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.8 2003/12/26 15:15:49 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -497,7 +497,7 @@ file_uncompress(char *file)
 		/* gather the old name info */
 		if (Nflag || lflag) {
 			int fd;
-			char header1[10], name[PATH_MAX + 1];
+			unsigned char header1[10], name[PATH_MAX + 1];
 
 			fd = open(file, O_RDONLY);
 			if (fd < 0)
