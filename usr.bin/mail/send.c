@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.7 1997/10/19 05:03:52 lukem Exp $	*/
+/*	$NetBSD: send.c,v 1.7.2.1 1997/11/26 03:49:24 mellon Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: send.c,v 1.7 1997/10/19 05:03:52 lukem Exp $");
+__RCSID("$NetBSD: send.c,v 1.7.2.1 1997/11/26 03:49:24 mellon Exp $");
 #endif
 #endif /* not lint */
 
@@ -419,7 +419,9 @@ fixhead(hp, tolist)
 	hp->h_to = NIL;
 	hp->h_cc = NIL;
 	hp->h_bcc = NIL;
-	for (np = tolist; np != NIL; np = np->n_flink)
+	for (np = tolist; np != NIL; np = np->n_flink) {
+		if (np->n_type & GDEL)
+			continue;	/* Don't copy deleted addresses to the header */
 		if ((np->n_type & GMASK) == GTO)
 			hp->h_to =
 				cat(hp->h_to, nalloc(np->n_name, np->n_type));
@@ -429,6 +431,7 @@ fixhead(hp, tolist)
 		else if ((np->n_type & GMASK) == GBCC)
 			hp->h_bcc =
 				cat(hp->h_bcc, nalloc(np->n_name, np->n_type));
+	}
 }
 
 /*
