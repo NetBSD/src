@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.19 1997/03/24 22:11:57 christos Exp $
+#	$NetBSD: Makefile,v 1.20 1997/05/09 07:50:15 mycroft Exp $
 
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
 		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x\
 		sm_inter.x spray.x yp.x yppasswd.x
-SRCS=		${RPCSRCS:R:S/$/.c/g}
+SRCS=		${RPCSRCS:R:S/$/.c/g} ${HDRS}
 HDRS=           ${RPCSRCS:R:S/$/.h/g}
 CLEANFILES+=	${SRCS} ${HDRS}
 
@@ -14,9 +14,6 @@ INCSDIR=/usr/include/rpcsvc
 LIB=		rpcsvc
 NOMAN=
 NOPIC=
-
-all:		${HDRS}
-beforedepend:	${HDRS}
 
 # We don't use explicit suffix rules here to avoid dependencies in the
 # Installed files.

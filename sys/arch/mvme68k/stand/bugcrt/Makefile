@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1996/05/17 19:43:48 chuck Exp $
+#	$NetBSD: Makefile,v 1.3 1997/05/09 07:50:31 mycroft Exp $
 #
 # DO NOT OPTMIZE bugcrt (i.e. no "-O2")
 #
@@ -15,8 +15,6 @@ bugcrt.o: bugcrt.c
 	${LD} -x -r ${.TARGET}
 	mv a.out ${.TARGET}
 
-install:
-
-lint tags:
+proginstall::
 
 .include <bsd.prog.mk>

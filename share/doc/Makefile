@@ -2,6 +2,4 @@
 
 SUBDIR=	psd smm usd
 
-all depend includes lint tags:
-
 .include <bsd.subdir.mk>

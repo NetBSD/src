@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1997/03/05 03:45:05 jonathan Exp $
+#	$NetBSD: Makefile,v 1.9 1997/05/09 07:50:11 mycroft Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
 
 CFLAGS+=	-DLIBC_SCCS -fPIC -DPIC -DDYNAMIC -DELFSIZE=32
@@ -30,7 +30,5 @@ crtn.o: crtend.c
 install:
 	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${OBJS} \
 	    ${DESTDIR}/usr/lib
-
-depend lint tags:
 
 .include <bsd.prog.mk>

@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 1997/03/24 22:11:53 christos Exp $
+#	$NetBSD: Makefile,v 1.8 1997/05/09 07:50:14 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
 
-OSRCS=	chared.c common.c el.c emacs.c hist.c key.c map.c parse.c \
-	prompt.c read.c refresh.c search.c sig.c term.c tty.c vi.c \
-	help.c fcns.c
+OSRCS=	chared.c common.c el.c emacs.c fcns.c help.c hist.c key.c map.c \
+	parse.c prompt.c read.c refresh.c search.c sig.c term.c tty.c vi.c
 
 MAN=	editline.3 editrc.5
 
@@ -21,10 +20,12 @@ MLINKS=	editline.3 el_init.3 editline.3 el_end.3 editline.3 el_reset.3 \
 # For protection
 SRCS=	editline.c tokenizer.c history.c
 
+SRCS+=	common.h emacs.h fcns.h help.h vi.h
+
 INCS= histedit.h
 INCSDIR=/usr/include
 
-CLEANFILES+=common.h emacs.h fcns.h help.h vi.h help.c fcns.c editline.c
+CLEANFILES+=common.h editline.c emacs.h fcns.c fcns.h help.c help.h vi.h
 CFLAGS+=-I. -I${.CURDIR} 
 CFLAGS+=#-DDEBUG_TTY -DDEBUG_KEY -DDEBUG_READ -DDEBUG -DDEBUG_REFRESH
 CFLAGS+=#-DDEBUG_PASTE
@@ -55,10 +56,6 @@ help.h: ${ASRC} makelist
 
 editline.c: ${OSRCS}
 	sh ${.CURDIR}/makelist -e ${.ALLSRC:T} > ${.TARGET}
-
-.depend: vi.h emacs.h common.h fcns.h help.h help.c
-all: vi.h emacs.h common.h fcns.h help.h help.c
-
 
 test:	libedit.a test.o 
 	${CC} ${CFLAGS} ${.ALLSRC} -o ${.TARGET} libedit.a ${LDADD} -ltermcap

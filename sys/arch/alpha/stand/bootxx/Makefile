@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 1997/04/17 07:27:49 thorpej Exp $
+# $NetBSD: Makefile,v 1.13 1997/05/09 07:50:27 mycroft Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -28,9 +28,6 @@ ${PROG}: ${PROG}.nosym ${HEADERSIZE_PROG}
 	dd if=${PROG}.nosym of=${PROG} \
 	    ibs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${PROG}.nosym` skip=1 \
 	    obs=`expr 15 \* 512` conv=osync
-
-# no lint here (yet?)
-lint:
 
 .include <bsd.prog.mk>
 

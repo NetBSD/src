@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.28 1997/05/08 21:11:04 gwr Exp $
+#	$NetBSD: Makefile,v 1.29 1997/05/09 07:50:04 mycroft Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
 SHSRCS=	alias.c cd.c echo.c error.c eval.c exec.c expand.c \
 	histedit.c input.c jobs.c mail.c main.c memalloc.c miscbltin.c \
 	mystring.c options.c parser.c redir.c show.c trap.c output.c var.c
-GENSRCS= arith.c arith_lex.c builtins.c init.c nodes.c syntax.c
-SRCS= ${SHSRCS} ${GENSRCS}
+GENSRCS=arith.c arith_lex.c builtins.c builtins.h init.c nodes.c nodes.h \
+	syntax.c syntax.h token.h
+SRCS=	${SHSRCS} ${GENSRCS}
 
 LDADD+=	-ll -ledit -ltermcap
 DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
@@ -22,16 +23,13 @@ CFLAGS+= -w
 
 .PATH:	${.CURDIR}/bltin ${.CURDIR}/../../usr.bin/printf
 
-CLEANFILES+= builtins.h mkinit mknodes mksyntax \
-	nodes.h syntax.h token.h y.tab.h
-CLEANFILES+= ${GENSRCS}
-
-beforedepend: token.h
+CLEANFILES+= mkinit mknodes mksyntax
+CLEANFILES+= ${GENSRCS} y.tab.h
 
 token.h: mktokens
 	sh ${.CURDIR}/mktokens
 
-builtins.h builtins.c: mkbuiltins builtins.def
+builtins.c builtins.h: mkbuiltins builtins.def
 	cd ${.CURDIR}; sh mkbuiltins ${.OBJDIR}
 
 init.c: mkinit ${SHSRCS}
@@ -42,8 +40,6 @@ nodes.c nodes.h: mknodes nodetypes nodes.c.pat
 
 syntax.c syntax.h: mksyntax
 	./mksyntax
-
-parser.o: token.h
 
 mkinit: mkinit.c
 	${HOST_COMPILE.c} ${.CURDIR}/mkinit.c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/04/17 07:31:43 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1997/05/09 07:50:29 mycroft Exp $
 
 BINDIR=		/usr/mdec
 BINMODE=	${NONBINMODE}
@@ -6,10 +6,6 @@ BINMODE=	${NONBINMODE}
 STRIPFLAG=
 LDFLAGS=	-nostdlib -static -Wl,-T0,-N
 CPPFLAGS+=	-I- -I. -I..
-
-depend:
-	@rm -f .depend
-	${CPP} ${CPPFLAGS} -M ${SRCS} >.depend
 
 beforeinstall:
 	dd if=${PROG} of=${PROG}X bs=32 skip=1 count=16  2>/dev/null

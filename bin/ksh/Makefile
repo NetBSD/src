@@ -1,14 +1,13 @@
-#	$NetBSD: Makefile,v 1.4 1997/01/16 21:17:53 perry Exp $
+#	$NetBSD: Makefile,v 1.5 1997/05/09 07:50:03 mycroft Exp $
 CFLAGS+=	-DHAVE_CONFIG_H -I.
 
 PROG=	ksh
-SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
+SRCS=	emacs.out siglist.out \
+	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
 	eval.c exec.c expr.c history.c io.c jobs.c lex.c mail.c \
 	main.c misc.c path.c shf.c sigact.c syn.c table.c trap.c \
 	tree.c tty.c var.c version.c vi.c
 CLEANFILES+=emacs.out siglist.out
-
-beforedepend:	emacs.out siglist.out
 
 # two steps to prevent the creation of a bogus siglist.out
 siglist.out: config.h sh.h siglist.in siglist.sh
@@ -19,8 +18,5 @@ siglist.out: config.h sh.h siglist.in siglist.sh
 emacs.out: emacs.c
 	sh $(.CURDIR)/emacs-gen.sh $(.CURDIR)/emacs.c > tmpemacs.out
 	mv tmpemacs.out emacs.out
-
-emacs.o: emacs.out
-trap.o: siglist.out
 
 .include <bsd.prog.mk>

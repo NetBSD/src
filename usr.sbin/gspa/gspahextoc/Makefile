@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 1996/12/23 00:19:05 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1997/05/09 07:50:35 mycroft Exp $
 
 PROG=	gspahextoc
-SRCS=	gspahextoc.l
+SRCS=	gspahextoc.c
 NOMAN=	noman
 LDADD=	-ll
 DPADD=	${LIBL}
@@ -9,5 +9,3 @@ DPADD=	${LIBL}
 CLEANFILES+= gspahextoc.c
 
 .include <bsd.prog.mk>
-
-.depend: gspahextoc.c

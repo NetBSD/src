@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/04/30 00:40:44 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1997/05/09 07:50:13 mycroft Exp $
 
 # MD4/MD5 sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/md ${.CURDIR}/md
@@ -23,5 +23,3 @@ md5.3: mdX.3
 	sed -e 's/mdX/md5/g' -e 's/MDX/MD5/g' $> > $@
 	cat ${>:H}/md5.copyright >> $@
 .endif
-
-beforedepend: md4hl.c md5hl.c
