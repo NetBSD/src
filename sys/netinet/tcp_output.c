@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.34 1998/04/13 21:18:19 kml Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.35 1998/04/29 03:44:12 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -150,13 +150,21 @@ tcp_segsize(tp, txsegsizep, rxsegsizep)
 	*rxsegsizep = min(tp->t_ourmss, size);
 
 	if (*txsegsizep != tp->t_segsz) {
-	        /* 
-		 * XXX:  should we check to make sure these are all
-		 *       at least txsegsize in length, now?
+		/*
+		 * If the new segment size is larger, we don't want to 
+		 * mess up the congestion window, but if it is smaller
+		 * we'll have to reduce the congestion window to ensure
+		 * that we don't get into trouble with initial windows
+		 * and the rest.  In any case, if the segment size
+		 * has changed, chances are the path has, too, and
+		 * our congestion window will be different.
 		 */
-		tp->snd_cwnd = (tp->snd_cwnd / tp->t_segsz) * *txsegsizep;
-		tp->snd_ssthresh = (tp->snd_ssthresh / tp->t_segsz) * 
-		    *txsegsizep;
+		if (*txsegsizep < tp->t_segsz) {
+			tp->snd_cwnd = max((tp->snd_cwnd / tp->t_segsz) 
+					   * *txsegsizep, *txsegsizep);
+			tp->snd_ssthresh = max((tp->snd_ssthresh / tp->t_segsz) 
+						* *txsegsizep, *txsegsizep);
+		}
 		tp->t_segsz = *txsegsizep;
 	}
 }

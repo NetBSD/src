@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.33 1998/02/10 01:26:33 perry Exp $	*/
+/*	$NetBSD: in.h,v 1.34 1998/04/29 03:44:11 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -289,7 +289,8 @@ struct ip_mreq {
 #define	IPCTL_MTUDISC		9	/* allow path MTU discovery */
 #define	IPCTL_ANONPORTMIN      10	/* minimum ephemeral port */
 #define	IPCTL_ANONPORTMAX      11	/* maximum ephemeral port */
-#define	IPCTL_MAXID	       12
+#define	IPCTL_MTUDISCTIMEOUT   12	/* allow path MTU discovery */
+#define	IPCTL_MAXID	       13
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -304,6 +305,7 @@ struct ip_mreq {
 	{ "mtudisc", CTLTYPE_INT }, \
 	{ "anonportmin", CTLTYPE_INT }, \
 	{ "anonportmax", CTLTYPE_INT }, \
+	{ "mtudisctimeout", CTLTYPE_INT }, \
 }
 
 
