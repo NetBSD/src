@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.18 2000/05/02 22:13:20 jdolecek Exp $	*/
+/*	$NetBSD: lkm.h,v 1.18.4.1 2001/03/11 22:15:46 he Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -293,7 +293,7 @@ extern int	lkmdispatch __P((struct lkm_table *, int));
 #define	LMRESERV_O	_IOWR('K', 0, struct lmc_oresrv)
 #define	LMLOADBUF	_IOW('K', 1, struct lmc_loadbuf)
 #define	LMUNRESRV	_IO('K', 2)
-#define	LMREADY		_IOW('K', 3, int)
+#define	LMREADY		_IOW('K', 3, u_long)
 #define	LMRESERV	_IOWR('K', 4, struct lmc_resrv)
 
 #define	LMLOAD		_IOW('K', 9, struct lmc_load)
