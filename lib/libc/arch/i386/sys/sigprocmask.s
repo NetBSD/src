@@ -32,12 +32,14 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)sigprocmask.s	5.2 (Berkeley) 12/17/90
+ *	$Id: sigprocmask.s,v 1.2 1993/10/21 02:19:39 jtc Exp $
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	.text
-	/*.asciz "from: @(#)sigprocmask.s	5.2 (Berkeley) 12/17/90"*/
-	.asciz "$Id: sigprocmask.s,v 1.1 1993/10/07 00:19:55 cgd Exp $"
+	.asciz "$Id: sigprocmask.s,v 1.2 1993/10/21 02:19:39 jtc Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
