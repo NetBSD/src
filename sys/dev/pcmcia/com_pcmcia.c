@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.13 1997/10/15 21:53:24 thorpej Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.14 1997/10/16 01:58:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -58,8 +58,9 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciareg.h>
 
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+
 #include <dev/isa/isareg.h>
 
 #define PCMCIA_MANUFACTURER_3COM		0x101
