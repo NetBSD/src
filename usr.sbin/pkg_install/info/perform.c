@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.35 2001/03/06 10:30:54 wiz Exp $	*/
+/*	$NetBSD: perform.c,v 1.36 2001/03/10 13:18:09 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.35 2001/03/06 10:30:54 wiz Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36 2001/03/10 13:18:09 wiz Exp $");
 #endif
 #endif
 
@@ -257,6 +257,7 @@ foundpkg(const char *found, char *data)
 
 /*
  * Check if a package "pkgspec" (which can be a pattern) is installed.
+ * dbdir contains the return value of _pkgdb_getPKGDB_DIR(), for reading only.
  * Return 0 if found, 1 otherwise (indicating an error).
  */
 static int
@@ -280,8 +281,7 @@ CheckForPkg(char *pkgspec, char *dbdir)
 		
 		char    try[FILENAME_MAX];
 		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkgspec);
-		if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
-			foundpkg, dbdir) != 0) {
+		if (findmatchingname(dbdir, try, foundpkg, dbdir) != 0) {
 			error = 0;
 		}
 	}
@@ -305,9 +305,8 @@ pkg_perform(lpkg_head_t *pkgs)
 
 	signal(SIGINT, cleanup);
 
-	if ((tmp = getenv(PKG_DBDIR)) == (char *) NULL) {
-		tmp = DEF_LOG_DIR;
-	}
+	tmp = _pkgdb_getPKGDB_DIR();
+
 	/* Overriding action? */
 	if (CheckPkg) {
 		err_cnt += CheckForPkg(CheckPkg, tmp);
