@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.10 2002/07/06 21:31:55 wiz Exp $ */
+/*	$NetBSD: mkalias.c,v 1.11 2003/07/14 05:55:38 itojun Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.10 2002/07/06 21:31:55 wiz Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.11 2003/07/14 05:55:38 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -303,7 +303,7 @@ main(int argc, char *argv[])
 	}
 
 	if (new_db != NULL) {
-	  	sprintf(datestr, "%010d", (int)time(NULL));
+	  	snprintf(datestr, sizeof(datestr), "%010d", (int)time(NULL));
 		key.dptr = YP_LAST_KEY;
 		key.dsize = strlen(YP_LAST_KEY);
 		val.dptr = datestr;
