@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_resource.c,v 1.4 1999/09/07 18:20:19 christos Exp $	 */
+/*	$NetBSD: svr4_resource.c,v 1.5 1999/09/28 14:47:02 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ svr4_sys_setrlimit(p, v, retval)
 	else if (slim.rlim_cur == SVR4_RLIM_SAVED_CUR)
 		blim.rlim_cur = limp->rlim_cur;
 
-	return dosetrlimit(p, rl, &blim);
+	return dosetrlimit(p, p->p_cred, rl, &blim);
 }
 
 
@@ -283,5 +283,5 @@ svr4_sys_setrlimit64(p, v, retval)
 	else if (slim.rlim_cur == SVR4_RLIM64_SAVED_CUR)
 		blim.rlim_cur = limp->rlim_cur;
 
-	return dosetrlimit(p, rl, &blim);
+	return dosetrlimit(p, p->p_cred, rl, &blim);
 }

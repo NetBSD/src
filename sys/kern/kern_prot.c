@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.54 1999/04/30 05:30:32 cgd Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.55 1999/09/28 14:47:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -335,7 +335,7 @@ sys_setuid(p, v, retval)
 	pc->pc_ucred->cr_uid = uid;
 	pc->p_ruid = uid;
 	pc->p_svuid = uid;
-	p->p_flag |= P_SUGID;
+	p_sugid(p);
 	return (0);
 }
 
@@ -363,7 +363,7 @@ sys_seteuid(p, v, retval)
 	 */
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_uid = euid;
-	p->p_flag |= P_SUGID;
+	p_sugid(p);
 	return (0);
 }
 
@@ -408,7 +408,7 @@ sys_setreuid(p, v, retval)
 	}
 
 	if (euid != (uid_t)-1 && ruid != (uid_t)-1)
-		p->p_flag |= P_SUGID;
+		p_sugid(p);
 	return (0);
 }
 
@@ -434,7 +434,7 @@ sys_setgid(p, v, retval)
 	pc->pc_ucred->cr_gid = gid;
 	pc->p_rgid = gid;
 	pc->p_svgid = gid;
-	p->p_flag |= P_SUGID;
+	p_sugid(p);
 	return (0);
 }
 
@@ -458,7 +458,7 @@ sys_setegid(p, v, retval)
 		return (error);
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = egid;
-	p->p_flag |= P_SUGID;
+	p_sugid(p);
 	return (0);
 }
 
@@ -501,7 +501,7 @@ sys_setregid(p, v, retval)
 	}
 
 	if (egid != (gid_t)-1 && rgid != (gid_t)-1)
-		p->p_flag |= P_SUGID;
+		p_sugid(p);
 	return (0);
 }
 
@@ -531,7 +531,7 @@ sys_setgroups(p, v, retval)
 	if (error)
 		return (error);
 	pc->pc_ucred->cr_ngroups = ngrp;
-	p->p_flag |= P_SUGID;
+	p_sugid(p);
 	return (0);
 }
 
