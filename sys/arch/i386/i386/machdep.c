@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.451 2001/08/02 22:04:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.452 2001/08/03 01:24:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -2166,9 +2166,10 @@ setregs(p, pack, stack)
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
-	if (i386_use_fxsave)
+	if (i386_use_fxsave) {
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __NetBSD_NPXCW__;
-	else
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
+	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
 
 	tf = p->p_md.md_regs;
