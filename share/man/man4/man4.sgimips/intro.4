@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.4,v 1.3 2003/05/06 07:44:55 wiz Exp $
+.\"     $NetBSD: intro.4,v 1.4 2004/02/08 13:25:39 sekiya Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 29, 2003
+.Dd January 24, 2004
 .Dt INTRO 4 sgimips
 .Os
 .Sh NAME
@@ -90,13 +90,22 @@ A list of the supported devices is given below.
 .Sh HARDWARE
 The following systems are supported:
 .Pp
-.Bl -tag -width XXXXXX -offset indent -compact
+.Bl -tag -width XXXXXXXXXX -offset indent -compact
 .It O2
 IP32
 .Pq Dq Moosehead
 .It Indy
 IP24
-.Pq Dq Guiness
+.Pq Dq Guinness
+.It Indigo 2 
+IP22
+.Pq Dq Fullhouse 
+.It Indigo R4k 
+IP20
+.Pq Dq Blackjack
+.It Indigo R3k 
+IP12
+.Pq Dq Hollywood 
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the
@@ -109,19 +118,27 @@ Not all supported devices are listed.
 found on the O2
 .It dsclock
 real-time clock
+.It dpclock
+real-time clock
 .It gio
+
 .It hpc
+High performance Peripheral Controller
 .It imc
-found on the Indy/Indigo2
+Indigo R4k/Indy/Indigo2 bus arbitrator
 .It mace
 found on the O2
 .It macepci
 .It mec
 O2 MAC110 ethernet
+.It newport
+entry framebuffer on Indy and Indigo2
+.It pic
+Personal Iris 4D/3x and Indigo R3k bus arbitrator
 .It sbic
 WD33C93 SCSI interface
 .It sq
-ethernet
+SEEQ 8003/80C03 ethernet 
 .It wdsc
 WD33C93 SCSI interface
 .El
@@ -145,6 +162,7 @@ bus and associated device drivers.
 .Xr hpc 4 ,
 .Xr imc 4 ,
 .Xr mace 4 ,
+.Xr pic 4 ,
 .Xr config 8
 .Sh HISTORY
 This
