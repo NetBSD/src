@@ -3,16 +3,16 @@
 #
 0	belong&077777777	041400413	netbsd/i386 demand paged
 >0	byte			&0x80
->>20	belong			<4096		shared library
->>20	belong			=4096		dynamically linked executable
->>20	belong			>4096		dynamically linked executable
+>>20	long			<4096		shared library
+>>20	long			=4096		dynamically linked executable
+>>20	long			>4096		dynamically linked executable
 >0	byte			^0x80		executable
->16	belong			>0		not stripped
+>16	long			>0		not stripped
 0	belong&077777777	041400410	netbsd/i386 pure
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80		executable
->16	belong			>0		not stripped
+>16	long			>0		not stripped
 0	belong&077777777	041400407	netbsd/i386
 >0	byte			&0x80		dynamically linked executable
 >0	byte			^0x80		executable
->16	belong			>0		not stripped
+>16	long			>0		not stripped
