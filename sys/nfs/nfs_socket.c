@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.47 1998/09/11 12:50:12 mycroft Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.48 1998/11/12 22:31:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -208,7 +208,7 @@ nfs_connect(nmp, rep)
 		s = splsoftnet();
 		while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
 			(void) tsleep((caddr_t)&so->so_timeo, PSOCK,
-				"nfscon", 2 * hz);
+				"nfscn1", 2 * hz);
 			if ((so->so_state & SS_ISCONNECTING) &&
 			    so->so_error == 0 && rep &&
 			    (error = nfs_sigintr(nmp, rep, rep->r_procp)) != 0){
@@ -302,7 +302,7 @@ nfs_reconnect(rep)
 	while ((error = nfs_connect(nmp, rep)) != 0) {
 		if (error == EINTR || error == ERESTART)
 			return (EINTR);
-		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfscon", 0);
+		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfscn2", 0);
 	}
 
 	/*
