@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.14 2001/10/14 00:39:09 simonb Exp $	*/
+/*	$NetBSD: zlib.c,v 1.15 2001/11/12 23:49:49 lukem Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.14 2001/10/14 00:39:09 simonb Exp $
+ * $Id: zlib.c,v 1.15 2001/11/12 23:49:49 lukem Exp $
  */
 
 /* 
@@ -20,6 +20,9 @@
  * This marker is used by the Linux installation script to determine
  * whether an up-to-date version of this file is already installed.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.15 2001/11/12 23:49:49 lukem Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
