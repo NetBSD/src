@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.17 2001/01/18 10:54:28 jdolecek Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.18 2001/01/19 01:41:36 shin Exp $	*/
 
 /*
  * Mach Operating System
@@ -81,7 +81,7 @@ void stacktrace_subr __P((int a0, int a1, int a2, int a3,
 void db_mips_stack_trace __P((int count, vaddr_t stackp,
 			      vaddr_t the_pc, vaddr_t the_ra, int flags,
 			      vaddr_t kstackp));
-int db_mips_variable_func __P((struct db_variable *vp, db_expr_t *valuep,
+int db_mips_variable_func __P((const struct db_variable *vp, db_expr_t *valuep,
 			       int db_var_fun));
 
 #define DB_SETF_REGS db_mips_variable_func
@@ -251,7 +251,7 @@ db_mips_stack_trace(count, stackp, the_pc, the_ra, flags, kstackp)
 
 
 int
-db_mips_variable_func (struct db_variable *vp,
+db_mips_variable_func (const struct db_variable *vp,
 	db_expr_t *valuep,
 	int db_var_fcn)
 {
