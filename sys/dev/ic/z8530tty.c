@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.93 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.94 2004/01/23 05:01:19 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,9 +137,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.93 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.94 2004/01/23 05:01:19 simonb Exp $");
 
 #include "opt_kgdb.h"
+#include "opt_ntp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,9 +187,6 @@ static int zsppscap =
 	PPS_TSFMT_TSPEC |
 	PPS_CAPTUREASSERT |
 	PPS_CAPTURECLEAR |
-#ifdef  PPS_SYNC
-	PPS_HARDPPSONASSERT | PPS_HARDPPSONCLEAR |
-#endif	/* PPS_SYNC */
 	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
 
 struct zstty_softc {
@@ -863,16 +861,6 @@ zsioctl(dev, cmd, data, flag, p)
 		 * compute masks from user-specified timestamp state.
 		 */
 		mode = zst->ppsparam.mode;
-#ifdef	PPS_SYNC
-		if (mode & PPS_HARDPPSONASSERT) {
-			mode |= PPS_CAPTUREASSERT;
-			/* XXX revoke any previous HARDPPS source */
-		}
-		if (mode & PPS_HARDPPSONCLEAR) {
-			mode |= PPS_CAPTURECLEAR;
-			/* XXX revoke any previous HARDPPS source */
-		}
-#endif	/* PPS_SYNC */
 		switch (mode & PPS_CAPTUREBOTH) {
 		case 0:
 			zst->zst_ppsmask = 0;
@@ -931,6 +919,32 @@ zsioctl(dev, cmd, data, flag, p)
 		*pi = zst->ppsinfo;
 		break;
 	}
+
+#ifdef PPS_SYNC
+	case PPS_IOC_KCBIND: {
+		int edge = (*(int *)data) & PPS_CAPTUREBOTH;
+
+		if (edge == 0) {
+			/*
+			 * remove binding for this source; ignore
+			 * the request if this is not the current
+			 * hardpps source
+			 */
+			if (pps_kc_hardpps_source == zst) {
+				pps_kc_hardpps_source = NULL;
+				pps_kc_hardpps_mode = 0;
+			}
+		} else {
+			/*
+			 * bind hardpps to this source, replacing any
+			 * previously specified source or edges
+			 */
+			pps_kc_hardpps_source = zst;
+			pps_kc_hardpps_mode = edge;
+		}
+		break;
+	}
+#endif /* PPS_SYNC */
 
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
 		if (cs->cs_rr0_pps == 0) {
@@ -1635,8 +1649,10 @@ zstty_stint(cs, force)
 				}
 
 #ifdef PPS_SYNC
-				if (zst->ppsparam.mode & PPS_HARDPPSONASSERT)
+				if (pps_kc_hardpps_source == zst &&
+				    pps_kc_hardpps_mode & PPS_CAPTUREASSERT) {
 					hardpps(&tv, tv.tv_usec);
+				}
 #endif
 				zst->ppsinfo.assert_sequence++;
 				zst->ppsinfo.current_mode = zst->ppsparam.mode;
@@ -1653,8 +1669,10 @@ zstty_stint(cs, force)
 				}
 
 #ifdef PPS_SYNC
-				if (zst->ppsparam.mode & PPS_HARDPPSONCLEAR)
+				if (pps_kc_hardpps_source == zst &&
+				    pps_kc_hardpps_mode & PPS_CAPTURECLEAR) {
 					hardpps(&tv, tv.tv_usec);
+				}
 #endif
 				zst->ppsinfo.clear_sequence++;
 				zst->ppsinfo.current_mode = zst->ppsparam.mode;
