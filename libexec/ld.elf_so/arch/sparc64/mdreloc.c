@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.11 2002/09/05 21:31:35 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.12 2002/09/06 02:01:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -540,15 +540,15 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 
 		type = ELF_R_TYPE(rela->r_info);
 		if (type == R_TYPE(NONE))
-			return (0);
+			continue;
 
 		/* We do JMP_SLOTs in relocate_plt_object() below */
 		if (type == R_TYPE(JMP_SLOT))
-			return (0);
+			continue;
 
 		/* COPY relocs are also handled elsewhere */
 		if (type == R_TYPE(COPY))
-			return (0);
+			continue;
 
 		/*
 		 * We use the fact that relocation types are an `enum'
@@ -566,7 +566,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 		if (!dodebug && type == R_TYPE(RELATIVE)) {
 			/* XXXX -- apparently we ignore the preexisting value */
 			*where = (Elf_Addr)(obj->relocbase + value);
-			return (0);
+			continue;
 		}
 
 		if (RELOC_RESOLVE_SYMBOL(type)) {
