@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.10 2000/01/25 21:50:30 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.11 2000/02/01 22:54:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -122,10 +122,12 @@ struct tulip_cardbus_softc {
 
 int	tlp_cardbus_match __P((struct device *, struct cfdata *, void *));
 void	tlp_cardbus_attach __P((struct device *, struct device *, void *));
+int	tlp_cardbus_detach __P((struct device *, int));
 
 struct cfattach tlp_cardbus_ca = {
 	sizeof(struct tulip_cardbus_softc),
 	    tlp_cardbus_match, tlp_cardbus_attach,
+		tlp_cardbus_detach, tlp_activate,
 };
 
 const struct tulip_cardbus_product {
@@ -427,6 +429,26 @@ tlp_cardbus_attach(parent, self, aux)
 	 * Finish off the attach.
 	 */
 	tlp_attach(sc, enaddr);
+}
+
+int
+tlp_cardbus_detach(self, flags)
+	struct device *self;
+	int flags;
+{
+	struct tulip_cardbus_softc *csc = (void *) self;
+	struct tulip_softc *sc = &csc->sc_tulip;
+	int rv;
+
+	rv = tlp_detach(sc);
+	if (rv == 0) {
+		/*
+		 * Unhook the interrupt handler.
+		 */
+		cardbus_intr_disestablish(csc->sc_ct->ct_cc,
+		    csc->sc_ct->ct_cf, csc->sc_ih);
+	}
+	return (rv);
 }
 
 void
