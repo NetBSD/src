@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.17 1996/09/18 22:47:48 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.18 1996/10/16 14:29:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.17 1996/09/18 22:47:48 thorpej Exp $";
+static char rcsid[] = "$NetBSD: cd.c,v 1.18 1996/10/16 14:29:42 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ STATIC char *cdcomppath;
 int
 cdcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	char *dest;
 	char *path;
@@ -91,9 +91,15 @@ cdcmd(argc, argv)
 	nextopt(nullstr);
 	if ((dest = *argptr) == NULL && (dest = bltinlookup("HOME", 1)) == NULL)
 		error("HOME not set");
+	if (*dest == '\0')
+	        dest = ".";
 	if (dest[0] == '-' && dest[1] == '\0') {
 		dest = prevdir ? prevdir : curdir;
 		print = 1;
+		if (dest)
+		        print = 1;
+		else
+		        dest = ".";
 	}
 	if (*dest == '/' || (path = bltinlookup("CDPATH", 1)) == NULL)
 		path = nullstr;
@@ -126,6 +132,7 @@ cdcmd(argc, argv)
 STATIC int
 docd(dest, print)
 	char *dest;
+	int print;
 {
 
 	TRACE(("docd(\"%s\", %d) called\n", dest, print));
@@ -221,7 +228,7 @@ updatepwd(dir)
 int
 pwdcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	getpwd();
 	out1str(curdir);
