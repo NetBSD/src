@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.128 2003/08/31 09:44:09 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.129 2003/09/01 07:35:39 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1423,4 +1423,11 @@ usr.sbin/mailwrapper/mailwrapper.c		1.7
 	Actually make additional arguments in mailer.conf useful, and document
 	them. Reviewed by perry and wiz.
 	[is, ticket #1390]
+
+gnu/usr.bin/gzip/gzexe				1.3
+gnu/usr.bin/gzip/znew				1.4
+
+	PR/21819: Jeremy Reed: znew and gzexe create/use unsafe tmp files.
+	Replaced with the FreeBSD current version.
+	[christos, ticket #1392]
 
