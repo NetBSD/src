@@ -42,7 +42,7 @@
  *	@(#)pte.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pte.h,v 1.5 92/11/26 02:04:43 torek Exp 
- * $Id: pte.h,v 1.3 1994/09/25 20:50:26 deraadt Exp $
+ * $Id: pte.h,v 1.4 1994/10/26 07:16:22 deraadt Exp $
  */
 
 /*
@@ -57,13 +57,6 @@
  * 64 (sun4c) PTEs.
  */
 typedef u_short pmeg_t;		/* 9 bits needed per Sun-4 segmap entry */
-#if notdef
-#ifdef SUN4
-typedef u_short pmeg_t;		/* 9 bits needed per Sun-4 segmap entry */
-#else
-typedef u_char pmeg_t;		/* 7 bits needed per Sun-4c segmap entry */
-#endif
-#endif
 #endif
 
 /*
@@ -120,7 +113,7 @@ typedef u_char pmeg_t;		/* 7 bits needed per Sun-4c segmap entry */
 /* number of PTEs that map one segment (not number that fit in one segment!) */
 #if defined(SUN4) && defined(SUN4C)
 extern int nptesg;
-#define	NPTESG	nptesg		/* (which someone will have to init) */
+#define	NPTESG	nptesg		/* (which someone will have to initialize) */
 #else
 #define	NPTESG	(NBPSG / NBPG)
 #endif
@@ -138,14 +131,14 @@ extern int nptesg;
 /* virtual segment to virtual address (must sign extend!) */
 #define	VSTOVA(vseg)	(((int)(vseg) << 20) >> 2)
 
-#ifdef SUN4
-#ifdef SUN4C
-#define VA_VPG(va)	(cputyp == CPU_SUN4C ? VA_SUN4C_VPG(va) : VA_SUN4_VPG(va))
-#else /* sun4 and not sun4c */
-#define VA_VPG(va)	VA_SUN4_VPG(va)
+#if defined(SUN4) && defined(SUN4C)
+#define VA_VPG(va)	(cputyp==CPU_SUN4C ? VA_SUN4C_VPG(va) : VA_SUN4_VPG(va))
 #endif
-#else /* not sun4; must be 4c */
-#define	VA_VPG(va)	VA_SUN4C_VPG(va)
+#if defined(SUN4C) && !defined(SUN4)
+#define VA_VPG(va)	VA_SUN4C_VPG(va)
+#endif
+#if !defined(SUN4C) && defined(SUN4)
+#define	VA_VPG(va)	VA_SUN4_VPG(va)
 #endif
 
 /* there is no `struct pte'; we just use `int' */
