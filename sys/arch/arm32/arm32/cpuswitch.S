@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.28 1998/09/09 00:07:49 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.29 1998/09/10 02:16:28 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -646,7 +646,7 @@ Lse_context_switched:
 
 	IRQenable
 
-	str	r3, [sp, #-0x0004]!
+/*	str	r3, [sp, #-0x0004]!*/
 
 	/*
 	 * Schedule the vmspace and stack to be freed.
