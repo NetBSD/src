@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.50 1995/04/26 01:17:45 cgd Exp $
+#	$Id: Makefile,v 1.51 1995/07/03 20:57:38 cgd Exp $
 
 SUBDIR=	apply apropos asa at biff basename cal calendar cap_mkdb \
 	checknr chflags chpass cksum cmp col colcrt colrm column comm \
@@ -18,7 +18,7 @@ SUBDIR=	apply apropos asa at biff basename cal calendar cap_mkdb \
 	unifdef uniq units unvis users uudecode uuencode \
 	vacation vgrind vi vis vmstat w wall wc what whatis whereis \
 	which who whois window write \
-	xargs xinstall xstr yacc yes ypcat ypmatch ypwhich
+	xargs xinstall xlint xstr yacc yes ypcat ypmatch ypwhich
 
 # Don't use the standard tool chain on the alpha.
 .if (${MACHINE_ARCH} != "alpha")
