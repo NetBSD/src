@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec_elf32.c,v 1.3 2001/12/04 22:13:41 manu Exp $ */
+/*	$NetBSD: irix_exec_elf32.c,v 1.4 2002/08/26 21:05:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.3 2001/12/04 22:13:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.4 2002/08/26 21:05:59 christos Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -56,7 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec_elf32.c,v 1.3 2001/12/04 22:13:41 manu Exp
 #include <compat/irix/irix_exec.h>
 
 int
-ELFNAME2(irix,copyargs)(pack, arginfo, stackp, argp)
+ELFNAME2(irix,copyargs)(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
