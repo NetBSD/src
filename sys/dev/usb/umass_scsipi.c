@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.3 2001/12/29 13:52:21 augustss Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.4 2001/12/31 12:15:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.3 2001/12/29 13:52:21 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.4 2001/12/31 12:15:21 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -100,7 +100,7 @@ Static void umass_scsipi_request(struct scsipi_channel *,
 				 scsipi_adapter_req_t, void *);
 Static void umass_scsipi_minphys(struct buf *bp);
 Static int umass_scsipi_ioctl(struct scsipi_channel *, u_long,
-			      caddr_t, int, struct proc *);
+			      caddr_t, int, usb_proc_ptr );
 Static int umass_scsipi_getgeom(struct scsipi_periph *periph,
 				struct disk_parms *, u_long sectors);
 
@@ -384,7 +384,7 @@ umass_scsipi_minphys(struct buf *bp)
 
 int
 umass_scsipi_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t arg,
-		   int flag, struct proc *p)
+		   int flag, usb_proc_ptr p)
 {
 	/*struct umass_softc *sc = link->adapter_softc;*/
 	/*struct umass_scsipi_softc *scbus = sc->bus;*/

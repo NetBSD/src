@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.48 2001/12/27 11:28:01 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.49 2001/12/31 12:15:22 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -89,6 +89,8 @@
 #endif
 
 #define SCSI_MODE_SENSE		MODE_SENSE
+
+typedef struct proc *usb_proc_ptr;
 
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
@@ -205,6 +207,8 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
 #endif
 
 #define Static
+
+typedef struct proc *usb_proc_ptr;
 
 #define UCOMBUSCF_PORTNO		-1
 #define UCOMBUSCF_PORTNO_DEFAULT	-1
@@ -388,6 +392,8 @@ __CONCAT(dname,_detach)(self, flags) \
 #define USBGETSOFTC(bdev) (device_get_softc(bdev))
 
 #define DECLARE_USB_DMA_T typedef void * usb_dma_t
+
+typedef struct proc *usb_proc_ptr;
 
 /* XXX Change this when FreeBSD has memset
  */

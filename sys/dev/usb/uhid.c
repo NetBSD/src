@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.47 2001/12/28 17:32:36 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.48 2001/12/31 12:15:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.47 2001/12/28 17:32:36 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.48 2001/12/31 12:15:21 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ struct uhid_softc {
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
-	struct proc *sc_async;	/* process that wants SIGIO */
+	usb_proc_ptr sc_async;	/* process that wants SIGIO */
 	u_char sc_state;	/* driver state */
 #define	UHID_ASLP	0x01	/* waiting for device data */
 #define UHID_IMMED	0x02	/* return read data immediately */
@@ -237,7 +237,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 }
 
 int
-uhidopen(dev_t dev, int flag, int mode, struct proc *p)
+uhidopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -265,7 +265,7 @@ uhidopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-uhidclose(dev_t dev, int flag, int mode, struct proc *p)
+uhidclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct uhid_softc *sc;
 
@@ -398,7 +398,7 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 
 int
 uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
-	      int flag, struct proc *p)
+	      int flag, usb_proc_ptr p)
 {
 	struct usb_ctl_report_desc *rd;
 	struct usb_ctl_report *re;
@@ -512,7 +512,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, caddr_t addr,
 }
 
 int
-uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 {
 	struct uhid_softc *sc;
 	int error;
@@ -527,7 +527,7 @@ uhidioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 }
 
 int
-uhidpoll(dev_t dev, int events, struct proc *p)
+uhidpoll(dev_t dev, int events, usb_proc_ptr p)
 {
 	struct uhid_softc *sc;
 	int revents = 0;

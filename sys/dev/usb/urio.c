@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.9 2001/12/16 15:11:19 ichiro Exp $	*/
+/*	$NetBSD: urio.c,v 1.10 2001/12/31 12:15:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.9 2001/12/16 15:11:19 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.10 2001/12/31 12:15:22 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,7 +295,7 @@ urio_activate(device_ptr_t self, enum devact act)
 #endif
 
 int
-urioopen(dev_t dev, int flag, int mode, struct proc *p)
+urioopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct urio_softc *sc;
 	usbd_status err;
@@ -328,7 +328,7 @@ urioopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-urioclose(dev_t dev, int flag, int mode, struct proc *p)
+urioclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct urio_softc *sc;
 	USB_GET_SC(urio, URIOUNIT(dev), sc);
@@ -470,7 +470,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 
 
 int
-urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 {
 	struct urio_softc * sc;
 	int unit = URIOUNIT(dev);
@@ -565,7 +565,7 @@ ret:
 }
 
 int
-uriopoll(dev_t dev, int events, struct proc *p)
+uriopoll(dev_t dev, int events, usb_proc_ptr p)
 {
 	return (0);
 }
