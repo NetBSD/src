@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.41 1999/02/24 15:05:21 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.42 1999/06/17 19:33:36 tls Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -7,11 +7,18 @@
 SRCS+=	_rand48.c _strtoq.c _strtouq.c a64l.c abort.c atexit.c atof.c \
 	atoi.c atol.c bsearch.c calloc.c drand48.c erand48.c exit.c \
 	getenv.c getopt.c getsubopt.c heapsort.c jrand48.c l64a.c \
-	lcong48.c lrand48.c malloc.c merge.c mrand48.c multibyte.c \
+	lcong48.c lrand48.c merge.c mrand48.c multibyte.c \
 	nrand48.c putenv.c qabs.c qdiv.c qsort.c radixsort.c rand.c \
 	rand_r.c random.c seed48.c setenv.c srand48.c strtod.c \
 	strtol.c strtoq.c strtoq.c strtoul.c strtouq.c system.c \
 	tdelete.c tfind.c tsearch.c twalk.c
+
+.if defined (MALLOC_NEW)
+SRCS+=  malloc-new.c
+.else
+SRCS+=	malloc.c
+.endif
+
 
 # machine-dependent stdlib sources
 # m-d Makefile.inc must include sources for:
