@@ -1,4 +1,4 @@
-/*	$NetBSD: hsearch.c,v 1.13 1999/02/16 18:12:24 kleink Exp $	*/
+/*	$NetBSD: hsearch.c,v 1.14 1999/02/16 18:23:00 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hsearch.c	8.4 (Berkeley) 7/21/94";
 #else
-__RCSID("$NetBSD: hsearch.c,v 1.13 1999/02/16 18:12:24 kleink Exp $");
+__RCSID("$NetBSD: hsearch.c,v 1.14 1999/02/16 18:23:00 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,12 +82,12 @@ hsearch(item, action)
 
 	if (!dbp)
 		return (NULL);
-	key.data = (u_char *)item.key;
-	key.size = strlen(item.key) + 1;
+	key.data = item.key;
+	key.size = strlen((char *)item.key) + 1;
 
 	if (action == ENTER) {
-		val.data = (u_char *)item.data;
-		val.size = strlen(item.data) + 1;
+		val.data = item.data;
+		val.size = strlen((char *)item.data) + 1;
 		status = (dbp->put)(dbp, &key, &val, R_NOOVERWRITE);
 		if (status)
 			return (NULL);
@@ -97,7 +97,7 @@ hsearch(item, action)
 		if (status)
 			return (NULL);
 		else
-			item.data = (char *)val.data;
+			item.data = val.data;
 	}
 	retval.key = item.key;
 	retval.data = item.data;
