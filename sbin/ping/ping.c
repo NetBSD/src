@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.57 2000/10/10 20:24:53 is Exp $	*/
+/*	$NetBSD: ping.c,v 1.58 2001/01/12 18:50:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.57 2000/10/10 20:24:53 is Exp $");
+__RCSID("$NetBSD: ping.c,v 1.58 2001/01/12 18:50:57 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -678,7 +678,7 @@ doit(void)
 		d_last = 365*24*60*60;
 	}
 
-	nfdmask = howmany(s + 1, NFDBITS);
+	nfdmask = howmany(s + 1, NFDBITS) * sizeof(fd_mask);
 	if ((fdmaskp = malloc(nfdmask)) == NULL)
 		err(1, "malloc");
 	memset(fdmaskp, 0, nfdmask);
