@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.32 2004/09/10 04:11:09 atatat Exp $	*/
+/*	$NetBSD: atactl.c,v 1.33 2004/10/08 17:19:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.32 2004/09/10 04:11:09 atatat Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.33 2004/10/08 17:19:50 mycroft Exp $");
 #endif
 
 
@@ -60,6 +60,42 @@ __RCSID("$NetBSD: atactl.c,v 1.32 2004/09/10 04:11:09 atatat Exp $");
 #include <dev/ata/atareg.h>
 #include <sys/ataio.h>
 
+struct ata_smart_error {
+	struct {
+		u_int8_t device_control;
+		u_int8_t features;
+		u_int8_t sector_count;
+		u_int8_t sector_number;
+		u_int8_t cylinder_low;
+		u_int8_t cylinder_high;
+		u_int8_t device_head;
+		u_int8_t command;
+		u_int8_t timestamp[4];
+	} command[5];
+	struct {
+		u_int8_t reserved;
+		u_int8_t error;
+		u_int8_t sector_count;
+		u_int8_t sector_number;
+		u_int8_t cylinder_low;
+		u_int8_t cylinder_high;
+		u_int8_t device_head;
+		u_int8_t status;
+		u_int8_t extended_error[19];
+		u_int8_t state;
+		u_int8_t lifetime[2];
+	} error_data;
+} __attribute__((packed));
+
+struct ata_smart_errorlog {
+	u_int8_t		data_structure_revision;
+	u_int8_t		mostrecenterror;
+	struct ata_smart_error	log_entries[5];
+	u_int16_t		device_error_count;
+	u_int8_t		reserved[57];
+	u_int8_t		checksum;
+} __attribute__((packed));
+
 struct command {
 	const char *cmd_name;
 	const char *arg_names;
@@ -75,9 +111,12 @@ int	main(int, char *[]);
 void	usage(void);
 void	ata_command(struct atareq *);
 void	print_bitinfo(const char *, const char *, u_int, struct bitinfo *);
+void	print_bitinfo2(const char *, const char *, u_int, u_int, struct bitinfo *);
 void	print_smart_status(void *, void *);
+void	print_error_entry(int, struct ata_smart_error *);
 void	print_selftest_entry(int, struct ata_smart_selftest *);
 
+void	print_error(void *);
 void	print_selftest(void *);
 
 int	is_smart(void);
@@ -104,7 +143,7 @@ struct command device_commands[] = {
 	{ "standby",	"",			device_idle },
 	{ "sleep",	"",			device_idle },
 	{ "checkpower",	"",			device_checkpower },
-	{ "smart",	"enable|disable|status|selftest-log", device_smart },
+	{ "smart",	"enable|disable|status|error-log|selftest-log", device_smart },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -382,6 +421,17 @@ print_bitinfo(const char *bf, const char *af, u_int bits, struct bitinfo *binfo)
 			printf("%s%s%s", bf, binfo->string, af);
 }
 
+void
+print_bitinfo2(const char *bf, const char *af, u_int bits, u_int enables, struct bitinfo *binfo)
+{
+
+	for (; binfo->bitmask != 0; binfo++)
+		if (bits & binfo->bitmask)
+			printf("%s%s (%s)%s", bf, binfo->string,
+			    (enables & binfo->bitmask) ? "enabled" : "disabled",
+			    af);
+}
+
 
 /*
  * Try to print SMART temperature field
@@ -411,20 +461,18 @@ print_smart_status(void *vbuf, void *tbuf)
 	int flags;
 	int i, j;
 	int aid;
-	int8_t checksum;
+	u_int8_t checksum;
 
-	for (i = checksum = 0; i < 511; i++)
-		checksum += ((int8_t *) value_buf)[i];
-	checksum *= -1;
-	if (checksum != value_buf->checksum) {
+	for (i = checksum = 0; i < 512; i++)
+		checksum += ((u_int8_t *) value_buf)[i];
+	if (checksum != 0) {
 		fprintf(stderr, "SMART attribute values checksum error\n");
 		return;
 	}
 
-	for (i = checksum = 0; i < 511; i++)
-		checksum += ((int8_t *) threshold_buf)[i];
-	checksum *= -1;
-	if (checksum != threshold_buf->checksum) {
+	for (i = checksum = 0; i < 512; i++)
+		checksum += ((u_int8_t *) threshold_buf)[i];
+	if (checksum != 0) {
 		fprintf(stderr, "SMART attribute thresholds checksum error\n");
 		return;
 	}
@@ -509,6 +557,96 @@ const char *selftest_status[] = {
 };
 
 void
+print_error_entry(int num, struct ata_smart_error *le)
+{
+	int i;
+
+	printf("Log entry: %d\n", num);
+
+	for (i = 0; i < 5; i++)
+		printf("\tCommand %d: dc=%02x sf=%02x sc=%02x sn=%02x cl=%02x ch=%02x dh=%02x cmd=%02x time=%02x%02x%02x%02x\n", i,
+		    le->command[i].device_control,
+		    le->command[i].features,
+		    le->command[i].sector_count,
+		    le->command[i].sector_number,
+		    le->command[i].cylinder_low,
+		    le->command[i].cylinder_high,
+		    le->command[i].device_head,
+		    le->command[i].command,
+		    le->command[i].timestamp[3],
+		    le->command[i].timestamp[2],
+		    le->command[i].timestamp[1],
+		    le->command[i].timestamp[0]);
+	printf("\tError: err=%02x sc=%02x sn=%02x cl=%02x ch=%02x dh=%02x status=%02x state=%02x lifetime=%02x%02x\n",
+	    le->error_data.error,
+	    le->error_data.sector_count,
+	    le->error_data.sector_number,
+	    le->error_data.cylinder_low,
+	    le->error_data.cylinder_high,
+	    le->error_data.device_head,
+	    le->error_data.status,
+	    le->error_data.state,
+	    le->error_data.lifetime[1],
+	    le->error_data.lifetime[0]);
+	printf("\tExtended: %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	    le->error_data.extended_error[0],
+	    le->error_data.extended_error[1],
+	    le->error_data.extended_error[2],
+	    le->error_data.extended_error[3],
+	    le->error_data.extended_error[4],
+	    le->error_data.extended_error[5],
+	    le->error_data.extended_error[6],
+	    le->error_data.extended_error[7],
+	    le->error_data.extended_error[8],
+	    le->error_data.extended_error[9],
+	    le->error_data.extended_error[10],
+	    le->error_data.extended_error[11],
+	    le->error_data.extended_error[12],
+	    le->error_data.extended_error[13],
+	    le->error_data.extended_error[14],
+	    le->error_data.extended_error[15],
+	    le->error_data.extended_error[15],
+	    le->error_data.extended_error[17],
+	    le->error_data.extended_error[18]);
+}
+
+void
+print_error(void *buf)
+{
+	struct ata_smart_errorlog *erlog = buf;
+	u_int8_t checksum;
+	int i;
+
+	for (i = checksum = 0; i < 512; i++)
+		checksum += ((u_int8_t *) buf)[i];
+	if (checksum != 0) {
+		fprintf(stderr, "SMART error log checksum error\n");
+		return;
+	}
+
+	if (erlog->data_structure_revision != 1) {
+		fprintf(stderr, "Log revision not 1");
+		return;
+	}
+
+	if (erlog->mostrecenterror == 0) {
+		printf("No errors have been logged\n");
+		return;
+	}
+		
+	if (erlog->mostrecenterror > 5) {
+		fprintf(stderr, "Most recent error is too large\n");
+		return;
+	}
+	
+	for (i = erlog->mostrecenterror; i < 5; i++)
+		print_error_entry(i, &erlog->log_entries[i]);
+	for (i = 0; i < erlog->mostrecenterror; i++)
+		print_error_entry(i, &erlog->log_entries[i]);
+	printf("device error count: %d\n", erlog->device_error_count);
+}
+
+void
 print_selftest_entry(int num, struct ata_smart_selftest *le)
 {
 	unsigned char *p;
@@ -527,28 +665,30 @@ print_selftest_entry(int num, struct ata_smart_selftest *le)
 	for (i = 0; selftest_name[i].name != NULL; i++)
 		if (selftest_name[i].number == le->number)
 			break;
-	if (selftest_name[i].number == 0)
-		i = 255; /* unknown test */
 
-	printf("\tName: %s\n", selftest_name[i].name);
+	if (selftest_name[i].name == NULL)
+		printf("\tName: (%d)\n", le->number);
+	else
+		printf("\tName: %s\n", selftest_name[i].name);
 	printf("\tStatus: %s\n", selftest_status[le->status >> 4]);
+	/* XXX This generally should not be set when a self-test is completed,
+	   and at any rate is useless.  - mycroft */
 	if (le->status >> 4 == 15)
-		printf("\tPrecent of test remaning: %1d0\n", le->status & 0xf);
-	if (le->status)
-		printf("LBA first error: %d\n", le->lba_first_error);
+		printf("\tPercent of test remaining: %1d0\n", le->status & 0xf);
+	else if (le->status >> 4 != 0)
+		printf("\tLBA first error: %d\n", le->lba_first_error);
 }
 
 void
 print_selftest(void *buf)
 {
 	struct ata_smart_selftestlog *stlog = buf;
-	int8_t checksum;
+	u_int8_t checksum;
 	int i;
 
-	for (i = checksum = 0; i < 511; i++)
-		checksum += ((int8_t *) buf)[i];
-  	checksum *= -1;
-	if ((u_int8_t)checksum != stlog->checksum) {
+	for (i = checksum = 0; i < 512; i++)
+		checksum += ((u_int8_t *) buf)[i];
+	if (checksum != 0) {
 		fprintf(stderr, "SMART selftest log checksum error\n");
 		return;
 	}
@@ -744,21 +884,21 @@ device_identify(int argc, char *argv[])
 	if (inqbuf->atap_cmd_set1 != 0 && inqbuf->atap_cmd_set1 != 0xffff &&
 	    inqbuf->atap_cmd_set2 != 0 && inqbuf->atap_cmd_set2 != 0xffff) {
 		printf("Command set support:\n");
-		print_bitinfo("\t", "\n", inqbuf->atap_cmd_set1, ata_cmd_set1);
-		print_bitinfo("\t", "\n", inqbuf->atap_cmd_set2, ata_cmd_set2);
+		if (inqbuf->atap_cmd1_en != 0 && inqbuf->atap_cmd1_en != 0xffff)
+			print_bitinfo2("\t", "\n", inqbuf->atap_cmd_set1,
+			    inqbuf->atap_cmd1_en, ata_cmd_set1);
+		else
+			print_bitinfo("\t", "\n", inqbuf->atap_cmd_set1,
+			    ata_cmd_set1);
+		if (inqbuf->atap_cmd2_en != 0 && inqbuf->atap_cmd2_en != 0xffff)
+			print_bitinfo2("\t", "\n", inqbuf->atap_cmd_set2,
+			    inqbuf->atap_cmd2_en, ata_cmd_set2);
+		else
+			print_bitinfo("\t", "\n", inqbuf->atap_cmd_set2,
+			    ata_cmd_set2);
 		if (inqbuf->atap_cmd_ext != 0 && inqbuf->atap_cmd_ext != 0xffff)
 			print_bitinfo("\t", "\n", inqbuf->atap_cmd_ext,
 			    ata_cmd_ext);
-	}
-
-	if (inqbuf->atap_cmd_def != 0 && inqbuf->atap_cmd_def != 0xffff) {
-		printf("Command sets/features enabled:\n");
-		print_bitinfo("\t", "\n", inqbuf->atap_cmd1_en &
-			      (WDC_CMD1_SRV | WDC_CMD1_RLSE | WDC_CMD1_AHEAD |
-			       WDC_CMD1_CACHE | WDC_CMD1_SEC | WDC_CMD1_SMART),
-			       ata_cmd_set1);
-		print_bitinfo("\t", "\n", inqbuf->atap_cmd2_en &
-			      (WDC_CMD2_RMSN | ATA_CMD2_APM), ata_cmd_set2);
 	}
 
 	return;
@@ -896,8 +1036,7 @@ device_smart(int argc, char *argv[])
 	unsigned char inbuf[DEV_BSIZE];
 	unsigned char inbuf2[DEV_BSIZE];
 
-	/* Only one argument */
-	if (argc != 1)
+	if (argc < 1)
 		usage();
 
 	if (strcmp(argv[0], "enable") == 0) {
@@ -975,6 +1114,43 @@ device_smart(int argc, char *argv[])
 
 			print_smart_status(inbuf, inbuf2);
 
+	} else if (strcmp(argv[0], "offline") == 0) {
+		if (!is_smart()) {
+			fprintf(stderr, "SMART not supported\n");
+			return;
+		}
+
+		memset(&req, 0, sizeof(req));
+
+		req.features = WDSM_EXEC_OFFL_IMM;
+		req.command = WDCC_SMART;
+		req.cylinder = htole16(WDSMART_CYL);
+		req.sec_num = atol(argv[1]);
+		req.timeout = 10000;
+
+		ata_command(&req);
+	} else if (strcmp(argv[0], "error-log") == 0) {
+		if (!is_smart()) {
+			fprintf(stderr, "SMART not supported\n");
+			return;
+		}
+
+		memset(&inbuf, 0, sizeof(inbuf));
+		memset(&req, 0, sizeof(req));
+		
+		req.flags = ATACMD_READ;
+		req.features = WDSM_RD_LOG;
+		req.sec_count = 1;
+		req.sec_num = 1;
+		req.command = WDCC_SMART;
+		req.databuf = (caddr_t) inbuf;
+		req.datalen = sizeof(inbuf);
+		req.cylinder = htole16(WDSMART_CYL);
+		req.timeout = 1000;
+		
+		ata_command(&req);
+		
+		print_error(inbuf);
 	} else if (strcmp(argv[0], "selftest-log") == 0) {
 		if (!is_smart()) {
 			fprintf(stderr, "SMART not supported\n");
