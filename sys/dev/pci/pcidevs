@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.531 2003/06/07 04:16:25 ichiro Exp $
+$NetBSD: pcidevs,v 1.532 2003/06/07 04:28:09 ichiro Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1536,9 +1536,9 @@ product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
 product INTEL 82855PM_AGP	0x3341	82855PM Host-to-AGP Bridge
 product INTEL 82855PM_PM	0x3342	82855PM Power Management Controller
 product INTEL 82855GM_MCH	0x3580	82855GM Host-to-Hub Controller
-product INTEL 82855GM_AGP	0x3582	82855PM GMCH Integrated Graphics Device
-product INTEL 82855GM_AGP	0x3584	82855PM GMCH Memory Controller
-product INTEL 82855GM_AGP	0x3585	82855PM GMCH Configuration Process
+product INTEL 82855GM_IGD	0x3582	82855PM GMCH Integrated Graphics Device
+product INTEL 82855GM_MC	0x3584	82855PM GMCH Memory Controller
+product INTEL 82855GM_CP	0x3585	82855PM GMCH Configuration Process
 product INTEL 82830MP_IO_1	0x3575	82830MP CPU to I/O Bridge 1
 product INTEL 82830MP_AGP	0x3576	82830MP CPU to AGP Bridge
 product INTEL 82830MP_IV	0x3577	82830MP Integrated Video
