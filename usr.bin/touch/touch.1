@@ -1,4 +1,4 @@
-.\"	$NetBSD: touch.1,v 1.9 1997/09/09 07:31:14 jtc Exp $
+.\"	$NetBSD: touch.1,v 1.10 1997/10/06 13:52:35 enami Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Nd change file access and modification times
 .Sh SYNOPSIS
 .Nm touch
-.Op Fl acfm
+.Op Fl acfhm
 .Op Fl r Ar file
 .Op Fl t Ar [[CC]YY]MMDDhhmm[.SS]
 .Ar file ...
@@ -71,6 +71,12 @@ No error messages are displayed and the exit value is not affected.
 .It Fl f
 Attempt to force the update, even if the file permissions do not
 currently permit it.
+.It Fl h
+If
+.Ar file
+is symbolic link, access and/or modification time of the link is changed.
+This option implies
+.Fl c .
 .It Fl m
 Change the modification time of the file.
 The access time of the file is not changed unless the
@@ -167,3 +173,5 @@ A
 .Nm touch
 utility appeared in
 .At v7 .
+.Sh BUGS
+A symbolic link can't be a reference file of access and/or modification time.
