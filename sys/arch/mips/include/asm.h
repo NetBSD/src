@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 1996/11/30 02:49:01 jtc Exp $	*/
+/*	$NetBSD: asm.h,v 1.12 1997/06/23 06:15:28 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -177,6 +177,6 @@ _C_LABEL(x): ; \
 
 #define ASMSTR(str) \
 	.asciiz str; \
-	.align	2
+	.align	3
 
 #endif /* _MIPS_ASM_H */
