@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.49 2002/08/23 08:14:20 kanaoka Exp $	*/
+/*	$NetBSD: commands.c,v 1.50 2003/04/27 11:09:57 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.49 2002/08/23 08:14:20 kanaoka Exp $");
+__RCSID("$NetBSD: commands.c,v 1.50 2003/04/27 11:09:57 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,6 @@ __RCSID("$NetBSD: commands.c,v 1.49 2002/08/23 08:14:20 kanaoka Exp $");
 #include <unistd.h>
 
 #include <arpa/telnet.h>
-#include <sys/cdefs.h>
 
 #include "general.h"
 
