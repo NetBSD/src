@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.8 2003/09/06 13:30:50 jdolecek Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.9 2004/05/20 06:34:30 atatat Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.8 2003/09/06 13:30:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.9 2004/05/20 06:34:30 atatat Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -54,10 +55,13 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.8 2003/09/06 13:30:50 jdolecek Exp
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
+#include <ufs/lfs/lfs_extern.h>
+
 int lfs_lkmentry __P((struct lkm_table *, int, int));
 
 static int lfs_load __P((struct lkm_table *, int));
 static int lfs_unload __P((struct lkm_table *, int));
+static struct sysctllog *_lfs_log;
 
 #define LFS_SYSENT_CNT		4
 static const struct {
@@ -127,6 +131,8 @@ lfs_load(lkmtp, cmd)
 		sysent[lfs_sysents[i].sysno] = lfs_sysents[i].sysent;
 	}
 
+	sysctl_vfs_lfs_setup(&_lfs_log);
+
 	return 0;
 }
 
@@ -139,6 +145,8 @@ lfs_unload(lkmtp, cmd)
 	int cmd;
 {
 	int i;
+
+	sysctl_teardown(&_lfs_log);
 
 	/* reset lfs syscall entries back to nosys */
 	for(i=0; i < LFS_SYSENT_CNT; i++) {

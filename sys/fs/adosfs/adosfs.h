@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.2 2003/02/01 06:23:40 thorpej Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.3 2004/05/20 06:34:26 atatat Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -173,4 +173,8 @@ void adosfs_aremhash __P((struct anode *));
 int adosfs_lookup __P((void *));
 
 extern int (**adosfs_vnodeop_p) __P((void *));
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_adosfs_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */

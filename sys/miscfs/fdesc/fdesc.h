@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.15 2003/08/07 16:32:32 agc Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.16 2004/05/20 06:34:30 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,4 +77,8 @@ extern int fdesc_root __P((struct mount *, struct vnode **));
 extern int fdesc_allocvp __P((fdntype, int, struct mount *, struct vnode **));
 extern int (**fdesc_vnodeop_p) __P((void *));
 extern struct vfsops fdesc_vfsops;
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_fdesc_setup);
+#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.h,v 1.11 2004/04/27 17:37:30 jrf Exp $	*/
+/*	$NetBSD: coda_vfsops.h,v 1.12 2004/05/20 06:34:24 atatat Exp $	*/
 
 /*
  * 
@@ -63,3 +63,7 @@ void coda_done(void);
 int coda_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *);
 int getNewVnode(struct vnode **vpp);
+
+#ifdef SYSCTL_SETUP_PROTO
+SYSCTL_SETUP_PROTO(sysctl_vfs_coda_setup);
+#endif /* SYSCTL_SETUP_PROTO */

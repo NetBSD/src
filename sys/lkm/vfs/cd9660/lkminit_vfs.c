@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.1 2002/12/23 17:45:15 jdolecek Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.2 2004/05/20 06:34:27 atatat Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.1 2002/12/23 17:45:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.2 2004/05/20 06:34:27 atatat Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -48,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.1 2002/12/23 17:45:15 jdolecek Exp
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+
+#include <fs/cd9660/iso.h>
+#include <fs/cd9660/cd9660_extern.h>
 
 int cd9660_lkmentry __P((struct lkm_table *, int, int));
 
@@ -62,6 +66,13 @@ extern struct vfsops cd9660_vfsops;
 MOD_VFS("cd9660", -1, &cd9660_vfsops);
 
 /*
+ * take care of fs specific sysctl nodes
+ */
+static int load __P((struct lkm_table *, int));
+static int unload __P((struct lkm_table *, int));
+static struct sysctllog *_cd9660_log;
+
+/*
  * entry point
  */
 int
@@ -71,5 +82,25 @@ cd9660_lkmentry(lkmtp, cmd, ver)
 	int ver;
 {
 
-	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc)
+	DISPATCH(lkmtp, cmd, ver, load, unload, lkm_nofunc)
+}
+
+static int
+load(lkmtp, cmd)
+	struct lkm_table *lkmtp;	
+	int cmd;
+{
+
+	sysctl_vfs_cd9660_setup(&_cd9660_log);
+	return (0);
+}
+
+static int
+unload(lkmtp, cmd)
+	struct lkm_table *lkmtp;	
+	int cmd;
+{
+
+	sysctl_teardown(&_cd9660_log);
+	return (0);
 }
