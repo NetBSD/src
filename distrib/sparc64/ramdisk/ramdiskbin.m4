@@ -1,10 +1,9 @@
-#	$NetBSD: ramdiskbin.m4,v 1.1 2000/08/10 14:38:54 mrg Exp $
+#	$NetBSD: ramdiskbin.m4,v 1.2 2000/08/20 14:43:19 mrg Exp $
 #
 # ramdiskbin.conf - unified binary for the install ramdisk
 #
 
 srcdirs bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin sys/arch/MACHINE/stand
-ifelse(MACHINE,sparc64,srcdirs sys/arch/sparc/stand usr.sbin/pppd)
 
 progs cat chmod chown chroot cp dd df disklabel ed
 progs fsck fsck_ffs ftp gzip ifconfig init installboot less
@@ -16,7 +15,7 @@ progs tip umount
 progs sysinst pax
 ifelse(MACHINE,i386,progs bad144 fdisk mbrlabel)
 ifelse(MACHINE,sparc,progs sysctl getopt)
-ifelse(MACHINE,sparc64,progs sysctl getopt pppd chat)
+ifelse(MACHINE,sparc64,progs sysctl getopt pppd chat rcp rcmd)
 
 special sysinst srcdir distrib/utils/sysinst/arch/MACHINE
 special init srcdir distrib/utils/init_s
@@ -25,8 +24,12 @@ special dd srcdir distrib/utils/x_dd
 special ftp srcdir distrib/utils/x_ftp
 special ifconfig srcdir distrib/utils/x_ifconfig
 special route srcdir distrib/utils/x_route
-special sh srcdir distrib/utils/x_sh
+ifelse(MACHINE,sparc64,,special sh srcdir distrib/utils/x_sh)
 special ping srcdir distrib/utils/x_ping
+
+ifelse(MACHINE,sparc64,special pppd srcdir usr.sbin/pppd/pppd)
+ifelse(MACHINE,sparc64,special chat srcdir usr.sbin/pppd/chat)
+ifelse(MACHINE,sparc64,special installboot srcdir sys/arch/sparc/stand/installboot)
 
 # "special" gzip is actually larger assuming nothing else uses -lz..
 #special gzip srcdir distrib/utils/x_gzip
@@ -46,4 +49,4 @@ ln reboot halt
 ln restore rrestore
 
 # libhack.o is built by Makefile & included Makefile.inc
-libs libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -lbz2 -lcrypt -ll -lm
+libs libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -lbz2 -lcrypt -ll -lm ifelse(MACHINE,sparc64,-lpcap)
