@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.68 2004/02/15 09:40:32 jdolecek Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.69 2004/08/21 22:48:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.68 2004/02/15 09:40:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.69 2004/08/21 22:48:18 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -303,29 +303,29 @@ do {									\
 
 #define	VR_TIMEOUT		1000
 
-static int vr_add_rxbuf		__P((struct vr_softc *, int));
+static int	vr_add_rxbuf(struct vr_softc *, int);
 
-static void vr_rxeof		__P((struct vr_softc *));
-static void vr_rxeoc		__P((struct vr_softc *));
-static void vr_txeof		__P((struct vr_softc *));
-static int vr_intr		__P((void *));
-static void vr_start		__P((struct ifnet *));
-static int vr_ioctl		__P((struct ifnet *, u_long, caddr_t));
-static int vr_init		__P((struct ifnet *));
-static void vr_stop		__P((struct ifnet *, int));
-static void vr_rxdrain		__P((struct vr_softc *));
-static void vr_watchdog		__P((struct ifnet *));
-static void vr_tick		__P((void *));
+static void	vr_rxeof(struct vr_softc *);
+static void	vr_rxeoc(struct vr_softc *);
+static void	vr_txeof(struct vr_softc *);
+static int	vr_intr(void *);
+static void	vr_start(struct ifnet *);
+static int	vr_ioctl(struct ifnet *, u_long, caddr_t);
+static int	vr_init(struct ifnet *);
+static void	vr_stop(struct ifnet *, int);
+static void	vr_rxdrain(struct vr_softc *);
+static void	vr_watchdog(struct ifnet *);
+static void	vr_tick(void *);
 
-static int vr_ifmedia_upd	__P((struct ifnet *));
-static void vr_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+static int	vr_ifmedia_upd(struct ifnet *);
+static void	vr_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-static int vr_mii_readreg	__P((struct device *, int, int));
-static void vr_mii_writereg	__P((struct device *, int, int, int));
-static void vr_mii_statchg	__P((struct device *));
+static int	vr_mii_readreg(struct device *, int, int);
+static void	vr_mii_writereg(struct device *, int, int, int);
+static void	vr_mii_statchg(struct device *);
 
-static void vr_setmulti		__P((struct vr_softc *));
-static void vr_reset		__P((struct vr_softc *));
+static void	vr_setmulti(struct vr_softc *);
+static void	vr_reset(struct vr_softc *);
 
 int	vr_copy_small = 0;
 
@@ -356,10 +356,10 @@ int	vr_copy_small = 0;
 /*
  * MII bit-bang glue.
  */
-u_int32_t vr_mii_bitbang_read __P((struct device *));
-void vr_mii_bitbang_write __P((struct device *, u_int32_t));
+static u_int32_t vr_mii_bitbang_read(struct device *);
+static void	vr_mii_bitbang_write(struct device *, u_int32_t);
 
-const struct mii_bitbang_ops vr_mii_bitbang_ops = {
+static const struct mii_bitbang_ops vr_mii_bitbang_ops = {
 	vr_mii_bitbang_read,
 	vr_mii_bitbang_write,
 	{
@@ -371,19 +371,16 @@ const struct mii_bitbang_ops vr_mii_bitbang_ops = {
 	}
 };
 
-u_int32_t
-vr_mii_bitbang_read(self)
-	struct device *self;
+static u_int32_t
+vr_mii_bitbang_read(struct device *self)
 {
 	struct vr_softc *sc = (void *) self;
 
 	return (CSR_READ_1(sc, VR_MIICMD));
 }
 
-void
-vr_mii_bitbang_write(self, val)
-	struct device *self;
-	u_int32_t val;
+static void
+vr_mii_bitbang_write(struct device *self, u_int32_t val)
 {
 	struct vr_softc *sc = (void *) self;
 
@@ -394,9 +391,7 @@ vr_mii_bitbang_write(self, val)
  * Read an PHY register through the MII.
  */
 static int
-vr_mii_readreg(self, phy, reg)
-	struct device *self;
-	int phy, reg;
+vr_mii_readreg(struct device *self, int phy, int reg)
 {
 	struct vr_softc *sc = (void *) self;
 
@@ -408,9 +403,7 @@ vr_mii_readreg(self, phy, reg)
  * Write to a PHY register through the MII.
  */
 static void
-vr_mii_writereg(self, phy, reg, val)
-	struct device *self;
-	int phy, reg, val;
+vr_mii_writereg(struct device *self, int phy, int reg, int val)
 {
 	struct vr_softc *sc = (void *) self;
 
@@ -419,8 +412,7 @@ vr_mii_writereg(self, phy, reg, val)
 }
 
 static void
-vr_mii_statchg(self)
-	struct device *self;
+vr_mii_statchg(struct device *self)
 {
 	struct vr_softc *sc = (struct vr_softc *)self;
 
@@ -447,8 +439,7 @@ vr_mii_statchg(self)
  * Program the 64-bit multicast hash filter.
  */
 static void
-vr_setmulti(sc)
-	struct vr_softc *sc;
+vr_setmulti(struct vr_softc *sc)
 {
 	struct ifnet *ifp;
 	int h = 0;
@@ -506,8 +497,7 @@ allmulti:
 }
 
 static void
-vr_reset(sc)
-	struct vr_softc *sc;
+vr_reset(struct vr_softc *sc)
 {
 	int i;
 
@@ -542,9 +532,7 @@ vr_reset(sc)
  * overflow the field and make a mess.
  */
 static int
-vr_add_rxbuf(sc, i)
-	struct vr_softc *sc;
-	int i;
+vr_add_rxbuf(struct vr_softc *sc, int i)
 {
 	struct vr_descsoft *ds = VR_DSRX(sc, i);
 	struct mbuf *m_new;
@@ -587,8 +575,7 @@ vr_add_rxbuf(sc, i)
  * the higher level protocols.
  */
 static void
-vr_rxeof(sc)
-	struct vr_softc *sc;
+vr_rxeof(struct vr_softc *sc)
 {
 	struct mbuf *m;
 	struct ifnet *ifp;
@@ -765,8 +752,7 @@ vr_rxeof(sc)
 }
 
 void
-vr_rxeoc(sc)
-	struct vr_softc *sc;
+vr_rxeoc(struct vr_softc *sc)
 {
 
 	vr_rxeof(sc);
@@ -781,8 +767,7 @@ vr_rxeoc(sc)
  * the list buffers.
  */
 static void
-vr_txeof(sc)
-	struct vr_softc *sc;
+vr_txeof(struct vr_softc *sc)
 {
 	struct ifnet *ifp = &sc->vr_ec.ec_if;
 	struct vr_desc *d;
@@ -837,8 +822,7 @@ vr_txeof(sc)
 }
 
 static int
-vr_intr(arg)
-	void *arg;
+vr_intr(void *arg)
 {
 	struct vr_softc *sc;
 	struct ifnet *ifp;
@@ -934,8 +918,7 @@ vr_intr(arg)
  * physical addresses.
  */
 static void
-vr_start(ifp)
-	struct ifnet *ifp;
+vr_start(struct ifnet *ifp)
 {
 	struct vr_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
@@ -1107,8 +1090,7 @@ vr_start(ifp)
  * Initialize the interface.  Must be called at splnet.
  */
 static int
-vr_init(ifp)
-	struct ifnet *ifp;
+vr_init(struct ifnet *ifp)
 {
 	struct vr_softc *sc = ifp->if_softc;
 	struct vr_desc *d;
@@ -1225,8 +1207,7 @@ vr_init(ifp)
  * Set media options.
  */
 static int
-vr_ifmedia_upd(ifp)
-	struct ifnet *ifp;
+vr_ifmedia_upd(struct ifnet *ifp)
 {
 	struct vr_softc *sc = ifp->if_softc;
 
@@ -1239,9 +1220,7 @@ vr_ifmedia_upd(ifp)
  * Report current media status.
  */
 static void
-vr_ifmedia_sts(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+vr_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct vr_softc *sc = ifp->if_softc;
 
@@ -1251,10 +1230,7 @@ vr_ifmedia_sts(ifp, ifmr)
 }
 
 static int
-vr_ioctl(ifp, command, data)
-	struct ifnet *ifp;
-	u_long command;
-	caddr_t data;
+vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct vr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1286,8 +1262,7 @@ vr_ioctl(ifp, command, data)
 }
 
 static void
-vr_watchdog(ifp)
-	struct ifnet *ifp;
+vr_watchdog(struct ifnet *ifp)
 {
 	struct vr_softc *sc = ifp->if_softc;
 
@@ -1301,8 +1276,7 @@ vr_watchdog(ifp)
  * One second timer, used to tick MII.
  */
 static void
-vr_tick(arg)
-	void *arg;
+vr_tick(void *arg)
 {
 	struct vr_softc *sc = arg;
 	int s;
@@ -1318,8 +1292,7 @@ vr_tick(arg)
  * Drain the receive queue.
  */
 static void
-vr_rxdrain(sc)
-	struct vr_softc *sc;
+vr_rxdrain(struct vr_softc *sc)
 {
 	struct vr_descsoft *ds;
 	int i;
@@ -1339,9 +1312,7 @@ vr_rxdrain(sc)
  * transmit lists.
  */
 static void
-vr_stop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+vr_stop(struct ifnet *ifp, int disable)
 {
 	struct vr_softc *sc = ifp->if_softc;
 	struct vr_descsoft *ds;
@@ -1384,17 +1355,15 @@ vr_stop(ifp, disable)
 	ifp->if_timer = 0;
 }
 
-static struct vr_type *vr_lookup __P((struct pci_attach_args *));
-static int vr_probe __P((struct device *, struct cfdata *, void *));
-static void vr_attach __P((struct device *, struct device *, void *));
-static void vr_shutdown __P((void *));
+static int	vr_probe(struct device *, struct cfdata *, void *);
+static void	vr_attach(struct device *, struct device *, void *);
+static void	vr_shutdown(void *);
 
 CFATTACH_DECL(vr, sizeof (struct vr_softc),
     vr_probe, vr_attach, NULL, NULL);
 
 static struct vr_type *
-vr_lookup(pa)
-	struct pci_attach_args *pa;
+vr_lookup(struct pci_attach_args *pa)
 {
 	struct vr_type *vrt;
 
@@ -1407,10 +1376,7 @@ vr_lookup(pa)
 }
 
 static int
-vr_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vr_probe(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -1425,8 +1391,7 @@ vr_probe(parent, match, aux)
  * get confused by errant DMAs when rebooting.
  */
 static void
-vr_shutdown(arg)
-	void *arg;
+vr_shutdown(void *arg)
 {
 	struct vr_softc *sc = (struct vr_softc *)arg;
 
@@ -1438,10 +1403,7 @@ vr_shutdown(arg)
  * setup and ethernet/BPF attach.
  */
 static void
-vr_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vr_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vr_softc *sc = (struct vr_softc *) self;
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
