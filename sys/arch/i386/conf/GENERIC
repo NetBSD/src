@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.388 2000/12/22 16:35:51 tv Exp $
+#	$NetBSD: GENERIC,v 1.389 2001/01/08 20:48:11 rh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.388 $"
+#ident 		"GENERIC-$Revision: 1.389 $"
 
 maxusers	32		# estimated number of users
 
@@ -722,6 +722,7 @@ auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
+esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
@@ -764,6 +765,7 @@ audio*	at auich?
 audio*	at clcs?
 audio*	at cmpci?
 audio*	at eap?
+audio*	at esm?
 audio*	at eso?
 audio*	at ess?
 audio*	at fms?
