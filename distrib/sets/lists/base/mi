@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.345 2002/08/22 03:31:33 lukem Exp $
+# $NetBSD: mi,v 1.346 2002/08/29 00:51:40 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -64,6 +64,7 @@
 ./etc/uucp		base-uucp-root
 ./home			base-sys-root
 ./lib			base-sys-root
+./libexec		base-sys-root
 ./mnt			base-sys-root
 ./rescue		base-sys-root
 ./rescue/[		base-rescue-root
