@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.6 2000/12/14 19:22:39 bjh21 Exp $ */
+/* $NetBSD: locore.S,v 1.7 2000/12/14 20:30:03 bjh21 Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: locore.S,v 1.6 2000/12/14 19:22:39 bjh21 Exp $")
+/* RCSID is at the end of the file in case it gets put in the text segment. */
 
 #include <sys/syscall.h>
 #include <machine/armreg.h>
@@ -459,3 +459,5 @@ ENTRY_NP(sigcode)
 	.align	0
         .global _C_LABEL(esigcode)
 _C_LABEL(esigcode):
+
+RCSID("$NetBSD: locore.S,v 1.7 2000/12/14 20:30:03 bjh21 Exp $")
