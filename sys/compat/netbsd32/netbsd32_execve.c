@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.8 2002/03/16 20:43:54 christos Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.9 2002/03/22 21:36:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.8 2002/03/16 20:43:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.9 2002/03/22 21:36:46 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -425,7 +425,9 @@ netbsd32_execve2(p, uap, retval)
 	vput(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
-	(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);
+	(*pack.ep_es->es_emul->e_setregs)(p, &pack, (u_long) stack);
+	if (pack.ep_es->es_setregs)
+		(*pack.ep_es->es_setregs)(p, &pack, (u_long) stack);
 
 	if (p->p_flag & P_TRACED)
 		psignal(p, SIGTRAP);
