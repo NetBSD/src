@@ -1,4 +1,4 @@
-.\"     $NetBSD: skey.3,v 1.7 2003/04/16 13:35:13 wiz Exp $
+.\"     $NetBSD: skey.3,v 1.8 2003/06/06 13:42:50 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -179,7 +179,7 @@ Returns \-1 on file error.
 Returns the current sequence number and seed for user
 .Ar username .
 .It Fn skey_passcheck "username" "passwd"
-Check to see if answer is the correct one to the current challenge.
+Checks to see if answer is the correct one to the current challenge.
 .It Fn skey_authenticate "username"
 Used when calling program will allow input of the user's response to
 the challenge.
