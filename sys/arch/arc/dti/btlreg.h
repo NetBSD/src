@@ -1,4 +1,4 @@
-/*	$NetBSD: btlreg.h,v 1.3 2000/02/22 11:26:01 soda Exp $	*/
+/*	$NetBSD: btlreg.h,v 1.4 2003/04/09 01:54:44 thorpej Exp $	*/
 
 typedef u_int8_t physaddr[4];
 typedef u_int8_t physlen[4];
@@ -101,7 +101,7 @@ struct bt_mbx_in {
 #if	defined(BIG_DMA)
 #define BT_NSEG 2048    /* Number of scatter gather segments - to much vm */
 #else
-#define	BT_NSEG	(MAXPHYS / NBPG)
+#define	BT_NSEG	(MAXPHYS / PAGE_SIZE)
 #endif /* BIG_DMA */
 
 struct bt_scat_gath {
