@@ -1,4 +1,4 @@
-.\"	$NetBSD: st.4,v 1.11 1998/07/31 01:26:11 mjacob Exp $
+.\"	$NetBSD: st.4,v 1.12 1998/11/08 19:27:33 mjacob Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -234,14 +234,16 @@ If EARLY WARNING recognitions is \fBnot\fR enabled, then detection
 of EOM (as reported in SCSI Sense Data with an EOM indicator)
 causes the write operation to be flagged with I/O error (EIO).
 This has the effect for the user application of not knowing actually
-how many bytes were written (since the return of the
+how many bytes were read (since the return of the
 .Xr read 2
 system call is set to \(mi1).
 .Pp
 If EARLY WARNING recognition \fBis\fR enabled, then detection of EOM
+(as reported in SCSI Sense Data with an EOM indicator)
 has no immediate effect except that
 the driver notes that EOM has been detected. If the write completing
 didn't transfer all data that was requested, then the residual count
+(counting bytes \fBnot\fR written)
 is returned to the user application. In any event, the next attempt
 to write (if that is the next action the user application takes)
 is immediately completed with no data transferred, and a residual
@@ -250,7 +252,7 @@ This is the traditional UNIX EOF indication. The state that EOM had
 been seen is then cleared.
 .Pp
 In either mode of operation, the driver does not prohibit the
-user application from writing more data, if chooses to do so. This
+user application from writing more data, if it chooses to do so. This
 will continue up until the physical end of media, which is usually
 signalled internally to the driver as a CHECK CONDITION with
 the Sense Key set to VOLUME OVERFLOW. When this or any otherwise
@@ -261,7 +263,7 @@ hitting physical end of media, that an indeterminate number of 'short write
 returns' as described in the previous paragraph will occur. However, the
 expected user application behaviour (in common with other systems) is
 to close the tape and rewind and request another tape upon the receipt
-of the first EOM indicator.
+of the first EOM indicator, possibly after writing one trailer record.
 .Sh KERNEL CONFIGURATION
 Because different tape drives behave differently, there is a
 mechanism within the source to
