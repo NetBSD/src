@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_bus_mem.c,v 1.4 1996/06/11 21:16:29 cgd Exp $	*/
+/*	$NetBSD: tc_bus_mem.c,v 1.5 1996/06/11 21:20:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -127,10 +127,15 @@ tc_mem_subregion(v, memh, offset, size, nmemh)
 	bus_mem_size_t offset, size;
 {
 
+	/* Disallow subregioning that would make the handle unaligned. */
+	if ((offset & 0x7) != 0)
+		return (1);
+
 	if ((memh & TC_SPACE_SPARSE) != 0)
 		*nmemh = memh + (off << 1);
 	else
 		*nmemh = memh + off;
+
 	return (0);
 }
 
@@ -215,7 +220,7 @@ tc_mem_write_1(v, memh, off, val)
 		volatile u_int64_t *p, v;
 		u_int64_t shift, msk;
 
-		shift = off & 0x3;		/* XXX breaks if subregion */
+		shift = off & 0x3;
 		off &= 0x3;
 
 		p = (u_int64_t *)(memh + (off << 1));
@@ -245,7 +250,7 @@ tc_mem_write_2(v, memh, off, val)
 		volatile u_int64_t *p, v;
 		u_int64_t shift, msk;
 
-		shift = off & 0x2;		/* XXX breaks if subregion */
+		shift = off & 0x2;
 		off &= 0x3;
 
 		p = (u_int64_t *)(memh + (off << 1));
