@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.36.4.2 1996/12/10 08:25:33 mycroft Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.36.4.3 1996/12/10 08:50:01 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -135,17 +135,21 @@ svr4_sys_execv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct svr4_sys_execv_args *uap = v;
-	struct sys_execve_args ex;
+	struct svr4_sys_execv_args /* {
+		syscallarg(char *) path;
+		syscallarg(char **) argv;
+	} */ *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
 
-	caddr_t sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p->p_emul);
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	SCARG(&ex, path) = SCARG(uap, path);
-	SCARG(&ex, argp) = SCARG(uap, argp);
-	SCARG(&ex, envp) = NULL;
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = NULL;
 
-	return sys_execve(p, &ex, retval);
+	return sys_execve(p, &ap, retval);
 }
 
 
@@ -155,11 +159,22 @@ svr4_sys_execve(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_execve_args *uap = v;
-	caddr_t sg = stackgap_init(p->p_emul);
+	struct svr4_sys_execve_args /* {
+		syscallarg(char *) path;
+		syscallarg(char **) argv;
+		syscallarg(char **) envp;
+	} */ *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
 	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys_execve(p, uap, retval);
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
+
+	return sys_execve(p, &ap, retval);
 }
 
 

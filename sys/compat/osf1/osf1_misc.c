@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_misc.c,v 1.7 1995/10/07 06:53:04 mycroft Exp $	*/
+/*	$NetBSD: osf1_misc.c,v 1.7.6.1 1996/12/10 08:46:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -934,4 +934,28 @@ osf1_sys_madvise(p, v, retval)
 
 	/* XXX */
 	return EINVAL;
+}
+
+int
+osf1_sys_execve(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_execve_args /* {
+		syscallarg(char *) path;
+		syscallarg(char **) argv;
+		syscallarg(char **) envp;
+	} */ *uap = v;
+	struct sys_execve_args ap;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&ap, path) = SCARG(uap, path);
+	SCARG(&ap, argp) = SCARG(uap, argp);
+	SCARG(&ap, envp) = SCARG(uap, envp);
+
+	return sys_execve(p, &ap, retval);
 }
