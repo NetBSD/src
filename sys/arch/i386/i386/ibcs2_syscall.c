@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_syscall.c,v 1.13 2000/12/12 20:30:12 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_syscall.c,v 1.14 2000/12/13 01:24:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -46,21 +46,16 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/acct.h>
-#include <sys/kernel.h>
+#include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/signal.h>
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
-#include <machine/trap.h>
 #include <machine/userret.h>
 
 #include <compat/ibcs2/ibcs2_errno.h>
