@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.31 1998/08/08 03:33:20 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.32 1998/08/08 04:04:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.31 1998/08/08 03:33:20 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.32 1998/08/08 04:04:17 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: fetch.c,v 1.31 1998/08/08 03:33:20 lukem Exp $");
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <netinet/in.h>
 
@@ -740,6 +741,7 @@ auto_fetch(argc, argv, outfile)
 		if (strchr(argv[argpos], ':') == NULL)
 			break;
 		host = path = dir = file = user = pass = NULL;
+		port = 0;
 		line = argv[argpos];
 
 #ifndef SMALL
