@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.18 1994/05/23 02:25:09 cgd Exp $
+ *	$Id: vector.s,v 1.19 1994/10/09 14:43:00 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -209,6 +209,7 @@ IDTVEC(intr/**/irq_num)							;\
 	pushl	$0			/* dummy error code */		;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
+	MAKE_FRAME							;\
 	MASK(irq_num, icu)		/* mask it in hardware */	;\
 	enable_icus(irq_num)		/* and allow other intrs */	;\
 	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num)		;\
@@ -237,6 +238,7 @@ _Xresume/**/irq_num/**/:						;\
 	jnz	7b							;\
 	STRAY_TEST							;\
 5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
+	DESTROY_FRAME							;\
 	INTREXIT			/* lower spl and do ASTs */	;\
 IDTVEC(stray/**/irq_num)						;\
 	pushl	$irq_num						;\
@@ -245,6 +247,7 @@ IDTVEC(stray/**/irq_num)						;\
 	jmp	5b							;\
 IDTVEC(hold/**/irq_num)							;\
 	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num)		;\
+	DESTROY_FRAME							;\
 	INTRFASTEXIT
 
 #if defined(DEBUG) && defined(notdef)
@@ -255,11 +258,22 @@ IDTVEC(hold/**/irq_num)							;\
 #define	STRAY_TEST \
 	testl	%esi,%esi		/* no more handlers */		;\
 	jz	_Xstray/**/irq_num	/* nobody claimed it */	
-#else
+#else /* !DEBUG */
 #define	STRAY_INITIALIZE
 #define	STRAY_INTEGRATE
 #define	STRAY_TEST
 #endif /* DEBUG */
+
+#ifdef DDB
+#define	MAKE_FRAME \
+	subl	$8,%esp							;\
+	movl	%esp,%ebp
+#define	DESTROY_FRAME \
+	addl	$8,%esp
+#else /* !DDB */
+#define	MAKE_FRAME
+#define	DESTROY_FRAME
+#endif /* DDB */
 
 INTR(0, IO_ICU1, ENABLE_ICU1)
 INTR(1, IO_ICU1, ENABLE_ICU1)
