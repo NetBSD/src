@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.16 2002/06/01 23:50:53 lukem Exp $	 */
+/*	$NetBSD: load.c,v 1.17 2002/07/18 14:46:11 abs Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -191,7 +191,7 @@ _rtld_load_by_name(name, obj, needed, mode, dodebug)
 		i = sizeof(val);
 
 		if (sysctl(x->ctl, x->ctlmax, &val, &i, NULL, 0) == -1) {
-			xwarnx("sysctl");
+			xwarnx(_PATH_LD_HINTS ": unknown sysctl for %s", name);
 			break;
 		}
 
