@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.5 1995/01/18 09:34:32 mycroft Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.6 1995/01/25 14:50:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -385,7 +385,7 @@ umapfs_fhtovp(mp, fidp, nam, vpp, exflagsp, credanonp)
 	struct ucred**credanonp;
 {
 
-	return (VFS_FHTOVP(MOUNTTOUMAPMOUNT(mp)->umapm_vfs, fidp, nam, vpp, exflagsp,credanonp));
+	return (EOPNOTSUPP);
 }
 
 int
@@ -394,7 +394,7 @@ umapfs_vptofh(vp, fhp)
 	struct fid *fhp;
 {
 
-	return (VFS_VPTOFH(UMAPVPTOLOWERVP(vp), fhp));
+	return (EOPNOTSUPP);
 }
 
 int umapfs_init __P((void));

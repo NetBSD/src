@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.5 1995/01/18 09:34:27 mycroft Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.6 1995/01/25 14:50:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -344,7 +344,7 @@ nullfs_fhtovp(mp, fidp, nam, vpp, exflagsp, credanonp)
 	struct ucred**credanonp;
 {
 
-	return VFS_FHTOVP(MOUNTTONULLMOUNT(mp)->nullm_vfs, fidp, nam, vpp, exflagsp,credanonp);
+	return (EOPNOTSUPP);
 }
 
 int
@@ -353,7 +353,7 @@ nullfs_vptofh(vp, fhp)
 	struct fid *fhp;
 {
 
-	return VFS_VPTOFH(NULLVPTOLOWERVP(vp), fhp);
+	return (EOPNOTSUPP);
 }
 
 int nullfs_init __P((void));
