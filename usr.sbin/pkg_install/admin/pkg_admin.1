@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_admin.1,v 1.21 2003/09/02 07:34:52 jlam Exp $
+.\"	$NetBSD: pkg_admin.1,v 1.22 2003/09/08 07:04:40 jlam Exp $
 .\"
 .\" Copyright (c) 1999-2002 Hubert Feyrer.  All rights reserved.
 .\"
@@ -48,9 +48,9 @@
 This command performs various administrative tasks around the
 .Nx
 Packages System.
-Available commands are:
-.Pp
-.Bl -tag -width check
+.Sh OPTIONS
+The following command-line options are supported:
+.Bl -tag -width indent
 .It Fl K Ar pkg_dbdir
 Set
 .Ar pkg_dbdir
@@ -69,6 +69,16 @@ names for
 and
 .Cm lsbest .
 The default pattern is ".t[bg]z".
+.El
+.Pp
+The following commands are supported:
+.Bl -tag -width indent
+.It Cm add Ar pkg ...
+For each listed package, write the absolute pathnames of the files listed in
+its +CONTENTS file together with the package they belong to into the package
+database.
+This should be used only by
+.Xr pkg_view 1 .
 .It Cm check Op Ar pkg ...
 Use this command to check the files belonging to some or all of the
 packages installed on the local machine against their MD5 checksum
@@ -82,14 +92,18 @@ The packages' +CONTENTS files will be parsed and the MD5
 checksum will be checked for every file found.
 A warning message is printed if the expected checksum differs from the
 checksum of the file on disk.
-.Pp
+.It Cm delete Ar pkg ...
+For each listed package, remove all file entries in the package database that
+belong to the package.
+This should be used only by
+.Xr pkg_view 1 .
 .It Cm dump
 Dump the contents of the package database, similar to
 .Cm pkg_info -F .
 Columns are printed for the keyfield used in the pkgdb - the filename -,
 and the data field - the package the file belongs to.
-.It Cm lsall /dir/pkgpattern
-.It Cm lsbest /dir/pkgpattern
+.It Cm lsall Ar /dir/pkgpattern
+.It Cm lsbest Ar /dir/pkgpattern
 List all/best package matching pattern in the given directory.
 Can be used to work around limitations of /bin/sh and other
 filename globbing mechanisms.
@@ -119,8 +133,12 @@ yui# pkg_admin lsall /usr/pkgsrc/packages/i386ELF/All/'{mit,unproven}-pthread*'
 /usr/pkgsrc/packages/i386ELF/All/mit-pthreads-1.60b6.tgz
 /usr/pkgsrc/packages/i386ELF/All/unproven-pthreads-0.15.tgz
 .Ed
-.It Cm pmatch pattern pkg
-Returns true if pkg matches pattern, false else.
+.It Cm pmatch Ar pattern Ar pkg
+Returns true if
+.Ar pkg
+matches
+.Ar pattern ,
+otherwise returns false.
 .It Cm rebuild
 Rebuild the package database mapping from scratch, scanning
 subdirectories in
@@ -162,6 +180,7 @@ The default package database directory is
 .Xr pkg_create 1 ,
 .Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
+.Xr pkg_view 1 ,
 .Xr packages 7
 .Sh HISTORY
 The
