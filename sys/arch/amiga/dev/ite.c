@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.39 1996/04/21 21:11:52 veego Exp $	*/
+/*	$NetBSD: ite.c,v 1.40 1996/05/09 20:31:32 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,7 @@
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/kdassert.h>
 #include <amiga/amiga/color.h>	/* DEBUG */
+#include <amiga/amiga/custom.h>	/* DEBUG */
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/iteioctl.h>
@@ -321,6 +322,9 @@ itecninit(cd)
 	iteinit(cd->cn_dev);
 	ip->flags |= ITE_ACTIVE | ITE_ISCONS;
 
+#ifdef DRACO
+	if (!is_draco())
+#endif
 	init_bell();
 }
 
@@ -2180,7 +2184,11 @@ iteputchar(c, ip)
 		}
 		break;
 	case BEL:
-		if (kbd_tty && kbd_ite && kbd_ite->tp == kbd_tty)
+		if (kbd_tty && kbd_ite && kbd_ite->tp == kbd_tty 
+#ifdef DRACO
+		    && !is_draco()	
+#endif
+		    )
 			ite_bell();
 		break;
 	case SO:

@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.8 1994/10/26 02:02:12 cgd Exp $	*/
+/*	$NetBSD: vectors.s,v 1.9 1996/05/09 20:30:53 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -35,7 +35,7 @@
  *
  *	@(#)vectors.s	7.2 (Berkeley) 5/7/91
  */
-	.text
+	.data
 	.globl	_buserr,_addrerr
 	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst,_trace
 	.globl	_badtrap
@@ -45,6 +45,8 @@
 	.globl	_fpfline, _fpunsupp, _fpfault
 	.globl	_trap12
 
+	.globl	_vectab
+_vectab:
 Lvectab:
 	.long	0x4ef80400	/* 0: jmp 0x400:w (unused reset SSP) */
 	.long	0		/* 1: NOT USED (reset PC) */
