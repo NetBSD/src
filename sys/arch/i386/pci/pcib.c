@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.22 1998/10/26 03:43:52 enami Exp $	*/
+/*	$NetBSD: pcib.c,v 1.23 1998/10/26 03:47:19 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -135,6 +135,11 @@ pcibmatch(parent, match, aux)
 			/*
 			 * The Intel 82371MX identifies itself erroneously as a
 			 * miscellaneous bridge.
+			 */
+		case PCI_PRODUCT_INTEL_82371AB_ISA:
+			/*
+			 * Some Intel 82371AB PCI-ISA bridge identifies
+			 * itself as miscellaneous bridge.
 			 */
 			return (1);
 		}
