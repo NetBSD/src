@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: isofs_rrip.c,v 1.3.2.1 1993/11/14 22:40:46 mycroft Exp $
+ *	$Id: isofs_rrip.c,v 1.3.2.2 1993/11/26 22:43:13 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -85,13 +85,13 @@ isofs_rrip_slink(p,ana)
 	register ISO_RRIP_SLINK_COMPONENT *pcompe;
 	int len, wlen, cont;
 	char *outbuf, *inbuf;
-	
+
 	pcomp = (ISO_RRIP_SLINK_COMPONENT *)p->component;
 	pcompe = (ISO_RRIP_SLINK_COMPONENT *)((char *)p + isonum_711(p->h.length));
 	len = *ana->outlen;
-	outbuf = ana->outbuf + len;
+	outbuf = ana->outbuf;
 	cont = ana->cont;
-	
+
 	/*
 	 * Gathering a Symbolic name from each component with path
 	 */
@@ -99,7 +99,7 @@ isofs_rrip_slink(p,ana)
 	     pcomp < pcompe;
 	     pcomp = (ISO_RRIP_SLINK_COMPONENT *)((char *)pcomp + ISO_RRIP_SLSIZ
 						  + isonum_711(pcomp->clen))) {
-		
+
 		if (!cont) {
 			if (len < ana->maxlen) {
 				len++;
@@ -107,29 +107,29 @@ isofs_rrip_slink(p,ana)
 			}
 		}
 		cont = 0;
-		
+
 		inbuf = "..";
 		wlen = 0;
-		
+
 		switch (*pcomp->cflag) {
-			
+
 		case ISO_SUSP_CFLAG_CURRENT:
 			/* Inserting Current */
 			wlen = 1;
 			break;
-			
+
 		case ISO_SUSP_CFLAG_PARENT:
 			/* Inserting Parent */
 			wlen = 2;
 			break;
-			
+
 		case ISO_SUSP_CFLAG_ROOT:
 			/* Inserting slash for ROOT */
 			/* start over from beginning(?) */
 			outbuf -= len;
 			len = 0;
 			break;
-			
+
 		case ISO_SUSP_CFLAG_VOLROOT:
 			/* Inserting a mount point i.e. "/cdrom" */
 			/* same as above */
@@ -138,13 +138,13 @@ isofs_rrip_slink(p,ana)
 			inbuf = ana->imp->im_mountp->mnt_stat.f_mntonname;
 			wlen = strlen(inbuf);
 			break;
-			
+
 		case ISO_SUSP_CFLAG_HOST:
 			/* Inserting hostname i.e. "kurt.tools.de" */
 			inbuf = hostname;
 			wlen = hostnamelen;
 			break;
-			
+
 		case ISO_SUSP_CFLAG_CONTINUE:
 			cont = 1;
 			/* fall thru */
@@ -158,23 +158,25 @@ isofs_rrip_slink(p,ana)
 			wlen = ana->maxlen + 1;
 			break;
 		}
-		
+
 		if (len + wlen > ana->maxlen) {
 			/* indicate error to caller */
 			ana->cont = 1;
 			ana->fields = 0;
-			return;
+			aha->outbuf -= *ana->outlen;
+			*ana->outlen = 0;
+			return 0;
 		}
-		
+
 		bcopy(inbuf,outbuf,wlen);
 		outbuf += wlen;
 		len += wlen;
-		
+
 	}
 	ana->outbuf = outbuf;
 	*ana->outlen = len;
 	ana->cont = cont;
-	
+
 	if (!isonum_711(p->flags)) {
 		ana->fields &= ~ISO_SUSP_SLINK;
 		return ISO_SUSP_SLINK;
@@ -193,28 +195,28 @@ isofs_rrip_altname(p,ana)
 	char *inbuf;
 	int wlen;
 	int cont;
-	
+
 	inbuf = "..";
 	wlen = 0;
 	cont = 0;
-	
+
 	switch (*p->flags) {
 	case ISO_SUSP_CFLAG_CURRENT:
 		/* Inserting Current */
 		wlen = 1;
 		break;
-		
+
 	case ISO_SUSP_CFLAG_PARENT:
 		/* Inserting Parent */
 		wlen = 2;
 		break;
-		
+
 	case ISO_SUSP_CFLAG_HOST:
 		/* Inserting hostname i.e. "kurt.tools.de" */
 		inbuf = hostname;
 		wlen = hostnamelen;
 		break;
-		
+
 	case ISO_SUSP_CFLAG_CONTINUE:
 		cont = 1;
 		/* fall thru */
@@ -223,22 +225,24 @@ isofs_rrip_altname(p,ana)
 		wlen = isonum_711(p->h.length) - 5;
 		inbuf = (char *)p + 5;
 		break;
-		
+
 	default:
 		printf("RRIP with incorrect NM flags?\n");
 		wlen = ana->maxlen + 1;
 		break;
 	}
-	
+
 	if ((*ana->outlen += wlen) > ana->maxlen) {
 		/* treat as no name field */
 		ana->fields &= ~ISO_SUSP_ALTNAME;
+		ana->outbuf -= *ana->outlen - wlen;
+		*ana->outlen = 0;
 		return 0;
 	}
-	
+
 	bcopy(inbuf,ana->outbuf,wlen);
 	ana->outbuf += wlen;
-	
+
 	if (!cont) {
 		ana->fields &= ~ISO_SUSP_ALTNAME;
 		return ISO_SUSP_ALTNAME;
@@ -254,9 +258,9 @@ isofs_rrip_defname(isodir,ana)
 	strcpy(ana->outbuf,"..");
 	switch (*isodir->name) {
 	default:
-		isofntrans(isodir->name,isonum_711(isodir->name_len),
-			   ana->outbuf,ana->outlen,
-			   0,isonum_711(isodir->flags)&4);
+		isofntrans(isodir->name, isonum_711(isodir->name_len),
+			   ana->outbuf, ana->outlen,
+			   1, isonum_711(isodir->flags) & 4);
 		break;
 	case 0:
 		*ana->outlen = 1;
@@ -275,25 +279,9 @@ isofs_rrip_pclink(p,ana)
 	ISO_RRIP_CLINK  *p;
 	ISO_RRIP_ANALYZE *ana;
 {
-	*ana->inump = isonum_733(p->dir_loc);
+	*ana->inump = isonum_733(p->dir_loc) << ana->imp->im_bshift;
 	ana->fields &= ~(ISO_SUSP_CLINK|ISO_SUSP_PLINK);
 	return *p->h.type == 'C' ? ISO_SUSP_CLINK : ISO_SUSP_PLINK;
-}
-
-void
-isofs_defino(isodir,inump)
-	struct iso_directory_record *isodir;
-	ino_t *inump;
-{
-	*inump = isonum_733(isodir->extent) + isonum_711(isodir->ext_attr_length);
-}
-
-static void
-isofs_rrip_defino(isodir,ana)
-	struct iso_directory_record *isodir;
-	ISO_RRIP_ANALYZE *ana;
-{
-	isofs_defino(isodir,ana->inump);
 }
 
 /*
@@ -316,52 +304,52 @@ isofs_rrip_tstamp(p,ana)
 	ISO_RRIP_ANALYZE *ana;
 {
 	unsigned char *ptime;
-	
+
 	ptime = p->time;
-	
+
 	/* Check a format of time stamp (7bytes/17bytes) */
 	if (!(*p->flags&ISO_SUSP_TSTAMP_FORM17)) {
 		if (*p->flags&ISO_SUSP_TSTAMP_CREAT)
 			ptime += 7;
-		
+
 		if (*p->flags&ISO_SUSP_TSTAMP_MODIFY) {
 			isofs_tstamp_conv7(ptime,&ana->inop->inode.iso_mtime);
 			ptime += 7;
 		} else
 			bzero(&ana->inop->inode.iso_mtime,sizeof(struct timeval));
-		
+
 		if (*p->flags&ISO_SUSP_TSTAMP_ACCESS) {
 			isofs_tstamp_conv7(ptime,&ana->inop->inode.iso_atime);
 			ptime += 7;
 		} else
 			ana->inop->inode.iso_atime = ana->inop->inode.iso_mtime;
-		
+
 		if (*p->flags&ISO_SUSP_TSTAMP_ATTR)
 			isofs_tstamp_conv7(ptime,&ana->inop->inode.iso_ctime);
 		else
 			ana->inop->inode.iso_ctime = ana->inop->inode.iso_mtime;
-		
+
 	} else {
 		if (*p->flags&ISO_SUSP_TSTAMP_CREAT)
 			ptime += 17;
-		
+
 		if (*p->flags&ISO_SUSP_TSTAMP_MODIFY) {
 			isofs_tstamp_conv17(ptime,&ana->inop->inode.iso_mtime);
 			ptime += 17;
 		} else
 			bzero(&ana->inop->inode.iso_mtime,sizeof(struct timeval));
-		
+
 		if (*p->flags&ISO_SUSP_TSTAMP_ACCESS) {
 			isofs_tstamp_conv17(ptime,&ana->inop->inode.iso_atime);
 			ptime += 17;
 		} else
 			ana->inop->inode.iso_atime = ana->inop->inode.iso_mtime;
-		
+
 		if (*p->flags&ISO_SUSP_TSTAMP_ATTR)
 			isofs_tstamp_conv17(ptime,&ana->inop->inode.iso_ctime);
 		else
 			ana->inop->inode.iso_ctime = ana->inop->inode.iso_mtime;
-		
+
 	}
 	ana->fields &= ~ISO_SUSP_TSTAMP;
 	return ISO_SUSP_TSTAMP;
@@ -384,15 +372,14 @@ isofs_rrip_device(p,ana)
 	ISO_RRIP_ANALYZE *ana;
 {
 	unsigned high, low;
-	
+
 	high = isonum_733(p->dev_t_high_l);
-	low  = isonum_733(p->dev_t_low_l);
-	
-	if ( high == 0 ) {
-		ana->inop->inode.iso_rdev = makedev( major(low), minor(low) );
-	} else {
-		ana->inop->inode.iso_rdev = makedev( high, minor(low) );
-	}
+	low = isonum_733(p->dev_t_low_l);
+
+	if (!high)
+		ana->inop->inode.iso_rdev = makedev(major(low), minor(low));
+	else
+		ana->inop->inode.iso_rdev = makedev(high, minor(low));
 	ana->fields &= ~ISO_SUSP_DEVICE;
 	return ISO_SUSP_DEVICE;
 }
@@ -409,7 +396,7 @@ isofs_rrip_idflag(p,ana)
 	/* special handling of RE field */
 	if (ana->fields&ISO_SUSP_RELDIR)
 		return isofs_rrip_reldir(p,ana);
-	
+
 	return ISO_SUSP_IDFLAG;
 }
 
@@ -476,7 +463,7 @@ isofs_rrip_loop(isodir,ana,table)
 	int i;
 	char *pwhead;
 	int result;
-	
+
 	/*
 	 * Note: If name length is odd,
 	 *       it will be padding 1 byte  after the name
@@ -484,23 +471,23 @@ isofs_rrip_loop(isodir,ana,table)
 	pwhead = isodir->name + isonum_711(isodir->name_len);
 	if (!(isonum_711(isodir->name_len)&1))
 		pwhead++;
-	
+
 	/* If it's not the '.' entry of the root dir obey SP field */
 	if (*isodir->name != 0
 	    || isonum_733(isodir->extent) != ana->imp->root_extent)
 		pwhead += ana->imp->rr_skip;
 	else
 		pwhead += ana->imp->rr_skip0;
-	
+
 	phead = (ISO_SUSP_HEADER *)pwhead;
 	pend = (ISO_SUSP_HEADER *)((char *)isodir + isonum_711(isodir->length));
-	
+
 	result = 0;
 	while (1) {
 		ana->iso_ce_len = 0;
 		/*
 		 * Note: "pend" should be more than one SUSP header
-		 */ 
+		 */
 		while (pend >= phead + 1) {
 			if (isonum_711(phead->version) == 1) {
 				for (ptable = table; ptable->func; ptable++) {
@@ -519,13 +506,13 @@ isofs_rrip_loop(isodir,ana,table)
 			 */
 			phead = (ISO_SUSP_HEADER *)((char *)phead + isonum_711(phead->length));
 		}
-		
-		if ( ana->fields && ana->iso_ce_len ) {
+
+		if (ana->fields && ana->iso_ce_len) {
 			if (ana->iso_ce_blk >= ana->imp->volume_space_size
-			    || ana->iso_ce_off + ana->iso_ce_len > ana->imp->im_bsize
+			    || ana->iso_ce_off + ana->iso_ce_len > ana->imp->logical_block_size
 			    || bread(ana->imp->im_devvp,
-				     ana->iso_ce_blk * ana->imp->im_bsize / DEV_BSIZE,
-				     ana->imp->im_bsize,NOCRED,&bp))
+				     ana->iso_ce_blk * ana->imp->logical_block_size / DEV_BSIZE,
+				     ana->imp->logical_block_size, NOCRED, &bp))
 				/* what to do now? */
 				break;
 			phead = (ISO_SUSP_HEADER *)(bp->b_un.b_addr + ana->iso_ce_off);
@@ -537,12 +524,12 @@ isofs_rrip_loop(isodir,ana,table)
 		brelse(bp);
 	/*
 	 * If we don't find the Basic SUSP stuffs, just set default value
-	 *   ( attribute/time stamp )
+	 * (attribute/time stamp )
 	 */
 	for (ptable = table; ptable->func2; ptable++)
 		if (!(ptable->result&result))
 			ptable->func2(isodir,ana);
-	
+
 	return result;
 }
 
@@ -563,22 +550,22 @@ isofs_rrip_analyze(isodir,inop,imp)
 	struct iso_mnt *imp;
 {
 	ISO_RRIP_ANALYZE analyze;
-	
+
 	analyze.inop = inop;
 	analyze.imp = imp;
 	analyze.fields = ISO_SUSP_ATTR|ISO_SUSP_TSTAMP|ISO_SUSP_DEVICE;
-	
+
 	return isofs_rrip_loop(isodir,&analyze,rrip_table_analyze);
 }
 
-/* 
- * Get Alternate Name from 'AL' record 
- * If either no AL record or 0 length, 
+/*
+ * Get Alternate Name from 'AL' record
+ * If either no AL record or 0 length,
  *    it will be return the translated ISO9660 name,
  */
 static RRIP_TABLE rrip_table_getname[] = {
 	{ "NM", isofs_rrip_altname,	isofs_rrip_defname,	ISO_SUSP_ALTNAME },
-	{ "CL", isofs_rrip_pclink,	isofs_rrip_defino,	ISO_SUSP_CLINK|ISO_SUSP_PLINK },
+	{ "CL", isofs_rrip_pclink,	0,			ISO_SUSP_CLINK|ISO_SUSP_PLINK },
 	{ "PL", isofs_rrip_pclink,	0,			ISO_SUSP_CLINK|ISO_SUSP_PLINK },
 	{ "RE", isofs_rrip_reldir,	0,			ISO_SUSP_RELDIR },
 	{ "RR", isofs_rrip_idflag,	0,			ISO_SUSP_IDFLAG },
@@ -597,7 +584,7 @@ isofs_rrip_getname(isodir,outbuf,outlen,inump,imp)
 {
 	ISO_RRIP_ANALYZE analyze;
 	RRIP_TABLE *tab;
-	
+
 	analyze.outbuf = outbuf;
 	analyze.outlen = outlen;
 	analyze.maxlen = NAME_MAX;
@@ -605,21 +592,21 @@ isofs_rrip_getname(isodir,outbuf,outlen,inump,imp)
 	analyze.imp = imp;
 	analyze.fields = ISO_SUSP_ALTNAME|ISO_SUSP_RELDIR|ISO_SUSP_CLINK|ISO_SUSP_PLINK;
 	*outlen = 0;
-	
+
 	tab = rrip_table_getname;
 	if (*isodir->name == 0
 	    || *isodir->name == 1) {
 		isofs_rrip_defname(isodir,&analyze);
-		
+
 		analyze.fields &= ~ISO_SUSP_ALTNAME;
 		tab++;
 	}
-	
+
 	return isofs_rrip_loop(isodir,&analyze,tab);
 }
 
-/* 
- * Get Symbolic Name from 'SL' record 
+/*
+ * Get Symbolic Name from 'SL' record
  *
  * Note: isodir should contains SL record!
  */
@@ -639,7 +626,7 @@ isofs_rrip_getsymname(isodir,outbuf,outlen,imp)
 	struct iso_mnt *imp;
 {
 	ISO_RRIP_ANALYZE analyze;
-	
+
 	analyze.outbuf = outbuf;
 	analyze.outlen = outlen;
 	*outlen = 0;
@@ -647,7 +634,7 @@ isofs_rrip_getsymname(isodir,outbuf,outlen,imp)
 	analyze.cont = 1;		/* don't start with a slash */
 	analyze.imp = imp;
 	analyze.fields = ISO_SUSP_SLINK;
-	
+
 	return (isofs_rrip_loop(isodir,&analyze,rrip_table_getsymname)&ISO_SUSP_SLINK);
 }
 
@@ -669,7 +656,7 @@ isofs_rrip_offset(isodir,imp)
 {
 	ISO_RRIP_OFFSET *p;
 	ISO_RRIP_ANALYZE analyze;
-	
+
 	imp->rr_skip0 = 0;
 	p = (ISO_RRIP_OFFSET *)(isodir->name + 1);
 	if (bcmp(p,"SP\7\1\276\357",6)) {
@@ -679,11 +666,11 @@ isofs_rrip_offset(isodir,imp)
 		if (bcmp(p,"SP\7\1\276\357",6))
 			return -1;
 	}
-	
+
 	analyze.imp = imp;
 	analyze.fields = ISO_SUSP_EXTREF;
 	if (!(isofs_rrip_loop(isodir,&analyze,rrip_table_extref)&ISO_SUSP_EXTREF))
 		return -1;
-	
+
 	return isonum_711(p->skip);
 }

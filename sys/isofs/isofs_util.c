@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_util.c,v 1.5.2.3 1993/11/14 22:40:48 mycroft Exp $
+ *	$Id: isofs_util.c,v 1.5.2.4 1993/11/26 22:43:15 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -124,7 +124,7 @@ isofncmp(unsigned char *fn,int fnlen,unsigned char *isofn,int isolen)
 {
 	int i, j;
 	char c;
-	
+
 	while (--fnlen >= 0) {
 		if (--isolen < 0)
 			return *fn;
@@ -176,27 +176,29 @@ isofncmp(unsigned char *fn,int fnlen,unsigned char *isofn,int isolen)
  * translate a filename
  */
 void
-isofntrans(unsigned char *infn,int infnlen,
-	   unsigned char *outfn,unsigned short *outfnlen,
-	   int stripgen,int assoc)
+isofntrans(infn, infnlen, outfn, outfnlen, original, assoc);
+	unsigned char *infn, *outfn;
+	int infnlen;
+	unsigned short *outfnlen;
+	int original, assoc;
 {
-	int fnidx;
-	
-	for (fnidx = 0; fnidx < infnlen; fnidx++) {
+	int fnidx = 0;
+
+	if (assoc) {
+		*outfn++ = ASSOCCHAR;
+		fnidx++;
+	}
+	for (; fnidx < infnlen; fnidx++) {
 		char c = *infn++;
-		
-		if (c >= 'A' && c <= 'Z')
+
+		if (!original && c >= 'A' && c <= 'Z')
 			*outfn++ = c + ('a' - 'A');
-		else if (c == '.' && stripgen && *infn == ';')
+		else if (!original && c == '.' && *infn == ';')
 			break;
-		else if (c == ';' && stripgen)
+		else if (!original && c == ';')
 			break;
 		else
 			*outfn++ = c;
-	}
-	if (assoc) {
-		*outfn = ASSOCCHAR;
-		fnidx++;
 	}
 	*outfnlen = fnidx;
 }

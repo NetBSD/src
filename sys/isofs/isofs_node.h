@@ -1,7 +1,6 @@
 /*
- *	$Id: isofs_node.h,v 1.7 1993/09/07 15:40:56 ws Exp $
+ *	$Id: isofs_node.h,v 1.7.2.1 1993/11/26 22:43:12 mycroft Exp $
  */
-
 
 typedef	struct	{
 	struct timeval	iso_atime;	/* time of last access */
@@ -45,17 +44,9 @@ struct iso_node {
 
 	long iso_extent;
 	long i_size;
-#ifdef	__notdef__
-	int iso_reclen;
-	int iso_extlen;
-	int iso_flags;
-	long iso_unit_size;
-	int iso_interleave_gap;
-	int iso_volume_seq;
-	int iso_namelen;	/* ISO9660/RRIP name len */
-#endif
-	int iso_parent;		/* byte offset in beginning of dir record */
-	long iso_parent_ino;	/* ino number of dir */
+	long iso_start;		/* actual start of data of file (may be */
+				/* different from iso_extent, if file has */
+				/* extended attributes) */
 	ISO_RRIP_INODE  inode;
 };
 
