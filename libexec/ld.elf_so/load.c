@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.21 2002/10/04 03:59:40 mycroft Exp $	 */
+/*	$NetBSD: load.c,v 1.22 2002/10/04 04:01:13 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -57,10 +57,12 @@
 static bool _rtld_load_by_name __P((const char *, Obj_Entry *, Needed_Entry **,
     int));
 
+#ifdef RTLD_LOADER
 Objlist _rtld_list_main =	/* Objects loaded at program startup */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_main);
 Objlist _rtld_list_global =	/* Objects dlopened with RTLD_GLOBAL */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_global);
+#endif
 
 void
 _rtld_objlist_add(list, obj)
@@ -155,6 +157,7 @@ _rtld_load_object(filepath, mode)
 		free(filepath);
 
 	++obj->refcount;
+#ifdef RTLD_LOADER
 	if (mode & RTLD_MAIN && !obj->mainref) {
 		obj->mainref = 1;
 		rdbg(("adding %p (%s) to _rtld_list_main", obj, obj->path));
@@ -165,6 +168,7 @@ _rtld_load_object(filepath, mode)
 		rdbg(("adding %p (%s) to _rtld_list_global", obj, obj->path));
 		_rtld_objlist_add(&_rtld_list_global, obj);
 	}
+#endif
 	return obj;
 }
 
