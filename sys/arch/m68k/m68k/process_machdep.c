@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: process_machdep.c,v 1.1 1994/01/08 11:17:29 cgd Exp $
+ *	$Id: process_machdep.c,v 1.2 1994/01/21 04:21:06 briggs Exp $
  */
 
 /*
@@ -135,7 +135,10 @@ process_sstep(p)
 
 	error = process_read_regs(p, &r);
 	if (error == 0) {
-		r.r_sr |= PSL_T;
+		if (sstep)
+			r.r_sr |= PSL_T;
+		else
+			r.r_sr &= ~PSL_T;
 		error = process_write_regs(p, &r);
 	}
 
