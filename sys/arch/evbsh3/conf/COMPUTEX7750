@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.2 2000/03/22 00:58:19 cgd Exp $
+#	$NetBSD: COMPUTEX7750,v 1.3 2000/07/31 20:57:45 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -48,6 +48,9 @@ options		BSC_RTCOR_VAL	=0xa582
 #options		BSC_RFCR_VAL	=0xa400
 options		FRQCR_VAL	=0x0e23
 options		BSC_SDMR3_VAL	=0xff940110
+
+makeoptions 	LDSCRIPTBASE="sh.x"	# for big endian
+#makeoptions 	LDSCRIPTBASE="shl.x"	# for little endian
 
 # Standard system options
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)

@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.7 2000/02/24 19:42:35 msaitoh Exp $
+#	$NetBSD: CQREEKSH3,v 1.8 2000/07/31 20:57:46 msaitoh Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -33,6 +33,9 @@ options		BSC_RTCSR_VAL	=0xa510
 options		BSC_RTCNT_VAL	=0xa500	# XXX
 options		BSC_RTCOR_VAL	=0xa53a
 options		FRQCR_VAL	=0x0102
+
+makeoptions 	LDSCRIPTBASE="sh.x"	# for big endian
+#makeoptions 	LDSCRIPTBASE="shl.x"	# for little endian
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
