@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16.2.2 1997/01/24 07:05:39 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.16.2.3 1997/01/31 02:26:53 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -84,7 +84,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 #define cdev_wsdisplay_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
+	dev_init(c,n,tty), dev_init(c,n,poll), dev_init(c,n,mmap), D_TTY }
 
 /* open, close, write, ioctl */
 #define cdev_lpt_init(c,n) { \
