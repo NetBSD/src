@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.27 1997/07/15 08:40:02 leo Exp $	*/
+/*	$NetBSD: isavar.h,v 1.28 1997/07/17 00:58:50 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -133,10 +133,12 @@ struct isa_attach_args {
 	bus_space_handle_t ia_delaybah; /* i/o handle for `delay port' */
 };
 
-#define	IOBASEUNK	-1		/* i/o address is unknown */
-#define	IRQUNK		-1		/* interrupt request line is unknown */
-#define	DRQUNK		-1		/* DMA request line is unknown */
-#define	MADDRUNK	-1		/* shared memory address is unknown */
+#include "locators.h"
+
+#define	IOBASEUNK	ISACF_PORT_DEFAULT	/* i/o address is unknown */
+#define	IRQUNK		ISACF_IRQ_DEFAULT	/* interrupt request line is unknown */
+#define	DRQUNK		ISACF_DRQ_DEFAULT	/* DMA request line is unknown */
+#define	MADDRUNK	ISACF_IOMEM_DEFAULT	/* shared memory address is unknown */
 
 /*
  * Per-device ISA variables
@@ -198,12 +200,12 @@ struct isa_softc {
 #define	ISA_DRQ_FREE(isadev, drq) \
 	((struct isa_softc *)(isadev))->sc_drqmap &= ~(1 << (drq))
 
-#define		cf_iobase		cf_loc[0]
-#define		cf_iosize		cf_loc[1]
-#define		cf_maddr		cf_loc[2]
-#define		cf_msize		cf_loc[3]
-#define		cf_irq			cf_loc[4]
-#define		cf_drq			cf_loc[5]
+#define		cf_iobase		cf_loc[ISACF_PORT]
+#define		cf_iosize		cf_loc[ISACF_SIZE]
+#define		cf_maddr		cf_loc[ISACF_IOMEM]
+#define		cf_msize		cf_loc[ISACF_IOSIZ]
+#define		cf_irq			cf_loc[ISACF_IRQ]
+#define		cf_drq			cf_loc[ISACF_DRQ]
 
 /*
  * ISA interrupt handler manipulation.

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.95 1997/06/06 23:43:54 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.96 1997/07/17 00:58:49 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -179,12 +179,12 @@ isascan(parent, match)
 	ia.ia_memt = sc->sc_memt;
 	ia.ia_dmat = sc->sc_dmat;
 	ia.ia_ic = sc->sc_ic;
-	ia.ia_iobase = cf->cf_loc[0];
-	ia.ia_iosize = 0x666;
-	ia.ia_maddr = cf->cf_loc[2];
-	ia.ia_msize = cf->cf_loc[3];
-	ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4];
-	ia.ia_drq = cf->cf_loc[5];
+	ia.ia_iobase = cf->cf_iobase;
+	ia.ia_iosize = 0x666;/* cf->cf_iosize; */
+	ia.ia_maddr = cf->cf_maddr;
+	ia.ia_msize = cf->cf_msize;
+	ia.ia_irq = cf->cf_irq == 2 ? 9 : cf->cf_irq;
+	ia.ia_drq = cf->cf_drq;
 	ia.ia_delaybah = sc->sc_delaybah;
 
 	if ((*cf->cf_attach->ca_match)(parent, match, &ia) > 0)
@@ -208,12 +208,12 @@ isasearch(parent, cf, aux)
 		ia.ia_memt = sc->sc_memt;
 		ia.ia_dmat = sc->sc_dmat;
 		ia.ia_ic = sc->sc_ic;
-		ia.ia_iobase = cf->cf_loc[0];
-		ia.ia_iosize = 0x666;
-		ia.ia_maddr = cf->cf_loc[2];
-		ia.ia_msize = cf->cf_loc[3];
-		ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4];
-		ia.ia_drq = cf->cf_loc[5];
+		ia.ia_iobase = cf->cf_iobase;
+		ia.ia_iosize = 0x666; /* cf->cf_iosize; */
+		ia.ia_maddr = cf->cf_maddr;
+		ia.ia_msize = cf->cf_msize;
+		ia.ia_irq = cf->cf_irq == 2 ? 9 : cf->cf_irq;
+		ia.ia_drq = cf->cf_drq;
 		ia.ia_delaybah = sc->sc_delaybah;
 
 		tryagain = 0;

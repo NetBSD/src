@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.160 1997/06/24 00:20:44 thorpej Exp $	*/
+/*	$NetBSD: wd.c,v 1.161 1997/07/17 00:58:52 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -294,7 +294,8 @@ wdprobe(parent, match, aux)
 	struct wdc_attach_args *wa = aux;
 	int drive = wa->wa_drive;
 
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
+	if (cf->cf_loc[WDCCF_DRIVE] != WDCCF_DRIVE_DEFAULT &&
+	    cf->cf_loc[WDCCF_DRIVE] != drive)
 		return 0;
 	
 	if (wdcommandshort(wdc, drive, WDCC_RECAL) != 0 ||

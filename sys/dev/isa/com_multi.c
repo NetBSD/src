@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.1 1997/04/04 20:56:37 mycroft Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.2 1997/07/17 00:58:48 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -79,7 +79,8 @@ com_multi_probe(parent, match, aux)
 	struct cfdata *cf = match;
 	struct commulti_attach_args *ca = aux;
  
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ca->ca_slave)
+	if (cf->cf_loc[COMMULTICF_SLAVE] != COMMULTICF_SLAVE_DEFAULT &&
+	    cf->cf_loc[COMMULTICF_SLAVE] != ca->ca_slave)
 		return (0);
 
 	iobase = ca->ca_iobase;
