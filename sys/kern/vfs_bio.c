@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.142 2005/02/26 21:34:56 perry Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.142.2.1 2005/04/03 13:28:23 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.142 2005/02/26 21:34:56 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.142.2.1 2005/04/03 13:28:23 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1609,22 +1609,24 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	node.sysctl_data = &t;
-	t = *(int*)rnode->sysctl_data;
+	t = *(int *)rnode->sysctl_data;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
 		return (error);
 
+	if (t < 0)
+		return EINVAL;
 	if (rnode->sysctl_data == &bufcache) {
-		if (t < 0 || t > 100)
+		if (t > 100)
 			return (EINVAL);
 		bufcache = t;
 		buf_setwm();
 	} else if (rnode->sysctl_data == &bufmem_lowater) {
-		if (bufmem_hiwater - bufmem_lowater < 16)
+		if (bufmem_hiwater - t < 16)
 			return (EINVAL);
 		bufmem_lowater = t;
 	} else if (rnode->sysctl_data == &bufmem_hiwater) {
-		if (bufmem_hiwater - bufmem_lowater < 16)
+		if (t - bufmem_lowater < 16)
 			return (EINVAL);
 		bufmem_hiwater = t;
 	} else
@@ -1632,7 +1634,7 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 
 	/* Drain until below new high water mark */
 	while ((t = bufmem - bufmem_hiwater) >= 0) {
-		if (buf_drain(t / (2*1024)) <= 0)
+		if (buf_drain(t / (2 * 1024)) <= 0)
 			break;
 	}
 
