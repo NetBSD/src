@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.7 1998/09/11 12:50:07 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.8 1998/12/13 19:27:51 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -119,5 +119,12 @@ struct svr4_ssd {
 #define	SVR4_T_PROTFLT		13
 #define	SVR4_T_PAGEFLT		14
 #define	SVR4_T_ALIGNFLT		17
+
+/*
+ * Fast syscall gate traps.
+ */
+#define	SVR4_TRAP_GETHRTIME	3
+#define	SVR4_TRAP_GETHRVTIME	4
+#define	SVR4_TRAP_CLOCK_SETTIME	5
 
 #endif /* !_I386_SVR4_MACHDEP_H_ */
