@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.5 1997/08/27 11:23:27 bouyer Exp $	*/
+/*	$NetBSD: cosc.c,v 1.6 1997/10/14 22:07:53 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -60,7 +60,7 @@
 #include <arm32/podulebus/podules.h>
 
 void coscattach	__P((struct device *, struct device *, void *));
-int coscmatch	__P((struct device *, void *, void *));
+int coscmatch	__P((struct device *, struct cfdata *, void *));
 int cosc_scsicmd	__P((struct scsipi_xfer *));
 
 struct scsipi_adapter cosc_scsiswitch = {
@@ -100,9 +100,10 @@ int cosc_poll = 1;
 
 
 int
-coscmatch(pdp, match, auxp)
+coscmatch(pdp, cf, auxp)
 	struct device *pdp;
-	void *match, *auxp;
+	struct cfdata *cf;
+	void *auxp;
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 
@@ -284,7 +285,7 @@ coscattach(pdp, dp, auxp)
 #if COSC_POLL > 0
 	if (!cosc_poll)
 #endif
-	if (irq_claim(IRQ_PODULE, &sc->sc_softc.sc_ih))
+	if (irq_claim(sc->sc_podule->interrupt, &sc->sc_softc.sc_ih))
 		panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
 	
 	printf("\n");
