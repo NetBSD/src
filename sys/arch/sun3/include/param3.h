@@ -124,13 +124,12 @@
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
 
 #include <machine/psl.h>
-#if 0
 
 /*
  * spl functions; all but spl0 are done in-line
  */
 
-
+#ifdef __GNUC__
 #define _spl(s) \
 ({ \
         register int _spl_r; \
@@ -139,7 +138,7 @@
                 "&=d" (_spl_r) : "di" (s)); \
         _spl_r; \
 })
-
+#endif
 /* spl0 requires checking for software interrupts */
 #define spl1()  _spl(PSL_S|PSL_IPL1)
 #define spl2()  _spl(PSL_S|PSL_IPL2)
@@ -171,7 +170,3 @@ int	cpuspeed;
 #else
 #define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 #endif
-#endif
-
-
-

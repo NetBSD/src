@@ -57,9 +57,9 @@
  * rather than inline or machine-dependent implementations
  */
 #define	NEED_MINMAX		/* need {,i,l,ul}{min,max} functions */
-#define	NEED_FFS		/* don't need ffs function */
-#define	NEED_BCMP		/* don't need bcmp function */
-#define	NEED_STRLEN		/* don't need strlen function */
+#undef	NEED_FFS		/* don't need ffs function */
+#undef	NEED_BCMP		/* don't need bcmp function */
+#undef	NEED_STRLEN		/* don't need strlen function */
 
 #define	cpu_exec(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
