@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.339 2001/06/20 19:52:19 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.340 2001/06/27 18:03:13 mcr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.333 2001/06/20 19:51:12 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.334 2001/06/27 17:57:23 mcr Exp 
  */
 
 /*
@@ -1339,6 +1339,8 @@
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0458	0x0458		/* LTMODEM */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_0459	0x0459		/* LTMODEM */
 #define	PCI_PRODUCT_LUCENT_LTMODEM_045a	0x045a		/* LTMODEM */
+#define	PCI_PRODUCT_LUCENT_OR3LP26	0x5400		/* Lucent ORCA FPGA w/32-bit PCI ASIC core */
+#define	PCI_PRODUCT_LUCENT_OR3TP12	0x5401		/* Lucent ORCA FPGA w/64-bit PCI ASIC core */
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
 
 /* Macronix */
@@ -1653,6 +1655,7 @@
 /* Solidum Systems Corporation */
 #define	PCI_PRODUCT_SOLIDUM_AMD971	0x2000		/* SNP8023: AMD 971 */
 #define	PCI_PRODUCT_SOLIDUM_CLASS802	0x8023		/* SNP8023: Classifier Engine */
+#define	PCI_PRODUCT_SOLIDUM_PAXWARE1100	0x1100		/* PAX.ware 1100 dual Gb Classifier Engine */
 
 /* Sony products */
 #define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A IEEE 1394 Host Controller */
