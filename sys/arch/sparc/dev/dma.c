@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.51 1998/03/29 22:06:58 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.52 1998/04/07 20:11:54 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -81,17 +81,8 @@ int	dma_setup	__P((struct dma_softc *, caddr_t *, size_t *,
 			     int, size_t *));
 void	dma_go		__P((struct dma_softc *));
 
-int	dma_bus_map __P((
-		void *,			/*cookie*/
-		bus_type_t,		/*slot*/
-		bus_addr_t,		/*offset*/
-		bus_size_t,		/*size*/
-		int,			/*flags*/
-		vm_offset_t,		/*preferred virtual address */
-		bus_space_handle_t *));
-
 void	*dmabus_intr_establish __P((
-		void *,			/*cookie*/
+		bus_space_tag_t,
 		int,			/*level*/
 		int,			/*flags*/
 		int (*) __P((void *)),	/*handler*/
@@ -322,30 +313,15 @@ dma_identify(sc)
 	sc->go = dma_go;
 }
 
-int
-dma_bus_map(cookie, slot, offset, size, flags, vaddr, hp)
-	void *cookie;
-	bus_type_t slot;
-	bus_addr_t offset;
-	bus_size_t size;
-	int flags;
-	vm_offset_t vaddr;
-	bus_space_handle_t *hp;
-{
-	struct dma_softc *sc = cookie;
-	return (sbus_bus_map(sc->sc_bustag, slot, offset, size,
-			     flags, vaddr, hp));
-}
-
 void *
-dmabus_intr_establish(cookie, level, flags, handler, arg)
-        void *cookie;
+dmabus_intr_establish(t, level, flags, handler, arg)
+	bus_space_tag_t t;
 	int level;
 	int flags;
 	int (*handler) __P((void *));
 	void *arg;
 {
-	struct dma_softc *sc = cookie;
+	struct dma_softc *sc = t->cookie;
 
 	if (sc->intr == ledmaintr) { /* XXX - for now; do esp later */
 		sc->sc_intrchain = handler;
@@ -725,8 +701,7 @@ dma_alloc_bustag(sc)
 
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
-	sbt->sparc_bus_map = dma_bus_map;
-	sbt->sparc_bus_unmap = sc->sc_bustag->sparc_bus_unmap;
+	sbt->parent = sc->sc_bustag;
 	sbt->sparc_intr_establish = dmabus_intr_establish;
 	return (sbt);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.21 1998/03/29 22:06:58 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.22 1998/04/07 20:13:33 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,9 +102,10 @@ void sbusreset __P((int));
 
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int, int *));
-static int sbus_bus_mmap __P((void *, bus_type_t, bus_addr_t, int));
+static int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
+			      int, bus_space_handle_t *));
 static int _sbus_bus_map __P((
-		void *,			/*cookie*/
+		bus_space_tag_t,
 		bus_type_t,		/*slot*/
 		bus_addr_t,		/*offset*/
 		bus_size_t,		/*size*/
@@ -419,8 +420,8 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 }
 
 int
-_sbus_bus_map(cookie, btype, offset, size, flags, vaddr, hp)
-	void	*cookie;
+_sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
+	bus_space_tag_t t;
 	bus_type_t btype;
 	bus_addr_t offset;
 	bus_size_t size;
@@ -428,7 +429,7 @@ _sbus_bus_map(cookie, btype, offset, size, flags, vaddr, hp)
 	vm_offset_t vaddr;
 	bus_space_handle_t *hp;
 {
-	struct sbus_softc *sc = cookie;
+	struct sbus_softc *sc = t->cookie;
 	int slot = btype;
 	int i;
 
@@ -450,15 +451,16 @@ _sbus_bus_map(cookie, btype, offset, size, flags, vaddr, hp)
 }
 
 int
-sbus_bus_mmap(cookie, btype, paddr, flags)
-	void *cookie;
+sbus_bus_mmap(t, btype, paddr, flags, hp)
+	bus_space_tag_t t;
 	bus_type_t btype;
 	bus_addr_t paddr;
 	int flags;
+	bus_space_handle_t *hp;
 {
 	int slot = (int)btype;
 	int offset = (int)paddr;
-	struct sbus_softc *sc = cookie;
+	struct sbus_softc *sc = t->cookie;
 	int i;
 
 	for (i = 0; i < sc->sc_nrange; i++) {
@@ -470,7 +472,8 @@ sbus_bus_mmap(cookie, btype, paddr, flags)
 
 		paddr = sc->sc_range[i].poffset + offset;
 		iospace = (bus_addr_t)sc->sc_range[i].pspace;
-		return (bus_space_mmap(sc->sc_bustag, iospace, paddr, flags));
+		return (bus_space_mmap(sc->sc_bustag, iospace, paddr,
+				       flags, hp));
 	}
 
 	return (-1);
@@ -579,14 +582,14 @@ sbus_get_intr(sc, node, ip)
  * Install an interrupt handler for an Sbus device.
  */
 void *
-sbus_intr_establish(cookie, level, flags, handler, arg)
-        void *cookie;
+sbus_intr_establish(t, level, flags, handler, arg)
+	bus_space_tag_t t;
 	int level;
 	int flags;
 	int (*handler) __P((void *));
 	void *arg;
 {
-	struct sbus_softc *sc = cookie;
+	struct sbus_softc *sc = t->cookie;
 	struct intrhand *ih;
 	int ipl;
 
@@ -624,10 +627,9 @@ sbus_alloc_bustag(sc)
 
 	bzero(sbt, sizeof *sbt);
 	sbt->cookie = sc;
+	sbt->parent = sc->sc_bustag;
 	sbt->sparc_bus_map = _sbus_bus_map;
-	sbt->sparc_bus_unmap = sc->sc_bustag->sparc_bus_unmap;
 	sbt->sparc_bus_mmap = sbus_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
 	return (sbt);
 }
-
