@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42 2003/11/26 19:22:57 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.43 2004/01/29 02:00:02 tsarna Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -659,7 +659,7 @@
 389	UNIMPL		__mac_set_file
 390	UNIMPL		kenv
 391	NOARGS		{ int sys_lchflags(const char *path, u_long flags); }
-392	UNIMPL		uuidgen
+392	NOARGS		{ int sys_uuidgen(struct uuid *store, int count); }
 393	UNIMPL		sendfile
 394	UNIMPL		mac_syscall
 395	UNIMPL		getfsstat

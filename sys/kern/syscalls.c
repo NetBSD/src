@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.147 2004/01/02 18:53:47 cl Exp $ */
+/* $NetBSD: syscalls.c,v 1.148 2004/01/29 02:00:03 tsarna Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.147 2004/01/02 18:53:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.148 2004/01/29 02:00:03 tsarna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -494,4 +494,5 @@ const char *const syscallnames[] = {
 	"#352 (unimplemented sys_sched_get_priority_min)",		/* 352 = unimplemented sys_sched_get_priority_min */
 	"#353 (unimplemented sys_sched_rr_get_interval)",		/* 353 = unimplemented sys_sched_rr_get_interval */
 	"fsync_range",			/* 354 = fsync_range */
+	"uuidgen",			/* 355 = uuidgen */
 };

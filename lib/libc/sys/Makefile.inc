@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.146 2004/01/02 18:56:39 cl Exp $
+#	$NetBSD: Makefile.inc,v 1.147 2004/01/29 02:00:02 tsarna Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -72,7 +72,7 @@ ASM=	access.S acct.S bind.S chdir.S chflags.S \
 	__sigaction_sigtramp.S __sigtimedwait.S \
 	socket.S socketpair.S __stat13.S statfs.S \
 	swapctl.S symlink.S umask.S undelete.S unlink.S \
-	unmount.S utimes.S utrace.S vadvise.S \
+	unmount.S utimes.S utrace.S uuidgen.S vadvise.S \
 	__sysctl.S \
 	__posix_chown.S __posix_fchown.S __posix_lchown.S __posix_rename.S \
 	_lwp_create.S _lwp_exit.S _lwp_self.S _lwp_wait.S \
@@ -154,7 +154,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	socketpair.2 stat.2 statfs.2 swapctl.2 swapon.3 symlink.2 \
 	sync.2 sysarch.2 syscall.2 timer_create.2 timer_delete.2 \
 	timer_settime.2 truncate.2 umask.2 undelete.2 \
-	unlink.2 utimes.2 utrace.2 vfork.2 wait.2 write.2
+	unlink.2 utimes.2 utrace.2 uuidgen.2 vfork.2 wait.2 write.2
 
 MLINKS+=_exit.2 _Exit.2
 MLINKS+=brk.2 sbrk.2

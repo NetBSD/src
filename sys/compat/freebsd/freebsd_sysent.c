@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_sysent.c,v 1.54 2003/11/26 19:23:29 jdolecek Exp $ */
+/* $NetBSD: freebsd_sysent.c,v 1.55 2004/01/29 02:00:02 tsarna Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.54 2003/11/26 19:23:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysent.c,v 1.55 2004/01/29 02:00:02 tsarna Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -910,8 +910,8 @@ struct sysent freebsd_sysent[] = {
 	    sys_nosys },			/* 390 = unimplemented kenv */
 	{ 2, s(struct sys_lchflags_args), 0,
 	    sys_lchflags },			/* 391 = lchflags */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 392 = unimplemented uuidgen */
+	{ 2, s(struct sys_uuidgen_args), 0,
+	    sys_uuidgen },			/* 392 = uuidgen */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 393 = unimplemented sendfile */
 	{ 0, 0, 0,

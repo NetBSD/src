@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscalls.c,v 1.52 2003/11/26 19:23:29 jdolecek Exp $ */
+/* $NetBSD: freebsd_syscalls.c,v 1.53 2004/01/29 02:00:02 tsarna Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.52 2003/11/26 19:23:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscalls.c,v 1.53 2004/01/29 02:00:02 tsarna Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -492,7 +492,7 @@ const char *const freebsd_syscallnames[] = {
 	"#389 (unimplemented __mac_set_file)",		/* 389 = unimplemented __mac_set_file */
 	"#390 (unimplemented kenv)",		/* 390 = unimplemented kenv */
 	"lchflags",			/* 391 = lchflags */
-	"#392 (unimplemented uuidgen)",		/* 392 = unimplemented uuidgen */
+	"uuidgen",			/* 392 = uuidgen */
 	"#393 (unimplemented sendfile)",		/* 393 = unimplemented sendfile */
 	"#394 (unimplemented mac_syscall)",		/* 394 = unimplemented mac_syscall */
 	"#395 (unimplemented getfsstat)",		/* 395 = unimplemented getfsstat */
