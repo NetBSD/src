@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc.xxx,v 1.1 2002/05/21 20:51:34 rafal Exp $
+#	$NetBSD: Makefile.inc.xxx,v 1.2 2002/12/30 14:55:28 pooka Exp $
 
 DBG=		-Os -Wa,-xgot # XXX -xgot workaround for objcopy-crunchide
 
@@ -19,6 +19,7 @@ IMAGEDEPENDS+=	${ARCHDIR}/dot.profile ${ARCHDIR}/termcap.iris-ansi \
 PRELABEL=${DESTDIR}/sbin/disklabel -w ${VND} ${DISKTYPE} ; \
 	${DESTDIR}/usr/mdec/sgivol -if ${VND} ;\
 	${DESTDIR}/usr/mdec/sgivol -wf boot /usr/mdec/boot ${VND} ; \
-	${DESTDIR}/usr/mdec/sgivol -wf boot.elf /usr/mdec/boot.elf ${VND}
+	${DESTDIR}/usr/mdec/sgivol -wf boot.elf /usr/mdec/boot.elf ${VND} ; \
+	${DESTDIR}/usr/mdec/sgivol -wf boot.ip32 /usr/mdec/boot.ip32 ${VND}
 
 image_md_post:
