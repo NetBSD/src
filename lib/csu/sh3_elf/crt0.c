@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.7 2003/07/05 22:51:12 marcus Exp $ */
+/* $NetBSD: crt0.c,v 1.8 2003/07/05 23:50:28 uwe Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -37,7 +37,7 @@
 
 #include "common.h"
 
-void _start __P((int, char **, char **, void (*cleanup) __P((void)),
+void ___start __P((int, char **, char **, void (*cleanup) __P((void)),
 			const Obj_Entry *, struct ps_strings *));
 
 __asm(	"	.text			\n"
@@ -91,7 +91,7 @@ ___start(argc, argv, envp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.7 2003/07/05 22:51:12 marcus Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.8 2003/07/05 23:50:28 uwe Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
