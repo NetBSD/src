@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_input.c,v 1.24 2001/01/24 09:04:16 itojun Exp $	*/
-/*	$KAME: ah_input.c,v 1.48 2001/01/23 08:59:37 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.25 2001/02/11 06:49:51 itojun Exp $	*/
+/*	$KAME: ah_input.c,v 1.51 2001/02/08 14:24:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1046,9 +1046,9 @@ ah6_ctlinput(cmd, sa, d)
 	struct secasvar *sav;
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
+	struct ip6ctlparam *ip6cp = NULL;
 	int off;
-	struct in6_addr finaldst;
-	struct in6_addr s;
+	struct sockaddr_in6 sa6_src, sa6_dst;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -1058,20 +1058,10 @@ ah6_ctlinput(cmd, sa, d)
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
-		struct ip6ctlparam *ip6cp = (struct ip6ctlparam *)d;
+		ip6cp = (struct ip6ctlparam *)d;
 		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
 		off = ip6cp->ip6c_off;
-
-		/* translate addresses into internal form */
-		bcopy(ip6cp->ip6c_finaldst, &finaldst, sizeof(finaldst));
-		if (IN6_IS_ADDR_LINKLOCAL(&finaldst)) {
-			finaldst.s6_addr16[1] =
-			    htons(m->m_pkthdr.rcvif->if_index);
-		}
-		bcopy(&ip6->ip6_src, &s, sizeof(s));
-		if (IN6_IS_ADDR_LINKLOCAL(&s))
-			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 	} else {
 		m = NULL;
 		ip6 = NULL;
@@ -1104,8 +1094,10 @@ ah6_ctlinput(cmd, sa, d)
 			 * Check to see if we have a valid SA corresponding to
 			 * the address in the ICMP message payload.
 			 */
-			sav = key_allocsa(AF_INET6, (caddr_t)&s,
-			    (caddr_t)&finaldst, IPPROTO_AH, ahp->ah_spi);
+			sav = key_allocsa(AF_INET6,
+					  (caddr_t)&sa6_src.sin6_addr,
+					  (caddr_t)&sa6_dst.sin6_addr,
+					  IPPROTO_AH, ahp->ah_spi);
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||
 				    sav->state == SADB_SASTATE_DYING)
@@ -1116,14 +1108,13 @@ ah6_ctlinput(cmd, sa, d)
 			/* XXX Further validation? */
 
 			/*
-			 * Now that we've validated that we are actually
-			 * communicating with the host indicated in the ICMPv6
-			 * message, recalculate the new MTU, and create the
-			 * corresponding routing entry.
+			 * Depending on the value of "valid" and routing table
+			 * size (mtudisc_{hi,lo}wat), we will:
+			 * - recalcurate the new MTU and create the
+			 *   corresponding routing entry, or
+			 * - ignore the MTU change notification.
 			 */
 			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
-
-			return;
 		}
 
 		/* we normally notify single pcb here */

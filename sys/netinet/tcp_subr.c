@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.106 2001/01/24 09:04:16 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.107 2001/02/11 06:49:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1110,16 +1110,14 @@ tcp6_ctlinput(cmd, sa, d)
 	struct sockaddr *sa;
 	void *d;
 {
-	struct tcphdr *thp;
 	struct tcphdr th;
 	void (*notify) __P((struct in6pcb *, int)) = tcp6_notify;
 	int nmatch;
-	struct sockaddr_in6 sa6;
 	struct ip6_hdr *ip6;
+	const struct sockaddr_in6 *sa6_src = NULL;
+	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
 	struct mbuf *m;
 	int off;
-	struct in6_addr finaldst;
-	struct in6_addr s;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -1144,25 +1142,12 @@ tcp6_ctlinput(cmd, sa, d)
 		m = ip6cp->ip6c_m;
 		ip6 = ip6cp->ip6c_ip6;
 		off = ip6cp->ip6c_off;
-
-		/* translate addresses into internal form */
-		bcopy(ip6cp->ip6c_finaldst, &finaldst, sizeof(finaldst));
-		if (IN6_IS_ADDR_LINKLOCAL(&finaldst)) {
-			finaldst.s6_addr16[1] =
-			    htons(m->m_pkthdr.rcvif->if_index);
-		}
-		bcopy(&ip6->ip6_src, &s, sizeof(s));
-		if (IN6_IS_ADDR_LINKLOCAL(&s))
-			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+		sa6_src = ip6cp->ip6c_src;
 	} else {
 		m = NULL;
 		ip6 = NULL;
+		sa6_src = &sa6_any;
 	}
-
-	/* translate addresses into internal form */
-	sa6 = *(struct sockaddr_in6 *)sa;
-	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr) && m && m->m_pkthdr.rcvif)
-		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 
 	if (ip6) {
 		/*
@@ -1174,15 +1159,8 @@ tcp6_ctlinput(cmd, sa, d)
 		if (m->m_pkthdr.len < off + sizeof(th))
 			return;
 
-		if (m->m_len < off + sizeof(th)) {
-			/*
-			 * this should be rare case,
-			 * so we compromise on this copy...
-			 */
-			m_copydata(m, off, sizeof(th), (caddr_t)&th);
-			thp = &th;
-		} else
-			thp = (struct tcphdr *)(mtod(m, caddr_t) + off);
+		bzero(&th, sizeof(th));
+		m_copydata(m, off, sizeof(th), (caddr_t)&th);
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;
@@ -1192,38 +1170,38 @@ tcp6_ctlinput(cmd, sa, d)
 			 * corresponding to the address in the ICMPv6 message
 			 * payload.
 			 */
-			if (in6_pcblookup_connect(&tcb6, &finaldst,
-			    thp->th_dport, &s, thp->th_sport, 0))
+			if (in6_pcblookup_connect(&tcb6, &sa6->sin6_addr,
+			    th.th_dport, (struct in6_addr *)&sa6_src->sin6_addr,
+			    th.th_sport, 0))
 				valid++;
 
 			/*
-			 * Now that we've validated that we are actually
-			 * communicating with the host indicated in the ICMPv6
-			 * message, recalculate the new MTU, and create the
-			 * corresponding routing entry.
+			 * Depending on the value of "valid" and routing table
+			 * size (mtudisc_{hi,lo}wat), we will:
+			 * - recalcurate the new MTU and create the
+			 *   corresponding routing entry, or
+			 * - ignore the MTU change notification.
 			 */
 			icmp6_mtudisc_update((struct ip6ctlparam *)d, valid);
 
+			/*
+			 * no need to call in6_pcbnotify, it should have been
+			 * called via callback if necessary
+			 */
 			return;
 		}
 
-		nmatch = in6_pcbnotify(&tcb6, (struct sockaddr *)&sa6,
-		    thp->th_dport, &s, thp->th_sport, cmd, notify);
+		nmatch = in6_pcbnotify(&tcb6, sa, th.th_dport,
+		    (struct sockaddr *)sa6_src, th.th_sport, cmd, NULL, notify);
 		if (nmatch == 0 && syn_cache_count &&
 		    (inet6ctlerrmap[cmd] == EHOSTUNREACH ||
 		     inet6ctlerrmap[cmd] == ENETUNREACH ||
-		     inet6ctlerrmap[cmd] == EHOSTDOWN)) {
-			struct sockaddr_in6 sin6;
-			bzero(&sin6, sizeof(sin6));
-			sin6.sin6_len = sizeof(sin6);
-			sin6.sin6_family = AF_INET6;
-			sin6.sin6_port = thp->th_sport;
-			sin6.sin6_addr = s;
-			syn_cache_unreach((struct sockaddr *)&sin6, sa, thp);
-		}
+		     inet6ctlerrmap[cmd] == EHOSTDOWN))
+			syn_cache_unreach((struct sockaddr *)sa6_src,
+					  sa, &th);
 	} else {
-		(void) in6_pcbnotify(&tcb6, (struct sockaddr *)&sa6, 0,
-				     &zeroin6_addr, 0, cmd, notify);
+		(void) in6_pcbnotify(&tcb6, sa, 0, (struct sockaddr *)sa6_src,
+		    0, cmd, NULL, notify);
 	}
 }
 #endif
@@ -1409,7 +1387,7 @@ tcp6_mtudisc_callback(faddr)
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *faddr;
 	(void) in6_pcbnotify(&tcb6, (struct sockaddr *)&sin6, 0,
-	    &zeroin6_addr, 0, PRC_MSGSIZE, tcp6_mtudisc);
+	    (struct sockaddr *)&sa6_any, 0, PRC_MSGSIZE, NULL, tcp6_mtudisc);
 }
 
 void

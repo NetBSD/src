@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_pcb.c,v 1.34 2001/02/10 04:14:27 itojun Exp $	*/
-/*	$KAME: in6_pcb.c,v 1.64 2000/10/01 12:37:20 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.35 2001/02/11 06:49:52 itojun Exp $	*/
+/*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -379,12 +379,8 @@ in6_pcbconnect(in6p, nam)
 	 || (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)
 	  && in6p->in6p_laddr.s6_addr32[3] == 0)) {
 		if (in6p->in6p_lport == 0) {
-#ifdef __NetBSD__
 			(void)in6_pcbbind(in6p, (struct mbuf *)0,
 			    (struct proc *)0);
-#else
-			(void)in6_pcbbind(in6p, (struct mbuf *)0);
-#endif
 		}
 		in6p->in6p_laddr = *in6a;
 	}
@@ -482,28 +478,38 @@ in6_setpeeraddr(in6p, nam)
  * any errors for each matching socket.
  *
  * Must be called at splsoftnet.
+ *
+ * Note: src (4th arg) carries the flowlabel value on the original IPv6
+ * header, in sin6_flowinfo member.
  */
 int
-in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
+in6_pcbnotify(head, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 	struct in6pcb *head;
-	struct sockaddr *dst;
+	struct sockaddr *dst, *src;
 	u_int fport_arg, lport_arg;
-	struct in6_addr *laddr6;
 	int cmd;
+	void *cmdarg;
 	void (*notify) __P((struct in6pcb *, int));
 {
 	struct in6pcb *in6p, *nin6p;
-	struct in6_addr faddr6;
+	struct sockaddr_in6 sa6_src, *sa6_dst;
 	u_int16_t fport = fport_arg, lport = lport_arg;
 	int errno;
 	int nmatch = 0;
-	int do_rtchange = (notify == in6_rtchange);
+	u_int32_t flowinfo;
 
 	if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET6)
 		return 0;
-	faddr6 = ((struct sockaddr_in6 *)dst)->sin6_addr;
-	if (IN6_IS_ADDR_UNSPECIFIED(&faddr6))
+
+	sa6_dst = (struct sockaddr_in6 *)dst;
+	if (IN6_IS_ADDR_UNSPECIFIED(&sa6_dst->sin6_addr))
 		return 0;
+
+	/*
+	 * note that src can be NULL when we get notify by local fragmentation.
+	 */
+	sa6_src = (src == NULL) ? sa6_any : *(struct sockaddr_in6 *)src;
+	flowinfo = sa6_src.sin6_flowinfo;
 
 	/*
 	 * Redirects go to all references to the destination,
@@ -516,48 +522,85 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 	if (PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD) {
 		fport = 0;
 		lport = 0;
-		bzero((caddr_t)laddr6, sizeof(*laddr6));
+		bzero((caddr_t)&sa6_src.sin6_addr, sizeof(sa6_src.sin6_addr));
 
-		do_rtchange = 1;
+		if (cmd != PRC_HOSTDEAD)
+			notify = in6_rtchange;
 	}
-
-	if (notify == NULL)
-		return 0;
 
 	errno = inet6ctlerrmap[cmd];
 	for (in6p = head->in6p_next; in6p != head; in6p = nin6p) {
 		nin6p = in6p->in6p_next;
 
-		if (do_rtchange) {
-			/*
-			 * Since a non-connected PCB might have a cached route,
-			 * we always call in6_rtchange without matching
-			 * the PCB to the src/dst pair.
-			 *
-			 * XXX: we assume in6_rtchange does not free the PCB.
-			 */
-			if (IN6_ARE_ADDR_EQUAL(&in6p->in6p_route.ro_dst.sin6_addr,
-			    &faddr6)) {
-				in6_rtchange(in6p, errno);
+		/*
+		 * Under the following condition, notify of redirects
+		 * to the pcb, without making address matches against inpcb.
+		 * - redirect notification is arrived.
+		 * - the inpcb is unconnected.
+		 * - the inpcb is caching !RTF_HOST routing entry.
+		 * - the ICMPv6 notification is from the gateway cached in the
+		 *   inpcb.  i.e. ICMPv6 notification is from nexthop gateway
+		 *   the inpcb used very recently.
+		 *
+		 * This is to improve interaction between netbsd/openbsd
+		 * redirect handling code, and inpcb route cache code.
+		 * without the clause, !RTF_HOST routing entry (which carries
+		 * gateway used by inpcb right before the ICMPv6 redirect)
+		 * will be cached forever in unconnected inpcb.
+		 *
+		 * There still is a question regarding to what is TRT:
+		 * - On bsdi/freebsd, RTF_HOST (cloned) routing entry will be
+		 *   generated on packet output.  inpcb will always cache
+		 *   RTF_HOST routing entry so there's no need for the clause
+		 *   (ICMPv6 redirect will update RTF_HOST routing entry,
+		 *   and inpcb is caching it already).
+		 *   However, bsdi/freebsd are vulnerable to local DoS attacks
+		 *   due to the cloned routing entries.
+		 * - Specwise, "destination cache" is mentioned in RFC2461.
+		 *   Jinmei says that it implies bsdi/freebsd behavior, itojun
+		 *   is not really convinced.
+		 * - Having hiwat/lowat on # of cloned host route (redirect/
+		 *   pmtud) may be a good idea.  netbsd/openbsd has it.  see
+		 *   icmp6_mtudisc_update().
+		 */
+		if ((PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD) &&
+		    IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
+		    in6p->in6p_route.ro_rt &&
+		    !(in6p->in6p_route.ro_rt->rt_flags & RTF_HOST)) {
+			struct sockaddr_in6 *dst6;
 
-				if (notify == in6_rtchange) {
-					/* there's nothing to do any more */
-					continue;
-				}
-			}
+			dst6 = (struct sockaddr_in6 *)&in6p->in6p_route.ro_dst;
+			if (IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr,
+			    &sa6_dst->sin6_addr))
+				goto do_notify;
 		}
 
-		/* at this point, we can assume that NOTIFY is not NULL. */
-
-		if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &faddr6) ||
+		/*
+		 * Detect if we should notify the error. If no source and
+		 * destination ports are specifed, but non-zero flowinfo and
+		 * local address match, notify the error. This is the case
+		 * when the error is delivered with an encrypted buffer
+		 * by ESP. Otherwise, just compare addresses and ports
+		 * as usual.
+		 */
+		if (lport == 0 && fport == 0 && flowinfo &&
+		    in6p->in6p_socket != NULL &&
+		    flowinfo == (in6p->in6p_flowinfo & IPV6_FLOWLABEL_MASK) &&
+		    IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, &sa6_src.sin6_addr))
+			goto do_notify;
+		else if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr,
+					     &sa6_dst->sin6_addr) ||
 		    in6p->in6p_socket == 0 ||
 		    (lport && in6p->in6p_lport != lport) ||
-		    (!IN6_IS_ADDR_UNSPECIFIED(laddr6) &&
-		     !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, laddr6)) ||
+		    (!IN6_IS_ADDR_UNSPECIFIED(&sa6_src.sin6_addr) &&
+		     !IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr,
+					 &sa6_src.sin6_addr)) ||
 		    (fport && in6p->in6p_fport != fport))
 			continue;
 
-		(*notify)(in6p, errno);
+	  do_notify:
+		if (notify)
+			(*notify)(in6p, errno);
 		nmatch++;
 	}
 	return nmatch;
