@@ -32,10 +32,6 @@
 #define BOOT_CS_INDEX		3
 #define BOOT_CS16_INDEX		5
 #define BOOT_DS_INDEX		4
-#define DB_CS_INDEX		14
-#define DB_CS16_INDEX		15
-#define DB_DS_INDEX		16
-#define GDT_INDEX		17
 
 /* Vector numbers. */
 #define BREAKPOINT_VECTOR	3
@@ -50,9 +46,9 @@
 ENTRY(boot2)
 	data32
 	subl	%eax, %eax
-	mov	%cs, %ax
-	mov	%ax, %ds
-	mov	%ax, %es
+	movl	%cs, %ax
+	movl	%ax, %ds
+	movl	%ax, %es
 	data32
 	shll	$4, %eax
 	addr32
@@ -67,7 +63,7 @@ ENTRY(boot2)
 	movb	%bl, EXT(Gdt)+(8*gdt_index)+4
 
 	data32
-	shld	$16, %eax, %ebx
+	shldl	$16, %eax, %ebx
 	FIXUP(BOOT_CS_INDEX)
 	FIXUP(BOOT_CS16_INDEX)
 	FIXUP(BOOT_DS_INDEX)
@@ -77,9 +73,6 @@ ENTRY(boot2)
 	movl	%eax, %ecx
 	data32
 	addl	$ EXT(Gdt), %eax
-	data32
-	shld	$16, %eax, %ebx
-	FIXUP(GDT_INDEX)
 	addr32
 	data32
 	movl	%eax, EXT(Gdtr)+2
@@ -88,60 +81,6 @@ ENTRY(boot2)
 	addr32
 	data32
 	movl	%ecx, EXT(Idtr_prot)+2
-
-	/* %es = vector table segment for a while */
-	push	%es
-	data32
-	subl	%eax, %eax
-	mov	%ax, %es
-
-#ifdef BDB
-	/* fix up GDT entries for bdb */
-	data32
-	movl	$4*DEBUG_VECTOR, %esi
-	addr32
-	movl	%es: 2(%esi), %eax	/* actually movw to %ax */
-	data32
-	shll	$4, %eax
-	data32
-	shld	$16, %eax, %ebx
-	FIXUP(DB_CS_INDEX)
-	FIXUP(DB_CS16_INDEX)
-	FIXUP(DB_DS_INDEX)
-
-	/* Fetch entry points of bdb's protected mode trap handlers.  These
-	 * are stored at 2 before the corresponding entry points for real mode.
-	 */
-	data32
-	subl	%ebx, %ebx
-	addr32
-	movl	%es: (%esi), %ebx	/* actually movw to %bx */
-	data32
-	subl	%ecx, %ecx
-	addr32
-	movl	%es: 4*(BREAKPOINT_VECTOR-DEBUG_VECTOR)(%esi), %ecx
-					/* actually movw to %cx */
-
-	/* %es = bdb segment for a while */
-	data32
-	shrl	$4, %eax
-	mov	%ax, %es
-
-/* XXX appears to be broken */
-	/* fix up IDT entries for bdb */
-	subl	$2, %ebx
-	movl	%es:(%edi), %eax	/* actually movw %es:(%bx), %ax */
-	addr32
-	movl	%eax, EXT(Idt)+8*DEBUG_VECTOR	/* actually movw %ax */
-	movl	%ecx, %ebx
-	subl	$2, %ebx
-	movl	%es:(%edi), %eax	/* actually movw %es:(%bx), %ax */
-	addr32
-	movl	%eax, EXT(Idt)+8*BREAKPOINT_VECTOR	/* actually movw %ax */
-#endif
-
-	/* finished with groping in real mode segments */
-	pop	%es
 
 	/* change to protected mode */
 	data32
@@ -159,8 +98,8 @@ ENTRY(boot2)
 	pushl	%edx
 	call	EXT(boot)
 oops:
+	cli
 	hlt
-	jmp	oops
 
 	.data
         .align 2
