@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.9 2003/11/20 07:12:34 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.10 2003/12/03 18:40:07 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.9 2003/11/20 07:12:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.10 2003/12/03 18:40:07 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,28 +130,63 @@ darwin_trapsignal(l, ksi)
 	struct lwp *l;
 	const struct ksiginfo *ksi;
 {
-	struct darwin_emuldata *ded;
-	int code[2];
-
-	/* 
-	 * Send signals as software exception if the process requested that
-	 * XXX this skips various checks (signal masks...)
-	 */
-	ded = (struct darwin_emuldata *)l->l_proc->p_emuldata;
-	if (ded->ded_flags & DARWIN_DED_SIGEXC) {
-		code[0] = MACH_SOFT_SIGNAL;
-		code[1] = ksi->ksi_signo;
-		mach_exception(l, MACH_EXC_SOFTWARE, code);
+	if (darwin_sigfilter(l, ksi) == 0)
 		return;
-	}
 
-	/* 
-	 * If mach_trapsignal1 returns 0, the exception was intercepted at
-	 * the Mach level, no signal is to be sent. if it returns an error,
-	 * we call native trapsignal to fire a UNIX signal.
-	 */
 	if (mach_trapsignal1(l, ksi) != 0)
 		trapsignal(l, ksi);
 
 	return;
+}
+
+int
+darwin_sigfilter(l, ksi)
+	struct lwp *l;
+	const struct ksiginfo *ksi;
+{
+	struct proc *p = l->l_proc;
+	struct darwin_emuldata *ded;
+	int code[2];
+	int error;
+	int signo;
+
+	signo = ksi->ksi_signo;
+
+	/* 
+	 * Don't generate Mach exeption for non 
+	 * maskable, stop and continue signals 
+	 */
+	if (sigprop[signo] & (SA_CANTMASK | SA_STOP | SA_CONT | SA_TTYSTOP))
+		return EINVAL;
+
+	/* Don't send an exception if the signal is masked or ignored */
+	if ((p->p_flag & P_TRACED) == 0) {
+		if ((sigismember(&p->p_sigctx.ps_sigignore, signo)) ||
+		    (sigismember(&p->p_sigctx.ps_sigmask, signo)))
+			return EINVAL;
+	}
+
+	/* 
+	 * Send signals as software exception if the process requested that.
+	 */
+	ded = (struct darwin_emuldata *)p->p_emuldata;
+	if (ded->ded_flags & DARWIN_DED_SIGEXC) {
+		code[0] = MACH_SOFT_SIGNAL;
+		code[1] = signo;
+		error = mach_exception(l, MACH_EXC_SOFTWARE, code);
+
+		/* Like if the signal was sent, wakeup any waiting process */
+		if ((error == 0) &&
+		    p->p_sigctx.ps_sigwaited &&
+		    sigismember(p->p_sigctx.ps_sigwait, signo) &&
+		    p->p_stat != SSTOP) {
+			p->p_sigctx.ps_sigwaited->ksi_info = ksi->ksi_info;
+			p->p_sigctx.ps_sigwaited = NULL;
+			wakeup_one(&p->p_sigctx.ps_sigwait);
+		}
+
+		return error;
+	}
+
+	return EINVAL;
 }
