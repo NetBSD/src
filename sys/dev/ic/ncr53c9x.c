@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36 1999/09/30 23:04:41 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.37 1999/11/10 00:42:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1831,6 +1831,7 @@ printf("<<RESELECT CONT'd>>");
 			case 2:
 				/* Select stuck at Command Phase */
 				NCRCMD(sc, NCRCMD_FLUSH);
+				break;
 			case 4:
 				if (ncr53c9x_dmaselect &&
 				    sc->sc_cmdlen != 0)
