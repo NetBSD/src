@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.c,v 1.11 2002/11/23 01:59:59 oster Exp $	*/
+/*	$NetBSD: rf_reconbuffer.c,v 1.12 2002/11/23 02:38:59 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.11 2002/11/23 01:59:59 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconbuffer.c,v 1.12 2002/11/23 02:38:59 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_reconbuffer.h"
@@ -371,14 +371,7 @@ rf_CheckForFullRbuf(raidPtr, reconCtrl, pssPtr, numDataCol)
 			Dprintf2("RECON: rbuf for psid %ld ru %d is in list\n",
 			    (long) rbuf->parityStripeID, rbuf->which_ru);
 		}
-#if 0
-		pssPtr->writeRbuf = pssPtr->rbuf;	/* DEBUG ONLY:  we like
-							 * to be able to find
-							 * this rbuf while it's
-							 * awaiting write */
-#else
 		rbuf->pssPtr = pssPtr;
-#endif
 		pssPtr->rbuf = NULL;
 		rf_CauseReconEvent(raidPtr, rbuf->row, rbuf->col, NULL, RF_REVENT_BUFREADY);
 	}
