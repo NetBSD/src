@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkioconf.c	5.18 (Berkeley) 5/10/91";*/
-static char rcsid[] = "$Id: mkioconf.c,v 1.28 1994/03/23 00:35:53 cgd Exp $";
+static char rcsid[] = "$Id: mkioconf.c,v 1.29 1994/03/29 04:27:18 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -655,9 +655,6 @@ char *
 char *shandler();
 char *sirq();
 
-#define	i386_scsidev(x) \
-	(eq(x, "sd") || eq(x, "st") || eq(x, "cd") || eq(x, "ch"))
-
 i386_ioconf()
 {
   register struct device *dp, *mp, *np;
@@ -695,9 +692,9 @@ i386_ioconf()
     
     for (dp = dtab; dp != 0; dp = dp->d_next) {
       mp = dp->d_conn;
-      if (mp == 0 || mp == TO_NEXUS || i386_scsidev(dp->d_name))
+      if (mp == 0 || mp == TO_NEXUS)
 	continue;
-      fprintf(fp, "extern struct isa_driver %3sdriver;",
+      fprintf(fp, "extern struct cfdriver %7scd;",
 	      dp->d_name);
       if (dp->d_irq == 2) {
 	fprintf(stderr, "remapped irq 2 to irq 9, please update your config file\n");
@@ -721,8 +718,7 @@ i386_ioconf()
       mp = dp->d_conn;
       if (mp == 0 || mp == TO_NEXUS)
 	continue;
-      fprintf(fp, "{ &%3sdriver,",
-	      i386_scsidev(dp->d_name) ? mp->d_name : dp->d_name);
+      fprintf(fp, "{ &%7scd,", dp->d_name);
       if (dp->d_port)
         fprintf(fp, " %8s,", dp->d_port);
       else
