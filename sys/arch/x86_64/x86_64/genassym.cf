@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 2003/01/26 00:05:39 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.10 2003/01/26 14:12:11 fvdl Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,19 +158,32 @@ define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 
-define	TF_CS			offsetof(struct trapframe, tf_cs)
-define	TF_DS			offsetof(struct trapframe, tf_ds)
-define	TF_ES			offsetof(struct trapframe, tf_es)
-define	TF_FS			offsetof(struct trapframe, tf_fs)
-define	TF_GS			offsetof(struct trapframe, tf_gs)
-define	TF_RIP			offsetof(struct trapframe, tf_rip)
-define	TF_RSP			offsetof(struct trapframe, tf_rsp)
-define	TF_RAX			offsetof(struct trapframe, tf_rax)
 define	TF_RDI			offsetof(struct trapframe, tf_rdi)
-define	TF_SS			offsetof(struct trapframe, tf_ss)
-define	TF_ERR			offsetof(struct trapframe, tf_err)
+define	TF_RSI			offsetof(struct trapframe, tf_rsi)
+define	TF_RDX			offsetof(struct trapframe, tf_rdx)
+define	TF_RCX			offsetof(struct trapframe, tf_rcx)
+define	TF_R8			offsetof(struct trapframe, tf_r8)
+define	TF_R9			offsetof(struct trapframe, tf_r9)
+define	TF_R10			offsetof(struct trapframe, tf_r10)
+define	TF_R11			offsetof(struct trapframe, tf_r11)
+define	TF_R12			offsetof(struct trapframe, tf_r12)
+define	TF_R13			offsetof(struct trapframe, tf_r13)
+define	TF_R14			offsetof(struct trapframe, tf_r14)
+define	TF_R15			offsetof(struct trapframe, tf_r15)
+define	TF_RBP			offsetof(struct trapframe, tf_rbp)
+define	TF_RBX			offsetof(struct trapframe, tf_rbx)
+define	TF_RAX			offsetof(struct trapframe, tf_rax)
+define	TF_GS			offsetof(struct trapframe, tf_gs)
+define	TF_FS			offsetof(struct trapframe, tf_fs)
+define	TF_ES			offsetof(struct trapframe, tf_es)
+define	TF_DS			offsetof(struct trapframe, tf_ds)
 define	TF_TRAPNO		offsetof(struct trapframe, tf_trapno)
+define	TF_ERR			offsetof(struct trapframe, tf_err)
+define	TF_RIP			offsetof(struct trapframe, tf_rip)
+define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_RFLAGS		offsetof(struct trapframe, tf_rflags)
+define	TF_RSP			offsetof(struct trapframe, tf_rsp)
+define	TF_SS			offsetof(struct trapframe, tf_ss)
 
 define	FRAMESIZE		sizeof(struct trapframe)
 
