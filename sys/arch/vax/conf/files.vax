@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.33 1998/02/22 08:51:18 mycroft Exp $
+#       $NetBSD: files.vax,v 1.34 1998/03/21 10:02:40 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -128,8 +128,9 @@ attach	ncr at vsbus
 file	arch/vax/vsa/ncr.c		ncr needs-flag
 
 # LANCE ethernet controller on VAXstation
-attach	le at vsbus
-file	arch/vax/if/if_le.c		le needs-flag
+device	ln: ifnet, ether
+attach	ln at vsbus
+file	arch/vax/if/if_le.c		ln
 
 # DC367-B in VAXstation 2000/3100 (DZ-like 4-port serial line controller,
 # controls keyboard, mouse, modem, and printer/console)
@@ -142,6 +143,12 @@ file	arch/vax/vsa/lk201.c		dc
 device	pm
 attach	pm at vsbus
 file	arch/vax/vsa/pm.c		pm needs-flag
+
+# QDSS at UBA
+device	qd
+attach	qd at uba
+file	arch/vax/uba/qd.c		qd needs-count
+file	arch/vax/uba/qfont.c		qd
 
 device	dl: tty
 attach	dl at uba
@@ -255,12 +262,6 @@ file	arch/vax/uba/vp.c		vp needs-count
 device	qv
 attach	qv at uba
 file	arch/vax/uba/qv.c		qv needs-count
-file	arch/vax/uba/qfont.c		qv needs-count
-
-# QDSS at UBA
-device	qd
-attach	qd at uba
-file	arch/vax/uba/qd.c		qd needs-count
 
 # Interlan NP100 at UBA
 device	np: ifnet
