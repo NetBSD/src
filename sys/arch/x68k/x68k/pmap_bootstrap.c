@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.17 1999/03/23 04:18:50 minoura Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.18 2000/04/18 21:06:12 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -39,13 +39,15 @@
  *	@(#)pmap_bootstrap.c	8.1 (Berkeley) 6/10/93
  */
 
+#include "opt_m680x0.h"
+
 #include <sys/param.h>
+#include <vm/vm.h>
 #include <machine/pte.h>
-#include <x68k/x68k/iodevice.h>
 #include <machine/vmparam.h>
 #include <machine/cpu.h>
+#include <arch/x68k/x68k/iodevice.h>
 
-#include <vm/vm.h>
 
 #define RELOC(v, t)	*((t*)((caddr_t)&(v) + firstpa))
 #define RELOCA(a, t)	((t)((caddr_t)(a) + firstpa))

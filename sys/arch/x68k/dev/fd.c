@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.33 2000/04/07 16:58:56 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.34 2000/04/18 21:06:06 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #include "rnd.h"
 #include "opt_ddb.h"
+#include "opt_m680x0.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2000/03/28 23:57:31 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 2000/04/18 21:06:08 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 #include "opt_ns.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
+#include "opt_m680x0.h"
 #include "opt_fpuemulate.h"
 #include "opt_m060sp.h"
 #include "opt_panicbutton.h"

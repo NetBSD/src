@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.19 1999/11/28 20:31:00 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.20 2000/04/18 21:06:12 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,7 @@
  *	@(#)sys_machdep.c	8.2 (Berkeley) 1/13/94
  */
 
+#include "opt_m680x0.h"
 #include "opt_compat_hpux.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.5 1999/07/08 18:11:02 thorpej Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.6 2000/04/18 21:06:06 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 /*
  * Hitachi HD63450 (= Motorola MC68450) DMAC driver for x68k.
  */
+
+#include "opt_m680x0.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
