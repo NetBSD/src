@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.287 2002/04/26 14:27:23 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.288 2002/04/26 15:02:02 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -45,18 +45,13 @@ _SRC_TOP_!= cd ${.CURDIR}; while :; do \
 
 .endif					# }
 
+
 # If _SRC_TOP != "", we're within the NetBSD source tree, so set
-# various defaults.
+# defaults for NETBSDSRCDIR and _SRC_TOP_OBJ_.
 #
 .if (${_SRC_TOP_} != "")		# {
 
-#   The default for BSDSRCDIR is ${_SRC_TOP_},
-#   and the default for BSDOBJDIR is the objdir of ${BSDSRCDIR}
-#
-BSDSRCDIR?=	${_SRC_TOP_}
-.if !defined(BSDOBJDIR)
-BSDOBJDIR!=	cd ${BSDSRCDIR} && ${PRINTOBJDIR}
-.endif
+NETBSDSRCDIR?=	${_SRC_TOP_}
 
 .if !defined(_SRC_TOP_OBJ_)
 _SRC_TOP_OBJ_!=		cd ${_SRC_TOP_} && ${PRINTOBJDIR}
@@ -95,7 +90,7 @@ HOST_OSTYPE:=	${_HOST_OSNAME}-${_HOST_OSREL:C/\([^\)]*\)//}-${_HOST_ARCH}
 
 # Provide a default for TOOLDIR.
 .if !defined(TOOLDIR)
-_TOOLOBJ!=	cd ${_SRC_TOP_}/tools && ${PRINTOBJDIR}
+_TOOLOBJ!=	cd ${NETBSDSRCDIR}/tools && ${PRINTOBJDIR}
 TOOLDIR:=	${_TOOLOBJ}/tools.${HOST_OSTYPE}
 .MAKEOVERRIDES+= TOOLDIR
 .endif
@@ -203,6 +198,7 @@ DESTDIR?=
 #
 BSDSRCDIR?=	/usr/src
 BSDOBJDIR?=	/usr/obj
+NETBSDSRCDIR?=	${BSDSRCDIR}
 
 BINGRP?=	wheel
 BINOWN?=	root
