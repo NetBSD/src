@@ -1,4 +1,4 @@
-/*	$NetBSD: ccitt_proto.c,v 1.7 1998/07/05 02:25:17 jonathan Exp $	*/
+/*	$NetBSD: ccitt_proto.c,v 1.8 1998/07/05 03:14:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -41,6 +41,7 @@
  */
 
 #include "opt_hdlc.h"
+#include "opt_llc.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>
