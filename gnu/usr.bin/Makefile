@@ -1,17 +1,21 @@
-#	$NetBSD: Makefile,v 1.65 1999/02/02 17:45:03 tv Exp $
+#	$NetBSD: Makefile,v 1.66 1999/02/02 22:48:11 tv Exp $
 
 # XXX for OBJECT_FMT
 .include <bsd.own.mk>
 
-SUBDIR+=	bc cpio dc diff diff3 egcs gawk grep groff
+SUBDIR+=	bc binutils cpio dc diff diff3 egcs gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar
-# SUBDIR+=	binutils gdb
+
+.if (${MACHINE_ARCH} == "i386")
+SUBDIR+=	gdb
+.endif
 
 .if (${MACHINE_ARCH} == "alpha") || \
-    (${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "mips") || \
-    (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "vax") || \
-    (${MACHINE_ARCH} == "sparc64")
-# SUBDIR+=	gas.new
+    (${MACHINE_ARCH} == "i386")
+# || (${MACHINE_ARCH} == "mips") || \
+#    (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "vax") || \
+#    (${MACHINE_ARCH} == "sparc64")
+SUBDIR+=	gas.new
 .elif (${MACHINE_ARCH} != "arm32")
 SUBDIR+=	gas
 .endif
