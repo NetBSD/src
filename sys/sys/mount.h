@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.60.2.1 1997/10/31 07:49:57 mellon Exp $	*/
+/*	$NetBSD: mount.h,v 1.60.2.2 1997/11/20 03:16:40 mellon Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -66,7 +66,7 @@ struct fid {
 
 struct statfs {
 	short	f_type;			/* type of file system (unused; zero) */
-	short	f_flags;		/* copy of mount flags */
+	u_short	f_flags;		/* copy of mount flags */
 	long	f_bsize;		/* fundamental file system block size */
 	long	f_iosize;		/* optimal transfer block size */
 	long	f_blocks;		/* total data blocks in file system */
