@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_fromdos.c,v 1.1.4.2 1997/09/22 06:31:31 thorpej Exp $	 */
+/*	$NetBSD: exec_fromdos.c,v 1.1.4.3 1997/10/14 09:10:52 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -289,14 +289,13 @@ exec_netbsd(file, loadaddr, boothowto)
 	}
 
 	boot_argv[1] = bootdevnr;
-	boot_argv[2] = 0;	/* cyl offset, unused */
-#else				/* XXX to be specified */
+#else
+	boot_argv[1] = 0;
+#endif
 #ifdef PASS_BIOSGEOM
 	bi_getbiosgeom();
 #endif
-	boot_argv[1] = 0;
-	boot_argv[2] = vtophys(bootinfo);	/* XXX cyl offset */
-#endif
+	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
 	/*
 	 * boot_argv[3] = end (set above)
 	 */

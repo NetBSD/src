@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.2.4.1 1997/08/23 07:09:09 thorpej Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.2.4.2 1997/10/14 09:10:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -87,12 +87,15 @@ joy_isapnp_attach(parent, self, aux)
 		return;
 	}
 
-	if (bus_space_subregion(ipa->ipa_iot, ipa->ipa_io[0].h, 1, 1,
-	    &ioh) < 0) {
-		printf("%s: error in region allocation\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
+	if (ipa->ipa_io[0].length == 8) {
+		if (bus_space_subregion(ipa->ipa_iot, ipa->ipa_io[0].h, 1, 1,
+		    &ioh) < 0) {
+			printf("%s: error in region allocation\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	} else
+		ioh = ipa->ipa_io[0].h;
 
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ioh;

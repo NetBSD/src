@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.42 1997/06/25 04:41:19 mellon Exp $
+#	$NetBSD: KICKME,v 1.42.4.1 1997/10/14 09:09:29 thorpej Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -8,7 +8,8 @@ include "arch/i386/conf/std.i386"
 maxusers	24		# estimated number of users
 
 options 	I486_CPU
-options 	VM86		# Virtual 8086 emulation
+options 	VM86		# virtual 8086 emulation
+options 	USER_LDT	# user-settable LDT; used by WINE
 
 options 	XSERVER
 options 	UCONSOLE
@@ -33,8 +34,6 @@ options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_LINUX	# binary compatibility with Linux
 
 options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
-
-options 	USER_LDT	# user-settable LDT; used by WINE
 
 file-system 	FFS		# UFS
 file-system 	NFS		# Network File System client

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9.2.1 1997/08/23 07:09:03 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.9.2.2 1997/10/14 09:09:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -208,14 +208,15 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insb((h) + (o), (a), (c));				\
 	} else {							\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movb (%0),%%al				;	\
+		1:	movb (%1),%%al				;	\
 			stosb					;	\
 			loop 1b"				: 	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "%eax", "memory");			\
+		    "%edi", "%ecx", "memory");				\
 	}								\
 } while (0)
 
@@ -223,14 +224,15 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insw((h) + (o), (a), (c));				\
 	} else {							\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movw (%0),%%ax				;	\
+		1:	movw (%1),%%ax				;	\
 			stosw					;	\
 			loop 1b"				:	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "%eax", "memory");			\
+		    "%edi", "%ecx", "memory");				\
 	}								\
 } while (0)
 
@@ -238,14 +240,15 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		insl((h) + (o), (a), (c));				\
 	} else {							\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
-		1:	movl (%0),%%eax				;	\
+		1:	movl (%1),%%eax				;	\
 			stosl					;	\
 			loop 1b"				:	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edi", "%ecx", "%eax", "memory");			\
+		    "%edi", "%ecx", "memory");				\
 	}								\
 } while (0)
 
@@ -265,15 +268,16 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_read_region_1(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
-		1:	inb %w0,%%al				;	\
+		1:	inb %w1,%%al				;	\
 			stosb					;	\
-			incl %0					;	\
+			incl %1					;	\
 			loop 1b"				: 	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "%eax", "memory");		\
+		    "%edx", "%edi", "%ecx", "memory");			\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
@@ -287,15 +291,16 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
-		1:	inw %w0,%%ax				;	\
+		1:	inw %w1,%%ax				;	\
 			stosw					;	\
-			addl $2,%0				;	\
+			addl $2,%1				;	\
 			loop 1b"				: 	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "%eax", "memory");		\
+		    "%edx", "%edi", "%ecx", "memory");			\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
@@ -309,15 +314,16 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
-		1:	inl %w0,%%eax				;	\
+		1:	inl %w1,%%eax				;	\
 			stosl					;	\
-			addl $4,%0				;	\
+			addl $4,%1				;	\
 			loop 1b"				: 	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
-		    "%edx", "%edi", "%ecx", "%eax", "memory");		\
+		    "%edx", "%edi", "%ecx", "memory");			\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
@@ -380,14 +386,15 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsb((h) + (o), (a), (c));				\
 	} else {							\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsb					;	\
-			movb %%al,(%0)				;	\
+			movb %%al,(%1)				;	\
 			loop 1b"				: 	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx", "%eax");				\
+		    "%esi", "%ecx");					\
 	}								\
 } while (0)
 
@@ -395,14 +402,15 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsw((h) + (o), (a), (c));				\
 	} else {							\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsw					;	\
-			movw %%ax,(%0)				;	\
+			movw %%ax,(%1)				;	\
 			loop 1b"				: 	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx", "%eax");				\
+		    "%esi", "%ecx");					\
 	}								\
 } while (0)
 
@@ -410,14 +418,15 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	if ((t) == I386_BUS_SPACE_IO) {					\
 		outsl((h) + (o), (a), (c));				\
 	} else {							\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsl					;	\
-			movl %%eax,(%0)				;	\
+			movl %%eax,(%1)				;	\
 			loop 1b"				: 	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%esi", "%ecx", "%eax");				\
+		    "%esi", "%ecx");					\
 	}								\
 } while (0)
 
@@ -437,15 +446,16 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_write_region_1(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsb					;	\
-			outb %%al,%w0				;	\
-			incl %0					;	\
+			outb %%al,%w1				;	\
+			incl %1					;	\
 			loop 1b"				: 	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "%eax", "memory");		\
+		    "%edx", "%esi", "%ecx", "memory");			\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
@@ -459,15 +469,16 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_write_region_2(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsw					;	\
-			outw %%ax,%w0				;	\
-			addl $2,%0				;	\
+			outw %%ax,%w1				;	\
+			addl $2,%1				;	\
 			loop 1b"				: 	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "%eax", "memory");		\
+		    "%edx", "%esi", "%ecx", "memory");			\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
@@ -481,15 +492,16 @@ void	i386_memio_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #define	bus_space_write_region_4(t, h, o, a, c) do {			\
 	if ((t) == I386_BUS_SPACE_IO) {					\
+		int __x __asm__("%eax");				\
 		__asm __volatile("					\
 			cld					;	\
 		1:	lodsl					;	\
-			outl %%eax,%w0				;	\
-			addl $4,%0				;	\
+			outl %%eax,%w1				;	\
+			addl $4,%1				;	\
 			loop 1b"				: 	\
-								:	\
+		    "=&a" (__x)					:	\
 		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
-		    "%edx", "%esi", "%ecx", "%eax", "memory");		\
+		    "%edx", "%esi", "%ecx", "memory");			\
 	} else {							\
 		__asm __volatile("					\
 			cld					;	\
