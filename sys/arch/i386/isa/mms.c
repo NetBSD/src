@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.6.2.8 1993/10/12 23:30:50 mycroft Exp $
+ *	$Id: mms.c,v 1.6.2.9 1993/10/16 06:39:39 mycroft Exp $
  */
 
 #include "param.h"
@@ -72,7 +72,7 @@ static void mmsattach __P((struct device *, struct device *, void *));
 static int mmsintr __P((void *));
 
 struct cfdriver mmscd =
-{ NULL, "mms", mmsprobe, mmsattach, sizeof (struct mms_softc) };
+{ NULL, "mms", mmsprobe, mmsattach, DV_TTY, sizeof (struct mms_softc) };
 
 #define MMSUNIT(dev)	(minor(dev))
 

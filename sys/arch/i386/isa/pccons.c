@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.31.2.9 1993/10/16 04:01:03 mycroft Exp $
+ *	$Id: pccons.c,v 1.31.2.10 1993/10/16 06:40:17 mycroft Exp $
  */
 
 /*
@@ -114,7 +114,7 @@ static void pcattach __P((struct device *, struct device *, void *));
 static int pcintr __P((void *));
 
 struct	cfdriver pccd =
-{ NULL, "pc", pcprobe, pcattach, sizeof(struct pc_softc) };
+{ NULL, "pc", pcprobe, pcattach, DV_TTY, sizeof(struct pc_softc) };
 
 /* block cursor so wfj does not go blind on laptop hunting for
 	the verdamnt cursor -wfj */

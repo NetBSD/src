@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.10 1993/10/15 09:57:45 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.11 1993/10/16 06:39:45 mycroft Exp $
  */
 
 /*
@@ -84,7 +84,7 @@ static void comattach __P((struct device *, struct device *, void *));
 static int comintr __P((struct com_softc *));
 
 struct cfdriver comcd =
-{ NULL, "com", comprobe, comattach, sizeof (struct com_softc) };
+{ NULL, "com", comprobe, comattach, DV_TTY, sizeof (struct com_softc) };
 
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
@@ -610,7 +610,7 @@ comeint(sc, stat)
 		c |= TTY_PE;
 	else if (stat & LSR_OE) {
 		c |= TTY_PE;		/* XXX ought to have its own define */
-		log(LOG_WARNING, "com%d: silo overflow\n", sc->sc_dev.dv_unit);
+		log(LOG_WARNING, "%s: silo overflow\n", sc->sc_dev.dv_xname);
 	}
 	/* XXXX put in FIFO and process later */
 	(*linesw[tp->t_line].l_rint)(c, tp);
@@ -687,8 +687,8 @@ comintr(sc)
 			comeint(sc, inb(iobase + com_lsr));
 			break;
 		    default:
-			log(LOG_WARNING, "com%d: weird iir=0x%x\n",
-			    sc->sc_dev.dv_unit, code);
+			log(LOG_WARNING, "%s: weird iir=0x%x\n",
+			    sc->sc_dev.dv_xname, code);
 			/* fall through */
 		    case IIR_MLSC:
 			commint(sc);

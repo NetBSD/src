@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.9 1993/10/12 23:30:52 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.10 1993/10/16 06:39:42 mycroft Exp $
  */
 
 /*
@@ -114,7 +114,7 @@ static void lptattach __P((struct device *, struct device *, void *));
 static int lptintr __P((void *));
 
 struct	cfdriver lptcd =
-{ NULL, "lpt", lptprobe, lptattach, sizeof(struct lpt_softc) };
+{ NULL, "lpt", lptprobe, lptattach, DV_TTY, sizeof(struct lpt_softc) };
 
 #define	LPTUNIT(s)	((s)&0x1f)
 #define	LPTFLAGS(s)	((s)&0xe0)
@@ -280,13 +280,14 @@ lptopen(dev, flag)
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
-		printf("lpt%d: state=0x%x not zero\n", unit, sc->sc_state);
+		printf("%s: state=0x%x not zero\n", sc->sc_dev.dv_xname,
+		       sc->sc_state);
 #endif
 
 	sc->sc_state = LPT_INIT;
 
 	sc->sc_flags = flags;
-	lprintf("lpt%d: open flags=0x%x\n", unit, flags);
+	lprintf("%s: open flags=0x%x\n", sc->sc_dev.dv_xname, flags);
 	iobase = sc->sc_iobase;
 
 	if ((flags & LPT_NOPRIME) == 0) {
@@ -325,7 +326,7 @@ lptopen(dev, flag)
 	sc->sc_count = 0;
 	lptout(sc);
 
-	lprintf("lpt%d: opened\n", unit);
+	lprintf("%s: opened\n", sc->sc_dev.dv_xname);
 	return 0;
 }
 
@@ -375,7 +376,7 @@ lptclose(dev, flag)
 	brelse(sc->sc_inbuf);
 	sc->sc_state = 0;
 
-	lprintf("lpt%d: closed\n", unit);
+	lprintf("%s: closed\n", sc->sc_dev.dv_xname);
 	return 0;
 }
 
@@ -419,7 +420,8 @@ pushbytes(sc)
 		while (sc->sc_count > 0) {
 			/* if the printer is ready for a char, give it one */
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
-				lprintf("lpt%d: write %d\n", sc->sc_count);
+				lprintf("%s: write %d\n", sc->sc_dev.dv_xname,
+					sc->sc_count);
 				s = spltty();
 				lptintr(sc);
 				splx(s);
