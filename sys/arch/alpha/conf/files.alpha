@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.89 1998/09/13 01:51:30 thorpej Exp $
+# $NetBSD: files.alpha,v 1.90 1998/09/24 05:36:06 ross Exp $
 #
 # alpha-specific configuration info
 
@@ -347,7 +347,7 @@ file	arch/alpha/pci/sio_pic.c	sio | pceb
 #
 device	ade: ether, ifnet, arp
 attach	ade at pci
-file	arch/alpha/pci/if_ade.c		ade
+file	arch/alpha/a12/if_ade.c		ade
 
 #
 # alpha/a12 platform-specific drivers
