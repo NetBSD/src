@@ -351,10 +351,8 @@ shmctl(p, uap, retval)
 			return error;
 		break;
 	case IPC_SET:
-		if (cred->cr_uid != 0 &&
-		    shmseg->shm_perm.cuid != cred->cr_uid &&
-		    shmseg->shm_perm.uid != cred->cr_uid)
-			return EPERM;
+		if (error = ipcperm(cred, &shmseg->shm_perm, IPC_M))
+			return error;
 		if (error = copyin(uap->ubuf, (caddr_t)&inbuf, sizeof(inbuf)))
 			return error;
 		shmseg->shm_perm.uid = inbuf.shm_perm.uid;
@@ -365,10 +363,8 @@ shmctl(p, uap, retval)
 		shmseg->shm_ctime = time.tv_sec;
 		break;
 	case IPC_RMID:
-		if (cred->cr_uid != 0 &&
-		    shmseg->shm_perm.cuid != cred->cr_uid &&
-		    shmseg->shm_perm.uid != cred->cr_uid)
-			return EPERM;
+		if (error = ipcperm(cred, &shmseg->shm_perm, IPC_M))
+			return error;
 		shmseg->shm_perm.key = IPC_PRIVATE;
 		shmseg->shm_perm.mode |= SHMSEG_REMOVED;
 		if (shmseg->shm_nattch <= 0) {
