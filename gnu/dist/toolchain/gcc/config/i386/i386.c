@@ -5763,7 +5763,8 @@ x86_initialize_trampoline (tramp, fnaddr, cxt)
   emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 6)), disp);
 
 #ifdef TRANSFER_FROM_TRAMPOLINE
-  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
-		     0, VOIDmode, 1, tramp, Pmode);
+  if (flag_hosted)
+    emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
+		       0, VOIDmode, 1, tramp, Pmode);
 #endif
 }
