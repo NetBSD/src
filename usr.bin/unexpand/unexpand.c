@@ -1,4 +1,4 @@
-/*	$NetBSD: unexpand.c,v 1.6 1997/10/20 02:20:41 lukem Exp $	*/
+/*	$NetBSD: unexpand.c,v 1.7 1999/02/10 16:16:43 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,43 +43,52 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)unexpand.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unexpand.c,v 1.6 1997/10/20 02:20:41 lukem Exp $");
+__RCSID("$NetBSD: unexpand.c,v 1.7 1999/02/10 16:16:43 kleink Exp $");
 #endif /* not lint */
 
 /*
  * unexpand - put tabs into a file replacing blanks
  */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 char	genbuf[BUFSIZ];
 char	linebuf[BUFSIZ];
-int	all;
 
 int	main __P((int, char **));
-void tabify __P((char));
+void tabify __P((int));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
+	int all, c;
 	char *cp;
 
-	argc--, argv++;
-	if (argc > 0 && argv[0][0] == '-') {
-		if (strcmp(argv[0], "-a") != 0) {
+	all = 0;
+	while ((c = getopt(argc, argv, "a")) != -1) {
+		switch (c) {
+		case 'a':
+			all++;
+			break;
+		case '?':
+		default:
 			fprintf(stderr, "usage: unexpand [ -a ] file ...\n");
-			exit(1);
+			exit(EXIT_FAILURE);
+			/* NOTREACHED */
 		}
-		all++;
-		argc--, argv++;
 	}
+	argc -= optind;
+	argv += optind;
+
 	do {
 		if (argc > 0) {
 			if (freopen(argv[0], "r", stdin) == NULL) {
 				perror(argv[0]);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			argc--, argv++;
 		}
@@ -92,12 +101,13 @@ main(argc, argv)
 			printf("%s", linebuf);
 		}
 	} while (argc > 0);
-	exit(0);
+	exit(EXIT_SUCCESS);
+	/* NOTREACHED */
 }
 
 void
 tabify(c)
-	char c;
+	int c;
 {
 	char *cp, *dp;
 	int dcol;
