@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.37 2000/01/22 05:28:00 takemura Exp $
+.\"	$NetBSD: ddb.4,v 1.38 2000/01/26 13:37:57 soren Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -744,10 +744,10 @@ Given a trap frame address, print out the trap frame.
 .Bl -tag -width "intrchain"
 .It Ic halt
 Call the PROM monitor to halt the CPU.
+.It Ic kvtop
+Print the physical address for a given kernel virtual address.
 .It Ic tlb
 Print out the Translation Lookaside Buffer (TLB).
-.It Ic trapdump
-Print out the Trap Log.
 Only works in
 .Nx
 kernels compiled with
