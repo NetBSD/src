@@ -113,10 +113,10 @@ getmxrr(host, mxhosts, mxprefs, droplocalhost, rcode)
 	register u_char *eom, *cp;
 	register int i, j, n;
 	int nmx = 0;
-	register char *bp;
+	register char *bp, *ep;
 	HEADER *hp;
 	querybuf answer;
-	int ancount, qdcount, buflen;
+	int ancount, qdcount;
 	bool seenlocal = FALSE;
 	u_short pref, type;
 	u_short localpref = 256;
@@ -235,13 +235,13 @@ getmxrr(host, mxhosts, mxprefs, droplocalhost, rcode)
 		if ((n = dn_skipname(cp, eom)) < 0)
 			goto punt;
 	}
-	buflen = sizeof(MXHostBuf) - 1;
 	bp = MXHostBuf;
+	ep = MXHostBuf + sizeof(MXHostBuf);
 	ancount = ntohs((u_short)hp->ancount);
 	while (--ancount >= 0 && cp < eom && nmx < MAXMXHOSTS - 1)
 	{
 		if ((n = dn_expand((u_char *)&answer,
-		    eom, cp, (RES_UNC_T) bp, buflen)) < 0)
+		    eom, cp, (RES_UNC_T) bp, ep - bp)) < 0)
 			break;
 		cp += n;
 		GETSHORT(type, cp);
@@ -257,7 +257,7 @@ getmxrr(host, mxhosts, mxprefs, droplocalhost, rcode)
 		}
 		GETSHORT(pref, cp);
 		if ((n = dn_expand((u_char *)&answer, eom, cp,
-				   (RES_UNC_T) bp, buflen)) < 0)
+				   (RES_UNC_T) bp, ep - bp)) < 0)
 			break;
 		cp += n;
 		if (wordinclass(bp, 'w'))
@@ -286,7 +286,6 @@ getmxrr(host, mxhosts, mxprefs, droplocalhost, rcode)
 			n++;
 		}
 		*bp++ = '\0';
-		buflen -= n + 1;
 	}
 
 	/* sort the records */
