@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.11 2002/06/02 14:44:40 drochner Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.12 2002/09/22 05:39:24 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -151,7 +151,7 @@ slaverun()
 		;
 	splsched();
 	sched_lock_idle();
-	cpu_switch(0);
+	cpu_switch(NULL,NULL);
 }
 
 /*
