@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.22 2003/09/13 17:19:55 christos Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.23 2003/10/16 13:38:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.22 2003/09/13 17:19:55 christos Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.23 2003/10/16 13:38:28 yamt Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -832,6 +832,7 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 	sigset_t oldmask, *maskp;
 	ucontext_t *uc, *olduc;
 	struct sigaction act;
+	siginfo_t *siginfop;
 
 	pthread_spinlock(self, &pt_sigacts_lock);
 	act = pt_sigacts[si->si_signo];
@@ -851,7 +852,7 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 	} else
 		olduc = target->pt_uc;
 	/*
-	 * We'd like to just pass oldmask to the
+	 * We'd like to just pass oldmask and si to the
 	 * pthread__signal_tramp(), but makecontext() can't reasonably
 	 * pass structures, just word-size things or smaller. We also
 	 * don't want to involve malloc() here, inside the upcall
@@ -861,12 +862,16 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 	maskp = (sigset_t *)(void *)((char *)(void *)olduc -
 	    STACKSPACE - sizeof(sigset_t));
 	*maskp = oldmask;
+	siginfop = (siginfo_t *)(void *)((char *)(void *)maskp -
+	    sizeof(*siginfop));
+	*siginfop = *si;
 
 	/*
 	 * XXX We are blatantly ignoring SIGALTSTACK. It would screw
 	 * with our notion of stack->thread mappings.
 	 */
-	uc = (ucontext_t *)(void *)((char *)(void *)maskp - sizeof(ucontext_t));
+	uc = (ucontext_t *)(void *)((char *)(void *)siginfop -
+	    sizeof(ucontext_t));
 #ifdef _UC_UCONTEXT_ALIGN
 	uc = (ucontext_t *)((uintptr_t)uc & _UC_UCONTEXT_ALIGN);
 #endif
@@ -878,7 +883,8 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 
 	SDPRINTF(("(makecontext %p): target %p: sig: %d uc: %p oldmask: %08x\n",
 	    self, target, si->si_signo, target->pt_uc, maskp->__bits[0]));
-	makecontext(uc, pthread__signal_tramp, 3, act.sa_handler, si, olduc);
+	makecontext(uc, pthread__signal_tramp, 3, act.sa_handler, siginfop,
+	    olduc);
 	target->pt_uc = uc;
 }
 
