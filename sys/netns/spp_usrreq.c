@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.27 2001/11/13 01:08:11 lukem Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.28 2002/05/12 20:23:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.27 2001/11/13 01:08:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.28 2002/05/12 20:23:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,11 +75,13 @@ spp_init()
 	spp_iss = 1; /* WRONG !! should fish it out of TODR */
 }
 
-struct spidp spp_savesi;
-int traceallspps = 0;
-extern int sppconsdebug;
-int spp_hardnosed;
 int spp_use_delack = 0;
+int traceallspps = 0;
+int spp_hardnosed;
+u_short spp_iss;
+struct spidp spp_savesi;
+struct spp_istat spp_istat;
+
 
 /*ARGSUSED*/
 void
