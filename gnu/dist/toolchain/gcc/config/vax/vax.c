@@ -95,6 +95,11 @@ print_operand_address (file, addr)
       goto retry;
 
     case REG:
+      if (REGNO (addr) >= 16)
+	{
+	  debug_rtx (orig_addr);
+	  abort ();
+	}
       fprintf (file, "(%s)", reg_names[REGNO (addr)]);
       break;
 
@@ -286,7 +291,14 @@ print_operand_address (file, addr)
 	output_address (offset);
 
       if (breg != 0)
-	fprintf (file, "(%s)", reg_names[REGNO (breg)]);
+	{
+	  if (REGNO (breg) >= 16)
+	    {
+	      debug_rtx (orig_addr);
+	      abort ();
+	    }
+	  fprintf (file, "(%s)", reg_names[REGNO (breg)]);
+	}
 
       if (ireg != 0)
 	{
@@ -775,9 +787,14 @@ check_float_value (mode, d, overflow)
   if (GET_CODE (X) == REG)						\
     {									\
       extern rtx *reg_equiv_mem;					\
-      if (! reload_in_progress						\
-	  || (xfoob = reg_equiv_mem[REGNO (X)]) == 0			\
-	  || INDIRECTABLE_ADDRESS_P (xfoob, STRICT, INDEXED, 0))	\
+      if (! reload_in_progress)						\
+	goto ADDR;							\
+      if (!STRICT)							\
+	{								\
+	  if ((xfoob = reg_equiv_mem[REGNO (xfoob)]) == 0)		\
+	    goto ADDR;							\
+	}								\
+      if (INDIRECTABLE_ADDRESS_P (xfoob, STRICT, INDEXED, 0))		\
 	goto ADDR;							\
     }									\
   if (INDIRECTABLE_CONSTANT_ADDRESS_P (X, INDEXED, 0)) goto ADDR;	\
@@ -850,6 +867,7 @@ legitimate_address_p(mode, xbar, strict)
      int strict;
 {
   register rtx xfoo, xfoo0, xfoo1;
+  int from = __LINE__;
   GO_IF_NONINDEXED_ADDRESS (xbar, win, strict, 0);
   if (GET_CODE (xbar) == PLUS)
     {
@@ -857,32 +875,45 @@ legitimate_address_p(mode, xbar, strict)
       xfoo = XEXP (xbar, 0);
       if (INDEX_TERM_P (xfoo, mode, strict))
 	{
+	  from = __LINE__;
 	  GO_IF_NONINDEXED_ADDRESS (XEXP (xbar, 1), win, strict, 0);
 	}
       xfoo = XEXP (xbar, 1);
       if (INDEX_TERM_P (xfoo, mode, strict))
 	{
+	  from = __LINE__;
 	  GO_IF_NONINDEXED_ADDRESS (XEXP (xbar, 0), win, strict, 0);
 	}
       /* Handle offset(reg)[index] with offset added outermost */
       if (INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (xbar, 0), 1, 0))
 	{
+	  from = __LINE__;
 	   if (GET_CODE (XEXP (xbar, 1)) == REG
 	      && XREG_OK_FOR_BASE_P (XEXP (xbar, 1), strict))
 	    goto win;
+	  from = __LINE__;
 	  GO_IF_REG_PLUS_INDEX (XEXP (xbar, 1), mode, win, strict);
 	}
       if (INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (xbar, 1), 1, 0))
 	{
+	  from = __LINE__;
 	  if (GET_CODE (XEXP (xbar, 0)) == REG
 	      && XREG_OK_FOR_BASE_P (XEXP (xbar, 0), strict))
 	    goto win;
+	  from = __LINE__;
 	  GO_IF_REG_PLUS_INDEX (XEXP (xbar, 0), mode, win, strict);
 	}
   }
   return 0;
 
  win:
+#if 0
+  if (strict)
+    {
+      fprintf(stderr, "line=%d\n", from);
+      debug_rtx (xbar);
+    }
+#endif
   return 1;
 }
 
@@ -958,7 +989,8 @@ vax_nonsymbolic_operand (op, mode)
   if (vax_symbolic_operand (op, mode))
     return 0;
 #if 0
-  if (GET_CODE (op) != CONST_INT && GET_CODE (op) != REG)
+  if (GET_CODE (op) != CONST_INT && GET_CODE (op) != REG &&
+      GET_CODE (op) != MEM)
     debug_rtx (op);
 #endif
   return 1;
@@ -1050,7 +1082,7 @@ legitimize_pic_address (orig, reg, code)
 {
   rtx pic_ref = orig;
 
-  if (!(flag_pic || TARGET_HALFPIC))
+  if (!(flag_pic || TARGET_HALFPIC) || no_new_pseudos)
     return pic_ref;
 
   /* fprintf(stderr, "before: "); debug_rtx(orig); */
