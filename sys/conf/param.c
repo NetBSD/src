@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.13 1994/08/30 03:04:28 mycroft Exp $	*/
+/*	$NetBSD: param.c,v 1.14 1994/12/05 06:03:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -113,37 +113,33 @@ struct	shminfo shminfo = {
 /*
  * Values in support of System V compatible semaphores.
  */
-
 #ifdef SYSVSEM
-
-struct seminfo seminfo = {
-		SEMMAP,		/* # of entries in semaphore map */
-		SEMMNI,		/* # of semaphore identifiers */
-		SEMMNS,		/* # of semaphores in system */
-		SEMMNU,		/* # of undo structures in system */
-		SEMMSL,		/* max # of semaphores per id */
-		SEMOPM,		/* max # of operations per semop call */
-		SEMUME,		/* max # of undo entries per process */
-		SEMUSZ,		/* size in bytes of undo structure */
-		SEMVMX,		/* semaphore maximum value */
-		SEMAEM		/* adjust on exit max value */
+struct	seminfo seminfo = {
+	SEMMAP,		/* # of entries in semaphore map */
+	SEMMNI,		/* # of semaphore identifiers */
+	SEMMNS,		/* # of semaphores in system */
+	SEMMNU,		/* # of undo structures in system */
+	SEMMSL,		/* max # of semaphores per id */
+	SEMOPM,		/* max # of operations per semop call */
+	SEMUME,		/* max # of undo entries per process */
+	SEMUSZ,		/* size in bytes of undo structure */
+	SEMVMX,		/* semaphore maximum value */
+	SEMAEM		/* adjust on exit max value */
 };
 #endif
 
 /*
  * Values in support of System V compatible messages.
  */
-
 #ifdef SYSVMSG
-
-struct msginfo msginfo = {
-		MSGMAX,		/* max chars in a message */
-		MSGMNI,		/* # of message queue identifiers */
-		MSGMNB,		/* max chars in a queue */
-		MSGTQL,		/* max messages in system */
-		MSGSSZ,		/* size of a message segment */
-				/* (must be small power of 2 greater than 4) */
-		MSGSEG		/* number of message segments */
+struct	msginfo msginfo = {
+	MSGMAX,		/* max chars in a message */
+	MSGMNI,		/* # of message queue identifiers */
+	MSGMNB,		/* max chars in a queue */
+	MSGTQL,		/* max messages in system */
+	MSGSSZ,		/* size of a message segment */
+			/* (must be small power of 2 greater than 4) */
+	MSGSEG		/* number of message segments */
 };
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.5 1994/10/20 04:28:58 cgd Exp $	*/
+/*	$NetBSD: msg.h,v 1.6 1994/12/05 06:11:41 mycroft Exp $	*/
 
 /*
  * SVID compatible msg.h file
@@ -152,7 +152,7 @@ __BEGIN_DECLS
 int msgctl __P((int, int, struct msqid_ds *));
 int msgget __P((key_t, int));
 int msgsnd __P((int, void *, size_t, int));
-int msgrcv __P((int, void*, size_t, long, int));
+int msgrcv __P((int, void *, size_t, long, int));
 __END_DECLS
 #endif /* !KERNEL */
 
