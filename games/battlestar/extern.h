@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.26 2000/09/25 14:08:08 jsm Exp $ */
+/*	$NetBSD: extern.h,v 1.27 2000/09/25 14:44:59 jsm Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -227,9 +227,18 @@
 #define MAXWEIGHT	60
 #define MAXCUMBER	10
 
-/* Flags for objects.  */
+/*
+ * These are flags for objects in the objflags array.  OBJ_PLURAL means
+ * that the object short name is plural; OBJ_AN that it begins with a
+ * vowel sound so should be preceded by "an" instead of "a"; OBJ_PERSON
+ * that it is a living person; OBJ_NONOBJ that it is not an object (to
+ * which any game action can be applied) at all (e.g. footsteps, asteroids).
+ * Any individual object has at most one of OBJ_PERSON and OBJ_NONOBJ.
+ */
 #define OBJ_PLURAL	1
 #define OBJ_AN		2
+#define OBJ_PERSON	4
+#define OBJ_NONOBJ	8
 
 struct room {
 	const char   *name;
