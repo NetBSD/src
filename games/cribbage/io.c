@@ -376,9 +376,9 @@ static int	Newpos = 0;
 /* VARARGS1 */
 msg(fmt,ap)
 	char *fmt;
-	_VA_LIST_ ap;
+	va_list ap;
 {
-	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
+	(void)vsprintf(&Msgbuf[Newpos], fmt, &ap);
 	endmsg();
 }
 
@@ -389,9 +389,9 @@ msg(fmt,ap)
 /* VARARGS1 */
 addmsg(fmt,ap)
 	char *fmt;
-	_VA_LIST_ ap;
+	va_list ap;
 {
-	(void)vsprintf(&Msgbuf[Newpos], fmt, ap);
+	(void)vsprintf(&Msgbuf[Newpos], fmt, &ap);
 }
 
 /*
