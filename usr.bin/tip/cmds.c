@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.15 2004/03/11 03:47:13 uebayasi Exp $	*/
+/*	$NetBSD: cmds.c,v 1.16 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.15 2004/03/11 03:47:13 uebayasi Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.16 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -49,17 +49,17 @@ __RCSID("$NetBSD: cmds.c,v 1.15 2004/03/11 03:47:13 uebayasi Exp $");
 int	quant[] = { 60, 60, 24 };
 
 char	null = '\0';
-char	*sep[] = { "second", "minute", "hour" };
+const char	*sep[] = { "second", "minute", "hour" };
 static	char *argv[10];		/* argument vector for take and put */
 
 int	args __P((char *, char **));
-int	anyof __P((char *, char *));
+int	anyof __P((char *, const char *));
 void	execute __P((char *));
 void	intcopy __P((int));
-void	prtime __P((char *, time_t));
+void	prtime __P((const char *, time_t));
 void	stopsnd __P((int));
-void	transfer __P((char *, int, char *));
-void	transmit __P((FILE *, char *, char *));
+void	transfer __P((char *, int, const char *));
+void	transmit __P((FILE *, const char *, char *));
 
 /*
  * FTP - remote ==> local
@@ -130,7 +130,7 @@ void
 transfer(buf, fd, eofchars)
 	char *buf;
 	int fd;
-	char *eofchars;
+	const char *eofchars;
 {
 	int ct;
 	char c, buffer[BUFSIZ];
@@ -297,9 +297,11 @@ sendfile(cc)
 void
 transmit(fd, eofchars, command)
 	FILE *fd;
-	char *eofchars, *command;
+	const char *eofchars;
+	char *command;
 {
-	char *pc, lastc;
+	const char *pc;
+	char lastc;
 	int c, ccount, lcount;
 	time_t start_t, stop_t;
 	sig_t f;
@@ -583,7 +585,7 @@ shell(dummy)
 	char dummy;
 {
 	int shpid, status;
-	char *cp;
+	const char *cp;
 
 	printf("[sh]\r\n");
 	signal(SIGINT, SIG_IGN);
@@ -647,10 +649,10 @@ void
 chdirectory(dummy)
 	char dummy;
 {
-	char dirname[80];
-	char *cp = dirname;
+	char dirnam[80];
+	const char *cp = dirnam;
 
-	if (prompt("[cd] ", dirname, sizeof dirname)) {
+	if (prompt("[cd] ", dirnam, sizeof dirnam)) {
 		if (stoprompt)
 			return;
 		cp = value(HOME);
@@ -662,7 +664,7 @@ chdirectory(dummy)
 
 void
 tipabort(msg)
-	char *msg;
+	const char *msg;
 {
 
 	kill(pid, SIGTERM);
@@ -680,7 +682,7 @@ void
 finish(dummy)
 	char dummy;
 {
-	char *dismsg;
+	const char *dismsg;
 
 	dismsg = value(DISCONNECT);
 	if (dismsg != NULL && dismsg[0] != '\0') {
@@ -704,7 +706,7 @@ void
 execute(s)
 	char *s;
 {
-	char *cp;
+	const char *cp;
 
 	if ((cp = strrchr(value(SHELL), '/')) == NULL)
 		cp = value(SHELL);
@@ -741,7 +743,7 @@ args(buf, a)
 
 void
 prtime(s, a)
-	char *s;
+	const char *s;
 	time_t a;
 {
 	int i;
@@ -809,7 +811,7 @@ variable(dummy)
  */
 void
 tandem(option)
-	char *option;
+	const char *option;
 {
 	struct termios	rmtty;
 
@@ -861,8 +863,9 @@ expand(name)
 {
 	static char xname[BUFSIZ];
 	char cmdbuf[BUFSIZ];
-	int pid, l;
-	char *cp, *Shell;
+	int mypid, l;
+	char *cp;
+	const char *Shell;
 	int s, pivec[2];
 
 	if (!anyof(name, "~{[*?$`'\"\\"))
@@ -872,7 +875,7 @@ expand(name)
 		return(name);
 	}
 	(void)snprintf(cmdbuf, sizeof cmdbuf, "echo %s", name);
-	if ((pid = vfork()) == 0) {
+	if ((mypid = vfork()) == 0) {
 		Shell = value(SHELL);
 		if (Shell == NULL)
 			Shell = _PATH_BSHELL;
@@ -885,7 +888,7 @@ expand(name)
 		execl(Shell, Shell, "-c", cmdbuf, 0);
 		_exit(1);
 	}
-	if (pid == -1) {
+	if (mypid == -1) {
 		perror("fork");
 		close(pivec[0]);
 		close(pivec[1]);
@@ -894,7 +897,7 @@ expand(name)
 	close(pivec[1]);
 	l = read(pivec[0], xname, BUFSIZ);
 	close(pivec[0]);
-	while (wait(&s) != pid);
+	while (wait(&s) != mypid);
 		;
 	s &= 0377;
 	if (s != 0 && s != SIGPIPE) {
@@ -926,7 +929,8 @@ expand(name)
 
 int
 anyof(s1, s2)
-	char *s1, *s2;
+	char *s1;
+	const char *s2;
 {
 	int c;
 

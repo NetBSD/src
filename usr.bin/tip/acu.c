@@ -1,4 +1,4 @@
-/*	$NetBSD: acu.c,v 1.8 2003/08/07 11:16:16 agc Exp $	*/
+/*	$NetBSD: acu.c,v 1.9 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: acu.c,v 1.8 2003/08/07 11:16:16 agc Exp $");
+__RCSID("$NetBSD: acu.c,v 1.9 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -62,7 +62,7 @@ static acu_t   *acutype __P((char *));
  *   for a single host acting as a rotary (in the order
  *   found in the file).
  */
-char *
+const char *
 connect()
 {
 	char *cp = PN;
@@ -170,7 +170,7 @@ connect()
 
 void
 disconnect(reason)
-	char *reason;
+	const char *reason;
 {
 
 	if (!conflag) {
