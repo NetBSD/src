@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_isa.c,v 1.8 2002/03/24 20:35:47 martin Exp $	*/
+/*	$NetBSD: isic_isa.c,v 1.9 2002/03/24 23:04:27 martin Exp $	*/
 
 /*
  *   Copyright (c) 1997-1999 Martin Husemann. All rights reserved.
@@ -35,7 +35,7 @@
  *	isic_isa.c - ISA bus frontend for i4b_isic driver
  *	--------------------------------------------------
  *
- *	$Id: isic_isa.c,v 1.8 2002/03/24 20:35:47 martin Exp $ 
+ *	$Id: isic_isa.c,v 1.9 2002/03/24 23:04:27 martin Exp $ 
  *
  *      last edit-date: [Tue Jan  9 01:43:45 2001]
  *
@@ -45,7 +45,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.8 2002/03/24 20:35:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.9 2002/03/24 23:04:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -372,12 +372,14 @@ done:
 			ia->ia_nio = 1;
 			ia->ia_io[0].ir_addr = iobase;
 			ia->ia_io[0].ir_size = iosize;
-		}
+		} else
+			ia->ia_nio = 0;
 		if (msize != 0) {
 			ia->ia_niomem = 1;
 			ia->ia_iomem[0].ir_addr = maddr;
 			ia->ia_iomem[0].ir_size = msize;
-		}
+		} else
+			ia->ia_niomem = 0;
 		ia->ia_nirq = 1;
 
 		ia->ia_ndrq = 0;
