@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.23 2003/11/08 01:58:26 simonb Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.24 2003/12/12 16:21:35 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.23 2003/11/08 01:58:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.24 2003/12/12 16:21:35 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,7 +409,7 @@ vrbcu_vrip_getcpuminor(void)
 int
 vrbcu_vrip_getcpuclock(void)
 {
-	u_int16_t clksp;
+	u_int16_t clksp = 0;
 	int cpuid, cpuclock;
 
 	cpuid = vrbcu_vrip_getcpuid();
