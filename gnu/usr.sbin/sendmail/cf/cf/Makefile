@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/02/28 04:16:04 itojun Exp $
+#	$NetBSD: Makefile,v 1.16 2002/01/31 19:12:43 tv Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -14,7 +14,7 @@ CFDIR=		${.CURDIR}/..
 CFDIR?=		${DIST}/sendmail/cf
 .endif
 CHMOD=		chmod
-M4=		m4
+M4?=		m4
 ROMODE=		444
 RM=		rm -f
 
