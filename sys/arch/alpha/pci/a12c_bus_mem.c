@@ -1,4 +1,4 @@
-/* $NetBSD: a12c_bus_mem.c,v 1.3 1998/09/23 21:20:55 ross Exp $ */
+/* $NetBSD: a12c_bus_mem.c,v 1.4 1999/03/12 22:56:21 perry Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997 Avalon Computer Systems, Inc.
@@ -46,7 +46,7 @@
 
 #define	A12C_BUS_MEM()	/* Generate ctags(1) key */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.3 1998/09/23 21:20:55 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c_bus_mem.c,v 1.4 1999/03/12 22:56:21 perry Exp $");
 
 /* Memory barrier */
 void		pci_a12c_mem_barrier __P((void *, bus_space_handle_t,
@@ -504,7 +504,7 @@ __CONCAT(pci_a12c_mem_copy_region_,BYTES)(v, h1, o1, h2, o2, c)		\
 	bus_size_t o;							\
 									\
 	if ((h1 >> 63) != 0 && (h2 >> 63) != 0) {			\
-		ovbcopy((void *)(h1 + o1), (void *)(h2 + o2), c * BYTES); \
+		memmove((void *)(h2 + o2), (void *)(h1 + o1), c * BYTES); \
 		return;							\
 	}								\
 									\
