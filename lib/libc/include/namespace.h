@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.42 1999/12/01 18:34:22 thorpej Exp $	*/
+/*	$NetBSD: namespace.h,v 1.43 2000/01/22 21:43:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -387,7 +387,9 @@
 #define timelocal		_timelocal
 #define timeoff			_timeoff
 #define times			_times
+#if 0
 #define timezone		_timezone
+#endif
 #define ttyname			_ttyname
 #define ttyslot			_ttyslot
 #define tzname			_tzname
