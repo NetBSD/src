@@ -1,4 +1,4 @@
-/*	$NetBSD: __longjmp14.c,v 1.1 2004/03/23 02:21:49 simonb Exp $	*/
+/*	$NetBSD: __longjmp14.c,v 1.2 2004/03/23 12:31:17 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,17 +72,18 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_mcontext.__gregs[_R_V0] = val;
 
 	/* Copy saved registers */
-	uc.uc_mcontext.__gregs[_R_S0] = sc->sc_regs[_R_S0];
-	uc.uc_mcontext.__gregs[_R_S1] = sc->sc_regs[_R_S1];
-	uc.uc_mcontext.__gregs[_R_S2] = sc->sc_regs[_R_S2];
-	uc.uc_mcontext.__gregs[_R_S3] = sc->sc_regs[_R_S3];
-	uc.uc_mcontext.__gregs[_R_S4] = sc->sc_regs[_R_S4];
-	uc.uc_mcontext.__gregs[_R_S5] = sc->sc_regs[_R_S5];
-	uc.uc_mcontext.__gregs[_R_S6] = sc->sc_regs[_R_S6];
-	uc.uc_mcontext.__gregs[_R_S7] = sc->sc_regs[_R_S7];
-	uc.uc_mcontext.__gregs[_R_S8] = sc->sc_regs[_R_S8];
-	uc.uc_mcontext.__gregs[_R_SP] = sc->sc_regs[_R_SP];
-	uc.uc_mcontext.__gregs[_R_RA] = sc->sc_regs[_R_RA];
+	uc.uc_mcontext.__gregs[_REG_S0] = sc->sc_regs[_R_S0];
+	uc.uc_mcontext.__gregs[_REG_S1] = sc->sc_regs[_R_S1];
+	uc.uc_mcontext.__gregs[_REG_S2] = sc->sc_regs[_R_S2];
+	uc.uc_mcontext.__gregs[_REG_S3] = sc->sc_regs[_R_S3];
+	uc.uc_mcontext.__gregs[_REG_S4] = sc->sc_regs[_R_S4];
+	uc.uc_mcontext.__gregs[_REG_S5] = sc->sc_regs[_R_S5];
+	uc.uc_mcontext.__gregs[_REG_S6] = sc->sc_regs[_R_S6];
+	uc.uc_mcontext.__gregs[_REG_S7] = sc->sc_regs[_R_S7];
+	uc.uc_mcontext.__gregs[_REG_S8] = sc->sc_regs[_R_S8];
+	uc.uc_mcontext.__gregs[_REG_SP] = sc->sc_regs[_R_SP];
+	uc.uc_mcontext.__gregs[_REG_RA] = sc->sc_regs[_R_RA];
+	uc.uc_mcontext.__gregs[_REG_EPC] = sc->sc_pc;
 
 	/* Copy FP state */
 	if (sc->sc_fpused) {
