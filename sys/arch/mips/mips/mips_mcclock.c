@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.c,v 1.8 1999/12/03 02:56:37 nisimura Exp $ */
+/* $NetBSD: mips_mcclock.c,v 1.9 2000/03/28 02:58:49 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,13 +34,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.8 1999/12/03 02:56:37 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.9 2000/03/28 02:58:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <dev/ic/mc146818reg.h>	
+#include <dev/ic/mc146818reg.h>
 #include <dev/dec/mcclockvar.h>
 #include <dev/dec/mcclock_pad32.h>
 
@@ -52,7 +52,7 @@ unsigned mips_mc_cpuspeed __P((void *, int, int (*)(void *, int)));
 int mips_mcclock_tickloop __P((void *, int));
 unsigned mips_mcclock_to_mhz __P((unsigned iters));
 
-extern u_int mips_read_causereg __P((void));
+u_int mips_read_causereg __P((void));
 
 
 /*

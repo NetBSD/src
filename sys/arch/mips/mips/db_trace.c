@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.8 1999/04/24 08:10:39 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.9 2000/03/28 02:58:48 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -38,8 +38,8 @@
 #include <ddb/db_variables.h>
 #include <ddb/db_sym.h>
 
-extern int __start __P((void));	/* lowest kernel code address */
-extern vaddr_t getreg_val __P((db_expr_t regno));
+int __start __P((void));	/* lowest kernel code address */
+vaddr_t getreg_val __P((db_expr_t regno));
 
 #define REG_ARG(i)	(4+i)
 #define SAVES_RA(x)	isa_spill((x),31)
@@ -54,7 +54,7 @@ extern vaddr_t getreg_val __P((db_expr_t regno));
 		 ((int *)(&((struct mips_kernel_state *)0)->sp) - (int *)0):  \
 	 -1)
 
-extern	db_sym_t localsym __P((db_sym_t sym, boolean_t isreg, int *lex_level));
+db_sym_t localsym __P((db_sym_t sym, boolean_t isreg, int *lex_level));
 
 /*
  * Machine register set.
@@ -68,7 +68,7 @@ int print_exception_frame __P((register struct mips_saved_state *fp,
 			       unsigned epc));
 
 /*XXX*/
-extern void stacktrace_subr __P((int a0, int a1, int a2, int a3,
+void stacktrace_subr __P((int a0, int a1, int a2, int a3,
 				 u_int pc, u_int sp, u_int fp, u_int ra,
 				 void (*)(const char*, ...)));
 

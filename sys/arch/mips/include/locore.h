@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.28 2000/03/27 05:30:40 nisimura Exp $	*/
+/*	$NetBSD: locore.h,v 1.29 2000/03/28 02:58:46 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -50,64 +50,64 @@
  * only to print them by name in stack tracebacks
  */
 
-extern u_int32_t mips_read_causereg __P((void));
-extern u_int32_t mips_read_statusreg __P((void));
-extern void mips_idle __P((void));
+u_int32_t mips_read_causereg __P((void));
+u_int32_t mips_read_statusreg __P((void));
+void mips_idle __P((void));
 
-extern void mips1_ConfigCache  __P((void));
-extern void mips1_FlushCache  __P((void));
-extern void mips1_FlushDCache  __P((vaddr_t addr, vsize_t len));
-extern void mips1_FlushICache  __P((vaddr_t addr, vsize_t len));
-extern void mips1_ForceCacheUpdate __P((void));
-extern void mips1_SetPID   __P((int pid));
+void mips1_ConfigCache  __P((void));
+void mips1_FlushCache  __P((void));
+void mips1_FlushDCache  __P((vaddr_t addr, vsize_t len));
+void mips1_FlushICache  __P((vaddr_t addr, vsize_t len));
+void mips1_ForceCacheUpdate __P((void));
+void mips1_SetPID   __P((int pid));
 
-extern void mips1_TBIA __P((int));
-extern void mips1_TBIAP __P((int));
-extern void mips1_TBIS __P((vaddr_t));
+void mips1_TBIA __P((int));
+void mips1_TBIAP __P((int));
+void mips1_TBIS __P((vaddr_t));
 
-extern int mips1_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
-extern void mips1_TLBWriteIndexed  __P((u_int index, u_int high,
-					    u_int low));
-extern void mips1_wbflush __P((void));
-extern void mips1_proc_trampoline __P((void));
-extern void mips1_cpu_switch_resume __P((void));
+int mips1_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
+void mips1_TLBWriteIndexed  __P((u_int index, u_int high,
+				 u_int low));
+void mips1_wbflush __P((void));
+void mips1_proc_trampoline __P((void));
+void mips1_cpu_switch_resume __P((void));
 
-extern void mips3_ConfigCache __P((void));
-extern void mips3_FlushCache  __P((void));
-extern void mips3_FlushDCache __P((vaddr_t addr, vaddr_t len));
-extern void mips3_FlushICache __P((vaddr_t addr, vaddr_t len));
-extern void mips3_ForceCacheUpdate __P((void));
-extern void mips3_HitFlushDCache __P((vaddr_t, int));
-extern void mips3_SetPID  __P((int pid));
-extern void mips3_TLBFlush __P((int numtlb));
-extern void mips3_TLBFlushAddr __P( /* XXX Really pte highpart ? */
-					  (vaddr_t addr));
-extern int mips3_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
+void mips3_ConfigCache __P((void));
+void mips3_FlushCache  __P((void));
+void mips3_FlushDCache __P((vaddr_t addr, vaddr_t len));
+void mips3_FlushICache __P((vaddr_t addr, vaddr_t len));
+void mips3_ForceCacheUpdate __P((void));
+void mips3_HitFlushDCache __P((vaddr_t, int));
+void mips3_SetPID  __P((int pid));
+void mips3_TLBFlush __P((int numtlb));
+void mips3_TLBFlushAddr __P( /* XXX Really pte highpart ? */
+			    (vaddr_t addr));
+int mips3_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
 struct tlb;
-extern void mips3_TLBRead __P((int, struct tlb *));
+void mips3_TLBRead __P((int, struct tlb *));
 #if 0
-extern void mips3_TLBWriteIndexedVPS __P((u_int index, struct tlb *tlb));
-extern void mips3_TLBWriteIndexed __P((u_int index, u_int high,
-					   u_int lo0, u_int lo1));
+void mips3_TLBWriteIndexedVPS __P((u_int index, struct tlb *tlb));
+void mips3_TLBWriteIndexed __P((u_int index, u_int high,
+				u_int lo0, u_int lo1));
 #endif
-extern void mips3_wbflush __P((void));
-extern void mips3_proc_trampoline __P((void));
-extern void mips3_cpu_switch_resume __P((void));
+void mips3_wbflush __P((void));
+void mips3_proc_trampoline __P((void));
+void mips3_cpu_switch_resume __P((void));
 
-extern void mips3_SetWIRED __P((int));
+void mips3_SetWIRED __P((int));
 
-extern void mips5200_FlushCache  __P((void));
-extern void mips5200_FlushDCache __P((vaddr_t addr, vaddr_t len));
-extern void mips5200_HitFlushDCache __P((vaddr_t, int));  
-extern void mips5200_FlushICache __P((vaddr_t addr, vaddr_t len));
+void mips5200_FlushCache  __P((void));
+void mips5200_FlushDCache __P((vaddr_t addr, vaddr_t len));
+void mips5200_HitFlushDCache __P((vaddr_t, int));
+void mips5200_FlushICache __P((vaddr_t addr, vaddr_t len));
 
-extern u_int32_t mips3_cycle_count __P((void));
-extern u_int32_t mips3_write_count __P((u_int32_t));
-extern u_int32_t mips3_read_compare __P((void));
-extern u_int32_t mips3_read_config __P((void));
-extern void mips3_write_compare __P((u_int32_t));
-extern void mips3_write_xcontext_upper __P((u_int32_t));
-extern void mips3_clearBEV __P((void));
+u_int32_t mips3_cycle_count __P((void));
+u_int32_t mips3_write_count __P((u_int32_t));
+u_int32_t mips3_read_compare __P((void));
+u_int32_t mips3_read_config __P((void));
+void mips3_write_compare __P((u_int32_t));
+void mips3_write_xcontext_upper __P((u_int32_t));
+void mips3_clearBEV __P((void));
 
 /*
  *  A vector with an entry for each mips-ISA-level dependent

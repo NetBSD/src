@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.25 2000/02/18 00:02:43 mycroft Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.26 2000/03/28 02:58:48 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -57,10 +57,10 @@ void db_halt_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_tlbdump_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_kvtophys_cmd __P((db_expr_t, int, db_expr_t, char *));
 
-extern void	kdbpoke __P((vaddr_t addr, int newval));
-extern vaddr_t	MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
+void	kdbpoke __P((vaddr_t addr, int newval));
+vaddr_t	MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
 
-extern paddr_t kvtophys __P((vaddr_t));
+paddr_t kvtophys __P((vaddr_t));
 
 #ifdef DDB_TRACE
 int
@@ -318,7 +318,7 @@ db_tlbdump_cmd(addr, have_addr, count, modif)
 			u_int32_t tlb_lo;
 		} tlb;
 		int i;
-		extern void mips1_TLBRead __P((int, struct mips1_tlb *));
+		void mips1_TLBRead __P((int, struct mips1_tlb *));
 
 		for (i = 0; i < mips_num_tlb_entries; i++) {
 			mips1_TLBRead(i, &tlb);
