@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $	*/
+/*	$NetBSD: badsect.c,v 1.11 1996/09/21 06:08:16 scottr Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: badsect.c,v 1.10 1995/03/18 14:54:28 cgd Exp $";
+static char rcsid[] = "$NetBSD: badsect.c,v 1.11 1996/09/21 06:08:16 scottr Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,13 +110,14 @@ main(argc, argv)
 		perror(argv[1]);
 		exit(2);
 	}
+
 	strcpy(name, _PATH_DEV);
 	if ((dirp = opendir(name)) == NULL) {
 		perror(name);
 		exit(3);
 	}
 	while ((dp = readdir(dirp)) != NULL) {
-		strcpy(&name[5], dp->d_name);
+		sprintf(name, "%s%s", _PATH_DEV, dp->d_name);
 		if (stat(name, &devstat) < 0) {
 			perror(name);
 			exit(4);
@@ -131,10 +132,18 @@ main(argc, argv)
 			stbuf.st_rdev, argv[1]);
 		exit(5);
 	}
+
+	/*
+	 * The filesystem is mounted; use the character device instead.
+	 * XXX - Assume that prepending an `r' will give us the name of
+	 * the character device.
+	 */
+	sprintf(name, "%sr%s", _PATH_DEV, dp->d_name);
 	if ((fsi = open(name, 0)) < 0) {
 		perror(name);
 		exit(6);
 	}
+
 	fs = &sblock;
 	rdfs(SBOFF, SBSIZE, (char *)fs);
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
@@ -148,6 +157,7 @@ main(argc, argv)
 			errs++;
 		}
 	}
+
 	printf("Don't forget to run ``fsck %s''\n", name);
 	exit(errs);
 }
@@ -165,6 +175,7 @@ chkuse(blkno, cnt)
 		printf("block %d out of range of file system\n", blkno);
 		return (1);
 	}
+
 	cg = dtog(fs, fsbn);
 	if (fsbn < cgdmin(fs, cg)) {
 		if (cg == 0 || (fsbn+cnt) > cgsblock(fs, cg)) {
@@ -179,16 +190,20 @@ chkuse(blkno, cnt)
 			return (1);
 		}
 	}
+
 	rdfs(fsbtodb(fs, cgtod(fs, cg)), (int)sblock.fs_cgsize,
 	    (char *)&acg);
+
 	if (!cg_chkmagic(&acg)) {
 		fprintf(stderr, "cg %d: bad magic number\n", cg);
 		errs++;
 		return (1);
 	}
+
 	bn = dtogd(fs, fsbn);
 	if (isclr(cg_blksfree(&acg), bn))
 		printf("Warning: sector %d is in use\n", blkno);
+
 	return (0);
 }
 
@@ -208,6 +223,7 @@ rdfs(bno, size, bf)
 		perror("rdfs");
 		exit(1);
 	}
+
 	n = read(fsi, bf, size);
 	if (n != size) {
 		printf("read error: %ld\n", bno);
