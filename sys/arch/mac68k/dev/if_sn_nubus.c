@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_nubus.c,v 1.3 1997/03/30 19:51:47 briggs Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.4 1997/04/10 03:22:47 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -59,6 +59,8 @@
 static int	sn_nubus_match __P((struct device *, struct cfdata *, void *));
 static void	sn_nubus_attach __P((struct device *, struct device *, void *));
 static int	sn_nb_card_vendor __P((struct nubus_attach_args *));
+static int	sn_nb_get_enaddr __P((struct nubus_attach_args *,
+					u_int8_t *, int));
 
 struct cfattach sn_nubus_ca = {
 	sizeof(struct sn_softc), sn_nubus_match, sn_nubus_attach
@@ -87,7 +89,7 @@ sn_nubus_match(parent, cf, aux)
 		default:
 			break;
 
-		/* This is it for now... */
+		case AE_VENDOR_APPLE:
 		case AE_VENDOR_DAYNA:
 			rv = 1;
 			break;
@@ -160,6 +162,22 @@ sn_nubus_attach(parent, self, aux)
 		success = 1;
                 break;
 
+	case AE_VENDOR_APPLE:
+                sc->snr_dcr = DCR_ASYNC | DCR_WAIT0 | DCR_DW32 |
+			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+		sc->snr_dcr2 = 0;
+
+		if (bus_space_subregion(bst, bsh, 0x00180000, SN_REGSIZE,
+					&sc->sc_regh)) {
+			printf(": failed to map register space.\n");
+			break;
+		}
+
+		if (sn_nb_get_enaddr(na, myaddr, 0x8) == 0)
+			success = 1;
+
+                break;
+
         default:
                 /*
                  * You can't actually get this default, the snmatch
@@ -170,6 +188,7 @@ sn_nubus_attach(parent, self, aux)
                 sc->snr_dcr = DCR_SYNC | DCR_WAIT0 | DCR_DW32 |
 			DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
 		sc->snr_dcr2 = 0;
+		printf(": attachment incomplete.\n");
                 return;
         }
 
@@ -202,6 +221,15 @@ sn_nb_card_vendor(na)
 
 	switch (na->drsw) {
 	case NUBUS_DRSW_3COM:
+		switch (na->drhw) {
+		case NUBUS_DRHW_APPLE_SN:
+			vendor = AE_VENDOR_APPLE;
+			break;
+		default:
+			vendor = AE_VENDOR_UNKNOWN;
+			break;
+		}
+		break;
 	case NUBUS_DRSW_APPLE:
 	case NUBUS_DRSW_TECHWORKS:
 		vendor = AE_VENDOR_APPLE;
@@ -241,3 +269,25 @@ sn_nb_card_vendor(na)
 	}
 	return vendor;
 }
+
+static int
+sn_nb_get_enaddr(na, ep, rsrc1)
+	struct nubus_attach_args *na;
+	u_int8_t *ep;
+	int	rsrc1;
+{
+	nubus_dir dir;
+	nubus_dirent dirent;
+
+	nubus_get_main_dir(na->fmt, &dir);
+	if (nubus_find_rsrc(na->fmt, &dir, na->rsrcid, &dirent) <= 0)
+		return 1;
+	nubus_get_dir_from_rsrc(na->fmt, &dirent, &dir);
+	if (nubus_find_rsrc(na->fmt, &dir, rsrc1, &dirent) <= 0)
+		return 1;
+	if (nubus_get_ind_data(na->fmt, &dirent, ep, ETHER_ADDR_LEN) <= 0)
+		return 1;
+
+	return 0;
+}
+
