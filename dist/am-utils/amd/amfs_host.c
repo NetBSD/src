@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_host.c,v 1.2 2003/07/14 17:20:13 itojun Exp $	*/
+/*	$NetBSD: amfs_host.c,v 1.3 2003/07/15 09:01:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -98,21 +98,21 @@ am_ops amfs_host_ops =
  * allows the entire PC disk to be mounted.
  */
 static void
-make_mntpt(char *mntpt, const exports ex, const char *mf_mount)
+make_mntpt(char *mntpt, size_t l, const exports ex, const char *mf_mount)
 {
   if (ex->ex_dir[0] == '/') {
     if (ex->ex_dir[1] == 0)
-      strcpy(mntpt, mf_mount);
+      strlcpy(mntpt, mf_mount, l);
     else
-      sprintf(mntpt, "%s%s", mf_mount, ex->ex_dir);
+      snprintf(mntpt, l, "%s%s", mf_mount, ex->ex_dir);
   } else if (ex->ex_dir[0] >= 'a' &&
 	     ex->ex_dir[0] <= 'z' &&
 	     ex->ex_dir[1] == ':' &&
 	     ex->ex_dir[2] == '/' &&
 	     ex->ex_dir[3] == 0)
-    sprintf(mntpt, "%s/%c%%", mf_mount, ex->ex_dir[0]);
+    snprintf(mntpt, l, "%s/%c%%", mf_mount, ex->ex_dir[0]);
   else
-    sprintf(mntpt, "%s/%s", mf_mount, ex->ex_dir);
+    snprintf(mntpt, l, "%s/%s", mf_mount, ex->ex_dir);
 }
 
 
@@ -402,7 +402,7 @@ amfs_host_mount(am_node *am, mntfs *mf)
    */
   ep = (exports *) xmalloc(n_export * sizeof(exports));
   for (j = 0, ex = exlist; ex; ex = ex->ex_next) {
-    make_mntpt(mntpt, ex, mf->mf_mount);
+    make_mntpt(mntpt, sizeof(mntpt), ex, mf->mf_mount);
     if (already_mounted(mlist, mntpt))
       /* we have at least one mounted f/s, so don't fail the mount */
       ok = TRUE;
@@ -459,9 +459,9 @@ amfs_host_mount(am_node *am, mntfs *mf)
   for (j = 0; j < n_export; j++) {
     ex = ep[j];
     if (ex) {
-      strcpy(rfs_dir, ex->ex_dir);
-      make_mntpt(mntpt, ex, mf->mf_mount);
-      make_mntpt(real_mntpt, ex, mf->mf_real_mount);
+      strlcpy(rfs_dir, ex->ex_dir, sizeof(fs_name) - (rfs_dir - fs_name));
+      make_mntpt(mntpt, sizeof(mntpt), ex, mf->mf_mount);
+      make_mntpt(real_mntpt, sizeof(real_mntpt), ex, mf->mf_real_mount);
       if (do_mount(&fp[j], mntpt, real_mntpt, fs_name, mf->mf_mopts,
 		   am->am_flags & AMF_AUTOFS, mf) == 0)
 	ok = TRUE;

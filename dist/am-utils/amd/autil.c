@@ -1,4 +1,4 @@
-/*	$NetBSD: autil.c,v 1.2 2003/04/12 21:57:16 christos Exp $	*/
+/*	$NetBSD: autil.c,v 1.3 2003/07/15 09:01:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -68,7 +68,7 @@ strealloc(char *p, char *s)
 
   p = (char *) xrealloc((voidp) p, len);
 
-  strcpy(p, s);
+  strlcpy(p, s, len);
 #ifdef DEBUG_MEM
   malloc_verify();
 #endif /* DEBUG_MEM */
