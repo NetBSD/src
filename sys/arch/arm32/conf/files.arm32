@@ -42,7 +42,7 @@ file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
 # Memory disk driver
-file	arch/arm32/dev/md_hooks.c		md | memory_disk_hooks
+file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks
 major   {md = 18}
 
 # Standard parallal driver
@@ -116,7 +116,7 @@ file	arch/arm32/podulebus/if_ie.c		ie
 
 device es: ether, ifnet
 attach es at mainbus
-file  arch/arm32/mainbus/if_es.c              es
+file  arch/arm32/mainbus/if_es.c		es
 
 # IIC/RTC files
 device iic { addr = -1 }
@@ -194,6 +194,7 @@ attach	vidcvideo at mainbus
 major	{vidcvideo = 37}
 device  vt: tty
 attach	vt at mainbus
+
 file    arch/arm32/dev/console/console.c	vt needs-count
 file    arch/arm32/dev/console/vidcconsole.c	vt needs-count
 file	arch/arm32/dev/console/vidc_mc.S	vt needs-count
@@ -221,6 +222,10 @@ file	arch/arm32/arm32/sys_machdep.c
 file	arch/arm32/arm32/vm_machdep.c
 file	arch/arm32/arm32/pmap.c
 file	arch/arm32/arm32/fusu.S
+file	arch/arm32/arm32/cpufunc.c
+file	arch/arm32/arm32/cpufunc_asm.S
+file	arch/arm32/arm32/setcpsr.S
+file	arch/arm32/arm32/setstack.S
 
 file	netinet/in_cksum.c			inet
 file	netns/ns_cksum.c			ns
@@ -239,9 +244,6 @@ file	arch/arm32/arm32/bcopy_page.S
 file	arch/arm32/arm32/bcopy.S
 file	arch/arm32/arm32/bcopyinout.S
 file	arch/arm32/arm32/copystr.S
-file	arch/arm32/arm32/coproc15.S
-file	arch/arm32/arm32/setcpsr.S
-file	arch/arm32/arm32/setstack.S
 
 # files related to the shell
 file	arch/arm32/kshell/shell_input.c		kshell
@@ -281,4 +283,3 @@ file	arch/arm32/arm32/db_machdep.c		ddb
 # RC7500 prom related files
 file	arch/arm32/dev/rc7500_prom.c		prom_debug
 file	arch/arm32/dev/rc7500_promsys.s		prom_debug
-
