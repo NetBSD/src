@@ -1,5 +1,5 @@
-/*	$NetBSD: if.c,v 1.12 2002/05/21 14:29:52 itojun Exp $	*/
-/*	$KAME: if.c,v 1.17 2001/01/21 15:27:30 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.13 2002/05/29 14:40:31 itojun Exp $	*/
+/*	$KAME: if.c,v 1.21 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,23 +36,12 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <net/if_types.h>
-#ifdef __FreeBSD__
-# include <net/ethernet.h>
-#endif
 #include <ifaddrs.h>
-#ifdef __NetBSD__
 #include <net/if_ether.h>
-#endif
 #include <net/route.h>
 #include <net/if_dl.h>
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
-#ifdef __bsdi__
-# include <netinet/if_ether.h>
-#endif
-#ifdef __OpenBSD__
-#include <netinet/if_ether.h>
-#endif
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -217,6 +206,7 @@ lladdropt_length(struct sockaddr_dl *sdl)
 {
 	switch (sdl->sdl_type) {
 	case IFT_ETHER:
+	case IFT_FDDI:
 		return(ROUNDUP8(ETHER_ADDR_LEN + 2));
 	default:
 		return(0);
@@ -232,6 +222,7 @@ lladdropt_fill(struct sockaddr_dl *sdl, struct nd_opt_hdr *ndopt)
 
 	switch (sdl->sdl_type) {
 	case IFT_ETHER:
+	case IFT_FDDI:
 		ndopt->nd_opt_len = (ROUNDUP8(ETHER_ADDR_LEN + 2)) >> 3;
 		addr = (char *)(ndopt + 1);
 		memcpy(addr, LLADDR(sdl), ETHER_ADDR_LEN);
