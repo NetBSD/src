@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.21 2001/02/19 23:03:50 cgd Exp $	*/
+/*	$NetBSD: passwd.c,v 1.22 2001/03/28 03:17:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.21 2001/02/19 23:03:50 cgd Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.22 2001/03/28 03:17:42 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,8 @@ main(argc, argv)
 		if (pw_modules[i].invalid)
 			continue;
 
-		pw_modules[i].invalid |= (*pw_modules[i].pw_init)(getprogname()) ?
+		pw_modules[i].invalid |=
+		    (*pw_modules[i].pw_init)(getprogname()) ?
 		    /* zero on success, non-zero on error */
 		    INIT_INVALID : 0;
 

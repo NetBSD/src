@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhid.c,v 1.16 2001/02/19 23:03:52 cgd Exp $ */
+/*      $NetBSD: usbhid.c,v 1.17 2001/03/28 03:17:42 simonb Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -592,10 +592,16 @@ usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "Usage: %s -f device [-t tablefile] [-l] [-v] -a\n", progname);
-	fprintf(stderr, "       %s -f device [-t tablefile] [-v] -r\n", progname);
-	fprintf(stderr, "       %s -f device [-t tablefile] [-l] [-n] [-v] name ...\n", progname);
-	fprintf(stderr, "       %s -f device [-t tablefile] -w name=value ...\n", progname);
+	fprintf(stderr, "Usage: %s -f device [-t tablefile] [-l] [-v] -a\n",
+	    progname);
+	fprintf(stderr, "       %s -f device [-t tablefile] [-v] -r\n",
+	    progname);
+	fprintf(stderr,
+	    "       %s -f device [-t tablefile] [-l] [-n] [-v] name ...\n",
+	    progname);
+	fprintf(stderr,
+	    "       %s -f device [-t tablefile] -w name=value ...\n",
+	    progname);
 	exit(1);
 }
 
