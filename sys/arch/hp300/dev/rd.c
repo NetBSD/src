@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.12 1995/08/04 08:12:57 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.13 1995/10/09 07:57:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -672,6 +672,9 @@ rdgo(unit)
 	register struct rd_softc *rs = &rd_softc[unit];
 	register struct hp_device *hp = rs->sc_hd;
 	struct buf *bp = rdtab[unit].b_actf;
+	int rw;
+
+	rw = bp->b_flags & B_READ;
 
 	if (hp->hp_dk >= 0) {
 		dk_busy |= 1 << hp->hp_dk;
@@ -683,7 +686,7 @@ rdgo(unit)
 		ledcontrol(0, 0, LED_DISK);
 #endif
 	hpibgo(hp->hp_ctlr, hp->hp_slave, C_EXEC,
-	       rs->sc_addr, rs->sc_resid, bp->b_flags & B_READ);
+	       rs->sc_addr, rs->sc_resid, rw, rw != 0);
 }
 
 rdintr(unit)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.11 1995/08/04 08:13:00 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.12 1995/10/09 07:57:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -536,10 +536,12 @@ ctgo(unit)
 {
 	register struct ct_softc *sc = &ct_softc[unit];
 	register struct buf *bp;
+	int rw;
 
 	bp = cttab[unit].b_actf;
+	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_hd->hp_ctlr, sc->sc_hd->hp_slave, C_EXEC,
-		sc->sc_addr, sc->sc_resid, bp->b_flags & B_READ);
+		sc->sc_addr, sc->sc_resid, rw, rw != 0);
 }
 
 /*
