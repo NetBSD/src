@@ -1,5 +1,7 @@
 #	@(#)Makefile	8.1 (Berkeley) 6/28/93
 
+.include "../config/Makefile.config"
+
 PROG=	fsinfo
 MAN8=	fsinfo.0
 SRCS=	fsinfo.c fsi_gram.c fsi_lex.c \
@@ -12,7 +14,7 @@ CLEANFILES= \
 CFLAGS+=-I.
 CFLAGS+=-I${.CURDIR}/../include
 CFLAGS+=-I${.CURDIR}/../config
-CFLAGS+=-DOS_HDR=\"os-bsd44.h\"
+CFLAGS+=-DOS_HDR=\"os-${OS}.h\"
 
 fsi_lex.o fsinfo.o: fsi_gram.h
 fsi_gram.c fsi_gram.h: ../fsinfo/fsi_gram.y
