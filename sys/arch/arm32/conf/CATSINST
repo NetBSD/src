@@ -1,4 +1,4 @@
-#	$NetBSD: CATSINST,v 1.8 2000/02/13 05:19:40 mark Exp $
+#	$NetBSD: CATSINST,v 1.9 2000/02/19 00:17:59 tsutsui Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -10,6 +10,9 @@ include	"arch/arm32/conf/std.arm32"
 maxusers	8
 
 # Standard system options
+
+#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
+#options 	INSECURE	# disable kernel securelevel
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
@@ -59,16 +62,33 @@ file-system	KERNFS		# /kern
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
+#file-system	CODA		# Coda File System; also needs vcode (below)
 
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
+#options 	SOFTDEP		# FFS soft updates support
 
 # Networking options
 
+# Pull in config fragments for kernel crypto.  Use only one of these,
+# and adjust the prefixes as necessary.
+
+#prefix ../crypto-us/sys
+#cinclude "conf/files.crypto-us"
+#prefix
+
+#prefix ../crypto-intl/sys
+#cinclude "conf/files.crypto-intl"
+#prefix
+
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
+#options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
@@ -101,7 +121,7 @@ options 	COMPAT_13	# NetBSD 1.3 compatibility.
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
-options 	SHMMAXPGS=1024	# 1024 pages is the default
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
@@ -116,7 +136,7 @@ options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 options 	SCSIVERBOSE	# Verbose SCSI errors
-options		PCIVERBOSE	# Verbose PCI descriptions
+options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	DDB_KEYCODE=0x40
 options		PMAP_STATIC_L1S=128
@@ -165,6 +185,7 @@ fcom0	at footbridge?
 # time-of-day device via footbridge or RTC
 todclock0	at todservice?
 
+# PCI bus support
 # PCI bus via footbridge
 pci0	at footbridge?			# PCI bus
 
@@ -183,8 +204,8 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 #lpt*	at puc? port ?			# || ports on "universal" comm boards
 
 # PCI SCSI Controllers and Buses
-#adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], ULTRA SCSI
-#scsibus* at adv?
+adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], ULTRA SCSI
+scsibus* at adv?
 #adw*	at pci? dev ? function ?	# AdvanSys 9xxUW SCSI
 #scsibus* at adw?
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI controllers
@@ -195,8 +216,8 @@ isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
 scsibus* at isp?
 #ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 #scsibus* at ncr?
-#pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
-#scsibus* at pcscp?
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+scsibus* at pcscp?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -238,7 +259,7 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 #en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 #ep*	at pci? dev ? function ?	# 3C590 ethernet cards
-#ex*	at pci? dev ? function ?	# 3Com 90x[B]
+ex*	at pci? dev ? function ?	# 3Com 90x[B]
 #epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #esh*	at pci? dev ? function ?	# Essential HIPPI card
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
@@ -253,17 +274,17 @@ ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 #options 	TLP_MATCH_21041
 #options 	TLP_MATCH_21140
 #options 	TLP_MATCH_21142
-#vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 rl*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
-#exphy*	at mii? phy ?			# 3Com internal PHYs
+exphy*	at mii? phy ?			# 3Com internal PHYs
 #icsphy* at mii? phy ?			# Integrated Circuit Systems ICS1890
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
 #iophy*	at mii? phy ?			# Intel 82553 PHYs
 #lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
-#nsphy*	at mii? phy ?			# NS83840 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
 #nsphyter* at mii? phy ?		# NS83843 PHYs
 #qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 #sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
@@ -274,8 +295,8 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
-#uhci*	at pci?                         # Universal Host Controller (Intel)
-ohci*	at pci?                         # Open Host Controller
+#uhci*	at pci?				# Universal Host Controller (Intel)
+ohci*	at pci?				# Open Host Controller
 
 # USB bus support
 #usb*	at uhci?
@@ -286,7 +307,7 @@ uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
-ums* 	at uhub? port ? configuration ? interface ?
+ums*	at uhub? port ? configuration ? interface ?
 wsmouse*	at ums?
 
 # USB Keyboards
@@ -317,7 +338,7 @@ cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
 # USB Generic driver
-#ugen* at uhub? port ? configuration ? interface ?
+#ugen* at uhub? port ?
 
 # Audio Devices
 
@@ -372,6 +393,10 @@ lpt1	at isa? port 0x278 irq 5
 #fdc1	at isa? port 0x370 irq ? drq ?
 #fd*	at fdc? drive ?			# the drives themselves
 
+# ISA network interface
+#ne0	at isa? port 0x280 irq 9
+#ne1	at isa? port 0x300 irq 10
+
 # The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?			# PC speaker
 
@@ -391,10 +416,14 @@ dsrtc0	at isa? port 0x72		# Dallas RTC
 #audio*	at sb?
 #audio*	at wss?
 
+# MPU 401 UARTs
+#mpu*	at sb?
+
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
 #midi*	at sb?			# SB MPU401 port
 #midi*	at opl?			# OPL FM synth
+#midi*	at mpu?			# MPU 401
 
 # Joysticks
 
@@ -426,3 +455,11 @@ pseudo-device	pty		32	# pseudo-terminals
 #pseudo-device	sequencer	1	# MIDI sequencer
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
+
+# for IPv6
+#pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
+#pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
