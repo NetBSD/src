@@ -1,5 +1,19 @@
-#	$NetBSD: LAST_MINUTE,v 1.1.2.8 2003/10/27 04:43:10 jmc Exp $
+#	$NetBSD: LAST_MINUTE,v 1.1.2.9 2004/02/27 04:31:00 jmc Exp $
 
 This file contains important information on the NetBSD 1.6.2 release that
 did not make it into the main documentation.
 
+[cats]
+
+	The xserver does not currently build for cats. This will be hopefully
+	fixed shortly. If absolutely required tne X builds from
+	1.6.1 could be used, but those have known security issues as 
+	described in NetBSD-SA2003-015. The rest of the X sets from arm32 
+	builds are included.
+
+[acorn32]
+
+	The xserver was not able to be built for this release due to a lack
+	of resources/hardware availability. This can be built from source
+	using the netbsd-1-6-PATCH002 tag on the xsrc tree. The rest of the X 
+	sets from arm32 builds are included.
