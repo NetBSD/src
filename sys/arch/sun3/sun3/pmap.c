@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 1995/03/17 05:00:31 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 1995/04/07 04:46:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -2224,6 +2224,7 @@ pmap_enter_user(pmap, va, pa, prot, wired, new_pte)
 			context_allocate(pmap);
 		}
 		set_context(pmap->pm_ctxnum);
+		ICIA();
 	}
 
 	/*
@@ -2586,6 +2587,7 @@ pmap_activate(pmap, pcbp)
 #endif
 
 	set_context(pmap->pm_ctxnum);
+	ICIA();
 }
 
 void
