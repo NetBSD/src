@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.7 1999/10/30 15:15:08 uch Exp $
+# 	$NetBSD: GENERIC,v 1.8 1999/11/02 10:36:52 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -82,9 +82,11 @@ config		nfsnetbsd	root on ? type nfs
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
 options		WSDISPLAY_DEFAULTSCREENS=4
+#options		FONT_VT220L8x8
+options		FONT_VT220L8x10
 
 # Workstation Console attachments
-fb*	at mainbus0
+fb*		at	mainbus0
 wsdisplay*	at	fb?
 wskbd*		at	vrkiu? mux 1
 #wsmouse*	at	pms? mux 0

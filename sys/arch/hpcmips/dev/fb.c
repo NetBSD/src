@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.4 1999/10/24 08:43:59 takemura Exp $	*/
+/*	$NetBSD: fb.c,v 1.5 1999/11/02 10:36:53 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -59,11 +59,15 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
+#define FBDEBUG
+/*
+#define WSCONS_FONT_HACK
+#define USE_RASTERCONS
+ */
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 19999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.4 1999/10/24 08:43:59 takemura Exp $";
+    "$Id: fb.c,v 1.5 1999/11/02 10:36:53 takemura Exp $";
 
 
 #include <sys/param.h>
@@ -81,14 +85,19 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 
-#include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
+
+#ifdef USE_RASTERCONS
+#include <dev/rcons/raster.h>
+#include <dev/wscons/wscons_raster.h>
+#else /*  USE_RASTERCONS */
+#include <dev/wsfont/wsfont.h>
+#include <dev/rasops/rasops.h>
+#endif /*  USE_RASTERCONS */
 
 #include <arch/hpcmips/dev/fbvar.h>
 
-#define FBDEBUG
 #ifdef FBDEBUG
 int	fb_debug = 1;
 #define	DPRINTF(arg) if (fb_debug) printf arg;
@@ -112,6 +121,11 @@ static void	fb_free_screen __P((void *, void *));
 static void	fb_show_screen __P((void *, void *));
 
 static int	pow __P((int, int));
+#if defined(USE_RASTERCONS) & defined(WSCONS_FONT_HACK)
+#include <arch/hpcmips/dev/vt220l8x10.h>
+static void	rcons_init2 __P((struct rcons *rc, int mrow, int mcol));
+void	rcons_initfont __P((struct rcons *, struct raster_font *));
+#endif
 
 /*
  *  static variables
@@ -120,6 +134,7 @@ struct cfattach fb_ca = {
 	sizeof(struct fb_softc), fbmatch, fbattach,
 };
 
+#ifdef USE_RASTERCONS
 struct wsdisplay_emulops fb_emulops = {
 	rcons_cursor,
 	rcons_mapchar,
@@ -130,11 +145,16 @@ struct wsdisplay_emulops fb_emulops = {
 	rcons_eraserows,
 	rcons_alloc_attr
 };
+#endif /* USE_RASTERCONS */
 
 struct wsscreen_descr fb_stdscreen = {
 	"std",
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
+#ifdef USE_RASTERCONS
 	&fb_emulops,
+#else
+	0,
+#endif /* USE_RASTERCONS */
 	0, 0,
 	WSSCREEN_REVERSE
 };
@@ -212,12 +232,25 @@ fbattach(parent, self, aux)
 		}
 	}
 
-	printf(": %dx%d pixels, %d colors, %dx%d chars",
+#ifdef USE_RASTERCONS
+	printf(": raster %dx%d pixels, %d colors, %dx%d chars",
 	       sc->sc_dc->dc_raster.width,
 	       sc->sc_dc->dc_raster.height,
 	       pow(2, sc->sc_dc->dc_raster.depth),
 	       sc->sc_dc->dc_rcons.rc_maxcol,
 	       sc->sc_dc->dc_rcons.rc_maxrow);
+#else /*  USE_RASTERCONS */
+	fb_stdscreen.textops = &sc->sc_dc->dc_rinfo.ri_ops;
+	fb_stdscreen.nrows = sc->sc_dc->dc_rinfo.ri_rows;
+	fb_stdscreen.ncols = sc->sc_dc->dc_rinfo.ri_cols;
+	fb_stdscreen.capabilities = sc->sc_dc->dc_rinfo.ri_caps;
+	printf(": rasops %dx%d pixels, %d colors, %dx%d chars",
+	       sc->sc_dc->dc_rinfo.ri_width,
+	       sc->sc_dc->dc_rinfo.ri_height,
+	       pow(2, sc->sc_dc->dc_rinfo.ri_depth),
+	       sc->sc_dc->dc_rinfo.ri_cols,
+	       sc->sc_dc->dc_rinfo.ri_rows);
+#endif /*  USE_RASTERCONS */
 
 	printf("\n");
 
@@ -249,12 +282,23 @@ fb_cnattach(iot, iobase, type, check)
 		return (ENXIO);
 	}
 
+#ifdef USE_RASTERCONS
 	fb_console_screen = fb_stdscreen;
 	fb_console_screen.nrows = fb_console_dc.dc_rcons.rc_maxrow;
 	fb_console_screen.ncols = fb_console_dc.dc_rcons.rc_maxcol;
-
 	wsdisplay_cnattach(&fb_console_screen, &fb_console_dc.dc_rcons,
 			   0, 0, defattr);
+#else /*  USE_RASTERCONS */
+	fb_console_screen = fb_stdscreen;
+	fb_console_screen.textops = &fb_console_dc.dc_rinfo.ri_ops;
+	fb_console_screen.nrows = fb_console_dc.dc_rinfo.ri_rows;
+	fb_console_screen.ncols = fb_console_dc.dc_rinfo.ri_cols;
+	fb_console_screen.capabilities = fb_console_dc.dc_rinfo.ri_caps;
+	fb_console_dc.dc_rinfo.ri_ops.alloc_attr(&fb_console_dc.dc_rinfo,
+						 7, 0, 0, &defattr);
+	wsdisplay_cnattach(&fb_console_screen, &fb_console_dc.dc_rinfo,
+			   0, 0, defattr);
+#endif /*  USE_RASTERCONS */
 
 	fbconsole = 1;
 	fb_console_type = type;
@@ -262,24 +306,17 @@ fb_cnattach(iot, iobase, type, check)
 	return (0);
 }
 
-void fb_cons_test_xxx(char a);
-
-void
-fb_cons_test_xxx(char a)
-{
-	static int col = 0;
-	fb_console_screen.textops->putchar(&fb_console_dc.dc_rcons,
-					   0, col++, a, 0);
-
-}
-
 int
 fb_getdevconfig(dc)
 	struct fb_devconfig *dc;
 {
 	int i;
-	int depth;
+	int depth, reverse;
+#ifdef USE_RASTERCONS
 	struct rcons *rcp;
+#else
+	struct rasops_info *ri;
+#endif
 
 	if (bootinfo == NULL ||
 	    bootinfo->fb_addr == 0 ||
@@ -305,16 +342,28 @@ fb_getdevconfig(dc)
 	switch (bootinfo->fb_type) {
 	case BIFB_D2_M2L_3:
 	case BIFB_D2_M2L_3x2:
+		reverse = 1;
+		depth = 2;
+		break;
 	case BIFB_D2_M2L_0:
 	case BIFB_D2_M2L_0x2:
+		reverse = 0;
 		depth = 2;
 		break;
 	case BIFB_D8_00:
+		reverse = 0;
+		depth = 8;
+		break;
 	case BIFB_D8_FF:
+		reverse = 1;
 		depth = 8;
 		break;
 	case BIFB_D16_0000:
+		reverse = 0;
+		depth = 16;
+		break;
 	case BIFB_D16_FFFF:
+		reverse = 1;
 		depth = 16;
 		break;
 	default:
@@ -323,6 +372,7 @@ fb_getdevconfig(dc)
 		break;
 	}
 
+#ifdef USE_RASTERCONS
 	/* initialize the raster */
 	dc->dc_raster.width = dc->dc_width;
 	dc->dc_raster.height = dc->dc_height;
@@ -337,8 +387,30 @@ fb_getdevconfig(dc)
 	rcp->rc_crow = rcp->rc_ccol = -1;
 	rcp->rc_crowp = &rcp->rc_crow;
 	rcp->rc_ccolp = &rcp->rc_ccol;
+#ifdef WSCONS_FONT_HACK
+	rcons_initfont(rcp, &vt220_8x10);
+	rcons_init2(rcp, 34, 80);
+#else /* WSCONS_FONT_HACK */
 	rcons_init(rcp, 34, 80);
+#endif /* WSCONS_FONT_HACK */
+#else /* USE_RASTERCONS */
+	ri = &dc->dc_rinfo;
+	bzero(ri, sizeof(struct rasops_info));
+	ri->ri_depth = depth;
+	ri->ri_bits = (caddr_t)dc->dc_fbaddr;
+	ri->ri_width = dc->dc_width;
+	ri->ri_height = dc->dc_height;
+	ri->ri_stride = dc->dc_rowbytes;
+	ri->ri_flg = RI_FORCEMONO | RI_CURSOR;
+	if (rasops_init(ri, 200, 200)) {
+		panic("%s(%d): rasops_init() failed!", __FILE__, __LINE__);
+	}
 
+	if (reverse) {
+		ri->ri_devcmap[0] = 0x00000000;
+		ri->ri_devcmap[1] = 0xffffffff;
+	}
+#endif /* USE_RASTERCONS */
 	return (0);
 }
 
@@ -384,18 +456,22 @@ fb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	long *attrp;
 {
 	struct fb_softc *sc = v;
-	long defattr;
 
 	DPRINTF(("%s(%d): fb_alloc_screen()\n", __FILE__, __LINE__));
 
 	if (sc->nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
-	*attrp = defattr;
+#ifdef USE_RASTERCONS
+	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
+	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, attrp);
+#else
+	*cookiep = &sc->sc_dc->dc_rinfo;
+	sc->sc_dc->dc_rinfo.ri_ops.alloc_attr(&sc->sc_dc->dc_rinfo,
+					      7, 0, 0, attrp);
+#endif
 	sc->nscreens++;
 	return (0);
 }
@@ -405,7 +481,11 @@ fb_free_screen(v, cookie)
 	void *v;
 	void *cookie;
 {
+	struct fb_softc *sc = v;
+
 	DPRINTF(("%s(%d): fb_free_screen()\n", __FILE__, __LINE__));
+
+	sc->nscreens--;
 }
 
 void
@@ -415,3 +495,47 @@ fb_show_screen(v, cookie)
 {
 	DPRINTF(("%s(%d): fb_show_screen()\n", __FILE__, __LINE__));
 }
+
+#if defined(USE_RASTERCONS) & defined(WSCONS_FONT_HACK)
+void
+rcons_init2(rc, mrow, mcol)
+	struct rcons *rc;
+	int mrow, mcol;
+{
+	struct raster *rp = rc->rc_sp;
+	int i;
+
+	if (rc->rc_font == NULL) {
+		/*rcons_initfont(rc, &gallant19);
+		 */
+	}
+
+	i = rp->height / rc->rc_font->height;
+	rc->rc_maxrow = min(i, mrow);
+
+	i = rp->width / rc->rc_font->width;
+	rc->rc_maxcol = min(i, mcol);
+
+	/* Center emulator screen (but align x origin to 32 bits) */
+	rc->rc_xorigin =
+	    ((rp->width - rc->rc_maxcol * rc->rc_font->width) / 2) & ~0x1f;
+	rc->rc_yorigin =
+	    (rp->height - rc->rc_maxrow * rc->rc_font->height) / 2;
+
+	/* Raster width used for row copies */
+	rc->rc_raswidth = rc->rc_maxcol * rc->rc_font->width;
+	if (rc->rc_raswidth & 0x1f) {
+		/* Pad to 32 bits */
+		i = (rc->rc_raswidth + 0x1f) & ~0x1f;
+		/* Make sure width isn't too wide */
+		if (rc->rc_xorigin + i <= rp->width)
+			rc->rc_raswidth = i;
+	}
+
+	rc->rc_bits = 0;
+
+	/* If cursor position given, assume it's there and drawn. */
+	if (*rc->rc_crowp != -1 && *rc->rc_ccolp != -1)
+		rc->rc_bits |= RC_CURSOR;
+}
+#endif /* USE_RASTERCONS & WSCONS_FONT_HACK */
