@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dhclient,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: dhclient,v 1.2 2000/03/15 03:15:47 fvdl Exp $
 #
 
 # PROVIDE: dhclient
@@ -10,7 +10,7 @@
 . /etc/rc.conf
 
 name="dhclient"
-command="/usr/sbin/${name}"
+command="/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 required_files="/etc/${name}.conf /var/db/${name}.leases"
 
