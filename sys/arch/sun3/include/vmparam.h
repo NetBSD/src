@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31 2001/11/15 18:06:18 soren Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32 2003/04/02 07:53:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ extern	char KERNBASE[];
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERN_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10 2003/03/05 23:56:02 fvdl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.11 2003/04/02 07:53:59 thorpej Exp $	*/
 
 /*
  *
@@ -211,11 +211,11 @@
 #define NKL2_START_ENTRIES	0
 #define NKL1_START_ENTRIES	0	/* XXX */
 
-#define NTOPLEVEL_PDES		(NBPG / (sizeof (pd_entry_t)))
+#define NTOPLEVEL_PDES		(PAGE_SIZE / (sizeof (pd_entry_t)))
 
 #define KERNSPACE		(NKL4_ENTRIES * NBPD_L4)
 
-#define NPDPG			(NBPG / sizeof (pd_entry_t))
+#define NPDPG			(PAGE_SIZE / sizeof (pd_entry_t))
 
 #define ptei(VA)	(((VA_SIGN_POS(VA)) & L1_MASK) >> L1_SHIFT)
 
@@ -254,11 +254,11 @@
  *   a PTP's offset is the byte-offset in the PTE space that this PTP is at
  *   a PTP's VA is the first VA mapped by that PTP
  *
- * note that NBPG == number of bytes in a PTP (4096 bytes == 1024 entries)
+ * note that PAGE_SIZE == number of bytes in a PTP (4096 bytes == 1024 entries)
  *           NBPD == number of bytes a PTP can map (4MB)
  */
 
-#define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * NBPG)
+#define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
 
 #define PTP_LEVELS	4
 
@@ -366,7 +366,7 @@ struct pv_page_info {
  * (note: won't work on systems where NPBG isn't a constant)
  */
 
-#define PVE_PER_PVPAGE ((NBPG - sizeof(struct pv_page_info)) / \
+#define PVE_PER_PVPAGE ((PAGE_SIZE - sizeof(struct pv_page_info)) / \
 			sizeof(struct pv_entry))
 
 /*

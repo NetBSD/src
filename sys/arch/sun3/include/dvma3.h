@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma3.h,v 1.9 1998/02/05 04:56:50 gwr Exp $	*/
+/*	$NetBSD: dvma3.h,v 1.10 2003/04/02 07:53:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 #define DVMA_MAP_BASE	0x0FF00000
 #define DVMA_MAP_SIZE	0x00100000
-#define DVMA_MAP_AVAIL	(DVMA_MAP_SIZE-NBPG)
+#define DVMA_MAP_AVAIL	(DVMA_MAP_SIZE-PAGE_SIZE)
 
 /*
  * To convert an address in DVMA space to a slave address,
