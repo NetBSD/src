@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.44 2000/09/13 15:00:25 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.45 2000/11/24 23:30:01 soren Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -882,7 +882,7 @@ sys_madvise(p, v, retval)
 	case MADV_FREE:
 		/*
 		 * These pages contain no valid data, and may be
-		 * grbage-collected.  Toss all resources, including
+		 * garbage-collected.  Toss all resources, including
 		 * any swap space in use.
 		 */
 		rv = uvm_map_clean(&p->p_vmspace->vm_map, addr, addr + size,
