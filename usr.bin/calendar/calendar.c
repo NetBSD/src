@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.9 1997/06/20 08:11:34 lukem Exp $	*/
+/*	$NetBSD: calendar.c,v 1.10 1997/08/26 19:58:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-static char rcsid[] = "$NetBSD: calendar.c,v 1.9 1997/06/20 08:11:34 lukem Exp $";
+static char rcsid[] = "$NetBSD: calendar.c,v 1.10 1997/08/26 19:58:11 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,13 +65,24 @@ static char rcsid[] = "$NetBSD: calendar.c,v 1.9 1997/06/20 08:11:34 lukem Exp $
 
 #include "pathnames.h"
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+unsigned short lookahead = 1, weekend = 2;
+char *fname = "calendar", *datestr = NULL;
 struct passwd *pw;
 int doall;
 
+void	 atodays __P((char, char *, unsigned short *));
 void	 cal __P((void));
 void	 closecal __P((FILE *));
 int	 getday __P((char *));
 int	 getfield __P((char *, char **, int *));
+void	 getmmdd(struct tm *tp, char *ds);
 int	 getmonth __P((char *));
 int	 isnow __P((char *));
 FILE	*opencal __P((void));
@@ -87,7 +98,7 @@ main(argc, argv)
 	int ch;
 	char *caldir;
 
-	while ((ch = getopt(argc, argv, "-a")) != EOF)
+	while ((ch = getopt(argc, argv, "-ad:f:l:w:")) != EOF)
 		switch (ch) {
 		case '-':		/* backward contemptible */
 		case 'a':
@@ -96,6 +107,18 @@ main(argc, argv)
 				err(1, NULL);
 			}
 			doall = 1;
+			break;
+		case 'd':
+			datestr = optarg;
+			break;
+		case 'f':
+			fname = optarg;
+			break;
+		case 'l':
+			atodays(ch, optarg, &lookahead);
+			break;
+		case 'w':
+			atodays(ch, optarg, &weekend);
 			break;
 		case '?':
 		default:
@@ -176,6 +199,9 @@ settime()
 
 	(void)time(&now);
 	tp = localtime(&now);
+	if (datestr) {
+		getmmdd(tp, datestr);
+	}
 	if (isleap(tp->tm_year + 1900)) {
 		yrdays = DAYSPERLYEAR;
 		cumdays = daytab[1];
@@ -184,7 +210,7 @@ settime()
 		cumdays = daytab[0];
 	}
 	/* Friday displays Monday's events */
-	offset = tp->tm_wday == 5 ? 3 : 1;
+	offset = tp->tm_wday == 5 ? lookahead + weekend : lookahead;
 	header[5].iov_base = dayname;
 	header[5].iov_len = strftime(dayname, sizeof(dayname), "%A", tp);
 }
@@ -296,12 +322,12 @@ opencal()
 	int fd, pdes[2];
 
 	/* open up calendar file as stdin */
-	if (!freopen("calendar", "r", stdin)) {
+	if (!freopen(fname, "r", stdin)) {
 		if (doall)
 			return (NULL);
 		errx(1, "no calendar file.");
 	}
-	if (pipe(pdes) < 0) 
+	if (pipe(pdes) < 0)
 		return (NULL);
 	switch (vfork()) {
 	case -1:			/* error */
@@ -349,14 +375,14 @@ closecal(fp)
 	(void)rewind(fp);
 	if (fstat(fileno(fp), &sbuf) || !sbuf.st_size)
 		goto done;
-	if (pipe(pdes) < 0) 
+	if (pipe(pdes) < 0)
 		goto done;
 	switch (vfork()) {
 	case -1:			/* error */
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
 		goto done;
-	case 0:		
+	case 0:
 		/* child -- set stdin to pipe output */
 		if (pdes[0] != STDIN_FILENO) {
 			(void)dup2(pdes[0], STDIN_FILENO);
@@ -416,8 +442,76 @@ getday(s)
 }
 
 void
+atodays(char ch, char *optarg, unsigned short *days)
+{
+	extern char *__progname;
+	int u;
+
+	u = atoi(optarg);
+	if ((u < 0) || (u > 366)) {
+		fprintf(stderr,
+			"%s: warning: -%c %d out of range 0-366, ignored.\n",
+			__progname, ch, u);
+	} else {
+		*days = u;
+	}
+}
+
+#define todigit(x) ((x) - '0')
+#define ATOI2(x) (todigit((x)[0]) * 10 + todigit((x)[1]))
+#define ISDIG2(x) (isdigit((x)[0]) && isdigit((x)[1]))
+
+void
+getmmdd(struct tm *tp, char *ds)
+{
+	extern char *__progname;
+	int ok = FALSE;
+	struct tm ttm;
+	char *t;
+
+	ttm = *tp;
+	ttm.tm_isdst = -1;
+
+	if (ISDIG2(ds)) {
+		ttm.tm_mon = ATOI2(ds) - 1;
+		ds += 2;
+	}
+
+	if (ISDIG2(ds)) {
+		ttm.tm_mday = ATOI2(ds);
+		ds += 2;
+
+		ok = TRUE;
+	}
+
+	if (ok) {
+		if (ISDIG2(ds) && ISDIG2(ds + 2)) {
+			ttm.tm_year = ATOI2(ds) * 100 - 1900;
+			ds += 2;
+			ttm.tm_year += ATOI2(ds);
+		} else if (ISDIG2(ds)) {
+			ttm.tm_year = ATOI2(ds);
+		}
+	}
+	
+	if (ok && (mktime(&ttm) < 0)) {
+		ok = FALSE;
+	}
+	
+	if (ok) {
+		*tp = ttm;
+	} else {
+		fprintf(stderr,
+			"%s: warning: can't convert %s to date, ignored.\n",
+			__progname, ds);
+		usage();
+	}
+}
+
+void
 usage()
 {
-	(void)fprintf(stderr, "usage: calendar [-a]\n");
+	(void)fprintf(stderr, "usage: calendar [-a] [-d MMDD[[YY]YY]" \
+		" [-f fname] [-l days] [-w days]\n");
 	exit(1);
 }
