@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.10 2004/04/21 01:05:37 christos Exp $
+	$NetBSD: syscalls.master,v 1.11 2004/05/08 14:31:59 kent Exp $
 ; based on NetBSD: syscalls.master,v 1.128 2003/03/18 18:08:49 christos Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -727,3 +727,15 @@
 351	UNIMPL		sys_sched_get_priority_max
 352	UNIMPL		sys_sched_get_priority_min
 353	UNIMPL		sys_sched_rr_get_interval
+
+354	NOARGS		{ int sys_fsync_range(int fd, int flags, off_t start, \
+			    off_t length); }
+355	NOARGS		{ int sys_uuidgen(struct uuid *store, int count); }
+356	NOARGS		{ int sys_getvfsstat(struct statvfs *buf, \
+			    size_t bufsize, int flags); }
+357	NOARGS		{ int sys_statvfs1(const char *path, \
+			    struct statvfs *buf, int flags); }
+358	NOARGS		{ int sys_fstatvfs1(int fd, struct statvfs *buf, \
+			    int flags); }
+359	NOARGS		{ int sys_fhstatvfs1(const fhandle_t *fhp, \
+			    struct statvfs *buf, int flags); }
