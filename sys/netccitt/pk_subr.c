@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.24 2003/08/07 16:33:04 agc Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.25 2004/04/17 15:18:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.24 2003/08/07 16:33:04 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.25 2004/04/17 15:18:53 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ pk_attach(so)
 			if (so->so_options & SO_ACCEPTCONN)
 				lcp->lcd_state = LISTEN;
 		} else
-			sbreserve(&lcp->lcd_sb, pk_sendspace);
+			sbreserve(&lcp->lcd_sb, pk_sendspace, so);
 	}
 	if (so) {
 		so->so_pcb = lcp;
