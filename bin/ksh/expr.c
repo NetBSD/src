@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.2 1997/01/12 19:11:51 tls Exp $	*/
+/*	$NetBSD: expr.c,v 1.3 1999/10/20 15:09:59 hubertf Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -39,7 +39,7 @@ enum token {
 	/* things that don't appear in the opinfo[] table */
 	VAR, LIT, END, BAD
     };
-#define IS_BINOP(op) (((int)op) >= O_EQ && ((int)op) <= O_COMMA)
+#define IS_BINOP(op) (((int)op) >= (int)O_EQ && ((int)op) <= (int)O_COMMA)
 #define IS_ASSIGNOP(op)	((int)(op) >= (int)O_ASN && (int)(op) <= (int)O_BORASN)
 
 enum prec {
@@ -123,7 +123,6 @@ struct expr_state {
 	struct tbl *evaling;		/* variable that is being recursively
 					 * expanded (EXPRINEVAL flag set)
 					 */
-	Expr_state *volatile prev;	/* previous state */
 };
 
 enum error_type { ET_UNEXPECTED, ET_BADLIT, ET_RECURSIVE,
@@ -131,15 +130,16 @@ enum error_type { ET_UNEXPECTED, ET_BADLIT, ET_RECURSIVE,
 
 static Expr_state *es;
 
-static void        evalerr  ARGS((enum error_type type, const char *str))
-						GCC_FUNC_ATTR(noreturn);
-static struct tbl *evalexpr ARGS((enum prec prec));
-static void        token    ARGS((void));
-static struct tbl *do_ppmm  ARGS((enum token op, struct tbl *vasn,
-				  bool_t is_prefix));
-static void	   assign_check ARGS((enum token op, struct tbl *vasn));
+static void        evalerr  ARGS((Expr_state *es, enum error_type type,
+				  const char *str)) GCC_FUNC_ATTR(noreturn);
+static struct tbl *evalexpr ARGS((Expr_state *es, enum prec prec));
+static void        token    ARGS((Expr_state *es));
+static struct tbl *do_ppmm  ARGS((Expr_state *es, enum token op,
+				  struct tbl *vasn, bool_t is_prefix));
+static void	   assign_check ARGS((Expr_state *es, enum token op,
+				      struct tbl *vasn));
 static struct tbl *tempvar  ARGS((void));
-static struct tbl *intvar   ARGS((struct tbl *vp));
+static struct tbl *intvar   ARGS((Expr_state *es, struct tbl *vp));
 
 /*
  * parse and evalute expression
@@ -171,14 +171,13 @@ v_evaluate(vp, expr, error_ok)
 {
 	struct tbl *v;
 	Expr_state curstate;
+	Expr_state * const es = &curstate;
 	int i;
 
 	/* save state to allow recursive calls */
 	curstate.expression = curstate.tokp = expr;
 	curstate.noassign = 0;
-	curstate.prev = es;
 	curstate.evaling = (struct tbl *) 0;
-	es = &curstate;
 
 	newenv(E_ERRH);
 	i = ksh_sigsetjmp(e->jbuf, 0);
@@ -187,9 +186,8 @@ v_evaluate(vp, expr, error_ok)
 		if (curstate.evaling)
 			curstate.evaling->flag &= ~EXPRINEVAL;
 		quitenv();
-		es = curstate.prev;
 		if (i == LAEXPR) {
-			if (error_ok)
+			if (error_ok == KSH_RETURN_ERROR)
 				return 0;
 			errorf(null);
 		}
@@ -197,31 +195,32 @@ v_evaluate(vp, expr, error_ok)
 		/*NOTREACHED*/
 	}
 
-	token();
+	token(es);
 #if 1 /* ifdef-out to disallow empty expressions to be treated as 0 */
 	if (es->tok == END) {
 		es->tok = LIT;
 		es->val = tempvar();
 	}
 #endif /* 0 */
-	v = intvar(evalexpr(MAX_PREC));
+	v = intvar(es, evalexpr(es, MAX_PREC));
 
 	if (es->tok != END)
-		evalerr(ET_UNEXPECTED, (char *) 0);
+		evalerr(es, ET_UNEXPECTED, (char *) 0);
 
 	if (vp->flag & INTEGER)
 		setint_v(vp, v);
 	else
-		setstr(vp, str_val(v));
+		/* can fail if readony */
+		setstr(vp, str_val(v), error_ok);
 
-	es = curstate.prev;
 	quitenv();
 
 	return 1;
 }
 
 static void
-evalerr(type, str)
+evalerr(es, type, str)
+	Expr_state *es;
 	enum error_type type;
 	const char *str;
 {
@@ -279,11 +278,12 @@ evalerr(type, str)
 }
 
 static struct tbl *
-evalexpr(prec)
+evalexpr(es, prec)
+	Expr_state *es;
 	enum prec prec;
 {
-	register struct tbl *vl, UNINITIALIZED(*vr), *vasn;
-	register enum token op;
+	struct tbl *vl, UNINITIALIZED(*vr), *vasn;
+	enum token op;
 	long UNINITIALIZED(res);
 
 	if (prec == P_PRIMARY) {
@@ -291,8 +291,8 @@ evalexpr(prec)
 		if (op == O_BNOT || op == O_LNOT || op == O_MINUS
 		    || op == O_PLUS)
 		{
-			token();
-			vl = intvar(evalexpr(P_PRIMARY));
+			token(es);
+			vl = intvar(es, evalexpr(es, P_PRIMARY));
 			if (op == O_BNOT)
 				vl->val.i = ~vl->val.i;
 			else if (op == O_LNOT)
@@ -301,48 +301,48 @@ evalexpr(prec)
 				vl->val.i = -vl->val.i;
 			/* op == O_PLUS is a no-op */
 		} else if (op == OPEN_PAREN) {
-			token();
-			vl = evalexpr(MAX_PREC);
+			token(es);
+			vl = evalexpr(es, MAX_PREC);
 			if (es->tok != CLOSE_PAREN)
-				evalerr(ET_STR, "missing )");
-			token();
+				evalerr(es, ET_STR, "missing )");
+			token(es);
 		} else if (op == O_PLUSPLUS || op == O_MINUSMINUS) {
-			token();
-			vl = do_ppmm(op, es->val, TRUE);
-			token();
+			token(es);
+			vl = do_ppmm(es, op, es->val, TRUE);
+			token(es);
 		} else if (op == VAR || op == LIT) {
 			vl = es->val;
-			token();
+			token(es);
 		} else {
-			evalerr(ET_UNEXPECTED, (char *) 0);
+			evalerr(es, ET_UNEXPECTED, (char *) 0);
 			/*NOTREACHED*/
 		}
 		if (es->tok == O_PLUSPLUS || es->tok == O_MINUSMINUS) {
-			vl = do_ppmm(es->tok, vl, FALSE);
-			token();
+			vl = do_ppmm(es, es->tok, vl, FALSE);
+			token(es);
 		}
 		return vl;
 	}
-	vl = evalexpr(((int) prec) - 1);
+	vl = evalexpr(es, ((int) prec) - 1);
 	for (op = es->tok; IS_BINOP(op) && opinfo[(int) op].prec == prec;
 		op = es->tok)
 	{
-		token();
+		token(es);
 		vasn = vl;
 		if (op != O_ASN) /* vl may not have a value yet */
-			vl = intvar(vl);
+			vl = intvar(es, vl);
 		if (IS_ASSIGNOP(op)) {
-			assign_check(op, vasn);
-			vr = intvar(evalexpr(P_ASSIGN));
+			assign_check(es, op, vasn);
+			vr = intvar(es, evalexpr(es, P_ASSIGN));
 		} else if (op != O_TERN && op != O_LAND && op != O_LOR)
-			vr = intvar(evalexpr(((int) prec) - 1));
+			vr = intvar(es, evalexpr(es, ((int) prec) - 1));
 		if ((op == O_DIV || op == O_MOD || op == O_DIVASN
 		     || op == O_MODASN) && vr->val.i == 0)
 		{
 			if (es->noassign)
 				vr->val.i = 1;
 			else
-				evalerr(ET_STR, "zero divisor");
+				evalerr(es, ET_STR, "zero divisor");
 		}
 		switch ((int) op) {
 		case O_TIMES:
@@ -406,7 +406,7 @@ evalexpr(prec)
 		case O_LAND:
 			if (!vl->val.i)
 				es->noassign++;
-			vr = intvar(evalexpr(((int) prec) - 1));
+			vr = intvar(es, evalexpr(es, ((int) prec) - 1));
 			res = vl->val.i && vr->val.i;
 			if (!vl->val.i)
 				es->noassign--;
@@ -414,7 +414,7 @@ evalexpr(prec)
 		case O_LOR:
 			if (vl->val.i)
 				es->noassign++;
-			vr = intvar(evalexpr(((int) prec) - 1));
+			vr = intvar(es, evalexpr(es, ((int) prec) - 1));
 			res = vl->val.i || vr->val.i;
 			if (vl->val.i)
 				es->noassign--;
@@ -424,15 +424,15 @@ evalexpr(prec)
 				int e = vl->val.i != 0;
 				if (!e)
 					es->noassign++;
-				vl = evalexpr(MAX_PREC);
+				vl = evalexpr(es, MAX_PREC);
 				if (!e)
 					es->noassign--;
 				if (es->tok != CTERN)
-					evalerr(ET_STR, "missing :");
-				token();
+					evalerr(es, ET_STR, "missing :");
+				token(es);
 				if (e)
 					es->noassign++;
-				vr = evalexpr(P_TERN);
+				vr = evalexpr(es, P_TERN);
 				if (e)
 					es->noassign--;
 				vl = e ? vl : vr;
@@ -459,10 +459,11 @@ evalexpr(prec)
 }
 
 static void
-token()
+token(es)
+	Expr_state *es;
 {
-	register const char *cp;
-	register int c;
+	const char *cp;
+	int c;
 	char *tvar;
 
 	/* skip white space */
@@ -480,9 +481,18 @@ token()
 
 			len = array_ref_len(cp);
 			if (len == 0)
-				evalerr(ET_STR, "missing ]");
+				evalerr(es, ET_STR, "missing ]");
 			cp += len;
 		}
+#ifdef KSH
+		else if (c == '(' /*)*/ ) {
+		    /* todo: add math functions (all take single argument):
+		     * abs acos asin atan cos cosh exp int log sin sinh sqrt
+		     * tan tanh
+		     */
+		    ;
+		}
+#endif /* KSH */
 		if (es->noassign) {
 			es->val = tempvar();
 			es->val->flag |= EXPRLVALUE;
@@ -501,7 +511,7 @@ token()
 		es->val->type = 0;
 		es->val->val.s = tvar;
 		if (setint_v(es->val, es->val) == NULL)
-			evalerr(ET_BADLIT, tvar);
+			evalerr(es, ET_BADLIT, tvar);
 		afree(tvar, ATEMP);
 		es->tok = LIT;
 	} else {
@@ -523,7 +533,8 @@ token()
 
 /* Do a ++ or -- operation */
 static struct tbl *
-do_ppmm(op, vasn, is_prefix)
+do_ppmm(es, op, vasn, is_prefix)
+	Expr_state *es;
 	enum token op;
 	struct tbl *vasn;
 	bool_t is_prefix;
@@ -531,9 +542,9 @@ do_ppmm(op, vasn, is_prefix)
 	struct tbl *vl;
 	int oval;
 
-	assign_check(op, vasn);
+	assign_check(es, op, vasn);
 
-	vl = intvar(vasn);
+	vl = intvar(es, vasn);
 	oval = op == O_PLUSPLUS ? vl->val.i++ : vl->val.i--;
 	if (vasn->flag & INTEGER)
 		setint_v(vasn, vl);
@@ -546,14 +557,15 @@ do_ppmm(op, vasn, is_prefix)
 }
 
 static void
-assign_check(op, vasn)
+assign_check(es, op, vasn)
+	Expr_state *es;
 	enum token op;
 	struct tbl *vasn;
 {
 	if (vasn->name[0] == '\0' && !(vasn->flag & EXPRLVALUE))
-		evalerr(ET_LVALUE, opinfo[op].name);
+		evalerr(es, ET_LVALUE, opinfo[(int) op].name);
 	else if (vasn->flag & RDONLY)
-		evalerr(ET_RDONLY, opinfo[op].name);
+		evalerr(es, ET_RDONLY, opinfo[(int) op].name);
 }
 
 static struct tbl *
@@ -572,10 +584,11 @@ tempvar()
 
 /* cast (string) variable to temporary integer variable */
 static struct tbl *
-intvar(vp)
-	register struct tbl *vp;
+intvar(es, vp)
+	Expr_state *es;
+	struct tbl *vp;
 {
-	register struct tbl *vq;
+	struct tbl *vq;
 
 	/* try to avoid replacing a temp var with another temp var */
 	if (vp->name[0] == '\0'
@@ -585,10 +598,10 @@ intvar(vp)
 	vq = tempvar();
 	if (setint_v(vq, vp) == NULL) {
 		if (vp->flag & EXPRINEVAL)
-			evalerr(ET_RECURSIVE, vp->name);
+			evalerr(es, ET_RECURSIVE, vp->name);
 		es->evaling = vp;
 		vp->flag |= EXPRINEVAL;
-		v_evaluate(vq, str_val(vp), FALSE);
+		v_evaluate(vq, str_val(vp), KSH_UNWIND_ERROR);
 		vp->flag &= ~EXPRINEVAL;
 		es->evaling = (struct tbl *) 0;
 	}

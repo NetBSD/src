@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.4 1998/11/04 18:27:21 christos Exp $	*/
+/*	$NetBSD: edit.c,v 1.5 1999/10/20 15:09:59 hubertf Exp $	*/
 
 /*
  * Command line editing - common code
@@ -43,9 +43,9 @@ static char vdisable_c;
 void
 x_init()
 {
-	/* set to -1 to force initial binding */
+	/* set to -2 to force initial binding */
 	edchars.erase = edchars.kill = edchars.intr = edchars.quit
-		= edchars.eof = -1;
+		= edchars.eof = -2;
 	/* default value for deficient systems */
 	edchars.werase = 027;	/* ^W */
 
@@ -288,14 +288,33 @@ x_mode(onoff)
 
 		set_tty(tty_fd, &cb, TF_WAIT);
 
+#ifdef __CYGWIN__
+		if (edchars.eof == '\0')
+			edchars.eof = '\4';
+#endif /* __CYGWIN__ */
+
+		/* Convert unset values to internal `unset' value */
+		if (edchars.erase == vdisable_c)
+			edchars.erase = -1;
+		if (edchars.kill == vdisable_c)
+			edchars.kill = -1;
+		if (edchars.intr == vdisable_c)
+			edchars.intr = -1;
+		if (edchars.quit == vdisable_c)
+			edchars.quit = -1;
+		if (edchars.eof == vdisable_c)
+			edchars.eof = -1;
+		if (edchars.werase == vdisable_c)
+			edchars.werase = -1;
 		if (memcmp(&edchars, &oldchars, sizeof(edchars)) != 0) {
 #ifdef EMACS
 			x_emacs_keys(&edchars);
 #endif
 		}
-	} else
+	} else {
 		/* TF_WAIT doesn't seem to be necessary when leaving xmode */
 		set_tty(tty_fd, &tty_state, TF_NONE);
+	}
 
 	return prev;
 }
@@ -707,7 +726,7 @@ x_command_glob(flags, str, slen, wordsp)
 	return nwords;
 }
 
-#define IS_WORDC(c)	!isspace((unsigned char)c)
+#define IS_WORDC(c)	!(ctype(c, C_LEX1) || (c) == '\'' || (c) == '"')
 
 static int
 x_locate_word(buf, buflen, pos, startp, is_commandp)
@@ -726,15 +745,7 @@ x_locate_word(buf, buflen, pos, startp, is_commandp)
 		*is_commandp = 0;
 		return 0;
 	}
-
-	if (pos == buflen) {
-		if (pos == 0) { /* empty buffer? */
-			*startp = pos;
-			*is_commandp = 1;
-			return 0;
-		}
-		pos--;
-	}
+	/* The case where pos == buflen happens to take care of itself... */
 
 	start = pos;
 	/* Keep going backwards to start of word (has effect of allowing
