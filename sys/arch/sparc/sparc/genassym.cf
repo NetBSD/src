@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.20 1999/03/14 22:29:00 jonathan Exp $
+#	$NetBSD: genassym.cf,v 1.21 1999/03/25 22:21:09 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,9 +91,7 @@ include <sys/disklabel.h>
 include <sys/disk.h>
 
 include <vm/vm.h>
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include <machine/pmap.h>
 include <machine/cpu.h>
@@ -137,15 +135,9 @@ define	PMAP_REGPTPS	offsetof(struct pmap, pm_reg_ptps)
 define	REGTAB_CPU_OFF	(int)(&((int *)0)[VA_VREG(CPUINFO_VA)])
 
 # interrupt/fault metering
-ifdef UVM
 define	V_SWTCH		offsetof(struct uvmexp, swtch)
 define	V_INTR		offsetof(struct uvmexp, intrs)
 define	V_FAULTS	offsetof(struct uvmexp, faults)
-else
-define	V_SWTCH		offsetof(struct vmmeter, v_swtch)
-define	V_INTR		offsetof(struct vmmeter, v_intr)
-define	V_FAULTS	offsetof(struct vmmeter, v_faults)
-endif
 
 # CPU info structure
 define	CPUINFO_STRUCTSIZE	sizeof(struct cpu_info)
