@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.16 1993/12/18 04:22:16 mycroft Exp $
+ *	$Id: tty_pty.c,v 1.17 1994/01/27 03:26:48 cgd Exp $
  */
 
 /*
@@ -296,8 +296,6 @@ ptcopen(dev, flag, devtype, p)
 	return (0);
 }
 
-extern struct tty *constty;	/* -hv- 06.Oct.92*/
-
 int
 ptcclose(dev)
 	dev_t dev;
@@ -308,10 +306,6 @@ ptcclose(dev)
 	(void)(*linesw[tp->t_line].l_modem)(tp, 0);
 	tp->t_state &= ~TS_CARR_ON;
 	tp->t_oproc = 0;		/* mark closed */
-
-/* XXX -hv- 6.Oct.92 this prevents the "hanging console bug" with X11 */
-	if (constty==tp)
-		constty = 0;
 
 	pt_ioctl[minor(dev)].pt_flags &= ~PF_COPEN;
 #ifdef broken
