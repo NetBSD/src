@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.15 1998/07/25 04:34:12 mycroft Exp $	*/
+/*	$NetBSD: crt0.c,v 1.16 1998/07/25 04:45:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -31,9 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
 #include <sys/exec.h>
 #include <sys/syscall.h>
-#include <vm/vm.h>
 
 #include <stdlib.h>
 #ifdef DYNAMIC
@@ -138,7 +138,7 @@ __start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.15 1998/07/25 04:34:12 mycroft Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.16 1998/07/25 04:45:04 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 static char *
