@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.36 2000/12/12 18:00:24 thorpej Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.37 2000/12/14 06:27:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -203,6 +203,7 @@ bah_attach_subr(sc)
 	ifp->if_ioctl = bah_ioctl;
 	ifp->if_timer = 0;
 	ifp->if_watchdog  = bah_watchdog;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 
@@ -384,7 +385,7 @@ bah_start(ifp)
 		return;
 	}
 
-	IF_DEQUEUE(&ifp->if_snd, m);
+	IFQ_DEQUEUE(&ifp->if_snd, m);
 	buffer = sc->sc_tx_act ^ 1;
 
 	splx(s);
