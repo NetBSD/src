@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.12 2003/01/27 14:46:11 tsutsui Exp $ */
+/* $NetBSD: vga_subr.c,v 1.13 2003/01/27 15:22:47 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.12 2003/01/27 14:46:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.13 2003/01/27 15:22:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,11 +152,11 @@ void
 vga_setfontset(struct vga_handle *vh, int fontset1, int fontset2)
 {
 	u_int8_t cmap;
-	static u_int8_t cmaptaba[] = {
+	static const u_int8_t cmaptaba[] = {
 		0x00, 0x10, 0x01, 0x11,
 		0x02, 0x12, 0x03, 0x13
 	};
-	static u_int8_t cmaptabb[] = {
+	static const u_int8_t cmaptabb[] = {
 		0x00, 0x20, 0x04, 0x24,
 		0x08, 0x28, 0x0c, 0x2c
 	};

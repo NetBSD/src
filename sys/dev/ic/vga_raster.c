@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.7 2003/01/27 15:16:11 tsutsui Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.8 2003/01/27 15:22:47 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -810,7 +810,7 @@ vga_setup_regs(struct videomode *mode, struct vga_moderegs *regs)
 {
 	int i;
 	int depth = 4;			/* XXXBJY hardcoded for now */
-	int palette[16] = {
+	const u_int8_t palette[] = {
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x14, 0x07,
 		0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f
 	};
