@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppd.8,v 1.26 1999/10/28 09:41:56 is Exp $
+.\"	$NetBSD: pppd.8,v 1.27 2000/04/17 06:13:18 itojun Exp $
 .\" manual page [] for pppd 2.3
 .\" Id: pppd.8,v 1.46 1999/08/24 05:31:10 paulus Exp 
 .\" SH section heading
@@ -354,6 +354,13 @@ Provides an extra parameter to the ip-up and ip-down scripts.  If this
 option is given, the \fIstring\fR supplied is given as the 6th
 parameter to those scripts.
 .TP
+.B +ipv6
+Enable IPv6CP negotiation and IPv6 communication.
+It needs to be explicitly specified if you want IPv6CP.
+.TP
+.B -ipv6
+Disable IPv6CP negotiation and IPv6 communication.
+.TP
 .B ipv6cp-max-configure \fIn
 Set the maximum number of IPv6CP configure-request transmissions to
 \fIn\fR (default 10).
@@ -608,9 +615,8 @@ only be required if the peer is buggy and gets confused by requests
 from pppd for IPCP negotiation.
 .TP
 .B noipv6
-Disable IPv6CP negotiation and IPv6 communication. This option should
-only be required if the peer is buggy and gets confused by requests
-from pppd for IPv6CP negotiation.
+An alias for
+.B -ipv6.
 .TP
 .B noipdefault
 Disables the default behaviour when no local IP address is specified,
