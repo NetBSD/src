@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.73 1998/09/24 23:07:06 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.74 1998/09/27 17:23:25 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 1998/09/24 23:07:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 1998/09/27 17:23:25 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,7 +541,7 @@ do {									\
 	}								\
 } while (0)
 #else
-#define	PMAP_ACTIVATE_ASN_SANITY(pmap)	/* nothing */
+#define	PMAP_ACTIVATE_ASN_SANITY(pmap, cpu_id)	/* nothing */
 #endif
 
 /*
@@ -556,7 +556,7 @@ do {									\
  */
 #define	PMAP_ACTIVATE(pmap, p, cpu_id)					\
 do {									\
-	PMAP_ACTIVATE_ASN_SANITY(pmap);					\
+	PMAP_ACTIVATE_ASN_SANITY(pmap, cpu_id);				\
 									\
 	(p)->p_addr->u_pcb.pcb_hw.apcb_ptbr =				\
 	    ALPHA_K0SEG_TO_PHYS((vaddr_t)(pmap)->pm_lev1map) >> PGSHIFT; \
