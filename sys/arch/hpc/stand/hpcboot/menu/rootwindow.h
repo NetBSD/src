@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.h,v 1.1 2001/02/09 18:35:01 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.h,v 1.2 2003/12/21 03:18:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@ public:
 
 	void disableTimer(void);
 	BOOL isDialogMessage(MSG &);
+
+	void progress();
+	void unprogress();
 };
 
 class BootButton : public Window

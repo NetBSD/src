@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcboot.cpp,v 1.9 2003/12/18 12:15:40 uwe Exp $	*/
+/*	$NetBSD: hpcboot.cpp,v 1.10 2003/12/21 03:18:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -227,6 +227,8 @@ hpcboot(void *arg)
  failed_exit:
 	MessageBox(menu._root->_window, error_message,
 	    TEXT("BOOT FAILED"), MB_ICONERROR | MB_OK);
+
+	menu.unprogress();	// rewind progress bar
 }
 
 //

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.8 2002/03/25 17:23:19 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.h,v 1.9 2003/12/21 03:18:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -178,8 +178,10 @@ public:
 	}
 	// call architecture dependent boot function.
 	void boot(void);
+
 	// Progress bar.
 	void progress(void);
+	void unprogress(void);
 
 	// Console window interface.
 	void print(TCHAR *);
