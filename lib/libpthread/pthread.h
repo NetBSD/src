@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.3 2001/07/13 02:42:38 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.4 2001/07/25 23:54:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@ int	pthread_mutex_destroy(pthread_mutex_t *mutex);
 int	pthread_mutex_lock(pthread_mutex_t *mutex);
 int	pthread_mutex_trylock(pthread_mutex_t *mutex);
 int	pthread_mutex_unlock(pthread_mutex_t *mutex);
+int	pthread_mutexattr_init(pthread_mutexattr_t *attr);
+int	pthread_mutexattr_destroy(pthread_mutexattr_t *attr);
 
 int	pthread_cond_init(pthread_cond_t *cond,
 	    const pthread_condattr_t *attr);
@@ -84,11 +86,7 @@ int	pthread_cond_signal(pthread_cond_t *cond);
 int	pthread_cond_broadacst(pthread_cond_t *cond);
 int	pthread_condattr_init(pthread_condattr_t *attr);
 int	pthread_condattr_destroy(pthread_condattr_t *attr);
-int	pthread_condattr_getpshared(const pthread_condattr_t *attr,
-	    int *pshared);
-int	pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared);
 
-#define PTHREAD_COND_INITIALIZER	xxxxx
 
 #define	PTHREAD_CREATE_JOINABLE	0
 #define	PTHREAD_CREATE_DETACHED	1
