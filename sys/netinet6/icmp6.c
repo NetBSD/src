@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.105 2004/03/24 15:34:54 atatat Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.106 2004/03/26 03:35:02 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.105 2004/03/24 15:34:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.106 2004/03/26 03:35:02 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -444,7 +444,8 @@ icmp6_input(mp, offp, proto)
 	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
 	if (icmp6 == NULL) {
 		icmp6stat.icp6s_tooshort++;
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
+		/* m is invalid */
+		/*icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);*/
 		return IPPROTO_DONE;
 	}
 	KASSERT(IP6_HDR_ALIGNED_P(icmp6));
