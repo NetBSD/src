@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_backend.c,v 1.3 2002/12/28 23:07:18 thorpej Exp $	*/
+/*	$NetBSD: dmover_backend.c,v 1.4 2003/04/01 20:59:15 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.3 2002/12/28 23:07:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_backend.c,v 1.4 2003/04/01 20:59:15 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -255,7 +255,7 @@ dmover_backend_release(struct dmover_session *dses)
 {
 	struct dmover_backend *dmb;
 
-	BACKEND_LIST_UNLOCK_READ();
+	BACKEND_LIST_LOCK_READ();
 
 	/* XXX Clear out the static assignment. */
 	dmb = dses->__dses_assignment.das_backend;
