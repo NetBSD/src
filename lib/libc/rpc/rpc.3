@@ -1,5 +1,5 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc.3,v 1.3 1996/01/04 20:09:53 pk Exp $
+.\"	$NetBSD: rpc.3,v 1.4 1996/06/19 20:38:43 jtc Exp $
 .\"
 .TH RPC 3N "16 February 1988"
 .SH NAME
@@ -418,6 +418,9 @@ handle could not be created.
 The message is prepended with string
 .I s
 and a colon.
+A
+.SM NEWLINE
+is appended at the end of the message.
 Used when a
 .BR clnt_create(\|) ,
 .BR clntraw_create(\|) ,
@@ -440,6 +443,9 @@ enum clnt_stat stat;
 Print a message to standard error corresponding
 to the condition indicated by
 .IR stat .
+A
+.SM NEWLINE
+is appended at the end of the message.
 Used after
 .BR callrpc(\|) .
 .br
@@ -462,6 +468,9 @@ is the handle used to do the call.
 The message is prepended with string
 .I s
 and a colon.
+A
+.SM NEWLINE
+is appended at the end of the message.
 Used after
 .BR clnt_call(\|) .
 .br
@@ -501,8 +510,7 @@ but instead of sending a message to the standard error
 indicating why an
 .SM RPC
 call failed, return a pointer to a string which contains
-the message.  The string ends with a
-.SM NEWLINE\s0.
+the message.
 .IP
 .B clnt_sperrno(\|)
 is used instead of
@@ -518,7 +526,7 @@ is to be used.
 Note: unlike
 .B clnt_sperror(\|)
 and
-.BR clnt_spcreaterror(\|) ,
+.BR clnt_spcreateerror(\|) ,
 .B clnt_sperrno(\|)
 returns pointer to static data, but the
 result will not get overwritten on each call.
