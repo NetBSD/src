@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.40 1997/03/29 05:41:28 jtk Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.41 1997/04/29 21:01:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -127,6 +127,7 @@ void	sbdsp_pause __P((struct sbdsp_softc *));
 int	sbdsp16_setrate __P((struct sbdsp_softc *, int, int, int *));
 int	sbdsp_tctosr __P((struct sbdsp_softc *, int));
 int	sbdsp_set_timeconst __P((struct sbdsp_softc *, int));
+int	sbdsp_set_io_params __P((struct sbdsp_softc *, struct audio_params *));
 
 #ifdef AUDIO_DEBUG
 void sb_printsc __P((struct sbdsp_softc *));
@@ -143,7 +144,7 @@ sb_printsc(sc)
 	    sc->sc_open, sc->dmachan, sc->sc_drq8, sc->sc_drq16, sc->sc_iobase);
 	printf("irate %d itc %d imode %d orate %d otc %d omode %d encoding %x\n",
 	    sc->sc_irate, sc->sc_itc, sc->sc_imode,
-	    sc->sc_orate, sc->sc_otc, sc->sc_omode, sc->sc_encoding);
+	    sc->sc_orate, sc->sc_otc, sc->sc_omode);
 	printf("outport %d inport %d spkron %d nintr %lu\n",
 	    sc->out_port, sc->in_port, sc->spkr_state, sc->sc_interrupts);
 	printf("precision %d channels %d intr %p arg %p\n",
@@ -267,7 +268,6 @@ sbdsp_attach(sc)
 		sc->sc_itc = sc->sc_otc = SB_8K;
   	else
 		sc->sc_itc = sc->sc_otc = SB_8K;
-	sc->sc_encoding = AUDIO_ENCODING_ULAW;
 	sc->sc_precision = 8;
 	sc->sc_channels = 1;
 
@@ -332,56 +332,6 @@ sbdsp_mix_read(sc, mixerport)
 }
 
 int
-sbdsp_set_in_sr(addr, sr)
-	void *addr;
-	u_long sr;
-{
-	register struct sbdsp_softc *sc = addr;
-
-	if (ISSB16CLASS(sc))
-		return (sbdsp16_setrate(sc, sr, SB_INPUT_RATE, &sc->sc_irate));
-	else
-		return (sbdsp_srtotc(sc, sr, SB_INPUT_RATE, &sc->sc_itc, &sc->sc_imode));
-}
-
-u_long
-sbdsp_get_in_sr(addr)
-	void *addr;
-{
-	register struct sbdsp_softc *sc = addr;
-
-	if (ISSB16CLASS(sc))
-		return (sc->sc_irate);
-	else
-		return (sbdsp_tctosr(sc, sc->sc_itc));
-}
-
-int
-sbdsp_set_out_sr(addr, sr)
-	void *addr;
-	u_long sr;
-{
-	register struct sbdsp_softc *sc = addr;
-
-	if (ISSB16CLASS(sc))
-		return (sbdsp16_setrate(sc, sr, SB_OUTPUT_RATE, &sc->sc_orate));
-	else
-		return (sbdsp_srtotc(sc, sr, SB_OUTPUT_RATE, &sc->sc_otc, &sc->sc_omode));
-}
-
-u_long
-sbdsp_get_out_sr(addr)
-	void *addr;
-{
-	register struct sbdsp_softc *sc = addr;
-
-	if (ISSB16CLASS(sc))
-		return (sc->sc_orate);
-	else
-		return (sbdsp_tctosr(sc, sc->sc_otc));
-}
-
-int
 sbdsp_query_encoding(addr, fp)
 	void *addr;
 	struct audio_encoding *fp;
@@ -402,13 +352,12 @@ sbdsp_query_encoding(addr, fp)
 }
 
 int
-sbdsp_set_format(addr, encoding, precision)
-	void *addr;
-	u_int encoding, precision;
+sbdsp_set_io_params(sc, p)
+	struct sbdsp_softc *sc;
+	struct audio_params *p;
 {
-	register struct sbdsp_softc *sc = addr;
-	
-	switch (encoding) {
+
+	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 	case AUDIO_ENCODING_PCM16:
 	case AUDIO_ENCODING_PCM8:
@@ -417,69 +366,83 @@ sbdsp_set_format(addr, encoding, precision)
 		return (EINVAL);
 	}
 
-	if (precision == 16)
-		if (!ISSB16CLASS(sc) && !ISJAZZ16(sc))
+	if (ISSB16CLASS(sc) || ISJAZZ16(sc)) {
+		if (p->precision != 16 && p->precision != 8)
 			return (EINVAL);
-
-	sc->sc_encoding = encoding;
-	sc->sc_precision = precision;
-
-	return (0);
-}
-
-int
-sbdsp_get_encoding(addr)
-	void *addr;
-{
-	register struct sbdsp_softc *sc = addr;
-
-	return (sc->sc_encoding);
-}
-
-int
-sbdsp_get_precision(addr)
-	void *addr;
-{
-	register struct sbdsp_softc *sc = addr;
-
-	return (sc->sc_precision);
-}
-
-int
-sbdsp_set_channels(addr, channels)
-	void *addr;
-	int channels;
-{
-	register struct sbdsp_softc *sc = addr;
+	} else {
+		if (p->precision != 8)
+			return (EINVAL);
+	}
 
 	if (ISSBPROCLASS(sc)) {
-		if (channels != 1 && channels != 2)
+		if (p->channels != 1 && p->channels != 2)
 			return (EINVAL);
-		sc->sc_channels = channels;
-		sc->sc_dmadir = SB_DMA_NONE;
-		/*
-		 * XXXX
-		 * With 2 channels, SBPro can't do more than 22kHz.
-		 * No framework to check this.
-		 */
+		if (p->channels == 2 && p->sample_rate > 22000)
+			return (EINVAL);
 	} else {
-		if (channels != 1)
+		if (p->channels != 1)
 			return (EINVAL);
-		sc->sc_channels = channels;
 	}
-	
+
 	return (0);
 }
 
 int
-sbdsp_get_channels(addr)
+sbdsp_set_in_params(addr, p)
 	void *addr;
+	struct audio_params *p;
 {
 	register struct sbdsp_softc *sc = addr;
-	
-	return (sc->sc_channels);
+	int error;
+
+	error = sbdsp_set_io_params(sc, p);
+	if (error)
+		return error;
+
+	if (ISSB16CLASS(sc))
+		error = sbdsp16_setrate(sc, p->sample_rate, SB_INPUT_RATE, &sc->sc_irate);
+	else
+		error = sbdsp_srtotc(sc, p->sample_rate, SB_INPUT_RATE, &sc->sc_itc, &sc->sc_imode);
+	if (error)
+		return error;
+
+	sc->sc_precision = p->precision;
+	sc->sc_channels = p->channels;
+	if (ISSB16CLASS(sc))
+		p->sample_rate = sc->sc_irate;
+	else
+		p->sample_rate = sbdsp_tctosr(sc, sc->sc_itc);
+	return 0;
 }
 
+int
+sbdsp_set_out_params(addr, p)
+	void *addr;
+	struct audio_params *p;
+{
+	register struct sbdsp_softc *sc = addr;
+	int error;
+
+	error = sbdsp_set_io_params(sc, p);
+	if (error)
+		return error;
+
+	if (ISSB16CLASS(sc))
+		error = sbdsp16_setrate(sc, p->sample_rate, SB_OUTPUT_RATE, &sc->sc_orate);
+	else
+		error = sbdsp_srtotc(sc, p->sample_rate, SB_OUTPUT_RATE, &sc->sc_otc, &sc->sc_omode);
+	if (error)
+		return error;
+
+	sc->sc_precision = p->precision;
+	sc->sc_channels = p->channels;
+	if (ISSB16CLASS(sc))
+		p->sample_rate = sc->sc_orate;
+	else
+		p->sample_rate = sbdsp_tctosr(sc, sc->sc_otc);
+	return 0;
+}
+  
 int
 sbdsp_set_ifilter(addr, which)
 	void *addr;
@@ -662,6 +625,8 @@ sbdsp_commit_settings(addr)
 	void *addr;
 {
 	register struct sbdsp_softc *sc = addr;
+
+	/* XXX these can me moved to sddsp_io_params() now */
 
 	/* due to potentially unfortunate ordering in the above layers,
 	   re-do a few sets which may be important--input gains

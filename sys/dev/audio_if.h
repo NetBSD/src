@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.10 1997/03/21 04:36:29 mycroft Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.11 1997/04/29 21:01:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -40,29 +40,31 @@
 
 struct audio_softc;
 
+struct audio_params {
+	u_long	sample_rate;			/* sample rate */
+	u_int	encoding;			/* e.g. ulaw, linear, etc */
+	u_int	precision;			/* bits/sample */
+	u_int	channels;			/* mono(1), stereo(2) */
+};
+
 struct audio_hw_if {
 	int	(*open)__P((dev_t, int));	/* open hardware */
 	void	(*close)__P((void *));		/* close hardware */
 	int	(*drain)__P((void *));		/* Optional: drain buffers */
 	
-	/* Sample rate */
-	int	(*set_in_sr)__P((void *, u_long));
-	u_long	(*get_in_sr)__P((void *));
-	int	(*set_out_sr)__P((void *, u_long));
-	u_long	(*get_out_sr)__P((void *));
-
 	/* Encoding. */
-	/* Precision = bits/sample, usually 8 or 16 */
 	/* XXX should we have separate in/out? */
 	int	(*query_encoding)__P((void *, struct audio_encoding *));
-	int	(*set_format)__P((void *, u_int, u_int));
-	int	(*get_encoding)__P((void *));
-	int	(*get_precision)__P((void *));
 
-	/* Channels - mono(1), stereo(2) */
-	int	(*set_channels)__P((void *, int));
-	int	(*get_channels)__P((void *));
-
+	/* Set the audio encoding parameters (record and play).
+	 * Return 0 on success, or an error code if the 
+	 * requested parameters are impossible.
+	 * The values in the params struct may be changed (e.g. rounding
+	 * to the nearest sample rate.)
+	 */
+        int	(*set_out_params)__P((void *, struct audio_params *));
+        int	(*set_in_params)__P((void *, struct audio_params *));
+  
 	/* Hardware may have some say in the blocksize to choose */
 	int	(*round_blocksize)__P((void *, int));
 
@@ -133,3 +135,4 @@ extern int	audio_hardware_detach __P((struct audio_hw_if *));
 #define splaudio splbio		/* XXX */
 #define IPL_AUDIO IPL_BIO	/* XXX */
 #endif
+

@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.10 1997/03/25 05:09:01 mark Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.11 1997/04/29 21:01:51 augustss Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -69,8 +69,6 @@
 #undef DEBUG
 
 struct audio_general {
-	int in_sr;
-	int out_sr;
 	vm_offset_t silence;
 	irqhandler_t ih;
 
@@ -93,10 +91,6 @@ struct vidcaudio_softc {
 	int iobase;
 
 	int open;
-
-	u_int encoding;
-	u_int precision;
-	int channels;
 
 	int inport;
 	int outport;
@@ -179,13 +173,8 @@ vidcaudio_attach(parent, self, aux)
 	sc->iobase = mb->mb_iobase;
 
 	sc->open = 0;
-	sc->encoding = AUDIO_ENCODING_ULAW;
-	sc->precision = 8;
-	sc->channels = 1;
 	sc->inport = 0;
 	sc->outport = 0;
-	ag.in_sr = 24*1024;
-	ag.out_sr = 24*1024;
 	ag.in_progress = 0;
 
 	ag.next_cur = 0;
@@ -193,7 +182,7 @@ vidcaudio_attach(parent, self, aux)
 	ag.next_intr = NULL;
 	ag.next_arg = NULL;
 
-	vidcaudio_rate(32);
+	vidcaudio_rate(32); /* 24*1024*/
 
 /* Program the silence buffer and reset the DMA channel */
 
@@ -303,16 +292,8 @@ vidcaudio_close(addr)
  | Interface to the generic audio driver                                     |
  * ************************************************************************* */
 
-int    vidcaudio_set_in_sr       __P((void *, u_long));
-u_long vidcaudio_get_in_sr       __P((void *));
-int    vidcaudio_set_out_sr      __P((void *, u_long));
-u_long vidcaudio_get_out_sr      __P((void *));
 int    vidcaudio_query_encoding  __P((void *, struct audio_encoding *));
-int    vidcaudio_set_format	 __P((void *, u_int, u_int));
-int    vidcaudio_get_encoding	 __P((void *));
-int    vidcaudio_get_precision	 __P((void *));
-int    vidcaudio_set_channels 	 __P((void *, int));
-int    vidcaudio_get_channels	 __P((void *));
+int    vidcaudio_set_params	 __P((void *, struct audio_params *));
 int    vidcaudio_round_blocksize __P((void *, int));
 int    vidcaudio_set_out_port	 __P((void *, int));
 int    vidcaudio_get_out_port	 __P((void *));
@@ -340,38 +321,6 @@ struct audio_device vidcaudio_device = {
 	"vidcaudio"
 };
 
-int
-vidcaudio_set_in_sr(addr, sr)
-	void *addr;
-	u_long sr;
-{
-	ag.in_sr = sr;
-	return 0;
-}
-
-u_long
-vidcaudio_get_in_sr(addr)
-	void *addr;
-{
-	return ag.in_sr;
-}
-
-int
-vidcaudio_set_out_sr(addr, sr)
-	void *addr;
-	u_long sr;
-{
-	ag.out_sr = sr;
-	return 0;
-}
-
-u_long
-vidcaudio_get_out_sr(addr)
-	void *addr;
-{
-	return(ag.out_sr);
-}
-
 int vidcaudio_query_encoding ( void *addr, struct audio_encoding *fp )
 {
     switch ( fp->index )
@@ -387,50 +336,18 @@ int vidcaudio_query_encoding ( void *addr, struct audio_encoding *fp )
     return 0;
 }
 
-int vidcaudio_set_format ( void *addr, u_int encoding, u_int precision )
+int
+vidcaudio_set_params(addr, p)
+	void *addr;
+	struct audio_params *p;
 {
-    struct vidcaudio_softc *sc = addr;
+	struct vidcaudio_softc *sc = addr;
 
-    if (encoding != AUDIO_ENCODING_ULAW)
-	return (EINVAL);
-    if (precision != 8)
-	return (EINVAL);
-
-    sc->encoding = encoding;
-    sc->precision = precision;
-    return (0);
-}
-
-int vidcaudio_get_encoding ( void *addr )
-{
-    struct vidcaudio_softc *sc = addr;
-
-    return (sc->encoding);
-}
-
-int vidcaudio_get_precision ( void *addr )
-{
-    struct vidcaudio_softc *sc = addr;
-
-    return (sc->precision);
-}
-
-int vidcaudio_set_channels ( void *addr, int channels )
-{
-    struct vidcaudio_softc *sc = addr;
-
-    if (channels != 1)
-	return (EINVAL);
-
-    sc->channels = channels;
-    return (0);
-}
-
-int vidcaudio_get_channels ( void *addr )
-{
-    struct vidcaudio_softc *sc = addr;
-
-    return (sc->channels);
+	if (p->encoding != AUDIO_ENCODING_ULAW ||
+	    p->channels != 8)
+		return EINVAL;
+	vidcaudio_rate(4 * p->sample_rate / (3 * 1024)); /* XXX probably wrong */
+	return 0;
 }
 
 int vidcaudio_round_blocksize ( void *addr, int blk )
@@ -604,16 +521,9 @@ struct audio_hw_if vidcaudio_hw_if = {
     vidcaudio_open,
     vidcaudio_close,
     NULL,
-    vidcaudio_set_in_sr,
-    vidcaudio_get_in_sr,
-    vidcaudio_set_out_sr,
-    vidcaudio_get_out_sr,
     vidcaudio_query_encoding,
-    vidcaudio_set_format,
-    vidcaudio_get_encoding,
-    vidcaudio_get_precision,
-    vidcaudio_set_channels,
-    vidcaudio_get_channels,
+    vidcaudio_set_params,
+    vidcaudio_set_params,
     vidcaudio_round_blocksize,
     vidcaudio_set_out_port,
     vidcaudio_get_out_port,
