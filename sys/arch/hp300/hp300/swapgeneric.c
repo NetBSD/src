@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)swapgeneric.c	7.5 (Berkeley) 5/7/91
- *	$Id: swapgeneric.c,v 1.4 1994/01/20 02:17:17 brezak Exp $
+ *	$Id: swapgeneric.c,v 1.5 1994/06/24 13:33:49 hpeyerl Exp $
  */
 
 #include "sys/param.h"
@@ -70,8 +70,8 @@ struct	genericconf {
 	{ 0 },
 };
 
-extern int ufs_mountroot();
-int (*mountroot)() = ufs_mountroot;
+extern int ffs_mountroot();
+int (*mountroot)() = ffs_mountroot;
 
 setconf()
 {
