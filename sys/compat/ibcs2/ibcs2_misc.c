@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.50 2000/08/18 17:38:33 matt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.51 2000/08/23 21:11:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -518,7 +518,7 @@ ibcs2_sys_read(p, v, retval)
 		FILE_UNUSE(fp, p);
 		return sys_read(p, uap, retval);
 	}
-	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
+	buflen = min(MAXBSIZE, max(DEV_BSIZE, SCARG(uap, nbytes)));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = fp->f_offset;
@@ -549,7 +549,7 @@ again:
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
-			panic("ibcs2_read");
+			panic("ibcs2_sys_read");
 		off = *cookie++;	/* each entry points to the next */
 		if ((off >> 32) != 0) {
 			error = EINVAL;
@@ -596,7 +596,7 @@ out:
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
- out1:
+out1:
 	FILE_UNUSE(fp, p);
 	return (error);
 }
