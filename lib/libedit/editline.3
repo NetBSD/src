@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.11 1998/05/20 01:37:54 christos Exp $
+.\"	$NetBSD: editline.3,v 1.12 1998/06/01 14:31:26 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -326,6 +326,8 @@ EOF was entered.
 Expecting further command input as arguments, do nothing visually.
 .It Dv CC_REFRESH
 Refresh display.
+.It Dv CC_REFRESH_BEEP
+Refresh display, and beep.
 .It Dv CC_CURSOR
 Cursor moved, so update and perform
 .Dv CC_REFRESH.
@@ -529,10 +531,6 @@ library was written by Christos Zoulas,
 and this manual was written by Luke Mewburn.
 .Sh BUGS
 This documentation is probably incomplete.
-.Pp
-.Fn el_parse
-should not modify the supplied
-.Va argv[0] .
 .Pp
 The tokenization functions are not publically defined in
 .Fd <histedit.h>

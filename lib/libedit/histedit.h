@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.8 1998/05/20 01:37:54 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.9 1998/06/01 14:31:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -75,6 +75,7 @@ typedef struct lineinfo {
 #define	CC_ERROR	6
 #define CC_FATAL	7
 #define CC_REDISPLAY	8
+#define CC_REFRESH_BEEP	9
 
 /*
  * Initialization, cleanup, and resetting
