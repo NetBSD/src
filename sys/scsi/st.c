@@ -15,7 +15,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  * major changes by Julian Elischer (julian@jules.dialix.oz.au) May 1993
  *
- *	$Id: st.c,v 1.16.2.10 1994/02/06 08:15:47 mycroft Exp $
+ *	$Id: st.c,v 1.16.2.11 1994/02/15 20:32:11 mycroft Exp $
  */
 
 /*
@@ -928,6 +928,7 @@ ststart(unit)
 
 		/* if a special awaits, let it proceed first */
 		if (sc_link->flags & SDEV_WAITING) {
+			sc_link->flags &= ~SDEV_WAITING;
 			wakeup((caddr_t)sc_link);
 			return;
 		}
