@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.60 1998/03/03 13:45:58 fvdl Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.61 1998/08/02 04:41:33 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -48,6 +48,7 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/mbuf.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
@@ -1306,7 +1307,7 @@ loop:
 			 * release while still running in process context.
 			 */
 			cpu_wait(q);
-			FREE(q, M_PROC);
+			pool_put(&proc_pool, q);
 			nprocs--;
 			return 0;
 		}
