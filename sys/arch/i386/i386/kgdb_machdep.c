@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.3 1997/10/04 17:27:19 thorpej Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.4 1998/03/31 08:18:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -87,9 +87,6 @@
 #include <machine/reg.h>
 #include <machine/trap.h>
 
-/* XXX Should be in <machine/pmap.h> */
-pt_entry_t	*pmap_pte __P((pmap_t, vm_offset_t));
-
 /*
  * Determine if the memory at va..(va+len) is valid.
  */
@@ -99,15 +96,15 @@ kgdb_acc(va, len)
 	size_t len;
 {
 	vm_offset_t last_va;
-	pt_entry_t pte;
+	pt_entry_t *pte;
 
 	last_va = va + len;
 	va  &= ~PGOFSET;
 	last_va &= ~PGOFSET;
 
 	do {
-		pte = *(pt_entry_t *)pmap_pte(pmap_kernel(), va);
-		if ((pte & PG_V) == 0)
+		pte = kvtopte(va);
+		if ((*pte & PG_V) == 0)
 			return (0);
 		va  += NBPG;
 	} while (va < last_va);
