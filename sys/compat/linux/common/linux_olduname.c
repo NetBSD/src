@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.31 1997/07/27 01:16:39 augustss Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.32 1997/08/04 09:48:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -839,7 +839,6 @@ again:
 		if (reclen > len || resid < linux_reclen) {
 			/* entry too big for buffer, so just stop */
 			outp++;
-			off = *cookie++;
 			break;
 		}
 		/*

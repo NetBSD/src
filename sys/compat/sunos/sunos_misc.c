@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.80 1997/06/13 19:08:25 thorpej Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.81 1997/08/04 09:48:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -489,9 +489,9 @@ again:
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("sunos_getdents");
-		off = *cookie++;	/* each entry points to next */
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
+			off = *cookie++;
 			continue;
 		}
 		sunos_reclen = SUNOS_RECLEN(&idb, bdp->d_namlen);
@@ -500,6 +500,7 @@ again:
 			outp++;
 			break;
 		}
+		off = *cookie++;	/* each entry points to next */
 		/*
 		 * Massage in place to make a Sun-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
