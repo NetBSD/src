@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.16 2003/01/12 01:15:50 christos Exp $
+#	$NetBSD: files.acpi,v 1.17 2003/04/17 01:22:21 thorpej Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -16,12 +16,12 @@ attach	acpiec at acpi
 file	dev/acpi/acpi_ec.c		acpiec
 
 # ACPI Lid Switch
-device	acpilid
+device	acpilid: sysmon_power
 attach	acpilid at acpi
 file	dev/acpi/acpi_lid.c		acpilid
 
 # ACPI Button
-device	acpibut
+device	acpibut: sysmon_power
 attach	acpibut at acpi
 file	dev/acpi/acpi_button.c		acpibut
 
