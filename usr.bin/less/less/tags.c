@@ -1,5 +1,7 @@
+/*	$NetBSD: tags.c,v 1.1.1.2 1997/04/22 13:45:25 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +38,7 @@ public char *tags = "tags";
 
 static char *tagpattern;
 static int taglinenum;
+static int tagendline;
 
 extern int linenums;
 extern int sigs;
@@ -57,7 +60,7 @@ findtag(tag)
 	register int taglen;
 	int search_char;
 	int err;
-	static char tline[200];
+	char tline[TAGLINE_SIZE];
 
 	if ((f = fopen(tags, "r")) == NULL)
 	{
@@ -124,14 +127,16 @@ findtag(tag)
 			search_char = *p++;
 			if (*p == '^')
 				p++;
-			tagpattern = q = p;
+			tagpattern = (char *) ecalloc(strlen(p)+1, sizeof(char));
+			q = tagpattern;
 			while (*p != search_char && *p != '\0')
 			{
 				if (*p == '\\')
 					p++;
 				*q++ = *p++;
 			}
-			if (q[-1] == '$')
+			tagendline = (q[-1] == '$');
+			if (tagendline)
 				q--;
 			*q = '\0';
 		}
@@ -209,11 +214,16 @@ tagsearch()
 		 * Test the line to see if we have a match.
 		 * Use strncmp because the pattern may be
 		 * truncated (in the tags file) if it is too long.
+		 * If tagendline is set, make sure we match all
+		 * the way to end of line (no extra chars after the match).
 		 */
-		if (strncmp(tagpattern, line, strlen(tagpattern)) == 0)
+		if (strncmp(tagpattern, line, strlen(tagpattern)) == 0 &&
+		    (!tagendline || line[strlen(tagpattern)] == '\0'))
 			break;
 	}
 
+	free(tagpattern);
+	tagpattern = NULL;
 	return (linepos);
 }
 

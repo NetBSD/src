@@ -1,3 +1,5 @@
+/*	$NetBSD: regexp.c,v 1.1.1.2 1997/04/22 13:45:36 mrg Exp $	*/
+
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
  *
@@ -67,6 +69,7 @@ char *strchr();
  */
 
 /* definition	number	opnd?	meaning */
+#undef EOL
 #define	END	0	/* no	End of program. */
 #define	BOL	1	/* no	Match "" at beginning of line. */
 #define	EOL	2	/* no	Match "" at end of line. */

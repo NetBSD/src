@@ -1,5 +1,7 @@
+/*	$NetBSD: opttbl.c,v 1.1.1.2 1997/04/22 13:45:22 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +45,6 @@ public int pr_type;		/* Type of prompt (short, medium, long) */
 public int bs_mode;		/* How to process backspaces */
 public int know_dumb;		/* Don't complain about dumb terminals */
 public int quit_at_eof;		/* Quit after hitting end of file twice */
-public int be_helpful;		/* more(1) style -d */
 public int squeeze;		/* Squeeze multiple blank lines into one */
 public int tabstop;		/* Tab settings */
 public int back_scroll;		/* Repaint screen on backwards movement */
@@ -53,7 +54,6 @@ public int caseless;		/* Do "caseless" searches */
 public int linenums;		/* Use line numbers */
 public int cbufs;		/* Current number of buffers */
 public int autobuf;		/* Automatically allocate buffers as needed */
-public int nohelp;		/* Disable the HELP command */
 public int ctldisp;		/* Send control chars to screen untranslated */
 public int force_open;		/* Open the file even if not regular file */
 public int swindow;		/* Size of scrolling window */
@@ -89,21 +89,13 @@ static struct option option[] =
 		"Repaint by clearing each line",
 		"Repaint by painting from top of screen"
 	},
-#if 0
 	{ 'd', BOOL|NO_TOGGLE, OPT_OFF, &know_dumb, NULL,
 		"Assume intelligent terminal",
 		"Assume dumb terminal",
 		NULL
 	},
-#else
-	{ 'd', BOOL, OPT_OFF, &be_helpful, NULL,
-		"Be helpful in prompts",
-		"Be less helpful in prompts",
-		NULL,
-	},
-#endif
-#if MSOFTC
-	{ 'D', STRING|REPAINT, 0, NULL, opt_D,
+#if MSDOS_COMPILER
+	{ 'D', STRING|REPAINT|NO_QUERY, 0, NULL, opt_D,
 		"color desc: ", NULL, NULL
 	},
 #endif
@@ -127,11 +119,6 @@ static struct option option[] =
 	{ 'h', NUMBER, -1, &back_scroll, NULL,
 		"Backwards scroll limit: ",
 		"Backwards scroll limit is %d lines",
-		NULL
-	},
-	{ 'H', BOOL|NO_TOGGLE, OPT_OFF, &nohelp, NULL,
-		"Allow help command",
-		"Don't allow help command",
 		NULL
 	},
 	{ 'i', TRIPLE|HL_REPAINT, OPT_OFF, &caseless, opt_i,

@@ -1,5 +1,7 @@
+/*	$NetBSD: optfunc.c,v 1.1.1.2 1997/04/22 13:45:21 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,13 +49,15 @@
 extern int nbufs;
 extern int cbufs;
 extern int pr_type;
-extern int nohelp;
 extern int plusoption;
 extern int swindow;
 extern int sc_height;
 extern int any_display;
+extern int secure;
+extern int dohelp;
 extern char *prproto[];
 extern char *eqproto;
+extern char *hproto;
 extern IFILE curr_ifile;
 #if LOGFILE
 extern char *namelogfile;
@@ -66,7 +70,7 @@ extern char *tagfile;
 extern char *tags;
 extern int jump_sline;
 #endif
-#if MSOFTC
+#if MSDOS_COMPILER
 extern int nm_fg_color, nm_bg_color;
 extern int bo_fg_color, bo_bg_color;
 extern int ul_fg_color, ul_bg_color;
@@ -86,6 +90,11 @@ opt_o(type, s)
 {
 	PARG parg;
 
+	if (secure)
+	{
+		error("log file support is not available", NULL_PARG);
+		return;
+	}
 	switch (type)
 	{
 	case INIT:
@@ -103,7 +112,7 @@ opt_o(type, s)
 			return;
 		}
 		s = skipsp(s);
-		namelogfile = glob(s);
+		namelogfile = lglob(s);
 		use_logfile(namelogfile);
 		sync_logfile();
 		break;
@@ -200,6 +209,11 @@ opt_t(type, s)
 		/* Do the rest in main() */
 		break;
 	case TOGGLE:
+		if (secure)
+		{
+			error("tags support is not available", NULL_PARG);
+			break;
+		}
 		findtag(skipsp(s));
 		if (tagfile == NULL)
 			break;
@@ -208,8 +222,7 @@ opt_t(type, s)
 			break;
 		if ((pos = tagsearch()) == NULL_POSITION)
 		{
-			if (edit_ifile(save_ifile))
-				quit(QUIT_ERROR);
+			reedit_ifile(save_ifile);
 			break;
 		}
 		jump_loc(pos, jump_sline);
@@ -234,7 +247,7 @@ opt__T(type, s)
 		break;
 	case TOGGLE:
 		s = skipsp(s);
-		tags = glob(s);
+		tags = lglob(s);
 		break;
 	case QUERY:
 		parg.p_string = tags;
@@ -287,9 +300,11 @@ opt__P(type, s)
 		 */
 		switch (*s)
 		{
+		case 's':  proto = &prproto[PR_SHORT];	s++;	break;
 		case 'm':  proto = &prproto[PR_MEDIUM];	s++;	break;
 		case 'M':  proto = &prproto[PR_LONG];	s++;	break;
 		case '=':  proto = &eqproto;		s++;	break;
+		case 'h':  proto = &hproto;		s++;	break;
 		default:   proto = &prproto[PR_SHORT];		break;
 		}
 		free(*proto);
@@ -366,7 +381,7 @@ opt__V(type, s)
 	}
 }
 
-#if MSOFTC
+#if MSDOS_COMPILER
 /*
  *
  */
@@ -457,8 +472,6 @@ opt_query(type, s)
 	int type;
 	char *s;
 {
-	if (nohelp)
-		return;
 	switch (type)
 	{
 	case QUERY:
@@ -466,20 +479,7 @@ opt_query(type, s)
 		error("Use \"h\" for help", NULL_PARG);
 		break;
 	case INIT:
-		/*
-		 * This is "less -?".
-		 * It rather ungracefully grabs control, 
-		 * does the initializations normally done in main,
-		 * shows the help file and exits.
-		 */
-		raw_mode(1);
-		get_term();
-		open_getchr();
-		init();
-		any_display = TRUE;
-		help(1);
-		quit(QUIT_OK);
-		/*NOTREACHED*/
+		dohelp = 1;
 	}
 }
 

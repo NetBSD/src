@@ -1,5 +1,7 @@
+/*	$NetBSD: cmdbuf.c,v 1.1.1.2 1997/04/22 13:45:14 mrg Exp $	*/
+
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
+ * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,10 +37,12 @@
 
 extern int sc_width;
 
-static char cmdbuf[120];	/* Buffer for holding a multi-char command */
-static int cmd_col;		/* Current column of the multi-char command */
+static char cmdbuf[CMDBUF_SIZE]; /* Buffer for holding a multi-char command */
+static int cmd_col;		/* Current column of the cursor */
+static int prompt_col;		/* Column of cursor just after prompt */
 static char *cp;		/* Pointer into cmdbuf */
-static int literal;
+static int cmd_offset;		/* Index into cmdbuf of first displayed char */
+static int literal;		/* Next input char should not be interpreted */
 
 #if TAB_COMPLETE_FILENAME
 static int cmd_complete();
@@ -52,6 +56,9 @@ static char *tk_ipoint;
 static char *tk_trial;
 static struct textlist tk_tlist;
 #endif
+
+static int cmd_left();
+static int cmd_right();
 
 #if CMD_HISTORY
 /*
@@ -70,22 +77,34 @@ struct mlist
  */
 struct mlist mlist_search =  
 	{ &mlist_search,  &mlist_search,  &mlist_search,  NULL };
-public void *ml_search = (void *) &mlist_search;
+public void constant *ml_search = (void *) &mlist_search;
+
 struct mlist mlist_examine = 
 	{ &mlist_examine, &mlist_examine, &mlist_examine, NULL };
-public void *ml_examine = (void *) &mlist_examine;
+public void constant *ml_examine = (void *) &mlist_examine;
+
 #if SHELL_ESCAPE || PIPEC
 struct mlist mlist_shell =   
 	{ &mlist_shell,   &mlist_shell,   &mlist_shell,   NULL };
-public void *ml_shell = (void *) &mlist_shell;
-#endif /* SHELL_ESCAPE || PIPEC */
+public void constant *ml_shell = (void *) &mlist_shell;
+#endif
+
+#else /* CMD_HISTORY */
+
+/* If CMD_HISTORY is off, these are just flags. */
+public void constant *ml_search = (void *)1;
+public void constant *ml_examine = (void *)2;
+#if SHELL_ESCAPE || PIPEC
+public void constant *ml_shell = (void *)3;
+#endif
+
+#endif /* CMD_HISTORY */
 
 /*
  * History for the current command.
  */
 static struct mlist *curr_mlist = NULL;
 
-#endif /* CMD_HISTORY */
 
 /*
  * Reset command buffer (to empty).
@@ -96,7 +115,30 @@ cmd_reset()
 	cp = cmdbuf;
 	*cp = '\0';
 	cmd_col = 0;
+	cmd_offset = 0;
 	literal = 0;
+}
+
+/*
+ * Clear command line on display.
+ */
+	public void
+clear_cmd()
+{
+	clear_bot();
+	cmd_col = prompt_col = 0;
+}
+
+/*
+ * Display a string, usually as a prompt for input into the command buffer.
+ */
+	public void
+cmd_putstr(s)
+	char *s;
+{
+	putstr(s);
+	cmd_col += strlen(s);
+	prompt_col += strlen(s);
 }
 
 /*
@@ -106,6 +148,189 @@ cmd_reset()
 len_cmdbuf()
 {
 	return (strlen(cmdbuf));
+}
+
+/*
+ * Repaint the line from cp onwards.
+ * Then position the cursor just after the char old_cp (a pointer into cmdbuf).
+ */
+	static void
+cmd_repaint(old_cp)
+	char *old_cp;
+{
+	char *p;
+
+	/*
+	 * Repaint the line from the current position.
+	 */
+	clear_eol();
+	for ( ;  *cp != '\0';  cp++)
+	{
+		p = prchar(*cp);
+		if (cmd_col + strlen(p) >= sc_width)
+			break;
+		putstr(p);
+		cmd_col += strlen(p);
+	}
+
+	/*
+	 * Back up the cursor to the correct position.
+	 */
+	while (cp > old_cp)
+		cmd_left();
+}
+
+/*
+ * Put the cursor at "home" (just after the prompt),
+ * and set cp to the corresponding char in cmdbuf.
+ */
+	static void
+cmd_home()
+{
+	while (cmd_col > prompt_col)
+	{
+		putbs();
+		cmd_col--;
+	}
+
+	cp = &cmdbuf[cmd_offset];
+}
+
+/*
+ * Shift the cmdbuf display left a half-screen.
+ */
+	static void
+cmd_lshift()
+{
+	char *s;
+	char *save_cp;
+	int cols;
+
+	/*
+	 * Start at the first displayed char, count how far to the
+	 * right we'd have to move to reach the center of the screen.
+	 */
+	s = cmdbuf + cmd_offset;
+	cols = 0;
+	while (cols < (sc_width - prompt_col) / 2 && *s != '\0')
+		cols += strlen(prchar(*s++));
+
+	cmd_offset = s - cmdbuf;
+	save_cp = cp;
+	cmd_home();
+	cmd_repaint(save_cp);
+}
+
+/*
+ * Shift the cmdbuf display right a half-screen.
+ */
+	static void
+cmd_rshift()
+{
+	char *s;
+	char *p;
+	char *save_cp;
+	int cols;
+
+	/*
+	 * Start at the first displayed char, count how far to the
+	 * left we'd have to move to traverse a half-screen width
+	 * of displayed characters.
+	 */
+	s = cmdbuf + cmd_offset;
+	cols = 0;
+	while (cols < (sc_width - prompt_col) / 2 && s > cmdbuf)
+	{
+		p = prchar(*--s);
+		cols += strlen(p);
+	}
+
+	cmd_offset = s - cmdbuf;
+	save_cp = cp;
+	cmd_home();
+	cmd_repaint(save_cp);
+}
+
+/*
+ * Move cursor right one character.
+ */
+	static int
+cmd_right()
+{
+	char *p;
+	
+	if (*cp == '\0')
+	{
+		/* 
+		 * Already at the end of the line.
+		 */
+		return (CC_OK);
+	}
+	p = prchar(*cp);
+	if (cmd_col + strlen(p) >= sc_width)
+		cmd_lshift();
+	else if (cmd_col + strlen(p) == sc_width - 1 && cp[1] != '\0')
+		cmd_lshift();
+	cp++;
+	putstr(p);
+	cmd_col += strlen(p);
+	return (CC_OK);
+}
+
+/*
+ * Move cursor left one character.
+ */
+	static int
+cmd_left()
+{
+	char *p;
+	
+	if (cp <= cmdbuf)
+	{
+		/* Already at the beginning of the line */
+		return (CC_OK);
+	}
+	p = prchar(cp[-1]);
+	if (cmd_col < prompt_col + strlen(p))
+		cmd_rshift();
+	cp--;
+	cmd_col -= strlen(p);
+	while (*p++ != '\0')
+		putbs();
+	return (CC_OK);
+}
+
+/*
+ * Insert a char into the command buffer, at the current position.
+ */
+	static int
+cmd_ichar(c)
+	int c;
+{
+	int col;
+	char *s;
+	
+	if (strlen(cmdbuf) >= sizeof(cmdbuf)-2)
+	{
+		/*
+		 * No room in the command buffer for another char.
+		 */
+		bell();
+		return (CC_ERROR);
+	}
+		
+	/*
+	 * Insert the character into the buffer.
+	 */
+	for (s = &cmdbuf[strlen(cmdbuf)];  s >= cp;  s--)
+		s[1] = s[0];
+	*cp = c;
+	/*
+	 * Reprint the tail of the line from the inserted char.
+	 */
+	cmd_repaint(cp);
+	cmd_right();
+	return (CC_OK);
 }
 
 /*
@@ -128,46 +353,18 @@ cmd_erase()
 		return (CC_QUIT);
 	}
 	/*
-	 * Back up the pointer.
+	 * Move cursor left (to the char being erased).
 	 */
-	--cp;
+	cmd_left();
 	/*
-	 * Remember the current cursor column and 
-	 * set it back the width of the char being erased.
-	 */
-	col = cmd_col;
-	p = prchar(*cp);
-	cmd_col -= strlen(p);
-	/*
-	 * Shift left the buffer after the erased char.
+	 * Remove the char from the buffer (shift the buffer left).
 	 */
 	for (s = cp;  *s != '\0';  s++)
 		s[0] = s[1];
 	/*
-	 * Back up the cursor to the position of the erased char,
-	 * clear the tail of the line,
-	 * and reprint the line after the erased char.
+	 * Repaint the buffer after the erased char.
 	 */
-	while (col > cmd_col)
-	{
-		putbs();
-		col--;
-	}
-	clear_eol();
-	for (s = cp;  *s != '\0';  s++)
-	{
-		p = prchar(*s);
-		putstr(p);
-		col += strlen(p);
-	}
-	/*
-	 * Back up the cursor again.
-	 */
-	while (col > cmd_col)
-	{
-		putbs();
-		col--;
-	}
+	cmd_repaint(cp);
 	
 	/*
 	 * This is rather weird.
@@ -201,10 +398,7 @@ cmd_delete()
 	/*
 	 * Move right, then use cmd_erase.
 	 */
-	p = prchar(*cp);
-	cp++;
-	putstr(p);
-	cmd_col += strlen(p);
+	cmd_right();
 	cmd_erase();
 	return (CC_OK);
 }
@@ -262,28 +456,6 @@ cmd_wdelete()
 }
 
 /*
- * Move cursor to start of command buffer.
- */
-	static int
-cmd_home()
-{
-	char *p;
-	
-	/*
-	 * Back up until we hit start of buffer.
-	 */
-	while (cp > cmdbuf)
-	{
-		cp--;
-		p = prchar(*cp);
-		cmd_col -= strlen(p);
-		while (*p++ != '\0')
-			putbs();
-	}
-	return (CC_OK);
-}
-
-/*
  * Delete all chars in the command buffer.
  */
 	static int
@@ -296,9 +468,10 @@ cmd_kill()
 		 */
 		return (CC_QUIT);
 	}
-	(void) cmd_home();
+	cmd_offset = 0;
+	cmd_home();
 	*cp = '\0';
-	clear_eol();
+	cmd_repaint(cp);
 	/*
 	 * Same weirdness as in cmd_erase.
 	 * If the current command has no history, abort the current command.
@@ -309,50 +482,6 @@ cmd_kill()
 }
 
 /*
- * Move cursor right one character.
- */
-	static int
-cmd_right()
-{
-	char *p;
-	
-	if (*cp == '\0')
-	{
-		/* 
-		 * Already at the end of the line.
-		 */
-		return (CC_OK);
-	}
-	p = prchar(*cp);
-	cp++;
-	putstr(p);
-	cmd_col += strlen(p);
-	return (CC_OK);
-}
-
-/*
- * Move cursor left one character.
- */
-	static int
-cmd_left()
-{
-	char *p;
-	
-	if (cp <= cmdbuf)
-	{
-		/* Already at the beginning of the line */
-		return (CC_OK);
-	}
-	cp--;
-	p = prchar(*cp);
-	cmd_col -= strlen(p);
-	while (*p++ != '\0')
-		putbs();
-	return (CC_OK);
-}
-
-#if CMD_HISTORY
-/*
  * Select an mlist structure to be the current command history.
  */
 	public void
@@ -362,6 +491,7 @@ set_mlist(mlist)
 	curr_mlist = (struct mlist *) mlist;
 }
 
+#if CMD_HISTORY
 /*
  * Move up or down in the currently selected command history list.
  */
@@ -395,16 +525,15 @@ cmd_updown(action)
 	s = curr_mlist->curr_mp->string;
 	if (s == NULL)
 		s = "";
-	for (cp = cmdbuf;  *s != '\0';  s++, cp++)
+	for (cp = cmdbuf;  *s != '\0';  s++)
 	{
 		*cp = *s;
-		p = prchar(*cp);
-		cmd_col += strlen(p);
-		putstr(p);
+		cmd_right();
 	}
 	*cp = '\0';
 	return (CC_OK);
 }
+#endif
 
 /*
  * Accept the command in the command buffer.
@@ -413,6 +542,7 @@ cmd_updown(action)
 	public void
 cmd_accept()
 {
+#if CMD_HISTORY
 	struct mlist *ml;
 	
 	/*
@@ -452,8 +582,8 @@ cmd_accept()
 	 * Thus, an UPARROW will always retrieve the previous command.
 	 */
 	curr_mlist->curr_mp = ml->next;
-}
 #endif
+}
 
 /*
  * Try to perform a line-edit function on the command buffer,
@@ -480,16 +610,20 @@ cmd_edit(c)
 	 * See if the char is indeed a line-editing command.
 	 */
 	flags = 0;
+#if CMD_HISTORY
 	if (curr_mlist == NULL)
 		/*
 		 * No current history; don't accept history manipulation cmds.
 		 */
 		flags |= EC_NOHISTORY;
-	if (curr_mlist == &mlist_search)
+#endif
+#if TAB_COMPLETE_FILENAME
+	if (curr_mlist == ml_search)
 		/*
 		 * In a search command; don't accept file-completion cmds.
 		 */
 		flags |= EC_NOCOMPLETE;
+#endif
 
 	action = editchar(c, flags);
 
@@ -517,7 +651,10 @@ cmd_edit(c)
 		return (CC_OK);
 	case EC_HOME:
 		not_in_completion();
-		return (cmd_home());
+		cmd_offset = 0;
+		cmd_home();
+		cmd_repaint(cp);
+		return (CC_OK);
 	case EC_END:
 		not_in_completion();
 		while (*cp != '\0')
@@ -560,84 +697,6 @@ cmd_edit(c)
 		not_in_completion();
 		return (CC_PASS);
 	}
-}
-
-/*
- * Insert a char into the command buffer, at the current position.
- */
-	static int
-cmd_ichar(c)
-	int c;
-{
-	int col;
-	char *p;
-	char *s;
-	
-	if (strlen(cmdbuf) >= sizeof(cmdbuf)-2)
-	{
-		/*
-		 * No room in the command buffer for another char.
-		 */
-		bell();
-		return (CC_ERROR);
-	}
-		
-	/*
-	 * Remember the current cursor column and 
-	 * move it forward the width of the char being inserted.
-	 */
-	col = cmd_col;
-	p = prchar(c);
-	cmd_col += strlen(p);
-	if (cmd_col >= sc_width-1)
-	{
-		cmd_col -= strlen(p);
-		bell();
-		return (CC_ERROR);
-	}
-	/*
-	 * Insert the character in the string.
-	 * First, make room for the new char.
-	 */
-	for (s = &cmdbuf[strlen(cmdbuf)];  s >= cp;  s--)
-		s[1] = s[0];
-	*cp++ = c;
-	/*
-	 * Reprint the tail of the line after the inserted char.
-	 */
-	clear_eol();
-	for (s = cp-1;  *s != '\0';  s++)
-	{
-		p = prchar(*s);
-		col += strlen(p);
-		if (col >= sc_width-1)
-		{
-			/*
-			 * Oops.  There is no room on the screen
-			 * for the new char.  Back up the cursor to
-			 * just after the inserted char and erase it.
-			 */
-			col -= strlen(p);
-			while (col > cmd_col)
-			{
-				putbs();
-				col--;
-			}
-			(void) cmd_erase();
-			bell();
-			return (CC_ERROR);
-		}
-		putstr(p);
-	}
-	/*
-	 * Back up the cursor to just after the inserted char.
-	 */
-	while (col > cmd_col)
-	{
-		putbs();
-		col--;
-	}
-	return (CC_OK);
 }
 
 #if TAB_COMPLETE_FILENAME
@@ -773,10 +832,9 @@ next_compl(action, prev)
 		return (forw_textlist(&tk_tlist, prev));
 	case EC_B_COMPLETE:
 		return (back_textlist(&tk_tlist, prev));
-	default:
-		/* Cannot happen */
-		return ("?");
 	}
+	/* Cannot happen */
+	return ("?");
 }
 
 /*
@@ -916,17 +974,6 @@ cmd_char(c)
 cmd_int()
 {
 	return (atoi(cmdbuf));
-}
-
-/*
- * Display a string, usually as a prompt for input into the command buffer.
- */
-	public void
-cmd_putstr(s)
-	char *s;
-{
-	putstr(s);
-	cmd_col += strlen(s);
 }
 
 /*
