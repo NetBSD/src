@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.15 2000/05/25 19:57:35 jhawk Exp $ */
+/*	$NetBSD: db_trace.c,v 1.16 2000/05/26 03:34:29 jhawk Exp $ */
 
 /*
  * Mach Operating System
@@ -39,11 +39,12 @@
 #define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK)
 
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
 	char            *modif;
+	void		(*pr) __P((const char *, ...));
 {
 	struct frame	*frame;
 	boolean_t	kernel_only = TRUE;
@@ -57,28 +58,25 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			kernel_only = FALSE;
 	}
 
-	if (count == -1)
-		count = 65535;
-
 	if (!have_addr)
 		frame = (struct frame *)DDB_TF->tf_out[6];
 	else {
 		if (trace_thread) {
 			struct proc *p;
 			struct user *u;
-			db_printf ("trace: pid %d ", (int)addr);
+			(*pr)("trace: pid %d ", (int)addr);
 			p = pfind(addr);
 			if (p == NULL) {
-				db_printf("not found\n");
+				(*pr)("not found\n");
 				return;
 			}	
 			if ((p->p_flag & P_INMEM) == 0) {
-				db_printf("swapped out\n");
+				(*pr)("swapped out\n");
 				return;
 			}
 			u = p->p_addr;
 			frame = (struct frame *)u->u_pcb.pcb_sp;
-			db_printf("at %p\n", frame);
+			(*pr)("at %p\n", frame);
 		} else {
 			frame = (struct frame *)addr;
 		}
@@ -101,7 +99,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			if (!kernel_only) {
 				count++;
 				while (count--) {
-					db_printf("0x%lx()\n", pc);
+					(*pr)("0x%lx()\n", pc);
 					pc = fuword(&frame->fr_pc);
 					frame = (void *)fuword(&frame->fr_fp);
 					if (pc == 0 || frame == NULL) {
@@ -116,16 +114,16 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (name == NULL)
 			name = "?";
 
-		db_printf("%s(", name);
+		(*pr)("%s(", name);
 
 		/*
 		 * Print %i0..%i5, hope these still reflect the
 		 * actual arguments somewhat...
 		 */
 		for (i=0; i < 5; i++)
-			db_printf("0x%x, ", frame->fr_arg[i]);
-		db_printf("0x%x) at ", frame->fr_arg[i]);
-		db_printsym(pc, DB_STGY_PROC, db_printf);
-		db_printf("\n");
+			(*pr)("0x%x, ", frame->fr_arg[i]);
+		(*pr)("0x%x) at ", frame->fr_arg[i]);
+		db_printsym(pc, DB_STGY_PROC, pr);
+		(*pr)("\n");
 	}
 }

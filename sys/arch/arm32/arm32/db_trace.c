@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.12 2000/05/25 19:57:32 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.13 2000/05/26 03:34:26 jhawk Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -40,11 +40,12 @@
 #define INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
 	char            *modif;
+	void		(*pr) __P((const char *, ...));
 {
 	struct frame	*frame, *lastframe;
 	char c, *cp = modif;
@@ -57,9 +58,6 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (c == 't')
 			trace_thread = TRUE;
 	}
-
-	if (count == -1)
-		count = 65535;
 
 	/*
 	 * The frame pointer points to the top word of the stack frame so we
@@ -74,20 +72,20 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (trace_thread) {
 			struct proc *p;
 			struct user *u;
-			db_printf ("trace: pid %d ", (int)addr);
+			(*pr)("trace: pid %d ", (int)addr);
 			p = pfind(addr);
 			if (p == NULL) {
-				db_printf("not found\n");
+				(*pr)("not found\n");
 				return;
 			}	
 			if (!(p->p_flag & P_INMEM)) {
-				db_printf("swapped out\n");
+				(*pr)("swapped out\n");
 				return;
 			}
 			u = p->p_addr;
 			frame = (struct frame *) (u->u_pcb.pcb_r11
 			    - (sizeof(struct frame) - sizeof(u_int)));
-			db_printf("at %p\n", frame);
+			(*pr)("at %p\n", frame);
 		} else
 			frame = (struct frame *)(addr - (sizeof(struct frame)
 			    - sizeof(u_int)));
@@ -99,7 +97,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		char		*name;
 		db_addr_t	pc;
 
-/*		db_printf("fp=%08x: fp=%08x sp=%08x lr=%08x pc=%08x\n",
+/*		(*pr)("fp=%08x: fp=%08x sp=%08x lr=%08x pc=%08x\n",
 		    (u_int)frame, frame->fr_fp, frame->fr_sp, frame->fr_lr,
 		    frame->fr_pc);*/
 
@@ -114,10 +112,10 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (name == NULL)
 			name = "?";
 
-		db_printf("%s(", name);
-		db_printsym(pc, DB_STGY_PROC, db_printf);
-		db_printf(")");
-		db_printf("\n");
+		(*pr)("%s(", name);
+		db_printsym(pc, DB_STGY_PROC, pr);
+		(*pr)(")");
+		(*pr)("\n");
 
 		/*
 		 * Switch to next frame up
@@ -132,7 +130,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */
 			if (frame <= lastframe) {
-				db_printf("Bad frame pointer: %p\n", frame);
+				(*pr)("Bad frame pointer: %p\n", frame);
 				break;
 			}
 		} else if (INKERNEL((int)lastframe)) {
@@ -142,7 +140,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		} else {
 			/* in user */
 			if (frame <= lastframe) {
-				db_printf("Bad user frame pointer: %p\n",
+				(*pr)("Bad user frame pointer: %p\n",
 					  frame);
 				break;
 			}

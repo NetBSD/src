@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.13 2000/05/25 19:57:35 jhawk Exp $ */
+/*	$NetBSD: db_trace.c,v 1.14 2000/05/26 03:34:30 jhawk Exp $ */
 
 /*
  * Mach Operating System
@@ -45,11 +45,12 @@ void db_print_window __P((u_int64_t));
 #define INKERNEL(va)	(((vaddr_t)(va)) >= USRSTACK) /* Not really true, y'know */
 
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_cmd(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
 	char            *modif;
+ 	void		(*pr) __P((const char *, ...));
 {
 	vaddr_t		frame;
 	boolean_t	kernel_only = TRUE;
@@ -60,9 +61,6 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			if (c == 'u')
 				kernel_only = FALSE;
 	}
-
-	if (count == -1)
-		count = 65535;
 
 	if (!have_addr)
 		frame = (vaddr_t)DDB_TF->tf_out[6];
@@ -105,7 +103,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			if (name == NULL)
 				name = "?";
 			
-			db_printf("%s(", name);
+			(*pr)("%s(", name);
 			
 			if (frame & 1) {
 				f64 = (struct frame64 *)(frame + BIAS);
@@ -114,8 +112,8 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				 * actual arguments somewhat...
 				 */
 				for (i=0; i < 5; i++)
-					db_printf("%lx, ", (long)f64->fr_arg[i]);
-				db_printf("%lx) at ", (long)f64->fr_arg[i]);
+					(*pr)("%lx, ", (long)f64->fr_arg[i]);
+				(*pr)("%lx) at ", (long)f64->fr_arg[i]);
 			} else {
 				f32 = (struct frame32 *)(frame);
 				/*
@@ -123,11 +121,11 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				 * actual arguments somewhat...
 				 */
 				for (i=0; i < 5; i++)
-					db_printf("%x, ", f32->fr_arg[i]);
-				db_printf("%x) at ", f32->fr_arg[i]);
+					(*pr)("%x, ", f32->fr_arg[i]);
+				(*pr)("%x) at ", f32->fr_arg[i]);
 			}
-			db_printsym(pc, DB_STGY_PROC, db_printf);
-			db_printf("\n");
+			db_printsym(pc, DB_STGY_PROC, pr);
+			(*pr)("\n");
 		}
 }
 

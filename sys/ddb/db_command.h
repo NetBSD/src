@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.16 2000/05/22 14:49:10 jhawk Exp $	*/
+/*	$NetBSD: db_command.h,v 1.17 2000/05/26 03:34:31 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -49,6 +49,7 @@ void db_error __P((char *));
 void db_fncall __P((db_expr_t, int, db_expr_t, char *));
 void db_reboot_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_sifting_cmd __P((db_expr_t, int, db_expr_t, char *));
+void db_stack_trace_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_sync_cmd __P((db_expr_t, int, db_expr_t, char *));
 
 db_addr_t	db_dot;		/* current location */

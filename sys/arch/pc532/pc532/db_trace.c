@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.8 2000/05/26 02:10:18 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.9 2000/05/26 03:34:28 jhawk Exp $	*/
 
 /* 
  * Mach Operating System
@@ -51,9 +51,10 @@
 
 struct ns532_frame;
 static void	db_nextframe __P((struct ns532_frame **, db_addr_t *,
-					int *, int));
+    int *, int, void (*)(const char *, ...)));
 static int	db_numargs __P((struct ns532_frame *));
-static int	db_spec_regs __P((struct db_variable *, db_expr_t *, int));
+static int	db_spec_regs __P((struct db_variable *, db_expr_t *, int,
+    void (*)(const char *, ...)));
 
 /*
  * Machine register set.
@@ -195,18 +196,19 @@ db_numargs(fp)
  *   of the function that faulted, but that could get hairy.
  */
 static void
-db_nextframe(fp, ip, argp, is_trap)
+db_nextframe(fp, ip, argp, is_trap, pr)
 	struct ns532_frame	**fp;		/* in/out */
 	db_addr_t		*ip;		/* out */
 	int			*argp;		/* in */
 	int			is_trap;	/* in */
+	void			(*pr) __P((const char *, ...));
 {
 	struct trapframe *tf;
 	struct syscframe *sf;
 
 	switch (is_trap) {
 	case INTERRUPT:
-		db_printf("--- interrupt ---\n");
+		(*pr)("--- interrupt ---\n");
 	case NONE:
 		*ip = (db_addr_t)
 		      db_get_value((int) &(*fp)->f_retaddr, 4, FALSE);
@@ -217,14 +219,14 @@ db_nextframe(fp, ip, argp, is_trap)
 	/* The only argument to trap() or syscall() is the trapframe. */
 	case TRAP:
 		tf = (struct trapframe *)argp;
-		db_printf("--- trap (number %ld) ---\n", tf->tf_trapno);
+		(*pr)("--- trap (number %ld) ---\n", tf->tf_trapno);
 		*fp = (struct ns532_frame *)tf->tf_regs.r_fp;
 		*ip = (db_addr_t)tf->tf_regs.r_pc;
 		break;
 
 	case SYSCALL:
 		sf = (struct syscframe *)argp;
-		db_printf("--- syscall (number %d) ---\n", sf->sf_regs.r_r0);
+		(*pr)("--- syscall (number %d) ---\n", sf->sf_regs.r_r0);
 		*fp = (struct ns532_frame *)sf->sf_regs.r_fp;
 		*ip = (db_addr_t)sf->sf_regs.r_pc;
 		break;
@@ -232,11 +234,12 @@ db_nextframe(fp, ip, argp, is_trap)
 }
 
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t	addr;
 	boolean_t	have_addr;
 	db_expr_t	count;
 	char		*modif;
+	void		(*pr) __P((const char *, ...));
 {
 	struct ns532_frame *frame, *lastframe;
 	int		*argp;
@@ -257,14 +260,11 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		}
 	}
 
-	if (count == -1)
-		count = 65535;
-
 	if (!have_addr) {
 		frame = (struct ns532_frame *)ddb_regs.tf_regs.r_fp;
 		callpc = (db_addr_t)ddb_regs.tf_regs.r_pc;
 	} else if (trace_thread) {
-		db_printf ("db_trace.c: can't trace thread\n");
+		(*pr) ("db_trace.c: can't trace thread\n");
 	} else {
 		frame = (struct ns532_frame *)addr;
 		callpc = (db_addr_t)
@@ -311,7 +311,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				narg = db_numargs(frame);
 		}
 
-		db_printf("%s(", name);
+		(*pr)("%s(", name);
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/*
@@ -325,15 +325,15 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 
 		while (narg) {
 			if (argnp)
-				db_printf("%s=", *argnp++);
-			db_printf("%lx", db_get_value((int)argp, 4, FALSE));
+				(*pr)("%s=", *argnp++);
+			(*pr)("%lx", db_get_value((int)argp, 4, FALSE));
 			argp++;
 			if (--narg != 0)
-				db_printf(",");
+				(*pr)(",");
 		}
-		db_printf(") at ");
-		db_printsym(callpc, DB_STGY_PROC, db_printf);
-		db_printf("\n");
+		(*pr)(") at ");
+		db_printsym(callpc, DB_STGY_PROC, pr);
+		(*pr)("\n");
 
 		if (lastframe == 0 && offset == 0 && !have_addr) {
 			/* Frame really belongs to next callpc */
@@ -344,7 +344,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		}
 
 		lastframe = frame;
-		db_nextframe(&frame, &callpc, &frame->f_arg0, is_trap);
+		db_nextframe(&frame, &callpc, &frame->f_arg0, is_trap, pr);
 
 		if (frame == 0) {
 			/* end of chain */
@@ -353,7 +353,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */
 			if (frame <= lastframe) {
-				db_printf("Bad frame pointer: %p\n", frame);
+				(*pr)("Bad frame pointer: %p\n", frame);
 				break;
 			}
 		} else if (INKERNEL((int)lastframe)) {
@@ -363,7 +363,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		} else {
 			/* in user */
 			if (frame <= lastframe) {
-				db_printf("Bad user frame pointer: %p\n",
+				(*pr)("Bad user frame pointer: %p\n",
 					  frame);
 				break;
 			}
@@ -372,8 +372,8 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	}
 
 	if (count && is_trap != NONE) {
-		db_printsym(callpc, DB_STGY_XTRN, db_printf);
-		db_printf(":\n");
+		db_printsym(callpc, DB_STGY_XTRN, pr);
+		(*pr)(":\n");
 	}
 }
 
@@ -384,10 +384,11 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
   *********************************************/
 
 static int
-db_spec_regs(vp, valp, what)
+db_spec_regs(vp, valp, what, pr)
 	struct db_variable *vp;
 	db_expr_t *valp;
 	int what;
+	void (*pr) __P((const char *, ...));
 {
 	if (strcmp(vp->name, "intbase") == 0)
 		if (what == DB_VAR_GET)
@@ -447,6 +448,6 @@ db_spec_regs(vp, valp, what)
 		else
 			lprd(cfg, *valp);
 	else
-		db_printf("Internal error, unknown register in db_spec_regs");
+		(*pr)("Internal error, unknown register in db_spec_regs");
 	return(0);
 }

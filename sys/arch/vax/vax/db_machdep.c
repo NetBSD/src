@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.18 2000/03/04 07:27:49 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.19 2000/05/26 03:34:30 jhawk Exp $	*/
 
 /* 
  * :set tabs=4
@@ -242,16 +242,17 @@ struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
  *	stackbase - Lowest stack value
  */
 static void
-db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase) {
+db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase, pr) {
 	u_int nargs, arg_base, regs;
 	VAX_CALLFRAME *tmp_frame;
 	db_expr_t	diff;
 	db_sym_t	sym;
 	char		*symname;
+	void		(*pr) __P((const char *, ...));
 
-	db_printf("Stack traceback : \n");
+	(*pr)("Stack traceback : \n");
 	if (IN_USERLAND(fp)) {
-		db_printf("  Process is executing in user space.\n");
+		(*pr)("  Process is executing in user space.\n");
 		return;
 	}
 
@@ -262,7 +263,7 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase) {
 		symname = NULL;
 		sym = db_search_symbol(fp->vax_pc, DB_STGY_ANY, &diff);
 		db_symbol_values(sym, &symname, 0);
-		db_printf("%s+0x%lx(", symname, diff);
+		(*pr)("%s+0x%lx(", symname, diff);
 
 		/*
 		 * Figure out the arguments by using a bit of subtlety.
@@ -295,12 +296,12 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase) {
 			nargs--; /* reduce by one for formatting niceties */
 			arg_base++; /* skip past the actual number of arguments */
 			while (nargs--)
-				db_printf("0x%x,", tmp_frame->vax_args[arg_base++]);
+				(*pr)("0x%x,", tmp_frame->vax_args[arg_base++]);
 
 			/* now print out the last arg with closing brace and \n */
-			db_printf("0x%x)\n", tmp_frame->vax_args[++arg_base]);
+			(*pr)("0x%x)\n", tmp_frame->vax_args[++arg_base]);
 		} else
-			db_printf("void)\n");
+			(*pr)("void)\n");
 		/* move to the next frame */
 		fp = fp->vax_fp;
 	}
@@ -315,11 +316,12 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase) {
  *	trace/t	0tnn		<-- Trace process nn (0t for decimal)
  */
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
         db_expr_t       addr;		/* Address parameter */
         boolean_t       have_addr;	/* True if addr is valid */
         db_expr_t       count;		/* Optional count */
         char            *modif;		/* pointer to flag modifier 't' */
+	void		(*pr) __P((const char *, ...));	/* Print function */
 {
 	extern vaddr_t 	proc0paddr;
 	struct proc	*p = curproc;
@@ -339,12 +341,12 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	/* Trace a panic */
 	if (! trace_proc) {
 		if (! panicstr) {
-			db_printf("Not a panic, use trace/t to trace a process.\n");
+			(*pr)("Not a panic, use trace/t to trace a process.\n");
 			return;
 		}
-		db_printf("panic: %s\n", panicstr);
+		(*pr)("panic: %s\n", panicstr);
 		/* xxx ? where did we panic and whose stack are we using? */
-		db_dump_stack((VAX_CALLFRAME *)(ddb_regs.sp), ddb_regs.ap);
+		db_dump_stack((VAX_CALLFRAME *)(ddb_regs.sp), ddb_regs.ap, pr);
 		return;
 	}
 
@@ -363,7 +365,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				while (foo != 0) {
 					int digit = (foo >> 28) & 0xf;
 					if (digit > 9) {
-						db_printf("  No such process.\n");
+						(*pr)("  No such process.\n");
 						return;
 					}
 					tpid = tpid * 10 + digit;
@@ -371,14 +373,14 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				}
 				p = pfind(tpid);
 				if (p == NULL) {
-					db_printf("  No such process.\n");
+					(*pr)("  No such process.\n");
 					return;
 				}
 			}
 		} else {
 			p = (struct proc *)(addr);
 			if (pfind(p->p_pid) != p) {
-				db_printf("  This address does not point to a valid process.\n");
+				(*pr)("  This address does not point to a valid process.\n");
 				return;
 			}
 		}
@@ -386,12 +388,12 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (trace_proc) {
 			p = curproc;
 			if (p == NULL) {
-				db_printf("trace: no current process! (ignored)\n");
+				(*pr)("trace: no current process! (ignored)\n");
 				return;
 			}
 		} else {
 			if (! panicstr) {
-				db_printf("Not a panic, no active process, ignored.\n");
+				(*pr)("Not a panic, no active process, ignored.\n");
 				return;
 			}
 		}
@@ -403,31 +405,32 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		uarea = p->p_addr;
 		curpid = p->p_pid;
 	}
-	db_printf("Process %d\n", curpid);
-	db_printf("  PCB contents:\n");
-	db_printf("	KSP = 0x%x\n", (unsigned int)(uarea->u_pcb.KSP));
-	db_printf("	ESP = 0x%x\n", (unsigned int)(uarea->u_pcb.ESP));
-	db_printf("	SSP = 0x%x\n", (unsigned int)(uarea->u_pcb.SSP));
-	db_printf("	USP = 0x%x\n", (unsigned int)(uarea->u_pcb.USP));
-	db_printf("	R[00] = 0x%08x    R[06] = 0x%08x\n", 
+	(*pr)("Process %d\n", curpid);
+	(*pr)("  PCB contents:\n");
+	(*pr)("	KSP = 0x%x\n", (unsigned int)(uarea->u_pcb.KSP));
+	(*pr)("	ESP = 0x%x\n", (unsigned int)(uarea->u_pcb.ESP));
+	(*pr)("	SSP = 0x%x\n", (unsigned int)(uarea->u_pcb.SSP));
+	(*pr)("	USP = 0x%x\n", (unsigned int)(uarea->u_pcb.USP));
+	(*pr)("	R[00] = 0x%08x    R[06] = 0x%08x\n", 
 		(unsigned int)(uarea->u_pcb.R[0]), (unsigned int)(uarea->u_pcb.R[6]));
-	db_printf("	R[01] = 0x%08x    R[07] = 0x%08x\n", 
+	(*pr)("	R[01] = 0x%08x    R[07] = 0x%08x\n", 
 		(unsigned int)(uarea->u_pcb.R[1]), (unsigned int)(uarea->u_pcb.R[7]));
-	db_printf("	R[02] = 0x%08x    R[08] = 0x%08x\n", 
+	(*pr)("	R[02] = 0x%08x    R[08] = 0x%08x\n", 
 		(unsigned int)(uarea->u_pcb.R[2]), (unsigned int)(uarea->u_pcb.R[8]));
-	db_printf("	R[03] = 0x%08x    R[09] = 0x%08x\n", 
+	(*pr)("	R[03] = 0x%08x    R[09] = 0x%08x\n", 
 		(unsigned int)(uarea->u_pcb.R[3]), (unsigned int)(uarea->u_pcb.R[9]));
-	db_printf("	R[04] = 0x%08x    R[10] = 0x%08x\n", 
+	(*pr)("	R[04] = 0x%08x    R[10] = 0x%08x\n", 
 		(unsigned int)(uarea->u_pcb.R[4]), (unsigned int)(uarea->u_pcb.R[10]));
-	db_printf("	R[05] = 0x%08x    R[11] = 0x%08x\n", 
+	(*pr)("	R[05] = 0x%08x    R[11] = 0x%08x\n", 
 		(unsigned int)(uarea->u_pcb.R[5]), (unsigned int)(uarea->u_pcb.R[11]));
-	db_printf("	AP = 0x%x\n", (unsigned int)(uarea->u_pcb.AP));
-	db_printf("	FP = 0x%x\n", (unsigned int)(uarea->u_pcb.FP));
-	db_printf("	PC = 0x%x\n", (unsigned int)(uarea->u_pcb.PC));
-	db_printf("	PSL = 0x%x\n", (unsigned int)(uarea->u_pcb.PSL));
-	db_printf("	Trap frame pointer: 0x%x\n", 
+	(*pr)("	AP = 0x%x\n", (unsigned int)(uarea->u_pcb.AP));
+	(*pr)("	FP = 0x%x\n", (unsigned int)(uarea->u_pcb.FP));
+	(*pr)("	PC = 0x%x\n", (unsigned int)(uarea->u_pcb.PC));
+	(*pr)("	PSL = 0x%x\n", (unsigned int)(uarea->u_pcb.PSL));
+	(*pr)("	Trap frame pointer: 0x%x\n", 
 							(unsigned int)(uarea->u_pcb.framep));
-	db_dump_stack((VAX_CALLFRAME *)(uarea->u_pcb.FP), (u_int) uarea->u_pcb.KSP);
+	db_dump_stack((VAX_CALLFRAME *)(uarea->u_pcb.FP),
+	    (u_int) uarea->u_pcb.KSP, pr);
 	return;
 #if 0
 	while (((u_int)(cur_frame->vax_fp) > stackbase) && 
@@ -439,7 +442,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		symname = NULL;
 		sym = db_search_symbol(cur_frame->vax_pc, DB_STGY_ANY, &diff);
 		db_symbol_values(sym, &symname, 0);
-		db_printf("%s+0x%lx(", symname, diff);
+		(*pr)("%s+0x%lx(", symname, diff);
 
 		/*
 		 * Figure out the arguments by using a bit of subterfuge
@@ -472,12 +475,12 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			nargs--; /* reduce by one for formatting niceties */
 			arg_base++; /* skip past the actual number of arguments */
 			while (nargs--)
-				db_printf("0x%x,", tmp_frame->vax_args[arg_base++]);
+				(*pr)("0x%x,", tmp_frame->vax_args[arg_base++]);
 
 			/* now print out the last arg with closing brace and \n */
-			db_printf("0x%x)\n", tmp_frame->vax_args[++arg_base]);
+			(*pr)("0x%x)\n", tmp_frame->vax_args[++arg_base]);
 		} else
-			db_printf("void)\n");
+			(*pr)("void)\n");
 		/* move to the next frame */
 		cur_frame = cur_frame->vax_fp;
 	}

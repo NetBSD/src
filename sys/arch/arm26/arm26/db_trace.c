@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3 2000/05/25 19:57:32 jhawk Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4 2000/05/26 03:34:30 jhawk Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -75,11 +75,12 @@
 #define FR_RFP	(-3)
 
 void
-db_stack_trace_cmd(addr, have_addr, count, modif)
+db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
 	int             have_addr;
 	db_expr_t       count;
 	char            *modif;
+	void		(*pr) __P((const char *, ...));
 {
 	u_int32_t	*frame, *lastframe;
 	char c, *cp = modif;
@@ -93,28 +94,25 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			trace_thread = TRUE;
 	}
 
-	if (count == -1)
-		count = 65535;
-
 	if (!have_addr)
 		frame = (u_int32_t *)(DDB_TF->tf_r11);
 	else {
 		if (trace_thread) {
 			struct proc *p;
 			struct user *u;
-			db_printf ("trace: pid %d ", (int)addr);
+			(*pr) ("trace: pid %d ", (int)addr);
 			p = pfind(addr);
 			if (p == NULL) {
-				db_printf("not found\n");
+				(*pr)("not found\n");
 				return;
 			}	
 			if (!(p->p_flag & P_INMEM)) {
-				db_printf("swapped out\n");
+				(*pr)("swapped out\n");
 				return;
 			}
 			u = p->p_addr;
 			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);
-			db_printf("at %p\n", frame);
+			(*pr)("at %p\n", frame);
 		} else
 			frame = (u_int32_t *)(addr);
 	}
@@ -138,13 +136,13 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (name == NULL)
 			name = "?";
 
-		db_printf("%s", name);
-		db_printf("(scp=0x%x(", frame[FR_SCP]);
-		db_printsym(scp, DB_STGY_PROC, db_printf);
-		db_printf("), rlv=0x%x(", frame[FR_RLV]);
-		db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC, db_printf);
-		db_printf("),\n\trsp=0x%x", frame[FR_RSP]);
-		db_printf(", rfp=0x%x", frame[FR_RFP]);
+		(*pr)("%s", name);
+		(*pr)("(scp=0x%x(", frame[FR_SCP]);
+		db_printsym(scp, DB_STGY_PROC, pr);
+		(*pr)("), rlv=0x%x(", frame[FR_RLV]);
+		db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC, pr);
+		(*pr)("),\n\trsp=0x%x", frame[FR_RSP]);
+		(*pr)(", rfp=0x%x", frame[FR_RFP]);
 
 		savecode = ((u_int32_t *)scp)[-3];
 		if ((savecode & 0x0e100000) == 0x08000000) {
@@ -152,12 +150,12 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 			rp = frame - 4;
 			for (r = 10; r >= 0; r--)
 				if (savecode & (1 << r))
-					db_printf(",%sr%d=0x%x",
+					(*pr)(",%sr%d=0x%x",
 						  (frame - rp) % 4 == 2 ?
 						  "\n\t" : " ", r, *rp--);
 		}
 
-		db_printf(")\n");
+		(*pr)(")\n");
 
 		/*
 		 * Switch to next frame up
@@ -171,7 +169,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */
 			if (frame <= lastframe) {
-				db_printf("Bad frame pointer: %p\n", frame);
+				(*pr)("Bad frame pointer: %p\n", frame);
 				break;
 			}
 		} else if (INKERNEL((int)lastframe)) {
@@ -181,7 +179,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		} else {
 			/* in user */
 			if (frame <= lastframe) {
-				db_printf("Bad user frame pointer: %p\n",
+				(*pr)("Bad user frame pointer: %p\n",
 					  frame);
 				break;
 			}
