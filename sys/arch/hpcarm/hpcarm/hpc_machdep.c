@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.63 2003/05/02 23:22:35 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.64 2003/05/03 03:29:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -297,9 +297,6 @@ initarm(argc, argv, bi)
 	u_int l1pagetable;
 	vaddr_t freemempos;
 	pv_addr_t kernel_l1pt;
-#ifndef ARM32_PMAP_NEW
-	pv_addr_t kernel_ptpt;
-#endif
 	vsize_t pt_size;
 #if NKSYMS || defined(DDB) || defined(LKM)
 	Elf_Shdr *sh;
@@ -462,11 +459,6 @@ initarm(argc, argv, bi)
 
 	pt_size = round_page(freemempos) - KERNEL_BASE;
 
-#ifndef ARM32_PMAP_NEW
-	/* Allocate a page for the page table to map kernel page tables*/
-	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / PAGE_SIZE);
-#endif
-
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
 	valloc_pages(abtstack, ABT_STACK_SIZE);
@@ -533,9 +525,6 @@ initarm(argc, argv, bi)
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-#ifndef ARM32_PMAP_NEW
-	pmap_link_l2pt(l1pagetable, PTE_BASE, &kernel_ptpt);
-#endif
 
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
@@ -585,58 +574,15 @@ initarm(argc, argv, bi)
 	    UPAGES * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
-#ifdef ARM32_PMAP_NEW
 	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
-#else
-	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-#endif
+
 	/* Map page tables */
 	pmap_map_chunk(l1pagetable, KERNEL_BASE, KERNEL_BASE, pt_size,
-#ifdef ARM32_PMAP_NEW
 	    VM_PROT_READ | VM_PROT_WRITE, PTE_PAGETABLE);
-#else
-	    VM_PROT_READ | VM_PROT_WRITE, PTE_CACHE);
-#endif
-
-#ifndef ARM32_PMAP_NEW
-	/* Map the page table that maps the kernel pages */
-	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-#endif
 
 	/* Map a page for entering idle mode */
 	pmap_map_entry(l1pagetable, sa11x0_idle_mem, sa11x0_idle_mem,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-
-#ifndef ARM32_PMAP_NEW
-	/*
-	 * Map entries in the page table used to map PTE's
-	 * Basically every kernel page table gets mapped here
-	 */
-	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
-	pmap_map_entry(l1pagetable,
-	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	pmap_map_entry(l1pagetable,
-	    PTE_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
-		pmap_map_entry(l1pagetable,
-		    PTE_BASE + ((KERNEL_VM_BASE +
-		    (loop * 0x00400000)) >> (PGSHIFT-2)),
-		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-	}
-	pmap_map_entry(l1pagetable,
-	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
-	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(l1pagetable,
-	    PTE_BASE + (SAIPIO_BASE >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_IO].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
-	    PTE_CACHE);
-#endif
 
 	/* Map the vector page. */
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
@@ -699,7 +645,6 @@ initarm(argc, argv, bi)
 	undefined_init();
 
 	/* Set the page table address. */
-#ifdef ARM32_PMAP_NEW
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
 	setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
@@ -711,9 +656,6 @@ initarm(argc, argv, bi)
 	 */
 	proc0paddr = (struct user *)kernelstack.pv_va;
 	lwp0.l_addr = proc0paddr;
-#else
-	setttb(kernel_l1pt.pv_pa);
-#endif
 
 #ifdef BOOT_DUMP
 	dumppages((char *)0xc0000000, 16 * PAGE_SIZE);
@@ -747,12 +689,7 @@ initarm(argc, argv, bi)
 	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
-#ifdef ARM32_PMAP_NEW
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va);
-#else
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
-#endif
-
 
 	if (cputype == CPU_ID_SA110)
 		rpc_sa110_cc_setup();	
