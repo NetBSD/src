@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.29 2005/01/12 03:34:58 christos Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.30 2005/02/26 07:19:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.29 2005/01/12 03:34:58 christos Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.30 2005/02/26 07:19:25 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,17 +56,10 @@ __RCSID("$NetBSD: local_passwd.c,v 1.29 2005/01/12 03:34:58 christos Exp $");
 
 #include "extern.h"
 
-static	char   *getnewpasswd __P((struct passwd *, int));
-
 static uid_t uid;
-static int force_local;
-
-char *tempname;
 
 static char *
-getnewpasswd(pw, min_pw_len)
-	struct passwd *pw;
-	int min_pw_len;
+getnewpasswd(struct passwd *pw, int min_pw_len)
 {
 	int tries;
 	char *p, *t;
@@ -119,6 +112,112 @@ getnewpasswd(pw, min_pw_len)
 	}
 	return(crypt(buf, salt));
 }
+
+#ifdef USE_PAM
+
+void
+pwlocal_usage(const char *prefix)
+{
+
+	(void) fprintf(stderr, "%s %s [-d files | -l] [user]\n",
+	    prefix, getprogname());
+}
+
+void
+pwlocal_process(const char *username, int argc, char **argv)
+{
+	struct passwd *pw;
+	struct passwd old_pw;
+	time_t old_change;
+	int pfd, tfd;
+	int min_pw_len = 0;
+	int pw_expiry  = 0;
+	int ch;
+#ifdef LOGIN_CAP
+	login_cap_t *lc;
+#endif
+
+	while ((ch = getopt(argc, argv, "l")) != -1) {
+		switch (ch) {
+		case 'l':
+			/*
+			 * Aborb the -l that may have gotten us here.
+			 */
+			break;
+
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	switch (argc) {
+	case 0:
+		/* username already provided */
+		break;
+	case 1:
+		username = argv[0];
+		break;
+	default:
+		usage();
+		/* NOTREACHED */
+	}
+
+	if (!(pw = getpwnam(username)))
+		errx(1, "unknown user %s", username);
+
+	uid = getuid();
+	if (uid && uid != pw->pw_uid)
+		errx(1, "%s", strerror(EACCES));
+
+	/* Save the old pw information for comparing on pw_copy(). */
+	old_pw = *pw;
+
+	/*
+	 * Get class restrictions for this user, then get the new password. 
+	 */
+#ifdef LOGIN_CAP
+	if((lc = login_getclass(pw->pw_class))) {
+		min_pw_len = (int) login_getcapnum(lc, "minpasswordlen", 0, 0);
+		pw_expiry  = (int) login_getcaptime(lc, "passwordtime", 0, 0);
+		login_close(lc);
+	}
+#endif
+
+	pw->pw_passwd = getnewpasswd(pw, min_pw_len);
+	old_change = pw->pw_change;
+	pw->pw_change = pw_expiry ? pw_expiry + time(NULL) : 0;
+
+	/*
+	 * Now that the user has given us a new password, let us
+	 * change the database.
+	 */
+	pw_init();
+	tfd = pw_lock(0);
+	if (tfd < 0) {
+		warnx ("The passwd file is busy, waiting...");
+		tfd = pw_lock(10);
+		if (tfd < 0)
+			errx(1, "The passwd file is still busy, "
+			     "try again later.");
+	}
+
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	if (pfd < 0)
+		pw_error(_PATH_MASTERPASSWD, 1, 1);
+
+	pw_copy(pfd, tfd, pw, &old_pw);
+
+	if (pw_mkdb(username, old_change == pw->pw_change) < 0)
+		pw_error((char *)NULL, 0, 1);
+}
+
+#else /* ! USE_PAM */
+
+static int force_local;
 
 int
 local_init(progname)
@@ -222,3 +321,5 @@ local_chpw(uname)
 		pw_error((char *)NULL, 0, 1);
 	return (0);
 }
+
+#endif /* USE_PAM */

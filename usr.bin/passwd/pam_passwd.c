@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_passwd.c,v 1.2 2005/02/24 05:11:34 thorpej Exp $	*/
+/*	$NetBSD: pam_passwd.c,v 1.3 2005/02/26 07:19:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 Networks Associates Technologies, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/usr.bin/passwd/passwd.c,v 1.23 2003/04/18 21:27:09 nectar Exp $");
 #else
-__RCSID("$NetBSD: pam_passwd.c,v 1.2 2005/02/24 05:11:34 thorpej Exp $");
+__RCSID("$NetBSD: pam_passwd.c,v 1.3 2005/02/26 07:19:25 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -61,90 +61,66 @@ static struct pam_conv pamc = {
 	NULL
 };
 
-static const char	*progname;
-static const char	*yp_domain;
-static const char	*yp_server;
-static int	 usage = PW_DONT_USE;
-
-#define pam_check(func) do { \
-	if (pam_err != PAM_SUCCESS) { \
-		if (pam_err == PAM_AUTH_ERR || pam_err == PAM_PERM_DENIED || \
-		    pam_err == PAM_AUTHTOK_RECOVERY_ERR) \
-			warnx("sorry"); \
-		else \
-			warnx("%s(): %s", func, pam_strerror(pamh, pam_err)); \
-		goto end; \
-	} \
-} while (0)
-
-
-int
-pwpam_init(const char *pname)
-{
-	progname = pname;
-	return 0;
-}
-
-int
-pwpam_arg(char arg, const char *optarg)
-{
-	switch (arg) {
-	case 'p':
-		usage = PW_USE_FORCE;
-		break;
-	case 'd':
-		yp_domain = optarg;
-		break;
-	case 's':
-		yp_server = optarg;
-		break;
-	default:
-		return 0;
-	}
-	return 1;
-}
-
-int
-pwpam_arg_end(void)
-{
-	return usage;
-}
+#define	pam_check(msg)							\
+do {									\
+	if (pam_err != PAM_SUCCESS) {					\
+		warnx("%s: %s", (msg), pam_strerror(pamh, pam_err));	\
+		goto end;						\
+	}								\
+} while (/*CONSTCOND*/0)
 
 void
-pwpam_end(void)
+pwpam_process(const char *username, int argc, char **argv)
 {
-	/* NOOP */
-}
-
-int
-pwpam_chpw(const char *uname)
-{
-	int pam_err;
+	int ch, pam_err;
 	char hostname[MAXHOSTNAMELEN + 1];
 
-	/* initialize PAM */
-	pam_err = pam_start(progname, uname, &pamc, &pamh);
-	pam_check("pam_start");
+	while ((ch = getopt(argc, argv, "")) != -1) {
+		switch (ch) {
+		default:
+			usage();
+			/* NOTREACHED */
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	switch (argc) {
+	case 0:
+		/* username already provided */
+		break;
+	case 1:
+		username = argv[0];
+		break;
+	default:
+		usage();
+		/* NOTREACHED */
+	}
+
+	/* initialize PAM -- always use the program name "passwd" */
+	pam_err = pam_start("passwd", username, &pamc, &pamh);
+	pam_check("unable to start PAM session");
 
 	pam_err = pam_set_item(pamh, PAM_TTY, ttyname(STDERR_FILENO));
-	pam_check("pam_set_item");
+	pam_check("unable to set TTY");
+
 	(void)gethostname(hostname, sizeof hostname);
 	pam_err = pam_set_item(pamh, PAM_RHOST, hostname);
-	pam_check("pam_set_item");
-	pam_err = pam_set_item(pamh, PAM_RUSER, getlogin());
-	pam_check("pam_set_item");
+	pam_check("unable to set RHOST");
 
-	/* set YP domain and host */
-	pam_err = pam_set_data(pamh, "yp_domain", __UNCONST(yp_domain), NULL);
-	pam_check("pam_set_data");
-	pam_err = pam_set_data(pamh, "yp_server", __UNCONST(yp_server), NULL);
-	pam_check("pam_set_data");
+	pam_err = pam_set_item(pamh, PAM_RUSER, getlogin());
+	pam_check("unable to set RUSER");
 
 	/* set new password */
 	pam_err = pam_chauthtok(pamh, 0);
-	pam_check("pam_chauthtok");
+	if (pam_err != PAM_SUCCESS)
+		printf("Unable to change auth token: %s\n",
+		    pam_strerror(pamh, pam_err));
 
  end:
 	pam_end(pamh, pam_err);
-	return pam_err == PAM_SUCCESS ? 0 : 1;
+	if (pam_err == PAM_SUCCESS)
+		return;
+	exit(1);
 }

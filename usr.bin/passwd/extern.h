@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2005/02/22 01:08:43 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2005/02/26 07:19:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -31,6 +31,29 @@
  *	@(#)extern.h	8.1 (Berkeley) 4/2/94
  */
 
+#ifdef USE_PAM
+
+void	usage(void);
+
+#ifdef KERBEROS5
+void	pwkrb5_usage(const char *);
+void	pwkrb5_argv0_usage(const char *);
+void	pwkrb5_process(const char *, int, char **);
+#endif
+
+#ifdef YP
+void	pwyp_usage(const char *);
+void	pwyp_argv0_usage(const char *);
+void	pwyp_process(const char *, int, char **);
+#endif
+
+void	pwlocal_usage(const char *);
+void	pwlocal_process(const char *, int, char **);
+
+void	pwpam_process(const char *, int, char **);
+
+#else /* ! USE_PAM */
+
 /* return values from pw_init() and pw_arg_end() */
 enum {
 	PW_USE_FORCE,
@@ -59,17 +82,11 @@ int	yp_arg_end __P((void));
 void	yp_end __P((void));
 int	yp_chpw __P((const char *));
 #endif
-#ifdef USE_PAM
-/* PAM */
-int	pwpam_init __P((const char *));
-int	pwpam_arg __P((char, const char *));
-int	pwpam_arg_end __P((void));
-void	pwpam_end __P((void));
-int	pwpam_chpw __P((const char *));
-#endif
 /* local */
 int	local_init __P((const char *));
 int	local_arg __P((char, const char *));
 int	local_arg_end __P((void));
 void	local_end __P((void));
 int	local_chpw __P((const char *));
+
+#endif /* USE_PAM */
