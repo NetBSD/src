@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 1998/04/24 05:27:25 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 1998/04/25 18:06:44 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -292,7 +292,7 @@ extern int		numranges;
 extern unsigned long	low[8];
 extern unsigned long	high[8];
 extern int		vidlen;
-#define VIDMAPSIZE	btoc(m68k_round_page(vidlen))
+#define VIDMAPSIZE	btoc(vidlen)
 
 #if defined(M68040)
 int		protostfree;	/* prototype (default) free ST map */
@@ -2652,6 +2652,7 @@ pmap_check_wiring(str, va)
 }
 #endif
 
+#ifdef MACHINE_NONCONTIG
 /*
  * LAK: These functions are from NetBSD/i386 and are used for
  *  the non-contiguous memory machines, such as the IIci, IIsi, and IIvx.
@@ -2697,6 +2698,7 @@ pmap_next_page(addrp)
 	avail_remaining--;
 	return TRUE;
 }
+#endif
 
 /*
  * pmap_page_index()
