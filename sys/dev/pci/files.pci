@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.73 1999/12/13 20:19:25 augustss Exp $
+#	$NetBSD: files.pci,v 1.74 2000/01/04 06:31:39 chopps Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -115,7 +115,7 @@ attach  tl at pci
 file    dev/pci/if_tl.c     		tl
 
 # SDL Communications N2 PCI Network Interface
-device	ntwoc: ifnet, hd64570
+# device declaration in sys/conf/files
 attach	ntwoc at pci with ntwoc_pci
 file	dev/pci/if_ntwoc_pci.c		ntwoc_pci
 
