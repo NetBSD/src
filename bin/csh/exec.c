@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.12 1998/07/26 14:53:46 mycroft Exp $	*/
+/*	$NetBSD: exec.c,v 1.13 1998/07/28 02:23:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.3 (Berkeley) 5/23/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.12 1998/07/26 14:53:46 mycroft Exp $");
+__RCSID("$NetBSD: exec.c,v 1.13 1998/07/28 02:23:38 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,6 +138,7 @@ doexec(v, t)
 	if (pv == 0) {
 	    setname(vis_str(blk[0]));
 	    stderror(ERR_NAME | ERR_NOMATCH);
+	    /* NOTREACHED */
 	}
 	gargv = 0;
     }
@@ -169,6 +170,7 @@ doexec(v, t)
 	    blkfree(pv);
 	    setname(vis_str(expath));
 	    stderror(ERR_NAME | ERR_NOMATCH);
+	    /* NOTREACHED */
 	}
 	gargv = 0;
     }
@@ -261,7 +263,9 @@ pexerr()
 	setname("");
     if (exerr)
 	stderror(ERR_NAME | ERR_STRING, exerr);
-    stderror(ERR_NAME | ERR_COMMAND);
+    else
+	stderror(ERR_NAME | ERR_COMMAND);
+    /* NOTREACHED */
 }
 
 /*
@@ -306,6 +310,7 @@ texec(sf, st)
 		     * We *know* what ENOEXEC means.
 		     */
 		    stderror(ERR_ARCH, f, strerror(errno));
+		    /* NOTREACHED */
 		}
 	    }
 #ifdef _PATH_BSHELL
@@ -345,10 +350,11 @@ texec(sf, st)
 	(void) execve(f, t, environ);
 	Vt = 0;
 	blkfree((Char **) t);
-	/* The sky is falling, the sky is falling! */
+	/* FALLTHROUGH */
 
     case ENOMEM:
 	stderror(ERR_SYSTEM, f, strerror(errno));
+	/* NOTREACHED */
 
     case ENOENT:
 	break;
@@ -431,8 +437,10 @@ execash(t, kp)
     OLDSTD = dmove(saveSTD, oOLDSTD);
 
     resexit(osetexit);
-    if (my_reenter)
+    if (my_reenter) {
 	stderror(ERR_SILENT);
+	/* NOTREACHED */
+    }
 }
 
 void

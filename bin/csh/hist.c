@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.9 1997/07/04 21:24:03 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.10 1998/07/28 02:23:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.9 1997/07/04 21:24:03 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.10 1998/07/28 02:23:39 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,7 @@ dohist(v, t)
 		break;
 	    default:
 		stderror(ERR_HISTUS);
-		break;
+		/* NOTREACHED */
 	    }
     }
     if (*v)

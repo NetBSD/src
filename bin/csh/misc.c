@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.9 1997/07/04 21:24:06 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.10 1998/07/28 02:23:39 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.9 1997/07/04 21:24:06 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.10 1998/07/28 02:23:39 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,6 +422,7 @@ udvar(name)
 
     setname(vis_str(name));
     stderror(ERR_NAME | ERR_UNDVAR);
+    /* NOTREACHED */
 }
 
 int

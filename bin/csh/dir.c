@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.12 1998/07/27 15:32:04 mycroft Exp $	*/
+/*	$NetBSD: dir.c,v 1.13 1998/07/28 02:23:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.12 1998/07/27 15:32:04 mycroft Exp $");
+__RCSID("$NetBSD: dir.c,v 1.13 1998/07/28 02:23:38 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,9 +103,11 @@ dinit(hp)
 	    cp = NULL;
 	if (cp == NULL) {
 	    (void) fprintf(csherr, emsg, "/");
-	    if (chdir("/") == -1)
+	    if (chdir("/") == -1) {
 		/* I am not even try to print an error message! */
 		xexit(1);
+		/* NOTREACHED */
+	    }
 	    cp = SAVE("/");
 	}
     }
@@ -185,7 +187,7 @@ skipargs(v, str)
 		break;
 	    default:
 		stderror(ERR_DIRUS, vis_str(**v), str);
-		break;
+		/* NOTREACHED */
 	    }
     *v = n;
 }
@@ -201,8 +203,10 @@ dodirs(v, t)
 {
     skipargs(&v, "");
 
-    if (*v != NULL)
+    if (*v != NULL) {
 	stderror(ERR_DIRUS, "dirs", "");
+	/* NOTREACHED */
+    }
     printdirs();
 }
 
@@ -311,13 +315,15 @@ dnormalize(cp)
 	    else
 		break;
 	}
-	while (dotdot > 0)
-	    if ((dp = Strrchr(cwd, '/'))) {
+	while (dotdot > 0) {
+	    dp = Strrchr(cwd, '/');
+	    if (dp) {
 		*dp = '\0';
 		dotdot--;
 	    }
 	    else
 		break;
+	}
 
 	if (*cp) {
 	    cwd[dotdot = Strlen(cwd)] = '/';
@@ -352,23 +358,28 @@ dochngd(v, t)
     skipargs(&v, " [<dir>]");
     printd = 0;
     if (*v == NULL) {
-	if ((cp = value(STRhome)) == NULL || *cp == 0)
+	if ((cp = value(STRhome)) == NULL || *cp == 0) {
 	    stderror(ERR_NAME | ERR_NOHOMEDIR);
-	if (chdir(short2str(cp)) < 0)
+	    /* NOTREACHED */
+	}
+	if (chdir(short2str(cp)) < 0) {
 	    stderror(ERR_NAME | ERR_CANTCHANGE);
+	    /* NOTREACHED */
+	}
 	cp = Strsave(cp);
     }
     else if (v[1] != NULL) {
 	stderror(ERR_NAME | ERR_TOOMANY);
 	/* NOTREACHED */
-	return;
     }
     else if ((dp = dfind(*v)) != 0) {
 	char   *tmp;
 
 	printd = 1;
-	if (chdir(tmp = short2str(dp->di_name)) < 0)
+	if (chdir(tmp = short2str(dp->di_name)) < 0) {
 	    stderror(ERR_SYSTEM, tmp, strerror(errno));
+	    /* NOTREACHED */
+	}
 	dcwd->di_prev->di_next = dcwd->di_next;
 	dcwd->di_next->di_prev = dcwd->di_prev;
 	dfree(dcwd);
@@ -482,7 +493,7 @@ dfollow(cp)
     (void) strcpy(ebuf, short2str(cp));
     xfree((ptr_t) cp);
     stderror(ERR_SYSTEM, ebuf, strerror(serrno));
-    return (NULL);
+    /* NOTREACHED */
 }
 
 
@@ -506,8 +517,10 @@ dopushd(v, t)
 
 	if ((dp = dcwd->di_prev) == &dhead)
 	    dp = dhead.di_prev;
-	if (dp == dcwd)
+	if (dp == dcwd) {
 	    stderror(ERR_NAME | ERR_NODIR);
+	    /* NOTREACHED */
+	}
 	if (chdir(tmp = short2str(dp->di_name)) < 0)
 	    stderror(ERR_SYSTEM, tmp, strerror(errno));
 	dp->di_prev->di_next = dp->di_next;
@@ -520,13 +533,14 @@ dopushd(v, t)
     else if (v[1] != NULL) {
 	stderror(ERR_NAME | ERR_TOOMANY);
 	/* NOTREACHED */
-	return;
     }
     else if ((dp = dfind(*v)) != NULL) {
 	char   *tmp;
 
-	if (chdir(tmp = short2str(dp->di_name)) < 0)
+	if (chdir(tmp = short2str(dp->di_name)) < 0) {
 	    stderror(ERR_SYSTEM, tmp, strerror(errno));
+	    /* NOTREACHED */
+	}
     }
     else {
 	Char *ccp;
@@ -566,8 +580,10 @@ dfind(cp)
     for (dp = dcwd; i != 0; i--) {
 	if ((dp = dp->di_prev) == &dhead)
 	    dp = dp->di_prev;
-	if (dp == dcwd)
+	if (dp == dcwd) {
 	    stderror(ERR_NAME | ERR_DEEP);
+	    /* NOTREACHED */
+	}
     }
     return (dp);
 }
@@ -591,19 +607,24 @@ dopopd(v, t)
     else if (v[1] != NULL) {
 	stderror(ERR_NAME | ERR_TOOMANY);
 	/* NOTREACHED */
-	return;
     }
-    else if ((dp = dfind(*v)) == 0)
+    else if ((dp = dfind(*v)) == 0) {
 	stderror(ERR_NAME | ERR_BADDIR);
-    if (dp->di_prev == &dhead && dp->di_next == &dhead)
+	/* NOTREACHED */
+    }
+    if (dp->di_prev == &dhead && dp->di_next == &dhead) {
 	stderror(ERR_NAME | ERR_EMPTY);
+	/* NOTREACHED */
+    }
     if (dp == dcwd) {
 	char   *tmp;
 
 	if ((p = dp->di_prev) == &dhead)
 	    p = dhead.di_prev;
-	if (chdir(tmp = short2str(p->di_name)) < 0)
+	if (chdir(tmp = short2str(p->di_name)) < 0) {
 	    stderror(ERR_SYSTEM, tmp, strerror(errno));
+	    /* NOTREACHED */
+	}
     }
     dp->di_prev->di_next = dp->di_next;
     dp->di_next->di_prev = dp->di_prev;
@@ -881,8 +902,8 @@ dcanon(cp, p)
      */
     if (p1 && *p1 == '/' &&
 	(Strncmp(p1, cp, cc) != 0 || (cp[cc] != '/' && cp[cc] != '\0'))) {
-	static ino_t home_ino = -1;
-	static dev_t home_dev = -1;
+	static ino_t home_ino;
+	static dev_t home_dev = NODEV;
 	static Char *home_ptr = NULL;
 	struct stat statbuf;
 
