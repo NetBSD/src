@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.47 2000/05/08 10:52:38 kleink Exp $	*/
+/*	$NetBSD: pci.c,v 1.48 2000/05/10 08:39:58 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -369,6 +369,7 @@ pci_get_capability(pc, tag, capid, offset, value)
 	if (!(reg & PCI_STATUS_CAPLIST_SUPPORT))
 		return (0);
 
+	/* Determine the Capability List Pointer register to start with. */
 	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
 	switch (PCI_HDRTYPE_TYPE(reg)) {
 	case 0:	/* standard device header */
