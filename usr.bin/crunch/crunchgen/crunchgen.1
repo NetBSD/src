@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.14 2001/12/01 19:02:07 wiz Exp $
+.\"	$NetBSD: crunchgen.1,v 1.15 2002/01/25 12:05:00 ragge Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -168,6 +168,11 @@ commands can be used to set
 .Nm
 parameters for a component program.
 .Bl -tag -width indent
+.It Nm special Ar progname Nm keepsymbols Ar symbols ...
+Don't hide the specified symbols for
+.Ar progname .
+Normally all externally visible symbols for
+a program is hidden to avoid interference.
 .It Nm special Ar progname Nm srcdir Ar pathname
 Set the source directory for
 .Ar progname .
