@@ -1,6 +1,6 @@
-/*	$NetBSD: privsep.c,v 1.1.1.2 2005/02/23 14:54:25 manu Exp $	*/
+/*	$NetBSD: privsep.c,v 1.1.1.3 2005/02/24 20:53:50 manu Exp $	*/
 
-/* Id: privsep.c,v 1.6 2005/02/10 02:02:56 manubsd Exp */
+/* Id: privsep.c,v 1.6.2.2 2005/02/24 18:31:56 manubsd Exp */
 
 /*
  * Copyright (C) 2004 Emmanuel Dreyfus
@@ -69,6 +69,7 @@ static int privsep_sock[2] = { -1, -1 };
 static int privsep_recv(int, struct privsep_com_msg **, size_t *);
 static int privsep_send(int, struct privsep_com_msg *, size_t);
 static int safety_check(struct privsep_com_msg *, int i);
+static int port_check(int);
 static int unsafe_env(char *const *);
 static int unknown_name(int);
 static int unknown_script(int);
@@ -182,10 +183,48 @@ privsep_init(void)
 		break;
 
 	case 0: /* Child: drop privileges */
-		setgid(lcconf->gid);
-		setegid(lcconf->gid);
-		setuid(lcconf->uid);
-		seteuid(lcconf->uid);
+		if (lcconf->chroot != NULL) {
+			if (chdir(lcconf->chroot) != 0) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "Cannot chdir(%s): %s\n", lcconf->chroot, 
+				    strerror(errno));
+				return -1;
+			}
+			if (chroot(lcconf->chroot) != 0) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "Cannot chroot(%s): %s\n", lcconf->chroot, 
+				    strerror(errno));
+				return -1;
+			}
+		}
+
+		if (setgid(lcconf->gid) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "Cannot setgid(%d): %s\n", lcconf->gid,
+			    strerror(errno));
+			return -1;
+		}
+
+		if (setegid(lcconf->gid) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "Cannot setegid(%d): %s\n", lcconf->gid,
+			    strerror(errno));
+			return -1;
+		}
+
+		if (setuid(lcconf->uid) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "Cannot setuid(%d): %s\n", lcconf->uid,
+			    strerror(errno));
+			return -1;
+		}
+
+		if (seteuid(lcconf->uid) != 0) {
+			plog(LLV_ERROR, LOCATION, NULL, 
+			    "Cannot seteuid(%d): %s\n", lcconf->uid,
+			    strerror(errno));
+			return -1;
+		}
 
 		return 0;
 		break;
@@ -462,6 +501,9 @@ privsep_init(void)
 			memcpy(&port, bufs[0], sizeof(port));
 			memcpy(&inout, bufs[1], sizeof(inout));
 
+			if (port_check(port) != 0)
+				break;
+
 			errno = 0;
 			if (isakmp_cfg_accounting_pam(port, inout) != 0) {
 				if (errno == 0)
@@ -491,6 +533,9 @@ privsep_init(void)
 			bufs[2][combuf->bufs.buflen[2] - 1] = '\0';
 			bufs[3][combuf->bufs.buflen[3] - 1] = '\0';
 
+			if (port_check(port) != 0)
+				break;
+
 			errno = 0;
 			if (xauth_login_pam(port, 
 			    raddr, bufs[2], bufs[3]) != 0) {
@@ -509,6 +554,9 @@ privsep_init(void)
 				break;
 
 			memcpy(&port, bufs[0], sizeof(port));
+
+			if (port_check(port) != 0)
+				break;
 
 			cleanup_pam(port);
 			reply->hdr.ac_errno = 0;
@@ -828,6 +876,20 @@ privsep_xauth_login_system(usr, pwd)
 	return 0;
 }
 #endif /* ENABLE_HYBRID */
+
+static int
+port_check(port)
+	int port;
+{
+	if ((port < 0) || (port >= isakmp_cfg_config.pool_size)) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+		    "privsep: port %d outsied of allowed range [0,%d]\n",
+		    port, isakmp_cfg_config.pool_size - 1);
+		return -1;
+	}
+
+	return 0;
+}
 
 static int 
 safety_check(msg, index)
