@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.73 2002/03/16 17:03:29 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.74 2002/04/11 20:27:40 heinz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -639,7 +639,7 @@ isdntel*)
 	chmod 600 isdntel$unit
 	;;
 
-isdnrc*)
+isdntrc*)
 	unit=${i#isdntrc}
 	rm -f isdntrc$unit
 	mknod isdntrc$unit c 48 $unit
