@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/12/12 11:44:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2002/11/23 02:15:45 lha Exp $
 
 COMPAT_UTIL_OVERRIDE=	freebsd
 .include "../Makefile.inc"
@@ -28,7 +28,7 @@ SRCS+=	freebsd_exec.c freebsd_file.c freebsd_ioctl.c freebsd_ipc.c \
 # MD source files
 .if ${MACHINE} == "i386"
 .PATH: $S/arch/i386/i386
-SRCS+=	freebsd_machdep.c freebsd_sigcode.s freebsd_syscall.c
+SRCS+=	freebsd_machdep.c freebsd_sigcode.S freebsd_syscall.c
 .endif
 
 .include <bsd.kmod.mk>
