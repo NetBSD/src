@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device.h	7.3 (Berkeley) 5/7/91
- *	$Id: device.h,v 1.2 1993/08/01 19:23:00 mycroft Exp $
+ *	$Id: device.h,v 1.3 1993/09/02 18:07:54 mw Exp $
  */
 
 struct driver {
@@ -63,6 +63,8 @@ struct amiga_device {
 	int		amiga_flags;
 	int		amiga_alive;
 	int		amiga_ipl;
+	int		amiga_serno;
+	int		amiga_size;
 };
 
 struct	devqueue {
@@ -83,6 +85,7 @@ struct amiga_hw {
 	caddr_t	hw_kva;		/* kernel virtual address of control space */
 	int	hw_manufacturer;
 	int	hw_product;	/* autoconfig® parameters */
+	int	hw_serno;	/* serial number, needed by ethernet boards */
 	int	hw_type;
 };
 
@@ -97,13 +100,32 @@ struct amiga_hw {
 #define PROD_BUILTIN_PPORT	6
 #define PROD_BUILTIN_DISPLAY	7
 #define PROD_BUILTIN_MOUSE	8
+#define PROD_BUILTIN_CLOCK2	9
 
-/* I think they have more than one manuf-id */
+/* They have more than one manuf-id */
 #define MANUF_CBM_1		513
 #define PROD_CBM_1_A2088	1
+#define MANUF_CBM_2		514
+#define PROD_CBM_2_A2091	3
+#define PROD_CBM_2_A2065	0x70
 
+/* Ameristar Ethernet board is the same as commo's A2065 (dunno exact boardname) */
+#define MANUF_AMERISTAR		1053
+#define PROD_AMERISTAR_ETHER	1
+
+/* Unilowell tiga-board */
 #define MANUF_UNILOWELL		1030
 #define PROD_UNILOWELL_A2410	0
+
+/* MacroSystem Retina board */
+#define MANUF_MACROSYSTEM	0x4754
+#define PROD_MACROSYSTEM_RETINA	6
+
+/* GVP */
+#define MANUF_GVP		2017
+#define PROD_GVP_SERIES_II	11
+#define PROD_GVP_IV24		32
+
 
 /* bus types */
 #define	B_MASK		0xE000

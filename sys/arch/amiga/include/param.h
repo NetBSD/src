@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machparam.h 1.11 89/08/14
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.2 1993/08/01 19:23:36 mycroft Exp $
+ *	$Id: param.h,v 1.3 1993/09/02 18:08:22 mw Exp $
  */
 
 /*
@@ -171,7 +171,9 @@
 #define splnet()        spl1()
 #define splbio()        spl3()
 #define splimp()        spl3()
-#define spltty()        spl5()
+/* lowered to spl4 to allow for serial input into
+   private ringbuffer inspite of spltty */
+#define spltty()        spl4()
 #define splclock()      spl6()
 #define splvm()         spl6()
 #define splhigh()       spl7()

@@ -33,18 +33,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+<<<<<<< scsi.c
  *	from: @(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: scsi.c,v 1.2 1993/08/01 19:23:14 mycroft Exp $
+ *	$Id: scsi.c,v 1.3 1993/09/02 18:08:09 mw Exp $
+||||||| 1.1.1.2
+ *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
+=======
+ *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
+ *
+ * MULTICONTROLLER support only working for multiple controllers of the 
+ * same kind at the moment !! 
+ *
+>>>>>>> /tmp/T4009682
  */
 
 /*
  * AMIGA AMD 33C93 scsi adaptor driver
  */
-#include "scsi.h"
+#include "a3000scsi.h"
+#include "a2091scsi.h"
+#include "gvp11scsi.h"
+#define NSCSI (NA3000SCSI + NA2091SCSI + NGVP11SCSI)
 #if NSCSI > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.2 1993/08/01 19:23:14 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.3 1993/09/02 18:08:09 mw Exp $";
 #endif
 
 #include "sys/param.h"
@@ -52,10 +65,9 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1
 #include "sys/buf.h"
 #include "device.h"
 
+#include "dmavar.h"
 #include "scsivar.h"
 #include "scsireg.h"
-#include "dmavar.h"
-#include "dmareg.h"
 
 #include "../amiga/custom.h"
 
@@ -64,8 +76,8 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1
 static int sbic_wait (volatile sbic_padded_regmap_t *regs, char until, int timeo, int line);
 static void scsiabort (register struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs, char *where);
 static void scsierror (register struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs, u_char csr);
-static int issue_select (register volatile sbic_padded_regmap_t *regs, u_char target, u_char our_addr);
-static int wait_for_select (register volatile sbic_padded_regmap_t *regs);
+static int issue_select (register struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs, u_char target, u_char our_addr);
+static int wait_for_select (register struct scsi_softc *dev, register volatile sbic_padded_regmap_t *regs);
 static int ixfer_start (register volatile sbic_padded_regmap_t *regs, int len, u_char phase, register int wait);
 static int ixfer_out (register volatile sbic_padded_regmap_t *regs, int len, register u_char *buf, int phase);
 static void ixfer_in (register volatile sbic_padded_regmap_t *regs, int len, register u_char *buf);
@@ -78,42 +90,117 @@ static void finishxfer (struct scsi_softc *dev, register volatile sbic_padded_re
  * SCSI delays
  * In u-seconds, primarily for state changes on the SPC.
  */
-#define	SCSI_CMD_WAIT	1000	/* wait per step of 'immediate' cmds */
-#define	SCSI_DATA_WAIT	1000	/* wait per data in/out step */
+#define	SCSI_CMD_WAIT	50000	/* wait per step of 'immediate' cmds */
+#define	SCSI_DATA_WAIT	50000	/* wait per data in/out step */
 #define	SCSI_INIT_WAIT	50000	/* wait per step (both) during init */
 
 extern void _insque();
 extern void _remque();
 
+#if 0
 int	scsiinit(), scsigo(), scsiintr(), scsixfer();
 void	scsistart(), scsidone(), scsifree(), scsireset();
 struct	driver scsidriver = {
 	scsiinit, "scsi", (int (*)())scsistart, scsigo, scsiintr,
 	(int (*)())scsidone,
 };
+#endif
 
-struct	scsi_softc scsi_softc;
+
+#if NA3000SCSI > 0
+int a3000scsiinit();
+
+struct driver a3000scsidriver = {
+        a3000scsiinit, "a3000scsi", (int (*)())scsistart, scsigo, scsiintr,
+	(int (*)())scsidone,
+};
+#endif
+
+#if NA2091SCSI > 0
+int a2091scsiinit();
+
+struct driver a2091scsidriver = {
+        a2091scsiinit, "a2091scsi", (int (*)())scsistart, scsigo, scsiintr,
+	(int (*)())scsidone,
+};
+#endif
+
+#if NGVP11SCSI > 0
+int gvp11scsiinit();
+
+struct driver gvp11scsidriver = {
+        gvp11scsiinit, "GVPIIscsi", (int (*)())scsistart, scsigo, scsiintr,
+	(int (*)())scsidone,
+};
+#endif
+
+
+struct	scsi_softc scsi_softc[NSCSI];
 
 int scsi_cmd_wait = SCSI_CMD_WAIT;
 int scsi_data_wait = SCSI_DATA_WAIT;
 int scsi_init_wait = SCSI_INIT_WAIT;
 
-int scsi_nosync = 1;		/* inhibit sync xfers if 1 */
+/*
+ * Synch xfer parameters, and timing conversions
+ */
+static int sbic_min_period = SBIC_SYN_MIN_PERIOD;  /* in cycles = f(ICLK,FSn) */
+static int sbic_max_offset = SBIC_SYN_MAX_OFFSET;  /* pure number */
 
-/* these devices want to be reset before first data transfer access.
-   This is site specific, you'll know when your drive locks up because it's
-   still using AmigaDOS sync values... */
-static u_char reset_devices[] = { 1, 1, 0, 0, 0, 1, 1, 0 };
+static int 
+sbic_to_scsi_period(dev, regs, a)
+     struct scsi_softc *dev;
+     sbic_padded_regmap_t *regs;
+{
+  unsigned int fs;
+  
+  /* cycle = DIV / (2*CLK) */
+  /* DIV = FS+2 */
+  /* best we can do is 200ns at 20Mhz, 2 cycles */
+  
+  GET_SBIC_myid(regs,fs);
+  fs = (fs >>6) + 2;                              /* DIV */
+  fs = (fs * 10000) / (dev->sc_clock_freq<<1);   /* Cycle, in ns */
+  if (a < 2) a = 8;                               /* map to Cycles */
+  return ((fs*a)>>2);                             /* in 4 ns units */
+}
 
+static int 
+scsi_period_to_sbic(dev, regs, p)
+     struct scsi_softc *dev;
+     sbic_padded_regmap_t *regs;
+{
+  register unsigned int fs, ret;
+  
+  /* Just the inverse of the above */
+  
+  GET_SBIC_myid(regs,fs);
+  fs = (fs >>6) + 2;                              /* DIV */
+  fs = (fs * 10000) / (dev->sc_clock_freq<<1);   /* Cycle, in ns */
+  
+  ret = p << 2;                                   /* in ns units */
+  ret = ret / fs;                                 /* in Cycles */
+  if (ret < sbic_min_period)
+    return sbic_min_period;
+  /* verify rounding */
+  if (sbic_to_scsi_period(dev, regs, ret) < p)
+    ret++;
+  return (ret >= 8) ? 0 : ret;
+}
+
+/* default to not inhibit sync negotiation on any drive */
+u_char inhibit_sync[NSCSI][8] = { 0, 0, 0, 0, 1, 0, 0 }; /* initialize, so patchable */
+int scsi_no_dma = 0;
 
 #ifdef DEBUG
 int	scsi_debug = 0;
+int	sync_debug = 0;
 #define WAITHIST
-#define QUASEL 
+#define QUASEL
 #endif
 
 #ifdef QUASEL
-#define QPRINTF(a) if (scsi_debug) printf a
+#define QPRINTF(a) if (scsi_debug > 1) printf a
 #else
 #define QPRINTF
 #endif
@@ -176,7 +263,9 @@ scsiabort(dev, regs, where)
   GET_SBIC_csr (regs, csr);
   GET_SBIC_asr (regs, asr);
 
-  printf ("scsi: abort %s: csr = 0x%02x, asr = 0x%02x\n", where, csr, asr);
+  printf ("scsi%d: abort %s: csr = 0x%02x, asr = 0x%02x\n", 
+	  dev->sc_ac->amiga_unit,
+	  where, csr, asr);
 
   if (dev->sc_flags & SCSI_SELECTED)
     {
@@ -239,29 +328,41 @@ scsi_delay(delay)
 	}
 }
 
+static int initialized[NSCSI];
+int scsi_clock_override = 0;
+
+#if NA3000SCSI > 0
 int
-scsiinit(ac)
+a3000scsiinit(ac)
 	register struct amiga_ctlr *ac;
 {
-  register struct scsi_softc *dev = &scsi_softc;
+  register struct scsi_softc *dev = &scsi_softc[ac->amiga_unit];
   register sbic_padded_regmap_t *regs;
-  extern void *SCSI_address;
-  static int initialized = 0;
 
-  if (initialized)
+  if (! ac->amiga_addr)
+    return 0;
+
+  if (initialized[ac->amiga_unit])
     return 0;
  
-  initialized = 1;
+  initialized[ac->amiga_unit] = 1;
   
-  SDMAC_setup ();
-  ac->amiga_addr = (caddr_t) regs = (sbic_padded_regmap_t *) SCSI_address;
+  /* initialize dma */
+  a3000dmainit (ac, &dev->dmareq, &dev->dmafree, &dev->dmago,
+		&dev->dmanext, &dev->dmastop);
+
+  /* advance ac->amiga_addr to point to the real sbic-registers */
+  ac->amiga_addr = (caddr_t) ((int)ac->amiga_addr + 0x41);
+  regs = (sbic_padded_regmap_t *) ac->amiga_addr;
+  dev->sc_clock_freq = scsi_clock_override ? scsi_clock_override : 143;
+
 
   /* hardwired IPL */
   ac->amiga_ipl = 2;
   dev->sc_ac = ac;
-  dev->sc_dq.dq_driver = &scsidriver;
+  dev->sc_dq.dq_driver = &a3000scsidriver;
   dev->sc_sq.dq_forw = dev->sc_sq.dq_back = &dev->sc_sq;
-  scsireset ();
+  scsireset (ac->amiga_unit);
 
   /* make sure IPL2 interrupts are delivered to the cpu when the sbic
      generates some. Note that this does not yet enable sbic-interrupts,
@@ -275,11 +376,108 @@ scsiinit(ac)
   custom.intena = INTF_SETCLR | INTF_PORTS;
   return(1);
 }
+#endif
+
+#if NA2091SCSI > 0
+int
+a2091scsiinit(ac)
+     register struct amiga_ctlr *ac;
+{
+  register struct scsi_softc *dev = &scsi_softc[ac->amiga_unit];
+  register sbic_padded_regmap_t *regs;
+
+  if (! ac->amiga_addr)
+    return 0;
+
+  if (initialized[ac->amiga_unit])
+    return 0;
+ 
+  initialized[ac->amiga_unit] = 1;
+  
+  /* initialize dma */
+  a2091dmainit (ac, &dev->dmareq, &dev->dmafree, &dev->dmago,
+		&dev->dmanext, &dev->dmastop);
+
+  /* advance ac->amiga_addr to point to the real sbic-registers */
+  ac->amiga_addr = (caddr_t) ((int)ac->amiga_addr + 0x91);
+  regs = (sbic_padded_regmap_t *) ac->amiga_addr;
+  dev->sc_clock_freq = scsi_clock_override ? scsi_clock_override : 77;
+
+
+  /* hardwired IPL */
+  ac->amiga_ipl = 2;
+  dev->sc_ac = ac;
+  dev->sc_dq.dq_driver = &a2091scsidriver;
+  dev->sc_sq.dq_forw = dev->sc_sq.dq_back = &dev->sc_sq;
+  scsireset (ac->amiga_unit);
+
+  /* make sure IPL2 interrupts are delivered to the cpu when the sbic
+     generates some. Note that this does not yet enable sbic-interrupts,
+     this is handled in dma.c, which selectively enables interrupts only
+     while DMA requests are pending.
+     
+     Note that enabling PORTS interrupts also enables keyboard interrupts
+     as soon as the corresponding int-enable bit in CIA-A is set. */
+     
+  custom.intreq = INTF_PORTS;
+  custom.intena = INTF_SETCLR | INTF_PORTS;
+  return(1);
+}
+#endif
+
+#if NGVP11SCSI > 0
+int
+gvp11scsiinit(ac)
+     register struct amiga_ctlr *ac;
+{
+  register struct scsi_softc *dev = &scsi_softc[ac->amiga_unit];
+  register sbic_padded_regmap_t *regs;
+
+  if (! ac->amiga_addr)
+    return 0;
+
+  if (initialized[ac->amiga_unit])
+    return 0;
+ 
+  initialized[ac->amiga_unit] = 1;
+  
+  /* initialize dma */
+  gvp11dmainit (ac, &dev->dmareq, &dev->dmafree, &dev->dmago,
+		&dev->dmanext, &dev->dmastop);
+
+  /* advance ac->amiga_addr to point to the real sbic-registers */
+  ac->amiga_addr = (caddr_t) ((int)ac->amiga_addr + 0x61);
+  regs = (sbic_padded_regmap_t *) ac->amiga_addr;
+  dev->sc_clock_freq = scsi_clock_override ? scsi_clock_override : 77;
+
+
+  /* hardwired IPL */
+  ac->amiga_ipl = 2;
+  dev->sc_ac = ac;
+  dev->sc_dq.dq_driver = &gvp11scsidriver;
+  dev->sc_sq.dq_forw = dev->sc_sq.dq_back = &dev->sc_sq;
+  scsireset (ac->amiga_unit);
+
+  /* make sure IPL2 interrupts are delivered to the cpu when the sbic
+     generates some. Note that this does not yet enable sbic-interrupts,
+     this is handled in dma.c, which selectively enables interrupts only
+     while DMA requests are pending.
+     
+     Note that enabling PORTS interrupts also enables keyboard interrupts
+     as soon as the corresponding int-enable bit in CIA-A is set. */
+     
+  custom.intreq = INTF_PORTS;
+  custom.intena = INTF_SETCLR | INTF_PORTS;
+  return(1);
+}
+#endif
+
 
 void
-scsireset()
+scsireset(unit)
+     register int unit;
 {
-  register struct scsi_softc *dev = &scsi_softc;
+  register struct scsi_softc *dev = &scsi_softc[unit];
   volatile register sbic_padded_regmap_t *regs =
 				(sbic_padded_regmap_t *)dev->sc_ac->amiga_addr;
   u_int i, s;
@@ -288,17 +486,18 @@ scsireset()
   if (dev->sc_flags & SCSI_ALIVE)
     scsiabort(dev, regs, "reset");
 		
-  printf("scsi: ");
+  printf("scsi%d: ", unit);
 
+  s = splbio();
   /* preserve our ID for now */
   GET_SBIC_myid (regs, my_id);
   my_id &= SBIC_ID_MASK;
 
-  if (SBIC_CLOCK_FREQUENCY < 110)
+  if (dev->sc_clock_freq < 110)
     my_id |= SBIC_ID_FS_8_10;
-  else if (SBIC_CLOCK_FREQUENCY < 160)
+  else if (dev->sc_clock_freq < 160)
     my_id |= SBIC_ID_FS_12_15;
-  else if (SBIC_CLOCK_FREQUENCY < 210)
+  else if (dev->sc_clock_freq < 210)
     my_id |= SBIC_ID_FS_16_20;
 
   my_id |= SBIC_ID_EAF/* |SBIC_ID_EHP*/;
@@ -324,11 +523,15 @@ scsireset()
 
   /* anything else was zeroed by reset */
 
+#if 0
   /* go async for now */
   dev->sc_sync = 0;
-  printf ("async");
+  printf ("async, ");
+#endif
 
-  printf(", scsi id %d\n", my_id & SBIC_ID_MASK);
+  splx (s);
+
+  printf("scsi id %d\n", my_id & SBIC_ID_MASK);
   dev->sc_flags |= SCSI_ALIVE;
   dev->sc_flags &= ~SCSI_SELECTED;
 }
@@ -339,9 +542,10 @@ scsierror(dev, regs, csr)
 	volatile register sbic_padded_regmap_t *regs;
 	u_char csr;
 {
+        int unit = dev->sc_ac->amiga_unit;
 	char *sep = "";
 
-	printf("scsi: ");
+	printf("scsi%d: ", unit);
 #if 0
 	if (ints & INTS_RST) {
 		DELAY(100);
@@ -396,7 +600,8 @@ scsierror(dev, regs, csr)
 }
 
 static int
-issue_select(regs, target, our_addr)
+issue_select(dev, regs, target, our_addr)
+        register struct scsi_softc *dev;
 	volatile register sbic_padded_regmap_t *regs;
 	u_char target, our_addr;
 {
@@ -405,19 +610,31 @@ issue_select(regs, target, our_addr)
   QPRINTF (("issue_select %d\n", target));
 
   /* if we're already selected, return */
-  if (scsi_softc.sc_flags & SCSI_SELECTED)	/* XXXX */
+  if (dev->sc_flags & SCSI_SELECTED)	/* XXXX */
     return 1;
   
   SBIC_TC_PUT (regs, 0);
   SET_SBIC_selid (regs, target);
-  SET_SBIC_timeo (regs, SBIC_TIMEOUT(250,SBIC_CLOCK_FREQUENCY));
+  SET_SBIC_timeo (regs, SBIC_TIMEOUT(250,dev->sc_clock_freq));
+  if (dev->sc_sync[target].state == SYNC_DONE)
+    {
+      /* set to negotiated values */
+      SET_SBIC_syn (regs, SBIC_SYN (dev->sc_sync[target].offset, 
+				    dev->sc_sync[target].period));
+    }
+  else
+    {
+      /* set to async */
+      SET_SBIC_syn (regs, SBIC_SYN (0, sbic_min_period));
+    }
   SET_SBIC_cmd (regs, SBIC_CMD_SEL_ATN);
 
   return (0);
 }
 
 static int
-wait_for_select(regs)
+wait_for_select(dev, regs)
+        register struct scsi_softc *dev;
 	volatile register sbic_padded_regmap_t *regs;
 {
   u_char  asr, csr;
@@ -437,43 +654,66 @@ wait_for_select(regs)
   /* Send identify message (SCSI-2 requires an identify msg (?)) */
   if (csr == (SBIC_CSR_MIS_2|MESG_OUT_PHASE))
     {
-      /* to get rid of amigados sync-settings... a bit kludgy I know.. */
-      static char sent_reset[8];
-      int id;
-      
+      u_char id;
       GET_SBIC_selid (regs, id);
-      id &= 7;
-      if (reset_devices[id] && ! sent_reset [id])
-        {
-	  /* prevent endless recursion.. */
-          sent_reset[id] = 1;
-          
-	  SEND_BYTE (regs, MSG_BUS_DEVICE_RESET);
-	  do
-	    {
-	      SBIC_WAIT (regs, SBIC_ASR_INT, 0);
-	      GET_SBIC_csr (regs, csr);
-	    }
-	  while ((csr != SBIC_CSR_DISC) && (csr != SBIC_CSR_DISC_1));
-	  /* give the device 5s time to get back to life.. might be
-	     too long for many drives, and certainly too short for others,
-	     sigh.. */
-	  DELAY(5000000);
-	  QPRINTF (("[%02x]", csr));
-	  while (issue_select (regs, id, 7) == 1)
-	    {
-	      printf ("select failed, retrying...\n");
-	      DELAY(1000);
-	    }
-	  wait_for_select (regs);
-        }
 
-      SEND_BYTE (regs, MSG_IDENTIFY);	/* no MSG_IDENTIFY_DR yet */
+      /* handle drives that don't want to be asked whether to go
+	 sync at all. */
+      if (inhibit_sync[dev->sc_ac->amiga_unit][id]
+	  && dev->sc_sync[id].state == SYNC_START)
+	{
+#ifdef DEBUG
+	  if (sync_debug)
+	    printf ("Forcing target %d asynchronous.\n", id);
+#endif
+	  dev->sc_sync[id].offset = 0;
+	  dev->sc_sync[id].period = sbic_min_period;
+	  dev->sc_sync[id].state = SYNC_DONE;
+	}
+	
+
+      if (dev->sc_sync[id].state == SYNC_START)
+	{
+	  /* then try to initiate a sync transfer.
+
+	     So compose the sync message we're going to send to the target */
+
+#ifdef DEBUG
+	  if (sync_debug)
+	    printf ("Sending sync request to target %d ... ", id);
+#endif
+	  dev->sc_msg[0] = MSG_IDENTIFY; /* no MSG_IDENTIFY_DR yet */
+	  dev->sc_msg[1] = MSG_EXT_MESSAGE; /* sync request is extended message */
+	  dev->sc_msg[2] = 3;		 /* length */
+	  dev->sc_msg[3] = MSG_SYNC_REQ;
+	  dev->sc_msg[4] = sbic_to_scsi_period (dev, regs, sbic_min_period);
+	  dev->sc_msg[5] = sbic_max_offset;
+
+	  if (ixfer_start (regs, 6, MESG_OUT_PHASE, scsi_cmd_wait)) 
+	    ixfer_out (regs, 6, dev->sc_msg, MESG_OUT_PHASE);
+
+	  dev->sc_sync[id].state = SYNC_SENT;
+#ifdef DEBUG
+	  if (sync_debug)
+	    printf ("sent\n");
+#endif
+	}
+      else
+	{
+	  /* just send identify then */
+	  SEND_BYTE (regs, MSG_IDENTIFY);
+	}
+
       SBIC_WAIT (regs, SBIC_ASR_INT, 0);
       GET_SBIC_csr (regs, csr);
       QPRINTF (("[%02x]", csr));
+#ifdef DEBUG
+      if (sync_debug && dev->sc_sync[id].state == SYNC_SENT)
+	printf ("csr-result of last msgout: 0x%x\n", csr);
+#endif
 
-      scsi_softc.sc_flags |= SCSI_SELECTED;
+      if (csr != SBIC_CSR_SEL_TIMEO)
+	dev->sc_flags |= SCSI_SELECTED;
     }
   
   QPRINTF(("\n"));
@@ -708,21 +948,15 @@ scsiicmd(dev, target, cbuf, clen, buf, len, xferphase)
   register int wait;
 
 
-#if 0
-  /* XXXXXXXX */
-  if (target != 6 && target != 4)
-    return -1;
-  /* XXXXXXXX */
-#endif
-
   /* set the sbic into non-DMA mode */
   SET_SBIC_control (regs, (/*SBIC_CTL_HHP |*/ SBIC_CTL_EDI | SBIC_CTL_IDI |
                            /* | SBIC_CTL_HSP | */ 0));
 
+retry_selection:
   /* select the SCSI bus (it's an error if bus isn't free) */
-  if (issue_select (regs, target, dev->sc_scsi_addr))
+  if (issue_select (dev, regs, target, dev->sc_scsi_addr))
     return -1;
-  if (wait_for_select (regs))
+  if (wait_for_select (dev, regs))
     return -1;
   /*
    * Wait for a phase change (or error) then let the device
@@ -734,6 +968,31 @@ scsiicmd(dev, target, cbuf, clen, buf, len, xferphase)
   while (1) 
     {
       wait = scsi_cmd_wait;
+
+      GET_SBIC_csr (regs, csr);
+      QPRINTF((">CSR:%02x<", csr));
+
+      HIST(cxin_wait, wait);
+      if ((csr != 0xff) && (csr & 0xf0) && (csr & 0x08)) /* requesting some new phase */
+	phase = csr & PHASE;
+      else if ((csr == SBIC_CSR_DISC) || (csr == SBIC_CSR_DISC_1)
+	       || (csr == SBIC_CSR_S_XFERRED))
+	{
+	  dev->sc_flags &= ~SCSI_SELECTED;
+	  GET_SBIC_cmd_phase (regs, phase);
+	  if (phase == 0x60)
+	    GET_SBIC_tlun (regs, dev->sc_stat[0]);
+	  else
+	    return -1;
+
+	  goto out;
+	}
+      else 
+	{
+	  scsierror(dev, regs, csr);
+	  goto abort;
+	}
+
       switch (phase) 
 	{
 	case CMD_PHASE:
@@ -755,16 +1014,122 @@ scsiicmd(dev, target, cbuf, clen, buf, len, xferphase)
 	case MESG_IN_PHASE:
 	  if (ixfer_start (regs, sizeof (dev->sc_msg), phase, wait))
 	    {
+	      dev->sc_msg[0] = 0xff;
 	      ixfer_in (regs, sizeof (dev->sc_msg), dev->sc_msg);
-	      /* prepare to reject any mesgin, no matter what it might be.. */
-	      SET_SBIC_cmd (regs, SBIC_CMD_SET_ATN);
-	      WAIT_CIP (regs);
-	      SET_SBIC_cmd (regs, SBIC_CMD_CLR_ACK);
-	      phase = MESG_OUT_PHASE;
+	      /* get the command completion interrupt, or we can't send
+		 a new command (LCI) */
+	      SBIC_WAIT (regs, SBIC_ASR_INT, wait);
+	      GET_SBIC_csr (regs, csr);
+#ifdef DEBUG
+	      if (sync_debug)
+		printf ("msgin finished with csr 0x%x\n", csr);
+#endif
+	      /* test whether this is a reply to our sync request */
+	      if (dev->sc_msg[0] == MSG_EXT_MESSAGE
+		  && dev->sc_msg[1] == 3
+		  && dev->sc_msg[2] == MSG_SYNC_REQ)
+		{
+		  dev->sc_sync[target].period = scsi_period_to_sbic (dev, regs, dev->sc_msg[3]);
+		  dev->sc_sync[target].offset = dev->sc_msg[4];
+		  dev->sc_sync[target].state = SYNC_DONE;
+		  SET_SBIC_syn (regs, SBIC_SYN (dev->sc_sync[target].offset, 
+						dev->sc_sync[target].period));
+		  /* ACK the message */
+		  SET_SBIC_cmd (regs, SBIC_CMD_CLR_ACK);
+		  WAIT_CIP (regs);
+		  phase = CMD_PHASE;  /* or whatever */
+		  printf ("scsi%d: target %d now synchronous, period=%dns, offset=%d.\n",
+			  dev->sc_ac->amiga_unit, target,
+			  dev->sc_msg[3] * 4, dev->sc_msg[4]);
+		}
+	      else if (dev->sc_msg[0] == MSG_REJECT
+		       && dev->sc_sync[target].state == SYNC_SENT)
+		{
+#ifdef DEBUG
+		  if (sync_debug)
+		    printf ("target %d rejected sync, going async\n", target);
+#endif
+		  dev->sc_sync[target].period = sbic_min_period;
+		  dev->sc_sync[target].offset = 0;
+		  dev->sc_sync[target].state = SYNC_DONE;
+		  SET_SBIC_syn (regs, SBIC_SYN (dev->sc_sync[target].offset, 
+						dev->sc_sync[target].period));
+		  /* ACK the message */
+		  SET_SBIC_cmd (regs, SBIC_CMD_CLR_ACK);
+		  WAIT_CIP (regs);
+		  phase = CMD_PHASE;  /* or whatever */
+		}
+	      else if (dev->sc_msg[0] == MSG_REJECT)
+		{
+		  /* coming to think of it, we'll never REJECt a REJECT
+		     message.. :-) */
+		  
+		  /* ACK the message */
+		  SET_SBIC_cmd (regs, SBIC_CMD_CLR_ACK);
+		  WAIT_CIP (regs);
+		  phase = CMD_PHASE;  /* or whatever */
+		}
+	      else if (dev->sc_msg[0] == MSG_CMD_COMPLETE)
+		{
+		  /* !! KLUDGE ALERT !!
+
+		     quite a few drives don't seem to really like the current
+		     way of sending the sync-handshake together with the
+		     ident-message, and they react by sending command-complete
+		     and disconnecting right after returning the valid sync
+		     handshake. So, all I can do is reselect the drive, and
+		     hope it won't disconnect again. I don't think this is valid
+		     behavior, but I can't help fixing a problem that apparently
+		     exists.
+
+		     Note: we should not get here on `normal' command completion,
+		     as that condition is handled by the high-level sel&xfer resume
+		     command used to walk thru status/cc-phase. */
+
+#ifdef DEBUG
+		  if (sync_debug)
+		    printf ("GOT CMD-COMPLETE! %d acting weird.. waiting for disconnect...\n", target);
+#endif
+		  /* ACK the message */
+		  SET_SBIC_cmd (regs, SBIC_CMD_CLR_ACK);
+		  WAIT_CIP (regs);
+
+		  /* wait for disconnect */
+		  while ((csr != SBIC_CSR_DISC) && (csr != SBIC_CSR_DISC_1))
+		    {
+		      DELAY (1);
+		      GET_SBIC_csr (regs, csr);
+		    }
+#ifdef DEBUG
+		  if (sync_debug)
+		    printf ("ok.\nRetrying selection.\n");
+#endif
+		  dev->sc_flags &= ~SCSI_SELECTED;
+		  goto retry_selection;
+		}
+	      else
+		{
+#ifdef DEBUG
+		  if (scsi_debug || sync_debug)
+		    printf ("Rejecting message 0x%02x\n", dev->sc_msg[0]);
+#endif
+		  /* prepare to reject the message, NACK */
+		  SET_SBIC_cmd (regs, SBIC_CMD_SET_ATN);
+		  WAIT_CIP (regs);
+		  SET_SBIC_cmd (regs, SBIC_CMD_CLR_ACK);
+		  WAIT_CIP (regs);
+		  phase = MESG_OUT_PHASE;
+		}
 	    }
 	  break;
 
 	case MESG_OUT_PHASE:
+#ifdef DEBUG
+	  if (sync_debug)
+	    printf ("Sending REJECT message to last received message.\n");
+#endif
+	  /* should only get here on reject, since it's always US that
+	     initiate a sync transfer */
 	  SEND_BYTE (regs, MSG_REJECT);
 	  phase = STATUS_PHASE;
 	  break;
@@ -812,35 +1177,13 @@ scsiicmd(dev, target, cbuf, clen, buf, len, xferphase)
           GET_SBIC_asr (regs, asr);
         }
 
+#if 0
       if (wait <= 0)            
 	goto abort;
+#endif
 
       /* wait for last command to complete */
       SBIC_WAIT (regs, SBIC_ASR_INT, wait);
-
-      GET_SBIC_csr (regs, csr);
-      QPRINTF((">CSR:%02x<", csr));
-
-      HIST(cxin_wait, wait);
-      if ((csr != 0xff) && (csr & 0xf0) && (csr & 0x08)) /* requesting some new phase */
-	phase = csr & PHASE;
-      else if ((csr == SBIC_CSR_DISC) || (csr == SBIC_CSR_DISC_1)
-	       || (csr == SBIC_CSR_S_XFERRED))
-	{
-	  dev->sc_flags &= ~SCSI_SELECTED;
-	  GET_SBIC_cmd_phase (regs, phase);
-	  if (phase == 0x60)
-	    GET_SBIC_tlun (regs, dev->sc_stat[0]);
-	  else
-	    return -1;
-
-	  goto out;
-	}
-      else 
-	{
-	  scsierror(dev, regs, csr);
-	  goto abort;
-	}
     }
 
 abort:
@@ -864,6 +1207,7 @@ finishxfer(dev, regs, target)
   u_char phase, csr;
   int s;
 
+  QPRINTF(("{"));
   s = splbio();
   /* have the sbic complete on its own */
   SBIC_TC_PUT (regs, 0);
@@ -874,12 +1218,14 @@ finishxfer(dev, regs, target)
     {
       SBIC_WAIT (regs, SBIC_ASR_INT, 0);
       GET_SBIC_csr (regs, csr);
+      QPRINTF(("%02x:", csr));
     }
   while ((csr != SBIC_CSR_DISC) && (csr != SBIC_CSR_DISC_1)
          && (csr != SBIC_CSR_S_XFERRED));
 
   dev->sc_flags &= ~SCSI_SELECTED;
   GET_SBIC_cmd_phase (regs, phase);
+  QPRINTF(("}%02x\n", phase));
   if (phase == 0x60)
     GET_SBIC_tlun (regs, dev->sc_stat[0]);
   else
@@ -889,38 +1235,41 @@ finishxfer(dev, regs, target)
 }
 
 int
-scsi_test_unit_rdy(slave)
-	int slave;
+scsi_test_unit_rdy(ctlr, slave, unit)
+	int ctlr, slave, unit;
 {
-	register struct scsi_softc *dev = &scsi_softc;
+	register struct scsi_softc *dev = &scsi_softc[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_TEST_UNIT_READY };
 
+	cdb.lun = unit;
 	return (scsiicmd(dev, slave, (u_char *)&cdb, sizeof(cdb), (u_char *)0, 0,
 			 STATUS_PHASE));
 }
 
 int
-scsi_request_sense(slave, buf, len)
-	int slave;
+scsi_request_sense(ctlr, slave, unit, buf, len)
+	int ctlr, slave, unit;
 	u_char *buf;
 	unsigned len;
 {
-	register struct scsi_softc *dev = &scsi_softc;
+	register struct scsi_softc *dev = &scsi_softc[ctlr];
 	static struct scsi_cdb6 cdb = { CMD_REQUEST_SENSE };
 
+	cdb.lun = unit;
 	cdb.len = len;
 	return (scsiicmd(dev, slave, (u_char *)&cdb, sizeof(cdb), buf, len, DATA_IN_PHASE));
 }
 
 int
-scsi_immed_command(slave, cdb, buf, len, rd)
-	int slave;
+scsi_immed_command(ctlr, slave, unit, cdb, buf, len, rd)
+	int ctlr, slave, unit;
 	struct scsi_fmt_cdb *cdb;
 	u_char *buf;
 	unsigned len;
 {
-	register struct scsi_softc *dev = &scsi_softc;
+	register struct scsi_softc *dev = &scsi_softc[ctlr];
 
+	cdb->cdb[1] |= (unit << 5);
 	return (scsiicmd(dev, slave, (u_char *) cdb->cdb, cdb->len, buf, len,
 			 rd != 0? DATA_IN_PHASE : DATA_OUT_PHASE));
 }
@@ -932,14 +1281,14 @@ scsi_immed_command(slave, cdb, buf, len, rd)
  * routines.
  */
 int
-scsi_tt_read(slave, buf, len, blk, bshift)
-	int slave;
+scsi_tt_read(ctlr, slave, unit, buf, len, blk, bshift)
+	int ctlr, slave, unit;
 	u_char *buf;
 	u_int len;
 	daddr_t blk;
 	int bshift;
 {
-	register struct scsi_softc *dev = &scsi_softc;
+	register struct scsi_softc *dev = &scsi_softc[ctlr];
 	struct scsi_cdb10 cdb;
 	int stat;
 	int old_wait = scsi_data_wait;
@@ -947,6 +1296,7 @@ scsi_tt_read(slave, buf, len, blk, bshift)
 	scsi_data_wait = 300000;
 	bzero(&cdb, sizeof(cdb));
 	cdb.cmd = CMD_READ_EXT;
+	cdb.lun = unit;
 	blk >>= bshift;
 	cdb.lbah = blk >> 24;
 	cdb.lbahm = blk >> 16;
@@ -960,14 +1310,14 @@ scsi_tt_read(slave, buf, len, blk, bshift)
 }
 
 int
-scsi_tt_write(slave, buf, len, blk, bshift)
-	int slave;
+scsi_tt_write(ctlr, slave, unit, buf, len, blk, bshift)
+	int ctlr, slave, unit;
 	u_char *buf;
 	u_int len;
 	daddr_t blk;
 	int bshift;
 {
-	register struct scsi_softc *dev = &scsi_softc;
+	register struct scsi_softc *dev = &scsi_softc[ctlr];
 	struct scsi_cdb10 cdb;
 	int stat;
 	int old_wait = scsi_data_wait;
@@ -976,6 +1326,7 @@ scsi_tt_write(slave, buf, len, blk, bshift)
 
 	bzero(&cdb, sizeof(cdb));
 	cdb.cmd = CMD_WRITE_EXT;
+	cdb.lun = unit;
 	blk >>= bshift;
 	cdb.lbah = blk >> 24;
 	cdb.lbahm = blk >> 16;
@@ -994,7 +1345,7 @@ scsireq(dq)
 {
 	register struct devqueue *hq;
 
-	hq = &scsi_softc.sc_sq;
+	hq = &scsi_softc[dq->dq_ctlr].sc_sq;
 	insque(dq, hq->dq_back);
 	if (dq->dq_back == hq)
 		return(1);
@@ -1004,9 +1355,9 @@ scsireq(dq)
 int
 scsiustart (int unit)
 {
-	register struct scsi_softc *dev = &scsi_softc;
+	register struct scsi_softc *dev = &scsi_softc[unit];
 
-	if (dmareq(&dev->sc_dq))
+	if (dev->dmareq(&dev->sc_dq))
 		return(1);
 	return(0);
 }
@@ -1016,29 +1367,24 @@ scsistart (int unit)
 {
 	register struct devqueue *dq;
 	
-	dq = scsi_softc.sc_sq.dq_forw;
+	dq = scsi_softc[unit].sc_sq.dq_forw;
 	(dq->dq_driver->d_go)(dq->dq_unit);
 }
 
 int
-scsigo(unit, slave, bp, cdb, pad)
-	int unit, slave;
+scsigo(ctlr, slave, unit, bp, cdb, pad)
+	int ctlr, slave, unit;
 	struct buf *bp;
 	struct scsi_fmt_cdb *cdb;
 	int pad;
 {
-  register struct scsi_softc *dev = &scsi_softc;
+  register struct scsi_softc *dev = &scsi_softc[ctlr];
   volatile register sbic_padded_regmap_t *regs =
 			(sbic_padded_regmap_t *)dev->sc_ac->amiga_addr;
   int i, dmaflags;
   u_char phase, csr, asr, cmd;
 
-#if 0
-  /* XXXXXXXX */
-  if (slave != 6 && slave != 4)
-    return -1;
-  /* XXXXXXXX */
-#endif
+  cdb->cdb[1] |= unit << 5;
 
   /* this should only happen on character devices, and there only if user
      programs have not been written taking care of not passing odd aligned
@@ -1046,11 +1392,11 @@ scsigo(unit, slave, bp, cdb, pad)
 
 /* XXXX do all with polled I/O */
 
-  if ((((int)bp->b_un.b_addr & 3) || (bp->b_bcount & 1)))
+  if (scsi_no_dma || (((int)bp->b_un.b_addr & 3) || (bp->b_bcount & 1)))
     {
       register struct devqueue *dq;
 
-      dmafree(&dev->sc_dq);
+      dev->dmafree(&dev->sc_dq);
 
       /* in this case do the transfer with programmed I/O :-( This is
          probably still faster than doing the transfer with DMA into a
@@ -1060,7 +1406,7 @@ scsigo(unit, slave, bp, cdb, pad)
 		bp->b_flags & B_READ ? DATA_IN_PHASE : DATA_OUT_PHASE);
 
       dq = dev->sc_sq.dq_forw;
-	      dev->sc_flags &=~ SCSI_IO;
+      dev->sc_flags &=~ SCSI_IO;
       (dq->dq_driver->d_intr)(dq->dq_unit, dev->sc_stat[0]);
       return dev->sc_stat[0];
     }
@@ -1070,9 +1416,9 @@ scsigo(unit, slave, bp, cdb, pad)
                            /* | SBIC_CTL_HSP | */ SBIC_MACHINE_DMA_MODE));
 
   /* select the SCSI bus (it's an error if bus isn't free) */
-  if (issue_select(regs, slave, dev->sc_scsi_addr) || wait_for_select(regs)) 
+  if (issue_select(dev, regs, slave, dev->sc_scsi_addr) || wait_for_select(dev, regs)) 
     {
-      dmafree(&dev->sc_dq);
+      dev->dmafree(&dev->sc_dq);
       return (1);
     }
   /*
@@ -1127,7 +1473,7 @@ scsigo(unit, slave, bp, cdb, pad)
 	   doesn't even go to data in/out phase. So handle this here
 	   normally, instead of going thru abort-handling. */
 	case STATUS_PHASE:
-          dmafree(&dev->sc_dq);
+          dev->dmafree(&dev->sc_dq);
 	  finishxfer (dev, regs, slave);
           dq = dev->sc_sq.dq_forw;
 	  dev->sc_flags &=~ SCSI_IO;
@@ -1182,7 +1528,7 @@ out:
     panic ("odd transfer count in scsi_go");
 
   /* dmago() also enables interrupts for the sbic */
-  i = dmago(bp->b_un.b_addr, bp->b_bcount, dmaflags);
+  i = dev->dmago(ctlr, bp->b_un.b_addr, bp->b_bcount, dmaflags);
 
   SBIC_TC_PUT (regs, (unsigned)i);
   SET_SBIC_cmd (regs, SBIC_CMD_XFER_INFO);
@@ -1191,7 +1537,7 @@ out:
 
 abort:
   scsiabort(dev, regs, "go");
-  dmafree(&dev->sc_dq);
+  dev->dmafree(&dev->sc_dq);
   return (1);
 }
 
@@ -1199,18 +1545,18 @@ void
 scsidone (int unit)
 {
   volatile register sbic_padded_regmap_t *regs =
-			(sbic_padded_regmap_t *)scsi_softc.sc_ac->amiga_addr;
+			(sbic_padded_regmap_t *)scsi_softc[unit].sc_ac->amiga_addr;
 
 #ifdef DEBUG
   if (scsi_debug)
-    printf("scsi: done called!\n");
+    printf("scsi%d: done called!\n", unit);
 #endif
 }
 
 int
 scsiintr (int unit)
 {
-  register struct scsi_softc *dev = &scsi_softc;
+  register struct scsi_softc *dev = &scsi_softc[unit];
   volatile register sbic_padded_regmap_t *regs =
 				(sbic_padded_regmap_t *)dev->sc_ac->amiga_addr;
   register u_char asr, csr, phase;
@@ -1237,7 +1583,7 @@ QPRINTF(("[0x%x]", csr));
       dq = dev->sc_sq.dq_forw;
       finishxfer(dev, regs, dq->dq_slave);
       dev->sc_flags &=~ SCSI_IO;
-      dmafree (&dev->sc_dq);
+      dev->dmafree (&dev->sc_dq);
       (dq->dq_driver->d_intr)(dq->dq_unit, dev->sc_stat[0]);
     } 
   else if (csr == (SBIC_CSR_XFERRED|DATA_OUT_PHASE) || csr == (SBIC_CSR_XFERRED|DATA_IN_PHASE)
@@ -1246,20 +1592,20 @@ QPRINTF(("[0x%x]", csr));
   	   || csr == (SBIC_CSR_MIS_2|DATA_OUT_PHASE) || csr == (SBIC_CSR_MIS_2|DATA_IN_PHASE))
     {
       /* do scatter-gather dma hacking the controller chip, ouch.. */
-      i = dmanext ();
+      i = dev->dmanext (unit);
       SBIC_TC_PUT (regs, (unsigned)i);
       SET_SBIC_cmd (regs, SBIC_CMD_XFER_INFO);
     }
   else 
     {
       /* Something unexpected happened -- deal with it. */
-      dmastop ();
+      dev->dmastop (unit);
       scsierror(dev, regs, csr);
       scsiabort(dev, regs, "intr");
       if (dev->sc_flags & SCSI_IO) 
 	{
 	  dev->sc_flags &=~ SCSI_IO;
-	  dmafree (&dev->sc_dq);
+	  dev->dmafree (&dev->sc_dq);
 	  dq = dev->sc_sq.dq_forw;
 	  (dq->dq_driver->d_intr)(dq->dq_unit, -1);
 	}
@@ -1274,7 +1620,7 @@ scsifree(dq)
 {
 	register struct devqueue *hq;
 
-	hq = &scsi_softc.sc_sq;
+	hq = &scsi_softc[dq->dq_ctlr].sc_sq;
 	remque(dq);
 	if ((dq = hq->dq_forw) != hq)
 		(dq->dq_driver->d_start)(dq->dq_unit);
@@ -1288,12 +1634,12 @@ scsifree(dq)
 #include "st.h"
 #if NST > 0
 int
-scsi_tt_oddio(slave, buf, len, b_flags, freedma)
-	int slave, b_flags;
+scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
+	int ctlr, slave, unit, b_flags;
 	u_char *buf;
 	u_int len;
 {
-	register struct scsi_softc *dev = &scsi_softc;
+	register struct scsi_softc *dev = &scsi_softc[ctlr];
 	struct scsi_cdb6 cdb;
 	u_char iphase;
 	int stat;
@@ -1303,11 +1649,12 @@ scsi_tt_oddio(slave, buf, len, b_flags, freedma)
 	 * We can't use DMA to do this transfer.
 	 */
 	if (freedma)
-		dmafree(&dev->sc_dq);
+		dev->dmafree(&dev->sc_dq);
 	/*
 	 * Initialize command block
 	 */
 	bzero(&cdb, sizeof(cdb));
+	cdb.lun  = unit;
 	cdb.lbam = (len >> 16) & 0xff;
 	cdb.lbal = (len >> 8) & 0xff;
 	cdb.len = len & 0xff;

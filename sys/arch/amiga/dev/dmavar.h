@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dmavar.h	7.2 (Berkeley) 11/4/90
- *	$Id: dmavar.h,v 1.2 1993/08/01 19:23:05 mycroft Exp $
+ *	$Id: dmavar.h,v 1.3 1993/09/02 18:07:55 mw Exp $
  */
 
 /* dmago flags */
@@ -39,13 +39,18 @@
 #define	DMAGO_NOINT	0x80	/* don't interrupt on completion */
 
 #ifdef KERNEL
-extern void SDMAC_setup (void);
-extern void dmainit (void);
-extern int dmareq (register struct devqueue *dq);
-extern void dmafree (register struct devqueue *dq);
-extern int dmago (register char *addr, register int count, register int flags);
-extern int dmanext ();
-extern void dmastop (void);
-extern int dmaintr (void);
-extern void dmatimeout (void);
+typedef int  (*dmareq_t)  (struct devqueue *);
+typedef void (*dmafree_t) (struct devqueue *dq);
+typedef int  (*dmago_t)   (int, char *, int, int);
+typedef int  (*dmanext_t) (int);
+typedef void (*dmastop_t) (int);
+
+extern void dma3000init (struct amiga_ctlr *, dmareq_t *, dmafree_t *, dmago_t *, 
+			 dmanext_t *, dmastop_t *);
+
+extern void dma2091init (struct amiga_ctlr *, dmareq_t *, dmafree_t *, dmago_t *, 
+			 dmanext_t *, dmastop_t *);
+
+extern void dmagvp11init (struct amiga_ctlr *, dmareq_t *, dmafree_t *, dmago_t *, 
+			  dmanext_t *, dmastop_t *);
 #endif

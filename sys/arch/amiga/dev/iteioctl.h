@@ -37,7 +37,9 @@
  *
  *	from: Utah Hdr: iteioctl.h 1.1 90/07/09
  *	from: @(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$Id: iteioctl.h,v 1.2 1993/08/01 19:23:11 mycroft Exp $
+ *	$Id: iteioctl.h,v 1.3 1993/09/02 18:08:04 mw Exp $
  */
 
-#define ITESWITCH _IOW('Z',0x69, int)	/* XXX */
+#define ITESWITCH	_IOW('Z',0x69, int)	/* XXX */
+#define ITELOADKMAP	_IOW('Z',0x70, struct kbdmap)
+#define ITEGETKMAP	_IOR('Z',0x71, struct kbdmap)

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: clock.c 1.18 91/01/21
  *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.2 1993/08/01 19:22:28 mycroft Exp $
+ *	$Id: clock.c,v 1.3 1993/09/02 18:05:28 mw Exp $
  */
 
 #include "param.h"
@@ -142,57 +142,24 @@ int
 DELAY (mic)
     int mic;
 {
+  u_long n;
+  short hpos;
+
   /* busy-poll for mic microseconds. This is *no* general timeout function,
      it's meant for timing in hardware control, and as such, may not lower
      interrupt priorities to really `sleep'. */
 
-  int interval;
-  unsigned char talo, tahi;
-
-  if (mic > 10000)
+  /* this function uses HSync pulses as base units. The custom chips 
+     display only deals with 31.6kHz/2 refresh, this gives us a
+     resolution of 1/15800 s, which is ~63us (add some fuzz so we really
+     wait awhile, even if using small timeouts) */
+  n = mic/63 + 2;
+  do
     {
-      /* as long as larger than 10ms (100Hz value), wait 10ms. */
-      interval = 715909 / 100 - 1;
-      talo = interval & 0xff;
-      tahi = interval >> 8;
-      while (mic > 10000)
-        {
-          /* order of setting is important ! */
-          ciaa.talo = talo;
-          ciaa.tahi = tahi;
-      
-          /* start timer A in single shot mode */
-          ciaa.cra = (ciaa.cra & 0xc0) | 0x09;
-          /* wait till done */
-          while (ciaa.cra & 0x01) ;
-
-          mic -= 10000;
-        }
+      hpos = custom.vhposr & 0xff00;
+      while (hpos == (custom.vhposr & 0xff00)) ;
     }
-
-  if (mic < 30)
-    {
-      register int i;
-      /* XXX */
-      for (i = mic * cpuspeed; i > 0; i--) ;
-      return;
-    }
-
-  /* try to somewhat account for the time lost setting up the timers and
-     calculating values */
-  mic -= 30;
-  
-  /* minimal precision this clock offers is ~2µs */
-  if (mic < 2) mic = 2;
-
-  /* and wait for the final < 10ms microseconds. */
-  interval = 1000000 / mic;	/* don't lose precision ! */
-  interval = 715909 / interval;
-
-  ciaa.talo = interval & 0xff;
-  ciaa.tahi = interval >> 8;
-  ciaa.cra = (ciaa.cra & 0xc0) | 0x09;
-  while (ciaa.cra & 0x01) ;
+  while (n--);
 }
 
 
@@ -499,200 +466,38 @@ profclock(pc, ps)
 #endif
 #endif
 
+/* this is a hook set by a clock driver for the configured realtime clock,
+   returning plain current unix-time */
+long (*gettod) () = 0;
+long (*settod) () = 0;
+
 /*
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
  */
 inittodr(base)
-	time_t base;
+     time_t base;
 {
-	u_long timbuf = base;	/* assume no battery clock exists */
-	static int bbcinited = 0;
-
-	/* XXX */
-	if (!bbcinited) {
-#if 0
-		if (badbaddr(&BBCADDR->hil_stat))
-#endif
-			printf("WARNING: no battery clock\n");
-#if 0
-		else
-			bbcaddr = BBCADDR;
-#endif
-		bbcinited = 1;
-	}
-
-#if 0
-	/*
-	 * bbc_to_gmt converts and stores the gmt in timbuf.
-	 * If an error is detected in bbc_to_gmt, or if the filesystem
-	 * time is more recent than the gmt time in the clock,
-	 * then use the filesystem time and warn the user.
- 	 */
-	if (!bbc_to_gmt(&timbuf) || timbuf < base) {
-		printf("WARNING: bad date in battery clock\n");
-#endif
-		timbuf = base;
-#if 0
-	}
-	if (base < 5*SECYR) {
-		printf("WARNING: preposterous time in file system");
-		timbuf = 6*SECYR + 186*SECDAY + SECDAY/2;
-		printf(" -- CHECK AND RESET THE DATE!\n");
-	}
-#endif
-	
-	/* Battery clock does not store usec's, so forget about it. */
-	time.tv_sec = timbuf;
+  u_long timbuf = base;	/* assume no battery clock exists */
+  
+  if (! gettod)
+    printf ("WARNING: no battery clock\n");
+  else
+    timbuf = gettod ();
+  
+  if (timbuf < base)
+    {
+      printf ("WARNING: bad date in battery clock\n");
+      timbuf = base;
+    }
+  
+  /* Battery clock does not store usec's, so forget about it. */
+  time.tv_sec = timbuf;
 }
 
 resettodr()
 {
-#if 0
-	register int i;
-	register struct bbc_tm *tmptr;
-
-	tmptr = gmt_to_bbc(time.tv_sec);
-
-	decimal_to_bbc(0, 1,  tmptr->tm_sec);
-	decimal_to_bbc(2, 3,  tmptr->tm_min);
-	decimal_to_bbc(4, 5,  tmptr->tm_hour);
-	decimal_to_bbc(7, 8,  tmptr->tm_mday);
-	decimal_to_bbc(9, 10, tmptr->tm_mon);
-	decimal_to_bbc(11, 12, tmptr->tm_year);
-
-	/* Some bogusness to deal with seemingly broken hardware. Nonsense */
-	bbc_registers[5] = ((tmptr->tm_hour / 10) & 0x03) + 8;
-
-	write_bbc_reg(15, 13);	/* reset prescalar */
-
-	for (i = 0; i <= NUM_BBC_REGS; i++)
-	  	if (bbc_registers[i] != write_bbc_reg(i, bbc_registers[i])) {
-			printf("Cannot set battery backed clock\n");
-			break;
-		}
-#endif
+  if (settod)
+    if (settod (time.tv_sec) != 1)
+      printf("Cannot set battery backed clock\n");
 }
-
-#if 0
-struct bbc_tm *
-gmt_to_bbc(tim)
-	long tim;
-{
-	register int i;
-	register long hms, day;
-	static struct bbc_tm rt;
-
-	day = tim / SECDAY;
-	hms = tim % SECDAY;
-
-	/* Hours, minutes, seconds are easy */
-	rt.tm_hour = hms / 3600;
-	rt.tm_min  = (hms % 3600) / 60;
-	rt.tm_sec  = (hms % 3600) % 60;
-
-	/* Number of years in days */
-	for (i = STARTOFTIME - 1900; day >= days_in_year(i); i++)
-	  	day -= days_in_year(i);
-	rt.tm_year = i;
-	
-	/* Number of months in days left */
-	if (leapyear(rt.tm_year))
-		days_in_month(FEBRUARY) = 29;
-	for (i = 1; day >= days_in_month(i); i++)
-		day -= days_in_month(i);
-	days_in_month(FEBRUARY) = 28;
-	rt.tm_mon = i;
-
-	/* Days are what is left over (+1) from all that. */
-	rt.tm_mday = day + 1;  
-	
-	return(&rt);
-}
-
-bbc_to_gmt(timbuf)
-	u_long *timbuf;
-{
-	register int i;
-	register u_long tmp;
-	int year, month, day, hour, min, sec;
-
-	read_bbc();
-
-	sec = bbc_to_decimal(1, 0);
-	min = bbc_to_decimal(3, 2);
-
-	/*
-	 * Hours are different for some reason. Makes no sense really.
-	 */
-	hour  = ((bbc_registers[5] & 0x03) * 10) + bbc_registers[4];
-	day   = bbc_to_decimal(8, 7);
-	month = bbc_to_decimal(10, 9);
-	year  = bbc_to_decimal(12, 11) + 1900;
-
-	range_test(hour, 0, 23);
-	range_test(day, 1, 31);
-	range_test(month, 1, 12);
-	range_test(year, STARTOFTIME, 2000);
-
-	tmp = 0;
-
-	for (i = STARTOFTIME; i < year; i++)
-		tmp += days_in_year(i);
-	if (leapyear(year) && month > FEBRUARY)
-		tmp++;
-
-	for (i = 1; i < month; i++)
-	  	tmp += days_in_month(i);
-	
-	tmp += (day - 1);
-	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
-
-	*timbuf = tmp;
-	return(1);
-}
-
-read_bbc()
-{
-  	register int i, read_okay;
-
-	read_okay = 0;
-	while (!read_okay) {
-		read_okay = 1;
-		for (i = 0; i <= NUM_BBC_REGS; i++)
-			bbc_registers[i] = read_bbc_reg(i);
-		for (i = 0; i <= NUM_BBC_REGS; i++)
-			if (bbc_registers[i] != read_bbc_reg(i))
-				read_okay = 0;
-	}
-}
-
-u_char
-read_bbc_reg(reg)
-	int reg;
-{
-	u_char data = reg;
-
-	if (bbcaddr) {
-		send_hil_cmd(bbcaddr, BBC_SET_REG, &data, 1, NULL);
-		send_hil_cmd(bbcaddr, BBC_READ_REG, NULL, 0, &data);
-	}
-	return(data);
-}
-
-u_char
-write_bbc_reg(reg, data)
-	u_int data;
-{
-	u_char tmp;
-
-	tmp = (u_char) ((data << HIL_SSHIFT) | reg);
-
-	if (bbcaddr) {
-		send_hil_cmd(bbcaddr, BBC_SET_REG, &tmp, 1, NULL);
-		send_hil_cmd(bbcaddr, BBC_WRITE_REG, NULL, 0, NULL);
-		send_hil_cmd(bbcaddr, BBC_READ_REG, NULL, 0, &tmp);
-	}
-	return(tmp);
-}	
-#endif

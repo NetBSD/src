@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: mem.c 1.14 90/10/12
  *	from: @(#)mem.c	7.5 (Berkeley) 5/7/91
- *	$Id: mem.c,v 1.2 1993/08/01 19:22:46 mycroft Exp $
+ *	$Id: mem.c,v 1.3 1993/09/02 18:05:35 mw Exp $
  */
 
 /*
@@ -57,6 +57,9 @@
 #include "vm/vm_statistics.h"
 #include "vm/pmap.h"
 #include "vm/vm_prot.h"
+
+
+extern int kernel_reload_write(struct uio *uio);
 
 /*ARGSUSED*/
 mmrw(dev, uio, flags)
@@ -129,6 +132,17 @@ mmrw(dev, uio, flags)
 			}
 			c = MIN(iov->iov_len, CLBYTES);
 			error = uiomove(zbuf, (int)c, uio);
+			continue;
+
+/* minor device 20 (/dev/reload) represents magic memory
+   which you can write a kernel image to,
+   causing a reboot into that kernel.  */
+		case 20:
+			/* Reads simply get EOF.  */
+			if (uio->uio_rw == UIO_READ)
+				return 0;
+
+			error = kernel_reload_write(uio);
 			continue;
 
 		default:

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: cons.c 1.1 90/07/09
  *	from: @(#)cons.c	7.6 (Berkeley) 5/4/91
- *	$Id: cons.c,v 1.2 1993/08/01 19:22:33 mycroft Exp $
+ *	$Id: cons.c,v 1.3 1993/09/02 18:05:30 mw Exp $
  */
 
 #include "sys/param.h"
@@ -59,10 +59,10 @@ int itecnprobe(), itecninit(), itecngetc(), itecnputc();
 
 
 struct	consdev constab[] = {
-	{ sercnprobe,	sercninit,	sercngetc,	sercnputc },
 #if NITE > 0
 	{ itecnprobe,	itecninit,	itecngetc,	itecnputc },
 #endif
+	{ sercnprobe,	sercninit,	sercngetc,	sercnputc },
 	{ 0 },
 };
 /* end XXX */
@@ -74,7 +74,6 @@ struct	tty *cn_tty;		/* XXX: console tty struct for tprintf */
 cninit()
 {
 	register struct consdev *cp;
-
 	/*
 	 * Collect information about all possible consoles
 	 * and find the one with highest priority
