@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.5 2002/09/27 20:30:44 thorpej Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.6 2002/10/01 04:25:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -106,9 +106,8 @@ vidcconsole_attach(parent, self, aux)
 	    (videomemory.vidm_type == VIDEOMEM_TYPE_VRAM) ? "VRAM" : "DRAM");
 }
 
-const struct cfattach vidcconsole_ca = {
-	sizeof (struct vidcconsole_softc), vidcconsole_probe, vidcconsole_attach
-};
+CFATTACH_DECL(vidcconsole, sizeof (struct vidcconsole_softc),
+    vidcconsole_probe, vidcconsole_attach, NULL, NULL)
 
 extern struct cfdriver vidcconsole_cd;
 
