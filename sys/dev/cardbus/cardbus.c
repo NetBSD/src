@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.11 1999/11/09 15:03:59 joda Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.12 1999/11/12 18:18:38 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -540,8 +540,6 @@ cardbus_attach_card(sc)
      if no functions were attached) */
   disable_function(sc, 8);
 
-  if(no_work_funcs == 0)
-      free(cc, M_DEVBUF);
   return no_work_funcs;
 }
 
