@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.10 1997/10/19 17:27:53 mycroft Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.11 1997/11/05 15:44:17 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -51,7 +51,10 @@
 
 #ifndef _KERNEL
 #include <sys/types.h>
-#endif
+#ifndef _POSIX_SOURCE
+#include <sys/stat.h>
+#endif /* !_POSIX_SOURCE /*
+#endif /* !_KERNEL */
 
 /*
  * File status flags: these are used by open(2), fcntl(2).
