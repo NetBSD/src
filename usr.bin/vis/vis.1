@@ -1,4 +1,4 @@
-.\"	$NetBSD: vis.1,v 1.9 2002/09/30 11:09:16 grant Exp $
+.\"	$NetBSD: vis.1,v 1.10 2002/12/23 01:45:54 lukem Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)vis.1	8.4 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd December 23, 2002
 .Dt VIS 1
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl cbflnostw
+.Op Fl e Ar extra
 .Op Fl F Ar foldwidth
 .Op Ar file ...
 .Sh DESCRIPTION
@@ -68,10 +69,17 @@ produces output which is neither invertible or precise, but does
 represent a minimum of change to the input.
 It is similar to
 .Dq Li cat -v .
+.Pq Dv VIS_NOSLASH
 .It Fl c
 Request a format which displays a small subset of the
 non-printable characters using C-style backslash sequences.
-.It Fl F
+.Pq Dv VIS_CSTYLE
+.It Fl e Ar extra
+Also encode characters in
+.Ar extra ,
+per
+.Xr svis 3 .
+.It Fl F Ar foldwidth
 Causes
 .Nm
 to fold output lines to foldwidth columns (default 80), like
@@ -112,17 +120,22 @@ That is, the output can be unfolded by running the output through
 .It Fl o
 Request a format which displays non-printable characters as
 an octal number, \eddd.
+.Pq Dv VIS_OCTAL
 .It Fl s
 Only characters considered unsafe to send to a terminal are encoded.
 This flag allows backspace, bell, and carriage return in addition
 to the default space, tab and newline.
+.Pq Dv VIS_SAFE
 .It Fl t
 Tabs are also encoded.
+.Pq Dv VIS_TAB
 .It Fl w
 White space (space-tab-newline) is also encoded.
+.Pq Dv VIS_WHITE
 .El
 .Sh SEE ALSO
 .Xr unvis 1 ,
+.Xr svis 3 ,
 .Xr vis 3
 .Sh HISTORY
 The
