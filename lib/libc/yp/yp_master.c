@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_master.c,v 1.8 1997/07/21 14:09:28 jtc Exp $	 */
+/*	$NetBSD: yp_master.c,v 1.9 1998/11/15 17:10:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_master.c,v 1.8 1997/07/21 14:09:28 jtc Exp $");
+__RCSID("$NetBSD: yp_master.c,v 1.9 1998/11/15 17:10:31 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -96,7 +96,7 @@ again:
 		if ((*outname = strdup(yprm.master)) == NULL)
 			r = YPERR_RESRC;
 	}
-	xdr_free(xdr_ypresp_master, (char *) &yprm);
+	xdr_free(xdr_ypresp_master, (char *)(void *)&yprm);
 	__yp_unbind(ysd);
 	if (r != 0) {
 		if (*outname) {
