@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.6 1997/01/30 09:18:54 thorpej Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.6.4.1 1997/03/03 19:28:25 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -43,7 +43,7 @@
  * Ethernet software status per interface.
  *
  * Each interface is referenced by a network interface structure,
- * arpcom.ac_if, which the routing code uses to locate the interface.
+ * ethercom.ec_if, which the routing code uses to locate the interface.
  * This structure contains the output queue for the interface, its address, ...
  */
 struct	le_softc {
