@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.23.4.1 2002/08/07 01:32:10 lukem Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.23.4.2 2002/11/22 17:36:00 tron Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -231,7 +231,7 @@ cgfourteenattach(parent, self, aux)
 		return;
 	}
 	bcopy(sa->sa_reg, sc->sc_physadr,
-	      sa->sa_nreg * sizeof(struct sbus_reg));
+	      sa->sa_nreg * sizeof(struct openprom_addr));
 
 	/*
 	 * Now map in the 8 useful pages of registers
@@ -608,8 +608,8 @@ cgfourteenmmap(dev, off, prot)
 	}
 
 	return (bus_space_mmap(sc->sc_bustag,
-		BUS_ADDR(sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
-			sc->sc_physadr[CG14_PXL_IDX].sbr_offset),
+		BUS_ADDR(sc->sc_physadr[CG14_PXL_IDX].oa_space,
+			sc->sc_physadr[CG14_PXL_IDX].oa_base),
 		off, prot, BUS_SPACE_MAP_LINEAR));
 }
 
