@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2003/06/27 22:20:14 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2003/06/28 08:25:08 dsl Exp $
 #
 # Makefile for sysinst
 
@@ -93,7 +93,8 @@ sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgto
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
 	sh ${MSG_XLAT_SH} > ${.TARGET}
 
-${PROG}: sysinstmsgs.${LANG}
+# A fake dependancy to get language dependant files built
+msg_defs.o: sysinstmsgs.${LANG}
 # .endif
 .endfor
 
