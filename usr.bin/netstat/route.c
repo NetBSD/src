@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.25 1997/10/28 22:38:48 kml Exp $	*/
+/*	$NetBSD: route.c,v 1.26 1998/05/14 20:55:51 kml Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.25 1997/10/28 22:38:48 kml Exp $");
+__RCSID("$NetBSD: route.c,v 1.26 1998/05/14 20:55:51 kml Exp $");
 #endif
 #endif /* not lint */
 
@@ -497,10 +497,10 @@ p_rtentry(rt)
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8ld ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
-		printf("%6ld%c", rt->rt_rmx.rmx_mtu, 
-		       (rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
+		printf("%6ld", rt->rt_rmx.rmx_mtu); 
 	else
-		printf("%6s ", "-");
+		printf("%6s", "-");
+	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
 	if (rt->rt_ifp) {
 		if (rt->rt_ifp != lastif) {
 			kget(rt->rt_ifp, ifnet);
