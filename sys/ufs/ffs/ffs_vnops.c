@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.30 2000/05/29 17:19:20 mycroft Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.31 2000/05/29 18:53:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -309,8 +309,7 @@ loop:
 		 * Ensure that any filesystem metadata associated
 		 * with the vnode has been written.
 		 */
-		if ((ap->a_flags & FSYNC_RECLAIM) == 0 &&
-		    (error = softdep_sync_metadata(ap)) != 0)
+		if ((error = softdep_sync_metadata(ap)) != 0)
 			return (error);
 
 		s = splbio();
