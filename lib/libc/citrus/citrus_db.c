@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db.c,v 1.1 2003/06/25 09:51:28 tshiozak Exp $	*/
+/*	$NetBSD: citrus_db.c,v 1.2 2003/07/16 08:13:51 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_db.c,v 1.1 2003/06/25 09:51:28 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_db.c,v 1.2 2003/07/16 08:13:51 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -273,11 +273,10 @@ _citrus_db_lookup_string_by_string(struct _citrus_db *db, const char *key,
 	if (ret)
 		return ret;
 
+	/* check whether the string is null terminated */
 	if (_region_size(&r) == 0)
 		return EFTYPE;
-
-	/* check whether the string is null terminated */
-	if (*((const char*)_region_head(&r)+_region_size(&r)) != '\0')
+	if (*((const char*)_region_head(&r)+_region_size(&r)-1) != '\0')
 		return EFTYPE;
 
 	if (rdata)
