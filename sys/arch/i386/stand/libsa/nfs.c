@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.1 1997/09/17 17:03:00 drochner Exp $	*/
+/*	$NetBSD: nfs.c,v 1.2 1998/01/24 12:43:09 drochner Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -100,12 +100,10 @@ struct nfs_iodesc {
 	struct nfsv2_fattrs fa;	/* all in network order */
 };
 
-struct nfs_iodesc nfs_root_node;
-
 
 /*
  * Fetch the root file handle (call mount daemon)
- * On error, return non-zero and set errno.
+ * Return zero or error number.
  */
 int
 nfs_getrootfh(d, path, fhp)
@@ -152,16 +150,12 @@ nfs_getrootfh(d, path, fhp)
 	    args, len, repl, sizeof(*repl));
 	if (cc == -1) {
 		/* errno was set by rpc_call */
-		return (-1);
+		return (errno);
 	}
-	if (cc < 4) {
-		errno = EBADRPC;
-		return (-1);
-	}
-	if (repl->errno) {
-		errno = ntohl(repl->errno);
-		return (-1);
-	}
+	if (cc < 4)
+		return (EBADRPC);
+	if (repl->errno)
+		return (ntohl(repl->errno));
 	bcopy(repl->fh, fhp, sizeof(repl->fh));
 	return (0);
 }
@@ -350,6 +344,7 @@ nfs_open(path, f)
 	char *path;
 	struct open_file *f;
 {
+	static struct nfs_iodesc nfs_root_node;
 	struct iodesc *desc;
 	struct nfs_iodesc *currfd;
 #ifndef NFS_NOSYMLINK
@@ -361,7 +356,7 @@ nfs_open(path, f)
 	char linkbuf[NFS_MAXPATHLEN + 1];
 	int nlinks = 0;
 #endif
-	int error = 0;
+	int error;
 
 #ifdef NFS_DEBUG
  	if (debug)
@@ -378,8 +373,8 @@ nfs_open(path, f)
 	/* Bind to a reserved port. */
 	desc->myport = htons(--rpc_port);
 	desc->destip = rootip;
-	if (nfs_getrootfh(desc, rootpath, nfs_root_node.fh))
-		return (ENXIO);
+	if ((error = nfs_getrootfh(desc, rootpath, nfs_root_node.fh)))
+		return (error);
 	nfs_root_node.iodesc = desc;
 
 #ifndef NFS_NOSYMLINK
@@ -522,7 +517,7 @@ nfs_close(f)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_close: fp=0x%x\n", fp);
+		printf("nfs_close: fp=0x%lx\n", (u_long)fp);
 #endif
 
 	if (fp)
@@ -548,7 +543,8 @@ nfs_read(f, buf, size, resid)
 	
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("nfs_read: size=%d off=%d\n", size, (int)fp->off);
+		printf("nfs_read: size=%lu off=%d\n", (u_long)size,
+		       (int)fp->off);
 #endif
 	while ((int)size > 0) {
 		twiddle();
