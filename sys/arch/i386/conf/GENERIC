@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.354.2.8 2000/09/20 18:26:06 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.354.2.9 2000/12/12 21:28:24 he Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.354.2.8 $"
+#ident 		"GENERIC-$Revision: 1.354.2.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -554,6 +554,7 @@ ne*	at isapnp?			# NE2000-compatible Ethernet
 tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 
 # PCMCIA network interfaces
+an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
 awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
