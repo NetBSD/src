@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.56 2001/04/14 00:45:13 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.57 2001/04/15 23:07:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.56 2001/04/14 00:45:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.57 2001/04/15 23:07:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,9 +381,28 @@ netintr()
 }
 
 struct alpha_soft_intr alpha_soft_intrs[IPL_NSOFT];
+unsigned long ssir;
 
 /* XXX For legacy software interrupts. */
 struct alpha_soft_intrhand *softnet_intrhand;
+
+/*
+ * spl0:
+ *
+ *	Lower interrupt priority to IPL 0 -- must check for
+ *	software interrupts.
+ */
+void
+spl0(void)
+{
+
+	if (ssir) {
+		(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT);
+		softintr_dispatch();
+	}
+
+	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
+}
 
 /*
  * softintr_init:
@@ -424,28 +443,46 @@ softintr_dispatch()
 	struct alpha_soft_intr *asi;
 	struct alpha_soft_intrhand *sih;
 	u_int64_t n, i;
-	int s;
+
+#ifdef DEBUG
+	n = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
+	if (n != ALPHA_PSL_IPL_SOFT)
+		panic("softintr_dispatch: entry at ipl %ld", n);
+#endif
 
 	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+
+#ifdef DEBUG
+	n = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
+	if (n != ALPHA_PSL_IPL_SOFT)
+		panic("softintr_dispatch: after kernel lock at ipl %ld", n);
+#endif
 
 	while ((n = atomic_loadlatch_ulong(&ssir, 0)) != 0) {
 		for (i = 0; i < IPL_NSOFT; i++) {
 			if ((n & (1 << i)) == 0)
 				continue;
+
 			asi = &alpha_soft_intrs[i];
 
 			asi->softintr_evcnt.ev_count++;
 
 			for (;;) {
-				alpha_softintr_lock(asi, s);
+				(void) alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH);
+				simple_lock(&asi->softintr_slock);
+
 				sih = TAILQ_FIRST(&asi->softintr_q);
-				if (sih == NULL) {
-					alpha_softintr_unlock(asi, s);
-					break;
+				if (sih != NULL) {
+					TAILQ_REMOVE(&asi->softintr_q, sih,
+					    sih_q);
+					sih->sih_pending = 0;
 				}
-				TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
-				sih->sih_pending = 0;
-				alpha_softintr_unlock(asi, s);
+
+				simple_unlock(&asi->softintr_slock);
+				(void) alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT);
+
+				if (sih == NULL)
+					break;
 
 				uvmexp.softs++;
 				(*sih->sih_fn)(sih->sih_arg);
@@ -494,12 +531,14 @@ softintr_disestablish(void *arg)
 	struct alpha_soft_intr *asi = sih->sih_intrhead;
 	int s;
 
-	alpha_softintr_lock(asi, s);
+	s = splhigh();
+	simple_lock(&asi->softintr_slock);
 	if (sih->sih_pending) {
 		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
 		sih->sih_pending = 0;
 	}
-	alpha_softintr_unlock(asi, s);
+	simple_unlock(&asi->softintr_slock);
+	splx(s);
 
 	free(sih, M_DEVBUF);
 }
