@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.17 1999/02/13 02:54:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 1999/02/13 22:29:15 cjs Exp $
 #	from: @(#)Makefile	5.4 (Berkeley) 5/11/90
+
+.include <bsd.own.mk>
 
 PROG=	chess
 SRCS=	gnuchess.c uxdsp.c move.c
