@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/10/04 05:34:15 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2000/10/04 05:39:08 itojun Exp $
 
 VERSION=	0.9.5a
 CRYPTODIST=	${.CURDIR}/../../../crypto/dist
@@ -13,10 +13,17 @@ manpages:
 	done
 	for i in ${CRYPTODIST}/openssl/doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
-		sec=`[ "$$fn" = "config" ] && echo 5 || echo 1`; \
-		(cd `dirname $$i`; \
-		 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
-			`basename $$i`) > `basename $$i .pod`.$$sec; \
+		if [ "$$fn" = "config" ]; then \
+			sec=5; \
+			(cd `dirname $$i`; \
+			 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
+				`basename $$i`) > openssl.cnf.$$sec; \
+		else \
+			sec=1; \
+			(cd `dirname $$i`; \
+			 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
+				`basename $$i`) > `basename $$i .pod`.$$sec; \
+		fi \
 	done
 	for i in ${CRYPTODIST}/openssl/doc/crypto/*.pod \
 	    ${CRYPTODIST}/openssl/doc/ssl/*.pod; do \
@@ -34,3 +41,6 @@ manpages:
 			 sed -f libcrypto.sed > `basename $$i .pod`.$$sec; \
 		fi \
 	done
+
+clean:
+	-/bin/rm -f *.[0-9]
