@@ -1,4 +1,4 @@
-.\"	$NetBSD: pom.6,v 1.6 1998/06/13 01:09:22 jeremy Exp $
+.\"	$NetBSD: pom.6,v 1.7 1999/09/14 20:00:07 jsm Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)pom.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd May 31, 1993
+.Dd January 9, 1999
 .Dt POM 6
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd display the phase of the moon
 .Sh SYNOPSIS
 .Nm
-.Op Ar secs
+.Op [[[[[cc]yy]mm]dd]HH]
 .Sh DESCRIPTION
 The
 .Nm
@@ -49,13 +49,25 @@ utility displays the current phase of the moon.
 Useful for selecting software completion target dates and predicting 
 managerial behavior.
 .Pp
-.Bl -tag -width secs
-.It Ar secs
-Display the phase of the moon for the date represented by
-.Ar secs
-seconds past the Epoch
-(Midnight, January 1, 1970 GMT).
-If
-.Ar secs
-is unspecified, the current time is used.
+.Bl -tag -width [[[[[cc]yy]mm]dd]HH]
+.It Ar [[[[[cc]yy]mm]dd]HH]
+Display the phase of the moon for a given time.  The format is similar to
+the canonical representation used by
+.Xr date 1 .
 .El
+.Sh SEE ALSO
+.Xr date 1
+.Sh AUTHOR
+.Nm
+was written by Keith E. Brandt.
+.Sh BUGS
+Times must be within range of the
+.Ux
+epoch.
+.Pp
+This program does not allow for the difference between the TDT and
+UTC timescales (about one minute at the time of writing).
+.Sh ACKNOWLEDGEMENTS
+This program is based on algorithms from
+.%B Practical Astronomy with Your Calculator, Third Edition
+by Peter Duffett-Smith <pjds@mrao.cam.ac.uk>.
