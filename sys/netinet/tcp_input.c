@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.76 1999/02/04 22:58:37 explorer Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.77 1999/02/05 22:37:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1015,7 +1015,7 @@ after_listen:
 			    tp->t_state == TCPS_TIME_WAIT &&
 			    SEQ_GT(ti->ti_seq, tp->rcv_nxt)) {
 				iss = tcp_new_iss(tp, sizeof(struct tcpcb),
-						  tp->rcv_nxt);
+						  tp->snd_nxt);
 				tp = tcp_close(tp);
 				/*
 				 * We have already advanced the mbuf
