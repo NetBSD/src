@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.10 1997/06/10 19:17:15 veego Exp $	*/
+/*	$NetBSD: dvma.c,v 1.11 1997/10/17 03:23:06 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -107,7 +107,8 @@ dvma_init()
  * Allocate actual memory pages in DVMA space.
  * (idea for implementation borrowed from Chris Torek.)
  */
-caddr_t dvma_malloc(bytes)
+void *
+dvma_malloc(bytes)
 	size_t bytes;
 {
     caddr_t new_mem;
@@ -127,8 +128,8 @@ caddr_t dvma_malloc(bytes)
  * Free pages from dvma_malloc()
  */
 void dvma_free(addr, size)
-	caddr_t	addr;
-	size_t	size;
+	void *addr;
+	size_t size;
 {
 	vm_size_t sz = m68k_round_page(size);
 
@@ -140,14 +141,16 @@ void dvma_free(addr, size)
  * would be used by some OTHER bus-master besides the CPU.
  * (Examples: on-board ie/le, VME xy board).
  */
-long dvma_kvtopa(kva, bustype)
-	long kva;
+u_long
+dvma_kvtopa(kva, bustype)
+	void *kva;
 	int bustype;
 {
-	long mask = 0;
+	u_long dvma, mask = 0;
 
-	if (kva < DVMA_SPACE_START || kva >= DVMA_SPACE_END)
-		panic("dvma_kvtopa: bad dmva addr=0x%x\n", kva);
+	dvma = (u_long)kva;
+	if (dvma < DVMA_SPACE_START || dvma >= DVMA_SPACE_END)
+		panic("dvma_kvtopa: bad dmva addr=0x%x\n", dvma);
 
 	switch (bustype) {
 	case BUS_OBIO:
@@ -161,7 +164,7 @@ long dvma_kvtopa(kva, bustype)
 		panic("dvma_kvtopa: bad bus type %d\n", bustype);
 	}
 
-	return(kva & mask);
+	return(dvma & mask);
 }
 
 /*
@@ -170,7 +173,11 @@ long dvma_kvtopa(kva, bustype)
  * This IS safe to call at interrupt time.
  * (Typically called at SPLBIO)
  */
-caddr_t dvma_mapin(char *kva, int len)
+void *
+dvma_mapin(kva, len, canwait)
+	void *kva;
+	int len;
+	int canwait; /* ignored */
 {
 	vm_offset_t seg_kva, seg_dma, seg_len, seg_off;
 	register vm_offset_t v, x;
@@ -229,7 +236,10 @@ caddr_t dvma_mapin(char *kva, int len)
  * This IS safe to call at interrupt time.
  * (Typically called at SPLBIO)
  */
-void dvma_mapout(char *dma, int len)
+void
+dvma_mapout(dma, len)
+	void *dma;
+	int len;
 {
 	vm_offset_t seg_dma, seg_len, seg_off;
 	register vm_offset_t v, x;
