@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: regexp.c,v 1.9 1998/09/14 20:25:04 tv Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.10 1999/05/04 17:15:51 christos Exp $");
 #endif /* not lint */
 
 #include <regexp.h>
@@ -180,10 +180,10 @@ STATIC char *reg __P((int, int *));
 STATIC char *regbranch __P((int *));
 STATIC char *regpiece __P((int *));
 STATIC char *regatom __P((int *));
-STATIC char *regnode __P((char));
+STATIC char *regnode __P((int));
 STATIC char *regnext __P((char *));
-STATIC void regc __P((char));
-STATIC void reginsert __P((char, char *));
+STATIC void regc __P((int));
+STATIC void reginsert __P((int, char *));
 STATIC void regtail __P((char *, char *));
 STATIC void regoptail __P((char *, char *));
 #ifdef STRCSPN
@@ -222,6 +222,7 @@ const char *exp;
 #ifdef notdef
 	if (exp[0] == '.' && exp[1] == '*') exp += 2;  /* aid grep */
 #endif
+	/* LINTED const castaway */
 	regparse = (char *)exp;
 	regnpar = 1;
 	regsize = 0L;
@@ -240,6 +241,7 @@ const char *exp;
 		FAIL("out of space");
 
 	/* Second pass: emit code. */
+	/* LINTED const castaway */
 	regparse = (char *)exp;
 	regnpar = 1;
 	regcode = r->program;
@@ -538,17 +540,14 @@ int *flagp;
 	case '\n':
 	case ')':
 		FAIL("internal urp");	/* Supposed to be caught earlier. */
-		break;
 	case '?':
 	case '+':
 	case '*':
 		FAIL("?+* follows nothing");
-		break;
 	case '\\':
 		switch (*regparse++) {
 		case '\0':
 			FAIL("trailing \\");
-			break;
 		case '<':
 			ret = regnode(WORDA);
 			break;
@@ -562,6 +561,7 @@ int *flagp;
 		}
 		break;
 	de_fault:
+		/*FALLTHROUGH*/
 	default:
 		/*
 		 * Encode a string of characters to be matched exactly.
@@ -651,7 +651,7 @@ int *flagp;
  */
 static char *			/* Location. */
 regnode(op)
-char op;
+int op;
 {
 	char *ret;
 	char *ptr;
@@ -676,7 +676,7 @@ char op;
  */
 static void
 regc(b)
-char b;
+int b;
 {
 	if (regcode != &regdummy)
 		*regcode++ = b;
@@ -691,7 +691,7 @@ char b;
  */
 static void
 reginsert(op, opnd)
-char op;
+int op;
 char *opnd;
 {
 	char *src;
@@ -743,7 +743,7 @@ char *val;
 		offset = scan - val;
 	else
 		offset = val - scan;
-	*(scan+1) = (offset>>8)&0377;
+	*(scan+1) = ((unsigned int)offset>>8)&0377;
 	*(scan+2) = offset&0377;
 }
 
@@ -810,9 +810,11 @@ const char *string;
 
 	/* If there is a "must appear" string, look for it. */
 	if (prog->regmust != NULL) {
+		/* LINTED const castaway */
 		s = (char *)string;
 		while ((s = strchr(s, prog->regmust[0])) != NULL) {
-			if (strncmp(s, prog->regmust, prog->regmlen) == 0)
+			if (strncmp(s, prog->regmust,
+			    (size_t)prog->regmlen) == 0)
 				break;	/* Found it. */
 			s++;
 		}
@@ -821,6 +823,7 @@ const char *string;
 	}
 
 	/* Mark beginning of line for ^ . */
+	/* LINTED const castaway */
 	regbol = (char *)string;
 
 	/* Simplest case:  anchored match need be tried only once. */
@@ -828,6 +831,7 @@ const char *string;
 		return(regtry(prog, string));
 
 	/* Messy cases:  unanchored match. */
+	/* LINTED const castaway */
 	s = (char *)string;
 	if (prog->regstart != '\0')
 		/* We know what char it must start with. */
@@ -859,6 +863,7 @@ const char *string;
 	char **sp;
 	char **ep;
 
+	/* LINTED const castaway */
 	reginput = (char *)string;				/* XXX */
 	regstartp = (char **)prog->startp;			/* XXX */
 	regendp = (char **)prog->endp;				/* XXX */
@@ -870,7 +875,9 @@ const char *string;
 		*ep++ = NULL;
 	}
 	if (regmatch((char *)prog->program + 1)) {		/* XXX */
+		/* LINTED const castaway */
 		((regexp *)prog)->startp[0] = (char *)string;	/* XXX */
+		/* LINTED const castaway */
 		((regexp *)prog)->endp[0] = reginput;		/* XXX */
 		return(1);
 	} else
@@ -944,7 +951,8 @@ char *prog;
 				if (*opnd != *reginput)
 					return(0);
 				len = strlen(opnd);
-				if (len > 1 && strncmp(opnd, reginput, len) != 0)
+				if (len > 1 && strncmp(opnd, reginput, 
+				    (size_t)len) != 0)
 					return(0);
 				reginput += len;
 			}
@@ -990,7 +998,6 @@ char *prog;
 				} else
 					return(0);
 			}
-			break;
 		case CLOSE+1:
 		case CLOSE+2:
 		case CLOSE+3:
@@ -1018,7 +1025,6 @@ char *prog;
 				} else
 					return(0);
 			}
-			break;
 		case BRANCH: {
 				char *save;
 
@@ -1065,14 +1071,11 @@ char *prog;
 				}
 				return(0);
 			}
-			break;
 		case END:
 			return(1);	/* Success! */
-			break;
 		default:
 			regerror("memory corruption");
 			return(0);
-			break;
 		}
 
 		scan = next;
