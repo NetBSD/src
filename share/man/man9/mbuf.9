@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.17 2001/09/04 02:51:16 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.18 2001/11/28 16:39:35 kleink Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,7 +83,7 @@
 .Ft struct mbuf *
 .Fn m_gethdr "int nowait" "int type"
 .Ft struct mbuf *
-.Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" "void (*copy) __P((const void *, void *, size_t))"
+.Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" "void (*copy)(const void *, void *, size_t)"
 .Ft struct mbuf *
 .Fn m_copym "struct mbuf *m" "int off0" "int len" "int wait"
 .Ft struct mbuf *
@@ -123,7 +123,7 @@
 .Ft void
 .Fn MEXTMALLOC "struct mbuf *m" "int len" "int how"
 .Ft void
-.Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int type" "void (*free) __P((caddr_t, u_int, void *))" "void *arg"
+.Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int type" "void (*free)(caddr_t, u_int, void *)" "void *arg"
 .Ft void
 .Fn MCLGET "struct mbuf *m" "int how"
 .Ft void
@@ -277,7 +277,7 @@ from caller.
 The
 .Fa type
 parameter is an mbuf type.
-.It Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" "void (*copy) __P((const void *, void *, size_t))"
+.It Fn m_devget "char *buf" "int totlen" "int off0" "struct ifnet *ifp" "void (*copy)(const void *, void *, size_t)"
 Copies
 .Fa len
 bytes from device local memory into mbufs using copy routine
@@ -493,7 +493,7 @@ The flag
 .Dv M_EXT
 is set upon success.
 Implemented as a macro.
-.It Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int type" "void (*free) __P((caddr_t, u_int, void *))" "void *arg"
+.It Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int type" "void (*free)(caddr_t, u_int, void *)" "void *arg"
 Adds pre-allocated external storage
 .Fa buf
 to a normal mbuf
