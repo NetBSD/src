@@ -281,7 +281,7 @@ arm_override_options ()
       
       if (ptr->string != NULL && ptr->string[0] != '\0')
         {
-	  struct processors * sel;
+	  const struct processors * sel;
 
           for (sel = ptr->processors; sel->name != NULL; sel ++)
             if (streq (ptr->string, sel->name))
