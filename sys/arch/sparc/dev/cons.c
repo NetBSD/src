@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.22 1996/05/18 12:27:40 mrg Exp $ */
+/*	$NetBSD: cons.c,v 1.23 1996/05/19 13:00:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@
 #include <dev/cons.h>
 
 #include <machine/bsd_openprom.h>
+#include <machine/eeprom.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/kbd.h>
@@ -276,12 +277,41 @@ cnopen(dev, flag, mode, p)
 {
 	register struct tty *tp = &cons;
  	static int firstopen = 1;
+	static int rows = 0, cols = 0;
 
-	if(firstopen) {
+	if (firstopen) {
 		clalloc(&tp->t_rawq, 1024, 1);
 		clalloc(&tp->t_canq, 1024, 1);
 		/* output queue doesn't need quoting */
 		clalloc(&tp->t_outq, 1024, 0);
+		/*
+		 * get the console struct winsize.
+		 */
+		if (CPU_ISSUN4COR4M) {
+			int i;
+			char *prop;
+
+			if ((prop = getpropstring(optionsnode, "screen-#rows"))) {
+				i = 0;
+				while (*prop != '\0')
+					i = i * 10 + *prop++ - '0';
+				rows = (unsigned short)i;
+			}
+			if ((prop = getpropstring(optionsnode, "screen-#columns"))) {
+				i = 0;
+				while (*prop != '\0')
+					i = i * 10 + *prop++ - '0';
+				cols = (unsigned short)i;
+			}
+		}
+		if (CPU_ISSUN4) {
+			struct eeprom *ep = (struct eeprom *)eeprom_va;
+
+			if (ep) {
+				rows = (u_short)ep->eeTtyRows;
+				cols = (u_short)ep->eeTtyCols;
+			}
+		}
 		firstopen = 0;
 	}
 
@@ -297,6 +327,8 @@ cnopen(dev, flag, mode, p)
 		tp->t_state = TS_ISOPEN | TS_CARR_ON;
 		(void)(*tp->t_param)(tp, &tp->t_termios);
 		ttsetwater(tp);
+		tp->t_winsize.ws_row = rows;
+		tp->t_winsize.ws_col = cols;
 	} else if (tp->t_state & TS_XCLUDE && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
