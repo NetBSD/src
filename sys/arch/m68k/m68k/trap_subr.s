@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.3 1998/09/30 23:52:32 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.4 1998/10/02 02:02:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -102,7 +102,7 @@ _ASM_LABEL(faultstkadjnotrap2):
  */
 ENTRY_NOPROFILE(trap1)
 	/* sigreturn trap handler expects syscall number in d0 */
-	movew	SYS_compat_13_sigreturn13,d0
+	movew	#SYS_compat_13_sigreturn13,d0
 	jra	_ASM_LABEL(sigreturn)
 #endif
 
