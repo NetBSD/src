@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.208 2000/07/06 00:43:36 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.209 2000/07/06 00:48:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -431,7 +431,7 @@ void
 wdstrategy(bp)
 	struct buf *bp;
 {
-	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(bp->b_dev)];
+	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(bp->b_dev));
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	daddr_t blkno;
 	int s;
@@ -795,7 +795,7 @@ wdclose(dev, flag, fmt, p)
 	int flag, fmt;
 	struct proc *p;
 {
-	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(dev)];
+	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int part = WDPART(dev);
 	int error;
 	
@@ -921,7 +921,7 @@ wdioctl(dev, xfer, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct wd_softc *wd = wd_cd.cd_devs[WDUNIT(dev)];
+	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
 	int error;
 
 	WDCDEBUG_PRINT(("wdioctl\n"), DEBUG_FUNCS);
