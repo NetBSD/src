@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.63 2001/06/02 18:09:24 chs Exp $     */
+/*	$NetBSD: trap.c,v 1.64 2001/06/03 15:07:21 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -235,6 +235,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		rv = uvm_fault(map, addr, 0, ftype);
 		if (rv != 0) {
 			if (umode == 0) {
+				KERNEL_UNLOCK();
 				FAULTCHK;
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
