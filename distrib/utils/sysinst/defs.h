@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.43 1999/06/22 00:43:57 cgd Exp $	*/
+/*	$NetBSD: defs.h,v 1.44 1999/06/22 02:43:09 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -288,7 +288,6 @@ int	distribution_sets_exist_p __P((const char *path));
 void	get_ramsize __P((void));
 void	ask_sizemult __P((void));
 void	reask_sizemult __P((void));
-int	ask_ynquestion __P((char *quest, char def, ...));
 void	run_makedev __P((void));
 int	get_via_floppy __P((void));
 int	get_via_cdrom __P((void));
