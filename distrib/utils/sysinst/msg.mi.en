@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.96 2003/04/06 16:12:37 jmmv Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.97 2003/05/21 10:05:21 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -209,6 +209,29 @@ message defaultunit
 {Unless specified with 'M' (megabytes), 'c' (cylinders) or 's' sector
 at the end of input, sizes and offsets are in %s.
 }
+
+.if 0
+message askfsroot
+{I will be asking for partition sizes and on some, mount points.
+ 
+First the root partition.  You have %d %s left on your disk. 
+Root partition size? }
+   
+message askfsswap
+{
+Next the swap partition.  You have %d %s left on your disk.
+Swap partition size? }
+    
+message askfsusr 
+{
+Next the /usr partition.  You have %d %s left on your disk.
+/usr partition size? }
+
+message askfspart
+{The next partition is /dev/%s%c.  You have %d %s left on your disk.
+Partition size? }
+.endif
+
 
 message startoutsidedisk
 {The start value you specified is beyond the end of the disk.

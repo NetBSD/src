@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.25 2003/01/11 19:44:04 christos Exp $	*/
+/*	$NetBSD: label.c,v 1.26 2003/05/21 10:05:20 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.25 2003/01/11 19:44:04 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.26 2003/05/21 10:05:20 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -307,7 +307,7 @@ getpartoff(msg_no, defpartstart)
 		    (i > ptstart && (i - ptstart) < localsizemult)) {
 			i = ptstart;
 		}
-		if (i > fsdsize) {
+		if (i > dlsize) {
 			msg_display(MSG_startoutsidedisk);
 			continue;
 		}
@@ -326,7 +326,7 @@ getpartsize(msg_no, partstart, defpartsize)
 {
 	char isize[20], maxpartc;
 	int i, partend, localsizemult;
-	int fsptend = ptstart + fsptsize;
+	int fsptend = ptstart + ptsize;
 	int partn;
 
 	maxpartc = 'a' + getmaxpartitions() - 1;
@@ -354,13 +354,13 @@ getpartsize(msg_no, partstart, defpartsize)
 		partend = NUMSEC((partstart + i) / localsizemult,
 		    localsizemult, dlcylsize);
 		/* Align to end-of-disk or end-of-slice if close enough */
-		if (fsdsize > partend && (fsdsize - partend) < localsizemult)
-			partend = fsdsize;
+		if (dlsize > partend && (dlsize - partend) < localsizemult)
+			partend = dlsize;
 		if (fsptend > partend && (fsptend - partend) < localsizemult)
 			partend = fsptend;
 		/* sanity checks */
-		if (partend > fsdsize) {
-			partend = fsdsize;
+		if (partend > dlsize) {
+			partend = dlsize;
 			msg_display(MSG_endoutsidedisk,
 			    (partend - partstart) / sizemult, multname);
 			process_menu(MENU_ok);
