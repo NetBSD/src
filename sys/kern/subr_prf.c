@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.65 1999/12/13 01:29:03 sommerfeld Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.66 2000/01/26 07:50:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -138,7 +138,6 @@ static void	 klogpri __P((int));
  */
 
 struct	tty *constty;	/* pointer to console "window" tty */
-int	consintr = 1;	/* ok to handle console interrupts? */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
@@ -580,12 +579,10 @@ printf(fmt, va_alist)
 #endif
 {
 	va_list ap;
-	int s, savintr;
+	int s;
 
 	KPRINTF_MUTEX_ENTER(s);
 
-	savintr = consintr;		/* disable interrupts */
-	consintr = 0;
 	va_start(ap, fmt);
 	kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
 	va_end(ap);
@@ -594,7 +591,6 @@ printf(fmt, va_alist)
 
 	if (!panicstr)
 		logwakeup();
-	consintr = savintr;		/* reenable interrupts */
 }
 
 /*
@@ -607,19 +603,16 @@ vprintf(fmt, ap)
 	const char *fmt;
 	va_list ap;
 {
-	int s, savintr;
+	int s;
 
 	KPRINTF_MUTEX_ENTER(s);
 
-	savintr = consintr;		/* disable interrupts */
-	consintr = 0;
 	kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
 
 	KPRINTF_MUTEX_EXIT(s);
 
 	if (!panicstr)
 		logwakeup();
-	consintr = savintr;		/* reenable interrupts */
 }
 
 /*
