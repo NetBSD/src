@@ -1,4 +1,4 @@
-/* $NetBSD: wi.c,v 1.2 2001/05/08 13:42:04 ichiro Exp $ */
+/* $NetBSD: wi.c,v 1.3 2001/05/08 16:42:49 ichiro Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1136,12 +1136,33 @@ wi_ioctl(ifp, command, data)
 		error = ether_ioctl(ifp, command, data);
 		break;
 	case SIOCSIFFLAGS:
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ifp->if_flags & IFF_PROMISC &&
+			    !(sc->wi_if_flags & IFF_PROMISC)) {
+				WI_SETVAL(WI_RID_PROMISC, 1);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    !(ifp->if_flags & IFF_PROMISC) &&
+			    sc->wi_if_flags & IFF_PROMISC) {
+				WI_SETVAL(WI_RID_PROMISC, 0);
+			}
+			wi_init(ifp);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING) {
+				wi_stop(ifp, 0);
+			}
+		}
+		sc->wi_if_flags = ifp->if_flags;
+
 		if (!(ifp->if_flags & IFF_UP)) {
-			if (sc->sc_disable)
-				(*sc->sc_disable)(sc);
-			sc->sc_enabled = 0;
-			ifp->if_flags &= ~IFF_RUNNING;
-		} 
+			if (sc->sc_enabled) {
+				if (sc->sc_disable)
+					(*sc->sc_disable)(sc);
+				sc->sc_enabled = 0;
+				ifp->if_flags &= ~IFF_RUNNING;
+			}
+		}
+		error = 0;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -1150,11 +1171,11 @@ wi_ioctl(ifp, command, data)
 			ether_delmulti(ifr, &sc->sc_ethercom);
 		if (error == ENETRESET) {
 			if (sc->sc_enabled != 0) {
-			/*
-			 * Multicast list has changed.  Set the
-			 * hardware filter accordingly.
-			 */
-			wi_setmulti(sc);
+				/*
+				 * Multicast list has changed.  Set the
+				 * hardware filter accordingly.
+				 */
+				wi_setmulti(sc);
 			}
 			error = 0;
 		}
