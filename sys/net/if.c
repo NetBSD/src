@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.144 2004/07/27 12:22:59 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.145 2004/10/06 02:44:32 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.144 2004/07/27 12:22:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.145 2004/10/06 02:44:32 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -479,9 +479,6 @@ if_attach(ifp)
 	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
 #endif
 
-	if (domains)
-		if_attachdomain1(ifp);
-
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
 }
@@ -773,7 +770,10 @@ if_clone_create(name)
 	const char *name;
 {
 	struct if_clone *ifc;
+	struct ifnet *ifp;
 	int unit;
+	int error;
+	int s;
 
 	ifc = if_clone_lookup(name, &unit);
 	if (ifc == NULL)
@@ -782,7 +782,20 @@ if_clone_create(name)
 	if (ifunit(name) != NULL)
 		return (EEXIST);
 
-	return ((*ifc->ifc_create)(ifc, unit));
+	error = (*ifc->ifc_create)(ifc, unit);
+	if (error)
+		return (error);
+
+	s = splnet();
+	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list)) {
+		if (strcmp(name, ifp->if_xname) == 0) {
+			if_attachdomain1(ifp);
+			break;
+		}
+	}
+	splx(s);
+
+	return (error);
 }
 
 /*
