@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.19.2.1 2000/07/05 13:22:34 oster Exp $
+.\"     $NetBSD: raidctl.8,v 1.19.2.2 2000/08/10 16:22:28 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -192,7 +192,9 @@ Get the component label for the specified component.
 Initialize the RAID device.  In particular, (re-write) the parity on
 the selected device.  This 
 .Ar MUST
-be done for all RAID sets before the RAID device is labeled and before
+be done for 
+.Ar all 
+RAID sets before the RAID device is labeled and before
 filesystems are created on the RAID device.
 .It Fl I Ar serial_number Ar dev
 Initialize the component labels on each component of the device.  
@@ -348,7 +350,7 @@ include:
 .It 0 
 RAID level 0.  No parity, only simple striping.
 .It 1
-RAID level 1.  Mirroring.
+RAID level 1.  Mirroring.  The parity is the mirror.
 .It 4
 RAID level 4.  Striping across components, with parity stored on the
 last component.
@@ -412,6 +414,7 @@ or
 may be used in place of
 .Sq raid0 .
 .Pp
+.Ss Initialization and Configuration
 The initial step in configuring a RAID set is to identify the components
 that will be used in the RAID set.  All components should be the same
 size.  Each component should have a disklabel type of
@@ -621,6 +624,7 @@ or
 on the device or its filesystems, and then to mount the filesystems
 for use.
 .Pp
+.Ss Maintenance of the RAID set
 After the parity has been initialized for the first time, the command:
 .Bd -unfilled -offset indent
 raidctl -p raid0
@@ -712,6 +716,7 @@ Component label for /dev/sd1e:
    Last configured as: raid0
 .Ed
 .Pp
+.Ss Dealing with Component Failures
 If for some reason
 (perhaps to test reconstruction) it is necessary to pretend a drive
 has failed, the following will perform that function:
@@ -882,6 +887,35 @@ Components:
 No spares.
 .Ed
 .Pp
+.Ss RAID on RAID
+RAID sets can be layered to create more complex and much larger RAID
+sets.  A RAID 0 set, for example, could be constructed from four RAID
+5 sets.  The following configuration file shows such a setup:
+.Bd -unfilled -offset indent
+START array
+# numRow numCol numSpare
+1 4 0
+
+START disks
+/dev/raid1e
+/dev/raid2e
+/dev/raid3e
+/dev/raid4e
+
+START layout
+# sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level_0
+128 1 1 0
+
+START queue
+fifo 100
+.Ed
+.Pp
+A similar configuration file might be used for a RAID 0 set
+constructed from components on RAID 1 sets.  In such a configuration,
+the mirroring provides a high degree of redundancy, while the striping
+provides additional speed benefits.
+.Pp
+.Ss Auto-configuration and Root on RAID
 RAID sets can also be auto-configured at boot.  To make a set
 auto-configurable, simply prepare the RAID set as above, and then do
 a:
@@ -895,8 +929,20 @@ auto-configuration, use:
 raidctl -A no raid0
 .Ed
 .Pp
-Having a system's root filesystem (/) on a RAID set is also allowed.
-To mark a RAID set as being a root filesystem, simply use:
+RAID sets which are auto-configurable will be configured before the
+root filesystem is mounted.  These RAID sets are thus available for
+use as a root filesystem, or for any other filesystem.  A primary
+advantage of using the auto-configuration is that RAID components
+become more independent of the disks they reside on.  For example,
+SCSI ID's can change, but auto-configured sets will always be
+configured correctly, even if the SCSI ID's of the component disks
+have become scrambled.
+.Pp
+Having a system's root filesystem (/) on a RAID set is also allowed,
+with the 
+.Sq a
+partition of such a RAID set being used for /.
+To use raid0a as the root filesystem, simply use:
 .Bd -unfilled -offset indent
 raidctl -A root raid0
 .Ed
@@ -909,16 +955,53 @@ Once a kernel is booting however, and an auto-configuring RAID set is
 found that is eligible to be root, then that RAID set will be
 auto-configured and used as the root device.  If two or more RAID sets
 claim to be root devices, then the user will be prompted to select the
-root device.  At this time, RAID 0, 1, 4, and 5 are all supported as
-root devices.  Multi-layered RAID devices (such as a RAID 0 set made
+root device.  At this time, RAID 0, 1, 4, and 5 sets are all supported
+as root devices.
+.Pp
+A typical RAID 1 setup with root on RAID might be as follows:
+.Bl -enum
+.It 
+wd0a - a small partition, which contains a complete, bootable, basic
+NetBSD installation. 
+.It
+wd1a - also contains a complete, bootable, basic NetBSD installation.
+.It 
+wd0e and wd1e - a RAID 1 set, raid0, used for the root filesystem.
+.It
+wd0f and wd1f - a RAID 1 set, raid1, which will be used only for
+swap space. 
+.It
+wd0g and wd1g - a RAID 1 set, raid2, used for /usr, /home, or other
+data, if desired.
+.It 
+wd0h and wd0h - a RAID 1 set, raid3, if desired.
+.El
+.Pp
+RAID sets raid0, raid1, and raid2 are all marked as
+auto-configurable.  raid0 is marked as being a root filesystem.
+When new kernels are installed, the kernel is not only copied to /, 
+but also to wd0a and wd1a.  The kernel on wd0a is required, since that
+is the kernel the system boots from.  The kernel on wd1a is also
+required, since that will be the kernel used should wd0 fail.  The
+important point here is to have redundant copies of the kernel
+available, in the event that one of the drives fail.
+.Pp
+There is no requirement that the root filesystem be on the same disk
+as the kernel.  For example, obtaining the kernel from wd0a, and using
+sd0e and sd1e for raid0, and the root filesystem, is fine.  It 
+.Ar is
+critical, however, that there be multiple kernels available, in the
+event of media failure.
+.Pp
+Multi-layered RAID devices (such as a RAID 0 set made
 up of RAID 1 sets) are
 .Ar not
 supported as root devices or auto-configurable devices at this point.
 (Multi-layered RAID devices 
 .Ar are
-supported in general, however.)  Note that in order to enable component
-auto-detection and auto-configuration of RAID devices, the
-line:
+supported in general, however, as mentioned earlier.)  Note that in
+order to enable component auto-detection and auto-configuration of
+RAID devices, the line:
 .Bd -unfilled -offset indent
 options    RAID_AUTOCONFIG
 .Ed
@@ -927,6 +1010,7 @@ must be in the kernel configuration file.  See
 .Xr raid 4
 for more details.
 .Pp
+.Ss Unconfiguration
 The final operation performed by 
 .Nm
 is to unconfigure a 
