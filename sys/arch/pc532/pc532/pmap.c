@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 1999/06/17 19:23:26 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 1999/06/26 09:09:52 matthias Exp $	*/
 
 /*
  *
@@ -609,8 +609,14 @@ vaddr_t va;
 vsize_t len;
 
 {
+  struct pmap *pm = pmap_kernel();
   pt_entry_t *pte;
+  int s;
+
   len = len / NBPG;
+
+  s = splimp();
+  simple_lock(&pm->pm_obj.vmobjlock);
 
   for ( /* null */ ; len ; len--, va += NBPG) {
 
@@ -621,10 +627,16 @@ vsize_t len;
       panic("pmap_kremove: PG_PVLIST mapping for 0x%lx\n", va);
 #endif
 
+    pm->pm_stats.resident_count--;
+    pm->pm_stats.wired_count--;
+
     *pte = 0;		/* zap! */
     pmap_update_pg(va);
     
   }
+
+  simple_unlock(&pm->pm_obj.vmobjlock);
+  splx(s);
 
 }
 
@@ -637,10 +649,22 @@ __inline static void pmap_kremove1(va)
 vaddr_t va;
 
 {
+  struct pmap *pm = pmap_kernel();
   pt_entry_t *pte;
+  int s;
+
+  s = splimp();
+  simple_lock(&pm->pm_obj.vmobjlock);
+
+  pm->pm_stats.resident_count--;
+  pm->pm_stats.wired_count--;
+
   pte = vtopte(va);
   *pte = 0;		/* zap! */
   pmap_update_pg(va);
+
+  simple_unlock(&pm->pm_obj.vmobjlock);
+  splx(s);
 }
 
 /*
@@ -654,9 +678,17 @@ struct vm_page **pgs;
 int npgs;
 
 {
+  struct pmap *pm = pmap_kernel();
   pt_entry_t *pte, opte;
-  int lcv;
+  int s, lcv;
   vaddr_t tva;
+
+  s = splimp();
+  simple_lock(&pm->pm_obj.vmobjlock);
+  pm->pm_stats.resident_count += npgs;
+  pm->pm_stats.wired_count += npgs;
+  simple_unlock(&pm->pm_obj.vmobjlock);
+  splx(s);
 
   for (lcv = 0 ; lcv < npgs ; lcv++) {
     tva = va + lcv * NBPG;
@@ -1712,13 +1744,14 @@ void pmap_destroy(pmap)
 struct pmap *pmap;
 
 {
+	int refs;
   /*
    * drop reference count
    */
   simple_lock(&pmap->pm_obj.vmobjlock);
-  pmap->pm_obj.uo_refs--;
-  if (pmap->pm_obj.uo_refs > 0) {
-    simple_unlock(&pmap->pm_obj.vmobjlock);
+  refs = --pmap->pm_obj.uo_refs;
+  simple_unlock(&pmap->pm_obj.vmobjlock);
+  if (refs > 0) {
     return;
   }
 
