@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.52.4.2 2001/07/02 13:41:41 jhawk Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.52.4.3 2002/12/15 15:59:57 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -1127,6 +1127,10 @@ sockargs(mp, buf, buflen, type)
 		 * enough external storage to hold the argument.
 		 */
 		MEXTMALLOC(m, buflen, M_WAITOK);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return (ENOBUFS);
+		}
 	}
 	m->m_len = buflen;
 	error = copyin(buf, mtod(m, caddr_t), (u_int)buflen);
