@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.18 2000/03/05 02:30:57 elric Exp $ */
+/* $NetBSD: tga.c,v 1.19 2000/03/05 07:57:52 elric Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -69,7 +69,7 @@ struct cfattach tga_ca = {
 int	tga_identify __P((tga_reg_t *));
 const struct tga_conf *tga_getconf __P((int));
 void	tga_getdevconfig __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
-	    pcitag_t tag, struct tga_devconfig *dc, int tga2));
+	    pcitag_t tag, struct tga_devconfig *dc));
 
 struct tga_devconfig tga_console_dc;
 
@@ -163,12 +163,11 @@ tgamatch(parent, match, aux)
 }
 
 void
-tga_getdevconfig(memt, pc, tag, dc, tga2)
+tga_getdevconfig(memt, pc, tag, dc)
 	bus_space_tag_t memt;
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	struct tga_devconfig *dc;
-	int tga2;
 {
 	const struct tga_conf *tgac;
 	struct raster *rap;
@@ -209,7 +208,23 @@ tga_getdevconfig(memt, pc, tag, dc, tga2)
 		panic("tga_getdevconfig: memory size mismatch?");
 #endif
 
-	if (tga2) {
+	switch (dc->dc_regs[TGA_REG_GREV] & 0xff) {
+	case 0x01:
+	case 0x02:
+	case 0x03:
+	case 0x04:
+		dc->dc_tga2 = 0;
+		break;
+	case 0x20:
+	case 0x21:
+	case 0x22:
+		dc->dc_tga2 = 1;
+		break;
+	default:
+		panic("tga_getdevconfig: TGA Revision not recognized");
+	}
+
+	if (dc->dc_tga2) {
 		int	monitor;
 
 		monitor = (~dc->dc_regs[TGA_REG_GREV] >> 16) & 0x0f;
@@ -295,7 +310,6 @@ tgaattach(parent, self, aux)
 	struct tga_softc *sc = (struct tga_softc *)self;
 	struct wsemuldisplaydev_attach_args aa;
 	pci_intr_handle_t intrh;
-	int tga2 = 0;
 	const char *intrstr;
 	u_int8_t rev;
 	int console;
@@ -305,9 +319,6 @@ tgaattach(parent, self, aux)
 #else
 	console = 0;
 #endif
-	rev = PCI_REVISION(pa->pa_class);
-	if ((rev & 0xf0) == 0x20)
-		tga2 = 1;
 	if (console) {
 		sc->sc_dc = &tga_console_dc;
 		sc->nscreens = 1;
@@ -316,7 +327,7 @@ tgaattach(parent, self, aux)
 		    malloc(sizeof(struct tga_devconfig), M_DEVBUF, M_WAITOK);
 		bzero(sc->sc_dc, sizeof(struct tga_devconfig));
 		tga_getdevconfig(pa->pa_memt, pa->pa_pc, pa->pa_tag,
-		    sc->sc_dc, tga2);
+		    sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_vaddr == NULL) {
 		printf(": couldn't map memory space; punt!\n");
@@ -347,20 +358,17 @@ tgaattach(parent, self, aux)
 	case 0x2:
 	case 0x3:
 		printf(": DC21030 step %c", 'A' + rev - 1);
-		tga2 = 0;
 		break;
 	case 0x20:
 		printf(": TGA2 abstract software model");
-		tga2 = 1;
 		break;
-	case 0x21: case 0x22:
+	case 0x21:
+	case 0x22:
 		printf(": TGA2 pass %d", rev - 0x20);
-		tga2 = 1;
 		break;
 
 	default:
 		printf("unknown stepping (0x%x)", rev);
-		tga2 = 0;
 		break;
 	}
 	printf(", ");
@@ -370,7 +378,7 @@ tgaattach(parent, self, aux)
 	 * to allocate its private storage and pass that back to us.
 	 */
 	sc->sc_dc->dc_ramdac_funcs = bt485_funcs();
-	if (!tga2) {
+	if (!sc->sc_dc->dc_tga2) {
 		sc->sc_dc->dc_ramdac_cookie = bt485_register(
 		    sc->sc_dc, tga_sched_update, tga_ramdac_wr,
 		    tga_ramdac_rd);
@@ -583,9 +591,8 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	struct tga_devconfig *dcp = &tga_console_dc;
 	long defattr;
 
-	/* XXX -- we know this isn't a TGA2 for now.  rcd */
 	tga_getdevconfig(memt, pc,
-	    pci_make_tag(pc, bus, device, function), dcp, 0);
+	    pci_make_tag(pc, bus, device, function), dcp);
 
 	/* sanity checks */
 	if (dcp->dc_vaddr == NULL)
@@ -602,10 +609,14 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	 */
 
 	/* XXX -- this only works for bt485, but then we only support that,
-	 *  currently.  It also doesn't work for TGA2, but we don't yet
-	 *  support TGA2 as a console.
+	 *  currently.
 	 */
-	bt485_cninit(dcp, tga_sched_update, tga_ramdac_wr, tga_ramdac_rd);
+	if (dcp->dc_tga2)
+		bt485_cninit(dcp, tga_sched_update, tga2_ramdac_wr,
+		    tga2_ramdac_rd);
+	else
+		bt485_cninit(dcp, tga_sched_update, tga_ramdac_wr,
+		    tga_ramdac_rd);
 
 	rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.5 2000/03/04 10:28:00 elric Exp $ */
+/* $NetBSD: tgavar.h,v 1.6 2000/03/05 07:57:52 elric Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -64,6 +64,7 @@ struct tga_devconfig {
 	tga_reg_t   *dc_regs;		/* registers; XXX: need aliases */
 
 	int	    dc_tga_type;	/* the device type; see below */
+	int	    dc_tga2;		/* True if it is a TGA2 */
 	const struct tga_conf *dc_tgaconf; /* device buffer configuration */
 
 	struct ramdac_funcs
@@ -109,8 +110,9 @@ struct tga_softc {
 #define	TGA_TYPE_UNKNOWN	7	/* unknown */
 
 #define	DEVICE_IS_TGA(class, id)					\
-	    ((PCI_VENDOR(id) == PCI_VENDOR_DEC &&			\
-	     PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030) ? 10 : 0)
+	    (((PCI_VENDOR(id) == PCI_VENDOR_DEC &&			\
+	       PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21030) ||		\
+	       PCI_PRODUCT(id) == PCI_PRODUCT_DEC_PBXGB) ? 10 : 0)
 
 int tga_cnattach __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
 		      int, int, int));
