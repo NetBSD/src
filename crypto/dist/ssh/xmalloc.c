@@ -1,3 +1,4 @@
+/*	$NetBSD: xmalloc.c,v 1.1.1.1.2.3 2001/12/10 23:54:48 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: xmalloc.c,v 1.14 2001/02/07 18:04:50 itojun Exp $");
+RCSID("$OpenBSD: xmalloc.c,v 1.16 2001/07/23 18:21:46 stevesk Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -39,8 +40,9 @@ xrealloc(void *ptr, size_t new_size)
 	if (new_size == 0)
 		fatal("xrealloc: zero size");
 	if (ptr == NULL)
-		fatal("xrealloc: NULL pointer given as argument");
-	new_ptr = realloc(ptr, new_size);
+		new_ptr = malloc(new_size);
+	else
+		new_ptr = realloc(ptr, new_size);
 	if (new_ptr == NULL)
 		fatal("xrealloc: out of memory (new_size %lu bytes)", (u_long) new_size);
 	return new_ptr;
@@ -57,11 +59,10 @@ xfree(void *ptr)
 char *
 xstrdup(const char *str)
 {
-	size_t len = strlen(str) + 1;
+	size_t len;
 	char *cp;
 
-	if (len == 0)
-		fatal("xstrdup: zero size");
+	len = strlen(str) + 1;
 	cp = xmalloc(len);
 	strlcpy(cp, str, len);
 	return cp;
