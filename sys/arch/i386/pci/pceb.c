@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.11 2003/02/08 12:00:36 jdolecek Exp $	*/
+/*	$NetBSD: pceb.c,v 1.12 2003/02/26 22:23:07 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.11 2003/02/08 12:00:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.12 2003/02/26 22:23:07 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -136,8 +136,8 @@ pceb_callback(self)
 	 */
 	memset(&ea, 0, sizeof(ea));
 	ea.ea_eba.eba_busname = "eisa";
-	ea.ea_eba.eba_iot = I386_BUS_SPACE_IO;
-	ea.ea_eba.eba_memt = I386_BUS_SPACE_MEM;
+	ea.ea_eba.eba_iot = X86_BUS_SPACE_IO;
+	ea.ea_eba.eba_memt = X86_BUS_SPACE_MEM;
 #if NEISA > 0
 	ea.ea_eba.eba_dmat = &eisa_bus_dma_tag;
 #endif
@@ -148,8 +148,8 @@ pceb_callback(self)
 	 */
 	memset(&ea, 0, sizeof(ea));
 	ea.ea_iba.iba_busname = "isa";
-	ea.ea_iba.iba_iot = I386_BUS_SPACE_IO;
-	ea.ea_iba.iba_memt = I386_BUS_SPACE_MEM;
+	ea.ea_iba.iba_iot = X86_BUS_SPACE_IO;
+	ea.ea_iba.iba_memt = X86_BUS_SPACE_MEM;
 #if NISA > 0
 	ea.ea_iba.iba_dmat = &isa_bus_dma_tag;
 #endif
