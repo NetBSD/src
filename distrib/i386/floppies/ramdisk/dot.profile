@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.4 1998/01/09 21:51:45 perry Exp $
+#	$NetBSD: dot.profile,v 1.5 1999/01/08 04:32:33 abs Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -36,6 +36,10 @@ TERM=pc3
 export TERM
 HOME=/
 export HOME
+BLOCKSIZE=1k
+export BLOCKSIZE
+EDITOR=ed
+export EDITOR
 
 umask 022
 
