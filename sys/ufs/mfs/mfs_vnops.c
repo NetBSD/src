@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.34 2003/08/07 16:34:41 agc Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.35 2003/12/28 00:36:33 dbj Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.34 2003/08/07 16:34:41 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.35 2003/12/28 00:36:33 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ mfs_close(v)
 	 * we must invalidate any in core blocks, so that
 	 * we can, free up its vnode.
 	 */
-	if ((error = vinvalbuf(vp, 1, ap->a_cred, ap->a_p, 0, 0)) != 0)
+	if ((error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 0, 0)) != 0)
 		return (error);
 	/*
 	 * There should be no way to have any more uses of this
