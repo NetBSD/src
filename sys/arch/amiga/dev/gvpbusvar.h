@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbusvar.h,v 1.4 1994/12/28 09:25:23 chopps Exp $	*/
+/*	$NetBSD: gvpbusvar.h,v 1.5 1995/02/12 19:19:09 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -35,6 +35,7 @@
 enum gvpbusprod {
 	GVP_GFORCE_040 = 0x20,
 	GVP_GFORCE_040_SCSI = 0x30,
+	GVP_A1291_SCSI = 0x40,
 	GVP_GFORCE_030 = 0xa0,
 	GVP_GFORCE_030_SCSI = 0xb0,
 	GVP_COMBO_R4 = 0x60,

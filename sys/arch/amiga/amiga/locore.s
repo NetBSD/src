@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.37 1994/12/28 09:04:41 chopps Exp $	*/
+/*	$NetBSD: locore.s,v 1.38 1995/02/12 19:18:40 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,14 +49,14 @@
 #include "assym.s"
 #include <amiga/amiga/vectors.s>
 #include <amiga/amiga/custom.h>
-#include "zssc.h"	/* needed for level 6 interrupt */
-#include "mfcs.h"	/* Another level 6 interrupt */
 
 #define CIAAADDR(ar)	movl	_CIAAbase,ar
 #define CIABADDR(ar)	movl	_CIABbase,ar
 #define CUSTOMADDR(ar)	movl	_CUSTOMbase,ar
 #define INTREQRADDR(ar)	movl	_INTREQRaddr,ar
 #define INTREQWADDR(ar)	movl	_INTREQWaddr,ar
+#define INTENAWADDR(ar) movl	_amiga_intena_write,ar
+#define	INTENARADDR(ar)	movl	_amiga_intena_read,ar
 
 	.text
 /*
@@ -85,7 +85,7 @@ _doadump:
 
 /*
  * Trap/interrupt vector routines
- */ 
+ */
 
 	.globl	_trap, _nofault, _longjmp
 _buserr:
@@ -501,18 +501,20 @@ _lev5intr:
 #else
 	INTREQWADDR(a0)
 	movew	#INTF_RBF,a0@		| clear RBF interrupt in intreq
-#endif	
+#endif
 	moveml	sp@+,d0/d1/a0/a1
 	addql	#1,_intrcnt+20
 	addql	#1,_cnt+V_INTR
 	jra	rei
-	
+
 _lev1intr:
 _lev2intr:
 _lev3intr:
+#ifndef LEV6_DEFER
 _lev4intr:
+#endif
 	moveml	#0xC0C0,sp@-
-Lnotdma:
+Lintrcommon:
 	lea	_intrcnt,a0
 	movw	sp@(22),d0		| use vector offset
 	andw	#0xfff,d0		|   sans frame type
@@ -526,32 +528,95 @@ Lnotdma:
 	jra	rei
 
 _lev6intr:
+#ifdef LEV6_DEFER
+	/*
+	 * cause a level 4 interrupt (AUD3) to occur as soon
+	 * as we return. Block generation of level 6 ints until
+	 * we have dealt with this one.
+	 */
+	moveml	#0x8080,sp@-
+	INTREQRADDR(a0)
+	movew	a0@,d0
+	btst	#INTB_EXTER,d0
+	jeq	Llev6spur
+	INTREQWADDR(a0)
+	movew	#INTF_SETCLR+INTF_AUD3,a0@
+	INTENAWADDR(a0)
+	movew	#INTF_EXTER,a0@
+	movew	#INTF_SETCLR+INTF_AUD3,a0@	| make sure THIS one is ok...
+	moveml	sp@+,#0x0101
+	rte
+Llev6spur:
+	addql	#1,_intrcnt+36		| count spurious level 6 interrupts
+	moveml	sp@+,#0x0101
+	rte
+
+_lev4intr:
+_fake_lev6intr:
+#endif
 	moveml	#0xC0C0,sp@-
-#if NMFCS > 0
-	jbsr	_mfcsintr6		| check for MultiFaceCard serial int
-	tstl	d0
-	jne	Lskipciab
+#ifdef LEV6_DEFER
+	/*
+	 * check for fake level 6
+	 */
+	INTREQRADDR(a0)
+	movew	a0@,d0
+	btst	#INTB_EXTER,d0
+	jeq	Lintrcommon		| if EXTER not pending, handle normally
 #endif
-#if NZSSC > 0
-	jbsr	_siopintr6		| check for siop (53C710) interrupt
-	tstl	d0
-	jne	Lskipciab		| XXX skip CIAB processing
-#endif
+
 	CIABADDR(a0)
 	movb	a0@(CIAICR),d0		| read irc register (clears ints!)
+	tstb	d0			| check if CIAB was source
+	jeq	Lchkexter		| no, go through isr chain
 	INTREQWADDR(a0)
+#ifndef LEV6_DEFER
 	movew	#INTF_EXTER,a0@		| clear EXTER interrupt in intreq
+#else
+	movew	#INTF_EXTER+INTF_AUD3,a0@ | clear EXTER & AUD3 in intreq
+	INTENAWADDR(a0)
+	movew	#INTF_SETCLR+INTF_EXTER,a0@ | reenable EXTER interrupts
+#endif
 	btst	#0,d0			| timerA interrupt?
 	jeq     Lskipciab		| no
+| save d0 if we want to check other CIAB interrupts?
 	lea	sp@(16),a1		| get pointer to PS
 	movl	a1,sp@-			| push pointer to PS, PC
 	jbsr	_hardclock		| call generic clock int routine
 	addql	#4,sp			| pop params
-	addql	#1,_intrcnt+24		| add another system clock interrupt
+	addql	#1,_intrcnt+32		| add another system clock interrupt
 Lskipciab:
+| process any other CIAB interrupts?
+Llev6done:
 	moveml	sp@+,#0x0303		| restore scratch regs
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
-	jra	rei			| all done
+	jra	rei			| all done [can we do rte here?]
+Lchkexter:
+| check to see if EXTER request is really set?
+	movl	_isr_exter,a0		| get head of EXTER isr chain
+Lnxtexter:
+	movl	a0,d0			| test if any more entries
+	jeq	Lexterdone		| (spurious interrupt?)
+	movl	a0,sp@-			| save isr pointer
+	movl	a0@(ISR_ARG),sp@-
+	movl	a0@(ISR_INTR),a0
+	jsr	a0@			| call isr handler
+	addql	#4,sp
+	movl	sp@+,a0			| restore isr pointer
+	movl	a0@(ISR_FORW),a0	| get next pointer
+	tstl	d0			| did handler process the int?
+	jeq	Lnxtexter		| no, try next
+Lexterdone:
+	INTREQWADDR(a0)
+#ifndef LEV6_DEFER
+	movew	#INTF_EXTER,a0@		| clear EXTER interrupt
+#else
+	movew	#INTF_EXTER+INTF_AUD3,a0@ | clear EXTER & AUD3 interrupt
+	INTENAWADDR(a0)
+	movew	#INTF_SETCLR+INTF_EXTER,a0@ | reenable EXTER interrupts
+#endif
+	addql	#1,_intrcnt+24		| count EXTER interrupts
+	jra	Llev6done
 
 _lev7intr:
 	addql	#1,_intrcnt+28
@@ -579,7 +644,6 @@ _lev7intr:
  * point for coprocessor mid-instruction frames (type 9), but we also test
  * for bus error frames (type 10 and 11).
  */
-	.comm	_ssir,1
 	.globl	_astpending
 	.globl	rei
 rei:
@@ -588,10 +652,10 @@ rei:
 	jne	Ldorte			| yes, do not make matters worse
 #endif
 	tstl	_astpending		| AST pending?
-	jeq	Lchksir			| no, go check for SIR
+	jeq	Ldorte			| no, done
 Lrei1:
 	btst	#5,sp@			| yes, are we returning to user mode?
-	jne	Lchksir			| no, go check for SIR
+	jne	Ldorte			| no, done
 	movw	#PSL_LOWIPL,sr		| lower SPL
 	clrl	sp@-			| stack adjust
 	moveml	#0xFFFF,sp@-		| save all registers
@@ -619,35 +683,6 @@ Laststkadj:
 	movl	a0,sp@(FR_SP)		| new SSP
 	moveml	sp@+,#0x7FFF		| restore user registers
 	movl	sp@,sp			| and our SP
-	rte				| and do real RTE
-Lchksir:
-	tstb	_ssir			| SIR pending?
-	jeq	Ldorte			| no, all done
-	movl	d0,sp@-			| need a scratch register
-	movw	sp@(4),d0		| get SR
-	andw	#PSL_IPL7,d0		| mask all but IPL
-	jne	Lnosir			| came from interrupt, no can do
-	movl	sp@+,d0			| restore scratch register
-Lgotsir:
-	movw	#SPL1,sr		| prevent others from servicing int
-	tstb	_ssir			| too late?
-	jeq	Ldorte			| yes, oh well...
-	clrl	sp@-			| stack adjust
-	moveml	#0xFFFF,sp@-		| save all registers
-	movl	usp,a1			| including
-	movl	a1,sp@(FR_SP)		|    the users SP
-	clrl	sp@-			| VA == none
-	clrl	sp@-			| code == none
-	movl	#T_SSIR,sp@-		| type == software interrupt
-	jbsr	_trap			| go handle it
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| and all remaining registers
-	addql	#8,sp			| pop SP and stack adjust
-	rte
-Lnosir:
-	movl	sp@+,d0			| restore scratch register
 Ldorte:
 	rte				| real return
 
@@ -702,7 +737,7 @@ start:
 	movl	#0xbfe001,_CIAAbase
 	movl	#0xbfd000,_CIABbase
 	movl	#0xdff000,_CUSTOMbase
-	
+
 	/*
 	 * initialize the timer frequency
 	 */
@@ -779,11 +814,10 @@ Lcacheon:
  * Create a fake exception frame that returns to user mode,
  * make space for the rest of a fake saved register set, and
  * pass the first available RAM and a pointer to the register
- * set to "main()".  "main()" will call "icode()", which fakes
- * an "execve()" system call, which is why we need to do that
- * ("main()" sets "u.u_ar0" to point to the register set).
+ * set to "main()".  "main()" will do an "execve()" using that
+ * stack frame.
  * When "main()" returns, we're running in process 1 and have
- * successfully faked the "execve()".  We load up the registers from
+ * successfully executed the "execve()".  We load up the registers from
  * that set; the "rte" loads the PC and PSR, which jumps to "init".
  */
   	clrw	sp@-			| vector offset/frame type
@@ -831,57 +865,6 @@ _sigcode:
 	trap	#0			| exit(errno)		(2 bytes)
 	.align	2
 _esigcode:
-
-/*
- * Icode is copied out to process 1 to exec init.
- * If the exec fails, process 1 exits.
- */
-	.globl	_icode,_szicode
-	.text
-_icode:
-	jra	st1
-init:
-	.asciz	"/sbin/init"
-	.byte	0			| GNU ``as'' bug won't
-					| allow an .even directive 
-					| here, says something about
-					| non constant, which is crap.
-argv:
-	.long	init+6-_icode	| argv[0] = "init" ("/sbin/init" + 6)
-	.long	eicode-_icode	| argv[1] follows icode after copyout
-	.long	0
-
-st1:	clrl	sp@-
-	.set	argvrpc,argv-.-2	| avoids PCREL bugs in ``as''
-					| otherwise it assebles different
-					| depending on your version of
-					| GNU ``as''.  Markus' as has a 
-					| nice one:
-					| 	a:	pea pc@(0) 
-					|is equivelent to:
-					|	a:	pea pc@(a-.)
-					|is equivelent to!: 
-					|	a:	pea pc@(b-.)
-					|	b:	....
-					|---
-					| Mine (2.2.1) doesn't work right 
-					| for #3 mine puts out
-					|	a:	pea pc@(2)
-					| and it should be pc@(4). 
-					| cest la vie.
-	pea	pc@(argvrpc)
-	.set	initrpc,init-.-2	| avoids PCREL bugs in ``as''
-					| see above comment	
-	pea	pc@(initrpc)
-	clrl	sp@-
-	moveq	#SYS_execve,d0
-	trap	#0
-	moveq	#SYS_exit,d0
-	trap	#0
-eicode:
-
-_szicode:
-	.long	_szicode-_icode
 
 /*
  * Primitives
@@ -1689,26 +1672,6 @@ ENTRY(ploadw)
 Lploadw040:			| should 68040 do a ptest?
 	rts
 
-/*
- * Set processor priority level calls.  Most are implemented with
- * inline asm expansions.  However, spl0 requires special handling
- * as we need to check for our emulated software interrupts.
- */
-
-ENTRY(spl0)
-	moveq	#0,d0
-	movw	sr,d0			| get old SR for return
-	movw	#PSL_LOWIPL,sr		| restore new SR
-	tstb	_ssir			| software interrupt pending?
-	jeq	Lspldone		| no, all done
-	subql	#4,sp			| make room for RTE frame
-	movl	sp@(4),sp@(2)		| position return address
-	clrw	sp@(6)			| set frame type 0
-	movw	#PSL_LOWIPL,sp@		| and new SR
-	jra	Lgotsir			| go handle it
-Lspldone:
-	rts
-
 ENTRY(_insque)
 	movw	sr,d0
 	movw	#PSL_HIGHIPL,sr		| atomic
@@ -2133,16 +2096,18 @@ timebomb:
 /* interrupt counters */
 	.globl	_intrcnt,_eintrcnt,_intrnames,_eintrnames
 _intrnames:
-	.asciz	"spur"
-	.asciz	"tbe"
-	.asciz	"kbd/scsi"
-	.asciz	"vbl"
-	.asciz	"lev4"
-	.asciz	"rbf"
-	.asciz	"clock"
-	.asciz	"nmi"
+	.asciz	"spur"		| spurious interrupt
+	.asciz	"tbe/soft"	| serial TBE & software
+	.asciz	"kbd/ports"	| keyboard & PORTS
+	.asciz	"vbl"		| vertical blank
+	.asciz	"audio"		| audio channels
+	.asciz	"rbf"		| serial receive
+	.asciz	"exter"		| EXTERN
+	.asciz	"nmi"		| non-maskable
+	.asciz	"clock"		| clock interrupts
+	.asciz	"spur6"		| spurious level 6
 _eintrnames:
 	.align	2
 _intrcnt:
-	.long	0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0,0
 _eintrcnt:

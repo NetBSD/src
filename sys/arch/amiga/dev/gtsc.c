@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.10 1995/01/05 07:22:35 chopps Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.11 1995/02/12 19:19:07 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -44,6 +44,7 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/dmavar.h>
 #include <amiga/dev/sbicreg.h>
 #include <amiga/dev/sbicvar.h>
@@ -58,7 +59,7 @@ int gtscprint __P((void *auxp, char *));
 void gtsc_dmafree __P((struct sbic_softc *));
 void gtsc_dmastop __P((struct sbic_softc *));
 int gtsc_dmanext __P((struct sbic_softc *));
-int gtsc_dmaintr __P((void));
+int gtsc_dmaintr __P((struct sbic_softc *));
 int gtsc_dmago __P((struct sbic_softc *, char *, int, int));
 
 struct scsi_adapter gtsc_scsiswitch = {
@@ -189,8 +190,10 @@ gtscattach(pdp, dp, auxp)
 	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
-	custom.intreq = INTF_PORTS;
-	custom.intena = INTF_SETCLR | INTF_PORTS;
+	sc->sc_isr.isr_intr = gtsc_dmaintr;
+	sc->sc_isr.isr_arg = sc;
+	sc->sc_isr.isr_ipl = 2;
+	add_isr(&sc->sc_isr);
 
 	/*
 	 * attach all scsi units on us
@@ -308,29 +311,24 @@ gtsc_dmastop(dev)
 }
 
 int
-gtsc_dmaintr()
+gtsc_dmaintr(dev)
+	struct sbic_softc *dev;
 {
 	volatile struct sdmac *sdp;
-	struct sbic_softc *dev;
-	int i, stat, found;
+	int stat;
 
-	found = 0;
-	for (i = 0; i < gtsccd.cd_ndevs; i++) {
-		dev = gtsccd.cd_devs[i];
-		if (dev == NULL)
-			continue;
-		sdp = dev->sc_cregs;
-		stat = sdp->CNTR;
-		if ((stat & GVP_CNTR_INT_P) == 0)
-			continue;
+	sdp = dev->sc_cregs;
+	stat = sdp->CNTR;
+	if ((stat & GVP_CNTR_INT_P) == 0)
+		return (0);
 #ifdef DEBUG
-		if (gtsc_debug & DDB_FOLLOW)
-			printf("gtsc_dmaintr(%d, 0x%x) ", i, stat);
+	if (gtsc_debug & DDB_FOLLOW)
+		printf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
 #endif
-		if (dev->sc_flags & SBICF_INTR)
-			found += sbicintr(dev);
-	}
-	return(found);
+	if (dev->sc_flags & SBICF_INTR)
+		if (sbicintr(dev))
+			return (1);
+	return(0);
 }
 
 

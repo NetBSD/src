@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)mfc.c
- *	$Id: mfc.c,v 1.1 1994/12/28 09:25:41 chopps Exp $
+ *	$Id: mfc.c,v 1.2 1995/02/12 19:19:16 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -50,10 +50,11 @@
 #include <sys/queue.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
-#include <amiga/dev/zbusvar.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
+#include <amiga/dev/zbusvar.h>
 
 #include <dev/cons.h>
 
@@ -62,6 +63,11 @@
 #define SEROBUF_SIZE	128
 #define SERIBUF_SIZE	1024
 
+#define splser()	spl6()
+
+/*
+ * 68581 DUART registers
+ */
 struct mfc_regs {
 	volatile u_char du_mr1a;
 #define	du_mr2a		du_mr1a
@@ -110,6 +116,9 @@ struct mfc_regs {
 	u_char pad30;
 };
 
+/*
+ * 68681 DUART serial port registers
+ */
 struct duart_regs {
 	volatile u_char ch_mr1;
 #define	ch_mr2		ch_mr1
@@ -126,6 +135,7 @@ struct duart_regs {
 
 struct mfc_softc {
 	struct	device sc_dev;
+	struct	isr sc_isr;
 	struct	mfc_regs *sc_regs;
 	u_long	clk_frq;
 	u_short	ct_val;
@@ -135,6 +145,7 @@ struct mfc_softc {
 	u_char	last_ip;
 };
 
+#if NMFCS > 0
 struct mfcs_softc {
 	struct	device sc_dev;
 	struct	duart_regs *sc_duart;
@@ -147,6 +158,12 @@ struct mfcs_softc {
 	char	*ptr, *end;
 	char	outbuf[SEROBUF_SIZE];
 };
+#endif
+
+#if NMFCP > 0
+struct mfcp_softc {
+};
+#endif
 
 struct mfc_args {
 	struct zbus_args zargs;
@@ -157,18 +174,32 @@ struct mfc_args {
 int mfcprint __P((void *auxp, char *));
 void mfcattach __P((struct device *, struct device *, void *));
 int mfcmatch __P((struct device *, struct cfdata *, void *));
+#if NMFCS > 0
 void mfcsattach __P((struct device *, struct device *, void *));
 int mfcsmatch __P((struct device *, struct cfdata *, void *));
-int mfcsintr6 __P((void));
+#endif
+#if NMFCP > 0
+void mfcpattach __P((struct device *, struct device *, void *));
+int mfcpmatch __P((struct device *, struct cfdata *, void *));
+#endif
+int mfcintr __P((struct mfc_softc *));
 void mfcsmint __P((register int unit));
 
 struct cfdriver mfccd = {
-	NULL, "mfc", (cfmatch_t) mfcmatch, mfcattach, 
+	NULL, "mfc", (cfmatch_t) mfcmatch, mfcattach,
 	DV_DULL, sizeof(struct mfc_softc), NULL, 0 };
 
+#if NMFCS > 0
 struct cfdriver mfcscd = {
-	NULL, "mfcs", (cfmatch_t) mfcsmatch, mfcsattach, 
+	NULL, "mfcs", (cfmatch_t) mfcsmatch, mfcsattach,
 	DV_TTY, sizeof(struct mfcs_softc), NULL, 0 };
+#endif
+
+#if NMFCP > 0
+struct cfdriver mfcpcd = {
+	NULL, "mfcp", (cfmatch_t) mfcpmatch, mfcpattach,
+	DV_DULL, sizeof(struct mfcp_softc), NULL, 0 };
+#endif
 
 int	mfcsstart(), mfcsparam(), mfcshwiflow();
 int	mfcs_active;
@@ -223,7 +254,7 @@ mfcmatch(pdp, cdp, auxp)
 	zap = auxp;
 	if (zap->manid == 2092 &&
 	    (zap->prodid == 16 || zap->prodid == 17 || zap->prodid == 18))
-	    
+
 		return(1);
 	return(0);
 }
@@ -240,7 +271,7 @@ mfcattach(pdp, dp, auxp)
 	struct mfc_regs *rp;
 
 	zap = auxp;
-	
+
 	printf ("\n");
 
 	scc = (struct mfc_softc *)dp;
@@ -274,8 +305,10 @@ mfcattach(pdp, dp, auxp)
 	rp->du_cra = 0x05;		/* enable A Rx & Tx */
 	rp->du_crb = 0x05;		/* enable B Rx & Tx */
 
-	custom.intreq = INTF_EXTER;
-	custom.intena = INTF_SETCLR | INTF_EXTER;
+	scc->sc_isr.isr_intr = mfcintr;
+	scc->sc_isr.isr_arg = scc;
+	scc->sc_isr.isr_ipl = 6;
+	add_isr(&scc->sc_isr);
 
 	/* configure ports */
 	bcopy(zap, &ma.zargs, sizeof(struct zbus_args));
@@ -290,7 +323,7 @@ mfcattach(pdp, dp, auxp)
 }
 
 /*
- * 
+ *
  */
 int
 mfcsmatch(pdp, cdp, auxp)
@@ -406,9 +439,9 @@ mfcsopen(dev, flag, mode, p)
 			tp->t_cflag |= MDMBUF;
 		mfcsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-		
+
 		(void)mfcsmctl(dev, TIOCM_DTR | TIOCM_RTS, DMSET);
-		if ((SWFLAGS(dev) & TIOCFLAG_SOFTCAR) || 
+		if ((SWFLAGS(dev) & TIOCFLAG_SOFTCAR) ||
 		    (mfcsmctl(dev, 0, DMGET) & TIOCM_CD))
 			tp->t_state |= TS_CARR_ON;
 		else
@@ -429,7 +462,7 @@ mfcsopen(dev, flag, mode, p)
 	 */
 	while ((tp->t_state & TS_CARR_ON) == 0 && (tp->t_cflag & CLOCAL) == 0) {
 		tp->t_state |= TS_WOPEN;
-		error = ttysleep(tp, (caddr_t)&tp->t_rawq, 
+		error = ttysleep(tp, (caddr_t)&tp->t_rawq,
 		    TTIPRI | PCATCH, ttopen, 0);
 		if (error) {
 			splx(s);
@@ -580,9 +613,9 @@ mfcsioctl(dev, cmd, data, flag, p)
 		*(int *)data = SWFLAGS(dev);
 		break;
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(p->p_ucred, &p->p_acflag);
 		if (error != 0)
-			return(EPERM); 
+			return(EPERM);
 
 		mfcsswflags[unit] = *(int *)data;
                 mfcsswflags[unit] &= /* only allow valid flags */
@@ -604,7 +637,7 @@ mfcsparam(tp, t)
 	int cfcr, cflag, unit, ospeed;
 	struct mfcs_softc *sc = mfcscd.cd_devs[tp->t_dev & 31];
 	struct mfc_softc *scc= sc->sc_mfc;
-	
+
 	cflag = t->c_cflag;
 	unit = tp->t_dev & 31;
 	if (sc->flags & CT_USED) {
@@ -635,7 +668,7 @@ mfcsparam(tp, t)
 	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
 		return(EINVAL);
 
-	/* 
+	/*
 	 * copy to tty
 	 */
 	tp->t_ispeed = t->c_ispeed;
@@ -654,7 +687,7 @@ mfcsparam(tp, t)
 	if (ospeed == 0)
 		(void)mfcsmctl(tp->t_dev, 0, DMSET);	/* hang up line */
 	else {
-		/* 
+		/*
 		 * (re)enable DTR
 		 * and set baud rate. (8 bit mode)
 		 */
@@ -691,7 +724,7 @@ mfcsstart(tp)
 
 	unit = tp->t_dev & 1;
 
-	s = spl6();
+	s = splser();
 	if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP))
 		goto out;
 
@@ -729,7 +762,7 @@ mfcsstart(tp)
 		/*
 		 * Get first character out, then have TBE-interrupts blow out
 		 * further characters, until buffer is empty, and TS_BUSY gets
-		 * cleared. 
+		 * cleared.
 		 */
 		sc->sc_duart->ch_tb = *sc->ptr++;
 		scc->imask |= 1 << (unit * 4);
@@ -749,7 +782,7 @@ mfcsstop(tp, flag)
 {
 	int s;
 
-	s = spl6();
+	s = splser();
 	if (tp->t_state & TS_BUSY) {
 		if ((tp->t_state & TS_TTSTOP) == 0)
 			tp->t_state |= TS_FLUSH;
@@ -782,7 +815,7 @@ mfcsmctl(dev, bits, how)
 		if (bits & TIOCM_RTS)
 			ub |= 0x01 << unit;
 	}
-	s = spl6();
+	s = splser();
 	switch (how) {
 	case DMSET:
 		sc->sc_regs->du_btst = ub;
@@ -820,108 +853,100 @@ mfcsmctl(dev, bits, how)
 }
 
 /*
- * Level 6 interrupt processing for the MultiFaceCard
+ * Level 6 interrupt processing for the MultiFaceCard 68681 DUART
  */
 
 int
-mfcsintr6 ()
-{
+mfcintr (scc)
 	struct mfc_softc *scc;
+{
 	struct mfcs_softc *sc;
 	struct mfc_regs *regs;
-	int i, istat, found, dummy;
+	struct tty *tp;
+	int istat, unit;
+	u_short c;
 
-	found = 0;
-	for (i = 0; i < mfccd.cd_ndevs; ++i) {
-		scc = mfccd.cd_devs[i];
-		if (scc == NULL)
-			continue;
-		regs = scc->sc_regs;
-		istat = regs->du_isr & scc->imask;
-		if (istat == 0)
-			continue;
-		++found;
-		if (istat & 0x02) {
-			sc = mfcscd.cd_devs[i * 2];
-			while (1) {
-				dummy = regs->du_sra << 8;
-				if ((dummy & 0x0100) == 0)
-					break;
-				dummy |= regs->du_rba;
-				if (sc->incnt == SERIBUF_SIZE)
-					++sc->ovfl;
-				else {
-					*sc->wptr++ = dummy;
-					if (sc->wptr == sc->inbuf + SERIBUF_SIZE)
-						sc->wptr = sc->inbuf;
-					++sc->incnt;
-					if (sc->incnt > SERIBUF_SIZE - 16)
-						regs->du_btrst = 1;
-				}
-				if (dummy & 0x1000)
-					regs->du_cra = 0x40;
+	regs = scc->sc_regs;
+	istat = regs->du_isr & scc->imask;
+	if (istat == 0)
+		return (0);
+	unit = scc->sc_dev.dv_unit * 2;
+	if (istat & 0x02) {		/* channel A receive interrupt */
+		sc = mfcscd.cd_devs[unit];
+		while (1) {
+			c = regs->du_sra << 8;
+			if ((c & 0x0100) == 0)
+				break;
+			c |= regs->du_rba;
+			if (sc->incnt == SERIBUF_SIZE)
+				++sc->ovfl;
+			else {
+				*sc->wptr++ = c;
+				if (sc->wptr == sc->inbuf + SERIBUF_SIZE)
+					sc->wptr = sc->inbuf;
+				++sc->incnt;
+				if (sc->incnt > SERIBUF_SIZE - 16)
+					regs->du_btrst = 1;
 			}
-		}
-		if (istat & 0x20) {
-			sc = mfcscd.cd_devs[i * 2 + 1];
-			while (1) {
-				dummy = regs->du_srb << 8;
-				if ((dummy & 0x0100) == 0)
-					break;
-				dummy |= regs->du_rbb;
-				if (sc->incnt == SERIBUF_SIZE)
-					++sc->ovfl;
-				else {
-					*sc->wptr++ = dummy;
-					if (sc->wptr == sc->inbuf + SERIBUF_SIZE)
-						sc->wptr = sc->inbuf;
-					++sc->incnt;
-					if (sc->incnt > SERIBUF_SIZE - 16)
-						regs->du_btrst = 2;
-				}
-				if (dummy & 0x1000)
-					regs->du_crb = 0x40;
-			}
-		}
-		if (istat & 0x01) {
-			struct tty *tp = mfcs_tty[i * 2];
-			u_short c;
-
-			sc = mfcscd.cd_devs[i * 2];
-			if (sc->ptr == sc->end) {
-				tp->t_state &= ~(TS_BUSY | TS_FLUSH);
-				scc->imask &= ~0x01;
-				regs->du_imr = scc->imask;
-				add_sicallback (tp->t_line ?
-				    linesw[tp->t_line].l_start : mfcsstart,
-				    tp, NULL);
-					   
-			}
-			else
-				regs->du_tba = *sc->ptr++;
-		}
-		if (istat & 0x10) {
-			struct tty *tp = mfcs_tty[i * 2 + 1];
-			u_short c;
-
-			sc = mfcscd.cd_devs[i * 2 + 1];
-			if (sc->ptr == sc->end) {
-				tp->t_state &= ~(TS_BUSY | TS_FLUSH);
-				scc->imask &= ~0x10;
-				regs->du_imr = scc->imask;
-				add_sicallback (tp->t_line ?
-				    linesw[tp->t_line].l_start : mfcsstart,
-				    tp, NULL);
-			}
-			else
-				regs->du_tbb = *sc->ptr++;
-		}
-		if (istat & 0x80) {
-			dummy = regs->du_ipcr;
-			printf ("mfcsintr6: ipcr %02x", dummy);
+			if (c & 0x1000)
+				regs->du_cra = 0x40;
 		}
 	}
-	return(found);
+	if (istat & 0x20) {		/* channel B receive interrupt */
+		sc = mfcscd.cd_devs[unit + 1];
+		while (1) {
+			c = regs->du_srb << 8;
+			if ((c & 0x0100) == 0)
+				break;
+			c |= regs->du_rbb;
+			if (sc->incnt == SERIBUF_SIZE)
+				++sc->ovfl;
+			else {
+				*sc->wptr++ = c;
+				if (sc->wptr == sc->inbuf + SERIBUF_SIZE)
+					sc->wptr = sc->inbuf;
+				++sc->incnt;
+				if (sc->incnt > SERIBUF_SIZE - 16)
+					regs->du_btrst = 2;
+			}
+			if (c & 0x1000)
+				regs->du_crb = 0x40;
+		}
+	}
+	if (istat & 0x01) {		/* channel A transmit interrupt */
+		tp = mfcs_tty[unit];
+		sc = mfcscd.cd_devs[unit];
+		if (sc->ptr == sc->end) {
+			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
+			scc->imask &= ~0x01;
+			regs->du_imr = scc->imask;
+			add_sicallback (tp->t_line ?
+			    linesw[tp->t_line].l_start : mfcsstart,
+			    tp, NULL);
+
+		}
+		else
+			regs->du_tba = *sc->ptr++;
+	}
+	if (istat & 0x10) {		/* channel B transmit interrupt */
+		tp = mfcs_tty[unit + 1];
+		sc = mfcscd.cd_devs[unit + 1];
+		if (sc->ptr == sc->end) {
+			tp->t_state &= ~(TS_BUSY | TS_FLUSH);
+			scc->imask &= ~0x10;
+			regs->du_imr = scc->imask;
+			add_sicallback (tp->t_line ?
+			    linesw[tp->t_line].l_start : mfcsstart,
+			    tp, NULL);
+		}
+		else
+			regs->du_tbb = *sc->ptr++;
+	}
+	if (istat & 0x80) {		/* input port change interrupt */
+		c = regs->du_ipcr;
+		printf ("%s: ipcr %02x", scc->sc_dev.dv_xname, c);
+	}
+	return(1);
 }
 
 int
@@ -943,14 +968,14 @@ mfcsxintr(unit)
 	 * while input is not blocked
 	 */
 	while (sc->incnt && (tp->t_state & TS_TBLOCK) == 0) {
-		/* 
+		/*
 		 * no collision with ser_fastint()
 		 */
 		mfcseint(unit, *sc->rptr++);
 
 		ovfl = 0;
 		/* lock against mfcs_fastint() */
-		s2 = spl6();
+		s2 = splser();
 		--sc->incnt;
 		if (sc->rptr == sc->inbuf + SERIBUF_SIZE)
 			sc->rptr = sc->inbuf;
@@ -999,7 +1024,8 @@ mfcseint(unit, stat)
 			c |= TTY_PE;
 
 	if (stat & 0x1000)
-		log(LOG_WARNING, "mfcs?: fifo overflow\n");
+		log(LOG_WARNING, "%s: fifo overflow\n",
+		    ((struct mfcs_softc *)mfcscd.cd_devs[unit])->sc_dev.dv_xname);
 
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }

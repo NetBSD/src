@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.24 1994/12/28 08:54:11 chopps Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.25 1995/02/12 19:18:33 chopps Exp $	*/
 
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
@@ -25,7 +25,7 @@
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/cc.h>
-#include <amiga/amiga/cia.h> 
+#include <amiga/amiga/cia.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/memlist.h>
@@ -52,6 +52,11 @@ extern u_long noncontig_enable;
  */
 vm_offset_t INTREQRaddr;
 vm_offset_t INTREQWaddr;
+
+/*
+ * these are used by the extended spl?() macros.
+ */
+volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 
 /*
  * the number of pages in our hw mapping and the start address
@@ -153,8 +158,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		aga_enable |= 1;
 #endif
 #ifdef MACHINE_NONCONTIG
-	if (flags & 2)
-		noncontig_enable = 1;
+	if (flags & (3 << 1))
+		noncontig_enable = (flags >> 1) & 3;
 #endif
 
 	/* 
@@ -173,7 +178,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 
 	memlist = (struct boot_memlist *)end_loaded;
 	end_loaded = (u_int)&memlist->m_seg[memlist->m_nseg];
-  
+
 	/*
 	 * Get ZorroII (16-bit) memory if there is any and it's not where the
 	 * kernel is loaded.
@@ -227,7 +232,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	pstart = vstart + fphystart;
 	pend   = vend   + fphystart;
 	avail -= vstart;
-  
+
 #ifdef M68040
 	if (cpu040) {
 		/*
@@ -259,7 +264,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		pstart += NBPG;
 		avail -= NBPG;
 	}
-  
+
 	/*
 	 * allocate initial page table pages
 	 */
@@ -271,7 +276,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	vstart += ptsize;
 	pstart += ptsize;
 	avail -= ptsize;
-  
+
 	/*
 	 * allocate kernel page table map
 	 */
@@ -295,7 +300,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		/*
 		 * map all level 1 entries to the segment table
 		 */
-		sg = (u_int *)Sysseg1_pa; 
+		sg = (u_int *)Sysseg1_pa;
 		while (sg_proto < ptpa) {
 			*sg++ = sg_proto;
 			sg_proto += AMIGA_040RTSIZE;
@@ -306,7 +311,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		 * map so many segs
 		 */
 		sg = (u_int *)Sysseg_pa;
-		pg = (u_int *)Sysptmap_pa; 
+		pg = (u_int *)Sysptmap_pa;
 		while (sg_proto < pstart) {
 			*sg++ = sg_proto;
 			if (pg_proto < pstart)
@@ -357,7 +362,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 		 * map so many segs
 		 */
 		sg = (u_int *)Sysseg_pa;
-		pg = (u_int *)Sysptmap_pa; 
+		pg = (u_int *)Sysptmap_pa;
 		while (sg_proto < pstart) {
 			*sg++ = sg_proto;
 			*pg++ = pg_proto;
@@ -404,7 +409,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 * record KVA at which to access current u-area PTE(s)
 	 */
 	Umap = (u_int)Sysmap + AMIGA_MAX_PTSIZE - UPAGES * 4;
-  
+
 	/*
 	 * initialize kernel page table page(s) (assume load at VA 0)
 	 */
@@ -473,14 +478,14 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	 * First available page (vstart/pstart) is used for proc0 page table.
 	 * Next UPAGES page(s) following are for u-area.
 	 */
-  
+
 	p0_ptpa = pstart;
 	pstart += NBPG;
 	vstart += NBPG;
 	avail -= NBPG;
 
 	p0_u_area_pa = pstart;		/* base of u-area and end of PT */
-  
+
 	/*
 	 * invalidate entire page table
 	 */
@@ -517,7 +522,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	maxmem  = pend >> PGSHIFT;
 	lowram  = fphystart >> PGSHIFT;
 	physmem = fphysize >> PGSHIFT;
-  
+
 	/*
 	 * get the pmap module in sync with reality.
 	 */
@@ -632,6 +637,13 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	custom.intreq = 0x7fff;			/* clear any current */
 	ciaa.icr = 0x7f;			/* and keyboard */
 	ciab.icr = 0x7f;			/* and again */
+
+	/*
+	 * remember address of read and write intena register for use
+	 * by extended spl?() macros.
+	 */
+	amiga_intena_read  = &custom.intenar;
+	amiga_intena_write = &custom.intena;
 
 	/*
 	 * This is needed for 3000's with superkick ROM's. Bit 7 of
@@ -778,7 +790,7 @@ kernel_reload_write(uio)
 	int error, c;
 
 	iov = uio->uio_iov;
-  
+
 	if (kernel_image == 0) {
 		/*
 		 * We have to get at least the whole exec header

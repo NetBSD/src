@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.12 1994/12/01 17:25:25 chopps Exp $	*/
+/*	$NetBSD: kbd.c,v 1.13 1995/02/12 19:19:15 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -204,28 +204,48 @@ int
 kbdintr (mask)
      int mask;
 {
-  u_char c, in;
+  u_char c;
   struct kbd_softc *k = &kbd_softc;
   struct firm_event *fe;
   int put;
+#ifdef KBDRESET
+  static int reset_warn;
+#endif
  
   /* now only invoked from generic CIA interrupt handler if there *is*
      a keyboard interrupt pending */
     
-  in = ciaa.sdr;
+  c = ~ciaa.sdr;	/* keyboard data is inverted */
   /* ack */
   ciaa.cra |= (1 << 6);	/* serial line output */
+#ifdef KBDRESET
+  if (reset_warn && c == 0xf0) {
+#ifdef DEBUG
+    printf ("kbdintr: !!!! Reset Warning !!!!\n");
+#endif
+    bootsync();
+    reset_warn = 0;
+    DELAY(30000000);
+  }
+#endif
   /* wait 200 microseconds (for bloody Cherry keyboards..) */
-  DELAY(200);
+  DELAY(2000);			/* fudge delay a bit for some keyboards */
   ciaa.cra &= ~(1 << 6);
-
-  c = ~in;	/* keyboard data is inverted */
 
   /* process the character */
   
   c = (c >> 1) | (c << 7);	/* rotate right once */
 
   
+#ifdef KBDRESET
+  if (c == 0x78) {
+#ifdef DEBUG
+    printf ("kbdintr: Reset Warning started\n");
+#endif
+    ++reset_warn;
+    return;
+  }
+#endif
   /* if not in event mode, deliver straight to ite to process key stroke */
   if (! k->k_event_mode)
     {
