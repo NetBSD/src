@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.91 2002/10/02 16:02:17 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.92 2002/10/09 08:56:25 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -355,7 +355,11 @@ zs_attach_obio(parent, self, aux)
 		}
 		zsc->zsc_bustag = oba->oba_bustag;
 		zsc->zsc_dmatag = oba->oba_dmatag;
-		/* Find prom unit by physical address */
+		/*
+		 * Find prom unit by physical address
+		 * We're just comparing the address (not the iospace) here
+		 */
+		paddr = BUS_ADDR_PADDR(paddr);
 		if (cpuinfo.cpu_type == CPUTYP_4_100)
 			/*
 			 * On the sun4/100, the top-most 4 bits are zero
