@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.10 2000/06/12 05:25:48 mrg Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.11 2000/07/04 14:58:36 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -455,8 +455,12 @@ lsi64854_enet_intr(arg)
 	char bits[64];
 	u_int32_t csr;
 	static int dodrain = 0;
+	int rv;
 
 	csr = L64854_GCSR(sc);
+
+	/* If the DMA logic shows an interrupt, claim it */
+	rv = ((csr & E_INT_PEND) != 0) ? 1 : 0;
 
 	if (csr & (E_ERR_PEND|E_SLAVE_ERR)) {
 		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
@@ -478,7 +482,7 @@ lsi64854_enet_intr(arg)
 			delay(1);
 	}
 
-	return (*sc->sc_intrchain)(sc->sc_intrchainarg);
+	return (rv | (*sc->sc_intrchain)(sc->sc_intrchainarg));
 }
 
 /*
