@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.48 2003/11/25 08:52:40 pk Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.49 2003/11/25 09:15:50 pk Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -32,8 +32,8 @@ MKID?=		mkid
 .MAKEOVERRIDES+=USETOOLS	# make sure proper value is propagated
 
 _MKMSG?=		@\#
-_MKSHMSG?=		: echo
-_MKSHECHO?=		: echo
+_MKSHMSG?=		echo
+_MKSHECHO?=		echo
 _MKMSG_CREATE?=		:
 _MKTARGET_COMPILE?=	:
 _MKTARGET_CREATE?=	:
