@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.8 2001/12/17 14:31:02 ichiro Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.9 2001/12/17 14:34:37 ichiro Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.8 2001/12/17 14:31:02 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.9 2001/12/17 14:34:37 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -496,6 +496,7 @@ void
 uftdi_break(void *vsc, int portno, int onoff)
 {
 	struct uftdi_softc *sc = vsc;
+	usb_device_request_t req;
 	int data;
 
 	DPRINTF(("uftdi_break: sc=%p, port=%d onoff=%d\n", vsc, portno,
