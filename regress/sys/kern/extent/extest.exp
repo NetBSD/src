@@ -1,4 +1,4 @@
-# $NetBSD: extest.exp,v 1.2 2000/06/16 18:50:46 drochner Exp $
+# $NetBSD: extest.exp,v 1.2.2.1 2000/06/29 23:49:32 thorpej Exp $
 # real output must start in line 4
 
 output for test1
@@ -25,3 +25,9 @@ output for test5
 result: 0xf0000000
 extent `test5' (0xf0000000 - 0xffffffff), flags = 0x0
      0xf0000000 - 0xf0000000
+output for test6
+result: 0x0
+result: 0x8
+result: 0xa
+extent `test6' (0x0 - 0xc), flags = 0x0
+     0x0 - 0xb
