@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.36 2001/05/26 21:34:04 chs Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.37 2001/07/24 15:39:31 assar Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -198,7 +198,7 @@ const int vop_mknod_vp_offsets[] = {
 const struct vnodeop_desc vop_mknod_desc = {
 	5,
 	"vop_mknod",
-	0 | VDESC_VP0_WILLPUT | VDESC_VPP_WILLRELE,
+	0 | VDESC_VP0_WILLPUT,
 	vop_mknod_vp_offsets,
 	VOPARG_OFFSETOF(struct vop_mknod_args, a_vpp),
 	VDESC_NO_OFFSET,
@@ -868,7 +868,7 @@ const int vop_symlink_vp_offsets[] = {
 const struct vnodeop_desc vop_symlink_desc = {
 	25,
 	"vop_symlink",
-	0 | VDESC_VP0_WILLPUT | VDESC_VPP_WILLRELE,
+	0 | VDESC_VP0_WILLPUT,
 	vop_symlink_vp_offsets,
 	VOPARG_OFFSETOF(struct vop_symlink_args, a_vpp),
 	VDESC_NO_OFFSET,
