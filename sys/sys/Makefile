@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2001/11/19 05:31:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.35 2001/11/25 22:49:39 thorpej Exp $
 
 KDIR=	/sys/sys
 INCSDIR= /usr/include/sys
@@ -6,11 +6,11 @@ INCSDIR= /usr/include/sys
 INCS=	acct.h agpio.h ansi.h ataio.h audioio.h buf.h bswap.h \
 	callout.h cdefs.h cdefs_aout.h \
 	cdefs_elf.h cdio.h chio.h clist.h clockctl.h conf.h core.h device.h \
-	dir.h dirent.h disk.h disklabel.h disklabel_mbr.h dkbad.h dkio.h \
-	dkstat.h domain.h dvdio.h endian.h envsys.h errno.h exec.h exec_aout.h \
-	exec_coff.h exec_ecoff.h exec_elf.h exec_script.h extent.h \
-	fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h fnv_hash.h \
-	gmon.h inttypes.h ioccom.h \
+	dir.h dirent.h disk.h disklabel.h disklabel_acorn.h disklabel_mbr.h \
+	dkbad.h dkio.h dkstat.h domain.h dvdio.h endian.h envsys.h errno.h \
+	exec.h exec_aout.h exec_coff.h exec_ecoff.h exec_elf.h exec_script.h \
+	extent.h fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h \
+	fnv_hash.h gmon.h inttypes.h ioccom.h \
 	ioctl.h ioctl_compat.h ipc.h kcore.h kernel.h kgdb.h ktrace.h lkm.h \
 	localedef.h lock.h lockf.h malloc.h map.h mbuf.h md4.h md5.h midiio.h \
 	mman.h mount.h msg.h msgbuf.h mtio.h namei.h null.h param.h pipe.h \
