@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.55 1997/05/29 21:22:47 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.56 1997/05/29 21:26:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -916,7 +916,7 @@ ENTRY(_getsr)
 	movw	sr,d0
 	rts
 
-ENTRY(_splx)
+ENTRY(_spl)
 	clrl	d0
 	movw	sr,d0
 	movl	sp@(4),d1
