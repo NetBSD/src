@@ -81,6 +81,9 @@ Remove character attributes set by
 .Fn attrset .
 To clear all character attributes, use
 .Fn attroff "A_ATTRIBUTES" .
+.Fn attroff "A_STANDOUT"
+is equivalent to
+.Fn standend .
 .Fn attroff "A_UNDERLINE"
 is equivalent to
 .Fn underend .
@@ -92,6 +95,9 @@ added to the window (if it has that capability).
 The attributes that can be set are \fBA_UNDERLINE\fR,
 \fBA_REVERSE\fR, \fBA_BLINK\fR, \fBA_DIM\fR,
 \fBA_BOLD\fR, \fBA_BLANK\fR and \fBA_PROTECT\fB.
+.Fn attron "A_STANDOUT"
+is equivalent to
+.Fn standout .
 .Fn attron "A_UNDERLINE"
 is equivalent to
 .Fn underscore .
@@ -116,6 +122,17 @@ which is included by
 Sound the terminal bell.  If the terminal has no bell capability,
 but has the ability to flash the screen, do that instead.  See also
 .Fn flash
+.Ds
+.Fn bkgd "chtype ch"
+.De
+Sets the background rendition to
+.Vn ch .
+.Ds
+.Fn bkgdset "chtype ch"
+.De
+Sets the background rendition to
+.Vn ch 
+and applies this rendition to the window.
 .Ds
 .Fn border "chtype left" "chtype right" "chtype top" "chtype bottom" "chtype topleft" "chtype topright" "chtype botleft" "chtype botright"
 .De
@@ -151,6 +168,10 @@ for drawing the horizontal lines.
 If scrolling is not allowed,
 and the window encompasses the lower right-hand corner of the terminal,
 the corners are left blank to avoid a scroll.
+.Ds
+.Fn can_change_colors ""
+.De
+Check if terminal can change colors.
 .Ds
 .Fn cbreak "" \(dg
 .De
@@ -210,6 +231,11 @@ under any circumstances.
 Wipes the window clear from the current \*y to the end of the line.
 \*(Nm
 .Ds
+.Fn color_content "short color" "short *red" "short *green" "short *blue"
+.De
+Get the red, green and blue values of color
+.Vn color .
+.Ds
 .Fn crmode "" \(dg
 .De
 Identical to
@@ -220,6 +246,16 @@ and
 .Fn nocrmode
 is retained for backwards compatibility
 with ealier versions of the library.
+.Ds
+.Fn def_prog_mode ""
+.De
+Save the current terminal modes as the \'in curses\' state for use with
+.Fn reset_prog_mode .
+.Ds
+.Fn def_shell_mode ""
+.De
+Save the current terminal modes as the \'not in curses\' state for use with
+.Fn reset_shell_mode .
 .Ds
 .Fn delch ""
 .De
@@ -317,6 +353,11 @@ it will do the
 .Fn fflush ,
 otherwise it will not.
 .Ds
+.Fn getbkgd "WINDOW *win"
+.De
+Gets the background rendition for
+.Vn win .
+.Ds
 .Fn getch "" \(dg
 .De
 Gets a character from the terminal and (if necessary)
@@ -377,6 +418,10 @@ of
 and
 .Vn x .
 .Ds
+.Fn has_colors ""
+.De
+Check if terminal has colors.
+.Ds
 .Fn idlok "WINDOW *win" "int boolf"
 .De
 Reserved for future use.
@@ -390,6 +435,16 @@ when updating the window.
 .De
 Returns the character at the current position on the given window.
 This does not make any changes to the window.
+.Ds
+.Fn init_color "short color" "short red" "short green" "short blue"
+.De
+Set the red, green and blue values of color
+.Vn color .
+.Ds
+.Fn init_pair "short pair" "short fore" "short back"
+.De
+Set the foreground and background colors of pair
+.Vn pair .
 .Ds
 .Fn initscr ""
 .De
@@ -464,12 +519,20 @@ has been called without a subsequent call to
 .Fn wrefresh ,
 and FALSE otherwise.
 .Ds
+.Fn intrflush "WINDOW *win" "int boolf"
+.De
+Sets the terminal flush on interrupt mode.  If
+.Vn boolf
+is non-zero, flushing of the output buffer will occur when an
+interrupt key is pressed.  The default is inherited from the
+terminal settings.
+.Ds
 .Fn keypad "WINDOW *win" "int boolf"
 .De
 Sets the boolean flag for interpretation of escape sequences.  If
 .Vn boolf
 is non-zero, escape sequences from terminal keypad and function
-keys will be interpreted by the library.  Escape sequnces are not
+keys will be interpreted by the library.  Escape sequences are not
 interpreted by default.  The include file
 .b <curses.h>
 contains the list of recognised keypad and function keys.  See also
@@ -712,6 +775,11 @@ blanks on
 become blank on
 .Vn win2 .
 .Ds
+.Fn pair content "short pair" "short *fore" "short *back"
+.De
+Get the foreground and background colors of pair
+.Vn pair .
+.Ds
 .Fn printw "char *fmt" "..."
 .De
 Performs a
@@ -757,6 +825,14 @@ the screen is cleared
 and repainted as it is currently.
 This is very useful for allowing the redrawing of the screen
 when the user has garbage dumped on his terminal.
+.Ds
+.Fn reset_prog_mode ""
+.De
+Restore the terminal to the \'in curses\' state.
+.Ds
+.Fn reset_shell_mode ""
+.De
+Restore the terminal to the \'not in curses\' state.
 .Ds
 .Fn resetty "" \(dg
 .De
@@ -831,6 +907,11 @@ accessed using
 .Fn attron
 and
 .Fn attrset .
+.Ds
+.Fn start_color ""
+.De
+Initialize the cplor routines. 
+This must be called before any of the color routines are used.
 .Ds
 .Ft "WINDOW *"
 .Fn subwin "WINDOW *win" "int lines" "int cols" "int begin_y" "int begin_x"
@@ -985,12 +1066,14 @@ are output to the current \*y position of the window specified by
 specification of a window, rather than the use of the default
 .Vn stdscr.\fP
 .Ds
-.Fn waddch "WINDOW *win" "char chtype"
+.Fn waddch "WINDOW *win" "chtype ch"
 .Fn waddstr "WINDOW *win" "char *str"
 .Fn waddnstr "WINDOW *win" "char *str" "int len"
-.Fn wattron  "WINDOW *win" "int attr"
-.Fn wattroff  "WINDOW *win" "int attr"
-.Fn wattrset  "WINDOW *win" "int attr"
+.Fn wattron "WINDOW *win" "int attr"
+.Fn wattroff "WINDOW *win" "int attr"
+.Fn wattrset "WINDOW *win" "int attr"
+.Fn wbkgd "WINDOW *win" "chtype ch"
+.Fn wbkgdset "WINDOW *win" "chtype ch"
 .Fn wborder "WINDOW *win" "chtype left" "chtype right" "chtype top" "chtype bottom" "chtype topleft" "chtype topright" "chtype botleft" "chtype botright"
 .Fn wclear "WINDOW *win"
 .Fn wclrtobot "WINDOW *win"
