@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.60 1999/03/24 05:51:25 mrg Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.61 1999/03/25 04:45:57 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -142,6 +142,14 @@ sys_ptrace(p, v, retval)
 		 */
 		if (t == initproc && securelevel > -1)
 			return (EPERM);
+
+		/*
+		 * (4) the tracer is chrooted, and its root directory is
+		 * not at or above the root directory of the tracee
+		 */
+
+		if (!proc_isunder(t, p))
+			return EPERM;
 		break;
 
 	case  PT_READ_I:
