@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.45 1998/09/11 16:46:32 jonathan Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.46 1998/12/25 16:52:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1686,7 +1686,7 @@ END(mips1_switch_exit)
  */
 /*
  * XXXX - almost done with the UADDR mapping; only the kernel stack should
- * now be using UADDR.  The first TLB entries are are used to map
+ * now be using UADDR.  The first TLB entries are used to map
  * UADDR to the u-area.  Then the following TLB entries are used to
  * map the current u-area.  Also, any current mapping for the u-area
  * address space needs to be flushed as well.
