@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.1 1996/02/15 22:37:25 mark Exp $ */
+/* $NetBSD: db_trace.c,v 1.2 1996/03/06 22:49:51 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -26,8 +26,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- *
- * $Id: db_trace.c,v 1.1 1996/02/15 22:37:25 mark Exp $
  */
 
 #include <sys/param.h>
@@ -59,13 +57,16 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	if (count == -1)
 		count = 65535;
 
-	return;
-#if 0
+/*
+ * The frame pointer points to the top word of the stack frame so we
+ * need to adjust it by sizeof(struct frame) - sizeof(u_int))
+ * to get the address of the start of the frame structure.
+ */
 
 	if (!have_addr)
-		frame = (struct frame *)DDB_TF->tf_r11;
+		frame = (struct frame *)(DDB_TF->tf_r11 - (sizeof(struct frame) - sizeof(u_int)));
 	else
-		frame = (struct frame *)addr;
+		frame = (struct frame *)(addr - (sizeof(struct frame) - sizeof(u_int)));
 
 	while (count--) {
 		int		i;
@@ -73,6 +74,8 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		db_sym_t	sym;
 		char		*name;
 		db_addr_t	pc;
+
+/*		db_printf("fp=%08x: fp=%08x sp=%08x lr=%08x pc=%08x\n", (u_int)frame, frame->fr_fp, frame->fr_sp, frame->fr_lr, frame->fr_pc);*/
 
 		pc = frame->fr_pc;
 		if (!INKERNEL(pc))
@@ -87,11 +90,12 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		/*
 		 * Switch to next frame up
 		 */
-		frame = frame->fr_fp;
+		frame = (struct frame *)(frame->fr_fp - (sizeof(struct frame) - sizeof(u_int)));
 
 		db_printsym(pc, DB_STGY_PROC);
+		db_printf(")");
 		db_printf("\n");
-
+		if (frame == NULL)
+			break;
 	}
-#endif
 }
