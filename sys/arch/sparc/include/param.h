@@ -42,7 +42,7 @@
  *	@(#)param.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: param.h,v 1.13 92/11/26 02:04:38 torek Exp  (LBL)
- * $Id: param.h,v 1.2 1993/10/11 02:28:27 deraadt Exp $
+ * $Id: param.h,v 1.3 1993/12/03 09:23:43 deraadt Exp $
  */
 
 /*
@@ -81,7 +81,7 @@
 
 /* NOTE: SSIZE and UPAGES must be multiples of CLSIZE */
 #define	SSIZE		1		/* initial stack size/NBPG */
-#define	UPAGES		2		/* pages of u-area */
+#define	UPAGES		6		/* pages of u-area */
 
 /*
  * Constants related to network buffer management.
