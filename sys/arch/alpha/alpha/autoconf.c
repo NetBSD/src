@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1997/03/26 22:38:47 gwr Exp $	*/
+/* $NetBSD: autoconf.c,v 1.21 1997/04/07 05:19:01 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

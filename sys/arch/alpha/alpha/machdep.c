@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 1997/04/02 21:48:55 christos Exp $	*/
+/* $NetBSD: machdep.c,v 1.71 1997/04/07 05:19:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.

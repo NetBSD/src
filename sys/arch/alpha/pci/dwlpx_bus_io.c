@@ -1,4 +1,4 @@
-/*	$NetBSD: dwlpx_bus_io.c,v 1.2 1997/03/12 21:09:56 cgd Exp $	*/
+/* $NetBSD: dwlpx_bus_io.c,v 1.3 1997/04/07 05:19:39 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob

@@ -1,4 +1,4 @@
-/*	$NetBSD: cia_pci.c,v 1.7 1996/11/23 06:46:50 cgd Exp $	*/
+/* $NetBSD: cia_pci.c,v 1.8 1997/04/07 05:19:37 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cia_bus_mem.c,v 1.7 1996/11/25 03:46:09 cgd Exp $	*/
+/* $NetBSD: cia_bus_mem.c,v 1.8 1997/04/07 05:19:35 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
