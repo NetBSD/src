@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.67 2000/01/23 23:55:45 chopps Exp $
+$NetBSD: pcmciadevs,v 1.68 2000/01/25 01:15:06 sommerfeld Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -190,6 +190,7 @@ product AIRONET PC4800		0x0005 Aironet PC4800 Wireless LAN Adapter
 
 /* Bay Networks */
 product BAY STACK_650		0x0804 BayStack 650 Wireless LAN
+product BAY STACK_660		0x0807 BayStack 660 Wireless LAN
 
 /* Raylink/WebGear */
 product RAYTHEON WLAN		0x0000 WLAN Adapter
