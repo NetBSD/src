@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.23 2004/09/17 23:10:52 mycroft Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.24 2004/10/01 05:16:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,6 @@
 struct sd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
-	struct lock sc_lock;
 
 	int flags;
 #define	SDF_WLABEL	0x04		/* label is writable */
