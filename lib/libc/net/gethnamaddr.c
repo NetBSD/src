@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.13 1999/01/20 13:09:04 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.14 1999/01/20 23:31:02 lukem Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.13 1999/01/20 13:09:04 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.14 1999/01/20 23:31:02 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -418,7 +418,8 @@ getanswer(answer, anslen, qname, qtype)
 				buflen -= nn;
 			}
 
-			bp += sizeof(align) - (size_t)((u_long)bp % sizeof(align));
+			bp += sizeof(align) -
+			    (size_t)((u_long)bp % sizeof(align));
 
 			if (bp + n >= &hostbuf[sizeof hostbuf]) {
 				dprintf("size (%d) too big\n", n);
@@ -895,7 +896,8 @@ addrsort(ap, num)
 	for (i = 0; i < num; i++, p++) {
 	    for (j = 0 ; (unsigned)j < _res.nsort; j++)
 		if (_res.sort_list[j].addr.s_addr == 
-		    (((struct in_addr *)(void *)(*p))->s_addr & _res.sort_list[j].mask))
+		    (((struct in_addr *)(void *)(*p))->s_addr &
+		    _res.sort_list[j].mask))
 			break;
 	    aval[i] = j;
 	    if (needsort == 0 && i > 0 && j < aval[i-1])
