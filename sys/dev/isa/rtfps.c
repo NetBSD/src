@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.14 1995/12/24 02:31:48 mycroft Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.15 1996/03/09 00:09:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -38,6 +38,9 @@
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/comreg.h>
+
+#define	NSLAVES	4
 
 struct rtfps_softc {
 	struct device sc_dev;
@@ -45,8 +48,8 @@ struct rtfps_softc {
 
 	int sc_iobase;
 	int sc_irqport;
-	int sc_alive;		/* mask of slave units attached */
-	void *sc_slaves[4];	/* com device unit numbers */
+	int sc_alive;			/* mask of slave units attached */
+	void *sc_slaves[NSLAVES];	/* com device unit numbers */
 };
 
 int rtfpsprobe();
@@ -69,8 +72,8 @@ rtfpsprobe(parent, self, aux)
 	 * its presence means there is a multiport board there.
 	 * XXX Needs more robustness.
 	 */
-	ia->ia_iosize = 4 * 8;
-	return comprobe1(ia->ia_iobase);
+	ia->ia_iosize = NSLAVES * COM_NPORTS;
+	return (comprobe1(ia->ia_iobase));
 }
 
 struct rtfps_attach_args {
@@ -131,9 +134,9 @@ rtfpsattach(parent, self, aux)
 	printf("\n");
 
 	isa.ia_aux = &ra;
-	for (ra.ra_slave = 0; ra.ra_slave < 4; ra.ra_slave++) {
+	for (ra.ra_slave = 0; ra.ra_slave < NSLAVES; ra.ra_slave++) {
 		struct cfdata *cf;
-		isa.ia_iobase = sc->sc_iobase + 8 * ra.ra_slave;
+		isa.ia_iobase = sc->sc_iobase + COM_NPORTS * ra.ra_slave;
 		isa.ia_iosize = 0x666;
 		isa.ia_irq = IRQUNK;
 		isa.ia_drq = DRQUNK;
@@ -147,7 +150,8 @@ rtfpsattach(parent, self, aux)
 		}
 	}
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, rtfpsintr,	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, rtfpsintr,
+	    sc);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.6 1995/12/24 02:31:11 mycroft Exp $	*/
+/*	$NetBSD: boca.c,v 1.7 1996/03/09 00:09:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles Hannum.  All rights reserved.
@@ -38,14 +38,17 @@
 #include <machine/pio.h>
 
 #include <dev/isa/isavar.h>
+#include <dev/isa/comreg.h>
+
+#define	NSLAVES	8
 
 struct boca_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
 	int sc_iobase;
-	int sc_alive;		/* mask of slave units attached */
-	void *sc_slaves[8];	/* com device unit numbers */
+	int sc_alive;			/* mask of slave units attached */
+	void *sc_slaves[NSLAVES];	/* com device unit numbers */
 };
 
 int bocaprobe();
@@ -68,7 +71,7 @@ bocaprobe(parent, self, aux)
 	 * its presence means there is a multiport board there.
 	 * XXX Needs more robustness.
 	 */
-	ia->ia_iosize = 8 * 8;
+	ia->ia_iosize = NSLAVES * COM_NPORTS;
 	return (comprobe1(ia->ia_iobase));
 }
 
@@ -118,9 +121,9 @@ bocaattach(parent, self, aux)
 	printf("\n");
 
 	isa.ia_aux = &ba;
-	for (ba.ba_slave = 0; ba.ba_slave < 8; ba.ba_slave++) {
+	for (ba.ba_slave = 0; ba.ba_slave < NSLAVES; ba.ba_slave++) {
 		struct cfdata *cf;
-		isa.ia_iobase = sc->sc_iobase + 8 * ba.ba_slave;
+		isa.ia_iobase = sc->sc_iobase + COM_NPORTS * ba.ba_slave;
 		isa.ia_iosize = 0x666;
 		isa.ia_irq = IRQUNK;
 		isa.ia_drq = DRQUNK;
