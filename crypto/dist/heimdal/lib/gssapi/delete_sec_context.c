@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: delete_sec_context.c,v 1.9 2001/05/10 15:23:04 assar Exp $"
-        "$NetBSD: delete_sec_context.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: delete_sec_context.c,v 1.2 2002/11/28 11:21:16 elric Exp $");
 
 OM_uint32 gss_delete_sec_context
            (OM_uint32 * minor_status,
@@ -42,7 +42,8 @@ OM_uint32 gss_delete_sec_context
             gss_buffer_t output_token
            )
 {
-  gssapi_krb5_init ();
+
+  GSSAPI_KRB5_INIT_MS(minor_status);
 
   if (output_token) {
       output_token->length = 0;

@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: acquire_cred.c,v 1.10 2002/08/20 12:02:45 nectar Exp $"
-        "$NetBSD: acquire_cred.c,v 1.8 2002/09/12 13:19:07 joda Exp $");
+        "$NetBSD: acquire_cred.c,v 1.9 2002/11/28 11:21:16 elric Exp $");
 
 static krb5_error_code
 get_keytab(krb5_keytab *keytab)
@@ -196,7 +196,7 @@ OM_uint32 gss_acquire_cred
     gss_cred_id_t handle;
     OM_uint32 ret;
 
-    gssapi_krb5_init ();
+    GSSAPI_KRB5_INIT_MS(minor_status);
 
     *minor_status = 0;
     handle = (gss_cred_id_t)malloc(sizeof(*handle));
