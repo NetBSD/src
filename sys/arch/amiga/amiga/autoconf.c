@@ -38,6 +38,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	@(#)autoconf.c	7.5 (Berkeley) 5/7/91
+ *	$Id: autoconf.c,v 1.8 1994/02/11 06:59:20 chopps Exp $
  */
 
 /*

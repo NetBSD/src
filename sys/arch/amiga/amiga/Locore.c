@@ -31,6 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)Locore.c	7.4 (Berkeley) 5/7/91
+ *	$Id: Locore.c,v 1.4 1994/02/11 06:59:16 chopps Exp $
  */
 
 #include "../includepte.h"

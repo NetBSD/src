@@ -1,5 +1,9 @@
-/* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist */
-/*          Michael L. Hitch - initial 68040 support  */
+/* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
+ *          Michael L. Hitch - initial 68040 support
+ *
+ *	$Id: amiga_init.c,v 1.7 1994/02/11 06:59:19 chopps Exp $
+ */
+
 
 #include "pte.h"
 #include "machine/cpu.h"
