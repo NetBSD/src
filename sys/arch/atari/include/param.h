@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 1995/06/28 02:43:43 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.9 1995/08/13 00:21:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -189,14 +189,15 @@
 
 #define splnone()	spl0()
 #define splsoftclock()	spl1()
-#define splnet()	spl1()
+#define splsoftnet()	spl1()
 #define splbio()	spl3()
-#define splimp()	spl3()
+#define splnet()	spl3()
 /*
  * lowered to spl4 to allow for serial input into
  * private ringbuffer inspite of spltty
  */
 #define spltty()	spl4()
+#define splimp()	spl4()
 #define splclock()	spl6()
 #define splstatclock()	spl6()
 #define splvm()		spl6()
