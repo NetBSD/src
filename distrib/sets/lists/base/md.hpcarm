@@ -1,0 +1,2 @@
+# $NetBSD: md.hpcarm,v 1.1 2002/07/26 18:03:11 manu Exp $
+./sbin/fdisk		base-sysutil-root
