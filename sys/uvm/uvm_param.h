@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.7 2001/03/21 03:16:06 chs Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.8 2001/04/29 04:23:21 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -100,6 +100,18 @@ typedef int	boolean_t;
 #define	PAGE_MASK	uvmexp.pagemask		/* size of page - 1 */
 #define	PAGE_SHIFT	uvmexp.pageshift	/* bits to shift for pages */
 #endif /* _KERNEL */
+
+/*
+ * Page coloring parameters.  We let machine dependent code tell us how
+ * many buckets to create.  If it doesn't, we assume it doesn't want to
+ * do coloring, so we disable it (set the number of buckets to 1).
+ *
+ * Note: the number of buckets must be a power of two.
+ */
+#ifndef VM_PGCOLOR_BUCKETS
+#define	VM_PGCOLOR_BUCKETS	1
+#endif
+#define	VM_PGCOLOR_MASK		(VM_PGCOLOR_BUCKETS - 1)
 
 /*
  * CTL_VM identifiers

@@ -1,7 +1,7 @@
-/*	$NetBSD: uvm_pglist.h,v 1.1 2000/06/26 14:21:19 mrg Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.2 2001/04/29 04:23:21 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -53,8 +53,12 @@ TAILQ_HEAD(pglist, vm_page);
 #define	PGFL_ZEROS	1
 #define	PGFL_NQUEUES	2
 
-struct pgfreelist {
+struct pgflbucket {
 	struct pglist pgfl_queues[PGFL_NQUEUES];
 };
 
-#endif
+struct pgfreelist {
+	struct pgflbucket pgfl_buckets[VM_PGCOLOR_BUCKETS];
+};
+
+#endif /* _PGLIST_H_ */
