@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.38 2003/10/16 22:26:32 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.39 2003/10/19 06:28:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.38 2003/10/16 22:26:32 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.39 2003/10/19 06:28:35 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -112,6 +112,7 @@ char *rl_terminal_name = NULL;
 int rl_already_prompted = 0;
 int rl_filename_completion_desired = 0;
 int rl_ignore_completion_duplicates = 0;
+int rl_catch_signals = 1;
 VFunction *rl_redisplay_function = NULL;
 Function *rl_startup_hook = NULL;
 VFunction *rl_completion_display_matches_hook = NULL;
@@ -253,7 +254,7 @@ rl_initialize(void)
 		return -1;
 	}
 	el_set(e, EL_PROMPT, _get_prompt);
-	el_set(e, EL_SIGNAL, 1);
+	el_set(e, EL_SIGNAL, rl_catch_signals);
 
 	/* set default mode to "emacs"-style and read setting afterwards */
 	/* so this can be overriden */
