@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.18 2000/06/12 21:27:12 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.19 2000/06/13 09:43:07 scw Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -67,6 +67,8 @@ Intel PIIX, PIIX3 and PIIX4 IDE Controllers
 .It
 Intel 82801 (ICH/ICH0) IDE Controllers
 .It
+OPTi 82c621 (plus a few of its derivatives) IDE Controllers
+.It
 Promise PDC20246 (Ultra/33) and PDC20262 (Ultra/66) PCI IDE controllers
 .It
 Silicon Integrated System 5597/5598 IDE controller
@@ -89,7 +91,8 @@ and another controller has been installed and uses the ISA legacy I/O ports
 and interrupts.
 .Pp
 The timings used for the PIO and DMA modes for controllers listed above
-are for a PCI bus running at 30 or 33 Mhz. This driver may not
+are for a PCI bus running at 30 or 33 Mhz (except the OPTi controller,
+which supports both 25 and 33 Mhz PCI bus timings). This driver may not
 work properly on overclocked systems.
 .Sh SEE ALSO
 .Xr intro 4 ,
