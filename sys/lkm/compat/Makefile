@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.13 2001/10/27 12:10:02 jdolecek Exp $
+# $NetBSD: Makefile,v 1.14 2001/10/31 18:30:18 jdolecek Exp $
 
 .if (${MACHINE} == "sparc64")
 SUBDIR+=	netbsd32 sunos32 svr4 svr4_32
 .endif
 
 .if (${MACHINE} == "i386")
-SUBDIR+=	freebsd linux
+SUBDIR+=	freebsd linux svr4
 .endif
 
 # These are untested, but do compile.  Once they are tested,
