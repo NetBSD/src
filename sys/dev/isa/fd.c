@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.14 2001/03/16 21:33:33 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.15 2001/05/19 12:04:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -232,7 +232,7 @@ struct fd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
 
-	const struct fd_type *sc_deftype;	/* default type descriptor */
+	const struct fd_type *sc_deftype; /* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
 	struct fd_type sc_type_copy;	/* copy for fiddling when formatting */
 
@@ -241,7 +241,7 @@ struct fd_softc {
 
 	daddr_t	sc_blkno;	/* starting block number */
 	int sc_bcount;		/* byte count left */
- 	int sc_opts;			/* user-set options */
+ 	int sc_opts;		/* user-set options */
 	int sc_skip;		/* bytes already transferred */
 	int sc_nblks;		/* number of blocks currently tranferring */
 	int sc_nbytes;		/* number of bytes currently tranferring */
@@ -331,14 +331,14 @@ fdcattach(fdc)
 	struct fdc_softc *fdc;
 {
 	struct fdc_attach_args fa;
-        bus_space_tag_t iot;
-        bus_space_handle_t ioh;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 #if defined(i386)
 	int type;
 #endif
 
-        iot = fdc->sc_iot;
-        ioh = fdc->sc_ioh;
+	iot = fdc->sc_iot;
+	ioh = fdc->sc_ioh;
 	callout_init(&fdc->sc_timo_ch);
 	callout_init(&fdc->sc_intr_ch);
 
@@ -354,25 +354,23 @@ fdcattach(fdc)
 		return;
 	}
  
-        /* 
-         * Reset the controller to get it into a known state. Not all
-         * probes necessarily need do this to discover the controller up
-         * front, so don't assume anything.
-         */
-         
-        bus_space_write_1(iot, ioh, fdout, 0);
-        delay(100);
-        bus_space_write_1(iot, ioh, fdout, FDO_FRST);
+	/* 
+	 * Reset the controller to get it into a known state. Not all
+	 * probes necessarily need do this to discover the controller up
+	 * front, so don't assume anything.
+	 */
+
+	bus_space_write_1(iot, ioh, fdout, 0);
+	delay(100);
+	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
  
-        /* see if it can handle a command */
-        if (out_fdc(iot, ioh, NE7CMD_SPECIFY) < 0) {
-            printf ("%s: can't reset controller\n",
-                    fdc->sc_dev.dv_xname);
-            return;
-        }
-        out_fdc(iot, ioh, 0xdf);
-        out_fdc(iot, ioh, 2);
-  
+	/* see if it can handle a command */
+	if (out_fdc(iot, ioh, NE7CMD_SPECIFY) < 0) {
+		printf ("%s: can't reset controller\n", fdc->sc_dev.dv_xname);
+		return;
+	}
+	out_fdc(iot, ioh, 0xdf);
+	out_fdc(iot, ioh, 2);
 
 #if defined(i386)
 	/*
@@ -614,7 +612,8 @@ fdstrategy(bp)
 	}
 
 	bp->b_rawblkno = bp->b_blkno;
- 	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
+ 	bp->b_cylinder =
+	    bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld sz %d\n",
@@ -928,7 +927,7 @@ fdctimeout(arg)
 
 	s = splbio();
 #ifdef DEBUG
-	log(LOG_ERR,"fdctimeout: state %d\n", fdc->sc_state);
+	log(LOG_ERR, "fdctimeout: state %d\n", fdc->sc_state);
 #endif
 	fdcstatus(&fd->sc_dev, 0, "timeout");
 
@@ -1028,7 +1027,7 @@ loop:
 		out_fdc(iot, ioh, 6);		/* XXX head load time == 6ms */
 
 		out_fdc(iot, ioh, NE7CMD_SEEK);	/* seek function */
-		out_fdc(iot, ioh, fd->sc_drive);	/* drive number */
+		out_fdc(iot, ioh, fd->sc_drive); /* drive number */
 		out_fdc(iot, ioh, bp->b_cylinder * fd->sc_type->step);
 
 		fd->sc_cylin = -1;
@@ -1055,15 +1054,18 @@ loop:
 		head = sec / type->sectrac;
 		sec -= head * type->sectrac;
 #ifdef DIAGNOSTIC
-		{int block;
-		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
-		 if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n",	
-				block, fd->sc_blkno);
+		{
+			int block;
+			block = (fd->sc_cylin * type->heads + head)
+			    * type->sectrac + sec;
+			if (block != fd->sc_blkno) {
+				printf("fdcintr: block %d != blkno %d\n",	
+				    block, fd->sc_blkno);
 #ifdef DDB
-			 Debugger();
+				 Debugger();
 #endif
-		 }}
+			}
+		}
 #endif
 		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
 		isa_dmastart(fdc->sc_ic, fdc->sc_drq,
@@ -1192,7 +1194,7 @@ loop:
 
 		/* fall through */
 	case DORECAL:
-		out_fdc(iot, ioh, NE7CMD_RECAL);	/* recalibrate function */
+		out_fdc(iot, ioh, NE7CMD_RECAL); /* recalibrate function */
 		out_fdc(iot, ioh, fd->sc_drive);
 		fdc->sc_state = RECALWAIT;
 		callout_reset(&fdc->sc_timo_ch, 5 * hz, fdctimeout, fdc);
@@ -1458,7 +1460,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		fd->sc_type->gap2 = form_parms->gaplen;
 		fd->sc_type->cyls = form_parms->ncyl;
 		fd->sc_type->size = fd->sc_type->seccyl * form_parms->ncyl *
-			form_parms->nbps / DEV_BSIZE;
+		    form_parms->nbps / DEV_BSIZE;
 		fd->sc_type->step = form_parms->stepspercyl;
 		fd->sc_type->fillbyte = form_parms->fillbyte;
 		fd->sc_type->interleave = form_parms->interleave;
@@ -1563,13 +1565,13 @@ fdformat(dev, finfo, p)
 
 	/* ...and wait for it to complete */
 	s = splbio();
-	while(!(bp->b_flags & B_DONE)) {
+	while (!(bp->b_flags & B_DONE)) {
 		rv = tsleep((caddr_t)bp, PRIBIO, "fdform", 20 * hz);
 		if (rv == EWOULDBLOCK)
 			break;
 	}
 	splx(s);
-       
+
 	if (rv == EWOULDBLOCK) {
 		/* timed out */
 		rv = EIO;
