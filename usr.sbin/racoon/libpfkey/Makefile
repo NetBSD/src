@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/10/04 00:21:21 itojun Exp $
+#	$NetBSD: Makefile,v 1.1 2000/12/29 02:33:39 itojun Exp $
 
 LIB=	pfkey
 CFLAGS+=-g -Wall -Werror
