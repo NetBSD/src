@@ -1051,16 +1051,19 @@ info_recv_initialcontact(iph1)
 
 		/*
 		 * RFC2407 4.6.3.3 INITIAL-CONTACT is the message that
-		 * announces the peer the sender of the message was rebooted.
+		 * announces the sender of the message was rebooted.
 		 * it is interpreted to delete all SAs which source address
 		 * is the sender of the message.
-		 * but racoon only deletes SA which is matched both the
+		 * racoon only deletes SA which is matched both the
 		 * source address and the destination accress.
 		 */
-		if ((cmpsaddrwop(iph1->local, src)
-		  && cmpsaddrwop(iph1->remote, dst))
-		 || (cmpsaddrwop(iph1->remote, src)
-		  && cmpsaddrwop(iph1->local, dst))) {
+		if (cmpsaddrwop(iph1->local, src) == 0 &&
+		    cmpsaddrwop(iph1->remote, dst) == 0)
+			;
+		else if (cmpsaddrwop(iph1->remote, src)  == 0 &&
+		    cmpsaddrwop(iph1->local, dst) == 0)
+			;
+		else {
 			msg = next;
 			continue;
 		}
@@ -1075,8 +1078,10 @@ info_recv_initialcontact(iph1)
 			    msg->sadb_msg_satype)
 				break;
 		}
-		if (i == pfkey_nsatypes)
+		if (i == pfkey_nsatypes) {
+			msg = next;
 			continue;
+		}
 
 		plog(LLV_INFO, LOCATION, NULL,
 			"purging spi=%u.\n", ntohl(sa->sadb_sa_spi));
