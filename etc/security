@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.86 2003/11/18 03:30:40 jhawk Exp $
+#	$NetBSD: security,v 1.87 2003/11/19 20:28:19 jhawk Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -757,7 +757,8 @@ if checkyesno check_mtree; then
 	for file in $special_files; do
 		[ ! -s $file ] && continue
 		mtree -e -l -p / $check_mtree_flags -f $file
-	done > $OUTPUT
+	done 3>&1 >$OUTPUT 2>&3 |
+		grep -v '^mtree: dev/tty: Device not configured$' >&2
 	if [ -s $OUTPUT ]; then
 		printf "\nChecking special files and directories.\n"
 		cat $OUTPUT
