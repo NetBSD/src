@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.102.2.3 2004/08/30 10:11:47 tron Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.102.2.3.2.1 2005/01/11 06:39:04 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.102.2.3 2004/08/30 10:11:47 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.102.2.3.2.1 2005/01/11 06:39:04 jmc Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -356,7 +356,8 @@ nfs_reconnect(rep)
 	 */
 	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
 		if (rp->r_nmp == nmp) {
-			rp->r_flags |= R_MUSTRESEND;
+			if ((rp->r_flags & R_MUSTRESEND) == 0)
+				rp->r_flags |= R_MUSTRESEND | R_REXMITTED;
 			rp->r_rexmit = 0;
 		}
 	}
@@ -927,7 +928,7 @@ nfsmout:
  * nb: always frees up mreq mbuf list
  */
 int
-nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
+nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp, rexmitp)
 	struct nfsnode *np;
 	struct mbuf *mrest;
 	int procnum;
@@ -936,6 +937,7 @@ nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	struct mbuf **mrp;
 	struct mbuf **mdp;
 	caddr_t *dposp;
+	int *rexmitp;
 {
 	struct mbuf *m, *mrep;
 	struct nfsreq *rep;
@@ -961,6 +963,9 @@ nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	struct ucred *origcred = NULL; /* XXX: gcc */
 	boolean_t retry_cred = TRUE;
 	boolean_t use_opencred = (np->n_flag & NUSEOPENCRED) != 0;
+
+	if (rexmitp != NULL)
+		*rexmitp = 0;
 
 tryagain_cred:
 	KASSERT(cred != NULL);
@@ -1134,6 +1139,16 @@ tryagain:
 	if (rep->r_flags & R_SENT) {
 		rep->r_flags &= ~R_SENT;	/* paranoia */
 		nmp->nm_sent -= NFS_CWNDSCALE;
+	}
+
+	if (rexmitp != NULL) {
+		int rexmit;
+
+		if (nmp->nm_sotype != SOCK_DGRAM)
+			rexmit = (rep->r_flags & R_REXMITTED) != 0;
+		else
+			rexmit = rep->r_rexmit;
+		*rexmitp = rexmit;
 	}
 
 	/*
