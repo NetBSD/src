@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.19 1999/04/05 06:42:14 cgd Exp $ */
+/* $NetBSD: boot.c,v 1.20 1999/04/05 22:03:56 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,7 +96,7 @@ main(long fd)
 
 	/* print a banner */
 	printf("\n");
-	printf("NetBSD/alpha " BOOT_TYPE_NAME " Bootstrap, Revision %s\n",
+	printf("NetBSD/alpha " NETBSD_VERS " " BOOT_TYPE_NAME " Bootstrap, Revision %s\n",
 	    bootprog_rev);
 	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 	printf("\n");
