@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.c,v 1.11 2002/03/05 15:54:33 simonb Exp $ */
+/* $NetBSD: mips_mcclock.c,v 1.12 2005/01/01 09:48:39 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.11 2002/03/05 15:54:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.12 2005/01/01 09:48:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ mips_mcclock_tickloop(mcclock_addr, clockmask)
 	void *mcclock_addr;
 	int clockmask;
 {
-	int iters = 0;
+	int iters;
 	volatile int junk;
 	volatile struct mcclock_pad32_clockdatum *clk = mcclock_addr;
 
@@ -164,19 +164,12 @@ mips_mcclock_tickloop(mcclock_addr, clockmask)
 	junk++;	junk++;	junk++;	junk++;
 
 	/* Count loops until next tick-interrupt request occurs (4ms). */
-	if (MIPS_HAS_CLOCK) {
-		while ((mips_cp0_cause_read() & clockmask) == 0) {
-			__asm __volatile ("nop; nop; nop; nop");
-			iters++;
-		}
-	} else {
-		while ((mips_cp0_cause_read() & clockmask) == 0) {
-			__asm __volatile ("nop; nop;");
-			iters++;
-		}
-	}
+	if (MIPS_HAS_CLOCK)
+		iters = mips_mcclock_loop_with_clock(clockmask);
+	else
+		iters = mips_mcclock_loop_without_clock(clockmask);
 
-	/* Ack the  interrupt from the just-gone-off tick */
+	/* Ack the interrupt from the just-gone-off tick */
 	junk = clk[MC_REGC].datum;
 
 	return (iters);
