@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.c,v 1.13 1995/03/21 18:35:32 mycroft Exp $	*/
+/*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-static char rcsid[] = "$NetBSD: csh.c,v 1.13 1995/03/21 18:35:32 mycroft Exp $";
+static char rcsid[] = "$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -903,9 +903,9 @@ int sig;
 		 * But avoid sending HUP to the shell again.
 		 */
 		if ((np->p_flags & PFOREGND) != 0 && np->p_jobid != shpgrp &&
-		    killpg(np->p_jobid, SIGHUP) != -1) {
+		    kill(-np->p_jobid, SIGHUP) != -1) {
 		    /* In case the job was suspended... */
-		    (void) killpg(np->p_jobid, SIGCONT);
+		    (void) kill(-np->p_jobid, SIGCONT);
 		    break;
 		}
 	    while ((np = np->p_friends) != pp);
