@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.2 2001/11/14 18:26:21 thorpej Exp $	*/
+/*	$NetBSD: cache.h,v 1.3 2001/11/19 01:28:07 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -184,6 +184,9 @@ extern int mips_tcache_way_size;
 extern int mips_tcache_way_mask;
 extern int mips_tcache_write_through;
 
+extern int mips_dcache_align;
+extern int mips_dcache_align_mask;
+
 extern int mips_cache_alias_mask;
 extern int mips_cache_prefer_mask;
 
@@ -231,5 +234,6 @@ do {									\
 	__mco_2args(dcache_wb_range, (v), (s))
 
 void	mips_config_cache(void);
+void	mips_dcache_compute_align(void);
 
 #endif /* _KERNEL */

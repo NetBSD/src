@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.3 2001/11/18 18:46:20 thorpej Exp $	*/
+/*	$NetBSD: cache.c,v 1.4 2001/11/19 01:28:08 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -92,6 +92,18 @@ int mips_tcache_way_size;
 int mips_tcache_way_mask;
 int mips_tcache_write_through;
 
+/*
+ * These two variables inform the rest of the kernel about the
+ * size of the largest D-cache line present in the system.  The
+ * mask can be used to determine if a region of memory is cache
+ * line size aligned.
+ *
+ * Whenever any code updates a data cache line size, it should
+ * call mips_dcache_compute_align() to recompute these values.
+ */
+int mips_dcache_align;
+int mips_dcache_align_mask;
+
 int mips_cache_alias_mask;	/* for virtually-indexed caches */
 int mips_cache_prefer_mask;
 
@@ -114,6 +126,28 @@ void	tx3920_get_cache_config(void);
 #ifdef MIPS3
 void	mips3_get_cache_config(int);
 #endif /* MIPS3 */
+
+/*
+ * mips_dcache_compute_align:
+ *
+ *	Compute the D-cache alignment values.
+ */
+void
+mips_dcache_compute_align(void)
+{
+	int align;
+
+	align = mips_pdcache_line_size;
+
+	if (mips_sdcache_line_size > align)
+		align = mips_sdcache_line_size;
+
+	if (mips_tcache_line_size > align)
+		align = mips_tcache_line_size;
+
+	mips_dcache_align = align;
+	mips_dcache_align_mask = align - 1;
+}
 
 /*
  * mips_config_cache:
@@ -422,6 +456,8 @@ mips_config_cache(void)
 		mips_pdcache_way_mask = mips_pdcache_way_size - 1;
 	}
 
+	mips_dcache_compute_align();
+
 	if (mips_sdcache_line_size == 0)
 		return;
 
@@ -510,6 +546,8 @@ mips_config_cache(void)
 		mips_sdcache_way_size = (mips_sdcache_size / mips_sdcache_ways);
 		mips_sdcache_way_mask = mips_sdcache_way_size - 1;
 	}
+
+	mips_dcache_compute_align();
 }
 
 #ifdef MIPS1
