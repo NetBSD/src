@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.61 1999/09/26 02:00:12 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.62 1999/09/26 14:18:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.61 1999/09/26 02:00:12 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.62 1999/09/26 14:18:01 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -634,8 +634,7 @@ foregroundproc()
 	if (pgrp == -1)
 		pgrp = getpgrp();
 
-	return ((ioctl(fileno(ttyout), TIOCGPGRP, &ctty_pgrp) != -1 &&
-	    ctty_pgrp == (int)pgrp));
+	return (tcgetpgrp(fileno(ttyout)) == pgrp);
 }
 
 
