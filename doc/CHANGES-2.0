@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.436 2004/09/10 03:08:06 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.437 2004/09/10 03:09:08 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7140,3 +7140,9 @@ sys/dev/mca/if_we_mca.c				1.10
 	Fix mask for getting WD8003 I/O address location, so it works even
 	for 0x300-0x3E0 bases. PR#26871
 	[jdolecek, ticket #821]
+
+sys/dev/mca/if_we_mca.c				1.11
+
+	Compute the shared memory location instead of hardcoding list of "known"
+	pos3 values for 8013 variants. PR#26877
+	[jdolecek, ticket #822]
