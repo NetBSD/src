@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 1998/01/12 18:04:01 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.19.8.1 1999/12/16 22:22:53 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -206,13 +206,13 @@ void		*auxp;
 void cpu_initclocks()
 {
 	MFP->mf_tacr  = T_Q200;		/* Start timer			*/
-	MFP->mf_ipra &= ~IA_TIMA;	/* Clear pending interrupts	*/
+	MFP->mf_ipra  = (u_int8_t)~IA_TIMA;/* Clear pending interrupts	*/
 	MFP->mf_iera |= IA_TIMA;	/* Enable timer interrupts	*/
 	MFP->mf_imra |= IA_TIMA;	/*    .....			*/
 
 #ifdef STATCLOCK
 	MFP->mf_tcdcr = (MFP->mf_tcdcr & 0x7) | (T_Q200<<4); /* Start	*/
-	MFP->mf_iprb &= ~IB_TIMC;	/* Clear pending interrupts	*/
+	MFP->mf_iprb  = (u_int8_t)~IB_TIMC;/* Clear pending interrupts	*/
 	MFP->mf_ierb |= IB_TIMC;	/* Enable timer interrupts	*/
 	MFP->mf_imrb |= IB_TIMC;	/*    .....			*/
 #endif /* STATCLOCK */
