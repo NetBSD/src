@@ -53,8 +53,8 @@
 
 #include <config.h>
 
-__RCSID("$Heimdal: kerberos5.c,v 1.51 2002/09/02 15:33:20 joda Exp $"
-        "$NetBSD: kerberos5.c,v 1.1.1.5 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: kerberos5.c,v 1.53 2002/09/20 14:37:46 joda Exp $"
+        "$NetBSD: kerberos5.c,v 1.1.1.6 2003/05/15 20:28:41 lha Exp $");
 
 #ifdef	KRB5
 
@@ -423,6 +423,29 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 		printf("Kerberos V5: "
 		       "krb5_auth_con_getremotesubkey failed (%s)\r\n",
 		       krb5_get_err_text(context, ret));
+	    return;
+	}
+
+	if (key_block == NULL) {
+	    ret = krb5_auth_con_getkey(context,
+				       auth_context,
+				       &key_block);
+	}
+	if (ret) {
+	    Data(ap, KRB_REJECT, "krb5_auth_con_getkey failed", -1);
+	    auth_finished(ap, AUTH_REJECT);
+	    if (auth_debug_mode)
+		printf("Kerberos V5: "
+		       "krb5_auth_con_getkey failed (%s)\r\n",
+		       krb5_get_err_text(context, ret));
+	    return;
+	}
+	if (key_block == NULL) {
+	    Data(ap, KRB_REJECT, "no subkey received", -1);
+	    auth_finished(ap, AUTH_REJECT);
+	    if (auth_debug_mode)
+		printf("Kerberos V5: "
+		       "krb5_auth_con_getremotesubkey returned NULL key\r\n");
 	    return;
 	}
 

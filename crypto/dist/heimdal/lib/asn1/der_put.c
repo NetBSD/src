@@ -33,8 +33,8 @@
 
 #include "der_locl.h"
 
-__RCSID("$Heimdal: der_put.c,v 1.27 2001/09/25 23:37:25 assar Exp $"
-        "$NetBSD: der_put.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: der_put.c,v 1.28 2003/04/17 07:12:24 lha Exp $"
+        "$NetBSD: der_put.c,v 1.1.1.5 2003/05/15 20:28:46 lha Exp $");
 
 /*
  * All encoding functions take a pointer `p' to first position in
@@ -376,15 +376,18 @@ int
 time2generalizedtime (time_t t, octet_string *s)
 {
      struct tm *tm;
+     size_t len;
 
-     s->data = malloc(16);
+     len = 15;
+
+     s->data = malloc(len + 1);
      if (s->data == NULL)
 	 return ENOMEM;
-     s->length = 15;
+     s->length = len;
      tm = gmtime (&t);
-     sprintf (s->data, "%04d%02d%02d%02d%02d%02dZ", tm->tm_year + 1900,
-	      tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min,
-	      tm->tm_sec);
+     snprintf (s->data, len + 1, "%04d%02d%02d%02d%02d%02dZ", 
+	       tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, 
+	       tm->tm_hour, tm->tm_min, tm->tm_sec);
      return 0;
 }
 

@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: socket.c,v 1.7 2001/09/03 12:04:23 joda Exp $"
-        "$NetBSD: socket.c,v 1.1.1.4 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: socket.c,v 1.8 2003/04/15 03:26:51 lha Exp $"
+        "$NetBSD: socket.c,v 1.1.1.5 2003/05/15 20:28:49 lha Exp $");
 #endif
 
 #include <roken.h>
@@ -271,7 +271,8 @@ socket_set_tos (int sock, int tos)
 {
 #if defined(IP_TOS) && defined(HAVE_SETSOCKOPT)
     if (setsockopt (sock, IPPROTO_IP, IP_TOS, (void *) &tos, sizeof (int)) < 0)
-	warn ("setsockopt TOS (ignored)");
+	if (errno != EINVAL)
+	    warn ("setsockopt TOS (ignored)");
 #endif
 }
 

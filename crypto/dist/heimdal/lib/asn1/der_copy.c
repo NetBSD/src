@@ -33,16 +33,15 @@
 
 #include "der_locl.h"
 
-__RCSID("$Heimdal: der_copy.c,v 1.9 2001/09/25 13:39:25 assar Exp $"
-        "$NetBSD: der_copy.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: der_copy.c,v 1.10 2003/04/17 07:13:08 lha Exp $"
+        "$NetBSD: der_copy.c,v 1.1.1.4 2003/05/15 20:28:46 lha Exp $");
 
 int
 copy_general_string (const general_string *from, general_string *to)
 {
-    *to = malloc(strlen(*from) + 1);
+    *to = strdup(*from);
     if(*to == NULL)
 	return ENOMEM;
-    strcpy(*to, *from);
     return 0;
 }
 

@@ -31,8 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Heimdal: kx.h,v 1.39 2001/09/17 01:59:41 assar Exp $
-   $NetBSD: kx.h,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $ */
+/* $Heimdal: kx.h,v 1.41 2003/04/16 16:45:43 joda Exp $
+   $NetBSD: kx.h,v 1.1.1.4 2003/05/15 20:28:43 lha Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -167,7 +167,7 @@ int create_and_write_cookie (char *xauthfile,
 int verify_and_remove_cookies (int fd, int sock, int cookiesp);
 int replace_cookie(int xserver, int fd, char *filename, int cookiesp);
 
-int suspicious_address (int sock, struct sockaddr_in addr);
+int suspicious_address (int sock, struct sockaddr *addr);
 
 #define KX_PORT 2111
 
@@ -198,7 +198,11 @@ struct kx_context {
     int debug_flag;
     int keepalive_flag;
     int tcp_flag;
-    struct sockaddr_in thisaddr, thataddr;
+    struct sockaddr_storage __ss_this;
+    struct sockaddr_storage __ss_that;
+    struct sockaddr *thisaddr;
+    struct sockaddr *thataddr;
+    socklen_t thisaddr_len, thataddr_len;
     void *data;
 };
 
