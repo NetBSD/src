@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.98 2004/03/14 01:08:48 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.99 2004/03/25 18:50:50 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2004/03/14 01:08:48 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2004/03/25 18:50:50 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -154,6 +154,15 @@ trap(struct trapframe *frame)
 					l->l_savp->savp_faultaddr = va;
 					l->l_flag |= L_SA_PAGEFAULT;
 				}
+#if defined(DIAGNOSTIC) && defined(PPC_OEA)
+			} else if ((va >> ADDR_SR_SHFT) == USER_SR) {
+				printf("trap: kernel %s DSI trap @ %#lx by %#lx"
+				    " (DSISR %#x): USER_SR unset\n",
+				    (frame->dsisr & DSISR_STORE)
+					? "write" : "read",
+				    va, frame->srr0, frame->dsisr);
+				goto brain_damage2;
+#endif
 			} else {
 				map = kernel_map;
 			}
