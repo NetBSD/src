@@ -1,7 +1,8 @@
-#	$NetBSD: _vax.mk,v 1.4 1998/08/22 19:02:11 tv Exp $
+#	$NetBSD: _vax.mk,v 1.5 1998/10/29 17:31:11 matt Exp $
 
 BFD_ARCH_SRCS=	cpu-vax.c \
-		vaxnetbsd.c aout32.c
+		vaxnetbsd.c aout32.c \
+		vax-dis.c
 
 BFD_ARCH_DEFS=	-DARCH_vax \
 		-DSELECT_ARCHITECTURES='&bfd_vax_arch' \
