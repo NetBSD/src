@@ -1,8 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2000/11/28 03:03:27 minoura Exp $
+#	$NetBSD: Makefile,v 1.6 2001/04/08 03:28:44 minoura Exp $
 
-PROG=	inst.fs.gz
-SRCS=
-MKMAN=	no
+.include <bsd.own.mk>
+.include <bsd.obj.mk>
+.include <bsd.depall.mk>
+.MAIN:	all
+
+realall: inst.fs.gz
+all: realall
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk.sysinst ; make print-objdir
 
@@ -20,5 +24,3 @@ ${RAMDISKDIR}/ramdisk.fs:
 release:
 	-mkdir -p ${RELEASEDIR}/installation/floppy
 	cp -p inst.fs inst.fs.gz ${RELEASEDIR}/installation/floppy
-
-.include <bsd.prog.mk>
