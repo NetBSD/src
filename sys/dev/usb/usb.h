@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.53 2001/11/06 12:29:48 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.54 2001/11/17 01:49:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -550,7 +550,10 @@ struct usb_device_info {
 	u_int8_t	subclass;
 	u_int8_t	protocol;
 	u_int8_t	config;
-	u_int8_t	lowspeed;
+	u_int8_t	speed;
+#define USB_SPEED_LOW  1
+#define USB_SPEED_FULL 2
+#define USB_SPEED_HIGH 3
 	int		power;	/* power consumption in mA, 0 if selfpowered */
 	int		nports;
 	char		devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];

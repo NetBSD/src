@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.92 2001/11/16 01:57:47 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.93 2001/11/17 01:49:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.92 2001/11/16 01:57:47 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.93 2001/11/17 01:49:53 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1208,7 +1208,7 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	di->protocol = dev->ddesc.bDeviceProtocol;
 	di->config = dev->config;
 	di->power = dev->self_powered ? 0 : dev->power;
-	di->lowspeed = dev->lowspeed;
+	di->speed = dev->lowspeed ? USB_SPEED_LOW : USB_SPEED_FULL;
 
 	if (dev->subdevs != NULL) {
 		for (i = 0; dev->subdevs[i] &&
