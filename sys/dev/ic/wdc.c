@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.187 2004/08/04 22:44:04 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.188 2004/08/10 02:40:51 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.187 2004/08/04 22:44:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.188 2004/08/10 02:40:51 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -834,6 +834,7 @@ wdcdetach(struct device *self, int flags)
 {
 	struct wdc_softc *wdc = (struct wdc_softc *)self;
 	struct wdc_channel *chp;
+	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
 	int i, error = 0;
 
 	for (i = 0; i < wdc->nchannels; i++) {
@@ -843,6 +844,12 @@ wdcdetach(struct device *self, int flags)
 		error = config_detach(chp->atabus, flags);
 		if (error)
 			break;
+	}
+	if (adapt->adapt_refcnt != 0) {
+#ifdef DIAGNOSTIC
+		printf("wdcdetach: refcnt should be 0 here??\n");
+#endif
+		(void) (*adapt->adapt_enable)(&wdc->sc_dev, 0);
 	}
 	return (error);
 }
