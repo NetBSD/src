@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.8 2002/04/04 17:28:33 bjh21 Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.9 2002/04/04 17:49:20 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -340,6 +340,32 @@ void *setmode(const char *);
 
 #ifndef _BSD_VA_LIST_
 #define _BSD_VA_LIST_ va_list
+#endif
+
+/* <sys/endian.h> */
+
+#ifndef HAVE_SYS_ENDIAN_H
+#if WORDS_BIGENDIAN
+#define htobe16(x)	(x)
+#define htobe32(x)	(x)
+#define htobe64(x)	(x)
+#define htole16(x)	bswap16((u_int16_t)(x))
+#define htole32(x)	bswap32((u_int32_t)(x))
+#define htole64(x)	bswap64((u_int64_t)(x))
+#else
+#define htobe16(x)	bswap16((u_int16_t)(x))
+#define htobe32(x)	bswap32((u_int32_t)(x))
+#define htobe64(x)	bswap64((u_int64_t)(x))
+#define htole16(x)	(x)
+#define htole32(x)	(x)
+#define htole64(x)	(x)
+#endif
+#define be16toh(x)	htobe16(x)
+#define be32toh(x)	htobe32(x)
+#define be64toh(x)	htobe64(x)
+#define le16toh(x)	htole16(x)
+#define le32toh(x)	htole32(x)
+#define le64toh(x)	htole64(x)
 #endif
 
 /* <sys/mman.h> */
