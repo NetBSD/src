@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.4 1997/10/06 00:07:11 mark Exp $	*/
+/*	$NetBSD: cerror.S,v 1.5 1997/10/17 19:57:17 mark Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,9 +37,7 @@
 
 #include "SYS.h"
 
-	.global	cerror
-	.type	cerror,@function
-cerror:
+ASENTRY(cerror)
 #ifdef PIC
 	/* Setup the GOT */
 	ldr	r3, got
