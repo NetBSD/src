@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.9.2.3 2004/09/21 13:33:53 skrll Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.9.2.4 2005/02/17 07:10:37 skrll Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.9.2.3 2004/09/21 13:33:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.9.2.4 2005/02/17 07:10:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,6 +219,8 @@ struct ucom_methods uvscom_methods = {
 };
 
 static const struct usb_devno uvscom_devs [] = {
+	/* SUNTAC U-Cable type A4 */
+	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_AS144L4 },
 	/* SUNTAC U-Cable type D2 */
 	{ USB_VENDOR_SUNTAC, USB_PRODUCT_SUNTAC_DS96L },
 	/* SUNTAC U-Cable type P1 */
