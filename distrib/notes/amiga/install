@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.22 2000/03/13 22:37:12 soren Exp $	
+.\"	$NetBSD: install,v 1.23 2000/03/13 22:45:46 soren Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -200,7 +200,7 @@ newfs: ioctl (WDINFO): Invalid argument
 newfs: /dev/rsd0a: can't rewrite disk label
 .Ed
 .Pp
-If there are any others, restart from the the beginning of
+If there are any others, restart from the beginning of
 the installation process.  This error is ok as the Amiga
 does not write disklabels currently.  You should expect
 this error whenever using newfs.
