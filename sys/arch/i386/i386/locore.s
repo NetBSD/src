@@ -35,9 +35,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.52 1994/04/04 15:56:47 mycroft Exp $
+ *	$Id: locore.s,v 1.53 1994/04/04 16:48:21 mycroft Exp $
  */
-
 
 /*
  * locore.s:	4BSD machine support for the Intel 386
@@ -53,7 +52,6 @@
 
 #include <machine/cputypes.h>
 #include <machine/param.h>
-#include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
@@ -142,7 +140,7 @@ tmpstk:
 	.globl	start
 start:	movw	$0x1234,0x472	# warm boot
 	jmp	1f
-	.space	0x500
+	.org	0x500
 1:
 
 	/*
@@ -272,7 +270,7 @@ start:	movw	$0x1234,0x472	# warm boot
 	movl	%ecx,%edi	# edi= end || esym
 	addl	$(PGOFSET),%ecx	# page align up
 	andl	$(~PGOFSET),%ecx
-	movl	%ecx,%esi	# esi=start of tables
+	movl	%ecx,%esi	# esi = start of tables
 	subl	%edi,%ecx
 	addl	$((NKPDE+UPAGES+2)*NBPG),%ecx	# size of tables
 	
@@ -487,7 +485,7 @@ lretmsg1:
 #endif
 
 
-#define	LCALL(x,y)	.byte 0x9a ; .long y; .word x
+#define	LCALL(x,y)	.byte 0x9a ; .long y ; .word x
 /*
  * Icode is copied out to process 1 to exec /etc/init.
  * If the exec fails, process 1 exits.
@@ -1684,18 +1682,23 @@ proffault:
 	addl	$8,%esp		; \
 	iret
 
-#define	TRAP(a)		pushl $(a) ; jmp alltraps
+#define	TRAP(a)		pushl $(a) ; jmp _alltraps
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
 #ifdef KGDB
-#define	BPTTRAP(a)	pushl $(a) ; jmp bpttraps
+#define	BPTTRAP(a)	testl $(PSL_I >> 8),13(%esp) ; jz 1f ; sti ; 1: ; \
+			pushl $(a) ; jmp _bpttraps
 #else
-#define	BPTTRAP(a)	TRAP(a)
+#define	BPTTRAP(a)	testl $(PSL_I >> 8),13(%esp) ; jz 1f ; sti ; 1: ; \
+			TRAP(a)
 #endif
 
 	.text
 IDTVEC(div)
 	ZTRAP(T_DIVIDE)
 IDTVEC(dbg)
+#ifdef BDB
+	BDBTRAP(dbg)
+#endif
 	subl	$4,%esp
 	pushl	%eax
 #	movl	%dr6,%eax	/* XXX stupid assembler! */
@@ -1705,17 +1708,14 @@ IDTVEC(dbg)
 #	movl	%eax,%dr6	/* XXX stupid assembler! */
 	.byte	0x0f, 0x23, 0xf0
 	popl	%eax
-#ifdef BDB
-	BDBTRAP(dbg)
-#endif
 	BPTTRAP(T_TRCTRAP)
 IDTVEC(nmi)
 	ZTRAP(T_NMI)
 IDTVEC(bpt)
-	pushl	$0
 #ifdef BDB
 	BDBTRAP(bpt)
 #endif
+	pushl	$0
 	BPTTRAP(T_BPTFLT)
 IDTVEC(ofl)
 	ZTRAP(T_OFLOW)
@@ -1749,11 +1749,11 @@ IDTVEC(fpu)
 	 * this is difficult for nested interrupts.
 	 */
 	pushl	$0		/* dummy error code */
-	pushl	$(T_ASTFLT)
+	pushl	$T_ASTFLT
 	INTRENTRY
-	pushl	_cpl		/* now it's an intrframe */
-	incl	_cnt+V_TRAP
+	pushl	_cpl
 	pushl	$0		/* dummy unit to finish building intr frame */
+	incl	_cnt+V_TRAP
 	call	_npxintr
 	INTREXIT
 #else
@@ -1792,7 +1792,7 @@ IDTVEC(rsvd14)
 	ZTRAP(T_RESERVED)
 
 	SUPERALIGN_TEXT
-alltraps:
+_alltraps:
 	INTRENTRY
 calltrap:
 	call	_trap
@@ -1814,7 +1814,7 @@ calltrap:
  * to the regular trap code.
  */
 	ALIGN_TEXT
-bpttraps:
+_bpttraps:
 	INTRENTRY
 	testb	$SEL_RPL_MASK,TF_CS(%esp)
 	jne	calltrap
@@ -1825,7 +1825,6 @@ bpttraps:
 /*
  * Call gate entry for syscall
  */
-
 	SUPERALIGN_TEXT
 IDTVEC(syscall)
 	pushl	$0	# Room for tf_err
