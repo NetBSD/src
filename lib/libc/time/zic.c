@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.7 1997/06/18 01:13:03 jtc Exp $	*/
+/*	$NetBSD: zic.c,v 1.8 1997/06/21 21:26:23 cjs Exp $	*/
 
 #ifndef lint
 #ifndef NOID
@@ -9,9 +9,7 @@ static char	elsieid[] = "@(#)zic.c	7.87";
 #include "private.h"
 #include "locale.h"
 #include "tzfile.h"
-#ifdef unix
 #include "sys/stat.h"			/* for umask manifest constants */
-#endif /* defined unix */
 
 /*
 ** On some ancient hosts, predicates like `isspace(C)' are defined
