@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.8 2002/09/13 14:32:11 itojun Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.9 2003/03/27 17:50:28 christos Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -50,6 +50,13 @@
 #endif
 #define DO_PREDICTOR_1	0
 #define DO_PREDICTOR_2	0
+
+/*
+ * How many entries to make available in the compressors table
+ */
+#ifndef PPP_COMPRESSORS_MAX
+#define PPP_COMPRESSORS_MAX	8
+#endif
 
 /*
  * Structure giving methods for compression/decompression.
