@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.15 1997/11/08 07:15:35 jonathan Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.16 1998/03/25 03:57:56 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.15 1997/11/08 07:15:35 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.16 1998/03/25 03:57:56 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>			/* printf() */
@@ -98,13 +98,13 @@ typedef int (*tc_handler_t) __P((void *intr_arg));
     
 extern void (*tc_enable_interrupt)  __P ((u_int slotno, tc_handler_t,
 				     void *intr_arg, int on)); 
-extern void kn03_enable_intr __P((u_int slot, tc_handler_t,
+extern void dec_3maxplus_enable_intr __P((u_int slot, tc_handler_t,
 				  void *intr_arg, int on)); 
-extern void kn02_enable_intr __P ((u_int slot, tc_handler_t,
+extern void dec_3max_enable_intr __P ((u_int slot, tc_handler_t,
 				   void *intr_arg, int on)); 
-extern void kmin_enable_intr __P ((u_int slot, tc_handler_t,
+extern void dec_3min_enable_intr __P ((u_int slot, tc_handler_t,
 				   void *intr_arg, int on)); 
-extern void xine_enable_intr __P ((u_int slot, tc_handler_t,
+extern void dec_maxine_enable_intr __P ((u_int slot, tc_handler_t,
 				   void *intr_arg, int on)); 
 
 /*
@@ -278,28 +278,28 @@ cpu_tcdesc(cpu)
 {
 	if (cpu == DS_3MAXPLUS) {
 #ifdef DS5000_240
-		tc_enable_interrupt = kn03_enable_intr;
+		tc_enable_interrupt = dec_3maxplus_enable_intr;
 		return &kn03_tc_desc;
 #else
 		return (0);
 #endif /* DS5000_240 */
 	} else if (cpu == DS_3MAX) {
 #ifdef DS5000_200
-		tc_enable_interrupt = kn02_enable_intr;
+		tc_enable_interrupt = dec_3max_enable_intr;
 		return &kn02_tc_desc;
 #else
 		return (0);
 #endif /* DS5000_240 */
 	} else if (cpu == DS_3MIN) {
 #ifdef DS5000_100
-		tc_enable_interrupt = kmin_enable_intr;
+		tc_enable_interrupt = dec_3min_enable_intr;
 		return &kmin_tc_desc;
 #else
 		return (0);
 #endif /*DS5000_100*/
 	} else if (cpu == DS_MAXINE) {
 #ifdef DS5000_25
-		tc_enable_interrupt = xine_enable_intr;
+		tc_enable_interrupt = dec_maxine_enable_intr;
 		return &xine_tc_desc;
 #else
 		return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.21 1998/01/12 20:12:39 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.22 1998/03/25 03:57:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -79,6 +79,11 @@ void	kn01_intr_establish __P((struct device *parent, void *cookie,
 void	kn01_intr_disestablish __P((struct confargs *));
 static void	kn01_attach __P((struct device *, struct device *, void *));
 
+/* XXXjrs */
+void		dec_3100_enable_intr 
+		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
+			 intr_arg_t sc, int onoff));
+
 
 static int
 mbmatch(parent, cf, aux)
@@ -110,7 +115,7 @@ mbattach(parent, self, aux)
 	register struct device *mb = self;
 	struct confargs nca;
 
-	extern int cputype, ncpus;
+	extern int systype, ncpus;
 
 	printf("\n");
 
@@ -128,8 +133,8 @@ mbattach(parent, self, aux)
 	config_found(mb, &nca, mbprint);
 
 #if NTC > 0
-	if (cputype == DS_3MAXPLUS || cputype == DS_3MAX ||
-	    cputype == DS_3MIN || cputype == DS_MAXINE) {
+	if (systype == DS_3MAXPLUS || systype == DS_3MAX ||
+	    systype == DS_3MIN || systype == DS_MAXINE) {
 		/*
 		 * This system might have a turbochannel.
 		 * Call the TC subr code to look for one
@@ -147,7 +152,7 @@ mbattach(parent, self, aux)
 #if 1 /*defined(DS3100)*/
 
 	/* XXX mipsmate: just a guess */
-	if (cputype == DS_PMAX || cputype == DS_MIPSMATE) {
+	if (systype == DS_PMAX || systype == DS_MIPSMATE) {
 		kn01_attach(mb, (void*)0, aux);
 	}
 #endif /*DS3100*/
@@ -269,7 +274,7 @@ kn01_intr_establish(parent, cookie, level, handler, arg)
 {
 	/* Interrupts on the KN01 are currently hardcoded. */
 	printf(" (kn01: intr_establish hardcoded) ");
-	kn01_enable_intr((u_int) cookie, handler, arg, 1);
+	dec_3100_enable_intr((u_int) cookie, handler, arg, 1);
 }
 
 void

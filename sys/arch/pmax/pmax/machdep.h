@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 1998/03/25 03:57:53 jonathan Exp $	*/
+/*	$NetBSD: machdep.h,v 1.1 1998/03/25 03:57:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -29,33 +29,42 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+/* the following is used externally (sysctl_hw) */
 
-#ifndef _PMAX_INTR_H_
-#define _PMAX_INTR_H_
+extern char machine[];
+extern char cpu_model[];
+
+/* XXXjrs  replace uses with calls to bus_reset */
+
+extern u_long	ioasic_base;		/* Base address of I/O asic */
 
 /*
- * Index into intrcnt[], which is defined in locore
+ * Interrupt-blocking functions defined in locore. These names aren't used
+ * directly except here and in interrupt handlers.
  */
-extern u_long intrcnt[];
 
-typedef enum {
-	SOFTCLOCK_INTR =0,
-	SOFTNET_INTR	=1,
-	SERIAL0_INTR=2,
-	SERIAL1_INTR = 3,
-	SERIAL2_INTR = 4,
-	LANCE_INTR =5,
-	SCSI_INTR = 6,
-	ERROR_INTR=7,
-	HARDCLOCK = 8,
-  	FPU_INTR   =9,
-	SLOT0_INTR =10,
-	SLOT1_INTR =11,
-	SLOT2_INTR =12,
-	DTOP_INTR = 13, /* XXX */
-	ISDN_INTR = 14, /* XXX */
-	FLOPPY_INTR = 15,
-	STRAY_INTR = 16
-} decstation_intr_t;
+/* Block out one hardware interrupt-enable bit. */
+extern int	Mach_spl0 __P((void)), Mach_spl1 __P((void));
+extern int	Mach_spl2 __P((void)), Mach_spl3 __P((void));
 
-#endif /* !_PMAX_INTR_H_ */
+/* Block out nested interrupt-enable bits. */
+extern int	cpu_spl0 __P((void)), cpu_spl1 __P((void));
+extern int	cpu_spl2 __P((void)), cpu_spl3 __P((void));
+extern int	splhigh __P((void));
+
+extern volatile struct chiptime *mcclock_addr;
+
+
+/* jump to PROM after halt switch.  */
+extern void prom_haltbutton __P((void));
+
+
+/* high-res clock ticks.  Need better timer support. */
+u_long latched_cycle_cnt;
+
+/* XXX ioasic hardware initialization. */
+
+void asic_init __P((int isa_maxine));
+
+/* XXX max memory */
+int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */
