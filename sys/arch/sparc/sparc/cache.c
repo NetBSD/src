@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.9 1996/06/12 14:57:03 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.10 1996/07/01 18:01:28 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -177,14 +177,13 @@ cache_enable()
 				SRMMU_PCR_ICE);
 			cacheinfo.c_enabled = cacheinfo.dc_enabled = 1;
 
-			/* Now try to turn on MultiCache if it exists */
-			/* XXX (ABB) THIS IS BROKEN MUST FIX */
-			if (0&&(lda(SRMMU_PCR, ASI_SRMMU) & SRMMU_PCR_MB) == 0
+			/* Now turn on MultiCache if it exists */
+			if ((lda(SRMMU_PCR, ASI_SRMMU) & SRMMU_PCR_MB) == 0
 				&& cacheinfo.ec_totalsize > 0) {
 				/* Multicache controller */
-				sta(MXCC_ENABLE_ADDR, ASI_CONTROL,
-				    lda(MXCC_ENABLE_ADDR, ASI_CONTROL) |
-					MXCC_ENABLE_BIT);
+				stda(MXCC_ENABLE_ADDR, ASI_CONTROL,
+				    ldda(MXCC_ENABLE_ADDR, ASI_CONTROL) |
+					 (u_int64_t)MXCC_ENABLE_BIT);
 				cacheinfo.ec_enabled = 1;
 			}
 			printf("cache enabled\n");
