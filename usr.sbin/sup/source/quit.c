@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.3 1997/06/17 18:56:29 christos Exp $	*/
+/*	$NetBSD: quit.c,v 1.4 2002/07/10 18:53:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -49,25 +49,11 @@
 #include "supextern.h"
 
 void 
-#ifdef __STDC__
 quit (int status, char * fmt, ...)
-#else
-quit (va_alist)
-va_dcl
-#endif
 {
 	va_list args;
-#ifdef __STDC__
+
 	va_start(args, fmt);
-#else
-	int status;
-	char *fmt;
-
-	va_start(args);
-	status = va_arg(args, int);
-	fmt = va_arg(args, char *);
-#endif
-
 	fflush(stdout);
 	(void) vfprintf(stderr, fmt, args);
 	va_end(args);

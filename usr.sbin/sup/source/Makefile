@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/07/19 07:52:44 enami Exp $
+#	$NetBSD: Makefile,v 1.18 2002/07/10 18:53:56 wiz Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -25,7 +25,7 @@
 # Makefile to build sup (the client side), supfilesrv (the repository
 # side, and supscan (used by the repository. If you only want to sup
 # files from CMU, just build sup.
-# The header files: c.h, libc.h and sysent.h are only
+# The header files: c.h and libc.h are only
 # necessary if you are compiling on a non-Mach system. Likewise the
 # files in libextra.a are normally found in libcs.a on a Mach system.
 # DOPRINT_VA is used by vprintf.c and should be defined if your version
