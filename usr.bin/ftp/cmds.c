@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.83 2000/04/13 08:13:30 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.84 2000/05/01 09:44:53 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.83 2000/04/13 08:13:30 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.84 2000/05/01 09:44:53 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,6 +131,7 @@ __RCSID("$NetBSD: cmds.c,v 1.83 2000/04/13 08:13:30 lukem Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "ftp_var.h"
 #include "version.h"
@@ -739,6 +740,44 @@ mget(argc, argv)
 	}
 	(void)xsignal(SIGINT, oldintr);
 	mflag = 0;
+}
+
+/*
+ * Read list of filenames from a local file and get those
+ */
+void
+fget(argc, argv)
+	int argc;
+	char *argv[];
+{
+	char	*buf, *mode;
+	FILE	*fp;
+
+	if (argc != 2) {
+		fprintf(ttyout, "usage: %s localfile\n", argv[0]);
+		code = -1;
+		return;
+	}
+
+	fp = fopen(argv[1], "r");
+	if (fp == NULL) {
+		fprintf(ttyout, "Cannot open source file %s\n", argv[1]);
+		code = -1;
+		return;
+	}
+
+	argv[0] = "get";
+	mode = restart_point ? "r+w" : "w";
+
+	for (;
+	    (buf = fparseln(fp, NULL, NULL, "\0\0\0", 0)) != NULL;
+	    free(buf)) {
+		if (buf[0] == '\0')
+			continue;
+		argv[1] = buf;
+		(void)getit(argc, argv, 0, mode);
+	}
+	fclose(fp);
 }
 
 char *

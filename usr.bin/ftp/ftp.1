@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.61 1999/12/21 13:00:19 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.62 2000/05/01 09:44:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd December 20, 1999
+.Dd May 1, 2000
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -444,6 +444,10 @@ is executed again.
 .It Ic exit
 A synonym for
 .Ic bye .
+.It Ic fget Ar localfile
+Retrieve the files listed in
+.Ar localfile ,
+which has one line per filename.
 .It Ic form Ar format
 Set the file transfer
 .Ic form
