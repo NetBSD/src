@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_syscall.h,v 1.29 2003/09/03 07:29:29 manu Exp $ */
+/* $NetBSD: darwin_syscall.h,v 1.30 2003/09/06 11:18:03 manu Exp $ */
 
 /*
  * System call numbers.
@@ -363,8 +363,14 @@
 /* syscall: "seteuid" ret: "int" args: "uid_t" */
 #define	DARWIN_SYS_seteuid	183
 
+/* syscall: "stat12" ret: "int" args: "const char *" "struct stat12 *" */
+#define	DARWIN_SYS_stat12	188
+
 /* syscall: "fstat" ret: "int" args: "int" "struct stat12 *" */
 #define	DARWIN_SYS_fstat	189
+
+/* syscall: "lstat12" ret: "int" args: "const char *" "struct stat12 *" */
+#define	DARWIN_SYS_lstat12	190
 
 /* syscall: "fpathconf" ret: "long" args: "int" "int" */
 #define	DARWIN_SYS_fpathconf	192
