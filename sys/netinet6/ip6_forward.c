@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.39 2003/10/03 04:30:31 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.40 2003/10/29 10:12:43 mycroft Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.39 2003/10/03 04:30:31 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.40 2003/10/29 10:12:43 mycroft Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -304,13 +304,12 @@ ip6_forward(m, srcrt)
 	ip6 = mtod(m, struct ip6_hdr *);
 	rt = state.ro ? state.ro->ro_rt : NULL;
 	dst = (struct sockaddr_in6 *)state.dst;
-	if (dst != NULL && rt != NULL)
+	if (dst != NULL && rt != NULL) {
 		ipsecrt = 1;
+		goto skip_routing;
+	}
     }
     skip_ipsec:
-
-	if (ipsecrt)
-		goto skip_routing;
 #endif /* IPSEC */
 
 	dst = &ip6_forward_rt.ro_dst;
