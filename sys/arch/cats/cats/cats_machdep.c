@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.9 2002/01/12 13:37:55 chris Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.10 2002/01/19 18:51:58 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -560,19 +560,23 @@ initarm(bootargs)
 	else {
 		extern int end;
 
-		logical = map_chunk(0, l2pagetable, KERNEL_TEXT_BASE,
-		    physical_start, kernexec->a_text,
-		    AP_KR, PT_CACHEABLE);
-		logical += map_chunk(0, l2pagetable, KERNEL_TEXT_BASE + logical,
-		    physical_start + logical, kernexec->a_data,
-		    AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(0, l2pagetable, KERNEL_TEXT_BASE + logical,
-		    physical_start + logical, kernexec->a_bss,
-		    AP_KRW, PT_CACHEABLE);
-		logical += map_chunk(0, l2pagetable, KERNEL_TEXT_BASE + logical,
-		    physical_start + logical, kernexec->a_syms + sizeof(int)
-		    + *(u_int *)((int)&end + kernexec->a_syms + sizeof(int)),
-		    AP_KRW, PT_CACHEABLE);
+		logical = map_chunk(l1pagetable, l2pagetable,
+			KERNEL_TEXT_BASE,
+			physical_start, kernexec->a_text,
+			AP_KR, PT_CACHEABLE);
+		logical += map_chunk(l1pagetable, l2pagetable,
+			KERNEL_TEXT_BASE + logical,
+			physical_start + logical, kernexec->a_data,
+			AP_KRW, PT_CACHEABLE);
+		logical += map_chunk(l1pagetable, l2pagetable,
+			KERNEL_TEXT_BASE + logical,
+			physical_start + logical, kernexec->a_bss,
+			AP_KRW, PT_CACHEABLE);
+		logical += map_chunk(l1pagetable, l2pagetable,
+			KERNEL_TEXT_BASE + logical,
+			physical_start + logical, kernexec->a_syms + sizeof(int)
+			+ *(u_int *)((int)&end + kernexec->a_syms + sizeof(int)),
+			AP_KRW, PT_CACHEABLE);
 	}
 
 	/*
