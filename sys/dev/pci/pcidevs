@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.615.2.11 2004/08/30 09:15:28 tron Exp $
+$NetBSD: pcidevs,v 1.615.2.12 2004/08/30 09:16:10 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1809,6 +1809,7 @@ product INVERTEX AEON		0x0005	AEON
 
 /* IO Data products */
 product IODATA CBIDE2		0x0003	CBIDE2 IDE controller
+product IODATA CBSCII		0x0005	CBSCII NinjaSCSI-32Bi SCSI
 
 /* ITE products */
 product ITE IT8152		0x8152	IT8152 Host Bridge
@@ -2841,6 +2842,15 @@ product WINBOND W89C840F	0x0840	W89C840F 10/100 Ethernet
 product WINBOND W89C940F	0x0940	W89C940F Ethernet
 product WINBOND W89C940F_1	0x5a5a	W89C940F Ethernet
 product WINBOND	W6692		0x6692	W6692 ISDN
+
+/* Workbit products */
+product WORKBIT NJSC32BI		0x8007	NinjaSCSI-32Bi SCSI
+product WORKBIT NJSC32UDE		0x8009	NinjaSCSI-32UDE SCSI
+product WORKBIT NJSC32BI_KME		0xf007	NinjaSCSI-32Bi SCSI (KME)
+product WORKBIT NJSC32UDE_IODATA	0xf010	NinjaSCSI-32UDE SCSI (IODATA)
+product WORKBIT NJSC32UDE_LOGITEC	0xf012	NinjaSCSI-32UDE SCSI (LOGITEC)
+product WORKBIT NJSC32UDE_LOGITEC2	0xf013	NinjaSCSI-32UDE SCSI (LOGITEC2)
+product WORKBIT NJSC32UDE_BUFFALO	0xf015	NinjaSCSI-32UDE SCSI (BUFFALO)
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part
