@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.31 2001/03/02 03:07:29 itojun Exp $
+# $NetBSD: network,v 1.32 2001/07/08 07:16:00 lukem Exp $
 #
 
 # PROVIDE: network
@@ -57,7 +57,7 @@ network_start()
 	# auto-route from a newly configured interface's address to lo0
 	# works correctly.
 	#
-	# NOTE: obscure networking problems may occur if lo0 isn't configured...
+	# NOTE: obscure networking problems will occur if lo0 isn't configured.
 	#
 	ifconfig lo0 inet 127.0.0.1
 
@@ -266,8 +266,6 @@ network_start()
 					ifconfig $int inet alias $addr \
 					    netmask $net
 				fi
-				# Use loopback, not the wire
-				route add $addr 127.0.0.1
 			done
 		fi
 	done
@@ -292,8 +290,6 @@ network_start()
 			else
 				ifconfig $int inet alias $addr netmask $net
 			fi
-			# use loopback, not the wire
-			route add $addr 127.0.0.1
 		done < /etc/ifaliases
 	fi
 
