@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.1.2.1 2000/03/05 23:25:56 jdc Exp $	*/
+/*	$NetBSD: acs.c,v 1.1.2.2 2000/03/30 19:27:45 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,9 +48,10 @@ chtype _acs_char[NUM_ACS];
 void
 __init_acs()
 {
-	int	count;
-	char	*aofac;	/* Address of 'ac' */
-	char	acs, term;
+	int		count;
+	char		*aofac;	/* Address of 'ac' */
+	char		acs;
+	unsigned char	term;
 
 	/* Default value '+' for all ACS characters */
 	for (count=0; count < NUM_ACS; count++)
