@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.19 1996/09/27 18:14:23 cgd Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.20 1996/10/03 05:02:07 cgd Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -28,7 +28,6 @@
  */
 
 #define	ELFSIZE		32				/* XXX should die */
-#define	EXEC_ELF32					/* XXX should die */
 
 #include <sys/param.h>
 #include <sys/systm.h>
