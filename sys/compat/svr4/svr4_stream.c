@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.5 1995/03/31 03:06:39 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.6 1995/06/24 18:47:08 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -641,7 +641,7 @@ svr4_putmsg(p, uap, retval)
 	register_t				*retval;
 {
 	struct filedesc	*fdp = p->p_fd;
-	struct file	*fp = fdp->fd_ofiles[SCARG(uap, fd)];
+	struct file	*fp;
 	struct svr4_strbuf dat, ctl;
 	struct svr4_strmcmd sc;
 	struct svr4_netaddr *na;
@@ -655,6 +655,10 @@ svr4_putmsg(p, uap, retval)
 	svr4_showmsg(">putmsg", SCARG(uap, fd), SCARG(uap, ctl),
 		     SCARG(uap, dat), SCARG(uap, flags));
 #endif /* DEBUG_SVR4 */
+
+	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+		return EBADF;
 
 	if (SCARG(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)
@@ -754,7 +758,7 @@ svr4_getmsg(p, uap, retval)
 	register_t				*retval;
 {
 	struct filedesc	*fdp = p->p_fd;
-	struct file	*fp = fdp->fd_ofiles[SCARG(uap, fd)];
+	struct file	*fp;
 	struct getpeername_args ga;
 	struct svr4_strbuf dat, ctl;
 	struct svr4_strmcmd sc;
@@ -776,6 +780,10 @@ svr4_getmsg(p, uap, retval)
 		     SCARG(uap, dat), 0);
 #endif /* DEBUG_SVR4 */
 			
+	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+		return EBADF;
+
 	if (SCARG(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG(uap, ctl), &ctl, sizeof(ctl))) != 0)
 			return error;
