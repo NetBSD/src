@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.c,v 1.24 2003/08/07 11:15:59 agc Exp $	*/
+/*	$NetBSD: netstat.c,v 1.25 2003/09/04 09:23:35 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netstat.c,v 1.24 2003/08/07 11:15:59 agc Exp $");
+__RCSID("$NetBSD: netstat.c,v 1.25 2003/09/04 09:23:35 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -158,12 +158,6 @@ static struct nlist namelist[] = {
 	{ "_tcbtable" },
 #define	X_UDBTABLE	1
 	{ "_udbtable" },
-#ifdef INET6
-#define	X_TCB6		2
-	{ "_tcb6" },
-#define	X_UDB6		3
-	{ "_udb6" },
-#endif
 	{ "" },
 };
 
@@ -205,10 +199,10 @@ fetchnetstat(void)
 	if ((protos & UDP) && namelist[X_UDBTABLE].n_type)
 		fetchnetstat4(NPTR(X_UDBTABLE), 0);
 #ifdef INET6
-	if ((protos & TCP) && namelist[X_TCB6].n_type)
-		fetchnetstat6(NPTR(X_TCB6), 1);
-	if ((protos & UDP) && namelist[X_UDB6].n_type)
-		fetchnetstat6(NPTR(X_UDB6), 0);
+	if ((protos & TCP) && namelist[X_TCBTABLE].n_type)
+		fetchnetstat6(NPTR(X_TCBTABLE), 1);
+	if ((protos & UDP) && namelist[X_UDBTABLE].n_type)
+		fetchnetstat6(NPTR(X_UDBTABLE), 0);
 #endif
 }
 
@@ -224,10 +218,10 @@ fetchnetstat4(void *off, int istcp)
 
 	KREAD(off, &pcbtable, sizeof pcbtable);
 	prev = head = (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue;
-	next = pcbtable.inpt_queue.cqh_first;
+	next = (struct inpcb *)pcbtable.inpt_queue.cqh_first;
 	while (next != head) {
 		KREAD(next, &inpcb, sizeof (inpcb));
-		if (inpcb.inp_queue.cqe_prev != prev) {
+		if ((struct inpcb *)inpcb.inp_queue.cqe_prev != prev) {
 printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev, head, next, inpcb.inp_queue.cqe_prev);
 			p = netcb.ni_forw;
 			for (; p != (struct netinfo *)&netcb; p = p->ni_forw)
@@ -236,8 +230,10 @@ printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev, head, next,
 			return;
 		}
 		prev = next;
-		next = inpcb.inp_queue.cqe_next;
+		next = (struct inpcb *)inpcb.inp_queue.cqe_next;
 
+		if (inpcb.inp_af != AF_INET)
+			continue;
 		if (!aflag && inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
 			continue;
 		if (nhosts && !checkhost(&inpcb))
@@ -257,19 +253,20 @@ printf("prev = %p, head = %p, next = %p, inpcb...prev = %p\n", prev, head, next,
 static void
 fetchnetstat6(void *off, int istcp)
 {
+	struct inpcbtable pcbtable;
+	struct in6pcb *head6, *prev6, *next6;
 	struct netinfo *p;
 	struct socket sockb;
 	struct tcpcb tcpcb;
 	struct in6pcb in6pcb;
-	struct in6pcb *head6, *prev6, *next6;
 
-	KREAD(off, &in6pcb, sizeof (struct in6pcb));
-	prev6 = head6 = (struct in6pcb *)off;
-	next6 = in6pcb.in6p_next;
+	KREAD(off, &pcbtable, sizeof pcbtable);
+	prev6 = head6 = (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue;
+	next6 = (struct in6pcb *)pcbtable.inpt_queue.cqh_first;
 	while (next6 != head6) {
 		KREAD(next6, &in6pcb, sizeof (in6pcb));
-		if (in6pcb.in6p_prev != prev6) {
-printf("prev = %p, head = %p, next = %p, in6pcb...prev = %p\n", prev6, head6, next6, in6pcb.in6p_prev);
+		if ((struct in6pcb *)in6pcb.in6p_queue.cqe_prev != prev6) {
+printf("prev = %p, head = %p, next = %p, in6pcb...prev = %p\n", prev6, head6, next6, in6pcb.in6p_queue.cqe_prev);
 			p = netcb.ni_forw;
 			for (; p != (struct netinfo *)&netcb; p = p->ni_forw)
 				p->ni_seen = 1;
@@ -277,8 +274,10 @@ printf("prev = %p, head = %p, next = %p, in6pcb...prev = %p\n", prev6, head6, ne
 			return;
 		}
 		prev6 = next6;
-		next6 = in6pcb.in6p_next;
+		next6 = (struct in6pcb *)in6pcb.in6p_queue.cqe_next;
 
+		if (in6pcb.in6p_af != AF_INET6)
+			continue;
 		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr))
 			continue;
 		if (nhosts && !checkhost6(&in6pcb))
