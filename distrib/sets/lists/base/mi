@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.139 1999/12/29 04:16:23 hubertf Exp $
+# $NetBSD: mi,v 1.140 2000/01/17 02:36:32 itojun Exp $
 .
 ./altroot
 ./bin
@@ -128,6 +128,7 @@
 ./sbin/slattach
 ./sbin/swapctl
 ./sbin/swapon
+./sbin/sysctl
 ./sbin/ttyflags
 ./sbin/tunefs
 ./sbin/umount
