@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.56 2002/03/19 14:42:41 lukem Exp $
+$NetBSD: UPDATING,v 1.57 2002/04/10 05:26:15 itojun Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -10,6 +10,7 @@ Recent changes:
 
 20020320:
 	<bsd.lib.mk> needs a new install(1) for it's "-a cmd" support.
+	build and install at usr.bin/xinstall before the build.
 
 20020319:
 	raw IPv6 socket now makes strict checking for sa_family and sa_len
