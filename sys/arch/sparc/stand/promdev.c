@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.9 1995/02/22 08:18:20 mycroft Exp $ */
+/*	$NetBSD: promdev.c,v 1.10 1995/05/08 18:56:06 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -66,7 +66,7 @@ struct promdata {
 int
 devopen(f, fname, file)
 	struct open_file *f;
-	char *fname;
+	const char *fname;
 	char **file;
 {
 	int	error, fd;
@@ -120,7 +120,7 @@ devopen(f, fname, file)
 #endif
 	f->f_dev = devsw;
 	f->f_devdata = (void *)pdp;
-	*file = fname;
+	*file = (char *)fname;
 	return 0;
 }
 
