@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.16 2003/11/23 23:13:11 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.17 2003/11/24 03:11:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.16 2003/11/23 23:13:11 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.17 2003/11/24 03:11:16 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -138,8 +138,8 @@ const char *exp_type[] = {
 };
 const int exp_types = sizeof exp_type / sizeof exp_type[0];
 
-void general_exception(struct lwp *, struct trapframe *);
-void tlb_exception(struct lwp *, struct trapframe *, u_int32_t);
+void general_exception(struct lwp *, struct trapframe *, uint32_t);
+void tlb_exception(struct lwp *, struct trapframe *, uint32_t);
 void syscall(struct lwp *, struct trapframe *);
 void ast(struct lwp *, struct trapframe *);
 
@@ -147,9 +147,10 @@ void ast(struct lwp *, struct trapframe *);
  * void general_exception(struct lwp *l, struct trapframe *tf):
  *	l  ... curlwp when exception occur.
  *	tf ... full user context.
+ *	va ... fault va for user mode EXPEVT_ADDR_ERR_{LD,ST}
  */
 void
-general_exception(struct lwp *l, struct trapframe *tf)
+general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
 	boolean_t usermode = !KERNELMODE(tf->tf_ssr);
@@ -194,10 +195,14 @@ general_exception(struct lwp *l, struct trapframe *tf)
 		/*FALLTHROUGH*/
 	case EXPEVT_ADDR_ERR_ST | EXP_USER:
 		KSI_INIT_TRAP(&ksi);
-		/* XXX: for kernel access attempt this should be a SIGSEGV */
-		ksi.ksi_signo = SIGBUS;
-		ksi.ksi_code = BUS_ADRALN;
-		ksi.ksi_addr = (void *)tf->tf_spc; /* XXX: use TEA */
+		if (((int)va) < 0) {
+		    ksi.ksi_signo = SIGSEGV;
+		    ksi.ksi_code = SEGV_ACCERR;
+		} else {
+		    ksi.ksi_signo = SIGBUS;
+		    ksi.ksi_code = BUS_ADRALN;
+		}
+		ksi.ksi_addr = (void *)va;
 		goto trapsignal;
 
 	case EXPEVT_RES_INST | EXP_USER:
@@ -395,13 +400,13 @@ syscall(struct lwp *l, struct trapframe *tf)
 }
 
 /*
- * void tlb_exception(struct lwp *l, struct trapframe *tf, u_int32_t va):
+ * void tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va):
  *	l  ... curlwp when exception occur.
  *	tf ... full user context.
  *	va ... fault address.
  */
 void
-tlb_exception(struct lwp *l, struct trapframe *tf, u_int32_t va)
+tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
 #define	TLB_ASSERT(assert, msg)						\
 do {									\
@@ -445,7 +450,7 @@ do {									\
 		if (usermode) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGSEGV;
-			ksi.ksi_code = SEGV_MAPERR;
+			ksi.ksi_code = SEGV_ACCERR;
 			ksi.ksi_addr = (void *)va;
 			goto user_fault;
 		} else {
@@ -516,7 +521,7 @@ do {									\
 	    (va < USRSTACK)) {
 		if (err == 0) {
 			struct vmspace *vm = l->l_proc->p_vmspace;
-			u_int32_t nss;
+			uint32_t nss;
 			nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
