@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.50 1994/04/04 08:57:54 mycroft Exp $
+ *	$Id: locore.s,v 1.51 1994/04/04 09:42:52 mycroft Exp $
  */
 
 
@@ -1376,8 +1376,8 @@ ENTRY(idle)
 
 	ALIGN_TEXT
 1:	cli
-	movl	_whichqs,%edi
-	testl	%edi,%edi
+	movl	_whichqs,%ecx
+	testl	%ecx,%ecx
 	jnz	sw1
 	sti
 	jmp	1b
@@ -1399,17 +1399,58 @@ ENTRY(swtch)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
+	pushl	_cpl
 
 	incl	_cnt+V_SWTCH
 
-	/* switch to new process. first, save context as needed */
-	movl	_curproc,%ecx
+	/* Wait for new process. */
+sw0:	cli				# splhigh doesn't do a cli
+	movl	_whichqs,%ecx
 
-	/* if no process to save, don't bother */
-	testl	%ecx,%ecx
-	jz	sw0
+sw1:	bsfl	%ecx,%ebx		# find a full q
+	jz	_idle			# if none, idle
 
-	movl	P_ADDR(%ecx),%esi
+	lea	_qs(,%ebx,8),%esi	# select q
+
+	movl	P_LINK(%esi),%edi	# unlink from front of process q
+#ifdef	DIAGNOSTIC
+	cmpl	%edi,%esi		# linked to self? (e.g. not on list)
+	je	badsw			# not possible
+#endif
+	movl	P_LINK(%edi),%edx
+	movl	%edx,P_LINK(%esi)
+	movl	P_RLINK(%edi),%eax
+	movl	%eax,P_RLINK(%edx)
+
+	cmpl	%edx,%esi		# q empty
+	jne	3f
+	btrl	%ebx,%ecx		# yes, clear to indicate empty
+
+3:	movl	%ecx,_whichqs		# update q status
+
+	xorl	%eax,%eax
+	movl	%eax,_want_resched
+
+#ifdef	DIAGNOSTIC
+	cmpl	%eax,P_WCHAN(%edi)
+	jne	badsw
+	cmpb	$SRUN,P_STAT(%edi)
+	jne	badsw
+#endif
+
+	movl	%eax,P_RLINK(%edi) /* isolate process to run */
+
+	/* Skip context switch if same process. */
+	movl	_curproc,%esi
+	cmpl	%edi,%esi
+	je	swtch_return
+
+	/* If old process exited, don't bother. */
+	testl	%esi,%esi
+	jz	swtch_exited
+
+	/* Save context. */
+	movl	P_ADDR(%esi),%esi
 
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
@@ -1418,13 +1459,10 @@ ENTRY(swtch)
 	movl	%gs,%ax
 	movl	%eax,PCB_GS(%esi)
 
-	movl	_cpl,%eax
-	movl	%eax,PCB_IML(%esi)
-
 #if NNPX > 0
 	/* have we used fp, and need a save? */
-	movl	_curproc,%edi
-	cmpl	%edi,_npxproc
+	movl	_curproc,%ecx
+	cmpl	%ecx,_npxproc
 	jne	1f
 
 	leal	PCB_SAVEFPU(%esi),%ebx
@@ -1436,48 +1474,14 @@ ENTRY(swtch)
 
 	movl	$0,_curproc		# out of process
 
-sw0:	cli				# splhigh doesn't do a cli
-	movl	_whichqs,%edi
+swtch_exited:
+	/* Restore context. */
+	movl	P_ADDR(%edi),%edx
 
-sw1:	bsfl	%edi,%ebx		# find a full q
-	jz	_idle			# if none, idle
-
-	lea	_qs(,%ebx,8),%esi	# select q
-
-	movl	P_LINK(%esi),%ecx	# unlink from front of process q
-#ifdef	DIAGNOSTIC
-	cmpl	%ecx,%esi		# linked to self? (e.g. not on list)
-	je	badsw			# not possible
-#endif
-	movl	P_LINK(%ecx),%edx
-	movl	%edx,P_LINK(%esi)
-	movl	P_RLINK(%ecx),%eax
-	movl	%eax,P_RLINK(%edx)
-
-	cmpl	%edx,%esi		# q empty
-	jne	3f
-	btrl	%ebx,%edi		# yes, clear to indicate empty
-
-3:	movl	%edi,_whichqs		# update q status
-
-	xorl	%eax,%eax
-	movl	%eax,_want_resched
-
-#ifdef	DIAGNOSTIC
-	cmpl	%eax,P_WCHAN(%ecx)
-	jne	badsw
-	cmpb	$SRUN,P_STAT(%ecx)
-	jne	badsw
-#endif
-
-	movl	%eax,P_RLINK(%ecx) /* isolate process to run */
-	movl	P_ADDR(%ecx),%edx
+	/* Switch address space. */
 	movl	PCB_CR3(%edx),%ebx
-
-	/* switch address space */
 	movl	%ebx,%cr3
 
-	/* restore context */
 	movl	PCB_ESP(%edx),%esp
 	movl	PCB_EBP(%edx),%ebp
 	movl	PCB_FS(%edx),%eax
@@ -1485,7 +1489,7 @@ sw1:	bsfl	%edi,%ebx		# find a full q
 	movl	PCB_GS(%edx),%eax
 	movl	%ax,%gs
 
-	movl	%ecx,_curproc		# into next process
+	movl	%edi,_curproc		# into next process
 	movl	%edx,_curpcb
 
 #ifdef	USER_LDT
@@ -1504,11 +1508,12 @@ sw1:	bsfl	%edi,%ebx		# find a full q
 #endif
 	sti				# splx() doesn't do an sti/cli
 
-	pushl	PCB_IML(%edx)
+swtch_return:
+	/* Old _cpl is already on the stack. */
 	call    _splx			# restore the process's ipl
 	addl	$4,%esp
 
-	movl	%edx,%eax		# return (p);
+	movl	%edi,%eax		# return (p);
 	popl	%edi
 	popl	%esi
 	popl	%ebx
@@ -1541,8 +1546,9 @@ ENTRY(savectx)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
+	pushl	_cpl
 
-	movl	16(%esp),%esi		/* esi = p2->p_addr */
+	movl	20(%esp),%esi		/* esi = p2->p_addr */
 
 	movl	%esp,PCB_ESP(%esi)
 	movl	%ebp,PCB_EBP(%esi)
@@ -1550,9 +1556,6 @@ ENTRY(savectx)
 	movl	%eax,PCB_FS(%esi)
 	movl	%gs,%ax
 	movl	%eax,PCB_GS(%esi)
-
-	movl	_cpl,%eax
-	movl	%eax,PCB_IML(%esi)
 
 #if NNPX > 0
 	/*
@@ -1586,7 +1589,7 @@ ENTRY(savectx)
 1:
 #endif
 
-	cmpl	$0,20(%esp)
+	cmpl	$0,24(%esp)
 	je	1f
 	movl	%esp,%eax		# eax = stack pointer
 	movl	%eax,%edx		# edx = stack offset from bottom
@@ -1601,6 +1604,7 @@ ENTRY(savectx)
 	addl	$12,%esp
 	
 1:	xorl	%eax,%eax		# return 0
+	addl	$4,%esp			# drop saved _cpl on the floor
 	popl	%edi
 	popl	%esi
 	popl	%ebx
