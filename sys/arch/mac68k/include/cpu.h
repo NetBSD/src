@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53 1997/10/26 21:41:44 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54 1998/02/13 07:41:55 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -107,6 +107,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
+extern int want_resched;	/* resched() was called */
 #define	need_resched()	{ want_resched++; aston(); }
 
 /*
@@ -122,10 +123,8 @@ struct clockframe {
  */
 #define	signotify(p)	aston()
 
+extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
-
-int	astpending;	/* need to trap before returning to user mode */
-int	want_resched;	/* resched() was called */
 
 #define CPU_CONSDEV	1
 #define CPU_MAXID	2
@@ -186,6 +185,7 @@ int	want_resched;	/* resched() was called */
 #define MACH_MACQ605		94
 #define MACH_MACQ605_33		95
 #define MACH_MACQ630		98
+#define	MACH_MACP580		99
 #define MACH_MACPB280		102
 #define MACH_MACPB280C		103
 #define MACH_MACPB150		115
@@ -205,6 +205,7 @@ int	want_resched;	/* resched() was called */
 #define MACH_CLASSQ	0x0100	/* non-A/V Centris/Quadras. */
 #define MACH_CLASSAV	0x0101	/* A/V Centris/Quadras. */
 #define MACH_CLASSQ2	0x0102	/* More Centris/Quadras, different sccA. */
+#define MACH_CLASSP580	0x0103	/* Similar to Quadras, but not quite.. */
 
 #define MACH_68020	0
 #define MACH_68030	1

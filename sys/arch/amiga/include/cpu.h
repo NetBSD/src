@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 1997/10/26 21:41:34 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 1998/02/13 07:41:47 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,6 +90,7 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
+extern int want_resched;	/* resched() was called */
 #define	need_resched()	{want_resched = 1; setsoftast();}
 
 /*
@@ -106,10 +107,9 @@ struct clockframe {
  */
 #define	signotify(p)	setsoftast()
 
+extern int astpending;		/* need trap before returning to user mode */
 #define setsoftast()	(astpending = 1)
 
-int	astpending;		/* need trap before returning to user mode */
-int	want_resched;		/* resched() was called */
 
 /* include support for software interrupts */
 #include <machine/mtpr.h>
