@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.6 2003/08/29 04:17:39 thorpej Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.7 2003/09/02 20:59:51 fvdl Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.6 2003/08/29 04:17:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.7 2003/09/02 20:59:51 fvdl Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -754,30 +754,34 @@ ahd_configure_termination(struct ahd_softc *ahd, u_int adapter_control)
 	 */
 	error = ahd_read_flexport(ahd, FLXADDR_TERMCTL, &termctl);
 	if ((adapter_control & CFAUTOTERM) == 0) {
-		printf("%s: Manual Primary Termination\n",
-		       ahd_name(ahd));
+		if (bootverbose)
+			printf("%s: Manual Primary Termination\n",
+			       ahd_name(ahd));
 		termctl &= ~(FLX_TERMCTL_ENPRILOW|FLX_TERMCTL_ENPRIHIGH);
 		if ((adapter_control & CFSTERM) != 0)
 			termctl |= FLX_TERMCTL_ENPRILOW;
 		if ((adapter_control & CFWSTERM) != 0)
 			termctl |= FLX_TERMCTL_ENPRIHIGH;
 	} else if (error != 0) {
-		printf("%s: Primary Auto-Term Sensing failed! "
-		       "Using Defaults.\n", ahd_name(ahd));
+		if (bootverbose)
+			printf("%s: Primary Auto-Term Sensing failed! "
+			       "Using Defaults.\n", ahd_name(ahd));
 		termctl = FLX_TERMCTL_ENPRILOW|FLX_TERMCTL_ENPRIHIGH;
 	}
 
 	if ((adapter_control & CFSEAUTOTERM) == 0) {
-		printf("%s: Manual Secondary Termination\n",
-		       ahd_name(ahd));
+		if (bootverbose)
+			printf("%s: Manual Secondary Termination\n",
+			       ahd_name(ahd));
 		termctl &= ~(FLX_TERMCTL_ENSECLOW|FLX_TERMCTL_ENSECHIGH);
 		if ((adapter_control & CFSELOWTERM) != 0)
 			termctl |= FLX_TERMCTL_ENSECLOW;
 		if ((adapter_control & CFSEHIGHTERM) != 0)
 			termctl |= FLX_TERMCTL_ENSECHIGH;
 	} else if (error != 0) {
-		printf("%s: Secondary Auto-Term Sensing failed! "
-		       "Using Defaults.\n", ahd_name(ahd));
+		if (bootverbose)
+			printf("%s: Secondary Auto-Term Sensing failed! "
+			    "Using Defaults.\n", ahd_name(ahd));
 		termctl |= FLX_TERMCTL_ENSECLOW|FLX_TERMCTL_ENSECHIGH;
 	}
 
@@ -798,21 +802,23 @@ ahd_configure_termination(struct ahd_softc *ahd, u_int adapter_control)
 		printf("%s: Unable to set termination settings!\n",
 		       ahd_name(ahd));
 	} else {
-		printf("%s: Primary High byte termination %sabled\n",
-		       ahd_name(ahd),
-		       (termctl & FLX_TERMCTL_ENPRIHIGH) ? "En" : "Dis");
+		if (bootverbose) {
+			printf("%s: Primary High byte termination %sabled\n",
+			    ahd_name(ahd),
+			    (termctl & FLX_TERMCTL_ENPRIHIGH) ? "En" : "Dis");
 
-		printf("%s: Primary Low byte termination %sabled\n",
-		       ahd_name(ahd),
-		       (termctl & FLX_TERMCTL_ENPRILOW) ? "En" : "Dis");
+			printf("%s: Primary Low byte termination %sabled\n",
+			    ahd_name(ahd),
+			    (termctl & FLX_TERMCTL_ENPRILOW) ? "En" : "Dis");
 
-		printf("%s: Secondary High byte termination %sabled\n",
-		       ahd_name(ahd),
-		       (termctl & FLX_TERMCTL_ENSECHIGH) ? "En" : "Dis");
+			printf("%s: Secondary High byte termination %sabled\n",
+			    ahd_name(ahd),
+			    (termctl & FLX_TERMCTL_ENSECHIGH) ? "En" : "Dis");
 
-		printf("%s: Secondary Low byte termination %sabled\n",
-		       ahd_name(ahd),
-		       (termctl & FLX_TERMCTL_ENSECLOW) ? "En" : "Dis");
+			printf("%s: Secondary Low byte termination %sabled\n",
+			    ahd_name(ahd),
+			    (termctl & FLX_TERMCTL_ENSECLOW) ? "En" : "Dis");
+		}
 	}
 	return;
 }
