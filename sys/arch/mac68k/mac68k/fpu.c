@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.7 1995/05/06 18:33:19 briggs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.8 1995/05/10 03:19:00 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -31,7 +31,7 @@
  */
 
 /*
- * Floating Point Unit (MC68881)
+ * Floating Point Unit (MC68881/882/040)
  * Probe for the FPU at autoconfig time.
  */
 
@@ -50,10 +50,9 @@
 extern int fpu_type;
 extern int *nofault;
 
-int  fpu_match  __P((struct device *,       void *vcf, void *args));
-void fpu_attach __P((struct device *, struct device *, void *));
-int  fpu_probe();
-extern int	matchbyname();
+extern int  matchbyname __P((struct device *, void *, void *));
+static void fpu_attach __P((struct device *, struct device *, void *));
+static int  fpu_probe __P((void));
 
 struct cfdriver fpucd = {
 	NULL, "fpu", matchbyname, fpu_attach,
@@ -67,9 +66,11 @@ static char *fpu_descr[] = {
 #endif
 	"mc68881",			/* 1 */
 	"mc68882",			/* 2 */
+	"mc68040",			/* 3 */
 	"?" };
 
-void fpu_attach(parent, self, args)
+static void
+fpu_attach(parent, self, args)
 	struct device *parent;
 	struct device *self;
 	void *args;
@@ -86,19 +87,65 @@ void fpu_attach(parent, self, args)
 	printf(" (%s)\n", descr);
 }
 
-int fpu_probe()
+static int
+fpu_probe()
 {
+	/*
+	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.
+	 * We, of course, need to have enough room for either.
+	 */
+	int	fpframe[60 / sizeof(int)];
 	jmp_buf	faultbuf;
-	int null_fpframe[2];
+	u_char	b;
 
 	nofault = (int *) &faultbuf;
 	if (setjmp(nofault)) {
 		nofault = (int *) 0;
 		return(0);
 	}
-	null_fpframe[0] = 0;
-	null_fpframe[1] = 0;
-	m68881_restore(null_fpframe);
+
+	/*
+	 * Synchronize FPU or cause a fault.
+	 * This should leave the 881/882 in the IDLE state,
+	 * state, so we can determine which we have by
+	 * examining the size of the FP state frame
+	 */
+	asm("fnop");
+
 	nofault = (int *) 0;
-	return(1);
+
+	/*
+	 * Presumably, if we're an 040 and did not take exception
+	 * above, we have an FPU.  Don't bother probing.
+	 */
+	if (cpu040) {
+		return 3;
+	}
+
+	/*
+	 * Presumably, this will not cause a fault--the fnop should
+	 * have if this will.  We save the state in order to get the
+	 * size of the frame.
+	 */
+	asm("movl %0, a0; fsave a0@" : : "a" (fpframe) : "a0" );
+
+	b = *((u_char *) fpframe + 1);
+
+	/*
+	 * Now, restore a NULL state to reset the FPU.
+	 */
+	fpframe[0] = fpframe[1] = 0;
+	m68881_restore(fpframe);
+
+	/*
+	 * The size of a 68881 IDLE frame is 0x18
+	 *         and a 68882 frame is 0x38
+	 */
+	if (b == 0x18) return 1;
+	if (b == 0x38) return 2;
+
+	/*
+	 * If it's not one of the above, we have no clue what it is.
+	 */
+	return 4;
 }
