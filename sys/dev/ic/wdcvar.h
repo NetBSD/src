@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.2 1998/04/07 19:51:58 leo Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.2.2.1 1998/06/04 16:52:47 bouyer Exp $    */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -14,15 +14,15 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	notice, this list of conditions and the following disclaimer in the
+ *	documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *	must display the following acknowledgement:
  *  This product includes software developed by Charles M. Hannum.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *	derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -36,70 +36,129 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct wdc_attachment_data {
-	/* manadatory fields */
-	int			cap;
-	bus_space_tag_t		iot;
-	bus_space_handle_t	ioh;
-	bus_space_tag_t		auxiot;
-	bus_space_handle_t	auxioh;
+#define	WAITTIME    (10 * hz)    /* time to wait for a completion */
+	/* this is a lot for hard drives, but not for cdroms */
+
+struct channel_queue {  /* per channel queue (may be shared) */
+	TAILQ_HEAD(xferhead, wdc_xfer) sc_xfer;
+};
+
+struct channel_softc { /* Per channel data */
+	/* Our location */
+	int channel;
+	/* Our controller's softc */
+	struct wdc_softc *wdc;
+	/* Our registers */
+	bus_space_tag_t       cmd_iot;
+	bus_space_handle_t    cmd_ioh;
+	bus_space_tag_t       ctl_iot;
+	bus_space_handle_t    ctl_ioh;
 	/*
 	 * XXX data access (normal and 32-bit) may need to be
 	 * done via a separate iot/ioh on some systems.  Let's
 	 * wait and see if that's the case before implementing
 	 * it.
 	 */
+	/* Our state */
+	int ch_flags;
+#define WDCF_ACTIVE   0x01	/* channel is active */
+#define WDCF_IRQ_WAIT 0x10	/* controller is waiting for irq */
+	u_int8_t ch_status;         /* copy of status register */
+	u_int8_t ch_error;          /* copy of error register */
+	/* per-drive infos */
+	struct ata_drive_datas ch_drive[2];
+
+	/*
+	 * channel queues. May be the same for all channels, if hw channels
+	 * are not independants
+	 */
+	struct channel_queue *ch_queue;
+};
+
+struct wdc_softc { /* Per controller state */
+	struct device sc_dev;
+	/* manadatory fields */
+	int           cap;
+/* Capabilities supported by the controller */
+#define	WDC_CAPABILITY_DATA32 0x01     /* 32-bit data access */
+#define	WDC_CAPABILITY_DMA    0x02     /* DMA */
+#define	   WDC_CAPABILITY_UDMA   0x04	 /* Ultra-DMA/33 */
+#define	WDC_CAPABILITY_HWLOCK 0x08     /* Needs to lock HW */
+	u_int8_t      pio_mode; /* hightest PIO mode supported */
+	u_int8_t      dma_mode; /* hightest DMA mode supported */
+	int nchannels;	/* Number of channels on this controller */
+	struct channel_softc *channels;  /* channels-specific datas (array) */
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
-	void			*dma_arg;
-	void			(*dma_setup) __P((void *));
-	void			(*dma_start) __P((void *, void *, size_t,
-				    int));
-	void			(*dma_finish) __P((void *));
+	void            *dma_arg;
+	int            (*dma_init) __P((void *, int, int, void *, size_t,
+	                int));
+	void           (*dma_start) __P((void *, int, int, int));
+	int            (*dma_finish) __P((void *, int, int, int));
 
 	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
-	int			(*claim_hw) __P((void *, int));
-	void			(*free_hw) __P((void *));
+	int            (*claim_hw) __P((void *, int));
+	void            (*free_hw) __P((void *));
+
 };
 
-/* Capabilities supported by the controller */
-#define	WDC_CAPABILITY_DATA32	0x01		/* 32-bit data access */
-#define	WDC_CAPABILITY_DMA	0x02		/* DMA */
-#define	WDC_CAPABILITY_HWLOCK	0x04		/* Needs to lock HW */
+ /*
+  * Description of a command to be handled by a controller.
+  * These commands are queued in a list.
+  */
+struct wdc_xfer {
+	volatile u_int c_flags;    
+#define C_INUSE  	0x0001 /* xfer struct is in use */
+#define C_ATAPI  	0x0002 /* xfer is ATAPI request */
+#define C_TIMEOU  	0x0004 /* xfer processing timed out */
+#define C_NEEDDONE  	0x0010 /* need to call upper-level done */
 
-struct wdc_softc {
-	struct device sc_dev;
-	const struct wdc_attachment_data *sc_adp;
+	/* Information about our location */
+	u_int8_t drive;
+	u_int8_t channel;
 
-	struct wd_link *d_link[2];
-	struct scsipi_link *ab_link;
-
-	TAILQ_HEAD(xferhead, wdc_xfer) sc_xfer;
-	int sc_flags;
-#define	WDCF_ACTIVE		0x01	/* controller is active */
-#define	WDCF_SINGLE		0x02	/* sector at a time mode */
-#define	WDCF_ERROR		0x04	/* processing a disk error */
-#define	WDCF_WANTED		0x08	/* XXX locking for wd_get_parms() */
-#define	WDCF_IRQ_WAIT		0x10	/* controller is waiting for irq */
-#define	WDCF_ONESLAVE		0x20	/* ctrl. has one ATAPI slave attached */
-	int sc_errors;			/* errors during current transfer */
-	u_char sc_status;		/* copy of status register */
-	u_char sc_error;		/* copy of error register */
-	u_char sc_drives_mask;	/* bitmask for drives present/absent */
+	/* Information about the current transfer  */
+	void *cmd; /* wdc, ata or scsipi command structure */
+	void *databuf;
+	int c_bcount;      /* byte count left */
+	int c_skip;        /* bytes already transferred */
+	TAILQ_ENTRY(wdc_xfer) c_xferchain;
+	LIST_ENTRY(wdc_xfer) free_list;
+	void (*c_start) __P((struct channel_softc *, struct wdc_xfer *));
+	int  (*c_intr)  __P((struct channel_softc *, struct wdc_xfer *));
 };
 
-#define	sc_cap		sc_adp->cap
-#define	sc_iot		sc_adp->iot
-#define	sc_ioh		sc_adp->ioh
-#define	sc_auxiot	sc_adp->auxiot
-#define	sc_auxioh	sc_adp->auxioh
-#define	sc_dma_arg	sc_adp->dma_arg
-#define	sc_dma_setup	sc_adp->dma_setup
-#define	sc_dma_start	sc_adp->dma_start
-#define	sc_dma_finish	sc_adp->dma_finish
-#define	sc_claim_hw	sc_adp->claim_hw
-#define	sc_free_hw	sc_adp->free_hw
+/*
+ * Public functions which can be called by ATA or ATAPI specific parts,
+ * or bus-specific backends.
+ */
 
-void	wdcattach(struct wdc_softc *, const struct wdc_attachment_data *);
-int	wdcintr(void *);
-int	wdcprobe(const struct wdc_attachment_data *);
+int   wdcprobe __P((const struct channel_softc *));
+void  wdcattach __P((struct channel_softc *));
+int   wdcintr __P((void *));
+void  wdc_exec_xfer __P((struct channel_softc *, struct wdc_xfer *));
+struct wdc_xfer *wdc_get_xfer __P((int)); /* int = WDC_NOSLEEP/CANSLEEP */
+#define WDC_CANSLEEP 0x00
+#define WDC_NOSLEEP 0x01
+void   wdc_free_xfer  __P((struct channel_softc *, struct wdc_xfer *));
+void  wdcstart __P((struct wdc_softc *, int));
+int   wdcreset	__P((struct channel_softc *, int));
+#define VERBOSE 1 
+#define SILENT 0 /* wdcreset will not print errors */
+int   wdcwait __P((struct channel_softc *, int));
+void  wdcbit_bucket __P(( struct channel_softc *, int));
+void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
+	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t));
+void   wdccommandshort __P((struct channel_softc *, int, int));
+void  wdctimeout	__P((void *arg));
+
+/*	
+ * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
+ * command is aborted.
+ */   
+#define wait_for_drq(chp)	wdcwait(chp, WDCS_DRDY | WDCS_DSC | WDCS_DRQ)
+#define wait_for_unbusy(chp)	wdcwait(chp, 0)
+#define wait_for_ready(chp) 	wdcwait(chp, WDCS_DRDY | WDCS_DSC)
+
+void wdc_atapibus_attach __P((struct channel_softc *));
+void wdc_ata_attach __P((struct channel_softc *));

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.152 1998/06/03 21:17:52 mjacob Exp $
+#	$NetBSD: GENERIC,v 1.152.2.1 1998/06/04 16:53:45 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -286,22 +286,32 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
 # IDE and Related Devices
+# The following flags may be set for the IDE controllers drivers:
+# byte 0 is for first channel, byte 1 for secondary.
+# For each channel, the first bit will enable 32-bits transferts for drive 0,
+# and the second bit for drive 1 (e.g 0x0101 will enable 32-bits transferts
+# for master drives of each channel).
+
+# PCI IDE controllers (CMD tech's PCI0640, Intel's PIIx).
+pciide* at pci ? dev ? function ? 
 
 # ISA Plug-and-Play IDE controllers
-wdc*	at isapnp?
+wdc*	at isapnp? flags 0x0000
 
 # PCMCIA IDE controllers
-wdc*	at pcmcia? function ?
+wdc*	at pcmcia? function ? 
 
-# ISA IDE controllers
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+# ISA ST506, ESDI, and IDE controllers
+wdc0	at isa? port 0x1f0 irq 14 
 wdc1	at isa? port 0x170 irq 15
 
 # IDE drives
-wd*	at wdc? drive ?			# the drives themselves
+wd*	at wdc? channel ? drive ?
+wd*	at pciide? channel ? drive ?
 
 # ATAPI bus support
-atapibus* at wdc?
+atapibus* at wdc? channel ?
+atapibus* at pciide? channel ?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives

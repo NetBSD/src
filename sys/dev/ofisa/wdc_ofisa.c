@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.2 1998/03/21 02:06:17 cgd Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.2.2.1 1998/06/04 16:54:51 bouyer Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -50,12 +50,12 @@
 #include <dev/ofisa/ofisavar.h>
 
 #include <dev/ic/wdcreg.h>		/* ??? */
+#include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
 struct wdc_ofisa_softc {
 	struct wdc_softc sc_wdc;
-
-	struct wdc_attachment_data sc_ad;
+	struct  channel_softc wdc_channel;
 	void	*sc_ih;
 };
 
@@ -128,14 +128,14 @@ wdc_ofisa_attach(parent, self, aux)
 	}
 
 	bzero(&osc->sc_ad, sizeof osc->sc_ad);
-	osc->sc_ad.iot =
+	osc->wdc_channel.cmd_iot =
 	    (reg[0].type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
-	osc->sc_ad.auxiot =
+	osc->wdc_channel.ctl_iot =
 	    (reg[1].type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
-        if (bus_space_map(osc->sc_ad.iot, reg[0].addr, 8, 0,
-              &osc->sc_ad.ioh) ||
-            bus_space_map(osc->sc_ad.auxiot, reg[1].addr, 1, 0,
-	      &osc->sc_ad.auxioh)) {
+        if (bus_space_map(osc->wdc_channel.cmd_iot, reg[0].addr, 8, 0,
+              &osc->wdc_channel.cmd_ioh) ||
+            bus_space_map(osc->wdc_channel.ctl_iot, reg[1].addr, 1, 0,
+	      &osc->wdc_channel.ctl_ioh)) {
                 printf(": can't map register spaces\n");
 		return;
         }
@@ -144,8 +144,18 @@ wdc_ofisa_attach(parent, self, aux)
 	    IPL_BIO, wdcintr, sc);
 
 	printf("\n");
-
-	wdcattach(sc, &osc->sc_ad);	
+	osc->sc_wdcdev.channels = &osc->wdc_channel;
+	osc->sc_wdcdev.nchannels = 1;
+	osc->wdc_channel.channel = 0;
+	osc->wdc_channel.wdc = &osc->sc_wdcdev;
+	osc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
+	    M_DEVBUF, M_NOWAIT);
+	if (osc->wdc_channel.ch_queue == NULL) {
+	    printf("%s: can't allocate memory for command queue",
+		osc->sc_wdcdev.sc_dev.dv_xname);
+	    return;
+	}
+	wdcattach(&osc->wdc_channel);
 
 #if 0
 	printf("%s: registers: ", sc->sc_dev.dv_xname);
