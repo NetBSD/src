@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: scc.4,v 1.4 2003/04/25 02:48:23 fair Exp $
+.\"	$NetBSD: scc.4,v 1.5 2003/04/25 03:03:07 fair Exp $
 .\"
 .Dd April 24, 2003
 .Dt SCC 4
@@ -51,8 +51,17 @@ via the
 found on
 .Tn DEC
 3000/300, 3000/500 and
+.Po
+supported by
+.Nx Ns /alpha
+.Pc ,
+and
 .Tn DECstation
-5000 models in the /100, /20, and /240 series.
+5000 models in the /100, /20, and /240 series
+.Po
+supported by
+.Nx Ns /pmax
+.Pc .
 .Pp
 Each
 .Tn SCC
@@ -73,11 +82,19 @@ Speeds up to 230400 are supported by the chip and the motherboard,
 but speeds higher than 57600 do not work reliably without an external
 clock signal.
 .Sh FILES
+.Ss alpha
 .Bl -tag -width Pa
 .It Pa /dev/ttyB0
 .It Pa /dev/ttyB1
 .It Pa /dev/ttyB2
 .It Pa /dev/ttyB3
+.El
+.Ss pmax
+.Bl -tag -width Pa
+.It Pa /dev/ttya
+.It Pa /dev/ttyb
+.It Pa /dev/ttyc
+.It Pa /dev/ttyd
 .El
 .Pp
 The mapping from units to serial-hardware outlets is idiosyncratic.
@@ -87,16 +104,16 @@ are reserved for mouse and keyboard.
 On machines with one port like
 .Tn "Personal DECstations" ,
 the single device is
-.Pa ttyB0 .
+.Pa ttya .
 .Pp
 On the
 .Tn "5000/1xx"
 and
 .Tn "5000/2xx" ,
 the first serial port (default serial console) is
-.Pa ttyB2
+.Pa ttyc
 and the second port is
-.Pa ttyB0 .
+.Pa ttya .
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr ioasic 4 ,
