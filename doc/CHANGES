@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.1 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.445.2.2 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -236,6 +236,8 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		[heas 20050220]
 	file(1): update to 4.13.  [pooka 20050221]
 	openpam(3): update to 20050201 (feterita) [christos 20050226]
+	ifconfig(8): Allow switching TCP Segment Offloading on/off by adding
+		a new tso4/-tso4 switch. [matt 20050306]
 	/etc/postinstall: support -s /path/to/etc.tgz to extract the file
 		into a temporary directory and run postinstall from there.
 		[lukem 20050308]
