@@ -573,11 +573,14 @@ _copyout:
 	movl	16(%esp), %esi
 	movl	20(%esp), %edi
 	movl	24(%esp), %ebx
+	orl	%ebx, %ebx
+	jz	done_copyio
 
 			/* compute number of pages */
 	movl	%edi, %ecx
 	andl	$0x0fff, %ecx
 	addl	%ebx, %ecx
+	decl	%ecx
 	shrl	$12, %ecx	/* IDXSHIFT+2 */
 	incl	%ecx
 
@@ -622,6 +625,7 @@ do_copyio:			/* now copy it over */
 	rep
 	movsb
 
+done_copyio:
 	popl	%ebx
 	popl	%edi
 	popl	%esi
@@ -648,11 +652,14 @@ _copyin:
 	movl	16(%esp), %esi
 	movl	20(%esp), %edi
 	movl	24(%esp), %ebx
+	orl	%ebx, %ebx
+	jz	done_copyio
 
 			/* compute number of pages */
 	movl	%esi, %ecx
 	andl	$0x0fff, %ecx
 	addl	%ebx, %ecx
+	decl	%ecx
 	shrl	$12, %ecx
 	incl	%ecx
 
