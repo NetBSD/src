@@ -1,3 +1,6 @@
-# $NetBSD: obsolete.powerpc,v 1.1 2000/06/11 14:13:01 tsubai Exp $
+# $NetBSD: obsolete.powerpc,v 1.2 2002/04/06 12:16:17 wiz Exp $
+/usr/include/powerpc/hid.h
+/usr/include/powerpc/hid_601.h
+/usr/include/powerpc/machine_type.h
 /usr/include/powerpc/va-ppc.h
 /usr/include/powerpc/vmparam.h
