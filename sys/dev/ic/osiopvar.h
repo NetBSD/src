@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.1 2001/04/30 04:47:51 tsutsui Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.2 2001/11/18 14:50:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -180,13 +180,15 @@ struct osiop_tinfo {
 	int dconns;		/* number of disconnects */
 	int touts;		/* number of timeouts */
 	int perrs;		/* number of parity errors */
-	u_int8_t lubusy;	/* What local units/subr. are busy? */
-	u_int8_t period;	/* Period suggestion */
-	u_int8_t offset;	/* Offset suggestion */
-	u_int8_t flags;		/* misc flags per each target */
+	int lubusy;		/* What local units/subr. are busy? */
+	int period;		/* Period suggestion */
+	int offset;		/* Offset suggestion */
+	int flags;		/* misc flags per each target */
 #define TI_NOSYNC	0x01	/* disable sync xfer on this target */
 #define TI_NODISC	0x02	/* disable disconnect on this target */
-
+	int state;		/* negotiation state */
+	u_int8_t sxfer;		/* value for SXFER reg */
+	u_int8_t sbcl;		/* value for SBCL reg */
 } tinfo_t;
 
 struct osiop_softc {
@@ -228,15 +230,7 @@ struct osiop_softc {
 
 	int sc_cfflags;			/* copy of config flags */
 
-	/* one for each target */
-	struct syncpar {
-		u_int8_t state;
-		u_int8_t sxfer;
-		u_int8_t sbcl;
-		u_int8_t pad;
-	} sc_sync[OSIOP_NTGT];
-
-	u_int8_t sc_minsync;
+	int sc_minsync;
 
 	u_int8_t sc_dstat;
 	u_int8_t sc_sstat0;
@@ -250,11 +244,9 @@ struct osiop_softc {
 
 /* negotiation states */
 #define NEG_INIT	0	/* Initial negotiate state */
-#define NEG_WIDE	0	/* Negotiate wide transfers */
-#define NEG_WAITW	1	/* Waiting for wide negotation response */
-#define NEG_SYNC	2	/* Negotiate synch transfers */
-#define NEG_WAITS	3	/* Waiting for synch negoation response */
-#define NEG_DONE	4	/* Wide and/or sync negotation done */
+#define NEG_SYNC	NEG_INIT /* Negotiate synch transfers */
+#define NEG_WAITS	1	/* Waiting for synch negoation response */
+#define NEG_DONE	2	/* Wide and/or sync negotation done */
 
 void osiop_attach(struct osiop_softc *);
 void osiop_intr(struct osiop_softc *);
