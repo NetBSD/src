@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.8 1995/03/21 09:08:01 cgd Exp $	*/
+/*	$NetBSD: keyword.c,v 1.9 1995/05/08 23:11:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: keyword.c,v 1.8 1995/03/21 09:08:01 cgd Exp $";
+static char rcsid[] = "$NetBSD: keyword.c,v 1.9 1995/05/08 23:11:31 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,6 +101,7 @@ VAR var[] = {
 	{"cputime", "", "time"},
 	{"f", "F", NULL, 0, pvar, 7, POFF(p_flag), LONG, "x"},
 	{"flags", "", "f"},
+	{"holdcnt", "HOLDCNT", NULL, 0, pvar, 8, POFF(p_holdcnt), INT, "d"},
 	{"ignored", "", "sigignore"},
 	{"inblk", "INBLK", NULL, USER, rvar, 4, ROFF(ru_inblock), LONG, "d"},
 	{"inblock", "", "inblk"},
