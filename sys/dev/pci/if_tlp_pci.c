@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.29 2000/01/25 19:29:18 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.30 2000/01/25 19:53:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -374,6 +374,13 @@ tlp_pci_attach(parent, self, aux)
 	sc->sc_regshift = 3;
 
 	/*
+	 * Some chips have a 128 byte SROM (6 address bits), and some
+	 * have a 512 byte SROM (8 address bits).  Default to 6; we'll
+	 * adjust below.
+	 */
+	sc->sc_srom_addrbits = 6;
+
+	/*
 	 * Get revision info, and set some chip-specific variables.
 	 */
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
@@ -388,7 +395,7 @@ tlp_pci_attach(parent, self, aux)
 			sc->sc_chip = TULIP_CHIP_21143;
 		if (sc->sc_rev >= 0x41) {
 			/*
-			 * 21143 rev. 4.1 has a larger SROM.  See below.
+			 * 21143 rev. 4.1 has a larger SROM.
 			 */
 			sc->sc_srom_addrbits = 8;
 		}
@@ -545,13 +552,8 @@ tlp_pci_attach(parent, self, aux)
 		sc->sc_flags |= TULIPF_MWI;
 
 	/*
-	 * Read the contents of the Ethernet Address ROM/SROM.  Some
-	 * chips have a 128 byte SROM (6 address bits), and some
-	 * have a 512 byte SROM (8 address bits).
+	 * Read the contents of the Ethernet Address ROM/SROM.
 	 */
-	if (sc->sc_srom_addrbits == 0)
-		sc->sc_srom_addrbits = 6;
- try_again:
 	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
@@ -843,22 +845,6 @@ tlp_pci_attach(parent, self, aux)
 
 	default:
  cant_cope:
-		switch (sc->sc_chip) {
-		case TULIP_CHIP_21143:
-			/*
-			 * Try reading it again, with larger SROM
-			 * size, if we haven't already.
-			 */
-			if (sc->sc_srom_addrbits != 8) {
-				sc->sc_srom_addrbits = 8;
-				goto try_again;
-			}
-			break;
-
-		default:
-			/* Nothing. */
-		}
-
 		printf("%s: sorry, unable to handle your board\n",
 		    sc->sc_dev.dv_xname);
 		return;
