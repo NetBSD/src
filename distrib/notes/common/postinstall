@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.9.4.10 2001/05/15 22:38:58 he Exp $
+.\"	$NetBSD: postinstall,v 1.9.4.11 2001/05/21 02:06:07 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,6 +82,10 @@ terminal type, you may need to use
 .\}
 and press
 .Key RETURN .
+You may need to type one of the following commands to get your delete key
+to work properly, depending on your keyboard:
+.Dl # Ic "stty erase '^h'"
+.Dl # Ic "stty erase '^?'"
 At this point, you need to configure at least
 one file in the
 .Pa /etc
@@ -272,25 +276,18 @@ Precompiled binaries can be found at
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/packages ,
 usually in the
 .Pa \*V/\*M/All
-subdir.  You can install them with the following commands (line
-continued to show entire line in 80 coloumn output, there's obviously
-no requirement to repeat that):
+subdir.  You can install them with the following commands:
 .Pp
-.Ic # export\ PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/\e
-.br
-.Ic packages/\*V/\*M/All
-.br
+.Bd -unfilled
+.Ic # export\ PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
 .Ic # pkg_add -v tcsh
-.br
 .Ic # pkg_add -v cvs
-.br
 .Ic # pkg_add -v apache
-.br
 .Ic # pkg_add -v perl
-.br
-.Ic \&...
+\&...
+.Ed
 .Pp
-These commands will install the tcsh shell, the CVS source code
+The above commands will install the tcsh shell, the CVS source code
 management system, the Apache web server and
 the perl programming language as well as all the packages they
 depend on. 
@@ -300,9 +297,10 @@ retrieving the file
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/tar_files/pkgsrc.tar.gz
 They are typically extracted into
 .Pa /usr/pkgsrc
-(though other locations work fine), as with the command:
+(though other locations work fine), with the commands:
 .Pp
-.Dl # Ic "mkdir /usr/pkgsrc; tar -C /usr/pkgsrc -zxpf pkgsrc.tar.gz"
+.Dl # Ic "mkdir /usr/pkgsrc"
+.Dl # Ic "( cd /usr/pkgsrc ; tar -zxpf - ) < pkgsrc.tar.gz"
 .Pp
 After extracting, then see the
 .Pa README
