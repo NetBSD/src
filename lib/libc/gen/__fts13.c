@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.28 2000/01/22 22:19:09 mycroft Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.28.4.1 2001/06/10 18:33:48 he Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.28 2000/01/22 22:19:09 mycroft Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.28.4.1 2001/06/10 18:33:48 he Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,15 +73,20 @@ __weak_alias(fts_set,_fts_set)
 
 #ifdef __LIBC12_SOURCE__
 __warn_references(fts_children,
-    "warning: reference to compatibility fts_children(); include <fts.h> for correct reference")
+    "warning: reference to compatibility fts_children();"
+    " include <fts.h> for correct reference")
 __warn_references(fts_close,
-    "warning: reference to compatibility fts_close(); include <fts.h> for correct reference")
+    "warning: reference to compatibility fts_close();"
+    " include <fts.h> for correct reference")
 __warn_references(fts_open,
-    "warning: reference to compatibility fts_open(); include <fts.h> for correct reference")
+    "warning: reference to compatibility fts_open();"
+    " include <fts.h> for correct reference")
 __warn_references(fts_read,
-    "warning: reference to compatibility fts_read(); include <fts.h> for correct reference")
+    "warning: reference to compatibility fts_read();"
+    " include <fts.h> for correct reference")
 __warn_references(fts_set,
-    "warning: reference to compatibility fts_set(); include <fts.h> for correct reference")
+    "warning: reference to compatibility fts_set();"
+    " include <fts.h> for correct reference")
 #endif
 
 static FTSENT	*fts_alloc __P((FTS *, char *, size_t));
@@ -164,7 +169,8 @@ fts_open(argv, options, compar)
 			goto mem3;
 		}
 
-		p = fts_alloc(sp, *argv, len);
+		if ((p = fts_alloc(sp, *argv, len)) == NULL)
+			goto mem3;
 		p->fts_level = FTS_ROOTLEVEL;
 		p->fts_parent = parent;
 		p->fts_accpath = p->fts_name;
@@ -418,7 +424,7 @@ next:	tmp = p;
 		 * load the paths for the next root.
 		 */
 		if (p->fts_level == FTS_ROOTLEVEL) {
-			if (!ISSET(FTS_NOCHDIR) && FCHDIR(sp, sp->fts_rfd)) {
+			if (FCHDIR(sp, sp->fts_rfd)) {
 				SET(FTS_STOP);
 				return (NULL);
 			}
@@ -475,7 +481,7 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 	 * one directory.
 	 */
 	if (p->fts_level == FTS_ROOTLEVEL) {
-		if (!ISSET(FTS_NOCHDIR) && FCHDIR(sp, sp->fts_rfd)) {
+		if (FCHDIR(sp, sp->fts_rfd)) {
 			SET(FTS_STOP);
 			return (NULL);
 		}
@@ -488,11 +494,37 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 			return (NULL);
 		}
 		(void)close(p->fts_symfd);
-	} else if (!(p->fts_flags & FTS_DONTCHDIR)) {
-		if (CHDIR(sp, "..")) {
+	} else if (!(p->fts_flags & FTS_DONTCHDIR) &&
+		!ISSET(FTS_NOCHDIR)) {
+		int fd;
+		struct STAT sb;
+
+		if ((fd = open("..", O_RDONLY)) == -1) {
 			SET(FTS_STOP);
 			return (NULL);
 		}
+		if (fstat(fd, &sb) == -1) {
+			saved_errno = errno;
+			(void)close(fd);
+			errno = saved_errno;
+			SET(FTS_STOP);
+			return (NULL);
+		}
+		if (sb.st_ino != p->fts_parent->fts_ino ||
+		    sb.st_dev != p->fts_parent->fts_dev) {
+			(void)close(fd);
+			errno = ENOENT;
+			SET(FTS_STOP);
+			return (NULL);
+		}
+		if (fchdir(fd) == -1) {
+			saved_errno = errno;
+			(void)close(fd);
+			errno = saved_errno;
+			SET(FTS_STOP);
+			return (NULL);
+		}
+		(void)close(fd);
 	}
 	p->fts_info = p->fts_errno ? FTS_ERR : FTS_DP;
 	return (sp->fts_cur = p);
@@ -586,10 +618,12 @@ fts_children(sp, instr)
 		return (sp->fts_child = fts_build(sp, instr));
 
 	if ((fd = open(".", O_RDONLY, 0)) < 0)
-		return (NULL);
+		return (sp->fts_child = NULL);
 	sp->fts_child = fts_build(sp, instr);
-	if (fchdir(fd))
+	if (fchdir(fd)) {
+		(void)close(fd);
 		return (NULL);
+	}
 	(void)close(fd);
 	return (sp->fts_child);
 }
@@ -1009,7 +1043,8 @@ fts_alloc(sp, name, namelen)
 	memmove(p->fts_name, name, namelen + 1);
 
 	if (!ISSET(FTS_NOSTAT))
-		p->fts_statp = (struct STAT *)ALIGN((u_long)(p->fts_name + namelen + 2));
+		p->fts_statp =
+		    (struct STAT *)ALIGN((u_long)(p->fts_name + namelen + 2));
 	p->fts_namelen = namelen;
 	p->fts_path = sp->fts_path;
 	p->fts_errno = 0;
@@ -1101,12 +1136,12 @@ fts_padjust(sp, head)
 
 	_DIAGASSERT(sp != NULL);
 
-#define	ADJUST(p) {							\
+#define	ADJUST(p) do {							\
 	if ((p)->fts_accpath != (p)->fts_name)				\
 		(p)->fts_accpath =					\
 		    addr + ((p)->fts_accpath - (p)->fts_path);		\
 	(p)->fts_path = addr;						\
-}
+} while (/*CONSTCOND*/0)
 
 	addr = sp->fts_path;
 
