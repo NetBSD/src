@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.18 2000/06/28 17:12:48 mrg Exp $	*/
+/*	$NetBSD: adv.c,v 1.19 2000/08/11 21:31:19 tls Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -661,7 +661,10 @@ adv_scsi_cmd(xs)
 	    (sc->reqcnt[sc_link->scsipi_scsi.target] % 255) == 0) {
 		ccb->scsiq.q2.tag_code = M2_QTAG_MSG_ORDERED;
 	} else {
-		ccb->scsiq.q2.tag_code = M2_QTAG_MSG_SIMPLE;
+		if((xs->bp != NULL) && xs->bp->b_flags & B_ASYNC)
+			ccb->scsiq.q2.tag_code = M2_QTAG_MSG_SIMPLE;
+		else
+			ccb->scsiq.q2.tag_code = M2_QTAG_MSG_ORDERED;
 	}
 
 
