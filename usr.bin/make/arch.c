@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.18 1997/05/20 22:53:30 mycroft Exp $	*/
+/*	$NetBSD: arch.c,v 1.19 1997/06/07 16:39:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: arch.c,v 1.18 1997/05/20 22:53:30 mycroft Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.19 1997/06/07 16:39:45 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -930,7 +930,7 @@ Arch_Touch (gn)
     char *p1, *p2;
 
     arch = ArchFindMember(Var_Value (ARCHIVE, gn, &p1),
-			  Var_Value (TARGET, gn, &p2),
+			  Var_Value (MEMBER, gn, &p2),
 			  &arh, "r+");
     if (p1)
 	free(p1);
@@ -1004,7 +1004,7 @@ Arch_MTime (gn)
     char *p1, *p2;
 
     arhPtr = ArchStatMember (Var_Value (ARCHIVE, gn, &p1),
-			     Var_Value (TARGET, gn, &p2),
+			     Var_Value (MEMBER, gn, &p2),
 			     TRUE);
     if (p1)
 	free(p1);
