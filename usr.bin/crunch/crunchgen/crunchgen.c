@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.64 2004/10/30 17:17:35 dsl Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.65 2005/01/30 23:04:33 lukem Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.64 2004/10/30 17:17:35 dsl Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.65 2005/01/30 23:04:33 lukem Exp $");
 #endif
 
 #include <stdlib.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: crunchgen.c,v 1.64 2004/10/30 17:17:35 dsl Exp $");
 #include <sys/param.h>
 #include <sys/utsname.h>
 
-#define CRUNCH_VERSION	"0.4"
+#define CRUNCH_VERSION	"20050130"
 
 #define MAXLINELEN	16384
 #define MAXFIELDS 	 2048
@@ -952,7 +952,8 @@ top_makefile_rules(FILE *outmk)
     fprintf(outmk, "${PROG}.strip:\n");
     fprintf(outmk, "\t${MAKE} -f ${PROG}.mk ${PROG}\n");
     fprintf(outmk, "\t@[ -f ${PROG}.unstripped -a ! ${PROG} -nt ${PROG}.unstripped ] || { \\\n");
-    fprintf(outmk, "\t\techo stripping ${PROG}; \\\n");
+    fprintf(outmk, "\t\t${_MKSHMSG:Uecho} \"  strip \" ${PROG}; \\\n");
+    fprintf(outmk, "\t\tcd ${.OBJDIR} && \\\n");
     fprintf(outmk, "\t\tcp ${PROG} ${PROG}.unstripped && \\\n");
     fprintf(outmk, "\t\t${OBJCOPY} -S -R .note -R .ident -R .comment -R .copyright ${PROG} && \\\n");
     fprintf(outmk, "\t\ttouch ${PROG}.unstripped; \\\n");
