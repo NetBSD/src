@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.26 2003/06/26 10:22:33 dsl Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.27 2003/07/31 10:36:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.26 2003/06/26 10:22:33 dsl Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.27 2003/07/31 10:36:00 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -138,27 +138,24 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			__CTRACE("ADDBYTES(%p, %d, %d)\n", win, y, x);
 #endif
 
-			lp = win->lines[y];
 			if (lp->flags & __ISPASTEOL) {
+				x = 0;
 		newline:
-				lp->flags &= ~__ISPASTEOL;
+				lp->flags &= ~(__ISPASTEOL | __ISAFTERCR);
 				if (y == win->scr_b) {
 #ifdef DEBUG
-			__CTRACE("ADDBYTES - on bottom of scrolling region\n");
+					__CTRACE("ADDBYTES - on bottom "
+					    "of scrolling region\n");
 #endif
-					if (win->flags & __SCROLLOK) {
-						SYNCH_OUT;
-						scroll(win);
-						SYNCH_IN;
-						lp = win->lines[y];
-						x = 0;
-					} else
-						return (ERR);
+					if (!(win->flags & __SCROLLOK))
+						return ERR;
+					SYNCH_OUT;
+					scroll(win);
+					SYNCH_IN;
 				} else {
 					y++;
-					lp = win->lines[y];
-					x = 0;
 				}
+				lp = win->lines[y];
 				if (c == '\n')
 					break;
 			}
@@ -170,7 +167,8 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			else if (win->wattr & __COLOR)
 				attributes |= win->wattr & __COLOR;
 #ifdef DEBUG
-			__CTRACE("ADDBYTES: 1: y = %d, x = %d, firstch = %d, lastch = %d\n",
+			__CTRACE("ADDBYTES: 1: y = %d, x = %d, firstch = %d, "
+				"lastch = %d\n",
 			    y, x, *win->lines[y]->firstchp,
 			    *win->lines[y]->lastchp);
 #endif
@@ -210,7 +208,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 #endif
 			break;
 		case '\n':
-			if (!(lp->flags & __ISPASTEOL)) {
+			if (!(lp->flags & (__ISPASTEOL | __ISAFTERCR))) {
 				SYNCH_OUT;
 				wclrtoeol(win);
 				SYNCH_IN;
@@ -219,13 +217,20 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 				x = 0;
 			goto newline;
 		case '\r':
+			if (!(lp->flags & __ISAFTERCR)) {
+				SYNCH_OUT;
+				wclrtoeol(win);
+				SYNCH_IN;
+			}
 			x = 0;
-			break;
+			lp->flags |= __ISAFTERCR;
+			continue;
 		case '\b':
 			if (--x < 0)
 				x = 0;
 			break;
 		}
+		lp->flags &= ~__ISAFTERCR;
 	}
 	SYNCH_OUT;
 	
