@@ -38,6 +38,7 @@
 ./dev
 ./dev/MAKEDEV
 ./dev/fd
+./dev/log
 ./etc
 ./etc/disklabels
 ./etc/kerberosIV
@@ -967,6 +968,7 @@
 ./usr/share/nls/no/libc.cat
 ./usr/share/nls/sv
 ./usr/share/nls/sv/libc.cat
+./usr/share/postfix
 ./usr/share/sendmail
 ./usr/share/sendmail/cf
 ./usr/share/sendmail/domain
