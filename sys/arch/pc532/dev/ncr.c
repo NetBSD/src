@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.49 2003/07/15 02:54:32 lukem Exp $	*/
+/*	$NetBSD: ncr.c,v 1.50 2004/01/23 04:12:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthias Pfaller.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.49 2003/07/15 02:54:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.50 2004/01/23 04:12:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ ncr_match(parent, cf, aux)
 {
 	struct confargs *ca = aux;
 	int unit = cf->cf_unit;
-	
+
 	if (unit != 0)	/* Only one unit */
 		return(0);
 
@@ -118,7 +118,7 @@ ncr_attach(parent, self, aux)
 	 */
 	scsi_select_ctlr(DP8490);
 
-	/* Pull in config flags. */ 
+	/* Pull in config flags. */
 	flags = ca->ca_flags | ncr_default_options;
 
 	if (flags)
@@ -327,7 +327,7 @@ static int
 ncr_pdma_out(sc, phase, datalen, data)
 	struct ncr5380_softc *sc;
 	int phase, datalen;
-	u_char *data; 
+	u_char *data;
 {
 	volatile u_char *pdma = PDMA_ADDRESS;
 	int i, s, resid;
@@ -357,7 +357,7 @@ ncr_pdma_out(sc, phase, datalen, data)
 		W4(0);
 		data += 4;
 		resid -= 4;
-		
+
 		for (; resid >= NCR_TSIZE_OUT; resid -= NCR_TSIZE_OUT) {
 			if (ncr_ready(sc) == 0) {
 				resid += 4; /* Overshot */
@@ -400,4 +400,3 @@ interrupt:
 	splx(s);
 	return(datalen - resid);
 }
-

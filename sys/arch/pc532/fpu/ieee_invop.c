@@ -1,21 +1,21 @@
-/*	$NetBSD: ieee_invop.c,v 1.6 2003/07/15 02:54:33 lukem Exp $	*/
+/*	$NetBSD: ieee_invop.c,v 1.7 2004/01/23 04:12:39 simonb Exp $	*/
 
-/* 
+/*
  * IEEE floating point support for NS32081 and NS32381 fpus.
  * Copyright (c) 1995 Ian Dall
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * IAN DALL ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" CONDITION.
  * IAN DALL DISCLAIMS ANY LIABILITY OF ANY KIND FOR ANY DAMAGES
  * WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
  */
-/* 
+/*
  *	File:	ieee_invop.c
  *	Author:	Ian Dall
  *	Date:	November 1995
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee_invop.c,v 1.6 2003/07/15 02:54:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee_invop.c,v 1.7 2004/01/23 04:12:39 simonb Exp $");
 
 #include "ieee_internal.h"
 
@@ -192,7 +192,7 @@ static int dot_iv (struct operand *op1, struct operand *op2, struct operand *op3
   int ret = FPC_TT_NONE;
   union t_conv t = op2->data;
   if(nan_2(op1->data, &t)) {
-    if(nan_2(t, &op3->data)) 
+    if(nan_2(t, &op3->data))
       return ret;
   }
   inftys = ((ISINFTY(op1->data)? 1: 0) + (ISINFTY(op2->data)? 2:0)
@@ -271,7 +271,7 @@ static int logb_iv (struct operand *op1, struct operand *op2)
 static void cmp_iv(struct operand *op1, struct operand *op2, state *state)
 {
   state->PSR &= ~(PSR_N | PSR_Z | PSR_L);
-  
+
   if (ISNAN(op1->data) || ISNAN(op2->data)) {
     return;
   }

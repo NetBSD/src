@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.31 2004/01/23 04:12:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -62,7 +62,7 @@
  * ALIGNED_POINTER is a boolean macro that checks whether an address
  * is valid to fetch data elements of type t from on this architecture.
  * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
+ * (within reasonable limits).
  *
  */
 #define	ALIGNBYTES		(sizeof(int) - 1)

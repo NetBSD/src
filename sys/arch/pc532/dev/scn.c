@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.62 2003/08/07 16:28:58 agc Exp $ */
+/*	$NetBSD: scn.c,v 1.63 2004/01/23 04:12:39 simonb Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.62 2003/08/07 16:28:58 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.63 2004/01/23 04:12:39 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1311,7 +1311,7 @@ scnpoll(dev, events, p)
 {
 	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
 	register struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 

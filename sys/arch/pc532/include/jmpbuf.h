@@ -1,6 +1,6 @@
-/*	$NetBSD: jmpbuf.h,v 1.4 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: jmpbuf.h,v 1.5 2004/01/23 04:12:39 simonb Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1993 Philip A. Nelson.
  * All rights reserved.
  *

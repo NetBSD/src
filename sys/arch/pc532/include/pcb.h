@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.13 2004/01/23 04:03:38 simonb Exp $	*/
+/*	$NetBSD: pcb.h,v 1.14 2004/01/23 04:12:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,13 +65,13 @@ struct pcb {
 	struct pmap *pcb_pmap;	/* back pointer to our pmap */
 };
 
-/*    
- * The pcb is augmented with machine-dependent additional data for 
+/*
+ * The pcb is augmented with machine-dependent additional data for
  * core dumps. For the pc532, there is nothing to add.
- */     
+ */
 struct md_coredump {
 	long	md_pad[8];
-};    
+};
 
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.154 2003/12/30 12:33:18 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155 2004/01/23 04:12:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 2003/12/30 12:33:18 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2004/01/23 04:12:39 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -148,7 +148,7 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[] = "ns32532";
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 struct user *proc0paddr;
@@ -471,7 +471,7 @@ cpu_setmcontext(l, mcp, flags)
 	}
 #endif
 	if (flags & _UC_SETSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;  
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.6 2003/08/07 16:29:01 agc Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.7 2004/01/23 04:12:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6 2003/08/07 16:29:01 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.7 2004/01/23 04:12:39 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6 2003/08/07 16:29:01 agc Ex
 #include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/sa.h>
-#include <sys/syscallargs.h> 
+#include <sys/syscallargs.h>
 
 int
 compat_13_sys_sigreturn(l, v, retval)
