@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.49 1996/09/24 17:11:53 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.50 1996/09/29 21:27:30 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -971,6 +971,7 @@ void
 start_c_cleanup()
 {
 	u_int *sg, *esg;
+	extern u_int32_t delaydivisor;
 
 	/*
 	 * remove shadow mapping of kernel?
@@ -981,6 +982,22 @@ start_c_cleanup()
 	esg = (u_int *)&sg[namigashdwpg];
 	while (sg < esg)
 		*sg++ = PG_NV;
+
+	/*
+	 * preliminary delay divisor value
+	 */
+
+	if (machineid & AMIGA_68060)
+		delaydivisor = (1024 * 1) / 80;	/* 80 MHz 68060 w. BTC */
+
+	else if (machineid & AMIGA_68040)
+		delaydivisor = (1024 * 3) / 40;	/* 40 MHz 68040 */
+
+	else if (machineid & AMIGA_68030)
+		delaydivisor = (1024 * 3) / 50;	/* 50 MHz 68030 */
+
+	else
+		delaydivisor = (1024 * 8) / 33; /* 33 MHz 68020 */
 }
 
 void
