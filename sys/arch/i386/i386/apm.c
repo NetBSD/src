@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.1 1996/08/25 23:39:35 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.2 1996/08/30 02:37:04 jtk Exp $ */
 
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
@@ -206,13 +206,13 @@ apm_power_print (sc, regs)
 struct apm_softc *sc;
 struct apmregs *regs;
 {
-	if (BATT_LIFE(regs) != APM_BATT_LIFE_UNKNOWN) {
+	if (APM_BATT_LIFE(regs) != APM_BATT_LIFE_UNKNOWN) {
 		printf("%s: battery life expectancy %d%%\n",
 		       sc->sc_dev.dv_xname,
-		       BATT_LIFE(regs));
+		       APM_BATT_LIFE(regs));
 	}
 	printf("%s: A/C state: ", sc->sc_dev.dv_xname);
-	switch (AC_STATE(regs)) {
+	switch (APM_AC_STATE(regs)) {
 	case APM_AC_OFF:
 		printf("off\n");
 		break;
@@ -229,7 +229,7 @@ struct apmregs *regs;
 	}
 	printf("%s: battery charge state:", sc->sc_dev.dv_xname);
 	if (apm_minver == 0)
-		switch (BATT_STATE(regs)) {
+		switch (APM_BATT_STATE(regs)) {
 		case APM_BATT_HIGH:
 			printf("high\n");
 			break;
@@ -246,28 +246,28 @@ struct apmregs *regs;
 			printf("unknown\n");
 			break;
 		default:
-			printf("undecoded state %x\n", BATT_STATE(regs));
+			printf("undecoded state %x\n", APM_BATT_STATE(regs));
 			break;
 		}
 	else if (apm_minver >= 1) {
-		if (BATT_FLAGS(regs) & APM_BATT_FLAG_NOBATTERY)
+		if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_NOBATTERY)
 			printf(" no battery");
 		else {
-			if (BATT_FLAGS(regs) & APM_BATT_FLAG_HIGH)
+			if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_HIGH)
 				printf(" high");
-			if (BATT_FLAGS(regs) & APM_BATT_FLAG_LOW)
+			if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_LOW)
 				printf(" low");
-			if (BATT_FLAGS(regs) & APM_BATT_FLAG_CRITICAL)
+			if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_CRITICAL)
 				printf(" critical");
-			if (BATT_FLAGS(regs) & APM_BATT_FLAG_CHARGING)
+			if (APM_BATT_FLAGS(regs) & APM_BATT_FLAG_CHARGING)
 				printf(" charging");
 		}
 		printf("\n");
-		if (BATT_REM_VALID(regs))
+		if (APM_BATT_REM_VALID(regs))
 			printf("%s: estimated %d:%02d minutes\n",
 			       sc->sc_dev.dv_xname,
-			       BATT_REMAINING(regs) / 60,
-			       BATT_REMAINING(regs)%60);
+			       APM_BATT_REMAINING(regs) / 60,
+			       APM_BATT_REMAINING(regs)%60);
 	}
 	return;
 }
@@ -962,28 +962,29 @@ apmioctl(dev, cmd, data, flag, p)
 		error = apm_get_powstat(&regs);
 		if (error == 0) {
 			bzero(powerp, sizeof(*powerp));
-			if (BATT_LIFE(&regs) != APM_BATT_LIFE_UNKNOWN)
-				powerp->battery_life = BATT_LIFE(&regs);
-			powerp->ac_state = AC_STATE(&regs);
+			if (APM_BATT_LIFE(&regs) != APM_BATT_LIFE_UNKNOWN)
+				powerp->battery_life = APM_BATT_LIFE(&regs);
+			powerp->ac_state = APM_AC_STATE(&regs);
 			switch (apm_minver) {
 			case 0:
-				powerp->battery_state = BATT_STATE(&regs);
+				powerp->battery_state = APM_BATT_STATE(&regs);
 				break;
 			case 1:
 			default:
 				powerp->battery_state = APM_BATT_UNKNOWN;
-				if (BATT_FLAGS(&regs) & APM_BATT_FLAG_HIGH)
+				if (APM_BATT_FLAGS(&regs) & APM_BATT_FLAG_HIGH)
 					powerp->battery_state = APM_BATT_HIGH;
-				else if (BATT_FLAGS(&regs) & APM_BATT_FLAG_LOW)
+				else if (APM_BATT_FLAGS(&regs) & APM_BATT_FLAG_LOW)
 					powerp->battery_state = APM_BATT_LOW;
-				else if (BATT_FLAGS(&regs) & APM_BATT_FLAG_CRITICAL)
+				else if (APM_BATT_FLAGS(&regs) & APM_BATT_FLAG_CRITICAL)
 					powerp->battery_state = APM_BATT_CRITICAL;
-				else if (BATT_FLAGS(&regs) & APM_BATT_FLAG_CHARGING)
+				else if (APM_BATT_FLAGS(&regs) & APM_BATT_FLAG_CHARGING)
 					powerp->battery_state = APM_BATT_CHARGING;
-				else if (BATT_FLAGS(&regs) & APM_BATT_FLAG_NOBATTERY)
-						powerp->battery_state = APM_BATTERY_ABSENT;
-				if (BATT_REM_VALID(&regs))
-				    powerp->minutes_left = BATT_REMAINING(&regs);
+				else if (APM_BATT_FLAGS(&regs) & APM_BATT_FLAG_NOBATTERY)
+					powerp->battery_state = APM_BATT_ABSENT;
+				if (APM_BATT_REM_VALID(&regs))
+					powerp->minutes_left =
+					    APM_BATT_REMAINING(&regs);
 			}
 		} else {
 			apm_perror("ioctl get power status", &regs);

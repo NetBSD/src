@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148 1996/08/25 23:39:44 jtk Exp $	*/
+/*	$NetBSD: locore.s,v 1.149 1996/08/30 02:37:14 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -152,7 +152,7 @@
 _apm_current_gdt_pdesc:	
 	.word	0, 0, 0
 _bootstrap_gdt:	
-	.space SIZEOF_GDTE * BOOTSTRAP_GDT_NUM
+	.space APM_SIZEOF_GDTE * APM_BOOTSTRAP_GDT_NUM
 #endif
 _cpu:		.long	0	# are we 386, 386sx, or 486
 _cpu_vendor:	.space	16	# vendor string returned by `cpuid' instruction
@@ -230,7 +230,7 @@ start:	movw	$0x1234,0x472			# warm boot
 	movsb
 
 	/* setup GDT pseudo descriptor */
-	movw	$(SIZEOF_GDTE*BOOTSTRAP_GDT_NUM), %ax
+	movw	$(APM_SIZEOF_GDTE*APM_BOOTSTRAP_GDT_NUM), %ax
 	movw	%ax, RELOC(_apm_current_gdt_pdesc)
 	leal	RELOC(_bootstrap_gdt), %eax
 	movl	%eax, RELOC(_apm_current_gdt_pdesc)+2
@@ -267,9 +267,9 @@ start:	movw	$0x1234,0x472			# warm boot
 	movw	$(attrib), 5(%edx) ; \
 	movb	%bh, 7(%edx)
 
-	APM_SETUP_GDT(APM_INIT_CS_INDEX  , CS32_ATTRIB)
-	APM_SETUP_GDT(APM_INIT_DS_INDEX  , DS32_ATTRIB)
-	APM_SETUP_GDT(APM_INIT_CS16_INDEX, CS16_ATTRIB)
+	APM_SETUP_GDT(APM_INIT_CS_INDEX  , APM_CS32_ATTRIB)
+	APM_SETUP_GDT(APM_INIT_DS_INDEX  , APM_DS32_ATTRIB)
+	APM_SETUP_GDT(APM_INIT_CS16_INDEX, APM_CS16_ATTRIB)
 
 	/*
 	 * Call the initializer:
