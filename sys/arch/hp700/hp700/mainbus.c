@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2004/02/20 20:22:10 jkunz Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18 2004/07/27 22:16:40 jkunz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2004/02/20 20:22:10 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2004/07/27 22:16:40 jkunz Exp $");
 
 #undef BTLBDEBUG
 
@@ -158,6 +158,7 @@ int mbus_alloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_
 void mbus_free(void *, bus_space_handle_t, bus_size_t);
 int mbus_subregion(void *, bus_space_handle_t, bus_size_t, bus_size_t, bus_space_handle_t *);
 void mbus_barrier(void *, bus_space_handle_t, bus_size_t, bus_size_t, int);
+void *mbus_vaddr(void *, bus_space_handle_t);
 
 int mbus_dmamap_create(void *, bus_size_t, int, bus_size_t, bus_size_t, int, bus_dmamap_t *);
 void mbus_dmamap_destroy(void *, bus_dmamap_t);
@@ -438,6 +439,16 @@ void
 mbus_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int op)
 {
 	sync_caches();
+}
+
+void*
+mbus_vaddr(void *v, bus_space_handle_t h)
+{
+	/*
+	 * We must only be called with addresses in I/O space.
+	 */
+	KASSERT(h >= HPPA_IOSPACE);
+	return (void*)h;
 }
 
 u_int8_t
@@ -746,7 +757,7 @@ const struct hppa_bus_space_tag hppa_bustag = {
 	NULL,
 
 	mbus_map, mbus_unmap, mbus_subregion, mbus_alloc, mbus_free,
-	mbus_barrier,
+	mbus_barrier, mbus_vaddr,
 	mbus_r1,    mbus_r2,   mbus_r4,   mbus_r8,
 	mbus_w1,    mbus_w2,   mbus_w4,   mbus_w8,
 	mbus_rm_1,  mbus_rm_2, mbus_rm_4, mbus_rm_8,
@@ -1562,7 +1573,7 @@ mbprint(void *aux, const char *pnp)
 	if (ca->ca_hpa) {
 		aprint_normal(" hpa 0x%lx path ", ca->ca_hpa);
 		for (n = 0 ; n < 6 ; n++) {
-			if ( ca->ca_dp.dp_bc[n] > 0)
+			if ( ca->ca_dp.dp_bc[n] >= 0)
 				printf( "%d/", ca->ca_dp.dp_bc[n]);
 		}
 		printf( "%d", ca->ca_dp.dp_mod);
