@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.8 1998/02/03 18:23:47 perry Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.9 1998/07/26 13:42:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.8 1998/02/03 18:23:47 perry Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.9 1998/07/26 13:42:28 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,17 +63,18 @@ __weak_alias(setusershell,_setusershell);
  * /etc/shells.
  */
 
-static char *okshells[] = { _PATH_BSHELL, _PATH_CSHELL, NULL };
-static char **curshell, **shells, *strings;
-static char **initshells __P((void));
+static const char *const okshells[] = { _PATH_BSHELL, _PATH_CSHELL, NULL };
+static const char *const *curshell, **shells;
+static char *strings;
+static const char *const *initshells __P((void));
 
 /*
  * Get a list of shells from _PATH_SHELLS, if it exists.
  */
-char *
+const char *
 getusershell()
 {
-	char *ret;
+	const char *ret;
 
 	if (curshell == NULL)
 		curshell = initshells();
@@ -103,10 +104,11 @@ setusershell()
 	curshell = initshells();
 }
 
-static char **
+static const char *const *
 initshells()
 {
-	char **sp, *cp;
+	const char **sp;
+	char *cp;
 	FILE *fp;
 	struct stat statb;
 
@@ -122,19 +124,19 @@ initshells()
 		(void)fclose(fp);
 		return (okshells);
 	}
-	if ((strings = malloc((u_int)statb.st_size)) == NULL) {
+	if ((cp = malloc((u_int)statb.st_size)) == NULL) {
 		(void)fclose(fp);
 		return (okshells);
 	}
-	shells = calloc((unsigned)statb.st_size / 3, sizeof (char *));
-	if (shells == NULL) {
+	sp = calloc((unsigned)statb.st_size / 3, sizeof (char *));
+	if (sp == NULL) {
 		(void)fclose(fp);
-		free(strings);
+		free(cp);
 		strings = NULL;
 		return (okshells);
 	}
-	sp = shells;
-	cp = strings;
+	shells = sp;
+	strings = cp;
 	while (fgets(cp, MAXPATHLEN + 1, fp) != NULL) {
 		while (*cp != '#' && *cp != '/' && *cp != '\0')
 			cp++;
