@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.71 2004/04/23 17:25:25 itojun Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.72 2004/07/07 20:21:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.71 2004/04/23 17:25:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.72 2004/07/07 20:21:06 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2380,13 +2380,23 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 	    || (usemode == AUMODE_PLAY && sc->sc_playchan.pipe != NULL))
 		return (EBUSY);
 
-	if (usemode & AUMODE_PLAY && sc->sc_playchan.altidx != -1)
+	if ((usemode & AUMODE_PLAY) && sc->sc_playchan.altidx != -1)
 		sc->sc_alts[sc->sc_playchan.altidx].sc_busy = 0;
-	if (usemode & AUMODE_RECORD && sc->sc_recchan.altidx != -1)
+	if ((usemode & AUMODE_RECORD) && sc->sc_recchan.altidx != -1)
 		sc->sc_alts[sc->sc_recchan.altidx].sc_busy = 0;
 
 	for (mode = AUMODE_RECORD; mode != -1;
 	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
+		if (usemode & mode) {
+			if (mode == AUMODE_PLAY) {
+				paltidx = i;
+				sc->sc_alts[i].sc_busy = 1;
+			} else {
+				raltidx = i;
+				sc->sc_alts[i].sc_busy = 1;
+			}
+		}
+
 		if ((setmode & mode) == 0)
 			continue;
 
@@ -2514,15 +2524,6 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 
 		p->sw_code = swcode;
 		p->factor  = factor;
-		if (usemode & mode) {
-			if (mode == AUMODE_PLAY) {
-				paltidx = i;
-				sc->sc_alts[i].sc_busy = 1;
-			} else {
-				raltidx = i;
-				sc->sc_alts[i].sc_busy = 1;
-			}
-		}
 	}
 
 	if ((usemode & AUMODE_PLAY) /*&& paltidx != sc->sc_playchan.altidx*/) {
