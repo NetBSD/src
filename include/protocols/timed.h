@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.h,v 1.6 1998/02/02 16:37:51 perry Exp $	*/
+/*	$NetBSD: timed.h,v 1.7 1998/02/10 00:38:24 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,8 +35,8 @@
  *	@(#)timed.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef	_TIMED_H_
-#define	_TIMED_H_
+#ifndef	_PROTOCOLS_TIMED_H_
+#define	_PROTOCOLS_TIMED_H_
 
 /*
  * Time Synchronization Protocol
@@ -101,4 +101,4 @@ char *tsptype[TSPTYPENUMBER] =
   "TEST", "SETDATE", "SETDATEREQ", "LOOP" };
 #endif
 
-#endif /* !_TIMED_H_ */
+#endif /* !_PROTOCOLS_TIMED_H_ */

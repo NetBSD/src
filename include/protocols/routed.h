@@ -1,4 +1,4 @@
-/*	$NetBSD: routed.h,v 1.10 1997/02/03 22:20:38 christos Exp $	*/
+/*	$NetBSD: routed.h,v 1.11 1998/02/10 00:38:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1993
@@ -35,8 +35,8 @@
  *	@(#)routed.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef _ROUTED_H_
-#define	_ROUTED_H_
+#ifndef _PROTOCOLS_ROUTED_H_
+#define	_PROTOCOLS_ROUTED_H_
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -174,4 +174,4 @@ char *ripcmds[RIPCMD_MAX] = {
 #ifdef __cplusplus
 }
 #endif
-#endif /* !_ROUTED_H_ */
+#endif /* !_PROTOCOLS_ROUTED_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprestore.h,v 1.7 1996/11/30 18:01:52 cgd Exp $	*/
+/*	$NetBSD: dumprestore.h,v 1.8 1998/02/10 00:38:16 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,8 +40,8 @@
  *	@(#)dumprestore.h	8.2 (Berkeley) 1/21/94
  */
 
-#ifndef _DUMPRESTORE_H_
-#define _DUMPRESTORE_H_
+#ifndef _PROTOCOLS_DUMPRESTORE_H_
+#define _PROTOCOLS_DUMPRESTORE_H_
 
 /*
  * TP_BSIZE is the size of file blocks on the dump tapes.
@@ -111,4 +111,4 @@ union u_spcl {
 						/* name, level, ctime(date) */
 #define	DUMPINFMT	"%16s %c %[^\n]\n"	/* inverse for scanf */
 
-#endif /* !_DUMPRESTORE_H_ */
+#endif /* !_PROTOCOLS_DUMPRESTORE_H_ */
