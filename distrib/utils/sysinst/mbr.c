@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.14 1999/04/14 16:00:42 bouyer Exp $ */
+/*	$NetBSD: mbr.c,v 1.15 1999/05/02 13:07:15 fvdl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -279,8 +279,6 @@ edit_mbr(partition)
 			}
 		} while (yesno && (numbsd != 1 || overlap));
 
-		if (activepart != -1)
-			part[activepart].mbrp_flag = 0x80;
 
 		if (numbsd == 0) {
 			msg_display(MSG_nobsdpart);
@@ -291,6 +289,21 @@ edit_mbr(partition)
 		if (numbsd > 1) {
 			msg_display(MSG_multbsdpart, bsdpart);
 			process_menu(MENU_ok);
+		}
+
+		if (activepart == -1) {
+			msg_display(MSG_noactivepart);
+			process_menu(MENU_yesno);
+			if (yesno)
+				part[bsdpart].mbrp_flag = 0x80;
+		} else
+			part[activepart].mbrp_flag = 0x80;
+
+		if (bsdpart == freebsdpart) {
+			msg_display(MSG_upgradeparttype);
+			process_menu(MENU_yesno);
+			if (yesno)
+				part[bsdpart].mbrp_typ = dosptyp_nbsd;
 		}
 			
 		ptstart = part[bsdpart].mbrp_start;
@@ -331,13 +344,25 @@ partsoverlap(part, i, j)
 		(part[i].mbrp_start == part[j].mbrp_start);
 }
 
+char *
+get_partname(i)
+	int i;
+{
+	int j;
+
+	for (j = 0; part_ids[j].id != -1 &&
+		    part_ids[j].id != part[i].mbrp_typ; j++);
+
+	return part_ids[j].name;
+}
+
 void
 disp_cur_part(part, sel, disp)
 	struct mbr_partition *part;
 	int sel;
 	int disp;
 {
-	int i, j, start, stop, rsize, rend;
+	int i, start, stop, rsize, rend;
 
 	if (disp < 0)
 		start = 0, stop = 4;
@@ -359,9 +384,7 @@ disp_cur_part(part, sel, disp)
 			msg_printf_add("%d %12d%12d%12d  ", i,
 			    part[i].mbrp_start / sizemult, rsize, rend);
 		}
-		for (j = 0; part_ids[j].id != -1 &&
-			    part_ids[j].id != part[i].mbrp_typ; j++);
-		msg_printf_add("%s\n", part_ids[j].name);
+		msg_printf_add("%s\n", get_partname(i));
 		if (sel == i)
 			msg_standend();
 	}

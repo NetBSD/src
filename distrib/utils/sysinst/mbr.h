@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.5 1999/04/05 06:59:36 simonb Exp $	*/
+/*	$NetBSD: mbr.h,v 1.6 1999/05/02 13:07:15 fvdl Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -85,3 +85,4 @@ int	md_bios_info __P((char *));
 void	set_bios_geom __P((int, int, int));
 int	otherpart __P((int));
 int	ourpart __P((int));
+char	*get_partname __P((int));

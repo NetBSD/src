@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.40 1999/04/13 20:17:47 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.41 1999/05/02 13:07:15 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -713,3 +713,12 @@ message cmdfail
 {Command
         %s
 failed. I can't continue.}
+
+message noactivepart
+{You have not marked a partition active. This may cause your system to not
+start up properly. Should the NetBSD partition of the disk be marked active?}
+
+message upgradeparttype
+{The only suitable partition that was found for NetBSD installation is of
+the old NetBSD/386BSD/FreeBSD partition type. Do you want to change the type
+of this partition to the new NetBSD-only partition type?}
