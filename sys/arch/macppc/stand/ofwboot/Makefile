@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/07/21 21:42:25 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.14 2000/07/25 06:18:23 tsubai Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -10,6 +10,7 @@ XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-msoft-float
 #CFLAGS+=	-DDEBUG -DNETIF_DEBUG
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
+DBG=		-Os -mmultiple
 
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S
@@ -38,7 +39,6 @@ NEWVERSWHAT=	"OpenFirmware Boot"
 # For now...
 #RELOC=		20000
 RELOC=		6c0000
-COPTS=		-Os
 
 ENTRY=		_start
 
@@ -78,11 +78,11 @@ vers.c: version
 
 ${PROG}: ${OBJS} ${XCOFFXTRAOBJ} ${LIBSA} ${LIBZ} ${LIBKERN} ${FIXCOFFTARG}
 	${LD} -s -N -Ttext ${RELOC} -Bstatic -o ${PROG}.elf \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
+	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O binary ${PROG}.elf ${PROG}
 	${LD} -s -N -T ${.CURDIR}/../fixcoff/elf32_powerpc_merge.x -e _entry \
 	    -Ttext ${RELOC} -Bstatic -o ${PROG}.mrg  ${XCOFFXTRAOBJ} \
-	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
+	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -O aixcoff-rs6000 -R .comment -R .note \
 	    ${PROG}.mrg ${PROG}.xcf
 	${FIXCOFF} ${PROG}.xcf
