@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.45 1999/10/31 04:52:30 christos Exp $
+$NetBSD: acronyms,v 1.46 1999/10/31 04:54:03 christos Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -62,6 +62,7 @@ NBD	no big deal
 NFC	no fucking clue
 NFI	no fucking idea
 NIH	not invented here
+NP	no problem
 NRN	no reply necessary
 OIC	oh, I see
 OTOH	on the other hand
