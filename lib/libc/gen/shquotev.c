@@ -1,4 +1,4 @@
-/* $NetBSD: shquotev.c,v 1.1 2001/03/10 01:51:49 cgd Exp $ */
+/* $NetBSD: shquotev.c,v 1.2 2001/03/10 20:54:53 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -76,5 +76,5 @@ shquotev(int argc, char * const * argv, char *buf, size_t bufsize)
 	return rv;
 
 bad:
-	return -1;
+	return (size_t)-1;
 }
