@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.5.4.2 2002/01/10 19:43:56 thorpej Exp $ */
+/*	$NetBSD: apmdev.c,v 1.5.4.3 2002/06/18 20:03:43 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -930,9 +930,9 @@ static const struct filterops apmread_filtops =
 	{ 1, NULL, filt_apmrdetach, filt_apmread };
 
 int
-apmkqfilter(dev_t dev, struct knote *kn)
+apmdevkqfilter(dev_t dev, struct knote *kn)
 {
-	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
+	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];
 	struct klist *klist;
 
 	switch (kn->kn_filter) {
