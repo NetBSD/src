@@ -1,3 +1,5 @@
+/*	$NetBSD: fpsetmask.S,v 1.3 1998/01/09 03:45:05 perry Exp $	*/
+
 /*
  * Written by Charles M. Hannum, Apr 9, 1995
  * Public domain.
