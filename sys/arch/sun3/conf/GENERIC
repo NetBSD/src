@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.13 1995/02/11 21:01:20 gwr Exp $
+#	$NetBSD: GENERIC,v 1.14 1995/02/24 04:58:21 gwr Exp $
 
 #
 # GENERIC kernel - supports root on: ie0, le0, sd*, ...
@@ -68,9 +68,21 @@ si0 at vmes0 addr 0xff200000 level 2 vect 0x40
 si1 at vmes0 addr 0xff204000 level 2 vect 0x41
 
 scsibus* at scsi?
+
+# Sun compatible scsi device mappings
+sd0 at scsibus? target 0 lun 0
+sd1 at scsibus? target 0 lun 1
+sd2 at scsibus? target 1 lun 0
+sd3 at scsibus? target 1 lun 1
 sd* at scsibus? target ? lun ?
+
+st0 at scsibus? target 4 lun 0
+st1 at scsibus? target 5 lun 0
 st* at scsibus? target ? lun ?
+
+cd0 at scsibus? target 6 lun 0
 cd* at scsibus? target ? lun ?
+
 #ch* at scsibus? target ? lun ?
 
 pseudo-device	loop
