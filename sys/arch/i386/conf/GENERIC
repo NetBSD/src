@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.114.2.10 1998/05/05 08:10:38 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.114.2.11 1998/07/27 15:33:32 mellon Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -126,6 +126,11 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
+# Keyboard layout configuration for pccons
+#options 	FRENCH_KBD
+#options 	GERMAN_KBD
+#options 	NORVEGIAN_KBD
+  
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0a type ffs

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.59.2.8 1997/11/28 08:20:10 mellon Exp $
+#	$NetBSD: INSTALL,v 1.59.2.9 1998/07/27 15:33:32 mellon Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -138,6 +138,11 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 
+# Keyboard layout configuration for pccons
+#options 	FRENCH_KBD
+#options 	GERMAN_KBD
+#options 	NORVEGIAN_KBD
+  
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0a type ffs
