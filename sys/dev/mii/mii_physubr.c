@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.34 2002/11/07 07:41:24 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.35 2003/02/20 00:55:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.34 2002/11/07 07:41:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.35 2003/02/20 00:55:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,7 +114,8 @@ mii_phy_setmedia(struct mii_softc *sc)
 	int bmcr, anar, gtcr;
 
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-		if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0)
+		if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0 ||
+		    (sc->mii_flags & MIIF_FORCEANEG))
 			(void) mii_phy_auto(sc, 1);
 		return;
 	}
