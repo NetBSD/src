@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 1996/02/05 02:08:32 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.28 1996/02/09 16:58:40 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -341,6 +341,7 @@ vmapbuf(bp, sz)
  * Free the io map PTEs associated with this IO operation.
  */
 /*ARGSUSED*/
+void
 vunmapbuf(bp, sz)
 	register struct buf *bp;
 	vm_size_t sz;
