@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 1996/11/14 19:25:50 gwr Exp $	*/
+/*	$NetBSD: main.c,v 1.20 1997/04/29 21:01:54 tls Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.19 1996/11/14 19:25:50 gwr Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.20 1997/04/29 21:01:54 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -198,8 +198,10 @@ main(argc, argv)
 	 * that the file descriptors are already set up for us. 
 	 * J. Gettys - MIT Project Athena.
 	 */
-	if (argc <= 2 || strcmp(argv[2], "-") == 0)
-	    strcpy(ttyn, ttyname(0));
+	if (argc <= 2 || strcmp(argv[2], "-") == 0) {
+	    strncpy(ttyn, ttyname(0), 32);
+	    ttyn[31] = (char)NULL;
+	}
 	else {
 	    int i;
 
