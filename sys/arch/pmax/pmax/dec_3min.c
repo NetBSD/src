@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.7.4.12 1999/08/13 09:01:50 nisimura Exp $ */
+/*	$NetBSD: dec_3min.c,v 1.7.4.13 1999/09/05 09:48:48 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.12 1999/08/13 09:01:50 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.13 1999/09/05 09:48:48 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,10 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.7.4.12 1999/08/13 09:01:50 nisimura E
 #include <pmax/tc/zs_ioasicvar.h>
 
 #include "wsdisplay.h"
-
-/* XXX XXX XXX */
-#define IOASIC_INTR_SCSI 0x00000200
-/* XXX XXX XXX */
 
 void dec_3min_init __P((void));
 void dec_3min_bus_reset __P((void));
@@ -318,6 +314,9 @@ dec_3min_intr(cpumask, pc, status, cause)
 			}
 			can_serve = intr & imsk;
 
+			if (can_serve & KMIN_INTR_TIMEOUT)
+				kn02ba_memerr();
+
 			if (can_serve & KMIN_INTR_CLOCK) {
 				struct clockframe cf;
 
@@ -339,9 +338,6 @@ dec_3min_intr(cpumask, pc, status, cause)
 			CHECKINTR(SYS_DEV_OPT2, KMIN_INTR_TC_2);
 			CHECKINTR(SYS_DEV_OPT1, KMIN_INTR_TC_1);
 			CHECKINTR(SYS_DEV_OPT0, KMIN_INTR_TC_0);
-
-			if (can_serve & KMIN_INTR_TIMEOUT)
-				kn02ba_memerr();
 
 			if (warned > 0 && !(can_serve & KMIN_INTR_PSWARN)) {
 				printf("%s\n", "Power supply ok now.");
