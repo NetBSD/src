@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/04/26 15:50:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2003/08/02 05:16:58 lukem Exp $
 
 NOMAN=
 .include <bsd.own.mk>
@@ -25,11 +25,14 @@ SRCS+=	alloc.c bpf.c comapi.c conflex.c discover.c dispatch.c dns.c \
 SRCS+=	alloc.OM.c convert.c dispatch.OM.c errwarn.c handle.c hash.c \
 	result.c support.c
 
+
 .SUFFIXES: .OM.c
 
 .c.OM.c:
-	cp ${RSRCDIR}/omapip/$*.c $@
+	rm -f ${.TARGET}
+	cp ${RSRCDIR}/omapip/${.IMPSRC:T} ${.TARGET}
 
-CLEANFILES+=${SRCS:M*.OM.c}
+DPSRCS+=	${SRCS:M*.OM.c}
+CLEANFILES+=	${SRCS:M*.OM.c}
 
 .include <bsd.prog.mk>

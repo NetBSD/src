@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2003/07/26 17:07:38 salo Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2003/08/02 05:16:56 lukem Exp $
 #
 # Makefile for sysinst
 
@@ -55,13 +55,13 @@ CPPFLAGS+=	-DSYSINST_CDROM_DIR=\"${SYSINST_CDROM_DIR}\"
 
 WARNS=		3
 
+DPSRCS+=	msg_defs.h menu_defs.h
+
 CLEANFILES=	menu_defs.c menu_defs.h menus.def \
 		msg_defs.c msg_defs.h msg.def msgtouch \
 		sysinstmsgs.*
 
 .PATH: ${.CURDIR}/../..
-
-.include <bsd.prog.mk>
 
 menu_defs.c menu_defs.h: menus.def
 	${TOOL_MENUC} menus.def
@@ -81,8 +81,6 @@ menus.def: menus.mi ${MENUS_MD} msgtouch
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} | \
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
-menu_defs.c: msg_defs.h
-
 .for LANG in ${LANGUAGES}
 # .if ${LANG} != ${SYSINSTLANG}
 sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgtouch msg_defs.h
@@ -90,11 +88,8 @@ sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgto
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
 	sh ${MSG_XLAT_SH} > ${.TARGET}
 
-# A fake dependancy to get language dependant files built
-msg_defs.o: sysinstmsgs.${LANG}
+DPSRCS+=	sysinstmsgs.${LANG}
 # .endif
 .endfor
 
-XOBJS:=${SRCS:M*.c:R:O:S/$/.o/g}
-
-${XOBJS}: msg_defs.h menu_defs.h
+.include <bsd.prog.mk>
