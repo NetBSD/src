@@ -76,9 +76,7 @@ getconfig(intface)
 	int stat, pfxs, i;
 	char tbuf[BUFSIZ];
 	struct rainfo *tmp;
-	char val8;
-	short val16;
-	int val32;
+	long val;
 	char buf[BUFSIZ];
 	char *bp = buf;
 	char *addr;
@@ -138,19 +136,16 @@ getconfig(intface)
 	/*
 	 * set router configuration variables.
 	 */
-	MAYHAVE(val32, "maxinterval", DEF_MAXRTRADVINTERVAL);
-	tmp->maxinterval = val32;
-	if (tmp->maxinterval < MIN_MAXINTERVAL ||
-	    tmp->maxinterval > MAX_MAXINTERVAL) {
+	MAYHAVE(val, "maxinterval", DEF_MAXRTRADVINTERVAL);
+	if (val < MIN_MAXINTERVAL || val > MAX_MAXINTERVAL) {
 		syslog(LOG_ERR,
 		       "<%s> maxinterval must be between %d and %d",
 		       __FUNCTION__, MIN_MAXINTERVAL, MAX_MAXINTERVAL);
 		exit(1);
 	}
-	MAYHAVE(val32, "mininterval", tmp->maxinterval/3);
-	tmp->mininterval = val32;
-	if (tmp->mininterval < MIN_MININTERVAL ||
-	    tmp->mininterval > (tmp->maxinterval * 3) / 4) {
+	tmp->maxinterval = (u_int)val;
+	MAYHAVE(val, "mininterval", tmp->maxinterval/3);
+	if (val < MIN_MININTERVAL || val > (tmp->maxinterval * 3) / 4) {
 		syslog(LOG_ERR,
 		       "<%s> mininterval must be between %d and %d",
 		       __FUNCTION__,
@@ -158,19 +153,17 @@ getconfig(intface)
 		       (tmp->maxinterval * 3) / 4);
 		exit(1);
 	}
+	tmp->mininterval = (u_int)val;
 
-	MAYHAVE(val16, "chlim", DEF_ADVCURHOPLIMIT);
-	tmp->hoplimit = 0xff & val16;
+	MAYHAVE(val, "chlim", DEF_ADVCURHOPLIMIT);
+	tmp->hoplimit = val & 0xff;
 
-	MAYHAVE(val8, "raflags", 0);
-	tmp->managedflg= val8 & ND_RA_FLAG_MANAGED;
-	tmp->otherflg = val8 & ND_RA_FLAG_OTHER;
+	MAYHAVE(val, "raflags", 0);
+	tmp->managedflg= val & ND_RA_FLAG_MANAGED;
+	tmp->otherflg = val & ND_RA_FLAG_OTHER;
 
-	MAYHAVE(val32, "rltime", tmp->maxinterval * 3);
-	tmp->lifetime = (u_short)val32;
-	if (tmp->lifetime &&
-	    (tmp->lifetime < tmp->maxinterval ||
-	     tmp->lifetime > MAXROUTERLIFETIME)) {
+	MAYHAVE(val, "rltime", tmp->maxinterval * 3);
+	if (val && (val < tmp->maxinterval || val > MAXROUTERLIFETIME)) {
 		syslog(LOG_ERR,
 		       "<%s> router lifetime on %s must be 0 or"
 		       " between %d and %d",
@@ -178,18 +171,24 @@ getconfig(intface)
 		       tmp->maxinterval, MAXROUTERLIFETIME);
 		exit(1);
 	}
+	tmp->lifetime = val & 0xffff;
 
-	MAYHAVE(val32, "rtime", DEF_ADVREACHABLETIME);
-	tmp->reachabletime = (u_int32_t)val32;
-	if (tmp->reachabletime > MAXREACHABLETIME) {
+	MAYHAVE(val, "rtime", DEF_ADVREACHABLETIME);
+	if (val > MAXREACHABLETIME) {
 		syslog(LOG_ERR,
 		       "<%s> reachable time must be no greater than %d",
 		       __FUNCTION__, MAXREACHABLETIME);
 		exit(1);
 	}
+	tmp->reachabletime = (u_int32_t)val;
 
-	MAYHAVE(val32, "retrans", DEF_ADVRETRANSTIMER);
-	tmp->retranstimer = val32;
+	MAYHAVE(val, "retrans", DEF_ADVRETRANSTIMER);
+	if (val < 0 || val > 0xffffffff) {
+		syslog(LOG_ERR,
+		       "<%s> retrans time out of range", __FUNCTION__);
+		exit(1);
+	}
+	tmp->retranstimer = (u_int32_t)val;
 
 	/* prefix information */
 	if ((pfxs = agetnum("addrs")) < 0) {
@@ -208,8 +207,6 @@ getconfig(intface)
 		for (i = 0; i < pfxs; i++) {
 			struct prefix *pfx;
 			char entbuf[256];
-			short val16;
-			int val32;
 			int added = (pfxs > 1) ? 1 : 0;
 
 			/* allocate memory to store prefix information */
@@ -223,23 +220,40 @@ getconfig(intface)
 			insque(pfx, &tmp->prefix);
 
 			makeentry(entbuf, i, "prefixlen", added);
-			MAYHAVE(val32, entbuf, 64);
-			pfx->prefixlen = (int)val32;
+			MAYHAVE(val, entbuf, 64);
+			if (val < 0 || val > 128) {
+				syslog(LOG_ERR,
+				       "<%s> prefixlen out of range",
+				       __FUNCTION__);
+				exit(1);
+			}
+			pfx->prefixlen = (int)val;
 
 			makeentry(entbuf, i, "pinfoflags", added);
-			MAYHAVE(val16, entbuf,
+			MAYHAVE(val, entbuf,
 				(ND_OPT_PI_FLAG_ONLINK|ND_OPT_PI_FLAG_AUTO));
-			val16 &= 0xc0;
-			pfx->onlinkflg = val16 & ND_OPT_PI_FLAG_ONLINK;
-			pfx->autoconfflg = val16 & ND_OPT_PI_FLAG_AUTO;
+			pfx->onlinkflg = val & ND_OPT_PI_FLAG_ONLINK;
+			pfx->autoconfflg = val & ND_OPT_PI_FLAG_AUTO;
 
 			makeentry(entbuf, i, "vltime", added);
-			MAYHAVE(val32, entbuf, DEF_ADVVALIDLIFETIME);
-			pfx->validlifetime = (u_int32_t)val32;
+			MAYHAVE(val, entbuf, DEF_ADVVALIDLIFETIME);
+			if (val < 0 || val > 0xffffffff) {
+				syslog(LOG_ERR,
+				       "<%s> vltime out of range",
+				       __FUNCTION__);
+				exit(1);
+			}
+			pfx->validlifetime = (u_int32_t)val;
 
 			makeentry(entbuf, i, "pltime", added);
-			MAYHAVE(val32, entbuf, DEF_ADVPREFERREDLIFETIME);
-			pfx->preflifetime = (u_int32_t)val32;
+			MAYHAVE(val, entbuf, DEF_ADVPREFERREDLIFETIME);
+			if (val < 0 || val > 0xffffffff) {
+				syslog(LOG_ERR,
+				       "<%s> pltime out of range",
+				       __FUNCTION__);
+				exit(1);
+			}
+			pfx->preflifetime = (u_int32_t)val;
 
 			makeentry(entbuf, i, "addr", added);
 			addr = (char *)agetstr(entbuf, &bp);
@@ -272,8 +286,13 @@ getconfig(intface)
 		}
 	}
 
-	MAYHAVE(val32, "mtu", 0);
-	tmp->linkmtu = (u_int32_t)val32;
+	MAYHAVE(val, "mtu", 0);
+	if (val < 0 || val > 0xffffffff) {
+		syslog(LOG_ERR,
+		       "<%s> mtu out of range", __FUNCTION__);
+		exit(1);
+	}
+	tmp->linkmtu = (u_int32_t)val;
 	if (tmp->linkmtu == 0) {
 		char *mtustr;
 
