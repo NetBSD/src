@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.8 1995/02/12 19:19:31 chopps Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.9 1995/08/18 15:28:17 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -105,7 +105,9 @@ wstscmatch(pdp, cdp, auxp)
 	/*
 	 * Check manufacturer and product id.
 	 */
-	if (zap->manid == 1056 && zap->prodid == 12)	/* add other boards? */
+	if (zap->manid == 1056 && (
+	    zap->prodid == 12 ||	/* WordSync */
+	    zap->prodid == 13))		/* ByteSync */
 		return(1);
 	else
 		return(0);

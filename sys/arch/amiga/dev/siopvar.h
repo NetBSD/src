@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.10 1995/08/12 20:30:57 mycroft Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.11 1995/08/18 15:28:14 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,75 +48,116 @@
  */
 #define	DMAMAXIO	(MAXPHYS/NBPG+1)
 
-struct	siop_pending {
-	TAILQ_ENTRY(siop_pending) link;
-	struct scsi_xfer *xs;
-};
-
-struct siop_ds {			/* Data Structure for SCRIPTS */
-	long	scsi_addr;		/* SCSI ID & sync */
-	long	idlen;			/* Identify message */
-	char	*idbuf;
-	long	cmdlen;			/* SCSI command */
-	char	*cmdbuf;
-	long	stslen;			/* Status */
-	char	*stsbuf;
-	long	msglen;			/* Message */
-	char	*msgbuf;
-	long	msginlen;		/* Message in */
-	char	*msginbuf;
-	long	extmsglen;		/* Extended message in */
-	char	*extmsgbuf;
-	long	synmsglen;		/* Sync transfer request */
-	char	*synmsgbuf;
+/*
+ * Data Structure for SCRIPTS program
+ */
+struct siop_ds {
+/*00*/	long	scsi_addr;		/* SCSI ID & sync */
+/*04*/	long	idlen;			/* Identify message */
+/*08*/	char	*idbuf;
+/*0c*/	long	cmdlen;			/* SCSI command */
+/*10*/	char	*cmdbuf;
+/*14*/	long	stslen;			/* Status */
+/*18*/	char	*stsbuf;
+/*1c*/	long	msglen;			/* Message */
+/*20*/	char	*msgbuf;
+/*24*/	long	msginlen;		/* Message in */
+/*28*/	char	*msginbuf;
+/*2c*/	long	extmsglen;		/* Extended message in */
+/*30*/	char	*extmsgbuf;
+/*34*/	long	synmsglen;		/* Sync transfer request */
+/*38*/	char	*synmsgbuf;
 	struct {
-		long datalen;
-		char *databuf;
+/*3c*/		long datalen;
+/*40*/		char *databuf;
 	} chain[DMAMAXIO];
 };
 
-struct	siop_softc {
-	struct	device sc_dev;
-	struct	isr sc_isr;
+/*
+ * ACB. Holds additional information for each SCSI command Comments: We
+ * need a separate scsi command block because we may need to overwrite it
+ * with a request sense command.  Basicly, we refrain from fiddling with
+ * the scsi_xfer struct (except do the expected updating of return values).
+ * We'll generally update: xs->{flags,resid,error,sense,status} and
+ * occasionally xs->retries.
+ */
+struct siop_acb {
+/*00*/	TAILQ_ENTRY(siop_acb) chain;
+/*08*/	struct scsi_xfer *xs;	/* SCSI xfer ctrl block from above */
+/*0c*/	int		flags;	/* Status */
+#define ACB_FREE	0x00
+#define ACB_ACTIVE	0x01
+#define ACB_DONE	0x04
+#define ACB_CHKSENSE	0x08
+/*10*/	struct scsi_generic cmd;  /* SCSI command block */
+/*1c*/	struct siop_ds ds;
+/*a0*/	void	*iob_buf;
+/*a4*/	u_long	iob_curbuf;
+/*a8*/	u_long	iob_len, iob_curlen;
+/*b0*/	u_char	msgout[6];
+/*b6*/	u_char	msg[6];
+/*bc*/	u_char	stat[1];
+/*bd*/	u_char	status;
+/*be*/	u_char	dummy[2];
+/*c0*/	int	 clen;
+/*c4*/	char	*daddr;		/* Saved data pointer */
+/*c8*/	int	 dleft;		/* Residue */
+};
 
-	u_char	sc_istat;
-	u_char	sc_dstat;
-	u_char	sc_sstat0;
-	u_char	sc_sstat1;
-	struct	scsi_link sc_link;	/* proto for sub devices */
-	siop_regmap_p	sc_siopp;	/* the SIOP */
-	volatile void 	*sc_cregs;	/* driver specific regs */
-	struct	scsi_xfer *sc_xs;	/* transfer from high level code */
-	u_long	sc_active;		/* number of active I/O's */
-	/* I/O blocks for each active I/O */
-	struct siop_iob {
-		struct	scsi_xfer *sc_xs;
-		struct siop_ds sc_ds;
-		void	*iob_buf;
-		u_long	iob_curbuf;
-		u_long	iob_len, iob_curlen;
-		u_char	sc_msgout[6];
-		u_char	sc_msg[6];
-		u_char	sc_stat[1];
-		u_char	sc_status;
-		u_char	sc_dummy[2];
-	} *sc_cur;			/* current I/O block */
-	struct	siop_iob sc_iob[2];	/* I/O blocks */
-	u_long	sc_scriptspa;		/* physical address of scripts */
-	u_long	sc_clock_freq;
-	u_char	sc_flags;
-	u_char	sc_slave;
+/*
+ * Some info about each (possible) target on the SCSI bus.  This should
+ * probably have been a "per target+lunit" structure, but we'll leave it at
+ * this for now.  Is there a way to reliably hook it up to sc->fordriver??
+ */
+struct siop_tinfo {
+	int	cmds;		/* #commands processed */
+	int	dconns;		/* #disconnects */
+	int	touts;		/* #timeouts */
+	int	perrs;		/* #parity errors */
+	int	senses;		/* #request sense commands sent */
+	ushort	lubusy;		/* What local units/subr. are busy? */
+	u_char  flags;
+	u_char  period;		/* Period suggestion */
+	u_char  offset;		/* Offset suggestion */
+} tinfo_t;
+
+struct	siop_softc {
+/*00*/	struct	device sc_dev;
+/*??*/	struct	isr sc_isr;
+
+/*38*/	u_char	sc_istat;
+/*39*/	u_char	sc_dstat;
+/*3a*/	u_char	sc_sstat0;
+/*3b*/	u_char	sc_sstat1;
+/*3c*/	u_long	sc_intcode;
+/*40*/	struct	scsi_link sc_link;	/* proto for sub devices */
+/*58*/	u_long	sc_scriptspa;		/* physical address of scripts */
+/*5c*/	siop_regmap_p	sc_siopp;	/* the SIOP */
+/*60*/	u_long	sc_active;		/* number of active I/O's */
+
+	/* Lists of command blocks */
+/*64*/	TAILQ_HEAD(acb_list, siop_acb) free_list,
+/*6c*/				       ready_list,
+/*74*/				       nexus_list;
+
+/*7c*/	struct siop_acb *sc_nexus;	/* current command */
+/*80*/	struct siop_acb sc_acb[8];	/* the real command blocks */
+/*6e0*/	struct siop_tinfo sc_tinfo[8];
+
+/*7b0*/	u_long	sc_clock_freq;
+/*7b4*/	u_char	sc_flags;
+/*7b5*/	u_char	sc_sien;
+/*7b6*/	u_char	sc_dien;
 	/* one for each target */
-	struct syncpar {
+/*7b7*/	struct syncpar {
 	  u_char state;
 	  u_char period, offset;
 	} sc_sync[8];
-	TAILQ_HEAD(,siop_pending) sc_xslist;	/* LIFO */
-	struct	siop_pending sc_xsstore[8][8];	/* one for every unit */
 };
 
 /* sc_flags */
-#define	SIOP_DMA	0x80	/* DMA I/O in progress */
+#define	SIOP_INTSOFF	0x80	/* Interrupts turned off */
+#define	SIOP_INTDEFER	0x40	/* Level 6 interrupt has been deferred */
 #define	SIOP_ALIVE	0x01	/* controller initialized */
 #define SIOP_SELECTED	0x04	/* bus is in selected state. Needed for
 				   correct abort procedure. */
@@ -140,7 +181,7 @@ struct	siop_softc {
 #define	MSG_BUS_DEVICE_RESET	0x0C
 #define	MSG_IDENTIFY		0x80
 #define	MSG_IDENTIFY_DR		0xc0	/* (disconnect/reconnect allowed) */
-#define	MSG_SYNC_REQ 		0x01
+#define	MSG_SYNC_REQ		0x01
 
 #define	STS_CHECKCOND	0x02	/* Check Condition (ie., read sense) */
 #define	STS_CONDMET	0x04	/* Condition Met (ie., search worked) */

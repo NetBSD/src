@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.40 1995/05/13 05:57:25 chopps Exp $	*/
+/*	$NetBSD: locore.s,v 1.41 1995/08/18 15:27:33 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,8 +99,8 @@ _addrerr:
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(FR_SP)		|   in the savearea
 	lea	sp@(FR_HW),a1		| grab base of HW berr frame
-	tstl	_cpu040
-	jeq	Lbe030
+	cmpl	#MMU_68040,_mmutype
+	jne	Lbe030
 	movl	a1@(8),sp@-		| V = exception address
 	clrl	sp@-			| dummy code
 	moveq	#0,d0
@@ -222,7 +222,7 @@ _fpfline:
 
 _fpunsupp:
 #if defined(M68040)
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	_illinst		| no, treat as illinst
 #ifdef FPSP
 	.globl	fpsp_unsupp
@@ -756,9 +756,8 @@ Lsetcpu040:
 	movl	#CACHE_OFF,d0		| 68020/030 cache
 	movl	#AMIGA_68040,d1
 	andl	d1,d5
-	movl	d5,_cpu040		| set 68040 CPU flag
 	jeq	Lstartnot040		| it's not 68040
-	movl	#-2,_mmutype		| same as hp300 for compat
+	movl	#MMU_68040,_mmutype	| same as hp300 for compat
 	.word	0xf4f8		| cpusha bc - push and invalidate caches
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 Lstartnot040:
@@ -832,8 +831,8 @@ Lcacheon:
 	pea	sp@			| addr of space for D0 
 	jbsr	_main			| main(firstaddr, r0)
 	addql	#4,sp			| pop args
-	tstl	_cpu040			| 68040?
-	jeq	Lnoflush		| no, skip
+	cmpl	#MMU_68040,_mmutype	| 68040?
+	jne	Lnoflush		| no, skip
 	.word	0xf478			| cpusha dc
 	.word	0xf498			| cinva ic
 Lnoflush:
@@ -905,8 +904,8 @@ ENTRY(copypage)
 	movl	sp@(4),a0		| source address
 	movl	sp@(8),a1		| destination address
 	movl	#NBPG/32,d0		| number of 32 byte chunks
-	tstl	_cpu040
-	jeq	Lmlloop			| no, use movl
+	cmpl	#MMU_68040,_mmutype
+	jne	Lmlloop			| no, use movl
 Lm16loop:
 	.long	0xf6209000		| move16 a0@+,a1@+
 	.long	0xf6209000		| move16 a0@+,a1@+
@@ -1243,8 +1242,8 @@ Lswnofpsave:
 	movl	_curpcb,a1		| restore p_addr
 Lswnochg:
 	lea	tmpstk,sp		| now goto a tmp stack for NMI
-	tstl	_cpu040
-	jne	Lres2
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lres2
 	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate cache(s)
 	pflusha				| flush entire TLB
@@ -1257,8 +1256,8 @@ Lres3:
 	movl	a1@(PCB_USTP),d0	| get USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
-	tstl	_cpu040
-	jne	Lres4
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lres4
 	lea	_protorp,a0		| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load new user root pointer
@@ -1394,8 +1393,8 @@ Lclrloop:
  */
 ENTRY(TBIA)
 __TBIA:
-	tstl	_cpu040
-	jne	Ltbia040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Ltbia040
 	pflusha				| flush entire TLB
 	tstl	_mmutype
 	jpl	Lmc68851a		| 68851 implies no d-cache
@@ -1416,8 +1415,8 @@ ENTRY(TBIS)
 	jne	__TBIA			| yes, flush entire TLB
 #endif
 	movl	sp@(4),a0		| get addr to flush
-	tstl	_cpu040
-	jne	Ltbis040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Ltbis040
 	tstl	_mmutype
 	jpl	Lmc68851b		| is 68851?
 	pflush	#0,#0,a0@		| flush address from both sides
@@ -1444,8 +1443,8 @@ ENTRY(TBIAS)
 	tstl	fulltflush		| being conservative?
 	jne	__TBIA			| yes, flush everything
 #endif
-	tstl	_cpu040
-	jne	Ltbias040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Ltbias040
 	tstl	_mmutype
 	jpl	Lmc68851c		| 68851?
 	pflush #4,#4			| flush supervisor TLB entries
@@ -1468,8 +1467,8 @@ ENTRY(TBIAU)
 	tstl	fulltflush		| being conservative?
 	jne	__TBIA			| yes, flush everything
 #endif
-	tstl	_cpu040
-	jne	Ltbiau040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Ltbiau040
 	tstl	_mmutype
 	jpl	Lmc68851d		| 68851?
 	pflush	#0,#4			| flush user TLB entries
@@ -1491,8 +1490,8 @@ ENTRY(ICIA)
 ENTRY(ICPA)
 #if defined(M68030) || defined(M68020)
 #if defined(M68040)
-	tstl	_cpu040
-	jne	Licia040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Licia040
 #endif
 	movl	#IC_CLEAR,d0
 	movc	d0,cacr			| invalidate i-cache
@@ -1513,16 +1512,16 @@ Licia040:
  */
 ENTRY(DCIA)
 __DCIA:
-	tstl	_cpu040
-	jeq	Ldciax
+	cmpl	#MMU_68040,_mmutype
+	jne	Ldciax
 	.word	0xf478		| cpusha dc
 Ldciax:
 	rts
 
 ENTRY(DCIS)
 __DCIS:
-	tstl	_cpu040
-	jeq	Ldcisx
+	cmpl	#MMU_68040,_mmutype
+	jne	Ldcisx
 	.word	0xf478		| cpusha dc
 	nop
 Ldcisx:
@@ -1530,8 +1529,8 @@ Ldcisx:
 
 ENTRY(DCIU)
 __DCIU:
-	tstl	_cpu040
-	jeq	Ldciux
+	cmpl	#MMU_68040,_mmutype
+	jne	Ldciux
 	.word	0xf478		| cpusha dc
 Ldciux:
 	rts
@@ -1539,8 +1538,8 @@ Ldciux:
 | Invalid single cache line
 ENTRY(DCIAS)
 __DCIAS:
-	tstl	_cpu040
-	jeq	Ldciasx
+	cmpl	#MMU_68040,_mmutype
+	jne	Ldciasx
 	movl	sp@(4),a0
 	.word	0xf468		| cpushl dc,a0@
 Ldciasx:
@@ -1578,8 +1577,8 @@ ENTRY(DCFP)	/* data cache flush page */
 ENTRY(PCIA)
 #if defined(M68030) || defined(M68030)
 #if defined(M68040)
-	tstl	_cpu040
-	jne	Lpcia040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lpcia040
 #endif
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
@@ -1641,8 +1640,8 @@ ENTRY(loadustp)
 	movl	sp@(4),d0		| new USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
-	tstl	_cpu040
-	jne	Lldustp040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lldustp040
 	lea	_protorp,a0		| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load root pointer
@@ -1659,8 +1658,8 @@ Lldustp040:
  * and ATC entries in PMMU.
  */
 ENTRY(flushustp)
-	tstl	_cpu040
-	jne	Lnot68851
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lnot68851
 	tstl	_mmutype		| 68851 PMMU?
 	jle	Lnot68851		| no, nothing to do
 	movl	sp@(4),d0		| get USTP to flush
@@ -1673,8 +1672,8 @@ Lnot68851:
 
 ENTRY(ploadw)
 	movl	sp@(4),a0		| address to load
-	tstl	_cpu040
-	jne	Lploadw040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lploadw040
 	ploadw	#1,a0@			| pre-load translation
 Lploadw040:			| should 68040 do a ptest?
 	rts
@@ -1935,8 +1934,8 @@ Lm68881rdone:
 	.globl	_doboot
 _doboot:
 	movl	#CACHE_OFF,d0
-	movl	_cpu040,d1		| load 68040 flag
-	jeq	Ldoboot0
+	cmpl	#MMU_68040,_mmutype	| is it 68040
+	jne	Ldoboot0
 	.word	0xf4f8		| cpusha bc - push and invalidate caches
 	nop
 	movl	#CACHE40_OFF,d0
@@ -2017,8 +2016,8 @@ _kernel_reload:
 	movew	#(1<<9),a5@(0x096)	| disable DMA (before clobbering chipmem)
 
 	movl	#CACHE_OFF,d0
-	tstl	_cpu040
-	jeq	Lreload1
+	cmpl	#MMU_68040,_mmutype
+	jne	Lreload1
 	.word	0xf4f8		| cpusha bc - push and invalidate caches
 	nop
 	movl	#CACHE40_OFF,d0
@@ -2047,8 +2046,8 @@ Lreload_copy:
 	jcc	Lreload_copy
 
 	| ok, turn off MMU..
-	tstl	_cpu040
-	jne	Lreload040
+	cmpl	#MMU_68040,_mmutype
+	jeq	Lreload040
 	lea	zero,a3
 	pmove	a3@,tc			| Turn off MMU
 	lea	nullrp,a3

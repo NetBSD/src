@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.8 1995/03/05 13:01:24 chopps Exp $	*/
+/*	$NetBSD: gvpbus.c,v 1.9 1995/08/18 15:27:54 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -83,14 +83,17 @@ gvpbusattach(pdp, dp, auxp)
 	/*
 	 * grab secondary type (or fake it if we have a series I)
 	 */
-	if (zap->prodid != 9)
+	if (zap->prodid != 9) {
 		ga.prod = *((u_char *)zap->va + 0x8001) & 0xf8;
+		if (*((u_char *)zap->va + 0x8001) & 0x01)
+			ga.flags |= GVP_14MHZ;
+	printf(": subprod %02x flags %02x", *((u_char *)zap->va + 0x8001), ga.flags);
 #if 0
-	else {
+	} else {
 		ga.prod = GVP_SERIESII;		/* really a series I */
 		ga.flags |= GVP_NOBANK;
-	}
 #endif
+	}
 	
 
 	switch (ga.prod) {
@@ -105,21 +108,24 @@ gvpbusattach(pdp, dp, auxp)
 		break;
 	/* scsi */
 	case GVP_A1291_SCSI:
-		ga.flags = GVP_SCSI | GVP_ACCEL;
+		ga.flags |= GVP_SCSI | GVP_ACCEL;
 		sbic_no_dma = 1;	/* Kludge !!!!!!! mlh */
 		break;
 	case GVP_GFORCE_040_SCSI:
-		ga.flags = GVP_SCSI | GVP_IO | GVP_ACCEL;
+		ga.flags |= GVP_SCSI | GVP_IO | GVP_ACCEL;
 		break;
 	case GVP_GFORCE_030_SCSI:
-		ga.flags = GVP_SCSI | GVP_IO | GVP_ACCEL | GVP_25BITDMA;
+		ga.flags |= GVP_SCSI | GVP_IO | GVP_ACCEL | GVP_25BITDMA;
 		break;
 	case GVP_A530_SCSI:
 	case GVP_COMBO_R4_SCSI:
-		ga.flags = GVP_SCSI | GVP_ACCEL | GVP_25BITDMA;
+		ga.flags |= GVP_SCSI | GVP_ACCEL | GVP_25BITDMA;
+		if (ga.prod == GVP_COMBO_R4_SCSI)
+			ga.flags ^= GVP_14MHZ;
 		break;
 	case GVP_COMBO_R3_SCSI:
-		ga.flags = GVP_SCSI | GVP_ACCEL | GVP_24BITDMA;
+		ga.flags |= GVP_SCSI | GVP_ACCEL | GVP_24BITDMA;
+		ga.flags ^= GVP_14MHZ;
 		break;
 	case GVP_SERIESII:
 		ga.flags |= GVP_SCSI | GVP_24BITDMA;
