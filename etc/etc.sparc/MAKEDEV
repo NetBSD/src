@@ -88,17 +88,17 @@ std)
 	;;
 
 bwtwo*)
-	unit=`expr $i : '..\(.*\)'`
+	unit=`expr $i : '.....\(.*\)'`
 	mknod bwtwo$unit	c 27 $unit; chmod 666 bwtwo$unit
 	;;
 
 cgthree*)
-	unit=`expr $i : '..\(.*\)'`
+	unit=`expr $i : '.......\(.*\)'`
 	mknod cgthree$unit	c 27 $unit; chmod 666 cgthree$unit
 	;;
 
 cgsix*)
-	unit=`expr $i : '..\(.*\)'`
+	unit=`expr $i : '.....\(.*\)'`
 	mknod cgsix$unit	c 27 $unit; chmod 666 cgsix$unit
 	;;
 
