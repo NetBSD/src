@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.306.2.21 2002/11/11 22:11:29 nathanw Exp $
+$NetBSD: pcidevs,v 1.306.2.22 2002/11/26 18:17:49 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -499,6 +499,7 @@ vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
 vendor CCUBE		0x123f	C-Cube Microsystems
 vendor AVM		0x1244	AVM
+vendor SAMSUNGELEC2	0x1249	Samsung Electronics Co. Ltd. (2nd vendor ID)
 vendor STALLION		0x124d	Stallion Technologies
 vendor LINEARSYS	0x1254	Linear Systems
 vendor ASIX		0x125b	ASIX Electronics
@@ -537,6 +538,7 @@ vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
 vendor ETIMEDIA		0x1409	eTIMedia Technology Co. Ltd.
 vendor OXFORDSEMI	0x1415	Oxford Semiconductor Ltd.
 vendor TAMARACK		0x143d	Tamarack Microelectronics, Inc.
+vendor SAMSUNGELEC3	0x144d	Samsung Electronics Co. Ltd. (3rd vendor ID)
 vendor ASKEY		0x144f	Askey Computer Corp.
 vendor AVERMEDIA	0x1461	Avermedia Technologies
 vendor AIRONET		0x14b9	Aironet Wireless Communications
@@ -780,7 +782,6 @@ product ALTIMA AC9100	0x03ea	AC9100 Gigabit Ethernet
 product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
-product AMD PCNETS_PCI	0x2040	PCnet-PCI Ethernet & SCSI
 product AMD SC520_SC	0x3000	Elan SC520 System Controller
 product AMD SC751_SC	0x7006	AMD751 System Controller
 product AMD SC751_PPB	0x7007	AMD751 PCI-to-PCI Bridge
@@ -1180,8 +1181,7 @@ product DLINK DL4000		0x4000	DL-4000 Gigabit Ethernet
 product DPT SC_RAID	0xa400	SmartCache/SmartRAID (EATA)
 product	DPT I960_PPB	0xa500	PCI-PCI Bridge
 product DPT RAID_I2O	0xa501	SmartRAID (I2O)
-product DPT RAID_2000S	0xa501	Zero channel SmartRAID(I2O)
-product DPT RAID_2005S	0xa511	Zero channel SmartRAID(I2O) SO-DIMM
+product DPT RAID_2005S	0xa511	Zero Channel SmartRAID (I2O)
 product DPT MEMCTLR	0x1012	Memory Controller
 
 /* Dolphin products */
@@ -1315,6 +1315,7 @@ product IBM MPIC	0x0046	MPIC
 product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
 product IBM GXT800P	0x005e	GXT-800P
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
+product IBM 133PCIX	0x01a7	133 PCI-X Bridge
 product IBM MPIC2	0xffff	MPIC-II
 
 /* Conexant (iCompression, GlobeSpan) products */
@@ -1348,6 +1349,7 @@ product IMS TT128M	0x9128	TwinTurbo 128M
 
 /* Intel products */
 product INTEL 80312		0x030d	80312 I/O Companion Chip
+product INTEL 80321		0x0319	80321 I/O Processor
 product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge (PCEB)
 product INTEL CDC		0x0483	82424ZX Cache and DRAM controller (CDC)
 product INTEL SIO		0x0484	82378ZB System I/O (SIO)
