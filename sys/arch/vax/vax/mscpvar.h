@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.5 1995/07/05 08:34:01 ragge Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.6 1995/11/10 19:09:58 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -131,7 +131,7 @@ struct mscp_ri {
  * been handed out; mi_wtab is that place.
  */
 struct mscp_info {
-	volatile struct	mscp_driver *mi_md;	/* pointer to driver info */
+	struct	mscp_driver *mi_md;	/* pointer to driver info */
 	int	mi_ctlr;		/* controller index */
 	struct	buf *mi_tab;		/* pointer to ctlr's drive queue */
 	struct	uba_device **mi_ip;	/* pointer to inverting pointers */
