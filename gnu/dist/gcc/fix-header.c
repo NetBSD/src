@@ -1,5 +1,5 @@
 /* fix-header.c - Make C header file suitable for C++.
-   Copyright (C) 1993, 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94-97, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -16,7 +16,7 @@ along with this program; if not, write to the Free Software
 Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* This program massages a system include file (such as stdio.h),
-   into a form more conforming with ANSI/POSIX, and more suitable for C++:
+   into a form that is compatible with GNU C and GNU C++.
 
    * extern "C" { ... } braces are added (inside #ifndef __cplusplus),
    if they seem to be needed.  These prevent C++ compilers from name
@@ -26,7 +26,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
    an argument list), and it is a "standard" function listed in
    the file sys-protos.h (and with a non-empty argument list), then
    the declaration is converted to a complete prototype by replacing
-   the empty parameter list with the argument lust from sys-protos.h.
+   the empty parameter list with the argument list from sys-protos.h.
 
    * The program can be given a list of (names of) required standard
    functions (such as fclose for stdio.h).  If a required function
@@ -70,23 +70,20 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
    Written by Per Bothner <bothner@cygnus.com>, July 1993.  */
 
-#include <stdio.h>
-#include <ctype.h>
 #include "hconfig.h"
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+#include "system.h"
+#include "gansidecl.h"
 #include "obstack.h"
 #include "scan.h"
 #include "cpplib.h"
-#include "gansidecl.h"
+#include "cpphash.h"
 
-#ifndef O_RDONLY
-#define O_RDONLY 0
-#endif
-
-extern void cpp_fatal ();
-
-#if !__STDC__ && !defined(const)
-#define const /* nothing */
-#endif
+void fatal PVPROTO ((const char *, ...)) ATTRIBUTE_PRINTF_1;
 
 sstring buf;
 
@@ -128,9 +125,21 @@ char *inf_ptr;
 enum special_file
 {
   no_special,
+#ifdef errno_h
+#undef errno_h
+#endif
   errno_h,
+#ifdef stdio_h
+#undef stdio_h
+#endif
   stdio_h,
+#ifdef stdlib_h
+#undef stdlib_h
+#endif
   stdlib_h,
+#ifdef sys_stat_h
+#undef sys_stat_h
+#endif
   sys_stat_h
 };
 
@@ -145,14 +154,31 @@ typedef int symbol_flags;
 /* Used to mark names defined in the ANSI/ISO C standard.  */
 #define ANSI_SYMBOL 1
 
+/* We no longer massage include files for POSIX or XOPEN symbols,
+   as there are now several versions of the POSIX and XOPEN standards,
+   and it would be a maintenance nightmare for us to track them all.
+   Better to be compatible with the system include files.  */
+/*#define ADD_MISSING_POSIX 1 */
+/*#define ADD_MISSING_XOPEN 1 */
+
+#if ADD_MISSING_POSIX
 /* Used to mark names defined in the Posix.1 or Posix.2 standard.  */
 #define POSIX1_SYMBOL 2
 #define POSIX2_SYMBOL 4
+#else
+#define POSIX1_SYMBOL 0
+#define POSIX2_SYMBOL 0
+#endif
 
+#if ADD_MISSING_XOPEN
 /* Used to mark names defined in X/Open Portability Guide.  */
 #define XOPEN_SYMBOL 8
 /* Used to mark names defined in X/Open UNIX Extensions.  */
 #define XOPEN_EXTENDED_SYMBOL 16
+#else
+#define XOPEN_SYMBOL 0
+#define XOPEN_EXTENDED_SYMBOL 0
+#endif
 
 /* Used to indicate names that are not functions */
 #define MACRO_SYMBOL 512
@@ -239,7 +265,7 @@ tan\0tanh\0" },
   { "stdio.h", ANSI_SYMBOL,
       "clearerr\0fclose\0feof\0ferror\0fflush\0fgetc\0fgetpos\0\
 fgets\0fopen\0fprintf\0fputc\0fputs\0fread\0freopen\0fscanf\0fseek\0\
-fsetpos\0ftell\0fwrite\0getc\0getchar\0gets\00perror\0popen\0\
+fsetpos\0ftell\0fwrite\0getc\0getchar\0gets\0perror\0\
 printf\0putc\0putchar\0puts\0remove\0rename\0rewind\0scanf\0setbuf\0\
 setvbuf\0sprintf\0sscanf\0vprintf\0vsprintf\0vfprintf\0tmpfile\0\
 tmpnam\0ungetc\0" },
@@ -475,6 +501,10 @@ recognized_macro (fname)
 	  else if (strcmp (fname, "S_IFREG") == 0) seen_S_IFREG++;
 	  else if (strcmp (fname, "S_ISREG") == 0) seen_S_ISREG++;
 	}
+      break;
+
+    default:
+      break;
     }
 }
 
@@ -487,8 +517,11 @@ recognized_extern (name, name_length, type, type_length)
   switch (special_file_handling)
     {
     case errno_h:
-      if (strcmp (name, "errno") == 0 && !seen_errno)
+      if (name_length == 5 && strncmp (name, "errno", 5) == 0 && !seen_errno)
 	seen_errno = 1, required_other--;
+      break;
+
+    default:
       break;
     }
 }
@@ -777,7 +810,8 @@ write_rbrac ()
 	      || !strcmp (fn->fname, "vprintf")
 	      || !strcmp (fn->fname, "vfprintf")
 	      || !strcmp (fn->fname, "vsprintf")
-	      || !strcmp (fn->fname, "rewinddir"))
+	      || !strcmp (fn->fname, "rewinddir")
+	      || !strcmp (fn->fname, "abort"))
 	    macro_protect = 1;
 
 	  if (macro_protect)
@@ -830,6 +864,9 @@ write_rbrac ()
 	fprintf (outf,
 		 "#define S_ISREG(mode) (((mode) & S_IFMT) == S_IFREG)\n");
       break;
+
+    default:
+      break;
     }
 
 
@@ -871,7 +908,7 @@ inf_skip_spaces (c)
 	  c = INF_GET ();
 	  if (c != '*')
 	    {
-	      INF_UNGET (c);
+	      (void) INF_UNGET (c);
 	      return '/';
 	    }
 	  c = INF_GET ();
@@ -921,13 +958,13 @@ inf_scan_ident (s, c)
      int c;
 {
   s->ptr = s->base;
-  if (isalpha (c) || c == '_')
+  if (ISALPHA (c) || c == '_')
     {
       for (;;)
 	{
 	  SSTRING_PUT (s, c);
 	  c = INF_GET ();
-	  if (c == EOF || !(isalnum (c) || c == '_'))
+	  if (c == EOF || !(ISALNUM (c) || c == '_'))
 	    break;
 	}
     }
@@ -972,7 +1009,7 @@ check_protection (ifndef_line, endif_line)
     return 0;
   protect_name = xstrdup (buf.base);
 
-  INF_UNGET (c);
+  (void) INF_UNGET (c);
   c = inf_read_upto (&buf, '\n');
   if (c == EOF)
     return 0;
@@ -1054,8 +1091,10 @@ main (argc, argv)
   int inf_fd;
   struct stat sbuf;
   int c;
-  int i, done;
-  const char *cptr, **pptr;
+#ifdef FIXPROTO_IGNORE_LIST
+  int i;
+#endif
+  const char *cptr;
   int ifndef_line;
   int endif_line;
   long to_read;
@@ -1122,7 +1161,8 @@ main (argc, argv)
       cur_symbol_table_size = 0;
       for (entry = include_entry; ;)
 	{
-	  add_symbols (entry->flags, entry->names);
+	  if (entry->flags)
+	    add_symbols (entry->flags, entry->names);
 	  entry++;
 	  if (entry->name != CONTINUED)
 	    break;
@@ -1235,10 +1275,10 @@ main (argc, argv)
 	  c = INF_GET ();
 	  if (c == EOF)
 	    break;
-	  if (isalpha (c) || c == '_')
+	  if (ISALPHA (c) || c == '_')
 	    {
 	      c = inf_scan_ident (&buf, c);
-	      INF_UNGET (c);
+	      (void) INF_UNGET (c);
 	      fputs (buf.base, outf);
 	      fn = lookup_std_proto (buf.base, strlen (buf.base));
 	      /* We only want to edit the declaration matching the one
@@ -1259,7 +1299,7 @@ main (argc, argv)
 		      else
 			{
 			  putc ('(', outf);
-			  INF_UNGET (c);
+			  (void) INF_UNGET (c);
 			}
 		    }
 		  else
@@ -1290,7 +1330,7 @@ main (argc, argv)
 
 void
 cpp_file_line_for_message (pfile, filename, line, column)
-     cpp_reader *pfile;
+     cpp_reader * pfile;
      char *filename;
      int line, column;
 {
@@ -1304,17 +1344,18 @@ cpp_file_line_for_message (pfile, filename, line, column)
 
 void
 cpp_print_containing_files (pfile)
-     cpp_reader *pfile;
+     cpp_reader *pfile ATTRIBUTE_UNUSED;
 {
 }
 
 /* IS_ERROR is 2 for fatal error, 1 for error, 0 for warning */
 
-void cpp_message (pfile, is_error, msg, arg1, arg2, arg3)
-     int is_error;
+void
+v_cpp_message (pfile, is_error, msg, ap)
      cpp_reader *pfile;
-     char *msg;
-     char *arg1, *arg2, *arg3;
+     int is_error;
+     const char *msg;
+     va_list ap;
 {
   if (is_error == 1)
     pfile->errors++;
@@ -1324,32 +1365,86 @@ void cpp_message (pfile, is_error, msg, arg1, arg2, arg3)
     return;
   if (!is_error)
     fprintf (stderr, "warning: ");
-  fprintf (stderr, msg, arg1, arg2, arg3);
+  vfprintf (stderr, msg, ap);
   fprintf (stderr, "\n");
 }
 
 void
-fatal (str, arg)
-     char *str, *arg;
+cpp_message VPROTO ((cpp_reader *pfile, int is_error, const char *msg, ...))
+{
+#ifndef __STDC__
+  cpp_reader *pfile;
+  int is_error;
+  const char *msg;
+#endif
+  va_list ap;
+  
+  VA_START (ap, msg);
+  
+#ifndef __STDC__
+  pfile = va_arg (ap, cpp_reader *);
+  is_error = va_arg (ap, const int);
+  msg = va_arg (ap, const char *);
+#endif
+
+  v_cpp_message(pfile, is_error, msg, ap);
+  va_end(ap);
+}
+
+static void
+v_fatal (str, ap)
+  const char * str;
+  va_list ap;
 {
   fprintf (stderr, "%s: %s: ", progname, inc_filename);
-  fprintf (stderr, str, arg);
+  vfprintf (stderr, str, ap);
   fprintf (stderr, "\n");
+  
   exit (FATAL_EXIT_CODE);
 }
 
 void
-cpp_fatal (pfile, str, arg)
-     cpp_reader *pfile;
-     char *str, *arg;
+fatal VPROTO ((const char *str, ...))
 {
-  fatal (str, arg);
+#ifndef __STDC__
+  const char *str;
+#endif
+  va_list ap;
+  
+  VA_START(ap, str);
+
+#ifndef __STDC__
+  str = va_arg (ap, const char *);
+#endif
+
+  v_fatal(str, ap);
+  va_end(ap);
+}
+
+void
+cpp_fatal VPROTO ((cpp_reader * pfile, const char *str, ...))
+{
+#ifndef __STDC__
+  cpp_reader * pfile;
+  const char *str;
+#endif
+  va_list ap;
+  
+  VA_START(ap, str);
+
+#ifndef __STDC__
+  pfile = va_arg (ap, cpp_reader *);
+  str = va_arg (ap, const char *);
+#endif
+
+  v_fatal(str, ap);
+  va_end(ap);
 }
 
 void
 cpp_pfatal_with_name (pfile, name)
      cpp_reader *pfile;
-     char *name;
+     const char *name;
 {
   cpp_perror_with_name (pfile, name);
   exit (FATAL_EXIT_CODE);

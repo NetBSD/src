@@ -1,6 +1,6 @@
 /* Collect static initialization info into data structures that can be
    traversed by C++ initialization and finalization routines.
-   Copyright (C) 1992, 93-7, 1998 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93-97, 1998 Free Software Foundation, Inc.
    Contributed by Chris Smith (csmith@convex.com).
    Heavily modified by Michael Meissner (meissner@cygnus.com),
    Per Bothner (bothner@cygnus.com), and John Gilmore (gnu@cygnus.com).
@@ -26,12 +26,8 @@ Boston, MA 02111-1307, USA.  */
 /* Build tables of static constructors and destructors and run ld.  */
 
 #include "config.h"
-#include <sys/types.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <errno.h>
+#include "system.h"
 #include <signal.h>
-#include <sys/file.h>
 #include <sys/stat.h>
 
 #define COLLECT
@@ -39,16 +35,8 @@ Boston, MA 02111-1307, USA.  */
 #include "demangle.h"
 #include "obstack.h"
 #include "gansidecl.h"
-
-#ifndef errno
-extern int errno;
-#endif
-
-#ifndef HAVE_STRERROR
-extern char *sys_errlist[];
-extern int sys_nerr;
-#else
-char *strerror();
+#ifdef __CYGWIN32__
+#include <process.h>
 #endif
 
 /* Obstack allocation and deallocation routines.  */
@@ -57,12 +45,6 @@ char *strerror();
 
 #ifdef USG
 #define vfork fork
-#endif
-
-#ifndef R_OK
-#define R_OK 4
-#define W_OK 2
-#define X_OK 1
 #endif
 
 #ifndef WIFSIGNALED
@@ -78,7 +60,7 @@ char *strerror();
 #define WEXITSTATUS(S) (((S) & 0xff00) >> 8)
 #endif
 
-extern char *choose_temp_base ();
+extern char *make_temp_file PROTO ((char *));
 
 /* On certain systems, we have code that works by scanning the object file
    directly.  But this code uses system-specific header files and library
@@ -222,8 +204,6 @@ int debug;				/* true if -debug */
 
 static int shared_obj;		        /* true if -shared */
 
-static int   temp_filename_length;	/* Length of temp_filename */
-static char *temp_filename;		/* Base of temp filenames */
 static char *c_file;			/* <xxx>.c for constructor/destructor list.  */
 static char *o_file;			/* <xxx>.o for constructor/destructor list.  */
 #ifdef COLLECT_EXPORT_LIST
@@ -233,7 +213,9 @@ static char *import_file;	        /* <xxx>.p for AIX import list.  */
 char *ldout;				/* File for ld errors.  */
 static char *output_file;		/* Output file for ld.  */
 static char *nm_file_name;		/* pathname of nm */
+#ifdef LDD_SUFFIX
 static char *ldd_file_name;		/* pathname of ldd (or equivalent) */
+#endif
 static char *strip_file_name;		/* pathname of strip */
 char *c_file_name;		        /* pathname of gcc */
 static char *initname, *fininame;	/* names of init and fini funcs */
@@ -254,9 +236,12 @@ char * temporary_firstobj;
 /* Defined in the automatically-generated underscore.c.  */
 extern int prepends_underscore;
 
-extern char *getenv ();
 extern char *mktemp ();
 extern FILE *fdopen ();
+
+#ifndef GET_ENVIRONMENT
+#define GET_ENVIRONMENT(ENV_VALUE,ENV_NAME) ENV_VALUE = getenv (ENV_NAME)
+#endif
 
 /* Structure to hold all the directories in which to search for files to
    execute.  */
@@ -284,12 +269,9 @@ static struct path_prefix *libpaths[3] = {&cmdline_lib_dirs,
 static char *libexts[3] = {"a", "so", NULL};  /* possible library extentions */
 #endif
 
-void collect_exit		PROTO((int));
-void collect_execute		PROTO((char *, char **, char *));
-void dump_file			PROTO((char *));
+static char *my_strerror	PROTO((int));
 static void handler		PROTO((int));
 static int is_ctor_dtor		PROTO((char *));
-static int is_in_prefix_list	PROTO((struct path_prefix *, char *, int));
 static char *find_a_file	PROTO((struct path_prefix *, char *));
 static void add_prefix		PROTO((struct path_prefix *, char *));
 static void prefix_from_env	PROTO((char *, struct path_prefix *));
@@ -299,28 +281,30 @@ static void fork_execute	PROTO((char *, char **));
 static void maybe_unlink	PROTO((char *));
 static void add_to_list		PROTO((struct head *, char *));
 static void write_list		PROTO((FILE *, char *, struct id *));
+#ifdef COLLECT_EXPORT_LIST
 static void dump_list		PROTO((FILE *, char *, struct id *));
+#endif
+#if 0
 static void dump_prefix_list	PROTO((FILE *, char *, struct prefix_list *));
-static int is_in_list		PROTO((char *, struct id *));
+#endif
 static void write_list_with_asm PROTO((FILE *, char *, struct id *));
 static void write_c_file	PROTO((FILE *, char *));
 static void scan_prog_file	PROTO((char *, enum pass));
+#ifdef SCAN_LIBRARIES
 static void scan_libraries	PROTO((char *));
-#ifdef COLLECT_EXPORT_LIST
-static void write_export_file PROTO((FILE *));
-static void write_import_file PROTO((FILE *));
-static char *resolve_lib_name PROTO((char *));
-static int use_import_list    PROTO((char *));
-static int ignore_library     PROTO((char *));
 #endif
-
+#ifdef COLLECT_EXPORT_LIST
+static int is_in_list		PROTO((char *, struct id *));
+static void write_export_file	PROTO((FILE *));
+static void write_import_file	PROTO((FILE *));
+static char *resolve_lib_name	PROTO((char *));
+static int use_import_list	PROTO((char *));
+static int ignore_library	PROTO((char *));
+#endif
 
 char *xcalloc ();
 char *xmalloc ();
 
-extern char *index ();
-extern char *rindex ();
-extern void free ();
 
 #ifdef NO_DUP2
 int
@@ -344,7 +328,7 @@ dup2 (oldfd, newfd)
 }
 #endif
 
-char *
+static char *
 my_strerror (e)
      int e;
 {
@@ -573,7 +557,7 @@ dump_file (name)
     {
       int c;
       while (c = getc (stream),
-	     c != EOF && (isalnum (c) || c == '_' || c == '$' || c == '.'))
+	     c != EOF && (ISALNUM (c) || c == '_' || c == '$' || c == '.'))
 	obstack_1grow (&temporary_obstack, c);
       if (obstack_object_size (&temporary_obstack) > 0)
 	{
@@ -743,48 +727,6 @@ static struct path_prefix cpath, path;
 static char *target_machine = TARGET_MACHINE;
 #endif
 
-/* Names under which we were executed.  Never return one of those files in our
-   searches.  */
-
-static struct path_prefix our_file_names;
-
-/* Determine if STRING is in PPREFIX.
-
-   This utility is currently only used to look up file names.  Prefix lists
-   record directory names.  This matters to us because the latter has a 
-   trailing slash, so I've added a flag to handle both.  */
-
-static int
-is_in_prefix_list (pprefix, string, filep)
-     struct path_prefix *pprefix;
-     char *string;
-     int filep;
-{
-  struct prefix_list *pl;
-
-  if (filep)
-    {
-      int len = strlen (string);
-
-      for (pl = pprefix->plist; pl; pl = pl->next)
-	{
-	  if (strncmp (pl->prefix, string, len) == 0
-	      && strcmp (pl->prefix + len, "/") == 0)
-	    return 1;
-	}
-    }
-  else
-    {
-      for (pl = pprefix->plist; pl; pl = pl->next)
-	{
-	  if (strcmp (pl->prefix, string) == 0)
-	    return 1;
-	}
-    }
-
-  return 0;
-}
-
 /* Search for NAME using prefix list PPREFIX.  We only look for executable
    files. 
 
@@ -799,6 +741,9 @@ find_a_file (pprefix, name)
   struct prefix_list *pl;
   int len = pprefix->max_len + strlen (name) + 1;
 
+  if (debug)
+    fprintf (stderr, "Looking for '%s'\n", name);
+  
 #ifdef EXECUTABLE_SUFFIX
   len += strlen (EXECUTABLE_SUFFIX);
 #endif
@@ -807,34 +752,47 @@ find_a_file (pprefix, name)
 
   /* Determine the filename to execute (special case for absolute paths).  */
 
-  if (*name == '/')
+  if (*name == '/'
+#ifdef DIR_SEPARATOR
+      || (DIR_SEPARATOR == '\\' && name[1] == ':'
+      && (name[2] == DIR_SEPARATOR || name[2] == '/'))
+#endif
+      )
     {
       if (access (name, X_OK) == 0)
 	{
 	  strcpy (temp, name);
+
+	  if (debug)
+	    fprintf (stderr, "  - found: absolute path\n");
+	  
 	  return temp;
 	}
+
+      if (debug)
+	fprintf (stderr, "  - failed to locate using absolute path\n");
     }
   else
     for (pl = pprefix->plist; pl; pl = pl->next)
       {
 	strcpy (temp, pl->prefix);
 	strcat (temp, name);
-	if (! is_in_prefix_list (&our_file_names, temp, 1)
-	    /* This is a kludge, but there seems no way around it.  */
-	    && strcmp (temp, "./ld") != 0
-	    && access (temp, X_OK) == 0)
+	
+	if (access (temp, X_OK) == 0)
 	  return temp;
 
 #ifdef EXECUTABLE_SUFFIX
 	/* Some systems have a suffix for executable files.
 	   So try appending that.  */
 	strcat (temp, EXECUTABLE_SUFFIX);
-	if (! is_in_prefix_list (&our_file_names, temp, 1)
-	    && access (temp, X_OK) == 0)
+	
+	if (access (temp, X_OK) == 0)
 	  return temp;
 #endif
       }
+
+  if (debug && pprefix->plist == NULL)
+    fprintf (stderr, "  - failed: no entries in prefix list\n");
 
   free (temp);
   return 0;
@@ -883,7 +841,8 @@ prefix_from_env (env, pprefix)
      char *env;
      struct path_prefix *pprefix;
 {
-  char *p = getenv (env);
+  char *p;
+  GET_ENVIRONMENT (p, env);
 
   if (p)
     prefix_from_string (p, pprefix);
@@ -897,6 +856,9 @@ prefix_from_string (p, pprefix)
   char *startp, *endp;
   char *nstore = (char *) xmalloc (strlen (p) + 3);
 
+  if (debug)
+    fprintf (stderr, "Convert string '%s' into prefixes, separator = '%c'\n", p, PATH_SEPARATOR);
+  
   startp = endp = p;
   while (1)
     {
@@ -915,6 +877,9 @@ prefix_from_string (p, pprefix)
 	  else
 	    nstore[endp-startp] = 0;
 
+	  if (debug)
+	    fprintf (stderr, "  - add prefix: %s\n", nstore);
+	  
 	  add_prefix (pprefix, nstore);
 	  if (*endp == 0)
 	    break;
@@ -935,9 +900,6 @@ main (argc, argv)
   char *ld_suffix	= "ld";
   char *full_ld_suffix	= ld_suffix;
   char *real_ld_suffix	= "real-ld";
-#ifdef CROSS_COMPILE
-  char *full_real_ld_suffix = real_ld_suffix;
-#endif
   char *collect_ld_suffix = "collect-ld";
   char *nm_suffix	= "nm";
   char *full_nm_suffix	= nm_suffix;
@@ -958,8 +920,6 @@ main (argc, argv)
   FILE *importf;
 #endif
   char *ld_file_name;
-  char *collect_name;
-  char *collect_names;
   char *p;
   char **c_argv;
   char **c_ptr;
@@ -970,12 +930,23 @@ main (argc, argv)
   char **object_lst	= (char **) xcalloc (sizeof (char *), argc);
   char **object		= object_lst;
   int first_file;
-  int num_c_args	= argc+7;
+  int num_c_args	= argc+9;
 
 #ifdef DEBUG
   debug = 1;
-  vflag = 1;
 #endif
+
+  /* Parse command line early for instances of -debug.  This allows
+     the debug flag to be set before functions like find_a_file()
+     are called.  */
+  {
+    int i;
+    
+    for (i = 1; argv[i] != NULL; i ++)
+      if (! strcmp (argv[i], "-debug"))
+	debug = 1;
+    vflag = debug;
+  }
 
 #ifndef DEFAULT_A_OUT_NAME
   output_file = "a.out";
@@ -986,52 +957,9 @@ main (argc, argv)
   obstack_begin (&temporary_obstack, 0);
   obstack_begin (&permanent_obstack, 0);
   temporary_firstobj = (char *) obstack_alloc (&temporary_obstack, 0);
+
   current_demangling_style = gnu_demangling;
-
-  /* We must check that we do not call ourselves in an infinite
-     recursion loop. We append the name used for us to the COLLECT_NAMES
-     environment variable.
-
-     In practice, collect will rarely invoke itself.  This can happen now
-     that we are no longer called gld.  A perfect example is when running
-     gcc in a build directory that has been installed.  When looking for
-     ld, we will find our installed version and believe that's the real ld.  */
-
-  /* We must also append COLLECT_NAME to COLLECT_NAMES to watch for the
-     previous version of collect (the one that used COLLECT_NAME and only
-     handled two levels of recursion).  If we do not we may mutually recurse
-     forever.  This can happen (I think) when bootstrapping the old version
-     and a new one is installed (rare, but we should handle it).
-     ??? Hopefully references to COLLECT_NAME can be removed at some point.  */
-
-  collect_name = (char *) getenv ("COLLECT_NAME");
-  collect_names = (char *) getenv ("COLLECT_NAMES");
-
-  p = (char *) xmalloc (strlen ("COLLECT_NAMES=")
-			+ (collect_name ? strlen (collect_name) + 1 : 0)
-			+ (collect_names ? strlen (collect_names) + 1 : 0)
-			+ strlen (argv[0]) + 1);
-  strcpy (p, "COLLECT_NAMES=");
-  if (collect_name != 0)
-    sprintf (p + strlen (p), "%s%c", collect_name, PATH_SEPARATOR);
-  if (collect_names != 0)
-    sprintf (p + strlen (p), "%s%c", collect_names, PATH_SEPARATOR);
-  strcat (p, argv[0]);
-  putenv (p);
-
-  prefix_from_env ("COLLECT_NAMES", &our_file_names);
-
-  /* Set environment variable COLLECT_NAME to our name so the previous version
-     of collect will not find us.  If it does we will mutually recurse forever.
-     This can happen when bootstrapping the new version and an old version is
-     installed.
-     ??? Hopefully this bit of code can be removed at some point.  */
-
-  p = xmalloc (strlen ("COLLECT_NAME=") + strlen (argv[0]) + 1);
-  sprintf (p, "COLLECT_NAME=%s", argv[0]);
-  putenv (p);
-
-  p = (char *) getenv ("COLLECT_GCC_OPTIONS");
+  p = getenv ("COLLECT_GCC_OPTIONS");
   while (p && *p)
     {
       char *q = extract_string (&p);
@@ -1074,7 +1002,7 @@ main (argc, argv)
 #ifdef CROSS_COMPILE
   /* If we look for a program in the compiler directories, we just use
      the short name, since these directories are already system-specific.
-     But it we look for a took in the system directories, we need to
+     But it we look for a program in the system directories, we need to
      qualify the program name with the target machine.  */
 
   full_ld_suffix
@@ -1082,12 +1010,6 @@ main (argc, argv)
   strcpy (full_ld_suffix, target_machine);
   strcat (full_ld_suffix, "-");
   strcat (full_ld_suffix, ld_suffix);
-
-  full_real_ld_suffix
-    = xcalloc (strlen (real_ld_suffix) + strlen (target_machine) + 2, 1);
-  strcpy (full_real_ld_suffix, target_machine);
-  strcat (full_real_ld_suffix, "-");
-  strcat (full_real_ld_suffix, real_ld_suffix);
 
 #if 0
   full_gld_suffix
@@ -1151,18 +1073,6 @@ main (argc, argv)
   if (ld_file_name == 0)
     ld_file_name = find_a_file (&path, full_ld_suffix);
 
-  /* If we've invoked ourselves, try again with LD_FILE_NAME.  */
-
-  if (collect_names != 0)
-    {
-      if (ld_file_name != 0)
-	{
-	  argv[0] = ld_file_name;
-	  execvp (argv[0], argv);
-	}
-      fatal ("cannot find `ld'");
-    }
-
 #ifdef REAL_NM_FILE_NAME
   nm_file_name = find_a_file (&path, REAL_NM_FILE_NAME);
   if (nm_file_name == 0)
@@ -1219,23 +1129,16 @@ main (argc, argv)
   *ld1++ = *ld2++ = ld_file_name;
 
   /* Make temp file names.  */
-  temp_filename = choose_temp_base ();
-  temp_filename_length = strlen (temp_filename);
-  c_file = xcalloc (temp_filename_length + sizeof (".c"), 1);
-  o_file = xcalloc (temp_filename_length + sizeof (".o"), 1);
+  c_file = make_temp_file (".c");
+  o_file = make_temp_file (".o");
 #ifdef COLLECT_EXPORT_LIST
-  export_file = xmalloc (temp_filename_length + sizeof (".x"));
-  import_file = xmalloc (temp_filename_length + sizeof (".p"));
+  export_file = make_temp_file (".x");
+  import_file = make_temp_file (".p");
 #endif
-  ldout = xmalloc (temp_filename_length + sizeof (".ld"));
-  sprintf (ldout, "%s.ld", temp_filename);
-  sprintf (c_file, "%s.c", temp_filename);
-  sprintf (o_file, "%s.o", temp_filename);
-#ifdef COLLECT_EXPORT_LIST
-  sprintf (export_file, "%s.x", temp_filename);
-  sprintf (import_file, "%s.p", temp_filename);
-#endif
+  ldout = make_temp_file (".ld");
   *c_ptr++ = c_file_name;
+  *c_ptr++ = "-x";
+  *c_ptr++ = "c";
   *c_ptr++ = "-c";
   *c_ptr++ = "-o";
   *c_ptr++ = o_file;
@@ -1254,7 +1157,7 @@ main (argc, argv)
      AIX support needs to know if -shared has been specified before
      parsing commandline arguments.  */
 
-  p = (char *) getenv ("COLLECT_GCC_OPTIONS");
+  p = getenv ("COLLECT_GCC_OPTIONS");
   while (p && *p)
     {
       char *q = extract_string (&p);
@@ -1297,8 +1200,7 @@ main (argc, argv)
 	    case 'd':
 	      if (!strcmp (arg, "-debug"))
 		{
-		  debug = 1;
-		  vflag = 1;
+		  /* Already parsed.  */
 		  ld1--;
 		  ld2--;
 		}
@@ -1482,10 +1384,6 @@ main (argc, argv)
       fprintf (stderr, "o_file              = %s\n",
 	       (o_file ? o_file : "not found"));
 
-      ptr = getenv ("COLLECT_NAMES");
-      if (ptr)
-	fprintf (stderr, "COLLECT_NAMES       = %s\n", ptr);
-
       ptr = getenv ("COLLECT_GCC_OPTIONS");
       if (ptr)
 	fprintf (stderr, "COLLECT_GCC_OPTIONS = %s\n", ptr);
@@ -1515,7 +1413,11 @@ main (argc, argv)
 
   /* If -r or they will be run via some other method, do not build the
      constructor or destructor list, just return now.  */
-  if (rflag || ! do_collecting)
+  if (rflag
+#ifndef COLLECT_EXPORT_LIST
+      || ! do_collecting
+#endif
+      )
     {
 #ifdef COLLECT_EXPORT_LIST
       /* But make sure we delete the export file we may have created.  */
@@ -1524,6 +1426,8 @@ main (argc, argv)
       if (import_file != 0 && import_file[0])
 	maybe_unlink (import_file);
 #endif
+      maybe_unlink (c_file);
+      maybe_unlink (o_file);
       return 0;
     }
 
@@ -1574,6 +1478,8 @@ main (argc, argv)
       maybe_unlink (export_file);
       maybe_unlink (import_file);
 #endif
+      maybe_unlink (c_file);
+      maybe_unlink (o_file);
       return 0;
     }
 
@@ -1737,6 +1643,7 @@ collect_execute (prog, argv, redir)
   if (argv[0] == 0)
     fatal ("cannot find `%s'", prog);
 
+#ifndef __CYGWIN32__
   pid = vfork ();
   if (pid == -1)
     {
@@ -1753,14 +1660,19 @@ collect_execute (prog, argv, redir)
 	{
 	  unlink (redir);
 	  if (freopen (redir, "a", stdout) == NULL)
-	    fatal_perror ("redirecting stdout");
+	    fatal_perror ("redirecting stdout: %s", redir);
 	  if (freopen (redir, "a", stderr) == NULL)
-	    fatal_perror ("redirecting stderr");
+	    fatal_perror ("redirecting stderr: %s", redir);
 	}
 
       execvp (argv[0], argv);
       fatal_perror ("executing %s", prog);
     }
+#else
+  pid = _spawnvp (_P_NOWAIT, argv[0], argv);
+  if (pid == -1)
+    fatal ("spawnvp failed");
+#endif
 }
 
 static void
@@ -1835,6 +1747,7 @@ write_list (stream, prefix, list)
     }
 }
 
+#ifdef COLLECT_EXPORT_LIST
 /* This function is really used only on AIX, but may be useful.  */
 static int
 is_in_list (prefix, list)
@@ -1848,8 +1761,10 @@ is_in_list (prefix, list)
     }
     return 0;
 }
+#endif
 
 /* Added for debugging purpose.  */
+#ifdef COLLECT_EXPORT_LIST
 static void
 dump_list (stream, prefix, list)
      FILE *stream;
@@ -1862,7 +1777,9 @@ dump_list (stream, prefix, list)
       list = list->next;
     }
 }
+#endif
 
+#if 0
 static void
 dump_prefix_list (stream, prefix, list)
      FILE *stream;
@@ -1875,6 +1792,7 @@ dump_prefix_list (stream, prefix, list)
       list = list->next;
     }
 }
+#endif
 
 static void
 write_list_with_asm (stream, prefix, list)
@@ -1932,7 +1850,7 @@ write_c_file_stat (stream, name)
   strncpy (prefix, p, q - p);
   prefix[q - p] = 0;
   for (q = prefix; *q; q++)
-    if (!isalnum (*q))
+    if (!ISALNUM (*q))
       *q = '_';
   if (debug)
     fprintf (stderr, "\nwrite_c_file - output name is %s, prefix is %s\n",
@@ -2027,6 +1945,7 @@ write_c_file_stat (stream, name)
 
 /* Write the constructor/destructor tables.  */
 
+#ifndef LD_INIT_SWITCH
 static void
 write_c_file_glob (stream, name)
      FILE *stream;
@@ -2090,6 +2009,7 @@ write_c_file_glob (stream, name)
   fprintf (stream, "extern entry_pt %s;\n", NAME__MAIN);
   fprintf (stream, "entry_pt *__main_reference = %s;\n\n", NAME__MAIN);
 }
+#endif /* ! LD_INIT_SWITCH */
 
 static void
 write_c_file (stream, name)
@@ -2246,7 +2166,7 @@ scan_prog_file (prog_name, which_pass)
       name = p;
       /* Find the end of the symbol name.
 	 Do not include `|', because Encore nm can tack that on the end.  */
-      for (end = p; (ch2 = *end) != '\0' && !isspace (ch2) && ch2 != '|';
+      for (end = p; (ch2 = *end) != '\0' && !ISSPACE (ch2) && ch2 != '|';
 	   end++)
 	continue;
 
@@ -2380,7 +2300,7 @@ libcompare (d1, d2)
   char *e2 = (*d2)->d_name + i2;
 
   while (*e1 && *e2 && *e1 == '.' && *e2 == '.'
-	 && e1[1] && isdigit (e1[1]) && e2[1] && isdigit (e2[1]))
+	 && e1[1] && ISDIGIT (e1[1]) && e2[1] && ISDIGIT (e2[1]))
     {
       ++e1;
       ++e2;
@@ -2393,7 +2313,7 @@ libcompare (d1, d2)
   if (*e1)
     {
       /* It has a valid numeric extension, prefer this one.  */
-      if (*e1 == '.' && e1[1] && isdigit (e1[1]))
+      if (*e1 == '.' && e1[1] && ISDIGIT (e1[1]))
 	return 1;
       /* It has a invalid numeric extension, must prefer the other one.  */
       else
@@ -2402,7 +2322,7 @@ libcompare (d1, d2)
   else if (*e2)
     {
       /* It has a valid numeric extension, prefer this one.  */
-      if (*e2 == '.' && e2[1] && isdigit (e2[1]))
+      if (*e2 == '.' && e2[1] && ISDIGIT (e2[1]))
 	return -1;
       /* It has a invalid numeric extension, must prefer the other one.  */
       else
@@ -2686,7 +2606,7 @@ scan_libraries (prog_name)
 
       /* Find the end of the symbol name.  */
       for (end = p; 
-	   (ch2 = *end) != '\0' && ch2 != '\n' && !isspace (ch2) && ch2 != '|';
+	   (ch2 = *end) != '\0' && ch2 != '\n' && !ISSPACE (ch2) && ch2 != '|';
 	   end++)
 	continue;
       *end = '\0';
@@ -2876,12 +2796,14 @@ scan_prog_file (prog_name, which_pass)
 			     to explicitly export all global symbols or add
 			     them to import list.  */
 			  if (shared_obj) 
-			    if (which_pass == PASS_OBJ && (! export_flag))
-			      add_to_list (&exports, name);
-			    else if (! is_shared && which_pass == PASS_FIRST
-				     && import_flag
-				     && is_in_list(name, undefined.first))
-			      add_to_list (&imports, name);
+			    {
+			      if (which_pass == PASS_OBJ && (! export_flag))
+				add_to_list (&exports, name);
+			      else if (! is_shared && which_pass == PASS_FIRST
+				       && import_flag
+				       && is_in_list(name, undefined.first))
+				add_to_list (&imports, name);
+			    }
 #endif
 			  continue;
 			}
@@ -2895,8 +2817,8 @@ scan_prog_file (prog_name, which_pass)
 #else
 		      if (debug)
 			fprintf (stderr,
-				 "\tiss = %5d, value = %5d, index = %5d, name = %s\n",
-				 symbol.iss, symbol.value, symbol.index, name);
+				 "\tiss = %5d, value = %5ld, index = %5d, name = %s\n",
+				 symbol.iss, (long) symbol.value, symbol.index, name);
 #endif
 		    }
 #ifdef COLLECT_EXPORT_LIST

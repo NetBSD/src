@@ -22,6 +22,11 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,11 +74,7 @@ enum cpp_token {
 };
 
 #ifndef PARAMS
-#ifdef __STDC
-#define PARAMS(P) P
-#else
-#define PARAMS(P) ()
-#endif
+#define PARAMS(P) PROTO(P)
 #endif /* !PARAMS */
 
 typedef enum cpp_token (*parse_underflow_t) PARAMS((cpp_reader *));
@@ -93,8 +94,9 @@ extern void parse_clear_mark PARAMS ((struct parse_marker *));
 extern void parse_goto_mark PARAMS((struct parse_marker *, cpp_reader *));
 extern void parse_move_mark PARAMS((struct parse_marker *, cpp_reader *));
 
+extern int cpp_handle_option PARAMS ((cpp_reader *, int, char **));
 extern int cpp_handle_options PARAMS ((cpp_reader *, int, char **));
-extern enum cpp_token cpp_get_token PARAMS ((struct parse_marker *));
+extern enum cpp_token cpp_get_token PARAMS ((cpp_reader *));
 extern void cpp_skip_hspace PARAMS((cpp_reader *));
 extern enum cpp_token cpp_get_non_space_token PARAMS ((cpp_reader *));
 
@@ -179,7 +181,7 @@ struct cpp_reader {
 
   /* A buffer used for both for cpp_get_token's output, and also internally. */
   unsigned char *token_buffer;
-  /* Alocated size of token_buffer.  CPP_RESERVE allocates space.  */
+  /* Allocated size of token_buffer.  CPP_RESERVE allocates space.  */
   int token_buffer_size;
   /* End of the written part of token_buffer. */
   unsigned char *limit;
@@ -410,6 +412,10 @@ struct cpp_options {
 
   char no_output;
 
+  /* Nonzero means we should look for header.gcc files that remap file
+     names.  */
+  char remap;
+
   /* Nonzero means don't output line number information.  */
 
   char no_line_commands;
@@ -485,6 +491,10 @@ struct cpp_options {
    also be useful with -E to figure out how symbols are defined, and
    where they are defined.  */
   int debug_output;
+
+  /* Nonzero means pass #include lines through to the output,
+     even if they are ifdefed out.  */
+  int dump_includes;
 
   /* Pending -D, -U and -A options, in reverse order. */
   struct cpp_pending *pending;
@@ -636,16 +646,22 @@ extern void cpp_buf_line_and_col PARAMS((cpp_buffer *, long *, long *));
 extern cpp_buffer* cpp_file_buffer PARAMS((cpp_reader *));
 extern void cpp_define PARAMS ((cpp_reader*, unsigned char *));
 
-extern void cpp_error ();
-extern void cpp_warning ();
-extern void cpp_pedwarn ();
-extern void cpp_error_with_line ();
-extern void cpp_pedwarn_with_line ();
-extern void cpp_pedwarn_with_file_and_line ();
-extern void fatal ();
-extern void cpp_error_from_errno ();
-extern void cpp_perror_with_name ();
-extern void cpp_pfatal_with_name ();
+extern void cpp_error PVPROTO ((cpp_reader *, const char *, ...))
+  ATTRIBUTE_PRINTF_2;
+extern void cpp_warning PVPROTO ((cpp_reader *, const char *, ...))
+  ATTRIBUTE_PRINTF_2;
+extern void cpp_pedwarn PVPROTO ((cpp_reader *, const char *, ...))
+  ATTRIBUTE_PRINTF_2;
+extern void cpp_error_with_line PVPROTO ((cpp_reader *, int, int, const char *, ...))
+  ATTRIBUTE_PRINTF_4;
+extern void cpp_pedwarn_with_line PVPROTO ((cpp_reader *, int, int, const char *, ...))
+  ATTRIBUTE_PRINTF_4;
+extern void cpp_pedwarn_with_file_and_line PVPROTO ((cpp_reader *, char *, int, const char *, ...))
+  ATTRIBUTE_PRINTF_4;
+extern void cpp_message_from_errno PROTO ((cpp_reader *, int, const char *));
+extern void cpp_error_from_errno PROTO ((cpp_reader *, const char *));
+extern void cpp_perror_with_name PROTO ((cpp_reader *, const char *));
+extern void v_cpp_message PROTO ((cpp_reader *, int, const char *, va_list));
 
 extern void cpp_grow_buffer PARAMS ((cpp_reader *, long));
 extern int cpp_parse_escape PARAMS ((cpp_reader *, char **));
@@ -655,6 +671,22 @@ extern cpp_buffer *cpp_pop_buffer PARAMS ((cpp_reader *));
 
 extern cpp_hashnode *cpp_lookup PARAMS ((cpp_reader *, const unsigned char *,
 					 int, int));
+extern void cpp_reader_init PARAMS ((cpp_reader *));
+extern void cpp_options_init PARAMS ((cpp_options *));
+extern int cpp_start_read PARAMS ((cpp_reader *, char *));
+extern int cpp_read_check_assertion PARAMS ((cpp_reader *));
+extern int scan_decls PARAMS ((cpp_reader *, int, char **));
+extern void skip_rest_of_line PARAMS ((cpp_reader *));
+extern void cpp_finish PARAMS ((cpp_reader *));
+
+/* From cpperror.c */
+extern void cpp_fatal PVPROTO ((cpp_reader *, const char *, ...))
+  ATTRIBUTE_PRINTF_2;
+extern void cpp_message PVPROTO ((cpp_reader *, int, const char *, ...))
+  ATTRIBUTE_PRINTF_3;
+extern void cpp_pfatal_with_name PROTO ((cpp_reader *, const char *));
+extern void cpp_file_line_for_message PROTO ((cpp_reader *, char *, int, int));
+extern void cpp_print_containing_files PROTO ((cpp_reader *));
 
 #ifdef __cplusplus
 }

@@ -56,20 +56,20 @@ extern void shorten_branches	PROTO((rtx));
    for the new function.  The label for the function and associated
    assembler pseudo-ops have already been output in
    `assemble_start_function'.  */
-extern void final_start_function  STDIO_PROTO((rtx, FILE *, int));
+extern void final_start_function  PROTO((rtx, FILE *, int));
 
 /* Output assembler code for the end of a function.
    For clarity, args are same as those of `final_start_function'
    even though not all of them are needed.  */
-extern void final_end_function  STDIO_PROTO((rtx, FILE *, int));
+extern void final_end_function  PROTO((rtx, FILE *, int));
 
 /* Output assembler code for some insns: all or part of a function.  */
-extern void final		STDIO_PROTO((rtx, FILE *, int, int));
+extern void final		PROTO((rtx, FILE *, int, int));
 
 /* The final scan for one insn, INSN.  Args are same as in `final', except
    that INSN is the insn being scanned.  Value returned is the next insn to
    be scanned.  */
-extern rtx final_scan_insn	STDIO_PROTO((rtx, FILE *, int, int, int));
+extern rtx final_scan_insn	PROTO((rtx, FILE *, int, int, int));
 
 /* Replace a SUBREG with a REG or a MEM, based on the thing it is a
    subreg of.  */
@@ -83,6 +83,11 @@ extern void output_operand_lossage  PROTO((char *));
    Defined in final.c.  */
 extern void output_asm_insn	PROTO((char *, rtx *));
 
+/* Compute a worst-case reference address of a branch so that it
+   can be safely used in the presence of aligned labels.
+   Defined in final.c.  */
+extern int insn_current_reference_address	PROTO((rtx));
+
 /* Output a LABEL_REF, or a bare CODE_LABEL, as an assembler symbol.  */
 extern void output_asm_label	PROTO((rtx));
 
@@ -93,12 +98,11 @@ extern void output_address	PROTO((rtx));
 /* Print an integer constant expression in assembler syntax.
    Addition and subtraction are the only arithmetic
    that may appear in these expressions.  */
-extern void output_addr_const STDIO_PROTO((FILE *, rtx));
+extern void output_addr_const PROTO((FILE *, rtx));
 
 /* Output a string of assembler code, substituting numbers, strings
    and fixed syntactic prefixes.  */
-extern void asm_fprintf		STDIO_PROTO(PVPROTO((FILE *file,
-						     char *p, ...)));
+extern void asm_fprintf		PROTO(PVPROTO((FILE *file, char *p, ...)));
 
 /* Split up a CONST_DOUBLE or integer constant rtx into two rtx's for single
    words.  */
@@ -119,8 +123,11 @@ extern void leaf_renumber_regs_insn PROTO((rtx));
 extern void allocate_for_life_analysis	PROTO((void));
 extern int regno_uninitialized		PROTO((int));
 extern int regno_clobbered_at_setjmp	PROTO((int));
-extern void dump_flow_info		STDIO_PROTO((FILE *));
-extern void flow_analysis		STDIO_PROTO((rtx, int, FILE *));
+extern void dump_flow_info		PROTO((FILE *));
+extern void find_basic_blocks         PROTO((rtx, int, FILE *, int));
+extern void free_basic_block_vars     PROTO((int));
+extern void set_block_num             PROTO((rtx, int));
+extern void life_analysis             PROTO((rtx, int, FILE *));
 #endif
 
 /* Functions in varasm.c.  */
@@ -137,6 +144,10 @@ extern void readonly_data_section	PROTO((void));
 
 /* Determine if we're in the text section. */
 extern int in_text_section		PROTO((void));
+
+#ifdef EH_FRAME_SECTION_ASM_OP
+extern void eh_frame_section		PROTO ((void));
+#endif
 
 #ifdef TREE_CODE
 /* Tell assembler to change to section NAME for DECL.
@@ -156,6 +167,13 @@ extern void exception_section		PROTO((void));
    The rtl is stored into DECL.  */
 extern void make_function_rtl		PROTO((tree));
 
+/* Declare DECL to be a weak symbol.  */
+extern void declare_weak		PROTO ((tree));
+#endif /* TREE_CODE */
+
+/* Emit any pending weak declarations.  */
+extern void weak_finish			PROTO ((void));
+
 /* Decode an `asm' spec for a declaration as a register name.
    Return the register number, or -1 if nothing specified,
    or -2 if the ASMSPEC is not `cc' or `memory' and is not recognized,
@@ -165,6 +183,7 @@ extern void make_function_rtl		PROTO((tree));
    Prefixes such as % are optional.  */
 extern int decode_reg_name		PROTO((char *));
 
+#ifdef TREE_CODE
 /* Create the DECL_RTL for a declaration for a static or external variable
    or static or external function.
    ASMSPEC, if not 0, is the string which the user specified
@@ -180,6 +199,8 @@ extern void make_var_volatile		PROTO((tree));
 
 /* Output alignment directive to align for constant expression EXP.  */
 extern void assemble_constant_align	PROTO((tree));
+
+extern void assemble_alias		PROTO((tree, tree));
 
 /* Output a string of literal assembler code
    for an `asm' keyword used between functions.  */
@@ -229,17 +250,11 @@ extern void assemble_string		PROTO((char *, int));
    initial value (that will be done by the caller).  */
 extern void assemble_variable		PROTO((tree, int, int, int));
 
-/* Output text storage for constructor CONSTR. */
-extern void bc_output_constructor	PROTO((tree, int));
-
-/* Create storage for constructor CONSTR. */
-extern void bc_output_data_constructor	PROTO((tree));
-
 /* Output something to declare an external symbol to the assembler.
    (Most assemblers don't need this, so we normally output nothing.)
    Do nothing if DECL is not external.  */
 extern void assemble_external		PROTO((tree));
-#endif
+#endif /* TREE_CODE */
 
 #ifdef RTX_CODE
 /* Similar, for calling a library function FUN.  */
@@ -257,7 +272,7 @@ extern void assemble_label		PROTO((char *));
    Otherwise NAME is transformed in an implementation-defined way
    (usually by the addition of an underscore).
    Many macros in the tm file are defined to call this function.  */
-extern void assemble_name		STDIO_PROTO((FILE *, char *));
+extern void assemble_name		PROTO((FILE *, char *));
 
 #ifdef RTX_CODE
 /* Assemble the integer constant X into an object of SIZE bytes.
@@ -424,6 +439,9 @@ extern int current_function_uses_pic_offset_table;
 
 /* This is nonzero if the current function uses the constant pool.  */
 extern int current_function_uses_const_pool;
+
+/* Language-specific reason why the current function cannot be made inline.  */
+extern char *current_function_cannot_inline;
 
 /* The line number of the beginning of the current function.
    sdbout.c needs this so that it can output relative linenumbers.  */

@@ -1,5 +1,5 @@
 /* Functions to support general ended bitmaps.
-   Copyright (C) 1997 Free Software Foundation, Inc.
+   Copyright (C) 1997, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -18,21 +18,13 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include <stdio.h>
 #include "config.h"
+#include "system.h"
 #include "rtl.h"
 #include "flags.h"
 #include "obstack.h"
 #include "regs.h"
 #include "basic-block.h"
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifdef NEED_DECLARATION_FREE
-extern void free PROTO((void *));
-#endif
 
 /* Obstack to allocate bitmap elements from.  */
 static struct obstack bitmap_obstack;
@@ -52,7 +44,7 @@ bitmap_element bitmap_zero;		/* An element of all zero bits. */
 bitmap_element *bitmap_free;		/* Freelist of bitmap elements. */
 
 static void bitmap_element_free		PROTO((bitmap, bitmap_element *));
-static bitmap_element *bitmap_element_allocate PROTO((bitmap));
+static bitmap_element *bitmap_element_allocate PROTO((void));
 static int bitmap_element_zerop		PROTO((bitmap_element *));
 static void bitmap_element_link		PROTO((bitmap, bitmap_element *));
 static bitmap_element *bitmap_find_bit	PROTO((bitmap, unsigned int));
@@ -88,11 +80,12 @@ bitmap_element_free (head, elt)
 /* Allocate a bitmap element.  The bits are cleared, but nothing else is.  */
 
 static INLINE bitmap_element *
-bitmap_element_allocate (head)
-     bitmap head;
+bitmap_element_allocate ()
 {
   bitmap_element *element;
+#if BITMAP_ELEMENT_WORDS != 2
   int i;
+#endif
 
   if (bitmap_free != 0)
     {
@@ -222,7 +215,7 @@ bitmap_element_link (head, element)
 
 /* Clear a bitmap by freeing the linked list.  */
 
-void INLINE
+INLINE void
 bitmap_clear (head)
      bitmap head;
 {
@@ -246,14 +239,16 @@ bitmap_copy (to, from)
      bitmap from;
 {
   bitmap_element *from_ptr, *to_ptr = 0;
+#if BITMAP_ELEMENT_WORDS != 2
   int i;
+#endif
 
   bitmap_clear (to);
 
   /* Copy elements in forward direction one at a time */
   for (from_ptr = from->first; from_ptr; from_ptr = from_ptr->next)
     {
-      bitmap_element *to_elt = bitmap_element_allocate (to);
+      bitmap_element *to_elt = bitmap_element_allocate ();
 
       to_elt->indx = from_ptr->indx;
 
@@ -360,7 +355,7 @@ bitmap_set_bit (head, bit)
 
   if (ptr == 0)
     {
-      ptr = bitmap_element_allocate (head);
+      ptr = bitmap_element_allocate ();
       ptr->indx = bit / BITMAP_ELEMENT_ALL_BITS;
       ptr->bits[word_num] = bit_val;
       bitmap_element_link (head, ptr);
@@ -413,7 +408,9 @@ bitmap_operation (to, from1, from2, operation)
   bitmap_element *from1_tmp;
   bitmap_element *from2_tmp;
   unsigned int indx;
+#if BITMAP_ELEMENT_WORDS != 2
   int i;
+#endif
 
   /* To simplify things, always create a new list.  If the old list was one
      of the inputs, free it later.  Otherwise, free it now.  */
@@ -457,7 +454,7 @@ bitmap_operation (to, from1, from2, operation)
 	}
 
       if (to_ptr == 0)
-	to_ptr = bitmap_element_allocate (to);
+	to_ptr = bitmap_element_allocate ();
 
       /* Do the operation, and if any bits are set, link it into the
 	 linked list.  */
@@ -563,9 +560,9 @@ bitmap_debug_file (file, head)
   bitmap_element *ptr;
 
   fprintf (file, "\nfirst = ");
-  fprintf (file, HOST_PTR_PRINTF, (HOST_WIDE_INT) head->first);
+  fprintf (file, HOST_PTR_PRINTF, head->first);
   fprintf (file, " current = ");
-  fprintf (file, HOST_PTR_PRINTF, (HOST_WIDE_INT) head->current);
+  fprintf (file, HOST_PTR_PRINTF, head->current);
   fprintf (file, " indx = %u\n", head->indx);
 
   for (ptr = head->first; ptr; ptr = ptr->next)
@@ -573,11 +570,11 @@ bitmap_debug_file (file, head)
       int i, j, col = 26;
 
       fprintf (file, "\t");
-      fprintf (file, HOST_PTR_PRINTF, (HOST_WIDE_INT) ptr);
+      fprintf (file, HOST_PTR_PRINTF, ptr);
       fprintf (file, " next = ");
-      fprintf (file, HOST_PTR_PRINTF, (HOST_WIDE_INT) ptr->next);
+      fprintf (file, HOST_PTR_PRINTF, ptr->next);
       fprintf (file, " prev = ");
-      fprintf (file, HOST_PTR_PRINTF, (HOST_WIDE_INT) ptr->prev);
+      fprintf (file, HOST_PTR_PRINTF, ptr->prev);
       fprintf (file, " indx = %u\n\t\tbits = {", ptr->indx);
 
       for (i = 0; i < BITMAP_ELEMENT_WORDS; i++)

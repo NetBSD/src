@@ -1,5 +1,5 @@
 /* C-compiler utilities for types and variables storage layout
-   Copyright (C) 1987, 88, 92-96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 92-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -20,20 +20,22 @@ Boston, MA 02111-1307, USA.  */
 
 
 #include "config.h"
-#include <stdio.h>
+#include "system.h"
 
 #include "tree.h"
+#include "rtl.h"
 #include "flags.h"
 #include "except.h"
 #include "function.h"
+#include "expr.h"
+#include "toplev.h"
 
 #define CEIL(x,y) (((x) + (y) - 1) / (y))
 
 /* Data type for the expressions representing sizes of data types.
-   It is the first integer type laid out.
-   In C, this is int.  */
+   It is the first integer type laid out.  */
 
-tree sizetype;
+struct sizetype_tab sizetype_tab;
 
 /* An integer constant with value 0 whose type is sizetype.  */
 
@@ -329,7 +331,7 @@ layout_record (rec)
   for (field = TYPE_FIELDS (rec); field; field = TREE_CHAIN (field))
     {
       register int known_align = var_size ? var_align : const_size;
-      register int desired_align;
+      register int desired_align = 0;
 
       /* If FIELD is static, then treat it like a separate variable,
 	 not really like a structure field.
@@ -390,7 +392,7 @@ layout_record (rec)
 	      int type_align = TYPE_ALIGN (TREE_TYPE (field));
 	      if (maximum_field_alignment != 0)
 		type_align = MIN (type_align, maximum_field_alignment);
-	      else if (TYPE_PACKED (rec))
+	      else if (DECL_PACKED (field))
 		type_align = MIN (type_align, BITS_PER_UNIT);
 
 	      record_align = MAX (record_align, type_align);
@@ -419,7 +421,7 @@ layout_record (rec)
 	    {
 	      if (const_size > 0)
 		var_size = size_binop (PLUS_EXPR, var_size,
-				       size_int (const_size));
+				       bitsize_int (const_size, 0L));
 	      const_size = 0;
 	      var_size = round_up (var_size, desired_align);
 	      var_align = MIN (var_align, desired_align);
@@ -464,11 +466,15 @@ layout_record (rec)
 
 	  if (maximum_field_alignment != 0)
 	    type_align = MIN (type_align, maximum_field_alignment);
-	  else if (TYPE_PACKED (rec))
+	  /* ??? This test is opposite the test in the containing if
+	     statement, so this code is unreachable currently.  */
+	  else if (DECL_PACKED (field))
 	    type_align = MIN (type_align, BITS_PER_UNIT);
 
 	  /* A bit field may not span the unit of alignment of its type.
 	     Advance to next boundary if necessary.  */
+	  /* ??? This code should match the code above for the
+	     PCC_BITFIELD_TYPE_MATTERS case.  */
 	  if (const_size / type_align
 	      != (const_size + field_size - 1) / type_align)
 	    const_size = CEIL (const_size, type_align) * type_align;
@@ -479,7 +485,7 @@ layout_record (rec)
 
       if (var_size && const_size)
 	DECL_FIELD_BITPOS (field)
-	  = size_binop (PLUS_EXPR, var_size, size_int (const_size));
+	  = size_binop (PLUS_EXPR, var_size, bitsize_int (const_size, 0L));
       else if (var_size)
 	DECL_FIELD_BITPOS (field) = var_size;
       else
@@ -532,7 +538,7 @@ layout_record (rec)
     {
       if (const_size)
 	var_size
-	  = size_binop (PLUS_EXPR, var_size, size_int (const_size));
+	  = size_binop (PLUS_EXPR, var_size, bitsize_int (const_size, 0L));
       TYPE_SIZE (rec) = var_size;
     }
 
@@ -542,6 +548,11 @@ layout_record (rec)
 #else
   TYPE_ALIGN (rec) = MAX (TYPE_ALIGN (rec), record_align);
 #endif
+
+  /* Record the un-rounded size in the binfo node.  But first we check
+     the size of TYPE_BINFO to make sure that BINFO_SIZE is available.  */
+  if (TYPE_BINFO (rec) && TREE_VEC_LENGTH (TYPE_BINFO (rec)) > 6)
+    TYPE_BINFO_SIZE (rec) = TYPE_SIZE (rec);
 
 #ifdef ROUND_TYPE_SIZE
   TYPE_SIZE (rec) = ROUND_TYPE_SIZE (rec, TYPE_SIZE (rec), TYPE_ALIGN (rec));
@@ -591,7 +602,7 @@ layout_union (rec)
 	continue;
 
       layout_decl (field, 0);
-      DECL_FIELD_BITPOS (field) = size_int (0);
+      DECL_FIELD_BITPOS (field) = bitsize_int (0L, 0L);
 
       /* Union must be at least as aligned as any field requires.  */
 
@@ -621,7 +632,7 @@ layout_union (rec)
       else if (TREE_CODE (rec) == QUAL_UNION_TYPE)
 	var_size = fold (build (COND_EXPR, sizetype, DECL_QUALIFIER (field),
 				DECL_SIZE (field),
-				var_size ? var_size : integer_zero_node));
+				var_size ? var_size : bitsize_int (0L, 0L)));
       }
 
   if (TREE_CODE (rec) == QUAL_UNION_TYPE)
@@ -629,13 +640,13 @@ layout_union (rec)
 
   /* Determine the ultimate size of the union (in bytes).  */
   if (NULL == var_size)
-    TYPE_SIZE (rec) = size_int (CEIL (const_size, BITS_PER_UNIT)
-				* BITS_PER_UNIT);
+    TYPE_SIZE (rec) = bitsize_int (CEIL (const_size, BITS_PER_UNIT)
+				   * BITS_PER_UNIT, 0L);
   else if (const_size == 0)
     TYPE_SIZE (rec) = var_size;
   else
     TYPE_SIZE (rec) = size_binop (MAX_EXPR, var_size,
-				  round_up (size_int (const_size),
+				  round_up (bitsize_int (const_size, 0L),
 					    BITS_PER_UNIT));
 
   /* Determine the desired alignment.  */
@@ -694,6 +705,11 @@ layout_type (type)
 	 of the language-specific code.  */
       abort ();
 
+    case BOOLEAN_TYPE:  /* Used for Java, Pascal, and Chill. */
+      if (TYPE_PRECISION (type) == 0)
+	TYPE_PRECISION (type) = 1; /* default to one byte/boolean. */
+      /* ... fall through ... */
+
     case INTEGER_TYPE:
     case ENUMERAL_TYPE:
     case CHAR_TYPE:
@@ -703,12 +719,14 @@ layout_type (type)
 
       TYPE_MODE (type) = smallest_mode_for_size (TYPE_PRECISION (type),
 						 MODE_INT);
-      TYPE_SIZE (type) = size_int (GET_MODE_BITSIZE (TYPE_MODE (type)));
+      TYPE_SIZE (type) = bitsize_int (GET_MODE_BITSIZE (TYPE_MODE (type)), 0L);
+      TYPE_SIZE_UNIT (type) = size_int (GET_MODE_SIZE (TYPE_MODE (type)));
       break;
 
     case REAL_TYPE:
       TYPE_MODE (type) = mode_for_size (TYPE_PRECISION (type), MODE_FLOAT, 0);
-      TYPE_SIZE (type) = size_int (GET_MODE_BITSIZE (TYPE_MODE (type)));
+      TYPE_SIZE (type) = bitsize_int (GET_MODE_BITSIZE (TYPE_MODE (type)), 0L);
+      TYPE_SIZE_UNIT (type) = size_int (GET_MODE_SIZE (TYPE_MODE (type)));
       break;
 
     case COMPLEX_TYPE:
@@ -718,30 +736,35 @@ layout_type (type)
 			 (TREE_CODE (TREE_TYPE (type)) == INTEGER_TYPE
 			  ? MODE_COMPLEX_INT : MODE_COMPLEX_FLOAT),
 			 0);
-      TYPE_SIZE (type) = size_int (GET_MODE_BITSIZE (TYPE_MODE (type)));
+      TYPE_SIZE (type) = bitsize_int (GET_MODE_BITSIZE (TYPE_MODE (type)), 0L);
+      TYPE_SIZE_UNIT (type) = size_int (GET_MODE_SIZE (TYPE_MODE (type)));
       break;
 
     case VOID_TYPE:
       TYPE_SIZE (type) = size_zero_node;
+      TYPE_SIZE_UNIT (type) = size_zero_node;
       TYPE_ALIGN (type) = 1;
       TYPE_MODE (type) = VOIDmode;
       break;
 
     case OFFSET_TYPE:
-      TYPE_SIZE (type) = size_int (POINTER_SIZE);
+      TYPE_SIZE (type) = bitsize_int (POINTER_SIZE, 0L);
+      TYPE_SIZE_UNIT (type) = size_int (POINTER_SIZE / BITS_PER_UNIT);
       TYPE_MODE (type) = ptr_mode;
       break;
 
     case FUNCTION_TYPE:
     case METHOD_TYPE:
       TYPE_MODE (type) = mode_for_size (2 * POINTER_SIZE, MODE_INT, 0);
-      TYPE_SIZE (type) = size_int (2 * POINTER_SIZE);
+      TYPE_SIZE (type) = bitsize_int (2 * POINTER_SIZE, 0);
+      TYPE_SIZE_UNIT (type) = size_int ((2 * POINTER_SIZE) / BITS_PER_UNIT);
       break;
 
     case POINTER_TYPE:
     case REFERENCE_TYPE:
       TYPE_MODE (type) = ptr_mode;
-      TYPE_SIZE (type) = size_int (POINTER_SIZE);
+      TYPE_SIZE (type) = bitsize_int (POINTER_SIZE, 0L);
+      TYPE_SIZE_UNIT (type) = size_int (POINTER_SIZE / BITS_PER_UNIT);
       TREE_UNSIGNED (type) = 1;
       TYPE_PRECISION (type) = POINTER_SIZE;
       break;
@@ -792,8 +815,19 @@ layout_type (type)
 		&& TREE_CODE (TYPE_MAX_VALUE (index)) != INTEGER_CST)
 	      length = size_binop (MAX_EXPR, length, size_zero_node);
 
-	    TYPE_SIZE (type) = size_binop (MULT_EXPR, length,
-					   TYPE_SIZE (element));
+	    TYPE_SIZE (type) = size_binop (MULT_EXPR, TYPE_SIZE (element),
+					   length);
+
+	    /* If we know the size of the element, calculate the total
+	       size directly, rather than do some division thing below.
+	       This optimization helps Fortran assumed-size arrays
+	       (where the size of the array is determined at runtime)
+	       substantially.  */
+	    if (TYPE_SIZE_UNIT (element) != 0)
+	      {
+	        TYPE_SIZE_UNIT (type)
+		  = size_binop (MULT_EXPR, TYPE_SIZE_UNIT (element), length);
+	      }
 	  }
 
 	/* Now round the alignment and size,
@@ -808,8 +842,15 @@ layout_type (type)
 
 #ifdef ROUND_TYPE_SIZE
 	if (TYPE_SIZE (type) != 0)
-	  TYPE_SIZE (type)
-	    = ROUND_TYPE_SIZE (type, TYPE_SIZE (type), TYPE_ALIGN (type));
+	  {
+	    tree tmp;
+	    tmp = ROUND_TYPE_SIZE (type, TYPE_SIZE (type), TYPE_ALIGN (type));
+	    /* If the rounding changed the size of the type, remove any
+	       pre-calculated TYPE_SIZE_UNIT.  */
+	    if (simple_cst_equal (TYPE_SIZE (type), tmp) != 1)
+	      TYPE_SIZE_UNIT (type) = NULL;
+	    TYPE_SIZE (type) = tmp;
+	  }
 #endif
 
 	TYPE_MODE (type) = BLKmode;
@@ -947,18 +988,7 @@ layout_type (type)
 	}
       break;
 
-    /* Pascal and Chill types */
-    case BOOLEAN_TYPE:		 /* store one byte/boolean for now.  */
-      TYPE_MODE (type) = QImode;
-      TYPE_SIZE (type) = size_int (GET_MODE_BITSIZE (TYPE_MODE (type)));
-      TYPE_PRECISION (type) = 1;
-      TYPE_ALIGN (type) = GET_MODE_ALIGNMENT (TYPE_MODE (type));
-      if (TREE_CODE (TYPE_MIN_VALUE (type)) == INTEGER_CST
-	  && tree_int_cst_sgn (TYPE_MIN_VALUE (type)) >= 0)
- 	TREE_UNSIGNED (type) = 1;
-      break;
-
-    case SET_TYPE:
+    case SET_TYPE:  /* Used by Chill and Pascal. */
       if (TREE_CODE (TYPE_MAX_VALUE (TYPE_DOMAIN (type))) != INTEGER_CST
 	  || TREE_CODE (TYPE_MIN_VALUE (TYPE_DOMAIN (type))) != INTEGER_CST)
 	abort();
@@ -977,7 +1007,8 @@ layout_type (type)
 	    TYPE_MODE (type) = BLKmode;
 	  else
 	    TYPE_MODE (type) = mode_for_size (alignment, MODE_INT, 1);
-	  TYPE_SIZE (type) = size_int (rounded_size);
+	  TYPE_SIZE (type) = bitsize_int (rounded_size, 0L);
+	  TYPE_SIZE_UNIT (type) = size_int (rounded_size / BITS_PER_UNIT);
 	  TYPE_ALIGN (type) = alignment;
 	  TYPE_PRECISION (type) = size_in_bits;
 	}
@@ -1010,6 +1041,19 @@ layout_type (type)
   if (TYPE_SIZE (type) != 0 && TREE_CODE (TYPE_SIZE (type)) != INTEGER_CST)
     TYPE_SIZE (type) = variable_size (TYPE_SIZE (type));
 
+  /* If we failed to find a simple way to calculate the unit size
+     of the type above, find it by division.  */
+  if (TYPE_SIZE_UNIT (type) == 0 && TYPE_SIZE (type) != 0)
+    {
+      TYPE_SIZE_UNIT (type) = size_binop (FLOOR_DIV_EXPR, TYPE_SIZE (type),
+				          size_int (BITS_PER_UNIT));
+    }
+
+  /* Once again evaluate only once, either now or as soon as safe.  */
+  if (TYPE_SIZE_UNIT (type) != 0
+      && TREE_CODE (TYPE_SIZE_UNIT (type)) != INTEGER_CST)
+    TYPE_SIZE_UNIT (type) = variable_size (TYPE_SIZE_UNIT (type));
+
   /* Also layout any other variants of the type.  */
   if (TYPE_NEXT_VARIANT (type)
       || type != TYPE_MAIN_VARIANT (type))
@@ -1017,6 +1061,7 @@ layout_type (type)
       tree variant;
       /* Record layout info of this variant.  */
       tree size = TYPE_SIZE (type);
+      tree size_unit = TYPE_SIZE_UNIT (type);
       int align = TYPE_ALIGN (type);
       enum machine_mode mode = TYPE_MODE (type);
 
@@ -1026,6 +1071,7 @@ layout_type (type)
 	   variant = TYPE_NEXT_VARIANT (variant))
 	{
 	  TYPE_SIZE (variant) = size;
+	  TYPE_SIZE_UNIT (variant) = size_unit;
 	  TYPE_ALIGN (variant) = align;
 	  TYPE_MODE (variant) = mode;
 	}
@@ -1071,9 +1117,7 @@ make_signed_type (precision)
      is the type for size values.  */
 
   if (sizetype == 0)
-    {
-      sizetype = type;
-    }
+    set_sizetype (type);
 
   /* Lay out the type: set its alignment, size, etc.  */
 
@@ -1097,11 +1141,63 @@ make_unsigned_type (precision)
 
   if (sizetype == 0)
     {
-      sizetype = type;
+      TREE_UNSIGNED (type) = 1;
+      set_sizetype (type);
     }
 
   fixup_unsigned_type (type);
   return type;
+}
+
+/* Set sizetype to TYPE, and initialize *sizetype accordingly.
+   Also update the type of any standard type's sizes made so far.  */
+
+void
+set_sizetype (type)
+     tree type;
+{
+  int oprecision = TYPE_PRECISION (type), precision;
+
+  sizetype = type;
+
+  /* The *bitsizetype types use a precision that avoids overflows when
+     calculating signed sizes / offsets in bits.
+
+     We are allocating bitsizetype once and change it in place when
+     we decide later that we want to change it.  This way, we avoid the
+     hassle of changing all the TYPE_SIZE (TREE_TYPE (sometype))
+     individually in each front end.  */
+  if (! bitsizetype)
+    bitsizetype = make_node (INTEGER_TYPE);
+  if (TYPE_NAME (sizetype) && ! TYPE_NAME (bitsizetype))
+    TYPE_NAME (bitsizetype) = TYPE_NAME (sizetype);
+
+  precision = oprecision + BITS_PER_UNIT_LOG + 1;
+  /* However, when cross-compiling from a 32 bit to a 64 bit host,
+     we are limited to 64 bit precision.  */
+  if (precision > 2 * HOST_BITS_PER_WIDE_INT)
+    precision = 2 * HOST_BITS_PER_WIDE_INT;
+  TYPE_PRECISION (bitsizetype) = precision;
+  if (TREE_UNSIGNED (type))
+    fixup_unsigned_type (bitsizetype);
+  else
+    fixup_signed_type (bitsizetype);
+  layout_type (bitsizetype);
+
+  if (TREE_UNSIGNED (type))
+    {
+      usizetype = sizetype;
+      ubitsizetype = bitsizetype;
+      ssizetype = make_signed_type (oprecision);
+      sbitsizetype = make_signed_type (precision);
+    }
+  else
+    {
+      ssizetype = sizetype;
+      sbitsizetype = bitsizetype;
+      usizetype = make_unsigned_type (oprecision);
+      ubitsizetype = make_unsigned_type (precision);
+    }
 }
 
 /* Set the extreme values of TYPE based on its precision in bits,
@@ -1188,14 +1284,14 @@ get_best_mode (bitsize, bitpos, align, largest_mode, volatilep)
      int volatilep;
 {
   enum machine_mode mode;
-  int unit;
+  int unit = 0;
 
   /* Find the narrowest integer mode that contains the bit field.  */
   for (mode = GET_CLASS_NARROWEST_MODE (MODE_INT); mode != VOIDmode;
        mode = GET_MODE_WIDER_MODE (mode))
     {
       unit = GET_MODE_BITSIZE (mode);
-      if (bitpos / unit == (bitpos + bitsize - 1) / unit)
+      if ((bitpos % unit) + bitsize <= unit)
 	break;
     }
 

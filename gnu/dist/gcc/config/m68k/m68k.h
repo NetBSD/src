@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Sun 68000/68020 version.
-   Copyright (C) 1987, 88, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1987, 88, 93-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -150,12 +150,12 @@ extern int target_flags;
     { "sky", -(MASK_FPA|MASK_68040_ONLY|MASK_68881)},			\
     { "sky", MASK_SKY},							\
     { "nosky", - MASK_SKY},						\
-    { "68881" - (MASK_FPA|MASK_SKY)},					\
+    { "68881", - (MASK_FPA|MASK_SKY)},					\
     { "68881", MASK_68881},						\
     { "soft-float", - (MASK_FPA|MASK_SKY|MASK_68040_ONLY|MASK_68881)},	\
-    { "68020-40", -(MASK_5200|MASK_68060)},				\
+    { "68020-40", -(MASK_5200|MASK_68060|MASK_68040_ONLY)},		\
     { "68020-40", (MASK_BITFIELD|MASK_68881|MASK_68020|MASK_68040)},	\
-    { "68020-60", -(MASK_5200|MASK_68040)},				\
+    { "68020-60", -(MASK_5200|MASK_68040|MASK_68040_ONLY)},		\
     { "68020-60", (MASK_BITFIELD|MASK_68881|MASK_68020|MASK_68060)},	\
     { "68030", - (MASK_5200|MASK_68060|MASK_68040|MASK_68040_ONLY)},	\
     { "68030", (MASK_68020|MASK_BITFIELD)},				\
@@ -165,8 +165,8 @@ extern int target_flags;
     { "68060", - (MASK_5200|MASK_68040)},				\
     { "68060", (MASK_68020|MASK_68881|MASK_BITFIELD			\
 		|MASK_68040_ONLY|MASK_68060)},				\
-    { "5200", - (MASK_68060|MASK_68040|MASK_68020|MASK_BITFIELD		\
-		|MASK_68881)},						\
+    { "5200", - (MASK_68060|MASK_68040|MASK_68040_ONLY|MASK_68020	\
+		|MASK_BITFIELD|MASK_68881)},				\
     { "5200", (MASK_5200)},						\
     { "68851", 0},							\
     { "no-68851", 0},							\
@@ -281,8 +281,8 @@ extern int target_flags;
 
 /* No data type wants to be aligned rounder than this. 
    Most published ABIs say that ints should be aligned on 16 bit
-   boundries, but cpus with 32 bit busses get better performance
-   aligned on 32 bit boundries.  Coldfires without a misalignment
+   boundaries, but cpus with 32 bit busses get better performance
+   aligned on 32 bit boundaries.  Coldfires without a misalignment
    module require 32 bit alignment. */
 #define BIGGEST_ALIGNMENT (TARGET_ALIGN_INT ? 32 : 16)
 
@@ -294,10 +294,10 @@ extern int target_flags;
 #define MAX_CODE_ALIGN	2			/* 4 byte alignment */
 
 /* Align loop starts for optimal branching.  */
-#define ASM_OUTPUT_LOOP_ALIGN(FILE) ASM_OUTPUT_ALIGN ((FILE), m68k_align_loops)
+#define LOOP_ALIGN(LABEL) (m68k_align_loops)
 
 /* This is how to align an instruction for optimal branching. */
-#define ASM_OUTPUT_ALIGN_CODE(FILE) ASM_OUTPUT_ALIGN ((FILE), m68k_align_jumps)
+#define LABEL_ALIGN_AFTER_BARRIER(LABEL) (m68k_align_jumps)
 
 #define SELECT_RTX_SECTION(MODE, X)					\
 {									\
@@ -379,7 +379,7 @@ extern int target_flags;
    and are not available for the register allocator.
    On the 68000, only the stack pointer is such.  */
 
-/* fpa0 is also reserved so that it can be used to move shit back and
+/* fpa0 is also reserved so that it can be used to move data back and
    forth between high fpa regs and everything else. */
 
 #define FIXED_REGISTERS        \
@@ -586,14 +586,14 @@ enum reg_class {
 
 #define REG_CLASS_CONTENTS \
 {					\
- 0x00000000,   	/* NO_REGS */		\
- 0x000000ff,	/* DATA_REGS */		\
- 0x0000ff00,	/* ADDR_REGS */		\
- 0x00ff0000,	/* FP_REGS */		\
- 0x0000ffff,	/* GENERAL_REGS */	\
- 0x00ff00ff,	/* DATA_OR_FP_REGS */	\
- 0x00ffff00,    /* ADDR_OR_FP_REGS */   \
- 0x00ffffff,	/* ALL_REGS */		\
+  {0x00000000},  /* NO_REGS */		\
+  {0x000000ff},  /* DATA_REGS */	\
+  {0x0000ff00},  /* ADDR_REGS */	\
+  {0x00ff0000},  /* FP_REGS */		\
+  {0x0000ffff},  /* GENERAL_REGS */	\
+  {0x00ff00ff},  /* DATA_OR_FP_REGS */	\
+  {0x00ffff00},  /* ADDR_OR_FP_REGS */	\
+  {0x00ffffff},  /* ALL_REGS */		\
 }
 
 /* The same information, inverted:
@@ -722,7 +722,7 @@ extern enum reg_class regno_reg_class[];
    (C) == 'J' ? (VALUE) >= -0x8000 && (VALUE) <= 0x7FFF : \
    (C) == 'K' ? (VALUE) < -0x80 || (VALUE) >= 0x80 : \
    (C) == 'L' ? (VALUE) < 0 && (VALUE) >= -8 : \
-   (C) == 'M' ? (VALUE) < -0x100 && (VALUE) >= 0x100 : \
+   (C) == 'M' ? (VALUE) < -0x100 || (VALUE) >= 0x100 : \
    (C) == 'N' ? (VALUE) >= 24 && (VALUE) <= 31 : \
    (C) == 'O' ? (VALUE) == 16 : \
    (C) == 'P' ? (VALUE) >= 8 && (VALUE) <= 15 : 0)
@@ -888,14 +888,14 @@ extern enum reg_class regno_reg_class[];
 /* On the 68000 the return value is in D0 regardless.  */
 
 #define FUNCTION_VALUE(VALTYPE, FUNC)  \
-  gen_rtx (REG, TYPE_MODE (VALTYPE), 0)
+  gen_rtx_REG (TYPE_MODE (VALTYPE), 0)
 
 /* Define how to find the value returned by a library function
    assuming the value has mode MODE.  */
 
 /* On the 68000 the return value is in D0 regardless.  */
 
-#define LIBCALL_VALUE(MODE)  gen_rtx (REG, MODE, 0)
+#define LIBCALL_VALUE(MODE)  gen_rtx_REG (MODE, 0)
 
 /* 1 if N is a possible register number for a function value.
    On the 68000, d0 is the only register thus used.  */
@@ -965,7 +965,7 @@ extern enum reg_class regno_reg_class[];
    It exists only to test register calling conventions.  */
 
 #define FUNCTION_ARG(CUM, MODE, TYPE, NAMED) \
-((TARGET_REGPARM && (CUM) < 8) ? gen_rtx (REG, (MODE), (CUM) / 4) : 0)
+((TARGET_REGPARM && (CUM) < 8) ? gen_rtx_REG ((MODE), (CUM) / 4) : 0)
 
 /* For an arg passed partly in registers and partly in memory,
    this is the number of registers used.
@@ -1227,15 +1227,19 @@ while(0)
 
 /* Emit RTL insns to initialize the variable parts of a trampoline.
    FNADDR is an RTX for the address of the function's pure code.
-   CXT is an RTX for the static chain value for the function.  */
+   CXT is an RTX for the static chain value for the function.
+
+   We generate a two-instructions program at address TRAMP :
+	movea.l &CXT,%a0
+	jmp FNADDR					*/
 
 #define INITIALIZE_TRAMPOLINE(TRAMP, FNADDR, CXT)			\
 {									\
-  emit_move_insn (gen_rtx (MEM, HImode, TRAMP), GEN_INT(0x207C));	\
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 2)), CXT); \
-  emit_move_insn (gen_rtx (MEM, HImode, plus_constant (TRAMP, 6)),	\
+  emit_move_insn (gen_rtx_MEM (HImode, TRAMP), GEN_INT(0x207C));	\
+  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 2)), CXT); \
+  emit_move_insn (gen_rtx_MEM (HImode, plus_constant (TRAMP, 6)),	\
 		  GEN_INT(0x4EF9));					\
-  emit_move_insn (gen_rtx (MEM, SImode, plus_constant (TRAMP, 8)), FNADDR); \
+  emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 8)), FNADDR); \
   FINALIZE_TRAMPOLINE(TRAMP);						\
 }
 
@@ -1410,7 +1414,7 @@ __transfer_from_trampoline ()					\
    || (GET_CODE (X) == PLUS						\
        && LEGITIMATE_BASE_REG_P (XEXP (X, 0))				\
        && GET_CODE (XEXP (X, 1)) == CONST_INT				\
-       && ((unsigned) INTVAL (XEXP (X, 1)) + 0x8000) < 0x10000)		\
+       && (TARGET_68020 || (unsigned) INTVAL (XEXP (X, 1)) + 0x8000) < 0x10000)		\
    || (GET_CODE (X) == PLUS && XEXP (X, 0) == pic_offset_table_rtx 	\
        && flag_pic && GET_CODE (XEXP (X, 1)) == SYMBOL_REF)		\
    || (GET_CODE (X) == PLUS && XEXP (X, 0) == pic_offset_table_rtx 	\
@@ -1449,10 +1453,10 @@ __transfer_from_trampoline ()					\
 { GO_IF_INDEXING (X, ADDR);						\
   if (GET_CODE (X) == PLUS)						\
     { if (GET_CODE (XEXP (X, 1)) == CONST_INT				\
-	  && (unsigned) INTVAL (XEXP (X, 1)) + 0x80 < 0x100)		\
+	  && (TARGET_68020 || (unsigned) INTVAL (XEXP (X, 1)) + 0x80 < 0x100))		\
 	{ rtx go_temp = XEXP (X, 0); GO_IF_INDEXING (go_temp, ADDR); }	\
       if (GET_CODE (XEXP (X, 0)) == CONST_INT				\
-	  && (unsigned) INTVAL (XEXP (X, 0)) + 0x80 < 0x100)		\
+	  && (TARGET_68020 || (unsigned) INTVAL (XEXP (X, 0)) + 0x80 < 0x100))		\
 	{ rtx go_temp = XEXP (X, 1); GO_IF_INDEXING (go_temp, ADDR); } } }
 
 #define LEGITIMATE_INDEX_REG_P(X)   \
@@ -1552,10 +1556,11 @@ __transfer_from_trampoline ()					\
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE HImode
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-#define CASE_VECTOR_PC_RELATIVE
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+#define CASE_VECTOR_PC_RELATIVE 1
 
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR FIX_ROUND_EXPR
@@ -1795,7 +1800,7 @@ __transfer_from_trampoline ()					\
 
 /* Before the prologue, RA is at 0(%sp).  */
 #define INCOMING_RETURN_ADDR_RTX \
-  gen_rtx (MEM, VOIDmode, gen_rtx (REG, VOIDmode, STACK_POINTER_REGNUM))
+  gen_rtx_MEM (VOIDmode, gen_rtx_REG (VOIDmode, STACK_POINTER_REGNUM))
 
 /* We must not use the DBX register numbers for the DWARF 2 CFA column
    numbers because that maps to numbers beyond FIRST_PSEUDO_REGISTER.
@@ -1845,10 +1850,7 @@ __transfer_from_trampoline ()					\
 #define ASM_OUTPUT_LONG_DOUBLE(FILE,VALUE)  				\
 do { long l[3];								\
      REAL_VALUE_TO_TARGET_LONG_DOUBLE (VALUE, l);			\
-     if (sizeof (int) == sizeof (long))					\
-       fprintf (FILE, "\t.long 0x%x,0x%x,0x%x\n", l[0], l[1], l[2]);	\
-     else								\
-       fprintf (FILE, "\t.long 0x%lx,0x%lx,0x%lx\n", l[0], l[1], l[2]);	\
+     fprintf (FILE, "\t.long 0x%lx,0x%lx,0x%lx\n", l[0], l[1], l[2]);	\
    } while (0)
   
 /* This is how to output an assembler line defining a `double' constant.  */
@@ -1864,10 +1866,7 @@ do { long l[3];								\
 #define ASM_OUTPUT_FLOAT(FILE,VALUE)			\
 do { long l;						\
      REAL_VALUE_TO_TARGET_SINGLE (VALUE, l);		\
-     if (sizeof (int) == sizeof (long))			\
-       fprintf (FILE, "\t.long 0x%x\n", l);		\
-     else						\
-       fprintf (FILE, "\t.long 0x%lx\n", l);		\
+     fprintf (FILE, "\t.long 0x%lx\n", l);		\
    } while (0)
 
 /* This is how to output an assembler line defining an `int' constant.  */
@@ -1915,7 +1914,7 @@ do { long l;						\
 
 /* This is how to output an element of a case-vector that is relative.  */
 
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
   asm_fprintf (FILE, "\t.word %LL%d-%LL%d\n", VALUE, REL)
 
 /* This is how to output an assembler line
@@ -1985,10 +1984,7 @@ do { long l;						\
         {							\
           long l;						\
           REAL_VALUE_TO_TARGET_SINGLE (VALUE, l);		\
-          if (sizeof (int) == sizeof (long))			\
-            asm_fprintf ((FILE), "%I0x%x", l);			\
-          else							\
-            asm_fprintf ((FILE), "%I0x%lx", l);			\
+          asm_fprintf ((FILE), "%I0x%lx", l);			\
         }							\
      } while (0)
 
@@ -2078,158 +2074,6 @@ do { long l;						\
 
 #define PRINT_OPERAND_ADDRESS(FILE, ADDR) print_operand_address (FILE, ADDR)
 
-
-/* Definitions for generating bytecode */
-
-/* Just so it's known this target is supported by the bytecode generator.
-   If this define isn't found anywhere in the target config files, then
-   dummy stubs are supplied by bytecode.h, and any attempt to use
-   -fbytecode will result in an error message. */
-
-#define TARGET_SUPPORTS_BYTECODE
-
-/* Minimal segment alignment within sections is 8 units. */
-#define MACHINE_SEG_ALIGN 3
-
-/* Integer alignment is two units. */
-#define INT_ALIGN 2
-
-/* Pointer alignment is eight units. */
-#define PTR_ALIGN 3
-
-/* Global symbols begin with `_' */
-#define NAMES_HAVE_UNDERSCORES
-
-/* BC_xxx below are similar to their ASM_xxx counterparts above. */
-#define BC_GLOBALIZE_LABEL(FP, NAME) bc_globalize_label(NAME)
-
-#define BC_OUTPUT_COMMON(FP, NAME, SIZE, ROUNDED) \
-  do { bc_emit_common(NAME, ROUNDED); bc_globalize_label(NAME); } while (0)
-
-#define BC_OUTPUT_BSS(FP, NAME, SIZE, ROUNDED) \
-  do { bc_data (); bc_emit_labeldef(NAME); bc_emit_skip (SIZE); } while (0)
-
-#define BC_OUTPUT_LOCAL(FP, NAME, SIZE, ROUNDED) \
-  bc_emit_common(NAME, ROUNDED)
-
-#define BC_OUTPUT_ALIGN(FP, ALIGN) bc_align(ALIGN)
-
-#define BC_OUTPUT_LABEL(FP, NAME) bc_emit_labeldef(NAME)
-
-#define BC_OUTPUT_SKIP(FP, SIZE) bc_emit_skip(SIZE)
-
-#define BC_OUTPUT_LABELREF(FP, NAME)					      \
-  do {									      \
-    char *foo = (char *) xmalloc(strlen(NAME) + 2);			      \
-    strcpy(foo, "_");							      \
-    strcat(foo, NAME);							      \
-    bc_emit_labelref (foo);						      \
-    free (foo);								      \
-  } while (0)
-
-#define BC_OUTPUT_FLOAT(FP, VAL)					      \
-  do {									      \
-    float F = VAL;							      \
-    bc_emit ((char *) &F, sizeof F);					      \
-  } while (0)
-
-#define BC_OUTPUT_DOUBLE(FP, VAL)					      \
-  do {									      \
-    double D = VAL;							      \
-    bc_emit ((char *) &D, sizeof D);					      \
-  } while (0)
-
-#define BC_OUTPUT_BYTE(FP, VAL)					      \
-  do {									      \
-    char C = VAL;							      \
-    bc_emit (&C, 1);							      \
-  } while (0)
-
-
-#define BC_OUTPUT_FILE ASM_OUTPUT_FILE
-#define BC_OUTPUT_ASCII ASM_OUTPUT_ASCII
-#define BC_OUTPUT_IDENT ASM_OUTPUT_IDENT
-
-/* Same as XSTR, but for bytecode */
-#define BCXSTR(RTX)  ((RTX)->bc_label)
-
-
-/* Flush bytecode buffer onto file */
-#define BC_WRITE_FILE(FP) \
-{ \
-  fprintf (FP, ".text\n"); \
-  bc_seg_write (bc_text_seg, FP); \
-  fprintf(FP, "\n.data\n"); \
-  bc_seg_write (bc_data_seg, FP); \
-  bc_sym_write (FP);  /* do .globl, .bss, etc. */ \
-}
-
-/* Write one symbol */
-#define BC_WRITE_SEGSYM(SEGSYM, FP) \
-{ \
-  prsym (FP, (SEGSYM)->sym->name); \
-  fprintf (FP, ":\n"); \
-}
-
-
-/* Write one reloc entry */
-#define BC_WRITE_RELOC_ENTRY(SEGRELOC, FP, OFFSET) \
-{ \
-  fprintf (FP, "\t.long "); \
-  prsym (FP, (SEGRELOC)->sym->name); \
-  fprintf (FP, " + %d\n", OFFSET); \
-}
-
-/* Start new line of bytecodes */
-#define BC_START_BYTECODE_LINE(FP) \
-{ \
-  fprintf (FP, "\t.byte"); \
-}
-
-/* Write one bytecode */
-#define BC_WRITE_BYTECODE(SEP, VAL, FP) \
-{ \
-  fprintf (FP, "%c0x%02X", (SEP), (VAL) & 0xff); \
-}
-
-/* Write one bytecode RTL entry */
-#define BC_WRITE_RTL(R, FP) \
-{ \
-  fprintf (FP, "%s+%d/0x%08X\n", (R)->label, (R)->offset, (R)->bc_label); \
-}
-
-
-/* Emit function entry trampoline */
-#define BC_EMIT_TRAMPOLINE(TRAMPSEG, CALLINFO) \
-{ \
-  short insn; \
- \
-  /* Push a reference to the callinfo structure.  */ \
-  insn = 0x4879;		/* pea xxx.L */ \
-  seg_data (TRAMPSEG, (char *) &insn, sizeof insn); \
-  seg_refsym (TRAMPSEG, CALLINFO, 0); \
- \
-  /* Call __interp, pop arguments, and return.  */ \
-  insn = 0x4eb9;		/* jsr xxx.L  */ \
-  seg_data (TRAMPSEG, (char *) &insn, sizeof insn); \
-  seg_refsym (TRAMPSEG, "__callint", 0); \
-  insn = 0x588f;		/* addql #4, sp */ \
-  seg_data (TRAMPSEG, (char *) &insn, sizeof insn); \
-  insn = 0x4e75;		/* rts */ \
-  seg_data (TRAMPSEG, (char *) &insn, sizeof insn); \
-}
-
-
-
-#if 0
-#define VALIDATE_STACK()  if (stack_depth < 0) abort ();
-#else
-#if 0
-#define VALIDATE_STACK() \
-  fprintf (stderr, " %%%d%%", stack_depth);
-#endif
-#endif
-
 /* Define functions defined in aux-output.c and used in templates.  */
 
 extern char *output_move_const_into_data_reg ();
@@ -2248,6 +2092,15 @@ extern char *output_addsi3 ();
 extern char *output_andsi3 ();
 extern char *output_iorsi3 ();
 extern char *output_xorsi3 ();
+extern void output_dbcc_and_branch ();
+extern int const_uint32_operand ();
+extern int const_sint32_operand ();
+extern int floating_exact_log2 ();
+extern int not_sp_operand ();
+extern int valid_dbcc_comparison_p ();
+extern int extend_operator ();
+extern int flags_in_68881 ();
+extern int strict_low_part_peephole_ok ();
 
 /* Variables in m68k.c */
 extern char *m68k_align_loops_string;
@@ -2257,6 +2110,19 @@ extern int m68k_align_loops;
 extern int m68k_align_jumps;
 extern int m68k_align_funcs;
 extern int m68k_last_compare_had_fp_operands;
+
+/* Functions from m68k.c used in macros.  */
+extern int symbolic_operand ();
+extern int const_int_cost ();
+extern int standard_68881_constant_p ();
+extern int standard_sun_fpa_constant_p ();
+extern void output_function_prologue ();
+extern int use_return_insn ();
+extern void print_operand_address ();
+extern void print_operand ();
+extern void notice_update_cc ();
+extern void finalize_pic ();
+extern void override_options ();
 
 
 /*

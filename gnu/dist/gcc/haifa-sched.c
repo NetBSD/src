@@ -1,5 +1,5 @@
 /* Instruction scheduling pass.
-   Copyright (C) 1992, 1993, 1994, 1995, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1992, 93-97, 1998 Free Software Foundation, Inc.
    Contributed by Michael Tiemann (tiemann@cygnus.com) Enhanced by,
    and currently maintained by, Jim Wilson (wilson@cygnus.com)
 
@@ -87,7 +87,8 @@
    broken by
    6.  choose insn with the least dependences upon the previously
    scheduled insn, or finally
-   7.  choose insn with lowest UID.
+   7   choose the insn which has the most insns dependent on it.
+   8.  choose insn with lowest UID.
 
    Memory references complicate matters.  Only if we can be certain
    that memory references are not part of the data dependency graph
@@ -154,8 +155,8 @@
    priorities are computed, and (3) block level: insns in the block
    are actually scheduled.  */
 
-#include <stdio.h>
 #include "config.h"
+#include "system.h"
 #include "rtl.h"
 #include "basic-block.h"
 #include "regs.h"
@@ -164,16 +165,12 @@
 #include "insn-config.h"
 #include "insn-attr.h"
 #include "except.h"
+#include "toplev.h"
 
 extern char *reg_known_equiv_p;
 extern rtx *reg_known_value;
 
 #ifdef INSN_SCHEDULING
-
-/* enable interblock scheduling code */
-
-/* define INTERBLOCK_DEBUG for using the -fsched-max debugging facility */
-/* #define INTERBLOCK_DEBUG */
 
 /* target_units bitmask has 1 for each unit in the cpu.  It should be
    possible to compute this variable from the machine description.
@@ -194,31 +191,20 @@ static int issue_rate;
 #define ISSUE_RATE 1
 #endif
 
-/* sched_debug_count is used for debugging the scheduler by limiting
-   the number of scheduled insns.  It is controlled by the option
-   -fsched-max-N (N is a number).
-
-   sched-verbose controls the amount of debugging output the
+/* sched-verbose controls the amount of debugging output the
    scheduler prints.  It is controlled by -fsched-verbose-N:
    N>0 and no -DSR : the output is directed to stderr.
    N>=10 will direct the printouts to stderr (regardless of -dSR).
    N=1: same as -dSR.
    N=2: bb's probabilities, detailed ready list info, unit/insn info.
    N=3: rtl at abort point, control-flow, regions info.
-   N=5: dependences info.
-
-   max_rgn_blocks and max_region_insns limit region size for
-   interblock scheduling.  They are controlled by
-   -fsched-interblock-max-blocks-N, -fsched-interblock-max-insns-N */
+   N=5: dependences info.  */
 
 #define MAX_RGN_BLOCKS 10
 #define MAX_RGN_INSNS 100
 
-static int sched_debug_count = -1;
 static int sched_verbose_param = 0;
 static int sched_verbose = 0;
-static int max_rgn_blocks = MAX_RGN_BLOCKS;
-static int max_rgn_insns = MAX_RGN_INSNS;
 
 /* nr_inter/spec counts interblock/speculative motion for the function */
 static int nr_inter, nr_spec;
@@ -235,15 +221,8 @@ void
 fix_sched_param (param, val)
      char *param, *val;
 {
-  if (!strcmp (param, "max"))
-    sched_debug_count = ((sched_debug_count == -1) ?
-			 atoi (val) : sched_debug_count);
-  else if (!strcmp (param, "verbose"))
+  if (!strcmp (param, "verbose"))
     sched_verbose_param = atoi (val);
-  else if (!strcmp (param, "interblock-max-blocks"))
-    max_rgn_blocks = atoi (val);
-  else if (!strcmp (param, "interblock-max-insns"))
-    max_rgn_insns = atoi (val);
   else
     warning ("fix_sched_param: unknown param: %s", param);
 }
@@ -320,7 +299,7 @@ static unsigned int *insn_blockage;
 #define UNIT_BLOCKED(B) ((B) >> (2 * BLOCKAGE_BITS))
 #define BLOCKAGE_RANGE(B)                                                \
   (((((B) >> BLOCKAGE_BITS) & BLOCKAGE_MASK) << (HOST_BITS_PER_INT / 2)) \
-   | (B) & BLOCKAGE_MASK)
+   | ((B) & BLOCKAGE_MASK))
 
 /* Encodings of the `<name>_unit_blockage_range' function.  */
 #define MIN_BLOCKAGE_COST(R) ((R) >> (HOST_BITS_PER_INT / 2))
@@ -404,7 +383,7 @@ static rtx dead_notes;
    The transition (R->S) is implemented in the scheduling loop in
    `schedule_block' when the best insn to schedule is chosen.
    The transition (R->Q) is implemented in `queue_insn' when an
-   insn is found to to have a function unit conflict with the already
+   insn is found to have a function unit conflict with the already
    committed insns.
    The transitions (P->R and P->Q) are implemented in `schedule_insn' as
    insns move from the ready list to the scheduled list.
@@ -457,8 +436,8 @@ static void sched_analyze_1 PROTO ((rtx, rtx));
 static void sched_analyze_2 PROTO ((rtx, rtx));
 static void sched_analyze_insn PROTO ((rtx, rtx, rtx));
 static void sched_analyze PROTO ((rtx, rtx));
-static void sched_note_set PROTO ((int, rtx, int));
-static int rank_for_schedule PROTO ((rtx *, rtx *));
+static void sched_note_set PROTO ((rtx, int));
+static int rank_for_schedule PROTO ((const GENERIC_PTR, const GENERIC_PTR));
 static void swap_sort PROTO ((rtx *, int));
 static void queue_insn PROTO ((rtx, int));
 static int schedule_insn PROTO ((rtx, rtx *, int, int));
@@ -467,15 +446,16 @@ static void attach_deaths PROTO ((rtx, rtx, int));
 static void attach_deaths_insn PROTO ((rtx));
 static int new_sometimes_live PROTO ((struct sometimes *, int, int));
 static void finish_sometimes_live PROTO ((struct sometimes *, int));
-static int schedule_block PROTO ((int, int, int));
+static int schedule_block PROTO ((int, int));
 static rtx regno_use_in PROTO ((int, rtx));
-static void split_hard_reg_notes PROTO ((rtx, rtx, rtx, rtx));
+static void split_hard_reg_notes PROTO ((rtx, rtx, rtx));
 static void new_insn_dead_notes PROTO ((rtx, rtx, rtx, rtx));
 static void update_n_sets PROTO ((rtx, int));
 static void update_flow_info PROTO ((rtx, rtx, rtx, rtx));
-
-/* Main entry point of this file.  */
-void schedule_insns PROTO ((FILE *));
+static char *safe_concat PROTO ((char *, char *, char *));
+static int insn_issue_delay PROTO ((rtx));
+static int birthing_insn_p PROTO ((rtx));
+static void adjust_priority PROTO ((rtx));
 
 /* Mapping of insns to their original block prior to scheduling.  */
 static int *insn_orig_block;
@@ -517,11 +497,9 @@ static int *out_edges;
 extern rtx forced_labels;
 
 
-static char is_cfg_nonregular PROTO ((void));
-static int uses_reg_or_mem PROTO ((rtx));
-void debug_control_flow PROTO ((void));
-static void build_control_flow PROTO ((void));
-static void build_jmp_edges PROTO ((rtx, int));
+static int is_cfg_nonregular PROTO ((void));
+static int build_control_flow PROTO ((int_list_ptr *, int_list_ptr *,
+				      int *, int *));
 static void new_edge PROTO ((int, int));
 
 
@@ -562,7 +540,8 @@ static int *containing_rgn;
 
 void debug_regions PROTO ((void));
 static void find_single_block_region PROTO ((void));
-static void find_rgns PROTO ((void));
+static void find_rgns PROTO ((int_list_ptr *, int_list_ptr *,
+			      int *, int *, sbitmap *));
 static int too_large PROTO ((int, int *, int *));
 
 extern void debug_live PROTO ((int, int));
@@ -707,14 +686,15 @@ static void compute_dom_prob_ps PROTO ((int));
 /* speculative scheduling functions */
 static int check_live_1 PROTO ((int, rtx));
 static void update_live_1 PROTO ((int, rtx));
-static int check_live PROTO ((rtx, int, int));
-static void update_live PROTO ((rtx, int, int));
+static int check_live PROTO ((rtx, int));
+static void update_live PROTO ((rtx, int));
 static void set_spec_fed PROTO ((rtx));
 static int is_pfree PROTO ((rtx, int, int));
 static int find_conditional_protection PROTO ((rtx, int));
 static int is_conditionally_protected PROTO ((rtx, int, int));
 static int may_trap_exp PROTO ((rtx, int));
-static int classify_insn PROTO ((rtx));
+static int haifa_classify_insn PROTO ((rtx));
+static int is_prisky PROTO ((rtx, int, int));
 static int is_exception_free PROTO ((rtx, int, int));
 
 static char find_insn_mem_list PROTO ((rtx, rtx, rtx, rtx));
@@ -761,12 +741,13 @@ static void get_block_head_tail PROTO ((int, rtx *, rtx *));
 static void find_pre_sched_live PROTO ((int));
 static void find_post_sched_live PROTO ((int));
 static void update_reg_usage PROTO ((void));
+static int queue_to_ready PROTO ((rtx [], int));
 
-void debug_ready_list PROTO ((rtx[], int));
-static void init_target_units PROTO (());
+static void debug_ready_list PROTO ((rtx[], int));
+static void init_target_units PROTO ((void));
 static void insn_print_units PROTO ((rtx));
-static int get_visual_tbl_length PROTO (());
-static void init_block_visualization PROTO (());
+static int get_visual_tbl_length PROTO ((void));
+static void init_block_visualization PROTO ((void));
 static void print_block_visualization PROTO ((int, char *));
 static void visualize_scheduled_insns PROTO ((int, int));
 static void visualize_no_unit PROTO ((rtx));
@@ -790,6 +771,80 @@ static void split_block_insns PROTO ((int));
 #define SIZE_FOR_MODE(X) (GET_MODE_SIZE (GET_MODE (X)))
 
 /* Helper functions for instruction scheduling.  */
+
+/* An INSN_LIST containing all INSN_LISTs allocated but currently unused.  */
+static rtx unused_insn_list;
+
+/* An EXPR_LIST containing all EXPR_LISTs allocated but currently unused.  */
+static rtx unused_expr_list;
+
+static void free_list PROTO ((rtx *, rtx *));
+static rtx alloc_INSN_LIST PROTO ((rtx, rtx));
+static rtx alloc_EXPR_LIST PROTO ((int, rtx, rtx));
+
+static void
+free_list (listp, unused_listp)
+     rtx *listp, *unused_listp;
+{
+  register rtx link, prev_link;
+
+  if (*listp == 0)
+    return;
+
+  prev_link = *listp;
+  link = XEXP (prev_link, 1);
+
+  while (link)
+    {
+      prev_link = link;
+      link = XEXP (link, 1);
+    }
+
+  XEXP (prev_link, 1) = *unused_listp;
+  *unused_listp = *listp;
+  *listp = 0;
+}
+
+static rtx
+alloc_INSN_LIST (val, next)
+     rtx val, next;
+{
+  rtx r;
+
+  if (unused_insn_list)
+    {
+      r = unused_insn_list;
+      unused_insn_list = XEXP (r, 1);
+      XEXP (r, 0) = val;
+      XEXP (r, 1) = next;
+      PUT_REG_NOTE_KIND (r, VOIDmode);
+    }
+  else
+    r = gen_rtx_INSN_LIST (VOIDmode, val, next);
+
+  return r;
+}
+
+static rtx
+alloc_EXPR_LIST (kind, val, next)
+     int kind;
+     rtx val, next;
+{
+  rtx r;
+
+  if (unused_expr_list)
+    {
+      r = unused_expr_list;
+      unused_expr_list = XEXP (r, 1);
+      XEXP (r, 0) = val;
+      XEXP (r, 1) = next;
+      PUT_REG_NOTE_KIND (r, kind);
+    }
+  else
+    r = gen_rtx_EXPR_LIST (kind, val, next);
+
+  return r;
+}
 
 /* Add ELEM wrapped in an INSN_LIST with reg note kind DEP_TYPE to the
    LOG_LINKS of INSN, if not already there.  DEP_TYPE indicates the type
@@ -865,12 +920,11 @@ add_dependence (insn, elem, dep_type)
       }
   /* Might want to check one level of transitivity to save conses.  */
 
-  link = rtx_alloc (INSN_LIST);
+  link = alloc_INSN_LIST (elem, LOG_LINKS (insn));
+  LOG_LINKS (insn) = link;
+
   /* Insn dependency, not data dependency.  */
   PUT_REG_NOTE_KIND (link, dep_type);
-  XEXP (link, 0) = elem;
-  XEXP (link, 1) = LOG_LINKS (insn);
-  LOG_LINKS (insn) = link;
 }
 
 /* Remove ELEM wrapped in an INSN_LIST from the LOG_LINKS
@@ -881,20 +935,26 @@ remove_dependence (insn, elem)
      rtx insn;
      rtx elem;
 {
-  rtx prev, link;
+  rtx prev, link, next;
   int found = 0;
 
-  for (prev = 0, link = LOG_LINKS (insn); link;
-       prev = link, link = XEXP (link, 1))
+  for (prev = 0, link = LOG_LINKS (insn); link; link = next)
     {
+      next = XEXP (link, 1);
       if (XEXP (link, 0) == elem)
 	{
 	  if (prev)
-	    XEXP (prev, 1) = XEXP (link, 1);
+	    XEXP (prev, 1) = next;
 	  else
-	    LOG_LINKS (insn) = XEXP (link, 1);
+	    LOG_LINKS (insn) = next;
+
+	  XEXP (link, 1) = unused_insn_list;
+	  unused_insn_list = link;
+
 	  found = 1;
 	}
+      else
+	prev = link;
     }
 
   if (!found)
@@ -911,6 +971,10 @@ schedule_insns (dump_file)
 #else
 #ifndef __GNUC__
 #define __inline
+#endif
+
+#ifndef HAIFA_INLINE
+#define HAIFA_INLINE __inline
 #endif
 
 /* Computation of memory dependencies.  */
@@ -942,14 +1006,6 @@ static rtx pending_write_mems;
    a function of the length of these pending lists.  */
 
 static int pending_lists_length;
-
-/* An INSN_LIST containing all INSN_LISTs allocated but currently unused.  */
-
-static rtx unused_insn_list;
-
-/* An EXPR_LIST containing all EXPR_LISTs allocated but currently unused.  */
-
-static rtx unused_expr_list;
 
 /* The last insn upon which all memory references must depend.
    This is an insn which flushed the pending lists, creating a dependency
@@ -1008,37 +1064,40 @@ static rtx *bb_sched_before_next_call;
 /* functions for construction of the control flow graph.  */
 
 /* Return 1 if control flow graph should not be constructed, 0 otherwise.
-   Estimate in nr_edges the number of edges on the graph.
-   We decide not to build the control flow graph if there is possibly more
-   than one entry to the function, or if computed branches exist.  */
 
-static char
+   We decide not to build the control flow graph if there is possibly more
+   than one entry to the function, if computed branches exist, of if we
+   have nonlocal gotos.  */
+
+static int
 is_cfg_nonregular ()
 {
   int b;
   rtx insn;
   RTX_CODE code;
 
-  rtx nonlocal_label_list = nonlocal_label_rtx_list ();
+  /* If we have a label that could be the target of a nonlocal goto, then
+     the cfg is not well structured.  */
+  if (nonlocal_label_rtx_list () != NULL)
+    return 1;
 
-  /* check for non local labels */
-  if (nonlocal_label_list)
-    {
-      return 1;
-    }
-
-  /* check for labels which cannot be deleted */
+  /* If we have any forced labels, then the cfg is not well structured.  */
   if (forced_labels)
-    {
-      return 1;
-    }
+    return 1;
 
-  /* check for labels which probably cannot be deleted */
+  /* If this function has a computed jump, then we consider the cfg
+     not well structured.  */
+  if (current_function_has_computed_jump)
+    return 1;
+
+  /* If we have exception handlers, then we consider the cfg not well
+     structured.  ?!?  We should be able to handle this now that flow.c
+     computes an accurate cfg for EH.  */
   if (exception_handler_labels)
-    {
-      return 1;
-    }
+    return 1;
 
+  /* If we have non-jumping insns which refer to labels, then we consider
+     the cfg not well structured.  */
   /* check for labels referred to other thn by jumps */
   for (b = 0; b < n_basic_blocks; b++)
     for (insn = basic_block_head[b];; insn = NEXT_INSN (insn))
@@ -1050,294 +1109,85 @@ is_cfg_nonregular ()
 
 	    for (note = REG_NOTES (insn); note; note = XEXP (note, 1))
 	      if (REG_NOTE_KIND (note) == REG_LABEL)
-		{
-		  return 1;
-		}
+		return 1;
 	  }
 
 	if (insn == basic_block_end[b])
 	  break;
       }
 
-  nr_edges = 0;
-
-  /* check for computed branches */
-  for (b = 0; b < n_basic_blocks; b++)
-    {
-      for (insn = basic_block_head[b];; insn = NEXT_INSN (insn))
-	{
-
-	  if (GET_CODE (insn) == JUMP_INSN)
-	    {
-	      rtx pat = PATTERN (insn);
-	      int i;
-
-	      if (GET_CODE (pat) == PARALLEL)
-		{
-		  int len = XVECLEN (pat, 0);
-		  int has_use_labelref = 0;
-
-		  for (i = len - 1; i >= 0; i--)
-		    if (GET_CODE (XVECEXP (pat, 0, i)) == USE
-			&& (GET_CODE (XEXP (XVECEXP (pat, 0, i), 0))
-			    == LABEL_REF))
-		      {
-			nr_edges++;
-			has_use_labelref = 1;
-		      }
-
-		  if (!has_use_labelref)
-		    for (i = len - 1; i >= 0; i--)
-		      if (GET_CODE (XVECEXP (pat, 0, i)) == SET
-			  && SET_DEST (XVECEXP (pat, 0, i)) == pc_rtx
-			  && uses_reg_or_mem (SET_SRC (XVECEXP (pat, 0, i))))
-			{
-			  return 1;
-			}
-		}
-	      /* check for branch table */
-	      else if (GET_CODE (pat) == ADDR_VEC
-		       || GET_CODE (pat) == ADDR_DIFF_VEC)
-		{
-		  int diff_vec_p = GET_CODE (pat) == ADDR_DIFF_VEC;
-		  int len = XVECLEN (pat, diff_vec_p);
-
-		  nr_edges += len;
-		}
-	      else
-		{
-		  /* check for computed branch */
-		  if (GET_CODE (pat) == SET
-		      && SET_DEST (pat) == pc_rtx
-		      && uses_reg_or_mem (SET_SRC (pat)))
-		    {
-		      return 1;
-		    }
-		}
-	    }
-
-	  if (insn == basic_block_end[b])
-	    break;
-	}
-    }
-
-  /* count for the fallthrough edges */
-  for (b = 0; b < n_basic_blocks; b++)
-    {
-      for (insn = PREV_INSN (basic_block_head[b]);
-	   insn && GET_CODE (insn) == NOTE; insn = PREV_INSN (insn))
-	;
-
-      if (!insn && b != 0)
-	nr_edges++;
-      else if (insn && GET_CODE (insn) != BARRIER)
-	nr_edges++;
-    }
-
-  nr_edges++;
-
+  /* All the tests passed.  Consider the cfg well structured.  */
   return 0;
 }
 
+/* Build the control flow graph and set nr_edges.
 
-/* Returns 1 if x uses a reg or a mem (function was taken from flow.c).
-   x is a target of a jump. Used for the detection of computed
-   branches. For each label seen, updates the edges estimation
-   counter nr_edges.  */
+   Instead of trying to build a cfg ourselves, we rely on flow to
+   do it for us.  Stamp out useless code (and bug) duplication.
+
+   Return nonzero if an irregularity in the cfg is found which would
+   prevent cross block scheduling.  */
 
 static int
-uses_reg_or_mem (x)
-     rtx x;
-{
-  enum rtx_code code = GET_CODE (x);
-  int i, j;
-  char *fmt;
-
-  if (code == REG)
-    return 1;
-
-  if (code == MEM
-      && !(GET_CODE (XEXP (x, 0)) == SYMBOL_REF
-	   && CONSTANT_POOL_ADDRESS_P (XEXP (x, 0))))
-    return 1;
-
-  if (code == IF_THEN_ELSE)
-    {
-      if (uses_reg_or_mem (XEXP (x, 1))
-	  || uses_reg_or_mem (XEXP (x, 2)))
-	return 1;
-      else
-	return 0;
-    }
-
-  if (code == LABEL_REF)
-    {
-      nr_edges++;
-
-      return 0;
-    }
-
-  fmt = GET_RTX_FORMAT (code);
-  for (i = GET_RTX_LENGTH (code) - 1; i >= 0; i--)
-    {
-      if (fmt[i] == 'e'
-	  && uses_reg_or_mem (XEXP (x, i)))
-	return 1;
-
-      if (fmt[i] == 'E')
-	for (j = 0; j < XVECLEN (x, i); j++)
-	  if (uses_reg_or_mem (XVECEXP (x, i, j)))
-	    return 1;
-    }
-
-  return 0;
-}
-
-
-/* Print the control flow graph, for debugging purposes.
-   Callable from the debugger.  */
-
-void
-debug_control_flow ()
-{
-  int i, e, next;
-
-  fprintf (dump, ";;   --------- CONTROL FLOW GRAPH --------- \n\n");
-
-  for (i = 0; i < n_basic_blocks; i++)
-    {
-      fprintf (dump, ";;\tBasic block %d: first insn %d, last %d.\n",
-	       i,
-	       INSN_UID (basic_block_head[i]),
-	       INSN_UID (basic_block_end[i]));
-
-      fprintf (dump, ";;\tPredecessor blocks:");
-      for (e = IN_EDGES (i); e; e = next)
-	{
-	  fprintf (dump, " %d", FROM_BLOCK (e));
-
-	  next = NEXT_IN (e);
-
-	  if (next == IN_EDGES (i))
-	    break;
-	}
-
-      fprintf (dump, "\n;;\tSuccesor blocks:");
-      for (e = OUT_EDGES (i); e; e = next)
-	{
-	  fprintf (dump, " %d", TO_BLOCK (e));
-
-	  next = NEXT_OUT (e);
-
-	  if (next == OUT_EDGES (i))
-	    break;
-	}
-
-      fprintf (dump, " \n\n");
-
-    }
-}
-
-
-/* build the control flow graph. (also set nr_edges accurately) */
-
-static void
-build_control_flow ()
+build_control_flow (s_preds, s_succs, num_preds, num_succs)
+     int_list_ptr *s_preds;
+     int_list_ptr *s_succs;
+     int *num_preds;
+     int *num_succs;
 {
   int i;
+  int_list_ptr succ;
+  int unreachable;
+
+  /* Count the number of edges in the cfg.  */
+  nr_edges = 0;
+  unreachable = 0;
+  for (i = 0; i < n_basic_blocks; i++)
+    {
+      nr_edges += num_succs[i];
+
+      /* Unreachable loops with more than one basic block are detected
+	 during the DFS traversal in find_rgns.
+
+	 Unreachable loops with a single block are detected here.  This
+	 test is redundant with the one in find_rgns, but it's much
+	 cheaper to go ahead and catch the trivial case here.  */
+      if (num_preds[i] == 0
+	  || (num_preds[i] == 1 && INT_LIST_VAL (s_preds[i]) == i))
+	unreachable = 1;
+    }
+
+  /* Account for entry/exit edges.  */
+  nr_edges += 2;
+
+  in_edges = (int *) xmalloc (n_basic_blocks * sizeof (int));
+  out_edges = (int *) xmalloc (n_basic_blocks * sizeof (int));
+  bzero ((char *) in_edges, n_basic_blocks * sizeof (int));
+  bzero ((char *) out_edges, n_basic_blocks * sizeof (int));
+
+  edge_table = (edge *) xmalloc ((nr_edges) * sizeof (edge));
+  bzero ((char *) edge_table, ((nr_edges) * sizeof (edge)));
 
   nr_edges = 0;
   for (i = 0; i < n_basic_blocks; i++)
-    {
-      rtx insn;
-
-      insn = basic_block_end[i];
-      if (GET_CODE (insn) == JUMP_INSN)
-	{
-	  build_jmp_edges (PATTERN (insn), i);
-	}
-
-      for (insn = PREV_INSN (basic_block_head[i]);
-	   insn && GET_CODE (insn) == NOTE; insn = PREV_INSN (insn))
-	;
-
-      /* build fallthrough edges */
-      if (!insn && i != 0)
-	new_edge (i - 1, i);
-      else if (insn && GET_CODE (insn) != BARRIER)
-	new_edge (i - 1, i);
-    }
+    for (succ = s_succs[i]; succ; succ = succ->next)
+      {
+	if (INT_LIST_VAL (succ) != EXIT_BLOCK)
+	  new_edge (i, INT_LIST_VAL (succ));
+      }
 
   /* increment by 1, since edge 0 is unused.  */
   nr_edges++;
 
+  return unreachable;
 }
 
 
-/* construct edges in the control flow graph, from 'source' block, to
-   blocks refered to by 'pattern'.  */
+/* Record an edge in the control flow graph from SOURCE to TARGET.
 
-static
-void 
-build_jmp_edges (pattern, source)
-     rtx pattern;
-     int source;
-{
-  register RTX_CODE code;
-  register int i;
-  register char *fmt;
-
-  code = GET_CODE (pattern);
-
-  if (code == LABEL_REF)
-    {
-      register rtx label = XEXP (pattern, 0);
-      register int target;
-
-      /* This can happen as a result of a syntax error
-         and a diagnostic has already been printed.  */
-      if (INSN_UID (label) == 0)
-	return;
-
-      target = INSN_BLOCK (label);
-      new_edge (source, target);
-
-      return;
-    }
-
-  /* proper handling of ADDR_DIFF_VEC: do not add a non-existing edge
-     from the block containing the branch-on-table, to itself.  */
-  if (code == ADDR_VEC
-      || code == ADDR_DIFF_VEC)
-    {
-      int diff_vec_p = GET_CODE (pattern) == ADDR_DIFF_VEC;
-      int len = XVECLEN (pattern, diff_vec_p);
-      int k;
-
-      for (k = 0; k < len; k++)
-	{
-	  rtx tem = XVECEXP (pattern, diff_vec_p, k);
-
-	  build_jmp_edges (tem, source);
-	}
-    }
-
-  fmt = GET_RTX_FORMAT (code);
-  for (i = GET_RTX_LENGTH (code) - 1; i >= 0; i--)
-    {
-      if (fmt[i] == 'e')
-	build_jmp_edges (XEXP (pattern, i), source);
-      if (fmt[i] == 'E')
-	{
-	  register int j;
-	  for (j = 0; j < XVECLEN (pattern, i); j++)
-	    build_jmp_edges (XVECEXP (pattern, i, j), source);
-	}
-    }
-}
-
-
-/* construct an edge in the control flow graph, from 'source' to 'target'.  */
+   In theory, this is redundant with the s_succs computed above, but
+   we have not converted all of haifa to use information from the
+   integer lists.  */
 
 static void
 new_edge (source, target)
@@ -1557,7 +1407,7 @@ too_large (block, num_bbs, num_insns)
   (*num_bbs)++;
   (*num_insns) += (INSN_LUID (basic_block_end[block]) -
 		   INSN_LUID (basic_block_head[block]));
-  if ((*num_bbs > max_rgn_blocks) || (*num_insns > max_rgn_insns))
+  if ((*num_bbs > MAX_RGN_BLOCKS) || (*num_insns > MAX_RGN_INSNS))
     return 1;
   else
     return 0;
@@ -1572,339 +1422,425 @@ too_large (block, num_bbs, num_insns)
   if (max_hdr[blk] == -1)                                            \
     max_hdr[blk] = hdr;                                              \
   else if (dfs_nr[max_hdr[blk]] > dfs_nr[hdr])                       \
-         inner[hdr] = 0;                                             \
+         RESET_BIT (inner, hdr);                                     \
   else if (dfs_nr[max_hdr[blk]] < dfs_nr[hdr])                       \
          {                                                           \
-            inner[max_hdr[blk]] = 0;                                 \
+            RESET_BIT (inner,max_hdr[blk]);			     \
             max_hdr[blk] = hdr;                                      \
          }                                                           \
 }
 
 
-/* Find regions for interblock scheduling: a loop-free procedure, a reducible
-   inner loop, or a basic block not contained in any other region.
-   The procedures control flow graph is traversed twice.
-   First traversal, a DFS, finds the headers of inner loops  in the graph,
-   and verifies that there are no unreacable blocks.
-   Second traversal processes headers of inner loops, checking that the
-   loop is reducible.  The loop blocks that form a region are put into the
-   region's blocks list in topological order.
+/* Find regions for interblock scheduling.
 
-   The following variables are changed by the function: rgn_nr, rgn_table,
-   rgn_bb_table, block_to_bb and containing_rgn.  */
+   A region for scheduling can be:
+
+     * A loop-free procedure, or
+
+     * A reducible inner loop, or
+
+     * A basic block not contained in any other region.
+
+
+   ?!? In theory we could build other regions based on extended basic
+   blocks or reverse extended basic blocks.  Is it worth the trouble?
+
+   Loop blocks that form a region are put into the region's block list
+   in topological order.
+
+   This procedure stores its results into the following global (ick) variables
+
+     * rgn_nr
+     * rgn_table
+     * rgn_bb_table
+     * block_to_bb
+     * containing region
+
+
+   We use dominator relationships to avoid making regions out of non-reducible
+   loops.
+
+   This procedure needs to be converted to work on pred/succ lists instead
+   of edge tables.  That would simplify it somewhat.  */
 
 static void
-find_rgns ()
+find_rgns (s_preds, s_succs, num_preds, num_succs, dom)
+     int_list_ptr *s_preds;
+     int_list_ptr *s_succs;
+     int *num_preds;
+     int *num_succs;
+     sbitmap *dom;
 {
   int *max_hdr, *dfs_nr, *stack, *queue, *degree;
-  char *header, *inner, *passed, *in_stack, *in_queue, no_loops = 1;
-  int node, child, loop_head, i, j, fst_edge, head, tail;
+  char no_loops = 1;
+  int node, child, loop_head, i, head, tail;
   int count = 0, sp, idx = 0, current_edge = out_edges[0];
-  int num_bbs, num_insns;
+  int num_bbs, num_insns, unreachable;
   int too_large_failure;
-  char *reachable;
 
-  /*
-     The following data structures are computed by the first traversal and
-     are used by the second traversal:
-     header[i] - flag set if the block i is the header of a loop.
-     inner[i] - initially set. It is reset if the the block i is the header
-     of a non-inner loop.
-     max_hdr[i] - the header of the inner loop containing block i.
-     (for a block i not in an inner loop it may be -1 or the
-     header of the most inner loop containing the block).
+  /* Note if an edge has been passed.  */
+  sbitmap passed;
 
-     These data structures are used by the first traversal only:
-     stack - non-recursive DFS implementation which uses a stack of edges.
-     sp - top of the stack of edges
-     dfs_nr[i] - the DFS ordering of block i.
-     in_stack[i] - flag set if the block i is in the DFS stack.
+  /* Note if a block is a natural loop header.  */
+  sbitmap header;
 
-     These data structures are used by the second traversal only:
-     queue - queue containing the blocks of the current region.
-     head and tail - queue boundaries.
-     in_queue[i] - flag set if the block i is in queue */
+  /* Note if a block is an natural inner loop header.  */
+  sbitmap inner;
 
-  /* function's inner arrays allocation and initialization */
+  /* Note if a block is in the block queue. */
+  sbitmap in_queue;
+
+  /* Note if a block is in the block queue. */
+  sbitmap in_stack;
+
+  /* Perform a DFS traversal of the cfg.  Identify loop headers, inner loops
+     and a mapping from block to its loop header (if the block is contained
+     in a loop, else -1).
+
+     Store results in HEADER, INNER, and MAX_HDR respectively, these will
+     be used as inputs to the second traversal.
+
+     STACK, SP and DFS_NR are only used during the first traversal.  */
+
+  /* Allocate and initialize variables for the first traversal.  */
   max_hdr = (int *) alloca (n_basic_blocks * sizeof (int));
   dfs_nr = (int *) alloca (n_basic_blocks * sizeof (int));
   bzero ((char *) dfs_nr, n_basic_blocks * sizeof (int));
   stack = (int *) alloca (nr_edges * sizeof (int));
-  queue = (int *) alloca (n_basic_blocks * sizeof (int));
 
-  inner = (char *) alloca (n_basic_blocks * sizeof (char));
-  header = (char *) alloca (n_basic_blocks * sizeof (char));
-  bzero ((char *) header, n_basic_blocks * sizeof (char));
-  passed = (char *) alloca (nr_edges * sizeof (char));
-  bzero ((char *) passed, nr_edges * sizeof (char));
-  in_stack = (char *) alloca (nr_edges * sizeof (char));
-  bzero ((char *) in_stack, nr_edges * sizeof (char));
-  reachable = (char *) alloca (n_basic_blocks * sizeof (char));
-  bzero ((char *) reachable, n_basic_blocks * sizeof (char));
+  inner = sbitmap_alloc (n_basic_blocks);
+  sbitmap_ones (inner);
 
-  in_queue = (char *) alloca (n_basic_blocks * sizeof (char));
+  header = sbitmap_alloc (n_basic_blocks);
+  sbitmap_zero (header);
+
+  passed = sbitmap_alloc (nr_edges);
+  sbitmap_zero (passed);
+
+  in_queue = sbitmap_alloc (n_basic_blocks);
+  sbitmap_zero (in_queue);
+
+  in_stack = sbitmap_alloc (n_basic_blocks);
+  sbitmap_zero (in_stack);
 
   for (i = 0; i < n_basic_blocks; i++)
-    {
-      inner[i] = 1;
-      max_hdr[i] = -1;
-    }
+    max_hdr[i] = -1;
 
-  /* First traversal: DFS, finds inner loops in control flow graph */
+  /* DFS traversal to find inner loops in the cfg.  */
 
-  reachable[0] = 1;
   sp = -1;
   while (1)
     {
-      if (current_edge == 0 || passed[current_edge])
+      if (current_edge == 0 || TEST_BIT (passed, current_edge))
 	{
-	  /*  Here, if  current_edge <  0, this is  a leaf  block.
-	     Otherwise current_edge  was already passed.  Note that in
-	     the latter case, not  only current_edge but also  all its
-	     NEXT_OUT edges are also passed.   We have to "climb up on
-	     edges in  the  stack", looking for the  first  (already
-	     passed) edge whose NEXT_OUT was not passed yet.  */
-
-	  while (sp >= 0 && (current_edge == 0 || passed[current_edge]))
+	  /* We have reached a leaf node or a node that was already
+	     processed.  Pop edges off the stack until we find
+	     an edge that has not yet been processed.  */
+	  while (sp >= 0
+		 && (current_edge == 0 || TEST_BIT (passed, current_edge)))
 	    {
+	      /* Pop entry off the stack.  */
 	      current_edge = stack[sp--];
 	      node = FROM_BLOCK (current_edge);
 	      child = TO_BLOCK (current_edge);
-	      in_stack[child] = 0;
-	      if (max_hdr[child] >= 0 && in_stack[max_hdr[child]])
+	      RESET_BIT (in_stack, child);
+	      if (max_hdr[child] >= 0 && TEST_BIT (in_stack, max_hdr[child]))
 		UPDATE_LOOP_RELATIONS (node, max_hdr[child]);
 	      current_edge = NEXT_OUT (current_edge);
 	    }
 
-	  /* stack empty - the whole graph is traversed.  */
-	  if (sp < 0 && passed[current_edge])
+	  /* See if have finished the DFS tree traversal.  */
+	  if (sp < 0 && TEST_BIT (passed, current_edge))
 	    break;
+
+	  /* Nope, continue the traversal with the popped node.  */
 	  continue;
 	}
 
+      /* Process a node.  */
       node = FROM_BLOCK (current_edge);
-      dfs_nr[node] = ++count;
-      in_stack[node] = 1;
       child = TO_BLOCK (current_edge);
-      reachable[child] = 1;
+      SET_BIT (in_stack, node);
+      dfs_nr[node] = ++count;
 
-      /* found a loop header */
-      if (in_stack[child])
+      /* If the successor is in the stack, then we've found a loop.
+	 Mark the loop, if it is not a natural loop, then it will
+	 be rejected during the second traversal.  */
+      if (TEST_BIT (in_stack, child))
 	{
 	  no_loops = 0;
-	  header[child] = 1;
-	  max_hdr[child] = child;
+	  SET_BIT (header, child);
 	  UPDATE_LOOP_RELATIONS (node, child);
-	  passed[current_edge] = 1;
+	  SET_BIT (passed, current_edge);
 	  current_edge = NEXT_OUT (current_edge);
 	  continue;
 	}
 
-      /* the  child was already visited once, no need to go down from
-         it, everything is traversed there.  */
+      /* If the child was already visited, then there is no need to visit
+	 it again.  Just update the loop relationships and restart
+	 with a new edge.  */
       if (dfs_nr[child])
 	{
-	  if (max_hdr[child] >= 0 && in_stack[max_hdr[child]])
+	  if (max_hdr[child] >= 0 && TEST_BIT (in_stack, max_hdr[child]))
 	    UPDATE_LOOP_RELATIONS (node, max_hdr[child]);
-	  passed[current_edge] = 1;
+	  SET_BIT (passed, current_edge);
 	  current_edge = NEXT_OUT (current_edge);
 	  continue;
 	}
 
-      /* this is a step down in the dfs traversal */
+      /* Push an entry on the stack and continue DFS traversal.  */
       stack[++sp] = current_edge;
-      passed[current_edge] = 1;
+      SET_BIT (passed, current_edge);
       current_edge = OUT_EDGES (child);
-    }				/* while (1); */
-
-  /* if there are unreachable blocks, or more than one entry to
-     the subroutine, give up on interblock scheduling */
-  for (i = 1; i < n_basic_blocks; i++)
-    {
-      if (reachable[i] == 0)
-	{
-	  find_single_block_region ();
-	  if (sched_verbose >= 3)
-	    fprintf (stderr, "sched: warning: found an unreachable block %d \n", i);
-	  return;
-	}
     }
 
-  /* Second travsersal: find reducible inner loops, and sort
-     topologically the blocks of each region */
-  degree = dfs_nr;		/* reuse dfs_nr array - it is not needed anymore */
-  bzero ((char *) in_queue, n_basic_blocks * sizeof (char));
+  /* Another check for unreachable blocks.  The earlier test in
+     is_cfg_nonregular only finds unreachable blocks that do not
+     form a loop.
 
-  if (no_loops)
-    header[0] = 1;
-
-  /* compute the in-degree of every block in the graph */
+     The DFS traversal will mark every block that is reachable from
+     the entry node by placing a nonzero value in dfs_nr.  Thus if
+     dfs_nr is zero for any block, then it must be unreachable.  */
+  unreachable = 0;
   for (i = 0; i < n_basic_blocks; i++)
-    {
-      fst_edge = IN_EDGES (i);
-      if (fst_edge > 0)
-	{
-	  degree[i] = 1;
-	  current_edge = NEXT_IN (fst_edge);
-	  while (fst_edge != current_edge)
-	    {
-	      ++degree[i];
-	      current_edge = NEXT_IN (current_edge);
-	    }
-	}
-      else
-	degree[i] = 0;
-    }
+    if (dfs_nr[i] == 0)
+      {
+	unreachable = 1;
+	break;
+      }
 
-  /* pass through all graph blocks, looking for headers of inner loops */
+  /* Gross.  To avoid wasting memory, the second pass uses the dfs_nr array
+     to hold degree counts.  */
+  degree = dfs_nr;
+
+  /* Compute the in-degree of every block in the graph */
   for (i = 0; i < n_basic_blocks; i++)
+    degree[i] = num_preds[i];
+
+  /* Do not perform region scheduling if there are any unreachable
+     blocks.  */
+  if (!unreachable)
     {
+      if (no_loops)
+	SET_BIT (header, 0);
 
-      if (header[i] && inner[i])
+      /* Second travsersal:find reducible inner loops and topologically sort
+	 block of each region.  */
+
+      queue = (int *) alloca (n_basic_blocks * sizeof (int));
+
+      /* Find blocks which are inner loop headers.  We still have non-reducible
+	 loops to consider at this point.  */
+      for (i = 0; i < n_basic_blocks; i++)
 	{
-
-	  /* i is a header of a potentially reducible inner loop, or
-	     block 0 in a subroutine with no loops at all */
-	  head = tail = -1;
-	  too_large_failure = 0;
-	  loop_head = max_hdr[i];
-
-	  /* decrease in_degree of all i's successors, (this is needed
-	     for the topological ordering) */
-	  fst_edge = current_edge = OUT_EDGES (i);
-	  if (fst_edge > 0)
+	  if (TEST_BIT (header, i) && TEST_BIT (inner, i))
 	    {
-	      do
+	      int_list_ptr ps;
+	      int j;
+
+	      /* Now check that the loop is reducible.  We do this separate
+		 from finding inner loops so that we do not find a reducible
+		 loop which contains an inner  non-reducible loop.
+
+		 A simple way to find reducible/natrual loops is to verify
+		 that each block in the loop is dominated by the loop
+		 header.
+
+		 If there exists a block that is not dominated by the loop
+		 header, then the block is reachable from outside the loop
+		 and thus the loop is not a natural loop.  */
+	      for (j = 0; j < n_basic_blocks; j++)	
 		{
-		  --degree[TO_BLOCK (current_edge)];
-		  current_edge = NEXT_OUT (current_edge);
-		}
-	      while (fst_edge != current_edge);
-	    }
-
-	  /* estimate # insns, and count # blocks in the region.  */
-	  num_bbs = 1;
-	  num_insns = INSN_LUID (basic_block_end[i]) - INSN_LUID (basic_block_head[i]);
-
-
-	  /* find all loop latches, if it is a true loop header, or
-	     all leaves if the graph has no loops at all */
-	  if (no_loops)
-	    {
-	      for (j = 0; j < n_basic_blocks; j++)
-		if (out_edges[j] == 0)	/* a leaf */
-		  {
-		    queue[++tail] = j;
-		    in_queue[j] = 1;
-
-		    if (too_large (j, &num_bbs, &num_insns))
-		      {
-			too_large_failure = 1;
+		  /* First identify blocks in the loop, except for the loop
+		     entry block.  */
+		  if (i == max_hdr[j] && i != j)
+		    {
+		      /* Now verify that the block is dominated by the loop
+			 header.  */
+		      if (!TEST_BIT (dom[j], i))
 			break;
+		    }
+		}
+
+	      /* If we exited the loop early, then I is the header of a non
+		 reducible loop and we should quit processing it now.  */
+	      if (j != n_basic_blocks)
+		continue;
+
+	      /* I is a header of an inner loop, or block 0 in a subroutine
+		 with no loops at all.  */
+	      head = tail = -1;
+	      too_large_failure = 0;
+	      loop_head = max_hdr[i];
+
+	      /* Decrease degree of all I's successors for topological
+		 ordering.  */
+	      for (ps = s_succs[i]; ps; ps = ps->next)
+		if (INT_LIST_VAL (ps) != EXIT_BLOCK
+		    && INT_LIST_VAL (ps) != ENTRY_BLOCK)
+		  --degree[INT_LIST_VAL(ps)];
+
+	      /* Estimate # insns, and count # blocks in the region.  */
+	      num_bbs = 1;
+	      num_insns	= (INSN_LUID (basic_block_end[i])
+			   - INSN_LUID (basic_block_head[i]));
+
+
+	      /* Find all loop latches (blocks which back edges to the loop
+		 header) or all the leaf blocks in the cfg has no loops.
+
+		 Place those blocks into the queue.  */
+	      if (no_loops)
+		{
+		  for (j = 0; j < n_basic_blocks; j++)
+		    /* Leaf nodes have only a single successor which must
+		       be EXIT_BLOCK.  */
+		    if (num_succs[j] == 1
+			&& INT_LIST_VAL (s_succs[j]) == EXIT_BLOCK)
+		      {
+			queue[++tail] = j;
+			SET_BIT (in_queue, j);
+
+			if (too_large (j, &num_bbs, &num_insns))
+			  {
+			    too_large_failure = 1;
+			    break;
+			  }
 		      }
-		  }
-	    }
-	  else
-	    {
-	      fst_edge = current_edge = IN_EDGES (i);
-	      do
-		{
-		  node = FROM_BLOCK (current_edge);
-		  if (max_hdr[node] == loop_head && node != i)	/* a latch */
-		    {
-		      queue[++tail] = node;
-		      in_queue[node] = 1;
-
-		      if (too_large (node, &num_bbs, &num_insns))
-			{
-			  too_large_failure = 1;
-			  break;
-			}
-		    }
-		  current_edge = NEXT_IN (current_edge);
 		}
-	      while (fst_edge != current_edge);
-	    }
-
-	  /* Put in queue[] all blocks that belong to the loop.  Check
-	     that the loop is reducible, traversing back from the loop
-	     latches up to the loop header.  */
-	  while (head < tail && !too_large_failure)
-	    {
-	      child = queue[++head];
-	      fst_edge = current_edge = IN_EDGES (child);
-	      do
+	      else
 		{
-		  node = FROM_BLOCK (current_edge);
+		  int_list_ptr ps;
 
-		  if (max_hdr[node] != loop_head)
-		    {		/* another entry to loop, it is irreducible */
-		      tail = -1;
-		      break;
-		    }
-		  else if (!in_queue[node] && node != i)
+		  for (ps = s_preds[i]; ps; ps = ps->next)
 		    {
-		      queue[++tail] = node;
-		      in_queue[node] = 1;
+		      node = INT_LIST_VAL (ps);
 
-		      if (too_large (node, &num_bbs, &num_insns))
+		      if (node == ENTRY_BLOCK || node == EXIT_BLOCK)
+			continue;
+ 
+		      if (max_hdr[node] == loop_head && node != i)
 			{
-			  too_large_failure = 1;
-			  break;
-			}
-		    }
-		  current_edge = NEXT_IN (current_edge);
-		}
-	      while (fst_edge != current_edge);
-	    }
+			  /* This is a loop latch.  */
+			  queue[++tail] = node;
+			  SET_BIT (in_queue, node);
 
-	  if (tail >= 0 && !too_large_failure)
-	    {
-	      /* Place the loop header into list of region blocks */
-	      degree[i] = -1;
-	      rgn_bb_table[idx] = i;
-	      RGN_NR_BLOCKS (nr_regions) = num_bbs;
-	      RGN_BLOCKS (nr_regions) = idx++;
-	      CONTAINING_RGN (i) = nr_regions;
-	      BLOCK_TO_BB (i) = count = 0;
-
-	      /* remove blocks from queue[], (in topological order), when
-	         their  in_degree becomes 0.  We  scan  the queue over and
-	         over  again until   it is empty.   Note: there may be a more
-	         efficient way to do it.  */
-	      while (tail >= 0)
-		{
-		  if (head < 0)
-		    head = tail;
-		  child = queue[head];
-		  if (degree[child] == 0)
-		    {
-		      degree[child] = -1;
-		      rgn_bb_table[idx++] = child;
-		      BLOCK_TO_BB (child) = ++count;
-		      CONTAINING_RGN (child) = nr_regions;
-		      queue[head] = queue[tail--];
-		      fst_edge = current_edge = OUT_EDGES (child);
-
-		      if (fst_edge > 0)
-			{
-			  do
+			  if (too_large (node, &num_bbs, &num_insns))
 			    {
-			      --degree[TO_BLOCK (current_edge)];
-			      current_edge = NEXT_OUT (current_edge);
+			      too_large_failure = 1;
+			      break;
 			    }
-			  while (fst_edge != current_edge);
+			}
+		      
+		    }
+		}
+
+	      /* Now add all the blocks in the loop to the queue.
+
+	     We know the loop is a natural loop; however the algorithm
+	     above will not always mark certain blocks as being in the
+	     loop.  Consider:
+		node   children
+		 a	  b,c
+		 b	  c
+		 c	  a,d
+		 d	  b
+
+
+	     The algorithm in the DFS traversal may not mark B & D as part
+	     of the loop (ie they will not have max_hdr set to A).
+
+	     We know they can not be loop latches (else they would have
+	     had max_hdr set since they'd have a backedge to a dominator
+	     block).  So we don't need them on the initial queue.
+
+	     We know they are part of the loop because they are dominated
+	     by the loop header and can be reached by a backwards walk of
+	     the edges starting with nodes on the initial queue.
+
+	     It is safe and desirable to include those nodes in the
+	     loop/scheduling region.  To do so we would need to decrease
+	     the degree of a node if it is the target of a backedge
+	     within the loop itself as the node is placed in the queue.
+
+	     We do not do this because I'm not sure that the actual
+	     scheduling code will properly handle this case. ?!? */
+	
+	      while (head < tail && !too_large_failure)
+		{
+		  int_list_ptr ps;
+		  child = queue[++head];
+
+		  for (ps = s_preds[child]; ps; ps = ps->next)
+		    {
+		      node = INT_LIST_VAL (ps);
+
+		      /* See discussion above about nodes not marked as in
+			 this loop during the initial DFS traversal.  */
+		      if (node == ENTRY_BLOCK || node == EXIT_BLOCK
+			  || max_hdr[node] != loop_head)
+			{
+			  tail = -1;
+			  break;
+			}
+		      else if (!TEST_BIT (in_queue, node) && node != i)
+			{
+			  queue[++tail] = node;
+			  SET_BIT (in_queue, node);
+
+			  if (too_large (node, &num_bbs, &num_insns))
+			    {
+			      too_large_failure = 1;
+			      break;
+			    }
 			}
 		    }
-		  else
-		    --head;
 		}
-	      ++nr_regions;
+
+	      if (tail >= 0 && !too_large_failure)
+		{
+		  /* Place the loop header into list of region blocks.  */
+		  degree[i] = -1;
+		  rgn_bb_table[idx] = i;
+		  RGN_NR_BLOCKS (nr_regions) = num_bbs;
+		  RGN_BLOCKS (nr_regions) = idx++;
+		  CONTAINING_RGN (i) = nr_regions;
+		  BLOCK_TO_BB (i) = count = 0;
+
+		  /* Remove blocks from queue[] when their in degree becomes
+		 zero.  Repeat until no blocks are left on the list.  This
+		 produces a topological list of blocks in the region.  */
+		  while (tail >= 0)
+		    {
+		      int_list_ptr ps;
+
+		      if (head < 0)
+			head = tail;
+		      child = queue[head];
+		      if (degree[child] == 0)
+			{
+			  degree[child] = -1;
+			  rgn_bb_table[idx++] = child;
+			  BLOCK_TO_BB (child) = ++count;
+			  CONTAINING_RGN (child) = nr_regions;
+			  queue[head] = queue[tail--];
+
+			  for (ps = s_succs[child]; ps; ps = ps->next)
+			    if (INT_LIST_VAL (ps) != ENTRY_BLOCK
+				&& INT_LIST_VAL (ps) != EXIT_BLOCK)
+			      --degree[INT_LIST_VAL (ps)];
+			}
+		      else
+			--head;
+		    }
+		  ++nr_regions;
+		}
 	    }
 	}
     }
 
-  /* define each of all other blocks as a region itself */
+  /* Any block that did not end up in a region is placed into a region
+     by itself.  */
   for (i = 0; i < n_basic_blocks; i++)
     if (degree[i] >= 0)
       {
@@ -1915,7 +1851,12 @@ find_rgns ()
 	BLOCK_TO_BB (i) = 0;
       }
 
-}				/* find_rgns */
+  free (passed);
+  free (header);
+  free (inner);
+  free (in_queue);
+  free (in_stack);
+}
 
 
 /* functions for regions scheduling information */
@@ -2164,7 +2105,7 @@ check_live_1 (src, x)
      int src;
      rtx x;
 {
-  register i;
+  register int i;
   register int regno;
   register rtx reg = SET_DEST (x);
 
@@ -2232,7 +2173,7 @@ update_live_1 (src, x)
      int src;
      rtx x;
 {
-  register i;
+  register int i;
   register int regno;
   register rtx reg = SET_DEST (x);
 
@@ -2285,10 +2226,9 @@ update_live_1 (src, x)
    ready-list or before the scheduling.  */
 
 static int
-check_live (insn, src, trg)
+check_live (insn, src)
      rtx insn;
      int src;
-     int trg;
 {
   /* find the registers set by instruction */
   if (GET_CODE (PATTERN (insn)) == SET
@@ -2314,9 +2254,9 @@ check_live (insn, src, trg)
    block src to trg.  */
 
 static void
-update_live (insn, src, trg)
+update_live (insn, src)
      rtx insn;
-     int src, trg;
+     int src;
 {
   /* find the registers set by instruction */
   if (GET_CODE (PATTERN (insn)) == SET
@@ -2558,7 +2498,7 @@ is_pfree (load_insn, bb_src, bb_trg)
 	      if (GET_MODE (fore_link) == VOIDmode)
 		{
 		  /* found a DEF-USE dependence (insn1, insn2) */
-		  if (classify_insn (insn2) != PFREE_CANDIDATE)
+		  if (haifa_classify_insn (insn2) != PFREE_CANDIDATE)
 		    /* insn2 not guaranteed to be a 1 base reg load */
 		    continue;
 
@@ -2659,7 +2599,7 @@ may_trap_exp (x, is_store)
    being either PFREE or PRISKY.  */
 
 static int
-classify_insn (insn)
+haifa_classify_insn (insn)
      rtx insn;
 {
   rtx pat = PATTERN (insn);
@@ -2689,6 +2629,10 @@ classify_insn (insn)
 	      tmp_class =
 		WORST_CLASS (tmp_class,
 			   may_trap_exp (SET_SRC (XVECEXP (pat, 0, i)), 0));
+	      break;
+	    case TRAP_IF:
+	      tmp_class = TRAP_RISKY;
+	      break;
 	    default:;
 	    }
 	  insn_class = WORST_CLASS (insn_class, tmp_class);
@@ -2714,6 +2658,10 @@ classify_insn (insn)
 	  tmp_class =
 	    WORST_CLASS (tmp_class,
 			 may_trap_exp (SET_SRC (pat), 0));
+	  break;
+	case TRAP_IF:
+	  tmp_class = TRAP_RISKY;
+	  break;
 	default:;
 	}
       insn_class = tmp_class;
@@ -2721,7 +2669,7 @@ classify_insn (insn)
 
   return insn_class;
 
-}				/* classify_insn */
+}				/* haifa_classify_insn */
 
 /* Return 1 if load_insn is prisky (i.e. if load_insn is fed by
    a load moved speculatively, or if load_insn is protected by
@@ -2754,7 +2702,7 @@ is_exception_free (insn, bb_src, bb_trg)
      rtx insn;
      int bb_src, bb_trg;
 {
-  int insn_class = classify_insn (insn);
+  int insn_class = haifa_classify_insn (insn);
 
   /* handle non-load insns */
   switch (insn_class)
@@ -2806,7 +2754,7 @@ is_exception_free (insn, bb_src, bb_trg)
 /* Return the INSN_LIST containing INSN in LIST, or NULL
    if LIST does not contain INSN.  */
 
-__inline static rtx
+HAIFA_INLINE static rtx
 find_insn_list (insn, list)
      rtx insn;
      rtx list;
@@ -2823,7 +2771,7 @@ find_insn_list (insn, list)
 
 /* Return 1 if the pair (insn, x) is found in (LIST, LIST1), or 0 otherwise.  */
 
-__inline static char
+HAIFA_INLINE static char
 find_insn_mem_list (insn, x, list, list1)
      rtx insn, x;
      rtx list, list1;
@@ -2846,7 +2794,7 @@ find_insn_mem_list (insn, x, list, list1)
    mask if the value is negative.  A function unit index is the
    non-negative encoding.  */
 
-__inline static int
+HAIFA_INLINE static int
 insn_unit (insn)
      rtx insn;
 {
@@ -2883,7 +2831,7 @@ insn_unit (insn)
    These values are encoded in an int where the upper half gives the
    minimum value and the lower half gives the maximum value.  */
 
-__inline static unsigned int
+HAIFA_INLINE static unsigned int
 blockage_range (unit, insn)
      int unit;
      rtx insn;
@@ -2930,11 +2878,10 @@ clear_units ()
 
 /* Return the issue-delay of an insn */
 
-__inline static int
+HAIFA_INLINE static int
 insn_issue_delay (insn)
      rtx insn;
 {
-  rtx link;
   int i, delay = 0;
   int unit = insn_unit (insn);
 
@@ -2961,7 +2908,7 @@ insn_issue_delay (insn)
    instance INSTANCE at time CLOCK if the previous actual hazard cost
    was COST.  */
 
-__inline static int
+HAIFA_INLINE static int
 actual_hazard_this_instance (unit, instance, insn, clock, cost)
      int unit, instance, clock, cost;
      rtx insn;
@@ -2998,7 +2945,7 @@ actual_hazard_this_instance (unit, instance, insn, clock, cost)
 /* Record INSN as having begun execution on the units encoded by UNIT at
    time CLOCK.  */
 
-__inline static void
+HAIFA_INLINE static void
 schedule_unit (unit, insn, clock)
      int unit, clock;
      rtx insn;
@@ -3030,7 +2977,7 @@ schedule_unit (unit, insn, clock)
 /* Return the actual hazard cost of executing INSN on the units encoded by
    UNIT at time CLOCK if the previous actual hazard cost was COST.  */
 
-__inline static int
+HAIFA_INLINE static int
 actual_hazard (unit, insn, clock, cost)
      int unit, clock, cost;
      rtx insn;
@@ -3079,7 +3026,7 @@ actual_hazard (unit, insn, clock, cost)
    to be used is chosen in preference to one with a unit that is less
    used.  We are trying to minimize a subsequent actual hazard.  */
 
-__inline static int
+HAIFA_INLINE static int
 potential_hazard (unit, insn, cost)
      int unit, cost;
      rtx insn;
@@ -3124,7 +3071,7 @@ potential_hazard (unit, insn, cost)
    This is the number of cycles between instruction issue and
    instruction results.  */
 
-__inline static int
+HAIFA_INLINE static int
 insn_cost (insn, link, used)
      rtx insn, link, used;
 {
@@ -3210,6 +3157,9 @@ priority (insn)
 	    rtx next;
 	    int next_priority;
 
+	    if (RTX_INTEGRATED_P (link))
+	      continue;
+
 	    next = XEXP (link, 0);
 
 	    /* critical path is meaningful in block boundaries only */
@@ -3229,40 +3179,15 @@ priority (insn)
 /* Remove all INSN_LISTs and EXPR_LISTs from the pending lists and add
    them to the unused_*_list variables, so that they can be reused.  */
 
-__inline static void
-free_pnd_lst (listp, unused_listp)
-     rtx *listp, *unused_listp;
-{
-  register rtx link, prev_link;
-
-  if (*listp == 0)
-    return;
-
-  prev_link = *listp;
-  link = XEXP (prev_link, 1);
-
-  while (link)
-    {
-      prev_link = link;
-      link = XEXP (link, 1);
-    }
-
-  XEXP (prev_link, 1) = *unused_listp;
-  *unused_listp = *listp;
-  *listp = 0;
-}
-
 static void
 free_pending_lists ()
 {
-
-
   if (current_nr_blocks <= 1)
     {
-      free_pnd_lst (&pending_read_insns, &unused_insn_list);
-      free_pnd_lst (&pending_write_insns, &unused_insn_list);
-      free_pnd_lst (&pending_read_mems, &unused_expr_list);
-      free_pnd_lst (&pending_write_mems, &unused_expr_list);
+      free_list (&pending_read_insns, &unused_insn_list);
+      free_list (&pending_write_insns, &unused_insn_list);
+      free_list (&pending_read_mems, &unused_expr_list);
+      free_list (&pending_write_mems, &unused_expr_list);
     }
   else
     {
@@ -3271,10 +3196,10 @@ free_pending_lists ()
 
       for (bb = 0; bb < current_nr_blocks; bb++)
 	{
-	  free_pnd_lst (&bb_pending_read_insns[bb], &unused_insn_list);
-	  free_pnd_lst (&bb_pending_write_insns[bb], &unused_insn_list);
-	  free_pnd_lst (&bb_pending_read_mems[bb], &unused_expr_list);
-	  free_pnd_lst (&bb_pending_write_mems[bb], &unused_expr_list);
+	  free_list (&bb_pending_read_insns[bb], &unused_insn_list);
+	  free_list (&bb_pending_write_insns[bb], &unused_insn_list);
+	  free_list (&bb_pending_read_mems[bb], &unused_expr_list);
+	  free_list (&bb_pending_write_mems[bb], &unused_expr_list);
 	}
     }
 }
@@ -3289,26 +3214,10 @@ add_insn_mem_dependence (insn_list, mem_list, insn, mem)
 {
   register rtx link;
 
-  if (unused_insn_list)
-    {
-      link = unused_insn_list;
-      unused_insn_list = XEXP (link, 1);
-    }
-  else
-    link = rtx_alloc (INSN_LIST);
-  XEXP (link, 0) = insn;
-  XEXP (link, 1) = *insn_list;
+  link = alloc_INSN_LIST (insn, *insn_list);
   *insn_list = link;
 
-  if (unused_expr_list)
-    {
-      link = unused_expr_list;
-      unused_expr_list = XEXP (link, 1);
-    }
-  else
-    link = rtx_alloc (EXPR_LIST);
-  XEXP (link, 0) = mem;
-  XEXP (link, 1) = *mem_list;
+  link = alloc_EXPR_LIST (VOIDmode, mem, *mem_list);
   *mem_list = link;
 
   pending_lists_length++;
@@ -3361,8 +3270,8 @@ flush_pending_lists (insn, only_write)
   for (u = last_pending_memory_flush; u; u = XEXP (u, 1))
     add_dependence (insn, XEXP (u, 0), REG_DEP_ANTI);
 
-  last_pending_memory_flush =
-    gen_rtx (INSN_LIST, VOIDmode, insn, NULL_RTX);
+  free_list (&last_pending_memory_flush, &unused_insn_list);
+  last_pending_memory_flush = alloc_INSN_LIST (insn, NULL_RTX);
 }
 
 /* Analyze a single SET or CLOBBER rtx, X, creating all dependencies generated
@@ -3578,8 +3487,7 @@ sched_analyze_2 (x, insn)
 	    while (--i >= 0)
 	      {
 		reg_last_uses[regno + i]
-		  = gen_rtx (INSN_LIST, VOIDmode,
-			     insn, reg_last_uses[regno + i]);
+		  = alloc_INSN_LIST (insn, reg_last_uses[regno + i]);
 
 		for (u = reg_last_sets[regno + i]; u; u = XEXP (u, 1))
 		  add_dependence (insn, XEXP (u, 0), 0);
@@ -3592,8 +3500,7 @@ sched_analyze_2 (x, insn)
 	  }
 	else
 	  {
-	    reg_last_uses[regno]
-	      = gen_rtx (INSN_LIST, VOIDmode, insn, reg_last_uses[regno]);
+	    reg_last_uses[regno] = alloc_INSN_LIST (insn, reg_last_uses[regno]);
 
 	    for (u = reg_last_sets[regno]; u; u = XEXP (u, 1))
 	      add_dependence (insn, XEXP (u, 0), 0);
@@ -3661,10 +3568,14 @@ sched_analyze_2 (x, insn)
 	return;
       }
 
+    /* Force pending stores to memory in case a trap handler needs them.  */
+    case TRAP_IF:
+      flush_pending_lists (insn, 1);
+      break;
+
     case ASM_OPERANDS:
     case ASM_INPUT:
     case UNSPEC_VOLATILE:
-    case TRAP_IF:
       {
 	rtx u;
 
@@ -3720,6 +3631,9 @@ sched_analyze_2 (x, insn)
       sched_analyze_2 (XEXP (x, 0), insn);
       sched_analyze_1 (x, insn);
       return;
+
+    default:
+      break;
     }
 
   /* Other cases: walk the insn.  */
@@ -3829,18 +3743,20 @@ sched_analyze_insn (x, insn, loop_notes)
   EXECUTE_IF_SET_IN_REG_SET (reg_pending_sets, 0, i,
 			     {
 			       /* reg_last_sets[r] is now a list of insns */
+			       free_list (&reg_last_sets[i], &unused_insn_list);
 			       reg_last_sets[i]
-				 = gen_rtx (INSN_LIST, VOIDmode, insn, NULL_RTX);
+				 = alloc_INSN_LIST (insn, NULL_RTX);
 			     });
   CLEAR_REG_SET (reg_pending_sets);
 
   if (reg_pending_sets_all)
     {
       for (i = 0; i < maxreg; i++)
-
-	/* reg_last_sets[r] is now a list of insns */
-	reg_last_sets[i]
-	  = gen_rtx (INSN_LIST, VOIDmode, insn, NULL_RTX);
+	{
+	  /* reg_last_sets[r] is now a list of insns */
+	  free_list (&reg_last_sets[i], &unused_insn_list);
+	  reg_last_sets[i] = alloc_INSN_LIST (insn, NULL_RTX);
+	}
 
       reg_pending_sets_all = 0;
     }
@@ -3940,12 +3856,12 @@ sched_analyze (head, tail)
 	      /* Add a pair of fake REG_NOTE which we will later
 		 convert back into a NOTE_INSN_SETJMP note.  See
 		 reemit_notes for why we use a pair of NOTEs.  */
-	      REG_NOTES (insn) = gen_rtx (EXPR_LIST, REG_DEAD,
-					  GEN_INT (0),
-					  REG_NOTES (insn));
-	      REG_NOTES (insn) = gen_rtx (EXPR_LIST, REG_DEAD,
-					  GEN_INT (NOTE_INSN_SETJMP),
-					  REG_NOTES (insn));
+	      REG_NOTES (insn) = alloc_EXPR_LIST (REG_DEAD,
+						  GEN_INT (0),
+						  REG_NOTES (insn));
+	      REG_NOTES (insn) = alloc_EXPR_LIST (REG_DEAD,
+						  GEN_INT (NOTE_INSN_SETJMP),
+						  REG_NOTES (insn));
 	    }
 	  else
 	    {
@@ -3987,8 +3903,8 @@ sched_analyze (head, tail)
 	     function call) on all hard register clobberage.  */
 
 	  /* last_function_call is now a list of insns */
-	  last_function_call
-	    = gen_rtx (INSN_LIST, VOIDmode, insn, NULL_RTX);
+	  free_list(&last_function_call, &unused_insn_list);
+	  last_function_call = alloc_INSN_LIST (insn, NULL_RTX);
 	}
 
       /* See comments on reemit_notes as to why we do this.  */
@@ -3997,13 +3913,17 @@ sched_analyze (head, tail)
 		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_LOOP_END
 		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_EH_REGION_BEG
 		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_EH_REGION_END
+		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_RANGE_START
+		   || NOTE_LINE_NUMBER (insn) == NOTE_INSN_RANGE_END
 		   || (NOTE_LINE_NUMBER (insn) == NOTE_INSN_SETJMP
 		       && GET_CODE (PREV_INSN (insn)) != CALL_INSN)))
 	{
-	  loop_notes = gen_rtx (EXPR_LIST, REG_DEAD,
-				GEN_INT (NOTE_BLOCK_NUMBER (insn)), loop_notes);
-	  loop_notes = gen_rtx (EXPR_LIST, REG_DEAD,
-				GEN_INT (NOTE_LINE_NUMBER (insn)), loop_notes);
+	  loop_notes = alloc_EXPR_LIST (REG_DEAD,
+					GEN_INT (NOTE_BLOCK_NUMBER (insn)),
+					loop_notes);
+	  loop_notes = alloc_EXPR_LIST (REG_DEAD,
+					GEN_INT (NOTE_LINE_NUMBER (insn)),
+					loop_notes);
 	  CONST_CALL_P (loop_notes) = CONST_CALL_P (insn);
 	}
 
@@ -4019,8 +3939,7 @@ sched_analyze (head, tail)
    are scanning forwards.  Mark that register as being born.  */
 
 static void
-sched_note_set (b, x, death)
-     int b;
+sched_note_set (x, death)
      rtx x;
      int death;
 {
@@ -4117,20 +4036,15 @@ while (0)
 
 static int
 rank_for_schedule (x, y)
-     rtx *x, *y;
+     const GENERIC_PTR x;
+     const GENERIC_PTR y;
 {
-  rtx tmp = *y;
-  rtx tmp2 = *x;
+  rtx tmp = *(rtx *)y;
+  rtx tmp2 = *(rtx *)x;
   rtx link;
-  int tmp_class, tmp2_class;
+  int tmp_class, tmp2_class, depend_count1, depend_count2;
   int val, priority_val, spec_val, prob_val, weight_val;
 
-
-  /* schedule reverse is a stress test of the scheduler correctness,
-     controlled by -fsched-reverse option.  */
-  if ((reload_completed && flag_schedule_reverse_after_reload) ||
-      (!reload_completed && flag_schedule_reverse_before_reload))
-    return INSN_LUID (tmp2) - INSN_LUID (tmp);
 
   /* prefer insn with higher priority */
   priority_val = INSN_PRIORITY (tmp2) - INSN_PRIORITY (tmp);
@@ -4189,6 +4103,21 @@ rank_for_schedule (x, y)
 	return val;
     }
 
+  /* Prefer the insn which has more later insns that depend on it. 
+     This gives the scheduler more freedom when scheduling later
+     instructions at the expense of added register pressure.  */
+  depend_count1 = 0;
+  for (link = INSN_DEPEND (tmp); link; link = XEXP (link, 1))
+    depend_count1++;
+
+  depend_count2 = 0;
+  for (link = INSN_DEPEND (tmp2); link; link = XEXP (link, 1))
+    depend_count2++;
+
+  val = depend_count2 - depend_count1;
+  if (val)
+    return val;
+  
   /* If insns are equally good, sort by INSN_LUID (original insn order),
      so that we make the sort stable.  This minimizes instruction movement,
      thus minimizing sched's effect on debugging and cross-jumping.  */
@@ -4197,7 +4126,7 @@ rank_for_schedule (x, y)
 
 /* Resort the array A in which only element at index N may be out of order.  */
 
-__inline static void
+HAIFA_INLINE static void
 swap_sort (a, n)
      rtx *a;
      int n;
@@ -4219,15 +4148,13 @@ static int max_priority;
    N_CYCLES after the currently executing insn.  Preserve insns
    chain for debugging purposes.  */
 
-__inline static void
+HAIFA_INLINE static void
 queue_insn (insn, n_cycles)
      rtx insn;
      int n_cycles;
 {
   int next_q = NEXT_Q_AFTER (q_ptr, n_cycles);
-  rtx link = rtx_alloc (INSN_LIST);
-  XEXP (link, 0) = insn;
-  XEXP (link, 1) = insn_queue[next_q];
+  rtx link = alloc_INSN_LIST (insn, insn_queue[next_q]);
   insn_queue[next_q] = link;
   q_size += 1;
 
@@ -4246,7 +4173,7 @@ queue_insn (insn, n_cycles)
 /* Return nonzero if PAT is the pattern of an insn which makes a
    register live.  */
 
-__inline static int
+HAIFA_INLINE static int
 birthing_insn_p (pat)
      rtx pat;
 {
@@ -4282,7 +4209,7 @@ birthing_insn_p (pat)
 /* PREV is an insn that is ready to execute.  Adjust its priority if that
    will help shorten register lifetimes.  */
 
-__inline static void
+HAIFA_INLINE static void
 adjust_priority (prev)
      rtx prev;
 {
@@ -4387,7 +4314,7 @@ schedule_insn (insn, ready, n_ready, clock)
 		  || CANT_MOVE (next)
 		  || (IS_SPECULATIVE_INSN (next)
 		      && (insn_issue_delay (next) > 3
-			  || !check_live (next, INSN_BB (next), target_bb)
+			  || !check_live (next, INSN_BB (next))
 		 || !is_exception_free (next, INSN_BB (next), target_bb)))))
 	    continue;
 
@@ -4442,10 +4369,7 @@ create_reg_dead_note (reg, insn)
       if (current_nr_blocks <= 1)
 	abort ();
       else
-	{
-	  link = rtx_alloc (EXPR_LIST);
-	  PUT_REG_NOTE_KIND (link, REG_DEAD);
-	}
+	link = alloc_EXPR_LIST (REG_DEAD, NULL_RTX, NULL_RTX);
     }
   else
     {
@@ -4472,12 +4396,8 @@ create_reg_dead_note (reg, insn)
 	  if (link == NULL_RTX && current_nr_blocks <= 1)
 	    abort ();
 	  else if (link == NULL_RTX)
-	    {
-	      link = rtx_alloc (EXPR_LIST);
-	      PUT_REG_NOTE_KIND (link, REG_DEAD);
-	      XEXP (link, 0) = gen_rtx (REG, word_mode, 0);
-	      XEXP (link, 1) = NULL_RTX;
-	    }
+	    link = alloc_EXPR_LIST (REG_DEAD, gen_rtx_REG (word_mode, 0),
+				    NULL_RTX);
 	     
 	  reg_note_regs += (REGNO (XEXP (link, 0)) >= FIRST_PSEUDO_REGISTER ? 1
 			    : HARD_REGNO_NREGS (REGNO (XEXP (link, 0)),
@@ -4490,11 +4410,8 @@ create_reg_dead_note (reg, insn)
 	{
 	  rtx temp_reg, temp_link;
 
-	  temp_reg = gen_rtx (REG, word_mode, 0);
-	  temp_link = rtx_alloc (EXPR_LIST);
-	  PUT_REG_NOTE_KIND (temp_link, REG_DEAD);
-	  XEXP (temp_link, 0) = temp_reg;
-	  XEXP (temp_link, 1) = dead_notes;
+	  temp_reg = gen_rtx_REG (word_mode, 0);
+	  temp_link = alloc_EXPR_LIST (REG_DEAD, temp_reg, dead_notes);
 	  dead_notes = temp_link;
 	  reg_note_regs--;
 	}
@@ -4594,12 +4511,7 @@ attach_deaths (x, insn, set_p)
 #endif
 		&& regno != STACK_POINTER_REGNUM)
 	      {
-		/* ??? It is perhaps a dead_or_set_p bug that it does
-		   not check for REG_UNUSED notes itself.  This is necessary
-		   for the case where the SET_DEST is a subreg of regno, as
-		   dead_or_set_p handles subregs specially.  */
-		if (! all_needed && ! dead_or_set_p (insn, x)
-		    && ! find_reg_note (insn, REG_UNUSED, x))
+		if (! all_needed && ! dead_or_set_p (insn, x))
 		  {
 		    /* Check for the case where the register dying partially
 		       overlaps the register set by this insn.  */
@@ -4626,9 +4538,8 @@ attach_deaths (x, insn, set_p)
 			     i >= 0; i--)
 			  if (! REGNO_REG_SET_P (old_live_regs, regno+i)
 			      && ! dead_or_set_regno_p (insn, regno + i))
-			    create_reg_dead_note (gen_rtx (REG,
-							   reg_raw_mode[regno + i],
-							   regno + i),
+			    create_reg_dead_note (gen_rtx_REG (reg_raw_mode[regno + i],
+							       regno + i),
 						  insn);
 		      }
 		  }
@@ -4663,17 +4574,20 @@ attach_deaths (x, insn, set_p)
       return;
 
     case SUBREG:
+      attach_deaths (SUBREG_REG (x), insn,
+		     set_p && ((GET_MODE_SIZE (GET_MODE (SUBREG_REG (x)))
+				<= UNITS_PER_WORD)
+			       || (GET_MODE_SIZE (GET_MODE (SUBREG_REG (x)))
+				   == GET_MODE_SIZE (GET_MODE ((x))))));
+      return;
+
     case STRICT_LOW_PART:
-      /* These two cases preserve the value of SET_P, so handle them
-         separately.  */
-      attach_deaths (XEXP (x, 0), insn, set_p);
+      attach_deaths (XEXP (x, 0), insn, 0);
       return;
 
     case ZERO_EXTRACT:
     case SIGN_EXTRACT:
-      /* This case preserves the value of SET_P for the first operand, but
-         clears it for the other two.  */
-      attach_deaths (XEXP (x, 0), insn, set_p);
+      attach_deaths (XEXP (x, 0), insn, 0);
       attach_deaths (XEXP (x, 1), insn, 0);
       attach_deaths (XEXP (x, 2), insn, 0);
       return;
@@ -4773,6 +4687,8 @@ unlink_other_notes (insn, tail)
       if (NOTE_LINE_NUMBER (insn) != NOTE_INSN_SETJMP
 	  && NOTE_LINE_NUMBER (insn) != NOTE_INSN_LOOP_BEG
 	  && NOTE_LINE_NUMBER (insn) != NOTE_INSN_LOOP_END
+	  && NOTE_LINE_NUMBER (insn) != NOTE_INSN_RANGE_START
+	  && NOTE_LINE_NUMBER (insn) != NOTE_INSN_RANGE_END
 	  && NOTE_LINE_NUMBER (insn) != NOTE_INSN_EH_REGION_BEG
 	  && NOTE_LINE_NUMBER (insn) != NOTE_INSN_EH_REGION_END)
 	{
@@ -4822,7 +4738,7 @@ unlink_line_notes (insn, tail)
 
 /* Return the head and tail pointers of BB.  */
 
-__inline static void
+HAIFA_INLINE static void
 get_block_head_tail (bb, headp, tailp)
      int bb;
      rtx *headp;
@@ -5178,7 +5094,7 @@ find_pre_sched_live (bb)
 	  if (GET_CODE (PATTERN (insn)) == SET
 	      || GET_CODE (PATTERN (insn)) == CLOBBER)
 	    {
-	      sched_note_set (b, PATTERN (insn), 0);
+	      sched_note_set (PATTERN (insn), 0);
 	      reg_weight++;
 	    }
 
@@ -5189,7 +5105,7 @@ find_pre_sched_live (bb)
 		if (GET_CODE (XVECEXP (PATTERN (insn), 0, j)) == SET
 		    || GET_CODE (XVECEXP (PATTERN (insn), 0, j)) == CLOBBER)
 		  {
-		    sched_note_set (b, XVECEXP (PATTERN (insn), 0, j), 0);
+		    sched_note_set (XVECEXP (PATTERN (insn), 0, j), 0);
 		    reg_weight++;
 		  }
 
@@ -5197,7 +5113,7 @@ find_pre_sched_live (bb)
 	         is harmless though, so we will leave it in for now.  */
 	      for (j = XVECLEN (PATTERN (insn), 0) - 1; j >= 0; j--)
 		if (GET_CODE (XVECEXP (PATTERN (insn), 0, j)) == USE)
-		  sched_note_set (b, XVECEXP (PATTERN (insn), 0, j), 0);
+		  sched_note_set (XVECEXP (PATTERN (insn), 0, j), 0);
 	    }
 
 	  /* Each call cobbers (makes live) all call-clobbered regs
@@ -5306,9 +5222,10 @@ find_post_sched_live (bb)
   next_tail = NEXT_INSN (tail);
   prev_head = PREV_INSN (head);
 
-  for (i = FIRST_PSEUDO_REGISTER; i < max_regno; i++)
-    if (REGNO_REG_SET_P (bb_live_regs, i))
-      sched_reg_basic_block[i] = REG_BLOCK_GLOBAL;
+  EXECUTE_IF_SET_IN_REG_SET (bb_live_regs, FIRST_PSEUDO_REGISTER, i,
+			     {
+			       sched_reg_basic_block[i] = REG_BLOCK_GLOBAL;
+			     });
 
   /* if the block is empty, same regs are alive at its end and its start.
      since this is not guaranteed after interblock scheduling, make sure they
@@ -5360,13 +5277,13 @@ find_post_sched_live (bb)
 
       if (GET_CODE (PATTERN (insn)) == SET
 	  || GET_CODE (PATTERN (insn)) == CLOBBER)
-	sched_note_set (b, PATTERN (insn), 1);
+	sched_note_set (PATTERN (insn), 1);
       else if (GET_CODE (PATTERN (insn)) == PARALLEL)
 	{
 	  for (j = XVECLEN (PATTERN (insn), 0) - 1; j >= 0; j--)
 	    if (GET_CODE (XVECEXP (PATTERN (insn), 0, j)) == SET
 		|| GET_CODE (XVECEXP (PATTERN (insn), 0, j)) == CLOBBER)
-	      sched_note_set (b, XVECEXP (PATTERN (insn), 0, j), 1);
+	      sched_note_set (XVECEXP (PATTERN (insn), 0, j), 1);
 	}
 
       /* This code keeps life analysis information up to date.  */
@@ -5457,9 +5374,11 @@ update_reg_usage ()
   int regno;
 
   if (n_basic_blocks > 0)
-    for (regno = FIRST_PSEUDO_REGISTER; regno < max_regno; regno++)
-      if (REGNO_REG_SET_P (basic_block_live_at_start[0], regno))
-	sched_reg_basic_block[regno] = REG_BLOCK_GLOBAL;
+    EXECUTE_IF_SET_IN_REG_SET (bb_live_regs, FIRST_PSEUDO_REGISTER, regno,
+			       {
+				 sched_reg_basic_block[regno]
+				   = REG_BLOCK_GLOBAL;
+			       });
 
   for (regno = 0; regno < max_regno; regno++)
     if (sched_reg_live_length[regno])
@@ -5608,7 +5527,7 @@ queue_to_ready (ready, n_ready)
 
 /* Print the ready list for debugging purposes. Callable from debugger.  */
 
-extern void
+static void
 debug_ready_list (ready, n_ready)
      rtx ready[];
      int n_ready;
@@ -5726,6 +5645,28 @@ init_block_visualization ()
 
 #define BUF_LEN 256
 
+static char *
+safe_concat (buf, cur, str)
+     char *buf;
+     char *cur;
+     char *str;
+{
+  char *end = buf + BUF_LEN - 2;	/* leave room for null */
+  int c;
+
+  if (cur > end)
+    {
+      *end = '\0';
+      return end;
+    }
+
+  while (cur < end && (c = *str++) != '\0')
+    *cur++ = c;
+
+  *cur = '\0';
+  return cur;
+}
+
 /* This recognizes rtx, I classified as expressions. These are always */
 /* represent some action on values or results of other expression, */
 /* that may be stored in objects representing values.  */
@@ -5736,332 +5677,335 @@ print_exp (buf, x, verbose)
      rtx x;
      int verbose;
 {
-  char t1[BUF_LEN], t2[BUF_LEN], t3[BUF_LEN];
+  char tmp[BUF_LEN];
+  char *st[4];
+  char *cur = buf;
+  char *fun = (char *)0;
+  char *sep;
+  rtx op[4];
+  int i;
+
+  for (i = 0; i < 4; i++)
+    {
+      st[i] = (char *)0;
+      op[i] = NULL_RTX;
+    }
 
   switch (GET_CODE (x))
     {
     case PLUS:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s+%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "+";
+      op[1] = XEXP (x, 1);
       break;
     case LO_SUM:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%sl+%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "+low(";
+      op[1] = XEXP (x, 1);
+      st[2] = ")";
       break;
     case MINUS:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s-%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "-";
+      op[1] = XEXP (x, 1);
       break;
     case COMPARE:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s??%s", t1, t2);
+      fun = "cmp";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
       break;
     case NEG:
-      print_value (t1, XEXP (x, 0), verbose);
-      sprintf (buf, "-%s", t1);
+      st[0] = "-";
+      op[0] = XEXP (x, 0);
       break;
     case MULT:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s*%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "*";
+      op[1] = XEXP (x, 1);
       break;
     case DIV:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s/%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "/";
+      op[1] = XEXP (x, 1);
       break;
     case UDIV:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%su/%s", t1, t2);
+      fun = "udiv";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
       break;
     case MOD:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s%%%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "%";
+      op[1] = XEXP (x, 1);
       break;
     case UMOD:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%su%%%s", t1, t2);
+      fun = "umod";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
       break;
     case SMIN:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "smin (%s, %s)", t1, t2);
+      fun = "smin";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
       break;
     case SMAX:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "smax(%s,%s)", t1, t2);
+      fun = "smax";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
       break;
     case UMIN:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "umin (%s, %s)", t1, t2);
+      fun = "umin";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
       break;
     case UMAX:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "umax(%s,%s)", t1, t2);
+      fun = "umax";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
       break;
     case NOT:
-      print_value (t1, XEXP (x, 0), verbose);
-      sprintf (buf, "!%s", t1);
+      st[0] = "!";
+      op[0] = XEXP (x, 0);
       break;
     case AND:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s&%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "&";
+      op[1] = XEXP (x, 1);
       break;
     case IOR:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s|%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "|";
+      op[1] = XEXP (x, 1);
       break;
     case XOR:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s^%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "^";
+      op[1] = XEXP (x, 1);
       break;
     case ASHIFT:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s<<%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "<<";
+      op[1] = XEXP (x, 1);
       break;
     case LSHIFTRT:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s0>%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = " 0>>";
+      op[1] = XEXP (x, 1);
       break;
     case ASHIFTRT:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s>>%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = ">>";
+      op[1] = XEXP (x, 1);
       break;
     case ROTATE:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s<-<%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "<-<";
+      op[1] = XEXP (x, 1);
       break;
     case ROTATERT:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s>->%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = ">->";
+      op[1] = XEXP (x, 1);
       break;
     case ABS:
-      print_value (t1, XEXP (x, 0), verbose);
-      sprintf (buf, "abs(%s)", t1);
+      fun = "abs";
+      op[0] = XEXP (x, 0);
       break;
     case SQRT:
-      print_value (t1, XEXP (x, 0), verbose);
-      sprintf (buf, "sqrt(%s)", t1);
+      fun = "sqrt";
+      op[0] = XEXP (x, 0);
       break;
     case FFS:
-      print_value (t1, XEXP (x, 0), verbose);
-      sprintf (buf, "ffs(%s)", t1);
+      fun = "ffs";
+      op[0] = XEXP (x, 0);
       break;
     case EQ:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s == %s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "==";
+      op[1] = XEXP (x, 1);
       break;
     case NE:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s!=%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "!=";
+      op[1] = XEXP (x, 1);
       break;
     case GT:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s>%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = ">";
+      op[1] = XEXP (x, 1);
       break;
     case GTU:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s>u%s", t1, t2);
+      fun = "gtu";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
       break;
     case LT:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s<%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "<";
+      op[1] = XEXP (x, 1);
       break;
     case LTU:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s<u%s", t1, t2);
+      fun = "ltu";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
       break;
     case GE:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s>=%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = ">=";
+      op[1] = XEXP (x, 1);
       break;
     case GEU:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s>=u%s", t1, t2);
+      fun = "geu";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
       break;
     case LE:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s<=%s", t1, t2);
+      op[0] = XEXP (x, 0);
+      st[1] = "<=";
+      op[1] = XEXP (x, 1);
       break;
     case LEU:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      sprintf (buf, "%s<=u%s", t1, t2);
+      fun = "leu";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
       break;
     case SIGN_EXTRACT:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      print_value (t3, XEXP (x, 2), verbose);
-      if (verbose)
-	sprintf (buf, "sign_extract(%s,%s,%s)", t1, t2, t3);
-      else
-	sprintf (buf, "sxt(%s,%s,%s)", t1, t2, t3);
+      fun = (verbose) ? "sign_extract" : "sxt";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
+      op[2] = XEXP (x, 2);
       break;
     case ZERO_EXTRACT:
-      print_value (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      print_value (t3, XEXP (x, 2), verbose);
-      if (verbose)
-	sprintf (buf, "zero_extract(%s,%s,%s)", t1, t2, t3);
-      else
-	sprintf (buf, "zxt(%s,%s,%s)", t1, t2, t3);
+      fun = (verbose) ? "zero_extract" : "zxt";
+      op[0] = XEXP (x, 0);
+      op[1] = XEXP (x, 1);
+      op[2] = XEXP (x, 2);
       break;
     case SIGN_EXTEND:
-      print_value (t1, XEXP (x, 0), verbose);
-      if (verbose)
-	sprintf (buf, "sign_extend(%s)", t1);
-      else
-	sprintf (buf, "sxn(%s)", t1);
+      fun = (verbose) ? "sign_extend" : "sxn";
+      op[0] = XEXP (x, 0);
       break;
     case ZERO_EXTEND:
-      print_value (t1, XEXP (x, 0), verbose);
-      if (verbose)
-	sprintf (buf, "zero_extend(%s)", t1);
-      else
-	sprintf (buf, "zxn(%s)", t1);
+      fun = (verbose) ? "zero_extend" : "zxn";
+      op[0] = XEXP (x, 0);
       break;
     case FLOAT_EXTEND:
-      print_value (t1, XEXP (x, 0), verbose);
-      if (verbose)
-	sprintf (buf, "float_extend(%s)", t1);
-      else
-	sprintf (buf, "fxn(%s)", t1);
+      fun = (verbose) ? "float_extend" : "fxn";
+      op[0] = XEXP (x, 0);
       break;
     case TRUNCATE:
-      print_value (t1, XEXP (x, 0), verbose);
-      if (verbose)
-	sprintf (buf, "trunc(%s)", t1);
-      else
-	sprintf (buf, "trn(%s)", t1);
+      fun = (verbose) ? "trunc" : "trn";
+      op[0] = XEXP (x, 0);
       break;
     case FLOAT_TRUNCATE:
-      print_value (t1, XEXP (x, 0), verbose);
-      if (verbose)
-	sprintf (buf, "float_trunc(%s)", t1);
-      else
-	sprintf (buf, "ftr(%s)", t1);
+      fun = (verbose) ? "float_trunc" : "ftr";
+      op[0] = XEXP (x, 0);
       break;
     case FLOAT:
-      print_value (t1, XEXP (x, 0), verbose);
-      if (verbose)
-	sprintf (buf, "float(%s)", t1);
-      else
-	sprintf (buf, "flt(%s)", t1);
+      fun = (verbose) ? "float" : "flt";
+      op[0] = XEXP (x, 0);
       break;
     case UNSIGNED_FLOAT:
-      print_value (t1, XEXP (x, 0), verbose);
-      if (verbose)
-	sprintf (buf, "uns_float(%s)", t1);
-      else
-	sprintf (buf, "ufl(%s)", t1);
+      fun = (verbose) ? "uns_float" : "ufl";
+      op[0] = XEXP (x, 0);
       break;
     case FIX:
-      print_value (t1, XEXP (x, 0), verbose);
-      sprintf (buf, "fix(%s)", t1);
+      fun = "fix";
+      op[0] = XEXP (x, 0);
       break;
     case UNSIGNED_FIX:
-      print_value (t1, XEXP (x, 0), verbose);
-      if (verbose)
-	sprintf (buf, "uns_fix(%s)", t1);
-      else
-	sprintf (buf, "ufx(%s)", t1);
+      fun = (verbose) ? "uns_fix" : "ufx";
+      op[0] = XEXP (x, 0);
       break;
     case PRE_DEC:
-      print_value (t1, XEXP (x, 0), verbose);
-      sprintf (buf, "--%s", t1);
+      st[0] = "--";
+      op[0] = XEXP (x, 0);
       break;
     case PRE_INC:
-      print_value (t1, XEXP (x, 0), verbose);
-      sprintf (buf, "++%s", t1);
+      st[0] = "++";
+      op[0] = XEXP (x, 0);
       break;
     case POST_DEC:
-      print_value (t1, XEXP (x, 0), verbose);
-      sprintf (buf, "%s--", t1);
+      op[0] = XEXP (x, 0);
+      st[1] = "--";
       break;
     case POST_INC:
-      print_value (t1, XEXP (x, 0), verbose);
-      sprintf (buf, "%s++", t1);
+      op[0] = XEXP (x, 0);
+      st[1] = "++";
       break;
     case CALL:
-      print_value (t1, XEXP (x, 0), verbose);
+      st[0] = "call ";
+      op[0] = XEXP (x, 0);
       if (verbose)
 	{
-	  print_value (t2, XEXP (x, 1), verbose);
-	  sprintf (buf, "call %s argc:%s", t1, t2);
+	  st[1] = " argc:";
+	  op[1] = XEXP (x, 1);
 	}
-      else
-	sprintf (buf, "call %s", t1);
       break;
     case IF_THEN_ELSE:
-      print_exp (t1, XEXP (x, 0), verbose);
-      print_value (t2, XEXP (x, 1), verbose);
-      print_value (t3, XEXP (x, 2), verbose);
-      sprintf (buf, "{(%s)?%s:%s}", t1, t2, t3);
+      st[0] = "{(";
+      op[0] = XEXP (x, 0);
+      st[1] = ")?";
+      op[1] = XEXP (x, 1);
+      st[2] = ":";
+      op[2] = XEXP (x, 2);
+      st[3] = "}";
       break;
     case TRAP_IF:
-      print_value (t1, TRAP_CONDITION (x), verbose);
-      sprintf (buf, "trap_if %s", t1);
+      fun = "trap_if";
+      op[0] = TRAP_CONDITION (x);
       break;
     case UNSPEC:
-      {
-	int i;
-
-	sprintf (t1, "unspec{");
-	for (i = 0; i < XVECLEN (x, 0); i++)
-	  {
-	    print_pattern (t2, XVECEXP (x, 0, i), verbose);
-	    sprintf (t3, "%s%s;", t1, t2);
-	    strcpy (t1, t3);
-	  }
-	sprintf (buf, "%s}", t1);
-      }
-      break;
     case UNSPEC_VOLATILE:
       {
-	int i;
-
-	sprintf (t1, "unspec/v{");
+	cur = safe_concat (buf, cur, "unspec");
+	if (GET_CODE (x) == UNSPEC_VOLATILE)
+	  cur = safe_concat (buf, cur, "/v");
+	cur = safe_concat (buf, cur, "[");
+	sep = "";
 	for (i = 0; i < XVECLEN (x, 0); i++)
 	  {
-	    print_pattern (t2, XVECEXP (x, 0, i), verbose);
-	    sprintf (t3, "%s%s;", t1, t2);
-	    strcpy (t1, t3);
+	    print_pattern (tmp, XVECEXP (x, 0, i), verbose);
+	    cur = safe_concat (buf, cur, sep);
+	    cur = safe_concat (buf, cur, tmp);
+	    sep = ",";
 	  }
-	sprintf (buf, "%s}", t1);
+	cur = safe_concat (buf, cur, "] ");
+	sprintf (tmp, "%d", XINT (x, 1));
+	cur = safe_concat (buf, cur, tmp);
       }
       break;
     default:
-/*    if (verbose) debug_rtx (x); else sprintf (buf, "$$$"); */
-      sprintf (buf, "$$$");
+      /* if (verbose) debug_rtx (x); */
+      st[0] = GET_RTX_NAME (GET_CODE (x));
+      break;
     }
-}				/* print_exp */
+
+  /* Print this as a function? */
+  if (fun)
+    {
+      cur = safe_concat (buf, cur, fun);
+      cur = safe_concat (buf, cur, "(");
+    }
+
+  for (i = 0; i < 4; i++)
+    {
+      if (st[i])
+	cur = safe_concat (buf, cur, st[i]);
+
+      if (op[i])
+	{
+	  if (fun && i != 0)
+	    cur = safe_concat (buf, cur, ",");
+
+	  print_value (tmp, op[i], verbose);
+	  cur = safe_concat (buf, cur, tmp);
+	}
+    }
+
+  if (fun)
+    cur = safe_concat (buf, cur, ")");
+}		/* print_exp */
 
 /* Prints rtxes, i customly classified as values. They're constants, */
 /* registers, labels, symbols and memory accesses.  */
@@ -6073,60 +6017,84 @@ print_value (buf, x, verbose)
      int verbose;
 {
   char t[BUF_LEN];
+  char *cur = buf;
 
   switch (GET_CODE (x))
     {
     case CONST_INT:
-      sprintf (buf, "%Xh", INTVAL (x));
+      sprintf (t, "0x%lx", (long)INTVAL (x));
+      cur = safe_concat (buf, cur, t);
       break;
     case CONST_DOUBLE:
-      print_value (t, XEXP (x, 0), verbose);
-      sprintf (buf, "<%s>", t);
+      sprintf (t, "<0x%lx,0x%lx>", (long)XWINT (x, 2), (long)XWINT (x, 3));
+      cur = safe_concat (buf, cur, t);
       break;
     case CONST_STRING:
-      sprintf (buf, "\"%s\"", (char *) XEXP (x, 0));
+      cur = safe_concat (buf, cur, "\"");
+      cur = safe_concat (buf, cur, XSTR (x, 0));
+      cur = safe_concat (buf, cur, "\"");
       break;
     case SYMBOL_REF:
-      sprintf (buf, "`%s'", (char *) XEXP (x, 0));
+      cur = safe_concat (buf, cur, "`");
+      cur = safe_concat (buf, cur, XSTR (x, 0));
+      cur = safe_concat (buf, cur, "'");
       break;
     case LABEL_REF:
-      sprintf (buf, "L%d", INSN_UID (XEXP (x, 0)));
+      sprintf (t, "L%d", INSN_UID (XEXP (x, 0)));
+      cur = safe_concat (buf, cur, t);
       break;
     case CONST:
-      print_value (buf, XEXP (x, 0), verbose);
+      print_value (t, XEXP (x, 0), verbose);
+      cur = safe_concat (buf, cur, "const(");
+      cur = safe_concat (buf, cur, t);
+      cur = safe_concat (buf, cur, ")");
       break;
     case HIGH:
-      print_value (buf, XEXP (x, 0), verbose);
+      print_value (t, XEXP (x, 0), verbose);
+      cur = safe_concat (buf, cur, "high(");
+      cur = safe_concat (buf, cur, t);
+      cur = safe_concat (buf, cur, ")");
       break;
     case REG:
-      if (GET_MODE (x) == SFmode
-	  || GET_MODE (x) == DFmode
-	  || GET_MODE (x) == XFmode
-	  || GET_MODE (x) == TFmode)
-	strcpy (t, "fr");
+      if (REGNO (x) < FIRST_PSEUDO_REGISTER)
+	{
+	  int c = reg_names[ REGNO (x) ][0];
+	  if (c >= '0' && c <= '9')
+	    cur = safe_concat (buf, cur, "%");
+
+	  cur = safe_concat (buf, cur, reg_names[ REGNO (x) ]);
+	}
       else
-	strcpy (t, "r");
-      sprintf (buf, "%s%d", t, REGNO (x));
+	{
+	  sprintf (t, "r%d", REGNO (x));
+	  cur = safe_concat (buf, cur, t);
+	}
       break;
     case SUBREG:
-      print_value (t, XEXP (x, 0), verbose);
-      sprintf (buf, "%s#%d", t, SUBREG_WORD (x));
+      print_value (t, SUBREG_REG (x), verbose);
+      cur = safe_concat (buf, cur, t);
+      sprintf (t, "#%d", SUBREG_WORD (x));
+      cur = safe_concat (buf, cur, t);
       break;
     case SCRATCH:
-      sprintf (buf, "scratch");
+      cur = safe_concat (buf, cur, "scratch");
       break;
     case CC0:
-      sprintf (buf, "cc0");
+      cur = safe_concat (buf, cur, "cc0");
       break;
     case PC:
-      sprintf (buf, "pc");
+      cur = safe_concat (buf, cur, "pc");
       break;
     case MEM:
       print_value (t, XEXP (x, 0), verbose);
-      sprintf (buf, "[%s]", t);
+      cur = safe_concat (buf, cur, "[");
+      cur = safe_concat (buf, cur, t);
+      cur = safe_concat (buf, cur, "]");
       break;
     default:
-      print_exp (buf, x, verbose);
+      print_exp (t, x, verbose);
+      cur = safe_concat (buf, cur, t);
+      break;
     }
 }				/* print_value */
 
@@ -6190,7 +6158,7 @@ print_pattern (buf, x, verbose)
       }
       break;
     case ASM_INPUT:
-      sprintf (buf, "asm {%s}", XEXP (x, 0));
+      sprintf (buf, "asm {%s}", XSTR (x, 0));
       break;
     case ADDR_VEC:
       break;
@@ -6307,36 +6275,6 @@ print_insn (buf, x, verbose)
 	sprintf (buf, "i%-4d  <What?>", INSN_UID (x));
     }
 }				/* print_insn */
-
-void
-print_insn_chain (rtx_first)
-     rtx rtx_first;
-{
-  register rtx tmp_rtx;
-  char str[BUF_LEN];
-
-  strcpy (str, "(nil)\n");
-  if (rtx_first != 0)
-    switch (GET_CODE (rtx_first))
-      {
-      case INSN:
-      case JUMP_INSN:
-      case CALL_INSN:
-      case NOTE:
-      case CODE_LABEL:
-      case BARRIER:
-	for (tmp_rtx = rtx_first; tmp_rtx != NULL;
-	     tmp_rtx = NEXT_INSN (tmp_rtx))
-	  {
-	    print_insn (str, tmp_rtx, 0);
-	    printf ("%s\n", str);
-	  }
-	break;
-      default:
-	print_insn (str, rtx_first, 0);
-	printf ("%s\n", str);
-      }
-}				/* print_insn_chain */
 
 /* Print visualization debugging info */
 
@@ -6573,9 +6511,8 @@ group_leader (insn)
    Return number of insns scheduled.  */
 
 static int
-schedule_block (bb, rgn, rgn_n_insns)
+schedule_block (bb, rgn_n_insns)
      int bb;
-     int rgn;
      int rgn_n_insns;
 {
   /* Local variables.  */
@@ -6653,8 +6590,6 @@ schedule_block (bb, rgn, rgn_n_insns)
 	       INSN_UID (basic_block_end[b]),
 	       (reload_completed ? "after" : "before"));
       fprintf (dump, ";;   ======================================================\n");
-      if (sched_debug_count >= 0)
-	fprintf (dump, ";;\t -- sched_debug_count=%d\n", sched_debug_count);
       fprintf (dump, "\n");
 
       visual_tbl = (char *) alloca (get_visual_tbl_length ());
@@ -6744,7 +6679,7 @@ schedule_block (bb, rgn, rgn_n_insns)
 	    if (!CANT_MOVE (insn)
 		&& (!IS_SPECULATIVE_INSN (insn)
 		    || (insn_issue_delay (insn) <= 3
-			&& check_live (insn, bb_src, target_bb)
+			&& check_live (insn, bb_src)
 			&& is_exception_free (insn, bb_src, target_bb))))
 
 	      {
@@ -6759,15 +6694,22 @@ schedule_block (bb, rgn, rgn_n_insns)
 	  }
       }
 
+#ifdef MD_SCHED_INIT
+  MD_SCHED_INIT (dump, sched_verbose);
+#endif
+
   /* no insns scheduled in this block yet */
   last_scheduled_insn = 0;
 
   /* Sort the ready list */
   SCHED_SORT (ready, n_ready);
+#ifdef MD_SCHED_REORDER
+  MD_SCHED_REORDER (dump, sched_verbose, ready, n_ready);
+#endif
 
   if (sched_verbose >= 2)
     {
-      fprintf (dump, ";;\t\tReady list initially:  ");
+      fprintf (dump, ";;\t\tReady list initially:             ");
       debug_ready_list (ready, n_ready);
     }
 
@@ -6791,10 +6733,6 @@ schedule_block (bb, rgn, rgn_n_insns)
     {
       int b1;
 
-#ifdef INTERBLOCK_DEBUG
-      if (sched_debug_count == 0)
-	break;
-#endif
       clock_var++;
 
       /* Add to the ready list all pending insns that can be issued now.
@@ -6814,10 +6752,13 @@ schedule_block (bb, rgn, rgn_n_insns)
 
       /* Sort the ready list.  */
       SCHED_SORT (ready, n_ready);
+#ifdef MD_SCHED_REORDER
+      MD_SCHED_REORDER (dump, sched_verbose, ready, n_ready);
+#endif
 
       if (sched_verbose)
 	{
-	  fprintf (dump, ";;\tReady list (t =%3d):  ", clock_var);
+	  fprintf (dump, "\n;;\tReady list (t =%3d):  ", clock_var);
 	  debug_ready_list (ready, n_ready);
 	}
 
@@ -6837,11 +6778,6 @@ schedule_block (bb, rgn, rgn_n_insns)
 	    }
 	  else if (cost == 0)
 	    {
-#ifdef INTERBLOCK_DEBUG
-	      if (sched_debug_count == 0)
-		break;
-#endif
-
 	      /* an interblock motion? */
 	      if (INSN_BB (insn) != target_bb)
 		{
@@ -6850,14 +6786,14 @@ schedule_block (bb, rgn, rgn_n_insns)
 		  if (IS_SPECULATIVE_INSN (insn))
 		    {
 
-		      if (!check_live (insn, INSN_BB (insn), target_bb))
+		      if (!check_live (insn, INSN_BB (insn)))
 			{
 			  /* speculative motion, live check failed, remove
 			     insn from ready list */
 			  ready[i] = ready[--n_ready];
 			  continue;
 			}
-		      update_live (insn, INSN_BB (insn), target_bb);
+		      update_live (insn, INSN_BB (insn));
 
 		      /* for speculative load, mark insns fed by it.  */
 		      if (IS_LOAD_INSN (insn) || FED_BY_SPEC_LOAD (insn))
@@ -6908,11 +6844,10 @@ schedule_block (bb, rgn, rgn_n_insns)
 	      last = move_insn (insn, last);
 	      sched_n_insns++;
 
+#ifdef MD_SCHED_VARIABLE_ISSUE
+	      MD_SCHED_VARIABLE_ISSUE (dump, sched_verbose, insn, can_issue_more);
+#else
 	      can_issue_more--;
-
-#ifdef INTERBLOCK_DEBUG
-	      if (sched_debug_count > 0)
-		sched_debug_count--;
 #endif
 
 	      n_ready = schedule_insn (insn, ready, n_ready, clock_var);
@@ -6930,10 +6865,6 @@ schedule_block (bb, rgn, rgn_n_insns)
       if (sched_verbose)
 	{
 	  visualize_scheduled_insns (b, clock_var);
-#ifdef INTERBLOCK_DEBUG
-	  if (sched_debug_count == 0)
-	    fprintf (dump, "........   sched_debug_count == 0  .................\n");
-#endif
 	}
     }
 
@@ -6946,24 +6877,14 @@ schedule_block (bb, rgn, rgn_n_insns)
     }
 
   /* Sanity check -- queue must be empty now.  Meaningless if region has
-     multiple bbs, or if scheduling stopped by sched_debug_count.  */
+     multiple bbs.  */
   if (current_nr_blocks > 1)
-#ifdef INTERBLOCK_DEBUG
-    if (sched_debug_count != 0)
-#endif
-      if (!flag_schedule_interblock && q_size != 0)
-	abort ();
+    if (!flag_schedule_interblock && q_size != 0)
+      abort ();
 
   /* update head/tail boundaries.  */
   head = NEXT_INSN (prev_head);
   tail = last;
-
-#ifdef INTERBLOCK_DEBUG
-  if (sched_debug_count == 0)
-    /* compensate for stopping scheduling prematurely */
-    for (i = sched_target_n_insns; i < target_n_insns; i++)
-      tail = move_insn (group_leader (NEXT_INSN (tail)), tail);
-#endif
 
   /* Restore-other-notes: NOTE_LIST is the end of a chain of notes
      previously found among the insns.  Insert them at the beginning
@@ -7055,13 +6976,10 @@ compute_block_forward_dependences (bb)
 	  if (find_insn_list (insn, INSN_DEPEND (x)))
 	    continue;
 
-	  new_link = rtx_alloc (INSN_LIST);
+	  new_link = alloc_INSN_LIST (insn, INSN_DEPEND (x));
 
 	  dep_type = REG_NOTE_KIND (link);
 	  PUT_REG_NOTE_KIND (new_link, dep_type);
-
-	  XEXP (new_link, 0) = insn;
-	  XEXP (new_link, 1) = INSN_DEPEND (x);
 
 	  INSN_DEPEND (x) = new_link;
 	  INSN_DEP_COUNT (insn) += 1;
@@ -7092,8 +7010,8 @@ init_rgn_data_dependences (n_bbs)
   for (bb = 0; bb < n_bbs; bb++)
     {
       bb_sched_before_next_call[bb] =
-	gen_rtx (INSN, VOIDmode, 0, NULL_RTX, NULL_RTX,
-		 NULL_RTX, 0, NULL_RTX, NULL_RTX);
+	gen_rtx_INSN (VOIDmode, 0, NULL_RTX, NULL_RTX,
+		      NULL_RTX, 0, NULL_RTX, NULL_RTX);
       LOG_LINKS (bb_sched_before_next_call[bb]) = 0;
     }
 }
@@ -7223,8 +7141,8 @@ compute_block_backward_dependences (bb)
       last_function_call = 0;
       last_pending_memory_flush = 0;
       sched_before_next_call
-	= gen_rtx (INSN, VOIDmode, 0, NULL_RTX, NULL_RTX,
-		   NULL_RTX, 0, NULL_RTX, NULL_RTX);
+	= gen_rtx_INSN (VOIDmode, 0, NULL_RTX, NULL_RTX,
+			NULL_RTX, 0, NULL_RTX, NULL_RTX);
       LOG_LINKS (sched_before_next_call) = 0;
     }
   else
@@ -7288,8 +7206,8 @@ compute_block_backward_dependences (bb)
 		      continue;
 
 		    (bb_reg_last_uses[bb_succ])[reg]
-		      = gen_rtx (INSN_LIST, VOIDmode, XEXP (u, 0),
-				 (bb_reg_last_uses[bb_succ])[reg]);
+		      = alloc_INSN_LIST (XEXP (u, 0),
+					 (bb_reg_last_uses[bb_succ])[reg]);
 		  }
 
 		/* reg-last-defs lists are inherited by bb_succ */
@@ -7299,8 +7217,8 @@ compute_block_backward_dependences (bb)
 		      continue;
 
 		    (bb_reg_last_sets[bb_succ])[reg]
-		      = gen_rtx (INSN_LIST, VOIDmode, XEXP (u, 0),
-				 (bb_reg_last_sets[bb_succ])[reg]);
+		      = alloc_INSN_LIST (XEXP (u, 0),
+					 (bb_reg_last_sets[bb_succ])[reg]);
 		  }
 	      }
 
@@ -7341,8 +7259,8 @@ compute_block_backward_dependences (bb)
 		  continue;
 
 		bb_last_function_call[bb_succ]
-		  = gen_rtx (INSN_LIST, VOIDmode, XEXP (u, 0),
-			     bb_last_function_call[bb_succ]);
+		  = alloc_INSN_LIST (XEXP (u, 0),
+				     bb_last_function_call[bb_succ]);
 	      }
 
 	    /* last_pending_memory_flush is inherited by bb_succ */
@@ -7352,8 +7270,8 @@ compute_block_backward_dependences (bb)
 		  continue;
 
 		bb_last_pending_memory_flush[bb_succ]
-		  = gen_rtx (INSN_LIST, VOIDmode, XEXP (u, 0),
-			     bb_last_pending_memory_flush[bb_succ]);
+		  = alloc_INSN_LIST (XEXP (u, 0),
+				     bb_last_pending_memory_flush[bb_succ]);
 	      }
 
 	    /* sched_before_next_call is inherited by bb_succ */
@@ -7365,6 +7283,28 @@ compute_block_backward_dependences (bb)
 	    e = NEXT_OUT (e);
 	  }
 	while (e != first_edge);
+    }
+
+  /* Free up the INSN_LISTs 
+
+     Note this loop is executed max_reg * nr_regions times.  It's first 
+     implementation accounted for over 90% of the calls to free_list.
+     The list was empty for the vast majority of those calls.  On the PA,
+     not calling free_list in those cases improves -O2 compile times by
+     3-5% on average.  */
+  for (b = 0; b < max_reg; ++b)
+    {
+      if (reg_last_sets[b])
+	free_list (&reg_last_sets[b], &unused_insn_list);
+      if (reg_last_uses[b])
+	free_list (&reg_last_uses[b], &unused_insn_list);
+    }
+
+  /* Assert that we won't need bb_reg_last_* for this block anymore.  */
+  if (current_nr_blocks > 1)
+    {
+      bb_reg_last_uses[bb] = (rtx *) NULL_RTX;
+      bb_reg_last_sets[bb] = (rtx *) NULL_RTX;
     }
 }
 
@@ -7623,19 +7563,16 @@ schedule_region (rgn)
   /* now we can schedule all blocks */
   for (bb = 0; bb < current_nr_blocks; bb++)
     {
-      sched_rgn_n_insns += schedule_block (bb, rgn, rgn_n_insns);
+      sched_rgn_n_insns += schedule_block (bb, rgn_n_insns);
 
 #ifdef USE_C_ALLOCA
       alloca (0);
 #endif
     }
 
-#ifdef INTERBLOCK_DEBUG
-  if (sched_debug_count != 0)
-#endif
-    /* sanity check: verify that all region insns were scheduled */
-    if (sched_rgn_n_insns != rgn_n_insns)
-      abort ();
+  /* sanity check: verify that all region insns were scheduled */
+  if (sched_rgn_n_insns != rgn_n_insns)
+    abort ();
 
   /* update register life and usage information */
   if (reload_completed == 0)
@@ -7704,8 +7641,8 @@ regno_use_in (regno, x)
    several smaller hard register references in the split insns.  */
 
 static void
-split_hard_reg_notes (note, first, last, orig_insn)
-     rtx note, first, last, orig_insn;
+split_hard_reg_notes (note, first, last)
+     rtx note, first, last;
 {
   rtx reg, temp, link;
   int n_regs, i, new_reg;
@@ -7730,10 +7667,7 @@ split_hard_reg_notes (note, first, last, orig_insn)
 	      && (temp = regno_use_in (new_reg, PATTERN (insn))))
 	    {
 	      /* Create a new reg dead note ere.  */
-	      link = rtx_alloc (EXPR_LIST);
-	      PUT_REG_NOTE_KIND (link, REG_DEAD);
-	      XEXP (link, 0) = temp;
-	      XEXP (link, 1) = REG_NOTES (insn);
+	      link = alloc_EXPR_LIST (REG_DEAD, temp, REG_NOTES (insn));
 	      REG_NOTES (insn) = link;
 
 	      /* If killed multiple registers here, then add in the excess.  */
@@ -7768,6 +7702,13 @@ new_insn_dead_notes (pat, insn, last, orig_insn)
 
   if (GET_CODE (dest) == REG)
     {
+      /* If the original insn already used this register, we may not add new
+         notes for it.  One example for a split that needs this test is
+	 when a multi-word memory access with register-indirect addressing
+	 is split into multiple memory accesses with auto-increment and
+	 one adjusting add instruction for the address register.  */
+      if (reg_referenced_p (dest, PATTERN (orig_insn)))
+	return;
       for (tem = last; tem != insn; tem = PREV_INSN (tem))
 	{
 	  if (GET_RTX_CLASS (GET_CODE (tem)) == 'i'
@@ -7789,10 +7730,8 @@ new_insn_dead_notes (pat, insn, last, orig_insn)
 		  if (!find_regno_note (tem, REG_UNUSED, REGNO (dest))
 		      && !find_regno_note (tem, REG_DEAD, REGNO (dest)))
 		    {
-		      rtx note = rtx_alloc (EXPR_LIST);
-		      PUT_REG_NOTE_KIND (note, REG_DEAD);
-		      XEXP (note, 0) = dest;
-		      XEXP (note, 1) = REG_NOTES (tem);
+		      rtx note = alloc_EXPR_LIST (REG_DEAD, dest,
+						  REG_NOTES (tem));
 		      REG_NOTES (tem) = note;
 		    }
 		  /* The reg only dies in one insn, the last one that uses
@@ -7818,10 +7757,7 @@ new_insn_dead_notes (pat, insn, last, orig_insn)
 
 	  if (GET_CODE (pat) == CLOBBER)
 	    {
-	      rtx note = rtx_alloc (EXPR_LIST);
-	      PUT_REG_NOTE_KIND (note, REG_UNUSED);
-	      XEXP (note, 0) = dest;
-	      XEXP (note, 1) = REG_NOTES (insn);
+	      rtx note = alloc_EXPR_LIST (REG_UNUSED, dest, REG_NOTES (insn));
 	      REG_NOTES (insn) = note;
 	      return;
 	    }
@@ -7927,7 +7863,7 @@ update_flow_info (notes, first, last, orig_insn)
 		      && GET_CODE (temp) == REG
 		      && REGNO (temp) < FIRST_PSEUDO_REGISTER
 		      && HARD_REGNO_NREGS (REGNO (temp), GET_MODE (temp)) > 1)
-		    split_hard_reg_notes (note, first, last, orig_insn);
+		    split_hard_reg_notes (note, first, last);
 		  else
 		    {
 		      XEXP (note, 1) = REG_NOTES (insn);
@@ -7972,6 +7908,14 @@ update_flow_info (notes, first, last, orig_insn)
 	  break;
 
 	case REG_WAS_0:
+	  /* If the insn that set the register to 0 was deleted, this
+	     note cannot be relied on any longer.  The destination might
+	     even have been moved to memory.
+             This was observed for SH4 with execute/920501-6.c compilation,
+	     -O2 -fomit-frame-pointer -finline-functions .  */
+	  if (GET_CODE (XEXP (note, 0)) == NOTE
+	      || INSN_DELETED_P (XEXP (note, 0)))
+	    break;
 	  /* This note applies to the dest of the original insn.  Find the
 	     first new insn that now has the same dest, and move the note
 	     there.  */
@@ -8048,7 +7992,7 @@ update_flow_info (notes, first, last, orig_insn)
 		    break;
 		  /* Likewise for multi-word memory references.  */
 		  if (GET_CODE (orig_dest) == MEM
-		      && SIZE_FOR_MODE (orig_dest) > MOVE_MAX)
+		      && SIZE_FOR_MODE (orig_dest) > UNITS_PER_WORD)
 		    break;
 		  abort ();
 		}
@@ -8117,8 +8061,11 @@ update_flow_info (notes, first, last, orig_insn)
 	  for (insn = first; insn != NEXT_INSN (last); insn = NEXT_INSN (insn))
 	    if (GET_RTX_CLASS (GET_CODE (insn)) == 'i'
 		&& reg_mentioned_p (XEXP (note, 0), PATTERN (insn)))
-	      REG_NOTES (insn) = gen_rtx (EXPR_LIST, REG_LABEL,
-					  XEXP (note, 0), REG_NOTES (insn));
+	      {
+	        REG_NOTES (insn) = alloc_EXPR_LIST (REG_LABEL,
+						    XEXP (note, 0),
+						    REG_NOTES (insn));
+	      }
 	  break;
 
 	case REG_CC_SETTER:
@@ -8214,10 +8161,7 @@ update_flow_info (notes, first, last, orig_insn)
 
 		  if (insn_dest != dest)
 		    {
-		      note = rtx_alloc (EXPR_LIST);
-		      PUT_REG_NOTE_KIND (note, REG_DEAD);
-		      XEXP (note, 0) = dest;
-		      XEXP (note, 1) = REG_NOTES (insn);
+		      note = alloc_EXPR_LIST (REG_DEAD, dest, REG_NOTES (insn));
 		      REG_NOTES (insn) = note;
 		      /* The reg only dies in one insn, the last one
 			 that uses it.  */
@@ -8367,8 +8311,7 @@ split_block_insns (b)
 
   for (insn = basic_block_head[b];; insn = next)
     {
-      rtx prev;
-      rtx set;
+      rtx set, last, first, notes;
 
       /* Can't use `next_real_insn' because that
          might go across CODE_LABELS and short-out basic blocks.  */
@@ -8405,31 +8348,24 @@ split_block_insns (b)
 	}
 
       /* Split insns here to get max fine-grain parallelism.  */
-      prev = PREV_INSN (insn);
-      /* It is probably not worthwhile to try to split again in
-	 the second pass.  However, if flag_schedule_insns is not set,
-	 the first and only (if any) scheduling pass is after reload.  */
-      if (reload_completed == 0 || ! flag_schedule_insns)
+      first = PREV_INSN (insn);
+      notes = REG_NOTES (insn);
+      last = try_split (PATTERN (insn), insn, 1);
+      if (last != insn)
 	{
-	  rtx last, first = PREV_INSN (insn);
-	  rtx notes = REG_NOTES (insn);
-	  last = try_split (PATTERN (insn), insn, 1);
-	  if (last != insn)
-	    {
-	      /* try_split returns the NOTE that INSN became.  */
-	      first = NEXT_INSN (first);
-	      update_flow_info (notes, first, last, insn);
+	  /* try_split returns the NOTE that INSN became.  */
+	  first = NEXT_INSN (first);
+	  update_flow_info (notes, first, last, insn);
 
-	      PUT_CODE (insn, NOTE);
-	      NOTE_SOURCE_FILE (insn) = 0;
-	      NOTE_LINE_NUMBER (insn) = NOTE_INSN_DELETED;
-	      if (insn == basic_block_head[b])
-		basic_block_head[b] = first;
-	      if (insn == basic_block_end[b])
-		{
-		  basic_block_end[b] = last;
-		  break;
-		}
+	  PUT_CODE (insn, NOTE);
+	  NOTE_SOURCE_FILE (insn) = 0;
+	  NOTE_LINE_NUMBER (insn) = NOTE_INSN_DELETED;
+	  if (insn == basic_block_head[b])
+	    basic_block_head[b] = first;
+	  if (insn == basic_block_end[b])
+	    {
+	      basic_block_end[b] = last;
+	      break;
 	    }
 	}
 
@@ -8448,7 +8384,6 @@ schedule_insns (dump_file)
 
   int max_uid;
   int b;
-  int i;
   rtx insn;
   int rgn;
 
@@ -8496,17 +8431,17 @@ schedule_insns (dump_file)
 
   max_uid = (get_max_uid () + 1);
 
-  cant_move = (char *) alloca (max_uid * sizeof (char));
+  cant_move = (char *) xmalloc (max_uid * sizeof (char));
   bzero ((char *) cant_move, max_uid * sizeof (char));
 
-  fed_by_spec_load = (char *) alloca (max_uid * sizeof (char));
+  fed_by_spec_load = (char *) xmalloc (max_uid * sizeof (char));
   bzero ((char *) fed_by_spec_load, max_uid * sizeof (char));
 
-  is_load_insn = (char *) alloca (max_uid * sizeof (char));
+  is_load_insn = (char *) xmalloc (max_uid * sizeof (char));
   bzero ((char *) is_load_insn, max_uid * sizeof (char));
 
-  insn_orig_block = (int *) alloca (max_uid * sizeof (int));
-  insn_luid = (int *) alloca (max_uid * sizeof (int));
+  insn_orig_block = (int *) xmalloc (max_uid * sizeof (int));
+  insn_luid = (int *) xmalloc (max_uid * sizeof (int));
 
   luid = 0;
   for (b = 0; b < n_basic_blocks; b++)
@@ -8528,16 +8463,23 @@ schedule_insns (dump_file)
       for (b = 0; b < n_basic_blocks; b++)
 	for (insn = basic_block_head[b];; insn = NEXT_INSN (insn))
 	  {
-	    rtx link;
+	    rtx link, prev;
 
 	    if (GET_RTX_CLASS (GET_CODE (insn)) == 'i')
 	      {
-		for (link = LOG_LINKS (insn); link; link = XEXP (link, 1))
+		prev = NULL_RTX;
+		link = LOG_LINKS (insn);
+		while (link)
 		  {
 		    rtx x = XEXP (link, 0);
 
 		    if (INSN_BLOCK (x) != b)
-		      remove_dependence (insn, x);
+		      {
+		        remove_dependence (insn, x);
+			link = prev ? XEXP (prev, 1) : LOG_LINKS (insn);
+		      }
+		    else
+		      prev = link, link = XEXP (prev, 1);
 		  }
 	      }
 
@@ -8561,54 +8503,80 @@ schedule_insns (dump_file)
     }
   else
     {
-      /* an estimation for nr_edges is computed in is_cfg_nonregular () */
-      nr_edges = 0;
-
       /* verify that a 'good' control flow graph can be built */
-      if (is_cfg_nonregular ()
-	  || nr_edges <= 1)
+      if (is_cfg_nonregular ())
 	{
 	  find_single_block_region ();
 	}
       else
 	{
-	  /* build control flow graph */
-	  in_edges = (int *) alloca (n_basic_blocks * sizeof (int));
-	  out_edges = (int *) alloca (n_basic_blocks * sizeof (int));
-	  bzero ((char *) in_edges, n_basic_blocks * sizeof (int));
-	  bzero ((char *) out_edges, n_basic_blocks * sizeof (int));
+	  int_list_ptr *s_preds, *s_succs;
+	  int *num_preds, *num_succs;
+	  sbitmap *dom, *pdom;
 
-	  edge_table =
-	    (edge *) alloca ((nr_edges) * sizeof (edge));
-	  bzero ((char *) edge_table,
-		 ((nr_edges) * sizeof (edge)));
-	  build_control_flow ();
+	  s_preds = (int_list_ptr *) alloca (n_basic_blocks
+					     * sizeof (int_list_ptr));
+	  s_succs = (int_list_ptr *) alloca (n_basic_blocks
+					     * sizeof (int_list_ptr));
+	  num_preds = (int *) alloca (n_basic_blocks * sizeof (int));
+	  num_succs = (int *) alloca (n_basic_blocks * sizeof (int));
+	  dom = sbitmap_vector_alloc (n_basic_blocks, n_basic_blocks);
+	  pdom = sbitmap_vector_alloc (n_basic_blocks, n_basic_blocks);
 
-	  /* identify reducible inner loops and compute regions */
-	  find_rgns ();
+	  /* The scheduler runs after flow; therefore, we can't blindly call
+	     back into find_basic_blocks since doing so could invalidate the
+	     info in basic_block_live_at_start.
+
+	     Consider a block consisting entirely of dead stores; after life
+	     analysis it would be a block of NOTE_INSN_DELETED notes.  If
+	     we call find_basic_blocks again, then the block would be removed
+	     entirely and invalidate our the register live information.
+
+	     We could (should?) recompute register live information.  Doing
+	     so may even be beneficial.  */
+
+	  compute_preds_succs (s_preds, s_succs, num_preds, num_succs);
+
+	  /* Compute the dominators and post dominators.  We don't currently use
+	     post dominators, but we should for speculative motion analysis.  */
+	  compute_dominators (dom, pdom, s_preds, s_succs);
+
+	  /* build_control_flow will return nonzero if it detects unreachable
+	     blocks or any other irregularity with the cfg which prevents
+	     cross block scheduling.  */
+	  if (build_control_flow (s_preds, s_succs, num_preds, num_succs) != 0)
+	    find_single_block_region ();
+	  else
+	    find_rgns (s_preds, s_succs, num_preds, num_succs, dom);
 
 	  if (sched_verbose >= 3)
-	    {
-	      debug_control_flow ();
-	      debug_regions ();
-	    }
+	    debug_regions ();
 
+	  /* For now.  This will move as more and more of haifa is converted
+	     to using the cfg code in flow.c  */
+	  free_bb_mem ();
+	  free (dom);
+	  free (pdom);
 	}
     }
 
   /* Allocate data for this pass.  See comments, above,
-     for what these vectors do.  */
-  insn_priority = (int *) alloca (max_uid * sizeof (int));
-  insn_reg_weight = (int *) alloca (max_uid * sizeof (int));
-  insn_tick = (int *) alloca (max_uid * sizeof (int));
-  insn_costs = (short *) alloca (max_uid * sizeof (short));
-  insn_units = (short *) alloca (max_uid * sizeof (short));
-  insn_blockage = (unsigned int *) alloca (max_uid * sizeof (unsigned int));
-  insn_ref_count = (int *) alloca (max_uid * sizeof (int));
+     for what these vectors do.
+
+     We use xmalloc instead of alloca, because max_uid can be very large
+     when there is a lot of function inlining.  If we used alloca, we could
+     exceed stack limits on some hosts for some inputs.  */
+  insn_priority = (int *) xmalloc (max_uid * sizeof (int));
+  insn_reg_weight = (int *) xmalloc (max_uid * sizeof (int));
+  insn_tick = (int *) xmalloc (max_uid * sizeof (int));
+  insn_costs = (short *) xmalloc (max_uid * sizeof (short));
+  insn_units = (short *) xmalloc (max_uid * sizeof (short));
+  insn_blockage = (unsigned int *) xmalloc (max_uid * sizeof (unsigned int));
+  insn_ref_count = (int *) xmalloc (max_uid * sizeof (int));
 
   /* Allocate for forward dependencies */
-  insn_dep_count = (int *) alloca (max_uid * sizeof (int));
-  insn_depend = (rtx *) alloca (max_uid * sizeof (rtx));
+  insn_dep_count = (int *) xmalloc (max_uid * sizeof (int));
+  insn_depend = (rtx *) xmalloc (max_uid * sizeof (rtx));
 
   if (reload_completed == 0)
     {
@@ -8636,7 +8604,7 @@ schedule_insns (dump_file)
     {
       rtx line;
 
-      line_note = (rtx *) alloca (max_uid * sizeof (rtx));
+      line_note = (rtx *) xmalloc (max_uid * sizeof (rtx));
       bzero ((char *) line_note, max_uid * sizeof (rtx));
       line_note_head = (rtx *) alloca (n_basic_blocks * sizeof (rtx));
       bzero ((char *) line_note_head, n_basic_blocks * sizeof (rtx));
@@ -8723,7 +8691,44 @@ schedule_insns (dump_file)
       fprintf (dump, "\n\n");
     }
 
+  free (cant_move);
+  free (fed_by_spec_load);
+  free (is_load_insn);
+  free (insn_orig_block);
+  free (insn_luid);
+
+  free (insn_priority);
+  free (insn_reg_weight);
+  free (insn_tick);
+  free (insn_costs);
+  free (insn_units);
+  free (insn_blockage);
+  free (insn_ref_count);
+
+  free (insn_dep_count);
+  free (insn_depend);
+
+  if (write_symbols != NO_DEBUG)
+    free (line_note);
+
   if (bb_live_regs)
     FREE_REG_SET (bb_live_regs);
+
+  if (edge_table)
+    {
+      free (edge_table);
+      edge_table = NULL;
+    }
+
+  if (in_edges)
+    {
+      free (in_edges);
+      in_edges = NULL;
+    }
+  if (out_edges)
+    {
+      free (out_edges);
+      out_edges = NULL;
+    }
 }
 #endif /* INSN_SCHEDULING */

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  AT&T DSP1600.
-   Copyright (C) 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
    Contributed by Michael Collison (collison@world.std.com).
 
 This file is part of GNU CC.
@@ -76,7 +76,7 @@ extern void bss_section ();
 extern struct rtx_def *dsp16xx_function_arg ();
 extern void dsp16xx_function_arg_advance ();
 extern enum rtx_code next_cc_user_code ();
-extern enum rtx_code save_next_cc_user_code;
+extern int next_cc_user_unsigned ();
 extern struct rtx_def *gen_tst_reg ();
 extern char *output_block_move();
 
@@ -138,7 +138,7 @@ extern char *output_block_move();
 /* Tell gcc where to look for the startfile */
 #define STANDARD_STARTFILE_PREFIX   "/d1600/lib"
 
-/* Tell gcc where to look for it's executables */
+/* Tell gcc where to look for its executables */
 #define STANDARD_EXEC_PREFIX  "/d1600/bin"
 
 /* Command line options to the AT&T assembler */
@@ -282,34 +282,25 @@ extern int target_flags;
    on a particular target machine.  You can define a macro
    `OVERRIDE_OPTIONS' to take account of this.  This macro, if
    defined, is executed once just after all the command options have
-   been parsed. */
+   been parsed.
+  
+   Don't use this macro to turn on various extra optimizations for
+   `-O'.  That is what `OPTIMIZATION_OPTIONS' is for.  */
 
 #define OVERRIDE_OPTIONS override_options ()
 
-#define OPTIMIZATION_OPTIONS(LEVEL)                   \
-{                                                     \
-    flag_gnu_linker             = FALSE;              \
-                                                      \
-    if (LEVEL)                                        \
-    {                                                 \
-	flag_omit_frame_pointer = TRUE;               \
-	flag_thread_jumps       = TRUE;               \
-    }                                                 \
-                                                      \
-    if (LEVEL >= 2)                                   \
-    {                                                 \
-	flag_strength_reduce         = TRUE;          \
-	flag_cse_follow_jumps        = TRUE;          \
-	flag_cse_skip_blocks         = TRUE;          \
-	flag_expensive_optimizations = TRUE;          \
-	flag_rerun_cse_after_loop    = TRUE;          \
-    }                                                 \
-                                                      \
-    if (LEVEL >= 3)                                   \
-    {                                                 \
-       flag_inline_functions = 1;                     \
-    }                                                 \
-}
+#define OPTIMIZATION_OPTIONS(LEVEL,SIZE)		\
+do							\
+  {							\
+    flag_gnu_linker             = FALSE;		\
+							\
+    if (SIZE)						\
+      {							\
+	flag_strength_reduce    = FALSE;		\
+	flag_inline_functions   = FALSE;		\
+      }							\
+  }							\
+while (0)
 
 /* STORAGE LAYOUT */
 
@@ -435,12 +426,12 @@ extern int target_flags;
    The hardware registers are assigned numbers for the compiler
    from 0 to FIRST_PSEUDO_REGISTER-1 */
 
-#define FIRST_PSEUDO_REGISTER REG_YBASE31 + 1
+#define FIRST_PSEUDO_REGISTER (REG_YBASE31 + 1)
 
 /* 1 for registers that have pervasive standard uses
    and are not available for the register allocator.
 
-   The registers are layed out as follows:
+   The registers are laid out as follows:
 
    {a0,a0l,a1,a1l,x,y,yl,p,pl} - Data Arithmetic Unit
    {r0,r1,r2,r3,j,k,ybase} - Y Space Address Arithmetic Unit
@@ -1130,11 +1121,11 @@ extern struct dsp16xx_frame_info current_frame_info;
 #define VALUE_REGNO(MODE)  (REG_Y)
 
 #define FUNCTION_VALUE(VALTYPE, FUNC)  \
-  gen_rtx (REG, TYPE_MODE (VALTYPE), VALUE_REGNO(TYPE_MODE(VALTYPE)))
+  gen_rtx_REG (TYPE_MODE (VALTYPE), VALUE_REGNO(TYPE_MODE(VALTYPE)))
 
 /* Define how to find the value returned by a library function
    assuming the value has mode MODE.  */
-#define LIBCALL_VALUE(MODE)  gen_rtx (REG, MODE, VALUE_REGNO(MODE))
+#define LIBCALL_VALUE(MODE)  gen_rtx_REG (MODE, VALUE_REGNO(MODE))
 
 /* 1 if N is a possible register number for a function value. */
 #define FUNCTION_VALUE_REGNO_P(N) ((N) == REG_Y)
@@ -1555,7 +1546,7 @@ extern struct dsp16xx_frame_info current_frame_info;
 
 /* A C expression for the cost of moving data of mode MODE between
    a register and memory. A value of 2 is the default. */
-#define MEMORY_MOVE_COST(MODE)                                  \
+#define MEMORY_MOVE_COST(MODE,CLASS,IN)                          \
   (GET_MODE_CLASS(MODE) == MODE_INT && MODE == QImode ? 12       \
    : 16)
 
@@ -1652,7 +1643,7 @@ const_section ()                                                   \
 /* This is how to output an assembler line defining a `float' constant.  */
 #define ASM_OUTPUT_FLOAT(FILE,VALUE)  asm_output_float (FILE, VALUE)
 
-/* This is how to output and assembler line defininf a 'float' constant of
+/* This is how to output an assembler line defining a 'float' constant of
    size HFmode. */
 #define ASM_OUTPUT_SHORT_FLOAT(FILE,VALUE)  asm_output_float (FILE, VALUE)
 
@@ -1879,7 +1870,7 @@ const_section ()                                                   \
 
 /* This macro should be provided on machines where the addresses in a dispatch
    table are relative to the table's own address. */
-#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
+#define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, BODY, VALUE, REL)  \
   fprintf (FILE, "\tint L%d-L%d\n", VALUE, REL)
 
 /* This macro should be provided on machines where the addresses in a dispatch
@@ -1921,10 +1912,11 @@ const_section ()                                                   \
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE QImode
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-/* #define CASE_VECTOR_PC_RELATIVE  */
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+/* #define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR FIX_ROUND_EXPR

@@ -1,6 +1,6 @@
 /* lex.h -- Public #include File (module.h template V1.0)
    Copyright (C) 1995 Free Software Foundation, Inc.
-   Contributed by James Craig Burley (burley@gnu.ai.mit.edu).
+   Contributed by James Craig Burley (burley@gnu.org).
 
 This file is part of GNU Fortran.
 
@@ -92,7 +92,6 @@ typedef lex_sigh__ (*ffelexHandler) (ffelexToken);
 
 /* Include files needed by this one. */
 
-#include <ctype.h>
 #include "top.h"
 #include "where.h"
 
@@ -173,7 +172,7 @@ ffelexToken ffelex_token_use (ffelexToken t);
 #define ffelex_init_3()
 #define ffelex_init_4()
 #define ffelex_is_firstnamechar(c) \
-  (isalpha ((c)) || ((c) == '_'))
+  (ISALPHA ((c)) || ((c) == '_'))
 #define ffelex_terminate_0()
 #define ffelex_terminate_1()
 #define ffelex_terminate_2()

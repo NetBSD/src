@@ -1,5 +1,5 @@
 /* Generate code to initialize optabs from machine description.
-   Copyright (C) 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94-97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -19,11 +19,15 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 
-#include <stdio.h>
 #include "hconfig.h"
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+#include "system.h"
 #include "rtl.h"
 #include "obstack.h"
-#include <ctype.h>
 
 static struct obstack obstack;
 struct obstack *rtl_obstack = &obstack;
@@ -31,12 +35,9 @@ struct obstack *rtl_obstack = &obstack;
 #define obstack_chunk_alloc xmalloc
 #define obstack_chunk_free free
 
-extern void free ();
-extern rtx read_rtx ();
-
-char *xmalloc ();
-static void fatal ();
-void fancy_abort ();
+char *xmalloc PROTO((unsigned));
+static void fatal PVPROTO ((char *, ...)) ATTRIBUTE_PRINTF_1;
+void fancy_abort PROTO((void));
 
 /* Many parts of GCC use arrays that are indexed by machine mode and
    contain the insn codes for pattern in the MD file that perform a given
@@ -128,16 +129,17 @@ char *optabs[] =
 /* Allow linking with print-rtl.c.  */
 char **insn_name_ptr;
 
+static void gen_insn PROTO((rtx));
+
 static void
 gen_insn (insn)
      rtx insn;
 {
   char *name = XSTR (insn, 0);
   int m1, m2, op;
-  int pindex;
+  size_t pindex;
   int i;
   char *np, *pp, *p, *q;
-  struct obstack *obstack_ptr;
 
   /* Don't mention instructions whose names are the null string.
      They are in the machine description just to be recognized.  */
@@ -307,11 +309,22 @@ xrealloc (ptr, size)
 }
 
 static void
-fatal (s, a1, a2)
-     char *s;
+fatal VPROTO ((char *format, ...))
 {
+#ifndef __STDC__
+  char *format;
+#endif
+  va_list ap;
+
+  VA_START (ap, format);
+
+#ifndef __STDC__
+  format = va_arg (ap, char *);
+#endif
+
   fprintf (stderr, "genopinit: ");
-  fprintf (stderr, s, a1, a2);
+  vfprintf (stderr, format, ap);
+  va_end (ap);
   fprintf (stderr, "\n");
   exit (FATAL_EXIT_CODE);
 }
@@ -331,8 +344,6 @@ main (argc, argv)
      char **argv;
 {
   rtx desc;
-  rtx dummy;
-  rtx *insn_ptr;
   FILE *infile;
   register int c;
 
@@ -354,6 +365,7 @@ main (argc, argv)
 from the machine description file `md'.  */\n\n");
 
   printf ("#include \"config.h\"\n");
+  printf ("#include \"system.h\"\n");
   printf ("#include \"rtl.h\"\n");
   printf ("#include \"flags.h\"\n");
   printf ("#include \"insn-flags.h\"\n");

@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  Iris version 6.
-   Copyright (C) 1994, 1995, 1996, 1998 Free Software Foundation, Inc.
+   Copyright (C) 1994, 1995, 1996, 1997, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -24,15 +24,14 @@ Boston, MA 02111-1307, USA.  */
 #define MULTILIB_DEFAULTS { "mabi=n32" }
 
 #ifndef TARGET_DEFAULT
-#define TARGET_DEFAULT MASK_ABICALLS|MASK_FLOAT64|MASK_64BIT
+#define TARGET_DEFAULT (MASK_ABICALLS|MASK_FLOAT64|MASK_64BIT)
 #endif
 
 #include "mips/iris5.h"
 #include "mips/abi64.h"
 
-/* For Irix 6, -mips3 implies TARGET_LONG64.  */
-#undef TARGET_LONG64
-#define TARGET_LONG64		(mips_abi == ABI_64)
+/* For Irix 6, -mabi=64 implies TARGET_LONG64.  */
+/* This is handled in override_options.  */
 
 #undef SUBTARGET_CC1_SPEC
 #define SUBTARGET_CC1_SPEC "%{static: -mno-abicalls}"
@@ -97,18 +96,33 @@ Boston, MA 02111-1307, USA.  */
 #undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 
+/* Force the generation of dwarf .debug_frame sections even if not
+   compiling -g.  This guarantees that we can unwind the stack. */
+#define DWARF2_FRAME_INFO 1
 /* The size in bytes of a DWARF field indicating an offset or length
    relative to a debug info section, specified to be 4 bytes in the DWARF-2
    specification.  The SGI/MIPS ABI defines it to be the same as PTR_SIZE.  */
 #define DWARF_OFFSET_SIZE PTR_SIZE
+
+/* There is no GNU as port for Irix6 yet, so we set MD_EXEC_PREFIX so that
+   gcc will automatically find SGI as instead of searching the user's path.
+   The latter can fail when building a cross compiler if the user has . in
+   the path before /usr/bin, since then gcc will find and try to use the link
+   to the cross assembler which can't possibly work.  */
+
+#undef MD_EXEC_PREFIX
+#define MD_EXEC_PREFIX "/usr/bin/"
+
+/* We have no need for MD_STARTFILE_PREFIX.  */
+#undef MD_STARTFILE_PREFIX
 
 #undef MACHINE_TYPE
 #define MACHINE_TYPE "SGI running IRIX 6.x"
 
 /* The Irix 6.0.1 assembler doesn't like labels in the text section, so
    just avoid emitting them.  */
-#define ASM_IDENTIFY_GCC
-#define ASM_IDENTIFY_LANGUAGE
+#define ASM_IDENTIFY_GCC(x) ((void)0)
+#define ASM_IDENTIFY_LANGUAGE(x) ((void)0)
 
 /* Irix 5 stuff that we don't need for Irix 6.  */
 /* ??? We do need this for the -mabi=32 switch though.  */
@@ -141,7 +155,7 @@ Boston, MA 02111-1307, USA.  */
   } while (0)
 
 /* Tell function_prologue in mips.c that we have already output the .ent/.end
-   psuedo-ops.  */
+   pseudo-ops.  */
 #define FUNCTION_NAME_ALREADY_DECLARED
 
 #undef SET_ASM_OP	/* Has no equivalent.  See ASM_OUTPUT_DEF below.  */
@@ -500,18 +514,18 @@ do {									 \
          %{!pg:%{p:/usr/lib32/mips3/nonshared/mcrt1.o%s \
              /usr/lib32/mips3/nonshared/libprof1.a%s} \
            %{!p:/usr/lib32/mips3/nonshared/crt1.o%s}}}}}} \
-   %{mabi=n32: %{mips4:-L/usr/lib32/mips4} %{!mips4:-L/usr/lib32/mips3} \
+   crtbegin.o%s"
+
+#undef LIB_SPEC
+#define LIB_SPEC \
+  "%{mabi=n32: %{mips4:-L/usr/lib32/mips4} %{!mips4:-L/usr/lib32/mips3} \
      -L/usr/lib32} \
    %{mabi=64: %{mips4:-L/usr/lib64/mips4} %{!mips4:-L/usr/lib64/mips3} \
      -L/usr/lib64} \
    %{!mabi*: %{mips4:-L/usr/lib32/mips4} %{!mips4:-L/usr/lib32/mips3} \
      -L/usr/lib32} \
-   crtbegin.o%s"
-
-#undef LIB_SPEC
-#define LIB_SPEC "\
-%{!shared: \
-  -dont_warn_unused %{p:libprof1.a%s}%{pg:libprof1.a%s} -lc -warn_unused}"
+   %{!shared: \
+     -dont_warn_unused %{p:libprof1.a%s}%{pg:libprof1.a%s} -lc -warn_unused}"
 
 /* Avoid getting two warnings for libgcc.a everytime we link.  */
 #undef LIBGCC_SPEC
@@ -543,4 +557,5 @@ do {									 \
   %{!shared: %{!non_shared: %{!call_shared: -call_shared -no_unresolved}}}} \
 %{rpath} -init __do_global_ctors -fini __do_global_dtors \
 %{shared:-hidden_symbol __do_global_ctors,__do_global_dtors,__EH_FRAME_BEGIN__,__frame_dummy} \
--_SYSTYPE_SVR4 %{mabi=32: -32}%{mabi=n32: -n32}%{mabi=64: -64} %{!mabi*: -n32}"
+-_SYSTYPE_SVR4 -woff 131 \
+%{mabi=32: -32}%{mabi=n32: -n32}%{mabi=64: -64}%{!mabi*: -n32}"

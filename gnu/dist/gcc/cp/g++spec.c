@@ -20,18 +20,9 @@ Boston, MA 02111-1307, USA.  */
 
 #include "config.h"
 
-#include <sys/types.h>
-#include <stdio.h>
+#include "system.h"
 
 #include "gansidecl.h"
-
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
 
 /* This bit is set if we saw a `-xfoo' language specification.  */
 #define LANGSPEC	(1<<1)
@@ -43,14 +34,18 @@ Boston, MA 02111-1307, USA.  */
 #ifndef MATH_LIBRARY
 #define MATH_LIBRARY "-lm"
 #endif
+#ifndef NEED_MATH_LIBRARY
+#define NEED_MATH_LIBRARY 1	/* Default is pass MATH_LIBRARY to linker */
+#endif
 
 extern char *xmalloc PROTO((size_t));
 
 void
-lang_specific_driver (fn, in_argc, in_argv)
+lang_specific_driver (fn, in_argc, in_argv, in_added_libraries)
      void (*fn)();
      int *in_argc;
      char ***in_argv;
+     int *in_added_libraries;
 {
   int i, j;
 
@@ -89,7 +84,7 @@ lang_specific_driver (fn, in_argc, in_argv)
   int *args;
 
   /* By default, we throw on the math library.  */
-  int need_math = 1;
+  int need_math = NEED_MATH_LIBRARY;
 
   /* The total number of arguments with the new stuff.  */
   int argc;
@@ -97,12 +92,15 @@ lang_specific_driver (fn, in_argc, in_argv)
   /* The argument list.  */
   char **argv;
 
+  /* The number of libraries added in.  */
+  int added_libraries;
+
   /* The total number of arguments with the new stuff.  */
   int num_args = 1;
 
   argc = *in_argc;
   argv = *in_argv;
-
+  added_libraries = *in_added_libraries;
 
   args = (int *) xmalloc (argc * sizeof (int));
   bzero ((char *) args, argc * sizeof (int));
@@ -240,11 +238,17 @@ lang_specific_driver (fn, in_argc, in_argv)
 
   /* Add `-lstdc++' if we haven't already done so.  */
   if (library)
-    arglist[j++] = "-lstdc++";
+    {
+      arglist[j++] = "-lstdc++";
+      added_libraries++;
+    }
   if (saw_math)
     arglist[j++] = saw_math;
-  else if (library)
-    arglist[j++] = MATH_LIBRARY;
+  else if (library && need_math)
+    {
+      arglist[j++] = MATH_LIBRARY;
+      added_libraries++;
+    }
   if (saw_libc)
     arglist[j++] = saw_libc;
 
@@ -252,4 +256,14 @@ lang_specific_driver (fn, in_argc, in_argv)
 
   *in_argc = j;
   *in_argv = arglist;
+  *in_added_libraries = added_libraries;
 }
+
+/* Called before linking.  Returns 0 on success and -1 on failure. */
+int lang_specific_pre_link ()  /* Not used for C++. */
+{
+  return 0;
+}
+
+/* Number of extra output files that lang_specific_pre_link may generate. */
+int lang_specific_extra_outfiles = 0;  /* Not used for C++. */
