@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 2000/04/12 00:47:10 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.29 2000/04/12 11:40:12 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -725,8 +725,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			continue;
 		}
 
-		if (config_found(dev, (void *)&ma, mbprint) == NULL)
-			panic(sp);
+		(void) config_found(dev, (void *)&ma, mbprint);
 		free(ma.ma_reg, M_DEVBUF);
 		free(ma.ma_interrupts, M_DEVBUF);
 		free(ma.ma_address, M_DEVBUF);
