@@ -1,5 +1,5 @@
-This is doc/cppinternals.info, produced by makeinfo version 4.2 from
-doc/cppinternals.texi.
+Ceci est le fichier Info doc/cppinternals.info, produit par Makeinfo
+version 4.6 à partir doc/cppinternals.texi.
 
 INFO-DIR-SECTION Programming
 START-INFO-DIR-ENTRY
@@ -31,8 +31,8 @@ File: cppinternals.info,  Node: Top,  Next: Conventions,  Up: (dir)
 Cpplib--the GNU C Preprocessor
 ******************************
 
-   The GNU C preprocessor in GCC 3.x has been completely rewritten.  It
-is now implemented as a library, "cpplib", so it can be easily shared
+The GNU C preprocessor in GCC 3.x has been completely rewritten.  It is
+now implemented as a library, "cpplib", so it can be easily shared
 between a stand-alone preprocessor, and a preprocessor integrated with
 the C, C++ and Objective-C front ends.  It is also available for use by
 other programs, though this is not recommended as its exposed interface
@@ -68,7 +68,7 @@ File: cppinternals.info,  Node: Conventions,  Next: Lexer,  Prev: Top,  Up: Top
 Conventions
 ***********
 
-   cpplib has two interfaces--one is exposed internally only, and the
+cpplib has two interfaces--one is exposed internally only, and the
 other is for both internal and external use.
 
    The convention is that functions and types that are exposed to
@@ -94,7 +94,7 @@ The Lexer
 Overview
 ========
 
-   The lexer is contained in the file `cpplex.c'.  It is a hand-coded
+The lexer is contained in the file `cpplex.c'.  It is a hand-coded
 lexer, and not implemented as a state machine.  It can understand C, C++
 and Objective-C source code, and has been extended to allow reasonably
 successful preprocessing of assembly language.  The lexer does not make
@@ -113,10 +113,10 @@ generating diagnostics, and for emitting the preprocessed output.
 Lexing a token
 ==============
 
-   Lexing of an individual token is handled by `_cpp_lex_direct' and
-its subroutines.  In its current form the code is quite complicated,
-with read ahead characters and such-like, since it strives to not step
-back in the character stream in preparation for handling non-ASCII file
+Lexing of an individual token is handled by `_cpp_lex_direct' and its
+subroutines.  In its current form the code is quite complicated, with
+read ahead characters and such-like, since it strives to not step back
+in the character stream in preparation for handling non-ASCII file
 encodings.  The current plan is to convert any such files to UTF-8
 before processing them.  This complexity is therefore unnecessary and
 will be removed, so I'll not discuss it further here.
@@ -277,7 +277,7 @@ program calls cpp_destroy, probably at the end of the translation unit.
 Lexing a line
 =============
 
-   When the preprocessor was changed to return pointers to tokens, one
+When the preprocessor was changed to return pointers to tokens, one
 feature I wanted was some sort of guarantee regarding how long a
 returned pointer remains valid.  This is important to the stand-alone
 preprocessor, the future direction of the C family front ends, and even
@@ -365,12 +365,12 @@ File: cppinternals.info,  Node: Hash Nodes,  Next: Macro Expansion,  Prev: Lexer
 Hash Nodes
 **********
 
-   When cpplib encounters an "identifier", it generates a hash code for
-it and stores it in the hash table.  By "identifier" we mean tokens
-with type `CPP_NAME'; this includes identifiers in the usual C sense,
-as well as keywords, directive names, macro names and so on.  For
-example, all of `pragma', `int', `foo' and `__GNUC__' are identifiers
-and hashed when lexed.
+When cpplib encounters an "identifier", it generates a hash code for it
+and stores it in the hash table.  By "identifier" we mean tokens with
+type `CPP_NAME'; this includes identifiers in the usual C sense, as
+well as keywords, directive names, macro names and so on.  For example,
+all of `pragma', `int', `foo' and `__GNUC__' are identifiers and hashed
+when lexed.
 
    Each node in the hash table contain various information about the
 identifier it represents.  For example, its length and type.  At any one
@@ -426,10 +426,9 @@ File: cppinternals.info,  Node: Macro Expansion,  Next: Token Spacing,  Prev: Ha
 Macro Expansion Algorithm
 *************************
 
-   Macro expansion is a tricky operation, fraught with nasty corner
-cases and situations that render what you thought was a nifty way to
-optimize the preprocessor's expansion algorithm wrong in quite subtle
-ways.
+Macro expansion is a tricky operation, fraught with nasty corner cases
+and situations that render what you thought was a nifty way to optimize
+the preprocessor's expansion algorithm wrong in quite subtle ways.
 
    I strongly recommend you have a good grasp of how the C and C++
 standards require macros to be expanded before diving into this
@@ -440,8 +439,8 @@ pasting are supposed to work, damage to your sanity can quickly result.
 Internal representation of macros
 =================================
 
-   The preprocessor stores macro expansions in tokenized form.  This
-saves repeated lexing passes during expansion, at the cost of a small
+The preprocessor stores macro expansions in tokenized form.  This saves
+repeated lexing passes during expansion, at the cost of a small
 increase in memory consumption on average.  The tokens are stored
 contiguously in memory, so a pointer to the first one and a token count
 is all you need to get the replacement list of a macro.
@@ -461,9 +460,9 @@ changed.
 Macro expansion overview
 ========================
 
-   The preprocessor maintains a "context stack", implemented as a
-linked list of `cpp_context' structures, which together represent the
-macro expansion state at any one time.  The `struct cpp_reader' member
+The preprocessor maintains a "context stack", implemented as a linked
+list of `cpp_context' structures, which together represent the macro
+expansion state at any one time.  The `struct cpp_reader' member
 variable `context' points to the current top of this stack.  The top
 normally holds the unexpanded replacement list of the innermost macro
 under expansion, except when cpplib is about to pre-expand an argument,
@@ -506,7 +505,7 @@ being expanded.
 Scanning the replacement list for macros to expand
 ==================================================
 
-   The C standard states that, after any parameters have been replaced
+The C standard states that, after any parameters have been replaced
 with their possibly-expanded arguments, the replacement list is scanned
 for nested macros.  Further, any identifiers in the replacement list
 that are not expanded during this scan are never again eligible for
@@ -556,7 +555,7 @@ it a second time.
 Looking for a function-like macro's opening parenthesis
 =======================================================
 
-   Function-like macros only expand when immediately followed by a
+Function-like macros only expand when immediately followed by a
 parenthesis.  To do this cpplib needs to temporarily disable macros and
 read the next token.  Unfortunately, because of spacing issues (*note
 Token Spacing::), there can be fake padding tokens in-between, and if
@@ -576,7 +575,7 @@ context just containing the padding information if necessary.
 Marking tokens ineligible for future expansion
 ==============================================
 
-   As discussed above, cpplib needs a way of marking tokens as
+As discussed above, cpplib needs a way of marking tokens as
 unexpandable.  Since the tokens cpplib handles are read-only once they
 have been lexed, it instead makes a copy of the token and adds the flag
 `NO_EXPAND' to the copy.
@@ -599,7 +598,7 @@ File: cppinternals.info,  Node: Token Spacing,  Next: Line Numbering,  Prev: Mac
 Token Spacing
 *************
 
-   First, let's look at an issue that only concerns the stand-alone
+First, let's look at an issue that only concerns the stand-alone
 preprocessor: we want to guarantee that re-reading its preprocessed
 output results in an identical token stream.  Without taking special
 measures, this might not be the case because of macro substitution.
@@ -730,8 +729,8 @@ Line numbering
 Just which line number anyway?
 ==============================
 
-   There are three reasonable requirements a cpplib client might have
-for the line number of a token passed to it:
+There are three reasonable requirements a cpplib client might have for
+the line number of a token passed to it:
 
    * The source line it was lexed on.
 
@@ -786,10 +785,10 @@ produce correct output.
 Representation of line numbers
 ==============================
 
-   As mentioned above, cpplib stores with each token the line number
-that it was lexed on.  In fact, this number is not the number of the
-line in the source file, but instead bears more resemblance to the
-number of the line in the translation unit.
+As mentioned above, cpplib stores with each token the line number that
+it was lexed on.  In fact, this number is not the number of the line in
+the source file, but instead bears more resemblance to the number of the
+line in the translation unit.
 
    The preprocessor maintains a monotonic increasing line count, which
 is incremented at every new line character (and also at the end of any
@@ -817,7 +816,7 @@ File: cppinternals.info,  Node: Guard Macros,  Next: Files,  Prev: Line Numberin
 The Multiple-Include Optimization
 *********************************
 
-   Header files are often of the form
+Header files are often of the form
 
      #ifndef FOO
      #define FOO
@@ -923,10 +922,10 @@ File: cppinternals.info,  Node: Files,  Next: Index,  Prev: Guard Macros,  Up: T
 File Handling
 *************
 
-   Fairly obviously, the file handling code of cpplib resides in the
-file `cppfiles.c'.  It takes care of the details of file searching,
-opening, reading and caching, for both the main source file and all the
-headers it recursively includes.
+Fairly obviously, the file handling code of cpplib resides in the file
+`cppfiles.c'.  It takes care of the details of file searching, opening,
+reading and caching, for both the main source file and all the headers
+it recursively includes.
 
    The basic strategy is to minimize the number of system calls.  On
 many systems, the basic `open ()' and `fstat ()' system calls can be
@@ -1018,17 +1017,17 @@ Index
 
 
 Tag Table:
-Node: Top910
-Node: Conventions2579
-Node: Lexer3523
-Ref: Invalid identifiers11446
-Ref: Lexing a line13395
-Node: Hash Nodes18168
-Node: Macro Expansion21050
-Node: Token Spacing30015
-Node: Line Numbering35897
-Node: Guard Macros39988
-Node: Files44786
-Node: Index48250
+Node: Top931
+Node: Conventions2597
+Node: Lexer3538
+Ref: Invalid identifiers11455
+Ref: Lexing a line13404
+Node: Hash Nodes18174
+Node: Macro Expansion21053
+Node: Token Spacing30000
+Node: Line Numbering35879
+Node: Guard Macros39964
+Node: Files44759
+Node: Index48220
 
 End Tag Table

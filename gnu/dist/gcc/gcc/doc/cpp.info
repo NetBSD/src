@@ -1,8 +1,8 @@
-This is doc/cpp.info, produced by makeinfo version 4.2 from
-doc/cpp.texi.
+Ceci est le fichier Info doc/cpp.info, produit par Makeinfo version 4.6
+à partir doc/cpp.texi.
 
 Copyright (C) 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.1 or
@@ -32,7 +32,7 @@ File: cpp.info,  Node: Top,  Next: Overview,  Up: (dir)
 
 
 
-   The C preprocessor implements the macro language used to transform C,
+The C preprocessor implements the macro language used to transform C,
 C++, and Objective-C programs before they are compiled.  It can also be
 useful on its own.
 
@@ -131,7 +131,7 @@ Obsolete Features
 * Obsolete once-only headers::
 
 Copyright (C) 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997,
-1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.1 or
@@ -157,8 +157,8 @@ File: cpp.info,  Node: Overview,  Next: Header Files,  Prev: Top,  Up: Top
 Overview
 ********
 
-   The C preprocessor, often known as "cpp", is a "macro processor"
-that is used automatically by the C compiler to transform your program
+The C preprocessor, often known as "cpp", is a "macro processor" that
+is used automatically by the C compiler to transform your program
 before compilation.  It is called a macro processor because it allows
 you to define "macros", which are brief abbreviations for longer
 constructs.
@@ -216,7 +216,7 @@ File: cpp.info,  Node: Initial processing,  Next: Tokenization,  Up: Overview
 Initial processing
 ==================
 
-   The preprocessor performs a series of textual transformations on its
+The preprocessor performs a series of textual transformations on its
 input.  These happen before all other processing.  Conceptually, they
 happen in a rigid order, and the entire file is run through each
 transformation before the next one begins.  CPP actually does them all
@@ -358,7 +358,7 @@ File: cpp.info,  Node: Tokenization,  Next: The preprocessing language,  Prev: I
 Tokenization
 ============
 
-   After the textual transformations are finished, the input file is
+After the textual transformations are finished, the input file is
 converted into a sequence of "preprocessing tokens".  These mostly
 correspond to the syntactic tokens used by the C compiler, but there are
 a few differences.  White space separates tokens; it is not itself a
@@ -506,11 +506,11 @@ File: cpp.info,  Node: The preprocessing language,  Prev: Tokenization,  Up: Ove
 The preprocessing language
 ==========================
 
-   After tokenization, the stream of tokens may simply be passed
-straight to the compiler's parser.  However, if it contains any
-operations in the "preprocessing language", it will be transformed
-first.  This stage corresponds roughly to the standard's "translation
-phase 4" and is what most people think of as the preprocessor's job.
+After tokenization, the stream of tokens may simply be passed straight
+to the compiler's parser.  However, if it contains any operations in the
+"preprocessing language", it will be transformed first.  This stage
+corresponds roughly to the standard's "translation phase 4" and is what
+most people think of as the preprocessor's job.
 
    The preprocessing language consists of "directives" to be executed
 and "macros" to be expanded.  Its primary capabilities are:
@@ -569,10 +569,10 @@ File: cpp.info,  Node: Header Files,  Next: Macros,  Prev: Overview,  Up: Top
 Header Files
 ************
 
-   A header file is a file containing C declarations and macro
-definitions (*note Macros::) to be shared between several source files.
-You request the use of a header file in your program by "including"
-it, with the C preprocessing directive `#include'.
+A header file is a file containing C declarations and macro definitions
+(*note Macros::) to be shared between several source files.  You request
+the use of a header file in your program by "including" it, with the C
+preprocessing directive `#include'.
 
    Header files serve two purposes.
 
@@ -617,8 +617,8 @@ File: cpp.info,  Node: Include Syntax,  Next: Include Operation,  Up: Header Fil
 Include Syntax
 ==============
 
-   Both user and system header files are included using the
-preprocessing directive `#include'.  It has two variants:
+Both user and system header files are included using the preprocessing
+directive `#include'.  It has two variants:
 
 `#include <FILE>'
      This variant is used for system header files.  It searches for a
@@ -653,8 +653,8 @@ File: cpp.info,  Node: Include Operation,  Next: Search Path,  Prev: Include Syn
 Include Operation
 =================
 
-   The `#include' directive works by directing the C preprocessor to
-scan the specified file as input before continuing with the rest of the
+The `#include' directive works by directing the C preprocessor to scan
+the specified file as input before continuing with the rest of the
 current file.  The output from the preprocessor contains the output
 already generated, followed by the output resulting from the included
 file, followed by the output that comes from the text after the
@@ -711,7 +711,7 @@ File: cpp.info,  Node: Search Path,  Next: Once-Only Headers,  Prev: Include Ope
 Search Path
 ===========
 
-   GCC looks in several different places for headers.  On a normal Unix
+GCC looks in several different places for headers.  On a normal Unix
 system, if you do not instruct it otherwise, it will look for headers
 requested with `#include <FILE>' in:
 
@@ -779,10 +779,10 @@ File: cpp.info,  Node: Once-Only Headers,  Next: Computed Includes,  Prev: Searc
 Once-Only Headers
 =================
 
-   If a header file happens to be included twice, the compiler will
-process its contents twice.  This is very likely to cause an error,
-e.g. when the compiler sees the same structure definition twice.  Even
-if it does not, it will certainly waste time.
+If a header file happens to be included twice, the compiler will process
+its contents twice.  This is very likely to cause an error, e.g. when
+the compiler sees the same structure definition twice.  Even if it does
+not, it will certainly waste time.
 
    The standard way to prevent this is to enclose the entire real
 contents of the file in a conditional, like this:
@@ -821,7 +821,7 @@ File: cpp.info,  Node: Computed Includes,  Next: Wrapper Headers,  Prev: Once-On
 Computed Includes
 =================
 
-   Sometimes it is necessary to select one of several different header
+Sometimes it is necessary to select one of several different header
 files to be included into your program.  They might specify
 configuration parameters to be used on different sorts of operating
 systems, for instance.  You could do this with a series of conditionals,
@@ -895,7 +895,7 @@ File: cpp.info,  Node: Wrapper Headers,  Next: System Headers,  Prev: Computed I
 Wrapper Headers
 ===============
 
-   Sometimes it is necessary to adjust the contents of a system-provided
+Sometimes it is necessary to adjust the contents of a system-provided
 header file without editing it directly.  GCC's `fixincludes' operation
 does this, for example.  One way to do that would be to create a new
 header file with the same name and insert it in the search path before
@@ -946,7 +946,7 @@ File: cpp.info,  Node: System Headers,  Prev: Wrapper Headers,  Up: Header Files
 System Headers
 ==============
 
-   The header files declaring interfaces to the operating system and
+The header files declaring interfaces to the operating system and
 runtime libraries often cannot be written in strictly conforming C.
 Therefore, GCC gives code found in "system headers" special treatment.
 All warnings, other than those generated by `#warning' (*note
@@ -989,11 +989,11 @@ File: cpp.info,  Node: Macros,  Next: Conditionals,  Prev: Header Files,  Up: To
 Macros
 ******
 
-   A "macro" is a fragment of code which has been given a name.
-Whenever the name is used, it is replaced by the contents of the macro.
-There are two kinds of macros.  They differ mostly in what they look
-like when they are used.  "Object-like" macros resemble data objects
-when used, "function-like" macros resemble function calls.
+A "macro" is a fragment of code which has been given a name.  Whenever
+the name is used, it is replaced by the contents of the macro.  There
+are two kinds of macros.  They differ mostly in what they look like
+when they are used.  "Object-like" macros resemble data objects when
+used, "function-like" macros resemble function calls.
 
    You may define any valid identifier as a macro, even if it is a C
 keyword.  The preprocessor does not know anything about keywords.  This
@@ -1022,9 +1022,9 @@ File: cpp.info,  Node: Object-like Macros,  Next: Function-like Macros,  Up: Mac
 Object-like Macros
 ==================
 
-   An "object-like macro" is a simple identifier which will be replaced
-by a code fragment.  It is called object-like because it looks like a
-data object in code that uses it.  They are most commonly used to give
+An "object-like macro" is a simple identifier which will be replaced by
+a code fragment.  It is called object-like because it looks like a data
+object in code that uses it.  They are most commonly used to give
 symbolic names to numeric constants.
 
    You create macros with the `#define' directive.  `#define' is
@@ -1124,10 +1124,10 @@ File: cpp.info,  Node: Function-like Macros,  Next: Macro Arguments,  Prev: Obje
 Function-like Macros
 ====================
 
-   You can also define macros whose use looks like a function call.
-These are called "function-like macros".  To define a function-like
-macro, you use the same `#define' directive, but you put a pair of
-parentheses immediately after the macro name.  For example,
+You can also define macros whose use looks like a function call.  These
+are called "function-like macros".  To define a function-like macro,
+you use the same `#define' directive, but you put a pair of parentheses
+immediately after the macro name.  For example,
 
      #define lang_init()  c_init()
      lang_init()
@@ -1168,7 +1168,7 @@ File: cpp.info,  Node: Macro Arguments,  Next: Stringification,  Prev: Function-
 Macro Arguments
 ===============
 
-   Function-like macros can take "arguments", just like true functions.
+Function-like macros can take "arguments", just like true functions.
 To define a macro that uses arguments, you insert "parameters" between
 the pair of parentheses in the macro definition that make the macro
 function-like.  The parameters must be valid C identifiers, separated
@@ -1261,7 +1261,7 @@ File: cpp.info,  Node: Stringification,  Next: Concatenation,  Prev: Macro Argum
 Stringification
 ===============
 
-   Sometimes you may want to convert a macro argument into a string
+Sometimes you may want to convert a macro argument into a string
 constant.  Parameters are not replaced inside string constants, but you
 can use the `#' preprocessing operator instead.  When a macro parameter
 is used with a leading `#', the preprocessor replaces it with the
@@ -1339,9 +1339,9 @@ File: cpp.info,  Node: Concatenation,  Next: Variadic Macros,  Prev: Stringifica
 Concatenation
 =============
 
-   It is often useful to merge two tokens into one while expanding
-macros.  This is called "token pasting" or "token concatenation".  The
-`##' preprocessing operator performs token pasting.  When a macro is
+It is often useful to merge two tokens into one while expanding macros.
+This is called "token pasting" or "token concatenation".  The `##'
+preprocessing operator performs token pasting.  When a macro is
 expanded, the two tokens on either side of each `##' operator are
 combined into a single token, which then replaces the `##' and the two
 original tokens in the macro expansion.  Usually both will be
@@ -1413,9 +1413,9 @@ File: cpp.info,  Node: Variadic Macros,  Next: Predefined Macros,  Prev: Concate
 Variadic Macros
 ===============
 
-   A macro can be declared to accept a variable number of arguments
-much as a function can.  The syntax for defining the macro is similar
-to that of a function.  Here is an example:
+A macro can be declared to accept a variable number of arguments much as
+a function can.  The syntax for defining the macro is similar to that of
+a function.  Here is an example:
 
      #define eprintf(...) fprintf (stderr, __VA_ARGS__)
 
@@ -1518,7 +1518,7 @@ File: cpp.info,  Node: Predefined Macros,  Next: Undefining and Redefining Macro
 Predefined Macros
 =================
 
-   Several object-like macros are predefined; you use them without
+Several object-like macros are predefined; you use them without
 supplying their definitions.  They fall into three classes: standard,
 common, and system-specific.
 
@@ -1538,10 +1538,10 @@ File: cpp.info,  Node: Standard Predefined Macros,  Next: Common Predefined Macr
 Standard Predefined Macros
 --------------------------
 
-   The standard predefined macros are specified by the relevant
-language standards, so they are available with all compilers that
-implement those standards.  Older compilers may not provide all of
-them.  Their names all start with double underscores.
+The standard predefined macros are specified by the relevant language
+standards, so they are available with all compilers that implement
+those standards.  Older compilers may not provide all of them.  Their
+names all start with double underscores.
 
 `__FILE__'
      This macro expands to the name of the current input file, in the
@@ -1662,15 +1662,16 @@ with `__FILE__' and `__LINE__', though.
      This macro is defined with value 1 when preprocessing assembly
      language.
 
+
 
 File: cpp.info,  Node: Common Predefined Macros,  Next: System-specific Predefined Macros,  Prev: Standard Predefined Macros,  Up: Predefined Macros
 
 Common Predefined Macros
 ------------------------
 
-   The common predefined macros are GNU C extensions.  They are
-available with the same meanings regardless of the machine or operating
-system on which you are using GNU C.  Their names all start with double
+The common predefined macros are GNU C extensions.  They are available
+with the same meanings regardless of the machine or operating system on
+which you are using GNU C.  Their names all start with double
 underscores.
 
 `__GNUC__'
@@ -1836,7 +1837,6 @@ underscores.
      being used.
 
 `__LP64__'
-
 `_LP64'
      These macros are defined, with value 1, if (and only if) the
      compilation is for a target where `long int' and pointer both use
@@ -1848,11 +1848,11 @@ File: cpp.info,  Node: System-specific Predefined Macros,  Next: C++ Named Opera
 System-specific Predefined Macros
 ---------------------------------
 
-   The C preprocessor normally predefines several macros that indicate
-what type of system and machine is in use.  They are obviously
-different on each target supported by GCC.  This manual, being for all
-systems and machines, cannot tell you what their names are, but you can
-use `cpp -dM' to see them all.  *Note Invocation::.  All system-specific
+The C preprocessor normally predefines several macros that indicate what
+type of system and machine is in use.  They are obviously different on
+each target supported by GCC.  This manual, being for all systems and
+machines, cannot tell you what their names are, but you can use `cpp
+-dM' to see them all.  *Note Invocation::.  All system-specific
 predefined macros expand to the constant 1, so you can test them with
 either `#ifdef' or `#if'.
 
@@ -1886,13 +1886,13 @@ File: cpp.info,  Node: C++ Named Operators,  Prev: System-specific Predefined Ma
 C++ Named Operators
 -------------------
 
-   In C++, there are eleven keywords which are simply alternate
-spellings of operators normally written with punctuation.  These
-keywords are treated as such even in the preprocessor.  They function
-as operators in `#if', and they cannot be defined as macros or
-poisoned.  In C, you can request that those keywords take their C++
-meaning by including `iso646.h'.  That header defines each one as a
-normal object-like macro expanding to the appropriate punctuator.
+In C++, there are eleven keywords which are simply alternate spellings
+of operators normally written with punctuation.  These keywords are
+treated as such even in the preprocessor.  They function as operators in
+`#if', and they cannot be defined as macros or poisoned.  In C, you can
+request that those keywords take their C++ meaning by including
+`iso646.h'.  That header defines each one as a normal object-like macro
+expanding to the appropriate punctuator.
 
    These are the named operators and their corresponding punctuators:
 
@@ -1915,9 +1915,9 @@ File: cpp.info,  Node: Undefining and Redefining Macros,  Next: Directives Withi
 Undefining and Redefining Macros
 ================================
 
-   If a macro ceases to be useful, it may be "undefined" with the
-`#undef' directive.  `#undef' takes a single argument, the name of the
-macro to undefine.  You use the bare macro name, even if the macro is
+If a macro ceases to be useful, it may be "undefined" with the `#undef'
+directive.  `#undef' takes a single argument, the name of the macro to
+undefine.  You use the bare macro name, even if the macro is
 function-like.  It is an error if anything appears on the line after
 the macro name.  `#undef' has no effect if the name is not a macro.
 
@@ -1967,9 +1967,9 @@ File: cpp.info,  Node: Directives Within Macro Arguments,  Next: Macro Pitfalls,
 Directives Within Macro Arguments
 =================================
 
-   Occasionally it is convenient to use preprocessor directives within
-the arguments of a macro.  The C and C++ standards declare that
-behavior in these cases is undefined.
+Occasionally it is convenient to use preprocessor directives within the
+arguments of a macro.  The C and C++ standards declare that behavior in
+these cases is undefined.
 
    Versions of CPP prior to 3.2 would reject such constructs with an
 error message.  This was the only syntactic difference between normal
@@ -2007,8 +2007,8 @@ File: cpp.info,  Node: Macro Pitfalls,  Prev: Directives Within Macro Arguments,
 Macro Pitfalls
 ==============
 
-   In this section we describe some special rules that apply to macros
-and macro expansion, and point out certain cases in which the rules have
+In this section we describe some special rules that apply to macros and
+macro expansion, and point out certain cases in which the rules have
 counter-intuitive consequences that you must watch out for.
 
 * Menu:
@@ -2027,7 +2027,7 @@ File: cpp.info,  Node: Misnesting,  Next: Operator Precedence Problems,  Up: Mac
 Misnesting
 ----------
 
-   When a macro is called with arguments, the arguments are substituted
+When a macro is called with arguments, the arguments are substituted
 into the macro body and the result is checked, together with the rest of
 the input file, for more macro calls.  It is possible to piece together
 a macro call coming partially from the macro body and partially from the
@@ -2059,11 +2059,11 @@ File: cpp.info,  Node: Operator Precedence Problems,  Next: Swallowing the Semic
 Operator Precedence Problems
 ----------------------------
 
-   You may have noticed that in most of the macro definition examples
-shown above, each occurrence of a macro argument name had parentheses
-around it.  In addition, another pair of parentheses usually surround
-the entire macro definition.  Here is why it is best to write macros
-that way.
+You may have noticed that in most of the macro definition examples shown
+above, each occurrence of a macro argument name had parentheses around
+it.  In addition, another pair of parentheses usually surround the
+entire macro definition.  Here is why it is best to write macros that
+way.
 
    Suppose you define a macro as follows,
 
@@ -2113,7 +2113,7 @@ File: cpp.info,  Node: Swallowing the Semicolon,  Next: Duplication of Side Effe
 Swallowing the Semicolon
 ------------------------
 
-   Often it is desirable to define a macro that expands into a compound
+Often it is desirable to define a macro that expands into a compound
 statement.  Consider, for example, the following macro, that advances a
 pointer (the argument `p' says where to find it) across whitespace
 characters:
@@ -2169,7 +2169,7 @@ File: cpp.info,  Node: Duplication of Side Effects,  Next: Self-Referential Macr
 Duplication of Side Effects
 ---------------------------
 
-   Many C programs define a macro `min', for "minimum", like this:
+Many C programs define a macro `min', for "minimum", like this:
 
      #define min(X, Y)  ((X) < (Y) ? (X) : (Y))
 
@@ -2228,12 +2228,12 @@ File: cpp.info,  Node: Self-Referential Macros,  Next: Argument Prescan,  Prev: 
 Self-Referential Macros
 -----------------------
 
-   A "self-referential" macro is one whose name appears in its
-definition.  Recall that all macro definitions are rescanned for more
-macros to replace.  If the self-reference were considered a use of the
-macro, it would produce an infinitely large expansion.  To prevent this,
-the self-reference is not considered a macro call.  It is passed into
-the preprocessor output unchanged.  Let's consider an example:
+A "self-referential" macro is one whose name appears in its definition.
+Recall that all macro definitions are rescanned for more macros to
+replace.  If the self-reference were considered a use of the macro, it
+would produce an infinitely large expansion.  To prevent this, the
+self-reference is not considered a macro call.  It is passed into the
+preprocessor output unchanged.  Let's consider an example:
 
      #define foo (4 + foo)
 
@@ -2289,7 +2289,7 @@ File: cpp.info,  Node: Argument Prescan,  Next: Newlines in Arguments,  Prev: Se
 Argument Prescan
 ----------------
 
-   Macro arguments are completely macro-expanded before they are
+Macro arguments are completely macro-expanded before they are
 substituted into a macro body, unless they are stringified or pasted
 with other tokens.  After substitution, the entire macro body, including
 the substituted arguments, is scanned again for macros to be expanded.
@@ -2376,7 +2376,7 @@ File: cpp.info,  Node: Newlines in Arguments,  Prev: Argument Prescan,  Up: Macr
 Newlines in Arguments
 ---------------------
 
-   The invocation of a function-like macro can extend over many logical
+The invocation of a function-like macro can extend over many logical
 lines.  However, in the present implementation, the entire expansion
 comes out on one line.  Thus line numbers emitted by the compiler or
 debugger refer to the line the invocation started on, which might be
@@ -2402,7 +2402,7 @@ File: cpp.info,  Node: Conditionals,  Next: Diagnostics,  Prev: Macros,  Up: Top
 Conditionals
 ************
 
-   A "conditional" is a directive that instructs the preprocessor to
+A "conditional" is a directive that instructs the preprocessor to
 select whether or not to include a chunk of code in the final token
 stream passed to the compiler.  Preprocessor conditionals can test
 arithmetic expressions, or whether a name is defined as a macro, or both
@@ -2443,7 +2443,7 @@ File: cpp.info,  Node: Conditional Uses,  Next: Conditional Syntax,  Up: Conditi
 Conditional Uses
 ================
 
-   There are three general reasons to use a conditional.
+There are three general reasons to use a conditional.
 
    * A program may need to use different code depending on the machine
      or operating system it is to run on.  In some cases the code for
@@ -2474,7 +2474,7 @@ File: cpp.info,  Node: Conditional Syntax,  Next: Deleted Code,  Prev: Condition
 Conditional Syntax
 ==================
 
-   A conditional in the C preprocessor begins with a "conditional
+A conditional in the C preprocessor begins with a "conditional
 directive": `#if', `#ifdef' or `#ifndef'.
 
 * Menu:
@@ -2491,7 +2491,7 @@ File: cpp.info,  Node: Ifdef,  Next: If,  Up: Conditional Syntax
 Ifdef
 -----
 
-   The simplest sort of conditional is
+The simplest sort of conditional is
 
      #ifdef MACRO
      
@@ -2563,7 +2563,7 @@ File: cpp.info,  Node: If,  Next: Defined,  Prev: Ifdef,  Up: Conditional Syntax
 If
 --
 
-   The `#if' directive allows you to test the value of an arithmetic
+The `#if' directive allows you to test the value of an arithmetic
 expression, rather than the mere existence of one macro.  Its syntax is
 
      #if EXPRESSION
@@ -2624,11 +2624,11 @@ File: cpp.info,  Node: Defined,  Next: Else,  Prev: If,  Up: Conditional Syntax
 Defined
 -------
 
-   The special operator `defined' is used in `#if' and `#elif'
-expressions to test whether a certain name is defined as a macro.
-`defined NAME' and `defined (NAME)' are both expressions whose value is
-1 if NAME is defined as a macro at the current point in the program,
-and 0 otherwise.  Thus,  `#if defined MACRO' is precisely equivalent to
+The special operator `defined' is used in `#if' and `#elif' expressions
+to test whether a certain name is defined as a macro.  `defined NAME'
+and `defined (NAME)' are both expressions whose value is 1 if NAME is
+defined as a macro at the current point in the program, and 0
+otherwise.  Thus,  `#if defined MACRO' is precisely equivalent to
 `#ifdef MACRO'.
 
    `defined' is useful when you wish to test more than one macro for
@@ -2659,7 +2659,7 @@ File: cpp.info,  Node: Else,  Next: Elif,  Prev: Defined,  Up: Conditional Synta
 Else
 ----
 
-   The `#else' directive can be added to a conditional to provide
+The `#else' directive can be added to a conditional to provide
 alternative text to be used if the condition fails.  This is what it
 looks like:
 
@@ -2680,8 +2680,8 @@ File: cpp.info,  Node: Elif,  Prev: Else,  Up: Conditional Syntax
 Elif
 ----
 
-   One common case of nested conditionals is used to check for more
-than two possible alternatives.  For example, you might have
+One common case of nested conditionals is used to check for more than
+two possible alternatives.  For example, you might have
 
      #if X == 1
      ...
@@ -2725,8 +2725,8 @@ File: cpp.info,  Node: Deleted Code,  Prev: Conditional Syntax,  Up: Conditional
 Deleted Code
 ============
 
-   If you replace or delete a part of the program but want to keep the
-old code around for future reference, you often cannot simply comment it
+If you replace or delete a part of the program but want to keep the old
+code around for future reference, you often cannot simply comment it
 out.  Block comments do not nest, so the first comment inside the old
 code will end the commenting-out.  The probable result is a flood of
 syntax errors.
@@ -2753,9 +2753,9 @@ File: cpp.info,  Node: Diagnostics,  Next: Line Control,  Prev: Conditionals,  U
 Diagnostics
 ***********
 
-   The directive `#error' causes the preprocessor to report a fatal
-error.  The tokens forming the rest of the line following `#error' are
-used as the error message.
+The directive `#error' causes the preprocessor to report a fatal error.
+The tokens forming the rest of the line following `#error' are used as
+the error message.
 
    You would use `#error' inside of a conditional that detects a
 combination of parameters which you know the program does not properly
@@ -2793,12 +2793,11 @@ File: cpp.info,  Node: Line Control,  Next: Pragmas,  Prev: Diagnostics,  Up: To
 Line Control
 ************
 
-   The C preprocessor informs the C compiler of the location in your
-source code where each token came from.  Presently, this is just the
-file name and line number.  All the tokens resulting from macro
-expansion are reported as having appeared on the line of the source
-file where the outermost macro was used.  We intend to be more accurate
-in the future.
+The C preprocessor informs the C compiler of the location in your source
+code where each token came from.  Presently, this is just the file name
+and line number.  All the tokens resulting from macro expansion are
+reported as having appeared on the line of the source file where the
+outermost macro was used.  We intend to be more accurate in the future.
 
    If you write a program which generates source code, such as the
 `bison' parser generator, you may want to adjust the preprocessor's
@@ -2872,8 +2871,8 @@ File: cpp.info,  Node: Pragmas,  Next: Other Directives,  Prev: Line Control,  U
 Pragmas
 *******
 
-   The `#pragma' directive is the method specified by the C standard
-for providing additional information to the compiler, beyond what is
+The `#pragma' directive is the method specified by the C standard for
+providing additional information to the compiler, beyond what is
 conveyed in the language itself.  Three forms of this directive
 (commonly known as "pragmas") are specified by the 1999 C standard.  A
 C compiler is free to attach any meaning it likes to other pragmas.
@@ -2963,15 +2962,16 @@ compilers.  They are documented in the GCC manual.
      the current file to be treated as if it came from a system header.
      *Note System Headers::.
 
+
 
 File: cpp.info,  Node: Other Directives,  Next: Preprocessor Output,  Prev: Pragmas,  Up: Top
 
 Other Directives
 ****************
 
-   The `#ident' directive takes one argument, a string constant.  On
-some systems, that string constant is copied into a special segment of
-the object file.  On other systems, the directive is ignored.
+The `#ident' directive takes one argument, a string constant.  On some
+systems, that string constant is copied into a special segment of the
+object file.  On other systems, the directive is ignored.
 
    This directive is not part of the C standard, but it is not an
 official GNU extension either.  We believe it came from System V.
@@ -2995,7 +2995,7 @@ File: cpp.info,  Node: Preprocessor Output,  Next: Traditional Mode,  Prev: Othe
 Preprocessor Output
 *******************
 
-   When the C preprocessor is used with the C, C++, or Objective-C
+When the C preprocessor is used with the C, C++, or Objective-C
 compilers, it is integrated into the compiler and communicates a stream
 of binary tokens directly to the compiler's parser.  However, it can
 also be used in the more conventional standalone mode, where it produces
@@ -3068,8 +3068,8 @@ File: cpp.info,  Node: Traditional Mode,  Next: Implementation Details,  Prev: P
 Traditional Mode
 ****************
 
-   Traditional (pre-standard) C preprocessing is rather different from
-the preprocessing specified by the standard.  When GCC is given the
+Traditional (pre-standard) C preprocessing is rather different from the
+preprocessing specified by the standard.  When GCC is given the
 `-traditional-cpp' option, it attempts to emulate a traditional
 preprocessor.
 
@@ -3097,7 +3097,7 @@ File: cpp.info,  Node: Traditional lexical analysis,  Next: Traditional macros, 
 Traditional lexical analysis
 ============================
 
-   The traditional preprocessor does not decompose its input into tokens
+The traditional preprocessor does not decompose its input into tokens
 the same way a standards-conforming preprocessor does.  The input is
 simply treated as a stream of text with minimal internal form.
 
@@ -3159,7 +3159,7 @@ File: cpp.info,  Node: Traditional macros,  Next: Traditional miscellany,  Prev:
 Traditional macros
 ==================
 
-   The major difference between traditional and ISO macros is that the
+The major difference between traditional and ISO macros is that the
 former expand to text rather than to a token sequence.  CPP removes all
 leading and trailing horizontal whitespace from a macro's replacement
 text before storing it, but preserves the form of internal whitespace.
@@ -3245,7 +3245,7 @@ File: cpp.info,  Node: Traditional miscellany,  Next: Traditional warnings,  Pre
 Traditional miscellany
 ======================
 
-   Here are some things to be aware of when using the traditional
+Here are some things to be aware of when using the traditional
 preprocessor.
 
    * Preprocessing directives are recognized only when their leading
@@ -3273,7 +3273,7 @@ File: cpp.info,  Node: Traditional warnings,  Prev: Traditional miscellany,  Up:
 Traditional warnings
 ====================
 
-   You can request warnings about features that did not exist, or worked
+You can request warnings about features that did not exist, or worked
 differently, in traditional C with the `-Wtraditional' option.  GCC
 does not warn about features of ISO C which you must use when you are
 using a conforming compiler, such as the `#' and `##' operators.
@@ -3319,7 +3319,7 @@ File: cpp.info,  Node: Implementation Details,  Next: Invocation,  Prev: Traditi
 Implementation Details
 **********************
 
-   Here we document details of how the preprocessor's implementation
+Here we document details of how the preprocessor's implementation
 affects its user-visible behavior.  You should try to avoid undue
 reliance on behavior described here, as it is possible that it will
 change subtly in future implementations.
@@ -3340,10 +3340,10 @@ File: cpp.info,  Node: Implementation-defined behavior,  Next: Implementation li
 Implementation-defined behavior
 ===============================
 
-   This is how CPP behaves in all the cases which the C standard
-describes as "implementation-defined".  This term means that the
-implementation is free to do what it likes, but must document its choice
-and stick to it.
+This is how CPP behaves in all the cases which the C standard describes
+as "implementation-defined".  This term means that the implementation
+is free to do what it likes, but must document its choice and stick to
+it.
 
    * The mapping of physical source file multi-byte characters to the
      execution character set.
@@ -3408,7 +3408,7 @@ File: cpp.info,  Node: Implementation limits,  Next: Obsolete Features,  Prev: I
 Implementation limits
 =====================
 
-   CPP has a small number of internal limits.  This section lists the
+CPP has a small number of internal limits.  This section lists the
 limits which the C standard requires to be no lower than some minimum,
 and all the others we are aware of.  We intend there to be as few limits
 as possible.  If you encounter an undocumented or inconvenient limit,
@@ -3475,9 +3475,9 @@ File: cpp.info,  Node: Obsolete Features,  Next: Differences from previous versi
 Obsolete Features
 =================
 
-   CPP has a number of features which are present mainly for
-compatibility with older programs.  We discourage their use in new code.
-In some cases, we plan to remove the feature in a future version of GCC.
+CPP has a number of features which are present mainly for compatibility
+with older programs.  We discourage their use in new code.  In some
+cases, we plan to remove the feature in a future version of GCC.
 
 * Menu:
 
@@ -3490,7 +3490,7 @@ File: cpp.info,  Node: Assertions,  Next: Obsolete once-only headers,  Up: Obsol
 Assertions
 ----------
 
-   "Assertions" are a deprecated alternative to macros in writing
+"Assertions" are a deprecated alternative to macros in writing
 conditionals to test what sort of computer or system the compiled
 program will run on.  Assertions are usually predefined, but you can
 define them with preprocessing directives or command-line options.
@@ -3556,7 +3556,7 @@ File: cpp.info,  Node: Obsolete once-only headers,  Prev: Assertions,  Up: Obsol
 Obsolete once-only headers
 --------------------------
 
-   CPP supports two more ways of indicating that a header file should be
+CPP supports two more ways of indicating that a header file should be
 read only once.  Neither one is as portable as a wrapper `#ifndef', and
 we recommend you do not use them in new programs.
 
@@ -3594,9 +3594,9 @@ File: cpp.info,  Node: Differences from previous versions,  Prev: Obsolete Featu
 Differences from previous versions
 ==================================
 
-   This section details behavior which has changed from previous
-versions of CPP.  We do not plan to change it again in the near future,
-but we do not promise not to, either.
+This section details behavior which has changed from previous versions
+of CPP.  We do not plan to change it again in the near future, but we
+do not promise not to, either.
 
    The "previous versions" discussed here are 2.95 and before.  The
 behavior of GCC 3.0 is mostly the same as the behavior of the widely
@@ -3681,12 +3681,12 @@ File: cpp.info,  Node: Invocation,  Next: Environment Variables,  Prev: Implemen
 Invocation
 **********
 
-   Most often when you use the C preprocessor you will not have to
-invoke it explicitly: the C compiler will do so automatically.
-However, the preprocessor is sometimes useful on its own.  All the
-options listed here are also acceptable to the C compiler and have the
-same meaning, except that the C compiler has different rules for
-specifying the output file.
+Most often when you use the C preprocessor you will not have to invoke
+it explicitly: the C compiler will do so automatically.  However, the
+preprocessor is sometimes useful on its own.  All the options listed
+here are also acceptable to the C compiler and have the same meaning,
+except that the C compiler has different rules for specifying the output
+file.
 
    *Note:* Whether you use the preprocessor by way of `gcc' or `cpp',
 the "compiler driver" is run first.  This program's purpose is to
@@ -4209,7 +4209,7 @@ File: cpp.info,  Node: Environment Variables,  Next: GNU Free Documentation Lice
 Environment Variables
 *********************
 
-   This section describes the environment variables that affect how CPP
+This section describes the environment variables that affect how CPP
 operates.  You can use them to specify directories or prefixes to use
 when searching for include files, or to control dependency output.
 
@@ -4672,7 +4672,7 @@ GNU Free Documentation License
 ADDENDUM: How to use this License for your documents
 ====================================================
 
-   To use this License in a document you have written, include a copy of
+To use this License in a document you have written, include a copy of
 the License in the document and put the following copyright and license
 notices just after the title page:
 
@@ -4926,75 +4926,75 @@ Concept Index
 
 
 Tag Table:
-Node: Top1016
-Node: Overview2808
-Node: Initial processing6434
-Ref: trigraphs8552
-Node: Tokenization12658
-Ref: Tokenization-Footnote-119707
-Node: The preprocessing language19818
-Node: Header Files22691
-Node: Include Syntax24569
-Node: Include Operation26071
-Node: Search Path27924
-Node: Once-Only Headers31001
-Node: Computed Includes32651
-Node: Wrapper Headers35790
-Node: System Headers38209
-Node: Macros40254
-Node: Object-like Macros41392
-Node: Function-like Macros44978
-Node: Macro Arguments46588
-Node: Stringification50733
-Node: Concatenation53934
-Node: Variadic Macros57048
-Node: Predefined Macros61830
-Node: Standard Predefined Macros62413
-Node: Common Predefined Macros68319
-Node: System-specific Predefined Macros76155
-Node: C++ Named Operators78167
-Node: Undefining and Redefining Macros79122
-Node: Directives Within Macro Arguments81219
-Node: Macro Pitfalls82762
-Node: Misnesting83288
-Node: Operator Precedence Problems84389
-Node: Swallowing the Semicolon86244
-Node: Duplication of Side Effects88256
-Node: Self-Referential Macros90428
-Node: Argument Prescan92838
-Node: Newlines in Arguments96581
-Node: Conditionals97526
-Node: Conditional Uses99355
-Node: Conditional Syntax100708
-Node: Ifdef101023
-Node: If104185
-Node: Defined106598
-Node: Else107871
-Node: Elif108432
-Node: Deleted Code109712
-Node: Diagnostics110954
-Node: Line Control112571
-Node: Pragmas116374
-Node: Other Directives120642
-Node: Preprocessor Output121834
-Node: Traditional Mode125034
-Node: Traditional lexical analysis126089
-Node: Traditional macros128585
-Node: Traditional miscellany132379
-Node: Traditional warnings133369
-Node: Implementation Details135559
-Node: Implementation-defined behavior136177
-Node: Implementation limits138851
-Node: Obsolete Features141542
-Node: Assertions141989
-Node: Obsolete once-only headers144519
-Node: Differences from previous versions146243
-Node: Invocation150315
-Ref: -MF158911
-Node: Environment Variables171572
-Node: GNU Free Documentation License174525
-Node: Index of Directives196955
-Node: Option Index198335
-Node: Concept Index202086
+Node: Top1043
+Node: Overview3663
+Node: Initial processing6461
+Ref: trigraphs8576
+Node: Tokenization12682
+Ref: Tokenization-Footnote-119728
+Node: The preprocessing language19839
+Node: Header Files22709
+Node: Include Syntax24585
+Node: Include Operation26084
+Node: Search Path27934
+Node: Once-Only Headers31008
+Node: Computed Includes32655
+Node: Wrapper Headers35791
+Node: System Headers38207
+Node: Macros40249
+Node: Object-like Macros41386
+Node: Function-like Macros44969
+Node: Macro Arguments46577
+Node: Stringification50719
+Node: Concatenation53917
+Node: Variadic Macros57027
+Node: Predefined Macros61806
+Node: Standard Predefined Macros62386
+Node: Common Predefined Macros68290
+Node: System-specific Predefined Macros76122
+Node: C++ Named Operators78131
+Node: Undefining and Redefining Macros79083
+Node: Directives Within Macro Arguments81177
+Node: Macro Pitfalls82717
+Node: Misnesting83240
+Node: Operator Precedence Problems84338
+Node: Swallowing the Semicolon86190
+Node: Duplication of Side Effects88199
+Node: Self-Referential Macros90368
+Node: Argument Prescan92774
+Node: Newlines in Arguments96514
+Node: Conditionals97456
+Node: Conditional Uses99282
+Node: Conditional Syntax100632
+Node: Ifdef100944
+Node: If104103
+Node: Defined106513
+Node: Else107784
+Node: Elif108342
+Node: Deleted Code109619
+Node: Diagnostics110858
+Node: Line Control112471
+Node: Pragmas116271
+Node: Other Directives120537
+Node: Preprocessor Output121726
+Node: Traditional Mode124923
+Node: Traditional lexical analysis125975
+Node: Traditional macros128468
+Node: Traditional miscellany132259
+Node: Traditional warnings133246
+Node: Implementation Details135433
+Node: Implementation-defined behavior136048
+Node: Implementation limits138719
+Node: Obsolete Features141407
+Node: Assertions141852
+Node: Obsolete once-only headers144379
+Node: Differences from previous versions146100
+Node: Invocation150169
+Ref: -MF158763
+Node: Environment Variables171424
+Node: GNU Free Documentation License174374
+Node: Index of Directives196801
+Node: Option Index198181
+Node: Concept Index201932
 
 End Tag Table

@@ -1,5 +1,5 @@
-This is doc/gccinstall.info, produced by makeinfo version 4.2 from
-doc/install.texi.
+Ceci est le fichier Info doc/gccinstall.info, produit par Makeinfo
+version 4.6 à partir doc/install.texi.
 
 Copyright (C) 1988, 1989, 1992, 1993, 1994, 1995, 1996, 1997, 1998,
 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
@@ -206,8 +206,8 @@ Target specification
 Options specification
 =====================
 
-   Use OPTIONS to override several configure time options for GCC.  A
-list of supported OPTIONS follows; `configure --help' may list other
+Use OPTIONS to override several configure time options for GCC.  A list
+of supported OPTIONS follows; `configure --help' may list other
 options, but those not listed below may not work and should not
 normally be used.
 
@@ -262,6 +262,7 @@ normally be used.
     `--with-gxx-include-dir=DIRNAME'
           Specify the installation directory for G++ header files.  The
           default is `PREFIX/include/g++-v3'.
+
 
 `--program-prefix=PREFIX'
      GCC supports some transformations of the names of its programs when
@@ -521,6 +522,7 @@ normally be used.
           aix64, pthread, softfloat, powercpu, powerpccpu, powerpcos,
           biendian, sysv, aix.
 
+
 `--enable-threads'
      Specify that the target supports threads.  This affects the
      Objective-C compiler and runtime library, and exception handling
@@ -704,7 +706,6 @@ normally be used.
      and `valgrind' are very expensive.
 
 `--enable-coverage'
-
 `--enable-coverage=LEVEL'
      With this option, the compiler is built to collect self coverage
      information, every time it is run. This is for internal development
@@ -753,24 +754,37 @@ normally be used.
      someone steps forward to maintain the port.
 
    Some options which only apply to building cross compilers:
+`--with-sysroot'
+`--with-sysroot=DIR'
+     Tells GCC to consider DIR as the root of a tree that contains a
+     (subset of) the root filesystem of the target operating system.
+     Target system headers, libraries and run-time object files will be
+     searched in there.  The specified directory is not copied into the
+     install tree, unlike the options `--with-headers' and
+     `--with-libs' that this option obsoletes.  The default value, in
+     case `--with-sysroot' is not given an argument, is
+     `${gcc_tooldir}/sys-root'.  If the specified directory is a
+     subdirectory of `${exec_prefix}', then it will be found relative to
+     the GCC binaries if the installation tree is moved.
+
 `--with-headers'
 `--with-headers=DIR'
-     Specifies that target headers are available when building a cross
-     compiler.  The DIR argument specifies a directory which has the
-     target include files.  These include files will be copied into the
-     `gcc' install directory.  _This option with the DIR argument is
-     required_ when building a cross compiler, if
-     `PREFIX/TARGET/sys-include' doesn't pre-exist.  If
-     `PREFIX/TARGET/sys-include' does pre-exist, the DIR argument may
-     be omitted.  `fixincludes' will be run on these files to make them
-     compatible with GCC.
+     Deprecated in favor of `--with-sysroot'.  Specifies that target
+     headers are available when building a cross compiler.  The DIR
+     argument specifies a directory which has the target include files.
+     These include files will be copied into the `gcc' install
+     directory.  _This option with the DIR argument is required_ when
+     building a cross compiler, if `PREFIX/TARGET/sys-include' doesn't
+     pre-exist.  If `PREFIX/TARGET/sys-include' does pre-exist, the DIR
+     argument may be omitted.  `fixincludes' will be run on these files
+     to make them compatible with GCC.
 
 `--with-libs'
 `--with-libs=``DIR1 DIR2 ... DIRN'''
-     Specifies a list of directories which contain the target runtime
-     libraries.  These libraries will be copied into the `gcc' install
-     directory.  If the directory list is omitted, this option has no
-     effect.
+     Deprecated in favor of `--with-sysroot'.  Specifies a list of
+     directories which contain the target runtime libraries.  These
+     libraries will be copied into the `gcc' install directory.  If the
+     directory list is omitted, this option has no effect.
 
 `--with-newlib'
      Specifies that `newlib' is being used as the target C library.
@@ -839,8 +853,8 @@ documentation pre-built for the unmodified documentation in the release.
 Building a native compiler
 ==========================
 
-   For a native build issue the command `make bootstrap'.  This will
-build the entire GCC system, which includes the following steps:
+For a native build issue the command `make bootstrap'.  This will build
+the entire GCC system, which includes the following steps:
 
    * Build host tools necessary to build the compiler such as texinfo,
      bison, gperf.
@@ -900,7 +914,7 @@ need to disable comparison in the `Makefile'.)
 Building a cross compiler
 =========================
 
-   We recommend reading the crossgcc FAQ for information about building
+We recommend reading the crossgcc FAQ for information about building
 cross compilers.
 
    When building a cross compiler, it is not generally possible to do a
@@ -933,9 +947,9 @@ performs the following steps:
 Building in parallel
 ====================
 
-   You can use `make bootstrap MAKE="make -j 2" -j 2', or just `make -j
-2 bootstrap' for GNU Make 3.79 and above, instead of `make bootstrap'
-to build GCC in parallel.  You can also specify a bigger number, and in
+You can use `make bootstrap MAKE="make -j 2" -j 2', or just `make -j 2
+bootstrap' for GNU Make 3.79 and above, instead of `make bootstrap' to
+build GCC in parallel.  You can also specify a bigger number, and in
 most cases using a value greater than the number of processors in your
 machine will result in fewer and shorter I/O latency hits, thus
 improving overall throughput; this is especially true for slow drives
@@ -944,7 +958,7 @@ and network filesystems.
 Building the Ada compiler
 =========================
 
-   In order to build GNAT, the Ada compiler, you need a working GNAT
+In order to build GNAT, the Ada compiler, you need a working GNAT
 compiler (GNAT version 3.13 or later, or GCC version 3.1 or later),
 since the Ada front end is written in Ada (with some GNAT-specific
 extensions), and GNU make.
@@ -1039,7 +1053,7 @@ can be ignored.
 How can I run the test suite on selected tests?
 ===============================================
 
-   In order to run sets of tests selectively, there are targets `make
+In order to run sets of tests selectively, there are targets `make
 check-gcc' and `make check-g++' in the `gcc' subdirectory of the object
 directory.  You can also just run `make check' in a subdirectory of the
 object directory.
@@ -1066,7 +1080,7 @@ files, pipe the output of `make check' into a file and look at the
 Additional testing for Java Class Libraries
 ===========================================
 
-   The Mauve Project provides a suite of tests for the Java Class
+The Mauve Project provides a suite of tests for the Java Class
 Libraries.  This suite can be run as part of libgcj testing by placing
 the Mauve tree within the libjava testsuite at
 `libjava/testsuite/libjava.mauve/mauve', or by specifying the location
@@ -1080,7 +1094,7 @@ tree within the libjava testsuite at
 How to interpret test results
 =============================
 
-   The result of running the testsuite are various `*.sum' and `*.log'
+The result of running the testsuite are various `*.sum' and `*.log'
 files in the testsuite subdirectories.  The `*.log' files contain a
 detailed log of the compiler invocations and the corresponding results,
 the `*.sum' files summarize the results.  These summaries contain
@@ -1108,7 +1122,7 @@ problem in future releases.
 Submitting test results
 =======================
 
-   If you want to report the results to the GCC project, use the
+If you want to report the results to the GCC project, use the
 `contrib/test_summary' shell script.  Start it in the OBJDIR with
 
          SRCDIR/contrib/test_summary -p your_commentary.txt \
@@ -1293,7 +1307,7 @@ Compiler Collection on your machine.
 alpha*-*-*
 ==========
 
-   This section contains general configuration information for all
+This section contains general configuration information for all
 alpha-based platforms using ELF (in particular, ignore this section for
 DEC OSF/1, Digital UNIX and Tru64 UNIX).  In addition to reading this
 section, please read all other sections that match your target.
@@ -1305,8 +1319,8 @@ of which is incorrect linking of shared libraries.
 alpha*-dec-osf*
 ===============
 
-   Systems using processors that implement the DEC Alpha architecture
-and are running the DEC/Compaq Unix (DEC OSF/1, Digital UNIX, or Compaq
+Systems using processors that implement the DEC Alpha architecture and
+are running the DEC/Compaq Unix (DEC OSF/1, Digital UNIX, or Compaq
 Tru64 UNIX) operating system, for example the DEC Alpha AXP systems.
 
    As of GCC 3.2, versions before `alpha*-dec-osf4' are no longer
@@ -1383,7 +1397,7 @@ provide a fix shortly.
 alphaev5-cray-unicosmk*
 =======================
 
-   Cray T3E systems running Unicos/Mk.
+Cray T3E systems running Unicos/Mk.
 
    This port is incomplete and has many known bugs.  We hope to improve
 the support for this target soon.  Currently, only the C front end is
@@ -1407,13 +1421,13 @@ failure.
 arc-*-elf
 =========
 
-   Argonaut ARC processor.  This configuration is intended for embedded
+Argonaut ARC processor.  This configuration is intended for embedded
 systems.
 
 arm-*-aout
 ==========
 
-   This configuration is obsoleted in GCC 3.3.
+This configuration is obsoleted in GCC 3.3.
 
    Advanced RISC Machines ARM-family processors.  These are often used
 in embedded applications.  There are no standard Unix configurations.
@@ -1426,17 +1440,17 @@ particular configuration.
 arm-*-elf
 =========
 
-   This configuration is intended for embedded systems.
+This configuration is intended for embedded systems.
 
 arm*-*-linux-gnu
 ================
 
-   We require GNU binutils 2.10 or newer.
+We require GNU binutils 2.10 or newer.
 
 avr
 ===
 
-   ATMEL AVR-family micro controllers.  These are used in embedded
+ATMEL AVR-family micro controllers.  These are used in embedded
 applications.  There are no standard Unix configurations.  *Note AVR
 Options: (gcc)AVR Options, for the list of supported MCU types.
 
@@ -1461,9 +1475,9 @@ tools can also be obtained from:
 c4x
 ===
 
-   Texas Instruments TMS320C3x and TMS320C4x Floating Point Digital
-Signal Processors.  These are used in embedded applications.  There are
-no standard Unix configurations.  *Note TMS320C3x/C4x Options:
+Texas Instruments TMS320C3x and TMS320C4x Floating Point Digital Signal
+Processors.  These are used in embedded applications.  There are no
+standard Unix configurations.  *Note TMS320C3x/C4x Options:
 (gcc)TMS320C3x/C4x Options, for the list of supported MCU types.
 
    GCC can be configured as a cross compiler for both the C3x and C4x
@@ -1478,7 +1492,7 @@ tools can also be obtained from:
 CRIS
 ====
 
-   CRIS is the CPU architecture in Axis Communications ETRAX
+CRIS is the CPU architecture in Axis Communications ETRAX
 system-on-a-chip series.  These are used in embedded applications.
 
    *Note CRIS Options: (gcc)CRIS Options, for a list of CRIS-specific
@@ -1508,7 +1522,7 @@ information about this platform is available at
 DOS
 ===
 
-   Please have a look at our binaries page.
+Please have a look at our binaries page.
 
    You cannot install GCC by itself on MSDOS; it will not compile under
 any MSDOS compiler except itself.  You need to get the complete
@@ -1518,15 +1532,14 @@ and includes all the necessary compilation tools and libraries.
 dsp16xx
 =======
 
-   A port to the AT&T DSP1610 family of processors.
+A port to the AT&T DSP1610 family of processors.
 
 *-*-freebsd*
 ============
 
-   The version of binutils installed in `/usr/bin' is known to work
-unless otherwise specified in any per-architecture notes.  However,
-binutils 2.12.1 or greater is known to improve overall testsuite
-results.
+The version of binutils installed in `/usr/bin' is known to work unless
+otherwise specified in any per-architecture notes.  However, binutils
+2.12.1 or greater is known to improve overall testsuite results.
 
    Support for FreeBSD 1 was discontinued in GCC 3.2.
 
@@ -1566,7 +1579,7 @@ least, both boehm-gc and libffi.
 h8300-hms
 =========
 
-   Renesas H8/300 series of processors.
+Renesas H8/300 series of processors.
 
    Please have a look at our binaries page.
 
@@ -1578,7 +1591,7 @@ are no longer a multiple of 2 bytes.
 hppa*-hp-hpux*
 ==============
 
-   Support for HP-UX versions 7, 8, and 9 is obsoleted in GCC 3.3.
+Support for HP-UX versions 7, 8, and 9 is obsoleted in GCC 3.3.
 
    We _highly_ recommend using gas/binutils 2.8 or newer on all hppa
 platforms; you may encounter a variety of problems when using the HP
@@ -1610,7 +1623,7 @@ default scheduling model is desired.
 hppa*-hp-hpux9
 ==============
 
-   Support for this system is obsoleted in GCC 3.3.
+Support for this system is obsoleted in GCC 3.3.
 
    The HP assembler has major problems on this platform.  We've tried
 to work around the worst of the problems.  However, those workarounds
@@ -1625,7 +1638,7 @@ and `SHELL' to `/bin/ksh' in your environment.
 hppa*-hp-hpux10
 ===============
 
-   For hpux10.20, we _highly_ recommend you pick up the latest sed patch
+For hpux10.20, we _highly_ recommend you pick up the latest sed patch
 `PHCO_19798' from HP.  HP has two sites which provide patches free of
 charge:
 
@@ -1644,10 +1657,10 @@ be able to continue by saying `make all' after getting the failure from
 hppa*-hp-hpux11
 ===============
 
-   GCC 3.0 and up support HP-UX 11.  On 64-bit capable systems, there
-are two distinct ports.  The `hppa2.0w-hp-hpux11*' port generates code
-for the 32-bit pa-risc runtime architecture.  It uses the HP linker.
-The `hppa64-hp-hpux11*' port generates 64-bit code for the pa-risc 2.0
+GCC 3.0 and up support HP-UX 11.  On 64-bit capable systems, there are
+two distinct ports.  The `hppa2.0w-hp-hpux11*' port generates code for
+the 32-bit pa-risc runtime architecture.  It uses the HP linker.  The
+`hppa64-hp-hpux11*' port generates 64-bit code for the pa-risc 2.0
 architecture.  The script config.guess now selects the port type based
 on the type compiler detected during configuration.  You must set your
 `PATH' or define `CC' so that configure finds an appropriate compiler
@@ -1735,13 +1748,13 @@ between traditional and ISO C.
 i370-*-*
 ========
 
-   This port is very preliminary and has many known bugs.  We hope to
-have a higher-quality port for this machine soon.
+This port is very preliminary and has many known bugs.  We hope to have
+a higher-quality port for this machine soon.
 
 *-*-linux-gnu
 =============
 
-   Versions of libstdc++-v3 starting with 3.2.1 require bugfixes present
+Versions of libstdc++-v3 starting with 3.2.1 require bugfixes present
 in glibc 2.2.5 and later.  More information is available in the
 libstdc++-v3 documentation.
 
@@ -1762,15 +1775,15 @@ You can use glibc 2.2.3 with GCC 3.0, just do not try to recompile it.
 i?86-*-linux*aout
 =================
 
-   Use this configuration to generate `a.out' binaries on Linux-based
-GNU systems.  This configuration is being superseded.  You must use
+Use this configuration to generate `a.out' binaries on Linux-based GNU
+systems.  This configuration is being superseded.  You must use
 gas/binutils version 2.5.2 or later.
 
 i?86-*-linux*
 =============
 
-   As of GCC 3.3, binutils 2.13.1 or later is required for this
-platform.  See bug 10877 for more information.
+As of GCC 3.3, binutils 2.13.1 or later is required for this platform.
+See bug 10877 for more information.
 
    If you receive Signal 11 errors when building on GNU/Linux, then it
 is possible you have a hardware problem.  Further information on this
@@ -1779,14 +1792,13 @@ can be found on www.bitwizard.nl.
 i?86-*-sco
 ==========
 
-   Compilation with RCC is recommended.  Also, it may be a good idea to
+Compilation with RCC is recommended.  Also, it may be a good idea to
 link with GNU malloc instead of the malloc that comes with the system.
 
 i?86-*-sco3.2v5*
 ================
 
-   Use this for the SCO OpenServer Release 5 family of operating
-systems.
+Use this for the SCO OpenServer Release 5 family of operating systems.
 
    Unlike earlier versions of GCC, the ability to generate COFF with
 this target is no longer provided.
@@ -1828,8 +1840,8 @@ for bootstrapping this version.
 i?86-*-udk
 ==========
 
-   This target emulates the SCO Universal Development Kit and requires
-that package be installed.  (If it is installed, you will have a
+This target emulates the SCO Universal Development Kit and requires that
+package be installed.  (If it is installed, you will have a
 `/udk/usr/ccs/bin/cc' file present.)  It's very much like the
 `i?86-*-unixware7*' target but is meant to be used when hosting on a
 system where UDK isn't the default compiler such as OpenServer 5 or
@@ -1858,7 +1870,7 @@ tools you may have installed.
 ia64-*-linux
 ============
 
-   IA-64 processor (also known as IPF, or Itanium Processor Family)
+IA-64 processor (also known as IPF, or Itanium Processor Family)
 running GNU/Linux.
 
    The toolchain is not completely finished, so requirements will
@@ -1880,9 +1892,9 @@ are expected.
 ia64-*-hpux*
 ============
 
-   Building GCC on this target requires the GNU Assembler. The bundled
-HP assembler will not work. To prevent GCC from using the wrong
-assembler, the option `--with-gnu-as' may be necessary.
+Building GCC on this target requires the GNU Assembler. The bundled HP
+assembler will not work. To prevent GCC from using the wrong assembler,
+the option `--with-gnu-as' may be necessary.
 
    The GCC libunwind library has not been ported to HPUX. This means
 that for GCC versions 3.2.3 and earlier, `--enable-libunwind-exceptions'
@@ -1891,7 +1903,7 @@ is required to build GCC. For GCC 3.3 and later, this is the default.
 *-lynx-lynxos
 =============
 
-   Support for SPARC LynxOS is obsoleted in GCC 3.3.
+Support for SPARC LynxOS is obsoleted in GCC 3.3.
 
    LynxOS 2.2 and earlier comes with GCC 1.x already installed as
 `/bin/gcc'.  You should compile with this instead of `/bin/cc'.  You
@@ -1903,7 +1915,7 @@ installed tools, which produce `a.out' format executables.
 *-ibm-aix*
 ==========
 
-   Support for AIX versions 1, 2, and 3 is obsoleted in GCC 3.3.
+Support for AIX versions 1, 2, and 3 is obsoleted in GCC 3.3.
 
    AIX Make frequently has problems with GCC makefiles.  GNU Make 3.76
 or newer is recommended to build on this platform.
@@ -2004,7 +2016,7 @@ using the configure option `--with-cpu-CPU_TYPE'.
 ip2k-*-elf
 ==========
 
-   Ubicom IP2022 micro controller.  This configuration is intended for
+Ubicom IP2022 micro controller.  This configuration is intended for
 embedded systems.  There are no standard Unix configurations.
 
    Use `configure --target=ip2k-elf --enable-languages=c' to configure
@@ -2013,13 +2025,13 @@ GCC.
 m32r-*-elf
 ==========
 
-   Renesas M32R processor.  This configuration is intended for embedded
+Renesas M32R processor.  This configuration is intended for embedded
 systems.
 
 m68000-hp-bsd
 =============
 
-   Support for this system is obsoleted in GCC 3.3.
+Support for this system is obsoleted in GCC 3.3.
 
    HP 9000 series 200 running BSD.  Note that the C compiler that comes
 with this system cannot compile GCC; contact <law@cygnus.com> to get
@@ -2028,19 +2040,19 @@ binaries of GCC for bootstrapping.
 m6811-elf
 =========
 
-   Motorola 68HC11 family micro controllers.  These are used in embedded
+Motorola 68HC11 family micro controllers.  These are used in embedded
 applications.  There are no standard Unix configurations.
 
 m6812-elf
 =========
 
-   Motorola 68HC12 family micro controllers.  These are used in embedded
+Motorola 68HC12 family micro controllers.  These are used in embedded
 applications.  There are no standard Unix configurations.
 
 m68k-att-sysv
 =============
 
-   Support for this system is obsoleted in GCC 3.3.
+Support for this system is obsoleted in GCC 3.3.
 
    AT&T 3b1, a.k.a. 7300 PC.  This version of GCC cannot be compiled
 with the system C compiler, which is too buggy.  You will need to get a
@@ -2051,7 +2063,7 @@ available from the OSU-CIS archive, at
 m68k-crds-unos
 ==============
 
-   Support for this system is obsoleted in GCC 3.3.
+Support for this system is obsoleted in GCC 3.3.
 
    Use `configure unos' for building on Unos.
 
@@ -2087,9 +2099,9 @@ library and linking from that library.
 m68k-hp-hpux
 ============
 
-   HP 9000 series 300 or 400 running HP-UX.  HP-UX version 8.0 has a
-bug in the assembler that prevents compilation of GCC.  This bug
-manifests itself during the first stage of compilation, while building
+HP 9000 series 300 or 400 running HP-UX.  HP-UX version 8.0 has a bug in
+the assembler that prevents compilation of GCC.  This bug manifests
+itself during the first stage of compilation, while building
 `libgcc2.a':
 
      _floatdisf
@@ -2135,7 +2147,7 @@ script to look like:
 m68k-ncr-*
 ==========
 
-   Support for this system is obsoleted in GCC 3.3.
+Support for this system is obsoleted in GCC 3.3.
 
    On the Tower models 4N0 and 6N0, by default a process is not allowed
 to have more than one megabyte of memory.  GCC cannot compile itself
@@ -2149,7 +2161,7 @@ line to the configuration file:
 m68k-sun
 ========
 
-   Support for this system is obsoleted in GCC 3.3.
+Support for this system is obsoleted in GCC 3.3.
 
    Sun 3.  We do not provide a configuration file to use the Sun FPA by
 default, because programs that establish signal handlers for floating
@@ -2158,14 +2170,14 @@ point traps inherently cannot work with the FPA.
 m68k-sun-sunos4.1.1
 ===================
 
-   Support for this system is obsoleted in GCC 3.3.
+Support for this system is obsoleted in GCC 3.3.
 
    It is reported that you may need the GNU assembler on this platform.
 
 mips-*-*
 ========
 
-   If on a MIPS system you get an error message saying "does not have gp
+If on a MIPS system you get an error message saying "does not have gp
 sections for all it's [sic] sectons [sic]", don't worry about it.  This
 happens whenever you use GAS with the MIPS linker, but there is not
 really anything wrong, and it is okay to use the output file.  You can
@@ -2184,8 +2196,8 @@ expected in future releases.
 mips-sgi-irix5
 ==============
 
-   This configuration has considerable problems, which will be fixed in
-a future release.
+This configuration has considerable problems, which will be fixed in a
+future release.
 
    In order to compile GCC on an SGI running IRIX 5, the
 "compiler_dev.hdr" subsystem must be installed from the IDO CD-ROM
@@ -2224,10 +2236,10 @@ vendor supplied `make' program; however, you may have success with
 mips-sgi-irix6
 ==============
 
-   If you are using IRIX `cc' as your bootstrap compiler, you must
-ensure that the N32 ABI is in use.  To test this, compile a simple C
-file with `cc' and then run `file' on the resulting object file.  The
-output should look like:
+If you are using IRIX `cc' as your bootstrap compiler, you must ensure
+that the N32 ABI is in use.  To test this, compile a simple C file with
+`cc' and then run `file' on the resulting object file.  The output
+should look like:
 
      test.o: ELF N32 MSB ...
 
@@ -2310,13 +2322,13 @@ IRIX platforms.
 powerpc-*-*
 ===========
 
-   You can specify a default version for the `-mcpu=CPU_TYPE' switch by
+You can specify a default version for the `-mcpu=CPU_TYPE' switch by
 using the configure option `--with-cpu-CPU_TYPE'.
 
 powerpc-*-darwin*
 =================
 
-   PowerPC running Darwin (Mac OS X kernel).
+PowerPC running Darwin (Mac OS X kernel).
 
    Pre-installed versions of Mac OS X may not include any developer
 tools, meaning that you will not be able to build GCC from source.  Tool
@@ -2339,69 +2351,69 @@ are generally specific to Mac programming.
 powerpc-*-elf, powerpc-*-sysv4
 ==============================
 
-   PowerPC system in big endian mode, running System V.4.
+PowerPC system in big endian mode, running System V.4.
 
 powerpc-*-linux-gnu*
 ====================
 
-   You will need binutils 2.13.90.0.10 or newer for a working GCC.
+You will need binutils 2.13.90.0.10 or newer for a working GCC.
 
 powerpc-*-netbsd*
 =================
 
-   PowerPC system in big endian mode running NetBSD.  To build the
+PowerPC system in big endian mode running NetBSD.  To build the
 documentation you will need Texinfo version 4.2 (NetBSD 1.5.1 included
 Texinfo version 3.12).
 
 powerpc-*-eabiaix
 =================
 
-   Embedded PowerPC system in big endian mode with `-mcall-aix'
-selected as the default.
+Embedded PowerPC system in big endian mode with `-mcall-aix' selected as
+the default.
 
 powerpc-*-eabisim
 =================
 
-   Embedded PowerPC system in big endian mode for use in running under
-the PSIM simulator.
+Embedded PowerPC system in big endian mode for use in running under the
+PSIM simulator.
 
 powerpc-*-eabi
 ==============
 
-   Embedded PowerPC system in big endian mode.
+Embedded PowerPC system in big endian mode.
 
 powerpcle-*-elf, powerpcle-*-sysv4
 ==================================
 
-   PowerPC system in little endian mode, running System V.4.
+PowerPC system in little endian mode, running System V.4.
 
 powerpcle-*-eabisim
 ===================
 
-   Embedded PowerPC system in little endian mode for use in running
-under the PSIM simulator.
+Embedded PowerPC system in little endian mode for use in running under
+the PSIM simulator.
 
 powerpcle-*-eabi
 ================
 
-   Embedded PowerPC system in little endian mode.
+Embedded PowerPC system in little endian mode.
 
 s390-*-linux*
 =============
 
-   S/390 system running Linux for S/390.
+S/390 system running Linux for S/390.
 
 s390x-*-linux*
 ==============
 
-   zSeries system (64-bit) running Linux for zSeries.
+zSeries system (64-bit) running Linux for zSeries.
 
 *-*-solaris2*
 =============
 
-   Sun does not ship a C compiler with Solaris 2.  To bootstrap and
-install GCC you first have to install a pre-built compiler, see our
-binaries page for details.
+Sun does not ship a C compiler with Solaris 2.  To bootstrap and install
+GCC you first have to install a pre-built compiler, see our binaries
+page for details.
 
    The Solaris 2 `/bin/sh' will often fail to configure `libstdc++-v3',
 `boehm-gc' or `libjava'.  We therefore recommend to use the following
@@ -2455,7 +2467,7 @@ defined by C89).
 sparc-sun-solaris2*
 ===================
 
-   When GCC is configured to use binutils 2.11.2 or later the binaries
+When GCC is configured to use binutils 2.11.2 or later the binaries
 produced are smaller than the ones produced using Sun's native tools;
 this difference is quite significant for binaries containing debugging
 information.
@@ -2485,11 +2497,11 @@ target libraries.
 sparc-sun-solaris2.7
 ====================
 
-   Sun patch 107058-01 (1999-01-13) for Solaris 7/SPARC triggers a bug
-in the dynamic linker.  This problem (Sun bug 4210064) affects GCC 2.8
-and later, including all EGCS releases.  Sun formerly recommended
-107058-01 for all Solaris 7 users, but around 1999-09-01 it started to
-recommend it only for people who use Sun's compilers.
+Sun patch 107058-01 (1999-01-13) for Solaris 7/SPARC triggers a bug in
+the dynamic linker.  This problem (Sun bug 4210064) affects GCC 2.8 and
+later, including all EGCS releases.  Sun formerly recommended 107058-01
+for all Solaris 7 users, but around 1999-09-01 it started to recommend
+it only for people who use Sun's compilers.
 
    Here are some workarounds to this problem:
    * Do not install Sun patch 107058-01 until after Sun releases a
@@ -2527,7 +2539,7 @@ shared version of libgcc. A typical error message is:
 sparc-sun-sunos4*
 =================
 
-   Support for this system is obsoleted in GCC 3.3.
+Support for this system is obsoleted in GCC 3.3.
 
    A bug in the SunOS 4 linker will cause it to crash when linking
 `-fPIC' compiled objects (and will therefore not allow you to build
@@ -2545,7 +2557,7 @@ or `genoutput' manually and then retrying the `make'.
 sparc-unknown-linux-gnulibc1
 ============================
 
-   Support for this system is obsoleted in GCC 3.3.
+Support for this system is obsoleted in GCC 3.3.
 
    It has been reported that you might need binutils 2.8.1.0.23 for
 this platform, too.
@@ -2553,15 +2565,15 @@ this platform, too.
 sparc-*-linux*
 ==============
 
-   GCC versions 3.0 and higher require binutils 2.11.2 and glibc 2.2.4
-or newer on this platform.  All earlier binutils and glibc releases
+GCC versions 3.0 and higher require binutils 2.11.2 and glibc 2.2.4 or
+newer on this platform.  All earlier binutils and glibc releases
 mishandled unaligned relocations on `sparc-*-*' targets.
 
 sparc64-*-solaris2*
 ===================
 
-   The following compiler flags must be specified in the configure step
-in order to bootstrap this target with the Sun compiler:
+The following compiler flags must be specified in the configure step in
+order to bootstrap this target with the Sun compiler:
 
         % CC="cc -xildoff -xarch=v9" SRCDIR/configure [OPTIONS] [TARGET]
 
@@ -2571,12 +2583,12 @@ specifies the SPARC-V9 architecture to the Sun linker and assembler.
 sparcv9-*-solaris2*
 ===================
 
-   This is a synonym for sparc64-*-solaris2*.
+This is a synonym for sparc64-*-solaris2*.
 
 *-*-sysv*
 =========
 
-   On System V release 3, you may get this error message while linking:
+On System V release 3, you may get this error message while linking:
 
      ld fatal: failed to write symbol name SOMETHING
       in strings table for file WHATEVER
@@ -2603,14 +2615,22 @@ which have bugs.
 vax-dec-ultrix
 ==============
 
-   Don't try compiling with VAX C (`vcc').  It produces incorrect code
-in some cases (for example, when `alloca' is used).
+Don't try compiling with VAX C (`vcc').  It produces incorrect code in
+some cases (for example, when `alloca' is used).
+
+x86_64-*-*, amd64-*-*
+=====================
+
+GCC supports the x86-64 architecture implemented by the AMD64 processor
+(amd64-*-* is an alias for x86_64-*-*) on GNU/Linux, FreeBSD and NetBSD.
+On GNU/Linux the default is a bi-arch compiler which is able to generate
+both 64-bit x86-64 and 32-bit x86 code (via the `-m32' switch).
 
 xtensa-*-elf
 ============
 
-   This target is intended for embedded Xtensa systems using the
-`newlib' C library.  It uses ELF but does not support shared objects.
+This target is intended for embedded Xtensa systems using the `newlib'
+C library.  It uses ELF but does not support shared objects.
 Designed-defined instructions specified via the Tensilica Instruction
 Extension (TIE) language are only supported through inline assembly.
 
@@ -2624,7 +2644,7 @@ replace the default header file.
 xtensa-*-linux*
 ===============
 
-   This target is for Xtensa systems running GNU/Linux.  It supports ELF
+This target is for Xtensa systems running GNU/Linux.  It supports ELF
 shared objects and the GNU C library (glibc).  It also generates
 position-independent code (PIC) regardless of whether the `-fpic' or
 `-fPIC' options are used.  In other respects, this target is the same
@@ -2633,7 +2653,7 @@ as the `xtensa-*-elf' target.
 Microsoft Windows (32-bit)
 ==========================
 
-   A port of GCC 2.95.2 and 3.x is included with the Cygwin environment.
+A port of GCC 2.95.2 and 3.x is included with the Cygwin environment.
 
    Current (as of early 2001) snapshots of GCC will build under Cygwin
 without modification.
@@ -2644,9 +2664,9 @@ are no plans to make it do so.
 OS/2
 ====
 
-   GCC does not currently support OS/2.  However, Andrew Zabolotny has
-been working on a generic OS/2 port with pgcc.  The current code can be
-found at http://www.goof.com/pcg/os2/.
+GCC does not currently support OS/2.  However, Andrew Zabolotny has been
+working on a generic OS/2 port with pgcc.  The current code can be found
+at http://www.goof.com/pcg/os2/.
 
    An older copy of GCC 2.8.1 is included with the EMX tools available
 at ftp://ftp.leo.org/pub/comp/os/os2/leo/devtools/emx+gcc/.
@@ -2654,10 +2674,10 @@ at ftp://ftp.leo.org/pub/comp/os/os2/leo/devtools/emx+gcc/.
 Older systems
 =============
 
-   GCC contains support files for many older (1980s and early 1990s)
-Unix variants.  For the most part, support for these systems has not
-been deliberately removed, but it has not been maintained for several
-years and may suffer from bitrot.
+GCC contains support files for many older (1980s and early 1990s) Unix
+variants.  For the most part, support for these systems has not been
+deliberately removed, but it has not been maintained for several years
+and may suffer from bitrot.
 
    Starting with GCC 3.1, each release has a list of "obsoleted"
 systems.  Support for these systems is still present in that release,
@@ -2696,8 +2716,8 @@ the GCC texinfo manual.
 all ELF targets (SVR4, Solaris 2, etc.)
 =======================================
 
-   C++ support is significantly better on ELF targets if you use the
-GNU linker; duplicate copies of inlines, vtables and template
+C++ support is significantly better on ELF targets if you use the GNU
+linker; duplicate copies of inlines, vtables and template
 instantiations will be discarded automatically.
 
 
@@ -3698,7 +3718,7 @@ GNU Free Documentation License
 ADDENDUM: How to use this License for your documents
 ====================================================
 
-   To use this License in a document you have written, include a copy of
+To use this License in a document you have written, include a copy of
 the License in the document and put the following copyright and license
 notices just after the title page:
 
@@ -3760,100 +3780,101 @@ Concept Index
 
 
 Tag Table:
-Node: Top86
-Node: Installing GCC2254
-Node: Downloading the source3747
-Node: Configuration5347
-Ref: with-gnu-as18119
-Ref: with-as19391
-Ref: with-gnu-ld20352
-Node: Building34125
-Node: Testing43369
-Node: Final install48760
-Node: Binaries53446
-Node: Specific55194
-Ref: alpha*-*-*55477
-Ref: alpha*-dec-osf*55969
-Ref: alphaev5-cray-unicosmk*59654
-Ref: arc-*-elf60604
-Ref: arm-*-aout60707
-Ref: arm-*-elf61124
-Ref: arm*-*-linux-gnu61202
-Ref: avr61280
-Ref: c4x61963
-Ref: cris62564
-Ref: dos63549
-Ref: dsp16xx63875
-Ref: *-*-freebsd*63945
-Ref: h8300-hms66115
-Ref: hppa*-hp-hpux*66470
-Ref: hppa*-hp-hpux967819
-Ref: hppa*-hp-hpux1068399
-Ref: hppa*-hp-hpux1169110
-Ref: i370-*-*73760
-Ref: *-*-linux-gnu73900
-Ref: ix86-*-linux*aout74892
-Ref: ix86-*-linux*75105
-Ref: ix86-*-sco75422
-Ref: ix86-*-sco3.2v5*75589
-Ref: ix86-*-udk77837
-Ref: ia64-*-linux79204
-Ref: ia64-*-hpux*80195
-Ref: *-lynx-lynxos80627
-Ref: *-ibm-aix*81107
-Ref: ip2k-*-elf86135
-Ref: m32r-*-elf86369
-Ref: m68000-hp-bsd86474
-Ref: m6811-elf86733
-Ref: m6812-elf86886
-Ref: m68k-att-sysv87039
-Ref: m68k-crds-unos87402
-Ref: m68k-hp-hpux88866
-Ref: m68k-ncr-*90882
-Ref: m68k-sun91280
-Ref: m68k-sun-sunos4.1.191544
-Ref: mips-*-*91711
-Ref: mips-sgi-irix592575
-Ref: mips-sgi-irix694559
-Ref: powerpc*-*-*98348
-Ref: powerpc-*-darwin*98496
-Ref: powerpc-*-elf99444
-Ref: powerpc-*-linux-gnu*99566
-Ref: powerpc-*-netbsd*99677
-Ref: powerpc-*-eabiaix99876
-Ref: powerpc-*-eabisim100003
-Ref: powerpc-*-eabi100132
-Ref: powerpcle-*-elf100211
-Ref: powerpcle-*-eabisim100344
-Ref: powerpcle-*-eabi100480
-Ref: s390-*-linux*100566
-Ref: s390x-*-linux*100637
-Ref: *-*-solaris2*100723
-Ref: sparc-sun-solaris2*103181
-Ref: sparc-sun-solaris2.7104517
-Ref: sparc-sun-sunos4*106590
-Ref: sparc-unknown-linux-gnulibc1107257
-Ref: sparc-*-linux*107458
-Ref: sparc64-*-solaris2*107686
-Ref: sparcv9-*-solaris2*108065
-Ref: #*-*-sysv*108153
-Ref: vax-dec-ultrix109117
-Ref: xtensa-*-elf109272
-Ref: xtensa-*-linux*109954
-Ref: windows110295
-Ref: os2110622
-Ref: older110948
-Ref: elf_targets113076
-Node: Old113337
-Node: Configurations116712
-Node: Cross-Compiler120912
-Node: Steps of Cross122669
-Node: Configure Cross123794
-Node: Tools and Libraries124438
-Node: Cross Headers126884
-Node: Build Cross128899
-Node: VMS Install129866
-Node: GNU Free Documentation License139406
-Node: Concept Index161819
+Node: Top1717
+Node: Installing GCC2275
+Node: Downloading the source3768
+Node: Configuration5368
+Ref: with-gnu-as18138
+Ref: with-as19410
+Ref: with-gnu-ld20371
+Node: Building34928
+Node: Testing44160
+Node: Final install49539
+Node: Binaries54225
+Node: Specific55973
+Ref: alpha*-*-*56256
+Ref: alpha*-dec-osf*56745
+Ref: alphaev5-cray-unicosmk*60427
+Ref: arc-*-elf61374
+Ref: arm-*-aout61474
+Ref: arm-*-elf61888
+Ref: arm*-*-linux-gnu61963
+Ref: avr62038
+Ref: c4x62718
+Ref: cris63316
+Ref: dos64298
+Ref: dsp16xx64621
+Ref: *-*-freebsd*64688
+Ref: h8300-hms66855
+Ref: hppa*-hp-hpux*67207
+Ref: hppa*-hp-hpux968553
+Ref: hppa*-hp-hpux1069130
+Ref: hppa*-hp-hpux1169838
+Ref: i370-*-*74486
+Ref: *-*-linux-gnu74623
+Ref: ix86-*-linux*aout75612
+Ref: ix86-*-linux*75822
+Ref: ix86-*-sco76135
+Ref: ix86-*-sco3.2v5*76299
+Ref: ix86-*-udk78544
+Ref: ia64-*-linux79908
+Ref: ia64-*-hpux*80896
+Ref: *-lynx-lynxos81325
+Ref: *-ibm-aix*81802
+Ref: ip2k-*-elf86827
+Ref: m32r-*-elf87058
+Ref: m68000-hp-bsd87160
+Ref: m6811-elf87416
+Ref: m6812-elf87566
+Ref: m68k-att-sysv87716
+Ref: m68k-crds-unos88076
+Ref: m68k-hp-hpux89537
+Ref: m68k-ncr-*91550
+Ref: m68k-sun91945
+Ref: m68k-sun-sunos4.1.192206
+Ref: mips-*-*92370
+Ref: mips-sgi-irix593231
+Ref: mips-sgi-irix695212
+Ref: powerpc*-*-*98998
+Ref: powerpc-*-darwin*99143
+Ref: powerpc-*-elf100088
+Ref: powerpc-*-linux-gnu*100207
+Ref: powerpc-*-netbsd*100315
+Ref: powerpc-*-eabiaix100511
+Ref: powerpc-*-eabisim100635
+Ref: powerpc-*-eabi100761
+Ref: powerpcle-*-elf100837
+Ref: powerpcle-*-eabisim100967
+Ref: powerpcle-*-eabi101100
+Ref: s390-*-linux*101183
+Ref: s390x-*-linux*101251
+Ref: *-*-solaris2*101334
+Ref: sparc-sun-solaris2*103789
+Ref: sparc-sun-solaris2.7105122
+Ref: sparc-sun-sunos4*107192
+Ref: sparc-unknown-linux-gnulibc1107856
+Ref: sparc-*-linux*108054
+Ref: sparc64-*-solaris2*108279
+Ref: sparcv9-*-solaris2*108655
+Ref: #*-*-sysv*108740
+Ref: vax-dec-ultrix109701
+Ref: x86_64-*-*109853
+Ref: xtensa-*-elf110181
+Ref: xtensa-*-linux*110860
+Ref: windows111198
+Ref: os2111522
+Ref: older111845
+Ref: elf_targets113970
+Node: Old114228
+Node: Configurations117603
+Node: Cross-Compiler121803
+Node: Steps of Cross123560
+Node: Configure Cross124685
+Node: Tools and Libraries125329
+Node: Cross Headers127775
+Node: Build Cross129790
+Node: VMS Install130757
+Node: GNU Free Documentation License140297
+Node: Concept Index162707
 
 End Tag Table
