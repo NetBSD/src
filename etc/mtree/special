@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.57 2002/04/29 08:23:35 lukem Exp $
+#	$NetBSD: special,v 1.58 2002/06/02 18:38:35 jmcneill Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -157,6 +157,7 @@
 ./etc/rc.d/lkm3			type=file mode=0555
 ./etc/rc.d/local		type=file mode=0555
 ./etc/rc.d/lpd			type=file mode=0555
+./etc/rc.d/mixerctl		type=file mode=0555
 ./etc/rc.d/mopd			type=file mode=0555
 ./etc/rc.d/motd			type=file mode=0555
 ./etc/rc.d/mountall		type=file mode=0555
