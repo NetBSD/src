@@ -1,9 +1,9 @@
-/*	$NetBSD: names.h,v 1.6 1997/01/28 00:49:45 christos Exp $	*/
+/*	$NetBSD: names.h,v 1.7 1997/09/30 17:00:45 is Exp $	*/
 
 /*
  * Names.h - names and types used by ascmagic in file(1).
  * These tokens are here because they can appear anywhere in
- * the first HOWMANY bytes, while tokens in /etc/magic must
+ * the first HOWMANY bytes, while tokens in MAGIC must
  * appear at fixed offsets into the file. Don't make HOWMANY
  * too high unless you have a very fast CPU.
  *
@@ -12,7 +12,7 @@
  *
  * See LEGAL.NOTICE
  *
- * $NetBSD: names.h,v 1.6 1997/01/28 00:49:45 christos Exp $
+ * $NetBSD: names.h,v 1.7 1997/09/30 17:00:45 is Exp $
  */
 
 /* these types are used to index the table 'types': keep em in sync! */

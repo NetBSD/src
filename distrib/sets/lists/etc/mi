@@ -25,7 +25,6 @@
 ./etc/inetd.conf
 ./etc/lkm.conf
 ./etc/localtime
-./etc/magic
 ./etc/mail.rc
 ./etc/man.conf
 ./etc/master.passwd
