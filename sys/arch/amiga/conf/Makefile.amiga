@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.31 1996/01/14 21:06:47 thorpej Exp $
+#	$NetBSD: Makefile.amiga,v 1.32 1996/01/28 20:09:08 chopps Exp $
 
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
 #
@@ -23,7 +23,7 @@
 
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
-AS=	as ${DEBUG}
+AS=	as
 CC=	cc ${DEBUG}
 CPP=	cpp
 LD=	ld 
