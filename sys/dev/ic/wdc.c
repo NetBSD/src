@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.36 1998/10/15 11:38:04 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.37 1998/10/20 17:00:26 bouyer Exp $ */
 
 
 /*
@@ -428,6 +428,10 @@ wdcstart(wdc, channel)
 	WDCDEBUG_PRINT(("wdcstart: xfer %p channel %d drive %d\n", xfer,
 	    xfer->channel, xfer->drive), DEBUG_XFERS);
 	chp->ch_flags |= WDCF_ACTIVE;
+	if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_RESET) {
+		chp->ch_drive[xfer->drive].drive_flags &= ~DRIVE_RESET;
+		chp->ch_drive[xfer->drive].state = 0;
+	}
 	xfer->c_start(chp, xfer);
 }
 
