@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.88 2003/01/26 16:42:25 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.89 2003/01/27 04:29:26 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3069,3 +3069,143 @@ sys/dev/ic/rtl81x9.c				1.44 via patch
 	Use a properly zeroed buffer to pad small packets to make
 	sure the chip doesn't send random data.
 	[bouyer, ticket #1086]
+
+usr.sbin/edquota/edquota.8			1.8-1.9
+usr.sbin/edquota/edquota.c			1.21-1.22
+
+	Add new command-line flags, which ease edquota use in bach scripts:
+	-f, which allows to restrict edquota to only one quota-enabled 
+	   filesystem
+	-s and -h, which allows to set soft and hard limits respectively, 
+	   without the need to edit a file.
+	[bouyer. ticket #1069]
+
+usr.sbin/quotacheck/quotacheck.8		1.9-1.10
+usr.sbin/quotacheck/quotacheck.c		1.22-1.23
+
+	Add SIGINFO support.
+	[bouyer. ticket #1070]
+
+sys/dev/usb/usbdevs				1.289-1.291
+sys/dev/usb/uscanner.c				1.35-1.37
+sys/dev/usb/usbdevs.h				1.255.2.1-1.255.2.2 (regen)
+sys/dev/usb/usbdevs_data.h			1.256.2.1-1.256.2.2 (regen)
+
+	Add Epson 1660.  From kerm/19767, Neil Short.
+	Add Epson Perfection 1260 scanner.
+	[tron, ticket #1074]
+
+gnu/dist/toolchain/gcc/Makefile.in		1.4-1.5
+
+	Fix toolchain build problem.
+	[grant, ticket #1075]
+
+etc/etc.amiga/MAKEDEV				1.80-1.82
+distrib/amiga/miniroot/Makefile.inc		1.12-1.13
+
+	Create device nodes for 2nd and 3rd CD drive
+	Increase inode density - we were running out of inodes mid-install after
+	adding more cd and st devices.
+	[is, ticket #1076]
+
+sys/dev/usb/ustir.c				1.2-1.3
+sys/dev/usb/ustir.c				1.9-1.10
+
+	This device has a single FIFO shared by both incoming and outgoing data.
+	If a series of outputs are delivered to the device before the kernel 
+	thread has polled for input data, any input data will be lost.  As a
+	counter measure, always force an input check between outputs.
+	[dsainty, ticket #1078]
+
+sys/dev/usb/uhci.c				1.165-1.167
+
+	Be somewhat more persuasive about enabling the port on a port reset. USB
+	protocol dictates that the port enable must be implied by the port 
+	reset. To implement this on (at least) the VIA VT83C572 this means we 
+	need to wait around tweaking the chip state until the port actually 
+	transitions to enabled (or the device goes away).  Likely fixes 
+	kern/11018.
+
+	Reissue the MAXP command on resume.  From FreeBSD.
+	[dsainty, ticket #1079]
+
+sbin/route/route.c				1.57-1.58
+
+	permit DNS names to address portion.  they will be considered as 
+	RTF_HOST if specified as destination (as there's no getnetbyname in 
+	IPv6).
+
+	[fredb, ticket #1080]
+
+sys/conf/Makefile.kern.inc			1.24-1.25
+
+	Back out revision 1.23, it breaks all kernel configs that do
+	makeoptions     COPTS="foo"
+	[ttaka, ticket #1082]
+
+gnu/dist/cvs/src/server.c			1.6-1.6.2.1 (hand patch)
+
+	* server.c (dirswitch): Don't free dir_name until right before
+	  allocating it again.  This removes a potential double-free problem,
+	  whereby this function could free dir_name and then immediately
+	  return due to invalid directory syntax (without ever reassigning
+	  dir_name), then re-enter and free dir_name again.
+	[wiz, ticket #1099]
+
+etc/postinstall					1.48-1.49
+
+	Among the many things postinstall should check are up to date is... 
+	postinstall
+	[abs, ticket #1100]
+
+usr.bin/patch/patch.c				1.12-1.13
+
+	Do not try to write a rejects file for those cases where the user has
+	told us to skip a patch due to missing file to patch.
+	[kristerw, ticket #1108]
+
+share/termcap/termcap.src			1.73-1.74
+
+	Add cygwin alias for pcansi. Okayed by jdc.
+	[wiz, ticket #1113]
+
+sys/arch/vax/boot/boot/Makefile			1.27-1.28,1.29-1.30
+sys/arch/vax/boot/xxboot/Makefile               1.13-1.14,1.15-1.16
+sys/arch/vax/boot/xxboot_ustarfs/Makefile       1.1-1.2,1.3-1.4
+sys/arch/vax/conf/Makefile.vax                  1.69-1.70
+
+	Add -mno-asm-pic to CFLAGS and AFLAGS, and add -ffreestanding and
+	empty LIBC setting to bootloader Makefiles.
+	[he, ticket #1072]
+
+sys/arch/amiga/dev/idesc.c			1.51-1.52
+
+	Compiles and works (tested on my A1200) again
+	[lonewolf, ticket #1101]
+
+distrib/amiga/miniroot/install.md		1.19-1.20
+
+	Make it work more than one time. The old behaviour was very annoying.
+	[is, ticket #1071]
+
+sys/dev/pci/agp.c				1.15-1.16
+sys/dev/pci/agp_i810.c				1.12-1.13
+
+	-avoid lock leak in error case
+	-Free AGP memory on close, to avoid a memory leak in case
+	 the X server doesn't free it explicitely.
+ 	(It appears that the X server never calls AGPIOC_DEALLOCATE.)
+
+	update the is_bound flag for local memory too
+	[manu, ticket #1073]
+
+sys/net/if_ethersubr.c				1.101-1.102
+sys/net/if_spppvar.h				1.5-1.6
+
+	Fix typo: realy -> really.  Okay'ed by wiz.
+	[jmmv, ticket #1102]
+
+usr.sbin/user/useradd.8				1.22-1.23
+
+	Fix typo in first form synopsis: -k does not require -r.
+	[jmmv, ticket 1103]
