@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.27 2002/02/28 01:56:59 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.28 2002/02/28 16:54:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -128,6 +128,13 @@ vaddr_t ram_start = IOM_RAM_BEGIN;
 extern char sh_vector_generic[], sh_vector_generic_end[];
 extern char sh_vector_interrupt[], sh_vector_interrupt_end[];
 extern char sh_vector_tlbmiss[], sh_vector_tlbmiss_end[];
+
+/*
+ * These variables are needed by /sbin/savecore
+ */
+u_long	dumpmag = 0x8fca0101;	/* magic number */
+int 	dumpsize = 0;		/* pages */
+long	dumplo = 0; 		/* blocks */
 
 void
 sh_cpu_init(int arch, int product)
@@ -278,6 +285,40 @@ sh3_startup()
 	pcb->r15 = (int)proc0.p_addr + USPACE - 16;
 
 	proc0.p_md.md_regs = (struct trapframe *)pcb->r15 - 1;
+}
+
+/*
+ * This is called by main to set dumplo and dumpsize.
+ * Dumps always skip the first CLBYTES of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
+ */
+void
+cpu_dumpconf()
+{
+}
+
+/*
+ * Doadump comes here after turning off memory management and
+ * getting on the dump stack, either when called above, or by
+ * the auto-restart code.
+ */
+#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
+static vaddr_t dumpspace;
+
+vaddr_t
+reserve_dumppages(p)
+	vaddr_t p;
+{
+
+	dumpspace = p;
+	return (p + BYTES_PER_DUMP);
+}
+
+void
+dumpsys()
+{
 }
 
 /*
@@ -482,4 +523,18 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	tf->tf_spc = pack->ep_entry;
 	tf->tf_ssr = PSL_USERSET;
 	tf->tf_r15 = stack;
+}
+
+/*
+ * Jump to reset vector.
+ */
+void
+cpu_reset()
+{
+
+	_cpu_exception_suspend();
+
+	goto *(u_int32_t *)0xa0000000;
+	for (;;)
+		;
 }
