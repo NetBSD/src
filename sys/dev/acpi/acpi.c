@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.30 2003/01/09 10:35:29 jdolecek Exp $	*/
+/*	$NetBSD: acpi.c,v 1.31 2003/01/13 01:24:11 fvdl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.30 2003/01/09 10:35:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.31 2003/01/13 01:24:11 fvdl Exp $");
 
 #include "opt_acpi.h"
 
@@ -288,7 +288,7 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Show SCI interrupt. */
 	if (AcpiGbl_FADT != NULL)
-		printf("%s: SCI interrupting at irq %d\n",
+		printf("%s: SCI interrupting at int %d\n",
 			sc->sc_dev.dv_xname, AcpiGbl_FADT->SciInt);
 	/*
 	 * Check for fixed-hardware features.
