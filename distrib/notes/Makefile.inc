@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2000/10/10 12:51:20 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2000/11/26 02:50:12 matt Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -18,7 +18,11 @@ SRCS=	${MAIN} whatis contents hardware xfer prep install\
 ICMD=	${INSTALL} ${RENAME} ${PRESERVE} ${COPY}	\
 	-o root -g wheel -m ${NONBINMODE} 
 
+.if defined(DESTDIR)
+PRESET=	${GFLAGS} -dM=${M} -dV=${V} -d.CURDIR=${.CURDIR} -r${M}=1 -M${DESTDIR}/usr/share/tmac
+.else
 PRESET=	${GFLAGS} -dM=${M} -dV=${V} -d.CURDIR=${.CURDIR} -r${M}=1
+.endif
 
 POST_PLAIN= -P-b -P-u -P-o
 
