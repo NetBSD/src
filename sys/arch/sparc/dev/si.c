@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.20 1996/03/16 23:28:35 christos Exp $	*/
+/*	$NetBSD: si.c,v 1.21 1996/03/17 02:01:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -241,15 +241,21 @@ static struct scsi_device si_dev = {
 
 
 /* The Sun SCSI-3 VME controller. */
-struct cfdriver sicd = {
-	NULL, "si", si_match, si_attach,
-	DV_DULL, sizeof(struct si_softc), NULL, 0,
+struct cfattach si_ca = {
+	sizeof(struct si_softc), si_match, si_attach
+};
+
+struct cfdriver si_cd = {
+	NULL, "si", DV_DULL
 };
 
 /* The Sun "SCSI Weird" 4/100 obio controller. */
-struct cfdriver swcd = {
-	NULL, "sw", si_match, si_attach,
-	DV_DULL, sizeof(struct si_softc), NULL, 0,
+struct cfattach sw_ca = {
+	sizeof(struct si_softc), si_match, si_attach
+};
+
+struct cfdriver sw_cd = {
+	NULL, "sw", DV_DULL
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.4 1996/03/16 23:28:23 christos Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.5 1996/03/17 02:00:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -95,9 +95,12 @@ int		cgeightioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int		cgeightmmap __P((dev_t, int, int));
 static void	cgeightunblank __P((struct device *));
 
-struct cfdriver cgeightcd = {
-	NULL, "cgeight", cgeightmatch, cgeightattach,
-	DV_DULL, sizeof(struct cgeight_softc)
+struct cfattach cgeight_ca = {
+	sizeof(struct cgeight_softc), cgeightmatch, cgeightattach
+};
+
+struct cfdriver cgeight_cd = {
+	NULL, "cgeight", DV_DULL
 };
 
 /* frame buffer generic driver */
@@ -290,7 +293,7 @@ cgeightopen(dev, flags, mode, p)
 {
 	int unit = minor(dev);
 
-	if (unit >= cgeightcd.cd_ndevs || cgeightcd.cd_devs[unit] == NULL)
+	if (unit >= cgeight_cd.cd_ndevs || cgeight_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 	return (0);
 }
@@ -313,7 +316,7 @@ cgeightioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	register struct cgeight_softc *sc = cgeightcd.cd_devs[minor(dev)];
+	register struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;
 	int error;
 
@@ -409,7 +412,7 @@ cgeightmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct cgeight_softc *sc = cgeightcd.cd_devs[minor(dev)];
+	register struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
 	int poff;
 
 #define START_ENABLE	(128*1024)

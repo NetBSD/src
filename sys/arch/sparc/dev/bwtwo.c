@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.23 1996/03/14 19:44:34 christos Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.24 1996/03/17 02:00:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -111,9 +111,13 @@ static void	bwtwounblank __P((struct device *));
 static void	bwtwo_set_video __P((struct bwtwo_softc *, int));
 static int	bwtwo_get_video __P((struct bwtwo_softc *));
 
-struct cfdriver bwtwocd =
-    { NULL, "bwtwo", bwtwomatch, bwtwoattach,
-      DV_DULL, sizeof(struct bwtwo_softc) };
+struct cfattach bwtwo_ca = {
+	sizeof(struct bwtwo_softc), bwtwomatch, bwtwoattach
+};
+
+struct cfdriver bwtwo_cd = {
+	NULL, "bwtwo", DV_DULL
+};
 
 /* XXX we do not handle frame buffer interrupts (do not know how) */
 
@@ -376,7 +380,7 @@ bwtwoopen(dev, flags, mode, p)
 {
 	int unit = minor(dev);
 
-	if (unit >= bwtwocd.cd_ndevs || bwtwocd.cd_devs[unit] == NULL)
+	if (unit >= bwtwo_cd.cd_ndevs || bwtwo_cd.cd_devs[unit] == NULL)
 		return (ENXIO);
 
 	return (0);
@@ -400,7 +404,7 @@ bwtwoioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	struct bwtwo_softc *sc = bwtwocd.cd_devs[minor(dev)];
+	struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 
 	switch (cmd) {
 
@@ -440,7 +444,7 @@ bwtwommap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct bwtwo_softc *sc = bwtwocd.cd_devs[minor(dev)];
+	register struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 
 	if (off & PGOFSET)
 		panic("bwtwommap");

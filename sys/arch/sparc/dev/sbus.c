@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.7 1996/03/14 19:45:13 christos Exp $ */
+/*	$NetBSD: sbus.c,v 1.8 1996/03/17 02:01:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,16 +57,20 @@
 #include <sparc/dev/sbusreg.h>
 #include <sparc/dev/sbusvar.h>
 
+int sbus_print __P((void *, char *));
+void sbusreset __P((int));
+
 /* autoconfiguration driver */
 void	sbus_attach __P((struct device *, struct device *, void *));
 int	sbus_match __P((struct device *, void *, void *));
-struct cfdriver sbuscd = {
-	NULL, "sbus", sbus_match, sbus_attach,
-	DV_DULL, sizeof(struct sbus_softc)
+
+struct cfattach sbus_ca = {
+	sizeof(struct sbus_softc), sbus_match, sbus_attach
 };
 
-int sbus_print __P((void *, char *));
-void sbusreset __P((int));
+struct cfdriver sbus_cd = {
+	NULL, "sbus", DV_DULL
+};
 
 /*
  * Print the location of some sbus-attached device (called just
@@ -192,7 +196,7 @@ sbusreset(sbus)
 	int sbus;
 {
 	register struct sbusdev *sd;
-	struct sbus_softc *sc = sbuscd.cd_devs[sbus];
+	struct sbus_softc *sc = sbus_cd.cd_devs[sbus];
 	struct device *dev;
 
 	printf("reset %s:", sc->sc_dev.dv_xname);
