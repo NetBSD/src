@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.253 2004/01/02 06:51:30 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.254 2004/01/03 15:57:16 he Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -47,7 +47,7 @@ etc/services					1.63
 usr.bin/tftp/tftp.c				1.16
 
 	Fix sendto return value check (incomplete change in 1.14).
-	Noted by Brian Ginsbach in PR 19842.
+	Noted by Brian Ginsbach in PR#19842.
 	[wiz, ticket #1139]
 
 sys/netiso/clnp_er.c				1.13
@@ -64,6 +64,7 @@ usr.bin/login/login.c				1.72
 
 etc/mrouted.conf				1.5
 share/man/man4/ntwoc.4				1.4
+
 	Fix typos.
 	[keihan, ticket #1135]
 
@@ -110,7 +111,7 @@ usr.bin/progress/progress.c			1.7
 
 usr.bin/cdplay/cdplay.c				1.22
 
-	Fix PR 18444 and a few other corner cases in cdplay.c.
+	Fix PR#18444 and a few other corner cases in cdplay.c.
 	[is, ticket #1172]
 
 sys/arch/mac68k/dev/akbdmap.h			1.4
@@ -123,7 +124,7 @@ sys/arch/macppc/dev/akbdmap.h			1.5
 	Added a french keyboard layout.
 	Fixed french keymap: option was not mapped correctly, thus making
 	impossible to use |{}[] (tested).
-	Added jp keymap from PR/15438, and sf, sv, de and uk keymaps from
+	Added jp keymap from PR#15438, and sf, sv, de and uk keymaps from
 	OpenBSD. (all untested).
 	[manu, ticket #1183]
 
@@ -149,7 +150,7 @@ lib/libc/citrus/citrus_none.c			1.6-1.7
 		fix a typo that causes SEGV.
 	while i'm here, make them similar each other.
 	when s==0, wctomb should initialize its internal state and return if
-	encodings have state dependency or not. Fix part of PR 18269.
+	encodings have state dependency or not.  Fixes part of PR#18269.
 	In _RESTART_BEGIN macro, don't use external variable directly.
 	- add missing _CEI_TO_EI/_TO_CEI.
 	- add missing _STATE_NEEDS_EXPLICIT_INIT checks.
@@ -158,7 +159,7 @@ lib/libc/citrus/citrus_none.c			1.6-1.7
 	- don't use 'cl' before assert it's non NULL.
 	- handle s==NULL case of wcrtomb.
 	- add a comment about it.
-	Fix rest of PR 18269 by wurlitzer.
+	Fixes rest of PR#18269 by wurlitzer.
 	[yamt, ticket #1202]
 
 sbin/fdisk/fdisk.c				1.55
@@ -221,13 +222,13 @@ usr.bin/mail/popen.c				1.15
 	the call to findchild().
 	Caused a coredump in one in every N thousand invocations of mail,
 	which I have been hunting for literally years.
-	Fixes PR 19696 from Mason Loring Bliss, too.
+	Fixes PR#19696 from Mason Loring Bliss, too.
 	[perry, ticket #1236]
 
 share/man/man8/man8.amiga/boot.8		1.8
 share/man/man8/man8.amiga/installboot.8		1.19
 
-	Fix typos reported by Igor Sobrado (PR port-amiga/20950).
+	Fix typos reported by Igor Sobrado (PR#20950).
 	[is, ticket #1238]
 
 sys/uvm/uvm.h					1.32
@@ -250,13 +251,13 @@ etc/rc.d/bootconf.sh				1.7
 bin/csh/csh.1					1.37
 
 	Additional text & formatting for the csh "limit" command;
-	hopefully this satisfies PR 11658
+	Fixes PR#11658.
 	[fair, ticket #1243]
 
 libexec/talkd/talkd.c				1.16
 
-	verify strvis() buffer length is enough.  make sure string termination
-	before use.  remove extra ntohs() which is not needed.  from Charles
+	Verify strvis() buffer length is enough.  Make sure string termination
+	before use.  Remove extra ntohs() which is not needed.  from Charles
 	Blundell
 	[itojun, ticket #1001]
 
@@ -264,14 +265,14 @@ sys/dev/scsipi/ses.c				1.19-1.20
 
 	The Double-Semi-Colon Police.
 
-	kern/20231- pass the correct argument (arg_addr) on thru to
+	Fix PR#20231 - pass the correct argument (arg_addr) on thru to
 	scsipi_do_ioctl, not the locally dereferenced fetch.
 	[mjacob, ticket #1162]
 
 sys/dev/pci/agp.c				1.26
 
 	Don't match a PCI graphics card in a system which supports an AGP.
-	Patch supplied by Quentin Garnier in PR kern/19256.
+	Patch supplied by Quentin Garnier in PR#19256.
 	[tron, ticket #1181]
 
 sys/sys/agpio.h					1.2
@@ -279,17 +280,17 @@ sys/sys/agpio.h					1.2
 	From FreeBSD: Fix an off-by-bit error in the AGP_MODE_[GS]ET_RATE()
 	macros.
 
-	This fixes PR kern/20480 by Quentin Garnier.
+	This fixes PR#20480 by Quentin Garnier.
 	[tron, ticket #1182]
 
 include/vis.h					1.13
 
-	this needs <sys/types.h>
+	This needs <sys/types.h>
 	[klienk, ticket #1210]
 
 usr.bin/menuc/menuc.1				1.12
 
-	Replace some \n with \en for correct display. Closes PR 18539.
+	Replace some \n with \en for correct display.  Fixes PR#18539.
 	[manu, ticket #1226]
 
 sys/dev/pci/if_bge.c				1.38
@@ -365,22 +366,22 @@ lib/libkvm/kvm.c				1.65.4.2
 sys/dev/pci/if_wm.c				1.36
 
 	Pullup short mbuf in wm_tx_cksum() instead of dropping it which fixes
-	PR kern/21190 by myself. Jason R. Thorpe code reviewed the changes.
+	PR#21190. Jason R. Thorpe code reviewed the changes.
 	[tron, ticket #1256]
 
 sys/netinet/ip_icmp.c				1.73
 
 	Clear hardware checksum flags before reusing a mbuf for an ICMP reply
-	as suggested by Enami Tsugutomo. This fixes PR kern/21203 by myself.
+	as suggested by Enami Tsugutomo. This fixes PR#21203.
 	[tron, ticket #1260]
 
 sys/arch/amiga/dev/grf_et.c			1.20-1.21
 
 	iszthreepa() takes a physical address, not a virtual address.
-	This fixes PR 19175, reported and heavily debugged by Pawel
+	This fixes PR#19175, reported and heavily debugged by Pawel
 	Chwalowski.
  
-	fix fatal typo
+	Fix fatal typo.
 	[is, ticket #1266]
 
 share/man/man4/scc.4				1.3-1.5
@@ -389,7 +390,7 @@ share/man/man4/scc.4				1.3-1.5
 	Clean up nroff problems.
 
 	Change the serial port file names in the FILES section to ttyB0,
-	etc. to match current reality, per PR 19572
+	etc. to match current reality.
 
 	Add some paragraph breaks to make the text more readable, and to
 	more clearly separate the topics covered.
@@ -403,7 +404,7 @@ share/man/man4/scc.4				1.3-1.5
 	and pmax, plus add a clear statement in the first paragraph as to
 	which computers listed are supported by which port.
 
-	Hopefully this will properly answer PR 19752
+	Fixes PR#19752.
 	[fair, ticket #1271]
 
 sbin/dump/rcache.c				1.20
@@ -418,10 +419,10 @@ sys/dev/wscons/wsemul_vt100.c			1.13
 sys/dev/wscons/wsemul_vt100_subr.c		1.24 (via patch)
 sys/dev/wscons/wsemul_vt100var.h		1.7
 
-	fix crash due to wrong argument in the (almost useless)
-	DECRQUPSS escape sequence
+	Fix crash due to wrong argument in the (almost useless)
+	DECRQUPSS escape sequence.
 
-	PR/17738: Matthias Drochner, PR/21230: Onno van der Linden: vt100
+	PR#17738: Matthias Drochner, PR#21230: Onno van der Linden: vt100
 	wscons crashes restoring cursor. Fixed by adding a flag as suggested.
 	[drochner, ticket #1277]
 
@@ -439,18 +440,18 @@ sys/dev/pci/pciidevar.h				1.9 (via patch)
 	driver.
 
 	Sync with the latest diff I made available, and also include changes
-	from kern/18015 which is much better than the hack I've done.
+	from PR#18015 which is much better than the hack I've done.
 	[bouyer, ticket #1234]
 
 share/misc/na.phone				1.16-1.18 (via patch)
 
 	Fix comment about format.
-	Fixes PR misc/17722 from David MacKenzie.
+	Fixes PR#17722 from David MacKenzie.
 
 	Add new numbers, remove some stars, and mildly sort it so that it's
 	actually in numeric order.
 
-	re-gen with new machinery. Finally up-to-date.
+	Re-gen with new machinery. Finally up-to-date.
 	[jhawk, #1189]
 
 share/man/man8/man8.sun2/boot.8			1.1-1.4 (new)
@@ -470,7 +471,7 @@ distrib/sets/lists/man/mi			1.573
 
 crypto/dist/kame/racoon/crypto_openssl.c	1.6
 
-	fix "round up to 8" code.  from kame
+	Fix "round up to 8" code.  from kame
 	[itojun, ticket #1270]
 
 sys/arch/newsmips/newsmips/cpu_cons.c		1.7
@@ -483,7 +484,7 @@ sys/arch/newsmips/newsmips/cpu_cons.c		1.7
 
 sys/netinet6/ip6_mroute.c			1.47
 
-	don't try to forward multicast packet to mif that went away.
+	Don't try to forward multicast packet to mif that went away.
 	[itojun, ticket #1317]
 
 sys/arch/mac68k/dev/if_mc.c			1.21
@@ -522,7 +523,7 @@ sys/netinet/ip_input.c				1.163 (via patch)
 
 sbin/mount_union/mount_union.8			1.14
 
-	Add some mdoc macros. Add text from PR 13878, modified.
+	Add some mdoc macros. Add text from PR#13878, modified.
 	[fair, ticket #1283]
 
 usr.bin/du/du.c					1.21 (via patch)
@@ -537,8 +538,8 @@ distrib/sets/lists/base/shl.mi			1.211 (via patch)
 lib/libc/arch/powerpc/net/Makefile.inc		1.2
 lib/libc/shlib_version				1.131 (via patch)
 
-	Build {h,n}to{n,h}{l,s}() into object code; addresses PR
-	port-macppc/21541 from Tsuyoshi MOMOSE.
+	Build {h,n}to{n,h}{l,s}() into object code; fixes PR#21541
+	from Tsuyoshi MOMOSE.
 
 	Bump to libc.so.12.83.2, due to addition of {h,n}to{n,h}{l,s}() on
 	PowerPC.
@@ -561,8 +562,9 @@ distrib/notes/macppc/prep			1.37
 
 lib/libc/stdio/vfscanf.c			1.34
 
-	Fix handing of -ve hexadecimal numbers in the %i format.  Fixes
-	PR lib/21691.  Patch from Simon Burge.
+	Fix handing of negative hexadecimal numbers in the %i format.  Fixes
+	PR#21691.  Patch from Simon Burge.
+
 	[thorpej, ticket #1298]
 
 sys/sys/shm.h					1.33
@@ -600,38 +602,38 @@ distrib/notes/macppc/hardware			1.31-1.34
 
 distrib/notes/macppc/install			1.26
 
-	misc small typos and wording cleanup
-	fix links to newly updated Partitioning HOW-TO and mention use of pdisk
+	Misc small typos and wording cleanup.
+	Fix links to newly updated Partitioning HOW-TO and mention use of pdisk
 	can't view files on official ISO image or floppy from Open Firmware
-	keyboard problems with iMac and B&W G3 seem to have been cleared up
+	keyboard problems with iMac and B&W G3 seem to have been cleared up.
 	[mbw, ticket #1306]
 
 distrib/notes/macppc/prep			1.38
 
-	misc small typos and wording cleanup
-	fix links to newly updated Partitioning HOW-TO
+	Misc small typos and wording cleanup.
+	Fix links to newly updated Partitioning HOW-TO.
 	OF 3 firmware update 4.1.7, mention that it's not much of a problem
-	anymore
-	point to ZTerm home page
-	redo partitioning section
-	update now that there's a pair of boot floppies
-	change MS-DOS floppy section to be Zip disk
+	anymore.
+	Point to ZTerm home page.
+	Redo partitioning section.
+	Update now that there's a pair of boot floppies.
+	Change MS-DOS floppy section to be Zip disk.
 	[mbw, ticket #1307]
 
 distrib/notes/common/contents			1.90
 
-	mention macppc has two floppies now
+	Mention macppc has two floppies now.
 	[mbw, ticket #1308]
 
 distrib/notes/common/netboot			1.15
 
-	detab a few lines, and in general try to make it better for 80 column
-	printout
+	Detab a few lines, and in general try to make it better for 80 column
+	printout.
 	[mbw, ticket #1310]
 
 distrib/notes/common/sysinst			1.63
 
-	fix a macppc TOC heading to be a little shorter
+	Fix a macppc TOC heading to be a little shorter.
 	[mbw, ticket #1311]
 
 sys/netatalk/at_control.c			1.8
@@ -695,7 +697,7 @@ sys/arch/macppc/include/keyboard.h		1.4
 	It is asking for trouble and is useless for the X server.
 	We can add it back later if need be.
 
-	add (commented out) option WSDISPLAY_COMPAT_RAWKBD
+	Add (commented out) option WSDISPLAY_COMPAT_RAWKBD.
 	[aymeric, ticket #1324]
 
 sys/dev/pci/yds.c				1.17
@@ -768,9 +770,9 @@ sys/net/if_ieee1394subr.c			1.23
 sys/net/if_spppsubr.c				1.66
 sys/net/if_tokensubr.c				1.22
 
-	don't call if_free_sadl() until very end of if_detach() logic.  many
+	Don't call if_free_sadl() until very end of if_detach() logic.  Many
 	of routing table manipulation code assumes the presense of AF_LINK
-	sockaddr.  should fix PR 21581
+	sockaddr.  Fixes PR#21581.
 	[itojun, ticket #1325]
 
 distrib/notes/macppc/hardware			1.36
@@ -814,7 +816,7 @@ sys/arch/sparc64/sparc64/process_machdep.c	1.12 (via patch)
 
 sys/dev/audio.c					1.161
 
-	fix unitialized variable. from simonb. OI
+	Fix unitialized variable. from simonb. OI
 	[nakayama, ticket #1332]
 
 sys/ufs/ffs/ffs_inode.c				1.52
@@ -832,8 +834,8 @@ sys/dev/usb/uaudio.c				1.61
 
 sys/net/rtsock.c				1.61
 
-	recover code that requires exact match on rtm_change/lock (lost in
-	1.16). without it "route change X" would change less-specific route by
+	Recover code that requires exact match on rtm_change/lock (lost in
+	1.16). Without it "route change X" would change less-specific route by
 	mistake.  reported by jinmei@kame
 	[itojun, ticket #1336]
 
@@ -848,10 +850,10 @@ sys/arch/newsmips/dev/zs_hb.c			1.14
 
 sys/arch/macppc/dev/ofb.c			1.29-1.30, 1.33
 
-	Update OFB_ENABLE_CACHE to search for a empty bat that does not
+	Update OFB_ENABLE_CACHE to search for an empty bat that does not
 	conflict the USER_SR or one of the kernel SRs.
 
-	for ofb_enable_cache, turn on the BAT_M bit as well to prevent
+	For ofb_enable_cache, turn on the BAT_M bit as well to prevent
 	the framebuffer from getting scrambled on MP systems.
 
 	Initialize the framebuffer BAT with BAT_G, too.  This marks the region
@@ -875,31 +877,31 @@ etc/rc.subr					1.57
 
 	run_rc_command(): when checking if ${command} exists before
 	executing it, be sure to check under ${name_chroot} (if set).
-	Fix from Ed Ravin in [bin/18523]
+	Fix from Ed Ravin in PR#18523.
 	[lukem, ticket #1346]
 
 usr.bin/mkdep/mkdep.c				1.16
 
-	catch SIGPIPE, too.
+	Catch SIGPIPE, too.
 	[msaitoh, ticket #1339]
 
 sys/netinet/igmp.c				1.34
 sys/netinet/igmp_var.h				1.16
 sys/netinet/in.c				1.87
 
-	purge rti structure (in igmp.c) for removed ifp on if_detach().
+	Purge rti structure (in igmp.c) for removed ifp on if_detach().
 	[itojun, ticket #1341]
 
 sys/netinet/in.c				1.89
 sys/netinet/ip_mroute.c				1.72
 sys/netinet/ip_mroute.h				1.21
 
-	cleanup multicast routing stuff on if_detach().
+	Cleanup multicast routing stuff on if_detach().
 	[itojun, ticket #1342]
 
 sys/netinet/ip_mroute.c				1.73
 
-	expire mrt if mrt_stall goes empty.  ono@kame
+	Expire mrt if mrt_stall goes empty.  ono@kame
 	[itojun, ticket #1345]
 
 usr.sbin/rpc.lockd/lockd_lock.c			1.19 (via patch)
@@ -918,15 +920,15 @@ sys/dev/pci/pcidevs				1.506 (via patch)
 sys/dev/pci/pcidevs.h				regenerate
 sys/dev/pci/pcidevs_data.h			regenerate
 
-	add Intel PRO/100M.
+	Add Intel PRO/100M.
 
-	apparently this driver works fine for Intel PRO/100 VM with 82562EM/EX
-	PHY, so make driver match it
-	while here, also make the driver match 'Intel PRO/100 VM with
+	Apparently this driver works fine for Intel PRO/100 VM with 82562EM/EX
+	PHY, so make driver match it.
+	While here, also make the driver match 'Intel PRO/100 VM with
 	82562EM/EX (CNR) PHY', with anticipation it would work fine too
 	activate the resume and dynamic standby bug workaround for these;
 	might not be necessary (not confirmed to be needed), but better safe
-	than sorry
+	than sorry.
 	[drochner, ticket #1343]
 
 distrib/utils/sysinst/arch/sgimips/md.c		1.4
@@ -993,7 +995,7 @@ sys/net/if_bridgevar.h				1.3 (via patch)
 	  brconfig bridge0 add if0 add if1 stp if0 stp if1 up
 	- s/BRDGSPRI/BRDGSIFPRIO in brconfig.c:cmd_ifpriority()
 
-	add a command (ifpathcost) to change the stp path cost of the STP path
+	Add a command (ifpathcost) to change the stp path cost of the STP path
 	cost of an interface. Display the interface path cost with the others
 	STP parameters.
 	[bouyer, ticket #1355]
@@ -1022,9 +1024,9 @@ sys/arch/amiga/amiga/amiga_init.c		1.86
 
 sys/netinet/ip_output.c				1.106-1.107
 
-	after pfil_run_hooks, need to fix hlen as well
+	After pfil_run_hooks, need to fix hlen as well.
 
-	freebsd code somehow crept in
+	FreeBSD code somehow crept in.
 	[itojun, ticket #1358]
 
 sys/netinet/igmp.c				patch
@@ -1041,8 +1043,8 @@ sys/nfs/nfs_serv.c				1.80
 
 	nfsrv_commit(): return success and don't do anything for requests
 	which starts past the end of the file. This can happen when two
-	clients are writting to the same file.
-	Close PR 21696 by myself, discussed on tech-net in 2003/05 and 2003/06.
+	clients are writing to the same file.
+	Fixes PR#21696, discussed on tech-net in 2003/05 and 2003/06.
 	Issue raised by Chuck Silvers (commit and truncate ops needs to be
 	serialised) still unadressed.
 	[bouyer, ticket #1373]
@@ -1223,7 +1225,7 @@ sys/dev/pci/pcidevs_data.h			regenerate
 sys/dev/microcode/siop/esiop.ss			1.15
 sys/dev/microcode/siop/esiop.out		regenerate
 
-	Properly handle messages that we get at reconnect time (other than
+	Properly handle messages that we get at reconnect time (other than
 	SIMPLE_Q_TAG). Some drives start sync/wide negotiation at reconnect
 	time. Problem reported and fix tested by Andreas Wrede.
 	[bouyer, ticket #1399]
@@ -1278,17 +1280,17 @@ lib/libc/sys/mmap.2				1.32
 sys/sys/mman.h					1.32
 sys/uvm/uvm_mmap.c				1.72
 
-	PR/21948: Todd Vierling: Implement MAP_TRYFIXED for linux emulation.
+	PR#21948: Todd Vierling: Implement MAP_TRYFIXED for linux emulation.
 	[tv, ticket #1420]
 
 sys/compat/linux/common/linux_ioctl.c		1.33
 
-	PR/21936: Todd Vierling: compat/linux: ioctl 'r' misinterpreted
+	PR#21936: Todd Vierling: compat/linux: ioctl 'r' misinterpreted
 	[tv, ticket #1421]
 
 sys/compat/ossaudio/ossaudio.c			1.43
 
-	Fix missing call to FILE_UNUSE.  From kern/21946, from Todd Vierling.
+	Fix missing call to FILE_UNUSE.  From PR#21946, from Todd Vierling.
 	[tv, ticket #1422]
 
 sys/kern/exec_conf.c				1.80
@@ -1296,8 +1298,8 @@ sys/kern/exec_script.c				1.33
 sys/sys/exec_script.h				1.8
 sys/sys/param.h					1.163
 
-	grow #! line length -- patch from cgd, fixes PR kern/20112 from
-	Todd Vierling
+	Grow #! line length -- patch from cgd, fixes PR#20112 from
+	Todd Vierling.
 	[tv, tickets #1423, #1424]
 
 share/man/man5/dir.5				1.10-1.16
@@ -1318,7 +1320,7 @@ share/man/man5/dir.5				1.10-1.16
 
 distrib/utils/sysinst/run.c			patch
 
-	Stop sysinst from dumping core randomly. This fixes PR install/17223.
+	Stop sysinst from dumping core randomly. This fixes PR#17223.
 	[dsl, ticket #1393]
 
 gnu/dist/postfix/src/trivial-rewrite/resolve.c	patch
@@ -1333,7 +1335,7 @@ sys/dev/pci/ahc_pci.c				1.43 (via patch)
 
 sys/kern/kern_sysctl.c				1.142 (via patch)
 
-	make proc.curproc.* check more strict.  atatat
+	Make proc.curproc.* check more strict.  atatat
 	[itojun, ticket #1435]
 
 sys/netinet6/esp_core.c				1.30
@@ -1422,7 +1424,7 @@ usr.sbin/mailwrapper/mailwrapper.c		1.7
 gnu/usr.bin/gzip/gzexe				1.3
 gnu/usr.bin/gzip/znew				1.4
 
-	PR/21819: Jeremy Reed: znew and gzexe create/use unsafe tmp files.
+	PR#21819: Jeremy Reed: znew and gzexe create/use unsafe tmp files.
 	Replaced with the FreeBSD current version.
 	[christos, ticket #1392]
 
@@ -1439,7 +1441,7 @@ sys/netinet/tcp_timer.c				1.58
 sys/netinet/tcp_var.h				1.91
 usr.bin/netstat/inet.c				1.52
 
-	Path MTU discovery blackhole detection. PR 12790
+	Path MTU discovery blackhole detection. PR#12790.
 	[tls, ticket #1445]
 
 crypto/dist/kame/racoon/missing/crypto/sha2/sha2.c 1.5
@@ -1449,7 +1451,7 @@ crypto/dist/kame/racoon/missing/crypto/sha2/sha2.c 1.5
 
 usr.sbin/ypbind/ypbind.c			1.48
 
-	width needs to be updated before each loop, because svc_maxfd may have
+	Width needs to be updated before each loop, because svc_maxfd may have
 	changed.
 	[bouyer, ticket #1449]
 
@@ -1467,14 +1469,14 @@ sys/netinet6/ah_input.c				1.41
 sys/netinet6/esp_input.c			1.33
 
 	m_cat may free mbuf on 2nd arg, so m_pkthdr manipulation has to happen
-	before m_cat call.  from Julian Coleman via kame.
+	before m_cat call.  From Julian Coleman via kame.
 	[itojun, ticket #1401]
 
 usr.sbin/cron/crontab.c				1.19
 
 	In "crontab -l", suppress the header lines, just as "crontab -e" does.
 	OK'd by Christos Zoulas and Paul Vixie.
-	Fixes PR 21705.
+	Fixes PR#21705.
 	[hubertf, ticket #1450]
 
 sys/arch/i386/i386/procfs_machdep.c		patch
@@ -1496,7 +1498,7 @@ sys/arch/sun68k/stand/libsa/version		1.4
 
 sys/netinet/tcp_subr.c				1.153
 
-	Initialize ip_hl for ipsec policy lookup. PR kern/22715
+	Initialize ip_hl for ipsec policy lookup.  Fixes PR#22715.
 	[itojun, ticket #1452]
 
 share/misc/bsd-family-tree			1.12-1.21
@@ -1511,9 +1513,9 @@ share/misc/bsd-family-tree			1.12-1.21
 sbin/disklabel/disklabel.5			1.16-1.18
 sys/sys/disklabel.h				1.74,1.76
 
-	Add DTYPE_LD to match disklabel.h
+	Add DTYPE_LD to match disklabel.h.
 	Add DTYPE_JFS2 and FS_JFS2 for IBM Journaled File System
-	this is to match FreeBSD's disklabel.h revision 1.73
+	this is to match FreeBSD's disklabel.h revision 1.73.
 	FreeBSD change was requested by Hiten Pandya <hiten@uk.FreeBSD.org>
 	Add a type for CGD.
 	[tv, ticket #1454]
@@ -1544,14 +1546,14 @@ sys/arch/i386/conf/NET4501
 sys/netinet6/in6_pcb.c				1.55 (via patch)
 
 	in6_pcbrtentry() now returns IPv4 rtentry if in6pcb is connected to
-	IPv4 mapped address.  PR kern/22431 from Andreas Gustafsson
+	IPv4 mapped address.  Fixes PR#22431 from Andreas Gustafsson.
 	[itojun, ticket #1405]
 
 sys/net/if.c					1.128-1.130 (via patch)
 
-	correct if_clone_lookup().  based on diff from Quentin Garnier
-	fix INT_MAX check in if_clone_lookup
-	correct number range handling.  David Young
+	Correct if_clone_lookup().  Based on diff from Quentin Garnier.
+	Fix INT_MAX check in if_clone_lookup.
+	Correct number range handling.  David Young.
 	[itojun, ticket #1406]
 
 sys/dev/pci/pcidevs				1.543
@@ -1705,7 +1707,7 @@ share/man/man4/isic.4				1.11
 sys/crypto/blowfish/bf_cbc.c			1.6-1.8
 sys/crypto/des/des_cbc.c			1.6
 
-	repoint include file for kernel use.
+	Re-point include file for kernel use.
 	Include <sys/types.h> to allow compilation to occur.
 	Modified to avoid compiler warnings.  The specific warning related
 	to const BF_KEY * vars, and I chose to ``fix'' it in this file
@@ -1725,7 +1727,7 @@ crypto/dist/ssh/version.h			1.29 (via patch)
 	Do not record expanded size before attempting to reallocate the
 	associated memory. From OpenBSD, via FreeBSD.
 
-	crank __NETBSDSSH_VERSION for buffer.c fix
+	Crank __NETBSDSSH_VERSION for buffer.c fix.
 	[elric/tron, ticket #1471]
 
 crypto/dist/ssh/buffer.c			1.3-1.4
@@ -1735,24 +1737,24 @@ crypto/dist/ssh/misc.c				1.12-1.14
 crypto/dist/ssh/session.c			1.35
 crypto/dist/ssh/version.h			1.31-1.32 (via patch)
 
-	apply more malloc fixes from OpenSSH 3.7 -> 3.7.1.
+	Apply more malloc fixes from OpenSSH 3.7 -> 3.7.1.
 	[christos, no ticket]
 
 gnu/dist/sendmail/sendmail/parseaddr.c		1.13
 gnu/dist/sendmail/sendmail/version.c		1.14 (via patch)
 
-	fix prescan() bug (potentially remotely exploitable), CAN-2003-0694
+	Fix prescan() bug (potentially remotely exploitable), CAN-2003-0694.
 	Bump version number after parse8.359.2.8 patch has been applied.
 	[tron, ticket #1473]
 
 crypto/dist/ssh/ssh-agent.c			1.23
 
-	typo.  markus@openbsd
+	Fix typo.  markus@openbsd
 	[itojun, ticket #1476]
 
 crypto/dist/ssh/buffer.c			1.5
 
-	protect against double free; #660;  zardoz at users.sf.net
+	Protect against double free; #660;  zardoz at users.sf.net
 	from openbsd
 	[christos, ticket #1477]
 
@@ -1820,7 +1822,7 @@ usr.sbin/pkg_install/view/pkg_view.sh		1.1-1.4
 gnu/dist/toolchain/gcc/config/sparc/netbsd64.h	1.10
 
 	Add a missing backslash.
-	patch supplied in PR toolchain/20062 from Jed Davis
+	Patch supplied in PR#20062 from Jed Davis.
 	[martin, ticket #1480]
 
 sys/ufs/ffs/ffs_vfsops.c			1.121 (via patch)
@@ -2101,7 +2103,6 @@ sys/netinet/if_arp.c				1.94 (via patch)
 crypto/dist/openssl/crypto/asn1/asn1_lib.c	patch
 crypto/dist/openssl/crypto/x509/x509_vfy.c	patch
 
-	Apply patch (requested by christos in ticket #1492):
 	Fix various bugs revealed by running the NISCC test suite:
 	Stop out of bounds reads in the ASN1 code when presented with
 	invalid tags (CAN-2003-0543 and CAN-2003-0544).
@@ -2112,12 +2113,12 @@ crypto/dist/openssl/crypto/x509/x509_vfy.c	patch
 sys/kern/kern_sysctl.c				1.147
 
 	make debug_sysctl() sysctl MIB check more strict. from smak.
-	attack similar to NetBSD-SA2003-014 can be mounted due to this flaw.
+	Attack similar to NetBSD-SA2003-014 can be mounted due to this flaw.
 	[itojun, ticket #1493]
 
 sbin/route/route.8				1.36
 
-	correct typo.  PR misc/22944
+	Correct typo.  PR#22944.
 	[itojun, ticket #1494]
 
 crypto/dist/openssl/ssl/ssl_ciph.c		1.6 (via patch)
@@ -2131,8 +2132,8 @@ crypto/dist/openssl/ssl/ssl_ciph.c		1.6 (via patch)
 crypto/dist/openssl/ssl/s3_clnt.c		1.5
 crypto/dist/openssl/ssl/s3_srvr.c		1.6
 
-more fixes from 0.9.7c, from openbsd
-[itojun, ticket #1496]
+	More fixes from 0.9.7c, from openbsd.
+	[itojun, ticket #1496]
 
 usr.bin/vmstat/vmstat.c				1.119
 
@@ -2159,33 +2160,33 @@ sys/kern/exec_subr.c				1.31
 sys/kern/vfs_vnops.c				1.55
 sys/sys/vnode.h					1.96
 
-	count executable image pages as executable for vm-usage purposes.
-	also, always do the VTEXT vs. v_writecount mutual exclusion
+	Count executable image pages as executable for vm-usage purposes.
+	Also, always do the VTEXT vs. v_writecount mutual exclusion
 	(which we previously skipped if the text or data segment was empty).
 	[junyoung, ticket #1488]
 
 lib/libmenu/item.c				1.10
 
 	new_item fixes:
-		* return NULL to indicate an error if a NULL name is passed
-		* fix a crash if description is NULL
+	 * return NULL to indicate an error if a NULL name is passed
+	 * fix a crash if description is NULL
 	Thanks to Julian Coleman for finding and fixing these.
 	[blymn, ticket #1489]
 
 sys/dev/pci/if_sip.c				1.81
 
-	Fix typo (DP83020 -> DP83820) from HITOSHI Osada in PR kern/23023.
+	Fix typo (DP83020 -> DP83820) from HITOSHI Osada in PR#23023.
 	[martin, ticket #1490]
 
 sys/netinet6/ipsec.c				1.84
 
-	permit tunnel mode over link-local address. (outer header is
-	link-local) iij seil team
+	Permit tunnel mode over link-local address. (outer header is
+	link-local) iij seil team.
 	[itojun, ticket #1498]
 
 sys/net/if_vlan.c				1.37
 
-	need to use m_freem(), not m_free().  from iij seil team
+	Need to use m_freem(), not m_free().  from iij seil team.
 	[itojun, ticket #1499]
 
 sys/netinet6/mld6.c				1.22 (via patch)
@@ -2205,7 +2206,7 @@ sys/netinet6/ip6_forward.c			1.37
 
 sys/netinet6/ip6_forward.c			1.38
 
-	Do not deref state.ro if it is NULL
+	Do not deref state.ro if it is NULL.
 	[itojun, ticket #1501]
 
 lib/libipsec/policy_parse.y			1.11
@@ -2222,13 +2223,13 @@ sys/netinet6/ip6_forward.c			1.39
 sys/nfs/nfs_subs.c				1.129
 sys/nfs/nfs_vfsops.c				1.133
 
-	Plug mbuf leak due to manual mbuf handling.  PR kern/13807.
+	Plug mbuf leak due to manual mbuf handling.  Fixes PR#13807.
 	[martti, ticket #1506]
 
 lib/libc/net/gethnamaddr.c			1.56-1.57
 
-	off-by-one.  from millert@openbsd
-	paren around macro arg
+	Fix off-by-one error.  from millert@openbsd
+	Add parenthesis around macro argument.
 	[itojun, ticket #1509]
 
 sys/netinet/in_proto.c				1.60
@@ -2239,7 +2240,7 @@ sys/netinet6/in6_proto.c			1.50
 
 usr.sbin/route6d/route6d.c			1.47
 
-	Don't age non-gateway host routes.  PR bin/22568 from Andrew White
+	Don't age non-gateway host routes.  Fixes PR#22568 from Andrew White.
 	[itojun, ticket #1432]
 
 sys/crypto/rijndael/rijndael-api-fst.c		1.11-1.12
@@ -2252,7 +2253,7 @@ sys/crypto/rijndael/rijndael-api-fst.c		1.11-1.12
 lib/libipsec/policy_parse.y			1.12 (via patch)
 crypto/dist/kame/libipsec/policy_parse.y	1.3 (via patch)
 
-	realloc error check failure; Greg Troxel, sync w/ kame
+	Realloc error check failure; Greg Troxel, sync w/ kame.
 	[itojun, ticket #1507]
 
 distrib/sets/lists/man/mi			1.610
@@ -2321,7 +2322,7 @@ share/man/man4/mc.4				1.1
 
 share/man/man4/bce.4				1.2
 
-	bce appeared in 1.6.2.
+	Mention that bce appeared in 1.6.2.
 	[wiz, ticket #1511]
 
 sys/dev/pci/pci_map.c				1.11
@@ -2354,12 +2355,12 @@ lib/libc/net/gethnamaddr.c			1.58
 sys/arch/sparc64/sparc64/pmap.c			1.145 (via patch)
 
 	cache_flush_virt() is buggy, just use blast_dcache() instead.
-	this should fix PR 23093.
+	Fixes PR#23093.
 	[martin, ticket #1522]
 
 distrib/sets/lists/xcomp4/mi			patch
 
-	remove bdftruncate.pl which was missed in a previous pullup.
+	Remove bdftruncate.pl which was missed in a previous pullup.
 	[tron, ticket #1443]
 
 distrib/sets/lists/xbase/md.i386		1.12
@@ -2387,7 +2388,7 @@ distrib/sets/lists/xserver4/md.sparc		1.1
 	Add a leading `.' to all pathnames, to be more consistent with the
 	other sets, and to prepare for an upcoming feature addition to
 	postinstall...
-	support XF4 on sparc.
+	Support XF4 on sparc.
 	Sync with .so additions.
 	Sort.
 	[taca, ticket #1523]
@@ -2396,7 +2397,7 @@ lib/libc/arch/sparc64/softfloat/qp.c		1.4-1.5
 
 	Correct unsigned to float conversions, add license, adjust style.
 	Make _Qp_qtoui return the right value for inputs that do not fit into
-	an int value, but are valid unsigned ints. This should fix PR 21414.
+	an int value, but are valid unsigned ints.  Fixes PR#21414.
 	The same problem exists for _Qp_qtoux, but there is no similar trivial
 	solution to that (I could think of).
 	Pointed out by David Laight.
@@ -2405,7 +2406,7 @@ lib/libc/arch/sparc64/softfloat/qp.c		1.4-1.5
 distrib/notes/common/main			1.245
 
 	macppc Quick install notes section -- remove scsi-ext references (no 
-	such thing)
+	such thing).
 	[mbw, ticket #1518]
 
 sys/kern/kern_allocsys.c			1.19
@@ -2448,7 +2449,7 @@ sys/dev/pci/pcidevs				1.569
 
 sys/dev/pci/if_bge.c				1.50
 
-	From FreeBSD as suggested by Nicolas Joly in PR kern/22682:
+	From FreeBSD as suggested by Nicolas Joly in PR#22682:
 	Do not initalize the LED's to 0x00.  The default configuration
 	the chip comes up in should yeild proper operation of the LED's.
 	[tron, ticket #1447]
@@ -2456,7 +2457,7 @@ sys/dev/pci/if_bge.c				1.50
 share/man/man4/umass.4				1.18
 
 	Add a few more devices which are known to work with this driver.
-	Some of them were suggested by Rich Neswold in PR kern/22684.
+	Some of them were suggested by Rich Neswold in PR#22684.
 	[tron, ticket #1448]
 
 sys/arch/i386/conf/INSTALL			1.224
@@ -2503,7 +2504,6 @@ distrib/sets/lists/base/mi			from patch
 
 usr.sbin/user/user.c				1.51.2.4->1.70  
 
-
 	Numerous bug fixes, blowfish password support.
 	[agc, ticket #1147]
 
@@ -2511,7 +2511,7 @@ sys/dev/pcmcia/pcmcia_cis.c			1.30-1.31
 sys/dev/pcmcia/pcmcia_cis_quirks.c		1.19-1.20
 sys/dev/pcmcia/pcmciavar.h			1.16-1.17
 
-	Fix support for multi-function pcmcia cards
+	Fix support for multi-function pcmcia cards.
 	[chris christos, ticket #699]
 
 usr.sbin/lpr/lpd/Makefile			from patch
@@ -2550,7 +2550,7 @@ distrib/notes/common/sysinst			1.64-1.66
 
 distrib/notes/macppc/prep.OPENFIRMWARE		1.4
 
-	mkhybrid deprecated, describe mkisofs.
+	mkhybrid is deprecated, describe mkisofs instead.
 	Update Toast instructions for Toast 5 instead of Toast 4.
 	[mbw, ticket #1519]
 
@@ -2569,7 +2569,6 @@ sys/compat/linux/common/linux_socket.h		1.11
 	for Linux binaries either (for now).
 	[tv, ticket #1425]
 
-
 sys/compat/linux/common/linux_oldmmap.c		1.59-1.60
 sys/compat/linux/common/linux_misc.c		1.115
 
@@ -2585,7 +2584,6 @@ sys/compat/linux/common/linux_mmap.h		1.15 (hand patched)
 
 	Proper support for mmap2.
 	[tv, ticket #1427]
-
 
 sys/compat/linux/common/linux_misc.c		1.119
 
@@ -2639,7 +2637,7 @@ sys/arch/sparc/sparc/machdep.c			patch
 	On small sun4c machines trim the buffer cache to reduce the demand for
 	kernel virtual memory. This leaves more of the precious PMEG resources
 	available for user space VM which speeds up things considerably, since
-	a reasonable PMEG working set can be maintained. "
+	a reasonable PMEG working set can be maintained.
 	[pk, ticket #1535]
 
 include/util.h					1.27
@@ -3028,11 +3026,11 @@ sys/compat/linux/arch/m68k/linux_syscallargs.h	regen
 sys/compat/linux/arch/m68k/linux_syscalls.c	regen
 sys/compat/linux/arch/m68k/linux_sysent.c	regen
 
-	Fixes for ticket #1427. Forgot a #include which broke builds.  
+	Fixes for ticket #1427. Forgot an #include which broke builds.  
 
 crypto/dist/openssl/crypto/opensslv.h		apply patch
 
-	define OPENSSL_HAS_20031107_FIX which reflects the date that the
+	Define OPENSSL_HAS_20031107_FIX which reflects the date that the
 	OpenSSL 0.6.9g -> 0.9.6l fixes were pulled up to the branch.
 	[jlam, ticket #1566]
 
@@ -3042,15 +3040,14 @@ dist/bind/bin/named/ns_init.c			1.7
 dist/bind/bin/named/ns_resp.c			1.12
 dist/bind/bin/nslookup/commands.l		1.5
 
-	sync w/ bind837
+	Sync with BIND 8.3.7.
 	[itojun, ticket #1568]
 
 lib/libc/sys/intro.2				1.36
 
 	Catch up with namei: An empty string is not a valid pathname.
-	Noted by SAITOH Akinori in PR misc/23565.
+	Noted by SAITOH Akinori in PR#23565.
 	[kleink, ticket #1567]
-
 
 sys/netinet/ip_nat.c				patched by hand
 sys/netinet/ip_nat.h				patched by hand
@@ -3097,12 +3094,13 @@ usr.bin/menuc/menu_sys.def			patch
 
 distrib/utils/sysinst/arch/sparc64/md.c		patch
 
-	When upgrading an old system, install new bootblocks too. PR#17204
+	When upgrading an old system, install new bootblocks too.
+	Fixes PR#17204.
 	[martin, ticket #1572]
 
 share/man/man5/rc.conf.5			1.84
 
-	Fix typo. PR#23622 and PR#23722
+	Correct typo.  Fixes PR#23622 and PR#23722
 	[wiz, ticket #1574]
 
 usr.bin/ipcs/ipcs.c				1.28
@@ -3351,9 +3349,9 @@ gnu/dist/cvs/src/watch.h			1.1.1.1
 gnu/dist/cvs/src/wrapper.c			1.1.1.4
 gnu/dist/cvs/src/zlib.c				1.1.1.4
 
-	Pulled up cvs to HEAD to fix security issue of modules command being 
-	able to create directories and possibly files in the root directory
-	of the repository's filesystem.
+	Update cvs to version 1.11.10 to fix security issue of
+	modules command being able to create directories and possibly
+	files in the root directory of the repository's file system.
 	[christos, ticket #1579]
 
 sys/netinet/ip_nat.c				patched by hand
