@@ -10,6 +10,16 @@
 #define	IPF_MAXPORTLEN	30
 
 
+int ippr_ftp_init __P((fr_info_t *, ip_t *, tcphdr_t *, ap_session_t *,
+    nat_t *));
+int ippr_ftp_in __P((fr_info_t *, ip_t *, tcphdr_t *, ap_session_t *,
+    nat_t *));
+int ippr_ftp_out __P((fr_info_t *, ip_t *, tcphdr_t *, ap_session_t *,
+    nat_t *));
+
+u_short ipf_ftp_atoi __P((char **));
+
+
 int ippr_ftp_init(fin, ip, tcp, aps, nat)
 fr_info_t *fin;
 ip_t *ip;
@@ -30,7 +40,6 @@ tcphdr_t *tcp;
 ap_session_t *aps;
 nat_t *nat;
 {
-	int	ch = 0;
 	u_long	sum1, sum2;
 
 	if (tcp->th_dport != aps->aps_dport) {
@@ -75,9 +84,9 @@ tcphdr_t *tcp;
 ap_session_t *aps;
 nat_t *nat;
 {
-	register u_long	sum1, sum2, sumd;
+	register u_long	sum1, sum2;
 	char	newbuf[IPF_MAXPORTLEN+1];
-	char	portbuf[IPF_MAXPORTLEN+1], *s, c;
+	char	portbuf[IPF_MAXPORTLEN+1], *s;
 	int	ch = 0, off = (ip->ip_hl << 2) + (tcp->th_off << 2), len;
 	u_int	a1, a2, a3, a4;
 	u_short	a5, a6;
@@ -94,7 +103,7 @@ nat_t *nat;
 	bzero(portbuf, sizeof(portbuf));
 	copyout_mblk(m, off, portbuf, MIN(sizeof(portbuf), dlen));
 #else
-	struct mbuf *m1, *m = *(struct mbuf **)fin->fin_mp;
+	struct mbuf *m = *(struct mbuf **)fin->fin_mp;
 
 	dlen = m->m_len - off;
 # if BSD >= 199306
