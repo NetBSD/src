@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.68 1999/03/30 17:34:55 soda Exp $	*/
+/*	$NetBSD: locore.S,v 1.68.2.1 1999/04/26 22:15:55 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -850,7 +850,7 @@ bcopy:
 	move	a1, v0
 #endif
 
-#if 1
+#if 0
 /*
  * netorder = htonl(hostorder)
  * hostorder = ntohl(netorder)
