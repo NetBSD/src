@@ -1,4 +1,4 @@
-# $NetBSD: md.pc532,v 1.25 1999/04/19 03:11:33 simonb Exp $
+# $NetBSD: md.pc532,v 1.26 1999/08/30 00:53:58 mrg Exp $
 ./usr/include/pc532
 ./usr/include/pc532/_G_config.h
 ./usr/include/pc532/ansi.h
@@ -18,6 +18,7 @@
 ./usr/include/pc532/fpu.h
 ./usr/include/pc532/frame.h
 ./usr/include/pc532/icu.h
+./usr/include/pc532/ieee.h
 ./usr/include/pc532/ieeefp.h
 ./usr/include/pc532/jmpbuf.h
 ./usr/include/pc532/kcore.h

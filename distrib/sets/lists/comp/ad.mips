@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.12 1999/06/09 03:01:21 simonb Exp $
+# $NetBSD: ad.mips,v 1.13 1999/08/30 00:53:57 mrg Exp $
 ./usr/bin/elf2aout
 ./usr/bin/elf2ecoff
 ./usr/include/mips
@@ -17,6 +17,7 @@
 ./usr/include/mips/elf_machdep.h
 ./usr/include/mips/endian.h
 ./usr/include/mips/float.h
+./usr/include/mips/ieee.h
 ./usr/include/mips/ieeefp.h
 ./usr/include/mips/kcore.h
 ./usr/include/mips/kdbparam.h

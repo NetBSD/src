@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.32 1999/08/09 09:25:19 simonb Exp $
+# $NetBSD: md.pmax,v 1.33 1999/08/30 00:53:58 mrg Exp $
 ./usr/include/pmax
 ./usr/include/pmax/_G_config.h
 ./usr/include/pmax/ansi.h
@@ -21,6 +21,7 @@
 ./usr/include/pmax/fbio.h
 ./usr/include/pmax/fbvar.h
 ./usr/include/pmax/float.h
+./usr/include/pmax/ieee.h
 ./usr/include/pmax/ieeefp.h
 ./usr/include/pmax/intr.h
 ./usr/include/pmax/kcore.h
