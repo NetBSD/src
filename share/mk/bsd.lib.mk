@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.194 2001/11/28 04:38:29 tv Exp $
+#	$NetBSD: bsd.lib.mk,v 1.195 2001/12/28 01:32:41 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -23,7 +23,7 @@ SHLIB_TEENY != . ${SHLIB_VERSION_FILE} ; echo $$teeny
 checkver:
 	@(cd ${.CURDIR} && \
 		sh ${BSDSRCDIR}/lib/checkver -v ${SHLIB_VERSION_FILE} \
-		    -d ${DESTDIR}${LIBDIR} ${LIB})
+		    -d ${DESTDIR}${_LIBSODIR} ${LIB})
 .endif
 .endif
 
@@ -370,7 +370,8 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 	    ${SHLIB_LDSTARTFILE} \
 	    --whole-archive ${SOLIB} \
 	    --no-whole-archive ${LDADD} \
-	    -L${DESTDIR}${LIBDIR} -R${LIBDIR} \
+	    -L${DESTDIR}${_LIBSODIR} -L${DESTDIR}${LIBDIR} \
+	    -R${_LIBSODIR} -R${LIBDIR} \
 	    ${SHLIB_LDENDFILE}
 .else
 	$(LD) -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
@@ -460,27 +461,39 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}_pic.a __archiveinstall
 .endif
 
 .if ${MKPIC} != "no" && defined(SHLIB_FULLVERSION)
-libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
-.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
+libinstall:: ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
+.PRECIOUS: ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
 .if !defined(UPDATE)
-.PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
+.PHONY: ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}.so.${SHLIB_FULLVERSION})
-${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: .MADE
+${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: .MADE
 .endif
-${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
+${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 		${.ALLSRC} ${.TARGET}
+.if ${_LIBSODIR} != ${LIBDIR}
+	${INSTALL_SYMLINK} ${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
+	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
+.endif
 .if ${OBJECT_FMT} == "a.out" && !defined(DESTDIR)
-	/sbin/ldconfig -m ${LIBDIR}
+	/sbin/ldconfig -m ${_LIBSODIR} ${LIBDIR}
 .endif
 .if ${OBJECT_FMT} == "ELF"
-	${INSTALL_SYMLINK} lib${LIB}.so.${SHLIB_FULLVERSION}\
+	${INSTALL_SYMLINK} lib${LIB}.so.${SHLIB_FULLVERSION} \
+	    ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_MAJOR}
+.if ${_LIBSODIR} != ${LIBDIR}
+	${INSTALL_SYMLINK} ${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
+.endif
 .if ${MKLINKLIB} != "no"
-	${INSTALL_SYMLINK} lib${LIB}.so.${SHLIB_FULLVERSION}\
+	${INSTALL_SYMLINK} lib${LIB}.so.${SHLIB_FULLVERSION} \
+	    ${DESTDIR}${_LIBSODIR}/lib${LIB}.so
+.if ${_LIBSODIR} != ${LIBDIR}
+	${INSTALL_SYMLINK} ${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.so
+.endif
 .endif
 .endif
 .endif

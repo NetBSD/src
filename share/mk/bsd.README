@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.84 2001/11/19 16:20:26 kleink Exp $
+#	$NetBSD: bsd.README,v 1.85 2001/12/28 01:32:40 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -206,6 +206,15 @@ LDSTATIC	Control program linking; if set blank, link everything
 		If not set, programs link according to their makefile.
 
 LIBDIR		Base path for library installation. [/usr/lib]
+
+SHLIBDIR	If ${USE_SHLIBDIR} is "yes", use ${SHLIBDIR} instead of
+		${LIBDIR} as the base path for shared library installation.
+		[/usr/lib]
+
+_LIBSODIR	Set to ${SHLIBDIR} if ${USE_SHLIBDIR} is "yes",
+		otherwise set to ${LIBDIR}
+
+SHLINKDIR	Base path for shared linker. [/usr/libexec]
 
 LINTLIBDIR	Base path for lint(1) library installation. [/usr/libdata/lint]
 
@@ -448,6 +457,8 @@ FILES		A list of files to install. The installation is controlled
 		by the FILESNAME, FILESOWN, FILESGRP, FILESMODE, FILESDIR
 		variables that can be further specialized by FILES<VAR>_<file>
 
+SHLINKDIR	Target directory for shared linker.
+
 The include file <bsd.prog.mk> includes the file named "../Makefile.inc"
 if it exists, as well as the include file <bsd.man.mk>.
 
@@ -576,6 +587,12 @@ It sets/uses the following variables:
 LIB		The name of the library to build.
 
 LIBDIR		Target directory for libraries.
+
+SHLIBDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
+		is "yes".
+
+USE_SHLIBDIR	If "yes", use ${SHLIBDIR} instead of ${LIBDIR}
+		as the path to install shared libraries to.
 
 LINTLIBDIR	Target directory for lint libraries.
 
