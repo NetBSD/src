@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)defs.h	5.10 (Berkeley) 3/1/91
- *	$Id: defs.h,v 1.3 1993/08/30 18:50:53 mycroft Exp $
+ *	from: @(#)defs.h	8.1 (Berkeley) 6/4/93
+ *	$Id: defs.h,v 1.4 1994/02/25 03:20:46 cgd Exp $
  */
 
 /*
@@ -39,7 +39,6 @@
  */
 #include <sys/types.h>
 #include <sys/param.h>
-
 
 #ifndef	BSD
 # define	BSD 43
@@ -148,6 +147,10 @@ typedef unsigned char cc_t;
 #include <memory.h>
 #endif	/* CRAY */
 
+#ifdef __hpux
+#include <sys/ptyio.h>
+#endif
+
 #if	!defined(TIOCSCTTY) && defined(TCSETCTTY)
 # define	TIOCSCTTY TCSETCTTY
 #endif
@@ -183,7 +186,9 @@ typedef struct fd_set { int fds_bits[1]; } fd_set;
 /*
  * Linemode support states, in decreasing order of importance
  */
-#define REAL_LINEMODE	0x02
+#define REAL_LINEMODE	0x04
+#define KLUDGE_OK	0x03
+#define	NO_AUTOKLUDGE	0x02
 #define KLUDGE_LINEMODE	0x01
 #define NO_LINEMODE	0x00
 

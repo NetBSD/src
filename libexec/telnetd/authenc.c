@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 1989, 1993
+/*-
+ * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,18 +32,54 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)global.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: global.c,v 1.3 1994/02/25 03:20:49 cgd Exp $";
+/* from: static char sccsid[] = "@(#)authenc.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: authenc.c,v 1.1 1994/02/25 03:20:42 cgd Exp $";
 #endif /* not lint */
 
-/*
- * Allocate global variables.  We do this
- * by including the header file that defines
- * them all as externs, but first we define
- * the keyword "extern" to be nothing, so that
- * we will actually allocate the space.
- */
+#if	defined(AUTHENTICATION)
+#include "telnetd.h"
+#include <libtelnet/misc.h>
 
-#include "defs.h"
-#define extern
-#include "ext.h"
+	int
+net_write(str, len)
+	unsigned char *str;
+	int len;
+{
+	if (nfrontp + len < netobuf + BUFSIZ) {
+		bcopy((void *)str, (void *)nfrontp, len);
+		nfrontp += len;
+		return(len);
+	}
+	return(0);
+}
+
+	void
+net_encrypt()
+{
+}
+
+	int
+telnet_spin()
+{
+	ttloop();
+	return(0);
+}
+
+	char *
+telnet_getenv(val)
+	char *val;
+{
+	extern char *getenv();
+	return(getenv(val));
+}
+
+	char *
+telnet_gets(prompt, result, length, echo)
+	char *prompt;
+	char *result;
+	int length;
+	int echo;
+{
+	return((char *)0);
+}
+#endif	/* defined(AUTHENTICATION) */

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,19 +32,19 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)state.c	5.10 (Berkeley) 3/22/91";*/
-static char rcsid[] = "$Id: state.c,v 1.4 1993/08/02 18:17:46 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)state.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: state.c,v 1.5 1994/02/25 03:20:54 cgd Exp $";
 #endif /* not lint */
 
 #include "telnetd.h"
-#if	defined(AUTHENTICATE)
+#if	defined(AUTHENTICATION)
 #include <libtelnet/auth.h>
 #endif
 
-char	doopt[] = { IAC, DO, '%', 'c', 0 };
-char	dont[] = { IAC, DONT, '%', 'c', 0 };
-char	will[] = { IAC, WILL, '%', 'c', 0 };
-char	wont[] = { IAC, WONT, '%', 'c', 0 };
+unsigned char	doopt[] = { IAC, DO, '%', 'c', 0 };
+unsigned char	dont[] = { IAC, DONT, '%', 'c', 0 };
+unsigned char	will[] = { IAC, WILL, '%', 'c', 0 };
+unsigned char	wont[] = { IAC, WONT, '%', 'c', 0 };
 int	not42 = 1;
 
 /*
@@ -53,7 +53,7 @@ int	not42 = 1;
  */
 unsigned char subbuffer[512], *subpointer= subbuffer, *subend= subbuffer;
 
-#define	SB_CLEAR()	subpointer = subbuffer;
+#define	SB_CLEAR()	subpointer = subbuffer
 #define	SB_TERM()	{ subend = subpointer; SB_CLEAR(); }
 #define	SB_ACCUM(c)	if (subpointer < (subbuffer+sizeof subbuffer)) { \
 				*subpointer++ = (c); \
@@ -62,6 +62,11 @@ unsigned char subbuffer[512], *subpointer= subbuffer, *subend= subbuffer;
 #define	SB_EOF()	(subpointer >= subend)
 #define	SB_LEN()	(subend - subpointer)
 
+#ifdef	ENV_HACK
+unsigned char *subsave;
+#define SB_SAVE()	subsave = subpointer;
+#define	SB_RESTORE()	subpointer = subsave;
+#endif
 
 
 /*
@@ -90,10 +95,6 @@ telrcv()
 		if ((&ptyobuf[BUFSIZ] - pfrontp) < 2)
 			break;
 		c = *netip++ & 0377, ncc--;
-#if	defined(ENCRYPT)
-		if (decrypt_input)
-			c = (*decrypt_input)(c);
-#endif
 		switch (state) {
 
 		case TS_CR:
@@ -122,10 +123,6 @@ telrcv()
 			 */
 			if ((c == '\r') && his_state_is_wont(TELOPT_BINARY)) {
 				int nc = *netip;
-#if	defined(ENCRYPT)
-				if (decrypt_input)
-					nc = (*decrypt_input)(nc & 0xff);
-#endif
 #ifdef	LINEMODE
 				/*
 				 * If we are operating in linemode,
@@ -138,10 +135,6 @@ telrcv()
 				} else
 #endif
 				{
-#if	defined(ENCRYPT)
-					if (decrypt_input)
-						(void)(*decrypt_input)(-1);
-#endif
 					state = TS_CR;
 				}
 			}
@@ -448,20 +441,17 @@ send_do(option, init)
 			set_his_want_state_will(option);
 		do_dont_resp[option]++;
 	}
-	(void) sprintf(nfrontp, doopt, option);
+	(void) sprintf(nfrontp, (char *)doopt, option);
 	nfrontp += sizeof (dont) - 2;
 
 	DIAG(TD_OPTIONS, printoption("td: send do", option));
 }
 
-#ifdef	AUTHENTICATE
+#ifdef	AUTHENTICATION
 extern void auth_request();
 #endif
 #ifdef	LINEMODE
 extern void doclientstat();
-#endif
-#ifdef	ENCRYPT
-extern void encrypt_send_support();
 #endif
 
 	void
@@ -526,6 +516,8 @@ willoption(option)
 				lmodetype = KLUDGE_LINEMODE;
 				clientstat(TELOPT_LINEMODE, WILL, 0);
 				send_wont(TELOPT_SGA, 1);
+			} else if (lmodetype == NO_AUTOKLUDGE) {
+				lmodetype = KLUDGE_OK;
 			}
 #endif	/* defined(LINEMODE) && defined(KLUDGELINEMODE) */
 			/*
@@ -549,7 +541,8 @@ willoption(option)
 		case TELOPT_NAWS:
 		case TELOPT_TSPEED:
 		case TELOPT_XDISPLOC:
-		case TELOPT_ENVIRON:
+		case TELOPT_NEW_ENVIRON:
+		case TELOPT_OLD_ENVIRON:
 			changeok++;
 			break;
 
@@ -566,19 +559,13 @@ willoption(option)
 			break;
 #endif	/* LINEMODE */
 
-#ifdef	AUTHENTICATE
+#ifdef	AUTHENTICATION
 		case TELOPT_AUTHENTICATION:
 			func = auth_request;
 			changeok++;
 			break;
 #endif
 
-#ifdef	ENCRYPT
-		case TELOPT_ENCRYPT:
-			func = encrypt_send_support;
-			changeok++;
-			break;
-#endif
 
 		default:
 			break;
@@ -632,17 +619,15 @@ willoption(option)
 			break;
 #endif	/* LINEMODE */
 
-#ifdef	AUTHENTICATE
+#ifdef	AUTHENTICATION
 		case TELOPT_AUTHENTICATION:
 			func = auth_request;
 			break;
 #endif
 
-#ifdef	ENCRYPT
-		case TELOPT_ENCRYPT:
-			func = encrypt_send_support;
+		case TELOPT_LFLOW:
+			func = flowstat;
 			break;
-#endif
 		}
 	    }
 	}
@@ -662,7 +647,7 @@ send_dont(option, init)
 		set_his_want_state_wont(option);
 		do_dont_resp[option]++;
 	}
-	(void) sprintf(nfrontp, dont, option);
+	(void) sprintf(nfrontp, (char *)dont, option);
 	nfrontp += sizeof (doopt) - 2;
 
 	DIAG(TD_OPTIONS, printoption("td: send dont", option));
@@ -734,7 +719,7 @@ wontoption(option)
 			slctab[SLC_XOFF].defset.flag |= SLC_CANTCHANGE;
 			break;
 
-#if	defined(AUTHENTICATE)
+#if	defined(AUTHENTICATION)
 		case TELOPT_AUTHENTICATION:
 			auth_finished(0, AUTH_REJECT);
 			break;
@@ -760,7 +745,11 @@ wontoption(option)
 			settimer(xdisplocsubopt);
 			break;
 
-		case TELOPT_ENVIRON:
+		case TELOPT_OLD_ENVIRON:
+			settimer(oenvironsubopt);
+			break;
+
+		case TELOPT_NEW_ENVIRON:
 			settimer(environsubopt);
 			break;
 
@@ -774,7 +763,7 @@ wontoption(option)
 		switch (option) {
 		case TELOPT_TM:
 #if	defined(LINEMODE) && defined(KLUDGELINEMODE)
-			if (lmodetype < REAL_LINEMODE) {
+			if (lmodetype < NO_AUTOKLUDGE) {
 				lmodetype = NO_LINEMODE;
 				clientstat(TELOPT_LINEMODE, WONT, 0);
 				send_will(TELOPT_SGA, 1);
@@ -783,7 +772,7 @@ wontoption(option)
 #endif	/* defined(LINEMODE) && defined(KLUDGELINEMODE) */
 			break;
 
-#if	defined(AUTHENTICATE)
+#if	defined(AUTHENTICATION)
 		case TELOPT_AUTHENTICATION:
 			auth_finished(0, AUTH_REJECT);
 			break;
@@ -808,7 +797,7 @@ send_will(option, init)
 		set_my_want_state_will(option);
 		will_wont_resp[option]++;
 	}
-	(void) sprintf(nfrontp, will, option);
+	(void) sprintf(nfrontp, (char *)will, option);
 	nfrontp += sizeof (doopt) - 2;
 
 	DIAG(TD_OPTIONS, printoption("td: send will", option));
@@ -926,18 +915,16 @@ dooption(option)
 			/* NOT REACHED */
 			break;
 
-#if	defined(ENCRYPT)
-		case TELOPT_ENCRYPT:
-			changeok++;
-			break;
-#endif
 		case TELOPT_LINEMODE:
 		case TELOPT_TTYPE:
 		case TELOPT_NAWS:
 		case TELOPT_TSPEED:
 		case TELOPT_LFLOW:
 		case TELOPT_XDISPLOC:
-		case TELOPT_ENVIRON:
+#ifdef	TELOPT_ENVIRON
+		case TELOPT_NEW_ENVIRON:
+#endif
+		case TELOPT_OLD_ENVIRON:
 		default:
 			break;
 		}
@@ -964,7 +951,7 @@ send_wont(option, init)
 		set_my_want_state_wont(option);
 		will_wont_resp[option]++;
 	}
-	(void) sprintf(nfrontp, wont, option);
+	(void) sprintf(nfrontp, (char *)wont, option);
 	nfrontp += sizeof (wont) - 2;
 
 	DIAG(TD_OPTIONS, printoption("td: send wont", option));
@@ -997,7 +984,8 @@ dontoption(option)
 		case TELOPT_ECHO:	/* we should stop echoing */
 #ifdef	LINEMODE
 # ifdef	KLUDGELINEMODE
-			if (lmodetype == NO_LINEMODE)
+			if ((lmodetype != REAL_LINEMODE) &&
+			    (lmodetype != KLUDGE_LINEMODE))
 # else
 			if (his_state_is_wont(TELOPT_LINEMODE))
 # endif
@@ -1016,11 +1004,13 @@ dontoption(option)
 			 * must process an incoming do SGA for
 			 * linemode purposes.
 			 */
-			if (lmodetype == KLUDGE_LINEMODE) {
+			if ((lmodetype == KLUDGE_LINEMODE) ||
+			    (lmodetype == KLUDGE_OK)) {
 				/*
 				 * The client is asking us to turn
 				 * linemode on.
 				 */
+				lmodetype = KLUDGE_LINEMODE;
 				clientstat(TELOPT_LINEMODE, WILL, 0);
 				/*
 				 * If we did not turn line mode on,
@@ -1036,7 +1026,7 @@ dontoption(option)
 				send_wont(option, 0);
 			set_my_state_wont(option);
 			if (turn_on_sga ^= 1)
-				send_will(option,1);
+				send_will(option, 1);
 			return;
 #endif	/* defined(LINEMODE) && defined(KLUDGELINEMODE) */
 
@@ -1051,6 +1041,14 @@ dontoption(option)
 	set_my_state_wont(option);
 
 }  /* end of dontoption */
+
+#ifdef	ENV_HACK
+int env_ovar = -1;
+int env_ovalue = -1;
+#else	/* ENV_HACK */
+# define env_ovar OLD_ENV_VAR
+# define env_ovalue OLD_ENV_VALUE
+#endif	/* ENV_HACK */
 
 /*
  * suboption()
@@ -1228,20 +1226,143 @@ suboption()
 	break;
     }  /* end of case TELOPT_XDISPLOC */
 
-    case TELOPT_ENVIRON: {
+#ifdef	TELOPT_NEW_ENVIRON
+    case TELOPT_NEW_ENVIRON:
+#endif
+    case TELOPT_OLD_ENVIRON: {
 	register int c;
 	register char *cp, *varp, *valp;
 
 	if (SB_EOF())
 		return;
 	c = SB_GET();
-	if (c == TELQUAL_IS)
-		settimer(environsubopt);
-	else if (c != TELQUAL_INFO)
+	if (c == TELQUAL_IS) {
+		if (subchar == TELOPT_OLD_ENVIRON)
+			settimer(oenvironsubopt);
+		else
+			settimer(environsubopt);
+	} else if (c != TELQUAL_INFO) {
 		return;
+	}
 
-	while (!SB_EOF() && SB_GET() != ENV_VAR)
-		;
+#ifdef	TELOPT_NEW_ENVIRON
+	if (subchar == TELOPT_NEW_ENVIRON) {
+	    while (!SB_EOF()) {
+		c = SB_GET();
+		if ((c == NEW_ENV_VAR) || (c == ENV_USERVAR))
+			break;
+	    }
+	} else
+#endif
+	{
+#ifdef	ENV_HACK
+	    /*
+	     * We only want to do this if we haven't already decided
+	     * whether or not the other side has its VALUE and VAR
+	     * reversed.
+	     */
+	    if (env_ovar < 0) {
+		register int last = -1;		/* invalid value */
+		int empty = 0;
+		int got_var = 0, got_value = 0, got_uservar = 0;
+
+		/*
+		 * The other side might have its VALUE and VAR values
+		 * reversed.  To be interoperable, we need to determine
+		 * which way it is.  If the first recognized character
+		 * is a VAR or VALUE, then that will tell us what
+		 * type of client it is.  If the fist recognized
+		 * character is a USERVAR, then we continue scanning
+		 * the suboption looking for two consecutive
+		 * VAR or VALUE fields.  We should not get two
+		 * consecutive VALUE fields, so finding two
+		 * consecutive VALUE or VAR fields will tell us
+		 * what the client is.
+		 */
+		SB_SAVE();
+		while (!SB_EOF()) {
+			c = SB_GET();
+			switch(c) {
+			case OLD_ENV_VAR:
+				if (last < 0 || last == OLD_ENV_VAR
+				    || (empty && (last == OLD_ENV_VALUE)))
+					goto env_ovar_ok;
+				got_var++;
+				last = OLD_ENV_VAR;
+				break;
+			case OLD_ENV_VALUE:
+				if (last < 0 || last == OLD_ENV_VALUE
+				    || (empty && (last == OLD_ENV_VAR)))
+					goto env_ovar_wrong;
+				got_value++;
+				last = OLD_ENV_VALUE;
+				break;
+			case ENV_USERVAR:
+				/* count strings of USERVAR as one */
+				if (last != ENV_USERVAR)
+					got_uservar++;
+				if (empty) {
+					if (last == OLD_ENV_VALUE)
+						goto env_ovar_ok;
+					if (last == OLD_ENV_VAR)
+						goto env_ovar_wrong;
+				}
+				last = ENV_USERVAR;
+				break;
+			case ENV_ESC:
+				if (!SB_EOF())
+					c = SB_GET();
+				/* FALL THROUGH */
+			default:
+				empty = 0;
+				continue;
+			}
+			empty = 1;
+		}
+		if (empty) {
+			if (last == OLD_ENV_VALUE)
+				goto env_ovar_ok;
+			if (last == OLD_ENV_VAR)
+				goto env_ovar_wrong;
+		}
+		/*
+		 * Ok, the first thing was a USERVAR, and there
+		 * are not two consecutive VAR or VALUE commands,
+		 * and none of the VAR or VALUE commands are empty.
+		 * If the client has sent us a well-formed option,
+		 * then the number of VALUEs received should always
+		 * be less than or equal to the number of VARs and
+		 * USERVARs received.
+		 *
+		 * If we got exactly as many VALUEs as VARs and
+		 * USERVARs, the client has the same definitions.
+		 *
+		 * If we got exactly as many VARs as VALUEs and
+		 * USERVARS, the client has reversed definitions.
+		 */
+		if (got_uservar + got_var == got_value) {
+	    env_ovar_ok:
+			env_ovar = OLD_ENV_VAR;
+			env_ovalue = OLD_ENV_VALUE;
+		} else if (got_uservar + got_value == got_var) {
+	    env_ovar_wrong:
+			env_ovar = OLD_ENV_VALUE;
+			env_ovalue = OLD_ENV_VAR;
+			DIAG(TD_OPTIONS, {sprintf(nfrontp,
+				"ENVIRON VALUE and VAR are reversed!\r\n");
+				nfrontp += strlen(nfrontp);});
+
+		}
+	    }
+	    SB_RESTORE();
+#endif
+
+	    while (!SB_EOF()) {
+		c = SB_GET();
+		if ((c == env_ovar) || (c == ENV_USERVAR))
+			break;
+	    }
+	}
 
 	if (SB_EOF())
 		return;
@@ -1250,13 +1371,22 @@ suboption()
 	valp = 0;
 
 	while (!SB_EOF()) {
-		switch (c = SB_GET()) {
-		case ENV_VALUE:
+		c = SB_GET();
+		if (subchar == TELOPT_OLD_ENVIRON) {
+			if (c == env_ovar)
+				c = NEW_ENV_VAR;
+			else if (c == env_ovalue)
+				c = NEW_ENV_VALUE;
+		}
+		switch (c) {
+
+		case NEW_ENV_VALUE:
 			*cp = '\0';
 			cp = valp = (char *)subpointer;
 			break;
 
-		case ENV_VAR:
+		case NEW_ENV_VAR:
+		case ENV_USERVAR:
 			*cp = '\0';
 			if (valp)
 				(void)setenv(varp, valp, 1);
@@ -1282,8 +1412,8 @@ suboption()
 	else
 		unsetenv(varp);
 	break;
-    }  /* end of case TELOPT_ENVIRON */
-#if	defined(AUTHENTICATE)
+    }  /* end of case TELOPT_NEW_ENVIRON */
+#if	defined(AUTHENTICATION)
     case TELOPT_AUTHENTICATION:
 	if (SB_EOF())
 		break;
@@ -1300,49 +1430,6 @@ suboption()
 		break;
 	case TELQUAL_NAME:
 		auth_name(subpointer, SB_LEN());
-		break;
-	}
-	break;
-#endif
-#if	defined(ENCRYPT)
-    case TELOPT_ENCRYPT:
-	if (SB_EOF())
-		break;
-	switch(SB_GET()) {
-	case ENCRYPT_SUPPORT:
-		encrypt_support(subpointer, SB_LEN());
-		break;
-	case ENCRYPT_IS:
-		encrypt_is(subpointer, SB_LEN());
-		break;
-	case ENCRYPT_REPLY:
-		encrypt_reply(subpointer, SB_LEN());
-		break;
-	case ENCRYPT_START:
-		encrypt_start(subpointer, SB_LEN());
-		break;
-	case ENCRYPT_END:
-		encrypt_end();
-		break;
-	case ENCRYPT_REQSTART:
-		encrypt_request_start(subpointer, SB_LEN());
-		break;
-	case ENCRYPT_REQEND:
-		/*
-		 * We can always send an REQEND so that we cannot
-		 * get stuck encrypting.  We should only get this
-		 * if we have been able to get in the correct mode
-		 * anyhow.
-		 */
-		encrypt_request_end();
-		break;
-	case ENCRYPT_ENC_KEYID:
-		encrypt_enc_keyid(subpointer, SB_LEN());
-		break;
-	case ENCRYPT_DEC_KEYID:
-		encrypt_dec_keyid(subpointer, SB_LEN());
-		break;
-	default:
 		break;
 	}
 	break;
@@ -1386,7 +1473,7 @@ send_status()
 	 * WILL/DO, and the "want_state" will be WONT/DONT.  We
 	 * need to go by the latter.
 	 */
-	for (i = 0; i < NTELOPTS; i++) {
+	for (i = 0; i < (unsigned char)NTELOPTS; i++) {
 		if (my_want_state_is_will(i)) {
 			ADD(WILL);
 			ADD_DATA(i);
@@ -1404,8 +1491,24 @@ send_status()
 	if (his_want_state_is_will(TELOPT_LFLOW)) {
 		ADD(SB);
 		ADD(TELOPT_LFLOW);
-		ADD(flowmode);
+		if (flowmode) {
+			ADD(LFLOW_ON);
+		} else {
+			ADD(LFLOW_OFF);
+		}
 		ADD(SE);
+
+		if (restartany >= 0) {
+			ADD(SB)
+			ADD(TELOPT_LFLOW);
+			if (restartany) {
+				ADD(LFLOW_RESTART_ANY);
+			} else {
+				ADD(LFLOW_RESTART_XON);
+			}
+			ADD(SE)
+			ADD(SB);
+		}
 	}
 
 #ifdef	LINEMODE
