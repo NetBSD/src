@@ -1,16 +1,40 @@
-#	$NetBSD: Makefile,v 1.94 1999/03/10 19:18:59 scottr Exp $
+#	$NetBSD: Makefile,v 1.95 1999/04/01 02:49:12 cjs Exp $
+
+# This is the top-level makefile for building NetBSD. For an outline of
+# how to build a snapshot or release, as well as other release engineering
+# information, see http://www.netbsd.org/developers/releng/index.html
+#
+# Not everything you can set or do is documented in this makefile. In
+# particular, you should review the files in /usr/share/mk (especially
+# bsd.README) for general information on building programs and writing
+# Makefiles within this structure, and see the comments in src/etc/Makefile
+# for further information on installation and release set options.
+#
+# Variables listed below can be set on the make command line (highest
+# priority), in /etc/mk.conf (middle priority), or in the environment
+# (lowest priority).
+#
+# Variables:
+#   NBUILDJOBS is the number of jobs to start in parallel during a
+#	'make build'. It defaults to 1.
+#   MKMAN, if set to `no', will prevent building of manual pages.
+#   MKSHARE, if set to `no', will prevent building and installing
+#	anything in /usr/share.
+#   UPDATE will avoid a `make cleandir' at the start of `make build',
+#	as well as having the effects listed in /usr/share/mk/bsd.README.
+#   DESTDIR is the target directory for installation of the compiled
+#	software. It defaults to /. Note that programs are built against
+#	libraries installed in DESTDIR.
+#
+# Targets:
+#   build: builds a full release of netbsd in DESTDIR.
+#   release: does a `make build,' and then tars up the DESTDIR files
+#	into RELEASEDIR, in release(7) format. (See etc/Makefile for
+#	more information on this.)
+#   snapshot: a synonym for release.
 
 .include <bsd.own.mk>			# for configuration variables.
 
-# Configurations variables (can be set either in /etc/mk.conf or
-# as environement variable
-# NBUILDJOBS:	the number of jobs to start in parallel in a 'make build'.
-#		defaults to 1
-# MKMAN:	if set to no, don't build and install man pages
-# MKSHARE:	if set to no, don't build or install /usr/share stuffs
-# UPDATE:	if set to 1, don't do a 'make cleandir' before compile
-# DESTDIR:	The target directory for installation (default to '/',
-#		which mean the current system is updated).
 
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
