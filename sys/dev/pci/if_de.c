@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.88 2000/01/15 18:39:31 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.89 2000/02/23 08:31:25 fair Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -5853,7 +5853,7 @@ tulip_pci_attach(
 	printf(": can't read ENET ROM (why=%d) (", retval);
 	for (idx = 0; idx < 32; idx++)
 	    printf("%02x", sc->tulip_rombuf[idx]);
-	printf("\n");
+	printf(")\n");
 	printf(TULIP_PRINTF_FMT ": %s%s pass %d.%d\n",
 	       TULIP_PRINTF_ARGS,
 	       sc->tulip_boardid, tulip_chipdescs[sc->tulip_chipid],
