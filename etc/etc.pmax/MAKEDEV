@@ -36,14 +36,25 @@ for i
 do
 case $i in
 
+all)
+	sh MAKEDEV std rz0 rz1 rz2 rz3 rz4 tz0 tz1
+	sh MAKEDEV cd0
+	sh MAKEDEV pty0 vnd0 vnd1 vnd2 vnd3 ccd0 ccd1 ccd2 ccd3
+	sh MAKEDEV tun0 tun1 tun2 tun3
+	sh MAKEDEV bpf0 bpf1 bpf2 bpf3
+	sh MAKEDEV lkm local
+#	sh MAKEDEV audio pm0 cfb0 xcfb0 mfb0 sfb0
+	sh MAKEDEV fb0 fb1 fb2
+	;;
+
 std)
 	mknod console		c 0 0
 	mknod drum		c 1 0	; chmod 640 drum ; chgrp kmem drum
+	mknod tty		c 2 0	; chmod 666 tty
 	mknod kmem		c 3 1	; chmod 640 kmem ; chgrp kmem kmem
 	mknod mem		c 3 0	; chmod 640 mem ; chgrp kmem mem
 	mknod null		c 3 2	; chmod 666 null
-	mknod zero              c 3 12  ; chmod 666 zero
-	mknod tty		c 2 0	; chmod 666 tty
+	mknod zero		c 3 12	; chmod 666 zero
 	mknod klog		c 6 0	; chmod 600 klog
 	mknod stdin		c 7 0	; chmod 666 stdin
 	mknod stdout		c 7 1	; chmod 666 stdout
@@ -89,19 +100,20 @@ bpf*)
 	chown root.wheel bpf$unit
 	;;
 
-#tun*)
+tun*)
 #	unit=`expr $i : 'tun\(.*\)'`
 #	rm -f tun$unit
 #	mknod tun$unit c 111 $unit
 #	chmod 600 tun$unit
 #	chown root.wheel tun$unit
-#	;;
-#lkm)
-#	rm -f lkm
-#	mknod lkm c 112 0
-#	chown root.kmem lkm
-#	chmod 640 lkm
-#	;;
+	;;
+
+lkm)
+	rm -f lkm
+	mknod lkm c 90 0
+	chown root.kmem lkm
+	chmod 640 lkm
+	;;
 
 rz*|vnd*|vn*|ccd*)
 	umask 2 ; unit=`expr $i : '.*[dz]\(.*\)'`
@@ -167,6 +179,15 @@ scc*)
 	esac
 	;;
 
+fb*)
+	unit=`expr $i : 'fb\(.*\)'`
+	mknod fb$unit c 86 $unit ; chmod 666 fb$unit
+	;;
+
+# NOTE:
+# framebuffer-specific devices pm*, cfb*, xfb*, sfb* ,mfb* are not 
+# supported in 1.2.  Use the generic fb device intsead.
+#
 pm*)
 	unit=`expr $i : 'pm\(.*\)'`
 	case $unit in
