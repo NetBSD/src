@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strtok.3	8.2 (Berkeley) 2/3/94
-.\"	$NetBSD: strtok.3,v 1.20 2003/08/07 16:43:53 agc Exp $
+.\"	$NetBSD: strtok.3,v 1.21 2004/10/11 14:22:04 dsl Exp $
 .\"
 .Dd August 11, 2002
 .Dt STRTOK 3
@@ -148,8 +148,6 @@ The
 function conforms to
 .St -p1003.1c-95 .
 .Sh BUGS
-There is no way to get tokens from multiple strings simultaneously.
-.Pp
 The System V
 .Fn strtok ,
 if handed a string containing only delimiter characters,
