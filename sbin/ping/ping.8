@@ -1,4 +1,4 @@
-.\"	$NetBSD: ping.8,v 1.29 1999/06/12 17:17:16 tron Exp $
+.\"	$NetBSD: ping.8,v 1.30 1999/06/19 19:15:22 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@ packets to network hosts
 .Sh SYNOPSIS
 .Nm ""
 .Bk -words
-.Op Fl dfnoqrvDPQRL
+.Op Fl adfnoqrvDPQRL
 .Ek
 .Bk -words
 .Op Fl c Ar count
@@ -96,6 +96,11 @@ and then an arbitrary number of ``pad'' bytes used to fill out the
 packet.
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a
+Emit an audible beep (by sending an ascii BEL character to the
+standard error output) after each non-duplicate response is received.
+This is disabled for flood pings as it would probably cause temporary
+insanity.
 .It Fl c Ar count
 Stop after sending (and waiting the specified delay to receive)
 .Ar count
