@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.139 2001/12/18 16:32:54 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.140 2001/12/18 16:40:51 bouyer Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.139 2001/12/18 16:32:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.140 2001/12/18 16:40:51 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -3460,7 +3460,7 @@ pdc202xx_chip_map(sc, pa)
 	 * mode. We have to fake interface
 	 */
 	interface = PCIIDE_INTERFACE_SETTABLE(0) | PCIIDE_INTERFACE_SETTABLE(1);
-	if (st & PDC2xx_STATE_NATIVE)
+	if (PDC_IS_268(sc) || (st & PDC2xx_STATE_NATIVE))
 		interface |= PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 
 	printf("%s: bus-master DMA support present",
