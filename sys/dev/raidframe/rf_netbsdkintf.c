@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.43 2000/01/08 02:04:06 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.44 2000/01/09 01:29:27 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -137,6 +137,7 @@
 #include "raid.h"
 #include "rf_raid.h"
 #include "rf_raidframe.h"
+#include "rf_copyback.h"
 #include "rf_dag.h"
 #include "rf_dagflags.h"
 #include "rf_diskqueue.h"
@@ -187,14 +188,9 @@ static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag,
 		   void (*cbFunc) (struct buf *), void *cbArg, 
 		   int logBytesPerSector, struct proc * b_proc);
 
-int raidmarkclean(dev_t dev, struct vnode *b_vp, int);
-int raidmarkdirty(dev_t dev, struct vnode *b_vp, int);
-
 void raidattach __P((int));
 int raidsize __P((dev_t));
 
-void    rf_DiskIOComplete(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
-void    rf_CopybackReconstructedData(RF_Raid_t * raidPtr);
 static int raidinit __P((dev_t, RF_Raid_t *, int));
 
 int raidopen __P((dev_t, int, int, struct proc *));
@@ -205,9 +201,6 @@ int raidread __P((dev_t, struct uio *, int));
 void raidstrategy __P((struct buf *));
 int raiddump __P((dev_t, daddr_t, caddr_t, size_t));
 
-int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-void rf_update_component_labels( RF_Raid_t *);
 /*
  * Pilfered from ccd.c
  */
@@ -280,7 +273,6 @@ static void raidmakedisklabel __P((struct raid_softc *));
 
 static int raidlock __P((struct raid_softc *));
 static void raidunlock __P((struct raid_softc *));
-int raidlookup __P((char *, struct proc * p, struct vnode **));
 
 static void rf_markalldirty __P((RF_Raid_t *));
 
