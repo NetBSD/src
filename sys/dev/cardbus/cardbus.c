@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.51 2004/08/02 19:14:28 mycroft Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.52 2004/08/19 14:50:52 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.51 2004/08/02 19:14:28 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.52 2004/08/19 14:50:52 drochner Exp $");
 
 #include "opt_cardbus.h"
 
@@ -68,10 +68,11 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.51 2004/08/02 19:14:28 mycroft Exp $")
 
 
 STATIC void cardbusattach(struct device *, struct device *, void *);
-int cardbus_attach_card(struct cardbus_softc *);
-
 STATIC int cardbusmatch(struct device *, struct cfdata *, void *);
-static int cardbussubmatch(struct device *, struct cfdata *, void *);
+int cardbus_rescan(struct device *, const char *, const int *);
+void cardbus_childdetached(struct device *, struct device *);
+static int cardbussubmatch(struct device *, struct cfdata *,
+			   const locdesc_t *, void *);
 static int cardbusprint(void *, const char *);
 
 typedef void (*tuple_decode_func)(u_int8_t*, int, void*);
@@ -87,8 +88,9 @@ static int cardbus_read_tuples(struct cardbus_attach_args *,
 static void enable_function(struct cardbus_softc *, int, int);
 static void disable_function(struct cardbus_softc *, int);
 
-CFATTACH_DECL(cardbus, sizeof(struct cardbus_softc),
-    cardbusmatch, cardbusattach, NULL, NULL);
+CFATTACH_DECL2(cardbus, sizeof(struct cardbus_softc),
+    cardbusmatch, cardbusattach, NULL, NULL,
+    cardbus_rescan, cardbus_childdetached);
 
 #ifndef __NetBSD_Version__
 struct cfdriver cardbus_cd = {
@@ -384,6 +386,45 @@ cardbus_attach_card(struct cardbus_softc *sc)
 {
 	cardbus_chipset_tag_t cc;
 	cardbus_function_tag_t cf;
+	int cdstatus;
+	static int wildcard[] = {
+		CARDBUSCF_DEV, CARDBUSCF_FUNCTION
+	};
+
+	cc = sc->sc_cc;
+	cf = sc->sc_cf;
+
+	DPRINTF(("cardbus_attach_card: cb%d start\n", sc->sc_dev.dv_unit));
+
+	/* inspect initial voltage */
+	if ((cdstatus = (*cf->cardbus_ctrl)(cc, CARDBUS_CD)) == 0) {
+		DPRINTF(("cardbusattach: no CardBus card on cb%d\n",
+		    sc->sc_dev.dv_unit));
+		return (0);
+	}
+
+	cardbus_rescan(&sc->sc_dev, "cardbus", wildcard);
+	return (1); /* XXX */
+}
+
+static struct cardbus_devfunc *
+cb_findfunc(struct cardbus_softc *sc, int func)
+{
+	struct cardbus_devfunc *ct;
+
+	for (ct = sc->sc_funcs; ct; ct = ct->ct_next)
+		if (ct->ct_func == func)
+			return (ct);
+
+	return (NULL);
+}
+
+int
+cardbus_rescan(struct device *self, const char *ifattr, const int *locators)
+{
+	struct cardbus_softc *sc = (struct cardbus_softc *)self;
+	cardbus_chipset_tag_t cc;
+	cardbus_function_tag_t cf;
 	cardbustag_t tag;
 	cardbusreg_t id, class, cis_ptr;
 	cardbusreg_t bhlc;
@@ -397,8 +438,6 @@ cardbus_attach_card(struct cardbus_softc *sc)
 
 	cc = sc->sc_cc;
 	cf = sc->sc_cf;
-
-	DPRINTF(("cardbus_attach_card: cb%d start\n", sc->sc_dev.dv_unit));
 
 	/* inspect initial voltage */
 	if ((cdstatus = (*cf->cardbus_ctrl)(cc, CARDBUS_CD)) == 0) {
@@ -437,7 +476,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 			}
 		}
 		if (i == 5) {
-			return (0);
+			return (EIO);
 		}
 	}
 
@@ -447,6 +486,11 @@ cardbus_attach_card(struct cardbus_softc *sc)
 
 	for (function = 0; function < nfunction; function++) {
 		struct cardbus_attach_args ca;
+		int help[3];
+		locdesc_t *ldesc = (void *)&help; /* XXX */
+
+		if (cb_findfunc(sc, function))
+			continue;
 
 		tag = cardbus_make_tag(cc, cf, sc->sc_bus, sc->sc_device,
 		    function);
@@ -514,7 +558,6 @@ cardbus_attach_card(struct cardbus_softc *sc)
 
 		memset(&ca, 0, sizeof(ca));
 
-		ca.ca_unit = sc->sc_dev.dv_unit;
 		ca.ca_ct = ct;
 
 		ca.ca_iot = sc->sc_iot;
@@ -528,7 +571,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 
 		ca.ca_tag = tag;
 		ca.ca_bus = sc->sc_bus;
-		ca.ca_device = sc->sc_device;
+		ca.ca_device = sc->sc_device; /* always 0 */
 		ca.ca_function = function;
 		ca.ca_id = id;
 		ca.ca_class = class;
@@ -546,8 +589,12 @@ cardbus_attach_card(struct cardbus_softc *sc)
 			}
 		}
 
-		if ((csc = config_found_sm((void *)sc, &ca, cardbusprint,
-		    cardbussubmatch)) == NULL) {
+		ldesc->len = 2;
+		ldesc->locs[CARDBUSCF_DEV] = sc->sc_device; /* always 0 */
+		ldesc->locs[CARDBUSCF_FUNCTION] = function;
+
+		if ((csc = config_found_sm_loc((void *)sc, "cardbus", ldesc,
+			&ca, cardbusprint, cardbussubmatch)) == NULL) {
 			/* do not match */
 			disable_function(sc, function);
 			free(ct, M_DEVBUF);
@@ -565,20 +612,21 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	 */
 	disable_function(sc, 8);
 
-	return (no_work_funcs);
+	return (0);
 }
 
 static int
-cardbussubmatch(struct device *parent, struct cfdata *cf, void *aux)
+cardbussubmatch(struct device *parent, struct cfdata *cf,
+		const locdesc_t *ldesc, void *aux)
 {
-	struct cardbus_attach_args *ca = aux;
 
+	/* ldesc->locs[CARDBUSCF_DEV] is always 0 */
 	if (cf->cardbuscf_dev != CARDBUS_UNK_DEV &&
-	    cf->cardbuscf_dev != ca->ca_unit) {
+	    cf->cardbuscf_dev != ldesc->locs[CARDBUSCF_DEV]) {
 		return (0);
 	}
 	if (cf->cardbuscf_function != CARDBUS_UNK_FUNCTION &&
-	    cf->cardbuscf_function != ca->ca_function) {
+	    cf->cardbuscf_function != ldesc->locs[CARDBUSCF_FUNCTION]) {
 		return (0);
 	}
 
@@ -623,9 +671,7 @@ cardbusprint(void *aux, const char *pnp)
 void
 cardbus_detach_card(struct cardbus_softc *sc)
 {
-	struct cardbus_devfunc *ct, *ct_next, **prev_next;
-
-	prev_next = &(sc->sc_funcs->ct_next);
+	struct cardbus_devfunc *ct, *ct_next;
 
 	for (ct = sc->sc_funcs; ct != NULL; ct = ct_next) {
 		struct device *fndev = ct->ct_device;
@@ -638,17 +684,39 @@ cardbus_detach_card(struct cardbus_softc *sc)
 		if (0 != config_detach(fndev, 0)) {
 			printf("%s: cannot detach dev %s, function %d\n",
 			    sc->sc_dev.dv_xname, fndev->dv_xname, ct->ct_func);
-			prev_next = &(ct->ct_next);
-		} else {
-			sc->sc_poweron_func &= ~(1 << ct->ct_func);
-			*prev_next = ct->ct_next;
-			free(ct, M_DEVBUF);
 		}
 	}
 
 	sc->sc_poweron_func = 0;
 	(*sc->sc_cf->cardbus_power)(sc->sc_cc,
 	    CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+}
+
+void
+cardbus_childdetached(struct device *self, struct device *child)
+{
+	struct cardbus_softc *sc = (struct cardbus_softc *)self;
+	struct cardbus_devfunc *ct, *ct_next, **prev_next;
+
+	prev_next = &(sc->sc_funcs);
+
+	for (ct = sc->sc_funcs; ct != NULL; ct = ct_next) {
+		ct_next = ct->ct_next;
+
+		if (ct->ct_device == child) {
+			KASSERT(child->dv_locators[CARDBUSCF_FUNCTION]
+				== ct->ct_func);
+			sc->sc_poweron_func &= ~(1 << ct->ct_func);
+			*prev_next = ct->ct_next;
+			free(ct, M_DEVBUF);
+			return;
+		}
+
+		prev_next = &(ct->ct_next);
+	}
+
+	printf("%s: cardbus_childdetached: %s not found\n",
+	       self->dv_xname, child->dv_xname);
 }
 
 /*
