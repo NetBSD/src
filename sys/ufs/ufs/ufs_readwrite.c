@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.29 2001/02/26 17:12:08 lukem Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.30 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -111,7 +111,7 @@ READ(void *v)
 #ifndef LFS_READWRITE
 	if (vp->v_type == VREG) {
 		while (uio->uio_resid > 0) {
-			bytelen = min(ip->i_ffs_size - uio->uio_offset,
+			bytelen = MIN(ip->i_ffs_size - uio->uio_offset,
 			    uio->uio_resid);
 			if (bytelen == 0)
 				break;
@@ -135,7 +135,7 @@ READ(void *v)
 		nextlbn = lbn + 1;
 		size = BLKSIZE(fs, ip, lbn);
 		blkoffset = blkoff(fs, uio->uio_offset);
-		xfersize = min(min(fs->fs_bsize - blkoffset, uio->uio_resid),
+		xfersize = MIN(MIN(fs->fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
 #ifdef LFS_READWRITE
@@ -275,7 +275,7 @@ WRITE(void *v)
 	while (uio->uio_resid > 0) {
 		oldoff = uio->uio_offset;
 		blkoffset = blkoff(fs, uio->uio_offset);
-		bytelen = min(fs->fs_bsize - blkoffset, uio->uio_resid);
+		bytelen = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
 
 		/*
 		 * XXXUBC if file is mapped and this is the last block,
@@ -323,7 +323,7 @@ WRITE(void *v)
 	while (uio->uio_resid > 0) {
 		lbn = lblkno(fs, uio->uio_offset);
 		blkoffset = blkoff(fs, uio->uio_offset);
-		xfersize = min(fs->fs_bsize - blkoffset, uio->uio_resid);
+		xfersize = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
 		if (fs->fs_bsize > xfersize)
 			flags |= B_CLRBUF;
 		else
