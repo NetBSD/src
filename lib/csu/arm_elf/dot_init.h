@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.1 2001/07/17 06:39:14 matt Exp $ */
+/* $NetBSD: dot_init.h,v 1.2 2002/01/01 01:36:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -49,7 +49,7 @@
 
 #define	MD_SECTION_PROLOGUE(sect, entry_pt)		\
 		__asm (					\
-		".section "#sect",\"ax\",@progbits	\n"\
+		".section "#sect",\"ax\",%progbits	\n"\
 		"	.align	0			\n"\
 		#entry_pt":				\n"\
 		"mov	ip, sp				\n"\
@@ -60,7 +60,7 @@
 
 #define	MD_SECTION_EPILOGUE(sect)			\
 		__asm (					\
-		".section "#sect",\"ax\",@progbits	\n"\
+		".section "#sect",\"ax\",%progbits	\n"\
 		"ldmea	fp, {fp, sp, pc}		\n"\
 		".previous")
 
