@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $ */
+/* $NetBSD: autoconf.c,v 1.2 2000/08/22 21:22:50 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -32,12 +32,13 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: autoconf.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $");
+__RCSID("$NetBSD: autoconf.c,v 1.2 2000/08/22 21:22:50 bjh21 Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <machine/intr.h>
 #include <machine/irq.h>
 #include <machine/machdep.h>
 
