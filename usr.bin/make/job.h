@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.9 2000/12/04 20:13:29 christos Exp $	*/
+/*	$NetBSD: job.h,v 1.10 2000/12/05 15:20:10 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -50,13 +50,21 @@
 
 #define TMPPAT	"/tmp/makeXXXXXX"
 
+#ifdef USE_SELECT
 /*
  * The SEL_ constants determine the maximum amount of time spent in select
  * before coming out to see if a child has finished. SEL_SEC is the number of
  * seconds and SEL_USEC is the number of micro-seconds
  */
-#define SEL_SEC		0
-#define SEL_USEC	500000
+#define SEL_SEC		5
+#define SEL_USEC	0
+#else
+/*
+ * The POLL_MSEC constant determines the maximum number of milliseconds spent
+ * in poll before coming out to see if a child has finished. 
+ */
+#define POLL_MSEC	5000
+#endif
 
 
 /*-

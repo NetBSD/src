@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.36 2000/12/04 17:45:17 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.37 2000/12/05 15:20:10 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.36 2000/12/04 17:45:17 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.37 2000/12/05 15:20:10 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.36 2000/12/04 17:45:17 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.37 2000/12/05 15:20:10 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -309,6 +309,7 @@ STATIC Lst	stoppedJobs;	/* Lst of Job structures describing
 
 static int JobCondPassSig __P((ClientData, ClientData));
 static void JobPassSig __P((int));
+static void JobIgnoreSig __P((int));
 static int JobCmpPid __P((ClientData, ClientData));
 static int JobPrintCommand __P((ClientData, ClientData));
 static int JobSaveCommand __P((ClientData, ClientData));
@@ -373,6 +374,31 @@ JobCondPassSig(jobp, signop)
 #endif
     return 0;
 }
+
+/*-
+ *-----------------------------------------------------------------------
+ * JobIgnoreSig --
+ *	No-op signal handler so we wake up from poll.
+ *
+ * Results:
+ *	None.
+ *
+ * Side Effects:
+ *	None.
+ *
+ *-----------------------------------------------------------------------
+ */
+static void
+JobIgnoreSig(signo)
+    int	    signo;	/* The signal number we've received */
+{
+	/*
+	 * Do nothing.  The mere fact that we've been called will cause
+	 * poll/select in Job_CatchOutput() to return early.
+	 */
+}
+
+
 
 /*-
  *-----------------------------------------------------------------------
@@ -2412,7 +2438,7 @@ Job_CatchOutput()
 			   (fd_set *) 0, &timeout)) <= 0)
 	    return;
 #else
-	if ((nready = poll(fds, nfds, 0)) <= 0)
+	if ((nready = poll(fds, nfds, POLL_MSEC)) <= 0)
 	    return;
 #endif
 	else {
@@ -2542,6 +2568,11 @@ Job_Init(maxproc, maxlocal)
     if (signal(SIGTERM, SIG_IGN) != SIG_IGN) {
 	(void) signal(SIGTERM, JobPassSig);
     }
+    /*
+     * Install a NOOP  SIGCHLD handler so we are woken up if we're blocked.
+     */
+    signal(SIGCHLD, JobIgnoreSig);
+    
     /*
      * There are additional signals that need to be caught and passed if
      * either the export system wants to be told directly of signals or if
