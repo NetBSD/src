@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.54 2001/06/10 22:05:44 chris Exp $
+#	$NetBSD: MAKEDEV,v 1.55 2001/06/10 22:07:23 chris Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -332,6 +332,15 @@ tty*)
 	mknod tty0$unit c 12 $(($unit + $dialin ))
 	mknod dty0$unit c 12 $(($unit + $dialout))
 	chown uucp.wheel tty0$unit dty0$unit
+	;;
+
+fcom*)
+	unit=${i#fcom}
+	fcom=fcom$unit
+	rm -f $fcom
+	mknod $fcom c 54 $unit
+	chown uucp.wheel $fcom
+	chmod 600 $fcom
 	;;
 
 pty*)
