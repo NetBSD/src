@@ -37,7 +37,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)process.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: process.c,v 1.13 1994/03/24 15:55:01 mycroft Exp $";
+static char *rcsid = "$Id: process.c,v 1.14 1995/03/15 11:13:30 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,7 +91,6 @@ process()
 	struct s_command *cp;
 	SPACE tspace;
 	size_t len;
-	int r;
 	char oldc, *p;
 
 	for (linenum = 0; mf_fgets(&PS, REPLACE);) {
@@ -161,11 +160,8 @@ redirect:
 				if (!nflag && !pd)
 					OUT(ps)
 				flush_appends();
-				r = mf_fgets(&PS, REPLACE);
-#ifndef NONHISTORIC_PRACTICE
-				if (!r)
+				if (!mf_fgets(&PS, REPLACE))
 					exit(0);
-#endif
 				pd = 0;
 				break;
 			case 'N':
