@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.6 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: aceride.c,v 1.7 2004/08/02 19:08:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -281,10 +281,11 @@ acer_pci_intr(void *arg)
 			continue;
 		if (chids & ACER_CHIDS_INT(i)) {
 			crv = wdcintr(wdc_cp);
-			if (crv == 0)
+			if (crv == 0) {
 				printf("%s:%d: bogus intr\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname, i);
-			else
+				pciide_irqack(wdc_cp);
+			} else
 				rv = 1;
 		}
 	}
