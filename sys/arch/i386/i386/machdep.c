@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.291 1998/02/18 01:09:25 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.292 1998/02/18 03:04:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1374,7 +1374,6 @@ cpu_dump()
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
 	int i;
-	extern u_long PTDpaddr;			/* from locore */
 
 	dump = bdevsw[major(dumpdev)].d_dump;
 
