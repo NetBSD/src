@@ -3670,15 +3670,23 @@ fold_truthop (code, truth_type, lhs, rhs)
 	   && lr_bitsize + lr_bitpos == rr_bitpos)
 	  || (ll_bitpos == rl_bitpos + rl_bitsize
 	      && lr_bitpos == rr_bitpos + rr_bitsize))
-	return build (wanted_code, truth_type,
-		      make_bit_field_ref (ll_inner, type,
-					  ll_bitsize + rl_bitsize,
-					  MIN (ll_bitpos, rl_bitpos),
-					  ll_unsignedp),
-		      make_bit_field_ref (lr_inner, type,
-					  lr_bitsize + rr_bitsize,
-					  MIN (lr_bitpos, rr_bitpos),
-					  lr_unsignedp));
+	{
+	  lhs = make_bit_field_ref (ll_inner, type, ll_bitsize + rl_bitsize,
+				    MIN (ll_bitpos, rl_bitpos), ll_unsignedp);
+	  ll_mask = const_binop (RSHIFT_EXPR, ll_mask,
+				 size_int (MIN (xll_bitpos, xrl_bitpos)), 0);
+	  if (! all_ones_mask_p (ll_mask, ll_bitsize + rl_bitsize))
+	    lhs = build (BIT_AND_EXPR, type, lhs, ll_mask);
+
+	  rhs = make_bit_field_ref (lr_inner, type, lr_bitsize + rr_bitsize,
+				    MIN (lr_bitpos, rr_bitpos), lr_unsignedp);
+	  lr_mask = const_binop (RSHIFT_EXPR, lr_mask,
+				 size_int (MIN (xlr_bitpos, xrr_bitpos)), 0);
+	  if (! all_ones_mask_p (lr_mask, lr_bitsize + rr_bitsize))
+	    rhs = build (BIT_AND_EXPR, type, rhs, lr_mask);
+
+	  return build (wanted_code, truth_type, lhs, rhs);
+	}
 
       return 0;
     }
