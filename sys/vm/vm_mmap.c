@@ -151,6 +151,8 @@ smmap(p, uap, retval)
 	if ((flags & MAP_FIXED) && (addr & page_mask) || uap->len < 0)
 		return(EINVAL);
 	size = (vm_size_t) round_page(uap->len);
+	if ((flags & MAP_FIXED) && (addr + size > VM_MAXUSER_ADDRESS))
+	    return EINVAL;
 	/*
 	 * XXX if no hint provided for a non-fixed mapping place it after
 	 * the end of the largest possible heap.
@@ -321,6 +323,8 @@ munmap(p, uap, retval)
 	size = (vm_size_t) round_page(uap->len);
 	if (size == 0)
 		return(0);
+	if (addr + size >= VM_MAXUSER_ADDRESS)
+	    return EINVAL;
 	if (!vm_map_is_allocated(&p->p_vmspace->vm_map, addr, addr+size,
 	    FALSE))
 		return(EINVAL);
