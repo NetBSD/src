@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.6 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7 2004/11/24 21:59:32 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,17 +35,6 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-/*
- * SGI partition conventions:
- *
- * Partition 0 - root
- * Partition 1 - swap
- * Partition 6 - usr
- * Partition 7 - volume body
- * Partition 8 - volume header
- * Partition 10 - whole disk
- */
-
 #define LABELSECTOR	1
 #define LABELOFFSET	0
 
@@ -56,63 +45,7 @@ struct cpu_disklabel {
 	int	cd_dummy;
 };
 
-struct devparms {
-	u_int8_t	dp_skew;
-	u_int8_t	dp_gap1;
-	u_int8_t	dp_gap2;
-	u_int8_t	dp_spares_cyl;
-	u_int16_t	dp_cyls;
-	u_int16_t	dp_shd0;
-	u_int16_t	dp_trks0;
-	u_int8_t	dp_ctq_depth;
-	u_int8_t	dp_cylshi;
-	u_int16_t	dp_unused;
-	u_int16_t	dp_secs;
-	u_int16_t	dp_secbytes;
-	u_int16_t	dp_interleave;
-	u_int32_t	dp_flags;
-	u_int32_t	dp_datarate;
-	u_int32_t	dp_nretries;
-	u_int32_t	dp_mspw;
-	u_int16_t	dp_xgap1;
-	u_int16_t	dp_xsync;
-	u_int16_t	dp_xrdly;
-	u_int16_t	dp_xgap2;
-	u_int16_t	dp_xrgate;
-	u_int16_t	dp_xwcont;
-} __attribute__((__packed__));
-
-struct sgilabel {
-#define SGILABEL_MAGIC	0xbe5a941
-	u_int32_t	magic;
-	int16_t		root;
-	int16_t		swap;
-	char		bootfile[16];
-	struct devparms dp;
-	struct {
-		char 		name[8];
-		int32_t		block;
-		int32_t		bytes;
-	} voldir[15];
-	struct {
-		int32_t 	blocks;
-		int32_t 	first;
-		int32_t 	type;
-	} partitions[MAXPARTITIONS];
-	int32_t		checksum;
-	int32_t		_pad;
-} __attribute__((__packed__));
-
-#define SGI_PTYPE_VOLHDR	0
-#define SGI_PTYPE_RAW		3
-#define SGI_PTYPE_BSD		4
-#define SGI_PTYPE_VOLUME	6
-#define SGI_PTYPE_EFS		7
-#define SGI_PTYPE_LVOL		8
-#define SGI_PTYPE_RLVOL		9
-#define SGI_PTYPE_XFS		10
-#define SGI_PTYPE_XFSLOG	11
-#define SGI_PTYPE_XLV		12
-#define SGI_PTYPE_XVM		13
+/* Pull in partition definitions. */
+#include <sys/bootblock.h>
 
 #endif /* _MACHINE_DISKLABEL_H_ */

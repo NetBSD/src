@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.13 2003/11/17 10:07:58 keihan Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14 2004/11/24 21:59:32 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.13 2003/11/17 10:07:58 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14 2004/11/24 21:59:32 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,10 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.13 2003/11/17 10:07:58 keihan Exp $")
 
 #include <machine/disklabel.h>
 
-static int disklabel_bsd_to_sgimips(struct disklabel *lp, struct sgilabel *vh);
-static char *disklabel_sgimips_to_bsd(struct sgilabel *vh, struct disklabel *lp);
+static int disklabel_bsd_to_sgimips(struct disklabel *lp, 
+				    struct sgi_boot_block *vh);
+static char *disklabel_sgimips_to_bsd(struct sgi_boot_block *vh, 
+				      struct disklabel *lp);
 
-int mipsvh_cksum(struct sgilabel *vhp);
+int mipsvh_cksum(struct sgi_boot_block *vhp);
 
 #define LABELSIZE(lp)	((char *)&lp->d_partitions[lp->d_npartitions] - \
 			 (char *)lp)
@@ -73,7 +75,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 {
 	struct buf *bp;
 	struct disklabel *dlp;
-	struct sgilabel *slp;
+	struct sgi_boot_block *slp;
 	int err;
 
 	/* Minimal requirements for archetypal disk label. */
@@ -119,8 +121,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 		return "error reading volume header";
 
 	/* Check for a SGI label. */
-	slp = (struct sgilabel *)bp->b_un.b_addr;
-	if (be32toh(slp->magic) != SGILABEL_MAGIC)
+	slp = (struct sgi_boot_block *)bp->b_un.b_addr;
+	if (be32toh(slp->magic) != SGI_BOOT_BLOCK_MAGIC)
 		return "no disk label";
 
 	return disklabel_sgimips_to_bsd(slp, lp);
@@ -302,7 +304,7 @@ struct partitionmap partition_map[] = {
  * Returns NULL on success, otherwise an error string
  */
 static char *
-disklabel_sgimips_to_bsd(struct sgilabel *vh, struct disklabel *lp)
+disklabel_sgimips_to_bsd(struct sgi_boot_block *vh, struct disklabel *lp)
 {
 	int  i, bp, mp;
 	struct partition *lpp;
@@ -347,14 +349,14 @@ disklabel_sgimips_to_bsd(struct sgilabel *vh, struct disklabel *lp)
  * Returns NULL on success, otherwise an error string
  */
 static int
-disklabel_bsd_to_sgimips(struct disklabel *lp, struct sgilabel *vh)
+disklabel_bsd_to_sgimips(struct disklabel *lp, struct sgi_boot_block *vh)
 {
 	int i, bp, mp;
 	struct partition *lpp;
 
-	if (vh->magic != SGILABEL_MAGIC || mipsvh_cksum(vh) != 0) {
+	if (vh->magic != SGI_BOOT_BLOCK_MAGIC || mipsvh_cksum(vh) != 0) {
 		memset((void *)vh, 0, sizeof *vh);
-		vh->magic = SGILABEL_MAGIC;
+		vh->magic = SGI_BOOT_BLOCK_MAGIC;
 		vh->root = 0;        /* a*/
 		vh->swap = 1;        /* b*/
 	}
@@ -401,7 +403,7 @@ disklabel_bsd_to_sgimips(struct disklabel *lp, struct sgilabel *vh)
  * of the entire volume header structure
  */
 int
-mipsvh_cksum(struct sgilabel *vhp)
+mipsvh_cksum(struct sgi_boot_block *vhp)
 {
 	int i, *ptr;
 	int cksum = 0;
