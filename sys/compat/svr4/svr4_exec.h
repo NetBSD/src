@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.h,v 1.2 1994/08/15 22:54:51 mycroft Exp $	*/
+/*	$NetBSD: svr4_exec.h,v 1.3 1994/08/17 11:03:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -53,7 +53,7 @@ enum Elf32_e_machine {
     Elf32_em_m32,
     Elf32_em_sparc,
     Elf32_em_386,
-    Elf32_em_86k,
+    Elf32_em_68k,
     Elf32_em_88k,
     Elf32_em_486,
     Elf32_em_860,
