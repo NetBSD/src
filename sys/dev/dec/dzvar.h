@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.10 2000/12/30 22:11:46 ragge Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.1 2002/02/25 14:58:08 ad Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
