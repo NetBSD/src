@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.223 2001/11/24 21:26:34 perry Exp $
+#	$NetBSD: bsd.own.mk,v 1.224 2001/11/25 09:06:00 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -49,6 +49,8 @@ _SRC_TOP_!= cd ${.CURDIR}; while :; do \
 
 .if !defined(_SRC_TOP_OBJ_)
 .if ${_SRC_TOP_} != ""
+.BEGIN:
+	@printf ".include <bsd.obj.mk>\n" | ${MAKE} -f- obj 1>&2
 _SRC_TOP_OBJ_!=	cd ${_SRC_TOP_} && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=	_SRC_TOP_OBJ_
 .endif
