@@ -1,4 +1,4 @@
-/*	$NetBSD: nullfs.c,v 1.4 2002/05/28 14:30:53 bjh21 Exp $	*/
+/*	$NetBSD: nullfs.c,v 1.5 2003/04/10 14:44:05 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -74,8 +74,7 @@ int
 null_open(char *path, struct open_file *f)
 {
 
-	errno = EIO;
-	return -1;
+	return EIO;
 }
 
 #ifndef LIBSA_NO_FS_CLOSE
@@ -87,21 +86,19 @@ null_close(struct open_file *f)
 }
 #endif
 
-ssize_t
+int
 null_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 
-	errno = EIO;
-	return -1;
+	return EIO;
 }
 
 #ifndef LIBSA_NO_FS_WRITE
-ssize_t
+int
 null_write(struct open_file *f, void *buf, size_t size, size_t *resid)
 {
 
-	errno = EIO;
-	return -1;
+	return EIO;
 }
 #endif
 
@@ -110,8 +107,7 @@ off_t
 null_seek(struct open_file *f, off_t offset, int where)
 {
 
-	errno = EIO;
-	return -1;
+	return (off_t)-1;
 }
 #endif
 
@@ -119,6 +115,5 @@ int
 null_stat(struct open_file *f, struct stat *sb)
 {
 
-	errno = EIO;
-	return -1;
+	return EIO;
 }
