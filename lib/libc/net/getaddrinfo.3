@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.40 2005/01/28 01:36:17 itojun Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.41 2005/01/28 11:04:52 wiz Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"	$OpenBSD: getaddrinfo.3,v 1.35 2004/12/21 03:40:31 jaredy Exp $
 .\"
@@ -25,9 +25,9 @@
 .Nm freeaddrinfo
 .Nd host and service name to socket address structure
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/socket.h>
-.Fd #include <netdb.h>
+.In sys/types.h
+.In sys/socket.h
+.In netdb.h
 .Ft int
 .Fn getaddrinfo "const char *hostname" "const char *servname" \
     "const struct addrinfo *hints" "struct addrinfo **res"
@@ -207,8 +207,8 @@ pointer in each
 .Li addrinfo
 structure until a null pointer is encountered.
 The three members
-.Fa ai_family,
-.Fa ai_socktype,
+.Fa ai_family ,
+.Fa ai_socktype ,
 and
 .Fa ai_protocol
 in each returned
@@ -303,24 +303,24 @@ int error;
 int s;
 const char *cause = NULL;
 
-memset(&hints, 0, sizeof(hints));
+memset(\*[Am]hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
-error = getaddrinfo("www.kame.net", "http", &hints, &res0);
+error = getaddrinfo("www.kame.net", "http", \*[Am]hints, \*[Am]res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
 }
 s = -1;
-for (res = res0; res; res = res->ai_next) {
-	s = socket(res->ai_family, res->ai_socktype,
-	    res->ai_protocol);
-	if (s < 0) {
+for (res = res0; res; res = res-\*[Gt]ai_next) {
+	s = socket(res-\*[Gt]ai_family, res-\*[Gt]ai_socktype,
+	    res-\*[Gt]ai_protocol);
+	if (s \*[Lt] 0) {
 		cause = "socket";
 		continue;
 	}
 
-	if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
+	if (connect(s, res-\*[Gt]ai_addr, res-\*[Gt]ai_addrlen) \*[Lt] 0) {
 		cause = "connect";
 		close(s);
 		s = -1;
@@ -329,7 +329,7 @@ for (res = res0; res; res = res->ai_next) {
 
 	break;	/* okay we got one */
 }
-if (s < 0) {
+if (s \*[Lt] 0) {
 	err(1, "%s", cause);
 	/*NOTREACHED*/
 }
@@ -346,25 +346,25 @@ int s[MAXSOCK];
 int nsock;
 const char *cause = NULL;
 
-memset(&hints, 0, sizeof(hints));
+memset(\*[Am]hints, 0, sizeof(hints));
 hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 hints.ai_flags = AI_PASSIVE;
-error = getaddrinfo(NULL, "http", &hints, &res0);
+error = getaddrinfo(NULL, "http", \*[Am]hints, \*[Am]res0);
 if (error) {
 	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
 }
 nsock = 0;
-for (res = res0; res && nsock < MAXSOCK; res = res->ai_next) {
-	s[nsock] = socket(res->ai_family, res->ai_socktype,
-	    res->ai_protocol);
-	if (s[nsock] < 0) {
+for (res = res0; res \*[Am]\*[Am] nsock \*[Lt] MAXSOCK; res = res-\*[Gt]ai_next) {
+	s[nsock] = socket(res-\*[Gt]ai_family, res-\*[Gt]ai_socktype,
+	    res-\*[Gt]ai_protocol);
+	if (s[nsock] \*[Lt] 0) {
 		cause = "socket";
 		continue;
 	}
 
-	if (bind(s[nsock], res->ai_addr, res->ai_addrlen) < 0) {
+	if (bind(s[nsock], res-\*[Gt]ai_addr, res-\*[Gt]ai_addrlen) \*[Lt] 0) {
 		cause = "bind";
 		close(s[nsock]);
 		continue;
@@ -418,7 +418,7 @@ freeaddrinfo(res0);
 .Rs
 .%A Craig Metz
 .%T Protocol Independence Using the Sockets API
-.%B "Proceedings of the freenix track: 2000 USENIX annual technical conference"
+.%B "Proceedings of the FREENIX track: 2000 USENIX annual technical conference"
 .%D June 2000
 .Re
 .Sh STANDARDS
