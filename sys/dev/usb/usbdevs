@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.23 1999/04/03 11:56:39 augustss Exp $
+$NetBSD: usbdevs,v 1.24 1999/04/03 19:01:57 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ vendor KONICA		0x04c8	Konica Corporation
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor JAZZ		0x04fa	Jazz
 vendor AKS		0x0529	Aladdin Knowledge Systems
+vendor VISION		0x0533	Vision
 vendor ATEN		0x0557	ATen
 vendor PERACOM		0x0565	Peracom
 vendor EIZO		0x056d	EIZO
@@ -71,6 +72,7 @@ vendor BELKIN		0x05ab	Belkin
 vendor LOGITECH		0x05ac	Logitech
 vendor EIZONANAO	0x05e7	EIZO Nanao
 vendor CHIC		0x05fe	Chic Technology
+vendor MACALLY		0x0618	Macally
 vendor ADS		0x06e1	ADS Technologies
 vendor PLX		0x10b5	PLX
 vendor ENTREGA		0x1645	Entrega
@@ -143,6 +145,9 @@ product JAZZ J6502		0x4201	J-6502 speakers
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
 
+/* Vision products */
+product VISION VC6452V002	0x0002	VC6452V002 Camera
+
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel printer adapter
 
@@ -165,6 +170,9 @@ product LOGITECH M4848		0x0301	M4848 mouse
 
 /* Chic Technology products */
 product CHIC MOUSE1		0x0001	mouse
+
+/* Macally products */
+product MACALLY MOUSE1		0x0101	mouse
 
 /* ADS products */
 product ADS ENET		0x0008	Ethernet adapter
