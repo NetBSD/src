@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fork.2	6.5 (Berkeley) 3/10/91
-.\"	$NetBSD: i386_get_ldt.2,v 1.6 1999/07/02 15:14:07 simonb Exp $
+.\"	$NetBSD: i386_get_ldt.2,v 1.7 1999/07/03 13:53:44 kleink Exp $
 .\"
 .Dd September 20, 1993
 .Dt I386_GET_LDT 2
@@ -67,7 +67,7 @@ will contain the descriptors to be set or returned
 The argument
 .Fa descs
 can be either segment_descriptor or gate_descriptor and are defined in
-.Fd <i386/segements.h> .
+.Fd <i386/segments.h> .
 These structures are defined by the architecure
 as disjoint bit-fields, so care must be taken in constructing them.
 .Sh RETURN VALUES
