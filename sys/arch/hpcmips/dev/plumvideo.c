@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.21 2001/09/15 12:47:07 uch Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.21.2.1 2001/11/06 16:35:59 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h> /* consdev */
+
+#include <mips/cache.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -693,7 +695,8 @@ __plumvideo_clut_access(struct plumvideo_softc *sc, void (*palette_func)
 static void
 _flush_cache()
 {
-	MachFlushCache();
+	mips_dcache_wbinv_all();
+	mips_icache_sync_all();
 }
 
 int
