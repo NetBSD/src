@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.2 2001/11/10 13:22:20 lukem Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.3 2001/12/06 04:28:07 chs Exp $	*/
 
 /*
  * Copyright (c) 2000, Boris Popov
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.2 2001/11/10 13:22:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.3 2001/12/06 04:28:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +150,8 @@ VNODEOP_SET(smbfs_vnodeop_opv_desc);
 #define smbfs_lock	genfs_nolock
 #define smbfs_unlock	genfs_nounlock
 #define smbfs_islocked	genfs_noislocked
+#define smbfs_getpages	genfs_getpages
+#define smbfs_putpages	genfs_putpages
 int (**smbfs_vnodeop_p) __P((void *));
 static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 	{ &vop_default_desc,		vn_default_error },
@@ -160,8 +162,8 @@ static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 	{ &vop_create_desc,		(int(*)(void *))smbfs_create },
 	{ &vop_fsync_desc,		(int(*)(void *))smbfs_fsync },
 	{ &vop_getattr_desc,		(int(*)(void *))smbfs_getattr },
-/*  	{ &vop_getpages_desc,		(int(*)(void *))smbfs_getpages }, */
-/*  	{ &vop_putpages_desc,		(int(*)(void *))smbfs_putpages }, */
+	{ &vop_getpages_desc,		(int(*)(void *))smbfs_getpages },
+	{ &vop_putpages_desc,		(int(*)(void *))smbfs_putpages },
 	{ &vop_ioctl_desc,		(int(*)(void *))smbfs_ioctl },
 	{ &vop_inactive_desc,		(int(*)(void *))smbfs_inactive },
 	{ &vop_islocked_desc,		(int(*)(void *))smbfs_islocked },
@@ -188,7 +190,7 @@ static struct vnodeopv_entry_desc smbfs_vnodeop_entries[] = {
 	{ &vop_getextattr_desc, 	(int(*)(void *))smbfs_getextattr },
 /*	{ &vop_setextattr_desc,		(int(*)(void *))smbfs_setextattr },*/
 #endif
-	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
+	{ NULL, NULL }
 };
 
 struct vnodeopv_desc smbfs_vnodeop_opv_desc =
