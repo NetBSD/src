@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.4 2000/01/25 14:38:50 tsubai Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.5 2000/02/02 08:05:31 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -251,7 +251,7 @@ bmac_attach(parent, self, aux)
 	mii->mii_statchg = bmac_mii_statchg;
 
 	ifmedia_init(&mii->mii_media, 0, bmac_mediachange, bmac_mediastatus);
-	mii_phy_probe(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 		      MII_OFFSET_ANY);
 
 	/* Choose a default media. */
