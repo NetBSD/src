@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.17 2001/01/07 21:47:28 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.18 2001/01/15 13:40:35 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -4928,10 +4928,10 @@ sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
 static int
 sppp_params(struct sppp *sp, int cmd, void *data)
 {
-	int subcmd;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct spppreq spr;
 
+#if 0
 	/*
 	 * ifr->ifr_data is supposed to point to a struct spppreq.
 	 * Check the cmd word first before attempting to fetch all the
@@ -4939,11 +4939,12 @@ sppp_params(struct sppp *sp, int cmd, void *data)
 	 */
 	if ((subcmd = fuword(ifr->ifr_data)) == -1)
 		return EFAULT;
+#endif
 
 	if (copyin((caddr_t)ifr->ifr_data, &spr, sizeof spr) != 0)
 		return EFAULT;
 
-	switch (subcmd) {
+	switch (spr.cmd) {
 	case SPPPIOGDEFS:
 		if (cmd != (int)SIOCGIFGENERIC)
 			return EINVAL;
