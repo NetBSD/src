@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.11 1999/01/06 04:11:27 nisimura Exp $	*/
+/*	$NetBSD: trap.h,v 1.12 1999/01/14 18:45:45 castor Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,11 +71,3 @@
 #define T_VCED			31	/* Virtual coherency data */
 
 #define	T_USER			0x20	/* user-mode flag or'ed with type */
-
-
-#ifdef DEBUG
-extern int cpu_singlestep __P((struct proc *));
-#endif
-#if defined(DEBUG) || defined(DDB)
-extern int kdbpeek __P((vaddr_t addr));
-#endif

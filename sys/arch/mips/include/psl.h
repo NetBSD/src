@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.9 1998/09/11 16:46:32 jonathan Exp $	*/
+/*	$NetBSD: psl.h,v 1.10 1999/01/14 18:45:45 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,15 +44,23 @@
  * configured CPU types.
  */
 
-#include <mips/cpuregs.h>
+#include <mips/cpuarch.h>
 
 /*
  * mips3-specific  definitions
  */
 #define	MIPS3_PSL_LOWIPL	(MIPS3_INT_MASK | MIPS_SR_INT_IE)
 
+#if defined(_MIPS_BSD_SIM) && _MIPS_BSD_SIM != _MIPS_SIM_ABI32
+#define MIPS3_PSL_XFLAGS	\
+		(MIPS3_SR_XX | MIPS3_SR_KX | MIPS3_SR_UX | MIPS3_SR_SX)
+#else
+#define MIPS3_PSL_XFLAGS	(0)
+#endif
+
 #define	MIPS3_PSL_USERSET 	\
 	(MIPS3_SR_KSU_USER |	\
+	 MIPS3_PSL_XFLAGS |	\
 	 MIPS_SR_INT_IE |	\
 	 MIPS3_SR_EXL |		\
 	 MIPS3_INT_MASK)

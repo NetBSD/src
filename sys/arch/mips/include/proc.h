@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.8 1997/07/07 03:54:29 jonathan Exp $	*/
+/*	$NetBSD: proc.h,v 1.9 1999/01/14 18:45:45 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  * Machine-dependent part of the proc structure for MIPS
  */
 struct mdproc {
-	int	*md_regs;		/* registers on current frame */
+	void *md_regs;		/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_upte[UPAGES];	/* ptes for mapping u page */
 	int	md_ss_addr;		/* single step address for ptrace */
@@ -58,7 +58,7 @@ struct mdproc {
  * MIPS trapframe
  */
 struct frame {
-	int	f_regs[38];
+	mips_reg_t f_regs[38];
 };
 
 #ifdef _KERNEL

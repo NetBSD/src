@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.10 1998/09/11 16:46:31 jonathan Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.11 1999/01/14 18:45:45 castor Exp $	*/
 
 /*
  * Architecture name.
@@ -16,10 +16,7 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		2		/* pages of u-area */
-#define	UADDR		0xffffc000	/* address of u */
 #define USPACE          (UPAGES*NBPG)   /* size of u-area in bytes */
-#define	UVPN		(UADDR>>PGSHIFT)/* virtual page number of u */
-#define	KERNELSTACK	(UADDR+UPAGES*NBPG)	/* top of kernel stack */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
