@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/02/04 08:39:26 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1997/02/04 19:14:57 thorpej Exp $
 
 BINDIR=			/usr/mdec
 
@@ -8,6 +8,9 @@ RELOC=	FFF00000
 CPPFLAGS+=		-DDCACONSOLE -DITECONSOLE -DDCMCONSOLE
 CPPFLAGS+=		-DSTANDALONE -DCOMPAT_NOLABEL -Dhp300
 CPPFLAGS+=		-DCOMPAT_UFS -DNO_LSEEK
+
+# Limit the alloc() heap to below the msgbuf and ROM scratch pages.
+CPPFLAGS+=		-DHEAP_LIMIT="0xffffdfff"
 
 COMMONSOURCE=		srt0.o autoconf.c clock.c conf.c cons.c devopen.c \
 			machdep.c prf.c rawfs.c netio.c
