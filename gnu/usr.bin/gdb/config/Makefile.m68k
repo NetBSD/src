@@ -1,0 +1,7 @@
+#	from: @(#)Makefile.hp300	6.1 (Berkeley) 3/11/91
+#	$Id: Makefile.m68k,v 1.1 1993/12/23 14:02:03 cgd Exp $
+
+CONFIGSRCS=	m68kbsd-dep.c m68k-pinsn.c
+
+param.h:
+	ln -s $(.CURDIR)/config/m-m68kbsd.h param.h
