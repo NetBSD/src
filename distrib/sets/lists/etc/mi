@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.137 2004/01/14 07:20:34 blymn Exp $
+# $NetBSD: mi,v 1.138 2004/01/30 08:44:11 lukem Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -63,6 +63,7 @@
 ./etc/motd					etc-sys-etc
 ./etc/mrouted.conf				etc-router-etc
 ./etc/mtree/NetBSD.dist				etc-sys-etc
+./etc/mtree/set.etc				etc-sys-etc
 ./etc/mtree/special				etc-sys-etc
 ./etc/namedb/127				etc-bind-etc
 ./etc/namedb/localhost				etc-bind-etc
