@@ -1,79 +1,48 @@
-#	$NetBSD: Makefile,v 1.18 2002/02/09 13:56:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2002/03/12 06:26:35 lukem Exp $
 
-BINDIR=		/installation/netboot
+.include "${.CURDIR}/../../Makefile.inc"
+.include <bsd.own.mk>
 
-TOP?=		${.CURDIR}/..
-ARCHDIR?=	${.CURDIR}/../miniroot
-
-.include "${TOP}/Makefile.inc"
-IMAGE=		ramdisk.fs
 DISKIMAGE=	diskimage.tgz
 
-CBIN=		ramdiskbin
-CSIZE=		6144 # 512 byte blocks, update disktab.ramdisk if changed
-DISKTAB=	${.CURDIR}/disktab.ramdisk
-DISKTYPE=	install-ramdisk
-MOUNT_POINT?=	/mnt
+IMAGE=		ramdisk.fs
+IMAGESIZE=	6144b
 
-VND?=		vnd0
-VND_DEV=	/dev/${VND}c
-VND_RDEV=	/dev/r${VND}c
+WARNS=		1
 
-CLEANFILES=	${IMAGE} ${DISKIMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
+CRUNCHBIN=	ramdiskbin
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
+MTREECONF=	${DISTRIBDIR}/common/mtree.common
+IMAGEENDIAN=	le
+MAKEDEVTARGETS=	minimal pty0
+IMAGEDEPENDS=	${CRUNCHBIN} \
+		disktab.preinstall dot.profile dot.hdprofile \
+		${CURDIR}/../miniroot/termcap.rcons \
+		${DESTDIR}/usr/mdec/bootxx_ffs ${DESTDIR}/usr/mdec/boot.pmax \
+		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
+		${_SRC_TOP_}/etc/protocols ${_SRC_TOP_}/etc/netconfig \
+		${_SRC_TOP_}/etc/services
 
-LISTS=		${.CURDIR}/list
-CRUNCHCONF=	${.CURDIR}/${CBIN}.conf
-MTREECONF=	${.CURDIR}/mtree.conf
 
-CRUNCHGEN?=	crunchgen
-MTREE?=		mtree
+${DISKIMAGE}: ${WORKBUILT} ${WORKSPEC}
+	( cd ${WORKDIR}; \
+	    GZIP=-9 ${PAX} -w -d -z -N ${DESTDIR}/etc -M < ${WORKSPEC} \
+	) > ${.TARGET}.tmp \
+	&& mv ${.TARGET}.tmp ${.TARGET}
 
-all: ${IMAGE}
+CLEANFILES+=	${DISKIMAGE} ${DISKIMAGE}.tmp
+	
 
-${IMAGE}: ${CBIN} 
-	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
-	vnconfig -v -c ${VND} ${IMAGE}
-	disklabel -rw -f ${DISKTAB} ${VND} ${DISKTYPE}
-	newfs -B le -m 0 -o space -i 5120 ${VND_RDEV}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${MTREECONF} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${TOP}/src/runlist.sh ${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	@echo Building diskimage tar file...
-	tar cf - -C ${MOUNT_POINT} . | gzip -9 > ${DISKIMAGE}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
 
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND}
-	-/bin/rm -f ${IMAGE}
+realall: ${IMAGE} .WAIT ${DISKIMAGE}
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
+release: check_RELEASEDIR .WAIT ${DISKIMAGE}
+	-mkdir -p ${RELEASEDIR}/installation/netboot
+	cp -p ${DISKIMAGE} ${RELEASEDIR}/installation/netboot
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
 
-echoimage:
-	@echo ${.OBJDIR}/${IMAGE}
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
 
-realinstall:
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE} \
-		${DISKIMAGE} ${RELEASEDIR}${BINDIR}
-
-clean cleandir distclean:
-	/bin/rm -f *.core ${CLEANFILES} *.o *.cro *.c
-
-# XXX!
-depend:
-dependall: depend all
-
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include "../Makefile.inc"
+.include <bsd.prog.mk>
