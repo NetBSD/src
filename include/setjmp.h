@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.12 1998/05/06 18:01:23 kleink Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.13 1998/09/14 07:10:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -56,19 +56,31 @@ typedef long jmp_buf[_JBLEN];
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	setjmp __P((jmp_buf));
-void	longjmp __P((jmp_buf, int));
+#if defined(__LIBC12_SOURCE__)
+int	__setjmp14 __P((jmp_buf));
+void	__longjmp14 __P((jmp_buf, int));
+
+int	__sigsetjmp __P((sigjmp_buf, int));
+void	__siglongjmp __P((sigjmp_buf, int));
+
+int	___setjmp14 __P((jmp_buf));
+void	___longjmp14 __P((jmp_buf));
+#else /* !__LIBC12_SOURCE__ */
+int	setjmp __P((jmp_buf)) __RENAME(__setjmp14);
+void	longjmp __P((jmp_buf, int)) __RENAME(__longjmp14);
 
 #ifndef _ANSI_SOURCE
-int	sigsetjmp __P((sigjmp_buf, int));
-void	siglongjmp __P((sigjmp_buf, int));
+int	sigsetjmp __P((sigjmp_buf, int)) __RENAME(__sigsetjmp14);
+void	siglongjmp __P((sigjmp_buf, int)) __RENAME(__siglongjmp14);
 #endif /* not ANSI */
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) || \
     defined(_XOPEN_SOURCE)
-int	_setjmp __P((jmp_buf));
-void	_longjmp __P((jmp_buf, int));
+int	_setjmp __P((jmp_buf)) __RENAME(___setjmp14);
+void	_longjmp __P((jmp_buf, int)) __RENAME(___longjmp14);
 #endif
+#endif /* __LIBC12_SOURCE__ */
+
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
 void	longjmperror __P((void));
