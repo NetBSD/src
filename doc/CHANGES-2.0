@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.260 2004/06/07 10:09:13 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.261 2004/06/07 10:36:00 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3578,4 +3578,49 @@ sys/dev/wscons/wsksymdef.h			1.49
 
 	PR kern/19925: David Ferlier: Add scrolling support to wscons.
 	[recht, ticket #451]
+
+usr.bin/msgc/msg_sys.def			1.27
+
+	Improve editing of input fields:
+	<- and -> move within the field
+	-> will pull default string into empty buffer
+	^H (etc) will delete default string from buffer (first press)
+	Put default string into display buffer if long and input in box.
+	Scroll input text if longer than space on line.
+	[dsl, ticket #452]
+
+distrib/utils/sysinst/defs.h			1.114
+distrib/utils/sysinst/install.c			1.40
+distrib/utils/sysinst/main.c			1.44
+distrib/utils/sysinst/menus.mi			1.17
+distrib/utils/sysinst/msg.mi.de			1.9
+distrib/utils/sysinst/msg.mi.en			1.128
+distrib/utils/sysinst/msg.mi.fr			1.77
+distrib/utils/sysinst/msg.mi.pl			1.39
+distrib/utils/sysinst/net.c			1.102
+distrib/utils/sysinst/run.c			1.57
+distrib/utils/sysinst/upgrade.c			1.48
+distrib/utils/sysinst/util.c			1.120
+
+	A load of usability fixes mainly to network installs.
+	I've made the error retry loops go back as far as the input menus.
+	Split all the pathname inputs into 2 pieces (base directory and set
+	directory).
+	Reduced the size of some fixed strings.
+	Stopped the install aborting if ftp can't find a set (eg the X ones).
+	The French and Polish transations don't differenciate between Base_dir
+	and Set_dir - but that can be fixed later.
+	[dsl, ticket #453]
+
+usr.bin/awk/awk.1				1.15
+
+	Add article.
+	[snj, ticket #454]
+
+etc/defaults/rc.conf				1.59
+etc/rc.d/ldconfig				1.7
+etc/rc.d/quota					1.4
+
+	Add rc variables "ldconfig" and "quota" defaulting to "YES".
+	[abs, ticket #455]
 
