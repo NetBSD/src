@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.23 2000/06/18 01:31:23 hubertf Exp $	*/
+/*	$NetBSD: str.c,v 1.23.2.1 2000/12/15 04:08:26 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.23 2000/06/18 01:31:23 hubertf Exp $");
+__RCSID("$NetBSD: str.c,v 1.23.2.1 2000/12/15 04:08:26 he Exp $");
 #endif
 #endif
 
@@ -334,16 +334,24 @@ findbestmatchingname_fn(const char *found, char *best)
 {
 	char *found_version, *best_version;
 	char *found_tgz, *best_tgz;
-	char found_no_tgz[255];
-	char best_no_tgz[255];
+	char *found_tbz, *best_tbz;
+	char found_no_sfx[255];
+	char best_no_sfx[255];
 
 	found_version = strrchr(found, '-') + 1;
 	found_tgz = strstr(found, ".tgz");
 	if (found_tgz) {
 		/* strip off any ".tgz" */
-		strncpy(found_no_tgz, found_version, found_tgz-found_version);
-		found_no_tgz[found_tgz-found_version] = '\0';
-		found_version = found_no_tgz;
+		strncpy(found_no_sfx, found_version, found_tgz-found_version);
+		found_no_sfx[found_tgz-found_version] = '\0';
+		found_version = found_no_sfx;
+	}
+	found_tbz = strstr(found, ".tbz");
+	if (found_tbz) {
+		/* strip off any ".tbz" */
+		strncpy(found_no_sfx, found_version, found_tbz-found_version);
+		found_no_sfx[found_tbz-found_version] = '\0';
+		found_version = found_no_sfx;
 	}
 
 	best_version=NULL;
@@ -352,9 +360,16 @@ findbestmatchingname_fn(const char *found, char *best)
 		best_tgz = strstr(best, ".tgz");
 		if (best_tgz) {
 			/* strip off any ".tgz" */
-			strncpy(best_no_tgz, best_version, best_tgz-best_version);
-			best_no_tgz[best_tgz-best_version] = '\0';
-			best_version = best_no_tgz;
+			strncpy(best_no_sfx, best_version, best_tgz-best_version);
+			best_no_sfx[best_tgz-best_version] = '\0';
+			best_version = best_no_sfx;
+		}
+		best_tbz = strstr(best, ".tbz");
+		if (best_tbz) {
+			/* strip off any ".tbz" */
+			strncpy(best_no_sfx, best_version, best_tbz-best_version);
+			best_no_sfx[best_tbz-best_version] = '\0';
+			best_version = best_no_sfx;
 		}
 	}
 
