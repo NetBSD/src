@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.15 2000/03/06 03:07:08 mark Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.16 2000/03/22 20:58:29 ws Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ipkdb.h"
 #include "opt_inet.h"
 #include "bpfilter.h"
 
@@ -58,6 +59,10 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+
+#ifdef IPKDB_NE_PCI
+#include <ipkdb/ipkdb.h>
+#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -85,6 +90,18 @@ void ne_pci_attach __P((struct device *, struct device *, void *));
 struct cfattach ne_pci_ca = {
 	sizeof(struct ne_pci_softc), ne_pci_match, ne_pci_attach
 };
+
+#ifdef IPKDB_NE_PCI
+static struct ne_pci_softc ipkdb_softc;
+static pci_chipset_tag_t ipkdb_pc;
+static pcitag_t ipkdb_tag;
+static struct ipkdb_if *ne_kip;
+
+int ne_pci_ipkdb_attach __P((struct ipkdb_if *, bus_space_tag_t,       /* XXX */
+			pci_chipset_tag_t, int, int));
+
+static int ne_pci_isipkdb __P((pci_chipset_tag_t, pcitag_t));
+#endif
 
 const struct ne_pci_product {
 	pci_vendor_id_t npp_vendor;
@@ -214,6 +231,13 @@ ne_pci_attach(parent, self, aux)
 
 	printf(": %s Ethernet\n", npp->npp_name);
 
+#ifdef IPKDB_NE_PCI
+	if (ne_pci_isipkdb(pc, pa->pa_tag)) {
+		nict = ipkdb_softc.sc_ne2000.sc_dp8390.sc_regt;
+		nich = ipkdb_softc.sc_ne2000.sc_dp8390.sc_regh;
+		ne_kip->port = nsc;
+	} else
+#endif
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &nict, &nich, NULL, NULL)) {
 		printf("%s: can't map i/o space\n", dsc->sc_dev.dv_xname);
@@ -279,3 +303,71 @@ ne_pci_attach(parent, self, aux)
 	}
 	printf("%s: interrupting at %s\n", dsc->sc_dev.dv_xname, intrstr);
 }
+
+#ifdef IPKDB_NE_PCI
+static int
+ne_pci_isipkdb(pc, tag)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+{
+	return !memcmp(&pc, &ipkdb_pc, sizeof pc)
+		&& !memcmp(&tag, &ipkdb_tag, sizeof tag);
+}
+
+int
+ne_pci_ipkdb_attach(kip, iot, pc, bus, dev)
+	struct ipkdb_if *kip;
+	bus_space_tag_t iot;
+	pci_chipset_tag_t pc;
+	int bus, dev;
+{
+	struct pci_attach_args pa;
+	bus_space_tag_t nict, asict;
+	bus_space_handle_t nich, asich;
+	u_int32_t csr;
+
+	pa.pa_iot = iot;
+	pa.pa_pc = pc;
+	pa.pa_device = dev;
+	pa.pa_function = 0;
+	pa.pa_flags = PCI_FLAGS_IO_ENABLED;
+	pa.pa_tag = pci_make_tag(pc, bus, dev, /*func*/0);
+	pa.pa_id = pci_conf_read(pc, pa.pa_tag, PCI_ID_REG);
+	pa.pa_class = pci_conf_read(pc, pa.pa_tag, PCI_CLASS_REG);
+	if (ne_pci_lookup(&pa) == NULL)
+		return -1;
+
+	if (pci_mapreg_map(&pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+			&nict, &nich, NULL, NULL))
+		return -1;
+
+	asict = nict;
+	if (bus_space_subregion(nict, nich, NE2000_ASIC_OFFSET,
+				NE2000_ASIC_NPORTS, &asich)) {
+		bus_space_unmap(nict, nich, NE2000_NPORTS);
+		return -1;
+	}
+
+	/* Enable card */
+	csr = pci_conf_read(pc, pa.pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pc, pa.pa_tag, PCI_COMMAND_STATUS_REG,
+			csr | PCI_COMMAND_MASTER_ENABLE);
+
+	ipkdb_softc.sc_ne2000.sc_dp8390.sc_regt = nict;
+	ipkdb_softc.sc_ne2000.sc_dp8390.sc_regh = nich;
+	ipkdb_softc.sc_ne2000.sc_asict = asict;
+	ipkdb_softc.sc_ne2000.sc_asich = asich;
+
+	kip->port = &ipkdb_softc;
+	ipkdb_pc = pc;
+	ipkdb_tag = pa.pa_tag;
+	ne_kip = kip;
+
+	if (ne2000_ipkdb_attach(kip) < 0) {
+		bus_space_unmap(nict, nich, NE2000_NPORTS);
+		return -1;
+	}
+
+	return 0;
+}
+#endif

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.357 2000/03/22 20:28:29 soren Exp $
+#	$NetBSD: files,v 1.358 2000/03/22 20:58:28 ws Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -163,21 +163,13 @@ define	crypto
 define	arp
 
 # Device description for machine-independent IPKDB code.
-define	ipkdb
-
-device	ipkdbif: ipkdb
-device	ipkdbslip: ipkdb
-device	ipkdbppp: ipkdb
+defopt	opt_ipkdb.h	IPKDB					: IPKDBKEY
+defopt	opt_ipkdb.h	IPKDBSECURE				: IPKDB
+defparam opt_ipkdb.h	IPKDBKEY				: IPKDB
 
 # Common files for any ipkdb support
-file	ipkdb/ipkdb_ipkdb.c		ipkdb			needs-flag
+file	ipkdb/ipkdb_ipkdb.c		ipkdb
 file	ipkdb/ipkdb_if.c		ipkdb
-
-# Support for slip
-file	ipkdb/ipkdb_slip.c		ipkdbslip		needs-flag
-
-# Support for ppp	(for now only fake)
-file	ipkdb/ipkdb_ppp.c		ipkdbppp		needs-flag
 
 # Attribute for devices that read/write an IEEE 802.3u MII bus
 # using the bit-bang method.
@@ -277,8 +269,9 @@ device	hme: arp, ether, ifnet, mii
 file	dev/ic/hme.c			hme
 
 # 8390-family Ethernet controllers
+defopt	opt_ipkdb.h	IPKDB_DP8390				: IPKDB
 define	dp8390nic
-file	dev/ic/dp8390.c			dp8390nic
+file	dev/ic/dp8390.c			dp8390nic | IPKDB_DP8390
 
 # TROPIC Token-Ring controller
 device	tr: arp, token, ifnet
@@ -350,8 +343,9 @@ file	dev/ic/tms320av110.c		tms320av110
 
 # Novell NE2000-compatible Ethernet cards, based on the
 # National Semiconductor DS8390.
+defopt	opt_ipkdb.h	IPKDB_NE				: IPKDB_DP8390
 device	ne: ether, ifnet, arp, dp8390nic
-file	dev/ic/ne2000.c			ne
+file	dev/ic/ne2000.c			ne | IPKDB_NE
 
 # 8250/16[45]50-based "com" ports
 # XXX In a perfect world, this would be done with attributes
