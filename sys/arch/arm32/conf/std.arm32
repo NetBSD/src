@@ -2,4 +2,6 @@
 
 machine	arm32
 
-options		MACHINE_NONCONTIG	# temporary kludge
+options		MACHINE_NONCONTIG
+options		EXEC_AOUT
+options		EXEC_SCRIPT
