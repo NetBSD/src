@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.1.8.1 2004/12/13 17:52:21 bouyer Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.1.8.2 2005/01/21 10:58:46 bouyer Exp $	*/
 /*	NetBSD: frameasm.h,v 1.4 2004/02/20 17:35:01 yamt Exp 	*/
 
 #ifndef _I386_FRAMEASM_H_
@@ -12,6 +12,7 @@
 #define TRAP_INSTR	int $0x82
 #define __HYPERVISOR_stack_switch          4
 #define __HYPERVISOR_fpu_taskswitch	   7
+#define __HYPERVISOR_physdev_op		   19
 
 #ifndef TRAPLOG
 #define TLOG		/**/
