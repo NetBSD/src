@@ -1361,7 +1361,7 @@ msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 					n * sizeof(struct direntry), uio);
 		}
 	}
-	while (!error && uio->uio_offset > 0 && ncookies > 0) {
+	while (!error && uio->uio_resid > 0 && ncookies > 0) {
 		lbn = (uio->uio_offset - bias) >> pmp->pm_cnshift;
 		on = (uio->uio_offset - bias) & pmp->pm_crbomask;
 		n = MIN((u_long) (pmp->pm_bpcluster - on), uio->uio_resid);
