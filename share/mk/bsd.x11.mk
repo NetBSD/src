@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.31 2004/03/04 13:14:57 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.32 2004/03/10 16:21:16 rtr Exp $
 
 .include <bsd.init.mk>
 
@@ -49,6 +49,7 @@ X11FLAGS.OS_DEFINES=	-DDDXOSINIT -DSERVER_LOCK -DDDXOSFATALERROR \
     ${MACHINE} == "amiga"	|| \
     ${MACHINE} == "pmax"	|| \
     ${MACHINE} == "sparc"	|| \
+    ${MACHINE} == "sun3"	|| \
     ${MACHINE} == "vax")
 #	EXT_DEFINES
 X11FLAGS.EXTENSION+=	-DXF86VIDMODE
