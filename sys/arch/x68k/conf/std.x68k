@@ -1,33 +1,15 @@
-#	$NetBSD: std.x68k,v 1.3 1997/05/08 16:39:41 oki Exp $
+#	$NetBSD: std.x68k,v 1.4 1998/09/07 14:24:08 minoura Exp $
+
+
 #
-# standard x68k information
+# Mandatory NetBSD/x68k kernel options.
 #
 
-machine x68k m68k
+machine		x68k m68k	# Machine architecture; required by config(8)
 
-options 	MACHINE_NONCONTIG	# Non-contiguous memory support
+#options 	SWAPPAGER	# swap and anonymous memory
+#options 	VNODEPAGER	# mapped files
+#options 	DEVPAGER	# mapped devices
 
-options 	EXEC_SCRIPT		# Support #!
-options 	EXEC_AOUT		# a.out format executables
-
-mainbus0	at root
-
-#clock0		at mainbus0		# system clock
-zs0		at mainbus0		# Zilog serial
-#par0		at mainbus0		# builtin parallel port
-#fdc0		at mainbus0		# floppy controller
-#fd0		at fdc0 unit 0		# builtin floppy drive
-#fd1		at fdc0 unit 1		# builtin floppy drive
-spc0		at mainbus0		# SCSI driver
-scsibus*	at spc?			# SCSI bus
-grfbus0 	at mainbus0		# bitmapped display's
-grf0		at grfbus0		# graphics driver
-ite0		at grf0			# console
-
-pseudo-device mouse			# standard mouse
-pseudo-device kbd			# standard keyboard
-
-# any disk/tape drives on configured controllers.
-sd*	at scsibus? target ? lun ?
-st*	at scsibus? target ? lun 0
-cd*	at scsibus? target ? lun ?
+options 	EXEC_AOUT	# execve(2) support for a.out binaries
+options 	EXEC_SCRIPT	# execve(2) support for scripts
