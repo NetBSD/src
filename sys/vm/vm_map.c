@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.c,v 1.25 1996/10/12 21:50:10 christos Exp $	*/
+/*	$NetBSD: vm_map.c,v 1.25.8.1 1997/03/12 21:27:00 is Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1769,9 +1769,12 @@ vm_map_copy_entry(src_map, dst_map, src_entry, dst_entry)
 
 		/*
 		 *	The destination always needs to have a shadow
-		 *	created.
+		 *	created, unless it's a zero-fill entry.
 		 */
-		dst_entry->needs_copy = TRUE;
+		if (dst_entry->object.vm_object != NULL)
+			dst_entry->needs_copy = TRUE;
+		else
+			dst_entry->needs_copy = FALSE;
 
 		/*
 		 *	Mark the entries copy-on-write, so that write-enabling

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.53 1997/01/31 03:02:57 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.53.4.1 1997/03/12 21:26:08 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -91,7 +91,6 @@ struct statfs {
 #define	MOUNT_MFS	"mfs"		/* Memory Filesystem */
 #define	MOUNT_MSDOS	"msdos"		/* MSDOS Filesystem */
 #define	MOUNT_LFS	"lfs"		/* Log-based Filesystem */
-#define	MOUNT_LOFS	"lofs"		/* Loopback filesystem */
 #define	MOUNT_FDESC	"fdesc"		/* File Descriptor Filesystem */
 #define	MOUNT_PORTAL	"portal"	/* Portal Filesystem */
 #define	MOUNT_NULL	"null"		/* Minimal Filesystem Layer */

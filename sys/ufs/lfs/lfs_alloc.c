@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.6 1996/10/12 21:58:49 christos Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.6.6.1 1997/03/12 21:26:31 is Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -53,8 +53,6 @@
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
-
-extern u_long nextgennumber;
 
 /* Allocate a new inode. */
 /* ARGSUSED */
@@ -131,9 +129,7 @@ lfs_valloc(v)
 	ip->i_din.di_inumber = new_ino;
 
 	/* Set a new generation number for this inode. */
-	if (++nextgennumber < (u_long)time.tv_sec)
-		nextgennumber = time.tv_sec;
-	ip->i_gen = nextgennumber;
+	ip->i_gen++;
 
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);

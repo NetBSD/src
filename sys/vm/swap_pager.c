@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.30 1997/01/03 18:03:17 mrg Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.30.6.1 1997/03/12 21:26:47 is Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -925,8 +925,7 @@ swap_pager_clean(rw)
 		 * Done with the object, decrement the paging count
 		 * and unlock it.
 		 */
-		if (--object->paging_in_progress == 0)
-			wakeup(object);
+		vm_object_paging_end(object);
 		vm_object_unlock(object);
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.69 1996/12/02 22:55:45 thorpej Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.69.4.1 1997/03/12 21:25:21 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -309,21 +309,6 @@ nfs_access(v)
 	int v3 = NFS_ISV3(vp);
 
 	/*
-	 * Disallow write attempts on filesystems mounted read-only;
-	 * unless the file is a socket, fifo, or a block or character
-	 * device resident on the filesystem.
-	 */
-	if ((ap->a_mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY)) {
-		switch (vp->v_type) {
-		case VREG:
-		case VDIR:
-		case VLNK:
-			return (EROFS);
-		default:
-			break;
-		}
-	}
-	/*
 	 * For nfs v3, do an access rpc, otherwise you are stuck emulating
 	 * ufs_access() locally using the vattr. This may not be correct,
 	 * since the server may apply other access criteria such as
@@ -367,9 +352,26 @@ nfs_access(v)
 				error = EACCES;
 		}
 		nfsm_reqdone;
-		return (error);
+		if (error)
+			return (error);
 	} else
 		return (nfsspec_access(ap));
+	/*
+	 * Disallow write attempts on filesystems mounted read-only;
+	 * unless the file is a socket, fifo, or a block or character
+	 * device resident on the filesystem.
+	 */
+	if ((ap->a_mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY)) {
+		switch (vp->v_type) {
+		case VREG:
+		case VDIR:
+		case VLNK:
+			return (EROFS);
+		default:
+			break;
+		}
+	}
+	return (0);
 }
 
 /*
@@ -583,9 +585,15 @@ nfs_setattr(v)
 	u_quad_t tsize = 0;
 
 	/*
+	 * Setting of flags is not supported.
+	 */
+	if (vap->va_flags != VNOVAL)
+		return (EOPNOTSUPP);
+
+	/*
 	 * Disallow write attempts if the filesystem is mounted read-only.
 	 */
-  	if ((vap->va_flags != VNOVAL || vap->va_uid != (uid_t)VNOVAL ||
+  	if ((vap->va_uid != (uid_t)VNOVAL ||
 	    vap->va_gid != (gid_t)VNOVAL || vap->va_atime.tv_sec != VNOVAL ||
 	    vap->va_mtime.tv_sec != VNOVAL || vap->va_mode != (mode_t)VNOVAL) &&
 	    (vp->v_mount->mnt_flag & MNT_RDONLY))
@@ -613,18 +621,20 @@ nfs_setattr(v)
 			 */
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
+ 			vnode_pager_setsize(vp, (u_long)vap->va_size);
  			if (vap->va_size == 0)
  				error = nfs_vinvalbuf(vp, 0,
  				     ap->a_cred, ap->a_p, 1);
 			else
 				error = nfs_vinvalbuf(vp, V_SAVE,
 				     ap->a_cred, ap->a_p, 1);
-			if (error)
+			if (error) {
+				vnode_pager_setsize(vp, (u_long)np->n_size);
 				return (error);
+			}
  			tsize = np->n_size;
  			np->n_size = np->n_vattr.va_size = vap->va_size;
- 			vnode_pager_setsize(vp, (u_long)np->n_size);
-  		};
+  		}
   	} else if ((vap->va_mtime.tv_sec != VNOVAL ||
 		vap->va_atime.tv_sec != VNOVAL) &&
 		vp->v_type == VREG &&
@@ -1537,7 +1547,7 @@ nfs_rename(v)
 	 * rename of the new file over it.
 	 */
 	if (tvp && tvp->v_usecount > 1 && !VTONFS(tvp)->n_sillyrename &&
-		!nfs_sillyrename(tdvp, tvp, tcnp)) {
+		tvp->v_type != VDIR && !nfs_sillyrename(tdvp, tvp, tcnp)) {
 		vrele(tvp);
 		tvp = NULL;
 	}
@@ -1647,15 +1657,11 @@ nfs_link(v)
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR, attrflag = 0;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
-	int v3 = NFS_ISV3(vp);
-
+	int v3;
 
 	if (dvp->v_mount != vp->v_mount) {
-		FREE(cnp->cn_pnbuf, M_NAMEI);
-		if (vp == dvp)
-			vrele(dvp);
-		else
-			vput(dvp);
+		VOP_ABORTOP(vp, cnp);
+		vput(dvp);
 		return (EXDEV);
 	}
 
@@ -1666,6 +1672,7 @@ nfs_link(v)
 	 */
 	VOP_FSYNC(vp, cnp->cn_cred, MNT_WAIT, cnp->cn_proc);
 
+	v3 = NFS_ISV3(vp);
 	nfsstats.rpccnt[NFSPROC_LINK]++;
 	nfsm_reqhead(vp, NFSPROC_LINK,
 		NFSX_FH(v3)*2 + NFSX_UNSIGNED + nfsm_rndup(cnp->cn_namelen));
@@ -3095,6 +3102,10 @@ nfsspec_access(v)
 	struct vnode *vp = ap->a_vp;
 	int error;
 
+	error = VOP_GETATTR(vp, &va, ap->a_cred, ap->a_p);
+	if (error)
+		return (error);
+
         /*
 	 * Disallow write attempts on filesystems mounted read-only;
 	 * unless the file is a socket, fifo, or a block or character
@@ -3110,10 +3121,6 @@ nfsspec_access(v)
 			break;
 		}
 	}
-
-	error = VOP_GETATTR(vp, &va, ap->a_cred, ap->a_p);
-	if (error)
-		return (error);
 
 	return (vaccess(va.va_mode, va.va_uid, va.va_gid, ap->a_mode,
 	    ap->a_cred));

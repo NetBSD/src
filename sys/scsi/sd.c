@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.107 1996/12/05 01:06:43 cgd Exp $	*/
+/*	$NetBSD: sd.c,v 1.107.6.1 1997/03/12 21:25:51 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -95,13 +95,14 @@ struct sd_softc {
 		u_long disksize;	/* total number sectors */
 	} params;
 	struct buf buf_queue;
+	u_int8_t type;
 };
 
 struct scsi_mode_sense_data {
 	struct scsi_mode_header header;
 	struct scsi_blk_desc blk_desc;
 	union disk_pages pages;
-} scsi_sense;
+};
 
 #ifdef __BROKEN_INDIRECT_CONFIG
 int	sdmatch __P((struct device *, void *, void *));
@@ -116,6 +117,7 @@ void	sdgetdisklabel __P((struct sd_softc *));
 void	sdstart __P((void *));
 int	sddone __P((struct scsi_xfer *, int));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
+int	sd_get_optparms __P((struct sd_softc *, int, struct disk_parms *));
 int	sd_get_parms __P((struct sd_softc *, int));
 static int sd_mode_sense __P((struct sd_softc *, struct scsi_mode_sense_data *,
     int, int));
@@ -188,6 +190,7 @@ sdattach(parent, self, aux)
 	 * Store information needed to contact our base driver
 	 */
 	sd->sc_link = sc_link;
+	sd->type = (sa->sa_inqbuf->device & SID_TYPE);
 	sc_link->device = &sd_switch;
 	sc_link->device_softc = sd;
 	if (sc_link->openings > SDOUTSTANDING)
@@ -563,6 +566,7 @@ sdstart(v)
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
 			biodone(bp);
 			continue;
 		}
@@ -619,7 +623,7 @@ sdstart(v)
 		 */
 		error = scsi_scsi_cmd(sc_link, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
-		    SDRETRIES, 10000, bp, SCSI_NOSLEEP |
+		    SDRETRIES, 60000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT));
 		if (error)
 			printf("%s: not queued, error %d\n",
@@ -796,7 +800,10 @@ sdgetdisklabel(sd)
 		/* as long as it's not 0 - readdisklabel divides by it (?) */
 	}
 
-	strncpy(lp->d_typename, "SCSI disk", 16);
+	if (sd->type == T_OPTICAL)
+		strncpy(lp->d_typename, "SCSI optical", 16);
+	else
+		strncpy(lp->d_typename, "SCSI disk", 16);
 	lp->d_type = DTYPE_SCSI;
 	strncpy(lp->d_packname, "fictitious", 16);
 	lp->d_secperunit = sd->params.disksize;
@@ -878,6 +885,58 @@ sd_mode_sense(sd, scsi_sense, page, flags)
 	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT);
 }
 
+int
+sd_get_optparms(sd, flags, dp)
+	struct sd_softc *sd;
+	int flags;
+	struct disk_parms *dp;
+{
+	struct scsi_mode_sense scsi_cmd;
+	struct scsi_mode_sense_data {
+		struct scsi_mode_header header;
+		struct scsi_blk_desc blk_desc;
+		union disk_pages pages;
+	} scsi_sense;
+	u_long sectors;
+	int error;
+
+	dp->blksize = 512;
+	if ((sectors = scsi_size(sd->sc_link, flags)) == 0)
+		return 1;
+
+	/* XXX
+	 * It is better to get the following params from the
+	 * mode sense page 6 only (optical device parameter page).
+	 * However, there are stupid optical devices which does NOT
+	 * support the page 6. Ghaa....
+	 */
+	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	scsi_cmd.opcode = MODE_SENSE;
+	scsi_cmd.page = 0x3f;	/* all pages */
+	scsi_cmd.length = sizeof(struct scsi_mode_header) +
+	    sizeof(struct scsi_blk_desc);
+
+	if ((error = scsi_scsi_cmd(sd->sc_link,  
+	    (struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd),  
+	    (u_char *)&scsi_sense, sizeof(scsi_sense), SDRETRIES,
+	    6000, NULL, flags | SCSI_DATA_IN)) != 0)
+		return error;
+
+	dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
+	if (dp->blksize == 0) 
+		dp->blksize = 512;
+
+	/*
+	 * Create a pseudo-geometry.
+	 */
+	dp->heads = 64;
+	dp->sectors = 32;
+	dp->cyls = sectors / (dp->heads * dp->sectors);
+	dp->disksize = sectors;
+
+	return 0;
+}
+
 /*
  * Get the scsi driver to send a full inquiry to the * device and use the
  * results to fill out the disk parameter structure.
@@ -892,6 +951,12 @@ sd_get_parms(sd, flags)
 	u_long sectors;
 	int page;
 	int error;
+
+	if (sd->type == T_OPTICAL) {
+		if ((error = sd_get_optparms(sd, flags, dp)) != 0)
+			sd->sc_link->flags &= ~SDEV_MEDIA_LOADED;
+		return error;
+	}
 
 	if ((error = sd_mode_sense(sd, &scsi_sense, page = 4, flags)) == 0) {
 		SC_DEBUG(sd->sc_link, SDEV_DB3,

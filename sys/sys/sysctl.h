@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.20 1997/01/31 03:03:29 thorpej Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.20.4.1 1997/03/12 21:26:14 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -303,15 +303,15 @@ struct kinfo_proc {
 #define	DDBCTL_LINES		4	/* int: number of display lines */
 #define	DDBCTL_TABSTOPS		5	/* int: tab width */
 #define	DDBCTL_ONPANIC		6	/* int: DDB on panic if non-zero */
-#define	DDBCTL_MAXID		7	/* number of vallid DDB ids */
+#define	DDBCTL_MAXID		7	/* number of valid DDB ids */
 
 #define	CTL_DDB_NAMES { \
 	{ 0, 0 }, \
 	{ "radix", CTLTYPE_INT }, \
 	{ "maxoff", CTLTYPE_INT }, \
 	{ "maxwidth", CTLTYPE_INT }, \
-	{ "tabstops", CTLTYPE_INT }, \
 	{ "lines", CTLTYPE_INT }, \
+	{ "tabstops", CTLTYPE_INT }, \
 	{ "onpanic", CTLTYPE_INT }, \
 }
 

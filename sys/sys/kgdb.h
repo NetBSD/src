@@ -1,8 +1,17 @@
-/*	$NetBSD: un.h,v 1.13.4.1 1997/03/12 21:26:17 is Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.1.4.2 1997/03/12 21:26:04 is Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1993
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,48 +41,63 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)un.h	8.1 (Berkeley) 6/2/93
+ *	@(#)remote-sl.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _SYS_UN_H_
-#define _SYS_UN_H_
+#ifndef _SYS_KGDB_H_
+#define _SYS_KGDB_H_
 
 /*
- * Definitions for UNIX IPC domain.
+ * Protocol definition for KGDB
+ * (gdb over remote serial line)
  */
-struct	sockaddr_un {
-	u_char	sun_len;		/* total sockaddr length */
-	u_char	sun_family;		/* AF_UNIX */
-	char	sun_path[104];		/* path name (gag) */
-};
 
-#ifdef _KERNEL
-struct unpcb;
-struct socket;
+#include <machine/db_machdep.h>
 
-int	unp_attach __P((struct socket *so));
-int	unp_bind __P((struct unpcb *unp, struct mbuf *nam, struct proc *p));
-int	unp_connect __P((struct socket *so, struct mbuf *nam, struct proc *p));
-int	unp_connect2 __P((struct socket *so, struct socket *so2));
-void	unp_detach __P((struct unpcb *unp));
-void	unp_discard __P((struct file *fp));
-void	unp_disconnect __P((struct unpcb *unp));
-void	unp_drop __P((struct unpcb *unp, int errno));
-void	unp_gc __P((void));
-void	unp_mark __P((struct file *fp));
-void	unp_scan __P((struct mbuf *m0, void (*op) __P((struct file *))));
-void	unp_shutdown __P((struct unpcb *unp));
-int 	unp_externalize __P((struct mbuf *));
-int	unp_internalize __P((struct mbuf *, struct proc *));
-void 	unp_dispose __P((struct mbuf *));
-int	unp_output __P((struct mbuf *, struct mbuf *, struct unpcb *));
-void	unp_setsockaddr __P((struct unpcb *, struct mbuf *));
-void	unp_setpeeraddr __P((struct unpcb *, struct mbuf *));
-#else /* !_KERNEL */
+/*
+ * Message types.
+ */
+#define KGDB_MEM_R	'm'
+#define KGDB_MEM_W	'M'
+#define KGDB_REG_R	'g'
+#define KGDB_REG_W	'G'
+#define KGDB_CONT	'c'
+#define KGDB_STEP	's'
+#define KGDB_KILL	'k'
+#define KGDB_SIGNAL	'?'
+#define KGDB_DEBUG	'd'
 
-/* actual length of an initialized sockaddr_un */
-#define SUN_LEN(su) \
-	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
-#endif /* _KERNEL */
+/*
+ * start of frame/end of frame
+ */
+#define KGDB_START	'$'
+#define KGDB_END	'#'
+#define KGDB_GOODP	'+'
+#define KGDB_BADP	'-'
 
-#endif /* !_SYS_UN_H_ */
+#ifdef	_KERNEL
+
+/*
+ * Functions and variables exported from kgdb_stub.c
+ */
+extern int kgdb_dev, kgdb_rate, kgdb_active;
+extern int kgdb_debug_init, kgdb_debug_panic;
+extern label_t *kgdb_recover;
+
+void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *ioarg));
+void kgdb_connect __P((int));
+void kgdb_panic __P((void));
+int kgdb_trap __P((int, db_regs_t *));
+
+/*
+ * Machine dependent functions needed by kgdb_stub.c
+ */
+void db_read_bytes __P((vm_offset_t, size_t, char *));
+void db_write_bytes __P((vm_offset_t, size_t, char *));
+int kgdb_signal __P((int));
+int kgdb_acc __P((vm_offset_t, size_t));
+void kgdb_getregs __P((db_regs_t *, kgdb_reg_t *));
+void kgdb_setregs __P((db_regs_t *, kgdb_reg_t *));
+
+#endif	/* _KERNEL */
+#endif /* !_SYS_KGDB_H_ */

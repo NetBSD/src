@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_pager.c,v 1.22 1997/01/31 03:06:06 thorpej Exp $	*/
+/*	$NetBSD: vnode_pager.c,v 1.22.4.1 1997/03/12 21:27:18 is Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -60,7 +60,9 @@
 #include <vm/vm_page.h>
 #include <vm/vnode_pager.h>
 
-struct pagerlst	vnode_pager_list;	/* list of managed vnodes */
+struct pagerlst		vnode_pager_list;	/* list of managed vnodes */
+simple_lock_data_t	vnode_pager_list_lock;
+lock_data_t		vnode_pager_sync_lock;
 
 #ifdef DEBUG
 int	vpagerdebug = 0x00;
@@ -106,6 +108,8 @@ vnode_pager_init()
 		printf("vnode_pager_init()\n");
 #endif
 	TAILQ_INIT(&vnode_pager_list);
+	simple_lock_init(&vnode_pager_list_lock);
+	lock_init(&vnode_pager_sync_lock, TRUE);
 }
 
 /*
@@ -173,13 +177,15 @@ vnode_pager_alloc(handle, size, prot, foff)
 		vnp->vnp_flags = 0;
 		vnp->vnp_vp = vp;
 		vnp->vnp_size = vattr.va_size;
-		TAILQ_INSERT_TAIL(&vnode_pager_list, pager, pg_list);
 		pager->pg_handle = handle;
 		pager->pg_type = PG_VNODE;
 		pager->pg_flags = 0;
 		pager->pg_ops = &vnodepagerops;
 		pager->pg_data = vnp;
 		vp->v_vmdata = (caddr_t)pager;
+		simple_lock(&vnode_pager_list_lock);
+		TAILQ_INSERT_TAIL(&vnode_pager_list, pager, pg_list);
+		simple_unlock(&vnode_pager_list_lock);
 	} else {
 		/*
 		 * vm_object_lookup() will remove the object from the
@@ -212,6 +218,9 @@ vnode_pager_dealloc(pager)
 	if (vpagerdebug & VDB_FOLLOW)
 		printf("vnode_pager_dealloc(%p)\n", pager);
 #endif
+	simple_lock(&vnode_pager_list_lock);
+	TAILQ_REMOVE(&vnode_pager_list, pager, pg_list);
+	simple_unlock(&vnode_pager_list_lock);
 	if ((vp = vnp->vnp_vp) != NULL) {
 		vp->v_vmdata = NULL;
 		vp->v_flag &= ~VTEXT;
@@ -221,7 +230,6 @@ vnode_pager_dealloc(pager)
 #endif
 		vrele(vp);
 	}
-	TAILQ_REMOVE(&vnode_pager_list, pager, pg_list);
 	free((caddr_t)vnp, M_VMPGDATA);
 	free((caddr_t)pager, M_VMPAGER);
 }
@@ -440,6 +448,68 @@ vnode_pager_umount(mp)
 			VOP_UNLOCK(vp);
 		}
 	}
+}
+
+/*
+ * Flush dirty pages in all vnode_pagers.
+ */
+void
+vnode_pager_sync(mp)
+	struct mount *mp;
+{
+	vm_pager_t pager;
+	struct vnode *vp;
+	vm_object_t object, next_object;
+	struct object_q object_list;
+
+	lock_write(&vnode_pager_sync_lock);
+
+	/*
+	 * We do this in two passes:
+	 * 1) We run through the list of pagers, making a list of the objects
+	 *    they back.  This also gains a reference, preventing them from
+	 *    being deleted.
+	 * 2) We then sync each object and deallocate it.
+	 *
+	 * We overload `cached_list', because it's convenient, and because
+	 * the extra reference we hold to the object will prevent it from
+	 * being on the cache list.
+	 */
+
+	TAILQ_INIT(&object_list);
+
+	simple_lock(&vnode_pager_list_lock);
+	for (pager = vnode_pager_list.tqh_first;
+	     pager != NULL; pager = pager->pg_list.tqe_next) {
+		vp = ((vn_pager_t)pager->pg_data)->vnp_vp;
+		if (mp == (struct mount *)0 || vp->v_mount == mp) {
+			object = vm_object_lookup(pager);
+			if (object != NULL)
+				TAILQ_INSERT_TAIL(&object_list, object,
+				    cached_list);
+		}
+	}
+	simple_unlock(&vnode_pager_list_lock);
+
+	for (object = object_list.tqh_first; object != NULL;
+	     object = next_object) {
+		next_object = object->cached_list.tqe_next;
+		vm_object_lock(object);
+
+		/*
+		 * If this object is already being deleted, or lost its last
+		 * reference while we were sleeping, don't bother to clean it
+		 * here; vm_object_terminate() will do it.
+		 */
+		if ((object->flags & OBJ_FADING) == 0 &&
+		    object->ref_count > 1)
+			(void) vm_object_page_clean(object, 0, 0, FALSE, FALSE);
+
+		vm_object_unlock(object);
+		vm_object_deallocate(object);
+	}
+
+	lock_write_done(&vnode_pager_sync_lock);
 }
 
 /*

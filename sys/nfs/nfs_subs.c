@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.38 1997/01/31 02:58:52 thorpej Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.38.2.1 1997/03/12 21:25:12 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -910,8 +910,10 @@ nfsm_uiotombuf(uiop, mq, siz, bpos)
 }
 
 /*
- * Help break down an mbuf chain by setting the first siz bytes contiguous
- * pointed to by returned val.
+ * Get at least "siz" bytes of correctly aligned data.
+ * When called the mbuf pointers are not necessarily correct,
+ * dsosp points to what ought to be in m_data and left contains
+ * what ought to be in m_len. 
  * This is used by the macros nfsm_dissect and nfsm_dissecton for tough
  * cases. (The macros use the vars. dpos and dpos2)
  */
@@ -923,55 +925,103 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 	int left;
 	caddr_t *cp2;
 {
-	register struct mbuf *mp, *mp2;
-	register int siz2, xfer;
-	register caddr_t p;
+	register struct mbuf *m1, *m2;
+	struct mbuf *havebuf = NULL;
+	caddr_t src = *dposp;
+	caddr_t dst;
+	int len;
 
-	mp = *mdp;
+#ifdef DEBUG
+	if (left < 0)
+		panic("nfsm_disct: left < 0"); 
+#endif
+	m1 = *mdp;
+	/*
+	 * Skip through the mbuf chain looking for an mbuf with
+	 * some data. If the first mbuf found has enough data
+	 * and it is correctly aligned return it.
+	 */
 	while (left == 0) {
-		*mdp = mp = mp->m_next;
-		if (mp == NULL)
+		havebuf = m1;
+		*mdp = m1 = m1->m_next;
+		if (m1 == NULL)
 			return (EBADRPC);
-		left = mp->m_len;
-		*dposp = mtod(mp, caddr_t);
-	}
-	if (left >= siz) {
-		*cp2 = *dposp;
-		*dposp += siz;
-	} else if (mp->m_next == NULL) {
-		return (EBADRPC);
-	} else if (siz > MHLEN) {
-		panic("nfs S too big");
-	} else {
-		MGET(mp2, M_WAIT, MT_DATA);
-		mp2->m_next = mp->m_next;
-		mp->m_next = mp2;
-		mp->m_len -= left;
-		mp = mp2;
-		*cp2 = p = mtod(mp, caddr_t);
-		bcopy(*dposp, p, left);		/* Copy what was left */
-		siz2 = siz-left;
-		p += left;
-		mp2 = mp->m_next;
-		/* Loop around copying up the siz2 bytes */
-		while (siz2 > 0) {
-			if (mp2 == NULL)
-				return (EBADRPC);
-			xfer = (siz2 > mp2->m_len) ? mp2->m_len : siz2;
-			if (xfer > 0) {
-				bcopy(mtod(mp2, caddr_t), p, xfer);
-				NFSMADV(mp2, xfer);
-				mp2->m_len -= xfer;
-				p += xfer;
-				siz2 -= xfer;
-			}
-			if (siz2 > 0)
-				mp2 = mp2->m_next;
+		src = mtod(m1, caddr_t);
+		left = m1->m_len;
+		/*
+		 * If we start a new mbuf and it is big enough
+		 * and correctly aligned just return it, don't
+		 * do any pull up.
+		 */
+		if (left >= siz && nfsm_aligned(src)) {
+			*cp2 = src;
+			*dposp = src + siz;
+			return (0);
 		}
-		mp->m_len = siz;
-		*mdp = mp2;
-		*dposp = mtod(mp2, caddr_t);
 	}
+	if (m1->m_flags & M_EXT) {
+		if (havebuf) {
+			/* If the first mbuf with data has external data
+			 * and there is a previous empty mbuf use it
+			 * to move the data into.
+			 */
+			m2 = m1;
+			*mdp = m1 = havebuf;
+			if (m1->m_flags & M_EXT) {
+				MCLFREE(m1->m_ext.ext_buf)
+				m1->m_flags &= ~M_EXT;
+				m1->m_ext.ext_size = 0; /* why ??? */
+			}
+		} else {
+			/*
+			 * If the first mbuf has a external data
+			 * and there is no previous empty mbuf
+			 * allocate a new mbuf and move the external
+			 * data to the new mbuf. Also make the first 
+			 * mbuf look empty.
+			 */
+			m2 = m_get(M_WAIT, MT_DATA);
+			m2->m_ext = m1->m_ext;
+			m2->m_data = src;
+			m2->m_len = left;
+			m2->m_flags |= M_EXT;
+			m1->m_ext.ext_size = 0; /* why ??? */
+			m1->m_flags &= ~M_EXT;
+			m2->m_next = m1->m_next;
+			m1->m_next = m2;
+		}
+		m1->m_len = 0;
+		dst = m1->m_dat;
+	} else {
+		/*
+		 * If the first mbuf has no external data
+		 * move the data to the front of the mbuf.
+		 */
+		if ((dst = m1->m_dat) != src)
+			ovbcopy(src, dst, left);
+		dst += left; 
+		m1->m_len = left;
+		m2 = m1->m_next;
+	}
+	m1->m_flags &= ~M_PKTHDR;
+	*cp2 = m1->m_data = m1->m_dat;   /* data is at beginning of buffer */
+	*dposp = mtod(m1, caddr_t) + siz;
+	/*
+	 * Loop through mbufs pulling data up into first mbuf until
+	 * the first mbuf is full or there is no more data to
+	 * pullup.
+	 */
+	while ((len = (MLEN - m1->m_len)) != 0 && m2) {
+		if ((len = min(len, m2->m_len)) != 0)
+			bcopy(m2->m_data, dst, len);
+		m1->m_len += len;
+		dst += len;
+		m2->m_data += len;
+		m2->m_len -= len;
+		m2 = m2->m_next;
+	}
+	if (m1->m_len < siz)
+		return (EBADRPC);
 	return (0);
 }
 

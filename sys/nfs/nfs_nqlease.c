@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.17 1997/01/31 02:58:48 thorpej Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.17.2.1 1997/03/12 21:24:56 is Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +55,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
+#include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -64,6 +65,7 @@
 #include <sys/buf.h>
 #include <sys/stat.h>
 #include <sys/protosw.h>
+#include <sys/signalvar.h>
 
 #include <netinet/in.h>
 #include <nfs/rpcv2.h>
@@ -145,7 +147,7 @@ extern struct nfsstats nfsstats;
  *     nqsrv_locklease() is coded such that at least one of LC_LOCKED and
  *     LC_WANTED is set whenever a process is tsleeping in it. The exception
  *     is when a new lease is being allocated, since it is not in the timer
- *     queue yet. (Ditto for the splsoftclock() and splx(s) calls)
+ *     queue yet. (Ditto for the splsoftnet() and splx(s) calls)
  */
 int
 nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
@@ -176,7 +178,7 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 	if (error)
 		return (error);
 	*frev = vattr.va_filerev;
-	s = splsoftclock();
+	s = splsoftnet();
 	tlp = vp->v_lease;
 	if ((flags & ND_CHECK) == 0)
 		nfsstats.srvnqnfs_getleases++;
@@ -298,7 +300,7 @@ doreply:
 		panic("nfs_nqlease.c: Phoney lpp");
 	LIST_INSERT_HEAD(lpp, lp, lc_hash);
 	vp->v_lease = lp;
-	s = splsoftclock();
+	s = splsoftnet();
 	nqsrv_instimeq(lp, *duration);
 	splx(s);
 	*cachablep = 1;
@@ -455,9 +457,10 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 	struct mbuf *mreq, *mb, *mb2, *nam2, *mheadend;
 	struct socket *so;
 	struct sockaddr_in *saddr;
+	nfsfh_t nfh;
 	fhandle_t *fhp;
 	caddr_t bpos, cp;
-	u_int32_t xid;
+	u_int32_t xid, *tl;
 	int len = 1, ok = 1, i = 0;
 	int sotype, *solockp;
 
@@ -488,12 +491,12 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 			else
 				solockp = (int *)0;
 			nfsm_reqhead((struct vnode *)0, NQNFSPROC_EVICTED,
-				NFSX_V3FH);
-			nfsm_build(cp, caddr_t, NFSX_V3FH);
-			bzero(cp, NFSX_V3FH);
-			fhp = (fhandle_t *)cp;
+				NFSX_V3FH + NFSX_UNSIGNED);
+			fhp = &nfh.fh_generic;
+			bzero((caddr_t)fhp, sizeof(nfh));
 			fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 			VFS_VPTOFH(vp, &fhp->fh_fid);
+			nfsm_srvfhtom(fhp, 1);
 			m = mreq;
 			siz = 0;
 			while (m) {
@@ -833,7 +836,7 @@ nqnfs_getlease(vp, rwflag, cred, p)
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	int cachable;
 	u_quad_t frev;
-	
+
 	nfsstats.rpccnt[NQNFSPROC_GETLEASE]++;
 	mb = mreq = nfsm_reqh(vp, NQNFSPROC_GETLEASE, NFSX_V3FH+2*NFSX_UNSIGNED,
 		 &bpos);
@@ -876,10 +879,10 @@ nqnfs_vacated(vp, cred)
 	struct mbuf *mreq, *mb, *mb2, *mheadend;
 	struct nfsmount *nmp;
 	struct nfsreq myrep;
-	
+
 	nmp = VFSTONFS(vp->v_mount);
 	nfsstats.rpccnt[NQNFSPROC_VACATED]++;
-	nfsm_reqhead(vp, NQNFSPROC_VACATED, NFSX_V3FH);
+	nfsm_reqhead(vp, NQNFSPROC_VACATED, NFSX_FH(1));
 	nfsm_fhtom(vp, 1);
 	m = mreq;
 	i = 0;
@@ -984,7 +987,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 	struct vnode *vp;
 	struct nfsreq myrep;
 	struct nfsuid *nuidp, *nnuidp;
-	int error = 0, vpid;
+	int error = 0, vpid, sleepreturn;
 
 	/*
 	 * First initialize some variables
@@ -1020,7 +1023,15 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 	/*
 	 * Loop every second updating queue until there is a termination sig.
 	 */
+	sleepreturn = 0;
 	while ((nmp->nm_flag & NFSMNT_DISMNT) == 0) {
+	    if (sleepreturn == EINTR || sleepreturn == ERESTART) {
+		if (vfs_busy(nmp->nm_mountp) == 0 &&
+		    dounmount(nmp->nm_mountp, 0, p) != 0)
+			CLRSIG(p, CURSIG(p));
+		sleepreturn = 0;
+		continue;
+	    }
 	    if (nmp->nm_flag & NFSMNT_NQNFS) {
 		/*
 		 * If there are no outstanding requests (and therefore no
@@ -1054,14 +1065,16 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 			     if (vpid == vp->v_id) {
 				CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 				np->n_timer.cqe_next = 0;
-				if ((np->n_flag & (NMODIFIED | NQNFSEVICTED))
-				    && vp->v_type == VREG) {
+				if (np->n_flag & (NMODIFIED | NQNFSEVICTED)) {
 					if (np->n_flag & NQNFSEVICTED) {
+						if (vp->v_type == VDIR)
+							nfs_invaldir(vp);
+						cache_purge(vp);
 						(void) nfs_vinvalbuf(vp,
 						       V_SAVE, cred, p, 0);
 						np->n_flag &= ~NQNFSEVICTED;
 						(void) nqnfs_vacated(vp, cred);
-					} else {
+					} else if (vp->v_type == VREG) {
 						(void) VOP_FSYNC(vp, cred,
 						    MNT_WAIT, p);
 						np->n_flag &= ~NMODIFIED;
@@ -1110,10 +1123,8 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 	     */
 	    if ((nmp->nm_flag & NFSMNT_DISMNT) == 0 &&
 		(nmp->nm_flag & (NFSMNT_WAITAUTH | NFSMNT_HASAUTH))) {
-		    error = tsleep((caddr_t)&nmp->nm_authstr, PSOCK | PCATCH,
-			"nqnfstimr", hz / 3);
-		    if (error == EINTR || error == ERESTART)
-			(void) dounmount(nmp->nm_mountp, MNT_FORCE, p);
+		    sleepreturn = tsleep((caddr_t)&nmp->nm_authstr,
+			PSOCK | PCATCH, "nqnfstimr", hz / 3);
 	    }
 	}
 
@@ -1190,7 +1201,7 @@ nqnfs_lease_updatetime(deltat)
 
 	if (nqnfsstarttime != 0)
 		nqnfsstarttime += deltat;
-	s = splsoftclock();
+	s = splsoftnet();
 	for (lp = nqtimerhead.cqh_first; lp != (void *)&nqtimerhead;
 	    lp = lp->lc_timer.cqe_next)
 		lp->lc_expiry += deltat;

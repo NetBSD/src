@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.57 1997/02/04 21:33:21 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.57.2.1 1997/03/12 21:25:16 is Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -442,6 +442,13 @@ nfs_decode_args(nmp, argp)
 	int maxio;
 
 	s = splsoftnet();
+
+	/*
+	 * Silently clear NFSMNT_NOCONN if it's a TCP mount, it makes
+	 * no sense in that context.
+	 */
+	if (argp->sotype == SOCK_STREAM)
+		argp->flags &= ~NFSMNT_NOCONN;
 
 	/* Re-bind if rsrvd port requested and wasn't on one */
 	adjsock = !(nmp->nm_flag & NFSMNT_RESVPORT)

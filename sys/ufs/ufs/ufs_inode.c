@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.7.8.1 1997/03/12 21:26:39 is Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -53,8 +53,6 @@
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
-
-u_long	nextgennumber;		/* Next generation number to assign. */
 
 void
 ufs_init()
