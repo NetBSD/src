@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.13 1997/01/09 11:43:07 tls Exp $	*/
+/*	$NetBSD: su.c,v 1.14 1997/01/31 22:22:47 ghudson Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-static char rcsid[] = "$NetBSD: su.c,v 1.13 1997/01/09 11:43:07 tls Exp $";
+static char rcsid[] = "$NetBSD: su.c,v 1.14 1997/01/31 22:22:47 ghudson Exp $";
 #endif
 #endif /* not lint */
 
@@ -167,8 +167,10 @@ main(argc, argv)
 	    if (!use_kerberos || kerberos(username, user, pwd->pw_uid))
 #endif
 	    {
-		/* only allow those in group zero to su to root. */
-		if (pwd->pw_uid == 0 && (gr = getgrgid((gid_t)0)))
+		/* only allow those in group zero to su to root, if group
+		 * zero has any members. */
+		if (pwd->pw_uid == 0 && (gr = getgrgid((gid_t)0)) &&
+		    *gr->gr_mem) {
 			for (g = gr->gr_mem;; ++g) {
 				if (!*g)
 					errx(1, 
@@ -176,6 +178,7 @@ main(argc, argv)
 					    user);
 				if (!strcmp(username, *g))
 					break;
+			}
 		}
 		/* if target requires a password, verify it */
 		if (*pwd->pw_passwd) {
