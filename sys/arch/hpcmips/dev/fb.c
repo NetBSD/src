@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.5 1999/11/02 10:36:53 takemura Exp $	*/
+/*	$NetBSD: fb.c,v 1.6 1999/11/03 13:48:07 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -67,7 +67,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 19999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.5 1999/11/02 10:36:53 takemura Exp $";
+    "$Id: fb.c,v 1.6 1999/11/03 13:48:07 takemura Exp $";
 
 
 #include <sys/param.h>
@@ -311,7 +311,8 @@ fb_getdevconfig(dc)
 	struct fb_devconfig *dc;
 {
 	int i;
-	int depth, reverse;
+	int32_t fg, bg;
+	int depth;
 #ifdef USE_RASTERCONS
 	struct rcons *rcp;
 #else
@@ -332,44 +333,38 @@ fb_getdevconfig(dc)
 	dc->dc_rowbytes = bootinfo->fb_line_bytes;
 	dc->dc_fbaddr = (vaddr_t)bootinfo->fb_addr;
 
-	/* clear the screen */
-	for (i = 0;
-	     i < dc->dc_height * dc->dc_rowbytes;
-	     i += sizeof(u_int32_t)) {
-		*(u_int32_t *)(dc->dc_fbaddr + i) = 0;
-	}
-
 	switch (bootinfo->fb_type) {
-	case BIFB_D2_M2L_3:
-	case BIFB_D2_M2L_3x2:
-		reverse = 1;
-		depth = 2;
-		break;
 	case BIFB_D2_M2L_0:
 	case BIFB_D2_M2L_0x2:
-		reverse = 0;
+		depth = 2;
+		break;
+	case BIFB_D2_M2L_3:
+	case BIFB_D2_M2L_3x2:
 		depth = 2;
 		break;
 	case BIFB_D8_00:
-		reverse = 0;
 		depth = 8;
 		break;
 	case BIFB_D8_FF:
-		reverse = 1;
 		depth = 8;
 		break;
 	case BIFB_D16_0000:
-		reverse = 0;
 		depth = 16;
 		break;
 	case BIFB_D16_FFFF:
-		reverse = 1;
 		depth = 16;
 		break;
 	default:
 		printf(": unknown type (=%d).\n", bootinfo->fb_type);
 		return (-1);
 		break;
+	}
+
+	/* clear the screen */
+	for (i = 0;
+	     i < dc->dc_height * dc->dc_rowbytes;
+	     i += sizeof(u_int32_t)) {
+		*(u_int32_t *)(dc->dc_fbaddr + i) = 0;
 	}
 
 #ifdef USE_RASTERCONS
@@ -406,9 +401,13 @@ fb_getdevconfig(dc)
 		panic("%s(%d): rasops_init() failed!", __FILE__, __LINE__);
 	}
 
-	if (reverse) {
-		ri->ri_devcmap[0] = 0x00000000;
-		ri->ri_devcmap[1] = 0xffffffff;
+	/*
+	 *  setup color map
+	 *  overriding rasops.c: rasops_init_devcmap().
+	 */
+	ri->ri_devcmap[0] = 0;
+	for (i = 1; i < 16; i++) {
+		ri->ri_devcmap[1] = ~0;
 	}
 #endif /* USE_RASTERCONS */
 	return (0);
