@@ -1,7 +1,7 @@
-/*	$NetBSD: intio.c,v 1.6 1998/01/12 18:31:00 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.7 2001/11/17 23:33:22 gmcgarry Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,17 +43,44 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h> 
- 
+
+#include <machine/hp300spu.h>
+
+#include <hp300/dev/intioreg.h> 
 #include <hp300/dev/intiovar.h>
 
-int	intiomatch __P((struct device *, struct cfdata *, void *));
-void	intioattach __P((struct device *, struct device *, void *));
-int	intioprint __P((void *, const char *));
-int	intiosearch __P((struct device *, struct cfdata *, void *));
+int	intiomatch(struct device *, struct cfdata *, void *);
+void	intioattach(struct device *, struct device *, void *);
+int	intioprint(void *, const char *);
 
-struct cfattach intio_ca = {
+const struct cfattach intio_ca = {
 	sizeof(struct device), intiomatch, intioattach
 };
+
+#if defined(HP320) || defined(HP330) || defined(HP340) || defined(HP345) || \
+    defined(HP350) || defined(HP360) || defined(HP370) || defined(HP375) || \
+    defined(HP380) || defined(HP385)
+const struct intio_builtins intio_3xx_builtins[] = {
+	{ "rtc     ",	0x020000,	-1},
+	{ "hil     ",	0x028000,	1},
+	{ "fb      ",	0x160000,	-1},
+};
+#define nintio_3xx_builtins \
+	(sizeof(intio_3xx_builtins) / sizeof(intio_3xx_builtins[0]))
+#endif
+
+#if defined(HP400) || defined(HP425) || defined(HP433)
+const struct intio_builtins intio_4xx_builtins[] = {
+	{ "rtc     ",	0x020000,	-1},
+	{ "frodo   ",	0x01c000,	5},
+	{ "hil     ",	0x028000,	1},
+	{ "fb      ",	0x160000,	-1},
+};
+#define nintio_4xx_builtins \
+	(sizeof(intio_4xx_builtins) / sizeof(intio_4xx_builtins[0]))
+#endif
+
+static int intio_matched = 0;
 
 int
 intiomatch(parent, match, aux)
@@ -61,8 +88,6 @@ intiomatch(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	static int intio_matched = 0;
-
 	/* Allow only one instance. */
 	if (intio_matched)
 		return (0);
@@ -76,11 +101,54 @@ intioattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct intio_attach_args ia;
+	const struct intio_builtins *ib;
+	int ndevs;
+	int i;
 
 	printf("\n");
 
-	/* Search for and attach children. */
-	config_search(intiosearch, self, NULL);
+	switch (machineid) {
+#if defined(HP320) || defined(HP330) || defined(HP340) || defined(HP345) || \
+    defined(HP350) || defined(HP360) || defined(HP370) || defined(HP375) || \
+    defined(HP380) || defined(HP385)
+	case HP_320:
+	case HP_330:
+	case HP_340:
+	case HP_345:
+	case HP_350:
+	case HP_360:
+	case HP_370:
+	case HP_375:
+	case HP_380:
+	case HP_385:
+		ib = intio_3xx_builtins;
+		ndevs = nintio_3xx_builtins;
+		break;
+#endif
+#if defined(HP400) || defined(HP425) || defined(HP433)
+	case HP_400:
+	case HP_425:
+	case HP_433:
+		ib = intio_4xx_builtins;
+		ndevs = nintio_4xx_builtins;
+		break;
+#endif
+	default:
+		return;
+	}
+
+	memset(&ia, 0, sizeof(ia));
+
+	for (i=0; i<ndevs; i++) {
+		strncpy(ia.ia_modname, ib[i].ib_modname, INTIO_MOD_LEN);
+		ia.ia_modname[INTIO_MOD_LEN] = '\0';
+		ia.ia_bst = HP300_BUS_SPACE_INTIO;
+		ia.ia_iobase = ib[i].ib_offset;
+		ia.ia_addr = (bus_addr_t)(intiobase + ib[i].ib_offset);
+		ia.ia_ipl = ib[i].ib_ipl;
+		config_found(self, &ia, intioprint);
+	}
 }
 
 int
@@ -90,22 +158,12 @@ intioprint(aux, pnp)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (ia->ia_addr != 0)
-		printf(" addr 0x%lx", ia->ia_addr);
+	if (pnp)
+		printf("%s at %s", ia->ia_modname, pnp);
+	if (ia->ia_addr != 0) {
+		printf(" addr 0x%lx", INTIOBASE + ia->ia_iobase);
+		if (ia->ia_ipl != -1)
+			printf(" ipl %d", ia->ia_ipl);
+	}
 	return (UNCONF);
-}
-
-int
-intiosearch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	struct intio_attach_args ia;
-
-	bzero(&ia, sizeof(ia));
-	ia.ia_bst = HP300_BUS_SPACE_INTIO;
-	if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0)
-		config_attach(parent, cf, &ia, intioprint);
-	return (0);
 }
