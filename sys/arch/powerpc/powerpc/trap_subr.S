@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.21 2002/05/02 16:47:49 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -552,6 +552,35 @@ _C_LABEL(ipkdblow):
 _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 #endif	/* IPKDB */
 
+#ifdef	CPU601_KERN_ENTRY_HOOK
+#define	CPU601_KERN_ENTRY(_s1_,_s2_)					\
+	mfpvr	_s1_;							\
+	srwi	_s1_,_s1_,16;						\
+	cmpi	0,_s1_,MPC601;						\
+	bne	98f;			/* skip if not 601 */		\
+	CPU601_KERN_ENTRY_HOOK(_s1_,_s2_);				\
+98:
+#else
+#define	CPU601_KERN_ENTRY(_s1_,_s2_)	/* nothing */
+#endif
+
+#ifdef CPU601_KERN_LEAVE_HOOK
+#define	CPU601_KERN_LEAVE(_pmap_,_s1_)					\
+	mfpvr	_s1_;							\
+	srwi	_s1_,_s1_,16;						\
+	cmpi	0,_s1_,MPC601;						\
+	bne	99f;			/* skip if not 601 */		\
+	CPU601_KERN_LEAVE_HOOK(_pmap_,_s1_);				\
+	xor	_s1_,_s1_,_s1_;						\
+	mtibatl	0,_s1_;			/* obliterate BATs */		\
+	mtibatl	1,_s1_;							\
+	mtibatl	2,_s1_;							\
+	mtibatl	3,_s1_;							\
+99:
+#else
+#define	CPU601_KERN_LEAVE(_pmap_,_s1_)	/* nothing */
+#endif
+
 /*
  * FRAME_SETUP assumes:
  *	SPRG1		SP (1)
@@ -643,6 +672,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtsr	USER_SR,3;						\
 	lwz	3,PM_KERNELSR(2);					\
 	mtsr	KERNEL_SR,3;						\
+	CPU601_KERN_LEAVE(2,3);						\
 1:	mfsprg	2,1;			/* restore cr */		\
 	mtcr	2;							\
 	lwz	2,savearea(0);						\
@@ -682,6 +712,7 @@ s_trap:
 	lis	31,KERNEL_SEGMENT@h
 	ori	31,31,KERNEL_SEGMENT@l
 	mtsr	KERNEL_SR,31
+	CPU601_KERN_ENTRY(30,31)
 /* Obliterate SRs so BAT spills work correctly */
 	lis	31,EMPTY_SEGMENT@h
 	ori	31,31,EMPTY_SEGMENT@l
@@ -849,6 +880,7 @@ s_isitrap:
 	mtsr	5,3;							\
 	mtsr	6,3;							\
 	mtsr	7,3;							\
+	CPU601_KERN_ENTRY(3,4);						\
 /* interrupts are recoverable here, and enable translation */		\
 	lis	3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@h;			\
 	ori	3,3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@l;		\
@@ -906,8 +938,9 @@ intr_exit:
 	mtsr	6,4			/* Restore SR6 */
 	lwz	4,PM_SR+28(3)
 	mtsr	7,4			/* Restore SR7 */
-	lwz	3,PM_KERNELSR(3)
-	mtsr	KERNEL_SR,3		/* Restore kernel SR */
+	lwz	4,PM_KERNELSR(3)
+	mtsr	KERNEL_SR,4		/* Restore kernel SR */
+	CPU601_KERN_LEAVE(3,4)
 	lis	3,_C_LABEL(astpending)@ha /* Test AST pending */
 	lwz	4,_C_LABEL(astpending)@l(3)
 	andi.	4,4,1
