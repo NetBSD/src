@@ -1,4 +1,4 @@
-/*	$NetBSD: lose.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $	*/
+/*	$NetBSD: lose.c,v 1.6 2001/02/05 01:12:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lose.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lose.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $");
+__RCSID("$NetBSD: lose.c,v 1.6 2001/02/05 01:12:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,8 @@ __RCSID("$NetBSD: lose.c,v 1.5 1999/07/21 13:19:11 hubertf Exp $");
 **	printed, and the game is restarted.  Oh yeh, any special
 **	actions which need be taken are taken.
 */
+
+extern jmp_buf	env;
 
 const char	*const Losemsg[] =
 {
@@ -77,8 +79,6 @@ void
 lose(why)
 int	why;
 {
-	extern jmp_buf	env;
-
 	Game.killed = 1;
 	sleep(1);
 	printf("\n%s\n", Losemsg[why - 1]);

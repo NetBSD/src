@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.c,v 1.6 1999/09/17 17:06:08 jsm Exp $	*/
+/*	$NetBSD: externs.c,v 1.7 2001/02/05 01:12:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)externs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: externs.c,v 1.6 1999/09/17 17:06:08 jsm Exp $");
+__RCSID("$NetBSD: externs.c,v 1.7 2001/02/05 01:12:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,8 +108,6 @@ struct quad	Quad[NQUADS][NQUADS];
 
 /* current sector map */
 char	Sect[NSECTS][NSECTS];
-
-const struct device	Device[NDEV];
 
 struct event	Event[MAXEVENTS];	/* dynamic event list; one entry per pending event */
 

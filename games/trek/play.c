@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.6 1999/09/08 21:45:33 jsm Exp $	*/
+/*	$NetBSD: play.c,v 1.7 2001/02/05 01:12:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)play.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: play.c,v 1.6 1999/09/08 21:45:33 jsm Exp $");
+__RCSID("$NetBSD: play.c,v 1.7 2001/02/05 01:12:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,8 @@ __RCSID("$NetBSD: play.c,v 1.6 1999/09/08 21:45:33 jsm Exp $");
 **	attack if the move was not free, and checkcond() to check up
 **	on how we are doing after the move.
 */
+
+extern jmp_buf env;
 
 const struct cvntab	Comtab[] =
 {
@@ -91,7 +93,6 @@ void
 myreset(v)
 	int v __attribute__((__unused__));
 {
-	extern jmp_buf env;
 
 	longjmp(env, 1);
 }
