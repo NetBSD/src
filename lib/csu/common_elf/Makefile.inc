@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2001/05/17 21:17:02 fredette Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2001/06/07 15:22:50 mrg Exp $
 
 .if !defined(ELFSIZE)
 ELFSIZE=32
@@ -46,7 +46,7 @@ crtend.o: crtend.c
 	@rm -f ${.TARGET}.o
 
 FILES=${OBJS}
-FILESDIR=/usr/lib
+FILESDIR=${LIBDIR}
 
 LINKS=	${LIBDIR}/crtbegin.o ${LIBDIR}/crtbeginS.o \
 	${LIBDIR}/crtend.o ${LIBDIR}/crtendS.o
