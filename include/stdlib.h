@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.66 2004/04/23 14:44:54 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.67 2004/05/27 02:58:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -191,6 +191,10 @@ char	*realpath __P((const char *, char *));
 int	 ttyslot __P((void));
 
 void	*valloc __P((size_t));		/* obsoleted by malloc() */
+
+int	 grantpt __P((int));
+int	 unlockpt __P((int));
+char	*ptsname __P((int));
 #endif
 
 /*
@@ -224,6 +228,8 @@ int	 __unsetenv13 __P((const char *));
 #else
 int	 unsetenv __P((const char *))		__RENAME(__unsetenv13);
 #endif
+
+int	 posix_openpt __P((int));
 #endif
 
 /*
