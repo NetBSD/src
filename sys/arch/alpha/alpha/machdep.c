@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.275 2003/10/08 03:10:41 enami Exp $ */
+/* $NetBSD: machdep.c,v 1.276 2003/10/13 22:19:15 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.275 2003/10/08 03:10:41 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.276 2003/10/13 22:19:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1575,7 +1575,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig_siginfo(%d): sig %d ssp %p usp %p\n", p->p_pid,
-		    sig, &onstack, scp);
+		    sig, &onstack, fp);
 #endif
 
 	/* Build stack frame for signal trampoline. */
@@ -1603,8 +1603,8 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig_siginfo(%d): sig %d scp %p code %lx\n",
-		       p->p_pid, sig, scp, code);
+		printf("sendsig_siginfo(%d): sig %d usp %p code %x\n",
+		       p->p_pid, sig, fp, ksi->ksi_code);
 #endif
 
 	/*
@@ -1627,7 +1627,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sendsig_siginfo(%d): pc %lx, catcher %lx\n", p->p_pid,
-		    frame->tf_regs[FRAME_PC], frame->tf_regs[FRAME_A3]);
+		    tf->tf_regs[FRAME_PC], tf->tf_regs[FRAME_A3]);
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig_siginfo(%d): sig %d returns\n",
 		    p->p_pid, sig);
