@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.1 1994/05/21 05:46:16 deraadt Exp $
+ * $Id: skeylogin.c,v 1.2 1994/05/31 08:50:31 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -112,8 +112,11 @@ char *name;
 	struct stat statbuf;
 
 	/* See if the KEYFILE exists, and create it if not */
-	if(stat(KEYFILE,&statbuf) == -1 && errno == ENOENT){
+
+	if(stat(KEYFILE,&statbuf) == -1 && errno == ENOENT) {
 		mp->keyfile = fopen(KEYFILE,"w+");
+		if(mp->keyfile)
+			chmod(KEYFILE, 644);
 	} else {
 		/* Otherwise open normally for update */
 		mp->keyfile = fopen(KEYFILE,"r+");
