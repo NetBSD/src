@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.117 1999/03/14 14:04:40 drochner Exp $
+#	$NetBSD: rc,v 1.118 1999/03/17 15:49:47 drochner Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -520,7 +520,7 @@ fi
 
 if checkyesno wscons && [ -f /etc/rc.wscons ]; then
 	echo 'configuring wscons'
-	. /etc/rc.wscons
+	/bin/sh /etc/rc.wscons $wscons_flags
 fi
 
 . /etc/rc.local
