@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.12 1998/11/06 19:54:19 christos Exp $	*/
+/*	$NetBSD: externs.h,v 1.13 1998/12/20 14:48:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -72,6 +72,10 @@
 #   include <sys/termio.h>
 #  else
 #   include <sys/termios.h>
+#   define termio termios
+#  endif
+# else
+#  if defined(TCSANOW)
 #   define termio termios
 #  endif
 # endif
