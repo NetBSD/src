@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.24 1997/06/26 06:01:59 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.25 1997/06/26 06:13:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -983,10 +983,10 @@ sockargs(mp, buf, buflen, type)
 	int error;
 
 	/*
-	 * We can't allow socket names > 255 in length, since that
+	 * We can't allow socket names > UCHAR_MAX in length, since that
 	 * will overflow sa_len.
 	 */
-	if (type == MT_SONAME && (u_int)buflen > 255)
+	if (type == MT_SONAME && (u_int)buflen > UCHAR_MAX)
 		return (EINVAL);
 
 	/* Allocate an mbuf to hold the arguments. */
