@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.1.1.1.2.8 2002/09/04 00:38:57 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.1.1.1.2.9 2002/10/28 17:59:44 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.33 2000/09/12 08:51:49 itojun Exp $	*/
 
 /*
@@ -583,7 +583,7 @@ esp6_input(mp, offp, proto)
 		goto noreplaycheck;
 	siz = (((*sumalgo->sumsiz)(sav) + 3) & ~(4 - 1));
 	if (m->m_pkthdr.len < off + ESPMAXLEN + siz) {
-		ipsecstat.in_inval++;
+		ipsec6stat.in_inval++;
 		goto bad;
 	}
 	if (AH_MAXSUMSIZE < siz) {
