@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.2 1998/07/07 03:05:03 eeh Exp $ */
+/*	$NetBSD: asm.h,v 1.2.2.1 1998/08/02 00:06:48 eeh Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -98,7 +98,7 @@
 
 #define ENTRY(name)		_ENTRY(_C_LABEL(name)); _PROF_PROLOGUE
 #define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name)); _PROF_PROLOGUE
-#define	FUNC(name)		ASENTRY(name)
+#define	FUNC(name)		ENTRY(name)
 
 
 #define ASMSTR			.asciz

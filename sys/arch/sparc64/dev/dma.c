@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.2.2.1 1998/07/30 14:03:50 eeh Exp $ */
+/*	$NetBSD: dma.c,v 1.2.2.2 1998/08/02 00:06:47 eeh Exp $ */
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -167,8 +167,8 @@ dmaattach_sbus(parent, self, aux)
 	sc->sc_dmatag = sa->sa_dmatag;
 
 	/* Map registers */
-	if (sa->sa_promvaddr != 0)
-		sc->sc_regs = (struct dma_regs *)sa->sa_promvaddr;
+	if (sa->sa_promvaddrs != 0)
+		sc->sc_regs = (struct dma_regs *)sa->sa_promvaddrs[0];
 	else {
 		if (sbus_bus_map(sa->sa_bustag,
 				 sa->sa_slot,
@@ -247,6 +247,7 @@ dmaattach_sbus(parent, self, aux)
 		sbus_setup_attach_args((struct sbus_softc *)parent,
 				       sbt, sc->sc_dmatag, node, bp, &sa);
 		(void) config_found(&sc->sc_dev, (void *)&sa, dmaprint);
+		sbus_destroy_attach_args(&sa);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.1.1.1.2.1 1998/08/02 00:06:47 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -428,7 +428,7 @@ cgtwoputcmap(sc, cmap)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-int
+paddr_t
 cgtwommap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
