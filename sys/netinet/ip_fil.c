@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.7 1997/03/29 01:57:55 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.8 1997/03/29 03:05:14 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_fil.c,v 1.7 1997/03/29 01:57:55 thorpej Exp $";
+static	char	rcsid[] = "$Id: ip_fil.c,v 1.8 1997/03/29 03:05:14 thorpej Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -131,24 +131,17 @@ struct devsw iplsw = {
 };
 #endif /* _BSDI_VERSION >= 199510  && _KERNEL */
 
-/*
- * Post NetBSD 1.2 has the PFIL interface for packet filters.  This turns
- * on those hooks.  We don't need any special mods with this!
- */
-#if (defined(NetBSD) && (NetBSD > 199609) && (NetBSD <= 1991011)) || \
-    (defined(NetBSD1_2) && NetBSD1_2 > 1)
-# define NETBSD_PF
-# include <net/pfil.h>
-# ifdef IPFILTER_LKM
-extern
-# endif
-int	(*fr_checkp) __P((ip_t *ip, int hlen, struct ifnet *ifp, int out,
-	    struct mbuf **mp));
-#endif
-
 #if defined(__NetBSD__)
 #include <sys/conf.h>
-#endif
+#if defined(NETBSD_PF)
+#include <net/pfil.h>
+/*
+ * We provide the fr_checkp name just to minimize changes later.
+ */
+int (*fr_checkp) __P((ip_t *ip, int hlen, struct ifnet *ifp, int out,
+    struct mbuf **mp));
+#endif /* NETBSD_PF */
+#endif /* __NetBSD__ */
 
 #ifdef	_KERNEL
 # ifdef	IPFILTER_LKM
