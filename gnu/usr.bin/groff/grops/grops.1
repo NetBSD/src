@@ -1,34 +1,40 @@
 .\" -*- nroff -*-
-.TH GROPS @MAN1EXT@ "17 September 1990" "Groff Version @VERSION@"
+.\" Like TP, but if specified indent is more than half
+.\" the current line-length - indent, use the default indent.
+.de Tp
+.ie \\n(.$=0:((0\\$1)*2u>(\\n(.lu-\\n(.iu)) .TP
+.el .TP "\\$1"
+..
+.TH GROPS 1 "5 April 1993" "Groff Version 1.08"
 .SH NAME
 grops \- PostScript driver for groff
 .SH SYNOPSIS
 .B grops
 [
-.B \-v
+.B \-glv
 ] [
-.B \-l
+.BI \-b n
 ] [
-.BI \-F dir
+.BI \-c n
 ] [
 .BI \-w n
 ] [
-.BI \-c n
+.BI \-F dir
 ] [
 .IR files \|.\|.\|.
 ]
 .SH DESCRIPTION
 .B grops
-translates the output of
-.B gtroff
+translates the output of GNU
+.B troff
 to PostScript.
 Normally
 .B grops
-should invoked by using the groff command
+should be invoked by using the groff command
 with a
 .B \-Tps
 option.
-.if '@DEVICE@'ps' (Actually, this is the default for groff.)
+.if 'ps'ps' (Actually, this is the default for groff.)
 If no files are given,
 .B grops
 will read the standard input.
@@ -38,12 +44,84 @@ will also cause
 .B grops
 to read the standard input.
 PostScript output is written to the standard output.
+When
+.B grops
+is run by
+.B groff
+options can be passed to
+.B grops
+using the
+.B groff
+.B \-P
+option.
 .SH OPTIONS
+.TP
+.BI \-b n
+Workaround broken spoolers and previewers.
+Normally
+.B grops
+produces output that conforms
+the Document Structuring Conventions version 3.0.
+Unfortunately some spoolers and previewers can't handle such output.
+The value of
+.I n
+controls what
+.B grops
+does to its output acceptable to such programs.
+A value of 0 will cause grops not to employ any workarounds.
+Add 1 if no
+.B %%BeginDocumentSetup
+and
+.B %%EndDocumentSetup
+comments should be generated;
+this is needed for early versions of TranScript that get confused by
+anything between the
+.B %%EndProlog
+comment and the first
+.B %%Page
+comment.
+Add 2 if lines in included files beginning with
+.B %!
+should be stripped out; this is needed for Sun's pageview previewer.
+Add 4 if
+.BR %%Page ,
+.BR %%Trailer
+and
+.B %%EndProlog
+comments should be
+stripped out of included files; this is needed for spoolers that
+don't understand the
+.B %%BeginDocument
+and
+.B %%EndDocument
+comments.
+Add 8 if the first line of the PostScript output should be
+.B %!PS-Adobe-2.0
+rather than
+.BR %!PS-Adobe-3.0 ;
+this is needed when using Sun's Newsprint with a printer that requires
+page reversal.
+The default value can be specified by a
+.RS
+.IP
+.BI broken\  n
+.LP
+command in the DESC file.
+Otherwise the default value is 0.
+.RE
 .TP
 .BI \-c n
 Print
 .I n
 copies of each page.
+.TP
+.BI \-g
+Guess the page length.
+This generates PostScript code that guesses the page length.
+The guess will be correct only if the imageable area is vertically
+centered on the page.
+This option allows you to generate documents that can be printed
+both on letter (8.5\(mu11) paper and on A4 paper without change.
 .TP
 .BI \-l
 Print the document in landscape format.
@@ -406,7 +484,7 @@ x and y directions so that it has the specified width.
 Note that the contents of the
 .B \eX
 command are not interpreted by
-.BR gtroff ;
+.BR troff ;
 so vertical space for the graphic is not automatically added,
 and the
 .I width
@@ -456,19 +534,68 @@ and
 .I height
 high.
 .RE
+.TP
+.B \eX'ps:\ invis'
+.br
+.ns
+.TP
+.B \eX'ps:\ endinvis'
+No output will be generated for text and drawing commands
+that are bracketed with these
+.B \eX
+commands.
+These commands are intended for use when output from
+.B troff
+will be previewed before being processed with
+.BR grops ;
+if the previewer is unable to display certain characters
+or other constructs, then other substitute characters or constructs
+can be used for previewing by bracketing them with these
+.B \eX
+commands.
+.RS
+.LP
+For example,
+.B gxditview
+is not able to display a proper
+.B \e(em
+character because the standard X11 fonts do not provide it;
+this problem can be overcome by executing the following
+request
+.IP
+.ft B
+.nf
+\&.char \e(em \eX'ps: invis'\e
+\eZ'\ev'-.25m'\eh'.05m'\eD'l .9m 0'\eh'.05m''\e
+\eX'ps: endinvis'\e(em
+.ft
+.fi
+.LP
+In this case,
+.B gxditview
+will be unable to display the
+.B \e(em
+character and will draw the line,
+whereas
+.B grops
+will print the
+.B \e(em
+character
+and ignore the line.
+.RE
 .LP
 The input to
 .B grops
 must be in the format output by
-.BR gtroff (@MAN1EXT@).
+.BR troff (1).
 This is described in
-.BR groff_out (@MAN1EXT@).
+.BR groff_out (1).
 In addition the device and font description files for the device used
 must meet certain requirements.
 The device and font description files supplied for
 .B ps
 device meet all these requirements.
-.BR afmtodit (@MAN1EXT@)
+.BR afmtodit (1)
 can be used to create font files from AFM files.
 The resolution must be an integer multiple of 72 times the
 .BR sizescale .
@@ -513,7 +640,7 @@ encoding for the font if the PostScript font is not to be reencoded.
 This code can be used with the
 .B \eN
 escape sequence in
-.B gtroff
+.B troff
 to select the character,
 even if the character does not have a groff name.
 Every character in the font file must exist in the PostScript font, and 
@@ -532,7 +659,7 @@ to print the document.
 Any downloadable fonts which should, when required, be included by
 .B grops
 must be listed in the file
-.BR @FONTDIR@/devps/download ;
+.BR /usr/share/groff_font/devps/download ;
 this should consist of lines of the form
 .IP
 .I
@@ -555,81 +682,116 @@ The
 .B download
 file itself will also be searched for using this mechanism.
 .LP
-If a file imported with the
-.B
-\eX import
-command complies with the Adobe Document Structuring Conventions,
+If the file containing a downloadable font or imported document
+conforms to the Adobe Document Structuring Conventions,
 then
 .B grops
-will include any fonts that are needed by the imported file
-and are listed in the
+will interpret any comments in the files sufficiently to ensure that its
+own output is conforming.
+It will also supply any needed font resources that are listed in the
 .B download
-file.
-.LP
-.B grops
-is also able to handle inter-font dependencies.
-Any downloadable font that depends on another font must indicate
-this by following the Structuring Conventions and listing the fonts
-on which it depends in the
-.B %%DocumentFonts
-comment.
+file
+as well as any needed file resources.
+It is also able to handle inter-resource dependencies.
 For example, suppose that you have a downloadable font called Garamond,
 and also a downloadable font called Garamond-Outline
 which depends on Garamond
 (typically it would be defined to copy Garamond's font dictionary,
 and change the PaintType),
-then the downloadable font file for Garamond-Outline should start like this
+then it is necessary for Garamond to be appear before Garamond-Outline
+in the PostScript document.
+.B grops
+will handle this automatically
+provided that the downloadable font file for Garamond-Outline
+indicates its dependence on Garamond by means of
+the Document Structuring Conventions,
+for example by beginning with the following lines
 .IP
 .B
-%!PS-Adobe-2.1
+%!PS-Adobe-3.0 Resource-Font
 .br
 .B
-%%DocumentFonts: Garamond
+%%DocumentNeededResources: font Garamond
+.br
+.B
+%%EndComments
+.br
+.B
+%%IncludeResource: font Garamond
 .LP
-.B grops
-will then ensure that whenever Garamond-Outline is included, Garamond is
-included before it.
 In this case both Garamond and Garamond-Outline would need to be listed
 in the
 .B download
 file.
-A downloadable font should list every font that it depends on
-even if that font is resident in the printer (like, for example, Symbol);
-this will enable
-.B grops
-to generate a correct
-.B %%DocumentFonts
-comment for its output;
-the font should not include its own name in the
-.B %%DocumentFonts
+A downloadable font should not include its own name in a
+.B %%DocumentSuppliedResources
 comment.
+.LP
+.B grops
+will not interpret 
+.B %%DocumentFonts
+comments.
+The
+.BR %%DocumentNeededResources ,
+.BR %%DocumentSuppliedResources ,
+.BR %%IncludeResource ,
+.BR %%BeginResource
+and
+.BR %%EndResource
+comments
+(or possibly the old
+.BR %%DocumentNeededFonts ,
+.BR %%DocumentSuppliedFonts ,
+.BR %%IncludeFont ,
+.BR %%BeginFont
+and
+.BR %%EndFont
+comments)
+should be used.
 .SH FILES
-.TP \w'\fB@FONTDIR@/devps/download'u+2n
-.B @FONTDIR@/devps/DESC
+.Tp \w'\fB/usr/share/groff_font/devps/download'u+2n
+.B /usr/share/groff_font/devps/DESC
 Device desciption file.
 .TP
-.BI @FONTDIR@/devps/ F
+.BI /usr/share/groff_font/devps/ F
 Font description file for font
 .IR F .
 .TP
-.B @FONTDIR@/devps/download
+.B /usr/share/groff_font/devps/download
 List of downloadable fonts.
 .TP
-.B @FONTDIR@/devps/text.enc
+.B /usr/share/groff_font/devps/text.enc
 Encoding used for text fonts.
 .TP
-.B @MACRODIR@/tmac.ps
+.B /usr/share/tmac/tmac.ps
 Macros for use with
-.BR grops .
+.BR grops ;
+automatically loaded by
+.BR troffrc
+.TP
+.B /usr/share/tmac/tmac.pspic
+Definition of
+.B PSPIC
+macro,
+automatically loaded by
+.BR tmac.ps .
+.TP
+.B /usr/share/tmac/tmac.psold
+Macros to disable use of characters not present in older
+PostScript printers; automatically loaded by
+.BR tmac.ps .
+.TP
+.B /usr/share/tmac/tmac.psnew
+Macros to undo the effect of
+.BR tmac.psold .
 .TP
 .BI /tmp/grops XXXXXX
 Temporary file.
 .SH "SEE ALSO"
-.BR afmtodit (@MAN1EXT@),
-.BR groff (@MAN1EXT@),
-.BR gtroff (@MAN1EXT@),
-.BR psbb (@MAN1EXT@),
-.BR groff_out (@MAN5EXT@),
-.BR groff_font (@MAN5EXT@)
-.br
-.I "Groff Character Names"
+.BR afmtodit (1),
+.BR groff (1),
+.BR troff (1),
+.BR psbb (1),
+.BR groff_out (5),
+.BR groff_font (5),
+.BR groff_char (7)
