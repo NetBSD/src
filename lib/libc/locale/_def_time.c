@@ -37,8 +37,8 @@ const _TimeLocale _DefaultTimeLocale =
 		"Sun","Mon","Tue","Wed","Thu","Fri","Sat",
 	},
 	{
-		"Sunday", "Monday", "Tuesday", "Thursday", "Friday",
-		"Saturday", "Sunday"
+		"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
+		"Friday", "Saturday"
 	},
 	{
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
