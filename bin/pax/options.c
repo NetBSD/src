@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.23 1999/10/22 20:59:08 is Exp $	*/
+/*	$NetBSD: options.c,v 1.24 1999/11/01 01:35:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.23 1999/10/22 20:59:08 is Exp $");
+__RCSID("$NetBSD: options.c,v 1.24 1999/11/01 01:35:59 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -301,11 +301,19 @@ pax_options(argc, argv)
 					/*
 					 * preserve user id, group id, file
 					 * mode, access/modification times
+					 * and file flags.
 					 */
 					pids = 1;
 					pmode = 1;
 					patime = 1;
 					pmtime = 1;
+					pfflags = 1;
+					break;
+				case 'f':
+					/*
+					 * do not preserve file flags
+					 */
+					pfflags = 0;
 					break;
 				case 'm':
 					/*
