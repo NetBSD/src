@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.34 1997/05/24 20:08:41 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.35 1997/06/07 19:16:23 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -85,6 +85,7 @@ static int	busattach __P((struct device *, struct cfdata *, void *, int));
 int		obio_scan __P((struct device *, struct cfdata *, void *));
 int 		vmes_scan __P((struct device *, struct cfdata *, void *));
 int 		vmel_scan __P((struct device *, struct cfdata *, void *));
+void		vmebus_translate __P((struct device *, struct confargs *, int));
 int 		vmeintr __P((void *));
 
 struct cfattach obio_ca = {
@@ -381,6 +382,46 @@ vmeattach(parent, self, aux)
 	(void)config_found(self, (void *)&oca, vmeprint);
 }
 
+void
+vmebus_translate(dev, ca, bustype)
+	struct device *dev;
+	struct confargs *ca;
+	int bustype;
+{
+	struct vmebus_softc *sc = (struct vmebus_softc *)dev;
+	register int j;
+	int cspace;
+
+	if (sc->sc_nrange == 0)
+		panic("vmebus: no ranges");
+
+	/*
+	 * Find VMEbus modifier based on address space.
+	 * XXX - should not be encoded in `ra_paddr'
+	 */
+	if (((u_long)ca->ca_ra.ra_paddr & 0xffff0000) == 0xffff0000)
+		cspace = VMEMOD_A16_D_S;
+	else if (((u_long)ca->ca_ra.ra_paddr & 0xff000000) == 0xff000000)
+		cspace = VMEMOD_A24_D_S;
+	else
+		cspace = VMEMOD_A32_D_S;
+
+	cspace |= (bustype == BUS_VME32) ? VMEMOD_D32 : 0;
+
+	/* Translate into parent address spaces */
+	for (j = 0; j < sc->sc_nrange; j++) {
+		if (sc->sc_range[j].cspace == cspace) {
+#if notyet
+			(int)ca->ca_ra.ra_paddr +=
+				sc->sc_range[j].poffset;
+#endif
+			(int)ca->ca_ra.ra_iospace =
+				sc->sc_range[j].pspace;
+			break;
+		}
+	}
+}
+
 int bt2pmt[] = {
 	PMAP_OBIO,
 	PMAP_OBIO,
@@ -424,12 +465,14 @@ busattach(parent, cf, args, bustype)
 			return 0;
 	}
 
-	oca.ca_ra.ra_iospace = CPU_ISSUN4
-		? bt2pmt[bustype]
-		: ((bustype == BUS_VME32) ? VME_SUN4M_32 : VME_SUN4M_16);
 	oca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
 	oca.ca_ra.ra_len = 0;
 	oca.ca_ra.ra_nreg = 1;
+	if (CPU_ISSUN4M)
+		vmebus_translate(parent->dv_parent, &oca, bustype);
+	else
+		oca.ca_ra.ra_iospace = bt2pmt[bustype];
+
 	if (oca.ca_ra.ra_paddr)
 		tmp = (caddr_t)mapdev(oca.ca_ra.ra_reg, TMPMAP_VA, 0, NBPG);
 	else
