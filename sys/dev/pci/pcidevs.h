@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.149 1999/07/29 20:58:19 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.150 1999/08/01 08:32:49 veego Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.142 1999/07/29 20:56:55 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.143 1999/08/01 08:32:08 veego Exp 
  */
 
 /*
@@ -1195,6 +1195,7 @@
 #define	PCI_PRODUCT_TI_PCI1221	0xac19		/* PCI1221 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1225	0xac1c		/* PCI1225 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI1251	0xac1d		/* PCI1251 PCI-CardBus Bridge */
+#define	PCI_PRODUCT_TI_PCI1211	0xac1e		/* PCI1211 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI2030	0xac20		/* PCI2030 PCI-CardBus Bridge */
   
 /* Sony products */
