@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.147.2.1 2000/02/20 18:35:38 sommerfeld Exp $
+#	$NetBSD: files.i386,v 1.147.2.2 2000/04/17 01:43:21 sommerfeld Exp $
 #
 # new style config file for i386 architecture
 #
@@ -11,7 +11,7 @@ maxusers 2 16 64
 # APM options
 defopt	opt_apm.h APM_DISABLE APM_FORCE_64K_SEGMENTS APM_NO_IDLE
 	APM_NO_STANDBY APM_V10_ONLY APM_NO_V12 APMDEBUG APMDEBUG_VALUE
-	APM_NO_POWER_PRINT APM_DISABLE_INTERRUPTS
+	APM_POWER_PRINT APM_DISABLE_INTERRUPTS
 
 # Processor type options.
 defopt	opt_cputype.h I386_CPU I486_CPU I586_CPU I686_CPU
@@ -56,12 +56,13 @@ file	arch/i386/i386/disksubr.c	disk
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.s	inet
 file	netinet/in4_cksum.c		inet
+file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/microtime.s
-file	arch/i386/i386/ns_cksum.c	ns
+file	netns/ns_cksum.c		ns
 file	arch/i386/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/sys_machdep.c
@@ -92,6 +93,12 @@ major	{wd = 0}
 file arch/i386/i386/md_root.c	memory_disk_hooks
 major	{md = 17}
 
+# RAIDframe
+major	{raid = 18}
+
+# Compaq arrays
+major	{ca = 19}
+
 # attribute used to bring in BIOS trampoline code for real-mode probing
 # of certain devices/BIOS features
 define bioscall
@@ -107,11 +114,10 @@ file	arch/i386/i386/bios32.c		bios32 needs-flag
 
 define mainbus { apid = -1 }
 # XXX BIOS32 only if something that uses it is configured!
+# device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32
 device	mainbus: isabus, eisabus, pcibus, mainbus, bios32
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
-
-#device	mca at root {...}
 
 #
 # PCI-only drivers
@@ -147,6 +153,14 @@ file	arch/i386/pci/pceb.c		pceb
 device	pcib: isabus
 attach	pcib at pci
 file	arch/i386/pci/pcib.c		pcib
+
+# Game adapter (joystick)
+device	joy
+file	arch/i386/isa/joy.c		joy needs-flag
+
+# PCI joysticks
+attach joy at pci with pci_joy
+file	arch/i386/pci/joy_pci.c		pci_joy
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
@@ -226,19 +240,15 @@ device	fdc {drive = -1}
 attach	fdc at isa
 device	fd: disk, isadma
 attach	fd at fdc
-file	arch/i386/isa/fd.c		fdc needs-flag
+file	dev/isa/fd.c			fdc needs-flag
 major	{fd = 2}
-
-# Game adapter (joystick)
-device	joy
-file	arch/i386/isa/joy.c		joy needs-flag
 
 attach	joy at isa with joy_isa
 file	arch/i386/isa/joy_isa.c		joy_isa
 
 # Adaptec AHA-284x VL SCSI controllers
 # device declaration in sys/conf/files
-attach	ahc at isa with ahc_isa
+attach	ahc at isa with ahc_isa: ahc_aic77xx, smc93cx6
 file	arch/i386/isa/ahc_isa.c		ahc_isa
 
 #
@@ -247,6 +257,14 @@ file	arch/i386/isa/ahc_isa.c		ahc_isa
 
 include "dev/eisa/files.eisa"
 file	arch/i386/eisa/eisa_machdep.c	eisa
+
+#
+# MCA-only drivers
+#
+
+# device mca {[slot = -1]} : bioscall
+# include "dev/mca/files.mca"
+# file	arch/i386/mca/mca_machdep.c	mca
 
 # ISA Plug 'n Play devices
 file	arch/i386/isa/isapnp_machdep.c	isapnp

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.3 2000/02/24 05:09:26 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.4 2000/04/17 01:43:28 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -227,6 +227,8 @@ struct cpu_cpuid_nameclass {
 extern int cpu;
 extern int cpu_class;
 extern int cpu_feature;
+extern int cpu_id;
+extern char cpu_vendor[];
 extern int cpuid_level;
 extern struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
 extern struct cpu_cpuid_nameclass i386_cpuid_cpus[];
@@ -296,7 +298,6 @@ void	vm86_gpfault __P((struct proc *, int));
 void	child_return __P((void *));
 
 /* consinit.c */
-void consinit __P((void));
 void kgdb_port_init __P((void));
 
 /* bus_machdep.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.29.2.1 2000/02/20 17:55:13 sommerfeld Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.29.2.2 2000/04/17 01:43:24 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -138,7 +138,6 @@ mainbus_attach(parent, self, aux)
 #endif
 	{
 		struct cpu_attach_args caa;
-		extern u_long cpu_id;
 		
 		memset(&caa, 0, sizeof(caa));
 		caa.caa_name = "cpu";
@@ -171,6 +170,7 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_iot = I386_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = I386_BUS_SPACE_MEM;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
+		mba.mba_pba.pba_pc = NULL;
 		mba.mba_pba.pba_flags = pci_bus_flags();
 		mba.mba_pba.pba_bus = 0;
 		config_found(self, &mba.mba_pba, mainbus_print);

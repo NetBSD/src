@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.1 2000/02/20 18:01:05 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.2 2000/04/17 01:43:23 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
+#include "opt_ipkdb.h"
 #include "opt_vm86.h"
 #include "opt_user_ldt.h"
 #include "opt_compat_netbsd.h"
@@ -105,6 +106,10 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <machine/kcore.h>
+
+#ifdef IPKDB
+#include <ipkdb/ipkdb.h>
+#endif
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -181,6 +186,8 @@ int	boothowto;
 int	cpu_class;
 int	i386_fpu_present = 0;
 
+#define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 0xf)
+
 vaddr_t	msgbuf_vaddr;
 paddr_t msgbuf_paddr;
 
@@ -220,6 +227,7 @@ static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
 
 void cyrix6x86_cpu_setup __P((void));
+void winchip_cpu_setup __P((void));
 
 static __inline u_char
 cyrix_read_reg(u_char reg)
@@ -458,7 +466,6 @@ i386_bufinit()
  * Info for CTL_HW
  */
 char	cpu_model[120];
-extern	char version[];
 
 /*
  * Note: these are just the ones that may not have a cpuid instruction.
@@ -633,10 +640,10 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_586,
 			{
 				0, 0, 0, 0, "WinChip C6", 0, 0, 0,
-				0, 0, 0, 0, 0, 0, 0, 0,
+				"WinChip 2", "WinChip 3", 0, 0, 0, 0, 0, 0,
 				"WinChip"		/* Default */
 			},
-			NULL
+			winchip_cpu_setup
 		},
 		/* Family 6, not yet available from IDT */
 		{
@@ -668,6 +675,20 @@ cyrix6x86_cpu_setup()
 	cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
 	/* disable access to ccr4/ccr5 */
 	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
+}
+
+void
+winchip_cpu_setup()
+{
+#if defined(I586_CPU)
+	extern int cpu_id;
+
+	switch (CPUID2MODEL(cpu_id)) { /* model */
+	case 4:	/* WinChip C6 */
+		cpu_feature &= ~CPUID_TSC;
+		printf("WARNING: WinChip C6: broken TSC disabled\n");
+	}
+#endif
 }
 
 /*
@@ -714,7 +735,7 @@ identifycpu(ci)
 		family = (ci->ci_signature >> 8) & 0xf;
 		if (family < CPU_MINFAMILY)
 			panic("identifycpu: strange family value");
-		model = (ci->ci_signature >> 4) & 0xf;
+		model = CPUID2MODEL(ci->ci_signature);
 		step = ci->ci_signature & 0xf;
 #ifdef CPUDEBUG
 		printf("%s: family %x model %x step %x\n", cpuname, family, 
@@ -1721,6 +1742,11 @@ init386(first_avail)
 	}
 	if (boothowto & RB_KDB)
 		Debugger();
+#endif
+#ifdef IPKDB
+	ipkdb_init();
+	if (boothowto & RB_KDB)
+		ipkdb_connect(0);
 #endif
 #ifdef KGDB
 	kgdb_port_init();

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.3 2000/02/21 19:49:54 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.4 2000/04/17 01:43:24 sommerfeld Exp $	*/
 
 /*
  *
@@ -1679,7 +1679,7 @@ pmap_alloc_ptp(pmap, pde_index, just_try)
 	struct vm_page *ptp;
 
 	ptp = uvm_pagealloc(&pmap->pm_obj, ptp_i2o(pde_index), NULL,
-			    UVM_PGA_USERESERVE);
+			    UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (ptp == NULL) {
 		if (just_try)
 			return(NULL);
@@ -1687,12 +1687,13 @@ pmap_alloc_ptp(pmap, pde_index, just_try)
 		if (ptp == NULL) {
 			return (NULL);
 		}
+		/* stole one; zero it. */
+		pmap_zero_page(VM_PAGE_TO_PHYS(ptp));
 	}
 
 	/* got one! */
 	ptp->flags &= ~PG_BUSY;	/* never busy */
 	ptp->wire_count = 1;	/* no mappings yet */
-	pmap_zero_page(VM_PAGE_TO_PHYS(ptp));
 	pmap->pm_pdir[pde_index] =
 		(pd_entry_t) (VM_PAGE_TO_PHYS(ptp) | PG_u | PG_RW | PG_V);
 	pmap->pm_stats.resident_count++;	/* count PTP as resident */
@@ -2877,7 +2878,7 @@ pmap_change_attrs(pg, setbits, clearbits)
 	for (pve = pvh->pvh_list; pve != NULL; pve = pve->pv_next) {
 #ifdef DIAGNOSTIC
 		if (pve->pv_va >= uvm.pager_sva && pve->pv_va < uvm.pager_eva) {
-			printf("pmap_change_attrs: found pager VA on pv_list");
+			printf("pmap_change_attrs: found pager VA on pv_list\n");
 		}
 		if (!pmap_valid_entry(pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]))
 			panic("pmap_change_attrs: mapping without PTP "
@@ -3057,7 +3058,7 @@ pmap_unwire(pmap, va)
 			ptes[i386_btop(va)] &= ~PG_W;
 			pmap->pm_stats.wired_count--;
 		}
-#ifdef DIAGNOSITC
+#ifdef DIAGNOSTIC
 		else {
 			printf("pmap_unwire: wiring for pmap %p va 0x%lx "
 			       "didn't change!\n", pmap, va);
@@ -3793,7 +3794,7 @@ pmap_growkernel(maxkvaddr)
 
 	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
 
-		if (pmap_initialized == FALSE) {
+		if (uvm.page_init_done == FALSE) {
 
 			/*
 			 * we're growing the kernel pmap early (from
@@ -3811,6 +3812,12 @@ pmap_growkernel(maxkvaddr)
 			kpm->pm_stats.resident_count++;
 			continue;
 		}
+
+		/*
+		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
+		 * pmap_initialized == FALSE CASE!  WE MAY BE
+		 * INVOKED WHILE pmap_init() IS RUNNING!
+		 */
 
 		if (pmap_alloc_ptp(kpm, PDSLOT_KERN + nkpde, FALSE) == NULL) {
 			panic("pmap_growkernel: alloc ptp failed");
