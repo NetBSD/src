@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.26 2000/03/30 11:27:18 augustss Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.27 2000/07/28 21:38:44 tron Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -345,7 +345,7 @@ linux_sys_rt_sigaction(p, v, retval)
 	if (sig < 0 || sig >= LINUX__NSIG)
 		return (EINVAL);
 	error = sigaction1(p, linux_to_native_sig[sig],
-	    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0);
+	    SCARG(uap, nsa) ? &nbsa : NULL, SCARG(uap, osa) ? &obsa : NULL);
 	if (error)
 		return (error);
 	if (SCARG(uap, osa)) {
@@ -389,7 +389,7 @@ linux_sigprocmask1(p, how, set, oset)
 		linux_old_to_native_sigset(&nlss, &nbss);
 	}
 	error = sigprocmask1(p, how,
-	    set ? &nbss : 0, oset ? &obss : 0);
+	    set ? &nbss : NULL, oset ? &obss : NULL);
 	if (error)
 		return (error); 
 	if (oset) {
@@ -446,7 +446,7 @@ linux_sys_rt_sigprocmask(p, v, retval)
 		linux_to_native_sigset(&nlss, &nbss);
 	}
 	error = sigprocmask1(p, how,
-	    set ? &nbss : 0, oset ? &obss : 0);
+	    set ? &nbss : NULL, oset ? &obss : NULL);
 	if (error)
 		return (error); 
 	if (oset) {
