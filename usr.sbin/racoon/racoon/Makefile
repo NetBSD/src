@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2001/01/03 15:57:00 itojun Exp $
+#	$NetBSD: Makefile,v 1.4 2001/02/22 02:33:06 itojun Exp $
 
 .include <bsd.own.mk>
 
+WARNS?=	0
 PROG=	racoon
 SRCS=	main.c session.c isakmp.c handler.c random.c \
 	isakmp_ident.c isakmp_agg.c isakmp_base.c \
@@ -11,7 +12,7 @@ SRCS=	main.c session.c isakmp.c handler.c random.c \
 	policy.c localconf.c remoteconf.c crypto_openssl.c algorithm.c \
 	cfparse.c cftoken.c strnames.c \
 	vmbuf.c plog.c logger.c schedule.c str2val.c misc.c sockmisc.c \
-	proposal.c sainfo.c vendorid.c safefile.c
+	proposal.c sainfo.c vendorid.c safefile.c backupsa.c
 
 MAN=	racoon.8 racoon.conf.5
 
