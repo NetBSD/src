@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.8 2003/10/18 08:30:14 lukem Exp $
+# $NetBSD: INSTALL,v 1.9 2003/10/25 20:41:36 fvdl Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.8 $"
+#ident 		"INSTALL-$Revision: 1.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -274,6 +274,7 @@ ld*	at iop? tid ?			# block devices
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 adw*	at pci? dev ? function ?	# AdvanSys 9x0UW[D], 3940U[2,3]W SCSI
 ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+ahd*	at pci? dev ? function ?	# Adaptec aic790x SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
@@ -365,6 +366,11 @@ wd*	at atabus? drive ? flags 0x0000
 # ATAPI bus support
 atapibus* at atapi?
 
+# ATA RAID configuration support, as found on some Promise controllers.
+pseudo-device ataraid
+ld* 	at ataraid? vendtype ? unit ?
+
+
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
@@ -386,6 +392,7 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM
 ep*	at pci? dev ? function ?	# 3Com 3c59x
