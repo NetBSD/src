@@ -1,4 +1,4 @@
-/*	$Id: elf2pef.c,v 1.1 1998/01/16 04:17:45 sakamoto Exp $	*/
+/*	$Id: elf2pef.c,v 1.2 1998/10/05 02:01:58 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@netbsd.org)
@@ -35,9 +35,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <errno.h>
+#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/uio.h>
 #include <sys/exec_elf.h>
 #include <machine/endian.h>
 #include "pef.h"
@@ -74,6 +78,7 @@ align(p)
 	return ((p + 0x0f) & 0xfffffff0);
 }
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -91,11 +96,6 @@ main(argc, argv)
 	struct LoaderHeader lh;
 	Elf32_Ehdr hdr;
 	Elf32_Phdr phdr;
-#if 0
-	char *symtab;
-	int symsize;
-	Elf32_Shdr shdr;
-#endif
 
 	switch (argc) {
 	case 4:
@@ -156,26 +156,6 @@ main(argc, argv)
 	printf("e_shstrndx= 0x%x\n", _BE_short(hdr.e_shstrndx));
 #endif
 
-#if 0
-	lseek(elf_fd, _BE_long(hdr.e_shoff) +
-		sizeof(shdr) * _BE_short(hdr.e_shstrndx), SEEK_SET);
-	if (read(elf_fd, &shdr, sizeof(shdr)) != sizeof(shdr)) {
-		fprintf(stderr, "Can't read shdr: %s\n", strerror(errno));
-		exit(3);
-	}
-	symsize = _BE_long(shdr.sh_size);
-	symtab = (char *)malloc(symsize);
-	if (symtab == NULL) {
-		fprintf(stderr, "Can't malloc: %s\n", strerror(errno));
-		exit(3);
-	}
-	lseek(elf_fd, _BE_long(shdr.sh_offset), SEEK_SET);
-	if (read(elf_fd, symtab, symsize) != symsize) {
-		fprintf(stderr, "Can't read symbol: %s\n", strerror(errno));
-		exit(3);
-	}
-#endif
-
 	for (i = 0; i < _BE_short(hdr.e_phnum); i++) {
 		lseek(elf_fd, _BE_long(hdr.e_phoff) + sizeof (phdr) * i,
 			SEEK_SET);
@@ -185,24 +165,12 @@ main(argc, argv)
 			exit(3);
 		}
 
-#if 0
-		lseek(elf_fd, _BE_long(hdr.e_shoff) + sizeof (shdr) * i,
-			SEEK_SET);
-		if (read(elf_fd, &shdr, sizeof(shdr)) != sizeof(shdr)) {
-			fprintf(stderr, "Can't read shdr: %s\n",
-				strerror(errno));
-			exit(3);
-		}
-		if (strcmp(".text", &symtab[_BE_long(shdr.sh_name)]) &&
-		    strcmp(".data", &symtab[_BE_long(shdr.sh_name)]))
-			continue;
-#endif
-
 		/* Read in text segment. */
 		offset = elf_image_len;
-		elf_image_len += _BE_long(phdr.p_filesz);
+		len = _BE_long(phdr.p_filesz);
+		elf_image_len += len;
 #ifdef DEBUG
-		printf("read text segment %d bytes\n", elf_image_len);
+		printf("read text segment %d bytes\n", len);
 #endif
 		elf_image = (unsigned char *)realloc(elf_image, elf_image_len);
 		if (elf_image == NULL) {
@@ -210,8 +178,7 @@ main(argc, argv)
 			exit(3);
 		}
 		lseek(elf_fd, _BE_long(phdr.p_offset), SEEK_SET);
-		if (read(elf_fd, (void *)(elf_image + offset), elf_image_len)
-		    != elf_image_len) {
+		if (read(elf_fd, (void *)(elf_image + offset), len) != len) {
 			fprintf(stderr, "Can't read input '%s' text : %s\n",
 				argv[1], strerror(errno));
 			exit(3);

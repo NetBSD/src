@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1998/03/27 00:11:07 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.4 1998/10/05 02:01:57 sakamoto Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -49,7 +49,7 @@ LIBSA=		${SALIB}
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} elf2pef
 	sh ${.CURDIR}/../newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 	${COMPILE.c} vers.c
-	${LD} -o ${BASE} -n -T ld.script -Ttext ${RELOC} ${OBJS} \
+	${LD} -o ${BASE} -s -N -T ld.script -Ttext ${RELOC} ${OBJS} \
 		${LIBSA} ${LIBZ} ${LIBKERN} vers.o
 .if exists (${KERNEL})
 	cat ${KERNEL} | gzip -9 > ${.CURDIR}/netbsd.gz
