@@ -1,4 +1,4 @@
-/*	$NetBSD: pwrite.c,v 1.2 1998/07/02 01:42:28 thorpej Exp $	*/
+/*	$NetBSD: pwrite.c,v 1.3 1998/10/14 11:25:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,12 +35,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pwrite.c,v 1.2 1998/07/02 01:42:28 thorpej Exp $");
+__RCSID("$NetBSD: pwrite.c,v 1.3 1998/10/14 11:25:19 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(pwrite,_pwrite);
+#endif
 
 /*
  * This function provides 64-bit offset padding that
