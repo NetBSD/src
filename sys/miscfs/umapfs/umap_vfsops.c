@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.35 2002/09/21 18:09:31 christos Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.36 2003/04/16 21:44:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.35 2002/09/21 18:09:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.36 2003/04/16 21:44:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,6 @@ umapfs_mount(mp, path, data, ndp, p)
 	struct umap_args args;
 	struct vnode *lowerrootvp, *vp;
 	struct umap_mount *amp;
-	size_t size;
 	int error;
 #ifdef UMAPFS_DIAGNOSTIC
 	int i;
@@ -231,16 +230,13 @@ umapfs_mount(mp, path, data, ndp, p)
 	vp->v_flag |= VROOT;
 	amp->umapm_rootvp = vp;
 
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
-	(void) copyinstr(args.umap_target, mp->mnt_stat.f_mntfromname,
-		MNAMELEN - 1, &size);
-	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
+	error = set_statfs_info(path, UIO_USERSPACE, args.umap_target,
+	    UIO_USERSPACE, mp, p);
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("umapfs_mount: lower %s, alias at %s\n",
 		mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname);
 #endif
-	return (0);
+	return error;
 }
 
 /*

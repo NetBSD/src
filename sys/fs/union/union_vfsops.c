@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.3 2003/03/17 10:28:41 jdolecek Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.4 2003/04/16 21:44:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.3 2003/03/17 10:28:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.4 2003/04/16 21:44:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,8 +226,10 @@ union_mount(mp, path, data, ndp, p)
 	mp->mnt_data = um;
 	vfs_getnewfsid(mp);
 
-	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
+	error = set_statfs_info( path, UIO_USERSPACE, NULL, UIO_USERSPACE,
+	    mp, p);
+	if (error)
+		goto bad;
 
 	switch (um->um_op) {
 	case UNMNT_ABOVE:
@@ -492,12 +494,7 @@ union_statfs(mp, sbp, p)
 	sbp->f_files += mstat.f_files;
 	sbp->f_ffree = mstat.f_ffree;
 
-	if (sbp != &mp->mnt_stat) {
-		memcpy(&sbp->f_fsid, &mp->mnt_stat.f_fsid, sizeof(sbp->f_fsid));
-		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
-		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
-	}
-	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
+	copy_statfs_info(sbp, mp);
 	return (0);
 }
 
