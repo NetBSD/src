@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_conf.c	7.3 (Berkeley) 6/28/90
- *	$Id: vfs_conf.c,v 1.12 1993/08/24 12:56:23 pk Exp $
+ *	$Id: vfs_conf.c,v 1.13 1993/12/18 04:22:43 mycroft Exp $
  */
 
-#include "param.h"
-#include "mount.h"
+#include <sys/param.h>
+#include <sys/mount.h>
 
 /*
  * These define the root filesystem and device.

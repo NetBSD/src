@@ -31,21 +31,21 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_socket.c	7.11 (Berkeley) 4/16/91
- *	$Id: sys_socket.c,v 1.4 1993/06/27 06:01:56 andrew Exp $
+ *	$Id: sys_socket.c,v 1.5 1993/12/18 04:21:41 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "file.h"
-#include "mbuf.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "ioctl.h"
-#include "stat.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/file.h>
+#include <sys/mbuf.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
 
-#include "net/if.h"
-#include "net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
 struct	fileops socketops =
     { soo_read, soo_write, soo_ioctl, soo_select, soo_close };
