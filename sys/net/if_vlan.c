@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.25 2000/12/18 19:32:20 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.26 2000/12/18 19:36:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -518,19 +518,13 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCADDMULTI:
-		if (ifv->ifv_p != NULL) {
-			error = (*ifv->ifv_msw->vmsw_addmulti)(ifv, ifr);
-		} else {
-			error = EINVAL;
-		}
+		error = (ifv->ifv_p != NULL) ?
+		    (*ifv->ifv_msw->vmsw_addmulti)(ifv, ifr) : EINVAL;
 		break;
 
 	case SIOCDELMULTI:
-		if (ifv->ifv_p != NULL) {
-			error = (*ifv->ifv_msw->vmsw_delmulti)(ifv, ifr);
-		} else {
-			error = EINVAL;
-		}
+		error = (ifv->ifv_p != NULL) ?
+		    (*ifv->ifv_msw->vmsw_delmulti)(ifv, ifr) : EINVAL;
 		break;
 
 	default:
