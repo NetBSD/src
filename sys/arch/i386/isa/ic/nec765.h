@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nec765.h	7.1 (Berkeley) 5/9/91
- *	$Id: nec765.h,v 1.2.4.1 1993/10/16 21:24:20 mycroft Exp $
+ *	$Id: nec765.h,v 1.2.4.2 1993/10/27 10:14:56 mycroft Exp $
  */
 
 /*
@@ -59,9 +59,9 @@
 #define NE7_ST3BITS	"\020\010fault\007write_protect\006drdy\005tk0\004two_side\003side_sel\002"
 
 /* Commands */
-#define NE7CMD_SENSED	0x02	/*  sense driver status */
 #define NE7CMD_SPECIFY	0x03	/*  specify drive parameters - requires unit
 					parameters byte */
+#define NE7CMD_SENSED	0x04	/*  sense driver status */
 #define NE7CMD_WRITE	0xc5	/*  write - requires eight additional bytes */
 #define NE7CMD_READ	0xe6	/*  read - requires eight additional bytes */
 #define NE7CMD_RECAL	0x07	/*  recalibrate drive - requires
