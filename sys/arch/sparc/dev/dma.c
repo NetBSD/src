@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.25 1996/04/22 02:34:53 abrown Exp $ */
+/*	$NetBSD: dma.c,v 1.26 1996/05/16 21:45:35 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -143,27 +143,6 @@ dmaattach(parent, self, aux)
 
 	sc->sc_regs = (struct dma_regs *) ca->ca_ra.ra_vaddr;
 
-	if (!CPU_ISSUN4M) {
-		/*
-		 * find the ESP by poking around the esp device structures
-		 *
-		 * What happens here is that if the esp driver has not been
-		 * configured, then this returns a NULL pointer. Then when the
-		 * esp actually gets configured, it does the opposing test, and
-		 * if the sc->sc_dma field in it's softc is NULL, then tries to
-		 * find the matching dma driver.
-		 *
-		 */
-		sc->sc_esp = (struct esp_softc *)
-			     getdevunit("esp", sc->sc_dev.dv_unit);
-
-		/*
-		 * and a back pointer to us, for DMA
-		 */
-		if (sc->sc_esp)
-			sc->sc_esp->sc_dma = sc;
-	}
-
 	/*
 	 * If we're a ledma, check to see what cable type is currently 
 	 * active and set the appropriate bit in the ledma csr so that
@@ -252,23 +231,19 @@ dmaattach(parent, self, aux)
 #if defined(SUN4C) || defined(SUN4M)
 	if (ca->ca_bustype == BUS_SBUS)
 		sbus_establish(&sc->sc_sd, &sc->sc_dev);
-#endif /* SUN4C || SUN4M */
-
-#if defined(SUN4M)
-	/* return if we are a plain "dma" with no children */
-	if (sc->sc_dev.dv_cfdata->cf_attach == &dma_ca)
-		return;
 
 	/* Propagate bootpath */
 	if (ca->ca_ra.ra_bp != NULL &&
 	    (strcmp(ca->ca_ra.ra_bp->name, "espdma") == 0 ||
+	     strcmp(ca->ca_ra.ra_bp->name, "dma") == 0 ||
 	     strcmp(ca->ca_ra.ra_bp->name, "ledma") == 0))
 		oca.ca_ra.ra_bp = ca->ca_ra.ra_bp + 1;
 	else
 		oca.ca_ra.ra_bp = NULL;
 
 	/* search through children */
-	for (node = firstchild(sc->sc_node); node; node = nextsibling(node)) {
+	node = firstchild(sc->sc_node);
+	if (node != 0) do {
 		name = getpropstring(node, "name");
 		if (!romprop(&oca.ca_ra, name, node))
 			continue;
@@ -276,8 +251,29 @@ dmaattach(parent, self, aux)
 		sbus_translate(parent, &oca);
 		oca.ca_bustype = BUS_SBUS;
 		(void) config_found(&sc->sc_dev, (void *)&oca, dmaprint);
+	} while ((node = nextsibling(node)) != 0); else
+#endif /* SUN4C || SUN4M */
+
+	if (strcmp(ca->ca_ra.ra_bp->name, "dma") == 0) {
+		/*
+		 * find the ESP by poking around the esp device structures
+		 *
+		 * What happens here is that if the esp driver has not been
+		 * configured, then this returns a NULL pointer. Then when the
+		 * esp actually gets configured, it does the opposing test, and
+		 * if the sc->sc_dma field in it's softc is NULL, then tries to
+		 * find the matching dma driver.
+		 *
+		 */
+		sc->sc_esp = (struct esp_softc *)
+			     getdevunit("esp", sc->sc_dev.dv_unit);
+
+		/*
+		 * and a back pointer to us, for DMA
+		 */
+		if (sc->sc_esp)
+			sc->sc_esp->sc_dma = sc;
 	}
-#endif
 }
 
 void
