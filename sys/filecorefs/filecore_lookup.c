@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.6 1999/08/04 18:40:47 wrstuden Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.7 1999/08/18 22:01:53 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -328,7 +328,7 @@ found:
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN)) {
-			if (error = vn_lock(pdp, LK_EXCLUSIVE)) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE))) {
 				vput(tdp);
 				return (error);
 			}
