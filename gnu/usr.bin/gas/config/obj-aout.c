@@ -469,7 +469,10 @@ object_headers *headers;
 	/* JF deal with forward references first... */
 	for (symbolP = symbol_rootP; symbolP; symbolP = symbol_next(symbolP)) {
 		if (symbolP->sy_forward && symbolP->sy_forward != symbolP) {
-			if (!S_IS_DEBUG(symbolP))
+			if (symbolP->sy_symbol.n_type != N_SETA &&
+			    symbolP->sy_symbol.n_type != N_SETT &&
+			    symbolP->sy_symbol.n_type != N_SETD &&
+			    symbolP->sy_symbol.n_type != N_SETB)
 				S_SET_SEGMENT(symbolP,
 					      S_GET_SEGMENT(symbolP->sy_forward));
 			S_SET_VALUE(symbolP, S_GET_VALUE(symbolP)
