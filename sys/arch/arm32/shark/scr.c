@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.5 2000/02/12 22:40:12 kristerw Exp $	*/
+/*	$NetBSD: scr.c,v 1.6 2000/02/13 01:31:22 kristerw Exp $	*/
 
 /*
  * Copyright 1997
@@ -510,10 +510,7 @@ struct scr_softc
     int     atrY;       /* indicates if TA,TB,TC,TD is to follow */
     int     atrK;       /* number of historical characters*/
     int     atrKCount;  /* progressive could of historical characters*/
-    int     atrTAx;     /* how many TA characters we have received */
-    int     atrTBx;     /* how many TB characters we have received */
-    int     atrTCx;     /* how many TB characters we have received */
-    int     atrTDx;     /* how many TB characters we have received */
+    int     atrTABCDx;  /* the 'i' in TA(i), TB(i), TC(i) and TD(i) */
     int     atrFi;      /* value of Fi */
     int     atrDi;      /* value of Di */
 
@@ -2662,11 +2659,8 @@ static void ATRSM (struct scr_softc * sc,int cmd)
                         /* store Y & K */
                         sc->atrY = sc->dataByte & 0xf0;
                         sc->atrK = sc->dataByte & 0x0f;
-    
-                        sc->atrTAx = 1;
-                        sc->atrTBx = 1;
-                        sc->atrTCx = 1;
-                        sc->atrTDx = 1;
+
+                        sc->atrTABCDx = 1;
                         sc->atrKCount = 1;
     
                         /* if there are no TDx following set T0 protocol */
@@ -2736,7 +2730,7 @@ static void ATRSM (struct scr_softc * sc,int cmd)
                         if (sc->atrY & ATR_Y_TA)
                         {
                             sc->atrY &= ~ATR_Y_TA;
-                            if (sc->atrTAx == 1)
+                            if (sc->atrTABCDx == 1)
                             {
                                 sc->Fi = FI2Fi[((sc->dataByte >> 4) & 0x0f)];
                                 if (sc->Fi == 0)
@@ -2753,40 +2747,39 @@ static void ATRSM (struct scr_softc * sc,int cmd)
                                 }
     
                             }
-                            sc->atrTAx++;
                         }
     
                         else if (sc->atrY & ATR_Y_TB)
                         {
                             sc->atrY &= ~ATR_Y_TB;
-                            sc->atrTBx++;
                         }
     
                         else if (sc->atrY & ATR_Y_TC)
                         {
                             sc->atrY &= ~ATR_Y_TC;
-                            if (sc->atrTCx == 1)
+                            if (sc->atrTABCDx == 1)
                             {
                                 sc->N = sc->dataByte;
                             }
     
-                            if (sc->atrTCx == 2)
+                            if (sc->atrTABCDx == 2)
                             {
                                 sc->Wi = sc->dataByte;
                             }
-                            sc->atrTCx++;
                         }
     
                         else
                         {
                             ASSERT(sc->atrY & ATR_Y_TD);
                             sc->atrY &= ~ATR_Y_TD;
-                            sc->atrTDx++;
-    
+
                             /* copy across the y section of TD */
                             sc->atrY    =    sc->dataByte;
                             sc->atrY &= 0xf0;
-    
+
+                            /* step to the next group of TABCD */
+                            sc->atrTABCDx++;
+
                             /* store protocols */
                             sc->protocolType = (1 << (sc->dataByte &0x0f));
                         }
