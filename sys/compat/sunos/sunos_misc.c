@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.127 2004/04/22 10:18:03 hannken Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.128 2004/04/25 06:02:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.127 2004/04/22 10:18:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.128 2004/04/25 06:02:20 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -684,7 +684,7 @@ sunos_sys_setsockopt(l, v, retval)
 #define		SUNOS_IP_MULTICAST_LOOP		4
 #define		SUNOS_IP_ADD_MEMBERSHIP		5
 #define		SUNOS_IP_DROP_MEMBERSHIP	6
-		static int ipoptxlat[] = {
+		static const int ipoptxlat[] = {
 			IP_MULTICAST_IF,
 			IP_MULTICAST_TTL,
 			IP_MULTICAST_LOOP,
