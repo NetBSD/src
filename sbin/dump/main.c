@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.47 2001/12/23 14:42:22 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.48 2001/12/25 12:06:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.47 2001/12/23 14:42:22 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.48 2001/12/25 12:06:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ main(int argc, char *argv[])
 			if (spcl.c_ddate < 0) {
 				(void)fprintf(stderr, "bad time \"%s\"\n",
 				    optarg);
-				exit(X_ABORT);
+				exit(X_STARTUP);
 			}
 			Tflag = 1;
 			lastlevel = '?';
@@ -246,7 +246,7 @@ main(int argc, char *argv[])
 		case 'W':		/* what to do */
 		case 'w':
 			lastdump(ch);
-			exit(0);	/* do nothing else */
+			exit(X_FINOK);	/* do nothing else */
 
 		default:
 			usage();
@@ -257,7 +257,7 @@ main(int argc, char *argv[])
 	if (argc < 1) {
 		(void)fprintf(stderr,
 		    "Must specify disk or image, or file list\n");
-		exit(X_ABORT);
+		exit(X_STARTUP);
 	}
 
 
@@ -321,13 +321,13 @@ main(int argc, char *argv[])
 			while (--argc)
 				(void)fprintf(stderr, " %s", *argv++);
 			(void)fprintf(stderr, "\n");
-			exit(X_ABORT);
+			exit(X_STARTUP);
 		}
 	}
 	if (Tflag && uflag) {
 		(void)fprintf(stderr,
 		    "You cannot use the T and u flags together.\n");
-		exit(X_ABORT);
+		exit(X_STARTUP);
 	}
 	if (strcmp(tape, "-") == 0) {
 		pipeout++;
@@ -358,10 +358,10 @@ main(int argc, char *argv[])
 		*tape++ = '\0';
 #ifdef RDUMP
 		if (rmthost(host) == 0)
-			exit(X_ABORT);
+			exit(X_STARTUP);
 #else
 		(void)fprintf(stderr, "remote dump not enabled\n");
-		exit(X_ABORT);
+		exit(X_STARTUP);
 #endif
 	}
 
@@ -415,7 +415,7 @@ main(int argc, char *argv[])
 
 	if ((diskfd = open(disk, O_RDONLY)) < 0) {
 		msg("Cannot open %s\n", disk);
-		exit(X_ABORT);
+		exit(X_STARTUP);
 	}
 	sync();
 
@@ -488,11 +488,11 @@ main(int argc, char *argv[])
 			   Assume no erroneous blocks; this can be compensated
 			   for with an artificially low tape size. */
 			fetapes =
-			(	  tapesize	/* blocks */
+			(	  (double) tapesize	/* blocks */
 				* TP_BSIZE	/* bytes/block */
 				* (1.0/density)	/* 0.1" / byte */
 			  +
-				  tapesize	/* blocks */
+				  (double) tapesize	/* blocks */
 				* (1.0/ntrec)	/* streaming-stops per block */
 				* 15.48		/* 0.1" / streaming-stop */
 			) * (1.0 / tsize );	/* tape / 0.1" */
@@ -524,7 +524,7 @@ main(int argc, char *argv[])
 	 * tapes, exit now.
 	 */
 	if (just_estimate)
-		exit(0);
+		exit(X_FINOK);
 
 	/*
 	 * Allocate tape buffer.
@@ -592,7 +592,7 @@ main(int argc, char *argv[])
 	msg("Average transfer rate: %d KB/s\n", xferrate / tapeno);
 	putdumptime();
 	trewind(0);
-	broadcast("DUMP IS DONE!\7\7\n");
+	broadcast("DUMP IS DONE!\a\a\n");
 	msg("DUMP IS DONE\n");
 	Exit(X_FINOK);
 	/* NOTREACHED */
@@ -608,7 +608,7 @@ usage(void)
 "            [-f file] [-h level] [-k read block size] [-L label]",
 "            [-r read cache size] [-s feet] [-T date] file system",
 "       dump [-W | -w]");
-	exit(1);
+	exit(X_STARTUP);
 }
 
 /*
@@ -623,9 +623,10 @@ numarg(char *meaning, long vmin, long vmax)
 
 	val = strtol(optarg, &p, 10);
 	if (*p)
-		errx(1, "illegal %s -- %s", meaning, optarg);
+		errx(X_STARTUP, "illegal %s -- %s", meaning, optarg);
 	if (val < vmin || (vmax && val > vmax))
-		errx(1, "%s must be between %ld and %ld", meaning, vmin, vmax);
+		errx(X_STARTUP, "%s must be between %ld and %ld",
+		    meaning, vmin, vmax);
 	return (val);
 }
 
