@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.27 1999/03/16 16:30:16 minoura Exp $
+#	$NetBSD: ALL,v 1.28 1999/03/17 12:31:25 minoura Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -21,7 +21,7 @@ options 	M68060
 #### System options specific to the x68k port
 
 options 	UVM			# new virtual memory system
-options 	MACHINE_NONCONTIG	# support for noncontiguous memory
+options 	EXTENDED_MEMORY		# support for >16MB memory
 options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060
@@ -190,9 +190,7 @@ kbd0	at mfp0				# standard keyboard
 ite0	at grf0				# internal terminal emulator
 #options 	ITE_KERNEL_ATTR=4	# bold for kernel messages
 					# see /sys/arch/x68k/dev/itevar.h
-#!pow0	at mfp0 flags 0			# power switch status; intr enabled
-#!pow1	at mfp0 flags 1			# power switch status; read only
-pseudo-device	pow		2	#! software power switch
+pseudo-device	pow		2	# software power switch
 
 ## floppy disks
 fdc0	at intio0 addr 0xe94000 intr 96 dma 0 dmaintr 100 # floppy controler
@@ -225,13 +223,13 @@ zsc2	at intio0 addr 0xeafc10 intr 114
 zstty4	at zsc2 channel 0
 zstty5	at zsc2 channel 1
 
-pseudo-device	sram			#! battery-backuped static RAM
-pseudo-device	bell			#! OPM bell
+pseudo-device	sram			# battery-backuped static RAM
+pseudo-device	bell			# OPM bell
 
 xcom0	at mainbus0			# NS16550 fast serial
 xcom1	at mainbus0
 
-## Audio device
+## Audio device; broken
 #okiadpcm0 at intio0 addr 0xe92000 intr 106 errintr 107 dma 3
 #audio*	at okiadpcm*
 
@@ -239,7 +237,7 @@ xcom1	at mainbus0
 neptune0 at intio0 addr 0xece000 intr 249	# Neptune-X
 neptune1 at intio0 addr 0xece400 intr 249	# Neptune-X at alt. addr.
 ne0	at neptune? addr 0x300			# NE2000 or clone
-#se0	at scsibus? target ? lun ?		# Ether+; not supported
+#se0	at scsibus? target ? lun ?		# Ether+; broken
 
 
 #### Pseudo devices
