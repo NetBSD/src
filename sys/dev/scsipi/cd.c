@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.16 1993/08/01 19:26:17 mycroft Exp $
+ *	$Id: cd.c,v 1.17 1993/08/04 17:26:23 brezak Exp $
  */
 
 #define SPLCD splbio
@@ -698,6 +698,27 @@ cdioctl(dev_t dev, int cmd, caddr_t addr, int flag)
 						));
 		}
 		break;
+	case CDIOCPLAYMSF:
+		{
+			struct	ioc_play_msf *args
+					= (struct  ioc_play_msf *)addr;
+			struct	cd_mode_data data;
+			if(error = cd_get_mode(unit,&data,AUDIO_PAGE))
+				break;
+			data.page.audio.sotc = 0;
+			data.page.audio.immed = 1;
+			if(error = cd_set_mode(unit,&data))
+				break;
+			return(cd_play_msf(unit
+						,args->start.minute
+						,args->start.second
+						,args->start.frame
+						,args->end.minute
+						,args->end.second
+						,args->end.frame
+						));
+		}
+		break;
 	case CDIOCPLAYBLOCKS:
 		{
 			struct	ioc_play_blocks *args
@@ -1158,6 +1179,33 @@ int	unit,strack,sindex,etrack,eindex;
 	scsi_cmd.start_index = sindex;
 	scsi_cmd.end_track = etrack;
 	scsi_cmd.end_index = eindex;
+	retval = cd_scsi_cmd(unit,
+			(struct scsi_generic *)&scsi_cmd,
+			sizeof(scsi_cmd),
+			0,
+			0,
+			20000,	/* should be immed */
+			0);
+	return(retval);
+}
+/*******************************************************\
+* Get scsi driver to send a "start playing" command	*
+\*******************************************************/
+cd_play_msf(unit,sm,ss,sf,em,es,ef)
+int	unit;
+u_char	sm,ss,sf,em,es,ef;
+{
+	struct scsi_play_msf scsi_cmd;
+	int	retval;
+
+	bzero((struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd));
+	scsi_cmd.op_code = PLAY_MSF;
+	scsi_cmd.start_m = sm;
+	scsi_cmd.start_s = ss;
+	scsi_cmd.start_f = sf;
+	scsi_cmd.end_m = em;
+	scsi_cmd.end_s = es;
+	scsi_cmd.end_f = ef;
 	retval = cd_scsi_cmd(unit,
 			(struct scsi_generic *)&scsi_cmd,
 			sizeof(scsi_cmd),
