@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.35 2001/07/06 18:05:25 mcr Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.36 2001/11/06 03:11:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -42,6 +42,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/reboot.h>		/* for AB_* needed by bootverbose */
 
 #include <machine/bus.h>
 
@@ -122,8 +123,10 @@ cardbusattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_lattimer = cba->cba_lattimer;
 
 	printf(": bus %d device %d", sc->sc_bus, sc->sc_device);
-	printf(" cacheline 0x%x, lattimer 0x%x\n", sc->sc_cacheline,
-	    sc->sc_lattimer);
+	if (bootverbose)
+		printf(" cacheline 0x%x, lattimer 0x%x", sc->sc_cacheline,
+		       sc->sc_lattimer);
+	printf("\n");
 
 	sc->sc_iot = cba->cba_iot;	/* CardBus I/O space tag */
 	sc->sc_memt = cba->cba_memt;	/* CardBus MEM space tag */
@@ -527,6 +530,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 #endif
 
 		ca.ca_tag = tag;
+		ca.ca_bus = sc->sc_bus;
 		ca.ca_device = sc->sc_device;
 		ca.ca_function = function;
 		ca.ca_id = id;
@@ -598,10 +602,12 @@ cardbusprint(void *aux, const char *pnp)
 				printf(", ");
 			printf("%s", ca->ca_cis.cis1_info[i]);
 		}
-		if (i)
-			printf(" ");
-		printf("(manufacturer 0x%x, product 0x%x)",
-		    ca->ca_cis.manufacturer, ca->ca_cis.product);
+		if (bootverbose) {
+			if (i)
+				printf(" ");
+			printf("(manufacturer 0x%x, product 0x%x)",
+			       ca->ca_cis.manufacturer, ca->ca_cis.product);
+		}
 		printf(" %s at %s", devinfo, pnp);
 	}
 	printf(" dev %d function %d", ca->ca_device, ca->ca_function);
