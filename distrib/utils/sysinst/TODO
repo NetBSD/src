@@ -63,6 +63,9 @@ Things we should try and do before 1.3 release....
 	    to mount the active system's /usr. Could happen when a
 	    real upgrade aborts, even running from ramdisk root.)
 
+        -- Use bootp or dhcp to get network info (hostname, domain name,
+           name servers, ...)
+
 Things to do ....
 
 	--  Things like having config_network()
