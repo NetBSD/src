@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.29 2001/10/31 01:46:42 tv Exp $
+#	$NetBSD: bsd.obj.mk,v 1.30 2001/11/11 22:39:23 tv Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -20,9 +20,9 @@ __objdir:= ${MAKEOBJDIR}
 # If that fails - we do a mkdir to get the appropriate error message
 # before bailing out.
 obj:
-	@if test ! -d ${__objdir}; then \
+	@if [ ! -d ${__objdir} ]; then \
 		mkdir -p ${__objdir}; \
-		if test ! -d ${__objdir}; then \
+		if [ ! -d ${__objdir} ]; then \
 			mkdir ${__objdir}; exit 1; \
 		fi; \
 		echo "${__curdir} -> ${__objdir}"; \
@@ -50,36 +50,37 @@ PAWD?=		/bin/pwd
 
 obj:
 	@cd ${__curdir}; \
-	here=`${PAWD}`; subdir=$${here#${BSDSRCDIR}/}; \
-	if test $$here != $$subdir ; then \
-		if test ! -d ${__usrobjdir}; then \
+	here=`${PAWD}`/; subdir=$${here#${BSDSRCDIR}/}; \
+	if [ "$$here" != "$$subdir/" ]; then \
+		if [ ! -d ${__usrobjdir} ]; then \
 			echo "BSDOBJDIR ${__usrobjdir} does not exist, bailing..."; \
 			exit 1; \
 		fi; \
-		dest=${__usrobjdir}/$$subdir${__usrobjdirpf} ; \
-		if [ -h $$here/${__objdir} ]; then \
-			curtarg=`ls -ld $$here/${__objdir} | awk '{print $$NF}'` ; \
+		subdir=$${subdir%/}; \
+		dest=${__usrobjdir}/$$subdir${__usrobjdirpf}; \
+		if [ -h $$here${__objdir} ]; then \
+			curtarg=`ls -ld $$here${__objdir} | awk '{print $$NF}'` ; \
 			if [ "$$curtarg" = "$$dest" ]; then \
 				: ; \
 			else \
-				echo "$$here/${__objdir} -> $$dest"; \
+				echo "$$here""${__objdir} -> $$dest"; \
 				rm -rf ${__objdir}; \
 				ln -s $$dest ${__objdir}; \
 			fi; \
 		else \
-			echo "$$here/${__objdir} -> $$dest"; \
+			echo "$$here""${__objdir} -> $$dest"; \
 			rm -rf ${__objdir}; \
 			ln -s $$dest ${__objdir}; \
 		fi; \
-		if test ! -d $$dest; then \
+		if [ ! -d $$dest ]; then \
 			mkdir -p $$dest; \
 		else \
 			true; \
 		fi; \
 	else \
 		true ; \
-		dest=$$here/${__objdir} ; \
-		if test ! -d ${__objdir} || test -h ${__objdir}; then \
+		dest=$$here${__objdir} ; \
+		if [ ! -d ${__objdir} ] || [ -h ${__objdir} ]; then \
 			echo "making $$dest" ; \
 			rm -f ${__objdir}; \
 			mkdir $$dest; \
