@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.73.2.2 2004/06/07 09:48:52 tron Exp $ */
+/* $NetBSD: wskbd.c,v 1.73.2.3 2004/06/07 09:57:29 tron Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.73.2.2 2004/06/07 09:48:52 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.73.2.3 2004/06/07 09:57:29 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1057,6 +1057,10 @@ getkeyrepeat:
 		ksdp = &sc->sc_scroll_data;
 		SETSCROLLMOD(usdp, ksdp, ksdp);
 		return (0);
+#else
+	case WSKBDIO_GETSCROLL:
+	case WSKBDIO_SETSCROLL:
+		return ENODEV;
 #endif
 
 #undef SETKEYREPEAT
