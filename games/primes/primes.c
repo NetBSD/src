@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $	*/
+/*	$NetBSD: primes.c,v 1.6 1997/01/07 12:24:57 tls Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)primes.c	8.4 (Berkeley) 3/21/94";
+static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: primes.c,v 1.6 1997/01/07 12:24:57 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ static char rcsid[] = "$NetBSD: primes.c,v 1.5 1995/04/24 12:24:47 cgd Exp $";
 #include <memory.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "primes.h"
 

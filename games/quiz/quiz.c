@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
+/*	$NetBSD: quiz.c,v 1.10 1997/01/07 12:27:30 tls Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,20 +45,23 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)quiz.c	8.2 (Berkeley) 1/3/94";
+static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $";
+static char rcsid[] = "$NetBSD: quiz.c,v 1.10 1997/01/07 12:27:30 tls Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+
+#include <ctype.h>
 #include <errno.h>
-#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include <err.h>
+#include <time.h>
+#include <unistd.h>
 #include "quiz.h"
 #include "pathnames.h"
 
