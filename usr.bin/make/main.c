@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.78 2001/11/12 01:33:48 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.79 2001/11/12 21:58:18 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.78 2001/11/12 01:33:48 tv Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.79 2001/11/12 21:58:18 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.78 2001/11/12 01:33:48 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.79 2001/11/12 21:58:18 tv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -482,6 +482,7 @@ Main_SetObjdir(path)
 			strncpy(objdir, path, MAXPATHLEN);
 			Var_Set(".OBJDIR", objdir, VAR_GLOBAL, 0);
 			setenv("PWD", objdir, 1);
+			Dir_InitDot();
 			rc = TRUE;
 		}
 	}
@@ -636,7 +637,9 @@ main(argc, argv)
 	 * finally _PATH_OBJDIRPREFIX`pwd`, in that order.  If none
 	 * of these paths exist, just use .CURDIR.
 	 */
+	Dir_Init(curdir);
 	(void) Main_SetObjdir(curdir);
+
 	if ((path = getenv("MAKEOBJDIRPREFIX")) != NULL) {
 		(void) snprintf(mdpath, MAXPATHLEN, "%s%s", path, curdir);
 		(void) Main_SetObjdir(mdpath);
@@ -684,19 +687,12 @@ main(argc, argv)
 	 */
 
 	/*
-	 * Initialize directory structures so -I flags can be processed
-	 * correctly.
-	 */
-	Dir_Init(curdir);
-	Parse_Init();		/* Need to initialize the paths of #include
-				 * directories */
-
-	/*
 	 * Initialize various variables.
 	 *	MAKE also gets this name, for compatibility
 	 *	.MAKEFLAGS gets set to the empty string just in case.
 	 *	MFLAGS also gets initialized empty, for compatibility.
 	 */
+	Parse_Init();
 	Var_Set("MAKE", argv[0], VAR_GLOBAL, 0);
 	Var_Set(".MAKE", argv[0], VAR_GLOBAL, 0);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL, 0);
