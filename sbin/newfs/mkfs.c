@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.20 1995/03/21 01:28:05 cgd Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.21 1995/04/12 21:24:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$NetBSD: mkfs.c,v 1.20 1995/03/21 01:28:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: mkfs.c,v 1.21 1995/04/12 21:24:31 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -569,6 +569,7 @@ next:
 	sblock.fs_cstotal.cs_nifree = 0;
 	sblock.fs_cstotal.cs_nffree = 0;
 	sblock.fs_fmod = 0;
+	sblock.fs_clean = FS_ISCLEAN;
 	sblock.fs_ronly = 0;
 	/*
 	 * Dump out summary information about file system.
