@@ -1,4 +1,4 @@
-/*	$NetBSD: divsi3.S,v 1.4 1999/09/19 15:58:02 is Exp $	*/
+/*	$NetBSD: divsi3.S,v 1.5 1999/09/20 09:22:48 is Exp $	*/
 
 /*
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -29,7 +29,14 @@ ENTRY(__modsi3)
 	ldmfd	sp!, {pc}
 
 L_overflow:
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+	mov	r0, #8			/* SIGFPE */
+	bl	_raise			/* raise it */
+	mov	r0, #0
+#else
+	/* XXX should cause a fatal error */
 	mvn	r0, #0
+#endif
 	mov	pc, lr
 
 ENTRY(__udivsi3)
