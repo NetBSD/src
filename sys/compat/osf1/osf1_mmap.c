@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_mmap.c,v 1.7 2000/09/13 15:00:24 thorpej Exp $ */
+/* $NetBSD: osf1_mmap.c,v 1.7.2.1 2001/08/30 23:43:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -43,8 +43,8 @@
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_madvise(p, v, retval)
-	struct proc *p;
+osf1_sys_madvise(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -95,7 +95,7 @@ osf1_sys_madvise(p, v, retval)
 	}
 
 	if (error == 0) {
-		error = sys_madvise(p, &a, retval);
+		error = sys_madvise(l, &a, retval);
 
 		/*
 		 * NetBSD madvise() currently always returns ENOSYS.
@@ -109,12 +109,13 @@ osf1_sys_madvise(p, v, retval)
 }
 
 int
-osf1_sys_mmap(p, v, retval)
-	struct proc *p;
+osf1_sys_mmap(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_mmap_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_mmap_args a;
 	unsigned long leftovers;
 
@@ -201,12 +202,12 @@ done:
 		}
 	}
 
-	return sys_mmap(p, &a, retval);
+	return sys_mmap(l, &a, retval);
 }
 
 int
-osf1_sys_mprotect(p, v, retval)
-	struct proc *p;
+osf1_sys_mprotect(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -223,5 +224,5 @@ osf1_sys_mprotect(p, v, retval)
 	if (leftovers != 0)
 		return (EINVAL);
 
-	return sys_mprotect(p, &a, retval);
+	return sys_mprotect(l, &a, retval);
 }

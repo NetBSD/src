@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.2 1999/05/05 01:51:32 cgd Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.2.18.1 2001/08/30 23:43:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -60,6 +60,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -78,12 +79,13 @@
  * the other word of our iov_len is zero!
  */
 int
-osf1_sys_readv(p, v, retval)
-	struct proc *p;
+osf1_sys_readv(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_readv_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_readv_args a;
 	struct osf1_iovec *oio;
 	struct iovec *nio;
@@ -113,7 +115,7 @@ osf1_sys_readv(p, v, retval)
 
 	if ((error = copyout(nio, (caddr_t)SCARG(&a, iovp), nsize)))
 		goto punt;
-	error = sys_readv(p, &a, retval);
+	error = sys_readv(l, &a, retval);
 
 punt:
 	free(oio, M_TEMP);
@@ -122,12 +124,13 @@ punt:
 }
 
 int
-osf1_sys_select(p, v, retval)
-	struct proc *p;
+osf1_sys_select(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_select_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_select_args a;
 	struct osf1_timeval otv;
 	struct timeval tv;
@@ -162,18 +165,19 @@ osf1_sys_select(p, v, retval)
 	}
 
 	if (error == 0)
-		error = sys_select(p, &a, retval);
+		error = sys_select(l, &a, retval);
 
 	return (error);
 }
 
 int
-osf1_sys_writev(p, v, retval)
-	struct proc *p;
+osf1_sys_writev(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_writev_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_writev_args a;
 	struct osf1_iovec *oio;
 	struct iovec *nio;
@@ -203,7 +207,7 @@ osf1_sys_writev(p, v, retval)
 
 	if ((error = copyout(nio, (caddr_t)SCARG(&a, iovp), nsize)))
 		goto punt;
-	error = sys_writev(p, &a, retval);
+	error = sys_writev(l, &a, retval);
 
 punt:
 	free(oio, M_TEMP);

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.2 1999/05/05 01:51:35 cgd Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.2.18.1 2001/08/30 23:43:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -43,8 +44,8 @@
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_getrlimit(p, v, retval)
-	struct proc *p;
+osf1_sys_getrlimit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -81,16 +82,17 @@ osf1_sys_getrlimit(p, v, retval)
 	/* XXX should translate */
 	SCARG(&a, rlp) = SCARG(uap, rlp);
 
-	return sys_getrlimit(p, &a, retval);
+	return sys_getrlimit(l, &a, retval);
 }
 
 int
-osf1_sys_getrusage(p, v, retval)
-	struct proc *p;
+osf1_sys_getrusage(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_getrusage_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_getrusage_args a;
 	struct osf1_rusage osf1_rusage;
 	struct rusage netbsd_rusage;
@@ -114,7 +116,7 @@ osf1_sys_getrusage(p, v, retval)
 	sg = stackgap_init(p->p_emul);
 	SCARG(&a, rusage) = stackgap_alloc(&sg, sizeof netbsd_rusage);
 
-	error = sys_getrusage(p, &a, retval);
+	error = sys_getrusage(l, &a, retval);
 	if (error == 0)
                 error = copyin((caddr_t)SCARG(&a, rusage),
 		    (caddr_t)&netbsd_rusage, sizeof netbsd_rusage);
@@ -128,8 +130,8 @@ osf1_sys_getrusage(p, v, retval)
 }
 
 int
-osf1_sys_setrlimit(p, v, retval)
-	struct proc *p;
+osf1_sys_setrlimit(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -166,5 +168,5 @@ osf1_sys_setrlimit(p, v, retval)
 	/* XXX should translate */
 	SCARG(&a, rlp) = SCARG(uap, rlp);
 
-	return sys_setrlimit(p, &a, retval);
+	return sys_setrlimit(l, &a, retval);
 }

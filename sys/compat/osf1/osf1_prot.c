@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_prot.c,v 1.3 1999/08/16 02:59:24 simonb Exp $ */
+/* $NetBSD: osf1_prot.c,v 1.3.14.1 2001/08/30 23:43:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -59,6 +59,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -75,12 +76,13 @@
  * setuid(), you'll get a correct description of setgid().
  */
 int
-osf1_sys_setgid(p, v, retval)
-	struct proc *p;
+osf1_sys_setgid(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_setgid_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct pcred *pc = p->p_cred;
 	gid_t gid = SCARG(uap, gid);
 	int error;
@@ -114,12 +116,13 @@ osf1_sys_setgid(p, v, retval)
  *	    this function call.
  */
 int
-osf1_sys_setuid(p, v, retval)
-	struct proc *p;
+osf1_sys_setuid(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct osf1_sys_setuid_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct pcred *pc = p->p_cred;
 	uid_t uid = SCARG(uap, uid);
 	int error;

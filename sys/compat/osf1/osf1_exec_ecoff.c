@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.1.4.1 2001/08/24 00:08:53 nathanw Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.1.4.2 2001/08/30 23:43:45 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -121,7 +121,7 @@ osf1_copyargs(pack, arginfo, stackp, argp)
 	char **stackp;
 	void *argp;
 {
-	struct proc *p = curproc;			/* XXX !!! */
+	struct proc *p = curproc->l_proc;			/* XXX !!! */
 	struct osf1_exec_emul_arg *emul_arg = pack->ep_emul_arg;
 	struct osf1_auxv ai[OSF1_MAX_AUX_ENTRIES], *a;
 	char *prognameloc, *loadernameloc;
