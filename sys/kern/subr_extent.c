@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.24 1999/02/18 18:52:29 mycroft Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.24.2.1 1999/06/24 16:13:21 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,8 @@
 #define	pool_get(pool, flags)		malloc(pool->pr_size,0,0)
 #define	pool_put(pool, rp)		free(rp,0)
 #define	panic(a)			printf(a)
+#define	splhigh()			(1)
+#define	splx(s)				((void)(s))
 #endif
 
 static	pool_handle_t expool_create __P((void));
@@ -119,6 +121,7 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 	size_t sz = storagesize;
 	struct extent_region *rp;
 	int fixed_extent = (storage != NULL);
+	int s;
 
 #ifdef DIAGNOSTIC
 	/* Check arguments. */
@@ -164,9 +167,12 @@ extent_create(name, start, end, mtype, storage, storagesize, flags)
 			LIST_INSERT_HEAD(&fex->fex_freelist, rp, er_link);
 		}
 	} else {
-		if ((expool == NULL) &&
-		    !expool_create())
-			return NULL;
+		s = splhigh();
+		if (expool == NULL)
+			expool_create();
+		splx(s);
+		if (expool == NULL)
+			return (NULL);
 
 		ex = (struct extent *)malloc(sizeof(struct extent),
 		    mtype, (flags & EX_WAITOK) ? M_WAITOK : M_NOWAIT);
@@ -604,11 +610,11 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 	}
 
 	/*
-	 * If there are no allocated regions beyond where we want to be,
-	 * relocate the start of our candidate region to the end of
-	 * the last allocated region (if there was one).
+	 * Relocate the start of our candidate region to the end of
+	 * the last allocated region (if there was one overlapping
+	 * our subrange).
 	 */
-	if (rp == NULL && last != NULL)
+	if (last != NULL && last->er_end >= newstart)
 		newstart = EXTENT_ALIGN((last->er_end + 1), alignment, skew);
 
 	for (; rp != NULL; rp = rp->er_link.le_next) {
@@ -991,6 +997,7 @@ extent_alloc_region_descriptor(ex, flags)
 {
 	struct extent_region *rp;
 	int exflags;
+	int s;
 
 	/*
 	 * XXX Make a static, create-time flags word, so we don't
@@ -1034,11 +1041,14 @@ extent_alloc_region_descriptor(ex, flags)
 	}
 
  alloc:
-	if ((expool == NULL) &&
-	    !expool_create())
+	s = splhigh();
+	if (expool == NULL && !expool_create()) {
+		splx(s);
 		return (NULL);
+	}
 
 	rp = pool_get(expool, (flags & EX_WAITOK) ? PR_WAITOK : 0);
+	splx(s);
 
 	if (rp != NULL)
 		rp->er_flags = ER_ALLOC;
@@ -1055,6 +1065,7 @@ extent_free_region_descriptor(ex, rp)
 	struct extent *ex;
 	struct extent_region *rp;
 {
+	int s;
 
 	if (ex->ex_flags & EXF_FIXED) {
 		struct extent_fixed *fex = (struct extent_fixed *)ex;
@@ -1072,7 +1083,9 @@ extent_free_region_descriptor(ex, rp)
 				    er_link);
 				goto wake_em_up;
 			} else {
+				s = splhigh();
 				pool_put(expool, rp);
+				splx(s);
 			}
 		} else {
 			/* Clear all flags. */
@@ -1091,7 +1104,9 @@ extent_free_region_descriptor(ex, rp)
 	/*
 	 * We know it's dynamically allocated if we get here.
 	 */
+	s = splhigh();
 	pool_put(expool, rp);
+	splx(s);
 }
 
 void
