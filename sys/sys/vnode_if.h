@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.h,v 1.11 1998/03/01 02:30:14 fvdl Exp $	*/
+/*	$NetBSD: vnode_if.h,v 1.12 1998/06/05 19:41:21 kleink Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.13 1998/03/01 02:22:37 fvdl Exp 
+ *	NetBSD: vnode_if.src,v 1.14 1998/06/05 19:38:56 kleink Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.16 1998/03/01 02:22:37 fvdl Exp 
  */
@@ -397,23 +397,23 @@ struct vop_fsync_args {
 	struct vnodeop_desc *a_desc;
 	struct vnode *a_vp;
 	struct ucred *a_cred;
-	int a_waitfor;
+	int a_flags;
 	struct proc *a_p;
 };
 extern struct vnodeop_desc vop_fsync_desc;
 static __inline int VOP_FSYNC __P((struct vnode *, struct ucred *, int, 
     struct proc *)) __attribute__ ((unused));
-static __inline int VOP_FSYNC(vp, cred, waitfor, p)
+static __inline int VOP_FSYNC(vp, cred, flags, p)
 	struct vnode *vp;
 	struct ucred *cred;
-	int waitfor;
+	int flags;
 	struct proc *p;
 {
 	struct vop_fsync_args a;
 	a.a_desc = VDESC(vop_fsync);
 	a.a_vp = vp;
 	a.a_cred = cred;
-	a.a_waitfor = waitfor;
+	a.a_flags = flags;
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_fsync), &a));
 }
