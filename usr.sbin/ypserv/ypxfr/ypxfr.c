@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.9 1999/07/25 09:36:02 lukem Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.10 2001/01/11 00:35:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.9 1999/07/25 09:36:02 lukem Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.10 2001/01/11 00:35:49 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -162,7 +162,7 @@ main(argc, argv)
 	}
 
 #ifdef DEBUG
-	openlog(__progname, LOG_PID, LOG_DAEMON);
+	openlog("ypxfr", LOG_PID, LOG_DAEMON);
 
 	syslog(LOG_DEBUG, "ypxfr: Arguments:");
 	syslog(LOG_DEBUG, "YP clear to local: %s", (cflag) ? "no" : "yes");
@@ -185,7 +185,9 @@ main(argc, argv)
 			goto punt;
 	}
 
+#ifdef DEBUG
         syslog(LOG_DEBUG, "Get Master");
+#endif
 
 	if (host == NULL) {
 		if (srcdomain == NULL)
@@ -201,7 +203,9 @@ main(argc, argv)
 		}
 	}
 
+#ifdef DEBUG
         syslog(LOG_DEBUG, "Connect host: %s", host); 
+#endif
 
 	client = yp_bind_host(host, YPPROG, YPVERS, 0, 1);
 
