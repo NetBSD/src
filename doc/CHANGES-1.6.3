@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.17 2004/03/15 04:12:52 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.18 2004/03/15 04:38:16 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -95,3 +95,12 @@ sys/arch/amiga/dev/toccata.c			1.7
 
 	Remove forgotten debug printf from development.
 	[is, ticket #1593]
+
+sys/dev/usb/ehci.c			1.51
+sys/dev/usb/ohci.c			1.146
+sys/dev/usb/uhci.c			1.177
+sys/dev/usb/uhub.c			1.65
+
+	Use the correct wValue to get hub desriptors.
+	Also, make wValue checks of root hub codes less strict.
+	[toshii, ticket #1599]
