@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35 2000/07/03 14:38:05 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.36 2000/07/07 12:44:47 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -133,6 +133,14 @@ struct intrmap intrmap[] = {
 	{ "SUNW,CS4231",	PIL_AUD },
 	{ NULL,		0 }
 };
+
+#ifdef DEBUG
+#define ACDB_BOOTDEV	0x1
+int autoconf_debug = 0x0;
+#define DPRINTF(l, s)   do { if (autoconf_debug & l) printf s; } while (0)
+#else
+#define DPRINTF(l, s)
+#endif
 
 /*
  * Most configuration on the SPARC is done by matching OPENPROM Forth
@@ -1074,8 +1082,8 @@ bus_compatible(bpname, dev)
 
 	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
 		if (strcmp(bpname, dev_compat_tab[i].bpname) == 0 &&
-		    (class == BUSCLASS_NONE ||
-		     class == dev_compat_tab[i].class))
+		    (dev_compat_tab[i].class == BUSCLASS_NONE ||
+		     dev_compat_tab[i].class == class))
 			return (dev_compat_tab[i].cfname);
 	}
 
@@ -1133,20 +1141,30 @@ instance_match(dev, aux, bp)
 	switch (bus_class(dev->dv_parent)) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
+		DPRINTF(ACDB_BOOTDEV,
+		    ("instance_match: mainbus device, want %#x have %#x\n",
+		    ma->ma_upaid, bp->val[0]));
 		if (bp->val[0] == ma->ma_upaid)
 			return (1);
 		break;
 	case BUSCLASS_SBUS:
 		sa = aux;
+		DPRINTF(ACDB_BOOTDEV, ("instance_match: sbus device, "
+		    "want slot %#x offset %#x have slot %#x offset %#x\n",
+		     bp->val[0], bp->val[1], sa->sa_slot, sa->sa_offset));
 		if (bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
 			return (1);
 		break;
 	case BUSCLASS_PCI:
 		pa = aux;
+		DPRINTF(ACDB_BOOTDEV, ("instance_match: pci device, "
+		    "want dev %#x fn %#x have dev %#x fn %#x\n",
+		     bp->val[0], bp->val[1], pa->pa_device, pa->pa_function));
 		if (bp->val[0] == pa->pa_device &&
 		    bp->val[1] == pa->pa_function)
 			return (1);
 		break;
+#if 0
 	case BUSCLASS_XDC:
 	case BUSCLASS_XYC:
 		{
@@ -1161,6 +1179,7 @@ instance_match(dev, aux, bp)
 
 		}
 		break;
+#endif
 	default:
 		break;
 	}
@@ -1218,6 +1237,10 @@ device_register(dev, aux)
 	bpname = bus_compatible(bp->name, dev);
 	dvname = dev->dv_cfdata->cf_driver->cd_name;
 
+	DPRINTF(ACDB_BOOTDEV,
+	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",
+	    dev->dv_xname, dvname, dev->dv_xname, bpname, bp->name));
+
 	/* First, match by name */
 	if (strcmp(dvname, bpname) != 0)
 		return;
@@ -1230,6 +1253,8 @@ device_register(dev, aux)
 		if (instance_match(dev, aux, bp) != 0) {
 			bp->dev = dev;
 			bootpath_store(1, bp + 1);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found bus controller %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	} else if (strcmp(dvname, "le") == 0 ||
@@ -1239,6 +1264,8 @@ device_register(dev, aux)
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found ethernet controller %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
@@ -1273,23 +1300,26 @@ device_register(dev, aux)
 		if (sc_link->scsipi_scsi.target == target &&
 		    sc_link->scsipi_scsi.lun == lun) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found [cs]d disk %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	} else if (strcmp("xd", dvname) == 0 || strcmp("xy", dvname) == 0) {
 		/* A Xylogic disk */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found x[yd] disk %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	} else if (strcmp("wd", dvname) == 0) {
-		/*
-		 * IDE disks.
-		 * ?XXX?
-		 */
+		/* IDE disks. */
 		struct ata_atapi_attach *aa = aux;
 
 		if (aa->aa_channel == bp->val[0]) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found wd disk %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	} else {
@@ -1298,6 +1328,8 @@ device_register(dev, aux)
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found generic device %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	}
