@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.3 1997/10/07 04:01:30 phil Exp $ */
+/*	$NetBSD: disks.c,v 1.4 1997/10/15 04:35:32 phil Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,6 +47,7 @@
 #include <sys/param.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#include <sys/disklabel.h>
 
 #include "defs.h"
 #include "msg_defs.h"
@@ -54,35 +55,42 @@
 #include "txtwalk.h"
 
 /* Local prototypes */
-static void found_disk(struct data *list, int num);
+static void get_disks (void);
 static void foundffs (struct data *list, int num);
 
-struct lookfor msgbuf[] = {
-	{"wd", "%s: %i, %d cyl, %d head, %d sec, %d", "c", NULL, found_disk},
-	{"sd", "%s: %i, %d cyl, %d head, %d sec, %d b%i x %d", "c",
-	 NULL, found_disk}
-};
-int nummsgbuf = sizeof(msgbuf) / sizeof(struct lookfor);
+static void get_disks(void)
+{
+	char *names[] = {"wd", "sd", "rd", NULL};
+	char **xd = names;
+	char d_name[SSTRSIZE];
+	struct disklabel l;
+	int i;
 
-static void found_disk(struct data *list, int num)
-{	int i;
-
-	if (numdisks < MAX_DISKS) {
-		strncpy (disks[numdisks].name, list[0].u.s_val, SSTRSIZE);
-		strncat (disknames, list[0].u.s_val,
-			 SSTRSIZE-1-strlen(disknames));
-		strncat (disknames, " ", SSTRSIZE-1-strlen(disknames));
-		disks[numdisks].geom[4] = 0;
-		for (i=0; i<num-1; i++)
-			disks[numdisks].geom[i] = list[i+1].u.i_val;
-		numdisks++;
+	while (*xd != NULL) {
+		for (i=0; i<5; i++) {
+			sprintf (d_name, "%s%d", *xd, i);
+			if (get_geom (d_name, &l) && numdisks < MAX_DISKS) {
+				strncpy (disks[numdisks].name,
+					 d_name, SSTRSIZE);
+				strncat (disknames, d_name,
+					 SSTRSIZE-1-strlen(disknames));
+				strncat (disknames, " ",
+					 SSTRSIZE-1-strlen(disknames));
+				disks[numdisks].geom[0] = l.d_ncylinders;
+				disks[numdisks].geom[1] = l.d_ntracks;
+				disks[numdisks].geom[2] = l.d_nsectors;
+				disks[numdisks].geom[3] = l.d_secsize;
+				disks[numdisks].geom[4] = l.d_secperunit;
+				numdisks++;
+			}
+		}
+		xd++;
 	}
 }
+			
 
 int find_disks (void)
 {
-	char *textbuf;
-	int  textsize;
 	char *tp;
 	char defname[STRSIZE];
 	int  i;
@@ -91,16 +99,8 @@ int find_disks (void)
 	disknames[0] = 0;
 	numdisks = 0;
 
-	/* Probe for hardware ... */
-	textsize = collect (T_FILE, &textbuf, "/kern/msgbuf");
-	if (textsize < 0) {
-		endwin();
-		fprintf (stderr, msg_string(MSG_openmsgbuf));
-		exit(1);
-	}
-
-	walk (textbuf, textsize, msgbuf, nummsgbuf);
-	free(textbuf);
+	/* Find disks. */
+	get_disks();
 
 	if (numdisks == 0) {
 		/* No disks found! */
