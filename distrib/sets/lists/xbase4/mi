@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1 2002/02/15 22:29:22 tron Exp $
+# $NetBSD: mi,v 1.2 2002/04/07 20:07:43 tron Exp $
 ./usr/X11R6/bin/cxpm
 ./usr/X11R6/bin/dpsexec
 ./usr/X11R6/bin/dpsinfo
@@ -16,6 +16,7 @@
 ./usr/X11R6/bin/uxterm
 ./usr/X11R6/bin/xfsinfo
 ./usr/X11R6/bin/xftcache
+./usr/X11R6/bin/xftlsfonts
 ./usr/X11R6/bin/xgamma
 ./usr/X11R6/bin/xrandr
 ./usr/X11R6/bin/xtrapchar
@@ -288,6 +289,7 @@
 ./usr/X11R6/man/cat1/texteroids.0
 ./usr/X11R6/man/cat1/xfsinfo.0
 ./usr/X11R6/man/cat1/xftcache.0
+./usr/X11R6/man/cat1/xftlsfonts.0
 ./usr/X11R6/man/cat1/xgamma.0
 ./usr/X11R6/man/cat1/xrandr.0
 ./usr/X11R6/man/cat1/xtrap.0
