@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.32 2001/11/21 19:14:26 wiz Exp $	*/
+/*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.32 2001/11/21 19:14:26 wiz Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,7 +240,7 @@ main(int argc, char **argv)
 		exit(1);
 	}
 	if (flock(lfd, LOCK_EX|LOCK_NB) < 0) {
-		if (errno == EWOULDBLOCK)	/* active deamon present */
+		if (errno == EWOULDBLOCK)	/* active daemon present */
 			exit(0);
 		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
 		exit(1);

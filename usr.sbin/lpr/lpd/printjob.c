@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.30 2001/10/09 02:15:38 mjl Exp $	*/
+/*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.30 2001/10/09 02:15:38 mjl Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,7 @@ printjob(void)
 		exit(1);
 	}
 	if (flock(lfd, LOCK_EX|LOCK_NB) < 0) {
-		if (errno == EWOULDBLOCK)	/* active deamon present */
+		if (errno == EWOULDBLOCK)	/* active daemon present */
 			exit(0);
 		syslog(LOG_ERR, "%s: %s: %m", printer, LO);
 		exit(1);
