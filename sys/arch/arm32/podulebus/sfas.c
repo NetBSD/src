@@ -1,4 +1,4 @@
-/* $NetBSD: sfas.c,v 1.3 1996/03/17 01:24:55 thorpej Exp $ */
+/* $NetBSD: sfas.c,v 1.4 1996/03/18 21:23:20 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -39,8 +39,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *
- *	$Id: sfas.c,v 1.3 1996/03/17 01:24:55 thorpej Exp $
  */
 
 /*
