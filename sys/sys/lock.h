@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.20 1999/07/27 21:29:15 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.21 1999/07/27 23:45:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,10 +89,6 @@
 
 #include <sys/queue.h>
 
-#if defined(MULTIPROCESSOR)
-#include <machine/lock.h>
-#endif
-
 /*
  * The simple lock.  Provides a simple spinning mutex.  Note the
  * member which is used in atomic operations must be aligned in
@@ -110,12 +106,14 @@ struct simplelock {
 #endif
 };
 
-#ifndef SIMPLELOCK_LOCKED
+/*
+ * Machine-dependent code may #undef and override these.
+ */
 #define	SIMPLELOCK_LOCKED	1
-#endif
-
-#ifndef SIMPLELOCK_UNLOCKED
 #define	SIMPLELOCK_UNLOCKED	0
+
+#if defined(MULTIPROCESSOR)
+#include <machine/lock.h>
 #endif
 
 #ifdef LOCKDEBUG
