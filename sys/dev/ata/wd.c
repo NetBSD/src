@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.120 1994/11/30 02:32:03 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.121 1994/12/01 10:45:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -238,7 +238,7 @@ wdcprobe(parent, match, aux)
 	outb(iobase+wd_command, WDCC_DIAGNOSE);
 
 	/* Wait for command to complete. */
-	if (wait_for_unbusy(wdc) != 0)
+	if (wait_for_unbusy(wdc) < 0)
 		return 0;
 
 	ia->ia_iosize = 8;
