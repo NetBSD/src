@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.34 1994/08/11 23:51:26 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.35 1994/10/14 18:27:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -78,13 +78,9 @@ int	Debugger();
 #define	CDOUTSTANDING	2
 #define	CDRETRIES	1
 
-#define	MAKECDDEV(maj, unit, part) \
-    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
-#define CDPART(z)	(minor(z) % MAXPARTITIONS)
-#define CDUNIT(z)	(minor(z) / MAXPARTITIONS)
-#ifndef RAW_PART
-#define	RAW_PART	3
-#endif
+#define	CDUNIT(z)			DISKUNIT(z)
+#define	CDPART(z)			DISKPART(z)
+#define	MAKECDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
 struct cd_data {
 	struct device sc_dev;

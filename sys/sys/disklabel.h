@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.28 1994/07/15 21:09:38 cgd Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.29 1994/10/14 18:27:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988 Regents of the University of California.
@@ -38,8 +38,25 @@
 #ifndef _SYS_DISKLABEL_H_
 #define _SYS_DISKLABEL_H_
 
-#ifdef amiga
+/*
+ * Each disk has a label which includes information about the hardware
+ * disk geometry, filesystem partitions, and drive specific
+ * information.  The location of the label, as well as the number of
+ * partitions the label can describe and the number of the "whole
+ * disk" (raw) paritition are machine dependent.
+ */
+
 #include <machine/disklabel.h>
+
+/*
+ * The absolute maximum number of disk partitions allowed.
+ * This is the maximum value of MAXPARTITIONS for which 'struct disklabel'
+ * is <= DEV_BSIZE bytes long.  If MAXPARTITIONS is greater than this, beware.
+ */
+
+#define	MAXMAXPARTITIONS	22
+#if MAXPARTITIONS > MAXMAXPARTITIONS
+#warn beware: MAXPARTITIONS bigger than MAXMAXPARTITIONS
 #endif
 
 /*
@@ -50,25 +67,14 @@
 #define	DISKTAB		"/etc/disktab"		/* deprecated */
 
 /*
- * Each disk has a label which includes information about the hardware
- * disk geometry, filesystem partitions, and drive specific information.
- *
- * The arch dependant label offsets et'al should be defined in machine/param.h.
+ * Translate between device numbers and major/disk unit/disk partition.
  */
-
-#ifndef	LABELSECTOR
-#define LABELSECTOR	0			/* sector containing label */
-#endif
-
-#ifndef	LABELOFFSET
-#define LABELOFFSET	64			/* offset of label in sector */
-#endif
+#define	DISKUNIT(dev)	(minor(dev) % MAXPARTITIONS)
+#define	DISKPART(dev)	(minor(dev) * MAXPARTITIONS)
+#define	MAKEDISKDEV(maj, unit, part) \
+    (makedev((maj), ((unit) * MAXPARTITIONS) + (part)))
 
 #define DISKMAGIC	((u_long) 0x82564557)	/* The disk magic number */
-#ifndef MAXPARTITIONS
-#define	MAXPARTITIONS	8
-#endif
-
 
 #ifndef LOCORE
 struct disklabel {
@@ -310,46 +316,6 @@ struct partinfo {
 	struct partition *part;
 };
 
-#ifdef i386
-/* DOS partition table -- located in boot block */
-
-#define	DOSBBSECTOR	0	/* DOS boot block relative sector number */
-#define	DOSPARTOFF	446
-#define NDOSPART	4
-
-struct dos_partition {
-	unsigned char	dp_flag;	/* bootstrap flags */
-	unsigned char	dp_shd;		/* starting head */
-	unsigned char	dp_ssect;	/* starting sector */
-	unsigned char	dp_scyl;	/* starting cylinder */
-	unsigned char	dp_typ;		/* partition type */
-#define		DOSPTYP_386BSD	0xa5		/* 386BSD partition type */
-	unsigned char	dp_ehd;		/* end head */
-	unsigned char	dp_esect;	/* end sector */
-	unsigned char	dp_ecyl;	/* end cylinder */
-	unsigned long	dp_start;	/* absolute starting sector number */
-	unsigned long	dp_size;	/* partition size in sectors */
-} dos_partitions[NDOSPART];
-
-#include <sys/dkbad.h>
-struct cpu_disklabel {
-	struct dos_partition dosparts[NDOSPART];
-	struct dkbad bad;
-};
-
-#endif /* i386 */
-
-#if defined(hp300) || defined(mac68k) || defined(vax) || defined(pc532) || \
-    defined(sun3) || defined(sparc) || defined(da30) || defined(pmax) || \
-    defined(alpha)
-struct cpu_disklabel {
-	int	cd_dummy;		/* must have one element. */
-};
-#endif
-
-#define	DPSECT(s) ((s) & 0x3f)		/* isolate relevant bits of sector */
-#define	DPCYL(c, s) ((c) + (((s) & 0xc0)<<2)) /* and those that are cylinder */
-
 /*
  * Disk-specific ioctls.
  */
@@ -370,9 +336,6 @@ struct cpu_disklabel {
 #define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */
 
 #ifdef KERNEL
-#ifdef i386
-int bounds_check_with_label __P((struct buf *, struct disklabel *, int));
-#endif
 void	 diskerr
 	    __P((struct buf *, char *, char *, int, int, struct disklabel *));
 void	 disksort __P((struct buf *, struct buf *));

@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  *
- *      $Id: sd.c,v 1.7 1994/02/22 00:57:33 briggs Exp $
+ *      $Id: sd.c,v 1.8 1994/10/14 18:27:11 cgd Exp $
  */
 
 #include <sys/types.h>
@@ -46,10 +46,9 @@ int     Debugger();
 #define	SDOUTSTANDING	2
 #define	SDRETRIES	4
 
-#define MAKESDDEV(maj, unit, part)	(makedev(maj,(unit<<3)|part))
-#define SDPART(z)	(minor(z) & 0x07)
-#define SDUNIT(z)	(minor(z) >> 3)
-#define	RAW_PART	2
+#define	SDUNIT(z)			DISKUNIT(z)
+#define	SDPART(z)			DISKPART(z)
+#define	MAKESDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
 struct sd_data {
 	struct dkdevice sc_dk;
