@@ -1,3 +1,0 @@
-# .sshrc
-path /sbin:/bin
-run cat /.welcome
