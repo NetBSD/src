@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_errno.c,v 1.2 1999/04/24 06:58:26 cgd Exp $ */
+/* $NetBSD: osf1_errno.c,v 1.3 1999/04/26 01:16:04 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -74,7 +74,7 @@ int netbsd_to_osf1_errno[] = {
     OSF1_EPIPE,			/* EPIPE (32) -> 32 */
     OSF1_EDOM,			/* EDOM (33) -> 33 */
     OSF1_ERANGE,		/* ERANGE (34) -> 34 */
-    OSF1_ENOSYS,		/* EAGAIN (35) has no equivalent */
+    OSF1_EWOULDBLOCK,		/* EAGAIN (35) -> OSF1_EWOULDBLOCK (35) */
     OSF1_EINPROGRESS,		/* EINPROGRESS (36) -> 36 */
     OSF1_EALREADY,		/* EALREADY (37) -> 37 */
     OSF1_ENOTSOCK,		/* ENOTSOCK (38) -> 38 */
