@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.14 1999/12/03 02:26:36 simonb Exp $	*/
+/*	$NetBSD: fmt.c,v 1.15 2001/03/20 19:05:11 itojun Exp $	*/
 
 #include <kvm.h>
 #include <stdio.h>
@@ -17,20 +17,21 @@ fmt_puts(s, leftp)
 {
 	static char *v = 0, *nv;
 	static int maxlen = 0;
-	int len;
+	int len, nlen;
 
 	if (*leftp == 0)
 		return;
 	len = strlen(s) * 4 + 1;
 	if (len > maxlen) {
 		if (maxlen == 0)
-			maxlen = getpagesize();
-		while (len > maxlen)
-			maxlen *= 2;
-		nv = realloc(v, maxlen);
+			nlen = getpagesize();
+		while (len > nlen)
+			nlen *= 2;
+		nv = realloc(v, nlen);
 		if (nv == 0)
 			return;
 		v = nv;
+		maxlen = nlen;
 	}
 	strvis(v, s, VIS_TAB | VIS_NL | VIS_CSTYLE);
 	if (*leftp != -1) {
