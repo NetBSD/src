@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 1997/07/16 00:01:49 is Exp $
+#	$NetBSD: genassym.cf,v 1.4 1998/01/06 08:40:50 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -106,7 +106,6 @@ define	MD_REGS		offsetof(struct mdproc, md_regs)
 define	SRUN		SRUN
 
 # VM structure fields
-define	PM_STCHG	offsetof(struct pmap, pm_stchanged)
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
 
 # interrupt/fault metering
@@ -159,7 +158,6 @@ define	PG_FRAME	PG_FRAME
 # pcb fields
 define	PCB_FLAGS	offsetof(struct pcb, pcb_flags)
 define	PCB_PS		offsetof(struct pcb, pcb_ps)
-define	PCB_USTP	offsetof(struct pcb, pcb_ustp)
 define	PCB_USP		offsetof(struct pcb, pcb_usp)
 define	PCB_REGS	offsetof(struct pcb, pcb_regs)
 define	PCB_CMAP2	offsetof(struct pcb, pcb_cmap2)
