@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: i386b-nat.c,v 1.7 1995/01/26 17:55:18 mycroft Exp $
+	$Id: i386b-nat.c,v 1.8 1995/01/26 18:13:49 mycroft Exp $
 */
 
 #include <sys/types.h>
@@ -43,20 +43,7 @@ fetch_inferior_registers (regno)
   ptrace (PT_GETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
 
-  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers.r_eax, 4);
-  memcpy (&registers[REGISTER_BYTE (1)], &inferior_registers.r_ecx, 4);
-  memcpy (&registers[REGISTER_BYTE (2)], &inferior_registers.r_edx, 4);
-  memcpy (&registers[REGISTER_BYTE (3)], &inferior_registers.r_ebx, 4);
-  memcpy (&registers[REGISTER_BYTE (4)], &inferior_registers.r_esp, 4);
-  memcpy (&registers[REGISTER_BYTE (5)], &inferior_registers.r_ebp, 4);
-  memcpy (&registers[REGISTER_BYTE (6)], &inferior_registers.r_esi, 4);
-  memcpy (&registers[REGISTER_BYTE (7)], &inferior_registers.r_edi, 4);
-  memcpy (&registers[REGISTER_BYTE (8)], &inferior_registers.r_eip, 4);
-  memcpy (&registers[REGISTER_BYTE (9)], &inferior_registers.r_eflags, 4);
-  memcpy (&registers[REGISTER_BYTE (10)], &inferior_registers.r_cs, 4);
-  memcpy (&registers[REGISTER_BYTE (11)], &inferior_registers.r_ss, 4);
-  memcpy (&registers[REGISTER_BYTE (12)], &inferior_registers.r_ds, 4);
-  memcpy (&registers[REGISTER_BYTE (13)], &inferior_registers.r_es, 4);
+  memcpy (&registers[REGISTER_BYTE (0)], &inferior_registers, 4*14);
 
   registers_fetched ();
 }
@@ -67,20 +54,7 @@ store_inferior_registers (regno)
 {
   struct reg inferior_registers;
 
-  memcpy (&inferior_registers.r_eax, &registers[REGISTER_BYTE (0)], 4);
-  memcpy (&inferior_registers.r_ecx, &registers[REGISTER_BYTE (1)], 4);
-  memcpy (&inferior_registers.r_edx, &registers[REGISTER_BYTE (2)], 4);
-  memcpy (&inferior_registers.r_ebx, &registers[REGISTER_BYTE (3)], 4);
-  memcpy (&inferior_registers.r_esp, &registers[REGISTER_BYTE (4)], 4);
-  memcpy (&inferior_registers.r_ebp, &registers[REGISTER_BYTE (5)], 4);
-  memcpy (&inferior_registers.r_esi, &registers[REGISTER_BYTE (6)], 4);
-  memcpy (&inferior_registers.r_edi, &registers[REGISTER_BYTE (7)], 4);
-  memcpy (&inferior_registers.r_eip, &registers[REGISTER_BYTE (8)], 4);
-  memcpy (&inferior_registers.r_eflags, &registers[REGISTER_BYTE (9)], 4);
-  memcpy (&inferior_registers.r_cs, &registers[REGISTER_BYTE (10)], 4);
-  memcpy (&inferior_registers.r_ss, &registers[REGISTER_BYTE (11)], 4);
-  memcpy (&inferior_registers.r_ds, &registers[REGISTER_BYTE (12)], 4);
-  memcpy (&inferior_registers.r_es, &registers[REGISTER_BYTE (13)], 4);
+  memcpy (&inferior_registers, &registers[REGISTER_BYTE (0)], 4*14);
 
   ptrace (PT_SETREGS, inferior_pid,
 	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
