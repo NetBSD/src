@@ -1,4 +1,4 @@
-/*	$NetBSD: sa.h,v 1.2 2003/01/18 09:53:16 thorpej Exp $	*/
+/*	$NetBSD: sa.h,v 1.3 2003/07/08 06:49:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,8 +47,7 @@ struct sa_t {
 	int sa_cpu;
 };
 
-typedef void (*sa_upcall_t)(int type, struct sa_t *sas[], int events, 
-    int interrupted, void *arg);
+typedef void (*sa_upcall_t)(int, struct sa_t *[], int, int, void *);
 
 #define SA_UPCALL_NEWPROC		0
 #define SA_UPCALL_PREEMPTED		1

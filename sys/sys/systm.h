@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.164 2003/07/08 06:18:00 itojun Exp $	*/
+/*	$NetBSD: systm.h,v 1.165 2003/07/08 06:49:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -336,7 +336,7 @@ void	doexithooks __P((struct proc *));
  */
 void	*forkhook_establish __P((void (*)(struct proc *, struct proc *)));
 void	forkhook_disestablish __P((void *));
-void	doforkhooks __P((struct proc *, struct proc *p));
+void	doforkhooks __P((struct proc *, struct proc *));
 
 /*
  * kernel syscall tracing/debugging hooks.
