@@ -1,4 +1,35 @@
-/*	$NetBSD: SYS.h,v 1.6 1996/10/19 00:25:22 jtc Exp $ */
+/*	$NetBSD: SYS.h,v 1.7 1996/10/19 12:32:04 jonathan Exp $ */
+
+/*-
+ * Copyright (c) 1996 Jonathan STone
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Jonathan Stone for
+ *      the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,59 +72,59 @@
 #include <sys/syscall.h>
 #include <machine/machAsmDefs.h>
 
-#ifdef __STDC__
-#ifdef ABICALLS
-#define RSYSCALL(x)     .abicalls; \
-			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
-			li v0,SYS_ ## x; syscall; \
-			bne a3,zero,err; j ra; \
-			err: la t9, _C_LABEL(cerror); jr t9; END(x);
-#define PSEUDO(x,y)     .abicalls; \
-			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
-			li v0,SYS_ ## y; syscall; \
-			bne a3,zero,err; j ra; \
-			err: la t9, _C_LABEL(cerror); jr t9; END(x);
-#else	/* !ABICALLS */
-#define RSYSCALL(x)     LEAF(x); li v0,SYS_ ## x; syscall; \
-			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
-#define PSEUDO(x,y)     LEAF(x); li v0,SYS_ ## y; syscall; \
-			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
-#endif	/* !ABICALLS */
-#else /* traditional C */
-#ifdef ABICALLS
-#define RSYSCALL(x)     .abicalls; \
-			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
-			li v0,SYS_/**/x; syscall; \
-			bne a3,zero,err; j ra; \
-			err: la t9, _C_LABEL(cerror); jr t9; END(x);
-#define PSEUDO(x,y)     .abicalls; \
-			LEAF(x); .set noreorder; .cpload t9; .set reorder; \
-			li v0,SYS_/**/y; syscall; \
-			bne a3,zero,err; j ra; \
-			err: la t9, _C_LABEL(cerror); jr t9; END(x);
-#else	/* !ABICALLS */
-#define RSYSCALL(x)     LEAF(x); li v0,SYS_/**/x; syscall; \
-			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
-#define PSEUDO(x,y)     LEAF(x); li v0,SYS_/**/y; syscall; \
-			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
-#endif	/* !ABICALLS */
-#endif /* traditional C */
 
 /*
- * SYSCALL_NOERROR is like SYSCALL, except it's used for syscalls 
- * that never fail.
- * 
- * XXX - This should be optimized.
+ * If compiling for shared libs, Emit sysV ABI PIC segment pseudo-ops.
+ *
+ * i)  Emit .abicalls before .LEAF entrypoint, and .cpload/.cprestore after.
+ * ii) Do interprocedure jumps indirectly via t9, with the side-effect of
+ *     preserving the callee's entry address in t9.
  */
-#define SYSCALL_NOERROR(x) \
-	SYSCALL(x)
-   
-/* 
- * RSYSCALL_NOERROR is like RSYSCALL, except it's used for syscalls  
- * that never fail.
- * 
- * XXX - This should be optimized.
+#ifdef ABICALLS
+# define PIC_LEAF(x,sr) \
+	.abicalls; LEAF(x); .set noreorder; .cpload sr; .set reorder
+# define PIC_CALL(l,sr) la sr, _C_LABEL(l); jr sr
+#else
+# define PIC_LEAF(x,sr)	LEAF(x)
+# define PIC_CALL(l,sr)	j  _C_LABEL(l)
+#endif
+
+
+#ifdef __STDC__
+# define SYSTRAP(x)	li v0,SYS_ ## x; syscall;
+#else
+# define SYSTRAP(x)	li v0,SYS_/**/x; syscall;
+#endif
+
+
+/*
+ * Helper macro: produce a possibly-PIC entry point 'x' that syscalls 'y'.
  */
-#define SYSCALL_NOERROR(x) \
+#define PIC_SYSTRAP(x,y) \
+	PIC_LEAF(x,t9);	\
+	SYSTRAP(y)
+
+/*
+ * Do a syscall that cannot fail (sync, get{p,u,g,eu,eg)id)
+ */
 #define RSYSCALL_NOERROR(x) \
-	RSYSCALL(x)
+	PIC_SYSTRAP(x,x); \
+	j ra
+
+/*
+ * Do a normal syscall.
+ */
+#define RSYSCALL(x) \
+	PSEUDO(x,x)
+
+
+/*
+ * Do a renamed or pseudo syscall (e.g., _exit()), where the entrypoint
+ * and syscall name are not the same.
+ */
+#define PSEUDO(x,y) \
+	PIC_SYSTRAP(x,y); \
+	bne a3,zero,err; j ra; \
+err:	PIC_CALL(cerror,t9); \
+	END(x)
+
