@@ -24,11 +24,13 @@ typedef struct MASTER_SERV {
     int    *listen_fd;			/* incoming requests */
     int     listen_fd_count;		/* nr of descriptors */
     union {
-	struct INET_ADDR_LIST *inet;
-    } addr_list;
-    union {
-	struct INET_ADDR_LIST *inet;
-    } addr_list_buf;
+	struct {
+	    char   *port;		/* inet listen port */
+	    struct INET_ADDR_LIST *addr;/* inet listen address */
+	} inet_ep;
+#define MASTER_INET_ADDRLIST(s)	((s)->endpoint.inet_ep.addr)
+#define MASTER_INET_PORT(s)	((s)->endpoint.inet_ep.port)
+    } endpoint;
     int     max_proc;			/* upper bound on # processes */
     char   *path;			/* command pathname */
     struct ARGV *args;			/* argument vector */
@@ -48,6 +50,7 @@ typedef struct MASTER_SERV {
 #define MASTER_FLAG_THROTTLE	(1<<0)	/* we're having trouble */
 #define MASTER_FLAG_MARK	(1<<1)	/* garbage collection support */
 #define MASTER_FLAG_CONDWAKE	(1<<2)	/* wake up if actually used */
+#define MASTER_FLAG_INETHOST	(1<<3)	/* endpoint name specifies host */
 
 #define MASTER_THROTTLED(f)	((f)->flags & MASTER_FLAG_THROTTLE)
 

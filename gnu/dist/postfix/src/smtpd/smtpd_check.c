@@ -24,6 +24,10 @@
 /*	SMTPD_STATE *state;
 /*	char	*recipient;
 /*
+/*	char	*smtpd_check_rcptmap(state, recipient)
+/*	SMTPD_STATE *state;
+/*	char	*recipient;
+/*
 /*	char	*smtpd_check_etrn(state, destination)
 /*	SMTPD_STATE *state;
 /*	char	*destination;
@@ -171,6 +175,12 @@
 /* .IP smtpd_recipient_restrictions
 /*	Restrictions on the recipient address that is sent with the RCPT
 /*	TO command.
+/* .PP
+/*	smtpd_check_rcptmap() validates the recipient address provided
+/*	with an RCPT TO request. Relevant configuration parameters:
+/* .IP local_recipients_map
+/*	Tables of user names (not addresses) that exist in $mydestination.
+/*	Mail for local users not in these tables is rejected.
 /* .PP
 /*	smtpd_check_etrn() validates the domain name provided with the
 /*	ETRN command, and other client-provided information. Relevant
@@ -565,6 +575,43 @@ static int smtpd_check_reject(SMTPD_STATE *state, int error_class,
     return (SMTPD_CHECK_REJECT);
 }
 
+/* reject_dict_retry - reject with temporary failure if dict lookup fails */
+
+static void reject_dict_retry(SMTPD_STATE *state, const char *reply_name)
+{
+    longjmp(smtpd_check_buf, smtpd_check_reject(state, MAIL_ERROR_RESOURCE,
+					"%d <%s>: Temporary lookup failure",
+						451, reply_name));
+}
+
+/* check_maps_find - reject with temporary failure if dict lookup fails */
+
+static const char *check_maps_find(SMTPD_STATE *state, const char *reply_name,
+			             MAPS *maps, const char *key, int flags)
+{
+    const char *result;
+
+    dict_errno = 0;
+    if ((result = maps_find(maps, key, flags)) == 0
+	&& dict_errno == DICT_ERR_RETRY)
+	reject_dict_retry(state, reply_name);
+    return (result);
+}
+
+/* check_mail_addr_find - reject with temporary failure if dict lookup fails */
+
+static const char *check_mail_addr_find(SMTPD_STATE *state, const char *reply_name,
+			            MAPS *maps, const char *key, char **ext)
+{
+    const char *result;
+
+    dict_errno = 0;
+    if ((result = mail_addr_find(maps, key, ext)) == 0
+	&& dict_errno == DICT_ERR_RETRY)
+	reject_dict_retry(state, reply_name);
+    return (result);
+}
+
 /* reject_unknown_client - fail if client hostname is unknown */
 
 static int reject_unknown_client(SMTPD_STATE *state)
@@ -777,7 +824,7 @@ static int reject_unknown_mailhost(SMTPD_STATE *state, char *name,
     return (SMTPD_CHECK_DUNNO);
 }
 
-static int permit_auth_destination(char *recipient);
+static int permit_auth_destination(SMTPD_STATE *state, char *recipient);
 
 /* check_relay_domains - OK/FAIL for message relaying */
 
@@ -798,7 +845,7 @@ static int check_relay_domains(SMTPD_STATE *state, char *recipient,
     /*
      * Permit authorized destinations.
      */
-    if (permit_auth_destination(recipient) == SMTPD_CHECK_OK)
+    if (permit_auth_destination(state, recipient) == SMTPD_CHECK_OK)
 	return (SMTPD_CHECK_OK);
 
     /*
@@ -811,7 +858,7 @@ static int check_relay_domains(SMTPD_STATE *state, char *recipient,
 
 /* permit_auth_destination - OK for message relaying */
 
-static int permit_auth_destination(char *recipient)
+static int permit_auth_destination(SMTPD_STATE *state, char *recipient)
 {
     char   *myname = "permit_auth_destination";
     char   *domain;
@@ -838,7 +885,8 @@ static int permit_auth_destination(char *recipient)
      * virtual_maps.
      */
     if (resolve_local(domain)
-	|| (*var_virtual_maps && maps_find(virtual_maps, domain, 0)))
+	|| (*var_virtual_maps
+	    && check_maps_find(state, recipient, virtual_maps, domain, 0)))
 	return (SMTPD_CHECK_OK);
 
     /*
@@ -871,7 +919,7 @@ static int reject_unauth_destination(SMTPD_STATE *state, char *recipient)
     /*
      * Skip authorized destination.
      */
-    if (permit_auth_destination(recipient) == SMTPD_CHECK_OK)
+    if (permit_auth_destination(state, recipient) == SMTPD_CHECK_OK)
 	return (SMTPD_CHECK_DUNNO);
 
     /*
@@ -988,7 +1036,7 @@ static int has_my_addr(char *host)
 
 /* permit_mx_backup - permit use of me as MX backup for recipient domain */
 
-static int permit_mx_backup(SMTPD_STATE *unused_state, const char *recipient)
+static int permit_mx_backup(SMTPD_STATE *state, const char *recipient)
 {
     char   *myname = "permit_mx_backup";
     char   *domain;
@@ -1015,7 +1063,8 @@ static int permit_mx_backup(SMTPD_STATE *unused_state, const char *recipient)
 	return (SMTPD_CHECK_OK);
     domain += 1;
     if (resolve_local(domain)
-	|| (*var_virtual_maps && maps_find(virtual_maps, domain, 0)))
+	|| (*var_virtual_maps
+	    && check_maps_find(state, recipient, virtual_maps, domain, 0)))
 	return (SMTPD_CHECK_OK);
 
     if (msg_verbose)
@@ -1156,7 +1205,8 @@ static int reject_unknown_address(SMTPD_STATE *state, char *addr,
 	return (SMTPD_CHECK_DUNNO);
     domain += 1;
     if (resolve_local(domain)
-	|| (*var_virtual_maps && maps_find(virtual_maps, domain, 0)))
+	|| (*var_virtual_maps
+	    && check_maps_find(state, reply_name, virtual_maps, domain, 0)))
 	return (SMTPD_CHECK_DUNNO);
     if (domain[0] == '#')
 	return (SMTPD_CHECK_DUNNO);
@@ -1493,9 +1543,13 @@ static int reject_maps_rbl(SMTPD_STATE *state)
     if (msg_verbose)
 	msg_info("%s: %s", myname, state->addr);
 
-    /* IPv4 only for now */
+    /*
+     * IPv4 only for now
+     */
+#ifdef INET6
     if (inet_pton(AF_INET, state->addr, &a) != 1)
 	return SMTPD_CHECK_DUNNO;
+#endif
 
     /*
      * Build the constant part of the RBL query: the reverse client address.
@@ -1713,7 +1767,7 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 		status = permit_mx_backup(state, state->recipient);
 	} else if (strcasecmp(name, PERMIT_AUTH_DEST) == 0) {
 	    if (state->recipient)
-		status = permit_auth_destination(state->recipient);
+		status = permit_auth_destination(state, state->recipient);
 	} else if (strcasecmp(name, REJECT_UNAUTH_DEST) == 0) {
 	    if (state->recipient)
 		status = reject_unauth_destination(state, state->recipient);
@@ -1982,6 +2036,7 @@ char   *smtpd_check_rcptmap(SMTPD_STATE *state, char *recipient)
     char   *myname = "smtpd_check_rcptmap";
     char   *saved_recipient;
     char   *domain;
+    int     status;
 
     /*
      * XXX This module does a lot of unnecessary guessing. This functionality
@@ -1996,6 +2051,13 @@ char   *smtpd_check_rcptmap(SMTPD_STATE *state, char *recipient)
      * that we can syslog the recipient with the reject messages.
      */
     SMTPD_CHECK_PUSH(saved_recipient, state->recipient, recipient);
+
+    /*
+     * Return here in case of serious trouble.
+     */
+    if ((status = setjmp(smtpd_check_buf)) != 0)
+	SMTPD_CHECK_RCPT_RETURN(status == SMTPD_CHECK_REJECT ?
+				STR(error_text) : 0);
 
     /*
      * Resolve the address.
@@ -2015,12 +2077,13 @@ char   *smtpd_check_rcptmap(SMTPD_STATE *state, char *recipient)
 	    SMTPD_CHECK_RCPT_RETURN(0);
 
 #define NOMATCH(map, rcpt) \
-    (mail_addr_find(map, rcpt, (char **) 0) == 0 && dict_errno == 0)
+    (check_mail_addr_find(state, recipient, map, rcpt, (char **) 0) == 0)
 
     /*
      * Reject mail to unknown addresses in Postfix-style virtual domains.
      */
-    if (*var_virtual_maps && maps_find(virtual_maps, domain, 0)) {
+    if (*var_virtual_maps
+	&& (check_maps_find(state, recipient, virtual_maps, domain, 0))) {
 	if (NOMATCH(rcpt_canon_maps, STR(reply.recipient))
 	    && NOMATCH(canonical_maps, STR(reply.recipient))
 	    && NOMATCH(relocated_maps, STR(reply.recipient))
@@ -2124,8 +2187,10 @@ char   *var_notify_classes = "";
   * String-valued configuration parameters.
   */
 char   *var_maps_rbl_domains;
+char   *var_myorigin;
 char   *var_mydest;
 char   *var_inet_interfaces;
+char   *var_rcpt_delim;
 char   *var_rest_classes;
 char   *var_alias_maps;
 char   *var_rcpt_canon_maps;
@@ -2142,8 +2207,10 @@ typedef struct {
 
 static STRING_TABLE string_table[] = {
     VAR_MAPS_RBL_DOMAINS, DEF_MAPS_RBL_DOMAINS, &var_maps_rbl_domains,
+    VAR_MYORIGIN, DEF_MYORIGIN, &var_myorigin,
     VAR_MYDEST, DEF_MYDEST, &var_mydest,
     VAR_INET_INTERFACES, DEF_INET_INTERFACES, &var_inet_interfaces,
+    VAR_RCPT_DELIM, DEF_RCPT_DELIM, &var_rcpt_delim,
     VAR_REST_CLASSES, DEF_REST_CLASSES, &var_rest_classes,
     VAR_ALIAS_MAPS, DEF_ALIAS_MAPS, &var_alias_maps,
     VAR_RCPT_CANON_MAPS, DEF_RCPT_CANON_MAPS, &var_rcpt_canon_maps,
@@ -2307,6 +2374,33 @@ void    resolve_clnt_init(RESOLVE_REPLY *reply)
     reply->recipient = vstring_alloc(100);
 }
 
+#ifdef USE_SASL_AUTH
+
+bool    var_smtpd_sasl_enable = 0;
+
+/* smtpd_sasl_connect - stub */
+
+void    smtpd_sasl_connect(SMTPD_STATE *state)
+{
+    msg_panic("smtpd_sasl_connect was called");
+}
+
+/* smtpd_sasl_disconnect - stub */
+
+void    smtpd_sasl_disconnect(SMTPD_STATE *state)
+{
+    msg_panic("smtpd_sasl_disconnect was called");
+}
+
+/* permit_sasl_auth - stub */
+
+int     permit_sasl_auth(SMTPD_STATE *state, int ifyes, int ifnot)
+{
+    return (ifnot);
+}
+
+#endif
+
 /* canon_addr_internal - stub */
 
 VSTRING *canon_addr_internal(VSTRING *result, const char *addr)
@@ -2419,7 +2513,31 @@ main(int argc, char **argv)
 	    /*
 	     * Try config settings.
 	     */
+#define UPDATE_MAPS(ptr, var, val, lock) \
+	{ if (ptr) maps_free(ptr); ptr = maps_create(var, val, lock); }
+
 	case 2:
+	    if (strcasecmp(args->argv[0], "virtual_maps") == 0) {
+		UPDATE_STRING(var_virtual_maps, args->argv[1]);
+		UPDATE_MAPS(virtual_maps, VAR_VIRTUAL_MAPS,
+			    var_virtual_maps, DICT_FLAG_LOCK);
+		resp = 0;
+		break;
+	    }
+	    if (strcasecmp(args->argv[0], "local_recipient_maps") == 0) {
+		UPDATE_STRING(var_local_rcpt_maps, args->argv[1]);
+		UPDATE_MAPS(local_rcpt_maps, VAR_LOCAL_RCPT_MAPS,
+			    var_local_rcpt_maps, DICT_FLAG_LOCK);
+		resp = 0;
+		break;
+	    }
+	    if (strcasecmp(args->argv[0], "canonical_maps") == 0) {
+		UPDATE_STRING(var_canonical_maps, args->argv[1]);
+		UPDATE_MAPS(canonical_maps, VAR_CANONICAL_MAPS,
+			    var_canonical_maps, DICT_FLAG_LOCK);
+		resp = 0;
+		break;
+	    }
 	    if (strcasecmp(args->argv[0], "mynetworks") == 0) {
 		namadr_list_free(mynetworks);
 		mynetworks = namadr_list_init(args->argv[1]);
@@ -2457,7 +2575,8 @@ main(int argc, char **argv)
 		UPDATE_STRING(state.sender, args->argv[1]);
 	    } else if (strcasecmp(args->argv[0], "rcpt") == 0) {
 		state.where = "RCPT";
-		resp = smtpd_check_rcpt(&state, args->argv[1]);
+		(resp = smtpd_check_rcpt(&state, args->argv[1]))
+		    || (resp = smtpd_check_rcptmap(&state, args->argv[1]));
 	    }
 	    break;
 
