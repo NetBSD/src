@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.96 2003/03/17 16:13:34 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.97 2003/03/20 15:31:12 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1999,3 +1999,9 @@ usr.sbin/rtadvd/rtadvd.c			1.27-1.28 (via patch)
 
   Add missing ND option length validation.  From KAME.
   [itojun, ticket #32]
+
+crypto/dist/openssl/crypto/rsa/rsa_eay.c        1.2
+crypto/dist/openssl/crypto/rsa/rsa_lib.c        1.2
+
+  Enable RSA blinding by default.
+  [itojun, ticket #34]
