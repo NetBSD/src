@@ -30,17 +30,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dmavar.h	7.2 (Berkeley) 11/4/90
- *	$Id: dmavar.h,v 1.7 1994/05/08 05:53:02 chopps Exp $
+ *	@(#)dma.c
+ *	$Id: mgnsc.c,v 1.1 1994/05/08 05:53:27 chopps Exp $
  */
 
-/* dmago flags */
-#define	DMAGO_READ	0x08	/* transfer is a read */
-#define	DMAGO_NOINT	0x80	/* don't interrupt on completion */
+/*
+ * dummy CSA Magnum DMA driver
+ */
 
-#ifdef KERNEL
-typedef void (*dmafree_t) (void *dev);
-typedef int  (*dmago_t)   (void *dev, char *, int, int);
-typedef int  (*dmanext_t) (void *dev);
-typedef void (*dmastop_t) (void *dev);
+#include "magnumscsi.h"
+
+#if NMAGNUMSCSI > 0
+
+void
+magnumdmainit ()
+{
+}
 #endif
+

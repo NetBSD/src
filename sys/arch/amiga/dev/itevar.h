@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: itevar.h,v 1.7 1994/02/17 09:10:52 chopps Exp $
+ *	$Id: itevar.h,v 1.8 1994/05/08 05:53:22 chopps Exp $
  */
 #if ! defined (_ITEVAR_H)
 #define _ITEVAR_H
@@ -49,9 +49,10 @@ enum ite_attr {
 };
 
 struct ite_softc {
-	struct	itesw *itesw;
+	struct	device device;
 	char	argbuf[MAX_ARGSIZE];
 	struct  grf_softc *grf;		/* XXX */
+	struct	tty *tp;
 	void	*priv;
 	char	*ap;
 	u_char	*tabs;
@@ -99,7 +100,6 @@ struct ite_softc {
 	int	save_curx;
 	int	cury;
 	int	save_cury;
-	void	*view;			/* XXX */
 };
 
 enum ite_flags {
@@ -109,16 +109,6 @@ enum ite_flags {
 	ITE_ISOPEN = 0x8,		/* ite has been opened */
 	ITE_INGRF  = 0x10,		/* ite is in graphics mode */
 	ITE_ACTIVE = 0x20,		/* ite is an active terminal */
-};
-
-struct itesw {
-	int	(*ite_cnprobe) __P((int minor));
-	void	(*ite_init) __P((struct ite_softc *));
-	void	(*ite_deinit) __P((struct ite_softc *));
-	void	(*ite_clear) __P((struct ite_softc *,int,int,int,int));
-	void	(*ite_putc) __P((struct ite_softc *,int,int,int,int));
-	void	(*ite_cursor) __P((struct ite_softc *,int));
-	void	(*ite_scroll) __P((struct ite_softc *,int,int,int,int));
 };
 
 enum ite_replrules {
@@ -194,6 +184,10 @@ enum tab_size { TABSIZE = 8 };
 #define attrtest(ip, attr) 0
 #define attrset(ip, attr)
 
+struct proc;
+struct consdev;
+struct termios;
+
 /* console related function */
 void	ite_cnprobe __P((struct consdev *));
 void	ite_cninit __P((struct consdev *));
@@ -218,28 +212,5 @@ int	ite_param __P((struct tty *, struct termios *));
 void	ite_reset __P((struct ite_softc *));
 int	ite_cnfilter __P((u_char, enum caller));
 void	ite_filter __P((u_char ,enum caller));
-
-/* lower layer functions */
-int	view_cnprobe __P((int));
-void	view_init __P((struct ite_softc *));
-void	view_deinit __P((struct ite_softc *));
-int	tiga_cnprobe __P((int));
-void	tiga_init __P((struct ite_softc *));
-void	tiga_deinit __P((struct ite_softc *));
-void	tiga_clear __P((struct ite_softc *,int,int,int,int));
-void	tiga_putc __P((struct ite_softc *,int,int,int,int));
-void	tiga_cursor __P((struct ite_softc *,int));
-void	tiga_scroll __P((struct ite_softc *,int,int,int,int));
-int	retina_cnprobe __P((int));
-void	retina_init __P((struct ite_softc *));
-void	retina_deinit __P((struct ite_softc *));
-void	retina_clear __P((struct ite_softc *,int,int,int,int));
-void	retina_putc __P((struct ite_softc *,int,int,int,int));
-void	retina_cursor __P((struct ite_softc *,int));
-void	retina_scroll __P((struct ite_softc *,int,int,int,int));
-
-#if defined (KERNEL)
-extern struct ite_softc ite_softc[];
-#endif
 
 #endif /* _ITEVAR_H */

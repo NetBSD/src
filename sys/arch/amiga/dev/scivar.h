@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scivar.h	7.1 (Berkeley) 5/8/90
- *	$Id: scivar.h,v 1.1 1994/02/28 06:06:25 chopps Exp $
+ *	$Id: scivar.h,v 1.2 1994/05/08 05:53:42 chopps Exp $
  */
 
 struct	sci_softc {
@@ -42,23 +42,23 @@ struct	sci_softc {
 	struct	devqueue sc_dq;
 	struct	devqueue sc_sq;
 
-	volatile u_char	*sci_data;		/* r: Current data */
-	volatile u_char	*sci_odata;		/* w: Out data */
-	volatile u_char	*sci_icmd;		/* rw: Initiator command */
-	volatile u_char	*sci_mode;		/* rw: Mode */
-	volatile u_char	*sci_tcmd;		/* rw: Target command */
-	volatile u_char	*sci_bus_csr;		/* r: Bus Status */
-	volatile u_char	*sci_sel_enb;		/* w: Select enable */
-	volatile u_char	*sci_csr;		/* r: Status */
-	volatile u_char	*sci_dma_send;		/* w: Start dma send data */
-	volatile u_char	*sci_idata;		/* r: Input data */
-	volatile u_char	*sci_trecv;		/* w: Start dma receive, target */
-	volatile u_char	*sci_iack;		/* r: Interrupt Acknowledge */
-	volatile u_char	*sci_irecv;		/* w: Start dma receive, initiator */
+	volatile u_char	*sci_data;	/* r: Current data */
+	volatile u_char	*sci_odata;	/* w: Out data */
+	volatile u_char	*sci_icmd;	/* rw: Initiator command */
+	volatile u_char	*sci_mode;	/* rw: Mode */
+	volatile u_char	*sci_tcmd;	/* rw: Target command */
+	volatile u_char	*sci_bus_csr;	/* r: Bus Status */
+	volatile u_char	*sci_sel_enb;	/* w: Select enable */
+	volatile u_char	*sci_csr;	/* r: Status */
+	volatile u_char	*sci_dma_send;	/* w: Start dma send data */
+	volatile u_char	*sci_idata;	/* r: Input data */
+	volatile u_char	*sci_trecv;	/* w: Start dma receive, target */
+	volatile u_char	*sci_iack;	/* r: Interrupt Acknowledge */
+	volatile u_char	*sci_irecv;	/* w: Start dma receive, initiator */
 
-	int	(*dma_xfer_in)();		/* psuedo DMA transfer */
-	int	(*dma_xfer_out)();		/* psuedo DMA transfer */
-	int	(*dma_intr)();			/* board-specific interrupt */
+	int	(*dma_xfer_in)();	/* psuedo DMA transfer */
+	int	(*dma_xfer_out)();	/* psuedo DMA transfer */
+	int	(*dma_intr)();		/* board-specific interrupt */
 	u_char	sc_flags;
 	u_char	sc_lun;
 	/* one for each target */

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)siop.c	7.5 (Berkeley) 5/4/91
- *	$Id: siop.c,v 1.6 1994/02/28 06:06:30 chopps Exp $
+ *	$Id: siop.c,v 1.7 1994/05/08 05:53:47 chopps Exp $
  *
  * MULTICONTROLLER support only working for multiple controllers of the 
  * same kind at the moment !! 
@@ -55,10 +55,6 @@
 #endif
 
 #if NSIOP > 0
-
-#ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/siop.c,v 1.6 1994/02/28 06:06:30 chopps Exp $";
-#endif
 
 /* need to know if any tapes have been configured */
 #include "st.h"
@@ -110,7 +106,7 @@ int siop_tt_oddio (int ctlr, int slave, int unit, u_char *buf, u_int len, int b_
 int zeusscsiinit();
 
 struct driver zeusscsidriver = {
-	zeusscsiinit, "Zeusscsi", (int (*)())siopstart, (int (*)(int,...))siopgo,
+	zeusscsiinit, "zeusscsi", (int (*)())siopstart, (int (*)(int,...))siopgo,
 	(int (*)())siopintr2, (int (*)())siopdone,
 	siopustart, siopreq, siopfree, siopreset,
 	siop_delay, siop_test_unit_rdy, siop_start_stop_unit,
@@ -128,7 +124,7 @@ struct driver zeusscsidriver = {
 int magnumscsiinit();
 
 struct driver magnumscsidriver = {
-	magnumscsiinit, "Magnumscsi", (int (*)())siopstart, (int (*)(int,...))siopgo,
+	magnumscsiinit, "magnumscsi", (int (*)())siopstart, (int (*)(int,...))siopgo,
 	(int (*)())siopintr2, (int (*)())siopdone,
 	siopustart, siopreq, siopfree, siopreset,
 	siop_delay, siop_test_unit_rdy, siop_start_stop_unit,
@@ -1329,42 +1325,7 @@ siop_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
 	u_char iphase;
 	int stat;
 
-printf ("siop%d: tt_oddio\n", slave);
-#if 0
-	/*
-	 * First free any DMA channel that was allocated.
-	 * We can't use DMA to do this transfer.
-	 */
-	if (freedma)
-		dev->dmafree(&dev->sc_dq);
-	/*
-	 * Initialize command block
-	 */
-	bzero(&cdb, sizeof(cdb));
-	cdb.lun  = unit;
-	cdb.lbam = (len >> 16) & 0xff;
-	cdb.lbal = (len >> 8) & 0xff;
-	cdb.len = len & 0xff;
-	if (buf == 0) {
-		cdb.cmd = CMD_SPACE;
-		cdb.lun |= 0x00;
-		len = 0;
-		iphase = MESG_IN_PHASE;
-	} else if (b_flags & B_READ) {
-		cdb.cmd = CMD_READ;
-		iphase = DATA_IN_PHASE;
-	} else {
-		cdb.cmd = CMD_WRITE;
-		iphase = DATA_OUT_PHASE;
-	}
-	/*
-	 * Perform command (with very long delays)
-	 */
-	scsi_delay(30000000);
-	stat = siopicmd(dev, slave, (u_char *) &cdb, sizeof(cdb), buf, len, iphase);
-	scsi_delay(0);
-	return (stat);
-#endif
+	printf ("siop%d: tt_oddio\n", slave);
 	return -1;
 }
 #endif

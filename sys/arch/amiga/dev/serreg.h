@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dcareg.h	7.3 (Berkeley) 5/7/91
- *	$Id: serreg.h,v 1.5 1994/02/11 07:02:17 chopps Exp $
+ *	$Id: serreg.h,v 1.6 1994/05/08 05:53:46 chopps Exp $
  */
 
 struct serdevice {
@@ -66,5 +66,4 @@ struct serdevice {
    dialout:   carrier is ignored */
 
 #define SERUNIT(dev)   (minor(dev) & 0x7f)
-#define DIALIN(dev)    ((minor(dev) & 0x80) == 0x80)
 #define DIALOUT(dev)   ((minor(dev) & 0x80) == 0x00)
