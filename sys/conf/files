@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.490 2002/01/09 18:01:38 deberg Exp $
+#	$NetBSD: files,v 1.491 2002/01/15 12:10:50 lukem Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -950,6 +950,7 @@ file	ddb/db_xxx.c			ddb
 file	dev/auconv.c			auconv
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/ccd.c			ccd			needs-flag
+file	dev/clockctl.c			clockctl		needs-flag
 file	dev/i2c/i2c_bus.c		i2c
 file	dev/i2c/i2c_eeprom.c		i2c_eeprom
 file	dev/ir/cir.c			cir			needs-flag
@@ -1482,4 +1483,3 @@ file	netisdn/i4b_i4bdrv.c		i4b			needs-flag
 file	netisdn/i4b_l4.c		isdn			needs-flag
 file	netisdn/i4b_l4mgmt.c		isdn			needs-flag
 file	netisdn/i4b_l4timer.c		isdn			needs-flag
-file	dev/clockctl.c			clockctl		needs-flag
