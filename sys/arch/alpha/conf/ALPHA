@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.94 1999/02/22 07:44:50 fvdl Exp $
+# $NetBSD: ALPHA,v 1.95 1999/04/29 01:28:40 ross Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -116,8 +116,8 @@ options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 # in case we have NFS root.
 options 	NFS_BOOT_DHCP		# superset of BOOTP
 
-# WS console uses SUN terminal emulation
-options 	WSEMUL_SUN
+# WS console uses SUN or VT100 terminal emulation
+options 	WSEMUL_VT100
 
 # realtime clock compatible to OSF/1
 #options 	CLOCK_COMPAT_OSF1
