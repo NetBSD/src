@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.84 2000/03/14 15:56:57 oster Exp $
+#	$NetBSD: files.pmax,v 1.85 2000/04/29 21:47:14 soren Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -250,8 +250,3 @@ file	arch/pmax/dev/bt459.c			cfb | sfb
 #
 defpseudo	fb
 file	arch/pmax/dev/fb.c		fb needs-count
-
-# Ultrix Binary Compatibility (COMPAT_ULTRIX)
-include "compat/ultrix/files.ultrix"
-
-# Configs
