@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_getconf.3,v 1.5 2002/02/07 07:00:52 ross Exp $
+.\"	$NetBSD: pw_getconf.3,v 1.6 2002/10/01 19:36:30 wiz Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -59,11 +59,13 @@ an empty string will be returned in data.
 .Pp
 To retrieve default values the key
 .Pa default
-can be used.  In this case, if
+can be used.
+In this case, if
 .Pa /etc/passwd.conf
 does not exist or does not contain a
 .Pa default
-section, the built-in defaults will be returned.  They are as follows:
+section, the built-in defaults will be returned.
+They are as follows:
 .Bl -column localcipher data -offset indent
 .It Sy option	data
 .It ypcipher	old

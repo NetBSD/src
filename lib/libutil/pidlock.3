@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidlock.3,v 1.4 2002/02/07 07:00:52 ross Exp $
+.\"	$NetBSD: pidlock.3,v 1.5 2002/10/01 19:36:30 wiz Exp $
 .\"
 .\" Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>
 .\"
@@ -45,36 +45,41 @@ The
 and
 .Fn ttyunlock
 functions attempt to create a lockfile for an arbitrary resource that
-only one program may hold at a time.  (In the case of
+only one program may hold at a time.
+(In the case of
 .Fn ttylock ,
-this is access to a tty device.) If the
+this is access to a tty device.)
+If the
 function succeeds in creating the lockfile, it will succeed for
 no other program calling it with the same lockfile until the original
-calling program has removed the lockfile or exited.  The
+calling program has removed the lockfile or exited.
+The
 .Fn ttyunlock
 function will remove the lockfile created by
 .Fn ttylock .
 .Pp
 These functions use the method of creating a lockfile traditionally
-used by UUCP software.  This is described as follows in the
-documentation for Taylor UUCP:
+used by UUCP software.
+This is described as follows in the documentation for Taylor UUCP:
 .Bd -filled -offset indent
-The lock file normally contains the process ID of the locking
-process.  This makes it easy to determine whether a lock is still
-valid.  The algorithm is to create a temporary file and then link
-it to the name that must be locked.  If the link fails because a
-file with that name already exists, the existing file is read to
-get the process ID.  If the process still exists, the lock attempt
-fails.  Otherwise the lock file is deleted and the locking algorithm
+The lock file normally contains the process ID of the locking process.
+This makes it easy to determine whether a lock is still valid.
+The algorithm is to create a temporary file and then link
+it to the name that must be locked.
+If the link fails because a file with that name already exists,
+the existing file is read to get the process ID.
+If the process still exists, the lock attempt fails.
+Otherwise the lock file is deleted and the locking algorithm
 is retried.
 .Ed
 .Pp
 The PID is stored in ASCII format, with leading spaces to pad it
-out to ten characters, and a terminating newline.  This
-implementation has been extended to put the hostname
+out to ten characters, and a terminating newline.
+This implementation has been extended to put the hostname
 on the second line of the file, terminated with a newline, and
 optionally an arbitrary comment on the third line of the file, also
-terminated with a newline. If a comment is given, but
+terminated with a newline.
+If a comment is given, but
 .Dv PIDLOCK_NONBLOCK
 is not, a blank line will be written as the second line of the file.
 .Pp
@@ -82,7 +87,8 @@ The
 .Fn pidlock
 function will attempt to create the file
 .Fa lockfile
-and put the current process's pid in it. The
+and put the current process's pid in it.
+The
 .Fn ttylock
 function will do the same, but should be passed only the base name
 (with no leading directory prefix) of the tty to be locked; it will
@@ -102,14 +108,16 @@ The following flags may be passed in
 .Bl -tag -width Dv -offset indent
 .It Dv PIDLOCK_NONBLOCK
 The function should return immediately when a lock is held by another
-active process.  Otherwise the function will wait (forever, if necessary)
+active process.
+Otherwise the function will wait (forever, if necessary)
 for the lock to be freed.
 .It Dv PIDLOCK_USEHOSTNAME
 The hostname should be compared against the hostname in the second
 line of the file (if present), and if they differ, no attempt at
 checking for a living process holding the lock will be made, and
-the lockfile will never be deleted.  (The process is assumed to be
-alive.)  This is used for locking on NFS or other remote filesystems.
+the lockfile will never be deleted.
+(The process is assumed to be alive.)
+This is used for locking on NFS or other remote filesystems.
 (The function will never create a lock if
 .Dv PIDLOCK_USEHOSTNAME
 is specified and no hostname is present.)
@@ -138,7 +146,8 @@ returns a failure:
 .Bl -tag -width Er
 .It Bq Er EPERM
 The current process does not have some of the privileges necessary
-to perform the lock. These include read and write access to the lock
+to perform the lock.
+These include read and write access to the lock
 directory, and read access to the current lockfile, if it exists.
 .It Bq Er ENOENT
 A component of a specified pathname did not exist, or the pathname

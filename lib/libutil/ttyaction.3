@@ -1,4 +1,4 @@
-.\" $NetBSD: ttyaction.3,v 1.9 2002/02/07 07:00:52 ross Exp $
+.\" $NetBSD: ttyaction.3,v 1.10 2002/10/01 19:36:30 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,14 +66,16 @@ file for any records that match the current
 .Fa ttyname
 and
 .Fa action
-parameters, and for each matching record, runs the shell command
-shown in that record.  The record format is described in
+parameters, and for each matching record,
+runs the shell command shown in that record.
+The record format is described in
 .Xr ttyaction 5 .
 The parameter
 .Fa username
 is the name of the new owner of the
 .Fa ttyname
-device.  Note that the
+device.
+Note that the
 .Fa ttyname
 parameter may be passed as a fully qualified pathname, and the
 .Fn ttyaction
@@ -101,7 +103,8 @@ Ty Sarna \*[Lt]tsarna@endicor.com\*[Gt]
 There should be some
 .Em other
 mechanism to allow selection of different access control policies
-on a per-line basis.  It has been suggested that the same
+on a per-line basis.
+It has been suggested that the same
 .Nm ttyaction
 mechanism should also be used for determining access control, but
 it was decided (after much discussion) that

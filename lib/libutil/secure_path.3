@@ -1,4 +1,4 @@
-.\"	$NetBSD: secure_path.3,v 1.7 2002/02/07 07:00:52 ross Exp $
+.\"	$NetBSD: secure_path.3,v 1.8 2002/10/01 19:36:30 wiz Exp $
 .\"
 .\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -49,7 +49,8 @@ The
 .Fn secure_path
 function takes a path name and returns zero if the referenced file is
 .Dq secure ,
-non-zero if not.  Any
+non-zero if not.
+Any
 .Dq insecurity ,
 other than failure to access
 the referenced file, will be logged to the system log.

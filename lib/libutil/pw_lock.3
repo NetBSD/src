@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_lock.3,v 1.9 2002/08/06 12:58:45 wiz Exp $
+.\"	$NetBSD: pw_lock.3,v 1.10 2002/10/01 19:36:30 wiz Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -73,13 +73,15 @@ The
 .Fn pw_lock
 function attempts to lock the passwd database by creating the file
 .Pa /etc/ptmp ,
-and returns the file descriptor of that file.  If
+and returns the file descriptor of that file.
+If
 .Fa retries
 is greater than zero,
 .Fn pw_lock
 will try multiple times to open
 .Pa /etc/ptmp ,
-waiting one second between tries.  In addition to being a lock file,
+waiting one second between tries.
+In addition to being a lock file,
 .Pa /etc/ptmp
 will also hold the contents of the new passwd file.
 .Pp
@@ -95,10 +97,12 @@ If
 .Fn pw_mkdb
 fails and you do not wish to retry, you should make sure to call
 .Fn pw_abort
-to clean up the lock file.  If the
+to clean up the lock file.
+If the
 .Ar username
 argument is not NULL, only database entries pertaining to the specified user
-will be modified.  If the
+will be modified.
+If the
 .Ar secureonly
 argument is non-zero, only the secure database will be updated.
 .Pp
@@ -110,13 +114,14 @@ The passwd database remains unchanged.
 .Pp
 The
 .Fn pw_setprefix
-function defines the root directory used for passwd file updates. If
-the prefix is set to
+function defines the root directory used for passwd file updates.
+If the prefix is set to
 .Pa /newroot
 .Fn pw_lock
 will operate on
 .Pa /newroot/etc/ptmp
-afterwards. The default prefix is an empty string.
+afterwards.
+The default prefix is an empty string.
 .Pp
 The
 .Fn pw_getprefix
