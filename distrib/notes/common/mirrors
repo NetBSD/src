@@ -1,4 +1,4 @@
-.\"	$NetBSD: mirrors,v 1.1 1999/01/13 08:18:45 ross Exp $
+.\"	$NetBSD: mirrors,v 1.2 1999/04/01 14:07:35 minoura Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,13 +98,13 @@ If you wish to become a distribution site for NetBSD, contact
 .Country "Japan"
 .mirror ftp.jp.netbsd.org "Internet Research Institute Inc., Tokyo" \
 ftp://ftp.jp.netbsd.org/pub/NetBSD
-.mirror "ftp.dti.ad.jp" \
+.mirror "ftp.dti.ad.jp" "Dream Train Internet Corp., Tokyo" \
 "ftp://ftp.dti.ad.jp/pub/NetBSD/"
 .mirror "mirror.nucba.ac.jp" \
 "Nagoya University of Commerce and Business" \
 "ftp://mirror.nucba.ac.jp/mirror/NetBSD"
 .mirror "netbsd.tohoku.ac.jp" \
-"Tohoku University" \
+"Tohoku University, Sendai" \
 "ftp://netbsd.tohoku.ac.jp/NetBSD"
 .
 .Country "Korea"
