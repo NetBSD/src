@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.2 1995/04/07 02:37:18 gwr Exp $	*/
+/*	$NetBSD: bw2.c,v 1.3 1995/04/10 05:45:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@ struct cfdriver bwtwocd = {
 /* XXX we do not handle frame buffer interrupts */
 
 /* frame buffer generic driver */
-int bw2open(), bw2close(), bw2ioctl(), bw2map();
+int bw2open(), bw2close(), bw2ioctl(), bw2mmap();
 
 static int  bw2gvideo __P((struct fbdevice *, int *));
 static int	bw2svideo __P((struct fbdevice *, int *));
@@ -215,7 +215,7 @@ bw2ioctl(dev, cmd, data, flags, p)
  * offset, allowing for the given protection, or return -1 for error.
  */
 int
-bw2map(dev, off, prot)
+bw2mmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {

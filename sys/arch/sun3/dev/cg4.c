@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.3 1995/04/07 05:19:24 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.4 1995/04/10 05:45:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,7 +92,7 @@ struct cfdriver cgfourcd = {
 	DV_DULL, sizeof(struct cg4_softc) };
 
 /* frame buffer generic driver */
-int cg4open(), cg4close(), cg4map();
+int cg4open(), cg4close(), cg4mmap();
 
 static int  cg4gattr __P((struct fbdevice *, struct fbgattr *));
 static int  cg4gvideo __P((struct fbdevice *, int *));
@@ -255,7 +255,7 @@ cg4ioctl(dev, cmd, data, flags, p)
  * 	1024k color memory
  */
 int
-cg4map(dev, off, prot)
+cg4mmap(dev, off, prot)
 	dev_t dev;
 	register int off;
 	int prot;

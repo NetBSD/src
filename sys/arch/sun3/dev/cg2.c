@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.2 1995/04/08 04:40:27 gwr Exp $	*/
+/*	$NetBSD: cg2.c,v 1.3 1995/04/10 05:45:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,7 +99,7 @@ struct cfdriver cgtwocd = {
 	DV_DULL, sizeof(struct cg2_softc) };
 
 /* frame buffer generic driver */
-int cg2open(), cg2close(), cg2map();
+int cg2open(), cg2close(), cg2mmap();
 
 static int  cg2gattr __P((struct fbdevice *, struct fbgattr *));
 static int  cg2gvideo __P((struct fbdevice *, int *));
@@ -229,7 +229,7 @@ cg2ioctl(dev, cmd, data, flags, p)
  * offset, allowing for the given protection, or return -1 for error.
  */
 int
-cg2map(dev, off, prot)
+cg2mmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
