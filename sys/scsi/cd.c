@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: cd.c,v 1.25 1994/04/11 03:53:58 mycroft Exp $
+ *      $Id: cd.c,v 1.26 1994/05/09 07:40:47 chopps Exp $
  */
 
 /*
@@ -80,7 +80,9 @@ int	Debugger();
 #define	MAKECDDEV(maj, unit, part)	(makedev(maj,(unit<<3)|part))
 #define CDPART(z)	(minor(z) & 0x07)
 #define CDUNIT(z)	(minor(z) >> 3)
+#ifndef RAW_PART
 #define	RAW_PART	3
+#endif
 
 struct cd_data {
 	struct device sc_dev;

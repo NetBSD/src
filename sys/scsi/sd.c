@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: sd.c,v 1.29 1994/04/11 03:54:10 mycroft Exp $
+ *      $Id: sd.c,v 1.30 1994/05/09 07:40:53 chopps Exp $
  */
 
 /* 
@@ -78,7 +78,9 @@ int     Debugger();
 #define MAKESDDEV(maj, unit, part)	(makedev(maj,(unit<<3)|part))
 #define SDPART(z)	(minor(z) & 0x07)
 #define SDUNIT(z)	(minor(z) >> 3)
-#define	RAW_PART	3
+#ifndef RAW_PART
+#define	RAW_PART	3		/* XXX should be 2 */
+#endif 
 
 struct sd_data {
 	struct device sc_dev;
