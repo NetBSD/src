@@ -1,4 +1,4 @@
-/*	$NetBSD: com1.c,v 1.12 2000/09/17 23:04:17 jsm Exp $	*/
+/*	$NetBSD: com1.c,v 1.13 2000/09/24 09:41:53 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com1.c,v 1.12 2000/09/17 23:04:17 jsm Exp $");
+__RCSID("$NetBSD: com1.c,v 1.13 2000/09/24 09:41:53 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -214,11 +214,17 @@ news()
 				WEIGHT = 0;
 		}
 	if (injuries[ARM] == 2) {
-		CUMBER -= 5;
+		if (CUMBER > 5)
+			CUMBER -= 5;
+		else
+			CUMBER = 0;
 		injuries[ARM]++;
 	}
 	if (injuries[RIBS] == 2) {
-		CUMBER -= 2;
+		if (CUMBER > 2)
+			CUMBER -= 2;
+		else
+			CUMBER = 0;
 		injuries[RIBS]++;
 	}
 	if (injuries[SPINE] == 2) {
