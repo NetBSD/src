@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.21 1995/06/04 07:20:47 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.22 1995/06/04 07:38:19 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1430,6 +1430,7 @@ ipip_input(m, hlen)
 		rip_input(m);
 		return;
 	}
+
 	/*
 	 * dump the packet if it's not to a multicast destination or if
 	 * we don't have an encapsulating tunnel with the source.
@@ -1442,30 +1443,29 @@ ipip_input(m, hlen)
 		m_freem(m);
 		return;
 	}
+
 	if (ip->ip_src.s_addr != last_encap_src) {
 		register struct vif *vife;
 	
 		vifp = viftable;
 		vife = vifp + numvifs;
-		last_encap_src = ip->ip_src.s_addr;
-		last_encap_vif = 0;
-		for ( ; vifp < vife; ++vifp)
-			if (vifp->v_rmt_addr.s_addr == ip->ip_src.s_addr) {
-				if ((vifp->v_flags & (VIFF_TUNNEL|VIFF_SRCRT))
-				    == VIFF_TUNNEL)
-					last_encap_vif = vifp;
+		for (; vifp < vife; vifp++)
+			if (vifp->v_flags & VIFF_TUNNEL &&
+			    vifp->v_rmt_addr.s_addr == ip->ip_src.s_addr)
 				break;
-			}
-	}
-	if ((vifp = last_encap_vif) == 0) {
-		last_encap_src = 0;
-		mrtstat.mrts_cant_tunnel++; /*XXX*/
-		m_freem(m);
-		if (mrtdebug)
-			log(LOG_DEBUG, "ip_mforward: no tunnel with %x",
-			    ntohl(ip->ip_src.s_addr));
-		return;
-	}
+		if (vifp == vife) {
+			mrtstat.mrts_cant_tunnel++; /*XXX*/
+			m_freem(m);
+			if (mrtdebug)
+				log(LOG_DEBUG, "ip_mforward: no tunnel with %x",
+				    ntohl(ip->ip_src.s_addr));
+			return;
+		}
+		last_encap_vif = vifp;
+		last_encap_src = ip->ip_src.s_addr;
+	} else
+		vifp = last_encap_vif;
+
 	m->m_data += hlen;
 	m->m_len -= hlen;
 	m->m_pkthdr.len -= hlen;
