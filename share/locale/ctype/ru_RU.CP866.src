@@ -1,10 +1,10 @@
-/*	$NetBSD: ru_RU.CP866.src,v 1.1 2001/01/22 17:48:19 itojun Exp $	*/
+/*	$NetBSD: ru_RU.CP866.src,v 1.2 2001/03/26 19:56:37 tshiozak Exp $	*/
 
 /*
  * LOCALE_CTYPE for Russian Alternative character set (CP866)
  */
 ENCODING	"NONE"
-VARIABLE        Russian Alternative charset (CP866) by ache@astral.msk.su
+VARIABLE        Russian Alternative charset, CODESET=CP866
 
 #
 # This is a comment

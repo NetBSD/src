@@ -1,4 +1,4 @@
-/*	$NetBSD: ja_JP.ISO-2022-JP-2.src,v 1.1 2000/12/30 02:33:16 itojun Exp $	*/
+/*	$NetBSD: ja_JP.ISO-2022-JP-2.src,v 1.2 2001/03/26 19:56:36 tshiozak Exp $	*/
 /*	@(#)Japanese	8.1 (Berkeley) 6/6/93 */
 
 /*
@@ -7,7 +7,7 @@
 
 ENCODING	"ISO2022"
 
-VARIABLE	MAX2 INIT0=94B 0=94 0=94$ 2=96 2=96$ SS2
+VARIABLE	MAX2 INIT0=94B 0=94 0=94$ 2=96 2=96$ SS2 CODESET=ISO2022-JP2
 
 #include "charset/ASCII"
 #include "charset/Latin-1"

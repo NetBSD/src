@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2001/02/01 19:46:42 itojun Exp $
+# $NetBSD: Makefile,v 1.3 2001/03/26 19:56:35 tshiozak Exp $
 
 # pull LOCALEDIR and other declarations
 .include <bsd.own.mk>
@@ -213,9 +213,10 @@ LOCALES += en_US.UTF-8
  LOCALESRC_en_US.UTF-8 = en_US.UTF-8
    ALIASES_en_US.UTF-8+=
 
-LOCALES += en_US.UTF-2
- LOCALESRC_en_US.UTF-2 = en_US.UTF-2
-   ALIASES_en_US.UTF-2+=
+# XXX: UTF-2 is obsoleted by UTF-8
+#LOCALES += en_US.UTF-2
+# LOCALESRC_en_US.UTF-2 = en_US.UTF-2
+#   ALIASES_en_US.UTF-2+=
 
 LOCALES += ja_JP.eucJP
  LOCALESRC_ja_JP.eucJP = ja_JP.eucJP

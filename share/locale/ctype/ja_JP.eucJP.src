@@ -1,4 +1,4 @@
-/*	$NetBSD: ja_JP.eucJP.src,v 1.1 2000/12/30 02:33:16 itojun Exp $	*/
+/*	$NetBSD: ja_JP.eucJP.src,v 1.2 2001/03/26 19:56:37 tshiozak Exp $	*/
 /*	@(#)Japanese	8.1 (Berkeley) 6/6/93 */
 
 /*
@@ -11,7 +11,7 @@ ENCODING	"EUC"
 /*		8859-1	 X208	  X201 	 X212		*/
 /*		GL		  GR			*/
 
-VARIABLE	1 0x0000 2 0x8080 2 0x0080 3 0x8000 0x8080
+VARIABLE	1 0x0000 2 0x8080 2 0x0080 3 0x8000 0x8080 CODESET=eucJP
 
 /*
  * Code Set 1

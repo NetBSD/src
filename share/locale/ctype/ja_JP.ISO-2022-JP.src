@@ -1,4 +1,4 @@
-/*	$NetBSD: ja_JP.ISO-2022-JP.src,v 1.1 2000/12/30 02:33:16 itojun Exp $	*/
+/*	$NetBSD: ja_JP.ISO-2022-JP.src,v 1.2 2001/03/26 19:56:36 tshiozak Exp $	*/
 /*	@(#)Japanese	8.1 (Berkeley) 6/6/93 */
 
 /*
@@ -7,7 +7,7 @@
 
 ENCODING	"ISO2022"
 
-VARIABLE	INIT0=94B
+VARIABLE	INIT0=94B CODESET=ISO2022-JP
 
 #include "charset/ASCII"
 #include "charset/JISX0201-left"

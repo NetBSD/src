@@ -1,4 +1,4 @@
-/*	$NetBSD: zh_TW.BIG5.src,v 1.1 2000/12/30 02:33:17 itojun Exp $	*/
+/*	$NetBSD: zh_TW.BIG5.src,v 1.2 2001/03/26 19:56:38 tshiozak Exp $	*/
 
 /*
  * big5   first byte:   A1-FE
@@ -6,7 +6,7 @@
  */
 
 ENCODING        "BIG5"
-/* VARIABLE	BIG5 character set */
+VARIABLE	CODESET=BIG5
 
 /*
  * ASCII

@@ -1,10 +1,10 @@
-/*	$NetBSD: en_US.DIS_8859-15.src,v 1.1 2000/12/30 02:33:15 itojun Exp $	*/
+/*	$NetBSD: en_US.DIS_8859-15.src,v 1.2 2001/03/26 19:56:35 tshiozak Exp $	*/
 
 /*
  * Standard LOCALE_CTYPE for the dis_8859_15 Locale
  */
 ENCODING	"NONE"
-VARIABLE        DIS 8859-15 Latin-9 character set
+VARIABLE        Latin-9 character set, CODESET=ISO8859-15
 
 #
 # This is a comment
