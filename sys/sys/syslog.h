@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.15 1997/01/22 07:09:25 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)syslog.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_SYSLOG_H_
+#define _SYS_SYSLOG_H_
 
 #define	_PATH_LOG	"/dev/log"
 
@@ -197,3 +200,5 @@ void	addlog __P((const char *, ...))
 void	logwakeup __P((void));
 
 #endif /* !_KERNEL */
+
+#endif /* !_SYS_SYSLOG_H_ */

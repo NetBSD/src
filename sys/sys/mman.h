@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
+/*	$NetBSD: mman.h,v 1.12 1997/01/22 07:09:18 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)mman.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_MMAN_H_
+#define _SYS_MMAN_H_
 
 /*
  * Protections are chosen from these bits, or-ed together
@@ -92,3 +95,5 @@ int	madvise __P((caddr_t, size_t, int));
 __END_DECLS
 
 #endif /* !_KERNEL */
+
+#endif /* !_SYS_MMAN_H_ */

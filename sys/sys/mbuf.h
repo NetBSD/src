@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.21 1996/06/10 23:55:39 cgd Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.22 1997/01/22 07:09:17 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)mbuf.h	8.3 (Berkeley) 1/21/94
  */
+
+#ifndef _SYS_MBUF_H_
+#define _SYS_MBUF_H_
 
 #ifndef M_WAITOK
 #include <sys/malloc.h>
@@ -396,5 +399,7 @@ int mbtypes[] = {				/* XXX */
 	M_MBUF,		/* MT_CONTROL	6	   extra-data protocol message */
 	M_MBUF,		/* MT_OOBDATA	7	   expedited data  */
 };
-#endif
-#endif
+#endif /* MBTYPES */
+#endif /* _KERNEL */
+
+#endif /* !_SYS_MBUF_H_ */

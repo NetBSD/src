@@ -1,4 +1,4 @@
-/*	$NetBSD: vlimit.h,v 1.6 1994/06/29 06:46:15 cgd Exp $	*/
+/*	$NetBSD: vlimit.h,v 1.7 1997/01/22 07:09:32 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,9 @@
  *	@(#)vlimit.h	8.1 (Berkeley) 6/2/93
  */
 
+#ifndef _SYS_VLIMIT_H_
+#define _SYS_VLIMIT_H_
+
 /*
  * Limits for u.u_limit[i], per process, inherited.
  */
@@ -49,3 +52,5 @@
 #define	NLIMITS		6
 
 #define	INFINITY	0x7fffffff
+
+#endif /* !_SYS_VLIMIT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.12 1996/11/07 06:04:05 jtc Exp $	*/
+/*	$NetBSD: errno.h,v 1.13 1997/01/22 07:09:12 mikel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)errno.h	8.5 (Berkeley) 1/21/94
  */
+
+#ifndef _SYS_ERRNO_H_
+#define _SYS_ERRNO_H_
 
 #ifndef _KERNEL
 
@@ -174,3 +177,5 @@ extern const char *const sys_errlist[];
 #define	ERESTART	-1		/* restart syscall */
 #define	EJUSTRETURN	-2		/* don't modify regs, just return */
 #endif
+
+#endif /* !_SYS_ERRNO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.61 1996/12/22 10:19:16 cgd Exp $	*/
+/*	$NetBSD: exec.h,v 1.62 1997/01/22 07:09:13 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,6 +41,9 @@
  *
  *	@(#)exec.h	8.3 (Berkeley) 1/21/94
  */
+
+#ifndef _SYS_EXEC_H_
+#define _SYS_EXEC_H_
 
 /*
  * The following structure is found at the top of the user stack of each
@@ -209,3 +212,5 @@ extern int	exec_maxhdrsz;
 #endif /* _KERNEL */
 
 #include <sys/exec_aout.h>
+
+#endif /* !_SYS_EXEC_H_ */

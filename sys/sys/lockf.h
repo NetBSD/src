@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.5 1994/06/29 06:44:33 cgd Exp $	*/
+/*	$NetBSD: lockf.h,v 1.6 1997/01/22 07:09:16 mikel Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,6 +37,9 @@
  *
  *	@(#)lockf.h	8.1 (Berkeley) 6/11/93
  */
+
+#ifndef _SYS_LOCKF_H_
+#define _SYS_LOCKF_H_
 
 /*
  * The lockf structure is a kernel structure which contains the information
@@ -80,4 +83,6 @@ __BEGIN_DECLS
 void	lf_print __P((char *, struct lockf *));
 void	lf_printlist __P((char *, struct lockf *));
 __END_DECLS
-#endif
+#endif /* LOCKF_DEBUG */
+
+#endif /* !_SYS_LOCKF_H_ */
