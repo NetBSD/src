@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.97 2003/09/12 11:09:32 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.98 2003/09/14 03:11:31 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.97 2003/09/12 11:09:32 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.98 2003/09/14 03:11:31 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -147,7 +147,7 @@ static LIST_HEAD(_sahtree, secashead) sahtree;			/* SAD */
 static LIST_HEAD(_regtree, secreg) regtree[SADB_SATYPE_MAX + 1];
 							/* registed list */
 
-#define SPIHASHSIZE	128
+#define SPIHASHSIZE	131	/* prime */
 static LIST_HEAD(_spihash, secasvar) spihash[SPIHASHSIZE];
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
