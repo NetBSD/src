@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.3 2002/09/27 20:33:43 thorpej Exp $ */
+/* $NetBSD: aurtc.c,v 1.4 2002/10/01 02:56:45 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -52,9 +52,8 @@ static void	aurtc_init(struct device *);
 static void	aurtc_get(struct device *, time_t, struct clocktime *);
 static void	aurtc_set(struct device *, struct clocktime *);
 
-const struct cfattach aurtc_ca = {
-	sizeof (struct device), aurtc_match, aurtc_attach, 
-};
+CFATTACH_DECL(aurtc, sizeof (struct device),
+    aurtc_match, aurtc_attach, NULL, NULL)
 
 const struct clockfns aurtc_clockfns = {
 	aurtc_init, aurtc_get, aurtc_set,
