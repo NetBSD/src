@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.10 2000/12/07 10:14:09 kleink Exp $	*/
+/*	$NetBSD: profile.h,v 1.11 2001/05/18 15:33:03 fredette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
 #define	MCOUNT_ENTRY	"mcount"
 #endif
 
+#ifndef	__mc68010__
 #define	MCOUNT \
 extern void mcount __P((void)) __asm__(MCOUNT_ENTRY); void mcount() { \
 	int selfpc, frompcindex; \
@@ -50,6 +51,20 @@ extern void mcount __P((void)) __asm__(MCOUNT_ENTRY); void mcount() { \
 	__asm__("movl %%a6@(0)@(4),%0" : "=r" (frompcindex)); \
 	_mcount(frompcindex, selfpc); \
 }
+#else	/* __mc68010__ */
+/*
+ * The 68010 doesn't have the memory indirect addressing mode
+ * that the above definition of mcount uses, so we're forced
+ * to do something different.
+ */
+#define	MCOUNT \
+extern void mcount __P((void)) __asm__("mcount"); void mcount() { \
+	int selfpc, frompcindex; \
+	__asm__("movl %%a6@(4),%0" : "=r" (selfpc)); \
+	__asm__("movl %%a6@(0),%%a0 ; movl %%a0@(4),%0" : "=r" (frompcindex) : /* no inputs */ : "a0"); \
+	_mcount(frompcindex, selfpc); \
+}
+#endif	/* __mc68010__ */
 
 #ifdef _KERNEL
 /*
