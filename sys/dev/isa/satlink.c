@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.6 1998/06/09 00:05:46 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.7 1998/06/09 07:25:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -97,11 +97,7 @@ struct satlink_softc {
 /* max that the DMA controller allows! */
 #define	SATLINK_BUFSIZE		65535
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	satlinkprobe __P((struct device *, void *, void *));
-#else
 int	satlinkprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void	satlinkattach __P((struct device *, struct device *, void *));
 void	satlinktimeout __P((void *));
 
@@ -116,11 +112,7 @@ cdev_decl(satlink);
 int
 satlinkprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

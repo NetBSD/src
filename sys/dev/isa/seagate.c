@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.26 1998/01/13 19:33:28 drochner Exp $	*/
+/*	$NetBSD: seagate.c,v 1.27 1998/06/09 07:25:06 thorpej Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -305,11 +305,7 @@ struct scsipi_device sea_dev = {
 	NULL,		/* Use default 'done' routine */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	seaprobe __P((struct device *, void *, void *));
-#else
 int	seaprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void	seaattach __P((struct device *, struct device *, void *));
 
 struct cfattach sea_ca = {
@@ -345,11 +341,7 @@ sea_queue_length(sea)
 int
 seaprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

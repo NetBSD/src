@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.7 1998/03/31 08:13:34 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.8 1998/06/09 07:32:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -78,11 +78,7 @@
 #define	PCMCIA_PRODUCT_3COM_3C562	0x562
 #define	PCMCIA_PRODUCT_3COM_3C589	0x589
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	ep_pcmcia_match __P((struct device *, void *, void *));
-#else
 int	ep_pcmcia_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	ep_pcmcia_attach __P((struct device *, struct device *, void *));
 
 int	ep_pcmcia_get_enaddr __P((struct pcmcia_tuple *, void *));
@@ -108,11 +104,7 @@ struct cfattach ep_pcmcia_ca = {
 int
 ep_pcmcia_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;

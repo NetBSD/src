@@ -137,11 +137,7 @@ struct aria_softc {
 	int	sc_sendcmd_err;
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	ariaprobe __P((struct device *, void *, void *));
-#else
 int	ariaprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void	ariaattach __P((struct device *, struct device *, void *));
 void	ariaclose __P((void *));
 int	ariaopen __P((void *, int));
@@ -245,22 +241,13 @@ struct audio_hw_if aria_hw_if = {
  * Probe for the aria hardware.
  */
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-ariaprobe(parent, match, aux)
-	struct device *parent;
-	void *match;
-#else
 ariaprobe(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = ((struct device *)match)->dv_cfdata;
-#endif
 
 	if (!ARIA_BASE_VALID(ia->ia_iobase)) {
 		printf("aria: configured iobase %d invalid\n", ia->ia_iobase);

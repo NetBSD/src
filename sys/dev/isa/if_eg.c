@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.40 1998/01/12 20:48:17 drochner Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.41 1998/06/09 07:25:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -125,11 +125,7 @@ struct eg_softc {
 #endif
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int egprobe __P((struct device *, void *, void *));
-#else
 int egprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void egattach __P((struct device *, struct device *, void *));
 
 struct cfattach eg_ca = {
@@ -327,11 +323,7 @@ egreadPCB(iot, ioh, pcb)
 int
 egprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

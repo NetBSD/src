@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.44 1998/06/09 00:05:47 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.45 1998/06/09 07:25:07 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -161,11 +161,7 @@ int wtreadfm __P((struct wt_softc *sc));
 int wtwritefm __P((struct wt_softc *sc));
 u_char wtsoft __P((struct wt_softc *sc, int mask, int bits));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int wtprobe __P((struct device *, void *, void *));
-#else
 int wtprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void wtattach __P((struct device *, struct device *, void *));
 int wtintr __P((void *sc));
 
@@ -181,11 +177,7 @@ extern struct cfdriver wt_cd;
 int
 wtprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

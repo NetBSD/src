@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.20 1998/02/03 16:22:01 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.21 1998/06/09 07:25:02 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -163,11 +163,7 @@ int in_iftint = 0;
 int iy_mediachange __P((struct ifnet *));
 void iy_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int iyprobe __P((struct device *, void *, void *));
-#else
 int iyprobe __P((struct device *, struct cfdata *, void *));
-#endif
 void iyattach __P((struct device *, struct device *, void *));
 
 static u_int16_t eepromread __P((bus_space_tag_t, bus_space_handle_t, int));
@@ -185,11 +181,7 @@ static u_int8_t eepro_revirqmap[] = EEPP_RINTMAP;
 int
 iyprobe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;

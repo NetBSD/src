@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.18 1998/06/09 00:05:19 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.19 1998/06/09 07:28:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -64,18 +64,10 @@ static void isapnp_configure __P((struct isapnp_softc *,
 static void isapnp_print_pin __P((const char *, struct isapnp_pin *, size_t));
 static int isapnp_print __P((void *, const char *));
 #ifdef _KERNEL
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int isapnp_submatch __P((struct device *, void *, void *));
-#else
 static int isapnp_submatch __P((struct device *, struct cfdata *, void *));
 #endif
-#endif
 static int isapnp_find __P((struct isapnp_softc *, int));
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int isapnp_match __P((struct device *, void *, void *));
-#else
 static int isapnp_match __P((struct device *, struct cfdata *, void *));
-#endif
 static void isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach isapnp_ca = {
@@ -571,11 +563,7 @@ isapnp_print(aux, str)
 static int
 isapnp_submatch(parent, match, aux)
 	struct device *parent;
-#ifdef	__BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct cfdata *cf = (struct cfdata *) match;
@@ -770,11 +758,7 @@ isapnp_configure(sc, ipa)
 static int
 isapnp_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	int rv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isapnp.c,v 1.1 1998/03/29 08:11:50 enami Exp $	*/
+/*	$NetBSD: aic_isapnp.c,v 1.2 1998/06/09 07:28:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,11 +60,7 @@ struct aic_isapnp_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	aic_isapnp_match __P((struct device *, void *, void *));
-#else
 int	aic_isapnp_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	aic_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach aic_isapnp_ca = {
@@ -74,11 +70,7 @@ struct cfattach aic_isapnp_ca = {
 int
 aic_isapnp_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct isapnp_attach_args *ipa = aux;

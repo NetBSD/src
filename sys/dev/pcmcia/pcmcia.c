@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.7 1998/06/05 02:51:17 enami Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.8 1998/06/09 07:32:57 thorpej Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -60,13 +60,8 @@ int	pcmcia_verbose = 1;
 int	pcmcia_verbose = 0;
 #endif
 
-#ifdef	__BROKEN_INDIRECT_CONFIG
-int	pcmcia_match __P((struct device *, void *, void *));
-int	pcmcia_submatch __P((struct device *, void *, void *));
-#else
 int	pcmcia_match __P((struct device *, struct cfdata *, void *));
 int	pcmcia_submatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	pcmcia_attach __P((struct device *, struct device *, void *));
 int	pcmcia_print __P((void *, const char *));
 
@@ -107,11 +102,7 @@ pcmcia_ccr_write(pf, ccr, val)
 int
 pcmcia_match(parent, match, aux)
 	struct device *parent;
-#ifdef	__BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	/* if the autoconfiguration got this far, there's a socket here */
@@ -220,19 +211,11 @@ pcmcia_card_detach(dev)
 }
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-pcmcia_submatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct cfdata *cf = match;
-#else
 pcmcia_submatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-#endif
 	struct pcmcia_attach_args *paa = aux;
 
 	if (cf->cf_loc[PCMCIACF_FUNCTION] != PCMCIACF_FUNCTION_DEFAULT &&
