@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.13 2000/11/22 03:48:33 itojun Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.14 2000/11/22 03:56:52 itojun Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -48,6 +48,7 @@
 #include <compat/osf1/osf1_syscall.h>
 #include <compat/osf1/osf1_util.h>
 #include <compat/osf1/osf1_cvt.h>
+#include <compat/osf1/osf1_exec.h>
 
 struct osf1_exec_emul_arg {
 	int	flags;
@@ -144,7 +145,7 @@ osf1_copyargs(pack, arginfo, stack, argp)
 {
 	struct proc *p = curproc;			/* XXX !!! */
 	struct osf1_exec_emul_arg *emul_arg = pack->ep_emul_arg;
-	struct osf1_auxv ai[MAX_AUX_ENTRIES], *a;
+	struct osf1_auxv ai[OSF1_MAX_AUX_ENTRIES], *a;
 	char *prognameloc, *loadernameloc;
 	size_t len;
 
