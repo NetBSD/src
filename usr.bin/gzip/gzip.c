@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.19 2004/01/05 23:23:34 jmmv Exp $	*/
+/*	$NetBSD: gzip.c,v 1.20 2004/01/25 05:19:49 grant Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.19 2004/01/05 23:23:34 jmmv Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.20 2004/01/25 05:19:49 grant Exp $");
 #endif /* not lint */
 
 /*
@@ -846,7 +846,6 @@ retry:
 out:
 	if (s)
 		free(s);
-	return;
 }
 
 /* compress/decompress a file */
