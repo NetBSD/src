@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.43 1994/12/14 16:30:40 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.44 1994/12/14 19:08:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -713,39 +713,34 @@ open(p, uap, retval)
 	cmode = ((SCARG(uap, mode) &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	p->p_dupfd = -indx - 1;			/* XXX check for fdopen */
-	fp->f_data = (caddr_t) NULL;
-	if (error = vn_open(&nd, flags, cmode, fp)) {
+	if (error = vn_open(&nd, flags, cmode)) {
 		ffree(fp);
-		if (p->p_dupfd >= 0) {
-			switch (error) {
-			case ENODEV:	/* XXX from fdopen or fdesc_open */
-				return (finishdup(fdp, p->p_dupfd, indx, retval));
-
-			case ENXIO:	/* XXX from portal_open */
-				return (finishmove(fdp, p->p_dupfd, indx, retval));
+		switch (error) {
+		case ENODEV:		/* XXX from fdopen or fdesc_open? */
+		case ENXIO:		/* XXX from portal_open? */
+			if (p->p_dupfd >= 0 && (error =
+			    dupfdopen(fdp, indx, p->p_dupfd, flags, error))) {
+				*retval = indx;
+				return (0);
 			}
-		}
-		if (error == ERESTART)
+			break;
+
+		case EJUSTRETURN:	/* XXX cloning device? */
+			if (p->p_dupfd >= 0) {
+				*retval = indx;
+				return (0);
+			}
+			break;
+
+		case ERESTART:
 			error = EINTR;
+			break;
+		}
 		fdp->fd_ofiles[indx] = NULL;
 		return (error);
 	}
-
 	p->p_dupfd = 0;
 	vp = nd.ni_vp;
-
-	if (fp->f_data != (caddr_t) NULL) {
-		/* 
-		 * The fp data was changed, so it is a cloning operation
-		 * Cleanup and return
-		 */
-		if (flags & FWRITE)
-			vp->v_writecount--;
-		vput(vp);
-		*retval = indx;
-		return (0);
-	}
-
 	fp->f_flag = flags & FMASK;
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
