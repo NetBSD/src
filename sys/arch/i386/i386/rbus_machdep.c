@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.3 2000/05/30 09:26:19 haya Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.4 2000/05/31 16:39:56 uch Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -30,7 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: rbus_machdep.c,v 1.3 2000/05/30 09:26:19 haya Exp $ */
+/* $Id: rbus_machdep.c,v 1.4 2000/05/31 16:39:56 uch Exp $ */
+#include "opt_pcibios.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +53,9 @@
 #include <dev/isa/isavar.h>
 
 #include <dev/pci/pcivar.h>
-
-
+#ifdef PCIBIOS_ADDR_FIXUP
+#include <arch/i386/pci/pci_addr_fixup.h>
+#endif
 
 /**********************************************************************
  * void _i386_memio_unmap(bus_space_tag bst, bus_space_handle bsh,
@@ -135,9 +137,15 @@ rbus_pccbb_parent_mem(pa)
 {
 	bus_addr_t start, offset;
 	bus_size_t size;
+	struct extent *ex;
+#ifdef PCIBIOS_ADDR_FIXUP
+	ex = pciaddr.extent_mem;
+#else
 	extern struct extent *iomem_ex;
+	ex = iomem_ex;
+#endif
 
-	start = iomem_ex->ex_start;
+	start = ex->ex_start;
 	if (start < 0x40000000) {
 		start = 0x40000000;	/* 1GB */
 	}
@@ -147,11 +155,14 @@ rbus_pccbb_parent_mem(pa)
 	 * some obstacles which do not recognised by the kernel) in
 	 * the region governed by iomem_ex.  So I decide to use only
 	 * very high address region.
+	 *
+	 * if defined PCIBIOS_ADDR_FIXUP, PCI device using area
+	 * which do not recognised by the kernel are already reserved.
 	 */
-	size = iomem_ex->ex_end - start;
+	size = ex->ex_end - start;
 	offset = 0;
   
-	return rbus_new_root_share(pa->pa_memt, iomem_ex, start, size, 0);
+	return rbus_new_root_share(pa->pa_memt, ex, start, size, 0);
 }
 
 
@@ -162,9 +173,17 @@ rbus_tag_t
 rbus_pccbb_parent_io(pa)
 	struct pci_attach_args *pa;
 {
+	struct extent *ex;
+	bus_addr_t start;
+	bus_size_t size;
+#ifdef PCIBIOS_ADDR_FIXUP
+	ex = pciaddr.extent_port;
+#else
 	extern struct extent *ioport_ex;
-	bus_addr_t start =  0x2000;
-	bus_size_t size =  0x1000;
+	ex = ioport_ex;
+#endif
+	start =  0x2000;
+	size =  0x1000;
 
-	return rbus_new_root_share(pa->pa_iot, ioport_ex, start, size, 0);
+	return rbus_new_root_share(pa->pa_iot, ex, start, size, 0);
 }
