@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.42 2000/05/11 07:43:42 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.43 2000/05/14 15:14:41 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.42 2000/05/11 07:43:42 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.43 2000/05/14 15:14:41 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.42 2000/05/11 07:43:42 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.43 2000/05/14 15:14:41 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1993,15 +1993,27 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    char    *pattern;
 		    char    *cp2;
 		    Boolean copy;
+		    int nest;
 
 		    copy = FALSE;
+		    nest = 1;
 		    for (cp = tstr + 1;
-			 *cp != '\0' && *cp != ':' && *cp != endc;
+			 *cp != '\0' && *cp != ':';
 			 cp++)
 		    {
-			if (*cp == '\\' && (cp[1] == ':' || cp[1] == endc)){
+			if (*cp == '\\' &&
+			    (cp[1] == ':' ||
+			     cp[1] == endc || cp[1] == startc)) {
 			    copy = TRUE;
 			    cp++;
+			    continue;
+			}
+			if (*cp == startc)
+			    ++nest;
+			if (*cp == endc) {
+			    --nest;
+			    if (nest == 0)
+				break;
 			}
 		    }
 		    termc = *cp;
@@ -2028,6 +2040,13 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			*cp2 = '\0';
 		    } else {
 			pattern = &tstr[1];
+		    }
+		    if ((cp2 = strchr(pattern, '$'))) {
+			cp2 = pattern;
+			pattern = Var_Subst(NULL, cp2, ctxt, err);
+			if (copy)
+			    free(cp2);
+			copy = TRUE;
 		    }
 		    if (*tstr == 'M' || *tstr == 'm') {
 			newStr = VarModify(str, VarMatch, (ClientData)pattern);
