@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.48 2001/05/29 17:37:52 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.49 2001/06/01 20:33:37 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.48 2001/05/29 17:37:52 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.49 2001/06/01 20:33:37 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.48 2001/05/29 17:37:52 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.49 2001/06/01 20:33:37 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -708,6 +708,12 @@ JobPrintCommand(cmdp, jobp)
 	}
     }
 
+    if (DEBUG(SHELL) && strcmp(shellName, "sh") == 0 &&
+	(job->flags & JOB_TRACED) == 0) {
+	    DBPRINTF("set -%s\n", "x");
+	    job->flags |= JOB_TRACED;
+    }
+    
     if ((cp = Check_Cwd_Cmd(cmd)) != NULL) {
 	    DBPRINTF("cd %s; ", cp);
     }		    
@@ -1279,6 +1285,8 @@ JobExec(job, argv)
     char    	  **argv;
 {
     int	    	  cpid;	    	/* ID of new child */
+
+    job->flags &= ~JOB_TRACED;
 
     if (DEBUG(JOB)) {
 	int 	  i;
@@ -2352,6 +2360,7 @@ Job_CatchChildren(block)
 	    }
 	} else {
 	    job = (Job *) Lst_Datum(jnode);
+	    Job_CatchOutput();
 	    (void) Lst_Remove(jobs, jnode);
 	    nJobs -= 1;
 #ifdef REMOTE

@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.48 2001/04/04 09:39:07 wiz Exp $
+.\"	$NetBSD: make.1,v 1.49 2001/06/01 20:33:37 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,6 +136,10 @@ Print debugging information about suffix-transformation rules.
 Print debugging information about target list maintenance.
 .It Ar v
 Print debugging information about variable assignment.
+.It Ar x
+Run shell commands with 
+.Fl x 
+so the actual commands are printed as they are executed. 
 .El
 .It Fl e
 Specify that environmental variables override macro assignments within
@@ -508,6 +512,19 @@ is set to the value of
 for all programs which
 .Nm
 executes.
+.It Va MAKE_PRINT_VAR_ON_ERROR
+When 
+.Nm
+stops due to an error, it prints its name and the value of
+.Ql Va .CURDIR
+as well as the value of any variables named in 
+.Ql Va MAKE_PRINT_VAR_ON_ERROR .
+.It Va .newline
+This variable is simply assigned a newline character as its value.
+This allows expansions using the :@ modifier to put a newline between
+iterations of the loop rather than a space.  For example, the printing of
+.Ql Va MAKE_PRINT_VAR_ON_ERROR
+could be done as ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}.
 .El
 .Pp
 Variable expansion may be modified to select or modify each word of the
