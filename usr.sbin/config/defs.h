@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.14 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: defs.h,v 1.15 2003/11/19 18:06:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -403,6 +403,11 @@ struct {			/* loc[] table for config */
 	const char **vec;
 	int	used;
 } locators;
+
+struct numconst {
+	int64_t	val;
+	int fmt;
+};
 
 /* files.c */
 void	initfiles(void);

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.45 2003/11/18 18:47:36 fvdl Exp $	*/
+/*	$NetBSD: gram.y,v 1.46 2003/11/19 18:06:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,8 @@
 #include "defs.h"
 #include "sem.h"
 
-#define	FORMAT(n) ((n) > -10 && (n) < 10 ? "%lld" : "0x%llx")
+#define	FORMAT(n) (((n).fmt == 8 && (n).val != 0) ? "0%llo" : \
+    ((n).fmt == 16) ? "0x%llx" : "%lld")
 
 #define	stop(s)	error(s), exit(1)
 
@@ -94,6 +95,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 	struct	deva *deva;
 	struct	nvlist *list;
 	const char *str;
+	struct	numconst num;
 	int64_t	val;
 }
 
@@ -102,7 +104,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	FILE_SYSTEM FLAGS IDENT INCLUDE XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PACKAGE PREFIX PSEUDO_DEVICE
 %token	ROOT SOURCE TYPE WITH NEEDS_COUNT NEEDS_FLAG NO BLOCK CHAR DEVICE_MAJOR
-%token	<val> NUMBER
+%token	<num> NUMBER
 %token	<str> PATHNAME QSTRING WORD EMPTY
 %token	ENDDEFS
 
@@ -127,7 +129,8 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<str>	device_instance
 %type	<str>	attachment
 %type	<str>	value
-%type	<val>	major_minor signed_number npseudo
+%type	<val>	major_minor npseudo
+%type	<num>	signed_number
 %type	<val>	flags_opt
 %type	<str>	deffs
 %type	<list>	deffses
@@ -197,11 +200,11 @@ device_major:
 					{ adddevm($2, $3, $4, $5); };
 
 device_major_block:
-	BLOCK NUMBER			{ $$ = $2; } |
+	BLOCK NUMBER			{ $$ = $2.val; } |
 	/* empty */			{ $$ = -1; };
 
 device_major_char:
-	CHAR NUMBER			{ $$ = $2; } |
+	CHAR NUMBER			{ $$ = $2.val; } |
 	/* empty */			{ $$ = -1; };
 
 /* order of options is important, must use right recursion */
@@ -283,8 +286,8 @@ one_def:
 					{ defdev($2, $3, $4, 0); } |
 	ATTACH devbase AT atlist devattach_opt attrs_opt
 					{ defdevattach($5, $2, $4, $6); } |
-	MAXPARTITIONS NUMBER		{ maxpartitions = $2; } |
-	MAXUSERS NUMBER NUMBER NUMBER	{ setdefmaxusers($2, $3, $4); } |
+	MAXPARTITIONS NUMBER		{ maxpartitions = $2.val; } |
+	MAXUSERS NUMBER NUMBER NUMBER	{ setdefmaxusers($2.val, $3.val, $4.val); } |
 	DEFPSEUDO devbase interface_opt attrs_opt
 					{ defdev($2, $3, $4, 1); } |
 	MAJOR '{' majorlist '}';
@@ -347,11 +350,11 @@ locdef:
 	locname locdefault 		{ $$ = new_nsi($1, $2, 0); } |
 	locname				{ $$ = new_nsi($1, NULL, 0); } |
 	'[' locname locdefault ']'	{ $$ = new_nsi($2, $3, 1); } |
-	locname '[' NUMBER ']'		{ $$ = mk_nsis($1, $3, NULL, 0); } |
+	locname '[' NUMBER ']'		{ $$ = mk_nsis($1, $3.val, NULL, 0); } |
 	locname '[' NUMBER ']' locdefaults
-					{ $$ = mk_nsis($1, $3, $5, 0); } |
+					{ $$ = mk_nsis($1, $3.val, $5, 0); } |
 	'[' locname '[' NUMBER ']' locdefaults ']'
-					{ $$ = mk_nsis($2, $4, $6, 1); };
+					{ $$ = mk_nsis($2, $4.val, $6, 1); };
 
 locname:
 	WORD				{ $$ = $1; } |
@@ -381,7 +384,7 @@ value:
 	EMPTY				{ $$ = $1; } |
 	signed_number			{ char bf[40];
 					  (void)snprintf(bf, sizeof(bf),
-					      FORMAT($1), $1);
+					      FORMAT($1), $1.val);
 					  $$ = intern(bf); };
 
 stringvalue:
@@ -394,7 +397,7 @@ values:
 
 signed_number:
 	NUMBER				{ $$ = $1; } |
-	'-' NUMBER			{ $$ = -$2; };
+	'-' NUMBER			{ $$.fmt = $2.fmt; $$.val = -$2.val; };
 
 attrs_opt:
 	':' attrs			{ $$ = $2; } |
@@ -412,7 +415,7 @@ majorlist:
 	majordef;
 
 majordef:
-	devbase '=' NUMBER		{ setmajor($1, $3); };
+	devbase '=' NUMBER		{ setmajor($1, $3.val); };
 
 
 /*
@@ -435,7 +438,7 @@ config_spec:
 	MAKEOPTIONS mkopt_list |
 	NO OPTIONS no_opt_list |
 	OPTIONS opt_list |
-	MAXUSERS NUMBER			{ setmaxusers($2); } |
+	MAXUSERS NUMBER			{ setmaxusers($2.val); } |
 	IDENT stringvalue		{ setident($2); } |
 	CONFIG conf root_spec sysparam_list
 					{ addconf(&conf); } |
@@ -521,13 +524,13 @@ dev_spec:
 	major_minor			{ $$ = new_si(NULL, $1); };
 
 major_minor:
-	MAJOR NUMBER MINOR NUMBER	{ $$ = makedev($2, $4); };
+	MAJOR NUMBER MINOR NUMBER	{ $$ = makedev($2.val, $4.val); };
 
 on_opt:
 	ON | /* empty */;
 
 npseudo:
-	NUMBER				{ $$ = $1; } |
+	NUMBER				{ $$ = $1.val; } |
 	/* empty */			{ $$ = 1; };
 
 device_instance:
@@ -548,7 +551,7 @@ locator:
 	WORD '?'			{ $$ = new_ns($1, NULL); };
 
 flags_opt:
-	FLAGS NUMBER			{ $$ = $2; } |
+	FLAGS NUMBER			{ $$ = $2.val; } |
 	/* empty */			{ $$ = 0; };
 
 %%
