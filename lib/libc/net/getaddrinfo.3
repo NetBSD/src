@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.33 2004/03/01 23:06:21 itojun Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.34 2004/04/14 04:42:35 itojun Exp $
 .\"	$KAME: getaddrinfo.3,v 1.32 2003/04/30 06:06:42 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     From: @(#)gethostbyname.3	8.4 (Berkeley) 5/25/95
 .\"
-.Dd May 14, 2002
+.Dd April 14, 2004
 .Dt GETADDRINFO 3
 .Os
 .\"
@@ -70,7 +70,7 @@ structure is defined as a result of including the
 header:
 .Bd -literal -offset
 struct addrinfo {
-     int       ai_flags;     /* AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST */
+     int       ai_flags;     /* AI_xxx */
      int       ai_family;    /* PF_xxx */
      int       ai_socktype;  /* SOCK_xxx */
      int       ai_protocol;  /* 0 or IPPROTO_xxx for IPv4 and IPv6 */
@@ -264,6 +264,23 @@ Otherwise an error of
 is returned.
 This flag prevents any type of name resolution service (e.g., the DNS)
 from being called.
+.Pp
+If the
+.Dv AI_NUMERICSERV
+bit is set in the
+.Fa ai_flags
+member of the
+.Fa hints
+structure, then a
+.Pf non Dv NULL
+.Fa servname
+string supplied shall be a numeric port string.
+Otherwise, an
+.Dv EAI_NONAME
+error shall be returned.
+This flag shall prevent any
+type of name resolution service (for example, NIS) from being
+invoked.
 .Pp
 The arguments to
 .Fn getaddrinfo
@@ -573,6 +590,16 @@ indicate an unknown error.
 .%T Basic Socket Interface Extensions for IPv6
 .%R RFC 2553
 .%D March 1999
+.Re
+.Rs
+.%A R. Gilligan
+.%A S. Thomson
+.%A J. Bound
+.%A J. McCann
+.%A W. Stevens
+.%T Basic Socket Interface Extensions for IPv6
+.%R RFC 3493
+.%D February 2003
 .Re
 .Rs
 .%A Tatsuya Jinmei
