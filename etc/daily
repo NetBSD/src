@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.46 2002/01/27 22:08:50 bouyer Exp $
+#	$NetBSD: daily,v 1.46.2.1 2002/12/26 08:04:52 tron Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -226,7 +226,7 @@ fi
 
 if checkyesno run_security; then
 	SECOUT="$DAILYDIR/sec"
-	sh /etc/security 2>&1 > "$SECOUT"
+	sh /etc/security > "$SECOUT" 2>&1
 	if [ ! -s "$SECOUT" ]; then
 		echo "Nothing to report on $date" > "$SECOUT"
 	fi
