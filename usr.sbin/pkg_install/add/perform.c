@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.103 2004/11/02 00:38:23 erh Exp $	*/
+/*	$NetBSD: perform.c,v 1.104 2004/12/10 21:49:31 erh Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.103 2004/11/02 00:38:23 erh Exp $");
+__RCSID("$NetBSD: perform.c,v 1.104 2004/12/10 21:49:31 erh Exp $");
 #endif
 #endif
 
@@ -129,7 +129,7 @@ sanity_check(const char *pkg)
 
 /* install a pre-requisite package. Returns 1 if it installed it */
 static int
-installprereq(const char *name, int *errc)
+installprereq(const char *name, int *errc, int doupdate)
 {
 	int ret;
 	ret = 0;
@@ -140,6 +140,8 @@ installprereq(const char *name, int *errc)
 
 	if (fexec_skipempty(BINDIR "/pkg_add", "-K", _pkgdb_getPKGDB_DIR(),
 			    "-s", get_verification(),
+	            doupdate ? "-u" : "",
+	            Fake ? "-n" : "",
 			    NoView ? "-L" : "",
 			    View ? "-w" : "", View ? View : "",
 			    Viewbase ? "-W" : "", Viewbase ? Viewbase : "",
@@ -162,7 +164,7 @@ installprereq(const char *name, int *errc)
  * Returns 0 if everything is ok, >0 else
  */
 static int
-pkg_do(const char *pkg)
+pkg_do(const char *pkg, lpkg_head_t *pkgs)
 {
 	char    playpen[FILENAME_MAX];
 	char    replace_from[FILENAME_MAX];
@@ -474,7 +476,8 @@ pkg_do(const char *pkg)
 			(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
 				(int)(s - PkgName) + 1, PkgName);
 			if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
-				if (Replace) {
+				if (Replace && !Fake) {
+					/* XXX Should list the steps in Fake mode */
 					snprintf(replace_from, sizeof(replace_from), "%s/%s/" REQUIRED_BY_FNAME,
 						 dbdir, installed);
 					snprintf(replace_via, sizeof(replace_via), "%s/.%s." REQUIRED_BY_FNAME,
@@ -542,7 +545,7 @@ pkg_do(const char *pkg)
 								 *  one at all. 
 								 */
 								strlcpy(base_new, PkgName, sizeof(base_new));
-								s2 = strpbrk(base_new, "<>[]?*{");
+								s2 = strpbrk(base_new, "<>[]?*{"); /* } */
 								if (s2)
 									*s2 = '\0';
 								else {
@@ -551,7 +554,7 @@ pkg_do(const char *pkg)
 										*s2 = '\0';
 								}
 								strlcpy(base_exist, depp->name, sizeof(base_exist));
-								s2 = strpbrk(base_exist, "<>[]?*{");
+								s2 = strpbrk(base_exist, "<>[]?*{"); /* } */
 								if (s2)
 									*s2 = '\0';
 								else {
@@ -667,21 +670,35 @@ ignore_replace_depends_check:
 				(void) snprintf(buf, sizeof(buf),
 				    skip ? "%.*s[0-9]*" : "%.*s-[0-9]*",
 				    (int)(s - p->name) + skip, p->name);
-				if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
-					warnx("pkg `%s' required, but `%s' found installed.",
-					      p->name, installed);
+				if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0)
+				{
+					int done = 0;
 
-					if (replacing) {
-						printf("HF: replace note -- could 'pkg_delete %s', and let the normal\n"
-						       "dependency handling reinstall the replaced package, assuming one IS\n"
-						       "available. But then I'd expect proper binary pkgs being available for\n"
-						       "the replace case.\n", installed);
+					if (Replace > 1)
+					{
+						int errc0 = 0;
+						char tmp[FILENAME_MAX];
+
+						warnx("Attempting to update `%s' using binary package\n", p->name);
+						/* Yes, append .tgz after the version so the */
+						/* pattern can match a filename. */
+						snprintf(tmp, sizeof(tmp), "%s.tgz", p->name);
+						done = installprereq(tmp, &errc0, 1);
+					}
+					else if (Replace)
+					{
+						warnx("To perform necessary upgrades on required packages specify -u twice.\n");
 					}
 
-					if (Force) {
-						warnx("Proceeding anyway.");
-					} else {
-						err_prescan++;
+					if (!done)
+					{
+						warnx("pkg `%s' required, but `%s' found installed.",
+							  p->name, installed);
+						if (Force) {
+							warnx("Proceeding anyway.");
+						} else {
+							err_prescan++;
+						}
 					}
 				}
 			}
@@ -723,10 +740,10 @@ ignore_replace_depends_check:
 
 				if (exact != NULL) {
 					/* first try the exact name, from the @blddep */
-					done = installprereq(exact, &errc0);
+					done = installprereq(exact, &errc0, 0);
 				}
 				if (!done) {
-					done = installprereq(p->name, &errc0);
+					done = installprereq(p->name, &errc0, 0);
 				}
 				if (!done && !Force) {
 					errc += errc0;
@@ -1007,11 +1024,11 @@ pkg_perform(lpkg_head_t *pkgs)
 	signal(SIGHUP, cleanup);
 
 	if (AddMode == SLAVE)
-		err_cnt = pkg_do(NULL);
+		err_cnt = pkg_do(NULL, NULL);
 	else {
 		while ((lpp = TAILQ_FIRST(pkgs)) != NULL) {
 			path_prepend_from_pkgname(lpp->lp_name);
-			err_cnt += pkg_do(lpp->lp_name);
+			err_cnt += pkg_do(lpp->lp_name, pkgs);
 			path_prepend_clear();
 			TAILQ_REMOVE(pkgs, lpp, lp_link);
 			free_lpkg(lpp);
