@@ -1,7 +1,0 @@
-#	$NetBSD: ULTRA,v 1.2 2002/04/17 02:26:48 mycroft Exp $
-#
-#	ULTRA - GENERIC for Motorola Ultra boards, but with
-#	        the tlp(4) driver matching the on-board Ethernet interface
-#
-
-include "arch/prep/conf/GENERIC"
