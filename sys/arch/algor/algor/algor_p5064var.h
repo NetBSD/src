@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064var.h,v 1.2 2001/06/10 05:26:58 thorpej Exp $	*/
+/*	$NetBSD: algor_p5064var.h,v 1.3 2001/06/10 09:13:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,36 @@ struct p5064_config {
 };
 
 #ifdef _KERNEL
+#define	P5064_IRQ_ETHERNET	4
+#define	P5064_IRQ_SCSI		5
+#define	P5064_IRQ_USB		6
+
+#define	P5064_IRQ_MKBD		7
+#define	P5064_IRQ_COM1		8
+#define	P5064_IRQ_COM2		9
+#define	P5064_IRQ_FLOPPY	10
+#define	P5064_IRQ_CENTRONICS	11
+#define	P5064_IRQ_RTC		12
+
+#define	P5064_IRQ_ISABRIDGE	13
+#define	P5064_IRQ_IDE0		14
+#define	P5064_IRQ_IDE1		15
+
+struct p5064_irqmap {
+	int		irqidx;
+	int		cpuintr;
+	int		irqreg;
+	int		irqbit;
+	int		xbarreg;
+	int		xbarshift;
+};
+
+void	algor_p5064_intr_disestablish(void *, void *);
+void	*algor_p5064_intr_establish(const struct p5064_irqmap *,
+	    int (*)(void *), void *);
+
 extern struct p5064_config p5064_configuration;
+extern const struct p5064_irqmap p5064_irqmap[];
 
 void	algor_p5064_bus_io_init(bus_space_tag_t, void *);
 void	algor_p5064_bus_mem_init(bus_space_tag_t, void *);
