@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.13 1996/11/06 20:19:41 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.14 1996/11/09 22:27:22 chuck Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -327,6 +327,7 @@ Lstploaddone:
 	movc	d0,cacr			| turn on both caches
 	jmp	Lenab1
 Lmotommu2:
+	RELOC(_prototc, a2)
 	movl	#0x82c0aa00,a2@		| value to load TC with
 	pmove	a2@,tc			| load it
 Lenab1:
@@ -1804,7 +1805,7 @@ Lsboot: /* sboot */
 1:	jmp	0x400a			| tell sboot to reboot us
 
 	.data
-	.globl	_machineid,_mmutype,_cputype,_ectype,_protorp
+	.globl	_machineid,_mmutype,_cputype,_ectype,_protorp,_prototc
 _machineid:
 	.long	MVME_147	| default to MVME_147
 _mmutype:
@@ -1815,6 +1816,8 @@ _ectype:
 	.long	EC_NONE		| external cache type, default to none
 _protorp:
 	.long	0,0		| prototype root pointer
+_prototc:
+	.long	0,0		| prototype translation control
 	.globl	_bootpart,_bootdevlun,_bootctrllun,_bootaddr,_boothowto
 _bootpart:
 	.long	0
