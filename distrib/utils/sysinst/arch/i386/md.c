@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.54 2001/01/14 23:45:17 mrg Exp $ */
+/*	$NetBSD: md.c,v 1.55 2001/01/27 07:34:39 jmc Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,8 @@
 #include <sys/sysctl.h>
 #include <sys/exec.h>
 #include <sys/utsname.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <machine/cpu.h>
 #include <stdio.h>
 #include <util.h>
@@ -210,11 +212,24 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
+	struct stat sb;
+	int ret;
+
 	/* boot blocks ... */
+	ret = stat("/usr/mdec/biosboot_com0.sym", &sb);
+	if ((ret != -1) && (sb.st_mode & S_IFREG)) {
+		msg_display(MSG_getboottype);
+		process_menu(MENU_getboottype);
+	}
 	msg_display(MSG_dobootblks, diskdev);
-	return run_prog(RUN_DISPLAY, NULL,
-	    "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
-	    diskdev);
+	if (!strcmp(boottype, "serial"))
+	        return run_prog(RUN_DISPLAY, NULL,
+	            "/usr/mdec/installboot -v /usr/mdec/biosboot_com0.sym /dev/r%sa",
+	            diskdev);
+	else
+	        return run_prog(RUN_DISPLAY, NULL,
+	            "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
+	            diskdev);
 }
 
 int
