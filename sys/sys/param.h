@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.116 2000/12/18 18:55:43 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.117 2000/12/22 23:21:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  *
  */
 
-#define __NetBSD_Version__  105150000	/* NetBSD 1.5O */
+#define __NetBSD_Version__  105160000	/* NetBSD 1.5P */
 
 /*
  * Historical NetBSD #define
