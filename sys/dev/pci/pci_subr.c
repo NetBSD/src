@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.20 1997/03/19 19:38:46 cgd Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.20.4.1 1997/09/16 03:50:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -33,6 +33,8 @@
 /*
  * PCI autoconfiguration support functions.
  */
+
+#include "opt_pciverbose.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

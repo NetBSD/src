@@ -1,4 +1,4 @@
-$NetBSD: Options,v 1.6 1997/01/31 23:01:21 carrel Exp $
+$NetBSD: Options,v 1.6.8.1 1997/09/16 03:48:20 thorpej Exp $
 
 Here is a list of hp300 specific kernel compilation options and what they
 mean:
@@ -77,12 +77,6 @@ COMPAT_HPUX
 
 COMPAT_OHPUX
 	Compile in old 4.2-ish HP-UX (pre-6.0?) compatibility code.
-
-FPCOPROC
-	Compile in code to support the 68881 and above FPU.  Should always
-	be defined, since all supported SPUs have one.  Don't even know if
-	it will compile, much less work,  without this option.  Defined in
-	the prototype makefile (hp300/conf/Makefile.hp300).
 
 DCMSTATS
 	Compile in code to collect a variety of transmit/receive statistics

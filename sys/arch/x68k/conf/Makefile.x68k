@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.15 1997/07/14 14:42:52 oki Exp $
+#	$NetBSD: Makefile.x68k,v 1.15.2.1 1997/09/16 03:49:38 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -35,7 +35,7 @@ X68K=	$S/arch/x68k
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dmc68020 -Dx68k -DFPCOPROC
+		-Dmc68020 -Dx68k
 .if empty(IDENT:M-DM68060)
 CMACHFLAGS=	-m68030
 .else
@@ -139,7 +139,7 @@ cleankernel:
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ioconf.c param.c | \
+	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:

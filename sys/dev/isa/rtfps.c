@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.28.4.2 1997/08/27 23:31:49 thorpej Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.28.4.3 1997/09/16 03:50:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -155,7 +155,7 @@ rtfpsattach(parent, self, aux)
 		IOBASEUNK, IOBASEUNK, IOBASEUNK, IOBASEUNK
 	};
 	bus_space_tag_t iot = ia->ia_iot;
-	int i;
+	int i, iobase;
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_iobase;
@@ -164,10 +164,13 @@ rtfpsattach(parent, self, aux)
 		panic("rtfpsattach: invalid irq");
 	sc->sc_irqport = irqport[ia->ia_irq];
 
-	for (i = 0; i < NSLAVES; i++)
-		if (bus_space_map(iot, sc->sc_iobase + i * COM_NPORTS,
-		    COM_NPORTS, 0, &sc->sc_slaveioh[i]))
+	for (i = 0; i < NSLAVES; i++) {
+		iobase = sc->sc_iobase + i * COM_NPORTS;
+		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
+		    bus_space_map(iot, iobase, COM_NPORTS, 0,
+			&sc->sc_slaveioh[i]))
 			panic("rtfpsattach: couldn't map slave %d", i);
+	}
 	if (bus_space_map(iot, sc->sc_irqport, 1, 0, &sc->sc_irqioh))
 		panic("rtfpsattach: couldn't map irq port at 0x%x\n",
 		    sc->sc_irqport);

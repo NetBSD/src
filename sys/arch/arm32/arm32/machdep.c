@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.4.1 1997/08/23 07:07:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.4.2 1997/09/16 03:48:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -2570,11 +2570,10 @@ setleds(led)
  */
 
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	register struct trapframe *tf;
 
@@ -2598,8 +2597,6 @@ setregs(p, pack, stack, retval)
 	tf->tf_spsr = PSR_USR32_MODE;
 
 	p->p_addr->u_pcb.pcb_flags = 0;
-
-	retval[1] = 0;
 }
 
 

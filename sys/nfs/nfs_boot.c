@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.33.4.3 1997/09/04 01:06:15 thorpej Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.33.4.4 1997/09/16 03:51:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -56,7 +56,6 @@
 
 #include <net/if.h>
 #include <net/route.h>
-
 #include <net/if_ether.h>
 #include <net/if_types.h>
 
@@ -64,12 +63,11 @@
 #include <netinet/if_inarp.h>
 
 #include <nfs/rpcv2.h>
-#include <nfs/nfsproto.h>
-#include <nfs/nfs.h>
-#include <nfs/nfsdiskless.h>
 #include <nfs/krpc.h>
 #include <nfs/xdr_subs.h>
-#include <nfs/nfs_var.h>
+
+#include <nfs/nfsproto.h>
+#include <nfs/nfsdiskless.h>
 
 #include "arp.h"
 #if NARP == 0
@@ -79,13 +77,6 @@ int nfs_boot_init(nd, procp)
 	struct proc *procp;
 {
 	printf("nfs_boot: NARP == 0\n");
-	return (ENXIO);
-}
-
-int
-nfs_boot_getfh(ndm)
-	struct nfs_dlmount *ndm;
-{
 	return (ENXIO);
 }
 
@@ -102,13 +93,14 @@ nfs_boot_getfh(ndm)
  * This is defined as BSS so machine-dependent code
  * may provide a data definition to override this.
  */
-int nfs_boot_rfc951; /* 0: BOOTP. 1: RARP/SUNRPC */
+int nfs_boot_rfc951; /* 1: BOOTP. 0: RARP/SUNRPC */
 
 /* mountd RPC */
 static int md_mount __P((struct sockaddr_in *mdsin, char *path,
 	struct nfs_args *argp));
 
 static void nfs_boot_defrt __P((struct in_addr *));
+static  int nfs_boot_getfh __P((struct nfs_dlmount *ndm));
 
 
 /*
@@ -155,7 +147,25 @@ nfs_boot_init(nd, procp)
 	if (nd->nd_gwip.s_addr)
 		nfs_boot_defrt(&nd->nd_gwip);
 
-	return (0);
+	/*
+	 * Now fetch the NFS file handles as appropriate.
+	 */
+	error = nfs_boot_getfh(&nd->nd_root);
+	if (error)
+		return (error);
+
+#if 0	/* swap now comes in from swapctl(2) */
+	if (nd->nd_swap.ndm_saddr.sa_len) {
+		error = nfs_boot_getfh(&nd->nd_swap);
+		if (error) {
+			printf("nfs_boot: warning: getfh(swap), error=%d\n", error);
+			/* Just ignore the error */
+			error = 0;
+		}
+	}
+#endif
+
+	return (error);
 }
 
 /*
@@ -197,7 +207,7 @@ nfs_boot_defrt(gw_ip)
  * Separate function because we used to call it twice.
  * (once for root and once for swap)
  */
-int
+static int
 nfs_boot_getfh(ndm)
 	struct nfs_dlmount *ndm;	/* output */
 {

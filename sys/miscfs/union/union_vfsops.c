@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.16 1997/05/05 07:19:05 mycroft Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.16.4.1 1997/09/16 03:51:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -93,7 +93,7 @@ union_mount(mp, path, data, ndp, p)
 	size_t size;
 
 #ifdef UNION_DIAGNOSTIC
-	printf("union_mount(mp = %x)\n", mp);
+	printf("union_mount(mp = %p)\n", mp);
 #endif
 
 	/*
@@ -295,7 +295,7 @@ union_unmount(mp, mntflags, p)
 	extern int doforce;
 
 #ifdef UNION_DIAGNOSTIC
-	printf("union_unmount(mp = %x)\n", mp);
+	printf("union_unmount(mp = %p)\n", mp);
 #endif
 
 	if (mntflags & MNT_FORCE) {
@@ -436,7 +436,7 @@ union_statfs(mp, sbp, p)
 	int lbsize;
 
 #ifdef UNION_DIAGNOSTIC
-	printf("union_statfs(mp = %x, lvp = %x, uvp = %x)\n", mp,
+	printf("union_statfs(mp = %p, lvp = %p, uvp = %p)\n", mp,
 	    um->um_lowervp, um->um_uppervp);
 #endif
 

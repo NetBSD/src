@@ -1,8 +1,10 @@
-#	$NetBSD: files.pci,v 1.25.2.1 1997/09/01 20:29:39 thorpej Exp $
+#	$NetBSD: files.pci,v 1.25.2.2 1997/09/16 03:50:34 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
+
+defopt	PCIVERBOSE
 
 device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
@@ -17,7 +19,7 @@ file	dev/pci/ahc_pci.c		ahc_pci
 file	dev/ic/smc93cx6.c		ahc_pci
 
 # BusLogic BT-9xx PCI family
-# device declaration in sys/dev/isa/files.isa
+# device declaration in sys/conf/files
 attach	bha at pci with bha_pci
 file	dev/pci/bha_pci.c		bha_pci
 

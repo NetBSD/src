@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.9 1997/06/26 01:06:46 thorpej Exp $	*/
+/*	$NetBSD: db_access.c,v 1.9.4.1 1997/09/16 03:49:52 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -57,13 +57,13 @@ db_get_value(addr, size, is_signed)
 {
 	char data[sizeof(db_expr_t)];
 	register db_expr_t value;
-	register int i;
+	register size_t i;
 
 	db_read_bytes(addr, size, data);
 
 	value = 0;
 #if BYTE_ORDER == LITTLE_ENDIAN
-	for (i = size - 1; i >= 0; i--)
+	for (i = size; i-- > 0;)
 #else /* BYTE_ORDER == BIG_ENDIAN */
 	for (i = 0; i < size; i++)
 #endif /* BYTE_ORDER */
@@ -81,12 +81,12 @@ db_put_value(addr, size, value)
 	register db_expr_t value;
 {
 	char data[sizeof(db_expr_t)];
-	register int i;
+	register size_t i;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	for (i = 0; i < size; i++)
 #else /* BYTE_ORDER == BIG_ENDIAN */
-	for (i = size - 1; i >= 0; i--)
+	for (i = size; i-- > 0;)
 #endif /* BYTE_ORDER */
 	{
 		data[i] = value & 0xFF;

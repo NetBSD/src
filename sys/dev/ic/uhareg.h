@@ -1,4 +1,4 @@
-/*	$NetBSD: uhareg.h,v 1.3.4.1 1997/08/27 23:31:02 thorpej Exp $	*/
+/*	$NetBSD: uhareg.h,v 1.3.4.2 1997/09/16 03:50:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -257,7 +257,7 @@ struct uha_mscp {
 	/*-----------------end of hardware supported fields----------------*/
 	TAILQ_ENTRY(uha_mscp) chain;
 	struct uha_mscp *nexthash;
-	long hashkey;
+	u_long hashkey;
 	struct scsipi_xfer *xs;	/* the scsipi_xfer for this cmd */
 	int flags;
 #define MSCP_ALLOC	0x01

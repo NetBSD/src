@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.241.2.3 1997/09/06 18:08:13 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.241.2.4 1997/09/16 03:48:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1282,11 +1282,10 @@ dumpsys()
  * Clear registers on exec
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	register struct pcb *pcb = &p->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -1310,15 +1309,18 @@ setregs(p, pack, stack, retval)
 	__asm("movl %w0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_edi = 0;
+	tf->tf_esi = 0;
 	tf->tf_ebp = 0;
 	tf->tf_ebx = (int)PS_STRINGS;
+	tf->tf_edx = 0;
+	tf->tf_ecx = 0;
+	tf->tf_eax = 0;
 	tf->tf_eip = pack->ep_entry;
 	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_eflags = PSL_USERSET;
 	tf->tf_esp = stack;
 	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
-
-	retval[1] = 0;
 }
 
 /*

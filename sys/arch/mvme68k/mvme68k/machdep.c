@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 1997/06/12 15:46:37 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21.4.1 1997/09/16 03:49:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,12 +117,6 @@ int	bufpages = 0;
 int	msgbufmapped;		/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
-
-#ifdef	FPCOPROC
-int fputype = FPU_68882;
-#else
-int fputype = FPU_NONE;
-#endif
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -506,21 +500,33 @@ allocsys(v)
 
 /*
  * Set registers on exec.
- * XXX Should clear registers except sp, pc,
- * but would break init; should be fixed soon.
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	register struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
+	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[SP] = stack;
+	frame->f_regs[D0] = 0;
+	frame->f_regs[D1] = 0;
+	frame->f_regs[D2] = 0;
+	frame->f_regs[D3] = 0;
+	frame->f_regs[D4] = 0;
+	frame->f_regs[D5] = 0;
+	frame->f_regs[D6] = 0;
+	frame->f_regs[D7] = 0;
+	frame->f_regs[A0] = 0;
+	frame->f_regs[A1] = 0;
 	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A3] = 0;
+	frame->f_regs[A4] = 0;
+	frame->f_regs[A5] = 0;
+	frame->f_regs[A6] = 0;
+	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;

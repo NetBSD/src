@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.73.2.2 1997/08/27 23:33:41 thorpej Exp $	*/
+/*	$NetBSD: st.c,v 1.73.2.3 1997/09/16 03:50:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -52,6 +52,8 @@
  * work out some better way of guessing what a good timeout is going
  * to be depending on whether we expect to retension or not.
  */
+
+#include "opt_scsiverbose.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

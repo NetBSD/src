@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.20.4.2 1997/08/27 23:31:22 thorpej Exp $	*/
+/*	$NetBSD: boca.c,v 1.20.4.3 1997/09/16 03:50:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -147,15 +147,18 @@ bocaattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
 	bus_space_tag_t iot = ia->ia_iot;
-	int i;
+	int i, iobase;
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_iobase;
 
-	for (i = 0; i < NSLAVES; i++)
-		if (bus_space_map(iot, sc->sc_iobase + i * COM_NPORTS,
-		    COM_NPORTS, 0, &sc->sc_slaveioh[i]))
+	for (i = 0; i < NSLAVES; i++) {
+		iobase = sc->sc_iobase + i * COM_NPORTS;
+		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
+		    bus_space_map(iot, iobase, COM_NPORTS, 0,
+			&sc->sc_slaveioh[i]))
 			panic("bocaattach: couldn't map slave %d", i);
+	}
 
 	printf("\n");
 

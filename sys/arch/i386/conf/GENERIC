@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.86.2.4 1997/09/01 20:10:00 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.86.2.5 1997/09/16 03:48:30 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -212,6 +212,7 @@ de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 ep*	at pci? dev ? function ?		# 3C59x/3C90x ethernet cards
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 fxp*	at pci? dev ? function ?		# Intel EEPRO 10/100B
+fe0	at isa? port 0x2a0 irq ?		# AT1700
 
 pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver

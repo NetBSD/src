@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 1997/07/15 06:49:56 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50.2.1 1997/09/16 03:48:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -376,26 +376,37 @@ again:
 
 /*
  * Set registers on exec.
- * XXX Should clear registers except sp, pc,
- * but would break init; should be fixed soon.
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	register struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 	
+	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
-	frame->f_regs[SP] = stack;
+	frame->f_regs[D0] = 0;
+	frame->f_regs[D1] = 0;
+	frame->f_regs[D2] = 0;
+	frame->f_regs[D3] = 0;
+	frame->f_regs[D4] = 0;
+	frame->f_regs[D5] = 0;
+	frame->f_regs[D6] = 0;
+	frame->f_regs[D7] = 0;
+	frame->f_regs[A0] = 0;
+	frame->f_regs[A1] = 0;
 	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A3] = 0;
+	frame->f_regs[A4] = 0;
+	frame->f_regs[A5] = 0;
+	frame->f_regs[A6] = 0;
+	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-
-	if(fputype)
+	if (fputype)
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
 }
 

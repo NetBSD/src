@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1997/06/12 15:46:50 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18.4.1 1997/09/16 03:49:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -383,29 +383,40 @@ cpu_startup()
 
 /*
  * Set registers on exec.
- * XXX Should clear registers except sp, pc,
- * but would break init; should be fixed soon.
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	register struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	struct trapframe *tf = (struct trapframe *)p->p_md.md_regs;
 
+	tf->tf_sr = PSL_USERSET;
 	tf->tf_pc = pack->ep_entry & ~1;
-	tf->tf_regs[SP] = stack;
+	tf->tf_regs[D0] = 0;
+	tf->tf_regs[D1] = 0;
+	tf->tf_regs[D2] = 0;
+	tf->tf_regs[D3] = 0;
+	tf->tf_regs[D4] = 0;
+	tf->tf_regs[D5] = 0;
+	tf->tf_regs[D6] = 0;
+	tf->tf_regs[D7] = 0;
+	tf->tf_regs[A0] = 0;
+	tf->tf_regs[A1] = 0;
 	tf->tf_regs[A2] = (int)PS_STRINGS;
+	tf->tf_regs[A3] = 0;
+	tf->tf_regs[A4] = 0;
+	tf->tf_regs[A5] = 0;
+	tf->tf_regs[A6] = 0;
+	tf->tf_regs[SP] = stack;
 
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
-	if (fputype) {
+	if (fputype)
 		m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
-	}
+
 	p->p_md.md_flags = 0;
-	/* XXX - HPUX sigcode hack would go here... */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_meter.c,v 1.19 1997/02/21 20:27:21 thorpej Exp $	*/
+/*	$NetBSD: vm_meter.c,v 1.19.4.1 1997/09/16 03:51:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -226,4 +226,5 @@ vmtotal(totalp)
 		}
 	}
 	totalp->t_free = cnt.v_free_count;
+	simple_unlock(&vm_object_list_lock);
 }

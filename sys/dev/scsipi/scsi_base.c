@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.47.2.3 1997/09/06 19:05:37 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.47.2.4 1997/09/16 03:50:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -32,6 +32,8 @@
 /*
  * Originally written by Julian Elischer (julian@dialix.oz.au)
  */
+
+#include "opt_scsiverbose.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

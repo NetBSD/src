@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.85.2.4 1997/08/29 17:47:51 thorpej Exp $
+#	$NetBSD: files.i386,v 1.85.2.5 1997/09/16 03:48:32 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -188,6 +188,7 @@ file	arch/i386/i386/svr4_machdep.c		compat_svr4
 
 # iBCS-2 binary compatibility (COMPAT_IBCS2)
 include "../../../compat/ibcs2/files.ibcs2"
+file	arch/i386/i386/ibcs2_machdep.c		compat_ibcs2
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "../../../compat/linux/files.linux"

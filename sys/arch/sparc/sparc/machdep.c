@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 1997/07/29 10:04:44 fair Exp $ */
+/*	$NetBSD: machdep.c,v 1.83.2.1 1997/09/16 03:49:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -374,11 +374,10 @@ allocsys(v)
  */
 /* ARGSUSED */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	register struct trapframe *tf = p->p_md.md_tf;
 	register struct fpstate *fs;
@@ -388,9 +387,11 @@ setregs(p, pack, stack, retval)
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/*
-	 * The syscall will ``return'' to npc or %g7 or %g2; set them all.
-	 * Set the rest of the registers to 0 except for %o6 (stack pointer,
-	 * built in exec()) and psr (retain CWP and PSR_S bits).
+	 * Set the registers to 0 except for:
+	 *	%o6: stack pointer, built in exec())
+	 *	%psr: (retain CWP and PSR_S bits)
+	 *	%g1: address of PS_STRINGS (used by crt0)
+	 *	%pc,%npc: entry point of program
 	 */
 	psr = tf->tf_psr & (PSR_S | PSR_CWP);
 	if ((fs = p->p_md.md_fpstate) != NULL) {
@@ -408,12 +409,11 @@ setregs(p, pack, stack, retval)
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_psr = psr;
-	tf->tf_npc = pack->ep_entry & ~3;
 	tf->tf_global[1] = (int)PS_STRINGS;
-	tf->tf_global[2] = tf->tf_global[7] = tf->tf_npc;
+	tf->tf_pc = pack->ep_entry & ~3;
+	tf->tf_npc = tf->tf_pc + 4;
 	stack -= sizeof(struct rwindow);
 	tf->tf_out[6] = stack;
-	retval[1] = 0;
 }
 
 #ifdef DEBUG

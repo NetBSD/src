@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.75.2.1 1997/08/23 07:08:42 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.75.2.2 1997/09/16 03:48:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -777,7 +777,7 @@ ENTRY_NOPROFILE(fpfault)
 	fsave	a0@		| save state
 #if defined(M68040) || defined(M68060)
 	/* always null state frame on 68040, 68060 */
-	cmpl	#CPU_68040,_C_LABEL(cputype)
+	cmpl	#FPU_68040,_C_LABEL(fputype)
 	jle	Lfptnull
 #endif
 	tstb	a0@		| null state frame?
@@ -1838,16 +1838,14 @@ L_delay:
 
 /*
  * Save and restore 68881 state.
- * Pretty awful looking since our assembler does not
- * recognize FP mnemonics.
  */
 ENTRY(m68881_save)
 	movl	sp@(4),a0		| save area pointer
 	fsave	a0@			| save state
 	tstb	a0@			| null state frame?
 	jeq	Lm68881sdone		| yes, all done
-	fmovem fp0-fp7,a0@(216)		| save FP general registers
-	fmovem fpcr/fpsr/fpi,a0@(312)	| save FP control registers
+	fmovem	fp0-fp7,a0@(216)	| save FP general registers
+	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers
 Lm68881sdone:
 	rts
 

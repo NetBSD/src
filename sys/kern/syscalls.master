@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.52 1997/06/12 22:05:37 mrg Exp $
+	$NetBSD: syscalls.master,v 1.52.4.1 1997/09/16 03:51:06 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -460,6 +460,9 @@
 237	UNIMPL		timer_settime
 238	UNIMPL		timer_gettime
 239	UNIMPL		timer_getoverrun
+;
+; Syscalls 240-269 are reserved for other IEEE Std1003.1b syscalls
+;
 240	STD		{ int sys_nanosleep(const struct timespec *rqtp, \
 			    struct timespec *rmtp); }
 241	UNIMPL
@@ -494,3 +497,7 @@
 270	STD		{ int sys_posix_rename(const char *from, \
 			    const char *to); }
 271	STD		{ int sys_swapctl(int cmd, void *arg, int misc); }
+; 272 will be getdents() shortly
+272	UNIMPL
+273	STD		{ int sys_minherit(caddr_t addr, size_t len, \
+			    int inherit); }

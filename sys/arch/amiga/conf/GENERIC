@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.81.2.3 1997/09/01 20:06:34 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.81.2.4 1997/09/16 03:48:11 thorpej Exp $
 
 #
 # GENERIC AMIGA
@@ -31,7 +31,6 @@ options 	M68040		# support for 040
 options 	FPSP		# MC68040 floating point support
 options 	M68030		# support for 030
 options 	M68020		# support for 020/851
-options 	FPCOPROC	# Support for MC6888[12] (Required)
 options 	FPU_EMULATE	# FPU emulation
 
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 1997/06/12 15:46:39 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66.4.1 1997/09/16 03:49:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -865,11 +865,10 @@ err:
  * Clear registers on exec
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	struct reg *r = p->p_md.md_regs;
 	struct pcb *pcbp = &p->p_addr->u_pcb;
@@ -886,8 +885,6 @@ setregs(p, pack, stack, retval)
 
 	pcbp->pcb_fsr = FPC_UEN;
 	bzero(pcbp->pcb_freg, sizeof(pcbp->pcb_freg));
-
-	retval[1] = 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.46.2.1 1997/08/23 07:12:36 thorpej Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.46.2.2 1997/09/16 03:49:49 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -913,8 +913,8 @@ svr4_sys_ulimit(p, v, retval)
 			if (error)
 				return error;
 
-			srl.which = RLIMIT_FSIZE;
-			srl.rlp = url;
+			SCARG(&srl, which) = RLIMIT_FSIZE;
+			SCARG(&srl, rlp) = url;
 
 			error = sys_setrlimit(p, &srl, retval);
 			if (error)

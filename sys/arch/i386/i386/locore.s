@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.167 1997/07/17 05:15:01 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.167.2.1 1997/09/16 03:48:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -70,8 +70,6 @@
 #define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
 #define _ALIGN_TEXT	ALIGN_TEXT
 #include <machine/asm.h>
-
-#include <i386/isa/debug.h>
 
 
 /* XXX temporary kluge; these should not be here */

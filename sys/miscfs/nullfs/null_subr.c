@@ -1,4 +1,4 @@
-/*	$NetBSD: null_subr.c,v 1.8 1996/10/13 02:21:33 christos Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.8.10.1 1997/09/16 03:51:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -302,7 +302,6 @@ null_node_create(mp, lowervp, newvpp, takelock)
 	return (0);
 }
 
-#ifdef notyet
 #ifdef NULLFS_DIAGNOSTIC
 struct vnode *
 null_checkvp(vp, fil, lno)
@@ -318,38 +317,43 @@ null_checkvp(vp, fil, lno)
 	 */
 	if (vp->v_op != null_vnodeop_p) {
 		printf ("null_checkvp: on non-null-node\n");
+#ifdef notyet
 		while (null_checkvp_barrier) /*WAIT*/ ;
+#endif
 		panic("null_checkvp");
 	};
 #endif
 	if (a->null_lowervp == NULL) {
 		/* Should never happen */
 		int i; u_long *p;
-		printf("vp = %x, ZERO ptr\n", vp);
+		printf("vp = %p, ZERO ptr\n", vp);
 		for (p = (u_long *) a, i = 0; i < 8; i++)
-			printf(" %x", p[i]);
+			printf(" %lx", p[i]);
 		printf("\n");
 		/* wait for debugger */
+#ifdef notyet
 		while (null_checkvp_barrier) /*WAIT*/ ;
+#endif
 		panic("null_checkvp");
 	}
 	if (a->null_lowervp->v_usecount < 1) {
 		int i; u_long *p;
-		printf("vp = %x, unref'ed lowervp\n", vp);
+		printf("vp = %p, unref'ed lowervp\n", vp);
 		for (p = (u_long *) a, i = 0; i < 8; i++)
-			printf(" %x", p[i]);
+			printf(" %lx", p[i]);
 		printf("\n");
 		/* wait for debugger */
+#ifdef notyet
 		while (null_checkvp_barrier) /*WAIT*/ ;
+#endif
 		panic ("null with unref'ed lowervp");
 	};
 #ifdef notyet
-	printf("null %x/%d -> %x/%d [%s, %d]\n",
+	printf("null %p/%d -> %p/%d [%s, %d]\n",
 	        NULLTOV(a), NULLTOV(a)->v_usecount,
 		a->null_lowervp, a->null_lowervp->v_usecount,
 		fil, lno);
 #endif
 	return a->null_lowervp;
 }
-#endif
 #endif

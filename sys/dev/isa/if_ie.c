@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.59 1997/04/24 08:05:22 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.59.4.1 1997/09/16 03:50:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -614,8 +614,12 @@ ee16_probe(sc, ia)
 		board_id |= (( id_var1 >> 4)  << id_var2);
 		}
 
-	if (board_id != IEE16_ID)
+	if (board_id != IEE16_ID) {
+#ifdef IEDEBUG
+		printf("BART ID mismatch\n");
+#endif
 		return 0;		
+	}
 
 	/* need sc->sc_iobase for ee16_read_eeprom */
 	sc->sc_iobase = ia->ia_iobase;
@@ -643,40 +647,90 @@ ee16_probe(sc, ia)
 	 */ 
 
 	if ((ia->ia_maddr == MADDRUNK) || (ia->ia_msize == 0)) {
-		i = (ee16_read_eeprom(sc, 6) & 0x00ff ) >> 3;
-		switch(i) {
-			case 0x03:
-				ia->ia_maddr = 0xCC000;
-				break;
-			case 0x06:
-				ia->ia_maddr = 0xD0000;
-				break;
-			case 0x0c:
-				ia->ia_maddr = 0xD4000;
-				break;
-			case 0x18:
-				ia->ia_maddr = 0xD8000;
-				break;
-			default:
-				return 0 ;
-				break; /* NOTREACHED */
+		i = ee16_read_eeprom(sc, 6) & 0xff;
+
+#ifdef IEDEBUG
+		printf("memory configuration %02x\n", i);
+#endif
+
+		switch (i & -i) {
+		case 0x01:
+			ia->ia_maddr = 0xc0000;
+			i = ((i >> 0) | (i << 8)) & 0xff;
+			break;
+		case 0x02:
+			ia->ia_maddr = 0xc4000;
+			i = ((i >> 1) | (i << 7)) & 0xff;
+			break;
+		case 0x04:
+			ia->ia_maddr = 0xc8000;
+			i = ((i >> 2) | (i << 6)) & 0xff;
+			break;
+		case 0x08:
+			ia->ia_maddr = 0xcc000;
+			i = ((i >> 3) | (i << 5)) & 0xff;
+			break;
+		case 0x10:
+			ia->ia_maddr = 0xd0000;
+			i = ((i >> 4) | (i << 4)) & 0xff;
+			break;
+		case 0x20:
+			ia->ia_maddr = 0xd4000;
+			i = ((i >> 5) | (i << 3)) & 0xff;
+			break;
+		case 0x40:
+			ia->ia_maddr = 0xd8000;
+			i = ((i >> 6) | (i << 2)) & 0xff;
+			break;
+		case 0x80:
+			ia->ia_maddr = 0xdc000;
+			i = ((i >> 7) | (i << 1)) & 0xff;
+			break;
 		}
-		ia->ia_msize = 0x8000; 
+
+		switch (i) {
+		case 0x01:
+			ia->ia_msize = 16 * 1024;
+			break;
+		case 0x03:
+			ia->ia_msize = 32 * 1024;
+			break;
+		case 0x07:
+			ia->ia_msize = 48 * 1024;
+			break;
+		case 0x0f:
+			ia->ia_msize = 64 * 1024;
+			break;
+		default:
+#ifdef IEDEBUG
+			printf("invalid memory size %02x\n", i);
+#endif
+			return 0;
+		}
 	}
 
 	/* need to set these after checking for MADDRUNK */
 	sc->sc_maddr = ISA_HOLE_VADDR(ia->ia_maddr);
 	sc->sc_msize = ia->ia_msize; 
 
+#ifdef IEDEBUG
+	printf("found %d byte memory region at %x/%p\n", ia->ia_msize,
+	    ia->ia_maddr, sc->sc_maddr);
+#endif
+
 	/* need to put the 586 in RESET, and leave it */
-	outb( PORT + IEE16_ECTRL, IEE16_RESET_586);  
+	outb(PORT + IEE16_ECTRL, IEE16_RESET_586);  
 
 	/* read the eeprom and checksum it, should == IEE16_ID */
-	for(i=0 ; i< 0x40 ; i++)
+	for(i = 0; i < 0x40; i++)
 		checksum += ee16_read_eeprom(sc, i);
 
-	if (checksum != IEE16_ID)
+	if (checksum != IEE16_ID) {
+#ifdef IEDEBUG
+		printf("checksum mismatch\n");
+#endif
 		return 0;	
+	}
 
 	/*
 	 * Size and test the memory on the board.  The size of the memory
@@ -686,28 +740,9 @@ ee16_probe(sc, ia)
 	 * If the size does not match the passed in memory allocation size
 	 * issue a warning, but continue with the minimum of the two sizes.
 	 */
-
-	switch (ia->ia_msize) {
-		case 65536:
-		case 32768: /* XXX Only support 32k and 64k right now */
-			break;
-		case 16384:
-		case 49512:
-		default:
-			printf("ieprobe mapped memory size out of range\n");
-			return 0;
-			break; /* NOTREACHED */
-	}
-
-	if ((kvtop(sc->sc_maddr) < 0xC0000) ||
-	    (kvtop(sc->sc_maddr) + sc->sc_msize > 0xF0000)) {
-		printf("ieprobe mapped memory address out of range\n");
-		return 0;
-	}
-
-	pg = (kvtop(sc->sc_maddr) & 0x3C000) >> 14;
+	pg = (ia->ia_maddr & 0x3C000) >> 14;
 	adjust = IEE16_MCTRL_FMCS16 | (pg & 0x3) << 2;
-	decode = ((1 << (sc->sc_msize / 16384)) - 1) << pg;
+	decode = ((1 << (ia->ia_msize / 16384)) - 1) << pg;
 	edecode = ((~decode >> 4) & 0xF0) | (decode >> 8);
 
 	/* ZZZ This should be checked against eeprom location 6, low byte */
@@ -738,9 +773,9 @@ ee16_probe(sc, ia)
 	irq = irq_translate[irq];
 	if (ia->ia_irq != IRQUNK) {
 		if (irq != ia->ia_irq) {
-#ifdef DIAGNOSTIC
+#ifdef IEDEBUG
 			printf("\nie%d: fatal: board IRQ %d does not match kernel\n", sc->sc_dev.dv_unit, irq);
-#endif /* DIAGNOSTIC */
+#endif
 			return 0; 	/* _must_ match or probe fails */
 		}
 	} else
@@ -774,8 +809,12 @@ ee16_probe(sc, ia)
 
 	outb(PORT + IEE16_ECTRL, 0);
 	delay(100);
-	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize))
+	if (!check_ie_present(sc, sc->sc_maddr, sc->sc_msize)) {
+#ifdef IEDEBUG
+		printf("check_ie_present failed\n");
+#endif
 		return 0;
+	}
 
 	ia->ia_iosize = 16;	/* the number of I/O ports */
 	return 1;		/* found */

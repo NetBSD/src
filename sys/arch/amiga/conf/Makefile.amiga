@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.60 1997/07/23 10:19:42 is Exp $
+#	$NetBSD: Makefile.amiga,v 1.60.2.1 1997/09/16 03:48:12 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -35,7 +35,7 @@ AMIGA=	$S/arch/amiga
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dmc68020 -Damiga
+		-Dmc68020 -Damiga -DFPCOPROC
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 .if empty(IDENT:M-DM68060)
 CMACHFLAGS=	-m68020
@@ -139,8 +139,7 @@ cleankernel:
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${AMIGA}/amiga/Locore.c ${CFILES} \
-	    ioconf.c param.c | \
+	    ${CFILES} ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 
 tags:
