@@ -1,7 +1,7 @@
 ./usr/lib/libamu.so.1.0
 ./usr/lib/libbfd.so.3.0
 ./usr/lib/libbz2.so.0.0
-./usr/lib/libc.so.12.37
+./usr/lib/libc.so.12.38
 ./usr/lib/libcrypt.so.0.0
 ./usr/lib/libcurses.so.2.2
 ./usr/lib/libedit.so.2.2
