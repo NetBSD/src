@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.14 1996/05/28 23:24:23 pk Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.15 2000/03/30 09:45:40 augustss Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -79,12 +79,12 @@ raw_input(m0, va_alist)
 	va_dcl
 #endif
 {
-	register struct rawcb *rp;
-	register struct mbuf *m = m0;
-	register int sockets = 0;
+	struct rawcb *rp;
+	struct mbuf *m = m0;
+	int sockets = 0;
 	struct socket *last;
 	va_list ap;
-	register struct sockproto *proto;
+	struct sockproto *proto;
 	struct sockaddr *src, *dst;
 	
 	va_start(ap, m0);
@@ -157,7 +157,7 @@ raw_ctlinput(cmd, arg, d)
 
 void
 raw_setsockaddr(rp, nam)
-	register struct rawcb *rp;
+	struct rawcb *rp;
 	struct mbuf *nam;
 {
 
@@ -167,7 +167,7 @@ raw_setsockaddr(rp, nam)
 
 void
 raw_setpeeraddr(rp, nam)
-	register struct rawcb *rp;
+	struct rawcb *rp;
 	struct mbuf *nam;
 {
 
@@ -183,9 +183,9 @@ raw_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct rawcb *rp;
+	struct rawcb *rp;
 	int s;
-	register int error = 0;
+	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);

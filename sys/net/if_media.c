@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
+/*	$NetBSD: if_media.c,v 1.11 2000/03/30 09:45:36 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ ifmedia_add(ifm, mword, data, aux)
 	int data;
 	void *aux;
 {
-	register struct ifmedia_entry *entry;
+	struct ifmedia_entry *entry;
 
 #ifdef IFMEDIA_DEBUG
 	if (ifmedia_debug) {
