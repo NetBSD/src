@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.92 2001/09/10 20:13:17 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.93 2001/10/04 18:58:04 eeh Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -14,8 +14,8 @@ MAN=	access.9 altq.9 arp.9 audio.9 autoconf.9 bitmask_snprintf.9 \
 	memcmp.9 memcpy.9 memmove.9 memset.9 \
 	microtime.9 panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
 	pcmcia.9 pfil.9 physio.9 \
-	pmap.9 pool.9 powerhook_establish.9 ppsratecheck.9 psignal.9 \
-	ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
+	pmap.9 pool.9 powerhook_establish.9 ppsratecheck.9 properties.9 \
+	psignal.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
 	scsipi.9 setrunqueue.9 shutdownhook_establish.9 sleep.9 softintr.9 \
 	spl.9 store.9 time.9 todr.9 uiomove.9 ucom.9 vme.9 \
 	usbdi.9 uvm.9 wdc.9
@@ -225,6 +225,14 @@ MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
 	rt_timer.9 rt_timer_queue_destroy.9 rt_timer.9 rt_timer_add.9 \
 	rt_timer.9 rt_timer_remove_all.9
 MLINKS+=pfil.9 pfil_hook_get.9 pfil.9 pfil_add_hook.9 pfil.9 pfil_remove_hook.9
+MLINKS+=properties.9 propdb_create.9 \
+	properties.9 propdb_destroy.9 \
+	properties.9 prop_copy.9 \
+	properties.9 prop_delete.9 \
+	properties.9 prop_get.9 \
+	properties.9 prop_list.9 \
+	properties.9 prop_objs.9 \
+	properties.9 prop_set.9
 MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=setrunqueue.9 remrunqueue.9
