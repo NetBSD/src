@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xdm,v 1.7 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: Makefile.xdm,v 1.8 2005/01/05 20:19:52 manu Exp $
 
 XDMVARDIR=	/var/db/xdm
 XDMDIR=		${X11ETCDIR}/xdm
@@ -14,5 +14,10 @@ CPPFLAGS+=	-DBINDIR=\"${X11BINDIR}\" -DXDMDIR=\"${XDMDIR}\" \
 		-DHAS_GETIFADDRS -UIPv6 -DHAS_MKSTEMP \
 		-I${X11SRCDIR.xc}/programs/xdm \
 		${X11FLAGS.VERSION}
+
+.if (${USE_PAM} == YES)
+CPPFLAGS+=	-DUSE_PAM
+LDADD+=		-lpam
+.endif
 
 .PATH:		${X11SRCDIR.xc}/programs/xdm
