@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.6 2001/11/20 12:56:30 lukem Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.7 2001/11/23 22:35:47 jdolecek Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -190,7 +190,7 @@ le*	at mca? slot ?			# SKNET Personal/MC2+
 
 # MCA ESDI controllers & disks
 edc*	at mca? slot ?			# IBM ESDI Disk Controllers
-ed*	at edc?
+ed*	at edc? drive ?
 
 # MCA SCSI controllers
 aha*	at mca? slot ?			# Adaptec AHA-1640
