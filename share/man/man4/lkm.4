@@ -1,4 +1,4 @@
-.\" $NetBSD: lkm.4,v 1.13 2000/12/11 13:58:02 jdolecek Exp $
+.\" $NetBSD: lkm.4,v 1.14 2001/03/29 08:47:47 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -99,12 +99,12 @@ usually created by instructing
 .Xr modload 8
 to run an appropriate program when the driver has been successfully loaded.
 .Ss Emulation modules
-Emulation modules allow to load an emulation support for foreight
+Emulation modules allow to load an emulation support for foreign
 operating systems.
 .Ss Execution Interpreters
 Execution interpreters allow to load support for execution of new type
 of binaries, not normally supported by kernel. This also allows to load
-support for executing foreight system binaries.
+support for executing foreign system binaries.
 Execution Interpreters normally depend on
 Emulation modules, in that appropriate Emulation module has to
 be loaded before Execution Interpreter can be.
