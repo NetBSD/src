@@ -1,4 +1,4 @@
-/*	$NetBSD: exit.c,v 1.8 1998/10/18 14:36:30 kleink Exp $	*/
+/*	$NetBSD: exit.c,v 1.9 2003/03/01 04:19:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)exit.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: exit.c,v 1.8 1998/10/18 14:36:30 kleink Exp $");
+__RCSID("$NetBSD: exit.c,v 1.9 2003/03/01 04:19:38 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,14 +56,8 @@ void
 exit(status)
 	int status;
 {
-	struct atexit *p;
-	int n;
-	
-	mutex_lock(&__atexit_mutex);
-	for (p = __atexit; p; p = p->next)
-		for (n = p->ind; --n >= 0;)
-			(*p->fns[n])();
-	mutex_unlock(&__atexit_mutex);
+
+	__cxa_finalize(NULL);
 	if (__cleanup)
 		(*__cleanup)();
 	_exit(status);
