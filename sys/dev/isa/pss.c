@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.52 1999/02/17 23:05:29 mycroft Exp $	*/
+/*	$NetBSD: pss.c,v 1.53 1999/02/18 17:27:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -232,8 +232,8 @@ struct audio_hw_if pss_audio_if = {
 	NULL,
 	NULL,
 	NULL,
-	ad1848_halt_out,
-	ad1848_halt_in,
+	ad1848_isa_halt_output,
+	ad1848_isa_halt_input,
 	pss_speaker_ctl,
 	pss_getdev,
 	NULL,
