@@ -163,6 +163,8 @@ $ ENEEDAUTH
 81 Need authenticator
 $ EIDRM
 82 Identifier removed
+$ ENOMSG
+83 No message of desired type
 $set 2
 $ SIGHUP
 1 Hangup
