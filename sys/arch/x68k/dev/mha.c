@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.11 1998/12/05 19:43:47 mjacob Exp $	*/
+/*	$NetBSD: mha.c,v 1.12 1999/02/07 15:18:58 minoura Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -323,6 +323,11 @@ mhaattach(parent, self, aux)
 	sc->sc_id = IODEVbase->io_sram[0x70] & 0x7; /* XXX */
 
 	mha_init(sc);	/* Init chip and driver */
+
+	printf("\n%s: Resetting SCSI bus... ", self->dv_xname);
+	mha_scsi_reset(sc);	/* XXX: some devices need this. */
+	printf("done\n");
+
 	sc->sc_phase  = BUSFREE_PHASE;
 
 	/*
@@ -380,11 +385,10 @@ mhaattach(parent, self, aux)
 
 	tmpsc = NULL;
 
-	printf("\n");
-
 	config_found(self, &sc->sc_link, scsiprint);
 }
 
+#if 0
 void
 mha_reset(sc)
 	struct mha_softc *sc;
@@ -406,6 +410,7 @@ printf("reset...");
 	sc->sc_id = IODEVbase->io_sram[0x70] & 0x7; /* XXX */
 printf("done.\n");
 }
+#endif
 
 /*
  * Pull the SCSI RST line for 500us.
@@ -416,7 +421,8 @@ mha_scsi_reset(sc)	/* FINISH? */
 {
 
 	CMR = CMD_SCSI_RESET;	/* SCSI RESET */
-	WAIT;
+	while (!(SSR&SS_IREQUEST))
+	  delay(10);
 }
 
 /*
@@ -472,9 +478,6 @@ mha_init(sc)
 	}
 
 	sc->sc_state = SPC_IDLE;
-#if 0
-	mha_reset(sc);
-#endif
 }
 
 void
