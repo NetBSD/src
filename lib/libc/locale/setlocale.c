@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.24 2000/12/21 11:29:47 itojun Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.25 2000/12/21 17:16:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.24 2000/12/21 11:29:47 itojun Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.25 2000/12/21 17:16:20 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -161,7 +161,8 @@ __setlocale(category, locale)
 		    sizeof(new_categories[category]));
 		if (!category) {
 			for (i = 1; i < _LC_LAST; ++i) {
-				if (!(env = getenv(categories[i])) || !*env)
+				env = getenv(categories[i]);
+				if (!env || !*env || strchr(env, '/'))
 					env = new_categories[0];
 				(void)strlcpy(new_categories[i], env,
 				    sizeof(new_categories[i]));
