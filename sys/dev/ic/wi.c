@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.148 2003/12/07 05:44:49 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.149 2004/01/31 10:40:19 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.148 2003/12/07 05:44:49 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.149 2004/01/31 10:40:19 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -781,6 +781,10 @@ wi_stop(struct ifnet *ifp, int disable)
 	for (i = 0; i < WI_NTXRSS; i++) {
 		ni = sc->sc_rssd[i].rd_desc.id_node;
 		sc->sc_rssd[i].rd_desc.id_node = NULL;
+		if (ni != NULL && (ifp->if_flags & IFF_DEBUG) != 0)
+			printf("%s: cleaning outstanding rssadapt "
+			    "descriptor for %s\n",
+			    sc->sc_dev.dv_xname, ether_sprintf(ni->ni_macaddr));
 		if (ni != NULL && ni != ic->ic_bss)
 			ieee80211_free_node(ic, ni);
 	}
