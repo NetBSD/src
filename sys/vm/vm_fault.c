@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_fault.c,v 1.18 1996/05/20 17:40:02 mrg Exp $	*/
+/*	$NetBSD: vm_fault.c,v 1.19 1997/01/03 18:03:22 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -190,6 +190,10 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 	vm_object_lock(first_object);
 
 	first_object->ref_count++;
+#ifdef DIAGNOSTIC
+	if (first_object->paging_in_progress == 0xdead)
+		panic("vm_fault: first_object deallocated");
+#endif
 	first_object->paging_in_progress++;
 
 	/*
@@ -424,6 +428,10 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 				object->paging_in_progress--;
 			vm_object_unlock(object);
 			object = next_object;
+#ifdef DIAGNOSTIC
+			if (object->paging_in_progress == 0xdead)
+				panic("vm_fault: object deallocated (1)");
+#endif
 			object->paging_in_progress++;
 		}
 	}
@@ -523,6 +531,10 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 			 */
 			object->paging_in_progress--;
 			vm_object_collapse(object);
+#ifdef DIAGNOSTIC
+			if (object->paging_in_progress == 0xdead)
+				panic("vm_fault: object deallocated (2)");
+#endif
 			object->paging_in_progress++;
 		}
 		else {
