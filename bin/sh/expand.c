@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.39 1998/03/29 04:41:44 mrg Exp $	*/
+/*	$NetBSD: expand.c,v 1.40 1998/07/26 19:44:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.39 1998/03/29 04:41:44 mrg Exp $");
+__RCSID("$NetBSD: expand.c,v 1.40 1998/07/26 19:44:12 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -255,7 +255,7 @@ exptilde(p, flag)
 {
 	char c, *startp = p;
 	struct passwd *pw;
-	char *home;
+	const char *home;
 	int quotes = flag & (EXP_FULL | EXP_CASE);
 
 	while ((c = *p) != '\0') {

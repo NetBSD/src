@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.14 1997/10/08 01:03:00 enami Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.15 1998/07/26 19:48:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.14 1997/10/08 01:03:00 enami Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.15 1998/07/26 19:48:10 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: mail.local.c,v 1.14 1997/10/08 01:03:00 enami Exp $");
 int	deliver __P((int, char *, int));
 void	err __P((int, const char *, ...));
 void	notifybiff __P((char *));
-int	store __P((char *));
+int	store __P((const char *));
 void	usage __P((void));
 int	main __P((int, char **));
 
@@ -81,7 +81,7 @@ main(argc, argv)
 	struct passwd *pw;
 	int ch, fd, eval, lockfile = 0;
 	uid_t uid;
-	char *from;
+	const char *from;
 
 	/* use a reasonable umask */
 	(void) umask(0077);
@@ -130,7 +130,7 @@ main(argc, argv)
 
 int
 store(from)
-	char *from;
+	const char *from;
 {
 	FILE *fp = NULL;	/* XXX gcc */
 	time_t tval;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.14 1998/07/06 06:48:56 mrg Exp $	*/
+/*	$NetBSD: rshd.c,v 1.15 1998/07/26 19:51:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.14 1998/07/06 06:48:56 mrg Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.15 1998/07/26 19:51:21 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,8 @@ doit(fromp)
 	int cc, nfd, pv[2], pid, s = -1;	/* XXX gcc */
 	int one = 1;
 	char *hostname, *errorstr, *errorhost = NULL;	/* XXX gcc */
-	char *cp, sig, buf[BUFSIZ];
+	const char *cp;
+	char sig, buf[BUFSIZ];
 	char cmdbuf[NCARGS+1], locuser[16], remuser[16];
 	char remotehost[2 * MAXHOSTNAMELEN + 1];
 	char hostnamebuf[2 * MAXHOSTNAMELEN + 1];
