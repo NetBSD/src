@@ -1,4 +1,4 @@
-/*	$NetBSD: map3270.c,v 1.4 1997/01/09 20:21:57 tls Exp $	*/
+/*	$NetBSD: map3270.c,v 1.5 1998/02/04 21:32:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$NetBSD: map3270.c,v 1.4 1997/01/09 20:21:57 tls Exp $";
+static char rcsid[] = "$NetBSD: map3270.c,v 1.5 1998/02/04 21:32:23 thorpej Exp $";
 #endif /* not lint */
 
 /*	This program reads a description file, somewhat like /etc/termcap,
@@ -60,11 +60,7 @@ static char rcsid[] = "$NetBSD: map3270.c,v 1.4 1997/01/09 20:21:57 tls Exp $";
 
 #include <stdio.h>
 #include <ctype.h>
-#if	defined(unix)
-#include <strings.h>
-#else	/* defined(unix) */
 #include <string.h>
-#endif	/* defined(unix) */
 
 #define	IsPrint(c)	((isprint(c) && !isspace(c)) || ((c) == ' '))
 
