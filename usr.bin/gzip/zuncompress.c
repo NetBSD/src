@@ -1,4 +1,4 @@
-/*	$NetBSD: zuncompress.c,v 1.1 2004/02/18 08:19:48 mrg Exp $ */
+/*	$NetBSD: zuncompress.c,v 1.2 2004/02/18 18:29:07 he Exp $ */
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -37,7 +37,7 @@
 
 /* This file is #included by gzip.c */
 
-static ssize_t	zread(void *, char *, int);
+static int	zread(void *, char *, int);
 
 #define	tab_prefixof(i)	(zs->zs_codetab[i])
 #define	tab_suffixof(i)	((char_type *)(zs->zs_htab))[i]
@@ -178,7 +178,7 @@ zopen(const char *fname)
  * compressed file.  The tables used herein are shared with those of the
  * compress() routine.  See the definitions above.
  */
-static ssize_t
+static int
 zread(void *cookie, char *rbp, int num)
 {
 	u_int count;
