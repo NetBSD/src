@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 1997/07/17 23:29:29 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.30 1997/07/19 00:01:43 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,8 +56,6 @@
 #endif
 #include <amiga/dev/rtc.h>
 #include <amiga/dev/zbusvar.h>
-
-#include <dev/clock_subr.h>
 
 #if defined(PROF) && defined(PROFTIMER)
 #include <sys/PROF.h>
@@ -645,15 +643,6 @@ profclock(pc, ps)
 #endif
 #endif
 
-void *clockaddr;
-
-time_t a3gettod __P((void));
-time_t a2gettod __P((void));
-int a3settod __P((time_t));
-int a2settod __P((time_t));
-
-int rtcinit __P((void));
-
 /*
  * Initialize the time of day register, based on the time base which is, e.g.
  * from a filesystem.
@@ -664,7 +653,7 @@ inittodr(base)
 {
 	time_t timbuf = base;	/* assume no battery clock exists */
   
-	if (gettod == NULL && rtcinit() == 0)
+	if (gettod == NULL)
 		printf("WARNING: no battery clock\n");
 	else
 		timbuf = gettod() + rtc_offset * 60;
@@ -683,230 +672,4 @@ resettodr()
 {
 	if (settod && settod(time.tv_sec - rtc_offset * 60) == 0)
 		printf("Cannot set battery backed clock\n");
-}
-
-int
-rtcinit()
-{
-	clockaddr = (void *)ztwomap(0xdc0000);
-
-	if (is_a3000() || is_a4000()) {
-		if (a3gettod() == 0)
-			return(0);
-		gettod = a3gettod;
-		settod = a3settod;
-	} else {
-		if (a2gettod() == 0)
-			return(0);
-		gettod = a2gettod;
-		settod = a2settod;
-	}
-	return(1);
-}
-
-time_t
-a3gettod()
-{
-	struct rtclock3000 *rt;
-	struct clock_ymdhms dt;
-	time_t secs;
-
-	rt = clockaddr;
-
-	/* hold clock */
-	rt->control1 = A3CONTROL1_HOLD_CLOCK;
-
-	/* Copy the info.  Careful about the order! */
-	dt.dt_sec   = rt->second1 * 10 + rt->second2;
-	dt.dt_min   = rt->minute1 * 10 + rt->minute2;
-	dt.dt_hour  = rt->hour1   * 10 + rt->hour2;
-	dt.dt_wday  = rt->weekday;
-	dt.dt_day   = rt->day1    * 10 + rt->day2;
-	dt.dt_mon   = rt->month1  * 10 + rt->month2;
-	dt.dt_year  = rt->year1   * 10 + rt->year2;
-
-	dt.dt_year += CLOCK_BASE_YEAR;
-
-	/* let it run again.. */
-	rt->control1 = A3CONTROL1_FREE_CLOCK;
-
-	if ((dt.dt_hour > 23) ||
-	    (dt.dt_wday > 6) || 
-	    (dt.dt_day  > 31) || 
-	    (dt.dt_mon  > 12) ||
-	    (dt.dt_year < STARTOFTIME) || (dt.dt_year > 2036))
-		return (0);
-
-	secs = clock_ymdhms_to_secs(&dt);
-	return (secs);
-}
-
-int
-a3settod(secs)
-	time_t secs;
-{
-	struct rtclock3000 *rt;
-	struct clock_ymdhms dt;
-
-	rt = clockaddr;
-	/*
-	 * there seem to be problems with the bitfield addressing
-	 * currently used..
-	 */
-
-	if (! rt)
-		return (0);
-
-	clock_secs_to_ymdhms(secs, &dt);
-	dt.dt_year -= CLOCK_BASE_YEAR;
-
-	rt->control1 = A3CONTROL1_HOLD_CLOCK;
-	rt->second1 = dt.dt_sec / 10;
-	rt->second2 = dt.dt_sec % 10;
-	rt->minute1 = dt.dt_min / 10;
-	rt->minute2 = dt.dt_min % 10;
-	rt->hour1   = dt.dt_hour / 10;
-	rt->hour2   = dt.dt_hour % 10;
-	rt->weekday = dt.dt_wday;
-	rt->day1    = dt.dt_day / 10;
-	rt->day2    = dt.dt_day % 10;
-	rt->month1  = dt.dt_mon / 10;
-	rt->month2  = dt.dt_mon % 10;
-	rt->year1   = dt.dt_year / 10;
-	rt->year2   = dt.dt_year % 10;
-	rt->control1 = A3CONTROL1_FREE_CLOCK;
-
-	return (1);
-}
-
-time_t
-a2gettod()
-{
-	struct rtclock2000 *rt;
-	struct clock_ymdhms dt;
-	time_t secs;
-	int i;
-
-	rt = clockaddr;
-
-	/*
-	 * hold clock
-	 */
-	rt->control1 |= A2CONTROL1_HOLD;
-	i = 0x1000;
-	while (rt->control1 & A2CONTROL1_BUSY && i--)
-		;
-	if (rt->control1 & A2CONTROL1_BUSY)
-		return (0);	/* Give up and say it's not there */
-
-	/* Copy the info.  Careful about the order! */
-	dt.dt_sec   = rt->second1 * 10 + rt->second2;
-	dt.dt_min   = rt->minute1 * 10 + rt->minute2;
-	dt.dt_hour  = (rt->hour1 & 3) * 10 + rt->hour2;
-	dt.dt_day   = rt->day1    * 10 + rt->day2;
-	dt.dt_mon   = rt->month1  * 10 + rt->month2;
-	dt.dt_year  = rt->year1   * 10 + rt->year2;
-	dt.dt_wday  = rt->weekday;
-
-	/*
-	 * The oki clock chip has a register to put the clock into
-	 * 12/24h mode.
-	 *
-	 *  clockmode   |    A2HOUR1_PM
-	 *  24h   12h   |  am = 0, pm = 1
-	 * ---------------------------------
-	 *   0    12    |       0
-	 *   1     1    |       0
-	 *  ..    ..    |       0
-	 *  11    11    |       0
-	 *  12    12    |       1
-	 *  13     1    |       1
-	 *  ..    ..    |       1
-	 *  23    11    |       1
-	 *
-	 */
-
-	if ((rt->control3 & A2CONTROL3_24HMODE) == 0) {
-		if ((rt->hour1 & A2HOUR1_PM) == 0 && dt.dt_hour == 12)
-			dt.dt_hour = 0;
-		else if ((rt->hour1 & A2HOUR1_PM) && dt.dt_hour != 12)
-			dt.dt_hour += 12;
-	}
-
-	/* 
-	 * release the clock 
-	 */
-	rt->control1 &= ~A2CONTROL1_HOLD;
-
-	dt.dt_year += CLOCK_BASE_YEAR;
-
-	if ((dt.dt_hour > 23) ||
-	    (dt.dt_day  > 31) || 
-	    (dt.dt_mon  > 12) ||
-	    (dt.dt_year < STARTOFTIME) || (dt.dt_year > 2036))
-		return (0);
-  
-	secs = clock_ymdhms_to_secs(&dt);
-	return (secs);
-}
-
-int
-a2settod(secs)
-	time_t secs;
-{
-	struct rtclock2000 *rt;
-	struct clock_ymdhms dt;
-	int ampm, i;
-
-	rt = clockaddr;
-	/* 
-	 * there seem to be problems with the bitfield addressing
-	 * currently used..
-	 */
-	if (! rt)
-		return (0);
-
-	clock_secs_to_ymdhms(secs, &dt);
-	dt.dt_year -= CLOCK_BASE_YEAR;
-
-	/*
-	 * hold clock
-	 */
-	rt->control1 |= A2CONTROL1_HOLD;
-	i = 0x1000;
-	while (rt->control1 & A2CONTROL1_BUSY && i--)
-		;
-	if (rt->control1 & A2CONTROL1_BUSY)
-		return (0);	/* Give up and say it's not there */
-
-	ampm = 0;
-	if ((rt->control3 & A2CONTROL3_24HMODE) == 0) {
-		if (dt.dt_hour >= 12) {
-			ampm = A2HOUR1_PM;
-			if (dt.dt_hour != 12)
-				dt.dt_hour -= 12;
-		} else if (dt.dt_hour == 0) {
-			dt.dt_hour = 12;
-		}
-	}
-	rt->hour1   = (dt.dt_hour / 10) | ampm;
-	rt->hour2   = dt.dt_hour % 10;
-	rt->second1 = dt.dt_sec / 10;
-	rt->second2 = dt.dt_sec % 10;
-	rt->minute1 = dt.dt_min / 10;
-	rt->minute2 = dt.dt_min % 10;
-	rt->day1    = dt.dt_day / 10;
-	rt->day2    = dt.dt_day % 10;
-	rt->month1  = dt.dt_mon / 10;
-	rt->month2  = dt.dt_mon % 10;
-	rt->year1   = dt.dt_year / 10;
-	rt->year2   = dt.dt_year % 10;
-	rt->weekday = dt.dt_wday;
-
-	/* 
-	 * release the clock 
-	 */
-	rt->control2 &= ~A2CONTROL1_HOLD;
-
-	return (1);
 }
