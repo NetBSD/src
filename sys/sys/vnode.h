@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.7 1993/08/07 08:12:30 cgd Exp $
+ *	$Id: vnode.h,v 1.8 1993/08/08 12:10:05 mycroft Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -132,7 +132,8 @@ struct vattr {
 	struct timeval	va_ctime;	/* time file changed */
 	u_long		va_gen;		/* generation number of file */
 	u_long		va_flags;	/* flags defined for file */
-	dev_t		va_rdev;	/* device the special file represents */
+	/* XXX should be a dev_t */
+	u_long		va_rdev;	/* device the special file represents */
 	u_quad		va_qbytes;	/* bytes of disk space held by file */
 };
 #if BYTE_ORDER == LITTLE_ENDIAN
