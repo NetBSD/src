@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.65 1999/10/01 21:59:05 mycroft Exp $	*/
+/*	$NetBSD: vnode.h,v 1.65.4.1 1999/10/19 12:50:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@ enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 enum vtagtype	{
 	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_LFS, VT_LOFS, VT_FDESC,
 	VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS, VT_AFS, VT_ISOFS,
-	VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA, VT_FILECORE, VT_NTFS
+	VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA, VT_FILECORE, VT_NTFS, VT_VFS
 };
 
 /*
@@ -98,6 +98,7 @@ struct vnode {
 	struct	buflists v_cleanblkhd;		/* clean blocklist head */
 	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
 	long	v_numoutput;			/* num of writes in progress */
+	LIST_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
 	enum	vtype v_type;			/* vnode type */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
@@ -235,10 +236,15 @@ extern int		vttoif_tab[];
 #define FSYNC_WAIT	0x0001		/* fsync: wait for completition */
 #define FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
 #define FSYNC_RECLAIM	0x0004		/* fsync: hint: vnode is being reclaimed */
+#define FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
 
 #define	HOLDRELE(vp)	holdrele(vp)
 #define	VHOLD(vp)	vhold(vp)
 #define	VREF(vp)	vref(vp)
+TAILQ_HEAD(freelst, vnode);
+extern struct freelst vnode_hold_list;	/* free vnodes referencing buffers */
+extern struct freelst vnode_free_list;	/* vnode free list */
+extern struct simplelock vnode_free_list_slock;
 
 #ifdef DIAGNOSTIC
 #define	ilstatic
@@ -265,6 +271,13 @@ holdrele(vp)
 {
 	simple_lock(&vp->v_interlock);
 	vp->v_holdcnt--;
+	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
+	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
+		simple_lock(&vnode_free_list_slock);
+		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
+		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+		simple_unlock(&vnode_free_list_slock);
+	}
 	simple_unlock(&vp->v_interlock);
 }
 
@@ -276,6 +289,13 @@ vhold(vp)
 	struct vnode *vp;
 {
 	simple_lock(&vp->v_interlock);
+	if ((vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb) &&
+	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
+		simple_lock(&vnode_free_list_slock);
+		TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
+		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
+		simple_unlock(&vnode_free_list_slock);
+	}
 	vp->v_holdcnt++;
 	simple_unlock(&vp->v_interlock);
 }
@@ -300,6 +320,8 @@ vref(vp)
  */
 extern	struct vnode *rootvnode;	/* root (i.e. "/") vnode */
 extern	int desiredvnodes;		/* number of vnodes desired */
+extern	time_t syncdelay;		/* time to delay syncing vnodes */
+extern	int rushjob;		/* # of slots filesys_syncer should run ASAP */
 extern	struct vattr va_null;		/* predefined null vattr structure */
 
 /*
@@ -496,6 +518,7 @@ int	vn_readdir __P((struct file *fp, char *buf, int segflg, u_int count,
 	    int *done, struct proc *p, off_t **cookies, int *ncookies));
 int	vn_poll __P((struct file *fp, int events, struct proc *p));
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
+void	vn_syncer_add_to_worklist __P((struct vnode *vp, int delay));
 int	vn_write __P((struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags));
 int	vn_writechk __P((struct vnode *vp));

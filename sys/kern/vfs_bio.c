@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.58 1998/11/09 01:18:34 mycroft Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.58.12.1 1999/10/19 12:50:04 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -61,6 +61,8 @@
 
 #include <vm/vm.h>
 
+#include <miscfs/specfs/specdev.h>
+
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
 #define	CLR(t, f)	(t) &= ~(f)
@@ -73,6 +75,7 @@
 	(&bufhashtbl[((long)(dvp) / sizeof(*(dvp)) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
+struct bio_ops bioops;	/* I/O operation notification */
 
 /*
  * Insq/Remq for the buffer hash lists.
@@ -149,6 +152,7 @@ bufinit()
 		bp->b_rcred = NOCRED;
 		bp->b_wcred = NOCRED;
 		bp->b_vnbufs.le_next = NOLIST;
+		LIST_INIT(&bp->b_dep);
 		bp->b_data = buffers + i * MAXBSIZE;
 		if (i < residual)
 			bp->b_bufsize = (base + 1) * CLBYTES;
@@ -300,6 +304,8 @@ bwrite(bp)
 {
 	int rv, sync, wasdelayed, s;
 	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	struct vnode *vp;
+	struct mount *mp;
 
 	/*
 	 * Remember buffer type, to switch on it later.  If the write was
@@ -313,6 +319,24 @@ bwrite(bp)
 	    ISSET(bp->b_vp->v_mount->mnt_flag, MNT_ASYNC)) {
 		bdwrite(bp);
 		return (0);
+	}
+
+	/*
+	 * Collect statistics on synchronous and asynchronous writes.
+	 * Writes to block devices are charged to their associated
+	 * filesystem (if any).
+	 */
+	if ((vp = bp->b_vp) != NULL) {
+		if (vp->v_type == VBLK)
+			mp = vp->v_specmountpoint;
+		else
+			mp = vp->v_mount;
+		if (mp != NULL) {
+			if (sync)
+				mp->mnt_stat.f_syncwrites++;
+			else
+				mp->mnt_stat.f_asyncwrites++;
+		}
 	}
 
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
@@ -420,6 +444,25 @@ bawrite(bp)
 }
 
 /*
+ * Same as first half of bdwrite, mark buffer dirty, but do not release it.
+ */
+void
+bdirty(bp)
+	struct buf *bp;
+{
+	struct proc *p = (curproc != NULL ? curproc : &proc0);	/* XXX */
+	int s;
+
+	if (!ISSET(bp->b_flags, B_DELWRI)) {
+		SET(bp->b_flags, B_DELWRI);
+		p->p_stats->p_ru.ru_oublock++;
+		s = splbio();
+		reassignbuf(bp, bp->b_vp);
+		splx(s);
+	}
+}
+
+/*
  * Release a buffer on to the free lists.
  * Described in Bach (p. 46).
  */
@@ -476,9 +519,13 @@ brelse(bp)
 		 * If it's invalid or empty, dissociate it from its vnode
 		 * and put on the head of the appropriate queue.
 		 */
-		if (bp->b_vp)
-			brelvp(bp);
+		if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
+			(*bioops.io_deallocate)(bp);
 		CLR(bp->b_flags, B_DONE|B_DELWRI);
+		if (bp->b_vp) {
+			reassignbuf(bp, bp->b_vp);
+			brelvp(bp);
+		}
 		if (bp->b_bufsize <= 0)
 			/* no data */
 			bufq = &bufqueues[BQ_EMPTY];
@@ -775,6 +822,9 @@ start:
 		brelvp(bp);
 	splx(s);
 
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_deallocate)
+		(*bioops.io_deallocate)(bp);
+
 	/* clear out various other fields */
 	bp->b_flags = B_BUSY;
 	bp->b_dev = NODEV;
@@ -809,7 +859,7 @@ biowait(bp)
 	struct buf *bp;
 {
 	int s;
-
+	
 	s = splbio();
 	while (!ISSET(bp->b_flags, B_DONE))
 		tsleep(bp, PRIBIO + 1, "biowait", 0);
@@ -849,17 +899,22 @@ biodone(bp)
 		panic("biodone already");
 	SET(bp->b_flags, B_DONE);		/* note that it's done */
 
+	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_complete)
+		(*bioops.io_complete)(bp);
+
 	if (!ISSET(bp->b_flags, B_READ))	/* wake up reader */
 		vwakeup(bp);
 
 	if (ISSET(bp->b_flags, B_CALL)) {	/* if necessary, call out */
 		CLR(bp->b_flags, B_CALL);	/* but note callout done */
 		(*bp->b_iodone)(bp);
-	} else if (ISSET(bp->b_flags, B_ASYNC))	/* if async, release it */
-		brelse(bp);
-	else {					/* or just wakeup the buffer */
-		CLR(bp->b_flags, B_WANTED);
-		wakeup(bp);
+	} else {
+		if (ISSET(bp->b_flags, B_ASYNC))	/* if async, release */
+			brelse(bp);
+		else {				/* or just wakeup the buffer */
+			CLR(bp->b_flags, B_WANTED);
+			wakeup(bp);
+		}
 	}
 }
 

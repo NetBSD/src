@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.13 1999/07/08 01:06:06 wrstuden Exp $	*/
+/*	$NetBSD: inode.h,v 1.13.4.1 1999/10/19 12:50:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -48,8 +48,12 @@
  * Per-filesystem inode extensions.
  */
 struct ext2fs_inode_ext {
-		ufs_daddr_t ext2fs_last_lblk; /* last logical block allocated */
-		ufs_daddr_t ext2fs_last_blk; /* last block allocated on disk */
+	ufs_daddr_t ext2fs_last_lblk; /* last logical block allocated */
+	ufs_daddr_t ext2fs_last_blk; /* last block allocated on disk */
+};
+
+struct ffs_inode_ext {
+	int ffs_effnlink;	/* i_nlink when I/O completes */
 };
 
 /*
@@ -96,9 +100,11 @@ struct inode {
 	union {
 		/* Other extensions could go here... */
 		struct ext2fs_inode_ext   e2fs;
+		struct ffs_inode_ext ffs;
 	} inode_ext;
 #define i_e2fs_last_lblk inode_ext.e2fs.ext2fs_last_lblk
 #define i_e2fs_last_blk inode_ext.e2fs.ext2fs_last_blk
+#define i_ffs_effnlink inode_ext.ffs.ffs_effnlink
 
 	/*
 	 * The on-disk dinode itself.
@@ -215,6 +221,9 @@ struct indir {
 	else							\
 		FFS_ITIMES(ip, acc, mod, cre) \
 }
+
+/* Determine if soft dependencies are being done */
+#define DOINGSOFTDEP(vp)	((vp)->v_mount->mnt_flag & MNT_SOFTDEP)
 
 /* This overlays the fid structure (see mount.h). */
 struct ufid {

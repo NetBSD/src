@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.63 1999/08/11 02:41:02 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.63.4.1 1999/10/19 12:49:59 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -782,6 +782,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	cbp->cb_buf.b_blkno = cbn + cboff;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_vp = ci->ci_vp;
+	LIST_INIT(&cbp->cb_buf.b_dep);
 	if (cs->sc_ileave == 0)
 		cbc = dbtob((u_int64_t)(ci->ci_size - cbn));
 	else

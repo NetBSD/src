@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.12 1998/08/09 20:15:40 perry Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.12.14.1 1999/10/19 12:50:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -409,7 +409,7 @@ quotaon(p, mp, type, fname)
 again:
 	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nextvp) {
 		nextvp = vp->v_mntvnodes.le_next;
-		if (vp->v_writecount == 0)
+		if (vp->v_type == VNON ||vp->v_writecount == 0)
 			continue;
 		if (vget(vp, LK_EXCLUSIVE))
 			goto again;
@@ -453,6 +453,8 @@ quotaoff(p, mp, type)
 again:
 	for (vp = mp->mnt_vnodelist.lh_first; vp != NULL; vp = nextvp) {
 		nextvp = vp->v_mntvnodes.le_next;
+		if (vp->v_type == VNON)
+			continue;
 		if (vget(vp, LK_EXCLUSIVE))
 			goto again;
 		ip = VTOI(vp);
@@ -636,6 +638,8 @@ again:
 		if (vp->v_mount != mp)
 			goto again;
 		nextvp = vp->v_mntvnodes.le_next;
+		if (vp->v_type == VNON)
+			continue;
 		simple_lock(&vp->v_interlock);
 		simple_unlock(&mntvnode_slock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);

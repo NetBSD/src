@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.18 1999/01/29 01:05:03 tv Exp $	*/
+/*	$NetBSD: queue.h,v 1.18.10.1 1999/10/19 12:50:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -61,7 +61,7 @@
  * linked so that an arbitrary element can be removed without a need to
  * traverse the list. New elements can be added to the list before or
  * after an existing element, at the head of the list, or at the end of
- * the list. A tail queue may only be traversed in the forward direction.
+ * the list. A tail queue may only be traversed in the either direction.
  *
  * A circle queue is headed by a pair of pointers, one to the head of the
  * list and the other to the tail of the list. The elements are doubly
@@ -262,8 +262,12 @@ struct {								\
  * Tail queue access methods.
  */
 #define	TAILQ_FIRST(head)		((head)->tqh_first)
-
 #define	TAILQ_NEXT(elm, field)		((elm)->field.tqe_next)
+
+#define TAILQ_LAST(head, headname) \
+	(*(((struct headname *)((head)->tqh_last))->tqh_last))
+#define TAILQ_PREV(elm, headname, field) \
+	(*(((struct headname *)((elm)->field.tqe_prev))->tqh_last))
 
 /*
  * Circular queue definitions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.29 1999/10/16 23:53:29 wrstuden Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.29.4.1 1999/10/19 12:50:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1364,6 +1364,7 @@ sw_reg_strategy(sdp, bp, bn)
 		nbp->vb_buf.b_vnbufs.le_next = NOLIST;
 		nbp->vb_buf.b_rcred    = sdp->swd_cred;
 		nbp->vb_buf.b_wcred    = sdp->swd_cred;
+		LIST_INIT(&nbp->vb_buf.b_dep);
 
 		/* 
 		 * set b_dirtyoff/end and b_validoff/end.   this is
@@ -1815,6 +1816,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	if (swapdev_vp->v_type == VBLK)
 		bp->b_dev = swapdev_vp->v_rdev;
 	bp->b_bcount = npages << PAGE_SHIFT;
+	LIST_INIT(&bp->b_dep);
 
 	/* 
 	 * for pageouts we must set "dirtyoff" [NFS client code needs it].

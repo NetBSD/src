@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.44 1999/10/16 23:53:27 wrstuden Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.44.4.1 1999/10/19 12:50:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -492,8 +492,13 @@ spec_strategy(v)
 	struct vop_strategy_args /* {
 		struct buf *a_bp;
 	} */ *ap = v;
+	struct buf *bp;
 
-	(*bdevsw[major(ap->a_bp->b_dev)].d_strategy)(ap->a_bp);
+	bp = ap->a_bp;
+	if (!(bp->b_flags & B_READ) &&
+	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
+		(*bioops.io_start)(bp);
+	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.157 1999/09/28 14:47:03 bouyer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.157.4.1 1999/10/19 12:50:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -90,6 +90,9 @@
 #include <sys/syscallargs.h>
 
 #include <ufs/ufs/quota.h>
+
+#include <miscfs/genfs/genfs.h>
+#include <miscfs/syncfs/syncfs.h>
 
 #include <machine/cpu.h>
 
@@ -421,6 +424,10 @@ main()
 	/* Create process 3, the process reaper kernel thread. */
 	if (kthread_create1(start_reaper, NULL, NULL, "reaper"))
 		panic("fork reaper");
+
+	/* Create process 4, the filesystem syncer */
+	if (kthread_create1(sched_sync, NULL, NULL, "ioflush"))
+		panic("fork syncer");
 
 	/* Create any other deferred kernel threads. */
 	kthread_run_deferred_queue();

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.13 1999/06/15 22:25:41 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.13.4.1 1999/10/19 12:50:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,13 +100,21 @@
 int lfs_fragextend __P((struct vnode *, int, int, ufs_daddr_t, struct buf **));
 
 int
-lfs_balloc(vp, offset, iosize, lbn, bpp)
+lfs_balloc(v)
+	void *v;
+{
+	struct vop_balloc_args /* {
+		struct vnode *a_vp;
+		off_t a_startoffset;
+		int a_size;
+		struct ucred *a_cred;
+		int a_flags;
+		struct buf *a_bpp;
+	} */ *ap = v;
 	struct vnode *vp;
 	int offset;
 	u_long iosize;
-	ufs_daddr_t lbn;
-	struct buf **bpp;
-{
+	daddr_t lbn;
 	struct buf *ibp, *bp;
 	struct inode *ip;
 	struct lfs *fs;
@@ -114,9 +122,14 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 	ufs_daddr_t	daddr, lastblock;
 	int bb;		/* number of disk blocks in a block disk blocks */
 	int error, frags, i, nsize, osize, num;
-	
+
+	vp = ap->a_vp;	
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
+	offset = blkoff(fs, ap->a_startoffset);
+	iosize = ap->a_size;
+	lbn = lblkno(fs, ap->a_startoffset);
+	(void)lfs_check(vp, lbn, 0);
 	
 #ifdef DEBUG
 	if(!VOP_ISLOCKED(vp)) {
@@ -137,7 +150,7 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 	 * to rewrite it.
 	 */
 	
-	*bpp = NULL;
+	*ap->a_bpp = NULL;
 	error = ufs_bmaparray(vp, lbn, &daddr, &indirs[0], &num, NULL );
 	if (error)
 		return (error);
@@ -195,7 +208,7 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 		bb = fragstodb(fs, frags);
 		if (lblktosize(fs, lbn) >= ip->i_ffs_size)
 			/* Brand new block or fragment */
-			*bpp = bp = getblk(vp, lbn, nsize, 0, 0);
+			*ap->a_bpp = bp = getblk(vp, lbn, nsize, 0, 0);
 		else {
 			if (nsize <= osize) {
 				/* No need to extend */
@@ -208,7 +221,7 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 				     lfs_fragextend(vp, osize, nsize, lbn, &bp)))
 					return(error);
 			}
-			*bpp = bp;
+			*ap->a_bpp = bp;
 		}
 	} else {
 		/*
@@ -217,7 +230,7 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 		 * block in the file.
 		 */
 		frags = dbtofrags(fs, bb);
-		*bpp = bp = getblk(vp, lbn, blksize(fs, ip, lbn), 0, 0);
+		*ap->a_bpp = bp = getblk(vp, lbn, blksize(fs, ip, lbn), 0, 0);
 	}
 	
 	/* 
