@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOT,v 1.6 1996/02/19 09:05:47 leo Exp $
+#	$NetBSD: BOOT,v 1.7 1996/03/14 21:41:21 leo Exp $
 #
 # BOOT
 #
@@ -77,6 +77,7 @@ options		TT_SCSI			# SCSI-support for TT
 options		FALCON_SCSI		# SCSI-support for Falcon
 options		TT_VIDEO		# Graphics support for TT
 options		FALCON_VIDEO		# Graphics support for FALCON
+options		RAMDISK_HOOKS		# Boot RAM-disk
 options		DISKLABEL_NBDA		# NetBSD disklabels (required)
 options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
