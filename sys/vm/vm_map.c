@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_map.c	7.3 (Berkeley) 4/21/91
- *	$Id: vm_map.c,v 1.5 1993/06/27 06:38:50 andrew Exp $
+ *	$Id: vm_map.c,v 1.6 1993/07/15 14:25:28 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -139,7 +139,8 @@ vm_size_t	kentry_data_size;
 vm_map_entry_t	kentry_free;
 vm_map_t	kmap_free;
 
-void vm_map_startup()
+void
+vm_map_startup()
 {
 	register int i;
 	register vm_map_entry_t mep;
@@ -296,7 +297,8 @@ vm_map_entry_t vm_map_entry_create(map)
  *
  *	Inverse of vm_map_entry_create.
  */
-void vm_map_entry_dispose(map, entry)
+void
+vm_map_entry_dispose(map, entry)
 	vm_map_t	map;
 	vm_map_entry_t	entry;
 {
@@ -336,7 +338,8 @@ void vm_map_entry_dispose(map, entry)
  *	Creates another valid reference to the given map.
  *
  */
-void vm_map_reference(map)
+void
+vm_map_reference(map)
 	register vm_map_t	map;
 {
 	if (map == NULL)
@@ -354,7 +357,8 @@ void vm_map_reference(map)
  *	destroying it if no references remain.
  *	The map should not be locked.
  */
-void vm_map_deallocate(map)
+void
+vm_map_deallocate(map)
 	register vm_map_t	map;
 {
 	register int		c;
@@ -716,7 +720,8 @@ vm_map_find(map, object, offset, addr, length, find_space)
  *		removing extra sharing maps
  *		[XXX maybe later] merging with a neighbor
  */
-void vm_map_simplify_entry(map, entry)
+void
+vm_map_simplify_entry(map, entry)
 	vm_map_t	map;
 	vm_map_entry_t	entry;
 {
@@ -790,7 +795,8 @@ void vm_map_simplify_entry(map, entry)
  *	This routine is called only when it is known that
  *	the entry must be split.
  */
-void _vm_map_clip_start(map, entry, start)
+void
+_vm_map_clip_start(map, entry, start)
 	register vm_map_t	map;
 	register vm_map_entry_t	entry;
 	register vm_offset_t	start;
@@ -845,7 +851,8 @@ void _vm_map_clip_end();
  *	This routine is called only when it is known that
  *	the entry must be split.
  */
-void _vm_map_clip_end(map, entry, end)
+void
+_vm_map_clip_end(map, entry, end)
 	register vm_map_t	map;
 	register vm_map_entry_t	entry;
 	register vm_offset_t	end;
@@ -1133,11 +1140,6 @@ vm_map_pageable(map, start, end, new_pageable)
 {
 	register vm_map_entry_t	entry;
 	vm_map_entry_t		temp_entry;
-	register vm_offset_t	failed;
-#ifdef vm_fault_wire_can_fail
-	/* vm_fault.c needs to be updated also, if this option is used XXX */
-	int			rv;
-#endif
 
 	vm_map_lock(map);
 
@@ -1290,34 +1292,11 @@ vm_map_pageable(map, start, end, new_pageable)
 		    lock_write_to_read(&map->lock);
 		}
 
-#ifdef vm_fault_wire_can_fail
-		rv = KERN_SUCCESS;
-#endif
 		entry = temp_entry;
 		while (entry != &map->header && entry->start < end) {
-#ifdef vm_fault_wire_can_fail
-		    /*
-		     * If vm_fault_wire fails for any page we need to
-		     * undo what has been done.  We decrement the wiring
-		     * count for those pages which have not yet been
-		     * wired (now) and unwire those that have (later).
-		     *
-		     * XXX this violates the locking protocol on the map,
-		     * needs to be fixed.
-		     */
-		    if (rv != KERN_SUCCESS)
-			entry->wired_count--;
-		    else if (entry->wired_count == 1) {
-			rv = vm_fault_wire(map, entry->start, entry->end);
-			if (rv != KERN_SUCCESS) {
-			    failed = entry->start;
-			    entry->wired_count--;
-			}
+		    if (entry->wired_count == 1) {
+			vm_fault_wire(map, entry->start, entry->end);
 		    }
-#else
-		    if (entry->wired_count == 1)
-		    	vm_fault_wire(map, entry->start, entry->end);
-#endif
 		    entry = entry->next;
 		}
 
@@ -1327,13 +1306,6 @@ vm_map_pageable(map, start, end, new_pageable)
 		else {
 		    lock_clear_recursive(&map->lock);
 		}
-#ifdef vm_fault_wire_can_fail
-		if (rv != KERN_SUCCESS) {
-		    vm_map_unlock(map);
-		    (void) vm_map_pageable(map, start, failed, TRUE);
-		    return(rv);
-		}
-#endif
 	}
 
 	vm_map_unlock(map);
@@ -1349,7 +1321,8 @@ vm_map_pageable(map, start, end, new_pageable)
  *	The map in question should be locked.
  *	[This is the reason for this routine's existence.]
  */
-void vm_map_entry_unwire(map, entry)
+void
+vm_map_entry_unwire(map, entry)
 	vm_map_t		map;
 	register vm_map_entry_t	entry;
 {
@@ -1559,7 +1532,8 @@ boolean_t vm_map_check_protection(map, start, end, protection)
  *	Copies the contents of the source entry to the destination
  *	entry.  The entries *must* be aligned properly.
  */
-void vm_map_copy_entry(src_map, dst_map, src_entry, dst_entry)
+void
+vm_map_copy_entry(src_map, dst_map, src_entry, dst_entry)
 	vm_map_t		src_map, dst_map;
 	register vm_map_entry_t	src_entry, dst_entry;
 {
@@ -2377,7 +2351,8 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
  *	(according to the handle returned by that lookup).
  */
 
-void vm_map_lookup_done(map, entry)
+void
+vm_map_lookup_done(map, entry)
 	register vm_map_t	map;
 	vm_map_entry_t		entry;
 {
@@ -2407,7 +2382,8 @@ void vm_map_lookup_done(map, entry)
  *		at allocation time because the adjacent entry
  *		is often wired down.
  */
-void vm_map_simplify(map, start)
+void
+vm_map_simplify(map, start)
 	vm_map_t	map;
 	vm_offset_t	start;
 {
@@ -2455,7 +2431,8 @@ void vm_map_simplify(map, start)
 /*
  *	vm_map_print:	[ debug ]
  */
-void vm_map_print(map, full)
+void
+vm_map_print(map, full)
 	register vm_map_t	map;
 	boolean_t		full;
 {

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm.h	7.1 (Berkeley) 5/5/91
- *	$Id: vm.h,v 1.4 1993/06/27 06:34:38 andrew Exp $
+ *	$Id: vm.h,v 1.5 1993/07/15 14:25:18 cgd Exp $
  */
 
 #ifndef _VM_VM_H_
@@ -75,7 +75,7 @@ struct	vmspace *vmspace_fork __P((struct vmspace *));
 void	vmspace_free __P((struct vmspace *));
 
 int	vm_fault __P((vm_map_t, vm_offset_t, vm_prot_t, boolean_t));
-int	vm_fault_wire __P((vm_map_t, vm_offset_t, vm_offset_t));
+void	vm_fault_wire __P((vm_map_t, vm_offset_t, vm_offset_t));
 void	vm_fault_unwire __P((vm_map_t, vm_offset_t, vm_offset_t));
 void	vm_fault_copy_entry __P((vm_map_t, vm_map_t, vm_map_entry_t, vm_map_entry_t));
 
