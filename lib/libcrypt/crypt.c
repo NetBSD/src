@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)crypt.c	5.11 (Berkeley) 6/25/91";*/
-static char rcsid[] = "$Id: crypt.c,v 1.2 1993/08/01 18:36:03 mycroft Exp $";
+static char rcsid[] = "$Id: crypt.c,v 1.3 1994/10/19 03:01:18 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
@@ -663,7 +663,7 @@ des_cipher(in, out, salt, num_iter)
 	{		/* decryption */
 		num_iter = -num_iter;
 		kp = &KS[KS_SIZE-1];
-		ks_inc  = -sizeof(*kp);
+		ks_inc  = -(long)sizeof(*kp);
 	}
 
 	while (--num_iter >= 0) {
