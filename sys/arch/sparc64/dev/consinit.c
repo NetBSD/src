@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.6 2000/06/24 04:20:58 eeh Exp $	*/
+/*	$NetBSD: consinit.c,v 1.7 2000/07/10 20:24:23 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -107,9 +107,17 @@ prom_cngetc(dev)
 {
 	unsigned char ch = '\0';
 	int l;
+#ifdef DDB
+	static int nplus = 0;
+#endif
 	
 	while ((l = OF_read(stdin, &ch, 1)) != 1)
 		/* void */;
+#ifdef DDB
+	if (ch == '+') {
+		if (nplus++ > 3) Debugger();
+	} else nplus = 0;
+#endif
 	if (ch == '\r')
 		ch = '\n';
 	return ch;
