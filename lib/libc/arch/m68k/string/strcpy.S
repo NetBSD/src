@@ -1,4 +1,4 @@
-/*	$NetBSD: strcpy.S,v 1.3 1995/11/17 20:21:23 thorpej Exp $	*/
+/*	$NetBSD: strcpy.S,v 1.4 1995/11/28 23:41:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,15 +37,15 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	RCSID("from: @(#)strcpy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strcpy.S,v 1.3 1995/11/17 20:21:23 thorpej Exp $")
+	RCSID("$NetBSD: strcpy.S,v 1.4 1995/11/28 23:41:01 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
-
-#include "DEFS.h"
 
 ENTRY(strcpy)
 	movl	sp@(8),a0		| a0 = fromaddr
