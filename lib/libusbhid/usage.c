@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.11 2001/01/09 15:59:47 augustss Exp $	*/
+/*	$NetBSD: usage.c,v 1.1 2001/12/28 17:45:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "usb.h"
+#include "usbhid.h"
 
 #define _PATH_HIDTABLE "/usr/share/misc/usb_hid_usages"
 
