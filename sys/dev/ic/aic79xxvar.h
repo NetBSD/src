@@ -165,8 +165,9 @@ do {								\
 
 /*
  * The maximum transfer per S/G segment.
+ * Limited by MAXPHYS or a 24bit counter.
  */
-#define AHD_MAXTRANSFER_SIZE	 0x00ffffff	/* limited by 24bit counter */
+#define AHD_MAXTRANSFER_SIZE	 MIN(MAXPHYS,0x00ffffff)
 
 /*
  * The maximum amount of SCB storage in hardware on a controller.
