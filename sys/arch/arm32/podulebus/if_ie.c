@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.3 1996/03/18 21:23:14 mark Exp $ */
+/* $NetBSD: if_ie.c,v 1.4 1996/03/20 18:49:56 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -477,8 +477,7 @@ struct cfattach ie_ca = {
 };
 
 struct cfdriver ie_cd = {
-    NULL, "ie", ieprobe, ieattach, DV_DULL,
-        sizeof(struct ie_softc), NULL, 0
+	NULL, "ie", DV_IFNET
 };
 
 /*
