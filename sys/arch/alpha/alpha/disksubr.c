@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 1997/02/03 19:48:04 cgd Exp $	*/
+/* $NetBSD: disksubr.c,v 1.11 1997/04/07 00:19:13 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 1997/04/01 03:38:50 mycroft Exp $	*/
+/* $NetBSD: cpu.c,v 1.20 1997/04/07 00:19:12 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
