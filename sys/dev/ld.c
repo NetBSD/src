@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.26 2003/06/29 22:29:59 fvdl Exp $	*/
+/*	$NetBSD: ld.c,v 1.27 2004/03/22 17:30:33 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.26 2003/06/29 22:29:59 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.27 2004/03/22 17:30:33 tls Exp $");
 
 #include "rnd.h"
 
@@ -151,7 +151,7 @@ ldattach(struct ld_softc *sc)
 	/* Set the `shutdownhook'. */
 	if (ld_sdh == NULL)
 		ld_sdh = shutdownhook_establish(ldshutdown, NULL);
-	bufq_alloc(&sc->sc_bufq, BUFQ_FCFS);
+	bufq_alloc(&sc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
 }
 
 int
