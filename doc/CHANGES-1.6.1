@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.111 2003/02/14 22:36:51 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.112 2003/02/14 22:40:39 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3682,5 +3682,7 @@ sys/arch/hpcarm/hpcarm/hpc_machdep.c		revert 1.52
 sys/arch/netwinder/netwinder/netwinder_machdep.c revert 1.35
 sys/arch/shark/ofw/ofw.c			revert 1.18
 
-  Revert pull-up of cached memory access to L1 tables, this causes
-  instability on the release branch.
+	Revert pull-up of cached memory access to L1 tables, this
+	causes instability on the release branch.
+	[rearnsha, ticket #1170]
+
