@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.29 2002/03/08 17:15:30 christos Exp $ */
+/* $NetBSD: csh.c,v 1.30 2002/05/25 23:29:16 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.29 2002/03/08 17:15:30 christos Exp $");
+__RCSID("$NetBSD: csh.c,v 1.30 2002/05/25 23:29:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,17 +56,12 @@ __RCSID("$NetBSD: csh.c,v 1.29 2002/03/08 17:15:30 christos Exp $");
 #include <locale.h>
 #include <paths.h>	/* should this be included in pathnames.h instead? */
 #include <pwd.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <vis.h>
-
-#if __STDC__
-# include <stdarg.h>
-#else
-# include <varargs.h>
-#endif
 
 #include "csh.h"
 #include "extern.h"

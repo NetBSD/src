@@ -1,4 +1,4 @@
-/*	$NetBSD: sigact.c,v 1.2 1997/01/12 19:12:15 tls Exp $	*/
+/*	$NetBSD: sigact.c,v 1.3 2002/05/25 23:29:17 wiz Exp $	*/
 
 /* NAME:
  *      sigact.c - fake sigaction(2)
@@ -147,11 +147,7 @@
 
 /*
     #ifndef __P
-    # if defined(__STDC__) || defined(__cplusplus)
-    #   define	__P(p)	p
-    # else
-    #   define	__P(p)	()
-    # endif
+    # define	__P(p)	p
     #endif
 */
 

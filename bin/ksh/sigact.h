@@ -1,4 +1,4 @@
-/*	$NetBSD: sigact.h,v 1.2 1997/01/12 19:12:16 tls Exp $	*/
+/*	$NetBSD: sigact.h,v 1.3 2002/05/25 23:29:17 wiz Exp $	*/
 
 /* NAME:
  *      sigact.h - sigaction et al
@@ -22,7 +22,7 @@
  */
 /*
  * RCSid:
- *      $NetBSD: sigact.h,v 1.2 1997/01/12 19:12:16 tls Exp $
+ *      $NetBSD: sigact.h,v 1.3 2002/05/25 23:29:17 wiz Exp $
  */
 /* Changes to sigact.h for pdksh, Michael Rendell <michael@cs.mun.ca>:
  *	- changed SIG_HDLR to RETSIGTYPE for use with GNU autoconf
@@ -46,13 +46,7 @@
 
 #if 0 /* ARGS(), volatile and const are already set up in config*.h -mhr */
 #undef ARGS
-#if defined(__STDC__) || defined(__cplusplus)
-# define ARGS(p) p
-#else
-# define ARGS(p) ()
-# define volatile			/* don't optimize please */
-# define const				/* read only */
-#endif
+#define ARGS(p) p
 #endif
 
 #ifndef IS_KSH

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.28 2001/09/24 13:22:25 wiz Exp $	*/
+/*	$NetBSD: rcp.c,v 1.29 2002/05/25 23:29:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.28 2001/09/24 13:22:25 wiz Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.29 2002/05/25 23:29:17 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -892,28 +892,15 @@ usage()
 	/* NOTREACHED */
 }
 
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef KERBEROS
 void
-#if __STDC__
 oldw(const char *fmt, ...)
-#else
-oldw(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)fprintf(stderr, "rcp: ");
 	(void)vfprintf(stderr, fmt, ap);
 	(void)fprintf(stderr, ", using standard rcp\n");
@@ -922,13 +909,7 @@ oldw(fmt, va_alist)
 #endif
 
 void
-#if __STDC__
 run_err(const char *fmt, ...)
-#else
-run_err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
 {
 	static FILE *fp;
 	va_list ap;
@@ -937,11 +918,7 @@ run_err(fmt, va_alist)
 	if (fp == NULL && !(fp = fdopen(rem, "w")))
 		return;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 
 	(void)fprintf(fp, "%c", 0x01);
 	(void)fprintf(fp, "rcp: ");
@@ -951,11 +928,7 @@ run_err(fmt, va_alist)
 	va_end(ap);
 
 	if (!iamremote) {
-#if __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		vwarnx(fmt, ap);
 		va_end(ap);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: str.c,v 1.11 2001/09/14 14:04:01 wiz Exp $ */
+/* $NetBSD: str.c,v 1.12 2002/05/25 23:29:17 wiz Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)str.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: str.c,v 1.11 2001/09/14 14:04:01 wiz Exp $");
+__RCSID("$NetBSD: str.c,v 1.12 2002/05/25 23:29:17 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,13 +51,8 @@ __RCSID("$NetBSD: str.c,v 1.11 2001/09/14 14:04:01 wiz Exp $");
 
 #include <sys/types.h>
 
+#include <stdarg.h>
 #include <vis.h>
-
-#if __STDC__
-# include <stdarg.h>
-#else
-# include <varargs.h>
-#endif
 
 #include "csh.h"
 #include "extern.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: dol.c,v 1.19 2002/01/30 20:53:33 christos Exp $ */
+/* $NetBSD: dol.c,v 1.20 2002/05/25 23:29:16 wiz Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dol.c,v 1.19 2002/01/30 20:53:33 christos Exp $");
+__RCSID("$NetBSD: dol.c,v 1.20 2002/05/25 23:29:16 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,15 +46,10 @@ __RCSID("$NetBSD: dol.c,v 1.19 2002/01/30 20:53:33 christos Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#if __STDC__
-# include <stdarg.h>
-#else
-# include <varargs.h>
-#endif
 
 #include "csh.h"
 #include "extern.h"
