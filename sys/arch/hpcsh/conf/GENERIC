@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.13 2001/12/14 05:34:48 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.14 2001/12/28 12:21:56 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -153,6 +153,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp		2	# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.70 2001/12/24 11:38:05 minoura Exp $
+# $NetBSD: GENERIC,v 1.71 2001/12/28 12:22:01 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/x68k/conf/std.x68k"
 
-#ident 		"GENERIC-$Revision: 1.70 $"
+#ident 		"GENERIC-$Revision: 1.71 $"
 
 maxusers	8
 
@@ -302,6 +302,9 @@ pseudo-device	sl		1
 
 ## PPP, the successor to SLIP.  See pppd(8).
 pseudo-device	ppp		1
+
+## PPP over Ethernet (RFC 2516)
+pseudo-device	pppoe
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
