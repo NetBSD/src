@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.3 2002/05/22 22:43:18 bjh21 Exp $	*/
+/*	$NetBSD: icside.c,v 1.4 2002/09/14 18:12:16 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -40,6 +40,13 @@
  * information
  */
 
+/*
+ * BUGS:
+ * Cold boot (hard reset or power-on) booting straight to NetBSD:
+ * panic: wdcstart: channel waiting for irq
+ * Booting via desktop avoinds this.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -76,6 +83,9 @@ struct icside_softc {
 	int 			sc_podule_number;	/* Our podule number */
 	struct bus_space 	sc_tag;			/* custom tag */
 	struct podule_attach_args *sc_pa;		/* podule info */
+	bus_space_tag_t		sc_latchiot;	/* EEPROM page latch etc */
+	bus_space_handle_t	sc_latchioh;
+	void			*sc_shutdownhook;
 	struct icside_channel {
 		struct channel_softc	wdc_channel;	/* generic part */
 		void			*ic_ih;		/* interrupt handler */
@@ -90,6 +100,7 @@ struct icside_softc {
 int	icside_probe	__P((struct device *, struct cfdata *, void *));
 void	icside_attach	__P((struct device *, struct device *, void *));
 int	icside_intr	__P((void *));
+void	icside_v6_shutdown(void *);
 
 struct cfattach icside_ca = {
 	sizeof(struct icside_softc), icside_probe, icside_attach
@@ -112,6 +123,7 @@ struct ide_version {
 	int		modspace;	/* Type of podule space */
 	int		channels;	/* Number of channels */
 	const char	*name;		/* name */
+	int		latchreg;	/* EEPROM latch register */
 	int		ideregs[MAX_CHANNELS];	/* IDE registers */
 	int		auxregs[MAX_CHANNELS];	/* AUXSTAT register */
 	int		irqregs[MAX_CHANNELS];	/* IRQ register */
@@ -122,18 +134,18 @@ struct ide_version {
 	/* A3USER - Unsupported */
 /*	{ 1,  0, 0, NULL, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },*/
 	/* ARCIN V6 - Supported */
-	{ 3,  0, 2, "ARCIN V6", 
+	{ 3,  0, 2, "ARCIN V6", V6_ADDRLATCH,
 	  { V6_P_IDE_BASE, V6_S_IDE_BASE },
 	  { V6_P_AUX_BASE, V6_S_AUX_BASE },
 	  { V6_P_IRQ_BASE, V6_S_IRQ_BASE },
 	  { V6_P_IRQSTAT_BASE, V6_S_IRQSTAT_BASE }
 	},
 	/* ARCIN V5 - Supported (ID reg not supported so reads as 15) */
-	{ 15,  1, 1, "ARCIN V5", 
-	  { V5_IDE_BASE, 0 },
-	  { V5_AUX_BASE, 0 },
-	  { V5_IRQ_BASE, 0 },
-	  { V5_IRQSTAT_BASE, 0 }
+	{ 15,  1, 1, "ARCIN V5", -1,
+	  { V5_IDE_BASE, -1 },
+	  { V5_AUX_BASE, -1 },
+	  { V5_IRQ_BASE, -1 },
+	  { V5_IRQSTAT_BASE, -1 }
 	}
 };
 
@@ -211,6 +223,18 @@ icside_attach(parent, self, aux)
 		return;
 	} else
 		printf(": %s\n", ide->name);
+
+	if (ide->latchreg != -1) {
+		sc->sc_latchiot = pa->pa_iot;
+		if (bus_space_map(iot, pa->pa_podule->fast_base +
+			ide->latchreg, 1, 0, &sc->sc_latchioh)) {
+			printf("%s: cannot map latch register\n",
+			    self->dv_xname);
+			return;
+		}
+		sc->sc_shutdownhook =
+		    shutdownhook_establish(icside_v6_shutdown, sc);
+	}
 
 	/*
 	 * Ok we need our own bus tag as the register spacing
@@ -302,6 +326,18 @@ icside_attach(parent, self, aux)
 		/* Enable interrupts */
 		bus_space_write_1(iot, icp->ic_irqioh, 0, 0);
 	}
+}
+
+/*
+ * Shutdown handler -- try to restore the card to a state where
+ * RISC OS will see it.
+ */
+void
+icside_v6_shutdown(void *arg)
+{
+	struct icside_softc *sc = arg;
+
+	bus_space_write_1(sc->sc_latchiot, sc->sc_latchioh, 0, 0);
 }
 
 /*
