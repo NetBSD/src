@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.5 2003/08/07 16:28:19 agc Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.6 2003/10/28 06:55:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -541,6 +541,7 @@ Lsavectx_nofpsave:
 	moveq	#0,%d0			| return 0
 	rts
 
+#if !defined(M68010)
 /*
  * void m68k_make_fpu_idle_frame(void)
  *
@@ -570,3 +571,4 @@ ENTRY(m68k_make_fpu_idle_frame)
 	fnop
 	addql	#4,%sp
 	rts
+#endif
