@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.6 1995/10/02 17:21:42 jpo Exp $	*/
+/*	$NetBSD: tree.c,v 1.7 1995/10/02 17:22:51 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: tree.c,v 1.6 1995/10/02 17:21:42 jpo Exp $";
+static char rcsid[] = "$NetBSD: tree.c,v 1.7 1995/10/02 17:22:51 jpo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -1733,7 +1733,7 @@ ptconv(arg, nt, ot, tp, tn)
 		 * if they differ only in sign and the argument is a constant
 		 * and the msb of the argument is not set, print no warning
 		 */
-		if (isityp(nt) && styp(nt) == styp(ot) &&
+		if (ptn->tn_op == CON && isityp(nt) && styp(nt) == styp(ot) &&
 		    msb(ptn->tn_val->v_quad, ot, -1) == 0) {
 			/* ok */
 		} else {
@@ -3098,7 +3098,11 @@ cast(tn, tp)
 	} else if (nt == PTR && isityp(ot)) {
 		/* ok */
 	} else if (nt == PTR && ot == PTR) {
-		/* ok */
+		if (!tp->t_subt->t_const && tn->tn_type->t_subt->t_const) {
+			if (hflag)
+				/* cast discards 'const' from ... */
+				warning(275);
+		}
 	} else {
 		/* invalid cast expression */
 		error(147);
@@ -3377,13 +3381,43 @@ static void
 nulleff(tn)
 	tnode_t	*tn;
 {
-	if (tn->tn_op == CVT && tn->tn_type->t_tspec == VOID)
-		tn = tn->tn_left;
-	if (!modtab[tn->tn_op].m_sideeff) {
-		if (hflag)
-			/* expression has null effect */
-			warning(129);
+	if (!hflag)
+		return;
+
+	while (!modtab[tn->tn_op].m_sideeff) {
+		if (tn->tn_op == CVT && tn->tn_type->t_tspec == VOID) {
+			tn = tn->tn_left;
+		} else if (tn->tn_op == LOGAND || tn->tn_op == LOGOR) {
+			/*
+			 * && and || have a side effect if the right operand
+			 * has a side effect.
+			 */
+			tn = tn->tn_right;
+		} else if (tn->tn_op == QUEST) {
+			/*
+			 * ? has a side effect if at least one of its right
+			 * operands has a side effect
+			 */
+			tn = tn->tn_right;
+		} else if (tn->tn_op == COLON) {
+			/*
+			 * : has a side effect if at least one of its operands
+			 * has a side effect
+			 */
+			if (modtab[tn->tn_left->tn_op].m_sideeff) {
+				tn = tn->tn_left;
+			} else if (modtab[tn->tn_right->tn_op].m_sideeff) {
+				tn = tn->tn_right;
+			} else {
+				break;
+			}
+		} else {
+			break;
+		}
 	}
+	if (!modtab[tn->tn_op].m_sideeff)
+		/* expression has null effect */
+		warning(129);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.5 1995/10/02 17:21:30 jpo Exp $	*/
+/*	$NetBSD: err.c,v 1.6 1995/10/02 17:22:48 jpo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: err.c,v 1.5 1995/10/02 17:21:30 jpo Exp $";
+static char rcsid[] = "$NetBSD: err.c,v 1.6 1995/10/02 17:22:48 jpo Exp $";
 #endif
 
 /* number of errors found */
@@ -331,7 +331,7 @@ const	char *msgs[] = {
 	"empty translation unit",				      /* 272 */
 	"bit-field type '%s' invalid in ANSI C",		      /* 273 */
 	"ANSI C forbids comparision of %s with %s",		      /* 274 */
-	"",							      /* 275 */
+	"cast discards 'const' from pointer target type",	      /* 275 */
 	"",							      /* 276 */
 	"initialisation of '%s' with '%s'",			      /* 277 */
 	"combination of '%s' and '%s', arg #%d",		      /* 278 */
