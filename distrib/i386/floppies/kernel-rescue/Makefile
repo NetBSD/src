@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2000/10/09 13:43:29 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2002/02/09 20:26:48 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -33,13 +33,14 @@ netbsd.INSTALL_SMALL.gz: .NOTMAIN ${KERNOBJDIR}/INSTALL_SMALL/netbsd ${RAMDISK_S
 	mv netbsd.tmp.gz ${.TARGET}
 
 KERNELS=netbsd.INSTALL_TINY.gz netbsd.INSTALL_SMALL.gz
+KERNELSYMS=	netbsd.INSTALL_TINY.symbols netbsd.INSTALL_SMALL.symbols
 
 all: ${KERNELS}
 
 release:
 
 clean cleandir distclean:
-	rm -f *.core ${KERNELS}
+	rm -f *.core ${KERNELS} ${KERNELSYMS}
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
