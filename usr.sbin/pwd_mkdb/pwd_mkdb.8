@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwd_mkdb.8,v 1.16 2001/07/06 18:07:15 abs Exp $
+.\"	$NetBSD: pwd_mkdb.8,v 1.17 2001/08/18 19:29:31 ad Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,8 +41,9 @@
 .Nd "generate the password databases"
 .Sh SYNOPSIS
 .Nm
-.Op Fl pBL
+.Op Fl BLps
 .Op Fl d Ar directory
+.Op Fl u Ar username
 .Ar file
 .Sh DESCRIPTION
 .Nm
@@ -63,18 +64,28 @@ different from the historic Version 7 style format.
 .Pp
 The options are as follows:
 .Bl -tag -width flag
-.It Fl p
-Create a Version 7 style password file and install it into
-.Dq Pa /etc/passwd .
+.It Fl B
+Store data in big-endian format.
+.It Fl L
+Store data in little-endian format.
 .It Fl d Ar directory
 Change the root directory of the generated files from
 .Dq Pa /
 to
 .Ar directory .
-.It Fl B
-Store data in big-endian format.
-.It Fl L
-Store data in little-endian format.
+.It Fl p
+Create a Version 7 style password file and install it into
+.Dq Pa /etc/passwd .
+.It Fl s
+Update the secure database only.  This is useful when only encrypted
+passwords have changed.  This option negates the effect of any
+.Fl p
+option.
+.It Fl u Ar name
+Don't re-build the database files, but instead modify or add entries for the
+specified user only.  This option may only be used when the line number and
+user name in the password file have not changed, or when adding new user
+from the last line in the password file.
 .El
 .Pp
 The two databases differ in that the secure version contains the user's 
@@ -146,3 +157,14 @@ not be surprised by the changes in functionality.
 .Xr userdel 8 ,
 .Xr usermod 8 ,
 .Xr vipw 8
+.Sh BUGS
+The database format should be changed so that inserting or removing records
+from arbitrary locations in the password file is possible.
+.Pp
+Strange things can happen when the
+.Fl u
+option is used and multiple users share the same UID.
+.Pp
+The database files are copied when the
+.Fl u
+option is used.  Locking would make this unnecessary.
