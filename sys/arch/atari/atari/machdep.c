@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2000/07/02 04:40:35 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 2000/07/02 05:43:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,7 +66,9 @@
 #include <sys/queue.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
 #include <net/netisr.h>
+#undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
