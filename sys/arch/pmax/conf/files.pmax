@@ -1,76 +1,121 @@
-#	$NetBSD: files.pmax,v 1.16 1995/04/30 10:11:00 cgd Exp $
+#	$NetBSD: files.pmax,v 1.17 1995/08/04 01:24:41 jonathan Exp $
+# DECstation-specific configuration info
+
+# maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
+
 maxusers 2 8 64
 
+#
+# Bus-independent devices
+#
 device mainbus at root { }		# no locators
+
 device cpu at mainbus			# not optional
 #file arch/pmax/pmax/cpu.c		cpu
 
-device clock at mainbus
+# Real-time clock (not optional)
+device	clock at asic,tc,mainbus 
 file	arch/pmax/pmax/clock.c		clock
 
-device tc at mainbus { slot = -1, offset = -1 }
 
-#device sfb at tc
-# no sfb code yet
+#
+# Machine-independent SCSI driver.
+#
 
-# Config for  Ted Lemon's changes to console driver:
+include "../../../scsi/files.scsi"
+#major { st = 10 }
+#major { cd = 3 }
+#major { sd = 21 }
+major { tz = 10 }
+major { rz = 21 }
+
+
+#
+# Auto-configuration driver for the turbochannel bus itself.
+#
+device tc at mainbus  { } #{ slot = -1, offset = -1 }
+file	arch/pmax/tc/tc.c		tc		needs-flag
+
+
+#
+# The TurboChannel IOCTL ASIC. Present on IOASIC machines,
+# which is all turbochannel machines ever built except the 3MAX (5000/200).
+#
+device asic at tc { } 	#{ }	# not really optional
+file	arch/pmax/tc/asic.c		asic
+
+# Config for Ted Lemon's changes to console driver:
 # use some bogus device till changes to framebuffer code are committed.
 device	fb at mainbus
 file	arch/pmax/dev/foo.c		fb needs-count
 
-define	scsi {}
-#file	arch/alpha/tc/esp.c		esp needs-count
-#file	arch/alpha/tc/dma.c		esp
 
-major	{ rz = 21 }
+#
+# Old 4.4bsd pmax-specific scsi driver (deprecated).
+#
+define	oldscsi {}
+device oldscsibus at oldscsi	{target = -1, drive = -1}
 
+# asc:  system-slot or turbochannel-option SCSI interface
+device asc at asic,tc: oldscsi,scsi
+file	arch/pmax/dev/asc.c		asc needs-count
 
-device scsibus at scsi	{target = -1, drive = -1}
-
-device asc at mainbus: scsi
-file	arch/pmax/dev/asc.c			asc needs-count
-
-device sii at mainbus: scsi
+# sii:  kn01 SCSI interface 
+device sii at mainbus: oldscsi,scsi
 file	arch/pmax/dev/sii.c		sii needs-count
 
 
-device	tz at scsibus: tape
+device	tz at oldscsibus: tape
 file	arch/pmax/dev/tz.c		tz needs-count
 
-device	rz at scsibus: disk
+device	rz at oldscsibus: disk
 file	arch/pmax/dev/rz.c		rz needs-count
 
-# optional device-drivers
+#
+# Optional device-drivers
+#
 
-
-device dc at mainbus
+# DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
+# For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
+device dc at mainbus,asic
 file	arch/pmax/dev/dc.c			dc needs-count
 
-# what is this anyway?  An xine/3min `desktop' bus?
-device dtop at mainbus
+# The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?
+device dtop at asic
 file	arch/pmax/dev/dtop.c			dtop needs-count
 
-
-device le at tc: ifnet, ether
+# LANCE ethernet driver.
+#  XXX Should use new machine-independent one instead.
+device le at asic,tc,mainbus: ifnet, ether
 file	arch/pmax/dev/if_le.c		le	needs-count
 
-device pm at tc
+# 3100 (pmax) onboard framebuffer
+device pm at mainbus
 file	arch/pmax/dev/pm.c		pm needs-count
+
+########################################################################
+# Turbochannel options.
+########################################################################
 
 device cfb at tc
 file	arch/pmax/dev/cfb.c		cfb needs-count
 
+device sfb at tc
+file	arch/pmax/dev/sfb.c		sfb needs-count
+
 device mfb at tc
 file	arch/pmax/dev/mfb.c		mfb needs-count
 
-device scc at tc #asic?
+#  Zilog 8350/intel 82350(?) SCC.
+device scc at asic
 file	arch/pmax/dev/scc.c		scc	needs-count
 
-# 3100 cfb
-device	xcfb at mainbus
+# MAXINE onboard framebuffer
+device	xcfb at tc
 file	arch/pmax/dev/xcfb.c 		xcfb needs-count
 
+# DECWRL 45Mbit T3 interface
 device	tt at tc
 file	arch/pmax/dev/if_tt.c		tt needs-count
 
@@ -92,13 +137,12 @@ file	arch/pmax/pmax/vm_machdep.c
 file	arch/pmax/pmax/disksubr.c
 file	arch/pmax/stand/libsa/callvec.c
 file	arch/pmax/pmax/elf.c
-# standard for now, till Ted Lemon is done
+file	arch/pmax/pmax/mainbus.c
+
+# fb.c is standard for now, until the redirectable FB console is finished.
 file	arch/pmax/dev/fb.c
-# This is a dummy - don't try to use it:
-
-
 file	arch/pmax/pmax/cons.c
-file	arch/pmax/pmax/cpu_cons.c
+
 file	netinet/in_cksum.c
 file	netns/ns_cksum.c			ns
 
@@ -106,8 +150,12 @@ file	compat/ultrix/ultrix_misc.c		compat_ultrix
 file	compat/ultrix/ultrix_syscalls.c		compat_ultrix
 file	compat/ultrix/ultrix_sysent.c		compat_ultrix
 
-# Ted Lemon's changes to console driver: redirectabe FB console
-device	rcons	at mainbus
-file	arch/pmax/dev/rcons.c			rcons	needs-count
+# Ted Lemon's not-quite-finished-as-yet redirectabe FB console driver
+#device	rcons	at mainbus
+#file	arch/pmax/dev/rcons.c			rcons	needs-count
+#file	arch/pmax/pmax/cpu_cons.c		rcons
+
+# Glue for old-style config
+file	arch/pmax/pmax/conf-glue.c
 
 # Configs
