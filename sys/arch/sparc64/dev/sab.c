@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.18 2004/07/17 21:23:10 heas Exp $	*/
+/*	$NetBSD: sab.c,v 1.19 2004/07/19 00:28:42 heas Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.18 2004/07/17 21:23:10 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.19 2004/07/19 00:28:42 heas Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -420,6 +420,9 @@ sabtty_attach(parent, self, aux)
 		struct termios t;
 		char *acc;
 
+		/* Let residual prom output drain */
+		DELAY(100000);
+
 		switch (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
 		case SABTTYF_CONS_IN:
 			acc = "input";
@@ -543,7 +546,7 @@ sabtty_intr(sc, needsoftp)
 
 			if (len > 0) {
 				SAB_WRITE_BLOCK(sc, SAB_XFIFO, sc->sc_txp, len);
-				sc->sc_txp += len; 
+				sc->sc_txp += len;
 				sc->sc_txc -= len;
 
 				sabtty_cec_wait(sc);
