@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.1.2.2 2005/01/18 14:52:15 bouyer Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.1.2.3 2005/01/21 10:16:08 bouyer Exp $	*/
 
 /*
  *
@@ -56,6 +56,8 @@ int bind_evtchn_to_irq(int);
 struct pintrhand {
 	int pirq;
 	int irq;
+	int (*func)(void *);
+	void *arg;
 };
 
 struct pintrhand *pirq_establish(int, int, int (*)(void *), void *, int);
