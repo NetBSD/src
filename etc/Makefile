@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.90 1998/11/02 03:32:22 kim Exp $
+#	$NetBSD: Makefile,v 1.91 1998/11/19 19:53:33 tron Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
-# XXX: For NO_SENDMAIL and USE_BIND8
+# XXX: For NO_SENDMAIL and USE_BIND4
 .include <bsd.own.mk>
 
 TZDIR=		/usr/share/zoneinfo
@@ -40,10 +40,10 @@ BIN2+=	motd
 BIN3+=	hosts.equiv
 
 NAMEDB=	localhost.rev root.cache
-.ifdef USE_BIND8
-NAMEDB+=	named.conf
-.else
+.ifdef USE_BIND4
 NAMEDB+=	named.boot
+.else
+NAMEDB+=	named.conf
 .endif
 PCS=	pcs750.bin
 
