@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.15 1997/10/19 14:25:03 lukem Exp $	*/
+/*	$NetBSD: rup.c,v 1.16 1998/02/03 04:04:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,19 +35,22 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.15 1997/10/19 14:25:03 lukem Exp $");
+__RCSID("$NetBSD: rup.c,v 1.16 1998/02/03 04:04:58 perry Exp $");
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include <err.h>
+#include <netdb.h>
+#include <rpc/rpc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <rpc/rpc.h>
-#include <arpa/inet.h>
-#include <err.h>
+#include <unistd.h>
 
 #undef FSHIFT			/* Use protocol's shift and scale values */
 #undef FSCALE
