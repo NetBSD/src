@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.3 2003/07/14 22:32:40 lukem Exp $	*/
+/*	$NetBSD: ipi.c,v 1.4 2003/10/26 11:30:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.3 2003/07/14 22:32:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.4 2003/10/26 11:30:42 yamt Exp $");
 
 #include <sys/param.h> 
 #include <sys/device.h>
@@ -132,11 +132,11 @@ x86_ipi_handler(void)
 
 	pending = x86_atomic_testset_ul(&ci->ci_ipis, 0);
 
-	for (bit = 0; bit < X86_NIPI && pending; bit++) {
-		if (pending & (1<<bit)) {
-			pending &= ~(1<<bit);
-			ci->ci_ipi_events[bit].ev_count++;
-			(*ipifunc[bit])(ci);
-		}
+	KDASSERT((pending >> X86_NIPI) == 0);
+	while ((bit = ffs(pending)) != 0) {
+		bit--;
+		pending &= ~(1<<bit);
+		ci->ci_ipi_events[bit].ev_count++;
+		(*ipifunc[bit])(ci);
 	}
 }
