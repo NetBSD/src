@@ -1,14 +1,14 @@
-/*	$NetBSD: ip_compat.h,v 1.9.2.3 1998/07/22 23:28:55 mellon Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.9.2.4 1998/11/24 07:19:08 cgd Exp $	*/
 
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.0.2.31.2.12 1998/06/06 14:36:38 darrenr Exp 
+ * Id: ip_compat.h,v 2.0.2.31.2.20 1998/11/22 01:50:20 darrenr Exp 
  */
 
 #ifndef _NETINET_IP_COMPAT_H_
@@ -27,23 +27,26 @@
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 #endif
 
-#if defined(_KERNEL) && !defined(KERNEL)
+#if defined(_KERNEL) || defined(KERNEL) || defined(__KERNEL__)
+# undef	KERNEL
+# undef	_KERNEL
+# undef 	__KERNEL__
 # define	KERNEL
-#endif
-#if defined(KERNEL) && !defined(_KERNEL)
 # define	_KERNEL
-#endif
-#if!defined(__KERNEL__) && defined(KERNEL)
 # define 	__KERNEL__
 #endif
 
 #if defined(__SVR4) || defined(__svr4__) || defined(__sgi)
 #define index   strchr
-# if !defined(_KERNEL)
+# if !defined(KERNEL)
 #  define	bzero(a,b)	memset(a,0,b)
 #  define	bcmp		memcmp
 #  define	bcopy(a,b,c)	memmove(b,a,c)
 # endif
+#endif
+
+#ifndef offsetof
+#define offsetof(t,m) (int)((&((t *)0L)->m))
 #endif
 
 #if defined(__sgi) || defined(bsdi)
@@ -82,7 +85,7 @@ struct  ether_addr {
 # undef	IPOPT_LSRR
 # undef	IPOPT_RR
 # undef	IPOPT_SSRR
-# ifndef	_KERNEL
+# ifndef	KERNEL
 #  define	_KERNEL
 #  undef	RES_INIT
 #  include <inet/common.h>
@@ -208,10 +211,23 @@ typedef unsigned long   u_32_t;
 #  define	ATOMIC_DEC(x)		{ mutex_enter(&ipf_rw); (x)--; \
 					  mutex_exit(&ipf_rw); }
 #  define	MUTEX_ENTER(x)		mutex_enter(x)
-#  define	READ_ENTER(x)		rw_enter(x, RW_READER)
-#  define	WRITE_ENTER(x)		rw_enter(x, RW_WRITER)
-#  define	MUTEX_DOWNGRADE(x)	rw_downgrade(x)
-#  define	RWLOCK_EXIT(x)	rw_exit(x)
+#  if 1
+#   define	KRWLOCK_T		krwlock_t
+#   define	READ_ENTER(x)		rw_enter(x, RW_READER)
+#   define	WRITE_ENTER(x)		rw_enter(x, RW_WRITER)
+#   define	MUTEX_DOWNGRADE(x)	rw_downgrade(x)
+#   define	RWLOCK_INIT(x, y, z)	rw_init((x), (y), RW_DRIVER, (z))
+#   define	RWLOCK_EXIT(x)		rw_exit(x)
+#   define	RW_DESTROY(x)		rw_destroy(x)
+#  else
+#   define	KRWLOCK_T		kmutex_t
+#   define	READ_ENTER(x)		mutex_enter(x)
+#   define	WRITE_ENTER(x)		mutex_enter(x)
+#   define	MUTEX_DOWNGRADE(x)	;
+#   define	RWLOCK_INIT(x, y, z)	mutex_init((x), (y), MUTEX_DRIVER, (z))
+#   define	RWLOCK_EXIT(x)		mutex_exit(x)
+#   define	RW_DESTROY(x)		mutex_destroy(x)
+#  endif
 #  define	MUTEX_EXIT(x)	mutex_exit(x)
 #  define	MTOD(m,t)	(t)((m)->b_rptr)
 #  define	IRCOPY(a,b,c)	copyin((a), (b), (c))
@@ -263,11 +279,12 @@ typedef struct {
 	lock_t *l;
 	int pl;
 } kmutex_t;
-#  define	ATOMIC_INC(x)		{ MUTEX_ENTER(&ipf_rw); \
+#   define	ATOMIC_INC(x)		{ MUTEX_ENTER(&ipf_rw); \
 					  (x)++; MUTEX_EXIT(&ipf_rw); }
-#  define	ATOMIC_DEC(x)		{ MUTEX_ENTER(&ipf_rw); \
+#   define	ATOMIC_DEC(x)		{ MUTEX_ENTER(&ipf_rw); \
 					  (x)--; MUTEX_EXIT(&ipf_rw); }
 #   define	MUTEX_ENTER(x)		(x)->pl = LOCK((x)->l, IPF_LOCK_PL);
+#   define	KRWLOCK_T		kmutex_t
 #   define	READ_ENTER(x)		MUTEX_ENTER(x)
 #   define	WRITE_ENTER(x)		MUTEX_ENTER(x)
 #   define	MUTEX_DOWNGRADE(x)	;
@@ -387,7 +404,15 @@ extern	vm_map_t	kmem_map;
 typedef mblk_t mb_t;
 #else
 # ifdef	linux
+#  ifndef kernel
+typedef struct mb {
+	struct mb *next;
+	u_int len;
+	u_char *data;
+} mb_t;
+#  else
 typedef struct sk_buff mb_t;
+#  endif
 # else
 typedef struct mbuf mb_t;
 # endif
@@ -522,6 +547,7 @@ typedef struct mbuf mb_t;
 #endif /* linux || __sgi */
 
 #ifdef	linux
+#include <linux/in_systm.h>
 /*
  * TCP States
  */
@@ -543,8 +569,13 @@ typedef struct mbuf mb_t;
 /*
  * file flags.
  */
+#ifdef WRITE
 #define	FWRITE	WRITE
 #define	FREAD	READ
+#else
+#define	FWRITE	_IOC_WRITE
+#define	FREAD	_IOC_READ
+#endif
 /*
  * mbuf related problems.
  */
@@ -552,7 +583,10 @@ typedef struct mbuf mb_t;
 #define	m_len		len
 #define	m_next		next
 
-#define	IP_DF		0x8000
+#ifdef	IP_DF
+#undef	IP_DF
+#endif
+#define	IP_DF		0x4000
 
 typedef	struct	{
 	__u16	th_sport;
@@ -604,15 +638,15 @@ typedef	struct	{
  * Structure of an icmp header.
  */
 typedef struct icmp {
-	u_char	icmp_type;		/* type of message, see below */
-	u_char	icmp_code;		/* type sub code */
-	u_short	icmp_cksum;		/* ones complement cksum of struct */
+	__u8	icmp_type;		/* type of message, see below */
+	__u8	icmp_code;		/* type sub code */
+	__u16	icmp_cksum;		/* ones complement cksum of struct */
 	union {
-		u_char ih_pptr;			/* ICMP_PARAMPROB */
-		struct in_addr ih_gwaddr;	/* ICMP_REDIRECT */
-		struct ih_idseq {
-			n_short	icd_id;
-			n_short	icd_seq;
+		__u8	ih_pptr;		/* ICMP_PARAMPROB */
+		struct	in_addr	ih_gwaddr;	/* ICMP_REDIRECT */
+		struct	ih_idseq {
+			__u16	icd_id;
+			__u16	icd_seq;
 		} ih_idseq;
 		int ih_void;
 	} icmp_hun;
