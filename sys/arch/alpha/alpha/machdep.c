@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.145 1998/09/23 21:51:04 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.146 1998/09/23 22:02:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145 1998/09/23 21:51:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 1998/09/23 22:02:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1251,22 +1251,6 @@ alpha_unknown_sysname()
 	sprintf(s, "%s family, unknown model variation 0x%lx",
 	    platform.family, hwrpb->rpb_variation & SV_ST_MASK);
 	return ((const char *)s);
-}
-
-/*
- * Recompute the checksum on the HWRPB.
- */
-void
-alpha_hwrpb_checksum(rpb)
-	struct rpb *rpb;
-{
-	u_int64_t sum, *p1, *p2;
-
-	p1 = (u_int64_t *)rpb;
-	p2 = &rpb->rpb_checksum;
-	for (sum = 0; p1 < p2; p1++)
-		sum += *p1;
-	*p2 = sum;
 }
 
 void
