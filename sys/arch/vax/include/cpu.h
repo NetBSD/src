@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.65 2003/02/27 07:14:19 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.66 2003/03/01 21:51:59 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -37,6 +37,20 @@
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #endif
+
+#define	CPU_PRINTFATALTRAPS	1
+#define	CPU_CONSDEV		2
+#define	CPU_BOOTED_DEVICE	3
+#define	CPU_BOOTED_KERNEL	4
+#define CPU_MAXID		5
+
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "printfataltraps", CTLTYPE_INT }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "booted_device", CTLTYPE_STRING }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
+}
 
 #ifdef _KERNEL
 
@@ -139,6 +153,8 @@ struct cpu_info {
 #define	CI_MASTERCPU	1		/* Set if master CPU */
 #define	CI_RUNNING	2		/* Set when a slave CPU is running */
 #define	CI_STOPPED	4		/* Stopped (in debugger) */
+
+extern int cpu_printfataltraps;
 
 #if defined(MULTIPROCESSOR)
 /*
