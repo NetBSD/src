@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 1998/09/01 13:07:23 tsubai Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 1998/11/04 15:06:13 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,6 +54,7 @@ static long ticks_per_intr;
 static volatile u_long lasttb;
 
 #define SECDAY 86400
+#define DIFF19041970 2082844800
 
 #if NADB > 0
 extern int adb_read_date_time __P((int *));
@@ -80,7 +81,7 @@ inittodr(base)
 		return;
 	}
 	clockinitted = 1;
-	time.tv_sec = rtc_time;
+	time.tv_sec = rtc_time - DIFF19041970;
 
 	deltat = time.tv_sec - base;
 	if (deltat < 0)
@@ -100,11 +101,13 @@ inittodr(base)
 void
 resettodr()
 {
-	if (! clockinitted)
-		return;
-
 #if NADB > 0
-	adb_set_date_time(time.tv_sec);
+	u_int rtc_time;
+
+	if (clockinitted) {
+		rtc_time = time.tv_sec + DIFF19041970;
+		adb_set_date_time(rtc_time);
+	}
 #endif
 }
 
