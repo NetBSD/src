@@ -1,12 +1,12 @@
 # Make up some fake test files that are easily produced.
 # By no means an exhaustive test!
-# @(#) $Header: /cvsroot/src/usr.bin/file/tst/Attic/Makefile,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
-all:	ar cmd emp i t x
+# @(#) $Id: Makefile,v 1.2 1993/06/10 00:38:32 jtc Exp $
+all:	ar cmd emp i tarf x
 ar:
 	echo '<ar> fake fake fake' >$@
 	echo 070707 fake fake fake >$@.asc
 	echo '!<arch>.__.SYMDEF fake fake fake' >$@.ranlib
-	echo - -h- >$@.swt
+	echo -h- >$@.swt
 cmd:
 	echo '#! /bin/sh' >$@
 	echo '#!/bin/sh' >c.sh2
@@ -22,8 +22,8 @@ emp:
 i:
 	echo '@document(language impress)fake fake' >$@
 	echo '@document(language diablo)fake fake' >$@.d
-t:
-	rm -f $@
+tarf:
+	rm -f $@	# so not include self
 	tar cvf $@ *
 x:
 	echo 'Interpress/Xerox fake fake fake' >$@
