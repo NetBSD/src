@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.12 1998/01/22 01:32:17 thorpej Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.13 1998/06/25 03:40:30 eeh Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -70,6 +70,7 @@ enum Elf_e_machine {
 	Elf_em_486,
 	Elf_em_860,
 	Elf_em_mips,
+	Elf_em_sparc32plus = 18,
 	Elf_em_ppc = 20,
 	Elf_em_alpha=0x9026,
 	Elf_em_num
