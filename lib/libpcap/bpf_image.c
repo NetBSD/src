@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_image.c,v 1.6 2000/10/10 19:12:48 is Exp $	*/
+/*	$NetBSD: bpf_image.c,v 1.7 2004/09/27 23:02:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
@@ -25,21 +25,21 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: bpf_image.c,v 1.22 96/09/26 23:27:56 leres Exp  (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/bpf_image.c,v 1.25.2.1 2003/11/15 23:26:38 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: bpf_image.c,v 1.6 2000/10/10 19:12:48 is Exp $");
+__RCSID("$NetBSD: bpf_image.c,v 1.7 2004/09/27 23:02:53 dyoung Exp $");
 #endif
 #endif
 
-#include <sys/types.h>
-#include <sys/time.h>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 #include <string.h>
 
 #include "pcap-int.h"
 
-#include "gnuc.h"
 #ifdef HAVE_OS_PROTO_H
 #include "os-proto.h"
 #endif
@@ -256,15 +256,11 @@ bpf_image(p, n)
 		op = "txa";
 		break;
 	}
-
-	if (BPF_CLASS(p->code) == BPF_JMP &&
-	    BPF_OP(p->code) != BPF_JA)	
-		(void)snprintf(image, sizeof image,
-		    "(%03d) %-8s %-16s jt %d\tjf %d",
-		    n, op, operand, n + 1 + p->jt, n + 1 + p->jf);
-	else
-		(void)snprintf(image, sizeof image,
-		    "(%03d) %-8s %s",
-		    n, op, operand);
+	(void)snprintf(image, sizeof image,
+		      (BPF_CLASS(p->code) == BPF_JMP &&
+		       BPF_OP(p->code) != BPF_JA) ?
+		      "(%03d) %-8s %-16s jt %d\tjf %d"
+		      : "(%03d) %-8s %s",
+		      n, op, operand, n + 1 + p->jt, n + 1 + p->jf);
 	return image;
 }

@@ -1,6 +1,6 @@
-/*	$NetBSD: ppp.h,v 1.2 1999/07/25 00:15:22 itojun Exp $	*/
+/*	$NetBSD: ppp.h,v 1.3 2004/09/27 23:02:53 dyoung Exp $	*/
 
-/* @(#) Header: ppp.h,v 1.7 95/05/04 17:52:46 mccanne Exp  (LBL) */
+/* @(#) Header: /tcpdump/master/libpcap/ppp.h,v 1.8 1999/10/19 15:18:31 itojun Exp  (LBL) */
 /*
  * Point to Point Protocol (PPP) RFC1331
  *
@@ -32,7 +32,7 @@
 #define PPP_BRPDU	0x0031	/* Bridging PDU */
 #define PPP_STII	0x0033	/* Stream Protocol (ST-II) */
 #define PPP_VINES	0x0035	/* Banyan Vines */
-#define PPP_IPV6	0x0057	/* Internet Protocol Version 6 */
+#define PPP_IPV6	0x0057	/* Internet Protocol version 6 */
 
 #define PPP_HELLO	0x0201	/* 802.1d Hello Packets */
 #define PPP_LUXCOM	0x0231	/* Luxcom */

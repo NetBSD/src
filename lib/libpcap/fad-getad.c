@@ -1,4 +1,4 @@
-/*	$NetBSD: fad-getad.c,v 1.1.1.2 2004/09/19 21:57:48 dyoung Exp $	*/
+/*	$NetBSD: fad-getad.c,v 1.2 2004/09/27 23:02:53 dyoung Exp $	*/
 
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
@@ -37,10 +37,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] _U_ =
+static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/fad-getad.c,v 1.7.2.2 2004/03/11 23:04:52 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: fad-getad.c,v 1.1.1.2 2004/09/19 21:57:48 dyoung Exp $");
+__RCSID("$NetBSD: fad-getad.c,v 1.2 2004/09/27 23:02:53 dyoung Exp $");
 #endif
 #endif
 

@@ -1,2 +1,2 @@
-/*	$NetBSD: version.c,v 1.3 2000/10/08 14:28:05 itojun Exp $	*/
-char pcap_version[] = "0.4";
+/*	$NetBSD: version.c,v 1.4 2004/09/27 23:02:53 dyoung Exp $	*/
+char pcap_version[] = "0.8.3";

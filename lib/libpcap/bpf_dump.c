@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_dump.c,v 1.1.1.2 2004/09/19 21:57:48 dyoung Exp $	*/
+/*	$NetBSD: bpf_dump.c,v 1.2 2004/09/27 23:02:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -23,10 +23,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] _U_ =
+static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/bpf_dump.c,v 1.13.2.1 2003/11/15 23:26:37 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: bpf_dump.c,v 1.1.1.2 2004/09/19 21:57:48 dyoung Exp $");
+__RCSID("$NetBSD: bpf_dump.c,v 1.2 2004/09/27 23:02:53 dyoung Exp $");
 #endif
 #endif
 
