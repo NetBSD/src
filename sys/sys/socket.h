@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.35 1998/06/25 23:57:03 thorpej Exp $	*/
+/*	$NetBSD: socket.h,v 1.36 1998/06/26 13:57:20 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -384,7 +384,7 @@ int	socket __P((int, int, int));
 int	socketpair __P((int, int, int, int *));
 __END_DECLS
 #else
-# if !defined(_LKM)
+# if defined(_KERNEL) && !defined(_LKM)
 #  include "opt_compat_freebsd.h"
 #  include "opt_compat_linux.h"
 #  include "opt_compat_sunos.h"
