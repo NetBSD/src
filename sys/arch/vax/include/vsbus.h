@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.9 1999/10/22 21:10:13 ragge Exp $ */
+/*	$NetBSD: vsbus.h,v 1.10 2000/01/24 02:40:33 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -45,10 +45,10 @@
 struct	vsbus_attach_args {
 	vaddr_t	va_addr;		/* virtual CSR address */
 	paddr_t	va_paddr;		/* physical CSR address */
-	void	(*va_ivec) __P((int));	/* Interrupt routine */
 	short	va_br;			/* Interrupt level */
 	short	va_cvec;		/* Interrupt vector address */
 	u_char	va_maskno;		/* Interrupt vector in mask */
+	bus_space_tag_t va_iot;
 	bus_dma_tag_t va_dmat;
 };
 
@@ -70,8 +70,11 @@ struct	vsbus_attach_args {
 #define	SMADDR		0x30000000
 #define	SMSIZE		0x20000		/* Actually 256k, only 128k used */
 
+#ifdef _KERNEL
+uint32_t *vsbus_iomap;
 u_char	vsbus_setmask __P((unsigned char));
 void	vsbus_clrintr __P((unsigned char));
 void	vsbus_copytoproc(struct proc *, caddr_t, caddr_t, int);
 void	vsbus_copyfromproc(struct proc *, caddr_t, caddr_t, int);
+#endif
 #endif /* _VAX_VSBUS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.42 1999/02/02 18:37:20 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.43 2000/01/24 02:40:36 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -200,10 +200,9 @@ void
 uba_dw780int(uba)
 	int	uba;
 {
-	int	br, vec, arg;
+	int	br, vec;
 	struct	uba_softc *sc = uba_cd.cd_devs[uba];
 	struct	uba_regs *ur = sc->uh_uba;
-	void	(*func) __P((int));
 
 	br = mfpr(PR_IPL);
 	vec = ur->uba_brrvr[br - 0x14];
@@ -215,10 +214,8 @@ uba_dw780int(uba)
 	if (cold)
 		scb_fake(vec + sc->uh_ibase, br);
 	else {
-		struct ivec_dsp *scb_vec = (struct ivec_dsp *)((int)scb + 512);
-		func = scb_vec[vec/4].hoppaddr;
-		arg = scb_vec[vec/4].pushlarg;
-		(*func)(arg);
+		struct ivec_dsp *scb_vec = (struct ivec_dsp *)((int)scb + 512 + vec * 4);
+		(*scb_vec->hoppaddr)(scb_vec->pushlarg);
 	}
 }
 

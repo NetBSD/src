@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.1 1999/06/21 16:23:01 ragge Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.2 2000/01/24 02:40:36 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -92,7 +92,7 @@ static	void	dw780_init __P((struct uba_softc*));
 static	void    dw780_beforescan __P((struct uba_softc *));
 static	void    dw780_afterscan __P((struct uba_softc *));
 static	int     dw780_errchk __P((struct uba_softc *));
-static	void    uba_dw780int __P((int));
+static	void    uba_dw780int __P((void *));
 static  void	ubaerror __P((struct uba_softc *, int *, int *));
 #ifdef notyet
 static	void	dw780_purge __P((struct uba_softc *, int));
@@ -157,7 +157,7 @@ dw780_attach(parent, self, aux)
 	 */
 	for (i = 0; i < 4; i++)
 		scb_vecalloc(256 + i * 64 + sa->nexnum * 4, uba_dw780int,
-		    sc->uv_sc.uh_dev.dv_unit, SCB_ISTACK);
+		    sc, SCB_ISTACK);
 	/*
 	 * Fill in variables used by the sgmap system.
 	 */
@@ -207,13 +207,13 @@ dw780_errchk(sc)
 }
 
 void
-uba_dw780int(uba)
-	int	uba;
+uba_dw780int(arg)
+	void	*arg;
 {
-	int	br, vec, arg;
-	struct	uba_vsoftc *vc = uba_cd.cd_devs[uba];
+	struct	uba_vsoftc *vc = arg;
 	struct	uba_regs *ur = vc->uv_uba;
-	void	(*func) __P((int));
+	struct	ivec_dsp *scb_vec;
+	int	br, vec;
 
 	br = mfpr(PR_IPL);
 	vec = ur->uba_brrvr[br - 0x14];
@@ -225,10 +225,8 @@ uba_dw780int(uba)
 	if (cold)
 		scb_fake(vec + vc->uh_ibase, br);
 	else {
-		struct ivec_dsp *scb_vec = (struct ivec_dsp *)((int)scb + 512);
-		func = scb_vec[vec/4].hoppaddr;
-		arg = scb_vec[vec/4].pushlarg;
-		(*func)(arg);
+		scb_vec = (struct ivec_dsp *)((int)scb + 512 + 4 * vec);
+		(*scb_vec->hoppaddr)(scb_vec->pushlarg);
 	}
 }
 

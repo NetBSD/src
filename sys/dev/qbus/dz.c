@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.18 1999/06/06 19:14:49 ragge Exp $	*/
+/*	$NetBSD: dz.c,v 1.19 2000/01/24 02:40:29 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -158,10 +158,10 @@ dzattach(sc)
 /* Receiver Interrupt */
 
 void
-dzrint(cntlr)
-	int cntlr;
+dzrint(arg)
+	void *arg;
 {
-	struct	dz_softc *sc = dz_cd.cd_devs[cntlr];
+	struct dz_softc *sc = arg;
 	register struct tty *tp;
 	register int cc, line;
 	register unsigned c;
@@ -213,10 +213,10 @@ dzrint(cntlr)
 /* Transmitter Interrupt */
 
 void
-dzxint(cntlr)
-	int cntlr;
+dzxint(arg)
+	void *arg;
 {
-	register struct dz_softc *sc = dz_cd.cd_devs[cntlr];
+	register struct dz_softc *sc = arg;
 	register struct tty *tp;
 	register struct clist *cl;
 	register int line, ch, csr;
@@ -511,7 +511,7 @@ dzstart(tp)
 	if ((state & (1 << line)) == 0) {
 		DZ_WRITE_BYTE(dr_tcr, state | (1 << line));
 	}
-	dzxint(sc->sc_dev.dv_unit);
+	dzxint(sc);
 	splx(s);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.7 1999/06/06 19:14:49 ragge Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.8 2000/01/24 02:40:29 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -104,7 +104,6 @@ dz_uba_match(parent, cf, aux)
 
 	/* Register the TX interrupt handler */
 
-	ua->ua_ivec = dzxint;
 
        	return (1);
 }
@@ -131,8 +130,9 @@ dz_uba_attach(parent, self, aux)
 
 	sc->sc_type = DZ_DZ;
 
-	/* Now register the RX interrupt handler */
-	scb_vecalloc(ua->ua_cvec - 4, dzrint, self->dv_unit, SCB_ISTACK);
+	/* Now register the TX & RX interrupt handlers */
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, dzxint, sc);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4, dzrint, sc);
 
 	dzattach(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.33 2000/01/10 23:54:47 matt Exp $	   */
+/*	$NetBSD: subr.s,v 1.34 2000/01/24 02:40:34 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -131,32 +131,18 @@ _ultrix_esigcode:
 
 		.globl	_idsptch, _eidsptch
 _idsptch:	pushr	$0x3f
-#ifdef NEWIDSPTCH
 		.word	0x9f16
 		.long	_cmn_idsptch
 		.long	0
 		.long	0
-#else
-		pushl	$1
-		.long	0x9f01fb01
-		.long	0x12345678
-#
-#	gas do not accept this :-/ use hexcode instead
-#		nop
-#		calls	$1, *$0x12345678
-		popr	$0x3f
-		rei
-#endif
 _eidsptch:
 
-#ifdef NEWIDSPTCH
 _cmn_idsptch:
 		movl	(sp)+,r0
 		pushl	4(r0)
 		calls	$1,*(r0)
-		popr	0x$3f
+		popr	$0x3f
 		rei
-#endif
 
 ENTRY(badaddr,0)			# Called with addr,b/w/l
 		mfpr	$0x12,r0

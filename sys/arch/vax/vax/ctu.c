@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.7 2000/01/23 18:53:11 matt Exp $ */
+/*	$NetBSD: ctu.c,v 1.8 2000/01/24 02:40:33 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -85,8 +85,8 @@ struct tu_softc {
 
 struct	ivec_dsp tu_recv, tu_xmit;
 
-void	ctutintr __P((int));
-void	cturintr __P((int));
+void	ctutintr __P((void *));
+void	cturintr __P((void *));
 void	ctuattach __P((void));
 void	ctustart __P((struct buf *));
 void	ctuwatch __P((void *));
@@ -213,7 +213,7 @@ ctustart(bp)
 	tu_sc.sc_state = SC_SEND_CMD;
 	if (tu_sc.sc_xmtok) {
 		tu_sc.sc_xmtok = 0;
-		ctutintr(0);
+		ctutintr(NULL);
 	}
 }
 
@@ -243,7 +243,7 @@ ctudump(dev, blkno, va, size)
 
 void
 cturintr(arg)
-	int arg;
+	void *arg;
 {
 	int	status = mfpr(PR_CSRD);
 	struct	buf *bp;
@@ -293,7 +293,7 @@ cturintr(arg)
 		if (status != 020)
 			printf("SC_GET_WCONT: status %o\n", status);
 		else
-			ctutintr(0);
+			ctutintr(NULL);
 		tu_sc.sc_xmtok = 0;
 		break;
 
@@ -315,7 +315,7 @@ cturintr(arg)
 
 void
 ctutintr(arg)
-	int arg;
+	void *arg;
 {
 	int	c;
 

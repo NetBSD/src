@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.23 1999/10/22 21:12:20 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.24 2000/01/24 02:40:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -72,9 +72,11 @@
 #include <dev/ic/ncr5380reg.h>
 #include <dev/ic/ncr5380var.h>
 
+#include <machine/cpu.h>
 #include <machine/vsbus.h>
 #include <machine/bus.h>
 #include <machine/sid.h>
+#include <machine/scb.h>
 
 #include "ioconf.h"
 
@@ -111,7 +113,6 @@ static struct scsipi_device si_dev = {
 static	int si_match(struct device *, struct cfdata *, void *);
 static	void si_attach(struct device *, struct device *, void *);
 static	void si_minphys(struct buf *);
-static	void si_intr(int);
 
 static	void si_dma_alloc __P((struct ncr5380_softc *));
 static	void si_dma_free __P((struct ncr5380_softc *));
@@ -143,7 +144,6 @@ si_match(parent, cf, aux)
 	si_csr[0] = 0x80;
 	si_csr[4] = 5; /* 0xcf */
 	DELAY(100000);
-	va->va_ivec = si_intr;
 	return 1;
 }
 
@@ -157,6 +157,9 @@ si_attach(parent, self, aux)
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 
 	printf("\n");
+
+	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc, SCB_ISTACK);
+
 	/*
 	 * DMA area mapin.
 	 * On VS3100, split the 128K block between the two devices.
@@ -244,12 +247,6 @@ si_minphys(struct buf *bp)
 		bp->b_bcount = (16*1024);
 	else if (bp->b_bcount > MAXPHYS)
 		bp->b_bcount = MAXPHYS;
-}
-
-static void
-si_intr(int arg)
-{
-	ncr5380_intr(ncr_cd.cd_devs[arg]);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.2 1999/08/14 18:42:46 ragge Exp $ */
+/*	$NetBSD: ibus.c,v 1.3 2000/01/24 02:40:33 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -66,7 +66,7 @@ ibus_match(parent, cf, aux)
 	struct cfdata *cf;
 	void	*aux;
 {
-	if (vax_bustype == VAX_IBUS)
+	if (cf->cf_unit == 0 && vax_bustype == VAX_IBUS)
 		return 1;
 	return 0;
 }
@@ -84,6 +84,11 @@ ibus_attach(parent, self, aux)
 	vaddr_t va;
 
 	printf("\n");
+#if 0
+	if (...) {
+		ibus_dma_init(sc);
+	}
+#endif
 	/*
 	 * There may be a SGEC. Is badaddr() enough here?
 	 */

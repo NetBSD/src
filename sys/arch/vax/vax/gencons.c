@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.21 1999/06/06 14:23:46 ragge Exp $	*/
+/*	$NetBSD: gencons.c,v 1.22 2000/01/24 02:40:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -74,8 +74,8 @@ cdev_decl(gencn);
 
 static	int gencnparam __P((struct tty *, struct termios *));
 static	void gencnstart __P((struct tty *));
-void	gencnrint __P((int));
-void	gencntint __P((int));
+void	gencnrint __P((void *));
+void	gencntint __P((void *));
 
 int
 gencnopen(dev, flag, mode, p)
@@ -211,13 +211,13 @@ out:	splx(s);
 }
 
 void
-gencnrint(unit)
-	int unit;
+gencnrint(arg)
+	void *arg;
 {
-	struct tty *tp;
+	struct tty *tp = *(struct tty **) arg;
+	int unit = (struct tty **) arg - gencn_tty;
 	int i;
 
-	tp = gencn_tty[unit];
 	i = mfpr(pr_rxdb[unit]) & 0377; /* Mask status flags etc... */
 
 #ifdef DDB
@@ -232,7 +232,7 @@ gencnrint(unit)
 	}
 #endif
 
-	(*linesw[tp->t_line].l_rint)(i,tp);
+	(*linesw[tp->t_line].l_rint)(i, tp);
 	return;
 }
 
@@ -244,12 +244,11 @@ gencnstop(tp, flag)
 }
 
 void
-gencntint(unit)
-	int unit;
+gencntint(arg)
+	void *arg;
 {
-	struct tty *tp;
+	struct tty *tp = *(struct tty **) arg;
 
-	tp = gencn_tty[unit];
 	tp->t_state &= ~TS_BUSY;
 
 	gencnstart(tp);
@@ -285,17 +284,21 @@ void
 gencninit(cndev)
 	struct	consdev *cndev;
 {
+
 	/* Allocate interrupt vectors */
-	scb_vecalloc(SCB_G0R, gencnrint, 0, SCB_ISTACK);
-	scb_vecalloc(SCB_G0T, gencntint, 0, SCB_ISTACK);
+	scb_vecalloc(SCB_G0R, gencnrint, &gencn_tty[0], SCB_ISTACK);
+	scb_vecalloc(SCB_G0T, gencntint, &gencn_tty[0], SCB_ISTACK);
+
 	if (vax_cputype == VAX_TYP_8SS) {
 		maxttys = 4;
-		scb_vecalloc(SCB_G1R, gencnrint, 1, SCB_ISTACK);
-		scb_vecalloc(SCB_G1T, gencntint, 1, SCB_ISTACK);
-		scb_vecalloc(SCB_G2R, gencnrint, 2, SCB_ISTACK);
-		scb_vecalloc(SCB_G2T, gencntint, 2, SCB_ISTACK);
-		scb_vecalloc(SCB_G3R, gencnrint, 3, SCB_ISTACK);
-		scb_vecalloc(SCB_G3T, gencntint, 3, SCB_ISTACK);
+		scb_vecalloc(SCB_G1R, gencnrint, &gencn_tty[1], SCB_ISTACK);
+		scb_vecalloc(SCB_G1T, gencntint, &gencn_tty[1], SCB_ISTACK);
+
+		scb_vecalloc(SCB_G2R, gencnrint, &gencn_tty[2], SCB_ISTACK);
+		scb_vecalloc(SCB_G2T, gencntint, &gencn_tty[2], SCB_ISTACK);
+
+		scb_vecalloc(SCB_G3R, gencnrint, &gencn_tty[3], SCB_ISTACK);
+		scb_vecalloc(SCB_G3T, gencntint, &gencn_tty[3], SCB_ISTACK);
 	}
 	mtpr(0, PR_TBIA); /* ??? */
 }

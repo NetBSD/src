@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.10 1999/09/06 19:52:53 ragge Exp $ */
+/*	$NetBSD: ka46.c,v 1.11 2000/01/24 02:40:34 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -160,16 +160,16 @@ ka46_steal_pages()
 	 * This will be reworked the day NetBSD/vax changes to
 	 * 4K pages. (No use before that).
 	 */
-	{	int *io_map, *lio_map;
+	{	uint32_t *io_map;
 
 		avail_end &= ~0x3ffff;
-		lio_map = (int *)avail_end;
+		vsbus_iomap = (uint32_t *)avail_end;
 		*(int *)(VS_REGS + 8) = avail_end & 0x07fe0000;
 		MAPVIRT(io_map, (0x20000 / VAX_NBPG));
 		pmap_map((vm_offset_t)io_map, (vm_offset_t)avail_end,
 		    (vm_offset_t)avail_end + 0x20000, VM_PROT_READ|VM_PROT_WRITE);
 		for (i = 0; i < 0x8000; i++)
-			lio_map[i] = 0x80000000|i;
+			vsbus_iomap[i] = 0x80000000|i;
 	}
 }
 

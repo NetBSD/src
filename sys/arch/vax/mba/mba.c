@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.17 2000/01/21 23:39:56 thorpej Exp $ */
+/*	$NetBSD: mba.c,v 1.18 2000/01/24 02:40:36 matt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -74,7 +74,7 @@ struct	mbaunit mbaunit[] = {
 
 int	mbamatch __P((struct device *, struct cfdata *, void *));
 void	mbaattach __P((struct device *, struct device *, void *));
-void	mbaintr __P((int));
+void	mbaintr __P((void *));
 int	mbaprint __P((void *, const char *));
 void	mbaqueue __P((struct mba_device *));
 void	mbastart __P((struct mba_softc *));
@@ -123,19 +123,18 @@ mbaattach(parent, self, aux)
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
 	volatile struct	mba_regs *mbar = (struct mba_regs *)sa->nexaddr;
 	struct	mba_attach_args ma;
-	extern  struct  ivec_dsp idsptch;
 	int	i, j;
 
 	printf("\n");
 	/*
 	 * Set up interrupt vectors for this MBA.
 	 */
-	bcopy(&idsptch, &sc->sc_dsp, sizeof(struct ivec_dsp));
+	sc->sc_dsp = idsptch;
+	sc->sc_dsp.pushlarg = sc;
+	sc->sc_dsp.hoppaddr = mbaintr;
 	scb->scb_nexvec[0][sa->nexnum] = scb->scb_nexvec[1][sa->nexnum] =
 	    scb->scb_nexvec[2][sa->nexnum] = scb->scb_nexvec[3][sa->nexnum] =
 	    &sc->sc_dsp;
-	sc->sc_dsp.pushlarg = sc->sc_dev.dv_unit;
-	sc->sc_dsp.hoppaddr = mbaintr;
 
 	sc->sc_physnr = sa->nexnum - 8; /* MBA's have TR between 8 - 11... */
 #if VAX750
@@ -171,9 +170,9 @@ mbaattach(parent, self, aux)
  */
 void
 mbaintr(mba)
-	int	mba;
+	void	*mba;
 {
-	struct	mba_softc *sc = mba_cd.cd_devs[mba];
+	struct	mba_softc *sc = mba;
 	volatile struct	mba_regs *mr = sc->sc_mbareg;
 	struct	mba_device *md;
 	struct	buf *bp;

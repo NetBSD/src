@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.15 1999/08/07 10:36:46 ragge Exp $	*/
+/*	$NetBSD: nexus.h,v 1.16 2000/01/24 02:40:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -37,6 +37,13 @@
 
 #ifndef _VAX_NEXUS_H_
 #define _VAX_NEXUS_H_
+
+#ifdef _KERNEL
+#include "opt_vax8600.h"
+#include "opt_vax780.h"
+#include "opt_vax750.h"
+#include "opt_vax730.h"
+#endif
 /*
  * Different definitions for nicer autoconf probing.
  */
@@ -135,7 +142,7 @@ extern caddr_t *nex_vec;
 #define	NEX_CFGFLT	(0xfc000000)
 
 #ifndef _LOCORE
-#if defined(VAX780) || defined(VAX8600)
+#if VAX780 || VAX8600
 #define	NEXFLT_BITS \
 "\20\40PARFLT\37WSQFLT\36URDFLT\35ISQFLT\34MXTFLT\33XMTFLT"
 #endif
