@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.33 1998/02/10 14:11:00 mrg Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.34 1998/02/14 19:56:30 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -446,10 +446,10 @@ ufs_chown(vp, uid, gid, cred, p)
 	struct proc *p;
 {
 	register struct inode *ip = VTOI(vp);
+#ifdef QUOTA
 	uid_t ouid;
 	gid_t ogid;
 	int error = 0;
-#ifdef QUOTA
 	register int i;
 	long change;
 #endif
@@ -458,18 +458,9 @@ ufs_chown(vp, uid, gid, cred, p)
 		uid = ip->i_ffs_uid;
 	if (gid == (gid_t)VNOVAL)
 		gid = ip->i_ffs_gid;
-	/*
-	 * If we don't own the file, are trying to change the owner
-	 * of the file, or are not a member of the target group,
-	 * the caller must be superuser or the call fails.
-	 */
-	if ((cred->cr_uid != ip->i_ffs_uid || uid != ip->i_ffs_uid ||
-	    (gid != ip->i_ffs_gid && !groupmember((gid_t)gid, cred))) &&
-	    (error = suser(cred, &p->p_acflag)))
-		return (error);
+#ifdef QUOTA
 	ogid = ip->i_ffs_gid;
 	ouid = ip->i_ffs_uid;
-#ifdef QUOTA
 	if ((error = getinoquota(ip)) != 0)
 		return (error);
 	if (ouid == uid) {
@@ -531,12 +522,7 @@ good:
 	if (getinoquota(ip))
 		panic("chown: lost quota");
 #endif /* QUOTA */
-	if (ouid != uid || ogid != gid)
-		ip->i_flag |= IN_CHANGE;
-	if (ouid != uid && cred->cr_uid != 0)
-		ip->i_ffs_mode &= ~ISUID;
-	if (ogid != gid && cred->cr_uid != 0)
-		ip->i_ffs_mode &= ~ISGID;
+	ip->i_flag |= IN_CHANGE;
 	return (0);
 }
 
