@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.74 1998/06/25 23:41:20 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.75 1998/06/28 21:34:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1030,8 +1030,8 @@ sigexit(p, signum)
 }
 
 /*
- * Dump core, into a file named "progname.core", unless the process was
- * setuid/setgid.
+ * Dump core, into a file named "progname.core" or "core" (depending on the 
+ * value of shortcorename), unless the process was setuid/setgid.
  */
 int
 coredump(p)
@@ -1045,6 +1045,7 @@ coredump(p)
 	int error, error1;
 	char name[MAXCOMLEN+6];		/* progname.core */
 	struct core core;
+	extern int shortcorename;
 
 	/*
 	 * Make sure the process has not set-id, to prevent data leaks.
@@ -1068,7 +1069,10 @@ coredump(p)
 	if (p->p_fd->fd_cdir->v_mount->mnt_flag & MNT_NOCOREDUMP)
 		return (EPERM);
 
-	sprintf(name, "%s.core", p->p_comm);
+	if (shortcorename) 
+		sprintf(name, "core");
+	else
+		sprintf(name, "%s.core", p->p_comm);
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, name, p);
 	error = vn_open(&nd, O_CREAT | FWRITE, S_IRUSR | S_IWUSR);
 	if (error)

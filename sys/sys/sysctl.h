@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.28 1998/05/24 19:52:01 kleink Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.29 1998/06/28 21:34:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -145,7 +145,8 @@ struct ctlname {
 #define	KERN_SYSVMSG		33	/* int: SysV message queue suppoprt */
 #define	KERN_SYSVSEM		34	/* int: SysV semaphore support */
 #define	KERN_SYSVSHM		35	/* int: SysV shared memory support */
-#define	KERN_MAXID		36	/* number of valid kern ids */
+#define	KERN_SHORTCORENAME	36	/* int: programs dump core as "core" */
+#define	KERN_MAXID		37	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -184,6 +185,7 @@ struct ctlname {
 	{ "sysvmsg", CTLTYPE_INT }, \
 	{ "sysvsem", CTLTYPE_INT }, \
 	{ "sysvshm", CTLTYPE_INT }, \
+	{ "shortcorename", CTLTYPE_INT }, \
 }
 
 /*
