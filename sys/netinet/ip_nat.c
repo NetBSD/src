@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.20 1998/07/12 15:24:00 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.21 1998/11/14 07:42:37 tls Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -236,7 +236,11 @@ int mode;
 	switch (cmd)
 	{
 	case SIOCADNAT :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE)) {
+#else
 		if (!(mode & FWRITE)) {
+#endif
 			error = EPERM;
 			break;
 		}
@@ -281,7 +285,11 @@ int mode;
 		ATOMIC_INC(nat_stats.ns_rules);
 		break;
 	case SIOCRMNAT :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE)) {
+#else
 		if (!(mode & FWRITE)) {
+#endif
 			error = EPERM;
 			n = NULL;
 			break;
@@ -323,7 +331,11 @@ int mode;
 		break;
 	    }
 	case SIOCFLNAT :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE)) {
+#else
 		if (!(mode & FWRITE)) {
+#endif
 			error = EPERM;
 			break;
 		}
@@ -333,7 +345,11 @@ int mode;
 		IWCOPY((caddr_t)&ret, data, sizeof(ret));
 		break;
 	case SIOCCNATL :
+#if defined(__NetBSD__)
+		if ((securelevel >= 2) || !(mode & FWRITE)) {
+#else
 		if (!(mode & FWRITE)) {
+#endif
 			error = EPERM;
 			break;
 		}
