@@ -25,6 +25,7 @@ powerpc*)		gdb_target_cpu=powerpc ;;
 sparc*)			gdb_target_cpu=sparc ;;
 thumb*)			gdb_target_cpu=arm ;;
 strongarm*)		gdb_target_cpu=arm ;;
+sh*)			gdb_target_cpu=sh ;;
 v850*)			gdb_target_cpu=v850 ;;
 *)			gdb_target_cpu=$target_cpu ;;
 
@@ -251,6 +252,7 @@ rs6000-*-aix4*)		gdb_target=aix4 ;;
 rs6000-*-*)		gdb_target=rs6000 ;;
 
 sh*-*-pe)		gdb_target=wince ;;
+sh*-*-netbsdelf*)	gdb_target=nbsd ;;
 sh-*-*)			gdb_target=sh ;;
 
 sparc-*-aout*)		gdb_target=sparc-em ;;

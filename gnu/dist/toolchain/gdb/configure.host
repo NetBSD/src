@@ -21,6 +21,7 @@ mips*)			gdb_host_cpu=mips ;;
 # OBSOLETE pyramid)		gdb_host_cpu=pyr ;;
 powerpc*)		gdb_host_cpu=powerpc ;;
 sparc64)		gdb_host_cpu=sparc ;;
+sh*)			gdb_host_cpu=sh ;;
 *)			gdb_host_cpu=$host_cpu ;;
 
 esac
@@ -150,6 +151,8 @@ romp-*-*)		gdb_host=rtbsd ;;
 rs6000-*-lynxos*)	gdb_host=rs6000lynx ;;
 rs6000-*-aix4*)		gdb_host=aix4 ;;
 rs6000-*-*)		gdb_host=rs6000 ;;
+
+sh*-*-netbsdelf*)	gdb_host=nbsd ;;
 
 sparc-*-linux*)		gdb_host=linux ;;
 sparc-*-lynxos*)	gdb_host=sparclynx ;;
