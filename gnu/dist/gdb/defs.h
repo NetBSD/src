@@ -47,9 +47,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #include "libiberty.h"
 
-/* libiberty.h can't declare this one, but evidently we can.  */
-extern char *strsignal PARAMS ((int));
-
 #include "progress.h"
 
 #ifndef NO_MMALLOC
