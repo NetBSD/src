@@ -1,4 +1,4 @@
-/*	$NetBSD: startup.c,v 1.12 1995/04/24 13:24:32 cgd Exp $	*/
+/*	$NetBSD: startup.c,v 1.13 1995/05/21 14:22:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)startup.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: startup.c,v 1.12 1995/04/24 13:24:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: startup.c,v 1.13 1995/05/21 14:22:23 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -496,19 +496,8 @@ getnetorhostname(type, name, sin)
 		sin->sin_addr = inet_makeaddr(n, INADDR_ANY);
 		return (1);
 	}
-	if (strcmp(type, "host") == 0) {
-		struct hostent *hp = gethostbyname(name);
-
-		if (hp == 0)
-			sin->sin_addr.s_addr = inet_addr(name);
-		else {
-			if (hp->h_addrtype != AF_INET)
-				return (0);
-			memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
-		}
-		sin->sin_family = AF_INET;
-		return (1);
-	}
+	if (strcmp(type, "host") == 0)
+		return (gethostnameornumber(name, sin));
 	return (0);
 }
 
@@ -519,13 +508,13 @@ gethostnameornumber(name, sin)
 {
 	struct hostent *hp;
 
-	hp = gethostbyname(name);
-	if (hp) {
+	if (inet_aton(name, &sin->sin_addr) == 0) {
+		hp = gethostbyname(name);
+		if (hp == 0)
+			return (0);
 		memcpy(&sin->sin_addr, hp->h_addr, hp->h_length);
 		sin->sin_family = hp->h_addrtype;
-		return (1);
-	}
-	sin->sin_addr.s_addr = inet_addr(name);
-	sin->sin_family = AF_INET;
-	return (sin->sin_addr.s_addr != -1);
+	} else
+		sin->sin_family = AF_INET;
+	return (1);
 }

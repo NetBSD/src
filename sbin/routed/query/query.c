@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.8 1995/03/18 15:00:52 cgd Exp $	*/
+/*	$NetBSD: query.c,v 1.9 1995/05/21 14:22:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: query.c,v 1.8 1995/03/18 15:00:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: query.c,v 1.9 1995/05/21 14:22:25 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,8 +155,7 @@ query(host)
 
 	memset(&router, 0, sizeof (router));
 	router.sin_family = AF_INET;
-	router.sin_addr.s_addr = inet_addr(host);
-	if (router.sin_addr.s_addr == -1) {
+	if (inet_aton(host, &router.sin_addr) == 0) {
 		hp = gethostbyname(host);
 		if (hp == NULL) {
 			fprintf(stderr, "query: %s: ", host);
