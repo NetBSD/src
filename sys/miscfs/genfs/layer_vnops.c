@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.2 2000/03/13 23:52:40 soren Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.3 2000/03/30 12:22:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.2 2000/03/13 23:52:40 soren Exp $
+ *	$Id: layer_vnops.c,v 1.3 2000/03/30 12:22:14 augustss Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -291,7 +291,7 @@ layer_bypass(v)
 		<other random data follows, presumably>
 	} */ *ap = v;
 	int (**our_vnodeop_p) __P((void *)); 
-	register struct vnode **this_vp_p;
+	struct vnode **this_vp_p;
 	int error, error1;
 	struct vnode *old_vps[VDESC_MAX_VPS], *vp0;
 	struct vnode **vps_p[VDESC_MAX_VPS];
@@ -822,7 +822,7 @@ layer_print(v)
 	struct vop_print_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 	printf ("\ttag VT_LAYERFS, vp=%p, lowervp=%p\n", vp, LAYERVPTOLOWERVP(vp));
 	return (0);
 }
