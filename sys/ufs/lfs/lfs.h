@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.3 1994/10/20 04:21:10 cgd Exp $	*/
+/*	$NetBSD: lfs.h,v 1.4 1994/11/17 16:58:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -157,6 +157,8 @@ struct lfs {
 	u_int8_t lfs_clean;		/* file system is clean flag */
 	u_int8_t lfs_ronly;		/* mounted read-only flag */
 	u_char	 lfs_fsmnt[MNAMELEN];	/* name mounted on */
+
+	int32_t	 pad[40];		/* round to 512 bytes */
 };
 
 /*
