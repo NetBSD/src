@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.5 1996/10/14 05:15:39 mhitch Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.6 1997/05/25 05:30:21 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,6 +78,7 @@
 #include <compat/ultrix/ultrix_util.h>
 
 const char ultrix_emul_path[] = "/emul/ultrix";
+static int ultrixstatfs __P((struct statfs *sp, caddr_t buf));
 
 int
 ultrix_sys_creat(p, v, retval)
