@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.6 2002/01/06 21:29:20 deberg Exp $
+.\"     $NetBSD: vnodeops.9,v 1.7 2002/02/01 18:47:17 eeh Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -379,12 +379,12 @@ do not follow symbolic links (pseudo)
 mask of operational modifiers
 .El
 .Pp
-All vnode operations must not be called from interrupt context.  Most
+No vnode operations may be called from interrupt context.  Most
 operations also require the vnode to be locked on entry.  To prevent
 deadlocks, when acquiring locks on multiple vnodes, the lock of parent
 directory must be acquired before the lock on the child directory.
 .Pp
-Generally, the vnode operations for a file system type should not be
+Vnode operations for a file system type generally should not be
 called directly from the kernel, but accessed indirectly through the
 high-level convenience functions discussed in
 .Xr vnsubr 9 .
