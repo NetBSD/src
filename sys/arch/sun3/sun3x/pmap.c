@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 1997/10/05 20:43:36 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 1997/10/23 02:24:41 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -865,12 +865,10 @@ pmap_bootstrap(nextva)
 	 * The first page of the kernel virtual address space is the msgbuf
 	 * page.  The page attributes (data, non-cached) are set here, while
 	 * the address is assigned to this global pointer in cpu_startup().
-	 * XXX - Make it non-cached?
+	 * It is non-cached, mostly due to paranoia.
 	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++) {
-		pmap_enter_kernel(va, pa|PMAP_NC, VM_PROT_ALL);
-		va += NBPG; pa += NBPG;
-	}
+	pmap_enter_kernel(va, pa|PMAP_NC, VM_PROT_ALL);
+	va += NBPG; pa += NBPG;
 
 	/* Next page is used as the temporary stack. */
 	pmap_enter_kernel(va, pa, VM_PROT_ALL);
