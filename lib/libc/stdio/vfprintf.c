@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.14 1995/01/25 11:20:41 jtc Exp $";
+static char *rcsid = "$Id: vfprintf.c,v 1.14.2.1 1995/03/02 20:24:16 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -45,8 +45,8 @@ static char *rcsid = "$Id: vfprintf.c,v 1.14 1995/01/25 11:20:41 jtc Exp $";
  * This code is large and complicated...
  */
 
+#include "namespace.h"
 #include <sys/types.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

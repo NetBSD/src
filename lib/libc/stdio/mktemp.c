@@ -1,4 +1,4 @@
-/*	$NetBSD: mktemp.c,v 1.5 1995/02/02 02:10:09 jtc Exp $	*/
+/*	$NetBSD: mktemp.c,v 1.5.2.1 1995/03/02 20:24:01 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -37,9 +37,10 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: mktemp.c,v 1.5 1995/02/02 02:10:09 jtc Exp $";
+static char rcsid[] = "$NetBSD: mktemp.c,v 1.5.2.1 1995/03/02 20:24:01 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
