@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.80 2003/01/18 09:42:59 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.81 2003/02/09 22:32:21 pk Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.80 2003/01/18 09:42:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.81 2003/02/09 22:32:21 pk Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1174,8 +1174,10 @@ ReFault:
 
 		/* got all resources, replace anon with nanon */
 		uvm_pagecopy(oanon->u.an_page, pg);
+		uvm_lock_pageq();
 		uvm_pageactivate(pg);
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
+		uvm_unlock_pageq();
 		UVM_PAGE_OWN(pg, NULL);
 		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
 		    anon, 1);
