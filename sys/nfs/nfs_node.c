@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_node.c	7.34 (Berkeley) 5/15/91
- *	$Id: nfs_node.c,v 1.5 1994/02/15 21:07:10 pk Exp $
+ *	$Id: nfs_node.c,v 1.6 1994/03/01 20:31:09 pk Exp $
  */
 
 #include <sys/param.h>
@@ -247,7 +247,7 @@ nfs_reclaim(vp)
  * In theory, NFS does not need locking, but we make provision
  * for doing it just in case it is needed.
  */
-int donfslocking = 0;
+int donfslocking = 1;
 /*
  * Lock an nfsnode
  */
