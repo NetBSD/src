@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: linkfarm.sh,v 1.1.2.11 2003/07/29 06:57:34 jlam Exp $
+# $NetBSD: linkfarm.sh,v 1.1.2.12 2003/08/24 06:29:56 jlam Exp $
 
 #
 # Copyright (c) 2002 Alistair G. Crooks.  All rights reserved.
@@ -69,9 +69,11 @@ linktype=-s
 
 # default action: create a linkfarm in $target from $stowdir/$1
 # i.e. linkfarm --target=${prefix}/${view} --dir=${prefix}/packages $1
+#
 doit=""
 target=${LOCALBASE:-/usr/pkg}
 stowdir=${target}/packages
+subdir=""
 verbose=0
 
 # default action is to create
@@ -88,6 +90,8 @@ while [ $# -gt 0 ]; do
 	-c)		check=yes; doit=":" ;;
 	-d)		stowdir=$2; shift ;;
 	-d*)		stowdir=`echo $1 | $sedprog -e 's|-d||'` ;;
+	-s)		subdir=$2; shift ;;
+	-s*)		subdir=`echo $1 | $sedprog -e 's|-s||'` ;;
 	-t)		target=$2; shift ;;
 	-t*)		target=`echo $1 | $sedprog -e 's|-t||'` ;;
 	-n)		doit=":" ;;
@@ -96,6 +100,7 @@ while [ $# -gt 0 ]; do
 	--delete)	delete=yes; create=no ;;
 	--dir=*)	stowdir=`echo $1 | $sedprog -e 's|--dir=||'` ;;
 	--restow)	delete=yes; create=yes ;;
+	--subdir=*)	subdir=`echo $1 | $sedprog -e 's|--subdir=||'` ;;
 	--target=*)	target=`echo $1 | $sedprog -e 's|--target=||'` ;;
 	--version)	version ;;
 
@@ -105,30 +110,36 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
+# set the package name
+package=$1
+
 # make sure stowdir has a full pathname
 case $stowdir in
 /*)	;;
 *)	stowdir=`pwd`/$stowdir ;;
 esac
 
-# make sure target has a full pathname
-case $target in
-/*)	;;
-*)	target=`pwd`/$target ;;
+# Set the directory from which we symlink.
+case $subdir in
+"")	fromdir=$stowdir/$package
+*)	fromdir=$stowdir/$package/$subdir
 esac
 
-# set the package name
-package=$1
+# Set the directory to which we symlink.
+case $target in
+/*)	todir=$target ;;
+*)	todir=`pwd`/$target ;;
+esac
 
 # if we're checking the entries, check, then exit
 case $check in
 yes)
-	checkdir $stowdir/$package
-	(cd $stowdir/$package; 
+	checkdir $fromdir
+	(cd $fromdir; 
 	ex=0;
 	for f in `$findprog . ! -type d -print`; do
 		newf=`echo $f | $sedprog -e 's|^\./||'`
-		if [ -e $target/$newf ]; then
+		if [ -e $todir/$newf ]; then
 			ignore=no
 			for i in $ignorefiles; do
 				case $newf in
@@ -148,8 +159,8 @@ esac
 # if we need to get rid of old linkfarms, do it
 case $delete in
 yes)	
-	checkdir $stowdir/$package
-	(cd $stowdir/$package;
+	checkdir $fromdir
+	(cd $fromdir;
 	for f in `$findprog . ! -type d -print`; do
 		newf=`echo $f | $sedprog -e 's|^\./||'`
 		ignore=no
@@ -161,16 +172,16 @@ yes)
 		case $ignore in
 		no)	
 			if [ $verbose -gt 0 ]; then
-				echo "$rmprog $target/$newf"
+				echo "$rmprog $todir/$newf"
 			fi
-			$doit $rmprog $target/$f ;;
+			$doit $rmprog $todir/$f ;;
 		esac
 	done
 	for d in `$findprog . -type d -print | $sortprog -r`; do
 		if [ $verbose -gt 0 ]; then
-			echo "$rmdirprog $target/$d"
+			echo "$rmdirprog $todir/$d"
 		fi
-		$doit $rmdirprog $target/$d > /dev/null 2>&1
+		$doit $rmdirprog $todir/$d > /dev/null 2>&1
 	done)
 	;;
 esac
@@ -178,17 +189,17 @@ esac
 # if we need to create new linkfarms, do it
 case $create in
 yes)
-	checkdir $stowdir/$package
-	(cd $stowdir/$package; 
+	checkdir $fromdir
+	(cd $fromdir; 
 	for d in `$findprog . -type d -print`; do
 		newd=`echo $d | $sedprog -e 's|^\./||'`
 		case "$d" in
 		"")	continue ;;
 		esac
 		if [ $verbose -gt 0 ]; then
-			echo "$mkdirprog -p $target/$newd"
+			echo "$mkdirprog -p $todir/$newd"
 		fi
-		$doit $mkdirprog -p $target/$newd > /dev/null 2>&1
+		$doit $mkdirprog -p $todir/$newd > /dev/null 2>&1
 	done
 	for f in `$findprog . ! -type d -print`; do
 		newf=`echo $f | $sedprog -e 's|^\./||'`
@@ -201,9 +212,9 @@ yes)
 		case $ignore in
 		no)
 			if [ $verbose -gt 0 ]; then
-				echo "$lnprog ${linktype} $stowdir/$package/$newf $target/$newf"
+				echo "$lnprog ${linktype} $fromdir/$newf $todir/$newf"
 			fi
-			$doit $lnprog ${linktype} $stowdir/$package/$newf $target/$f ;;
+			$doit $lnprog ${linktype} $fromdir/$newf $todir/$f ;;
 		esac
 	done)
 	;;
