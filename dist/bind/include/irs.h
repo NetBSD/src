@@ -1,4 +1,4 @@
-/*	$NetBSD: irs.h,v 1.1.1.1.2.2 1999/12/04 17:08:33 he Exp $	*/
+/*	$NetBSD: irs.h,v 1.1.1.1.2.3 2001/01/28 17:09:00 he Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: irs.h,v 8.4 1999/01/18 07:46:46 vixie Exp
+ * Id: irs.h,v 8.5 2000/12/23 08:14:49 vixie Exp
  */
 
 #ifndef _IRS_H_INCLUDED
@@ -208,6 +208,8 @@ extern struct irs_acc *	irs_lcl_acc __P((const char *options));
 extern struct irs_acc *	irs_dns_acc __P((const char *options));
 extern struct irs_acc *	irs_nis_acc __P((const char *options));
 extern struct irs_acc *	irs_irp_acc __P((const char *options));
+
+extern void		irs_destroy(void);
 
 /*
  * These forward declarations are for the semi-private functions in

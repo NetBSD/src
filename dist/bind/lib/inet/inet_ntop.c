@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.1.1.1.2.2 1999/12/04 16:59:43 he Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.1.1.1.2.3 2001/01/28 17:09:01 he Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: inet_ntop.c,v 1.8 1999/10/13 16:39:28 vixie Exp";
+static const char rcsid[] = "Id: inet_ntop.c,v 1.10 2001/01/25 20:21:10 vixie Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -98,7 +98,7 @@ inet_ntop4(src, dst, size)
 	static const char fmt[] = "%u.%u.%u.%u";
 	char tmp[sizeof "255.255.255.255"];
 
-	if (SPRINTF((tmp, fmt, src[0], src[1], src[2], src[3])) > size) {
+	if (SPRINTF((tmp, fmt, src[0], src[1], src[2], src[3])) >= size) {
 		errno = ENOSPC;
 		return (NULL);
 	}

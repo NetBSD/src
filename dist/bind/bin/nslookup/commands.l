@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.l,v 1.1.1.1.2.2 1999/12/04 16:57:11 he Exp $	*/
+/*	$NetBSD: commands.l,v 1.1.1.1.2.3 2001/01/28 17:08:59 he Exp $	*/
 
 %{
 
@@ -97,6 +97,7 @@ static char sccsid[] = "@(#)commands.l	5.13 (Berkeley) 7/24/90";
 
 #include "port_before.h"
 #include <sys/types.h>
+#include <netinet/in.h>
 #include "port_after.h"
 #include "res.h"
 
@@ -107,7 +108,7 @@ extern void ViewList(char *);
 %}
 WS	[ \t]
 FLET	[A-Za-z0-9.*\\_]
-LET	[A-Za-z0-9.*]
+LET	[A-Za-z0-9.*_]
 NAME	[A-Za-z0-9.*=_/-]
 %%
 ^{WS}*server{WS}+{LET}{NAME}*{WS}*$	{
@@ -142,10 +143,6 @@ NAME	[A-Za-z0-9.*=_/-]
 					}
 ^{WS}*finger({WS}+{LET}{NAME}*)?{WS}*$	{
 					    Finger(yytext, 0);
-					    return(1);
-					}
-^{WS}*view{WS}+{NAME}+{WS}*$	{
-					    ViewList((char *)yytext);
 					    return(1);
 					}
 ^{WS}*ls{WS}+(("-a"|"-d"|"-h"|"-m"|"-s"){WS}+)?{LET}{NAME}*{WS}+>>?{WS}+{NAME}+{WS}*$	{

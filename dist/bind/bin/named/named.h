@@ -1,7 +1,7 @@
-/*	$NetBSD: named.h,v 1.1.1.1.2.2 1999/12/04 16:54:07 he Exp $	*/
+/*	$NetBSD: named.h,v 1.1.1.1.2.3 2001/01/28 17:08:58 he Exp $	*/
 
 /*
- * Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Copyright (c) 1996-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: named.h,v 8.25 1999/10/13 18:00:19 vixie Exp
+ * Id: named.h,v 8.27 2000/04/21 06:54:04 vixie Exp
  */
 
 /* Options. Change them at your peril. */
@@ -32,7 +32,6 @@
 #define QRYLOG
 #define YPKLUDGE
 #define	RENICE
-#define SLAVE_FORWARD
 #define BIND_IXFR
 #define BIND_NOTIFY
 #define BIND_UPDATE

@@ -1,8 +1,8 @@
-/*	$NetBSD: db_tsig.c,v 1.1.1.1.2.2 1999/12/04 16:53:54 he Exp $	*/
+/*	$NetBSD: db_tsig.c,v 1.1.1.1.2.3 2001/01/28 17:08:58 he Exp $	*/
 
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "Id: db_tsig.c,v 8.5 1999/10/15 19:48:59 vixie Exp";
+static const char rcsid[] = "Id: db_tsig.c,v 8.6 2000/04/21 06:54:04 vixie Exp";
 #endif /* not lint */
 
 /*
@@ -59,7 +59,7 @@ static const char rcsid[] = "Id: db_tsig.c,v 8.5 1999/10/15 19:48:59 vixie Exp";
  */
 
 /*
- * Portions Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Portions Copyright (c) 1996-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
