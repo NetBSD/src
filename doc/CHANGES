@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.204 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.205 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -443,6 +443,7 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		the S3C2410 Processor.  [bsh 20030804]
 	dlsym(3): Add support for RTLD_DEFAULT, RTLD_NEXT and RTLD_SELF
 		[christos,skrll 20030812]
+	gdb(1): Import gdb-5.3 and add support for i386 [christos 20030814]
 	kernel: Add support for non-executable mappings for many platforms.
 		Map the stack and heap non-executable.  [chs 20030824]
 	agp(4): Add support for i865G integrated graphics.  [tron 20030826]
@@ -455,7 +456,6 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	kernel: Enhance LKM versioning, and improve compatibility checking
 		on LKM load [jdolecek 20030906]
 	kernel: Add support for SA_SIGINFO on i386 [christos 20030907]
-	gdb: Import gdb-5.3 and add support for i386 [christos 20030804]
 	XFree86: Reach-over build framework added under src/x11.
 		[lukem 20030912]
 	i386: Switch to GCC 3.3.1.  [mrg 20030919]
