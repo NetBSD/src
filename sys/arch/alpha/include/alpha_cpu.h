@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.29 1998/09/25 03:21:31 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.30 1998/09/25 23:59:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -331,6 +331,7 @@ int		alpha_atomic_testset_l __P((unsigned int *, unsigned int));
 void		alpha_atomic_setbits_q __P((unsigned long *, unsigned long));
 void		alpha_atomic_clearbits_q __P((unsigned long *, unsigned long));
 int		alpha_atomic_testset_q __P((unsigned long *, unsigned long));
+unsigned long	alpha_atomic_loadlatch_q __P((unsigned long *, unsigned long));
 
 /*
  * Stubs for OSF/1 PALcode operations.
