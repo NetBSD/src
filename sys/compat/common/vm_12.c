@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.6 1997/10/10 05:40:17 mrg Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.7 1997/10/16 23:49:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -34,6 +34,7 @@
 #include <sys/syscallargs.h>
 
 #include <vm/vm_swap.h>
+#include <sys/mman.h>
 
 int
 compat_12_sys_swapon(p, v, retval)
@@ -50,4 +51,22 @@ compat_12_sys_swapon(p, v, retval)
 	SCARG(&ua, arg) = (void *)SCARG(uap, name);
 	SCARG(&ua, misc) = 0;	/* priority */
 	return (sys_swapctl(p, &ua, retval));
+}
+
+int
+compat_12_sys_msync(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_msync_args ua;
+	struct compat_12_sys_msync_args /* {
+		syscallarg(caddr_t) addr;
+		syscallarg(size_t) len;
+	} */ *uap = v;
+
+	SCARG(&ua, addr) = SCARG(uap, addr);;
+	SCARG(&ua, len) = SCARG(uap, len);;
+	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
+	return (sys_msync(p, &ua, retval));
 }
