@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2000/05/02 16:06:50 sjg Exp $
+#	$NetBSD: Makefile,v 1.10.4.1 2001/05/02 23:06:35 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -44,11 +44,13 @@ unconfig:
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c #libhack.o
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
 	make -f ${CBIN}.mk all
 
-#HACKSRC=${TOP}/../../utils/libhack
-#.include "${HACKSRC}/Makefile.inc"
+HACKSRC=${TOP}/../../utils/libhack
+.include "${HACKSRC}/Makefile.inc"
+HACKOBJS= gethost.o getnet.o getpwent.o localeconv.o perror.o \
+	setlocale.o strerror.o strsignal.o utmp.o yplib.o
 
 clean cleandir distclean:
 	rm -f ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
