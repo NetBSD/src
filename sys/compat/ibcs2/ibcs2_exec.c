@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.32 2000/06/26 14:38:55 mrg Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.33 2000/06/28 00:14:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -498,6 +498,14 @@ exec_ibcs2_coff_prep_nmagic(p, epp, fp, ap)
 		epp->ep_dsize += ap->a_bsize;
 	}
 	DPRINTF(("\n"));
+	/* The following is to make obreak(2) happy.  It expects daddr
+	 * to on a page boundary and will round up dsize to a page
+	 * address.
+	 */
+	if (trunc_page(epp->ep_daddr) != epp->ep_daddr) {
+		epp->ep_dsize += epp->ep_daddr - trunc_page(epp->ep_daddr);
+		epp->ep_daddr = trunc_page(epp->ep_daddr);
+	}
 
 	return exec_ibcs2_coff_setup_stack(p, epp);
 }
