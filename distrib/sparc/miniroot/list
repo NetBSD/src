@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.26 2002/05/29 04:11:03 lukem Exp $
+#	$NetBSD: list,v 1.27 2002/06/12 22:59:33 lukem Exp $
 
 # Sparc extra's
 PROG	bin/rcmd
@@ -29,6 +29,8 @@ SYMLINK	/tmp	var/tmp
 
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
+# ensure binstall is executable
+MTREE	./usr/mdec/binstall	mode=0555
 
 # the zoneinfo
 COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
