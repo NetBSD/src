@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.6 1995/03/08 02:56:57 cgd Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.7 1997/05/01 14:42:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -63,13 +63,15 @@ struct llc {
 	    } type_s;
 	    struct {
 	        u_int8_t control;
-		struct frmrinfo {
-			u_int8_t rej_pdu_0;
-			u_int8_t rej_pdu_1;
-			u_int8_t frmr_control;
-			u_int8_t frmr_control_ext;
-			u_int8_t frmr_cause;
-		} frmrinfo;
+		/*
+		 * We cannot put the following fields in a structure because
+		 * the structure rounding might cause padding.
+		 */
+		u_int8_t frmr_pdu0;
+		u_int8_t frmr_pdu1;
+		u_int8_t frmr_control;
+		u_int8_t frmr_control_ext;
+		u_int8_t frmr_cause;
 	    } type_frmr;
 	    struct {
 		u_int8_t  control;
@@ -82,17 +84,16 @@ struct llc {
 	    } type_raw;
 	} llc_un;
 };
-#define llc_control            llc_un.type_u.control
-#define	llc_control_ext        llc_un.type_raw.control_ext
-#define llc_fid                llc_un.type_u.format_id
-#define llc_class              llc_un.type_u.class
-#define llc_window             llc_un.type_u.window_x2
-#define llc_frmrinfo           llc_un.type_frmr.frmrinfo
-#define llc_frmr_pdu0          llc_un.type_frmr.frmrinfo.rej_pdu0
-#define llc_frmr_pdu1          llc_un.type_frmr.frmrinfo.rej_pdu1
-#define llc_frmr_control       llc_un.type_frmr.frmrinfo.frmr_control
-#define llc_frmr_control_ext   llc_un.type_frmr.frmrinfo.frmr_control_ext
-#define llc_frmr_cause         llc_un.type_frmr.frmrinfo.frmr_control_ext
+#define	llc_control		llc_un.type_u.control
+#define	llc_control_ext		llc_un.type_raw.control_ext
+#define	llc_fid			llc_un.type_u.format_id
+#define	llc_class		llc_un.type_u.class
+#define	llc_window		llc_un.type_u.window_x2
+#define	llc_frmr_pdu0		llc_un.type_frmr.frmr_pdu0
+#define	llc_frmr_pdu1		llc_un.type_frmr.frmr_pdu1
+#define	llc_frmr_control	llc_un.type_frmr.frmr_control
+#define	llc_frmr_control_ext	llc_un.type_frmr.frmr_control_ext
+#define	llc_frmr_cause		llc_un.type_frmr.frmr_cause
 
 /*
  * Don't use sizeof(struct llc_un) for LLC header sizes
