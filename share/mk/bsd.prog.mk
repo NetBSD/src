@@ -65,7 +65,7 @@ ${PROG}: ${OBJS} ${LIBC} ${DPADD}
 SRCS= ${PROG}.c
 
 ${PROG}: ${SRCS} ${LIBC} ${DPADD}
-	${CC} ${CFLAGS} -o ${.TARGET} ${.CURDIR}/${SRCS} ${LDADD}
+	${CC} ${LDFLAGS} ${CFLAGS} -o ${.TARGET} ${.CURDIR}/${SRCS} ${LDADD}
 
 MKDEP=	-p
 
