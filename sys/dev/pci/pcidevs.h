@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.335 2001/06/17 19:51:27 tsubai Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.336 2001/06/18 13:19:07 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.329 2001/06/17 19:50:33 tsubai Exp 
+ *	NetBSD: pcidevs,v 1.330 2001/06/18 13:18:08 onoe Exp 
  */
 
 /*
@@ -708,6 +708,7 @@
 
 /* Aironet Wireless Communicasions products */
 #define	PCI_PRODUCT_AIRONET_PC4xxx	0x0001		/* Aironet PC4500/PC4800 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_350	0x0350		/* Aironet 350 Wireless LAN Adapter */
 #define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* Aironet PC4500 Wireless LAN Adapter */
 #define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* Aironet PC4800 Wireless LAN Adapter */
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.333 2001/06/17 19:51:27 tsubai Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.334 2001/06/18 13:19:07 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.329 2001/06/17 19:50:33 tsubai Exp 
+ *	NetBSD: pcidevs,v 1.330 2001/06/18 13:18:08 onoe Exp 
  */
 
 /*
@@ -662,6 +662,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Aironet Wireless Communications",
 	    "Aironet PC4500/PC4800 Wireless LAN Adapter",
+	},
+	{
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_350,
+	    0,
+	    "Aironet Wireless Communications",
+	    "Aironet 350 Wireless LAN Adapter",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500,
