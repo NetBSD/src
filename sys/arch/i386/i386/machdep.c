@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.526 2003/06/29 22:28:24 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.527 2003/07/28 10:28:30 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.526 2003/06/29 22:28:24 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.527 2003/07/28 10:28:30 mrg Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -333,7 +333,7 @@ cpu_startup()
 	 * is not managed by the VM system.
 	 */
 	size = MAXBSIZE * nbuf;
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *)(void *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != 0)
