@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.29 2004/01/07 12:18:16 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.30 2004/03/05 20:44:01 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.29 2004/01/07 12:18:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.30 2004/03/05 20:44:01 dbj Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -464,6 +464,7 @@ again:
 		struct vm_page *pgs[npages];
 		int gpflags = PGO_SYNCIO|PGO_OVERWRITE|PGO_PASTEOF;
 		int i;
+		KDASSERT(flags & UBC_WRITE);
 
 		if (umap->flags & UMAP_MAPPING_CACHED) {
 			umap->flags &= ~UMAP_MAPPING_CACHED;
