@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.11 2000/01/05 18:44:26 ad Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.12 2000/01/07 03:25:46 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.11 2000/01/05 18:44:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.12 2000/01/07 03:25:46 enami Exp $");
 
 #include "opt_wsfont.h"
 
@@ -419,15 +419,19 @@ wsfont_lock(cookie, ptr, bitorder, byteorder)
 	
 	if ((ent = wsfont_find0(cookie)) != NULL) {
 		if (bitorder && bitorder != ent->font->bitorder) {
-			if (ent->lockcount)
+			if (ent->lockcount) {
+				splx(s);
 				return (-1);
+			}
 			wsfont_revbit(ent->font);
 			ent->font->bitorder = bitorder;
 		}
 
 		if (byteorder && byteorder != ent->font->byteorder) {
-			if (ent->lockcount)
+			if (ent->lockcount) {
+				splx(s);
 				return (-1);
+			}
 			wsfont_revbyte(ent->font);
 			ent->font->byteorder = byteorder;
 		}
