@@ -1,4 +1,4 @@
-#	$Id: files.oldconf,v 1.21 1993/08/14 06:38:24 deraadt Exp $
+#	$Id: files.oldconf,v 1.22 1993/08/24 12:52:29 pk Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -82,6 +82,9 @@ miscfs/fdesc/fdesc_vfsops.c	optional fdesc
 miscfs/fdesc/fdesc_vnops.c	optional fdesc
 miscfs/kernfs/kernfs_vfsops.c	optional kernfs
 miscfs/kernfs/kernfs_vnops.c	optional kernfs
+miscfs/procfs/procfs_vfsops.c	optional procfs
+miscfs/procfs/procfs_vnops.c	optional procfs
+miscfs/procfs/procfs_subr.c	optional procfs
 net/af.c		standard
 net/bpf.c		optional bpfilter
 net/bpf_filter.c	optional bpfilter device-driver
