@@ -98,6 +98,9 @@ int event_gotsig;		/* Set in signal handler */
 /* Prototypes */
 void	event_queue_insert(struct event *, int);
 void	event_queue_remove(struct event *, int);
+int	event_haveevents(void);
+void	event_process_active(void);
+void	timeout_insert(struct event *);
 
 static RB_HEAD(event_tree, event) timetree;
 static struct event_list activequeue;
