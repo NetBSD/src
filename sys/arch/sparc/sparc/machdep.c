@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127 1998/09/13 20:24:15 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.128 1998/09/13 20:33:33 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -751,72 +751,6 @@ sys___sigreturn14(p, v, retval)
 	return (EJUSTRETURN);
 }
 
-#ifdef COMPAT_13
-/*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above),
- * and return to the given trap frame (if there is one).
- * Check carefully to make sure that the user has not
- * modified the state to gain improper privileges or to cause
- * a machine fault.
- */
-/* ARGSUSED */
-int
-compat_13_sys_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct compat_13_sys_sigreturn_args /* {
-		syscallarg(struct sigcontext13 *) sigcntxp;
-	} */ *uap = v;
-	struct sigcontext13 sc, *scp;
-	sigset_t mask;
-	struct trapframe *tf;
-	int error;
-
-	/* First ensure consistent stack state (see sendsig). */
-	write_user_windows();
-	if (rwindow_save(p))
-		sigexit(p, SIGILL);
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: %s[%d], sigcntxp %p\n",
-		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
-#endif
-	if ((error = copyin(SCARG(uap, sigcntxp), &sc, sizeof sc)) != 0)
-		return (error);
-	scp = &sc;
-
-	tf = p->p_md.md_tf;
-	/*
-	 * Only the icc bits in the psr are used, so it need not be
-	 * verified.  pc and npc must be multiples of 4.  This is all
-	 * that is required; if it holds, just do it.
-	 */
-	if (((scp->sc_pc | scp->sc_npc) & 3) != 0)
-		return (EINVAL);
-	/* take only psr ICC field */
-	tf->tf_psr = (tf->tf_psr & ~PSR_ICC) | (scp->sc_psr & PSR_ICC);
-	tf->tf_pc = scp->sc_pc;
-	tf->tf_npc = scp->sc_npc;
-	tf->tf_global[1] = scp->sc_g1;
-	tf->tf_out[0] = scp->sc_o0;
-	tf->tf_out[6] = scp->sc_sp;
-
-	if (scp->sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	/* Restore signal mask */
-	native_sigset13_to_sigset(&scp->sc_mask, &mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
-
-	return (EJUSTRETURN);
-}
-#endif
 
 int	waittime = -1;
 
