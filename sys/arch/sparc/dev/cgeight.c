@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.28 2002/09/27 20:35:40 thorpej Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.29 2002/10/01 18:57:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -129,9 +129,8 @@ static void	cgeightunblank __P((struct device *));
 
 static int	cg8_pfour_probe __P((void *, void *));
 
-const struct cfattach cgeight_ca = {
-	sizeof(struct cgeight_softc), cgeightmatch, cgeightattach
-};
+CFATTACH_DECL(cgeight, sizeof(struct cgeight_softc),
+    cgeightmatch, cgeightattach, NULL, NULL)
 
 extern struct cfdriver cgeight_cd;
 

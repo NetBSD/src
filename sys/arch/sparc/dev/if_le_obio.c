@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_obio.c,v 1.14 2002/09/27 20:35:50 thorpej Exp $	*/
+/*	$NetBSD: if_le_obio.c,v 1.15 2002/10/01 18:57:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -86,9 +86,8 @@ static int lemedia[] = {
 };
 #define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
 
-const struct cfattach le_obio_ca = {
-	sizeof(struct le_softc), lematch_obio, leattach_obio
-};
+CFATTACH_DECL(le_obio, sizeof(struct le_softc),
+    lematch_obio, leattach_obio, NULL, NULL)
 
 extern struct cfdriver le_cd;
 
