@@ -20,6 +20,9 @@ BINMODE?=	555
 LIBCRT0?=	/usr/lib/crt0.o
 LIBC?=		/usr/lib/libc.a
 LIBCOMPAT?=	/usr/lib/libcompat.a
+.ifndef EXPORTABLE_SYSTEM
+LIBCRYPT?=	/usr/lib/libcrypt.a
+.endif
 LIBCURSES?=	/usr/lib/libcurses.a
 LIBDBM?=	/usr/lib/libdbm.a
 LIBDES?=	/usr/lib/libdes.a
