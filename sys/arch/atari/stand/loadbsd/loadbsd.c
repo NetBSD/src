@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.5 1995/05/02 05:54:28 leo Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.6 1995/05/05 16:39:14 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -46,7 +46,7 @@ int	t_flag = 0;		/* Just test, do not execute	*/
 int	d_flag = 0;		/* Output debugging output?	*/
 int	s_flag = 0;		/* St-ram only			*/
 
-char version[] = "$Revision: 1.5 $";
+char version[] = "$Revision: 1.6 $";
 
 /*
  * Default name of kernel to boot, large enough to patch
@@ -264,14 +264,14 @@ void get_sys_info()
 			}
 			if(jar[0] == 0x5f465055) { /* _FPU	*/
 				switch(jar[1]) {
-					case 0x10000:
 					case 0x20000:
+					case 0x40000:
 						kparam.cputype |= ATARI_68881;
 						break;
-					case 0x30000:
+					case 0x60000:
 						kparam.cputype |= ATARI_68882;
 						break;
-					case 0x40000:
+					case 0x80000:
 						kparam.cputype |= ATARI_FPU40;
 						break;
 					default:
