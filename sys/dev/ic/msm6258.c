@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.8 2002/04/02 15:22:38 isaki Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.9 2002/04/07 14:51:40 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.8 2002/04/02 15:22:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.9 2002/04/07 14:51:40 isaki Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -49,14 +49,26 @@ __KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.8 2002/04/02 15:22:38 isaki Exp $");
 #include <dev/mulaw.h>
 #include <dev/ic/msm6258var.h>
 
+struct msm6258_codecvar {
+	/* ADPCM stream must be converted in order. */
+	u_char	mc_buf[AU_RING_SIZE]; /* XXX */
 
-static inline u_char pcm2adpcm_step(short, short *, char *);
-static inline void adpcm2pcm_step(u_char, short *, char *);
+	short	mc_amp;
+	char	mc_estim;
+};
 
+struct msm6258_softc {
+	struct device sc_dev;
+	struct msm6258_codecvar *sc_mc;
+	/* MD vars follow */
+};
+
+static inline u_char pcm2adpcm_step(struct msm6258_codecvar *, short);
+static inline short  adpcm2pcm_step(struct msm6258_codecvar *, u_char);
 
 static int adpcm_estimindex[16] = {
-	 1,  3,  5,  7,  9,  11,  13,  15,
-	-1, -3, -5, -7, -9, -11, -13, -15
+	 2,  6,  10,  14,  18,  22,  26,  30,
+	-2, -6, -10, -14, -18, -22, -26, -30
 };
 
 static int adpcm_estim[49] = {
@@ -67,20 +79,9 @@ static int adpcm_estim[49] = {
 	724, 796, 875, 963, 1060, 1166, 1282, 1411, 1552
 };
 
-static u_char adpcm_estimindex_correct[16] = {
+static int adpcm_estimstep[16] = {
 	-1, -1, -1, -1, 2, 4, 6, 8,
 	-1, -1, -1, -1, 2, 4, 6, 8
-};
-
-struct msm6258_codecvar {
-	short	mc_amp;
-	char	mc_estim;
-};
-
-struct msm6258_softc {
-	struct device sc_dev;
-	struct msm6258_codecvar *sc_mc;
-	/* MD vars follow */
 };
 
 void *
@@ -108,108 +109,195 @@ msm6258_codec_open(void *hdl)
 	return 0;
 }
 
+/*
+ * signed 16bit linear PCM -> OkiADPCM
+ */
 static inline u_char
-pcm2adpcm_step(short a, short *y, char *x)
+pcm2adpcm_step(struct msm6258_codecvar *mc, short a)
 {
-	int c, d;
-	register unsigned char b;
+	int estim = (int)mc->mc_estim;
+	int df;
+	short dl, c;
+	unsigned char b;
+	unsigned char s;
 
-	a -= *y;
-	d = adpcm_estim[(int) *x];
-	c = a * 4  / d;
-
-	if (c < 0) {
-		b = (unsigned char)-c;
-		if (b >= 8)
-			b = 7;
-		b |= 0x08;
+	df = a - mc->mc_amp;
+	dl = adpcm_estim[estim];
+	c = (df / 16) * 8 / dl;
+	if (df < 0) {
+		b = (unsigned char)(-c) / 2;
+		s = 0x08;
 	} else {
-		b = (unsigned char)c;
-		if (b >= 8)
-			b = 7;
+		b = (unsigned char)(c) / 2;
+		s = 0;
 	}
+	if (b > 7)
+		b = 7;
+	s |= b;
+	mc->mc_amp += (short)(adpcm_estimindex[(int)s] * dl);
+	estim += adpcm_estimstep[b];
+	if (estim < 0)
+		estim = 0;
+	else if (estim > 48)
+		estim = 48;
 
-	*y += (short)(adpcm_estimindex[b] * d / 8);
-	*x += adpcm_estimindex_correct[b];
-	if (*x < 0)
-		*x = 0;
-	else if (*x > 48)
-		*x = 48;
-	return b;
+	mc->mc_estim = estim;
+	return s;
+}
+
+void
+msm6258_slinear16_host_to_adpcm(void *hdl, u_char *p, int cc)
+{
+	struct msm6258_softc *sc = hdl;
+	struct msm6258_codecvar *mc = sc->sc_mc;
+	short *s = (short *)p;
+	int i;
+	u_char f;
+
+	for (i = 0; i < cc; i += 4) {
+		f  = pcm2adpcm_step(mc, *s++);
+		f |= pcm2adpcm_step(mc, *s++) << 4;
+		*p++ = f;
+	}
+}
+
+void
+msm6258_slinear16_le_to_adpcm(void *hdl, u_char *p, int cc)
+{
+#if BYTE_ORDER == BIG_ENDIAN
+	swap_bytes(hdl, p, cc);
+#endif
+	msm6258_slinear16_host_to_adpcm(hdl, p, cc);
+}
+
+void
+msm6258_slinear16_be_to_adpcm(void *hdl, u_char *p, int cc)
+{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	swap_bytes(hdl, p, cc);
+#endif
+	msm6258_slinear16_host_to_adpcm(hdl, p, cc);
+}
+
+void
+msm6258_slinear8_to_adpcm(void *hdl, u_char *p, int cc)
+{
+	struct msm6258_softc *sc = hdl;
+	struct msm6258_codecvar *mc = sc->sc_mc;
+	u_char *s = p;
+	int i;
+	u_char f;
+
+	for (i = 0; i < cc; i += 2) {
+		f  = pcm2adpcm_step(mc, (short)(*s++) * 256);
+		f |= pcm2adpcm_step(mc, (short)(*s++) * 256) << 4;
+		*p++ = f;
+	}
 }
 
 void
 msm6258_ulinear8_to_adpcm(void *hdl, u_char *p, int cc)
 {
-	struct msm6258_softc *sc = hdl;
-	struct msm6258_codecvar *mc = sc->sc_mc;
-	char *x = &(mc->mc_estim);
-	short *y = &(mc->mc_amp);
-	register int i;
-	u_char *d = p;
-	u_char f;
-
-	for (i = 0; i < cc; ) {
-		f = pcm2adpcm_step(p[i++], y, x);
-		*d++ = f + (pcm2adpcm_step(p[i++], y, x) << 4);
-	}
+	change_sign8(hdl, p, cc);
+	msm6258_slinear8_to_adpcm(hdl, p, cc);
 }
 
 void
 msm6258_mulaw_to_adpcm(void *hdl, u_char *p, int cc)
 {
-	mulaw_to_ulinear8(hdl, p, cc);
-	msm6258_ulinear8_to_adpcm(hdl, p, cc);
+	mulaw_to_slinear8(hdl, p, cc);
+	msm6258_slinear8_to_adpcm(hdl, p, cc);
 }
 
-static inline void
-adpcm2pcm_step(u_char b, short *y, char *x)
+
+/*
+ * OkiADPCM -> signed 16bit linear PCM
+ */
+static inline short
+adpcm2pcm_step(struct msm6258_codecvar *mc, u_char b)
 {
-	short dl;
-	short pcm = *y;
-	int estim = *x;
+	int estim = (int)mc->mc_estim;
 
-	dl = adpcm_estim[estim] * adpcm_estimindex[b] / 8;
-	pcm += dl;
-	*y = pcm / 256;
+	mc->mc_amp += adpcm_estim[estim] * adpcm_estimindex[b];
+	estim += adpcm_estimstep[b];
 
-	estim += adpcm_estimindex_correct[b];
 	if (estim < 0)
 		estim = 0;
-	if (estim > 48)
+	else if (estim > 48)
 		estim = 48;
-	*x = estim;
+
+	mc->mc_estim = estim;
+
+	return mc->mc_amp;
 }
 
-/* ADPCM stream must be converted in order. */
-u_char tmpbuf[AU_RING_SIZE]; /* XXX */
+void
+msm6258_adpcm_to_slinear16_host(void *hdl, u_char *p, int cc)
+{
+	struct msm6258_softc *sc = hdl;
+	struct msm6258_codecvar *mc = sc->sc_mc;
+	short *d = (short *)p;
+	int i;
+	u_char a;
+
+	/* XXX alignment ? */
+	memcpy(mc->mc_buf, p, cc / 4);
+	for (i = 0; i < cc / 4;) {
+		a = mc->mc_buf[i++];
+
+		*d++ = adpcm2pcm_step(mc, a & 0x0f);
+		*d++ = adpcm2pcm_step(mc, (a >> 4) & 0x0f);
+	}
+}
+
+void
+msm6258_adpcm_to_slinear16_le(void *hdl, u_char *p, int cc)
+{
+	msm6258_adpcm_to_slinear16_host(hdl, p, cc);
+#if BYTE_ORDER == BIG_ENDIAN
+	swap_bytes(hdl, p, cc);
+#endif
+}
+
+void
+msm6258_adpcm_to_slinear16_be(void *hdl, u_char *p, int cc)
+{
+	msm6258_adpcm_to_slinear16_host(hdl, p, cc);
+#if BYTE_ORDER == LITTLE_ENDIAN
+	swap_bytes(hdl, p, cc);
+#endif
+}
+
+void
+msm6258_adpcm_to_slinear8(void *hdl, u_char *p, int cc)
+{
+	struct msm6258_softc *sc = hdl;
+	struct msm6258_codecvar *mc = sc->sc_mc;
+	char *d = (char *)p;
+	int i;
+	u_char a;
+
+	/* cc may be even. XXX alignment ? */
+	memcpy(mc->mc_buf, p, cc / 2);
+	for (i = 0; i < cc / 2;) {
+		a = mc->mc_buf[i++];
+
+		*d++ = adpcm2pcm_step(mc, a & 0x0f) / 256;
+		*d++ = adpcm2pcm_step(mc, (a >> 4) & 0x0f) / 256;
+	}
+}
 
 void
 msm6258_adpcm_to_ulinear8(void *hdl, u_char *p, int cc)
 {
-	struct msm6258_softc *sc = hdl;
-	struct msm6258_codecvar *mc = sc->sc_mc;
-	char *x = &(mc->mc_estim);
-	short *y = &(mc->mc_amp);
-	u_char a, b;
-	int i;
-
-	/* cc may be even. XXX alignment? */
-	memcpy(tmpbuf, p, cc/2);
-	for (i = 0; i < cc/2;) {
-		a = tmpbuf[i++];
-		b = a & 0x0f;
-		adpcm2pcm_step(b, y, x);
-		*p++ = *y;
-		b = a >> 4;
-		adpcm2pcm_step(b, y, x);
-		*p++ = *y;
-	}
+	msm6258_adpcm_to_slinear8(hdl, p, cc);
+	change_sign8(hdl, p, cc);
 }
 
 void
 msm6258_adpcm_to_mulaw(void *hdl, u_char *p, int cc)
 {
-	msm6258_adpcm_to_ulinear8(hdl, p, cc);
-	ulinear8_to_mulaw(hdl, p, cc*2);
+	msm6258_adpcm_to_slinear8(hdl, p, cc);
+	slinear8_to_mulaw(hdl, p, cc);
 }
+
