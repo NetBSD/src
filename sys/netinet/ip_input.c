@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.65 1998/05/04 19:24:53 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.66 1998/05/24 20:14:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -891,7 +891,7 @@ ip_dooptions(m)
 				break;
 
 			case IPOPT_TS_TSANDADDR:
-				if (ipt->ipt_ptr + sizeof(n_time) +
+				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len)
 					goto bad;
 				ipaddr.sin_addr = dst;
@@ -905,7 +905,7 @@ ip_dooptions(m)
 				break;
 
 			case IPOPT_TS_PRESPEC:
-				if (ipt->ipt_ptr + sizeof(n_time) +
+				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len)
 					goto bad;
 				bcopy((caddr_t)sin, (caddr_t)&ipaddr.sin_addr,
