@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.72 2000/04/14 14:13:56 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.73 2000/04/21 15:58:55 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -351,10 +351,8 @@ usbd_reset_port(dev, port, ps)
 			return (err);
 		}
 	} while ((UGETW(ps->wPortChange) & UPS_C_PORT_RESET) == 0 && --n > 0);
-	if (n == 0) {
-		printf("usbd_reset_port: timeout\n");
-		return (USBD_IOERROR);
-	}
+	if (n == 0)
+		return (USBD_TIMEOUT);
 	err = usbd_clear_port_feature(dev, port, UHF_C_PORT_RESET);
 #ifdef USB_DEBUG
 	if (err)
