@@ -1,4 +1,4 @@
-#	$NetBSD: std.sgimips,v 1.2 2000/06/22 20:27:56 fvdl Exp $
+#	$NetBSD: std.sgimips,v 1.3 2000/08/08 16:56:03 soren Exp $
 
 machine sgimips mips
 
@@ -6,6 +6,8 @@ options	EXEC_ELF32	# exec ELF32 binaries
 options	EXEC_SCRIPT	# exec #! scripts
 
 options __NO_SOFT_SERIAL_INTERRUPT
+
+options MIPS3_ENABLE_CLOCK_INTR
 
 options COM16650
 options TLP_MATCH_21040
