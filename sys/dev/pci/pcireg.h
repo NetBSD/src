@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.33 2001/02/09 14:33:16 briggs Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.34 2001/02/12 06:24:24 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -500,6 +500,7 @@ typedef u_int8_t pci_intr_line_t;
 #define	  PCI_BRIDGE_PREFETCHMEM_LIMIT_SHIFT	20
 #define	  PCI_BRIDGE_PREFETCHMEM_BASE_MASK	0xffff
 #define	  PCI_BRIDGE_PREFETCHMEM_LIMIT_MASK	0xffff
+#define	  PCI_BRIDGE_PREFETCHMEM_64BITS(reg)	((reg) & 0xf)
 
 #define PCI_BRIDGE_PREFETCHBASE32_REG	0x28
 #define PCI_BRIDGE_PREFETCHLIMIT32_REG	0x2C
