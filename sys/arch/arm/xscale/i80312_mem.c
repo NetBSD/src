@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mem.c,v 1.1 2001/11/05 23:37:01 thorpej Exp $	*/
+/*	$NetBSD: i80312_mem.c,v 1.2 2001/12/18 02:52:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -63,7 +63,7 @@ i80312_sdram_bounds(bus_space_tag_t st, bus_space_handle_t sh,
 	sbr0 = bus_space_read_4(st, sh, I80312_MEM_SB0);
 	sbr1 = bus_space_read_4(st, sh, I80312_MEM_SB1);
 
-#if 0
+#ifdef VERBOSE_INIT_ARM
 	printf("i80312: SBDR = 0x%08x SBR0 = 0x%08x SBR1 = 0x%08x\n",
 	    sdbr, sbr0, sbr1);
 #endif
@@ -78,7 +78,7 @@ i80312_sdram_bounds(bus_space_tag_t st, bus_space_handle_t sh,
 	bank0 = sbr0 << 25;
 	bank1 = sbr1 << 25;
 
-#if 0
+#ifdef VERBOSE_INIT_ARM
 	printf("i80312: BANK0 = 0x%08x BANK1 = 0x%08x\n", bank0, bank1);
 #endif
 
