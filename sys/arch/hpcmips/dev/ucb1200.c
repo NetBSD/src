@@ -1,4 +1,4 @@
-/*	$NetBSD: ucb1200.c,v 1.7 2002/01/29 18:53:12 uch Exp $ */
+/*	$NetBSD: ucb1200.c,v 1.8 2002/06/08 16:02:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ ucb1200_state_idle(dev)
 void
 ucb1200_dump(struct ucb1200_softc *sc)
 {
-        const char *regname[] = {
+	static const char *regname[] = {
                 "IO_DATA        ",
                 "IO_DIR         ",
                 "POSINTEN       ",
@@ -233,7 +233,7 @@ ucb1200_dump(struct ucb1200_softc *sc)
                 "MODE           ",
                 "RESERVED       ",
                 "NULL           "
-        };
+	};
 	tx_chipset_tag_t tc;
 	u_int16_t reg;
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumvideo.c,v 1.27 2002/04/13 09:29:53 takemura Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.28 2002/06/08 16:02:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -620,8 +620,8 @@ plumvideo_clut_default(struct plumvideo_softc *sc)
 	    bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	{
-		const u_int8_t compo6[6] = { 0,  51, 102, 153, 204, 255 };
-		const u_int32_t ansi_color[16] = {
+		static const u_int8_t compo6[6] = { 0, 51, 102, 153, 204, 255 };
+		static const u_int32_t ansi_color[16] = {
 			0x000000, 0xff0000, 0x00ff00, 0xffff00,
 			0x0000ff, 0xff00ff, 0x00ffff, 0xffffff,
 			0x000000, 0x800000, 0x008000, 0x808000,
