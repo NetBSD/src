@@ -9,18 +9,12 @@ END-INFO-DIR-ENTRY
    Copyright (C) 1988, 92, 97, 98, 99, 2000 Free Software Foundation,
 Inc.
 
-   Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notice and this permission notice are
-preserved on all copies.
-
-   Permission is granted to copy and distribute modified versions of
-this manual under the conditions for verbatim copying, provided that
-the entire resulting derived work is distributed under the terms of a
-permission notice identical to this one.
-
-   Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions.
+   Permission is granted to copy, distribute and/or modify this document
+     under the terms of the GNU Free Documentation License, Version 1.1
+     or any later version published by the Free Software Foundation;
+   with no Invariant Sections, with no Front-Cover Texts, and with no
+    Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 
 File: gprof.info,  Node: Line-by-line,  Next: Annotated Source,  Prev: Call Graph,  Up: Output
@@ -356,7 +350,7 @@ are a few differences.
      tables without skipping the blurbs.
 
 
-File: gprof.info,  Node: Details,  Prev: Incompatibilities,  Up: Top
+File: gprof.info,  Node: Details,  Next: GNU Free Documentation License,  Prev: Incompatibilities,  Up: Top
 
 Details of Profiling
 ********************
@@ -756,5 +750,4 @@ interpreted as a sum of the following options:
 
 8192 - Annotate source
      Tracks operation of `-A' option
-
 

@@ -676,8 +676,8 @@ Disassembly of section .text:
  85e:	ef49      	exit	\$s0
  860:	efa9      	exit	\$s0-\$s1,\$ra
  862:	ef29      	exit	\$ra
- 864:	0000      	addiu	\$s0,\$sp,0
-	...
+ 864:	6500      	nop
+ 866:	6500      	nop
 
 0+000868 <bar>:
 	...
