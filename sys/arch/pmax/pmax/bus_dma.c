@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4 1998/05/27 03:57:49 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5 1998/06/03 04:33:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -169,13 +169,14 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 	int first;
 {
 	bus_size_t sgsize;
-	vm_offset_t curaddr, lastaddr;
+	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vm_offset_t vaddr = (vm_offset_t)buf;
 	int seg;
 
 	lastaddr = *lastaddrp;
+	bmask  = ~(map->_dm_boundary - 1);
 
-	for (seg = *segp; buflen > 0 && seg < map->_dm_segcnt; ) {
+	for (seg = *segp; buflen > 0 ; ) {
 		/*
 		 * Get the physical address for this segment.
 		 */
@@ -193,6 +194,15 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 			sgsize = buflen;
 
 		/*
+		 * Make sure we don't cross any boundaries.
+		 */
+		if (map->_dm_boundary > 0) {
+			baddr = (curaddr + map->_dm_boundary) & bmask;
+			if (sgsize > (baddr - curaddr))
+				sgsize = (baddr - curaddr);
+		}
+
+		/*
 		 * Insert chunk into a segment, coalescing with
 		 * the previous segment if possible.
 		 */
@@ -203,10 +213,14 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			    map->_dm_maxsegsz)
+			     map->_dm_maxsegsz &&
+			    (map->_dm_boundary == 0 ||
+			     (map->dm_segs[seg].ds_addr & bmask) ==
+			     (curaddr & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
-				seg++;
+				if (++seg >= map->_dm_segcnt)
+					break;
 				map->dm_segs[seg].ds_addr = curaddr;
 				map->dm_segs[seg].ds_len = sgsize;
 			}
@@ -223,13 +237,8 @@ _bus_dmamap_load_buffer(map, buf, buflen, p, flags,
 	/*
 	 * Did we fit?
 	 */
-	if (buflen != 0) {
-		/*
-		 * If there is a chained window, we will automatically
-		 * fall back to it.
-		 */
+	if (buflen != 0)
 		return (EFBIG);		/* XXX better return value here? */
-	}
 
 	return (0);
 }
