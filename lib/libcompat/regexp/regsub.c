@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: regsub.c,v 1.6 1998/02/03 18:58:11 perry Exp $");
+__RCSID("$NetBSD: regsub.c,v 1.7 1998/09/14 20:25:05 tv Exp $");
 #endif /* not lint */
 
 #include <regexp.h>
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: regsub.c,v 1.6 1998/02/03 18:58:11 perry Exp $");
  - regsub - perform substitutions after a regexp match
  */
 void
-regsub(prog, source, dest)
+__compat_regsub(prog, source, dest)
 const regexp *prog;
 const char *source;
 char *dest;
