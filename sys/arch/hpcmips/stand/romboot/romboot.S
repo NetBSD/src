@@ -1,4 +1,4 @@
-/*	$NetBSD*	*/
+/*	$NetBSD: romboot.S,v 1.2 2002/01/03 11:22:17 shin Exp $	*/
 
 /*-
  * Copyright (c) 2001 Takao Shinohara.
