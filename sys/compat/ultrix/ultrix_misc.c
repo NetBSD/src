@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.67 2001/01/07 04:13:17 simonb Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.68 2001/01/15 21:33:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -166,17 +166,22 @@ extern const char * const ultrix_syscallnames[];
 #endif /* vax */
 #endif
 
-
 extern char ultrix_sigcode[], ultrix_esigcode[];
+#ifdef __HAVE_SYSCALL_INTERN
+void syscall_intern(struct proc *);
+#else
 void syscall __P((void));
+#endif
 
 const struct emul emul_ultrix = {
 	"ultrix",
 	"/emul/ultrix",
+#ifndef __HAVE_MINIMAL_EMUL
 	0,
 	NULL,
 	ULTRIX_SYS_syscall,
 	ULTRIX_SYS_MAXSYSCALL,
+#endif
 	ultrix_sysent,
 	ultrix_syscallnames,
 	sendsig,
@@ -185,7 +190,11 @@ const struct emul emul_ultrix = {
 	NULL,
 	NULL,
 	NULL,
-	syscall
+#ifdef __HAVE_SYSCALL_INTERN
+	syscall_intern,
+#else
+	syscall,
+#endif
 };
 
 #define GSI_PROG_ENV 1
