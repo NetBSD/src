@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.32 2005/01/02 18:38:04 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.33 2005/01/11 01:51:12 chs Exp $
 .\"
 .\" Copyright (c) 2001, 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -440,7 +440,7 @@ is unlocked, the ".." node is locked and then
 .Fa dvp
 is relocked if and only if LOCKPARENT and ISLASTCN is set in
 .Em cnp-\*[Gt]cn_flags .
-If LOCKPARENT or ISLATCN is not set,
+If LOCKPARENT or ISLASTCN is not set,
 .Fa dvp
 is returned unlocked on a successful lookup.
 This process preserves the protocol of always locking nodes from root
@@ -455,7 +455,7 @@ If the pathname is not found in the name cache, the directory is
 searched for the pathname.
 The resulting locked vnode is returned in
 .Fa vpp .
-If LOCKPARENT or ISLATCN is not set,
+If LOCKPARENT or ISLASTCN is not set,
 .Fa dvp
 is returned unlocked on a successful lookup.
 .Pp
