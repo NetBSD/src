@@ -33,7 +33,7 @@
  *	isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: isic_pcmcia.c,v 1.2 2001/02/20 22:24:40 martin Exp $ 
+ *	$Id: isic_pcmcia.c,v 1.3 2001/03/24 12:40:30 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -82,6 +82,8 @@
 #include <dev/pcmcia/isic_pcmcia.h>
 
 #include "opt_isicpcmcia.h"
+
+extern const struct isdn_layer1_bri_driver isic_std_driver;
 
 static int isic_pcmcia_match __P((struct device *, struct cfdata *, void *));
 static void isic_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -275,7 +277,6 @@ isic_pcmcia_isdn_attach(struct l1_softc *sc)
 		"Unknown Version"
 	};
 
-	l1_sc[sc->sc_unit] = sc;		
 	sc->sc_isac_version = 0;
 	sc->sc_isac_version = ((ISAC_READ(I_RBCH)) >> 5) & 0x03;
 
@@ -315,9 +316,9 @@ isic_pcmcia_isdn_attach(struct l1_softc *sc)
 
 	/* HSCX setup */
 
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_A, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
 	
-	isic_bchannel_setup(sc->sc_unit, HSCX_CH_B, BPROT_NONE, 0);
+	isic_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
 
 	/* setup linktab */
 
@@ -348,7 +349,7 @@ isic_pcmcia_isdn_attach(struct l1_softc *sc)
 
 	/* init higher protocol layers */
 	
-	MPH_Status_Ind(sc->sc_unit, STI_ATTACH, sc->sc_cardtyp);	
+	sc->sc_l2 = isdn_attach_layer1_bri(sc, sc->sc_dev.dv_xname, "some isic card", &isic_std_driver);
 
 	/* announce chip versions */
 	
