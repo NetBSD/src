@@ -1,4 +1,4 @@
-#	$NetBSD: ttys,v 1.3 2002/02/13 09:46:14 martti Exp $
+#	$NetBSD: ttys,v 1.4 2002/08/22 06:08:53 petrov Exp $
 #
 #	@(#)ttys	5.1 (Berkeley) 4/17/89
 #
@@ -7,6 +7,8 @@
 console	"/usr/libexec/getty suncons"	sun-ss5	on secure
 ttya	"/usr/libexec/getty std.9600"	unknown	off secure
 ttyb	"/usr/libexec/getty std.9600"	unknown	off secure
+ttyh0   "/usr/libexec/getty std.9600"   unknown off secure
+ttyh1   "/usr/libexec/getty std.9600"   unknown off secure
 ttyp0	none				network
 ttyp1	none				network
 ttyp2	none				network
