@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.13 2000/04/03 07:35:24 chs Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.14 2000/04/03 08:09:02 chs Exp $	*/
 
 /*
  *
@@ -145,7 +145,6 @@ void		uvm_pagermapout __P((vaddr_t, int));
 struct vm_page **uvm_mk_pcluster  __P((struct uvm_object *, struct vm_page **,
 				       int *, struct vm_page *, int, 
 				       voff_t, voff_t));
-void		uvm_shareprot __P((vm_map_entry_t, vm_prot_t));
 
 #endif /* _KERNEL */
 
