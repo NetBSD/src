@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2000/03/24 21:56:04 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2000/05/18 01:10:58 matt Exp $
 #
 # Makefile for install
 
@@ -7,6 +7,7 @@
 PROG=sysinst
 
 LDADD=-lcurses -ltermcap -lutil
+LDSTATIC?=-static
 
 .if exists(${.CURDIR}/../../../../sys/conf/osrelease.sh)
 VER != sh ${.CURDIR}/../../../../sys/conf/osrelease.sh
