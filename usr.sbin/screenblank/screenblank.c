@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.6 1997/07/30 22:54:40 jtc Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.7 1997/10/18 11:37:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.6 1997/07/30 22:54:40 jtc Exp $");
+__RCSID("$NetBSD: screenblank.c,v 1.7 1997/10/18 11:37:45 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -233,7 +233,7 @@ add_dev(path, isfb)
 	dsp1 = malloc(sizeof(struct dev_stat));
 	if (dsp1 == NULL)
 		errx(1, "can't allocate memory for %s", path);
-	bzero(dsp1, sizeof(struct dev_stat));
+	memset(dsp1, 0, sizeof(struct dev_stat));
 	dsp1->ds_path = path;
 	dsp1->ds_isfb = isfb;
 
