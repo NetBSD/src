@@ -1,4 +1,4 @@
-/*	$NetBSD: com1.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $	*/
+/*	$NetBSD: com1.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com1.c,v 1.7 1999/02/10 01:36:50 hubertf Exp $");
+__RCSID("$NetBSD: com1.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -243,7 +243,7 @@ crash()
 		else {
 			puts("You're out of fuel.  We'll have to crash land!");
 			if (!location[position].down) {
-				puts("Your viper strikes the ground and explodes into firey fragments.");
+				puts("Your viper strikes the ground and explodes into fiery fragments.");
 				puts("Thick black smoke billows up from the wreckage.");
 				die();
 			}
