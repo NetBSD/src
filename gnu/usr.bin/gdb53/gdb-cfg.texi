@@ -1,0 +1,2 @@
+@c	$NetBSD: gdb-cfg.texi,v 1.1 2003/08/17 18:03:25 christos Exp $
+@include all-cfg.texi
