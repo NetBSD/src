@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.1 1993/11/25 00:57:37 paulus Exp $
+ *	$Id: md.c,v 1.2 1994/01/28 20:57:31 pk Exp $
  */
 
 #include <sys/param.h>
@@ -85,25 +85,6 @@ unsigned char		*addr;
 	default:
 		fatal("Unsupported relocation size: %x", RELOC_TARGET_SIZE(rp));
 	}
-}
-
-/*
- * Initialize (output) exec header such that useful values are
- * obtained from subsequent N_*() macro evaluations.
- */
-void
-md_init_header(hp, magic, flags)
-struct exec	*hp;
-int		magic, flags;
-{
-	if (oldmagic)
-		hp->a_midmag = oldmagic;
-	else
-		N_SETMAGIC((*hp), magic, MID_MACHINE, flags);
-
-	/* TEXT_START depends on the value of outheader.a_entry.  */
-	if (!(link_mode & SHAREABLE)) /*WAS: if (entry_symbol) */
-		hp->a_entry = PAGSIZ;
 }
 
 /*
@@ -237,8 +218,29 @@ long	*savep;
 	*(short *)where = BPT;
 }
 
-#ifdef NEED_SWAP
+#ifndef RTLD
+/*
+ * Initialize (output) exec header such that useful values are
+ * obtained from subsequent N_*() macro evaluations.
+ */
+void
+md_init_header(hp, magic, flags)
+struct exec	*hp;
+int		magic, flags;
+{
+	if (oldmagic)
+		hp->a_midmag = oldmagic;
+	else
+		N_SETMAGIC((*hp), magic, MID_MACHINE, flags);
 
+	/* TEXT_START depends on the value of outheader.a_entry.  */
+	if (!(link_mode & SHAREABLE))
+		hp->a_entry = PAGSIZ;
+}
+#endif /* RTLD */
+
+
+#ifdef NEED_SWAP
 /*
  * Byte swap routines for cross-linking.
  */
