@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.18 1995/09/29 13:51:59 chopps Exp $	*/
+/*	$NetBSD: sbic.c,v 1.19 1995/10/05 12:36:07 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1767,7 +1767,7 @@ sbicgo(dev, xs)
 		    acb->sc_pa.dc_count,
 		    dmaflags);
 #ifdef DEBUG
-		dev->sc_dmatimo = 1;
+		dev->sc_dmatimo = dev->sc_tcnt ? 1 : 0;
 #endif
         } else
 		dev->sc_dmacmd = 0; /* Don't use DMA */
