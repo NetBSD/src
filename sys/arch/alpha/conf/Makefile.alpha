@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.38 1997/11/03 04:22:05 ross Exp $
+# $NetBSD: Makefile.alpha,v 1.39 1997/11/12 22:25:31 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -24,9 +24,12 @@
 CC?=	cc
 CPP?=	cpp
 LD?=	ld
+LORDER?=lorder
 MKDEP?=	mkdep
+NM?=	nm
 SIZE?=	size
 STRIP?=	strip
+TSORT?=	tsort -q
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S

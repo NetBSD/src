@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.52 1997/10/08 21:26:16 thorpej Exp $
+#	$NetBSD: Makefile.pmax,v 1.53 1997/11/12 22:26:24 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -23,9 +23,12 @@
 
 CC?=	cc
 LD?=	ld
+LORDER?=lorder
 MKDEP?=	mkdep
-STRIP?=	strip
+NM?=	nm
 SIZE?=	size
+STRIP?=	strip
+TSORT?=	tsort -q
 COPTS?=		-O2
 
 # source tree is located via $S relative to the compilation directory
