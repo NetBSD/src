@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.13 1999/09/16 17:08:04 sommerfeld Exp $	*/
+/*	$NetBSD: md5c.c,v 1.14 1999/09/17 09:25:34 kleink Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -91,9 +91,6 @@ Encode (output, input, len)
 {
 	unsigned int i, j;
 
-	_DIAGASSERT(output != 0);
-	_DIAGASSERT(input != 0);
-
 	for (i = 0, j = 0; j < len; i++, j += 4) {
 		output[j] = (unsigned char)(input[i] & 0xff);
 		output[j+1] = (unsigned char)((input[i] >> 8) & 0xff);
@@ -113,9 +110,6 @@ Decode (output, input, len)
 	unsigned int len;
 {
 	unsigned int i, j;
-
-	_DIAGASSERT(output != 0);
-	_DIAGASSERT(input != 0);
 
 	for (i = 0, j = 0; j < len; i++, j += 4)
 		output[i] = ((UINT4)input[j]) | (((UINT4)input[j+1]) << 8) |
@@ -288,15 +282,8 @@ MD5Transform(state, block)
 	UINT4 state[4];
 	const unsigned char block[64];
 {
-	UINT4 a, b, c, d, x[16];
+	UINT4 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 
-	_DIAGASSERT(state != 0);
-	_DIAGASSERT(block != 0);
-
-	a = state[0];
-	b = state[1];
-	c = state[2];
-	d = state[3];
 	Decode(x, block, 64);
 
 	/* Round 1 */
