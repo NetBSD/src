@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.42 1997/10/05 23:50:33 mark Exp $
+#	$NetBSD: Makefile,v 1.43 1997/10/16 20:28:49 augustss Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 
 SUBDIR=	csu libarch libc libcompat libcrypt libcurses libedit libkvm \
-	libl libm libntp libpcap libposix libresolv librmt  librpcsvc\
-	libskey libterm libutil libwrap liby libz
+	libl libm libntp libossaudio libpcap libposix libresolv librmt \
+	librpcsvc libskey libterm libutil libwrap liby libz
 
 # XXX Temporary until these ports are able to use libkvm.
 .if	(${MACHINE} == "i386")   || \
