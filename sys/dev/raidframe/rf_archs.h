@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.5 1999/08/03 22:07:39 oster Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.6 1999/08/26 02:40:27 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -74,17 +74,6 @@
 #define RF_INCLUDE_QUEUE_RANDOM 0
 
 #define RF_KEEP_DISKSTATS 1
-
-/* These two symbols enable nonstandard forms of error recovery.
- * These modes are only valid for performance measurements and
- * data corruption will occur if an error occurs when either
- * forward or backward error recovery are enabled.  In general
- * both of the following two definitions should be commented
- * out--this forces RAIDframe to use roll-away error recovery
- * which does guarantee proper error recovery without data corruption
- */
-/* #define RF_FORWARD 1 */
-/* #define RF_BACKWARD 1 */
 
 #include "rf_options.h"
 
