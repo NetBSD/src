@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.34 2004/08/10 21:58:31 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.35 2004/10/04 07:17:41 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.34 2004/08/10 21:58:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.35 2004/10/04 07:17:41 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -615,9 +615,10 @@ ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
 	IEEE80211_NODE_LOCK(ic);
 	ni = _ieee80211_find_node(ic, macaddr);
 	IEEE80211_NODE_UNLOCK(ic);
-	if (ni == NULL &&
-	    (ic->ic_opmode == IEEE80211_M_IBSS ||
-	     ic->ic_opmode == IEEE80211_M_AHDEMO)) {
+	if (ni == NULL) {
+		if (ic->ic_opmode != IEEE80211_M_IBSS &&
+		    ic->ic_opmode != IEEE80211_M_AHDEMO)
+			return NULL;
 		/*
 		 * Fake up a node; this handles node discovery in
 		 * adhoc mode.  Note that for the driver's benefit
@@ -627,13 +628,12 @@ ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
 		 * XXX need better way to handle this; issue probe
 		 *     request so we can deduce rate set, etc.
 		 */
-		ni = ieee80211_dup_bss(ic, macaddr);
-		if (ni != NULL) {
-			/* XXX no rate negotiation; just dup */
-			ni->ni_rates = ic->ic_bss->ni_rates;
-			if (ic->ic_newassoc)
-				(*ic->ic_newassoc)(ic, ni, 1);
-		}
+		if ((ni = ieee80211_dup_bss(ic, macaddr)) == NULL)
+			return NULL;
+		/* XXX no rate negotiation; just dup */
+		ni->ni_rates = ic->ic_bss->ni_rates;
+		if (ic->ic_newassoc)
+			(*ic->ic_newassoc)(ic, ni, 1);
 	}
 	return ieee80211_ref_node(ni);
 }
