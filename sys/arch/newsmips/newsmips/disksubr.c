@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 2003/03/30 08:42:00 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12 2003/04/18 15:57:37 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -208,7 +208,7 @@ bounds_check_with_label(bp, lp, wlabel)
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
-	if (securelevel >= 1 && DISKPART(bp->b_dev) != RAW_PART &&
+	if (securelevel >= 1 &&
 	    bp->b_blkno + p->p_offset <= labelsector &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
