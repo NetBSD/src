@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.17 1994/12/07 14:45:57 deraadt Exp $
+# 	$NetBSD: Makefile.sparc,v 1.18 1995/03/23 19:47:27 jtc Exp $
 
 # @(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
 # Makefile for 4.4 BSD
@@ -35,7 +35,7 @@ S=	../../../..
 SPARC=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -DKERNEL
+COPTS=	${INCLUDES} ${IDENT} -DKERNEL -D_KERNEL
 CFLAGS=	${COPTS} -O2
 
 ### find out what to use for libkern
