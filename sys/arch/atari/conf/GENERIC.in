@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.6 2001/07/09 13:37:38 leo Exp $
+#	$NetBSD: GENERIC.in,v 1.7 2001/09/01 21:52:25 atatat Exp $
 #
 # Generic atari
 #
@@ -215,6 +215,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
+pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	ccd		4	# concatenating disk driver
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
