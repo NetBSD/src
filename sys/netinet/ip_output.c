@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.112 2003/08/19 00:54:41 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.113 2003/08/19 01:20:03 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.112 2003/08/19 00:54:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.113 2003/08/19 01:20:03 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -147,7 +147,6 @@ static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static struct ifnet *ip_multicast_if __P((struct in_addr *, int *));
 static void ip_mloopback
 	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
-static int ip_fragment __P((struct mbuf *, struct ifnet *, u_long));
 
 #ifdef PFIL_HOOKS
 extern struct pfil_head inet_pfil_hook;			/* XXX */
@@ -853,7 +852,7 @@ bad:
 	goto done;
 }
 
-static int
+int
 ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 {
 	struct ip *ip, *mhip;
