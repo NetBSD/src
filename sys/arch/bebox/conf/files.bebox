@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.19 2000/04/07 16:35:23 thorpej Exp $
+#	$NetBSD: files.bebox,v 1.20 2000/04/23 16:47:47 thorpej Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -114,11 +114,14 @@ file	arch/bebox/pci/pfb.c		pfb needs-flag
 include "dev/pckbc/files.pckbc"
 
 # Floppy disk controller
-device	fdc {drive = -1}
-attach	fdc at isa
-device	fd: disk, isadma
-attach	fd at fdc
+device	fdc {drive = -1}: isadma
 file	dev/isa/fd.c			fdc needs-flag
+
+attach	fdc at isa with fdc_isa
+file	dev/isa/fdc_isa.c		fdc_isa
+
+device	fd: disk
+attach	fd at fdc
 major	{fd = 2}
 
 # Game adapter (joystick)
