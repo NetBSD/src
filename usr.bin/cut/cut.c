@@ -1,6 +1,8 @@
+/*	$NetBSD: cut.c,v 1.8 1995/03/26 20:51:27 glass Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Adam S. Moskowitz of Menlo Consulting and Marciano Pitargue.
@@ -35,23 +37,27 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cut.c	5.4 (Berkeley) 10/30/90";*/
-static char rcsid[] = "$Id: cut.c,v 1.7 1995/03/20 23:50:43 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)cut.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: cut.c,v 1.8 1995/03/26 20:51:27 glass Exp $";
+#endif
 #endif /* not lint */
 
+#include <ctype.h>
+#include <err.h>
+#include <errno.h>
+#include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <locale.h>
-#include <ctype.h>
-#include <err.h>
 
 int	cflag;
 char	dchar;
@@ -59,15 +65,19 @@ int	dflag;
 int	fflag;
 int	sflag;
 
+void	c_cut __P((FILE *, char *));
+void	f_cut __P((FILE *, char *));
+void	get_list __P((char *));
+void	usage __P((void));
+
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern char *optarg;
-	extern int errno, optind;
 	FILE *fp;
-	int ch, (*fcn)(), c_cut(), f_cut();
+	void (*fcn) __P((FILE *, char *));
+	int ch;
 
 	setlocale (LC_ALL, "");
 
@@ -112,11 +122,10 @@ main(argc, argv)
 
 	if (*argv)
 		for (; *argv; ++argv) {
-			if (!(fp = fopen(*argv, "r"))) {
+			if (!(fp = fopen(*argv, "r")))
 				err(1, "%s", *argv);
-				/* NOTREACHED */
-			}
 			fcn(fp, *argv);
+			(void)fclose(fp);
 		}
 	else
 		fcn(stdin, "stdin");
@@ -127,11 +136,12 @@ int autostart, autostop, maxval;
 
 char positions[_POSIX2_LINE_MAX + 1];
 
+void
 get_list(list)
 	char *list;
 {
-	register char *pos;
 	register int setautostart, start, stop;
+	register char *pos;
 	char *p;
 
 	/*
@@ -163,15 +173,12 @@ get_list(list)
 			}
 		}
 		if (*p)
-			badlist("illegal list value");
+			errx(1, "[-cf] list: illegal list value\n");
 		if (!stop || !start)
-			badlist("values may not include zero");
-		if (stop > _POSIX2_LINE_MAX) {
-			/* positions used rather than allocate a new buffer */
-			(void)sprintf(positions, "%d too large (max %d)",
+			errx(1, "[-cf] list: values may not include zero\n");
+		if (stop > _POSIX2_LINE_MAX)
+			errx(1, "[-cf] list: %d too large (max %d)\n",
 			    stop, _POSIX2_LINE_MAX);
-			badlist(positions);
-		}
 		if (maxval < stop)
 			maxval = stop;
 		for (pos = positions + start; start++ <= stop; *pos++ = 1);
@@ -187,6 +194,7 @@ get_list(list)
 }
 
 /* ARGSUSED */
+void
 c_cut(fp, fname)
 	FILE *fp;
 	char *fname;
@@ -202,18 +210,19 @@ c_cut(fp, fname)
 			if (ch == '\n')
 				break;
 			if (*pos++)
-				putchar(ch);
+				(void)putchar(ch);
 		}
 		if (ch != '\n')
 			if (autostop)
 				while ((ch = getc(fp)) != EOF && ch != '\n')
-					putchar(ch);
+					(void)putchar(ch);
 			else
 				while ((ch = getc(fp)) != EOF && ch != '\n');
-		putchar('\n');
+		(void)putchar('\n');
 	}
 }
 
+void
 f_cut(fp, fname)
 	FILE *fp;
 	char *fname;
@@ -226,11 +235,8 @@ f_cut(fp, fname)
 	for (sep = dchar; fgets(lbuf, sizeof(lbuf), fp);) {
 		output = 0;
 		for (isdelim = 0, p = lbuf;; ++p) {
-			if (!(ch = *p)) {
-				(void)fprintf(stderr,
-				    "cut: %s: line too long.\n", fname);
-				exit(1);
-			}
+			if (!(ch = *p))
+				errx(1, "%s: line too long.\n", fname);
 			/* this should work if newline is delimiter */
 			if (ch == sep)
 				isdelim = 1;
@@ -247,9 +253,9 @@ f_cut(fp, fname)
 		for (field = maxval, p = lbuf; field; --field, ++pos) {
 			if (*pos) {
 				if (output++)
-					putchar(sep);
+					(void)putchar(sep);
 				while ((ch = *p++) != '\n' && ch != sep)
-					putchar(ch);
+					(void)putchar(ch);
 			} else
 				while ((ch = *p++) != '\n' && ch != sep);
 			if (ch == '\n')
@@ -258,22 +264,16 @@ f_cut(fp, fname)
 		if (ch != '\n')
 			if (autostop) {
 				if (output)
-					putchar(sep);
+					(void)putchar(sep);
 				for (; (ch = *p) != '\n'; ++p)
-					putchar(ch);
+					(void)putchar(ch);
 			} else
 				for (; (ch = *p) != '\n'; ++p);
-		putchar('\n');
+		(void)putchar('\n');
 	}
 }
 
-badlist(msg)
-	char *msg;
-{
-	(void)fprintf(stderr, "cut: [-cf] list: %s.\n", msg);
-	exit(1);
-}
-
+void
 usage()
 {
 	(void)fprintf(stderr,
