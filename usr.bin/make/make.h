@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.48 2003/09/10 18:04:23 jmmv Exp $	*/
+/*	$NetBSD: make.h,v 1.49 2003/09/27 21:29:37 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -447,6 +447,13 @@ Boolean Main_SetObjdir(const char *);
     __d.__cp = ptr, __d.__p; })
 #else
 #define UNCONST(ptr)	(void *)(ptr)
+#endif
+
+#ifndef MIN
+#define MIN(a, b) ((a < b) ? a : b)
+#endif
+#ifndef MAX
+#define MAX(a, b) ((a > b) ? a : b)
 #endif
 
 #endif /* _MAKE_H_ */
