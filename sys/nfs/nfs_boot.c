@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.38 1997/09/13 06:16:04 thorpej Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.39 1997/09/30 20:44:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -166,6 +166,163 @@ nfs_boot_init(nd, procp)
 #endif
 
 	return (error);
+}
+
+int nfs_boot_setrecvtimo(so)
+struct socket *so;
+{
+	struct mbuf *m;
+	struct timeval *tv;
+
+	m = m_get(M_WAIT, MT_SOOPTS);
+	tv = mtod(m, struct timeval *);
+	m->m_len = sizeof(*tv);
+	tv->tv_sec = 1;
+	tv->tv_usec = 0;
+	return(sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m));
+}
+
+int nfs_boot_enbroadcast(so)
+struct socket *so;
+{
+	struct mbuf *m;
+	int32_t *on;
+
+	m = m_get(M_WAIT, MT_SOOPTS);
+	on = mtod(m, int32_t *);
+	m->m_len = sizeof(*on);
+	*on = 1;
+	return(sosetopt(so, SOL_SOCKET, SO_BROADCAST, m));
+}
+
+int nfs_boot_sobind_ipport(so, port)
+struct socket *so;
+u_int16_t port;
+{
+	struct mbuf *m;
+	struct sockaddr_in *sin;
+	int error;
+
+	m = m_getclr(M_WAIT, MT_SONAME);
+	sin = mtod(m, struct sockaddr_in *);
+	sin->sin_len = m->m_len = sizeof(*sin);
+	sin->sin_family = AF_INET;
+	sin->sin_addr.s_addr = INADDR_ANY;
+	sin->sin_port = htons(port);
+	error = sobind(so, m);
+	m_freem(m);
+	return(error);
+}
+
+/*
+ * What is the longest we will wait before re-sending a request?
+ * Note this is also the frequency of "timeout" messages.
+ * The re-send loop counts up linearly to this maximum, so the
+ * first complaint will happen after (1+2+3+4+5)=15 seconds.
+ */
+#define	MAX_RESEND_DELAY 5	/* seconds */
+#define TOTAL_TIMEOUT   30	/* seconds */
+
+int nfs_boot_sendrecv(so, nam, sndproc, snd, rcvproc, rcv,
+		      from_p, context)
+struct socket *so;
+struct mbuf *nam;
+int (*sndproc) __P((struct mbuf*, void*, int));
+struct mbuf *snd;
+int (*rcvproc) __P((struct mbuf*, void*));
+struct mbuf **rcv, **from_p;
+void *context;
+{
+	int error, rcvflg, timo, secs, waited;
+	struct mbuf *m, *from;
+	struct uio uio;
+
+	/* Free at end if not null. */
+	from = NULL;
+
+	/*
+	 * Send it, repeatedly, until a reply is received,
+	 * but delay each re-send by an increasing amount.
+	 * If the delay hits the maximum, start complaining.
+	 */
+	waited = timo = 0;
+send_again:
+	waited += timo;
+	if (waited >= TOTAL_TIMEOUT)
+		return(ETIMEDOUT);
+
+	/* Determine new timeout. */
+	if (timo < MAX_RESEND_DELAY)
+		timo++;
+	else
+		printf("nfs_boot: timeout...\n");
+
+	if (sndproc) {
+		error = (*sndproc)(snd, context, waited);
+		if (error)
+			goto out;
+	}
+
+	/* Send request (or re-send). */
+	m = m_copypacket(snd, M_WAIT);
+	if (m == NULL) {
+		error = ENOBUFS;
+		goto out;
+	}
+	error = sosend(so, nam, NULL, m, NULL, 0);
+	if (error) {
+		printf("nfs_boot: sosend: %d\n", error);
+		goto out;
+	}
+	m = NULL;
+
+	/*
+	 * Wait for up to timo seconds for a reply.
+	 * The socket receive timeout was set to 1 second.
+	 */
+
+	secs = timo;
+	for (;;) {
+		if (from) {
+			m_freem(from);
+			from = NULL;
+		}
+		if (m) {
+			m_freem(m);
+			m = NULL;
+		}
+		uio.uio_resid = 1 << 16; /* ??? */
+		rcvflg = 0;
+		error = soreceive(so, &from, &uio, &m, NULL, &rcvflg);
+		if (error == EWOULDBLOCK) {
+			if (--secs <= 0)
+				goto send_again;
+			continue;
+		}
+		if (error)
+			goto out;
+#ifdef DIAGNOSTIC
+		if (!m || !(m->m_flags & M_PKTHDR)
+		    || (1 << 16) - uio.uio_resid != m->m_pkthdr.len)
+			panic("nfs_boot_sendrecv: return size");
+#endif
+
+		if ((*rcvproc)(m, context))
+			continue;
+
+		if (rcv)
+			*rcv = m;
+		else
+			m_freem(m);
+		if (from_p) {
+			*from_p = from;
+			from = NULL;
+		}
+		break;
+	}
+out:
+	if (from) m_freem(from);
+	return(error);
 }
 
 /*
