@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.6 1996/06/25 22:15:18 pk Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.7 1998/01/05 05:08:43 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -13,7 +13,7 @@
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
  * 
- * : $Header: if_tnreg.h,v 1.1.2.1 1992/07/16 22:39:16 friedl Exp
+ * from: Header: if_tnreg.h,v 1.1.2.1 1992/07/16 22:39:16 friedl Exp
  */
 
 #ifndef _NET_IF_TUN_H_
