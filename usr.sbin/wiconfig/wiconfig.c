@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.9 2000/08/23 19:01:06 jhawk Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.10 2000/11/24 09:53:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.9 2000/08/23 19:01:06 jhawk Exp $";
+	"@(#) $Id: wiconfig.c,v 1.10 2000/11/24 09:53:36 jdolecek Exp $";
 #endif
 
 struct wi_table {
@@ -359,7 +359,7 @@ static void wi_printkeys(wreq)
                 k = &keys->wi_keys[i];
                 ptr = (char *)k->wi_keydat;
                 for (j = 0; j < k->wi_keylen; j++) {
-		        if (!isprint(ptr[j])) {
+		        if (!isprint((unsigned char) ptr[j])) {
 			        bn = 1;
 				break;
 			}
