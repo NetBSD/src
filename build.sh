@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.37 2001/12/19 20:59:07 tv Exp $
+#  $NetBSD: build.sh,v 1.38 2002/01/15 19:17:23 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -233,10 +233,8 @@ if $do_rebuildmake; then
 	trap "exit 1" 1 2 3 15
 	$runcmd cd $tmpdir
 
-	$runcmd ${HOST_CC-cc} ${HOST_CFLAGS} -DMAKE_BOOTSTRAP \
-		-o nbmake -I$cwd/usr.bin/make \
-		$cwd/usr.bin/make/*.c $cwd/usr.bin/make/lst.lib/*.c \
-		${HOST_LDFLAGS} || bomb "build of nbmake failed"
+	$runcmd $cwd/tools/make/configure || bomb "configure of nbmake failed"
+	$runcmd ./buildmake.sh || bomb "build of nbmake failed"
 
 	make=$tmpdir/nbmake
 	$runcmd cd $cwd
@@ -344,7 +342,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.37 2001/12/19 20:59:07 tv Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.38 2002/01/15 19:17:23 tv Exp $
 #
 
 EOF
