@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.21 1993/12/20 17:16:47 ws Exp $
+ *	$Id: trap.c,v 1.22 1994/01/03 16:21:54 mycroft Exp $
  */
 
 /*
@@ -58,6 +58,7 @@
 #include <vm/vm_map.h>
 
 #include <machine/cpu.h>
+#include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>

@@ -725,7 +725,7 @@ setregs(p, entry, stack, retval)
 	tf->tf_cs = _ucodesel;
 
 	p->p_addr->u_pcb.pcb_flags &= 0 /* FM_SYSCTRC */; /* no fp at all */
-	load_cr0(rcr0() | CR0_TS);	/* start emulating */
+	lcr0(rcr0() | CR0_TS);	/* start emulating */
 #if	NNPX > 0
 	npxinit(__INITIAL_NPXCW__);
 #endif
@@ -902,13 +902,11 @@ extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
 	IDTVEC(rsvd9), IDTVEC(rsvd10), IDTVEC(rsvd11), IDTVEC(rsvd12),
 	IDTVEC(rsvd13), IDTVEC(rsvd14), IDTVEC(rsvd14), IDTVEC(syscall);
 
-int lcr0(), lcr3(), rcr0(), rcr2();
-
 void
 init386(first_avail)
 	vm_offset_t first_avail;
 {
-	extern ssdtosd(), lgdt(), lidt(), lldt(), etext; 
+	extern ssdtosd(), lgdt(), etext; 
 	int x, *pi;
 	unsigned biosbasemem, biosextmem;
 	struct gate_descriptor *gdp;
