@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.377 2001/07/02 22:59:55 hubertf Exp $
+# $NetBSD: mi,v 1.378 2001/07/09 15:15:02 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -708,7 +708,6 @@
 ./usr/share/man/cat4/mvme68k/wdsc.0		man-sys-catman
 ./usr/share/man/cat4/mvme68k/zsc.0		man-sys-catman
 ./usr/share/man/cat4/nca.0			man-sys-catman
-./usr/share/man/cat4/ncr.0			man-sys-catman
 ./usr/share/man/cat4/ne.0			man-sys-catman
 ./usr/share/man/cat4/nele.0			man-sys-catman
 ./usr/share/man/cat4/neo.0			man-sys-catman
@@ -2250,7 +2249,6 @@
 ./usr/share/man/man4/mvme68k/wdsc.4		man-sys-man
 ./usr/share/man/man4/mvme68k/zsc.4		man-sys-man
 ./usr/share/man/man4/nca.4			man-sys-man
-./usr/share/man/man4/ncr.4			man-sys-man
 ./usr/share/man/man4/ne.4			man-sys-man
 ./usr/share/man/man4/nele.4			man-sys-man
 ./usr/share/man/man4/neo.4			man-sys-man
