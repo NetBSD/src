@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 1995/12/28 08:51:55 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.28 1996/10/16 17:56:37 perry Exp $
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
 
 # stdlib sources
@@ -16,8 +16,6 @@ SRCS+=	abs.S div.c labs.c ldiv.c
 .elif (${MACHINE_ARCH} == "i386")
 SRCS+=	abs.S div.S labs.S ldiv.S
 .elif (${MACHINE_ARCH} == "ns32k")
-SRCS+=	abs.S div.c labs.c ldiv.c
-.elif (${MACHINE_ARCH} == "tahoe")
 SRCS+=	abs.S div.c labs.c ldiv.c
 .elif (${MACHINE_ARCH} == "vax")
 SRCS+=	abs.c div.c labs.c ldiv.c
