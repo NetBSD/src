@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.10 2002/04/19 01:04:42 wiz Exp $
+#	$NetBSD: files.acorn32,v 1.11 2002/04/24 17:52:48 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -164,11 +164,11 @@ device	beep
 attach	beep at vidc
 file	arch/arm/iomd/beep.c			beep needs-flag
 
-device	vidcaudio: audio
+device	vidcaudio: audiobus
 attach	vidcaudio at vidc
 file	arch/arm/iomd/vidcaudio.c		vidcaudio needs-flag
 
-device	lmcaudio: audio
+device	lmcaudio: audiobus
 attach	lmcaudio at vidc
 file	arch/arm/iomd/lmcaudio.c		lmcaudio needs-flag
 file	arch/arm/iomd/lmc1982.S		lmcaudio
