@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.52 2000/07/19 18:15:02 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.53 2000/07/22 05:03:23 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -369,7 +369,9 @@ _C_LABEL(sret):
 sbifltmsg:
 	.asciz	"SBI fault"
 
-#if VAX630 || VAX650 || VAX410
+#if VAX630  || VAX640  || VAX650  || VAX660  || VAX670  || VAX680 || \
+    VAX410  || VAX43   || VAX48   || VAX46   || VAX49   || VAX53  || \
+    VAX6200 || VAX6300 || VAX6400 || VAX6500 || VAX6600
 /*
  * Table of emulated Microvax instructions supported by emulate.s.
  * Use noemulate to convert unimplemented ones to reserved instruction faults.
@@ -449,7 +451,9 @@ _C_LABEL(emtable):
  */
 
 SCBENTRY(emulate)
-#if VAX630 || VAX650 || VAX410
+#if VAX630  || VAX640  || VAX650  || VAX660  || VAX670  || VAX680 || \
+    VAX410  || VAX43   || VAX48   || VAX46   || VAX49   || VAX53  || \
+    VAX6200 || VAX6300 || VAX6400 || VAX6500 || VAX6600
 	movl	r11,32(sp)		# save register r11 in unused operand
 	movl	r10,36(sp)		# save register r10 in unused operand
 	cvtbl	(sp),r10		# get opcode
