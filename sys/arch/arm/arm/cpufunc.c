@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.31 2002/03/16 03:38:28 reinoud Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.32 2002/03/16 18:02:19 bjh21 Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -553,11 +553,11 @@ u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
-    defined(CPU_SA110) || defined(CPU_XSCALE)
-static void get_cachetype __P((void));
+    defined(CPU_XSCALE)
+static void get_cachetype_cp15 __P((void));
 
 static void
-get_cachetype()
+get_cachetype_cp15()
 {
 	u_int ctype, isize, dsize;
 	u_int multiplier;
@@ -619,7 +619,67 @@ get_cachetype()
  out:
 	arm_dcache_align_mask = arm_dcache_align - 1;
 }
-#endif /* ARM7TDMI || ARM8 || ARM9 || SA110 || XSCALE */
+#endif /* ARM7TDMI || ARM8 || ARM9 || XSCALE */
+
+#if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
+    defined(CPU_ARM7) || defined(CPU_SA110)
+/* Cache information for CPUs without cache type registers. */
+struct cachetab {
+	u_int32_t ct_cpuid;
+	int	ct_pcache_type;
+	int	ct_pcache_unified;
+	int	ct_pdcache_size;
+	int	ct_pdcache_line_size;
+	int	ct_pdcache_ways;
+	int	ct_picache_size;
+	int	ct_picache_line_size;
+	int	ct_picache_ways;
+};
+
+struct cachetab cachetab[] = {
+    /* cpuid,           cache type,       u,  dsiz, ls, wy,  isiz, ls, wy */
+    { CPU_ID_ARM2,      0,                1,     0,  0,  0,     0,  0,  0 },
+    { CPU_ID_ARM250,    0,                1,     0,  0,  0,     0,  0,  0 },
+    { CPU_ID_ARM3,      CPU_CT_CTYPE_WT,  1,  4096, 16, 64,     0,  0,  0 },
+    { CPU_ID_ARM710,    CPU_CT_CTYPE_WT,  1,  8192, 32,  4,     0,  0,  0 },
+    { CPU_ID_ARM7500,   CPU_CT_CTYPE_WT,  1,  4096, 16,  4,     0,  0,  0 },
+    { CPU_ID_ARM710A,   CPU_CT_CTYPE_WT,  1,  8192, 16,  4,     0,  0,  0 },
+    { CPU_ID_ARM7500FE, CPU_CT_CTYPE_WT,  1,  4096, 16,  4,     0,  0,  0 },
+    /* XXX is this type right for SA-1? */
+    { CPU_ID_SA110,	CPU_CT_CTYPE_WB1, 0, 16384, 32, 32, 16384, 32, 32 },
+    { CPU_ID_SA1100,	CPU_CT_CTYPE_WB1, 0,  8192, 32, 32, 16384, 32, 32 },
+    { CPU_ID_SA1110,	CPU_CT_CTYPE_WB1, 0,  8192, 32, 32, 16384, 32, 32 },
+    { 0, 0, 0, 0, 0, 0, 0, 0}
+};
+
+static void get_cachetype_table __P((void));
+
+static void
+get_cachetype_table()
+{
+	int i;
+	u_int32_t cpuid = cpufunc_id();
+
+	for (i = 0; cachetab[i].ct_cpuid != 0; i++) {
+		if (cachetab[i].ct_cpuid == (cpuid & CPU_ID_CPU_MASK)) {
+			arm_pcache_type = cachetab[i].ct_pcache_type;
+			arm_pcache_unified = cachetab[i].ct_pcache_unified;
+			arm_pdcache_size = cachetab[i].ct_pdcache_size;
+			arm_pdcache_line_size =
+			    cachetab[i].ct_pdcache_line_size;
+			arm_pdcache_ways = cachetab[i].ct_pdcache_ways;
+			arm_picache_size = cachetab[i].ct_picache_size;
+			arm_picache_line_size =
+			    cachetab[i].ct_picache_line_size;
+			arm_picache_ways = cachetab[i].ct_picache_ways;
+		}
+	}
+	arm_dcache_align = arm_pdcache_line_size;
+
+	arm_dcache_align_mask = arm_dcache_align - 1;
+}
+
+#endif /* ARM2 || ARM250 || ARM3 || ARM7 || SA110 */
 
 /*
  * Cannot panic here as we may not have a console yet ...
@@ -637,7 +697,7 @@ set_cpufuncs()
 	    (cputype & 0x00000f00) == 0x00000300) {
 		cpufuncs = arm3_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
-		/* XXX Cache info? */
+		get_cachetype_table();
 		arm_dcache_align_mask = -1;
 		return 0;
 	}
@@ -658,7 +718,7 @@ set_cpufuncs()
 	    (cputype & CPU_ID_7ARCH_MASK) == CPU_ID_7ARCH_V3) {
 		cpufuncs = arm7_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
-		/* XXX Cache info? */
+		get_cachetype_table();
 		arm_dcache_align_mask = -1;
 		return 0;
 	}
@@ -669,7 +729,7 @@ set_cpufuncs()
 	    (cputype & CPU_ID_7ARCH_MASK) == CPU_ID_7ARCH_V4T) {
 		cpufuncs = arm7tdmi_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
-		get_cachetype();
+		get_cachetype_cp15();
 		return 0;
 	}
 #endif	
@@ -678,7 +738,7 @@ set_cpufuncs()
 	    (cputype & 0x0000f000) == 0x00008000) {
 		cpufuncs = arm8_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;	/* XXX correct? */
-		get_cachetype();
+		get_cachetype_cp15();
 		return 0;
 	}
 #endif	/* CPU_ARM8 */
@@ -687,7 +747,7 @@ set_cpufuncs()
 		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
 		cpufuncs = arm9_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
-		get_cachetype();
+		get_cachetype_cp15();
 		return 0;
 	}
 #endif /* CPU_ARM9 */
@@ -696,7 +756,7 @@ set_cpufuncs()
 	    cputype == CPU_ID_SA1110) {
 		cpufuncs = sa110_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
-		get_cachetype();
+		get_cachetype_table();
 		/*
 		 * Enable the right variant of sleeping.
 		 */
@@ -756,7 +816,7 @@ set_cpufuncs()
 			cpufuncs.cf_dcache_inv_range = xscale_cache_purgeD_rng;
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
-		get_cachetype();
+		get_cachetype_cp15();
 		return 0;
 	}
 #endif /* CPU_XSCALE */
