@@ -1,10 +1,9 @@
-/*	$NetBSD: getgrent.c,v 1.19.2.4 1998/11/02 03:33:13 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.19.2.5 1999/01/14 07:02:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
  * Portions Copyright (c) 1994, Jason Downs. All Rights Reserved.
- * Portions Copyright (c) 1997, Luke Mewburn. All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.19.2.4 1998/11/02 03:33:13 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.19.2.5 1999/01/14 07:02:16 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -423,14 +422,13 @@ __grscancompat(search, gid, name)
 	gid_t		 gid;
 	const char	*name;
 {
-	static ns_dtab	dtab;
-
-	if (dtab[NS_FILES].cb == NULL) {
-		NS_FILES_CB(dtab, _bad_grscan, "files");
-		NS_DNS_CB(dtab, _dns_grscan, NULL);
-		NS_NIS_CB(dtab, _nis_grscan, NULL);
-		NS_COMPAT_CB(dtab, _bad_grscan, "compat");
-	}
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_bad_grscan, "files"),
+		NS_DNS_CB(_dns_grscan, NULL),
+		NS_NIS_CB(_nis_grscan, NULL),
+		NS_COMPAT_CB(_bad_grscan, "compat"),
+		{ 0 }
+	};
 
 	return nsdispatch(NULL, dtab, NSDB_GROUP_COMPAT, search, gid, name);
 }
@@ -530,14 +528,13 @@ grscan(search, gid, name)
 	const char	*name;
 {
 	int		r;
-	static ns_dtab	dtab;
-
-	if (dtab[NS_FILES].cb == NULL) {
-		NS_FILES_CB(dtab, _local_grscan, NULL);
-		NS_DNS_CB(dtab, _dns_grscan, NULL);
-		NS_NIS_CB(dtab, _nis_grscan, NULL);
-		NS_COMPAT_CB(dtab, _compat_grscan, NULL);
-	}
+	static ns_dtab	dtab[] = {
+		NS_FILES_CB(_local_grscan, NULL),
+		NS_DNS_CB(_dns_grscan, NULL),
+		NS_NIS_CB(_nis_grscan, NULL),
+		NS_COMPAT_CB(_compat_grscan, NULL),
+		{ 0 }
+	};
 
 	r = nsdispatch(NULL, dtab, NSDB_GROUP, search, gid, name);
 	return (r == NS_SUCCESS) ? 1 : 0;
