@@ -1,4 +1,4 @@
-/*	$NetBSD: ypwhich.c,v 1.12 2002/06/11 06:06:21 itojun Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.13 2003/07/12 14:03:46 itojun Exp $	*/
 
 /*
  *
@@ -363,7 +363,7 @@ find_mapmaster(host, domain, map, inhibit, force)
 	         * asked about in it.
 	         */
 		memset(&fakelist, 0, sizeof(fakelist));
-		strncpy(fakelist.ypml_name, map, YPMAXMAP);
+		strlcpy(fakelist.ypml_name, map, sizeof(fakelist.ypml_name));
 		fakelist.ypml_next = NULL;
 		ypml = &fakelist;
 	}
