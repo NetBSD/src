@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.31 2001/03/26 06:47:34 chs Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.31.4.1 2001/07/10 13:55:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)ufs_readwrite.c	8.11 (Berkeley) 5/8/95
  */
+
+#define	VN_KNOTE(vp, b)		KNOTE((struct klist *)&vp->v_klist, (b))
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -205,7 +207,7 @@ WRITE(void *v)
 	struct proc *p;
 	ufs_daddr_t lbn;
 	off_t osize;
-	int blkoffset, error, flags, ioflag, resid, size, xfersize;
+	int blkoffset, error, extended, flags, ioflag, resid, size, xfersize;
 #ifndef LFS_READWRITE
 	void *win;
 	vsize_t bytelen;
@@ -217,6 +219,7 @@ WRITE(void *v)
 	uio = ap->a_uio;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
+	extended = 0;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
@@ -293,6 +296,9 @@ WRITE(void *v)
 		error = uiomove(win, bytelen, uio);
 		ubc_release(win, 0);
 
+		if (oldoff + bytelen > osize)
+			extended = 1;
+
 		/*
 		 * flush what we just wrote if necessary.
 		 * XXXUBC simplistic async flushing.
@@ -355,6 +361,7 @@ WRITE(void *v)
 		if (uio->uio_offset + xfersize > ip->i_ffs_size) {
 			ip->i_ffs_size = uio->uio_offset + xfersize;
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
+			extended = 1;
 		}
 		size = BLKSIZE(fs, ip, lbn) - bp->b_resid;
 		if (xfersize > size)
@@ -403,6 +410,8 @@ WRITE(void *v)
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_ffs_mode &= ~(ISUID | ISGID);
+	if (resid > uio->uio_resid)
+		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		if (ioflag & IO_UNIT) {
 			(void)VOP_TRUNCATE(vp, osize,
