@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 1999/04/11 22:40:27 bouyer Exp $	*/
+/*	$NetBSD: md.c,v 1.10 1999/04/23 01:38:35 tsubai Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -133,7 +133,7 @@ md_post_disklabel(void)
  *
  * On the macppc, we use this opportunity to install the boot blocks.
  */
-void
+int
 md_post_newfs()
 {
 	const char *bootfile = target_expand("/boot");	/*XXX*/
