@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.18 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.19 2000/04/15 22:59:05 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.18 2000/04/15 13:17:03 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.19 2000/04/15 22:59:05 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -494,8 +494,8 @@ wgetch(WINDOW *win)
 	    && __echoit)
 		return (ERR);
 #ifdef DEBUG
-	__CTRACE("wgetch: __echoit = %d, __rawmode = %d\n",
-	    __echoit, __rawmode);
+	__CTRACE("wgetch: __echoit = %d, __rawmode = %d, flags = %0.2o\n",
+	    __echoit, __rawmode, win->flags);
 #endif
 	if (__echoit && !__rawmode) {
 		cbreak();
@@ -512,7 +512,10 @@ wgetch(WINDOW *win)
 			inp = inkey (win->flags & __NOTIMEOUT ? 0 : 1, 0);
 			break;
 		case 0:
-			if (__nodelay() == ERR) return ERR;
+			if (__nodelay() == ERR) {
+				__restore_termios();
+				return ERR;
+			}
 			inp = inkey(0, 0);
 			break;
 		default:
@@ -567,8 +570,10 @@ wgetch(WINDOW *win)
 
 	__restore_termios();
 	if (__echoit) {
+/*
 		mvwaddch(curscr,
 		    (int) (win->cury + win->begy), (int) (win->curx + win->begx), (chtype) inp);
+*/
 		waddch(win, (chtype) inp);
 	}
 	if (weset)
