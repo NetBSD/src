@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.11 2000/02/10 18:18:02 drochner Exp $
+#	$NetBSD: bsd.links.mk,v 1.12 2000/02/26 19:02:40 mycroft Exp $
 
 .PHONY:		linksinstall
 realinstall:	linksinstall
@@ -16,8 +16,7 @@ linksinstall::
 		echo ".PHONY: $$t"; \
 		echo "$$t:"; \
 		echo "	@echo \"$$t -> $$l\""; \
-		echo "	@rm -f $$t"; \
-		echo "	@ln -s $$l $$t"; \
+		echo "	@rm -f $$t; ln -s $$l $$t"; \
 	 done; \
 	) | ${MAKE} -f- all
 .endif
@@ -34,8 +33,7 @@ linksinstall::
 		echo ".PHONY: $$t"; \
 		echo "$$t:"; \
 		echo "	@echo \"$$t -> $$l\""; \
-		echo "	@rm -f $$t"; \
-		echo "	@ln $$l $$t"; \
+		echo "	@rm -f $$t; ln $$l $$t"; \
 	 done; \
 	) | ${MAKE} -f- all
 .endif
