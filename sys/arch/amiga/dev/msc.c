@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.1 1995/09/30 01:50:50 chopps Exp $ */
+/*	$NetBSD: msc.c,v 1.2 1995/10/07 18:18:26 chopps Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -174,6 +174,30 @@ struct cfdriver msccd = {
 	sizeof(struct device), NULL, 0
 };
 
+#if DEBUG_MSC
+void
+bugi(msc, string)
+	struct mscdevice *msc;
+	char *string;
+{
+	volatile struct mscstatus *ms;
+	volatile struct mscmemory *mscmem;
+
+	mscmem = msc->board;
+	ms = &mscmem->Status[msc->port];
+
+	printf("msc  %s u%d f%08lx F%08lx\n", string, msc->port, msc->flags,
+		msc->openflags);
+	printf("msc  h%d t%d H%d t%d p%02x c%02x CD%02x\n", ms->InHead,
+		ms->InTail, ms->OutHead, ms->OutTail, ms->Param, ms->Command,
+		ms->chCD);
+	printf("msc  a%02x b%02x c%02x\n", ms->Pad_a, ms->Pad_b, ms->Padc);
+
+	return
+}
+	
+#endif
+
 int
 mscmatch(pdp, cdp, auxp)
 	struct device *pdp;
@@ -199,7 +223,6 @@ mscattach(pdp, dp, auxp)
   struct zbus_args *zap;
   int unit;
   int Count;
-  unsigned short ir = custom.intenar;	/* XXX */
 
   zap = (struct zbus_args *)auxp;
   unit = dp->dv_unit;
@@ -299,6 +322,7 @@ mscopen(dev, flag, mode, p)
       msc_tty[ttyn] = tp;
       msc_tty[ttyn+1] = (struct tty *)NULL;
 
+#if 0
       /* default values are not optimal for this device, increase buffers. */
       clfree(&tp->t_rawq);
       clfree(&tp->t_canq);
@@ -306,6 +330,7 @@ mscopen(dev, flag, mode, p)
       clalloc(&tp->t_rawq, 8192, 1);
       clalloc(&tp->t_canq, 8192, 1);
       clalloc(&tp->t_outq, 8192, 0);
+#endif
 
   } 
   else
@@ -382,6 +407,9 @@ mscopen(dev, flag, mode, p)
 
       tp->t_state |= TS_WOPEN;
 
+#if DEBUG_CD
+      printf("msc %ld waiting for CD\n", MSCLINE(dev));
+#endif
       error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH, ttopen, 0);
 
       if (error) {
@@ -390,12 +418,10 @@ mscopen(dev, flag, mode, p)
       }
   }
 
-#if DEBUG_CD
-  if (tp->t_state & TS_CARR_ON) printf(" CARR_ON ");
-  if (tp->t_cflag & CLOCAL) printf(" CLOCAL ");
-#endif
-
 done: 
+#if DEBUG_CD
+  printf("msc %ld waiting for CD\n", MSCLINE(dev));
+#endif
   /* This is a way to handle lost XON characters */
   if ((flag & O_TRUNC) && (tp->t_state & TS_TTSTOP)) {
           tp->t_state &= ~TS_TTSTOP;
@@ -438,6 +464,10 @@ mscclose(dev, flag, mode, p)
 
   ms = &msc->board->Status[msc->port];
   
+#if DEBUG_MSC
+  bugi(msc, "close1");
+#endif
+
   tp = msc_tty[MSCTTY(dev)];
   (*linesw[tp->t_line].l_close)(tp, flag);
 
@@ -449,6 +479,10 @@ mscclose(dev, flag, mode, p)
     msc->closing = TRUE; /* flush remaining characters before dropping DTR */
   else
     ms->OutFlush = TRUE; /* just bitbucket remaining characters */
+
+#if DEBUG_MSC
+  bugi(msc, "close2");
+#endif
 
   return (0);
 
@@ -565,26 +599,23 @@ mscmint (data)
 			    /* carrier detect change OFF -> ON */
 			    case MSCEVENT_CarrierOn:
 #if DEBUG_CD
-			      printf("Carrier detected on msc%d\n", slot);
+			      printf("msc  CD ON %d\n", msc->port);
 #endif
 			      msc->flags |= TIOCM_CD;
-			      if (tp && (tp->t_state & (TS_ISOPEN|TS_WOPEN))
-				     && MSCDIALIN(tp->t_dev))
+			      if (MSCDIALIN(tp->t_dev))
 				(*linesw[tp->t_line].l_modem)(tp, 1);
 			      break;
     
 			    /*  carrier detect change ON -> OFF */
 			    case MSCEVENT_CarrierOff:
 #if DEBUG_CD
-			      printf("Carrier lost on msc%d\n", slot);
+			      printf("msc  CD OFF %d\n", msc->port);
 #endif
 			      msc->flags &= ~TIOCM_CD;
-			      /* if (tp && (tp->t_state & (TS_ISOPEN|TS_WOPEN)) && MSCDIALIN(tp->t_dev)) */
 #ifndef MSCCDHACK
-			      if (tp && MSCDIALIN(tp->t_dev))
-#else
-			      if (tp )
-#endif
+			      if (MSCDIALIN(tp->t_dev))
+#endif			    /* Note to format police: Don't merge the { below
+			       in to the line above! */
 			      {
 				  if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0)
 				  {
@@ -612,8 +643,31 @@ mscmint (data)
 			break;
 
 		      case MSCINCTL_CHAR:
-			 if (tp->t_state & TS_TBLOCK)
+			 if (tp->t_state & TS_TBLOCK) {
+			   if (ms->chCD) {
+			     /* Carrier detect ON -> OFF */
+#if DEBUG_CD
+			     printf("msc  CD OFF blocked %d msc->flags %08lx\n",
+				    msc->port, msc->flags);
+#endif
+			     msc->flags &= ~TIOCM_CD;
+
+#ifndef MSCCDHACK
+			     if (MSCDIALIN(tp->t_dev))
+#endif
+			     {
+			       if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
+				 /* Clear RTS and DTR, bitbucket output */
+				 ms->Command = (ms->Command & ~MSCCMD_CMask) |
+					       MSCCMD_Close;
+				 ms->Setup = TRUE;
+				 msc->flags &= ~(TIOCM_DTR | TIOCM_RTS);
+				 ms->OutFlush = TRUE;
+			       }
+			     }
+			   }
 			   goto NoRoomForYa;
+			 }
 #if DEBUG_MSC
 			 printf("'%c' ",ibuf[bufpos]);
 #endif
@@ -690,21 +744,17 @@ NoRoomForYa:
 			    /* carrier detect change OFF -> ON */
 			    case MSCEVENT_CarrierOn:
 #if DEBUG_CD
-			      printf("Carrier detected on msc%d\n", slot);
+			      printf("msc  CD ON %d (closed)\n", msc->port);
 #endif
 			      msc->flags |= TIOCM_CD;
-			      if (tp && (tp->t_state & (TS_ISOPEN|TS_WOPEN))
-				     && MSCDIALIN(tp->t_dev))
-				(*linesw[tp->t_line].l_modem)(tp, 1);
 			      break;
     
 			    /*  carrier detect change ON -> OFF */
 			    case MSCEVENT_CarrierOff:
 #if DEBUG_CD
-			      printf("Carrier lost on msc%d\n", slot);
+			      printf("msc  CD OFF %d (closed)\n", msc->port);
 #endif
 			      msc->flags &= ~TIOCM_CD;
-			      /* if (tp && (tp->t_state & (TS_ISOPEN|TS_WOPEN)) && MSCDIALIN(tp->t_dev)) */
 #ifndef MSCCDHACK
 			      if (tp && MSCDIALIN(tp->t_dev))
 #else
@@ -722,13 +772,6 @@ NoRoomForYa:
 			      }
 			      break;
     
-			    case MSCEVENT_Break:
-#if DEBUG_MSC
-			      printf("Break received on msc%d\n", slot);
-#endif
-			      (*linesw[tp->t_line].l_rint)(TTY_FE, tp);
-			      break;
-    
 			    default:
 			      printf("msc: unknown event type %d\n",
 				     ibuf[(bufpos-1)&0xff]);
@@ -737,7 +780,7 @@ NoRoomForYa:
 			break;
 
 		      default:
-			;
+			bufpos++;
 
 		   } /* switch on input data type */
 
@@ -795,7 +838,8 @@ mscioctl(dev, cmd, data, flag, p)
     return ENXIO;
 
   ms = &msc->board->Status[msc->port];
-  tp = msc_tty[MSCTTY(dev)];
+  if (!(tp = msc_tty[MSCTTY(dev)]))
+    return ENXIO;
 
   error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 
@@ -902,6 +946,9 @@ mscparam(tp, t)
 
   ms = &msc->board->Status[msc->port];
 
+#if DEBUG_MSC
+  bugi(msc, "param1");
+#endif
   /* check requested parameters */
   if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
     return (EINVAL);
@@ -927,9 +974,13 @@ mscparam(tp, t)
        * also mscmctl will cause the speed to be set
        */
       (void) mscmctl (tp->t_dev, TIOCM_DTR | TIOCM_RTS, DMSET);
+
       splx(s);
   }
   
+#if DEBUG_MSC
+  bugi(msc, "param2");
+#endif
   return (0);
 
 }
@@ -975,6 +1026,9 @@ mschwiflow(tp, flag)
     return ENXIO;
   ms = &msc->board->Status[msc->port];
 
+#if DEBUG_MSC
+  bugi(msc, "hwiflow");
+#endif
   /* Well, we should really _do_ something here, but the 65c02 code
    * manages the RTS signal on its own now, so...  This will probably
    * change in the future.
@@ -1011,11 +1065,9 @@ mscstart(tp)
 
   s = spltty();
 
-#if 0
   /* don't start if explicitly stopped */
   if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP)) 
     goto out;
-#endif
 
   /* wake up if below low water */
   cc = tp->t_outq.c_cc;
@@ -1031,7 +1083,7 @@ mscstart(tp)
   }
 
   /* don't bother if no characters or busy */
-  if (! cc || (tp->t_state & TS_BUSY))
+  if (cc == 0 || (tp->t_state & TS_BUSY))
     goto out;
 
   /*
@@ -1147,7 +1199,11 @@ mscmctl(dev, bits, how)
   if (!msc->active)
     return ENXIO;
 
-  s = spltty();
+#if DEBUG_MSC
+  bugi(msc, "mctl1");
+#endif
+
+  s = spltty();		/* Jukka wants spl6() here, WHY?!! RFH */
 
   if (how != DMGET) {
       OldFlags = msc->flags;
@@ -1166,6 +1222,10 @@ mscmctl(dev, bits, how)
           msc->flags |= bits;
           break;
       }
+
+#if DEBUG_MSC
+    bugi(msc, "mctl2");
+#endif
 
       /* modify modem control state */
       ms = &msc->board->Status[msc->port];
@@ -1190,6 +1250,10 @@ mscmctl(dev, bits, how)
 
   (void) splx(s);
   
+#if DEBUG_MSC
+    bugi(msc, "mctl3");
+#endif
+
   return(bits);
 
 }
@@ -1235,7 +1299,7 @@ mscinitcard(zap)
 
   mlm->Common.Crystal = MSC_UNKNOWN;	/* use automatic speed check */
 
-  /* start it running */
+  /* start 6502 running */
   (void)mlm->ResetBoard;
 
   /* wait until speed detector has finished */

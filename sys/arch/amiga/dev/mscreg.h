@@ -1,4 +1,4 @@
-/*	$NetBSD: mscreg.h,v 1.2 1995/09/30 02:08:47 chopps Exp $ */
+/*	$NetBSD: mscreg.h,v 1.3 1995/10/07 18:18:35 chopps Exp $ */
 
 /*
  * Copyright (c) 1993 Zik.
@@ -70,7 +70,7 @@ struct mscstatus {
 	u_char InHead;		/* input queue head */
 	u_char InTail;		/* input queue tail */
 	u_char Pad_a;		/* paddington */
-	u_char InSync;		/* input character to wake client */
+	u_char Pad_b;		/* paddington */
 	u_char OutDisable;	/* disables output */
 	u_char OutHead;		/* output queue head */
 	u_char OutTail;		/* output queue tail */
@@ -83,7 +83,7 @@ struct mscstatus {
 	/* private 65C02 fields: */
 	u_char chCD;		/* used to detect CD changes */
 	u_char XonOff;		/* stores XON/XOFF enable/disable */
-	u_char Pad_b;		/* paddington */
+	u_char Pad_c;		/* paddington */
 };
 
 #define	MSC_MEMPAD	\
@@ -126,7 +126,6 @@ struct mscdevice {
 #define	MSCEVENT_Break		1	/* break set */
 #define	MSCEVENT_CarrierOn	2	/* carrier raised */
 #define	MSCEVENT_CarrierOff	3	/* carrier dropped */
-#define	MSCEVENT_Sync		4
 
 #define	MSCCMD_Enable		0x1	/* enable/DTR bit */
 #define	MSCCMD_Close		0x2	/* close the device */
@@ -134,7 +133,7 @@ struct mscdevice {
 #define	MSCCMD_CMask		0xf	/* command mask */
 #define	MSCCMD_RTSOff		0x0  	/* turn off RTS */
 #define	MSCCMD_RTSOn		0x8	/* turn on RTS */
-#define	MSCCMD_Break		0xd	/* transmit a break */
+#define	MSCCMD_Break		0xc	/* transmit a break */
 #define	MSCCMD_RTSMask		0xc	/* mask for RTS stuff */
 #define	MSCCMD_NoParity		0x00	/* don't use parity */
 #define	MSCCMD_OddParity	0x20	/* odd parity */
