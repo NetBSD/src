@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.14 1998/09/01 22:22:03 jeremy Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.15 1998/09/01 22:56:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -251,23 +251,24 @@ struct ncr53c9x_softc {
 	u_char	sc_espfflags;
 
 	/* Lists of command blocks */
-	TAILQ_HEAD(ecb_list, ncr53c9x_ecb) free_list,
-				      ready_list,
-				      nexus_list;
+	TAILQ_HEAD(ecb_list, ncr53c9x_ecb)
+		free_list,
+		ready_list,
+		nexus_list;
 
-	struct ncr53c9x_ecb *sc_nexus;		/* current command */
-	struct ncr53c9x_ecb sc_ecb[3*8];		/* three per target */
+	struct ncr53c9x_ecb *sc_nexus;		/* Current command */
+	struct ncr53c9x_ecb sc_ecb[3*8];	/* Three per target */
 	struct ncr53c9x_tinfo sc_tinfo[8];
 
 	/* Data about the current nexus (updated for every cmd switch) */
-	caddr_t	sc_dp;				/* Current data pointer */
-	ssize_t	sc_dleft;			/* Data left to transfer */
+	caddr_t	sc_dp;		/* Current data pointer */
+	ssize_t	sc_dleft;	/* Data left to transfer */
 
 	/* Adapter state */
-	int	sc_phase;		/* Copy of what bus phase we are in */
-	int	sc_prevphase;		/* Copy of what bus phase we were in */
-	u_char	sc_state;		/* State applicable to the adapter */
-	u_char	sc_flags;
+	int	sc_phase;	/* Copy of what bus phase we are in */
+	int	sc_prevphase;	/* Copy of what bus phase we were in */
+	u_char	sc_state;	/* State applicable to the adapter */
+	u_char	sc_flags;	/* See below */
 	u_char	sc_selid;
 	u_char	sc_lastcmd;
 
@@ -285,13 +286,13 @@ struct ncr53c9x_softc {
 	caddr_t	sc_cmdp;	/* Command pointer (for DMAed commands) */
 	size_t	sc_cmdlen;	/* Size of command in transit */
 
-	/* hardware/openprom stuff */
-	int sc_freq;				/* Freq in MHz */
-	int sc_id;				/* our scsi id */
-	int sc_rev;				/* esp revision */
-	int sc_features;			/* chip features */
-	int sc_minsync;				/* minimum sync period / 4 */
-	int sc_maxxfer;				/* maximum transfer size */
+	/* Hardware attributes */
+	int sc_freq;		/* SCSI bus frequency in MHz */
+	int sc_id;		/* Our SCSI id */
+	int sc_rev;		/* Chip revision */
+	int sc_features;	/* Chip features */
+	int sc_minsync;		/* Minimum sync period / 4 */
+	int sc_maxxfer;		/* Maximum transfer size */
 };
 
 /* values for sc_state */
