@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 1996/10/13 03:06:36 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 1996/11/30 00:29:38 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -152,6 +152,11 @@ void ser_outintr __P((void));
 #if NFD > 0
 void fdintr __P((int));
 #endif
+
+/*
+ * patched by some devices at attach time (currently, only drcom)
+ */
+u_int16_t amiga_ttyspl = PSL_S|PSL_IPL4;
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -442,6 +447,7 @@ again:
 #ifdef DEBUG_KERNEL_START
 	printf("survived initcpu...\n");
 #endif
+	
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
@@ -489,6 +495,11 @@ setregs(p, pack, stack, retval)
  */
 char cpu_model[120];
 extern char version[];
+
+#if defined(M68060)
+int m68060_pcr_init = 0x21;	/* make this patchable */
+#endif
+
  
 void
 identifycpu()
@@ -534,7 +545,7 @@ identifycpu()
 		cpu_type = "m68040";
 		mmu = "/MMU";
 		fpu = "/FPU";
-		fputype = FPU_68040;
+		fputype = FPU_68040; /* XXX */
 	} else if (machineid & AMIGA_68030) {
 		cpu_type = "m68030";	/* XXX */
 		mmu = "/MMU";
@@ -1189,10 +1200,6 @@ microtime(tvp)
 	splx(s);
 }
 
-#if defined(M68060)
-int m68060_pcr_init = 0x21;	/* make this patchable */
-#endif
-
 void
 initcpu()
 {
@@ -1226,7 +1233,12 @@ initcpu()
 		vectab[61] = &I_CALL_TOP[128 + 0x00];
 
 		/* floating point support */
+		/*
+		 * XXX maybe we really should run-time check for the
+		 * stack frame format here:
+		 */
 		vectab[11] = &FP_CALL_TOP[128 + 0x30];
+
 		vectab[55] = &FP_CALL_TOP[128 + 0x38];
 		vectab[60] = &FP_CALL_TOP[128 + 0x40];
 
@@ -1243,6 +1255,10 @@ initcpu()
 		vectab[48] = &fpfault;
 	}
 #endif
+
+/*
+ * Vector initialization for special motherboards 
+ */
 
 #ifdef DRACO
 	dracorev = is_draco();
@@ -1505,6 +1521,7 @@ call_sicallbacks()
 struct isr *isr_ports;
 #ifdef DRACO
 struct isr *isr_slot3;
+struct isr *isr_supio;
 #endif
 struct isr *isr_exter;
 
@@ -1522,6 +1539,9 @@ add_isr(isr)
 	case 3:
 		p = &isr_slot3;
 		break;
+	case 5:
+		p = &isr_supio;
+		break;
 	default:	/* was case 6:; make gcc -Wall quiet */
 		p = &isr_exter;
 		break;
@@ -1536,8 +1556,16 @@ add_isr(isr)
 	/* enable interrupt */
 #ifdef DRACO
 	if (is_draco())
-		*draco_intena |= isr->isr_ipl == 6 ?
-			DRIRQ_INT6 : DRIRQ_INT2;
+		switch(isr->isr_ipl) {
+			case 6:
+				*draco_intena |= DRIRQ_INT6;
+				break;
+			case 2:
+				*draco_intena |= DRIRQ_INT2;
+				break;
+			default:
+				break;
+		}
 	else 
 #endif
 		custom.intena = isr->isr_ipl == 2 ? 
@@ -1558,6 +1586,9 @@ remove_isr(isr)
 		break;
 	case 3:
 		p = &isr_slot3;
+		break;
+	case 5:
+		p = &isr_supio;
 		break;
 	default:	/* XXX to make gcc -Wall quiet, was 6: */
 		p = &isr_exter;
@@ -1582,6 +1613,9 @@ remove_isr(isr)
 	case 3:
 		p = &isr_slot3;
 		break;
+	case 5:
+		p = &isr_supio;
+		break;
 	case 6:
 		p = &isr_exter;
 		break;
@@ -1591,10 +1625,18 @@ remove_isr(isr)
 #endif
 	if (*p == NULL)
 #ifdef DRACO
-		if (is_draco())
-			*draco_intena &= isr->isr_ipl == 6 ? 
-			    ~DRIRQ_INT6 : ~DRIRQ_INT2;
-		else
+		if (is_draco()) {
+			switch(isr->isr_ipl) {
+				case 2:
+					*draco_intena &= ~DRIRQ_INT2;
+					break;
+				case 6:
+					*draco_intena &= ~DRIRQ_INT6;
+					break;
+				default:
+					break;
+			}
+		} else
 #endif
 			custom.intena = isr->isr_ipl == 6 ? 
 			    INTF_EXTER : INTF_PORTS;
@@ -1708,6 +1750,16 @@ intrhand(sr)
 		if (ireq & INTF_VERTB) 
 			vbl_handler();
 		break;
+#ifdef DRACO
+	case 5:
+		p = &isr_supio;
+		while ((q = *p) != NULL) {
+			if ((q->isr_intr)(q->isr_arg))
+				break;
+			p = &q->isr_forw;
+		}
+		break;
+#endif
 #if 0
 /* now dealt with in locore.s for speed reasons */
 	case 5:
