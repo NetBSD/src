@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.17 1994/11/04 19:01:50 mycroft Exp $	*/
+/*	$NetBSD: if_el.c,v 1.18 1994/11/18 22:03:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -75,7 +75,7 @@ struct el_softc {
 	struct intrhand sc_ih;
 
 	struct arpcom sc_arpcom;	/* ethernet common */
-	u_short sc_iobase;		/* base I/O addr */
+	int sc_iobase;			/* base I/O addr */
 	char sc_pktbuf[EL_BUFSIZ]; 	/* frame buffer */
 };
 
@@ -115,7 +115,7 @@ elprobe(parent, match, aux)
 {
 	struct el_softc *sc = match;
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 	u_char station_addr[ETHER_ADDR_LEN];
 	int i;
 
@@ -251,7 +251,7 @@ static inline void
 el_hardreset(sc)
 	struct el_softc *sc;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	int i;
 
 	outb(iobase+EL_AC, EL_AC_RESET);
@@ -270,7 +270,7 @@ el_init(sc)
 	struct el_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	int s;
 
 	/* If address not known, do nothing. */
@@ -318,7 +318,7 @@ el_start(ifp)
 	struct ifnet *ifp;
 {
 	struct el_softc *sc = elcd.cd_devs[ifp->if_unit];
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	struct mbuf *m, *m0;
 	int s, i, len, retries, done;
 
@@ -428,7 +428,7 @@ el_xmit(sc, len)
 	struct el_softc *sc;
 	int len;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	int gpl;
 	int i;
 
@@ -456,7 +456,7 @@ int
 elintr(sc)
 	register struct el_softc *sc;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	int stat, rxstat, len, done;
 
 	dprintf(("elintr: "));

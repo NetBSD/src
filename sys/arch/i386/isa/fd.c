@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.61 1994/11/04 22:51:59 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.62 1994/11/18 22:03:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -97,8 +97,8 @@ struct fdc_softc {
 	struct isadev sc_id;
 	struct intrhand sc_ih;
 
-	u_short	sc_iobase;
-	u_short	sc_drq;
+	int sc_iobase;
+	int sc_drq;
 
 	struct fd_softc *sc_fd[4];	/* pointers to children */
 	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
@@ -184,7 +184,7 @@ void fd_set_motor __P((struct fdc_softc *fdc, int reset));
 void fd_motor_off __P((void *arg));
 void fd_motor_on __P((void *arg));
 int fdcresult __P((struct fdc_softc *fdc));
-int out_fdc __P((u_short iobase, u_char x));
+int out_fdc __P((int iobase, u_char x));
 void fdcstart __P((struct fdc_softc *fdc));
 void fdcstatus __P((struct device *dv, int n, char *s));
 void fdctimeout __P((void *arg));
@@ -199,7 +199,7 @@ fdcprobe(parent, match, aux)
 	void *match, *aux;
 {
 	register struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
 	/* reset */
 	outb(iobase + fdout, 0);
@@ -239,7 +239,7 @@ fdcforceintr(aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
 	/* the motor is off; this should generate an error with or
 	   without a disk drive present */
@@ -335,7 +335,7 @@ fdprobe(parent, match, aux)
 	struct cfdata *cf = match;
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
-	u_short iobase = fdc->sc_iobase;
+	int iobase = fdc->sc_iobase;
 	int n;
 
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
@@ -590,7 +590,7 @@ int
 fdcresult(fdc)
 	struct fdc_softc *fdc;
 {
-	u_short iobase = fdc->sc_iobase;
+	int iobase = fdc->sc_iobase;
 	u_char i;
 	int j = 100000,
 	    n = 0;
@@ -613,7 +613,7 @@ fdcresult(fdc)
 
 int
 out_fdc(iobase, x)
-	u_short iobase;
+	int iobase;
 	u_char x;
 {
 	int i = 100000;
@@ -688,7 +688,7 @@ fdcstatus(dv, n, s)
 	char *s;
 {
 	struct fdc_softc *fdc = (void *)dv->dv_parent;
-	u_short iobase = fdc->sc_iobase;
+	int iobase = fdc->sc_iobase;
 
 	if (n == 0) {
 		out_fdc(fdc->sc_iobase, NE7CMD_SENSEI);
@@ -768,7 +768,7 @@ fdcintr(fdc)
 #define	cyl	fdc->sc_status[1]
 	struct fd_softc *fd;
 	struct buf *bp;
-	u_short iobase = fdc->sc_iobase;
+	int iobase = fdc->sc_iobase;
 	int read, head, trac, sec, i, s, sectrac, blkno, nblks;
 	struct fd_type *type;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.18 1994/11/04 18:35:09 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.19 1994/11/18 22:03:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -215,7 +215,7 @@ struct ie_softc {
 	struct device sc_dev;
 	struct intrhand sc_ih;
 
-	u_short sc_iobase;
+	int sc_iobase;
 	caddr_t sc_maddr;
 	u_int sc_msize;
 
@@ -293,9 +293,9 @@ struct cfdriver iecd = {
 #define PORT sc->sc_iobase
 #define MEM sc->sc_maddr
 
-#define bis(c, b)	do { const register u_short com_ad = (c); \
+#define bis(c, b)	do { const register int com_ad = (c); \
 			     outb(com_ad, inb(com_ad) | (b)); } while(0)
-#define bic(c, b)	do { const register u_short com_ad = (c); \
+#define bic(c, b)	do { const register int com_ad = (c); \
 			     outb(com_ad, inb(com_ad) &~ (b)); } while(0)
 
 /*

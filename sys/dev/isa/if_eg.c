@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.7 1994/11/04 21:32:23 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.8 1994/11/18 22:03:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -98,10 +98,10 @@ struct eg_softc {
 	struct device sc_dev;
 	struct intrhand sc_ih;
 	struct arpcom sc_arpcom;	/* Ethernet common part */
-	u_short eg_cmd;			/* Command register R/W */
-	u_short eg_ctl;			/* Control register R/W (EG_CTL_*) */
-	u_short eg_stat;		/* Status register R/O (EG_STAT_*) */
-	u_short eg_data;		/* Data register R/W (16 bits) */
+	int eg_cmd;			/* Command register R/W */
+	int eg_ctl;			/* Control register R/W (EG_CTL_*) */
+	int eg_stat;			/* Status register R/O (EG_STAT_*) */
+	int eg_data;			/* Data register R/W (16 bits) */
 	u_char  eg_rom_major;		/* Cards ROM version (major number) */ 
 	u_char  eg_rom_minor;		/* Cards ROM version (minor number) */ 
 	short	eg_ram;			/* Amount of RAM on the card */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.16 1994/11/04 19:01:53 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.17 1994/11/18 22:03:23 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -77,8 +77,8 @@ struct le_softc {
 	struct	intrhand sc_ih;
 
 	struct	arpcom sc_arpcom;	/* Ethernet common part */
-	u_short	sc_iobase;		/* IO base address of card */
-	u_short	sc_rap, sc_rdp;
+	int	sc_iobase;		/* IO base address of card */
+	int	sc_rap, sc_rdp;
 	int	sc_chip, sc_card;
 	void	*sc_mem;
 	struct	init_block *sc_init;	/* Lance initialisation block */
@@ -211,7 +211,7 @@ depca_probe(sc, ia)
 	struct le_softc *sc;
 	struct isa_attach_args *ia;
 {
-	u_short iobase = ia->ia_iobase, port;
+	int iobase = ia->ia_iobase, port;
 	u_long sum, rom_sum;
 	u_char x;
 	int i;
@@ -292,7 +292,7 @@ ne2100_probe(sc, ia)
 	struct le_softc *sc;
 	struct isa_attach_args *ia;
 {
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 	int i;
 
 	sc->sc_iobase = iobase;
@@ -318,7 +318,7 @@ bicc_probe(sc, ia)
 	struct le_softc *sc;
 	struct isa_attach_args *ia;
 {
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 	int i;
 
 	sc->sc_iobase = iobase;

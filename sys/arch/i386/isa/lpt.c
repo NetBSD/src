@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.24 1994/10/30 21:44:04 cgd Exp $	*/
+/*	$NetBSD: lpt.c,v 1.25 1994/11/18 22:03:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -91,8 +91,8 @@ struct lpt_softc {
 	struct buf *sc_inbuf;
 	u_char *sc_cp;
 	int sc_spinmax;
-	u_short sc_iobase;
-	u_short sc_irq;
+	int sc_iobase;
+	int sc_irq;
 	u_char sc_state;
 #define	LPT_OPEN	0x01	/* device is open */
 #define	LPT_OBUSY	0x02	/* printer is busy doing output */
@@ -105,8 +105,8 @@ struct lpt_softc {
 	u_char sc_laststatus;
 };
 
-int lptprobe();
-void lptattach();
+int lptprobe __P((struct device *, void *, void *));
+void lptattach __P((struct device *, struct device *, void *));
 int lptintr __P((struct lpt_softc *));
 
 struct cfdriver lptcd = {
@@ -118,14 +118,11 @@ struct cfdriver lptcd = {
 
 #define	LPS_INVERT	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
 #define	LPS_MASK	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
-#ifndef DIAGNOSTIC
 #define	NOT_READY()	((inb(iobase + lpt_status) ^ LPS_INVERT) & LPS_MASK)
-#else
-#define	NOT_READY()	notready(inb(iobase + lpt_status), sc)
-static int notready __P((u_char, struct lpt_softc *));
-#endif
+#define	NOT_READY_ERR()	not_ready(inb(iobase + lpt_status), sc)
+static int not_ready __P((u_char, struct lpt_softc *));
 
-static void lptout __P((void *arg));
+static void lptwakeup __P((void *arg));
 static int pushbytes __P((struct lpt_softc *));
 
 /*
@@ -133,7 +130,7 @@ static int pushbytes __P((struct lpt_softc *));
  */
 int
 lpt_port_test(port, data, mask)
-	u_short port;
+	int port;
 	u_char data, mask;
 {
 	int timeout;
@@ -173,13 +170,13 @@ lpt_port_test(port, data, mask)
  *	3) Set the data and control ports to a value of 0
  */
 int
-lptprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lptprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
-	u_short port;
+	int iobase = ia->ia_iobase;
+	int port;
 	u_char mask, data;
 	int i;
 
@@ -239,9 +236,9 @@ lptattach(parent, self, aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
-	if (ia->ia_irq)
+	if (ia->ia_irq != IRQUNK)
 		printf("\n");
 	else
 		printf(": polled\n");
@@ -251,7 +248,7 @@ lptattach(parent, self, aux)
 	sc->sc_state = 0;
 	outb(iobase + lpt_control, LPC_NINIT);
 
-	if (ia->ia_irq) {
+	if (ia->ia_irq != IRQUNK) {
 		sc->sc_ih.ih_fun = lptintr;
 		sc->sc_ih.ih_arg = sc;
 		sc->sc_ih.ih_level = IPL_NONE;
@@ -270,7 +267,7 @@ lptopen(dev, flag)
 	int unit = LPTUNIT(dev);
 	u_char flags = LPTFLAGS(dev);
 	struct lpt_softc *sc;
-	u_short iobase;
+	int iobase;
 	u_char control;
 	int error;
 	int spin;
@@ -281,7 +278,7 @@ lptopen(dev, flag)
 	if (!sc)
 		return ENXIO;
 
-	if (sc->sc_irq == 0 && (flags & LPT_NOINTR) == 0)
+	if (sc->sc_irq == IRQUNK && (flags & LPT_NOINTR) == 0)
 		return ENXIO;
 
 #ifdef DIAGNOSTIC
@@ -308,7 +305,7 @@ lptopen(dev, flag)
 	outb(iobase + lpt_control, control);
 
 	/* wait till ready (printer running diagnostics) */
-	for (spin = 0; NOT_READY(); spin += STEP) {
+	for (spin = 0; NOT_READY_ERR(); spin += STEP) {
 		if (spin >= TIMEOUT) {
 			sc->sc_state = 0;
 			return EBUSY;
@@ -332,21 +329,22 @@ lptopen(dev, flag)
 	sc->sc_inbuf = geteblk(LPT_BSIZE);
 	sc->sc_count = 0;
 	sc->sc_state = LPT_OPEN;
-	lptout(sc);
+
+	if ((sc->sc_flags & LPT_NOINTR) == 0)
+		lptwakeup(sc);
 
 	lprintf("%s: opened\n", sc->sc_dev.dv_xname);
 	return 0;
 }
 
-#ifdef DIAGNOSTIC
 int
-notready(status, sc)
+not_ready(status, sc)
 	u_char status;
 	struct lpt_softc *sc;
 {
 	u_char new;
 
-	status ^= LPS_INVERT;
+	status = (status ^ LPS_INVERT) & LPS_MASK;
 	new = status & ~sc->sc_laststatus;
 	sc->sc_laststatus = status;
 
@@ -357,26 +355,21 @@ notready(status, sc)
 	else if (new & LPS_NERR)
 		log(LOG_NOTICE, "%s: output error\n", sc->sc_dev.dv_xname);
 
-	return status & LPS_MASK;
+	return status;
 }
-#endif
 
 void
-lptout(arg)
+lptwakeup(arg)
 	void *arg;
 {
-	struct lpt_softc *sc;
+	struct lpt_softc *sc = arg;
 	int s;
-
-	sc = (struct lpt_softc *)arg;
-	if (sc->sc_flags & LPT_NOINTR)
-		return;
 
 	s = spltty();
 	lptintr(sc);
 	splx(s);
 
-	timeout(lptout, sc, STEP);
+	timeout(lptwakeup, sc, STEP);
 }
 
 /*
@@ -388,10 +381,13 @@ lptclose(dev, flag)
 {
 	int unit = LPTUNIT(dev);
 	struct lpt_softc *sc = lptcd.cd_devs[unit];
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 
 	if (sc->sc_count)
 		(void) pushbytes(sc);
+
+	if ((sc->sc_flags & LPT_NOINTR) == 0)
+		untimeout(lptwakeup, sc);
 
 	outb(iobase + lpt_control, LPC_NINIT);
 	sc->sc_state = 0;
@@ -406,7 +402,7 @@ int
 pushbytes(sc)
 	struct lpt_softc *sc;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	int error;
 
 	if (sc->sc_flags & LPT_NOINTR) {
@@ -415,12 +411,13 @@ pushbytes(sc)
 
 		while (sc->sc_count > 0) {
 			spin = 0;
-			while (NOT_READY() && spin++ < sc->sc_spinmax);
-			if (spin >= sc->sc_spinmax) {
+			while (NOT_READY()) {
+				if (++spin < sc->sc_spinmax)
+					continue;
 				tic = 0;
 				/* adapt busy-wait algorithm */
 				sc->sc_spinmax++;
-				while (NOT_READY()) {
+				while (NOT_READY_ERR()) {
 					/* exponential backoff */
 					tic = tic + tic + 1;
 					if (tic > TIMEOUT)
@@ -430,6 +427,7 @@ pushbytes(sc)
 					if (error != EWOULDBLOCK)
 						return error;
 				}
+				break;
 			}
 
 			outb(iobase + lpt_data, *sc->sc_cp++);
@@ -438,7 +436,7 @@ pushbytes(sc)
 			outb(iobase + lpt_control, control);
 
 			/* adapt busy-wait algorithm */
-			if (spin*2 < sc->sc_spinmax)
+			if (spin*2 + 16 < sc->sc_spinmax)
 				sc->sc_spinmax--;
 		}
 	} else {
@@ -498,7 +496,7 @@ int
 lptintr(sc)
 	struct lpt_softc *sc;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 
 #if 0
 	if ((sc->sc_state & LPT_OPEN) == 0)
@@ -506,7 +504,7 @@ lptintr(sc)
 #endif
 
 	/* is printer online and ready for output */
-	if (NOT_READY())
+	if (NOT_READY() && NOT_READY_ERR())
 		return 0;
 
 	if (sc->sc_count) {

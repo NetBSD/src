@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.15 1994/11/03 23:17:41 mycroft Exp $	*/
+/*	$NetBSD: mms.c,v 1.16 1994/11/18 22:03:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -56,7 +56,7 @@ struct mms_softc {		/* driver status information */
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
-	u_short sc_iobase;	/* I/O port base */
+	int sc_iobase;		/* I/O port base */
 	u_char sc_state;	/* mouse driver state */
 #define	MMS_OPEN	0x01	/* device is open */
 #define	MMS_ASLP	0x02	/* waiting for mouse data */
@@ -80,7 +80,7 @@ mmsprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
 	/* Read identification register to see if present */
 	if (inb(iobase + MMS_IDENT) != 0xde)
@@ -101,7 +101,7 @@ mmsattach(parent, self, aux)
 {
 	struct mms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
 	printf("\n");
 
@@ -266,7 +266,7 @@ int
 mmsintr(sc)
 	struct mms_softc *sc;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	u_char buttons, changed, status;
 	char dx, dy;
 	u_char buffer[5];

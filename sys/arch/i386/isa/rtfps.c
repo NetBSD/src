@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.5 1994/11/07 09:03:51 mycroft Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.6 1994/11/18 22:03:37 mycroft Exp $	*/
 
 /*
  * Multi-port serial card interrupt demuxing support.
@@ -19,8 +19,8 @@ struct rtfps_softc {
 	struct device sc_dev;
 	struct intrhand sc_ih;
 
-	u_short sc_iobase;
-	u_short sc_irqport;
+	int sc_iobase;
+	int sc_irqport;
 	int sc_alive;		/* mask of slave units attached */
 	void *sc_slaves[4];	/* com device unit numbers */
 };
@@ -28,7 +28,6 @@ struct rtfps_softc {
 int rtfpsprobe();
 void rtfpsattach();
 int rtfpsintr __P((struct rtfps_softc *));
-void rt_resetintr __P((/*u_short*/));
 
 struct cfdriver rtfpscd = {
 	NULL, "rtfps", rtfpsprobe, rtfpsattach, DV_TTY, sizeof(struct rtfps_softc), 1
@@ -90,7 +89,7 @@ rtfpsattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct rtfps_attach_args ra;
 	struct isa_attach_args isa;
-	static u_short irqport[] = {
+	static int irqport[] = {
 		-1,    -1,    -1,    -1,
 		-1,    -1,    -1,    -1,
 		-1, 0x2f2, 0x6f2, 0x6f3,
@@ -99,7 +98,7 @@ rtfpsattach(parent, self, aux)
 
 	sc->sc_iobase = ia->ia_iobase;
 
-	if (ia->ia_irq >= 16 || irqport[ia->ia_irq] == (u_short)-1)
+	if (ia->ia_irq >= 16 || irqport[ia->ia_irq] == -1)
 		panic("rtfpsattach: invalid irq");
 	sc->sc_irqport = irqport[ia->ia_irq];
 
@@ -132,7 +131,7 @@ int
 rtfpsintr(sc)
 	struct rtfps_softc *sc;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	int alive = sc->sc_alive;
 
 	outb(sc->sc_irqport, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultra14f.c,v 1.42 1994/11/04 19:02:03 mycroft Exp $	*/
+/*	$NetBSD: ultra14f.c,v 1.43 1994/11/18 22:03:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -286,7 +286,7 @@ struct uha_softc {
 	struct isadev sc_id;
 	struct intrhand sc_ih;
 
-	u_short sc_iobase;
+	int sc_iobase;
 
 	void (*send_mbox)();
 	int (*abort)();
@@ -296,8 +296,8 @@ struct uha_softc {
 
 	struct mscp *mscphash[MSCP_HASH_SIZE];
 	struct mscp *free_mscp;
-	u_short uha_int;
-	u_short uha_dma;
+	int uha_int;
+	int uha_dma;
 	int uha_scsi_dev;		/* our scsi id */
 	int nummscps;
 	struct scsi_link sc_link;
@@ -368,7 +368,7 @@ u14_send_mbox(uha, mscp)
 	struct uha_softc *uha;
 	struct mscp *mscp;
 {
-	u_short iobase = uha->sc_iobase;
+	int iobase = uha->sc_iobase;
 	int spincount = 100000;	/* 1s should be enough */
 	int s = splbio();
 
@@ -394,7 +394,7 @@ u24_send_mbox(uha, mscp)
 	struct uha_softc *uha;
 	struct mscp *mscp;
 {
-	u_short iobase = uha->sc_iobase;
+	int iobase = uha->sc_iobase;
 	int spincount = 100000;	/* 1s should be enough */
 	int s = splbio();
 
@@ -424,7 +424,7 @@ u14_abort(uha, mscp)
 	struct uha_softc *uha;
 	struct mscp *mscp;
 {
-	u_short iobase = uha->sc_iobase;
+	int iobase = uha->sc_iobase;
 	int spincount = 100;		/* 1 mSec */
 	int abortcount = 200000;	/* 2 secs */
 	int s = splbio();
@@ -471,7 +471,7 @@ u24_abort(uha, mscp)
 	struct uha_softc *uha;
 	struct mscp *mscp;
 {
-	u_short iobase = uha->sc_iobase;
+	int iobase = uha->sc_iobase;
 	int spincount = 100;		/* 1 mSec */
 	int abortcount = 200000;	/* 2 secs */
 	int s = splbio();
@@ -524,7 +524,7 @@ u14_poll(uha, wait)
 	struct uha_softc *uha;
 	int wait;
 {
-	u_short iobase = uha->sc_iobase;
+	int iobase = uha->sc_iobase;
 
 	while (--wait) {
 		if (inb(iobase + U14_SINT) & U14_SINTP)
@@ -546,7 +546,7 @@ u24_poll(uha, wait)
 	struct uha_softc *uha;
 	int wait;
 {
-	u_short iobase = uha->sc_iobase;
+	int iobase = uha->sc_iobase;
 
 	while (--wait) {
 		if (inb(iobase + U24_SINT) & U24_SINTP)
@@ -675,7 +675,7 @@ u14intr(uha)
 	struct mscp *mscp;
 	u_char uhastat;
 	u_long mboxval;
-	u_short iobase = uha->sc_iobase;
+	int iobase = uha->sc_iobase;
 
 #ifdef	UHADEBUG
 	printf("%s: uhaintr ", uha->sc_dev.dv_xname);
@@ -720,7 +720,7 @@ u24intr(uha)
 	struct mscp *mscp;
 	u_char uhastat;
 	u_long mboxval;
-	u_short iobase = uha->sc_iobase;
+	int iobase = uha->sc_iobase;
 
 #ifdef	UHADEBUG
 	printf("%s: uhaintr ", uha->sc_dev.dv_xname);
@@ -946,7 +946,7 @@ u14_find(uha, ia)
 	struct uha_softc *uha;
 	struct isa_attach_args *ia;
 {
-	u_short iobase = uha->sc_iobase;
+	int iobase = uha->sc_iobase;
 	u_short model, config;
 	int resetcount = 4000;	/* 4 secs? */
 
@@ -1032,7 +1032,7 @@ u24_find(uha, ia)
 	struct isa_attach_args *ia;
 {
 	static int uha_slot = 0;
-	u_short iobase;
+	int iobase;
 	u_short vendor, model;
 	u_char config0, config1, config2;
 	u_char irq_ch, uha_id;
@@ -1128,7 +1128,7 @@ void
 u14_init(uha)
 	struct uha_softc *uha;
 {
-	u_short iobase = uha->sc_iobase;
+	int iobase = uha->sc_iobase;
 
 	/* make sure interrupts are enabled */
 	outb(iobase + U14_SMASK, UHA_SINTEN | UHA_ICM_ENABLED);
@@ -1138,7 +1138,7 @@ void
 u24_init(uha)
 	struct uha_softc *uha;
 {
-	u_short iobase = uha->sc_iobase;
+	int iobase = uha->sc_iobase;
 
 	/* make sure interrupts are enabled */
 	outb(iobase + U24_SMASK, 0xc2);		/* XXXX */

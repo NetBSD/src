@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.60 1994/11/04 18:35:07 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.61 1994/11/18 22:03:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -83,7 +83,7 @@ struct ep_softc {
 	struct intrhand sc_ih;
 
 	struct arpcom sc_arpcom;	/* Ethernet common part		*/
-	u_short	ep_iobase;		/* i/o bus address		*/
+	int	ep_iobase;		/* i/o bus address		*/
 	char    ep_connectors;		/* Connectors on this card.	*/
 #define MAX_MBS	8			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
@@ -120,8 +120,8 @@ static int epbusyeeprom __P((struct ep_softc *));
 #define MAXEPCARDS 20	/* if you have 21 cards in your machine... you lose */
 
 static struct epcard {
-	u_short	iobase;
-	u_short	irq;
+	int	iobase;
+	int	irq;
 	char	available;
 	char	bus32bit;
 } epcards[MAXEPCARDS];
@@ -129,8 +129,8 @@ static int nepcards;
 
 static void
 epaddcard(iobase, irq, bus32bit)
-	u_short iobase;
-	u_short irq;
+	int iobase;
+	int irq;
 	char bus32bit;
 {
 
@@ -161,7 +161,7 @@ epprobe(parent, match, aux)
 	static int probed;
 	int slot, iobase, i;
 	u_short vendor, model;
-	u_short k, k2;
+	int k, k2;
 
 	if (!probed) {
 		probed = 1;
@@ -310,7 +310,7 @@ epattach(parent, self, aux)
 		outw(BASE + EP_W0_EEPROM_COMMAND, READ_EEPROM | i);
 		if (epbusyeeprom(sc))
 			return;
-		p = (u_short *) & sc->sc_arpcom.ac_enaddr[i * 2];
+		p = (u_short *)&sc->sc_arpcom.ac_enaddr[i * 2];
 		*p = htons(inw(BASE + EP_W0_EEPROM_DATA));
 		GO_WINDOW(2);
 		outw(BASE + EP_W2_ADDR_0 + (i * 2), ntohs(*p));

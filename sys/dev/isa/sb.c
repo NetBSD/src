@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.13 1994/11/04 19:02:00 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.14 1994/11/18 22:03:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -67,14 +67,14 @@ struct sb_softc {
 	struct isadev sc_id;		/* ISA device */
 	struct intrhand sc_ih;		/* interrupt vectoring */
 
-	u_short	sc_open;		/* reference count of open calls */
-	u_short sc_dmachan;		/* dma channel */
-	u_short	sc_locked;		/* true when doing HS DMA  */
-	u_short	sc_iobase;		/* I/O port base address */
- 	u_short	sc_adacmode;		/* low/high speed mode indicator */
+	int	sc_open;		/* reference count of open calls */
+	int	sc_dmachan;		/* dma channel */
+	int	sc_locked;		/* true when doing HS DMA  */
+	int	sc_iobase;		/* I/O port base address */
+ 	int	sc_adacmode;		/* low/high speed mode indicator */
 #define SB_ADAC_LS 0
 #define SB_ADAC_HS 1
- 	u_short	sc_adactc;		/* current adac time constant */
+ 	int	sc_adactc;		/* current adac time constant */
 	u_long	sc_interrupts;		/* number of interrupts taken */
 	void	(*sc_intr)(void*);	/* dma completion intr handler */
 	void	(*sc_mintr)(void*, int);/* midi input intr handler */
@@ -85,8 +85,8 @@ int sbreset __P((struct sb_softc *));
 void sb_spkron __P((struct sb_softc *));
 void sb_spkroff __P((struct sb_softc *));
 
-static int wdsp(u_short iobase, int v);
-static int rdsp(u_short iobase);
+static int wdsp(int iobase, int v);
+static int rdsp(int iobase);
 
 #define splsb splhigh		/* XXX */
 struct sb_softc *sb_softc;	/* XXX */
@@ -119,7 +119,7 @@ sbprobe(parent, match, aux)
 {
 	register struct sb_softc *sc = match;
 	register struct isa_attach_args *ia = aux;
-	register u_short iobase = ia->ia_iobase;
+	register int iobase = ia->ia_iobase;
 
 	if (!SB_BASE_VALID(ia->ia_iobase)) {
 		printf("sb: configured iobase %d invalid\n", ia->ia_iobase);
@@ -166,7 +166,7 @@ sbforceintr(aux)
 {
 	static char dmabuf;
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
 	/*
 	 * Set up a DMA read of one byte.
@@ -194,7 +194,7 @@ sbattach(parent, self, aux)
 {
 	register struct sb_softc *sc = (struct sb_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-	register u_short iobase = ia->ia_iobase;
+	register int iobase = ia->ia_iobase;
 	register int vers;
 
 	/* XXX */
@@ -269,7 +269,7 @@ sbclose(sc)
  * polling loop and wait until it can take the byte.
  */
 static int
-wdsp(u_short iobase, int v)
+wdsp(int iobase, int v)
 {
 	register int i;
 
@@ -287,7 +287,7 @@ wdsp(u_short iobase, int v)
  * Read a byte from the DSP, using polling.
  */
 int
-rdsp(u_short iobase)
+rdsp(int iobase)
 {
 	register int i;
 
@@ -308,7 +308,7 @@ int
 sbreset(sc)
 	struct sb_softc *sc;
 {
-	register u_short iobase = sc->sc_iobase;
+	register int iobase = sc->sc_iobase;
 	register int i;
 
 	/*
@@ -363,7 +363,7 @@ int
 sbversion(sc)
 	struct sb_softc *sc;
 {
-	register u_short iobase = sc->sc_iobase;
+	register int iobase = sc->sc_iobase;
 	int v;
 
 	if (wdsp(iobase, SB_DSP_VERSION) < 0)
@@ -522,7 +522,7 @@ sb_dma_input(sc, p, cc, intr, arg)
 	void (*intr)();
 	void *arg;
 {
-	register u_short iobase;
+	register int iobase;
 
 	at_dma(1, p, cc, sc->sc_dmachan);
 	sc->sc_intr = intr;
@@ -557,7 +557,7 @@ sb_dma_output(sc, p, cc, intr, arg)
 	void (*intr)();
 	void *arg;
 {
-	register u_short iobase;
+	register int iobase;
 
 	at_dma(0, p, cc, sc->sc_dmachan);
 	sc->sc_intr = intr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.23 1994/11/03 22:56:01 mycroft Exp $	*/
+/*	$NetBSD: mcd.c,v 1.24 1994/11/18 22:03:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -104,7 +104,7 @@ struct mcd_softc {
 	struct	dkdevice sc_dk;
 	struct	intrhand sc_ih;
 
-	u_short	iobase;
+	int	iobase;
 	short	config;
 	short	flags;
 #define MCDOPEN		0x0001	/* device opened */
@@ -133,7 +133,7 @@ int mcdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int mcd_getdisklabel __P((struct mcd_softc *));
 int mcdsize __P((dev_t));
 void mcd_configure __P((struct mcd_softc *));
-int mcd_waitrdy __P((u_short, int));
+int mcd_waitrdy __P((int, int));
 int mcd_getreply __P((struct mcd_softc *, int));
 int mcd_getstat __P((struct mcd_softc *, int));
 void mcd_setflags __P((struct mcd_softc *));
@@ -574,7 +574,7 @@ mcdprobe(parent, match, aux)
 {
 	struct mcd_softc *sc = match;
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 	int i;
 	int st, check, version;
 
@@ -653,7 +653,7 @@ mcdprobe(parent, match, aux)
 
 int
 mcd_waitrdy(iobase, dly)
-	u_short iobase;
+	int iobase;
 	int dly;
 {
 	int i;
@@ -672,7 +672,7 @@ mcd_getreply(sc, dly)
 	struct mcd_softc *sc;
 	int dly;
 {
-	u_short iobase = sc->iobase;
+	int iobase = sc->iobase;
 
 	/* Wait data to become ready. */
 	if (mcd_waitrdy(iobase, dly) < 0) {
@@ -690,7 +690,7 @@ mcd_getstat(sc, sflg)
 	int sflg;
 {
 	int i;
-	u_short iobase = sc->iobase;
+	int iobase = sc->iobase;
 
 	/* Get the status. */
 	if (sflg)
@@ -749,7 +749,7 @@ mcd_send(sc, cmd, nretries)
 	int cmd, nretries;
 {
 	int i, k;
-	u_short iobase = sc->iobase;
+	int iobase = sc->iobase;
 	
 	MCD_TRACE("send: cmd=0x%x\n", cmd, 0, 0, 0);
 
@@ -846,7 +846,7 @@ int
 mcdintr(sc)
 	struct mcd_softc *sc;
 {
-	u_short iobase = sc->iobase;
+	int iobase = sc->iobase;
 	
 	MCD_TRACE("stray interrupt xfer=0x%x\n", inb(iobase + mcd_xfer),
 	    0, 0, 0);
@@ -871,7 +871,7 @@ mcd_doread(arg)
 {
 	struct mcd_mbx *mbx = arg;
 	struct mcd_softc *sc = mbx->softc;
-	u_short iobase = sc->iobase;
+	int iobase = sc->iobase;
 	struct buf *bp = mbx->bp;
 
 	int i, k;
@@ -1031,7 +1031,7 @@ mcd_setmode(sc, mode)
 	struct mcd_softc *sc;
 	int mode;
 {
-	u_short iobase = sc->iobase;
+	int iobase = sc->iobase;
 	int retry;
 
 	printf("%s: setting mode to %d\n", sc->sc_dev.dv_xname, mode);
@@ -1271,7 +1271,7 @@ mcd_play(sc, pb)
 	struct mcd_softc *sc;
 	struct mcd_read2 *pb;
 {
-	u_short iobase = sc->iobase;
+	int iobase = sc->iobase;
 	int retry, st;
 
 	sc->lastpb = *pb;

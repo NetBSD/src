@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.16 1994/11/03 23:17:42 mycroft Exp $	*/
+/*	$NetBSD: pms.c,v 1.17 1994/11/18 22:03:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -94,7 +94,7 @@ struct pms_softc {		/* driver status information */
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
-	u_short sc_iobase;	/* I/O port base */
+	int sc_iobase;		/* I/O port base */
 	u_char sc_state;	/* mouse driver state */
 #define	PMS_OPEN	0x01	/* device is open */
 #define	PMS_ASLP	0x02	/* waiting for mouse data */
@@ -114,7 +114,7 @@ struct cfdriver pmscd = {\
 
 static inline void
 pms_flush(iobase)
-	u_short iobase;
+	int iobase;
 {
 	u_char c;
 	while (c = inb(iobase+PMS_STATUS) & 0x03)
@@ -128,7 +128,7 @@ pms_flush(iobase)
 
 static inline void
 pms_dev_cmd(iobase, value)
-	u_short iobase;
+	int iobase;
 	u_char value;
 {
 	pms_flush(iobase);
@@ -139,7 +139,7 @@ pms_dev_cmd(iobase, value)
 
 static inline void
 pms_aux_cmd(iobase, value)
-	u_short iobase;
+	int iobase;
 	u_char value;
 {
 	pms_flush(iobase);
@@ -148,7 +148,7 @@ pms_aux_cmd(iobase, value)
 
 static inline void
 pms_pit_cmd(iobase, value)
-	u_short iobase;
+	int iobase;
 	u_char value;
 {
 	pms_flush(iobase);
@@ -163,7 +163,7 @@ pmsprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 	u_char x;
 
 	pms_dev_cmd(iobase, PMS_RESET);
@@ -186,7 +186,7 @@ pmsattach(parent, self, aux)
 {
 	struct pms_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	u_short iobase = ia->ia_iobase;
+	int iobase = ia->ia_iobase;
 
 	printf("\n");
 
@@ -367,7 +367,7 @@ int
 pmsintr(sc)
 	struct pms_softc *sc;
 {
-	u_short iobase = sc->sc_iobase;
+	int iobase = sc->sc_iobase;
 	static int state = 0;
 	static u_char buttons;
 	u_char changed;

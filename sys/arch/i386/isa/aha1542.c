@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.37 1994/11/04 19:01:31 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.38 1994/11/18 22:02:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -304,7 +304,7 @@ struct aha_softc {
 	struct isadev sc_id;
 	struct intrhand sc_ih;
 
-	u_short aha_base;			/* base port for each board */
+	int aha_base;				/* base port for each board */
 	/*
 	 * xor this with a physaddr to get a kv addr and visa versa
 	 * for items in THIS STRUCT only. 
@@ -315,8 +315,8 @@ struct aha_softc {
 	struct aha_mbx aha_mbx;			/* all the mailboxes */
 	struct aha_ccb *aha_ccb_free;		/* the next free CCB */
 	struct aha_ccb aha_ccb[AHA_MBX_SIZE];	/* all the CCBs */
-	u_short aha_int;			/* our IRQ level */
-	u_short aha_dma;			/* our DMA req channel */
+	int aha_int;				/* our IRQ level */
+	int aha_dma;				/* our DMA req channel */
 	int aha_scsi_dev;			/* our SCSI bus address */
 	struct scsi_link sc_link;		/* prototype for subdevs */
 };
