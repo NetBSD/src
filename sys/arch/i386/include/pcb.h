@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.15 1995/03/28 18:17:00 jtc Exp $	*/
+/*	$NetBSD: pcb.h,v 1.16 1995/05/01 04:49:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,6 +61,7 @@ struct pcb {
 #ifdef	notyet
 	u_char	pcb_iomap[NPORT/sizeof(u_char)]; /* i/o port bitmap */
 #endif
+	int	pcb_cr0;		/* saved image of CR0 */
         caddr_t	pcb_ldt;		/* per process (user) LDT */
         int	pcb_ldt_len;		/*      number of LDT entries */
 	struct	segment_descriptor pcb_ldt_desc;
@@ -70,11 +71,6 @@ struct pcb {
  * Software pcb (extension)
  */
 	int	pcb_flags;
-#ifdef notused
-#define	FP_WASUSED	0x01	/* process has used fltng pnt hardware */
-#define	FP_NEEDSSAVE	0x02	/* ... that needs save on next context switch */
-#define	FP_NEEDSRESTORE	0x04	/* ... that needs restore on next DNA fault */
-#endif
 #define	FP_USESEMC	0x08	/* process uses EMC memory-mapped mode */
 #define	FP_SOFTFP	0x20	/* process using software fltng pnt emulator */
 	int	pcb_iml;	/* interrupt mask level */
