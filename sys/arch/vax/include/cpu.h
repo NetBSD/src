@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.14 1996/02/02 18:08:20 mycroft Exp $      */
+/*      $NetBSD: cpu.h,v 1.15 1996/03/02 14:27:52 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -45,12 +45,11 @@ extern int cpunumber, cpu_type;
 extern struct cpu_dep cpu_calls[];
 
 struct	cpu_dep {
-	int	(*cpu_steal_pages)(); /* Pmap init before mm is on */
+	int	(*cpu_steal_pages)(); /* pmap init before mm is on */
 	int	(*cpu_clock)();	 /* CPU dependent clock handling */
 	int	(*cpu_mchk)();   /* Machine check handling */
 	int	(*cpu_memerr)(); /* Memory subsystem errors */
 	int	(*cpu_conf)();	 /* Autoconfiguration */
-/*	int	(*cpu_cmrerr)(); /* Memory parity errors */
 };
 
 struct clockframe {

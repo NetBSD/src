@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.9 1996/02/02 19:08:40 mycroft Exp $	*/
+/*	$NetBSD: nexus.h,v 1.10 1996/03/02 14:27:53 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -94,6 +94,14 @@ struct sbi_attach_args {
 	void	*nexaddr;	/* Virtual address of this nexus */
 };
 
+/* Memory device struct. This should be somewhere else */
+struct mem_softc {
+	struct	device sc_dev;
+	caddr_t	sc_memaddr;
+	int	sc_memtype;
+	int	sc_memnr;
+};
+
 struct iobus {
         int io_type;
         int io_addr;
@@ -172,6 +180,15 @@ extern caddr_t *nex_vec;
 #define	NEX_MEM256U	0x72		/* 256K chips, non-interleaved, upper */
 #define	NEX_MEM256UI	0x73		/* 256K chips, ext-interleaved, upper */
 #define	NEX_MEM256I	0x74		/* 256K chips, interleaved */
+
+/* Memory classes */
+#define	M780C		0
+#define	M780EL		1
+#define	M780EU		2
+
+/* Memory recover defines */
+#define	MCHK_PANIC	-1
+#define	MCHK_RECOVERED	0
 
 #ifndef	_LOCORE
 struct	nexus *nexus;
