@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.21 1997/04/29 21:01:55 tls Exp $	*/
+/*	$NetBSD: subr.c,v 1.22 1997/08/06 07:22:26 mikel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: subr.c,v 1.21 1997/04/29 21:01:55 tls Exp $";
+__RCSID("$NetBSD: subr.c,v 1.22 1997/08/06 07:22:26 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,15 +47,16 @@ static char rcsid[] = "$NetBSD: subr.c,v 1.21 1997/04/29 21:01:55 tls Exp $";
  */
 #define COMPAT_43
 #include <sys/param.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <termios.h>
 #include <sys/ioctl.h>
 
+#include <stdlib.h>
+#include <string.h>
+#include <termios.h>
+#include <unistd.h>
+
+#include "extern.h"
 #include "gettytab.h"
 #include "pathnames.h"
-#include "extern.h"
 
 extern	struct termios tmode, omode;
 
@@ -264,7 +266,7 @@ setflags(n)
 			CLR(cflag, PARODD);
 			if (AP)
 				CLR(iflag, INPCK);
-		} else if (AP || EP && OP) {
+		} else if (AP || (EP && OP)) {
 			CLR(iflag, INPCK|IGNPAR);
 			CLR(cflag, PARODD);
 		}
@@ -614,9 +616,9 @@ makeenv(env)
 		termbuf[127] = (char)NULL;
 		*ep++ = termbuf;
 	}
-	if (p = EV) {
+	if ((p = EV) != NULL) {
 		q = p;
-		while (q = strchr(q, ',')) {
+		while ((q = strchr(q, ',')) != NULL) {
 			*q++ = '\0';
 			*ep++ = p;
 			p = q;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.7 1996/07/31 20:40:32 thorpej Exp $	*/
+/*	$NetBSD: init.c,v 1.8 1997/08/06 07:22:24 mikel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "from: @(#)init.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.7 1996/07/31 20:40:32 thorpej Exp $";
+__RCSID("$NetBSD: init.c,v 1.8 1997/08/06 07:22:24 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,7 +47,9 @@ static char rcsid[] = "$NetBSD: init.c,v 1.7 1996/07/31 20:40:32 thorpej Exp $";
  *
  * Melbourne getty.
  */
+
 #include <termios.h>
+
 #include "gettytab.h"
 #include "pathnames.h"
 
