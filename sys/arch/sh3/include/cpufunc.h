@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4 2000/02/24 23:32:27 msaitoh Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4.4.1 2000/09/21 07:56:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -82,7 +82,7 @@ static __inline void
 cacheflush(void)
 {
 #if 1
-	volatile int *p = (int *)0x88000000;
+	volatile int *p = (int *)ram_start;
 	int i;
 	int d;
 
