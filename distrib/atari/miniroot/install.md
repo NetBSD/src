@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.6 1996/08/22 03:24:15 mrg Exp $
+#	$NetBSD: install.md,v 1.7 1996/08/26 02:34:37 thorpej Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 #
 # machine dependent section of installation/upgrade script.
 #
+
+# Machine-dependent install sets
+MDSETS=""
 
 __mount_kernfs() {
 	#
@@ -349,5 +352,3 @@ __md_copy_kernel_1
 	done
 	umount -f /mnt2 > /dev/null 2>&1
 }
-
-md_install_sets() {}
