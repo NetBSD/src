@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.16 2004/03/22 18:57:10 jdc Exp $	*/
+/*	$NetBSD: screen.c,v 1.17 2004/03/23 21:17:20 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.16 2004/03/22 18:57:10 jdc Exp $");
+__RCSID("$NetBSD: screen.c,v 1.17 2004/03/23 21:17:20 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -146,11 +146,11 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	new_screen->winlistp = NULL;
 
 	if ((new_screen->curscr = __newwin(new_screen, 0,
-	    0, 0, 0, FALSE)) == ERR)
+	    0, 0, 0, FALSE)) == NULL)
 		goto error_exit;
 
 	if ((new_screen->stdscr = __newwin(new_screen, 0,
-	    0, 0, 0, FALSE)) == ERR) {
+	    0, 0, 0, FALSE)) == NULL) {
 		delwin(new_screen->curscr);
 		goto error_exit;
 	}
@@ -158,7 +158,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	clearok(new_screen->stdscr, 1);
 
 	if ((new_screen->__virtscr = __newwin(new_screen, 0,
-	    0, 0, 0, FALSE)) == ERR) {
+	    0, 0, 0, FALSE)) == NULL) {
 		delwin(new_screen->curscr);
 		delwin(new_screen->stdscr);
 		goto error_exit;
@@ -205,7 +205,7 @@ delscreen(SCREEN *screen)
 	t_freent(screen->cursesi_genbuf);
 
 	  /* walk the window list and kill all the parent windows */
-	while ((list = screen->winlistp)) {
+	while ((list = screen->winlistp) != NULL) {
 		delwin(list->winp);
 		if (list == screen->winlistp)
 			/* sanity - abort if window didn't remove itself */
