@@ -3,4 +3,5 @@
 CONFIGSRCS=	i386bsd-dep.c i386-pinsn.c
 
 param.h:
+	rm -f param.h
 	ln -s $(.CURDIR)/config/m-i386bsd.h param.h
