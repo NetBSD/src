@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.15 1997/09/20 06:16:25 lukem Exp $	*/
+/*	$NetBSD: fsck.h,v 1.16 1997/09/21 00:24:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -103,7 +103,7 @@ struct inodesc {
 	ino_t id_parent;	/* for DATA nodes, their parent */
 	ufs_daddr_t id_blkno;	/* current block number being examined */
 	int id_numfrags;	/* number of frags contained in block */
-	u_int64_t id_filesize;	/* for DATA nodes, the size of the directory */
+	int64_t id_filesize;	/* for DATA nodes, the size of the directory */
 	int id_loc;		/* for DATA nodes, current location in dir */
 	int id_entryno;		/* for DATA nodes, current entry number */
 	struct direct *id_dirp;	/* for DATA nodes, ptr to current entry */
