@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.2 2003/04/17 00:31:04 thorpej Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.3 2003/08/06 08:34:32 jdolecek Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -49,6 +49,9 @@
 #if 0
 #include <stdio.h>
 #endif
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: bcrypt.c,v 1.3 2003/08/06 08:34:32 jdolecek Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
