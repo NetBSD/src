@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.14 2004/03/01 23:46:44 kleink Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.15 2004/07/05 09:24:31 pk Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.14 2004/03/01 23:46:44 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.15 2004/07/05 09:24:31 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,12 +176,14 @@ mk48txx_settime(handle, tv)
 	struct clock_ymdhms dt;
 	u_int8_t csr;
 	int year;
+	long sec;
 
 	sc = handle->cookie;
 	clkoff = sc->sc_clkoffset;
 
 	/* Note: we ignore `tv_usec' */
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
+	sec = tv->tv_sec + ((tv->tv_usec < 500000) ? 0 : 1);
+	clock_secs_to_ymdhms(sec, &dt);
 
 	year = dt.dt_year - sc->sc_year0;
 	if (year > 99 &&
