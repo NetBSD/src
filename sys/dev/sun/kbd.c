@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.30 2002/05/13 09:42:12 pk Exp $	*/
+/*	$NetBSD: kbd.c,v 1.30.2.1 2002/05/16 11:34:24 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.30 2002/05/13 09:42:12 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.30.2.1 2002/05/16 11:34:24 gehenna Exp $");
 
 #include "opt_ddb.h"
 
@@ -101,9 +101,18 @@ static int 	kbd_drain_tx __P((struct kbd_softc *));
 static int	kbd_iopen __P((struct kbd_softc *));
 static int	kbd_iclose __P((struct kbd_softc *));
 
-cdev_decl(kbd);	/* open, close, read, write, ioctl, stop, ... */
-
 extern struct cfdriver kbd_cd;
+
+dev_type_open(kbdopen);
+dev_type_close(kbdclose);
+dev_type_read(kbdread);
+dev_type_ioctl(kbdioctl);
+dev_type_poll(kbdpoll);
+
+const struct cdevsw kbd_cdevsw = {
+	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
+	nostop, notty, kbdpoll, nommap,
+};
 
 /****************************************************************
  *  Entry points for /dev/kbd
@@ -181,17 +190,6 @@ kbdread(dev, uio, flags)
 
 	k = kbd_cd.cd_devs[minor(dev)];
 	return (ev_read(&k->k_events, uio, flags));
-}
-
-/* this routine should not exist, but is convenient to write here for now */
-int
-kbdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return (EOPNOTSUPP);
 }
 
 int

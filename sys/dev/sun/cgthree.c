@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.4 2001/11/13 06:54:32 lukem Exp $ */
+/*	$NetBSD: cgthree.c,v 1.4.8.1 2002/05/16 11:34:24 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.4 2001/11/13 06:54:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.4.8.1 2002/05/16 11:34:24 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,21 +68,25 @@ __KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.4 2001/11/13 06:54:32 lukem Exp $");
 #include <dev/sun/cgthreereg.h>
 #include <dev/sun/cgthreevar.h>
 
-#include <machine/conf.h>
-
 static void	cgthreeunblank(struct device *);
 static void	cgthreeloadcmap(struct cgthree_softc *, int, int);
 static void	cgthree_set_video(struct cgthree_softc *, int);
 static int	cgthree_get_video(struct cgthree_softc *);
 
-/* cdevsw prototypes */
-cdev_decl(cgthree);
-
 extern struct cfdriver cgthree_cd;
+
+dev_type_open(cgthreeopen);
+dev_type_ioctl(cgthreeioctl);
+dev_type_mmap(cgthreemmap);
+
+const struct cdevsw cgthree_cdevsw = {
+	cgthreeopen, nullclose, noread, nowrite, cgthreeioctl,
+	nostop, notty, nopoll, cgthreemmap,
+};
 
 /* frame buffer generic driver */
 static struct fbdriver cgthreefbdriver = {
-	cgthreeunblank, cgthreeopen, cgthreeclose, cgthreeioctl, cgthreepoll,
+	cgthreeunblank, cgthreeopen, nullclose, cgthreeioctl, nopoll,
 	cgthreemmap
 };
 
@@ -171,16 +175,6 @@ cgthreeopen(dev, flags, mode, p)
 }
 
 int
-cgthreeclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 cgthreeioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -237,16 +231,6 @@ cgthreeioctl(dev, cmd, data, flags, p)
 		return (ENOTTY);
 	}
 	return (0);
-}
-
-int
-cgthreepoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
 }
 
 /*
