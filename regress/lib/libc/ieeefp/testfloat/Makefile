@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2001/03/13 06:37:34 ross Exp $
+# $NetBSD: Makefile,v 1.2 2001/03/22 12:27:59 ross Exp $
 
 TOSRC=		${.CURDIR}/../../../../..
 SFLIB=		${TOSRC}/lib/libc/softfloat
@@ -16,5 +16,5 @@ SRCS+=		testfloat.c softfloat.c fail.c testCases.c writeHex.c	\
 regress: $(PROG)
 	./${PROG} -all
 
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
+.-include "${.CURDIR}/arch/${MACHINE_ARCH}/Makefile.inc"
 .include <bsd.prog.mk>
