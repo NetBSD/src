@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.28 2004/04/20 12:00:02 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.29 2004/09/30 21:32:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28 2004/04/20 12:00:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29 2004/09/30 21:32:27 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -162,7 +162,11 @@ syscall_plain(frame)
 		KERNEL_PROC_UNLOCK(l);
 	}
 
-	KASSERT(l->l_holdcnt == 0);
+#if defined(DIAGNOSTIC)
+	if (l->l_holdcnt != 0)
+		panic("l_holdcnt leak (%d) in syscall %d\n",
+		    l->l_holdcnt, (int)code);
+#endif /* defined(DIAGNOSTIC) */
 
 	switch (error) {
 	case 0:
@@ -262,7 +266,11 @@ syscall_fancy(frame)
 		KERNEL_PROC_UNLOCK(l);
 	}
 
-	KASSERT(l->l_holdcnt == 0);
+#if defined(DIAGNOSTIC)
+	if (l->l_holdcnt != 0)
+		panic("l_holdcnt leak (%d) in syscall %d\n",
+		    l->l_holdcnt, (int)code);
+#endif /* defined(DIAGNOSTIC) */
 
 	switch (error) {
 	case 0:
