@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.6 1997/10/28 21:28:03 christos Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.7 1997/12/17 01:31:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -203,18 +203,18 @@ le_isapnp_attach(parent, self, aux)
 	bus_dma_segment_t seg;
 	int i, rseg;
 
+	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
+		printf("%s: error in region allocation\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
 	lesc->sc_iot = iot = ipa->ipa_iot;
 	lesc->sc_ioh = ioh = ipa->ipa_io[0].h;
 	lesc->sc_dmat = dmat = ipa->ipa_dmat;
 
 	lesc->sc_rap = PCNET_RAP;
 	lesc->sc_rdp = PCNET_RDP;
-
-	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
 
 	/*
 	 * Extract the physical MAC address from the ROM.
