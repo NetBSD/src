@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.70 2000/01/25 08:06:49 mycroft Exp $
+$NetBSD: pcmciadevs,v 1.71 2000/01/25 15:43:59 thorpej Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ product NEWMEDIA BUSTOASTER	0xc102 New Media BusToaster SCSI Host Adapter
 
 /* Standard Microsystems Corporation Products */
 product SMC 8016		0x0105 SMC 8016 EtherCard
-product SMC EZCARD		0x8022 SMC EXCard 10 PCMCIA
+product SMC EZCARD		0x8022 SMC EZCard 10 PCMCIA
 
 /* Contec C-NET(PC) */
 product CONTEC CNETPC		0x0000 Contec C-NET(PC)C
