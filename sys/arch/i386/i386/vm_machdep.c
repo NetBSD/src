@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.7.2.3 1993/10/10 08:47:46 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.7.2.4 1993/10/15 13:11:31 mycroft Exp $
  */
 
 /*
@@ -292,14 +292,14 @@ kernacc(addr, count, rw)
 	if (count <= 0)
 		return(0);
 	pde = (struct pde *)((u_int)u.u_procp->p_p0br + u.u_procp->p_szpt * NBPG);
-	ix = (addr & PD_MASK) >> PD_SHIFT;
-	cnt = ((addr + count + (1 << PD_SHIFT) - 1) & PD_MASK) >> PD_SHIFT;
+	ix = (addr & PD_MASK) >> PDSHIFT;
+	cnt = ((addr + count + (1 << PDSHIFT) - 1) & PD_MASK) >> PDSHIFT;
 	cnt -= ix;
 	for (pde += ix; cnt; cnt--, pde++)
 		if (pde->pd_v == 0)
 			return(0);
-	ix = btop(addr-0xfe000000);
-	cnt = btop(addr-0xfe000000+count+NBPG-1);
+	ix = btop(addr-KERNBASE);
+	cnt = btop(addr-KERNBASE+count+NBPG-1);
 	if (cnt > (int)&Syssize)
 		return(0);
 	cnt -= ix;
