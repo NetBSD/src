@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.25 2002/11/05 12:06:58 cjs Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.26 2002/11/05 12:14:45 cjs Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, NULL
 	},
 
-	{ { USB_VENDOR_SONY, USB_PRODUCT_DSC },
+	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_DSC },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  0,
