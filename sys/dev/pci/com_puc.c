@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.2 2001/03/16 16:43:54 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -108,7 +108,7 @@ com_puc_attach(parent, self, aux)
 	sc->sc_iobase = aa->a;
 	sc->sc_iot = aa->t;
 	sc->sc_ioh = aa->h;
-	sc->sc_frequency = COM_FREQ;
+	sc->sc_frequency = aa->flags & PUC_COM_CLOCKMASK;
 
 	intrstr = pci_intr_string(aa->pc, aa->intrhandle);
 	psc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_SERIAL,
