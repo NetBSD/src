@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.4 1997/03/29 02:34:40 briggs Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.5 1997/03/30 19:51:49 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -88,21 +88,33 @@ sn_obio_attach(parent, self, aux)
 	void   *aux;
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *) aux;
-        struct sn_softc *sc = (void *)self;
-	u_int8_t myaddr[ETHER_ADDR_LEN];
+        struct sn_softc	*sc = (void *)self;
+	u_int8_t	myaddr[ETHER_ADDR_LEN];
+	int		i;
 
-        sc->s_dcr = DCR_LBR | DCR_SYNC | DCR_WAIT0 |
-                    DCR_DMABLOCK | DCR_RFT16 | DCR_TFT16;
+        sc->snr_dcr = DCR_SYNC | DCR_WAIT0 | DCR_DMABLOCK |
+		DCR_RFT16 | DCR_TFT16;
+	sc->snr_dcr2 = 0;
 
-        switch (current_mac_model->class) {
-        case MACH_CLASSQ:
-        case MACH_CLASSQ2:
-                sc->s_dcr |= DCR_DW32;
+        switch (current_mac_model->machineid) {
+        case MACH_MACQ700:	/* only tested on Q700 */
+        case MACH_MACQ900:
+	case MACH_MACQ950:
+                sc->snr_dcr |= DCR_LBR | DCR_DW32;
 		sc->bitmode = 1;
                 break;
 
-        case MACH_CLASSPB:
-                sc->s_dcr |= DCR_DW16;
+	case MACH_MACQ800:
+	case MACH_MACQ650:
+	case MACH_MACC650:
+	case MACH_MACC610:
+	case MACH_MACQ610:
+		sc->snr_dcr |= DCR_EXBUS | DCR_DW32;
+		sc->bitmode = 1;
+		break;
+
+        case MACH_MACPB500:
+                sc->snr_dcr |= DCR_LBR | DCR_DW16;
 		sc->bitmode = 0;
                 break;
 
@@ -121,7 +133,18 @@ sn_obio_attach(parent, self, aux)
 
 	sn_obio_getaddr(sc, myaddr);
 
-	snsetup(sc, myaddr);
+	/* regs are addressed as words, big-endian. */
+	for (i = 0; i < SN_NREGS; i++) {
+		sc->sc_reg_map[i] = (bus_size_t)((i * 4) + 2);
+	}
+
+	/* snsetup returns 1 if something fails */
+	if (snsetup(sc, myaddr)) {
+		bus_space_unmap(sc->sc_regt, sc->sc_regh, SN_REGSIZE);
+		return;
+	}
+
+	add_nubus_intr(sc->slotno, snintr, (void *)sc);
 }
 
 static u_char bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
@@ -141,9 +164,34 @@ sn_obio_getaddr(sc, lladdr)
 	}
 
 	/*
-	 * Apparently Apple goofed here.  The ethernet MAC address is
-	 * stored in bit-byte-reversed format.  It is rumored that this
-	 * is only true for some systems.
+	 * For reasons known only to Apple, MAC addresses in the ethernet
+	 * PROM are stored in Token Ring (IEEE 802.5) format, that is
+	 * with all of the bits in each byte reversed (canonical bit format).
+	 * When the address is read out it must be reversed to ethernet format
+	 * before use.
+	 *
+	 * Apple has been assigned OUI's 00:08:07 and 00:a0:40. All onboard
+	 * ethernet addresses on 68K machines should be in one of these
+	 * two ranges.
+	 *
+	 * Here is where it gets complicated.
+	 *
+	 * The PMac 7200, 7500, 8500, and 9500 accidentally had the PROM
+	 * written in standard ethernet format. The MacOS accounted for this
+	 * in these systems, and did not reverse the bytes. Some other
+	 * networking utilities were not so forgiving, and got confused.
+	 * "Some" of Apple's Nubus ethernet cards also had their bits
+	 * burned in ethernet format.
+	 *
+	 * Apple petitioned the IEEE and was granted the 00:05:02 (bit reversal
+	 * of 00:a0:40) as well. As of OpenTransport 1.1.1, Apple removed
+	 * their workaround and now reverses the bits regardless of
+	 * what kind of machine it is. So PMac systems and the affected
+	 * Nubus cards now use 00:05:02, instead of the 00:a0:40 for which they
+	 * were intended.
+	 *
+	 * See Apple Techinfo article TECHINFO-0020552, "OpenTransport 1.1.1
+	 * and MacOS System 7.5.3 FAQ (10/96)" for more details.
 	 */
 	do_bbr = 0;
 	b = bus_space_read_1(sc->sc_regt, bsh, 0);
