@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.14 2000/11/25 02:39:34 perseant Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.15 2001/02/04 21:51:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -82,7 +82,6 @@
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>
-#include <ufs/lfs/lfs_extern.h>
 
 /*
  * Simple, general purpose, fast checksum.  Data must be short-aligned.
