@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.24 1997/03/29 08:02:48 mikel Exp $
+#	$NetBSD: bsd.doc.mk,v 1.25 1997/04/15 21:29:09 christos Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 BIB?=		bib
@@ -41,6 +41,7 @@ manpages:
 .endif
 
 .if !target(obj)
+.PHONY: obj
 obj:
 .endif
 
