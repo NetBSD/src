@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.56 2000/08/26 02:31:01 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.57 2000/12/31 19:27:24 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -48,12 +48,12 @@ __CONCAT(X,name):
 SCBENTRY(namn)			; \
 	pushl $0		; \
 	pushl $typ		; \
-	jbr trap
+	jbr Xtrap
 
 #define TRAPARGC(namn, typ) \
 SCBENTRY(namn)			; \
 	pushl $typ		; \
-	jbr trap
+	jbr Xtrap
 
 #define FASTINTR(namn, rutin) \
 SCBENTRY(namn)			; \
@@ -211,9 +211,9 @@ SCBENTRY(privinflt)	# Privileged/unimplemented instruction
 #ifndef NO_INSN_EMULATE
 	jsb	_C_LABEL(unimemu)	# do not return if insn emulated
 #endif
-	pushl $0
-	pushl $T_PRIVINFLT
-	jbr trap
+	pushl	$0
+	pushl	$T_PRIVINFLT
+	jbr	Xtrap
 
 	TRAPCALL(xfcflt, T_XFCFLT);
 	TRAPCALL(resopflt, T_RESOPFLT)
@@ -248,10 +248,10 @@ SCBENTRY(access_v)			# 24: Access cntrl viol fault
 	bisl2	$T_WRITE,(sp)
 2:	movl	(sp), 4(sp)
 	addl2	$4, sp
-	jbr	trap
+	jbr	Xtrap
 
 ptelen: movl	$T_PTELEN, (sp)		# PTE must expand (or send segv)
-	jbr trap;
+	jbr	Xtrap;
 
 TRAPCALL(tracep, T_TRCTRAP)
 TRAPCALL(breakp, T_BPTFLT)
@@ -369,12 +369,12 @@ SCBENTRY(hardclock)
  * _sret is used in cpu_set_kpc to jump out to user space first time.
  */
 	.globl	_C_LABEL(sret)
-trap:	pushr	$0xfff
+Xtrap:	pushr	$0xfff
 	mfpr	$PR_USP, -(sp)
 	pushl	ap
 	pushl	fp
 	pushl	sp
-	calls	$1, _C_LABEL(arithflt)
+	calls	$1, _C_LABEL(trap)
 _C_LABEL(sret):
 	movl	(sp)+, fp
 	movl	(sp)+, ap
