@@ -1,9 +1,9 @@
-# $NetBSD: UTF.alias,v 1.1 2003/06/27 08:40:58 tshiozak Exp $
+# $NetBSD: UTF.alias,v 1.2 2003/07/16 05:10:29 tshiozak Exp $
 
 8		utf-8
-16		utf-16
-16LE		utf-16le
-16BE		utf-16be
-32		utf-32
-32LE		utf-32le
-32BE		utf-32be
+16		utf-16 ucs-2
+16LE		utf-16le ucs-2le
+16BE		utf-16be ucs-2be
+32		utf-32 ucs-4
+32LE		utf-32le ucs-4le
+32BE		utf-32be ucs-4be
