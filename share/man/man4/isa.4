@@ -1,4 +1,4 @@
-.\"	$NetBSD: isa.4,v 1.25 2000/07/26 22:09:45 augustss Exp $
+.\"	$NetBSD: isa.4,v 1.26 2000/08/07 14:29:58 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -259,8 +259,6 @@ compatible chips.
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width pcdisplay -offset indent
-.It joy
-games adapter driver
 .It lm
 National Semiconductor LM78, LM79 and compatible hardware monitors.
 .It pcdisplay
@@ -298,6 +296,7 @@ to attach
 .Tn ISA
 devices.
 .Sh SEE ALSO
+.Xr intro 4 ,
 .Xr aha 4 ,
 .Xr ahc 4 ,
 .Xr aic 4 ,
