@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.6 1999/02/02 00:29:17 thorpej Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.7 1999/02/02 00:32:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -343,20 +343,6 @@ struct vr_desc {
 #define	VR_RXLEN		1520
 
 #define	VR_TXOWN(x)		x->vr_ptr->vr_status
-
-/*
- * General constants that are fun to know.
- *
- * VIA vendor ID
- */
-#define	VIA_VENDORID		0x1106
-
-/*
- * VIA Rhine device IDs.
- */
-#define	VIA_DEVICEID_RHINE	0x3043
-#define	VIA_DEVICEID_RHINE_II	0x6100
-
 
 /*
  * Texas Instruments PHY identifiers
