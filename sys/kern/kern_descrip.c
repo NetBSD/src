@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.62 1999/12/08 18:53:56 sommerfeld Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.63 2000/01/24 17:57:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -746,7 +746,8 @@ cwdinit(p)
 	cwdi = pool_get(&cwdi_pool, PR_WAITOK);
 
 	cwdi->cwdi_cdir = p->p_cwdi->cwdi_cdir;
-	VREF(cwdi->cwdi_cdir);
+	if (cwdi->cwdi_cdir)
+		VREF(cwdi->cwdi_cdir);
 	cwdi->cwdi_rdir = p->p_cwdi->cwdi_rdir;
 	if (cwdi->cwdi_rdir)
 		VREF(cwdi->cwdi_rdir);
