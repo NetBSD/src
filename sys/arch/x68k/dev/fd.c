@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.25 1999/03/16 16:30:17 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.26 1999/03/18 16:15:53 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -614,7 +614,8 @@ fdattach(parent, self, aux)
 	mountroothook_establish(fd_mountroot_hook, &fd->sc_dev);
 
 #if NRND > 0
-	rnd_attach_source(&fd->rnd_source, fd->sc_dev.dv_xname, RND_TYPE_DISK);
+	rnd_attach_source(&fd->rnd_source, fd->sc_dev.dv_xname,
+			  RND_TYPE_DISK, 0);
 #endif
 }
 
