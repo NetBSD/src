@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.20 2004/01/29 09:59:57 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.21 2004/01/29 10:01:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.20 2004/01/29 09:59:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.21 2004/01/29 10:01:14 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1961,9 +1961,11 @@ atw_write_bcn_thresh(sc)
 	 */
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 		lost_bcn_thresh = 0;
-	else
-		lost_bcn_thresh = MAX(2,
-		    MIN(1000000/(IEEE80211_DUR_TU * ic->ic_bss->ni_intval), 7));
+	else {
+		int beacons_per_second =
+		    1000000 / (IEEE80211_DUR_TU * MAX(1,ic->ic_bss->ni_intval));
+		lost_bcn_thresh = MAX(2, MIN(7, beacons_per_second));
+	}
 
 	/* XXX resets wake-up status bits */
 	ATW_WRITE(sc, ATW_WCSR,
