@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.27.2.5 2005/02/23 10:25:50 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.27.2.6 2005/02/24 11:16:20 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27.2.5 2005/02/23 10:25:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.27.2.6 2005/02/24 11:16:20 yamt Exp $");
 
 #include "opt_m680x0.h"
 
@@ -319,6 +319,10 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		protopte += PAGE_SIZE;
 	}
 
+	/*
+	 * Finally, validate the internal IO space PTEs (RW+CI).
+	 */
+
 #define	PTE2VA(pte)	m68k_ptob(pte - ((pt_entry_t *)kptpa))
 
 	protopte = INTIOBASE | PG_RW | PG_CI | PG_V;
@@ -418,7 +422,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		 * descriptor mask noting that we have used:
 		 *	0:		level 1 table
 		 *	1 to `num':	map page tables
-		 *	MAXKL2SIZE-1:	maps last-page page table
+		 *	MAXKL2SIZE-1:	maps kptmpa and last-page page table
 		 */
 		if (RELOC(mmutype, int) == MMU_68040) {
 			int num;
