@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.78 1998/06/26 01:54:00 lukem Exp $
+#	$NetBSD: GENERIC,v 1.79 1998/07/01 14:49:07 scottr Exp $
 #
 # GENERIC
 
@@ -101,10 +101,11 @@ options 	NETATALK	# AppleTalk networking protocols
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Mac-specific options
-options 	ZS_CONSOLE_ABORT
-options 	DISABLE_EXT_CACHE # Don't use IIci external cache
-#options 	MRG_ADB		# Use ROM-based ADB driver
 #options 	ALTXBUTTONS	# Map Opt-{1,2,3} to mouse buttons
+options 	DISABLE_EXT_CACHE # Don't use IIci external cache
+options 	GRF_COMPAT	# Include grf compatibility code
+#options 	MRG_ADB		# Use ROM-based ADB driver
+options 	ZS_CONSOLE_ABORT
 
 options 	NFS_BOOT_BOOTP
 

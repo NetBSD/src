@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.34 1998/06/02 03:21:42 scottr Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.35 1998/07/01 14:49:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -32,6 +32,8 @@
  * Graphics display driver for the Macintosh internal video for machines
  * that don't map it into a fake nubus card.
  */
+
+#include "opt_grf.h"
 
 #include <sys/param.h>
 

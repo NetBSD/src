@@ -1,10 +1,11 @@
-#	$NetBSD: files.mac68k,v 1.82 1998/05/31 23:28:07 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.83 1998/07/01 14:49:07 scottr Exp $
 
 # mac68k-specific configuration info
 
 # options understood by the mac68k-specific part of the kernel
 # (note, these are case-sensitive)
 defopt	opt_adb.h	ADB_DEBUG MRG_ADB
+defopt	opt_grf.h	GRF_COMPAT
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 8

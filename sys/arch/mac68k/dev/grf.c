@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.53 1998/06/02 02:14:20 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.54 1998/07/01 14:49:08 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,10 @@
  * Hardware access is through the grfdev routines below.
  */
 
+#include "opt_grf.h"
+#ifdef GRF_COMPAT
 #include "opt_uvm.h"
+#endif /* GRF_COMPAT */
 
 #include <sys/param.h>
 
@@ -219,8 +222,8 @@ grfioctl(dev, cmd, data, flag, p)
 	error = 0;
 
 	switch (cmd) {
-	case GRFIOCGINFO: /* XXX - This should go away as soon as X and	*/
-			  /*       dt are fixed to use GRFIOC*MODE*	*/
+#ifdef GRF_COMPAT
+	case GRFIOCGINFO:
 		{ struct grfinfo *g;
 		  g = (struct grfinfo *)data;
 		  bzero(data, sizeof(struct grfinfo));
@@ -234,18 +237,19 @@ grfioctl(dev, cmd, data, flag, p)
 		  g->gd_fbrowbytes = gm->rowbytes;
 		}
 		break;
+	case GRFIOCMAP:
+		error = grfmap(dev, (caddr_t *)data, p);
+		break;
+	case GRFIOCUNMAP:
+		error = grfunmap(dev, *(caddr_t *)data, p);
+		break;
+#endif /* GRF_COMPAT */
 
 	case GRFIOCON:
 		error = grfon(dev);
 		break;
 	case GRFIOCOFF:
 		error = grfoff(dev);
-		break;
-	case GRFIOCMAP:
-		error = grfmap(dev, (caddr_t *)data, p);
-		break;
-	case GRFIOCUNMAP:
-		error = grfunmap(dev, *(caddr_t *)data, p);
 		break;
 
 	case GRFIOCGMODE:
@@ -335,7 +339,9 @@ grfoff(dev)
 
 	gp = grf_cd.cd_devs[unit];
 
+#ifdef GRF_COMPAT
 	(void) grfunmap(dev, (caddr_t)0, curproc);
+#endif /* GRF_COMPAT */
 
 	error = (*gp->sc_mode)(gp, GM_GRFOFF, NULL);
 
@@ -345,6 +351,7 @@ grfoff(dev)
 	return (error);
 }
 
+#ifdef GRF_COMPAT
 int
 grfmap(dev, addrp, p)
 	dev_t dev;
@@ -424,3 +431,4 @@ grfunmap(dev, addr, p)
 
 	return (rv == KERN_SUCCESS ? 0 : EINVAL);
 }
+#endif /* GRF_COMPAT */
