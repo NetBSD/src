@@ -1,7 +1,10 @@
-#	$NetBSD: dot.login,v 1.2 1997/10/17 09:26:59 mrg Exp $
+#	$NetBSD: dot.login,v 1.3 2000/03/02 16:21:44 hubertf Exp $
 #csh .login file
 
-setenv SHELL /bin/csh
+if ( ! $?SHELL ) then
+  setenv SHELL /bin/csh
+endif
+
 set noglob
 eval `tset -s -m 'network:?xterm'`
 unset noglob
