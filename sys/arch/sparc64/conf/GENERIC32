@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC32,v 1.10 2000/12/03 14:49:14 fvdl Exp $
+# 	$NetBSD: GENERIC32,v 1.11 2000/12/30 19:30:50 mjacob Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.10 $"
+#ident 		"GENERIC-$Revision: 1.11 $"
 
 maxusers	64
 
@@ -270,8 +270,9 @@ esp*	at dma? flags 0x0000			# SBus
 
 scsibus* at esp?
 
-## Qlogic ISP SBus SCSI Card
+## Qlogic ISP SBus or PCI SCSI Card
 isp*	at sbus? slot ? offset ?
+isp*	at pci?
 scsibus* at isp?
 
 ## FAS support missing
