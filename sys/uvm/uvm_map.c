@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.22.2.1 1998/07/30 14:04:12 eeh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.22.2.2 1998/08/12 03:01:28 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -3215,7 +3215,7 @@ uvm_page_printit(pg, full, pr)
 
 	(*pr)("PAGE %p:\n", pg);
 	(*pr)("  flags=0x%x, pqflags=0x%x, vers=%d, wire_count=%d, pa=0x%lx\n", 
-	pg->flags, pg->pqflags, pg->version, pg->wire_count, pg->phys_addr);
+	pg->flags, pg->pqflags, pg->version, pg->wire_count, (long)pg->phys_addr);
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%lx loan_count=%d\n", 
 	pg->uobject, pg->uanon, pg->offset, pg->loan_count);
 #if defined(UVM_PAGE_TRKOWN)
