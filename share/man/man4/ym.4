@@ -1,4 +1,4 @@
-.\" $NetBSD: ym.4,v 1.8 1999/11/16 00:25:06 itohy Exp $
+.\" $NetBSD: ym.4,v 1.9 1999/11/16 12:42:17 soren Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@ equalizer.
 .Pp
 The joystick interface is handled by the
 .Xr joy 4
-driver,
+driver.
 .Sh MIXER DEVICE
 The mixer device of
 .Nm
@@ -171,13 +171,13 @@ suspend/resume, the DMA state is not restored.
 That is, if the system suspends during playback,
 this is not continued after suspend/resume cycle.
 .Pp
-The Joystick port is not under power management.
+The joystick port is not under power management.
 If a
 .Xr joy 4
 device is configured,
 the device will never be put in global power down or power save mode.
 .Pp
-The external devices, such as Zoomed Video port, OPL4-ML/2, MODEM, and CD-ROM
+The external devices, such as Zoomed Video port, OPL4-ML/2, modem, and CD-ROM
 are not supported.
 .Sh SEE ALSO
 .Xr mixerctl 1 ,
