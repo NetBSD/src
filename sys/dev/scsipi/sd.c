@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.117 1997/09/20 18:56:30 mjacob Exp $	*/
+/*	$NetBSD: sd.c,v 1.118 1997/10/01 01:19:17 enami Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -169,7 +169,7 @@ sdmatch(parent, match, aux)
 	int priority;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)sd_patterns, sizeof(sd_patterns)/sizeof(sd_patterns[0]),
+	    (caddr_t)sd_patterns, sizeof(sd_patterns) / sizeof(sd_patterns[0]),
 	    sizeof(sd_patterns[0]), &priority);
 	return (priority);
 }
@@ -228,8 +228,8 @@ sdattach(parent, self, aux)
 
 	if ((sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
 		error = scsipi_start(sd->sc_link, SSS_START,
-				   SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST |
-				   SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
+		    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST |
+		    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 	} else
 		error = 0;
 
@@ -256,10 +256,10 @@ sdlock(sd)
 	while ((sd->flags & SDF_LOCKED) != 0) {
 		sd->flags |= SDF_WANTED;
 		if ((error = tsleep(sd, PRIBIO | PCATCH, "sdlck", 0)) != 0)
-			return error;
+			return (error);
 	}
 	sd->flags |= SDF_LOCKED;
-	return 0;
+	return (0);
 }
 
 /*
@@ -293,10 +293,10 @@ sdopen(dev, flag, fmt, p)
 
 	unit = SDUNIT(dev);
 	if (unit >= sd_cd.cd_ndevs)
-		return ENXIO;
+		return (ENXIO);
 	sd = sd_cd.cd_devs[unit];
 	if (sd == NULL)
-		return ENXIO;
+		return (ENXIO);
 
 	sc_link = sd->sc_link;
 
@@ -305,7 +305,7 @@ sdopen(dev, flag, fmt, p)
 	    sd_cd.cd_ndevs, SDPART(dev)));
 
 	if ((error = sdlock(sd)) != 0)
-		return error;
+		return (error);
 
 	if (sd->sc_dk.dk_openmask != 0) {
 		/*
@@ -319,18 +319,16 @@ sdopen(dev, flag, fmt, p)
 	} else {
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(sc_link,
-					     SCSI_IGNORE_ILLEGAL_REQUEST |
-					     SCSI_IGNORE_MEDIA_CHANGE |
-					     SCSI_IGNORE_NOT_READY);
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
+		    SCSI_IGNORE_NOT_READY);
 		if (error)
 			goto bad3;
 
 		/* Start the pack spinning if necessary. */
 		if ((sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
 			error = scsipi_start(sc_link, SSS_START,
-					   SCSI_IGNORE_ILLEGAL_REQUEST |
-					   SCSI_IGNORE_MEDIA_CHANGE |
-					   SCSI_SILENT);
+			    SCSI_IGNORE_ILLEGAL_REQUEST |
+			    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 			if (error)
 				goto bad3;
 		}
@@ -339,8 +337,7 @@ sdopen(dev, flag, fmt, p)
 
 		/* Lock the pack in. */
 		error = scsipi_prevent(sc_link, PR_PREVENT,
-				     SCSI_IGNORE_ILLEGAL_REQUEST |
-				     SCSI_IGNORE_MEDIA_CHANGE);
+		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 		if (error)
 			goto bad;
 
@@ -379,11 +376,12 @@ sdopen(dev, flag, fmt, p)
 		sd->sc_dk.dk_bopenmask |= (1 << part);
 		break;
 	}
-	sd->sc_dk.dk_openmask = sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
+	sd->sc_dk.dk_openmask =
+	    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
 	sdunlock(sd);
-	return 0;
+	return (0);
 
 bad2:
 	sc_link->flags &= ~SDEV_MEDIA_LOADED;
@@ -397,7 +395,7 @@ bad:
 
 bad3:
 	sdunlock(sd);
-	return error;
+	return (error);
 }
 
 /*
@@ -415,7 +413,7 @@ sdclose(dev, flag, fmt, p)
 	int error;
 
 	if ((error = sdlock(sd)) != 0)
-		return error;
+		return (error);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -425,7 +423,8 @@ sdclose(dev, flag, fmt, p)
 		sd->sc_dk.dk_bopenmask &= ~(1 << part);
 		break;
 	}
-	sd->sc_dk.dk_openmask = sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
+	sd->sc_dk.dk_openmask =
+	    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	if (sd->sc_dk.dk_openmask == 0) {
 		/* XXXX Must wait for I/O to complete! */
@@ -436,7 +435,7 @@ sdclose(dev, flag, fmt, p)
 	}
 
 	sdunlock(sd);
-	return 0;
+	return (0);
 }
 
 /*
@@ -531,6 +530,7 @@ sdstart(v)
 {
 	register struct sd_softc *sd = v;
 	register struct	scsipi_link *sc_link = sd->sc_link;
+	struct disklabel *lp = sd->sc_dk.dk_label;
 	struct buf *bp = 0;
 	struct buf *dp;
 	struct scsipi_rw_big cmd_big;
@@ -582,13 +582,12 @@ sdstart(v)
 		 * First, translate the block to absolute and put it in terms
 		 * of the logical blocksize of the device.
 		 */
-		blkno =
-		    bp->b_blkno / (sd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+		blkno = bp->b_blkno / (lp->d_secsize / DEV_BSIZE);
 		if (SDPART(bp->b_dev) != RAW_PART) {
-		     p = &sd->sc_dk.dk_label->d_partitions[SDPART(bp->b_dev)];
-		     blkno += p->p_offset;
+			p = &lp->d_partitions[SDPART(bp->b_dev)];
+			blkno += p->p_offset;
 		}
-		nblks = howmany(bp->b_bcount, sd->sc_dk.dk_label->d_secsize);
+		nblks = howmany(bp->b_bcount, lp->d_secsize);
 
 		/*
 		 *  Fill out the scsi command.  If the transfer will
@@ -626,7 +625,7 @@ sdstart(v)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		error = sc_link->scsipi_cmd(sc_link, cmdp, cmdlen,
+		error = (*sc_link->scsipi_cmd)(sc_link, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    SDRETRIES, 60000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT));
@@ -715,26 +714,26 @@ sdioctl(dev, cmd, addr, flag, p)
 	 * If the device is not valid.. abandon ship
 	 */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0)
-		return EIO;
+		return (EIO);
 
 	switch (cmd) {
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(sd->sc_dk.dk_label);
-		return 0;
+		return (0);
 
 	case DIOCGPART:
 		((struct partinfo *)addr)->disklab = sd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
 		    &sd->sc_dk.dk_label->d_partitions[SDPART(dev)];
-		return 0;
+		return (0);
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
+			return (EBADF);
 
 		if ((error = sdlock(sd)) != 0)
-			return error;
+			return (error);
 		sd->flags |= SDF_LABELLING;
 
 		error = setdisklabel(sd->sc_dk.dk_label,
@@ -749,20 +748,20 @@ sdioctl(dev, cmd, addr, flag, p)
 
 		sd->flags &= ~SDF_LABELLING;
 		sdunlock(sd);
-		return error;
+		return (error);
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
+			return (EBADF);
 		if (*(int *)addr)
 			sd->flags |= SDF_WLABEL;
 		else
 			sd->flags &= ~SDF_WLABEL;
-		return 0;
+		return (0);
 
 	case DIOCLOCK:
-		return scsipi_prevent(sd->sc_link,
-		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0);
+		return (scsipi_prevent(sd->sc_link,
+		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0));
 
 	case DIOCEJECT:
 		return ((sd->sc_link->flags & SDEV_REMOVABLE) == 0 ? ENOTTY :
@@ -770,8 +769,8 @@ sdioctl(dev, cmd, addr, flag, p)
 
 	default:
 		if (SDPART(dev) != RAW_PART)
-			return ENOTTY;
-		return scsipi_do_ioctl(sd->sc_link, dev, cmd, addr, flag, p);
+			return (ENOTTY);
+		return (scsipi_do_ioctl(sd->sc_link, dev, cmd, addr, flag, p));
 	}
 
 #ifdef DIAGNOSTIC
@@ -827,7 +826,7 @@ sdgetdisklabel(sd)
 	 * Call the generic disklabel extraction routine
 	 */
 	errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit, RAW_PART),
-				  sdstrategy, lp, sd->sc_dk.dk_cpulabel);
+	    sdstrategy, lp, sd->sc_dk.dk_cpulabel);
 	if (errstring) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;
@@ -852,10 +851,10 @@ sd_reassign_blocks(sd, blkno)
 	_lto2b(sizeof(rbdata.defect_descriptor[0]), rbdata.length);
 	_lto4b(blkno, rbdata.defect_descriptor[0].dlbaddr);
 
-	return sd->sc_link->scsipi_cmd(sd->sc_link,
-		(struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(scsipi_cmd), (u_char *)&rbdata, sizeof(rbdata), SDRETRIES,
-	    5000, NULL, SCSI_DATA_OUT);
+	return ((*sd->sc_link->scsipi_cmd)(sd->sc_link,
+	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
+	    (u_char *)&rbdata, sizeof(rbdata), SDRETRIES, 5000, NULL,
+	    SCSI_DATA_OUT));
 }
 
 
@@ -883,10 +882,10 @@ sd_mode_sense(sd, scsipi_sense, page, flags)
 	 * If the command worked, use the results to fill out
 	 * the parameter structure
 	 */
-	return sd->sc_link->scsipi_cmd(sd->sc_link,
-		(struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(scsipi_cmd), (u_char *)scsipi_sense, sizeof(*scsipi_sense),
-	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT);
+	return ((*sd->sc_link->scsipi_cmd)(sd->sc_link,
+	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
+	    (u_char *)scsipi_sense, sizeof(*scsipi_sense),
+	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT));
 }
 
 int
@@ -906,7 +905,7 @@ sd_get_optparms(sd, flags, dp)
 
 	dp->blksize = 512;
 	if ((sectors = scsipi_size(sd->sc_link, flags)) == 0)
-		return 1;
+		return (1);
 
 	/* XXX
 	 * It is better to get the following params from the
@@ -920,11 +919,11 @@ sd_get_optparms(sd, flags, dp)
 	scsipi_cmd.length = sizeof(struct scsi_mode_header) +
 	    sizeof(struct scsi_blk_desc);
 
-	if ((error = sd->sc_link->scsipi_cmd(sd->sc_link,  
+	if ((error = (*sd->sc_link->scsipi_cmd)(sd->sc_link,  
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),  
 	    (u_char *)&scsipi_sense, sizeof(scsipi_sense), SDRETRIES,
 	    6000, NULL, flags | SCSI_DATA_IN)) != 0)
-		return error;
+		return (error);
 
 	dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
 	if (dp->blksize == 0) 
@@ -938,7 +937,7 @@ sd_get_optparms(sd, flags, dp)
 	dp->cyls = sectors / (dp->heads * dp->sectors);
 	dp->disksize = sectors;
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -959,7 +958,7 @@ sd_get_parms(sd, flags)
 	if (sd->type == T_OPTICAL) {
 		if ((error = sd_get_optparms(sd, flags, dp)) != 0)
 			sd->sc_link->flags &= ~SDEV_MEDIA_LOADED;
-		return error;
+		return (error);
 	}
 
 	if ((error = sd_mode_sense(sd, &scsipi_sense, page = 4, flags)) == 0) {
@@ -992,7 +991,7 @@ sd_get_parms(sd, flags)
 		sectors /= (dp->heads * dp->cyls);
 		dp->sectors = sectors;	/* XXX dubious on SCSI */
 
-		return 0;
+		return (0);
 	}
 
 	if ((error = sd_mode_sense(sd, &scsipi_sense, page = 5, flags)) == 0) {
@@ -1007,7 +1006,7 @@ sd_get_parms(sd, flags)
 		if (dp->blksize == 0)
 			dp->blksize = 512;
 
-		return 0;
+		return (0);
 	}
 
 fake_it:
@@ -1031,7 +1030,7 @@ fake_it:
 	dp->cyls = sectors / (64 * 32);
 	dp->blksize = 512;
 	dp->disksize = sectors;
-	return 0;
+	return (0);
 }
 
 int
@@ -1094,7 +1093,7 @@ sddump(dev, blkno, va, size)
 
 	/* Check if recursive dump; if so, punt. */
 	if (sddoingadump)
-		return EFAULT;
+		return (EFAULT);
 
 	/* Mark as active early. */
 	sddoingadump = 1;
@@ -1104,7 +1103,7 @@ sddump(dev, blkno, va, size)
 
 	/* Check for acceptable drive number. */
 	if (unit >= sd_cd.cd_ndevs || (sd = sd_cd.cd_devs[unit]) == NULL)
-		return ENXIO;
+		return (ENXIO);
 
 	/*
 	 * XXX Can't do this check, since the media might have been
@@ -1114,14 +1113,14 @@ sddump(dev, blkno, va, size)
 #if 0
 	/* Make sure it was initialized. */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) != SDEV_MEDIA_LOADED)
-		return ENXIO;
+		return (ENXIO);
 #endif
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
 	lp = sd->sc_dk.dk_label;
 	sectorsize = lp->d_secsize;
 	if ((size % sectorsize) != 0)
-		return EFAULT;
+		return (EFAULT);
 	totwrt = size / sectorsize;
 	blkno = dbtob(blkno) / sectorsize;	/* blkno in DEV_BSIZE units */
 
@@ -1130,7 +1129,7 @@ sddump(dev, blkno, va, size)
 
 	/* Check transfer bounds against partition size. */
 	if ((blkno < 0) || ((blkno + totwrt) > nsects))
-		return EINVAL;
+		return (EINVAL);
 
 	/* Offset block number to start of partition. */
 	blkno += sectoff;
@@ -1169,9 +1168,9 @@ sddump(dev, blkno, va, size)
 		/*
 		 * Pass all this info to the scsi driver.
 		 */
-		retval = (*(sd->sc_link->adapter->scsipi_cmd)) (xs);
+		retval = (*sd->sc_link->adapter->scsipi_cmd)(xs);
 		if (retval != COMPLETE)
-			return ENXIO;
+			return (ENXIO);
 #else	/* SD_DUMP_NOT_TRUSTED */
 		/* Let's just talk about this first... */
 		printf("sd%d: dump addr 0x%x, blk %d\n", unit, va, blkno);
@@ -1184,7 +1183,7 @@ sddump(dev, blkno, va, size)
 		va += sectorsize * nwrt;
 	}
 	sddoingadump = 0;
-	return 0;
+	return (0);
 }
 #else	/* __BDEVSW_DUMP_NEW_TYPE */
 int
@@ -1196,6 +1195,6 @@ sddump(dev, blkno, va, size)
 {
 
 	/* Not implemented. */
-	return ENXIO;
+	return (ENXIO);
 }
 #endif	/* __BDEVSW_DUMP_NEW_TYPE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.2 1997/08/27 11:26:58 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.3 1997/10/01 01:19:13 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -114,6 +114,7 @@ scsipi_dtype(type)
 	int type;
 {
 	char *dtype;
+
 	switch (type) {
 	case T_DIRECT:
 		dtype = "direct";
@@ -151,7 +152,7 @@ scsipi_dtype(type)
 		dtype = "unknown";
 		break;
 	}
-	return dtype;
+	return (dtype);
 }
 
 void

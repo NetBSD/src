@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.3 1997/09/19 23:53:33 cgd Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.4 1997/10/01 01:19:08 enami Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -63,7 +63,7 @@ scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	struct scsipi_xfer *xs;
 
 	if ((xs = scsipi_get_xs(sc_link, flags)) == NULL)
-		return NULL;
+		return (NULL);
 
 	/*
 	 * Fill out the scsipi_xfer structure.  We don't know whose context
@@ -85,10 +85,10 @@ scsipi_make_xs(sc_link, scsipi_cmd, cmdlen, data_addr, datalen,
 	 */
 
 	if ((sc_link->type == BUS_SCSI) &&
-		((sc_link->scsipi_scsi.scsi_version & SID_ANSII) <= 2))
+	    ((sc_link->scsipi_scsi.scsi_version & SID_ANSII) <= 2))
 		xs->cmd->bytes[0] |=
 		    ((sc_link->scsipi_scsi.lun << SCSI_CMD_LUN_SHIFT) &
 			SCSI_CMD_LUN_MASK);
 
-	return xs;
+	return (xs);
 }

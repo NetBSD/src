@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_tape.h,v 1.11 1997/09/29 19:29:02 mjacob Exp $	*/
+/*	$NetBSD: scsi_tape.h,v 1.12 1997/10/01 01:19:01 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -35,7 +35,7 @@
  *
  * TRW Financial Systems, in accordance with their agreement with Carnegie
  * Mellon University, makes this software available to CMU to distribute
- * or use in any manner that they see fit as long as this message is kept with 
+ * or use in any manner that they see fit as long as this message is kept with
  * the software. For this reason TFS also grants any other persons or
  * organisations permission to use or modify this software.
  *
@@ -130,8 +130,8 @@ struct scsi_block_limits {
 
 struct scsi_block_limits_data {
 	u_int8_t reserved;
-	u_int8_t max_length[3];	/* Most significant */
-	u_int8_t min_length[2];	/* Most significant */
+	u_int8_t max_length[3];		/* Most significant */
+	u_int8_t min_length[2];		/* Most significant */
 };
 
 /* See SCSI-II spec 9.3.3.1 */
@@ -168,21 +168,21 @@ struct scsi_tape_dev_conf_page {
 
 /* from SCSI-3: SSC-Rev10 (6/97) */
 struct scsi_tape_dev_compression_page {
-	u_int8_t	pagecode;	/* 0xf */
-	u_int8_t	pagelength;	/* 0xe */
-	u_int8_t	dce_dcc;
+	u_int8_t pagecode;	/* 0x0f */
+	u_int8_t pagelength;	/* 0x0e */
+	u_int8_t dce_dcc;
 #define	DCP_DCE			0x80	/* enable compression */
 #define	DCP_DCC			0x40	/* compression capable */
-	u_int8_t	dde_red;
+	u_int8_t dde_red;
 #define	DCP_DDE			0x80	/* enable decompression */
 /* There's a lot of gup about bits 5,6 for reporting exceptions */
 /* in transitions between compressed and uncompressed data- but */
 /* mostly we want the default (0), which is to report a MEDIUM	*/
 /* ERROR when a read transitions into data that can't be de-	*/
 /* compressed */
-	u_int8_t	comp_alg[4];	/* compression algorithm */
-	u_int8_t	decomp_alg[4];	/* de-"" */
-	u_int8_t	reserved[4];
+	u_int8_t comp_alg[4];		/* compression algorithm */
+	u_int8_t decomp_alg[4];		/* de-"" */
+	u_int8_t reserved[4];
 };
 
 /* defines for the device specific byte in the mode select/sense header */
@@ -207,9 +207,9 @@ struct block_desc_cipher {
 
 #define	READ_POSITION	0x34
 struct scsi_tape_read_position {
-	u_int8_t	opcode;		/* READ_POSITION */
-	u_int8_t	byte1;		/* set LSB to read hardware block pos */
-	u_int8_t	reserved[8];
+	u_int8_t opcode;		/* READ_POSITION */
+	u_int8_t byte1;			/* set LSB to read hardware block pos */
+	u_int8_t reserved[8];
 };
 
 #define	LOCATE		0x2B

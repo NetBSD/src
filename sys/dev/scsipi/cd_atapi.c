@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.2 1997/08/27 11:26:21 bouyer Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.3 1997/10/01 01:18:46 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -115,11 +115,11 @@ cd_atapibus_match(parent, match, aux)
 	int priority;
 
 	if (sa->sa_sc_link->type != BUS_ATAPI)
-		return 0;
+		return (0);
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
 	    (caddr_t)cd_atapibus_patterns,
-		sizeof(cd_atapibus_patterns)/sizeof(cd_atapibus_patterns[0]),
+	    sizeof(cd_atapibus_patterns) / sizeof(cd_atapibus_patterns[0]),
 	    sizeof(cd_atapibus_patterns[0]), &priority);
 	return (priority);
 }
@@ -158,13 +158,12 @@ cd_atapibus_get_mode(cd, data, page, len, flags)
 	scsipi_cmd.page = page;
 	_lto2b(len, scsipi_cmd.length);
 	error = cd->sc_link->scsipi_cmd(cd->sc_link,
-		(struct scsipi_generic *)&scsipi_cmd,
-		sizeof(scsipi_cmd), (u_char *)data, sizeof(*data), CDRETRIES,
-		20000, NULL, SCSI_DATA_IN);
+	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
+	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
+	    SCSI_DATA_IN);
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cd_atapibus_get_mode: error=%d\n",
 	    error));
-	return error;
-
+	return (error);
 }
 
 int
@@ -183,12 +182,12 @@ cd_atapibus_set_mode(cd, data, len)
 	scsipi_cmd.page  = data->page.page_code;
 	_lto2b(len, scsipi_cmd.length);
 	error = cd->sc_link->scsipi_cmd(cd->sc_link,
-		(struct scsipi_generic *)&scsipi_cmd,
-		sizeof(scsipi_cmd), (u_char *)data, sizeof(*data), CDRETRIES,
-		20000, NULL, SCSI_DATA_OUT);
+	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
+	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
+	    SCSI_DATA_OUT);
 	SC_DEBUG(cd->sc_link, SDEV_DB2, ("cd_atapibus_set_mode: error=%d\n",
 	    error));
-	return error;
+	return (error);
 }
 
 int
@@ -201,12 +200,12 @@ cd_atapibus_setchan(cd, p0, p1, p2, p3)
 
 	if ((error = cd_atapibus_get_mode(cd, &data, ATAPI_AUDIO_PAGE,
 	    AUDIOPAGESIZE, 0)) != 0)
-		return error;
+		return (error);
 	data.page.audio.port[LEFT_PORT].channels = p0;
 	data.page.audio.port[RIGHT_PORT].channels = p1;
 	data.page.audio.port[2].channels = p2;
 	data.page.audio.port[3].channels = p3;
-	return cd_atapibus_set_mode(cd, &data, AUDIOPAGESIZE);
+	return (cd_atapibus_set_mode(cd, &data, AUDIOPAGESIZE));
 }
 
 int
@@ -219,12 +218,12 @@ cd_atapibus_getvol(cd, arg)
 
 	if ((error = cd_atapibus_get_mode(cd, &data, ATAPI_AUDIO_PAGE,
 	    AUDIOPAGESIZE, 0)) != 0)
-		return error;
+		return (error);
 	arg->vol[0] = data.page.audio.port[0].volume;
 	arg->vol[1] = data.page.audio.port[1].volume;
 	arg->vol[2] = data.page.audio.port[2].volume;
 	arg->vol[3] = data.page.audio.port[3].volume;
-	return 0;
+	return (0);
 }
 
 int
@@ -237,21 +236,21 @@ cd_atapibus_setvol(cd, arg)
 
 	if ((error = cd_atapibus_get_mode(cd, &data, ATAPI_AUDIO_PAGE,
 	    AUDIOPAGESIZE, 0)) != 0)
-		return error;
+		return (error);
 	if ((error = cd_atapibus_get_mode(cd, &mask, ATAPI_AUDIO_PAGE_MASK,
 	    AUDIOPAGESIZE, 0))   != 0)
-		return error;
+		return (error);
 
 	data.page.audio.port[0].volume = arg->vol[0] &
-		mask.page.audio.port[0].volume;
+	    mask.page.audio.port[0].volume;
 	data.page.audio.port[1].volume = arg->vol[1] &
-		mask.page.audio.port[1].volume;
+	    mask.page.audio.port[1].volume;
 	data.page.audio.port[2].volume = arg->vol[2] &
-		mask.page.audio.port[2].volume;
+	    mask.page.audio.port[2].volume;
 	data.page.audio.port[3].volume = arg->vol[3] &
-		mask.page.audio.port[3].volume;
+	    mask.page.audio.port[3].volume;
 
-	return cd_atapibus_set_mode(cd, &data, AUDIOPAGESIZE);
+	return (cd_atapibus_set_mode(cd, &data, AUDIOPAGESIZE));
 }
 
 int

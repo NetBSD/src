@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.75 1997/09/29 19:33:03 mjacob Exp $	*/
+/*	$NetBSD: st.c,v 1.76 1997/10/01 01:19:24 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -82,7 +82,7 @@
 #define STMODE(z)	( minor(z)       & 0x03)
 #define STDSTY(z)	((minor(z) >> 2) & 0x03)
 #define STUNIT(z)	((minor(z) >> 4)       )
-#define CTLMODE	3
+#define CTLMODE		3
 
 /*
  * Maximum density code known.
@@ -232,24 +232,24 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 
 struct st_softc {
 	struct device sc_dev;
-/*--------------------present operating parameters, flags etc.----------------*/
-	int flags;		/* see below                          */
-	u_int quirks;		/* quirks for the open mode           */
-	int blksize;		/* blksize we are using                */
-	u_int8_t density;	/* present density                    */
-	u_int page_0_size;	/* size of page 0 data		      */
+/*--------------------present operating parameters, flags etc.---------------*/
+	int flags;		/* see below                         */
+	u_int quirks;		/* quirks for the open mode          */
+	int blksize;		/* blksize we are using              */
+	u_int8_t density;	/* present density                   */
+	u_int page_0_size;	/* size of page 0 data		     */
 	u_int last_dsty;	/* last density opened               */
-/*--------------------device/scsi parameters----------------------------------*/
-	struct scsipi_link *sc_link;	/* our link to the adpter etc.        */
-/*--------------------parameters reported by the device ----------------------*/
+/*--------------------device/scsi parameters---------------------------------*/
+	struct scsipi_link *sc_link;	/* our link to the adpter etc.       */
+/*--------------------parameters reported by the device ---------------------*/
 	int blkmin;		/* min blk size                       */
 	int blkmax;		/* max blk size                       */
-	struct quirkdata *quirkdata;	/* if we have a rogue entry           */
-/*--------------------parameters reported by the device for this media--------*/
+	struct quirkdata *quirkdata;	/* if we have a rogue entry          */
+/*--------------------parameters reported by the device for this media-------*/
 	u_long numblks;		/* nominal blocks capacity            */
 	int media_blksize;	/* 0 if not ST_FIXEDBLOCKS            */
 	u_int8_t media_density;	/* this is what it said when asked    */
-/*--------------------quirks for the whole drive------------------------------*/
+/*--------------------quirks for the whole drive-----------------------------*/
 	u_int drive_quirks;	/* quirks of this drive               */
 /*--------------------How we should set up when opening each minor device----*/
 	struct modes modes[4];	/* plus more for each mode            */
@@ -258,12 +258,13 @@ struct st_softc {
 #define DENSITY_SET_BY_QUIRK	0x02
 #define BLKSIZE_SET_BY_USER	0x04
 #define BLKSIZE_SET_BY_QUIRK	0x08
-/*--------------------storage for sense data returned by the drive------------*/
+/*--------------------storage for sense data returned by the drive-----------*/
 	u_char sense_data[MAX_PAGE_0_SIZE];	/*
 						 * additional sense data needed
 						 * for mode sense/select.
 						 */
-	struct buf buf_queue;		/* the queue of pending IO operations */
+	struct buf buf_queue;		/* the queue of pending IO */
+					/* operations */
 };
 
 
@@ -274,7 +275,7 @@ int	stmatch __P((struct device *, struct cfdata *, void *));
 #endif
 void	stattach __P((struct device *, struct device *, void *));
 void	st_identify_drive __P((struct st_softc *,
-								struct scsipi_inquiry_pattern *));
+	    struct scsipi_inquiry_pattern *));
 void	st_loadquirks __P((struct st_softc *));
 int	st_mount_tape __P((dev_t, int));
 void	st_unmount __P((struct st_softc *, boolean));
@@ -317,7 +318,7 @@ struct scsipi_device st_switch = {
 #define	ST_FIXEDBLOCKS	0x0008
 #define	ST_AT_FILEMARK	0x0010
 #define	ST_EIO_PENDING	0x0020	/* we couldn't report it then (had data) */
-#define	ST_NEW_MOUNT	0x0040	/* still need to decide mode              */
+#define	ST_NEW_MOUNT	0x0040	/* still need to decide mode             */
 #define	ST_READONLY	0x0080	/* st_mode_sense says write protected */
 #define	ST_FM_WRITTEN	0x0100	/*
 				 * EOF file mark written  -- used with
@@ -330,8 +331,8 @@ struct scsipi_device st_switch = {
 #define	ST_DONTBUFFER	0x1000	/* Disable buffering/caching */
 
 #define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_BLANK_READ)
-#define	ST_PER_MOUNT	(ST_INFO_VALID | ST_BLOCK_SET | ST_WRITTEN | \
-			 ST_FIXEDBLOCKS | ST_READONLY | ST_FM_WRITTEN | \
+#define	ST_PER_MOUNT	(ST_INFO_VALID | ST_BLOCK_SET | ST_WRITTEN |	\
+			 ST_FIXEDBLOCKS | ST_READONLY | ST_FM_WRITTEN |	\
 			 ST_2FM_AT_EOD | ST_PER_ACTION)
 
 struct scsipi_inquiry_pattern st_patterns[] = {
@@ -431,7 +432,7 @@ st_identify_drive(st, inqbuf)
 
 	finger = (struct st_quirk_inquiry_pattern *)scsipi_inqmatch(inqbuf,
 	    (caddr_t)st_quirk_patterns,
-	    sizeof(st_quirk_patterns)/sizeof(st_quirk_patterns[0]),
+	    sizeof(st_quirk_patterns) / sizeof(st_quirk_patterns[0]),
 	    sizeof(st_quirk_patterns[0]), &priority);
 	if (priority != 0) {
 		st->quirkdata = &finger->quirkdata;
@@ -478,7 +479,7 @@ st_loadquirks(st)
 /*
  * open the device.
  */
-int 
+int
 stopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags;
@@ -493,10 +494,10 @@ stopen(dev, flags, mode, p)
 
 	unit = STUNIT(dev);
 	if (unit >= st_cd.cd_ndevs)
-		return ENXIO;
+		return (ENXIO);
 	st = st_cd.cd_devs[unit];
-	if (!st)
-		return ENXIO;
+	if (st == NULL)
+		return (ENXIO);
 
 	stmode = STMODE(dev);
 	dsty = STDSTY(dev);
@@ -510,16 +511,14 @@ stopen(dev, flags, mode, p)
 	 */
 	if (sc_link->flags & SDEV_OPEN) {
 		printf("%s: already open\n", st->sc_dev.dv_xname);
-		return EBUSY;
+		return (EBUSY);
 	}
 
 	/*
 	 * Catch any unit attention errors.
 	 */
-	error = scsipi_test_unit_ready(sc_link,
-				     SCSI_IGNORE_MEDIA_CHANGE |
-				     (stmode == CTLMODE ?
-					SCSI_IGNORE_NOT_READY : 0));
+	error = scsipi_test_unit_ready(sc_link, SCSI_IGNORE_MEDIA_CHANGE |
+	    (stmode == CTLMODE ? SCSI_IGNORE_NOT_READY : 0));
 	if (error)
 		goto bad;
 
@@ -531,7 +530,7 @@ stopen(dev, flags, mode, p)
 	 * This mode does NOT ALLOW I/O, only ioctls
 	 */
 	if (stmode == CTLMODE)
-		return 0;
+		return (0);
 
 	/*
 	 * if it's a different mode, or if the media has been
@@ -559,19 +558,19 @@ stopen(dev, flags, mode, p)
 		st->flags |= ST_WRITTEN;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("open complete\n"));
-	return 0;
+	return (0);
 
 bad:
 	st_unmount(st, NOEJECT);
 	sc_link->flags &= ~SDEV_OPEN;
-	return error;
+	return (error);
 }
 
 /*
  * close the device.. only called if we are the LAST
  * occurence of an open device
  */
-int 
+int
 stclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags;
@@ -599,7 +598,7 @@ stclose(dev, flags, mode, p)
 	}
 	st->sc_link->flags &= ~SDEV_OPEN;
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -625,7 +624,7 @@ st_mount_tape(dev, flags)
 	sc_link = st->sc_link;
 
 	if (st->flags & ST_MOUNTED)
-		return 0;
+		return (0);
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mounting\n "));
 	st->flags |= ST_NEW_MOUNT;
@@ -635,7 +634,7 @@ st_mount_tape(dev, flags)
 	 * to do a 'load' instruction.  (We assume it is new.)
 	 */
 	if ((error = st_load(st, LD_LOAD, 0)) != 0)
-		return error;
+		return (error);
 	/*
 	 * Throw another dummy instruction to catch
 	 * 'Unit attention' errors. Some drives appear to give
@@ -650,13 +649,13 @@ st_mount_tape(dev, flags)
 	 */
 	if (st->quirks & ST_Q_SENSE_HELP)
 		if ((error = st_touch_tape(st)) != 0)
-			return error;
+			return (error);
 	/*
 	 * Load the physical device parameters
 	 * loads: blkmin, blkmax
 	 */
 	if ((error = st_read_block_limits(st, 0)) != 0)
-		return error;
+		return (error);
 	/*
 	 * Load the media dependent parameters
 	 * includes: media_blksize,media_density,numblks
@@ -664,7 +663,7 @@ st_mount_tape(dev, flags)
 	 * If not you may need the "quirk" above.
 	 */
 	if ((error = st_mode_sense(st, 0)) != 0)
-		return error;
+		return (error);
 	/*
 	 * If we have gained a permanent density from somewhere,
 	 * then use it in preference to the one supplied by
@@ -680,17 +679,18 @@ st_mount_tape(dev, flags)
 	 * default by the driver.
 	 */
 	st->flags &= ~ST_FIXEDBLOCKS;
-	if (st->modeflags[dsty] & (BLKSIZE_SET_BY_QUIRK | BLKSIZE_SET_BY_USER)) {
+	if (st->modeflags[dsty] &
+	    (BLKSIZE_SET_BY_QUIRK | BLKSIZE_SET_BY_USER)) {
 		st->blksize = st->modes[dsty].blksize;
 		if (st->blksize)
 			st->flags |= ST_FIXEDBLOCKS;
 	} else {
 		if ((error = st_decide_mode(st, FALSE)) != 0)
-			return error;
+			return (error);
 	}
 	if ((error = st_mode_select(st, 0)) != 0) {
 		printf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
-		return error;
+		return (error);
 	}
 	scsipi_prevent(sc_link, PR_PREVENT,
 	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY);
@@ -698,7 +698,7 @@ st_mount_tape(dev, flags)
 	st->flags |= ST_MOUNTED;
 	sc_link->flags |= SDEV_MEDIA_LOADED;	/* move earlier? */
 
-	return 0;
+	return (0);
 }
 
 /*
@@ -831,7 +831,7 @@ done:
 	default:
 		st->flags |= ST_2FM_AT_EOD;
 	}
-	return 0;
+	return (0);
 }
 
 /*
@@ -870,7 +870,7 @@ ststrategy(bp)
 	 * as are out-of-range requests on variable drives.
 	 */
 	else if (bp->b_bcount < st->blkmin ||
-		 (st->blkmax && bp->b_bcount > st->blkmax)) {
+	    (st->blkmax && bp->b_bcount > st->blkmax)) {
 		printf("%s: bad request, must be between %d and %d\n",
 		    st->sc_dev.dv_xname, st->blkmin, st->blkmax);
 		bp->b_error = EIO;
@@ -923,7 +923,7 @@ done:
  * continues to be drained.
  * ststart() is called at splbio
  */
-void 
+void
 ststart(v)
 	void *v;
 {
@@ -1041,9 +1041,10 @@ ststart(v)
 		/*
 		 * go ask the adapter to do all this for us
 		 */
-		if (sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd,
-		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount, 0,
-		    100000, bp, flags | SCSI_NOSLEEP))
+		if ((*sc_link->scsipi_cmd)(sc_link,
+		    (struct scsipi_generic *)&cmd, sizeof(cmd),
+		    (u_char *)bp->b_data, bp->b_bcount,
+		    0, 100000, bp, flags | SCSI_NOSLEEP))
 			printf("%s: not queued\n", st->sc_dev.dv_xname);
 	} /* go back and see if we can cram more work in.. */
 }
@@ -1057,7 +1058,7 @@ stread(dev, uio, iomode)
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_READ,
-		       st->sc_link->adapter->scsipi_minphys, uio));
+	    st->sc_link->adapter->scsipi_minphys, uio));
 }
 
 int
@@ -1069,7 +1070,7 @@ stwrite(dev, uio, iomode)
 	struct st_softc *st = st_cd.cd_devs[STUNIT(dev)];
 
 	return (physio(ststrategy, NULL, dev, B_WRITE,
-		       st->sc_link->adapter->scsipi_minphys, uio));
+	    st->sc_link->adapter->scsipi_minphys, uio));
 }
 
 /*
@@ -1126,7 +1127,8 @@ stioctl(dev, cmd, arg, flag, p)
 	case MTIOCTOP: {
 
 		SC_DEBUG(st->sc_link, SDEV_DB1,
-		    ("[ioctl: op=0x%x count=0x%x]\n", mt->mt_op, mt->mt_count));
+		    ("[ioctl: op=0x%x count=0x%x]\n", mt->mt_op,
+			mt->mt_count));
 
 		/* compat: in U*x it is a short */
 		number = mt->mt_count;
@@ -1184,9 +1186,9 @@ stioctl(dev, cmd, arg, flag, p)
 				break;
 			}
 #endif
-			if (number == 0) {
+			if (number == 0)
 				st->flags &= ~ST_FIXEDBLOCKS;
-			} else {
+			else {
 				if ((st->blkmin || st->blkmax) &&
 				    (number < st->blkmin ||
 				    number > st->blkmax)) {
@@ -1238,12 +1240,13 @@ stioctl(dev, cmd, arg, flag, p)
 
 	default:
 		if (STMODE(dev) == CTLMODE)
-			error = scsipi_do_ioctl(st->sc_link, dev, cmd, arg, flag, p);
+			error = scsipi_do_ioctl(st->sc_link, dev, cmd, arg,
+			    flag, p);
 		else
 			error = ENOTTY;
 		break;
 	}
-	return error;
+	return (error);
 /*-----------------------------*/
 try_new_value:
 	/*
@@ -1258,7 +1261,7 @@ try_new_value:
 			st->flags |= ST_FIXEDBLOCKS;
 		else
 			st->flags &= ~ST_FIXEDBLOCKS;
-		return error;
+		return (error);
 	}
 	/*
 	 * As the drive liked it, if we are setting a new default,
@@ -1280,7 +1283,7 @@ try_new_value:
 			break;
 		}
 	}
-	return 0;
+	return (0);
 }
 
 /*
@@ -1299,7 +1302,7 @@ st_read(st, buf, size, flags)
 	 * If it's a null transfer, return immediatly
 	 */
 	if (size == 0)
-		return 0;
+		return (0);
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = READ;
 	if (st->flags & ST_FIXEDBLOCKS) {
@@ -1308,9 +1311,9 @@ st_read(st, buf, size, flags)
 		    cmd.len);
 	} else
 		_lto3b(size, cmd.len);
-	return st->sc_link->scsipi_cmd(st->sc_link, (struct scsipi_generic *) &cmd,
-	    sizeof(cmd), (u_char *) buf, size, 0, 100000, NULL,
-	    flags | SCSI_DATA_IN);
+	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd),
+	    (u_char *)buf, size, 0, 100000, NULL, flags | SCSI_DATA_IN));
 }
 
 /*
@@ -1330,7 +1333,7 @@ st_read_block_limits(st, flags)
 	 * First check if we have it all loaded
 	 */
 	if ((sc_link->flags & SDEV_MEDIA_LOADED))
-		return 0;
+		return (0);
 
 	/*
 	 * do a 'Read Block Limits'
@@ -1341,19 +1344,18 @@ st_read_block_limits(st, flags)
 	/*
 	 * do the command, update the global values
 	 */
-	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd,
-			      sizeof(cmd), (u_char *) &block_limits,
-			      sizeof(block_limits), ST_RETRIES, 5000,
-			      NULL, flags | SCSI_DATA_IN);
+	error = (*sc_link->scsipi_cmd)(sc_link, (struct scsipi_generic *)&cmd,
+	    sizeof(cmd), (u_char *)&block_limits, sizeof(block_limits),
+	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_IN);
 	if (error)
-		return error;
+		return (error);
 
 	st->blkmin = _2btol(block_limits.min_length);
 	st->blkmax = _3btol(block_limits.max_length);
 
 	SC_DEBUG(sc_link, SDEV_DB3,
 	    ("(%d <= blksize <= %d)\n", st->blkmin, st->blkmax));
-	return 0;
+	return (0);
 }
 
 /*
@@ -1396,12 +1398,11 @@ st_mode_sense(st, flags)
 	 * or if we need it as a template for the mode select
 	 * store it away.
 	 */
-	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd,
-			      sizeof(cmd), (u_char *) &scsipi_sense,
-			      scsipi_sense_len, ST_RETRIES, 5000, NULL,
-			      flags | SCSI_DATA_IN);
+	error = (*sc_link->scsipi_cmd)(sc_link, (struct scsipi_generic *)&cmd,
+	    sizeof(cmd), (u_char *)&scsipi_sense, scsipi_sense_len,
+	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_IN);
 	if (error)
-		return error;
+		return (error);
 
 	st->numblks = _3btol(scsipi_sense.blk_desc.nblocks);
 	st->media_blksize = _3btol(scsipi_sense.blk_desc.blklen);
@@ -1416,9 +1417,10 @@ st_mode_sense(st, flags)
 	    ("%sbuffered\n",
 	    scsipi_sense.header.dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
 	if (st->page_0_size)
-		bcopy(scsipi_sense.sense_data, st->sense_data, st->page_0_size);
+		bcopy(scsipi_sense.sense_data, st->sense_data,
+		    st->page_0_size);
 	sc_link->flags |= SDEV_MEDIA_LOADED;
-	return 0;
+	return (0);
 }
 
 /*
@@ -1450,7 +1452,7 @@ st_mode_select(st, flags)
 		SC_DEBUG(sc_link, SDEV_DB3,
 		    ("not setting density 0x%x blksize 0x%x\n",
 		    st->density, st->blksize));
-		return 0;
+		return (0);
 	}
 
 	/*
@@ -1476,9 +1478,9 @@ st_mode_select(st, flags)
 	/*
 	 * do the command
 	 */
-	return sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &cmd,
-	    sizeof(cmd), (u_char *) &scsi_select, scsi_select_len,
-	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_OUT);
+	return ((*sc_link->scsipi_cmd)(sc_link, (struct scsipi_generic *)&cmd,
+	    sizeof(cmd), (u_char *)&scsi_select, scsi_select_len,
+	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_OUT));
 }
 
 int
@@ -1492,22 +1494,22 @@ st_cmprss(st, onoff)
 	struct scsi_select {
 		struct scsi_mode_header header;
 		struct scsi_blk_desc blk_desc;
-		u_char pdata[max(sizeof (struct scsi_tape_dev_conf_page),
-			 sizeof (struct scsi_tape_dev_compression_page))];
+		u_char pdata[max(sizeof(struct scsi_tape_dev_conf_page),
+		    sizeof(struct scsi_tape_dev_compression_page))];
 	} scsi_pdata;
 	struct scsi_tape_dev_conf_page *ptr;
 	struct scsi_tape_dev_compression_page *cptr;
 	struct scsipi_link *sc_link = st->sc_link;
 	int error, ison, flags;
 
-	scsi_dlen = sizeof (scsi_pdata);
+	scsi_dlen = sizeof(scsi_pdata);
 	bzero(&scsi_pdata, scsi_dlen);
 
 	/*
 	 * Set up for a mode sense.
 	 * Do DATA COMPRESSION page first.
 	 */
-	bzero(&scmd, sizeof (scmd));
+	bzero(&scmd, sizeof(scmd));
 	scmd.opcode = SCSI_MODE_SENSE;
 	scmd.page = SMS_PAGE_CTRL_CURRENT | 0xf;
 	scmd.length = scsi_dlen;
@@ -1518,23 +1520,23 @@ st_cmprss(st, onoff)
 	 * Do the MODE SENSE command...
 	 */
 again:
-	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &scmd,
-			sizeof(scmd), (u_char *) &scsi_pdata, scsi_dlen,
-			ST_RETRIES, 5000, NULL, flags | SCSI_DATA_IN);
+	error = (*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *)&scmd, sizeof(scmd), 
+	    (u_char *)&scsi_pdata, scsi_dlen,
+	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_IN);
 
 	if (error) {
 		if (scmd.byte2 != SMS_DBD) {
 			scmd.byte2 = SMS_DBD;
 			goto again;
 		}
-		return error;
+		return (error);
 	}
 
-	if (scsi_pdata.header.blk_desc_len) {
+	if (scsi_pdata.header.blk_desc_len)
 		ptr = (struct scsi_tape_dev_conf_page *) scsi_pdata.pdata;
-	} else {
+	else
 		ptr = (struct scsi_tape_dev_conf_page *) &scsi_pdata.blk_desc;
-	}
 
 	if ((scmd.page & SMS_PAGE_CODE) == 0xf) {
 		cptr = (struct scsi_tape_dev_compression_page *) ptr;
@@ -1552,7 +1554,7 @@ again:
 			ptr->sel_comp_alg = 0;
 		ptr->pagecode &= ~0x80;
 	}
-	onoff = (onoff)? 1 : 0;
+	onoff = onoff ? 1 : 0;
 	/*
 	 * There might be a virtue in actually doing the MODE SELECTS,
 	 * but let's not clog the bus over it.
@@ -1583,10 +1585,11 @@ again:
 	}
 
 	/*
-	 * do the command
+	 * Do the command
 	 */
-	error = sc_link->scsipi_cmd(sc_link, (struct scsipi_generic *) &mcmd,
-	    sizeof(mcmd), (u_char *) &scsi_pdata, scsi_dlen,
+	error = (*sc_link->scsipi_cmd)(sc_link,
+	    (struct scsipi_generic *)&mcmd, sizeof(mcmd),
+	    (u_char *)&scsi_pdata, scsi_dlen,
 	    ST_RETRIES, 5000, NULL, flags | SCSI_DATA_OUT);
 
 	if (error && (scmd.page & SMS_PAGE_CODE) == 0xf) {
@@ -1624,8 +1627,9 @@ st_erase(st, full, flags)
 	 * XXX We always do this asynchronously, for now.  How long should
 	 * we wait if we want to (eventually) to it synchronously?
 	 */
-	return (st->sc_link->scsipi_cmd(st->sc_link, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), 0, 0, ST_RETRIES, 5000, NULL, flags));
+	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd),
+	    0, 0, ST_RETRIES, 5000, NULL, flags));
 }
 
 /*
@@ -1646,7 +1650,7 @@ st_space(st, number, what, flags)
 		if (st->flags & ST_PER_ACTION) {
 			if (number > 0) {
 				st->flags &= ~ST_PER_ACTION;
-				return EIO;
+				return (EIO);
 			} else if (number < 0) {
 				if (st->flags & ST_AT_FILEMARK) {
 					/*
@@ -1655,13 +1659,13 @@ st_space(st, number, what, flags)
 					 * right file mark count.
 					 */
 					error = st_space(st, 0, SP_FILEMARKS,
-						flags);
+					    flags);
 					if (error)
-						return error;
+						return (error);
 				}
 				if (st->flags & ST_BLANK_READ) {
 					st->flags &= ~ST_BLANK_READ;
-					return EIO;
+					return (EIO);
 				}
 				st->flags &= ~ST_EIO_PENDING;
 			}
@@ -1672,7 +1676,7 @@ st_space(st, number, what, flags)
 			if (number > 0) {
 				/* pretend we just discovered the error */
 				st->flags &= ~ST_EIO_PENDING;
-				return EIO;
+				return (EIO);
 			} else if (number < 0) {
 				/* back away from the error */
 				st->flags &= ~ST_EIO_PENDING;
@@ -1692,22 +1696,23 @@ st_space(st, number, what, flags)
 		if (st->flags & ST_EIO_PENDING) {
 			/* pretend we just discovered the error */
 			st->flags &= ~ST_EIO_PENDING;
-			return EIO;
+			return (EIO);
 		}
 		if (st->flags & ST_AT_FILEMARK)
 			st->flags &= ~ST_AT_FILEMARK;
 		break;
 	}
 	if (number == 0)
-		return 0;
+		return (0);
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = SPACE;
 	cmd.byte2 = what;
 	_lto3b(number, cmd.number);
 
-	return st->sc_link->scsipi_cmd(st->sc_link, (struct scsipi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, 0, 900000, NULL, flags);
+	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd),
+	    0, 0, 0, 900000, NULL, flags));
 }
 
 /*
@@ -1726,7 +1731,7 @@ st_write_filemarks(st, number, flags)
 	 * Don't try.
 	 */
 	if (number < 0)
-		return EINVAL;
+		return (EINVAL);
 	switch (number) {
 	case 0:		/* really a command to sync the drive's buffers */
 		break;
@@ -1745,8 +1750,9 @@ st_write_filemarks(st, number, flags)
 	cmd.opcode = WRITE_FILEMARKS;
 	_lto3b(number, cmd.number);
 
-	return st->sc_link->scsipi_cmd(st->sc_link, (struct scsipi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, 0, 100000, NULL, flags);
+	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd),
+	    0, 0, 0, 100000, NULL, flags));
 }
 
 /*
@@ -1769,7 +1775,7 @@ st_check_eod(st, position, nmarks, flags)
 	switch (st->flags & (ST_WRITTEN | ST_FM_WRITTEN | ST_2FM_AT_EOD)) {
 	default:
 		*nmarks = 0;
-		return 0;
+		return (0);
 	case ST_WRITTEN:
 	case ST_WRITTEN | ST_FM_WRITTEN | ST_2FM_AT_EOD:
 		*nmarks = 1;
@@ -1780,7 +1786,7 @@ st_check_eod(st, position, nmarks, flags)
 	error = st_write_filemarks(st, *nmarks, flags);
 	if (position && !error)
 		error = st_space(st, -*nmarks, SP_FILEMARKS, flags);
-	return error;
+	return (error);
 }
 
 /*
@@ -1800,17 +1806,18 @@ st_load(st, type, flags)
 
 		error = st_check_eod(st, FALSE, &nmarks, flags);
 		if (error)
-			return error;
+			return (error);
 	}
 	if (st->quirks & ST_Q_IGNORE_LOADS)
-		return 0;
+		return (0);
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = LOAD;
 	cmd.how = type;
 
-	return st->sc_link->scsipi_cmd(st->sc_link, (struct scsipi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, ST_RETRIES, 300000, NULL, flags);
+	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd),
+	    0, 0, ST_RETRIES, 300000, NULL, flags));
 }
 
 /*
@@ -1828,16 +1835,16 @@ st_rewind(st, immediate, flags)
 
 	error = st_check_eod(st, FALSE, &nmarks, flags);
 	if (error)
-		return error;
+		return (error);
 	st->flags &= ~ST_PER_ACTION;
 
 	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = REWIND;
 	cmd.byte2 = immediate;
 
-	return st->sc_link->scsipi_cmd(st->sc_link, (struct scsipi_generic *) &cmd,
-	    sizeof(cmd), 0, 0, ST_RETRIES, immediate ? 5000 : 300000, NULL,
-	    flags);
+	return ((*st->sc_link->scsipi_cmd)(st->sc_link,
+	    (struct scsipi_generic *)&cmd, sizeof(cmd),
+	    0, 0, ST_RETRIES, immediate ? 5000 : 300000, NULL, flags));
 }
 
 int
@@ -1857,21 +1864,21 @@ st_rdpos(st, hard, blkptr)
 	if (error)
 		return (error);
 
-	bzero(&cmd, sizeof (cmd));
-	bzero(&posdata, sizeof (posdata));
+	bzero(&cmd, sizeof(cmd));
+	bzero(&posdata, sizeof(posdata));
 	cmd.opcode = READ_POSITION;
 	if (hard)
 		cmd.byte1 = 1;
 
 	error = st->sc_link->scsipi_cmd(st->sc_link,
-	    (struct scsipi_generic *) &cmd, sizeof (cmd), (u_char *) &posdata,
-	    sizeof (posdata), ST_RETRIES, 30000, NULL, SCSI_DATA_IN);
+	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&posdata,
+	    sizeof(posdata), ST_RETRIES, 30000, NULL, SCSI_DATA_IN);
 
 	if (error == 0) {
 
 #if	0
 		printf("posdata:");
-		for (hard = 0; hard < sizeof (posdata); hard++)
+		for (hard = 0; hard < sizeof(posdata); hard++)
 			printf("%02x ", posdata[hard] & 0xff);
 		printf("\n");
 #endif
@@ -1900,13 +1907,13 @@ st_setpos(st, hard, blkptr)
 	if (error)
 		return (error);
 
-	bzero(&cmd, sizeof (cmd));
+	bzero(&cmd, sizeof(cmd));
 	cmd.opcode = LOCATE;
 	if (hard)
 		cmd.bytes[0] = 1 << 2;
 	_lto4b(*blkptr, &cmd.bytes[2]);
-	error = st->sc_link->scsipi_cmd(st->sc_link, &cmd, sizeof (cmd), NULL,
-		0, ST_RETRIES, 5000, NULL, 0);
+	error = (*st->sc_link->scsipi_cmd)(st->sc_link, &cmd, sizeof(cmd),
+	    NULL, 0, ST_RETRIES, 5000, NULL, 0);
 	/*
 	 * XXX: Note file && block number position now unknown (if
 	 * XXX: these things ever start being maintained in this driver)
@@ -1939,7 +1946,7 @@ st_interpret_sense(xs)
 	else
 		info = xs->datalen;	/* bad choice if fixed blocks */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70)
-		return -1;	/* let the generic code handle it */
+		return (-1);		/* let the generic code handle it */
 #ifdef SCSIVERBOSE
 	else if ((xs->flags & SCSI_SILENT) == 0)
 		scsi_print_sense(xs, 0);    /* tell folks what happened */
@@ -1981,21 +1988,21 @@ st_interpret_sense(xs)
 		 */
 		if (xs->resid >= xs->datalen) {
 			if (st->flags & ST_EIO_PENDING)
-				return EIO;
+				return (EIO);
 			if (st->flags & ST_AT_FILEMARK) {
 				if (bp)
 					bp->b_resid = xs->resid;
-				return 0;
+				return (0);
 			}
 		}
 	} else {		/* must be variable mode */
 		xs->resid = xs->datalen;	/* to be sure */
 		if (sense->flags & SSD_EOM)
-			return EIO;
+			return (EIO);
 		if (sense->flags & SSD_FILEMARK) {
 			if (bp)
 				bp->b_resid = bp->b_bcount;
-			return 0;
+			return (0);
 		}
 		if (sense->flags & SSD_ILI) {
 			if (info < 0) {
@@ -2006,7 +2013,7 @@ st_interpret_sense(xs)
 					printf("%s: %d-byte record too big\n",
 					    st->sc_dev.dv_xname,
 					    xs->datalen - info);
-				return EIO;
+				return (EIO);
 			}
 			xs->resid = info;
 			if (bp)
@@ -2033,10 +2040,10 @@ st_interpret_sense(xs)
 				bp->b_resid = xs->resid;
 				/* return an EOF */
 			}
-			return 0;
+			return (0);
 		}
 	}
-	return -1;		/* let the default/generic handler handle it */
+	return (-1);		/* let the default/generic handler handle it */
 }
 
 /*
@@ -2064,8 +2071,8 @@ st_touch_tape(st)
 	int error;
 
 	buf = malloc(1024, M_TEMP, M_NOWAIT);
-	if (!buf)
-		return ENOMEM;
+	if (buf == NULL)
+		return (ENOMEM);
 
 	if ((error = st_mode_sense(st, 0)) != 0)
 		goto bad;
@@ -2086,12 +2093,12 @@ st_touch_tape(st)
 		st_read(st, buf, readsize, SCSI_SILENT);	/* XXX */
 		if ((error = st_rewind(st, 0, 0)) != 0) {
 bad:			free(buf, M_TEMP);
-			return error;
+			return (error);
 		}
 	} while (readsize != 1 && readsize > st->blksize);
 
 	free(buf, M_TEMP);
-	return 0;
+	return (0);
 }
 
 int
@@ -2103,5 +2110,5 @@ stdump(dev, blkno, va, size)
 {
 
 	/* Not implemented. */
-	return ENXIO;
+	return (ENXIO);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.3 1997/09/05 16:45:25 bouyer Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.4 1997/10/01 01:18:48 enami Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -116,11 +116,11 @@ cd_scsibus_match(parent, match, aux)
 	int priority;
 
 	if (sa->sa_sc_link->type != BUS_SCSI)
-		return 0;
+		return (0);
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
 	    (caddr_t)cd_scsibus_patterns,
-		sizeof(cd_scsibus_patterns)/sizeof(cd_scsibus_patterns[0]),
+	    sizeof(cd_scsibus_patterns) / sizeof(cd_scsibus_patterns[0]),
 	    sizeof(cd_scsibus_patterns[0]), &priority);
 	return (priority);
 }
@@ -168,10 +168,10 @@ cd_scsibus_get_mode(cd, data, page)
 	scsipi_cmd.opcode = SCSI_MODE_SENSE;
 	scsipi_cmd.page = page;
 	scsipi_cmd.length = sizeof(*data) & 0xff;
-	return cd->sc_link->scsipi_cmd(cd->sc_link,
-		(struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(scsipi_cmd), (u_char *)data, sizeof(*data), CDRETRIES, 20000,
-	    NULL, SCSI_DATA_IN);
+	return ((*cd->sc_link->scsipi_cmd)(cd->sc_link,
+	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
+	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
+	    SCSI_DATA_IN));
 }
 
 /*
@@ -189,10 +189,10 @@ cd_scsibus_set_mode(cd, data)
 	scsipi_cmd.byte2 |= SMS_PF;
 	scsipi_cmd.length = sizeof(*data) & 0xff;
 	data->header.data_length = 0;
-	return cd->sc_link->scsipi_cmd(cd->sc_link,
-		(struct scsipi_generic *)&scsipi_cmd,
-	    sizeof(scsipi_cmd), (u_char *)data, sizeof(*data), CDRETRIES, 20000,
-	    NULL, SCSI_DATA_OUT);
+	return ((*cd->sc_link->scsipi_cmd)(cd->sc_link,
+	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
+	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
+	    SCSI_DATA_OUT));
 }
 
 int
@@ -203,10 +203,10 @@ cd_scsibus_set_pa_immed(cd)
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
-		return error;
+		return (error);
 	data.page.audio.flags &= ~CD_PA_SOTC;
 	data.page.audio.flags |= CD_PA_IMMED;
-	return cd_scsibus_set_mode(cd, &data);
+	return (cd_scsibus_set_mode(cd, &data));
 }
 
 int
@@ -218,12 +218,12 @@ cd_scsibus_setchan(cd, p0, p1, p2, p3)
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
-		return error;
+		return (error);
 	data.page.audio.port[LEFT_PORT].channels = p0;
 	data.page.audio.port[RIGHT_PORT].channels = p1;
 	data.page.audio.port[2].channels = p2;
 	data.page.audio.port[3].channels = p3;
-	return cd_scsibus_set_mode(cd, &data);
+	return (cd_scsibus_set_mode(cd, &data));
 }
 
 int
@@ -236,12 +236,12 @@ cd_scsibus_getvol(cd, arg)
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
-		return error;
+		return (error);
 	arg->vol[LEFT_PORT] = data.page.audio.port[LEFT_PORT].volume;
 	arg->vol[RIGHT_PORT] = data.page.audio.port[RIGHT_PORT].volume;
 	arg->vol[2] = data.page.audio.port[2].volume;
 	arg->vol[3] = data.page.audio.port[3].volume;
-	return 0;
+	return (0);
 }
 
 int
@@ -253,12 +253,12 @@ cd_scsibus_setvol(cd, arg)
 	int error;
 
 	if ((error = cd_scsibus_get_mode(cd, &data, SCSI_AUDIO_PAGE)) != 0)
-		return error;
+		return (error);
 	data.page.audio.port[LEFT_PORT].channels = CHANNEL_0;
 	data.page.audio.port[LEFT_PORT].volume = arg->vol[LEFT_PORT];
 	data.page.audio.port[RIGHT_PORT].channels = CHANNEL_1;
 	data.page.audio.port[RIGHT_PORT].volume = arg->vol[RIGHT_PORT];
 	data.page.audio.port[2].volume = arg->vol[2];
 	data.page.audio.port[3].volume = arg->vol[3];
-	return cd_scsibus_set_mode(cd, &data);
+	return (cd_scsibus_set_mode(cd, &data));
 }

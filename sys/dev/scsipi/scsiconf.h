@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.38 1997/08/27 11:26:47 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.39 1997/10/01 01:19:04 enami Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -68,7 +68,7 @@ int	scsiprint __P((void *, const char *));
  */
 struct scsibus_softc {
 	struct device sc_dev;
-	struct scsipi_link *adapter_link;		/* prototype supplied by adapter */
+	struct scsipi_link *adapter_link; /* prototype supplied by adapter */
 	struct scsipi_link ***sc_link;		/* dynamically allocated */
 	int	sc_maxtarget;
 	u_int8_t moreluns;
@@ -78,18 +78,15 @@ struct scsibus_softc {
 #define	SCSI_OP_RESET	0x0002
 #define	SCSI_OP_BDINFO	0x0003
 
-int scsi_change_def __P((struct scsipi_link *, int));
-void scsi_print_addr __P((struct scsipi_link *));
-int scsi_interpret_sense __P((struct scsipi_xfer *));
+int	scsi_change_def __P((struct scsipi_link *, int));
+int	scsi_interpret_sense __P((struct scsipi_xfer *));
+void	scsi_print_addr __P((struct scsipi_link *));
 #ifdef SCSIVERBOSE
-void scsi_print_sense __P((struct scsipi_xfer *, int));
+void	scsi_print_sense __P((struct scsipi_xfer *, int));
 #endif
-
-int scsi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
-			int cmdlen, u_char *data_addr,
-			int datalen, int retries,
-			int timeout, struct buf *bp,
-			int flags));
-int scsi_probe_busses __P((int, int, int));
+int	scsi_probe_busses __P((int, int, int));
+int	scsi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
+	    int cmdlen, u_char *data_addr, int datalen, int retries,
+	    int timeout, struct buf *bp, int flags));
 
 #endif /* SCSI_SCSICONF_H */
