@@ -1,4 +1,4 @@
-/*	$NetBSD: errlist.c,v 1.5 1997/07/13 19:45:46 christos Exp $	*/
+/*	$NetBSD: errlist.c,v 1.6 1997/10/09 11:31:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)errlst.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: errlist.c,v 1.5 1997/07/13 19:45:46 christos Exp $");
+__RCSID("$NetBSD: errlist.c,v 1.6 1997/10/09 11:31:05 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -142,4 +142,4 @@ const char *const _sys_errlist[] = {
 	"Function not implemented",		/* 78 - ENOSYS */
 	"Inappropriate file type or format",	/* 79 - EFTYPE */
 };
-int _sys_nerr = { sizeof _sys_errlist/sizeof _sys_errlist[0] };
+const int _sys_nerr = { sizeof _sys_errlist/sizeof _sys_errlist[0] };
