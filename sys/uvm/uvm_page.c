@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.49 2001/01/28 22:14:52 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.50 2001/01/28 22:23:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -102,8 +102,6 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
  * problems for either cpu caches or DMA latency.
  */
 boolean_t vm_page_zero_enable = FALSE;
-
-extern struct uvm_pagerops uvm_vnodeops;
 
 /*
  * local variables

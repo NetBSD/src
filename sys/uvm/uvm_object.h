@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.9 2001/01/28 22:14:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.10 2001/01/28 22:23:06 thorpej Exp $	*/
 
 /*
  *
@@ -82,7 +82,13 @@ struct uvm_object {
 #define	UVM_OBJ_IS_INTRSAFE_OBJECT(uobj)				\
 	((uobj)->uo_refs == UVM_OBJ_KERN_INTRSAFE)
 
+#ifdef _KERNEL
+
+extern struct uvm_pagerops uvm_vnodeops;
+
 #define	UVM_OBJ_IS_VNODE(uobj)						\
 	((uobj)->pgops == &uvm_vnodeops)
+
+#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_OBJECT_H_ */
