@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.55 1999/10/06 21:54:10 ad Exp $	*/
+/*	$NetBSD: inetd.c,v 1.56 2000/01/13 15:53:00 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.55 1999/10/06 21:54:10 ad Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.56 2000/01/13 15:53:00 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -835,6 +835,7 @@ config(signo)
 					    "%s: ipsec initialization failed",
 					    sep->se_service);
 					sep->se_checked = 0;
+					sigsetmask(omask);
 					continue;
 				}
 			}
