@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.5 2000/01/08 05:13:26 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.6 2000/01/08 22:57:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -44,7 +44,6 @@
 #include "rf_dagffwr.h"
 #include "rf_dagdegrd.h"
 #include "rf_dagdegwr.h"
-#include "rf_threadid.h"
 #include "rf_paritylog.h"
 #include "rf_paritylogDiskMgr.h"
 #include "rf_paritylogging.h"
@@ -540,9 +539,8 @@ rf_ShutdownParityLoggingRegionInfo(RF_ThreadArg_t arg)
 
 	raidPtr = (RF_Raid_t *) arg;
 	if (rf_parityLogDebug) {
-		int     tid;
-		rf_get_threadid(tid);
-		printf("[%d] ShutdownParityLoggingRegionInfo\n", tid);
+		printf("raid%d: ShutdownParityLoggingRegionInfo\n", 
+		       raidPtr->raidid);
 	}
 	/* free region information structs */
 	for (i = 0; i < rf_numParityRegions; i++)
@@ -558,9 +556,7 @@ rf_ShutdownParityLoggingPool(RF_ThreadArg_t arg)
 
 	raidPtr = (RF_Raid_t *) arg;
 	if (rf_parityLogDebug) {
-		int     tid;
-		rf_get_threadid(tid);
-		printf("[%d] ShutdownParityLoggingPool\n", tid);
+		printf("raid%d: ShutdownParityLoggingPool\n", raidPtr->raidid);
 	}
 	/* free contents of parityLogPool */
 	FreeParityLogQueue(raidPtr, &raidPtr->parityLogPool);
@@ -574,9 +570,8 @@ rf_ShutdownParityLoggingRegionBufferPool(RF_ThreadArg_t arg)
 
 	raidPtr = (RF_Raid_t *) arg;
 	if (rf_parityLogDebug) {
-		int     tid;
-		rf_get_threadid(tid);
-		printf("[%d] ShutdownParityLoggingRegionBufferPool\n", tid);
+		printf("raid%d: ShutdownParityLoggingRegionBufferPool\n", 
+		       raidPtr->raidid);
 	}
 	FreeRegionBufferQueue(&raidPtr->regionBufferPool);
 }
@@ -588,9 +583,8 @@ rf_ShutdownParityLoggingParityBufferPool(RF_ThreadArg_t arg)
 
 	raidPtr = (RF_Raid_t *) arg;
 	if (rf_parityLogDebug) {
-		int     tid;
-		rf_get_threadid(tid);
-		printf("[%d] ShutdownParityLoggingParityBufferPool\n", tid);
+		printf("raid%d: ShutdownParityLoggingParityBufferPool\n",
+		       raidPtr->raidid);
 	}
 	FreeRegionBufferQueue(&raidPtr->parityBufferPool);
 }
@@ -604,9 +598,8 @@ rf_ShutdownParityLoggingDiskQueue(RF_ThreadArg_t arg)
 
 	raidPtr = (RF_Raid_t *) arg;
 	if (rf_parityLogDebug) {
-		int     tid;
-		rf_get_threadid(tid);
-		printf("[%d] ShutdownParityLoggingDiskQueue\n", tid);
+		printf("raid%d: ShutdownParityLoggingDiskQueue\n",
+		       raidPtr->raidid);
 	}
 	/* free disk manager stuff */
 	RF_ASSERT(raidPtr->parityLogDiskQueue.bufHead == NULL);
@@ -633,9 +626,7 @@ rf_ShutdownParityLogging(RF_ThreadArg_t arg)
 
 	raidPtr = (RF_Raid_t *) arg;
 	if (rf_parityLogDebug) {
-		int     tid;
-		rf_get_threadid(tid);
-		printf("[%d] ShutdownParityLogging\n", tid);
+		printf("raid%d: ShutdownParityLogging\n", raidPtr->raidid);
 	}
 	/* shutdown disk thread */
 	/* This has the desirable side-effect of forcing all regions to be
@@ -656,9 +647,7 @@ rf_ShutdownParityLogging(RF_ThreadArg_t arg)
 	}
 	RF_UNLOCK_MUTEX(raidPtr->parityLogDiskQueue.mutex);
 	if (rf_parityLogDebug) {
-		int     tid;
-		rf_get_threadid(tid);
-		printf("[%d] ShutdownParityLogging done (thread completed)\n", tid);
+		printf("raid%d: ShutdownParityLogging done (thread completed)\n", raidPtr->raidid);
 	}
 }
 
@@ -812,7 +801,6 @@ rf_ParityLoggingDagSelect(
 	RF_RowCol_t frow, fcol;
 	RF_RowStatus_t rstat;
 	int     prior_recon;
-	int     tid;
 
 	RF_ASSERT(RF_IO_IS_R_OR_W(type));
 
@@ -894,9 +882,8 @@ rf_ParityLoggingDagSelect(
 				RF_ASSERT(failedPDA->col != -1);
 
 				if (rf_dagDebug || rf_mapDebug) {
-					rf_get_threadid(tid);
-					printf("[%d] Redirected type '%c' r %d c %d o %ld -> r %d c %d o %ld\n",
-					    tid, type, or, oc, (long) oo, failedPDA->row, failedPDA->col, (long) failedPDA->startSector);
+					printf("raid%d: Redirected type '%c' r %d c %d o %ld -> r %d c %d o %ld\n",
+					    raidPtr->raidid, type, or, oc, (long) oo, failedPDA->row, failedPDA->col, (long) failedPDA->startSector);
 				}
 				asmp->numDataFailed = asmp->numParityFailed = 0;
 			}
