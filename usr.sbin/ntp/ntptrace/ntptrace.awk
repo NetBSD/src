@@ -83,7 +83,7 @@ function do_one_server( command, i, nvars, vars, stratum, peer, offset,
 
     printf("%s: stratum %d, offset %f, synch distance %f",
 	dhost(host), stratum, offset, syncdistance)
-    if ($stratum == 1) printf(", refid '%s'", refid)
+    if (stratum == 1) printf(", refid '%s'", refid)
     printf("\n")
 
     if (stratum == 0 || stratum == 1 || stratum == 16)
