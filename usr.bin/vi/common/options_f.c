@@ -1,4 +1,4 @@
-/*	$NetBSD: options_f.c,v 1.4 2002/04/09 01:47:31 thorpej Exp $	*/
+/*	$NetBSD: options_f.c,v 1.5 2003/08/27 15:15:16 dsl Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -15,7 +15,7 @@
 #if 0
 static const char sccsid[] = "@(#)options_f.c	10.25 (Berkeley) 7/12/96";
 #else
-__RCSID("$NetBSD: options_f.c,v 1.4 2002/04/09 01:47:31 thorpej Exp $");
+__RCSID("$NetBSD: options_f.c,v 1.5 2003/08/27 15:15:16 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ f_columns(sp, op, str, valp)
 	 * number of lines/columns for the screen, but at least we don't drop
 	 * core.
 	 */
-#define	MAXIMUM_SCREEN_COLS	500
+#define	MAXIMUM_SCREEN_COLS	4000
 	if (*valp > MAXIMUM_SCREEN_COLS) {
 		msgq(sp, M_ERR, "041|Screen columns too large, greater than %d",
 		    MAXIMUM_SCREEN_COLS);
@@ -108,7 +108,7 @@ f_lines(sp, op, str, valp)
 	 * number of lines/columns for the screen, but at least we don't drop
 	 * core.
 	 */
-#define	MAXIMUM_SCREEN_ROWS	500
+#define	MAXIMUM_SCREEN_ROWS	4000
 	if (*valp > MAXIMUM_SCREEN_ROWS) {
 		msgq(sp, M_ERR, "043|Screen lines too large, greater than %d",
 		    MAXIMUM_SCREEN_ROWS);
@@ -165,24 +165,6 @@ f_msgcat(sp, op, str, valp)
 	u_long *valp;
 {
 	(void)msg_open(sp, str);
-	return (0);
-}
-
-/*
- * PUBLIC: int f_paragraph __P((SCR *, OPTION *, char *, u_long *));
- */
-int
-f_paragraph(sp, op, str, valp)
-	SCR *sp;
-	OPTION *op;
-	char *str;
-	u_long *valp;
-{
-	if (strlen(str) & 1) {
-		msgq(sp, M_ERR,
-		    "048|The paragraph option must be in two character groups");
-		return (1);
-	}
 	return (0);
 }
 
@@ -257,24 +239,6 @@ f_reformat(sp, op, str, valp)
 	u_long *valp;
 {
 	F_SET(sp, SC_SCR_REFORMAT);
-	return (0);
-}
-
-/*
- * PUBLIC: int f_section __P((SCR *, OPTION *, char *, u_long *));
- */
-int
-f_section(sp, op, str, valp)
-	SCR *sp;
-	OPTION *op;
-	char *str;
-	u_long *valp;
-{
-	if (strlen(str) & 1) {
-		msgq(sp, M_ERR,
-		    "049|The section option must be in two character groups");
-		return (1);
-	}
 	return (0);
 }
 

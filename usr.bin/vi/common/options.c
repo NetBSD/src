@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.7 2003/08/27 13:47:51 dsl Exp $	*/
+/*	$NetBSD: options.c,v 1.8 2003/08/27 15:15:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	10.51 (Berkeley) 10/14/96";
 #else
-__RCSID("$NetBSD: options.c,v 1.7 2003/08/27 13:47:51 dsl Exp $");
+__RCSID("$NetBSD: options.c,v 1.8 2003/08/27 15:15:16 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,8 @@ OPTLIST const optlist[] = {
 	{"lock",	NULL,		OPT_1BOOL,	0},
 /* O_MAGIC	    4BSD */
 	{"magic",	NULL,		OPT_1BOOL,	0},
+/* O_MATCHCHARS	  netbsd 2.0 */
+	{"matchchars",	NULL,		OPT_STR,	OPT_PAIRS},
 /* O_MATCHTIME	  4.4BSD */
 	{"matchtime",	NULL,		OPT_NUM,	0},
 /* O_MESG	    4BSD */
@@ -147,7 +149,7 @@ OPTLIST const optlist[] = {
 /* O_OPTIMIZE	    4BSD */
 	{"optimize",	NULL,		OPT_1BOOL,	0},
 /* O_PARAGRAPHS	    4BSD */
-	{"paragraphs",	f_paragraph,	OPT_STR,	0},
+	{"paragraphs",	NULL,		OPT_STR,	OPT_PAIRS},
 /* O_PATH	  4.4BSD */
 	{"path",	NULL,		OPT_STR,	0},
 /* O_PRINT	  4.4BSD */
@@ -171,7 +173,7 @@ OPTLIST const optlist[] = {
 /* O_SEARCHINCR	  4.4BSD */
 	{"searchincr",	NULL,		OPT_0BOOL,	0},
 /* O_SECTIONS	    4BSD */
-	{"sections",	f_section,	OPT_STR,	0},
+	{"sections",	NULL,		OPT_STR,	OPT_PAIRS},
 /* O_SECURE	  4.4BSD */
 	{"secure",	NULL,		OPT_0BOOL,	OPT_NOUNSET},
 /* O_SHELL	    4BSD */
@@ -308,6 +310,12 @@ opts_init(sp, oargs)
 	int cnt, optindx;
 	char *s, b1[1024];
 
+	if (sizeof optlist / sizeof optlist[0] - 1 != O_OPTIONCOUNT) {
+		fprintf(stderr, "vi: option table size error (%d != %d)\n",
+		    sizeof optlist / sizeof optlist[0] - 1, O_OPTIONCOUNT);
+		exit(1);
+	}
+
 	a.bp = b1;
 	b.bp = NULL;
 	a.len = b.len = 0;
@@ -378,6 +386,7 @@ opts_init(sp, oargs)
 	OI(O_TABSTOP, "tabstop=8");
 	(void)snprintf(b1, sizeof(b1), "tags=%s", _PATH_TAGS);
 	OI(O_TAGS, b1);
+	OI(O_MATCHCHARS, "matchchars=()[]{}<>");
 
 	/*
 	 * XXX
@@ -707,6 +716,14 @@ badnum:				p = msg_print(sp, name, &nf);
 				if (!disp)
 					disp = SELECT_DISPLAY;
 				F_SET(spo, OPT_SELECTED);
+				break;
+			}
+
+			/* Check for strings that must have even length */
+			if (F_ISSET(op, OPT_PAIRS) && strlen(sep) & 1) {
+				msgq_str(sp, M_ERR, name,
+				    "047|set: the %s option must be in two character groups");
+				rval = 1;
 				break;
 			}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_extern.h,v 1.2 2001/03/31 11:37:51 aymeric Exp $	*/
+/*	$NetBSD: com_extern.h,v 1.3 2003/08/27 15:15:17 dsl Exp $	*/
 
 #ifndef HAVE_BSEARCH
 void	*bsearch __P((const void *, const void *, size_t,
@@ -152,12 +152,10 @@ int f_columns __P((SCR *, OPTION *, char *, u_long *));
 int f_lines __P((SCR *, OPTION *, char *, u_long *));
 int f_lisp __P((SCR *, OPTION *, char *, u_long *));
 int f_msgcat __P((SCR *, OPTION *, char *, u_long *));
-int f_paragraph __P((SCR *, OPTION *, char *, u_long *));
 int f_print __P((SCR *, OPTION *, char *, u_long *));
 int f_readonly __P((SCR *, OPTION *, char *, u_long *));
 int f_recompile __P((SCR *, OPTION *, char *, u_long *));
 int f_reformat __P((SCR *, OPTION *, char *, u_long *));
-int f_section __P((SCR *, OPTION *, char *, u_long *));
 int f_ttywerase __P((SCR *, OPTION *, char *, u_long *));
 int f_w300 __P((SCR *, OPTION *, char *, u_long *));
 int f_w1200 __P((SCR *, OPTION *, char *, u_long *));
