@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.346 2003/07/27 14:49:22 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.347 2003/07/28 02:38:33 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -643,4 +643,4 @@ USE_${var}?= yes
 USE_XF86_4?=	yes
 .endif
 
-.endif		# _BSD_OWN_MK_
+.endif	# !defined(_BSD_OWN_MK_)
