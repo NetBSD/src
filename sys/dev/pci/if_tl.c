@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.54 2002/09/27 20:40:20 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.55 2002/09/30 20:37:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.54 2002/09/27 20:40:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.55 2002/09/30 20:37:40 thorpej Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -184,9 +184,8 @@ static __inline u_int8_t netsio_read(sc, bits)
 	return (tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & bits);
 }
 
-const struct cfattach tl_ca = {
-	sizeof(tl_softc_t), tl_pci_match, tl_pci_attach
-};
+CFATTACH_DECL(tl, sizeof(tl_softc_t),
+    tl_pci_match, tl_pci_attach, NULL, NULL)
 
 const struct tl_product_desc tl_compaq_products[] = {
 	{ PCI_PRODUCT_COMPAQ_N100TX, TLPHY_MEDIA_NO_10_T,

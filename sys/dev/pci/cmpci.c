@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.14 2002/09/27 20:39:48 thorpej Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.15 2002/09/30 20:37:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.14 2002/09/27 20:39:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.15 2002/09/30 20:37:11 thorpej Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -114,9 +114,8 @@ static int cmpci_set_in_ports __P((struct cmpci_softc *));
 static int cmpci_match __P((struct device *, struct cfdata *, void *));
 static void cmpci_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach cmpci_ca = {
-	sizeof (struct cmpci_softc), cmpci_match, cmpci_attach
-};
+CFATTACH_DECL(cmpci, sizeof (struct cmpci_softc),
+    cmpci_match, cmpci_attach, NULL, NULL)
 
 /* interrupt */
 static int cmpci_intr __P((void *));

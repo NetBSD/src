@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.15 2002/09/27 20:39:56 thorpej Exp $ */
+/* $NetBSD: esa.c,v 1.16 2002/09/30 20:37:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -208,10 +208,8 @@ struct audio_hw_if esa_hw_if = {
 	esa_trigger_input
 };
 
-const struct cfattach esa_ca = {
-	sizeof(struct esa_softc), esa_match, esa_attach,
-	esa_detach, /*esa_activate*/ NULL
-};
+CFATTACH_DECL(esa, sizeof(struct esa_softc), esa_match, esa_attach,
+    esa_detach, NULL)
 
 /*
  * audio(9) functions

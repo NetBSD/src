@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.2 2002/09/27 20:40:28 thorpej Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.3 2002/09/30 20:37:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.2 2002/09/27 20:40:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.3 2002/09/30 20:37:50 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -79,9 +79,8 @@ void	ld_amr_handler(struct amr_ccb *);
 int	ld_amr_match(struct device *, struct cfdata *, void *);
 int	ld_amr_start(struct ld_softc *, struct buf *);
 
-const struct cfattach ld_amr_ca = {
-	sizeof(struct ld_amr_softc), ld_amr_match, ld_amr_attach
-};
+CFATTACH_DECL(ld_amr, sizeof(struct ld_amr_softc),
+    ld_amr_match, ld_amr_attach, NULL, NULL)
 
 struct {
 	const char	*ds_descr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.14 2002/09/27 20:40:41 thorpej Exp $	*/
+/*	$NetBSD: puc.c,v 1.15 2002/09/30 20:38:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.14 2002/09/27 20:40:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.15 2002/09/30 20:38:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,8 @@ void	puc_attach __P((struct device *, struct device *, void *));
 int	puc_print __P((void *, const char *));
 int	puc_submatch __P((struct device *, struct cfdata *, void *));
 
-const struct cfattach puc_ca = {
-	sizeof(struct puc_softc), puc_match, puc_attach
-};
+CFATTACH_DECL(puc, sizeof(struct puc_softc),
+    puc_match, puc_attach, NULL, NULL)
 
 const struct puc_device_description *
 	puc_find_description __P((pcireg_t, pcireg_t, pcireg_t, pcireg_t));

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.178 2002/09/24 22:05:19 pooka Exp $
+#	$NetBSD: files.pci,v 1.179 2002/09/30 20:37:21 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -298,6 +298,11 @@ file	dev/pci/mpu_fms.c		mpu_fms
 device	eap: audiobus, auconv, mulaw, ac97, midibus
 attach	eap at pci
 file	dev/pci/eap.c			eap
+
+# Avance Logic ALS4000 audio
+device	als: audiobus, auconv, mulaw
+attach	als at pci
+file	dev/pci/als.c			als
 
 # Intel ICH AC'97 audio
 device	auich: audiobus, auconv, mulaw, ac97, aurateconv

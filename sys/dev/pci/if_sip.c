@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.70 2002/09/27 20:40:15 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.71 2002/09/30 20:37:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.70 2002/09/27 20:40:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.71 2002/09/30 20:37:36 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -456,9 +456,13 @@ void	SIP_DECL(attach)(struct device *, struct device *, void *);
 
 int	SIP_DECL(copy_small) = 0;
 
-const struct cfattach SIP_DECL(ca) = {
-	sizeof(struct sip_softc), SIP_DECL(match), SIP_DECL(attach),
-};
+#ifdef DP83820
+CFATTACH_DECL(gsip, sizeof(struct sip_softc),
+    gsip_match, gsip_attach, NULL, NULL)
+#else
+CFATTACH_DECL(sip, sizeof(struct sip_softc),
+    sip_match, sip_attach, NULL, NULL)
+#endif
 
 /*
  * Descriptions of the variants of the SiS900.
