@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.19 1998/01/12 18:31:04 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.20 1998/07/01 22:47:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -164,14 +164,8 @@ nhpibmatch(parent, match, aux)
 {
 	struct dio_attach_args *da = aux;
 
-	/*
-	 * Internal HP-IB doesn't always return a device ID,
-	 * so we rely on the sysflags.
-	 */
-	if (da->da_scode == 7 && internalhpib)
-		return (1);
-
-	if (da->da_id == DIO_DEVICE_ID_NHPIB)
+	if (da->da_id == DIO_DEVICE_ID_NHPIB ||
+	    da->da_id == DIO_DEVICE_ID_IHPIB)
 		return (1);
 
 	return (0);
