@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.37 1999/11/15 19:18:26 fvdl Exp $	*/
+/*	$NetBSD: setup.c,v 1.37.4.1 2001/11/24 22:08:55 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.37 1999/11/15 19:18:26 fvdl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.37.4.1 2001/11/24 22:08:55 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,6 @@ __RCSID("$NetBSD: setup.c,v 1.37 1999/11/15 19:18:26 fvdl Exp $");
 #include "extern.h"
 #include "fsutil.h"
 
-struct bufarea asblk;
-struct fs *altsblock;
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
 static void badsb __P((int, char *));
@@ -138,9 +136,6 @@ setup(dev)
 	 * Read in the superblock, looking for alternates if necessary
 	 */
 	if (readsb(1) == 0) {
-#ifdef LITE2BORKEN
-		skipclean = 0;
-#endif
 		if (bflag || preen || calcsb(dev, fsreadfd, &proto) == 0)
 			return(0);
 		if (reply("LOOK FOR ALTERNATE SUPERBLOCKS") == 0)
@@ -154,7 +149,7 @@ setup(dev)
 			printf("%s %s\n%s %s\n%s %s\n",
 				"SEARCH FOR ALTERNATE SUPER-BLOCK",
 				"FAILED. YOU MUST USE THE",
-				"-b OPTION TO FSCK_FFS TO SPECIFY THE",
+				"-b OPTION TO fsck_ffs TO SPECIFY THE",
 				"LOCATION OF AN ALTERNATE",
 				"SUPER-BLOCK TO SUPPLY NEEDED",
 				"INFORMATION; SEE fsck_ffs(8).");
@@ -413,7 +408,17 @@ setup(dev)
 		    (unsigned)((maxino + 1) * sizeof(int16_t)));
 		goto badsblabel;
 	}
+	/*
+	 * cs_ndir may be inaccurate, particularly if we're using the -b
+	 * option, so set a minimum to prevent bogus subdirectory reconnects
+	 * and really inefficient directory scans.
+	 * Also set a maximum in case the value is too large.
+	 */
 	numdirs = sblock->fs_cstotal.cs_ndir;
+	if (numdirs < 1024)
+		numdirs = 1024;
+	if (numdirs > maxino + 1)
+		numdirs = maxino + 1;
 	inplast = 0;
 	listmax = numdirs + 10;
 	inpsort = (struct inoinfo **)calloc((unsigned)listmax,
@@ -545,39 +550,7 @@ readsb(listerr)
 	memmove(altsblock, asblk.b_un.b_fs, sblock->fs_sbsize);
 	if (needswap)
 		ffs_sb_swap(asblk.b_un.b_fs, altsblock, 0);
-	altsblock->fs_firstfield = sblock->fs_firstfield;
-	altsblock->fs_fscktime = sblock->fs_fscktime;
-	altsblock->fs_unused_1 = sblock->fs_unused_1;
-	altsblock->fs_time = sblock->fs_time;
-	altsblock->fs_cstotal = sblock->fs_cstotal;
-	altsblock->fs_cgrotor = sblock->fs_cgrotor;
-	altsblock->fs_fmod = sblock->fs_fmod;
-	altsblock->fs_clean = sblock->fs_clean;
-	altsblock->fs_ronly = sblock->fs_ronly;
-	altsblock->fs_flags = sblock->fs_flags;
-	altsblock->fs_maxcontig = sblock->fs_maxcontig;
-	altsblock->fs_minfree = sblock->fs_minfree;
-	altsblock->fs_optim = sblock->fs_optim;
-	altsblock->fs_rotdelay = sblock->fs_rotdelay;
-	altsblock->fs_maxbpg = sblock->fs_maxbpg;
-	memmove(altsblock->fs_csp, sblock->fs_csp, sizeof sblock->fs_csp);
-	altsblock->fs_maxcluster = sblock->fs_maxcluster;
-	memmove(altsblock->fs_fsmnt, sblock->fs_fsmnt, sizeof sblock->fs_fsmnt);
-	memmove(altsblock->fs_sparecon,
-		sblock->fs_sparecon, sizeof sblock->fs_sparecon);
-	/*
-	 * The following should not have to be copied.
-	 */
-	altsblock->fs_fsbtodb = sblock->fs_fsbtodb;
-	altsblock->fs_interleave = sblock->fs_interleave;
-	altsblock->fs_npsect = sblock->fs_npsect;
-	altsblock->fs_nrpos = sblock->fs_nrpos;
-	altsblock->fs_state = sblock->fs_state;
-	altsblock->fs_qbmask = sblock->fs_qbmask;
-	altsblock->fs_qfmask = sblock->fs_qfmask;
-	altsblock->fs_state = sblock->fs_state;
-	altsblock->fs_maxfilesize = sblock->fs_maxfilesize;
-	if (memcmp(sblock, altsblock, (int)sblock->fs_sbsize)) {
+	if (cmpsblks(sblock, altsblock)) {
 		if (debug) {
 			long *nlp, *olp, *endlp;
 
@@ -603,6 +576,46 @@ readsb(listerr)
 	}
 	havesb = 1;
 	return (1);
+}
+
+int
+cmpsblks(const struct fs *sb, struct fs *asb)
+{
+
+	asb->fs_firstfield = sb->fs_firstfield;
+	asb->fs_fscktime = sb->fs_fscktime;
+	asb->fs_unused_1 = sb->fs_unused_1;
+	asb->fs_time = sb->fs_time;
+	asb->fs_cstotal = sb->fs_cstotal;
+	asb->fs_cgrotor = sb->fs_cgrotor;
+	asb->fs_fmod = sb->fs_fmod;
+	asb->fs_clean = sb->fs_clean;
+	asb->fs_ronly = sb->fs_ronly;
+	asb->fs_flags = sb->fs_flags;
+	asb->fs_maxcontig = sb->fs_maxcontig;
+	asb->fs_minfree = sb->fs_minfree;
+	asb->fs_optim = sb->fs_optim;
+	asb->fs_rotdelay = sb->fs_rotdelay;
+	asb->fs_maxbpg = sb->fs_maxbpg;
+	memmove(asb->fs_csp, sb->fs_csp, sizeof sb->fs_csp);
+	asb->fs_maxcluster = sb->fs_maxcluster;
+	memmove(asb->fs_fsmnt, sb->fs_fsmnt, sizeof sb->fs_fsmnt);
+	memmove(asb->fs_sparecon,
+		sb->fs_sparecon, sizeof sb->fs_sparecon);
+	/*
+	 * The following should not have to be copied.
+	 */
+	asb->fs_fsbtodb = sb->fs_fsbtodb;
+	asb->fs_interleave = sb->fs_interleave;
+	asb->fs_npsect = sb->fs_npsect;
+	asb->fs_nrpos = sb->fs_nrpos;
+	asb->fs_state = sb->fs_state;
+	asb->fs_qbmask = sb->fs_qbmask;
+	asb->fs_qfmask = sb->fs_qfmask;
+	asb->fs_state = sb->fs_state;
+	asb->fs_maxfilesize = sb->fs_maxfilesize;
+
+	return (memcmp(sb, asb, (int)sb->fs_sbsize));
 }
 
 static void
