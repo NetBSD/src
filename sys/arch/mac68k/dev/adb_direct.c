@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.9 1998/01/07 07:33:36 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.10 1998/01/09 06:59:29 scottr Exp $	*/
 
 /*  From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -250,6 +250,7 @@ int	tickle_serial=0;		/* the last packet tickled */
 int	adb_cuda_serial=0;		/* the current packet */
 
 extern struct mac68k_machine_S mac68k_machine;
+extern int adb_polling;
 
 int	zshard __P((int));
 
@@ -1526,7 +1527,14 @@ adb_pass_up(struct adbCommand *in)
 	if (++adbInTail >= ADB_QUEUE)
 		adbInTail=0;
 
-	setsoftadb();
+	/*
+	 * If the debugger is running, call upper half manually.
+	 * Otherwise, trigger a soft interrupt to handle the rest later.
+	 */
+	if (adb_polling)
+		adb_soft_intr();
+	else
+		setsoftadb();
 
 	return;
 }
