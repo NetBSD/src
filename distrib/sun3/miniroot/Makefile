@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1998/02/12 19:55:14 gwr Exp $
+#	$NetBSD: Makefile,v 1.9 1998/03/17 23:03:32 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -29,6 +29,8 @@ NBLKS=		16384
 NEWFSARGS= -O -m 0 -o space -i 8192 -t 8 -u 32 -c 16
 
 CLEANFILES= ${IMAGE}.gz install.sub
+
+all: ${IMAGE}.gz
 
 ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
 	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
