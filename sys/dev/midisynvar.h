@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.7 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.8 2004/10/29 12:57:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ struct midisyn {
 
 struct midi_softc;
 
-extern struct midi_hw_if midisyn_hw_if;
+extern const struct midi_hw_if midisyn_hw_if;
 
 void	midisyn_attach (struct midi_softc *, midisyn *);
 

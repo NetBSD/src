@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.22 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: ym.c,v 1.23 2004/10/29 12:57:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.22 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.23 2004/10/29 12:57:17 yamt Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -176,7 +176,7 @@ static void ym_set_3d __P((struct ym_softc *, mixer_ctrl_t *,
 	struct ad1848_volume *, int));
 
 
-struct audio_hw_if ym_hw_if = {
+const struct audio_hw_if ym_hw_if = {
 	ad1848_isa_open,
 	ad1848_isa_close,
 	NULL,

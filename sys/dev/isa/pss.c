@@ -1,4 +1,4 @@
-/*	$NetBSD: pss.c,v 1.65 2004/09/14 20:20:49 drochner Exp $	*/
+/*	$NetBSD: pss.c,v 1.66 2004/10/29 12:57:17 yamt Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.65 2004/09/14 20:20:49 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pss.c,v 1.66 2004/10/29 12:57:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ void	wss_dump_regs __P((struct ad1848_isa_softc *));
  * Define our interface to the higher level audio driver.
  */
 
-struct audio_hw_if pss_audio_if = {
+const struct audio_hw_if pss_audio_if = {
 	ad1848_isa_open,
 	ad1848_isa_close,
 	NULL,
