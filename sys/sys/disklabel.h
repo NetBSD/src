@@ -59,10 +59,12 @@
 /*
  * Translate between device numbers and major/disk unit/disk partition.
  */
+#ifndef __i386__
 #define	DISKUNIT(dev)	(minor(dev) / MAXPARTITIONS)
 #define	DISKPART(dev)	(minor(dev) % MAXPARTITIONS)
 #define	DISKMINOR(unit, part) \
     (((unit) * MAXPARTITIONS) + (part))
+#endif
 #define	MAKEDISKDEV(maj, unit, part) \
     (makedev((maj), DISKMINOR((unit), (part))))
 
