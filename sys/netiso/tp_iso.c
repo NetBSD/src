@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.5 1994/06/29 06:40:17 cgd Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.6 1994/09/20 06:41:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -93,6 +93,7 @@ SOFTWARE.
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/protosw.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/route.h>

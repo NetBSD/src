@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_table.c,v 1.2 1994/06/29 06:40:54 cgd Exp $	*/
+/*	$NetBSD: tuba_table.c,v 1.3 1994/09/20 06:41:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,7 +110,10 @@ tuba_lookup(siso, wait)
 	tc->tc_siso.siso_len = sizeof(tc->tc_siso);
 	tc->tc_time = time.tv_sec;
 	for (i = sum_a = tc->tc_siso.siso_nlen; --i >= 0; )
-		(i & 1 ? sum_a : sum_b) += (u_char)tc->tc_siso.siso_data[i];
+		if (i & 1)
+			sum_a += (u_char)tc->tc_siso.siso_data[i];
+		else
+			sum_b += (u_char)tc->tc_siso.siso_data[i];
 	REDUCE(tc->tc_sum, (sum_a << 8) + sum_b);
 	HTONS(tc->tc_sum);
 	SWAB(tc->tc_ssum, tc->tc_sum);

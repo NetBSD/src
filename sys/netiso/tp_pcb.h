@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.h,v 1.5 1994/06/29 06:40:28 cgd Exp $	*/
+/*	$NetBSD: tp_pcb.h,v 1.6 1994/09/20 06:41:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -336,7 +336,6 @@ u_int	tp_start_win;
 
 #ifdef KERNEL
 extern struct tp_refinfo 	tp_refinfo;
-extern struct timeval 	time;
 extern struct tp_ref	*tp_ref;
 extern struct tp_param	tp_param;
 extern struct nl_protosw  nl_protosw[];
