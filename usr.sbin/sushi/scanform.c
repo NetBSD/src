@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.3 2001/01/09 19:32:35 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.4 2001/01/10 03:05:48 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@ extern struct winsize ws;
 extern nl_catd catalog;
 extern char *lang_id;
 
+static void scan_formindex(struct cqForm *cqf, char *row);
+
 static void
 form_status(FORM *form)
 {
@@ -84,8 +86,8 @@ form_status(FORM *form)
 	wrefresh(stdscr);
 }
 
-int
-scan_form(struct cqForm *cqf, char *basedir, char *path)
+static int
+scan_form(struct cqForm *cqf, char *path)
 {
 	FILE *filep;
 	int lcnt;
@@ -115,7 +117,7 @@ scan_form(struct cqForm *cqf, char *basedir, char *path)
 				continue;
 			*t = '\0';
 
-			scan_formindex(cqf, basedir, p);
+			scan_formindex(cqf, p);
 		}
 
 		fclose(filep);
@@ -142,11 +144,8 @@ form_appenditem(struct cqForm *cqf, char *desc, int type, char *data, int req)
 	CIRCLEQ_INSERT_TAIL(cqf, fte, cqFormEntries);
 }
 
-void
-scan_formindex(cqf, basedir, row)
-	struct cqForm *cqf;
-	char *basedir;
-	char *row;
+static void
+scan_formindex(struct cqForm *cqf, char *row)
 {
 	char *t = row;
 	char *x;
@@ -205,7 +204,7 @@ scan_formindex(cqf, basedir, row)
 		bailout("%s: %s",
 		    catgets(catalog, 1, 11, "invalid data type"), x);
 
-	snprintf(data, t-row+1, "%s", row);
+	snprintf(data, (size_t)(t-row+1), "%s", row);
 
 	while (*++t && isspace((unsigned char)*t));
 	if (strlen(t) > 50)
@@ -371,7 +370,7 @@ get_request(WINDOW *w)			/* virtual key mapping */
 static int 
 my_driver(FORM * form, int c, char *path)
 {
-	WINDOW *subwin;
+	WINDOW *subwindow;
 	CDKSCROLL *plist;
 	CDKSELECTION *slist;
 	CDKENTRY *entry;
@@ -404,35 +403,43 @@ my_driver(FORM * form, int c, char *path)
 		set_field_buffer(curfield, 0, tmp);
 		destroyCDKEntry(entry);
 		return(FALSE);
+		/* NOTREACHED */
 		break;
 	case COMMAND:
 		/* for now, ignore this.. it's messy */
 		return(FALSE);
+		/* NOTREACHED */
 		break;
 	case RESET:
 		return(2); /* hrmmm... */
+		/* NOTREACHED */
 		break;
 	case REFRESH:
 		touchwin(stdscr);
 		wrefresh(stdscr);
 		return(FALSE);
+		/* NOTREACHED */
 		break;
 	case SHELL:
 		endwin();
 		system("/bin/sh");
 		wrefresh(stdscr);
 		return(FALSE);
+		/* NOTREACHED */
 		break;
 	case DUMPSCREEN:
 		do_scrdump(NULL, NULL, NULL, NULL);
 		return(FALSE);
+		/* NOTREACHED */
 		break;
 	case SHOWHELP:
-	        simple_lang_handler(path, HELPFILE, handle_help);
-		subwin = form_win(form);
-		touchwin(subwin);
-		wrefresh(subwin);
+	        if (simple_lang_handler(path, HELPFILE, handle_help) == -2)
+			nohelp();
+		subwindow = form_win(form);
+		touchwin(subwindow);
+		wrefresh(subwindow);
 		return(FALSE);
+		/* NOTREACHED */
 		break;
 	case GENLIST:
 		/* pull the grand popup list */
@@ -482,7 +489,8 @@ my_driver(FORM * form, int c, char *path)
 				set_field_buffer(curfield, 0, list[i]);
 			destroyCDKScroll(plist);
 		}
-		return FALSE;
+		return(FALSE);
+		/* NOTREACHED */
 		break;
 	case QUIT:
 		/* do something useful */
@@ -492,9 +500,11 @@ my_driver(FORM * form, int c, char *path)
 			else
 				return(2); /* special meaning */
 		}
+		/* NOTREACHED */
 		break;
 	case BAIL:
-		return TRUE;
+		return(TRUE);
+		/* NOTREACHED */
 		break;
 	case FASTBAIL:
 		endwin();
@@ -509,7 +519,7 @@ static FIELD *
 LABEL(FIELD_RECORD *x)
 {
 	char *tmp;
-	FIELD *f = new_field(1, strlen(x->v)+2, x->frow, x->fcol, 0, 0);
+	FIELD *f = new_field(1, (int)(strlen(x->v)+2), x->frow, x->fcol, 0, 0);
 
 	if (f) {
 		tmp = malloc(sizeof(char *) * (strlen(x->v)+2));
@@ -667,7 +677,7 @@ process_preform(FORM *form, char *path)
 	if (args == NULL)
 		bailout("malloc: %s", strerror(errno));
 	lcnt = field_count(form);
-	args = realloc(args, sizeof(char *) * (lcnt+1+i));
+	args = realloc(args, sizeof(char *) * (lcnt+1));
 	f = malloc(sizeof(FIELD *) * lcnt);
 	if (f == NULL || args == NULL)
 		bailout("malloc: %s", strerror(errno));
@@ -827,10 +837,12 @@ strlen_data(FTREE_ENTRY *ftp)
 	switch(ftp->type) {
 	case DATAT_BLANK:
 		return(1);
+		/* NOTREACHED */
 		break;
 	case DATAT_ENTRY:
 	case DATAT_ESCRIPT:
 		return(ftp->elen);
+		/* NOTREACHED */
 		break;
 	case DATAT_LIST:
 	case DATAT_FUNC:
@@ -842,16 +854,19 @@ strlen_data(FTREE_ENTRY *ftp)
 			if (strlen(ftp->list[i]) > j)
 				j = strlen(ftp->list[i]);
 		return(j);
+		/* NOTREACHED */
 		break;
 	case DATAT_INVIS:
 	case DATAT_NOEDIT:
 	case DATAT_NESCRIPT:
 		return(strlen(ftp->data));
+		/* NOTREACHED */
 		break;
 	case DATAT_INTEGER:
 		p = strdup(ftp->data);
 		q = strsep(&p, ",");
 		return(atoi(q));
+		/* NOTREACHED */
 		break;
 	default:
 		bailout(catgets(catalog, 1, 14, "invalid field type"));
@@ -1171,7 +1186,7 @@ handle_form(char *basedir, char *path, char **args)
 
 	CIRCLEQ_INIT(&cqFormHead);
 	cqFormHeadp = &cqFormHead;
-	if (scan_form(cqFormHeadp, basedir, path))
+	if (scan_form(cqFormHeadp, path))
 		return(1);
 
 	F = malloc(sizeof(FIELD_RECORD) *
@@ -1251,7 +1266,7 @@ handle_preform(char *basedir, char *path)
 
 	CIRCLEQ_INIT(&cqFormHead);
 	cqFormHeadp = &cqFormHead;
-	if (scan_form(cqFormHeadp, basedir, path))
+	if (scan_form(cqFormHeadp, path))
 		return(1);
 
 	F = malloc(sizeof(FIELD_RECORD) *

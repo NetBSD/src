@@ -1,4 +1,4 @@
-/*      $NetBSD: scandir.c,v 1.2 2001/01/06 15:04:05 veego Exp $       */
+/*      $NetBSD: scandir.c,v 1.3 2001/01/10 03:05:48 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ scan_index(cqm, basedir, row)
 	struct stat dirstat;
 
 	while (*++t && !isspace((unsigned char)*t));
-	snprintf(filename, t-row+1, "%s", row);
+	snprintf(filename, (size_t)(t-row+1), "%s", row);
 	snprintf(nextpath, sizeof(nextpath), "%s/%s", basedir, filename);
 
 	if (strcmp(filename, "BLANK") && stat(nextpath, &dirstat) < 0) {

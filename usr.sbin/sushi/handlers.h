@@ -1,4 +1,4 @@
-/*      $NetBSD: handlers.h,v 1.3 2001/01/09 21:38:53 garbled Exp $       */
+/*      $NetBSD: handlers.h,v 1.4 2001/01/10 03:05:48 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
