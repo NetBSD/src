@@ -32,16 +32,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)vectors.s	7.2 (Berkeley) 5/7/91
- *	$Id: vectors.s,v 1.5 1994/05/08 05:52:32 chopps Exp $
+ *	$Id: vectors.s,v 1.6 1994/07/06 04:33:33 chopps Exp $
  */
-#define	_fpbsun		_fpfault
-#define	_fpinex		_fpfault
-#define	_fpdz		_fpfault
-#define	_fpunfl		_fpfault
-#define	_fpoperr	_fpfault
-#define	_fpovfl		_fpfault
-#define	_fpsnan		_fpfault
-
 	.text
 	.globl	_buserr,_addrerr
 	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst,_trace
@@ -102,13 +94,26 @@ Lvectab:
 	.long	_illinst	/* 45: TRAP instruction vector */
 	.long	_illinst	/* 46: TRAP instruction vector */
 	.long	_trap15		/* 47: TRAP instruction vector */
- 	.long	_fpbsun		/* 48: FPCP branch/set on unordered cond */
- 	.long	_fpinex		/* 49: FPCP inexact result */
- 	.long	_fpdz		/* 50: FPCP divide by zero */
- 	.long	_fpunfl		/* 51: FPCP underflow */
- 	.long	_fpoperr	/* 52: FPCP operand error */
- 	.long	_fpovfl		/* 53: FPCP overflow */
- 	.long	_fpsnan		/* 54: FPCP signalling NAN */
+#ifdef FPSP
+	.globl	bsun, inex, dz, unfl, operr, ovfl, snan
+	.long	bsun		/* 48: FPCP branch/set on unordered cond */
+	.long	inex		/* 49: FPCP inexact result */
+	.long	dz		/* 50: FPCP divide by zero */
+	.long	unfl		/* 51: FPCP underflow */
+	.long	operr		/* 52: FPCP operand error */
+	.long	ovfl		/* 53: FPCP overflow */
+	.long	snan		/* 54: FPCP signalling NAN */
+#else
+	.globl	_fpfault
+	.long	_fpfault	/* 48: FPCP branch/set on unordered cond */
+	.long	_fpfault	/* 49: FPCP inexact result */
+	.long	_fpfault	/* 50: FPCP divide by zero */
+	.long	_fpfault	/* 51: FPCP underflow */
+	.long	_fpfault	/* 52: FPCP operand error */
+	.long	_fpfault	/* 53: FPCP overflow */
+	.long	_fpfault	/* 54: FPCP signalling NAN */
+#endif
+
 
 	.long	_fpunsupp	/* 55: FPCP unimplemented data type */
 	.long	_badtrap	/* 56: unassigned, reserved */
