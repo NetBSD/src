@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.24 2003/06/30 02:33:36 grant Exp $
+$NetBSD: pcidevs,v 1.428.2.25 2003/07/10 15:52:59 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1361,6 +1361,8 @@ product INTEL PRO_100_VM_3	0x103b	PRO/100 VM Network Controller with 82562EM/EX 
 product INTEL PRO_100_VM_4	0x103c	PRO/100 VM Network Controller with 82562EM/EX (CNR) PHY
 product INTEL PRO_100_VE_4	0x103d	PRO/100 VE (MOB) Network Controller
 product INTEL PRO_100_VM_5	0x103e	PRO/100 VM (MOB) Network Controller
+product INTEL PRO_WL_2100	0x1043	PRO/Wireless LAN 2100 3B Mini PCI Adapter
+product INTEL PRO_100_VM_6	0x1050  PRO/100 VM Network Controller with 82562ET PHY
 product INTEL PRO_100_M		0x1059	PRO/100 M Network Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
@@ -1447,7 +1449,20 @@ product INTEL 82801DB_AC	0x24C5	82801DB AC97 Audio Controller
 product INTEL 82801DB_MOD	0x24C6	82801DB AC97 Modem Controller
 product INTEL 82801DB_USB_3	0x24C7	82801DB USB UHCI Controller #3
 product INTEL 82801DB_IDE	0x24CB	82801DB IDE Controller (UltraATA/100)
-product INTEL 82801DB_USBC	0x24CD	82801DB USB EHCI Controller
+product INTEL 82801DB_ISA	0x24CC	82801DB ISA Bridge
+product INTEL 82801DB_USBC	0x24CD	82801DB/DBM USB EHCI Controller
+product INTEL 82801EB_LPC	0x24D0	82801EB LPC Interface Bridge
+product INTEL 82801EB_SATA	0x24D1	82801EB Serial ATA Controller
+product INTEL 82801EB_USB_0	0x24D2	82801EB/ER USB UHCI Controller #0
+product INTEL 82801EB_SMB	0x24D3	82801EB/ER SMBus Controller
+product INTEL 82801EB_USB_1	0x24D4	82801EB/ER USB UHCI Controller #1
+product INTEL 82801EB_AC	0x24D5	82801EB/ER AC'97 Audio Controller
+product INTEL 82801EB_MOD	0x24D6	82801EB/ER AC'97 Modem Controller
+product INTEL 82801EB_USB_2	0x24D7	82801EB/ER USB UHCI Controller #2
+product INTEL 82801EB_IDE	0x24DB	82801EB/ER IDE Controller
+product INTEL 82801EB_EHCI	0x24DD	82801EB/ER USB EHCI Controller
+product INTEL 82801EB_USB_3	0x24DE	82801EB/ER USB UHCI Controller #3
+product INTEL 82801ER_SATA	0x24DF	82801ER Serial ATA Controller
 product INTEL 82820_MCH		0x2501	82820 MCH (Camino)
 product INTEL 82820_AGP		0x250f	82820 AGP
 product INTEL 82850_HB		0x2530	82850 Host
@@ -1469,6 +1484,16 @@ product INTEL E7500_HI_D2	0x2548	E7500 MCH HI_C vppb 2
 product INTEL 82845G_DRAM	0x2560	82845G/GL DRAM Controller / Host-Hub I/F Bridge
 product INTEL 82845G_AGP	0x2561	82845G/GL Host-to-AGP Bridge
 product INTEL 82845G_IGD	0x2562	82845G/GL Integrated Graphics Device
+product INTEL 82875P_DRAM	0x2578  82875P DRAM Controller / Host-Hub Bridge
+product INTEL 82875P_AGP	0x2579  82875P Host-to-AGP Bridge
+product INTEL 31244		0x3200	31244 Serial ATA Controller
+product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
+product INTEL 82855PM_AGP	0x3341	82855PM Host-to-AGP Bridge
+product INTEL 82855PM_PM	0x3342	82855PM Power Management Controller
+product INTEL 82855GM_MCH	0x3580	82855GM Host-to-Hub Controller
+product INTEL 82855GM_IGD	0x3582	82855PM GMCH Integrated Graphics Device
+product INTEL 82855GM_MC	0x3584	82855PM GMCH Memory Controller
+product INTEL 82855GM_CP	0x3585	82855PM GMCH Configuration Process
 product INTEL 82830MP_IO_1	0x3575	82830MP CPU to I/O Bridge 1
 product INTEL 82830MP_AGP	0x3576	82830MP CPU to AGP Bridge
 product INTEL 82830MP_IV	0x3577	82830MP Integrated Video
