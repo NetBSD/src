@@ -1,7 +1,7 @@
 /*
  *                     RCS common definitions and data structures
  */
-#define RCSBASE "$Id: rcsbase.h,v 1.4 1994/09/19 02:34:17 mycroft Exp $"
+#define RCSBASE "$Id: rcsbase.h,v 1.5 1994/10/07 14:41:14 mycroft Exp $"
 
 /* Copyright (C) 1982, 1988, 1989 Walter Tichy
    Copyright 1990, 1991 by Paul Eggert
@@ -273,10 +273,10 @@ struct assoc {
 #define keylength 8 /* max length of any of the above keywords */
 
 enum markers { Nomatch, Author, Date, Header, Id,
-	       Locker, Log,
 #ifdef LOCALID
 	       LocalId,
 #endif
+	       Locker, Log,
 	       RCSfile, Revision, Source, State };
 	/* This must be in the same order as rcskeys.c's Keyword[] array. */
 
