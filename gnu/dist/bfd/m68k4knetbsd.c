@@ -20,13 +20,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define BYTES_IN_WORD	4
 #define TARGET_IS_BIG_ENDIAN_P
 
-#define	TARGET_PAGE_SIZE	4096
-#define	SEGMENT_SIZE	4096
+#define TARGET_PAGE_SIZE	0x1000
 
 #define DEFAULT_ARCH	bfd_arch_m68k
-#define MACHTYPE_OK(mtype) \
-  ((mtype) == M_68020 || (mtype) == M_68K_NETBSD || (mtype) == M_68K4K_NETBSD \
-   || (mtype) == M_UNKNOWN)
+#define DEFAULT_MID 	M_68K4K_NETBSD
 
 #define MY(OP) CAT(m68k4knetbsd_,OP)
 /* This needs to start with a.out so GDB knows it is an a.out variant.  */
