@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_pcctwo.c,v 1.5 2003/07/14 15:47:20 lukem Exp $	*/
+/*	$NetBSD: osiop_pcctwo.c,v 1.6 2003/11/26 14:29:37 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.5 2003/07/14 15:47:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.6 2003/11/26 14:29:37 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,10 +87,22 @@ osiop_pcctwo_match(parent, cf, args)
 	void *args;
 {
 	struct pcctwo_attach_args *pa;
+	bus_space_handle_t bsh;
+	int rv;
 
 	pa = args;
 
 	if (strcmp(pa->pa_name, osiop_cd.cd_name))
+		return (0);
+
+	/*
+	 * See if the SCSI controller is responding.
+	 */
+	if (bus_space_map(pa->pa_bust, pa->pa_offset, OSIOP_NREGS, 0, &bsh))
+		return (0);
+	rv = bus_space_peek_1(pa->pa_bust, bsh, OSIOP_CTEST8, NULL);
+	bus_space_unmap(pa->pa_bust, bsh, OSIOP_NREGS);
+	if (rv)
 		return (0);
 
 	pa->pa_ipl = cf->pcctwocf_ipl;
