@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 1998/04/26 21:12:04 scottr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 1998/04/26 21:20:26 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1566,7 +1566,7 @@ void
 pmap_collect(pmap)
 	pmap_t		pmap;
 {
-	int s;
+	int bank, s;
 
 	if (pmap != pmap_kernel())
 		return;
