@@ -1,4 +1,4 @@
-.\"	$NetBSD: send.2,v 1.12 1998/09/30 14:03:06 hwr Exp $
+.\"	$NetBSD: send.2,v 1.13 1999/02/10 18:20:03 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 .Ft ssize_t
 .Fn send "int s" "const void *msg" "size_t len" "int flags"
 .Ft ssize_t
-.Fn sendto "int s" "const void *msg" "size_t len" "int flags" "const struct sockaddr *to" "int tolen"
+.Fn sendto "int s" "const void *msg" "size_t len" "int flags" "const struct sockaddr *to" "socklen_t tolen"
 .Ft ssize_t
 .Fn sendmsg "int s" "const struct msghdr *msg" "int flags"
 .Sh DESCRIPTION
