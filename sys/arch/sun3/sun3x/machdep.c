@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 1998/11/24 16:48:26 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 1998/12/13 18:14:30 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -307,7 +307,7 @@ cpu_startup()
 	initfpu();	/* also prints FPU type */
 
 	size = ptoa(physmem);
-	printf("real  mem = %dK (0x%lx)\n", (size >> 10), size);
+	printf("real  mem = %ldK (0x%lx)\n", (size >> 10), size);
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -435,7 +435,7 @@ cpu_startup()
 #else
 	size = ptoa(cnt.v_free_count);
 #endif
-	printf("avail mem = %dK (0x%lx)\n", (size >> 10), size);
+	printf("avail mem = %ldK (0x%lx)\n", (size >> 10), size);
 	printf("using %d buffers containing %d bytes of memory\n",
 		   nbuf, bufpages * CLBYTES);
 
