@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.34 2004/09/25 10:32:15 tsutsui Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.35 2004/09/25 10:36:15 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.34 2004/09/25 10:32:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.35 2004/09/25 10:36:15 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1006,11 +1006,13 @@ nextbyte:
 #else
 		if ((bus_space_read_1(iot, ioh, PSNS) & PSNS_ATN) != 0)
 			bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ATN);
+		bus_space_write_1(iot, ioh, PCTL, PCTL_BFINT_ENAB | PH_MSGIN);
 
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) == 0) {
 			/* XXX needs timeout */
 			if ((bus_space_read_1(iot, ioh, PSNS) & PH_MASK)
-			     != PH_MSGIN)
+			    != PH_MSGIN ||
+			    bus_space_read_1(iot, ioh, INTS) != 0)
 				/*
 				 * Target left MESSAGE IN, probably because it
 				 * a) noticed our ATN signal, or
@@ -1019,7 +1021,6 @@ nextbyte:
 				goto out;
 		}
 
-		bus_space_write_1(iot, ioh, PCTL, PH_MSGIN);
 		msg = bus_space_read_1(iot, ioh, TEMP);
 #endif
 
@@ -2029,9 +2030,9 @@ dophase:
 
 		if ((bus_space_read_1(iot, ioh, PSNS) & PSNS_ATN) != 0)
 			bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ATN);
+		bus_space_write_1(iot, ioh, PCTL, PCTL_BFINT_ENAB | PH_STAT);
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) == 0)
 			continue;	/* XXX needs timeout */
-		bus_space_write_1(iot, ioh, PCTL, PH_STAT);
 		acb->target_stat = bus_space_read_1(iot, ioh, TEMP);
 		bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
