@@ -71,7 +71,7 @@ _isa_false15_intrcnt:
 		.space	4		/* false IRQ15's */
 _isa_stray_intrcnt:
 		.space	4		/* stray interrupts */
-_isa_intr:	.space	16*4
+_isa_intr:	.space	18*4
 _eintrcnt:				/* Added to make vmstat happy */
 
 	.text
