@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990var.h,v 1.5 1996/04/18 00:25:33 cgd Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.6 1996/04/22 02:40:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -32,7 +32,7 @@
 #ifdef DDB
 #define	integrate
 #else
-#define	integrate	static inline
+#define	integrate	static __inline
 #endif
 
 void leconfig __P((struct le_softc *));
@@ -45,6 +45,7 @@ void lestart __P((struct ifnet *));
 void lestop __P((struct le_softc *));
 void lewatchdog __P((int));
 
+integrate void lehwinit __P((struct le_softc *));
 integrate u_int16_t lerdcsr __P((struct le_softc *, u_int16_t));
 integrate void lewrcsr __P((struct le_softc *, u_int16_t, u_int16_t));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.17 1996/04/18 00:25:30 cgd Exp $	*/
+/*	$NetBSD: am7990.c,v 1.18 1996/04/22 02:40:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -290,6 +290,7 @@ leinit(sc)
 		lestart(ifp);
 	} else
 		printf("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
+	lehwinit(sc);
 }
 
 /*
