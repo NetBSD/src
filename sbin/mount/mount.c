@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.37 1997/11/01 14:21:53 drochner Exp $	*/
+/*	$NetBSD: mount.c,v 1.38 1997/11/01 15:32:06 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.37 1997/11/01 14:21:53 drochner Exp $");
+__RCSID("$NetBSD: mount.c,v 1.38 1997/11/01 15:32:06 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -423,6 +423,25 @@ mountfs(vfstype, spec, name, flags, options, mntopts, skipmounted)
 		} else if (WIFSIGNALED(status)) {
 			warnx("%s: %s", name, strsignal(WTERMSIG(status)));
 			return (1);
+		}
+
+		if (!strcmp(vfstype, "mfs")) {
+			/*
+			 * XXX "mount_mfs" backgrounds itself and returns
+			 * before the mount actually happened. This can cause
+			 * bogus output and unwanted remounts.
+			 * We wait here until the mount if done.
+			 */
+			for (;;) {
+				usleep(1);
+				if (statfs(name, &sf) < 0) {
+					warn("statfs %s", name);
+					return (1);
+				}
+				if (!strncmp(sf.f_mntonname, name, MNAMELEN) &&
+				    !strcmp(sf.f_fstypename, "mfs"))
+					break;
+			}
 		}
 
 		if (verbose) {
