@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.37 1995/01/08 22:53:28 cgd Exp $	*/
+/*	$NetBSD: mount.h,v 1.38 1995/01/18 06:15:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -107,7 +107,7 @@ struct statfs {
 LIST_HEAD(vnodelst, vnode);
 
 struct mount {
-	TAILQ_ENTRY(mount) mnt_list;		/* mount list */
+	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
 	struct vnodelst	mnt_vnodelist;		/* list of vnodes this mount */
@@ -397,7 +397,8 @@ struct	netcred *vfs_export_lookup	    /* lookup host in fs export list */
 int	vfs_lock __P((struct mount *));	    /* lock a vfs */
 int	vfs_mountedon __P((struct vnode *));/* is a vfs mounted on vp */
 void	vfs_unlock __P((struct mount *));   /* unlock a vfs */
-extern	TAILQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
+void	vfs_unmountall __P((void));	    /* unmount all file systems */
+extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];		    /* filesystem type table */
 extern	int nvfssw;
 
