@@ -32,7 +32,7 @@ THIS SOFTWARE.
 #include <string.h>
 #include <stdlib.h>
 #include "awk.h"
-#include "ytab.h"
+#include "awkgram.h"
 
 struct xx
 {	int token;
@@ -120,15 +120,15 @@ int main(int argc, char *argv[])
 
 	printf("#include <stdio.h>\n");
 	printf("#include \"awk.h\"\n");
-	printf("#include \"ytab.h\"\n\n");
+	printf("#include \"awkgram.h\"\n\n");
 	for (i = SIZE; --i >= 0; )
 		names[i] = "";
 
-	if ((fp = fopen("ytab.h", "r")) == NULL) {
-		fprintf(stderr, "maketab can't open ytab.h!\n");
+	if ((fp = fopen("awkgram.h", "r")) == NULL) {
+		fprintf(stderr, "maketab can't open awkgram.h!\n");
 		exit(1);
 	}
-	printf("static char *printname[%d] = {\n", SIZE);
+	printf("static const char * const printname[%d] = {\n", SIZE);
 	i = 0;
 	while (fgets(buf, sizeof buf, fp) != NULL) {
 		n = sscanf(buf, "%1c %s %s %d", &c, def, name, &tok);
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 		}
 		names[tok-FIRSTTOKEN] = (char *) malloc(strlen(name)+1);
 		strcpy(names[tok-FIRSTTOKEN], name);
-		printf("\t(char *) \"%s\",\t/* %d */\n", name, tok);
+		printf("\t\"%s\",\t/* %d */\n", name, tok);
 		i++;
 	}
 	printf("};\n\n");
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 			printf("\t%s,\t/* %s */\n", table[i], names[i]);
 	printf("};\n\n");
 
-	printf("char *tokname(int n)\n");	/* print a tokname() function */
+	printf("const char *tokname(int n)\n");	/* print a tokname() function */
 	printf("{\n");
 	printf("	static char buf[100];\n\n");
 	printf("	if (n < FIRSTTOKEN || n > LASTTOKEN) {\n");
