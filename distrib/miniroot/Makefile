@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 1996/05/30 06:57:12 leo Exp $
+#	$NetBSD: Makefile,v 1.7 1996/06/25 05:33:14 thorpej Exp $
 
-# Revision is 1.1B
-REV=		11B
+# Revision is 1.2A
+REV=		12A
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
