@@ -1,7 +1,6 @@
-# $NetBSD: md.amiga,v 1.42 1999/04/19 03:11:31 simonb Exp $
+# $NetBSD: md.amiga,v 1.43 1999/05/18 23:18:17 tron Exp $
 ./dev/mouse
 ./sbin/binpatch
-./usr/lkm/adosfs.o
 ./usr/mdec/installboot
 ./usr/mdec/xxboot
 ./usr/mdec/fdboot

@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.52 1999/05/12 12:06:23 tron Exp $
+# $NetBSD: md.i386,v 1.53 1999/05/18 23:18:17 tron Exp $
 ./sbin/fdisk
 ./sbin/ldconfig
 ./usr/bin/cursor
@@ -13,6 +13,7 @@
 ./usr/lib/libi386.so.0.2
 ./usr/lib/libkeycap.so.0.0
 ./usr/libexec/ld.so
+./usr/lkm/adosfs.o
 ./usr/lkm/cd9660.o
 ./usr/lkm/coda.o
 ./usr/lkm/ext2fs.o
@@ -21,8 +22,8 @@
 ./usr/lkm/kernfs.o
 ./usr/lkm/mfs.o
 ./usr/lkm/msdosfs.o
-./usr/lkm/nullfs.o
 ./usr/lkm/ntfs.o
+./usr/lkm/nullfs.o
 ./usr/lkm/portal.o
 ./usr/lkm/procfs.o
 ./usr/lkm/umapfs.o
