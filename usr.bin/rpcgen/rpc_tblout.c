@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_tblout.c,v 1.2 1995/06/11 21:50:07 pk Exp $	*/
+/*	$NetBSD: rpc_tblout.c,v 1.3 1995/06/24 15:00:15 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -116,7 +116,7 @@ write_table(def)
 			f_print(fout, "\n\t(char *(*)())RPCGEN_ACTION(");
 
 			/* routine to invoke */
-			if( Cflag && !newstyle )
+			if ( !newstyle)
 			  pvname_svc(proc->proc_name, vp->vers_num);
 			else {
 			  if( newstyle )
