@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.99 2000/12/18 06:39:38 joff Exp $
+.\"	$NetBSD: main,v 1.100 2001/01/15 15:53:22 taya Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1220,6 +1220,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Jim Wise Ta Mt jwise@netbsd.org
 .It Ta Michael Wolfson Ta Mt mbw@netbsd.org
 .It Ta Colin Wood Ta Mt ender@netbsd.org
+.It Ta Shin'ichiro TAYA Ta Mt taya@netbsd.org
 .
 .El
 .
