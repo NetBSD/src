@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.35 1995/02/03 16:18:46 mycroft Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.36 1995/04/15 01:56:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -334,6 +334,7 @@ kernfs_getattr(ap)
 {
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
+	struct timeval tv;
 	int error = 0;
 	char strbuf[KSTRING], *buf;
 
@@ -344,7 +345,8 @@ kernfs_getattr(ap)
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	vap->va_size = 0;
 	vap->va_blocksize = DEV_BSIZE;
-	microtime(&vap->va_atime);
+	microtime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_atime);
 	vap->va_mtime = vap->va_atime;
 	vap->va_ctime = vap->va_ctime;
 	vap->va_gen = 0;
