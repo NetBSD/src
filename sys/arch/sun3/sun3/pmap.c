@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.85 1997/11/03 21:55:39 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86 1997/11/03 22:47:10 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -3144,7 +3144,7 @@ pmap_protect_mmu(pmap, sva, eva)
 	}
 #endif
 
-	/* Remove write permission on PTEs in the given range. */
+	/* Remove write permission in the given range. */
 	for (pgva = sva; pgva < eva; pgva += NBPG) {
 		pte = get_pte(pgva);
 		if (pte & PG_VALID) {
@@ -3174,9 +3174,8 @@ pmap_protect_noctx(pmap, sva, eva)
 	pmap_t pmap;
 	vm_offset_t sva, eva;
 {
-	int pte, sme, ptenum, segnum;
-	vm_offset_t pgva;
-	pmeg_t pmegp;
+	int old_ctx, pte, sme, segnum;
+	vm_offset_t pgva, segva;
 
 	CHECK_SPL();
 
@@ -3188,24 +3187,39 @@ pmap_protect_noctx(pmap, sva, eva)
 		panic("pmap_protect_noctx: null segmap");
 #endif
 
-	segnum = VA_SEGNUM(sva);
+	segva = m68k_trunc_seg(sva);
+	segnum = VA_SEGNUM(segva);
 	sme = pmap->pm_segmap[segnum];
 	if (sme == SEGINV)
 		return;
-	pmegp = pmeg_p(sme);
+
+	/*
+	 * Borrow the EMPTY_CONTEXT so we can access the PMEG
+	 * at its normal virtual address.
+	 */
+	old_ctx = get_context();
+	set_context(EMPTY_CONTEXT);
+	set_segmap(segva, sme);
 
 	/* Remove write permission in the given range. */
 	for (pgva = sva; pgva < eva; pgva += NBPG) {
-		ptenum = VA_PTE_NUM(pgva);
-		pte = get_pte_pmeg(sme, ptenum);
+		pte = get_pte(pgva);
 		if (pte & PG_VALID) {
+			/* No cache flush needed. */
 			if (IS_MAIN_MEM(pte)) {
 				save_modref_bits(pte);
 			}
 			pte &= ~(PG_WRITE | PG_MODREF);
-			set_pte_pmeg(sme, ptenum, pte);
+			set_pte(pgva, pte);
 		}
 	}
+
+	/*
+	 * Make the EMPTY_CONTEXT really empty again, and
+	 * restore the previous context.
+	 */
+	set_segmap(segva, SEGINV);
+	set_context(old_ctx);
 }
 
 
@@ -3448,9 +3462,9 @@ pmap_remove_noctx(pmap, sva, eva)
 	pmap_t pmap;
 	vm_offset_t sva, eva;
 {
-	int pte, sme, ptenum, segnum;
-	vm_offset_t pgva;
 	pmeg_t pmegp;
+	int old_ctx, pte, sme, segnum;
+	vm_offset_t pgva, segva;
 
 	CHECK_SPL();
 
@@ -3462,17 +3476,26 @@ pmap_remove_noctx(pmap, sva, eva)
 		panic("pmap_remove_noctx: null segmap");
 #endif
 
-	segnum = VA_SEGNUM(sva);
+	segva = m68k_trunc_seg(sva);
+	segnum = VA_SEGNUM(segva);
 	sme = pmap->pm_segmap[segnum];
 	if (sme == SEGINV)
 		return;
 	pmegp = pmeg_p(sme);
 
-	/* Remove mappings in the given range. */
+	/*
+	 * Borrow the EMPTY_CONTEXT so we can access the PMEG
+	 * at its normal virtual address.
+	 */
+	old_ctx = get_context();
+	set_context(EMPTY_CONTEXT);
+	set_segmap(segva, sme);
+
+	/* Invalidate the PTEs in the given range. */
 	for (pgva = sva; pgva < eva; pgva += NBPG) {
-		ptenum = VA_PTE_NUM(pgva);
-		pte = get_pte_pmeg(sme, ptenum);
+		pte = get_pte(pgva);
 		if (pte & PG_VALID) {
+			/* No cache flush needed. */
 			if (IS_MAIN_MEM(pte)) {
 				save_modref_bits(pte);
 				pv_unlink(pmap, PG_PA(pte), pgva);
@@ -3484,13 +3507,28 @@ pmap_remove_noctx(pmap, sva, eva)
 					   pmap, pgva, pte, PG_INVAL);
 			}
 #endif
-			set_pte_pmeg(sme, ptenum, PG_INVAL);
+			set_pte(pgva, PG_INVAL);
 			pmegp->pmeg_vpages--;
 		}
 	}
+
+	/*
+	 * Make the EMPTY_CONTEXT really empty again, and
+	 * restore the previous context.
+	 */
+	set_segmap(segva, SEGINV);
+	set_context(old_ctx);
+
 	if (pmegp->pmeg_vpages <= 0) {
-		if (is_pmeg_wired(pmegp))
-			panic("pmap: removing wired");
+		/* We are done with this pmeg. */
+		if (is_pmeg_wired(pmegp)) {
+#ifdef	PMAP_DEBUG
+			if (pmap_debug & PMD_WIRING) {
+				db_printf("pmap: removing wired pmeg: %p\n", pmegp);
+				Debugger();
+			}
+#endif	/* PMAP_DEBUG */
+		}
 
 		pmap->pm_segmap[segnum] = SEGINV;
 		pmeg_free(pmegp);
