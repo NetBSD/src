@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.16 2002/10/14 02:08:39 takemura Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.17 2003/04/02 07:35:59 thorpej Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
  * virtual & physical address of the trampoline
  * that we use: page 1.
  */
-#define APM_BIOSTRAMP	NBPG
+#define APM_BIOSTRAMP	PAGE_SIZE
 
 /* filled in by apmcall */ 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2003/04/02 02:44:06 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6 2003/04/02 07:36:03 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -106,9 +106,9 @@
 
 #define	VM_MIN_ADDRESS		(0)
 #ifdef _LP64
-#define	VM_MAXUSER_ADDRESS	(0xffffffffc0000000UL - NBPG)
+#define	VM_MAXUSER_ADDRESS	(0xffffffffc0000000UL - PAGE_SIZE)
 #else
-#define	VM_MAXUSER_ADDRESS	(0xc0000000UL - NBPG)
+#define	VM_MAXUSER_ADDRESS	(0xc0000000UL - PAGE_SIZE)
 #endif
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 
@@ -145,10 +145,10 @@
 
 /* Size of user raw I/O map */
 #ifndef USRIOSIZE
-#define USRIOSIZE               (MAXBSIZE / NBPG * 8)
+#define USRIOSIZE               (MAXBSIZE / PAGE_SIZE * 8)
 #endif
 
-#define VM_PHYS_SIZE            (USRIOSIZE * NBPG)
+#define VM_PHYS_SIZE            (USRIOSIZE * PAGE_SIZE)
 
 /*
  * Physical memory segments
