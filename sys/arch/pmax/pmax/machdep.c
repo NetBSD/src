@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 1996/09/08 11:49:49 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1105,8 +1105,12 @@ sys_sigreturn(p, v, retval)
 }
 
 int	waittime = -1;
+struct pcb dumppcb;
 
 
+/*
+ * These variables are needed by /sbin/savecore
+ */
 int	dumpmag = (int)0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
@@ -1188,11 +1192,40 @@ dumpsys()
 	}
 }
 
+/*
+ * call PROM to halt or reboot.
+ */
+void
+prom_halt(howto, bootstr)
+	int howto;
+	char *bootstr;
+
+{
+	if (callv != &callvec) {
+		if (howto & RB_HALT)
+			(*callv->_rex)('h');
+		else {
+			(*callv->_rex)('b');
+		}
+	} else if (howto & RB_HALT) {
+		volatile void (*f)() = (volatile void (*)())DEC_PROM_REINIT;
+
+		(*f)();	/* jump back to prom monitor */
+	} else {
+		volatile void (*f)() = (volatile void (*)())DEC_PROM_AUTOBOOT;
+		(*f)();	/* jump back to prom monitor and do 'auto' cmd */
+	}
+
+	while(1) ;	/* fool gcc */
+	/*NOTREACHED*/
+}
+
 void
 boot(howto, bootstr)
 	register int howto;
 	char *bootstr;
 {
+	extern int cold;
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
@@ -1202,6 +1235,12 @@ boot(howto, bootstr)
 	if (panicstr)
 		stacktrace();
 #endif
+
+	/* If system is cold, just halt. */
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
@@ -1217,26 +1256,25 @@ boot(howto, bootstr)
 		 */
 		resettodr();
 	}
+
+	/* disable interrupts. */
 	(void) splhigh();		/* extreme priority */
-	if (callv != &callvec) {
-		if (howto & RB_HALT)
-			(*callv->_rex)('h');
-		else {
-			if (howto & RB_DUMP)
-				dumpsys();
-			(*callv->_rex)('b');
-		}
-	} else if (howto & RB_HALT) {
-		volatile void (*f)() = (volatile void (*)())DEC_PROM_REINIT;
 
-		(*f)();	/* jump back to prom monitor */
-	} else {
-		volatile void (*f)() = (volatile void (*)())DEC_PROM_AUTOBOOT;
-
-		if (howto & RB_DUMP)
-			dumpsys();
-		(*f)();	/* jump back to prom monitor and do 'auto' cmd */
+	/* If rebooting and a dump is requested do it. */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
+		savectx(&dumppcb, 0);
+		dumpsys();
 	}
+
+	/* run any shutdown hooks */
+	doshutdownhooks();
+
+haltsys:
+
+	/* Finally, halt/reboot the system. */
+	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
+	prom_halt(howto & RB_HALT, bootstr);
+
 	while(1) ;	/* fool gcc */
 	/*NOTREACHED*/
 }
