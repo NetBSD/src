@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.33 1995/07/01 00:51:15 gwr Exp $
+#	$NetBSD: Makefile.sun3,v 1.34 1995/09/19 23:54:29 thorpej Exp $
 
 #
 # Makefile for NetBSD
@@ -35,7 +35,7 @@ SUN3=	../..
 INCLUDES= -I. -I../.. -I$S/arch -I$S/sys -I$S
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dsun3
 # We do NOT want accidental FP instructions in the kernel.
-CFLAGS= -msoft-float ${DEBUG} ${COPTS}
+CFLAGS= -Werror -fno-builtin -msoft-float ${DEBUG} ${COPTS}
 
 # What to use for libkern:
 .include "$S/lib/libkern/Makefile.inc"
