@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.4 2003/05/31 01:16:31 ichiro Exp $
+#	$NetBSD: ZAO425,v 1.5 2003/05/31 23:57:46 ichiro Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -109,6 +109,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 # Console options.  The default console is speed is 115200 baud.
 options 	CONSPEED=115200		# Console speed
+options 	CONUNIT=0		# Console port number
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
@@ -155,6 +156,7 @@ ixdpled*	at ixpsip? addr 0x52000000 size 0x1000
 
 # On-board device support
 ixpcom0		at ixpsip? addr 0xc8000000 size 0x1000
+ixpcom1		at ixpsip? addr 0xc8001000 size 0x1000
 
 # IXP425 fast bus
 ixpio0		at mainbus?
