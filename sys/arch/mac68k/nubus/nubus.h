@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.44 1998/09/27 14:39:12 scottr Exp $	*/
+/*	$NetBSD: nubus.h,v 1.44.6.1 1999/11/01 07:09:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -61,7 +61,8 @@
 #define    NUBUS_DRHW_SUPRGFX	0x0105	/* SuperMac GFX */
 #define    NUBUS_DRHW_FORMAC	0x013A	/* Formac color card II */
 #define    NUBUS_DRHW_CB264	0x013B	/* RasterOps ColorBoard 264 */
-#define    NUBUS_DRHW_MICRON	0x0146
+#define    NUBUS_DRHW_MICRON	0x0146	/* Micron Exceed color */
+#define    NUBUS_DRHW_RADGSC	0x0153	/* Radius GS/C */
 #define    NUBUS_DRHW_SPECTRM8	0x017b	/* SuperMac Spectrum/8  Series III */
 #define    NUBUS_DRHW_SPECTRUM	0x017c	/* SuperMac Spectrum/24 Series III */
 #define    NUBUS_DRHW_VIMAGE	0x026E	/* Interware Co., Ltd. Vimage */
@@ -70,6 +71,7 @@
 #define	   NUBUS_DRHW_LAPIS	0x0292	/* SE/30 Lapis ProColorServer 8 PDS */
 #define	   NUBUS_DRHW_ROPS24LXI	0x02A0	/* RasterOps 8/24 XLi */
 #define    NUBUS_DRHW_FUTURASX	0x02AE	/* E-Machines Futura-SX */
+#define    NUBUS_DRHW_ROPS24XLTV	0x02B7	/* E-Machines Futura-SX */
 #define    NUBUS_DRHW_THUNDER24	0x02CB	/* SuperMac Thunder/24 */
 #define    NUBUS_DRHW_GVIMAGE	0x03FB	/* Interware Co., Ltd. Grand Vimage */
 #define	   NUBUS_DRHW_RPC24XP	0x0406	/* Radius PrecisionColor 24Xp */
@@ -97,6 +99,7 @@
 #define    NUBUS_DRHW_INTERLAN	0x0100
 #define    NUBUS_DRHW_KINETICS	0x0106
 #define    NUBUS_DRHW_CABLETRON	0x0109
+#define    NUBUS_DRHW_NUVOLINK	0x010B
 #define    NUBUS_DRHW_ASANTE_LC	0x010F
 #define    NUBUS_DRHW_SONIC	0x0110
 #define    NUBUS_DRHW_TECHWORKS	0x0112
@@ -298,4 +301,6 @@ char	*nubus_get_vendor __P((bus_space_tag_t, bus_space_handle_t,
 	    nubus_slot *slot, int rsrc));
 char	*nubus_get_card_name __P((bus_space_tag_t, bus_space_handle_t,
 	    nubus_slot *slot));
+#ifdef DEBUG
 void	nubus_scan_slot __P((bus_space_tag_t, int));
+#endif
