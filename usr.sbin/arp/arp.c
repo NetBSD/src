@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
+/*	$NetBSD: arp.c,v 1.13 1996/12/08 13:59:11 mycroft Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)arp.c	8.2 (Berkeley) 1/2/94";*/
-static char *rcsid = "$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $";
+static char *rcsid = "$NetBSD: arp.c,v 1.13 1996/12/08 13:59:11 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -528,15 +528,13 @@ getinetaddr(host, inap)
 	const char *host;
 	struct in_addr *inap;
 {
-	extern char *__progname;	/* Program name, from crt0. */
 	struct hostent *hp;
 	u_long addr;
 
 	if (inet_aton(host, inap) == 1)
 		return (0);
 	if ((hp = gethostbyname(host)) == NULL) {
-		(void)fprintf(stderr, "%s: %s: ", __progname, host);
-		herror(NULL);
+		warnx("%s: %s\n", host, hstrerror(h_errno));
 		return (-1);
 	}
 	(void)memcpy(inap, hp->h_addr, sizeof(*inap));
