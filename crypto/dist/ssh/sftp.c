@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.5 2001/04/10 08:08:01 itojun Exp $	*/
+/*	$NetBSD: sftp.c,v 1.6 2001/05/15 14:50:53 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -46,7 +46,12 @@ char *ssh_program = _PATH_SSH_PROGRAM;
 char *sftp_server = NULL;
 FILE* infile;
 
-static void
+/* prototype */
+void connect_to_server(char **, int *, int *, pid_t *);
+char **make_ssh_args(char *);
+void usage(void);
+
+void
 connect_to_server(char **args, int *in, int *out, pid_t *sshpid)
 {
 	int c_in, c_out;
@@ -87,7 +92,7 @@ connect_to_server(char **args, int *in, int *out, pid_t *sshpid)
 	close(c_out);
 }
 
-static char **
+char **
 make_ssh_args(char *add_arg)
 {
 	static char **args = NULL;
@@ -139,7 +144,7 @@ make_ssh_args(char *add_arg)
 	return(args);
 }
 
-static void
+void
 usage(void)
 {
 	fprintf(stderr, "usage: sftp [-1vC] [-b batchfile] [-osshopt=value] [user@]host\n");

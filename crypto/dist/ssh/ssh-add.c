@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-add.c,v 1.9 2001/04/16 03:10:14 tron Exp $	*/
+/*	$NetBSD: ssh-add.c,v 1.10 2001/05/15 14:50:53 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -50,9 +50,17 @@ RCSID("$OpenBSD: ssh-add.c,v 1.33 2001/04/09 15:12:23 markus Exp $");
 #include "pathnames.h"
 #include "readpass.h"
 
+/* prototypes */
+void clear_pass(void);
+void delete_file(AuthenticationConnection *, const char *);
+void delete_all(AuthenticationConnection *);
+char *ssh_askpass(char *, char *);
+void add_file(AuthenticationConnection *, const char *);
+void list_identities(AuthenticationConnection *, int);
+
 /* we keep a cache of one passphrases */
 static char *pass = NULL;
-static void
+void
 clear_pass(void)
 {
 	if (pass) {
@@ -62,7 +70,7 @@ clear_pass(void)
 	}
 }
 
-static void
+void
 delete_file(AuthenticationConnection *ac, const char *filename)
 {
 	Key *public;
@@ -82,7 +90,7 @@ delete_file(AuthenticationConnection *ac, const char *filename)
 }
 
 /* Send a request to remove all identities. */
-static void
+void
 delete_all(AuthenticationConnection *ac)
 {
 	int success = 1;
@@ -98,7 +106,7 @@ delete_all(AuthenticationConnection *ac)
 		fprintf(stderr, "Failed to remove all identities.\n");
 }
 
-static char *
+char *
 ssh_askpass(char *askpass, char *msg)
 {
 	pid_t pid;
@@ -138,7 +146,7 @@ ssh_askpass(char *askpass, char *msg)
 	return pass;
 }
 
-static void
+void
 add_file(AuthenticationConnection *ac, const char *filename)
 {
 	struct stat st;
@@ -201,7 +209,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 	key_free(private);
 }
 
-static void
+void
 list_identities(AuthenticationConnection *ac, int do_fp)
 {
 	Key *key;
