@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.20 1997/10/17 12:53:14 lukem Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.21 1997/10/18 11:18:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.20 1997/10/17 12:53:14 lukem Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.21 1997/10/18 11:18:39 lukem Exp $");
 #endif
 
 
@@ -39,17 +39,14 @@ __RCSID("$NetBSD: rarpd.c,v 1.20 1997/10/17 12:53:14 lukem Exp $");
  *		rarpd [ -d -f ] interface
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <syslog.h>
-#include <string.h>
-#include <strings.h>
 #include <sys/types.h>
-#include <unistd.h>
+#include <sys/errno.h>
+#include <sys/file.h>
 #include <sys/time.h>
-#include <net/bpf.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+
+#include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #ifdef __NetBSD__
@@ -62,11 +59,16 @@ __RCSID("$NetBSD: rarpd.c,v 1.20 1997/10/17 12:53:14 lukem Exp $");
 #else
 #include <netinet/if_ether.h>
 #endif
-#include <sys/errno.h>
-#include <sys/file.h>
-#include <netdb.h>
+
 #include <arpa/inet.h>
+
 #include <dirent.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
 
 #define FATAL		1	/* fatal error occurred */
 #define NONFATAL	0	/* non fatal error occurred */
@@ -401,17 +403,17 @@ rarp_check(p, len)
 		return 0;
 	}
 #ifdef __NetBSD__
-	if (bcmp((char *) &ep->ether_shost, ar_sha(ap), 6) != 0) {
+	if (memcmp((char *) &ep->ether_shost, ar_sha(ap), 6) != 0) {
 #else
-	if (bcmp((char *) &ep->ether_shost, ap->arp_sha, 6) != 0) {
+	if (memcmp((char *) &ep->ether_shost, ap->arp_sha, 6) != 0) {
 #endif
 		rarperr(NONFATAL, "ether/arp sender address mismatch");
 		return 0;
 	}
 #ifdef __NetBSD__
-	if (bcmp(ar_sha(ap), ar_tha(ap), 6) != 0) {
+	if (memcmp(ar_sha(ap), ar_tha(ap), 6) != 0) {
 #else
-	if (bcmp((char *) &ap->arp_sha, (char *) &ap->arp_tha, 6) != 0) {
+	if (memcmp((char *) &ap->arp_sha, (char *) &ap->arp_tha, 6) != 0) {
 #endif
 		rarperr(NONFATAL, "ether/arp target address mismatch");
 		return 0;
@@ -655,7 +657,7 @@ lookup_eaddr(ifname, eaddr)
 		    sdl->sdl_alen != 6)
 			continue;
 		if (!strncmp(ifr->ifr_name, ifname, sizeof(ifr->ifr_name))) {
-			bcopy((caddr_t)LLADDR(sdl), (caddr_t)eaddr, 6);
+			memmove((caddr_t)eaddr, (caddr_t)LLADDR(sdl), 6);
 			debug("%s: %x:%x:%x:%x:%x:%x",
 			    ifr->ifr_name, eaddr[0], eaddr[1],
 			    eaddr[2], eaddr[3], eaddr[4], eaddr[5]);
@@ -723,7 +725,7 @@ update_arptab(ep, ipaddr)
 	   because AF_UNSPEC is zero and the kernel assumes that a zero
 	   sa_family means that the real sa_family value is in sa_len.  */
 	request.arp_ha.sa_len = 16; /* XXX */
-	bcopy((char *) ep, (char *) request.arp_ha.sa_data, 6);
+	memmove((char *) request.arp_ha.sa_data, (char *)ep, 6);
 
 #if 0
 	s = socket(AF_INET, SOCK_DGRAM, 0);
@@ -799,13 +801,13 @@ rarp_reply(ii, ep, ipaddr)
 	ap->ar_pro = htons(ETHERTYPE_IP);
 	ap->ar_op = htons(ARPOP_REVREPLY);
 
-	bcopy(ar_sha(ap), (char *) &ep->ether_dhost, 6);
-	bcopy((char *) ii->ii_eaddr, (char *) &ep->ether_shost, 6);
-	bcopy((char *) ii->ii_eaddr, ar_sha(ap), 6);
+	memmove((char *) &ep->ether_dhost, ar_sha(ap), 6);
+	memmove((char *) &ep->ether_shost, (char *) ii->ii_eaddr, 6);
+	memmove(ar_sha(ap), (char *) ii->ii_eaddr, 6);
 
-	bcopy((char *) &ipaddr, ar_tpa(ap), 4);
+	memmove(ar_tpa(ap), (char *) &ipaddr, 4);
 	/* Target hardware is unchanged. */
-	bcopy((char *) &ii->ii_ipaddr, ar_spa(ap), 4);
+	memmove(ar_spa(ap), (char *) &ii->ii_ipaddr, 4);
 
 	len = sizeof(*ep) + sizeof(*ap) + 
 	    2 * ap->ar_pln + 2 * ap->ar_hln;
@@ -814,13 +816,13 @@ rarp_reply(ii, ep, ipaddr)
 	ap->ea_hdr.ar_pro = htons(ETHERTYPE_IP);
 	ap->arp_op = htons(ARPOP_REVREPLY);
 
-	bcopy((char *) &ap->arp_sha, (char *) &ep->ether_dhost, 6);
-	bcopy((char *) ii->ii_eaddr, (char *) &ep->ether_shost, 6);
-	bcopy((char *) ii->ii_eaddr, (char *) &ap->arp_sha, 6);
+	memmove((char *) &ep->ether_dhost, (char *) &ap->arp_sha, 6);
+	memmove((char *) &ep->ether_shost, (char *) ii->ii_eaddr, 6);
+	memmove((char *) &ap->arp_sha, (char *) ii->ii_eaddr, 6);
 
-	bcopy((char *) &ipaddr, (char *) ap->arp_tpa, 4);
+	memmove((char *) ap->arp_tpa, (char *) &ipaddr, 4);
 	/* Target hardware is unchanged. */
-	bcopy((char *) &ii->ii_ipaddr, (char *) ap->arp_spa, 4);
+	memmove((char *) ap->arp_spa, (char *) &ii->ii_ipaddr, 4);
 
 	len = sizeof(*ep) + sizeof(*ap);
 #endif
