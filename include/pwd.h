@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pwd.h	8.2 (Berkeley) 1/21/94
- *	$Id: pwd.h,v 1.4 1994/05/16 10:58:59 cgd Exp $
+ *	$Id: pwd.h,v 1.5 1994/05/17 00:12:02 cgd Exp $
  */
 
 #ifndef _PWD_H_
@@ -82,8 +82,10 @@ struct passwd	*getpwuid __P((uid_t));
 struct passwd	*getpwnam __P((const char *));
 #ifndef _POSIX_SOURCE
 struct passwd	*getpwent __P((void));
+#ifndef _XOPEN_SOURCE
 int		 setpassent __P((int));
-int		 setpwent __P((void));
+#endif
+void		 setpwent __P((void));
 void		 endpwent __P((void));
 #endif
 __END_DECLS
