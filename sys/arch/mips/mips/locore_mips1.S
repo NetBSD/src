@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.54 2002/03/05 16:03:22 simonb Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.55 2002/11/12 14:00:41 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1003,6 +1003,7 @@ END(mips1_wbflush)
  * calls another.
  */
 LEAF(mips1_proc_trampoline)
+	addu	sp, sp, -CALLFRAME_SIZ
 	jal	ra, s0
 	move	a0, s1
 	.set	noat

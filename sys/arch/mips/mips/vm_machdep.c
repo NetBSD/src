@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.91 2002/11/10 05:29:18 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.92 2002/11/12 14:00:42 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.91 2002/11/10 05:29:18 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92 2002/11/12 14:00:42 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	memcpy(&p2->p_addr->u_pcb, &p1->p_addr->u_pcb, sizeof(struct pcb));
 	f = (struct frame *)((caddr_t)p2->p_addr + USPACE) - 1;
 	memcpy(f, p1->p_md.md_regs, sizeof(struct frame));
-	memset((caddr_t)f - 24, 0, 24);		/* ? required ? */
 
 	/*
 	 * If specified, give the child a different stack.
@@ -146,7 +145,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 	pcb = &p2->p_addr->u_pcb;
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
-	pcb->pcb_context[8] = (int)f - 24;		/* SP */
+	pcb->pcb_context[8] = (int)f;			/* SP */
 	pcb->pcb_context[0] = (int)func;		/* S0 */
 	pcb->pcb_context[1] = (int)arg;			/* S1 */
 	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
