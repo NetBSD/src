@@ -1,4 +1,4 @@
-/*	$NetBSD: n_j1.c,v 1.1 1995/10/10 23:36:53 ragge Exp $	*/
+/*	$NetBSD: n_j1.c,v 1.2 1997/10/20 14:12:50 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)j1.c	8.2 (Berkeley) 11/30/93";
+#endif
 #endif /* not lint */
 
 /*
@@ -111,7 +113,7 @@ static char sccsid[] = "@(#)j1.c	8.2 (Berkeley) 11/30/93";
  *	   by method mentioned above.
  */
 
-#include <math.h>
+#include "mathimpl.h"
 #include <float.h>
 #include <errno.h>
 
@@ -122,7 +124,7 @@ static char sccsid[] = "@(#)j1.c	8.2 (Berkeley) 11/30/93";
 #define infnan(x) (0.0)
 #endif
 
-static double pone(), qone();
+static double pone __P((double)), qone __P((double));
 
 static double 
 huge    = 1e300,

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asinh.c,v 1.1 1995/10/10 23:36:35 ragge Exp $	*/
+/*	$NetBSD: n_asinh.c,v 1.2 1997/10/20 14:11:54 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)asinh.c	8.1 (Berkeley) 6/4/93";
+#endif
 #endif /* not lint */
 
 /* ASINH(X)

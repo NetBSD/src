@@ -1,4 +1,4 @@
-/*      $NetBSD: n_exp.c,v 1.1 1995/10/10 23:36:44 ragge Exp $ */
+/*      $NetBSD: n_exp.c,v 1.2 1997/10/20 14:12:17 ragge Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 6/4/93";
+#endif
 #endif /* not lint */
 
 /* EXP(X)
@@ -163,7 +165,7 @@ double x;
 double __exp__D(x, c)
 double x, c;
 {
-	double  z,hi,lo, t;
+	double  z,hi,lo;
 	int k;
 
 #if !defined(vax)&&!defined(tahoe)

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_fmod.c,v 1.1 1995/10/10 23:36:49 ragge Exp $	*/
+/*	$NetBSD: n_fmod.c,v 1.2 1997/10/20 14:12:34 ragge Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)fmod.c	8.1 (Berkeley) 6/4/93";
+#endif
 #endif /* not lint */
 
 #include "mathimpl.h"
@@ -67,7 +69,6 @@ static char sccsid[] = "@(#)fmod.c	8.1 (Berkeley) 6/4/93";
 #if !defined(vax) && !defined(tahoe)
 extern int isnan(),finite();
 #endif	/* !defined(vax) && !defined(tahoe) */
-extern double frexp(),ldexp(),fabs();
 
 #ifdef TEST_FMOD
 static double

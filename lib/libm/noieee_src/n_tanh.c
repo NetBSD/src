@@ -1,4 +1,4 @@
-/*	$NetBSD: n_tanh.c,v 1.1 1995/10/10 23:37:08 ragge Exp $	*/
+/*	$NetBSD: n_tanh.c,v 1.2 1997/10/20 14:13:32 ragge Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)tanh.c	8.1 (Berkeley) 6/4/93";
+#endif
 #endif /* not lint */
 
 /* TANH(X)
@@ -73,12 +75,13 @@ static char sccsid[] = "@(#)tanh.c	8.1 (Berkeley) 6/4/93";
  *	observed error was 2.22 ulps (units in the last place).
  */
 
+#include "mathimpl.h"
+
 double tanh(x)
 double x;
 {
 	static double one=1.0, two=2.0, small = 1.0e-10, big = 1.0e10;
-	double expm1(), t, copysign(), sign;
-	int finite();
+	double t, sign;
 
 #if !defined(vax)&&!defined(tahoe)
 	if(x!=x) return(x);	/* x is NaN */
@@ -92,7 +95,7 @@ double x;
 	    else if ( x > small )
 		{t= -expm1(-(x+x)); return(copysign(t/(two-t),sign));}
 	    else		/* raise the INEXACT flag for non-zero x */
-		{big+x; return(copysign(x,sign));}
+		{ t = big+x; return(copysign(x,sign));} /* ??? -ragge */
 	else if(finite(x))
 	    return (sign+1.0E-37); /* raise the INEXACT flag */
 	else

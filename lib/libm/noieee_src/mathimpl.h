@@ -1,4 +1,4 @@
-/*	$NetBSD: mathimpl.h,v 1.1 1995/10/10 23:36:31 ragge Exp $	*/
+/*	$NetBSD: mathimpl.h,v 1.2 1997/10/20 14:11:35 ragge Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -91,8 +91,9 @@
 /*
  * Functions internal to the math package, yet not static.
  */
-extern double	__exp__E();
-extern double	__log__L();
+extern double	__exp__E __P((double, double));
+extern double	__log__L __P((double));
+extern int	infnan __P((int));
 
 struct Double {double a, b;};
 double __exp__D __P((double, double));

@@ -1,4 +1,4 @@
-/*	$NetBSD: n_j0.c,v 1.1 1995/10/10 23:36:52 ragge Exp $	*/
+/*	$NetBSD: n_j0.c,v 1.2 1997/10/20 14:12:44 ragge Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)j0.c	8.2 (Berkeley) 11/30/93";
+#endif
 #endif /* not lint */
 
 /*
@@ -111,7 +113,7 @@ static char sccsid[] = "@(#)j0.c	8.2 (Berkeley) 11/30/93";
  *	3. Special cases: y0(0)=-inf, y0(x<0)=NaN, y0(inf)=0.
  */
 
-#include <math.h>
+#include "mathimpl.h"
 #include <float.h>
 #include <errno.h>
 
@@ -342,7 +344,7 @@ static double pzero(x)
 	if (x >= 8.00)			   {p = pr8; q= ps8;}
 	else if (x >= 4.54545211791992188) {p = pr5; q= ps5;}
 	else if (x >= 2.85714149475097656) {p = pr3; q= ps3;}
-	else if (x >= 2.00)		   {p = pr2; q= ps2;}
+	else /* if (x >= 2.00) */	   {p = pr2; q= ps2;}
 	z = one/(x*x);
 	r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
 	s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*q[4]))));
@@ -434,7 +436,7 @@ static double qzero(x)
 	if (x >= 8.00)			   {p = qr8; q= qs8;}
 	else if (x >= 4.54545211791992188) {p = qr5; q= qs5;}
 	else if (x >= 2.85714149475097656) {p = qr3; q= qs3;}
-	else if (x >= 2.00)		   {p = qr2; q= qs2;}
+	else /* if (x >= 2.00) */	   {p = qr2; q= qs2;}
 	z = one/(x*x);
 	r = p[0]+z*(p[1]+z*(p[2]+z*(p[3]+z*(p[4]+z*p[5]))));
 	s = one+z*(q[0]+z*(q[1]+z*(q[2]+z*(q[3]+z*(q[4]+z*q[5])))));

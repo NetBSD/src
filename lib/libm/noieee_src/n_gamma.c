@@ -1,4 +1,4 @@
-/*      $NetBSD: n_gamma.c,v 1.1 1995/10/10 23:36:50 ragge Exp $ */
+/*      $NetBSD: n_gamma.c,v 1.2 1997/10/20 14:12:39 ragge Exp $ */
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,9 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)gamma.c	8.1 (Berkeley) 6/4/93";
+#endif
 #endif /* not lint */
 
 /*
@@ -140,6 +142,7 @@ double
 gamma(x)
 	double x;
 {
+	double b;
 	struct Double u;
 	endian = (*(int *) &one) ? 1 : 0;
 
@@ -156,7 +159,7 @@ gamma(x)
 		if (x == 0.0)
 			if (!_IEEE) return (infnan(ERANGE));
 			else return (one/x);
-		one+1e-20;		/* Raise inexact flag. */
+		b =one+1e-20;		/* Raise inexact flag. ??? -ragge */
 		return (one/x);
 	} else if (!finite(x)) {
 		if (_IEEE)		/* x = NaN, -Inf */
@@ -174,7 +177,6 @@ large_gam(x)
 	double x;
 {
 	double z, p;
-	int i;
 	struct Double t, u, v;
 
 	z = one/(x*x);
@@ -203,7 +205,7 @@ static double
 small_gam(x)
 	double x;
 {
-	double y, ym1, t, x1;
+	double y, ym1, t;
 	struct Double yy, r;
 	y = x - one;
 	ym1 = y - one;
@@ -266,7 +268,6 @@ static struct Double
 ratfun_gam(z, c)
 	double z, c;
 {
-	int i;
 	double p, q;
 	struct Double r, t;
 
