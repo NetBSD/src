@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.519 2002/10/18 15:11:11 junyoung Exp $
+# $NetBSD: GENERIC,v 1.520 2002/10/24 18:22:53 junyoung Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.519 $"
+#ident 		"GENERIC-$Revision: 1.520 $"
 
 maxusers	32		# estimated number of users
 
@@ -372,8 +372,10 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+#machfb* 	at pci? dev ? function ? # ATI Mach64 framebuffer driver
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
+#wsdisplay* 	at machfb? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
