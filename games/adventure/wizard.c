@@ -1,4 +1,4 @@
-/*	$NetBSD: wizard.c,v 1.6 1997/10/11 01:53:40 lukem Exp $	*/
+/*	$NetBSD: wizard.c,v 1.7 1998/07/24 23:18:07 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: wizard.c,v 1.6 1997/10/11 01:53:40 lukem Exp $");
+__RCSID("$NetBSD: wizard.c,v 1.7 1998/07/24 23:18:07 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -66,8 +66,10 @@ datime(d, t)
 	time(&tvec);
 	tptr = localtime(&tvec);
 	/* day since 1977  (mod leap)   */
-	*d = tptr->tm_yday + 365 * (tptr->tm_year - 77);
-	/* bug: this will overflow in the year 2066 AD                  */
+	*d = (tptr->tm_yday + 365 * (tptr->tm_year - 77)
+             + (tptr->tm_year - 77) / 4 - (tptr->tm_year - 1) / 100
+             + (tptr->tm_year + 299) / 400);
+	/* bug: this will overflow in the year 2066 AD (with 16 bit int) */
 	/* it will be attributed to Wm the C's millenial celebration    */
 	/* and minutes since midnite */
 	*t = tptr->tm_hour * 60 + tptr->tm_min;
