@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.52 2000/11/27 08:40:03 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.53 2001/01/23 01:56:16 thorpej Exp $	*/
 
 /*
  *
@@ -299,6 +299,8 @@ uvmfault_anonget(ufi, amap, anon)
 	struct vm_page *pg;
 	int result;
 	UVMHIST_FUNC("uvmfault_anonget"); UVMHIST_CALLED(maphist);
+
+	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
 
 	result = 0;		/* XXX shut up gcc */
 	uvmexp.fltanget++;
@@ -1180,13 +1182,18 @@ ReFault:
 		uvmexp.flt_acow++;
 		oanon = anon;		/* oanon = old, locked anon */
 		anon = uvm_analloc();
-		if (anon)
+		if (anon) {
+			simple_lock(&anon->an_lock);
 			pg = uvm_pagealloc(NULL, 0, anon, 0);
+		}
 
 		/* check for out of RAM */
 		if (anon == NULL || pg == NULL) {
-			if (anon)
+			if (anon) {
+				anon->an_ref--;
+				simple_unlock(&anon->an_lock);
 				uvm_anfree(anon);
+			}
 			uvmfault_unlockall(&ufi, amap, uobj, oanon);
 			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 			if (anon == NULL || uvmexp.swpgonly == uvmexp.swpages) {
@@ -1211,11 +1218,11 @@ ReFault:
 
 		/* deref: can not drop to zero here by defn! */
 		oanon->an_ref--;
-			 
+
 		/*
-		 * note: oanon still locked.   anon is _not_ locked, but we
-		 * have the sole references to in from amap which _is_ locked.
-		 * thus, no one can get at it until we are done with it.
+		 * note: oanon is still locked, as is the new anon.  we
+		 * need to check for this later when we unlock oanon; if
+		 * oanon != anon, we'll have to unlock anon, too.
 		 */
 
 	} else {
@@ -1228,7 +1235,7 @@ ReFault:
 
 	}
 
-	/* locked: maps(read), amap, oanon */
+	/* locked: maps(read), amap, oanon, anon (if different from oanon) */
 
 	/*
 	 * now map the page in ...
@@ -1249,6 +1256,8 @@ ReFault:
 		 * We do, however, have to go through the ReFault path,
 		 * as the map may change while we're asleep.
 		 */
+		if (anon != oanon)
+			simple_unlock(&anon->an_lock);
 		uvmfault_unlockall(&ufi, amap, uobj, oanon);
 		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 		if (uvmexp.swpgonly == uvmexp.swpages) {
@@ -1291,6 +1300,8 @@ ReFault:
 	 * done case 1!  finish up by unlocking everything and returning success
 	 */
 
+	if (anon != oanon)
+		simple_unlock(&anon->an_lock);
 	uvmfault_unlockall(&ufi, amap, uobj, oanon);
 	return (KERN_SUCCESS);
 
@@ -1470,6 +1481,9 @@ Case2:
 		 * set "pg" to the page we want to map in (uobjpage, usually)
 		 */
 
+		/* no anon in this case. */
+		anon = NULL;
+
 		uvmexp.flt_obj++;
 		if (UVM_ET_ISCOPYONWRITE(ufi.entry))
 			enter_prot &= ~VM_PROT_WRITE;
@@ -1577,6 +1591,7 @@ Case2:
 			 * a zero'd, dirty page, so have
 			 * uvm_pagealloc() do that for us.
 			 */
+			simple_lock(&anon->an_lock);
 			pg = uvm_pagealloc(NULL, 0, anon,
 			    (uobjpage == PGO_DONTCARE) ? UVM_PGA_ZERO : 0);
 		}
@@ -1585,6 +1600,12 @@ Case2:
 		 * out of memory resources?
 		 */
 		if (anon == NULL || pg == NULL) {
+
+			if (anon != NULL) {
+				anon->an_ref--;
+				simple_unlock(&anon->an_lock);
+				uvm_anfree(anon);
+			}
 
 			/*
 			 * arg!  must unbusy our page and fail or sleep.
@@ -1613,8 +1634,6 @@ Case2:
 
 			UVMHIST_LOG(maphist, "  out of RAM, waiting for more",
 			    0,0,0,0);
-			anon->an_ref--;
-			uvm_anfree(anon);
 			uvmexp.fltnoram++;
 			uvm_wait("flt_noram5");
 			goto ReFault;
@@ -1670,12 +1689,12 @@ Case2:
 
 		amap_add(&ufi.entry->aref, ufi.orig_rvaddr - ufi.entry->start,
 		    anon, 0);
-		
 	}
 
 	/*
 	 * locked:
-	 * maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj)
+	 * maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj),
+	 *   anon(if !null), pg(if anon)
 	 *
 	 * note: pg is either the uobjpage or the new page in the new anon
 	 */
@@ -1712,7 +1731,7 @@ Case2:
  
 		pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
-		uvmfault_unlockall(&ufi, amap, uobj, NULL);
+		uvmfault_unlockall(&ufi, amap, uobj, anon);
 		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 		if (uvmexp.swpgonly == uvmexp.swpages) {
 			UVMHIST_LOG(maphist,
@@ -1757,7 +1776,7 @@ Case2:
  
 	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
-	uvmfault_unlockall(&ufi, amap, uobj, NULL);
+	uvmfault_unlockall(&ufi, amap, uobj, anon);
 
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
 	return (KERN_SUCCESS);
