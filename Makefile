@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 1998/07/26 17:28:58 mycroft Exp $
+#	$NetBSD: Makefile,v 1.62 1998/07/28 18:55:41 thorpej Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -63,8 +63,11 @@ build: beforeinstall
 	(cd ${.CURDIR}/gnu/usr.bin/egcs/libgcc && \
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .else
+.if	(${MACHINE_ARCH} != "alpha") && \
+	(${MACHINE_ARCH} != "powerpc")
 	(cd ${.CURDIR}/gnu/usr.bin/gcc/libgcc && \
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
+.endif
 .endif
 .if exists(domestic) && !defined(EXPORTABLE_SYSTEM)
 # libtelnet depends on libdes and libkrb.  libkrb depends on
