@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.24 1998/10/15 09:28:13 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.25 1998/10/16 12:39:54 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@
 #define execv			_execv
 #define execvp			_execvp
 #define fdopen			_fdopen
+#define fgetln			_fgetln
 #define fnmatch			_fnmatch
 #define ftok			_ftok
 #define ftruncate		_ftruncate
