@@ -1,4 +1,4 @@
-/*	$NetBSD: cyvar.h,v 1.2 1996/10/21 22:34:19 thorpej Exp $	*/
+/*	$NetBSD: cyvar.h,v 1.3 1997/04/13 20:02:11 cgd Exp $	*/
 
 /*
  * cy_var.h
@@ -88,7 +88,6 @@ struct cy_softc {
 	struct device   sc_dev;
 	void           *sc_ih;
 	bus_space_tag_t sc_memt;
-	bus_space_tag_t sc_iot;		/* only used by PCI card */
 	bus_space_handle_t sc_bsh;
 	int             sc_bustype;
 	int		sc_nchips;	/* Number of cd1400's on this card */
