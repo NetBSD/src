@@ -1,4 +1,4 @@
-/* $NetBSD: rcons_font.h,v 1.1 1995/10/05 00:02:57 pk Exp $ */
+/* $NetBSD: rcons_font.h,v 1.2 1995/10/08 19:31:44 pk Exp $ */
 
 /*
  * Raster Console font definition; this file exports `console_font',
@@ -1138,7 +1138,7 @@ static struct raster font_fixed_255 = { 6, 13, 1, 1, font_fixed_255_pixels, 0 };
 #define null128 null64, null64
 
 struct raster_font console_font = {
-    6, 13, -13, RASFONT_FIXEDWIDTH|RASFONT_NOVERTICALMOVEMENT,
+    6, 13, 10, RASFONT_FIXEDWIDTH|RASFONT_NOVERTICALMOVEMENT,
     {
 	{ &font_fixed_0, 0, -10, 6, 0 },
 	{ &font_fixed_1, 0, -10, 6, 0 },
@@ -2526,7 +2526,7 @@ static u_long gallant19_255_pixels[] = { 0, 0, 0, 0x19800000, 0x19800000,
 static struct raster gallant19_255 = { 12, 22, 1, 1, gallant19_255_pixels, 0 };
 
 struct raster_font console_font = {
-12, 22, -22, RASFONT_FIXEDWIDTH|RASFONT_NOVERTICALMOVEMENT,
+12, 22, 15, RASFONT_FIXEDWIDTH|RASFONT_NOVERTICALMOVEMENT,
 {
 { &gallant19_0, 0, -15, 12, 0 },
 { &gallant19_1, 0, -15, 12, 0 },
