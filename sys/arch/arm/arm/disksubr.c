@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 2002/08/27 17:30:02 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 2003/04/16 15:01:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -404,7 +404,7 @@ bounds_check_with_label(bp, lp, wlabel)
 		if (sz == 0) {
 			/* If exactly at end of disk, return EOF. */
 			bp->b_resid = bp->b_bcount;
-			goto done;
+			return (0);
 		}
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
@@ -432,8 +432,7 @@ bounds_check_with_label(bp, lp, wlabel)
 
 bad:
 	bp->b_flags |= B_ERROR;
-done:
-	return (0);
+	return (-1);
 }
 
 /* End of disksubr.c */
