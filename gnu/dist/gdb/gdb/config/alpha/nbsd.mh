@@ -1,4 +1,5 @@
 # Host: Alpha running NetBSD
 NAT_CLIBS=
-NATDEPFILES= infptrace.o inftarg.o fork-child.o alphabsd-nat.o
+NATDEPFILES= infptrace.o inftarg.o fork-child.o alphabsd-nat.o \
+	kcore-nbsd.o nbsd-thread.o
 NAT_FILE= nm-nbsd.h
