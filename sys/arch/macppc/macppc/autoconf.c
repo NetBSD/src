@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 1998/05/15 10:15:57 tsubai Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 1998/06/05 12:22:45 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,7 +37,11 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 #include <dev/ofw/openfirm.h>
+
 #include <machine/powerpc.h>
 #include <machine/pio.h>
 #include <machine/autoconf.h>
@@ -102,7 +106,8 @@ void
 findroot()
 {
 	int chosen, len;
-	int scsi_id;
+	int targ;
+	int lun = 0;	/* XXX */
 	struct device *dv;
 	char p[64];
 
@@ -110,22 +115,26 @@ findroot()
 	if (chosen == -1)
 		goto out;
 
+	bzero(p, sizeof(p));
 	len = OF_getprop(chosen, "bootpath", p, sizeof(p));
 	if (len < 0 || len >= sizeof(p))
 		goto out;
 
-	p[len] = 0;
-
 	/* XXX for now... */
 	booted_partition = p[len - 2] - '0';
-	scsi_id = p[len - 4] - '0';
+	targ = p[len - 4] - '0';
 
-	sprintf(p, "sd%d", scsi_id);
+	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next) {
+		if (strncmp(dv->dv_xname, "scsibus0", 8) == 0) { /* XXX */
+			struct scsibus_softc *sdv = (void *)dv;
 
-	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
-		if (strcmp(p, dv->dv_xname) == 0)
-			booted_device = dv;
+			if (sdv->sc_link[targ][lun] == NULL)
+				continue;
+			booted_device = sdv->sc_link[targ][lun]->device_softc;
+			break;
+		}
+	}
 
 out:
-	/*dk_cleanup();*/
+	dk_cleanup();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 1998/05/15 10:15:58 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.2 1998/06/05 12:22:45 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  */
 
 #include "ipkdb.h"
+#include "opt_uvm.h"
 
 #include "assym.h"
 
@@ -282,7 +283,11 @@ ENTRY(switchexit)
 	stw	6,_C_LABEL(curpcb)@l(7)
 	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
 /* Now free the old user structure (args are already in r3, r4, r5) */
+#if defined(UVM)
+	bl	_C_LABEL(uvm_km_free)
+#else
 	bl	_C_LABEL(kmem_free)
+#endif
 /* Fall through to cpu_switch to actually select another proc */
 	li	3,0			/* indicate exited process */
 

@@ -13,7 +13,6 @@ file arch/macppc/macppc/conf.c
 file arch/macppc/macppc/disksubr.c		disk
 file arch/macppc/macppc/extintr.c
 file arch/macppc/macppc/machdep.c
-file arch/macppc/macppc/vm_machdep.c
 file arch/macppc/dev/dbdma.c
 file dev/cons.c
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.2 1998/05/30 06:16:06 tsubai Exp $	*/
+/*	$NetBSD: esp.c,v 1.3 1998/06/05 12:22:44 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -547,17 +547,8 @@ espdmaintr(sc)
 		trans, resid));
 
 #if 0
-	if (csr & D_WRITE) {
-		vm_offset_t va = (vm_offset_t)*sc->sc_dmaaddr;
-		int len = trans;
-
-		va = trunc_page(va);
-		while (len > 0) {
-			flushcache(va, NBPG);
-			va  += NBPG;
-			len -= NBPG;
-		}
-	}
+	if (csr & D_WRITE)
+		flushcache(*sc->sc_dmaaddr, trans);
 #endif
 
 	*sc->sc_dmalen -= trans;
