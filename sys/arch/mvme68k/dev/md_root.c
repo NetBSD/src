@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.8 2000/03/18 22:33:03 scw Exp $	*/
+/*	$NetBSD: md_root.c,v 1.9 2000/07/22 19:43:03 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/reboot.h>
 
