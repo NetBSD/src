@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.65 2002/12/05 04:56:57 junyoung Exp $	 */
+/*	$NetBSD: rtld.h,v 1.66 2003/04/23 17:40:25 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -176,8 +176,7 @@ typedef struct Struct_Obj_Entry {
 	int             (*dlclose) __P((void *));
 	int             (*dladdr) __P((const void *, Dl_info *));
 
-	u_int32_t	mainprog:1,	/* True if this is the main program */
-	        	rtld:1,		/* True if this is the dynamic linker */
+	u_int32_t	rtld:1,		/* True if this is the dynamic linker */
 			textrel:1,	/* True if there are relocations to
 					 * text seg */
 			symbolic:1,	/* True if generated with
@@ -256,6 +255,8 @@ Obj_Entry *_rtld_load_library __P((const char *, const Obj_Entry *, int));
 unsigned long _rtld_elf_hash __P((const char *));
 const Elf_Sym *_rtld_symlook_obj __P((const char *, unsigned long,
     const Obj_Entry *, bool));
+const Elf_Sym *_rtld_find_symname __P((const char *, const Obj_Entry *,
+    const Obj_Entry **, bool));
 const Elf_Sym *_rtld_find_symdef __P((unsigned long, const Obj_Entry *,
     const Obj_Entry **, bool));
 const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,

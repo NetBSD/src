@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.90 2002/12/14 15:37:57 junyoung Exp $	 */
+/*	$NetBSD: rtld.c,v 1.91 2003/04/23 17:40:25 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -367,8 +367,6 @@ _rtld(sp, relocbase)
 		_rtld_objmain->pathlen = strlen(_rtld_objmain->path);
 	}
 
-	_rtld_objmain->mainprog = true;
-	
 	/*
 	 * Get the actual dynamic linker pathname from the executable if
 	 * possible.  (It should always be possible.)  That ensures that
@@ -673,19 +671,10 @@ _rtld_dlsym(handle, name)
 	const char *name;
 {
 	const Obj_Entry *obj;
-	unsigned long hash;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	
-	hash = _rtld_elf_hash(name);
-	def = NULL;
-	defobj = NULL;
-	
-	if (handle == NULL
-#if 0
-	    || handle == RTLD_NEXT
-#endif
-	) {
+	if (handle == NULL) {
 		void *retaddr;
 
 		retaddr = __builtin_return_address(0); /* __GNUC__ only */
@@ -693,33 +682,14 @@ _rtld_dlsym(handle, name)
 			_rtld_error("Cannot determine caller's shared object");
 			return NULL;
 		}
-		if (handle == NULL) { /* Just the caller's shared object. */
-			def = _rtld_symlook_obj(name, hash, obj, false);
-			defobj = obj;
-		} else { /* All the shared objects after the caller's */
-			while ((obj = obj->next) != NULL) {
-				if ((def = _rtld_symlook_obj(name, hash, obj, false)) != NULL) {
-					defobj = obj;
-					break;
-				}
-			}
-		}
 	} else {
-		if ((obj = _rtld_dlcheck(handle)) == NULL)
+		if ((obj = _rtld_dlcheck(handle)) == NULL) {
+			_rtld_error("Handle not found");
 			return NULL;
-		
-		if (obj->mainprog) {
-			/* Search main program and all libraries loaded by it. */
-			def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj, false);
-		} else {
-			/*
-			 * XXX - This isn't correct.  The search should include the whole
-			 * DAG rooted at the given object.
-			 */
-			def = _rtld_symlook_obj(name, hash, obj, false);
-			defobj = obj;
 		}
 	}
+		
+	def = _rtld_find_symname(name, obj, &defobj, false);
 	
 	if (def != NULL) {
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
@@ -728,10 +698,10 @@ _rtld_dlsym(handle, name)
 			    def, 0);
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 		return defobj->relocbase + def->st_value;
+	} else {
+		_rtld_error("Undefined symbol \"%s\"", name);
+		return NULL;
 	}
-	
-	_rtld_error("Undefined symbol \"%s\"", name);
-	return NULL;
 }
 
 int
