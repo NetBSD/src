@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.59 2001/11/29 18:45:40 lukem Exp $
+# $NetBSD: obsolete.mi,v 1.60 2001/12/24 20:59:57 wiz Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -125,6 +125,7 @@
 /usr/include/dev/ic/wdcvar.h
 /usr/include/dev/ic/z8530reg.h
 /usr/include/dev/ic/z8530sc.h
+/usr/include/dev/irdaio.h
 /usr/include/dev/isa/ad1848var.h
 /usr/include/dev/isa/ahareg.h
 /usr/include/dev/isa/ariareg.h
@@ -219,11 +220,8 @@
 /usr/include/dev/pci/if_tlregs.h
 /usr/include/dev/pci/ncr_reg.h
 /usr/include/dev/pci/ncrreg.h
-/usr/include/dev/pci/pcidevs.h
-/usr/include/dev/pci/pcidevs_data.h
 /usr/include/dev/pci/pciidereg.h
 /usr/include/dev/pci/pciidevar.h
-/usr/include/dev/pci/pcireg.h
 /usr/include/dev/pci/pcivar.h
 /usr/include/dev/pci/ppbreg.h
 /usr/include/dev/pci/tgavar.h
@@ -251,7 +249,6 @@
 /usr/include/dev/scsipi/scsi_scanner.h
 /usr/include/dev/scsipi/scsi_tape.h
 /usr/include/dev/scsipi/scsipi_base.h
-/usr/include/dev/scsipi/scsipi_cd.h
 /usr/include/dev/scsipi/scsipi_disk.h
 /usr/include/dev/scsipi/sdvar.h
 /usr/include/dev/scsipi/ss_mustek.h
@@ -697,7 +694,6 @@
 /usr/share/man/cat3/vlimit.0
 /usr/share/man/cat3/vtimes.0
 /usr/share/man/cat8/config.new.0
-/usr/share/man/cat9/disk_detach.0
 /usr/share/man/cat9/vslock.0
 /usr/share/man/cat9/vsunlock.0
 /usr/share/man/cat9/vn_marktext.0
@@ -774,7 +770,6 @@
 /usr/share/man/man3/threads.3
 /usr/share/man/man3/vlimit.3
 /usr/share/man/man3/vtimes.3
-/usr/share/man/man9/disk_detach.9
 /usr/share/man/man9/vslock.9
 /usr/share/man/man9/vsunlock.9
 /usr/share/man/man9/vn_marktext.9
