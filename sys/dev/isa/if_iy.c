@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.49 2001/03/16 13:02:51 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.50 2001/03/16 13:43:32 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -478,8 +478,6 @@ struct iy_softc *sc;
 	
 	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
 		temp = MATCH_ALL;
-	} else if (sc->sc_ethercom.ec_multicnt) {
-		temp = MATCH_MULTI;
 	} else 
 		temp = MATCH_ID;
 
@@ -605,6 +603,8 @@ struct iy_softc *sc;
 
 	bus_space_write_1(iot, ioh, INT_MASK_REG, ALL_INTS & ~(RX_BIT|TX_BIT));
 	bus_space_write_1(iot, ioh, STATUS_REG, ALL_INTS); /* clear ints */
+
+	bus_space_write_1(iot, ioh, RCV_COPY_THRESHOLD, 0);
 
 	bus_space_write_2(iot, ioh, RCV_START_LOW, 0);
 	bus_space_write_2(iot, ioh, RCV_STOP_LOW,  sc->rx_size - 2);
@@ -1323,7 +1323,7 @@ iy_mc_setup(sc)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
-	len = 6 * ecp->ec_multicnt + 6;
+	len = 6 * ecp->ec_multicnt;
 	
 	avail = sc->tx_start - sc->tx_end;
 	if (avail <= 0)
@@ -1336,7 +1336,7 @@ iy_mc_setup(sc)
 	last = sc->rx_size;
 
 	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
-	bus_space_write_1(iot, ioh, RECV_MODES_REG, MATCH_MULTI);
+	bus_space_write_1(iot, ioh, RECV_MODES_REG, MATCH_ID);
 	/* XXX VOODOO */
 	temp = bus_space_read_1(iot, ioh, MEDIA_SELECT);
 	bus_space_write_1(iot, ioh, MEDIA_SELECT, temp);
@@ -1348,9 +1348,6 @@ iy_mc_setup(sc)
 	bus_space_write_2(iot, ioh, MEM_PORT_REG, 0);
 	bus_space_write_stream_2(iot, ioh, MEM_PORT_REG, htole16(len));
 	
-	bus_space_write_multi_stream_2(iot, ioh, MEM_PORT_REG,
-	    LLADDR(ifp->if_sadl), 3);
-
 	ETHER_FIRST_MULTI(step, ecp, enm);
 	while(enm) {
 		bus_space_write_multi_stream_2(iot, ioh, MEM_PORT_REG,
@@ -1441,8 +1438,6 @@ setupmulti:
 	bus_space_write_1(iot, ioh, 0, BANK_SEL(2));
 	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) {
 		temp = MATCH_ALL;
-	} else if (sc->sc_ethercom.ec_multicnt) {
-		temp = MATCH_MULTI;
 	} else 
 		temp = MATCH_ID;
 
