@@ -1,4 +1,4 @@
-/*	$NetBSD: cirvar.h,v 1.2 2001/12/12 15:33:53 augustss Exp $	*/
+/*	$NetBSD: cirio.h,v 1.1 2001/12/12 15:33:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,19 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct cir_methods {
-	int (*im_open)(void *h, int flag, int mode, struct proc *p);
-	int (*im_close)(void *h, int flag, int mode, struct proc *p);
-	int (*im_read)(void *h, struct uio *uio, int flag);
-	int (*im_write)(void *h, struct uio *uio, int flag);
-	int (*im_setparams)(void *h, struct cir_params *params);
+#ifndef _SYS_DEV_CIRIO_H_
+#define _SYS_DEV_CIRIO_H_
+
+struct cir_params {
+	int raw;
 };
 
-struct cir_softc {
-	struct	device		sc_dev;
-	const struct cir_methods *sc_methods;
-	void			*sc_handle;
-	char			sc_open;
-	struct	selinfo		sc_rdsel;
-	struct	cir_params	sc_params;
-};
+/* Coordinate numbering with irdaio.h. */
+#define CIR_GET_PARAMS		_IOR('I', 201, struct cir_params)
+#define CIR_SET_PARAMS		_IOW('I', 202, struct cir_params)
+
+#endif /* _SYS_DEV_CIRIO_H_ */
+
