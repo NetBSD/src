@@ -1,4 +1,4 @@
-/*	$KAME: algorithm.c,v 1.20 2001/08/16 06:17:12 sakane Exp $	*/
+/*	$KAME: algorithm.c,v 1.23 2002/04/25 09:48:32 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@ static struct enc_algorithm ipsec_encdef[] = {
 		NULL,			eay_des_keylen, },
 { "null",	algtype_null_enc,	IPSECDOI_ESP_NULL,		8,
 		NULL,			NULL,
-		NULL,			eay_3des_keylen, },
+		NULL,			eay_null_keylen, },
 { "rijndael",	algtype_rijndael,	IPSECDOI_ESP_RIJNDAEL,		16,
 		NULL,			NULL,
 		NULL,			eay_aes_keylen, },
@@ -227,6 +227,8 @@ static struct dh_algorithm oakley_dhdef[] = {
 		&dh_modp3072, },
 { "modp4096",	algtype_modp4096,	OAKLEY_ATTR_GRP_DESC_MODP4096,
 		&dh_modp4096, },
+{ "modp6144",	algtype_modp6144,	OAKLEY_ATTR_GRP_DESC_MODP6144,
+		&dh_modp6144, },
 { "modp8192",	algtype_modp8192,	OAKLEY_ATTR_GRP_DESC_MODP8192,
 		&dh_modp8192, },
 };
@@ -460,8 +462,8 @@ alg_oakley_encdef_decrypt(doi, buf, key, iv)
 
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
-	syslog(LOG_NOTICE, "%s(%s size=%d): %8.6f", __FUNCTION__,
-		f->name, buf->l, timedelta(&start, &end));
+	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __FUNCTION__,
+		f->name, key->l << 3, buf->l, timedelta(&start, &end));
 #endif
 	return res;
 }
@@ -489,8 +491,8 @@ alg_oakley_encdef_encrypt(doi, buf, key, iv)
 
 #ifdef ENABLE_STATS
 	gettimeofday(&end, NULL);
-	syslog(LOG_NOTICE, "%s(%s size=%d): %8.6f", __FUNCTION__,
-		f->name, buf->l, timedelta(&start, &end));
+	syslog(LOG_NOTICE, "%s(%s klen=%d size=%d): %8.6f", __FUNCTION__,
+		f->name, key->l << 3, buf->l, timedelta(&start, &end));
 #endif
 	return res;
 }

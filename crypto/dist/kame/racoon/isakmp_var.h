@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_var.h,v 1.19 2000/10/04 17:41:01 itojun Exp $	*/
+/*	$KAME: isakmp_var.h,v 1.20 2001/12/12 15:29:14 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,9 +66,9 @@ extern void isakmp_close __P((void));
 extern int isakmp_send __P((struct ph1handle *, vchar_t *));
 
 extern void isakmp_ph1resend_stub __P((void *));
-extern void isakmp_ph1resend __P((struct ph1handle *));
+extern int isakmp_ph1resend __P((struct ph1handle *));
 extern void isakmp_ph2resend_stub __P((void *));
-extern void isakmp_ph2resend __P((struct ph2handle *));
+extern int isakmp_ph2resend __P((struct ph2handle *));
 extern void isakmp_ph1expire_stub __P((void *));
 extern void isakmp_ph1expire __P((struct ph1handle *));
 extern void isakmp_ph1delete_stub __P((void *));

@@ -1,4 +1,4 @@
-/*	$KAME: localconf.h,v 1.27 2001/08/09 07:32:19 sakane Exp $	*/
+/*	$KAME: localconf.h,v 1.28 2001/12/11 23:44:08 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -47,8 +47,8 @@
 #define LC_DEFAULT_RETRY_COUNTER	5
 #define LC_DEFAULT_RETRY_INTERVAL	10
 #define LC_DEFAULT_COUNT_PERSEND	1
-#define LC_DEFAULT_RETRY_CHECKPH1	15
-#define LC_DEFAULT_WAIT_PH2COMPLETE	10
+#define LC_DEFAULT_RETRY_CHECKPH1	30
+#define LC_DEFAULT_WAIT_PH2COMPLETE	30
 
 #define LC_DEFAULT_SECRETSIZE	16	/* 128 bits */
 

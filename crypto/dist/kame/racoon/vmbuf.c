@@ -1,4 +1,4 @@
-/*	$KAME: vmbuf.c,v 1.10 2001/04/03 15:51:57 thorpej Exp $	*/
+/*	$KAME: vmbuf.c,v 1.11 2001/11/26 16:54:29 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,6 +29,7 @@
  * SUCH DAMAGE.
  */
 
+#define NONEED_DRM
 #include <sys/types.h>
 #include <sys/param.h>
 

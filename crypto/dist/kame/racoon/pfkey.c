@@ -1,4 +1,4 @@
-/*	$KAME: pfkey.c,v 1.128 2001/08/20 06:46:28 itojun Exp $	*/
+/*	$KAME: pfkey.c,v 1.133 2001/11/16 04:07:41 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -738,7 +738,7 @@ pfkey_timeover(iph2)
 	plog(LLV_ERROR, LOCATION, NULL,
 		"%s give up to get IPsec-SA due to time up to wait.\n",
 		saddrwop2str(iph2->dst));
-	SCHED_INIT(iph2->sce);
+	SCHED_KILL(iph2->sce);
 
 	/* If initiator side, send error to kernel by SADB_ACQUIRE. */
 	if (iph2->side == INITIATOR)
@@ -1516,6 +1516,8 @@ pk_recvacquire(mhp)
 			xpl->sadb_x_policy_id);
 		return -1;
 	}
+	plog(LLV_DEBUG, LOCATION, NULL,
+		"suitable outbound SP found: %s.\n", spidx2str(&sp_out->spidx));
 
 	/* get inbound policy */
     {
@@ -1528,18 +1530,17 @@ pk_recvacquire(mhp)
 	spidx.prefd = sp_out->spidx.prefs;
 	spidx.ul_proto = sp_out->spidx.ul_proto;
 
-	sp_in = getsp_r(&spidx);
-	if (!sp_in) {
-		plog(LLV_ERROR, LOCATION, NULL,
+	sp_in = getsp(&spidx);
+	if (sp_in) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"suitable inbound SP found: %s.\n",
+			spidx2str(&sp_in->spidx));
+	} else {
+		plog(LLV_NOTIFY, LOCATION, NULL,
 			"no in-bound policy found: %s\n",
 			spidx2str(&spidx));
-		return -1;
 	}
     }
-	plog(LLV_DEBUG, LOCATION, NULL,
-		"suitable outbound SP found: %s.\n", spidx2str(&sp_out->spidx));
-	plog(LLV_DEBUG, LOCATION, NULL,
-		"suitable inbound SP found: %s.\n", spidx2str(&sp_in->spidx));
 
 	memset(iph2, 0, MAXNESTEDSA);
 
@@ -1608,7 +1609,7 @@ pk_recvacquire(mhp)
 	}
     }
 
-	if (set_proposal_from_policy(iph2[n], sp_in, sp_out) < 0) {
+	if (set_proposal_from_policy(iph2[n], sp_out, sp_in) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to create saprop.\n");
 		delph2(iph2[n]);
@@ -1740,15 +1741,20 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 	struct saproto *pr;
 	caddr_t policy, p;
 	int policylen;
+	int xisrlen;
 	u_int satype, mode;
 
 	/* get policy buffer size */
 	policylen = sizeof(struct sadb_x_policy);
 	if (type != SADB_X_SPDDELETE) {
 		for (pr = iph2->approval->head; pr; pr = pr->next) {
-			policylen += PFKEY_ALIGN8(sizeof(*xisr)
-					   + iph2->src->sa_len
-					   + iph2->dst->sa_len);
+			xisrlen = sizeof(*xisr);
+			if (pr->encmode == IPSECDOI_ATTR_ENC_MODE_TUNNEL) {
+				xisrlen += (iph2->src->sa_len
+				          + iph2->dst->sa_len);
+			}
+
+			policylen += PFKEY_ALIGN8(xisrlen);
 		}
 	}
 
@@ -1798,15 +1804,19 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 		xisr->sadb_x_ipsecrequest_reqid = 0;
 		p = (caddr_t)(xisr + 1);
 
-		memcpy(p, iph2->src, iph2->src->sa_len);
-		p += iph2->src->sa_len;
+		xisrlen = sizeof(*xisr);
 
-		memcpy(p, iph2->dst, iph2->dst->sa_len);
-		p += iph2->dst->sa_len;
+		if (pr->encmode == IPSECDOI_ATTR_ENC_MODE_TUNNEL) {
+			xisrlen += (iph2->src->sa_len + iph2->dst->sa_len);
 
-		xisr->sadb_x_ipsecrequest_len = PFKEY_ALIGN8(sizeof(*xisr)
-		                                           + iph2->src->sa_len
-		                                           + iph2->dst->sa_len);
+			memcpy(p, iph2->src, iph2->src->sa_len);
+			p += iph2->src->sa_len;
+
+			memcpy(p, iph2->dst, iph2->dst->sa_len);
+			p += iph2->dst->sa_len;
+		}
+
+		xisr->sadb_x_ipsecrequest_len = PFKEY_ALIGN8(xisrlen);
 	}
 
 end:

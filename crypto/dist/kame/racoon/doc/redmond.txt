@@ -1,6 +1,6 @@
 Appendix:
 
-It's summary report of IPSec Interoperability Workshop Aug 31st- Sept 3 1998.
+It's summary report of IPsec Interoperability Workshop Aug 31st- Sept 3 1998.
 To be consider each following items.. ;-(
 
 Location: Microsoft Campus, Redmond WA
@@ -10,7 +10,7 @@ IRE, Microsoft NT5, Netscreen, Redcreek, SSH, Timestep, Worldcom/ANS, IRE,
 Free SWAN
 		Verisign, Entrust, Worldcom Advanced Networks - James
 Matheke, Digital Signature Trust Company, Microsoft PKI & Directory reps
-		L2TP/IPSec: Microsoft NT5 and Cisco IOS
+		L2TP/IPsec: Microsoft NT5 and Cisco IOS
 
 Handouts:
 (I will get these on a public web site ASAP.  Stay tuned for pointer)
@@ -18,21 +18,21 @@ Handouts:
 Network Configuration Tear Sheet - network topology explanation & diagram
 Testing Matrix: had 43 options * (transport + tunnel) * (initial + rekey) =
 172 tests.
-Rodney Thayer's draft IPSec certificate profile
-IPSec Rekeying Issues powerpoint slides, by Tim Jenkins of Timestep
+Rodney Thayer's draft IPsec certificate profile
+IPsec Rekeying Issues powerpoint slides, by Tim Jenkins of Timestep
 Working copy of Draft-ietf-ipsec-ldap-schema.txt
 Powerpoint slides presented at IETF Policy BOF explaining
 draft-ietf-ipsec-ldap-schema.txt
 Microsoft Directory Enabled Networking Powerpoint slides by Steve Judd
 Microsoft Public Key Infrastructure Powerpoint slides by Rick Johnson
-Windows NT5.0 Beta2 walkthrough guide for creating IPSec policy
+Windows NT5.0 Beta2 walkthrough guide for creating IPsec policy
 
 
 Debriefing Survey
 =================
 On Wed and Thursday, I surveyed 8 companies with the following questions,
 saying that I would compile a list of responses without indicating vendors
-and post the compiled report to the IETF IPSec mailing list.  Here are the
+and post the compiled report to the IETF IPsec mailing list.  Here are the
 results.  I have attempted to reduce duplication by indicating in
 parentheses how many of the respondants indicated a similar response, eg (4)
 means 4 out of 8 vendors.  There is no priority or ordering on these
@@ -98,7 +98,7 @@ as a T61String which is NOT the documented format.  The cure is to have CA
 vendors try to decode from both and have all new clients only do
 rsaExtensionsAttribute as Seq of Ext.
 
-What are the open IPSec design issues?
+What are the open IPsec design issues?
 ========================================================
 PKI usage, cert formats, CA enrollment, deployment model for cert-based
 trust, supporting CRLs, supporting cert request payload (5)
@@ -132,7 +132,7 @@ Mismatch filters in policy.  When initiator should propose both the full
 filter breadth, as well as the specific packet protocol type/ports to the
 responder, so the responder can pick the widest clean match.
 Need some kind of model for using SNMP MIB for reporting and management of
-IPSec enabled devices.
+IPsec enabled devices.
 Think IKE is open to denial of service attack because anyone can provoke DH
 computation in MM. Should only create state when get cookie back to reduce
 denial of service.
@@ -145,12 +145,12 @@ Need "Credential Request Payload" more general than just certificate request
 payload, to support retry for authentication when both systems participate
 in multiple trust models.
 
-What are the open IPSec interop issues? If products shipped today, what
-problems would customers encounter with multiple IPSec products?
+What are the open IPsec interop issues? If products shipped today, what
+problems would customers encounter with multiple IPsec products?
 ================================================================
 Policy expression, configuration for interop (5)
 Peer recovery of SAs, with mobile users, between two gateways (2)
-US export IPSec interop- no support at all in drafts for what products have
+US export IPsec interop- no support at all in drafts for what products have
 to implement for ESP. Custom DH group for export not supported in drafts (2)
 Understanding why proposals failed- Error messages to detail why proposal
 not chosen (Michael Richardson going to collect error codes & messages from
@@ -161,7 +161,7 @@ Client interop because clients haven't been tested much, mostly GW/FW
 Real world application usage/admin, where systems are taken up/down, address
 changes, etc.
 Biggest challenge is to cover all aspects/combinations
-Hard to balance tolerance of variance among IPSec implementations which is
+Hard to balance tolerance of variance among IPsec implementations which is
 necessary for interop with strictness of checks to fulfill security and
 draft requirements.
 Scalability
@@ -173,7 +173,7 @@ for data encryperment. Maybe define another type of cert field encoding,
 have 1-9, need 10.
 How to process Subject Altname
 Nobody else is doing encrypted nonces
-Enforcing check that traffic sent through IPSec format matches filter which
+Enforcing check that traffic sent through IPsec format matches filter which
 was negotiated.  This must be agreed upon by other vendors.  Not covering
 this in bakeoff testing because people mostly ping and ftp test, not
 multi-protocol  or multi-port through same SA.
@@ -198,7 +198,7 @@ What wasn't so good about bakeoff?
 Had to reconfigure because test net was not on Internet which for many
 caused a reboot. Only really need 4-5 class C addresses with preplanned
 private net space.  Should have DHCP on external net.  NAT from private to
-public wouldn't work using IPSec, of course, because using IPSec to get back
+public wouldn't work using IPsec, of course, because using IPsec to get back
 home to company net. (3)
 Power failure Monday morning (2)
 Internet access via ISDN 128Kb was very slow (2)
@@ -223,12 +223,12 @@ and http"
 For next bakeoff at IBM, what should be done?
 ========================================================
 Test rekey in each direction under stress (4).  Use FTP for this.
-Huge payload to test fragmentation & reassembly in IPSec ESP, AH under load
+Huge payload to test fragmentation & reassembly in IPsec ESP, AH under load
 (2)
 Seat vendors together who more advanced in their IPSEC/IKE implementations.
 Otherwise it will be n-X-n testing matrix which is impossible with 60
 vendors present.
-Post test matrix to the IPSec list before the event to get comments on it's
+Post test matrix to the IPsec list before the event to get comments on it's
 completeness
 Make sure real world topology is tested: static IP client -> GW -- internal
 net -- servers on PCs
@@ -238,8 +238,8 @@ Not relying on non-mandatory messages
 Peer recovery testing
 Negotiating and maintaining many SAs
 Need next NT5.0 post-beta2 release to test with
-Need denial of service and IPSec knowlegable attack tests
-Need a complete implementation of all IPSec capabilities to test against,
+Need denial of service and IPsec knowlegable attack tests
+Need a complete implementation of all IPsec capabilities to test against,
 Need an attacker box to test against
 All CA vendors should support Subject Altname
 Need telephone at desk

@@ -1,4 +1,4 @@
-/*	$KAME: sainfo.c,v 1.14 2001/04/03 15:51:56 thorpej Exp $	*/
+/*	$KAME: sainfo.c,v 1.15 2001/11/16 04:12:59 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,6 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <sys/queue.h>
 
 #include <netkey/key_var.h>

@@ -1,4 +1,4 @@
-/*	$KAME: pfkey_dump.c,v 1.30 2001/06/27 13:20:15 sakane Exp $	*/
+/*	$KAME: pfkey_dump.c,v 1.35 2001/11/13 12:38:47 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -99,7 +99,8 @@ do { \
 } while (0)
 
 static char *str_ipaddr __P((struct sockaddr *));
-static char *str_prefport __P((u_int, u_int, u_int));
+static char *str_prefport __P((u_int, u_int, u_int, u_int));
+static void str_upperspec __P((u_int, u_int, u_int));
 static char *str_time __P((time_t));
 static void str_lifetime_byte __P((struct sadb_lifetime *, char *));
 
@@ -128,22 +129,6 @@ static char *str_mode[] = {
 	"any",
 	"transport",
 	"tunnel",
-};
-
-static char *str_upper[] = {
-/*0*/	"ip", "icmp", "igmp", "ggp", "ip4",
-	"", "tcp", "", "egp", "",
-/*10*/	"", "", "", "", "",
-	"", "", "udp", "", "",
-/*20*/	"", "", "idp", "", "",
-	"", "", "", "", "tp",
-/*30*/	"", "", "", "", "",
-	"", "", "", "", "",
-/*40*/	"", "ip6", "", "rt6", "frag6",
-	"", "rsvp", "gre", "", "",
-/*50*/	"esp", "ah", "", "", "",
-	"", "", "", "icmp6", "none",
-/*60*/	"dst6",
 };
 
 static char *str_state[] = {
@@ -371,7 +356,7 @@ pfkey_spdump(m)
 	struct sadb_x_policy *m_xpl;
 	struct sadb_lifetime *m_lftc = NULL, *m_lfth = NULL;
 	struct sockaddr *sa;
-	u_int16_t port;
+	u_int16_t sport = 0, dport = 0;
 
 	/* check pfkey message. */
 	if (pfkey_align(m, mhp)) {
@@ -400,12 +385,13 @@ pfkey_spdump(m)
 	case AF_INET6:
 		if (getnameinfo(sa, sa->sa_len, NULL, 0, pbuf, sizeof(pbuf),
 		    NI_NUMERICSERV) != 0)
-			port = 0;	/*XXX*/
+			sport = 0;	/*XXX*/
 		else
-			port = atoi(pbuf);
+			sport = atoi(pbuf);
 		printf("%s%s ", str_ipaddr(sa),
 			str_prefport(sa->sa_family,
-			    m_saddr->sadb_address_prefixlen, port));
+			    m_saddr->sadb_address_prefixlen, sport,
+			    m_saddr->sadb_address_proto));
 		break;
 	default:
 		printf("unknown-af ");
@@ -423,12 +409,13 @@ pfkey_spdump(m)
 	case AF_INET6:
 		if (getnameinfo(sa, sa->sa_len, NULL, 0, pbuf, sizeof(pbuf),
 		    NI_NUMERICSERV) != 0)
-			port = 0;	/*XXX*/
+			dport = 0;	/*XXX*/
 		else
-			port = atoi(pbuf);
+			dport = atoi(pbuf);
 		printf("%s%s ", str_ipaddr(sa),
 			str_prefport(sa->sa_family,
-			    m_daddr->sadb_address_prefixlen, port));
+			    m_daddr->sadb_address_prefixlen, dport,
+			    m_saddr->sadb_address_proto));
 		break;
 	default:
 		printf("unknown-af ");
@@ -440,10 +427,7 @@ pfkey_spdump(m)
 		printf("upper layer protocol mismatched.\n");
 		return;
 	}
-	if (m_saddr->sadb_address_proto == IPSEC_ULPROTO_ANY)
-		printf("any");
-	else
-		GETMSGSTR(str_upper, m_saddr->sadb_address_proto);
+	str_upperspec(m_saddr->sadb_address_proto, sport, dport);
 
 	/* policy */
     {
@@ -494,11 +478,7 @@ str_ipaddr(sa)
 	struct sockaddr *sa;
 {
 	static char buf[NI_MAXHOST];
-#ifdef NI_WITHSCOPEID
-	const int niflag = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflag = NI_NUMERICHOST;
-#endif
 
 	if (sa == NULL)
 		return "";
@@ -512,8 +492,8 @@ str_ipaddr(sa)
  * set "/prefix[port number]" to buffer.
  */
 static char *
-str_prefport(family, pref, port)
-	u_int family, pref, port;
+str_prefport(family, pref, port, ulp)
+	u_int family, pref, port, ulp;
 {
 	static char buf[128];
 	char prefbuf[10];
@@ -536,7 +516,9 @@ str_prefport(family, pref, port)
 	else
 		snprintf(prefbuf, sizeof(prefbuf), "/%u", pref);
 
-	if (port == IPSEC_PORT_ANY)
+	if (ulp == IPPROTO_ICMPV6)
+		memset(portbuf, 0, sizeof(portbuf));
+	else if (ulp != IPPROTO_ICMPV6 && port == IPSEC_PORT_ANY)
 		snprintf(portbuf, sizeof(portbuf), "[%s]", "any");
 	else
 		snprintf(portbuf, sizeof(portbuf), "[%u]", port);
@@ -544,6 +526,36 @@ str_prefport(family, pref, port)
 	snprintf(buf, sizeof(buf), "%s%s", prefbuf, portbuf);
 
 	return buf;
+}
+
+static void
+str_upperspec(ulp, p1, p2)
+	u_int ulp, p1, p2;
+{
+	if (ulp == IPSEC_ULPROTO_ANY)
+		printf("any");
+	else if (ulp == IPPROTO_ICMPV6) {
+		printf("icmp6");
+		if (!(p1 == IPSEC_PORT_ANY && p2 == IPSEC_PORT_ANY))
+			printf(" %d,%d", p1, p2);
+	} else {
+		struct protoent *ent;
+
+		switch (ulp) {
+		case IPPROTO_IPV4:
+			printf("ip4");
+			break;
+		default:
+			ent = getprotobynumber(ulp);
+			if (ent)
+				printf("%s", ent->p_name);
+			else
+				printf("%d", ulp);
+
+			endprotoent();
+			break;
+		}
+	}
 }
 
 /*

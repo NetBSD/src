@@ -1,4 +1,4 @@
-/*	$KAME: strnames.c,v 1.21 2001/08/14 14:55:27 sakane Exp $	*/
+/*	$KAME: strnames.c,v 1.23 2001/12/12 18:23:42 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -31,10 +31,12 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/socket.h>
 
-#include <stdio.h>
 #include <netinet6/ipsec.h>
 #include <netinet/in.h>
+
+#include <stdio.h>
 
 #include "var.h"
 #include "misc.h"
@@ -623,6 +625,7 @@ static struct ksmap name_attr_isakmp_desc[] = {
 { OAKLEY_ATTR_GRP_DESC_MODP2048,	"2048-bit MODP group",	NULL },
 { OAKLEY_ATTR_GRP_DESC_MODP3072,	"3072-bit MODP group",	NULL },
 { OAKLEY_ATTR_GRP_DESC_MODP4096,	"4096-bit MODP group",	NULL },
+{ OAKLEY_ATTR_GRP_DESC_MODP6144,	"6144-bit MODP group",	NULL },
 { OAKLEY_ATTR_GRP_DESC_MODP8192,	"8192-bit MODP group",	NULL },
 };
 

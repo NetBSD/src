@@ -1,9 +1,9 @@
-/*	$KAME: gcmalloc.h,v 1.4 2001/11/16 04:34:57 sakane Exp $	*/
+/*	$KAME: debugrm.h,v 1.3 2001/11/26 16:54:29 sakane Exp $	*/
 
 /*
- * Copyright (C) 2000, 2001 WIDE Project.
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -29,74 +29,9 @@
  * SUCH DAMAGE.
  */
 
-/*
- * Debugging malloc glue for Racoon.
- */
+#define DRMDUMPFILE	"/var/tmp/debugrm.dump"
 
-#ifndef _GCMALLOC_H_DEFINED
-#define _GCMALLOC_H_DEFINED
-
-/* ElectricFence needs no special handling. */
-
-/*
- * Boehm-GC provides GC_malloc(), GC_realloc(), GC_free() functions,
- * but not the traditional entry points.  So what we do is provide  
- * malloc(), calloc(), realloc(), and free() entry points in the main
- * program and letting the linker do the rest.
- */
-#ifdef GC
-#define GC_DEBUG
-#include <gc.h>
-
-#ifdef RACOON_MAIN_PROGRAM
-void *
-malloc(size_t size)
-{
-
-	return (GC_MALLOC(size));
-}
-
-void *
-calloc(size_t number, size_t size)
-{
-
-	/* GC_malloc() clears the storage. */
-	return (GC_MALLOC(number * size));
-}
-
-void *
-realloc(void *ptr, size_t size)
-{
-
-	return (GC_REALLOC(ptr, size));
-}
-
-void
-free(void *ptr)
-{
-
-	GC_FREE(ptr);
-}
-#endif /* RACOON_MAIN_PROGRAM */
-
-#define	racoon_malloc(sz)	GC_debug_malloc(sz, GC_EXTRAS)
-#define	racoon_calloc(cnt, sz)	GC_debug_malloc(cnt * sz, GC_EXTRAS)
-#define	racoon_realloc(old, sz)	GC_debug_realloc(old, sz, GC_EXTRAS)
-#define	racoon_free(p)		GC_debug_free(p)
-
-#endif /* GC */
-
-/*
- * Dmalloc only requires that you pull in a header file and link
- * against libdmalloc.
- */
-#ifdef DMALLOC
-#include <dmalloc.h>
-#endif /* DMALLOC */
-
-#ifdef DEBUG_RECORD_MALLOCATION
-#include <debugrm.h>
-#else
+#ifdef NONEED_DRM
 #ifndef racoon_malloc
 #define	racoon_malloc(sz)	malloc((sz))
 #endif
@@ -109,6 +44,44 @@ free(void *ptr)
 #ifndef racoon_free
 #define	racoon_free(p)		free((p))
 #endif
-#endif /* DEBUG_RECORD_MALLOCATION */
+#else /*!NONEED_DRM*/
+#ifndef racoon_malloc
+#define	racoon_malloc(sz)	\
+	DRM_malloc(__FILE__, __LINE__, __FUNCTION__, (sz))
+#endif
+#ifndef racoon_calloc
+#define	racoon_calloc(cnt, sz)	\
+	DRM_calloc(__FILE__, __LINE__, __FUNCTION__, (cnt), (sz))
+#endif
+#ifndef racoon_realloc
+#define	racoon_realloc(old, sz)	\
+	DRM_realloc(__FILE__, __LINE__, __FUNCTION__, (old), (sz))
+#endif
+#ifndef racoon_free
+#define	racoon_free(p)		\
+	DRM_free(__FILE__, __LINE__, __FUNCTION__, (p))
+#endif
+#endif /*NONEED_DRM*/
 
-#endif /* _GCMALLOC_H_DEFINED */
+extern void DRM_init __P((void));
+extern void DRM_dump __P((void));
+extern void *DRM_malloc __P((char *, int, char *, size_t));
+extern void *DRM_calloc __P((char *, int, char *, size_t, size_t));
+extern void *DRM_realloc __P((char *, int, char *, void *, size_t));
+extern void DRM_free __P((char *, int, char *, void *));
+
+#ifndef NONEED_DRM
+#define	vmalloc(sz)	\
+	DRM_vmalloc(__FILE__, __LINE__, __FUNCTION__, (sz))
+#define	vdup(old)	\
+	DRM_vdup(__FILE__, __LINE__, __FUNCTION__, (old))
+#define	vrealloc(old, sz)	\
+	DRM_vrealloc(__FILE__, __LINE__, __FUNCTION__, (old), (sz))
+#define	vfree(p)		\
+	DRM_vfree(__FILE__, __LINE__, __FUNCTION__, (p))
+#endif
+
+extern void *DRM_vmalloc __P((char *, int, char *, size_t));
+extern void *DRM_vrealloc __P((char *, int, char *, void *, size_t));
+extern void DRM_vfree __P((char *, int, char *, void *));
+extern void *DRM_vdup __P((char *, int, char *, void *));

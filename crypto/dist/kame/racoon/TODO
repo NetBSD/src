@@ -1,4 +1,4 @@
-$KAME: TODO,v 1.35 2000/10/04 17:40:58 itojun Exp $
+$KAME: TODO,v 1.36 2001/09/19 09:41:39 sakane Exp $
 
 Please send any questions or bug reports to snap-users@kame.net.
 
@@ -10,23 +10,15 @@ o split log file based on client.  printf-like config directive, i.e.
   "logfile racoon.%s.log", should be useful here.
   -> beware of possible security issue, don't use sprintf() directly!
      make validation before giving a string to sprintf().
-o fix flag for logging
 o save decrypted IKE packet in tcpdump format
 o IPComp SA with wellknown CPI in CPI field.  how to handle it?
-o hunt for memory leaks
 o better rekey
 
 MUST
-o Certificate type handling.  e.g. CRL, CR, PGP...
 o multiple certificate payload handling.
 o To consider the use with certificate infrastructure.  PXIX ???
-o Support scoped (link-local and site-local) IPv6 addresses.
-  It needs pfkey modification for scope IDs, and advanced API (RFC2292)
-  related mods in racoon itself.
 o kmstat should be improved.
-o aggressive mode DH group checks/handling on responder side.
 o Informational Exchange processing properly.
-o mandatory configuration check.
 o require less configuration.  phase 2 is easier (as kernel presents racoon
   some hints), phase 1 is harder.  for example,
   - grab phase 2 lifetime and algorith configuration from sadb_comb payloads in
@@ -44,18 +36,11 @@ o require less configuration.  phase 2 is easier (as kernel presents racoon
 		(is "strict" a reasonable default?)
 	guess which mode to use for phase 1 negotiation (is main mode useful?
 		is base mode popular enough?)
-o psk.txt should be a database? (psk.db?)  psk_mkdb?
+o more acceptable check.
 
 SHOULD
-o how to support multi interfaces ?
-  - perform a dummy connect(2), like ping6.
-  - bind multi address, like named.
-  now racoon uses the former way.
-o DSA signature authentication method.
-o more acceptable check.
-o New group mode should be considered.
+o psk.txt should be a database? (psk.db?)  psk_mkdb?
 o Dynamically retry to exchange and resend the packet per nodes.
-o Remote maintenance with secure connection.
 o To make the list of supported algorithm by sadb_supported payload
   in the SADB_REGISTER message which happens asynchronously.
 o fix the structure of ph2handle.

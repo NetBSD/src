@@ -1,4 +1,4 @@
-/*	$KAME: vmbuf.h,v 1.7 2000/10/04 17:41:05 itojun Exp $	*/
+/*	$KAME: vmbuf.h,v 1.8 2001/12/12 21:18:33 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,8 +46,6 @@ typedef struct _vchar_t_ {
 	size_t l;	/* length of the value */
 	caddr_t v;	/* place holder to the pointer to the value */
 } vchar_t;
-
-#define VREALLOC(ptr, size) ((ptr) = vrealloc((ptr), (size)))
 
 #define VPTRINIT(p) \
 do { \

@@ -1,4 +1,4 @@
-IPSec transport mode
+IPsec transport mode
 
 	HOST-A ================ HOST-B
 	(A)                     (B)
@@ -20,7 +20,7 @@ IPSec transport mode
 	both racoon.conf:
 		no particular twists
 
-IPSec tunnel mode
+IPsec tunnel mode
 
 	HOST-A --- Gateway-A =========== Gateway-B --- HOST-B
 	(A)        (GA)                  (GB)          (B)
@@ -70,9 +70,9 @@ MIP6
 		support_mip6 on;
 		(generate_policy on;)
 
-o Anonymous client on IPSec transport mode
+o Anonymous client on IPsec transport mode
 
-	HOST-A communicates with Server by using IPSec transport mode.
+	HOST-A communicates with Server by using IPsec transport mode.
 
 	HOST-A =========== Server
 	(A)                (G)
@@ -99,14 +99,14 @@ o Anonymous client on IPSec transport mode
 	Server's racoon.conf:
 		anonymous { passive on; }
 
-	due to the absense of phase 2 ID, IPSec SA will be installed for
+	due to the absense of phase 2 ID, IPsec SA will be installed for
 	A <--> S, not for net/pl <--> S.
 
 o anonymous client allocated IP address dynamically and having a internal
   address.
 
 	HOST-A communicates with hosts on Network-B through Gateway
-	by using IPSec tunnel mode.
+	by using IPsec tunnel mode.
 	IP address of HOST-A is allocated dynamically.
 
 	HOST-A =========== Gateway ----------- Network-B
@@ -138,7 +138,7 @@ o anonymous client allocated IP address dynamically and having a internal
 o anonymous client allocated IP address dynamically.
 
 	HOST-A communicates with hosts on Network-B through Gateway
-	by using IPSec tunnel mode, also using NAT.
+	by using IPsec tunnel mode, also using NAT.
 	IP address of HOST-A is allocated dynamically.
 
 	HOST-A =========== Gateway ----------- Network-B

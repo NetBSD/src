@@ -1,4 +1,4 @@
-/*	$KAME: remoteconf.c,v 1.25 2001/05/24 06:43:24 sakane Exp $	*/
+/*	$KAME: remoteconf.c,v 1.29 2001/12/07 08:39:39 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -71,7 +71,7 @@ static LIST_HEAD(_rmtree, remoteconf) rmtree;
 /*%%%*/
 /*
  * search remote configuration.
- * don't use port number to search if its value is either ~0.
+ * don't use port number to search if its value is either IPSEC_PORT_ANY.
  * If matching anonymous entry, then new entry is copied from anonymous entry.
  * If no anonymous entry found, then return NULL.
  * OUT:	NULL:	NG
@@ -114,7 +114,7 @@ getrmconf(remote)
 
 	LIST_FOREACH(p, &rmtree, chain) {
 		if ((!withport && cmpsaddrwop(remote, p->remote) == 0)
-		 || (withport && cmpsaddrwild(remote, p->remote) == 0)) {
+		 || (withport && cmpsaddrstrict(remote, p->remote) == 0)) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"configuration found for %s.\n", buf);
 			return p;
@@ -157,6 +157,7 @@ newrmconf()
 	new->passive = FALSE;
 	new->ini_contact = TRUE;
 	new->pcheck_level = PROP_CHECK_STRICT;
+	new->verify_identifier = FALSE;
 	new->verify_cert = TRUE;
 	new->getcert_method = ISAKMP_GETCERT_PAYLOAD;
 	new->send_cert = TRUE;
@@ -165,7 +166,6 @@ newrmconf()
 	new->gen_policy = FALSE;
 	new->retry_counter = lcconf->retry_counter;
 	new->retry_interval = lcconf->retry_interval;
-	new->count_persend = lcconf->count_persend;
 
 	return new;
 }

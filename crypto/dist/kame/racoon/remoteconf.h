@@ -1,4 +1,4 @@
-/*	$KAME: remoteconf.h,v 1.25 2001/05/24 06:43:24 sakane Exp $	*/
+/*	$KAME: remoteconf.h,v 1.27 2001/12/07 08:39:39 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,6 +61,7 @@ struct remoteconf {
 	int send_cert;			/* send to CERT or not */
 	int send_cr;			/* send to CR or not */
 	int verify_cert;		/* verify a CERT strictly */
+	int verify_identifier;		/* vefify the peer's identifier */
 	int nonce_size;			/* the number of bytes of nonce */
 	int keepalive;			/* XXX may not use */
 	int passive;			/* never initiate */
@@ -75,8 +76,7 @@ struct remoteconf {
 
 	int retry_counter;		/* times to retry. */
 	int retry_interval;		/* interval each retry. */
-	int count_persend;		/* the number of packets each retry. */
-				/* above 3 values are copied from localconf. */
+				/* above 2 values are copied from localconf. */
 
 	struct isakmpsa *proposal;	/* proposal list */
 	LIST_ENTRY(remoteconf) chain;	/* next remote conf */

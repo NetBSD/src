@@ -1,4 +1,4 @@
-/*	$KAME: session.c,v 1.26 2001/08/13 10:50:42 itojun Exp $	*/
+/*	$KAME: session.c,v 1.28 2001/12/10 18:11:20 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,6 +101,9 @@ session(void)
 	int error;
 	struct myaddrs *p;
 
+	/* initialize schedular */
+	sched_init();
+
 	init_signal();
 
 #ifdef ENABLE_ADMINPORT
@@ -115,9 +118,6 @@ session(void)
 		exit(1);
 
 	initfds();
-
-	/* initialize schedular */
-	sched_init();
 
 	sigreq = 0;
 	while (1) {
@@ -249,6 +249,11 @@ signal_handler(sig)
 	    }
 		break;
 
+#ifdef DEBUG_RECORD_MALLOCATION
+	case SIGUSR2:
+		DRM_dump();
+		break;
+#endif
 	default:
 		/* XXX should be blocked any signal ? */
 		sigreq = sig;

@@ -1,4 +1,4 @@
-/*	$KAME: sockmisc.h,v 1.11 2001/08/16 14:37:29 itojun Exp $	*/
+/*	$KAME: sockmisc.h,v 1.12 2001/12/07 08:39:39 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@ extern struct sockaddr *getlocaladdr __P((struct sockaddr *));
 extern int recvfromto __P((int, void *, size_t, int,
 	struct sockaddr *, int *, struct sockaddr *, int *));
 extern int sendfromto __P((int, const void *, size_t,
-	struct sockaddr *, struct sockaddr *));
+	struct sockaddr *, struct sockaddr *, int));
 
 extern int setsockopt_bypass __P((int, int));
 
