@@ -19,3 +19,5 @@ cd ${POSTFIX_DIR}
 
 mkdir etc 
 cp /etc/services etc
+mkdir -p usr/lib
+cp /usr/lib/tztab usr/lib

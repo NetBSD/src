@@ -62,7 +62,6 @@ flush.o: ../../include/vbuf.h
 flush.o: ../../include/vstring.h
 flush.o: ../../include/vstring_vstream.h
 flush.o: ../../include/myflock.h
-flush.o: ../../include/valid_hostname.h
 flush.o: ../../include/htable.h
 flush.o: ../../include/dict.h
 flush.o: ../../include/argv.h

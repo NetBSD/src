@@ -104,6 +104,10 @@
 #include "dict.h"
 #include "dict_ldap.h"
 
+/* AAARGH!! */
+
+#include "../global/mail_conf.h"
+
 /*
  * Structure containing all the configuration parameters for a given
  * LDAP source, plus its connection handle.

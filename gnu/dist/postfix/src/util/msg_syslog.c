@@ -48,6 +48,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <syslog.h>
+#include <string.h>
 
 /* Application-specific. */
 

@@ -133,7 +133,7 @@ static void watchdog_event(int unused_sig)
     if ((wp = watchdog_curr) == 0)
 	msg_panic("%s: no instance", myname);
     if (msg_verbose)
-	msg_info("%s: %p %d", myname, (char *) wp, wp->trip_run);
+	msg_info("%s: %p %d", myname, (void *) wp, wp->trip_run);
     if (++(wp->trip_run) < WATCHDOG_STEPS) {
 	alarm(wp->timeout);
     } else {
@@ -169,7 +169,7 @@ WATCHDOG *watchdog_create(unsigned timeout, WATCHDOG_FN action, char *context)
     if (sigaction(SIGALRM, &sig_action, &wp->saved_action) < 0)
 	msg_fatal("%s: sigaction(SIGALRM): %m", myname);
     if (msg_verbose)
-	msg_info("%s: %p %d", myname, (char *) wp, timeout);
+	msg_info("%s: %p %d", myname, (void *) wp, timeout);
     return (watchdog_curr = wp);
 }
 
@@ -187,7 +187,7 @@ void    watchdog_destroy(WATCHDOG *wp)
 	alarm(wp->saved_time);
     myfree((char *) wp);
     if (msg_verbose)
-	msg_info("%s: %p", myname, (char *) wp);
+	msg_info("%s: %p", myname, (void *) wp);
 }
 
 /* watchdog_start - enable watchdog timer */
@@ -201,7 +201,7 @@ void    watchdog_start(WATCHDOG *wp)
     wp->trip_run = 0;
     alarm(wp->timeout);
     if (msg_verbose)
-	msg_info("%s: %p", myname, (char *) wp);
+	msg_info("%s: %p", myname, (void *) wp);
 }
 
 /* watchdog_stop - disable watchdog timer */
@@ -214,7 +214,7 @@ void    watchdog_stop(WATCHDOG *wp)
 	msg_panic("%s: wrong watchdog instance", myname);
     alarm(0);
     if (msg_verbose)
-	msg_info("%s: %p", myname, (char *) wp);
+	msg_info("%s: %p", myname, (void *) wp);
 }
 
 /* watchdog_pat - pat the dog so it stays quiet */
@@ -226,7 +226,7 @@ void    watchdog_pat(void)
     if (watchdog_curr)
 	watchdog_curr->trip_run = 0;
     if (msg_verbose)
-	msg_info("%s: %p", myname, (char *) watchdog_curr);
+	msg_info("%s: %p", myname, (void *) watchdog_curr);
 }
 
 #ifdef TEST

@@ -116,7 +116,8 @@ static LMTP_SESSION *lmtp_connect_sock(int, struct sockaddr *, int,
 
 /* lmtp_connect_unix - connect to UNIX-domain address */
 
-static LMTP_SESSION *lmtp_connect_unix(const char *addr, VSTRING *why)
+static LMTP_SESSION *lmtp_connect_unix(const char *addr,
+			              const char *destination, VSTRING *why)
 {
 #undef sun
     char   *myname = "lmtp_connect_unix";
@@ -156,7 +157,7 @@ static LMTP_SESSION *lmtp_connect_unix(const char *addr, VSTRING *why)
 	msg_info("%s: trying: %s...", myname, addr);
 
     return (lmtp_connect_sock(sock, (struct sockaddr *) & sun, sizeof(sun),
-			      addr, addr, addr, why));
+			      addr, addr, destination, why));
 }
 
 /* lmtp_connect_addr - connect to explicit address */
@@ -358,13 +359,19 @@ LMTP_SESSION *lmtp_connect(const char *destination, VSTRING *why)
      * XXX Ad-hoc transport parsing and connection management. Some or all
      * should be moved away to a reusable library routine so that every
      * program benefits from it.
+     * 
+     * XXX Should transform destination into canonical form (unix:/path or
+     * inet:host:port before entering it into the connection cache. See also
+     * the connection cache lookup code in lmtp.c.
      */
     if (strncmp(destination, "unix:", 5) == 0)
-	return (lmtp_connect_unix(destination + 5, why));
+	return (lmtp_connect_unix(destination + 5, destination, why));
     if (strncmp(destination, "inet:", 5) == 0)
-	destination += 5;
-    dest_buf = lmtp_parse_destination(destination, def_service,
-				      &host, &port);
+	dest_buf = lmtp_parse_destination(destination + 5, def_service,
+					  &host, &port);
+    else
+	dest_buf = lmtp_parse_destination(destination, def_service,
+					  &host, &port);
     if (msg_verbose)
 	msg_info("%s: connecting to %s port %d", myname, host, ntohs(port));
     session = lmtp_connect_host(host, port, destination, why);

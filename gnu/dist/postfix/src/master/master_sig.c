@@ -152,7 +152,7 @@ static void master_sigchld(int sig)
 
 static void master_sigdeath(int sig)
 {
-    char   *myname = "master_sigsetup";
+    char   *myname = "master_sigdeath";
     struct sigaction action;
     pid_t   pid = getpid();
 

@@ -7,9 +7,7 @@
 /*	\fBpipe\fR [generic Postfix daemon options] command_attributes...
 /* DESCRIPTION
 /*	The \fBpipe\fR daemon processes requests from the Postfix queue
-/*	manager to deliver messages to external commands. Each delivery
-/*	request specifies a queue file, a sender address, a domain or host
-/*	to deliver to, and one or more recipients.
+/*	manager to deliver messages to external commands.
 /*	This program expects to be run from the \fBmaster\fR(8) process
 /*	manager.
 /*
@@ -17,6 +15,22 @@
 /*	as finished, or it informs the queue manager that delivery should
 /*	be tried again at a later time. Delivery problem reports are sent
 /*	to the \fBbounce\fR(8) or \fBdefer\fR(8) daemon as appropriate.
+/* SINGLE-RECIPIENT DELIVERY
+/* .ad
+/* .fi
+/*	Some external commands cannot handle more than one recipient
+/*	per delivery request. Examples of such transports are pagers,
+/*	fax machines, and so on.
+/*
+/*	To prevent Postfix from sending multiple recipients per delivery
+/*	request, specify 
+/*
+/* .ti +4
+/*	\fItransport\fB_destination_recipient_limit = 1\fR 
+/*
+/*	in the Postfix \fBmain.cf\fR file, where \fItransport\fR
+/*	is the name in the first column of the Postfix \fBmaster.cf\fR
+/*	entry for the pipe-based delivery transport.
 /* COMMAND ATTRIBUTE SYNTAX
 /* .ad
 /* .fi
@@ -74,18 +88,21 @@
 /*	This macro expands to the extension part of a recipient address.
 /*	For example, with an address \fIuser+foo@domain\fR the extension is
 /*	\fIfoo\fR.
+/* .sp
 /*	A command-line argument that contains \fB${\fBextension\fR}\fR expands
 /*	into as many command-line arguments as there are recipients.
 /* .IP \fB${\fBmailbox\fR}\fR
 /*	This macro expands to the complete local part of a recipient address.
 /*	For example, with an address \fIuser+foo@domain\fR the mailbox is
 /*	\fIuser+foo\fR.
+/* .sp
 /*	A command-line argument that contains \fB${\fBmailbox\fR}\fR
 /*	expands into as many command-line arguments as there are recipients.
 /* .IP \fB${\fBnexthop\fR}\fR
 /*	This macro expands to the next-hop hostname.
 /* .IP \fB${\fBrecipient\fR}\fR
 /*	This macro expands to the complete recipient address.
+/* .sp
 /*	A command-line argument that contains \fB${\fBrecipient\fR}\fR
 /*	expands into as many command-line arguments as there are recipients.
 /* .IP \fB${\fBsender\fR}\fR
@@ -97,6 +114,7 @@
 /*	This macro expands to the username part of a recipient address.
 /*	For example, with an address \fIuser+foo@domain\fR the username
 /*	part is \fIuser\fR.
+/* .sp
 /*	A command-line argument that contains \fB${\fBuser\fR}\fR expands
 /*	into as many command-line arguments as there are recipients.
 /* .RE

@@ -46,6 +46,7 @@
 #include <sys_defs.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
 /* Utility library. */
 

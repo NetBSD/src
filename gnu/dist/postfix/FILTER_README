@@ -128,9 +128,9 @@ for transit mail that arrives and leaves via SMTP, provided that
 you create no temporary files. Each temporary file adds another
 factor to the performance loss.
 
-We will set up a content filtering program listening on localhost
-port 10025 that receives mail via the SMTP protocol, and that
-submits mail back into Postfix via localhost port 10026.
+We will set up a content filtering program that receives SMTP mail
+via localhost port 10025, and that submits SMTP mail back into
+Postfix via localhost port 10026.
 
       ..................................
       :            Postfix             :
@@ -162,7 +162,7 @@ transport table.  The content filtering records are added by the
 smtpd and pickup servers.
 
 When a queue file has content filtering information, the queue
-manager will deliver the mail to the specified content filtering
+manager will deliver the mail to the specified content filter
 regardless of its final destination.
 
 The content filter can be set up with the Postfix spawn service,
@@ -182,6 +182,9 @@ In the above example, Postfix listens on port localhost:10025.  If
 you want to have your filter listening on port localhost:10025
 instead of Postfix, then you must run your filter as a stand-alone
 program.
+
+Note: the localhost port 10025 SMTP server filter should announce
+itself as "220 localhost...", to silence warnings in the log.
 
 The /some/where/filter command is most likely a PERL script. PERL
 has modules that make talking SMTP easy. The command-line specifies

@@ -330,6 +330,10 @@ static int deliver_message(DELIVER_REQUEST *request, char **unused_argv)
 	/*
 	 * Disconnect if we're going to a different destination. Discard
 	 * transcript and status information for sending QUIT.
+	 * 
+	 * XXX Should transform nexthop into canonical form (unix:/path or
+	 * inet:host:port) before doing connection cache lookup. See also the
+	 * connection cache updating code in lmtp_connect.c.
 	 */
 	if (strcasecmp(state->session->dest, request->nexthop) != 0) {
 	    lmtp_quit(state);
