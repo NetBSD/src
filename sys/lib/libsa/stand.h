@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.36 1999/11/11 21:23:27 thorpej Exp $	*/
+/*	$NetBSD: stand.h,v 1.37 1999/11/12 01:26:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -228,7 +228,9 @@ int	getfile __P((char *prompt, int mode));
 char	*strerror __P((int));
 __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
 __dead void	_rtt __P((void)) __attribute__((noreturn));
+int	bcmp __P((const void *, const void *, size_t));
 void	bcopy __P((const void *, void *, size_t));
+void	bzero __P((void *, size_t));
 void	*memcpy __P((void *, const void *, size_t));
 int	memcmp __P((const void *, const void *, size_t));
 void	exec __P((char *, char *, int));
@@ -244,6 +246,7 @@ size_t	strlen __P((const char *));
 int	strcmp __P((const char *, const char *));
 int	strncmp __P((const char *, const char *, size_t));
 char	*strcpy __P((char *, const char *));
+char	*strncpy __P((char *, const char *, size_t));
 char	*strcat __P((char *, const char *));
 
 u_int32_t inet_addr __P((const char *));
