@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.194 2004/01/25 02:43:38 sekiya Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.195 2004/02/01 12:38:24 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.192 2004/01/25 02:42:49 sekiya Exp 
+ *	NetBSD: pcmciadevs,v 1.193 2004/02/01 12:35:59 uwe Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1331,6 +1331,34 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "EXP IDE/ATAPI DVD Card",	}
 	,
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J181,
+	    PCMCIA_CIS_FUJITSU_FMV_J181,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU FMV-J181 PCMCIA Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J182,
+	    PCMCIA_CIS_FUJITSU_FMV_J182,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU FMV-J182 PCMCIA Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J182A,
+	    PCMCIA_CIS_FUJITSU_FMV_J182A,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU FMV-J182A PCMCIA Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_ITCFJ182A,
+	    PCMCIA_CIS_FUJITSU_ITCFJ182A,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU ITCFJ182A CompactCard",	}
+	,
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_GEMTEK_WLAN,
 	    PCMCIA_CIS_GEMTEK_WLAN,
 	    0,
@@ -1357,13 +1385,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "I-O DATA",
 	    "IO-DATA CBIDE2/16-bit mode",	}
-	,
-	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_TOSHIBA_CBIDE2,
-	    PCMCIA_CIS_TOSHIBA_CBIDE2,
-	    0,
-	    "",
-	    "TOSHIBA PA2673U CBIDE2/16-bit mode (IO-DATA OEM)",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_IODATA_PCLAT,
@@ -1555,11 +1576,25 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Synergy 21 S21810+ NE2000 Compatible Card",	}
 	,
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_TAMARACK_ETHERNET,
+	    PCMCIA_CIS_TAMARACK_ETHERNET,
+	    0,
+	    "TAMARACK",
+	    "TAMARACK Ethernet Card",	}
+	,
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_TEAC_IDECARDII,
 	    PCMCIA_CIS_TEAC_IDECARDII,
 	    0,
 	    "TEAC",
 	    "TEAC IDE Card/II",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_TOSHIBA_CBIDE2,
+	    PCMCIA_CIS_TOSHIBA_CBIDE2,
+	    0,
+	    "",
+	    "TOSHIBA PA2673U CBIDE2/16-bit mode (IO-DATA OEM)",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_XIRCOM_CFE_10,
@@ -1581,34 +1616,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "",
 	    "Zoom Air-4000",	}
-	,
-	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J181,
-	    PCMCIA_CIS_FUJITSU_FMV_J181,
-	    0,
-	    "Fujitsu Corporation",
-	    "FUJITSU FMV-J181 PCMCIA Card",	}
-	,
-	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J182,
-	    PCMCIA_CIS_FUJITSU_FMV_J182,
-	    0,
-	    "Fujitsu Corporation",
-	    "FUJITSU FMV-J182 PCMCIA Card",	}
-	,
-	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J182A,
-	    PCMCIA_CIS_FUJITSU_FMV_J182A,
-	    0,
-	    "Fujitsu Corporation",
-	    "FUJITSU FMV-J182A PCMCIA Card",	}
-	,
-	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_ITCFJ182A,
-	    PCMCIA_CIS_FUJITSU_ITCFJ182A,
-	    0,
-	    "Fujitsu Corporation",
-	    "FUJITSU ITCFJ182A CompactCard",	}
 	,
 	{
 	    PCMCIA_VENDOR_FUJITSU,
@@ -2344,6 +2351,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Synergy 21",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_TAMARACK,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "TAMARACK",
 	    NULL,
 	},
 	{
