@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhid.c,v 1.19 2001/12/22 12:34:41 augustss Exp $ */
+/*      $NetBSD: usbhid.c,v 1.20 2001/12/28 17:49:32 augustss Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,12 +50,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <usb.h>
+#include <usbhid.h>
+
+/*
+ * Zero if not in a verbose mode.  Greater levels of verbosity
+ * are indicated by values larger than one.
+ */
+unsigned int verbose;
 
 /* Parser tokens */
 #define DELIM_USAGE '.'
 #define DELIM_PAGE ':'
 #define DELIM_SET '='
+
+static int reportid;
 
 struct Susbvar {
 	/* Variable name, not NUL terminated */
@@ -386,8 +394,7 @@ allocreport(struct Sreport *report, report_desc_t rd, int repindex)
 {
 	int reptsize;
 
-	reptsize = hid_report_size(rd, reptoparam[repindex].hid_kind,
-				   &report->report_id);
+	reptsize = hid_report_size(rd, reptoparam[repindex].hid_kind, reportid);
 	if (reptsize < 0)
 		errx(1, "Negative report size");
 	report->size = reptsize;
@@ -426,7 +433,8 @@ getreport(struct Sreport *report, int hidfd, report_desc_t rd, int repindex)
 
 		report->buffer->report = reptoparam[repindex].uhid_report;
 		if (ioctl(hidfd, USB_GET_REPORT, report->buffer) < 0)
-			err(1, "USB_GET_REPORT");
+			err(1, "USB_GET_REPORT (probably not supported by "
+			    "device)");
 	}
 }
 
@@ -496,14 +504,28 @@ varop_modify(struct hid_item *item, struct Susbvar *var,
 static void
 reportitem(char const *label, struct hid_item const *item, unsigned int mflags)
 {
-	printf("%s size=%d count=%d page=%s usage=%s%s", label,
+	int isconst = item->flags & HIO_CONST,
+	    isvar = item->flags & HIO_VARIABLE;
+	printf("%s size=%d count=%d%s%s page=%s", label,
 	       item->report_size, item->report_count,
-	       hid_usage_page(HID_PAGE(item->usage)),
-	       hid_usage_in_page(item->usage),
-	       item->flags & HIO_CONST ? " Const" : "");
-	if (mflags & MATCH_SHOWNUMERIC)
-		printf(" (%u:0x%x)",
-		       HID_PAGE(item->usage), HID_USAGE(item->usage));
+	       isconst ? " Const" : "",
+	       !isvar && !isconst ? " Array" : "",
+	       hid_usage_page(HID_PAGE(item->usage)));
+	if (item->usage_minimum != 0 || item->usage_maximum != 0) {
+		printf(" usage=%s..%s", hid_usage_in_page(item->usage_minimum),
+		       hid_usage_in_page(item->usage_maximum));
+		if (mflags & MATCH_SHOWNUMERIC)
+			printf(" (%u:0x%x..%u:0x%x)",
+			       HID_PAGE(item->usage_minimum),
+			       HID_USAGE(item->usage_minimum),
+			       HID_PAGE(item->usage_maximum),
+			       HID_USAGE(item->usage_maximum));
+	} else {
+		printf(" usage=%s", hid_usage_in_page(item->usage));
+		if (mflags & MATCH_SHOWNUMERIC)
+			printf(" (%u:0x%x)",
+			       HID_PAGE(item->usage), HID_USAGE(item->usage));
+	}
 	printf(", logical range %d..%d",
 	       item->logical_minimum, item->logical_maximum);
 	if (item->physical_minimum != item->physical_maximum)
@@ -577,7 +599,7 @@ devloop(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize)
 			     (unsigned long)readlen, (unsigned long)dlen);
 
 		collind = 0;
-		hdata = hid_start_parse(rd, 1 << hid_input);
+		hdata = hid_start_parse(rd, 1 << hid_input, reportid);
 		if (hdata == NULL)
 			errx(1, "Failed to start parser");
 
@@ -601,6 +623,9 @@ devloop(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize)
 			case hid_feature:
 				errx(1, "Unexpected non-input item returned");
 			}
+
+			if (reportid != -1 && hitem.report_ID != reportid)
+				continue;
 
 			matchvar = hidmatch(colls, collind, &hitem,
 					    varlist, vlsize);
@@ -634,9 +659,7 @@ devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
 	}
 
 	collind = 0;
-	hdata = hid_start_parse(rd, kindset |
-				(1 << hid_collection) |
-				(1 << hid_endcollection));
+	hdata = hid_start_parse(rd, kindset, reportid);
 	if (hdata == NULL)
 		errx(1, "Failed to start parser");
 
@@ -644,6 +667,9 @@ devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
 		struct Susbvar *matchvar;
 		int repindex;
 
+		if (verbose > 3)
+			printf("item: kind=%d repid=%d usage=0x%x\n",
+			       hitem.kind, hitem.report_ID, hitem.usage);
 		repindex = -1;
 		switch (hitem.kind) {
 		case hid_collection:
@@ -666,6 +692,9 @@ devshow(int hidfd, report_desc_t rd, struct Susbvar *varlist, size_t vlsize,
 			repindex = REPORT_FEATURE;
 			break;
 		}
+
+		if (reportid != -1 && hitem.report_ID != reportid)
+			continue;
 
 		matchvar = hidmatch(colls, collind, &hitem, varlist, vlsize);
 
@@ -742,12 +771,6 @@ main(int argc, char **argv)
 	report_desc_t repdesc;
 	char devnamebuf[PATH_MAX];
 	struct Susbvar variables[128];
-
-	/*
-	 * Zero if not in a verbose mode.  Greater levels of verbosity
-	 * are indicated by values larger than one.
-	 */
-	unsigned int verbose;
 
 	wflag = aflag = nflag = verbose = rflag = lflag = 0;
 	dev = NULL;
@@ -909,6 +932,10 @@ main(int argc, char **argv)
 	if (hidfd < 0)
 		err(1, "%s", dev);
 
+	if (ioctl(hidfd, USB_GET_REPORT_ID, &reportid) < 0)
+		reportid = -1;
+	if (verbose > 1)
+		printf("report ID=%d\n", reportid);
 	repdesc = hid_get_report_desc(hidfd);
 	if (repdesc == 0)
 		errx(1, "USB_GET_REPORT_DESC");
@@ -927,31 +954,18 @@ main(int argc, char **argv)
 		1 << hid_output |
 		1 << hid_feature);
 
-#if 0
-	{
-		size_t repindex;
-		for (repindex = 0;
-		     repindex < (sizeof(reptoparam) / sizeof(*reptoparam));
-		     repindex++)
-			devshow(hidfd, repdesc, variables, varnum,
-				1 << reptoparam[repindex].hid_kind);
-	}
-#endif
-
 	if (rflag) {
 		/* Report mode trailer */
 		size_t repindex;
 		for (repindex = 0;
 		     repindex < (sizeof(reptoparam) / sizeof(*reptoparam));
 		     repindex++) {
-			int report_id, size;
+			int size;
 			size = hid_report_size(repdesc,
 					       reptoparam[repindex].hid_kind,
-					       &report_id);
-			size -= report_id != 0;
-			printf("Total %7s size %s%d bytes\n",
-			       reptoparam[repindex].name,
-			       report_id && size ? "1+" : "", size);
+					       reportid);
+			printf("Total %7s size %d bytes\n",
+			       reptoparam[repindex].name, size);
 		}
 	}
 

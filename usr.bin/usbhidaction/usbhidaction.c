@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.3 2001/02/20 23:55:42 cgd Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.4 2001/12/28 17:49:31 augustss Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include <sys/ioctl.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
-#include <usb.h>
+#include <usbhid.h>
 #include <util.h>
 
 int verbose = 0;
@@ -67,7 +67,7 @@ struct command *commands;
 #define SIZE 4000
 
 void usage(void);
-void parse_conf(const char *conf, report_desc_t repd, int ignore);
+void parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore);
 void docmd(struct command *cmd, int value, const char *hid,
 	   int argc, char **argv);
 
@@ -81,6 +81,7 @@ main(int argc, char **argv)
 	report_desc_t repd;
 	char buf[100];
 	struct command *cmd;
+	int reportid;
 
 	demon = 1;
 	ignore = 0;
@@ -118,11 +119,13 @@ main(int argc, char **argv)
 	fd = open(hid, O_RDWR);
 	if (fd < 0)
 		err(1, "%s", hid);
+	if (ioctl(fd, USB_GET_REPORT_ID, &reportid) < 0)
+		reportid = -1;
 	repd = hid_get_report_desc(fd);
 	if (repd == NULL)
 		err(1, "hid_get_report_desc() failed\n");
 
-	parse_conf(conf, repd, ignore);
+	parse_conf(conf, repd, reportid, ignore);
 
 	sz = hid_report_size(repd, hid_input, NULL);
 	hid_dispose_report_desc(repd);
@@ -179,7 +182,7 @@ peek(FILE *f)
 }
 
 void
-parse_conf(const char *conf, report_desc_t repd, int ignore)
+parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 {
 	FILE *f;
 	char *p;
@@ -229,7 +232,7 @@ parse_conf(const char *conf, report_desc_t repd, int ignore)
 		}
 
 		coll[0] = 0;
-		for (d = hid_start_parse(repd, 1 << hid_input);
+		for (d = hid_start_parse(repd, 1 << hid_input, reportid);
 		     hid_get_item(d, &h); ) {
 			if (verbose > 2)
 				printf("kind=%d usage=%x\n", h.kind, h.usage);
