@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)Ovfork.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: Ovfork.S,v 1.1 1993/11/25 23:39:23 paulus Exp $"
+	.asciz "$Id: Ovfork.S,v 1.2 1993/12/04 18:59:42 briggs Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -59,6 +59,8 @@
 
 	vfork = 66
 .globl	_vfork
+
+	.even
 
 _vfork:
 	movl	sp@+,a0
