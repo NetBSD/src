@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.22 2001/02/04 21:33:19 christos Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.23 2001/05/26 07:48:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.22 2001/02/04 21:33:19 christos Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.23 2001/05/26 07:48:15 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,11 +103,8 @@ rmthost(host)
 	char *host;
 {
 
-	rmtpeer = malloc(strlen(host) + 1);
-	if (rmtpeer)
-		strcpy(rmtpeer, host);
-	else
-		rmtpeer = host;
+	if ((rmtpeer = strdup(host)) == NULL)
+		err(1, "strdup");
 	signal(SIGPIPE, rmtconnaborted);
 	rmtgetconn();
 	if (rmtape < 0)
@@ -141,7 +138,7 @@ rmtgetconn()
 			errx(1, "who are you?");
 	}
 	if ((name = strdup(pwd->pw_name)) == NULL)
-		err(1, "malloc");
+		err(1, "strdup");
 	if ((cp = strchr(rmtpeer, '@')) != NULL) {
 		tuser = rmtpeer;
 		*cp = '\0';
