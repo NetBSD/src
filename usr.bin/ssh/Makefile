@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/05/26 23:27:14 itojun Exp $
+#	$NetBSD: Makefile,v 1.13 2001/06/23 19:37:43 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,6 @@ distribution:
 	${INSTALL} ${INSTPRIV} ${COPY} -o root -g wheel -m 644 \
 	    ${SSHDIST}/sshd_config ${DESTDIR}/etc/sshd.conf
 	${INSTALL} ${INSTPRIV} ${COPY} -o root -g wheel -m 444 \
-	    ${SSHDIST}/primes ${DESTDIR}/etc/primes
+	    ${SSHDIST}/moduli ${DESTDIR}/etc/moduli
 
 .include <bsd.subdir.mk>
