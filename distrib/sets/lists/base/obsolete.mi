@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.59 2002/10/20 21:28:11 thorpej Exp $
+# $NetBSD: obsolete.mi,v 1.60 2002/10/30 10:39:39 lukem Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -21,10 +21,8 @@
 /usr/include/compat
 /usr/include/gssapi/rpc
 /usr/include/ss
-/usr/lib/libkrb5.so.18.0
 /usr/lib/libntp.so.0
 /usr/lib/libntp.so.0.0
-/usr/lib/libroken.so.12.2
 /usr/lib/libusb.a
 /usr/lib/libusb.so
 /usr/lib/libusb.so.0
