@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.12.10.1 2000/07/17 19:55:54 mjl Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.12.10.2 2001/04/25 12:26:53 he Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -67,6 +67,7 @@ int main(int argc, char **argv)
 	if ((pp = getpwuid(getuid())) == NULL)
 		err(1, "no user with uid %ld", (u_long)getuid());
 	(void)strncpy(me, pp->pw_name, sizeof(me) - 1);
+	me[sizeof(me) - 1] = '\0';
 
 	if ((pp = getpwnam(me)) == NULL)
 		err(1, "Who are you?");
