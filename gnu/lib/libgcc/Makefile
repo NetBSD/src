@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2001/11/28 04:39:55 tv Exp $
+#	$NetBSD: Makefile,v 1.28 2001/11/28 14:29:13 tv Exp $
 
 REQUIRETOOLS=	yes
 
@@ -6,6 +6,8 @@ REQUIRETOOLS=	yes
 
 LIB=		gcc
 MKLINT=		no
+
+.cc: # disable .cc->NULL transform
 
 .if defined(USE_NEW_TOOLCHAIN)
 
@@ -99,9 +101,6 @@ NEW2OBJS=	_op_vnew.o _op_vnewnt.o _op_delete.o _op_delnt.o \
 
 INCS=		exception new new.h typeinfo
 INCSDIR=	/usr/include/g++
-
-.cc:
-	@true
 
 ${NEW1OBJS}: new1.cc
 	${COMPILE.cc} -DL$* -o $@ $>
