@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/09/27 19:13:52 fvdl Exp $
+#	$NetBSD: Makefile,v 1.3 2002/02/03 16:22:23 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -9,4 +9,4 @@ KERN!=	cd $(.CURDIR)/../kernel-ramdisk/; \
 	${MAKE} -s -f-
 BASENAME=bootlap
 
-.include "${TOP}/fdset-common/Makefile.inc"
+.include "${TOP}/common/Makefile.fdset"

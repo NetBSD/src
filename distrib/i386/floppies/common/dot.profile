@@ -1,5 +1,6 @@
-# $NetBSD: dot.hdprofile,v 1.1 2000/09/27 16:04:17 fvdl Exp $
+#	$NetBSD: dot.profile,v 1.1 2002/02/03 16:22:22 lukem Exp $
 #
+# Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
 # 
@@ -38,25 +39,43 @@ TERM=pc3
 export TERM
 HOME=/
 export HOME
+BLOCKSIZE=1k
+export BLOCKSIZE
+EDITOR=ed
+export EDITOR
+BOOTMODEL=@BOOTMODEL@
+export BOOTMODEL
 
 umask 022
+
+ROOTDEV=/dev/md0a
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
 	export DONEPROFILE
-
-	echo "Checking filesystems..."
-	fsck -y
-
-	echo "Mounting root..."
-	mount -u /
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 	echo ''
 
-	TERMCAP=/.termcap ; export TERMCAP
+	# mount the ramdisk read write
+	mount -u $ROOTDEV /
 
-	[ -x /sysinst ] && /sysinst
+	# mount the kern_fs so that we can examine the dmesg state
+	mount -t kernfs /kern /kern
+
+	# pull in the functions that people will use from the shell prompt.
+	# . /.commonutils
+	# . /.instutils
+	dmesg() cat /kern/msgbuf
+	grep() sed -n "/$1/p"
+
+	if [ -x /sysinst ]; then
+		# run the installation or upgrade script.
+		sysinst
+	else
+		echo "This image contains utilities which may be needed"
+		echo "to get you out of a pinch."
+	fi
 fi
