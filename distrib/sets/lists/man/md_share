@@ -149,6 +149,7 @@
 ./usr/share/man/cat4/sparc/kbd.0
 ./usr/share/man/cat4/sparc/kmem.0
 ./usr/share/man/cat4/sparc/le.0
+./usr/share/man/cat4/sparc/magma.0
 ./usr/share/man/cat4/sparc/mem.0
 ./usr/share/man/cat4/sparc/ms.0
 ./usr/share/man/cat4/sparc/openprom.0
@@ -437,6 +438,7 @@
 ./usr/share/man/man4/sparc/kbd.4
 ./usr/share/man/man4/sparc/kmem.4
 ./usr/share/man/man4/sparc/le.4
+./usr/share/man/man4/sparc/magma.4
 ./usr/share/man/man4/sparc/mem.4
 ./usr/share/man/man4/sparc/ms.4
 ./usr/share/man/man4/sparc/openprom.4

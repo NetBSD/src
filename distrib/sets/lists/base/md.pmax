@@ -16,8 +16,8 @@
 ./usr/lib/libcurses.so.2
 ./usr/lib/libcurses.so.2.2
 ./usr/lib/libedit.so
-./usr/lib/libedit.so.1
-./usr/lib/libedit.so.1.1
+./usr/lib/libedit.so.2
+./usr/lib/libedit.so.2.0
 ./usr/lib/libg++.so
 ./usr/lib/libg++.so.4
 ./usr/lib/libg++.so.4.0

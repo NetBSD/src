@@ -81,6 +81,7 @@
 ./usr/include/dev/ic/bhareg.h
 ./usr/include/dev/ic/bhavar.h
 ./usr/include/dev/ic/bt485reg.h
+./usr/include/dev/ic/cd1190reg.h
 ./usr/include/dev/ic/cd1400reg.h
 ./usr/include/dev/ic/comreg.h
 ./usr/include/dev/ic/comvar.h
@@ -127,6 +128,7 @@
 ./usr/include/dev/ic/nec765reg.h
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
+./usr/include/dev/ic/opl3sa3.h
 ./usr/include/dev/ic/pcdisplay.h
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
@@ -186,6 +188,7 @@
 ./usr/include/dev/isa/wssreg.h
 ./usr/include/dev/isa/wssvar.h
 ./usr/include/dev/isa/wtreg.h
+./usr/include/dev/isa/ymvar.h
 ./usr/include/dev/isapnp
 ./usr/include/dev/isapnp/if_levar.h
 ./usr/include/dev/isapnp/isapnpreg.h

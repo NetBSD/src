@@ -328,7 +328,6 @@
 ./usr/share/man/cat4/ep.0
 ./usr/share/man/cat4/esh.0
 ./usr/share/man/cat4/esis.0
-./usr/share/man/cat4/esh.0
 ./usr/share/man/cat4/esp.0
 ./usr/share/man/cat4/fd.0
 ./usr/share/man/cat4/fea.0
@@ -902,7 +901,7 @@
 ./usr/share/man/cat9/rnd_add_uint32.0
 ./usr/share/man/cat9/rnd_attach_source.0
 ./usr/share/man/cat9/rnd_detach_source.0
-./usr/share/man/cat9/rt_timer.0 
+./usr/share/man/cat9/rt_timer.0
 ./usr/share/man/cat9/rt_timer_add.0
 ./usr/share/man/cat9/rt_timer_queue_change.0
 ./usr/share/man/cat9/rt_timer_queue_create.0
@@ -1395,6 +1394,7 @@
 ./usr/share/man/man4/we.4
 ./usr/share/man/man4/wss.4
 ./usr/share/man/man4/wt.4
+./usr/share/man/man4/ym.4
 ./usr/share/man/man4/zstty.4
 ./usr/share/man/man5/a.out.5
 ./usr/share/man/man5/acct.5
@@ -1899,7 +1899,7 @@
 ./usr/share/man/man9/rnd_add_uint32.9
 ./usr/share/man/man9/rnd_attach_source.9
 ./usr/share/man/man9/rnd_detach_source.9
-./usr/share/man/man9/rt_timer.9 
+./usr/share/man/man9/rt_timer.9
 ./usr/share/man/man9/rt_timer_add.9
 ./usr/share/man/man9/rt_timer_queue_change.9
 ./usr/share/man/man9/rt_timer_queue_create.9
