@@ -1,10 +1,11 @@
-/*	$NetBSD: start_dos.S,v 1.1.1.1 1997/03/14 02:40:34 perry Exp $	*/
+/*	$NetBSD: start_dos.S,v 1.2 1997/06/13 17:49:27 drochner Exp $	*/
 	
 /* startup for DOS .COM programs
  with input from:
  netbsd:sys/arch/i386/boot/start.S
  Tor Egge's patches for NetBSD boot (pr port-i386/1002)
  freebsd:sys/i386/boot/netboot/start2.S
+ XMS support by Martin Husemann
  */
 
 /*
@@ -345,3 +346,139 @@ ENTRY(vtophys)
 	shll	$4, %eax
 	addl 4(%esp), %eax
 	ret
+
+#ifdef XMS
+
+/* pointer to XMS driver, 0 if no XMS used */
+
+	.data
+_xmsdrv:
+	.long	0
+
+	.text
+ENTRY(checkxms)
+	pushl %ebp
+	movl  %esp, %ebp
+	pushl	%ebx
+	pushl	%edx
+	pushl	%es
+	pushl	%esi
+	pushl	%edi
+
+	call	_C_LABEL(prot_to_real)	# enter real mode
+
+	.byte	0xb8	/* movw $0x4300,ax */
+	.word	0x4300
+	int	$0x2f	/* check if XMS installed */
+	cmpb	$0x80, %al
+	jnz	noxms
+
+	.byte	0xb8	/* movw $0x4310,ax */
+	.word	0x4310
+	int	$0x2f	/* get driver address */
+
+	.byte	0x89,0x1e	/* save es:bx to _xmsdrv */
+	.word	_xmsdrv
+	.byte	0x8c,0x06
+	.word	_xmsdrv+2
+
+	movb	$0x08, %ah	/* XMS: query free extended memory */
+#if 0
+	movb	$0x00, %bl
+#endif
+	.byte	0xff, 0x1e
+	.word	_xmsdrv  /* result in dx */
+	jmp	xdone
+
+noxms:		/* no XMS manager found */
+	movl	$0, %edx /* comes out as movw ! */
+
+xdone:
+	data32
+	call	_C_LABEL(real_to_prot) # back to protected mode
+
+	xorl	%eax, %eax
+	movw	%dx, %ax
+
+	popl	%edi
+	popl	%esi
+	popl	%es
+	popl	%edx
+	popl	%ebx
+	popl	%ebp
+	ret
+
+/*
+	Allocate a block of XMS memory with the requested size
+		void * xmsalloc(long int kBytes);
+
+	Depends on _xmsdrv being set by getextmem() before first call
+	to this function.
+
+	Return value: a physical address.
+*/
+ENTRY(xmsalloc)
+	pushl %ebp
+	movl  %esp, %ebp
+	pushl	%ebx
+	pushl	%edx
+	pushl	%esi
+	pushl	%edi
+
+	movl	0x8(%ebp), %edx # Kbytes needed
+
+	call	_C_LABEL(prot_to_real)	# enter real mode
+
+	movb	$0x09, %ah	# XMS allocate block
+	.byte 0xff,0x1e
+	.word _xmsdrv		# result: handle in %dx
+	movb	$0x0c, %ah	# XMS lock block
+	.byte 0xff,0x1e
+	.word _xmsdrv		# result: 32 bit physical address in DX:BX
+
+	data32
+	call	_C_LABEL(real_to_prot) # back to protected mode
+
+	movl	%edx, %eax
+	shl	$16, %eax
+	movw	%bx, %ax	# result in %eax
+
+	popl	%edi
+	popl	%esi
+	popl	%edx
+	popl	%ebx
+	popl	%ebp
+	ret
+
+/*
+ * ppbcopy(src, dst, cnt)
+ *	where src and dst are physical addresses
+ */
+ENTRY(ppbcopy)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%es
+	pushl	%esi
+	pushl	%edi
+
+	cld
+
+	# set %es to point at the flat segment
+	movl	$flatdataseg, %eax
+	movl	%ax, %es
+
+	movl	8(%ebp), %esi		# source
+	movl	12(%ebp), %edi		# destination
+	movl	16(%ebp), %ecx		# count
+
+	es
+	rep
+	movsb
+
+	popl	%edi
+	popl	%esi
+	popl	%es
+	popl	%ebp
+	ret
+
+#endif

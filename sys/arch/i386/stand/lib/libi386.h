@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.2 1997/04/13 18:44:41 perry Exp $	*/
+/*	$NetBSD: libi386.h,v 1.3 1997/06/13 17:49:25 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -65,4 +65,10 @@ int biosdisk_gettype __P((struct open_file*));
 /* this is in "user code"! */
 int parsebootfile __P((const char *, char**, char**, unsigned int*,
 		       unsigned int*, const char**));
+#endif
+
+#ifdef XMS
+physaddr_t ppbcopy __P((physaddr_t, physaddr_t, int));
+int checkxms __P((void));
+physaddr_t xmsalloc __P((int));
 #endif
