@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.32 2003/07/15 03:36:02 lukem Exp $	*/
+/*	$NetBSD: ofw.c,v 1.33 2003/11/05 10:09:10 scw Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.32 2003/07/15 03:36:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.33 2003/11/05 10:09:10 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1539,7 +1539,7 @@ ofw_getphysmeminfo()
 
 			/* Handle empty block. */
 			if (mp->size == 0) {
-				bcopy(mp + 1, mp, (cnt - (mp - tmp))
+				memmove(mp, mp + 1, (cnt - (mp - tmp))
 				    * sizeof(struct mem_region));
 				cnt--;
 				mp--;
@@ -1553,7 +1553,7 @@ ofw_getphysmeminfo()
 				if (s < mp1->start)
 					break;
 			if (mp1 < mp) {
-				bcopy(mp1, mp1 + 1, (char *)mp - (char *)mp1);
+				memmove(mp1 + 1, mp1, (char *)mp - (char *)mp1);
 				mp1->start = s;
 				mp1->size = sz;
 			}
