@@ -1,6 +1,6 @@
-#	$Id: Makefile.inc,v 1.4 1994/06/30 06:46:37 deraadt Exp $
+#	$Id: Makefile.inc,v 1.5 1996/11/18 22:37:28 pk Exp $
 
-KMINCLUDES= arch/sparc/SYS.h arch/sparc/DEFS.h
+KMINCLUDES= arch/sparc/SYS.h
 KMSRCS=	bzero.S ffs.S strlen.S htonl.S htons.S \
 	ntohl.S ntohs.S divrem.m4 \
 	_setjmp.S mul.S saveregs.S setjmp.S umul.S
