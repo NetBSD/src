@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.60 2002/04/03 21:33:34 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.61 2002/04/03 22:25:04 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2642,3 +2642,19 @@ distrib/notes/common/main			patch
 sys/conf/osrelease.sh				patch
 
   Mark this as NetBSD 1.5.3.
+
+sys/compat/linux/arch/i386/linux_machdep.c	1.75
+sys/arch/i386/i386/freebsd_machdep.c		1.32
+sys/arch/i386/i386/svr4_machdep.c		1.62
+
+  Fix restoral of %fs / %gs in i386 emulation code.
+
+sys/arch/mac68k/conf/GENERICSBC			patch (new)
+sys/arch/mac68k/conf/INSTALLSBC			patch (new)
+
+  Add configurations which use the MI NCR 5380 driver, based on
+  GENERIC and INSTALL.
+
+etc/etc.mac68k/Makefile.inc			patch
+
+  Also build the INSTALLSBC and GENERICSBC kernels.
