@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.22.2.1 1999/04/16 16:29:56 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.22.2.2 2000/01/31 20:36:12 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1637,9 +1637,6 @@ uvn_io(uvn, pps, npages, flags, rw)
 	if (file_offset >= uvn->u_size) {
 			simple_unlock(&uvn->u_obj.vmobjlock);
 			UVMHIST_LOG(maphist,"<- BAD (size check)",0,0,0,0);
-#ifdef DIAGNOSTIC
-			printf("uvn_io: note: size check fired\n");
-#endif
 			return(VM_PAGER_BAD);
 	}
 
