@@ -60,7 +60,7 @@ The following describes these 14 procedures:
         Checks to see that the entry contains a `.SH NAME'
         section, producing files _n_o._N_A_M_E[_1-_8].
 
-        Checks the NAME section of the entry to insure that it is
+        Checks the NAME section of the entry to ensure that it is
         exactly one line long (multi-line NAMEs will severely
         confuse `tocrc'), producing files _n_o_t._o_n_e._l_i_n_e[_1-_8].
 

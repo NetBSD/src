@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.12 2000/05/27 02:23:19 enami Exp $
+.\"	$NetBSD: bpf.4,v 1.13 2000/10/05 12:35:33 ad Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -320,7 +320,7 @@ padding between the header and the link level protocol.
 The purpose here is to guarantee proper alignment of the packet
 data structures, which is required on alignment sensitive
 architectures and and improves performance on many other architectures.
-The packet filter insures that the
+The packet filter ensures that the
 .Va bpf_hdr
 and the
 .Em network layer
