@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2003/04/26 18:55:45 fvdl Exp $
+#	$NetBSD: list,v 1.2 2003/07/25 21:31:17 dsl Exp $
 #
 
 SRCDIRS	usr.bin/less
@@ -59,7 +59,7 @@ PROG	usr/bin/less	usr/bin/more
 PROG	usr/bin/sed
 PROG	usr/bin/tip
 
-PROG	usr/mdec/installboot
+PROG	usr/sbin/installboot
 
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
@@ -71,16 +71,15 @@ SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	ping6		srcdir	distrib/utils/x_ping6
 SPECIAL	route		srcdir	distrib/utils/x_route
 
-# we have not switched to MI usr.sbin/installboot yet.
-SPECIAL	installboot	srcdir	sys/arch/i386/stand/installboot
-
 LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script	555
 
-# we need the boot block in /usr/mdec + the MBR copy
-COPY	${DESTDIR}/usr/mdec/biosboot_com0.sym	usr/mdec/biosboot_com0.sym
-
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
+
+# Foreign texts for sysinst
+COPY	${OBJDIR}/sysinst/sysinstmsgs.fr	sysinstmsgs.fr
+COPY	${OBJDIR}/sysinst/sysinstmsgs.pl	sysinstmsgs.pl
+
