@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.26 1999/03/26 17:34:16 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.27 1999/03/30 16:07:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1610,18 +1610,6 @@ ReTry:	/* XXXMRG */
 			UVMHIST_LOG(pdhist,
 			    "success!  returning %d slots starting at %d",
 			    *nslots, result + sdp->swd_drumoffset, 0, 0);
-#if 0
-{
-	struct swapdev *sdp2;
-
-	sdp2 = swapdrum_getsdp(result + sdp->swd_drumoffset);
-	if (sdp2 == NULL) {
-printf("uvm_swap_alloc:  nslots=%d, dev=%x, drumoff=%d, result=%ld",
-    *nslots, sdp->swd_dev, sdp->swd_drumoffset, result);
-panic("uvm_swap_alloc:  allocating unmapped swap block!");
-	}
-}
-#endif
 			return(result + sdp->swd_drumoffset);
 		}
 	}
