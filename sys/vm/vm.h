@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.h,v 1.22 2000/03/26 20:54:48 kleink Exp $	*/
+/*	$NetBSD: vm.h,v 1.22.4.1 2000/08/05 11:10:43 wiz Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -58,7 +58,6 @@ typedef struct vm_page  *vm_page_t;
 #include <vm/vm_param.h>
 #include <sys/lock.h>
 #include <vm/vm_prot.h>
-#include <vm/vm_inherit.h>
 #include <vm/vm_map.h>
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
