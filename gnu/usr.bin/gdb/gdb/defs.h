@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: defs.h,v 1.2 1994/05/17 14:01:45 pk Exp $
+	$Id: defs.h,v 1.3 1995/01/12 10:20:27 pk Exp $
 */
 
 #if !defined (DEFS_H)
@@ -375,6 +375,9 @@ enum val_prettyprint
   /* Use the default setting which the user has specified.  */
   Val_pretty_default
 };
+
+/* Whether to open exec and core files read-only or read-write.  */
+extern int write_files;
 
 #ifdef KERNEL_DEBUG
 extern int kernel_debugging;
