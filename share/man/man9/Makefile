@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.126 2002/09/29 20:29:15 jdolecek Exp $
+#       $NetBSD: Makefile,v 1.127 2002/10/05 05:39:35 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -47,6 +47,7 @@ MLINKS+=access.9 kernacc.9 access.9 useracc.9
 MLINKS+=autoconf.9 config_search.9 \
 	autoconf.9 config_found_sm.9 \
 	autoconf.9 config_found.9 \
+	autoconf.9 config_match.9 \
 	autoconf.9 config_attach.9 \
 	autoconf.9 config_detach.9 \
 	autoconf.9 config_activate.9 \
