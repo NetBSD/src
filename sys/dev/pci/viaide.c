@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.21 2005/01/27 13:34:32 kent Exp $	*/
+/*	$NetBSD: viaide.c,v 1.22 2005/02/01 18:21:42 abs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -149,6 +149,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  0,
 	  NULL,
 	  via_chip_map,
+	},
+	{ PCI_PRODUCT_VIATECH_VT642_RAID,
+	  0,
+	  "VIA Technologies VT642 SATA RAID Controller",
+	  via_sata_chip_map,
 	},
 	{ PCI_PRODUCT_VIATECH_VT8237_SATA,
 	  0,
