@@ -1,4 +1,4 @@
-/*	$NetBSD: strings.h,v 1.4 1998/02/02 15:59:13 kleink Exp $	*/
+/*	$NetBSD: strings.h,v 1.5 1998/04/27 16:48:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,5 +62,9 @@ char	*rindex __P((const char *, int));
 int	 strcasecmp __P((const char *, const char *));
 int	 strncasecmp __P((const char *, const char *, size_t));
 __END_DECLS
+
+#if !defined(_XOPEN_SOURCE)
+#include <string.h>
+#endif
 
 #endif /* !defined(_STRINGS_H_) */
