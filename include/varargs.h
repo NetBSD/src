@@ -1,3 +1,5 @@
+/*	$NetBSD: varargs.h,v 1.2 2004/06/06 06:58:50 mrg Exp $	*/
+
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
