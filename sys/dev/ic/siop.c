@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.12 2000/05/06 00:44:00 soren Exp $	*/
+/*	$NetBSD: siop.c,v 1.13 2000/05/11 09:30:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -58,7 +58,7 @@
 #include <dev/ic/siopreg.h>
 #include <dev/ic/siopvar.h>
 
-#undef DEBUG
+#define DEBUG
 #undef DEBUG_DR
 #undef DEBUG_INTR
 #undef DEBUG_SHED
@@ -1502,7 +1502,7 @@ siop_scsicmd(xs)
 		sc->targets[target]->flags = 0;
 		sc->targets[target]->id = sc->clock_div << 24; /* scntl3 */
 		sc->targets[target]->id |=  target << 16; /* id */
-		sc->targets[target]->id |= 0x80 << 8; /* scxfer */
+		/* sc->targets[target]->id |= 0x00 << 8; scxfer is 0 */
 		for (i = 0; i < 8; i++) 
 			TAILQ_INIT(&sc->targets[target]->active_list[i]);
 	}
