@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.6 2002/03/26 10:54:40 manu Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.7 2002/03/28 10:37:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.6 2002/03/26 10:54:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.7 2002/03/28 10:37:46 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.6 2002/03/26 10:54:40 manu Exp $");
 #include <sys/resource.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/vmparam.h>
 
@@ -185,18 +187,20 @@ irix_sysmp_saget(cmd, buf, len)
 		struct irix_sysmp_rminfo *irm = 
 		    (struct irix_sysmp_rminfo *)kbuf;
 
-		irm->freemem = 0;
-		irm->availsmem = 0;
-		irm->availrmem = 0;
-		irm->bufmem = 0;
-		irm->physmem = 0;
-		irm->dchunkpages = 0;
-		irm->pmapmem = 0;
-		irm->strmem = 0;
-		irm->chunkpages = 0;
-		irm->dpages = 0;
-		irm->emptymem = 0;
-		irm->ravailrmem = 0;
+		irm->freemem = uvmexp.free + uvmexp.filepages;
+		irm->availsmem = uvmexp.free + uvmexp.active + uvmexp.inactive
+		    + uvmexp.wired + (uvmexp.swpages - uvmexp.swpgonly);
+		irm->availrmem = uvmexp.free + uvmexp.active + uvmexp.inactive
+		    + uvmexp.wired;
+		irm->bufmem = bufpages;
+		irm->physmem = uvmexp.npages;
+		irm->dchunkpages = 0; /* unsupported */
+		irm->pmapmem = 0;     /* unsupported */
+		irm->strmem = 0;      /* unsupported */
+		irm->chunkpages = 0;  /* unsupported */
+		irm->dpages = 0;      /* unsupported */
+		irm->emptymem = uvmexp.free;
+		irm->ravailrmem = uvmexp.active + uvmexp.inactive + uvmexp.free;
 		break;
 	}
 	default:
@@ -206,7 +210,7 @@ irix_sysmp_saget(cmd, buf, len)
 		break;
 	}
 
-	if (error != 0)
+	if (error == 0)
 		(void)copyout((void *)kbuf, (void *)buf, len);
 
 	free(kbuf, M_TEMP);
