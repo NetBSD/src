@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.278 2000/11/18 06:22:18 wiz Exp $
+#	$NetBSD: mi,v 1.279 2000/12/06 13:40:32 tron Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -2422,10 +2422,12 @@
 ./usr/share/man/cat3/pw_edit.0	comp-c-catman
 ./usr/share/man/cat3/pw_error.0	comp-c-catman
 ./usr/share/man/cat3/pw_getconf.0	comp-c-catman
+./usr/share/man/cat3/pw_getprefix.0	comp-c-catman
 ./usr/share/man/cat3/pw_init.0	comp-c-catman
 ./usr/share/man/cat3/pw_lock.0	comp-c-catman
 ./usr/share/man/cat3/pw_mkdb.0	comp-c-catman
 ./usr/share/man/cat3/pw_prompt.0	comp-c-catman
+./usr/share/man/cat3/pw_setprefix.0	comp-c-catman
 ./usr/share/man/cat3/pw_scan.0	comp-c-catman
 ./usr/share/man/cat3/pwcache.0	comp-c-catman
 ./usr/share/man/cat3/qabs.0	comp-c-catman
@@ -4189,10 +4191,12 @@
 ./usr/share/man/man3/pw_edit.3		comp-c-man
 ./usr/share/man/man3/pw_error.3		comp-c-man
 ./usr/share/man/man3/pw_getconf.3	comp-c-man
+./usr/share/man/man3/pw_getprefix.3	comp-c-man
 ./usr/share/man/man3/pw_init.3		comp-c-man
 ./usr/share/man/man3/pw_lock.3		comp-c-man
 ./usr/share/man/man3/pw_mkdb.3		comp-c-man
 ./usr/share/man/man3/pw_prompt.3		comp-c-man
+./usr/share/man/man3/pw_setprefix.3	comp-c-man
 ./usr/share/man/man3/pw_scan.3		comp-c-man
 ./usr/share/man/man3/pwcache.3		comp-c-man
 ./usr/share/man/man3/qabs.3		comp-c-man
