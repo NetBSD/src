@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.38 2003/09/09 14:44:35 drochner Exp $	*/
+/*	$NetBSD: dir.c,v 1.39 2004/01/11 12:22:40 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: dir.c,v 1.38 2003/09/09 14:44:35 drochner Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.39 2004/01/11 12:22:40 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.38 2003/09/09 14:44:35 drochner Exp $");
+__RCSID("$NetBSD: dir.c,v 1.39 2004/01/11 12:22:40 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -753,7 +753,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
     const char    	  *cp;
 
     if (DEBUG(DIR)) {
-	printf("expanding \"%s\"...", word);
+	printf("Expanding \"%s\"... ", word);
     }
 
     cp = strchr(word, '{');
@@ -861,18 +861,15 @@ DirLookup(Path *p, const char *name, const char *cp, Boolean hasSlash)
     char *file;		/* the current filename to check */
 
     if (DEBUG(DIR)) {
-	printf("%s...", p->name);
+	printf("   %s ...\n", p->name);
     }
 
     if (Hash_FindEntry (&p->files, cp) == (Hash_Entry *)NULL)
 	return NULL;
 
-    if (DEBUG(DIR)) {
-	printf("here...");
-    }
     file = str_concat (p->name, cp, STR_ADDSLASH);
     if (DEBUG(DIR)) {
-	printf("returning %s\n", file);
+	printf("   returning %s\n", file);
     }
     p->hits += 1;
     hits += 1;
@@ -911,20 +908,16 @@ DirLookupSubdir(Path *p, const char *name)
     }
 
     if (DEBUG(DIR)) {
-	printf("checking %s...", file);
+	printf("checking %s ...\n", file);
     }
 
     if (stat (file, &stb) == 0) {
-	if (DEBUG(DIR)) {
-	    printf("got it.\n");
-	}
-
 	/*
 	 * Save the modification time so if it's needed, we don't have
 	 * to fetch it again.
 	 */
 	if (DEBUG(DIR)) {
-	    printf("Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
+	    printf("   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    file);
 	}
 	entry = Hash_CreateEntry(&mtimes, (char *) file,
@@ -959,7 +952,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
 	const char *p2;		/* pointer into name */
 
 	if (DEBUG(DIR)) {
-		printf("%s...", p->name);
+		printf("   %s ...\n", p->name);
 	}
 
 	/*
@@ -977,19 +970,16 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
 
 	if (Hash_FindEntry (&p->files, cp) == (Hash_Entry *)NULL) {
 		if (DEBUG(DIR)) {
-			printf("must be here but isn't -- returning\n");
+			printf("   must be here but isn't -- returning\n");
 		}
 		/* Return empty string: terminates search */
 		return estrdup("");
 	}
 
-	if (DEBUG(DIR)) {
-		printf("here...");
-	}
 	p->hits += 1;
 	hits += 1;
 	if (DEBUG(DIR)) {
-		printf("returning %s\n", name);
+		printf("   returning %s\n", name);
 	}
 	return (estrdup (name));
 }
@@ -1013,7 +1003,7 @@ DirFindDot(Boolean hasSlash, const char *name, const char *cp)
 
 	if (Hash_FindEntry (&dot->files, cp) != (Hash_Entry *)NULL) {
 	    if (DEBUG(DIR)) {
-		printf("in '.'\n");
+		printf("   in '.'\n");
 	    }
 	    hits += 1;
 	    dot->hits += 1;
@@ -1022,7 +1012,7 @@ DirFindDot(Boolean hasSlash, const char *name, const char *cp)
 	if (cur &&
 	    Hash_FindEntry (&cur->files, cp) != (Hash_Entry *)NULL) {
 	    if (DEBUG(DIR)) {
-		printf("in ${.CURDIR} = %s\n", cur->name);
+		printf("   in ${.CURDIR} = %s\n", cur->name);
 	    }
 	    hits += 1;
 	    cur->hits += 1;
@@ -1080,7 +1070,7 @@ Dir_FindFile(const char *name, Lst path)
     }
 
     if (DEBUG(DIR)) {
-	printf("Searching for %s...", name);
+	printf("Searching for %s ...", name);
     }
 
     if (Lst_Open (path) == FAILURE) {
@@ -1098,6 +1088,9 @@ Dir_FindFile(const char *name, Lst path)
             if (DEBUG(DIR))
 		printf("[dot last]...");
 	}
+    }
+    if (DEBUG(DIR)) {
+	printf("\n");
     }
 
     /*
@@ -1160,7 +1153,7 @@ Dir_FindFile(const char *name, Lst path)
      */
     if (!hasSlash) {
 	if (DEBUG(DIR)) {
-	    printf("failed.\n");
+	    printf("   failed.\n");
 	}
 	misses += 1;
 	return ((char *) NULL);
@@ -1170,7 +1163,7 @@ Dir_FindFile(const char *name, Lst path)
 	Boolean	checkedDot = FALSE;
 
 	if (DEBUG(DIR)) {
-	    printf("failed. Trying subdirectories...");
+	    printf("   Trying subdirectories...\n");
 	}
 
 	if (!hasLastDot) {
@@ -1210,17 +1203,13 @@ Dir_FindFile(const char *name, Lst path)
 			return file;
 	}
 
-	if (DEBUG(DIR)) {
-	    printf("failed. ");
-	}
-
 	if (checkedDot) {
 	    /*
 	     * Already checked by the given name, since . was in the path,
 	     * so no point in proceeding...
 	     */
 	    if (DEBUG(DIR)) {
-		printf("Checked . already, returning NULL\n");
+		printf("   Checked . already, returning NULL\n");
 	    }
 	    return(NULL);
 	}
@@ -1237,7 +1226,7 @@ Dir_FindFile(const char *name, Lst path)
 	 * returning an empty string.
 	 */
 	if (DEBUG(DIR)) {
-	    printf("failed. Trying exact path matches...");
+	    printf("   Trying exact path matches...\n");
 	}
 
 	if (!hasLastDot && cur && (file = DirLookupAbs(cur, name, cp)) != NULL)
@@ -1257,10 +1246,6 @@ Dir_FindFile(const char *name, Lst path)
 
 	if (hasLastDot && cur && (file = DirLookupAbs(cur, name, cp)) != NULL)
 	    return *file?file:NULL;
-
-	if (DEBUG(DIR)) {
-	    printf("failed. ");
-	}
     }
 
     /*
@@ -1300,27 +1285,27 @@ Dir_FindFile(const char *name, Lst path)
     }
 #else /* !notdef */
     if (DEBUG(DIR)) {
-	printf("Looking for \"%s\"...", name);
+	printf("   Looking for \"%s\" ...\n", name);
     }
 
     bigmisses += 1;
     entry = Hash_FindEntry(&mtimes, name);
     if (entry != (Hash_Entry *)NULL) {
 	if (DEBUG(DIR)) {
-	    printf("got it (in mtime cache)\n");
+	    printf("   got it (in mtime cache)\n");
 	}
 	return(estrdup(name));
     } else if (stat (name, &stb) == 0) {
 	entry = Hash_CreateEntry(&mtimes, name, (Boolean *)NULL);
 	if (DEBUG(DIR)) {
-	    printf("Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
+	    printf("   Caching %s for %s\n", Targ_FmtTime(stb.st_mtime),
 		    name);
 	}
 	Hash_SetValue(entry, (long)stb.st_mtime);
 	return (estrdup (name));
     } else {
 	if (DEBUG(DIR)) {
-	    printf("failed. Returning NULL\n");
+	    printf("   failed. Returning NULL\n");
 	}
 	return ((char *)NULL);
     }
@@ -1448,7 +1433,7 @@ Dir_AddDir(Lst path, const char *name)
 	}
     } else {
 	if (DEBUG(DIR)) {
-	    printf("Caching %s...", name);
+	    printf("Caching %s ...", name);
 	    fflush(stdout);
 	}
 
