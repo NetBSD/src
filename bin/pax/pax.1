@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.6 1997/10/20 08:52:58 enami Exp $
+.\"	$NetBSD: pax.1,v 1.7 1998/01/21 00:11:15 mycroft Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -895,8 +895,10 @@ changed during a specified time range will be archived).
 A time range is made up of six different fields and each field must contain two
 digits.
 The format is:
-.Dl [yy[mm[dd[hh]]]]mm[.ss]
+.Dl [[[[[cc]yy]mm]dd]hh]mm[\&.ss]
 Where
+.Cm cc
+is the first two digits of the year (the century),
 .Cm yy
 is the last two digits of the year,
 the first
@@ -911,15 +913,15 @@ the second
 is the minute (from 00 to 59),
 and
 .Cm ss
-is the seconds (from 00 to 59).
-The minute field
+is the seconds (from 00 to 61).
+Only the minute field
 .Cm mm
-is required, while the other fields are optional and must be added in the
-following order:
-.Dl Cm hh , dd , mm , yy .
+is required; the others will default to the current system values.
 The 
 .Cm ss
 field may be added independently of the other fields.
+If the century is not specified, it defaults to 1900 for
+years between 69 and 99, or 2000 for years between 0 and 68.
 Time ranges are relative to the current time, so
 .Dl Fl T Ar 1234/cm
 would select all files with a modification or inode change time
