@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.34 1999/12/03 06:52:13 itojun Exp $	*/
+/*	$NetBSD: commands.c,v 1.35 1999/12/13 04:52:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.34 1999/12/03 06:52:13 itojun Exp $");
+__RCSID("$NetBSD: commands.c,v 1.35 1999/12/13 04:52:20 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2201,7 +2201,6 @@ tn(argc, argv)
 
     if (connected) {
 	printf("?Already connected to %s\n", hostname);
-	setuid(getuid());
 	return 0;
     }
     if (argc < 2) {
@@ -2242,7 +2241,6 @@ tn(argc, argv)
 	}
     usage:
 	printf("usage: %s [-l user] [-a] host-name [port]\n", cmd);
-	setuid(getuid());
 	return 0;
     }
     if (hostp == 0)
@@ -2258,7 +2256,6 @@ tn(argc, argv)
 	}
 	if (hostname == NULL) {
 	    fprintf(stderr, "%s: bad source route specification\n", hostp);
-	    setuid(getuid());
 	    return 0;
 	}
 	*hostname++ = '\0';
@@ -2300,7 +2297,6 @@ tn(argc, argv)
     }
     if (error) {
       fprintf(stderr, "%s: %s\n", hostname, gai_strerror(error));
-      setuid(getuid());
       return 0;
     }
 
@@ -2339,13 +2335,11 @@ tn(argc, argv)
 	    if ((len = ipsec_get_policylen(ipsec_policy)) < 0) {
 		printf("%s\n", ipsec_strerror());
 		freeaddrinfo(res0);
-		setuid(getuid());
 		return 0;
 	    }
 	    if ((buf = (char *)malloc(len)) == NULL) {
 		perror("malloc");
 		freeaddrinfo(res0);
-		setuid(getuid());
 		return 0;
 	    }
 	    if ((len = ipsec_set_policy(buf, len, ipsec_policy)) < 0) {
@@ -2390,7 +2384,6 @@ tn(argc, argv)
 	break;
     }
     freeaddrinfo(res0);
-    setuid(getuid());
     if (net < 0 || connected == 0) {
 	perror(cause);
 	return 0;
