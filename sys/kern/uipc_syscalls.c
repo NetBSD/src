@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.14 1995/08/12 23:59:12 mycroft Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.15 1995/09/19 21:45:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -65,15 +65,16 @@
 extern	struct fileops socketops;
 
 int
-socket(p, uap, retval)
+socket(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct socket_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
 	struct socket *so;
 	struct file *fp;
@@ -97,15 +98,16 @@ socket(p, uap, retval)
 
 /* ARGSUSED */
 int
-bind(p, uap, retval)
+bind(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct bind_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) name;
 		syscallarg(int) namelen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *nam;
 	int error;
@@ -122,14 +124,15 @@ bind(p, uap, retval)
 
 /* ARGSUSED */
 int
-listen(p, uap, retval)
+listen(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct listen_args /* {
 		syscallarg(int) s;
 		syscallarg(int) backlog;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct file *fp;
 	int error;
 
@@ -139,15 +142,16 @@ listen(p, uap, retval)
 }
 
 int
-accept(p, uap, retval)
+accept(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct accept_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) name;
 		syscallarg(int *) anamelen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *nam;
 	int namelen, error, s, tmpfd;
@@ -218,15 +222,16 @@ accept(p, uap, retval)
 
 /* ARGSUSED */
 int
-connect(p, uap, retval)
+connect(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct connect_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) name;
 		syscallarg(int) namelen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct file *fp;
 	register struct socket *so;
 	struct mbuf *nam;
@@ -266,16 +271,17 @@ bad:
 }
 
 int
-socketpair(p, uap, retval)
+socketpair(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct socketpair_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
 		syscallarg(int *) rsv;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	struct file *fp1, *fp2;
 	struct socket *so1, *so2;
@@ -329,8 +335,11 @@ free1:
 }
 
 int
-sendto(p, uap, retval)
+sendto(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct sendto_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
@@ -338,9 +347,7 @@ sendto(p, uap, retval)
 		syscallarg(int) flags;
 		syscallarg(caddr_t) to;
 		syscallarg(int) tolen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov;
 
@@ -358,15 +365,16 @@ sendto(p, uap, retval)
 }
 
 int
-sendmsg(p, uap, retval)
+sendmsg(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct sendmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) msg;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
@@ -500,8 +508,11 @@ bad:
 }
 
 int
-recvfrom(p, uap, retval)
+recvfrom(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct recvfrom_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
@@ -509,9 +520,7 @@ recvfrom(p, uap, retval)
 		syscallarg(int) flags;
 		syscallarg(caddr_t) from;
 		syscallarg(int *) fromlenaddr;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov;
 	int error;
@@ -534,15 +543,16 @@ recvfrom(p, uap, retval)
 }
 
 int
-recvmsg(p, uap, retval)
+recvmsg(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct recvmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(struct msghdr *) msg;
 		syscallarg(int) flags;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *uiov, *iov;
 	register int error;
@@ -712,14 +722,15 @@ out:
 
 /* ARGSUSED */
 int
-shutdown(p, uap, retval)
+shutdown(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct shutdown_args /* {
 		syscallarg(int) s;
 		syscallarg(int) how;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct file *fp;
 	int error;
 
@@ -730,17 +741,18 @@ shutdown(p, uap, retval)
 
 /* ARGSUSED */
 int
-setsockopt(p, uap, retval)
+setsockopt(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct setsockopt_args /* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
 		syscallarg(caddr_t) val;
 		syscallarg(int) valsize;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
@@ -766,17 +778,18 @@ setsockopt(p, uap, retval)
 
 /* ARGSUSED */
 int
-getsockopt(p, uap, retval)
+getsockopt(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct getsockopt_args /* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
 		syscallarg(caddr_t) val;
 		syscallarg(int *) avalsize;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int valsize, error;
@@ -856,15 +869,16 @@ free1:
  */
 /* ARGSUSED */
 int
-getsockname(p, uap, retval)
+getsockname(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct getsockname_args /* {
 		syscallarg(int) fdes;
 		syscallarg(caddr_t) asa;
 		syscallarg(int *) alen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct file *fp;
 	register struct socket *so;
 	struct mbuf *m;
@@ -897,15 +911,16 @@ bad:
  */
 /* ARGSUSED */
 int
-getpeername(p, uap, retval)
+getpeername(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct getpeername_args /* {
 		syscallarg(int) fdes;
 		syscallarg(caddr_t) asa;
 		syscallarg(int *) alen;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct file *fp;
 	register struct socket *so;
 	struct mbuf *m;
