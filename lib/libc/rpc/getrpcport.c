@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcport.c,v 1.12 1998/02/13 05:52:23 lukem Exp $	*/
+/*	$NetBSD: getrpcport.c,v 1.13 1998/11/15 17:25:39 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)getrpcport.c 1.3 87/08/11 SMI";
 static char *sccsid = "@(#)getrpcport.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: getrpcport.c,v 1.12 1998/02/13 05:52:23 lukem Exp $");
+__RCSID("$NetBSD: getrpcport.c,v 1.13 1998/11/15 17:25:39 christos Exp $");
 #endif
 #endif
 
@@ -73,6 +73,10 @@ getrpcport(host, prognum, versnum, proto)
 	addr.sin_len = sizeof(struct sockaddr_in);
 	addr.sin_family = AF_INET;
 	addr.sin_port =  0;
-	memmove((char *) &addr.sin_addr, hp->h_addr, hp->h_length);
-	return (pmap_getport(&addr, prognum, versnum, proto));
+	if (hp->h_length > addr.sin_len)
+		hp->h_length = addr.sin_len;
+	memcpy(&addr.sin_addr.s_addr, hp->h_addr, (size_t)hp->h_length);
+	/* Inconsistent interfaces need casts! :-( */
+	return (pmap_getport(&addr, (u_long)prognum, (u_long)versnum, 
+	    (u_int)proto));
 }

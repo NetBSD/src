@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.13 1998/07/09 18:15:18 msaitoh Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.14 1998/11/15 17:25:39 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_simple.c 1.35 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_simple.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_simple.c,v 1.13 1998/07/09 18:15:18 msaitoh Exp $");
+__RCSID("$NetBSD: clnt_simple.c,v 1.14 1998/11/15 17:25:39 christos Exp $");
 #endif
 #endif
 
@@ -110,8 +110,10 @@ callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 		timeout.tv_usec = 0;
 		timeout.tv_sec = 5;
 		memset(&server_addr, 0, sizeof(server_addr));
-		memmove((char *)&server_addr.sin_addr, hp->h_addr,
-		    hp->h_length);
+		if (hp->h_length > sizeof(struct sockaddr_in))
+			hp->h_length = sizeof(struct sockaddr_in);
+		memcpy(&server_addr.sin_addr.s_addr, hp->h_addr,
+		    (size_t)hp->h_length);
 		server_addr.sin_len = sizeof(struct sockaddr_in);
 		server_addr.sin_family = AF_INET;
 		server_addr.sin_port =  0;
@@ -125,7 +127,7 @@ callrpc(host, prognum, versnum, procnum, inproc, in, outproc, out)
 	}
 	tottimeout.tv_sec = 25;
 	tottimeout.tv_usec = 0;
-	clnt_stat = clnt_call(crp->client, procnum, inproc, in,
+	clnt_stat = clnt_call(crp->client, (unsigned long)procnum, inproc, in,
 	    outproc, out, tottimeout);
 	/* 
 	 * if call failed, empty cache
