@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.6 2001/11/21 20:25:04 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.7 2001/11/25 10:39:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -570,8 +570,8 @@ cpu_getmcontext(l, mcp, flags)
 	*flags |= _UC_CPU;
 
 	/* Save exception frame information. */
+	mcp->__mc_pad.mc_frame.format = format;
 	if (format >= FMT4) {
-		mcp->__mc_pad.mc_frame.format = format;
 		mcp->__mc_pad.mc_frame.vector = frame->f_vector;
 		(void)memcpy(&mcp->__mc_pad.mc_frame.exframe, &frame->F_u,
 		    (size_t)exframesize[format]);
@@ -579,7 +579,6 @@ cpu_getmcontext(l, mcp, flags)
 		/* Leave indicators, see above. */
 		frame->f_stackadj += exframesize[format];
 		frame->f_format = frame->f_vector = 0;
-		*flags |= _UC_M68K_FMT_VALID;
 	}
 
 	if (fputype != FPU_NONE) {
@@ -620,12 +619,12 @@ cpu_setmcontext(l, mcp, flags)
 	/* Validate the supplied context */
 	if (((flags & _UC_CPU) != 0 &&
 	     (gr[_REG_PS] & (PSL_MBZ|PSL_IPL|PSL_S)) != 0) ||
-	    ((flags & _UC_M68K_FMT_VALID) != 0 &&
+	    ((flags & _UC_M68K_UC_USER) == 0 &&
 	     (format > FMTB || (sz = exframesize[format]) < 0)))
 		return (EINVAL);
 
 	/* Restore exception frame information if necessary. */
-	if ((flags & _UC_M68K_FMT_VALID) != 0 && format >= FMT4) {
+	if ((flags & _UC_M68K_UC_USER) == 0 && format >= FMT4) {
 		if (frame->f_stackadj == 0) {
 			reenter_syscall(frame, sz);
 			/* NOTREACHED */
@@ -666,7 +665,8 @@ cpu_setmcontext(l, mcp, flags)
 		frame->f_pc       = gr[_REG_PC];
 	}
 
-	if ((flags & _UC_FPU) != 0 && fputype != FPU_NONE) {
+	if ((flags & (_UC_FPU|_UC_M68K_UC_USER)) == _UC_FPU &&
+	    fputype != FPU_NONE) {
 		/* Restore Floating Point State */
 		struct fpframe fpf;
 
