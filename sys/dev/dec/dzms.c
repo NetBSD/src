@@ -1,4 +1,4 @@
-/*	$NetBSD: dzms.c,v 1.4 2002/03/17 19:40:54 atatat Exp $	*/
+/*	$NetBSD: dzms.c,v 1.5 2002/03/26 13:59:10 fredette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.4 2002/03/17 19:40:54 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzms.c,v 1.5 2002/03/26 13:59:10 fredette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,8 @@ dzms_enable(v)
 	/* XXX mice presence test should be done in match/attach context XXX */
 	sc->self_test = 1;
 	dzputc(sc->dzms_ls, MOUSE_SELF_TEST);
+	DELAY(100000);
+	DELAY(100000);
 	DELAY(100000);
 	if (sc->self_test < 0) {
 		sc->self_test = 0;
