@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.2 (Berkeley) 6/30/90
-#	$Id: Makefile,v 1.3 1993/07/31 15:34:01 mycroft Exp $
+#	$Id: Makefile,v 1.4 1994/01/24 22:36:32 cgd Exp $
 
 DIR=	ps1/04.pascal
 DOC=	04.pascal
@@ -14,7 +14,7 @@ CLEANFILES+=csfix ${FIGURES}
 
 .include <bsd.doc.mk>
 
-${DOC}.${PRINTER}: ${FIGURES}
+${DOC}.${PRINTER_TYPE}: ${FIGURES}
 	${SOELIM} ${SRCS} | ${TBL} | ${ROFF} > ${.TARGET}
 
 csfix:

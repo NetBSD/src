@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 6/30/90
-#	$Id: Makefile,v 1.4 1993/07/31 15:33:01 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/01/24 22:36:57 cgd Exp $
 
 DIR=	smm/01.setup
 DOC=	01.setup
@@ -12,5 +12,5 @@ SRCS+=	c.t
 
 .include <bsd.doc.mk>
 
-${DOC}.${PRINTER}: ${SRCS}
+${DOC}.${PRINTER_TYPE}: ${SRCS}
 	( cd ${.CURDIR} ; ${EQN} ${.ALLSRC} ) | ${TBL} | ${ROFF} > ${.TARGET}

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.3 (Berkeley) 6/30/90
-#	$Id: Makefile,v 1.4 1993/07/31 15:31:17 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/01/24 22:37:25 cgd Exp $
 
 DIR=	smm/16.sendmail
 DOC=	16.sendmail
@@ -9,5 +9,5 @@ MACROS=	-me
 
 .include <bsd.doc.mk>
 
-${DOC}.${PRINTER}: ${SRCS}
+${DOC}.${PRINTER_TYPE}: ${SRCS}
 	( cd ${.CURDIR} ; ${PIC} ${SRCS} ) | ${ROFF} > ${.TARGET}

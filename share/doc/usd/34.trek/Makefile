@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	6.2 (Berkeley) 6/30/90
-#	$Id: Makefile,v 1.4 1993/07/31 15:29:34 mycroft Exp $
+#	$Id: Makefile,v 1.5 1994/01/24 22:38:00 cgd Exp $
 
 DIR=	usd/34.trek
 DOC=	34.trek
@@ -9,5 +9,5 @@ MACROS=	-me
 
 .include <bsd.doc.mk>
 
-${DOC}.${PRINTER}: ${SRCS}
+${DOC}.${PRINTER_TYPE}: ${SRCS}
 	( cd ${.CURDIR} ; ${TBL} ${SRCS} ) | ${ROFF} > ${.TARGET}
