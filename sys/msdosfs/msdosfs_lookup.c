@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.19 1995/10/30 19:06:18 ws Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.20 1995/11/03 17:29:53 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -221,6 +221,8 @@ msdosfs_lookup(ap)
 		wincnt = winSlotCnt((u_char *)cnp->cn_nameptr,cnp->cn_namelen) + 1;
 		break;
 	}
+	if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
+		wincnt = 1;
 
 	/*
 	 * Suppress search for slots unless creating
