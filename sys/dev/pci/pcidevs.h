@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.326 2001/05/06 16:10:45 fvdl Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.327 2001/05/14 22:37:24 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.320 2001/05/06 16:09:38 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.321 2001/05/14 22:36:06 thorpej Exp 
  */
 
 /*
@@ -1363,6 +1363,7 @@
 /* National Semiconductor products */
 #define	PCI_PRODUCT_NS_DP83810	0x0001		/* DP83810 10/100 Ethernet */
 #define	PCI_PRODUCT_NS_DP83815	0x0020		/* DP83815 10/100 Ethernet */
+#define	PCI_PRODUCT_NS_DP83820	0x0022		/* DP83820 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_NS_NS87410	0xd001		/* NS87410 */
 
 /* NCR/Symbios Logic products */
