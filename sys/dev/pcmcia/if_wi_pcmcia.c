@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.13 2001/11/18 04:27:49 mrg Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.13 2001/11/18 04:27:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,6 +197,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11,
 	  PCMCIA_CIS_BUFFALO_WLI_PCM_S11,
 	  PCMCIA_STR_BUFFALO_WLI_PCM_S11 },
+
+	{ PCMCIA_VENDOR_BUFFALO,
+	  PCMCIA_PRODUCT_BUFFALO_WLI_CF_S11G,
+	  PCMCIA_CIS_BUFFALO_WLI_CF_S11G,
+	  PCMCIA_STR_BUFFALO_WLI_CF_S11G },
 
 	{ PCMCIA_VENDOR_EMTAC,
 	  PCMCIA_PRODUCT_EMTAC_WLAN,
