@@ -21,7 +21,7 @@ This paragraph is here to try to keep Sun CC from dying.
 The number of chars here seems crucial!!!!  */
 
 #ifndef lint
-static char rcsid[] = "$Id: gcc.c,v 1.3 1993/08/02 17:32:36 mycroft Exp $";
+static char rcsid[] = "$Id: gcc.c,v 1.4 1993/09/02 18:48:31 mycroft Exp $";
 #endif /* not lint */
 
 /* This program is the user interface to the C compiler and possibly to
@@ -1156,11 +1156,13 @@ static char *standard_startfile_prefix = STANDARD_STARTFILE_PREFIX;
 static char *standard_startfile_prefix_1 = "/lib/";
 static char *standard_startfile_prefix_2 = "/usr/lib/";
 
+#if 0
 #ifndef TOOLDIR_BASE_PREFIX
 #define TOOLDIR_BASE_PREFIX "/usr/local/"
 #endif
 static char *tooldir_base_prefix = TOOLDIR_BASE_PREFIX;
 static char *tooldir_prefix;
+#endif
 
 /* Clear out the vector of arguments (after a command is executed).  */
 
@@ -2372,6 +2374,7 @@ process_command (argc, argv)
   add_prefix (&startfile_prefix, standard_exec_prefix, 0, 1, NULL_PTR);
   add_prefix (&startfile_prefix, standard_exec_prefix_1, 0, 1, NULL_PTR);
 
+#if 0
   tooldir_prefix = concat (tooldir_base_prefix, spec_machine, "/");
 
   /* If tooldir is relative, base it on exec_prefix.  A relative
@@ -2408,7 +2411,7 @@ process_command (argc, argv)
 
   /* More prefixes are enabled in main, after we read the specs file
      and determine whether this is cross-compilation or not.  */
-
+#endif
 
   /* Then create the space for the vectors and scan again.  */
 
