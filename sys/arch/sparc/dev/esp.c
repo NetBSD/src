@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.63 1996/11/27 21:34:59 pk Exp $	*/
+/*	$NetBSD: esp.c,v 1.64 1996/12/10 21:27:44 thorpej Exp $	*/
 
 #ifdef __sparc__
 #define	SPARC_DRIVER
@@ -421,6 +421,7 @@ espattach(parent, self, aux)
 	sc->sc_link.adapter = &esp_switch;
 	sc->sc_link.device = &esp_dev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	/*
 	 * If the boot path is "esp" at the moment and it's me, then

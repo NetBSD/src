@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.6 1996/10/21 22:30:56 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.7 1996/12/10 21:27:48 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -228,6 +228,7 @@ ahbattach(parent, self, aux)
 	sc->sc_link.adapter = &ahb_switch;
 	sc->sc_link.device = &ahb_dev;
 	sc->sc_link.openings = 4;
+	sc->sc_link.max_target = 7;
 
 	if (eisa_intr_map(ec, sc->sc_irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",

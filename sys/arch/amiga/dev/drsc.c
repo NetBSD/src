@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.7 1996/11/30 01:27:04 is Exp $	*/
+/*	$NetBSD: drsc.c,v 1.8 1996/12/10 21:27:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -132,6 +132,7 @@ drscattach(pdp, dp, auxp)
 	sc->sc_link.adapter = &drsc_scsiswitch;
 	sc->sc_link.device = &drsc_scsidev;
 	sc->sc_link.openings = 2;
+	sc->sc_link.max_target = 7;
 
 	siopinitialize(sc);
 

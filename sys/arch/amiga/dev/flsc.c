@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.12 1996/10/13 03:06:57 christos Exp $	*/
+/*	$NetBSD: flsc.c,v 1.13 1996/12/10 21:27:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -178,6 +178,7 @@ flscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_link.adapter	    = &flsc_scsiswitch;
 	sc->sc_softc.sc_link.device	    = &flsc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
+	sc->sc_softc.sc_link.max_target     = 7;
 
 	sc->sc_softc.sc_isr.isr_intr = flsc_intr;
 	sc->sc_softc.sc_isr.isr_arg  = &sc->sc_softc;

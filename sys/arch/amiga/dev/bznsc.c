@@ -1,4 +1,4 @@
-/*	$NetBSD: bznsc.c,v 1.3 1996/11/11 15:33:57 is Exp $	*/
+/*	$NetBSD: bznsc.c,v 1.4 1996/12/10 21:27:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -200,6 +200,7 @@ bznscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_link.adapter	    = &bznsc_scsiswitch;
 	sc->sc_softc.sc_link.device	    = &bznsc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
+	sc->sc_softc.sc_link.max_target     = 7;
 
 	sc->sc_softc.sc_isr.isr_intr = bznsc_intr;
 	sc->sc_softc.sc_isr.isr_arg  = &sc->sc_softc;
