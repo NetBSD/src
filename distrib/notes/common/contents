@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.98 2004/05/13 00:26:25 cl Exp $
+.\"	$NetBSD: contents,v 1.99 2004/05/23 17:47:09 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -334,7 +334,7 @@ Netboot bootloader and root filesystem with install tools; see below.
 .\}
 .if \n[sparc64] \{\
 .		It Pa netboot/
-Server boot-file image for diskless machines.
+Netboot bootloader; see below.
 .\}
 .
 .if \n[sun2] \{\
