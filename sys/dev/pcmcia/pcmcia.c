@@ -351,7 +351,6 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
      int (*ih_fct) __P((void *));
      void *ih_arg;
 {
-    u_int16_t irqmask = pf->cfe_head.sqh_first->irqmask;
     void *ret;
 
     /* behave differently if this is a multifunction card */
@@ -397,7 +396,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 #endif
 
 	    pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct, pf->sc->pch,
-						    irqmask, ipl,
+						    pf, ipl,
 						    pcmcia_card_intr, pf->sc);
 	} else if (ipl > hiipl) {
 #ifdef DIAGNOSTIC
@@ -408,7 +407,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 	    pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
 					  pf->sc->ih);
 	    pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct, pf->sc->pch,
-						    irqmask, ipl,
+						    pf, ipl,
 						    pcmcia_card_intr, pf->sc);
 	}
 
@@ -428,7 +427,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 	}
     } else {
 	ret = pcmcia_chip_intr_establish(pf->sc->pct, pf->sc->pch,
-					 irqmask, ipl, ih_fct, ih_arg);
+					 pf, ipl, ih_fct, ih_arg);
     }
 
     return(ret);
@@ -439,7 +438,6 @@ pcmcia_intr_disestablish(pf, ih)
      struct pcmcia_function *pf;
      void *ih;
 {
-    u_int16_t irqmask = pf->cfe_head.sqh_first->irqmask;
 
     /* behave differently if this is a multifunction card */
 
@@ -502,7 +500,7 @@ pcmcia_intr_disestablish(pf, ih)
 	    pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
 					  pf->sc->ih);
 	    pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct, pf->sc->pch,
-						    irqmask, hiipl,
+						    pf, hiipl,
 						    pcmcia_card_intr, pf->sc);
 	}
 	    
@@ -556,4 +554,3 @@ int pcmcia_card_intr(arg)
 
     return(ret);
 }
-

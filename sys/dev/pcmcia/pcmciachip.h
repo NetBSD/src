@@ -3,6 +3,7 @@
 
 #include <machine/bus.h>
 
+struct pcmcia_function;
 struct pcmcia_mem_handle;
 struct pcmcia_io_handle;
 
@@ -43,7 +44,8 @@ struct pcmcia_chip_functions {
     void (*io_unmap) __P((pcmcia_chipset_handle_t, int));
 
     /* interrupt glue */
-    void *(*intr_establish) __P((pcmcia_chipset_handle_t, u_int16_t, int,
+    void *(*intr_establish) __P((pcmcia_chipset_handle_t,
+    				 struct pcmcia_function *, int,
 				 int (*)(void *), void *));
     void (*intr_disestablish) __P((pcmcia_chipset_handle_t, void *));
 };
@@ -70,8 +72,8 @@ struct pcmcia_chip_functions {
 #define pcmcia_chip_io_unmap(tag, handle, window) \
 	((*(tag)->io_unmap)((handle), (window)))
 
-#define pcmcia_chip_intr_establish(tag, handle, irqmask, ipl, fct, arg) \
-	((*(tag)->intr_establish)((handle), (irqmask), (ipl), (fct), (arg)))
+#define pcmcia_chip_intr_establish(tag, handle, pf, ipl, fct, arg) \
+	((*(tag)->intr_establish)((handle), (pf), (ipl), (fct), (arg)))
 #define pcmcia_chip_intr_disestablish(tag, handle, ih) \
 	((*(tag)->intr_disestablish)((handle), (ih)))
 
