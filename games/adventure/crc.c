@@ -1,4 +1,4 @@
-/*	$NetBSD: crc.c,v 1.5 1997/10/11 01:53:21 lukem Exp $	*/
+/*	$NetBSD: crc.c,v 1.6 1998/09/13 00:07:24 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)crc.c	8.1 (Berkeley) 5/31/93";
 static char ORIGINAL_sccsid[] = "@(#)crc.c	5.2 (Berkeley) 4/4/91";
 #else
-__RCSID("$NetBSD: crc.c,v 1.5 1997/10/11 01:53:21 lukem Exp $");
+__RCSID("$NetBSD: crc.c,v 1.6 1998/09/13 00:07:24 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,11 +121,11 @@ crc_start()
 
 unsigned long
 crc(ptr, nr)		/* Process nr bytes at a time; ptr points to them */
-	char   *ptr;
+	const char   *ptr;
 	int     nr;
 {
 	int     i;
-	char   *p;
+	const char   *p;
 
 	while (nr > 0)
 		for (p = ptr; nr--; ++p) {
