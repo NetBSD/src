@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.46 2001/11/15 09:48:07 lukem Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.47 2001/11/26 20:15:49 fredette Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.46 2001/11/15 09:48:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.47 2001/11/26 20:15:49 fredette Exp $");
 
 #include "opt_ddb.h"
 
@@ -2279,7 +2279,6 @@ next_phase:
 	sc->sc_prevphase = phase;
 
 do_actions:
-	__asm("_ncr5380_actions:");
 
 	if (act_flags & ACT_WAIT_DMA) {
 		act_flags &= ~ACT_WAIT_DMA;
@@ -2384,7 +2383,6 @@ do_actions:
 		NCR5380_WRITE(sc, sci_sel_enb, 0x80);
 
 		if ((act_flags & ACT_CMD_DONE) == 0) {
-			__asm("_ncr5380_disconnected:");
 			NCR_TRACE("machine: discon, cur=0x%x\n", (long)sr);
 		}
 
