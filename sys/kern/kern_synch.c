@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.117 2002/12/21 23:52:06 gmcgarry Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.118 2002/12/29 02:08:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.117 2002/12/21 23:52:06 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.118 2002/12/29 02:08:39 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -582,6 +582,8 @@ awaken(struct proc *p)
 	/*
 	 * Since curpriority is a user priority, p->p_priority
 	 * is always better than curpriority.
+	 *
+	 * XXX See affinity comment in setrunnable().
 	 */
 	if (p->p_flag & P_INMEM) {
 		setrunqueue(p);
