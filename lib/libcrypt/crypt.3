@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.9 2000/08/03 08:30:43 ad Exp $
+.\"	$NetBSD: crypt.3,v 1.10 2002/01/15 02:40:05 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,8 +78,7 @@ of perturbations is selected.  If
 .Ar setting
 begins with any other character, DES encryption with a fixed number
 of perturbations is selected.
-.Ss "DES" encryption:
-.Pp
+.Ss DES encryption:
 The DES encryption scheme is derived from the
 .Tn NBS
 Data Encryption Standard.
@@ -90,7 +89,7 @@ is a character array, 9 bytes in length, consisting of an underscore (``_'')
 followed by 4 bytes of iteration count and 4 bytes of salt.
 Both the iteration
 .Fa count
-and the 
+and the
 .Fa salt
 are encoded with 6 bits per character, least significant bits first.
 The values 0 to 63 are encoded by the characters ``./0-9A-Za-z'',
@@ -223,18 +222,17 @@ The
 specifies perturbations to
 .Tn DES
 as described above.
-.Ss "MD5" encryption:
-.Pp
+.Ss MD5 encryption:
 For the
-.Tn MD5 
+.Tn MD5
 encryption scheme, the version number (in this case ``1''),
 .Fa salt
 and the hashed password are separated
-by the ``$'' character.  A valid password looks like this: 
+by the ``$'' character.  A valid password looks like this:
 .Pp
 ``$1$2qGr5PPQ$eT08WBFev3RPLNChixg0H.''.
 .Pp
-The entire password string is passed as 
+The entire password string is passed as
 .Fa setting
 for interpretation.
 .Sh RETURN VALUES
