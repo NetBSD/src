@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.22 1998/02/02 14:02:21 mrg Exp $	*/
+/*	$NetBSD: function.c,v 1.23 1998/02/03 01:04:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.22 1998/02/02 14:02:21 mrg Exp $");
+__RCSID("$NetBSD: function.c,v 1.23 1998/02/03 01:04:27 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -433,24 +433,10 @@ c_fstype(arg)
 	char *arg;
 {
 	PLAN *new;
-#if 0
-	struct vfsconf vfc;
-#endif
     
 	ftsoptions &= ~FTS_NOSTAT;
     
 	new = palloc(N_FSTYPE, f_fstype);
-#if 0
-
-	/*
-	 * Check first for a filesystem name.
-	 */
-	if (getvfsbyname(arg, &vfc) == 0) {
-		new->flags = F_MTTYPE;
-		new->mt_data = vfc.vfc_typenum;
-		return (new);
-	}
-#endif
 
 	switch (*arg) {
 	case 'l':
@@ -469,14 +455,9 @@ c_fstype(arg)
 		break;
 	}
 
-#if 0
-	errx(1, "%s: unknown file type", arg);
-	/* NOTREACHED */
-#else
 	new->flags = F_MTTYPE;
 	new->c_data = arg;
 	return (new);
-#endif
 }
  
 /*
