@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 2000/03/23 06:37:24 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.138 2000/03/28 23:57:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -463,7 +463,6 @@ setregs(p, pack, stack)
  * Info for CTL_HW
  */
 char	cpu_model[120];
-extern	char version[];
 
 struct hp300_model {
 	int id;

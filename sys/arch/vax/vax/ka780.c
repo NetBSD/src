@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.14 1999/08/07 10:36:49 ragge Exp $ */
+/*	$NetBSD: ka780.c,v 1.15 2000/03/28 23:57:30 simonb Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -355,7 +355,6 @@ struct ka78x {
 void
 ka780_conf()
 {
-	extern	char cpu_model[];
 	struct	ka78x *ka78 = (void *)&vax_cpudata;
 
 	/* Enable cache */

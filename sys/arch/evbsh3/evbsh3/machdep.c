@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2000/03/25 03:07:29 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2000/03/28 23:57:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -215,11 +215,6 @@ cpu_startup()
 	boothowto |= RB_SINGLE;
 #endif
 }
-
-/*
- * Info for CTL_HW
- */
-extern	char version[];
 
 #define CPUDEBUG
 

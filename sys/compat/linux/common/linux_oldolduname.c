@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.51 2000/03/13 23:52:35 soren Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.52 2000/03/28 23:57:33 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/mount.h>
 
 #include <sys/syscallargs.h>
@@ -64,7 +65,6 @@ linux_sys_oldolduname(p, v, retval)
 	struct linux_sys_uname_args /* {
 		syscallarg(struct linux_oldoldutsname *) up;
 	} */ *uap = v;
-	extern char ostype[], hostname[], osrelease[], version[], machine[];
 	struct linux_oldoldutsname luts;
 	int len;
 	char *cp;
@@ -88,4 +88,3 @@ linux_sys_oldolduname(p, v, retval)
 
 	return copyout(&luts, SCARG(uap, up), sizeof(luts));
 }
-
