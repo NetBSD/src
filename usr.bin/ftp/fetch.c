@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.108 2000/04/13 08:13:31 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.109 2000/04/13 08:17:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.108 2000/04/13 08:13:31 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.109 2000/04/13 08:17:56 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -628,6 +628,8 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 							continue;
 					}
 					plen = strlen(cp);
+					if (hlen < plen)
+						continue;
 					if (strncasecmp(host + hlen - plen,
 					    cp, plen) == 0) {
 						isproxy = 0;
@@ -1000,6 +1002,12 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 			} else if (strncasecmp(cp, TRANSENC,
 						sizeof(TRANSENC) - 1) == 0) {
 				cp += sizeof(TRANSENC) - 1;
+				if (strcasecmp(cp, "binary") == 0) {
+					warnx(
+			"Bogus transfer encoding - `%s' (fetching anyway)",
+					    cp);
+					continue;
+				}
 				if (strcasecmp(cp, "chunked") != 0) {
 					warnx(
 				    "Unsupported transfer encoding - `%s'",
