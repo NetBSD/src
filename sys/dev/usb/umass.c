@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.53 2001/03/23 14:11:39 fvdl Exp $	*/
+/*	$NetBSD: umass.c,v 1.54 2001/04/01 14:41:39 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -50,13 +50,14 @@
  *
  * Over these wire protocols it handles the following command protocols
  * - SCSI
- * - UFI (floppy command set)
- * - 8070 (ATA/ATAPI)
+ * - 8070 (ATA/ATAPI for rewritable removable media)
+ * - UFI (USB Floppy Interface)
  *
- * UFI and 8070i are transformed versions of the SCSI command set. The
- * sc->transform method is used to convert the commands into the appropriate
- * format (if at all necessary). For example, UFI requires all commands to be
- * 12 bytes in length amongst other things.
+ * 8070i is a transformed version of the SCSI command set. UFI is a transformed
+ * version of the 8070i command set.  The sc->transform method is used to 
+ * convert the commands into the appropriate format (if at all necessary).
+ * For example, ATAPI requires all commands to be 12 bytes in length amongst
+ * other things.
  *
  * The source code below is marked and can be split into a number of pieces
  * (in this order):
@@ -140,11 +141,14 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <dev/scsipi/atapi_all.h>
 #include <dev/scsipi/atapiconf.h>
 
 #include <dev/scsipi/scsipi_disk.h>
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsi_changer.h>
+
+#include <dev/scsipi/atapi_disk.h>
 
 #define SHORT_INQUIRY_LENGTH    36 /* XXX */
 
@@ -617,9 +621,6 @@ Static void umass_scsipi_sense_cb(struct umass_softc *sc, void *priv,
 				       int residue, int status);
 
 Static int scsipiprint(void *aux, const char *pnp);
-Static int umass_ufi_transform(struct umass_softc *sc,
-			       struct scsipi_generic *cmd, int cmdlen,
-			       struct scsipi_generic *rcmd, int *rcmdlen);
 #if NATAPIBUS > 0
 Static void umass_atapi_probedev(struct atapibus_softc *, int);
 #endif
@@ -701,15 +702,29 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		return (UMATCH_VENDOR_PRODUCT);
 	}
 
-	if (UGETW(dd->idVendor) == USB_VENDOR_YANO
-	    && UGETW(dd->idProduct) == USB_PRODUCT_YANO_U640MO) {
+	if (vendor == USB_VENDOR_MICROTECH &&
+	    product == USB_PRODUCT_MICROTECH_DPCM) {
+		sc->proto = PROTO_ATAPI | PROTO_CBI;
+		sc->subclass = UISUBCLASS_SFF8070I;
+		sc->protocol = UIPROTO_MASS_CBI;
+		sc->transfer_speed = UMASS_ZIP100_TRANSFER_SPEED * 2;
+
+		return (UMATCH_VENDOR_PRODUCT);
+	}
+
+	if (vendor == USB_VENDOR_YANO &&
+	    product == USB_PRODUCT_YANO_U640MO) {
+#if CBI_I
 		sc->proto = PROTO_ATAPI | PROTO_CBI_I;
+#else
+		sc->proto = PROTO_ATAPI | PROTO_CBI;
+#endif
 		sc->quirks |= FORCE_SHORT_INQUIRY;
 		return (UMATCH_VENDOR_PRODUCT);
 	}
 
-	if (UGETW(dd->idVendor) == USB_VENDOR_SONY
-	    && UGETW(dd->idProduct) == USB_PRODUCT_SONY_MSC) {
+	if (vendor == USB_VENDOR_SONY &&
+	    product == USB_PRODUCT_SONY_MSC) {
 		sc->quirks |= FORCE_SHORT_INQUIRY;
 	}
 
@@ -1141,10 +1156,7 @@ USB_ATTACH(umass)
 	 * fill in the prototype scsipi_link.
 	 */
 	switch (sc->proto & PROTO_COMMAND) {
-	case PROTO_UFI:
 	case PROTO_RBC:
-		sc->u.sc_link.quirks |= SDEV_ONLYBIG;
-		/* fall into */
 	case PROTO_SCSI:
 		sc->u.sc_link.type = BUS_SCSI;
 		sc->u.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
@@ -1156,11 +1168,10 @@ USB_ATTACH(umass)
 		sc->u.sc_link.scsipi_scsi.max_target = UMASS_SCSIID_DEVICE;
 		sc->u.sc_link.scsipi_scsi.max_lun = sc->maxlun;
 
-		if (sc->quirks & NO_TEST_UNIT_READY)
-			sc->u.sc_link.quirks |= ADEV_NOTUR;
 		break;
 
 #if NATAPIBUS > 0
+	case PROTO_UFI:
 	case PROTO_ATAPI:
 		sc->u.aa.sc_aa.aa_type = T_ATAPI;
 		sc->u.aa.sc_aa.aa_channel = 0;
@@ -1169,6 +1180,9 @@ USB_ATTACH(umass)
 		sc->u.aa.sc_aa.aa_bus_private = &sc->sc_atapi_adapter;
 		sc->sc_atapi_adapter.atapi_probedev = umass_atapi_probedev;
 		sc->sc_atapi_adapter.atapi_kill_pending = scsi_kill_pending;
+
+		if (sc->quirks & NO_TEST_UNIT_READY)
+			sc->u.sc_link.quirks |= ADEV_NOTUR;
 		break;
 #endif
 
@@ -3173,13 +3187,6 @@ umass_scsipi_cmd(struct scsipi_xfer *xs)
 
 	/* XXX should use transform */
 
-	if (xs->cmd->opcode == SCSI_MODE_SENSE &&
-	    (sc_link->quirks & SDEV_NOMODESENSE)) {
-		/*printf("%s: SCSI_MODE_SENSE\n", USBDEVNAME(sc->sc_dev));*/
-		xs->error = XS_TIMEOUT;
-		goto done;
-	}
-
 	if (xs->cmd->opcode == START_STOP &&
 	    (sc->quirks & NO_START_STOP)) {
 		/*printf("%s: START_STOP\n", USBDEVNAME(sc->sc_dev));*/
@@ -3215,13 +3222,6 @@ umass_scsipi_cmd(struct scsipi_xfer *xs)
 
 	cmd = xs->cmd;
 	cmdlen = xs->cmdlen;
-	if (sc->proto & PROTO_UFI) {
-		if (!umass_ufi_transform(sc, cmd, cmdlen, &trcmd, &cmdlen)) {
-			xs->error = XS_DRIVER_STUFFUP;
-			goto done;
-		}
-		cmd = &trcmd;
-	}
 
 	if (xs->xs_control & XS_CTL_POLL) {
 		/* Use sync transfer. XXX Broken! */
@@ -3436,71 +3436,6 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	s = splbio();
 	scsipi_done(xs);
 	splx(s);
-}
-
-/*
- * UFI specific functions
- */
-
-Static int
-umass_ufi_transform(struct umass_softc *sc, struct scsipi_generic *cmd, 
-		    int cmdlen, struct scsipi_generic *rcmd, int *rcmdlen)
-{
-	*rcmdlen = UFI_COMMAND_LENGTH;
-	memset(rcmd, 0, sizeof *rcmd);
-
-	/* Handle any quirks */
-	if (cmd->opcode == TEST_UNIT_READY
-	    && (sc->quirks & NO_TEST_UNIT_READY)) {
-		/*
-		 * Some devices do not support this command.
-		 * Start Stop Unit should give the same results
-		 */
-		DPRINTF(UDMASS_UFI, ("%s: Converted TEST_UNIT_READY "
-			"to START_UNIT\n", USBDEVNAME(sc->sc_dev)));
-		rcmd->opcode = START_STOP;
-		rcmd->bytes[3] = SSS_START;
-		return 1;
-	} 
-
-	switch (cmd->opcode) {
-	/* Commands of which the format has been verified. They should work. */
-	case TEST_UNIT_READY:
-	case SCSI_REZERO_UNIT:
-	case REQUEST_SENSE:
-	case INQUIRY:
-	case START_STOP:
-	/*case SEND_DIAGNOSTIC: ??*/
-	case PREVENT_ALLOW:
-	case READ_CAPACITY:
-	case READ_BIG:
-	case WRITE_BIG:
-	case POSITION_TO_ELEMENT:	/* SEEK_10 */
-	case SCSI_MODE_SELECT_BIG:
-	case SCSI_MODE_SENSE_BIG:
-		/* Copy the command into the (zeroed out) destination buffer */
-		memcpy(rcmd, cmd, cmdlen);
-		return (1);	/* success */
-
-	/* 
-	 * Other UFI commands: FORMAT_UNIT, MODE_SELECT, READ_FORMAT_CAPACITY,
-	 * VERIFY, WRITE_AND_VERIFY.
-	 * These should be checked whether they somehow can be made to fit.
-	 */
-
-	/* These commands are known _not_ to work. They should be converted. */
-	case SCSI_READ_COMMAND:
-	case SCSI_WRITE_COMMAND:
-	case SCSI_MODE_SENSE:
-	case SCSI_MODE_SELECT:
-	default:
-		printf("%s: Unsupported UFI command 0x%02x",
-			USBDEVNAME(sc->sc_dev), cmd->opcode);
-		if (cmdlen == 6)
-			printf(", 6 byte command should have been converted");
-		printf("\n");
-		return (0);	/* failure */
-	}
 }
 
 #if NATAPIBUS > 0
