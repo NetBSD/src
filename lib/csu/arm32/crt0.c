@@ -1,3 +1,5 @@
+/*	$NetBSD: crt0.c,v 1.2 1996/10/18 05:36:47 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
  * Copyright (C) 1995 TooLs GmbH.

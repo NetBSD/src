@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.4 1996/10/18 05:36:59 thorpej Exp $
 #	from: @(#)Makefile	5.6 (Berkeley) 5/22/91
-#	$Id: Makefile,v 1.3 1996/10/18 05:27:47 thorpej Exp $
 
 CFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/..
 OBJS=		crt0.o gcrt0.o scrt0.o

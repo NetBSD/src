@@ -1,4 +1,5 @@
-/*	$NetBSD: common.c,v 1.4 1995/09/23 22:34:20 pk Exp $	*/
+/*	$NetBSD: common.c,v 1.5 1996/10/18 05:36:43 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
  * All rights reserved.
@@ -27,7 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #ifdef DYNAMIC
