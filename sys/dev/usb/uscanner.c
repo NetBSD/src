@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.11 2001/01/07 14:46:31 augustss Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.12 2001/01/23 14:04:14 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -319,6 +319,9 @@ USB_ATTACH(uscanner)
 		UID_ROOT, GID_OPERATOR, 0644, "%s", USBDEVNAME(sc->sc_dev));
 #endif
 
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -632,6 +635,9 @@ USB_DETACH(uscanner)
 		VOP_REVOKE(vp, REVOKEALL);
 	destroy_dev(dev);
 #endif
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
 
 	return (0);
 }

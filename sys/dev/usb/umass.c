@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.49 2001/01/21 18:56:38 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.50 2001/01/23 14:04:13 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -1180,6 +1180,9 @@ USB_ATTACH(umass)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	sc->sc_child = config_found(&sc->sc_dev, &sc->u, scsipiprint);
 	if (sc->sc_child == NULL) {
 		umass_disco(sc);
@@ -1187,9 +1190,6 @@ USB_ATTACH(umass)
 		USB_ATTACH_SUCCESS_RETURN;
 	}
 #endif
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
 
 	DPRINTF(UDMASS_GEN, ("%s: Attach finished\n", USBDEVNAME(sc->sc_dev)));
 

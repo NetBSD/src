@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.40 2001/01/21 00:07:13 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.41 2001/01/23 14:04:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -402,15 +402,15 @@ USB_ATTACH(uaudio)
 		printf("%s: %d mixer controls\n", USBDEVNAME(sc->sc_dev),
 		    sc->sc_nctls);
 
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
 #if defined(__OpenBSD__)
 	audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
 #else
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
 #endif
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
 
 	USB_ATTACH_SUCCESS_RETURN;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.4 2000/12/08 01:53:44 augustss Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.5 2001/01/23 14:04:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -217,6 +217,9 @@ USB_ATTACH(uftdi)
 	uca.methods = &uftdi_methods;
 	uca.arg = sc;
 
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	DPRINTF(("uftdi: in=0x%x out=0x%x\n", uca.bulkin, uca.bulkout));
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 
@@ -260,6 +263,10 @@ uftdi_detach(device_ptr_t self, int flags)
 		rv = config_detach(sc->sc_subdev, flags);
 		sc->sc_subdev = NULL;
 	}
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	return (0);
 }
 

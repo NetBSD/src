@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.36 2001/01/11 20:35:02 explorer Exp $	*/
+/*	$NetBSD: umodem.c,v 1.37 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -289,11 +289,11 @@ USB_ATTACH(umodem)
 	uca.methods = &umodem_methods;
 	uca.arg = sc;
 
-	DPRINTF(("umodem_attach: sc=%p\n", sc));
-	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
-
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	DPRINTF(("umodem_attach: sc=%p\n", sc));
+	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 
 	USB_ATTACH_SUCCESS_RETURN;
 
