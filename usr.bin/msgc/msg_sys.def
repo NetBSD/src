@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.26 2003/09/25 18:32:10 dsl Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.27 2004/06/05 19:05:36 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,6 +45,8 @@ static int last_o_was_punct, last_o_was_space;
 
 static void	_msg_beep(void);
 static int	_msg_vprintf(int, const char *, va_list);
+#define MSG_PROMPT_ECHO		1
+#define MSG_PROMPT_HIDE_DFLT	2
 static void	_msg_vprompt(const char *, int, const char *, char *,
 			size_t, va_list);
 
@@ -321,70 +323,136 @@ _erase_ch(void)
 }
 
 static void
-_msg_vprompt(const char *fmt, int do_echo, const char *def, char *val,
+_msg_vprompt(const char *fmt, int flags, const char *def, char *val,
     size_t max_chars, va_list ap)
 {
 	int ch;
-	int count = 0;
+	int len, pos, npos, off;
+	int first;
+	int txt_y, txt_x;
 	char *ibuf = alloca(max_chars);
+	int maxx;
 
+	keypad(msg_win, TRUE);
 	_msg_vprintf(0, fmt, ap);
+	ibuf[0] = 0;
 	if (def != NULL && *def) {
-		waddstr(msg_win, " [");
-		waddstr(msg_win, def);
-		waddstr(msg_win, "]");
+		if (flags & MSG_PROMPT_HIDE_DFLT)
+			strlcpy(ibuf, def, max_chars);
+		else {
+			waddstr(msg_win, " [");
+			waddstr(msg_win, def);
+			waddstr(msg_win, "]");
+		}
 	}
 	waddstr(msg_win, ": ");
-	wrefresh(msg_win);
+	len = strlen(ibuf);
+	pos = len;
+	getyx(msg_win, txt_y, txt_x);
+	maxx = getmaxx(msg_win) - txt_x - 1;
+	off = 0;
 
-	while ((ch = wgetch(msg_win)) != '\n') {
-		if (ch == 0x08 || ch == 0x7f) {  /* bs or del */
-			if (count > 0) {
-				count--;
-				if (do_echo)
-					_erase_ch();
+	for (first = 1; ; first = 0) {
+
+		if (flags & MSG_PROMPT_ECHO) {
+			/* shift text right as we near the buffer start */
+			if (pos - off < 4)
+				off = pos - 4;
+			/* keep offset to a minimum if we are at the end */
+			if (pos == len)
+				off = pos - maxx;
+			if (off < 0 || len <= maxx)
+				off = 0;
+			/* shift text left as we near the buffer end */
+			npos = pos + 4;
+			if (npos > len)
+				npos = len;
+			if (npos - off > maxx)
+				off = npos - maxx;
+			/* calc. length to display */
+			npos = len - off;
+			if (npos > maxx)
+				npos = maxx;
+			mvwaddnstr(msg_win, txt_y, txt_x, ibuf + off, npos);
+			wclrtoeol(msg_win);
+			if (off != 0)
+				mvwaddstr(msg_win, txt_y, txt_x, "+");
+			wmove(msg_win, txt_y, txt_x + pos - off);
+			wrefresh(msg_win);
+		}
+
+		ch = wgetch(msg_win);
+		if (ch == '\n')
+			break;
+
+		switch (ch) {
+		case KEY_BACKSPACE:
+		case 'h' & 0x1f: case 0x7f:  /* bs or del - delete left */
+			if (first) {
+				/* delete all of default string */
+				len = pos = 0;
+				break;
+			}
+			if (pos > 0) {
+				memmove(ibuf + pos - 1, ibuf + pos, len - pos);
+				len--;
+				pos--;
 			} else
 				_msg_beep();
-		} else if (ch == 0x15) {	/* ^U; line kill */
-			while (count > 0) {
-				count--;
-				if (do_echo)
-					_erase_ch();
-			}
-		} else if (ch == 0x17) {        /* ^W; word kill */
+			break;
+		case 'u' & 0x1f:	/* ^U; line kill */
+			/* kill line */
+			len = pos = 0;
+			break;
+		case 'w' & 0x1f:        /* ^W; word kill */
 			/*
 			 * word kill kills the spaces and the 'word'
 			 * (non-spaces) last typed.  the spaces before
 			 * the 'word' aren't killed.
 			 */
-			while (count > 0 && isspace(ibuf[count - 1])) {
-				count--;
-				if (do_echo)
-					_erase_ch();
+			npos = pos;
+			while (npos > 0 && isspace(ibuf[npos - 1]))
+				npos--;
+			while (npos > 0 && !isspace(ibuf[npos - 1]))
+				npos--;
+			memmove(ibuf + npos, ibuf + pos, len - pos);
+			len -= pos - npos;
+			pos = npos;
+			break;
+		case KEY_LEFT:
+			if (pos > 0)
+				pos--;
+			break;
+		case KEY_RIGHT:
+			if (len == 0 && pos == 0 && def != NULL) {
+				/* restore default! */
+				strlcpy(ibuf, def, max_chars);
+				len = pos = strlen(ibuf);
+				break;
 			}
-			while (count > 0 && !isspace(ibuf[count - 1])) {
-				count--;
-				if (do_echo)
-					_erase_ch();
-			}
-		} else if (count < (max_chars - 1) && isprint(ch)) {
-			if (do_echo)
-				waddch(msg_win, ch);
-			ibuf[count++] = ch;
-		} else
-			_msg_beep();
-		if (do_echo)
-			wrefresh(msg_win);
+			if (pos < len)
+				pos++;
+			break;
+		default:
+			if (len < (max_chars - 1) && isprint(ch)) {
+				memmove(ibuf + pos + 1, ibuf + pos, len - pos);
+				ibuf[pos++] = ch;
+				len++;
+			} else
+				_msg_beep();
+			break;
+		}
 	}
-	if (do_echo) {
-		waddch(msg_win, '\n');
+
+	if (flags & MSG_PROMPT_ECHO) {
+		mvwaddch(msg_win, txt_y, txt_x + len - off, '\n');
 		last_o_was_punct = 0;
 		last_o_was_space = 1;
 	}
 
 	/* copy the appropriate string to the output */
-	if (count != 0) {
-		ibuf[count] = '\0';
+	if (len != 0) {
+		ibuf[len] = '\0';
 		strlcpy(val, ibuf, max_chars);
 	} else if (def != NULL && val != def) {
 		strlcpy(val, def, max_chars);
@@ -399,7 +467,8 @@ msg_prompt(msg msg_no, const char *def, char *val, size_t max_chars, ...)
 	msg_clear();
 
 	va_start(ap, max_chars);
-	_msg_vprompt(msg_string(msg_no), 1, def, val, max_chars, ap);
+	_msg_vprompt(msg_string(msg_no), MSG_PROMPT_ECHO,
+		def, val, max_chars, ap);
 	va_end(ap);
 }
 
@@ -410,6 +479,7 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	va_list ap;
 	WINDOW *win, *svwin;
 	int maxx, maxy;
+	int msg_flags = MSG_PROMPT_ECHO | MSG_PROMPT_HIDE_DFLT;
 
 	maxx = getmaxx(msg_win);
 	maxy = getmaxy(msg_win);
@@ -417,15 +487,22 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 		va_start(ap, max_chars);
 		w = vsnprintf(NULL, 0, msg_string(msg_no), ap);
 		va_end(ap);
-		if (def != NULL && *def != 0)
+		if (def != NULL && *def != 0 && w + max_chars * 2 < maxx) {
 			w += 2 + strlen(def) + 1;
+			msg_flags &= ~MSG_PROMPT_HIDE_DFLT;
+		}
 		w += 1 + 2 + max_chars + 1;
-		if (w > maxx)
+		if (w > maxx) {
+			if (!(msg_flags & MSG_PROMPT_HIDE_DFLT)) {
+				w -= 2 + strlen(def) + 1;
+				msg_flags |= MSG_PROMPT_HIDE_DFLT;
+			}
 			w = maxx;
+		}
 	}
 
 	if (x == -1)
-		x = (maxx - w) / 2;
+		x = (maxx - w) / 2 + 1;
 	if (h < 3)
 		h = 3;
 	if (y < 3)
@@ -444,6 +521,7 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 		box(win, 0, 0);
 		wrefresh(win);
 
+		/* Change message window to be our little box */
 		svwin = msg_window(subwin(msg_win, h - 2, w - 2, y + 1, x + 1));
 		wbkgd(msg_win, getbkgd(win));
 		wattrset(msg_win, getattrs(win));
@@ -452,12 +530,13 @@ msg_prompt_win(msg msg_no, int x, int y, int w, int h,
 	}
 
 	va_start(ap, max_chars);
-	_msg_vprompt(msg_string(msg_no), 1, def, val, max_chars, ap);
+	_msg_vprompt(msg_string(msg_no), msg_flags, def, val, max_chars, ap);
 	va_end(ap);
 
 	if (win != NULL) {
 		wclear(win);
 		wrefresh(win);
+		/* Restore normal message window */
 		delwin(msg_window(svwin));
 		delwin(win);
 	}
@@ -469,7 +548,7 @@ msg_prompt_add(msg msg_no, const char *def, char *val, size_t max_chars, ...)
 	va_list ap;
 
 	va_start(ap, max_chars);
-	_msg_vprompt(msg_string(msg_no), 1, def, val, max_chars, ap);
+	_msg_vprompt(msg_string(msg_no), MSG_PROMPT_ECHO, def, val, max_chars, ap);
 	va_end(ap);
 }
 
