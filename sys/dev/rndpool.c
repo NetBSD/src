@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.5 1997/10/20 15:03:19 explorer Exp $        */
+/*      $NetBSD: rndpool.c,v 1.6 1998/05/27 00:59:14 explorer Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
-#include <sys/md5.h>
+#include <sys/sha1.h>
 
 #include <sys/rnd.h>
 
@@ -227,8 +227,8 @@ rndpool_extract_data(rp, p, len, mode)
 	u_int32_t  mode;
 {
 	u_int      i;
-	MD5_CTX    md5;
-	u_int32_t  digest[4];
+	SHA1_CTX    hash;
+	u_int32_t  digest[5];
 	u_int32_t  remain;
 	u_int8_t  *buf;
 	int        good;
@@ -239,7 +239,7 @@ rndpool_extract_data(rp, p, len, mode)
 	if (mode == RND_EXTRACT_ANY)
 		good = 1;
 	else
-		good = (rp->entropy >= 64);  /* size of hash returned */
+		good = (rp->entropy >= 8 * RND_ENTROPY_THRESHOLD);
 
 	/*
 	 * While bytes are requested, stir the pool with a hash function and
@@ -247,9 +247,9 @@ rndpool_extract_data(rp, p, len, mode)
 	 * hash value itself.
 	 */
 	while (good && (remain != 0)) {
-		MD5Init(&md5);
-		MD5Update(&md5, (u_int8_t *)rp->pool, RND_POOLWORDS * 4);
-		MD5Final((u_int8_t *)digest, &md5);
+		SHA1Init(&hash);
+		SHA1Update(&hash, (u_int8_t *)rp->pool, RND_POOLWORDS * 4);
+		SHA1Final((u_int8_t *)digest, &hash);
     
 		/*
 		 * Add the hash into the pool.  This helps stir the pool a
@@ -257,19 +257,10 @@ rndpool_extract_data(rp, p, len, mode)
 		 * a different value if no new values were added to the
 		 * pool.
 		 */
-		for (i = 0 ; i < 4 ; i++)
+		for (i = 0 ; i < 5 ; i++)
 			rndpool_add_one_word(rp, digest[i]);
 		
-		/*
-		 * copy out the bytes, but xor two bytes from the hash
-		 * together before returning them.  This allows us (with
-		 * MD5 as the hash function) to return 8 bytes per hash
-		 * call and not give out any information to the caller.
-		 */
-		digest[0] ^= digest[2];
-		digest[1] ^= digest[3];
-
-		if (remain < 8) {
+		if (remain < RND_ENTROPY_THRESHOLD) {
 			bcopy(digest, buf, remain);
 			buf += remain;
 			if (rp->entropy >= remain * 8)
@@ -278,20 +269,20 @@ rndpool_extract_data(rp, p, len, mode)
 				rp->entropy = 0;
 			remain = 0;
 		} else {
-			bcopy(digest, buf, 8);
-			buf += 8;
-			remain -= 8;
-			if (rp->entropy >= 64)
-				rp->entropy -= 64;
+			bcopy(digest, buf, RND_ENTROPY_THRESHOLD);
+			buf += 20;
+			remain -= 20;
+			if (rp->entropy >= 8 * RND_ENTROPY_THRESHOLD)
+				rp->entropy -= 8 * RND_ENTROPY_THRESHOLD;
 			else
 				rp->entropy = 0;
 		}
 
 		if (mode == RND_EXTRACT_GOOD)
-			good = (rp->entropy >= 64);
+			good = (rp->entropy >= 8 * RND_ENTROPY_THRESHOLD);
 	}
 	
-	bzero(&md5, sizeof(MD5_CTX));
+	bzero(&hash, sizeof(hash));
 	bzero(digest, sizeof(digest));
 
 	return (len - remain);

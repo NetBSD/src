@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.8 1997/10/20 15:06:04 explorer Exp $	*/
+/*	$NetBSD: rnd.h,v 1.9 1998/05/27 00:59:30 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,6 +61,13 @@
 #define RND_POOLWORDS	128
 #endif
 #define RND_POOLBITS     (RND_POOLWORDS * 32)
+
+/*
+ * Number of bytes returned per hash.  This value is used in both
+ * rnd.c and rndpool.c to decide when enough entropy exists to do a
+ * hash to extract it.
+ */
+#define RND_ENTROPY_THRESHOLD	12
 
 /*
  * size of the event queue.  This _MUST_ be a power of 2.
