@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.8 2004/04/24 20:05:49 cl Exp $
+#	$NetBSD: files.xen,v 1.9 2004/04/24 20:58:59 cl Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -120,8 +120,8 @@ device	xencons: tty
 attach	xencons at hypervisor
 file	arch/xen/xen/xencons.c		xencons needs-flag
 
-#include	"dev/wscons/files.wscons"
-#include	"dev/wsfont/files.wsfont"
+include	"dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
 
 # CPUS
 
@@ -211,5 +211,9 @@ attach	sd at hypervisor
 device	cd: disk
 attach	cd at hypervisor
 
+
+# Generic VGA
+attach	vga at hypervisor with vga_xen
+file	arch/xen/xen/vga_xen.c		vga_xen		needs-flag
 
 include "arch/xen/conf/majors.i386"
