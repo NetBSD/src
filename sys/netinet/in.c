@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.82 2002/11/07 07:18:12 thorpej Exp $	*/
+/*	$NetBSD: in.c,v 1.83 2003/06/13 07:59:57 onoe Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.82 2002/11/07 07:18:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.83 2003/06/13 07:59:57 onoe Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -846,7 +846,7 @@ in_ifinit(ifp, ia, sin, scrub)
 		ia->ia_netbroadcast.s_addr =
 			ia->ia_net | ~ia->ia_netmask;
 	} else if (ifp->if_flags & IFF_LOOPBACK) {
-		ia->ia_ifa.ifa_dstaddr = ia->ia_ifa.ifa_addr;
+		ia->ia_dstaddr = ia->ia_addr;
 		flags |= RTF_HOST;
 	} else if (ifp->if_flags & IFF_POINTOPOINT) {
 		if (ia->ia_dstaddr.sin_family != AF_INET)
