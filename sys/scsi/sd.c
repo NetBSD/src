@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  *
- *      $Id: sd.c,v 1.18.2.8 1993/11/25 10:31:56 mycroft Exp $
+ *      $Id: sd.c,v 1.18.2.9 1993/11/29 06:14:10 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -52,6 +52,7 @@ int     Debugger();
 #define	RAW_PART	3
 
 struct sd_data {
+	struct device sc_dev;
 	struct dkdevice sc_dk;
 
 	u_int32 flags;
@@ -122,6 +123,7 @@ sdattach(parent, self, aux)
 	sc_link->dev_unit = self->dv_unit;
 
 	sd->sc_dk.dk_driver = &sddkdriver;
+	dk_establish(&sd->sc_dk, &sd->sc_dev);
 
 	if (sd->sc_link->adapter->adapter_info) {
 		sd->ad_info = ((*(sd->sc_link->adapter->adapter_info)) (sc_link->adapter_softc));
@@ -487,7 +489,7 @@ sdstart(unit)
 			    	  SCSI_DATA_IN : SCSI_DATA_OUT))
 		    != SUCCESSFULLY_QUEUED) {
 bad:
-			printf("%s: not queued", sd->sc_dk.dk_dev.dv_xname);
+			printf("%s: not queued", sd->sc_dev.dv_xname);
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
 			biodone(bp);
@@ -637,11 +639,11 @@ sdgetdisklabel(sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	if (errstring = readdisklabel(MAKESDDEV(0, sd->sc_dk.dk_dev.dv_unit,
+	if (errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit,
 				      RAW_PART), sdstrategy,
 	    			      &sd->sc_dk.dk_label,
 				      &sd->sc_dk.dk_cpulabel)) {
-		printf("%s: %s\n", sd->sc_dk.dk_dev.dv_xname, errstring);
+		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return ENXIO;
 	}
 	sd->flags |= SDHAVELABEL;	/* WE HAVE IT ALL NOW */
@@ -674,7 +676,7 @@ sd_size(sd, flags)
 	if (scsi_scsi_cmd(sd->sc_link, (struct scsi_generic *) &scsi_cmd,
 			  sizeof(scsi_cmd), (u_char *) &rdcap, sizeof(rdcap),
 			  SDRETRIES, 2000, NULL, flags | SCSI_DATA_IN) != 0) {
-		printf("%s: could not get size\n", sd->sc_dk.dk_dev.dv_xname);
+		printf("%s: could not get size\n", sd->sc_dev.dv_xname);
 		return 0;
 	} else {
 		size = rdcap.addr_0 + 1;
@@ -755,7 +757,7 @@ sd_get_parms(sd, flags)
 			  sizeof(scsi_sense), SDRETRIES, 2000, NULL,
 			  flags | SCSI_DATA_IN) != 0) {
 
-		printf("%s: could not mode sense", sd->sc_dk.dk_dev.dv_xname);
+		printf("%s: could not mode sense", sd->sc_dev.dv_xname);
 		printf(" (4); using ficticious geometry\n");
 		/*
 		 * use adaptec standard ficticious geometry

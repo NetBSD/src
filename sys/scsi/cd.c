@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: cd.c,v 1.18.2.4 1993/11/25 10:19:12 mycroft Exp $
+ *      $Id: cd.c,v 1.18.2.5 1993/11/29 06:14:03 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -54,6 +54,7 @@ int	Debugger();
 #define	RAW_PART	3
 
 struct cd_data {
+	struct device sc_dev;
 	struct dkdevice sc_dk;
 
 	u_int32 flags;
@@ -117,7 +118,10 @@ cdattach(parent, self, aux)
 	 */
 	cd->sc_link = sc_link;
 	sc_link->device = &cd_switch;
-	sc_link->dev_unit = cd->sc_dk.dk_dev.dv_unit;
+	sc_link->dev_unit = cd->sc_dev.dv_unit;
+
+	cd->sc_dk.dk_driver = &cddkdriver;
+	dk_establish(&cd->sc_dk, &cd->sc_dev);
 
 	sc_link->opennings = cd->cmdscount = CDOUTSTANDING;
 
@@ -462,7 +466,7 @@ cdstart(unit)
 				  SCSI_DATA_IN : SCSI_DATA_OUT))
 		    != SUCCESSFULLY_QUEUED) {
 bad:
-			printf("%s: not queued", cd->sc_dk.dk_dev.dv_xname);
+			printf("%s: not queued", cd->sc_dev.dv_xname);
 			bp->b_error = EIO;
 			bp->b_flags |= B_ERROR;
 			biodone(bp);
@@ -803,7 +807,7 @@ cd_size(cd, flags)
 			  CDRETRIES, 20000, NULL, SCSI_DATA_IN | flags) != 0) {
 		if (!(flags & SCSI_SILENT))
 			printf("%s: could not get size\n",
-			       cd->sc_dk.dk_dev.dv_xname);
+			       cd->sc_dev.dv_xname);
 		return 0;
 	} else {
 		size = rdcap.addr_0 + 1;
