@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.59 2001/12/06 17:00:26 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.60 2001/12/29 15:44:11 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ typedef struct {
 #define  UDESC_DEVICE_QUALIFIER	0x06
 #define  UDESC_OTHER_SPEED_CONFIGURATION 0x07
 #define  UDESC_INTERFACE_POWER	0x08
+#define  UDESC_OTG		0x09
 #define  UDESC_CS_DEVICE	0x21	/* class specific */
 #define  UDESC_CS_CONFIG	0x22
 #define  UDESC_CS_STRING	0x23
@@ -342,6 +343,19 @@ typedef struct {
 	uByte		bReserved;
 } UPACKED usb_device_qualifier_t;
 #define USB_DEVICE_QUALIFIER_SIZE 10
+
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bmAttributes;
+#define UOTG_SRP	0x01
+#define UOTG_HNP	0x02
+} UPACKED usb_otg_descriptor_t;
+
+/* OTG feature selectors */
+#define UOTG_B_HNP_ENABLE	3
+#define UOTG_A_HNP_SUPPORT	4
+#define UOTG_A_ALT_HNP_SUPPORT	5
 
 typedef struct {
 	uWord		wStatus;
