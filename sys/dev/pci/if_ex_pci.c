@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.12.4.2 2001/03/20 17:25:33 he Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.12.4.3 2002/01/01 12:21:38 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,8 +92,11 @@
 
 struct ex_pci_softc {
 	struct ex_softc sc_ex;
-	pci_chipset_tag_t sc_chiptag;
-	pcitag_t sc_pcitag;
+
+	/* PCI function status space. 556,556B requests it. */
+	bus_space_tag_t sc_funct;
+	bus_space_handle_t sc_funch;
+
 };
 
 /*
@@ -105,6 +108,7 @@ struct ex_pci_softc {
 #define PCI_POWERCTL		0xe0
 #define PCI_FUNCMEM		0x18
 
+#define PCI_INTR		4
 #define PCI_INTRACK		0x00008000
 
 int ex_pci_match __P((struct device *, struct cfdata *, void *));
@@ -258,6 +262,17 @@ ex_pci_attach(parent, self, aux)
 	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
 	    PCI_COMMAND_MASTER_ENABLE);
 
+	if (sc->ex_conf & EX_CONF_PCI_FUNCREG) {
+		/* Map PCI function status window. */
+		if (pci_mapreg_map(pa, PCI_FUNCMEM, PCI_MAPREG_TYPE_MEM, 0,
+		    &psc->sc_funct, &psc->sc_funch, NULL, NULL)) {
+			printf("%s: unable to map function status window\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+		sc->intr_ack = ex_pci_intr_ack;
+	}
+		
 	/* Get it out of power save mode if needed (BIOS bugs) */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		reg = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
@@ -284,12 +299,6 @@ ex_pci_attach(parent, self, aux)
 		return;
 	}
 
-	if (sc->ex_conf & EX_CONF_PCI_FUNCREG) {
-		sc->intr_ack = ex_pci_intr_ack;
-		psc->sc_chiptag = pa->pa_pc;
-		psc->sc_pcitag = pa->pa_tag;
-	}
-
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ex_intr, sc);
 	if (sc->sc_ih == NULL) {
@@ -303,6 +312,10 @@ ex_pci_attach(parent, self, aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	ex_config(sc);
+
+	if (sc->ex_conf & EX_CONF_PCI_FUNCREG)
+		bus_space_write_4(psc->sc_funct, psc->sc_funch, PCI_INTR, 
+		    PCI_INTRACK);
 }
 
 void            
@@ -311,6 +324,6 @@ ex_pci_intr_ack(sc)
 {
 	struct ex_pci_softc *psc = (struct ex_pci_softc *)sc;
         
-	pci_conf_write(psc->sc_chiptag, psc->sc_pcitag, PCI_FUNCMEM + 4,
+	bus_space_write_4(psc->sc_funct, psc->sc_funch, PCI_INTR,
 	    PCI_INTRACK);
 }
