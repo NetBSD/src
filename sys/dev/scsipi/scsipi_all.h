@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.18 2001/05/18 21:11:43 is Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.19 2001/05/22 15:14:24 bouyer Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -111,7 +111,7 @@ struct scsipi_mode_select {
 	u_int8_t byte2;
 #define	SMS_SP	0x01		/* save page */
 #define	SMS_PF	0x10
-	u_int8_t unused[2];
+	u_int8_t unused;
 	union {
 		struct {
 			u_int8_t unused;
