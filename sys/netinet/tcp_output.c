@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.79 2002/04/27 01:47:58 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.80 2002/05/26 16:05:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.79 2002/04/27 01:47:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.80 2002/05/26 16:05:43 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -271,12 +271,12 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 	ifp = rt->rt_ifp;
 
 	size = tcp_mssdflt;
-	if (rt->rt_rmx.rmx_mtu != 0)
+	if (tp->t_mtudisc && rt->rt_rmx.rmx_mtu != 0)
 		size = rt->rt_rmx.rmx_mtu - iphlen - sizeof(struct tcphdr);
 	else if (ifp->if_flags & IFF_LOOPBACK)
 		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 #ifdef INET
-	else if (inp && ip_mtudisc)
+	else if (inp && tp->t_mtudisc)
 		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 	else if (inp && in_localaddr(inp->inp_faddr))
 		size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
@@ -288,7 +288,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			/* mapped addr case */
 			struct in_addr d;
 			bcopy(&in6p->in6p_faddr.s6_addr32[3], &d, sizeof(d));
-			if (ip_mtudisc || in_localaddr(d))
+			if (tp->t_mtudisc || in_localaddr(d))
 				size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
 		} else
 #endif
@@ -297,7 +297,8 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 			 * for IPv6, path MTU discovery is always turned on,
 			 * or the node must use packet size <= 1280.
 			 */
-			size = ifp->if_mtu - iphlen - sizeof(struct tcphdr);
+			size = tp->t_mtudisc ? ifp->if_mtu : IPV6_MMTU;
+			size -= (iphlen + sizeof(struct tcphdr));
 		}
 	}
 #endif
@@ -1121,7 +1122,7 @@ send:
 		else
 			opts = NULL;
 		error = ip_output(m, opts, ro,
-			(ip_mtudisc ? IP_MTUDISC : 0) |
+			(tp->t_mtudisc ? IP_MTUDISC : 0) |
 			(so->so_options & SO_DONTROUTE),
 			0);
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.57 2001/11/13 00:32:42 lukem Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.58 2002/05/26 16:05:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.57 2001/11/13 00:32:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.58 2002/05/26 16:05:45 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -302,7 +302,7 @@ tcp_timer_rexmt(void *arg)
 	TCPT_RANGESET(tp->t_rxtcur, rto * tcp_backoff[tp->t_rxtshift],
 	    tp->t_rttmin, TCPTV_REXMTMAX);
 	TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
-#if 0
+
 	/* 
 	 * If we are losing and we are trying path MTU discovery,
 	 * try turning it off.  This will avoid black holes in
@@ -311,21 +311,23 @@ tcp_timer_rexmt(void *arg)
 	 * lots more sophisticated searching to find the right
 	 * value here...
 	 */
-	if (ip_mtudisc && tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
-		struct rtentry *rt = NULL;
+	if (tp->t_mtudisc && tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
+		tcpstat.tcps_pmtublackhole++;
 
 #ifdef INET
+		/* try turning PMTUD off */
 		if (tp->t_inpcb)
-			rt = in_pcbrtentry(tp->t_inpcb);
+			tp->t_mtudisc = 0;
 #endif
 #ifdef INET6
+		/* try using IPv6 minimum MTU */
 		if (tp->t_in6pcb)
-			rt = in6_pcbrtentry(tp->t_in6pcb);
+			tp->t_mtudisc = 0;
 #endif
 
-		/* XXX:  Black hole recovery code goes here */
+		/* XXX: more sophisticated Black hole recovery code? */
 	}
-#endif /* 0 */
+
 	/*
 	 * If losing, let the lower level know and try for
 	 * a better route.  Also, if we backed off this far,
