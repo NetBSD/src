@@ -1,4 +1,4 @@
-/*	$NetBSD: null_subr.c,v 1.11 1998/03/01 02:21:43 fvdl Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.12 1998/03/11 15:52:02 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -206,7 +206,7 @@ loop:
 				vgone(cvp);
 				goto loop;
 			}
-			if (vget(cvp, LK_EXCLUSIVE))
+			if (vget(cvp, 0))
 				/* can't lock; will die! */
 				goto loop;
 			break;
