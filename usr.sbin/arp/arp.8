@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.8,v 1.8 1997/03/07 07:04:42 mikel Exp $
+.\"	$NetBSD: arp.8,v 1.9 1997/10/16 23:46:38 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,23 +40,23 @@
 .Nm arp
 .Nd address resolution display and control
 .Sh SYNOPSIS
-.Nm arp
+.Nm
 .Op Fl n
 .Ar hostname
-.Nm arp
+.Nm ""
 .Op Fl n
 .Fl a
-.Nm arp
+.Nm ""
 .Fl d Ar hostname
-.Nm arp
+.Nm ""
 .Fl s Ar hostname ether_addr
 .Op Ar temp
 .Op Ar pub
-.Nm arp
+.Nm ""
 .Fl f Ar filename
 .Sh DESCRIPTION
 The
-.Nm arp
+.Nm
 program displays and modifies the Internet-to-Ethernet address translation
 tables used by the address resolution protocol
 .Pq Xr arp 4 .
@@ -81,7 +81,7 @@ with the
 flag.
 .It Fl n
 Show network addresses as numbers (normally
-.Nm arp
+.Nm
 attempts to display addresses symbolically).
 .It Fl s Ar hostname ether_addr
 Create an
