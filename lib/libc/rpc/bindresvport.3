@@ -1,5 +1,5 @@
 .\"	@(#)bindresvport.3n	2.2 88/08/02 4.0 RPCSRC; from 1.7 88/03/14 SMI
-.\"	$NetBSD: bindresvport.3,v 1.2 1995/02/25 03:01:37 cgd Exp $
+.\"	$NetBSD: bindresvport.3,v 1.3 1997/07/01 06:28:22 mikel Exp $
 .\"
 .Dd November 22, 1987
 .Dt BINDRESVPORT 3
@@ -9,7 +9,7 @@
 .Nd bind a socket to a privileged IP port
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
-.Fd include <netinet/in.h>
+.Fd #include <netinet/in.h>
 .Ft int
 .Fn bindresvport "int sd" "struct sockaddr_in **sin"
 .Sh DESCRIPTION
