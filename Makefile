@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 1999/01/28 15:36:48 scottr Exp $
+#	$NetBSD: Makefile,v 1.82 1999/01/29 05:42:35 scottr Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -30,11 +30,16 @@ SUBDIR+= gnu
 # This is needed for libstdc++ and gen-params.
 includes-gnu: includes-include includes-sys
 
-# This little mess makes the includes and install targets
-# do the expected thing.
+# Descend into the domestic tree if it exists AND
+#  1) the target is clean, cleandir, or obj, OR
+#  2) the the target is install or includes AND NOT
+#    a) compiling only "exportable" code OR
+#    b) doing it as part of build.
+
 .if exists(domestic) && \
     (make(clean) || make(cleandir) || make(obj) || \
-    (!defined(_BUILD) && (make(includes) || make(install))))
+    ((make(includes) || make(install)) && \
+    !(defined(EXPORTABLE_SYSTEM) || defined(_BUILD))))
 SUBDIR+= domestic
 .endif
 
