@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.3 1993/05/20 14:34:43 cgd Exp $
+ *	$Id: cpu.h,v 1.4 1993/05/20 15:36:49 cgd Exp $
  */
 
 /*
@@ -108,10 +108,6 @@ int	want_resched;		/* resched() was called */
 #define	CPU_486		3
 #define	CPU_586		4
 
-#define CPU_MINTYPE	CPU_386SX
-#define CPU_MAXTYPE	CPU_586
-
 #ifdef KERNEL
-extern char *cpu_typenames[];
 extern int cpu;
 #endif
