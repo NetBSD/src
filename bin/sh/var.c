@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.14 1996/06/25 16:49:05 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.15 1996/10/16 15:24:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.14 1996/06/25 16:49:05 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.15 1996/10/16 15:24:31 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ static char rcsid[] = "$NetBSD: var.c,v 1.14 1996/06/25 16:49:05 christos Exp $"
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
+#include "parser.h"
 #ifndef NO_HISTORY
 #include "myhistedit.h"
 #endif
@@ -115,7 +116,7 @@ const struct varinit varinit[] = {
 	  NULL },
 	{ &vpath,	VSTRFIXED|VTEXTFIXED,		"PATH=/bin:/usr/bin",
 	  changepath },
-	/* 
+	/*
 	 * vps1 depends on uid
 	 */
 	{ &vps2,	VSTRFIXED|VTEXTFIXED,		"PS2=> ",
@@ -229,8 +230,9 @@ setvar(name, val, flags)
 
 	isbad = 0;
 	p = name;
-	if (! is_name(*p++))
+	if (! is_name(*p))
 		isbad = 1;
+	p++;
 	for (;;) {
 		if (! is_in_name(*p)) {
 			if (*p == '\0' || *p == '=')
@@ -466,7 +468,7 @@ shprocvar() {
 int
 showvarscmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct var **vpp;
 	struct var *vp;
@@ -489,7 +491,7 @@ showvarscmd(argc, argv)
 int
 exportcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	struct var **vpp;
 	struct var *vp;
@@ -536,7 +538,7 @@ found:;
 int
 localcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	char *name;
 
@@ -627,7 +629,7 @@ poplocalvars() {
 int
 setvarcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	if (argc <= 2)
 		return unsetcmd(argc, argv);
@@ -648,7 +650,7 @@ setvarcmd(argc, argv)
 int
 unsetcmd(argc, argv)
 	int argc;
-	char **argv; 
+	char **argv;
 {
 	char **ap;
 	int i;
@@ -664,7 +666,7 @@ unsetcmd(argc, argv)
 	}
 	if (flg_func == 0 && flg_var == 0)
 		flg_var = 1;
-			
+
 	for (ap = argptr; *ap ; ap++) {
 		if (flg_func)
 			ret |= unsetfunc(*ap);
@@ -722,9 +724,9 @@ hashvar(p)
 	{
 	unsigned int hashval;
 
-	hashval = *p << 4;
+	hashval = ((unsigned char) *p) << 4;
 	while (*p && *p != '=')
-		hashval += *p++;
+		hashval += (unsigned char) *p++;
 	return &vartab[hashval % VTABSIZE];
 }
 
