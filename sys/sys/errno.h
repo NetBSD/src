@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.11 1996/09/19 04:51:03 jtc Exp $	*/
+/*	$NetBSD: errno.h,v 1.12 1996/11/07 06:04:05 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,13 @@
  */
 
 #ifndef _KERNEL
-extern int errno;			/* global error number */
+
+#if !defined(_REENTRANT)
+extern int errno;
+#else
+extern int *__errno();
+#define errno (*__errno())
+#endif
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 extern int sys_nerr;
