@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.478 2004/05/18 00:36:03 christos Exp $
+# $NetBSD: mi,v 1.479 2004/05/18 05:38:18 christos Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2378,7 +2378,7 @@
 ./usr/share/misc/mail.tildehelp			base-reference-share	share
 ./usr/share/misc/map3270			base-reference-share	share
 ./usr/share/misc/more.help			base-obsolete		obsolete
-./usr/share/misc/nslookup.help			base-reference-share	share
+./usr/share/misc/nslookup.help			base-reference-share	obsolete
 ./usr/share/misc/termcap			base-termcap-share	share
 ./usr/share/misc/termcap.db			base-termcap-share	share
 ./usr/share/misc/units.lib			base-reference-share	share
