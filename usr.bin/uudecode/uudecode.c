@@ -1,4 +1,4 @@
-/*	$NetBSD: uudecode.c,v 1.14 2002/01/31 19:31:31 tv Exp $	*/
+/*	$NetBSD: uudecode.c,v 1.15 2002/06/11 06:06:21 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uudecode.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: uudecode.c,v 1.14 2002/01/31 19:31:31 tv Exp $");
+__RCSID("$NetBSD: uudecode.c,v 1.15 2002/06/11 06:06:21 itojun Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -136,13 +136,13 @@ decode()
 	mode = strtol(buf + 6, &fn, 8);
 	if (fn == (buf+6) || !isspace(*fn) || mode==LONG_MIN || mode==LONG_MAX)
 	{
-	        warnx("%s: invalid mode on \"begin\" line\n", filename);
+	        warnx("%s: invalid mode on \"begin\" line", filename);
 		return(1);
 	}
 	/* skip whitespace for file name */
 	while (*fn && isspace(*fn)) fn++;
 	if (*fn == 0) {
-                warnx("%s: no filename on \"begin\" line\n", filename);
+                warnx("%s: no filename on \"begin\" line", filename);
 		return(1);
 	}
 	/* zap newline */

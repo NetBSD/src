@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.19 2002/01/23 01:09:15 thorpej Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.20 2002/06/11 06:06:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.19 2002/01/23 01:09:15 thorpej Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.20 2002/06/11 06:06:18 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -583,7 +583,7 @@ Play_Relative_Addresses:
 			lba2msf(be32toh(toc_buffer[tr1].addr.lba), &tm, &ts, &tf);
 		if ((m1 > tm) || ((m1 == tm) && ((s1 > ts) || ((s1 == ts) &&
 		    (f1 > tf))))) {
-			warnx("Track %d is not that long.\n", tr1);
+			warnx("Track %d is not that long.", tr1);
 			return (0);
 		}
 		tr1--;
@@ -665,7 +665,7 @@ Play_Relative_Addresses:
 
 		if ((tr2 < n) && ((m2 > tm) || ((m2 == tm) && ((s2 > ts) ||
 		    ((s2 == ts) && (f2 > tf)))))) {
-			warnx("The playing time of the disc is not that long.\n");
+			warnx("The playing time of the disc is not that long.");
 			return (0);
 		}
 

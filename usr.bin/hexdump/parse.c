@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $	*/
+/*	$NetBSD: parse.c,v 1.13 2002/06/11 06:06:18 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $");
+__RCSID("$NetBSD: parse.c,v 1.13 2002/06/11 06:06:18 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -505,19 +505,19 @@ badcnt(s)
 void
 badsfmt()
 {
-	errx(1, "%%s: requires a precision or a byte count\n");
+	errx(1, "%%s: requires a precision or a byte count");
 }
 
 void
 badfmt(fmt)
 	const char *fmt;
 {
-	errx(1, "\"%s\": bad format\n", fmt);
+	errx(1, "\"%s\": bad format", fmt);
 }
 
 void
 badconv(ch)
 	char *ch;
 {
-	errx(1, "%%%s: bad conversion character\n", ch);
+	errx(1, "%%%s: bad conversion character", ch);
 }

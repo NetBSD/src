@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.16 2002/01/05 00:04:27 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.17 2002/06/11 06:06:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -256,7 +256,7 @@ playfile(FILE *f, char *name)
 	size = 1000;
 	buf = malloc(size);
 	if (buf == 0)
-		errx(1, "malloc() failed\n");
+		errx(1, "malloc() failed");
 	nread = size;
 	tot = 0;
 	for (;;) {
@@ -269,7 +269,7 @@ playfile(FILE *f, char *name)
 		size *= 2;
 		buf = realloc(buf, size);
 		if (buf == NULL)
-			errx(1, "realloc() failed\n");
+			errx(1, "realloc() failed");
 	}
 	playdata(buf, tot, name);
 	free(buf);
@@ -291,11 +291,11 @@ playdata(u_char *buf, u_int tot, char *name)
 		printf("Playing %s (%d bytes) ... \n", name, tot);
 
 	if (memcmp(buf, MARK_HEADER, MARK_LEN) != 0) {
-		warnx("Not a MIDI file, missing header\n");
+		warnx("Not a MIDI file, missing header");
 		return;
 	}
 	if (GET32(buf + MARK_LEN) != HEADER_LEN) {
-		warnx("Not a MIDI file, bad header\n");
+		warnx("Not a MIDI file, bad header");
 		return;
 	}
 	format = GET16(buf + MARK_LEN + SIZE_LEN);
@@ -306,27 +306,27 @@ playdata(u_char *buf, u_int tot, char *name)
 	if ((divfmt & 0x80) == 0)
 		ticks |= divfmt << 8;
 	else
-		errx(1, "Absolute time codes not implemented yet\n");
+		errx(1, "Absolute time codes not implemented yet");
 	if (verbose > 1)
 		printf("format=%d ntrks=%d divfmt=%x ticks=%d\n",
 		       format, ntrks, divfmt, ticks);
 	if (format != 0 && format != 1) {
-		warnx("Cannot play MIDI file of type %d\n", format);
+		warnx("Cannot play MIDI file of type %d", format);
 		return;
 	}
 	if (ntrks == 0)
 		return;
 	tracks = malloc(ntrks * sizeof(struct track));
 	if (tracks == NULL)
-		errx(1, "malloc() tracks failed\n");
+		errx(1, "malloc() tracks failed");
 	for (t = 0; t < ntrks; ) {
 		if (p >= end - MARK_LEN - SIZE_LEN) {
-			warnx("Cannot find track %d\n", t);
+			warnx("Cannot find track %d", t);
 			goto ret;
 		}
 		len = GET32(p + MARK_LEN);
 		if (len > 1000000) { /* a safe guard */
-			warnx("Crazy track length\n");
+			warnx("Crazy track length");
 			goto ret;
 		}
 		if (memcmp(p, MARK_TRACK, MARK_LEN) == 0) {
@@ -531,7 +531,7 @@ main(int argc, char **argv)
 	if (ioctl(fd, SEQUENCER_NRMIDIS, &nmidi) < 0)
 		err(1, "ioctl(SEQUENCER_NRMIDIS) failed, ");
 	if (nmidi == 0)
-		errx(1, "Sorry, no MIDI devices available\n");
+		errx(1, "Sorry, no MIDI devices available");
 	if (listdevs) {
 		for (info.device = 0; info.device < nmidi; info.device++) {
 			if (ioctl(fd, SEQUENCER_INFO, &info) < 0)
