@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.20 1995/08/18 10:09:22 jonathan Exp $
+#	$NetBSD: files.pmax,v 1.21 1995/08/29 10:12:48 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -59,11 +59,11 @@ device oldscsibus at oldscsi	{target = -1, drive = -1}
 
 # asc:  system-slot or turbochannel-option SCSI interface
 device asc at ioasic,tc: oldscsi,scsi
-file	arch/pmax/dev/asc.c		asc needs-count
+file	arch/pmax/dev/asc.c		asc needs-flag
 
 # sii:  kn01 SCSI interface 
 device sii at mainbus: oldscsi,scsi
-file	arch/pmax/dev/sii.c		sii needs-count
+file	arch/pmax/dev/sii.c		sii needs-flag
 
 
 device	tz at oldscsibus: tape
@@ -150,10 +150,11 @@ file	compat/ultrix/ultrix_misc.c		compat_ultrix
 file	compat/ultrix/ultrix_syscalls.c		compat_ultrix
 file	compat/ultrix/ultrix_sysent.c		compat_ultrix
 
-# Ted Lemon's not-quite-finished-as-yet redirectabe FB console driver
-#device	rcons	at mainbus
-#file	arch/pmax/dev/rcons.c			rcons	needs-count
-#file	arch/pmax/pmax/cpu_cons.c		rcons
+# Ted Lemon's not-quite-finished-as-yet redirectabe FB console driver.
+# Don't configure  one until the rcons code is merged!
+device	rcons	at mainbus
+file	arch/pmax/dev/rcons.c			rcons	needs-count
+file	arch/pmax/pmax/cpu_cons.c		rcons
 
 # Glue for old-style config
 file	arch/pmax/pmax/conf-glue.c
