@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.8 1995/05/01 04:53:24 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.9 1995/05/01 07:56:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -39,6 +39,6 @@
  * Machine-dependent part of the proc structure for i386.
  */
 struct mdproc {
-	int	*md_regs;		/* registers on current frame */
+	struct	trapframe *md_regs;	/* registers on current frame */
 	int	__spare;
 };
