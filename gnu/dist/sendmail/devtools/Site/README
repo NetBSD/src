@@ -13,6 +13,10 @@ used to further distinguish between site configuration files in this
 directory.  If set, it will also be used in generating the obj.* directory
 name.
 
+Notice: if any of the above files is changed, the -c flag must be
+specified with the Build command, otherwise those changes will have
+no effect.
+
 See the README in the devtools directory for more information.
 
-Revision: 8.7, Last updated Date: 1999/12/17 00:10:40
+Revision: 8.8, Last updated Date: 2002/02/18 20:57:00

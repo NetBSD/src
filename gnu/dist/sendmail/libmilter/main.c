@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 1999-2001 Sendmail, Inc. and its suppliers.
+ *  Copyright (c) 1999-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -8,11 +8,9 @@
  *
  */
 
-#ifndef lint
-static char id[] = "@(#)Id: main.c,v 8.34.4.11 2001/05/07 22:06:37 gshapiro Exp";
-#endif /* ! lint */
+#include <sm/gen.h>
+SM_RCSID("@(#)Id: main.c,v 8.64.2.10 2003/01/23 22:34:24 ca Exp")
 
-#if _FFR_MILTER
 #define _DEFINE	1
 #include "libmilter.h"
 #include <fcntl.h>
@@ -51,7 +49,7 @@ smfi_register(smfilter)
 	smfi->xxfi_name = (char *) malloc(len);
 	if (smfi->xxfi_name == NULL)
 		return MI_FAILURE;
-	(void) strlcpy(smfi->xxfi_name, smfilter.xxfi_name, len);
+	(void) sm_strlcpy(smfi->xxfi_name, smfilter.xxfi_name, len);
 
 	/* compare milter version with hard coded version */
 	if (smfi->xxfi_version != SMFI_VERSION)
@@ -61,13 +59,16 @@ smfi_register(smfilter)
 			"%s: smfi_register: version mismatch application: %d != milter: %d",
 			smfi->xxfi_name, smfi->xxfi_version,
 			(int) SMFI_VERSION);
+
+		/* XXX how about smfi? */
+		free(smfi->xxfi_name);
 		return MI_FAILURE;
 	}
 
 	return MI_SUCCESS;
 }
 
-/*
+/*
 **  SMFI_STOP -- stop milter
 **
 **	Parameters:
@@ -84,10 +85,47 @@ smfi_stop()
 	return MI_SUCCESS;
 }
 
+/*
+**  default values for some variables.
+**	Most of these can be changed with the functions below.
+*/
+
 static int dbg = 0;
 static char *conn = NULL;
 static int timeout = MI_TIMEOUT;
-static int backlog= MI_SOMAXCONN;
+static int backlog = MI_SOMAXCONN;
+
+#if _FFR_SMFI_OPENSOCKET
+/*
+**  SMFI_OPENSOCKET -- try the socket setup to make sure we'll be
+**		able to start up
+**
+**	Parameters:
+**		None.
+**
+**	Return:
+**		MI_SUCCESS/MI_FAILURE
+*/
+
+int
+smfi_opensocket()
+{
+	if (smfi == NULL || conn == NULL)
+		return MI_FAILURE;
+
+	return mi_opensocket(conn, backlog, dbg, smfi);
+}
+#endif /* _FFR_SMFI_OPENSOCKET */
+
+/*
+**  SMFI_SETDBG -- set debug level.
+**
+**	Parameters:
+**		odbg -- new debug level.
+**
+**	Returns:
+**		MI_SUCCESS
+*/
 
 int
 smfi_setdbg(odbg)
@@ -97,6 +135,16 @@ smfi_setdbg(odbg)
 	return MI_SUCCESS;
 }
 
+/*
+**  SMFI_SETTIMEOUT -- set timeout (for read/write).
+**
+**	Parameters:
+**		otimeout -- new timeout.
+**
+**	Returns:
+**		MI_SUCCESS
+*/
+
 int
 smfi_settimeout(otimeout)
 	int otimeout;
@@ -104,6 +152,16 @@ smfi_settimeout(otimeout)
 	timeout = otimeout;
 	return MI_SUCCESS;
 }
+
+/*
+**  SMFI_SETCONN -- set connection information (socket description)
+**
+**	Parameters:
+**		oconn -- new connection information.
+**
+**	Returns:
+**		MI_SUCCESS/MI_FAILURE
+*/
 
 int
 smfi_setconn(oconn)
@@ -116,10 +174,20 @@ smfi_setconn(oconn)
 	l = strlen(oconn) + 1;
 	if ((conn = (char *) malloc(l)) == NULL)
 		return MI_FAILURE;
-	if (strlcpy(conn, oconn, l) >= l)
+	if (sm_strlcpy(conn, oconn, l) >= l)
 		return MI_FAILURE;
 	return MI_SUCCESS;
 }
+
+/*
+**  SMFI_SETBACKLOG -- set backlog
+**
+**	Parameters:
+**		obacklog -- new backlog.
+**
+**	Returns:
+**		MI_SUCCESS/MI_FAILURE
+*/
 
 int
 smfi_setbacklog(obacklog)
@@ -132,11 +200,22 @@ smfi_setbacklog(obacklog)
 }
 
 
+/*
+**  SMFI_MAIN -- setup milter connnection and start listener.
+**
+**	Parameters:
+**		none.
+**
+**	Returns:
+**		MI_SUCCESS/MI_FAILURE
+*/
+
 int
 smfi_main()
 {
+	int r;
 
-	signal(SIGPIPE, SIG_IGN);
+	(void) signal(SIGPIPE, SIG_IGN);
 	if (conn == NULL)
 	{
 		smi_log(SMI_LOG_FATAL, "%s: missing connection information",
@@ -152,12 +231,11 @@ smfi_main()
 			smfi->xxfi_name);
 		return MI_FAILURE;
 	}
-
+	r = MI_SUCCESS;
 
 	/* Startup the listener */
 	if (mi_listener(conn, dbg, smfi, timeout, backlog) != MI_SUCCESS)
-		return MI_FAILURE;
-
-	return MI_SUCCESS;
+		r = MI_FAILURE;
+	return r;
 }
-#endif /* _FFR_MILTER */
+

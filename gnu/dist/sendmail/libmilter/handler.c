@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 1999-2000 Sendmail, Inc. and its suppliers.
+ *  Copyright (c) 1999-2003 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  *
  * By using this file, you agree to the terms and conditions set
@@ -8,11 +8,9 @@
  *
  */
 
-#ifndef lint
-static char id[] = "@(#)Id: handler.c,v 8.19.4.3 2000/12/29 19:45:39 gshapiro Exp";
-#endif /* ! lint */
+#include <sm/gen.h>
+SM_RCSID("@(#)Id: handler.c,v 8.30.2.4 2003/01/23 22:28:36 ca Exp")
 
-#if _FFR_MILTER
 #include "libmilter.h"
 
 
@@ -37,15 +35,17 @@ mi_handle_session(ctx)
 	ctx->ctx_id = (sthread_t) sthread_get_id();
 
 	/*
-	**  detach so resources are free when the thread returns
-	**  if we ever "wait" for threads, this call must be removed
+	**  Detach so resources are free when the thread returns.
+	**  If we ever "wait" for threads, this call must be removed.
 	*/
+
 	if (pthread_detach(ctx->ctx_id) != 0)
-		return MI_FAILURE;
-	ret = mi_engine(ctx);
+		ret = MI_FAILURE;
+	else
+		ret = mi_engine(ctx);
 	if (ValidSocket(ctx->ctx_sd))
 	{
-		(void) close(ctx->ctx_sd);
+		(void) closesocket(ctx->ctx_sd);
 		ctx->ctx_sd = INVALID_SOCKET;
 	}
 	if (ctx->ctx_reply != NULL)
@@ -64,4 +64,3 @@ mi_handle_session(ctx)
 	ctx = NULL;
 	return ret;
 }
-#endif /* _FFR_MILTER */

@@ -9,7 +9,7 @@
 #
 #  Definitions for Makefile construction for sendmail
 #
-#	Id: header.m4,v 8.26 1999/08/09 18:57:22 gshapiro Exp
+#	Id: header.m4,v 8.26.66.1 2002/08/01 21:57:29 gshapiro Exp
 #
 changecom(^A)
 undefine(`format')
@@ -19,6 +19,7 @@ ifdef(`pushdef', `',
 	`errprint(`You need a newer version of M4, at least as new as
 System V or GNU')
 	include(NoSuchFile)')
+define(`confABI', `')
 define(`confCC', `cc')
 define(`confSHELL', `/bin/sh')
 define(`confBEFORE', `')
