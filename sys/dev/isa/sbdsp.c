@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.53 1997/05/26 16:13:59 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.54 1997/05/27 23:37:53 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -118,7 +118,7 @@ struct {
 #define SB_TC_TO_RATE(tc) (1000000 / (256 - (tc)))
 
 struct sbmode {
-	short	version;
+	short	model;
 	u_char	channels;
 	u_char	precision;
 	u_short	lowrate, highrate;
@@ -400,7 +400,7 @@ sbdsp_query_encoding(addr, fp)
 	struct sbdsp_softc *sc = addr;
 	int emul;
 
-	emul = sc->sc_model != SB_16 ? AUDIO_ENCODINGFLAG_EMULATED : 0;
+	emul = ISSB16CLASS(sc) ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
 
 	switch (fp->index) {
 	case 0:
@@ -422,7 +422,7 @@ sbdsp_query_encoding(addr, fp)
 		fp->flags = emul;
 		return 0;
         }
-        if (sc->sc_model != SB_16 && sc->sc_model != SB_JAZZ)
+        if (!ISSB16CLASS(sc) && sc->sc_model != SB_JAZZ)
 		return EINVAL;
 
         switch(fp->index) {
@@ -468,19 +468,19 @@ sbdsp_set_params(addr, mode, p, q)
 	void (*swcode) __P((void *, u_char *buf, int cnt));
 
 	for(m = mode == AUMODE_PLAY ? sbpmodes : sbrmodes; 
-	    m->version != -1; m++) {
-		if (sc->sc_model == m->version &&
+	    m->model != -1; m++) {
+		if (sc->sc_model == m->model &&
 		    p->channels == m->channels &&
 		    p->precision == m->precision &&
 		    p->sample_rate >= m->lowrate && 
 		    p->sample_rate < m->highrate)
 			break;
 	}
-	if (m->version == -1)
+	if (m->model == -1)
 		return EINVAL;
 	rate = p->sample_rate;
 	swcode = 0;
-	if (m->version == SB_16) {
+	if (m->model == SB_16) {
 		switch (p->encoding) {
 		case AUDIO_ENCODING_LINEAR_BE:
 			if (p->precision == 16)
@@ -506,7 +506,7 @@ sbdsp_set_params(addr, mode, p, q)
 		}
 		if (p->channels == 2)
 			bmode |= 0x20;
-	} else if (m->version == SB_JAZZ && m->precision == 16) {
+	} else if (m->model == SB_JAZZ && m->precision == 16) {
 		switch (p->encoding) {
 		case AUDIO_ENCODING_LINEAR_LE:
 			break;
@@ -572,7 +572,7 @@ sbdsp_set_params(addr, mode, p, q)
 	 */
 	sc->sc_dmadir = SB_DMA_NONE;
 
-	DPRINTF(("set_params: version=%d, rate=%ld, prec=%d, chan=%d, enc=%d -> tc=%02x, cmd=%02x, bmode=%02x, cmdchan=%02x, swcode=%p\n", 
+	DPRINTF(("set_params: model=%d, rate=%ld, prec=%d, chan=%d, enc=%d -> tc=%02x, cmd=%02x, bmode=%02x, cmdchan=%02x, swcode=%p\n", 
 		 sc->sc_model, p->sample_rate, p->precision, p->channels,
 		 p->encoding, tc, m->cmd, bmode, m->cmdchan, swcode));
 
