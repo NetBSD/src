@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.27 1998/12/18 22:07:53 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.28 1998/12/19 23:48:39 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -182,6 +182,9 @@
 #define	PCMCIA_STR_TDK_DFL9610	"TDK DFL9610 Ethernet & Digital Cellular"
 
 /* TDK Vendor ID also used by Xircom! */
+#define	PCMCIA_CIS_TDK_XIR_CE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_XIR_CE	0x0108
+#define	PCMCIA_STR_TDK_XIR_CE	"Xircom CreditCard Ethernet"
 #define	PCMCIA_CIS_TDK_XIR_PS_CE2_10	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_TDK_XIR_PS_CE2_10	0x010b
 #define	PCMCIA_STR_TDK_XIR_PS_CE2_10	"Xircom CreditCard CE2 Ethernet"
