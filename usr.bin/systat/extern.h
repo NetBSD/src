@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 1999/12/16 04:02:23 jwise Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 1999/12/16 04:49:33 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -94,10 +94,10 @@ void	 fetchnetstat __P((void));
 void	 fetchpigs __P((void));
 void	 fetchswap __P((void));
 void	 fetchtcp __P((void));
-void	 global_help __P((void));
-void	 global_load __P((void));
-void	 global_quit __P((void));
-void	 global_stop __P((void));
+void	 global_help __P((char *args));
+void	 global_load __P((char *args));
+void	 global_quit __P((char *args));
+void	 global_stop __P((char *args));
 int	 initbufcache __P((void));
 int	 initicmp __P((void));
 int	 initiostat __P((void));
