@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 1996/07/31 20:40:34 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.19 1996/11/14 19:25:50 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.18 1996/07/31 20:40:34 thorpej Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.19 1996/11/14 19:25:50 gwr Exp $";
 #endif
 #endif /* not lint */
 
@@ -209,6 +209,8 @@ main(argc, argv)
 		chown(ttyn, 0, 0);
 		chmod(ttyn, 0600);
 		revoke(ttyn);
+		if (ttyaction(ttyn, "getty", "root"))
+			syslog(LOG_ERR,"%s: ttyaction failed", ttyn);
 		/*
 		 * Delay the open so DTR stays down long enough to be detected.
 		 */
