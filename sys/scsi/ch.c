@@ -2,7 +2,7 @@
  * Written by grefen@?????
  * Based on scsi drivers by Julian Elischer (julian@tfs.com)
  *
- *      $Id: ch.c,v 1.4.2.2 1993/11/29 05:00:19 mycroft Exp $
+ *      $Id: ch.c,v 1.4.2.3 1994/02/16 02:40:46 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -55,8 +55,7 @@ struct cfdriver chcd =
 /*
  * This driver is so simple it uses all the default services
  */
-struct scsi_device ch_switch =
-{
+struct scsi_device ch_switch = {
 	NULL,
 	NULL,
 	NULL,
@@ -97,7 +96,7 @@ chattach(parent, self, aux)
 		/*stat = CHOPEN;*/
 	} else {
 		printf(": %d slot(s), %d drive(s), %d arm(s), %d i/e-slot(s)\n",
-			ch->slots, ch->drives, ch->chms, ch->imexs);
+		    ch->slots, ch->drives, ch->chms, ch->imexs);
 		/*stat = CHKNOWN;*/
 	}
 
@@ -127,7 +126,7 @@ chopen(dev)
 
 	sc_link = ch->sc_link;
 	SC_DEBUG(sc_link, SDEV_DB1, ("chopen: dev=0x%x (unit %d (of %d))\n",
-		 dev, unit, chcd.cd_ndevs));
+	    dev, unit, chcd.cd_ndevs));
 
 	if (ch->flags & CHOPEN)
 		return EBUSY;
@@ -208,7 +207,7 @@ chioctl(dev, cmd, arg, mode)
 	case CHIOOP: {
 		struct chop *chop = (struct chop *) arg;
 		SC_DEBUG(sc_link, SDEV_DB2, ("[chtape_chop: %x]\n",
-			chop->ch_op));
+		    chop->ch_op));
 
 		switch (chop->ch_op) {
 		case CHGETPARAM:
@@ -226,18 +225,15 @@ chioctl(dev, cmd, arg, mode)
 			break;
 		case CHPOSITION:
 			return ch_position(ch, &chop->result,
-					   chop->u.position.chm,
-			    		   chop->u.position.to, flags);
+			    chop->u.position.chm, chop->u.position.to, flags);
 		case CHMOVE:
 			return ch_move(ch, &chop->result, chop->u.position.chm,
-				       chop->u.move.from, chop->u.move.to,
-				       flags);
+			    chop->u.move.from, chop->u.move.to, flags);
 		case CHGETELEM:
 			return ch_getelem(ch, &chop->result,
-					  chop->u.get_elem_stat.type,
-					  chop->u.get_elem_stat.from,
-					  &chop->u.get_elem_stat.elem_data,
-					  flags);
+			    chop->u.get_elem_stat.type,
+			    chop->u.get_elem_stat.from,
+			    &chop->u.get_elem_stat.elem_data, flags);
 		default:
 			return EINVAL;
 		}
@@ -271,8 +267,8 @@ ch_getelem(ch, stat, type, from, data, flags)
 	scsi_cmd.allocation_length[2] = 32;
 
 	error = scsi_scsi_cmd(ch->sc_link, (struct scsi_generic *) &scsi_cmd,
-			      sizeof(scsi_cmd), (u_char *) elbuf, 32,
-			      CHRETRIES, 100000, NULL, SCSI_DATA_IN | flags);
+	    sizeof(scsi_cmd), (u_char *) elbuf, 32, CHRETRIES, 100000, NULL,
+	    SCSI_DATA_IN | flags);
 	if (error)
 		*stat = ch->lsterr;
 	else
@@ -300,8 +296,7 @@ ch_move(ch, stat, chm, from, to, flags)
 	scsi_cmd.destination_address[1] = to & 0xff;
 	scsi_cmd.invert = (chm & CH_INVERT) ? 1 : 0;
 	error = scsi_scsi_cmd(ch->sc_link, (struct scsi_generic *) &scsi_cmd,
-			      sizeof(scsi_cmd), NULL, 0, CHRETRIES, 100000,
-			      NULL, flags);
+	    sizeof(scsi_cmd), NULL, 0, CHRETRIES, 100000, NULL, flags);
 	if (error)
 		*stat = ch->lsterr;
 	else
@@ -326,8 +321,7 @@ ch_position(ch, stat, chm, to, flags)
 	scsi_cmd.source_address[1] = to & 0xff;
 	scsi_cmd.invert = (chm & CH_INVERT) ? 1 : 0;
 	error = scsi_scsi_cmd(ch->sc_link, (struct scsi_generic *) &scsi_cmd,
-			      sizeof(scsi_cmd), NULL, 0, CHRETRIES, 100000,
-			      NULL, flags);
+	    sizeof(scsi_cmd), NULL, 0, CHRETRIES, 100000, NULL, flags);
 	if (error)
 		*stat = ch->lsterr;
 	else
@@ -380,13 +374,12 @@ ch_mode_sense(ch, flags)
 	 * Read in the pages
 	 */
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
-			      sizeof(scsi_cmd), (u_char *) &scsi_sense,
-			      sizeof (scsi_sense), CHRETRIES, 5000, NULL,
-			      flags | SCSI_DATA_IN);
+	    sizeof(scsi_cmd), (u_char *) &scsi_sense, sizeof(scsi_sense),
+	    CHRETRIES, 5000, NULL, flags | SCSI_DATA_IN);
 	if (error) {
 		if (!(flags & SCSI_SILENT))
 			printf("%s: could not mode sense\n",
-				ch->sc_dev.dv_xname);
+			    ch->sc_dev.dv_xname);
 		return error;
 	}
 
@@ -402,9 +395,9 @@ ch_mode_sense(ch, flags)
 #define p4copy(valp)	 (valp[3] | (valp[2]<<8) | (valp[1]<<16) | (valp[0]<<24)); valp+=4
 #if 0
 	printf("\nmode_sense %d\n", l);
-	for (i = 0; i < l + 4; i++) {
+	for (i = 0; i < l + 4; i++)
 		printf("%x%c", scsi_sense[i], i % 8 == 7 ? '\n' : ':');
-	} printf("\n");
+	printf("\n");
 #endif
 	for (i = 0; i < l;) {
 		u_char pc = (*b++) & 0x3f;
@@ -436,8 +429,8 @@ ch_mode_sense(ch, flags)
 		i += pl + 2;
 	}
 	SC_DEBUG(sc_link, SDEV_DB2,
-		(" cht(%d-%d)slot(%d-%d)imex(%d-%d)cts(%d-%d) %s rotate\n",
-		ch->chmo, ch->chms, ch->sloto, ch->slots, ch->imexo, ch->imexs,
-		ch->driveo, ch->drives, ch->rot ? "can" : "can't"));
+	    (" cht(%d-%d)slot(%d-%d)imex(%d-%d)cts(%d-%d) %s rotate\n",
+	    ch->chmo, ch->chms, ch->sloto, ch->slots, ch->imexo, ch->imexs,
+	    ch->driveo, ch->drives, ch->rot ? "can" : "can't"));
 	return 0;
 }
