@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.4 1998/07/31 15:17:17 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.5 1998/07/31 23:54:09 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -501,8 +501,8 @@ ess_config_drq(sc)
 		printf("ess_config_drq: configured dma chan %d not supported for Audio 1\n", 
 		       sc->sc_in.drq);
 		return;
-	}
 #endif
+	}
 	/* Set DRQ1 */
 	ess_write_x_reg(sc, ESS_XCMD_DRQ_CTRL, v);
 
@@ -526,8 +526,8 @@ ess_config_drq(sc)
 		printf("ess_config_drq: configured dma chan %d not supported for Audio 2\n", 
 		       sc->sc_out.drq);
 		return;
-	}
 #endif
+	}
 	ess_write_mix_reg(sc, ESS_MREG_AUDIO2_CTRL3, v);
 	/* Enable DMA 2 */
 	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 
