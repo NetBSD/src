@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.5 1999/02/18 09:22:17 mycroft Exp $ */
+/*      $NetBSD: sv.c,v 1.6 1999/02/19 02:27:59 mycroft Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -374,7 +374,12 @@ sv_attach(parent, self, aux)
 	DPRINTF(("sv: IO ports: enhanced=0x%x, OPL=0x%x, MIDI=0x%x\n",
 		 (int)sc->sc_ioh, (int)sc->sc_oplioh, (int)sc->sc_midiioh));
 
+#ifdef alpha
+	/* XXX Force allocation through the SGMAP. */
+	sc->sc_dmatag = alphabus_dma_get_tag(pa->pa_dmat, ALPHA_BUS_ISA);
+#else
 	sc->sc_dmatag = pa->pa_dmat;
+#endif
 
 	pci_conf_write(pc, pt, SV_DMAA_CONFIG_OFF, SV_DMAA_EXTENDED_ADDR);
 	pci_conf_write(pc, pt, SV_DMAC_CONFIG_OFF, 0);
