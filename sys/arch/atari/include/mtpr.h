@@ -1,4 +1,4 @@
-/*	$NetBSD: mtpr.h,v 1.3 1996/07/04 07:25:13 leo Exp $	*/
+/*	$NetBSD: mtpr.h,v 1.4 1997/09/15 11:08:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,15 +57,14 @@ extern volatile unsigned char ssir;
 #define SIR_CLOCK	0x2	/* call softclock()		*/
 #define	SIR_CBACK	0x4	/* walk the sicallback-chain	*/
 
+#define siron(x)	\
+	__asm __volatile ("orb %0,%1" : : "di" ((u_char)(x)), "g" (ssir))
 #define siroff(x)	\
-	{ asm volatile ("andb %0,%1" : : "di" ((u_char)~(x)), "g" (ssir)); }
+	__asm __volatile ("andb %0,%1" : : "di" ((u_char)~(x)), "g" (ssir))
 
-#define setsoftnet()	\
-	asm volatile ("orb %0,%1" : : "di" ((u_char)SIR_NET), "g" (ssir))
-#define setsoftclock()	\
-	asm volatile ("orb %0,%1" : : "di" ((u_char)SIR_CLOCK), "g" (ssir))
-#define setsoftcback()	\
-	asm volatile ("orb %0,%1" : : "di" ((u_char)SIR_CBACK), "g" (ssir))
+#define setsoftnet()	siron(SIR_NET)
+#define setsoftclock()	siron(SIR_CLOCK)
+#define setsoftcback()	siron(SIR_CBACK)
 
 #endif /* _KERNEL */
 
