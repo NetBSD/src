@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.h,v 1.9 1999/07/31 18:41:15 itojun Exp $	*/
+/*	$NetBSD: tcp_debug.h,v 1.10 2001/04/29 15:18:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -72,7 +72,9 @@ char	*tanames[] =
     { "input", "output", "user", "respond", "drop" };
 #endif
 
+#ifndef TCP_NDEBUG
 #define	TCP_NDEBUG 100
+#endif
 struct	tcp_debug tcp_debug[TCP_NDEBUG];
 int	tcp_debx;
 
