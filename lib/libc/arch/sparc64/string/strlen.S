@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.S,v 1.2 2002/03/30 03:28:53 eeh Exp $	*/
+/*	$NetBSD: strlen.S,v 1.3 2002/04/01 15:59:26 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,7 +39,7 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: strlen.S,v 1.2 2002/03/30 03:28:53 eeh Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.3 2002/04/01 15:59:26 eeh Exp $")
 #endif /* LIBC_SCCS and not lint */
 	
 /* The algorithm here uses the following techniques:
@@ -61,7 +61,7 @@
  *    by Steve Hoxey, Faraydon Karim, Bill Hay and Hank Warren.
  */
 
-ENTRY(mystrlen)
+ENTRY(strlen)
 	/*
 	 * Calculate address for and load the first xword.
 	 */
@@ -157,7 +157,7 @@ ENTRY(mystrlen)
 	inc	%o1
 	btst	%g1, %o5	! Check 7th byte
 	bz	%xcc,0f
-	 srlx	%o5, 8, %o5
+	 nop
 
 	inc	%o1
 0:
