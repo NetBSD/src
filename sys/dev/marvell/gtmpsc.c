@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.8.2.3 2004/09/21 13:30:17 skrll Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.8.2.4 2005/01/17 08:25:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.8.2.3 2004/09/21 13:30:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.8.2.4 2005/01/17 08:25:45 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -587,7 +587,7 @@ gtmpscshutdown(struct gtmpsc_softc *sc)
 }
 
 int
-gtmpscopen(dev_t dev, int flag, int mode, struct proc *p)
+gtmpscopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct gtmpsc_softc *sc;
 	int unit = GTMPSCUNIT(dev);
@@ -611,7 +611,7 @@ gtmpscopen(dev_t dev, int flag, int mode, struct proc *p)
 	tp = sc->gtmpsc_tty;
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-	    p->p_ucred->cr_uid != 0)
+	    l->l_proc->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -670,7 +670,7 @@ bad:
 }
 
 int
-gtmpscclose(dev_t dev, int flag, int mode, struct proc *p)
+gtmpscclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = GTMPSCUNIT(dev);
 	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[unit];
@@ -717,24 +717,24 @@ gtmpscwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-gtmpscpoll(dev_t dev, int events, struct proc *p)
+gtmpscpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(dev)];
 	struct tty *tp = sc->gtmpsc_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-gtmpscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+gtmpscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct gtmpsc_softc *sc = gtmpsc_cd.cd_devs[GTMPSCUNIT(dev)];
 	struct tty *tp = sc->gtmpsc_tty;
 	int error;
 	
-	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) >= 0)
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l)) >= 0)
 		return error;
-	if ((error = ttioctl(tp, cmd, data, flag, p)) >= 0)
+	if ((error = ttioctl(tp, cmd, data, flag, l)) >= 0)
 		return error;
 	return ENOTTY;
 }

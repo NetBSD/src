@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.h,v 1.1.4.4 2004/09/21 13:13:32 skrll Exp $ */
+/* $NetBSD: s3c24x0_lcd.h,v 1.1.4.5 2005/01/17 08:25:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -111,7 +111,7 @@ struct s3c24x0_wsscreen_descr {
 
 int s3c24x0_lcd_show_screen(void *, void *, int, void (*)(void *, int, int),
     void *);
-int s3c24x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p);
+int s3c24x0_lcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *p);
 paddr_t	s3c24x0_lcd_mmap(void *, off_t, int);
 int s3c24x0_lcd_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);

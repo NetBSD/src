@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.1.2.3 2004/09/21 13:14:33 skrll Exp $ */
+/* $NetBSD: panel.c,v 1.1.2.4 2005/01/17 08:25:44 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.1.2.3 2004/09/21 13:14:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.1.2.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,20 +164,20 @@ panel_cbt_rread(iot, ioh)
 }
 
 int
-panelopen(dev, flag, mode, p)
+panelopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct panel_softc *sc = device_lookup(&panel_cd, minor(dev));
 	return ((sc->sc_lcd.sc_dev_ok == 0) ? ENXIO : 0);
 }
 
 int
-panelclose(dev, flag, mode, p)
+panelclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct panel_softc *sc = device_lookup(&panel_cd, minor(dev));
 	selwakeup(&sc->sc_selq);
@@ -226,22 +226,22 @@ panelwrite(dev, uio, flag)
 }
 
 int
-panelioctl(dev, cmd, data, flag, p)
+panelioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct panel_softc *sc = device_lookup(&panel_cd, minor(dev));
 	return hd44780_ioctl_subr(&sc->sc_lcd, cmd, data);
 }
 
 int
-panelpoll(dev, events, p)
+panelpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	int revents = 0;
 
@@ -251,7 +251,7 @@ panelpoll(dev, events, p)
 		if (lcdkp_scankey(&sc->sc_kp) != 0) {
 			revents = events & (POLLIN | POLLRDNORM);
 		} else {
-			selrecord(p, &sc->sc_selq);
+			selrecord(l, &sc->sc_selq);
 			callout_reset(&sc->sc_callout, PANEL_POLLRATE,
 					panel_soft, sc);
 		}

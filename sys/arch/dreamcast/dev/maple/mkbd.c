@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.18.6.3 2004/09/21 13:14:40 skrll Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.18.6.4 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.18.6.3 2004/09/21 13:14:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.18.6.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -68,7 +68,7 @@ static	int mkbddetach(struct device *, int);
 
 int	mkbd_enable(void *, int);
 void	mkbd_set_leds(void *, int);
-int	mkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
+int	mkbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
 struct wskbd_accessops mkbd_accessops = {
 	mkbd_enable,
@@ -195,7 +195,7 @@ mkbd_set_leds(void *v, int on)
 }
 
 int
-mkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+mkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 
 	switch (cmd) {

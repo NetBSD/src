@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.10.6.3 2004/09/21 13:14:19 skrll Exp $	*/
+/*	$NetBSD: et4000.c,v 1.10.6.4 2005/01/17 08:25:44 skrll Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,7 +52,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.10.6.3 2004/09/21 13:14:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.10.6.4 2005/01/17 08:25:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -384,10 +384,10 @@ et_vme_attach(parent, self, aux)
 }
 
 int
-etopen(dev, flags, devtype, p)
+etopen(dev, flags, devtype, l)
 	dev_t dev;
 	int flags, devtype;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct et_softc *sc;
 
@@ -401,10 +401,10 @@ etopen(dev, flags, devtype, p)
 }
 
 int
-etclose(dev, flags, devtype, p)
+etclose(dev, flags, devtype, l)
 	dev_t dev;
 	int flags, devtype;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct et_softc *sc;
 
@@ -435,12 +435,12 @@ etwrite(dev, uio, flags)
 }
 
 int
-etioctl(dev, cmd, data, flags, p)
+etioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct grfinfo g_display;
 	struct et_softc *sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.2.4.5 2004/10/19 15:56:53 skrll Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.2.4.6 2005/01/17 08:25:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -121,7 +121,7 @@ m41t00_attach(struct device *parent, struct device *self, void *aux)
 
 /*ARGSUSED*/
 int
-m41t00_open(dev_t dev, int flag, int fmt, struct proc *p)
+m41t00_open(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct m41t00_softc *sc;
 
@@ -139,7 +139,7 @@ m41t00_open(dev_t dev, int flag, int fmt, struct proc *p)
 
 /*ARGSUSED*/
 int
-m41t00_close(dev_t dev, int flag, int fmt, struct proc *p)
+m41t00_close(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct m41t00_softc *sc;
 

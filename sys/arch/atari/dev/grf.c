@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.31.6.3 2004/09/21 13:13:58 skrll Exp $	*/
+/*	$NetBSD: grf.c,v 1.31.6.4 2005/01/17 08:25:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.31.6.3 2004/09/21 13:13:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.31.6.4 2005/01/17 08:25:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -200,10 +200,10 @@ const char	*name;
 
 /*ARGSUSED*/
 int
-grfopen(dev, flags, devtype, p)
+grfopen(dev, flags, devtype, l)
 	dev_t dev;
 	int flags, devtype;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct grf_softc *gp;
 
@@ -226,11 +226,11 @@ grfopen(dev, flags, devtype, p)
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags, mode, p)
+grfclose(dev, flags, mode, l)
 	dev_t		dev;
 	int		flags;
 	int		mode;
-	struct proc	*p;
+	struct lwp	*l;
 {
 	struct grf_softc *gp;
 
@@ -242,12 +242,12 @@ grfclose(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-grfioctl(dev, cmd, data, flag, p)
+grfioctl(dev, cmd, data, flag, l)
 dev_t		dev;
 u_long		cmd;
 int		flag;
 caddr_t		data;
-struct proc	*p;
+struct lwp	*l;
 {
 	struct grf_softc	*gp;
 	int			error;
@@ -299,7 +299,7 @@ struct proc	*p;
 		 * view code.
 		 */
 		return((*view_cdevsw.d_ioctl)(gp->g_viewdev, cmd, data, flag,
-					      p));
+					      l));
 		error = EINVAL;
 		break;
 
@@ -425,7 +425,7 @@ struct grf_softc *gp;
 	gi = &gp->g_display;
 
 	(*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCGBMAP, (caddr_t)&bm,
-			       0, NOPROC);
+			       0, NOLWP);
   
 	gp->g_data = (caddr_t) 0xDeadBeaf; /* not particularly clean.. */
   
@@ -439,7 +439,7 @@ struct grf_softc *gp;
 	gi->gd_vgabase = bm.vga_base;
 
 	if((*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCGSIZE, (caddr_t)&vs, 0,
-				  NOPROC)) {
+				  NOLWP)) {
 		/*
 		 * fill in some default values...
 		 * XXX: Should _never_ happen
@@ -482,11 +482,11 @@ void			*arg;
 			 */
 			grf_viewsync(gp);
 			(*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCDISPLAY,
-					       NULL, 0, NOPROC);
+					       NULL, 0, NOLWP);
 			return(0);
 	case GM_GRFOFF:
 			(*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCREMOVE,
-					       NULL, 0, NOPROC);
+					       NULL, 0, NOLWP);
 			return(0);
 	case GM_GRFCONFIG:
 	default:
