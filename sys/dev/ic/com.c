@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.11 1993/07/12 11:37:16 mycroft Exp $
+ *	$Id: com.c,v 1.12 1993/08/29 13:47:03 deraadt Exp $
  */
 
 #include "com.h"
@@ -59,7 +59,8 @@
 #include "i386/isa/ic/ns16550.h"
 #define cominor(d)
 
-int 	comprobe(), comattach(), comintr(), comstart(), comparam();
+int 	comprobe(), comattach(), comintr(), comparam();
+void	comstart();
 
 struct	isa_driver comdriver = {
 	comprobe, comattach, "com"
@@ -517,6 +518,7 @@ comparam(tp, t)
 	return(0);
 }
  
+void
 comstart(tp)
 	register struct tty *tp;
 {
