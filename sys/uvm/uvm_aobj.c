@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.24 1999/07/22 22:58:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.25 1999/08/21 02:19:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -855,6 +855,7 @@ uao_flush(uobj, start, stop, flags)
 		case PGO_CLEANIT|PGO_FREE:
 		case PGO_CLEANIT|PGO_DEACTIVATE:
 		case PGO_DEACTIVATE:
+ deactivate_it:
 			/* skip the page if it's loaned or wired */
 			if (pp->loan_count != 0 ||
 			    pp->wire_count != 0)
@@ -870,6 +871,13 @@ uao_flush(uobj, start, stop, flags)
 			continue;
 
 		case PGO_FREE:
+			/*
+			 * If there are multiple references to
+			 * the object, just deactivate the page.
+			 */
+			if (uobj->uo_refs > 1)
+				goto deactivate_it;
+
 			/* XXX skip the page if it's loaned or wired */
 			if (pp->loan_count != 0 ||
 			    pp->wire_count != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.67 1999/08/03 00:38:33 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.68 1999/08/21 02:19:05 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2533,6 +2533,7 @@ uvm_map_clean(map, start, end, flags)
 			case PGO_CLEANIT|PGO_FREE:
 			case PGO_CLEANIT|PGO_DEACTIVATE:
 			case PGO_DEACTIVATE:
+ deactivate_it:
 				/* skip the page if it's loaned or wired */
 				if (pg->loan_count != 0 ||
 				    pg->wire_count != 0) {
@@ -2577,6 +2578,13 @@ uvm_map_clean(map, start, end, flags)
 				continue;
 
 			case PGO_FREE:
+				/*
+				 * If there are multiple references to
+				 * the amap, just deactivate the page.
+				 */
+				if (amap_refs(amap) > 1)
+					goto deactivate_it;
+
 				/* XXX skip the page if it's wired */
 				if (pg->wire_count != 0) {
 					simple_unlock(&anon->an_lock);
