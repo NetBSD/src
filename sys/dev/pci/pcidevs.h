@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.99 1998/11/29 02:00:33 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.100 1998/11/30 19:47:53 jtk Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.93 1998/11/29 02:00:13 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.94 1998/11/30 19:47:16 jtk Exp 
  */
 
 /*
@@ -681,7 +681,7 @@
 #define	PCI_PRODUCT_CIRRUS_CL_GD5434_8	0x00a8		/* CL-GD5434-8 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD5436	0x00ac		/* CL-GD5436 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD5446	0x00b8		/* CL-GD5446 */
-#define	PCI_PRODUCT_CIRRUS_CL_GD6729	0x1100		/* CL-GD6729 */
+#define	PCI_PRODUCT_CIRRUS_CL_PD6729	0x1100		/* CL-PD6729 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7542	0x1200		/* CL-GD7542 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7543	0x1202		/* CL-GD7543 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7541	0x1204		/* CL-GD7541 */
