@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.1 2001/07/08 23:37:52 rjs Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.2 2001/07/30 16:20:06 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -153,16 +153,6 @@ sa11x0_attach(parent, self, aux)
 			  0, &sc->sc_gpioh))
 		panic("%s: unable to map GPIO registers\n", self->dv_xname);
 	bus_space_write_4(sc->sc_iot, sc->sc_gpioh, SAGPIO_EDR, 0xffffffff);
-
-#ifdef SAEGPIO_BASE
-	/* Map the iPAQ Extended GPIO registers */
-	if (bus_space_map(sc->sc_iot, SAEGPIO_BASE, 1, 0, &sc->sc_egpioh))
-		panic("%s: unable to map Extended GPIO registers\n",
-			self->dv_xname);
-# if 0
-	bus_space_write_2(sc->sc_iot, sc->sc_egpioh, 0, EGPIO_INIT);
-# endif
-#endif
 
 	/* Map the PPC registers */
 	if (bus_space_map(sc->sc_iot, SAPPC_BASE, SAPPC_NPORTS,
