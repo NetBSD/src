@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.17 1995/06/12 01:09:20 mycroft Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.18 1995/06/13 05:59:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -169,10 +169,11 @@ tunclose(dev, flag)
 			/* find internet addresses and delete routes */
 			register struct ifaddr *ifa;
 			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-			    ifa = ifa->ifa_list.le_next) {
-				if (ifa->ifa_addr->sa_family == AF_INET)
-			    		rtinit(ifa, (int)RTM_DELETE,
-					    p->tun_flags & TUN_DSTADDR ? RTF_HOST : 0);
+			    ifa = ifa->ifa_list.tqe_next) {
+				if (ifa->ifa_addr->sa_family == AF_INET) {
+					rtinit(ifa, (int)RTM_DELETE,
+					    tp->tun_flags & TUN_DSTADDR ? RTF_HOST : 0);
+				}
 			}
 		}
 		splx(s);
@@ -197,7 +198,7 @@ tuninit(unit)
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-	    ifa = ifa->ifa_list.le_next) {
+	    ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct sockaddr_in *sin;
 
@@ -209,6 +210,7 @@ tuninit(unit)
 			if (sin && sin->sin_addr.s_addr)
 				tp->tun_flags |= TUN_DSTADDR;
 		}
+	}
 
 	return 0;
 }

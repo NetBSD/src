@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.10 1995/06/01 21:41:40 mycroft Exp $	*/
+/*	$NetBSD: iso.c,v 1.11 1995/06/13 05:52:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -460,12 +460,8 @@ iso_control(so, cmd, data, ifp)
 			} else
 				iso_ifaddr = nia;
 			ia = nia;
-			if (ifa = ifp->if_addrlist) {
-				for ( ; ifa->ifa_next; ifa = ifa->ifa_next)
-					;
-				ifa->ifa_next = (struct ifaddr *) ia;
-			} else
-				ifp->if_addrlist = (struct ifaddr *) ia;
+			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
+			    ifa_list);
 			ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
 			ia->ia_ifa.ifa_dstaddr
 					= (struct sockaddr *)&ia->ia_dstaddr;
@@ -531,17 +527,7 @@ iso_control(so, cmd, data, ifp)
 
 	case SIOCDIFADDR_ISO:
 		iso_ifscrub(ifp, ia);
-		if ((ifa = ifp->if_addrlist) == (struct ifaddr *)ia)
-			ifp->if_addrlist = ifa->ifa_next;
-		else {
-			while (ifa->ifa_next &&
-			       (ifa->ifa_next != (struct ifaddr *)ia))
-				    ifa = ifa->ifa_next;
-			if (ifa->ifa_next)
-			    ifa->ifa_next = ((struct ifaddr *)ia)->ifa_next;
-			else
-				printf("Couldn't unlink isoifaddr from ifp\n");
-		}
+		TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia ifa_list);
 		oia = ia;
 		if (oia == (ia = iso_ifaddr)) {
 			iso_ifaddr = ia->ia_next;
@@ -663,11 +649,12 @@ iso_ifwithidi(addr)
 		dump_isoaddr( (struct sockaddr_iso *)(addr));
 		printf("\n");
 	ENDDEBUG
-	for (ifp = ifnet; ifp; ifp = ifp->if_next) {
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
 		IFDEBUG(D_ROUTE)
 			printf("iso_ifwithidi ifnet %s\n", ifp->if_name);
 		ENDDEBUG
-		for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
+		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+		    ifa = ifa->ifa_list.tqe_next) {
 			IFDEBUG(D_ROUTE)
 				printf("iso_ifwithidi address ");
 				dump_isoaddr( (struct sockaddr_iso *)(ifa->ifa_addr));
