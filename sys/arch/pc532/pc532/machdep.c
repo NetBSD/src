@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 1995/06/09 06:00:06 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 1995/08/25 07:49:10 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -129,14 +129,14 @@ int IdlePTD;
 int start_page;
 int _istack;
 
-#if 0
-#include <pc532/umprintf.c> 
-#else
-umprintf (char *fmt,...)
-{} /* Dummy procedure. */
-#endif
-
 int low_mem_map;
+
+/* Support for VERY low debugging ... in case we get NO output.
+   (e.g. in case pmap does not work and can't do regular mapped
+   output. */
+#if VERYLOWDEBUG
+#include <pc532/umprintf.c> 
+#endif
 
 void
 _low_level_init ()
@@ -145,7 +145,9 @@ _low_level_init ()
   int  p0, p1, p2;
   extern int _mapped;
 
+#if VERYLOWDEBUG
   umprintf ("starting low level init\n");
+#endif
 
   mem_size = ram_size(end);
   physmem = btoc(mem_size);
@@ -154,9 +156,11 @@ _low_level_init ()
   avail_start = start_page; 
   avail_end   = mem_size - NS532_PAGE_SIZE;
   
-
+#if VERYLOWDEBUG
   umprintf ("mem_size = 0x%x\nphysmem=%x\nstart_page=0x%x\navail_end=0x%x\n",
 	    mem_size, physmem, start_page, avail_end);
+#endif
+
 
   /* Initialize the mmu with a simple memory map. */
 
@@ -249,24 +253,6 @@ init532()
   void (**int_tab)();
   extern int _save_sp;
 
-
-#if 0
-  /*  Initial testing messages .... Removed at a later time. */
-
-  printf ("Memory size is %d Megs\n", ((int)mem_size) / (1024*1024));
-
-  printf ("physmem         = %d (0x%x)\n", physmem, physmem);
-  printf ("first free page = 0x%x\n", start_page);
-  printf ("IdlePTD         = 0x%x\n", IdlePTD);
-  printf ("avail_start     = 0x%x\n", avail_start);
-
-  printf ("number of kernel pages = %d (0x%x)\n", start_page / NS532_PAGE_SIZE,
-		start_page / NS532_PAGE_SIZE);
-
-  free_pages = (mem_size - start_page) / NS532_PAGE_SIZE;
-  printf ("number of free pages = %d\n", free_pages);
-#endif
-
 /*#include "ddb.h" */
 #if NDDB > 0
 	kdb_init();
@@ -298,8 +284,6 @@ init532()
 int boothowto = 0, Maxmem = 0;
 long dumplo;
 int physmem, maxmem;
-
-int _get_ptb0();
 
 extern int bootdev;
 extern cyloffset;
@@ -516,16 +500,6 @@ vmtime(otime, olbolt, oicr)
 #endif
 
 /*
-struct sigframe {
-	int	sf_signum;
-	int	sf_code;
-	struct	sigcontext *sf_scp;
-	sig_t	sf_handler;
-	struct	sigcontext sf_sc;
-} ;
-*/
-
-/*
  * Send an interrupt to process.
  *
  * Stack is set up to allow sigcode stored
@@ -658,15 +632,13 @@ sigreturn(p, uap, retval)
 	return(EJUSTRETURN);
 }
 
-int	waittime = -1;
+int waittime = -1;
 struct pcb dumppcb;
 
 void
-boot(arghowto)
-	int arghowto;
+boot(howto)
+	int howto;
 {
-	register long dummy;		/* r12 is reserved */
-	register int howto;		/* r11 == how to boot */
 	register int devtype;		/* r10 == major of root dev */
 	extern const char *panicstr;
 	extern int cold;
@@ -676,11 +648,8 @@ boot(arghowto)
 		printf("cold boot: hit reset please");
 		for(;;);
 	}
-	howto = arghowto;
+	boothowto = howto;
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
-		register struct buf *bp;
-		int iter, nbusy;
-
 		waittime = 0;
 		vfs_shutdown();
 		/*
@@ -700,29 +669,15 @@ boot(arghowto)
 		cpu_reset();
 		for(;;) ;
 		/*NOTREACHED*/
+	} else {
+		if (howto & RB_DUMP) {
+			savectx(&dumppcb, 0);
+			dumppcb.pcb_ptb = _get_ptb0();
+			dumpsys();
+		}
 	}
 
-	if (howto & RB_DUMP) {
-#if 1
-	  /* dump the stack! */
-	  { int *fp = (int *)_get_fp();
-	    int i=0;
-	    while ((u_int)fp < (u_int)UPT_MIN_ADDRESS-40) {
-	      printf ("0x%x (@0x%x), ", fp[1], fp);
-	      fp = (int *)fp[0];
-	      if (++i == 3) { printf ("\n"); i=0; }
-	    }
-	    printf ("\n");
-	  }
-#else
-		savectx(&dumppcb, 0);
-		dumppcb.pcb_ptd = _get_ptb0();
-		dumpsys();	
-		/*NOTREACHED*/
-#endif
-	}
-
-	printf ("rebooting ....");
+	printf("rebooting ...");
 	reboot_cpu();
 	for(;;) ;
 	/*NOTREACHED*/
@@ -940,105 +895,166 @@ copystr(fromaddr, toaddr, maxlength, lencopied) size_t *lencopied, maxlength;
 	return(ENAMETOOLONG);
 }
 
+/*
+ * These variables are needed by /sbin/savecore
+ */
+u_long	dumpmag = 0x8fca0101;	/* magic number */
+int 	dumpsize = 0;		/* pages */
+long	dumplo = 0; 		/* blocks */
 
+/*
+ * This is called by configure to set dumplo and dumpsize.
+ * Dumps always skip the first CLBYTES of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
+ */
+void
+dumpconf()
+{
+	int nblks;	/* size of dump area */
+	int maj;
 
-int	dumpmag = 0x8fca0101;	/* magic number for savecore */
-int	dumpsize = 0;		/* also for savecore */
+	if (dumpdev == NODEV)
+		return;
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdevsw[maj].d_psize == NULL)
+		return;
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
 
-#if 0
+	dumpsize = physmem;
+
+	/* Always skip the first CLBYTES, in case there is a label there. */
+	if (dumplo < ctod(1))
+		dumplo = ctod(1);
+
+	/* Put dump at end of partition, and make it fit. */
+	if (dumpsize > dtoc(nblks - dumplo))
+		dumpsize = dtoc(nblks - dumplo);
+	if (dumplo < nblks - ctod(dumpsize))
+		dumplo = nblks - ctod(dumpsize);
+}
+
 /*
  * Doadump comes here after turning off memory management and
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
-dumpsys()
+#define BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
+static vm_offset_t dumpspace;
+
+vm_offset_t
+reserve_dumppages(p)
+	vm_offset_t p;
 {
 
+	dumpspace = p;
+	return (p + BYTES_PER_DUMP);
+}
+
+void
+dumpsys()
+{
+	unsigned bytes, i, n;
+	int maddr, psize;
+	daddr_t blkno;
+	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int error = 0;
+	int c;
+
+	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
 		return;
-	if ((minor(dumpdev)&07) != 1)
+
+	/*
+	 * For dumps during autoconfiguration,
+	 * if dump device has already configured...
+	 */
+	if (dumpsize == 0)
+		dumpconf();
+	if (dumplo < 0)
 		return;
-	printf("\nThe operating system is saving a copy of RAM memory to device %x, offset %d\n\
-(hit any key to abort): [ amount left to save (MB) ] ", dumpdev, dumplo);
-	dumpsize = physmem;
-	switch ((*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+
+	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	printf("dump ");
+	if (psize == -1) {
+		printf("area unavailable\n");
+		return;
+	}
+
+#if 0	/* XXX this doesn't work.  grr. */
+        /* toss any characters present prior to dump */
+	while (sget() != NULL); /*syscons and pccons differ */
+#endif
+
+	bytes = mem_size;
+	maddr = 0;
+	blkno = dumplo;
+	dump = bdevsw[major(dumpdev)].d_dump;
+	for (i = 0; i < bytes; i += n) {
+		/* Print out how many MBs we to go. */
+		n = bytes - i;
+		if (n && (n % (1024*1024)) == 0)
+			printf("%d ", n / (1024 * 1024));
+
+		/* Limit size for next transfer. */
+		if (n > BYTES_PER_DUMP)
+			n =  BYTES_PER_DUMP;
+
+		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
+		error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+		if (error)
+			break;
+		maddr += n;
+		blkno += btodb(n);			/* XXX? */
+
+#if 0	/* XXX this doesn't work.  grr. */
+		/* operator aborting dump? */
+		if (sget() != NULL) {
+			error = EINTR;
+			break;
+		}
+#endif
+	}
+
+	switch (error) {
 
 	case ENXIO:
-		printf("-- device bad\n");
+		printf("device bad\n");
 		break;
 
 	case EFAULT:
-		printf("-- device not ready\n");
+		printf("device not ready\n");
 		break;
 
 	case EINVAL:
-		printf("-- area improper\n");
+		printf("area improper\n");
 		break;
 
 	case EIO:
-		printf("-- i/o error\n");
+		printf("i/o error\n");
 		break;
 
 	case EINTR:
-		printf("-- aborted from console\n");
+		printf("aborted from console\n");
+		break;
+
+	case 0:
+		printf("succeeded\n");
 		break;
 
 	default:
-		printf(" succeeded\n");
+		printf("error %d\n", error);
 		break;
 	}
-	printf("system rebooting.\n\n");
-	DELAY(10000);
+	printf("\n\n");
+	delay(5000000);		/* 5 seconds */
 }
-#endif
-
-/* ptrace support is next. */
-
-int
-ptrace_set_pc (struct proc *p, unsigned int addr) 
-{
-	register int *regs = p->p_md.md_regs;
-
-	regs[REG_PC] = addr;
-	return 0;
-}
-
-int
-ptrace_single_step (struct proc *p)
-{
-	register int *regs = p->p_md.md_regs;
-
-	regs[REG_PSR] |= PSL_T;
-	return 0;
-}
-
-int
-ptrace_getregs (struct proc *p, unsigned int *addr)
-{
-	register int *regs;
-	regs = p->p_md.md_regs;
-
-	return copyout (regs, addr, NIPCREG*sizeof(int));
-}
-
-int
-ptrace_setregs (struct proc *p, unsigned int *addr)
-{
-	register int *regs = p->p_md.md_regs;
-
-	return copyin (addr, regs, NIPCREG*sizeof(int));
-}
-
-
-/* Final little things that need to be here to get it to link or 
-   are not available on the system. */
-
-#ifndef INET
-int ether_output()
-{
-  panic ("No ether_output!");
-}
-#endif
 
 /* Stub function for reboot_cpu. */
 
@@ -1129,11 +1145,4 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
-}
-
-
-/* SCSI "support". */
-int
-dk_establish()
-{
 }

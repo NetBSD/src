@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.27 1995/06/09 06:00:02 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.28 1995/08/25 07:49:08 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -82,12 +82,6 @@ __have_fpu:	.long 0
 .globl start
 start:
 	br here_we_go
-
-	.align 4
-.globl  __boot_flags	/* First cut at flags from a boot program */
-__boot_flags:
-	.long 0		/* 0 => nothing sent in by boot loader. */
-	.long 0		/* Other information? */
 
 	.align 4	/* So the trap table is double aligned. */
 int_base_tab:		/* Here is the fixed jump table for traps! */
@@ -769,7 +763,20 @@ kcopy:
 	ret	0
 
 m_ll_fork: .asciz "_low_level_fork: kstack not double alligned."
-	
+
+/*
+ * savectx(struct pcb *pcb, int altreturn);
+ * Update pcb, saving current processor state and arranging for alternate
+ * return in cpu_switch() if altreturn is true.
+ */
+ENTRY(savectx)
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],0
+	movd	B_ARG0, r2
+	sprd	sp,PCB_KSP(r2)
+	sprd	fp,PCB_KFP(r2)
+	movd	_Cur_pl(pc),PCB_PL(r2)
+	exit	[r0,r1,r2,r3,r4,r5,r6,r7]
+	ret 0
 
 ENTRY(_trap_nmi)
 	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
