@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.6 1997/10/10 05:55:03 scottr Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.7 1997/12/16 19:44:19 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -221,8 +221,10 @@ sbc_obio_attach(parent, self, args)
 		    SBC_OPTIONS_BITS, bits, sizeof(bits)));
 	printf("\n");
 
-	/* Enable SCSI interrupts through VIA2 */
-	sbc_intr_enable(ncr_sc);
+	if (sc->sc_options & (SBC_INTR|SBC_RESELECT)) {
+		/* Enable SCSI interrupts through VIA2 */
+		sbc_intr_enable(ncr_sc);
+	}
 
 #ifdef SBC_DEBUG
 	if (sbc_debug)
