@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.32 2001/12/03 00:11:17 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.33 2002/01/07 22:11:18 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_IRQACK 0x0400 /* callback to ack interrupt */
 #define WDC_CAPABILITY_SINGLE_DRIVE 0x0800 /* Don't probe second drive */
 #define WDC_CAPABILITY_NOIRQ  0x1000	/* Controller never interrupts */
+#define WDC_CAPABILITY_SELECT  0x2000	/* Controller selects target */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */
@@ -133,6 +134,9 @@ struct wdc_softc { /* Per controller state */
 
 	/* if WDC_CAPABILITY_MODE set in 'cap' */
 	void 		(*set_modes) __P((struct channel_softc *));
+
+	/* if WDC_CAPABILITY_SELECT set in 'cap' */
+	void		(*select) __P((struct channel_softc *,int));
 
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
 	void		(*irqack) __P((struct channel_softc *));
