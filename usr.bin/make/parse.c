@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.77 2002/01/26 20:42:14 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.78 2002/01/27 01:50:55 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.77 2002/01/26 20:42:14 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.78 2002/01/27 01:50:55 reinoud Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.77 2002/01/26 20:42:14 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.78 2002/01/27 01:50:55 reinoud Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1255,7 +1255,6 @@ ParseDoDependency (line)
 	     * If it was .OBJDIR, the source is a new definition for .OBJDIR,
 	     * and will cause make to do a new chdir to that path.
 	     */
-	    char  savec;
 	    while (*cp && !isspace ((unsigned char)*cp)) {
 		cp++;
 	    }
@@ -1317,8 +1316,6 @@ ParseDoDependency (line)
 	    }
 
 	    if (*cp == LPAREN) {
-		GNode	  *gn;
-
 		sources = Lst_Init (FALSE);
 		if (Arch_ParseArchive (&line, sources, VAR_CMD) != SUCCESS) {
 		    Parse_Error (PARSE_FATAL,
@@ -1926,18 +1923,18 @@ ParseDoInclude (line)
  *---------------------------------------------------------------------
  */
 static void
-ParseSetParseFile(fname)
-    char *fname;
+ParseSetParseFile(filename)
+    char *filename;
 {
     char *slash;
 
-    slash = strrchr(fname, '/');
+    slash = strrchr(filename, '/');
     if (slash == 0) {
 	Var_Set(".PARSEDIR", ".", VAR_GLOBAL, 0);
-	Var_Set(".PARSEFILE", fname, VAR_GLOBAL, 0);
+	Var_Set(".PARSEFILE", filename, VAR_GLOBAL, 0);
     } else {
 	*slash = '\0';
-	Var_Set(".PARSEDIR", fname, VAR_GLOBAL, 0);
+	Var_Set(".PARSEDIR", filename, VAR_GLOBAL, 0);
 	Var_Set(".PARSEFILE", slash+1, VAR_GLOBAL, 0);
 	*slash = '/';
     }

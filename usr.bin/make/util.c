@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.28 2002/01/25 17:51:32 tv Exp $	*/
+/*	$NetBSD: util.c,v 1.29 2002/01/27 01:50:55 reinoud Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: util.c,v 1.28 2002/01/25 17:51:32 tv Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.29 2002/01/27 01:50:55 reinoud Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.28 2002/01/25 17:51:32 tv Exp $");
+__RCSID("$NetBSD: util.c,v 1.29 2002/01/27 01:50:55 reinoud Exp $");
 #endif
 #endif
 
@@ -425,7 +425,7 @@ snprintf(va_alist)
 }
 
 #if defined(MAKE_BOOTSTRAP) && !defined(HAVE_STRFTIME)
-int
+size_t
 strftime(buf, len, fmt, tm)
 	char *buf;
 	size_t len;

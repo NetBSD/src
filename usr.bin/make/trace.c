@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.3 2001/01/23 02:48:05 cgd Exp $	*/
+/*	$NetBSD: trace.c,v 1.4 2002/01/27 01:50:55 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
 
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: trace.c,v 1.3 2001/01/23 02:48:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.4 2002/01/27 01:50:55 reinoud Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: trace.c,v 1.3 2001/01/23 02:48:05 cgd Exp $");
+__RCSID("$NetBSD: trace.c,v 1.4 2002/01/27 01:50:55 reinoud Exp $");
 #endif /* not lint */
 #endif
 
@@ -98,15 +98,15 @@ Trace_Log(event, job)
 	TrEvent event;
 	Job *job;
 {
-	struct timeval now;
+	struct timeval rightnow;
 	
 	if (trfile == NULL)
 		return;
 
-	gettimeofday(&now, NULL);
+	gettimeofday(&rightnow, NULL);
 
 	fprintf(trfile, "%ld.%06d %d %d %s %d %s",
-	    now.tv_sec, (int)now.tv_usec,
+	    rightnow.tv_sec, (int)rightnow.tv_usec,
 	    jobTokensRunning, jobTokensFree,
 	    evname[event], trpid, trwd);
 	if (job != NULL) {
