@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.10 2002/10/02 15:58:04 wiz Exp $
+.\" $NetBSD: ksh.Man,v 1.11 2002/10/12 00:02:47 wiz Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -1339,7 +1339,7 @@ expression) - the parameter is incremented by 1.
 When used as a prefix operator, the result is the incremented value of
 the parameter, when used as a postfix operator, the result is the
 original value of the parameter.
-.IP "\fB++\fP"
+.IP "\fB--\fP"
 similar to \fB++\fP, except the parameter is decremented by 1.
 .IP "\fB,\fP"
 separates two arithmetic expressions; the left hand side is evaluated first,
@@ -1620,7 +1620,7 @@ kept after the command completes.
 Just to confuse things, if the posix option is turned off (see \fBset\fP
 command below) some special commands are very special in that
 no field splitting, file globing, brace expansion nor tilde expansion
-is preformed on arguments that look like assignments.
+is performed on arguments that look like assignments.
 Regular built-in commands are different only in that the \fBPATH\fP
 parameter is not used to find them.
 .PP
@@ -1730,7 +1730,6 @@ Execute the built-in command \fIcommand\fP.
 Set the working directory to \fIdir\fP.
 If the parameter \fBCDPATH\fP
 is set, it lists directories to search in for \fIdir\fP.
-\fIdir\fP.
 An empty entry in the \fBCDPATH\fP entry means the current directory.
 If a non-empty directory from \fBCDPATH\fP is used, the resulting full
 path is printed to standard output.
@@ -1781,7 +1780,7 @@ their names are simply printed,
 for aliases, a command that defines them is printed,
 and for commands found by searching the \fBPATH\fP parameter,
 the full path of the command is printed.
-If no command is be found, (\fIi.e.\fP, the path search fails), nothing
+If no command is found, (\fIi.e.\fP, the path search fails), nothing
 is printed and \fBcommand\fP exits with a non-zero status.
 The \fB\-V\fP option is like the \fB\-v\fP option, except it is more verbose.
 .ksh)
@@ -1917,7 +1916,7 @@ does not begin with a colon.
 .sp
 When the end of the options is encountered, \fBgetopts\fP exits with a
 non-zero exit status.
-Options end at the first (non-option argument) argument that does not
+Options end at the first (non-option) argument that does not
 start with a \-, or when a \fB\-\-\fP argument is encountered.
 .sp
 Option parsing can be reset by setting \fBOPTIND\fP to 1 (this is done
@@ -2114,7 +2113,7 @@ Do not execute any commands \- useful for checking the syntax of scripts
 (ignored if interactive).
 T}
 \-p	privileged	T{
-Set automatically if, when the shell starts, the read uid or gid does not
+Set automatically if, when the shell starts, the real uid or gid does not
 match the effective uid or gid, respectively.
 See Shell Startup above for a description of what this means.
 T}
