@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.45 2001/04/17 10:33:21 reinoud Exp $
+#	$NetBSD: DEVNAMES,v 1.46 2001/04/17 23:51:07 bjh21 Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -69,7 +69,6 @@ aria			MI
 arp			MI		Attribute
 asc			alpha
 asc			arc
-asc			arm26
 asc			arm32
 asc			mac68k
 asc			mipsco
