@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.16 2001/09/16 06:56:29 manu Exp $	*/
+/*	$NetBSD: paths.h,v 1.17 2001/10/22 23:57:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,6 +56,7 @@
 #define	_PATH_AUDIO	"/dev/audio0"
 #define	_PATH_AUDIOCTL	"/dev/audioctl0"
 #define	_PATH_BSHELL	"/bin/sh"
+#define	_PATH_CLOCKCTL	"/dev/clockctl"
 #define	_PATH_CONSOLE	"/dev/console"
 #define	_PATH_CSHELL	"/bin/csh"
 #define	_PATH_DEFTAPE	"/dev/nrst0"
@@ -76,7 +77,6 @@
 #define	_PATH_SKEYKEYS	"/etc/skeykeys"
 #define	_PATH_SOUND	"/dev/sound0"
 #define	_PATH_TTY	"/dev/tty"
-#define	_PATH_CLOCKCTL	"/dev/clockctl"
 #define	_PATH_UNIX	"/netbsd"
 #define	_PATH_VI	"/usr/bin/vi"
 
