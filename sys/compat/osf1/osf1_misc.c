@@ -1,4 +1,34 @@
-/*	$NetBSD: osf1_misc.c,v 1.18 1999/04/24 07:09:49 cgd Exp $	*/
+/* $NetBSD: osf1_misc.c,v 1.19 1999/04/24 07:23:54 cgd Exp $ */
+
+/*
+ * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -46,7 +76,7 @@
 #include <sys/vnode.h>
 #include <sys/socketvar.h>
 
-#include <compat/osf1/osf1_errno.h>
+#include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscall.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
@@ -55,18 +85,18 @@
 
 void cvtstat2osf1 __P((struct stat *, struct osf1_stat *));
 
-
 #ifdef SYSCALL_DEBUG
 extern int scdebug;
 #endif
 
+const char osf1_emul_path[] = "/emul/osf1";
+
+/* XXX BEGIN BITS THAT DON'T BELONG HERE */
 extern struct sysent osf1_sysent[];
 extern char *osf1_syscallnames[];
 extern void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *,
 					u_long));
-
 extern char sigcode[], esigcode[];
-const char osf1_emul_path[] = "/emul/osf1";
 
 struct emul emul_osf1 = {
 	"osf1",
@@ -82,6 +112,33 @@ struct emul emul_osf1 = {
 	sigcode,
 	esigcode,
 };
+/* XXX END BITS THAT DON'T BELONG HERE */
+
+struct emul_flags_xtab osf1_open_flags_xtab[] = {
+    {	OSF1_O_ACCMODE,		OSF1_O_RDONLY,		O_RDONLY	},
+    {	OSF1_O_ACCMODE,		OSF1_O_WRONLY,		O_WRONLY	},
+    {	OSF1_O_ACCMODE,		OSF1_O_RDWR,		O_RDWR		},
+    {	OSF1_O_NONBLOCK,	OSF1_O_NONBLOCK,	O_NONBLOCK	},
+    {	OSF1_O_APPEND,		OSF1_O_APPEND,		O_APPEND	},
+#if 0 /* no equivalent +++ */
+    {	OSF1_O_DEFER,		OSF1_O_DEFER,		???		},
+#endif
+    {	OSF1_O_CREAT,		OSF1_O_CREAT,		O_CREAT		},
+    {	OSF1_O_TRUNC,		OSF1_O_TRUNC,		O_TRUNC		},
+    {	OSF1_O_EXCL,		OSF1_O_EXCL,		O_EXCL		},
+    {	OSF1_O_NOCTTY,		OSF1_O_NOCTTY,		O_NOCTTY	},
+#if 0 /* kernel only */
+    {	OSF1_O_DOCLONE,		OSF1_O_DOCLONE,		???		},
+#endif
+    {	OSF1_O_SYNC,		OSF1_O_SYNC,		O_SYNC		},
+    {	OSF1_O_NDELAY,		OSF1_O_NDELAY,		O_NDELAY	},
+#if 0 /* no equivalent, also same value as O_NDELAY! */
+    {	OSF1_O_DRD,		OSF1_O_DRD,		???		},
+#endif
+    {	OSF1_O_DSYNC,		OSF1_O_DSYNC,		O_DSYNC		},
+    {	OSF1_O_RSYNC,		OSF1_O_RSYNC,		O_RSYNC		},
+    {	0								}
+};
 
 int
 osf1_sys_open(p, v, retval)
@@ -91,6 +148,9 @@ osf1_sys_open(p, v, retval)
 {
 	struct osf1_sys_open_args *uap = v;
 	struct sys_open_args a;
+	const char *path;
+	caddr_t sg;
+	unsigned long leftovers;
 #ifdef SYSCALL_DEBUG
 	char pnbuf[1024];
 
@@ -99,9 +159,24 @@ osf1_sys_open(p, v, retval)
 		printf("osf1_open: open: %s\n", pnbuf);
 #endif
 
-	SCARG(&a, path) = SCARG(uap, path);
-	SCARG(&a, flags) = SCARG(uap, flags);		/* XXX translate */
+	sg = stackgap_init(p->p_emul);
+
+	/* translate flags */
+	SCARG(&a, flags) = emul_flags_translate(osf1_open_flags_xtab,
+	    SCARG(uap, flags), &leftovers);
+	if (leftovers != 0)
+		return (EINVAL);
+
+	/* copy mode, no translation necessary */
 	SCARG(&a, mode) = SCARG(uap, mode);
+
+	/* pick appropriate path */
+	path = SCARG(uap, path);
+	if (SCARG(&a, flags) & O_CREAT)
+		OSF1_CHECK_ALT_CREAT(p, &sg, path);
+	else
+		OSF1_CHECK_ALT_EXIST(p, &sg, path);
+	SCARG(&a, path) = path;
 
 	return sys_open(p, &a, retval);
 }
@@ -112,10 +187,8 @@ osf1_sys_setsysinfo(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#if 0
-	struct osf1_setsysinfo_args *uap = v;
-#endif
 
+	/* XXX */
 	return (0);
 }
 
@@ -169,15 +242,32 @@ osf1_sys_setrlimit(p, v, retval)
 	return sys_setrlimit(p, &a, retval);
 }
 
-#define	OSF1_MAP_SHARED		0x001
-#define OSF1_MAP_PRIVATE	0x002
-#define	OSF1_MAP_ANONYMOUS	0x010
-#define	OSF1_MAP_FILE		0x000
-#define OSF1_MAP_TYPE		0x0f0
-#define	OSF1_MAP_FIXED		0x100
-#define	OSF1_MAP_HASSEMAPHORE	0x200
-#define	OSF1_MAP_INHERIT	0x400
-#define	OSF1_MAP_UNALIGNED	0x800
+struct emul_flags_xtab osf1_mmap_prot_xtab[] = {
+#if 0 /* pseudo-flag */
+    {	OSF1_PROT_NONE,		OSF1_PROT_NONE,		PROT_NONE	},
+#endif
+    {	OSF1_PROT_READ,		OSF1_PROT_READ,		PROT_READ	},
+    {	OSF1_PROT_WRITE,	OSF1_PROT_WRITE,	PROT_WRITE	},
+    {	OSF1_PROT_EXEC,		OSF1_PROT_EXEC,		PROT_EXEC	},
+    {	0								}
+};
+
+struct emul_flags_xtab osf1_mmap_flags_xtab[] = {
+    {	OSF1_MAP_SHARED,	OSF1_MAP_SHARED,	MAP_SHARED	},
+    {	OSF1_MAP_PRIVATE,	OSF1_MAP_PRIVATE,	MAP_PRIVATE	},
+    {	OSF1_MAP_TYPE,		OSF1_MAP_FILE,		MAP_FILE	},
+    {	OSF1_MAP_TYPE,		OSF1_MAP_ANON,		MAP_ANON	},
+    {	OSF1_MAP_FIXED,		OSF1_MAP_FIXED,		MAP_FIXED	},
+#if 0 /* pseudo-flag, and the default */
+    {	OSF1_MAP_VARIABLE,	OSF1_MAP_VARIABLE,	0		},
+#endif
+    {	OSF1_MAP_HASSEMAPHORE,	OSF1_MAP_HASSEMAPHORE,	MAP_HASSEMAPHORE },
+    {	OSF1_MAP_INHERIT,	OSF1_MAP_INHERIT,	MAP_INHERIT	},
+#if 0 /* no equivalent +++ */
+    {	OSF1_MAP_UNALIGNED,	OSF1_MAP_UNALIGNED,	???		},
+#endif
+    {	0								}
+};
 
 int
 osf1_sys_mmap(p, v, retval)
@@ -187,36 +277,24 @@ osf1_sys_mmap(p, v, retval)
 {
 	struct osf1_sys_mmap_args *uap = v;
 	struct sys_mmap_args a;
+	unsigned long leftovers;
 
 	SCARG(&a, addr) = SCARG(uap, addr);
 	SCARG(&a, len) = SCARG(uap, len);
-	SCARG(&a, prot) = SCARG(uap, prot);
 	SCARG(&a, fd) = SCARG(uap, fd);
 	SCARG(&a, pad) = 0;
 	SCARG(&a, pos) = SCARG(uap, pos);
 
-	SCARG(&a, flags) = 0;
-	if (SCARG(uap, flags) & OSF1_MAP_SHARED)
-		SCARG(&a, flags) |= MAP_SHARED;
-	if (SCARG(uap, flags) & OSF1_MAP_PRIVATE)
-		SCARG(&a, flags) |= MAP_PRIVATE;
-	switch (SCARG(uap, flags) & OSF1_MAP_TYPE) {
-	case OSF1_MAP_ANONYMOUS:
-		SCARG(&a, flags) |= MAP_ANON;
-		break;
-	case OSF1_MAP_FILE:
-		SCARG(&a, flags) |= MAP_FILE;
-		break;
-	default:
+	/* translate prot */
+	SCARG(&a, prot) = emul_flags_translate(osf1_mmap_prot_xtab,
+	    SCARG(uap, prot), &leftovers);
+	if (leftovers != 0)
 		return (EINVAL);
-	}
-	if (SCARG(uap, flags) & OSF1_MAP_FIXED)
-		SCARG(&a, flags) |= MAP_FIXED;
-	if (SCARG(uap, flags) & OSF1_MAP_HASSEMAPHORE)
-		SCARG(&a, flags) |= MAP_HASSEMAPHORE;
-	if (SCARG(uap, flags) & OSF1_MAP_INHERIT)
-		SCARG(&a, flags) |= MAP_INHERIT;
-	if (SCARG(uap, flags) & OSF1_MAP_UNALIGNED)
+
+	/* translate flags */
+	SCARG(&a, flags) = emul_flags_translate(osf1_mmap_flags_xtab,
+	    SCARG(uap, flags), &leftovers);
+	if (leftovers != 0)
 		return (EINVAL);
 
 	return sys_mmap(p, &a, retval);
@@ -291,6 +369,10 @@ osf1_sys_stat(p, v, retval)
 	struct osf1_stat osb;
 	int error;
 	struct nameidata nd;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
@@ -320,6 +402,10 @@ osf1_sys_lstat(p, v, retval)
 	struct osf1_stat osb;
 	int error;
 	struct nameidata nd;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
@@ -414,6 +500,10 @@ osf1_sys_mknod(p, v, retval)
 {
 	struct osf1_sys_mknod_args *uap = v;
 	struct sys_mknod_args a;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&a, path) = SCARG(uap, path);
 	SCARG(&a, mode) = SCARG(uap, mode);
@@ -540,15 +630,27 @@ osf1_sys_sendto(p, v, retval)
 	return sys_sendto(p, &a, retval);
 }
 
-#define	OSF1_RB_ASKNAME		0x001
-#define	OSF1_RB_SINGLE		0x002
-#define	OSF1_RB_NOSYNC		0x004
-#define	OSF1_RB_HALT		0x008
-#define	OSF1_RB_INITNAME	0x010
-#define	OSF1_RB_DFLTROOT	0x020
-#define	OSF1_RB_ALTBOOT		0x040
-#define	OSF1_RB_UNIPROC		0x080
-#define	OSF1_RB_ALLFLAGS	0x0ff		/* all of the above */
+struct emul_flags_xtab osf1_reboot_opt_xtab[] = {
+#if 0 /* pseudo-flag */
+    {	OSF1_RB_AUTOBOOT,	OSF1_RB_AUTOBOOT,	RB_AUTOBOOT	},
+#endif
+    {	OSF1_RB_ASKNAME,	OSF1_RB_ASKNAME,	RB_ASKNAME	},
+    {	OSF1_RB_SINGLE,		OSF1_RB_SINGLE,		RB_SINGLE	},
+    {	OSF1_RB_NOSYNC,		OSF1_RB_NOSYNC,		RB_NOSYNC	},
+#if 0 /* same value as O_NDELAY, only used at boot time? */
+    {	OSF1_RB_KDB,		OSF1_RB_KDB,		RB_KDB		},
+#endif
+    {	OSF1_RB_HALT,		OSF1_RB_HALT,		RB_HALT		},
+    {	OSF1_RB_INITNAME,	OSF1_RB_INITNAME,	RB_INITNAME	},
+    {	OSF1_RB_DFLTROOT,	OSF1_RB_DFLTROOT,	RB_DFLTROOT	},
+#if 0 /* no equivalents +++ */
+    {	OSF1_RB_ALTBOOT,	OSF1_RB_ALTBOOT,	???		},
+    {	OSF1_RB_UNIPROC,	OSF1_RB_UNIPROC,	???		},
+    {	OSF1_RB_PARAM,		OSF1_RB_PARAM,		???		},
+#endif
+    {	OSF1_RB_DUMP,		OSF1_RB_DUMP,		RB_DUMP		},
+    {	0								}
+};
 
 int
 osf1_sys_reboot(p, v, retval)
@@ -558,25 +660,15 @@ osf1_sys_reboot(p, v, retval)
 {
 	struct osf1_sys_reboot_args *uap = v;
 	struct sys_reboot_args a;
+	unsigned long leftovers;
 
-	if (SCARG(uap, opt) & ~OSF1_RB_ALLFLAGS &&
-	    SCARG(uap, opt) & (OSF1_RB_ALTBOOT|OSF1_RB_UNIPROC))
+	/* translate opt */
+	SCARG(&a, opt) = emul_flags_translate(osf1_reboot_opt_xtab,
+	    SCARG(uap, opt), &leftovers);
+	if (leftovers != 0)
 		return (EINVAL);
 
-	SCARG(&a, opt) = 0;
 	SCARG(&a, bootstr) = NULL;
-	if (SCARG(uap, opt) & OSF1_RB_ASKNAME)
-		SCARG(&a, opt) |= RB_ASKNAME;
-	if (SCARG(uap, opt) & OSF1_RB_SINGLE)
-		SCARG(&a, opt) |= RB_SINGLE;
-	if (SCARG(uap, opt) & OSF1_RB_NOSYNC)
-		SCARG(&a, opt) |= RB_NOSYNC;
-	if (SCARG(uap, opt) & OSF1_RB_HALT)
-		SCARG(&a, opt) |= RB_HALT;
-	if (SCARG(uap, opt) & OSF1_RB_INITNAME)
-		SCARG(&a, opt) |= RB_INITNAME;
-	if (SCARG(uap, opt) & OSF1_RB_DFLTROOT)
-		SCARG(&a, opt) |= RB_DFLTROOT;
 
 	return sys_reboot(p, &a, retval);
 }
@@ -777,6 +869,10 @@ osf1_sys_truncate(p, v, retval)
 {
 	struct osf1_sys_truncate_args *uap = v;
 	struct sys_truncate_args a;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+	OSF1_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&a, path) = SCARG(uap, path);
 	SCARG(&a, pad) = 0;
