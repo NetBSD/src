@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 1998/05/15 10:15:59 tsubai Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2 1998/07/13 19:27:13 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 /*
- * powermac-specific PCI structure and type definitions.
+ * macppc-specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  *
  * Configuration tag; created from a {bus,device,function} triplet by
@@ -44,19 +44,23 @@
  * the read and write routines, but this would cause extra overhead.
  */
 
-struct bandit_addr {
-	u_int *addr;
-	u_int *data;
-	bus_space_tag_t iot;
-};
-struct bandit_addr bandits[2];
-
 /*
  * Types provided to machine-independent PCI code
  */
 typedef int pci_chipset_tag_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
+
+struct pci_bridge {
+	u_int *addr;
+	u_int *data;
+	bus_space_tag_t iot;
+	pci_chipset_tag_t pc;
+};
+struct pci_bridge pci_bridges[2];
+
+#define PCI_CHIPSET_BANDIT 0x00
+#define PCI_CHIPSET_MPC106 0x10
 
 /*
  * Functions provided to machine-independent PCI code.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1 1998/05/15 10:15:58 tsubai Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2 1998/07/13 19:27:13 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -94,10 +94,14 @@ pci_make_tag(pc, bus, device, function)
 	if (bus >= 256 || device >= 32 || function >= 8)
 		panic("pci_make_tag: bad request");
 
-	if (device < 11)
-		return 0;
-
-	tag = (1 << device);
+	if (pc == PCI_CHIPSET_MPC106) {
+		tag = 0x80000000 |
+			(bus << 16) | (device << 11) | (function << 8);
+	} else {
+		if (device < 11)
+			return 0;
+		tag = (1 << device);
+	}
 
 	return tag;
 }
@@ -108,29 +112,21 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 	pcitag_t tag;
 	int *bp, *dp, *fp;
 {
-	printf("pci_decompose_tag\n");
-#if 0
-	if (bp != NULL)
-		*bp = (tag >> 16) & 0xff;
-	if (dp != NULL)
-		*dp = (tag >> 11) & 0x1f;
-	if (fp != NULL)
-		*fp = (tag >> 8) & 0x7;
-#endif
-	if (bp != NULL) *bp = 0;
-	if (dp != NULL) {
-		int dev, x;
-		x = tag;
-		for (dev = 0; dev < 32; dev++) {
-			if (x & 1) {
-				*dp = dev;
-				break;
-			}
-			x >>= 1;
-		}
+	if (pc == PCI_CHIPSET_MPC106) {
+		if (bp != NULL)
+			*bp = (tag >> 16) & 0xff;
+		if (dp != NULL)
+			*dp = (tag >> 11) & 0x1f;
+		if (fp != NULL)
+			*fp = (tag >> 8) & 0x7;
+	} else {
+		if (bp != NULL)
+			*bp = 0;
+		if (dp != NULL)
+			*dp = ffs(tag) - 1;
+		if (fp != NULL)
+			*fp = 0;
 	}
-	if (fp != NULL) *fp = 0;
-
 	return;
 }
 
@@ -141,17 +137,28 @@ pci_conf_read(pc, tag, reg)
 	int reg;
 {
 	pcireg_t data;
-	struct bandit_addr *r = &bandits[pc];
+	struct pci_bridge *r;
 
-	if (tag == 0)
-		return 0xffffffff;
+	if (pc == PCI_CHIPSET_MPC106) {
+		r = &pci_bridges[0];
 
-	out32rb(r->addr, tag | reg);
-	DELAY(10);
-	data = in32rb(r->data);
-	DELAY(10);
-	out32rb(r->addr, 0);
-	DELAY(10);
+		out32rb(r->addr, tag | reg);
+		data = in32rb(r->data);
+		out32rb(r->addr, 0);
+	} else {
+		r = &pci_bridges[pc];
+
+		if (tag == 0)
+			return 0xffffffff;
+
+		out32rb(r->addr, tag | reg);
+		DELAY(10);
+		data = in32rb(r->data);
+		DELAY(10);
+		out32rb(r->addr, 0);
+		DELAY(10);
+	}
+
 	return data;
 }
 
@@ -162,14 +169,24 @@ pci_conf_write(pc, tag, reg, data)
 	int reg;
 	pcireg_t data;
 {
-	struct bandit_addr *r = &bandits[pc];
+	struct pci_bridge *r = &pci_bridges[pc];
 
-	out32rb(r->addr, tag | reg);
-	DELAY(10);
-	out32rb(r->data, data);
-	DELAY(10);
-	out32rb(r->addr, 0);
-	DELAY(10);
+	if (pc == PCI_CHIPSET_MPC106) {
+		r = &pci_bridges[0];
+
+		out32rb(r->addr, tag | reg);
+		out32rb(r->data, data);
+		out32rb(r->addr, 0);
+	} else {
+		r = &pci_bridges[pc];
+
+		out32rb(r->addr, tag | reg);
+		DELAY(10);
+		out32rb(r->data, data);
+		DELAY(10);
+		out32rb(r->addr, 0);
+		DELAY(10);
+	}
 }
 
 int
