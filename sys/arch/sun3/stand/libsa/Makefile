@@ -1,6 +1,13 @@
-#	$NetBSD: Makefile,v 1.24 2000/07/16 21:56:13 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.25 2001/02/04 08:59:57 jmc Exp $
 
 LIB=sa
+
+# 
+# We're not actually building a lint version, but this way the separate object
+# files get built
+#
+
+LOBJS=SRT0.o SRT1.o
 
 MKLINT=no
 MKPIC=no
@@ -40,8 +47,6 @@ SRC_here= clock.c dev_disk.c devopen.c exec_sun.c \
 
 SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_here}
 SRCS+= ${S}/arch/sun3/sun3/ctrlsp.S
-
-all: SRT0.o SRT1.o
 
 # only needed during build
 libinstall::
