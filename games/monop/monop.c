@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.4 1997/10/12 17:45:16 christos Exp $	*/
+/*	$NetBSD: monop.c,v 1.5 1998/09/11 13:54:08 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.4 1997/10/12 17:45:16 christos Exp $");
+__RCSID("$NetBSD: monop.c,v 1.5 1998/09/11 13:54:08 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ char	*av[]; {
 	}
 	num_luck = sizeof lucky_mes / sizeof (char *);
 	init_decks();
-	signal(2, do_quit);
+	signal(SIGINT, do_quit);
 	for (;;) {
 		printf("\n%s (%d) (cash $%d) on %s\n", cur_p->name, player + 1,
 			cur_p->money, board[cur_p->loc].name);
