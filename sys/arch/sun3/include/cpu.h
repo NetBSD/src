@@ -35,10 +35,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: cpu.h 1.16 91/03/25$
- *
+ *	from: Utah Hdr: cpu.h 1.16 91/03/25
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
+ *	$Id: cpu.h,v 1.8 1994/05/05 03:02:49 gwr Exp $
  */
 
 #ifdef KERNEL
@@ -84,7 +84,7 @@ typedef struct clockframe clockframe;
  * interrupt.  On hp300, request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	{ (p)->p_flag |= SOWEUPC; aston();}
+#define	profile_tick(p, framep)	{ (p)->p_flag |= P_OWEUPC; aston();}
 
 /*
  * Notify the current process (p) that it has a signal pending,
