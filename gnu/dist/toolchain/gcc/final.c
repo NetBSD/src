@@ -1117,7 +1117,7 @@ shorten_branches (first)
 	  for (label = insn; label; label = NEXT_INSN (label))
 	    if (GET_CODE (label) == CODE_LABEL)
 	      {
-		log = LOOP_ALIGN (insn);
+		log = LOOP_ALIGN (label);
 		if (max_log < log)
 		  {
 		    max_log = log;
