@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.7 2000/01/05 13:05:15 simonb Exp $
+#	$NetBSD: disktab,v 1.8 2000/01/05 23:47:41 simonb Exp $
 #
 #	from: @(#)disktab	8.1 (Berkeley) 6/9/93
 #
@@ -37,22 +37,6 @@
 # has the same amount for all disks (currently 65536 sectors or 32megs).
 * The `b' partition is approx 48 megs while `c' is always the entire disk. T
 # The  sum of `d', `e', and `f' is equal to `g' which is everything else.
-
-# the following entry is referenced in src/distrib/pmax/instkernel/Makefile
-miniroot:2MB Install Diskimage\
-	:ty=simulated:se#512:nt#2:ns#16:nc#128:\
-	:ta=4.4BSD:\
-	:pa#4096:oa#0:ba#4096:fa#512:\
-	:pb#0:ob#0:\
-	:pc#4096:oc#0:
-
-# the following entry is referenced in src/distrib/pmax/ramdisk/Makefile
-install-ramdisk:3MB Installation Ramdisk:\
-	:ty=simulated:se#512:nt#3:ns#16:nc#128:\
-	:ta=4.4BSD:\
-	:pa#6144:oa#0:ba#4096:fa#512:\
-	:pb#0:ob#0:\
-	:pc#6144:oc#0:
 
 rz22|RZ22|DEC RZ22 Winchester:\
 	:dt=SCSI:ty=winchester:ns#33:nt#4:nc#776:\
