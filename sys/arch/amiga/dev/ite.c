@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.59 2002/03/17 19:40:30 atatat Exp $ */
+/*	$NetBSD: ite.c,v 1.60 2002/05/30 20:03:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.59 2002/03/17 19:40:30 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60 2002/05/30 20:03:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -642,8 +642,9 @@ itestart(struct tty *tp)
 			}
 			selwakeup(&tp->t_wsel);
 		}
-	      out:
-	} splx(s);
+	}
+ out:
+	splx(s);
 }
 
 int
