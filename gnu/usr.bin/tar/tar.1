@@ -3,15 +3,14 @@
 .\"
 .\"	Written by John F. Woods <jfw@jfwhome.funhouse.com>
 .\"
-.\"	$Id: tar.1,v 1.5 1996/03/13 14:55:00 is Exp $
+.\"	$NetBSD: tar.1,v 1.6 1996/12/03 05:24:56 mikel Exp $
 .\"
 .Dd 6 August 1994
 .Os NetBSD
 .Dt TAR 1
 .Sh NAME
 .Nm tar
-.Nd
-tape archiver; manipulate "tar" archive files
+.Nd tape archiver; manipulate "tar" archive files
 .Sh SYNOPSIS
 .Nm
 .Op Cm Bq -
@@ -165,7 +164,7 @@ Create/list/extract old GNU-format incremental backup.
 .It Fl -listed-incremental Ar file
 Create/list/extract new GNU-format incremental backup.
 .It Fl h
-.it Fl -dereference
+.It Fl -dereference
 Don't write symlinks as symlinks; write the data of the files they name.
 .It Fl i
 .It Fl -ignore-zeros
@@ -334,8 +333,8 @@ because of the end-of-file block at the end of a tar archive).
 The tar program examines the following environment variables.
 .Bl -tag -width "POSIXLY-CORRECT"
 .It POSIXLY-CORRECT
-Normally, tar will process flag arguments that appear in the file list
-If set in the environment, this causes tar to consider the first
+Normally, tar will process flag arguments that appear in the file list.
+If set in the environment, this flag causes tar to consider the first
 non-flag argument to terminate flag processing, as per the POSIX specification.
 .It SHELL
 In interactive mode, a permissible response to the prompt is to
