@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.7 1996/07/17 21:38:46 explorer Exp $
+.\"	$NetBSD: sysctl.8,v 1.8 1997/01/09 05:38:54 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -167,6 +167,12 @@ privilege can change the value.
 .It user.posix2_localedef	integer	no
 .It user.posix2_sw_dev	integer	no
 .It user.posix2_upe	integer	no
+.It ddb.radix	integer		yes
+.It ddb.maxoff	integer 	yes
+.It ddb.maxwidth	integer		yes
+.It ddb.tabstops	integer		yes
+.It ddb.lines	integer		yes
+.It ddb.onpanic	integer		yes
 .El
 .Sh EXAMPLES
 .Pp
