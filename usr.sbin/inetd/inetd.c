@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.73 2001/02/19 23:22:43 cgd Exp $	*/
+/*	$NetBSD: inetd.c,v 1.74 2001/04/06 11:13:47 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.73 2001/02/19 23:22:43 cgd Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.74 2001/04/06 11:13:47 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1214,7 +1214,7 @@ enter(cp)
 	sep = (struct servtab *)malloc(sizeof (*sep));
 	if (sep == (struct servtab *)0) {
 		syslog(LOG_ERR, "Out of memory.");
-		exit(-1);
+		exit(1);
 	}
 	*sep = *cp;
 	sep->se_fd = -1;
@@ -1293,7 +1293,7 @@ more:
 					syslog(LOG_ERR,
 						"%s: invalid ipsec policy \"%s\"",
 						CONFIG, p);
-					exit(-1);
+					exit(1);
 				} else {
 					if (policy)
 						free(policy);
@@ -1690,7 +1690,7 @@ sskip(cpp)
 	cp = skip(cpp);
 	if (cp == NULL) {
 		syslog(LOG_ERR, "%s: syntax error", CONFIG);
-		exit(-1);
+		exit(1);
 	}
 	return (cp);
 }
@@ -1749,7 +1749,7 @@ newstr(cp)
 	if ((cp = strdup(cp ? cp : "")))
 		return (cp);
 	syslog(LOG_ERR, "strdup: %m");
-	exit(-1);
+	exit(1);
 }
 
 void

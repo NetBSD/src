@@ -163,7 +163,7 @@ int main (int argc, char **argv)
       mesg[0] = "<C></U>Fatal Error";
       mesg[1] = "<C>Could not connect to the Sybase database.";
       popupLabel (GPCdkScreen, mesg, 2);
-      exit (-1);
+      exit (1);
    }
 
    /* Load the history. */
@@ -200,7 +200,7 @@ int main (int argc, char **argv)
    {
       destroyCDKScreen (GPCdkScreen);
       endCDK ();
-      exit (-1);
+      exit (1);
    }
 
    /* Do this forever. */
@@ -574,7 +574,7 @@ DBPROCESS *loginToSybase (CDKSCREEN *screen, char *accountName, char *accountPas
       mesg[1] = "<C>Could not connect to the Sybase database.";
       popupLabel (screen, mesg, 2);
       refreshCDKScreen (screen);
-      exit (-1);
+      exit (1);
    }
 
   /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.9 2000/12/04 07:05:47 itojun Exp $	*/
+/*	$NetBSD: debug.c,v 1.10 2001/04/06 11:13:49 wiz Exp $	*/
 /*	$KAME: debug.c,v 1.11 2000/12/04 06:33:09 itojun Exp $	*/
 
 /*
@@ -417,7 +417,7 @@ log(severity, syserr, format, va_alist)
 	    syslog(severity, "%s", msg);
     }
     
-    if (severity <= LOG_ERR) exit(-1);
+    if (severity <= LOG_ERR) exit(1);
 }
 
 void

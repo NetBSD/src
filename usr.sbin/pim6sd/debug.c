@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.9 2001/01/16 02:44:43 cgd Exp $	*/
+/*	$NetBSD: debug.c,v 1.10 2001/04/06 11:13:49 wiz Exp $	*/
 /*	$KAME: debug.c,v 1.44 2000/12/04 06:45:29 itojun Exp $	*/
 
 /*
@@ -661,7 +661,7 @@ va_dcl
     }
 
     if (severity <= LOG_ERR)
-	exit(-1);
+	exit(1);
 }
 
 /* TODO: format the output for better readability */
