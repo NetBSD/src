@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.5 1998/06/20 21:56:40 drochner Exp $ */
+/* $NetBSD: tga.c,v 1.6 1998/06/26 21:07:03 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -72,6 +72,7 @@ struct tga_devconfig tga_console_dc;
 
 struct wsdisplay_emulops tga_emulops = {
 	rcons_cursor,			/* could use hardware cursor; punt */
+	rcons_mapchar,
 	rcons_putchar,
 	rcons_copycols,
 	rcons_erasecols,
