@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxreg.h,v 1.8 1997/08/16 01:14:32 mjacob Exp $ */
+/* $NetBSD: dwlpxreg.h,v 1.9 1998/03/21 22:02:42 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -157,6 +157,30 @@
 #define	PCIA_CTL_T1CYC	(1<<0)		/* Type 1 Configuration Cycle */
 
 /*
+ * Bits in PCIA_ERR. All are "Write 1 to clear".
+ */
+#define	PCIA_ERR_SERR_L	(1<<18)		/* PCI device asserted SERR_L */
+#define	PCIA_ERR_ILAT	(1<<17)		/* Incremental Latency Exceeded */
+#define	PCIA_ERR_SGPRTY	(1<<16)		/* CPU access of SG RAM Parity Error */
+#define	PCIA_ERR_ILLCSR	(1<<15)		/* Illegal CSR Address Error */
+#define	PCIA_ERR_PCINXM	(1<<14)		/* Nonexistent PCI Address Error */
+#define	PCIA_ERR_DSCERR	(1<<13)		/* PCI Target Disconnect Error */
+#define	PCIA_ERR_ABRT	(1<<12)		/* PCI Target Abort Error */
+#define	PCIA_ERR_WPRTY	(1<<11)		/* PCI Write Parity Error */
+#define	PCIA_ERR_DPERR	(1<<10)		/* PCI Data Parity Error */
+#define	PCIA_ERR_APERR	(1<<9)		/* PCI Address Parity Error */
+#define	PCIA_ERR_DFLT	(1<<8)		/* SG Map RAM Invalid Entry Error */
+#define	PCIA_ERR_DPRTY	(1<<7)		/* DMA access of SG RAM Parity Error */ 
+#define	PCIA_ERR_DRPERR	(1<<6)		/* DMA Read Return Parity Error */
+#define	PCIA_ERR_MABRT	(1<<5)		/* PCI Master Abort Error */
+#define	PCIA_ERR_CPRTY	(1<<4)		/* CSR Parity Error */
+#define	PCIA_ERR_COVR	(1<<3)		/* CSR Overrun Error */
+#define	PCIA_ERR_MBPERR	(1<<2)		/* Mailbox Parity Error */
+#define	PCIA_ERR_MBILI	(1<<1)		/* Mailbox Illegal Length Error */
+#define	PCIA_ERR_ERROR	(1<<0)		/* Summary Error */
+#define	PCIA_ERR_ALLERR	((1<<19) - 1)
+
+/*
  * Bits in PCIA_PRESENT.
  */
 #define	PCIA_PRESENT_REVSHIFT	25	/* shift by this to get revision */
@@ -207,8 +231,7 @@
 /*
  * Values for PCIA_TBASE_x
  *
- * NOTE: Translated Base is only used on direct-mapped DMA on the
- * DWLPx!!
+ * NOTE: Translated Base is only used on direct-mapped DMA on the DWLPx!!
  */
 #define	PCIA_TBASE_MASK	 0x00fffffe
 #define	PCIA_TBASE_SHIFT 15
