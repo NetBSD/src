@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.45 2003/01/17 06:20:07 gendalia Exp $
+$NetBSD: miidevs,v 1.46 2003/01/26 06:20:30 matt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -102,6 +102,9 @@ oui xxPMCSIERRA2		0x009057	PMC-Sierra
 model ALTIMA ACXXX		0x0001 ACXXX 10/100 media interface
 model ALTIMA AC101		0x0021 AC101 10/100 media interface
 model ALTIMA AC101L		0x0012 AC101L 10/100 media interface
+/* AMD Am79C87[45] have ALTIMA OUI */
+model ALTIMA Am79C875		0x0014 Am79C875 10/100 media interface
+model ALTIMA Am79C874		0x0021 Am79C874 10/100 media interface
 
 /* Advanced Micro Devices PHYs */
 /* see Davicom DM9101 for Am79C873 */
