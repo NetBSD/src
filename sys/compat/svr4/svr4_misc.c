@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.15 1995/01/10 00:04:03 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.16 1995/01/22 23:44:48 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -95,13 +95,30 @@ svr4_wait(p, uap, retval)
 	register_t			*retval;
 {
 	struct wait4_args w4;
+	int error;
+	size_t sz = sizeof(*SCARG(&w4, status));
 
 	SCARG(&w4, rusage) = NULL;
 	SCARG(&w4, options) = 0;
-	SCARG(&w4, status) = SCARG(uap, status);
+
+	if (SCARG(uap, status) == NULL) {
+		caddr_t sg = stackgap_init();
+		SCARG(&w4, status) = stackgap_alloc(&sg, sz);
+	}
+	else
+		SCARG(&w4, status) = SCARG(uap, status);
+
 	SCARG(&w4, pid) = WAIT_ANY;
 
-	return wait4(p, &w4, retval);
+	if ((error = wait4(p, &w4, retval)) != 0)
+		return error;
+
+	/*
+	 * It looks like wait(2) on svr4/solaris/2.4 returns
+	 * the status in retval[1], and the pid on retval[0].
+	 * NB: this can break if register_t stops being an int.
+	 */
+	return copyin(SCARG(&w4, status), &retval[1], sz);
 }
 
 

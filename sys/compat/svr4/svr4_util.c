@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_util.c,v 1.4 1994/10/29 00:43:31 christos Exp $	 */
+/*	$NetBSD: svr4_util.c,v 1.5 1995/01/22 23:44:50 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -37,6 +37,7 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/vnode.h>
 
 #include <compat/svr4/svr4_util.h>
 
@@ -51,6 +52,9 @@ svr4_emul_find(p, sgp, prefix, path, pbuf)
 	char		**pbuf;
 {
 	struct nameidata	 nd;
+	struct nameidata	 ndroot;
+	struct vattr		 vat;
+	struct vattr		 vatroot;
 	int			 error;
 	char			*ptr, *buf;
 	size_t			 sz, len;
@@ -83,6 +87,7 @@ svr4_emul_find(p, sgp, prefix, path, pbuf)
 		free(buf, M_TEMP);
 		return EINVAL;
 	}
+
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, buf, p);
 
 	if ((error = namei(&nd)) != 0) {
@@ -90,6 +95,44 @@ svr4_emul_find(p, sgp, prefix, path, pbuf)
 		free(buf, M_TEMP);
 		return error;
 	}
+
+	/*
+	 * We now compare the vnode of the svr4_root to the one
+	 * vnode asked. If they resolve to be the same, then we
+	 * ignore the match so that the real root gets used.
+	 * This avoids the problem of traversing "../.." to find the
+	 * root directory and never finding it, because "/" resolves
+	 * to the emulation root directory. This is expensive :-(
+	 */
+	/* XXX: prototype should have const here for NDINIT */
+	NDINIT(&ndroot, LOOKUP, FOLLOW, UIO_SYSSPACE, 
+	       (char *) svr4_emul_path, p);
+
+	if ((error = namei(&ndroot)) != 0) {
+		/* Cannot happen! */
+		DPRINTF(("no %s!\n", svr4_emul_path));
+		free(buf, M_TEMP);
+		vrele(nd.ni_vp);
+		return error;
+	}
+
+	if ((error = VOP_GETATTR(nd.ni_vp, &vat, p->p_ucred, p)) != 0) {
+		DPRINTF(("no attr for directory\n"));
+		goto done;
+	}
+
+	if ((error = VOP_GETATTR(ndroot.ni_vp, &vatroot, p->p_ucred, p)) != 0) {
+		DPRINTF(("no attr for root\n"));
+		goto done;
+	}
+
+	if (vat.va_fsid == vatroot.va_fsid &&
+	    vat.va_fileid == vatroot.va_fileid) {
+		DPRINTF(("return the real root\n"));
+		error = ENOENT;
+		goto done;
+	}
+
 	if (sgp == NULL)
 		*pbuf = buf;
 	else {
@@ -101,6 +144,8 @@ svr4_emul_find(p, sgp, prefix, path, pbuf)
 
 	DPRINTF(("ok\n"));
 
+done:
 	vrele(nd.ni_vp);
+	vrele(ndroot.ni_vp);
 	return error;
 }
