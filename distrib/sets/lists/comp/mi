@@ -255,6 +255,7 @@
 ./usr/include/dev/pckbc/pckbdvar.h
 ./usr/include/dev/pckbc/psmreg.h
 ./usr/include/dev/pcmcia
+./usr/include/dev/pcmcia/if_wi_ieee.h
 ./usr/include/dev/pcmcia/pcmciachip.h
 ./usr/include/dev/pcmcia/pcmciareg.h
 ./usr/include/dev/pcmcia/pcmciavar.h
