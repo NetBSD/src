@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.92 2003/02/25 20:35:34 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.93 2003/03/01 08:01:17 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.92 2003/02/25 20:35:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.93 2003/03/01 08:01:17 enami Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -738,9 +738,6 @@ vndioctl(dev, cmd, data, flag, p)
 		printf("vndioctl(0x%x, 0x%lx, %p, 0x%x, %p): unit %d\n",
 		    dev, cmd, data, flag, p, unit);
 #endif
-	error = suser(p->p_ucred, &p->p_acflag);
-	if (error)
-		return (error);
 	if (unit >= numvnd)
 		return (ENXIO);
 
