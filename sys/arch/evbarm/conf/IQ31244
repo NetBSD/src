@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.6 2003/10/06 16:06:06 thorpej Exp $
+#	$NetBSD: IQ31244,v 1.7 2003/10/08 11:07:31 bouyer Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -165,7 +165,8 @@ pci*		at ppb? bus ?
 # Storage devices
 #
 pciide*		at pci? dev ? function ?	# Intel i31244 S-ATA
-wd*		at pciide? channel ? drive ? flags 0x0000
+atabus* 	at pciide? channel ?
+wd*		at atabus? drive ? flags 0x0000
 
 #
 # Networking devices
