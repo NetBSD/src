@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.118.2.5 2001/11/17 01:15:18 nathanw Exp $ */
+/* $NetBSD: syscall.h,v 1.118.2.6 2002/01/28 18:29:50 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -755,6 +755,9 @@
 
 /* syscall: "_lwp_continue" ret: "int" args: "lwpid_t" */
 #define	SYS__lwp_continue	314
+
+/* syscall: "_lwp_wakeup" ret: "int" args: "lwpid_t" */
+#define	SYS__lwp_wakeup	315
 
 /* syscall: "sa_register" ret: "int" args: "sa_upcall_t" "sa_upcall_t *" */
 #define	SYS_sa_register	330

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.108.2.4 2001/11/17 01:10:17 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.108.2.5 2002/01/28 18:29:52 nathanw Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -624,8 +624,8 @@
 				lwpid_t *departed); }
 313	STD		{ int sys__lwp_suspend(lwpid_t target); }
 314	STD		{ int sys__lwp_continue(lwpid_t target); }
-; Syscalls 315-329 reserved for remaining Solaris-compatible LWP calls.
-315	UNIMPL
+315	STD		{ int sys__lwp_wakeup(lwpid_t target); }
+; Syscalls 316-329 reserved for remaining Solaris-compatible LWP calls.
 316	UNIMPL
 317	UNIMPL
 318	UNIMPL

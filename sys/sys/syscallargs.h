@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.99.2.5 2001/11/17 01:15:19 nathanw Exp $ */
+/* $NetBSD: syscallargs.h,v 1.99.2.6 2002/01/28 18:29:50 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -1273,6 +1273,10 @@ struct sys__lwp_continue_args {
 	syscallarg(lwpid_t) target;
 };
 
+struct sys__lwp_wakeup_args {
+	syscallarg(lwpid_t) target;
+};
+
 struct sys_sa_register_args {
 	syscallarg(sa_upcall_t) new;
 	syscallarg(sa_upcall_t *) old;
@@ -1613,6 +1617,7 @@ int	sys__lwp_self(struct lwp *, void *, register_t *);
 int	sys__lwp_wait(struct lwp *, void *, register_t *);
 int	sys__lwp_suspend(struct lwp *, void *, register_t *);
 int	sys__lwp_continue(struct lwp *, void *, register_t *);
+int	sys__lwp_wakeup(struct lwp *, void *, register_t *);
 int	sys_sa_register(struct lwp *, void *, register_t *);
 int	sys_sa_stacks(struct lwp *, void *, register_t *);
 int	sys_sa_enable(struct lwp *, void *, register_t *);
