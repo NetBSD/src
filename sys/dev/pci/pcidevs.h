@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.672 2004/12/06 12:55:26 cube Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.673 2004/12/07 04:30:59 jdarrow Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.671 2004/12/06 12:54:37 cube Exp 
+ *	NetBSD: pcidevs,v 1.672 2004/12/07 04:28:07 jdarrow Exp 
  */
 
 /*
@@ -588,6 +588,7 @@
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
 #define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
 #define	PCI_VENDOR_FZJZEL	0x1796		/* FZ Juelich / ZEL */
+#define	PCI_VENDOR_BELKIN	0x1799		/* Belkin */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst */
 #define	PCI_VENDOR_I4	0x17cf		/* I4 */
@@ -1095,6 +1096,9 @@
 #define	PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN	0x0e00		/* Fritz!PCI v2.0 ISDN Interface */
 #define	PCI_PRODUCT_AVM_B1	0x0700		/* Basic Rate B1 ISDN Interface */
 #define	PCI_PRODUCT_AVM_T1	0x1200		/* Primary Rate T1 ISDN Interface */
+
+/* Belkin products */
+#define	PCI_PRODUCT_BELKIN_F5D6020V3	0x6020		/* F5D6020v3 802.11b */
 
 /* Stallion products */
 #define	PCI_PRODUCT_STALLION_EC8_32	0x0000		/* EC8/32 */
