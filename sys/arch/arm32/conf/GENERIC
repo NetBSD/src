@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.35 1998/03/14 17:15:52 mark Exp $
+#	$NetBSD: GENERIC,v 1.36 1998/03/18 16:34:42 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -59,6 +59,7 @@ file-system	UNION		# union file system
 
 # File system options
 options 	QUOTA		# UFS quotas
+#options 	FFS_EI		# FFS Endian Independant support
 options 	FIFO		# FIFOs; RECOMMENDED
 options 	NFSSERVER
 
