@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.h,v 1.3 1998/06/27 21:15:08 christos Exp $	*/
+/*	$NetBSD: parsetime.h,v 1.4 2000/10/04 19:24:59 mjl Exp $	*/
 
 /*
  *  parsetime.h -  header for at(1)
@@ -27,4 +27,4 @@
  * From: $OpenBSD: parsetime.h,v 1.3 1997/03/01 23:40:11 millert Exp $
  */
 
-time_t parsetime	__P((int, char **));
+time_t parsetime	(int, char **);

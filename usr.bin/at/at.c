@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.16 2000/10/04 19:14:53 mjl Exp $	*/
+/*	$NetBSD: at.c,v 1.17 2000/10/04 19:24:59 mjl Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -70,7 +70,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.16 2000/10/04 19:14:53 mjl Exp $");
+__RCSID("$NetBSD: at.c,v 1.17 2000/10/04 19:24:59 mjl Exp $");
 #endif
 #endif
 
@@ -93,22 +93,19 @@ char atverify = 0;		/* verify time instead of queuing job */
 
 /* Function declarations */
 
-static void sigc	__P((int));
-static void alarmc	__P((int));
-static char *cwdname	__P((void));
-static int  nextjob	__P((void));
-static void writefile	__P((time_t, char));
-static void list_jobs	__P((void));
-static void process_jobs __P((int, char **, int));
-
-int main __P((int, char **));
+static void sigc	(int);
+static void alarmc	(int);
+static char *cwdname	(void);
+static int  nextjob	(void);
+static void writefile	(time_t, char);
+static void list_jobs	(void);
+static void process_jobs (int, char **, int);
 
 /* Signal catching functions */
 
 /*ARGSUSED*/
 static void 
-sigc(signo)
-	int signo;
+sigc(int signo)
 {
 	/* If the user presses ^C, remove the spool file and exit. */
 	if (fcreated) {
@@ -122,8 +119,7 @@ sigc(signo)
 
 /*ARGSUSED*/
 static void 
-alarmc(signo)
-	int signo;
+alarmc(int signo)
 {
 	/* Time out after some seconds. */
 	panic("File locking timed out");
@@ -132,7 +128,7 @@ alarmc(signo)
 /* Local functions */
 
 static char *
-cwdname()
+cwdname(void)
 {
 	/*
 	 * Read in the current directory; the name will be overwritten on
@@ -144,7 +140,7 @@ cwdname()
 }
 
 static int
-nextjob()
+nextjob(void)
 {
 	int jobno;
 	FILE *fid;
@@ -167,9 +163,7 @@ nextjob()
 }
 
 static void
-writefile(runtimer, queue)
-	time_t runtimer;
-	char queue;
+writefile(time_t runtimer, char queue)
 {
 	/*
 	 * This does most of the work if at or batch are invoked for
@@ -414,7 +408,7 @@ writefile(runtimer, queue)
 }
 
 static void
-list_jobs()
+list_jobs(void)
 {
 	/*
 	 * List all a user's jobs in the queue, by looping through
@@ -484,10 +478,7 @@ list_jobs()
 }
 
 static void
-process_jobs(argc, argv, what)
-	int argc;
-	char **argv;
-	int what;
+process_jobs(int argc, char **argv, int what)
 {
 	/* Delete every argument (job - ID) given */
 	int i;
@@ -567,9 +558,7 @@ process_jobs(argc, argv, what)
 /* Global functions */
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int c;
 	char queue = DEFAULT_AT_QUEUE;
