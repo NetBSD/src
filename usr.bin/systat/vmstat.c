@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.54 2003/08/30 12:57:03 dsl Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.55 2003/09/19 07:08:50 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.54 2003/08/30 12:57:03 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.55 2003/09/19 07:08:50 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -169,6 +169,7 @@ get_interrupt_events(void)
 	struct evcntlist allevents;
 	struct evcnt evcnt, *evptr;
 	intr_evcnt_t *ie;
+	intr_evcnt_t *n;
 
 	if (!NREAD(X_ALLEVENTS, &allevents, sizeof allevents))
 		return;
@@ -178,11 +179,12 @@ get_interrupt_events(void)
 			return;
 		if (evcnt.ev_type != EVCNT_TYPE_INTR)
 			continue;
-		ie_head = realloc(ie_head, sizeof *ie * (nevcnt + 1));
-		if (ie_head == NULL) {
+		n = realloc(ie_head, sizeof *ie * (nevcnt + 1));
+		if (n == NULL) {
 			error("realloc failed");
 			die(0);
 		}
+		ie_head = n;
 		ie = ie_head + nevcnt;
 		ie->ie_group = malloc(evcnt.ev_grouplen + 1);
 		ie->ie_name = malloc(evcnt.ev_namelen + 1);
