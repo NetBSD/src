@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.32 2001/03/21 01:33:47 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.33 2001/05/18 22:01:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -186,10 +186,6 @@ psycho_attach(parent, self, aux)
 	sc->sc_dmatag = ma->ma_dmatag;
 
 	/*
-	 * pull in all the information about the psycho as we can.
-	 */
-
-	/*
 	 * call the model-specific initialisation routine.
 	 */
 	if (strcmp(model, ROM_SABRE_MODEL) == 0)
@@ -226,8 +222,8 @@ psycho_print(aux, p)
  * SUNW,sabre initialisation ..
  *	- get the sabre's ranges.  this are used for both simba's.
  *	- find the two SUNW,simba's underneath (a and b)
- *	- work out which simba is which via the bus-range property
- *	- get each simba's interrupt-map and interrupt-map-mask.
+ *	- work out which simba is which via the PCI function
+ *	- get each simba's interrupt-map and interrupt-map-mask
  *	- turn on the iommu
  */
 static void
@@ -293,7 +289,7 @@ sabre_init(sc, ma, pba)
 	sc->sc_simba_b->pp_nrange = sc->sc_simba_a->pp_nrange =
 	    sc->sc_sabre->pp_nrange;
 
-	/* get the bus-range for the sabre.  we expect 0..2 */
+	/* get the bus-range for the sabre.  */
 	psycho_get_bus_range(sc->sc_node, sabre_br);
 
 	pba->pba_bus = sabre_br[0];
@@ -313,6 +309,7 @@ sabre_init(sc, ma, pba)
 		if (strcmp(model, ROM_SIMBA_MODEL) != 0)
 			continue;
 
+		/* grab the simba bus range and registers */
 		psycho_get_bus_range(node, simba_br);
 		psycho_get_registers(node, &regs, &nregs);
 
@@ -321,25 +318,23 @@ sabre_init(sc, ma, pba)
 		case 0:
 			pp = sc->sc_simba_a;
 			who = 'a';
-			pp->pp_regs = regs;
-			pp->pp_nregs = nregs;
 			break;
 		case 1:
 			pp = sc->sc_simba_b;
 			who = 'b';
-			pp->pp_regs = regs;
-			pp->pp_nregs = nregs;
 			break;
 		default:
 			panic("illegal simba funcion %d\n", fn);
 		}
+		pp->pp_regs = regs;
+		pp->pp_nregs = nregs;
 		pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
 		/* link us in .. */
 		pp->pp_sc = sc;
 		
 		printf("; simba %c, PCI bus %d", who, simba_br[0]);
 
-		/* grab the simba registers, interrupt map and map mask */
+		/* grab the simba interrupt map and map mask */
 		psycho_get_intmap(node, &pp->pp_intmap, &pp->pp_nintmap);
 		psycho_get_intmapmask(node, &pp->pp_intmapmask);
 
