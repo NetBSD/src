@@ -2412,50 +2412,42 @@ elf64_alpha_calc_dynrel_sizes (h, info)
     }
 
   /* If the symbol is dynamic, we'll need all the relocations in their
-     natural form.  If it has been forced local, we'll need the same 
-     number of RELATIVE relocations.  */
-  if (alpha_elf_dynamic_symbol_p (&h->root, info) 
-      || (info->shared && h->root.dynindx == -1))
+     natural form.  If this is a shared object, and it has been forced
+     local, we'll need the same number of RELATIVE relocations.  */
+
+  if (alpha_elf_dynamic_symbol_p (&h->root, info) || info->shared)
     {
       struct alpha_elf_reloc_entry *relent;
-
-      for (relent = h->reloc_entries; relent; relent = relent->next)
-	{
-	  relent->srel->_raw_size +=
-	    sizeof (Elf64_External_Rela) * relent->count;
-	}
-
-      /* Only add a .rela.got entry if we're not using a .plt entry.  */
-      if (h->root.plt_offset == MINUS_ONE)
-	{
-	  bfd *dynobj = elf_hash_table(info)->dynobj;
-	  struct alpha_elf_got_entry *gotent;
-	  bfd_size_type count = 0;
-	  asection *srel;
-
-	  for (gotent = h->got_entries; gotent ; gotent = gotent->next)
-	    count++;
-	  if (count > 0)
-	    {
-	      srel = bfd_get_section_by_name (dynobj, ".rela.got");
-	      BFD_ASSERT (srel != NULL);
-	      srel->_raw_size += sizeof (Elf64_External_Rela) * count;
-	    }
-	}
-    }
-  /* Otherwise, shared objects require RELATIVE relocs for all REFQUAD
-     and REFLONG relocations.  */
-  else if (info->shared)
-    {
-      struct alpha_elf_reloc_entry *relent;
+      bfd *dynobj;
+      struct alpha_elf_got_entry *gotent;
+      bfd_size_type count;
+      asection *srel;
 
       for (relent = h->reloc_entries; relent; relent = relent->next)
 	if (relent->rtype == R_ALPHA_REFLONG
 	    || relent->rtype == R_ALPHA_REFQUAD)
 	  {
 	    relent->srel->_raw_size +=
-	      sizeof(Elf64_External_Rela) * relent->count;
+	      sizeof (Elf64_External_Rela) * relent->count;
 	  }
+
+      dynobj = elf_hash_table(info)->dynobj;
+      count = 0;
+
+      for (gotent = h->got_entries; gotent ; gotent = gotent->next)
+	count++;
+
+      /* If we are using a .plt entry, subtract one, as the first
+	 reference uses a .rela.plt entry instead.  */
+      if (h->root.plt_offset != MINUS_ONE)
+	count--;
+
+      if (count > 0)
+	{
+	  srel = bfd_get_section_by_name (dynobj, ".rela.got");
+	  BFD_ASSERT (srel != NULL);
+	  srel->_raw_size += sizeof (Elf64_External_Rela) * count;
+	}
     }
 
   return true;
@@ -3168,14 +3160,38 @@ elf64_alpha_finish_dynamic_symbol (output_bfd, info, h, sym)
       bfd_put_64 (output_bfd, plt_addr, sgot->contents + gotent->got_offset);
 
       /* Subsequent .got entries will continue to bounce through the .plt.  */
-      while ((gotent = gotent->next) != NULL)
+      if (gotent->next)
 	{
-	  sgot = alpha_elf_tdata(gotent->gotobj)->got;
-	  BFD_ASSERT(sgot != NULL);
-	  BFD_ASSERT(gotent->addend == 0);
+	  srel = bfd_get_section_by_name (dynobj, ".rela.got");
+	  BFD_ASSERT (! info->shared || srel != NULL);
 
-	  bfd_put_64 (output_bfd, plt_addr,
-		      sgot->contents + gotent->got_offset);
+	  gotent = gotent->next;
+	  do
+	    {
+	      sgot = alpha_elf_tdata(gotent->gotobj)->got;
+	      BFD_ASSERT(sgot != NULL);
+	      BFD_ASSERT(gotent->addend == 0);
+
+	      bfd_put_64 (output_bfd, plt_addr,
+			  sgot->contents + gotent->got_offset);
+
+	      if (info->shared)
+		{
+		  outrel.r_offset = (sgot->output_section->vma
+				     + sgot->output_offset
+				     + gotent->got_offset);
+		  outrel.r_info = ELF64_R_INFO(0, R_ALPHA_RELATIVE);
+		  outrel.r_addend = 0;
+
+		  bfd_elf64_swap_reloca_out (output_bfd, &outrel,
+					     ((Elf64_External_Rela *)
+					      srel->contents)
+					     + srel->reloc_count++);
+		}
+
+	      gotent = gotent->next;
+	    }
+	  while (gotent != NULL);
 	}
     }
   else if (alpha_elf_dynamic_symbol_p (h, info))
