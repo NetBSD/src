@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ievar.h,v 1.9 1997/03/15 18:10:53 is Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.10 1998/10/01 20:05:11 thorpej Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -69,8 +69,8 @@ struct ie_softc {
 	void    (*reset_586) __P((struct ie_softc *));
 	void    (*chan_attn) __P((struct ie_softc *));
 	void    (*run_586)   __P((struct ie_softc *));
-	void (*sc_bcopy) __P((const void *, void *, u_int));
-	void (*sc_bzero) __P((void *, u_int));
+	void	*(*sc_memcpy) __P((void *, const void *, size_t));
+	void	*(*sc_memset) __P((void *, int, size_t));
 
 	caddr_t sc_iobase;	/* KVA of base of 24bit addr space */
 	caddr_t sc_maddr;	/* KVA of base of chip's RAM */
