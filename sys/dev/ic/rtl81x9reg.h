@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.3 2000/04/26 14:02:35 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.4 2000/04/30 12:00:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -238,16 +238,22 @@
 #define RL_EEMODE_PROGRAM	0x80
 #define RL_EEMODE_WRITECFG	(0x80|0x40)
 
-/* 9346 EEPROM commands */
-#define RL_EECMD_WRITE		0x140
-#define RL_EECMD_READ		0x180
-#define RL_EECMD_ERASE		0x1c0
+/* 9346/9356 EEPROM commands */
+#define RL_EEADDR_LEN0		6	/* 9346 */
+#define RL_EEADDR_LEN1		8	/* 9356 */
+#define RL_EECMD_LEN		4
+
+#define RL_EECMD_WRITE		0x5	/* 0101b */
+#define RL_EECMD_READ		0x6	/* 0110b */
+#define RL_EECMD_ERASE		0x7	/* 0111b */
 
 #define RL_EE_ID		0x00
 #define RL_EE_PCI_VID		0x01
 #define RL_EE_PCI_DID		0x02
 /* Location of station address inside EEPROM */
-#define RL_EE_EADDR		0x07
+#define RL_EE_EADDR0		0x07
+#define RL_EE_EADDR1		0x08
+#define RL_EE_EADDR2		0x09
 
 /*
  * MII register (8129 only)
@@ -300,7 +306,7 @@
 #define RL_RX_BUF_SZ		RL_RXBUF_64
 #define RL_RXBUFLEN		(1 << ((RL_RX_BUF_SZ >> 11) + 13))
 #define RL_TX_LIST_CNT		4
-#define RL_TX_EARLYTHRESH	(256 << 11)
+#define RL_TX_EARLYTHRESH	((256 / 32) << 16)
 #define RL_RX_FIFOTHRESH	RL_RXFIFO_256BYTES
 #define RL_RX_MAXDMA		RL_RXDMA_256BYTES
 #define RL_TX_MAXDMA		RL_TXDMA_256BYTES

@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl_pci.c,v 1.5 2000/04/26 14:02:36 tsutsui Exp $ */
+/* $NetBSD: if_rl_pci.c,v 1.6 2000/04/30 12:00:41 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -221,7 +221,7 @@ rl_pci_attach(parent, self, aux)
 	pcireg_t		command;
 	struct rl_pci_softc *psc = (struct rl_pci_softc *)self;
 	struct rl_softc *sc = &psc->sc_rl;
-	u_int16_t		rl_did = 0;
+	u_int16_t		rl_did, val;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -301,7 +301,7 @@ rl_pci_attach(parent, self, aux)
 	 * Now read the exact device type from the EEPROM to find
 	 * out if it's an 8129 or 8139.
 	 */
-	rl_read_eeprom(sc, (caddr_t)&rl_did, RL_EE_PCI_DID, 1, 0);
+	rl_did = rl_read_eeprom(sc, RL_EE_PCI_DID, RL_EEADDR_LEN0);
 
 	if (rl_did == PCI_PRODUCT_REALTEK_RT8139 ||
 	    rl_did == PCI_PRODUCT_ACCTON_MPX5030 ||
@@ -326,7 +326,15 @@ rl_pci_attach(parent, self, aux)
 	/*
 	 * Get station address from the EEPROM.
 	 */
-	rl_read_eeprom(sc, (caddr_t)&eaddr, RL_EE_EADDR, 3, 1);
+	val = rl_read_eeprom(sc, RL_EE_EADDR0, RL_EEADDR_LEN0);
+	eaddr[0] = val & 0xff;
+	eaddr[1] = val >> 8;
+	val = rl_read_eeprom(sc, RL_EE_EADDR1, RL_EEADDR_LEN0);
+	eaddr[2] = val & 0xff;
+	eaddr[3] = val >> 8;
+	val = rl_read_eeprom(sc, RL_EE_EADDR2, RL_EEADDR_LEN0);
+	eaddr[4] = val & 0xff;
+	eaddr[5] = val >> 8;
 
 	/*
 	 * A RealTek chip was detected. Inform the world.
