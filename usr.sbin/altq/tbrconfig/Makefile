@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2001/04/05 21:48:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2001/12/14 00:52:34 lukem Exp $
 
-BINDIR=/sbin
+BINDIR=	/sbin
+LDSTATIC?=-static
 
 PROG=	tbrconfig
 MAN=	tbrconfig.8
