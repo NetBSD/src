@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/01/23 22:24:20 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.3 2001/10/19 04:12:41 martin Exp $
 
 DIST=	${.CURDIR}/../../dist
 .PATH:	${DIST}/nawk
@@ -9,5 +9,10 @@ CPPFLAGS+=	-I${DIST}/nawk -I.
 LDADD+=	-lm
 DPADD+=	${LIBM}
 YHEADER=	yes
+
+# XXX work around toolchain/fpu emul lossage
+.if ${MACHINE_ARCH} == "sparc64"
+CPPFLAGS+=	-msoft-quad-float
+.endif
 
 .include <bsd.prog.mk>
