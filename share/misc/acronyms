@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.85 2001/05/01 19:55:20 martin Exp $
+$NetBSD: acronyms,v 1.86 2001/05/28 13:02:51 wiz Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -127,6 +127,7 @@ SWAHBI	silly, wild-assed hare-brained idea
 TANSTAAFL	there ain't no such thing as a free lunch
 TIA	thanks in advance
 TLA	three letter acronym
+TMA	too many abbreviations
 TMI	too much information
 TTFN	ta ta for now
 TTYL	talk to you later
