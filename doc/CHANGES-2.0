@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.135 2004/04/28 05:42:59 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.136 2004/04/28 05:53:26 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1413,3 +1413,10 @@ x11/Xserver/hw/xfree86/int10/Makefile		1.4
 
 	Only -D_PC on i386/amd64. PR#25036
 	[kristerw, ticket #196]
+
+sys/ufs/ffs/ffs_vfsops.c			1.145
+
+	Remove botched superblock upgrade warnings.
+	There are now alternate non-kernel checks and fixes for this problem.
+	PR#17910 PR#21283 PR#21404 PR#23925 PR#23926 PR#25138
+	[dbj, ticket #197]
