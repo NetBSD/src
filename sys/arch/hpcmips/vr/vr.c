@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.20 2001/02/22 18:38:04 uch Exp $	*/
+/*	$NetBSD: vr.c,v 1.21 2001/04/12 19:22:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -262,7 +262,7 @@ vr_os_init()
 	splvec.splbio = MIPS_SPL0;
 	splvec.splnet = MIPS_SPL0;
 	splvec.spltty = MIPS_SPL0;
-	splvec.splimp = MIPS_SPL0;
+	splvec.splvm = MIPS_SPL0;
 	splvec.splclock = MIPS_SPL_0_1;
 	splvec.splstatclock = MIPS_SPL_0_1;
 
