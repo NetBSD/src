@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2002/10/22 13:10:28 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 2002/10/23 13:24:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2180,7 +2180,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	} else {
 		if (pmap_enter(pmap_kernel(), va, pa, prot,
 		    PMAP_WIRED | PMAP_UNMANAGED))
-			pmap_debugger();
+			panic("pmap_kenter_pa: pmap_enter botched");
 	}
 
 	PMPRINTF(("pmap_kenter_pa: done\n"));
