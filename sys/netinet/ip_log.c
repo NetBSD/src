@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.1.1.1.4.2 1997/11/17 16:33:08 mrg Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.1.1.1.4.3 1998/07/22 23:37:26 mellon Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -7,17 +7,17 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: ip_log.c,v 2.0.2.13.2.2 1997/11/12 10:52:21 darrenr Exp 
+ * Id: ip_log.c,v 2.0.2.13.2.4 1998/06/07 16:27:09 darrenr Exp 
  */
 #ifdef	IPFILTER_LOG
 # ifndef SOLARIS
 #  define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
 # endif
 
+# if defined(KERNEL) && !defined(_KERNEL)
+#  define       _KERNEL
+# endif
 # ifdef  __FreeBSD__
-#  if defined(KERNEL) && !defined(_KERNEL)
-#   define       _KERNEL
-#  endif
 #  if defined(_KERNEL) && !defined(IPFILTER_LKM)
 #   include <sys/osreldate.h>
 #  else
@@ -462,6 +462,7 @@ int unit;
 	iplog_t *ipl;
 	int used;
 
+	MUTEX_ENTER(&ipl_mutex);
 	while ((ipl = iplt[unit])) {
 		iplt[unit] = ipl->ipl_next;
 		KFREES((caddr_t)ipl, ipl->ipl_dsize);
@@ -470,6 +471,7 @@ int unit;
 	used = iplused[unit];
 	iplused[unit] = 0;
 	iplcrc[unit] = 0;
+	MUTEX_EXIT(&ipl_mutex);
 	return used;
 }
 #endif /* IPFILTER_LOG */
