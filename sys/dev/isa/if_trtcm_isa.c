@@ -1,3 +1,5 @@
+/*	$NetBSD: if_trtcm_isa.c,v 1.2 1999/03/22 23:01:37 bad Exp $	*/
+
 #undef TRTCMISADEBUG
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

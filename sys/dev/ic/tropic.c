@@ -1,3 +1,5 @@
+/*	$NetBSD: tropic.c,v 1.2 1999/03/22 23:01:37 bad Exp $	*/
+
 /* 
  * Ported to NetBSD by Onno van der Linden
  * Many thanks to Larry Lile for sending me the IBM TROPIC documentation.
