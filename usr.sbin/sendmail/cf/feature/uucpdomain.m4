@@ -32,8 +32,18 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.1 (Berkeley) 6/7/93')
-#
+
 divert(0)
-# Configuration version number
-DZ8.1
+VERSIONID(`@(#)uucpdomain.m4	8.1 (Berkeley) 6/7/93')
+divert(-1)
+
+
+PUSHDIVERT(6)
+Kuudomain ifelse(_ARG_, `', `hash /etc/uudomain -o', `_ARG_')
+POPDIVERT
+
+
+PUSHDIVERT(8)
+# handle UUCP mapping
+R$* < @ $+ .UUCP > $*		$: $1 < @ $(uudomain $2 $: $2.UUCP $) > $3
+POPDIVERT

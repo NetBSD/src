@@ -32,8 +32,9 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-VERSIONID(`@(#)version.m4	8.1 (Berkeley) 6/7/93')
-#
 divert(0)
-# Configuration version number
-DZ8.1
+VERSIONID(`@(#)cs.exposed.m4	8.1 (Berkeley) 6/7/93')
+DOMAIN(Berkeley)dnl
+HACK(cssubdomain)dnl
+define(`confUSERDB_SPEC',
+	`/usr/sww/share/lib/users.cs.db,/usr/sww/share/lib/users.eecs.db')dnl
