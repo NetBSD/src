@@ -72,7 +72,7 @@
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 
-#include <dev/pcmcia/pcmcia_isic.h>
+#include <dev/pcmcia/i4b_isic_pcmcia.h>
 
 /*---------------------------------------------------------------------------*
  *      Sedlbauer SpeedStar ISAC get fifo routine

@@ -33,7 +33,7 @@
  *	ELSA MicroLink ISDN/MC card specific routines
  *	---------------------------------------------
  *
- *	$Id: i4b_elsa_isdnmc.c,v 1.2 2001/01/18 22:14:00 martin Exp $
+ *	$Id: i4b_elsa_isdnmc.c,v 1.3 2001/02/17 15:00:49 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -84,7 +84,7 @@
 #include <dev/ic/i4b_isac.h>
 #include <dev/ic/i4b_hscx.h>
 
-#include <dev/pcmcia/pcmcia_isic.h>
+#include <dev/pcmcia/i4b_isic_pcmcia.h>
 
 #ifndef __FreeBSD__
 /* PCMCIA support routines */

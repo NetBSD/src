@@ -30,10 +30,10 @@
  *
  *---------------------------------------------------------------------------
  *
- *	pcmcia_isic.h - common definitions for pcmcia isic cards
- *	--------------------------------------------------------
+ *	i4b_isic_pcmcia.h - common definitions for pcmcia isic cards
+ *	------------------------------------------------------------
  *
- *	$Id: pcmcia_isic.h,v 1.2 2001/01/18 22:14:02 martin Exp $ 
+ *	$Id: i4b_isic_pcmcia.h,v 1.1 2001/02/17 15:00:49 martin Exp $ 
  *
  *      last edit-date: [Sun Feb 14 10:29:33 1999]
  *
