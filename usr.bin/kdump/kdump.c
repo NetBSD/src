@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.62 2003/09/20 22:24:00 matt Exp $	*/
+/*	$NetBSD: kdump.c,v 1.63 2003/11/15 23:10:31 manu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.62 2003/09/20 22:24:00 matt Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.63 2003/11/15 23:10:31 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -808,9 +808,22 @@ ktrmmsg(mmsg, len)
 	struct ktr_mmsg *mmsg;
 	int len;
 {
-	printf("id %d [0x%x -> 0x%x] flags 0x%x\n", 
-	    mmsg->ktr_id, mmsg->ktr_local_port, 
-	    mmsg->ktr_remote_port, mmsg->ktr_bits);
+	const char *service_name;
+	char *reply;
+	int id;
+
+	id = mmsg->ktr_id;
+	if ((id / 100) % 2) {  /* Message reply */
+		reply = " reply";
+		id -= 100;
+	} else {
+		reply = "";
+	}
+
+	if ((service_name = mach_service_name(id)) != NULL)
+		printf("%s%s\n", service_name, reply);
+	else 
+		printf("unknown service%s [%d]\n", reply, mmsg->ktr_id);
 
 	hexdump_buf(mmsg, len);
 }
