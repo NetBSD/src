@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.17 2004/08/01 18:52:03 uch Exp $
+#	$NetBSD: Makefile.Xserver,v 1.18 2005/02/24 14:53:15 christos Exp $
 
 .for _SL in	dix os mi printer printer/pcl printer/ps printer/raster \
 		Xext/ext Xext/exts GL/glx GL/GLcore xkb xinput lbx dbe \
@@ -21,5 +21,9 @@ LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/x11/Xserver/${_SL} && ${PRINTOBJDIR}
 LDADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
 DPADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
 .endfor
+.if (${USE_PAM} != "no")
+LDADD.os +=-lpam
+DPADD.os +=${LIBPAM}
+.endif
 
 LIBCWRAPPER=	${LIBDIR.os}/libc_wrapper.o
