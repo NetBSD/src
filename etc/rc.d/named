@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.11 2002/06/18 14:35:38 lukem Exp $
+# $NetBSD: named,v 1.12 2003/12/18 18:30:18 christos Exp $
 #
 
 # PROVIDE: named
@@ -33,13 +33,23 @@ named_precmd()
 	# exists and named isn't running at this point (unless forcestart
 	# is used).
 	#
+	case "$($command -v)" in
+	BIND*)	# 9 no group, named-xfer, or ndc
+		;;
+	named*)	# 4 and 8
+		rc_flags="-g named $rc_flags"
+		if [ ! -x "${named_chrootdir}/usr/libexec/named-xfer" -o \
+		    "${named_chrootdir}/usr/libexec/named-xfer" -ot \
+		    /usr/libexec/named-xfer ]; then
+			rm -f "${named_chrootdir}/usr/libexec/named-xfer"
+			cp -p /usr/libexec/named-xfer \
+			    "${named_chrootdir}/usr/libexec"
+		fi
+		ln -fs "${named_chrootdir}/var/run/ndc" /var/run/ndc
+		;;
+	esac
 
-	if [ ! -x "${named_chrootdir}/usr/libexec/named-xfer" -o \
-	    "${named_chrootdir}/usr/libexec/named-xfer" -ot \
-	    /usr/libexec/named-xfer ]; then
-		rm -f "${named_chrootdir}/usr/libexec/named-xfer"
-		cp -p /usr/libexec/named-xfer "${named_chrootdir}/usr/libexec"
-	fi
+
 	if [ ! -c "${named_chrootdir}/dev/null" ]; then
 		rm -f "${named_chrootdir}/dev/null"
 		( cd /dev ; /bin/pax -rw -pe null "${named_chrootdir}/dev" )
@@ -49,11 +59,10 @@ named_precmd()
 		    cp -p /etc/localtime "${named_chrootdir}/etc/localtime"
 	fi
 	ln -fs "${named_chrootdir}/var/run/named.pid" /var/run/named.pid
-	ln -fs "${named_chrootdir}/var/run/ndc" /var/run/ndc
 
 	#	Change run_rc_commands()'s internal copy of $named_flags
 	#
-	rc_flags="-u named -g named -t ${named_chrootdir} $rc_flags"
+	rc_flags="-u named -t ${named_chrootdir} $rc_flags"
 }
 
 load_rc_config $name
