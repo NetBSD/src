@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.13 1998/08/13 21:36:05 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.14 1998/12/04 20:19:22 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -115,8 +115,10 @@ void		db_task_name(/* task_t */);
 int kdb_trap __P((int, int, db_regs_t *));
 
 /*
- * We use a.out symbols in DDB.
+ * We use either a.out or Elf32 symbols in DDB.
  */
 #define	DB_AOUT_SYMBOLS
+#define	DB_ELF_SYMBOLS
+#define	DB_ELFSIZE	32
 
 #endif	/* _I386_DB_MACHDEP_H_ */
