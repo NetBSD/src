@@ -42,7 +42,7 @@
  *	@(#)genassym.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: genassym.c,v 1.15 93/04/21 06:09:30 torek Exp  (LBL)
- * $Id: genassym.c,v 1.2 1993/10/11 02:16:17 deraadt Exp $
+ * $Id: genassym.c,v 1.3 1993/11/26 11:43:29 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -57,7 +57,7 @@
 #include <sys/vmmeter.h>
 
 #include <machine/pmap.h>
-#include <machine/psl.h>
+#include <machine/cpu.h>
 
 #ifdef notyet
 #include <sparc/dev/zsreg.h>
@@ -65,8 +65,6 @@
 #endif
 #include <sparc/dev/bsd_audioreg.h>
 #include <sparc/dev/bsd_audiovar.h>
-
-#include <sparc/sparc/intreg.h>
 
 #include <stdio.h>
 #include <stddef.h>
