@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2001/08/07 22:54:00 bjh21 Exp $	*/
+/*	$NetBSD: param.h,v 1.5 2002/02/12 06:58:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,22 +41,32 @@
 
 /*
  * For KERNEL code:
- *	MACHINE must be defined by the individual port.
- *	MACHINE_ARCH may be defined by an individual port.
+ *	MACHINE must be defined by the individual port.  This is so that
+ *	uname returns the correct thing, etc.
+ *
+ *	MACHINE_ARCH may be defined by individual ports as a temporary
+ *	measure while we're finishing the conversion to ELF.
  *
  * For non-KERNEL code:
- *	MACHINE && MACHINE_ARCH default to "arm"
+ *	If ELF, MACHINE and MACHINE_ARCH are forced to "arm".
  */
 
-#ifndef _KERNEL
-#ifndef MACHINE
-#define	MACHINE		"arm"
-#endif
-#endif /* !_KERNEL */
-
-#ifndef MACHINE_ARCH
+#if defined(_KERNEL)
+#ifndef MACHINE_ARCH			/* XXX For now */
+#define	_MACHINE_ARCH	arm
 #define	MACHINE_ARCH	"arm"
 #endif
+#elif defined(__ELF__)
+#undef _MACHINE
+#define	_MACHINE	arm
+#undef MACHINE
+#define	MACHINE		"arm"
+
+#undef _MACHINE_ARCH
+#define	_MACHINE_ARCH	arm
+#undef MACHINE_ARCH
+#define	MACHINE_ARCH	"arm"
+#endif /* _KERNEL */
 
 #define	MID_MACHINE	MID_ARM6
 
