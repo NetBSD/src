@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.3 2002/10/14 09:48:20 scw Exp $
+$NetBSD: TODO,v 1.4 2002/10/14 10:52:41 scw Exp $
 
 TODO List For NetBSD/sh5
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,3 +56,15 @@ DONE.	Test the whole lot using a 64-bit kernel/userland.
 9.	If (8) works, try 64-bit kernel and 32-bit userland, using COMPAT32.
 
 10.	Stress-testing of just about everything. ;-)
+
+11.	Define a "board_info" structure, and move a whole bunch of currently
+	hard-coded stuff into it. For example:
+
+	  - CPU speed,
+	  - Memory size,
+	  - KSEG0 physical address,
+	  - Cache details: e.g. size, number of sets/ways, line size,
+	  - Cache/TLB interface routines (currently __cpu_cache*/__cpu_tlb*)
+	  - etc.
+
+12.	Support for nathan_sa when the branch is merged.
