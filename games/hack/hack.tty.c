@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)hack.tty.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: hack.tty.c,v 1.4 1995/04/28 23:01:47 mycroft Exp $";
+static char rcsid[] = "$NetBSD: hack.tty.c,v 1.5 1995/04/29 01:08:54 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ static char rcsid[] = "$NetBSD: hack.tty.c,v 1.4 1995/04/28 23:01:47 mycroft Exp
 #define	NR_OF_EOFS	20
 #endif BSD
 
-extern short ospeed;
+extern speed_t ospeed;
 static char erase_char, kill_char;
 static boolean settty_needed = FALSE;
 struct termios inittyb, curttyb;
