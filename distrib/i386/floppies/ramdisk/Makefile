@@ -1,11 +1,14 @@
-#	$NetBSD: Makefile,v 1.9 1999/03/04 20:32:19 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.10 1999/03/13 21:21:51 sommerfe Exp $
 
 TOP=		${.CURDIR}/..
+WARNS=1
 
 .include "${TOP}/Makefile.inc"
 IMAGE=		ramdisk.fs
 
 AUXTARGETS=	install.sh upgrade.sh start.sh
+AUXDEPENDS= 	dot.profile dot.hdprofile disktab.preinstall \
+		termcap.mini termcap.pc3
 AUXCLEAN=	${AUXTARGETS}
 
 CBIN=		ramdiskbin
@@ -35,7 +38,7 @@ upgrade.sh: upgrade.tmpl
 start.sh: start.tmpl
 	sed "s/@@VERSION@@/${VER}/" < ${.ALLSRC} > ${.TARGET}
 
-all: ${AUXTARGETS} ${CBIN} 
+all: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	dd if=/dev/zero of=${IMAGE} count=2880
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
@@ -61,9 +64,17 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
+# This is listed in ramdiskbin.conf but is built here.
+${CBIN}: libhack.o
+
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=${TOP}/../../utils/libhack
+.include "${HACKSRC}/Makefile.inc"
+
 clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
+.include <bsd.sys.mk>
