@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530reg.h,v 1.5 1996/01/24 19:21:40 gwr Exp $ */
+/*	$NetBSD: z8530reg.h,v 1.6 1996/10/16 22:34:52 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,22 +63,12 @@
  * registers 2 and 9 across both channels, and reads registers 2 and 3
  * differently for the two channels.  We can, however, ignore this much
  * of the time.
- */
-#if 0	/* Example only! */
-/*
- * The layout of this structure is hardware-dependent!
- * Define these in some machine-dependent place.
- */
-struct zschan {
-	volatile u_char	zc_csr;		/* ctrl, status, or reg. number */
-	volatile u_char	zc_data;	/* data or numbered register */
-};
-struct zsdevice {
-	struct	zschan zs_chan[2];
-};
-#endif	/* Example only! */
-
-/*
+ *
+ * This file also includes flags for the Z85C30 and Z85230 enhanced scc.
+ * The CMOS 8530 includes extra SDLC functionality, and is used in a
+ * number of Macs (often in the Z85C80, an 85C30 combined w/ a SCSI
+ * controller). -wrs
+ *
  * Some of the names in this files were chosen to make the hsis driver
  * work unchanged (which means that they will match some in SunOS).
  *
@@ -87,9 +77,7 @@ struct zsdevice {
  *	framing error		(missing stop bit, etc)
  *	end of frame		(in synchronous modes)
  *	parity error		(when `parity error is S.C.' is set)
- */
-
-/*
+ *
  * Registers with only a single `numeric value' get a name.
  * Other registers hold bits and are only numbered; the bit
  * definitions imply the register number (see below).
@@ -100,8 +88,15 @@ struct zsdevice {
  */
 #define	ZSRR_IVEC	2	/* interrupt vector (channel 0) */
 #define	ZSRR_IPEND	3	/* interrupt pending (ch. 0 only) */
+#define	ZSRR_TXSYNC	6	/* sync transmit char (monosync mode) */
+#define	ZSRR_RXSYNC	7	/* sync receive char (monosync mode) */
+#define	ZSRR_SYNCLO	6	/* sync low byte (bisync mode) */
+#define	ZSRR_SYNCHI	7	/* sync high byte (bisync mode) */
+#define	ZSRR_SDLC_ADDR	6	/* SDLC address (SDLC mode) */
+#define	ZSRR_SDLC_FLAG	7	/* SDLC flag 0x7E (SDLC mode) */
 #define	ZSRR_BAUDLO	12	/* baud rate generator (low half) */
 #define	ZSRR_BAUDHI	13	/* baud rate generator (high half) */
+#define	ZSRR_ENHANCED	14	/* read address of WR7' - yes, it's not 7!*/
 
 #define	ZSWR_IVEC	2	/* interrupt vector (shared) */
 #define	ZSWR_TXSYNC	6	/* sync transmit char (monosync mode) */
@@ -112,6 +107,7 @@ struct zsdevice {
 #define	ZSWR_SDLC_FLAG	7	/* SDLC flag 0x7E (SDLC mode) */
 #define	ZSWR_BAUDLO	12	/* baud rate generator (low half) */
 #define	ZSWR_BAUDHI	13	/* baud rate generator (high half) */
+#define	ZSWR_ENHANCED	7	/* write address of WR7' */
 
 /*
  * Registers 0 through 7 may be written with any one of the 8 command
@@ -241,6 +237,21 @@ struct zsdevice {
 #endif
 
 /*
+ * Bits in Write Register 7' (ZSWR_ENHANCED above). This register is
+ * only available on the 85230. Dispite the fact it contains flags
+ * and not a single value, the register was named as it is read
+ * via RR14. Weird.
+ */
+			/*	0x80	unused */
+#define	ZSWR7P_EXTEND_READ	0x40	/* modify read map; make most regs readable */
+#define	ZSWR7P_TX_FIFO		0x20	/* change level for Tx FIFO empty int */
+#define	ZSWR7P_DTR_TIME		0x10	/* modifies deact. speed of /DTR//REQ */
+#define	ZSWR7P_RX_FIFO		0x08	/* Rx FIFO int on 1/2 full? */
+#define	ZSWR7P_RTS_DEACT	0x04	/* automatically deassert RTS */
+#define	ZSWR7P_AUTO_EOM_RESET	0x02	/* automatically reset EMO/Tx Underrun */
+#define	ZSWR7P_AUTO_TX_FLAG	0x01	/* Auto send SDLC flag at transmit start */
+
+/*
  * Bits in Write Register 9 (`Master Interrupt Control').  Bits 7 & 6
  * are taken as a unit and indicate the type of reset; 00 means no reset
  * (and is not defined here).
@@ -248,7 +259,7 @@ struct zsdevice {
 #define	ZSWR9_HARD_RESET	0xc0	/* force hardware reset */
 #define	ZSWR9_A_RESET		0x80	/* reset channel A (0) */
 #define	ZSWR9_B_RESET		0x40	/* reset channel B (1) */
-			/*	0x20	   unused */
+#define	ZSWR9_SOFT_INTAC	0x20	/* Not in NMOS version */
 
 #define	ZSWR9_STATUS_HIGH	0x10	/* status in high bits of intr vec */
 #define	ZSWR9_MASTER_IE		0x08	/* master interrupt enable */
@@ -281,13 +292,13 @@ struct zsdevice {
  */
 #define	ZSWR11_XTAL		0x80	/* have xtal between RTxC* and SYNC* */
 					/* (else have TTL oscil. on RTxC*) */
-#define	ZSWR11_RXCLK_RTXC	0x00	/* recv clock taken from TRxC* pin */
+#define	ZSWR11_RXCLK_RTXC	0x00	/* recv clock taken from RTxC* pin */
 #define	ZSWR11_RXCLK_TRXC	0x20	/* recv clock taken from TRxC* pin */
 #define	ZSWR11_RXCLK_BAUD	0x40	/* recv clock taken from BRG */
 #define	ZSWR11_RXCLK_DPLL	0x60	/* recv clock taken from DPLL */
 
-#define	ZSWR11_TXCLK_RTXC	0x00	/* xmit clock taken from TRxC* pin */
-#define	ZSWR11_TXCLK_TRXC	0x08	/* xmit clock taken from RTxC* pin */
+#define	ZSWR11_TXCLK_RTXC	0x00	/* xmit clock taken from RTxC* pin */
+#define	ZSWR11_TXCLK_TRXC	0x08	/* xmit clock taken from TRxC* pin */
 #define	ZSWR11_TXCLK_BAUD	0x10	/* xmit clock taken from BRG */
 #define	ZSWR11_TXCLK_DPLL	0x18	/* xmit clock taken from DPLL */
 
@@ -348,15 +359,19 @@ struct zsdevice {
  * Bits in Write Register 15 (`External/Status Interrupt Control').
  * Most of these cause status interrupts whenever the corresponding
  * bit or pin changes state (i.e., any rising or falling edge).
+ *
+ * NOTE: ZSWR15_SDLC_FIFO & ZSWR15_ENABLE_ENHANCED should not be
+ * set on an NMOS 8530. Also, ZSWR15_ENABLE_ENHANCED is only
+ * available on the 85230.
  */
 #define	ZSWR15_BREAK_IE		0x80	/* enable break/abort status int */
 #define	ZSWR15_TXUEOM_IE	0x40	/* enable TX underrun/EOM status int */
 #define	ZSWR15_CTS_IE		0x20	/* enable CTS* pin status int */
 #define	ZSWR15_SYNCHUNT_IE	0x10	/* enable SYNC* pin/hunt status int */
 #define	ZSWR15_DCD_IE		0x08	/* enable DCD* pin status int */
-			/*	0x04	   unused, must be zero */
+#define	ZSWR15_SDLC_FIFO	0x04	/* enable SDLC FIFO enhancements */
 #define	ZSWR15_ZERO_COUNT_IE	0x02	/* enable BRG-counter = 0 status int */
-			/*	0x01	   unused, must be zero */
+#define	ZSWR15_ENABLE_ENHANCED	0x01	/* enable writing WR7' at reg 7 */
 
 /*
  * Bits in Read Register 0 (`Transmit/Receive Buffer Status and External
