@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.133 2000/01/31 15:08:25 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.134 2000/03/05 08:21:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1652,6 +1652,8 @@ instance_match(dev, aux, bp)
 	return (0);
 }
 
+struct device *booted_device;
+
 void
 nail_bootdev(dev, bp)
 	struct device *dev;
@@ -1666,7 +1668,7 @@ nail_bootdev(dev, bp)
 	 * Mark this bootpath component by linking it to the matched
 	 * device. We pick up the device pointer in cpu_rootconf().
 	 */
-	bp->dev = dev;
+	booted_device = bp->dev = dev;
 
 	/*
 	 * Then clear the current bootpath component, so we don't spuriously
