@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.12 2000/11/29 22:05:36 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.13 2000/12/22 22:58:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -109,14 +109,13 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 {
 	struct proc *p = curproc;
 	struct linux_rt_sigframe *sfp, sigframe;
-	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 	int fsize, rndfsize;
 	extern char linux_rt_sigcode[], linux_rt_esigcode[];
 
 	/* Do we need to jump onto the signal stack? */
-	onstack = (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-		  (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	onstack = (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+		  (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context.  */
 	fsize = sizeof(struct linux_rt_sigframe);
@@ -124,8 +123,8 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 
 	if (onstack)
 		sfp = (struct linux_rt_sigframe *)
-					((caddr_t)psp->ps_sigstk.ss_sp +
-						  psp->ps_sigstk.ss_size);
+					((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		sfp = (struct linux_rt_sigframe *)(alpha_pal_rdusp());
 	sfp = (struct linux_rt_sigframe *)((caddr_t)sfp - rndfsize);
@@ -204,7 +203,7 @@ void setup_linux_rt_sigframe(tf, sig, mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 void setup_linux_sigframe(tf, sig, mask)
@@ -214,14 +213,13 @@ void setup_linux_sigframe(tf, sig, mask)
 {
 	struct proc *p = curproc;
 	struct linux_sigframe *sfp, sigframe;
-	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 	int fsize, rndfsize;
 	extern char linux_sigcode[], linux_esigcode[];
 
 	/* Do we need to jump onto the signal stack? */
-	onstack = (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-		  (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	onstack = (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+		  (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context.  */
 	fsize = sizeof(struct linux_sigframe);
@@ -229,8 +227,8 @@ void setup_linux_sigframe(tf, sig, mask)
 
 	if (onstack)
 		sfp = (struct linux_sigframe *)
-					((caddr_t)psp->ps_sigstk.ss_sp +
-						  psp->ps_sigstk.ss_size);
+					((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		sfp = (struct linux_sigframe *)(alpha_pal_rdusp());
 	sfp = (struct linux_sigframe *)((caddr_t)sfp - rndfsize);
@@ -292,7 +290,7 @@ void setup_linux_sigframe(tf, sig, mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -373,9 +371,9 @@ linux_restore_sigcontext(struct proc *p, struct linux_sigcontext context,
 	 * an onstack member.  This could be needed in the future.
 	 */
 	if (context.sc_onstack & LINUX_SA_ONSTACK)
-	    p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	    p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-	    p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	    p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Reset the signal mask */
 	(void) sigprocmask1(p, SIG_SETMASK, mask, 0);

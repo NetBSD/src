@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.109 2000/10/18 21:38:52 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.110 2000/12/22 22:58:56 jdolecek Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -333,9 +333,9 @@ compat_13_sys_sigreturn(p, v, retval)
 		return (EINVAL);
 	}
 	if (cntx->sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	native_sigset13_to_sigset(&cntx->sc_mask, &mask);
 	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
@@ -373,9 +373,9 @@ sys___sigreturn14(p, v, retval)
 		return (EINVAL);
 	}
 	if (cntx->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &cntx->sc_mask, 0);
 
@@ -406,7 +406,6 @@ sendsig(catcher, sig, mask, code)
 	u_long		code;
 {
 	struct	proc	*p = curproc;
-	struct	sigacts *psp = p->p_sigacts;
 	struct	trapframe *syscf;
 	struct	sigcontext *sigctx, gsigctx;
 	struct	trampframe *trampf, gtrampf;
@@ -416,12 +415,12 @@ sendsig(catcher, sig, mask, code)
 	syscf = p->p_addr->u_pcb.framep;
 
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		cursp = ((int)psp->ps_sigstk.ss_sp + psp->ps_sigstk.ss_size);
+		cursp = ((int)p->p_sigctx.ps_sigstk.ss_sp + p->p_sigctx.ps_sigstk.ss_size);
 	else
 		cursp = syscf->sp;
 
@@ -445,7 +444,7 @@ sendsig(catcher, sig, mask, code)
 	gsigctx.sc_ap = syscf->ap;
 	gsigctx.sc_fp = syscf->fp; 
 	gsigctx.sc_sp = syscf->sp; 
-	gsigctx.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	gsigctx.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
 	gsigctx.sc_mask = *mask;
 
 #if defined(COMPAT_13) || defined(COMPAT_ULTRIX)
@@ -456,13 +455,13 @@ sendsig(catcher, sig, mask, code)
 	    copyout(&gsigctx, sigctx, sizeof(gsigctx)))
 		sigexit(p, SIGILL);
 
-	syscf->pc = (int)psp->ps_sigcode;
+	syscf->pc = (int)p->p_sigctx.ps_sigcode;
 	syscf->psl = PSL_U | PSL_PREVU;
 	syscf->ap = cursp;
 	syscf->sp = cursp;
 
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 int	waittime = -1;
