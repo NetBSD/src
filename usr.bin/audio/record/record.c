@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.31 2002/10/13 00:56:44 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.32 2002/12/27 23:43:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -69,7 +69,7 @@ int	precision;
 int	sample_rate;
 int	channels;
 struct timeval record_time;
-struct timeval start_time;	/* XXX because that's what gettimeofday returns */
+struct timeval start_time;
 
 void (*conv_func) (u_char *, size_t);
 
@@ -316,6 +316,10 @@ main(argc, argv)
 		   info.record.sample_rate, info.record.channels,
 		   info.record.precision,
 		   audio_enc_from_val(info.record.encoding));
+
+	if (!no_time_limit && verbose)
+		fprintf(stderr, "recording for %lu seconds, %lu microseconds\n",
+		    (u_long)record_time.tv_sec, (u_long)record_time.tv_usec);
 
 	(void)gettimeofday(&start_time, NULL);
 	while (no_time_limit || timeleft(&start_time, &record_time)) {
