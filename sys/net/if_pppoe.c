@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.19 2002/02/01 13:40:16 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.20 2002/02/01 13:50:00 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.19 2002/02/01 13:40:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.20 2002/02/01 13:50:00 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -471,7 +471,8 @@ static void pppoe_dispatch_disc_pkt(u_int8_t *p, size_t size, struct ifnet *rcvi
 			return;
 		sc->sc_session = session;
 		callout_stop(&sc->sc_timeout);
-		printf("%s: session 0x%x connected\n", sc->sc_sppp.pp_if.if_xname, session);
+		if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
+			printf("%s: session 0x%x connected\n", sc->sc_sppp.pp_if.if_xname, session);
 		sc->sc_state = PPPOE_STATE_SESSION;
 		sc->sc_sppp.pp_up(&sc->sc_sppp);	/* notify upper layers */
 		break;
@@ -480,8 +481,8 @@ static void pppoe_dispatch_disc_pkt(u_int8_t *p, size_t size, struct ifnet *rcvi
 			return;
                 /* stop timer (we might be about to transmit a PADT ourself) */
                 callout_stop(&sc->sc_timeout);
-                /* signal upper layer */
-                printf("%s: session 0x%x terminated, received PADT\n", sc->sc_sppp.pp_if.if_xname, session);
+                if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
+	                printf("%s: session 0x%x terminated, received PADT\n", sc->sc_sppp.pp_if.if_xname, session);
                 /* clean up softc */
                 sc->sc_state = PPPOE_STATE_INITIAL;
                 memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
@@ -491,6 +492,7 @@ static void pppoe_dispatch_disc_pkt(u_int8_t *p, size_t size, struct ifnet *rcvi
                 }
                 sc->sc_ac_cookie_len = 0;
                 sc->sc_session = 0;
+                /* signal upper layer */
                 sc->sc_sppp.pp_down(&sc->sc_sppp);
                 break;
         default:
@@ -894,7 +896,8 @@ pppoe_disconnect(struct pppoe_softc *sc)
 	if (sc->sc_state < PPPOE_STATE_SESSION)
 		err = EBUSY;
 	else {
-		printf("%s: disconnecting\n", sc->sc_sppp.pp_if.if_xname);
+		if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
+			printf("%s: disconnecting\n", sc->sc_sppp.pp_if.if_xname);
 		err = pppoe_send_padt(sc);
 	}
 
