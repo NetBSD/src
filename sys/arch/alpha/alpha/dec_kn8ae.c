@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.7.2.3 1997/07/22 05:54:33 cgd Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.7.2.4 1997/07/22 06:09:46 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -33,7 +33,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.7.2.3 1997/07/22 05:54:33 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.7.2.4 1997/07/22 06:09:46 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.7.2.3 1997/07/22 05:54:33 cgd Exp $"
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-
-/* XXX CGD SOMETHING MISSING? */
 
 const char *
 dec_kn8ae_model_name()
