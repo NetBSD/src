@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.38 1996/09/03 18:20:33 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.39 1996/10/10 23:34:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -106,7 +106,7 @@ scsi_get_xs(sc_link, flags)
 		    ((flags & SCSI_NOSLEEP) != 0 ? M_NOWAIT : M_WAITOK));
 		if (!xs) {
 			sc_print_addr(sc_link);
-			printf("cannot allocate scsi xs\n");
+			kprintf("cannot allocate scsi xs\n");
 			return 0;
 		}
 	}
@@ -217,7 +217,7 @@ scsi_size(sc_link, flags)
 			  sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap),
 			  2, 20000, NULL, flags | SCSI_DATA_IN) != 0) {
 		sc_print_addr(sc_link);
-		printf("could not get size\n");
+		kprintf("could not get size\n");
 		return 0;
 	}
 
@@ -563,7 +563,7 @@ sc_err1(xs, async)
 
 	default:
 		sc_print_addr(xs->sc_link);
-		printf("unknown error category from scsi driver\n");
+		kprintf("unknown error category from scsi driver\n");
 		error = EIO;
 		break;
 	}
@@ -623,25 +623,25 @@ scsi_interpret_sense(xs)
 #ifdef	SCSIDEBUG
 	if ((sc_link->flags & SDEV_DB1) != 0) {
 		int count;
-		printf("code%x valid%x ",
+		kprintf("code%x valid%x ",
 		    sense->error_code & SSD_ERRCODE,
 		    sense->error_code & SSD_ERRCODE_VALID ? 1 : 0);
-		printf("seg%x key%x ili%x eom%x fmark%x\n",
+		kprintf("seg%x key%x ili%x eom%x fmark%x\n",
 		    sense->segment,
 		    sense->flags & SSD_KEY,
 		    sense->flags & SSD_ILI ? 1 : 0,
 		    sense->flags & SSD_EOM ? 1 : 0,
 		    sense->flags & SSD_FILEMARK ? 1 : 0);
-		printf("info: %x %x %x %x followed by %d extra bytes\n",
+		kprintf("info: %x %x %x %x followed by %d extra bytes\n",
 		    sense->info[0],
 		    sense->info[1],
 		    sense->info[2],
 		    sense->info[3],
 		    sense->extra_len);
-		printf("extra: ");
+		kprintf("extra: ");
 		for (count = 0; count < sense->extra_len; count++)
-			printf("%x ", sense->extra_bytes[count]);
-		printf("\n");
+			kprintf("%x ", sense->extra_bytes[count]);
+		kprintf("\n");
 	}
 #endif	/*SCSIDEBUG */
 	/*
@@ -663,7 +663,7 @@ scsi_interpret_sense(xs)
 	case 0x71:		/* delayed error */
 		sc_print_addr(sc_link);
 		key = sense->flags & SSD_KEY;
-		printf(" DELAYED ERROR, key = 0x%x\n", key);
+		kprintf(" DELAYED ERROR, key = 0x%x\n", key);
 	case 0x70:
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0)
 			info = _4btol(sense->info);
@@ -725,7 +725,7 @@ scsi_interpret_sense(xs)
 
 		if (key) {
 			sc_print_addr(sc_link);
-			printf("%s", error_mes[key - 1]);
+			kprintf("%s", error_mes[key - 1]);
 			if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
 				switch (key) {
 				case 0x2:	/* NOT READY */
@@ -734,26 +734,26 @@ scsi_interpret_sense(xs)
 				case 0x7:	/* DATA PROTECT */
 					break;
 				case 0x8:	/* BLANK CHECK */
-					printf(", requested size: %d (decimal)",
+					kprintf(", requested size: %d (decimal)",
 					    info);
 					break;
 				case 0xb:
 					if (xs->retries)
-						printf(", retrying");
-					printf(", cmd 0x%x, info 0x%x",
+						kprintf(", retrying");
+					kprintf(", cmd 0x%x, info 0x%x",
 						xs->cmd->opcode, info);
 					break;
 				default:
-					printf(", info = %d (decimal)", info);
+					kprintf(", info = %d (decimal)", info);
 				}
 			}
 			if (sense->extra_len != 0) {
 				int n;
-				printf(", data =");
+				kprintf(", data =");
 				for (n = 0; n < sense->extra_len; n++)
-					printf(" %02x", sense->extra_bytes[n]);
+					kprintf(" %02x", sense->extra_bytes[n]);
 			}
-			printf("\n");
+			kprintf("\n");
 		}
 		return error;
 
@@ -762,15 +762,15 @@ scsi_interpret_sense(xs)
 	 */
 	default:
 		sc_print_addr(sc_link);
-		printf("error code %d",
+		kprintf("error code %d",
 		    sense->error_code & SSD_ERRCODE);
 		if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
 			struct scsi_sense_data_unextended *usense =
 			    (struct scsi_sense_data_unextended *)sense;
-			printf(" at block no. %d (decimal)",
+			kprintf(" at block no. %d (decimal)",
 			    _3btol(usense->block));
 		}
-		printf("\n");
+		kprintf("\n");
 		return EIO;
 	}
 }
@@ -788,7 +788,7 @@ sc_print_addr(sc_link)
 	struct scsi_link *sc_link;
 {
 
-	printf("%s(%s:%d:%d): ",
+	kprintf("%s(%s:%d:%d): ",
 	    sc_link->device_softc ?
 	    ((struct device *)sc_link->device_softc)->dv_xname : "probe",
 	    ((struct device *)sc_link->adapter_softc)->dv_xname,
@@ -803,18 +803,18 @@ void
 show_scsi_xs(xs)
 	struct scsi_xfer *xs;
 {
-	printf("xs(%p): ", xs);
-	printf("flg(0x%x)", xs->flags);
-	printf("sc_link(%p)", xs->sc_link);
-	printf("retr(0x%x)", xs->retries);
-	printf("timo(0x%x)", xs->timeout);
-	printf("cmd(%p)", xs->cmd);
-	printf("len(0x%x)", xs->cmdlen);
-	printf("data(%p)", xs->data);
-	printf("len(0x%x)", xs->datalen);
-	printf("res(0x%x)", xs->resid);
-	printf("err(0x%x)", xs->error);
-	printf("bp(%p)", xs->bp);
+	kprintf("xs(%p): ", xs);
+	kprintf("flg(0x%x)", xs->flags);
+	kprintf("sc_link(%p)", xs->sc_link);
+	kprintf("retr(0x%x)", xs->retries);
+	kprintf("timo(0x%x)", xs->timeout);
+	kprintf("cmd(%p)", xs->cmd);
+	kprintf("len(0x%x)", xs->cmdlen);
+	kprintf("data(%p)", xs->data);
+	kprintf("len(0x%x)", xs->datalen);
+	kprintf("res(0x%x)", xs->resid);
+	kprintf("err(0x%x)", xs->error);
+	kprintf("bp(%p)", xs->bp);
 	show_scsi_cmd(xs);
 }
 
@@ -826,19 +826,19 @@ show_scsi_cmd(xs)
 	int     i = 0;
 
 	sc_print_addr(xs->sc_link);
-	printf("command: ");
+	kprintf("command: ");
 
 	if ((xs->flags & SCSI_RESET) == 0) {
 		while (i < xs->cmdlen) {
 			if (i)
-				printf(",");
-			printf("%x", b[i++]);
+				kprintf(",");
+			kprintf("%x", b[i++]);
 		}
-		printf("-[%d bytes]\n", xs->datalen);
+		kprintf("-[%d bytes]\n", xs->datalen);
 		if (xs->datalen)
 			show_mem(xs->data, min(64, xs->datalen));
 	} else
-		printf("-RESET-\n");
+		kprintf("-RESET-\n");
 }
 
 void
@@ -848,12 +848,12 @@ show_mem(address, num)
 {
 	int x;
 
-	printf("------------------------------");
+	kprintf("------------------------------");
 	for (x = 0; x < num; x++) {
 		if ((x % 16) == 0)
-			printf("\n%03d: ", x);
-		printf("%02x ", *address++);
+			kprintf("\n%03d: ", x);
+		kprintf("%02x ", *address++);
 	}
-	printf("\n------------------------------\n");
+	kprintf("\n------------------------------\n");
 }
 #endif /*SCSIDEBUG */

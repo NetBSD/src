@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.21 1996/09/13 00:35:59 thorpej Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.22 1996/10/10 23:34:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -127,13 +127,13 @@ scsi_user_done(xs)
 	bp = xs->bp;
 	if (!bp) {	/* ALL user requests must have a buf */
 		sc_print_addr(xs->sc_link);
-		printf("User command with no buf\n");
+		kprintf("User command with no buf\n");
 		return;
 	}
 	si = si_find(bp);
 	if (!si) {
 		sc_print_addr(xs->sc_link);
-		printf("User command with no ioctl\n");
+		kprintf("User command with no ioctl\n");
 		return;
 	}
 	screq = &si->si_screq;
@@ -156,7 +156,7 @@ scsi_user_done(xs)
 		break;
 	case XS_DRIVER_STUFFUP:
 		sc_print_addr(sc_link);
-		printf("host adapter code inconsistency\n");
+		kprintf("host adapter code inconsistency\n");
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
 	case XS_TIMEOUT:
@@ -169,7 +169,7 @@ scsi_user_done(xs)
 		break;
 	default:
 		sc_print_addr(sc_link);
-		printf("unknown error category from host adapter code\n");
+		kprintf("unknown error category from host adapter code\n");
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
 	}
@@ -205,7 +205,7 @@ scsistrategy(bp)
 
 	si = si_find(bp);
 	if (!si) {
-		printf("user_strat: No ioctl\n");
+		kprintf("user_strat: No ioctl\n");
 		error = EINVAL;
 		goto bad;
 	}
@@ -218,7 +218,7 @@ scsistrategy(bp)
 	 */
 	if (bp->b_bcount != screq->datalen) {
 		sc_print_addr(sc_link);
-		printf("physio split the request.. cannot proceed\n");
+		kprintf("physio split the request.. cannot proceed\n");
 		error = EIO;
 		goto bad;
 	}
@@ -230,7 +230,7 @@ scsistrategy(bp)
 
 	if (screq->cmdlen > sizeof(struct scsi_generic)) {
 		sc_print_addr(sc_link);
-		printf("cmdlen too big\n");
+		kprintf("cmdlen too big\n");
 		error = EFAULT;
 		goto bad;
 	}

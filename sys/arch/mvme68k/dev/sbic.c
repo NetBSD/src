@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.3 1996/08/26 06:47:42 thorpej Exp $	*/
+/*	$NetBSD: sbic.c,v 1.4 1996/10/10 23:41:03 christos Exp $	*/
 
 /*
  * Changes Copyright (c) 1996 Steve Woodford
@@ -143,7 +143,7 @@ int     sbicdma_hits    = 0;    /* number of DMA chains that were contiguous */
 int     sbicdma_misses  = 0;    /* number of DMA chains that were not contiguous */
 int     sbicdma_saves   = 0;
 
-#define QPRINTF(a) if (sbic_debug > 1) printf a
+#define QPRINTF(a) if (sbic_debug > 1) kprintf a
 
 int     sbic_debug      = 0;    /* Debug all chip related things */
 int     sync_debug      = 0;    /* Debug all Synchronous Scsi related things */
@@ -201,7 +201,7 @@ sbic_save_ptrs(dev)
     do {
         GET_SBIC_asr(regs, asr);
         if( asr & SBIC_ASR_DBR ) {
-            printf("sbic_save_ptrs: asr %02x canceled!\n", asr);
+            kprintf("sbic_save_ptrs: asr %02x canceled!\n", asr);
             splx(s);
             return;
         }
@@ -258,7 +258,7 @@ sbic_save_ptrs(dev)
 
 #ifdef DEBUG
     if ( data_pointer_debug )
-        printf("save at (%x,%x):%x\n",
+        kprintf("save at (%x,%x):%x\n",
                dev->sc_cur->dc_addr, dev->sc_cur->dc_count,count);
     sbicdma_saves++;
 #endif
@@ -342,7 +342,7 @@ sbic_load_ptrs(dev)
 
 #ifdef DEBUG
         if ( data_pointer_debug )
-            printf("DMA recalc:kv(%x,%x)pa(%x,%x)\n", acb->sc_kv.dc_addr,
+            kprintf("DMA recalc:kv(%x,%x)pa(%x,%x)\n", acb->sc_kv.dc_addr,
                                                       acb->sc_kv.dc_count,
                                                       acb->sc_pa.dc_addr,
                                                       acb->sc_tcnt);
@@ -388,7 +388,7 @@ sbic_scsicmd(xs)
 
     if ( acb == NULL ) {
 #ifdef DEBUG
-        printf("sbic_scsicmd: unable to queue request for target %d\n",
+        kprintf("sbic_scsicmd: unable to queue request for target %d\n",
             slp->target);
 #ifdef DDB
         Debugger();
@@ -518,7 +518,7 @@ sbic_sched(dev)
 
 #ifdef DEBUG
     if ( data_pointer_debug > 1 )
-        printf("sbic_sched(%d,%d)\n", slp->target, slp->lun);
+        kprintf("sbic_sched(%d,%d)\n", slp->target, slp->lun);
 #endif
 
     dev->sc_xs = xs = acb->xs;
@@ -556,7 +556,7 @@ sbic_scsidone(acb, stat)
 
 #ifdef DIAGNOSTIC
     if ( acb == NULL || xs == NULL ) {
-        printf("sbic_scsidone -- (%d,%d) no scsi_xfer\n", dev->target, dev->lun);
+        kprintf("sbic_scsidone -- (%d,%d) no scsi_xfer\n", dev->target, dev->lun);
 #ifdef DDB
         Debugger();
 #endif
@@ -571,7 +571,7 @@ sbic_scsidone(acb, stat)
 
 #ifdef DEBUG
     if ( data_pointer_debug > 1 )
-        printf("scsidone: (%d,%d)->(%d,%d)%02x\n", slp->target, slp->lun,
+        kprintf("scsidone: (%d,%d)->(%d,%d)%02x\n", slp->target, slp->lun,
                                                    dev->target, dev->lun, stat);
 
     if ( xs->sc_link->target == dev->sc_link.adapter_target )
@@ -588,7 +588,7 @@ sbic_scsidone(acb, stat)
 
 #ifdef DEBUG
             if ( report_sense )
-                printf("sbic_scsidone: autosense %02x targ %d lun %d",
+                kprintf("sbic_scsidone: autosense %02x targ %d lun %d",
                         acb->cmd.opcode, slp->target, slp->lun);
 #endif
 
@@ -624,7 +624,7 @@ sbic_scsidone(acb, stat)
 
 #ifdef DEBUG
         if (report_sense)
-            printf(" => %02x %02x\n", xs->sense.flags, 
+            kprintf(" => %02x %02x\n", xs->sense.flags, 
 			xs->sense.extra_bytes[3]);
 #endif
 
@@ -673,7 +673,7 @@ sbic_scsidone(acb, stat)
         else if ( acb->chain.tqe_next ) {
             TAILQ_REMOVE(&dev->ready_list, acb, chain);
         } else {
-            printf("%s: can't find matching acb\n", dev->sc_dev.dv_xname);
+            kprintf("%s: can't find matching acb\n", dev->sc_dev.dv_xname);
 #ifdef DDB
             Debugger();
 #endif
@@ -736,7 +736,7 @@ sbicwait(regs, until, timeo, line)
         if ( timeo-- == 0 ) {
             int csr;
             GET_SBIC_csr(regs, csr);
-            printf("sbicwait TIMEO @%d with asr=x%x csr=x%x\n", line, val, csr);
+            kprintf("sbicwait TIMEO @%d with asr=x%x csr=x%x\n", line, val, csr);
 #if defined(DDB) && defined(DEBUG)
             Debugger();
 #endif
@@ -763,7 +763,7 @@ sbicabort(dev, where)
     GET_SBIC_asr(regs, asr);
     GET_SBIC_csr(regs, csr);
 
-    printf ("%s: abort %s: csr = 0x%02x, asr = 0x%02x\n",
+    kprintf ("%s: abort %s: csr = 0x%02x, asr = 0x%02x\n",
             dev->sc_dev.dv_xname, where, csr, asr);
 
     /*
@@ -777,7 +777,7 @@ sbicabort(dev, where)
              * But we don't know what direction it needs to go
              */
             GET_SBIC_data(regs, asr);
-            printf("%s: abort %s: clearing data buffer 0x%02x\n",
+            kprintf("%s: abort %s: clearing data buffer 0x%02x\n",
                    dev->sc_dev.dv_xname, where, asr);
             GET_SBIC_asr(regs, asr);
             if ( asr & SBIC_ASR_DBR ) /* Not the read direction, then */
@@ -787,7 +787,7 @@ sbicabort(dev, where)
 
         WAIT_CIP(regs);
 
-        printf("%s: sbicabort - sending ABORT command\n", dev->sc_dev.dv_xname);
+        kprintf("%s: sbicabort - sending ABORT command\n", dev->sc_dev.dv_xname);
         SET_SBIC_cmd(regs, SBIC_CMD_ABORT);
         WAIT_CIP(regs);
 
@@ -797,14 +797,14 @@ sbicabort(dev, where)
             /*
              * ok, get more drastic..
              */
-            printf("%s: sbicabort - asr %x, trying to reset\n",
+            kprintf("%s: sbicabort - asr %x, trying to reset\n",
                     dev->sc_dev.dv_xname, asr);
             sbicreset(dev);
             dev->sc_flags &= ~SBICF_SELECTED;
             return SBIC_STATE_ERROR;
         }
 
-        printf("%s: sbicabort - sending DISC command\n", dev->sc_dev.dv_xname);
+        kprintf("%s: sbicabort - sending DISC command\n", dev->sc_dev.dv_xname);
         SET_SBIC_cmd(regs, SBIC_CMD_DISC);
 
         do {
@@ -882,7 +882,7 @@ sbicinit(dev)
 
 #ifdef DEBUG
         if ( inhibit_sync )
-            printf("%s: Inhibiting synchronous transfer %02x\n",
+            kprintf("%s: Inhibiting synchronous transfer %02x\n",
                         dev->sc_dev.dv_xname, inhibit_sync);
 #endif
         for (i = 0; i < 8; ++i) {
@@ -964,7 +964,7 @@ sbicerror(dev, csr)
     if ( xs->flags & SCSI_SILENT )
         return;
 
-    printf("%s: csr == 0x%02x\n", dev->sc_dev.dv_xname, csr);
+    kprintf("%s: csr == 0x%02x\n", dev->sc_dev.dv_xname, csr);
 }
 
 /*
@@ -1130,7 +1130,7 @@ sbicselectbus(dev)
              */
 #ifdef DEBUG
             if ( sync_debug )
-                printf("\nSending sync request to target %d ... ", id);
+                kprintf("\nSending sync request to target %d ... ", id);
 #endif
             /*
              * setup scsi message sync message request
@@ -1147,7 +1147,7 @@ sbicselectbus(dev)
             dev->sc_sync[id].state = SYNC_SENT;
 #ifdef DEBUG
             if ( sync_debug )
-                printf ("sent\n");
+                kprintf ("sent\n");
 #endif
         }
 
@@ -1164,7 +1164,7 @@ sbicselectbus(dev)
     if ( dev->sc_sync[target].state == SYNC_DONE ) {
 #ifdef  DEBUG
         if ( sync_debug )
-            printf("select(%d): sync reg = 0x%02x\n", target,
+            kprintf("select(%d): sync reg = 0x%02x\n", target,
                             SBIC_SYN(dev->sc_sync[target].offset,
                                      dev->sc_sync[target].period));
 #endif
@@ -1173,7 +1173,7 @@ sbicselectbus(dev)
     } else {
 #ifdef  DEBUG
         if ( sync_debug )
-            printf("select(%d): sync reg = 0x%02x\n", target,
+            kprintf("select(%d): sync reg = 0x%02x\n", target,
                             SBIC_SYN(0,sbic_min_period));
 #endif
         SET_SBIC_syn(regs, SBIC_SYN(0, sbic_min_period));
@@ -1352,7 +1352,7 @@ sbicicmd(dev, cbuf, clen, buf, len)
 
 #ifdef  DEBUG
     if ( data_pointer_debug > 1 )
-        printf("sbicicmd(%d,%d):%d\n", dev->target, dev->lun, acb->sc_kv.dc_count);
+        kprintf("sbicicmd(%d,%d):%d\n", dev->target, dev->lun, acb->sc_kv.dc_count);
 #endif
 
     /*
@@ -1407,7 +1407,7 @@ sbicicmd(dev, cbuf, clen, buf, len)
                     } else {
 #ifdef DEBUG
                         if ( reselect_debug > 1 )
-                            printf("sbicicmd: handling disconnect\n");
+                            kprintf("sbicicmd: handling disconnect\n");
 #endif
                         still_busy = SBIC_STATE_DISCONNECT;
                     }
@@ -1435,7 +1435,7 @@ sbicicmd(dev, cbuf, clen, buf, len)
                      */
 #ifdef DEBUG
                     if ( sbic_debug )
-                        printf("SBICICMD status phase (bsy=%d)\n", still_busy);
+                        kprintf("SBICICMD status phase (bsy=%d)\n", still_busy);
 #endif
                     SET_SBIC_cmd_phase(regs, 0x46);
                     SET_SBIC_cmd(regs, SBIC_CMD_SEL_ATN_XFER);
@@ -1463,7 +1463,7 @@ sbicicmd(dev, cbuf, clen, buf, len)
                 if ( asr & SBIC_ASR_DBR ) {
                     int     i;
 
-                    printf("sbicicmd: Waiting while sbic is jammed, CSR:%02x,ASR:%02x\n", csr,asr);
+                    kprintf("sbicicmd: Waiting while sbic is jammed, CSR:%02x,ASR:%02x\n", csr,asr);
 #ifdef DDB
                     Debugger();
 #endif
@@ -1487,7 +1487,7 @@ sbicicmd(dev, cbuf, clen, buf, len)
          * wait for last command to complete
          */
         if ( asr & SBIC_ASR_LCI ) {
-            printf("sbicicmd: last command ignored\n");
+            kprintf("sbicicmd: last command ignored\n");
         }
         else
         if ( still_busy >= SBIC_STATE_RUNNING ) /* Bsy */
@@ -1505,7 +1505,7 @@ sbicicmd(dev, cbuf, clen, buf, len)
 
 #ifdef DEBUG
     if ( data_pointer_debug > 1 )
-        printf("sbicicmd done(%d,%d):%d =%d=\n", dev->target, dev->lun,
+        kprintf("sbicicmd done(%d,%d):%d =%d=\n", dev->target, dev->lun,
                                                  acb->sc_kv.dc_count,
                                                  dev->sc_stat[0]);
 #endif
@@ -1589,7 +1589,7 @@ sbicgo(dev, xs)
 
 #ifdef DEBUG
     if ( data_pointer_debug > 1 )
-        printf("sbicgo(%d,%d): usedma=%d\n", dev->target, dev->lun, usedma);
+        kprintf("sbicgo(%d,%d): usedma=%d\n", dev->target, dev->lun, usedma);
 #endif
 
     /*
@@ -1612,7 +1612,7 @@ sbicgo(dev, xs)
     count = acb->sc_kv.dc_count;
 
     if ( count && ((char *)kvtop(addr) != acb->sc_pa.dc_addr) ) {
-        printf("sbic: DMA buffer mapping changed %x->%x\n",
+        kprintf("sbic: DMA buffer mapping changed %x->%x\n",
                 acb->sc_pa.dc_addr, kvtop(addr));
 #ifdef DDB
         Debugger();
@@ -1651,7 +1651,7 @@ sbicgo(dev, xs)
 
 #ifdef DEBUG
     if ( data_pointer_debug > 1 ) {
-        printf("sbicgo dmago:%d(%x:%x) dmacmd=0x%02x\n", dev->target,
+        kprintf("sbicgo dmago:%d(%x:%x) dmacmd=0x%02x\n", dev->target,
                                            dev->sc_cur->dc_addr,
                                            dev->sc_tcnt,
                                            dev->sc_dmacmd);
@@ -1678,7 +1678,7 @@ sbicgo(dev, xs)
             GET_SBIC_asr(regs, asr);
 
             if ( asr & SBIC_ASR_LCI )
-                printf("sbicgo: LCI asr:%02x csr:%02x\n", asr, csr);
+                kprintf("sbicgo: LCI asr:%02x csr:%02x\n", asr, csr);
 
             if ( asr & SBIC_ASR_INT )
                 GET_SBIC_csr(regs, csr);
@@ -1689,7 +1689,7 @@ sbicgo(dev, xs)
     if ( i == SBIC_STATE_DONE ) {
         if ( dev->sc_stat[0] == 0xff )
 #if 0
-            printf("sbicgo: done & stat = 0xff\n");
+            kprintf("sbicgo: done & stat = 0xff\n");
 #else
             ;
 #endif
@@ -1731,7 +1731,7 @@ sbicintr(dev)
             GET_SBIC_asr(regs, asr);
 
             if ( asr & SBIC_ASR_LCI )
-                printf("sbicgo: LCI asr:%02x csr:%02x\n", asr, csr);
+                kprintf("sbicgo: LCI asr:%02x csr:%02x\n", asr, csr);
 
             if ( asr & SBIC_ASR_INT )
                 GET_SBIC_csr(regs, csr);
@@ -1786,7 +1786,7 @@ sbicpoll(dev)
             u_char z = 0;
 
             if ( asr & SBIC_ASR_DBR ) {
-                printf("sbipoll: Waiting while sbic is jammed, CSR:%02x,ASR:%02x\n", csr,asr);
+                kprintf("sbipoll: Waiting while sbic is jammed, CSR:%02x,ASR:%02x\n", csr,asr);
 #ifdef DDB
                 Debugger();
 #endif
@@ -1806,7 +1806,7 @@ sbicpoll(dev)
         }
 
         if ( asr & SBIC_ASR_LCI )
-            printf("sbicpoll: LCI asr:%02x csr:%02x\n", asr,csr);
+            kprintf("sbicpoll: LCI asr:%02x csr:%02x\n", asr,csr);
         else
         if ( i == SBIC_STATE_RUNNING ) /* BSY */
             SBIC_WAIT(regs, SBIC_ASR_INT, sbic_cmd_wait);
@@ -1839,7 +1839,7 @@ sbicmsgin(dev)
 
 #ifdef DEBUG
     if ( reselect_debug > 1 )
-        printf("sbicmsgin asr=%02x\n", asr);
+        kprintf("sbicmsgin asr=%02x\n", asr);
 #endif
 
     GET_SBIC_selid (regs, csr);
@@ -1865,7 +1865,7 @@ sbicmsgin(dev)
 
 #ifdef DEBUG
             if ( reselect_debug > 1 )
-                printf("sbicmsgin: got %02x csr %02x\n", *tmpaddr, csr);
+                kprintf("sbicmsgin: got %02x csr %02x\n", *tmpaddr, csr);
 #endif
 
             tmpaddr++;
@@ -1881,14 +1881,14 @@ sbicmsgin(dev)
         }
 
         if ( msgaddr[0] == 0xff ) {
-            printf("sbicmsgin: sbic swallowed our message\n");
+            kprintf("sbicmsgin: sbic swallowed our message\n");
             break;
         }
 
 #ifdef DEBUG
         if ( sync_debug ) {
             GET_SBIC_asr(regs, asr);
-            printf("msgin done csr 0x%x asr 0x%x msg 0x%x\n", csr, asr, msgaddr[0]);
+            kprintf("msgin done csr 0x%x asr 0x%x msg 0x%x\n", csr, asr, msgaddr[0]);
         }
 #endif
         /*
@@ -1913,7 +1913,7 @@ sbicmsgin(dev)
 
 #ifdef DEBUG
             if ( sync_debug )
-                printf("target %d rejected sync, going async\n", dev->target);
+                kprintf("target %d rejected sync, going async\n", dev->target);
 #endif
 
             dev->sc_sync[dev->target].period = sbic_min_period;
@@ -1956,7 +1956,7 @@ sbicmsgin(dev)
 
 #ifdef DEBUG
             if ( reselect_debug > 1 && msgaddr[0] == MSG_DISCONNECT )
-                printf("sbicmsgin: got disconnect msg %s\n",
+                kprintf("sbicmsgin: got disconnect msg %s\n",
                        (dev->sc_flags & SBICF_ICMD) ? "rejecting" : "");
 #endif
 
@@ -1992,7 +1992,7 @@ sbicmsgin(dev)
 
 #ifdef DEBUG
             if ( sync_debug )
-                printf ("GOT MSG %d! target %d acting weird.."
+                kprintf ("GOT MSG %d! target %d acting weird.."
                         " waiting for disconnect...\n", msgaddr[0], dev->target);
 #endif
 
@@ -2078,12 +2078,12 @@ sbicmsgin(dev)
                                         dev->sc_sync[dev->target].period));
 #ifdef  DEBUG
             if ( sync_debug )
-                printf("msgin(%d): sync reg = 0x%02x\n", dev->target,
+                kprintf("msgin(%d): sync reg = 0x%02x\n", dev->target,
                                 SBIC_SYN(dev->sc_sync[dev->target].offset,
                                          dev->sc_sync[dev->target].period));
 #endif
 
-            printf("%s: target %d now synchronous, period=%dns, offset=%d.\n",
+            kprintf("%s: target %d now synchronous, period=%dns, offset=%d.\n",
                    dev->sc_dev.dv_xname, dev->target,
                    msgaddr[3] * 4, msgaddr[4]);
 
@@ -2094,7 +2094,7 @@ sbicmsgin(dev)
              */
 #ifdef DEBUG
             if ( sbic_debug || sync_debug )
-                printf ("sbicmsgin: Rejecting message 0x%02x\n", msgaddr[0]);
+                kprintf ("sbicmsgin: Rejecting message 0x%02x\n", msgaddr[0]);
 #endif
 
             /*
@@ -2177,7 +2177,7 @@ sbicnextstate(dev, csr, asr)
 #ifdef DEBUG
             dev->sc_dmatimo = 0;
             if ( data_pointer_debug > 1 )
-                printf("next dmastop: %d(%x:%x)\n", dev->target,
+                kprintf("next dmastop: %d(%x:%x)\n", dev->target,
                                                     dev->sc_cur->dc_addr,
                                                     dev->sc_tcnt);
 #endif
@@ -2209,7 +2209,7 @@ sbicnextstate(dev, csr, asr)
              * Verify that we expected to transfer data...
              */
             if ( acb->sc_kv.dc_count <= 0 ) {
-                printf("next: DATA phase with xfer count == %d, asr:0x%02x csr:0x%02x\n",
+                kprintf("next: DATA phase with xfer count == %d, asr:0x%02x csr:0x%02x\n",
                         acb->sc_kv.dc_count, asr, csr);
                 goto abort;
             }
@@ -2227,7 +2227,7 @@ sbicnextstate(dev, csr, asr)
 
 #ifdef DEBUG
                 if ( data_pointer_debug > 1 )
-                    printf("next PIO: %d(%x:%x)\n", dev->target,
+                    kprintf("next PIO: %d(%x:%x)\n", dev->target,
                                                     acb->sc_kv.dc_addr,
                                                     acb->sc_kv.dc_count);
 #endif
@@ -2270,7 +2270,7 @@ sbicnextstate(dev, csr, asr)
 #ifdef DEBUG
                 dev->sc_dmatimo = 1;
                 if ( data_pointer_debug > 1 )
-                    printf("next DMA: %d(%x:%x)\n", dev->target,
+                    kprintf("next DMA: %d(%x:%x)\n", dev->target,
                                                     dev->sc_cur->dc_addr,
                                                     dev->sc_tcnt);
 #endif
@@ -2317,7 +2317,7 @@ sbicnextstate(dev, csr, asr)
              * but just for the sake of paranoia...
              */
             SET_SBIC_cmd(regs, SBIC_CMD_CLR_ACK); /* Dunno what I'm ACKing */
-            printf("Acking unknown msgin CSR:%02x",csr);
+            kprintf("Acking unknown msgin CSR:%02x",csr);
         }
         break;
 
@@ -2334,7 +2334,7 @@ sbicnextstate(dev, csr, asr)
 
 #ifdef DEBUG
             if (sync_debug)
-                printf ("sending REJECT msg to last msg.\n");
+                kprintf ("sending REJECT msg to last msg.\n");
 #endif
 
             SEND_BYTE(regs, MSG_REJECT);
@@ -2354,7 +2354,7 @@ sbicnextstate(dev, csr, asr)
 
 #ifdef DEBUG
             if ( reselect_debug > 1 )
-                printf("sbicnext target %d disconnected\n", dev->target);
+                kprintf("sbicnext target %d disconnected\n", dev->target);
 #endif
 
             TAILQ_INSERT_HEAD(&dev->nexus_list, acb, chain);
@@ -2424,7 +2424,7 @@ sbicnextstate(dev, csr, asr)
                  * If we didn't get an interrupt, somethink's up
                  */
                 if ( (asr & SBIC_ASR_INT) == 0 ) {
-                    printf("%s: Reselect without identify? asr %x\n",
+                    kprintf("%s: Reselect without identify? asr %x\n",
                             dev->sc_dev.dv_xname, asr);
                     newlun = 0; /* XXXX */
                 } else {
@@ -2447,7 +2447,7 @@ sbicnextstate(dev, csr, asr)
                         /*
                          * Whoops! Target didn't go to message in phase!!
                          */
-                        printf("RSLT_NI - not MESG_IN_PHASE %x\n", csr);
+                        kprintf("RSLT_NI - not MESG_IN_PHASE %x\n", csr);
                         newlun = 0; /* XXXSCW */
                     }
                 }
@@ -2459,7 +2459,7 @@ sbicnextstate(dev, csr, asr)
 #ifdef DEBUG
             if ( reselect_debug > 1 ||
                 (reselect_debug && csr == SBIC_CSR_RSLT_NI) ) {
-                printf("sbicnext: reselect %s from targ %d lun %d\n",
+                kprintf("sbicnext: reselect %s from targ %d lun %d\n",
                         csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY", newtarget, newlun);
             }
 #endif
@@ -2472,7 +2472,7 @@ sbicnextstate(dev, csr, asr)
                  */
 #ifdef DEBUG
                 if ( reselect_debug > 1 ) {
-                    printf("%s: reselect %s with active command\n",
+                    kprintf("%s: reselect %s with active command\n",
                         dev->sc_dev.dv_xname,
                         csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY");
                 }
@@ -2520,7 +2520,7 @@ sbicnextstate(dev, csr, asr)
             }
 
             if ( acb == NULL ) {
-                printf("%s: reselect %s targ %d not in nexus_list %x\n",
+                kprintf("%s: reselect %s targ %d not in nexus_list %x\n",
                         dev->sc_dev.dv_xname,
                         csr == SBIC_CSR_RSLT_NI ? "NI" : "IFY", newtarget,
                         &dev->nexus_list.tqh_first);
@@ -2538,7 +2538,7 @@ sbicnextstate(dev, csr, asr)
             /*
              * Something unexpected happened -- deal with it.
              */
-            printf("next: aborting asr 0x%02x csr 0x%02x\n", asr, csr);
+            kprintf("next: aborting asr 0x%02x csr 0x%02x\n", asr, csr);
 
 #ifdef DDB
             Debugger();
@@ -2547,7 +2547,7 @@ sbicnextstate(dev, csr, asr)
 #ifdef DEBUG
             dev->sc_dmatimo = 0;
             if ( data_pointer_debug > 1 )
-                printf("next dmastop: %d(%x:%x)\n", dev->target,
+                kprintf("next dmastop: %d(%x:%x)\n", dev->target,
                                                     dev->sc_cur->dc_addr,
                                                     dev->sc_tcnt);
 #endif
@@ -2563,7 +2563,7 @@ sbicnextstate(dev, csr, asr)
 #ifdef DEBUG
                 dev->sc_dmatimo = 0;
                 if ( data_pointer_debug > 1 )
-                    printf("next dmastop: %d(%x:%x)\n", dev->target,
+                    kprintf("next dmastop: %d(%x:%x)\n", dev->target,
                                                         dev->sc_cur->dc_addr,
                                                         dev->sc_tcnt);
 #endif
@@ -2685,7 +2685,7 @@ sbictimeout(dev)
 
         if ( dev->sc_dmatimo > 1 ) {
 
-            printf("%s: dma timeout #%d\n", dev->sc_dev.dv_xname,
+            kprintf("%s: dma timeout #%d\n", dev->sc_dev.dv_xname,
                                             dev->sc_dmatimo - 1);
 
             GET_SBIC_asr(dev->sc_sbicp, asr);

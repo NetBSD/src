@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)copy.c	8.1 (Berkeley) 6/11/93";*/
-static char rcsid[] = "$NetBSD: copy.c,v 1.5 1994/06/29 06:43:28 cgd Exp $";
+static char rcsid[] = "$NetBSD: copy.c,v 1.6 1996/10/10 23:32:59 christos Exp $";
 #endif /* not lint */
 
 #define	BSIZE	10240
@@ -59,17 +59,17 @@ main()
 		if (!(rcc = read(from, buf, bsize)))
 			break;
 		if (rcc < 0) {
-			printf("Record %d: read error, errno=%d\n",
+			kprintf("Record %d: read error, errno=%d\n",
 			    record, errno);
 			break;
 		}
 		if (rcc != bsize) {
 			if (record == 0) {
 				bsize = rcc;
-				printf("Block size set from input; %d bytes\n",
+				kprintf("Block size set from input; %d bytes\n",
 				    bsize);
 			} else
-				printf("Record %d: read short; expected %d, got %d\n",
+				kprintf("Record %d: read short; expected %d, got %d\n",
 				    record, bsize, rcc);
 		}
 #ifdef vax
@@ -78,15 +78,15 @@ main()
 			rcc = bsize;
 #endif
 		if ((wcc = write(to, buf, rcc)) < 0) {
-			printf("Record %d: write error: errno=%d\n",
+			kprintf("Record %d: write error: errno=%d\n",
 			    record, errno);
 			break;
 		}
 		if (wcc < rcc) {
-			printf("Record %d: write short; expected %d, got %d\n",
+			kprintf("Record %d: write short; expected %d, got %d\n",
 			    record, rcc, wcc);
 			break;
 		}
 	}
-	printf("copy completed: %d records copied\n", record);
+	kprintf("copy completed: %d records copied\n", record);
 }
