@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.27 2003/01/18 06:55:26 thorpej Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.28 2003/01/21 20:42:03 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -414,7 +414,7 @@ svr4_getsiginfo(si, sig, code, addr)
 		si->si_code = SVR4_EMT_TAGOVF;
 		break;
 
-	case T_DIV0:
+	case T_IDIV0:
 		si->si_code = SVR4_FPE_INTDIV;
 		break;
 
