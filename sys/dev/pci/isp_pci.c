@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.57 2000/10/16 05:12:26 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.58 2000/10/17 17:39:10 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -476,10 +476,7 @@ isp_pci_attach(parent, self, aux)
 	isp->isp_dblev |= ISP_LOGDEBUG1|ISP_LOGDEBUG2;
 #endif
 #ifdef	DEBUG
-	isp->isp_dblev |= ISP_LOGDEBUG0;
-#endif
-#ifdef	DIAGNOSTIC
-	isp->isp_dblev |= ISP_LOGINFO;
+	isp->isp_dblev |= ISP_LOGDEBUG0|ISP_LOGINFO;
 #endif
 #endif
 
