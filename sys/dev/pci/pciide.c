@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.142 2002/01/14 01:35:39 augustss Exp $	*/
+/*	$NetBSD: pciide.c,v 1.143 2002/01/28 15:30:29 bouyer Exp $	*/
 
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.142 2002/01/14 01:35:39 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.143 2002/01/28 15:30:29 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -3407,7 +3407,8 @@ hpt_pci_intr(arg)
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
-		if((dmastat & IDEDMA_CTL_INTR) == 0)
+		if((dmastat & ( IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
+		    IDEDMA_CTL_INTR)
 			continue;
 		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->wdc_channel;
