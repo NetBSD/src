@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.18 2000/09/22 16:35:00 pooka Exp $	*/
+/*	$NetBSD: print.c,v 1.19 2001/03/17 11:21:51 pooka Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -45,9 +45,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)Id: print.c,v 1.31 2000/08/05 17:36:49 christos Exp ")
+FILE_RCSID("@(#)Id: print.c,v 1.32 2001/03/11 20:29:16 christos Exp ")
 #else
-__RCSID("$NetBSD: print.c,v 1.18 2000/09/22 16:35:00 pooka Exp $");
+__RCSID("$NetBSD: print.c,v 1.19 2001/03/17 11:21:51 pooka Exp $");
 #endif
 #endif  /* lint */
 
@@ -68,9 +68,9 @@ mdump(m)
 	if (m->flag & INDIR)
 		(void) fprintf(stderr, "(%s,%d),",
 			       /* Note: in.type is unsigned */
-			       (m->in.type < SZOF(typ)) ? 
-					typ[m->in.type] : "*bad*",
-			       m->in.offset);
+			       (m->in_type < SZOF(typ)) ? 
+					typ[m->in_type] : "*bad*",
+			       m->in_offset);
 
 	(void) fprintf(stderr, " %s%s", (m->flag & UNSIGNED) ? "u" : "",
 		       /* Note: type is unsigned */
