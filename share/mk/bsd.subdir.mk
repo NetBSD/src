@@ -1,5 +1,5 @@
 #	from: @(#)bsd.subdir.mk	5.9 (Berkeley) 2/1/91
-#	$Id: bsd.subdir.mk,v 1.5 1994/02/09 07:55:08 cgd Exp $
+#	$Id: bsd.subdir.mk,v 1.6 1994/06/30 05:21:33 cgd Exp $
 
 .if !target(.MAIN)
 .MAIN: all
@@ -40,4 +40,30 @@ afterinstall: realinstall
 realinstall: beforeinstall _SUBDIRUSE
 .endif
 
-all clean cleandir depend lint obj tags: _SUBDIRUSE
+.if !target(all)
+all: _SUBDIRUSE
+.endif
+
+.if !target(clean)
+clean: _SUBDIRUSE
+.endif
+
+.if !target(cleandir)
+cleandir: _SUBDIRUSE
+.endif
+
+.if !target(depend)
+depend: _SUBDIRUSE
+.endif
+
+.if !target(lint)
+lint: _SUBDIRUSE
+.endif
+
+.if !target(obj)
+obj: _SUBDIRUSE
+.endif
+
+.if !target(tags)
+tags: _SUBDIRUSE
+.endif

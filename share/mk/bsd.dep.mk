@@ -1,8 +1,8 @@
-#	$Id: bsd.dep.mk,v 1.7 1994/02/27 22:27:18 cgd Exp $
+#	$Id: bsd.dep.mk,v 1.8 1994/06/30 05:21:28 cgd Exp $
 
 # some of the rules involve .h sources, so remove them from mkdep line
 .if !target(depend)
-depend: beforedepend .depend afterdepend
+depend: beforedepend .depend _SUBDIRUSE afterdepend
 .if defined(SRCS)
 .depend: ${SRCS}
 	rm -f .depend
@@ -31,7 +31,7 @@ afterdepend:
 
 .if !target(tags)
 .if defined(SRCS)
-tags: ${SRCS}
+tags: ${SRCS} _SUBDIRUSE
 	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
 	    sed "s;\${.CURDIR}/;;" > tags
 .else
