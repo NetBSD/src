@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.29 2001/08/14 05:44:15 lukem Exp $	*/
+/*	$NetBSD: tape.c,v 1.30 2001/11/01 08:03:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.29 2001/08/14 05:44:15 lukem Exp $");
+__RCSID("$NetBSD: tape.c,v 1.30 2001/11/01 08:03:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -563,7 +563,7 @@ startnewtape(int top)
 	int	parentpid;
 	int	childpid;
 	int	status;
-	int	waitpid;
+	int	waitforpid;
 	char	*p;
 #ifdef sunos
 	void	(*interrupt_save)();
@@ -598,9 +598,9 @@ restore_check_point:
 		msg("Tape: %d; parent process: %d child process %d\n",
 			tapeno+1, parentpid, childpid);
 #endif /* TDEBUG */
-		while ((waitpid = wait(&status)) != childpid)
+		while ((waitforpid = wait(&status)) != childpid)
 			msg("Parent %d waiting for child %d has another child %d return\n",
-				parentpid, childpid, waitpid);
+				parentpid, childpid, waitforpid);
 		if (status & 0xFF) {
 			msg("Child %d returns LOB status %o\n",
 				childpid, status&0xFF);

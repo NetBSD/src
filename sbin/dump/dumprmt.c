@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.25 2001/05/28 00:41:14 lukem Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.26 2001/11/01 08:03:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dumprmt.c,v 1.25 2001/05/28 00:41:14 lukem Exp $");
+__RCSID("$NetBSD: dumprmt.c,v 1.26 2001/11/01 08:03:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,13 +184,13 @@ okname(char *cp0)
 }
 
 int
-rmtopen(char *tape, int mode)
+rmtopen(char *tapedevice, int mode)
 {
 	char buf[256];
 
-	(void)snprintf(buf, sizeof buf, "O%s\n%d\n", tape, mode);
+	(void)snprintf(buf, sizeof buf, "O%s\n%d\n", tapedevice, mode);
 	rmtstate = TS_OPEN;
-	return (rmtcall(tape, buf));
+	return (rmtcall(tapedevice, buf));
 }
 
 void

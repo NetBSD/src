@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.32 2001/08/14 05:44:15 lukem Exp $	*/
+/*	$NetBSD: traverse.c,v 1.33 2001/11/01 08:03:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.32 2001/08/14 05:44:15 lukem Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.33 2001/11/01 08:03:03 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ blockest(struct dinode *dp)
  * Determine if given inode should be dumped
  */
 void
-mapfileino(ino_t ino, long *tapesize, int *dirskipped)
+mapfileino(ino_t ino, long *tape_size, int *dirskipped)
 {
 	int mode;
 	struct dinode *dp;
@@ -162,9 +162,9 @@ mapfileino(ino_t ino, long *tapesize, int *dirskipped)
 	if (WANTTODUMP(dp)) {
 		SETINO(ino, dumpinomap);
 		if (mode != IFREG && mode != IFDIR && mode != IFLNK)
-			*tapesize += 1;
+			*tape_size += 1;
 		else
-			*tapesize += blockest(dp);
+			*tape_size += blockest(dp);
 		return;
 	}
 	if (mode == IFDIR) {
@@ -185,7 +185,7 @@ mapfileino(ino_t ino, long *tapesize, int *dirskipped)
  * disk may be NULL if dirv is NULL.
  */
 int
-mapfiles(ino_t maxino, long *tapesize, char *disk, char * const *dirv)
+mapfiles(ino_t maxino, long *tape_size, char *diskname, char * const *dirv)
 {
 	int anydirskipped = 0;
 
@@ -214,7 +214,7 @@ mapfiles(ino_t maxino, long *tapesize, char *disk, char * const *dirv)
 			case FTS_DP:		/* already seen dir */
 				continue;
 			}
-			mapfileino(entry->fts_statp->st_ino, tapesize,
+			mapfileino(entry->fts_statp->st_ino, tape_size,
 			    &anydirskipped);
 		}
 		(void)fts_close(dirh);
@@ -231,7 +231,7 @@ mapfiles(ino_t maxino, long *tapesize, char *disk, char * const *dirv)
 			else
 				(void)snprintf(path, sizeof(path), "%s",
 				    dirv[d]);
-			while (strcmp(path, disk) != 0) {
+			while (strcmp(path, diskname) != 0) {
 				char *p;
 				struct stat sb;
 
@@ -247,7 +247,7 @@ mapfiles(ino_t maxino, long *tapesize, char *disk, char * const *dirv)
 					    strerror(errno));
 					break;
 				}
-				mapfileino(sb.st_ino, tapesize, &anydirskipped);
+				mapfileino(sb.st_ino, tape_size, &anydirskipped);
 			}
 		}
 
@@ -255,12 +255,12 @@ mapfiles(ino_t maxino, long *tapesize, char *disk, char * const *dirv)
 		 * Ensure that the root inode actually appears in the
 		 * file list for a subdir
 		 */
-		mapfileino(ROOTINO, tapesize, &anydirskipped);
+		mapfileino(ROOTINO, tape_size, &anydirskipped);
 	} else {
 		ino_t ino;
 
 		for (ino = ROOTINO; ino < maxino; ino++) {
-			mapfileino(ino, tapesize, &anydirskipped);
+			mapfileino(ino, tape_size, &anydirskipped);
 		}
 	}
 	/*
@@ -284,7 +284,7 @@ mapfiles(ino_t maxino, long *tapesize, char *disk, char * const *dirv)
  * pass using this algorithm.
  */
 int
-mapdirs(ino_t maxino, long *tapesize)
+mapdirs(ino_t maxino, long *tape_size)
 {
 	struct  dinode *dp, di;
 	int i, isdir, nodump;
@@ -318,7 +318,7 @@ mapdirs(ino_t maxino, long *tapesize)
 			if (di.di_db[i] != 0)
 				ret |= searchdir(ino, iswap32(di.di_db[i]),
 					(long)ufs_dblksize(ufsib, &di, i),
-					filesize, tapesize, nodump);
+					filesize, tape_size, nodump);
 			if (ret & HASDUMPEDFILE)
 				filesize = 0;
 			else
@@ -328,11 +328,11 @@ mapdirs(ino_t maxino, long *tapesize)
 			if (di.di_ib[i] == 0)
 				continue;
 			ret |= dirindir(ino, di.di_ib[i], i, &filesize,
-			    tapesize, nodump);
+			    tape_size, nodump);
 		}
 		if (ret & HASDUMPEDFILE) {
 			SETINO(ino, dumpinomap);
-			*tapesize += blockest(&di);
+			*tape_size += blockest(&di);
 			change = 1;
 			continue;
 		}
@@ -357,7 +357,7 @@ mapdirs(ino_t maxino, long *tapesize)
  */
 static int
 dirindir(ino_t ino, daddr_t blkno, int ind_level, long *filesize,
-	long *tapesize, int nodump)
+	long *tape_size, int nodump)
 {
 	int ret = 0;
 	int i;
@@ -371,7 +371,7 @@ dirindir(ino_t ino, daddr_t blkno, int ind_level, long *filesize,
 			if (blkno != 0)
 				ret |= searchdir(ino, iswap32(blkno),
 				    ufsib->ufs_bsize, *filesize,
-				    tapesize, nodump);
+				    tape_size, nodump);
 			if (ret & HASDUMPEDFILE)
 				*filesize = 0;
 			else
@@ -384,7 +384,7 @@ dirindir(ino_t ino, daddr_t blkno, int ind_level, long *filesize,
 		blkno = idblk[i];
 		if (blkno != 0)
 			ret |= dirindir(ino, blkno, ind_level, filesize,
-			    tapesize, nodump);
+			    tape_size, nodump);
 	}
 	return (ret);
 }
@@ -396,7 +396,7 @@ dirindir(ino_t ino, daddr_t blkno, int ind_level, long *filesize,
  */
 static int
 searchdir(ino_t dino, daddr_t blkno, long size, long filesize,
-	long *tapesize, int nodump)
+	long *tape_size, int nodump)
 {
 	struct direct *dp;
 	struct dinode *ip;
@@ -428,7 +428,7 @@ searchdir(ino_t dino, daddr_t blkno, long size, long filesize,
 			if (TSTINO(ino, dumpinomap)) {
 				CLRINO(ino, dumpinomap);
 				CLRINO(ino, usedinomap);
-				*tapesize -= blockest(ip);
+				*tape_size -= blockest(ip);
 			}
 			/* Add dir back to the dir map, to propagate nodump */
 			if ((ip->di_mode & IFMT) == IFDIR) {
