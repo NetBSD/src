@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.129 2003/07/28 07:03:43 lukem Exp $
+#	$NetBSD: bsd.README,v 1.130 2003/07/28 08:53:53 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -108,10 +108,6 @@ MKCRYPTO_MDC2	If not "no", MDC2 support will be built into libcrypto_mdc2.a
 		Default: no
 
 MKCRYPTO_RC5	If not "no", RC5 support will be built into libcrypto_rc5.a.
-		Default: no
-
-MKCXXSUPCXX	If not "no", the support libraries needed for C++ programs
-		are set to `-lsupc++ -lm', rather than `-lstdc++ -lm'.
 		Default: no
 
 MKDOC		If "no", don't build or install the documentation.
@@ -553,6 +549,7 @@ SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
 USE_SHLIBDIR	If "yes", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
 		as the path to install shared libraries to.
 		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
+		Default: no
 
 LINTLIBDIR	Target directory for lint libraries.
 
@@ -875,6 +872,10 @@ FILES		See description of <bsd.files.mk>.
 
 SHLINKDIR	Target directory for shared linker.  See description of
 		<bsd.own.mk> for additional information about this variable.
+
+USE_LIBSTDCXX	If "no", the support libraries needed for C++ programs
+		are set to `-lsupc++ -lm', rather than `-lstdc++ -lm'.
+		Default: yes
 
 The include file <bsd.prog.mk> includes the file named "../Makefile.inc"
 if it exists, as well as the include file <bsd.man.mk>.
