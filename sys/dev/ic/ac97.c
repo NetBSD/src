@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.24 2002/01/23 14:50:45 ichiro Exp $ */
+/*      $NetBSD: ac97.c,v 1.25 2002/07/05 13:50:47 joda Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.24 2002/01/23 14:50:45 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.25 2002/07/05 13:50:47 joda Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,6 +291,8 @@ static const struct ac97_codecid {
 	const char *name;
 } ac97codecid[] = {
 	{ AC97_CODEC_ID('A', 'D', 'S', 64),	"Analog Devices AD1881" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 72),	"Analog Devices AD1881A" },
+	{ AC97_CODEC_ID('A', 'D', 'S', 96),	"Analog Devices AD1885" },
 	{ AC97_CODEC_ID('A', 'K', 'M', 0),	"Asahi Kasei AK4540"	},
 	{ AC97_CODEC_ID('A', 'K', 'M', 2),	"Asahi Kasei AK4543"	},
 	{ AC97_CODEC_ID('C', 'R', 'Y', 0),	"Crystal CS4297"	},
