@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruserpass.c	8.3 (Berkeley) 4/2/94";*/
-static char *rcsid = "$Id: ruserpass.c,v 1.4 1994/08/29 03:09:21 mycroft Exp $";
+static char *rcsid = "$Id: ruserpass.c,v 1.5 1994/09/17 00:51:10 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -145,7 +145,7 @@ next:
 				}
 			break;
 		case PASSWD:
-			if (strcmp(*aname, "anonymous") &&
+			if ((*aname == 0 || strcmp(*aname, "anonymous")) &&
 			    fstat(fileno(cfile), &stb) >= 0 &&
 			    (stb.st_mode & 077) != 0) {
 	warnx("Error: .netrc file is readable by others.");
