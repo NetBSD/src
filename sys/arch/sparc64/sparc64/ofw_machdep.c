@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.21 2004/03/14 18:18:56 chs Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.22 2004/03/21 14:13:15 pk Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.21 2004/03/14 18:18:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.22 2004/03/21 14:13:15 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -48,12 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.21 2004/03/14 18:18:56 chs Exp $")
 #include <sys/systm.h>
 
 #include <machine/openfirm.h>
+#include <machine/promlib.h>
 
 #include <dev/ofw/ofw_pci.h>
-
-#if defined(FFS) && defined(CD9660)
-#include <ufs/ffs/fs.h>
-#endif
 
 /*
  * Note that stdarg.h and the ANSI style va_start macro is used for both
@@ -62,13 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.21 2004/03/14 18:18:56 chs Exp $")
 #include <machine/stdarg.h>
 
 #include <machine/sparc64.h>
-
-int vsprintf __P((char *, const char *, va_list));
-
-void dk_cleanup __P((void));
-#if defined(FFS) && defined(CD9660)
-static int dk_match_ffs __P((void));
-#endif
 
 static u_int mmuh = -1, memh = -1;
 
@@ -642,34 +632,6 @@ OF_stdout()
 	return stdout;
 }
 
-
-/*
- * print debug info to prom. 
- * This is not safe, but then what do you expect?
- */
-void
-#ifdef __STDC__
-prom_printf(const char *fmt, ...)
-#else
-prom_printf(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	int s, len;
-	static char buf[256];
-	va_list ap;
-#ifdef MULTIPROCESSOR
-	extern struct simplelock kprintf_slock;
-#endif
-
-	KPRINTF_MUTEX_ENTER(s);
-	va_start(ap, fmt);
-	len = vsprintf(buf, fmt, ap);
-	va_end(ap);
-	OF_write(OF_stdout(), buf, len);
-	KPRINTF_MUTEX_EXIT(s);
-}
 
 #ifdef DEBUG
 int ofmapintrdebug = 0;
