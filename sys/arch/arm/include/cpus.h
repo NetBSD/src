@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.10 2002/03/09 23:24:11 bjh21 Exp $	*/
+/*	$NetBSD: cpus.h,v 1.11 2002/03/09 23:49:16 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -62,10 +62,6 @@
 /* Define the structure used to describe a cpu */
 
 typedef struct _cpu {
-/* These are generic CPU variables */
-
-	char	cpu_model[256];	/* Text description of CPU */
-
 /* These are generic FPU variables */
 
 	u_int	fpu_class;	/* The FPU class */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 2002/03/09 23:24:11 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.20 2002/03/09 23:49:15 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,6 +45,9 @@
 #include "opt_cputypes.h"
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: cpu.c,v 1.20 2002/03/09 23:49:15 bjh21 Exp $");
+
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -63,7 +66,7 @@
 
 cpu_t cpus[MAX_CPUS];
 
-char cpu_model[64];
+char cpu_model[256];
 volatile int undefined_test;	/* Used for FPA test */
 
 /* Prototypes */
@@ -144,7 +147,6 @@ identify_master_cpu(struct device *dv, int cpu_number)
 	curcpu()->ci_cpuid = cpu_id();
 
 	identify_arm_cpu(dv, cpu_number, curcpu());
-	strcpy(cpu_model, cpus[cpu_number].cpu_model);
 
 	if ((curcpu()->ci_cpuid & CPU_ID_CPU_MASK) == CPU_ID_SA110
 	    && (curcpu()->ci_cpuid & CPU_ID_REVISION_MASK) < 3) {
@@ -431,7 +433,7 @@ identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
 	for (i = 0; cpuids[i].cpuid != 0; i++)
 		if (cpuids[i].cpuid == (cpuid & CPU_ID_CPU_MASK)) {
 			cpu_class = cpuids[i].cpu_class;
-			sprintf(cpu->cpu_model, "%s %s (%s core)",
+			sprintf(cpu_model, "%s %s (%s core)",
 			    cpuids[i].cpu_name,
 			    cpuids[i].cpu_steppings[cpuid &
 						    CPU_ID_REVISION_MASK],
@@ -440,7 +442,7 @@ identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
 		}
 
 	if (cpuids[i].cpuid == 0)
-		sprintf(cpu->cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
+		sprintf(cpu_model, "unknown CPU (ID = 0x%x)", cpuid);
 
 	switch (cpu_class) {
 	case CPU_CLASS_ARM6:
@@ -448,40 +450,40 @@ identify_arm_cpu(struct device *dv, int cpu_number, struct cpu_info *ci)
 	case CPU_CLASS_ARM7TDMI:
 	case CPU_CLASS_ARM8:
 		if ((ci->ci_ctrl & CPU_CONTROL_IDC_ENABLE) == 0)
-			strcat(cpu->cpu_model, " IDC disabled");
+			strcat(cpu_model, " IDC disabled");
 		else
-			strcat(cpu->cpu_model, " IDC enabled");
+			strcat(cpu_model, " IDC enabled");
 		break;
 	case CPU_CLASS_ARM9TDMI:
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
-			strcat(cpu->cpu_model, " DC disabled");
+			strcat(cpu_model, " DC disabled");
 		else
-			strcat(cpu->cpu_model, " DC enabled");
+			strcat(cpu_model, " DC enabled");
 		if ((ci->ci_ctrl & CPU_CONTROL_IC_ENABLE) == 0)
-			strcat(cpu->cpu_model, " IC disabled");
+			strcat(cpu_model, " IC disabled");
 		else
-			strcat(cpu->cpu_model, " IC enabled");
+			strcat(cpu_model, " IC enabled");
 		break;
 	default:
 		break;
 	}
 	if ((ci->ci_ctrl & CPU_CONTROL_WBUF_ENABLE) == 0)
-		strcat(cpu->cpu_model, " WB disabled");
+		strcat(cpu_model, " WB disabled");
 	else
-		strcat(cpu->cpu_model, " WB enabled");
+		strcat(cpu_model, " WB enabled");
 
 	if (ci->ci_ctrl & CPU_CONTROL_LABT_ENABLE)
-		strcat(cpu->cpu_model, " LABT");
+		strcat(cpu_model, " LABT");
 	else
-		strcat(cpu->cpu_model, " EABT");
+		strcat(cpu_model, " EABT");
 
 	if (ci->ci_ctrl & CPU_CONTROL_BPRD_ENABLE)
-		strcat(cpu->cpu_model, " branch prediction enabled");
+		strcat(cpu_model, " branch prediction enabled");
 
 	/* Print the info */
-	printf(": %s\n", cpu->cpu_model);
+	printf(": %s\n", cpu_model);
 
 	/* Print cache info. */
 	if (arm_picache_line_size == 0 && arm_pdcache_line_size == 0)
