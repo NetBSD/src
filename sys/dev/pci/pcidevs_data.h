@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.7 2000/09/13 16:51:39 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.8 2000/09/21 18:00:06 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.7 2000/09/13 16:48:25 tron Exp 
+ *	NetBSD: pcidevs,v 1.236.2.8 2000/09/21 17:59:05 thorpej Exp 
  */
 
 /*
@@ -2702,6 +2702,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "National Semiconductor",
 	    "DP83810 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83815,
+	    0,
+	    "National Semiconductor",
+	    "DP83815 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_NS87410,
