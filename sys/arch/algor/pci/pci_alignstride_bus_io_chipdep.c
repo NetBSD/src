@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_alignstride_bus_io_chipdep.c,v 1.4 2001/09/04 16:32:43 thorpej Exp $	*/
+/*	$NetBSD: pci_alignstride_bus_io_chipdep.c,v 1.5 2003/07/14 22:57:48 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@
  *			Size of the device-provided static storage area
  *			for the I/O memory space extent.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: pci_alignstride_bus_io_chipdep.c,v 1.5 2003/07/14 22:57:48 lukem Exp $");
 
 #include <sys/extent.h>
 

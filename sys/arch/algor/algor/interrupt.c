@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.5 2001/06/15 04:01:40 thorpej Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.6 2003/07/14 22:57:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2003/07/14 22:57:47 lukem Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
