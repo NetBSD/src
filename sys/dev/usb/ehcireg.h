@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.7 2001/11/16 15:33:13 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.8 2001/11/16 23:52:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -164,6 +164,8 @@
 #define  EHCI_PS_CSC		0x00000002 /* RWC connect status change */
 #define  EHCI_PS_CS		0x00000001 /* RO connect status */
 #define  EHCI_PS_CLEAR		(EHCI_PS_OCC|EHCI_PS_PEC|EHCI_PS_CSC)
+
+#define EHCI_PORT_RESET_COMPLETE 2 /* ms */
 
 #define EHCI_FLALIGN_ALIGN	0x1000
 
