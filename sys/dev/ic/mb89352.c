@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.29 2004/08/09 14:07:57 mycroft Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.30 2004/08/11 14:22:34 mycroft Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.29 2004/08/09 14:07:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.30 2004/08/11 14:22:34 mycroft Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1614,39 +1614,21 @@ spc_datain_pio(sc, p, n)
 	 * b) reset has occurred or busfree is detected.
 	 */
 	while (n > 0) {
-		int xfer;
-
-		/* Wait for fifo half full or phase mismatch */
-		for (;;) {
-			/* XXX needs timeout */
-			intstat = bus_space_read_1(iot, ioh, INTS);
-			sstat = bus_space_read_1(iot, ioh, SSTS);
-			if (intstat != 0 ||
-			    (sstat & SSTS_DREG_EMPTY) == 0)
-				break;
-		}
-
-#ifdef NEED_DREQ_ON_HARDWARE_XFER
-		if (intstat != 0)
-			goto phasechange;
-#endif
-
-		if (sstat & SSTS_DREG_FULL) {
-			xfer = DINAMOUNT;
-			n -= xfer;
-			in += xfer;
-			bus_space_read_multi_1(iot, ioh, DREG, p, xfer);
-			p += xfer;
-		}
-		while (n > 0 &&
-		    (bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) == 0) {
+		sstat = bus_space_read_1(iot, ioh, SSTS);
+		if ((sstat & SSTS_DREG_FULL) != 0) {
+			n -= DINAMOUNT;
+			in += DINAMOUNT;
+			bus_space_read_multi_1(iot, ioh, DREG, p, DINAMOUNT);
+			p += DINAMOUNT;
+		} else if ((sstat & SSTS_DREG_EMPTY) == 0) {
 			n--;
 			in++;
 			*p++ = bus_space_read_1(iot, ioh, DREG);
+		} else {
+			intstat = bus_space_read_1(iot, ioh, INTS);
+			if (intstat != 0)
+				goto phasechange;
 		}
-
-		if (intstat != 0)
-			goto phasechange;
 	}
 
 	/*
