@@ -1,4 +1,4 @@
-/*	$NetBSD: bitstring_test.c,v 1.3 1995/04/20 22:37:55 cgd Exp $	*/
+/*	$NetBSD: bitstring_test.c,v 1.4 1995/04/29 05:44:35 cgd Exp $	*/
 
 /*
  * this is a simple program to test bitstring.h
@@ -15,13 +15,7 @@
 #define _bitstr_size bitstr_size
  
 #include <stdio.h>
-#if defined (BSD)
-#include <sys/types.h>
-#include <sys/malloc.h>
-#endif /*BSD*/
-#if defined (ATT)
-#include <sys/malloc.h>
-#endif /*ATT*/
+#include <stdlib.h>
 
 /* #ifdef NOTSOGOOD */
 #include "bitstring.h"
