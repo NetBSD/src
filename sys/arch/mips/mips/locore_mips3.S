@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.53 2000/09/16 06:57:21 jeffs Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.54 2000/09/26 18:22:13 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -619,7 +619,7 @@ NESTED_NOPROFILE(mips3_SystemCall, CALLFRAME_SIZ, ra)
 	lw	k1, _C_LABEL(curpcb)
 	#nop					# -slip-
 	addu	k1, k1, USPACE - FRAME_SIZ
-	REG_S	AT, FRAME_AST(k1)
+	#REG_S	AT, FRAME_AST(k1)
 	REG_S	v0, FRAME_V0(k1)		# syscall #
 	REG_S	v1, FRAME_V1(k1)		# used by syscall()
 	mflo	v0
