@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.7 2000/08/11 03:38:29 minoura Exp $
+# $NetBSD: mi,v 1.253.2.8 2000/08/13 17:24:39 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -408,6 +408,7 @@
 ./usr/share/man/cat4/depca.0
 ./usr/share/man/cat4/dpt.0
 ./usr/share/man/cat4/drum.0
+./usr/share/man/cat4/dty.0
 ./usr/share/man/cat4/eap.0
 ./usr/share/man/cat4/ec.0
 ./usr/share/man/cat4/ef.0
@@ -1439,6 +1440,7 @@
 ./usr/share/man/man4/depca.4
 ./usr/share/man/man4/dpt.4
 ./usr/share/man/man4/drum.4
+./usr/share/man/man4/dty.4
 ./usr/share/man/man4/eap.4
 ./usr/share/man/man4/ec.4
 ./usr/share/man/man4/ef.4
