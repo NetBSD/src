@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.6 2001/09/25 21:08:44 jdolecek Exp $	*/
+/*	$NetBSD: urio.c,v 1.7 2001/11/13 06:24:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * The inspiration and information for this driver comes from the
  * FreeBSD driver written by Iwasa Kazmi.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.7 2001/11/13 06:24:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.90 2001/11/10 17:11:38 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.91 2001/11/13 06:24:56 lukem Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -37,6 +37,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.91 2001/11/13 06:24:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
