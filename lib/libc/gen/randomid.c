@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.c,v 1.1 2003/09/09 22:10:34 itojun Exp $	*/
+/*	$NetBSD: randomid.c,v 1.2 2003/09/10 07:12:33 tls Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -88,12 +88,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: randomid.c,v 1.1 2003/09/09 22:10:34 itojun Exp $");
+__RCSID("$NetBSD: randomid.c,v 1.2 2003/09/10 07:12:33 tls Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include <randomid.h>
 
