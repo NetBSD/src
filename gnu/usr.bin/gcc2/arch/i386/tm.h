@@ -1,6 +1,6 @@
 /* Configuration for an i386 running NetBSD as the target machine. 
 
-	$Id: tm.h,v 1.5 1993/12/06 09:49:15 cgd Exp $
+	$Id: tm.h,v 1.6 1994/04/20 09:19:02 pk Exp $
 */
 
 /* This is tested by i386gas.h.  */
@@ -41,13 +41,10 @@
 {									\
   if (flag_pic)								\
     {									\
-      fprintf (FILE, "\tleal %sP%d@GOTOFF(%%ebx),%%eax\n",		\
-	       LPREFIX, (LABELNO));					\
-      fprintf (FILE, "\tcall *mcount@GOT(%%ebx)\n");			\
+      fprintf (FILE, "\tcall mcount@PLT\n");				\
     }									\
   else									\
     {									\
-      fprintf (FILE, "\tmovl $%sP%d,%%eax\n", LPREFIX, (LABELNO));	\
       fprintf (FILE, "\tcall mcount\n");				\
     }									\
 }
