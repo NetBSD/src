@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.86 1998/07/02 01:25:37 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.87 1998/09/26 23:58:14 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -6,18 +6,16 @@
 
 # modules with non-default implementations on at least one architecture:
 SRCS+=	Ovfork.S __vfork14.S brk.S exect.S fork.S pipe.S ptrace.S sbrk.S \
-	setlogin.S sigpending.S sigprocmask.S sigreturn.S sigsuspend.S \
-	syscall.S
+	setlogin.S sigaction.S sigpending.S sigprocmask.S sigreturn.S \
+	__sigreturn14.S sigsuspend.S syscall.S
 SRCS+=	cerror.S
 
 LSRCS+=	Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
 	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
-	Lint_sigpending.c Lint_sigprocmask.c Lint_sigreturn.c \
-	Lint_sigsuspend.c Lint_syscall.c
+	Lint___sigreturn14.c Lint_syscall.c
 DPSRCS+= Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
 	Lint_pipe.c Lint_ptrace.c Lint_sbrk.c Lint_setlogin.c \
-	Lint_sigpending.c Lint_sigprocmask.c Lint_sigreturn.c \
-	Lint_sigsuspend.c Lint_syscall.c
+	Lint___sigreturn14.c Lint_syscall.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -53,8 +51,9 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
 	setpgid.o setpriority.o setregid.o setreuid.o setrlimit.o \
 	setsid.o setsockopt.o settimeofday.o setuid.o shmat.o \
-	shmctl.o shmdt.o shmget.o shutdown.o sigaction.o \
-	__sigaltstack14.o socket.o socketpair.o __stat13.o statfs.o \
+	shmctl.o shmdt.o shmget.o shutdown.o __sigaction14.o \
+	__sigaltstack14.o __sigpending14.o __sigprocmask14.o __sigsuspend14.o \
+	socket.o socketpair.o __stat13.o statfs.o \
 	swapctl.o symlink.o sysarch.o umask.o undelete.o unlink.o \
 	unmount.o utimes.o vadvise.o wait4.o write.o writev.o \
 	__semctl.o __syscall.o __sysctl.o \
