@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.31 2001/01/21 07:48:30 christos Exp $
+#	$NetBSD: genassym.cf,v 1.32 2001/06/08 04:21:41 mrg Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ define	CPUINFO_IDLE_U		offsetof(struct cpu_info, idle_u)
 define	CPUINFO_CURPCB		offsetof(struct cpu_info, curpcb)
 define	CPUINFO_CURPROC		offsetof(struct cpu_info, ci_curproc)
 define	CPUINFO_SELF		offsetof(struct cpu_info, ci_self)
+define	CPUINFO_FLAGS		offsetof(struct cpu_info, flags)
 
 # PTE bits and related information
 define	PG_W		PG_W
