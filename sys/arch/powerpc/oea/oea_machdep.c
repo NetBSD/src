@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.1 2003/02/03 17:10:10 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.2 2003/02/05 07:05:20 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -95,7 +95,7 @@ struct vm_map *phys_map = NULL;
 extern struct user *proc0paddr;
 
 struct bat battable[512];
-sr_t iosrtable[16];	/* I/O segments, for kernel_pmap setup */
+register_t iosrtable[16];	/* I/O segments, for kernel_pmap setup */
 paddr_t msgbuf_paddr;
 
 void
