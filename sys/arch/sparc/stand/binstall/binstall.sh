@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.6 2000/08/10 13:34:39 mrg Exp $
+#	$NetBSD: binstall.sh,v 1.7 2000/08/20 14:56:28 mrg Exp $
 #
 
 vecho () {
@@ -11,7 +11,7 @@ vecho () {
 }
 
 Usage () {
-	echo "Usage: $0 [-hvt] [-m<path>] net|ffs directory"
+	echo "Usage: $0 [-hvtuU] [-m<path>] net|ffs directory"
 	exit 1
 }
 
@@ -25,6 +25,7 @@ Help () {
 	echo "Options:"
 	echo "	-h		- display this message"
 	echo "	-u		- install sparc64 (UltraSPARC) boot block"
+	echo "	-U		- install sparc boot block"
 	echo "	-b<bootprog>	- second-stage boot program to install"
 	echo "	-m<path>	- Look for boot programs in <path> (default: /usr/mdec)"
 	echo "	-v		- verbose mode"
@@ -42,7 +43,7 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin
 MDEC=${MDEC:-/usr/mdec}
 BOOTPROG=${BOOTPROG:-boot}
 OFWBOOT=${OFWBOOTBLK:-ofwboot}
-if [ "`uname -m`" = sparc64 ]; then
+if [ "`sysctl -n hw.machine`" = sparc64 ]; then
 	ULTRASPARC=1
 else
 	ULTRASPARC=0
@@ -52,7 +53,7 @@ if [ "`sysctl -n kern.securelevel`" -gt 0 ]; then
 	Secure
 fi
 
-set -- `getopt "b:hm:tv" "$@"`
+set -- `getopt "b:hm:tvuU" "$@"`
 if [ $? -gt 0 ]; then
 	Usage
 fi
@@ -62,9 +63,9 @@ do
 	case $1 in
 	-h) Help; shift ;;
 	-u) ULTRASPARC=1; shift ;;
+	-U) ULTRASPARC=0; shift ;;
 	-b) BOOTPROG=$2; OFWBOOT=$2; shift 2 ;;
 	-m) MDEC=$2; shift 2 ;;
-	-o) OFWBOOT=$2; shift 2 ;;
 	-t) TEST=1; VERBOSE=1; shift ;;
 	-v) VERBOSE=1; shift ;;
 	--) shift; break ;;
