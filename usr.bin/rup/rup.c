@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.17 1999/01/10 08:19:23 abs Exp $	*/
+/*	$NetBSD: rup.c,v 1.18 1999/07/30 01:29:30 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.17 1999/01/10 08:19:23 abs Exp $");
+__RCSID("$NetBSD: rup.c,v 1.18 1999/07/30 01:29:30 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -210,7 +210,10 @@ print_rup_data(host, host_stat)
 	char days_buf[16];
 	char hours_buf[16];
 
-	printf("%-*.*s", HOST_WIDTH, HOST_WIDTH, host);
+	if (printtime)
+		printf("%-*.*s", HOST_WIDTH-4, HOST_WIDTH-4, host);
+	else
+		printf("%-*.*s", HOST_WIDTH, HOST_WIDTH, host);
 
 	tmp_time = localtime((time_t *)&host_stat->curtime.tv_sec);
 	host_time = *tmp_time;
