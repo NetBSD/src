@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_sysent.c,v 1.38 2000/11/17 03:07:25 erh Exp $ */
+/* $NetBSD: osf1_sysent.c,v 1.39 2000/11/30 19:05:27 jdolecek Exp $ */
 
 /*
  * System call switch table.
@@ -7,7 +7,9 @@
  * created from	NetBSD: syscalls.master,v 1.31 2000/11/17 03:06:28 erh Exp 
  */
 
+#if defined ( _KERNEL )  && !defined ( _LKM ) 
 #include "opt_compat_43.h"
+#endif
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
