@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.24 1998/05/22 09:26:33 ragge Exp $ */
+/*	$NetBSD: ka750.c,v 1.25 1998/11/29 14:48:53 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -271,7 +271,7 @@ ka750_steal_pages()
 	 * We also set up virtual area for SBI.
 	 */
 	MAPPHYS(junk, V750PGS, VM_PROT_READ|VM_PROT_WRITE);
-	MAPVIRT(nexus, btoc(NEX750SZ));
+	MAPVIRT(nexus, vax_btoc(NEX750SZ));
 	pmap_map((vm_offset_t)nexus, NEX750, NEX750 + NEX750SZ,
 	    VM_PROT_READ|VM_PROT_WRITE);
 }

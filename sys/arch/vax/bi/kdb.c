@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.12 1998/03/02 17:03:12 ragge Exp $ */
+/*	$NetBSD: kdb.c,v 1.13 1998/11/29 14:48:51 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -190,7 +190,7 @@ kdbgo(usc, bp)
 	caddr_t addr;
 
 	o = (int)bp->b_un.b_addr & PGOFSET;
-	npf = btoc(bp->b_bcount + o) + 1;
+	npf = vax_btoc(bp->b_bcount + o) + 1;
 	addr = bp->b_un.b_addr;
 
 	/*
