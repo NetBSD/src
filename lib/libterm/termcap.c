@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $	*/
+/*	$NetBSD: termcap.c,v 1.8 1996/03/22 23:25:30 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: termcap.c,v 1.7 1995/06/05 19:45:52 pk Exp $";
+static char rcsid[] = "$NetBSD: termcap.c,v 1.8 1996/03/22 23:25:30 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -138,9 +138,11 @@ tgetent(bp, name)
 
 	dummy = NULL;
 	i = cgetent(&dummy, pathvec, name);      
-	
-	if (i == 0)
-		strcpy(bp, dummy);
+
+	if (i == 0) {
+		strncpy(bp, dummy, 1024);
+		bp[1023] = '\0';
+	}
 	
 	if (dummy)
 		free(dummy);
