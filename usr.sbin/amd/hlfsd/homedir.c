@@ -1,4 +1,4 @@
-/*	$NetBSD: homedir.c,v 1.4 1998/03/30 02:37:43 mrg Exp $	*/
+/*	$NetBSD: homedir.c,v 1.5 1998/07/27 00:52:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Erez Zadok
@@ -69,7 +69,7 @@ static uid2home_t *lastchild;
 static uid2home_t *pwtab;
 static void delay(uid2home_t *, int);
 static void plt_init(void);
-static void table_add(int, char *, char *);
+static void table_add(int, const char *, const char *);
 
 /* GLOBAL FUNCTIONS */
 char *homeof(char *username);
@@ -616,7 +616,7 @@ plt_reset(void)
  * n: user ID name
  */
 static void
-table_add(int u, char *h, char *n)
+table_add(int u, const char *h, const char *n)
 {
   int i;
 
