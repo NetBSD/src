@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.84 1997/03/13 02:46:00 perry Exp $
+#	$NetBSD: bsd.lib.mk,v 1.85 1997/03/14 00:52:50 cgd Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -131,9 +131,10 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
 	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
 .else
 	$(LD) -shared -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	    -soname lib${LIB}.so.${SHLIB_MAJOR} /usr/lib/crtbeginS.o \
+	    -soname lib${LIB}.so.${SHLIB_MAJOR} \
+	    ${DESTDIR}/usr/lib/crtbeginS.o \
 	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
-	    /usr/lib/crtendS.o
+	    ${DESTDIR}/usr/lib/crtendS.o
 .endif
 
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
