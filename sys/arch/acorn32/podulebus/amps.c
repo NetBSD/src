@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.4 2002/09/27 20:29:14 thorpej Exp $	*/
+/*	$NetBSD: amps.c,v 1.5 2002/10/02 02:23:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,9 +94,8 @@ int	amps_probe	__P((struct device *, struct cfdata *, void *));
 void	amps_attach	__P((struct device *, struct device *, void *));
 void	amps_shutdown	__P((void *arg));
 
-const struct cfattach amps_ca = {
-	sizeof(struct amps_softc), amps_probe, amps_attach
-};
+CFATTACH_DECL(amps, sizeof(struct amps_softc),
+	amps_probe, amps_attach, NULL, NULL);
 
 /*
  * Attach arguments for child devices.
@@ -229,9 +228,8 @@ static void com_amps_attach  __P((struct device *, struct device *, void *));
 
 /* device attach structure */
 
-const struct cfattach com_amps_ca = {
-	sizeof(struct com_amps_softc), com_amps_probe, com_amps_attach
-};
+CFATTACH_DECL(com_amps, sizeof(struct com_amps_softc),
+	com_amps_probe, com_amps_attach, NULL, NULL);
 
 /*
  * Controller probe function

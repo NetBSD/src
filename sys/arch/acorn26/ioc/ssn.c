@@ -1,4 +1,4 @@
-/*	$NetBSD: ssn.c,v 1.3 2002/09/27 20:29:07 thorpej Exp $	*/
+/*	$NetBSD: ssn.c,v 1.4 2002/10/02 02:21:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ssn.c,v 1.3 2002/09/27 20:29:07 thorpej Exp $");
+__RCSID("$NetBSD: ssn.c,v 1.4 2002/10/02 02:21:21 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -51,9 +51,8 @@ struct ssn_softc {
 static int ssn_match(struct device *, struct cfdata *, void *);
 static void ssn_attach(struct device *, struct device *, void *);
 
-const struct cfattach ssn_ca = {
-	sizeof(struct ssn_softc), ssn_match, ssn_attach
-};
+CFATTACH_DECL(ssn, sizeof(struct ssn_softc),
+	ssn_match, ssn_attach, NULL, NULL);
 
 static int ds_ioc_read_bit(void *);
 static void ds_ioc_write_bit(void *, int);

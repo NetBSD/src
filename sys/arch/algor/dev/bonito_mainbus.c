@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.3 2002/09/27 20:29:19 thorpej Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.4 2002/10/02 02:26:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -61,9 +61,8 @@ struct bonito_softc {
 int	bonito_mainbus_match(struct device *, struct cfdata *, void *);
 void	bonito_mainbus_attach(struct device *, struct device *, void *);
 
-const struct cfattach bonito_mainbus_ca = {
-	sizeof(struct bonito_softc), bonito_mainbus_match,
-	    bonito_mainbus_attach,
+CFATTACH_DECL(bonito_mainbus, sizeof(struct bonito_mainbus_softc),
+	bonito_mainbus_match, bonito_mainbus_attach, NULL, NULL);
 };
 extern struct cfdriver bonito_cd;
 
