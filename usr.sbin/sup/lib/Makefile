@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1997/10/07 01:31:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/16 08:26:50 mikel Exp $
 
 LIB=	sup
 
@@ -9,7 +9,7 @@ SRCS+=	atoo.c errmsg.c expand.c ffilecopy.c filecopy.c \
 
 .PATH: ${.CURDIR}/../source
 
-CLEANFILES+=netcrupt.c
+CLEANFILES+=netcrypt.c
 
 NOPROFILE=
 NOPIC=
