@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.16 2003/11/28 21:53:32 provos Exp $	*/
+/*	$NetBSD: systrace.h,v 1.17 2004/12/01 03:30:07 provos Exp $	*/
 /*	$OpenBSD: systrace.h,v 1.14 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -58,7 +58,7 @@ struct filter {
 	TAILQ_ENTRY(filter) policy_next;
 
 	char *rule;
-	char name[32];
+	char name[64];
 	char emulation[16];
 	struct logic *logicroot;
 	short match_action;
