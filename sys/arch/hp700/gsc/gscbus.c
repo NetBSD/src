@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.3 2002/08/16 15:02:40 fredette Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.4 2002/08/25 20:20:00 fredette Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -83,11 +83,6 @@
 #include <sys/mbuf.h>
 #include <sys/reboot.h>
 
-#ifdef	KGDB
-#include <sys/kgdb.h>
-#include "com.h"
-#endif
-
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 #include <machine/cpufunc.h>
@@ -163,26 +158,6 @@ gscattach(parent, self, aux)
 	sc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_NONE,
 					 NULL, ga->ga_int_reg,
 					 &int_reg_cpu, ga->ga_irq);
-
-#ifdef	KGDB
-	/*
-	 * XXX This is a crude way of figuring out if the 
-	 * kgdb device is now mapped.
-	 */
-	if (ga->ga_hpa <= KGDBADDR &&
-	    KGDBADDR < (ga->ga_hpa + hppa_btlb_size_min * PAGE_SIZE)) {
-#if NCOM > 0
-		if(!strcmp(KGDB_DEVNAME, "com")) {
-			int com_gsc_kgdb_attach __P((void));
-			if (com_gsc_kgdb_attach() == 0) {
-				if (boothowto & RB_KDB) {
-					kgdb_connect(1);
-				}
-			}
-		}
-#endif /* NCOM > 0 */
-	}
-#endif /* KGDB */
 
 	pdc_scanbus(self, ga->ga_mod, MAXMODBUS, gsc_module_callback);
 }
