@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258var.h,v 1.2 2002/03/16 09:00:43 isaki Exp $	*/
+/*	$NetBSD: msm6258var.h,v 1.3 2002/04/02 15:22:38 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -35,6 +35,7 @@
  */
 
 void *msm6258_codec_init (void);
+int  msm6258_codec_open (void *);
 void msm6258_ulinear8_to_adpcm (void *, u_char *, int);
 void msm6258_mulaw_to_adpcm (void *, u_char *, int);
 void msm6258_adpcm_to_ulinear8 (void *, u_char *, int);
