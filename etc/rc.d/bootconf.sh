@@ -1,11 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: bootconf.sh,v 1.1.1.1 2000/03/10 11:53:25 lukem Exp $
+# $NetBSD: bootconf.sh,v 1.2 2000/08/21 23:34:45 lukem Exp $
 #
 
 # PROVIDE: bootconf
 # REQUIRE: mountcritlocal
-# BEFORE:  beforenetlkm
 
 bootconf_start()
 {
