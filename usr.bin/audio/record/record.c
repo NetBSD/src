@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.36.2.1 2004/07/23 18:06:18 tron Exp $	*/
+/*	$NetBSD: record.c,v 1.36.2.2 2004/07/23 18:07:14 tron Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.36.2.1 2004/07/23 18:06:18 tron Exp $");
+__RCSID("$NetBSD: record.c,v 1.36.2.2 2004/07/23 18:07:14 tron Exp $");
 #endif
 
 
@@ -571,7 +571,9 @@ write_header_wav(hdrp, lenp, leftp)
 #if BYTE_ORDER == BIG_ENDIAN
 	case AUDIO_ENCODING_SLINEAR:
 #endif
-		if (bps == 16)
+		if (bps == 8)
+			conv_func = change_sign8;
+		else if (bps == 16)
 			conv_func = swap_bytes;
 		else if (bps == 32)
 			conv_func = swap_bytes32;
@@ -592,6 +594,8 @@ write_header_wav(hdrp, lenp, leftp)
 #if BYTE_ORDER == LITTLE_ENDIAN
 	case AUDIO_ENCODING_SLINEAR:
 #endif
+		if (bps == 8)
+			conv_func = change_sign8;
 fmt_pcm:
 		fmttag = WAVE_FORMAT_PCM;
 		fmtsz = 16;
