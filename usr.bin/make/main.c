@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 1998/04/02 10:33:17 kleink Exp $	*/
+/*	$NetBSD: main.c,v 1.43 1998/10/13 17:08:34 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.42 1998/04/02 10:33:17 kleink Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.43 1998/10/13 17:08:34 wsanchez Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.42 1998/04/02 10:33:17 kleink Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 1998/10/13 17:08:34 wsanchez Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -525,7 +525,11 @@ main(argc, argv)
 
 	if (!machine_arch) {
 #ifndef MACHINE_ARCH
+#ifdef __ARCHITECTURE__
+            machine_arch = __ARCHITECTURE__;
+#else
 	    machine_arch = "unknown";	/* XXX: no uname -p yet */
+#endif
 #else
 	    machine_arch = MACHINE_ARCH;
 #endif
