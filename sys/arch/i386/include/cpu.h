@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.110 2003/12/30 03:52:01 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.111 2003/12/30 12:33:22 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -345,7 +345,6 @@ int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	i386_init_pcb_tss_ldt(struct cpu_info *);
 void	i386_proc0_tss_ldt_init(void);
-void	i386_bufinit(void);
 
 /* identcpu.c */
 extern int tmx86_has_longrun;

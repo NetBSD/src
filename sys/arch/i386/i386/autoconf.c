@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.74 2003/10/27 14:11:46 junyoung Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.74 2003/10/27 14:11:46 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -154,9 +154,6 @@ cpu_configure(void)
 #if NLAPIC > 0
 	lapic_tpr = 0;
 #endif
-
-	/* XXX Finish deferred buffer cache allocation. */
-	i386_bufinit();
 }
 
 void
