@@ -1,0 +1,13 @@
+$NetBSD: version,v 1.1 2002/04/18 14:54:39 tsutsui Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+1.1:	Initial version
+1.2:	Add bootinfo support
+1.3:	Add news5000 support
+1.4:	loadfile() update:  ELF symbols no longer need backward seeks.
+1.5:	loadfile() update to avoid backwards seeks for ELF Program Headers.
+1.6:	Add ustarfs support
+1.7:	Use newvers_stand.sh and print version strings
