@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.30 2003/07/25 08:26:28 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.31 2003/08/30 13:53:28 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,13 +53,6 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
-
-/*
- * Symbolic names for disk partitions.
- */
-#define	PART_ROOT	A
-#define	PART_RAW	C
-#define	PART_USR	G
 
 int
 md_get_info(void)
