@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.61.10.3 2000/08/07 01:08:58 sommerfeld Exp $	*/
+/*	$NetBSD: icu.s,v 1.61.10.4 2000/08/18 13:58:29 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,13 +147,22 @@ IDTVEC(softserial)
 	movl	$IPL_SOFTSERIAL,CPL
 #include "com.h"
 #if NCOM > 0
+#ifdef MULTIPROCESSOR
+	call	_C_LABEL(apic_intlock)
+#endif
 	call	_C_LABEL(comsoft)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(apic_intunlock)
+#endif
 #endif
 	movl	%ebx,CPL
 	jmp	%esi
 
 IDTVEC(softnet)
-	movl	$IPL_SOFTNET,CPL	
+	movl	$IPL_SOFTNET,CPL
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(apic_intlock)
+#endif
 	xorl	%edi,%edi
 	xchgl	_C_LABEL(netisr),%edi
 
@@ -165,10 +174,19 @@ IDTVEC(softnet)
 1:
 #include <net/netisr_dispatch.h>
 	movl	%ebx,CPL
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(apic_intunlock)	
+#endif
 	jmp	%esi
 
 IDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK,CPL
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(apic_intlock)
+#endif
 	call	_C_LABEL(softclock)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(apic_intunlock)		
+#endif
 	movl	%ebx,CPL
 	jmp	%esi
