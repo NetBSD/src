@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.111 1998/01/15 19:56:03 cgd Exp $	*/
+/*	$NetBSD: cd.c,v 1.112 1998/03/16 04:17:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -864,6 +864,8 @@ cdioctl(dev, cmd, addr, flag, p)
 		return (scsipi_start(cd->sc_link, SSS_START, 0));
 	case CDIOCSTOP:
 		return (scsipi_start(cd->sc_link, SSS_STOP, 0));
+	case CDIOCCLOSE:
+		return (scsipi_start(cd->sc_link, SSS_START|SSS_LOEJ, 0));
 	case CDIOCEJECT: /* FALLTHROUGH */
 	case DIOCEJECT:
 		return (scsipi_start(cd->sc_link, SSS_STOP|SSS_LOEJ, 0));
