@@ -1,13 +1,13 @@
-/*	$NetBSD: asctime.c,v 1.4 1997/01/23 14:02:26 mrg Exp $	*/
+/*	$NetBSD: asctime.c,v 1.5 1997/06/18 01:12:40 jtc Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
-** June 5, 1996 by Arthur David Olson (arthur_david_olson@nih.gov).
+** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
 */
 
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)asctime.c	7.7";
+static char	elsieid[] = "@(#)asctime.c	7.8";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 

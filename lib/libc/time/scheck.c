@@ -1,17 +1,14 @@
-/*	$NetBSD: scheck.c,v 1.3 1996/01/08 22:50:58 jtc Exp $	*/
+/*	$NetBSD: scheck.c,v 1.4 1997/06/18 01:12:50 jtc Exp $	*/
 
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)scheck.c	8.13";
+static char	elsieid[] = "@(#)scheck.c	8.14";
 #endif /* !defined lint */
 #endif /* !defined NOID */
 
 /*LINTLIBRARY*/
 
 #include "private.h"
-
-extern char *	imalloc P((int n));
-extern void	ifree P((char * p));
 
 char *
 scheck(string, format)

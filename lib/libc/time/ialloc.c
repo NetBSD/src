@@ -1,8 +1,8 @@
-/*	$NetBSD: ialloc.c,v 1.3 1997/01/23 14:02:28 mrg Exp $	*/
+/*	$NetBSD: ialloc.c,v 1.4 1997/06/18 01:12:43 jtc Exp $	*/
 
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)ialloc.c	8.28";
+static char	elsieid[] = "@(#)ialloc.c	8.29";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -11,13 +11,6 @@ static char	elsieid[] = "@(#)ialloc.c	8.28";
 #include "private.h"
 
 #define nonzero(n)	(((n) == 0) ? 1 : (n))
-
-char *	icalloc P((int nelem, int elsize));
-char *	icatalloc P((char * old, const char * new));
-char *	icpyalloc P((const char * string));
-char *	imalloc P((int n));
-void *	irealloc P((void * pointer, int size));
-void	ifree P((char * pointer));
 
 char *
 imalloc(n)
