@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.5.2.6 1996/07/04 07:05:45 leo Exp $
+#	$NetBSD: install.sub,v 1.5.2.7 1996/08/26 15:45:20 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -173,24 +173,6 @@ twiddle() {
 		sleep 1; echo -n "\\";
 		sleep 1; echo -n "|";
 	done > /dev/tty & echo $!
-}
-
-do_mfs_mount() {
-	# $1 is the mount point
-	# $2 is the size in DEV_BIZE blocks
-
-	umount $1 > /dev/null 2>&1
-	if ! mount_mfs -s $2 swap $1 ; then
-		cat << \__mfs_failed_1
-
-FATAL ERROR: Can't mount the memory filesystem.
-
-__mfs_failed_1
-		exit
-	fi
-
-	# Bleh.  Give mount_mfs a chance to DTRT.
-	sleep 2
 }
 
 get_localdir() {

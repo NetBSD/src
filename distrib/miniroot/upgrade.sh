@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.2.4.3 1996/08/25 14:46:10 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.2.4.4 1996/08/26 15:45:22 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -85,8 +85,10 @@ md_set_term
 # XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
 ls -l /dev > /dev/null 2>&1
 
-# We don't like it, but it sure makes a few things a lot easier.
-do_mfs_mount "/tmp" "2048"
+# Make sure we can write files (at least in /tmp)
+# This might make an MFS mount on /tmp, or it may
+# just re-mount the root with read-write enabled.
+md_makerootwritable
 
 while [ "X${ROOTDISK}" = "X" ]; do
 	getrootdisk
