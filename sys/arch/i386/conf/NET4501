@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.9 2002/07/22 11:06:04 wiz Exp $
+# $NetBSD: NET4501,v 1.10 2002/08/05 01:14:58 itojun Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.9 $"
+#ident 		"NET4501-$Revision: 1.10 $"
 
 maxusers	32		# estimated number of users
 
@@ -38,6 +38,7 @@ options 	DUMMY_NOPS
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
+options 	CONSPEED=19200
 #options 	CONSDEVNAME="\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
