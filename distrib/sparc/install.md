@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.18 2002/05/07 12:27:26 pk Exp $
+#	$NetBSD: install.md,v 1.19 2004/01/17 05:30:01 lukem Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #
 
 # Machine-dependent install sets
-MDSETS="kern xbase xcomp xcontrib xfont xserver"
+MDSETS="kern xbase xcomp xfont xserver"
 
 if [ "$MODE" = upgrade ]; then
 	RELOCATED_FILES_13="${RELOCATED_FILES_13} /usr/sbin/installboot /usr/mdec/installboot"
