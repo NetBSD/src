@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.38 1999/05/03 08:57:42 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.39 1999/05/12 19:11:23 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -2756,6 +2756,10 @@ uvmspace_fork(vm1)
 #ifdef SYSVSHM
 	if (vm1->vm_shm)
 		shmfork(vm1, vm2);
+#endif
+
+#ifdef PMAP_FORK
+	pmap_fork(vm1->vm_map.pmap, vm2->vm_map.pmap);
 #endif
 
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
