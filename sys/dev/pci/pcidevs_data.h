@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.118.2.10 2000/06/03 18:32:19 he Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.118.2.11 2000/07/07 18:24:53 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -484,6 +484,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "79C974 PCnet-PCI Ethernet & SCSI",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_ISA,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD756 PCI-to-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_IDE,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD756 IDE controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_PMC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD756 Power Management Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_USB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD756 USB Host Controller",
+	},
+	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
 	    0,
 	    "Apple Computer",
@@ -800,6 +824,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "CMD Technology",
 	    "PCI0647",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_648,
+	    0,
+	    "CMD Technology",
+	    "PCI0648",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_649,
+	    0,
+	    "CMD Technology",
+	    "PCI0649",
 	},
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_650A,
@@ -1420,6 +1456,144 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82439HX System Controller (TXC)",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
+	    0,
+	    "Intel",
+	    "82801AA LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_IDE,
+	    0,
+	    "Intel",
+	    "82801AA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_USB,
+	    0,
+	    "Intel",
+	    "82801AA USB Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_SMB,
+	    0,
+	    "Intel",
+	    "82801AA SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACA,
+	    0,
+	    "Intel",
+	    "82801AA AC-97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACM,
+	    0,
+	    "Intel",
+	    "82801AA AC-97 PCI Modem",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_HPB,
+	    0,
+	    "Intel",
+	    "82801AA Hub-to-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_LPC,
+	    0,
+	    "Intel",
+	    "82801AB LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_IDE,
+	    0,
+	    "Intel",
+	    "82801AB IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_USB,
+	    0,
+	    "Intel",
+	    "82801AB USB Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_SMB,
+	    0,
+	    "Intel",
+	    "82801AB SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACA,
+	    0,
+	    "Intel",
+	    "82801AB AC-97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACM,
+	    0,
+	    "Intel",
+	    "82801AB AC-97 PCI Modem",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_HPB,
+	    0,
+	    "Intel",
+	    "82801AB Hub-to-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LPC,
+	    0,
+	    "Intel",
+	    "82801BA LPC Interface Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB1,
+	    0,
+	    "Intel",
+	    "82801BA USB Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_SMB,
+	    0,
+	    "Intel",
+	    "82801BA SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB2,
+	    0,
+	    "Intel",
+	    "82801BA USB Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACA,
+	    0,
+	    "Intel",
+	    "82801BA AC-97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACM,
+	    0,
+	    "Intel",
+	    "82801BA AC-97 PCI Modem",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LAN,
+	    0,
+	    "Intel",
+	    "82801BA LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_IDE,
+	    0,
+	    "Intel",
+	    "82801BA IDE Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_HPB,
+	    0,
+	    "Intel",
+	    "82801BA Hub-to-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
 	    0,
 	    "Intel",
@@ -1816,6 +1990,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82C558",
 	},
 	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C568,
+	    0,
+	    "Opti",
+	    "82C568",
+	},
+	{
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82D568,
+	    0,
+	    "Opti",
+	    "82D568",
+	},
+	{
 	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C621,
 	    0,
 	    "Opti",
@@ -1868,6 +2054,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Promise Technology",
 	    "Ultra DMA/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA66,
+	    0,
+	    "Promise Technology",
+	    "Ultra66/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100,
+	    0,
+	    "Promise Technology",
+	    "Ultra100/ATA Bus Master IDE Accelerator",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
@@ -2414,6 +2612,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Trident Microsystems",
 	    "TGUI 9682",
+	},
+	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT366,
+	    0,
+	    "Triones Technologies",
+	    "HPT366/370 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,
