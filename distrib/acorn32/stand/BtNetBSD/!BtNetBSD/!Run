@@ -1,4 +1,4 @@
-| $NetBSD: !Run,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+| $NetBSD: !Run,v 1.1.1.1.2.1 2002/06/18 14:10:25 lukem Exp $
 |
 | run file for !BtNetBSD application
 |
@@ -11,4 +11,4 @@ Set BtNetBSD$Dir <Obey$Dir>
 | needs the memfix module
 
 Run <BtNetBSD$Dir>.checkro403
-Obey <BtNetBSD$Dir>.fastboot
+Obey <BtNetBSD$Dir>.fastboot %*0

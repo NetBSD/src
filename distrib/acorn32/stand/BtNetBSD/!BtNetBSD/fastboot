@@ -1,11 +1,11 @@
-| $NetBSD: fastboot,v 1.1.1.1 2002/05/09 20:03:58 jdolecek Exp $
+| $NetBSD: fastboot,v 1.1.1.1.2.1 2002/06/18 14:10:33 lukem Exp $
 |
 | Fast boot configuration file, edit by hand, save and run !BtNetBSD
 | Part of !BtNetBSD
 |
 
 | First mount the root partition wd0a in this case for the kernel
-Run <BtNetBSD$Dir>.native.mountufs ADFS 4
+If "%*0" = "" Then Run <BtNetBSD$Dir>.native.mountufs ADFS 4
 
 | Run The PreBoot file for various extra settings nessisary
 Run <BtNetBSD$Dir>.PreBoot
@@ -17,7 +17,7 @@ Set NetBSD$ScreenMode "X1024 Y768 C256"
 | Select Kernel, Root and Bootoptions
 | add `oldkernel' to BootOptions for booting old a.out kernels
 |
-Set NetBSD$Kernel UnixFS:$.netbsd
+If "%*0" = "" Then Set NetBSD$Kernel UnixFS:$.netbsd Else Set NetBSD$Kernel %*0
 Set NetBSD$Root /dev/wd0a
 Set NetBSD$BootOptions maxproc=64 noftp symtab
 
