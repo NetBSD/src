@@ -1,4 +1,4 @@
-/* $NetBSD: psl.h,v 1.6 1997/01/26 01:25:43 mark Exp $ */
+/*	$NetBSD: psl.h,v 1.7 1997/10/14 09:20:29 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.2 1996/03/14 23:11:33 mark Exp $ */
+/*	$NetBSD: proc.h,v 1.3 1997/10/14 09:20:27 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
