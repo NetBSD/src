@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.5 1997/10/17 11:46:40 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.6 1998/10/08 02:04:56 wsanchez Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.5 1997/10/17 11:46:40 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.6 1998/10/08 02:04:56 wsanchez Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ parsekey(name, needvaluep)
 	k = (KEY *)bsearch(&tmp, keylist, sizeof(keylist) / sizeof(KEY),
 	    sizeof(KEY), keycompare);
 	if (k == NULL)
-		err("unknown keyword %s", name);
+		mtree_err("unknown keyword %s", name);
 
 	if (needvaluep)
 		*needvaluep = k->flags & NEEDVALUE ? 1 : 0;
@@ -109,9 +109,9 @@ keycompare(a, b)
 
 void
 #if __STDC__
-err(const char *fmt, ...)
+mtree_err(const char *fmt, ...)
 #else
-err(fmt, va_alist)
+mtree_err(fmt, va_alist)
 	char *fmt;
         va_dcl
 #endif
