@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.157 1999/03/29 13:21:15 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.158 1999/03/29 13:40:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -2174,13 +2174,11 @@ com_common_putc(iot, ioh, c)
 	int c;
 {
 	int s = splserial();
-	u_char stat;
 	int timo;
 
 	/* wait for any pending transmission to finish */
 	timo = 1500;
-	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY)
-	    && --timo)
+	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
 		delay(100);
 
 	bus_space_write_1(iot, ioh, com_data, c);
@@ -2188,8 +2186,7 @@ com_common_putc(iot, ioh, c)
 
 	/* wait for this transmission to complete */
 	timo = 15000;
-	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY)
-	    && --timo)
+	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
 		delay(100);
 
 	splx(s);
