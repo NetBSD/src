@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.4 2002/02/13 09:46:13 martti Exp $
+#	$NetBSD: ttys,v 1.5 2003/10/03 14:54:21 dsl Exp $
 #
 # name	getty				type	status		comments
 
@@ -8,7 +8,7 @@
 # If the console is marked insecure, single-user requires the root password.
 
 # Console pseudo-device
-console	"/usr/libexec/getty std.9600"	vt100	on secure
+constty	"/usr/libexec/getty std.9600"	vt100	on secure
 
 # "com" serial console port
 ttyC0	"/usr/libexec/getty std.9600"	vt100	off secure
