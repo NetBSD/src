@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.17 2004/07/03 18:31:36 mycroft Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.18 2004/07/03 18:54:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.17 2004/07/03 18:31:36 mycroft Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.18 2004/07/03 18:54:47 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,10 +53,6 @@ keyboard(void)
 	int ch, rch;
 	char *line;
 	int i, linesz;
-	sigset_t set;
-
-	sigemptyset(&set);
-	sigaddset(&set, SIGALRM);
 
 	linesz = COLS - 2;		/* XXX does not get updated on SIGWINCH */
 	if ((line = malloc(linesz)) == NULL) {
@@ -71,12 +67,14 @@ keyboard(void)
 		while (col == 0 || (ch != '\r' && ch != '\n')) {
 			refresh();
 			ch = getch();
-			if (ch == -1 && ferror(stdin)) {
-				clearerr(stdin);
+			if (ch == ERR) {
+				display(0);
 				continue;
 			}
-			if (ch == KEY_RESIZE)
+			if (ch == KEY_RESIZE) {
 				redraw(0);
+				continue;
+			}
 			ch &= 0177;
 			rch = ch;
 			if (col == 0) {
@@ -87,14 +85,10 @@ keyboard(void)
 					display(0);
 					break;
 				    case CTRL('l'):
-					sigprocmask(SIG_BLOCK, &set, NULL);
 					wrefresh(curscr);
-					sigprocmask(SIG_UNBLOCK, &set, NULL);
 					break;
 				    case CTRL('g'):
-					sigprocmask(SIG_BLOCK, &set, NULL);
 					status();
-					sigprocmask(SIG_UNBLOCK, &set, NULL);
 					break;
 				    case '?':
 				    case 'H':
