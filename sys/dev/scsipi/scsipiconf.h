@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.48 2001/04/25 17:53:40 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.49 2001/04/30 02:37:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ struct scsipi_generic {
 typedef enum {
 	ASYNC_EVENT_MAX_OPENINGS,	/* set max openings on periph */
 	ASYNC_EVENT_XFER_MODE,		/* xfer mode update for I_T */
-	ASYNC_EVENT_RESET,		/* channel reset */
+	ASYNC_EVENT_RESET		/* channel reset */
 } scsipi_async_event_t;
 
 /*
@@ -146,7 +146,7 @@ struct scsipi_xfer_mode {
 typedef enum {
 	ADAPTER_REQ_RUN_XFER,		/* run a scsipi_xfer */
 	ADAPTER_REQ_GROW_RESOURCES,	/* grow xfer execution resources */
-	ADAPTER_REQ_SET_XFER_MODE,	/* set xfer mode */
+	ADAPTER_REQ_SET_XFER_MODE	/* set xfer mode */
 } scsipi_adapter_req_t;
 
 
@@ -446,7 +446,7 @@ typedef enum {
 	XS_TIMEOUT,		/* The Timeout reported was caught by SW  */
 	XS_BUSY,		/* The device busy, try again later?      */
 	XS_RESET,		/* bus was reset; possible retry command  */
-	XS_REQUEUE,		/* requeue this command */
+	XS_REQUEUE		/* requeue this command */
 } scsipi_xfer_result_t;
 
 /*
@@ -823,7 +823,7 @@ _4ltol(bytes)
 
 static __inline void
 bswap (buf, len)
-    char *buf;
+	char *buf;
 	int len;
 {
 	u_int16_t *p = (u_int16_t *)(buf + len);
