@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 1996/10/13 09:29:07 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.49 1996/10/13 09:54:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -449,7 +449,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			if (!(entry & PG_V) || (entry & PG_M))
 				panic("trap: ktlbmod: invalid pte");
 #endif
-			if (entry & PG_RO) {
+			if (PAGE_IS_RDONLY(entry, vadr)) {
 				/* write to read only page in the kernel */
 				ftype = VM_PROT_WRITE;
 				goto kernel_fault;
@@ -486,7 +486,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			panic("trap: utlbmod: invalid pte");
 		}
 #endif
-		if (entry & PG_RO) {
+		if (PAGE_IS_RDONLY(entry, vadr)) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
 			goto dofault;

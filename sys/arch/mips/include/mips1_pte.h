@@ -1,4 +1,4 @@
-/*	$NetBSD: mips1_pte.h,v 1.7 1996/10/13 09:28:53 jonathan Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.8 1996/10/13 09:54:43 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,5 +93,5 @@ typedef union pt_entry {
 #define PG_SHIFT	12
 #define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
 
-#define PTE_TO_PADDR(x) ((unsigned)(x) & PG_FRAME)
-
+#define PTE_TO_PADDR(pte) ((unsigned)(pte) & PG_FRAME)
+#define PAGE_IS_RDONLY(pte,va) ((pte) & PG_RO)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.4 1996/10/13 09:28:55 jonathan Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.5 1996/10/13 09:54:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -114,7 +114,10 @@ typedef union pt_entry {
 #define vad_to_vpn(x) ((unsigned)(x) & PG_SVPN)
 #define vpn_to_vad(x) ((x) & PG_SVPN)
 
-#define PTE_TO_PADDR(x) (pfn_to_vad((x))
+#define PTE_TO_PADDR(pte) (pfn_to_vad(pte))
+#define PAGE_IS_RDONLY(pte,va) \
+    (pmap_is_page_ro(pmap_kernel(), mips_trunc_page(va), (pte)))
+
 
 /* User virtual to pte page entry */
 #define uvtopte(adr) (((adr) >> PGSHIFT) & (NPTEPG -1))
