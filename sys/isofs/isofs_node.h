@@ -23,6 +23,8 @@ struct iso_node {
 	int iso_interleave_gap;
 	int iso_volume_seq;
 	int iso_namelen;
+	int iso_parent;
+	int iso_parent_ext;
 };
 
 #define	i_forw		i_chain[0]

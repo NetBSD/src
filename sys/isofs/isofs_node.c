@@ -132,6 +132,8 @@ loop:
 	ip->i_flag = 0;
 	ip->i_devvp = 0;
 	ip->i_diroff = 0;
+	ip->iso_parent = xp->i_diroff; /* Parent directory's */
+	ip->iso_parent_ext = xp->iso_extent;
 	ip->i_lockf = 0;
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
