@@ -1,8 +1,8 @@
-	$NetBSD: README,v 1.8 1995/07/05 08:15:27 ragge Exp $
+	$NetBSD: README,v 1.9 1995/09/16 12:00:21 ragge Exp $
 
 Devices supported in kernel and _known_ to work:
 CPU:	VAX 11/750 with 2-14MB of memory.
-	KA630 (MicroVAX II) with 2-?? MB memory.
+	KA630 (MicroVAX II) with 2-16 MB memory.
 
 Net:	DEUNA/DELUA Unibus ethernet cards.
 	DEQNA/DELQA Q22 bus ethernet cards.
@@ -12,25 +12,39 @@ Disks:	UDA50 Unibus MSCP controller.
 		RA??-disks on UDA50 or KDA50.
 		RD??-disks on RQDX3. (known as RA?? by system).
 
-Tapes:	Exabyte on Qbus DILOG board. (TMSCP emulating)
+Tapes:	DILOG Q22 bus tape ctlr w/ Exabyte. (TMSCP emulating)
+	TSV05 Q22 bus tape ctlr.
 	TK50 (TMSCP) on Q22 bus.
 		Other TMSCP ctlrs may also work, but haven't tried.
 
 
-NOTE: NetBSD/VAX is still a developers-only port.
+To install and run NetBSD/vax you need a MicroVAX II or VAX 11/750
+with at least 4MB of memory, and a usable install media. Supported
+install media is TK50 tape and RX33/RX50 floppy. If you do initial
+installation from floppy then you need a way to load the rest of
+the system, like tape or ethernet. 
+NOTE! TU58 INSTALLATION IS NOT YET SUPPORTED, BUT WILL BE.
 
-I have only included relevant files from old berkeley VAX distributions.
-If you want to look at other files get them from nearest ftp site with
-an 4.4BSD distribution, or from ftp.luth.se:/pub/unix/4_4bsd_l directory.
+Actually, the system will run fine on only 2MB of memory, but
+installation program needs 4MB. If this causes trouble for someone
+tell me and I'll fix it.
 
-We who have done parts of this is:
+Differences between the NetBSD/vax port and other ports:
+ * It uses gcc 2.7.0 as default compiler.
+ * libm is not the same as the other ports; instead it is 4.4BSD libm. 
+ * No dynamic linked libraries, all binaries is statically linked.
+These things will be fixed in the future.
+
+
+We who have done parts of the VAX port is:
 	Joachim Isaksson, first pmap and lots of help with gcc functionality.
 	Mattias Gr|nlund, locore assembler and interrupt handling.
 	Mattias ]slund, lots of help and ideas everywhere.
-	Bertram Barth, bootblocks and boot routines for uVAX.
-	Rick Macklem, fixed all uVAXII, tmscp and deqna support.
+	Bertram Barth, bootblocks and boot routines for MicroVAX.
+	Rick Macklem, fixed all MicroVAX II, TMSCP and DEQNA support.
 	Anders Magnusson (ragge), that's me, who put things together
 		and wrote the rest.
 
-/ragge@ludd.luth.se
+Have fun with it,
+	ragge@ludd.luth.se
 
