@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2001/02/08 12:58:12 tsutsui Exp $
+# $NetBSD: Makefile,v 1.11 2001/06/06 21:38:49 mrg Exp $
 
 # XXX for now, only Linux on i386 was actually tested, others might
 # need further work; compile stuff on everything, but only install
@@ -33,9 +33,8 @@ SUBDIR+=	ultrix
 SUBDIR+=	aout sunos svr4
 .endif
 
-.if (${MACHINE_ARCH} == "sparc64")
-SUBDIR+=	netbsd32 sunos32
-#SUBDIR+=	svr4_32
+.if (${MACHINE} == "sparc64")
+SUBDIR+=	netbsd32 sunos32 svr4 svr4_32
 .endif
 
 .if (${MACHINE_ARCH} == "vax")
