@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.4 2002/01/29 10:20:35 tv Exp $	*/
+/*	$NetBSD: lex.l,v 1.5 2003/01/27 01:22:10 uwe Exp $	*/
 
 %{
 /*-
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.l	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lex.l,v 1.4 2002/01/29 10:20:35 tv Exp $");
+__RCSID("$NetBSD: lex.l,v 1.5 2003/01/27 01:22:10 uwe Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,8 @@ __RCSID("$NetBSD: lex.l,v 1.4 2002/01/29 10:20:35 tv Exp $");
 #define _BSD_RUNE_T_    int
 #define _BSD_CT_RUNE_T_ rune_t
 #include "runetype.h"
-#else
+#else  /* __FreeBSD__ */
+#define _DONT_USE_CTYPE_INLINE_
 #include <ctype.h>
 #endif
 #include <stdio.h>
