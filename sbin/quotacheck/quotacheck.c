@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quotacheck.c	5.16 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: quotacheck.c,v 1.3 1993/08/01 18:25:41 mycroft Exp $";
+static char rcsid[] = "$Id: quotacheck.c,v 1.4 1994/05/26 06:53:36 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -246,7 +246,7 @@ chkquota(fsname, mntpt, qnp)
 	}
 	sync();
 	dev_bsize = 1;
-	bread(SBOFF, (char *)&sblock, (long)SBSIZE);
+	bread((daddr_t)SBOFF, (char *)&sblock, (long)SBSIZE);
 	dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
 	resetinodebuf();
