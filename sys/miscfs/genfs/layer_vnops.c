@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.20 2004/06/16 12:39:07 yamt Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.21 2004/06/16 17:59:53 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.20 2004/06/16 12:39:07 yamt Exp $
+ *	$Id: layer_vnops.c,v 1.21 2004/06/16 17:59:53 wrstuden Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.20 2004/06/16 12:39:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.21 2004/06/16 17:59:53 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,8 +473,8 @@ layer_lookup(v)
 		if (error) {
 			vput(vp);
 			if (cnp->cn_flags & PDIRUNLOCK) {
-				vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
-				cnp->cn_flags &= ~PDIRUNLOCK;
+				if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
+					cnp->cn_flags &= ~PDIRUNLOCK;
 			}
 		}
 	}
