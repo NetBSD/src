@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.9 2000/02/02 23:28:10 thorpej Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.10 2000/02/03 13:17:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -85,9 +85,9 @@ struct	in6pcb {
 	struct	in6pcb *in6p_head;	/* pointer back to chain of
 					   in6pcb's for this protocol */
 	struct	in6_addr in6p_faddr;	/* foreign host table entry */
-	u_short	in6p_fport;		/* foreign port */
+	u_int16_t in6p_fport;		/* foreign port */
 	struct	in6_addr in6p_laddr;	/* local host table entry */
-	u_short	in6p_lport;		/* local port */
+	u_int16_t in6p_lport;		/* local port */
 	u_int32_t in6p_flowinfo;	/* priority and flowlabel */
 	struct	socket *in6p_socket;	/* back pointer to socket */
 	caddr_t	in6p_ppcb;		/* pointer to per-protocol pcb */
