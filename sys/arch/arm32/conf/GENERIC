@@ -58,6 +58,8 @@ options		CCITT,LLC,HDLC	# X.25
 # Compatibility options
 
 options		COMPAT_43
+options 	COMPAT_12
+options		COMPAT_11
 options		COMPAT_10
 options		COMPAT_09
 options         TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
