@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.h,v 1.10 2003/03/24 15:03:58 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.h,v 1.11 2003/04/02 15:03:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -181,8 +181,6 @@ struct smbioc_oshare;
 struct smbioc_ossn;
 struct uio;
 
-#define SMB_DEFRQTIMO	5
-
 #define SMB_DIALECT(vcp)	((vcp)->vc_sopt.sv_proto)
 
 struct smb_tran_desc;
@@ -240,7 +238,6 @@ struct smb_vc {
 	char *		vc_pass;	/* password for usl case */
 	char *		vc_domain;	/* workgroup/primary domain */
 
-	u_int		vc_timo;	/* default request timeout */
 	int		vc_maxvcs;	/* maximum number of VC per connection */
 
 	void *		vc_tolower;	/* local charset */
