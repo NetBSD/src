@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.13 2000/11/07 13:53:59 soren Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.14 2001/01/07 15:01:06 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.13 2000/11/07 13:53:42 soren Exp 
+ *	NetBSD: miidevs,v 1.14 2001/01/07 15:00:46 augustss Exp 
  */
 
 /*-
@@ -55,10 +55,11 @@
  * mangled accordingly to compensate.
  */
 
+#define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
-#define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
+#define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
@@ -79,6 +80,8 @@
 
 /* some vendors have the bits swapped within bytes
 	(ie, ordered as on the wire) */
+
+#define	MII_OUI_xxALTIMA	0x000895	/* Altima Communications */
 #define	MII_OUI_xxBROADCOM	0x000818	/* Broadcom Corporation */
 #define	MII_OUI_xxICS	0x00057d	/* Integrated Circuit Systems */
 #define	MII_OUI_xxSEEQ	0x0005be	/* Seeq */
@@ -100,6 +103,10 @@
 /*
  * List of known models.  Grouped by oui.
  */
+
+/* Altima Communications PHYs */
+#define	MII_MODEL_xxALTIMA_AC101	0x0021
+#define	MII_STR_xxALTIMA_AC101	"AC101 10/100 media interface"
 
 /* Advanced Micro Devices PHYs */
 #define	MII_MODEL_xxAMD_79C873	0x0000
