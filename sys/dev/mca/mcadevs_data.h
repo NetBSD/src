@@ -1,10 +1,10 @@
-/*	$NetBSD: mcadevs_data.h,v 1.16 2001/04/27 18:04:14 jdolecek Exp $	*/
+/*	$NetBSD: mcadevs_data.h,v 1.17 2001/12/01 10:44:35 jdolecek Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: mcadevs,v 1.15 2001/04/27 18:03:41 jdolecek Exp 
+ *	NetBSD: mcadevs,v 1.16 2001/12/01 10:43:36 jdolecek Exp 
  */
 
 /*-
