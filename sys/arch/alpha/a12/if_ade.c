@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.10 2001/07/12 23:25:39 thorpej Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.11 2001/07/12 23:26:30 thorpej Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -2132,8 +2132,8 @@ tulip_identify_dec_nic(
 #define D0	4
     if (sc->tulip_chipid <= TULIP_DE425)
 	return;
-    if (bcmp(sc->tulip_rombuf + 29, "DE500", 5) == 0
-	|| bcmp(sc->tulip_rombuf + 29, "DE450", 5) == 0) {
+    if (memcmp(sc->tulip_rombuf + 29, "DE500", 5) == 0
+	|| memcmp(sc->tulip_rombuf + 29, "DE450", 5) == 0) {
 	bcopy(sc->tulip_rombuf + 29, &sc->tulip_boardid[D0], 8);
 	sc->tulip_boardid[D0+8] = ' ';
     }
@@ -2792,13 +2792,13 @@ tulip_read_macaddr(
     }
 
 
-    if (bcmp(&sc->tulip_rombuf[0], &sc->tulip_rombuf[16], 8) != 0) {
+    if (memcmp(&sc->tulip_rombuf[0], &sc->tulip_rombuf[16], 8) != 0) {
 	/*
 	 * Detect early Avalon 100-TX PMC cards with magic number followed
 	 * by hw addr. These should all have been upgraded by now. It's an
 	 * electronic eeprom write-in-place, so there's no excuse not to...
 	 */
-	if (bcmp("AC5E", sc->tulip_rombuf, 4) == 0) {
+	if (memcmp("AC5E", sc->tulip_rombuf, 4) == 0) {
 		panic("PMC2TTX: old format Avalon srom, reprogram hw addr");
 #if 0
 		printf("ade%d: Warning: reinit srom! Old Avalon format!",
@@ -2891,14 +2891,14 @@ tulip_read_macaddr(
      * This is the standard DEC address ROM test.
      */
 
-    if (bcmp(&sc->tulip_rombuf[24], testpat, 8) != 0)
+    if (memcmp(&sc->tulip_rombuf[24], testpat, 8) != 0)
 	return -3;
 
     tmpbuf[0] = sc->tulip_rombuf[15]; tmpbuf[1] = sc->tulip_rombuf[14];
     tmpbuf[2] = sc->tulip_rombuf[13]; tmpbuf[3] = sc->tulip_rombuf[12];
     tmpbuf[4] = sc->tulip_rombuf[11]; tmpbuf[5] = sc->tulip_rombuf[10];
     tmpbuf[6] = sc->tulip_rombuf[9];  tmpbuf[7] = sc->tulip_rombuf[8];
-    if (bcmp(&sc->tulip_rombuf[0], tmpbuf, 8) != 0)
+    if (memcmp(&sc->tulip_rombuf[0], tmpbuf, 8) != 0)
 	return -2;
 
     bcopy(sc->tulip_rombuf, sc->tulip_enaddr, 6);
@@ -2923,7 +2923,7 @@ tulip_read_macaddr(
      * Check for various boards based on OUI.  Did I say braindead?
      */
     for (idx = 0; tulip_vendors[idx].vendor_identify_nic != NULL; idx++) {
-	if (bcmp((caddr_t) sc->tulip_enaddr,
+	if (memcmp((caddr_t) sc->tulip_enaddr,
 		 (caddr_t) tulip_vendors[idx].vendor_oui, 3) == 0) {
 	    (*tulip_vendors[idx].vendor_identify_nic)(sc);
 	    break;
@@ -3049,7 +3049,7 @@ tulip_addr_filter(
 	    memset(sc->tulip_setupdata, 0, sizeof(sc->tulip_setupdata));
 	    ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
 	    while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 		    hash = tulip_mchash(enm->enm_addrlo);
 		    sp[hash >> 4] |= 1 << (hash & 0xF);
 		} else {
@@ -3081,7 +3081,7 @@ tulip_addr_filter(
 	     */
 	    ETHER_FIRST_MULTI(step, TULIP_ETHERCOM(sc), enm);
 	    for (; enm != NULL; idx++) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[0]; 
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[1]; 
 		    *sp++ = ((u_int16_t *) enm->enm_addrlo)[2];
