@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.33 1999/07/12 21:55:21 kleink Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.34 1999/07/14 21:06:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -620,7 +620,9 @@ sys___msync13(p, v, retval)
 	/*
 	 * translate MS_ flags into PGO_ flags
 	 */
-	uvmflags = PGO_CLEANIT | (flags & MS_INVALIDATE) ? PGO_FREE : 0;
+	uvmflags = PGO_CLEANIT;
+	if (flags & MS_INVALIDATE)
+		uvmflags |= PGO_FREE;
 	if (flags & MS_SYNC)
 		uvmflags |= PGO_SYNCIO;
 	else
