@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.6 2003/02/01 21:02:03 erh Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.7 2003/02/16 19:35:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -33,10 +33,6 @@
  *
  * FreeBSD: src/sys/fs/smbfs/smbfs_vfsops.c,v 1.5 2001/12/13 13:08:34 sheldonh Exp
  */
-#include "opt_smb.h"
-#ifndef SMB
-#error "SMBFS requires option SMB"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,14 +56,6 @@
 #include <fs/smbfs/smbfs_subr.h>
 
 int smbfs_debuglevel = 0;
-
-#ifdef SMBFS_USEZONE
-#include <vm/vm.h>
-#include <vm/vm_extern.h>
-#include <vm/vm_zone.h>
-
-vm_zone_t smbfsmount_zone;
-#endif
 
 #ifndef __NetBSD__
 SYSCTL_NODE(_vfs, OID_AUTO, smbfs, CTLFLAG_RW, 0, "SMB/CIFS file system");
@@ -137,11 +125,8 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	struct smb_share *ssp = NULL;
 	struct vnode *vp;
 	struct smb_cred scred;
-#ifndef	FB_CURRENT
 	size_t size;
-#endif
 	int error;
-	char *pc, *pe;
 
 	if (data == NULL) {
 		printf("missing data argument\n");
@@ -153,13 +138,14 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 			return EIO;
 		return copyout(&smp->sm_args, data, sizeof(smp->sm_args));
 	}
-	if (mp->mnt_flag & MNT_UPDATE) {
-		printf("MNT_UPDATE not implemented");
+
+	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
-	}
+
 	error = copyin(data, (caddr_t)&args, sizeof(struct smbfs_args));
 	if (error)
 		return error;
+
 	if (args.version != SMBFS_VERSION) {
 		printf("mount version mismatch: kernel=%d, mount=%d\n",
 		    SMBFS_VERSION, args.version);
@@ -175,17 +161,9 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	smb_share_unlock(ssp, 0);
 	mp->mnt_stat.f_iosize = SSTOVC(ssp)->vc_txmax;
 
-#ifdef SMBFS_USEZONE
-	smp = zalloc(smbfsmount_zone);
-#else
-        MALLOC(smp, struct smbmount*, sizeof(*smp), M_SMBFSDATA, M_WAITOK);
-#endif
-        if (smp == NULL) {
-                printf("could not alloc smbmount\n");
-                error = ENOMEM;
-		goto bad;
-        }
-	bzero(smp, sizeof(*smp));
+        MALLOC(smp, struct smbmount *, sizeof(*smp), M_SMBFSDATA, M_WAITOK);
+	memset(smp, 0, sizeof(*smp));
+
         mp->mnt_data = smp;
 	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST, 
 				M_SMBFSHASH, M_WAITOK, &smp->sm_hashlen);
@@ -201,27 +179,18 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	smp->sm_args.dir_mode  = (smp->sm_args.dir_mode &
 			    (S_IRWXU|S_IRWXG|S_IRWXO)) | S_IFDIR;
 
-/*	simple_lock_init(&smp->sm_npslock);*/
-#ifndef	FB_CURRENT
 	error = copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	if (error)
 		goto bad;
-	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-#endif
-	pc = mp->mnt_stat.f_mntfromname;
-	pe = pc + sizeof(mp->mnt_stat.f_mntfromname);
-	bzero(pc, MNAMELEN);
-	*pc++ = '/';
-	*pc++ = '/';
-	pc=strchr(strncpy(pc, vcp->vc_username, pe - pc - 2), 0);
-	if (pc < pe-1) {
-		*(pc++) = '@';
-		pc = strchr(strncpy(pc, vcp->vc_srvname, pe - pc - 2), 0);
-		if (pc < pe - 1) {
-			*(pc++) = '/';
-			strncpy(pc, ssp->ss_name, pe - pc - 2);
-		}
-	}
+	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
+
+	memset(mp->mnt_stat.f_mntfromname, 0, MNAMELEN);
+	snprintf(mp->mnt_stat.f_mntfromname, MNAMELEN,
+		"//%s@%s/%s",
+		vcp->vc_username,
+		vcp->vc_srvname,
+		ssp->ss_name);
+
 	/* protect against invalid mount points */
 	smp->sm_args.mount_point[sizeof(smp->sm_args.mount_point) - 1] = '\0';
 	vfs_getnewfsid(mp);
@@ -235,6 +204,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	SMBERROR("mp=%p\n", mp);
 #endif
 	return error;
+
 bad:
         if (smp) {
 		if (smp->sm_hash)
@@ -242,11 +212,7 @@ bad:
 #ifndef __NetBSD__
 		lockdestroy(&smp->sm_hashlock);
 #endif
-#ifdef SMBFS_USEZONE
-		zfree(smbfsmount_zone, smp);
-#else
 		free(smp, M_SMBFSDATA);
-#endif
 	}
 	if (ssp)
 		smb_share_put(ssp, &scred);
@@ -278,11 +244,7 @@ smbfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 #ifndef __NetBSD__
 	lockdestroy(&smp->sm_hashlock);
 #endif
-#ifdef SMBFS_USEZONE
-	zfree(smbfsmount_zone, smp);
-#else
 	free(smp, M_SMBFSDATA);
-#endif
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return error;
 }
@@ -358,9 +320,6 @@ void
 smbfs_init(void)
 {
 
-#ifdef SMBFS_USEZONE
-	smbfsmount_zone = zinit("SMBFSMOUNT", sizeof(struct smbmount), 0, 0, 1);
-#endif
 #ifndef __NetBSD__
 	smbfs_pbuf_freecnt = nswbuf / 2 + 1;
 #endif
