@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.18 2001/08/04 04:06:29 chs Exp $	*/
+/*	$NetBSD: control.c,v 1.19 2001/09/05 13:21:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,14 +56,14 @@ set_context(c)
 
 u_int
 get_pte(va)
-	vm_offset_t va;
+	vaddr_t va;
 {
 	return (get_control_word(CONTROL_ADDR_BUILD(PGMAP_BASE, va)));
 }
 
 void
 set_pte(va, pte)
-	vm_offset_t va;
+	vaddr_t va;
 	u_int pte;
 {
 	set_control_word(CONTROL_ADDR_BUILD(PGMAP_BASE, va), pte);
@@ -71,14 +71,14 @@ set_pte(va, pte)
 
 int
 get_segmap(va)
-	vm_offset_t va;
+	vaddr_t va;
 {
 	return (get_control_byte(CONTROL_ADDR_BUILD(SEGMAP_BASE, va)));
 }
 
 void
 set_segmap(va, sme)
-	vm_offset_t va;
+	vaddr_t va;
 	int sme;
 {
 	set_control_byte(CONTROL_ADDR_BUILD(SEGMAP_BASE, va), sme);

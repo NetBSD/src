@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.23 1999/04/08 04:08:01 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.24 2001/09/05 13:21:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ static void
 idprom_get(dst)
 	u_char *dst;
 {
-	vm_offset_t src;	/* control space address */
+	vaddr_t src;	/* control space address */
 	int len, x;
 
 	src = IDPROM_BASE;
