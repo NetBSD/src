@@ -1,4 +1,4 @@
-/*	$NetBSD: mulaw.h,v 1.5 1997/05/23 21:20:02 augustss Exp $	*/
+/*	$NetBSD: mulaw.h,v 1.6 1997/05/28 00:07:47 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /* Convert 8-bit mu-law to/from 8 bit unsigned linear. */
 extern void mulaw_to_ulinear8 __P((void *, u_char *buf, int cnt));
 extern void ulinear8_to_mulaw __P((void *, u_char *buf, int cnt));
+/* Convert 8-bit a-law to/from 8 bit unsigned linear. */
+extern void alaw_to_ulinear8 __P((void *, u_char *buf, int cnt));
+extern void ulinear8_to_alaw __P((void *, u_char *buf, int cnt));
 /* Convert between signed and unsigned. */
 extern void change_sign8 __P((void *, u_char *buf, int cnt));
 extern void change_sign16 __P((void *, u_char *buf, int cnt));
