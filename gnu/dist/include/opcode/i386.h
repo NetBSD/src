@@ -776,6 +776,8 @@ static const template i386_optab[] = {
 {"cmpxchg8b", 1, 0x0fc7, 1, Modrm, { Mem, 0, 0} },
 
 /* Pentium Pro extensions */
+{"fxsave",1, 0x0fae, 0, Modrm, { Mem, 0, 0} },
+{"fxrstor",1,0x0fae, 1, Modrm, { Mem, 0, 0} },
 {"rdpmc", 0, 0x0f33, _, NoModrm, { 0, 0, 0} },
 
 {"ud2", 0, 0x0f0b, _, NoModrm, {0, 0, 0} }, /* official undefined instr. */
