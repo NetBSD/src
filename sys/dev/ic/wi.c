@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.113 2003/03/27 04:34:17 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.114 2003/03/27 05:00:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.113 2003/03/27 04:34:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.114 2003/03/27 05:00:21 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -302,7 +302,8 @@ wi_attach(struct wi_softc *sc)
 		if (sc->sc_sta_firmware_ver > 10101)
 			sc->sc_flags |= WI_FLAGS_HAS_DBMADJUST;
 		if (sc->sc_sta_firmware_ver >= 800) {
-			ic->ic_flags |= IEEE80211_F_HASHOSTAP;
+			if (sc->sc_sta_firmware_ver != 10402)
+				ic->ic_flags |= IEEE80211_F_HASHOSTAP;
 			ic->ic_flags |= IEEE80211_F_HASIBSS;
 			ic->ic_flags |= IEEE80211_F_HASMONITOR;
 		}
