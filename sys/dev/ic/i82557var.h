@@ -1,7 +1,7 @@
-/*	$NetBSD: i82557var.h,v 1.1 1999/06/20 16:33:29 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.2 1999/08/03 22:43:28 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -72,22 +72,18 @@
  */
 
 /*
- * Number of transmit control blocks.  This determines the number
- * of transmit buffers that can be chained in the CB list.  This
- * must be a power of two.
+ * Transmit descriptor list size.
  */
-#define	FXP_NTXCB	128
-
-/*
- * TxCB list index mask.  This is used to do list wrap-around.
- */
-#define	FXP_TXCB_MASK	(FXP_NTXCB - 1)
+#define	FXP_NTXCB		128
+#define	FXP_NTXCB_MASK		(FXP_NTXCB - 1)
+#define	FXP_NEXTTX(x)		((x + 1) & FXP_NTXCB_MASK)
+#define	FXP_NTXSEG		16
 
 /*
  * Number of receive frame area buffers.  These are large, so
  * choose wisely.
  */
-#define	FXP_NRFABUFS	64
+#define	FXP_NRFABUFS		64
 
 /*
  * Maximum number of seconds that the reciever can be idle before we
@@ -110,6 +106,23 @@ struct fxp_control_data {
 	struct fxp_cb_tx fcd_txcbs[FXP_NTXCB];
 
 	/*
+	 * The transmit buffer descriptors.
+	 */
+	struct fxp_tbdlist {
+		struct fxp_tbd tbd_d[FXP_NTXSEG];
+	} fcd_tbdl[FXP_NTXCB];
+
+	/*
+	 * The configuration CB.
+	 */
+	struct fxp_cb_config fcd_configcb;
+
+	/*
+	 * The Individual Address CB.
+	 */
+	struct fxp_cb_ias fcd_iascb;
+
+	/*
 	 * The multicast setup CB.
 	 */
 	struct fxp_cb_mcs fcd_mcscb;
@@ -121,10 +134,23 @@ struct fxp_control_data {
 };
 
 #define	FXP_CDOFF(x)	offsetof(struct fxp_control_data, x)
+#define	FXP_CDTXOFF(x)	FXP_CDOFF(fcd_txcbs[(x)])
+#define	FXP_CDTBDOFF(x)	FXP_CDOFF(fcd_tbdl[(x)])
+#define	FXP_CDCONFIGOFF	FXP_CDOFF(fcd_configcb)
+#define	FXP_CDIASOFF	FXP_CDOFF(fcd_iascb)
+#define	FXP_CDMCSOFF	FXP_CDOFF(fcd_mcscb)
+#define	FXP_CDSTATSOFF	FXP_CDOFF(fcd_stats)
 
 /*
- * Receive buffer descriptor (software only).  This is the analog of
- * the software portion of the fxp_cb_tx.
+ * Software state for transmit descriptors.
+ */
+struct fxp_txsoft {
+	struct mbuf *txs_mbuf;		/* head of mbuf chain */
+	bus_dmamap_t txs_dmamap;	/* our DMA map */
+};
+
+/*
+ * Software state for receive descriptors.
  */
 struct fxp_rxdesc {
 	struct fxp_rxdesc *fr_next;	/* next in the chain */
@@ -132,15 +158,19 @@ struct fxp_rxdesc {
 	bus_dmamap_t fr_dmamap;		/* our DMA map */
 };
 
+/*
+ * Software state per device.
+ */
 struct fxp_softc {
 	struct device sc_dev;		/* generic device structures */
-	void *sc_ih;			/* interrupt handler cookie */
-	void *sc_sdhook;		/* shutdown hook */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus dma tag */
 	struct ethercom sc_ethercom;	/* ethernet common part */
-#define	sc_if		sc_ethercom.ec_if
+	void *sc_sdhook;		/* shutdown hook */
+	void *sc_ih;			/* interrupt handler cookie */
+
+	struct mii_data sc_mii;		/* MII/media information */
 
 	/*
 	 * We create a single DMA map that maps all data structure
@@ -151,28 +181,31 @@ struct fxp_softc {
 #define	sc_cddma	sc_dmamap->dm_segs[0].ds_addr
 
 	/*
-	 * These DMA maps map transmit and recieve buffers.
+	 * Software state for transmit and receive descriptors.
 	 */
-	bus_dmamap_t sc_tx_dmamaps[FXP_NTXCB];
+	struct fxp_txsoft sc_txsoft[FXP_NTXCB];
+
 	bus_dmamap_t sc_rx_dmamaps[FXP_NRFABUFS];
+	struct fxp_rxdesc sc_rxdescs[FXP_NRFABUFS];
 
 	/*
-	 * Control data - TxCBs, stats, etc.
+	 * Control data structures.
 	 */
-	struct fxp_control_data *control_data;
+	struct fxp_control_data *sc_control_data;
 
-					/* receive buffer descriptors */
-	struct fxp_rxdesc sc_rxdescs[FXP_NRFABUFS];
-	struct mii_data sc_mii;		/* MII media information */
-	struct fxp_cb_tx *cbl_first;	/* first active TxCB in list */
-	struct fxp_cb_tx *cbl_last;	/* last active TxCB in list */
-	int tx_queued;			/* # of active TxCB's */
-	int need_mcsetup;		/* multicast filter needs programming */
+	int	sc_flags;		/* misc. flags */
+
+#define	FXPF_NEEDMCSETUP	0x01	/* multicast setup needed */
+#define	FXPF_DOINGMCSETUP	0x02	/* multicast setup in-progress */
+
+	int	sc_txpending;		/* number of TX requests pending */
+	int	sc_txdirty;		/* first dirty TX descriptor */
+	int	sc_txlast;		/* last used TX descriptor */
+
 	struct fxp_rxdesc *rfa_head;	/* first mbuf in receive frame area */
 	struct fxp_rxdesc *rfa_tail;	/* last mbuf in receive frame area */
 	int rx_idle_secs;		/* # of seconds RX has been idle */
-	int all_mcasts;			/* receive all multicasts */
-	int promisc_mode;		/* promiscuous mode enabled */
+
 	int phy_primary_addr;		/* address of primary PHY */
 	int phy_primary_device;		/* device type of primary PHY */
 	int phy_10Mbps_only;		/* PHY is 10Mbps-only device */
@@ -180,6 +213,34 @@ struct fxp_softc {
 	rndsource_element_t rnd_source;	/* random source */
 #endif
 };
+
+#define	FXP_CDTXADDR(sc, x)	((sc)->sc_cddma + FXP_CDTXOFF((x)))
+#define	FXP_CDTBDADDR(sc, x)	((sc)->sc_cddma + FXP_CDTBDOFF((x)))
+
+#define	FXP_CDTX(sc, x)		(&(sc)->sc_control_data->fcd_txcbs[(x)])
+#define	FXP_CDTBD(sc, x)	(&(sc)->sc_control_data->fcd_tbdl[(x)])
+
+#define	FXP_DSTX(sc, x)		(&(sc)->sc_txsoft[(x)])
+
+#define	FXP_CDTXSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
+	    FXP_CDTXOFF((x)), sizeof(struct fxp_cb_tx), (ops))
+
+#define	FXP_CDTBDSYNC(sc, x, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
+	    FXP_CDTBDOFF((x)), sizeof(struct fxp_tbdlist), (ops))
+
+#define	FXP_CDCONFIGSYNC(sc, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
+	    FXP_CDCONFIGOFF, sizeof(struct fxp_cb_config), (ops))
+
+#define	FXP_CDIASSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
+	    FXP_CDIASOFF, sizeof(struct fxp_cb_ias), (ops))
+
+#define	FXP_CDMCSSYNC(sc, ops)						\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
+	    FXP_CDMCSOFF, sizeof(struct fxp_cb_mcs), (ops))
 
 /* Macros to ease CSR access. */
 #define	CSR_READ_1(sc, reg)						\
