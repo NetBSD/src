@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.85 2001/11/04 12:05:42 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.86 2001/11/13 13:14:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  * inspired by the work of Julian Elischer (julian@tfs.com) and
  * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.86 2001/11/13 13:14:42 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
