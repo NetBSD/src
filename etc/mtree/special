@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.30.4.7 2002/02/26 21:01:55 he Exp $
+#	$NetBSD: special,v 1.30.4.8 2002/03/25 17:20:34 he Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -71,6 +71,11 @@ newsyslog.conf	type=file mode=0644 uname=root gname=wheel
 nsswitch.conf	type=file mode=0644 uname=root gname=wheel
 passwd		type=file mode=0644 uname=root gname=wheel
 phones		type=file mode=0644 uname=root gname=wheel
+postfix		type=dir mode=0755 uname=root gname=wheel optional
+main.cf		type=file mode=0444 uname=root gname=wheel optional
+master.cf	type=file mode=0444 uname=root gname=wheel optional
+postfix-script	type=file mode=0555 uname=root gname=wheel optional
+..	#etc/postfix
 ppp		type=dir mode=0755 uname=root gname=wheel optional
 options		type=file mode=0644 uname=root gname=wheel optional
 ..	#etc/ppp
