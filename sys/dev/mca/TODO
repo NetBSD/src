@@ -1,8 +1,7 @@
-# $NetBSD: TODO,v 1.10 2001/04/19 17:42:49 jdolecek Exp $
+# $NetBSD: TODO,v 1.11 2001/04/23 09:36:01 jdolecek Exp $
 
 Bugs:
 * i386: detect the existence of MCA bus by BIOS call
-* i386: make isa/clock.c parse PS/2 CMOS correctly
 * i386: keyboard freezes in fd_mountroothook when booting from floppy;
 	if the fd_mountroothook is not executed, the keyboard works
 	just fine
