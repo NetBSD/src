@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9.4.1 2000/10/19 14:13:10 tv Exp $
+#	$NetBSD: Makefile,v 1.9.4.2 2001/02/26 21:25:48 he Exp $
 
 SUBDIR=	libhack init_s more ssh tls \
 	x_dd x_dhclient x_dmesg x_ed x_ftp x_gzip x_ifconfig x_netstat x_ping \
-	x_route x_sh zcat
+	x_route x_sh x_umount zcat
 
 .if exists(sysinst/arch/${MACHINE})
 SUBDIR+=sysinst
