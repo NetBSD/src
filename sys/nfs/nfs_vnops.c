@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.35.2.3 1994/08/21 15:11:01 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.35.2.4 1994/10/06 05:10:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -996,6 +996,7 @@ nfs_mknod(ap)
 		vput(dvp);
 		return (error);
 	}
+	newvp = NULLVP;
 	nfsstats.rpccnt[NFSPROC_CREATE]++;
 	nfsm_reqhead(dvp, NFSPROC_CREATE,
 	  NFSX_FH+NFSX_UNSIGNED+nfsm_rndup(cnp->cn_namelen)+NFSX_SATTR(isnq));
@@ -1024,6 +1025,8 @@ nfs_mknod(ap)
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	VTONFS(dvp)->n_attrstamp = 0;
 	vrele(dvp);
+	if (newvp != NULLVP)
+		vrele(newvp);
 	return (error);
 }
 
