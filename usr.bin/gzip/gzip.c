@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.5 2003/12/26 14:11:01 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.6 2003/12/26 14:49:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,14 +32,17 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.5 2003/12/26 14:11:01 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.6 2003/12/26 14:49:37 mrg Exp $");
 #endif /* not lint */
 
 /*
  * gzip.c -- GPL free gzip using zlib.
  *
- * Very minor portions of this code are (very loosely) derived from
+ * very minor portions of this code are (very loosely) derived from
  * the minigzip.c in the zlib distribution.
+ *
+ * TODO:
+ *	- handle .taz/.tgz files?
  */
 
 #include <sys/param.h>
@@ -104,9 +107,10 @@ static	void	handle_file(char *, struct stat *);
 static	void	handle_dir(char *, struct stat *);
 static	void	handle_stdin(void);
 static	void	handle_stdout(void);
+static	void	print_ratio(off_t, off_t, FILE *);
 static	void	print_verbage(char *, char *, ssize_t, ssize_t);
 static	void	print_test(char *, int);
-static	void	print_list(int fd, struct stat *sbp, const char *);
+static	void	print_list(int fd, off_t, const char *);
 
 int main(int, char *p[]);
 
@@ -234,6 +238,8 @@ main(int argc, char **argv)
 			handle_pathname(argv[0]);
 		} while (*++argv);
 	}
+	if (qflag == 0 && lflag && argc > 1)
+		print_list(-1, 0, "(totals)");
 	exit(0);
 }
 
@@ -550,7 +556,7 @@ file_uncompress(char *file)
 
 		if ((fd = open(file, O_RDONLY)) == -1)
 			maybe_err(1, "open");
-		print_list(fd, &isb, outfile);
+		print_list(fd, isb.st_size, outfile);
 		return 0;	/* XXX */
 	}
 
@@ -629,7 +635,7 @@ handle_stdin(void)
 
 		if (fstat(STDIN_FILENO, &isb) < 0)
 			maybe_err(1, "fstat");
-		print_list(STDIN_FILENO, &isb, "-");
+		print_list(STDIN_FILENO, isb.st_size, "stdout");
 		return;
 	}
 
@@ -761,16 +767,29 @@ handle_dir(char *dir, struct stat *sbp)
 	(void)fts_close(fts);
 }
 
+/* print a ratio */
+static void
+print_ratio(off_t in, off_t out, FILE *where)
+{
+	u_int64_t percent;
+
+	if (out == 0)
+		percent = 0;
+	else if (out < 1000 * 1000)
+		percent = 999 - (in * 1000) / out;
+	else
+		percent = 999 - in / (out / 1000);
+	fprintf(where, "%3lu.%1lu%%", (unsigned long)percent / 10UL,
+	    (unsigned long)percent % 10);
+}
+
 /* print compression statistics, and the new name (if there is one!) */
 static void
 print_verbage(char *file, char *nfile, ssize_t usize, ssize_t gsize)
 {
-	off_t percent = 1000 - (1000 * gsize / usize);
-
-	fprintf(stderr, "%s:%s  %2lu.%1lu%%", file,
-	    strlen(file) < 7 ? "\t\t" : "\t",
-	    (unsigned long)percent / 10UL,
-	    (unsigned long)percent % 10);
+	fprintf(stderr, "%s:%s  ", file,
+	    strlen(file) < 7 ? "\t\t" : "\t");
+	print_ratio(usize, gsize, stderr);
 	if (nfile)
 		fprintf(stderr, " -- replaced with %s", nfile);
 	fprintf(stderr, "\n");
@@ -793,35 +812,40 @@ print_test(char *file, int ok)
       354841      1679360  78.8% /usr/pkgsrc/distfiles/libglade-2.0.1.tar
 */
 static void
-print_list(int fd, struct stat *sbp, const char *outfile)
+print_list(int fd, off_t in, const char *outfile)
 {
-	off_t percent;
 	static int first = 1;
-	off_t in, out;
+	static off_t in_tot, out_tot;
+	off_t out;
 	int rv;
 
 	if (qflag == 0 && first)
 		printf("  compressed uncompressed  ratio uncompressed_name\n");
 	first = 0;
 
-	in = sbp->st_size;
+	/* print totals? */
+	if (fd == -1) {
+		in = in_tot;
+		out = out_tot;
+	} else {
+		/* read the last 4 bytes - this is the uncompressed size */
+		rv = lseek(fd, (off_t)(-4), SEEK_END);
+		if (rv != -1) {
+			unsigned char buf[4];
+			u_int32_t usize;
 
-	/* read the last 4 bytes - this is the uncompressed size */
-	rv = lseek(fd, (off_t)(-4), SEEK_END);
-	if (rv != -1) {
-		unsigned char buf[4];
-		u_int32_t usize;
-
-		if (read(fd, (char *)buf, sizeof(buf)) != sizeof(buf))
-			maybe_err(1, "read of uncompressed size");
-		usize = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;
-		out = (off_t)usize;
+			if (read(fd, (char *)buf, sizeof(buf)) != sizeof(buf))
+				maybe_err(1, "read of uncompressed size");
+			usize = buf[0] | buf[1] << 8 | buf[2] << 16 | buf[3] << 24;
+			out = (off_t)usize;
+		}
 	}
 
-	percent = 1000 - (1000 * in / out);
-	printf("%12llu %12llu %3lu.%1lu%% %s\n", (unsigned long long)in,
-	    (unsigned long long)out, (unsigned long)percent / 10UL,
-	    (unsigned long)percent % 10, outfile);
+	printf("%12llu %12llu ", (unsigned long long)in, (unsigned long long)out);
+	print_ratio(in, out, stdout);
+	printf(" %s\n", outfile);
+	in_tot += in;
+	out_tot += out;
 }
 
 /* display the usage of NetBSD gzip */
