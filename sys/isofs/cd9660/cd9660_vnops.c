@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.15 1994/08/19 11:36:56 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.16 1994/10/20 04:26:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -957,7 +957,7 @@ cd9660_pathconf(ap)
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
-		int *a_retval;
+		register_t *a_retval;
 	} */ *ap;
 {
 

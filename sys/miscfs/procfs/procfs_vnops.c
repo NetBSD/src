@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.25 1994/08/30 03:06:42 mycroft Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.26 1994/10/20 04:26:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -259,7 +259,7 @@ procfs_pathconf(ap)
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
-		int *a_retval;
+		register_t *a_retval;
 	} */ *ap;
 {
 

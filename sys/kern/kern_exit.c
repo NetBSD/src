@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.25 1994/08/30 03:05:33 mycroft Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.26 1994/10/20 04:22:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -59,6 +59,9 @@
 #include <sys/resourcevar.h>
 #include <sys/ptrace.h>
 
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+
 #include <machine/cpu.h>
 #ifdef COMPAT_43
 #include <machine/reg.h>
@@ -75,17 +78,16 @@ __dead void exit1 __P((struct proc *, int));
  * exit --
  *	Death of process.
  */
-struct exit_args {
-	int	rval;
-};
 __dead void
 exit(p, uap, retval)
 	struct proc *p;
-	struct exit_args *uap;
+	struct exit_args /* {
+		syscallarg(int) rval;
+	} */ *uap;
 	int *retval;
 {
 
-	exit1(p, W_EXITCODE(uap->rval, 0));
+	exit1(p, W_EXITCODE(SCARG(uap, rval), 0));
 	/* NOTREACHED */
 }
 
@@ -270,16 +272,6 @@ exit1(p, rv)
 	cpu_exit(p);
 }
 
-struct wait_args {
-	int	pid;
-	int	*status;
-	int	options;
-	struct	rusage *rusage;
-#ifdef COMPAT_43
-	int	compat;		/* pseudo */
-#endif
-};
-
 #ifdef COMPAT_43
 #ifdef m68k
 #include <machine/frame.h>
@@ -288,85 +280,106 @@ struct wait_args {
 #define GETPS(rp)	(rp)[PS]
 #endif
 
-owait(p, uap, retval)
+compat_43_wait(p, uap, retval)
 	struct proc *p;
-	register struct wait_args *uap;
+	void *uap;
 	int *retval;
 {
+	struct wait4_args /* {
+		syscallarg(int) pid;
+		syscallarg(int *) status;
+		syscallarg(int) options;
+		syscallarg(struct rusage *) rusage;
+	} */ a;
 
 #ifdef PSL_ALLCC
 	if ((GETPS(p->p_md.md_regs) & PSL_ALLCC) != PSL_ALLCC) {
-		uap->options = 0;
-		uap->rusage = NULL;
+		SCARG(&a, options) = 0;
+		SCARG(&a, rusage) = NULL;
 	} else {
-		uap->options = p->p_md.md_regs[R0];
-		uap->rusage = (struct rusage *)p->p_md.md_regs[R1];
+		SCARG(&a, options) = p->p_md.md_regs[R0];
+		SCARG(&a, rusage) = (struct rusage *)p->p_md.md_regs[R1];
 	}
 #else
-	uap->options = 0;
-	uap->rusage = NULL;
+	SCARG(&a, options) = 0;
+	SCARG(&a, rusage) = NULL;
 #endif
-	uap->pid = WAIT_ANY;
-	uap->status = NULL;
-	uap->compat = 1;
-	return (wait1(p, uap, retval));
+	SCARG(&a, pid) = WAIT_ANY;
+	SCARG(&a, status) = NULL;
+	return (wait1(p, &a, retval, 1));
 }
 
 wait4(p, uap, retval)
 	struct proc *p;
-	struct wait_args *uap;
+	struct wait4_args /* {
+		syscallarg(int) pid;
+		syscallarg(int *) status;
+		syscallarg(int) options;
+		syscallarg(struct rusage *) rusage;
+	} */ *uap;
 	int *retval;
 {
 
-	uap->compat = 0;
-	return (wait1(p, uap, retval));
+	return (wait1(p, uap, retval, 0));
 }
 #else
 #define	wait1	wait4
 #endif
 
 int
-wait1(q, uap, retval)
+wait1(q, uap, retval, compat)
 	register struct proc *q;
-	register struct wait_args *uap;
-	int retval[];
+	register struct wait4_args /* {
+		syscallarg(int) pid;
+		syscallarg(int *) status;
+		syscallarg(int) options;
+		syscallarg(struct rusage *) rusage;
+	} */ *uap;
+	register_t *retval;
+#ifdef COMPAT_43
+	int compat;
+#endif
 {
 	register int nfound;
 	register struct proc *p, *t;
 	int status, error;
 
 #ifdef COMPAT_09
-	uap->pid = (short) uap->pid;
+	SCARG(uap, pid) = (short)SCARG(uap, pid);
 #endif
 
-	if (uap->pid == 0)
-		uap->pid = -q->p_pgid;
+	if (SCARG(uap, pid) == 0)
+		SCARG(uap, pid) = -q->p_pgid;
 #ifdef notyet
-	if (uap->options &~ (WUNTRACED|WNOHANG))
+	if (SCARG(uap, options) &~ (WUNTRACED|WNOHANG))
 		return (EINVAL);
 #endif
 loop:
 	nfound = 0;
 	for (p = q->p_children.lh_first; p != 0; p = p->p_sibling.le_next) {
-		if (uap->pid != WAIT_ANY &&
-		    p->p_pid != uap->pid && p->p_pgid != -uap->pid)
+		if (SCARG(uap, pid) != WAIT_ANY &&
+		    p->p_pid != SCARG(uap, pid) &&
+		    p->p_pgid != -SCARG(uap, pid))
 			continue;
 		nfound++;
 		if (p->p_stat == SZOMB) {
 			retval[0] = p->p_pid;
 #ifdef COMPAT_43
-			if (uap->compat)
+			if (compat)
 				retval[1] = p->p_xstat;
 			else
 #endif
-			if (uap->status) {
+			if (SCARG(uap, status)) {
 				status = p->p_xstat;	/* convert to int */
 				if (error = copyout((caddr_t)&status,
-				    (caddr_t)uap->status, sizeof(status)))
+				    (caddr_t)SCARG(uap, status),
+				    sizeof(status)))
 					return (error);
 			}
-			if (uap->rusage && (error = copyout((caddr_t)p->p_ru,
-			    (caddr_t)uap->rusage, sizeof (struct rusage))))
+			if (SCARG(uap, rusage) &&
+			    (error = copyout((caddr_t)p->p_ru,
+			    (caddr_t)SCARG(uap, rusage),
+			    sizeof (struct rusage))))
 				return (error);
 			/*
 			 * If we got the child via a ptrace 'attach',
@@ -421,19 +434,20 @@ loop:
 			return (0);
 		}
 		if (p->p_stat == SSTOP && (p->p_flag & P_WAITED) == 0 &&
-		    (p->p_flag & P_TRACED || uap->options & WUNTRACED)) {
+		    (p->p_flag & P_TRACED || SCARG(uap, options) & WUNTRACED)) {
 			p->p_flag |= P_WAITED;
 			retval[0] = p->p_pid;
 #ifdef COMPAT_43
-			if (uap->compat) {
+			if (compat) {
 				retval[1] = W_STOPCODE(p->p_xstat);
 				error = 0;
 			} else
 #endif
-			if (uap->status) {
+			if (SCARG(uap, status)) {
 				status = W_STOPCODE(p->p_xstat);
 				error = copyout((caddr_t)&status,
-					(caddr_t)uap->status, sizeof(status));
+				    (caddr_t)SCARG(uap, status),
+				    sizeof(status));
 			} else
 				error = 0;
 			return (error);
@@ -441,7 +455,7 @@ loop:
 	}
 	if (nfound == 0)
 		return (ECHILD);
-	if (uap->options & WNOHANG) {
+	if (SCARG(uap, options) & WNOHANG) {
 		retval[0] = 0;
 		return (0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.32 1994/07/04 20:43:06 mycroft Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.33 1994/10/20 04:22:39 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,6 +42,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
@@ -54,6 +55,8 @@
 #include <sys/resourcevar.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+
+#include <sys/syscallargs.h>
 
 /*
  * The routines implemented in this file are described in:
@@ -91,13 +94,12 @@ int	acctchkfreq = 15;	/* frequency (in seconds) to check space */
  * Accounting system call.  Written based on the specification and
  * previous implementation done by Mark Tinguely.
  */
-struct acct_args {
-	char	*path;
-};
 acct(p, uap, retval)
 	struct proc *p;
-	struct acct_args *uap;
-	int *retval;
+	struct acct_args /* {
+		syscallarg(char *) path;
+	} */ *uap;
+	register_t *retval;
 {
 	struct nameidata nd;
 	int error;
@@ -110,8 +112,9 @@ acct(p, uap, retval)
 	 * If accounting is to be started to a file, open that file for
 	 * writing and make sure it's a 'normal'.
 	 */
-	if (uap->path != NULL) {
-		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, uap->path, p);
+	if (SCARG(uap, path) != NULL) {
+		NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path),
+		    p);
 		if (error = vn_open(&nd, FWRITE, 0))
 			return (error);
 		VOP_UNLOCK(nd.ni_vp);
@@ -131,7 +134,7 @@ acct(p, uap, retval)
 		    p->p_ucred, p);
 		acctp = savacctp = NULLVP;
 	}
-	if (uap->path == NULL)
+	if (SCARG(uap, path) == NULL)
 		return (error);
 
 	/*

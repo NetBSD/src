@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.21 1994/08/30 06:16:25 mycroft Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.22 1994/10/20 04:22:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -57,7 +57,7 @@
 fork(p, uap, retval)
 	struct proc *p;
 	void *uap;
-	int retval[];
+	register_t *retval;
 {
 
 	return (fork1(p, 0, retval));
@@ -67,7 +67,7 @@ fork(p, uap, retval)
 vfork(p, uap, retval)
 	struct proc *p;
 	void *uap;
-	int retval[];
+	register_t *retval;
 {
 
 	return (fork1(p, 1, retval));
@@ -77,7 +77,8 @@ int	nprocs = 1;		/* process 0 */
 
 fork1(p1, isvfork, retval)
 	register struct proc *p1;
-	int isvfork, retval[];
+	int isvfork;
+	register_t *retval;
 {
 	register struct proc *p2;
 	register uid_t uid;

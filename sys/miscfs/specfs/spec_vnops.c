@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.17 1994/07/16 11:40:56 paulus Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.18 1994/10/20 04:26:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -633,7 +633,7 @@ spec_pathconf(ap)
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
-		int *a_retval;
+		register_t *a_retval;
 	} */ *ap;
 {
 

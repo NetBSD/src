@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.19 1994/09/22 02:22:42 mycroft Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.20 1994/10/20 04:22:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -437,10 +437,13 @@ lkmioctl(dev, cmd, data, flag)
  * Place holder for system call slots reserved for loadable modules.
  */
 int
-lkmnosys()
+lkmnosys(p, uap, retval)
+	struct proc *p;
+	void *uap;
+	register_t *retval;
 {
 
-	return (nosys());
+	return (nosys(p, uap, retval));
 }
 
 /*

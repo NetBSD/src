@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.8 1994/09/16 02:01:49 mycroft Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.9 1994/10/20 04:27:30 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@ void		 chgkprot __P((caddr_t, int, int));
 
 #ifdef KERNEL
 #ifdef TYPEDEF_FOR_UAP
-int		 ogetpagesize __P((struct proc *p, void *, int *));
+int		 compat_43_getpagesize __P((struct proc *p, void *, int *));
 int		 madvise __P((struct proc *, void *, int *));
 int		 mincore __P((struct proc *, void *, int *));
 int		 mprotect __P((struct proc *, void *, int *));

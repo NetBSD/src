@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_unix.c,v 1.13 1994/06/29 06:48:45 cgd Exp $	*/
+/*	$NetBSD: vm_unix.c,v 1.14 1994/10/20 04:27:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,17 +52,19 @@
 #include <sys/vnode.h>
 #include <sys/core.h>
 
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+
 #include <vm/vm.h>
 
-struct obreak_args {
-	char	*nsiz;
-};
 /* ARGSUSED */
 int
 obreak(p, uap, retval)
 	struct proc *p;
-	struct obreak_args *uap;
-	int *retval;
+	struct obreak_args /* {
+		syscallarg(char *) nsize;
+	} */ *uap;
+	register_t *retval;
 {
 	register struct vmspace *vm = p->p_vmspace;
 	vm_offset_t new, old;
@@ -70,7 +72,7 @@ obreak(p, uap, retval)
 	register int diff;
 
 	old = (vm_offset_t)vm->vm_daddr;
-	new = round_page(uap->nsiz);
+	new = round_page(SCARG(uap, nsize));
 	if ((int)(new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return(ENOMEM);
 	old = round_page(old + ctob(vm->vm_dsize));
@@ -126,15 +128,14 @@ grow(p, sp)
 	return (1);
 }
 
-struct ovadvise_args {
-	int	anom;
-};
 /* ARGSUSED */
 int
 ovadvise(p, uap, retval)
 	struct proc *p;
-	struct ovadvise_args *uap;
-	int *retval;
+	struct ovadvise_args /* {
+		syscallarg(int) anom;
+	} */ *uap;
+	register_t *retval;
 {
 
 	return (EINVAL);

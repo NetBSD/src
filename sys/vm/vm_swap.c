@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.24 1994/07/21 07:12:13 mycroft Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.25 1994/10/20 04:27:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,6 +45,9 @@
 #include <sys/vnode.h>
 #include <sys/map.h>
 #include <sys/file.h>
+
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -267,15 +270,14 @@ swstrategy(bp)
  * which must be in the swdevsw.  Return EBUSY
  * if already swapping on this device.
  */
-struct swapon_args {
-	char	*name;
-};
 /* ARGSUSED */
 int
 swapon(p, uap, retval)
 	struct proc *p;
-	struct swapon_args *uap;
-	int *retval;
+	struct swapon_args /* {
+		syscallarg(char *) name;
+	} */ *uap;
+	register_t *retval;
 {
 	register struct vnode *vp;
 	register struct swdevt *sp;
@@ -285,7 +287,7 @@ swapon(p, uap, retval)
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, uap->name, p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, name), p);
 	if (error = namei(&nd))
                 return (error);
 	vp = nd.ni_vp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.28 1994/07/21 10:22:20 mycroft Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.29 1994/10/20 04:26:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -618,7 +618,7 @@ kernfs_pathconf(ap)
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
-		int *a_retval;
+		register_t *a_retval;
 	} */ *ap;
 {
 

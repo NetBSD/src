@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.9 1994/06/29 06:33:15 cgd Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.10 1994/10/20 04:23:17 cgd Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -15,8 +15,9 @@
 #include <sys/sem.h>
 #include <sys/malloc.h>
 
-static int	semctl(), semget(), semop(), semconfig();
-int	(*semcalls[])() = { semctl, semget, semop, semconfig };
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+
 int	semtot = 0;
 
 static struct proc *semlock_holder = NULL;
@@ -44,29 +45,6 @@ seminit()
 }
 
 /*
- * Entry point for all SEM calls
- */
-
-struct semsys_args {
-	u_int	which;
-};
-
-int
-semsys(p, uap, retval)
-	struct proc *p;
-	struct semsys_args *uap;
-	int *retval;
-{
-
-	while (semlock_holder != NULL && semlock_holder != p)
-		sleep((caddr_t)&semlock_holder, (PZERO - 4));
-
-	if (uap->which >= sizeof(semcalls)/sizeof(semcalls[0]))
-		return (EINVAL);
-	return ((*semcalls[uap->which])(p, &uap[1], retval));
-}
-
-/*
  * Lock or unlock the entire semaphore facility.
  *
  * This will probably eventually evolve into a general purpose semaphore
@@ -81,19 +59,17 @@ semsys(p, uap, retval)
  * in /dev/kmem.
  */
 
-struct semconfig_args {
-	semconfig_ctl_t	flag;
-};
-
 int
 semconfig(p, uap, retval)
 	struct proc *p;
-	struct semconfig_args *uap;
-	int *retval;
+	struct semconfig_args /* {
+		syscallarg(int) flag;
+	} */ *uap;
+	register_t *retval;
 {
 	int eval = 0;
 
-	switch (uap->flag) {
+	switch (SCARG(uap, flag)) {
 	case SEM_CONFIG_FREEZE:
 		semlock_holder = p;
 		break;
@@ -104,8 +80,9 @@ semconfig(p, uap, retval)
 		break;
 
 	default:
-		printf("semconfig: unknown flag parameter value (%d) - ignored\n",
-		    uap->flag);
+		printf(
+		    "semconfig: unknown flag parameter value (%d) - ignored\n",
+		    SCARG(uap, flag));
 		eval = EINVAL;
 		break;
 	}
@@ -283,23 +260,21 @@ semundo_clear(semid, semnum)
 	}
 }
 
-struct semctl_args {
-	int	semid;
-	int	semnum;
-	int	cmd;
-	union	semun *arg;
-};
-
 int
-semctl(p, uap, retval)
+__semctl(p, uap, retval)
 	struct proc *p;
-	register struct semctl_args *uap;
-	int *retval;
+	register struct __semctl_args /* {
+		syscallarg(int) semid;
+		syscallarg(int) semnum;
+		syscallarg(int) cmd;
+		syscallarg(union semun *) arg;
+	} */ *uap;
+	register_t *retval;
 {
-	int semid = uap->semid;
-	int semnum = uap->semnum;
-	int cmd = uap->cmd;
-	union semun *arg = uap->arg;
+	int semid = SCARG(uap, semid);
+	int semnum = SCARG(uap, semnum);
+	int cmd = SCARG(uap, cmd);
+	union semun *arg = SCARG(uap, arg);
 	union semun real_arg;
 	struct ucred *cred = p->p_ucred;
 	int i, rval, eval;
@@ -316,7 +291,7 @@ semctl(p, uap, retval)
 
 	semaptr = &sema[semid];
 	if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0 ||
-	    semaptr->sem_perm.seq != IPCID_TO_SEQ(uap->semid))
+	    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid)))
 		return(EINVAL);
 
 	eval = 0;
@@ -447,22 +422,20 @@ semctl(p, uap, retval)
 	return(eval);
 }
 
-struct semget_args {
-	key_t	key;
-	int	nsems;
-	int	semflg;
-};
-
 int
 semget(p, uap, retval)
 	struct proc *p;
-	register struct semget_args *uap;
-	int *retval;
+	register struct semget_args /* {
+		syscallarg(key_t) key;
+		syscallarg(int) nsems;
+		syscallarg(int) semflg;
+	} */ *uap;
+	register_t *retval;
 {
 	int semid, eval;
-	int key = uap->key;
-	int nsems = uap->nsems;
-	int semflg = uap->semflg;
+	int key = SCARG(uap, key);
+	int nsems = SCARG(uap, nsems);
+	int semflg = SCARG(uap, semflg);
 	struct ucred *cred = p->p_ucred;
 
 #ifdef SEM_DEBUG
@@ -560,20 +533,18 @@ found:
 	return(0);
 }
 
-struct semop_args {
-	int	semid;
-	struct	sembuf *sops;
-	int	nsops;
-};
-
 int
 semop(p, uap, retval)
 	struct proc *p;
-	register struct semop_args *uap;
-	int *retval;
+	register struct semop_args /* {
+		syscallarg(int) semid;
+		syscallarg(struct sembuf *) sops;
+		syscallarg(u_int) nsops;
+	} */ *uap;
+	register_t *retval;
 {
-	int semid = uap->semid;
-	int nsops = uap->nsops;
+	int semid = SCARG(uap, semid);
+	int nsops = SCARG(uap, nsops);
 	struct sembuf sops[MAX_SOPS];
 	register struct semid_ds *semaptr;
 	register struct sembuf *sopptr;
@@ -595,7 +566,7 @@ semop(p, uap, retval)
 	semaptr = &sema[semid];
 	if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0)
 		return(EINVAL);
-	if (semaptr->sem_perm.seq != IPCID_TO_SEQ(uap->semid))
+	if (semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid)))
 		return(EINVAL);
 
 	if ((eval = ipcperm(cred, &semaptr->sem_perm, IPC_W))) {
@@ -612,10 +583,11 @@ semop(p, uap, retval)
 		return(E2BIG);
 	}
 
-	if ((eval = copyin(uap->sops, &sops, nsops * sizeof(sops[0]))) != 0) {
+	if ((eval = copyin(SCARG(uap, sops), sops, nsops * sizeof(sops[0])))
+	    != 0) {
 #ifdef SEM_DEBUG
 		printf("eval = %d from copyin(%08x, %08x, %d)\n", eval,
-		    uap->sops, &sops, nsops * sizeof(sops[0]));
+		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0]));
 #endif
 		return(eval);
 	}
@@ -728,7 +700,7 @@ semop(p, uap, retval)
 		 * Make sure that the semaphore still exists
 		 */
 		if ((semaptr->sem_perm.mode & SEM_ALLOC) == 0 ||
-		    semaptr->sem_perm.seq != IPCID_TO_SEQ(uap->semid)) {
+		    semaptr->sem_perm.seq != IPCID_TO_SEQ(SCARG(uap, semid))) {
 			/* The man page says to return EIDRM. */
 			/* Unfortunately, BSD doesn't define that code! */
 #ifdef EIDRM
@@ -937,3 +909,69 @@ unlock:
 		wakeup((caddr_t)&semlock_holder);
 	}
 }
+
+#if defined(COMPAT_10) && !defined(alpha)
+int
+compat_10_semsys(p, uap, retval)
+	struct proc *p;
+	struct compat_10_semsys_args /* {
+		syscallarg(int) which;
+		syscallarg(int) a2;
+		syscallarg(int) a3;
+		syscallarg(int) a4;
+		syscallarg(int) a5;
+	} */ *uap;
+	register_t *retval;
+{
+	struct __semctl_args /* {
+		syscallarg(int) semid;
+		syscallarg(int) semnum;
+		syscallarg(int) cmd;
+		syscallarg(union semun *) arg;
+	} */ __semctl_args;
+	struct semget_args /* {
+		syscallarg(key_t) key;
+		syscallarg(int) nsems;
+		syscallarg(int) semflg;
+	} */ semget_args;
+	struct semop_args /* {
+		syscallarg(int) semid;
+		syscallarg(struct sembuf *) sops;
+		syscallarg(u_int) nsops;
+	} */ semop_args;
+	struct semconfig_args /* {
+		syscallarg(int) flag;
+	} */ semconfig_args;
+
+	while (semlock_holder != NULL && semlock_holder != p)
+		sleep((caddr_t)&semlock_holder, (PZERO - 4));
+
+	switch (SCARG(uap, which)) {
+	case 0:						/* __semctl() */
+		SCARG(&__semctl_args, semid) = SCARG(uap, a2);
+		SCARG(&__semctl_args, semnum) = SCARG(uap, a3);
+		SCARG(&__semctl_args, cmd) = SCARG(uap, a4);
+		SCARG(&__semctl_args, arg) = (union semun *)SCARG(uap, a5);
+		return (__semctl(p, &__semctl_args, retval));
+
+	case 1:						/* semget() */
+		SCARG(&semget_args, key) = SCARG(uap, a2);
+		SCARG(&semget_args, nsems) = SCARG(uap, a3);
+		SCARG(&semget_args, semflg) = SCARG(uap, a4);
+		return (semget(p, &semget_args, retval));
+
+	case 2:						/* semop() */
+		SCARG(&semop_args, semid) = SCARG(uap, a2);
+		SCARG(&semop_args, sops) = (struct sembuf *)SCARG(uap, a3);
+		SCARG(&semop_args, nsops) = SCARG(uap, a4);
+		return (semop(p, &semop_args, retval));
+
+	case 3:						/* semconfig() */
+		SCARG(&semconfig_args, flag) = SCARG(uap, a2);
+		return (semconfig(p, &semconfig_args, retval));
+
+	default:
+		return (EINVAL);
+	}
+}
+#endif /* defined(COMPAT_10) && !defined(alpha) */
