@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.56 2002/10/22 18:48:28 perry Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.57 2003/02/19 19:03:41 matt Exp $
 
 .include <bsd.init.mk>
 
@@ -17,13 +17,15 @@ CPPFLAGS+=	-D_KERNEL -D_LKM
 
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}} \
-		machine ${MACHINE_CPU}
+		machine ${MACHINE_CPU} tmp.o
 
 # see below why this is necessary
 .if ${MACHINE} == "sun2" || ${MACHINE} == "sun3"
 CLEANFILES+=	sun68k
 .elif ${MACHINE} == "sparc64"
 CLEANFILES+=	sparc
+.elif ${MACHINE_ARCH} == "powerpc"
+CLEANFILES+=	${KMOD}_tramp.o ${KMOD}_tramp.S tmp.S ${KMOD}_tmp.o
 .endif
 
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
@@ -35,9 +37,27 @@ realall:	${PROG}
 
 ${OBJS}:	${DPSRCS}
 
+.if ${MACHINE_ARCH} == "powerpc"
+${KMOD}_tmp.o: ${OBJS} ${DPADD}
+	${LD} -r ${LDFLAGS} -o tmp.o ${OBJS}
+	mv tmp.o ${.TARGET}
+
+${KMOD}_tramp.S: ${KMOD}_tmp.o $S/lkm/arch/${MACHINE_ARCH}/lkmtramp.awk
+	${OBJDUMP} --reloc ${KMOD}_tmp.o | \
+		 awk -f $S/lkm/arch/${MACHINE_ARCH}/lkmtramp.awk > tmp.S
+	mv tmp.S ${.TARGET}
+
+${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
+	${LD} -r ${LDFLAGS} \
+		`${OBJDUMP} --reloc ${KMOD}_tmp.o | \
+			 awk -f $S/lkm/arch/${MACHINE_ARCH}/lkmwrap.awk` \
+		 -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
+	mv tmp.o ${.TARGET}
+.else
 ${PROG}: ${OBJS} ${DPADD}
 	${LD} -r ${LDFLAGS} -o tmp.o ${OBJS}
 	mv tmp.o ${.TARGET}
+.endif
 
 # XXX.  This should be done a better way.  It's @'d to reduce visual spew.
 # XXX   .BEGIN is used to make sure the links are done before anything else.
