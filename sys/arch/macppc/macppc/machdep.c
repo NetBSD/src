@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2000/07/02 04:40:39 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2000/07/05 16:02:39 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -392,59 +392,9 @@ restore_ofw_mapping()
 /*
  * This should probably be in autoconf!				XXX
  */
-int cpu;
 char cpu_model[80];
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-void
-identifycpu()
-{
-	int pvr;
-
-	/*
-	 * Find cpu type (Do it by OpenFirmware?)
-	 */
-	asm ("mfpvr %0" : "=r"(pvr));
-	cpu = pvr >> 16;
-	switch (cpu) {
-	case 1:
-		sprintf(cpu_model, "601");
-		break;
-	case 3:
-		sprintf(cpu_model, "603");
-		break;
-	case 4:
-		sprintf(cpu_model, "604");
-		break;
-	case 5:
-		sprintf(cpu_model, "602");
-		break;
-	case 6:
-		sprintf(cpu_model, "603e");
-		break;
-	case 7:
-		sprintf(cpu_model, "603ev");
-		break;
-	case 8:
-		sprintf(cpu_model, "750");
-		break;
-	case 9:
-		sprintf(cpu_model, "604ev");
-		break;
-	case 12:
-		sprintf(cpu_model, "7400");
-		break;
-	case 20:
-		sprintf(cpu_model, "620");
-		break;
-	default:
-		sprintf(cpu_model, "Version %x", cpu);
-		break;
-	}
-	sprintf(cpu_model + strlen(cpu_model), " (Revision %x)", pvr & 0xffff);
-	printf("CPU: %s\n", cpu_model);
-}
 
 void
 install_extint(handler)
@@ -486,7 +436,7 @@ cpu_startup()
 	v = (caddr_t)proc0paddr + USPACE;
 
 	printf("%s", version);
-	identifycpu();
+	identifycpu(cpu_model);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
