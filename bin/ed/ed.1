@@ -1,4 +1,4 @@
-.\"	$NetBSD: ed.1,v 1.16 2000/05/12 14:02:00 christos Exp $
+.\"	$NetBSD: ed.1,v 1.17 2000/11/07 01:45:49 lukem Exp $
 .\"
 .TH ED 1 "21 May 1993"
 .SH NAME
@@ -882,7 +882,9 @@ x
 Prompts for an encryption key which is used in subsequent reads and
 writes.  If a newline alone is entered as the key, then encryption is
 turned off.  Otherwise, echoing is disabled while a key is read.
-Encryption/decryption is done using the bdes(1) algorithm.
+Encryption/decryption is done using the
+.IR bdes (1)
+algorithm.
 
 .TP 8
 .RI (.+1)z n
