@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.110 2004/01/15 14:57:20 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.111 2004/01/16 05:03:02 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 2004/01/15 14:57:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2004/01/16 05:03:02 mrg Exp $");
 
 #define NEW_FPSTATE
 
@@ -2085,9 +2085,9 @@ syscall(tf, code, pc)
 
 			for (i = 0; i < j; i++)
 				args64.l[i] = args.i[i];
-			ktrsyscall32(p, code, code, NULL, args64.r);
+			ktrsyscall(p, code, code, NULL, args64.r);
 #else
-			ktrsyscall(p, code, code, NULL, args.i);
+			ktrsyscall(p, code, code, NULL, args.r);
 #endif
 		}
 #endif
