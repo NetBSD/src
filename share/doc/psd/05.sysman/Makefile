@@ -7,6 +7,7 @@ MACROS=	-ms
 CLEANFILES+=toc
 
 paper.ps: ${SRCS}
-	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
+	soelim -I${.CURDIR} ${.ALLSRC} | ${TBL} | ${ROFF} > ${.TARGET}
 
 .include <bsd.doc.mk>
+.include <bsd.obj.mk>
