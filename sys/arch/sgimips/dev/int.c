@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.7 2004/04/11 12:05:37 pooka Exp $	*/
+/*	$NetBSD: int.c,v 1.8 2004/07/06 23:56:13 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.7 2004/04/11 12:05:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.8 2004/07/06 23:56:13 sekiya Exp $");
 
 #include "opt_cputype.h"
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: int.c,v 1.7 2004/04/11 12:05:37 pooka Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <dev/ic/i8253reg.h>
 #include <machine/sysconf.h>
@@ -188,6 +189,7 @@ int_mappable_intr(void *arg)
 	u_int32_t mstat;
 	u_int32_t mmask;
 	int which = (int)arg;
+	struct sgimips_intrhand *ih;
 
 	ret = 0;
 	mstat = bus_space_read_4(iot, ioh, INT2_MAP_STATUS);
@@ -198,12 +200,14 @@ int_mappable_intr(void *arg)
 	for (i = 0; i < 8; i++) {
 		intnum = i + 16 + (which << 3);
 		if (mstat & (1 << i)) {
-			if (intrtab[intnum].ih_fun != NULL)
-				ret |= (intrtab[intnum].ih_fun)
-				    (intrtab[intnum].ih_arg);
-			else
-				printf("int0: unexpected mapped interrupt %d\n",
-				    intnum);
+			for (ih = &intrtab[intnum]; ih != NULL;
+							ih = ih->ih_next) {
+				if (ih->ih_fun != NULL)
+					ret |= (ih->ih_fun)(ih->ih_arg);
+				else
+					printf("int0: unexpected mapped "
+					       "interrupt %d\n", intnum);
+			}
 		}
 	}
 
@@ -215,25 +219,36 @@ int_local0_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		u_int32_t ipending)
 {
 	int i;
-	int ret;
 	u_int32_t l0stat;
 	u_int32_t l0mask;
+	struct sgimips_intrhand *ih;
 
-	ret = 0;
 	l0stat = bus_space_read_4(iot, ioh, INT2_LOCAL0_STATUS);
 	l0mask = bus_space_read_4(iot, ioh, INT2_LOCAL0_MASK);
 
-	l0stat &= l0mask;
+	/* The "FIFO full" bit is apparently not latched in the ISR, which
+	   means that it won't be present in l0stat unless we're very lucky.
+	   If no interrupts are pending, assume that it was caused by a full
+	   FIFO and dispatch.
+	 */
+	bus_space_write_4(iot, ioh, INT2_LOCAL0_MASK, l0mask & (0xfe));
+	if ( (l0stat & l0mask) == 0)
+	  l0stat = 0x01;
 
 	for (i = 0; i < 8; i++) {
-		if (l0stat & (1 << i)) {
-			if (intrtab[i].ih_fun != NULL)
-				ret |= (intrtab[i].ih_fun)(intrtab[i].ih_arg);
-			else
-				printf("int0: unexpected local0 interrupt %d\n",
-				    i);
+		if ( (l0stat & l0mask) & (1 << i)) {
+			for (ih = &intrtab[i]; ih != NULL; ih = ih->ih_next) {
+				if (ih->ih_fun != NULL)
+					(ih->ih_fun)(ih->ih_arg);
+				else
+					printf("int0: unexpected local0 "
+					       "interrupt %d\n", i);
+			}
 		}
 	}
+
+	/* Unmask FIFO */
+	bus_space_write_4(iot, ioh, INT2_LOCAL0_MASK, l0mask | 0x01);
 }
 
 void
@@ -241,24 +256,24 @@ int_local1_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		u_int32_t ipending)
 {
 	int i;
-	int ret;
 	u_int32_t l1stat;
 	u_int32_t l1mask;
+	struct sgimips_intrhand *ih;
 
 	l1stat = bus_space_read_4(iot, ioh, INT2_LOCAL1_STATUS);
 	l1mask = bus_space_read_4(iot, ioh, INT2_LOCAL1_MASK);
 
 	l1stat &= l1mask;
 
-	ret = 0;
 	for (i = 0; i < 8; i++) {
 		if (l1stat & (1 << i)) {
-			if (intrtab[8 + i].ih_fun != NULL)
-				ret |= (intrtab[8 + i].ih_fun)
-				    (intrtab[8 + i].ih_arg);
-			else
-				printf("int0: unexpected local1 interrupt %x\n",
-				    8 + i);
+			for (ih = &intrtab[8+i]; ih != NULL; ih = ih->ih_next) {
+				if (ih->ih_fun != NULL)
+					(ih->ih_fun)(ih->ih_arg);
+				else
+					printf("int0: unexpected local1 "
+					       " interrupt %x\n", 8 + i);
+			}
 		}
 	}
 }
@@ -271,14 +286,31 @@ int_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 	if (level < 0 || level >= NINTR)
 		panic("invalid interrupt level");
 
-	if (intrtab[level].ih_fun != NULL)
-	{
-		printf("int0: cannot share interrupts yet.\n");
-		return (void *)NULL;
+	if (intrtab[level].ih_fun == NULL) {
+		intrtab[level].ih_fun = handler;
+		intrtab[level].ih_arg = arg;
+		intrtab[level].ih_next = NULL;
+	} else {
+		struct sgimips_intrhand *n, *ih = malloc(sizeof *ih,
+							 M_DEVBUF, M_NOWAIT);
+
+		if (ih == NULL) {
+			printf("int_intr_establish: can't allocate handler\n"); 
+			return (void *)NULL;
+		}
+
+		ih->ih_fun = handler;
+		ih->ih_arg = arg;
+		ih->ih_next = NULL;
+
+		for (n = &intrtab[level]; n->ih_next != NULL; n = n->ih_next)
+			;	
+		
+		n->ih_next = ih;
+
+		return (void *)NULL;	/* vector already set */
 	}
 
-	intrtab[level].ih_fun = handler;
-	intrtab[level].ih_arg = arg;
 
 	if (level < 8) {
 		mask = bus_space_read_4(iot, ioh, INT2_LOCAL0_MASK);
@@ -384,6 +416,9 @@ int_8254_cal(void)
 void
 int2_wait_fifo(u_int32_t flag)
 {
-	while (bus_space_read_4(iot, ioh, INT2_LOCAL0_STATUS) & flag)
-		;
+	if (ioh == 0)
+		delay(5000);
+	else
+		while (bus_space_read_4(iot, ioh, INT2_LOCAL0_STATUS) & flag)
+			;
 }
