@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.45 2004/08/13 13:28:46 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.46 2004/08/13 13:37:04 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.45 2004/08/13 13:28:46 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.46 2004/08/13 13:37:04 wiz Exp $");
 #endif
 
 /*
@@ -62,7 +62,7 @@ static int checkpattern_fn(const char *, void *);
 static void 
 usage(const char *prog)
 {
-	(void) fprintf(stderr, "usage: %s [-b] [-d lsdir] [-V] [-q] [-s sfx] command args ...\n"
+	(void) fprintf(stderr, "usage: %s [-bqSV] [-d lsdir] [-K pkg_dbdir] [-s sfx] command args ...\n"
 	    "Where 'commands' and 'args' are:\n"
 	    " rebuild                     - rebuild pkgdb from +CONTENTS files\n"
 	    " check [pkg ...]             - check md5 checksum of installed files\n"
