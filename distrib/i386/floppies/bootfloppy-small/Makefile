@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2000/05/05 21:35:51 mycroft Exp $
+#	$NetBSD: Makefile,v 1.7 2000/05/06 05:32:29 mycroft Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -9,8 +9,8 @@ KERN!=	cd $(.CURDIR)/../ramdisk-kernel/; \
         printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.INSTALL_SMALL.gz\n" | \
 	${MAKE} -s -f-
 
-DISKTYPE=	floppy5
-DISKSIZE=	2400
-BLOCK8K=	149
+DISKTYPE=	floppy3
+DISKSIZE=	2880
+BLOCK8K=	179
 
 .include "${TOP}/bootfloppy-common/Makefile.inc"
