@@ -1,18 +1,21 @@
-#	$NetBSD: Makefile.inc,v 1.3 1998/01/06 00:06:09 perry Exp $
-#
 .PATH: ${.CURDIR}/arch/arm32/fplib
 
 SRCS+=fplib_glue.S fplib_libc.c softfloat.c
 
 softfloat.o: softfloat.c
-	${COMPILE.c} -freg-struct-return -c ${.IMPSRC} -o ${.TARGET}
-	@${LD} -x -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -freg-struct-return ${.IMPSRC}
+	@${COMPILE.c} -freg-struct-return ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 softfloat.po: softfloat.c
-	${COMPILE.c} -freg-struct-return -p ${.IMPSRC} -o ${.TARGET}
-	@${LD} -X -r ${.TARGET}
-	@mv a.out ${.TARGET}
+	@echo ${COMPILE.c:Q} -pg -freg-struct-return ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.c} -pg -freg-struct-return ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 softfloat.so: softfloat.c
-	${COMPILE.c} -freg-struct-return -c ${.IMPSRC} -o ${.TARGET}
+	@echo ${COMPILE.c:Q} ${CPICFLAGS} -freg-struct-return ${.IMPSRC} -o ${.TARGET}
+	@${COMPILE.c} ${CPICFLAGS} -freg-struct-return ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
