@@ -1,4 +1,4 @@
-.\"	$NetBSD: ed.1,v 1.21 2002/02/08 01:21:57 ross Exp $
+.\"	$NetBSD: ed.1,v 1.22 2002/09/25 15:18:39 wiz Exp $
 .\"
 .TH ED 1 "21 May 1993"
 .SH NAME
@@ -61,16 +61,14 @@ When an input command, such as
 .I `c'
 (change), is given,
 .B ed
-enters input mode.  This is the primary means
-of adding text to a file.
+enters input mode.
+This is the primary means of adding text to a file.
 In this mode, no commands are available;
-instead, the standard input is written
-directly to the editor buffer.  Lines consist of text up to and
-including a
+instead, the standard input is written directly to the editor buffer.
+Lines consist of text up to and including a
 .IR newline
 character.
-Input mode is terminated by
-entering a single period  (\fI.\fR) on a line.
+Input mode is terminated by entering a single period  (\fI.\fR) on a line.
 
 All
 .B ed
@@ -81,7 +79,8 @@ command deletes lines; the
 .I `m'
 command moves lines, and so on.
 It is possible to modify only a portion of a line by means of replacement,
-as in the example above.  However even here, the
+as in the example above.
+However even here, the
 .I `s'
 command is applied to whole lines at a time.
 
@@ -96,13 +95,15 @@ commands have the structure:
 .RE
 .sp
 The address(es) indicate the line or range of lines to be affected by the
-command.  If fewer addresses are given than the command accepts, then
+command.
+If fewer addresses are given than the command accepts, then
 default addresses are supplied.
 
 .SS OPTIONS
 .TP 8
 -s
-Suppresses diagnostics. This should be used if
+Suppresses diagnostics.
+This should be used if
 .BR ed 's
 standard input is from a script.
 
@@ -115,7 +116,8 @@ command).
 
 .TP 8
 .RI \-p \ string
-Specifies a command prompt.  This may be toggled on and off with the
+Specifies a command prompt.
+This may be toggled on and off with the
 .I `P'
 command.
 
@@ -126,10 +128,12 @@ regular expressions that are normally used.
 
 .TP 8
 .I file
-Specifies the name of a file to read.  If
+Specifies the name of a file to read.
+If
 .I file
 is prefixed with a
-bang (!), then it is interpreted as a shell command.  In this case,
+bang (!), then it is interpreted as a shell command.
+In this case,
 what is read is
 the standard output of
 .I file
@@ -149,13 +153,12 @@ maintains a
 which is
 typically supplied to commands as the default address when none is specified.
 When a file is first read,  the current address is set to the last line
-of the file.  In general, the current address is set to the last line
-affected by a command.
+of the file.
+In general, the current address is set to the last line affected by a command.
 
-A line address is
-constructed from one of the bases in the list below, optionally followed
-by a numeric offset.  The offset may include any combination
-of digits, operators (i.e.,
+A line address is constructed from one of the bases in the list below,
+optionally followed by a numeric offset.
+The offset may include any combination of digits, operators (i.e.,
 .IR + ,
 .I -
 and
@@ -172,9 +175,12 @@ This means "before the first line,"
 and is legal wherever it makes sense.
 
 An address range is two addresses separated either by a comma or
-semi-colon. The value of the first address in a range cannot exceed the
-value of the second.  If only one address is given in a range, then
-the second address is set to the given address.  If an
+semi-colon.
+The value of the first address in a range cannot exceed the
+value of the second.
+If only one address is given in a range, then
+the second address is set to the given address.
+If an
 .IR n- tuple
 of addresses is given where
 .I n \*[Gt] 2,
@@ -184,9 +190,9 @@ the
 If only one address is expected, then the last address is used.
 
 Each address in a comma-delimited range is interpreted relative to the
-current address.  In a semi-colon-delimited range, the first address is
-used to set the current address, and the second address is interpreted
-relative to the first.
+current address.
+In a semi-colon-delimited range, the first address is used to set the
+current address, and the second address is interpreted relative to the first.
 
 
 The following address symbols are recognized.
@@ -247,15 +253,15 @@ is interpreted as
 
 .TP 8
 , \fRor\fB %
-The first through last lines in the buffer.  This is equivalent to
-the address range
+The first through last lines in the buffer.
+This is equivalent to the address range
 .I 1,$.
 
 .TP 8
 ;
 The
-current through last lines in the buffer.  This is equivalent to
-the address range
+current through last lines in the buffer.
+This is equivalent to the address range
 .I .,$.
 
 .TP 8
@@ -303,8 +309,8 @@ used by the
 command for selecting old text to be replaced with new.
 
 In addition to a specifying string literals, regular expressions can
-represent
-classes of strings.  Strings thus represented are said to be matched
+represent classes of strings.
+Strings thus represented are said to be matched
 by the corresponding regular expression.
 If it is possible for a regular expression
 to match several strings in a line, then the left-most longest match is
@@ -323,8 +329,7 @@ matches itself.
 \fR\e\fIc\fR
 Any backslash-escaped character
 .IR c ,
-except for `{', '}', `(', `)', `\*[Lt]' and `\*[Gt]',
-matches itself.
+except for `{', '}', `(', `)', `\*[Lt]' and `\*[Gt]', matches itself.
 
 .TP 8
 \fR.\fR
@@ -350,8 +355,7 @@ to specify sets of characters:
 .PD 0
 \ \ [:blank:]\ \ [:graph:]\ \ [:punct:]\ \ [:xdigit:]
 .sp
-If `-' appears as the first or last
-character of
+If `-' appears as the first or last character of
 .IR char-class ,
 then it matches itself.
 All other characters in
@@ -382,8 +386,7 @@ for an explanation of these constructs.
 Matches any single character, other than newline, not in
 .IR char-class .
 .IR char-class
-is defined
-as above.
+is defined as above.
 
 .TP 8
 ^
@@ -421,15 +424,15 @@ is a number in the range [1,9], expands to the text matched by the
 subexpression.
 For example, the regular expression `\e(.*\e)\e1' matches any string
 consisting of identical adjacent substrings.
-Subexpressions are ordered relative to
-their left delimiter.
+Subexpressions are ordered relative to their left delimiter.
 
 .TP 8
 *
 Matches the single character regular expression or subexpression
-immediately preceding it zero or more times.  If '*' is the first
-character of a regular expression or subexpression, then it matches
-itself.  The `*' operator sometimes yields unexpected results.
+immediately preceding it zero or more times.
+If '*' is the first
+character of a regular expression or subexpression, then it matches itself.
+The `*' operator sometimes yields unexpected results.
 For example, the regular expression `b*' matches the beginning of
 the string `abbb' (as opposed to the substring `bbb'), since a null match
 is the only left-most match.
@@ -462,8 +465,7 @@ All
 .B ed
 commands are single characters, though some require additonal parameters.
 If a command's parameters extend over several lines, then
-each line except for the last
-must be terminated with a backslash (\\).
+each line except for the last must be terminated with a backslash (\\).
 
 In general, at most one command is allowed per line.
 However, most commands accept a print suffix, which is any of
@@ -480,7 +482,8 @@ An interrupt (typically ^C) has the effect of aborting the current command
 and returning the editor to command mode.
 
 .B ed
-recognizes the following commands.  The commands are shown together with
+recognizes the following commands.
+The commands are shown together with
 the default address or address range supplied if none is
 specified (in parenthesis).
 
@@ -492,7 +495,8 @@ The current address is set to last line entered.
 
 .TP 8
 (.,.)c
-Changes lines in the buffer.  The addressed lines are deleted
+Changes lines in the buffer.
+The addressed lines are deleted
 from the buffer, and text is appended in their place.
 Text is entered in input mode.
 The current address is set to last line entered.
@@ -501,7 +505,8 @@ The current address is set to last line entered.
 (.,.)d
 Deletes the addressed lines from the buffer.
 If there is a line after the deleted range, then the current address is set
-to this line. Otherwise the current address is set to the line
+to this line.
+Otherwise the current address is set to the line
 before the deleted range.
 
 .TP 8
@@ -512,8 +517,7 @@ and sets the default filename.
 If
 .I file
 is not specified, then the  default filename is used.
-Any lines in the buffer are deleted before
-the new file is read.
+Any lines in the buffer are deleted before the new file is read.
 The current address is set to the last line read.
 
 .TP 8
@@ -536,8 +540,7 @@ Edits
 unconditionally.
 This is similar to the
 .I e
-command,
-except that unwritten changes are discarded without warning.
+command, except that unwritten changes are discarded without warning.
 The current address is set to the last line read.
 
 .TP 8
@@ -554,8 +557,7 @@ Applies
 .I command-list
 to each of the addressed lines matching a regular expression
 .IR re .
-The current address is set to the
-line currently matched before
+The current address is set to the line currently matched before
 .I command-list
 is executed.
 At the end of the
@@ -585,8 +587,7 @@ command.
 Interactively edits the addressed lines matching a regular expression
 .IR re.
 For each matching line,
-the line is printed,
-the current address is set,
+the line is printed, the current address is set,
 and the user is prompted to enter a
 .IR command-list .
 At the end of the
@@ -599,7 +600,8 @@ The format of
 .I command-list
 is the same as that of the
 .I `g'
-command.  A newline alone acts as a null command list.
+command.
+A newline alone acts as a null command list.
 A single `\*[Am]' repeats the last non-null command list.
 
 .TP 8
@@ -621,8 +623,8 @@ The current address is set to the last line entered.
 
 .TP 8
 (.,.+1)j
-Joins the addressed lines.  The addressed lines are
-deleted from the buffer and replaced by a single
+Joins the addressed lines.
+The addressed lines are deleted from the buffer and replaced by a single
 line containing their joined text.
 The current address is set to the resultant line.
 
@@ -634,8 +636,8 @@ The  line can then be addressed as
 .I 'lc
 (i.e., a single quote followed by
 .I lc
-) in subsequent commands.  The mark is not cleared until the line is
-deleted or otherwise modified.
+) in subsequent commands.
+The mark is not cleared until the line is deleted or otherwise modified.
 
 .TP 8
 (.,.)l
@@ -644,30 +646,28 @@ If a single line fills for than one screen (as might be the case
 when viewing a binary file, for instance), a `--More--'
 prompt is printed on the last line.
 .B ed
-waits until the RETURN key is pressed
-before displaying the next screen.
-The current address is set to the last line
-printed.
+waits until the RETURN key is pressed before displaying the next screen.
+The current address is set to the last line printed.
 
 .TP 8
 (.,.)m(.)
-Moves lines in the buffer.  The addressed lines are moved to after the
+Moves lines in the buffer.
+The addressed lines are moved to after the
 right-hand destination address, which may be the address
 .IR 0
 (zero).
-The current address is set to the
-last line moved.
+The current address is set to the last line moved.
 
 .TP 8
 (.,.)n
 Prints the addressed lines along with
-their line numbers.  The current address is set to the last line
-printed.
+their line numbers.
+The current address is set to the last line printed.
 
 .TP 8
 (.,.)p
-Prints the addressed lines. The current address is set to the last line
-printed.
+Prints the addressed lines.
+The current address is set to the last line printed.
 
 .TP 8
 P
@@ -684,17 +684,18 @@ Q
 Quits ed unconditionally.
 This is similar to the
 .I q
-command,
-except that unwritten changes are discarded without warning.
+command, except that unwritten changes are discarded without warning.
 
 .TP 8
 .RI ($)r \ file
 Reads
 .I file
-to after the addressed line.  If
+to after the addressed line.
+If
 .I file
 is not specified, then the default
-filename is used.  If there was no default filename prior to the command,
+filename is used.
+If there was no default filename prior to the command,
 then the default filename is set to
 .IR file .
 Otherwise, the default filename is unchanged.
@@ -702,9 +703,7 @@ The current address is set to the last line read.
 
 .TP 8
 .RI ($)r \ !command
-Reads
-to after the addressed line
-the standard output of
+Reads to after the addressed line the standard output of
 .IR `!command' ,
 (see the
 .RI ! command
@@ -720,8 +719,7 @@ The current address is set to the last line read.
 .HP
 .RI (.,.)s  /re/replacement/n
 .br
-Replaces text in the addressed lines
-matching a regular expression
+Replaces text in the addressed lines matching a regular expression
 .I re
 with
 .IR replacement .
@@ -808,8 +806,7 @@ Copies (i.e., transfers) the addressed lines to after the right-hand
 destination address, which may be the address
 .IR 0
 (zero).
-The current address is set to the last line
-copied.
+The current address is set to the last line copied.
 
 .TP 8
 u
@@ -852,8 +849,8 @@ Any previous contents of
 is lost without warning.
 If there is no default filename, then the default filename is set to
 .IR file,
-otherwise it is unchanged.  If no filename is specified, then the default
-filename is used.
+otherwise it is unchanged.
+If no filename is specified, then the default filename is used.
 The current address is unchanged.
 
 .TP 8
@@ -884,9 +881,9 @@ The current address is unchanged.
 
 .TP 8
 x
-Prompts for an encryption key which is used in subsequent reads and
-writes.  If a newline alone is entered as the key, then encryption is
-turned off.  Otherwise, echoing is disabled while a key is read.
+Prompts for an encryption key which is used in subsequent reads and writes.
+If a newline alone is entered as the key, then encryption is turned off.
+Otherwise, echoing is disabled while a key is read.
 Encryption/decryption is done using the
 .IR bdes (1)
 algorithm.
@@ -895,7 +892,8 @@ algorithm.
 .RI (.+1)z n
 Scrolls
 .I n
-lines at a time starting at addressed line.  If
+lines at a time starting at addressed line.
+If
 .I n
 is not specified, then the current window size is used.
 The current address is set to the last line printed.
@@ -928,8 +926,7 @@ Prints the line number of the addressed line.
 
 .TP 8
 (.+1)newline
-Prints the addressed line, and sets the current address to
-that line.
+Prints the addressed line, and sets the current address to that line.
 
 .SH ENVIRONMENTAL VARIABLES
 .TP
@@ -966,13 +963,13 @@ Addison-Wesley, 1981.
 processes
 .I file
 arguments for backslash escapes, i.e.,  in a filename,
-any characters preceded by a backslash (\\) are
-interpreted literally.
+any characters preceded by a backslash (\\) are interpreted literally.
 
 If a text (non-binary) file is not terminated by a newline character,
 then
 .B ed
-appends one on reading/writing it.  In the case of a binary file,
+appends one on reading/writing it.
+In the case of a binary file,
 .B ed
 does not append a newline on reading/writing.
 
@@ -983,8 +980,7 @@ When an error occurs,
 .B ed
 prints a `?' and either returns to command mode
 or exits if its input is from a script.
-An explanation of the last error can be
-printed with the
+An explanation of the last error can be printed with the
 .I `h'
 (help) command.
 
@@ -1008,7 +1004,6 @@ the command list is executed only once.
 
 If diagnostics are not disabled, attempting to quit
 .B ed
-or edit another file before writing a modified buffer
-results in an error.
+or edit another file before writing a modified buffer results in an error.
 If the command is entered a second time, it succeeds,
 but any changes to the buffer are lost.

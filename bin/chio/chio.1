@@ -1,4 +1,4 @@
-.\"	$NetBSD: chio.1,v 1.13 2002/02/08 01:21:55 ross Exp $
+.\"	$NetBSD: chio.1,v 1.14 2002/09/25 15:18:37 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,11 +79,13 @@ There are four element types:
 .Pa portal
 (import/export), and
 .Pa drive
-(data transfer).  In this command description, the shorthand
+(data transfer).
+In this command description, the shorthand
 .Ic ET
 will be used to represent an element type, and
 .Ic EU
-will be used to represent an element unit.  For example, to represent
+will be used to represent an element unit.
+For example, to represent
 the first robotic arm in the changer, the ET would be
 .Dq picker
 and the EU would be
@@ -109,7 +111,8 @@ is specified, the media unit will be inverted before insertion.
 .Op Ar inv1
 .Op Ar inv2
 .Pp
-Performs a media unit exchange operation.  The media unit in
+Performs a media unit exchange operation.
+The media unit in
 .Pa \*[Lt]src ET/EU\*[Gt]
 is moved to
 .Pa \*[Lt]dst1 ET/EU\*[Gt]
@@ -173,7 +176,8 @@ Configure the changer to use picker
 .Oo Ar \*[Lt]type\*[Gt] Oo unit Oo count Oc Oc Oc
 .Op Ar voltags
 .Pp
-Report the status of all elements in the changer.  If
+Report the status of all elements in the changer.
+If
 .Pa \*[Lt]type\*[Gt]
 is specified, report the status of all elements of type
 .Pa \*[Lt]type\*[Gt] .
@@ -217,8 +221,9 @@ operation on the changer.
 .Ar \*[Lt]slot\*[Gt]
 .Pp
 This command is provided for controlling CD-ROM changer mechanisms which
-cannot use the standard changer control interface.  ATAPI CD-ROM changers
-fall into this category.  There are 3 sub-commands:
+cannot use the standard changer control interface.
+ATAPI CD-ROM changers fall into this category.
+There are 3 sub-commands:
 .Bl -tag -width indent
 .It Nm load
 Loads the media from the specified slot into the CD-ROM drive.
@@ -252,6 +257,7 @@ Returns status of all elements in the second changer.
 The
 .Nm
 program and SCSI changer driver were originally written by Jason R. Thorpe
-for And Communications, http://www.and.com/.  Additional development was
+for And Communications, http://www.and.com/.
+Additional development was
 done by Jason R. Thorpe for the Numerical Aerospace Simulation Facility,
 NASA Ames Research Center.

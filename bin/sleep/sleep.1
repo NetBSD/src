@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.1,v 1.15 2002/02/08 01:22:00 ross Exp $
+.\"	$NetBSD: sleep.1,v 1.16 2002/09/25 15:18:43 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,10 +58,9 @@ below).
 Note: The
 .Nx
 .Nm
-command will accept and honor a non-integer number of specified
-seconds. This is a non-portable extension, and its use will nearly
-guarantee that a shell script will not execute properly on another
-system.
+command will accept and honor a non-integer number of specified seconds.
+This is a non-portable extension, and its use will nearly guarantee that
+a shell script will not execute properly on another system.
 .Sh EXIT STATUS
 The
 .Nm
@@ -82,7 +81,8 @@ number seconds later:
 .Dl (sleep 1800; sh command_file \*[Gt]\*[Am] errors)\*[Am]
 .Pp
 This incantation would wait a half hour before
-running the script command_file. (See the
+running the script command_file.
+(See the
 .Xr at 1
 utility.)
 .Pp

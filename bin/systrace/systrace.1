@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.12 2002/08/28 03:52:46 itojun Exp $
+.\"	$NetBSD: systrace.1,v 1.13 2002/09/25 15:18:43 wiz Exp $
 .\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -49,15 +49,18 @@
 The
 .Nm
 utility monitors and controls an application's access to the system by
-enforcing access policies for system calls.  The
+enforcing access policies for system calls.
+The
 .Nm
 utility might be used to trace an untrusted application's access to
-the system.  Alternatively, it might be used to protect the system
+the system.
+Alternatively, it might be used to protect the system
 from software bugs (such as buffer overflows) by constraining a
 daemon's access to the system.
 .Pp
 The access policy can be generated interactively or obtained from a
-policy file.  Operations not covered by the policy raise an alarm and
+policy file.
+Operations not covered by the policy raise an alarm and
 allow an user to refine the currently configured policy.
 .Pp
 The options are as follows:
@@ -71,10 +74,10 @@ Automatically generate a policy that allows every operation the
 application executes.
 The created policy functions as a base that can be refined.
 .It Fl u
-Do not perform aliasing on system call names.  Aliasing is enabled
-by default to group similar system calls into a single compound
-name.  For example, system calls that read from the file system
-like
+Do not perform aliasing on system call names.
+Aliasing is enabled by default to group similar system calls into a
+single compound name.
+For example, system calls that read from the file system like
 .Fn lstat
 and
 .Fn access
@@ -130,7 +133,8 @@ is used to return an
 .Xr errno 2
 value to the system call when using a
 .Va deny
-action.  The values
+action.
+The values
 .Do
 inherit
 .Dc
