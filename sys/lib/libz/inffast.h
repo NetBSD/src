@@ -1,7 +1,7 @@
-/* $NetBSD: inffast.h,v 1.3 1998/11/03 15:49:39 tron Exp $ */
+/* $NetBSD: inffast.h,v 1.4 2002/03/12 00:42:24 fvdl Exp $ */
 
 /* inffast.h -- header to use inffast.c
- * Copyright (C) 1995-1998 Mark Adler
+ * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
@@ -10,7 +10,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-extern int inflate_fast OF((
+extern int inflate_fast __P((
     uInt,
     uInt,
     inflate_huft *,
