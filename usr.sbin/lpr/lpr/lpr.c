@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.15 1997/10/05 15:12:20 mrg Exp $	*/
+/*	$NetBSD: lpr.c,v 1.16 1997/10/19 19:41:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.15 1997/10/05 15:12:20 mrg Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.16 1997/10/19 19:41:57 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -606,7 +606,7 @@ test(file)
 		printf("%s: cannot stat %s\n", name, file);
 		goto bad;
 	}
-	if ((statb.st_mode & S_IFMT) == S_IFDIR) {
+	if (S_ISDIR(statb.st_mode)) {
 		printf("%s: %s is a directory\n", name, file);
 		goto bad;
 	}
