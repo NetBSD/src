@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.48 2001/01/06 12:14:39 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.49 2001/01/21 18:56:38 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -145,6 +145,8 @@
 #include <dev/scsipi/scsipi_disk.h>
 #include <dev/scsipi/scsi_disk.h>
 #include <dev/scsipi/scsi_changer.h>
+
+#define SHORT_INQUIRY_LENGTH    36 /* XXX */
 
 #include <dev/ata/atavar.h>	/* XXX */
 #include <sys/disk.h>		/* XXX */
@@ -335,6 +337,10 @@ struct umass_softc {
 	 * Shuttle E-USB
 	 */
 #	define NO_START_STOP		0x04
+	/* Don't ask for full inquiry data (255 bytes).
+	 * Yano ATAPI-USB
+	 */
+#       define FORCE_SHORT_INQUIRY      0x08
 
 	unsigned int		proto;
 #	define PROTO_UNKNOWN	0x0000		/* unknown protocol */
@@ -693,6 +699,19 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		sc->protocol = UIPROTO_MASS_CBI;
 		sc->quirks |= NO_TEST_UNIT_READY | NO_START_STOP;
 		return (UMATCH_VENDOR_PRODUCT);
+	}
+
+	if (UGETW(dd->idVendor) == USB_VENDOR_YANO
+	    && UGETW(dd->idProduct) == USB_PRODUCT_YANO_U640MO) {
+		sc->proto = PROTO_ATAPI | PROTO_CBI_I;
+		sc->quirks |= FORCE_SHORT_INQUIRY;
+		return (UMATCH_VENDOR_PRODUCT);
+	}
+
+	if (UGETW(dd->idVendor) == USB_VENDOR_SONY
+	    && UGETW(dd->idProduct) == USB_PRODUCT_SONY_MSC) {
+		printf("XXX Sony MSC\n");
+		sc->quirks |= FORCE_SHORT_INQUIRY;
 	}
 
 	if (vendor == USB_VENDOR_YEDATA &&
@@ -3153,6 +3172,8 @@ umass_scsipi_cmd(struct scsipi_xfer *xs)
 	}
 #endif
 
+	/* XXX should use transform */
+
 	if (xs->cmd->opcode == SCSI_MODE_SENSE &&
 	    (sc_link->quirks & SDEV_NOMODESENSE)) {
 		/*printf("%s: SCSI_MODE_SENSE\n", USBDEVNAME(sc->sc_dev));*/
@@ -3165,6 +3186,14 @@ umass_scsipi_cmd(struct scsipi_xfer *xs)
 		/*printf("%s: START_STOP\n", USBDEVNAME(sc->sc_dev));*/
 		xs->error = XS_NOERROR;
 		goto done;
+	}
+
+	if (xs->cmd->opcode == INQUIRY &&
+	    (sc->quirks & FORCE_SHORT_INQUIRY)) {
+		/* some drives wedge when asked for full inquiry information. */
+		memcpy(&trcmd, cmd, sizeof trcmd);
+		trcmd.bytes[4] = SHORT_INQUIRY_LENGTH;
+		cmd = &trcmd;
 	}
 
 	dir = DIR_NONE;
@@ -3193,7 +3222,6 @@ umass_scsipi_cmd(struct scsipi_xfer *xs)
 			goto done;
 		}
 		cmd = &trcmd;
-
 	}
 
 	if (xs->xs_control & XS_CTL_POLL) {
@@ -3431,8 +3459,8 @@ umass_ufi_transform(struct umass_softc *sc, struct scsipi_generic *cmd,
 		 */
 		DPRINTF(UDMASS_UFI, ("%s: Converted TEST_UNIT_READY "
 			"to START_UNIT\n", USBDEVNAME(sc->sc_dev)));
-		cmd->opcode = START_STOP;
-		cmd->bytes[3] = SSS_START;
+		rcmd->opcode = START_STOP;
+		rcmd->bytes[3] = SSS_START;
 		return 1;
 	} 
 
