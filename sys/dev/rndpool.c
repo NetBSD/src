@@ -1,4 +1,4 @@
-/*      $NetBSD: rndpool.c,v 1.8 1999/01/27 10:41:01 mrg Exp $        */
+/*      $NetBSD: rndpool.c,v 1.9 2000/06/05 23:42:34 sommerfeld Exp $        */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -60,9 +60,18 @@ rndpool_init(rp)
 	rndpool_t *rp;
 {
 
-	rp->cursor = RND_POOLWORDS - 1;
-	rp->entropy = 0;
+	rp->cursor = 0;
 	rp->rotate = 0;
+
+	memset(&rp->stats, 0, sizeof(rp->stats));
+
+	rp->stats.curentropy = 0;
+	rp->stats.poolsize = RND_POOLWORDS;
+	rp->stats.threshold = RND_ENTROPY_THRESHOLD;
+	rp->stats.maxentropy = RND_POOLBITS;
+
+	assert(RND_ENTROPY_THRESHOLD*2 <= 20); /* XXX sha knowledge */
+	
 }
 
 u_int32_t
@@ -70,19 +79,17 @@ rndpool_get_entropy_count(rp)
 	rndpool_t *rp;
 {
 
-	return rp->entropy;
+	return rp->stats.curentropy;
 }
 
-void
-rndpool_set_entropy_count(rp, entropy)
+void rndpool_get_stats(rp, rsp, size)
 	rndpool_t *rp;
-	u_int32_t  entropy;
+	void *rsp;
+	int size;
 {
-
-	rp->entropy = entropy;
-	if (rp->entropy > RND_POOLBITS)
-		rp->entropy = RND_POOLBITS;
+	memcpy(rsp, &rp->stats, size);
 }
+
 
 void
 rndpool_increment_entropy_count(rp, entropy)
@@ -90,9 +97,12 @@ rndpool_increment_entropy_count(rp, entropy)
 	u_int32_t  entropy;
 {
 
-	rp->entropy += entropy;
-	if (rp->entropy > RND_POOLBITS)
-		rp->entropy = RND_POOLBITS;
+	rp->stats.curentropy += entropy;
+	rp->stats.added += entropy;
+	if (rp->stats.curentropy > RND_POOLBITS) {
+		rp->stats.discarded += (rp->stats.curentropy - RND_POOLBITS);
+		rp->stats.curentropy = RND_POOLBITS;
+	}
 }
 
 u_int32_t *
@@ -118,12 +128,11 @@ rndpool_add_one_word(rp, val)
 	rndpool_t *rp;
 	u_int32_t  val;
 {
-
 	/*
 	 * Steal some values out of the pool, and xor them into the
 	 * word we were given.
 	 *
-	 * Store the new value into the pool using xor.  This will
+	 * Mix the new value into the pool using xor.  This will
 	 * prevent the actual values from being known to the caller
 	 * since the previous values are assumed to be unknown as well.
 	 */
@@ -133,14 +142,15 @@ rndpool_add_one_word(rp, val)
 	val ^= rp->pool[(rp->cursor + TAP4) & (RND_POOLWORDS - 1)];
 	val ^= rp->pool[(rp->cursor + TAP5) & (RND_POOLWORDS - 1)];
 	rp->pool[rp->cursor++] ^=
-	  ((val << rp->rotate) | (val >> (31 - rp->rotate)));
+	  ((val << rp->rotate) | (val >> (32 - rp->rotate)));
 
 	/*
 	 * If we have looped around the pool, increment the rotate
-	 * variable so the next value will get xored in slightly
-	 * rotated.  Increment by a value that is relativly prime to
-	 * the word size to try to spread the bits throughout the pool
-	 * quickly when the pool is empty.
+	 * variable so the next value will get xored in rotated to
+	 * a different position.
+	 * Increment by a value that is relativly prime to the word size
+	 * to try to spread the bits throughout the pool quickly when the
+	 * pool is empty.
 	 */
 	if (rp->cursor == RND_POOLWORDS) {
 		rp->cursor = 0;
@@ -148,9 +158,10 @@ rndpool_add_one_word(rp, val)
 	}
 }
 
+#if 0
 /*
- * Add one byte to the pool.  Update entropy estimate if an estimate
- * was given.
+ * Stir a 32-bit value (with possibly less entropy than that) into the pool.
+ * Update entropy estimate.
  */
 void
 rndpool_add_uint32(rp, val, entropy)
@@ -158,17 +169,16 @@ rndpool_add_uint32(rp, val, entropy)
 	u_int32_t  val;
 	u_int32_t  entropy;
 {
-	val = (val << rp->rotate) | (val >> rp->rotate);
-	rp->rotate = (rp->rotate + 1) & 0x07;
-	
 	rndpool_add_one_word(rp, val);
-	
-	if (entropy) {
-		rp->entropy += entropy;
-		if (rp->entropy > RND_POOLBITS)
-			rp->entropy = RND_POOLBITS;
+
+	rp->entropy += entropy;
+	rp->stats.added += entropy;
+	if (rp->entropy > RND_POOLBITS) {
+		rp->stats.discarded += (rp->entropy - RND_POOLBITS);
+		rp->entropy = RND_POOLBITS;
 	}
 }
+#endif
 
 /*
  * add a buffer's worth of data to the pool.
@@ -192,9 +202,8 @@ rndpool_add_data(rp, p, len, entropy)
 		buf += 4;
 	}
 
-	val = 0;
-
 	if (len != 0) {
+		val = 0;
 		switch (len) {
 		case 3:
 			val = *buf++;
@@ -207,10 +216,12 @@ rndpool_add_data(rp, p, len, entropy)
 		rndpool_add_one_word(rp, val);
 	}
 
-	if (entropy) {
-		rp->entropy += entropy;
-		if (rp->entropy > RND_POOLBITS)
-			rp->entropy = RND_POOLBITS;
+	rp->stats.curentropy += entropy;
+	rp->stats.added += entropy;
+
+	if (rp->stats.curentropy > RND_POOLBITS) {
+		rp->stats.discarded += (rp->stats.curentropy - RND_POOLBITS);
+		rp->stats.curentropy = RND_POOLBITS;
 	}
 }
 
@@ -235,8 +246,8 @@ rndpool_extract_data(rp, p, len, mode)
 {
 	u_int      i;
 	SHA1_CTX    hash;
-	u_int32_t  digest[5];
-	u_int32_t  remain;
+	u_char      digest[20];	/* XXX SHA knowledge */
+	u_int32_t  remain, deltae, count;
 	u_int8_t  *buf;
 	int        good;
 
@@ -246,47 +257,57 @@ rndpool_extract_data(rp, p, len, mode)
 	if (mode == RND_EXTRACT_ANY)
 		good = 1;
 	else
-		good = (rp->entropy >= 8 * RND_ENTROPY_THRESHOLD);
+		good = (rp->stats.curentropy >= (8 * RND_ENTROPY_THRESHOLD));
 
-	/*
-	 * While bytes are requested, stir the pool with a hash function and
-	 * copy some of the bytes from that hash out, preserving the secret
-	 * hash value itself.
-	 */
+	assert(RND_ENTROPY_THRESHOLD*2 <= 20); /* XXX SHA knowledge */
+	
 	while (good && (remain != 0)) {
+		/*
+		 * While bytes are requested, compute the hash of the pool,
+		 * and then "fold" the hash in half with XOR, keeping the
+		 * exact hash value secret, as it will be stirred back into
+		 * the pool.
+		 *
+		 * XXX this approach needs examination by competant
+		 * cryptographers!  It's rather expensive per bit but
+		 * also involves every bit of the pool in the
+		 * computation of every output bit..
+		 */
 		SHA1Init(&hash);
 		SHA1Update(&hash, (u_int8_t *)rp->pool, RND_POOLWORDS * 4);
-		SHA1Final((u_int8_t *)digest, &hash);
+		SHA1Final(digest, &hash);
     
 		/*
-		 * Add the hash into the pool.  This helps stir the pool a
-		 * bit, and also guarantees that the next hash will generate
-		 * a different value if no new values were added to the
-		 * pool.
+		 * Stir the hash back into the pool.  This guarantees
+		 * that the next hash will generate a different value
+		 * if no new values were added to the pool.
 		 */
-		for (i = 0 ; i < 5 ; i++)
-			rndpool_add_one_word(rp, digest[i]);
-		
-		if (remain < RND_ENTROPY_THRESHOLD) {
-			bcopy(digest, buf, remain);
-			buf += remain;
-			if (rp->entropy >= remain * 8)
-				rp->entropy -= remain * 8;
-			else
-				rp->entropy = 0;
-			remain = 0;
-		} else {
-			bcopy(digest, buf, RND_ENTROPY_THRESHOLD);
-			buf += RND_ENTROPY_THRESHOLD;
-			remain -= RND_ENTROPY_THRESHOLD;
-			if (rp->entropy >= 8 * RND_ENTROPY_THRESHOLD)
-				rp->entropy -= 8 * RND_ENTROPY_THRESHOLD;
-			else
-				rp->entropy = 0;
+		for (i = 0 ; i < 5 ; i++) {
+			u_int32_t word;
+			memcpy(&word, &digest[i*4], 4);
+			rndpool_add_one_word(rp, word);
 		}
 
+		count = min(remain, RND_ENTROPY_THRESHOLD);
+
+		for (i=0; i<count; i++)
+			buf[i] = digest[i] ^ digest[i+RND_ENTROPY_THRESHOLD];
+
+		buf += count;
+		deltae = count * 8;
+		remain -= count;
+
+		deltae = min(deltae, rp->stats.curentropy);
+
+		rp->stats.removed += deltae;
+		rp->stats.curentropy -= deltae;
+
+		if (rp->stats.curentropy == 0)
+			rp->stats.generated += (count * 8) - deltae;
+		
 		if (mode == RND_EXTRACT_GOOD)
-			good = (rp->entropy >= 8 * RND_ENTROPY_THRESHOLD);
+			good = (rp->stats.curentropy >=
+			    (8 * RND_ENTROPY_THRESHOLD));
 	}
 	
 	bzero(&hash, sizeof(hash));
