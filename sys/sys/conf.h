@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.102 2002/06/17 16:23:58 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.103 2002/06/18 05:30:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -335,9 +335,10 @@ extern struct cdevsw cdevsw[];
 
 /* open, close, read, write, ioctl */
 #define	cdev_systrace_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
-	0,  dev_noimpl(poll,enodev), dev_noimpl(mmap,enodev) }
+	dev_init(c,n,open), dev_noimpl(close,enodev), \
+	dev_noimpl(read,enodev), dev_noimpl(write,enodev), \
+	dev_noimpl(ioctl,enodev), dev_noimpl(stop,enodev), \
+	0, seltrue, dev_noimpl(mmap,enodev) }
 
 /* (open), (close), read, write */
 #define cdev_swap_init(c,n) { \
