@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.lockd.8,v 1.3 1998/02/06 06:23:18 perry Exp $
+.\"	$NetBSD: rpc.lockd.8,v 1.4 2000/06/07 14:34:40 bouyer Exp $
 .\"
 .\" Copyright (c) 1995 A.R.Gordon, andrew.gordon@net-tel.co.uk
 .\" All rights reserved.
@@ -41,6 +41,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d Ar debug_level
+.Op Fl g Ar grace period
 .Sh DESCRIPTION
 The
 .Nm
@@ -63,6 +64,13 @@ LOG_DEBUG and facility LOG_DAEMON.  Specifying a debug_level of 1 results
 in the generation of one log line per protocol operation.  Higher
 debug levels can be specified, causing display of operation arguments
 and internal operations of the daemon.
+.It Fl g
+The
+.Fl g
+option allow to specify the grace period, in second. During the grace period
+.Nm
+only accepts requests from hosts which are reinitialising locks which
+existed before the server restart. Default is 30 seconds.
 .El
 .Pp
 Error conditions are logged to syslog, irrespective of the debug level,
@@ -94,11 +102,7 @@ but there is currently no means for a
 .Nx
 client to establish locks).
 .Pp
-No actual file or record locking is done.  As such, it is recommended that
-NFS locking services be enabled only in environments where vendor NFS
-implmentations require them.  Applications which depend upon NFS file or
-record locking to protect creation and modification of files may not
-operate properly.  Local filesystem locking mechanisms are unaffected.
+The current implementation serialises locks requests that could be shared.
 .Sh STANDARDS
 The implementation is based on the specification in X/Open CAE Specification
 C218, "Protocols for X/Open PC Interworking: XNFS, Issue 4", ISBN 1 872630 66 9
