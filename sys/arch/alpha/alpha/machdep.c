@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.88 1997/09/19 22:00:34 mjacob Exp $ */
+/* $NetBSD: machdep.c,v 1.89 1997/09/23 23:15:51 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 1997/09/19 22:00:34 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 1997/09/23 23:15:51 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,6 @@ u_int32_t no_optimize;
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[128];
-const struct cpusw *cpu_fn_switch;		/* function switch */
 
 struct	user *proc0paddr;
 
@@ -184,6 +183,8 @@ char booted_kernel[64];
 
 int bootinfo_valid;
 struct bootinfo bootinfo;
+
+struct platform platform;
 
 #ifdef DDB
 /* start and end of kernel symbol table */
@@ -435,43 +436,12 @@ alpha_init(pfn, ptb, bim, bip)
 	 * Find out what hardware we're on, and remember its type name.
 	 */
 	cputype = hwrpb->rpb_type;
-	if (cputype < 0 || cputype > ncpusw) {
-unknown_cputype:
-		printf("\n");
-		printf("Unknown system type %d.\n", cputype);
-		printf("\n");
-		panic("unknown system type");
+	if (unknown_cpu(cputype)) {
+		nocpu();
+		/* NOTREACHED */
 	}
-	cpu_fn_switch = &cpusw[cputype];
-	if (cpu_fn_switch->family == NULL)
-		goto unknown_cputype;
-	if (cpu_fn_switch->option == NULL) {
-		printf("\n");
-		printf("NetBSD does not currently support system type %d\n",
-		    cputype);
-		printf("(%s family).\n", cpu_fn_switch->family);
-		printf("\n");
-		panic("unsupported system type");
-	}
-	if (!cpu_fn_switch->present) {
-		printf("\n");
-		printf("Support for system type %d (%s family) is\n", cputype,
-		    cpu_fn_switch->family);
-		printf("not present in this kernel.  Build a kernel with \"options %s\"\n",
-		    cpu_fn_switch->option);
-		printf("to include support for this system type.\n");
-		printf("\n");
-		panic("support for system not present");
-	}
-
-	if ((*cpu_fn_switch->model_name)() != NULL)
-		strncpy(cpu_model, (*cpu_fn_switch->model_name)(),
-		    sizeof cpu_model - 1);
-	else {
-		strncpy(cpu_model, cpu_fn_switch->family, sizeof cpu_model - 1);
-		strcat(cpu_model, " family");		/* XXX */
-	}
-	cpu_model[sizeof cpu_model - 1] = '\0';
+	cpuinit[cputype]();
+	strcpy(cpu_model, platform.model);
 
 	/* XXX SANITY CHECKING.  SHOULD GO AWAY */
 	/* XXX We should always be running on the the primary. */
@@ -700,8 +670,8 @@ unknown_cputype:
 void
 consinit()
 {
-
-	(*cpu_fn_switch->cons_init)();
+	if (platform.cons_init)
+		(*platform.cons_init)();
 	pmap_unmap_prom();
 
 #ifdef DDB

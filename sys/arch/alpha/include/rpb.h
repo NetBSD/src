@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.12 1997/04/06 08:47:40 cgd Exp $ */
+/* $NetBSD: rpb.h,v 1.13 1997/09/23 23:17:51 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -123,7 +123,9 @@ struct rpb {
 #define	SV_ST_MUSTANG2_4_166	0x00000800	/* Mustang II;	200 4/166 */
 #define	SV_ST_MUSTANG2_4_233	0x00001000	/* Mustang II;	200 4/233 */
 #define	SV_ST_AVANTI_XXX	0x00001400	/* also Avanti;	400 4/233 */
+#define	SV_ST_AVANTI_4_266	0x00002000
 #define	SV_ST_MUSTANG2_4_100	0x00002400	/* Mustang II;	200 4/100 */
+#define	SV_ST_AVANTI_4_233	0x0000a800	/* AlphaStation 255/233 */
 
 	u_int64_t	rpb_variation;		/*  58 */
 

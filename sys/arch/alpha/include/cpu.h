@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.17 1997/07/25 00:04:36 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.18 1997/09/23 23:17:49 mjacob Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,6 +135,7 @@ struct trapframe;
 extern int cold;
 extern struct proc *fpcurproc;
 extern struct rpb *hwrpb;
+extern volatile int mc_expected, mc_received;
 
 void	XentArith __P((u_int64_t, u_int64_t, u_int64_t));	/* MAGIC */
 void	XentIF __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
@@ -146,6 +147,7 @@ void	XentUna __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
 void	alpha_init __P((u_long, u_long, u_long, u_long));
 void	ast __P((struct trapframe *));
 int	badaddr	__P((void *, size_t));
+int	badaddr_read __P((void *, size_t, void *));
 void	child_return __P((struct proc *p));
 void	configure __P((void));
 u_int64_t console_restart __P((u_int64_t, u_int64_t, u_int64_t));
@@ -155,14 +157,15 @@ void	exception_return __P((void));				/* MAGIC */
 void	frametoreg __P((struct trapframe *, struct reg *));
 long	fswintrberr __P((void));				/* MAGIC */
 void	init_prom_interface __P((void));
-void	interrupt __P((unsigned long, unsigned long, unsigned long,
-	    struct trapframe *));
+void	interrupt
+	__P((unsigned long, unsigned long, unsigned long, struct trapframe *));
+void	machine_check
+	__P((unsigned long, struct trapframe *, unsigned long, unsigned long));
 u_int64_t hwrpb_checksum __P((void));
 void	hwrpb_restart_setup __P((void));
 void	regdump __P((struct trapframe *));
 void	regtoframe __P((struct reg *, struct trapframe *));
 void	savectx __P((struct pcb *));
-void	set_clockintr __P((void));
 void	set_iointr __P((void (*)(void *, unsigned long)));
 void    switch_exit __P((struct proc *));			/* MAGIC */
 void	switch_trampoline __P((void));				/* MAGIC */
