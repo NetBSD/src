@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.9 1994/06/29 06:34:24 cgd Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.10 1994/10/20 04:26:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -439,7 +439,7 @@ fifo_pathconf(ap)
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
 		int a_name;
-		int *a_retval;
+		register_t *a_retval;
 	} */ *ap;
 {
 

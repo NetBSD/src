@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.18 1994/06/29 06:32:50 cgd Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.19 1994/10/20 04:23:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,53 +43,51 @@
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 
-struct reboot_args {
-	int	opt;
-};
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+
 /* ARGSUSED */
 int
 reboot(p, uap, retval)
 	struct proc *p;
-	struct reboot_args *uap;
-	int *retval;
+	struct reboot_args /* {
+		syscallarg(int) opt;
+	} */ *uap;
+	register_t *retval;
 {
 	int error;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
-	boot(uap->opt);
+	boot(SCARG(uap, opt));
 	return (0);
 }
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS)
 
-struct ogethostname_args {
-	char	*hostname;
-	u_int	len;
-};
 /* ARGSUSED */
 int
-ogethostname(p, uap, retval)
+compat_43_gethostname(p, uap, retval)
 	struct proc *p;
-	struct ogethostname_args *uap;
-	int *retval;
+	struct compat_43_gethostname_args /* {
+		syscallarg(char *) hostname;
+		syscallarg(u_int) len;
+	} */ *uap;
+	register_t *retval;
 {
 	int name;
 
 	name = KERN_HOSTNAME;
-	return (kern_sysctl(&name, 1, uap->hostname, &uap->len, 0, 0));
+	return (kern_sysctl(&name, 1, SCARG(uap, hostname), &SCARG(uap, len),
+	    0, 0));
 }
 
-struct osethostname_args {
-	char	*hostname;
-	u_int	len;
-};
 /* ARGSUSED */
 int
-osethostname(p, uap, retval)
+compat_43_sethostname(p, uap, retval)
 	struct proc *p;
-	register struct osethostname_args *uap;
-	int *retval;
+	register struct compat_43_sethostname_args *uap;
+	register_t *retval;
 {
 	int name;
 	int error;
@@ -97,43 +95,46 @@ osethostname(p, uap, retval)
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
 	name = KERN_HOSTNAME;
-	return (kern_sysctl(&name, 1, 0, 0, uap->hostname, uap->len));
+	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, hostname),
+	    SCARG(uap, len)));
 }
 
 /* ARGSUSED */
 int
-ogethostid(p, uap, retval)
+compat_43_gethostid(p, uap, retval)
 	struct proc *p;
 	void *uap;
-	int *retval;
+	register_t *retval;
 {
 
-	*(long *)retval = hostid;
+	*(int32_t *)retval = hostid;
 	return (0);
 }
 #endif /* COMPAT_43 || COMPAT_SUNOS */
 
 #ifdef COMPAT_43
-struct osethostid_args {
-	long	hostid;
-};
 /* ARGSUSED */
 int
-osethostid(p, uap, retval)
+compat_43_sethostid(p, uap, retval)
 	struct proc *p;
-	struct osethostid_args *uap;
-	int *retval;
+	struct compat_43_sethostid_args /* {
+		syscallarg(int32_t) hostid;
+	} */ *uap;
+	register_t *retval;
 {
 	int error;
 
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
-	hostid = uap->hostid;
+	hostid = SCARG(uap, hostid);
 	return (0);
 }
 
 int
-oquota()
+compat_43_quota(p, uap, retval)
+	struct proc *p;
+	void *uap;
+	register_t *retval;
 {
 
 	return (ENOSYS);
@@ -141,33 +142,32 @@ oquota()
 #endif /* COMPAT_43 */
 
 #if defined(COMPAT_09) || defined(COMPAT_SUNOS) || defined(COMPAT_HPUX)
-struct ogetdomainname_args {
-	char	*domainname;
-	u_int	len;
-};
 /* ARGSUSED */
 int
-ogetdomainname(p, uap, retval)
+compat_09_getdomainname(p, uap, retval)
 	struct proc *p;
-	struct ogetdomainname_args *uap;
-	int *retval;
+	struct compat_09_getdomainname_args /* {
+		syscallarg(char *) domainname;
+		syscallarg(int) len;
+	} */ *uap;
+	register_t *retval;
 {
 	int name;
 
 	name = KERN_DOMAINNAME;
-	return (kern_sysctl(&name, 1, uap->domainname, &uap->len, 0, 0));
+	return (kern_sysctl(&name, 1, SCARG(uap, domainname),
+	    &SCARG(uap, len), 0, 0));
 }
 
-struct osetdomainname_args {
-	char	*domainname;
-	u_int	len;
-};
 /* ARGSUSED */
 int
-osetdomainname(p, uap, retval)
+compat_09_setdomainname(p, uap, retval)
 	struct proc *p;
-	struct osetdomainname_args *uap;
-	int *retval;
+	struct compat_09_setdomainname_args /* {
+		syscallarg(char *) domainname;
+		syscallarg(int) len;
+	} */ *uap;
+	register_t *retval;
 {
 	int name;
 	int error;
@@ -175,7 +175,8 @@ osetdomainname(p, uap, retval)
 	if (error = suser(p->p_ucred, &p->p_acflag))
 		return (error);
 	name = KERN_DOMAINNAME;
-	return (kern_sysctl(&name, 1, 0, 0, uap->domainname, uap->len));
+	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),
+	    SCARG(uap, len)));
 }
 #endif /* COMPAT_09 || COMPAT_SUNOS || COMPAT_HPUX */
 
@@ -188,15 +189,14 @@ struct outsname {
 	char	machine[32];
 };
 
-struct ouname_args {
-	struct outsname	*name;
-};
 /* ARGSUSED */
 int
-ouname(p, uap, retval)
+compat_09_uname(p, uap, retval)
 	struct proc *p;
-	struct ouname_args *uap;
-	int *retval;
+	struct compat_09_uname_args /* {
+		syscallarg(struct outsname *) name;
+	} */ *uap;
+	register_t *retval;
 {
 	struct outsname outsname;
 	char *cp, *dp, *ep;
@@ -217,50 +217,119 @@ ouname(p, uap, retval)
 		*dp++ = *cp;
 	*dp = '\0';
 	strncpy(outsname.machine, MACHINE, sizeof(outsname.machine));
-	return (copyout((caddr_t)&outsname, (caddr_t)uap->name,
+	return (copyout((caddr_t)&outsname, (caddr_t)SCARG(uap, name),
 	    sizeof(struct outsname)));
 }
 #endif /* COMPAT_09 */
 
 #ifdef SYSCALL_DEBUG
-int	scdebug = 1;	/* XXX */
+#define	SCDEBUG_CALLS		0x0001	/* show calls */
+#define	SCDEBUG_RETURNS		0x0002	/* show returns */
+#define	SCDEBUG_ALL		0x0004	/* even syscalls that are implemented */
+#define	SCDEBUG_SHOWARGS	0x0008	/* show arguments to calls */
+
+int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS;
+
+extern int nsysent;
+extern char *syscallnames[];
+
+#ifdef COMPAT_OSF1
+extern int nosf1_sysent;
+extern struct sysent osf1_sysent[];
+extern char *osf1_syscallnames[];
+#endif /* COMPAT_OSF1 */
+
+static struct os_syscall {
+	char *name;
+	int *nsysent;
+	struct sysent *sysent;
+	char **syscallnames;
+} os_syscall[] = {
+	{ "NetBSD", &nsysent, sysent, syscallnames },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+#ifdef COMPAT_OSF1
+	{ "OSF/1", &nosf1_sysent, osf1_sysent, osf1_syscallnames },
+#else
+	{ NULL, },
+#endif
+};
 
 void
-scdebug_call(p, code, narg, args)
+scdebug_call(p, code, args)
 	struct proc *p;
-	int code, narg, *args;
+	int code;
+	register_t *args;
 {
+	struct os_syscall *os;
+	struct sysent *sy;
 	int i;
 
-	if (!scdebug)
+	if (!(scdebug & SCDEBUG_CALLS))
 		return;
 
-	printf("proc %d: syscall ", p->p_pid);
-	if (code < 0 || code >= nsysent) {
+#ifdef DIAGNOSTIC
+	if (p->p_emul > sizeof os_syscall/sizeof os_syscall[0] ||
+	    os_syscall[p->p_emul].name == NULL)
+		panic("bogus p_emul");
+#endif
+
+	os = &os_syscall[p->p_emul];
+	sy = &os->sysent[code];
+	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= *os->nsysent ||
+	     sy->sy_call == nosys))
+		return;
+		
+	printf("proc %d (%s): %s syscall ", p->p_pid, p->p_comm, os->name);
+	if (code < 0 || code >= *os->nsysent) {
 		printf("OUT OF RANGE (%d)", code);
 		code = 0;
 	} else
 		printf("%d", code);
-	printf(" called: %s(", syscallnames[code]);
-	for (i = 0; i < narg; i++)
-		printf("0x%x, ", args[i]);
-	printf(")\n");
+	printf(" called: %s", os->syscallnames[code]);
+	if (scdebug & SCDEBUG_SHOWARGS) {
+		printf("(");
+		for (i = 0; i < sy->sy_argsize / sizeof(register_t); i++)
+			printf("%s0x%lx", i == 0 ? "" : ", ", (long)args[i]);
+		printf(")");
+	}
+	printf("\n");
 }
 
 void
 scdebug_ret(p, code, error, retval)
 	struct proc *p;
-	int code, error, retval;
+	int code, error;
+	register_t *retval;
 {
-	if (!scdebug)
+	struct os_syscall *os;
+	struct sysent *sy;
+
+	if (!(scdebug & SCDEBUG_RETURNS))
 		return;
 
-	printf("proc %d: syscall ", p->p_pid);
-	if (code < 0 || code >= nsysent) {
+#ifdef DIAGNOSTIC
+	if (p->p_emul > sizeof os_syscall/sizeof os_syscall[0] ||
+	    os_syscall[p->p_emul].name == NULL)
+		panic("bogus p_emul");
+#endif
+
+	os = &os_syscall[p->p_emul];
+	sy = &os->sysent[code];
+	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= *os->nsysent ||
+	    sy->sy_call == nosys))
+		return;
+		
+	printf("proc %d (%s): %s syscall ", p->p_pid, p->p_comm, os->name);
+	if (code < 0 || code >= *os->nsysent) {
 		printf("OUT OF RANGE (%d)", code);
 		code = 0;
 	} else
 		printf("%d", code);
-	printf(" return: error = %d, retval = %d\n", error, retval);
+	printf(" return: error = %d, retval = 0x%lx,0x%lx\n", error,
+	    (long)retval[0], (long)retval[1]);
 }
 #endif /* SYSCALL_DEBUG */

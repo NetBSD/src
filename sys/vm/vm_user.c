@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_user.c,v 1.10 1994/06/29 06:48:46 cgd Exp $	*/
+/*	$NetBSD: vm_user.c,v 1.11 1994/10/20 04:27:34 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -92,19 +92,21 @@ int
 svm_allocate(p, uap, retval)
 	struct proc *p;
 	struct svm_allocate_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	vm_offset_t addr;
 	int rv;
 
-	uap->map = p->p_map;		/* XXX */
+	SCARG(uap, map) = p->p_map;		/* XXX */
 
-	if (copyin((caddr_t)uap->addr, (caddr_t)&addr, sizeof (addr)))
+	if (copyin((caddr_t)SCARG(uap, addr), (caddr_t)&addr, sizeof (addr)))
 		rv = KERN_INVALID_ARGUMENT;
 	else
-		rv = vm_allocate(uap->map, &addr, uap->size, uap->anywhere);
+		rv = vm_allocate(SCARG(uap, map), &addr, SCARG(uap, size),
+		    SCARG(uap, anywhere));
 	if (rv == KERN_SUCCESS) {
-		if (copyout((caddr_t)&addr, (caddr_t)uap->addr, sizeof(addr)))
+		if (copyout((caddr_t)&addr, (caddr_t)SCARG(uap, addr),
+		    sizeof(addr)))
 			rv = KERN_INVALID_ARGUMENT;
 	}
 	return((int)rv);
@@ -120,12 +122,12 @@ int
 svm_deallocate(p, uap, retval)
 	struct proc *p;
 	struct svm_deallocate_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	int rv;
 
-	uap->map = p->p_map;		/* XXX */
-	rv = vm_deallocate(uap->map, uap->addr, uap->size);
+	SCARG(uap, map) = p->p_map;		/* XXX */
+	rv = vm_deallocate(SCARG(uap, map), SCARG(uap, addr), SCARG(uap, size));
 	return((int)rv);
 }
 
@@ -140,12 +142,13 @@ int
 svm_inherit(p, uap, retval)
 	struct proc *p;
 	struct svm_inherit_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	int rv;
 
-	uap->map = p->p_map;		/* XXX */
-	rv = vm_inherit(uap->map, uap->addr, uap->size, uap->inherit);
+	SCARG(uap, map) = p->p_map;		/* XXX */
+	rv = vm_inherit(SCARG(uap, map), SCARG(uap, addr), SCARG(uap, size),
+	    SCARG(uap, inherit));
 	return((int)rv);
 }
 
@@ -161,12 +164,13 @@ int
 svm_protect(p, uap, retval)
 	struct proc *p;
 	struct svm_protect_args *uap;
-	int *retval;
+	register_t *retval;
 {
 	int rv;
 
-	uap->map = p->p_map;		/* XXX */
-	rv = vm_protect(uap->map, uap->addr, uap->size, uap->setmax, uap->prot);
+	SCARG(uap, map) = p->p_map;		/* XXX */
+	rv = vm_protect(SCARG(uap, map), SCARG(uap, addr), SCARG(uap, size),
+	    SCARG(uap, setmax), SCARG(uap, prot));
 	return((int)rv);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.21 1994/08/30 03:05:40 mycroft Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.22 1994/10/20 04:22:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,11 +41,15 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/file.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #include <vm/vm.h>
 
@@ -53,25 +57,24 @@
  * Resource controls and accounting.
  */
 
-struct getpriority_args {
-	int	which;
-	int	who;
-};
 getpriority(curp, uap, retval)
 	struct proc *curp;
-	register struct getpriority_args *uap;
-	int *retval;
+	register struct getpriority_args /* {
+		syscallarg(int) which;
+		syscallarg(int) who;
+	} */ *uap;
+	register_t *retval;
 {
 	register struct proc *p;
 	register int low = PRIO_MAX + 1;
 
-	switch (uap->which) {
+	switch (SCARG(uap, which)) {
 
 	case PRIO_PROCESS:
-		if (uap->who == 0)
+		if (SCARG(uap, who) == 0)
 			p = curp;
 		else
-			p = pfind(uap->who);
+			p = pfind(SCARG(uap, who));
 		if (p == 0)
 			break;
 		low = p->p_nice;
@@ -80,9 +83,9 @@ getpriority(curp, uap, retval)
 	case PRIO_PGRP: {
 		register struct pgrp *pg;
 
-		if (uap->who == 0)
+		if (SCARG(uap, who) == 0)
 			pg = curp->p_pgrp;
-		else if ((pg = pgfind(uap->who)) == NULL)
+		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
 			break;
 		for (p = pg->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
 			if (p->p_nice < low)
@@ -92,10 +95,11 @@ getpriority(curp, uap, retval)
 	}
 
 	case PRIO_USER:
-		if (uap->who == 0)
-			uap->who = curp->p_ucred->cr_uid;
+		if (SCARG(uap, who) == 0)
+			SCARG(uap, who) = curp->p_ucred->cr_uid;
 		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next)
-			if (p->p_ucred->cr_uid == uap->who && p->p_nice < low)
+			if (p->p_ucred->cr_uid == SCARG(uap, who) &&
+			    p->p_nice < low)
 				low = p->p_nice;
 		break;
 
@@ -108,53 +112,53 @@ getpriority(curp, uap, retval)
 	return (0);
 }
 
-struct setpriority_args {
-	int	which;
-	int	who;
-	int	prio;
-};
 /* ARGSUSED */
 setpriority(curp, uap, retval)
 	struct proc *curp;
-	register struct setpriority_args *uap;
-	int *retval;
+	register struct setpriority_args /* {
+		syscallarg(int) which;
+		syscallarg(int) who;
+		syscallarg(int) prio;
+	} */ *uap;
+	register_t *retval;
 {
 	register struct proc *p;
 	int found = 0, error = 0;
 
-	switch (uap->which) {
+	switch (SCARG(uap, which)) {
 
 	case PRIO_PROCESS:
-		if (uap->who == 0)
+		if (SCARG(uap, who) == 0)
 			p = curp;
 		else
-			p = pfind(uap->who);
+			p = pfind(SCARG(uap, who));
 		if (p == 0)
 			break;
-		error = donice(curp, p, uap->prio);
+		error = donice(curp, p, SCARG(uap, prio));
 		found++;
 		break;
 
 	case PRIO_PGRP: {
 		register struct pgrp *pg;
 		 
-		if (uap->who == 0)
+		if (SCARG(uap, who) == 0)
 			pg = curp->p_pgrp;
-		else if ((pg = pgfind(uap->who)) == NULL)
+		else if ((pg = pgfind(SCARG(uap, who))) == NULL)
 			break;
-		for (p = pg->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
-			error = donice(curp, p, uap->prio);
+		for (p = pg->pg_members.lh_first; p != 0;
+		    p = p->p_pglist.le_next) {
+			error = donice(curp, p, SCARG(uap, prio));
 			found++;
 		}
 		break;
 	}
 
 	case PRIO_USER:
-		if (uap->who == 0)
-			uap->who = curp->p_ucred->cr_uid;
+		if (SCARG(uap, who) == 0)
+			SCARG(uap, who) = curp->p_ucred->cr_uid;
 		for (p = allproc.lh_first; p != 0; p = p->p_list.le_next)
-			if (p->p_ucred->cr_uid == uap->who) {
-				error = donice(curp, p, uap->prio);
+			if (p->p_ucred->cr_uid == SCARG(uap, who)) {
+				error = donice(curp, p, SCARG(uap, prio));
 				found++;
 			}
 		break;
@@ -189,69 +193,67 @@ donice(curp, chgp, n)
 }
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS)
-struct osetrlimit_args {
-	u_int	which;
-	struct	orlimit *lim;
-};
 /* ARGSUSED */
-osetrlimit(p, uap, retval)
+compat_43_setrlimit(p, uap, retval)
 	struct proc *p;
-	struct osetrlimit_args *uap;
-	int *retval;
+	struct compat_43_setrlimit_args /* {
+		syscallarg(u_int) which;
+		syscallarg(struct ogetrlimit *) rlp;
+	} */ *uap;
+	register_t *retval;
 {
 	struct orlimit olim;
 	struct rlimit lim;
 	int error;
 
-	if (error =
-	    copyin((caddr_t)uap->lim, (caddr_t)&olim, sizeof (struct orlimit)))
+	if (error = copyin((caddr_t)SCARG(uap, rlp), (caddr_t)&olim,
+	    sizeof (struct orlimit)))
 		return (error);
 	lim.rlim_cur = olim.rlim_cur;
 	lim.rlim_max = olim.rlim_max;
-	return (dosetrlimit(p, uap->which, &lim));
+	return (dosetrlimit(p, SCARG(uap, which), &lim));
 }
 
-struct ogetrlimit_args {
-	u_int	which;
-	struct	orlimit *rlp;
-};
 /* ARGSUSED */
-ogetrlimit(p, uap, retval)
+compat_43_getrlimit(p, uap, retval)
 	struct proc *p;
-	register struct ogetrlimit_args *uap;
-	int *retval;
+	register struct compat_43_getrlimit_args /* {
+		syscallarg(u_int) which;
+		syscallarg(struct ogetrlimit *) rlp;
+	} */ *uap;
+	register_t *retval;
 {
 	struct orlimit olim;
 
-	if (uap->which >= RLIM_NLIMITS)
+	if (SCARG(uap, which) >= RLIM_NLIMITS)
 		return (EINVAL);
-	olim.rlim_cur = p->p_rlimit[uap->which].rlim_cur;
+	olim.rlim_cur = p->p_rlimit[SCARG(uap, which)].rlim_cur;
 	if (olim.rlim_cur == -1)
 		olim.rlim_cur = 0x7fffffff;
-	olim.rlim_max = p->p_rlimit[uap->which].rlim_max;
+	olim.rlim_max = p->p_rlimit[SCARG(uap, which)].rlim_max;
 	if (olim.rlim_max == -1)
 		olim.rlim_max = 0x7fffffff;
-	return (copyout((caddr_t)&olim, (caddr_t)uap->rlp, sizeof(olim)));
+	return (copyout((caddr_t)&olim, (caddr_t)SCARG(uap, rlp),
+	    sizeof(olim)));
 }
 #endif /* COMPAT_43 || COMPAT_SUNOS */
 
-struct setrlimit_args {
-	u_int	which;
-	struct	rlimit *lim;
-};
 /* ARGSUSED */
 setrlimit(p, uap, retval)
 	struct proc *p;
-	register struct setrlimit_args *uap;
-	int *retval;
+	register struct setrlimit_args /* {
+		syscallarg(u_int) which;
+		syscallarg(struct rlimit *) rlp;
+	} */ *uap;
+	register_t *retval;
 {
 	struct rlimit alim;
 	int error;
 
-	if (error =
-	    copyin((caddr_t)uap->lim, (caddr_t)&alim, sizeof (struct rlimit)))
+	if (error = copyin((caddr_t)SCARG(uap, rlp), (caddr_t)&alim,
+	    sizeof (struct rlimit)))
 		return (error);
-	return (dosetrlimit(p, uap->which, &alim));
+	return (dosetrlimit(p, SCARG(uap, which), &alim));
 }
 
 int
@@ -338,21 +340,20 @@ dosetrlimit(p, which, limp)
 	return (0);
 }
 
-struct getrlimit_args {
-	u_int	which;
-	struct	rlimit *rlp;
-};
 /* ARGSUSED */
 getrlimit(p, uap, retval)
 	struct proc *p;
-	register struct getrlimit_args *uap;
-	int *retval;
+	register struct getrlimit_args /* {
+		syscallarg(u_int) which;
+		syscallarg(struct rlimit *) rlp;
+	} */ *uap;
+	register_t *retval;
 {
 
-	if (uap->which >= RLIM_NLIMITS)
+	if (SCARG(uap, which) >= RLIM_NLIMITS)
 		return (EINVAL);
-	return (copyout((caddr_t)&p->p_rlimit[uap->which], (caddr_t)uap->rlp,
-	    sizeof (struct rlimit)));
+	return (copyout((caddr_t)&p->p_rlimit[SCARG(uap, which)],
+	    (caddr_t)SCARG(uap, rlp), sizeof (struct rlimit)));
 }
 
 /*
@@ -411,19 +412,18 @@ calcru(p, up, sp, ip)
 	}
 }
 
-struct getrusage_args {
-	int	who;
-	struct	rusage *rusage;
-};
 /* ARGSUSED */
 getrusage(p, uap, retval)
 	register struct proc *p;
-	register struct getrusage_args *uap;
-	int *retval;
+	register struct getrusage_args /* {
+		syscallarg(int) who;
+		syscallarg(struct rusage *) rusage;
+	} */ *uap;
+	register_t *retval;
 {
 	register struct rusage *rup;
 
-	switch (uap->who) {
+	switch (SCARG(uap, who)) {
 
 	case RUSAGE_SELF:
 		rup = &p->p_stats->p_ru;
@@ -437,7 +437,7 @@ getrusage(p, uap, retval)
 	default:
 		return (EINVAL);
 	}
-	return (copyout((caddr_t)rup, (caddr_t)uap->rusage,
+	return (copyout((caddr_t)rup, (caddr_t)SCARG(uap, rusage),
 	    sizeof (struct rusage)));
 }
 
