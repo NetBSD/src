@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.12 2001/05/04 14:13:50 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.13 2002/05/24 21:40:59 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -80,6 +80,10 @@ void ka53_rom_putchar(int c);
 int ka53_rom_getchar(void);
 int ka53_rom_testchar(void);
 
+void vxt_putchar(int c);
+int vxt_getchar(void);
+int vxt_testchar(void);
+
 void putchar(int);
 int getchar(void);
 int testkey(void);
@@ -143,6 +147,12 @@ consinit(void)
 		test_fp = rom_testchar;
 		rom_putc = 0x20040058;		/* 537133144 */
 		rom_getc = 0x20040044;		/* 537133124 */
+		break;
+
+	case VAX_BTYP_VXT:
+		put_fp = vxt_putchar;
+		get_fp = vxt_getchar;
+		test_fp = vxt_testchar;
 		break;
 
 	case VAX_BTYP_630:
@@ -264,4 +274,35 @@ void ka53_consinit(void)
 	put_fp = ka53_rom_putchar;
 	get_fp = ka53_rom_getchar;
 	test_fp = ka53_rom_testchar;
+}
+
+static volatile int *vxtregs = (int *)0x200A0000;
+
+#define	CH_SR		1
+#define	CH_DAT		3
+#define SR_TX_RDY	0x04
+#define SR_RX_RDY	0x01
+
+void
+vxt_putchar(int c)
+{
+	while ((vxtregs[CH_SR] & SR_TX_RDY) == 0)
+		;
+	vxtregs[CH_DAT] = c;
+}
+
+int
+vxt_getchar(void)
+{
+	while ((vxtregs[CH_SR] & SR_RX_RDY) == 0)
+		;
+	return vxtregs[CH_DAT];
+}
+
+int
+vxt_testchar(void)
+{
+	if ((vxtregs[CH_SR] & SR_RX_RDY) == 0)
+		return 0;
+	return vxtregs[CH_DAT];
 }
