@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.31 1998/01/26 12:02:55 lukem Exp $
+#	$NetBSD: security,v 1.32 1998/08/25 13:47:29 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -37,6 +37,7 @@ MPBYUID=secure4.$$
 MPBYPATH=secure5.$$
 LIST=secure6.$$
 OUTPUT=secure7.$$
+LABELS=secure8.$$
 
 trap '/bin/rm -rf $SECUREDIR ; exit 0' 0 2 3
 
@@ -47,6 +48,7 @@ awk -F: '{ print $1 " " $3 }' $MP | sort -k2n > $MPBYUID
 awk -F: '{ print $1 " " $9 }' $MP | sort -k2 > $MPBYPATH
 
 # Check the master password file syntax.
+#
 if checkyesno check_passwd; then
 	awk '
 	BEGIN {
@@ -109,6 +111,7 @@ fi
 # Backup the master password file; a special case, the normal backup
 # mechanisms also print out file differences and we don't want to do
 # that because this file has encrypted passwords in it.
+#
 CUR=/var/backups/`basename $MP`.current
 BACK=/var/backups/`basename $MP`.backup
 if [ -s $CUR ] ; then
@@ -125,6 +128,7 @@ else
 fi
 
 # Check the group file syntax.
+#
 if checkyesno check_group; then
 	GRP=/etc/group
 	awk -F: '{
@@ -158,6 +162,7 @@ fi
 # The check for the root paths is problematical -- it's likely to fail
 # in other environments.  Once the shells have been modified to warn
 # of '.' in the path, the path tests should go away.
+#
 if checkyesno check_rootdotfiles; then
 	> $OUTPUT
 	rhome=`csh -fc "echo ~root"`
@@ -254,6 +259,7 @@ end-of-sh
 fi
 
 # Root and uucp should both be in /etc/ftpusers.
+#
 if checkyesno check_ftpusers; then
 	> $OUTPUT
 	list="uucp "`awk '$2 == 0 { print $1 }' $MPBYUID`
@@ -269,6 +275,7 @@ if checkyesno check_ftpusers; then
 fi
 
 # Uudecode should not be in the /etc/aliases file.
+#
 if checkyesno check_aliases; then
 	if egrep '^[^#]*(uudecode|decode).*\|' /etc/aliases; then
 		printf "\nEntry for uudecode in /etc/aliases file.\n"
@@ -276,6 +283,7 @@ if checkyesno check_aliases; then
 fi
 
 # Files that should not have + signs.
+#
 if checkyesno check_rhosts; then
 	list="/etc/hosts.equiv /etc/hosts.lpd"
 	for f in $list ; do
@@ -315,6 +323,7 @@ fi
 
 # Check home directories.  Directories should not be owned by someone else
 # or writeable.
+#
 if checkyesno check_homes; then
 	while read uid homedir; do
 		if [ -d ${homedir}/ ] ; then
@@ -383,6 +392,7 @@ if checkyesno check_homes; then
 fi
 
 # Mailboxes should be owned by user and unreadable.
+#
 if checkyesno check_varmail; then
 	ls -l /var/mail | sed 1d | \
 	awk '$3 != $9 \
@@ -395,10 +405,10 @@ if checkyesno check_varmail; then
 	fi
 fi
 
-if checkyesno check_nfs; then
-	if [ -f /etc/exports ]; then
-	    # File systems should not be globally exported.
-	    awk '{
+# NFS exports shouldn't be globally exported
+#
+if checkyesno check_nfs && [ -f /etc/exports ]; then
+	awk '{
 		# ignore comments and blank lines
 		if ($LINE ~ /^\#/ || $LINE ~ /^$/ )
 			next;
@@ -414,15 +424,15 @@ if checkyesno check_nfs; then
 			print "File system " $1 " globally exported, read-only."
 		else
 			print "File system " $1 " globally exported, read-write."
-	    }' < /etc/exports > $OUTPUT
-	    if [ -s $OUTPUT ] ; then
+	}' < /etc/exports > $OUTPUT
+	if [ -s $OUTPUT ] ; then
 		printf "\nChecking for globally exported file systems.\n"
 		cat $OUTPUT
-	    fi
 	fi
 fi
 
 # Display any changes in setuid files and devices.
+#
 if checkyesno check_devices; then
 	> $ERR
 	(find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
@@ -578,6 +588,7 @@ fi
 # the hacker can modify the tree specification to match the replaced binary.
 # For details on really protecting yourself against modified binaries, see
 # the mtree(8) manual page.
+#
 if checkyesno check_mtree; then
 	mtree -e -p / -f /etc/mtree/special > $OUTPUT
 	if [ -s $OUTPUT ]; then
@@ -601,11 +612,39 @@ if checkyesno check_mtree; then
 	fi
 fi
 
+CHANGELIST=""
+
+# Backup disklabels of available disks
+#
+if checkyesno check_disklabels; then
+		# generate list of old disklabels and remove them
+	ls -1d /var/backups/disklabel.* 2>/dev/null |
+	    egrep -v '\.(backup|current)$' > $LABELS
+	xargs rm < $LABELS
+
+	disks=`iostat -x | sed 1d | awk '$1 !~ /^[mf]d/ { print $1; }'`
+	for i in $disks; do
+		dlf="/var/backups/disklabel.$i"
+		disklabel $i > $dlf 2>/dev/null
+	done
+
+		# append list of new disklabels, sort list
+	ls -1d /var/backups/disklabel.* 2>/dev/null |
+	    egrep -v '\.(backup|current)$' >> $LABELS
+	sort -u -o $LABELS $LABELS
+	CHANGELIST=$LABELS
+fi
+
 # List of files that get backed up and checked for any modifications.  Each
 # file is expected to have two backups, /var/backups/file.{current,backup}.
 # Any changes cause the files to rotate.
+#
 if checkyesno check_changelist && [ -s /etc/changelist ] ; then
-	for file in `egrep -v "^#|$MP" /etc/changelist`; do
+	CHANGELIST="/etc/changelist $CHANGELIST"
+fi
+
+if [ -n "$CHANGELIST" ]; then
+	for file in `egrep -hv "^#|$MP" $CHANGELIST`; do
 		CUR=/var/backups/`basename $file`.current
 		BACK=/var/backups/`basename $file`.backup
 		if [ -f $file ]; then
