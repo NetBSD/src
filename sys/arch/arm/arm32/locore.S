@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9 2002/10/13 14:54:49 bjh21 Exp $	*/
+/*	$NetBSD: locore.S,v 1.10 2002/10/15 23:10:32 bsh Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -114,7 +114,7 @@ ENTRY_NP(cpu_reset)
 	ldr	r4, [r4]
 
 	ldr	r0, .Lcpufuncs
-	mov	pc, lr
+	mov	lr, pc
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
 	/*
