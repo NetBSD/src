@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.14 1995/04/19 18:33:27 mycroft Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.15 1995/04/19 19:12:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -76,9 +76,6 @@
  *	-hm	------------ Release 3.00 --------------
  *
  *---------------------------------------------------------------------------*/
-
-#include "vt.h"
-#if NVT > 0
 
 #define EXTERN			/* allocate mem */
 
@@ -1152,7 +1149,5 @@ pcvt_xmode_set(int on, struct proc *p)
 void cons_highlight (void) {}
 void cons_normal (void) {}
 #endif
-
-#endif	/* NVT > 0 */
 
 /*-------------------------- E O F -------------------------------------*/
