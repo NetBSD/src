@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.12 2000/05/19 05:26:17 eeh Exp $	*/
+/*	$NetBSD: kd.c,v 1.13 2000/09/21 23:14:40 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -203,6 +203,7 @@ static	int firstopen = 1;
 		struct cons_channel *cc = kd->kd_in;
 		if (cc != NULL &&
 		    (error = (*cc->cc_iopen)(cc)) != 0) {
+			splx(s);
 			return (error);
 		}
 
@@ -530,6 +531,19 @@ cons_attach_input(cc, cn)
 	/* Indicate that it is OK to use the PROM fbwrite */
 	kd_is_console = 1;
 }
+
+
+void kd_attach_input(struct cons_channel *);
+void
+kd_attach_input(cc)
+	struct cons_channel *cc;
+{
+	struct kd_softc *kd = &kd_softc;
+
+	kd->kd_in = cc;
+	cc->cc_upstream = kd_cons_input;
+}
+
 
 /* We never call this. */
 static void
