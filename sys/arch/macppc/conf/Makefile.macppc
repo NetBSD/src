@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.6 1999/01/15 23:37:06 thorpej Exp $
+#	$NetBSD: Makefile.macppc,v 1.7 1999/07/09 09:52:57 mrg Exp $
 #
 # Makefile for NetBSD
 #
@@ -55,6 +55,8 @@ CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-D_LOCORE
 LINKFLAGS=	-N -Ttext 100000 -e __start
 STRIPFLAGS=	--strip-debug
+
+%INCLUDES
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"

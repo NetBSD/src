@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.40 1999/07/09 06:44:59 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.41 1999/07/09 09:53:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,6 +67,7 @@ static int emitcfiles __P((FILE *));
 static int emitsfiles __P((FILE *));
 static int emitrules __P((FILE *));
 static int emitload __P((FILE *));
+static int emitincludes __P((FILE *));
 
 int
 mkmakefile()
@@ -111,6 +112,8 @@ mkmakefile()
 			fn = emitrules;
 		else if (strcmp(line, "%LOAD\n") == 0)
 			fn = emitload;
+		else if (strcmp(line, "%INCLUDES\n") == 0)
+			fn = emitincludes;
 		else {
 			xerror(ifname, lineno,
 			    "unknown %% construct ignored: %s", line);
@@ -388,9 +391,20 @@ emitrules(fp)
 			continue;
 		if ((fpath = srcpath(fi)) == NULL)
 			return (1);
-		if (fprintf(fp, "%s.o: %s%s\n", fi->fi_base,
-		    *fpath != '/' ? "$S/" : "", fpath) < 0)
-			return (1);
+		if (*fpath == '/') {
+			if (fprintf(fp, "%s.o: %s\n", fi->fi_base, fpath) < 0)
+				return (1);
+		} else {
+			if (fi->fi_prefix != NULL) {
+				if (fprintf(fp, "%s.o: $S/%s/%s\n", fi->fi_base,
+				    fi->fi_prefix, fpath) < 0)
+					return (1);
+			} else {
+				if (fprintf(fp, "%s.o: $S/%s\n", fi->fi_base,
+				    fpath) < 0)
+					return (1);
+			}
+		}
 		if ((cp = fi->fi_mkrule) == NULL) {
 			cp = "NORMAL";
 			ch = fpath[strlen(fpath) - 1];
@@ -450,5 +464,27 @@ swap%s.o: ", swname, swname) < 0)
 		if (fputs("\t${NORMAL_C}\n\n", fp) < 0)
 			return (1);
 	}
+	return (0);
+}
+
+/*
+ * Emit include headers (for any prefixes encountered)
+ */
+static int
+emitincludes(fp)
+	FILE *fp;
+{
+	struct prefix *pf;
+	int done = 0;
+
+	for (pf = allprefixes; pf != NULL; pf = pf->pf_next) {
+		if (done == 0) {
+			done = 1;
+			fprintf(fp, "INCLUDES+=\t");
+		}
+		fprintf(fp, " -I$S/%s", pf->pf_prefix);
+	}
+	putc('\n', fp);
+
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.8 1999/07/09 06:44:59 thorpej Exp $	*/
+/*	$NetBSD: util.c,v 1.9 1999/07/09 09:53:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,7 +151,17 @@ prefix_pop()
 	}
 
 	prefixes = pf->pf_next;
-	free(pf);
+
+	/*
+	 * Once we're done with it, put it on the allprefixes list.
+	 */
+	if (allprefixes) {
+		allprefixes = pf;
+		pf->pf_next = NULL;
+	} else {
+		pf->pf_next = allprefixes;
+		allprefixes = pf;
+	}
 }
 
 /*

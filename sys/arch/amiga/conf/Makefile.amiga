@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.80 1999/01/15 23:37:05 thorpej Exp $
+#	$NetBSD: Makefile.amiga,v 1.81 1999/07/09 09:52:55 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -59,6 +59,8 @@ CFLAGS=		${DEBUG} ${CWARNFLAGS} ${COPTS} ${CMACHFLAGS} -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 STRIPFLAGS=	-d
+
+%INCLUDES
 
 ### find out what to use for libkern
 KERN_AS=	obj
