@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.36.2.2 2000/06/22 05:11:20 soren Exp $	*/
+/*	$NetBSD: locore.h,v 1.36.2.3 2000/06/22 11:08:13 soren Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -55,7 +55,7 @@ void mips1_SetPID   __P((int pid));
 void mips1_TBIA __P((int));
 void mips1_TBIAP __P((int));
 void mips1_TBIS __P((vaddr_t));
-void mips1_TBRPL __P((vaddr_t, vaddr_t, paddr_t));
+void mips1_TBRPL __P((vaddr_t, vaddr_t, unsigned int));
 int mips1_TLBUpdate __P((u_int, u_int));
 
 void mips1_wbflush __P((void));
