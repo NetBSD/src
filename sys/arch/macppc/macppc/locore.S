@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.32 2000/12/25 02:15:52 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.33 2001/01/01 04:33:40 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -504,8 +504,13 @@ ENTRY(cpu_switch)
 1:
 	/* just did this resched thing */
 	xor	3,3,3
+#if defined(MULTIPROCESSOR)
+	GET_CPUINFO(4)
+	stw	3,CI_WANT_RESCHED(4)
+#else
 	lis	4,_C_LABEL(want_resched)@ha
 	stw	3,_C_LABEL(want_resched)@l(4)
+#endif
 
 	stw	3,P_BACK(31)		/* probably superfluous */
 
