@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.479 2004/10/01 05:58:54 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.480 2004/10/02 16:16:48 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7633,7 +7633,7 @@ lib/libc/citrus/citrus_ctype_template.h		1.26-1.31
 
 	Fix 3 bugs in cirtus:
 	1. The return values of wcrtomb(3) and wctomb(3) are wrong,
-	   if second argument wc is L   and current locale is either
+	   if second argument wc is L'\0' and current locale is either
 	   ja_JP.ISO2022-JP or ja_JP.ISO2022-JP2.
 	2. There is a case that _FUNCNAME(ctype_wcrtomb) return garbage values 
 	   on the stack
