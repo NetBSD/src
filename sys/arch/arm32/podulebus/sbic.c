@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.27 2001/08/14 22:58:17 rearnsha Exp $ */
+/* $NetBSD: sbic.c,v 1.28 2001/08/15 20:05:08 rearnsha Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -97,7 +97,7 @@
 
 #include <machine/io.h>
 #include <machine/irqhandler.h>
-#include <arm32/podulebus/podulebus.h>
+#include <machine/bus.h>
 #include <arm32/podulebus/sbicreg.h>
 #include <arm32/podulebus/sbicvar.h>
 
