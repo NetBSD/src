@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.113 1999/02/14 12:48:01 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.114 1999/02/14 14:03:16 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -779,7 +779,7 @@ configure()
 	if (CPU_ISSUN4C) {
 		char *cp, buf[32];
 		int node = findroot();
-		cp = getpropstringA(node, "device_type", buf);
+		cp = getpropstringA(node, "device_type", buf, sizeof buf);
 		if (strcmp(cp, "cpu") != 0)
 			panic("PROM root device type = %s (need CPU)\n", cp);
 	}
