@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.60 2004/05/23 16:54:13 christos Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.61 2004/06/04 20:05:25 ginsbach Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.60 2004/05/23 16:54:13 christos Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.61 2004/06/04 20:05:25 ginsbach Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1111,10 +1111,7 @@ dn_skipname(const u_char *comp_dn, const u_char *eom)
 
 /*ARGSUSED*/
 int
-_dns_gethtbyname(rv, cb_data, ap)
-	void	*rv;
-	void	*cb_data;
-	va_list	 ap;
+_dns_gethtbyname(void *rv, void *cb_data, va_list ap)
 {
 	querybuf *buf;
 	int n, type;
