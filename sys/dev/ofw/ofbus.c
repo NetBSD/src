@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.7 1998/02/02 22:00:07 cgd Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.8 1998/02/03 00:43:46 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -88,9 +88,6 @@ ofbattach(parent, dev, aux)
 	struct ofprobe *ofp = aux;
 	struct ofprobe probe;
 	int units;
-
-	if (!parent)
-		ofbprint(aux, 0);
 
 	printf("\n");
 
