@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.65 2000/02/24 18:51:51 ad Exp $	
+.\"	$NetBSD: hardware,v 1.66 2000/03/15 02:28:42 fvdl Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -43,10 +43,12 @@ Supported devices include:
 			do not have a boot ROM; only the AHA-152x and
 			motherboards using this chip are likely to be
 			bootable, consequently.)
-		Adaptec AHA-2x4x[U][W] cards and some onboard PCI designs
-			using the AIC-7770, AIC-7850, AIC-7860, AIC-7870, or
-			AIC-7880 chip.
-		Adaptec AHA-3940[U][W] cards [b]
+		Adaptec AHA-2x4x[U][2][W] cards and onboard PCI designs
+			using the AIC-7770, AIC-7850, AIC-7860, AIC-7870,
+			AIC-7880 and AIC-789x chipsets.
+		Adaptec AHA-394x[U][W] cards [b]
+		Adaptec AHA-3950U2 cards
+		Adaptec AHA-3960, 19160 and 29160 Ultra-160 adapters
 		AdvanSys ABP-9x0[U][A] cards
 		AdvanSys ABP-940UW[68], ABP-970UW[68], ASB3940UW-00 cards
 		AMD PCscsi-PCI (Am53c974) based SCSI adapters, including
