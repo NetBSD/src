@@ -1,4 +1,4 @@
-/*	$NetBSD: style,v 1.10 1999/01/29 07:24:20 scottr Exp $	*/
+/*	$NetBSD: style,v 1.11 1999/07/03 21:47:21 abs Exp $	*/
 
 /*
  * Style guide for the 4BSD KNF (Kernel Normal Form).
@@ -141,7 +141,7 @@ main(argc, argv)
 		case 'n':
 			num = strtol(optarg, &ep, 10);
                         if (num <= 0 || *ep != '\0')
-                                err("illegal number -- %s", optarg);
+                                err(1,"illegal number -- %s", optarg);
 			break;
 		case '?':
 		default:
