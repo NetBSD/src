@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.47 1997/01/26 17:55:52 hpeyerl Exp $
+#	$NetBSD: Makefile.hp300,v 1.48 1997/02/01 23:55:10 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -104,6 +104,11 @@ LINKFLAGS+=	-S
 
 %LOAD
 
+# XXX not quite ready yet
+#assym.h: $S/kern/genassym.sh ${HP300}/hp300/genassym.cf
+#	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+#	    < ${HP300}/hp300/genassym.cf > assym.h
+
 assym.h: genassym
 	./genassym >assym.h
 
@@ -127,10 +132,8 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
-# XXX for now
-vers.o: newvers
-
-clean:
+clean: cleankernel
+cleankernel:
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
