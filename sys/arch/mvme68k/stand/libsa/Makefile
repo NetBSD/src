@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2001/11/14 23:01:15 tv Exp $
+#	$NetBSD: Makefile,v 1.21 2002/03/27 20:18:25 scw Exp $
 
 LIB=sa
 
@@ -6,24 +6,43 @@ LIB=sa
 DIR_SA=$S/lib/libsa
 DIR_KERN=$S/lib/libkern
 
-SRC_net= nfs.c rpc.c net.c ether.c arp.c in_cksum.c netif.c \
-	 bootparam.c rarp.c dev_net.c bootp.c
+SRC_net= arp.c \
+	 bootp.c bootparam.c \
+	 dev_net.c \
+	 ether.c \
+	 in_cksum.c \
+	 net.c netif.c nfs.c \
+	 rarp.c rpc.c
 
-
-SRC_sa = alloc.c memcpy.c memset.c close.c exit.c getfile.c gets.c \
-	 open.c printf.c read.c strerror.c ufs.c globals.c lseek.c panic.c \
-	 closeall.c dev.c dkcksum.c nullfs.c fstat.c twiddle.c sprintf.c \
-	 subr_prf.c intoa.c udp.c memcmp.c loadfile.c loadfile_aout.c \
-	 loadfile_elf32.c dev_net.c
+SRC_sa= alloc.c \
+	close.c closeall.c \
+	dev.c dev_net.c dkcksum.c \
+	exit.c \
+	files.c fstat.c \
+	getfile.c gets.c globals.c \
+	intoa.c \
+	loadfile.c loadfile_aout.c loadfile_elf32.c lseek.c \
+	memcmp.c memcpy.c memset.c \
+	nullfs.c \
+	open.c \
+	panic.c printf.c \
+	read.c \
+	sprintf.c strerror.c subr_prf.c \
+	twiddle.c \
+	udp.c ufs.c
 
 # XXX Needed until libsa's memcmp.c doesn't depend on bcmp...
 SRC_sa+= bcmp.c
 
-SRC_kern= ashldi3.c ashrdi3.c strcmp.c strlen.c strncpy.c inet_addr.c
+SRC_kern= ashldi3.c ashrdi3.c \
+	  inet_addr.c \
+	  strcmp.c strlen.c strncpy.c
 
 SRC_mvme= exec_mvme.c
 
-SRC_here= clock.c chiptotime.c bugdev.c parse_args.c
+SRC_here= bugdev.c \
+	  chiptotime.c clock.c \
+	  parse_args.c
 
 SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_mvme} ${SRC_here}
 
