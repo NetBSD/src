@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.8 1998/06/08 06:53:49 lukem Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.9 1998/06/11 14:50:47 kleink Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdhosts.c,v 1.8 1998/06/08 06:53:49 lukem Exp $");
+__RCSID("$NetBSD: stdhosts.c,v 1.9 1998/06/11 14:50:47 kleink Exp $");
 #endif
 
 #include <sys/types.h>
@@ -62,7 +62,7 @@ main(argc, argv)
 {
 	struct in_addr host_addr;
 	FILE	*data_file;
-	int	 line_no;
+	size_t	 line_no;
 	size_t	 len;
 	char	*k, *v, *addr_string, *fname;
 
@@ -99,7 +99,8 @@ main(argc, argv)
 
 		if (inet_aton(k, &host_addr) == 0 ||
 		    (addr_string = inet_ntoa(host_addr)) == NULL)
-			warnx("%s line %d: syntax error", fname, line_no);
+			warnx("%s line %lu: syntax error", fname,
+			    (unsigned long)line_no);
 
 		printf("%s %s\n", addr_string, v);
 	}

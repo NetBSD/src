@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.8 1998/06/08 06:53:48 lukem Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.9 1998/06/11 14:50:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mknetid.c,v 1.8 1998/06/08 06:53:48 lukem Exp $");
+__RCSID("$NetBSD: mknetid.c,v 1.9 1998/06/11 14:50:46 kleink Exp $");
 #endif
 
 /*
@@ -229,7 +229,8 @@ read_passwd(fname)
 	const char *fname;
 {
 	FILE	*pfile;
-	int	 line_no, colon;
+	size_t	 line_no;
+	int	 colon;
 	size_t	 len;
 	char	*p, *k, *u, *g;
 
@@ -241,7 +242,8 @@ read_passwd(fname)
 	    (p = fparseln(pfile, &len, &line_no, NULL, FPARSELN_UNESCALL));
 	    free(p)) {
 		if (len == 0) {
-			warnx("%s line %d: empty line", fname, line_no);
+			warnx("%s line %lu: empty line", fname,
+			    (unsigned long)line_no);
 			continue;
 		}
 
@@ -250,8 +252,8 @@ read_passwd(fname)
 				colon++;
 
 		if (colon != 6) {
-			warnx("%s line %d: incorrect number of fields",
-			    fname, line_no);
+			warnx("%s line %lu: incorrect number of fields",
+			    fname, (unsigned long)line_no);
 			continue;
 		}
 
@@ -303,7 +305,8 @@ read_group(fname)
 	const char *fname;
 {
 	FILE	*gfile;
-	int	 line_no, colon;
+	size_t	 line_no;
+	int	 colon;
 	size_t	 len;
 	char	*p, *k, *u, *g;
 
@@ -315,7 +318,8 @@ read_group(fname)
 	    (p = fparseln(gfile, &len, &line_no, NULL, FPARSELN_UNESCALL));
 	    free(p)) {
 		if (len == 0) {
-			warnx("%s line %d: empty line", fname, line_no);
+			warnx("%s line %lu: empty line", fname,
+			    (unsigned long)line_no);
 			continue;
 		}
 
@@ -324,8 +328,8 @@ read_group(fname)
 				colon++;
 
 		if (colon != 3) {
-			warnx("%s line %d: incorrect number of fields",
-			    fname, line_no);
+			warnx("%s line %lu: incorrect number of fields",
+			    fname, (unsigned long)line_no);
 			continue;
 		}
 
