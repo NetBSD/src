@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/06/11 15:50:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/12/23 06:52:50 lukem Exp $
 
 PROG=		install-info
 SRCS=		install-info.c
@@ -9,6 +9,6 @@ SRCS=		install-info.c
 
 infodir-meta:
 .if defined(UNPRIVED) && (${MKINFO} != "no")
-	echo "${DESTDIR}/usr/share/info/dir type=file mode=0644 uname=root gname=wheel" | \
-		sed -e 's|^/|./|g' -e 's|//|/|g' | ${CAT} -l >>${METALOG}
+	echo "./usr/share/info/dir type=file mode=0644 uname=root gname=wheel" \
+	    | ${METALOG.add}
 .endif
