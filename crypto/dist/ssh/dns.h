@@ -1,8 +1,9 @@
-/*	$NetBSD: myproposal.h,v 1.1.1.9 2005/02/13 00:53:04 christos Exp $	*/
-/*	$OpenBSD: myproposal.h,v 1.16 2004/06/13 12:53:24 djm Exp $	*/
+/*	$NetBSD: dns.h,v 1.1.1.1 2005/02/13 00:52:59 christos Exp $	*/
+/*	$OpenBSD: dns.h,v 1.5 2003/11/12 16:39:58 jakob Exp $	*/
 
 /*
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2003 Wesley Griffin. All rights reserved.
+ * Copyright (c) 2003 Jakob Schlyter. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,31 +25,33 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#define KEX_DEFAULT_KEX		"diffie-hellman-group-exchange-sha1," \
-	"diffie-hellman-group14-sha1," \
-	"diffie-hellman-group1-sha1"
-#define	KEX_DEFAULT_PK_ALG	"ssh-rsa,ssh-dss"
-#define	KEX_DEFAULT_ENCRYPT \
-	"aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,arcfour," \
-	"aes192-cbc,aes256-cbc,rijndael-cbc@lysator.liu.se," \
-	"aes128-ctr,aes192-ctr,aes256-ctr"
-#define	KEX_DEFAULT_MAC \
-	"hmac-md5,hmac-sha1,hmac-ripemd160," \
-	"hmac-ripemd160@openssh.com," \
-	"hmac-sha1-96,hmac-md5-96"
-#define	KEX_DEFAULT_COMP	"none,zlib"
-#define	KEX_DEFAULT_LANG	""
 
 
-static char *myproposal[PROPOSAL_MAX] = {
-	KEX_DEFAULT_KEX,
-	KEX_DEFAULT_PK_ALG,
-	KEX_DEFAULT_ENCRYPT,
-	KEX_DEFAULT_ENCRYPT,
-	KEX_DEFAULT_MAC,
-	KEX_DEFAULT_MAC,
-	KEX_DEFAULT_COMP,
-	KEX_DEFAULT_COMP,
-	KEX_DEFAULT_LANG,
-	KEX_DEFAULT_LANG
+#include "includes.h"
+
+#ifndef DNS_H
+#define DNS_H
+
+enum sshfp_types {
+	SSHFP_KEY_RESERVED,
+	SSHFP_KEY_RSA,
+	SSHFP_KEY_DSA
 };
+
+enum sshfp_hashes {
+	SSHFP_HASH_RESERVED,
+	SSHFP_HASH_SHA1
+};
+
+#define DNS_RDATACLASS_IN	1
+#define DNS_RDATATYPE_SSHFP	44
+
+#define DNS_VERIFY_FOUND	0x00000001
+#define DNS_VERIFY_MATCH	0x00000002
+#define DNS_VERIFY_SECURE	0x00000004
+
+
+int	verify_host_key_dns(const char *, struct sockaddr *, const Key *, int *);
+int	export_dns_rr(const char *, const Key *, FILE *, int);
+
+#endif /* DNS_H */

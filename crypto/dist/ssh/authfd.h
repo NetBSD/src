@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.h,v 1.1.1.10 2003/04/03 05:57:16 itojun Exp $	*/
-/*	$OpenBSD: authfd.h,v 1.32 2003/01/23 13:50:27 markus Exp $	*/
+/*	$NetBSD: authfd.h,v 1.1.1.11 2005/02/13 00:52:53 christos Exp $	*/
+/*	$OpenBSD: authfd.h,v 1.34 2003/11/21 11:57:03 djm Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -50,6 +50,7 @@
 /* add key with constraints */
 #define SSH_AGENTC_ADD_RSA_ID_CONSTRAINED	24
 #define SSH2_AGENTC_ADD_ID_CONSTRAINED		25
+#define SSH_AGENTC_ADD_SMARTCARD_KEY_CONSTRAINED 26
 
 #define	SSH_AGENT_CONSTRAIN_LIFETIME		1
 #define	SSH_AGENT_CONSTRAIN_CONFIRM		2
@@ -83,7 +84,8 @@ int	 ssh_add_identity_constrained(AuthenticationConnection *, Key *,
 int	 ssh_remove_identity(AuthenticationConnection *, Key *);
 int	 ssh_remove_all_identities(AuthenticationConnection *, int);
 int	 ssh_lock_agent(AuthenticationConnection *, int, const char *);
-int	 ssh_update_card(AuthenticationConnection *, int, const char *, const char *);
+int	 ssh_update_card(AuthenticationConnection *, int, const char *,
+    const char *, u_int, u_int);
 
 int
 ssh_decrypt_challenge(AuthenticationConnection *, Key *, BIGNUM *, u_char[16],
