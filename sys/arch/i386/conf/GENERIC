@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.73 1997/03/13 04:15:24 cgd Exp $
+#	$NetBSD: GENERIC,v 1.74 1997/03/26 01:16:23 perry Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -177,7 +177,10 @@ wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 #wdc1	at isa? port 0x170 irq ?
 wd*	at wdc? drive ?
 
-wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+# note: the wt driver conflicts unpleasantly with ed devices at the
+# same I/O address. The probe reprograms their eeproms. Don't
+# uncomment it unless you are actually using it.
+#wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
 ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
