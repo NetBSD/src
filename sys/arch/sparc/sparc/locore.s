@@ -269,20 +269,6 @@ sun4_notsup:
 	.globl _msgbuf
 _msgbuf = KERNBASE
 
-#if 0
-/*
- * We need to map the interrupt enable register very early on in the
- * boot process, so that we can handle NMIs (parity errors) halfway
- * sensibly during boot.  We use virtual address f8002000 (`page 2')
- * for this, wasting a page of physical memory.
- *
- * This doesn't work for the Sun4M, which can have 5 or more pages of
- * registers. Thus we use a reserved piece of the virtual address space, set
- * up in bootstrap().
- */
-IE_reg_addr = KERNBASE + 8192		! this page not used; points to IEreg
-#endif
-
 /*
  * Each trap has room for four instructions, of which one perforce must
  * be a branch.  On entry the hardware has copied pc and npc to %l1 and
@@ -1295,26 +1281,21 @@ Lpanic_red:
 #endif /* 4m */
 
 #if defined(SUN4M) && !(defined(SUN4C) || defined(SUN4))
+
 #define PTE_OF_ADDR(addr, pte, bad, page_offset, label) \
 	PTE_OF_ADDR4M(addr, pte, bad, page_offset)
 #define CMP_PTE_USER_WRITE(pte, tmp, label)	CMP_PTE_USER_WRITE4M(pte)
 #define CMP_PTE_USER_READ(pte, tmp, label)	CMP_PTE_USER_READ4M(pte)
+
 #elif (defined(SUN4C) || defined(SUN4)) && !defined(SUN4M)
+
 #define PTE_OF_ADDR(addr, pte, bad, page_offset,label) \
 	PTE_OF_ADDR4_4C(addr, pte, bad, page_offset)
 #define CMP_PTE_USER_WRITE(pte, tmp, label)	CMP_PTE_USER_WRITE4_4C(pte)
 #define CMP_PTE_USER_READ(pte, tmp, label)	CMP_PTE_USER_READ4_4C(pte)
+
 #else /* both defined, ugh */
-#define	OLDPTE_OF_ADDR(addr, pte, bad, page_offset) \
-	sethi	%hi(_cputyp), pte; \
-	ld	[pte + %lo(_cputyp)], pte; \
-	cmp	pte, CPU_SUN4M; \
-	bne	2f; nop; \
-	PTE_OF_ADDR4M(addr, pte, bad, page_offset); \
-	b,a	3f; \
-2: \
-	PTE_OF_ADDR4_4C(addr, pte, bad, page_offset); \
-3:
+
 #define	PTE_OF_ADDR(addr, pte, bad, page_offset, label) \
 label:	b,a	2f; \
 	PTE_OF_ADDR4M(addr, pte, bad, page_offset); \
@@ -1323,16 +1304,6 @@ label:	b,a	2f; \
 	PTE_OF_ADDR4_4C(addr, pte, bad, page_offset); \
 3:
 
-#define OLDCMP_PTE_USER_READ(pte, tmp) \
-	sethi	%hi(_cputyp), tmp; \
-	ld	[tmp + %lo(_cputyp)], tmp; \
-	cmp	tmp, CPU_SUN4M; \
-	bne	1f; nop; \
-	CMP_PTE_USER_READ4M(pte); \
-	b,a	2f; \
-1: \
-	CMP_PTE_USER_READ4_4C(pte); \
-2:
 #define CMP_PTE_USER_READ(pte, tmp, label) \
 label:	b,a	1f; \
 	CMP_PTE_USER_READ4M(pte); \
@@ -1341,16 +1312,6 @@ label:	b,a	1f; \
 	CMP_PTE_USER_READ4_4C(pte); \
 2:
 
-#define OLDCMP_PTE_USER_WRITE(pte, tmp) \
-	sethi	%hi(_cputyp), tmp; \
-	ld	[tmp + %lo(_cputyp)], tmp; \
-	cmp	tmp, CPU_SUN4M; \
-	bne	1f; nop; \
-	CMP_PTE_USER_WRITE4M(pte); \
-	b,a	2f; \
-1: \
-	CMP_PTE_USER_WRITE4_4C(pte); \
-2:
 #define CMP_PTE_USER_WRITE(pte, tmp, label) \
 label:	b,a	1f; \
 	CMP_PTE_USER_WRITE4M(pte); \
@@ -5444,23 +5405,6 @@ ENTRY(loadfpstate)
  */
 
 #if defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
-#if 0
-ENTRY(ienab_bis)
-	sethi	%hi(_cputyp), %o1
-	ld	[%o1 + %lo(_cputyp)], %o1
-	cmp	%o1, CPU_SUN4M
-	be,a	_ienab_bis_4m
-	 nop
-	b,a	_ienab_bis_4c
-
-ENTRY(ienab_bic)
-	sethi	%hi(_cputyp), %o1
-	ld	[%o1 + %lo(_cputyp)], %o1
-	cmp	%o1, CPU_SUN4M
-	be,a	_ienab_bic_4m
-	 nop
-	b,a	_ienab_bic_4c
-#endif
 ENTRY(ienab_bis)
 NOP_ON_4M_13:
 	b,a	_ienab_bis_4c
@@ -5771,22 +5715,6 @@ ENTRY(microtime)
 	sethi	%hi(TIMERREG_VA), %g3
 	or	%g3, %lo(TIMERREG_VA), %g3
 
-#if 0
-/* blech, sun4m has microsecond counter at a different location */
-#if (defined(SUN4) || defined(SUN4C)) && !defined(SUN4M)
-#define r_aardvark	%lo(TIMERREG_VA)
-#elif !(defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
-#define r_aardvark	%lo(TIMERREG_VA) + 4
-#else
-	sethi	%hi(_cputyp), %g4
-	ld	[%g4 + %lo(_cputyp)], %g4
-	cmp	%g4, CPU_SUN4M
-	be,a	1f
-	 add	%g3, 4, %g3
-1:
-#define r_aardvark	0
-#endif
-#endif
 	/* sun4m has microsecond counter at a different location */
 NOP_ON_4_1:
 	 add	%g3, 4, %g3
