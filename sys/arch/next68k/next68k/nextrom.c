@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.4 1998/07/11 07:06:17 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.5 1998/07/19 21:41:17 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -114,6 +114,11 @@ next68k_bootargs(args)
 			msize4  = 0x200000;
 			msize1  = 0x80000;			/* ? */
 			ROM_PUTS("Looks like a NeXT_WARP9C\r\n");
+		} else if (MONRELOC(char,MG_machine_type) == NeXT_WARP9) {
+			msize16 = 0x1000000;
+			msize4  = 0x400000;
+			msize1  = 0x100000;
+			ROM_PUTS("Looks like a NeXT_WARP9\r\n");
 		} else {
 			msize16 = 0x100000;
 			msize4  = 0x100000;

@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.2 1998/07/13 04:01:39 dbj Exp $	*/
+/*	$NetBSD: espvar.h,v 1.3 1998/07/19 21:41:16 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,4 +44,8 @@ struct esp_softc {
 	bus_space_handle_t sc_bsh;		/* the device registers */
 	bus_dmamap_t  sc_dmamap;			/* i/o dma map */
 	int sc_datain;								/* dma direction for map */
+	caddr_t sc_slop_bgn_addr;			/* bytes to be fifo'd at beginning */
+	caddr_t sc_slop_end_addr;			/* bytes to be fifo'd at end */
+	int sc_slop_bgn_size;					/* # bytes to be fifo'd at beginning */
+	int sc_slop_end_size;					/* # bytes to be fifo'd at end */
 };

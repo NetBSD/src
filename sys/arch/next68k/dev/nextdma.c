@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.2 1998/07/01 22:14:44 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.3 1998/07/19 21:41:17 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -185,7 +185,8 @@ next_dmamap_sync(t, map, offset, len, ops)
 {
 	/* flush/purge the cache.
 	 * assumes pointers are aligned
-	 * should probably be fixed to use offset and len
+	 * @@@ should probably be fixed to use offset and len args.
+	 * should also optimize this to work on pages for larger regions?
 	 */
 	if (ops & BUS_DMASYNC_PREWRITE) {
 		int i;
