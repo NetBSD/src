@@ -1,10 +1,10 @@
-/*	$NetBSD: ahc_isa.c,v 1.12 1998/03/22 12:53:55 drochner Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.13 2000/03/15 02:05:19 fvdl Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
- * 	284X VLbus SCSI controllers
+ * 	AHA-284X VL-bus SCSI controllers
  *
- * Copyright (c) 1994, 1995, 1996 Justin T. Gibbs.
+ * Copyright (c) 1994, 1995, 1996, 1997, 1998 Justin T. Gibbs.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,10 +13,7 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice immediately at the beginning of the file, without modification,
  *    this list of conditions, and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
+ * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -30,6 +27,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $FreeBSD: src/sys/dev/aic7xxx/ahc_eisa.c,v 1.15 2000/01/29 14:22:19 peter Exp $
  */
 
 /*-
@@ -115,9 +114,6 @@
  *
  *	-- Jason R. Thorpe <thorpej@NetBSD.ORG>
  *	   July 12, 1996
- *
- * TODO: some code could be shared with ahc_eisa.c, but it would probably
- * be a logistical mightmare to even try.
  */
 
 #include <sys/param.h>
@@ -140,20 +136,32 @@
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
-#include <dev/ic/aic7xxxreg.h>
+#include <dev/microcode/aic7xxx/aic7xxx_reg.h>
 #include <dev/ic/aic7xxxvar.h>
+#include <dev/ic/aic77xxreg.h>
+#include <dev/ic/aic77xxvar.h>
+#include <dev/ic/smc93cx6var.h>
+
+/*
+ * Under normal circumstances, these messages are unnecessary
+ * and not terribly cosmetic.
+ */
+#ifdef DEBUG
+#define bootverbose	1
+#else
+#define bootverbose	1
+#endif
 
 /* IO port address setting range as EISA slot number */
 #define AHC_ISA_MIN_SLOT	0x1	/* from iobase = 0x1c00 */
 #define AHC_ISA_MAX_SLOT	0xe	/* to   iobase = 0xec00 */
 
-#define AHC_ISA_SLOT_OFFSET	0xc00	/* offset from EISA IO space */
-#define AHC_ISA_IOSIZE		0x100
+#define AHC_ISA_SLOT_OFFSET	AHC_EISA_SLOT_OFFSET
+#define AHC_ISA_IOSIZE		AHC_EISA_IOSIZE
 
 /*
  * I/O port offsets
  */
-#define INTDEF			0x5cul	/* Interrupt Definition Register */
 #define	AHC_ISA_VID		(EISA_SLOTOFF_VID - AHC_ISA_SLOT_OFFSET)
 #define	AHC_ISA_PID		(EISA_SLOTOFF_PID - AHC_ISA_SLOT_OFFSET)
 #define	AHC_ISA_PRIMING		AHC_ISA_VID	/* enable vendor/product ID */
@@ -164,15 +172,15 @@
 #define	AHC_ISA_PRIMING_VID(index)	(AHC_ISA_VID + (index))
 #define	AHC_ISA_PRIMING_PID(index)	(AHC_ISA_PID + (index))
 
-int	ahc_isa_irq __P((bus_space_tag_t, bus_space_handle_t));
 int	ahc_isa_idstring __P((bus_space_tag_t, bus_space_handle_t, char *));
 int	ahc_isa_match __P((struct isa_attach_args *, bus_addr_t));
 
 int	ahc_isa_probe __P((struct device *, struct cfdata *, void *));
 void	ahc_isa_attach __P((struct device *, struct device *, void *));
+void	aha2840_load_seeprom __P((struct ahc_softc *ahc));
 
 struct cfattach ahc_isa_ca = {
-	sizeof(struct ahc_data), ahc_isa_probe, ahc_isa_attach
+	sizeof(struct ahc_softc), ahc_isa_probe, ahc_isa_attach
 };
 
 /*
@@ -191,36 +199,6 @@ struct ahc_isa_slot {
 };
 static LIST_HEAD(, ahc_isa_slot) ahc_isa_all_slots;
 static int ahc_isa_slot_initialized;
-
-/*
- * Return irq setting of the board, otherwise -1.
- */
-int
-ahc_isa_irq(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-{
-	int irq;
-	u_char intdef;
-
-	ahc_reset("ahc_isa", iot, ioh);
-	intdef = bus_space_read_1(iot, ioh, INTDEF);
-	switch (irq = (intdef & 0xf)) {
-	case 9:
-	case 10:
-	case 11:
-	case 12:
-	case 14:
-	case 15:
-		break;
-	default:
-		printf("ahc_isa_irq: illegal irq setting %d\n", irq);
-		return -1;
-	}
-
-	/* Note that we are going and return (to probe) */
-	return irq;
-}
 
 int
 ahc_isa_idstring(iot, ioh, idstring)
@@ -309,7 +287,7 @@ ahc_isa_match(ia, iobase)
 	    strcmp(idstring, "ADP7757"))
 		irq = -1;	/* unknown ID strings */
 	else
-		irq = ahc_isa_irq(iot, ioh);
+		irq = ahc_aic77xx_irq(iot, ioh);
 
 	bus_space_unmap(iot, ioh, AHC_ISA_IOSIZE);
 
@@ -393,14 +371,13 @@ ahc_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	ahc_type type;
-	struct ahc_data *ahc = (void *)self;
+	struct ahc_softc *ahc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	int irq;
+	int irq, intrtype;
+	const char *intrtypestr;
 	char idstring[EISA_IDSTRINGLEN];
-	const char *model;
 
 	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh)) {
 		printf(": can't map i/o space\n");
@@ -408,127 +385,175 @@ ahc_isa_attach(parent, self, aux)
 	}
 	if (!ahc_isa_idstring(iot, ioh, idstring)) {
 		printf(": can't read ID string\n");
-		return;
+		goto free_io;
 	}
-	if ((irq = ahc_isa_irq(iot, ioh)) < 0) {
-		printf(": ahc_isa_irq failed\n");
-		return;
+	if ((irq = ahc_aic77xx_irq(iot, ioh)) < 0) {
+		printf(": ahc_aic77xx_irq failed\n");
+		goto free_io;
 	}
 
 	if (strcmp(idstring, "ADP7756") == 0) {
-		model = EISA_PRODUCT_ADP7756;
-		type = AHC_284;
+		printf(": %s\n", EISA_PRODUCT_ADP7756);
 	} else if (strcmp(idstring, "ADP7757") == 0) {
-		model = EISA_PRODUCT_ADP7757;
-		type = AHC_284;
+		printf(": %s\n", EISA_PRODUCT_ADP7757);
 	} else {
 		printf(": unknown device type %s\n", idstring);
-		return;
+		goto free_io;
 	}
-	printf(": %s\n", model);
 
-	ahc_construct(ahc, iot, ioh, ia->ia_dmat, type, AHC_FNONE);
+	if (ahc_alloc(ahc, ioh, iot, ia->ia_dmat,
+	    AHC_AIC7770|AHC_VL, AHC_AIC7770_FE, AHC_FNONE))
+		goto free_io;
 
 	/*
 	 * Tell the bus-dma interface that we can do 32bit dma
+	 * NOTE: this variable is first referenced in ahc_init().
 	 */
 	ahc->sc_dmaflags = ISABUS_DMA_32BIT;
 
-#ifdef DEBUG
+	ahc->channel = 'A';
+	ahc->channel_b = 'B';
+	if (ahc_reset(ahc) != 0)
+		goto free_ahc;
+
+	/*
+	 * The IRQMS bit enables level sensitive interrupts. Only allow
+	 * IRQ sharing if it's set.
+	 * NOTE: ahc->pause is initialized in ahc_alloc().
+	 */
+	if (ahc->pause & IRQMS) {
+		intrtype = IST_LEVEL;
+		intrtypestr = "level sensitive";
+	} else {
+		intrtype = IST_EDGE;
+		intrtypestr = "edge triggered";
+	}
+	ahc->ih = isa_intr_establish(ia->ia_ic, irq,
+	    intrtype, IPL_BIO, ahc_intr, ahc);
+	if (ahc->ih == NULL) {
+		printf("%s: couldn't establish %s interrupt\n",
+		       ahc->sc_dev.dv_xname, intrtypestr);
+		goto free_ahc;
+	}
+
 	/*
 	 * Tell the user what type of interrupts we're using.
 	 * usefull for debugging irq problems
 	 */
-	printf( "%s: Using %s Interrupts\n", ahc_name(ahc),
-	    ahc->pause & IRQMS ?  "Level Sensitive" : "Edge Triggered");
-#endif
+	if (bootverbose) {
+		printf("%s: Using %s interrupts\n",
+		       ahc->sc_dev.dv_xname, intrtypestr);
+	}
 
 	/*
 	 * Now that we know we own the resources we need, do the 
 	 * card initialization.
-	 *
-	 * First, the aic7770 card specific setup.
 	 */
+	aha2840_load_seeprom(ahc);
 
-	/* XXX
-	 * On AHA-284x,
-	 * all values are automagically intialized at
-	 * POST for these cards, so we can always rely
-	 * on the Scratch Ram values.  However, we should
-	 * read the SEEPROM here (Dan has the code to do
-	 * it) so we can say what kind of translation the
-	 * BIOS is using.  Printing out the geometry could
-	 * save a lot of users the grief of failed installs.
-	 */
+	/* Attach sub-devices */
+	if (ahc_aic77xx_attach(ahc) == 0)
+		return; /* succeed */
 
-	/*      
-	 * See if we have a Rev E or higher aic7770. Anything below a
-	 * Rev E will have a R/O autoflush disable configuration bit.
-	 * It's still not clear exactly what is differenent about the Rev E.
-	 * We think it allows 8 bit entries in the QOUTFIFO to support
-	 * "paging" SCBs so you can have more than 4 commands active at
-	 * once.
-	 */     
-	{
-		char *id_string;
-		u_char sblkctl;
-		u_char sblkctl_orig;
+	/* failed */
+	isa_intr_disestablish(ia->ia_ic, ahc->ih);
+free_ahc:
+	ahc_free(ahc);
+free_io:
+	bus_space_unmap(iot, ioh, ia->ia_iosize);
+}
 
-		sblkctl_orig = AHC_INB(ahc, SBLKCTL);
-		sblkctl = sblkctl_orig ^ AUTOFLUSHDIS;
-		AHC_OUTB(ahc, SBLKCTL, sblkctl);
-		sblkctl = AHC_INB(ahc, SBLKCTL);
-		if(sblkctl != sblkctl_orig)
-		{
-			id_string = "aic7770 >= Rev E, ";
-			/*
-			 * Ensure autoflush is enabled
-			 */
-			sblkctl &= ~AUTOFLUSHDIS;
-			AHC_OUTB(ahc, SBLKCTL, sblkctl);
+/*
+ * Read the 284x SEEPROM.
+ */
+void
+aha2840_load_seeprom(struct ahc_softc *ahc)
+{
+	struct	  seeprom_descriptor sd;
+	struct	  seeprom_config sc;
+	u_int16_t checksum = 0;
+	u_int8_t  scsi_conf;
+	int	  have_seeprom;
 
-			/* Allow paging on this adapter */
-			ahc->flags |= AHC_PAGESCBS;
+	sd.sd_tag = ahc->tag;
+	sd.sd_bsh = ahc->bsh;
+	sd.sd_control_offset = SEECTL_2840;
+	sd.sd_status_offset = STATUS_2840;
+	sd.sd_dataout_offset = STATUS_2840;		
+	sd.sd_chip = C46;
+	sd.sd_MS = 0;
+	sd.sd_RDY = EEPROM_TF;
+	sd.sd_CS = CS_2840;
+	sd.sd_CK = CK_2840;
+	sd.sd_DO = DO_2840;
+	sd.sd_DI = DI_2840;
+
+	if (bootverbose)
+		printf("%s: Reading SEEPROM...", ahc_name(ahc));
+	have_seeprom = read_seeprom(&sd,
+				    (u_int16_t *)&sc,
+				    /*start_addr*/0,
+				    sizeof(sc)/2);
+
+	if (have_seeprom) {
+		/* Check checksum */
+		int i;
+		int maxaddr = (sizeof(sc)/2) - 1;
+		u_int16_t *scarray = (u_int16_t *)&sc;
+
+		for (i = 0; i < maxaddr; i++)
+			checksum = checksum + scarray[i];
+		if (checksum != sc.checksum) {
+			if(bootverbose)
+				printf ("checksum error\n");
+			have_seeprom = 0;
+		} else if (bootverbose) {
+			printf("done.\n");
 		}
-		else
-			id_string = "aic7770 <= Rev C, ";
-
-		printf("%s: %s", ahc_name(ahc), id_string);
 	}
 
-	/* Setup the FIFO threshold and the bus off time */
-	{
-		u_char hostconf = AHC_INB(ahc, HOSTCONF);
-		AHC_OUTB(ahc, BUSSPD, hostconf & DFTHRSH);
-		AHC_OUTB(ahc, BUSTIME, (hostconf << 2) & BOFF);
+	if (!have_seeprom) {
+		if (bootverbose)
+			printf("%s: No SEEPROM available\n", ahc_name(ahc));
+		ahc->flags |= AHC_USEDEFAULTS;
+	} else {
+		/*
+		 * Put the data we've collected down into SRAM
+		 * where ahc_init will find it.
+		 */
+		int i;
+		int max_targ = (ahc->features & AHC_WIDE) != 0 ? 16 : 8;
+		u_int16_t discenable;
+
+		discenable = 0;
+		for (i = 0; i < max_targ; i++){
+	                u_int8_t target_settings;
+			target_settings = (sc.device_flags[i] & CFXFER) << 4;
+			if (sc.device_flags[i] & CFSYNCH)
+				target_settings |= SOFS;
+			if (sc.device_flags[i] & CFWIDEB)
+				target_settings |= WIDEXFER;
+			if (sc.device_flags[i] & CFDISC)
+				discenable |= (0x01 << i);
+			ahc_outb(ahc, TARG_SCSIRATE + i, target_settings);
+		}
+		ahc_outb(ahc, DISC_DSB, ~(discenable & 0xff));
+		ahc_outb(ahc, DISC_DSB + 1, ~((discenable >> 8) & 0xff));
+
+		ahc->our_id = sc.brtime_id & CFSCSIID;
+
+		scsi_conf = (ahc->our_id & 0x7);
+		if (sc.adapter_control & CFSPARITY)
+			scsi_conf |= ENSPCHK;
+		if (sc.adapter_control & CFRESETB)
+			scsi_conf |= RESET_SCSI;
+
+		if (sc.bios_control & CF284XEXTEND)		
+			ahc->flags |= AHC_EXTENDED_TRANS_A;
+		/* Set SCSICONF info */
+		ahc_outb(ahc, SCSICONF, scsi_conf);
+
+		if (sc.adapter_control & CF284XSTERM)
+			ahc->flags |= AHC_TERM_ENB_A;
 	}
-
-	/*
-	 * Generic aic7xxx initialization.
-	 */
-	if(ahc_init(ahc)){
-		ahc_free(ahc);
-		return;
-	}
-
-	/*
-	 * Enable the board's BUS drivers
-	 */
-	AHC_OUTB(ahc, BCTL, ENABLE);
-
-	/*
-	 * The IRQMS bit enables level sensitive interrupts only allow
-	 * IRQ sharing if its set.
-	 */
-	ahc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
-	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_intr, ahc);
-	if (ahc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		       ahc->sc_dev.dv_xname);
-		ahc_free(ahc);
-		return;
-	}
-
-	/* Attach sub-devices - always succeeds */
-	ahc_attach(ahc);
 }
