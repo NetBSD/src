@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.30 1999/01/10 12:59:20 tron Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.31 1999/03/25 23:10:13 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -125,10 +125,6 @@ struct mbuf *ed_ring_to_mbuf __P((struct ed_softc *, caddr_t, struct mbuf *, u_s
 struct cfattach ed_zbus_ca = {
 	sizeof(struct ed_softc), ed_zbus_match, ed_zbus_attach
 };
-
-#define	ETHER_MIN_LEN	64
-#define	ETHER_MAX_LEN	1518
-#define	ETHER_ADDR_LEN	6
 
 static inline void
 NIC_PUT(sc, off, val)
