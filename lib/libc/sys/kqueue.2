@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.1.1.1.2.2 2002/03/18 21:35:32 jdolecek Exp $
+.\"	$NetBSD: kqueue.2,v 1.1.1.1.2.3 2002/06/07 08:24:11 jdolecek Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .Ft int
 .Fn kqueue "void"
 .Ft int
-.Fn kevent "int kq" "const struct kevent *changelist" "int nchanges" "struct kevent *eventlist" "int nevents" "const struct timespec *timeout"
+.Fn kevent "int kq" "const struct kevent *changelist" "size_t nchanges" "struct kevent *eventlist" "size_t nevents" "const struct timespec *timeout"
 .Fn EV_SET "&kev" ident filter flags fflags data udata
 .Sh DESCRIPTION
 .Fn kqueue
