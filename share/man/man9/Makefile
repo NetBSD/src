@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.112 2002/06/24 22:45:41 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.113 2002/07/09 02:28:10 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -21,9 +21,9 @@ MAN=	access.9 altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
 	pcmcia.9 pfil.9 physio.9 \
 	pmap.9 pool.9 powerhook_establish.9 ppsratecheck.9 properties.9 \
-	psignal.9 radio.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
+	radio.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
 	scsipi.9 setjmp.9 setrunqueue.9 shutdownhook_establish.9 \
-	sleep.9 softintr.9 \
+	signal.9 sleep.9 softintr.9 \
 	spl.9 store.9 suser.9 tc.9 time.9 todr.9 uiomove.9 ucom.9 \
 	vattr.9 vfs.9 vfsops.9 vme.9 vnode.9 vnodeops.9 vnsubr.9 \
 	usbdi.9 uvm.9 wdc.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
@@ -266,7 +266,6 @@ MLINKS+=properties.9 propdb_create.9 \
 	properties.9 prop_list.9 \
 	properties.9 prop_objs.9 \
 	properties.9 prop_set.9
-MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=rasops.9 rasops_init.9 \
 	rasops.9 rasops_reconfig.9
 MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
@@ -277,6 +276,29 @@ MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
 MLINKS+=setjmp.9 longjmp.9
 MLINKS+=setrunqueue.9 remrunqueue.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
+MLINKS+=signal.9 siginit.9 \
+	signal.9 sigactsinit.9 \
+	signal.9 sigactsunshare.9 \
+	signal.9 sigactsfree.9 \
+	signal.9 execsigs.9 \
+	signal.9 sigaction1.9 \
+	signal.9 sigprocmask1.9 \
+	signal.9 sigpending1.9 \
+	signal.9 sigsuspend1.9 \
+	signal.9 sigaltstack1.9 \
+	signal.9 gsignal.9 \
+	signal.9 pgsignal.9 \
+	signal.9 trapsignal.9 \
+	signal.9 psignal.9 \
+	signal.9 sched_psignal.9 \
+	signal.9 issignal.9 \
+	signal.9 postsig.9 \
+	signal.9 killproc.9 \
+	signal.9 sigexit.9 \
+	signal.9 sigmasked.9 \
+	signal.9 sendsig.9 \
+	signal.9 sigcode.9 \
+	signal.9 sigtramp.9
 MLINKS+=sleep.9 wakeup.9 sleep.9 tsleep.9 sleep.9 ltsleep.9
 MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
 	softintr.9 softintr_schedule.9
