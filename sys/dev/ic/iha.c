@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.1 2001/06/03 13:43:46 tsutsui Exp $ */
+/*	$NetBSD: iha.c,v 1.2 2001/06/05 12:42:44 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -162,16 +162,19 @@ static void tul_scsi(struct iha_softc *);
 
 static int  tul_wait(struct iha_softc *, u_int8_t);
 
-static void tul_mark_busy_scb(struct iha_scsi_req_q *);
+static __inline void tul_mark_busy_scb(struct iha_scsi_req_q *);
 
 static void tul_append_free_scb(struct iha_softc *, struct iha_scsi_req_q *);
 static void tul_append_done_scb(struct iha_softc *, struct iha_scsi_req_q *,
     u_int8_t);
-static struct iha_scsi_req_q *tul_pop_done_scb(struct iha_softc *);
+static __inline struct iha_scsi_req_q *tul_pop_done_scb(struct iha_softc *);
 
-static void tul_append_pend_scb(struct iha_softc *, struct iha_scsi_req_q *);
-static void tul_push_pend_scb(struct iha_softc *, struct iha_scsi_req_q *);
-static void tul_del_pend_scb(struct iha_softc *, struct iha_scsi_req_q *);
+static __inline void tul_append_pend_scb(struct iha_softc *,
+    struct iha_scsi_req_q *);
+static __inline void tul_push_pend_scb(struct iha_softc *,
+    struct iha_scsi_req_q *);
+static __inline void tul_del_pend_scb(struct iha_softc *,
+    struct iha_scsi_req_q *);
 static struct iha_scsi_req_q *tul_find_pend_scb(struct iha_softc *);
 
 static void tul_sync_done(struct iha_softc *);
@@ -189,8 +192,8 @@ static int tul_state_8(struct iha_softc *);
 
 static void tul_set_ssig(struct iha_softc *, u_int8_t, u_int8_t);
 
-static int tul_xpad_in	 (struct iha_softc *);
-static int tul_xpad_out (struct iha_softc *);
+static int tul_xpad_in(struct iha_softc *);
+static int tul_xpad_out(struct iha_softc *);
 
 static int tul_xfer_data(struct iha_softc *, struct iha_scsi_req_q *,
     int direction);
@@ -567,7 +570,7 @@ tul_append_free_scb(sc, scb)
 	splx(s);
 }
 
-static void
+static __inline void
 tul_append_pend_scb(sc, scb)
 	struct iha_softc *sc;
 	struct iha_scsi_req_q *scb;
@@ -582,7 +585,7 @@ tul_append_pend_scb(sc, scb)
 	TAILQ_INSERT_TAIL(&sc->sc_pendscb, scb, chain);
 }
 
-static void
+static __inline void
 tul_push_pend_scb(sc, scb)
 	struct iha_softc *sc;
 	struct iha_scsi_req_q *scb;
@@ -665,7 +668,7 @@ tul_find_pend_scb(sc)
 /*
  * tul_del_pend_scb - remove scb from sc_pendscb
  */
-static void
+static __inline void
 tul_del_pend_scb(sc, scb)
 	struct iha_softc *sc;
 	struct iha_scsi_req_q *scb;
@@ -679,7 +682,7 @@ tul_del_pend_scb(sc, scb)
 	splx(s);
 }
 
-static void
+static __inline void
 tul_mark_busy_scb(scb)
 	struct iha_scsi_req_q *scb;
 {
@@ -730,7 +733,7 @@ tul_append_done_scb(sc, scb, hastat)
 	splx(s);
 }
 
-static struct iha_scsi_req_q *
+static __inline struct iha_scsi_req_q *
 tul_pop_done_scb(sc)
 	struct iha_softc *sc;
 {
