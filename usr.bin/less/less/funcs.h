@@ -1,6 +1,5 @@
-/*	$NetBSD: funcs.h,v 1.1.1.3 1997/09/21 12:23:14 mrg Exp $	*/
+/*	$NetBSD: funcs.h,v 1.1.1.4 1999/04/06 05:30:38 mrg Exp $	*/
 
-	public void strtcpy ();
 	public char * save ();
 	public VOID_POINTER ecalloc ();
 	public char * skipsp ();
@@ -134,6 +133,7 @@
 	public void if_dump ();
 	public POSITION forw_line ();
 	public POSITION back_line ();
+	public void set_attnpos ();
 	public void jump_forw ();
 	public void jump_back ();
 	public void repaint ();
@@ -217,6 +217,7 @@
 	public char * eq_message ();
 	public char * pr_string ();
 	public void repaint_hilite ();
+	public void clear_attn ();
 	public void undo_search ();
 	public void clr_hilite ();
 	public int is_hilited ();
