@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.3 1996/12/18 22:25:09 cgd Exp $	*/
+/*	$NetBSD: crt0.c,v 1.4 1997/01/03 18:23:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -177,8 +177,8 @@ rtld_setup(cleanup, obj)
 
 void *
 dlopen(name, mode)
-	char	*name;
-	int	mode;
+	const char *name;
+	int mode;
 {
 
 	if (mainprog_obj == NULL)
@@ -188,7 +188,7 @@ dlopen(name, mode)
 
 int
 dlclose(fd)
-	void	*fd;
+	void *fd;
 {
 
 	if (mainprog_obj == NULL)
@@ -198,8 +198,8 @@ dlclose(fd)
 
 void *
 dlsym(fd, name)
-	void	*fd;
-	char	*name;
+	void *fd;
+	const char *name;
 {
 
 	if (mainprog_obj == NULL)
