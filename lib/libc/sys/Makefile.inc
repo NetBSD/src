@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.125 2002/07/10 04:29:10 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.126 2002/08/07 04:51:12 briggs Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -58,7 +58,7 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	mlock.S mlockall.S mount.S mprotect.S __msgctl13.S msgget.S msgrcv.S \
 	msgsnd.S __msync13.S munlock.S munlockall.S munmap.S nanosleep.S \
 	nfssvc.S ntp_gettime.S open.S pathconf.S \
-	poll.S profil.S quotactl.S read.S \
+	pmc_get_info.S pmc_control.S poll.S profil.S quotactl.S read.S \
 	readlink.S readv.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
 	rmdir.S select.S semconfig.S semget.S semop.S ____semctl13.S sendmsg.S \
 	sendto.S setegid.S seteuid.S setgid.S setgroups.S setitimer.S \
@@ -122,7 +122,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	madvise.2 mincore.2 minherit.2 mlock.2 mlockall.2 mmap.2 mount.2 \
 	mprotect.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
 	munmap.2 nanosleep.2 nfssvc.2 ntp_adjtime.2 open.2 pathconf.2 pipe.2 \
-	poll.2 profil.2 ptrace.2 quotactl.2 read.2 readlink.2 \
+	pmc_control.2 poll.2 profil.2 ptrace.2 quotactl.2 read.2 readlink.2 \
 	reboot.2 recv.2 rename.2 revoke.2 rmdir.2 select.2 semctl.2 \
 	semget.2 semop.2 send.2 setgroups.2 setpgid.2 setregid.2 \
 	setreuid.2 setsid.2 setuid.2 shmat.2 shmctl.2 shmget.2 \
@@ -161,6 +161,7 @@ MLINKS+=mlockall.2 munlockall.2
 MLINKS+=mount.2 unmount.2
 MLINKS+=ntp_adjtime.2 ntp_gettime.2
 MLINKS+=pathconf.2 fpathconf.2
+MLINKS+=pmc_control.2 pmc_get_info.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2
 MLINKS+=send.2 sendmsg.2 send.2 sendto.2
