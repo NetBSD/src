@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.14 1999/07/02 15:21:25 simonb Exp $	*/
+/*	$NetBSD: history.c,v 1.15 2000/08/29 07:04:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.14 1999/07/02 15:21:25 simonb Exp $");
+__RCSID("$NetBSD: history.c,v 1.15 2000/08/29 07:04:32 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -316,7 +316,7 @@ private int
 history_def_set(p, ev, n)
     ptr_t p;
     HistEvent *ev;
-    int n;
+    const int n;
 {
     history_t *h = (history_t *) p;
 
