@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.59 2002/03/31 05:51:47 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.60 2002/03/31 10:44:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.59 2002/03/31 05:51:47 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.60 2002/03/31 10:44:44 jdolecek Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1499,6 +1499,8 @@ wi_ioctl(ifp, command, data)
 		} else {
 			if (sc->sc_enabled == 0)
 				error = wi_getdef(sc, &wreq);
+			else if (wreq.wi_len > WI_MAX_DATALEN)
+				error = EINVAL;
 			else if (wi_read_record(sc, (struct wi_ltv_gen *)&wreq))
 				error = EINVAL;
 		}
@@ -1537,7 +1539,9 @@ wi_ioctl(ifp, command, data)
 				}
 			}
 		} else {
-			if (sc->sc_enabled != 0)
+			if (wreq.wi_len > WI_MAX_DATALEN)
+				error = EINVAL;
+			else if (sc->sc_enabled != 0)
 				error = wi_write_record(sc,
 				    (struct wi_ltv_gen *)&wreq);
 			if (error == 0)
