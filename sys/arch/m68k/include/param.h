@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 1999/12/04 21:20:35 ragge Exp $	*/
+/*	$NetBSD: param.h,v 1.7 1999/12/12 07:45:46 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,12 +134,14 @@
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
 
 /*
- * Mach derived conversion macros
+ * Mach-derived conversion macros
  */
 #define	m68k_round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
 #define	m68k_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
+#define	m68k_seg_offset(x)	((unsigned)(x) & SEGOFSET)
 #define	m68k_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
 #define	m68k_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
+#define	m68k_page_offset(x)	((unsigned)(x) & PGOFSET)
 #define	m68k_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define	m68k_ptob(x)		((unsigned)(x) << PGSHIFT)
 
