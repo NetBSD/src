@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mkfontdir,v 1.5 2004/02/09 04:30:05 lukem Exp $
+#	$NetBSD: Makefile.mkfontdir,v 1.6 2004/02/09 06:52:34 lukem Exp $
 
 # Note: needs "install" run in ./encodings  first
 #
@@ -10,7 +10,7 @@ afterinstall:
 	rm -f ${DESTDIR}${FILESDIR}/fonts.dir
 	${MKFONTDIR} ${DESTDIR}${FILESDIR}
 .if ${MKUNPRIVED} != "no"
-	echo ".${FILESDIR}/fonts.dir type=file mode=0444 uname=root gname=wheel" \
+	echo ".${FILESDIR}/fonts.dir type=file mode=0444 uname=${BINOWN} gname=${BINGRP}" \
 	    | ${METALOG.add}
 .endif
 	${_MKMSG_INSTALL} ${DESTDIR}${FILESDIR}/encodings.dir
