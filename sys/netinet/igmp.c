@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.25 2000/06/16 20:21:26 matt Exp $	*/
+/*	$NetBSD: igmp.c,v 1.26 2001/07/25 00:13:16 enami Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -73,9 +73,6 @@ void
 igmp_init()
 {
 
-	/*
-	 * To avoid byte-swapping the same value over and over again.
-	 */
 	igmp_timers_are_running = 0;
 	rti_head = 0;
 }
