@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.4 2003/08/07 16:27:40 agc Exp $	*/
+/*	$NetBSD: apci.c,v 1.5 2003/11/08 12:02:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -113,9 +113,9 @@
 #include <dev/cons.h>
 
 #include <hp300/dev/frodoreg.h>		/* for APCI offsets */
-#include <hp300/dev/apcireg.h>		/* for register map */
-#include <hp300/dev/dcareg.h>		/* for register bits */
 
+#include <hp300/stand/common/apcireg.h>	/* for register map */
+#include <hp300/stand/common/dcareg.h>	/* for register bits */
 #include <hp300/stand/common/consdefs.h>
 #include <hp300/stand/common/samachdep.h>
 
