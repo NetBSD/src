@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.24 1997/06/12 18:41:14 kleink Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.25 1997/07/28 22:18:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -435,11 +435,11 @@ tcp_ctloutput(op, so, level, optname, mp)
 #ifndef TCP_SENDSPACE
 #define	TCP_SENDSPACE	1024*16;
 #endif
-u_long	tcp_sendspace = TCP_SENDSPACE;
+int	tcp_sendspace = TCP_SENDSPACE;
 #ifndef TCP_RECVSPACE
 #define	TCP_RECVSPACE	1024*16;
 #endif
-u_long	tcp_recvspace = TCP_RECVSPACE;
+int	tcp_recvspace = TCP_RECVSPACE;
 
 /*
  * Attach TCP protocol to socket, allocating
@@ -573,7 +573,24 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case TCPCTL_RFC1323:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcp_do_rfc1323));
-
+	case TCPCTL_SENDSPACE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_sendspace));
+	case TCPCTL_RECVSPACE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_recvspace));
+	case TCPCTL_MSSDFLT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_mssdflt));
+	case TCPCTL_SYN_CACHE_LIMIT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_syn_cache_limit));
+	case TCPCTL_SYN_BUCKET_LIMIT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_syn_bucket_limit));
+	case TCPCTL_SYN_CACHE_INTER:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &tcp_syn_cache_interval));
 	default:
 		return (ENOPROTOOPT);
 	}
