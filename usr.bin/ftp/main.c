@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.77 2001/02/19 23:03:46 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.78 2001/12/23 12:23:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.77 2001/02/19 23:03:46 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.78 2001/12/23 12:23:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,6 +190,7 @@ main(int argc, char *argv[])
 	upload_path = NULL;
 	isupload = 0;
 	reply_callback = NULL;
+	family = AF_UNSPEC;
 
 	netrc[0] = '\0';
 	cp = getenv("NETRC");
@@ -279,8 +280,16 @@ main(int argc, char *argv[])
 		}
 	}
 
-	while ((ch = getopt(argc, argv, "AadefginN:o:pP:r:RtT:u:vV")) != -1) {
+	while ((ch = getopt(argc, argv, "46AadefginN:o:pP:r:RtT:u:vV")) != -1) {
 		switch (ch) {
+		case '4':
+			family = AF_INET;
+			break;
+
+		case '6':
+			family = AF_INET6;
+			break;
+
 		case 'A':
 			activefallback = 0;
 			passivemode = 0;
@@ -1008,7 +1017,7 @@ usage(void)
 	const char *progname = getprogname();
 
 	(void)fprintf(stderr,
-"usage: %s [-AadefginpRtvV] [-N netrc] [-o outfile] [-P port] [-r retry]\n"
+"usage: %s [-46AadefginpRtvV] [-N netrc] [-o outfile] [-P port] [-r retry]\n"
 "           [-T dir,max[,inc][[user@]host [port]]] [host:path[/]]\n"
 "           [file:///file] [ftp://[user[:pass]@]host[:port]/path[/]]\n"
 "           [http://[user[:pass]@]host[:port]/path] [...]\n"
