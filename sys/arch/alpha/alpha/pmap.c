@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 1996/10/13 02:59:42 christos Exp $	*/
+/* $NetBSD: pmap.c,v 1.18 1997/04/07 00:19:18 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1996 Carnegie Mellon University
@@ -67,6 +67,8 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: prom.c,v 1.13 1997/03/12 04:45:41 cgd Exp $	*/
+/* $NetBSD: prom.c,v 1.14 1997/04/07 00:19:20 cgd Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -24,6 +24,8 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
