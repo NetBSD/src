@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.132 2001/11/04 20:55:28 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.133 2001/11/13 00:32:40 lukem Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -123,6 +123,9 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  *	mail servers, which use a large number of short-lived
  *	connections.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.133 2001/11/13 00:32:40 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

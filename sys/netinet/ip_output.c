@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.88 2001/09/17 17:27:00 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.89 2001/11/13 00:32:39 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,6 +100,9 @@
  *
  *	@(#)ip_output.c	8.3 (Berkeley) 1/21/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.89 2001/11/13 00:32:39 lukem Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"

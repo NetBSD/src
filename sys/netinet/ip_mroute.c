@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.57 2001/11/04 20:55:28 matt Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.58 2001/11/13 00:32:38 lukem Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -13,6 +13,9 @@
  *
  * MROUTING Revision: 1.2
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.58 2001/11/13 00:32:38 lukem Exp $");
 
 #include "opt_ipsec.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.121 2001/11/04 20:55:29 matt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.122 2001/11/13 00:32:41 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,6 +100,9 @@
  *
  *	@(#)tcp_subr.c	8.2 (Berkeley) 5/24/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.122 2001/11/13 00:32:41 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"

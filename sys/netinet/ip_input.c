@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.140 2001/11/04 20:55:27 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.141 2001/11/13 00:32:38 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,6 +100,9 @@
  *
  *	@(#)ip_input.c	8.2 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.141 2001/11/13 00:32:38 lukem Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.78 2001/08/20 03:13:45 itojun Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.79 2001/11/13 00:32:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@
  * TODO:
  *	add "inuse/lock" bit (or ref. count) along with valid bit
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.79 2001/11/13 00:32:35 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
