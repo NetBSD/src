@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.h,v 1.3 1998/09/13 12:13:50 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.h,v 1.4 1999/01/21 23:06:25 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -99,11 +99,21 @@ typedef struct {
 } svr4_fregset_t;
 
 typedef struct {
+	u_int		 id;
+	void		*ptr;
+} svr4_xrs_t;
+
+#define SVR4_XRS_ID	(('x' << 24) | ('r' << 16) | ('s' << 8))
+
+typedef struct svr4_mcontext {
 	svr4_gregset_t	 greg;
 	svr4_gwindow_t  *gwin;
 	svr4_fregset_t	 freg;
-	long		 pad[21];
+	svr4_xrs_t	 xrs;
+	long		 pad[19];
 } svr4_mcontext_t;
+
+#define SVR4_UC_MACHINE_PAD	23
 
 struct svr4_ucontext;
 
