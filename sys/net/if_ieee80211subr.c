@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.20 2002/10/11 01:34:43 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.21 2002/10/15 08:51:50 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.20 2002/10/11 01:34:43 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.21 2002/10/15 08:51:50 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -748,14 +748,8 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCS80211NWKEY:
 		nwkey = (struct ieee80211_nwkey *)data;
-		if (nwkey->i_wepon == IEEE80211_NWKEY_OPEN) {
-			if (ic->ic_flags & IEEE80211_F_WEPON) {
-				error = ENETRESET;
-				ic->ic_flags &= ~IEEE80211_F_WEPON;
-			}
-			break;
-		}
-		if ((ic->ic_flags & IEEE80211_F_HASWEP) == 0) {
+		if ((ic->ic_flags & IEEE80211_F_HASWEP) == 0 &&
+		    nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
 			error = EINVAL;
 			break;
 		}
@@ -781,12 +775,17 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (i < 0 || i >= IEEE80211_WEP_NKID ||
 		    keys[i].wk_len == 0 ||
 		    (keys[i].wk_len == -1 && ic->ic_nw_keys[i].wk_len == 0)) {
-			error = EINVAL;
-			break;
-		}
+			if (nwkey->i_wepon != IEEE80211_NWKEY_OPEN) {
+				error = EINVAL;
+				break;
+			}
+		} else
+			ic->ic_wep_txkey = i;
 		/* save the key */
-		ic->ic_flags |= IEEE80211_F_WEPON;
-		ic->ic_wep_txkey = i;
+		if (nwkey->i_wepon == IEEE80211_NWKEY_OPEN)
+			ic->ic_flags &= ~IEEE80211_F_WEPON;
+		else
+			ic->ic_flags |= IEEE80211_F_WEPON;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			if (keys[i].wk_len < 0)
 				continue;
@@ -1225,8 +1224,8 @@ ieee80211_end_scan(struct ifnet *ifp)
 	p = ic->ic_bss.ni_private;
 	ic->ic_bss = *selbs;
 	ic->ic_bss.ni_private = p;
-	if (p != NULL && ic->ic_bss_privlen)
-		memcpy(p, selbs->ni_private, ic->ic_bss_privlen);
+	if (p != NULL && ic->ic_node_privlen)
+		memcpy(p, selbs->ni_private, ic->ic_node_privlen);
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
 		ieee80211_fix_rate(ic, &ic->ic_bss, IEEE80211_F_DOFRATE |
 		    IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
@@ -1246,7 +1245,7 @@ ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr, int copy)
 	int hash;
 	int s;
 
-	ni = malloc(sizeof(struct ieee80211_node) + ic->ic_bss_privlen,
+	ni = malloc(sizeof(struct ieee80211_node) + ic->ic_node_privlen,
 	    M_DEVBUF, M_NOWAIT);
 	if (ni == NULL)
 		return NULL;
@@ -1255,9 +1254,9 @@ ieee80211_alloc_node(struct ieee80211com *ic, u_int8_t *macaddr, int copy)
 	else
 		memset(ni, 0, sizeof(struct ieee80211_node));
 	IEEE80211_ADDR_COPY(ni->ni_macaddr, macaddr);
-	if (ic->ic_bss_privlen) {
+	if (ic->ic_node_privlen) {
 		ni->ni_private = &ni[1];
-		memset(ni->ni_private, 0, ic->ic_bss_privlen);
+		memset(ni->ni_private, 0, ic->ic_node_privlen);
 	} else
 		ni->ni_private = NULL;
 
@@ -1293,6 +1292,8 @@ ieee80211_free_node(struct ieee80211com *ic, struct ieee80211_node *ni)
 	int s;
 
 	s = splnet();
+	if (ic->ic_node_free != NULL)
+		(*ic->ic_node_free)(ic, ni);
 	TAILQ_REMOVE(&ic->ic_node, ni, ni_list);
 	LIST_REMOVE(ni, ni_hash);
 	splx(s);

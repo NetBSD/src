@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.22 2002/09/30 15:48:41 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.23 2002/10/15 08:51:50 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -455,7 +455,9 @@ struct ieee80211com {
 	enum ieee80211_state	ic_state;
 	caddr_t			ic_rawbpf;	/* packet filter structure */
 	struct ieee80211_node	ic_bss;		/* information for this node */
-	int			ic_bss_privlen;	/* size for ni_private */
+	int			ic_node_privlen;/* size for ni_private */
+	void			(*ic_node_free)(struct ieee80211com *,
+				    struct ieee80211_node *);	/* callback */
 	u_int8_t		ic_ibss_chan;
 	int			ic_fixed_rate;	/* index to ic_sup_rates[] */
 	TAILQ_HEAD(, ieee80211_node) ic_node;	/* information of all nodes */
