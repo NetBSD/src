@@ -1,4 +1,4 @@
-/* $NetBSD: mpbiosreg.h,v 1.1.2.2 2000/02/21 18:54:07 sommerfeld Exp $ */
+/* $NetBSD: mpbiosreg.h,v 1.1.2.3 2000/02/29 13:17:51 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _I386_MPBIOSREG_H_
+#define _I386_MPBIOSREG_H_
 
 #define BIOS_BASE		(0xf0000)
 #define BIOS_SIZE		(0x10000)
@@ -146,3 +149,5 @@ struct mpbios_int {
 	u_int8_t  dst_apic_id;
 	u_int8_t  dst_apic_int;
 };
+
+#endif /* !_I386_MPBIOSREG_H_ */
