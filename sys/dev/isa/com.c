@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.67 1996/02/17 04:51:41 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.68 1996/02/18 09:10:15 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -832,7 +832,7 @@ comstart(tp)
 	int s;
 
 	s = spltty();
-	if (ISSET(tp->t_state, TS_TTSTOP | TS_BUSY))
+	if (ISSET(tp->t_state, TS_TIMEOUT | TS_TTSTOP | TS_BUSY))
 		goto out;
 	if (sc->sc_halt > 0)
 		goto out;
@@ -1066,11 +1066,9 @@ comintr(arg)
 		}
 
 		if (ISSET(lsr, LSR_TXRDY) && ISSET(tp->t_state, TS_BUSY)) {
-			CLR(tp->t_state, TS_BUSY);
+			CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 			if (sc->sc_halt > 0)
 				wakeup(&tp->t_outq);
-			else if (ISSET(tp->t_state, TS_FLUSH))
-				CLR(tp->t_state, TS_FLUSH);
 			else
 				(*linesw[tp->t_line].l_start)(tp);
 		}
