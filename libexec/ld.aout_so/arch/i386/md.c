@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.6 1993/12/08 10:14:46 pk Exp $
+ *	$Id: md.c,v 1.7 1994/01/28 20:57:08 pk Exp $
  */
 
 #include <sys/param.h>
@@ -85,25 +85,6 @@ unsigned char		*addr;
 	default:
 		fatal("Unsupported relocation size: %x", RELOC_TARGET_SIZE(rp));
 	}
-}
-
-/*
- * Initialize (output) exec header such that useful values are
- * obtained from subsequent N_*() macro evaluations.
- */
-void
-md_init_header(hp, magic, flags)
-struct exec	*hp;
-int		magic, flags;
-{
-	if (oldmagic)
-		hp->a_midmag = oldmagic;
-	else
-		N_SETMAGIC((*hp), magic, MID_I386, flags);
-
-	/* TEXT_START depends on the value of outheader.a_entry.  */
-	if (!(link_mode & SHAREABLE)) /*WAS: if (entry_symbol) */
-		hp->a_entry = PAGSIZ;
 }
 
 /*
@@ -245,8 +226,39 @@ long	*savep;
 	*(char *)where = TRAP;
 }
 
-#ifdef NEED_SWAP
+#ifndef RTLD
+/*
+ * Initialize (output) exec header such that useful values are
+ * obtained from subsequent N_*() macro evaluations.
+ */
+void
+md_init_header(hp, magic, flags)
+struct exec	*hp;
+int		magic, flags;
+{
+#ifdef NetBSD
+	if (oldmagic || magic == QMAGIC)
+		hp->a_midmag = magic;
+	else
+		N_SETMAGIC((*hp), magic, MID_I386, flags);
+#endif
+#ifdef FreeBSD
+	if (oldmagic && number_of_shobjs != 0)
+		hp->a_midmag = magic;
+	else if (magic == ZMAGIC)
+		N_SETMAGIC_NET((*hp), magic, MID_I386, flags);
+	else
+		N_SETMAGIC((*hp), magic, MID_I386, flags);
+#endif
 
+	/* TEXT_START depends on the value of outheader.a_entry.  */
+	if (!(link_mode & SHAREABLE)) /*WAS: if (entry_symbol) */
+		hp->a_entry = PAGSIZ;
+}
+#endif /* RTLD */
+
+
+#ifdef NEED_SWAP
 /*
  * Byte swap routines for cross-linking.
  */
