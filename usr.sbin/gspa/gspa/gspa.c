@@ -1,4 +1,4 @@
-/*	$NetBSD: gspa.c,v 1.4 1998/04/09 00:32:40 tv Exp $	*/
+/*	$NetBSD: gspa.c,v 1.5 1999/06/22 20:27:21 is Exp $	*/
 /*
  * GSP assembler main program
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gspa.c,v 1.4 1998/04/09 00:32:40 tv Exp $");
+__RCSID("$NetBSD: gspa.c,v 1.5 1999/06/22 20:27:21 is Exp $");
 #endif
 
 #include <sys/param.h>
@@ -69,6 +69,7 @@ FILE *current_infile;
 FILE *objfile;
 FILE *listfile;
 
+char *c_name;
 char in_name[PATH_MAX + 1];
 
 struct input {
@@ -84,6 +85,8 @@ void	setext(char *, const char *, const char *);
 void	usage(void);
 int	yyparse(void);
 
+void	c_dumpbuf(void);
+
 int
 main(int argc, char **argv)
 {
@@ -98,12 +101,17 @@ main(int argc, char **argv)
 	hex_name = list_name = 0;
 
 	/* parse options */
-	while ((c = getopt(argc, argv, "o:l:")) != -1) {
+	while ((c = getopt(argc, argv, "o:l:c:")) != -1) {
 		switch (c) {
 		case 'o':
 			if (hex_name)
 				usage();
 			hex_name = optarg;
+			break;
+		case 'c':
+			if (c_name)
+				usage();
+			c_name = optarg;
 			break;
 		case 'l':
 			if (list_name)
@@ -151,6 +159,15 @@ main(int argc, char **argv)
 		objfile = stdout;
 	else if ((objfile = fopen(hex_name, "w")) == NULL)
 		err(1, "fopen");
+	if (c_name) {
+		fprintf(objfile, "/*\n"
+		    " * This file was automatically created from\n"
+		    " * a TMS34010 assembler output file.\n"
+		    " * Do not edit manually.\n"
+		    " */\n"
+		    "#include <sys/types.h>\n"
+		    "u_int16_t %s[] = {\n\t", c_name);
+	}
 	if (list_name)
 		if ((listfile = fopen(list_name, "w")) == NULL)
 			err(1, "fopen");
@@ -169,6 +186,11 @@ main(int argc, char **argv)
 			yyparse();
 		}
 		listing();
+	}
+
+	if (c_name) {
+		c_dumpbuf();
+		fprintf(objfile, "\n\t0\n};\n");
 	}
 
 	exit(err_count != 0);
@@ -285,6 +307,6 @@ void
 usage()
 {
 	fprintf(stderr,
-		"Usage: gspa [infile] [+o|-o hex_file] [+l|-l list_file]\n");
+		"Usage: gspa [infile] [-c c_array_name|+o|-o hex_file] [+l|-l list_file]\n");
 	exit(1);
 }

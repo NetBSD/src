@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_ass.h,v 1.4 1999/06/22 20:00:47 is Exp $	*/
+/*	$NetBSD: gsp_ass.h,v 1.5 1999/06/22 20:27:21 is Exp $	*/
 /*
  * GSP assembler - definitions
  *
