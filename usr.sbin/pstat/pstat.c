@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.63 2002/02/21 10:58:00 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.64 2002/02/22 04:27:30 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.63 2002/02/21 10:58:00 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.64 2002/02/22 04:27:30 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -458,7 +458,6 @@ ufs_getflags(vp, ip, flags)
 	if (flag == 0)
 		*flags++ = '-';
 	*flags = '\0';
-
 }
 
 void
@@ -745,7 +744,8 @@ kinfo_vnodes(avnodes)
 	return (beg);
 }
 
-const char hdr[]="  LINE RAW CAN OUT  HWT LWT     COL STATE  SESS      PGID DISC\n";
+const char hdr[] =
+    "  LINE RAW CAN OUT  HWT LWT     COL STATE  SESS      PGID DISC\n";
 int ttyspace = 128;
 
 void
@@ -803,7 +803,7 @@ ttyprt(tp)
 		(void)printf("%-7s ", name);
 	(void)printf("%2d %3d ", tp->t_rawq.c_cc, tp->t_canq.c_cc);
 	(void)printf("%3d %4d %3d %7d ", tp->t_outq.c_cc,
-		tp->t_hiwat, tp->t_lowat, tp->t_column);
+	    tp->t_hiwat, tp->t_lowat, tp->t_column);
 	for (i = j = 0; ttystates[i].flag; i++)
 		if (tp->t_state&ttystates[i].flag)
 			state[j++] = ttystates[i].val;
@@ -818,7 +818,7 @@ ttyprt(tp)
 		KGET2(&tp->t_pgrp->pg_id, &pgid, sizeof(pid_t), "pgid");
 	(void)printf("%6d ", pgid);
 	KGET2(tp->t_linesw, &t_linesw, sizeof(t_linesw),
-		"line discipline switch table");
+	    "line discipline switch table");
 	name = t_linesw.l_name;
 	for (;;) {
 		KGET2(name, &buffer, sizeof(buffer), "line discipline name");
