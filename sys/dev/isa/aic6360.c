@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.27 1995/02/01 16:11:43 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.28 1995/02/01 16:56:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -1059,6 +1059,26 @@ aic_poll(sc, xs, count)
 		sc->sc_msgpriq |= (m);				\
 	} while (0)
 
+#if AIC_USE_SYNCHRONOUS
+/*
+ * Set synchronous transfer offset and period.
+ */
+static inline void
+aic_setsync(sc, ti)
+	struct aic_softc *sc;
+	struct aic_tinfo *ti;
+{
+
+	if (ti->offset != 0)
+		outb(SCSIRATE,
+		    ((ti->period * sc->sc_freq) / 250 - 2) << 4 | ti->offset);
+	else
+		outb(SCSIRATE, 0);
+}
+#else
+#define	aic_setsync(sc, ti)
+#endif
+
 /*
  * Start a selection.  This is used by aic_sched() to select an idle target,
  * and by aic_done() to immediately reselect a target to get sense information.
@@ -1073,11 +1093,7 @@ aic_select(sc, acb)
 	struct aic_tinfo *ti = &sc->sc_tinfo[target];
 
 	outb(SCSIID, sc->sc_initiator << OID_S | target);
-	if (ti->offset != 0)
-		outb(SCSIRATE,
-		    ((ti->period * sc->sc_freq) / 250 - 2) << 4 | ti->offset);
-	else
-		outb(SCSIRATE, 0);
+	aic_setsync(sc, ti);
 	outb(SXFRCTL1, STIMO_256ms|ENSTIMER);
 
 	/* Always enable reselections. */
@@ -1137,11 +1153,7 @@ aic_reselect(sc, message)
 	sc->sc_nexus = acb;
 	ti = &sc->sc_tinfo[target];
 	ti->lubusy |= (1 << lun);
-	if (ti->offset != 0)
-		outb(SCSIRATE,
-		    ((ti->period * sc->sc_freq) / 250 - 2) << 4 | ti->offset);
-	else
-		outb(SCSIRATE, 0);
+	aic_setsync(sc, ti);
 
 	/* Do an implicit RESTORE POINTERS. */
 	sc->sc_dp = acb->data_addr;
@@ -1458,19 +1470,25 @@ nextbyte:
 		case MSG_MESSAGE_REJECT:
 			AIC_MISC(("message rejected  "));
 			switch (sc->sc_msgout) {
+#if AIC_USE_SYNCHRONOUS + AIC_USE_WIDE
 			case SEND_IDENTIFY:
 				ti->flags &= ~(DO_SYNC|DO_WIDE);
 				ti->period = ti->offset = 0;
 				ti->width = 0;
 				break;
+#endif
+#if AIC_USE_SYNCHRONOUS
 			case SEND_SDTR:
 				ti->flags &= ~DO_SYNC;
 				ti->period = ti->offset = 0;
 				break;
+#endif
+#if AIC_USE_WIDE
 			case SEND_WDTR:
 				ti->flags &= ~DO_WIDE;
 				ti->width = 0;
 				break;
+#endif
 			case SEND_INIT_DET_ERR:
 				sc->sc_flags |= AIC_ABORTING;
 				aic_sched_msgout(SEND_ABORT);
@@ -1500,42 +1518,49 @@ nextbyte:
 
 		case MSG_EXTENDED:
 			switch (sc->sc_imess[2]) {
+#if AIC_USE_SYNCHRONOUS
 			case MSG_EXT_SDTR:
 				if (sc->sc_imess[1] != 3)
 					goto reject;
 				ti->period = sc->sc_imess[3];
 				ti->offset = sc->sc_imess[4];
+				ti->flags &= ~DO_SYNC;
+				sc_print_addr(acb->xs->sc_link);
 				if (ti->offset == 0) {
-					sc_print_addr(acb->xs->sc_link);
 					printf("async\n");
 				} else if (ti->period < sc->sc_minsync ||
 					   ti->period > sc->sc_maxsync ||
 					   ti->offset > 15) {
-					sc_print_addr(acb->xs->sc_link);
 					printf("async\n");
 					ti->period = ti->offset = 0;
 					aic_sched_msgout(SEND_SDTR);
 				} else {
-					sc_print_addr(acb->xs->sc_link);
 					printf("sync, offset %d, period %dnsec\n",
 					    ti->offset, ti->period * 4);
 				}
+				aic_setsync(sc, ti);
 				break;
+#endif
 
+#if AIC_USE_WIDE
 			case MSG_EXT_WDTR:
 				if (sc->sc_imess[1] != 2)
 					goto reject;
 				ti->width = sc->sc_imess[3];
+				ti->flags &= ~DO_WIDE;
+				sc_print_addr(acb->xs->sc_link);
 				if (ti->width == 0) {
+					printf("narrow\n");
 				} else if (ti->width > AIC_MAX_WIDTH) {
+					printf("narrow\n");
 					ti->width = 0;
 					aic_sched_msgout(SEND_WDTR);
 				} else {
-					sc_print_addr(acb->xs->sc_link);
 					printf("wide, width %d\n",
 					    1 << (3 + ti->width));
 				}
 				break;
+#endif
 
 			default:
 				printf("%s: unrecognized MESSAGE EXTENDED; sending REJECT\n",
@@ -1665,6 +1690,7 @@ nextmsg:
 		n = 1;
 		break;
 
+#if AIC_USE_SYNCHRONOUS
 	case SEND_SDTR:
 		if (sc->sc_state != AIC_CONNECTED) {
 			printf("%s: SEND_SDTR while not connected; sending NOOP\n",
@@ -1681,7 +1707,9 @@ nextmsg:
 		sc->sc_omess[0] = ti->offset;
 		n = 5;
 		break;
+#endif
 
+#if AIC_USE_WIDE
 	case SEND_WDTR:
 		if (sc->sc_state != AIC_CONNECTED) {
 			printf("%s: SEND_WDTR while not connected; sending NOOP\n",
@@ -1697,6 +1725,7 @@ nextmsg:
 		sc->sc_omess[0] = ti->width;
 		n = 4;
 		break;
+#endif
 
 	case SEND_DEV_RESET:
 		sc->sc_omess[0] = MSG_BUS_DEV_RESET;
@@ -2135,10 +2164,14 @@ gotintr:
 			if ((acb->xs->flags & SCSI_RESET) == 0) {
 				sc->sc_msgpriq = SEND_IDENTIFY;
 				if (acb->flags != ACB_ABORTED) {
+#if AIC_USE_SYNCHRONOUS
 					if ((ti->flags & DO_SYNC) != 0)
 						sc->sc_msgpriq |= SEND_SDTR;
+#endif
+#if AIC_USE_WIDE
 					if ((ti->flags & DO_WIDE) != 0)
 						sc->sc_msgpriq |= SEND_WDTR;
+#endif
 				} else {
 					sc->sc_flags |= AIC_ABORTING;
 					sc->sc_msgpriq |= SEND_ABORT;
