@@ -45,9 +45,18 @@ typedef struct task ath_task_t;
 #define ath_txq_critsect_begin(sc, _x)		mtx_lock(&(sc)->sc_txqlock)
 #define ath_txq_critsect_end(sc, _x)		mtx_unlock(&(sc)->sc_txqlock)
 
-#define ath_buf_dmamap_load_mbuf(tag, bf, m, flags) \
-	bus_dmamap_load_mbuf((tag), (bf)->bf_dmamap, (m), ath_mbuf_load_cb, \
-	                     (bf), (flags))
+static __inline int
+ath_buf_dmamap_load_mbuf(bus_dma_tag_t tag, struct ath_buf *bf,
+    struct mbuf *m, int flags)
+{
+	int error;
+	error = bus_dmamap_load_mbuf(tag, bf->bf_dmamap, m, ath_mbuf_load_cb,
+	    bf, flags);
+	if (error == 0 && bf->bf_nseg > ATH_TXDESC)
+		return EFBIG;
+	return error;
+}
+
 #define ath_buf_dmamap_sync(tag, bf, ops) \
 	bus_dmamap_sync((tag), (bf)->bf_dmamap, (ops))
 

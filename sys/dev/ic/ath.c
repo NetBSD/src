@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.10 2003/10/16 07:55:18 ichiro Exp $	*/
+/*	$NetBSD: ath.c,v 1.11 2003/10/16 09:13:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.10 2003/10/16 07:55:18 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.11 2003/10/16 09:13:30 dyoung Exp $");
 #endif
 
 /*
@@ -2214,17 +2214,12 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	 * also calculates the number of descriptors we need.
 	 */
 	error = ath_buf_dmamap_load_mbuf(sc->sc_dmat, bf, m0, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		sc->sc_stats.ast_tx_busdma++;
-		m_freem(m0);
-		return error;
-	}
 	/*
 	 * Discard null packets and check for packets that
 	 * require too many TX descriptors.  We try to convert
 	 * the latter to a cluster.
 	 */
-	if (bf->bf_nseg > ATH_TXDESC) {		/* too many desc's, linearize */
+	if (error == EFBIG) {		/* too many desc's, linearize */
 		sc->sc_stats.ast_tx_linear++;
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
@@ -2258,6 +2253,10 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		KASSERT(bf->bf_nseg == 1,
 			("ath_tx_start: packet not one segment; nseg %u",
 			bf->bf_nseg));
+	} else if (error != 0) {
+		sc->sc_stats.ast_tx_busdma++;
+		m_freem(m0);
+		return error;
 	} else if (bf->bf_nseg == 0) {		/* null packet, discard */
 		sc->sc_stats.ast_tx_nodata++;
 		m_freem(m0);
