@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.30 2002/06/10 20:52:11 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.31 2002/07/04 14:43:52 junyoung Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -127,7 +127,7 @@ static void	smg_copycols(void *, int, int, int,int);
 static void	smg_erasecols(void *, int, int, int, long);
 static void	smg_copyrows(void *, int, int, int);
 static void	smg_eraserows(void *, int, int, long);
-static int	smg_alloc_attr(void *, int, int, int, long *);
+static int	smg_allocattr(void *, int, int, int, long *);
 
 const struct wsdisplay_emulops smg_emulops = {
 	smg_cursor,
@@ -137,7 +137,7 @@ const struct wsdisplay_emulops smg_emulops = {
 	smg_erasecols,
 	smg_copyrows,
 	smg_eraserows,
-	smg_alloc_attr
+	smg_allocattr
 };
 
 const struct wsscreen_descr smg_stdscreen = {
@@ -401,7 +401,7 @@ smg_eraserows(void *id, int startrow, int nrows, long fillattr)
 }
 
 static int
-smg_alloc_attr(void *id, int fg, int bg, int flags, long *attrp)
+smg_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
 	*attrp = flags;
 	return 0;

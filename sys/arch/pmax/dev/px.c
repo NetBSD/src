@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.38 2002/03/13 15:05:20 ad Exp $	*/
+/* 	$NetBSD: px.c,v 1.39 2002/07/04 14:43:51 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.38 2002/03/13 15:05:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.39 2002/07/04 14:43:51 junyoung Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -143,7 +143,7 @@ static void	px_copycols __P((void *, int, int, int, int));
 static void	px_copyrows __P((void *, int, int, int num));
 static void	px_erasecols __P((void *, int, int, int num, long));
 static void	px_eraserows __P((void *, int, int, long));
-static int	px_alloc_attr __P((void *, int, int, int, long *));
+static int	px_allocattr __P((void *, int, int, int, long *));
 static int	px_mapchar __P((void *, int, unsigned int *));
 
 static struct wsdisplay_emulops px_emulops = {
@@ -154,7 +154,7 @@ static struct wsdisplay_emulops px_emulops = {
 	px_erasecols,
 	px_copyrows,
 	px_eraserows,
-	px_alloc_attr
+	px_allocattr
 };
 
 /* Colormap for wscons, matching WSCOL_*. Upper 8 are high-intensity */
@@ -1246,7 +1246,7 @@ px_rect(pxi, x, y, w, h, color)
  * Allocate attribute. We just pack these into an integer.
  */
 static int
-px_alloc_attr(cookie, fg, bg, flags, attr)
+px_allocattr(cookie, fg, bg, flags, attr)
 	void *cookie;
 	int fg, bg, flags;
 	long *attr;

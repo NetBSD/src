@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.6 2002/03/17 19:40:27 atatat Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.7 2002/07/04 14:43:48 junyoung Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.6 2002/03/17 19:40:27 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.7 2002/07/04 14:43:48 junyoung Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -146,7 +146,7 @@ void amidisplaycc_copycols(void *, int, int, int, int);
 void amidisplaycc_erasecols(void *, int, int, int, long);
 void amidisplaycc_copyrows(void *, int, int, int);
 void amidisplaycc_eraserows(void *, int, int, long);
-int  amidisplaycc_alloc_attr(void *, int, int, int, long *);
+int  amidisplaycc_allocattr(void *, int, int, int, long *);
 /* end of emulops for wscons */
 
 
@@ -185,7 +185,7 @@ const struct wsdisplay_emulops amidisplaycc_emulops = {
 	amidisplaycc_erasecols,
 	amidisplaycc_copyrows,
 	amidisplaycc_eraserows,
-	amidisplaycc_alloc_attr
+	amidisplaycc_allocattr
 };
 
 /* add some of our own data to the wsscreen_descr */
@@ -987,7 +987,7 @@ amidisplaycc_eraserows(void *screen, int row, int nrows, long attr)
  * background color, and flags.
  */
 int
-amidisplaycc_alloc_attr(void *screen, int fg, int bg, int flags, long *attrp)
+amidisplaycc_allocattr(void *screen, int fg, int bg, int flags, long *attrp)
 {
 	adccscr_t  * scr;
 	int          maxcolor;

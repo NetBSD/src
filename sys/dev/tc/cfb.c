@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.32 2002/03/17 19:41:02 atatat Exp $ */
+/* $NetBSD: cfb.c,v 1.33 2002/07/04 14:37:13 junyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.32 2002/03/17 19:41:02 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.33 2002/07/04 14:37:13 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,7 +453,7 @@ cfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	*cookiep = ri;	 /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
@@ -494,7 +494,7 @@ cfb_cnattach(addr)
 	ri = &cfb_console_ri;
 	ri->ri_hw = (void *)addr;
 	cfb_common_init(ri);
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&cfb_stdscreen, ri, 0, 0, defattr);
 	cfb_consaddr = addr;
 	return(0);

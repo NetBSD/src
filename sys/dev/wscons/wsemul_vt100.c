@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.17 2002/01/12 16:41:02 tsutsui Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.18 2002/07/04 14:37:14 junyoung Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.17 2002/01/12 16:41:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.18 2002/07/04 14:37:14 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,12 +168,12 @@ wsemul_vt100_cnattach(const struct wsscreen_descr *type, void *cookie,
 #define WS_KERNEL_MONOATTR 0
 #endif
 	if (type->capabilities & WSSCREEN_WSCOLORS)
-		res = (*edp->emulops->alloc_attr)(cookie,
+		res = (*edp->emulops->allocattr)(cookie,
 					    WS_KERNEL_FG, WS_KERNEL_BG,
 					    WS_KERNEL_COLATTR | WSATTR_WSCOLORS,
 					    &edp->kernattr);
 	else
-		res = (*edp->emulops->alloc_attr)(cookie, 0, 0,
+		res = (*edp->emulops->allocattr)(cookie, 0, 0,
 					    WS_KERNEL_MONOATTR,
 					    &edp->kernattr);
 	if (res)

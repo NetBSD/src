@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.2 2002/03/17 19:40:46 atatat Exp $	*/
+/*	$NetBSD: xafb.c,v 1.3 2002/07/04 14:43:50 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -315,7 +315,7 @@ xafb_alloc_screen(v, scrdesc, cookiep, ccolp, crowp, attrp)
 
 	*cookiep = ri;
 	*ccolp = *crowp = 0;
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->sc_nscreens++;
 
@@ -363,7 +363,7 @@ xafb_cnattach()
 
 	crow = 0;			/* XXX current cursor pos */
 
-	(*ri->ri_ops.alloc_attr)(ri, 0, 0, 0, &defattr);
+	(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&xafb_stdscreen, &dc->dc_ri, 0, crow, defattr);
 
 	return 0;

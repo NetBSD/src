@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.12 2002/05/03 04:42:08 thorpej Exp $	*/
+/*	$NetBSD: pvr.c,v 1.13 2002/07/04 14:43:49 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.12 2002/05/03 04:42:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.13 2002/07/04 14:43:49 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,7 +421,7 @@ pvr_alloc_screen(void *v, const struct wsscreen_descr *type,
 	*cookiep = &sc->sc_dc->rinfo; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	(*sc->sc_dc->rinfo.ri_ops.alloc_attr)(&sc->sc_dc->rinfo, 0, 0, 0,
+	(*sc->sc_dc->rinfo.ri_ops.allocattr)(&sc->sc_dc->rinfo, 0, 0, 0,
 	    &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
@@ -596,7 +596,7 @@ pvrcninit(struct consdev *cndev)
 	long defattr;
 
 	pvr_getdevconfig(dcp);
-	(*dcp->rinfo.ri_ops.alloc_attr)(&dcp->rinfo, 0, 0, 0, &defattr);
+	(*dcp->rinfo.ri_ops.allocattr)(&dcp->rinfo, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&pvr_stdscreen, &dcp->rinfo, 0, 0, defattr);
 
 	pvr_is_console = 1;

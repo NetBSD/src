@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.17 2002/03/17 19:40:59 atatat Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.18 2002/07/04 14:37:11 junyoung Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.17 2002/03/17 19:40:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.18 2002/07/04 14:37:11 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static int pcdisplay_probe_mono __P((bus_space_tag_t, bus_space_tag_t));
 static void pcdisplay_init __P((struct pcdisplay_config *,
 			     bus_space_tag_t, bus_space_tag_t,
 			     int));
-static int pcdisplay_alloc_attr __P((void *, int, int, int, long *));
+static int pcdisplay_allocattr __P((void *, int, int, int, long *));
 
 struct cfattach pcdisplay_ca = {
 	sizeof(struct pcdisplay_softc), pcdisplay_match, pcdisplay_attach,
@@ -100,7 +100,7 @@ const struct wsdisplay_emulops pcdisplay_emulops = {
 	pcdisplay_erasecols,
 	pcdisplay_copyrows,
 	pcdisplay_eraserows,
-	pcdisplay_alloc_attr
+	pcdisplay_allocattr
 };
 
 const struct wsscreen_descr pcdisplay_scr = {
@@ -456,7 +456,7 @@ pcdisplay_show_screen(v, cookie, waitok, cb, cbarg)
 }
 
 static int
-pcdisplay_alloc_attr(id, fg, bg, flags, attrp)
+pcdisplay_allocattr(id, fg, bg, flags, attrp)
 	void *id;
 	int fg, bg;
 	int flags;

@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.39 2002/03/13 15:05:15 ad Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.40 2002/07/04 14:37:12 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.39 2002/03/13 15:05:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.40 2002/07/04 14:37:12 junyoung Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -260,10 +260,10 @@ rasops_reconfig(ri, wantrows, wantcols)
 	ri->ri_do_cursor = rasops_do_cursor;
 
 	if (ri->ri_depth < 8 || (ri->ri_flg & RI_FORCEMONO) != 0) {
-		ri->ri_ops.alloc_attr = rasops_alloc_mattr;
+		ri->ri_ops.allocattr = rasops_alloc_mattr;
 		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_REVERSE;
 	} else {
-		ri->ri_ops.alloc_attr = rasops_alloc_cattr;
+		ri->ri_ops.allocattr = rasops_alloc_cattr;
 		ri->ri_caps = WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 		    WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	}

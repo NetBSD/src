@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.10 2001/11/15 09:48:15 lukem Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.11 2002/07/04 14:37:12 junyoung Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.10 2001/11/15 09:48:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.11 2002/07/04 14:37:12 junyoung Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -92,7 +92,7 @@ rcons_init_ops(rc)
 	rc->rc_supwsflg = 0;
 	
 	for (i = 1; i < 256; i <<= 1)
-		if (rc->rc_ops->alloc_attr(rc->rc_cookie, 0, 0, i, &tmp) == 0)
+		if (rc->rc_ops->allocattr(rc->rc_cookie, 0, 0, i, &tmp) == 0)
 			rc->rc_supwsflg |= i;
 
 	/* Allocate kernel output attribute */
@@ -531,7 +531,7 @@ rcons_setcolor(rc, fg, bg)
 	flg = (rc->rc_wsflg | WSATTR_WSCOLORS) & rc->rc_supwsflg;
 	rc->rc_bgcolor = bg;
 	rc->rc_fgcolor = fg;
-	rc->rc_ops->alloc_attr(rc->rc_cookie, fg, bg, flg, &rc->rc_attr);
+	rc->rc_ops->allocattr(rc->rc_cookie, fg, bg, flg, &rc->rc_attr);
 }
 
 
