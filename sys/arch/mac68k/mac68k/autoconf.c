@@ -72,7 +72,7 @@
  * from: Utah $Hdr: autoconf.c 1.31 91/01/21$
  *
  *	from: from: @(#)autoconf.c	7.5 (Berkeley) 5/7/91
- *	$Id: autoconf.c,v 1.9 1994/07/08 07:57:48 lkestel Exp $
+ *	$Id: autoconf.c,v 1.10 1994/07/21 00:55:49 briggs Exp $
  */
 
 /*
@@ -102,7 +102,6 @@
 
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-int root_scsi_id;           /* CPC: set in locore.s */
 
 #include <machine/vmparam.h>
 #include <machine/param.h>
@@ -195,7 +194,7 @@ mainbus_attach(parent, dev, aux)
 					{"ser",       0},
 					{"ncrscsi",   0},
 					{"ncr96scsi", 0},
-					{"audio",     0},
+					{"asc",       0},
 					{"floppy",    0},
 					{NULL,        0}
 			 	};
