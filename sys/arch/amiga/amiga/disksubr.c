@@ -1,5 +1,5 @@
 /*
- *	$Id: disksubr.c,v 1.11 1994/06/23 05:33:20 chopps Exp $
+ *	$Id: disksubr.c,v 1.12 1994/06/27 04:55:38 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -533,7 +533,10 @@ getadostype(dostype)
 		return(adt);
 	case DOST_AMIX:
 		adt.archtype = ADT_AMIX;
-		adt.fstype = FS_UNUSED;
+		if (b1 == 2)
+			adt.fstype = FS_BSDFFS;
+		else
+			adt.fstype = FS_UNUSED;
 		return(adt);
 	case DOST_XXXBSD:
 #ifdef DIAGNOSTIC
