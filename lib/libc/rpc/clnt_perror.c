@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: clnt_perror.c,v 1.1 1993/10/07 07:29:41 cgd Exp $";
+static char *rcsid = "$Id: clnt_perror.c,v 1.2 1994/10/10 04:56:01 jtc Exp $";
 #endif
 
 /*
@@ -228,7 +228,6 @@ char *
 clnt_spcreateerror(s)
 	char *s;
 {
-	extern int sys_nerr;
 	char *str = _buf();
 
 	if (str == 0)
@@ -244,13 +243,7 @@ clnt_spcreateerror(s)
 
 	case RPC_SYSTEMERROR:
 		(void) strcat(str, " - ");
-		if (rpc_createerr.cf_error.re_errno > 0
-		    && rpc_createerr.cf_error.re_errno < sys_nerr)
-			(void) strcat(str,
-			    strerror(rpc_createerr.cf_error.re_errno));
-		else
-			(void) sprintf(&str[strlen(str)], "Error %d",
-			    rpc_createerr.cf_error.re_errno);
+		(void) strcat(str, strerror(rpc_createerr.cf_error.re_errno));
 		break;
 	}
 	(void) strcat(str, "\n");
