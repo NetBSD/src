@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.52 2002/12/28 14:39:08 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.53 2002/12/29 14:08:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.52 2002/12/28 14:39:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.53 2002/12/29 14:08:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,15 +263,6 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 	KASSERT(fsb < 0 || VOP_ISLOCKED(vp));
 	KASSERT(vp2 == NULL || fsb < 0 || VOP_ISLOCKED(vp2));
 
-	/*
-	 * XXX
-	 * vref vnodes here so that cleaner doesn't try to reuse them.
-	 */
-	lfs_vref(vp);
-	if (vp2 != NULL) {
-		lfs_vref(vp2);
-	}
-
 	cantwait = (VTOI(vp)->i_flag & IN_ADIROP);
 #ifdef DIAGNOSTIC
 	if (cantwait) {
@@ -293,6 +284,15 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, struct vnode *vp2, int fsb)
 #endif
 	if (cantwait)
 		return 0;
+
+	/*
+	 * XXX
+	 * vref vnodes here so that cleaner doesn't try to reuse them.
+	 */
+	lfs_vref(vp);
+	if (vp2 != NULL) {
+		lfs_vref(vp2);
+	}
 
 	error = lfs_reserveavail(fs, vp, vp2, fsb);
 	if (error)
