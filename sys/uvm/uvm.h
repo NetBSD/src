@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.6 1998/03/01 02:25:28 fvdl Exp $	*/
+/*	$NetBSD: uvm.h,v 1.7 1998/05/18 15:00:50 pk Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -141,7 +141,7 @@ UVMHIST_DECL(pdhist);
  * (poorly named) thread_sleep_msg function.
  */
 
-#if NCPU > 1
+#if NCPU > 1 || defined(LOCKDEBUG)
 
 #define UVM_UNLOCK_AND_WAIT(event,lock,intr,msg, timo) \
 	thread_sleep_msg(event,lock,intr,msg, timo)
