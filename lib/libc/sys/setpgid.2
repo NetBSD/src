@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)setpgid.2	6.3 (Berkeley) 3/10/91
-.\"	$Id: setpgid.2,v 1.6 1994/01/10 23:54:26 jtc Exp $
+.\"	$Id: setpgid.2,v 1.7 1994/05/02 23:54:59 jtc Exp $
 .\"
 .Dd March 10, 1991
 .Dt SETPGRP 2
@@ -68,12 +68,20 @@ indicates the reason.
 .Fn Setpgid
 will fail and the process group will not be altered if:
 .Bl -tag -width Er
-.It Bq Er ESRCH
-The requested process does not exist.
+.It Bq Er EACCESS
+The value of the
+.Fa pid
+argument matches the process ID of a child process of the calling process, 
+and the child process has successfully executed one of the exec functions.
 .It Bq Er EPERM
 The effective user ID of the requested process is different
 from that of the caller and the process is not a descendant
 of the calling process.
+.It Bq Er ESRCH
+The value of the 
+.Fa pid 
+argument does not match the process ID of the calling process or of a 
+child process of the calling process.
 .El
 .Sh SEE ALSO
 .Xr getpgrp 2
