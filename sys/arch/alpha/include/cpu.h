@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.49 2000/12/13 00:46:31 mycroft Exp $ */
+/* $NetBSD: cpu.h,v 1.50 2001/01/19 18:51:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -127,7 +127,6 @@ struct cpu_info {
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	struct cpu_softc *ci_softc;	/* pointer to our device */
 	u_long ci_want_resched;		/* preempt current process */
-	u_long ci_astpending;		/* AST is pending */
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 #if defined(MULTIPROCESSOR)
@@ -207,7 +206,8 @@ struct clockframe {
 #define	need_resched(ci)						\
 do {									\
 	(ci)->ci_want_resched = 1;					\
-	aston(ci);							\
+	if ((ci)->ci_curproc != NULL)					\
+		aston((ci)->ci_curproc);				\
 } while (/*CONSTCOND*/0)
 
 /*
@@ -218,14 +218,14 @@ do {									\
 #define	need_proftick(p)						\
 do {									\
 	(p)->p_flag |= P_OWEUPC;					\
-	aston((p)->p_cpu);						\
+	aston(p);							\
 } while (/*CONSTCOND*/0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston((p)->p_cpu)
+#define	signotify(p)	aston(p)
 
 /*
  * XXXSMP
@@ -233,7 +233,7 @@ do {									\
  * it sees a normal kernel entry?  I guess letting it happen later
  * follows the `asynchronous' part of the name...
  */
-#define	aston(ci)	((ci)->ci_astpending = 1)
+#define	aston(p)	((p)->p_md.md_astpending = 1)
 #endif /* _KERNEL */
 
 /*
