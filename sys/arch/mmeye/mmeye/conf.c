@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2000/02/24 17:07:35 msaitoh Exp $	*/
+/*	$NetBSD: conf.c,v 1.5 2000/04/19 15:56:27 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -36,6 +36,8 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
+
+#include <machine/conf.h>
 
 #include "wd.h"
 bdev_decl(wd);
