@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2002/03/15 01:50:40 mjl Exp $
+#	$NetBSD: Makefile,v 1.8 2002/06/27 21:03:37 thorpej Exp $
+
+.include <bsd.own.mk>
 
 LIB=		bz2
 NOMAN=		# defined
@@ -13,6 +15,11 @@ INCSDIR=	/usr/include
 TEXINFO=	bzip2.info
 CLEANFILES+=	bzip2.texi
 
+# XXX huffman.c gets mis-compiled with 2.95.3
+.if ${MACHINE_ARCH} == "vax"
+COPTS+=		-O0
+.endif
+
 bzip2.texi: manual.texi
 	@-rm -f $@
 	sed -e 's/@parindent.*//' \
@@ -21,8 +28,6 @@ bzip2.texi: manual.texi
 	    -e 's/@itemize$$/@itemize @bullet/' \
 	    -e 's/@bf{\(.*\)}/\1/' \
 	    <$> >$@
-
-.include <bsd.own.mk>
 
 .if ${MKSHARE} != "no"
 FILESDIR=	${HTMLDOCDIR}/bzip2
