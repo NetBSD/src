@@ -1,10 +1,11 @@
-#	$NetBSD: std.alpha,v 1.5 1996/07/02 22:34:02 cgd Exp $
+#	$NetBSD: std.alpha,v 1.6 1996/07/09 00:46:04 cgd Exp $
 #
 # Standard/required configuration info for NetBSD/alpha.
 
 machine		alpha
 
 makeoptions	DEBUG="-g"
+makeoptions	CWARNFLAGS="-Werror"
 
 options		EXEC_ECOFF
 options		OLD_PMAP
