@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.26.2.2 1997/07/22 12:21:07 bouyer Exp $	*/
+/*	$NetBSD: sii.c,v 1.26.2.3 1997/07/30 16:23:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

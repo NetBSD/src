@@ -1,10 +1,12 @@
-#	$NetBSD: files,v 1.125.2.2 1997/07/17 13:42:39 bouyer Exp $
+#	$NetBSD: files,v 1.125.2.3 1997/07/30 16:23:25 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 # options understood by the machine-independent part of the kernel
 # (note, these are case-sensitive)
 defopt	KMEMSTATS
+defopt    TCP_RECVSPACE
+defopt    TCP_SENDSPACE
 
 # generic attributes
 define	disk
@@ -53,13 +55,17 @@ file	ipkdb/ipkdb_ppp.c		ipkdbppp needs-flag
 device	ahc: scsi
 file	dev/ic/aic7xxx.c	ahc
 
-# Adaptec AHA-154x and AHA-164x controllers
-device	aha: scsi
-file	dev/ic/aha.c		aha
-
 # BusLogic MultiMaster and MultiMaster Ultra SCSI controllers
+# (Must be declared before AHA to ensure bha probes before aha.
+#  Probing AHA first configures bhas as aha, via their AHA
+#  hardware-compatibility mode.)
 device	bha: scsi
 file	dev/ic/bha.c		bha
+
+# Adaptec AHA-154x and AHA-164x controllers
+# (must be after bha, see above)
+device    aha: scsi
+file  dev/ic/aha.c        aha
 
 # Qlogic ISP 10x0 SCSI Controllers
 device	isp: scsi
@@ -101,6 +107,10 @@ file	dev/ic/midway.c		en
 # NCR 53x9x or Emulex ESP SCSI Controller
 define	ncr53c9x
 file	dev/ic/ncr53c9x.c	ncr53c9x
+
+# Intel 82586 Ethernet Controller
+define    i82586
+file  dev/ic/i82586.c     i82586
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
