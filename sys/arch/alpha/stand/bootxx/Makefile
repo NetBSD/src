@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.19 1999/04/02 03:11:57 cgd Exp $
+# $NetBSD: Makefile,v 1.20 1999/04/02 03:20:00 cgd Exp $
 
 PROG = bootxx
 
-SRCS = start.S bootxx.c prom.c prom_disp.S puts.c
+SRCS = start.S bootxx.c prom.c prom_disp.S puts.c booted_dev.c
 
 BOOT_RELOC = ${PRIMARY_LOAD_ADDRESS}
 PRIMARY_MAX_LOAD!=	expr 8192 - 512
