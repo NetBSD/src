@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.9 2004/09/12 22:52:58 thorpej Exp $	*/
+/*	$NetBSD: endian.h,v 1.10 2004/09/12 23:17:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -170,6 +170,117 @@ __END_DECLS
 #define LE16TOH(x)	HTOLE16(x)
 #define LE32TOH(x)	HTOLE32(x)
 #define LE64TOH(x)	HTOLE64(x)
+
+/*
+ * Routines to encode/decode big- and little-endian multi-octet values
+ * to/from an octet stream.
+ */
+
+static __inline void __unused
+be16enc(void *buf, uint16_t u)
+{
+	uint8_t *p = buf;
+
+	p[0] = (u >> 8) & 0xff;
+	p[1] = u & 0xff;
+}
+
+static __inline void __unused
+le16enc(void *buf, uint16_t u)
+{
+	uint8_t *p = buf;
+
+	p[0] = u & 0xff;
+	p[1] = (u >> 8) & 0xff;
+}
+
+static __inline uint16_t __unused
+be16dec(const void *buf)
+{
+	const uint8_t *p = buf;
+
+	return ((p[0] << 8) | p[1]);
+}
+
+static __inline uint16_t __unused
+le16dec(const void *buf)
+{
+	const uint8_t *p = buf;
+
+	return ((p[1] << 8) | p[0]);
+}
+
+static __inline void __unused
+be32enc(void *buf, uint32_t u)
+{
+	uint8_t *p = buf;
+
+	p[0] = (u >> 24) & 0xff;
+	p[1] = (u >> 16) & 0xff;
+	p[2] = (u >> 8) & 0xff;
+	p[3] = u & 0xff;
+}
+
+static __inline void __unused
+le32enc(void *buf, uint32_t u)
+{
+	uint8_t *p = buf;
+
+	p[0] = u & 0xff;
+	p[1] = (u >> 8) & 0xff;
+	p[2] = (u >> 16) & 0xff;
+	p[3] = (u >> 24) & 0xff;
+}
+
+static __inline uint32_t __unused
+be32dec(const void *buf)
+{
+	const uint8_t *p = buf;
+
+	return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
+}
+
+static __inline uint32_t __unused
+le32dec(const void *buf)
+{
+	const uint8_t *p = buf;
+
+	return ((p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
+}
+
+static __inline void __unused
+be64enc(void *buf, uint64_t u)
+{
+	uint8_t *p = buf;
+
+	be32enc(p, u >> 32);
+	be32enc(p + 4, u & 0xffffffffU);
+}
+
+static __inline void __unused
+le64enc(void *buf, uint64_t u)
+{
+	uint8_t *p = buf;
+
+	le32enc(p, u & 0xffffffffU);
+	le32enc(p + 4, u >> 32);
+}
+
+static __inline uint64_t __unused
+be64dec(const void *buf)
+{
+	const uint8_t *p = buf;
+
+	return (((uint64_t)be32dec(p) << 32) | be32dec(p + 4));
+}
+
+static __inline uint64_t __unused
+le64dec(const void *buf)
+{
+	const uint8_t *p = buf;
+
+	return (le32dec(p) | ((uint64_t)le32dec(p + 4) << 32));
+}
 
 #endif /* !_LOCORE */
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */

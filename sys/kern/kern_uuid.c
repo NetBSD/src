@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.2 2004/08/30 02:56:03 thorpej Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.3 2004/09/12 23:17:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.2 2004/08/30 02:56:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.3 2004/09/12 23:17:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -254,78 +254,6 @@ uuid_printf(const struct uuid *uuid)
  *  |                         node (2-5)                            |
  *  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-
-static void
-be16enc(void *buf, uint16_t u)
-{
-	uint8_t *p = buf;
-
-	p[0] = (u >> 8) & 0xff;
-	p[1] = u & 0xff;
-}
-
-static void
-le16enc(void *buf, uint16_t u)
-{
-	uint8_t *p = buf;
-
-	p[0] = u & 0xff;
-	p[1] = (u >> 8) & 0xff;
-}
-
-static uint16_t
-be16dec(const void *buf)
-{
-	const uint8_t *p = buf;
-
-	return ((p[0] << 8) | p[1]);
-}
-
-static uint16_t
-le16dec(const void *buf)
-{
-	const uint8_t *p = buf;
-
-	return ((p[1] << 8) | p[0]);
-}
-
-static void
-be32enc(void *buf, uint32_t u)
-{
-	uint8_t *p = buf;
-
-	p[0] = (u >> 24) & 0xff;
-	p[1] = (u >> 16) & 0xff;
-	p[2] = (u >> 8) & 0xff;
-	p[3] = u & 0xff;
-}
-
-static void
-le32enc(void *buf, uint32_t u)
-{
-	uint8_t *p = buf;
-
-	p[0] = u & 0xff;
-	p[1] = (u >> 8) & 0xff;
-	p[2] = (u >> 16) & 0xff;
-	p[3] = (u >> 24) & 0xff;
-}
-
-static uint32_t
-be32dec(const void *buf)
-{
-	const uint8_t *p = buf;
-
-	return ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
-}
-
-static uint32_t
-le32dec(const void *buf)
-{
-	const uint8_t *p = buf;
-
-	return ((p[3] << 24) | (p[2] << 16) | (p[1] << 8) | p[0]);
-}
 
 void
 uuid_enc_le(void *buf, const struct uuid *uuid)
