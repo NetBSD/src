@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.11 2000/11/02 11:00:54 itohy Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.12 2000/11/08 22:51:01 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -225,7 +225,7 @@ ttcompat(tp, com, data, flag, p)
 		break;
 
 	case OTIOCGETD:
-		*(int *)data = tp->t_linesw ? tp->t_linesw->l_no : 2;
+		*(int *)data = (tp->t_linesw != NULL) ? tp->t_linesw->l_no : 2;
 		break;
 
 	case OTIOCSETD: {
