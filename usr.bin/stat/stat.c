@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.8 2002/08/13 20:15:06 atatat Exp $ */
+/*	$NetBSD: stat.c,v 1.9 2002/10/19 20:33:19 provos Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stat.c,v 1.8 2002/08/13 20:15:06 atatat Exp $");
+__RCSID("$NetBSD: stat.c,v 1.9 2002/10/19 20:33:19 provos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -683,7 +683,7 @@ format1(const struct stat *st,
 		data = 0;
 		if (S_ISLNK(st->st_mode)) {
 			snprintf(path, sizeof(path), " -> ");
-			l = readlink(file, path + 4, sizeof(path) - 4);
+			l = readlink(file, path + 4, sizeof(path) - 4 - 1);
 			if (l == -1) {
 				linkfail = 1;
 				l = 0;

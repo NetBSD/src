@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.26 2002/08/09 11:06:43 soren Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.27 2002/10/19 20:33:20 provos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -903,10 +903,13 @@ recvsym(TREE * t, int new, struct stat * statp)
 		return (TRUE);
 	}
 	linkname = t->Tlink->Tname;
+	n = -1;
 	if (!new && (t->Tflags & FNEW) == 0 &&
-	    (n = readlink(t->Tname, buf, sizeof(buf))) >= 0 &&
+	    (n = readlink(t->Tname, buf, sizeof(buf) - 1)) >= 0 &&
 	    (n == strlen(linkname)) && (strncmp(linkname, buf, n) == 0))
 		return (FALSE);
+	if (n >= 0)
+		t->Tname[n] = '\0';
 	if (thisC->Cflags & CFLIST) {
 		vnotify("SUP Would %s symbolic link %s to %s\n",
 		    new ? "create" : "update", t->Tname, linkname);

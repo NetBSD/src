@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.20 2001/09/13 09:53:59 wiz Exp $ */
+/* $NetBSD: utils.c,v 1.21 2002/10/19 20:33:17 provos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.20 2001/09/13 09:53:59 wiz Exp $");
+__RCSID("$NetBSD: utils.c,v 1.21 2002/10/19 20:33:17 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,7 +221,7 @@ copy_link(FTSENT *p, int exists)
 	int len;
 	char target[MAXPATHLEN];
 
-	if ((len = readlink(p->fts_path, target, sizeof(target))) == -1) {
+	if ((len = readlink(p->fts_path, target, sizeof(target)-1)) == -1) {
 		warn("readlink: %s", p->fts_path);
 		return (1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.15 2002/08/01 22:41:34 christos Exp $	*/
+/*	$NetBSD: ls.c,v 1.16 2002/10/19 20:33:19 provos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ls.c,v 1.15 2002/08/01 22:41:34 christos Exp $");
+__RCSID("$NetBSD: ls.c,v 1.16 2002/10/19 20:33:19 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ printlink(name)
 	int lnklen;
 	char path[MAXPATHLEN + 1];
 
-	if ((lnklen = readlink(name, path, MAXPATHLEN)) == -1) {
+	if ((lnklen = readlink(name, path, MAXPATHLEN - 1)) == -1) {
 		warn("%s", name);
 		return;
 	}

@@ -34,7 +34,7 @@
 #include "ftpd_locl.h"
 
 __RCSID("$KTH-KRB: ls.c,v 1.25 2002/08/22 08:31:03 joda Exp $"
-      "$NetBSD: ls.c,v 1.1.1.4 2002/09/12 12:22:08 joda Exp $");
+      "$NetBSD: ls.c,v 1.2 2002/10/19 20:33:18 provos Exp $");
 
 #else
 #include <stdio.h>
@@ -269,7 +269,7 @@ make_fileinfo(FILE *out, const char *filename, struct fileinfo *file, int flags)
     }
     if(S_ISLNK(st->st_mode)) {
 	int n;
-	n = readlink((char *)filename, buf, sizeof(buf));
+	n = readlink((char *)filename, buf, sizeof(buf)-1);
 	if(n >= 0) {
 	    buf[n] = '\0';
 	    file->link = strdup(buf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.22 2002/10/12 15:39:29 christos Exp $	*/
+/*	$NetBSD: ftree.c,v 1.23 2002/10/19 20:33:18 provos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.22 2002/10/12 15:39:29 christos Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.23 2002/10/19 20:33:18 provos Exp $");
 #endif
 #endif /* not lint */
 
@@ -712,7 +712,7 @@ next_file(ARCHD *arcn)
 			 */
 			} else if ((cnt =
 			    readlink(ftent->fts_path, arcn->ln_name,
-			    PAXPATHLEN)) < 0) {
+			    PAXPATHLEN-1)) < 0) {
 				syswarn(1, errno, "Unable to read symlink %s",
 				    ftent->fts_path);
 				continue;
