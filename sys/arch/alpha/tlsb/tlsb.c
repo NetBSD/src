@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.4 1997/04/07 23:41:09 cgd Exp $ */
+/* $NetBSD: tlsb.c,v 1.5 1997/07/17 01:27:22 jtk Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -41,7 +41,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.4 1997/04/07 23:41:09 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.5 1997/07/17 01:27:22 jtk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.4 1997/04/07 23:41:09 cgd Exp $");
 
 #include <alpha/tlsb/tlsbreg.h>
 #include <alpha/tlsb/tlsbvar.h>
+
+#include "locators.h"
 
 extern int	cputype;
 int		cpu_node_id;
@@ -95,7 +97,8 @@ tlsbsubmatch(parent, cf, aux)
 	struct tlsb_dev_attach_args *tap = aux;
 	if (tap->ta_name != tlsb_cd.cd_name)
 		return (0);
-	if ((cf->cf_loc[0] != -1) && (cf->cf_loc[0] != tap->ta_node))
+	if (cf->cf_loc[TLSBCF_NODE] != TLSBCF_NODE_DEFAULT &&
+	    cf->cf_loc[TLSBCF_NODE] != tap->ta_node)
 		return (0);
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }

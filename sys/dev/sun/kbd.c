@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.13 1996/12/17 20:46:11 gwr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.14 1997/07/17 01:17:45 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,6 +79,7 @@
 
 #include "event_var.h"
 #include "kbd_xlate.h"
+#include "locators.h"
 
 /*
  * Ideas:
@@ -211,7 +212,7 @@ kbd_match(parent, cf, aux)
 	struct zsc_attach_args *args = aux;
 
 	/* Exact match required for keyboard. */
-	if (cf->cf_loc[0] == args->channel)
+	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
 		return 2;
 
 	return 0;
