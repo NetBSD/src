@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.7 2003/01/01 00:44:34 thorpej Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.8 2003/02/06 01:36:07 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -347,8 +347,11 @@
 #define	ICU_INT_DMA0_EOC	1	/* DMA0 end-of-chain */
 #define	ICU_INT_DMA0_EOT	0	/* DMA0 end-of-transfer */
 
-#define	ICU_INT_HWMASK		(0xffffffff & ~(ICU_INT_bit26|ICU_INT_bit22| \
-						ICU_INT_bit5|ICU_INT_bit4))
+#define	ICU_INT_HWMASK		(0xffffffff & \
+					~((1 << ICU_INT_bit26) | \
+					  (1 << ICU_INT_bit22) | \
+					  (1 << ICU_INT_bit5)  | \
+					  (1 << ICU_INT_bit4)))
 
 /*
  * DMA Controller
