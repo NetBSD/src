@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.111 2001/10/30 18:52:17 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.112 2001/10/30 19:05:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -81,6 +81,7 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/kernel.h>
+#include <sys/mount.h>
 #include <sys/vnode.h>
 
 #ifdef SYSVSHM
@@ -1801,6 +1802,22 @@ uvm_map_protect(map, start, end, new_prot, set_max)
 		if ((new_prot & current->max_protection) != new_prot) {
 			error = EACCES;
 			goto out;
+		}
+		/*
+		 * Don't allow VM_PROT_EXECUTE to be set on entries that
+		 * point to vnodes that are associated with a NOEXEC file
+		 * system.
+		 */
+		if (UVM_ET_ISOBJ(current) &&
+		    UVM_OBJ_IS_VNODE(current->object.uvm_obj)) {
+			struct vnode *vp =
+			    (struct vnode *) current->object.uvm_obj;
+
+			if ((new_prot & VM_PROT_EXECUTE) != 0 &&
+			    (vp->v_mount->mnt_flag & MNT_NOEXEC) != 0) {
+				error = EACCES;
+				goto out;
+			}
 		}
 		current = current->next;
 	}

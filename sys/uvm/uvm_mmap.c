@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.58 2001/10/30 15:32:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.59 2001/10/30 19:05:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1058,6 +1058,15 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 
 	} else {
 		vp = (struct vnode *)handle;
+
+		/*
+		 * Don't allow mmap for EXEC if the file system
+		 * is mounted NOEXEC.
+		 */
+		if ((prot & PROT_EXEC) != 0 &&
+		    (vp->v_mount->mnt_flag & MNT_NOEXEC) != 0)
+			return (EACCES);
+
 		if (vp->v_type != VCHR) {
 			error = VOP_MMAP(vp, 0, curproc->p_ucred, curproc);
 			if (error) {
