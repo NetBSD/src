@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.43 2003/10/28 23:24:07 mycroft Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.44 2003/11/02 11:14:22 wiz Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.43 2003/10/28 23:24:07 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.44 2003/11/02 11:14:22 wiz Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -3038,7 +3038,7 @@ ray_user_update_params(sc, pr)
 /*
  * issue a report params
  *
- * expected to be called in sleapable context -- intended for user stuff
+ * expected to be called in sleepable context -- intended for user stuff
  */
 static int
 ray_user_report_params(sc, pr)
