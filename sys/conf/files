@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.407 2000/12/02 20:43:08 scw Exp $
+#	$NetBSD: files,v 1.408 2000/12/05 17:59:43 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -20,6 +20,7 @@ defopt	opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 defopt	opt_ntp.h	PPS_SYNC NTP 
 
 defopt	opt_nfs_boot.h	NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
+			NFS_BOOT_BOOTP_REQFILE
 			NFS_BOOT_GATEWAY
 			NFS_BOOT_TCP NFS_BOOT_OPTIONS NFS_BOOT_RWSIZE
 defopt	opt_nfs.h	NFS_V2_ONLY
