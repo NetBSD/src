@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.263 1999/10/06 23:01:45 ad Exp $
+#	$NetBSD: GENERIC,v 1.264 1999/10/08 13:53:00 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -351,7 +351,7 @@ scsibus* at aic?
 scsibus* at bha?
 scsibus* at dpt?
 scsibus* at isp?
-scsibus* at nca?
+#scsibus* at nca?
 scsibus* at ncr?
 scsibus* at pcscp?
 scsibus* at sea?

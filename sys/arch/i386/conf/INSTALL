@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.128 1999/10/06 12:21:44 drochner Exp $
+#	$NetBSD: INSTALL,v 1.129 1999/10/08 13:53:00 drochner Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -333,7 +333,7 @@ scsibus* at aic?
 scsibus* at bha?
 scsibus* at dpt?
 scsibus* at isp?
-scsibus* at nca?
+#scsibus* at nca?
 scsibus* at ncr?
 scsibus* at pcscp?
 scsibus* at sea?
