@@ -16,7 +16,7 @@
  *	%W% (Berkeley) %G%
  *
  * from: Header: sd.c,v 1.27 93/04/29 01:22:19 torek Exp 
- * $Id: sd.c,v 1.3 1993/11/14 15:01:52 deraadt Exp $
+ * $Id: sd.c,v 1.4 1993/11/29 08:31:22 deraadt Exp $
  */
 
 /*
@@ -64,7 +64,8 @@
  * scsi disks.  Note that our blocks are in terms of DEV_BSIZE blocks.
  */
 struct sd_softc {
-	struct	dkdevice sc_dk;	/* base disk device, must be first */
+	struct	device sc_dev;	/* base device, must be first */
+	struct	dkdevice sc_dk;
 	struct	unit sc_unit;	/* scsi unit */
 	pid_t	sc_format_pid;	/* process using "format" mode */
 	u_char	sc_type;	/* drive type */
@@ -222,7 +223,8 @@ sdattach(parent, self, aux)
 	 * Declare our existence.
 	 */
 	sc->sc_unit.u_driver = &sdunitdriver;
-	scsi_establish(&sc->sc_unit, &sc->sc_dk.dk_dev, sa->sa_unit);
+	scsi_establish(&sc->sc_unit, &sc->sc_dev, sa->sa_unit);
+	dk_establish(&sc->sc_dk, &sc->sc_dev);
 
 	/*
 	 * Figure out what kind of disk this is.
@@ -272,7 +274,7 @@ sdattach(parent, self, aux)
 			++sc->sc_bshift;
 		if (i != DEV_BSIZE) {
 			printf("%s: blksize not multiple of %d: cannot use\n",
-			    sc->sc_dk.dk_dev.dv_xname, DEV_BSIZE);
+			    sc->sc_dev.dv_xname, DEV_BSIZE);
 			return;
 		}
 		sc->sc_blks <<= sc->sc_bshift;
@@ -293,16 +295,16 @@ sdattach(parent, self, aux)
 	i = (*sc->sc_unit.u_hbd->hd_icmd)(sc->sc_unit.u_hba,
 	    sc->sc_unit.u_targ, &rd0, sector, sc->sc_blksize, B_READ);
 	if (i == STS_GOOD) {
-		printf("%s: <%s>\n", sc->sc_dk.dk_dev.dv_xname,
+		printf("%s: <%s>\n", sc->sc_dev.dv_xname,
 		    ((struct sun_disklabel *)sector)->sl_text);
 		if (sun_disklabel(sector, &sc->sc_dk.dk_label))
 			sc->sc_flags |= SDF_ALIVE;
 		else
 			printf("%s: sun_disklabel fails\n",
-			    sc->sc_dk.dk_dev.dv_xname);
+			    sc->sc_dev.dv_xname);
 	} else
 		printf("%s: could not read sector 0 for disk label\n",
-		    sc->sc_dk.dk_dev.dv_xname);
+		    sc->sc_dev.dv_xname);
 	free(sector, M_DEVBUF);
 #endif
 #endif /* notyet */
@@ -319,7 +321,7 @@ sdreset(u)
 {
 	register struct sd_softc *sc = (struct sd_softc *)u->u_dev;
 
-	printf(" %s", sc->sc_dk.dk_dev.dv_xname);
+	printf(" %s", sc->sc_dev.dv_xname);
 	sc->sc_resets++;
 }
 
@@ -455,10 +457,10 @@ done:
 	if ((sc)->sc_format_pid && legal_cmds[(sc)->sc_cmd.cdb_bytes[0]] > 0) \
 		(*(sc)->sc_unit.u_start)((sc)->sc_unit.u_updev, \
 		    &(sc)->sc_unit.u_forw, (struct buf *)NULL, \
-		    sdigo, &(sc)->sc_dk.dk_dev); \
+		    sdigo, &(sc)->sc_dev); \
 	else \
 		(*(sc)->sc_unit.u_start)((sc)->sc_unit.u_updev, \
-		    &(sc)->sc_unit.u_forw, bp, sdgo, &(sc)->sc_dk.dk_dev); \
+		    &(sc)->sc_unit.u_forw, bp, sdgo, &(sc)->sc_dev); \
 }
 
 void
@@ -547,11 +549,11 @@ sderror(sc, stat)
 		sc->sc_sense.status = stat;	/* ??? */
 		if ((stat & STS_MASK) != STS_GOOD) {
 			printf("%s: sense failed, status %x\n",
-			    sc->sc_dk.dk_dev.dv_xname, stat);
+			    sc->sc_dev.dv_xname, stat);
 			return (0);
 		}
 		printf("%s: scsi sense class %d, code %d",
-		    sc->sc_dk.dk_dev.dv_xname,
+		    sc->sc_dev.dv_xname,
 		    SENSE_ECLASS(sn), SENSE_ECODE(sn));
 		if (SENSE_ISXSENSE(sn) && XSENSE_ISSTD(sn)) {
 			int key;
@@ -646,7 +648,7 @@ sdgo(sc0, cdb)
 #ifdef DEBUG
 		if (n)
 			printf("%s: partial block xfer -- %x bytes\n",
-			    sc->sc_dk.dk_dev.dv_xname, bp->b_bcount);
+			    sc->sc_dev.dv_xname, bp->b_bcount);
 #endif
 		sc->sc_transfers++;
 	}
@@ -668,7 +670,7 @@ sdgo(sc0, cdb)
 #ifdef DEBUG
 	if (sddebug & SDB_ERROR)
 		printf("%s: sdgo: %s adr %d blk %d len %d ecnt %d\n",
-		    sc->sc_dk.dk_dev.dv_xname,
+		    sc->sc_dev.dv_xname,
 		    bp->b_flags & B_READ? "read" : "write",
 		    bp->b_un.b_addr, bp->b_cylin, bp->b_bcount,
 		    sc->sc_tab.b_errcnt);
@@ -709,12 +711,12 @@ sdintr(sc0, stat, resid)
 #ifdef DEBUG
 		if (sddebug & SDB_ERROR)
 			printf("%s: sdintr scsi status 0x%x resid %d\n",
-			    sc->sc_dk.dk_dev.dv_xname, stat, resid);
+			    sc->sc_dev.dv_xname, stat, resid);
 #endif
 		retry = sderror(sc, stat);
 		if (retry && ++sc->sc_tab.b_errcnt <= SDRETRY) {
 			printf("%s: retry %d\n",
-			    sc->sc_dk.dk_dev.dv_xname, sc->sc_tab.b_errcnt);
+			    sc->sc_dev.dv_xname, sc->sc_tab.b_errcnt);
 			goto restart;
 		}
 		bp->b_flags |= B_ERROR;
@@ -850,7 +852,7 @@ sddump(dev_t dev, daddr_t blkoff, caddr_t addr, int len)
 	hba = sc->sc_unit.u_hba;
 	if (hba->hba_head) {
 		(*hba->hba_driver->hd_reset)(hba, 0);
-		printf("[reset %s] ", sc->sc_dk.dk_dev.dv_xname);
+		printf("[reset %s] ", sc->sc_dev.dv_xname);
 	}
 
 	CDB10(&cdb)->cdb_cmd = CMD_WRITE10;
@@ -873,7 +875,7 @@ sddump(dev_t dev, daddr_t blkoff, caddr_t addr, int len)
 		    &cdb, addr, n);
 		if ((stat & STS_MASK) != STS_GOOD) {
 			printf("%s: scsi write error 0x%x\ndump ",
-			    sc->sc_dk.dk_dev.dv_xname, stat);
+			    sc->sc_dev.dv_xname, stat);
 			return (EIO);
 		}
 		if ((len -= n) == 0)
