@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.13 1999/11/29 15:04:23 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.14 2000/01/01 19:56:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.13 1999/11/29 15:04:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.14 2000/01/01 19:56:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,7 +420,7 @@ dpt_cmd(sc, cp, addr, eatacmd, icmd)
 }
 
 /*
- * Wait for the HBA to reach an arbitrary state.
+ * Wait for the HBA status register to reach a specific state.
  */
 int
 dpt_wait(sc, mask, state, ms)
@@ -460,12 +460,14 @@ dpt_poll(sc, ccb)
         	return (0);                
 
         for (i = ccb->ccb_timeout * 20; i; i--) {
-                if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) != 0)
+                if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) != 0) {
                 	dpt_intr(sc);
-                if ((ccb->ccb_flg & CCB_INTR) != 0)
-                	return (0);
-                DELAY(50);
+	                if ((ccb->ccb_flg & CCB_INTR) != 0)
+				return (0);
+		}
+		DELAY(50);
         }
+
         return (-1);
 }
 
