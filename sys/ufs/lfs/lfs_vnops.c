@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.42 2000/07/01 19:03:57 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.43 2000/07/05 22:25:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -254,6 +254,17 @@ struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 };
 struct vnodeopv_desc lfs_fifoop_opv_desc =
 	{ &lfs_fifoop_p, lfs_fifoop_entries };
+
+/*
+ * A function version of LFS_ITIMES, for the UFS functions which call ITIMES
+ */
+void
+lfs_itimes(ip, acc, mod, cre)
+	struct inode *ip;
+	struct timespec *acc, *mod, *cre;
+{
+	LFS_ITIMES(ip, acc, mod, cre);
+}
 
 #define	LFS_READWRITE
 #include <ufs/ufs/ufs_readwrite.c>
@@ -784,16 +795,12 @@ lfs_close(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	int mod;
 	struct timespec ts;
 
 	simple_lock(&vp->v_interlock);
 	if (vp->v_usecount > 1) {
-		mod = ip->i_flag & (IN_MODIFIED | IN_ACCESSED);
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
 		LFS_ITIMES(ip, &ts, &ts, &ts);
-		if (!mod && (ip->i_flag & (IN_MODIFIED | IN_ACCESSED)))
-			ip->i_lfs->lfs_uinodes++;
 	}
 	simple_unlock(&vp->v_interlock);
 	return (0);
@@ -815,6 +822,7 @@ lfs_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 	int error;
 
+	LFS_CLR_UINO(VTOI(vp), IN_ALLMOD);
 	if ((error = ufs_reclaim(vp, ap->a_p)))
 		return (error);
 	pool_put(&lfs_inode_pool, vp->v_data);
