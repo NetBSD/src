@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.18 2000/09/24 12:32:31 jdolecek Exp $	*/
+/*	$NetBSD: reboot.h,v 1.19 2001/07/01 02:56:20 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -56,6 +56,7 @@
 #define	RB_MINIROOT	0x200	/* mini-root present in memory at boot time */
 #define	RB_STRING	0x400	/* use provided bootstr */
 #define	RB_POWERDOWN	(RB_HALT|0x800) /* turn power off (or at least halt) */
+#define RB_USERCONF	0x1000	/* change configured devices */
 
 /*
  * Extra autoboot flags (passed by boot prog to kernel). See also
