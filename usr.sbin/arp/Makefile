@@ -1,18 +1,7 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 4/18/94
-#	$Id: Makefile,v 1.6 1994/12/20 15:12:31 cgd Exp $
-
-.include <bsd.own.mk>
+#	$Id: Makefile,v 1.7 1994/12/22 11:32:44 cgd Exp $
 
 PROG=	arp
-MAN8=	arp.0
-CLEANFILES=arp4.0
-
-.if !defined(NOMAN)
-all: ${PROG} arp4.0 ${MAN8}
-
-beforeinstall:
-	install -c -o ${MANOWN} -g ${MANGRP} -m ${MANMODE} arp4.0 \
-	    ${DESTDIR}${MANDIR}4/arp.0
-.endif
+MAN=	arp.4 arp.8
 
 .include <bsd.prog.mk>
