@@ -161,6 +161,10 @@ Wishlist:
 - ddb needs a way to trace specific LWPs, instead of just the
   "representative" LWP of a process.
 
+- ktrace'ing of a process with multiple LWPs is "interesting".  Making each
+  ktrace point report its LWP is a very invasive change (particularly so
+  for file-descriptor handling).
+
 - Lazy FPU upcall notifications.
 
 - Implement better management of the lwp cache for a sa process. High-water 
