@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.69 2004/09/08 20:13:52 drochner Exp $	   */
+/*	$NetBSD: uba.c,v 1.70 2004/12/14 02:32:03 chs Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.69 2004/09/08 20:13:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.70 2004/12/14 02:32:03 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.69 2004/09/08 20:13:52 drochner Exp $");
 #include <dev/qbus/ubavar.h>
 
 #include "ioconf.h"
+#include "locators.h"
 
 static int ubasearch (struct device *, struct cfdata *,
 		      const locdesc_t *, void *);
@@ -291,12 +292,13 @@ ubasearch(struct device *parent, struct cfdata *cf,
 {
 	struct	uba_softc *sc = (struct uba_softc *)parent;
 	struct	uba_attach_args ua;
-	int	i, vec, br;
+	int	i, csr, vec, br;
 
-	if (sc->uh_used[ubdevreg(cf->cf_loc[0])])
+	csr = cf->cf_loc[UBACF_CSR];
+	if (sc->uh_used[ubdevreg(csr)])
 		return 0; /* something are already at this address */
 
-	ua.ua_ioh = ubdevreg(cf->cf_loc[0]) + sc->uh_ioh;
+	ua.ua_ioh = ubdevreg(csr) + sc->uh_ioh;
 	ua.ua_iot = sc->uh_iot;
 	ua.ua_dmat = sc->uh_dmat;
 
@@ -321,10 +323,10 @@ ubasearch(struct device *parent, struct cfdata *cf,
 
 	ua.ua_br = br;
 	ua.ua_cvec = vec;
-	ua.ua_iaddr = cf->cf_loc[0];
+	ua.ua_iaddr = csr;
 	ua.ua_evcnt = NULL;
 
-	sc->uh_used[ubdevreg(cf->cf_loc[0])] = 1;
+	sc->uh_used[ubdevreg(csr)] = 1;
 
 	config_attach(parent, cf, &ua, ubaprint);
 	return 0;
@@ -332,7 +334,7 @@ ubasearch(struct device *parent, struct cfdata *cf,
 fail:
 	printf("%s%d at %s csr %o %s\n",
 	    cf->cf_name, cf->cf_unit, parent->dv_xname,
-	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
+	    csr, (i ? "zero vector" : "didn't interrupt"));
 
 forgetit:
 	return 0;

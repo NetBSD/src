@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.11 2003/10/22 09:03:40 agc Exp $        */
+/*      $NetBSD: opms.c,v 1.12 2004/12/14 02:32:02 chs Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.11 2003/10/22 09:03:40 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.12 2004/12/14 02:32:02 chs Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -277,7 +277,7 @@ opmsprobe(parent, match, aux)
         ** we expect that the parent has mapped the io space.
         ** Check an IRQ has been specified in the configuration
         */
-        if (cf->cf_loc[0] != -1)
+        if (cf->cf_loc[SPCKBDCF_IRQ] != -1)
         {
             /* Clear out any garbage left in there at this point in time
             */
@@ -360,7 +360,7 @@ opmsattach(parent, self, aux)
     void          *aux;
 {
     struct opms_softc          *sc = (void *)self;
-    int                       irq = self->dv_cfdata->cf_loc[0];
+    int                       irq = self->dv_cfdata->cf_loc[SPCKBDCF_IRQ];
     struct isa_attach_args    *ia = aux;                   
 
     printf(" irq %d\n", irq);

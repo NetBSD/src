@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.7 2003/07/14 22:48:25 lukem Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.8 2004/12/14 02:32:02 chs Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
 /*#define PIOC_DEBUG*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.7 2003/07/14 22:48:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pioc.c,v 1.8 2004/12/14 02:32:02 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,13 +274,13 @@ piocsubmatch(parent, cf, aux)
 	struct pioc_attach_args *pa = aux;
 	int tryagain;
 
-	if ((pa->pa_offset >> 2) != cf->cf_loc[0])
+	if ((pa->pa_offset >> 2) != cf->cf_loc[PIOCCF_OFFSET])
 		return(0);
 	do {
 		if (pa->pa_drq == -1)
-			pa->pa_drq = cf->cf_loc[1];
+			pa->pa_drq = cf->cf_loc[PIOCCF_DACK];
 		if (pa->pa_irq == -1)
-			pa->pa_irq = cf->cf_loc[2];
+			pa->pa_irq = cf->cf_loc[PIOCCF_IRQ];
 		tryagain = 0;
 		if (config_match(parent, cf, pa) > 0) {
 			config_attach(parent, cf, pa, piocprint);

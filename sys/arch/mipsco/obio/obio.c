@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.8 2003/07/15 02:43:44 lukem Exp $	*/
+/*	$NetBSD: obio.c,v 1.9 2004/12/14 02:32:02 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.8 2003/07/15 02:43:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.9 2004/12/14 02:32:02 chs Exp $");
+
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

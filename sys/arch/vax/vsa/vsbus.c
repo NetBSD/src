@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.45 2004/05/02 08:16:52 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.46 2004/12/14 02:32:03 chs Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.45 2004/05/02 08:16:52 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.46 2004/12/14 02:32:03 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.45 2004/05/02 08:16:52 ragge Exp $");
 #include <machine/vsbus.h>
 
 #include "ioconf.h"
+#include "locators.h"
 #include "opt_cputype.h"
 
 int	vsbus_match(struct device *, struct cfdata *, void *);
@@ -215,7 +216,7 @@ vsbus_search(parent, cf, aux)
 	int i, vec, br;
 	u_char c;
 
-	va.va_paddr = cf->cf_loc[0];
+	va.va_paddr = cf->cf_loc[VSBUSCF_CSR];
 	va.va_addr = vax_map_physmem(va.va_paddr, 1);
 	va.va_dmat = &sc->sc_dmatag;
 	va.va_iot = &vax_mem_bus_space;
@@ -256,7 +257,7 @@ vsbus_search(parent, cf, aux)
 fail:
 	printf("%s%d at %s csr 0x%x %s\n",
 	    cf->cf_name, cf->cf_unit, parent->dv_xname,
-	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
+	    cf->cf_loc[VSBUSCF_CSR], (i ? "zero vector" : "didn't interrupt"));
 forgetit:
 	return 0;
 }

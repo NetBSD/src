@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.1 2003/08/19 10:51:57 ragge Exp $	*/
+/*	$NetBSD: ebus.c,v 1.2 2004/12/14 02:32:02 chs Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -60,7 +60,7 @@ ebus_search(struct device *parent, struct cfdata *cf, void *aux)
 	int rv;
 
 	ea.ea_iot = 0;
-	ea.ea_ioh = cf->cf_loc[0];
+	ea.ea_ioh = cf->cf_loc[EBUSCF_CSR];
 	rv = config_match(parent, cf, &ea);
 	if (rv == 0)
 		return 0;

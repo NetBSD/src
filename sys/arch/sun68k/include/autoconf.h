@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 2001/06/27 02:53:07 fredette Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3 2004/12/14 02:32:03 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -69,8 +69,6 @@ struct mainbus_attach_args {
 #define	obma_pri		ma_pri
 
 /* Locator aliases */
-#define cf_paddr	cf_loc[0]
-#define cf_intpri	cf_loc[1]
 #define	LOCATOR_OPTIONAL	(0)
 #define	LOCATOR_REQUIRED	(1)
 #define	LOCATOR_FORBIDDEN	(2)
