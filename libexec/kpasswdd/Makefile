@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2000/12/30 17:29:25 sommerfeld Exp $
+# $NetBSD: Makefile,v 1.8 2001/02/11 18:02:06 assar Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,8 @@ LDADD=	-lkadm5srv \
 	-lcom_err \
 	-L${VERS} -lvers \
 	-lroken \
-	-lcrypt
+	-lcrypt \
+	-lutil
 
 MAN = kpasswdd.8
 
