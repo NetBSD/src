@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2000/08/30 23:51:53 jhawk Exp $
+# $NetBSD: Makefile,v 1.8 2000/09/10 19:36:43 joda Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/krb5
 .PATH: ${DIST}/heimdal/doc
@@ -133,6 +133,7 @@ MAN=						\
 	krb5_sname_to_principal.3		\
 	krb5_unparse_name.3			\
 	krb5_warn.3				\
+	kerberos.8				\
 	verify_krb5_conf.8
 
 krb5-types.h:
@@ -177,3 +178,10 @@ INFOFLAGS=	-I${DIST}/heimdal/doc
 
 .include <bsd.lib.mk>
 .include <bsd.info.mk>
+
+.if ${MKSHARE} != "no"
+FILES=  ${DIST}/heimdal/krb5.conf
+FILESDIR=/usr/share/examples/kerberos
+.endif
+
+.include <bsd.files.mk>
