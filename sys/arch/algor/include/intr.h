@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2001/06/10 05:26:59 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2001/06/10 09:13:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -113,6 +113,14 @@ extern int		_clrsoftintr(int);
 #define	splsoftserial()	_splraise(ipl_sr_bits[IPL_SOFTSERIAL])
 
 #define	spllowersoftclock() _spllower(ipl_sr_bits[IPL_SOFTCLOCK])
+
+struct algor_intrhand {
+	LIST_ENTRY(algor_intrhand) ih_q;
+	int (*ih_func)(void *);
+	void *ih_arg;
+	int ih_irq;		/* mostly for ISA */
+	const void *ih_irqmap;
+};
 
 #define	setsoft(x)							\
 do {									\
