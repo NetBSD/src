@@ -1,4 +1,4 @@
-/*	$NetBSD: netdate.c,v 1.17 1998/11/04 12:50:17 christos Exp $	*/
+/*	$NetBSD: netdate.c,v 1.18 1998/12/19 22:44:19 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.17 1998/11/04 12:50:17 christos Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.18 1998/12/19 22:44:19 kristerw Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ netsettime(tval)
 #ifdef IP_PORTRANGE
 	int on;
 #endif
-	char hostname[MAXHOSTNAMELEN + 1];
+	char hostname[MAXHOSTNAMELEN];
 
 	if ((sp = getservbyname("timed", "udp")) == NULL) {
 		warnx("udp/timed: unknown service");
