@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.551 2003/03/30 13:15:03 he Exp $
+#	$NetBSD: mi,v 1.552 2003/04/04 20:57:27 wiz Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -4034,6 +4034,7 @@
 ./usr/share/man/cat9/vfs_export_lookup.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_getnewfsid.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_rootmountalloc.0		comp-sys-catman
+./usr/share/man/cat9/vfs_shutdown.0		comp-sys-catman
 ./usr/share/man/cat9/vfsops.0		comp-sys-catman
 ./usr/share/man/cat9/vget.0		comp-sys-catman
 ./usr/share/man/cat9/vgone.0		comp-sys-catman
@@ -7099,6 +7100,7 @@
 ./usr/share/man/man9/vfs_export_lookup.9		comp-sys-man
 ./usr/share/man/man9/vfs_getnewfsid.9		comp-sys-man
 ./usr/share/man/man9/vfs_rootmountalloc.9		comp-sys-man
+./usr/share/man/man9/vfs_shutdown.9		comp-sys-man
 ./usr/share/man/man9/vfsops.9		comp-sys-man
 ./usr/share/man/man9/vget.9		comp-sys-man
 ./usr/share/man/man9/vgone.9		comp-sys-man
