@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.3.6.3 2005/01/21 10:03:39 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.3.6.4 2005/01/31 17:21:16 bouyer Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.6.3 2005/01/21 10:03:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.6.4 2005/01/31 17:21:16 bouyer Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.3.6.3 2005/01/21 10:03:39 b
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
+
+#include "opt_xen.h"
 
 /* #define PORT_DEBUG -1 */
 
@@ -133,9 +135,9 @@ stipending()
 					    ci->ci_isources[irq]->is_maxlevel)
 						ret = 1;
 				}
-#if 0 /* XXXcl dev/evtchn */
+#ifdef DOM0OPS
 				else
-					evtchn_device_upcall(port);
+					xenevt_event(port);
 #endif
 			}
 		}
@@ -190,11 +192,9 @@ do_hypervisor_callback(struct intrframe *regs)
 #endif
 				if ((irq = evtchn_to_irq[port]) != -1)
 					do_event(irq, regs);
+#if DOM0OPS
 				else
-					printf("do_hypervisor_callback port %d no IRQ\n", port);
-#if 0 /* XXXcl dev/evtchn */
-				else
-					evtchn_device_upcall(port);
+					xenevt_event(port);
 #endif
 			}
 		}
