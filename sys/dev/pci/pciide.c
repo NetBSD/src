@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68.2.2 2000/06/27 14:57:05 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.3 2000/06/27 17:08:42 tron Exp $	*/
 
 
 /*
@@ -172,6 +172,7 @@ void cmd0643_9_setup_channel __P((struct channel_softc*));
 void cmd_channel_map __P((struct pci_attach_args *,
 			struct pciide_softc *, int));
 int  cmd_pci_intr __P((void *));
+void cmd648_9_irqack __P((struct channel_softc *));
 
 void cy693_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void cy693_setup_channel __P((struct channel_softc*));
@@ -2165,12 +2166,15 @@ cmd0643_9_chip_map(sc, pa)
 	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
-		sc->sc_wdcdev.irqack = pciide_irqack;
 		switch (sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_CMDTECH_649:
 		case PCI_PRODUCT_CMDTECH_648:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			sc->sc_wdcdev.UDMA_cap = 4;
+			sc->sc_wdcdev.irqack = cmd648_9_irqack;
+			break;
+		default:
+			sc->sc_wdcdev.irqack = pciide_irqack;
 		}
 	}
 
@@ -2277,6 +2281,24 @@ cmd0643_9_setup_channel(chp)
 		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
+}
+
+void
+cmd648_9_irqack(chp)
+	struct channel_softc *chp;
+{
+	u_int32_t priirq, secirq;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+
+	if (chp->channel == 0) {
+		priirq = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_CONF);
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, CMD_CONF, priirq);
+	} else {
+		secirq = pciide_pci_read(sc->sc_pc, sc->sc_tag, CMD_ARTTIM23);
+		pciide_pci_write(sc->sc_pc, sc->sc_tag, CMD_ARTTIM23, secirq);
+	}
+	pciide_irqack(chp);
 }
 
 void
