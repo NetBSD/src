@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.15 1999/08/02 19:50:30 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.16 1999/08/07 23:14:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -180,6 +180,36 @@ usbd_get_port_status(dev, port, ps)
 	USETW(req.wIndex, port);
 	USETW(req.wLength, sizeof *ps);
 	return (usbd_do_request(dev, &req, ps));
+}
+
+usbd_status
+usbd_clear_hub_feature(dev, sel)
+	usbd_device_handle dev;
+	int sel;
+{
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_WRITE_CLASS_DEVICE;
+	req.bRequest = UR_CLEAR_FEATURE;
+	USETW(req.wValue, sel);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 0);
+	return (usbd_do_request(dev, &req, 0));
+}
+
+usbd_status
+usbd_set_hub_feature(dev, sel)
+	usbd_device_handle dev;
+	int sel;
+{
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_WRITE_CLASS_DEVICE;
+	req.bRequest = UR_SET_FEATURE;
+	USETW(req.wValue, sel);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 0);
+	return (usbd_do_request(dev, &req, 0));
 }
 
 usbd_status
