@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.2 2001/03/21 16:08:34 toshii Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.3 2001/03/31 12:49:21 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -182,14 +182,18 @@ sacc_intr_dispatch(arg)
 			/* clear SA1110's GPIO intr status */
 			bus_space_write_4(sc->sc_piot, sc->sc_gpioh,
 					  SAGPIO_EDR, sc->sc_gpiomask);
+			/*
+			 * Clear intr status before calling intr handlers.
+			 * This cause stray interrupts, but clearing
+			 * after calling intr handlers cause intr lossage.
+			 */
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+					  SACCIC_INTSTATCLR0, 1 << i);
+
 			handled = 0;
 			for(ih = sc->sc_intrhand[i]; ih; ih = ih->ih_next)
 				handled = handled |
 				    ((ih->ih_fun)(ih->ih_arg) == 1);
-
-			/* always clear intr status here */
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-					  SACCIC_INTSTATCLR0, 1 << i);
 
 			if (! handled)
 				sacc_stray_interrupt(sc, i + 32);
@@ -199,13 +203,13 @@ sacc_intr_dispatch(arg)
 			/* clear SA1110's GPIO intr status */
 			bus_space_write_4(sc->sc_piot, sc->sc_gpioh,
 					  SAGPIO_EDR, sc->sc_gpiomask);
+			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+					  SACCIC_INTSTATCLR1, 1 << i);
+
 			handled = 0;
 			for(ih = sc->sc_intrhand[i + 32]; ih; ih = ih->ih_next)
 				handled = handled |
 				    ((ih->ih_fun)(ih->ih_arg) == 1);
-
-			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
-					  SACCIC_INTSTATCLR1, 1 << i);
 
 			if (! handled)
 				sacc_stray_interrupt(sc, i + 32);
@@ -218,7 +222,7 @@ sacc_stray_interrupt(sc, irq)
 	struct sacc_softc *sc;
 	int irq;
 {
-	printf("sacc_stray_interrupt\n");
+	DPRINTF(("sacc_stray_interrupt\n"));
 }
 
 void *
