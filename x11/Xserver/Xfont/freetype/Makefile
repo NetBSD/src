@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/17 23:15:30 perry Exp $
+#	$NetBSD: Makefile,v 1.6 2005/03/22 15:00:37 tron Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/fonts
 
@@ -53,6 +53,9 @@ SRCS+=	bdf.c
 
 .PATH:	${FT2SRC}/pcf
 SRCS+=	pcf.c
+
+.PATH:	${FT2SRC}/lzw
+SRCS+=	ftlzw.c
 
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/lib/font/FreeType/module \
