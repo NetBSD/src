@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.39 1994/10/27 04:14:47 cgd Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.40 1994/10/29 08:34:06 cgd Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -9,7 +9,7 @@ timezone	8 dst
 maxusers	10
 options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		FFS
-options		INET,NFSCLIENT
+options		INET,NFSCLIENT,NFSSERVER
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		XSERVER,UCONSOLE
