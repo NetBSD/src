@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.59 2001/06/14 20:32:47 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.60 2001/06/16 12:00:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,6 +36,7 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_new_pipe.h"
 
 /*
  * Though COMPAT_OLDSOCK is needed only for COMPAT_43, SunOS, Linux,
@@ -912,6 +913,7 @@ sys_getsockopt(struct proc *p, void *v, register_t *retval)
 	return (error);
 }
 
+#ifndef NEW_PIPE
 /* ARGSUSED */
 int
 sys_pipe(struct proc *p, void *v, register_t *retval)
@@ -965,6 +967,7 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	(void)soclose(rso);
 	return (error);
 }
+#endif /* !NEW_PIPE */
 
 /*
  * Get socket name.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.88 2001/04/26 06:07:13 enami Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.89 2001/06/16 12:00:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,6 +45,7 @@
 #include "opt_ddb.h"
 #include "opt_insecure.h"
 #include "opt_defcorename.h"
+#include "opt_new_pipe.h"
 #include "opt_sysv.h"
 #include "pty.h"
 
@@ -334,6 +335,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_MBUF:
 	case KERN_PROC_ARGS:
 	case KERN_SYSVIPC_INFO:
+	case KERN_PIPE:
 		/* Not terminal. */
 		break;
 	default:
@@ -534,6 +536,11 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #if NPTY > 0
 	case KERN_MAXPTYS:
 		return sysctl_pty(oldp, oldlenp, newp, newlen);
+#endif
+#ifdef NEW_PIPE
+	case KERN_PIPE:
+		return (sysctl_dopipe(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 #endif
 	default:
 		return (EOPNOTSUPP);
