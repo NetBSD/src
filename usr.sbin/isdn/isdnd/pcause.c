@@ -27,7 +27,7 @@
  *	printing cause values
  *	---------------------
  *
- *	$Id: pcause.c,v 1.1.1.1 2001/01/06 13:00:23 martin Exp $
+ *	$Id: pcause.c,v 1.2 2003/05/02 04:29:03 thorpej Exp $
  *
  * $FreeBSD$
  *
@@ -36,40 +36,6 @@
  *---------------------------------------------------------------------------*/
 
 #include "isdnd.h"
-
-static char *cause_i4b_tab[CAUSE_I4B_MAX+1];
-static char *cause_q850_tab[CAUSE_Q850_MAX];
-
-char *
-print_i4b_cause(cause_t code)
-{
-	static char error_message[128];
-
-	snprintf(error_message, sizeof(error_message), "%d: ", GET_CAUSE_VAL(code));
-
-	switch(GET_CAUSE_TYPE(code))
-	{
-		case CAUSET_Q850:
-			strcat(error_message, cause_q850_tab[GET_CAUSE_VAL(code)]);
-			strcat(error_message, " (Q.850)");
-			break;
-
-		case CAUSET_I4B:
-			if((GET_CAUSE_VAL(code) < CAUSE_I4B_NORMAL) ||
-			   (GET_CAUSE_VAL(code) >= CAUSE_I4B_MAX))
-			{
-				SET_CAUSE_VAL(code, CAUSE_I4B_MAX);
-			}
-			strcat(error_message, cause_i4b_tab[GET_CAUSE_VAL(code)]);
-			strcat(error_message, " (I4B)");
-			break;
-
-		default:
-			strcat(error_message, "ERROR: unknown cause type!");
-			break;
-	}
-	return(error_message);
-}
 
 static char *cause_i4b_tab[CAUSE_I4B_MAX+1] = {
 	"normal call clearing",
@@ -226,5 +192,36 @@ static char *cause_q850_tab[CAUSE_Q850_MAX] = {
 	"cause code 126: error, unassigned in Q.850 (03/93)",
 	"Interworking, unspecified"
 };
+
+char *
+print_i4b_cause(cause_t code)
+{
+	static char error_message[128];
+
+	snprintf(error_message, sizeof(error_message), "%d: ", GET_CAUSE_VAL(code));
+
+	switch(GET_CAUSE_TYPE(code))
+	{
+		case CAUSET_Q850:
+			strcat(error_message, cause_q850_tab[GET_CAUSE_VAL(code)]);
+			strcat(error_message, " (Q.850)");
+			break;
+
+		case CAUSET_I4B:
+			if((GET_CAUSE_VAL(code) < CAUSE_I4B_NORMAL) ||
+			   (GET_CAUSE_VAL(code) >= CAUSE_I4B_MAX))
+			{
+				SET_CAUSE_VAL(code, CAUSE_I4B_MAX);
+			}
+			strcat(error_message, cause_i4b_tab[GET_CAUSE_VAL(code)]);
+			strcat(error_message, " (I4B)");
+			break;
+
+		default:
+			strcat(error_message, "ERROR: unknown cause type!");
+			break;
+	}
+	return(error_message);
+}
 
 /* EOF */
