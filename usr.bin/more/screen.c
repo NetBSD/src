@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)screen.c	5.8 (Berkeley) 6/28/92"; */
-static char *rcsid = "$Id: screen.c,v 1.2 1993/11/09 05:13:02 cgd Exp $";
+static char *rcsid = "$Id: screen.c,v 1.3 1994/04/16 08:14:52 andrew Exp $";
 #endif /* not lint */
 
 /*
@@ -47,10 +47,14 @@ static char *rcsid = "$Id: screen.c,v 1.2 1993/11/09 05:13:02 cgd Exp $";
 #include <stdio.h>
 #include <less.h>
 
-#if TERMIO
+#ifdef TERMIOS
+#include <termios.h>
+#else
+#ifdef TERMIO
 #include <termio.h>
 #else
 #include <sgtty.h>
+#endif
 #endif
 
 #ifdef TIOCGWINSZ
@@ -103,7 +107,11 @@ int so_width, se_width;		/* Printing width of standout sequences */
  * and needed by, the termcap library.
  * It may be necessary on some systems to declare them extern here.
  */
+#ifdef TERMIOS
+/*extern*/ speed_t ospeed;	/* Terminal output baud rate */
+#else
 /*extern*/ short ospeed;	/* Terminal output baud rate */
+#endif
 /*extern*/ char PC;		/* Pad character */
 
 extern int back_scroll;
@@ -124,7 +132,50 @@ char *tgoto();
 raw_mode(on)
 	int on;
 {
-#if TERMIO
+#ifdef TERMIOS
+	struct termios s;
+	static struct termios save_term;
+
+	if (on)
+	{
+		/*
+		 * Get terminal modes.
+		 */
+		(void)tcgetattr(2, &s);
+
+		/*
+		 * Save modes and set certain variables dependent on modes.
+		 */
+		save_term = s;
+		ospeed = cfgetospeed(&s);
+		erase_char = s.c_cc[VERASE];
+		kill_char = s.c_cc[VKILL];
+		werase_char = s.c_cc[VWERASE];
+
+		/*
+		 * Set the modes to the way we want them.
+		 */
+		s.c_lflag &= ~(ICANON|ECHO|ECHOE|ECHOK|ECHONL);
+		s.c_oflag |=  (OPOST|ONLCR
+#ifdef TAB3
+				|TAB3
+#endif
+				);
+#ifdef OCRNL
+		s.c_oflag &= ~(OCRNL|ONLRET|ONOCR);
+#endif
+		s.c_cc[VMIN] = 1;
+		s.c_cc[VTIME] = 0;
+	} else
+	{
+		/*
+		 * Restore saved modes.
+		 */
+		s = save_term;
+	}
+	(void)tcsetattr(2, TCSADRAIN, &s);
+#else
+#ifdef TERMIO
 	struct termio s;
 	static struct termio save_term;
 
@@ -195,6 +246,7 @@ raw_mode(on)
 		s = save_term;
 	}
 	(void)ioctl(2, TIOCSETN, &s);
+#endif
 #endif
 }
 
