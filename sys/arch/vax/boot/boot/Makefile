@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2001/12/12 01:49:54 tv Exp $
+#	$NetBSD: Makefile,v 1.22 2001/12/23 02:21:35 matt Exp $
 
 S=	${.CURDIR}/../../../..
 NOMAN=	# defined
@@ -61,7 +61,9 @@ install:
 	    ${DESTDIR}${BINDIR}
 	${INSTALL} ${COPY} -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG} \
 	    ${DESTDIR}${MDEC_DIR}
+.if ${OBJECT_FMT} != "ELF"
 	${INSTALL} ${COPY} -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG}.mop \
 	    ${DESTDIR}${MDEC_DIR}
+.endif
 
 .include <bsd.prog.mk>
