@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.51 2003/02/20 11:40:28 lukem Exp $
+# $NetBSD: postinstall,v 1.52 2003/02/20 12:47:29 lukem Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,7 +50,6 @@
 #	- support quiet/verbose mode ?
 #	- differentiate between failures caused by missing source
 #	  and real failures
-#	- rm files before cp -f (incase of symlink)?
 #
 
 #
@@ -191,7 +190,8 @@ compare_dir()
 		if [ "${_op}" = "check" ]; then
 			msg ${_error}
 			_cmpdir_rv=1
-		elif ! cp -f ${fs} ${fd}; then
+		elif ! rm -f ${fd} ||
+		     ! cp -f ${fs} ${fd}; then
 			msg "Can't copy ${fs} to ${fd}"
 			_cmpdir_rv=1
 		elif ! chmod ${_mode} ${fd}; then
@@ -507,7 +507,8 @@ do_ssh()
 			if [ "${op}" = "check" ]; then
 				msg "${sshdconf} needs the following changes:"
 				failed=1
-			elif ! cp -f ${SCRATCHDIR}/sshd_config ${sshdconf}; then
+			elif ! rm -f ${sshdconf} ||
+			     ! cp -f ${SCRATCHDIR}/sshd_config ${sshdconf}; then
 				msg "${sshdconf} changes not applied:"
 				failed=1
 			else
