@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_buffer.3,v 1.6 2002/08/09 14:15:13 blymn Exp $
+.\"	$NetBSD: form_field_buffer.3,v 1.7 2002/10/01 19:15:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -59,22 +59,25 @@ The
 .Fn field_buffer
 function returns the contents of the buffer number specified by
 .Fa buffer
-for the given field.  If the requested buffer number exceeds the
+for the given field.
+If the requested buffer number exceeds the
 number of buffers attached to the field then NULL will be returned.
 The field buffer may be set by calling
 .Fn set_field_buffer
 which will set the given buffer number to the contents of the string
-passed.  A buffer may also be set by calling
+passed.
+A buffer may also be set by calling
 .Fn set_field_printf
 which sets the buffer using the format arg
 .Fa fmt
 after being expanded using the subsequent arguments in the same manner
 as
 .Xr sprintf 3
-does.  Calling
+does.
+Calling
 .Fn field_status
-will return the status of the first buffer attached to the field.  If
-the field has been modified then the function will return TRUE
+will return the status of the first buffer attached to the field.
+If the field has been modified then the function will return TRUE
 otherwise FALSE is returned, the status of the first buffer may be
 programmatically set by calling
 .Fn set_field_status .
@@ -107,6 +110,6 @@ and
 .Pa \*[Lt]eti.h\*[Gt] .
 The function
 .Fn set_field_printf
-is a 
+is a
 .Nx
 extension and must not be used in portable code.

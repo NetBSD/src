@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field_just.3,v 1.5 2002/08/06 12:44:34 wiz Exp $
+.\"	$NetBSD: form_field_just.3,v 1.6 2002/10/01 19:15:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -46,8 +46,10 @@
 .Fn set_field_just "FIELD *field" "int justification"
 .Sh DESCRIPTION
 Field justification is only applied to static fields, a dynamic field
-will not be justified.  The default justification for a field is
-NO_JUSTIFICATION.  The
+will not be justified.
+The default justification for a field is
+NO_JUSTIFICATION.
+The
 .Fn field_just
 will return the current justification value of the given field and the
 justification may be set by calling the
@@ -58,13 +60,15 @@ The following are the valid justifications for a field:
 .Pp
 .Bl -tag -width NO_JUSTIFICATION -compact
 .It NO_JUSTIFICATION
-No justification is to be applied to the field.  In practice, this is
-the same as JUSTIFY_LEFT.
+No justification is to be applied to the field.
+In practice, this is the same as JUSTIFY_LEFT.
 .It JUSTIFY_RIGHT
-The field will be right justified.  That is, the end of each line will
+The field will be right justified.
+That is, the end of each line will
 be butted up against the right hand side of the field.
 .It JUSTIFY_LEFT
-The field will be left justified.  That is, the start of each line
+The field will be left justified.
+That is, the start of each line
 will be butted up against the left hand side of the field.
 .It JUSTIFY_CENTER
 The field will be centre justified, padding will be applied to either

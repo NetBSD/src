@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_new.3,v 1.4 2002/02/20 11:30:59 wiz Exp $
+.\"	$NetBSD: form_new.3,v 1.5 2002/10/01 19:15:17 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -48,11 +48,12 @@
 The function
 .Fn free_form
 frees all the resources associated with the form and destroys the
-form.  Calling
+form.
+Calling
 .Fn new_form
 will create a new form, set the form parameters to the current
-defaults and attach the passed fields to the form.  The array of
-fields passed to
+defaults and attach the passed fields to the form.
+The array of fields passed to
 .Fn new_form
 must be terminated with a NULL pointer to indicate the end of the
 fields.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_fieldtype.3,v 1.5 2002/08/06 12:44:35 wiz Exp $
+.\"	$NetBSD: form_fieldtype.3,v 1.6 2002/10/01 19:15:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -68,8 +68,8 @@
 .Sh DESCRIPTION
 The function
 .Fn free_fieldtype
-frees the storage associated with the field type and destroys it.  The
-function
+frees the storage associated with the field type and destroys it.
+The function
 .Fn link_fieldtype
 links together the two given field types to produce a new field type.
 A new field type can be created by calling
@@ -77,17 +77,20 @@ A new field type can be created by calling
 which requires pointers to two functions which perform validation, the
 .Fa field_check
 function must validate the field contents and return TRUE if they are
-acceptable and FALSE if they are not.  The
+acceptable and FALSE if they are not.
+The
 .Fa char_check
 validates the character input into the field, this function will be
 called for each character entered, if the character can be entered
 into the field then
 .Fa char_check
-must return TRUE.  Neither
+must return TRUE.
+Neither
 .Fa field_check
 nor
 .Fa char_check
-may be NULL.  The functions for handling the field type arguments can
+may be NULL.
+The functions for handling the field type arguments can
 be defined by using the
 .Fn set_fieldtype_arg
 function, the
@@ -98,8 +101,8 @@ is used to copy the fieldtype arguments to a new arguments structure
 and
 .Fa free_args
 is used to destroy the fieldtype arguments and release any associated
-storage, none of these function pointers may be NULL.  The field type
-choice functions can be set by calling
+storage, none of these function pointers may be NULL.
+The field type choice functions can be set by calling
 .Fn set_fieldtype_choice ,
 the
 .Fa next_choice
@@ -108,7 +111,8 @@ and
 specify the next and previous choice functions for the field type.
 These functions must perform the necessary actions to select the next
 or previous choice for the field, updating the field buffer if
-necessary.  The choice functions must return TRUE if the function
+necessary.
+The choice functions must return TRUE if the function
 succeeded and FALSE otherwise.
 .Sh RETURN VALUES
 Functions returning pointers will return NULL if an error is detected.

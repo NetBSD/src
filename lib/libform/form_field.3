@@ -1,4 +1,4 @@
-.\"	$NetBSD: form_field.3,v 1.5 2002/08/06 12:44:34 wiz Exp $
+.\"	$NetBSD: form_field.3,v 1.6 2002/10/01 19:15:15 wiz Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -56,7 +56,8 @@ The
 function returns the number of fields that are attached to the given
 form, if the form argument passed is NULL then
 .Fn field_count
-will return -1.  The function
+will return -1.
+The function
 .Fn form_fields
 will return a pointer to array of attach fields for the given form,
 this array is not NULL terminated, fields may be attached to the given
@@ -65,10 +66,11 @@ form by calling
 The
 .Fa fields
 argument in this function is a pointer to a NULL terminated array of
-fields that will be attached to the form.  If there are already fields
-attached to the form then they will be detached before the new fields
-are attached.  The new fields given must not be attached to any other
-form.  The
+fields that will be attached to the form.
+If there are already fields attached to the form then they will be
+detached before the new fields are attached.
+The new fields given must not be attached to any other form.
+The
 .Fn move_field
 function will move the given field to the location specified by
 .Fa frow
