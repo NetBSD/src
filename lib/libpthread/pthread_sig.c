@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.4 2003/01/24 17:43:45 jdolecek Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.5 2003/01/25 00:43:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -90,8 +90,8 @@ static pthread_cond_t pt_sigsuspended_cond = PTHREAD_COND_INITIALIZER;
 
 
 static void 
-pthread__signal_tramp(int, int, struct sigaction *, ucontext_t *, sigset_t *,
-    int, struct pthread_queue_t *, pthread_spin_t *);
+pthread__signal_tramp(int, int, void (*)(int, int, struct sigcontext *),
+    ucontext_t *, sigset_t *);
 
 __strong_alias(__libc_thr_sigsetmask,pthread_sigmask)
 
@@ -167,7 +167,6 @@ __sigsuspend14(const sigset_t *sigmask)
 	}
 	pthread_sigmask(SIG_SETMASK, sigmask, &oldmask);
 
-	self->pt_flags |= PT_FLAG_SIGCATCH;
 	self->pt_state = PT_STATE_BLOCKED_QUEUE;
 	self->pt_sleepobj = &pt_sigsuspended_cond;
 	self->pt_sleepq = &pt_sigsuspended;
@@ -178,7 +177,6 @@ __sigsuspend14(const sigset_t *sigmask)
 	pthread__block(self, &pt_sigsuspended_lock);
 
 	pthread__testcancel(self);
-	self->pt_flags &= ~PT_FLAG_SIGCATCH;
 
 	pthread_sigmask(SIG_SETMASK, &oldmask, NULL);
 
@@ -353,13 +351,10 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
  * willing thread, if t is null.
  */
 void
-pthread__signal(pthread_t t, int sig, int code)
+pthread__signal(pthread_t self, pthread_t t, int sig, int code)
 {
-	pthread_t self, target, good, okay;
-	sigset_t oldmask, *maskp;
-	ucontext_t *uc;
+	pthread_t target, good, okay;
 
-	self = pthread__self();
 	if (t) {
 		target = t;
 		pthread_spinlock(self, &target->pt_siglock);
@@ -455,14 +450,6 @@ pthread__signal(pthread_t t, int sig, int code)
 	 * target process is a bug.
 	 */
 	assert(target->pt_state != PT_STATE_RUNNING);
-	/*
-	 * Prevent anyone else from considering this thread for handling
-	 * more instances of this signal.
-	 */
-	oldmask = target->pt_sigmask;
-	__sigplusset(&target->pt_sigmask, &pt_sigacts[sig].sa_mask);
-	__sigaddset14(&target->pt_sigmask, sig);
-	pthread_spinunlock(self, &target->pt_siglock);
 
 	/*
 	 * Holding the state lock blocks out cancellation and any other
@@ -483,13 +470,40 @@ pthread__signal(pthread_t t, int sig, int code)
 	case PT_STATE_BLOCKED_SYS:
 		/*
 		 * The target is not on a queue at all, and won't run
-		 * again for a while. Try to wake it from its torpor.
+		 * again for a while. Try to wake it from its torpor, then
+		 * mark the signal for later processing.
 		 */
+		__sigaddset14(&target->pt_sigblocked, sig);
+		__sigaddset14(&target->pt_sigmask, sig);
+		target->pt_flags |= PT_FLAG_SIGDEFERRED;
+		pthread_spinunlock(self, &target->pt_siglock);
+		pthread_spinunlock(self, &target->pt_statelock);
 		_lwp_wakeup(target->pt_blockedlwp);
-		break;
+		return;
 	default:
 		;
 	}
+
+	pthread__deliver_signal(self, target, sig, code);
+	pthread__sched(self, target);
+	pthread_spinunlock(self, &target->pt_statelock);
+}
+
+/* Must be called with target's siglock held */
+void
+pthread__deliver_signal(pthread_t self, pthread_t target, int sig, int code)
+{
+	sigset_t oldmask, *maskp;
+	ucontext_t *uc;
+
+	/*
+	 * Prevent anyone else from considering this thread for handling
+	 * more instances of this signal.
+	 */
+	oldmask = target->pt_sigmask;
+	__sigplusset(&target->pt_sigmask, &pt_sigacts[sig].sa_mask);
+	__sigaddset14(&target->pt_sigmask, sig);
+	pthread_spinunlock(self, &target->pt_siglock);
 
 	/*
 	 * We'd like to just pass oldmask to the
@@ -519,38 +533,36 @@ pthread__signal(pthread_t t, int sig, int code)
 
 	SDPRINTF(("(makecontext %p): target %p: sig: %d %d uc: %p oldmask: %08x\n",
 	    self, target, sig, code, target->pt_uc, maskp->__bits[0]));
-	makecontext(uc, pthread__signal_tramp, 8,
-	    sig, code, &pt_sigacts[sig], target->pt_uc, maskp,
-	    target->pt_state, target->pt_sleepq, target->pt_sleeplock);
+	makecontext(uc, pthread__signal_tramp, 5,
+	    sig, code, pt_sigacts[sig].sa_handler, target->pt_uc, maskp);
 	target->pt_uc = uc;
-
-	if (target->pt_state != PT_STATE_BLOCKED_SYS)
-		pthread__sched(self, target);
-	pthread_spinunlock(self, &target->pt_statelock);
 }
 
+void
+pthread__signal_deferred(pthread_t self, pthread_t t)
+{
+	int i;
+
+	pthread_spinlock(self, &t->pt_siglock);
+
+	while ((i = firstsig(&t->pt_sigblocked)) != 0) {
+		__sigdelset14(&t->pt_sigblocked, i);
+		pthread__deliver_signal(self, t, i, 0);
+	}
+	t->pt_flags &= ~PT_FLAG_SIGDEFERRED;
+
+	pthread_spinunlock(self, &t->pt_siglock);
+}
 
 static void 
-pthread__signal_tramp(int sig, int code, struct sigaction *act, 
-    ucontext_t *uc, sigset_t *oldmask, int oldstate,
-    struct pthread_queue_t *oldsleepq, pthread_spin_t *oldsleeplock)
+pthread__signal_tramp(int sig, int code,
+    void (*handler)(int, int, struct sigcontext *),
+    ucontext_t *uc, sigset_t *oldmask)
 {
-	void (*handler)(int, int, struct sigcontext *);
 	struct pthread__sigcontext psc;
-	pthread_t self, next;
 
-	self = pthread__self();
-
-	SDPRINTF(("(tramp %p) sig %d uc %p oldmask %08x oldstate %d q %p\n", 
-	    self, sig, uc, oldmask->__bits[0], oldstate, oldsleepq));
-
-	/*
-	 * We should only ever get here if a handler is set. Signal
-	 * actions are process-global; a signal set to SIG_DFL or
-	 * SIG_IGN should be handled in the kernel (by being ignored
-	 * or killing the process) and never get this far.
-	 */
-	handler = (void (*)(int, int, struct sigcontext *)) act->sa_handler;
+	SDPRINTF(("(tramp %p) sig %d uc %p oldmask %08x\n", 
+	    pthread__self(), sig, uc, oldmask->__bits[0]));
 
 	/*
 	 * XXX we don't support siginfo here yet.
@@ -567,43 +579,6 @@ pthread__signal_tramp(int sig, int code, struct sigaction *act,
 	 */
 	pthread_sigmask(SIG_SETMASK, &uc->uc_sigmask, NULL);
 
-	/*
-	 * Go back to whatever queue we were found on, unless SIGCATCH
-	 * is set.  When we are continued, the first thing we do will
-	 * be to jump back to the previous context.
-	 */
-	if (self->pt_flags & PT_FLAG_SIGCATCH)
-		_setcontext_u(uc);
-		
-	next = pthread__next(self);
-	next->pt_state = PT_STATE_RUNNING;
-	pthread_spinlock(self, &self->pt_statelock);
-	if (oldstate == PT_STATE_RUNNABLE) {
-		pthread_spinlock(self, &pthread__runqueue_lock);
-		self->pt_state = PT_STATE_RUNNABLE;
-		pthread_spinunlock(self, &self->pt_statelock);
-		PTQ_INSERT_TAIL(&pthread__runqueue, self, pt_runq);
-		pthread__locked_switch(self, next, &pthread__runqueue_lock);
-	} else if (oldstate == PT_STATE_BLOCKED_QUEUE) {
-		pthread_spinlock(self, oldsleeplock);
-		self->pt_state = PT_STATE_BLOCKED_QUEUE;
-		self->pt_sleepq = oldsleepq;
-		self->pt_sleeplock = oldsleeplock;
-		pthread_spinunlock(self, &self->pt_statelock);
-		PTQ_INSERT_TAIL(oldsleepq, self, pt_sleep);
-		pthread__locked_switch(self, next, oldsleeplock);
-	} else if (oldstate == PT_STATE_BLOCKED_SYS) {
-		/*
-		 * We weren't really doing anything before. Just go to
-		 * the next thread. 
-		 */
-		self->pt_state = PT_STATE_BLOCKED_SYS;
-		pthread_spinunlock(self, &self->pt_statelock);
-		pthread__switch(self, next);
-	} else {
-		/*CONSTCOND*/
-		assert(0);
-	}
 	/*
 	 * Jump back to what we were doing before we were interrupted
 	 * by a signal.

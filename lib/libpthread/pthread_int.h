@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.3 2003/01/18 18:45:54 christos Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.4 2003/01/25 00:43:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@ struct pt_alarm_t {
 
 struct	pthread_st {
 	unsigned int	pt_magic;
+	/* Identifier, for debugging and for preventing recycling. */
+	int		pt_num;
 
 	int	pt_type;	/* normal, upcall, or idle */
 	int	pt_state;	/* running, blocked, etc. */
@@ -100,6 +102,7 @@ struct	pthread_st {
 
 	sigset_t	pt_sigmask;	/* Signals we won't take. */
 	sigset_t	pt_siglist;	/* Signals pending for us. */
+	sigset_t	pt_sigblocked;	/* Signals delivered while blocked. */
 	pthread_spin_t	pt_siglock;	/* Lock on above */
 
 	void *		pt_exitval;	/* Read by pthread_join() */
@@ -140,9 +143,6 @@ struct	pthread_st {
 	 */
 	pthread_spin_t*	pt_heldlock;
 
-	/* Identifier, for debugging. */
-	int		pt_num;
-
 	/* Thread-specific data */
 	void*		pt_specific[PTHREAD_KEYS_MAX];
 
@@ -180,7 +180,7 @@ struct pthread_lock_ops {
 #define PT_FLAG_CS_DISABLED	0x0004	/* Cancellation disabled */
 #define PT_FLAG_CS_ASYNC	0x0008  /* Cancellation is async */
 #define PT_FLAG_CS_PENDING	0x0010
-#define PT_FLAG_SIGCATCH	0x0020	/* Interrupt sleep on a signal */
+#define PT_FLAG_SIGDEFERRED     0x0020	/* There are signals to take */
 
 #define PT_MAGIC	0x11110001
 #define PT_DEAD		0xDEAD0001
@@ -341,7 +341,9 @@ void	pthread__locked_switch(pthread_t self, pthread_t next,
 
 void	pthread__signal_init(void);
 
-void	pthread__signal(pthread_t t, int sig, int code);
+void	pthread__signal(pthread_t self, pthread_t t, int sig, int code);
+void	pthread__deliver_signal(pthread_t self, pthread_t t, int sig, int code);
+void	pthread__signal_deferred(pthread_t self, pthread_t t);
 
 void	pthread__destroy_tsd(pthread_t self);
 
