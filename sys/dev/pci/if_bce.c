@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.1 2003/09/27 13:13:28 mrg Exp $	 */
+/* $NetBSD: if_bce.c,v 1.2 2003/09/28 01:03:07 mrg Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -52,13 +52,6 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#endif
-
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
@@ -76,38 +69,73 @@
 
 #include <uvm/uvm_extern.h>
 
-static int      bce_probe(struct device *, struct cfdata *, void *);
-static void     bce_attach(struct device *, struct device *, void *);
-static int      bce_ioctl(struct ifnet *, u_long, caddr_t);
-static void bce_start __P((struct ifnet *));
-static void bce_watchdog __P((struct ifnet *));
-static int      bce_intr(void *);
-static void bce_rxintr __P((struct bce_softc *));
-static void bce_txintr __P((struct bce_softc *));
-static int bce_init __P((struct ifnet *));
-static void     bce_add_mac
-                __P((struct bce_softc *, unsigned char *, unsigned long));
-static int bce_add_rxbuf __P((struct bce_softc *, int));
-static void bce_rxdrain __P((struct bce_softc *));
-static void bce_stop __P((struct ifnet *, int));
-static void bce_reset __P((struct bce_softc *));
-static void bce_set_filter __P((struct ifnet *));
-static int bce_mii_read __P((struct device *, int, int));
-static void bce_mii_write __P((struct device *, int, int, int));
-static void bce_statchg __P((struct device *));
-static int bce_mediachange __P((struct ifnet *));
-static void bce_mediastatus __P((struct ifnet *, struct ifmediareq *));
-static void bce_tick __P((void *));
+/* transmit buffer max frags allowed */
+#define BCE_NTXFRAGS	16
 
-#define BCE_DEBUG
-#ifdef BCE_DEBUG
-#define DPRINTF(x)	if (bcedebug) printf x
-#define DPRINTFN(n,x)	if (bcedebug >= (n)) printf x
-int             bcedebug = 0;
-#else
-#define DPRINTF(x)
-#define DPRINTFN(n,x)
-#endif
+/* ring descriptor */
+struct bce_dma_slot {
+	u_int32_t ctrl;
+	u_int32_t addr;
+};
+#define CTRL_BC_MASK	0x1fff	/* buffer byte count */
+#define CTRL_EOT	0x10000000	/* end of descriptor table */
+#define CTRL_IOC	0x20000000	/* interrupt on completion */
+#define CTRL_EOF	0x40000000	/* end of frame */
+#define CTRL_SOF	0x80000000	/* start of frame */
+
+/* Packet status is returned in a pre-packet header */
+struct rx_pph {
+	u_int16_t len;
+	u_int16_t flags;
+	u_int16_t pad[12];
+};
+
+/* packet status flags bits */
+#define RXF_NO				0x8	/* odd number of nibbles */
+#define RXF_RXER			0x4	/* receive symbol error */
+#define RXF_CRC				0x2	/* crc error */
+#define RXF_OV				0x1	/* fifo overflow */
+
+/* number of descriptors used in a ring */
+#define BCE_NRXDESC		128
+#define BCE_NTXDESC		128
+
+/*
+ * Mbuf pointers. We need these to keep track of the virtual addresses
+ * of our mbuf chains since we can only convert from physical to virtual,
+ * not the other way around.
+ */
+struct bce_chain_data {
+	struct mbuf    *bce_tx_chain[BCE_NTXDESC];
+	struct mbuf    *bce_rx_chain[BCE_NRXDESC];
+	bus_dmamap_t    bce_tx_map[BCE_NTXDESC];
+	bus_dmamap_t    bce_rx_map[BCE_NRXDESC];
+};
+
+#define BCE_TIMEOUT		100	/* # 10us for mii read/write */
+
+struct bce_softc {
+	struct device		bce_dev;
+	bus_space_tag_t		bce_btag;
+	bus_space_handle_t	bce_bhandle;
+	bus_dma_tag_t		bce_dmatag;
+	struct ethercom		ethercom;	/* interface info */
+	void			*bce_intrhand;
+	struct pci_attach_args	bce_pa;
+	struct mii_data		bce_mii;
+	u_int32_t		bce_phy;	/* eeprom indicated phy */
+	struct ifmedia		bce_ifmedia;	/* media info *//* Check */
+	u_int8_t		enaddr[ETHER_ADDR_LEN];
+	struct bce_dma_slot	*bce_rx_ring;	/* receive ring */
+	struct bce_dma_slot	*bce_tx_ring;	/* transmit ring */
+	struct bce_chain_data	bce_cdata;	/* mbufs */
+	bus_dmamap_t		bce_ring_map;
+	u_int32_t		bce_rxin;	/* last rx descriptor seen */
+	u_int32_t		bce_txin;	/* last tx descriptor seen */
+	int			bce_txsfree;	/* no. tx slots available */
+	int			bce_txsnext;	/* next available tx slot */
+	struct callout		bce_timeout;
+};
 
 /* for ring descriptors */
 #define BCE_RXBUF_LEN	(MCLBYTES - 4)
@@ -115,7 +143,7 @@ int             bcedebug = 0;
 do {									\
 	struct bce_dma_slot *__bced = &sc->bce_rx_ring[x];		\
 									\
-	*mtod(sc->bce_cdata.bce_rx_chain[x], long *) = 0;		\
+	*mtod(sc->bce_cdata.bce_rx_chain[x], u_int32_t *) = 0;		\
 	__bced->addr =							\
 	    htole32(sc->bce_cdata.bce_rx_map[x]->dm_segs[0].ds_addr	\
 	    + 0x40000000);						\
@@ -127,7 +155,45 @@ do {									\
 	    sizeof(struct bce_dma_slot) * x,				\
 	    sizeof(struct bce_dma_slot),				\
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);			\
-} while(0)
+} while (/* CONSTCOND */ 0)
+
+static	int	bce_probe(struct device *, struct cfdata *, void *);
+static	void	bce_attach(struct device *, struct device *, void *);
+static	int	bce_ioctl(struct ifnet *, u_long, caddr_t);
+static	void	bce_start(struct ifnet *);
+static	void	bce_watchdog(struct ifnet *);
+static	int	bce_intr(void *);
+static	void	bce_rxintr(struct bce_softc *);
+static	void	bce_txintr(struct bce_softc *);
+static	int	bce_init(struct ifnet *);
+static	void	bce_add_mac(struct bce_softc *, u_int8_t *, unsigned long);
+static	int	bce_add_rxbuf(struct bce_softc *, int);
+static	void	bce_rxdrain(struct bce_softc *);
+static	void	bce_stop(struct ifnet *, int);
+static	void	bce_reset(struct bce_softc *);
+static	void	bce_set_filter(struct ifnet *);
+static	int	bce_mii_read(struct device *, int, int);
+static	void	bce_mii_write(struct device *, int, int, int);
+static	void	bce_statchg(struct device *);
+static	int	bce_mediachange(struct ifnet *);
+static	void	bce_mediastatus(struct ifnet *, struct ifmediareq *);
+static	void	bce_tick(void *);
+
+#define BCE_DEBUG
+#ifdef BCE_DEBUG
+#define DPRINTF(x)	do {		\
+	if (bcedebug)			\
+		printf x;		\
+} while (/* CONSTCOND */ 0)
+#define DPRINTFN(n,x)	do {		\
+	if (bcedebug >= (n))		\
+		printf x;		\
+} while (/* CONSTCOND */ 0)
+int             bcedebug = 0;
+#else
+#define DPRINTF(x)
+#define DPRINTFN(n,x)
+#endif
 
 #ifdef OLDNETBSD
 struct cfattach bce_ca = {
@@ -138,10 +204,11 @@ CFATTACH_DECL(bce, sizeof(struct bce_softc),
 	      bce_probe, bce_attach, NULL, NULL);
 #endif
 
+
 static const struct bce_product {
 	pci_vendor_id_t bp_vendor;
 	pci_product_id_t bp_product;
-	const char     *bp_name;
+	const	char *bp_name;
 } bce_products[] = {
 	{
 		PCI_VENDOR_BROADCOM,
@@ -244,9 +311,8 @@ bce_attach(parent, self, aux)
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
-		if (pci_mapreg_map(pa, BCE_PCI_BAR0,
-				memtype, 0, &sc->bce_btag, &sc->bce_bhandle,
-				   &memaddr, &memsize) == 0)
+		if (pci_mapreg_map(pa, BCE_PCI_BAR0, memtype, 0, &sc->bce_btag,
+		    &sc->bce_bhandle, &memaddr, &memsize) == 0)
 			break;
 	default:
 		printf("%s: unable to find mem space\n",
@@ -321,8 +387,12 @@ bce_attach(parent, self, aux)
 	 * The receive, and transmit rings can not share the same
 	 * 4k space, however both are allocated at once here.
 	 */
+	/*
+	 * XXX PAGE_SIZE is wasteful; we only need 1KB + 1KB, but
+	 * due to the limition above.
+	 */
 	if ((error = bus_dmamem_alloc(sc->bce_dmatag,
-				    2 * PAGE_SIZE, PAGE_SIZE, 2 * PAGE_SIZE,
+	    2 * PAGE_SIZE, PAGE_SIZE, 2 * PAGE_SIZE,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT))) {
 		printf("%s: unable to alloc space for ring descriptors, "
 		       "error = %d\n", sc->bce_dev.dv_xname, error);
@@ -330,25 +400,25 @@ bce_attach(parent, self, aux)
 	}
 	/* map ring space to kernel */
 	if ((error = bus_dmamem_map(sc->bce_dmatag, &seg, rseg,
-				    2 * PAGE_SIZE, &kva, BUS_DMA_NOWAIT))) {
+	    2 * PAGE_SIZE, &kva, BUS_DMA_NOWAIT))) {
 		printf("%s: unable to map DMA buffers, error = %d\n",
-		       sc->bce_dev.dv_xname, error);
+		    sc->bce_dev.dv_xname, error);
 		bus_dmamem_free(sc->bce_dmatag, &seg, rseg);
 		return;
 	}
 	/* create a dma map for the ring */
 	if ((error = bus_dmamap_create(sc->bce_dmatag,
-			 2 * PAGE_SIZE, 1, 2 * PAGE_SIZE, 0, BUS_DMA_NOWAIT,
+	    2 * PAGE_SIZE, 1, 2 * PAGE_SIZE, 0, BUS_DMA_NOWAIT,
 				       &sc->bce_ring_map))) {
 		printf("%s: unable to create ring DMA map, error = %d\n",
-		       sc->bce_dev.dv_xname, error);
+		    sc->bce_dev.dv_xname, error);
 		bus_dmamem_unmap(sc->bce_dmatag, kva, 2 * PAGE_SIZE);
 		bus_dmamem_free(sc->bce_dmatag, &seg, rseg);
 		return;
 	}
 	/* connect the ring space to the dma map */
 	if (bus_dmamap_load(sc->bce_dmatag, sc->bce_ring_map, kva,
-			    2 * PAGE_SIZE, NULL, BUS_DMA_NOWAIT)) {
+	    2 * PAGE_SIZE, NULL, BUS_DMA_NOWAIT)) {
 		bus_dmamap_destroy(sc->bce_dmatag, sc->bce_ring_map);
 		bus_dmamem_unmap(sc->bce_dmatag, kva, 2 * PAGE_SIZE);
 		bus_dmamem_free(sc->bce_dmatag, &seg, rseg);
@@ -361,9 +431,9 @@ bce_attach(parent, self, aux)
 	/* Create the transmit buffer DMA maps. */
 	for (i = 0; i < BCE_NTXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->bce_dmatag, MCLBYTES,
-					       BCE_NTXFRAGS, MCLBYTES, 0, 0, &sc->bce_cdata.bce_tx_map[i])) != 0) {
+		    BCE_NTXFRAGS, MCLBYTES, 0, 0, &sc->bce_cdata.bce_tx_map[i])) != 0) {
 			printf("%s: unable to create tx DMA map, error = %d\n",
-			       sc->bce_dev.dv_xname, error);
+			    sc->bce_dev.dv_xname, error);
 		}
 		sc->bce_cdata.bce_tx_chain[i] = NULL;
 	}
@@ -371,9 +441,9 @@ bce_attach(parent, self, aux)
 	/* Create the receive buffer DMA maps. */
 	for (i = 0; i < BCE_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->bce_dmatag, MCLBYTES, 1,
-		      MCLBYTES, 0, 0, &sc->bce_cdata.bce_rx_map[i])) != 0) {
+		    MCLBYTES, 0, 0, &sc->bce_cdata.bce_rx_map[i])) != 0) {
 			printf("%s: unable to create rx DMA map, error = %d\n",
-			       sc->bce_dev.dv_xname, error);
+			    sc->bce_dev.dv_xname, error);
 		}
 		sc->bce_cdata.bce_rx_chain[i] = NULL;
 	}
@@ -397,9 +467,9 @@ bce_attach(parent, self, aux)
 	sc->bce_mii.mii_writereg = bce_mii_write;
 	sc->bce_mii.mii_statchg = bce_statchg;
 	ifmedia_init(&sc->bce_mii.mii_media, 0, bce_mediachange,
-		     bce_mediastatus);
+	    bce_mediastatus);
 	mii_attach(&sc->bce_dev, &sc->bce_mii, 0xffffffff, MII_PHY_ANY,
-		   MII_OFFSET_ANY, 0);
+	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->bce_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->bce_mii.mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->bce_mii.mii_media, IFM_ETHER | IFM_NONE);
@@ -407,32 +477,32 @@ bce_attach(parent, self, aux)
 		ifmedia_set(&sc->bce_mii.mii_media, IFM_ETHER | IFM_AUTO);
 	/* get the phy */
 	sc->bce_phy =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 90) & 0x1f;
+		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 90) & 0x1f;	 /* MAGIC */
 	/*
 	 * Enable activity led.
 	 * XXX This should be in a phy driver, but not currently.
 	 */
-	bce_mii_write((struct device *) sc, 1, 26,
-		      bce_mii_read((struct device *) sc, 1, 26) & 0x7fff);
+	bce_mii_write((struct device *) sc, 1, 26,	 /* MAGIC */
+		      bce_mii_read((struct device *) sc, 1, 26) & 0x7fff);	 /* MAGIC */
 	/* enable traffic meter led mode */
-	bce_mii_write((struct device *) sc, 1, 26,
-		      bce_mii_read((struct device *) sc, 1, 27) | (1 << 6));
+	bce_mii_write((struct device *) sc, 1, 26,	 /* MAGIC */
+		      bce_mii_read((struct device *) sc, 1, 27) | (1 << 6));	 /* MAGIC */
 
 
 	/* Attach the interface */
 	if_attach(ifp);
 	sc->enaddr[0] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 79);
+		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 79);	 /* MAGIC */
 	sc->enaddr[1] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 78);
+		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 78);	 /* MAGIC */
 	sc->enaddr[2] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 81);
+		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 81);	 /* MAGIC */
 	sc->enaddr[3] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 80);
+		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 80);	 /* MAGIC */
 	sc->enaddr[4] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 83);
+		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 83);	 /* MAGIC */
 	sc->enaddr[5] =
-		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 82);
+		bus_space_read_1(sc->bce_btag, sc->bce_bhandle, 4096 + 82);	 /* MAGIC */
 	printf("%s: Ethernet address %s\n", sc->bce_dev.dv_xname,
 	       ether_sprintf(sc->enaddr));
 	ether_ifattach(ifp, sc->enaddr);
@@ -522,18 +592,18 @@ bce_start(ifp)
 		 * be tried again later.
 		 */
 		error = bus_dmamap_load_mbuf(sc->bce_dmatag, dmamap, m0,
-					     BUS_DMA_WRITE | BUS_DMA_NOWAIT);
+		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error == EFBIG) {
-			printf("%s: Tx packet consumes too many "
-			"DMA segments, dropping...\n", sc->bce_dev.dv_xname);
+			printf("%s: Tx packet consumes too many DMA segments, "
+			    "dropping...\n", sc->bce_dev.dv_xname);
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			m_freem(m0);
 			ifp->if_oerrors++;
 			continue;
 		} else if (error) {
 			/* short on resources, come back later */
-			printf("%s: unable to load Tx buffer, "
-			       "error = %d\n", sc->bce_dev.dv_xname, error);
+			printf("%s: unable to load Tx buffer, error = %d\n",
+			    sc->bce_dev.dv_xname, error);
 			break;
 		}
 		/* If not enough descriptors available, try again later */
@@ -557,7 +627,7 @@ bce_start(ifp)
 		/* Initialize the transmit descriptor(s). */
 		txstart = sc->bce_txsnext;
 		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
-			unsigned long   ctrl;
+			u_int32_t ctrl;
 
 			ctrl = dmamap->dm_segs[seg].ds_len & CTRL_BC_MASK;
 			if (seg == 0)
@@ -567,9 +637,9 @@ bce_start(ifp)
 			if (sc->bce_txsnext == BCE_NTXDESC - 1)
 				ctrl |= CTRL_EOT;
 			ctrl |= CTRL_IOC;
-			sc->bce_tx_ring[sc->bce_txsnext].ctrl = ctrl;
+			sc->bce_tx_ring[sc->bce_txsnext].ctrl = htole32(ctrl);
 			sc->bce_tx_ring[sc->bce_txsnext].addr =
-				dmamap->dm_segs[seg].ds_addr + 0x40000000;
+			    htole32(dmamap->dm_segs[seg].ds_addr + 0x40000000);	/* MAGIC */
 			if (sc->bce_txsnext + 1 > BCE_NTXDESC - 1)
 				sc->bce_txsnext = 0;
 			else
@@ -626,8 +696,8 @@ bce_intr(xsc)
 {
 	struct bce_softc *sc;
 	struct ifnet   *ifp;
-	unsigned long   intstatus;
-	unsigned long   intmask;
+	u_int32_t intstatus;
+	u_int32_t intmask;
 	int             wantinit;
 	int             handled = 0;
 
@@ -636,9 +706,10 @@ bce_intr(xsc)
 
 
 	for (wantinit = 0; wantinit == 0;) {
-		intstatus =
-			bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_INT_STS);
-		intmask = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_INT_MASK);
+		intstatus = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_INT_STS);
+		intmask = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_INT_MASK);
 
 		/* ignore if not ours, or unsolicited interrupts */
 		intstatus &= intmask;
@@ -649,22 +720,22 @@ bce_intr(xsc)
 
 		/* Ack interrupt */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_INT_STS,
-				  intstatus);
+		    intstatus);
 
 		/* Receive interrupts. */
-		if (intstatus & I_RI) {
+		if (intstatus & I_RI)
 			bce_rxintr(sc);
-		}
 		/* Transmit interrupts. */
-		if (intstatus & I_XI) {
+		if (intstatus & I_XI)
 			bce_txintr(sc);
-		}
 		/* Error interrupts */
 		if (intstatus & ~(I_RI | I_XI)) {
 			if (intstatus & I_XU)
-				printf("%s: transmit fifo underflow\n", sc->bce_dev.dv_xname);
+				printf("%s: transmit fifo underflow\n",
+				    sc->bce_dev.dv_xname);
 			if (intstatus & I_RO) {
-				printf("%s: receive fifo overflow\n", sc->bce_dev.dv_xname);
+				printf("%s: receive fifo overflow\n",
+				    sc->bce_dev.dv_xname);
 				ifp->if_ierrors++;
 			}
 			if (intstatus & I_RU)
@@ -674,11 +745,14 @@ bce_intr(xsc)
 				printf("%s: descriptor protocol error\n",
 				       sc->bce_dev.dv_xname);
 			if (intstatus & I_PD)
-				printf("%s: data error\n", sc->bce_dev.dv_xname);
+				printf("%s: data error\n",
+				    sc->bce_dev.dv_xname);
 			if (intstatus & I_PC)
-				printf("%s: descriptor error\n", sc->bce_dev.dv_xname);
+				printf("%s: descriptor error\n",
+				    sc->bce_dev.dv_xname);
 			if (intstatus & I_TO)
-				printf("%s: general purpose timeout\n", sc->bce_dev.dv_xname);
+				printf("%s: general purpose timeout\n",
+				    sc->bce_dev.dv_xname);
 			wantinit = 1;
 		}
 	}
@@ -706,17 +780,18 @@ bce_rxintr(sc)
 
 	/* get pointer to active receive slot */
 	curr = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXSTATUS)
-		& RS_CD_MASK;
+	    & RS_CD_MASK;
 	curr = curr / sizeof(struct bce_dma_slot);
 	if (curr >= BCE_NRXDESC)
 		curr = BCE_NRXDESC - 1;
 
 	/* process packets up to but not current packet being worked on */
-	for (i = sc->bce_rxin; i != curr; i + 1 > BCE_NRXDESC - 1 ? i = 0 : i++) {
-
+	for (i = sc->bce_rxin; i != curr;
+	    i + 1 > BCE_NRXDESC - 1 ? i = 0 : i++) {
 		/* complete any post dma memory ops on packet */
 		bus_dmamap_sync(sc->bce_dmatag, sc->bce_cdata.bce_rx_map[i], 0,
-				sc->bce_cdata.bce_rx_map[i]->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		    sc->bce_cdata.bce_rx_map[i]->dm_mapsize,
+		    BUS_DMASYNC_POSTREAD);
 
 		/*
 		 * If the packet had an error, simply recycle the buffer,
@@ -736,7 +811,7 @@ bce_rxintr(sc)
 		pph->len = 0;
 		pph->flags = 0;
 		/* bump past pre header to packet */
-		sc->bce_cdata.bce_rx_chain[i]->m_data += 30;
+		sc->bce_cdata.bce_rx_chain[i]->m_data += 30;	/* MAGIC */
 
 		/*
 		 * If the packet is small enough to fit in a
@@ -756,7 +831,7 @@ bce_rxintr(sc)
 			m->m_data += 2;
 			memcpy(mtod(m, caddr_t),
 			 mtod(sc->bce_cdata.bce_rx_chain[i], caddr_t), len);
-			sc->bce_cdata.bce_rx_chain[i]->m_data -= 30;
+			sc->bce_cdata.bce_rx_chain[i]->m_data -= 30;	/* MAGIC */
 		} else {
 			m = sc->bce_cdata.bce_rx_chain[i];
 			if (bce_add_rxbuf(sc, i) != 0) {
@@ -765,9 +840,9 @@ bce_rxintr(sc)
 				/* continue to use old buffer */
 				sc->bce_cdata.bce_rx_chain[i]->m_data -= 30;
 				bus_dmamap_sync(sc->bce_dmatag,
-					     sc->bce_cdata.bce_rx_map[i], 0,
+				    sc->bce_cdata.bce_rx_map[i], 0,
 				    sc->bce_cdata.bce_rx_map[i]->dm_mapsize,
-						BUS_DMASYNC_PREREAD);
+				    BUS_DMASYNC_PREREAD);
 				continue;
 			}
 		}
@@ -790,9 +865,9 @@ bce_rxintr(sc)
 		(*ifp->if_input) (ifp, m);
 
 		/* re-check current in case it changed */
-		curr =
-			(bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXSTATUS) &
-			 RS_CD_MASK) / sizeof(struct bce_dma_slot);
+		curr = (bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_DMA_RXSTATUS) & RS_CD_MASK) /
+		    sizeof(struct bce_dma_slot);
 		if (curr >= BCE_NRXDESC)
 			curr = BCE_NRXDESC - 1;
 	}
@@ -819,15 +894,15 @@ bce_txintr(sc)
 	curr = curr / sizeof(struct bce_dma_slot);
 	if (curr >= BCE_NTXDESC)
 		curr = BCE_NTXDESC - 1;
-	for (i = sc->bce_txin; i != curr; i + 1 > BCE_NTXDESC - 1 ? i = 0 : i++) {
-
+	for (i = sc->bce_txin; i != curr;
+	    i + 1 > BCE_NTXDESC - 1 ? i = 0 : i++) {
 		/* do any post dma memory ops on transmit data */
 		if (sc->bce_cdata.bce_tx_chain[i] == NULL)
 			continue;
 		bus_dmamap_sync(sc->bce_dmatag, sc->bce_cdata.bce_tx_map[i], 0,
-				sc->bce_cdata.bce_tx_map[i]->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->bce_dmatag,
-				  sc->bce_cdata.bce_tx_map[i]);
+		    sc->bce_cdata.bce_tx_map[i]->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->bce_dmatag, sc->bce_cdata.bce_tx_map[i]);
 		m_freem(sc->bce_cdata.bce_tx_chain[i]);
 		sc->bce_cdata.bce_tx_chain[i] = NULL;
 		ifp->if_opackets++;
@@ -848,7 +923,7 @@ bce_init(ifp)
 	struct ifnet   *ifp;
 {
 	struct bce_softc *sc = ifp->if_softc;
-	unsigned long   reg_win;
+	u_int32_t reg_win;
 	int             error;
 	int             i;
 
@@ -860,25 +935,26 @@ bce_init(ifp)
 	/* remap the pci registers to the Sonics config registers */
 
 	/* save the current map, so it can be restored */
-	reg_win =
-		pci_conf_read(sc->bce_pa.pa_pc, sc->bce_pa.pa_tag, BCE_REG_WIN);
+	reg_win = pci_conf_read(sc->bce_pa.pa_pc, sc->bce_pa.pa_tag,
+	    BCE_REG_WIN);
+
 	/* set register window to Sonics registers */
 	pci_conf_write(sc->bce_pa.pa_pc, sc->bce_pa.pa_tag, BCE_REG_WIN,
-		       BCE_SONICS_WIN);
+	    BCE_SONICS_WIN);
 
 	/* enable SB to PCI interrupt */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBINTVEC,
-	     bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBINTVEC) |
-			  SBIV_ENET0);
+	    bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBINTVEC) |
+	    SBIV_ENET0);
 
 	/* enable prefetch and bursts for sonics-to-pci translation 2 */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SPCI_TR2,
-	     bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SPCI_TR2) |
-			  SBTOPCI_PREF | SBTOPCI_BURST);
+	    bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SPCI_TR2) |
+	    SBTOPCI_PREF | SBTOPCI_BURST);
 
 	/* restore to ethernet register space */
 	pci_conf_write(sc->bce_pa.pa_pc, sc->bce_pa.pa_tag, BCE_REG_WIN,
-		       reg_win);
+	    reg_win);
 
 	/* Reset the chip to a known state. */
 	bce_reset(sc);
@@ -890,19 +966,20 @@ bce_init(ifp)
 
 	/* enable crc32 generation */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL,
-			  bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL) | BCE_EMC_CG);
+	    bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL) |
+	    BCE_EMC_CG);
 
 	/* setup DMA interrupt control */
-	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMAI_CTL, 1 << 24);
+	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMAI_CTL, 1 << 24);	/* MAGIC */
 
 	/* setup packet filter */
 	bce_set_filter(ifp);
 
 	/* set max frame length, account for possible vlan tag */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_MAX,
-			  ETHER_MAX_LEN + 32);
+	    ETHER_MAX_LEN + 32);
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_TX_MAX,
-			  ETHER_MAX_LEN + 32);
+	    ETHER_MAX_LEN + 32);
 
 	/* set tx watermark */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_TX_WATER, 56);
@@ -910,7 +987,7 @@ bce_init(ifp)
 	/* enable transmit */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_TXCTL, XC_XE);
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_TXADDR,
-			  htole32(sc->bce_ring_map->dm_segs[0].ds_addr + PAGE_SIZE + 0x40000000));
+	    sc->bce_ring_map->dm_segs[0].ds_addr + PAGE_SIZE + 0x40000000);	/* MAGIC */
 
 	/*
          * Give the receive ring to the chip, and
@@ -922,16 +999,17 @@ bce_init(ifp)
 	memset(sc->bce_rx_ring, 0, BCE_NRXDESC * sizeof(struct bce_dma_slot));
 	/* enable receive */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXCTL,
-			  30 << 1 | 1);
+	    30 << 1 | 1);
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXADDR,
-		htole32(sc->bce_ring_map->dm_segs[0].ds_addr + 0x40000000));
+	    sc->bce_ring_map->dm_segs[0].ds_addr + 0x40000000);		/* MAGIC */
 
 	/* Initalize receive descriptors */
 	for (i = 0; i < BCE_NRXDESC; i++) {
 		if (sc->bce_cdata.bce_rx_chain[i] == NULL) {
 			if ((error = bce_add_rxbuf(sc, i)) != 0) {
-				printf("%s: unable to allocate or map rx(%d) mbuf, error = %d\n"
-				       ,sc->bce_dev.dv_xname, i, error);
+				printf("%s: unable to allocate or map rx(%d) "
+				    "mbuf, error = %d\n", sc->bce_dev.dv_xname,
+				    i, error);
 				bce_rxdrain(sc);
 				return (error);
 			}
@@ -941,18 +1019,19 @@ bce_init(ifp)
 
 	/* Enable interrupts */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_INT_MASK,
-	      I_XI | I_RI | I_XU | I_RO | I_RU | I_DE | I_PD | I_PC | I_TO);
+	    I_XI | I_RI | I_XU | I_RO | I_RU | I_DE | I_PD | I_PC | I_TO);
 
 	/* start the receive dma */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXDPTR,
-			  BCE_NRXDESC * sizeof(struct bce_dma_slot));
+	    BCE_NRXDESC * sizeof(struct bce_dma_slot));
 
 	/* set media */
 	mii_mediachg(&sc->bce_mii);
 
 	/* turn on the ethernet mac */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL,
-			  bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL) | EC_EE);
+	    bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+	    BCE_ENET_CTL) | EC_EE);
 
 	/* start timer */
 	callout_reset(&sc->bce_timeout, hz, bce_tick, sc);
@@ -968,27 +1047,29 @@ bce_init(ifp)
 void
 bce_add_mac(sc, mac, idx)
 	struct bce_softc *sc;
-	unsigned char  *mac;
+	u_int8_t *mac;
 	unsigned long   idx;
 {
 	int             i;
-	unsigned long   rval;
+	u_int32_t rval;
 
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_LOW,
-			mac[2] << 24 | mac[3] << 16 | mac[4] << 8 | mac[5]);
+	    mac[2] << 24 | mac[3] << 16 | mac[4] << 8 | mac[5]);
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_HI,
-			  mac[0] << 8 | mac[1] | 0x10000);
+	    mac[0] << 8 | mac[1] | 0x10000);	/* MAGIC */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL,
-			  idx << 16 | 8);
+	    idx << 16 | 8);	/* MAGIC */
 	/* wait for write to complete */
 	for (i = 0; i < 100; i++) {
-		rval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL);
-		if (!(rval & 0x80000000))
+		rval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_FILT_CTL);
+		if (!(rval & 0x80000000))	/* MAGIC */
 			break;
 		delay(10);
 	}
 	if (i == 100) {
-		printf("%s: timed out writting pkt filter ctl\n", sc->bce_dev.dv_xname);
+		printf("%s: timed out writting pkt filter ctl\n",
+		   sc->bce_dev.dv_xname);
 	}
 }
 
@@ -1011,12 +1092,14 @@ bce_add_rxbuf(sc, idx)
 		return (ENOBUFS);
 	}
 	if (sc->bce_cdata.bce_rx_chain[idx] != NULL)
-		bus_dmamap_unload(sc->bce_dmatag, sc->bce_cdata.bce_rx_map[idx]);
+		bus_dmamap_unload(sc->bce_dmatag,
+		    sc->bce_cdata.bce_rx_map[idx]);
 
 	sc->bce_cdata.bce_rx_chain[idx] = m;
 
 	error = bus_dmamap_load(sc->bce_dmatag, sc->bce_cdata.bce_rx_map[idx],
-				m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_READ | BUS_DMA_NOWAIT);
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+	    BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error)
 		return (error);
 
@@ -1038,7 +1121,8 @@ bce_rxdrain(sc)
 
 	for (i = 0; i < BCE_NRXDESC; i++) {
 		if (sc->bce_cdata.bce_rx_chain[i] != NULL) {
-			bus_dmamap_unload(sc->bce_dmatag, sc->bce_cdata.bce_rx_map[i]);
+			bus_dmamap_unload(sc->bce_dmatag,
+			    sc->bce_cdata.bce_rx_map[i]);
 			m_freem(sc->bce_cdata.bce_rx_chain[i]);
 			sc->bce_cdata.bce_rx_chain[i] = NULL;
 		}
@@ -1053,7 +1137,7 @@ bce_stop(ifp, disable)
 {
 	struct bce_softc *sc = ifp->if_softc;
 	int             i;
-	unsigned long   val;
+	u_int32_t val;
 
 	/* Stop the 1 second timer */
 	callout_stop(&sc->bce_timeout);
@@ -1068,7 +1152,8 @@ bce_stop(ifp, disable)
 	/* Disable emac */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL, EC_ED);
 	for (i = 0; i < 200; i++) {
-		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL);
+		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_ENET_CTL);
 		if (!(val & EC_ED))
 			break;
 		delay(10);
@@ -1082,7 +1167,8 @@ bce_stop(ifp, disable)
 	/* Release any queued transmit buffers. */
 	for (i = 0; i < BCE_NTXDESC; i++) {
 		if (sc->bce_cdata.bce_tx_chain[i] != NULL) {
-			bus_dmamap_unload(sc->bce_dmatag, sc->bce_cdata.bce_tx_map[i]);
+			bus_dmamap_unload(sc->bce_dmatag,
+			    sc->bce_cdata.bce_tx_map[i]);
 			m_freem(sc->bce_cdata.bce_tx_chain[i]);
 			sc->bce_cdata.bce_tx_chain[i] = NULL;
 		}
@@ -1095,7 +1181,6 @@ bce_stop(ifp, disable)
 	/* Mark the interface down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
-
 }
 
 /* reset the chip */
@@ -1103,19 +1188,23 @@ static void
 bce_reset(sc)
 	struct bce_softc *sc;
 {
-	unsigned long   val;
-	unsigned long   sbval;
+	u_int32_t val;
+	u_int32_t sbval;
 	int             i;
 
 	/* if SB core is up */
-	sbval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW);
+	sbval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+	    BCE_SBTMSTATELOW);
 	if ((sbval & (SBTML_RESET | SBTML_REJ | SBTML_CLK)) == SBTML_CLK) {
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMAI_CTL, 0);
+		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMAI_CTL,
+		    0);
 
 		/* disable emac */
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL, EC_ED);
+		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL,
+		    EC_ED);
 		for (i = 0; i < 200; i++) {
-			val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL);
+			val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+			    BCE_ENET_CTL);
 			if (!(val & EC_ED))
 				break;
 			delay(10);
@@ -1128,24 +1217,27 @@ bce_reset(sc)
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_TXCTL, 0);
 		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXSTATUS);
 		/* if error on receive, wait to go idle */
-		if (val & 0xf0000) {
+		if (val & 0xf0000) {	/* MAGIC */
 			for (i = 0; i < 100; i++) {
-				val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
-						       BCE_DMA_RXSTATUS);
-				if (val & 0x2000)
+				val = bus_space_read_4(sc->bce_btag,
+				    sc->bce_bhandle, BCE_DMA_RXSTATUS);
+				if (val & 0x2000)	/* MAGIC */
 					break;
 				delay(10);
 			}
 			if (i == 100)
-				printf("%s: receive dma did not go idle after error\n",
-				       sc->bce_dev.dv_xname);
+				printf("%s: receive dma did not go idle after"
+				    " error\n", sc->bce_dev.dv_xname);
 		}
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXSTATUS, 0);
+		bus_space_write_4(sc->bce_btag, sc->bce_bhandle,
+		   BCE_DMA_RXSTATUS, 0);
 
 		/* reset ethernet mac */
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL, EC_ES);
+		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL,
+		    EC_ES);
 		for (i = 0; i < 200; i++) {
-			val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL);
+			val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+			    BCE_ENET_CTL);
 			if (!(val & EC_ES))
 				break;
 			delay(10);
@@ -1154,26 +1246,28 @@ bce_reset(sc)
 			printf("%s: timed out restting ethernet mac\n",
 			       sc->bce_dev.dv_xname);
 	} else {
-		unsigned long   reg_win;
+		u_int32_t reg_win;
 
 		/* remap the pci registers to the Sonics config registers */
 
 		/* save the current map, so it can be restored */
-		reg_win =
-			pci_conf_read(sc->bce_pa.pa_pc, sc->bce_pa.pa_tag, BCE_REG_WIN);
+		reg_win = pci_conf_read(sc->bce_pa.pa_pc, sc->bce_pa.pa_tag,
+		    BCE_REG_WIN);
 		/* set register window to Sonics registers */
-		pci_conf_write(sc->bce_pa.pa_pc, sc->bce_pa.pa_tag, BCE_REG_WIN,
-			       BCE_SONICS_WIN);
+		pci_conf_write(sc->bce_pa.pa_pc, sc->bce_pa.pa_tag,
+		    BCE_REG_WIN, BCE_SONICS_WIN);
 
 		/* enable SB to PCI interrupt */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBINTVEC,
-				  bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBINTVEC) |
-				  SBIV_ENET0);
+		    bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		        BCE_SBINTVEC) |
+		    SBIV_ENET0);
 
 		/* enable prefetch and bursts for sonics-to-pci translation 2 */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SPCI_TR2,
-				  bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SPCI_TR2) |
-				  SBTOPCI_PREF | SBTOPCI_BURST);
+		    bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+			BCE_SPCI_TR2) |
+		    SBTOPCI_PREF | SBTOPCI_BURST);
 
 		/* restore to ethernet register space */
 		pci_conf_write(sc->bce_pa.pa_pc, sc->bce_pa.pa_tag, BCE_REG_WIN,
@@ -1184,41 +1278,43 @@ bce_reset(sc)
 	if (!(sbval & SBTML_RESET)) {
 
 		/* set the reject bit */
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW,
-				  SBTML_REJ | SBTML_CLK);
+		bus_space_write_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_SBTMSTATELOW, SBTML_REJ | SBTML_CLK);
 		for (i = 0; i < 200; i++) {
 			val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
-					       BCE_SBTMSTATELOW);
+			    BCE_SBTMSTATELOW);
 			if (val & SBTML_REJ)
 				break;
 			delay(1);
 		}
-		if (val == 200)
+		if (i == 200)
 			printf("%s: while restting core, reject did not set\n",
-			       sc->bce_dev.dv_xname);
+			    sc->bce_dev.dv_xname);
 		/* wait until busy is clear */
 		for (i = 0; i < 200; i++) {
 			val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
-					       BCE_SBTMSTATEHI);
+			    BCE_SBTMSTATEHI);
 			if (!(val & 0x4))
 				break;
 			delay(1);
 		}
 		if (i == 200)
 			printf("%s: while restting core, busy did not clear\n",
-			       sc->bce_dev.dv_xname);
+			    sc->bce_dev.dv_xname);
 		/* set reset and reject while enabling the clocks */
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW,
-			   SBTML_FGC | SBTML_CLK | SBTML_REJ | SBTML_RESET);
-		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW);
+		bus_space_write_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_SBTMSTATELOW,
+		    SBTML_FGC | SBTML_CLK | SBTML_REJ | SBTML_RESET);
+		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_SBTMSTATELOW);
 		delay(10);
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW,
-				  SBTML_REJ | SBTML_RESET);
+		bus_space_write_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_SBTMSTATELOW, SBTML_REJ | SBTML_RESET);
 		delay(1);
 	}
 	/* enable clock */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW,
-			  SBTML_FGC | SBTML_CLK | SBTML_RESET);
+	    SBTML_FGC | SBTML_CLK | SBTML_RESET);
 	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW);
 	delay(1);
 
@@ -1226,26 +1322,26 @@ bce_reset(sc)
 	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATEHI);
 	if (val & 1)
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATEHI,
-				  0);
+		    0);
 	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBIMSTATE);
-	if (val & 0x60000)
+	if (val & 0x60000)	/* MAGIC */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBIMSTATE,
-				  val & ~0x60000);
+		    val & ~0x60000);	/* MAGIC */
 
 	/* clear reset and allow it to propagate throughout the core */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW,
-			  SBTML_FGC | SBTML_CLK);
+	    SBTML_FGC | SBTML_CLK);
 	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW);
 	delay(1);
 
 	/* leave clock enabled */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW,
-			  SBTML_CLK);
+	    SBTML_CLK);
 	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_SBTMSTATELOW);
 	delay(1);
 
 	/* initialize MDC preamble, frequency */
-	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_CTL, 0x8d);
+	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_CTL, 0x8d);	/* MAGIC */
 
 	/* enable phy, differs for internal, and external */
 	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_DEVCTL);
@@ -1254,7 +1350,7 @@ bce_reset(sc)
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL, EC_EP);
 	} else if (val & BCE_DC_ER) {	/* internal, clear reset bit if on */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DEVCTL,
-				  val & ~BCE_DC_ER);
+		    val & ~BCE_DC_ER);
 		delay(100);
 	}
 }
@@ -1269,27 +1365,29 @@ bce_set_filter(ifp)
 	if (ifp->if_flags & IFF_PROMISC) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL,
-				  bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL) | ERC_PE);
+		    bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL)
+		    | ERC_PE);
 	} else {
 		ifp->if_flags &= ~IFF_ALLMULTI;
 
 		/* turn off promiscuous */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL,
-		bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL) &
-				  ~ERC_PE);
+		    bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_RX_CTL) & ~ERC_PE);
 
 		/* enable/disable broadcast */
 		if (ifp->if_flags & IFF_BROADCAST)
-			bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL,
-					  bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL) &
-					  ~ERC_DB);
+			bus_space_write_4(sc->bce_btag, sc->bce_bhandle,
+			    BCE_RX_CTL, bus_space_read_4(sc->bce_btag,
+			    sc->bce_bhandle, BCE_RX_CTL) & ~ERC_DB);
 		else
-			bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL,
-					  bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL) |
-					  ERC_DB);
+			bus_space_write_4(sc->bce_btag, sc->bce_bhandle,
+			    BCE_RX_CTL, bus_space_read_4(sc->bce_btag,
+			    sc->bce_bhandle, BCE_RX_CTL) | ERC_DB);
 
 		/* disable the filter */
-		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL, 0);
+		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL,
+		    0);
 
 		/* add our own address */
 		bce_add_mac(sc, sc->enaddr, 0);
@@ -1297,12 +1395,13 @@ bce_set_filter(ifp)
 		/* for now accept all multicast */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL,
 		bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_CTL) |
-				  ERC_AM);
+		    ERC_AM);
 		ifp->if_flags |= IFF_ALLMULTI;
 
 		/* enable the filter */
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL,
-				  bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL) | 1);
+		    bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_FILT_CTL) | 1);
 	}
 }
 
@@ -1314,15 +1413,15 @@ bce_mii_read(self, phy, reg)
 {
 	struct bce_softc *sc = (struct bce_softc *) self;
 	int             i;
-	unsigned long   val;
+	u_int32_t val;
 
 	/* clear mii_int */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_STS, BCE_MIINTR);
 
 	/* Read the PHY register */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM,
-			  (MII_COMMAND_READ << 28) | (MII_COMMAND_START << 30) | (MII_COMMAND_ACK << 16)
-			  | BCE_MIPHY(phy) | BCE_MIREG(reg));
+	    (MII_COMMAND_READ << 28) | (MII_COMMAND_START << 30) |	/* MAGIC */
+	    (MII_COMMAND_ACK << 16) | BCE_MIPHY(phy) | BCE_MIREG(reg));	/* MAGIC */
 
 	for (i = 0; i < BCE_TIMEOUT; i++) {
 		val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_STS);
@@ -1332,8 +1431,8 @@ bce_mii_read(self, phy, reg)
 	}
 	val = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM);
 	if (i == BCE_TIMEOUT) {
-		printf("%s: PHY read timed out reading phy %d, reg %d, val = 0x%08lx\n"
-		       ,sc->bce_dev.dv_xname, phy, reg, val);
+		printf("%s: PHY read timed out reading phy %d, reg %d, val = "
+		    "0x%08x\n", sc->bce_dev.dv_xname, phy, reg, val);
 		return (0);
 	}
 	return (val & BCE_MICOMM_DATA);
@@ -1347,28 +1446,30 @@ bce_mii_write(self, phy, reg, val)
 {
 	struct bce_softc *sc = (struct bce_softc *) self;
 	int             i;
-	unsigned long   rval;
+	u_int32_t rval;
 
 	/* clear mii_int */
-	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_STS, BCE_MIINTR);
+	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_STS,
+	    BCE_MIINTR);
 
 	/* Write the PHY register */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM,
-			  (MII_COMMAND_WRITE << 28) | (MII_COMMAND_START << 30) | (MII_COMMAND_ACK << 16)
-			  | (val & BCE_MICOMM_DATA)
-			  | BCE_MIPHY(phy) | BCE_MIREG(reg));
+	    (MII_COMMAND_WRITE << 28) | (MII_COMMAND_START << 30) |	/* MAGIC */
+	    (MII_COMMAND_ACK << 16) | (val & BCE_MICOMM_DATA) |	/* MAGIC */
+	    BCE_MIPHY(phy) | BCE_MIREG(reg));
 
 	/* wait for write to complete */
 	for (i = 0; i < BCE_TIMEOUT; i++) {
-		rval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_STS);
+		rval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
+		    BCE_MI_STS);
 		if (rval & BCE_MIINTR)
 			break;
 		delay(10);
 	}
 	rval = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MI_COMM);
 	if (i == BCE_TIMEOUT) {
-		printf("%s: PHY timed out writting phy %d, reg %d, val = 0x%08x\n"
-		       ,sc->bce_dev.dv_xname, phy, reg, val);
+		printf("%s: PHY timed out writting phy %d, reg %d, val "
+		    "= 0x%08x\n", sc->bce_dev.dv_xname, phy, reg, val);
 	}
 }
 
@@ -1378,26 +1479,26 @@ bce_statchg(self)
 	struct device  *self;
 {
 	struct bce_softc *sc = (struct bce_softc *) self;
-	unsigned long   reg;
+	u_int32_t reg;
 
 	/* if needed, change register to match duplex mode */
 	reg = bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_TX_CTL);
 	if (sc->bce_mii.mii_media_active & IFM_FDX && !(reg & EXC_FD))
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_TX_CTL,
-				  reg | EXC_FD);
+		    reg | EXC_FD);
 	else if (!(sc->bce_mii.mii_media_active & IFM_FDX) && reg & EXC_FD)
 		bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_TX_CTL,
-				  reg & ~EXC_FD);
+		    reg & ~EXC_FD);
 
 	/*
          * Enable activity led.
          * XXX This should be in a phy driver, but not currently.
          */
-	bce_mii_write((struct device *) sc, 1, 26,
-		      bce_mii_read((struct device *) sc, 1, 26) & 0x7fff);
+	bce_mii_write((struct device *) sc, 1, 26,	/* MAGIC */
+	    bce_mii_read((struct device *) sc, 1, 26) & 0x7fff);	/* MAGIC */
 	/* enable traffic meter led mode */
-	bce_mii_write((struct device *) sc, 1, 26,
-		      bce_mii_read((struct device *) sc, 1, 27) | (1 << 6));
+	bce_mii_write((struct device *) sc, 1, 26,	/* MAGIC */
+	    bce_mii_read((struct device *) sc, 1, 27) | (1 << 6));	/* MAGIC */
 }
 
 /* Set hardware to newly-selected media */
