@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.47 2003/09/01 00:21:08 itojun Exp $	*/
+/*	$NetBSD: lpd.c,v 1.48 2003/10/16 03:03:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.47 2003/09/01 00:21:08 itojun Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.48 2003/10/16 03:03:04 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,6 +152,7 @@ main(int argc, char **argv)
 	int options = 0, check_options = 0;
 	struct servent *sp;
 	const char *port = "printer";
+	char **newblist;
 
 	euid = geteuid();	/* these shouldn't be different */
 	uid = getuid();
@@ -164,13 +165,12 @@ main(int argc, char **argv)
 		switch (i) {
 		case 'b':
 			if (blist_addrs >= blist_size) {
-				blist_size += sizeof(char *) * 4;
-				if (blist == NULL)
-					blist = malloc(blist_size);
-				else
-					blist = realloc(blist, blist_size);
-				if (blist == NULL)
+				newblist = realloc(blist,
+				    blist_size + sizeof(char *) * 4);
+				if (newblist == NULL)
 					err(1, "cant allocate bind addr list");
+				blist = newblist;
+				blist_size += sizeof(char *) * 4;
 			}
 			blist[blist_addrs++] = strdup(optarg);
 			break;
@@ -709,12 +709,12 @@ socksetup(int af, int options, const char *port, int *nfds)
 	struct sockaddr_un un;
 	struct addrinfo hints, *res, *r;
 	int error, s, blidx = 0, n;
-	struct pollfd *socks;
+	struct pollfd *socks, *newsocks;
 	const int on = 1;
 
 	*nfds = 0;
 
-	socks = malloc(1 * sizeof(int));
+	socks = malloc(1 * sizeof(socks[0]));
 	if (!socks) {
 		syslog(LOG_ERR, "couldn't allocate memory for sockets");
 		mcleanup(0);
@@ -763,11 +763,12 @@ socksetup(int af, int options, const char *port, int *nfds)
 		/* Count max number of sockets we may open */
 		for (r = res, n = 0; r; r = r->ai_next, n++)
 			;
-		socks = realloc(socks, (*nfds + n) * sizeof(int));
-		if (!socks) {
+		newsocks= realloc(socks, (*nfds + n) * sizeof(socks[0]));
+		if (!newsocks) {
 			syslog(LOG_ERR, "couldn't allocate memory for sockets");
 			mcleanup(0);
 		}
+		socks = newsocks;
 
 		for (r = res; r; r = r->ai_next) {
 			s = socket(r->ai_family, r->ai_socktype,
