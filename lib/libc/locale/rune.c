@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.14 2002/03/17 22:14:30 tshiozak Exp $	*/
+/*	$NetBSD: rune.c,v 1.15 2002/03/18 11:34:40 yamt Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.14 2002/03/17 22:14:30 tshiozak Exp $");
+__RCSID("$NetBSD: rune.c,v 1.15 2002/03/18 11:34:40 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -145,7 +145,7 @@ readentry(_RuneRange *rr, FILE *fp)
 		l = re[i].re_max - re[i].re_min + 1;
 		re[i].re_rune_types = malloc(l * sizeof(_RuneType));
 		if (!re[i].re_rune_types) {
-			error = ENOBUFS;
+			error = ENOMEM;
 			goto fail;
 		}
 		memset(re[i].re_rune_types, 0, l * sizeof(_RuneType));
@@ -285,7 +285,7 @@ _Read_RuneMagi(fp)
 		return NULL;
 	}
 
-	if (readentry(&rl->rl_runetype_ext, fp) < 0) {
+	if (readentry(&rl->rl_runetype_ext, fp) != 0) {
 		free(hostdata);
 		return NULL;
 	}
