@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.5 2000/06/13 13:36:47 ad Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.5.2.1 2001/10/25 17:54:45 he Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,19 +37,44 @@
  */
 
 #ifndef _IC_CACVAR_H_
-#define _IC_CACVAR_H_
+#define	_IC_CACVAR_H_
 
 #include "locators.h"
 
 #define	CAC_MAX_CCBS	20
 #define	CAC_MAX_XFER	(0xffff * 512)
-#define CAC_SG_SIZE	32
+#define	CAC_SG_SIZE	32
+
+#define	cac_inb(sc, port) \
+	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, port)
+#define	cac_inw(sc, port) \
+	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, port)
+#define	cac_inl(sc, port) \
+	bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, port)
+#define	cac_outb(sc, port, val) \
+	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, port, val)
+#define	cac_outw(sc, port, val) \
+	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, port, val)
+#define	cac_outl(sc, port, val) \
+	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, port, val)
+
+/*
+ * Stupid macros to deal with alignment/endianness issues.
+ */
+
+#define	CAC_GET1(x)							\
+	(((u_char *)&(x))[0])
+#define	CAC_GET2(x)							\
+	(((u_char *)&(x))[0] | (((u_char *)&(x))[1] << 8))
+#define	CAC_GET4(x)							\
+	((((u_char *)&(x))[0] | (((u_char *)&(x))[1] << 8)) |		\
+	(((u_char *)&(x))[0] << 16 | (((u_char *)&(x))[1] << 24)))
 
 struct cac_softc;
 struct cac_ccb;
 
 struct cac_context {
-	void		(*cc_handler) __P((struct cac_ccb *, int));
+	void		(*cc_handler)(struct device *, void *, int);
 	struct device	*cc_dv;
 	void 		*cc_context;
 };
@@ -69,15 +94,16 @@ struct cac_ccb {
 	struct cac_context ccb_context;
 };
 
-#define	CAC_CCB_DATA_IN		0x0001
-#define	CAC_CCB_DATA_OUT	0x0002
+#define	CAC_CCB_DATA_IN		0x0001	/* Map describes inbound xfer */
+#define	CAC_CCB_DATA_OUT	0x0002	/* Map describes outbound xfer */
+#define	CAC_CCB_ACTIVE		0x0004	/* Command submitted to controller */
 
 struct cac_linkage {
-	void	(*cl_submit) __P((struct cac_softc *, paddr_t));
-	paddr_t	(*cl_completed) __P((struct cac_softc *));
-	int	(*cl_intr_pending) __P((struct cac_softc *));
-	void	(*cl_intr_enable) __P((struct cac_softc *, int));
-	int	(*cl_fifo_full) __P((struct cac_softc *));
+	struct	cac_ccb *(*cl_completed)(struct cac_softc *);
+	int	(*cl_fifo_full)(struct cac_softc *);
+	void	(*cl_intr_enable)(struct cac_softc *, int);
+	int	(*cl_intr_pending)(struct cac_softc *);
+	void	(*cl_submit)(struct cac_softc *, struct cac_ccb *);
 };
 
 struct cac_softc {
@@ -86,9 +112,9 @@ struct cac_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
 	bus_dmamap_t		sc_dmamap;
+	int			sc_nunits;
 	void			*sc_ih;
-	struct cac_linkage	*sc_cl;
-	char			*sc_typestr;
+	const struct cac_linkage	*sc_cl;
 	caddr_t			sc_ccbs;
 	paddr_t			sc_ccbs_paddr;
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_free;	
@@ -99,19 +125,13 @@ struct cac_attach_args {
 	int		caca_unit;
 };
 
-#define CACACF_UNIT	0
+#define	cacacf_unit	cf_loc[CACCF_UNIT]
 
-#define	cacacf_unit	cf_loc[CACACF_UNIT]
+int	cac_cmd(struct cac_softc *, int, void *, int, int, int, int, 
+		struct cac_context *);
+int	cac_init(struct cac_softc *, const char *, int);
+int	cac_intr(void *);
 
-#define	CACACF_UNIT_UNKNOWN 	-1
-
-int	cac_cmd __P((struct cac_softc *, int, void *, int, int, int, int, 
-		struct cac_context *));
-void	cac_minphys __P((struct buf *));
-int	cac_intr __P((void *));
-int	cac_init __P((struct cac_softc *, const char *));
-void	cac_ccb_free __P((struct cac_softc *, struct cac_ccb *));
-int	cac_ccb_start __P((struct cac_softc *, struct cac_ccb *));
-struct	cac_ccb *cac_ccb_alloc __P((struct cac_softc *, int));
+extern struct	cac_linkage cac_l0;
 
 #endif	/* !_IC_CACVAR_H_ */
