@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3 2003/07/14 09:34:00 itojun Exp $	*/
+/*	$NetBSD: defs.h,v 1.4 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,8 +38,8 @@
 
 /* defs.h: definitions needed for the message system. */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <stdio.h>

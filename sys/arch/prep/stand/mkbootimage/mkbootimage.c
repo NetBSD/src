@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.7 2003/10/19 11:34:27 he Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.8 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (C) 1999, 2000 NONAKA Kimihiro (nonaka@netbsd.org)
@@ -43,8 +43,8 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #include "../../sys/sys/bootblock.h"
 #else
 #include <sys/bootblock.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.38 2003/08/07 16:42:49 agc Exp $	*/
+/*	$NetBSD: getcap.c,v 1.39 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,8 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.38 2003/08/07 16:42:49 agc Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.39 2003/10/27 00:12:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 

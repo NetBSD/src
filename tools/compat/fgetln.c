@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.4 2003/07/26 20:24:00 salo Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.5 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*
  * Copyright 1999 Luke Mewburn <lukem@NetBSD.org>.
@@ -27,7 +27,7 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
+#include "nbtool_config.h"
 
 #if !HAVE_FGETLN
 #include <stdlib.h>
