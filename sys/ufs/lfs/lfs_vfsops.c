@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.92 2003/02/19 12:01:17 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.93 2003/02/19 12:18:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.92 2003/02/19 12:01:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.93 2003/02/19 12:18:59 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1948,8 +1948,9 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 			bp = pool_get(&bufpool, PR_WAITOK);
 			UVMHIST_LOG(ubchist, "vp %p bp %p num now %d",
 			    vp, bp, vp->v_numoutput, 0);
-			memset(bp, 0, sizeof(*bp));
 			splx(s);
+			memset(bp, 0, sizeof(*bp));
+			simple_lock_init(&bp->b_interlock);
 			bp->b_data = (char *)kva +
 			    (vaddr_t)(offset - pg->offset);
 			bp->b_resid = bp->b_bcount = iobytes;
