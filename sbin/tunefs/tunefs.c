@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.11 1997/09/15 11:27:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $";
+__RCSID("$NetBSD: tunefs.c,v 1.11 1997/09/15 11:27:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,9 +76,10 @@ union {
 int fi;
 long dev_bsize = 1;
 
-void bwrite(daddr_t, char *, int);
-int bread(daddr_t, char *, int);
-void getsb(struct fs *, char *);
+void bwrite __P((daddr_t, char *, int));
+int bread __P((daddr_t, char *, int));
+void getsb __P((struct fs *, char *));
+int main __P((int, char *[]));
 void usage __P((void));
 
 int
@@ -243,7 +244,7 @@ usage()
 
 void
 getsb(fs, file)
-	register struct fs *fs;
+	struct fs *fs;
 	char *file;
 {
 
