@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.161 2000/08/03 20:41:24 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.162 2000/09/19 22:01:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -477,16 +477,20 @@ dounmount(mp, flags, p)
 	struct vnode *coveredvp;
 	int error;
 	int async;
+	int used_syncer;
 
 	simple_lock(&mountlist_slock);
 	vfs_unbusy(mp);
+	used_syncer = (mp->mnt_syncer != NULL);
+
 	/*
 	 * XXX Freeze syncer. This should really be done on a mountpoint
 	 * basis, but especially the softdep code possibly called from
 	 * the syncer doesn't exactly work on a per-mountpoint basis,
 	 * so the softdep code would become a maze of vfs_busy calls.
 	 */
-	lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+	if (used_syncer)
+		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
 
 	mp->mnt_flag |= MNT_UNMOUNT;
 	mp->mnt_unmounter = p;
@@ -511,7 +515,8 @@ dounmount(mp, flags, p)
 		mp->mnt_flag |= async;
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock);
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		if (used_syncer)
+			lockmgr(&syncer_lock, LK_RELEASE, NULL);
 		while (mp->mnt_wcnt > 0) {
 			wakeup((caddr_t)mp);
 			tsleep(&mp->mnt_wcnt, PVFS, "mntwcnt1", 0);
@@ -528,7 +533,8 @@ dounmount(mp, flags, p)
 		panic("unmount: dangling vnode");
 	mp->mnt_flag |= MNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
-	lockmgr(&syncer_lock, LK_RELEASE, NULL);
+	if (used_syncer)
+		lockmgr(&syncer_lock, LK_RELEASE, NULL);
 	while(mp->mnt_wcnt > 0) {
 		wakeup((caddr_t)mp);
 		tsleep(&mp->mnt_wcnt, PVFS, "mntwcnt2", 0);
@@ -2719,7 +2725,7 @@ sys_fsync(p, v, retval)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, p);
+	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0, p);
 	if (error == 0 && bioops.io_fsync != NULL &&
 	    vp->v_mount && (vp->v_mount->mnt_flag & MNT_SOFTDEP))
 		(*bioops.io_fsync)(vp);
@@ -2750,7 +2756,7 @@ sys_fdatasync(p, v, retval)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT|FSYNC_DATAONLY, p);
+	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT|FSYNC_DATAONLY, 0, 0, p);
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, p);
 	return (error);
