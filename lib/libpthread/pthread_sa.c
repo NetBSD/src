@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.18 2003/10/24 17:35:22 yamt Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.19 2003/10/29 18:53:34 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.18 2003/10/24 17:35:22 yamt Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.19 2003/10/29 18:53:34 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -107,7 +107,6 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	if (type == SA_UPCALL_BLOCKED) {
 		/* Don't handle this SA in the usual processing. */
 		t = pthread__sa_id(sas[1]);
-		pthread__assert(t->pt_type != PT_THREAD_UPCALL);
 		pthread__assert(self->pt_spinlocks == 0);
 		if ((t->pt_spinlocks > 0) || (t->pt_next)) {
 			SDPRINTF(("(up %p) unblocking %p "
