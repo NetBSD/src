@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.14 1994/10/27 04:15:15 cgd Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.15 1995/01/15 00:46:38 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -46,18 +46,6 @@ extern jmp_buf	*db_recover;
 int	db_active = 0;
 
 /*
- * Received keyboard interrupt sequence.
- */
-kdb_kbd_trap(regs)
-	db_regs_t *regs;
-{
-	if (db_active == 0 && (boothowto & RB_KDB)) {
-		printf("\n\nkernel: keyboard interrupt\n");
-		kdb_trap(-1, 0, regs);
-	}
-}
-
-/*
  *  kdb_trap - field a TRACE or BPT trap
  */
 kdb_trap(type, code, regs)
@@ -84,22 +72,15 @@ kdb_trap(type, code, regs)
 		}
 	}
 
-	/* Should switch to kdb`s own stack here. */
+	/* XXX Should switch to kdb`s own stack here. */
 
 	ddb_regs = *regs;
-
-	if ((regs->tf_cs & 0x3) == 0) {
+	if (ISPL(regs->tf_cs) == SEL_KPL) {
 		/*
 		 * Kernel mode - esp and ss not saved
 		 */
 		ddb_regs.tf_esp = (int)&regs->tf_esp;	/* kernel stack pointer */
-#if 0
-		ddb_regs.ss   = KERNEL_DS;
-#endif
-		asm(" movw %%ss,%%ax; movl %%eax,%0 " 
-		    : "=g" (ddb_regs.tf_ss) 
-		    :
-		    : "ax");
+		asm("movw %%ss,%W0" : "=r" (ddb_regs.tf_ss));
 	}
 
 	s = splhigh();
@@ -122,7 +103,7 @@ kdb_trap(type, code, regs)
 	regs->tf_eip    = ddb_regs.tf_eip;
 	regs->tf_cs     = ddb_regs.tf_cs;
 	regs->tf_eflags = ddb_regs.tf_eflags;
-	if (regs->tf_cs & 0x3) {
+	if (ISPL(regs->tf_cs) != SEL_KPL) {
 		/* ring transit - saved esp and ss valid */
 		regs->tf_esp    = ddb_regs.tf_esp;
 		regs->tf_ss     = ddb_regs.tf_ss;
@@ -140,12 +121,12 @@ extern int trap_types;
 kdbprinttrap(type, code)
 	int type, code;
 {
-	printf("kernel: ");
+	db_printf("kernel: ");
 	if (type >= trap_types || type < 0)
-		printf("type %d", type);
+		db_printf("type %d", type);
 	else
-		printf("%s", trap_type[type]);
-	printf(" trap, code=%x\n", code);
+		db_printf("%s", trap_type[type]);
+	db_printf(" trap, code=%x\n", code);
 }
 
 /*
@@ -216,5 +197,5 @@ db_write_bytes(addr, size, data)
 int
 Debugger()
 {
-	asm ("int $3");
+	asm("int $3");
 }
