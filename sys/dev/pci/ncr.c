@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.82 1999/08/04 20:51:31 tron Exp $	*/
+/*	$NetBSD: ncr.c,v 1.83 1999/08/19 00:43:45 matt Exp $	*/
 
 /**************************************************************************
 **
@@ -1518,7 +1518,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.82 1999/08/04 20:51:31 tron Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.83 1999/08/19 00:43:45 matt Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4136,6 +4136,7 @@ static void ncr_attach (pcici_t config_id, int unit)
 			    "error = %d\n", self->dv_xname, error);
 			return;
 		}
+		memset(np->script, 0, sizeof(struct script));
 #else
 		np->script  = (struct script *)
 			malloc (sizeof (struct script), M_DEVBUF, M_WAITOK);
@@ -4184,6 +4185,7 @@ static void ncr_attach (pcici_t config_id, int unit)
 		    "error = %d\n", self->dv_xname, error);
 		return;
 	}
+	memset(np->scripth, 0, sizeof(struct scripth));
 #endif /* __FreeBSD__ */
 
 #ifdef SCSI_NCR_PCI_CONFIG_FIXUP
