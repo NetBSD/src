@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.4 2001/11/28 12:00:53 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.5 2001/12/02 16:16:57 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.4 2001/11/28 12:00:53 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.5 2001/12/02 16:16:57 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.4 2001/11/28 12:00:53 manu Exp $");
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_exec.h>
+#include <compat/irix/irix_errno.h>
 
 static int ELFNAME2(irix,mipsopt_signature) __P((struct proc *, 
     struct exec_package *epp, Elf_Ehdr *eh));
@@ -73,7 +74,7 @@ const struct emul emul_irix = {
 	"/emul/irix",
 #ifndef __HAVE_MINIMAL_EMUL
 	0,
-	0,
+	native_to_irix_errno,
 	IRIX_SYS_syscall,
 	IRIX_SYS_MAXSYSCALL,
 #endif
