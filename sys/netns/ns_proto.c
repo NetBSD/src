@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_proto.c,v 1.8 1999/01/14 01:28:23 thorpej Exp $	*/
+/*	$NetBSD: ns_proto.c,v 1.9 1999/07/01 05:53:18 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -78,7 +78,7 @@ struct protosw nssw[] = {
   spp_usrreq,
   spp_init,	spp_fasttimo,	spp_slowtimo,	0,
 },
-{ SOCK_SEQPACKET,&nsdomain,	NSPROTO_SPP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ATOMIC,
+{ SOCK_SEQPACKET,&nsdomain,	NSPROTO_SPP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ATOMIC|PR_LISTEN,
   spp_input,	0,		spp_ctlinput,	spp_ctloutput,
   spp_usrreq_sp,
   0,		0,		0,		0,
