@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 1995/03/01 21:18:57 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.25 1995/03/08 15:53:50 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -543,9 +543,20 @@ romprop(rp, cp, node)
 	rp->ra_node = node;
 	rp->ra_name = cp;
 	rp->ra_nreg = len / sizeof(struct rom_reg);
-	bcopy(u.rr, rp->ra_reg, rp->ra_nreg * sizeof(struct rom_reg));
+	bcopy(u.rr, rp->ra_reg, len);
 
 	rp->ra_vaddr = (caddr_t)getpropint(node, "address", 0);
+	len = getprop(node, "address", (void *)rp->ra_vaddrs,
+		      sizeof(rp->ra_vaddrs));
+	if (len == -1)
+		len = 0;
+	if (len & 3) {
+		printf("%s \"address\" %s = %d (need multiple of 4)\n",
+		    cp, pl, len);
+		len = 0;
+	}
+	rp->ra_nvaddrs = len >> 2;
+
 	len = getprop(node, "intr", (void *)&rp->ra_intr, sizeof rp->ra_intr);
 	if (len == -1)
 		len = 0;
