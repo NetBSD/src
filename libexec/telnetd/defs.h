@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.8 2000/11/19 20:17:39 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.9 2001/06/18 11:23:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -268,7 +268,7 @@ typedef struct {
 			((options[opt]+MY_STATE_DO) & MY_WANT_STATE_DO)
 
 /*
- * Make everything symetrical
+ * Make everything symmetrical
  */
 
 #define	HIS_STATE_WILL			MY_STATE_DO
