@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.55 2003/02/01 06:23:52 thorpej Exp $	*/
+/*	$NetBSD: tty.h,v 1.56 2003/02/05 15:49:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -75,12 +75,12 @@ struct clist {
  */
 struct tty {
 	TAILQ_ENTRY(tty) tty_link;	/* Link in global tty list. */
+	struct	simplelock t_slock;	/* mutex for all access to this tty */
 	struct	clist t_rawq;		/* Device raw input queue. */
 	long	t_rawcc;		/* Raw input queue statistics. */
 	struct	clist t_canq;		/* Device canonical queue. */
 	long	t_cancc;		/* Canonical queue statistics. */
 	struct	clist t_outq;		/* Device output queue. */
-	struct	callout t_outq_ch;	/* for ttycheckoutq() */
 	struct	callout t_rstrt_ch;	/* for delayed output start */
 	long	t_outcc;		/* Output queue statistics. */
 	struct	linesw *t_linesw;	/* Interface to device drivers. */
@@ -107,6 +107,19 @@ struct tty {
 	short	t_lowat;		/* Low water mark. */
 	short	t_gen;			/* Generation number. */
 };
+
+#define __TTY_ENABLE_SLOCK
+#ifdef __TTY_ENABLE_SLOCK
+#define TTY_LOCK(tp) do {			\
+	simple_lock(&(tp)->t_slock);		\
+} while (/*CONSTCOND*/ 0);
+#define TTY_UNLOCK(tp) do {			\
+	simple_unlock(&(tp)->t_slock);		\
+} while (/*CONSTCOND*/ 0);
+#else /* __TTY_ENABLE_SLOCK */
+#define TTY_LOCK(tp)	/**/
+#define TTY_UNLOCK(tp)	/**/
+#endif /* __TTY_ENABLE_SLOCK */
 
 #define	t_cc		t_termios.c_cc
 #define	t_cflag		t_termios.c_cflag
