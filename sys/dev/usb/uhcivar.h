@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.26 2000/03/24 22:57:58 augustss Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.27 2000/03/25 18:02:33 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -74,7 +74,6 @@ typedef struct uhci_intr_info {
 	uhci_soft_td_t *stdstart;
 	uhci_soft_td_t *stdend;
 	LIST_ENTRY(uhci_intr_info) list;
-	usb_callout_t timeout_handle;
 #ifdef DIAGNOSTIC
 	int isdone;
 #endif
@@ -163,7 +162,8 @@ typedef struct uhci_softc {
 
 	/* Info for the root hub interrupt channel. */
 	int sc_ival;			/* time between root hug intrs */
-	usbd_xfer_handle sc_has_timo;	/* root hub interrupt transfer */
+	usbd_xfer_handle sc_intr_xfer;	/* root hub interrupt transfer */
+	usb_callout_t sc_poll_handle;
 
 	char sc_vendor[16];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
