@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.24 1999/03/25 22:33:03 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.25 1999/03/29 21:54:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -320,7 +320,8 @@ static int lfs_set_dirop(fs)
 		if ((fs)->lfs_dirvcount > LFS_MAXDIROP)	{		\
 			++(fs)->lfs_writer;				\
 			lfs_flush((fs),0);                              \
-			--(fs)->lfs_writer;				\
+			if(--(fs)->lfs_writer==0)                       \
+				wakeup(&(fs)->lfs_dirops);		\
 		}                                                       \
 	}								\
 }
