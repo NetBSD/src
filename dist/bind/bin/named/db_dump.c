@@ -1,4 +1,4 @@
-/*	$NetBSD: db_dump.c,v 1.6 2002/06/20 11:42:56 itojun Exp $	*/
+/*	$NetBSD: db_dump.c,v 1.7 2003/08/07 09:20:41 agc Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)db_dump.c	4.33 (Berkeley) 3/3/91";
@@ -17,11 +17,7 @@ static const char rcsid[] = "Id: db_dump.c,v 8.51 2001/06/18 14:42:49 marka Exp"
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 

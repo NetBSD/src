@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_main.c,v 1.15 2003/06/09 13:19:33 itojun Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.16 2003/08/07 09:20:45 agc Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
@@ -17,11 +17,7 @@ static const char rcsid[] = "Id: ns_main.c,v 8.162.6.2 2003/06/08 22:08:02 marka
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
