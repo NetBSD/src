@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.37 2003/10/02 07:13:57 itojun Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.38 2003/12/05 19:35:43 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.37 2003/10/02 07:13:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.38 2003/12/05 19:35:43 scw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -188,6 +188,9 @@ static LIST_HEAD(, ifvlan) ifv_list;
 
 struct if_clone vlan_cloner =
     IF_CLONE_INITIALIZER("vlan", vlan_clone_create, vlan_clone_destroy);
+
+/* Used to pad ethernet frames with < ETHER_MIN_LEN bytes */
+static char vlan_zero_pad_buff[ETHER_MIN_LEN];
 
 void
 vlanattach(int n)
@@ -779,6 +782,25 @@ vlan_start(struct ifnet *ifp)
 				evl->evl_proto = evl->evl_encap_proto;
 				evl->evl_encap_proto = htons(ETHERTYPE_VLAN);
 				evl->evl_tag = htons(ifv->ifv_tag);
+
+				/*
+				 * To cater for VLAN-aware layer 2 ethernet
+				 * switches which may need to strip the tag
+				 * before forwarding the packet, make sure
+				 * the packet+tag is at least 68 bytes long.
+				 * This is necessary because our parent will
+				 * only pad to 64 bytes (ETHER_MIN_LEN) and
+				 * some switches will not pad by themselves
+				 * after deleting a tag.
+				 */
+				if (m->m_pkthdr.len <
+				    (ETHER_MIN_LEN + ETHER_VLAN_ENCAP_LEN)) {
+					m_copyback(m, m->m_pkthdr.len,
+					    (ETHER_MIN_LEN +
+					     ETHER_VLAN_ENCAP_LEN) -
+					     m->m_pkthdr.len,
+					    vlan_zero_pad_buff);
+				}
 				break;
 			    }
 
