@@ -1,0 +1,30 @@
+# $NetBSD: HOW_TO_CONF,v 1.1.1.1 1999/09/16 12:23:18 takemura Exp $
+# Written by Shin Takemura. This document is public domain.
+
+If you get many errors like below:
+
+  ioconf.c:102: `NEC_MCR' undeclared here (not in a function)
+  ioconf.c:102: initializer element for `loc[12]' is not constant
+
+The file ioconf.incl.hpcmis in this directry is not correctly included into
+ioconf.c. You must run config as following steps:
+
+1) Make target directry by hand if it dose not exist.
+
+  ex:
+   # mkdir ../compile/GENERIC
+
+2) Copy ioconf.incl.hpcmips into target directory.
+
+  ex:
+   # cp ./ioconf.incl.hpcmips ../compile/GENERIC
+
+3) Run config command normaly.
+
+  ex:
+   # /usr/sbin/config GENERIC
+
+If you get same errors, check ioconf.c in target directory and ensure that
+ioconf.incl.hpcmips is embedded in the head of ioconf.c.
+
+See also the config utility source code, usr.sbin/config/mkioconf.c.
