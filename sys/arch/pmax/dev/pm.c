@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.14 1996/03/17 01:46:45 thorpej Exp $	*/
+/*	$NetBSD: pm.c,v 1.15 1996/09/08 19:28:05 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -215,6 +215,7 @@ pmattach(parent, self, aux)
 
 	/* no interrupts for PM */
 	/*BUS_INTR_ESTABLISH(ca, sccintr, self->dv_unit);*/
+	printf("\n");
 	return;
 }
 
@@ -241,7 +242,7 @@ pminit(fi, unit, silent)
 	} else {
     		fi->fi_cmap_bits = malloc(CMAP_BITS, M_DEVBUF, M_NOWAIT);
 		if (fi->fi_cmap_bits == NULL) {
-			printf("cfb%d: no memory for cmap 0x%x\n", unit);
+			printf("pm%d: no memory for cmap 0x%x\n", unit);
 			return (0);
 		}
 	}
