@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.213 2003/09/09 03:01:27 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.214 2003/09/09 03:57:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.213 2003/09/09 03:01:27 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.214 2003/09/09 03:57:57 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -619,12 +619,7 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "FUJITSU ", "M2266",         ""},     PQUIRK_CAP_SYNC},
 
 	{{T_DIRECT, T_REMOV,
-	 "iomega", "jaz 1GB", 		 ""},	  PQUIRK_NOMODESENSE},
-	{{T_DIRECT, T_REMOV,
-	 "IOMEGA", "ZIP 100",		 ""},	  PQUIRK_NOMODESENSE},
-	{{T_DIRECT, T_REMOV,
-	 "IOMEGA", "ZIP 100",		 "J.03"},
-				PQUIRK_NOMODESENSE|PQUIRK_NOLUNS},
+	 "IOMEGA", "ZIP 100",		 "J.03"}, PQUIRK_NOLUNS},
 	{{T_DIRECT, T_REMOV,
 	 "INSITE", "I325VM",             ""},     PQUIRK_NOLUNS},
 
