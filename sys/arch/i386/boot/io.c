@@ -25,10 +25,11 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: io.c,v 1.5 1993/08/28 01:19:01 brezak Exp $
+ *	$Id: io.c,v 1.6 1993/12/23 07:12:00 cgd Exp $
  */
 
-#include <i386/include/pio.h>
+#include <sys/types.h>
+#include <machine/pio.h>
 
 #define K_RDWR 		0x60		/* keyboard data & cmds (read/write) */
 #define K_STATUS 	0x64		/* keyboard status */
