@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.3 1996/10/18 19:37:48 jtc Exp $ */
+/*	$NetBSD: SYS.h,v 1.4 1997/05/02 18:15:32 kleink Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,28 +43,34 @@
 #define SYSTRAP(x)	chmk $ SYS_/**/x
 #endif
 
-#define	SYSCALL(x) \
-	err: jmp cerror; \
-	ENTRY(x, 0); \
-	SYSTRAP(x); \
+#define _SYSCALL_NOERROR(x,y)						\
+	ENTRY(x,0);							\
+	SYSTRAP(y)
+
+#define _SYSCALL(x,y)							\
+	err: jmp cerror;						\
+	_SYSCALL_NOERROR(x,y);						\
 	jcs err
 
-#define	RSYSCALL(x) \
-	SYSCALL(x); \
+#define SYSCALL_NOERROR(x)						\
+	_SYSCALL_NOERROR(x,x)
+
+#define SYSCALL(x)							\
+	_SYSCALL(x,x)
+
+#define PSEUDO_NOERROR(x,y)						\
+	_SYSCALL_NOERROR(x,y);						\
 	ret
 
-#define SYSCALL_NOERROR(x) \
-	ENTRY(x, 0); \
-	SYSTRAP(x)
+#define PSEUDO(x,y)							\
+	_SYSCALL(x,y);							\
+	ret
 
-#define RSYSCALL_NOERROR(x) \
-	SYSCALL_NOERROR(x); \
-	ret
-	
-#define	PSEUDO(x,y) \
-	ENTRY(x, 0); \
-	SYSTRAP(y); \
-	ret
+#define RSYSCALL_NOERROR(x)						\
+	PSEUDO_NOERROR(x,x)
+
+#define RSYSCALL(x)							\
+	PSEUDO(x,x)
 
 #define	ASMSTR		.asciz
 
