@@ -1,0 +1,2 @@
+# $NetBSD: rescue.x86_64,v 1.1 2003/03/08 20:50:58 fvdl Exp $
+./rescue/fdisk		base-rescue-root
