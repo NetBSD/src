@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.57 1998/12/19 02:46:12 thorpej Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.58 1999/03/23 10:45:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -219,6 +219,21 @@ in_pcbbind(v, nam, p)
 		    (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))))
 			return (EACCES);
 #endif
+		if (so->so_uid && !IN_MULTICAST(sin->sin_addr.s_addr)) {
+			t = in_pcblookup_port(table, sin->sin_addr, lport, 1);
+		/*
+		 * XXX:	investigate ramifications of loosening this
+		 *	restriction so that as long as both ports have
+		 *	SO_REUSEPORT allow the bind
+		 */
+			if (t &&
+			    (!in_nullhost(sin->sin_addr) ||
+			     !in_nullhost(t->inp_laddr) ||
+			     (t->inp_socket->so_options & SO_REUSEPORT) == 0)
+			    && (so->so_uid != t->inp_socket->so_uid)) {
+				return (EADDRINUSE);
+			}
+		}
 		t = in_pcblookup_port(table, sin->sin_addr, lport, wild);
 		if (t && (reuseport & t->inp_socket->so_options) == 0)
 			return (EADDRINUSE);

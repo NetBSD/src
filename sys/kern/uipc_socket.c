@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.43 1999/01/21 22:09:10 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.44 1999/03/23 10:45:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -100,6 +100,8 @@ socreate(dom, aso, type, proto)
 	so->so_proto = prp;
 	so->so_send = sosend;
 	so->so_receive = soreceive;
+	if (p != 0)
+		so->so_uid = p->p_ucred->cr_uid;
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
 	    (struct mbuf *)(long)proto, (struct mbuf *)0, p);
 	if (error) {
