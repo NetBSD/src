@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.26 1995/08/15 14:01:01 cgd Exp $	*/
+/*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.26 1995/08/15 14:01:01 cgd Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -687,6 +687,7 @@ printval(bp, v)
 {
 	static char ofmt[32] = "%";
 	char *fcp, *cp;
+	enum type type;
 
 	cp = ofmt + 1;
 	fcp = v->fmt;
@@ -703,6 +704,28 @@ printval(bp, v)
 #define	CHK_INF127(n)		(((n) > 127) && (v->flag & INF127) ? 127 : (n))
 
 	switch (v->type) {
+	case INT32:
+		if (sizeof(int32_t) == sizeof(int))
+			type = INT;
+		else if (sizeof(int32_t) == sizeof(long))
+			type = LONG;
+		else
+			errx(1, "unknown conversion for type %d", v->type);
+		break;
+	case UINT32:
+		if (sizeof(u_int32_t) == sizeof(u_int))
+			type = UINT;
+		else if (sizeof(u_int32_t) == sizeof(u_long))
+			type = ULONG;
+		else
+			errx(1, "unknown conversion for type %d", v->type);
+		break;
+	default:
+		type = v->type;
+		break;
+	}
+
+	switch (type) {
 	case CHAR:
 		(void)printf(ofmt, v->width, GET(char));
 		break;
