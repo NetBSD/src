@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2003/07/01 08:19:29 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2003/07/01 12:38:10 mrg Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/preproc/pic/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
@@ -15,5 +15,6 @@ YFLAGS=		-d
 CLEANFILES=	${MAN} pic.cpp pic_tab.h y.tab.c y.tab.h
 
 pic_tab.h: pic.cpp
+lex.cpp: pic_tab.h
 
 .include <bsd.prog.mk>
