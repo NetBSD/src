@@ -1,4 +1,4 @@
-.\"	$NetBSD: st.4,v 1.10 1998/07/30 03:52:42 mjacob Exp $
+.\"	$NetBSD: st.4,v 1.11 1998/07/31 01:26:11 mjacob Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -152,7 +152,7 @@ This is Control mode, which  allows the tape driver to be opened without a tape
 inserted to allow various ioctls (e.g. MTIOCGET or MTIOCTOP to set density
 or blocksize) and raw SCSI command on
 through. I/O can be done in this mode, if desired, with the same
-rewind/eject behaviour as mode 00. This isn't really an 'action taken
+rewind/eject behaviour as mode 01. This isn't really an 'action taken
 on close' type of distinction, but this seems to be the place to put
 this mode.
 .El
