@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.34 2001/11/21 19:14:24 wiz Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.35 2002/01/11 05:18:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.34 2001/11/21 19:14:24 wiz Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.35 2002/01/11 05:18:11 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -249,13 +249,11 @@ main(int argc, char **argv)
 		err(1, "lfs_cleanerd: filesystem %s isn't an LFS!", fs_name);
 	}
 
-	openlog("lfs_cleanerd", LOG_NDELAY | LOG_PID | (debug ? LOG_PERROR : 0),
-	    LOG_DAEMON);
-
 	/* should we become a daemon, chdir to / & close fd's */
 	if (debug == 0) {
 		if (daemon(0, 0) == -1)
 			err(1, "lfs_cleanerd: couldn't become a daemon!");
+		openlog("lfs_cleanerd", LOG_NDELAY | LOG_PID | 0, LOG_DAEMON);
 		lasttime=0;
 		loopcount=0;
 	    loop:
@@ -299,7 +297,9 @@ main(int argc, char **argv)
 			}
 			goto loop;
 		}
-	}
+	} else
+		openlog("lfs_cleanerd", LOG_NDELAY | LOG_PID | LOG_PERROR,
+		    LOG_DAEMON);
 
 	signal(SIGINT, sig_report);
 	signal(SIGUSR1, sig_report);
