@@ -107,6 +107,8 @@
 #define	SPR_UMMCR1		0x3ac	/* .6. User Monitor Mode Control Register 1 */
 #define	SPR_ZPR			0x3b0	/* 4.. Zone Protection Register */
 #define	SPR_MMCR2		0x3b0	/* .6. Monitor Mode Control Register 2 */
+#define	 SPR_MMCR2_THRESHMULT_32  0x80000000 /* Multiply MMCR0 threshold by 32 */
+#define	 SPR_MMCR2_THRESHMULT_2	  0x00000000 /* Multiply MMCR0 threshold by 2 */
 #define	SPR_PID			0x3b1	/* 4.. Process ID */
 #define	SPR_PMC5		0x3b1	/* .6. Performance Counter Register 5 */
 #define	SPR_PMC6		0x3b2	/* .6. Performance Counter Register 6 */
@@ -116,6 +118,24 @@
 #define	SPR_DVC1		0x3b6	/* 4.. Data Value Compare 1 */
 #define	SPR_DVC2		0x3b7	/* 4.. Data Value Compare 2 */
 #define	SPR_MMCR0		0x3b8	/* .6. Monitor Mode Control Register 0 */
+#define	  SPR_MMCR0_FC		  0x80000000 /* Freeze counters */
+#define	  SPR_MMCR0_FCS		  0x40000000 /* Freeze counters in supervisor mode */
+#define	  SPR_MMCR0_FCP		  0x20000000 /* Freeze counters in user mode */
+#define	  SPR_MMCR0_FCM1	  0x10000000 /* Freeze counters when mark=1 */
+#define	  SPR_MMCR0_FCM0	  0x08000000 /* Freeze counters when mark=0 */
+#define	  SPR_MMCR0_PMXE	  0x04000000 /* Enable PM interrupt */
+#define	  SPR_MMCR0_FCECE	  0x02000000 /* Freeze counters after event */
+#define	  SPR_MMCR0_TBSEL_15	  0x01800000 /* Count bit 15 of TBL */
+#define	  SPR_MMCR0_TBSEL_19	  0x01000000 /* Count bit 19 of TBL */
+#define	  SPR_MMCR0_TBSEL_23	  0x00800000 /* Count bit 23 of TBL */
+#define	  SPR_MMCR0_TBSEL_31	  0x00000000 /* Count bit 31 of TBL */
+#define	  SPR_MMCR0_TBEE	  0x00400000 /* Time-base event enable */
+#define	  SPR_MMCRO_THRESHOLD(x)  ((x) << 16) /* Threshold value */
+#define	  SPR_MMCR0_PMC1CE	  0x00008000 /* PMC1 condition enable */
+#define	  SPR_MMCR0_PMCNCE	  0x00004000 /* PMCn condition enable */
+#define	  SPR_MMCR0_TRIGGER	  0x00002000 /* Trigger */
+#define	  SPR_MMCR0_PMC1SEL(x)	  ((x) << 6) /* PMC1 selector */
+#define	  SPR_MMCR0_PMC2SEL(x)	  ((x) << 0) /* PMC2 selector */
 #define	SPR_SGR			0x3b9	/* 4.. Storage Guarded Register */
 #define	SPR_PMC1		0x3b9	/* .6. Performance Counter Register 1 */
 #define	SPR_DCWR		0x3ba	/* 4.. Data Cache Write-through Register */
@@ -123,6 +143,11 @@
 #define	SPR_SLER		0x3bb	/* 4.. Storage Little Endian Register */
 #define	SPR_SIA			0x3bb	/* .6. Sampled Instruction Address */
 #define	SPR_MMCR1		0x3bc	/* .6. Monitor Mode Control Register 2 */
+#define	  SPR_MMCR1_PMC3SEL(x)	  ((x) << 27) /* PMC 3 selector */
+#define	  SPR_MMCR1_PMC4SEL(x)	  ((x) << 22) /* PMC 4 selector */
+#define	  SPR_MMCR1_PMC5SEL(x)	  ((x) << 17) /* PMC 5 selector */
+#define	  SPR_MMCR1_PMC6SEL(x)	  ((x) << 11) /* PMC 6 selector */
+
 #define	SPR_SU0R		0x3bc	/* 4.. Storage User-defined 0 Register */
 #define	SPR_DBCR1		0x3bd	/* 4.. Debug Control Register 1 */
 #define	SPR_PMC3		0x3bd	/* .6. Performance Counter Register 3 */
@@ -283,5 +308,15 @@
 /* Time Base Register declarations */
 #define	TBR_TBL			0x10c	/* 468 Time Base Lower */
 #define	TBR_TBU			0x10d	/* 468 Time Base Upper */
+
+/* Performance counter declarations */
+#define	PMC_OVERFLOW	  	0x80000000 /* Counter has overflowed */
+
+/* The first five countable [non-]events are common to all the PMC's */
+#define	PMCN_NONE		 0 /* Count nothing */
+#define	PMCN_CYCLES		 1 /* Processor cycles */
+#define	PMCN_ICOMP		 2 /* Instructions completed */
+#define	PMCN_TBLTRANS		 3 /* TBL bit transitions */
+#define	PCMN_IDISPATCH		 4 /* Instructions dispatched */
 
 #endif /* !_POWERPC_SPR_H_ */
