@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.38 2003/04/07 13:31:17 fvdl Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.39 2003/04/10 04:40:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.38 2003/04/07 13:31:17 fvdl Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.39 2003/04/10 04:40:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -592,7 +592,7 @@ shownfsargs(nfsargsp)
 		error = -1;
 
 	if (error == 0)
-		printf("ddr=%s, port=%s, addrlen=%d, ",
+		printf("addr=%s, port=%s, addrlen=%d, ",
 		    host, serv, nfsargsp->addrlen);
 	printf("sotype=%d, proto=%d, fhsize=%d, "
 	    "flags=%s, wsize=%d, rsize=%d, readdirsize=%d, timeo=%d, "
