@@ -1,3 +1,10 @@
+/*	$NetBSD: recurse.c,v 1.2 2004/08/02 00:17:21 thorpej Exp $	*/
+
+/*
+ * Written by Jason R. Thorpe, August 1, 2004.
+ * Public domain.
+ */
+
 #define	_REENTRANT
 
 #include <assert.h>
