@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2000/08/12 22:58:51 wdk Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2000/08/29 10:34:13 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,8 @@ void cpu_initclocks __P((void));
 void inittodr __P((time_t));
 void resettodr __P((void));
 
+#define MINYEAR 1998 /* "today" */
+
 /*
  * Machine-dependent clock routines.
  *
@@ -106,7 +108,7 @@ inittodr(base)
 
 	int deltat, badbase = 0;
 
-	if (base < 5*SECYR) {
+	if (base < (MINYEAR-1970)*SECYR) {
 		printf("WARNING: preposterous time in file system\n");
 		/* read the system clock anyway */
 		base = 6*SECYR + 186*SECDAY + SECDAY/2;
@@ -161,7 +163,9 @@ resettodr()
 {
 	struct clock_ymdhms dt;
 
-	clock_secs_to_ymdhms(time.tv_sec, &dt);
-	(*platform.write_todr)(&dt);
+	if (time.tv_sec >= (MINYEAR-1970)*SECYR) {
+		clock_secs_to_ymdhms(time.tv_sec, &dt);
+		(*platform.write_todr)(&dt);
+	}
 }
 
