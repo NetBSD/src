@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.47 2002/01/28 03:45:25 sommerfeld Exp $	*/
+/*	$NetBSD: seagate.c,v 1.48 2002/01/28 03:47:14 sommerfeld Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.47 2002/01/28 03:45:25 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.48 2002/01/28 03:47:14 sommerfeld Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,7 @@ seaprobe(parent, match, aux)
 		break;
 	default:
 #ifdef DEBUG
-		printf("seaprobe: board type unknown at address 0x%x\n", maddr);
+		printf("seaprobe: board type unknown at address %p\n", maddr);
 #endif
 		return 0;
 	}
@@ -428,7 +428,7 @@ seaattach(parent, self, aux)
 		break;
 	default:
 #ifdef DEBUG
-		printf("%s: board type unknown at address 0x%x\n",
+		printf("%s: board type unknown at address %p\n",
 		    sea->sc_dev.dv_xname, sea->maddr);
 #endif
 		return;
