@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.13.2.2 1999/06/21 14:21:58 perry Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.13.2.3 2000/07/07 17:33:49 he Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ struct cfattach wdc_isa_ca = {
 
 static void	wdc_isa_dma_setup __P((struct wdc_isa_softc *));
 static int	wdc_isa_dma_init __P((void*, int, int, void *, size_t, int));
-static void 	wdc_isa_dma_start __P((void*, int, int, int));
+static void 	wdc_isa_dma_start __P((void*, int, int));
 static int	wdc_isa_dma_finish __P((void*, int, int, int));
 
 int
@@ -196,7 +196,7 @@ wdc_isa_dma_init(v, channel, drive, databuf, datalen, read)
 }
 
 static void
-wdc_isa_dma_start(v, channel, drive, read)
+wdc_isa_dma_start(v, channel, drive)
 	void *v;
 	int channel, drive;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidereg.h,v 1.4 1999/02/02 16:14:00 bouyer Exp $	*/
+/*	$NetBSD: pciidereg.h,v 1.4.2.1 2000/07/07 17:33:50 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -73,6 +73,8 @@
 #define	PCIIDE_COMPAT_CTL_BASE(chan)	((chan) == 0 ? 0x3f6 : 0x376)
 #define	PCIIDE_COMPAT_CTL_SIZE		1
 #define	PCIIDE_COMPAT_IRQ(chan)		((chan) == 0 ? 14 : 15)
+
+#define PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
 
 /*
  * definitions for IDE DMA 

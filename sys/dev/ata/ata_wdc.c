@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.19.2.2 2000/01/23 12:26:01 he Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.19.2.3 2000/07/07 17:33:46 he Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -19,17 +19,16 @@
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
 
@@ -196,12 +195,13 @@ _wdc_ata_bio_start(chp, xfer)
 		 * that we never get to this point if that's the case.
 		 */
 		/* at this point, we should only be in RECAL state */
-		if (drvp->state != RECAL) {
+		if (drvp->state != RESET) {
 			printf("%s:%d:%d: bad state %d in _wdc_ata_bio_start\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
 			    xfer->drive, drvp->state);
 			panic("_wdc_ata_bio_start: bad state");
 		}
+		drvp->state = RECAL;
 		xfer->c_intr = wdc_ata_ctrl_intr;
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | (xfer->drive << 4));
@@ -223,7 +223,6 @@ _wdc_ata_bio_start(chp, xfer)
 		if (drvp->n_xfers <= NXFER)
 			drvp->n_xfers++;
 		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
-		dma_flags |= (ata_bio->flags & ATA_POLL) ?  WDC_DMA_POLL : 0;
 	}
 	if (ata_bio->flags & ATA_SINGLE)
 		ata_delay = ATA_DELAY;
@@ -284,7 +283,6 @@ again:
 			ata_bio->nbytes = xfer->c_bcount;
 			cmd = (ata_bio->flags & ATA_READ) ?
 			    WDCC_READDMA : WDCC_WRITEDMA;
-			nblks = ata_bio->nblks;
 	    		/* Init the DMA channel. */
 			if ((*chp->wdc->dma_init)(chp->wdc->dma_arg,
 			    chp->channel, xfer->drive,
@@ -304,7 +302,8 @@ again:
 			    head, sect, nblks, 0);
 			/* start the DMA channel */
 			(*chp->wdc->dma_start)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive, dma_flags);
+			    chp->channel, xfer->drive);
+			chp->ch_flags |= WDCF_DMA_WAIT;
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
@@ -387,6 +386,10 @@ intr:	/* Wait for IRQ (either real or polled) */
 	} else {
 		/* Wait for at last 400ns for status bit to be valid */
 		delay(1);
+		if (chp->ch_flags & WDCF_DMA_WAIT) {
+			wdc_dmawait(chp, xfer, ATA_DELAY);
+			chp->ch_flags &= ~WDCF_DMA_WAIT;
+		}
 		wdc_ata_bio_intr(chp, xfer, 0);
 		if ((ata_bio->flags & ATA_ITSDONE) == 0)
 			goto again;
@@ -411,7 +414,6 @@ wdc_ata_bio_intr(chp, xfer, irq)
 	struct ata_bio *ata_bio = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	int drv_err;
-	int dma_flags = 0;
 
 	WDCDEBUG_PRINT(("wdc_ata_bio_intr %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
@@ -424,11 +426,6 @@ wdc_ata_bio_intr(chp, xfer, irq)
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    drvp->state);
 		panic("wdc_ata_bio_intr: bad state\n");
-	}
-
-	if (xfer->c_flags & C_DMA) {
-		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
-		dma_flags |= (ata_bio->flags & ATA_POLL) ?  WDC_DMA_POLL : 0;
 	}
 
 	/*
@@ -449,16 +446,16 @@ wdc_ata_bio_intr(chp, xfer, irq)
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
-		/* if we were using DMA, turn off DMA channel */
+		/* if we were using DMA, flag a DMA error */
 		if (xfer->c_flags & C_DMA) {
-			(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive, dma_flags);
 			ata_dmaerr(drvp);
 		}
 		ata_bio->error = TIMEOUT;
 		wdc_ata_bio_done(chp, xfer);
 		return 1;
 	}
+	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+		chp->wdc->irqack(chp);
 	
 	drv_err = wdc_ata_err(drvp, ata_bio);
 
@@ -480,8 +477,7 @@ wdc_ata_bio_intr(chp, xfer, irq)
 				drv_err = WDC_ATA_ERR;
 			}
 		}
-		if ((*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-		    chp->channel, xfer->drive, dma_flags) != 0) {
+		if (chp->wdc->dma_status != 0) {
 			if (drv_err != WDC_ATA_ERR) {
 				ata_bio->error = ERR_DMA;
 				drv_err = WDC_ATA_ERR;
@@ -575,7 +571,6 @@ wdc_ata_bio_done(chp, xfer)
 	struct wdc_xfer *xfer;
 {
 	struct ata_bio *ata_bio = xfer->cmd;
-	int need_done = xfer->c_flags & C_NEEDDONE;
 	int drive = xfer->drive;
 
 	WDCDEBUG_PRINT(("wdc_ata_bio_done %s:%d:%d: flags 0x%x\n",
@@ -592,7 +587,7 @@ wdc_ata_bio_done(chp, xfer)
 	wdc_free_xfer(chp, xfer);
 
 	ata_bio->flags |= ATA_ITSDONE;
-	if (need_done) {
+	if ((ata_bio->flags & ATA_POLL) == 0) {
 		WDCDEBUG_PRINT(("wdc_ata_done: wddone\n"), DEBUG_XFERS);
 		wddone(chp->ch_drive[drive].drv_softc);
 	}
@@ -628,6 +623,8 @@ again:
 		errstring = "recal";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
 	/* fall through */
@@ -648,6 +645,8 @@ again:
 		errstring = "piomode";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
 	/* fall through */
@@ -668,6 +667,8 @@ again:
 		errstring = "dmamode";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
 	/* fall through */
@@ -688,6 +689,8 @@ again:
 		errstring = "geometry";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
 		/* fall through */
@@ -705,6 +708,8 @@ again:
 		errstring = "setmulti";
 		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, delay))
 			goto timeout;
+		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+			chp->wdc->irqack(chp);
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
 		/* fall through */

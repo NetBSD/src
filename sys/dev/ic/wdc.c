@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.66.2.8 2000/02/01 23:30:28 he Exp $ */
+/*	$NetBSD: wdc.c,v 1.66.2.9 2000/07/07 17:33:48 he Exp $ */
 
 
 /*
@@ -126,6 +126,7 @@ int   wdprint __P((void *, const char *));
 #define DEBUG_STATUS 0x04
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
+#define DEBUG_DELAY  0x20
 #ifdef WDCDEBUG
 int wdcdebug_mask = 0;
 int wdc_nxfer = 0;
@@ -252,11 +253,10 @@ wdcprobe(chp)
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 	    	    chp->channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
 		/*
-		 * sc is supposted to be 0x1 for ATAPI but at last one drive
-		 * set it to 0x0 - or maybe it's the controller.
+		 * sc & sn are supposted to be 0x1 for ATAPI but in some cases
+		 * we get wrong values here, so ignore it.
 		 */
-		if ((sc == 0x00 || sc == 0x01) && sn == 0x01 &&
-		    cl == 0x14 && ch == 0xeb) {
+		if (cl == 0x14 && ch == 0xeb) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
 		} else {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATA;
@@ -283,13 +283,11 @@ wdcattach(chp)
 		return;
 	}
 
-	if (wdcprobe(chp) == 0) {
+	if (wdcprobe(chp) == 0)
 		/* If no drives, abort attach here. */
-		wdc_delref(chp);
-		return;
-	}
+		goto out;
 
-	/* init list only once */
+	/* initialise global data */
 	if (inited == 0) {
 		LIST_INIT(&xfer_free_list);
 		inited++;
@@ -313,19 +311,27 @@ wdcattach(chp)
 		if ((chp->ch_drive[i].drive_flags & DRIVE) == 0)
 			continue;
 
-		/* Issue a IDENTIFY command, to try to detect slave ghost */
-		ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
-		if (ata_get_params(&chp->ch_drive[i], AT_POLL, &params) ==
-		    CMD_OK) {
+		/*
+		 * Wait a bit, some devices are weird just after a reset.
+		 * Then issue a IDENTIFY command, to try to detect slave ghost
+		 */
+		delay(100);
+		error = ata_get_params(&chp->ch_drive[i], AT_POLL, &params);
+		if (error != CMD_OK) {
+			delay(1000000);
+			error = ata_get_params(&chp->ch_drive[i], AT_POLL,
+			    &params);
+		}
+		if (error == CMD_OK) {
 			/* If IDENTIFY succeded, this is not an OLD ctrl */
 			chp->ch_drive[0].drive_flags &= ~DRIVE_OLD;
 			chp->ch_drive[1].drive_flags &= ~DRIVE_OLD;
 		} else {
 			chp->ch_drive[i].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
-			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed\n",
+			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed (%d)\n",
 			    chp->wdc->sc_dev.dv_xname,
-			    chp->channel, i), DEBUG_PROBE);
+			    chp->channel, i, error), DEBUG_PROBE);
 			if ((chp->ch_drive[i].drive_flags & DRIVE_OLD) == 0)
 				continue;
 			/*
@@ -380,7 +386,7 @@ wdcattach(chp)
 	/* If no drives, abort here */
 	if ((chp->ch_drive[0].drive_flags & DRIVE) == 0 &&
 	    (chp->ch_drive[1].drive_flags & DRIVE) == 0)
-		return;
+		goto out;
 
 	/*
 	 * Attach an ATAPI bus, if needed.
@@ -401,8 +407,8 @@ wdcattach(chp)
 		aa_link.aa_openings = 1;
 		aa_link.aa_drv_data = 0;
 		aa_link.aa_bus_private = NULL;
-		(void)config_found(&chp->wdc->sc_dev, (void *)&aa_link,
-		    atapi_print);
+		(void)config_found(&chp->wdc->sc_dev,
+		    (void *)&aa_link, atapi_print);
 #endif
 	}
 
@@ -452,6 +458,8 @@ wdcattach(chp)
 			}
 		}
 	}
+
+out:
 	wdc_delref(chp);
 }
 
@@ -537,12 +545,22 @@ wdcintr(arg)
 
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
 		WDCDEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
-		return 0;
+		return (0);
 	}
 
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
-	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	xfer = chp->ch_queue->sc_xfer.tqh_first;
+	if (chp->ch_flags & WDCF_DMA_WAIT) {
+		chp->wdc->dma_status =
+		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, chp->channel,
+			xfer->drive, 0);
+		if (chp->wdc->dma_status & WDC_DMAST_NOIRQ) {
+			/* IRQ not for us, not detected by DMA engine */
+			return 0;
+		}
+		chp->ch_flags &= ~WDCF_DMA_WAIT;
+	}
+	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	ret = xfer->c_intr(chp, xfer, 1);
 	if (ret == 0) /* irq was not for us, still waiting for irq */
 		chp->ch_flags |= WDCF_IRQ_WAIT;
@@ -701,15 +719,20 @@ wdcwait(chp, mask, bits, timeout)
 		if ((status & WDCS_BSY) == 0 && (status & mask) == bits)
 			break;
 		if (++time > timeout) {
-			WDCDEBUG_PRINT(("wdcwait: timeout, status %x "
-			    "error %x\n", status,
+			WDCDEBUG_PRINT(("wdcwait: timeout (time=%d), "
+			    "status %x error %x (mask 0x%x bits 0x%x)\n",
+			    time, status,
 			    bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
-				wd_error)),
-			    DEBUG_STATUS);
+				wd_error), mask, bits),
+			    DEBUG_STATUS | DEBUG_PROBE | DEBUG_DELAY);
 			return -1;
 		}
 		delay(WDCDELAY);
 	}
+#ifdef WDCDEBUG
+	if (time > 0 && (wdcdebug_mask & DEBUG_DELAY))
+		printf("wdcwait: did busy-wait, time=%d\n", time);
+#endif
 	if (status & WDCS_ERR)
 		chp->ch_error = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 		    wd_error);
@@ -731,6 +754,30 @@ wdcwait(chp, mask, bits, timeout)
 	return 0;
 }
 
+/*
+ * Busy-wait for DMA to complete
+ */
+int
+wdc_dmawait(chp, xfer, timeout)
+	struct channel_softc *chp;
+	struct wdc_xfer *xfer;
+	int timeout;
+{
+	int time;
+	for (time = 0;  time < timeout * 1000 / WDCDELAY; time++) {
+		chp->wdc->dma_status =
+		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+			chp->channel, xfer->drive, 0);
+		if ((chp->wdc->dma_status & WDC_DMAST_NOIRQ) == 0)
+			return 0;
+		delay(WDCDELAY);
+	}
+	/* timeout, force a DMA halt */
+	chp->wdc->dma_status = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+	    chp->channel, xfer->drive, 1);
+	return 1;
+}
+
 void
 wdctimeout(arg)
 	void *arg;
@@ -744,10 +791,16 @@ wdctimeout(arg)
 	s = splbio();
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0) {
 		__wdcerror(chp, "lost interrupt");
-		printf("\ttype: %s\n", (xfer->c_flags & C_ATAPI) ?
-		    "atapi":"ata");
-		printf("\tc_bcount: %d\n", xfer->c_bcount);
-		printf("\tc_skip: %d\n", xfer->c_skip);
+		printf("\ttype: %s tc_bcount: %d tc_skip: %d\n",
+		    (xfer->c_flags & C_ATAPI) ?  "atapi" : "ata",
+		    xfer->c_bcount,
+		    xfer->c_skip);
+		if (chp->ch_flags & WDCF_DMA_WAIT) {
+			chp->wdc->dma_status =
+			    (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
+				chp->channel, xfer->drive, 1);
+			chp->ch_flags &= ~WDCF_DMA_WAIT;
+		}
 		/*
 		 * Call the interrupt routine. If we just missed and interrupt,
 		 * it will do what's needed. Else, it will take the needed
@@ -799,7 +852,7 @@ wdc_probe_caps(drvp)
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
 		} else {
-			printf("%s: 32-bits data port", drv_dev->dv_xname);
+			printf("%s: 32-bit data port", drv_dev->dv_xname);
 		}
 	}
 #if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
@@ -1099,7 +1152,7 @@ __wdccommand_start(chp, xfer)
 
 	bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 	    WDSD_IBM | (drive << 4));
-	if (wdcwait(chp, wdc_c->r_st_bmask, wdc_c->r_st_bmask,
+	if (wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ, wdc_c->r_st_bmask,
 	    wdc_c->timeout) != 0) {
 		wdc_c->flags |= AT_TIMEOU;
 		__wdccommand_done(chp, xfer);
@@ -1140,6 +1193,8 @@ __wdccommand_intr(chp, xfer, irq)
 		__wdccommand_done(chp, xfer);
 		return 1;
 	}
+	if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
+		chp->wdc->irqack(chp);
 	if (wdc_c->flags & AT_READ) {
 		if (chp->ch_drive[xfer->drive].drive_flags & DRIVE_CAP32) {
 			bus_space_read_multi_4(chp->data32iot, chp->data32ioh,
@@ -1170,7 +1225,6 @@ __wdccommand_done(chp, xfer)
 	struct channel_softc *chp;
 	struct wdc_xfer *xfer;
 {
-	int needdone = xfer->c_flags & C_NEEDDONE;
 	struct wdc_command *wdc_c = xfer->cmd;
 
 	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
@@ -1185,8 +1239,8 @@ __wdccommand_done(chp, xfer)
 		wdc_c->r_error = chp->ch_error;
 	}
 	wdc_c->flags |= AT_DONE;
-	if (wdc_c->flags & AT_READREG && (wdc_c->flags & (AT_ERROR | AT_DF))
-								== 0) {
+	if ((wdc_c->flags & AT_READREG) != 0 &&
+	    (wdc_c->flags & (AT_ERROR | AT_DF)) == 0) {
 		wdc_c->r_head = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 						 wd_sdh);
 		wdc_c->r_cyl = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
@@ -1203,12 +1257,10 @@ __wdccommand_done(chp, xfer)
 						    wd_precomp);
 	}
 	wdc_free_xfer(chp, xfer);
-	if (needdone) {
-		if (wdc_c->flags & AT_WAIT)
-			wakeup(wdc_c);
-		else
-			wdc_c->callback(wdc_c->callback_arg);
-	}
+	if (wdc_c->flags & AT_WAIT)
+		wakeup(wdc_c);
+	else if (wdc_c->callback)
+		wdc_c->callback(wdc_c->callback_arg);
 	wdcstart(chp);
 	return;
 }
@@ -1295,7 +1347,6 @@ wdc_exec_xfer(chp, xfer)
 	WDCDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp);
-	xfer->c_flags |= C_NEEDDONE; /* we can now call upper level done() */
 }
 
 struct wdc_xfer *
@@ -1331,6 +1382,7 @@ wdc_get_xfer(flags)
 	if ((xfer->c_flags & C_INUSE) != 0)
 		panic("wdc_get_xfer: xfer already in use\n");
 #endif
+	splx(s);
 	memset(xfer, 0, sizeof(struct wdc_xfer));
 	xfer->c_flags = C_INUSE;
 	return xfer;
@@ -1360,6 +1412,7 @@ __wdcerror(chp, msg)
 	char *msg;
 {
 	struct wdc_xfer *xfer = chp->ch_queue->sc_xfer.tqh_first;
+
 	if (xfer == NULL)
 		printf("%s:%d: %s\n", chp->wdc->sc_dev.dv_xname, chp->channel,
 		    msg);
