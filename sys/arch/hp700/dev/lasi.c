@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.6 2003/07/15 02:29:24 lukem Exp $	*/
+/*	$NetBSD: lasi.c,v 1.7 2003/11/18 04:04:42 chs Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.6 2003/07/15 02:29:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.7 2003/11/18 04:04:42 chs Exp $");
 
 #undef LASIDEBUG
 
@@ -82,7 +82,10 @@ struct lasi_softc {
 int	lasimatch __P((struct device *, struct cfdata *, void *));
 void	lasiattach __P((struct device *, struct device *, void *));
 
-CFATTACH_DECL(lasi, sizeof(struct lasi_softc),
+CFATTACH_DECL(lasi_mainbus, sizeof(struct lasi_softc),
+    lasimatch, lasiattach, NULL, NULL);
+
+CFATTACH_DECL(lasi_phantomas, sizeof(struct lasi_softc),
     lasimatch, lasiattach, NULL, NULL);
 
 /*
