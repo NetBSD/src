@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.29 1995/05/16 22:25:15 jtc Exp $
+#	$NetBSD: Makefile.sun3,v 1.30 1995/05/24 20:29:16 gwr Exp $
 
 #
 # Makefile for NetBSD
@@ -115,10 +115,7 @@ symbols.sort: ${SUN3}/sun3/symbols.raw
 	    | sed 's/^	//' | sort -u > symbols.sort
 
 locore.o: assym.s ${SUN3}/sun3/locore.s ${SUN3}/include/asm.h \
-	${S}/sys/syscall.h ${SUN3}/sun3/lib.s ${SUN3}/sun3/m68k.s \
-	${SUN3}/sun3/signal.s ${SUN3}/sun3/process.s \
-	${SUN3}/sun3/softint.s ${SUN3}/sun3/interrupt.s \
-	${SUN3}/sun3/trap.s
+	  ${SUN3}/include/trap.h $S/arch/m68k/include/trap.h
 	${CPP} -DLOCORE ${COPTS} ${SUN3}/sun3/locore.s > plocore.s
 	echo "" >>plocore.s
 	${AS} -o locore.o plocore.s

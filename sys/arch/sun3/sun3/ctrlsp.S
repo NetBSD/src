@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.s,v 1.16 1995/03/26 19:38:23 gwr Exp $	*/
+/*	$NetBSD: ctrlsp.S,v 1.1 1995/05/24 20:37:45 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
