@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.3 2000/11/01 23:57:15 eeh Exp $	*/
+/*	$NetBSD: sunms.c,v 1.4 2001/05/17 02:24:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@ struct cfattach ms_ca = {
 
 struct  linesw sunms_disc =
 	{ "sunms", 8, ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
-	  sunmsinput, ttstart, nullmodem };		/* 8- SUNMOUSEDISC */
+	  sunmsinput, ttstart, nullmodem, ttpoll };	/* 8- SUNMOUSEDISC */
 
 /*
  * ms_match: how is this zs channel configured?
