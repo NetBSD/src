@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.5 2000/06/29 08:04:03 mrg Exp $ */
+/*	$NetBSD: if_ie.c,v 1.6 2000/07/25 20:52:27 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -337,10 +337,6 @@ ie_pcctwo_attach(parent, self, args)
 
 	/* Attach the MI back-end */
 	i82586_attach(sc, "onboard", ethaddr, NULL, 0, 0);
-
-	/* Are we the boot device? */
-	if (PCCTWO_PADDR(pa->pa_offset) == bootaddr)
-		booted_device = self;
 
 	/* Finally, hook the hardware interrupt */
 	pcc2_reg_write(sys_pcctwo, PCC2REG_ETH_ICSR, 0);
