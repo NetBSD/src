@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 1998/07/24 16:48:47 tv Exp $
+#	$NetBSD: Makefile,v 1.59 1998/07/24 16:51:33 tv Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -77,17 +77,15 @@ build: beforeinstall
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
 .if defined(USE_EGCS)
-.if defined(DESTDIR)
-.if (${HAVE_GCC28} == "")
+.if defined(DESTDIR) && (${HAVE_GCC28} == "")
 	@echo '***** WARNING ***** Your system compiler is not GCC 2.8 or higher,'
 	@echo 'and you have built a distribution with GCC 2.8 and DESTDIR set.'
 	@echo 'You will need to rebuild libgcc from gnu/usr.bin/egcs/libgcc'
 	@echo 'in order to have full C++ support in the binary set.'
-.endif # HAVE_GCC28
 .else
 	(cd ${.CURDIR}/gnu/usr.bin/egcs/libgcc &&\
 	    ${MAKE} depend && ${MAKE} && ${MAKE} install)
-.endif # DESTDIR
+.endif # DESTDIR && !HAVE_GCC28
 .endif # USE_EGCS
 	@echo -n "Build finished at: "
 	@date
