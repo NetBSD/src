@@ -1,4 +1,4 @@
-/* $NetBSD: pcic_shb.c,v 1.3 2000/06/29 07:44:02 mrg Exp $ */
+/* $NetBSD: pcic_shb.c,v 1.4 2000/09/01 10:43:33 tsubai Exp $ */
 
 #define	PCICSHBDEBUG
 
@@ -117,8 +117,8 @@ pcic_shb_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
+	struct shb_attach_args *ia = aux;
 #if 0
-	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh, memh;
 	int val, found;
@@ -180,9 +180,9 @@ pcic_shb_probe(parent, match, aux)
 
 	if (!found)
 		return (0);
-
-	ia->ia_iosize = SHPCIC_IOSIZE;
 #endif
+	ia->ia_iosize = SHPCIC_IOSIZE;
+
 	return (1);
 }
 
