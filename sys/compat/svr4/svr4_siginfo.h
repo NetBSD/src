@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_siginfo.h,v 1.1 1995/03/31 03:06:23 christos Exp $	 */
+/*	$NetBSD: svr4_siginfo.h,v 1.2 1995/07/04 19:47:05 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -70,6 +70,8 @@
 #define	SVR4_CLD_TRAPPED	4
 #define	SVR4_CLD_STOPPED	5
 #define	SVR4_CLD_CONTINUED	6
+
+#define SVR4_EMT_TAGOVF		1
 
 typedef union svr4_siginfo {
 	char	si_pad[128];	/* Total size; for future expansion */
