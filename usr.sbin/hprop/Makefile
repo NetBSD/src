@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.1.2.2 2000/08/06 21:17:39 thorpej Exp $
+# $NetBSD: Makefile,v 1.1.2.3 2001/04/05 23:24:05 he Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/kdc
 
@@ -8,7 +11,8 @@ MKLINT= no
 PROG= hprop
 
 SRCS= 	hprop.c					\
-	hprop-common.c
+	mit_dump.c				\
+	v4_dump.c
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/kdc			\
@@ -25,6 +29,8 @@ CPPFLAGS+= -I.					\
 	-I${DIST}/openssl/crypto/des		\
 	-DHAVE_CONFIG_H
 
+VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
+
 LDADD=	-lhdb					\
 	-lkrb5					\
 	-lkdb					\
@@ -32,6 +38,7 @@ LDADD=	-lhdb					\
 	-lcrypto				\
 	-lasn1					\
 	-lcom_err				\
+	-L${VERS} -lvers			\
 	-lroken					\
 	-lcrypt
 
