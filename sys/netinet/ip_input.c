@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.103 2000/03/01 12:49:33 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.104 2000/03/02 06:07:36 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -949,11 +949,11 @@ ip_dooptions(m)
 	struct mbuf *m;
 {
 	register struct ip *ip = mtod(m, struct ip *);
-	register u_char *cp;
+	register u_char *cp, *cp0;
 	register struct ip_timestamp *ipt;
 	register struct in_ifaddr *ia;
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
-	struct in_addr *sin, dst;
+	struct in_addr dst;
 	n_time ntime;
 
 	dst = ip->ip_dst;
@@ -1082,7 +1082,7 @@ ip_dooptions(m)
 					goto bad;
 				break;
 			}
-			sin = (struct in_addr *)(cp + ipt->ipt_ptr - 1);
+			cp0 = (cp + ipt->ipt_ptr - 1);
 			switch (ipt->ipt_flg) {
 
 			case IPOPT_TS_TSONLY:
@@ -1097,8 +1097,8 @@ ip_dooptions(m)
 				    m->m_pkthdr.rcvif));
 				if (ia == 0)
 					continue;
-				bcopy((caddr_t)&ia->ia_addr.sin_addr,
-				    (caddr_t)sin, sizeof(struct in_addr));
+				bcopy(&ia->ia_addr.sin_addr,
+				    cp0, sizeof(struct in_addr));
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
 
@@ -1106,7 +1106,7 @@ ip_dooptions(m)
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len)
 					goto bad;
-				bcopy((caddr_t)sin, (caddr_t)&ipaddr.sin_addr,
+				bcopy(cp0, &ipaddr.sin_addr,
 				    sizeof(struct in_addr));
 				if (ifatoia(ifa_ifwithaddr(sintosa(&ipaddr)))
 				    == NULL)
@@ -1118,7 +1118,8 @@ ip_dooptions(m)
 				goto bad;
 			}
 			ntime = iptime();
-			bcopy((caddr_t)&ntime, (caddr_t)cp + ipt->ipt_ptr - 1,
+			cp0 = (u_char *) &ntime;	/* XXX GCC BUG */
+			bcopy(cp0, (caddr_t)cp + ipt->ipt_ptr - 1,
 			    sizeof(n_time));
 			ipt->ipt_ptr += sizeof(n_time);
 		}
