@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.58 2004/11/29 17:00:06 ginsbach Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.59 2005/03/30 16:12:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.58 2004/11/29 17:00:06 ginsbach Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.59 2005/03/30 16:12:58 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -389,7 +389,8 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 	pid_t pid;
 	int sp[2], ep[2];
 	char *p;
-	struct passwd *pw;
+	struct passwd *pw, pwres;
+	char pwbuf[1024];
 
 	_DIAGASSERT(ahost != NULL);
 	_DIAGASSERT(locuser != NULL);
@@ -402,7 +403,7 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 		rshcmd = _PATH_BIN_RCMD;
 
 	/* locuser must exist on this host. */
-	if ((pw = getpwnam(locuser)) == NULL) {
+	if (getpwnam_r(locuser, &pwres, pwbuf, sizeof(pwbuf), &pw) != 0) {
 		warnx("rshrcmd: unknown user: %s", locuser);
 		return(-1);
 	}
@@ -651,12 +652,13 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 {
 	struct sockaddr *sa;
 	struct stat sbuf;
-	struct passwd *pwd;
+	struct passwd *pwd, pwres;
 	FILE *hostf;
 	uid_t uid;
 	gid_t gid;
 	int isvaliduser;
 	char pbuf[MAXPATHLEN];
+	char pwbuf[1024];
 
 	_DIAGASSERT(raddr != NULL);
 	_DIAGASSERT(ruser != NULL);
@@ -681,7 +683,7 @@ iruserok_sa(raddr, rlen, superuser, ruser, luser)
 	isvaliduser = -1;
 	if (__check_rhosts_file || superuser) {
 
-		if ((pwd = getpwnam(luser)) == NULL)
+		if (getpwnam_r(luser, &pwres, pwbuf, sizeof(pwbuf), &pwd) != 0)
 			return (-1);
 		(void)strlcpy(pbuf, pwd->pw_dir, sizeof(pbuf));
 		(void)strlcat(pbuf, "/.rhosts", sizeof(pbuf));
