@@ -5,6 +5,7 @@
 ./usr/include/sparc/asm.h
 ./usr/include/sparc/autoconf.h
 ./usr/include/sparc/bsd_openprom.h
+./usr/include/sparc/bswap.h
 ./usr/include/sparc/bus.h
 ./usr/include/sparc/cdefs.h
 ./usr/include/sparc/cgtworeg.h

@@ -3,6 +3,7 @@
 ./usr/include/amiga/ansi.h
 ./usr/include/amiga/aout_machdep.h
 ./usr/include/amiga/asm.h
+./usr/include/amiga/bswap.h
 ./usr/include/amiga/bus.h
 ./usr/include/amiga/cdefs.h
 ./usr/include/amiga/conf.h

@@ -5,6 +5,7 @@
 ./usr/include/mac68k/aout_machdep.h
 ./usr/include/mac68k/asm.h
 ./usr/include/mac68k/autoconf.h
+./usr/include/mac68k/bswap.h
 ./usr/include/mac68k/bus.h
 ./usr/include/mac68k/cdefs.h
 ./usr/include/mac68k/cpu.h

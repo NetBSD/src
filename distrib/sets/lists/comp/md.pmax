@@ -4,6 +4,7 @@
 ./usr/include/pmax/aout_machdep.h
 ./usr/include/pmax/autoconf.h
 ./usr/include/pmax/bsd-aout.h
+./usr/include/pmax/bswap.h
 ./usr/include/pmax/bus.h
 ./usr/include/pmax/cdefs.h
 ./usr/include/pmax/clock_machdep.h
