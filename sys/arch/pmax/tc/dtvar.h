@@ -1,4 +1,4 @@
-/*	$NetBSD: dtvar.h,v 1.2 2003/12/13 23:04:38 ad Exp $	*/
+/*	$NetBSD: dtvar.h,v 1.3 2003/12/23 09:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -40,18 +40,12 @@
 #define _DTVAR_H_
 
 #define	DT_DEVICE_NO(a)		(((a) - DT_ADDR_FIRST) >> 1)
+#define	DT_GET_SHORT(b0, b1)	(((b0) << 8) | (b1))
 
 struct dt_msg {
 	uint8_t	dst;
 	uint8_t	src;
-	union {
-		struct {
-			uint8_t	len : 5, /* message byte len */
-				sub : 2, /* sub-address */
-				P : 1;	 /* Ctl(1)/Data(0) marker */
-		} val;
-		uint8_t	bits;	/* quick check */
-	} code;
+	uint8_t	ctl;
 
 	/* varzise, checksum byte at end */
 	uint8_t	body[DT_MAX_MSG_SIZE-3];
@@ -62,10 +56,15 @@ struct dt_msg {
 	} chain;
 };
 
+#define	DT_CTL(l, s, p)	\
+    ((l & 0x1f) | ((s & 0x03) << 5) | ((p & 0x01) << 7))
+#define	DT_CTL_P(c)		((c >> 7) & 0x01)
+#define	DT_CTL_SUBADDR(c)	((c >> 5) & 0x03)
+#define	DT_CTL_LEN(c)		(c & 0x1f)
+
 struct dt_device {
 	struct	device *dtdv_dv;
-	void	*dtdv_sih;
-	SIMPLEQ_HEAD(, dt_msg) dtdv_queue;
+	void	(*dtdv_handler)(void *, struct dt_msg *);
 };
 
 struct dt_state {
@@ -81,8 +80,9 @@ struct dt_state {
 struct dt_softc {
 	struct device	sc_dv;
 	struct dt_msg	sc_msg;
+	void		*sc_sih;
 	SLIST_HEAD(, dt_msg) sc_free;
-	struct dt_device sc_dtdv[(DT_ADDR_DEFAULT - DT_ADDR_FIRST) >> 1];
+	SIMPLEQ_HEAD(, dt_msg) sc_queue;
 };
 
 struct dt_attach_args {
@@ -96,37 +96,14 @@ struct dt_attach_args {
 void	dt_cninit(void);
 int	dt_identify(int, struct dt_ident *);
 int	dt_msg_get(struct dt_msg *, int);
-int	dt_establish_handler(struct dt_softc *, int, struct device *,
-			     void (*)(void *));
-
-static __inline__ struct	dt_msg *dt_msg_dequeue(struct dt_device *);
-static __inline__ void	dt_msg_release(struct dt_softc *, struct dt_msg *);
+void	dt_msg_dump(struct dt_msg *);
+int	dt_establish_handler(struct dt_softc *, struct dt_device *,
+    struct device *, void (*)(void *, struct dt_msg *));
 
 extern int	dt_kbd_addr;
+extern struct	dt_device dt_kbd_dv;
+extern int	dt_ms_addr;
+extern struct	dt_device dt_ms_dv;
 extern struct	dt_state dt_state;
-
-static __inline__ struct dt_msg *
-dt_msg_dequeue(struct dt_device *dtdv)
-{
-	struct dt_msg *msg;
-	int s;
-
-	s = spltty();
-	msg = SIMPLEQ_FIRST(&dtdv->dtdv_queue);
-	if (msg != NULL)
-		SIMPLEQ_REMOVE_HEAD(&dtdv->dtdv_queue, chain.simpleq);
-	splx(s);
-	return (msg);
-}
-
-static __inline__ void
-dt_msg_release(struct dt_softc *sc, struct dt_msg *msg)
-{
-	int s;
-
-	s = spltty();
-	SLIST_INSERT_HEAD(&sc->sc_free, msg, chain.slist);
-	splx(s);
-}
 
 #endif	/* !_DTVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtkbd.c,v 1.2 2003/12/13 23:04:38 ad Exp $	*/
+/*	$NetBSD: dtkbd.c,v 1.3 2003/12/23 09:39:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.2 2003/12/13 23:04:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.3 2003/12/23 09:39:46 ad Exp $");
 
 #include "locators.h"
 
@@ -74,7 +74,7 @@ int	dtkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	dtkbd_cngetc(void *, u_int *, int *);
 void	dtkbd_cnpollc(void *, int);
 int	dtkbd_process_msg(struct dt_msg *, u_int *, int *);
-void	dtkbd_handler(void *);
+void	dtkbd_handler(void *, struct dt_msg *);
 void	dtkbd_set_leds(void *, int);
 
 const struct wskbd_accessops dtkbd_accessops = {
@@ -108,30 +108,9 @@ int
 dtkbd_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct dt_attach_args *dta;
-	struct dt_ident ident;
 
 	dta = aux;
-
-	/*
-	 * Allow hard-wiring of addresses.
-	 */
-	if (cf->cf_loc[DTCF_ADDR] == dta->dta_addr)
-		return (2);
-
-	/*
-	 * The keyboard and mouse addresses are often swapped.  So, we
-	 * accept the standard address for either, and ask the device to
-	 * identify itself.
-	 */
-	if (cf->cf_loc[DTCF_ADDR] == DTCF_ADDR_DEFAULT &&
-	    (dta->dta_addr == DT_ADDR_KBD || dta->dta_addr == DT_ADDR_MOUSE)) {
-		if (dt_identify(dta->dta_addr, &ident))
-			return (dta->dta_addr == DT_ADDR_KBD);
-		return (strncmp(ident.vendor, "DEC     ", 8) == 0 &&
-		    strncmp(ident.module, "LK501-", 6) == 0);
-	}
-
-	return (0);
+	return (dta->dta_addr == DT_ADDR_KBD);
 }
 
 void
@@ -139,22 +118,19 @@ dtkbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dt_softc *dt;
 	struct dtkbd_softc *sc;
-	struct dt_attach_args *dta;
 	struct wskbddev_attach_args a;
 
 	dt = (struct dt_softc *)parent;
 	sc = (struct dtkbd_softc *)self;
-	dta = aux;
 
 	printf("\n");
 
-	if (dt_establish_handler(dt, dta->dta_addr, self, dtkbd_handler)) {
+	if (dt_establish_handler(dt, &dt_kbd_dv, self, dtkbd_handler)) {
 		printf("%s: unable to establish handler\n", self->dv_xname);
 		return;
 	}
 
 	sc->sc_enabled = 1;
-	dt_kbd_addr = dta->dta_addr;
 
 	a.console = dtkbd_isconsole;
 	a.keymap = &dtkbd_keymapdata;
@@ -191,11 +167,11 @@ dtkbd_cngetc(void *v, u_int *type, int *data)
 	static u_int types[20];
 	static int cnt, i, vals[20];
 
-	if (i >= cnt) {
+	while (i >= cnt) {
 		for (;;) {
 			if (dt_msg_get(&msg, 0) == DT_GET_DONE)
-				if (msg.src == DT_ADDR_KBD &&
-				    !msg.code.val.P)
+				if (msg.src == dt_kbd_addr &&
+				    !DT_CTL_P(msg.ctl))
 					break;
 			DELAY(1000);
 		}
@@ -240,31 +216,20 @@ dtkbd_set_leds(void *v, int state)
 }
 
 void
-dtkbd_handler(void *cookie)
+dtkbd_handler(void *cookie, struct dt_msg *msg)
 {
 	struct dtkbd_softc *sc;
-	struct dt_softc *dt;
-	struct dt_device *dtdv;
-	struct dt_msg *msg;
 	u_int types[20];
 	int i, cnt, vals[20];
 
-	dtdv = cookie;
-	sc = (struct dtkbd_softc *)dtdv->dtdv_dv;
-	dt = (struct dt_softc *)sc->sc_dv.dv_parent;
+	sc = cookie;
 
-	while ((msg = dt_msg_dequeue(dtdv)) != NULL) {
-		if (sc->sc_enabled) {
-			if (!msg->code.val.P) {
-				cnt = dtkbd_process_msg(msg, types, vals);
-				for (i = 0; i < cnt; i++)
-					wskbd_input(sc->sc_wskbddev, types[i],
-					    vals[i]);
-			}
-		}
+	if (!sc->sc_enabled)
+		return;
 
-		dt_msg_release(dt, msg);
-	}
+	cnt = dtkbd_process_msg(msg, types, vals);
+	for (i = 0; i < cnt; i++)
+		wskbd_input(sc->sc_wskbddev, types[i], vals[i]);
 }
 
 int
@@ -273,7 +238,7 @@ dtkbd_process_msg(struct dt_msg *msg, u_int *types, int *vals)
 	u_int len, c, count;
 	int i, j;
 
-	len = msg->code.val.len;
+	len = DT_CTL_LEN(msg->ctl);
 
 	if ((msg->body[0] < DT_KBD_KEY_MIN && msg->body[0] != DT_KBD_EMPTY) ||
 	    len > 10) {
