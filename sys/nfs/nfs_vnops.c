@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.162 2003/04/09 14:21:24 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.163 2003/04/09 14:22:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.162 2003/04/09 14:21:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.163 2003/04/09 14:22:33 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -269,8 +269,6 @@ extern u_int32_t nfs_true, nfs_false;
 extern u_int32_t nfs_xdrneg1;
 extern const nfstype nfsv3_type[9];
 
-struct proc *nfs_iodwant[NFS_MAXASYNCDAEMON];
-struct nfsmount *nfs_iodmount[NFS_MAXASYNCDAEMON];
 int nfs_numasync = 0;
 #define	DIRHDSIZ	(sizeof (struct dirent) - (MAXNAMLEN + 1))
 

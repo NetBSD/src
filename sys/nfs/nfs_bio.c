@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.86 2003/01/18 09:34:30 thorpej Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.87 2003/04/09 14:22:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.86 2003/01/18 09:34:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.87 2003/04/09 14:22:33 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -796,19 +796,22 @@ again:
 	 * Find a free iod to process this request.
 	 */
 
-	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
-		if (nfs_iodwant[i]) {
+	for (i = 0; i < NFS_MAXASYNCDAEMON; i++) {
+		struct nfs_iod *iod = &nfs_asyncdaemon[i];
+
+		if (iod->nid_want) {
 			/*
 			 * Found one, so wake it up and tell it which
 			 * mount to process.
 			 */
-			nfs_iodwant[i] = NULL;
-			nfs_iodmount[i] = nmp;
+			iod->nid_want = NULL;
+			iod->nid_mount = nmp;
 			nmp->nm_bufqiods++;
-			wakeup((caddr_t)&nfs_iodwant[i]);
+			wakeup((caddr_t)&iod->nid_want);
 			gotiod = TRUE;
 			break;
 		}
+	}
 
 	/*
 	 * If none are free, we may already have an iod working on this mount
