@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.107 2000/03/29 03:43:31 simonb Exp $	*/
+/*	$NetBSD: isa.c,v 1.108 2001/06/19 12:45:23 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #include "isadma.h"
 
 #include "isapnp.h"
-#ifdef NISAPNP
+#if NISAPNP > 0
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
 #endif
