@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.138 2000/03/27 11:45:42 augustss Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.139 2000/04/02 17:25:52 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -126,6 +126,9 @@ scsibusmatch(parent, cf, aux)
 {
 	struct scsipi_link *l = aux;
 	int channel;
+
+	if (l->type != BUS_SCSI)
+		return (0);
 
 	/*
 	 * Allow single-channel controllers to specify their channel

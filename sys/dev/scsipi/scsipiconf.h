@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.39 2000/03/30 00:00:55 augustss Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.40 2000/04/02 17:25:53 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -167,10 +167,17 @@ struct scsipi_adapter {
  * XXX nasty.
  */
 
+/*
+ * XXX Small hack alert
+ * NOTE:  The first field of struct scsipi_link is shared with 
+ * dev/scspi/scsipiconf.h's struct ata_atapi_attach.  This allows
+ * atapibus and scsibus to attach to the same device.
+ */
 struct scsipi_link {
 	u_int8_t type;			/* device type, i.e. SCSI, ATAPI, ...*/
 #define BUS_SCSI		0
 #define BUS_ATAPI		1
+/*define BUS_ATA		2*/
 	int openings;			/* max # of outstanding commands */
 	int active;			/* current # of outstanding commands */
 	int flags;			/* flags that all devices have */
