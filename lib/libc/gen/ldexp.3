@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldexp.3,v 1.6 1999/08/29 18:52:18 mycroft Exp $
+.\"	$NetBSD: ldexp.3,v 1.7 1999/08/29 18:55:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\"
 .\"     @(#)ldexp.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd August 29, 1999
 .Dt LDEXP 3
 .Os
 .Sh NAME
@@ -71,9 +71,7 @@ the global variable
 .Va errno
 is set to
 .Er ERANGE
-and the value
-.Dv HUGE_VAL
-is returned, with the same sign as
+and infinity is returned, with the same sign as
 .Fa x .
 .Pp
 If the result would cause underflow to 0.0,
