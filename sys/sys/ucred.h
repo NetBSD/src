@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ucred.h	7.5 (Berkeley) 2/5/91
- *	$Id: ucred.h,v 1.4 1993/06/27 05:59:10 andrew Exp $
+ *	$Id: ucred.h,v 1.5 1993/07/29 21:45:25 jtc Exp $
  */
 
 #ifndef _SYS_UCRED_H_
@@ -55,6 +55,6 @@ struct ucred	*crget __P((void));
 struct ucred	*crcopy __P((struct ucred *cr));
 struct ucred	*crdup __P((struct ucred *cr));
 int		suser __P((struct ucred *cred, u_short *acflag));
-#endif KERNEL
+#endif /* KERNEL */
 
 #endif /* !_SYS_UCRED_H_ */

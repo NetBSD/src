@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_object.h,v 1.3 1993/05/20 03:59:36 cgd Exp $
+ *	$Id: vm_object.h,v 1.4 1993/07/29 21:45:40 jtc Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -127,7 +127,7 @@ vm_object_t	kmem_object;
 
 #define	vm_object_cache_lock()		simple_lock(&vm_cache_lock)
 #define	vm_object_cache_unlock()	simple_unlock(&vm_cache_lock)
-#endif	KERNEL
+#endif	/* KERNEL */
 
 /*
  *	Declare procedures that operate on VM objects.
@@ -160,13 +160,13 @@ void		vm_object_print();
 #define	vm_object_lock_try(object)	(simple_lock_try(&(object)->Lock) ? ( ((object)->LockHolder = (int) current_thread()) , TRUE) : FALSE)
 #define	vm_object_sleep(event, object, interruptible) \
 					{ (object)->LockHolder = 0; thread_sleep((event), &(object)->Lock, (interruptible)); }
-#else	VM_OBJECT_DEBUG
+#else	/* VM_OBJECT_DEBUG */
 #define	vm_object_lock_init(object)	simple_lock_init(&(object)->Lock)
 #define	vm_object_lock(object)		simple_lock(&(object)->Lock)
 #define	vm_object_unlock(object)	simple_unlock(&(object)->Lock)
 #define	vm_object_lock_try(object)	simple_lock_try(&(object)->Lock)
 #define	vm_object_sleep(event, object, interruptible) \
 					thread_sleep((event), &(object)->Lock, (interruptible))
-#endif	VM_OBJECT_DEBUG
+#endif	/* VM_OBJECT_DEBUG */
 
 #endif /* !_VM_VM_OBJECT_H_ */

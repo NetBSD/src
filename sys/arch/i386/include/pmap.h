@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/12/91
- *	$Id: pmap.h,v 1.2 1993/05/22 08:00:30 cgd Exp $
+ *	$Id: pmap.h,v 1.3 1993/07/29 21:42:21 jtc Exp $
  */
 
 /*
@@ -230,6 +230,6 @@ pv_entry_t	pv_table;		/* array of entries, one per page */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
-#endif	KERNEL
+#endif	/* KERNEL */
 
-#endif	_PMAP_MACHINE_
+#endif	/* _PMAP_MACHINE_ */
