@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc64.c,v 1.2.8.1 2000/08/07 01:22:27 mrg Exp $	*/
+/*	$NetBSD: kvm_sparc64.c,v 1.2.8.2 2000/10/18 00:15:53 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc64.c,v 1.2.8.1 2000/08/07 01:22:27 mrg Exp $");
+__RCSID("$NetBSD: kvm_sparc64.c,v 1.2.8.2 2000/10/18 00:15:53 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -194,7 +194,7 @@ _kvm_kvatop(kd, va, pa)
 
 lose:
 	*pa = -1;
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
 }
 
@@ -228,7 +228,7 @@ _kvm_pa2off(kd, pa)
 		off += mp->size;
 	}
 	if (nmem < 0) {
-		_kvm_err(kd, 0, "invalid address (%x)", pa);
+		_kvm_err(kd, 0, "invalid address (%lx)", pa);
 		return (-1);
 	}
 
