@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2000/03/12 05:04:47 takemura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2000/03/12 11:46:45 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -101,8 +101,12 @@ mbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	int i;
 	register struct device *mb = self;
 	struct mainbus_attach_args ma;
+	char *devnames[] = {
+		"txsim", "bivideo", "vrip",
+	};
 
 	printf("\n");
 
@@ -113,20 +117,17 @@ mbattach(parent, self, aux)
 #if defined VR41X1 && defined TX39XX
 #error misconfiguration
 #elif defined VR41X1
-	/* Attach frame buffer */
-	ma.ma_name = "bivideo";
-	config_found(mb, &ma, mbprint);
-
-	/* Attach Vr41x1 integrated peripherals (if configured). */
-	ma.ma_name = "vrip";
 	if (!system_bus_iot) 
 	    mb_bus_space_init();
 	hpcmips_init_bus_space_extent(system_bus_iot); /* Now prepare extent */
 	ma.ma_iot = system_bus_iot;
-#elif defined TX39XX
-	ma.ma_name = "txsim";
 #endif
-	config_found(mb, &ma, mbprint);
+
+	/* Attach devices */
+	for (i = 0; i < sizeof(devnames)/sizeof(*devnames); i++) {
+		ma.ma_name = devnames[i];
+		config_found(mb, &ma, mbprint);
+	}
 }
 
 
