@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.105 2003/03/02 04:34:31 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.106 2003/03/04 19:19:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.105 2003/03/02 04:34:31 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.106 2003/03/04 19:19:43 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -232,19 +232,25 @@ lfs_vflush(struct vnode *vp)
 				continue;
 #ifdef LFS_UBC
 			/*
-			 * In the UBC case, look for *pages* matching
-			 * the range covered by cleaning blocks.
+			 * Look for pages matching the range covered
+			 * by cleaning blocks.  It's okay if more dirty
+			 * pages appear, so long as none disappear out
+			 * from under us.
 			 */
 			if (bp->b_lblkno > 0 && vp->v_type == VREG &&
 			    vp != fs->lfs_ivnode) {
 				struct vm_page *pg;
 				voff_t off;
 
+				simple_lock(&vp->v_interlock);
 				for (off = lblktosize(fs, bp->b_lblkno);
 				     off < lblktosize(fs, bp->b_lblkno + 1);
 				     off += PAGE_SIZE) {
 					pg = uvm_pagelookup(&vp->v_uobj, off);
-					if (pg && pmap_is_modified(pg)) {
+					if (pg == NULL)
+						continue;
+					if ((pg->flags & PG_CLEAN) == 0 ||
+					    pmap_is_modified(pg)) {
 						fs->lfs_avail += btofsb(fs,
 							bp->b_bcount);
 						wakeup(&fs->lfs_avail);
@@ -253,6 +259,7 @@ lfs_vflush(struct vnode *vp)
 						goto nextbp;
 					}
 				}
+				simple_unlock(&vp->v_interlock);
 			}
 #endif
 			for (tbp = LIST_FIRST(&vp->v_dirtyblkhd); tbp;
@@ -1282,7 +1289,12 @@ lfs_update_single(struct lfs *fs, struct segment *sp, daddr_t lbn,
 		    ((int32_t *)bp->b_data)[ap->in_off] = ndaddr;
 		    (void) VOP_BWRITE(bp);
 	}
-	KASSERT(daddr < fs->lfs_lastpseg || daddr > ndaddr);
+
+	/*
+	 * Though we'd rather it couldn't, this *can* happen right now
+	 * if cleaning blocks and regular blocks coexist.
+	 */
+	/* KASSERT(daddr < fs->lfs_lastpseg || daddr > ndaddr); */
 
 	/*
 	 * Update segment usage information, based on old size
