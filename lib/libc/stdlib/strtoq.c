@@ -37,9 +37,9 @@ static char sccsid[] = "@(#)strtoq.c	5.1 (Berkeley) 6/26/92";
 
 #include <sys/types.h>
 
-#include <limits.h>
-#include <errno.h>
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 
 /*
@@ -57,7 +57,7 @@ strtoq(nptr, endptr, base)
 	register const char *s;
 	register u_quad_t acc;
 	register int c;
-	register u_quad_t qbase, cutoff;
+	register u_quad_t cutoff;
 	register int neg, any, cutlim;
 
 	/*
@@ -104,10 +104,9 @@ strtoq(nptr, endptr, base)
 	 * Set any if any `digits' consumed; make it negative to indicate
 	 * overflow.
 	 */
-	qbase = (unsigned)base;
 	cutoff = neg ? -(u_quad_t)QUAD_MIN : QUAD_MAX;
-	cutlim = cutoff % qbase;
-	cutoff /= qbase;
+	cutlim = cutoff % (u_quad_t)base;
+	cutoff /= (u_quad_t)base;
 	for (acc = 0, any = 0;; c = *s++) {
 		if (isdigit(c))
 			c -= '0';
@@ -121,7 +120,7 @@ strtoq(nptr, endptr, base)
 			any = -1;
 		else {
 			any = 1;
-			acc *= qbase;
+			acc *= (u_quad_t)base;
 			acc += c;
 		}
 	}
