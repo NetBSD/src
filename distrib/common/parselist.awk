@@ -1,4 +1,4 @@
-#	$NetBSD: parselist.awk,v 1.4 2002/03/05 00:19:43 lukem Exp $
+#	$NetBSD: parselist.awk,v 1.5 2002/03/06 04:47:58 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -153,17 +153,20 @@ $1 == "COPYDIR" \
 {
 	if (NF != 3)
 		err("Usage: COPYDIR src dest");
+	srcdir=$2;
+	destdir=$3;
 	if (mode == "mtree") {
-		command="cd " $2 " ; find . -type d -print"
+		printf("./%s type=dir mode=755\n", destdir);
+		command="cd " srcdir " ; find . -type d -print"
 		while (command | getline dir) {
 			gsub(/^\.\//, "", dir);
-			printf("./%s/%s type=dir mode=755\n", $3, dir);
+			if (dir == ".")
+				continue;
+			printf("./%s/%s type=dir mode=755\n", destdir, dir);
 		}
 		close(command);
 	}
 	if (mode == "populate" || mode == "mtree") {
-		srcdir=$2;
-		destdir=$3;
 		command="cd " srcdir " ; find . -type f -print"
 		while (command | getline srcfile) {
 			gsub(/^\.\//, "", srcfile);
