@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.29 2002/02/08 01:36:38 ross Exp $
+.\"	$NetBSD: install.1,v 1.30 2002/03/19 14:17:04 lukem Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)install.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd October 26, 2001
+.Dd March 20, 2002
 .Dt INSTALL 1
 .Os
 .Sh NAME
@@ -53,6 +53,9 @@
 .Ek
 .Bk -words
 .Op Fl T Ar tags
+.Ek
+.Bk -words
+.Op Fl a Ar command
 .Ek
 .Bk -words
 .Op Fl m Ar mode
@@ -85,6 +88,9 @@
 .Op Fl T Ar tags
 .Ek
 .Bk -words
+.Op Fl a Ar command
+.Ek
+.Bk -words
 .Op Fl m Ar mode
 .Ek
 .Bk -words
@@ -102,13 +108,16 @@
 .Ar file1 ...\&
 .Ar fileN directory
 .Nm ""
-.Op Fl Up
 .Fl d
+.Op Fl Up
 .Bk -words
 .Op Fl M Ar metalog
 .Ek
 .Bk -words
 .Op Fl T Ar tags
+.Ek
+.Bk -words
+.Op Fl a Ar command
 .Ek
 .Bk -words
 .Op Fl m Ar mode
@@ -143,6 +152,23 @@ if permissions allow, An alternate backup suffix may be specified via the
 option's argument.
 .Pp
 .Bl -tag -width Ds
+.It Fl a Ar command
+Run
+.Ar command
+on the target after installation and stripping
+.Pq Fl s ,
+but before 
+ownership, permissions or timestamps are set and before renaming
+.Pq Fl r
+occurs.
+.Ar command
+is invoked via the
+.Xr sh  1
+shell, allowing a single
+.Fl a
+argument be to specified to
+.Nm
+which the shell can then tokenize.
 .It Fl b
 Backup any existing files before overwriting them by renaming
 them to
@@ -167,12 +193,15 @@ Copy the file.
 This flag turns off the default behavior of
 .Nm
 where it deletes the original file after creating the target.
-.It Fl f
+.It Fl d
+Create directories.
+Missing parent directories are created as required.
+.It Fl f Ar flags
 Specify the target's file flags.
 (See
 .Xr chflags 1
 for a list of possible flags and their meanings.)
-.It Fl g
+.It Fl g Ar group
 Specify a group.
 .It Fl M Ar metalog
 Write the metadata associated with each item installed to
@@ -183,7 +212,7 @@ in an
 specification line.
 The metadata includes: the file name and file type, and depending upon
 other options, the owner, group, file flags, modification time, and tags.
-.It Fl m
+.It Fl m Ar mode
 Specify an alternative mode.
 The default mode is set to rwxr-xr-x (0755).
 The specified mode may be either an octal or symbolic value; see
@@ -207,7 +236,7 @@ are:
 .Ar m
 (mixed). Absolute and relative have effect only for symbolic links. Mixed links
 are hard links for files on the same filesystem, symbolic otherwise.
-.It Fl o
+.It Fl o Ar owner
 Specify an owner.
 .It Fl p
 Preserve the source files access and modification times.
@@ -238,7 +267,7 @@ is used,
 is invoked via the
 .Xr sh  1
 shell, allowing a single
-Fl S
+.Fl S
 argument be to specified to
 .Nm
 which the shell can then tokenize. Normally,
@@ -252,9 +281,6 @@ Specify the
 .Xr mtree 8
 tags to write out for the file when using
 .Fl M Ar metalog .
-.It Fl d
-Create directories.
-Missing parent directories are created as required.
 .It Fl U
 Indicate that install is running unprivileged, and that it should not
 try to change the owner, the group, or the file flags of the destination.

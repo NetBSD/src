@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.68 2002/02/28 00:22:51 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.69 2002/03/19 14:17:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.68 2002/02/28 00:22:51 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.69 2002/03/19 14:17:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,6 +90,7 @@ FILE	*metafp;
 char	*metafile;
 u_long	fileflags;
 char	*stripArgs;
+char	*afterinstallcmd;
 char	*suffix = BACKUP_SUFFIX;
 
 #define LN_ABSOLUTE	0x01
@@ -103,6 +104,7 @@ char	*suffix = BACKUP_SUFFIX;
 #define	HASUID		0x04		/* Tell install the uid was given */
 #define	HASGID		0x08		/* Tell install the gid was given */
 
+void	afterinstall(const char *, const char *, int);
 void	backup(const char *);
 void	copy(int, char *, int, char *, off_t);
 int	do_link(char *, char *);
@@ -130,8 +132,13 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	iflags = 0;
-	while ((ch = getopt(argc, argv, "cbB:df:g:l:m:M:o:prsS:T:U")) != -1)
+	while ((ch = getopt(argc, argv, "a:cbB:df:g:l:m:M:o:prsS:T:U")) != -1)
 		switch((char)ch) {
+		case 'a':
+			afterinstallcmd = strdup(optarg);
+			if (afterinstallcmd == NULL)
+				errx(1, "%s", strerror(ENOMEM));
+			break;
 		case 'B':
 			suffix = optarg;
 			numberedbackup = 0;
@@ -422,9 +429,26 @@ makelink(char *from_name, char *to_name)
 		} else {
 			if (stat(to_name, &to_sb))
 				err(1, "%s: stat", to_name);
-			if (S_ISREG(to_sb.st_mode))
-				metadata_log(to_name, "file", NULL, NULL);
+			if (S_ISREG(to_sb.st_mode)) {
 					/* XXX: only metalog hardlinked files */
+				int omode;
+				char *oowner, *ogroup, *offlags;
+
+					/* XXX: use underlying perms */
+				omode = mode;
+				mode = (to_sb.st_mode & 0777);
+				oowner = owner;
+				owner = NULL;
+				ogroup = group;
+				group = NULL;
+				offlags = fflags;
+				fflags = NULL;
+				metadata_log(to_name, "file", NULL, NULL);
+				mode = omode;
+				owner = oowner;
+				group = ogroup;
+				fflags = offlags;
+			}
 			return;
 		}
 	}
@@ -580,7 +604,19 @@ install(char *from_name, char *to_name, u_int flags)
 		 */
 		close(to_fd);
 		if ((to_fd = open(to_name, O_RDONLY, S_IRUSR | S_IWUSR)) < 0)
-		  err(1, "stripping %s", to_name);
+			err(1, "stripping %s", to_name);
+	}
+
+	if (afterinstallcmd != NULL) {
+		afterinstall(afterinstallcmd, to_name, 1);
+
+		/*
+		 * Re-open our fd on the target, in case we used an
+		 * after-install command that does not work in-place
+		 */
+		close(to_fd);
+		if ((to_fd = open(to_name, O_RDONLY, S_IRUSR | S_IWUSR)) < 0)
+			err(1, "running after install command on %s", to_name);
 	}
 
 	/*
@@ -762,6 +798,49 @@ strip(char *to_name)
 }
 
 /*
+ * afterinstall --
+ *	run provided command on the target file or directory after it's been
+ *	installed and stripped, but before permissions are set or it's renamed
+ */
+void
+afterinstall(const char *command, const char *to_name, int errunlink)
+{
+	int	serrno, status;
+	char	*cmd;
+
+	switch (vfork()) {
+	case -1:
+		serrno = errno;
+		if (errunlink)
+			(void)unlink(to_name);
+		errx(1, "vfork: %s", strerror(serrno));
+		/*NOTREACHED*/
+	case 0:
+		/*
+		 * build up a command line and let /bin/sh
+		 * parse the arguments
+		 */
+		cmd = (char*)malloc(sizeof(char)*
+					  (2+strlen(command)+
+					     strlen(to_name)));
+
+		if (cmd == NULL)
+			errx(1, "%s", strerror(ENOMEM));
+
+		sprintf(cmd, "%s %s", command, to_name);
+
+		execl(_PATH_BSHELL, "sh", "-c", cmd, NULL);
+
+		warn("%s: exec of after install command", command);
+		_exit(1);
+		/*NOTREACHED*/
+	default:
+		if ((wait(&status) == -1 || status) && errunlink)
+			(void)unlink(to_name);
+	}
+}
+
+/*
  * backup --
  *	backup file "to_name" to to_name.suffix
  *	if suffix contains a "%", it's taken as a printf(3) pattern
@@ -816,6 +895,9 @@ install_dir(char *path, u_int flags)
                         if (!(*p = ch))
 				break;
                 }
+
+	if (afterinstallcmd != NULL)
+		afterinstall(afterinstallcmd, path, 0);
 
 	if (!dounpriv && (
 	    ((flags & (HASUID | HASGID)) && chown(path, uid, gid) == -1)
@@ -907,14 +989,19 @@ xdirname(char *path)
 void
 usage(void)
 {
+	const char *prog;
 
-	(void)fprintf(stderr, "\
-usage: install [-Ubcprs] [-M log] [-T tags] [-B suffix] [-f flags] [-m mode]\n\
-	    [-o owner] [-g group] [-l linkflags] [-S stripflags] file1 file2\n\
-       install [-Ubcprs] [-M log] [-T tags] [-B suffix] [-f flags] [-m mode]\n\
-	    [-o owner] [-g group] [-l linkflags] [-S stripflags]\n\
-	    file1 ... fileN directory\n\
-       install [-Up] [-M log] [-T tags] -d [-m mode]\n\
-	    [-o owner] [-g group] directory ...\n");
+	prog = getprogname();
+
+	(void)fprintf(stderr,
+"usage: %s [-Ubcprs] [-M log] [-T tags] [-B suffix] [-a afterinstallcmd]\n"
+"           [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags]\n"
+"           [-S stripflags] file1 file2\n"
+"       %s [-Ubcprs] [-M log] [-T tags] [-B suffix] [-a afterinstallcmd]\n"
+"           [-f flags] [-m mode] [-o owner] [-g group] [-l linkflags]\n"
+"           [-S stripflags] file1 ... fileN directory\n"
+"       %s -d [-Up] [-M log] [-T tags] [-a afterinstallcmd] [-m mode]\n"
+"           [-o owner] [-g group] directory ...\n",
+	    prog, prog, prog);
 	exit(1);
 }
