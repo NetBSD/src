@@ -5312,10 +5312,8 @@ _C_LABEL(dcache_flush_page):
  * When this code is run, the stack looks like:
  *	[%sp]			128 bytes to which registers can be dumped
  *	[%sp + 128]		signal number (goes in %o0)
- *	[%sp + 128 + 8]		signal code (goes in %o1)
- *	[%sp + 128 + 16]	placeholder
- *	[%sp + 128 + 24]	argument for %o3, currently unsupported (always 0)
- *	[%sp + 128 + 32]	first word of saved state (sigcontext)
+ *	[%sp + 128 + 4]		signal code (goes in %o1)
+ *	[%sp + 128 + 8]		first word of saved state (sigcontext)
  *	    .
  *	    .
  *	    .
@@ -5375,8 +5373,9 @@ _C_LABEL(sigcode):
 2:
 	lduw	[%fp + BIAS + CC64FSZ], %o0	! sig
 	lduw	[%fp + BIAS + CC64FSZ + 4], %o1	! code
+	add	%fp, BIAS + CC64FSZ + 8, %o2	! scp
 	call	%g1			! (*sa->sa_handler)(sig,code,scp)
-	 add	%fp, BIAS + CC64FSZ + 8, %o2	! scp
+	 andn	%o2, 0x0f, %o2
 
 	/*
 	 * Now that the handler has returned, re-establish all the state
@@ -5411,6 +5410,7 @@ _C_LABEL(sigcode):
 
 	restore	%g0, SYS___sigreturn14, %g1 ! get registers back & set syscall #
 	add	%sp, BIAS + CC64FSZ + 8, %o0! compute scp
+	andn	%o0, 0x0f, %o0
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
 	mov	SYS_exit, %g1		! exit(errno)
@@ -5554,6 +5554,9 @@ _C_LABEL(esigcode):
 #endif
 
 #ifdef COMPAT_SVR4
+/*
+ * This code is still 32-bit only.
+ */
 /*
  * The following code is copied to the top of the user stack when each
  * process is exec'ed, and signals are `trampolined' off it.
