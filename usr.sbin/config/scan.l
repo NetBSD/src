@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.22 1998/06/24 11:20:55 jonathan Exp $	*/
+/*	$NetBSD: scan.l,v 1.23 1999/07/07 00:02:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,7 @@ and		return AND;
 at		return AT;
 attach		return ATTACH;
 build		return BUILD;
+cinclude	return CINCLUDE;
 compile-with	return COMPILE_WITH;
 config		return CONFIG;
 deffs		return DEFFS;
@@ -93,6 +94,7 @@ define		return DEFINE;
 defflag		return DEFFLAG;
 defopt		return DEFOPT;
 defparam	return DEFPARAM;
+defpseudo	return DEFPSEUDO;
 devclass	return DEVCLASS;
 device		return DEVICE;
 dumps		return DUMPS;
@@ -201,9 +203,9 @@ firstfile(fname)
  * If ateof == 0 then nothing is inserted.
  */
 int
-include(fname, ateof)
+include(fname, ateof, conditional)
 	const char *fname;
-	int ateof;
+	int ateof, conditional;
 {
 	FILE *fp;
 	struct incl *in;
@@ -216,12 +218,14 @@ include(fname, ateof)
 	}
 
 	/* Kludge until files.* files are fixed. */
-	if (strncmp(fname, "../../../", 9) == 0)
+	if (conditional == 0 && strncmp(fname, "../../../", 9) == 0)
 		fname += 9;
 
 	s = (*fname == '/') ? strdup(fname) : sourcepath(fname);
 	if ((fp = fopen(s, "r")) == NULL) {
-		error("cannot open %s for reading: %s\n", s, strerror(errno));
+		if (conditional == 0)
+			error("cannot open %s for reading: %s\n", s,
+			    strerror(errno));
 		free(s);
 		return (-1);
 	}
