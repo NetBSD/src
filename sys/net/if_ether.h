@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.27 2002/03/05 04:13:00 itojun Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.28 2002/09/16 19:25:30 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -250,10 +250,10 @@ u_int32_t ether_crc32_be(const u_int8_t *, size_t);
  */
 #include <sys/cdefs.h>
 __BEGIN_DECLS
-char *	ether_ntoa __P((struct ether_addr *));
+char *	ether_ntoa __P((const struct ether_addr *));
 struct ether_addr *
 	ether_aton __P((const char *));
-int	ether_ntohost __P((char *, struct ether_addr *));
+int	ether_ntohost __P((char *, const struct ether_addr *));
 int	ether_hostton __P((const char *, struct ether_addr *));
 int	ether_line __P((const char *, struct ether_addr *, char *));
 __END_DECLS
