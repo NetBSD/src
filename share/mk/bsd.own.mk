@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.352 2003/08/01 22:51:34 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.353 2003/08/27 16:03:17 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -33,24 +33,34 @@ TOOLCHAIN_MISSING=	no
 #
 # Transitional for toolchain upgrade to GCC3.3
 #
+# not working:
+#
 #    ${MACHINE_ARCH} == "m68000" ||
 #    ${MACHINE_ARCH} == "sh3el" ||
 #    ${MACHINE_ARCH} == "sh3eb" ||
 #    ${MACHINE_ARCH} == "powerpc" ||
+# mostly working,:
+#    ${MACHINE_ARCH} == "arm" ||
+#    ${MACHINE_ARCH} == "m68k" ||
+#    ${MACHINE_ARCH} == "mipseb" ||
+#    ${MACHINE_ARCH} == "mipsel" ||
 
-USE_TOOLS_TOOLCHAIN?=	yes
+HAVE_GCC3?=	no
+# these are ready to switch
 .if ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "m68k" || \
-    ${MACHINE_ARCH} == "mipseb" || \
-    ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64"
-USE_TOOLS_TOOLCHAIN?=	no
+HAVE_GCC3?=	yes
 .else
-USE_TOOLS_TOOLCHAIN?=	yes
+HAVE_GCC3?=	no
 .endif
+
+# Do we want to use tools/toolchain or not?
+.if ${HAVE_GCC3} == "yes"
+USE_TOOLS_TOOLCHAIN=no
+.endif
+USE_TOOLS_TOOLCHAIN?=no
 
 #
 # XXX TEMPORARY: If ns32k and not using an external toolchain, then we have

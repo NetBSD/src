@@ -1,8 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.2 2003/07/26 18:33:52 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.3 2003/08/27 16:03:18 mrg Exp $
 
 # Standard kernel compile flags
 CFLAGS += -G 0 -mno-abicalls
-.if ${USE_TOOLS_TOOLCHAIN} == "yes"
+.if ${HAVE_GCC3} == "no"
 CFLAGS += -mno-half-pic
 .endif
 
