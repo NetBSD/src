@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec_elf32.c,v 1.3 2001/11/13 02:09:22 lukem Exp $	 */
+/*	$NetBSD: svr4_exec_elf32.c,v 1.4 2002/08/26 21:06:03 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_exec_elf32.c,v 1.3 2001/11/13 02:09:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_exec_elf32.c,v 1.4 2002/08/26 21:06:03 christos Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -60,43 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_exec_elf32.c,v 1.3 2001/11/13 02:09:22 lukem Ex
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_exec.h>
 #include <compat/svr4/svr4_errno.h>
-
-int
-svr4_copyargs(pack, arginfo, stackp, argp)
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
-{
-	AuxInfo *a;
-	int error;
-
-	if ((error = elf32_copyargs(pack, arginfo, stackp, argp)) != 0)
-		return error;
-
-	a = (AuxInfo *)*stackp;
-#ifdef SVR4_COMPAT_SOLARIS2
-	if (pack->ep_emul_arg) {
-		a->au_type = AT_SUN_UID;
-		a->au_v = p->p_ucred->cr_uid;
-		a++;
-
-		a->au_type = AT_SUN_RUID;
-		a->au_v = p->p_cred->ruid;
-		a++;
-
-		a->au_type = AT_SUN_GID;
-		a->au_v = p->p_ucred->cr_gid;
-		a++;
-
-		a->au_type = AT_SUN_RGID;
-		a->au_v = p->p_cred->rgid;
-		a++;
-	}
-#endif
-	*stackp = (char *)a;
-	return 0;
-}
 
 int
 svr4_elf32_probe(p, epp, eh, itp, pos)

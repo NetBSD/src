@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.4 2001/11/13 02:09:27 lukem Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.5 2002/08/26 21:06:04 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.4 2001/11/13 02:09:27 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.5 2002/08/26 21:06:04 christos Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -140,19 +140,19 @@ svr4_32_copyargs(pack, arginfo, stackp, argp)
 		a->a_v = PAGE_SIZE;
 		a++;
 
-		a->a_type = AT_SUN_UID;
+		a->a_type = AT_EUID;
 		a->a_v = p->p_ucred->cr_uid;
 		a++;
 
-		a->a_type = AT_SUN_RUID;
+		a->a_type = AT_RUID;
 		a->a_v = p->p_cred->p_ruid;
 		a++;
 
-		a->a_type = AT_SUN_GID;
+		a->a_type = AT_EGID;
 		a->a_v = p->p_ucred->cr_gid;
 		a++;
 
-		a->a_type = AT_SUN_RGID;
+		a->a_type = AT_RGID;
 		a->a_v = p->p_cred->p_rgid;
 		a++;
 

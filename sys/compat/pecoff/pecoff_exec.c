@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.17 2002/03/25 06:44:46 kent Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.18 2002/08/26 21:06:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.17 2002/03/25 06:44:46 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.18 2002/08/26 21:06:03 christos Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -84,7 +84,8 @@ int exec_pecoff_prep_zmagic (struct proc *p, struct exec_package *epp,
 
 
 int
-pecoff_copyargs(pack, arginfo, stackp, argp)
+pecoff_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -94,7 +95,7 @@ pecoff_copyargs(pack, arginfo, stackp, argp)
 	struct pecoff_args *ap;
 	int error;
 
-	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
+	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	ap = (struct pecoff_args *)pack->ep_emul_arg;

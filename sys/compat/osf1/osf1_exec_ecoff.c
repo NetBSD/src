@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.3 2001/11/13 02:09:12 lukem Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.4 2002/08/26 21:06:02 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.3 2001/11/13 02:09:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.4 2002/08/26 21:06:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,20 +118,20 @@ osf1_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
  * any ELF-like AUX entries used by the dynamic loading scheme.
  */
 int
-osf1_copyargs(pack, arginfo, stackp, argp)
+osf1_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
 	void *argp;
 {
-	struct proc *p = curproc;			/* XXX !!! */
 	struct osf1_exec_emul_arg *emul_arg = pack->ep_emul_arg;
 	struct osf1_auxv ai[OSF1_MAX_AUX_ENTRIES], *a;
 	char *prognameloc, *loadernameloc;
 	size_t len;
 	int error;
 
-	if ((error = copyargs(pack, arginfo, stackp, argp)) != 0)
+	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
 		goto out;
 
 	a = ai;
