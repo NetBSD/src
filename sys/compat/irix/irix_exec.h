@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.12 2002/08/02 23:02:51 manu Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.13 2002/08/25 19:03:12 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -50,13 +50,6 @@
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>
-
-/* IRIX share group structure */
-struct irix_share_group {
-	LIST_HEAD(isg_head, irix_emuldata) isg_head;	/* list head */
-	struct lock isg_lock;				/* list lock */ 
-	int isg_refcount;
-};
 
 /* IRIX specific per-process data, zero'ed on allocation */
 struct irix_emuldata {

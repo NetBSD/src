@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.15 2002/08/12 20:11:38 manu Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.16 2002/08/25 19:03:13 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.15 2002/08/12 20:11:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.16 2002/08/25 19:03:13 manu Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -638,13 +638,31 @@ irix_prda_init(p)
 {
 	int error;
 	struct exec_vmcmd evc;
+	struct irix_prda *ip;
+	struct irix_prda_sys ips;
 
 	bzero(&evc, sizeof(evc));
 	evc.ev_addr = (u_long)IRIX_PRDA;
 	evc.ev_len = sizeof(struct irix_prda);
 	evc.ev_prot = UVM_PROT_RW;
 	evc.ev_proc = *vmcmd_map_zero;
-	error = (*evc.ev_proc)(p, &evc);
+
+	if ((error = (*evc.ev_proc)(p, &evc)) != 0)
+		return error;
+
+	ip = (struct irix_prda *)IRIX_PRDA;
+	bzero(&ips, sizeof(ips));
+
+	ips.t_pid = p->p_pid;
+	/* 
+	 * The PRDA ID must be unique for a PRDA. IRIX uses a small 
+	 * integer, but we don't know how it is chosen. The PID
+	 * should be unique enough to get the work done.
+	 */
+	ips.t_prid = p->p_pid;
+
+	error = copyout(&ips, (void *)&ip->sys_prda.prda_sys, sizeof(ips));
+
 	return error;
 }
 

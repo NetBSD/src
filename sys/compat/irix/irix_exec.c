@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.19 2002/08/02 23:02:51 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.20 2002/08/25 19:03:12 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.19 2002/08/02 23:02:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.20 2002/08/25 19:03:12 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.19 2002/08/02 23:02:51 manu Exp $");
 #include <compat/irix/irix_prctl.h>
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_errno.h>
+#include <compat/irix/irix_usema.h>
 
 extern const int native_to_svr4_signo[];
 
@@ -321,18 +322,39 @@ irix_e_proc_exit(p)
 		LIST_REMOVE(ied, ied_sglist);
 		isg->isg_refcount--;
 	
-		/* 
-		 * If the list is now empty, free the share group structure 
-		 * We don't need to release the lock: there is nobody left
-		 * in the share group. 
-		 */
 		if (isg->isg_refcount == 0) {
+			/* 
+		 	 * This was the last process in the share group.
+			 * Call irix_usema_exit_cleanup() to free in-kernel 
+			 * structures hold by the share group through
+			 * the irix_usync_cntl system call. 
+			 */
+			irix_usema_exit_cleanup(p, NULL);
+			 /* 
+			  * Free the share group structure (no need to free
+			  * the lock since we destroy it now).
+			  */
 			free(isg, M_EMULDATA);
 			ied->ied_share_group = NULL;
 		} else {
+			/* 
+			 * There are other processes remaining in the share
+			 * group. Call irix_usema_exit_cleanup() to set the 
+			 * first of them as the owner of the structures 
+			 * hold in the kernel by the share group.
+			 */
+			irix_usema_exit_cleanup(p, 
+			    LIST_FIRST(&isg->isg_head)->ied_p);
 			lockmgr(&isg->isg_lock, LK_RELEASE, NULL);
 		}
 	
+	} else {
+		/* 
+		 * The process is not part of a share group. Call 
+		 * irix_usema_exit_cleanup() to free in-kernel structures hold 
+		 * by the process through the irix_usync_cntl system call.
+		 */
+		irix_usema_exit_cleanup(p, NULL);
 	}
 
 	free(p->p_emuldata, M_EMULDATA);
