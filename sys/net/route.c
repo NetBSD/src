@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.16 1996/10/13 02:11:10 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.17 1997/04/02 21:17:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)route.c	8.2 (Berkeley) 11/15/93
+ *	@(#)route.c	8.3 (Berkeley) 1/9/95
  */
 
 #include <sys/param.h>
@@ -175,6 +175,7 @@ ifafree(ifa)
  * message from the network layer.
  *
  * N.B.: must be called at splsoftnet
+ *
  */
 void
 rtredirect(dst, gateway, netmask, flags, src, rtp)
@@ -522,8 +523,8 @@ rtinit(ifa, cmd, flags)
 	if (cmd == RTM_ADD && error == 0 && (rt = nrt)) {
 		rt->rt_refcnt--;
 		if (rt->rt_ifa != ifa) {
-			printf("rtinit: wrong ifa (%p) was (%p)\n",
-			    ifa, rt->rt_ifa);
+			printf("rtinit: wrong ifa (%p) was (%p)\n", ifa,
+				rt->rt_ifa);
 			if (rt->rt_ifa->ifa_rtrequest)
 			    rt->rt_ifa->ifa_rtrequest(RTM_DELETE, rt, SA(0));
 			IFAFREE(rt->rt_ifa);

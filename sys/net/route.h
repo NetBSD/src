@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.10 1996/05/22 13:55:17 mycroft Exp $	*/
+/*	$NetBSD: route.h,v 1.11 1997/04/02 21:17:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,9 +32,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)route.h	8.3 (Berkeley) 4/19/94
+ *	@(#)route.h	8.5 (Berkeley) 2/8/95
  */
 
+#ifndef _NET_ROUTE_H_
+#define _NET_ROUTE_H_
 /*
  * Kernel resident routing tables.
  * 
@@ -110,12 +112,12 @@ struct rtentry {
  */
 struct ortentry {
 	u_int32_t rt_hash;		/* to speed lookups */
-	struct sockaddr rt_dst;		/* key */
-	struct sockaddr rt_gateway;	/* value */
-	int16_t	  rt_flags;		/* up/down?, host/net */
-	int16_t	  rt_refcnt;		/* # held references */
+	struct	sockaddr rt_dst;	/* key */
+	struct	sockaddr rt_gateway;	/* value */
+	int16_t	rt_flags;		/* up/down?, host/net */
+	int16_t	rt_refcnt;		/* # held references */
 	u_int32_t rt_use;		/* raw # packets forwarded */
-	struct ifnet *rt_ifp;		/* the answer: interface to use */
+	struct	ifnet *rt_ifp;		/* the answer: interface to use */
 };
 
 #define	RTF_UP		0x1		/* route usable */
@@ -237,18 +239,19 @@ struct	route_cb route_cb;
 struct	rtstat	rtstat;
 struct	radix_node_head *rt_tables[AF_MAX+1];
 
-struct	socket;
+struct socket;
+
 void	 route_init __P((void));
 int	 route_output __P((struct mbuf *, ...));
-int	 route_usrreq __P((struct socket *, int, struct mbuf *,
-			   struct mbuf *, struct mbuf *, struct proc *));
+int	 route_usrreq __P((struct socket *,
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 void	 rt_ifmsg __P((struct ifnet *));
 void	 rt_maskedcopy __P((struct sockaddr *,
 	    struct sockaddr *, struct sockaddr *));
 void	 rt_missmsg __P((int, struct rt_addrinfo *, int, int));
 void	 rt_newaddrmsg __P((int, struct ifaddr *, int, struct rtentry *));
-int	 rt_setgate __P((struct rtentry *, struct sockaddr *,
-			 struct sockaddr *));
+int	 rt_setgate __P((struct rtentry *,
+	    struct sockaddr *, struct sockaddr *));
 void	 rt_setmetrics __P((u_long, struct rt_metrics *, struct rt_metrics *));
 void	 rtable_init __P((void **));
 void	 rtalloc __P((struct route *));
@@ -258,9 +261,8 @@ void	 rtfree __P((struct rtentry *));
 int	 rtinit __P((struct ifaddr *, int, int));
 int	 rtioctl __P((u_long, caddr_t, struct proc *));
 void	 rtredirect __P((struct sockaddr *, struct sockaddr *,
-			 struct sockaddr *, int, struct sockaddr *,
-			 struct rtentry **));
+	    struct sockaddr *, int, struct sockaddr *, struct rtentry **));
 int	 rtrequest __P((int, struct sockaddr *,
-			struct sockaddr *, struct sockaddr *, int,
-			struct rtentry **));
+	    struct sockaddr *, struct sockaddr *, int, struct rtentry **));
 #endif /* _KERNEL */
+#endif /* _NET_ROUTE_H_ */
