@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 2001/11/15 18:06:13 soren Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 2002/12/10 05:14:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,19 +60,13 @@
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
- * USRTEXT is the start of the user text/data space, while USRSTACK
- * is the top (end) of the user stack.  LOWPAGES and HIGHPAGES are
- * the number of pages from the beginning of the P0 region to the
- * beginning of the text and from the beginning of the P1 region to the
- * beginning of the stack respectively.
+ * USRSTACK is the top (end) of the user stack.
  *
  * These are a mixture of i386, sun3 and hp settings.. 
  */
 
 /* Sun settings. Still hope, that I might get sun3 binaries to work... */
-#define	USRTEXT		0x2000
 #define	USRSTACK	0x0E000000
-#define	LOWPAGES	btoc(USRTEXT)
 #define KUSER_AREA	(-UPAGES*NBPG)
 /*
  * Virtual memory related constants, all in bytes
