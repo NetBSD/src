@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.10 2005/02/23 09:19:38 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.11 2005/02/23 09:20:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1812,14 +1812,14 @@ re_init(struct ifnet *ifp)
 	 */
 
 	CSR_WRITE_4(sc, RTK_RXLIST_ADDR_HI,
-	    RTK_ADDR_HI(sc->rtk_ldata.rtk_rx_listseg.ds_addr));
+	    RTK_ADDR_HI(sc->rtk_ldata.rtk_rx_list_map->dm_segs[0].ds_addr));
 	CSR_WRITE_4(sc, RTK_RXLIST_ADDR_LO,
-	    RTK_ADDR_LO(sc->rtk_ldata.rtk_rx_listseg.ds_addr));
+	    RTK_ADDR_LO(sc->rtk_ldata.rtk_rx_list_map->dm_segs[0].ds_addr));
 
 	CSR_WRITE_4(sc, RTK_TXLIST_ADDR_HI,
-	    RTK_ADDR_HI(sc->rtk_ldata.rtk_tx_listseg.ds_addr));
+	    RTK_ADDR_HI(sc->rtk_ldata.rtk_tx_list_map->dm_segs[0].ds_addr));
 	CSR_WRITE_4(sc, RTK_TXLIST_ADDR_LO,
-	    RTK_ADDR_LO(sc->rtk_ldata.rtk_tx_listseg.ds_addr));
+	    RTK_ADDR_LO(sc->rtk_ldata.rtk_tx_list_map->dm_segs[0].ds_addr));
 
 	CSR_WRITE_1(sc, RTK_EARLY_TX_THRESH, 16);
 
