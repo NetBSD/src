@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.88 2004/10/30 08:49:45 dsl Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.89 2004/11/16 05:59:32 itojun Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.88 2004/10/30 08:49:45 dsl Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.89 2004/11/16 05:59:32 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -250,11 +250,7 @@ static struct uucred def_anon = {
 
 static int      opt_flags;
 static int	have_v6 = 1;
-#ifdef NI_WITHSCOPEID
-static const int ninumeric = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 static const int ninumeric = NI_NUMERICHOST;
-#endif
 
 /* Bits for above */
 #define	OP_MAPROOT	0x001

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifmcstat.c,v 1.8 2000/02/26 08:13:25 itojun Exp $	*/
+/*	$NetBSD: ifmcstat.c,v 1.9 2004/11/16 05:59:32 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -111,11 +111,7 @@ const char *inet6_n2a(p)
 	static char buf[NI_MAXHOST];
 	struct sockaddr_in6 sin6;
 	u_int32_t scopeid;
-#ifdef NI_WITHSCOPEID
-	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
-#else
 	const int niflags = NI_NUMERICHOST;
-#endif
 
 	memset(&sin6, 0, sizeof(sin6));
 	sin6.sin6_family = AF_INET6;
