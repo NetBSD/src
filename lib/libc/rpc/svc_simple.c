@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.20 2000/07/06 03:10:35 christos Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.21 2001/01/04 14:42:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -51,10 +51,11 @@
 #include <sys/types.h>
 #include <rpc/rpc.h>
 #include <rpc/nettype.h>
+#include <assert.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
 
 #include "rpc_com.h"
 
@@ -110,8 +111,6 @@ rpc_reg(prognum, versnum, procnum, progname, inproc, outproc, nettype)
 #ifdef __REENT
 	extern mutex_t proglst_lock;
 #endif
-
-
 
 	if (procnum == NULLPROC) {
 		warnx("%s can't reassign procedure number %u", rpc_reg_msg,
@@ -253,6 +252,9 @@ universal(rqstp, transp)
 #ifdef __REENT
 	extern mutex_t proglst_lock;
 #endif
+
+	_DIAGASSERT(rqstp != NULL);
+	_DIAGASSERT(transp != NULL);
 
 	/*
 	 * enforce "procnum 0 is echo" convention

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.4 2000/09/28 09:07:04 kleink Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.5 2001/01/04 14:42:20 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -48,6 +48,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <rpc/rpc.h>
+#include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <netdb.h>
@@ -182,6 +183,8 @@ strlocase(p)
 {
 	char *t = p;
 
+	_DIAGASSERT(p != NULL);
+
 	for (; *p; p++)
 		if (isupper(*p))
 			*p = tolower(*p);
@@ -255,6 +258,9 @@ __rpc_getconfip(nettype)
 	netid_udp = netid_udp_main;
 	netid_tcp = netid_tcp_main;
 #endif
+
+	_DIAGASSERT(nettype != NULL);
+
 	if (!netid_udp && !netid_tcp) {
 		struct netconfig *nconf;
 		void *confighandle;
@@ -316,6 +322,8 @@ __rpc_setconf(nettype)
 	const char *nettype;
 {
 	struct handle *handle;
+
+	/* nettype may be NULL; getnettype() supports that */
 
 	handle = (struct handle *) malloc(sizeof (struct handle));
 	if (handle == NULL) {
@@ -494,6 +502,8 @@ __rpc_fd2sockinfo(int fd, struct __rpc_sockinfo *sip)
 	int type, proto;
 	struct sockaddr_storage ss;
 
+	_DIAGASSERT(sip != NULL);
+
 	len = sizeof ss;
 	if (getsockname(fd, (struct sockaddr *)(void *)&ss, &len) < 0)
 		return 0;
@@ -529,6 +539,9 @@ __rpc_nconf2sockinfo(const struct netconfig *nconf, struct __rpc_sockinfo *sip)
 {
 	int i;
 
+	_DIAGASSERT(nconf != NULL);
+	_DIAGASSERT(sip != NULL);
+
 	for (i = 0; i < (sizeof na_cvt) / (sizeof (struct netid_af)); i++)
 		if (!strcmp(na_cvt[i].netid, nconf->nc_netid)) {
 			sip->si_af = na_cvt[i].af;
@@ -549,6 +562,8 @@ __rpc_nconf2fd(const struct netconfig *nconf)
 {
 	struct __rpc_sockinfo si;
 
+	_DIAGASSERT(nconf != NULL);
+
 	if (!__rpc_nconf2sockinfo(nconf, &si))
 		return 0;
 
@@ -559,6 +574,9 @@ int
 __rpc_sockinfo2netid(struct __rpc_sockinfo *sip, const char **netid)
 {
 	int i;
+
+	_DIAGASSERT(sip != NULL);
+	/* netid may be NULL */
 
 	for (i = 0; i < (sizeof na_cvt) / (sizeof (struct netid_af)); i++)
 		if (na_cvt[i].af == sip->si_af &&
@@ -576,6 +594,9 @@ taddr2uaddr(const struct netconfig *nconf, const struct netbuf *nbuf)
 {
 	struct __rpc_sockinfo si;
 
+	_DIAGASSERT(nconf != NULL);
+	_DIAGASSERT(nbuf != NULL);
+
 	if (!__rpc_nconf2sockinfo(nconf, &si))
 		return NULL;
 	return __rpc_taddr2uaddr_af(si.si_af, nbuf);
@@ -585,6 +606,9 @@ struct netbuf *
 uaddr2taddr(const struct netconfig *nconf, const char *uaddr)
 {
 	struct __rpc_sockinfo si;
+
+	_DIAGASSERT(nconf != NULL);
+	_DIAGASSERT(uaddr != NULL);
 	
 	if (!__rpc_nconf2sockinfo(nconf, &si))
 		return NULL;
@@ -603,6 +627,8 @@ __rpc_taddr2uaddr_af(int af, const struct netbuf *nbuf)
 	char namebuf6[INET6_ADDRSTRLEN];
 #endif
 	u_int16_t port;
+
+	_DIAGASSERT(nbuf != NULL);
 
 	switch (af) {
 	case AF_INET:
@@ -650,6 +676,8 @@ __rpc_uaddr2taddr_af(int af, const char *uaddr)
 	struct sockaddr_in6 *sin6;
 #endif
 	struct sockaddr_un *sun;
+
+	_DIAGASSERT(uaddr != NULL);
 
 	addrstr = strdup(uaddr);
 	if (addrstr == NULL)
@@ -774,6 +802,9 @@ __rpc_fixup_addr(struct netbuf *new, const struct netbuf *svc)
 #ifdef INET6
 	struct sockaddr *sa_new, *sa_svc;
 	struct sockaddr_in6 *sin6_new, *sin6_svc;
+
+	_DIAGASSERT(new != NULL);
+	_DIAGASSERT(svc != NULL);
 
 	sa_svc = (struct sockaddr *)svc->buf;
 	sa_new = (struct sockaddr *)new->buf;

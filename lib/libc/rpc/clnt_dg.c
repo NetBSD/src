@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.6 2000/12/20 23:08:51 christos Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.7 2001/01/04 14:42:18 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -52,6 +52,7 @@ static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <rpc/rpc.h>
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -306,7 +307,7 @@ clnt_dg_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	caddr_t		resultsp;	/* pointer to results */
 	struct timeval	utimeout;	/* seconds to wait before giving up */
 {
-	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu;
 	XDR *xdrs;
 	size_t outlen;
 	struct rpc_msg reply_msg;
@@ -325,6 +326,10 @@ clnt_dg_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	sigset_t newmask;
 	socklen_t fromlen, inlen;
 	ssize_t recvlen = 0;
+
+	_DIAGASSERT(cl != NULL);
+
+	cu = (struct cu_data *)cl->cl_private;
 
 	sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
@@ -563,8 +568,12 @@ clnt_dg_geterr(cl, errp)
 	CLIENT *cl;
 	struct rpc_err *errp;
 {
-	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu;
 
+	_DIAGASSERT(cl != NULL);
+	_DIAGASSERT(errp != NULL);
+
+	cu = (struct cu_data *)cl->cl_private;
 	*errp = cu->cu_error;
 }
 
@@ -574,13 +583,17 @@ clnt_dg_freeres(cl, xdr_res, res_ptr)
 	xdrproc_t xdr_res;
 	caddr_t res_ptr;
 {
-	struct cu_data *cu = (struct cu_data *)cl->cl_private;
-	XDR *xdrs = &(cu->cu_outxdrs);
+	struct cu_data *cu;
+	XDR *xdrs;
 	bool_t dummy;
 #ifdef __REENT
 	sigset_t mask;
 #endif
 	sigset_t newmask;
+
+	_DIAGASSERT(cl != NULL);
+	cu = (struct cu_data *)cl->cl_private;
+	xdrs = &(cu->cu_outxdrs);
 
 	sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
@@ -608,12 +621,17 @@ clnt_dg_control(cl, request, info)
 	u_int request;
 	char *info;
 {
-	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu;
 	struct netbuf *addr;
 #ifdef __REENT
 	sigset_t mask;
 #endif
 	sigset_t newmask;
+
+	_DIAGASSERT(cl != NULL);
+	/* info is handled below */
+
+	cu = (struct cu_data *)cl->cl_private;
 
 	sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
@@ -742,12 +760,17 @@ static void
 clnt_dg_destroy(cl)
 	CLIENT *cl;
 {
-	struct cu_data *cu = (struct cu_data *)cl->cl_private;
-	int cu_fd = cu->cu_fd;
+	struct cu_data *cu;
+	int cu_fd;
 #ifdef __REENT
 	sigset_t mask;
 #endif
 	sigset_t newmask;
+
+	_DIAGASSERT(cl != NULL);
+
+	cu = (struct cu_data *)cl->cl_private;
+	cu_fd = cu->cu_fd;
 
 	sigfillset(&newmask);
 	thr_sigsetmask(SIG_SETMASK, &newmask, &mask);
@@ -803,6 +826,9 @@ static bool_t
 time_not_ok(t)
 	struct timeval *t;
 {
+
+	_DIAGASSERT(t != NULL);
+
 	return (t->tv_sec < -1 || t->tv_sec > 100000000 ||
 		t->tv_usec < -1 || t->tv_usec > 1000000);
 }
@@ -816,6 +842,8 @@ __rpc_timeval_to_msec(t)
 	struct timeval	*t;
 {
 	int	t1, tmp;
+
+	_DIAGASSERT(t != NULL);
 
 	/*
 	 *	We're really returning t->tv_sec * 1000 + (t->tv_usec / 1000)

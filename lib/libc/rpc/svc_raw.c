@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.14 2000/07/06 03:10:35 christos Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.15 2001/01/04 14:42:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -53,6 +53,7 @@ static char sccsid[] = "@(#)svc_raw.c 1.25 89/01/31 Copyr 1984 Sun Micro";
 #include <rpc/rpc.h>
 #include <sys/types.h>
 #include <rpc/raw.h>
+#include <assert.h>
 #include <stdlib.h>
 
 #ifdef __weak_alias
@@ -247,6 +248,8 @@ svc_raw_ops(xprt)
 #ifdef __REENT
 	extern mutex_t ops_lock;
 #endif
+
+	_DIAGASSERT(xprt != NULL);
 
 /* VARIABLES PROTECTED BY ops_lock: ops */
 
