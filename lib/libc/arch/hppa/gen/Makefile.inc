@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2004/07/18 22:41:23 chs Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2004/07/24 19:09:29 chs Exp $
 
 SRCS+=	bswap16.c bswap32.c bswap64.c
 SRCS+=	__sigsetjmp14.S __setjmp14.S _setjmp.S __longjmp14.c
@@ -16,6 +16,5 @@ SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
 SRCS+=	makecontext.c resumecontext.c _resumecontext.S swapcontext.S _lwp.c
 
-# XXX Missing:
-# fabs, flt_rounds, fpgetmask, fpgetround, fpgetsticky
-# fpsetmask, fpsetround, fpsetsticky
+SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
+	fpsetround.c fpsetsticky.c
