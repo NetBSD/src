@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.65.2.1 2001/05/15 20:33:14 he Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.65.2.2 2001/08/16 13:33:15 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65.2.1 2001/05/15 20:33:14 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65.2.2 2001/08/16 13:33:15 tv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.65.2.1 2001/05/15 20:33:14 he Exp $
 #include <mips/regnum.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
+#include <mips/psl.h>
 #include <machine/cpu.h>
 
 paddr_t kvtophys __P((vaddr_t));	/* XXX */
@@ -142,17 +143,13 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	for (i = 0; i < UPAGES; i++)
 		p2->p_md.md_upte[i] = pte[i].pt_entry &~ x;
 
-	/*
-	 * new thread of control starts its life calling proc_trampoline
-	 * in spl0 condition.
-	 */
 	pcb = &p2->p_addr->u_pcb;
 	pcb->pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
 	pcb->pcb_context[10] = (int)proc_trampoline;	/* RA */
 	pcb->pcb_context[8] = (int)f - 24;		/* SP */
 	pcb->pcb_context[0] = (int)func;		/* S0 */
 	pcb->pcb_context[1] = (int)arg;			/* S1 */
-	pcb->pcb_context[11] |= MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	pcb->pcb_context[11] |= PSL_LOWIPL;		/* SR */
 }
 
 /*
