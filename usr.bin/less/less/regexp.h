@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.h,v 1.1.1.3 1997/09/21 12:23:20 mrg Exp $	*/
+/*	$NetBSD: regexp.h,v 1.1.1.4 1999/04/06 05:30:38 mrg Exp $	*/
 
 /*
  * Definitions etc. for regexp(3) routines.
