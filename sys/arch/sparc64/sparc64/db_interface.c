@@ -1,6 +1,7 @@
-/*	$NetBSD: db_interface.c,v 1.63 2002/05/13 20:30:11 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.64 2002/05/14 02:34:15 eeh Exp $ */
 
 /*
+ * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
@@ -163,14 +164,14 @@ const struct db_variable db_regs[] = {
 	{ "o5", (long *)&DDB_TF->tf_out[5], FCN_NULL, },
 	{ "o6", (long *)&DDB_TF->tf_out[6], FCN_NULL, },
 	{ "o7", (long *)&DDB_TF->tf_out[7], FCN_NULL, },
-	{ "l0", (long *)&DDB_TF->tf_local[0], FCN_NULL, },
-	{ "l1", (long *)&DDB_TF->tf_local[1], FCN_NULL, },
-	{ "l2", (long *)&DDB_TF->tf_local[2], FCN_NULL, },
-	{ "l3", (long *)&DDB_TF->tf_local[3], FCN_NULL, },
-	{ "l4", (long *)&DDB_TF->tf_local[4], FCN_NULL, },
-	{ "l5", (long *)&DDB_TF->tf_local[5], FCN_NULL, },
-	{ "l6", (long *)&DDB_TF->tf_local[6], FCN_NULL, },
-	{ "l7", (long *)&DDB_TF->tf_local[7], FCN_NULL, },
+	{ "l0", (long *)&DDB_FR->fr_local[0], FCN_NULL, },
+	{ "l1", (long *)&DDB_FR->fr_local[1], FCN_NULL, },
+	{ "l2", (long *)&DDB_FR->fr_local[2], FCN_NULL, },
+	{ "l3", (long *)&DDB_FR->fr_local[3], FCN_NULL, },
+	{ "l4", (long *)&DDB_FR->fr_local[4], FCN_NULL, },
+	{ "l5", (long *)&DDB_FR->fr_local[5], FCN_NULL, },
+	{ "l6", (long *)&DDB_FR->fr_local[6], FCN_NULL, },
+	{ "l7", (long *)&DDB_FR->fr_local[7], FCN_NULL, },
 	{ "i0", (long *)&DDB_FR->fr_arg[0], FCN_NULL, },
 	{ "i1", (long *)&DDB_FR->fr_arg[1], FCN_NULL, },
 	{ "i2", (long *)&DDB_FR->fr_arg[2], FCN_NULL, },
