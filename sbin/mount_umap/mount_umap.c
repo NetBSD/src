@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.6 1997/09/15 06:10:24 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $";
+__RCSID("$NetBSD: mount_umap.c,v 1.6 1997/09/15 06:10:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ const struct mntopt mopts[] = {
 	{ NULL }
 };
 
+int	main __P((int, char *[]));
 void	usage __P((void));
 
 int
@@ -106,7 +107,7 @@ main(argc, argv)
 
 	mntflags = 0;
 	mapfile = gmapfile = NULL;
-	while ((ch = getopt(argc, argv, "g:o:u:")) != EOF)
+	while ((ch = getopt(argc, argv, "g:o:u:")) != -1)
 		switch (ch) {
 		case 'g':
 			gmapfile = optarg;
@@ -199,7 +200,7 @@ main(argc, argv)
 #endif /* MAPSECURITY */
 
 	if ((fscanf(gfp, "%d\n", &gnentries)) != 1)
-		errx(1, "nentries not found%s", gmapfile, not);
+		errx(1, "nentries not found%s", not);
 	if (gnentries > MAPFILEENTRIES)
 		errx(1,
 		    "maximum number of entries is %d%s", GMAPFILEENTRIES, not);
@@ -230,7 +231,7 @@ main(argc, argv)
 	args.gmapdata = gmapdata;
 
 	if (mount(MOUNT_UMAP, argv[1], mntflags, &args))
-		err(1, NULL);
+		err(1, "%s", "");
 	exit(0);
 }
 
