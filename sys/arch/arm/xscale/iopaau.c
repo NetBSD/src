@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.2 2002/08/02 00:36:38 thorpej Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.3 2002/08/02 02:08:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.2 2002/08/02 00:36:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.3 2002/08/02 02:08:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -224,111 +224,18 @@ iopaau_process(struct dmover_backend *dmb)
 }
 
 /*
- * iopaau_func_zero_setup:
+ * iopaau_func_fill_immed_setup:
  *
- *	Setup routine for the "zero" function.
+ *	Common code shared by the zero and fillN setup routines.
  */
-int
-iopaau_func_zero_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
+static int
+iopaau_func_fill_immed_setup(struct iopaau_softc *sc,
+    struct dmover_request *dreq, uint32_t immed)
 {
 	bus_dmamap_t dmamap = sc->sc_map_out;
 	uint32_t *prevpa;
 	struct aau_desc_4 **prevp, *cur;
 	int error, seg;
-
-	switch (dreq->dreq_outbuf_type) {
-	case DMOVER_BUF_LINEAR:
-		error = bus_dmamap_load(sc->sc_dmat, dmamap,
-		    dreq->dreq_outbuf.dmbuf_linear.l_addr,
-		    dreq->dreq_outbuf.dmbuf_linear.l_len, NULL,
-		    BUS_DMA_NOWAIT|BUS_DMA_WRITE|BUS_DMA_STREAMING);
-		break;
-
-	case DMOVER_BUF_UIO:
-	    {
-		struct uio *uio = dreq->dreq_outbuf.dmbuf_uio;
-
-		if (uio->uio_rw != UIO_READ)
-			return (EINVAL);
-
-		error = bus_dmamap_load_uio(sc->sc_dmat, dmamap,
-		    uio, BUS_DMA_NOWAIT|BUS_DMA_WRITE|BUS_DMA_STREAMING);
-		break;
-	    }
-	}
-
-	if (__predict_false(error != 0))
-		return (error);
-
-	bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
-	prevp = (struct aau_desc_4 **) &sc->sc_firstdesc;
-	prevpa = &sc->sc_firstdesc_pa;
-
-	for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
-		cur = pool_cache_get(&aau_desc_4_cache, PR_NOWAIT);
-		if (cur == NULL) {
-			*prevp = NULL;
-			error = ENOMEM;
-			goto bad;
-		}
-
-		*prevp = cur;
-		*prevpa = cur->d_pa;
-
-		prevp = &cur->d_next;
-		prevpa = &cur->d_nda;
-
-		/*
-		 * We don't actually enforce the page alignment
-		 * constraint, here, because there is only one
-		 * data stream to worry about.
-		 */
-
-		cur->d_sar1 = 0;	/* immediate value */
-		cur->d_dar = dmamap->dm_segs[seg].ds_addr;
-		cur->d_bc = dmamap->dm_segs[seg].ds_len;
-		cur->d_dc = AAU_DC_B1_CC(AAU_DC_CC_FILL) | AAU_DC_DWE;
-		SYNC_DESC_4(cur);
-	}
-
-	*prevp = NULL;
-	*prevpa = 0;
-
-	cur->d_dc |= AAU_DC_IE;
-	SYNC_DESC_4(cur);
-
-	sc->sc_lastdesc = cur;
-
-	return (0);
-
- bad:
-	iopaau_desc_4_free(sc, sc->sc_firstdesc);
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_map_out);
-	sc->sc_firstdesc = NULL;
-
-	return (error);
-}
-
-/*
- * iopaau_func_fill8_setup:
- *
- *	Setup routine for the "fill8" function.
- */
-int
-iopaau_func_fill8_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
-{
-	bus_dmamap_t dmamap = sc->sc_map_out;
-	uint32_t *prevpa;
-	struct aau_desc_4 **prevp, *cur;
-	int error, seg;
-	uint32_t immed;
-
-	immed = dreq->dreq_immediate[0] |
-	    (dreq->dreq_immediate[0] << 8) |
-	    (dreq->dreq_immediate[0] << 16) |
-	    (dreq->dreq_immediate[0] << 24);
 
 	switch (dreq->dreq_outbuf_type) {
 	case DMOVER_BUF_LINEAR:
@@ -403,6 +310,34 @@ iopaau_func_fill8_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
 	sc->sc_firstdesc = NULL;
 
 	return (error);
+}
+
+/*
+ * iopaau_func_zero_setup:
+ *
+ *	Setup routine for the "zero" function.
+ */
+int
+iopaau_func_zero_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
+{
+
+	return (iopaau_func_fill_immed_setup(sc, dreq, 0));
+}
+
+/*
+ * iopaau_func_fill8_setup:
+ *
+ *	Setup routine for the "fill8" function.
+ */
+int
+iopaau_func_fill8_setup(struct iopaau_softc *sc, struct dmover_request *dreq)
+{
+
+	return (iopaau_func_fill_immed_setup(sc, dreq,
+	    dreq->dreq_immediate[0] |
+	    (dreq->dreq_immediate[0] << 8) |
+	    (dreq->dreq_immediate[0] << 16) |
+	    (dreq->dreq_immediate[0] << 24)));
 }
 
 /*
