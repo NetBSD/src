@@ -1,4 +1,4 @@
-/*	$NetBSD: xlint.c,v 1.5 1997/10/19 19:34:56 mycroft Exp $	*/
+/*	$NetBSD: xlint.c,v 1.6 1998/02/22 15:40:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -32,8 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: xlint.c,v 1.5 1997/10/19 19:34:56 mycroft Exp $";
+__RCSID("$NetBSD: xlint.c,v 1.6 1998/02/22 15:40:41 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -52,6 +53,8 @@ static char rcsid[] = "$NetBSD: xlint.c,v 1.5 1997/10/19 19:34:56 mycroft Exp $"
 
 #include "lint.h"
 #include "pathnames.h"
+
+int main __P((int, char *[]));
 
 /* directory for temporary files */
 static	const	char *tmpdir;
@@ -117,7 +120,7 @@ static	void	applst __P((char ***, char *const *));
 static	void	freelst __P((char ***));
 static	char	*concat2 __P((const char *, const char *));
 static	char	*concat3 __P((const char *, const char *, const char *));
-static	void	terminate __P((int));
+static	void	terminate __P((int)) __attribute__((__noreturn__));
 static	const	char *basename __P((const char *, int));
 static	void	appdef __P((char ***, const char *));
 static	void	usage __P((void));
@@ -284,6 +287,7 @@ usage()
 	(void)printf("     [-Idirectory] [-Uname] file ...\n");
 	terminate(-1);
 }
+
 
 int
 main(argc, argv)

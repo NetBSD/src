@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.12 1997/11/06 15:47:23 cjs Exp $	*/
+/*	$NetBSD: cgram.y,v 1.13 1998/02/22 15:40:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -33,8 +33,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: cgram.y,v 1.12 1997/11/06 15:47:23 cjs Exp $";
+__RCSID("$NetBSD");
 #endif
 
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $	*/
+/*	$NetBSD: main1.c,v 1.4 1998/02/22 15:40:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -31,8 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: main1.c,v 1.3 1995/10/02 17:29:56 jpo Exp $";
+__RCSID("$NetBSD");
 #endif
 
 #include <stdio.h>
@@ -105,6 +106,8 @@ int	vflag = 1;
 int	zflag = 1;
 
 static	void	usage __P((void));
+
+int main __P((int, char *[]));
 
 int
 main(argc, argv)

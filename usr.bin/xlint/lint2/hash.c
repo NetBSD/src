@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.3 1997/11/03 22:36:59 cgd Exp $	*/
+/*	$NetBSD: hash.c,v 1.4 1998/02/22 15:40:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -31,8 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: hash.c,v 1.3 1997/11/03 22:36:59 cgd Exp $";
+__RCSID("$NetBSD: hash.c,v 1.4 1998/02/22 15:40:41 christos Exp $");
 #endif
 
 /*
@@ -40,8 +41,10 @@ static char rcsid[] = "$NetBSD: hash.c,v 1.3 1997/11/03 22:36:59 cgd Exp $";
  */
 
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <err.h>
 
 #include "lint2.h"
 
@@ -155,7 +158,7 @@ _destroyhash(table)
 
 	for (i = 0; i < HSHSIZ2; i++) {
 		for (hte = table[i]; hte != NULL; hte = nexthte) {
-			free(hte->h_name);
+			free((void *)hte->h_name);
 			nexthte = hte->h_link;
 			free(hte);
 		}

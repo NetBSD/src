@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $	*/
+/*	$NetBSD: func.c,v 1.8 1998/02/22 15:40:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -31,8 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: func.c,v 1.7 1995/10/02 17:31:40 jpo Exp $";
+__RCSID("$NetBSD");
 #endif
 
 #include <stdlib.h>
@@ -615,7 +616,7 @@ switch1(tn)
 void
 switch2()
 {
-	int	nenum, nclab;
+	int	nenum = 0, nclab = 0;
 	sym_t	*esym;
 	clst_t	*cl;
 

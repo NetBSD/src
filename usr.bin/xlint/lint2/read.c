@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.4 1997/11/03 22:37:09 cgd Exp $	*/
+/*	$NetBSD: read.c,v 1.5 1998/02/22 15:40:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -32,8 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: read.c,v 1.4 1997/11/03 22:37:09 cgd Exp $";
+__RCSID("$NetBSD: read.c,v 1.5 1998/02/22 15:40:41 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -107,7 +108,7 @@ readfile(name)
 	FILE	*inp;
 	size_t	len;
 	const	char *cp;
-	char	*line, *eptr, rt;
+	char	*line, *eptr, rt = '\0';
 	int	cline, isrc, iline;
 	pos_t	pos;
 
@@ -349,7 +350,7 @@ decldef(posp, cp)
 	sym_t	*symp, sym;
 	char	c, *ep, *pos1;
 	int	used, renamed;
-	hte_t	*hte, *renamehte;
+	hte_t	*hte, *renamehte = NULL;
 	const char *name, *rename;
 
 	(void)memset(&sym, 0, sizeof (sym));
@@ -543,7 +544,7 @@ inptype(cp, epp)
 	char	c, s, *eptr;
 	const	char *ep;
 	type_t	*tp;
-	int	narg, i, osdef;
+	int	narg, i, osdef = 0;
 	size_t	tlen;
 	u_short	tidx;
 	int	h;
@@ -677,6 +678,25 @@ inptype(cp, epp)
 		}
 		break;
 		/* LINTED (enumeration value(s) not handled in switch) */
+	case LONG:
+	case VOID:
+	case LDOUBLE:
+	case DOUBLE:
+	case FLOAT:
+	case UQUAD:
+	case QUAD:
+	case ULONG:
+	case UINT:
+	case INT:
+	case USHORT:
+	case SHORT:
+	case UCHAR:
+	case SCHAR:
+	case CHAR:
+	case UNSIGN:
+	case SIGNED:
+	case NOTSPEC:
+		break;
 	}
 
 	*epp = cp;
@@ -863,6 +883,25 @@ gettlen(cp, epp)
 		}
 		break;
 		/* LINTED (enumeration value(s) not handled in switch) */
+	case FLOAT:
+	case USHORT:
+	case SHORT:
+	case UCHAR:
+	case SCHAR:
+	case CHAR:
+	case UNSIGN:
+	case SIGNED:
+	case NOTSPEC:
+	case INT:
+	case UINT:
+	case DOUBLE:
+	case LDOUBLE:
+	case VOID:
+	case ULONG:
+	case QUAD:
+	case UQUAD:
+	case LONG:
+		break;
 	}
 
 	*epp = cp;

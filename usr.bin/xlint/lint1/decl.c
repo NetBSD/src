@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.12 1996/12/22 11:31:05 cgd Exp $	*/
+/*	$NetBSD: decl.c,v 1.13 1998/02/22 15:40:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -32,8 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: decl.c,v 1.12 1996/12/22 11:31:05 cgd Exp $";
+__RCSID("$NetBSD");
 #endif
 
 #include <sys/param.h>
@@ -480,6 +481,27 @@ tdeferr(td, t)
 		}
 		break;
 		/* LINTED (enumeration values not handled in switch) */
+	case NOTSPEC:
+	case USHORT:
+	case UCHAR:
+	case SCHAR:
+	case CHAR:
+	case FUNC:
+	case ARRAY:
+	case PTR:
+	case ENUM:
+	case UNION:
+	case STRUCT:
+	case VOID:
+	case LDOUBLE:
+	case DOUBLE:
+	case FLOAT:
+	case UQUAD:
+	case QUAD:
+	case ULONG:
+	case UINT:
+	case INT:
+		break;
 	}
 
 	/* Anything other is not accepted. */
@@ -1024,7 +1046,8 @@ decl1str(dsym)
 {
 	type_t	*tp;
 	tspec_t	t;
-	int	sz, o, len;
+	int	sz, len;
+	int	o = 0;	/* Appease gcc */
 	scl_t	sc;
 
 	if ((sc = dsym->s_scl) != MOS && sc != MOU)
@@ -1427,7 +1450,7 @@ sym_t *
 dname(sym)
 	sym_t	*sym;
 {
-	scl_t	sc;
+	scl_t	sc = NULL;
 
 	if (sym->s_scl == NOSCL) {
 		dcs->d_rdcsym = NULL;
@@ -1557,7 +1580,7 @@ mktag(tag, kind, decl, semi)
 	tspec_t	kind;
 	int	decl, semi;
 {
-	scl_t	scl;
+	scl_t	scl = NULL;
 	type_t	*tp;
 
 	if (kind == STRUCT) {
