@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.23 2005/02/09 23:02:10 ws Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.24 2005/02/14 02:22:48 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.23 2005/02/09 23:02:10 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.24 2005/02/14 02:22:48 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -401,7 +401,7 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 				    (off + bsize) & 0xffffffff);
 			error = ext2fs_setsize(ip, off + bsize);
 			if (error) {
-				UVMHIST_LOG(ubcist, "error %d", error, 0,0,0);
+				UVMHIST_LOG(ubchist, "error %d", error, 0,0,0);
 				return error;
 			}
 		}
