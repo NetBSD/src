@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.18 2002/02/11 04:56:27 takemura Exp $	*/
+/*	$NetBSD: vrip.c,v 1.19 2002/02/11 07:55:51 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -205,6 +205,13 @@ vripattach_common(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_chipset = vrip_chipset_methods; /* structure assignment */
 	sc->sc_chipset.vc_sc = sc;
+
+#ifdef DIAGNOSTIC
+	if (sc->sc_icu_addr == 0 ||
+	    sc->sc_sysint2 == 0 ||
+	    sc->sc_msysint2 == 0)
+		panic("vripattach: missing register info.");
+#endif /* DIAGNOSTIC */
 
 	/*
 	 *  Map ICU (Interrupt Control Unit) register space.

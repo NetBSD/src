@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.71 2002/02/11 04:33:22 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.72 2002/02/11 07:55:50 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -111,7 +111,10 @@ include "dev/isa/files.isa"
 device vripif { [addr=-1], [size=-1], [addr2=-1], [size2=-1], [unit=-1], [pwctl=-1], [platform = -1] }
 device vrip: vripif
 attach vrip at mainbus
-file arch/hpcmips/vr/vrip.c		vrip needs-flag
+device vr4102ip: vripif
+attach vr4102ip at mainbus
+file arch/hpcmips/vr/vrip.c		vrip|vr4102ip needs-flag
+file arch/hpcmips/vr/vr4102ip.c		vr4102ip
 
 device vrbcu
 attach vrbcu at vripif
