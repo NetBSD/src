@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.24 2000/08/09 03:02:53 tv Exp $	*/
+/*	$NetBSD: ka650.c,v 1.25 2001/04/27 15:02:37 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -112,8 +112,7 @@ uvaxIII_conf()
 	    syssub == VAX_SIE_KA640 ? 4 : 5,
 	    syssub == VAX_SIE_KA655 ? 5 : 0,
 	    (vax_cpudata & 0xff), GETFRMREV(vax_siedata));
-	if (syssub != VAX_SIE_KA640)
-		ka650setcache(CACHEON);
+	ka650setcache(CACHEON);
 	if (ctob(physmem) > ka650merr_ptr->merr_qbmbr) {
 		printf("physmem(0x%x) > qbmbr(0x%x)\n",
 		    ctob(physmem), (int)ka650merr_ptr->merr_qbmbr);
@@ -254,25 +253,30 @@ uvaxIII_mchk(cmcf)
  * Enable 1st level cache too.
  */
 void
-ka650setcache(state)
+ka650setcache(int state)
 {
-	register int i;
+	int syssub = GETSYSSUBT(vax_siedata);
+	int i;
 
 	/*
 	 * Before doing anything, disable the cache.
 	 */
 	mtpr(0, PR_CADR);
-	ka650cbd_ptr->cbd_cacr = CACR_CPE;
+	if (syssub != VAX_SIE_KA640)
+		ka650cbd_ptr->cbd_cacr = CACR_CPE;
 
 	/*
 	 * Check what we want to do, enable or disable.
 	 */
 	if (state == CACHEON) {
-		for (i = 0; i < (KA650_CACHESIZE / sizeof(KA650_CACHE_ptr[0]));
-		    i += 2)
-			KA650_CACHE_ptr[i] = 0;
-		ka650cbd_ptr->cbd_cacr = CACR_CEN;
 		mtpr(CADR_SEN2 | CADR_SEN1 | CADR_CENI | CADR_CEND, PR_CADR);
+		if (syssub != VAX_SIE_KA640) {
+			for (i = 0;
+			    i < (KA650_CACHESIZE / sizeof(KA650_CACHE_ptr[0]));
+			    i += 2)
+				KA650_CACHE_ptr[i] = 0;
+			ka650cbd_ptr->cbd_cacr = CACR_CEN;
+		}
 	}
 }
 
