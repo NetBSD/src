@@ -1,11 +1,12 @@
-/*	$NetBSD: isp_pci.c,v 1.20 1998/06/08 06:55:57 thorpej Exp $	*/
-
+/* $NetBSD: isp_pci.c,v 1.21 1998/07/15 19:53:57 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
- * Copyright (c) 1997 by Matthew Jacob 
- * NASA AMES Research Center
+ *---------------------------------------
+ * Copyright (c) 1997, 1998 by Matthew Jacob
+ * NASA/Ames Research Center
  * All rights reserved.
+ *---------------------------------------
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,28 +31,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
  */
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/queue.h>
-#include <sys/device.h>
-#include <machine/bus.h>
-#include <machine/intr.h>
-#include <dev/scsipi/scsi_all.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsiconf.h>
+#include <dev/ic/isp_netbsd.h>
+#include <dev/microcode/isp/asm_pci.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-#include <vm/vm.h>
-
-#include <dev/ic/ispreg.h>
-#include <dev/ic/ispvar.h>
-#include <dev/ic/ispmbox.h>
-#include <dev/microcode/isp/asm_pci.h>
 
 static u_int16_t isp_pci_rd_reg __P((struct ispsoftc *, int));
 static void isp_pci_wr_reg __P((struct ispsoftc *, int, u_int16_t));
@@ -154,8 +142,10 @@ isp_pci_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
+	static char oneshot = 0;
 	struct pci_attach_args *pa = aux;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) self;
+	struct ispsoftc *isp = &pcs->pci_isp;
 	bus_space_tag_t st, iot, memt;
 	bus_space_handle_t sh, ioh, memh;
 	pci_intr_handle_t ih;
@@ -187,39 +177,39 @@ isp_pci_attach(parent, self, aux)
 	pcs->pci_pc = pa->pa_pc;
 	pcs->pci_tag = pa->pa_tag;
 	if (pa->pa_id == PCI_QLOGIC_ISP) {
-		pcs->pci_isp.isp_mdvec = &mdvec;
-		pcs->pci_isp.isp_type = ISP_HA_SCSI_UNKNOWN;
-		pcs->pci_isp.isp_param =
-			malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
-		if (pcs->pci_isp.isp_param == NULL) {
+		isp->isp_mdvec = &mdvec;
+		isp->isp_type = ISP_HA_SCSI_UNKNOWN;
+		isp->isp_param = malloc(sizeof (sdparam), M_DEVBUF, M_NOWAIT);
+		if (isp->isp_param == NULL) {
 			printf("%s: couldn't allocate sdparam table\n",
-			       pcs->pci_isp.isp_name);
+			       isp->isp_name);
+			return;
 		}
-		bzero(pcs->pci_isp.isp_param, sizeof (sdparam));
+		bzero(isp->isp_param, sizeof (sdparam));
 	} else if (pa->pa_id == PCI_QLOGIC_ISP2100) {
 		u_int32_t data;
-		pcs->pci_isp.isp_mdvec = &mdvec_2100;
+		isp->isp_mdvec = &mdvec_2100;
 		if (ioh_valid == 0) {
 			printf("%s: warning, ISP2100 cannot use I/O Space"
-				" Mappings\n", pcs->pci_isp.isp_name);
+				" Mappings\n", isp->isp_name);
 		} else {
 			pcs->pci_st = iot;
 			pcs->pci_sh = ioh;
 		}
 
 #if	0
-		printf("%s: PCIREGS cmd=%x bhlc=%x\n", pcs->pci_isp.isp_name,
+		printf("%s: PCIREGS cmd=%x bhlc=%x\n", isp->isp_name,
 		 pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG),
 		 pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG));
 #endif
-		pcs->pci_isp.isp_type = ISP_HA_FC_2100;
-		pcs->pci_isp.isp_param =
-			malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
-		if (pcs->pci_isp.isp_param == NULL) {
+		isp->isp_type = ISP_HA_FC_2100;
+		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
+		if (isp->isp_param == NULL) {
 			printf("%s: couldn't allocate fcparam table\n",
-			       pcs->pci_isp.isp_name);
+			       isp->isp_name);
+			return;
 		}
-		bzero(pcs->pci_isp.isp_param, sizeof (fcparam));
+		bzero(isp->isp_param, sizeof (fcparam));
 
 		data = pci_conf_read(pa->pa_pc, pa->pa_tag,
 			PCI_COMMAND_STATUS_REG);
@@ -243,29 +233,36 @@ isp_pci_attach(parent, self, aux)
 		data |= 0xf801;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG, data);
 		printf("%s: setting latency to %x and cache line size to %x\n",
-			pcs->pci_isp.isp_name, (data >> 8) & 0xff,
+			isp->isp_name, (data >> 8) & 0xff,
 			data & 0xff);
 #endif
 	} else {
 		return;
 	}
-	isp_reset(&pcs->pci_isp);
-	if (pcs->pci_isp.isp_state != ISP_RESETSTATE) {
-		free(pcs->pci_isp.isp_param, M_DEVBUF);
+
+	if (oneshot) {
+		oneshot = 0;
+		printf("***Qlogic ISP Driver, NetBSD (pci) Version\n***%s\n",
+			ISP_VERSION_STRING);
+	}
+
+	isp_reset(isp);
+	if (isp->isp_state != ISP_RESETSTATE) {
+		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
-	isp_init(&pcs->pci_isp);
-	if (pcs->pci_isp.isp_state != ISP_INITSTATE) {
-		isp_uninit(&pcs->pci_isp);
-		free(pcs->pci_isp.isp_param, M_DEVBUF);
+	isp_init(isp);
+	if (isp->isp_state != ISP_INITSTATE) {
+		isp_uninit(isp);
+		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", pcs->pci_isp.isp_name);
-		isp_uninit(&pcs->pci_isp);
-		free(pcs->pci_isp.isp_param, M_DEVBUF);
+		printf("%s: couldn't map interrupt\n", isp->isp_name);
+		isp_uninit(isp);
+		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
 
@@ -273,36 +270,37 @@ isp_pci_attach(parent, self, aux)
 	if (intrstr == NULL)
 		intrstr = "<I dunno>";
 	pcs->pci_ih =
-	  pci_intr_establish(pa->pa_pc, ih, IPL_BIO, isp_intr, &pcs->pci_isp);
+	  pci_intr_establish(pa->pa_pc, ih, IPL_BIO, isp_intr, isp);
 	if (pcs->pci_ih == NULL) {
 		printf("%s: couldn't establish interrupt at %s\n",
-			pcs->pci_isp.isp_name, intrstr);
-		isp_uninit(&pcs->pci_isp);
-		free(pcs->pci_isp.isp_param, M_DEVBUF);
+			isp->isp_name, intrstr);
+		isp_uninit(isp);
+		free(isp->isp_param, M_DEVBUF);
 		return;
 	}
-	printf("%s: interrupting at %s\n", pcs->pci_isp.isp_name, intrstr);
+	printf("%s: interrupting at %s\n", isp->isp_name, intrstr);
 
 	/*
 	 * Create the DMA maps for the data transfers.
 	 */
-	for (i = 0; i < RQUEST_QUEUE_LEN(&pcs->pci_isp); i++) {
+	for (i = 0; i < RQUEST_QUEUE_LEN; i++) {
 		if (bus_dmamap_create(pcs->pci_dmat, MAXPHYS,
 		    (MAXPHYS / NBPG) + 1, MAXPHYS, 0, BUS_DMA_NOWAIT,
 		    &pcs->pci_xfer_dmap[i])) {
 			printf("%s: can't create dma maps\n",
-			    pcs->pci_isp.isp_name);
-			isp_uninit(&pcs->pci_isp);
+			    isp->isp_name);
+			isp_uninit(isp);
 			return;
 		}
 	}
 	/*
 	 * Do Generic attach now.
 	 */
-	isp_attach(&pcs->pci_isp);
-	if (pcs->pci_isp.isp_state != ISP_RUNSTATE) {
-		isp_uninit(&pcs->pci_isp);
-		free(pcs->pci_isp.isp_param, M_DEVBUF);
+	isp_attach(isp);
+	if (isp->isp_state != ISP_RUNSTATE) {
+		isp_uninit(isp);
+		free(isp->isp_param, M_DEVBUF);
+		return;
 	}
 }
 
@@ -389,7 +387,7 @@ isp_pci_mbxdma(isp)
 	/*
 	 * Allocate and map the request queue.
 	 */
-	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN(isp));
+	len = ISP_QUEUE_SIZE(RQUEST_QUEUE_LEN);
 	if (bus_dmamem_alloc(pci->pci_dmat, len, NBPG, 0, &seg, 1, &rseg,
 	      BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
@@ -406,7 +404,7 @@ isp_pci_mbxdma(isp)
 	/*
 	 * Allocate and map the result queue.
 	 */
-	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp));
+	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN);
 	if (bus_dmamem_alloc(pci->pci_dmat, len, NBPG, 0, &seg, 1, &rseg,
 	      BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(pci->pci_dmat, &seg, rseg, len,
@@ -457,7 +455,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 		return (0);
 	}
 
-	if (rq->req_handle > RQUEST_QUEUE_LEN(isp) || rq->req_handle < 1) {
+	if (rq->req_handle > RQUEST_QUEUE_LEN || rq->req_handle < 1) {
 		panic("%s: bad handle (%d) in isp_pci_dmasetup\n",
 		    isp->isp_name, rq->req_handle);
 		/* NOTREACHED */
@@ -479,8 +477,10 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	}
 	error = bus_dmamap_load(pci->pci_dmat, dmap, xs->data, xs->datalen,
 	    NULL, xs->flags & SCSI_NOSLEEP ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-	if (error)
+	if (error) {
+		XS_SETERR(xs, HBA_BOTCH);
 		return (error);
+	}
 
 	segcnt = dmap->dm_nsegs;
 
@@ -507,11 +507,12 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	do {
 		crq = (ispcontreq_t *)
 			ISP_QUEUE_ENTRY(isp->isp_rquest, *iptrp);
-		*iptrp = (*iptrp + 1) & (RQUEST_QUEUE_LEN(isp) - 1);
+		*iptrp = (*iptrp + 1) & (RQUEST_QUEUE_LEN - 1);
 		if (*iptrp == optr) {
 			printf("%s: Request Queue Overflow++\n",
 			       isp->isp_name);
 			bus_dmamap_unload(pci->pci_dmat, dmap);
+			XS_SETERR(xs, HBA_BOTCH);
 			return (EFBIG);
 		}
 		rq->req_header.rqs_entry_count++;
