@@ -1,4 +1,4 @@
-.\"	$NetBSD: isapnp.4,v 1.16 2000/07/26 12:02:28 ad Exp $
+.\"	$NetBSD: isapnp.4,v 1.17 2000/12/19 15:33:52 onoe Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -80,6 +80,11 @@ Standard IDE and ATAPI drive controller.
 .Pp
 .Ss Network interfaces
 .Bl -tag -width pcdisplay -offset indent
+.It an
+.Tn Aironet
+4500/4800 and
+.Tn Cisco
+340 series 802.11 interfaces.
 .It ep
 3com 3c509B Etherlink-III
 .Tn Ethernet
@@ -140,6 +145,7 @@ the supported front-ends for other buses.
 .Xr intro 4 ,
 .Xr aha 4 ,
 .Xr aic 4 ,
+.Xr an 4 ,
 .Xr com 4 ,
 .Xr ep 4 ,
 .Xr ess 4 ,
