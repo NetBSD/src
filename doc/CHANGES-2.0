@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.291 2004/06/22 09:29:17 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.292 2004/06/22 11:08:36 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4380,3 +4380,7 @@ sys/arch/macppc/macppc/machdep.c		1.132
 	Fix spurious keyboard inputs on iBook G4.
 	[manu, ticket #534]
 
+xsrc/local/programs/x11-ssh-askpass/Imakefile	1.5
+
+	Remove leftover files in clean and cleandir targets. PR #25852.
+	[tron, ticket #499]
