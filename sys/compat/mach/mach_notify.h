@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.h,v 1.4 2003/11/17 13:20:06 manu Exp $ */
+/*	$NetBSD: mach_notify.h,v 1.5 2003/11/18 01:40:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ void mach_notify_port_dead_name(struct lwp *, struct mach_right *);
 #define MACH_EXC_RAISE_STATE_MSGID	2402
 #define MACH_EXC_RAISE_STATE_IDENTITY_MSGID	2403
 
+/* exception_raise. The kernel is the client, not the server */
 
 typedef struct {
 	mach_msg_header_t req_msgh;
@@ -138,6 +139,14 @@ typedef struct {
 } mach_exception_raise_request_t;
 
 typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+} mach_exception_raise_reply_t;
+
+/* exception_raise_state. The kernel is the client, not the server */
+
+typedef struct {
 	mach_msg_header_t req_msgh;
 	mach_ndr_record_t req_ndr;
 	mach_exception_type_t req_exc;
@@ -148,6 +157,14 @@ typedef struct {
 	mach_natural_t req_state[144];
 	mach_msg_trailer_t req_trailer;
 } mach_exception_raise_state_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+} mach_exception_raise_state_reply_t;
+
+/* exception_raise_state_identity. The kernel is the client, not the server */
 
 typedef struct {
 	mach_msg_header_t req_msgh;
@@ -163,6 +180,13 @@ typedef struct {
 	mach_natural_t req_state[144];
 	mach_msg_trailer_t req_trailer;
 } mach_exception_raise_state_identity_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+} mach_exception_raise_state_identity_reply_t;
+
 
 void mach_trapsignal(struct lwp *, const struct ksiginfo *);
 int mach_trapsignal1(struct lwp *, const struct ksiginfo *);
