@@ -1,4 +1,4 @@
-/*	$NetBSD: authfile.h,v 1.1.1.1 2000/09/28 22:09:46 thorpej Exp $	*/
+/*	$NetBSD: authfile.h,v 1.1.1.2 2001/01/14 04:50:05 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,6 +15,7 @@
 
 #ifndef AUTHFILE_H
 #define AUTHFILE_H
+
 
 /*
  * Saves the authentication (private) key in a file, encrypting it with

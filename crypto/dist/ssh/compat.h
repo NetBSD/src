@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.h,v 1.1.1.1 2000/09/28 22:10:00 thorpej Exp $	*/
+/*	$NetBSD: compat.h,v 1.1.1.2 2001/01/14 04:50:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 Markus Friedl.  All rights reserved.
@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: compat.h,v 1.10 2000/09/07 20:27:50 deraadt Exp */
+/* from OpenBSD: compat.h,v 1.13 2000/12/06 22:58:15 markus Exp */
 
 #ifndef COMPAT_H
 #define COMPAT_H
@@ -35,10 +35,12 @@
 #define	SSH_PROTO_2		0x04
 
 #define SSH_BUG_SIGBLOB		0x01
-#define SSH_BUG_PUBKEYAUTH	0x02
+#define SSH_BUG_PKSERVICE	0x02
 #define SSH_BUG_HMAC		0x04
 #define SSH_BUG_X11FWD		0x08
-#define SSH_COMPAT_SESSIONID_ENCODING		0x10
+#define SSH_OLD_SESSIONID	0x10
+#define SSH_BUG_PKAUTH		0x20
+#define SSH_BUG_DEBUG		0x40
 
 void    enable_compat13(void);
 void    enable_compat20(void);

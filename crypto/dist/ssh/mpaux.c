@@ -1,4 +1,4 @@
-/*	$NetBSD: mpaux.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $	*/
+/*	$NetBSD: mpaux.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,11 +14,11 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* from OpenBSD: mpaux.c,v 1.14 2000/09/07 20:27:52 deraadt Exp */
+/* from OpenBSD: mpaux.c,v 1.15 2000/12/19 23:17:57 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mpaux.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $");
+__RCSID("$NetBSD: mpaux.c,v 1.1.1.2 2001/01/14 04:50:24 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -32,15 +32,15 @@ __RCSID("$NetBSD: mpaux.c,v 1.1.1.1 2000/09/28 22:10:04 thorpej Exp $");
 #include "mpaux.h"
 
 void
-compute_session_id(unsigned char session_id[16],
-    unsigned char cookie[8],
+compute_session_id(u_char session_id[16],
+    u_char cookie[8],
     BIGNUM* host_key_n,
     BIGNUM* session_key_n)
 {
-	unsigned int host_key_bytes = BN_num_bytes(host_key_n);
-	unsigned int session_key_bytes = BN_num_bytes(session_key_n);
-	unsigned int bytes = host_key_bytes + session_key_bytes;
-	unsigned char *buf = xmalloc(bytes);
+	u_int host_key_bytes = BN_num_bytes(host_key_n);
+	u_int session_key_bytes = BN_num_bytes(session_key_n);
+	u_int bytes = host_key_bytes + session_key_bytes;
+	u_char *buf = xmalloc(bytes);
 	MD5_CTX md;
 
 	BN_bn2bin(host_key_n, buf);

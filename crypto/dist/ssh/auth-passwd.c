@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.1.1.1 2000/09/28 22:09:39 thorpej Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.1.1.2 2001/01/14 04:49:58 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -60,11 +60,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* from OpenBSD: auth-passwd.c,v 1.17 2000/09/07 20:27:49 deraadt Exp */
+/* from OpenBSD: auth-passwd.c,v 1.18 2000/10/03 18:03:03 markus Exp */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: auth-passwd.c,v 1.1.1.1 2000/09/28 22:09:39 thorpej Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.1.1.2 2001/01/14 04:49:58 itojun Exp $");
 #endif
 
 #include "includes.h"
@@ -92,7 +92,7 @@ auth_password(struct passwd * pw, const char *password)
 	if (*password == '\0' && options.permit_empty_passwd == 0)
 		return 0;
 
-#ifdef SKEY
+#ifdef SKEY_VIA_PASSWD_IS_DISABLED
 	if (options.skey_authentication == 1) {
 		int ret = auth_skey_password(pw, password);
 		if (ret == 1 || ret == 0)

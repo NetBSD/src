@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-server.c,v 1.1.1.1 2000/09/28 22:10:25 thorpej Exp $	*/
+/*	$NetBSD: sftp-server.c,v 1.1.1.2 2001/01/14 04:50:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -28,11 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sftp-server.c,v 1.1.1.1 2000/09/28 22:10:25 thorpej Exp $");
+__RCSID("$NetBSD: sftp-server.c,v 1.1.1.2 2001/01/14 04:50:19 itojun Exp $");
 #endif
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.6 2000/09/07 20:27:53 deraadt Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.9 2000/12/19 23:17:58 markus Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -852,7 +852,7 @@ process_remove(void)
 	id = get_int();
 	name = get_string(NULL);
 	TRACE("remove id %d name %s", id, name);
-	ret = remove(name);
+	ret = unlink(name);
 	status = (ret == -1) ? errno_to_portable(errno) : SSH_FX_OK;
 	send_status(id, status);
 	xfree(name);
@@ -902,6 +902,10 @@ process_realpath(void)
 
 	id = get_int();
 	path = get_string(NULL);
+	if (path[0] == '\0') {
+		xfree(path);
+		path = xstrdup(".");
+	}
 	TRACE("realpath id %d path %s", id, path);
 	if (realpath(path, resolvedname) == NULL) {
 		send_status(id, errno_to_portable(errno));
@@ -938,13 +942,13 @@ process_rename(void)
 void
 process(void)
 {
-	unsigned int msg_len;
-	unsigned int type;
-	unsigned char *cp;
+	u_int msg_len;
+	u_int type;
+	u_char *cp;
 
 	if (buffer_len(&iqueue) < 5)
 		return;		/* Incomplete message. */
-	cp = (unsigned char *) buffer_ptr(&iqueue);
+	cp = (u_char *) buffer_ptr(&iqueue);
 	msg_len = GET_32BIT(cp);
 	if (msg_len > 256 * 1024) {
 		error("bad message ");

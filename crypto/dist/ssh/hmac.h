@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac.h,v 1.1.1.1 2000/09/28 22:10:02 thorpej Exp $	*/
+/*	$NetBSD: hmac.h,v 1.1.1.2 2001/01/14 04:50:19 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,11 +27,11 @@
 #ifndef HMAC_H
 #define HMAC_H
 
-unsigned char *
+u_char *
 hmac(
     EVP_MD *evp_md,
-    unsigned int seqno,
-    unsigned char *data, int datalen,
-    unsigned char *key, int len);
+    u_int seqno,
+    u_char *data, int datalen,
+    u_char *key, int len);
 
 #endif
