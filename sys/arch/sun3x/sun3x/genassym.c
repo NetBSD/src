@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.1.1.1 1997/01/14 20:57:08 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.2 1997/01/17 16:19:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -35,7 +35,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
- *	from: genassym.c,v 1.9 1994/05/23 06:14:19 mycroft
  */
 
 #include <sys/param.h>
@@ -58,6 +57,10 @@
 #include "buserr.h"
 #include "machdep.h"
 
+/* Note: Avoid /usr/include for cross compilation! */
+extern void printf __P((char *fmt, ...));
+extern void exit __P((int));
+
 #if 1	/* XXX - Temporary hack... */
 /*
  * Make this work correctly on a SPARC!
@@ -76,15 +79,6 @@ struct mytrapframe {
 #define trapframe mytrapframe
 #endif	/* XXX */
 
-#ifdef	__STDC__
-#define	def1(name) def(#name, name)
-#else
-#define	def1(name) def("name", name)
-#endif
-
-extern void printf __P((char *fmt, ...));
-extern void exit __P((int));
-
 void
 def(what, val)
 	char *what;
@@ -97,6 +91,12 @@ def(what, val)
 	else
 		printf("%d\n", val);
 }
+
+#ifdef	__STDC__
+#define	def1(name) def(#name, name)
+#else
+#define	def1(name) def("name", name)
+#endif
 
 main()
 {
@@ -167,7 +167,7 @@ main()
 	/* pcb offsets */
 	def("PCB_FLAGS", &pcb->pcb_flags);
 	def("PCB_PS", &pcb->pcb_ps);
-	def("PCB_MMUCTX", &pcb->pcb_mmuctx);
+	def("PCB_MMUCRP", &pcb->pcb_mmucrp);
 	def("PCB_USP", &pcb->pcb_usp);
 	def("PCB_REGS", pcb->pcb_regs);
 	def("PCB_ONFAULT", &pcb->pcb_onfault);
