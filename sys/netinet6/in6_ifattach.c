@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.4 1999/07/10 19:46:10 thorpej Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.5 1999/09/05 01:57:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,9 @@ ieee802_to_eui64(dst, src)
 }
 
 /*
- * find first ifid on list of interfaces.
+ * Find first ifid on list of interfaces.
+ * This is assumed that ifp0's interface token (for example, IEEE802 MAC)
+ * is globally unique.  We may need to have a flag parameter in the future.
  */
 int
 in6_ifattach_getifid(ifp0)
@@ -149,6 +151,10 @@ found:
 			first_ifid[2] & 0xff, first_ifid[3] & 0xff,
 			first_ifid[4] & 0xff, first_ifid[5] & 0xff,
 			first_ifid[6] & 0xff, first_ifid[7] & 0xff);
+
+		/* invert u bit to convert EUI64 to RFC2373 interface ID. */
+		first_ifid[0] ^= 0x02;
+
 		return 0;
 	} else {
 #ifdef DEBUG
@@ -161,6 +167,8 @@ found:
 /*
  * add link-local address to *pseudo* p2p interfaces.
  * get called when the first MAC address is made available in in6_ifattach().
+ *
+ * XXX I start feeling this as a bad idea. (itojun)
  */
 void
 in6_ifattach_p2p()
@@ -174,9 +182,11 @@ in6_ifattach_p2p()
 	for (ifp = ifnet.tqh_first; ifp; ifp = ifp->if_list.tqe_next) {
 		switch (ifp->if_type) {
 		case IFT_GIF:
-		case IFT_FAITH:
 			/* pseudo interfaces - safe to initialize here */
 			in6_ifattach(ifp, IN6_IFT_P2P, 0, 0);
+			break;
+		case IFT_FAITH:
+			/* this mistakingly becomes IFF_UP */
 			break;
 		case IFT_SLIP:
 			/* IPv6 is not supported */
@@ -305,8 +315,6 @@ in6_ifattach(ifp, type, laddr, noloop)
 		if (laddr == NULL)
 			break;
 		ieee802_to_eui64(&ia->ia_addr.sin6_addr.s6_addr8[8], laddr);
-		/* set global bit */
-		ia->ia_addr.sin6_addr.s6_addr8[8] |= 0x02;
 		if (found_first_ifid == 0) {
 			if (in6_ifattach_getifid(ifp) == 0)
 				in6_ifattach_p2p();
@@ -364,7 +372,6 @@ in6_ifattach(ifp, type, laddr, noloop)
 		  RTF_UP|rtflag,
 		  (struct rtentry **)0);
 	ia->ia_flags |= IFA_ROUTE;
-
 
 	if (type == IN6_IFT_P2P || type == IN6_IFT_P2P802) {
 		/*
