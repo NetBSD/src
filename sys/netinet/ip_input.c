@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.144 2002/02/24 17:22:21 martin Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.145 2002/02/25 02:17:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.144 2002/02/24 17:22:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.145 2002/02/25 02:17:55 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -687,6 +687,13 @@ ip_input(struct mbuf *m)
 			ipstat.ips_cantforward++;
 			return;
 		}
+#ifdef IPSEC
+		if (ipsec4_in_reject(m, NULL)) {
+			ipsecstat.in_polvio++;
+			goto bad;
+		}
+#endif
+
 		ip_forward(m, 0);
 	}
 	return;
