@@ -1,4 +1,4 @@
-/*	$NetBSD: if_prom.c,v 1.7 1997/01/18 01:49:29 cgd Exp $	*/
+/*	$NetBSD: if_prom.c,v 1.8 1997/01/24 01:53:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
 #include "include/prom.h"
 #include <lib/libkern/libkern.h>
 
-#include "../bbinfo.h"
+#include "stand/common/bbinfo.h"
 
 int prom_probe();
 int prom_match();
