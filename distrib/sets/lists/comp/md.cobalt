@@ -1,4 +1,4 @@
-# $NetBSD: md.cobalt,v 1.9 2002/04/03 13:44:29 bjh21 Exp $
+# $NetBSD: md.cobalt,v 1.10 2002/04/03 14:28:16 bjh21 Exp $
 ./usr/include/cobalt			comp-c-include
 ./usr/include/cobalt/_G_config.h	comp-c-include
 ./usr/include/cobalt/ansi.h		comp-c-include
@@ -19,11 +19,11 @@
 ./usr/include/cobalt/float.h		comp-c-include
 ./usr/include/cobalt/ieee.h		comp-c-include
 ./usr/include/cobalt/ieeefp.h		comp-c-include
-./usr/include/cobalt/int_const.h		comp-c-include
-./usr/include/cobalt/int_fmtio.h		comp-c-include
-./usr/include/cobalt/int_limits.h		comp-c-include
-./usr/include/cobalt/int_mwgwtypes.h		comp-c-include
-./usr/include/cobalt/int_types.h		comp-c-include
+./usr/include/cobalt/int_const.h	comp-c-include
+./usr/include/cobalt/int_fmtio.h	comp-c-include
+./usr/include/cobalt/int_limits.h	comp-c-include
+./usr/include/cobalt/int_mwgwtypes.h	comp-c-include
+./usr/include/cobalt/int_types.h	comp-c-include
 ./usr/include/cobalt/intr.h		comp-c-include
 ./usr/include/cobalt/kcore.h		comp-c-include
 ./usr/include/cobalt/kdbparam.h		comp-c-include
@@ -53,4 +53,4 @@
 ./usr/include/cobalt/types.h		comp-c-include
 ./usr/include/cobalt/varargs.h		comp-c-include
 ./usr/include/cobalt/vmparam.h		comp-c-include
-./usr/include/ieeefp.h		comp-c-include
+./usr/include/ieeefp.h			comp-c-include
