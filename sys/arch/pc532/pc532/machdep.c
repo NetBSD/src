@@ -88,8 +88,8 @@ void reboot_cpu();
 
 
 /* the following is used externally (sysctl_hw) */
-char machine[] = "ns32k";		/* cpu "architecture" */
-char cpu_model[120] = "32532";
+char machine[] = "pc532";
+char cpu_model[] = "ns32532";
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -554,7 +554,7 @@ sendsig(catcher, sig, mask, code)
 		    ps->ps_sigstk.ss_size - sizeof(struct sigframe));
 		ps->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else {
-		fp = (struct sigframe *)(regs[SP]
+		fp = (struct sigframe *)(regs[REG_SP]
 				- sizeof(struct sigframe));
 	}
 
@@ -591,13 +591,13 @@ sendsig(catcher, sig, mask, code)
 	 */
 	fp->sf_sc.sc_onstack = oonstack;
 	fp->sf_sc.sc_mask = mask;
-	fp->sf_sc.sc_sp = regs[SP];
-	fp->sf_sc.sc_fp = regs[FP];
-	fp->sf_sc.sc_pc = regs[PC];
-	fp->sf_sc.sc_ps = regs[PSR];
-	fp->sf_sc.sc_sb = regs[SB];
-	regs[SP] = (int)fp;
-	regs[PC] = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	fp->sf_sc.sc_sp = regs[REG_SP];
+	fp->sf_sc.sc_fp = regs[REG_FP];
+	fp->sf_sc.sc_pc = regs[REG_PC];
+	fp->sf_sc.sc_ps = regs[REG_PSR];
+	fp->sf_sc.sc_sb = regs[REG_SB];
+	regs[REG_SP] = (int)fp;
+	regs[REG_PC] = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 }
 
 /*
@@ -623,7 +623,7 @@ sigreturn(p, uap, retval)
 	register struct sigcontext *scp;
 	register struct sigframe *fp;
 	register int *regs = p->p_md.md_regs;
-	fp = (struct sigframe *) regs[SP] ;
+	fp = (struct sigframe *) regs[REG_SP] ;
 
 	if (useracc((caddr_t)fp, sizeof (*fp), 0) == 0)
 		return(EINVAL);
@@ -645,11 +645,11 @@ sigreturn(p, uap, retval)
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~
 	    (sigmask(SIGKILL)|sigmask(SIGCONT)|sigmask(SIGSTOP));
-	regs[FP] = scp->sc_fp;
-	regs[SP] = scp->sc_sp;
-	regs[PC] = scp->sc_pc;
-	regs[PSR] = scp->sc_ps;
-	regs[SB] = scp->sc_sb;
+	regs[REG_FP] = scp->sc_fp;
+	regs[REG_SP] = scp->sc_sp;
+	regs[REG_PC] = scp->sc_pc;
+	regs[REG_PSR] = scp->sc_ps;
+	regs[REG_SB] = scp->sc_sb;
 	return(EJUSTRETURN);
 }
 
@@ -1035,7 +1035,7 @@ ptrace_set_pc (struct proc *p, unsigned int addr)
 {
 	register int *regs = p->p_md.md_regs;
 
-	regs[PC] = addr;
+	regs[REG_PC] = addr;
 	return 0;
 }
 
@@ -1044,7 +1044,7 @@ ptrace_single_step (struct proc *p)
 {
 	register int *regs = p->p_md.md_regs;
 
-	regs[PSR] |= PSL_T;
+	regs[REG_PSR] |= PSL_T;
 	return 0;
 }
 

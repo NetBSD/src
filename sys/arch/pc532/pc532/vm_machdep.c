@@ -37,25 +37,26 @@
  *
  *	@(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
  *
- *	$Id: vm_machdep.c,v 1.2 1993/09/13 07:26:52 phil Exp $
+ *	$Id: vm_machdep.c,v 1.3 1994/05/20 06:44:35 phil Exp $
  */
 
 /*
  *	Utah $Hdr: vm_machdep.c 1.16.1.1 89/06/23$
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.2 1993/09/13 07:26:52 phil Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/pc532/pc532/Attic/vm_machdep.c,v 1.3 1994/05/20 06:44:35 phil Exp $";
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "malloc.h"
-#include "buf.h"
-#include "user.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/buf.h>
+#include <user.h>
 
-#include "../include/cpu.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
+#include <machine/cpu.h>
+
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -139,8 +140,8 @@ cpu_exit(p)
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 
 	p->p_addr = (struct user *) &nullpcb;
-	splclock();
-	swtch();
+	splstatclock();
+	cpu_switch();
 	/* NOTREACHED */
 }
 #else
@@ -149,14 +150,10 @@ cpu_exit(p)
 	register struct proc *p;
 {
 	
-#if NNPX > 0
- 	npxexit(p);
-#endif
-	splclock();
-	swtch();
+	splstatclock();
+	cpu_switch();
 	/* Not reached. */
 	panic ("cpu_exit! swtch returned!");
-	while (1);
 }
 
 void

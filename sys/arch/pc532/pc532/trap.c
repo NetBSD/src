@@ -329,13 +329,13 @@ out:
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
 		 * If that happened after we setrunqueue ourselves but
-		 * before we swtch()'ed, we might not be on the queue
+		 * before we switch()'ed, we might not be on the queue
 		 * indicated by our priority.
 		 */
-		(void) splclock();
+		(void) splstatclock();
 		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
+		mi_switch();
 		(void) splnone();
 		while (i = CURSIG(p))
 			postsig(i);
@@ -392,7 +392,7 @@ syscall(frame)
 #ifdef notdef
 	sticks = p->p_stime;
 #endif
-	code = frame.sf_reg[R0];
+	code = frame.sf_reg[REG_R0];
 	p->p_md.md_regs = (int *) & (frame.sf_reg);
 	params = (caddr_t)frame.sf_usp + sizeof (int) ;
 
@@ -438,7 +438,7 @@ if (code == -1 && p->p_pid == 1) {
 
 	if ((i = callp->sy_narg * sizeof (int)) &&
 	    (error = copyin(params, (caddr_t)args, (u_int)i))) {
-		frame.sf_reg[R0] = error;
+		frame.sf_reg[REG_R0] = error;
 		frame.sf_psr |= PSL_C;	
 #ifdef SYSCALL_DEBUG
 		scdebug_call(p, code, callp->sy_narg, args);
@@ -463,11 +463,11 @@ if (code == -1 && p->p_pid == 1) {
 		frame.sf_pc = opc;
 	else if (error != EJUSTRETURN) {
 		if (error) {
-			frame.sf_reg[R0] = error;
+			frame.sf_reg[REG_R0] = error;
 			frame.sf_psr |= PSL_C;
 		} else {
-			frame.sf_reg[R0] = rval[0];
-			frame.sf_reg[R1] = rval[1];
+			frame.sf_reg[REG_R0] = rval[0];
+			frame.sf_reg[REG_R1] = rval[1];
 			frame.sf_psr &= ~PSL_C;
 		}
 	}
@@ -488,13 +488,13 @@ done:
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
 		 * If that happened after we setrunqeue ourselves but before
-		 * we swtch()'ed, we might not be on the queue indicated by
+		 * we switch()'ed, we might not be on the queue indicated by
 		 * our priority.
 		 */
-		(void) splclock();
+		(void) splstatclock();
 		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
-		swtch();
+		mi_switch();
 		(void) splnone();
 		while (i = CURSIG(p))
 			postsig(i);
