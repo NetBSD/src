@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.c,v 1.2 1996/03/28 12:40:33 jonathan Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
- *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.1.1.1 1996/03/13 04:58:13 jonathan Exp $
+ *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
 #include <sys/param.h>
@@ -69,22 +70,34 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
-#include <pica/pica/pica.h>
-
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
 
 struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
-extern void MachKernGenException();
-extern void MachUserGenException();
-extern void MachKernIntr();
-extern void MachUserIntr();
-extern void MachTLBModException();
-extern void MachTLBInvalidException();
-extern unsigned MachEmulateBranch();
+/*
+ * Port-specific hardware interrupt handler
+ */
 
-void (*machExceptionTable[])() = {
+int (*mips_hardware_intr) __P((u_int mask, u_int pc, u_int status,
+			       u_int cause)) =
+	( int (*) __P((u_int, u_int, u_int, u_int)) ) 0;
+
+/*
+ * Exception-handling functions, called via machExceptionTable from locore
+ */
+extern void MachKernGenException __P((void));
+extern void MachUserGenException __P((void));
+extern void MachKernIntr __P((void));
+extern void MachUserIntr __P((void));
+extern void MachTLBModException __P((void));
+extern void MachTLBInvalidException __P((void));
+extern unsigned MachEmulateBranch __P((unsigned *regsPtr,
+			     unsigned instPC,
+			     unsigned fpcCSR,
+			     int allowNonBranch));
+
+void (*machExceptionTable[]) __P((void)) = {
 /*
  * The kernel exception handlers.
  */
@@ -102,7 +115,7 @@ void (*machExceptionTable[])() = {
 	MachKernGenException,		/* coprocessor unusable */
 	MachKernGenException,		/* arithmetic overflow */
 	MachKernGenException,		/* trap exception */
-	MachKernGenException,		/* viritual coherence exception inst */
+	MachKernGenException,		/* virtual coherence exception inst */
 	MachKernGenException,		/* floating point exception */
 	MachKernGenException,		/* reserved */
 	MachKernGenException,		/* reserved */
@@ -119,7 +132,7 @@ void (*machExceptionTable[])() = {
 	MachKernGenException,		/* reserved */
 	MachKernGenException,		/* reserved */
 	MachKernGenException,		/* reserved */
-	MachKernGenException,		/* viritual coherence exception data */
+	MachKernGenException,		/* virtual coherence exception data */
 /*
  * The user exception handlers.
  */
@@ -171,9 +184,9 @@ char	*trap_type[] = {
 	"reserved instruction",
 	"coprocessor unusable",
 	"arithmetic overflow",
-	"trap",
-	"viritual coherency instruction",
-	"floating point",
+	"r4k trap/r3k reserved 13",
+	"r4k virtual coherency instruction/r3k reserved 14",
+	"r4k floating point/ r3k reserved 15",
 	"reserved 16",
 	"reserved 17",
 	"reserved 18",
@@ -181,7 +194,7 @@ char	*trap_type[] = {
 	"reserved 20",
 	"reserved 21",
 	"reserved 22",
-	"watch",
+	"r4000 watch",
 	"reserved 24",
 	"reserved 25",
 	"reserved 26",
@@ -189,15 +202,8 @@ char	*trap_type[] = {
 	"reserved 28",
 	"reserved 29",
 	"reserved 30",
-	"viritual coherency data",
+	"r4000 virtual coherency data",
 };
-
-struct {
-	int	int_mask;
-	int	(*int_hand)();
-} cpu_int_tab[8];
-
-int cpu_int_mask;	/* External cpu interrupt mask */
 
 #ifdef DEBUG
 #define TRAPSIZE	10
@@ -210,6 +216,8 @@ struct trapdebug {		/* trap history buffer for debugging */
 	u_int	sp;
 	u_int	code;
 } trapdebug[TRAPSIZE], *trp = trapdebug;
+
+void trapDump __P((char * msg));
 #endif	/* DEBUG */
 
 #ifdef DEBUG	/* stack trace code, also useful for DDB one day */
@@ -219,12 +227,12 @@ extern void logstacktrace();
 /* extern functions printed by name in stack backtraces */
 extern void idle(), cpu_switch(), splx(), MachEmptyWriteBuffer();
 extern void MachTLBMiss();
+extern int main __P((void*));
 #endif	/* DEBUG */
 
-static void pica_errintr();
-extern const struct callback *callv;
 extern volatile struct chiptime *Mach_clock_addr;
 extern u_long intrcnt[];
+
 
 /*
  * Handle an exception.
@@ -506,7 +514,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			if (code >= numsys)
 				callp += p->p_emul->e_nosys; /* (illegal) */
 			else
-				callp += code; 
+				callp += code;
 			i = callp->sy_argsize / sizeof(int);
 			args.i[0] = locr0[A2];
 			args.i[1] = locr0[A3];
@@ -593,6 +601,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		trp->vadr = locr0[SP];
 		trp->pc = locr0[PC];
 		trp->ra = locr0[RA];
+		/*trp->sp = (int)&args;*/	/* XXX */
 		trp->code = -code;
 		if (++trp == &trapdebug[TRAPSIZE])
 			trp = trapdebug;
@@ -763,9 +772,9 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 		panic("trap");
 	}
-	p->p_md.md_regs[PC] = pc;
-	p->p_md.md_regs[CAUSE] = causeReg;
-	p->p_md.md_regs[BADVADDR] = vadr;
+	p->p_md.md_regs [PC] = pc;
+	p->p_md.md_regs [CAUSE] = causeReg;
+	p->p_md.md_regs [BADVADDR] = vadr;
 	trapsignal(p, i, ucode);
 out:
 	/*
@@ -814,6 +823,7 @@ out:
  * Called from MachKernIntr() or MachUserIntr()
  * Note: curproc might be NULL.
  */
+void
 interrupt(statusReg, causeReg, pc, what, args)
 	unsigned statusReg;	/* status register at time of the exception */
 	unsigned causeReg;	/* cause register at time of exception */
@@ -838,19 +848,7 @@ interrupt(statusReg, causeReg, pc, what, args)
 	cnt.v_intr++;
 	mask = causeReg & statusReg;	/* pending interrupts & enable mask */
 
-	/*
-	 *  Check off all enabled interrupts. Called interrupt routine
-	 *  returns mask of interrupts to reenable.
-	 */
-	for(i = 0; i < 5; i++) {
-		if(cpu_int_tab[i].int_mask & mask) {
-			causeReg &= (*cpu_int_tab[i].int_hand)(mask, pc, statusReg, causeReg);
-		}
-	}
-	/*
-	 *  Reenable all non served hardware levels.
-	 */
-	splx((statusReg & ~causeReg & MACH_HARD_INT_MASK) | MACH_SR_INT_ENAB);
+	splx(pica_hardware_intr(mask, pc, statusReg, causeReg));
 
 
 	if (mask & MACH_SOFT_INT_MASK_0) {
@@ -890,12 +888,13 @@ interrupt(statusReg, causeReg, pc, what, args)
 #endif
 #include "ppp.h"
 #if NPPP > 0
-		if(netisr & (1 << NETISR_PPP)) {
+		if (netisr & (1 << NETISR_PPP)) {
 			netisr &= ~(1 << NETISR_PPP);
 			pppintr();
 		}
 #endif
 	}
+
 	if (mask & MACH_SOFT_INT_MASK_0) {
 		clearsoftclock();
 		intrcnt[0]++;
@@ -905,31 +904,11 @@ interrupt(statusReg, causeReg, pc, what, args)
 }
 
 
-set_intr(mask, int_hand, prio)
-	int	mask;
-	int	(*int_hand)();
-	int	prio;
-{
-	if(prio > 4)
-		panic("set_intr: to high priority");
-
-	if(cpu_int_tab[prio].int_mask != 0)
-		panic("set_intr: int already set");
-
-	cpu_int_tab[prio].int_hand = int_hand;
-	cpu_int_tab[prio].int_mask = mask;
-	cpu_int_mask |= mask >> 10;
-
-	/*
-	 *  Update external interrupt mask but dont enable clock.
-	 */
-	out32(PICA_SYS_EXT_IMASK, cpu_int_mask & (~MACH_INT_MASK_4 >> 10));
-}
-
 /*
  * This is called from MachUserIntr() if astpending is set.
  * This is very similar to the tail of trap().
  */
+void
 softintr(statusReg, pc)
 	unsigned statusReg;	/* status register at time of the exception */
 	unsigned pc;		/* program counter where to continue */
@@ -970,6 +949,7 @@ softintr(statusReg, pc)
 }
 
 #ifdef DEBUG
+void
 trapDump(msg)
 	char *msg;
 {
@@ -994,41 +974,6 @@ trapDump(msg)
 	splx(s);
 }
 #endif
-
-/*
- *----------------------------------------------------------------------
- *
- * MemErrorInterrupts --
- *   pica_errintr - for the ACER PICA_61
- *
- *	Handler an interrupt for the control register.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-static void
-pica_errintr()
-{
-#if 0
-	volatile u_short *sysCSRPtr =
-		(u_short *)MACH_PHYS_TO_UNCACHED(KN01_SYS_CSR);
-	u_short csr;
-
-	csr = *sysCSRPtr;
-
-	if (csr & KN01_CSR_MERR) {
-		printf("Memory error at 0x%x\n",
-			*(unsigned *)MACH_PHYS_TO_UNCACHED(KN01_SYS_ERRADR));
-		panic("Mem error interrupt");
-	}
-	*sysCSRPtr = (csr & ~KN01_CSR_MBZ) | 0xff;
-#endif
-}
 
 
 /*
@@ -1177,6 +1122,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
  * We do this by storing a break instruction after the current instruction,
  * resuming execution, and then restoring the old instruction.
  */
+int
 cpu_singlestep(p)
 	register struct proc *p;
 {
@@ -1215,6 +1161,7 @@ cpu_singlestep(p)
 		return (EFAULT);
 	}
 	p->p_md.md_ss_addr = va;
+
 	/*
 	 * Fetch what's at the current location.
 	 */
@@ -1242,7 +1189,7 @@ cpu_singlestep(p)
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = curproc;
 	i = procfs_domem(curproc, p, NULL, &uio);
-	MachFlushCache();
+	MachFlushCache(); /* XXX memory barrier followed by flush icache? */
 
 	if (i < 0)
 		return (EFAULT);
@@ -1255,6 +1202,7 @@ cpu_singlestep(p)
 }
 
 #ifdef DEBUG
+int
 kdbpeek(addr)
 {
 	if (addr & 3) {
@@ -1529,6 +1477,9 @@ finish:
 #define Name(_fn) { _fn, "_fn"}
 #endif
 static struct { void *addr; char *name;} names[] = {
+	Name(stacktrace),
+	Name(stacktrace_subr),
+	Name(main),
 	Name(interrupt),
 	Name(trap),
 	Name(MachKernGenException),
