@@ -1,10 +1,11 @@
-/*	$NetBSD: fight.c,v 1.9 2004/04/07 17:46:47 ross Exp $	*/
+/*	$NetBSD: fight.c,v 1.10 2004/04/11 13:35:06 he Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
  */
 
 #include "include.h"
+#undef bool
 #include <curses.h>
 
 void
