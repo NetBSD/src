@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.29 2001/06/04 21:37:11 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.30 2001/06/06 06:29:36 chs Exp $	*/
 
 /* 
  * :set tabs=4
@@ -638,9 +638,11 @@ db_mach_cpu(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	bcopy(stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
 	db_printf("using cpu %ld", addr);
 }
+#endif
 
 const struct db_command db_machine_command_table[] = {
+#ifdef MULTIPROCESSOR
 	{ "cpu",	db_mach_cpu,	0,	0 },
-	{ (char *)0, },
-};
 #endif
+	{ NULL },
+};
