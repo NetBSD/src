@@ -1,10 +1,10 @@
-/* $NetBSD: identd.c,v 1.25 2005/03/11 15:49:52 peter Exp $ */
+/* $NetBSD: identd.c,v 1.26 2005/04/03 22:15:32 peter Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
  *
  * This software is in the public domain.
- * Written by Peter Postma <peter@pointless.nl>
+ * Written by Peter Postma <peter@NetBSD.org>
  */
 
 #include <sys/types.h>
@@ -38,19 +38,26 @@
 #include <syslog.h>
 #include <unistd.h>
 
-__RCSID("$NetBSD: identd.c,v 1.25 2005/03/11 15:49:52 peter Exp $");
+#include "identd.h"
+
+__RCSID("$NetBSD: identd.c,v 1.26 2005/04/03 22:15:32 peter Exp $");
 
 #define OPSYS_NAME	"UNIX"
 #define IDENT_SERVICE	"auth"
 #define TIMEOUT		30	/* seconds */
 
 static int   idhandle(int, const char *, const char *, const char *,
-		const char *, int);
+		const char *, struct sockaddr *, int);
 static void  idparse(int, int, int, const char *, const char *, const char *);
 static void  iderror(int, int, int, const char *);
-static const char *gethost(struct sockaddr_storage *);
+static const char *gethost(struct sockaddr *);
 static int  *socketsetup(const char *, const char *, int);
+static int   ident_getuid(struct sockaddr_storage *, socklen_t,
+		struct sockaddr *, uid_t *);
 static int   sysctl_getuid(struct sockaddr_storage *, socklen_t, uid_t *);
+static int   sysctl_proxy_getuid(struct sockaddr_storage *,
+		struct sockaddr *, uid_t *);
+static int   forward(int, struct sockaddr *, int, int, int);
 static int   check_noident(const char *);
 static int   check_userident(const char *, char *, size_t);
 static void  random_string(char *, size_t);
@@ -58,18 +65,37 @@ static int   change_format(const char *, struct passwd *, char *, size_t);
 static void  timeout_handler(int);
 static void  waitchild(int);
 static void  fatal(const char *);
-static void  maybe_syslog(int, const char *, ...);
+static void  die(const char *, ...);
 
 static int   bflag, eflag, fflag, Fflag, iflag, Iflag;
 static int   lflag, Lflag, nflag, Nflag, rflag;
 
+/* NAT lookup function pointer. */
+static int  (*nat_lookup)(struct sockaddr_storage *, struct sockaddr *, int *);
+
+/* Packet filters. */
+static const struct {
+	const char *name;
+	int (*fn)(struct sockaddr_storage *, struct sockaddr *, int *);
+} filters[] = {
+#ifdef WITH_PF
+	{ "pf", pf_natlookup },
+#endif
+#ifdef WITH_IPF
+	{ "ipfilter", ipf_natlookup },
+#endif
+	{ NULL, NULL }
+};
+
 int
 main(int argc, char *argv[])
 {
-	int IPv4or6, ch, *socks, timeout;
+	int IPv4or6, ch, error, i, *socks, timeout;
+	const char *filter, *osname, *portno, *proxy;
 	char *address, *charset, *fmt, *p;
-	const char *osname, *portno;
 	char user[LOGIN_NAME_MAX];
+	struct addrinfo *ai, hints;
+	struct sockaddr *proxy_addr;
 	struct group *grp;
 	struct passwd *pw;
 	gid_t gid;
@@ -79,6 +105,9 @@ main(int argc, char *argv[])
 	osname = OPSYS_NAME;
 	portno = IDENT_SERVICE;
 	timeout = TIMEOUT;
+	nat_lookup = NULL;
+	proxy_addr = NULL;
+	filter = proxy = NULL;
 	address = charset = fmt = NULL;
 	uid = gid = 0;
 	bflag = eflag = fflag = Fflag = iflag = Iflag = 0;
@@ -89,7 +118,8 @@ main(int argc, char *argv[])
 		bflag = 1;
 
 	/* Parse command line arguments. */
-	while ((ch = getopt(argc, argv, "46a:bceF:f:g:IiL:lNno:p:rt:u:")) != -1)
+	while ((ch = getopt(argc, argv,
+	    "46a:bceF:f:g:IiL:lm:Nno:P:p:rt:u:")) != -1) {
 		switch (ch) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -123,8 +153,7 @@ main(int argc, char *argv[])
 				if ((grp = getgrnam(optarg)) != NULL)
 					gid = grp->gr_gid;
 				else
-					errx(EXIT_FAILURE,
-					    "No such group '%s'", optarg);
+					die("No such group `%s'", optarg);
 			}
 			break;
 		case 'I':
@@ -138,7 +167,12 @@ main(int argc, char *argv[])
 			(void)strlcpy(user, optarg, sizeof(user));
 			break;
 		case 'l':
+			if (!lflag)
+				openlog("identd", LOG_PID, LOG_DAEMON);
 			lflag = 1;
+			break;
+		case 'm':
+			filter = optarg;
 			break;
 		case 'N':
 			Nflag = 1;
@@ -149,6 +183,9 @@ main(int argc, char *argv[])
 		case 'o':
 			osname = optarg;
 			break;
+		case 'P':
+			proxy = optarg;
+			break;
 		case 'p':
 			portno = optarg;
 			break;
@@ -157,9 +194,8 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			timeout = (int)strtol(optarg, &p, 0);
-			if (*p != '\0') 
-				errx(EXIT_FAILURE,
-				    "Invalid timeout value '%s'", optarg);
+			if (*p != '\0' || timeout < 1) 
+				die("Invalid timeout value `%s'", optarg);
 			break;
 		case 'u':
 			uid = (uid_t)strtol(optarg, &p, 0);
@@ -168,34 +204,49 @@ main(int argc, char *argv[])
 					uid = pw->pw_uid;
 					gid = pw->pw_gid;
 				} else
-					errx(EXIT_FAILURE,
-					    "No such user '%s'", optarg);
+					die("No such user `%s'", optarg);
 			}
 			break;
 		default:
 			exit(EXIT_FAILURE);
 		}
+	}
 
-	if (lflag)
-		openlog("identd", LOG_PID, LOG_DAEMON);
+	/* Verify proxy address, if enabled. */
+	if (proxy != NULL) {
+		(void)memset(&hints, 0, sizeof(hints));
+		hints.ai_family = IPv4or6;
+		hints.ai_socktype = SOCK_STREAM;
+		error = getaddrinfo(proxy, NULL, &hints, &ai);
+		if (error != 0)
+			die("Bad proxy `%s': %s", proxy, gai_strerror(error));
+		if (ai->ai_next != NULL)
+			die("Bad proxy `%s': resolves to multiple addresses",
+			    proxy);
+		proxy_addr = ai->ai_addr;
+	}
+
+	/* Verify filter, if enabled. */
+	if (filter != NULL) {
+		for (i = 0; filters[i].name != NULL; i++) {
+			if (strcasecmp(filter, filters[i].name) == 0) {
+				nat_lookup = filters[i].fn;
+				break;
+			}
+		}
+		if (nat_lookup == NULL)
+			die("Packet filter `%s' is not supported", filter);
+	}
 
 	/* Setup sockets when running in the background. */
 	if (bflag)
 		socks = socketsetup(address, portno, IPv4or6);
 
 	/* Switch to another uid/gid? */
-	if (gid && setgid(gid) == -1) {
-		maybe_syslog(LOG_ERR, "setgid: %m");
-		if (bflag)
-			warn("setgid");
-		exit(EXIT_FAILURE);
-	}
-	if (uid && setuid(uid) == -1) {
-		maybe_syslog(LOG_ERR, "setuid: %m");
-		if (bflag)
-			warn("setuid");
-		exit(EXIT_FAILURE);
-	}
+	if (gid && setgid(gid) == -1)
+		die("Failed to set GID to `%d': %s", gid, strerror(errno));
+	if (uid && setuid(uid) == -1)
+		die("Failed to set UID to `%d': %s", uid, strerror(errno));
 
 	/*
 	 * When running as daemon: daemonize, setup pollfds and go into
@@ -203,12 +254,12 @@ main(int argc, char *argv[])
 	 * let inetd handle the sockets.
 	 */
 	if (bflag) {
-		int fd, i, nfds, rv;
+		int fd, nfds, rv;
 		struct pollfd *rfds;
 
 		(void)signal(SIGCHLD, waitchild);
 		if (daemon(0, 0) < 0)
-			err(EXIT_FAILURE, "daemon");
+			die("daemon: %s", strerror(errno));
 
 		rfds = malloc(*socks * sizeof(struct pollfd));
 		if (rfds == NULL)
@@ -243,7 +294,8 @@ main(int argc, char *argv[])
 						break;
 					case 0:		/* child */
 						(void)idhandle(fd, charset,
-						    fmt, osname, user, timeout);
+						    fmt, osname, user,
+						    proxy_addr, timeout);
 						_exit(EXIT_SUCCESS);
 					default:	/* parent */
 						(void)close(fd);
@@ -253,14 +305,14 @@ main(int argc, char *argv[])
 		}
 	} else
 		(void)idhandle(STDIN_FILENO, charset, fmt, osname, user,
-		    timeout);
+		    proxy_addr, timeout);
 
 	return 0;
 }
 
 static int
 idhandle(int fd, const char *charset, const char *fmt, const char *osname,
-    const char *user, int timeout)
+    const char *user, struct sockaddr *proxy, int timeout)
 {
 	struct sockaddr_storage ss[2];
 	char userbuf[LOGIN_NAME_MAX];	/* actual user name (or numeric uid) */
@@ -282,7 +334,8 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	if (getpeername(fd, (struct sockaddr *)&ss[0], &len) < 0)
 		fatal("getpeername");
 
-	maybe_syslog(LOG_INFO, "Connection from %s", gethost(&ss[0]));
+	maybe_syslog(LOG_INFO, "Connection from %s",
+	    gethost((struct sockaddr *)&ss[0]));
 
 	/* Get local internet address. */
 	len = sizeof(ss[1]);
@@ -318,7 +371,7 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	/* Are the ports valid? */
 	if (lport < 1 || lport > 65535 || fport < 1 || fport > 65535) {
 		maybe_syslog(LOG_NOTICE, "Invalid port(s): %d, %d from %s",
-		    lport, fport, gethost(&ss[0]));
+		    lport, fport, gethost((struct sockaddr *)&ss[0]));
 		iderror(fd, 0, 0, eflag ? "UNKNOWN-ERROR" : "INVALID-PORT");
 		return 1;
 	}
@@ -326,7 +379,7 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	/* If there is a 'lie' user enabled, then handle it now and stop. */
 	if (Lflag) {
 		maybe_syslog(LOG_NOTICE, "Lying with name %s to %s",
-		    idbuf, gethost(&ss[0]));
+		    idbuf, gethost((struct sockaddr *)&ss[0]));
 		idparse(fd, lport, fport, charset, osname, idbuf);
 		return 0;
 	}
@@ -334,12 +387,12 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	/* Protocol dependent stuff. */
 	switch (ss[0].ss_family) {
 	case AF_INET:
-		((struct sockaddr_in *)&ss[0])->sin_port = htons(fport);
-		((struct sockaddr_in *)&ss[1])->sin_port = htons(lport);
+		satosin(&ss[0])->sin_port = htons(fport);
+		satosin(&ss[1])->sin_port = htons(lport);
 		break;
 	case AF_INET6:
-		((struct sockaddr_in6 *)&ss[0])->sin6_port = htons(fport);
-		((struct sockaddr_in6 *)&ss[1])->sin6_port = htons(lport);
+		satosin6(&ss[0])->sin6_port = htons(fport);
+		satosin6(&ss[1])->sin6_port = htons(lport);
 		break;
 	default:
 		maybe_syslog(LOG_ERR, "Unsupported protocol (no. %d)",
@@ -348,14 +401,31 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 	}
 
 	/* Try to get the UID of the connection owner using sysctl. */
-	if (sysctl_getuid(ss, sizeof(ss), &uid) == -1) {
-		maybe_syslog(LOG_ERR, "sysctl: %m");
+	if (ident_getuid(ss, sizeof(ss), proxy, &uid) == -1) {
+		/* Lookup failed, try to forward if enabled. */
+		if (nat_lookup != NULL) {
+			struct sockaddr nat_addr;
+			int nat_lport;
+
+			(void)memset(&nat_addr, 0, sizeof(nat_addr));
+
+			if ((*nat_lookup)(ss, &nat_addr, &nat_lport) &&
+			    forward(fd, &nat_addr, nat_lport, fport, lport)) {
+				maybe_syslog(LOG_INFO,
+				    "Succesfully forwarded the request to %s",
+				    gethost(&nat_addr));
+				return 0;
+			}
+		}
+		/* Fall back to a default name? */
 		if (fflag) {
 			maybe_syslog(LOG_NOTICE, "Using fallback name %s to %s",
-			    idbuf, gethost(&ss[0]));
+			    idbuf, gethost((struct sockaddr *)&ss[0]));
 			idparse(fd, lport, fport, charset, osname, idbuf);
 			return 0;
 		}
+		maybe_syslog(LOG_ERR, "Lookup failed, returning error to %s",
+		    gethost((struct sockaddr *)&ss[0]));
 		iderror(fd, lport, fport, eflag ? "UNKNOWN-ERROR" : "NO-USER");
 		return 1;
 	}
@@ -366,14 +436,15 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 		(void)snprintf(userbuf, sizeof(userbuf), "%u", uid);
 	} else {
 		maybe_syslog(LOG_INFO, "Successful lookup: %d, %d: %s for %s",
-		    lport, fport, pw->pw_name, gethost(&ss[0]));
+		    lport, fport, pw->pw_name,
+		    gethost((struct sockaddr *)&ss[0]));
 		(void)strlcpy(userbuf, pw->pw_name, sizeof(userbuf));
 	}
 
 	/* No ident enabled? */
 	if (Nflag && pw && check_noident(pw->pw_dir)) {
 		maybe_syslog(LOG_NOTICE, "Returning HIDDEN-USER for user %s"
-		    " to %s", pw->pw_name, gethost(&ss[0]));
+		    " to %s", pw->pw_name, gethost((struct sockaddr *)&ss[0]));
 		iderror(fd, lport, fport, "HIDDEN-USER");
 		return 1;
 	}
@@ -390,8 +461,9 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 				(void)strlcpy(idbuf, userbuf, sizeof(idbuf));
 			}
 		}
-		maybe_syslog(LOG_NOTICE, "Returning user-specified '%s' for "
-		    "user %s to %s", idbuf, userbuf, gethost(&ss[0]));
+		maybe_syslog(LOG_NOTICE,
+		    "Returning user-specified '%s' for user %s to %s",
+		    idbuf, userbuf, gethost((struct sockaddr *)&ss[0]));
 		idparse(fd, lport, fport, charset, osname, idbuf);
 		return 0;
 	}
@@ -405,8 +477,9 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 		else
 			random_string(idbuf, sizeof(idbuf));
 
-		maybe_syslog(LOG_NOTICE, "Returning random '%s' for user %s"
-		    " to %s", idbuf, userbuf, gethost(&ss[0]));
+		maybe_syslog(LOG_NOTICE,
+		    "Returning random '%s' for user %s to %s",
+		    idbuf, userbuf, gethost((struct sockaddr *)&ss[0]));
 		idparse(fd, lport, fport, charset, osname, idbuf);
 		return 0;
 	}
@@ -463,12 +536,12 @@ iderror(int fd, int lport, int fport, const char *error)
 
 /* Return the IP address of the connecting host. */
 static const char *
-gethost(struct sockaddr_storage *ss)
+gethost(struct sockaddr *sa)
 {
 	static char host[NI_MAXHOST];
 
-	if (getnameinfo((struct sockaddr *)ss, ss->ss_len, host,
-	    sizeof(host), NULL, 0, NI_NUMERICHOST) == 0)
+	if (getnameinfo(sa, sa->sa_len, host, sizeof(host),
+	    NULL, 0, NI_NUMERICHOST) == 0)
 		return host;
 
 	return "UNKNOWN";
@@ -488,8 +561,7 @@ socketsetup(const char *address, const char *port, int af)
 	hints.ai_socktype = SOCK_STREAM;
 	error = getaddrinfo(address, port, &hints, &res0);
 	if (error) {
-		maybe_syslog(LOG_ERR, "getaddrinfo: %s", gai_strerror(error));
-		errx(EXIT_FAILURE, "%s", gai_strerror(error));
+		die("getaddrinfo: %s", gai_strerror(error));
 		/* NOTREACHED */
 	}
 
@@ -499,8 +571,7 @@ socketsetup(const char *address, const char *port, int af)
 
 	socks = malloc((maxs + 1) * sizeof(int));
 	if (socks == NULL) {
-		maybe_syslog(LOG_ERR, "malloc: %m");
-		err(EXIT_FAILURE, "malloc");
+		die("malloc: %s", strerror(errno));
 		/* NOTREACHED */
 	}
 
@@ -529,14 +600,27 @@ socketsetup(const char *address, const char *port, int af)
 
 	if (*socks == 0) {
 		free(socks);
-		maybe_syslog(LOG_ERR, "%s: %m", cause);
-		err(EXIT_FAILURE, "%s", cause);
+		die("%s: %s", cause, strerror(errno));
 		/* NOTREACHED */
 	}
 	if (res0)
 		freeaddrinfo(res0);
 
 	return socks;
+}
+
+/* UID lookup wrapper. */
+static int
+ident_getuid(struct sockaddr_storage *ss, socklen_t len,
+    struct sockaddr *proxy, uid_t *uid)
+{
+	int rc;
+
+	rc = sysctl_getuid(ss, len, uid);
+	if (rc == -1 && proxy != NULL)
+		rc = sysctl_proxy_getuid(ss, proxy, uid);
+
+	return rc;
 }
 
 /* Try to get the UID of the connection owner using sysctl. */
@@ -559,6 +643,190 @@ sysctl_getuid(struct sockaddr_storage *ss, socklen_t len, uid_t *uid)
 	*uid = myuid;
 
 	return 0;
+}
+
+/* Try to get the UID of the connection owner using sysctl (proxy version). */
+static int
+sysctl_proxy_getuid(struct sockaddr_storage *ss, struct sockaddr *proxy,
+    uid_t *uid)
+{
+	struct sockaddr_storage new[2];
+	int i, rc, name[CTL_MAXNAME];
+	struct kinfo_pcb *kp;
+	size_t sz, len;
+	const char *list;
+
+	rc = -1;
+	sz = CTL_MAXNAME;
+	list = NULL;
+
+	/* Retrieve a list of sockets. */
+	switch (ss[0].ss_family) {
+	case AF_INET:
+		/* We only accept queries from the proxy. */
+		if (in_hosteq(satosin(&ss[0])->sin_addr,
+		    satosin(proxy)->sin_addr))
+			list = "net.inet.tcp.pcblist";
+		break;
+	case AF_INET6:
+		/* We only accept queries from the proxy. */
+		if (IN6_ARE_ADDR_EQUAL(&satosin6(&ss[0])->sin6_addr,
+		    &satosin6(proxy)->sin6_addr))
+			list = "net.inet6.tcp.pcblist";	
+		break;
+	default:
+		maybe_syslog(LOG_ERR, "Unsupported protocol for proxy (no. %d)",
+		    ss[0].ss_family);
+	}
+	if (list != NULL)
+		rc = sysctlnametomib(list, &name[0], &sz);
+	if (rc == -1)
+		return -1;
+	len = sz;
+
+	name[len++] = PCB_ALL;
+	name[len++] = 0;
+	name[len++] = sizeof(struct kinfo_pcb);
+	name[len++] = INT_MAX;
+
+	kp = NULL;
+	sz = 0;
+	do {
+		rc = sysctl(&name[0], len, kp, &sz, NULL, 0);
+		if (rc == -1 && errno != ENOMEM)
+			return -1;
+		if (kp == NULL) {
+			kp = malloc(sz);
+			rc = -1;
+		}
+		if (kp == NULL)
+			return -1;
+	} while (rc == -1);
+
+	rc = -1;
+	/*
+	 * Walk through the list of sockets and try to find a match.
+	 * We don't know who has sent the query (we only know that the
+	 * proxy has forwarded to us) so just try to match the ports and
+	 * the local address.
+	 */
+	for (i = 0; i < sz / sizeof(struct kinfo_pcb); i++) {
+		switch (ss[0].ss_family) {
+		case AF_INET:
+			/* Foreign and local ports must match. */
+			if (satosin(&ss[0])->sin_port != 
+			    satosin(&kp[i].ki_src)->sin_port)
+				continue;
+			if (satosin(&ss[1])->sin_port !=
+			    satosin(&kp[i].ki_dst)->sin_port)
+				continue;
+			/* Foreign address may not match proxy address. */
+			if (in_hosteq(satosin(proxy)->sin_addr,
+			    satosin(&kp[i].ki_dst)->sin_addr))
+				continue;
+			/* Local addresses must match. */
+			if (!in_hosteq(satosin(&ss[1])->sin_addr,
+			    satosin(&kp[i].ki_src)->sin_addr))
+				continue;
+			break;
+		case AF_INET6:
+			/* Foreign and local ports must match. */
+			if (satosin6(&ss[0])->sin6_port !=
+			    satosin6(&kp[i].ki_src)->sin6_port)
+				continue;
+			if (satosin6(&ss[1])->sin6_port !=
+			    satosin6(&kp[i].ki_dst)->sin6_port)
+				continue;
+			/* Foreign address may not match proxy address. */
+			if (IN6_ARE_ADDR_EQUAL(&satosin6(proxy)->sin6_addr,
+			    &satosin6(&kp[i].ki_dst)->sin6_addr))
+				continue;
+			/* Local addresses must match. */
+			if (!IN6_ARE_ADDR_EQUAL(&satosin6(&ss[1])->sin6_addr,
+			    &satosin6(&kp[i].ki_src)->sin6_addr))
+				continue;
+			break;
+		}
+
+		/*
+		 * We have found the foreign address, copy it to a new
+		 * struct and retrieve the UID of the connection owner.
+		 */
+		(void)memcpy(&new[0], &kp[i].ki_dst, kp[i].ki_dst.sa_len);
+		(void)memcpy(&new[1], &kp[i].ki_src, kp[i].ki_src.sa_len);
+
+		rc = sysctl_getuid(new, sizeof(new), uid);
+
+		/* Done. */
+		break;
+	}
+
+	free(kp);
+	return rc;
+}
+
+/* Forward ident queries. Returns 1 when succesful, or zero if not. */
+static int
+forward(int fd, struct sockaddr *nat_addr, int nat_lport, int fport, int lport)
+{
+	char buf[BUFSIZ], reply[BUFSIZ], *p;
+	int sock, n;
+
+	/* Connect to the NAT host. */
+	sock = socket(nat_addr->sa_family, SOCK_STREAM, 0);
+	if (sock < 0) {
+		maybe_syslog(LOG_ERR, "socket: %m");
+		return 0;
+	}
+	if (connect(sock, nat_addr, nat_addr->sa_len) < 0) {
+		maybe_syslog(LOG_ERR, "Can't connect to %s: %m",
+		    gethost(nat_addr));
+		(void)close(sock);
+		return 0;
+	}
+
+	/*
+	 * Send the ident query to the NAT host, but use as local port
+	 * the port of the NAT host.
+	 */
+	(void)snprintf(buf, sizeof(buf), "%d , %d\r\n", nat_lport, fport);
+	if (send(sock, buf, strlen(buf), 0) < 0) {
+		maybe_syslog(LOG_ERR, "send: %m");
+		(void)close(sock);
+		return 0;
+	}
+
+	/* Read the reply from the NAT host. */
+	if ((n = recv(sock, reply, sizeof(reply) - 1, 0)) < 0) {
+		maybe_syslog(LOG_ERR, "recv: %m");
+		(void)close(sock);
+		return 0;
+	} else if (n == 0) {
+		maybe_syslog(LOG_NOTICE, "recv: EOF");
+		(void)close(sock);
+		return 0;
+	}
+	reply[n] = '\0';
+	(void)close(sock);
+
+	/* Extract everything after the port specs from the ident reply. */
+	for (p = reply; *p != '\0' && *p != ':'; p++)
+		continue;
+	if (*p == '\0' || *++p == '\0') {
+		maybe_syslog(LOG_ERR, "Malformed ident reply from %s",
+		    gethost(nat_addr));
+		return 0;
+	}
+	/* Build reply for the requesting host, use the original local port. */
+	(void)snprintf(buf, sizeof(buf), "%d,%d:%s", lport, fport, p);
+
+	/* Send the reply from the NAT host back to the requesting host. */
+	if (send(fd, buf, strlen(buf), 0) < 0) {
+		maybe_syslog(LOG_ERR, "send: %m");
+		return 0;
+	}
+
+	return 1;
 }
 
 /* Check if a .noident file exists in the user home directory. */
@@ -753,8 +1021,27 @@ fatal(const char *func)
 	exit(EXIT_FAILURE);
 }
 
-/* Log using syslog, but only if enabled with the -l flag. */
+/*
+ * Report an error through syslog and/or stderr and quit.  Only used when
+ * running identd in the background and when it isn't a daemon yet.
+ */
 static void
+die(const char *message, ...)
+{
+	va_list ap;
+
+	va_start(ap, message);
+	if (bflag)
+		vwarnx(message, ap);
+	if (lflag)
+		vsyslog(LOG_ERR, message, ap);
+	va_end(ap);
+
+	exit(EXIT_FAILURE);
+}
+
+/* Log using syslog, but only if enabled with the -l flag. */
+void
 maybe_syslog(int priority, const char *message, ...)
 {
 	va_list ap;
