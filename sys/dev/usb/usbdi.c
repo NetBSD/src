@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.58 2000/01/18 20:11:01 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.59 2000/01/18 20:23:42 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -366,7 +366,6 @@ usbd_alloc_xfer(dev)
 	xfer = dev->bus->methods->allocx(dev->bus);
 	if (xfer == NULL)
 		return (NULL);
-	memset(xfer, 0, sizeof *xfer);
 	xfer->device = dev;
 	DPRINTFN(5,("usbd_alloc_xfer() = %p\n", xfer));
 	return (xfer);
