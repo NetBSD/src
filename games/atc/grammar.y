@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.y,v 1.4 1997/10/10 02:07:08 lukem Exp $	*/
+/*	$NetBSD: grammar.y,v 1.5 1999/07/21 13:10:47 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)grammar.y	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.4 1997/10/10 02:07:08 lukem Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.5 1999/07/21 13:10:47 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ hdef:
 wdef:
 	WidthOp '=' ConstOp ';'
 		{
-		if (sp->height != 0)
+		if (sp->width != 0)
 			return (yyerror("Redefinition of 'width'."));
 		else if ($3 < 3)
 			return (yyerror("'width' is too small."));
