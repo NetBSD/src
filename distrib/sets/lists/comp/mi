@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.356 2001/07/12 12:35:17 itojun Exp $
+#	$NetBSD: mi,v 1.357 2001/07/15 23:27:17 wiz Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1957,6 +1957,28 @@
 ./usr/share/man/cat3/fnmatch.0	comp-c-catman
 ./usr/share/man/cat3/fopen.0	comp-c-catman
 ./usr/share/man/cat3/forkpty.0	comp-c-catman
+./usr/share/man/cat3/form_cursor.0	comp-c-catman
+./usr/share/man/cat3/form_data.0	comp-c-catman
+./usr/share/man/cat3/form_driver.0	comp-c-catman
+./usr/share/man/cat3/form_field.0	comp-c-catman
+./usr/share/man/cat3/form_field_attributes.0	comp-c-catman
+./usr/share/man/cat3/form_field_buffer.0	comp-c-catman
+./usr/share/man/cat3/form_field_info.0	comp-c-catman
+./usr/share/man/cat3/form_field_just.0	comp-c-catman
+./usr/share/man/cat3/form_field_new.0	comp-c-catman
+./usr/share/man/cat3/form_field_opts.0	comp-c-catman
+./usr/share/man/cat3/form_field_userptr.0	comp-c-catman
+./usr/share/man/cat3/form_field_validation.0	comp-c-catman
+./usr/share/man/cat3/form_fieldtype.0	comp-c-catman
+./usr/share/man/cat3/form_hook.0	comp-c-catman
+./usr/share/man/cat3/form_new.0	comp-c-catman
+./usr/share/man/cat3/form_new_page.0	comp-c-catman
+./usr/share/man/cat3/form_opts.0	comp-c-catman
+./usr/share/man/cat3/form_page.0	comp-c-catman
+./usr/share/man/cat3/form_post.0	comp-c-catman
+./usr/share/man/cat3/form_userptr.0	comp-c-catman
+./usr/share/man/cat3/form_win.0	comp-c-catman
+./usr/share/man/cat3/forms.0	comp-c-catman
 ./usr/share/man/cat3/fparseln.0	comp-c-catman
 ./usr/share/man/cat3/fpgetmask.0	comp-c-catman
 ./usr/share/man/cat3/fpgetround.0	comp-c-catman
@@ -3112,6 +3134,7 @@
 ./usr/share/man/cat9/isapnp_unconfig.0		comp-sys-catman
 ./usr/share/man/cat9/kernacc.0		comp-sys-catman
 ./usr/share/man/cat9/kprintf.0		comp-sys-catman
+./usr/share/man/cat9/kthread.0		comp-sys-catman
 ./usr/share/man/cat9/kthread_create.0		comp-sys-catman
 ./usr/share/man/cat9/kthread_create1.0		comp-sys-catman
 ./usr/share/man/cat9/kthread_exit.0		comp-sys-catman
@@ -3163,6 +3186,11 @@
 ./usr/share/man/cat9/pci_findvendor.0		comp-sys-catman
 ./usr/share/man/cat9/pci_get_capability.0		comp-sys-catman
 ./usr/share/man/cat9/pci_intr.0		comp-sys-catman
+./usr/share/man/cat9/pci_intr_disestablish.0	comp-sys-catman
+./usr/share/man/cat9/pci_intr_establish.0	comp-sys-catman
+./usr/share/man/cat9/pci_intr_evcnt.0		comp-sys-catman
+./usr/share/man/cat9/pci_intr_map.0		comp-sys-catman
+./usr/share/man/cat9/pci_intr_string.0		comp-sys-catman
 ./usr/share/man/cat9/pci_make_tag.0		comp-sys-catman
 ./usr/share/man/cat9/pci_mapreg_info.0		comp-sys-catman
 ./usr/share/man/cat9/pci_mapreg_map.0		comp-sys-catman
@@ -3210,6 +3238,7 @@
 ./usr/share/man/cat9/psignal.0		comp-sys-catman
 ./usr/share/man/cat9/ratecheck.0		comp-sys-catman
 ./usr/share/man/cat9/readdisklabel.0		comp-sys-catman
+./usr/share/man/cat9/remrunqueue.0		comp-sys-catman
 ./usr/share/man/cat9/resettodr.0		comp-sys-catman
 ./usr/share/man/cat9/rnd.0		comp-sys-catman
 ./usr/share/man/cat9/rnd_add_data.0		comp-sys-catman
@@ -3225,6 +3254,7 @@
 ./usr/share/man/cat9/runtime.0		comp-sys-catman
 ./usr/share/man/cat9/scsipi.0		comp-sys-catman
 ./usr/share/man/cat9/setdisklabel.0		comp-sys-catman
+./usr/share/man/cat9/setrunqueue.0		comp-sys-catman
 ./usr/share/man/cat9/shutdownhook_disestablish.0		comp-sys-catman
 ./usr/share/man/cat9/shutdownhook_establish.0		comp-sys-catman
 ./usr/share/man/cat9/simple_lock.0	comp-sys-catman
@@ -4069,6 +4099,28 @@
 ./usr/share/man/man3/fnmatch.3		comp-c-man
 ./usr/share/man/man3/fopen.3		comp-c-man
 ./usr/share/man/man3/forkpty.3		comp-c-man
+./usr/share/man/man3/form_cursor.3	comp-c-man
+./usr/share/man/man3/form_data.3	comp-c-man
+./usr/share/man/man3/form_driver.3	comp-c-man
+./usr/share/man/man3/form_field.3	comp-c-man
+./usr/share/man/man3/form_field_attributes.3	comp-c-man
+./usr/share/man/man3/form_field_buffer.3	comp-c-man
+./usr/share/man/man3/form_field_info.3	comp-c-man
+./usr/share/man/man3/form_field_just.3	comp-c-man
+./usr/share/man/man3/form_field_new.3	comp-c-man
+./usr/share/man/man3/form_field_opts.3	comp-c-man
+./usr/share/man/man3/form_field_userptr.3	comp-c-man
+./usr/share/man/man3/form_field_validation.3	comp-c-man
+./usr/share/man/man3/form_fieldtype.3	comp-c-man
+./usr/share/man/man3/form_hook.3	comp-c-man
+./usr/share/man/man3/form_new.3		comp-c-man
+./usr/share/man/man3/form_new_page.3	comp-c-man
+./usr/share/man/man3/form_opts.3	comp-c-man
+./usr/share/man/man3/form_page.3	comp-c-man
+./usr/share/man/man3/form_post.3	comp-c-man
+./usr/share/man/man3/form_userptr.3	comp-c-man
+./usr/share/man/man3/form_win.3		comp-c-man
+./usr/share/man/man3/forms.3		comp-c-man
 ./usr/share/man/man3/fparseln.3		comp-c-man
 ./usr/share/man/man3/fpgetmask.3		comp-c-man
 ./usr/share/man/man3/fpgetround.3		comp-c-man
@@ -5224,6 +5276,7 @@
 ./usr/share/man/man9/isapnp_unconfig.9		comp-sys-man
 ./usr/share/man/man9/kernacc.9		comp-sys-man
 ./usr/share/man/man9/kprintf.9		comp-sys-man
+./usr/share/man/man9/kthread.9		comp-sys-man
 ./usr/share/man/man9/kthread_create.9		comp-sys-man
 ./usr/share/man/man9/kthread_create1.9		comp-sys-man
 ./usr/share/man/man9/kthread_exit.9		comp-sys-man
@@ -5275,6 +5328,11 @@
 ./usr/share/man/man9/pci_findvendor.9		comp-sys-man
 ./usr/share/man/man9/pci_get_capability.9		comp-sys-man
 ./usr/share/man/man9/pci_intr.9		comp-sys-man
+./usr/share/man/man9/pci_intr_disestablish.9		comp-sys-man
+./usr/share/man/man9/pci_intr_establish.9		comp-sys-man
+./usr/share/man/man9/pci_intr_evcnt.9		comp-sys-man
+./usr/share/man/man9/pci_intr_map.9		comp-sys-man
+./usr/share/man/man9/pci_intr_string.9		comp-sys-man
 ./usr/share/man/man9/pci_make_tag.9		comp-sys-man
 ./usr/share/man/man9/pci_mapreg_info.9		comp-sys-man
 ./usr/share/man/man9/pci_mapreg_map.9		comp-sys-man
@@ -5322,6 +5380,7 @@
 ./usr/share/man/man9/psignal.9		comp-sys-man
 ./usr/share/man/man9/ratecheck.9		comp-sys-man
 ./usr/share/man/man9/readdisklabel.9		comp-sys-man
+./usr/share/man/man9/remrunqueue.9		comp-sys-man
 ./usr/share/man/man9/resettodr.9		comp-sys-man
 ./usr/share/man/man9/rnd.9		comp-sys-man
 ./usr/share/man/man9/rnd_add_data.9		comp-sys-man
@@ -5337,6 +5396,7 @@
 ./usr/share/man/man9/runtime.9		comp-sys-man
 ./usr/share/man/man9/scsipi.9		comp-sys-man
 ./usr/share/man/man9/setdisklabel.9		comp-sys-man
+./usr/share/man/man9/setrunqueue.9		comp-sys-man
 ./usr/share/man/man9/shutdownhook_disestablish.9		comp-sys-man
 ./usr/share/man/man9/shutdownhook_establish.9		comp-sys-man
 ./usr/share/man/man9/simple_lock.9	comp-sys-man
