@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.28 1998/08/30 21:31:24 pk Exp $ */
+/*	$NetBSD: autoconf.h,v 1.29 1998/09/26 18:20:19 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
  */
 
 #include <machine/bus.h>
+#include <machine/bsd_openprom.h>
 #include <dev/sbus/sbusvar.h>
 
 /*
@@ -160,33 +161,6 @@ int	obio_find_rom_map __P((bus_addr_t, bus_type_t, int,
 				bus_space_handle_t *));
 
 
-
-/*
- * The various getprop* functions obtain `properties' from the ROMs.
- * getprop() obtains a property as a byte-sequence, and returns its
- * length; the others convert or make some other guarantee.
- */
-int	getproplen __P((int node, char *name));
-int	getprop __P((int, char *, int, int *, void **));
-char	*getpropstring __P((int node, char *name));
-int	getpropint __P((int node, char *name, int deflt));
-
-/* Frequently used options node */
-extern int optionsnode;
-
-	/* new interfaces: */
-char	*getpropstringA __P((int, char *, char *));
-
-/*
- * Helper routines to get some of the more common properties. These
- * only get the first item in case the property value is an array.
- * Drivers that "need to know it all" can call getprop() directly.
- */
-int	getprop_reg1 __P((int, struct rom_reg *));
-int	getprop_intr1 __P((int, int *));
-int	getprop_address1 __P((int, void **));
-
-
 /*
  * The matchbyname function is useful in drivers that are matched
  * by romaux name, i.e., all `mainbus attached' devices.  It expects
@@ -216,9 +190,6 @@ int	makememarr(struct memarr *, int max, int which);
 #define	MEMARR_AVAILPHYS	0
 #define	MEMARR_TOTALPHYS	1
 
-/* Pass a string to the FORTH interpreter.  May fail silently. */
-void	rominterpret __P((char *));
-
 /* Openprom V2 style boot path */
 struct bootpath {
 	char	name[16];	/* name of this node */
@@ -238,13 +209,17 @@ void	mountroot_hook_establish __P((void (*) __P((struct device *)),
 
 void	configure __P((void));
 void	bootstrap __P((void));
-int	firstchild __P((int));
-int	nextsibling __P((int));
-void	callrom __P((void));
 struct device *getdevunit __P((char *, int));
 void	*findzs __P((int));
 int	romgetcursoraddr __P((int **, int **));
+#if 0
+/* Pass a string to the FORTH interpreter.  May fail silently. */
+void	rominterpret __P((char *));
+int	firstchild __P((int));
+int	nextsibling __P((int));
+void	callrom __P((void));
 int	findroot __P((void));
 int	findnode __P((int, const char *));
 int	opennode __P((char *));
 int	node_has_property __P((int, const char *));
+#endif
