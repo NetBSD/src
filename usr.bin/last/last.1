@@ -1,4 +1,4 @@
-.\"	$NetBSD: last.1,v 1.9 2002/09/30 11:09:04 grant Exp $
+.\"	$NetBSD: last.1,v 1.10 2003/02/17 15:08:57 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,6 +46,9 @@
 .Op Fl f Ar file
 .Op Fl h Ar host
 .Op Fl t Ar tty
+.Op Fl L Ar linesize
+.Op Fl N Ar namesize
+.Op Fl H Ar hostsize
 .Op user ...
 .Sh DESCRIPTION
 .Nm
@@ -70,7 +73,14 @@ will so indicate.
 reads the file
 .Ar file
 instead of the default,
+.Pa /var/log/wtmpx
+or
 .Pa /var/log/wtmp .
+If the file ends with `x', it is treated as a
+.Xr utmpx 5
+format file, else it is treated as a
+.Xr utmp 5
+format file.
 .It Fl Ar n
 Limits the report to
 .Ar n
@@ -88,6 +98,12 @@ equivalent to
 names may be names or internet numbers.
 .It Fl T
 Display better time information, including the year and seconds.
+.It Fl L Ar linesize
+Use the provided linesize as the width to format the tty field.
+.It Fl N Ar namesize
+Use the provided namesize as the width to format the login name field.
+.It Fl H Ar hostsize
+Use the provided hostsize as the width to format the host name field.
 .El
 .Pp
 If
@@ -117,12 +133,15 @@ If interrupted with a quit signal
 indicates how
 far the search has progressed and then continues.
 .Sh FILES
-.Bl -tag -width /var/log/wtmp -compact
+.Bl -tag -width /var/log/wtmpx -compact
+.It Pa /var/log/wtmpx
+login data base
 .It Pa /var/log/wtmp
 login data base
 .El
 .Sh SEE ALSO
 .Xr lastcomm 1 ,
+.Xr utmpx 5 ,
 .Xr utmp 5 ,
 .Xr ac 8
 .Sh HISTORY
