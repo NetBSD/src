@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.66 2003/08/07 10:04:26 agc Exp $	*/
+/*	$NetBSD: mount.c,v 1.67 2003/09/19 08:29:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.66 2003/08/07 10:04:26 agc Exp $");
+__RCSID("$NetBSD: mount.c,v 1.67 2003/09/19 08:29:58 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -575,15 +575,14 @@ catopt(sp, o)
 	char **sp;
 	const char *o;
 {
-	char *s;
-	size_t i, j;
+	char *s, *n;
 
 	s = *sp;
 	if (s) {
-		i = strlen(s);
-		j = i + 1 + strlen(o) + 1;
-		s = realloc(s, j);
-		(void)snprintf(s + i, j, ",%s", o);
+		if (asprintf(&n, "%s,%s", s, o) < 0)
+			err(1, "asprintf");
+		free(s);
+		s = n;
 	} else
 		s = strdup(o);
 	*sp = s;
@@ -597,7 +596,7 @@ mangle(options, argcp, argvp, maxargcp)
 {
 	char *p, *s;
 	int argc, maxargc;
-	const char **argv;
+	const char **argv, **nargv;
 
 	argc = *argcp;
 	argv = *argvp;
@@ -606,8 +605,11 @@ mangle(options, argcp, argvp, maxargcp)
 	for (s = options; (p = strsep(&s, ",")) != NULL;) {
 		/* Always leave space for one more argument and the NULL. */
 		if (argc >= maxargc - 4) {
+			nargv = realloc(argv, (maxargc << 1) * sizeof(char *));
+			if (!nargv)
+				err(1, "realloc");
+			argv = nargv;
 			maxargc <<= 1;
-			argv = realloc(argv, maxargc * sizeof(char *));
 		}
 		if (*p != '\0') {
 			if (*p == '-') {
