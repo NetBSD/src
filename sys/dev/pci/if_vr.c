@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.13 1999/02/05 08:21:31 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.14 1999/02/05 08:27:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -156,17 +156,15 @@ struct vr_chain_data {
 };
 
 struct vr_softc {
-	struct device		vr_dev;
-	void			*vr_ih;
-	void			*vr_ats;
-	bus_space_tag_t		vr_bustag;
-	bus_space_handle_t	vr_bushandle;
-	pci_chipset_tag_t	vr_pc;
-	struct ethercom		vr_ec;
+	struct device		vr_dev;		/* generic device glue */
+	void			*vr_ih;		/* interrupt cookie */
+	void			*vr_ats;	/* shutdown hook */
+	bus_space_tag_t		vr_bst;		/* bus space tag */
+	bus_space_handle_t	vr_bsh;		/* bus space handle */
+	pci_chipset_tag_t	vr_pc;		/* PCI chipset info */
+	struct ethercom		vr_ec;		/* Ethernet common info */
 	u_int8_t 		vr_enaddr[ETHER_ADDR_LEN];
 	struct mii_data		vr_mii;		/* MII/media info */
-	bus_space_handle_t	vr_bhandle;	/* bus space handle */
-	bus_space_tag_t		vr_btag;	/* bus space tag */
 	caddr_t			vr_ldata_ptr;
 	struct vr_list_data	*vr_ldata;
 	struct vr_chain_data	vr_cdata;
@@ -176,18 +174,18 @@ struct vr_softc {
  * register space access macros
  */
 #define	CSR_WRITE_4(sc, reg, val)	\
-	bus_space_write_4(sc->vr_btag, sc->vr_bhandle, reg, val)
+	bus_space_write_4(sc->vr_bst, sc->vr_bsh, reg, val)
 #define	CSR_WRITE_2(sc, reg, val)	\
-	bus_space_write_2(sc->vr_btag, sc->vr_bhandle, reg, val)
+	bus_space_write_2(sc->vr_bst, sc->vr_bsh, reg, val)
 #define	CSR_WRITE_1(sc, reg, val)	\
-	bus_space_write_1(sc->vr_btag, sc->vr_bhandle, reg, val)
+	bus_space_write_1(sc->vr_bst, sc->vr_bsh, reg, val)
 
 #define	CSR_READ_4(sc, reg)		\
-	bus_space_read_4(sc->vr_btag, sc->vr_bhandle, reg)
+	bus_space_read_4(sc->vr_bst, sc->vr_bsh, reg)
 #define	CSR_READ_2(sc, reg)		\
-	bus_space_read_2(sc->vr_btag, sc->vr_bhandle, reg)
+	bus_space_read_2(sc->vr_bst, sc->vr_bsh, reg)
 #define	CSR_READ_1(sc, reg)		\
-	bus_space_read_1(sc->vr_btag, sc->vr_bhandle, reg)
+	bus_space_read_1(sc->vr_bst, sc->vr_bsh, reg)
 
 #define	VR_TIMEOUT		1000
 
@@ -1489,19 +1487,19 @@ vr_attach(parent, self, aux)
 			0, &memt, &memh, NULL, NULL) == 0);
 #if defined(VR_USEIOSPACE)
 		if (ioh_valid) {
-			sc->vr_btag = iot;
-			sc->vr_bhandle = ioh;
+			sc->vr_bst = iot;
+			sc->vr_bsh = ioh;
 		} else if (memh_valid) {
-			sc->vr_btag = memt;
-			sc->vr_bhandle = memh;
+			sc->vr_bst = memt;
+			sc->vr_bsh = memh;
 		}
 #else
 		if (memh_valid) {
-			sc->vr_btag = memt;
-			sc->vr_bhandle = memh;
+			sc->vr_bst = memt;
+			sc->vr_bsh = memh;
 		} else if (ioh_valid) {
-			sc->vr_btag = iot;
-			sc->vr_bhandle = ioh;
+			sc->vr_bst = iot;
+			sc->vr_bsh = ioh;
 		}
 #endif
 		else {
