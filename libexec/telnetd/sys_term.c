@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.18 1999/12/31 12:42:35 tron Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.19 2000/11/19 20:17:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.18 1999/12/31 12:42:35 tron Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.19 2000/11/19 20:17:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -482,13 +482,13 @@ getnpty()
  * Returns the file descriptor of the opened pty.
  */
 #ifndef	__GNUC__
-char *line = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+char *line = NULL16STR;
 #else
-static char Xline[] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+static char Xline[] = NULL16STR;
 char *line = Xline;
 #endif
 #ifdef	CRAY
-char *myline = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+char *myline = NULL16STR;
 #endif	/* CRAY */
 
 #ifdef OPENPTY_PTY
@@ -522,7 +522,7 @@ int *ptynum;
 	if (p > 0) {
 		grantpt(p);
 		unlockpt(p);
-		strcpy(line, ptsname(p));
+		(void)strlcpy(line, ptsname(p), sizeof(NULL16STR));
 		return(p);
 	}
 
@@ -1601,7 +1601,7 @@ start_login(host, autologin, name)
 #endif
 #ifdef SOLARIS
 	char *term;
-	char termbuf[64];
+	char termnamebuf[64];
 #endif
 
 #ifdef	UTMPX
@@ -1655,9 +1655,10 @@ start_login(host, autologin, name)
 		if (term == NULL || term[0] == 0) {
 			term = "-";
 		} else {
-			strcpy(termbuf, "TERM=");
-			strncat(termbuf, term, sizeof(termbuf) - 6);
-			term = termbuf;
+			(void)strcpy(termnamebuf, "TERM=");
+			(void)strlcpy(&termnamebuf[5], term,
+			    sizeof(termnamebuf) - 6);
+			term = termnamebuf;
 		}
 		argv = addarg(argv, term);
 #endif
@@ -1893,6 +1894,17 @@ scrub_env()
 		if (strncmp(*cpp, "LD_", 3) &&
 		    strncmp(*cpp, "_RLD_", 5) &&
 		    strncmp(*cpp, "LIBPATH=", 8) &&
+		    strncmp(*cpp, "LOCALDOMAIN=", 12) &&
+		    strncmp(*cpp, "RES_OPTIONS=", 12) &&
+		    strncmp(*cpp, "TERMINFO=", 9) &&
+		    strncmp(*cpp, "TERMINFO_DIRS=", 14) &&
+		    /*
+		     * We dissallow TERMPATH and TERMCAP
+		     * entries that reference files.
+		     */
+		    strncmp(*cpp, "TERMPATH=", 9) &&
+		    strncmp(*cpp, "TERMCAP=/", 9) &&
+		    strncmp(*cpp, "ENV=", 4) &&
 		    strncmp(*cpp, "IFS=", 4))
 			*cpp2++ = *cpp;
 	}
