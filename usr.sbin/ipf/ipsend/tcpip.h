@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpip.h,v 1.1.1.2 1997/10/30 05:30:07 mrg Exp $	*/
+/*	$NetBSD: tcpip.h,v 1.1.1.3 1997/11/14 08:04:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -33,11 +33,23 @@
  * SUCH DAMAGE.
  *
  *	@(#)tcpip.h	8.1 (Berkeley) 6/10/93
- * Id: tcpip.h,v 2.0.2.3 1997/09/17 10:55:58 darrenr Exp 
+ * Id: tcpip.h,v 2.0.2.3.2.1 1997/11/12 11:01:12 darrenr Exp 
  */
 
 #ifndef _NETINET_TCPIP_H_
 #define _NETINET_TCPIP_H_
+
+# if defined(linux) && !defined(LINUX_IPOVLY)
+#  define LINUX_IPOVLY
+struct ipovly {
+	caddr_t	ih_next, ih_prev;	/* for protocol sequence q's */
+	u_char	ih_x1;			/* (unused) */
+	u_char	ih_pr;			/* protocol */
+	short	ih_len;			/* protocol length */
+	struct	in_addr ih_src;		/* source internet address */
+	struct	in_addr ih_dst;		/* destination internet address */
+};
+# endif
 
 /*
  * Tcp+ip header, after ip options removed.

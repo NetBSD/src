@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.h,v 1.1.1.5 1997/10/30 05:31:53 mrg Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.1.1.6 1997/11/14 08:06:12 mrg Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.

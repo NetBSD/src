@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsopt.c,v 1.1.1.4 1997/10/30 05:30:00 mrg Exp $	*/
+/*	$NetBSD: ipsopt.c,v 1.1.1.5 1997/11/14 08:04:36 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.1.1.6 1997/10/30 05:32:02 mrg Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.1.1.7 1997/11/14 08:06:22 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
