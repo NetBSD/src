@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arc.c,v 1.4 1999/02/15 04:03:03 hubertf Exp $
+/*	$NetBSD: refclock_arc.c,v 1.5 2000/03/13 23:22:56 soren Exp $
  */
 
 /*
@@ -119,7 +119,7 @@ GENERAL
         significant.
 
      c) Note that the bit time of 3.3ms adds to the potential error in
-        the the clock timestamp, since the bit clock of the serial link
+        the clock timestamp, since the bit clock of the serial link
         may effectively be free-running with respect to the host clock
         and the MSF clock.  Actually, the error is probably 1/16th of
         the above, since the input data is probably sampled at at least

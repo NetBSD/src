@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.3 1999/07/08 06:09:04 dean Exp $	*/
+/*	$NetBSD: vs_refresh.c,v 1.4 2000/03/13 23:22:53 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -480,7 +480,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 
 		/*
 		 * Count up the widths of the characters.  If it's a tab
-		 * character, go do it the the slow way.
+		 * character, go do it the slow way.
 		 */
 		for (cwtotal = 0; cnt--; cwtotal += KEY_LEN(sp, ch))
 			if ((ch = *(u_char *)p--) == '\t')
@@ -518,7 +518,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 
 		/*
 		 * Count up the widths of the characters.  If it's a tab
-		 * character, go do it the the slow way.  If we cross a
+		 * character, go do it the slow way.  If we cross a
 		 * screen boundary, we can quit.
 		 */
 		for (cwtotal = SCNO; cnt--;) {

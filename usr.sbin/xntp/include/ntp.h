@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp.h,v 1.4 1998/08/12 14:11:51 christos Exp $	*/
+/*	$NetBSD: ntp.h,v 1.5 2000/03/13 23:22:56 soren Exp $	*/
 
 /*
  * ntp.h - NTP definitions for the masses
@@ -463,7 +463,7 @@ struct peer {
 /*
  * Macro for checking for invalid addresses.  This is really, really
  * gross, but is needed so no one configures a host on net 127 now that
- * we're encouraging it the the configuration file.
+ * we're encouraging it in the configuration file.
  */
 #define	LOOPBACKADR	0x7f000001
 #define	LOOPNETMASK	0xff000000
