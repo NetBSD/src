@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.27 2000/06/04 16:24:02 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.28 2000/06/16 01:56:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -49,9 +49,6 @@
 #include <sys/exec_coff.h>
 #include <sys/exec_elf.h>
 #include <sys/resourcevar.h>
-#ifdef IBCS2_DEBUG
-#include <sys/syslog.h>
-#endif
 
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
@@ -108,6 +105,12 @@ extern char *ibcs2_syscallnames[];
 extern char ibcs2_sigcode[], ibcs2_esigcode[];
 
 const char ibcs2_emul_path[] = "/emul/ibcs2";
+
+#ifdef IBCS2_DEBUG
+int ibcs2_debug = 1;
+#else
+int ibcs2_debug = 0;
+#endif
 
 struct emul emul_ibcs2_coff = {
 	"ibcs2",
@@ -565,9 +568,18 @@ n	 */
 	if (!error) {
 		size_t resid;
 		struct coff_slhdr *slhdr;
-		char buf[128], *bufp;	/* FIXME */
+		char *buf, *bufp;
 		int len = sh.s_size, path_index, entry_len;
-		
+
+#if 0
+		if (len > COFF_SHLIBSEC_MAXSIZE) {
+			return ENOEXEC;
+		}
+#endif
+		buf = (char *) malloc(len, M_TEMP, M_WAITOK);
+		if (buf == NULL)
+			return ENOEXEC;
+
 		/* DPRINTF(("COFF shlib size %d offset %d\n",
 			 sh.s_size, sh.s_scnptr)); */
 
@@ -577,6 +589,7 @@ n	 */
 				&resid, p);
 		if (error) {
 			DPRINTF(("shlib section read error %d\n", error));
+			free(buf, M_TEMP);
 			return ENOEXEC;
 		}
 		bufp = buf;
@@ -585,15 +598,23 @@ n	 */
 			path_index = slhdr->path_index * sizeof(long);
 			entry_len = slhdr->entry_len * sizeof(long);
 
+			if (entry_len > len) {
+				free(buf, M_TEMP);
+				return ENOEXEC;
+			}
+
 			/* DPRINTF(("path_index: %d entry_len: %d name: %s\n",
 				 path_index, entry_len, slhdr->sl_name)); */
 
 			error = coff_load_shlib(p, slhdr->sl_name, epp);
-			if (error)
+			if (error) {
+				free(buf, M_TEMP);
 				return ENOEXEC;
+			}
 			bufp += entry_len;
 			len -= entry_len;
 		}
+		free(buf, M_TEMP);
 	}
 		
 	/* set up entry point */
@@ -621,14 +642,13 @@ coff_load_shlib(p, path, epp)
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
 	struct coff_scnhdr sh, *shp = &sh;
-	caddr_t sg = stackgap_init(p->p_emul);
 
 	/*
 	 * 1. open shlib file
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-	IBCS2_CHECK_ALT_EXIST(p, &sg, path);
+	IBCS2_CHECK_ALT_EXIST(p, NULL, path);	/* path is on kernel stack */
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {
