@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_pcb.h,v 1.13 2000/10/19 20:23:02 itojun Exp $	*/
-/*	$KAME: in6_pcb.h,v 1.28 2000/06/09 01:10:12 itojun Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.14 2001/02/08 14:56:15 itojun Exp $	*/
+/*	$KAME: in6_pcb.h,v 1.44 2001/02/06 09:16:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -177,10 +177,6 @@ struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
 				     struct in6_addr *, int *));
 int	in6_selecthlim __P((struct in6pcb *, struct ifnet *));
 int	in6_pcbsetport __P((struct in6_addr *, struct in6pcb *));
-int in6_embedscope __P((struct in6_addr *, const struct sockaddr_in6 *,
-	struct in6pcb *, struct ifnet **));
-int in6_recoverscope __P((struct sockaddr_in6 *, const struct in6_addr *,
-	struct ifnet *));
 
 extern struct rtentry *
 	in6_pcbrtentry __P((struct in6pcb *));
