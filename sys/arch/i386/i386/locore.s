@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.109 1995/02/05 01:06:50 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.110 1995/02/05 01:41:33 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -586,10 +586,8 @@ reloc_gdt:
 	subl	$40,%esp		# error code, trap number, registers
 	pushl	%ecx			# user ds
 	pushl	%ecx			# user es
-	/* We used to clear these, but now we need gs for start_init() and
-	   don't have another chance to set it. */
 	movl	%cx,%fs			# user fs (not used)
-	movl	%cx,%gs			# user gs (used by copyin/out)
+	movl	%cx,%gs			# user gs (not used)
 
 	movl	%esp,%eax		# push pointer to frame
 	pushl	%eax
