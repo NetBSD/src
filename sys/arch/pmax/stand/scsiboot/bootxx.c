@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.11 1999/02/22 10:23:53 simonb Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.12 1999/03/14 00:57:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,10 +43,9 @@
 #include <stand.h>
 #include <machine/dec_prom.h>
 
-
 #include "byteswap.h"
 
-char	line[512];
+int	errno;
 
 /*
  * This gets arguments from the PROM, calls other routines to open
@@ -62,39 +61,15 @@ _main(argc, argv)
 	char **argv;
 {
 	register char *cp;
-	int ask, entry;
+	int entry;
 
-#ifdef DIAGNOSTIC
-	extern int prom_id; /* hack, saved by standalone startup */
-
-	(*(callvec._printf))("hello, world\n");
-
-	printf ((callv == &callvec)?  "No REX %x\n" : "have REX %x\n",
-		 prom_id);
-#endif
-
-#ifdef JUSTASK
-	ask = 1;
-#else
 	/* check for DS5000 boot */
 	if (strcmp(argv[0], "boot") == 0) {
 		argc--;
 		argv++;
 	}
 	cp = *argv;
-	ask = 0;
-#endif /* JUSTASK */
-
-  	printf("Boot: ");
-	if (ask) {
-		gets(line);
-		if (line[0] == '\0')
-			return 0;
-		cp = line;
-		argv[0] = cp;
-		argc = 1;
-	} else
-		printf("%s\n", cp);
+	printf("Boot: %s\n", cp);
 	entry = loadfile(cp);
 	if (entry == -1)
 		return 0;

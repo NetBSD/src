@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10 1999/02/22 07:17:44 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 1999/03/14 00:57:07 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,10 +45,13 @@
 #include <rz.h>
 
 const	struct callback *callv = &callvec;
-int	errno;
 
-extern void	nullsys();
-extern int	nodev(), noioctl();
+#ifdef UFS_NOCLOSE
+#define ufs_close	0
+#endif
+#ifdef UFS_NOWRITE
+#define ufs_write	0
+#endif
 
 #ifdef SMALL
 #define rzclose /*(()(struct open_file*))*/0
@@ -62,3 +65,9 @@ struct devsw devsw[] = {
 };
 
 int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+
+struct fs_ops file_system[] = {
+	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat }
+};
+
+int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
