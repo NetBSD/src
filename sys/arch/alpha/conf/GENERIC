@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69 1997/10/20 18:47:08 explorer Exp $
+# $NetBSD: GENERIC,v 1.70 1997/11/26 03:13:12 mjacob Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -50,6 +50,12 @@ options 	COMPAT_43
 options 	COMPAT_10
 options 	COMPAT_11
 options 	COMPAT_12
+
+# System V-like message queues
+options 	SYSVMSG
+
+# System V-like semaphores
+options 	SYSVSEM
 
 # System V-like shared memory
 options 	SYSVSHM
