@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.37 2000/12/14 06:27:26 thorpej Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.38 2001/07/07 15:57:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ bah_attach_subr(sc)
 	 */
 	bah_stop(sc); 
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = bah_start;
 	ifp->if_ioctl = bah_ioctl;
