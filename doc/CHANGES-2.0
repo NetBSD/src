@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.427 2004/09/01 03:34:53 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.428 2004/09/01 18:22:21 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7094,3 +7094,12 @@ distrib/utils/x_umount/umount.c			patch
 	Rename variables so they dont conflict w. libcurses when crunched. 
 	PR#26458
 	[chs, ticket #808]
+
+distrib/arc/instkernel/Makefile			1.8
+sys/arch/arc/conf/Makefile.arc.inc		1.12
+
+	Remove .mdebug.abi32 and .comment sections created by binutils-2.14
+	on converting kernels into ECOFF.
+	ARC BIOS may be confused by these sections without valid address.
+	[tsutsui, ticket #809]
+
