@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.32 1999/03/26 23:41:35 mycroft Exp $ */
+/*	$NetBSD: iommu.c,v 1.32.2.1 1999/04/23 15:12:24 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -71,6 +71,11 @@ struct	iommu_softc *iommu_sc;/*XXX*/
 int	has_iocache;
 u_long	dvma_cachealign;
 
+/*
+ * Note: operations on the extent map are being protected with
+ * splhigh(), since we cannot predict at which interrupt priority
+ * our clients will run.
+ */
 struct extent *iommu_dvmamap;
 
 
@@ -456,6 +461,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	vaddr_t va = (vaddr_t)buf;
 	u_long align, voff;
 	pmap_t pmap;
+	int s, error;
 
 	/*
 	 * Remember page offset, then truncate the buffer address to
@@ -476,9 +482,13 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	align = dvma_cachealign ? dvma_cachealign : NBPG;
 	boundary = map->_dm_boundary;
 
-	if (extent_alloc1(iommu_dvmamap, sgsize, align, va & (align-1),
-			  boundary, EX_NOWAIT, (u_long *)&dva) != 0)
-		return (ENOMEM);
+	s = splhigh();
+	error = extent_alloc1(iommu_dvmamap, sgsize, align, va & (align-1),
+			  boundary, EX_NOWAIT, (u_long *)&dva);
+	splx(s);
+
+	if (error != 0)
+		return (error);
 
 	cpuinfo.cache_flush(buf, buflen);
 
@@ -567,6 +577,7 @@ iommu_dmamap_unload(t, map)
 {
 	bus_addr_t addr;
 	bus_size_t len;
+	int s, error;
 
 	if (map->dm_nsegs != 1)
 		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
@@ -577,7 +588,10 @@ iommu_dmamap_unload(t, map)
 	addr &= ~PGOFSET;
 
 	iommu_remove(addr, len);
-	if (extent_free(iommu_dvmamap, addr, len, EX_NOWAIT) != 0)
+	s = splhigh();
+	error = extent_free(iommu_dvmamap, addr, len, EX_NOWAIT);
+	splx(s);
+	if (error != 0)
 		printf("warning: %ld of DVMA space lost\n", (long)len);
 
 	/* Mark the mappings as invalid. */
@@ -619,7 +633,7 @@ iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	paddr_t pa;
 	bus_addr_t dva;
 	vm_page_t m;
-	int error;
+	int s, error;
 	struct pglist *mlist;
 
 	size = round_page(size);
@@ -628,10 +642,14 @@ iommu_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	if (error != 0)
 		return (error);
 
-	if (extent_alloc(iommu_dvmamap, size, alignment, boundary,
-			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
-			 (u_long *)&dva) != 0)
-		return (ENOMEM);
+	s = splhigh();
+	error = extent_alloc(iommu_dvmamap, size, alignment, boundary,
+			     (flags & BUS_DMA_NOWAIT) == 0
+				? EX_WAITOK : EX_NOWAIT,
+			     (u_long *)&dva);
+	splx(s);
+	if (error != 0)
+		return (error);
 
 	/*
 	 * Compute the location, size, and number of segments actually
@@ -665,6 +683,7 @@ iommu_dmamem_free(t, segs, nsegs)
 {
 	bus_addr_t addr;
 	bus_size_t len;
+	int s, error;
 
 	if (nsegs != 1)
 		panic("bus_dmamem_free: nsegs = %d", nsegs);
@@ -673,7 +692,10 @@ iommu_dmamem_free(t, segs, nsegs)
 	len = segs[0].ds_len;
 
 	iommu_remove(addr, len);
-	if (extent_free(iommu_dvmamap, addr, len, EX_NOWAIT) != 0)
+	s = splhigh();
+	error = extent_free(iommu_dvmamap, addr, len, EX_NOWAIT);
+	splx(s);
+	if (error != 0)
 		printf("warning: %ld of DVMA space lost\n", (long)len);
 	/*
 	 * Return the list of pages back to the VM system.
