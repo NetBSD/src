@@ -1,5 +1,5 @@
 #!/bin/sh -
-# $NetBSD: makelintstub,v 1.14 2003/07/26 19:24:54 salo Exp $
+# $NetBSD: makelintstub,v 1.15 2003/09/30 22:30:16 christos Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou
 # All rights reserved.
@@ -211,7 +211,7 @@ fi
 trap "rm -f $syscalldump" 0 1 2 15
 
 header
-echo "#include \"$syscallhdr\"" | ${CPP} -C >$syscalldump
+echo "#include \"$syscallhdr\"" | ${CPP} -D_LIBC -C >$syscalldump
 for syscall; do
 	fnname=${syscall%.S}
 	if [ $pflag = YES ]; then
