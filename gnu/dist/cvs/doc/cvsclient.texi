@@ -1,7 +1,7 @@
 \input texinfo @c -*- texinfo -*-
 
 @setfilename cvsclient.info
-@include CVSvn.texi
+@include version-client.texi
 
 @dircategory Programming
 @direntry
@@ -13,7 +13,7 @@
 
 This document describes the client/server protocol used by CVS.  It does
 not describe how to use or administer client/server CVS; see the regular
-CVS manual for that.  This is version @value{CVSVN} of the protocol
+CVS manual for that.  This is version @value{VERSION} of the protocol
 specification---@xref{Introduction}, for more on what this version number
 means.
 
@@ -59,7 +59,7 @@ to date than what you are reading now) of this document,
 @file{cvsclient.texi}, can be found at the usual GNU FTP sites, with a
 filename such as @file{cvs-@var{version}.tar.gz}.
 
-This is version @value{CVSVN} of the protocol specification.  This
+This is version @value{VERSION} of the protocol specification.  This
 version number is intended only to aid in distinguishing different
 versions of this specification.  Although the specification is currently
 maintained in conjunction with the CVS implementation, and carries the
@@ -484,7 +484,8 @@ in use, or sticks to a common subset.
 The protocol contains times and dates in various places.
 
 For the @samp{-D} option to the @code{annotate}, @code{co}, @code{diff},
-@code{export}, @code{history}, @code{rdiff}, @code{rtag}, @code{tag},
+@code{export}, @code{history}, @code{rannotate}, @code{rdiff},
+@code{rtag}, @code{tag},
 and @code{update} requests, the server should support two formats:
 
 @example
@@ -495,7 +496,8 @@ and @code{update} requests, the server should support two formats:
 The former format is preferred; the latter however is sent by the CVS
 command line client (versions 1.5 through at least 1.9).
 
-For the @samp{-d} option to the @code{log} request, servers should at
+For the @samp{-d} option to the @code{log} and @code{rlog} requests,
+servers should at
 least support RFC 822/1123 format.  Clients are encouraged to use this
 format too (the command line CVS client, version 1.10 and older, just passed
 along the date format specified by the user, however).
@@ -1160,12 +1162,14 @@ and send it in a future @code{Entry} request.  Note that the entries
 line in the @code{Created} response must indicate whether the file is
 binary or text, so the client can create it correctly.
 
-@item rdiff \n
+@item rannotate \n
+@itemx rdiff \n
+@itemx rlog \n
 @itemx rtag \n
 Response expected: yes.  Actually do a cvs command.  This uses any
 previous @code{Argument} requests, if they have been sent.  The client
 should not send @code{Directory}, @code{Entry}, or @code{Modified}
-requests for this command; they are not used.  Arguments to these
+requests for these commands; they are not used.  Arguments to these
 commands are module names, as described for @code{co}.
 
 @item init @var{root-name} \n
