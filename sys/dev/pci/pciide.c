@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.202 2003/09/21 11:14:02 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.203 2003/09/21 11:20:37 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.202 2003/09/21 11:14:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.203 2003/09/21 11:20:37 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -718,9 +718,9 @@ CFATTACH_DECL(pciide, sizeof(struct pciide_softc),
     pciide_match, pciide_attach, NULL, NULL);
 
 int	pciide_chipen __P((struct pciide_softc *, struct pci_attach_args *));
-int	pciide_mapregs_compat __P(( struct pci_attach_args *,
+void	pciide_mapregs_compat __P(( struct pci_attach_args *,
 	    struct pciide_channel *, int, bus_size_t *, bus_size_t*));
-int	pciide_mapregs_native __P((struct pci_attach_args *, 
+void	pciide_mapregs_native __P((struct pci_attach_args *, 
 	    struct pciide_channel *, bus_size_t *, bus_size_t *,
 	    int (*pci_intr) __P((void *))));
 void	pciide_mapreg_dma __P((struct pciide_softc *,
@@ -864,7 +864,7 @@ pciide_chipen(sc, pa)
 	return 1;
 }
 
-int
+void
 pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	struct pci_attach_args *pa;
 	struct pciide_channel *cp;
@@ -899,14 +899,14 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	wdc_cp->data32iot = wdc_cp->cmd_iot;
 	wdc_cp->data32ioh = wdc_cp->cmd_ioh;
 	pciide_map_compat_intr(pa, cp, compatchan);
-	return (1);
+	return;
 
 bad:
 	cp->wdc_channel.ch_flags |= WDCF_DISABLED;
-	return (0);
+	return;
 }
 
-int
+void
 pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	struct pci_attach_args * pa;
 	struct pciide_channel *cp;
@@ -976,11 +976,11 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 
 	wdc_cp->data32iot = wdc_cp->cmd_iot;
 	wdc_cp->data32ioh = wdc_cp->cmd_ioh;
-	return (1);
+	return;
 
 bad:
 	cp->wdc_channel.ch_flags |= WDCF_DISABLED;
-	return (0);
+	return;
 }
 
 void
@@ -3998,8 +3998,14 @@ hpt_chip_map(sc, pa)
 		}
 		if (pciide_chansetup(sc, i, interface) == 0)
 			continue;
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    hpt_pci_intr);
+		if (interface & PCIIDE_INTERFACE_PCI(i)) {
+			pciide_mapregs_native(pa, cp, &cmdsize,
+			    &ctlsize, hpt_pci_intr);
+		} else {
+			pciide_mapregs_compat(pa, cp, compatchan,
+			    &cmdsize, &ctlsize);
+		}
+		wdcattach(&cp->wdc_channel);
 	}
 	if ((sc->sc_pp->ide_product == PCI_PRODUCT_TRIONES_HPT366 &&
 	    (revision == HPT370_REV || revision == HPT370A_REV ||
