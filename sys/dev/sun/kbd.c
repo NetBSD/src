@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.14 1997/07/17 01:17:45 jtk Exp $	*/
+/*	$NetBSD: kbd.c,v 1.15 1997/10/03 23:04:46 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -379,7 +379,6 @@ kbdpoll(dev, events, p)
 }
 
 
-static int kbd_ioccmd(struct kbd_softc *k, int *data);
 static int kbd_iockeymap __P((struct kbd_state *ks,
 	u_long cmd, struct kiockeymap *kio));
 
@@ -437,7 +436,7 @@ kbdioctl(dev, cmd, data, flag, p)
 		break;
 
 	case KIOCCMD:	/* Send a command to the keyboard */
-		error = kbd_ioccmd(k, (int *)data);
+		error = kbd_docmd(*((int *)data), 1);
 		break;
 
 	case KIOCTYPE:	/* Get keyboard type */
@@ -576,16 +575,21 @@ kbd_oldkeymap(ks, cmd, kio)
 /*
  * keyboard command ioctl
  * ``unimplemented commands are ignored'' (blech)
+ * This is also export to the fb driver.
  */
-static int
-kbd_ioccmd(k, data)
-	struct kbd_softc *k;
-	int *data;
+int
+kbd_docmd(cmd, isuser)
+	int cmd;
+	int isuser;
 {
-	struct kbd_state *ks = &k->k_state;
-	int cmd, error, s;
+	struct kbd_softc *k;
+	struct kbd_state *ks;
+	int error, s;
 
-	cmd = *data;
+	error = 0;
+	k = kbd_cd.cd_devs[0];
+	ks = &k->k_state;
+
 	switch (cmd) {
 
 	case KBD_CMD_BELL:
@@ -607,7 +611,9 @@ kbd_ioccmd(k, data)
 
 	s = spltty();
 
-	error = kbd_drain_tx(k);
+	if (isuser)
+		error = kbd_drain_tx(k);
+
 	if (error == 0) {
 		kbd_output(k, cmd);
 		kbd_start_tx(k);
