@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1995/04/22 10:27:25 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1995/04/22 11:18:35 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	rogue
@@ -10,5 +10,9 @@ DPADD=	${LIBCURSES} ${LIBTERM} ${LIBCOMPAT}
 LDADD=	-lcurses -ltermlib -lcompat
 HIDEGAME=hidegame
 MAN=	rogue.6
+
+.if make(install)
+SUBDIR+= USD.doc
+.endif
 
 .include <bsd.prog.mk>
