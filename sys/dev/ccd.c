@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.26 1996/02/10 22:27:22 hpeyerl Exp $	*/
+/*	$NetBSD: ccd.c,v 1.27 1996/02/11 18:04:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -564,10 +564,13 @@ ccdopen(dev, flags, fmt, p)
 		ccdgetdisklabel(dev);
 
 	/* Check that the partition exists. */
-	if (part != RAW_PART && ((part > lp->d_npartitions) ||
-	    (lp->d_partitions[part].p_fstype == FS_UNUSED))) {
-		error = ENXIO;
-		goto done;
+	if (part != RAW_PART) {
+		if (((cs->sc_flags & CCDF_INITED) == 0) ||
+		    ((part > lp->d_npartitions) ||
+		     (lp->d_partitions[part].p_fstype == FS_UNUSED))) {
+			error = ENXIO;
+			goto done;
+		}
 	}
 
 	/* Prevent our unit from being unconfigured while open. */
