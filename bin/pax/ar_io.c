@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.43 2004/07/18 20:58:36 yamt Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.44 2004/08/02 10:20:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.43 2004/07/18 20:58:36 yamt Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.44 2004/08/02 10:20:48 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1668,17 +1668,17 @@ ar_summary(int n)
 
 
 	if (act == COPY) {
-	len = snprintf(buf, sizeof(buf),
-	    "%lu files in %s\n",
-	    (unsigned long)flcnt,
-	    timefmt(tbuf, sizeof(tbuf), flcnt, secs, "files"));
+		len = snprintf(buf, sizeof(buf),
+		    "%lu files in %s\n",
+		    (unsigned long)flcnt,
+		    timefmt(tbuf, sizeof(tbuf), flcnt, secs, "files"));
 	} else {
-	len = snprintf(buf, sizeof(buf),
-	    "%s vol %d, %lu files, %s read, %s written in %s\n",
-	    frmt->name, arvol-1, (unsigned long)flcnt,
-	    sizefmt(s1buf, sizeof(s1buf), rdcnt),
-	    sizefmt(s2buf, sizeof(s2buf), wrcnt),
-	    timefmt(tbuf, sizeof(tbuf), rdcnt + wrcnt, secs, "bytes"));
+		len = snprintf(buf, sizeof(buf),
+		    "%s vol %d, %lu files, %s read, %s written in %s\n",
+		    frmt->name, arvol-1, (unsigned long)flcnt,
+		    sizefmt(s1buf, sizeof(s1buf), rdcnt),
+		    sizefmt(s2buf, sizeof(s2buf), wrcnt),
+		    timefmt(tbuf, sizeof(tbuf), rdcnt + wrcnt, secs, "bytes"));
 	}
 	if (n == 0)
 		(void)fprintf(outf, "%s: %s", argv0, buf);
