@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.4 2000/09/24 17:03:27 jdolecek Exp $
+.\"	$NetBSD: boot.8,v 1.5 2001/06/05 12:52:56 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .\"	@(#)boot_hp300.8	8.2 (Berkeley) 4/19/94
 .\"
 .Dd May 8, 1997
-.Dt boot 8 amiga
+.Dt BOOT 8 amiga
 .Os
 .Sh NAME
 .Nm boot
@@ -74,7 +74,7 @@ When a bootable
 partition is created by means of HDTOOLBOX or another RDB editing program
 and a bootblock has been copied there by
 .Xr installboot 8
-and the boot priority of the 
+and the boot priority of the
 .Nx
 partion is either the highest or the
 .Nx
@@ -118,7 +118,7 @@ Force fastmem size to be
 .Ar memsize
 kBytes.
 .It Fl n
-maximum number of 
+maximum number of
 .Ar segments
 of memory to use, encoded as follows: 0 (default): 1 segment, 1:
 2 segments, 2: 3 or more segments.
@@ -156,7 +156,7 @@ from AmigaOS, you have to use the
 program that is supplied in the utils directory of the distribution.
 The loadbsd command line specification is:
 .Bd -ragged -offset indent
-.Nm loadbsd 
+.Nm loadbsd
 .Op Fl abknpstADZ
 .Op Fl c Ar model
 .Op Fl m Ar memsize
@@ -182,7 +182,7 @@ Force fastmem size to be
 .Ar memsize
 kBytes.
 .It Fl n
-maximum number of 
+maximum number of
 .Ar segments
 of memory to use, encoded as follows: 0 (default): 1 segment, 1:
 2 segments, 2: 3 or more segments.
