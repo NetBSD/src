@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.8 2004/04/08 12:33:20 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.9 2004/04/19 13:55:53 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -64,14 +64,6 @@
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
 #endif
-/* XXX: FreeBSD prior to 5.0 doesn't have real wchar support */
-#if defined(__FreeBSD_version) && __FreeBSD_version < 500000
-#undef HAVE_WCHAR_H
-#endif
-/* XXX: wchar in NetBSD 1.5 is somewhat plain */
-#if defined(__NetBSD_Version__) && __NetBSD_Version__ < 106000000
-#undef HAVE_WCHAR_H
-#endif
 #ifdef HAVE_WCHAR_H
 #include <wchar.h>
 #endif
@@ -90,7 +82,7 @@
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.92 2004/03/22 21:34:39 christos Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.8 2004/04/08 12:33:20 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.9 2004/04/19 13:55:53 pooka Exp $");
 #endif
 #endif	/* lint */
 
