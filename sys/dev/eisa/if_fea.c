@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.5 1996/06/08 00:11:32 cgd Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.6 1996/06/09 23:32:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -520,7 +520,7 @@ pdq_eisa_attach(
     if (sc->sc_ats == NULL)
 	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
 #if !defined(PDQ_IOMAPPED)
-    printf("%s: using iomem 0x%x-0x%x", sc->sc_dev.dv_xname, maddr,
+    printf("%s: using iomem 0x%x-0x%x\n", sc->sc_dev.dv_xname, maddr,
 	maddr + msize - 1);
 #endif
     if (intrstr != NULL)
