@@ -1,4 +1,4 @@
-#	@(#)Makefile	5.3 (Berkeley) 12/4/90
+#	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	date
 SRCS=	date.c netdate.c

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,30 +32,49 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)sleep.c	5.5 (Berkeley) 4/8/91";
+static char sccsid[] = "@(#)sleep.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
+void usage __P((void));
+
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	int secs;
+	int ch, secs;
 
-	if (argc != 2) {
-		(void)fprintf(stderr, "usage: sleep time\n");
-		exit(1);
-	}
-	if ((secs = atoi(argv[1])) > 0)
+	while ((ch = getopt(argc, argv, "")) != EOF)
+		switch(ch) {
+		case '?':
+		default:
+			usage();
+		}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		usage();
+
+	if ((secs = atoi(*argv)) > 0)
 		(void)sleep(secs);
 	exit(0);
+}
+
+void
+usage()
+{
+
+	(void)fprintf(stderr, "usage: sleep seconds\n");
+	exit(1);
 }
