@@ -1,4 +1,4 @@
-/*	$NetBSD: xscale_pmc.c,v 1.1 2002/08/07 05:15:02 briggs Exp $	*/
+/*	$NetBSD: xscale_pmc.c,v 1.2 2002/08/07 21:11:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.1 2002/08/07 05:15:02 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.2 2002/08/07 21:11:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -271,14 +271,14 @@ xscale_counter_type(int ctr)
 
 	switch (ctr) {
 	case __PMC_CCNT_I:
-		ret = XSCALE_PMC_TYPE_CCNT;
+		ret = PMC_TYPE_I80200_CCNT;
 		break;
 	case __PMC0_I:
 	case __PMC1_I:
-		ret = XSCALE_PMC_TYPE_PMCx;
+		ret = PMC_TYPE_I80200_PMCx;
 		break;
 	case -1:
-		ret = XSCALE_PMC_TYPE_I80200;
+		ret = PMC_TYPE_I80200;
 		break;
 	default:
 		ret = -1;
