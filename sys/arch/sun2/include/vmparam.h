@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2001/04/06 13:13:05 fredette Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2001/04/10 12:23:14 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 /*
  * We definitely need a small pager map.
  */
+#undef	PAGER_MAP_SIZE
 #define	PAGER_MAP_SIZE (1 * 1024 * 1024)
 
 /*
