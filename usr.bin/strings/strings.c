@@ -1,6 +1,8 @@
+/*	$NetBSD: strings.c,v 1.5 1994/12/10 11:54:32 jtc Exp $	*/
+
 /*
- * Copyright (c) 1980, 1987 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,26 +34,29 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1987 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1987, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)strings.c	5.10 (Berkeley) 5/23/91";*/
-static char rcsid[] = "$Id: strings.c,v 1.4 1993/11/13 01:51:02 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
+#endif
+static char rcsid[] = "$NetBSD: strings.c,v 1.5 1994/12/10 11:54:32 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <fcntl.h>
-#include <errno.h>
+
 #include <a.out.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
+#include <unistd.h>
 
 enum offset_radix {			/* radix used for string offset */
 	OFFSET_NONE,
@@ -151,6 +156,10 @@ main(argc, argv)
 
 	if (minlen == -1)
 		minlen = DEF_LEN;
+	else {
+		(void)fprintf(stderr, "strings: length less than 1\n");
+		exit (1);
+	}
 
 	if (!(bfr = malloc((u_int)minlen))) {
 		(void)fprintf(stderr, "strings: %s\n", strerror(errno));
