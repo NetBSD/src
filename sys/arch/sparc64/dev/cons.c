@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: cons.c,v 1.2 1999/08/05 18:08:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -472,7 +472,7 @@ cnfbstart(tp)
 	if (tp->t_outq.c_cc) {
 		tp->t_state |= TS_BUSY;
 		if (s == 0) {
-			(void) splsoftclock();
+			(void) spllowersoftclock();
 #ifdef NOTDEF_DEBUG
 			prom_printf("cnfbstart: cnfbdma\r\n");
 #endif

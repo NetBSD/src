@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11 1998/09/06 04:22:43 mark Exp $	*/
+/*	$NetBSD: psl.h,v 1.12 1999/08/05 18:08:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -68,7 +68,8 @@
 #define spl0()		splx(_SPL_0)
 /*#define splsoft()	raisespl(_SPL_SOFT)*/
 #define splsoftnet()	raisespl(_SPL_SOFTNET)
-#define splsoftclock()	lowerspl(_SPL_SOFTCLOCK)
+#define spllowersoftclock() lowerspl(_SPL_SOFTCLOCK)
+#define splsoftclock()	raisespl(_SPL_SOFTCLOCK)
 #define splbio()	raisespl(_SPL_BIO)
 #define splnet()	raisespl(_SPL_NET)
 #define splsoftserial()	raisespl(_SPL_SOFTSERIAL)
