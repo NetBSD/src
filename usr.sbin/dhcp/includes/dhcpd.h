@@ -160,6 +160,10 @@ struct lease_state {
 
 	struct iaddr from;
 
+	int max_message_size;
+	u_int8_t *prl;
+	int prl_len;
+
 	u_int32_t xid;
 	u_int16_t secs;
 	u_int16_t bootp_flags;
@@ -332,6 +336,7 @@ struct client_state {
 	enum dhcp_state state;		/* Current state for this interface. */
 	struct iaddr destination;		    /* Where to send packet. */
 	u_int32_t xid;					  /* Transaction ID. */
+	u_int16_t secs;			    /* secs value from DHCPDISCOVER. */
 	TIME first_sending;			/* When was first copy sent? */
 	TIME interval;		      /* What's the current resend interval? */
 	struct string_list *medium;		   /* Last media type tried. */
@@ -457,8 +462,9 @@ typedef unsigned char option_mask [16];
 
 void parse_options PROTO ((struct packet *));
 void parse_option_buffer PROTO ((struct packet *, unsigned char *, int));
-int cons_options PROTO ((struct packet *, struct dhcp_packet *,
-			  struct tree_cache **, int, int, int));
+int cons_options PROTO ((struct packet *, struct dhcp_packet *, int,
+			 struct tree_cache **, int, int, int,
+			 u_int8_t *, int));
 int store_options PROTO ((unsigned char *, int, struct tree_cache **,
 			   unsigned char *, int, int, int, int));
 char *pretty_print_option PROTO ((unsigned int,
