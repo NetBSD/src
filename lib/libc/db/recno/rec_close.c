@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_close.c,v 1.9 1997/07/21 14:06:43 jtc Exp $	*/
+/*	$NetBSD: rec_close.c,v 1.10 1998/08/18 23:50:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_close.c	8.6 (Berkeley) 8/18/94";
 #else
-__RCSID("$NetBSD: rec_close.c,v 1.9 1997/07/21 14:06:43 jtc Exp $");
+__RCSID("$NetBSD: rec_close.c,v 1.10 1998/08/18 23:50:09 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,13 +87,15 @@ __rec_close(dbp)
 	if (F_ISSET(t, R_MEMMAPPED) && munmap(t->bt_smap, t->bt_msize))
 		status = RET_ERROR;
 
-	if (!F_ISSET(t, R_INMEM))
+	if (!F_ISSET(t, R_INMEM)) {
 		if (F_ISSET(t, R_CLOSEFP)) {
 			if (fclose(t->bt_rfp))
 				status = RET_ERROR;
-		} else
+		} else {
 			if (close(t->bt_rfd))
 				status = RET_ERROR;
+		}
+	}
 
 	if (__bt_close(dbp) == RET_ERROR)
 		status = RET_ERROR;
