@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1998/07/28 11:41:47 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1998/11/04 13:45:57 christos Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -39,7 +39,7 @@ __COPYRIGHT(
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 1998/07/28 11:41:47 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 1998/11/04 13:45:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: main.c,v 1.9 1998/07/28 11:41:47 mycroft Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/wait.h>
+#include <termios.h>
 #include <ctype.h>
 #include <setjmp.h>
 #include <pwd.h>
@@ -292,7 +293,8 @@ extract_addr_range()
 }
 
 
-#define	SKIP_BLANKS() while (isspace(*ibufp) && *ibufp != '\n') ibufp++
+#define	SKIP_BLANKS() while (isspace((unsigned char)*ibufp) && *ibufp != '\n') \
+	ibufp++
 
 #define MUST_BE_FIRST() \
 	if (!first) { sprintf(errmsg, "invalid address"); return ERR; }
@@ -317,7 +319,7 @@ next_addr()
 		case '^':
 			ibufp++;
 			SKIP_BLANKS();
-			if (isdigit(*ibufp)) {
+			if (isdigit((unsigned char)*ibufp)) {
 				STRTOL(n, ibufp);
 				addr += (c == '-' || c == '^') ? -n : n;
 			} else if (!isspace(c))
@@ -502,7 +504,7 @@ exec_command()
 		if (addr_cnt > 0) {
 			sprintf(errmsg, "unexpected address");
 			return ERR;
-		} else if (!isspace(*ibufp)) {
+		} else if (!isspace((unsigned char)*ibufp)) {
 			sprintf(errmsg, "unexpected command suffix");
 			return ERR;
 		} else if ((fnp = get_filename()) == NULL)
@@ -532,7 +534,7 @@ exec_command()
 		if (addr_cnt > 0) {
 			sprintf(errmsg, "unexpected address");
 			return ERR;
-		} else if (!isspace(*ibufp)) {
+		} else if (!isspace((unsigned char)*ibufp)) {
 			sprintf(errmsg, "unexpected command suffix");
 			return ERR;
 		} else if ((fnp = get_filename()) == NULL)
@@ -663,7 +665,7 @@ exec_command()
 		gflag =  (modified && !scripted && c == 'q') ? EMOD : EOF;
 		break;
 	case 'r':
-		if (!isspace(*ibufp)) {
+		if (!isspace((unsigned char)*ibufp)) {
 			sprintf(errmsg, "unexpected command suffix");
 			return ERR;
 		} else if (addr_cnt == 0)
@@ -796,7 +798,7 @@ exec_command()
 			gflag = EOF;
 			ibufp++;
 		}
-		if (!isspace(*ibufp)) {
+		if (!isspace((unsigned char)*ibufp)) {
 			sprintf(errmsg, "unexpected command suffix");
 			return ERR;
 		} else if ((fnp = get_filename()) == NULL)
