@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.76 2000/10/09 12:54:28 enami Exp $	*/
+/*	$NetBSD: tulip.c,v 1.77 2000/10/09 14:31:01 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
-#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -62,10 +61,6 @@
 
 #include <uvm/uvm_extern.h>
  
-#if NRND > 0
-#include <sys/rnd.h>
-#endif
-
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>

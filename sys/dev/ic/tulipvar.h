@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.39 2000/10/09 12:54:28 enami Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.40 2000/10/09 14:31:02 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -40,8 +40,14 @@
 #ifndef _DEV_IC_TULIPVAR_H_
 #define	_DEV_IC_TULIPVAR_H_
 
+#include "rnd.h"
+ 
 #include <sys/queue.h>
 #include <sys/callout.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 /*
  * Misc. definitions for the Digital Semiconductor ``Tulip'' (21x4x)
