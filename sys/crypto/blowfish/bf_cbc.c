@@ -57,9 +57,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_cbc.c,v 1.5 2001/11/13 01:40:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_cbc.c,v 1.5.10.1 2003/09/12 19:11:03 tron Exp $");
 
-#include <openssl/blowfish.h>
+#include <crypto/blowfish/blowfish.h>
 #include "bf_locl.h"
 
 void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
