@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.28 1995/02/01 16:56:42 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.29 1995/02/01 21:49:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -70,8 +70,8 @@
 #define AIC_USE_DWORDS		0
 
 /* Synchronous data transfers? */
-#define AIC_USE_SYNCHRONOUS	0
-#define AIC_SYNC_REQ_ACK_OFS 	15
+#define AIC_USE_SYNCHRONOUS	1
+#define AIC_SYNC_REQ_ACK_OFS 	8
 
 /* Wide data transfers? */
 #define	AIC_USE_WIDE		0
@@ -524,7 +524,8 @@ struct aic_softc {
 	/* Message stuff */
 	u_char	sc_msgpriq;	/* Messages we want to send */
 	u_char	sc_msgoutq;	/* Messages sent during last MESSAGE OUT */
-	u_char	sc_msgout;	/* Message last transmitted */
+	u_char	sc_lastmsg;	/* Message last transmitted */
+	u_char	sc_currmsg;	/* Message currently ready to transmit */
 #define SEND_DEV_RESET		0x01
 #define SEND_PARITY_ERROR	0x02
 #define SEND_ABORT		0x04
@@ -1464,16 +1465,17 @@ nextbyte:
 
 		case MSG_PARITY_ERROR:
 			/* Resend the last message. */
-			aic_sched_msgout(sc->sc_msgout);
+			aic_sched_msgout(sc->sc_lastmsg);
 			break;
 
 		case MSG_MESSAGE_REJECT:
-			AIC_MISC(("message rejected  "));
-			switch (sc->sc_msgout) {
+			AIC_MISC(("message rejected %02x  ", sc->sc_lastmsg));
+			switch (sc->sc_lastmsg) {
 #if AIC_USE_SYNCHRONOUS + AIC_USE_WIDE
 			case SEND_IDENTIFY:
 				ti->flags &= ~(DO_SYNC|DO_WIDE);
 				ti->period = ti->offset = 0;
+				aic_setsync(sc, ti);
 				ti->width = 0;
 				break;
 #endif
@@ -1481,6 +1483,7 @@ nextbyte:
 			case SEND_SDTR:
 				ti->flags &= ~DO_SYNC;
 				ti->period = ti->offset = 0;
+				aic_setsync(sc, ti);
 				break;
 #endif
 #if AIC_USE_WIDE
@@ -1525,16 +1528,14 @@ nextbyte:
 				ti->period = sc->sc_imess[3];
 				ti->offset = sc->sc_imess[4];
 				ti->flags &= ~DO_SYNC;
-				sc_print_addr(acb->xs->sc_link);
 				if (ti->offset == 0) {
-					printf("async\n");
 				} else if (ti->period < sc->sc_minsync ||
 					   ti->period > sc->sc_maxsync ||
-					   ti->offset > 15) {
-					printf("async\n");
+					   ti->offset > 8) {
 					ti->period = ti->offset = 0;
 					aic_sched_msgout(SEND_SDTR);
 				} else {
+					sc_print_addr(acb->xs->sc_link);
 					printf("sync, offset %d, period %dnsec\n",
 					    ti->offset, ti->period * 4);
 				}
@@ -1548,14 +1549,12 @@ nextbyte:
 					goto reject;
 				ti->width = sc->sc_imess[3];
 				ti->flags &= ~DO_WIDE;
-				sc_print_addr(acb->xs->sc_link);
 				if (ti->width == 0) {
-					printf("narrow\n");
 				} else if (ti->width > AIC_MAX_WIDTH) {
-					printf("narrow\n");
 					ti->width = 0;
 					aic_sched_msgout(SEND_WDTR);
 				} else {
+					sc_print_addr(acb->xs->sc_link);
 					printf("wide, width %d\n",
 					    1 << (3 + ti->width));
 				}
@@ -1630,6 +1629,7 @@ aic_msgout(sc)
 {
 	struct aic_acb *acb;
 	struct aic_tinfo *ti;
+	u_char sstat1;
 	int n;
 
 	AIC_TRACE(("aic_msgout  "));
@@ -1668,15 +1668,16 @@ aic_msgout(sc)
 
 	/* No messages transmitted so far. */
 	sc->sc_msgoutq = 0;
+	sc->sc_lastmsg = 0;
 
 nextmsg:
 	/* Pick up highest priority message. */
-	sc->sc_msgout = sc->sc_msgpriq & -sc->sc_msgpriq;
-	sc->sc_msgpriq &= ~sc->sc_msgout;
-	sc->sc_msgoutq |= sc->sc_msgout;
+	sc->sc_currmsg = sc->sc_msgpriq & -sc->sc_msgpriq;
+	sc->sc_msgpriq &= ~sc->sc_currmsg;
+	sc->sc_msgoutq |= sc->sc_currmsg;
 
 	/* Build the outgoing message data. */
-	switch (sc->sc_msgout) {
+	switch (sc->sc_currmsg) {
 	case SEND_IDENTIFY:
 		if (sc->sc_state != AIC_CONNECTED) {
 			printf("%s: SEND_IDENTIFY while not connected; sending NOOP\n",
@@ -1753,9 +1754,11 @@ nextmsg:
 		break;
 
 	case 0:
+#ifdef AIC_PICKY
 		printf("%s: unexpected MESSAGE OUT; sending NOOP\n",
 		    sc->sc_dev.dv_xname);
 		AIC_BREAK();
+#endif
 	noop:
 		sc->sc_omess[0] = MSG_NOOP;
 		n = 1;
@@ -1773,29 +1776,27 @@ nextbyte:
 	/* Send message bytes. */
 	for (;;) {
 		for (;;) {
-			u_char sstat1 = inb(SSTAT1);
-			if ((sstat1 & (REQINIT|BUSFREE)) == 0) {
-				/* Wait for REQINIT.  XXX Need timeout. */
-				continue;
-			}
-			if ((sstat1 & (PHASECHG|BUSFREE)) != 0) {
-				/*
-				 * Target left MESSAGE OUT, possibly to reject
-				 * our message.
-				 */
-				goto out;
-			}
-			/* Still in MESSAGE OUT phase, and REQ is asserted. */
-			break;
+			sstat1 = inb(SSTAT1);
+			if ((sstat1 & (REQINIT|BUSFREE)) != 0)
+				break;
+			/* Wait for REQINIT.  XXX Need timeout. */
+		}
+		if ((sstat1 & (PHASECHG|BUSFREE)) != 0) {
+			/*
+			 * Target left MESSAGE OUT, possibly to reject
+			 * our message.
+			 */
+			goto out;
 		}
 
-		--n;
-
 		/* Clear ATN before last byte if this is the last message. */
-		if (n == 0 && sc->sc_msgpriq == 0)
+		if (n == 1 && sc->sc_msgpriq == 0)
 			outb(CLRSINT1, CLRATNO);
 		/* Send message byte. */
 		outb(SCSIDAT, *--sc->sc_omp);
+		--n;
+		/* Keep track of the last message we've sent any bytes of. */
+		sc->sc_lastmsg = sc->sc_currmsg;
 		/* Wait for ACK to be negated.  XXX Need timeout. */
 		while ((inb(SCSISIG) & ACKI) != 0)
 			;
@@ -1839,8 +1840,7 @@ aic_dataout_pio(sc, p, n)
 	int out = 0;
 #define DOUTAMOUNT 128		/* Full FIFO */
 
-	/* Clear FIFOs and counters. */
-	outb(SXFRCTL0, CHEN|CLRSTCNT|CLRCH);
+	/* Clear host FIFO and counter. */
 	outb(DMACNTRL0, RSTFIFO|WRITE);
 	/* Enable FIFOs. */
 	outb(SXFRCTL0, SCSIEN|DMAEN|CHEN);
@@ -1865,6 +1865,8 @@ aic_dataout_pio(sc, p, n)
 		}
 
 		xfer = min(DOUTAMOUNT, n);
+
+		AIC_MISC(("%d> ", xfer));
 
 		n -= xfer;
 		out += xfer;
@@ -1891,39 +1893,44 @@ aic_dataout_pio(sc, p, n)
 		}
 	}
 
-	/* See the bytes off chip */
-	for (;;) {
-		dmastat = inb(DMASTAT);
-		if ((dmastat & DFIFOEMP) != 0 &&
-		    (inb(SSTAT2) & SEMPTY) != 0)
-			break;
-		if ((dmastat & INTSTAT) != 0)
-			goto phasechange;
+	if (out == 0) {
+		outb(SXFRCTL1, BITBUCKET);
+		for (;;) {
+			if ((inb(DMASTAT) & INTSTAT) != 0)
+				break;
+		}
+		outb(SXFRCTL1, 0);
+		AIC_MISC(("extra data  "));
+	} else {
+		/* See the bytes off chip */
+		for (;;) {
+			dmastat = inb(DMASTAT);
+			if ((dmastat & DFIFOEMP) != 0 &&
+			    (inb(SSTAT2) & SEMPTY) != 0)
+				break;
+			if ((dmastat & INTSTAT) != 0)
+				goto phasechange;
+		}
 	}
 
 phasechange:
-	/* We now have the data off chip.  */
+	/* Stop the FIFO data path. */
 	outb(SXFRCTL0, CHEN);
+	while ((inb(SXFRCTL0) & SCSIEN) != 0)
+		;
 
 	if ((dmastat & INTSTAT) != 0) {
 		/* Some sort of phase change. */
-		register u_char sstat2;
 		int amount;
 
 		/* Stop transfers, do some accounting */
-		amount = inb(FIFOSTAT);
-		sstat2 = inb(SSTAT2);
-		if ((sstat2 & 7) == 0)
-			amount += sstat2 & SFULL ? 8 : 0;
-		else
-			amount += sstat2 & 7;
-		out -= amount;
-		AIC_MISC(("+%d ", amount));
+		amount = inb(FIFOSTAT) + inb(SSTAT2) & 15;
+		if (amount > 0) {
+			out -= amount;
+			outb(SXFRCTL0, CHEN|CLRSTCNT|CLRCH);
+			AIC_MISC(("+%d ", amount));
+		}
 	}
-	
-	outb(DMACNTRL0, RSTFIFO);
-	while ((inb(SXFRCTL0) & SCSIEN) != 0)
-		;
 
 	/* Turn on ENREQINIT again. */
 	outb(SIMODE1, ENSCSIRST|ENSCSIPERR|ENBUSFREE|ENREQINIT|ENPHASECHG);
@@ -1948,8 +1955,7 @@ aic_datain_pio(sc, p, n)
 	int in = 0;
 #define DINAMOUNT 128		/* Full FIFO */
 	
-	/* Clear FIFOs and counters */
-	outb(SXFRCTL0, CHEN|CLRSTCNT|CLRCH);
+	/* Clear host FIFO and counter. */
 	outb(DMACNTRL0, RSTFIFO);
 	/* Enable FIFOs */
 	outb(SXFRCTL0, SCSIEN|DMAEN|CHEN);
@@ -1973,14 +1979,11 @@ aic_datain_pio(sc, p, n)
 		}
 
 		if ((dmastat & DFIFOFULL) != 0)
-			xfer = DINAMOUNT;
-		else {
-			while ((inb(SSTAT2) & SEMPTY) == 0)
-				;
-			xfer = inb(FIFOSTAT);
-		}
+			xfer = min(DINAMOUNT, n);
+		else
+			xfer = min(inb(FIFOSTAT), n);
 
-		xfer = min(xfer, n);
+		AIC_MISC((">%d ", xfer));
 
 		n -= xfer;
 		in += xfer;
@@ -2007,13 +2010,8 @@ aic_datain_pio(sc, p, n)
 		}
 
 		if ((dmastat & INTSTAT) != 0)
-			break;
+			goto phasechange;
 	}
-
-#if 0
-	if (n > 0)
-		printf("residual %d\n", n);
-#endif
 
 	/* Some SCSI-devices are rude enough to transfer more data than what
 	 * was requested, e.g. 2048 bytes from a CD-ROM instead of the 
@@ -2022,23 +2020,18 @@ aic_datain_pio(sc, p, n)
 	 * FIFO is not empty, waste some bytes....
 	 */
 	if (in == 0) {
-		int extra = 0;
-
+		outb(SXFRCTL1, BITBUCKET);
 		for (;;) {
-			dmastat = inb(DMASTAT);
-			if ((dmastat & DFIFOEMP) != 0)
+			if ((inb(DMASTAT) & INTSTAT) != 0)
 				break;
-			(void) inb(DMADATA); /* Throw it away */
-			extra++;
 		}
-
-		AIC_MISC(("aic: %d extra bytes\n", extra));
+		outb(SXFRCTL1, 0);
+		AIC_MISC(("extra data  "));
 	}
 
-	/* Stop the FIFO data path */
+phasechange:
+	/* Stop the FIFO data path. */
 	outb(SXFRCTL0, CHEN);
-
-	outb(DMACNTRL0, RSTFIFO);
 	while ((inb(SXFRCTL0) & SCSIEN) != 0)
 		;
 
@@ -2071,6 +2064,7 @@ aicintr(sc)
 
 	AIC_TRACE(("aicintr  "));
 	
+loop:
 gotintr:
 	/*
 	 * First check for abnormal conditions, such as reset.
@@ -2179,7 +2173,7 @@ gotintr:
 			} else
 				sc->sc_msgpriq = SEND_DEV_RESET;
 
-			ti->lubusy |= (1<<sc_link->lun);
+			ti->lubusy |= (1 << sc_link->lun);
 
 			/* Do an implicit RESTORE POINTERS. */
 			sc->sc_dp = acb->data_addr;
@@ -2210,12 +2204,14 @@ gotintr:
 			aic_done(sc, acb);
 			goto out;
 		} else {
+#ifdef AIC_PICKY
 			if (sc->sc_state != AIC_IDLE) {
 				printf("%s: BUS FREE while not idle; state=%d\n",
 				    sc->sc_dev.dv_xname, sc->sc_state);
 				AIC_BREAK();
 				goto out;
 			}
+#endif
 
 			aic_sched(sc);
 			goto out;
@@ -2296,14 +2292,18 @@ dophase:
 		    (sc->sc_flags & AIC_ABORTING) == 0)
 			break;
 		aic_msgout(sc);
-		goto nextphase;
+		sc->sc_prevphase = PH_MSGOUT;
+		goto loop;
 
 	case PH_MSGIN:
 		if ((sc->sc_state & (AIC_CONNECTED|AIC_RESELECTED)) == 0)
 			break;
-		if (aic_msgin(sc))
+		if (aic_msgin(sc)) {
+			sc->sc_prevphase = PH_MSGIN;
 			goto gotintr;
-		goto nextphase;
+		}
+		sc->sc_prevphase = PH_MSGIN;
+		goto loop;
 
 	case PH_CMD:
 		if ((sc->sc_state & AIC_CONNECTED) == 0)
@@ -2319,7 +2319,8 @@ dophase:
 		n = aic_dataout_pio(sc, sc->sc_cp, sc->sc_cleft);
 		sc->sc_cp += n;
 		sc->sc_cleft -= n;
-		goto nextphase;
+		sc->sc_prevphase = PH_CMD;
+		goto loop;
 
 	case PH_DATAOUT:
 		if ((sc->sc_state & AIC_CONNECTED) == 0)
@@ -2328,7 +2329,8 @@ dophase:
 		n = aic_dataout_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
-		goto nextphase;
+		sc->sc_prevphase = PH_DATAOUT;
+		goto loop;
 
 	case PH_DATAIN:
 		if ((sc->sc_state & AIC_CONNECTED) == 0)
@@ -2337,7 +2339,8 @@ dophase:
 		n = aic_datain_pio(sc, sc->sc_dp, sc->sc_dleft);
 		sc->sc_dp += n;
 		sc->sc_dleft -= n;
-		goto nextphase;
+		sc->sc_prevphase = PH_DATAIN;
+		goto loop;
 
 	case PH_STAT:
 		if ((sc->sc_state & AIC_CONNECTED) == 0)
@@ -2352,7 +2355,8 @@ dophase:
 		while ((inb(SXFRCTL0) & SCSIEN) != 0)
 			;
 		AIC_MISC(("target_stat=0x%02x  ", acb->target_stat));
-		goto nextphase;
+		sc->sc_prevphase = PH_STAT;
+		goto loop;
 	}
 
 	printf("%s: unexpected bus phase; resetting\n", sc->sc_dev.dv_xname);
@@ -2360,9 +2364,6 @@ dophase:
 reset:
 	aic_init(sc);
 	return 1;
-
-nextphase:
-	sc->sc_prevphase = sc->sc_phase;
 
 out:
 	outb(DMACNTRL0, INTEN);
@@ -2502,9 +2503,9 @@ aic_dump_driver(sc)
 	int i;
 	
 	printf("nexus=%x prevphase=%x\n", sc->sc_nexus, sc->sc_prevphase);
-	printf("state=%x msgin=%x msgpriq=%x msgoutq=%x msgout=%x\n",
+	printf("state=%x msgin=%x msgpriq=%x msgoutq=%x lastmsg=%x currmsg=%x\n",
 	    sc->sc_state, sc->sc_imess[0],
-	    sc->sc_msgpriq, sc->sc_msgoutq, sc->sc_msgout);
+	    sc->sc_msgpriq, sc->sc_msgoutq, sc->sc_lastmsg, sc->sc_currmsg);
 	for (i = 0; i < 7; i++) {
 		ti = &sc->sc_tinfo[i];
 		printf("tinfo%d: %d cmds %d disconnects %d timeouts",
