@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 1999/09/13 10:31:26 itojun Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 1999/09/16 21:17:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -156,10 +156,10 @@ microtime(tvp)
 	*tvp = time;
 
 #ifdef USE_RTCCLK
-	/* ticks = (16000 - SHREG_TMU.TCNT1)*1000000/16000; */
-	ticks = 1000000 - SHREG_TMU.TCNT1*1000/16;
+	/* ticks = (16000 - SHREG_TCNT1)*1000000/16000; */
+	ticks = 1000000 - SHREG_TCNT1*1000/16;
 #else
-	ticks = (PCLOCK/16 - SHREG_TMU.TCNT1)/(PCLOCK/16/1000000);
+	ticks = (PCLOCK/16 - SHREG_TCNT1)/(PCLOCK/16/1000000);
 #endif
 
 	tvp->tv_usec += ticks;
@@ -188,9 +188,9 @@ clockintr(arg)
 
 	/* clear timer counter under flow interrupt flag */
 #ifdef USE_RTCCLK
-        SHREG_TMU.TCR1.WORD = 0x0024;
+        SHREG_TCR1 = 0x0024;
 #else
-        SHREG_TMU.TCR1.WORD = 0x0021;
+        SHREG_TCR1 = 0x0021;
 #endif
 
 	hardclock(frame);
@@ -204,7 +204,7 @@ gettick()
 	/* Don't want someone screwing with the counter while we're here. */
 	disable_intr();
 
-	counter = SHREG_TMU.TCNT0;
+	counter = SHREG_TCNT0;
 
 	enable_intr();
 	return counter;
@@ -271,17 +271,17 @@ findcpuspeed()
 
 #if 0
 	/* disable Under Flow int,up rising edge, 1/4 Cys */
-	SHREG_TMU.TCR0.WORD = 0;
+	SHREG_TCR0 = 0;
 #else
 	/* disable Under Flow int,up rising edge, 1/16 Cys */
-	SHREG_TMU.TCR0.WORD = 0;
+	SHREG_TCR0 = 0;
 #endif
 
 	/* set counter */
-	SHREG_TMU.TCNT0 = 0xffffffff;
+	SHREG_TCNT0 = 0xffffffff;
 
 	/* start counter */
-	SHREG_TMU.TSTR.BYTE = 0x01;
+	SHREG_TSTR = 0x01;
 
 	/* Timer counter is decremented at every 0.5 uSec */
 	for (i = FIRST_GUESS; i; i--)
@@ -300,18 +300,18 @@ cpu_initclocks()
 #ifdef USE_RTCCLK
         /* enable under flow interrupt, up rising edge, RTCCLK */
 	/* RTCCLK == 16kHz */
-        SHREG_TMU.TCR1.WORD = 0x0024;
-	SHREG_TMU.TCOR1 = 16000 / hz; /* about 1/HZ Sec */
-	SHREG_TMU.TCNT1 = 16000 / hz; /* about 1/HZ Sec */
+        SHREG_TCR1 = 0x0024;
+	SHREG_TCOR1 = 16000 / hz; /* about 1/HZ Sec */
+	SHREG_TCNT1 = 16000 / hz; /* about 1/HZ Sec */
 #else
         /* enable under flow interrupt, up rising edge, 1/16 Pcyc */
-        SHREG_TMU.TCR1.WORD = 0x0021;
-	SHREG_TMU.TCOR1 = PCLOCK / 16 / hz; /* about 1/HZ Sec */
-	SHREG_TMU.TCNT1 = PCLOCK / 16 / hz; /* about 1/HZ Sec */
+        SHREG_TCR1 = 0x0021;
+	SHREG_TCOR1 = PCLOCK / 16 / hz; /* about 1/HZ Sec */
+	SHREG_TCNT1 = PCLOCK / 16 / hz; /* about 1/HZ Sec */
 #endif
 
 	/* start timer counter 1 */
-	SHREG_TMU.TSTR.BYTE |= 0x02;
+	SHREG_TSTR |= 0x02;
 
 	(void)shb_intr_establish(TMU1_IRQ, IST_EDGE, IPL_CLOCK, clockintr, 0);
 }
