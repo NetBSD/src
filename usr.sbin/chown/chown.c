@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.15 1998/10/05 21:37:39 kim Exp $");
+__RCSID("$NetBSD: chown.c,v 1.16 1999/03/14 01:39:48 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,17 +61,16 @@ __RCSID("$NetBSD: chown.c,v 1.15 1998/10/05 21:37:39 kim Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void	a_gid __P((char *));
-void	a_uid __P((char *));
-void	chownerr __P((char *));
-u_long	id __P((char *, char *));
+static void	a_gid __P((const char *));
+static void	a_uid __P((const char *));
+static id_t	id __P((const char *, const char *));
 int	main __P((int, char **));
-void	usage __P((void));
+static void	usage __P((void));
 
 uid_t uid;
 gid_t gid;
 int Rflag, ischown, fflag;
-char *gname, *myname;
+char *myname;
 
 int
 main(argc, argv)
@@ -146,7 +145,8 @@ main(argc, argv)
 	else
 		change_owner = chown;
 
-	uid = gid = -1;
+	uid = (uid_t)-1;
+	gid = (gid_t)-1;
 	if (ischown) {
 #ifdef SUPPORT_DOT
 		if ((cp = strchr(*argv, '.')) != NULL) {
@@ -203,23 +203,23 @@ main(argc, argv)
 	if (errno)
 		err(1, "fts_read");
 	exit(rval);
+	/* NOTREACHED */
 }
 
-void
+static void
 a_gid(s)
-	char *s;
+	const char *s;
 {
 	struct group *gr;
 
 	if (*s == '\0')			/* Argument was "uid[:.]". */
 		return;
-	gname = s;
 	gid = ((gr = getgrnam(s)) == NULL) ? id(s, "group") : gr->gr_gid;
 }
 
-void
+static void
 a_uid(s)
-	char *s;
+	const char *s;
 {
 	struct passwd *pw;
 
@@ -228,19 +228,15 @@ a_uid(s)
 	uid = ((pw = getpwnam(s)) == NULL) ? id(s, "user") : pw->pw_uid;
 }
 
-u_long
+static id_t
 id(name, type)
-	char *name, *type;
+	const char *name, *type;
 {
-	u_long val;
+	id_t val;
 	char *ep;
 
-	/*
-	 * XXX
-	 * We know that uid_t's and gid_t's are unsigned longs.
-	 */
 	errno = 0;
-	val = strtoul(name, &ep, 10);
+	val = (id_t)strtoul(name, &ep, 10);
 	if (errno)
 		err(1, "%s", name);
 	if (*ep != '\0')
@@ -248,7 +244,7 @@ id(name, type)
 	return (val);
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr,
