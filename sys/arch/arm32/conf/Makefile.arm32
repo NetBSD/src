@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.33 1998/05/31 23:25:41 thorpej Exp $
+#	$NetBSD: Makefile.arm32,v 1.34 1998/07/06 02:43:38 mark Exp $
 
 # Makefile for NetBSD
 #
@@ -189,14 +189,17 @@ depend: .depend
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
  
-# depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+# depend on network
+uipc_proto.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+genassym.o: Makefile
 
 # depend on CPU configuration 
-cpufunc.o cpufunc_asm.o cpuswitch.o fault.o machdep.o: Makefile
+cpufunc.o cpufunc_asm.o: Makefile
+
+# depend on DIAGNOSTIC etc.
+cpuswitch.o fault.o machdep.o: Makefile
 
 
 locore.o: ${ARM32}/arm32/locore.S assym.h
