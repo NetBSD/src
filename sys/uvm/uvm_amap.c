@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.42 2002/03/08 20:48:46 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.42.2.1 2002/03/12 02:27:47 thorpej Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.42 2002/03/08 20:48:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.42.2.1 2002/03/12 02:27:47 thorpej Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.42 2002/03/08 20:48:46 thorpej Exp $"
 
 /*
  * pool for allocation of vm_map structures.  note that the pool has
- * its own simplelock for its protection.  also note that in order to
+ * its own mutex for its protection.  also note that in order to
  * avoid an endless loop, the amap pool's allocator cannot allocate
  * memory from an amap (it currently goes through the kernel uobj, so
  * we are ok).
@@ -184,7 +184,7 @@ amap_alloc1(slots, padslots, waitf)
 
 	totalslots = malloc_roundup((slots + padslots) * sizeof(int)) /
 	    sizeof(int);
-	simple_lock_init(&amap->am_l);
+	mutex_init(&amap->am_mtx, MUTEX_DEFAULT, 0);
 	amap->am_ref = 1;
 	amap->am_flags = 0;
 #ifdef UVM_AMAP_PPREF
@@ -262,7 +262,7 @@ amap_free(amap)
 	UVMHIST_FUNC("amap_free"); UVMHIST_CALLED(maphist);
 
 	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
-	LOCK_ASSERT(!simple_lock_held(&amap->am_l));
+	LOCK_ASSERT(!mutex_owned(&amap->am_mtx));
 	free(amap->am_slots, M_UVMAMAP);
 	free(amap->am_bckptr, M_UVMAMAP);
 	free(amap->am_anon, M_UVMAMAP);
@@ -460,7 +460,7 @@ amap_share_protect(entry, prot)
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slots, lcv, slot, stop;
 
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
+	LOCK_ASSERT(mutex_owned(&amap->am_mtx));
 
 	AMAP_B2SLOT(slots, (entry->end - entry->start));
 	stop = entry->aref.ar_pageoff + slots;
