@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.45 2000/01/18 19:33:31 thorpej Exp $	*/
+/*	$NetBSD: idesc.c,v 1.46 2000/05/25 19:11:45 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -95,7 +95,9 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/custom.h>
+#ifndef __powerpc__
 #include <amiga/amiga/isr.h>
+#endif
 #include <amiga/dev/zbusvar.h>
 
 #include <machine/cpu.h>
