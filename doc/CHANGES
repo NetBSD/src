@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.301 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.302 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -15,3 +15,4 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		[matt 20040404]
 	file(1): update to 4.09.  [pooka 20040408]
 	sgimips: Add IP12 support.  [pooka 20040411]
+	cvs(1): update to 1.11.15.  [itojun 20040416]
