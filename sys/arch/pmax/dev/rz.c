@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.60 2000/05/19 18:54:26 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.61 2000/05/27 04:52:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.60 2000/05/19 18:54:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.61 2000/05/27 04:52:30 thorpej Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -1072,7 +1072,7 @@ rzclose(dev, flags, mode, p)
 	if (sc->sc_openpart == 0) {
 		s = splbio();
 		while (BUFQ_FIRST(&sc->sc_tab) != NULL)
-			sleep((caddr_t)&sc->sc_tab, PZERO - 1);
+			(void) tsleep(&sc->sc_tab, PZERO - 1, "rzclose", 0);
 		splx(s);
 #if 0
 		/* 4.4Lite semantics  breaks disklabel -[N|W] on close */
