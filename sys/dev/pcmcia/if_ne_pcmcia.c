@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.8 1997/12/18 22:29:29 perry Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.9 1997/12/31 01:19:52 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -390,7 +390,7 @@ ne_pcmcia_attach(parent, self, aux)
 		if (enaddr[0] != ne_dev->enet_vendor[0] ||
 		    enaddr[1] != ne_dev->enet_vendor[1] ||
 		    enaddr[2] != ne_dev->enet_vendor[2]) {
-			printf("\n%s: enet addr has incorrect vendor code\n",
+			printf("%s: enet addr has incorrect vendor code\n",
 			    dsc->sc_dev.dv_xname);
 			printf("%s: (%02x:%02x:%02x should be "
 			    "%02x:%02x:%02x)\n", dsc->sc_dev.dv_xname,
