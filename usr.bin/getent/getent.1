@@ -1,4 +1,4 @@
-.\"	$NetBSD: getent.1,v 1.4 2004/11/26 04:52:45 lukem Exp $
+.\"	$NetBSD: getent.1,v 1.5 2004/11/26 05:07:12 lukem Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,6 +66,7 @@ may be one of:
 .It hosts Ta address hostname [alias ...]
 .It networks Ta name network [alias ...]
 .It passwd Ta user:passwd:uid:gid:gecos:home_dir_shell
+.It protocols Ta name protocol [alias ...]
 .It shells Ta /path/to/shell
 .El
 .Pp
@@ -102,6 +103,7 @@ or 3 if there is no support for enumeration on
 .Xr networks 5 ,
 .Xr nsswitch.conf 5 ,
 .Xr passwd 5 ,
+.Xr protocols 5 ,
 .Xr shells 5 .
 .Sh HISTORY
 A

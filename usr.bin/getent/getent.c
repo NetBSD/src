@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.2 2004/11/26 04:52:45 lukem Exp $	*/
+/*	$NetBSD: getent.c,v 1.3 2004/11/26 05:07:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.2 2004/11/26 04:52:45 lukem Exp $");
+__RCSID("$NetBSD: getent.c,v 1.3 2004/11/26 05:07:12 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -66,6 +66,7 @@ static int	group(int, char *[]);
 static int	hosts(int, char *[]);
 static int	networks(int, char *[]);
 static int	passwd(int, char *[]);
+static int	protocols(int, char *[]);
 static int	shells(int, char *[]);
 
 enum {
@@ -86,6 +87,7 @@ main(int argc, char *argv[])
 		{	"hosts",	hosts,		},
 		{	"networks",	networks,	},
 		{	"passwd",	passwd,		},
+		{	"protocols",	protocols,	},
 		{	"shells",	shells,		},
 
 		{	NULL,		NULL,		},
@@ -192,6 +194,7 @@ group(int argc, char *argv[])
 	endgrent();
 	return rv;
 }
+
 
 		/*
 		 * hosts
@@ -310,6 +313,7 @@ networks(int argc, char *argv[])
 	return rv;
 }
 
+
 		/*
 		 * passwd
 		 */
@@ -356,6 +360,58 @@ passwd(int argc, char *argv[])
 	endpwent();
 	return rv;
 }
+
+
+		/*
+		 * protocols
+		 */
+
+static void
+protocolsprint(const struct protoent *pe)
+{
+	int		i;
+
+	assert(pe != NULL);
+	printf("%s\t%d", pe->p_name, pe->p_proto);
+	for (i = 0; pe->p_aliases[i] != NULL; i++) {
+		printf(" %s", pe->p_aliases[i]);
+	}
+	printf("\n");
+}
+
+static int
+protocols(int argc, char *argv[])
+{
+	struct protoent	*pe;
+	unsigned long	id;
+	int		i, rv;
+
+	assert(argc > 1);
+	assert(argv != NULL);
+
+	setprotoent(1);
+	rv = RV_OK;
+	if (argc == 2) {
+		while ((pe = getprotoent()) != NULL)
+			protocolsprint(pe);
+	} else {
+		for (i = 2; i < argc; i++) {
+			if (parsenum(argv[i], &id))
+				pe = getprotobynumber((int)id);
+			else
+				pe = getprotobyname(argv[i]);
+			if (pe != NULL)
+				protocolsprint(pe);
+			else {
+				rv = RV_NOTFOUND;
+				break;
+			}
+		}
+	}
+	endprotoent();
+	return rv;
+}
+
 
 		/*
 		 * shells
