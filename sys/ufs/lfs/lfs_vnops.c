@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.105 2003/05/02 01:47:39 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.106 2003/05/07 18:49:29 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.105 2003/05/02 01:47:39 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.106 2003/05/07 18:49:29 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1955,7 +1955,9 @@ lfs_dump_vop(void *v)
 		int a_flags;
 	} */ *ap = v;
 
+#ifdef DDB
 	vfs_vnode_print(ap->a_vp, 0, printf);
+#endif
 	lfs_dump_dinode(VTOI(ap->a_vp)->i_din.ffs1_din);
 }
 #endif
