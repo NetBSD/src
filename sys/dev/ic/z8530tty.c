@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.28 1997/11/01 20:40:36 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.29 1997/11/02 08:02:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -816,7 +816,6 @@ zsparam(tp, t)
 	error = zs_set_modes(cs, cflag);
 	if (error)
 		return (error);
-	cs->cs_rr0_mask = cs->cs_rr0_cts | cs->cs_rr0_dcd;
 
 	/* OK, we are now committed to do it. */
 	tp->t_cflag = cflag;
@@ -833,6 +832,16 @@ zsparam(tp, t)
 	 *
 	 */
 	s = splzs();
+
+	cs->cs_rr0_mask = cs->cs_rr0_cts | cs->cs_rr0_dcd;
+	if ((cs->cs_rr0_mask & ZSRR0_DCD) != 0)
+		cs->cs_preg[15] |= ZSWR15_DCD_IE;
+	else
+		cs->cs_preg[15] &= ~ZSWR15_DCD_IE;
+	if ((cs->cs_rr0_mask & ZSRR0_CTS) != 0)
+		cs->cs_preg[15] |= ZSWR15_CTS_IE;
+	else
+		cs->cs_preg[15] &= ~ZSWR15_CTS_IE;
 
 	/* Recompute character size bits. */
 	tmp3 = cs->cs_preg[3] & ~ZSWR3_RXSIZE;
