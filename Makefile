@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202 2003/04/04 01:06:00 thorpej Exp $
+#	$NetBSD: Makefile,v 1.203 2003/04/04 01:16:28 thorpej Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -291,11 +291,7 @@ do-${targ}: ${targ}
 	@true
 .endfor
 
-<<<<<<< Makefile
-.for dir in tools tools/compat lib/csu lib/libc lib gnu/lib
-=======
-.for dir in tools lib/csu lib/libc lib/libcrypt lib gnu/lib
->>>>>>> 1.201
+.for dir in tools tools/compat lib/csu lib/libc lib/libcrypt lib gnu/lib
 do-${dir:S/\//-/}:
 .for targ in dependall install
 	(cd ${.CURDIR}/${dir} && ${MAKE} ${targ})
