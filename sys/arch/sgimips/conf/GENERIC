@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.14 2002/12/26 18:26:07 pooka Exp $
+#	$NetBSD: GENERIC,v 1.15 2003/01/03 08:14:44 rafal Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.14 $"
+#ident		"GENERIC-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -177,7 +177,6 @@ ex* 	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp* 	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne* 	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk* 	at pci? dev ? function ?	# Realtek 8129/8139
-ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 #tlp* 	at pci? dev ? function ?	# DECchip 21x4x and clones
 wm*	at pci? dev ? function ?	# Intel gigabit Ethernet
 
