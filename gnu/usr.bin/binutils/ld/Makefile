@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2004/12/12 12:43:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2004/12/16 17:10:24 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -92,4 +92,4 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 
 cleanprog: __cleanldscripts 
 __cleanldscripts:
-	-rm -rf ldscripts
+	-rm -rf ldscripts tmpdir
