@@ -1,4 +1,4 @@
-/* $NetBSD: wsfont.h,v 1.2 1999/04/13 00:40:11 ad Exp $ */
+/* $NetBSD: wsfont.h,v 1.3 1999/04/26 04:24:22 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -35,17 +35,17 @@
  * don't care about that aspect of the font. It returns a cookie which
  * we can use with the other functions. When more flexibility is required,
  * wsfont_enum() should be used. The last two parameters to wsfont_lock()
- * are the bit order and byte order required (WSFONT_LITTLE or WSFONT_BIG).
+ * are the bit order and byte order required (WSFONT_L2R or WSFONT_R2L).
  *
  * Example:
  *
- *	int cookie;
  *	struct wsdisplay_font *font;
+ *	int cookie;
  *
  *	if ((cookie = wsfont_find(NULL, 8, 16, 0, 0)) < 0)
  *		panic("unable to get 8x16 font");
  *
- *	if (wsfont_lock(cookie, &font, WSFONT_LITTLE, WSFONT_BIG) < 0)
+ *	if (wsfont_lock(cookie, &font, WSFONT_L2R, WSFONT_R2L) < 0)
  *		panic("unable to lock font");
  *
  *	... do stuff ...
@@ -54,8 +54,9 @@
  */
 struct wsdisplay_font;
 
-#define WSFONT_LITTLE	(0)
-#define WSFONT_BIG	(1)
+/* Left to Right, Right to Left */
+#define WSFONT_L2R	(0)
+#define WSFONT_R2L	(1)
 
 void	wsfont_init __P((void));
 int	wsfont_find __P((char *name, int width, int height, int stride));
