@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.18 1996/11/22 00:19:07 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.19 1997/01/04 03:04:25 jtk Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -355,8 +355,8 @@ struct apmregs *regs;
 		DPRINTF(("user wants STANDBY--fat chance\n"));
 		(void) apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_REJECTED);
 #ifndef APM_NO_STANDBY
-		(void) apm_record_event(sc, regs->bx);
-		apm_userstandbys++;
+		if (apm_record_event(sc, regs->bx))
+			apm_userstandbys++;
 #endif
 		break;
 	case APM_STANDBY_REQ:
@@ -377,8 +377,8 @@ struct apmregs *regs;
 		DPRINTF(("user wants suspend--fat chance!\n"));
 		(void) apm_set_powstate(APM_DEV_ALLDEVS,
 					APM_LASTREQ_REJECTED);
-		apm_suspends++;
-		apm_record_event(sc, regs->bx);
+		if (apm_record_event(sc, regs->bx))
+			apm_suspends++;
 		break;
 	case APM_SUSPEND_REQ:
 		DPRINTF(("suspend requested\n"));
