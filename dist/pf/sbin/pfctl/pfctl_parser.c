@@ -1,5 +1,5 @@
-/*	$NetBSD: pfctl_parser.c,v 1.5 2004/11/14 11:26:48 yamt Exp $	*/
-/*	$OpenBSD: pfctl_parser.c,v 1.203 2004/07/16 23:44:25 frantzen Exp $ */
+/*	$NetBSD: pfctl_parser.c,v 1.6 2004/11/21 18:01:14 peter Exp $	*/
+/*	$OpenBSD: pfctl_parser.c,v 1.203.2.1 2004/11/13 23:52:14 brad Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -895,11 +895,17 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		}
 		for (i = 0; i < PFTM_MAX; ++i)
 			if (r->timeout[i]) {
+				int j;
+
 				if (!opts)
 					printf(", ");
 				opts = 0;
-				printf("%s %u", pf_timeouts[i].name,
-				    r->timeout[i]);
+				for (j = 0; j < sizeof(pf_timeouts) /
+				    sizeof(pf_timeouts[0]); ++j)
+					if (pf_timeouts[j].timeout == i)
+						break;
+				printf("%s %u", j == PFTM_MAX ?  "inv.timeout" :
+				    pf_timeouts[j].name, r->timeout[i]);
 			}
 		printf(")");
 	}
