@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71.4.2 2001/11/17 13:07:56 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.71.4.3 2001/11/18 09:35:01 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -873,7 +873,7 @@ pmap_activate(l)
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_SEGTAB,
 	    ("pmap_activate(%p)\n", l));
 
-	PMAP_ACTIVATE(pmap, l == curproc);
+	PMAP_ACTIVATE(pmap, curproc == NULL || l->l_proc == curproc->l_proc);
 }
 
 /*
