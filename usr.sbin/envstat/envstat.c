@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.18 2004/03/21 10:52:26 mrg Exp $ */
+/*	$NetBSD: envstat.c,v 1.19 2004/03/25 01:26:57 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.18 2004/03/21 10:52:26 mrg Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.19 2004/03/25 01:26:57 mrg Exp $");
 #endif
 
 #include <fcntl.h>
@@ -63,6 +63,8 @@ int strtosnum(envsys_basic_info_t *, const char *, size_t);
 void header(size_t, int, envsys_basic_info_t *, const int * const, size_t);
 void values(size_t, int, envsys_tre_data_t *, const int * const, size_t);
 void usage(void);
+void printrow(int *, envsys_tre_data_t *, envsys_basic_info_t *, int, int,
+	      size_t);
 
 int rflag = 0;
 
@@ -160,58 +162,17 @@ main(int argc, char **argv)
 		exit(1);
 
 	if (rflag) {
-		int i;
+		if (interval == 0) {
+			printrow(cetds, etds, ebis, ns, celsius, width);
+			exit(0);
+		}
 
-		for (i = 0 ; i < ns ; i++) {
-			if (cetds[i] == 0)
-				continue;
-
-			if ((etds[i].validflags & ENVSYS_FCURVALID) == 0)
-				continue;
-
-			if (ebis[i].units == ENVSYS_INDICATOR &&
-			    etds[i].cur.data_s == 0)
-				continue;
-
-			printf("%*.*s", (int)width, (int)width, ebis[i].desc);
-			/* different units need some magic */
-			switch (ebis[i].units)
-			{
-			case ENVSYS_INDICATOR:
-				break;
-			case ENVSYS_INTEGER:
-				printf(": %10d", etds[i].cur.data_s);
-				break;
-			case ENVSYS_STEMP: {
-			     	double temp = (etds[i].cur.data_s / 1000000.0)
-				    - 273.15;
-				if (celsius)
-					printf(": %10.3f degC", temp);
-				else {
-					temp = (9.0 / 5.0) * temp + 32.0;
-					printf(": %10.3f degF", temp);
-				}
-				break;
-			}
-			case ENVSYS_SFANRPM:
-				printf(": %10u RPM", etds[i].cur.data_us);
-				break;
-			default:
-				printf(": %10.3f %s",
-				    etds[i].cur.data_s / 1000000.0,
-				    envsysunitnames[ebis[i].units]);
-				break;
-			}
-
-			if (etds[i].validflags & ENVSYS_FFRACVALID) {
-				printf(" (%5.2f%%)",
-				    (etds[i].cur.data_s * 100.0) /
-				    etds[i].max.data_s);
-			}
-
+		while (1) {
+			printrow(cetds, etds, ebis, ns, celsius, width);
+			sleep(interval);
+			fillsensors(fd, etds, ebis, ns);
 			printf("\n");
 		}
-		exit(0);
 	}
 
 
@@ -245,6 +206,66 @@ main(int argc, char **argv)
 	return (0);
 }
 
+/*
+ * row wise processing
+ */
+void
+printrow(int *cetds, envsys_tre_data_t *etds, envsys_basic_info_t *ebis,
+	 int ns, int celsius, size_t width)
+{
+	int i;
+
+	for (i = 0 ; i < ns ; i++) {
+		if (cetds[i] == 0)
+			continue;
+
+		if ((etds[i].validflags & ENVSYS_FCURVALID) == 0)
+			continue;
+
+		if (ebis[i].units == ENVSYS_INDICATOR &&
+		    etds[i].cur.data_s == 0)
+			continue;
+
+		printf("%*.*s", (int)width, (int)width, ebis[i].desc);
+		/* different units need some magic */
+		switch (ebis[i].units)
+		{
+		case ENVSYS_INDICATOR:
+			break;
+		case ENVSYS_INTEGER:
+			printf(": %10d", etds[i].cur.data_s);
+			break;
+		case ENVSYS_STEMP: {
+			double temp = (etds[i].cur.data_s / 1000000.0)
+			    - 273.15;
+			if (celsius)
+				printf(": %10.3f degC", temp);
+			else {
+				temp = (9.0 / 5.0) * temp + 32.0;
+				printf(": %10.3f degF", temp);
+			}
+			break;
+		}
+		case ENVSYS_SFANRPM:
+			printf(": %10u RPM", etds[i].cur.data_us);
+			break;
+		default:
+			printf(": %10.3f %s",
+			    etds[i].cur.data_s / 1000000.0,
+			    envsysunitnames[ebis[i].units]);
+			break;
+		}
+
+		if (etds[i].validflags & ENVSYS_FFRACVALID) {
+			printf(" (%5.2f%%)",
+			    (etds[i].cur.data_s * 100.0) /
+			    etds[i].max.data_s);
+		}
+
+		printf("\n");
+	}
+
+}
 
 /*
  * pre:  cetds[i] != 0 iff sensor i should appear in the output
