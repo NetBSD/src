@@ -1,0 +1,95 @@
+#	$NetBSD: files.pmax_wscons,v 1.1 2003/12/13 23:04:37 ad Exp $
+
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+
+# DC7085 (DZ-11 like four-port serial device) on ibus
+attach dz at ibus with dz_ibus
+file   arch/pmax/ibus/dz_ibus.c        dz_ibus
+
+device lkkbd: wskbddev
+attach lkkbd at dz with dzkbd
+file   dev/dec/dzkbd.c                 dzkbd needs-flag
+
+device vsms: wsmousedev
+attach vsms at dz with dzms
+file   dev/dec/dzms.c                  dzms needs-flag
+
+# 3100 (pmax) onboard framebuffer
+device pm: wsemuldisplaydev, rasops1, rasops8
+attach pm at ibus
+file   arch/pmax/ibus/pm.c             pm needs-flag
+
+# The "desktop bus" on the MAXINE (5k/25).
+device dt { addr = -1 }
+attach dt at ioasic
+file   arch/pmax/tc/dt.c               dt needs-flag
+
+device dtkbd: wskbddev, lkkbdmap
+attach dtkbd at dt
+file   arch/pmax/tc/dtkbd.c            dtkbd needs-flag
+
+device dtms: wsmousedev
+attach dtms at dt 
+file   arch/pmax/tc/dtms.c             dtms needs-flag
+
+# DV MAXINE builtin
+device xcfb: wsemuldisplaydev, rasops8
+attach xcfb at tc
+file   dev/tc/xcfb.c                   xcfb needs-flag
+
+#
+# Everything below this point can go into dev/tc/files.tc, and out of
+# here and files.alpha if wscons is ever made the default on pmax.
+#
+
+# 8530 UARTs using the MI 8530 driver
+device zsc { channel = -1 }
+attach zsc at ioasic with zsc_ioasic
+file   dev/tc/zs_ioasic.c              zsc_ioasic      needs-flag
+file   dev/ic/z8530sc.c                zsc
+
+device zstty: tty
+attach zstty at zsc
+file   dev/ic/z8530tty.c               zstty           needs-flag
+ 
+attach vsms at zsc with zsms
+file   dev/tc/zsms.c                   zsms
+ 
+attach lkkbd at zsc with zskbd
+file   dev/tc/zskbd.c                  zskbd           needs-flag
+
+# CX PMAG-B
+device cfb: wsemuldisplaydev, rasops8
+attach cfb at tc
+file   dev/tc/cfb.c                    cfb needs-flag
+
+# MX PMAG-A
+device mfb: wsemuldisplaydev, rasops8
+attach mfb at tc
+file   dev/tc/mfb.c                    mfb needs-flag
+
+# TX PMAG-J
+device tfb: wsemuldisplaydev, rasops8  
+attach tfb at tc 
+file   dev/tc/tfb.c                    tfb needs-flag
+
+# HX PMAGB-B
+device sfb: wsemuldisplaydev, rasops8
+attach sfb at tc
+file   dev/tc/sfb.c                    sfb needs-flag
+
+# STIC (stamp interface chip) for PX and PXG
+define stic
+file   dev/tc/stic.c                   stic needs-flag
+
+# PX PMAG-C
+device px: wsemuldisplaydev, stic
+attach px at tc  
+file   dev/tc/px.c                     px needs-flag  
+
+# PXG PMAG-D, PMAG-E, PMAG-F
+device pxg: wsemuldisplaydev, stic
+attach pxg at tc
+file   dev/tc/pxg.c                    pxg needs-flag
