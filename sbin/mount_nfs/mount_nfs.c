@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.21 1998/04/01 16:27:05 kleink Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.22 1998/05/14 07:44:09 tron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.21 1998/04/01 16:27:05 kleink Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.22 1998/05/14 07:44:09 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -646,8 +646,7 @@ tryagain:
 		saddr.sin_family = AF_INET;
 		saddr.sin_port = htons(PMAPPORT);
 		if ((tport = pmap_getport(&saddr, RPCPROG_NFS,
-		    nfsvers, nfsargsp->sotype == SOCK_STREAM ? IPPROTO_TCP :
-		    IPPROTO_UDP)) == 0) {
+		    nfsvers, nfsproto )) == 0) {
 			if ((opflags & ISBGRND) == 0)
 				clnt_pcreateerror("NFS Portmap");
 		} else {
