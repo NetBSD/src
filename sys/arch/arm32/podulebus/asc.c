@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.22 1998/07/04 22:18:19 jonathan Exp $	*/
+/*	$NetBSD: asc.c,v 1.23 1998/10/10 00:28:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -85,8 +85,7 @@ void asc_minphys __P((struct buf *bp));
 struct scsipi_adapter asc_scsiswitch = {
 	asc_scsicmd,
 	asc_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device asc_scsidev = {

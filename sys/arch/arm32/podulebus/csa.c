@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.2 1998/09/18 03:23:19 mark Exp $	*/
+/*	$NetBSD: csa.c,v 1.3 1998/10/10 00:28:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,10 +78,9 @@ int  csa_match  __P((struct device *, struct cfdata *, void *));
 static void csa_minphys __P((struct buf *bp));
 
 struct scsipi_adapter csa_scsiswitch = {
-	ncr5380_scsi_cmd,	/* scsi_cmd() */
-	csa_minphys,		/* scsi_minphys() */
-	0,			/* no lun support */
-	0,			/* no lun support */
+	ncr5380_scsi_cmd,	/* scsipi_cmd */
+	csa_minphys,		/* scsipi_minphys */
+	NULL,			/* scsipi_ioctl */
 };
 
 struct scsipi_device csa_scsidev = {

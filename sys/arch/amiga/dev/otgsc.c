@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.19 1998/01/12 10:40:08 thorpej Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.20 1998/10/10 00:28:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -60,8 +60,7 @@ int otgsc_intr __P((void *));
 struct scsipi_adapter otgsc_scsiswitch = {
 	sci_scsicmd,
 	sci_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device otgsc_scsidev = {

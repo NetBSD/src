@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.28 1998/08/15 03:02:32 mycroft Exp $	*/
+/*	$NetBSD: seagate.c,v 1.29 1998/10/10 00:28:34 thorpej Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -293,8 +293,7 @@ int sea_abort __P((struct sea_softc *, struct sea_scb *scb));
 struct scsipi_adapter sea_switch = {
 	sea_scsi_cmd,
 	minphys,	/* no special minphys(), since driver uses PIO */
-	0,
-	0,
+	NULL,		/* scsipi_ioctl */
 };
 
 /* the below structure is so we have a default dev struct for our link struct */

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.13 1998/01/12 20:04:25 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.14 1998/10/10 00:28:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -457,8 +457,7 @@ void asc_minphys __P((struct buf *));
 struct scsipi_adapter asc_switch = {
 	asc_scsi_cmd,
 /*XXX*/	asc_minphys,	/* no max transfer size, DMA driver negotiates */
-	NULL,
-	NULL,
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device asc_dev = {

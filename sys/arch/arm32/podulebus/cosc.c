@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.7 1998/01/13 02:10:26 thorpej Exp $	*/
+/*	$NetBSD: cosc.c,v 1.8 1998/10/10 00:28:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -66,8 +66,7 @@ int cosc_scsicmd	__P((struct scsipi_xfer *));
 struct scsipi_adapter cosc_scsiswitch = {
 	cosc_scsicmd,		/* Eventually call esc_scsicmd directly */
 	esc_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
+	NULL,		/* scsipi_ioctl */
 };
 
 struct scsipi_device cosc_scsidev = {
