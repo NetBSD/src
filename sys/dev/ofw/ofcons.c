@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.7 1998/01/26 21:49:00 cgd Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.8 1998/02/24 05:44:39 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,7 +42,7 @@
 
 #include <dev/ofw/openfirm.h>
 
-struct ofc_softc {
+struct ofcons_softc {
 	struct device of_dev;
 	struct tty *of_tty;
 	int of_flags;
@@ -54,50 +54,52 @@ struct ofc_softc {
 
 static int stdin, stdout;
 
-static int ofcmatch __P((struct device *, struct cfdata *, void *));
-static void ofcattach __P((struct device *, struct device *, void *));
+static int ofcons_match __P((struct device *, struct cfdata *, void *));
+static void ofcons_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ofcons_ca = {
-	sizeof(struct ofc_softc), ofcmatch, ofcattach
+	sizeof(struct ofcons_softc), ofcons_match, ofcons_attach
 };
 
 extern struct cfdriver ofcons_cd;
 
-static int ofcprobe __P((void));
+static int ofcons_probe __P((void));
 
 static int
-ofcmatch(parent, match, aux)
+ofcons_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	
-	if (!ofcprobe())
+	if (strcmp(oba->oba_busname, "ofw"))
+		return (0);
+	if (!ofcons_probe())
 		return 0;
-	return OF_instance_to_package(stdin) == ofp->phandle
-		|| OF_instance_to_package(stdout) == ofp->phandle;
+	return OF_instance_to_package(stdin) == oba->oba_phandle
+		|| OF_instance_to_package(stdout) == oba->oba_phandle;
 }
 
 static void
-ofcattach(parent, self, aux)
+ofcons_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	printf("\n");
 }
 
-static void ofcstart __P((struct tty *));
-static int ofcparam __P((struct tty *, struct termios *));
-static void ofcpoll __P((void *));
+static void ofcons_start __P((struct tty *));
+static int ofcons_param __P((struct tty *, struct termios *));
+static void ofcons_poll __P((void *));
 
 int
-ofcopen(dev, flag, mode, p)
+ofcons_open(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
-	struct ofc_softc *sc;
+	struct ofcons_softc *sc;
 	int unit = minor(dev);
 	struct tty *tp;
 	
@@ -108,8 +110,8 @@ ofcopen(dev, flag, mode, p)
 		return ENXIO;
 	if (!(tp = sc->of_tty))
 		sc->of_tty = tp = ttymalloc();
-	tp->t_oproc = ofcstart;
-	tp->t_param = ofcparam;
+	tp->t_oproc = ofcons_start;
+	tp->t_param = ofcons_param;
 	tp->t_dev = dev;
 	if (!(tp->t_state & TS_ISOPEN)) {
 		tp->t_state |= TS_WOPEN;
@@ -119,7 +121,7 @@ ofcopen(dev, flag, mode, p)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
-		ofcparam(tp, &tp->t_termios);
+		ofcons_param(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state&TS_XCLUDE) && suser(p->p_ucred, &p->p_acflag))
 		return EBUSY;
@@ -127,22 +129,22 @@ ofcopen(dev, flag, mode, p)
 	
 	if (!(sc->of_flags & OFPOLL)) {
 		sc->of_flags |= OFPOLL;
-		timeout(ofcpoll, sc, 1);
+		timeout(ofcons_poll, sc, 1);
 	}
 
 	return (*linesw[tp->t_line].l_open)(dev, tp);
 }
 
 int
-ofcclose(dev, flag, mode, p)
+ofcons_close(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
 	struct proc *p;
 {
-	struct ofc_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 
-	untimeout(ofcpoll, sc);
+	untimeout(ofcons_poll, sc);
 	sc->of_flags &= ~OFPOLL;
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
@@ -150,38 +152,38 @@ ofcclose(dev, flag, mode, p)
 }
 
 int
-ofcread(dev, uio, flag)
+ofcons_read(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
 {
-	struct ofc_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	
 	return (*linesw[tp->t_line].l_read)(tp, uio, flag);
 }
 
 int
-ofcwrite(dev, uio, flag)
+ofcons_write(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 	int flag;
 {
-	struct ofc_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	
 	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
 }
 
 int
-ofcioctl(dev, cmd, data, flag, p)
+ofcons_ioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct ofc_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	int error;
 	
@@ -193,23 +195,23 @@ ofcioctl(dev, cmd, data, flag, p)
 }
 
 struct tty *
-ofctty(dev)
+ofcons_tty(dev)
 	dev_t dev;
 {
-	struct ofc_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 
 	return sc->of_tty;
 }
 
 void
-ofcstop(tp, flag)
+ofcons_stop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
 }
 
 static void
-ofcstart(tp)
+ofcons_start(tp)
 	struct tty *tp;
 {
 	struct clist *cl;
@@ -243,7 +245,7 @@ ofcstart(tp)
 }
 
 static int
-ofcparam(tp, t)
+ofcons_param(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
@@ -254,10 +256,10 @@ ofcparam(tp, t)
 }
 
 static void
-ofcpoll(aux)
+ofcons_poll(aux)
 	void *aux;
 {
-	struct ofc_softc *sc = aux;
+	struct ofcons_softc *sc = aux;
 	struct tty *tp = sc->of_tty;
 	char ch;
 	
@@ -265,11 +267,11 @@ ofcpoll(aux)
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*linesw[tp->t_line].l_rint)(ch, tp);
 	}
-	timeout(ofcpoll, sc, 1);
+	timeout(ofcons_poll, sc, 1);
 }
 
 static int
-ofcprobe()
+ofcons_probe()
 {
 	int chosen;
 	char stdinbuf[4], stdoutbuf[4];
@@ -292,29 +294,29 @@ ofcprobe()
 }
 
 void
-ofccnprobe(cd)
+ofcons_cnprobe(cd)
 	struct consdev *cd;
 {
 	int maj;
 
-	if (!ofcprobe())
+	if (!ofcons_probe())
 		return;
 
 	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == ofcopen)
+		if (cdevsw[maj].d_open == ofcons_open)
 			break;
 	cd->cn_dev = makedev(maj, 0);
 	cd->cn_pri = CN_INTERNAL;
 }
 
 void
-ofccninit(cd)
+ofcons_cninit(cd)
 	struct consdev *cd;
 {
 }
 
 int
-ofccngetc(dev)
+ofcons_cngetc(dev)
 	dev_t dev;
 {
 	unsigned char ch = '\0';
@@ -327,7 +329,7 @@ ofccngetc(dev)
 }
 
 void
-ofccnputc(dev, c)
+ofcons_cnputc(dev, c)
 	dev_t dev;
 	int c;
 {
@@ -337,22 +339,22 @@ ofccnputc(dev, c)
 }
 
 void
-ofccnpollc(dev, on)
+ofcons_cnpollc(dev, on)
 	dev_t dev;
 	int on;
 {
-	struct ofc_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
 	
 	if (!sc)
 		return;
 	if (on) {
 		if (sc->of_flags & OFPOLL)
-			untimeout(ofcpoll, sc);
+			untimeout(ofcons_poll, sc);
 		sc->of_flags &= ~OFPOLL;
 	} else {
 		if (!(sc->of_flags & OFPOLL)) {
 			sc->of_flags |= OFPOLL;
-			timeout(ofcpoll, sc, 1);
+			timeout(ofcons_poll, sc, 1);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.9 1998/01/12 09:33:32 thorpej Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.10 1998/02/24 05:44:39 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,7 +44,7 @@
 
 #include <dev/ofw/openfirm.h>
 
-struct ofd_softc {
+struct ofdisk_softc {
 	struct device sc_dev;
 	int sc_phandle;
 	int sc_unit;
@@ -58,33 +58,35 @@ struct ofd_softc {
 /* sc_flags */
 #define OFDF_ISFLOPPY	0x01		/* we are a floppy drive */
 
-static int ofdprobe __P((struct device *, struct cfdata *, void *));
-static void ofdattach __P((struct device *, struct device *, void *));
+static int ofdisk_match __P((struct device *, struct cfdata *, void *));
+static void ofdisk_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ofdisk_ca = {
-	sizeof(struct ofd_softc), ofdprobe, ofdattach
+	sizeof(struct ofdisk_softc), ofdisk_match, ofdisk_attach
 };
 
 extern struct cfdriver ofdisk_cd;
 
-void ofdstrategy __P((struct buf *));
+void ofdisk_strategy __P((struct buf *));
 
-struct dkdriver ofdkdriver = { ofdstrategy };
+struct dkdriver ofdisk_dkdriver = { ofdisk_strategy };
 
-void ofdgetdefaultlabel __P((struct ofd_softc *, struct disklabel *));
-void ofdgetdisklabel __P((dev_t));
+void ofdisk_getdefaultlabel __P((struct ofdisk_softc *, struct disklabel *));
+void ofdisk_getdisklabel __P((dev_t));
 
 static int
-ofdprobe(parent, match, aux)
+ofdisk_match(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
 {
-	struct ofprobe *ofp = aux;
+	struct ofbus_attach_args *oba = aux;
 	char type[8];
 	int l;
 	
-	if ((l = OF_getprop(ofp->phandle, "device_type", type,
+	if (strcmp(oba->oba_busname, "ofw"))
+		return (0);
+	if ((l = OF_getprop(oba->oba_phandle, "device_type", type,
 	    sizeof type - 1)) < 0)
 		return 0;
 	if (l >= sizeof type)
@@ -94,16 +96,16 @@ ofdprobe(parent, match, aux)
 }
 
 static void
-ofdattach(parent, self, aux)
+ofdisk_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ofd_softc *of = (void *)self;
-	struct ofprobe *ofp = aux;
+	struct ofdisk_softc *of = (void *)self;
+	struct ofbus_attach_args *oba = aux;
 	char child[64];
 	int l;
 
-	if ((l = OF_getprop(ofp->phandle, "name", child,
+	if ((l = OF_getprop(oba->oba_phandle, "name", child,
 	    sizeof child - 1)) < 0)
 		panic("device without name?");
 	if (l >= sizeof child)
@@ -111,10 +113,10 @@ ofdattach(parent, self, aux)
 	child[l] = 0;
 
 	of->sc_flags = 0;
-	of->sc_phandle = ofp->phandle;
-	of->sc_unit = ofp->unit;
+	of->sc_phandle = oba->oba_phandle;
+	of->sc_unit = oba->oba_unit;
 	of->sc_ihandle = 0;
-	of->sc_dk.dk_driver = &ofdkdriver;
+	of->sc_dk.dk_driver = &ofdisk_dkdriver;
 	of->sc_dk.dk_name = of->sc_name;
 	strcpy(of->sc_name, of->sc_dev.dv_xname);
 	disk_attach(&of->sc_dk);
@@ -126,14 +128,14 @@ ofdattach(parent, self, aux)
 }
 
 int
-ofdopen(dev, flags, fmt, p)
+ofdisk_open(dev, flags, fmt, p)
 	dev_t dev;
 	int flags;
 	int fmt;
 	struct proc *p;
 {
 	int unit = DISKUNIT(dev);
-	struct ofd_softc *of;
+	struct ofdisk_softc *of;
 	char path[256];
 	struct disklabel *lp;
 	int l;
@@ -177,7 +179,7 @@ ofdopen(dev, flags, fmt, p)
 		if (of->max_transfer > MAXPHYS)
 			of->max_transfer = MAXPHYS;
 
-		ofdgetdisklabel(dev);
+		ofdisk_getdisklabel(dev);
 	}
 
 	switch (fmt) {
@@ -195,13 +197,13 @@ ofdopen(dev, flags, fmt, p)
 }
 
 int
-ofdclose(dev, flags, fmt, p)
+ofdisk_close(dev, flags, fmt, p)
 	dev_t dev;
 	int flags;
 	int fmt;
 	struct proc *p;
 {
-	struct ofd_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
+	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -228,10 +230,10 @@ ofdclose(dev, flags, fmt, p)
 }
 
 void
-ofdstrategy(bp)
+ofdisk_strategy(bp)
 	struct buf *bp;
 {
-	struct ofd_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
 	struct partition *p;
 	u_quad_t off;
 	int read;
@@ -280,37 +282,37 @@ static void
 ofminphys(bp)
 	struct buf *bp;
 {
-	struct ofd_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(bp->b_dev)];
 	
 	if (bp->b_bcount > of->max_transfer)
 		bp->b_bcount = of->max_transfer;
 }
 
 int
-ofdread(dev, uio)
+ofdisk_read(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	return physio(ofdstrategy, NULL, dev, B_READ, ofminphys, uio);
+	return physio(ofdisk_strategy, NULL, dev, B_READ, ofminphys, uio);
 }
 
 int
-ofdwrite(dev, uio)
+ofdisk_write(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	return physio(ofdstrategy, NULL, dev, B_WRITE, ofminphys, uio);
+	return physio(ofdisk_strategy, NULL, dev, B_WRITE, ofminphys, uio);
 }
 
 int
-ofdioctl(dev, cmd, data, flag, p)
+ofdisk_ioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
 {
-	struct ofd_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
+	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
 	int error;
 	
 	switch (cmd) {
@@ -334,13 +336,13 @@ ofdioctl(dev, cmd, data, flag, p)
 		    of->sc_dk.dk_cpulabel);
 		if (error == 0 && cmd == DIOCWDINFO)
 			error = writedisklabel(MAKEDISKDEV(major(dev),
-			    DISKUNIT(dev), RAW_PART), ofdstrategy,
+			    DISKUNIT(dev), RAW_PART), ofdisk_strategy,
 			    of->sc_dk.dk_label, of->sc_dk.dk_cpulabel);
 
 		return error;
 
 	case DIOCGDEFLABEL:
-		ofdgetdefaultlabel(of, (struct disklabel *)data);
+		ofdisk_getdefaultlabel(of, (struct disklabel *)data);
 		return 0;
 
 	default:
@@ -349,7 +351,7 @@ ofdioctl(dev, cmd, data, flag, p)
 }
 
 int
-ofddump(dev, blkno, va, size)
+ofdisk_dump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
 	caddr_t va;
@@ -359,10 +361,10 @@ ofddump(dev, blkno, va, size)
 }
 
 int
-ofdsize(dev)
+ofdisk_size(dev)
 	dev_t dev;
 {
-	struct ofd_softc *of;
+	struct ofdisk_softc *of;
 	struct disklabel *lp;
 	int size, part, omask, unit;
 
@@ -375,7 +377,7 @@ ofdsize(dev)
 	omask = of->sc_dk.dk_openmask & (1 << part);
 	lp = of->sc_dk.dk_label;
 
-	if (omask == 0 && ofdopen(dev, 0, S_IFBLK, curproc) != 0)
+	if (omask == 0 && ofdisk_open(dev, 0, S_IFBLK, curproc) != 0)
 		return -1;
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -384,15 +386,15 @@ ofdsize(dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && ofdclose(dev, 0, S_IFBLK, curproc) != 0)
+	if (omask == 0 && ofdisk_close(dev, 0, S_IFBLK, curproc) != 0)
 		return -1;
 
 	return size;
 }
 
 void
-ofdgetdefaultlabel(of, lp)
-	struct ofd_softc *of;
+ofdisk_getdefaultlabel(of, lp)
+	struct ofdisk_softc *of;
 	struct disklabel *lp;
 {
 
@@ -425,16 +427,16 @@ ofdgetdefaultlabel(of, lp)
 }
 
 void
-ofdgetdisklabel(dev)
+ofdisk_getdisklabel(dev)
 	dev_t dev;
 {
 	int unit = DISKUNIT(dev);
-	struct ofd_softc *of = ofdisk_cd.cd_devs[unit];
+	struct ofdisk_softc *of = ofdisk_cd.cd_devs[unit];
 	struct disklabel *lp = of->sc_dk.dk_label;
 	char *errmes;
 	int l;
 
-	ofdgetdefaultlabel(of, lp);
+	ofdisk_getdefaultlabel(of, lp);
 
 	/*
 	 * Don't read the disklabel on a floppy; simply
@@ -455,7 +457,7 @@ ofdgetdisklabel(dev)
 		lp->d_checksum = dkcksum(lp);
 	} else {
 		errmes = readdisklabel(MAKEDISKDEV(major(dev),
-		    unit, RAW_PART), ofdstrategy, lp,
+		    unit, RAW_PART), ofdisk_strategy, lp,
 		    of->sc_dk.dk_cpulabel);
 		if (errmes != NULL)
 			printf("%s: %s\n", errmes);
