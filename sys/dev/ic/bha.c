@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.5 1996/11/05 03:04:28 jonathan Exp $	*/
+/*	$NetBSD: bha.c,v 1.6 1996/11/28 00:43:26 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -244,7 +244,7 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 * We may get an extra interrupt for the HACC signal, but this is
 	 * unimportant.
 	 */
-	if (opcode != BHA_MBO_INTR_EN) {
+	if (opcode != BHA_MBO_INTR_EN && opcode != BHA_MODIFY_IOPORT) {
 		for (i = 20000; i; i--) {	/* 1 sec? */
 			sts = bus_space_read_1(iot, ioh, BHA_INTR_PORT);
 			/* XXX Need to save this in the interrupt handler? */
@@ -896,7 +896,7 @@ bha_disable_isacompat(sc)
 	isa_disable.cmd.modifier = BHA_IOMODIFY_DISABLE1;
 	bha_cmd(sc->sc_iot, sc->sc_ioh, sc,
 	    sizeof(isa_disable.cmd), (u_char*)&isa_disable.cmd,
-	    0, 0);
+	    0, (u_char *)0);
 	return (0);
 }
 
