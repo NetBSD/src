@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.32 2002/01/09 16:17:08 agc Exp $	*/
+/*	$NetBSD: str.c,v 1.33 2002/02/02 15:30:18 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.32 2002/01/09 16:17:08 agc Exp $");
+__RCSID("$NetBSD: str.c,v 1.33 2002/02/02 15:30:18 yamt Exp $");
 #endif
 #endif
 
@@ -149,7 +149,7 @@ mktest(int *op, char *test)
 			return tp->len;
 		}
 	}
-	warnx("relational tets not found `%.10s'", test);
+	warnx("relational test not found `%.10s'", test);
 	return -1;
 }
 
