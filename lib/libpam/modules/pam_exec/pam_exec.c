@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_exec.c,v 1.3 2005/02/26 16:03:58 thorpej Exp $	*/
+/*	$NetBSD: pam_exec.c,v 1.4 2005/02/26 22:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_exec/pam_exec.c,v 1.4 2005/02/01 10:37:07 des Exp $");
 #else
-__RCSID("$NetBSD: pam_exec.c,v 1.3 2005/02/26 16:03:58 thorpej Exp $");
+__RCSID("$NetBSD: pam_exec.c,v 1.4 2005/02/26 22:45:52 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -65,19 +65,6 @@ static struct {
 	ENV_ITEM(PAM_RHOST),
 	ENV_ITEM(PAM_RUSER),
 };
-
-/*
- * XXX Until we import OpenPAM Feterita.
- */
-static void
-openpam_free_envlist(char **envlist)
-{
-	char **env;
-
-	for (env = envlist; *env != NULL; ++env)
-		free(*env);
-	free(envlist);
-}
 
 static int
 _pam_exec(pam_handle_t *pamh __unused, int flags __unused,
