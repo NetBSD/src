@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.41 2001/08/22 12:44:10 simonb Exp $	*/
+/*	$NetBSD: comvar.h,v 1.42 2001/08/27 14:27:01 enami Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -117,6 +117,10 @@ struct com_softc {
 	volatile u_char sc_msr, sc_msr_delta, sc_msr_mask, sc_mcr,
 	    sc_mcr_active, sc_lcr, sc_ier, sc_fifo, sc_dlbl, sc_dlbh, sc_efr;
 	u_char sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
+
+#ifdef COM_HAYESP
+	u_char sc_prescaler;
+#endif
 
 	/* power management hooks */
 	int (*enable) __P((struct com_softc *));
