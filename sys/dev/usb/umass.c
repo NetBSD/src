@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.21.2.11 2001/03/12 13:31:28 bouyer Exp $	*/
+/*	$NetBSD: umass.c,v 1.21.2.12 2001/03/23 11:32:16 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -593,14 +593,6 @@ Static int umass_cam_detach(struct umass_softc *sc);
 #define UMASS_ATAPI_DRIVE	0
 
 #define UMASS_MAX_TRANSFER_SIZE	MAXBSIZE
-
-struct scsipi_periphsw umass_probe_periphsw =
-{
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-};
 
 Static void umass_scsipi_request(struct scsipi_channel *,
 				    scsipi_adapter_req_t, void *);

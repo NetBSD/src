@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.8.2.12 2001/03/12 13:30:17 bouyer Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.2.13 2001/03/23 11:32:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.12 2001/03/12 13:30:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.13 2001/03/23 11:32:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -875,7 +875,7 @@ dpt_scsipi_request(chan, req, arg)
 					    DPT_SG_SIZE);
 				else
 					printf("error %d loading DMA map\n",
-					    sc->sc_dv.dv_xname, error); 
+					    error); 
  out_bad:
 				dpt_free_ccb(sc, ccb);
 				scsipi_done(xs);
