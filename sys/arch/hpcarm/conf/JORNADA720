@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.29 2002/10/14 18:39:31 elric Exp $
+#	$NetBSD: JORNADA720,v 1.30 2003/04/17 11:45:13 wiz Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 # estimated number of users
 maxusers	32
@@ -191,12 +191,6 @@ tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
-
-# RTC device via IIC bus
-#rtc*	at iic? addr 0xa0
-
-# time-of-day device via rtc device
-#todclock0	at rtc?
 
 # Peripheral IO Controller
 #pioc0	at mainbus? base 0x00210000
