@@ -1,4 +1,4 @@
-.\"	$NetBSD: finger.1,v 1.12 2002/09/12 01:31:41 kim Exp $
+.\"	$NetBSD: finger.1,v 1.13 2002/09/12 10:06:12 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)finger.1	8.3 (Berkeley) 5/5/94
 .\"
-.Dd November 21, 1996
+.Dd September 12, 2002
 .Dt FINGER 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nd user information lookup program
 .Sh SYNOPSIS
 .Nm
-.Op Fl lmpshog8
+.Op Fl 8ghlmops
 .Op Ar user ...
 .Op Ar user@host ...
 .Sh DESCRIPTION
@@ -51,45 +51,20 @@ displays information about the system users.
 .Pp
 Options are:
 .Bl -tag -width flag
-.It Fl s
-.Nm
-displays the user's login name, real name, terminal name and write
-status (as a ``*'' after the terminal name if write permission is
-denied), idle time, login time, and either office location and office
-phone number, or the remote host.
-If
-.Fl h
-is given, the remote is printed.
-If
-.Fl o
-is given, the office location and phone number is printed instead
-(the default).
-.Pp
-Idle time is in minutes if it is a single integer, hours and minutes
-if a ``:'' is present, or days if a ``d'' is present.
-Login time is displayed as the dayname if less than six days,
-else month, day, hours and minutes, unless
-more than six months ago, in which case the year is displayed rather
-than the hours and minutes.
-.Pp
-Unknown devices as well as nonexistent idle and login times are
-displayed as single asterisks.
-.Pp
+.It Fl 8
+Pass through 8-bit data.  This option is intended for enabling 8-bit
+data output in the
+.Xr fingerd 8
+service.  Using this from the command line is
+.Em dangerous ,
+as the output data may include control characters for your terminal.
+.It Fl g
+This option restricts the gecos output to only the users' real names.
 .It Fl h
 When used in conjunction with the
 .Fl s
 option, the name of the remote host is displayed instead of the office
 location and office phone.
-.Pp
-.It Fl o
-When used in conjunction with the
-.Fl s
-option, the office location and office phone information is displayed
-instead of the name of the remote host.
-.Pp
-.It Fl g
-This option restricts the gecos output to only the users' real names.
-.Pp
 .It Fl l
 Produces a multi-line format displaying all of the information
 described for the
@@ -103,39 +78,36 @@ and
 from the user's home directory.
 .Pp
 If idle time is at least a minute and less than a day, it is
-presented in the form ``hh:mm''.
-Idle times greater than a day are presented as ``d day[s]hh:mm''.
+presented in the form
+.Dq hh:mm .
+Idle times greater than a day are presented as
+.Dq d day[s]hh:mm .
 .Pp
-Phone numbers specified as eleven digits are printed as ``+N-NNN-NNN-NNNN''.
+Phone numbers specified as eleven digits are printed as
+.Dq +N-NNN-NNN-NNNN .
 Numbers specified as ten or seven digits are printed as the appropriate
 subset of that string.
-Numbers specified as five digits are printed as ``xN-NNNN''.
-Numbers specified as four digits are printed as ``xNNNN''.
+Numbers specified as five digits are printed as
+.Dq xN-NNNN .
+Numbers specified as four digits are printed as
+.Dq xNNNN .
 .Pp
-If write permission is denied to the device, the phrase ``(messages off)''
+If write permission is denied to the device, the phrase
+.Dq (messages off)
 is appended to the line containing the device name.
 One entry per user is displayed with the
 .Fl l
 option; if a user is logged on multiple times, terminal information
 is repeated once per login.
 .Pp
-Mail status is shown as ``No Mail.'' if there is no mail at all, ``Mail
-last read DDD MMM ## HH:MM YYYY (TZ)'' if the person has looked at their
-mailbox since new mail arriving, or ``New mail received ...'', ``Unread
-since ...'' if they have new mail.
-.Pp
-.It Fl p
-Prevents
-the
-.Fl l
-option of
-.Nm
-from displaying the contents of the
-.Dq Pa .forward ,
-.Dq Pa .plan
-and
-.Dq Pa .project
-files.
+Mail status is shown as
+.Dq \&No Mail.
+if there is no mail at all, ``Mail last read DDD MMM ## HH:MM YYYY (TZ)''
+if the person has looked at their
+mailbox since new mail arriving, or
+.Dq New mail received ... ,
+.Dq Unread since \&...
+if they have new mail.
 .It Fl m
 Prevent matching of
 .Ar user
@@ -148,13 +120,52 @@ option is supplied.
 All name matching performed by
 .Nm
 is case insensitive.
-.It Fl 8
-Pass through 8-bit data.  This option is intended for enabling 8-bit
-data output in the
-.Xr fingerd 8
-service.  Using this from the command line is
-.Em dangerous ,
-as the output data may include control characters for your terminal.
+.It Fl o
+When used in conjunction with the
+.Fl s
+option, the office location and office phone information is displayed
+instead of the name of the remote host.
+.It Fl p
+Prevents
+the
+.Fl l
+option of
+.Nm
+from displaying the contents of the
+.Dq Pa .forward ,
+.Dq Pa .plan
+and
+.Dq Pa .project
+files.
+.It Fl s
+.Nm
+displays the user's login name, real name, terminal name and write
+status (as a
+.Dq *
+after the terminal name if write permission is denied), idle time,
+login time, and either office location and office phone number,
+or the remote host.
+If
+.Fl h
+is given, the remote is printed.
+If
+.Fl o
+is given, the office location and phone number is printed instead
+(the default).
+.Pp
+Idle time is in minutes if it is a single integer, hours and minutes
+if a
+.Dq \&:
+is present, or days if a
+.Dq d
+is present.
+Login time is displayed as the dayname if less than six days,
+else month, day, hours and minutes, unless
+more than six months ago, in which case the year is displayed rather
+than the hours and minutes.
+.Pp
+Unknown devices as well as nonexistent idle and login times are
+displayed as single asterisks.
 .El
 .Pp
 If no options are specified,
