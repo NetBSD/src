@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.12 2002/01/28 21:29:46 thorpej Exp $
+# $NetBSD: Makefile.sun2,v 1.13 2002/06/04 21:39:12 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -30,17 +30,13 @@ GENASSYM=	${SUN2}/sun2/genassym.cf
 ##
 ## (2) compile settings
 ##
-# Override CPP defaults entirely, so cross-compilation works.
-# Keep -nostdinc before all -I flags, similar for -undef ...
 CPPFLAGS+=	-Dsun2
 CFLAGS+=	-msoft-float -fno-defer-pop
-APPFLAGS=	-x assembler-with-cpp -P -traditional ${CPPFLAGS} -D_LOCORE
-
-# Do NOT assume the compiler does "-x funny_format" (gcc-specific)
-# This needs an intermediate file.  The original file is always
-# safe in some far away directory, so just use the base name.
-NORMAL_S=	${CPP} ${APPFLAGS} $< > $*.s ;\
-		${AS} -o $@ $*.s ; rm $*.s
+.if defined(HAVE_GCC3)
+AFLAGS+=	-x assembler-with-cpp
+.else
+AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+.endif
 
 ##
 ## (3) libkern and compat
@@ -87,7 +83,6 @@ stub.o: Makefile
 ##
 ## (7) misc settings
 ##
-MKDEP_AFLAGS=	${APPFLAGS}
 
 ##
 ## (8) config(8) generated machinery

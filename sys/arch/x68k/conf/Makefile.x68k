@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.55 2001/12/04 15:22:29 minoura Exp $
+#	$NetBSD: Makefile.x68k,v 1.56 2002/06/04 21:39:13 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -32,7 +32,11 @@ GENASSYM=	${X68K}/x68k/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-Dx68k
+.if defined(HAVE_GCC3)
+AFLAGS+=	-x assembler-with-cpp
+.else
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
+.endif
 CMACHFLAGS?=	-m68020-60 -Wa,-m68030 -Wa,-m68851
 CFLAGS+=	${CMACHFLAGS} -msoft-float
 

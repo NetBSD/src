@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.26 2002/03/05 14:28:31 simonb Exp $
+#	$NetBSD: Makefile.mips,v 1.27 2002/06/04 21:39:11 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -59,7 +59,11 @@ CPPFLAGS+=	-D${MACHINE}
 DEFGP?=		-G 0
 GP?=		${DEFGP}
 CFLAGS+=	${ENDIAN} ${GP} -mno-abicalls -mno-half-pic
+.if defined(HAVE_GCC3)
+AFLAGS+=	${ENDIAN} -x assembler-with-cpp
+.else
 AFLAGS+=	${ENDIAN} -x assembler-with-cpp -traditional-cpp
+.endif
 
 ##
 ## (3) libkern and compat
