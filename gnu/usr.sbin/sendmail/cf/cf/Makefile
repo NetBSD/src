@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2000/07/04 12:21:04 itojun Exp $
+#	$NetBSD: Makefile,v 1.8 2000/07/05 03:11:42 enami Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -21,13 +21,14 @@ RM=		rm -f
 
 ALL=		netbsd-proto.cf netbsd-proto-IPv4only.cf
 
-OTHERS=		${FILES:C/Makefile//:C/\.mc/.cf/g:C/netbsd-proto\.cf//:C/netbsd-proto-IPv4only\.cf//}
+OTHERS=		${FILES:S/Makefile//:C/netbsd-proto.*//:S/.mc/.cf/g}
 
 .SUFFIXES: .mc .cf
 
 .mc.cf:
 	${RM} $@
-	(cd ${CFDIR}/cf && ${M4} ${CFDIR}/m4/cf.m4 ${.CURDIR}/${@:R}.mc > ${.OBJDIR}/$@)
+	(cd ${CFDIR}/cf && \
+	    ${M4} ${CFDIR}/m4/cf.m4 ${.CURDIR}/${@:R}.mc > ${.OBJDIR}/$@)
 	${CHMOD} ${ROMODE} $@
 
 realall: ${ALL}
