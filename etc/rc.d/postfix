@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postfix,v 1.6 2002/02/12 02:19:27 lukem Exp $
+# $NetBSD: postfix,v 1.7 2003/01/31 06:47:16 lukem Exp $
 #
 
 # PROVIDE: mail
@@ -14,9 +14,9 @@ name="postfix"
 rcvar=$name
 required_files="/etc/${name}/main.cf"
 start_precmd="postfix_precmd"
-start_cmd="${name} start"
-stop_cmd="${name} stop"
-reload_cmd="${name} reload"
+start_cmd="${name} "'${rc_arg}'
+stop_cmd=$start_cmd
+reload_cmd=$start_cmd
 extra_commands="reload"
 spooletcdir="/var/spool/${name}/etc"
 required_dirs=$spooletcdir
