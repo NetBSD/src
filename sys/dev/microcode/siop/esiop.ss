@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.13 2002/05/02 12:37:19 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.13.4.1 2003/08/15 19:09:37 tron Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -174,7 +174,7 @@ nextisn:
 	JUMP REL(waitphase), WHEN NOT MSG_IN;
 	MOVE 1, abs_msgin2, WHEN MSG_IN;
 	CLEAR ACK;
-	INT int_msgin, IF NOT 0x20; not a simple tag message, let host handle it
+	JUMP REL(handle_msgin), IF NOT 0x20; not a simple tag message
 	MOVE 1, abs_msgin2, WHEN MSG_IN; get tag
 	MOVE SFBR to SCRATCHA2;
 	MOVE SFBR to SCRATCHC3;
