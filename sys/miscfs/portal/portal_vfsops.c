@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.15 1996/12/22 10:10:25 cgd Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.16 1998/02/18 07:05:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -315,6 +315,13 @@ portal_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
+extern struct vnodeopv_desc portal_vnodeop_opv_desc;
+
+struct vnodeopv_desc *portal_vnodeopv_descs[] = {
+	&portal_vnodeop_opv_desc,
+	NULL,
+};
+
 struct vfsops portal_vfsops = {
 	MOUNT_PORTAL,
 	portal_mount,
@@ -328,4 +335,6 @@ struct vfsops portal_vfsops = {
 	portal_fhtovp,
 	portal_vptofh,
 	portal_init,
+	NULL,				/* vfs_mountroot */
+	portal_vnodeopv_descs,
 };
