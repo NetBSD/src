@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/03 05:39:05 mikel Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/18 06:42:35 lukem Exp $
 
 .if ${MACHINE} == "i386"
 PROG=	apmd
 SRCS=	apmd.c apmsubr.c
-WARNS?=	1
 .endif
 
 MAN=	apmd.8

@@ -32,6 +32,8 @@
 
 .include <bsd.obj.mk>
 
+WARNS?=	0
+
 COBJDIR!=cd $(.CURDIR)/../common; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
@@ -39,4 +41,6 @@ CFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
 LDADD=  ${COBJDIR}/libdhcp.a          
 DPADD=  ${COBJDIR}/libdhcp.a          
 
+.if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
+.endif

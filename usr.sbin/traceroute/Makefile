@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/04 16:31:24 christos Exp $	
+#	$NetBSD: Makefile,v 1.7 1997/10/18 06:43:04 lukem Exp $	
 
-WARNS?=	1
 PROG=	traceroute
 MAN=	traceroute.8 
 
