@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.33 2002/12/11 14:22:12 martin Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.34 2002/12/16 18:32:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -450,6 +450,8 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 						prev->pt_next = next;
 					else
 						intqueue = next;
+					/* Permit moving off the reidlequeue */
+					victim->pt_next = NULL;
 				}
 			}
 

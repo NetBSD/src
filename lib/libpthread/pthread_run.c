@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.17 2002/11/14 04:18:11 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.18 2002/12/16 18:32:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@ sched_yield(void)
 
 	if (pthread__started) {
 		self = pthread__self();
+		SDPRINTF(("(sched_yield %p) yielding\n", self));
 		pthread_spinlock(self, &runqueue_lock);
 		PTQ_INSERT_TAIL(&runqueue, self, pt_runq);
 		/*
@@ -146,6 +147,7 @@ void
 pthread__sched_idle(pthread_t self, pthread_t thread)
 {
 
+	SDPRINTF(("(sched_idle %p) idling %p\n", self, thread));
 	thread->pt_state = PT_STATE_RUNNABLE;
 	thread->pt_type = PT_THREAD_IDLE;
 	thread->pt_flags &= ~PT_FLAG_IDLED;
@@ -163,15 +165,22 @@ pthread__sched_idle(pthread_t self, pthread_t thread)
 void
 pthread__sched_idle2(pthread_t self)
 {
-	pthread_t idlethread, qhead;
+	pthread_t idlethread, qhead, next;
 
 	qhead = NULL;
 	pthread_spinlock(self, &deadqueue_lock);
-	while (!PTQ_EMPTY(&reidlequeue)) {
-		idlethread = PTQ_FIRST(&reidlequeue);
-		PTQ_REMOVE(&reidlequeue, idlethread, pt_runq);
-		idlethread->pt_next = qhead;
-		qhead = idlethread;
+	idlethread = PTQ_FIRST(&reidlequeue);
+	while (idlethread != NULL) {
+		SDPRINTF(("(sched_idle2 %p) reidling %p\n", self, idlethread));
+		next = PTQ_NEXT(idlethread, pt_runq);
+		if (idlethread->pt_next == NULL) {
+			PTQ_REMOVE(&reidlequeue, idlethread, pt_runq);
+			idlethread->pt_next = qhead;
+			qhead = idlethread;
+		} else {
+		SDPRINTF(("(sched_idle2 %p) %p is in a preemption loop\n", self, idlethread));
+		}
+		idlethread = next;
 	}
 	pthread_spinunlock(self, &deadqueue_lock);
 
@@ -212,6 +221,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 			qhead->pt_uc->uc_stack = qhead->pt_stack;
 			qhead->pt_uc->uc_link = NULL;
 			makecontext(qhead->pt_uc, pthread__idle, 0);
+			SDPRINTF(("(bulk %p) idling %p\n", self, qhead));
 			PTQ_INSERT_TAIL(&idlequeue, qhead, pt_runq);
 		}
 	}
