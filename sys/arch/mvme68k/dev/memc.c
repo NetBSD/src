@@ -1,4 +1,4 @@
-/*	$NetBSD: memc.c,v 1.7 2001/07/27 21:54:07 scw Exp $	*/
+/*	$NetBSD: memc.c,v 1.8 2001/07/27 21:56:10 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,8 +89,8 @@ static void memecc_log_error(struct memc_softc *, u_int8_t, int, int);
 
 /*
  * Some tweakable parameters. Mind you, I don't recommend changing
- * the irq level...
- * XXX: This should probably be irq 7
+ * the ipl...
+ * XXX: This should probably be ipl 7
  */
 #define MEMC_IRQ_LEVEL		6
 #define MEMECC_SCRUBBER_PERIOD	86400	/* ~24 hours */
@@ -532,7 +532,7 @@ memecc_attach(struct memc_softc *sc)
 	    memc_reg_read(sc, MEMECC_REG_SCRUB_CONTROL) |
 	    MEMECC_SCRUB_CONTROL_SCRBEN | MEMECC_SCRUB_CONTROL_SBEIEN);
 
-	printf("%s: Logging ECC errors at irq %d\n", sc->sc_dev.dv_xname,
+	printf("%s: Logging ECC errors at ipl %d\n", sc->sc_dev.dv_xname,
 	    MEMC_IRQ_LEVEL);
 }
 
