@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.100 2003/12/04 19:38:25 atatat Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.101 2003/12/04 20:06:58 atatat Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -931,8 +931,6 @@ struct sysctlnode;
 
 __BEGIN_DECLS
 int	sysctl __P((int *, u_int, void *, size_t *, const void *, size_t));
-int     sysctlnametomib __P((const char *, int *, u_int *,
-			     char *, size_t *, struct sysctlnode **));
 __END_DECLS
 
 #endif	/* !_KERNEL */
