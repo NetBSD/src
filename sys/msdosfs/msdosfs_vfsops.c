@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.47 1997/10/17 11:24:13 ws Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -632,10 +632,10 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		if ((error = bread(devvp, pmp->pm_fsinfo, 1024, NOCRED, &bp)) != 0)
 			goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
-		if (!memcmp(fp->fsisig1, "RRaA", 4)
-		    && !memcmp(fp->fsisig2, "rrAa", 4)
-		    && !memcmp(fp->fsisig3, "\0\0\125\252", 4)
-		    && !memcmp(fp->fsisig4, "\0\0\125\252", 4))
+		if (!bcmp(fp->fsisig1, "RRaA", 4)
+		    && !bcmp(fp->fsisig2, "rrAa", 4)
+		    && !bcmp(fp->fsisig3, "\0\0\125\252", 4)
+		    && !bcmp(fp->fsisig4, "\0\0\125\252", 4))
 			pmp->pm_nxtfree = getulong(fp->fsinxtfree);
 		else
 			pmp->pm_fsinfo = 0;
