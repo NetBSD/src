@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.18 1999/01/23 22:18:43 sommerfe Exp $	*/
+/*	$NetBSD: pms.c,v 1.19 1999/02/02 04:02:26 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -635,11 +635,12 @@ pmspoll(dev, events, p)
 	int revents = 0;
 	int s = spltty();
 
-	if (events & (POLLIN | POLLRDNORM))
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_q.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &sc->sc_rsel);
+	}
 
 	(void)splx(s);
 	return (revents);
