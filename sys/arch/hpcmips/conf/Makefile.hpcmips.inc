@@ -1,4 +1,5 @@
-#	$NetBSD: Makefile.hpcmips.inc,v 1.1 2000/12/20 04:12:42 matt Exp $
+#	$NetBSD: Makefile.hpcmips.inc,v 1.1.28.1 2004/04/07 04:51:08 jmc Exp $
 
-CFLAGS+=	-mips2
-AFLAGS+=	-mips2
+MIPSFLAGS?=	-mips2
+CFLAGS+=	${MIPSFLAGS}
+AFLAGS+=	${MIPSFLAGS}
