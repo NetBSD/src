@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.122.2.8 2005/02/06 08:59:23 skrll Exp $	*/
+/*	$NetBSD: tulip.c,v 1.122.2.9 2005/02/07 08:36:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.8 2005/02/06 08:59:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.9 2005/02/07 08:36:33 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -1014,6 +1014,7 @@ tlp_ioctl(ifp, cmd, data)
 		    == (sc->sc_if_flags & (~RESETIGN)))) {
 			/* Set up the receive filter. */
 			(*sc->sc_filter_setup)(sc);
+			error = 0;
 			break;
 #undef RESETIGN
 		}
