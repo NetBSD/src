@@ -1,18 +1,18 @@
-	$NetBSD: upgrade,v 1.5 1998/10/21 14:32:36 minoura Exp $	
+	$NetBSD: upgrade,v 1.6 1998/11/04 14:23:40 minoura Exp $	
 
 The upgrade to NetBSD _VER is a binary upgrade; it can be quite difficult
 to advance to a later version by recompiling from source due primarily
 to interdependencies in the various components.
 
 To do the upgrade, you must have the bootable install floppy
-(boot.fs).  You must also have at least the "base.tgz" binary
-distribution set available, so that you can upgrade with it, using one
-of the upgrade methods described below.  Finally, you must have
-sufficient disk space available to install the new binaries.  Since
-the old binaries are being overwritten in place, you only need space
-for the new binaries, which weren't previously on the system.  If you
-have a few megabytes free on each of your root and /usr partitions,
-you should have enough space.
+(boot.fs).  You must also have at least the "base.tgz" and "kern.tgz"
+binary distribution sets available, so that you can upgrade with it,
+using one of the upgrade methods described below.  Finally, you must
+have sufficient disk space available to install the new binaries.
+Since the old binaries are being overwritten in place, you only need
+space for the new binaries, which weren't previously on the system.
+If you have a few megabytes free on each of your root and /usr
+partitions, you should have enough space.
 
 Since upgrading involves replacing the boot blocks on your NetBSD
 partition, the kernel, and most of the system binaries, it has the
@@ -89,6 +89,8 @@ To upgrade your system, follow the following instructions:
 	temporary directory's path name.  (It should be the path name
 	of the directory that you're in.)
 
+	Run the command "Extract kern" to upgrade the kernel.
+
 	Run the command "Extract base" to upgrade the base
 	distribution.
 
@@ -106,8 +108,7 @@ To upgrade your system, follow the following instructions:
 	When you are done upgrading all of the distribution sets you
 	wish to upgrade, issue the command "Cleanup".  It will clean
 	up the installation, by remaking some system databases.  When
-	it is complete, all you have to do is to copy the new kernel
-	to the root filesystem, and reboot(8) your system.
+	it is complete, all you have to do is to reboot(8) your system.
 
 Your system has now been upgraded to NetBSD _VER.
 
