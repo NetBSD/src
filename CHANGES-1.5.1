@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.14 2000/12/26 08:19:19 jhawk Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.15 2000/12/26 19:17:20 jhawk Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -371,3 +371,18 @@ distrib/utils/sysinst/msg.mi.fr			1.39
 sys/dev/pcmcia/wdc_pcmcia.c			1.36 via patch
 
   Support AMACOM "Value Engineered" CDROM.
+
+sys/dev/isa/ad1848_isa.c			1.17
+sys/dev/isa/ad1848var.h				1.35
+
+  Support full-duplex audio on 1848 wss devices by using
+  seperate interrupt handlers for play and record. Fix from
+  Juergen Weiss <weiss@uni-mainz.de> by way of PR#11178.
+
+gnu/usr.sbin/sendmail/Makefile			1.3
+
+  Move the the "doc" subdirectory from MKSHARE conditional to the MKDOC one.
+
+sys/dev/tc/sfbreg.h				1.3
+
+  Make XalphaNetBSD compile with SFB support.
