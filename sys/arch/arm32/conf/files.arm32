@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.61 1998/09/01 02:28:04 mark Exp $
+#	$NetBSD: files.arm32,v 1.62 1998/09/06 02:28:58 mark Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -24,6 +24,8 @@ defopt	PMAP_DEBUG
 # X server support in console drivers
 defopt	XSERVER
 
+define todservice {}
+
 device	mainbus { [base = -1], [dack = -1], [irq = -1] }
 attach	mainbus at root
 file	arch/arm32/mainbus/mainbus.c		mainbus
@@ -46,10 +48,10 @@ device	wdc: atapi, ata
 device	wd: disk
 attach	wd at ata
 # XXX shouldn't have to have NWD in wdc.h
-file	dev/ic/wdc.c				wdc & (wd | !wd) & shark needs-flag
-file	arch/arm32/dev/wdc.c			wdc & (wd | !wd) & !shark needs-flag
-file	dev/ata/wd.c				wd & shark needs-flag
-file	arch/arm32/dev/wd.c			wd & !shark needs-flag
+file	dev/ic/wdc.c				wdc & (wd | !wd) & !iomd needs-flag
+file	arch/arm32/dev/wdc.c			wdc & (wd | !wd) & iomd needs-flag
+file	dev/ata/wd.c				wd & !iomd needs-flag
+file	arch/arm32/dev/wd.c			wd & iomd needs-flag
 major	{wd = 16}
 attach	wdc at pioc with wdc_pioc
 file	arch/arm32/mainbus/wdc_pioc.c		wdc_pioc
@@ -214,12 +216,12 @@ file	arch/arm32/iomd/iic_iomd.c		iic_iomd
 file	arch/arm32/iomd/iomd_iic.S		iic_iomd
 
 # IIC based RTC
-device	rtc {}
+device	rtc : todservice
 attach	rtc at iic
 file	arch/arm32/dev/rtc.c			rtc	needs-flag
 
 device	todclock
-attach	todclock at rtc
+attach	todclock at todservice
 file	arch/arm32/dev/todclock.c		todclock	needs-count
 
 # VIDC device
@@ -493,6 +495,68 @@ file	arch/arm32/shark/pccons.c		pc & ofw needs-flag
 device  scr: tty
 file	arch/arm32/shark/scr.c			scr needs-flag
 attach  scr at ofisascr
+
+# DC21285 "Footbridge" specific files
+define	footbridge {}
+device	footbridge: pcibus, todservice
+attach	footbridge at mainbus
+file	arch/arm32/footbridge/footbridge.c		footbridge
+file	arch/arm32/footbridge/footbridge_machdep.c	footbridge
+file	arch/arm32/footbridge/footbridge_io.c		footbridge
+file	arch/arm32/footbridge/footbridge_io_asm.S	footbridge
+file	arch/arm32/footbridge/footbridge_pci.c		footbridge
+file	arch/arm32/footbridge/footbridge_irq.S		footbridge
+file	arch/arm32/footbridge/footbridge_irqhandler.c	footbridge
+file	arch/arm32/footbridge/footbridge_clock.c	footbridge
+
+# DC21285 "Footbridge" serial port
+device	fcom: tty
+attach	fcom at footbridge
+file	arch/arm32/footbridge/footbridge_com.c		fcom needs-flag
+file	arch/arm32/footbridge/footbridge_com_io.c	fcom
+file	arch/arm32/footbridge/footbridge_com_io_asm.S	fcom
+
+# EBSA285/CATS class board
+# DC21285 based board with cyclone firmware
+file	arch/arm32/footbridge/ebsa285_machdep.c		footbridge & ebsa285
+
+# PCI devices
+
+#
+# Include PCI config
+#
+include "dev/pci/files.pci"
+
+# network devices MII bus
+include "dev/mii/files.mii"
+
+device	pcib: isabus
+attach	pcib at pci
+file	arch/arm32/pci/pcib.c			pcib
+
+# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
+# XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
+# XXX (when the conf/files and files.isa bogons are fixed, this can
+# XXX be fixed as well.)
+
+attach	lpt at puc with lpt_puc
+file	dev/pci/lpt_puc.c	lpt_puc
+
+# XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
+# XXX BECAUSE NOT ALL PORTS USE THE MI DRIVER YET.  (when the conf/files
+# XXX and files.isa bogons are fixed, this can be fixed as well.)
+
+# PCI IDE controllers
+device	pciide {[channel = -1]}
+attach	pciide at pci
+file	dev/pci/pciide.c		pciide
+attach	wdc at pciide with wdc_pciide
+file	dev/pci/wdc_pciide.c		wdc_pciide
+
+file	arch/arm32/pci/pciide_machdep.c	pciide
+
+# Include USB stuff
+include "dev/usb/files.usb"
 
 # XXX REALLY JUST WANT FILES.ISA!!!!
 #
