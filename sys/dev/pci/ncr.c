@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.84 1999/09/30 23:04:42 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.85 1999/10/05 00:29:41 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1518,7 +1518,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.84 1999/09/30 23:04:42 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.85 1999/10/05 00:29:41 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4593,7 +4593,7 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	flags = xp->xs_control;
 
 	if (xp->bp)
-		flags |= (XS_CTL_ASYNC); /* just to be sure */
+		flags |= (XS_CTL_NOSLEEP); /* just to be sure */
 
 	/*---------------------------------------------------
 	**
