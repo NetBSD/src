@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_addr.c,v 1.12 2001/06/11 01:50:51 wiz Exp $	*/
+/*	$NetBSD: ns_addr.c,v 1.13 2001/06/17 23:24:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: ns_addr.c,v 1.12 2001/06/11 01:50:51 wiz Exp $");
+__RCSID("$NetBSD: ns_addr.c,v 1.13 2001/06/17 23:24:22 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -199,19 +199,25 @@ Field(buf, out, len)
 	bp = clen + buf - 3;
 	hp = hb + i - 1;
 
-	while (hp >= hb) {
+	while (hp > hb) {
 		if (base16)
 			(void)sscanf(bp, "%3x", hp);
 		else if (base10)
 			(void)sscanf(bp, "%3d", hp);
 		else
 			(void)sscanf(bp, "%3o", hp);
-		if (hp > hb) {
-			bp[0] = 0;
-			hp--;
-			bp -= 3;
-		}
+
+		bp[0] = 0;
+		hp--;
+		bp -= 3;
 	}
+	if (base16)
+		(void)sscanf(buf, "%3x", hp);
+	else if (base10)
+		(void)sscanf(buf, "%3d", hp);
+	else
+		(void)sscanf(buf, "%3o", hp);
+
 	cvtbase((long)ibase, 256, hb, i, out, len);
 }
 
