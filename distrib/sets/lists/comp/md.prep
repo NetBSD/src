@@ -1,4 +1,4 @@
-# $NetBSD: md.prep,v 1.7 2001/04/15 17:14:28 kleink Exp $
+# $NetBSD: md.prep,v 1.8 2001/05/03 13:17:26 soren Exp $
 ./usr/include/prep	comp-c-include
 ./usr/include/prep/_G_config.h	comp-c-include
 ./usr/include/prep/ansi.h	comp-c-include
@@ -32,7 +32,6 @@
 ./usr/include/prep/kcore.h	comp-c-include
 ./usr/include/prep/kgdb.h	comp-c-include
 ./usr/include/prep/limits.h	comp-c-include
-./usr/include/prep/machine_type.h	comp-c-include
 ./usr/include/prep/math.h	comp-c-include
 ./usr/include/prep/mouse.h	comp-c-include
 ./usr/include/prep/param.h	comp-c-include
