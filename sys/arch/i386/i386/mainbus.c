@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 1997/08/30 06:52:55 mycroft Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18 1997/08/30 06:54:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,6 +44,8 @@
 #include <i386/isa/isa_machdep.h>
 
 #include "pci.h"
+#include "eisa.h"
+#include "isa.h"
 #include "apm.h"
 
 #if NAPM > 0
@@ -114,6 +116,7 @@ mainbus_attach(parent, self, aux)
 		mba.mba_pba.pba_busname = "pci";
 		mba.mba_pba.pba_iot = I386_BUS_SPACE_IO;
 		mba.mba_pba.pba_memt = I386_BUS_SPACE_MEM;
+		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 		mba.mba_pba.pba_flags =
 		    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 		mba.mba_pba.pba_bus = 0;
@@ -125,6 +128,9 @@ mainbus_attach(parent, self, aux)
 		mba.mba_eba.eba_busname = "eisa";
 		mba.mba_eba.eba_iot = I386_BUS_SPACE_IO;
 		mba.mba_eba.eba_memt = I386_BUS_SPACE_MEM;
+#if NEISA > 0
+		mba.mba_eba.eba_dmat = &eisa_bus_dma_tag;
+#endif
 		config_found(self, &mba.mba_eba, mainbus_print);
 	}
 
@@ -132,6 +138,9 @@ mainbus_attach(parent, self, aux)
 		mba.mba_iba.iba_busname = "isa";
 		mba.mba_iba.iba_iot = I386_BUS_SPACE_IO;
 		mba.mba_iba.iba_memt = I386_BUS_SPACE_MEM;
+#if NISA > 0
+		mba.mba_iba.iba_dmat = &isa_bus_dma_tag;
+#endif
 		config_found(self, &mba.mba_iba, mainbus_print);
 	}
 #if NAPM > 0
