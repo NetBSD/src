@@ -14,7 +14,7 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
- *      $Id: scsiconf.c,v 1.9.3.3 1993/11/24 19:19:44 mycroft Exp $
+ *      $Id: scsiconf.c,v 1.9.3.4 1993/11/24 20:33:44 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -314,14 +314,29 @@ scsi_probe_bus(bus, targ, lun)
 			sc_link->target = targ;
 			sc_link->lun = lun;
 			bestmatch = scsi_probedev(sc_link, &maybe_more);
-			if (!bestmatch)
-				continue;
-			if (!scsi_attachdev(scsi, sc_link,
-					    bestmatch->attach_rtn))
-				continue;
-			scsi->sc_link[targ][lun] = sc_link;
-			sc_link = NULL;		/* it's been used */
-			if (!(maybe_more))	/* nothing suggests we'll find more */
+			/*
+			 * We already know what the device is.  We use a
+			 * special matching routine which insists that the
+			 * cfdata is of the right type rather than putting
+			 * more intelligence in individual match routines for
+			 * each high-level driver.  We must have
+			 * scsi_targmatch() do all of the comparisons, or we
+			 * could get stuck in an infinite loop trying the same
+			 * device repeatedly.  We use the `fordriver' field of
+			 * the scsi_link for now, rather than inventing a new
+			 * structure just for the config_search().
+			 */
+			if (bestmatch) {
+				sc_link->fordriver = bestmatch->attach_rtn;
+				if (config_found((struct device *)scsi,
+						 sc_link, NULL)) {
+					scsi->sc_link[targ][lun] = sc_link;
+					sc_link = NULL;	/* it's been used */
+				} else
+					printf("No matching config entry.\n");
+			} else
+				printf("No matching driver.\n");
+			if (!maybe_more)/* nothing suggests we'll find more */
 				break;	/* nothing here, skip to next targ */
 			/* otherwise something says we should look further */
 		}
@@ -348,30 +363,6 @@ scsi_targmatch(parent, cf, aux)
 		return 0;
 
 	return 1;
-}
-
-int
-scsi_attachdev(scsi, sc_link, attach_rtn)
-	struct scsibus_data *scsi;
-	struct scsi_link *sc_link;
-	void (*attach_rtn) ();
-{
-	/*
-	 * We already know what the device is.  We use a special matching
-	 * routine which insists that the cfdata is of the right type rather
-	 * than putting more intelligence in individual match routines for
-	 * each high-level driver.  We must have scsi_targmatch() do all of
-	 * the comparisons, or we could get stuck in an infinite loop trying
-	 * the same device over and over.  We use the `fordriver' field of
-	 * the scsi_link for now, rather than inventing a new structure just
-	 * for the config_search().
-	 */
-	sc_link->fordriver = attach_rtn;
-	if (config_found((struct device *)scsi, sc_link, NULL))
-		return 1;
-
-	printf("No matching config file entry.\n");
-	return 0;
 }
 
 /*
@@ -627,12 +618,9 @@ selectdev(qualifier, type, remov, manu, model, rev)
 			break;
 		}
 	}
-	if (!bestmatch) {
 #if NUK > 0
+	if (!bestmatch)
 		bestmatch = &unknowndev;
-#else
-		printf("No explicit device driver match.\n");
 #endif
-	}
 	return bestmatch;
 }
