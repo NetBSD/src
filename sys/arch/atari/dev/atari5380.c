@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.14 1996/05/15 07:29:03 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.15 1996/06/18 11:10:04 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -461,7 +461,6 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 /*
  * Prototype functions defined below 
  */
-static void	fscsi_int __P((void));
 static void	scsi_falcon_init __P((struct ncr_softc *));
 static u_char	get_falcon_5380_reg __P((u_short));
 static void	set_falcon_5380_reg __P((u_short, u_short));
@@ -523,6 +522,7 @@ scsi_falcon_clr_ipend()
 	int	tmp;
 
 	tmp = get_falcon_5380_reg(NCR5380_IRCV);
+	rem_sicallback((si_farg)ncr_ctrl_intr);
 }
 
 extern __inline__ int
@@ -574,8 +574,8 @@ falcon_claimed_dma()
 			 */
 			return(0);
 		}
-		if (!st_dmagrab((dma_farg)fscsi_int, (dma_farg)run_main,
-						&connected, &falcon_lock, 1))
+		if (!st_dmagrab((dma_farg)ncr_ctrl_intr, (dma_farg)run_main,
+						cur_softc, &falcon_lock, 1))
 			return(0);
 	}
 	return(1);
@@ -589,7 +589,8 @@ falcon_reconsider_dma()
 		 * No need to keep DMA locked by us as we are not currently
 		 * connected and no disconnected jobs are pending.
 		 */
-		st_dmafree(&connected, &falcon_lock);
+		rem_sicallback((si_farg)ncr_ctrl_intr);
+		st_dmafree(cur_softc, &falcon_lock);
 	}
 
 	if (!falcon_lock && (issue_q != NULL)) {
@@ -597,8 +598,8 @@ falcon_reconsider_dma()
 		 * We must (re)claim DMA access as there are jobs
 		 * waiting in the issue queue.
 		 */
-		st_dmagrab((dma_farg)fscsi_int, (dma_farg)run_main,
-						&connected, &falcon_lock, 0);
+		st_dmagrab((dma_farg)ncr_ctrl_intr, (dma_farg)run_main,
+						cur_softc, &falcon_lock, 0);
 	}
 }
 
@@ -640,18 +641,6 @@ u_char	mode;
 		set_falcon_5380_reg(NCR5380_ICOM, SC_ADTB);
 		set_falcon_5380_reg(NCR5380_DMSTAT, 0);
 		fal1_dma(1, nsects, reqp);
-	}
-}
-
-/*
- * Falcon SCSI interrupt. _Always_ called at spl1!
- */
-static void
-fscsi_int()
-{
-	if (scsi_falcon_ipending()) {
-		scsi_falcon_idisable();
-		ncr_ctrl_intr(cur_softc);
 	}
 }
 
@@ -714,7 +703,8 @@ u_long	*bytes_left;
 		 */
 		bytes_done = st_dmaaddr_get() - reqp->dm_cur->dm_addr;
 		if (bytes_done & 511) {
-			ncr_tprint(reqp, "Some bytes stuck in fifo\n");
+			ncr_tprint(reqp, "%ld bytes of %ld stuck in fifo\n",
+					bytes_done & 15, bytes_done & ~511);
 			bytes_done &= ~511;
 			reqp->xs->error = XS_DRIVER_STUFFUP;
 		}
