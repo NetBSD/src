@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.4,v 1.1.1.1.8.1 2002/02/09 16:55:58 he Exp $
+.\"	$NetBSD: ipf.4,v 1.1.1.1.8.2 2002/10/18 13:17:00 itojun Exp $
 .\"
 .TH IPF 4
 .SH NAME
@@ -124,7 +124,7 @@ Flags which are recognised in fr_flags:
      FR_RETRST       0x000080   /* return a TCP RST packet if blocked */
      FR_RETICMP      0x000100   /* return an ICMP packet if blocked */
      FR_FAKEICMP     0x00180    /* Return ICMP unreachable with fake source */
-     FR_NOMATCH      0x000200   /* no match occurred */
+     FR_NOMATCH      0x000200   /* No match occurred */
      FR_ACCOUNT      0x000400   /* count packet bytes */
      FR_KEEPFRAG     0x000800   /* keep fragment information */
      FR_KEEPSTATE    0x001000   /* keep `connection' state information */
@@ -164,7 +164,7 @@ and FR_OUTQUE (see above).  This ioctl is also implemented for
 or just all those which are not established if passed 1.
 
 .IP "\fBGeneral Logging Flags\fP" 0
-There are two flags which can be set to log packets independantly of the
+There are two flags which can be set to log packets independently of the
 rules used.  These allow for packets which are either passed or blocked
 to be logged.  To set (and clear)/get these flags, two ioctls are
 provided:
@@ -262,7 +262,7 @@ ipf(4) will not look at decapsulated packets on inbound,
 nor packets prior to encapsulation on outbound.
 .PP
 When tunneled packets arrive at the node and are handled by a
-tunnelling pseudo interface like gif(4) or ipip(4),
+tunneling pseudo interface like gif(4),
 the packets may go through ipf(4) twice, before and after decapsulation.
 In some cases it may be necessary to check, in the ipf(4) rules,
-if the inbound interface is a tunnelling pseudo interface or not.
+if the inbound interface is a tunneling pseudo interface or not.

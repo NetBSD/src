@@ -1,4 +1,4 @@
-/*	$NetBSD: lsock.c,v 1.1.1.1.8.1 2002/02/09 16:55:15 he Exp $	*/
+/*	$NetBSD: lsock.c,v 1.1.1.1.8.2 2002/10/18 13:16:59 itojun Exp $	*/
 
 /*
  * lsock.c (C) 1995-1998 Darren Reed
@@ -7,7 +7,10 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)lsock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: lsock.c,v 2.1.4.1 2001/06/26 10:43:22 darrenr Exp";
+static const char rcsid[] = "@(#)Id: lsock.c,v 2.1.4.2 2002/02/22 15:32:58 darrenr Exp";
+#endif
+#ifdef __sgi
+# include <sys/ptimers.h>
 #endif
 #include <stdio.h>
 #include <unistd.h>

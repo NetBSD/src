@@ -1,10 +1,13 @@
-/*	$NetBSD: ip.c,v 1.1.1.1.8.1 2002/02/09 16:55:55 he Exp $	*/
+/*	$NetBSD: ip.c,v 1.1.1.1.8.2 2002/10/18 13:16:58 itojun Exp $	*/
 
 /*
  * ip.c (C) 1995-1998 Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,8 +33,10 @@
 #include "ipsend.h"
 
 #if !defined(lint)
-static const char sccsid[] = "%W% %G% (C)1995";
-static const char rcsid[] = "@(#)Id: ip.c,v 2.1.4.3 2001/07/15 22:00:13 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "%W% %G% (C)1995";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ip.c,v 2.1.4.4 2002/02/22 15:32:57 darrenr Exp";
 #endif
 
 static	char	*ipbuf = NULL, *ethbuf = NULL;

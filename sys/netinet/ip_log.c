@@ -1,21 +1,22 @@
-/*	$NetBSD: ip_log.c,v 1.10.4.2 2002/02/09 17:01:02 he Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.10.4.3 2002/10/18 13:16:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_log.c,v 2.5.2.9 2001/10/30 16:48:08 darrenr Exp
+ * Id: ip_log.c,v 2.5.2.19 2002/04/25 16:32:48 darrenr Exp
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.10.4.2 2002/02/09 17:01:02 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.10.4.3 2002/10/18 13:16:46 itojun Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) && !defined(_KERNEL)
 # define       _KERNEL
 #endif
-#if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM)
+#if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM) && \
+    defined(_KERNEL)
 # include "opt_ipfilter_log.h"
 #endif
 #ifdef  __FreeBSD__
@@ -58,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.10.4.2 2002/02/09 17:01:02 he Exp $");
 # if defined(_KERNEL)
 #  include <sys/systm.h>
 # endif
-# include <sys/uio.h>
 # if !SOLARIS
 #  if (NetBSD > 199609) || (OpenBSD > 199603) || (__FreeBSD_version >= 300000)
 #   include <sys/dirent.h>
@@ -69,13 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.10.4.2 2002/02/09 17:01:02 he Exp $");
 # else
 #  include <sys/filio.h>
 #  include <sys/cred.h>
-#  include <sys/ddi.h>
-#  include <sys/sunddi.h>
-#  include <sys/ksynch.h>
 #  include <sys/kmem.h>
-#  include <sys/mkdev.h>
-#  include <sys/dditypes.h>
-#  include <sys/cmn_err.h>
+#  ifdef _KERNEL
+#   include <sys/ddi.h>
+#   include <sys/sunddi.h>
+#   include <sys/ksynch.h>
+#   include <sys/dditypes.h>
+#   include <sys/cmn_err.h>
+#  endif
 # endif
 # include <sys/protosw.h>
 # include <sys/socket.h>
@@ -90,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.10.4.2 2002/02/09 17:01:02 he Exp $");
 # include <net/route.h>
 # include <netinet/in.h>
 # ifdef __sgi
+#  define _KMEMUSER
 #  include <sys/ddi.h>
 #  ifdef IFF_DRVRLOCK /* IRIX6 */
 #   include <sys/hashing.h>
@@ -117,6 +119,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.10.4.2 2002/02/09 17:01:02 he Exp $");
 # ifndef MIN
 #  define	MIN(a,b)	(((a)<(b))?(a):(b))
 # endif
+# ifdef IPFILTER_LOGSIZE
+#  undef IPLLOGSIZE
+#  define IPLLOGSIZE IPFILTER_LOGSIZE
+# endif
 
 
 # if SOLARIS || defined(__sgi)
@@ -127,7 +133,7 @@ extern	kcondvar_t	iplwait;
 # endif
 
 iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1], *ipll[IPL_LOGMAX+1];
-size_t	iplused[IPL_LOGMAX+1];
+int	iplused[IPL_LOGMAX+1];
 static fr_info_t	iplcrc[IPL_LOGMAX+1];
 
 
@@ -169,7 +175,7 @@ mb_t *m;
 	void *ptrs[2];
 	int types[2];
 	u_char p;
-# if SOLARIS
+# if SOLARIS && defined(_KERNEL)
 	ill_t *ifp = fin->fin_ifp;
 # else
 	struct ifnet *ifp = fin->fin_ifp;
@@ -216,7 +222,8 @@ mb_t *m;
 	 * Get the interface number and name to which this packet is
 	 * currently associated.
 	 */
-# if SOLARIS
+	bzero((char *)ipfl.fl_ifname, sizeof(ipfl.fl_ifname));
+# if SOLARIS && defined(_KERNEL)
 	ipfl.fl_unit = (u_char)ifp->ill_ppa;
 	bcopy(ifp->ill_name, ipfl.fl_ifname,
 	      MIN(ifp->ill_name_length, sizeof(ipfl.fl_ifname)));
@@ -227,10 +234,8 @@ mb_t *m;
 	strncpy(ipfl.fl_ifname, ifp->if_xname, IFNAMSIZ);
 #  else
 	ipfl.fl_unit = (u_char)ifp->if_unit;
-	if ((ipfl.fl_ifname[0] = ifp->if_name[0]))
-		if ((ipfl.fl_ifname[1] = ifp->if_name[1]))
-			if ((ipfl.fl_ifname[2] = ifp->if_name[2]))
-				ipfl.fl_ifname[3] = ifp->if_name[3];
+	strncpy(ipfl.fl_ifname, ifp->if_name, MIN(sizeof(ipfl.fl_ifname),
+						  sizeof(ifp->if_name)));
 #  endif
 	mlen = (flags & FR_LOGBODY) ? MIN(fin->fin_plen - hlen, 128) : 0;
 # endif
@@ -243,10 +248,11 @@ mb_t *m;
 	else
 		ipfl.fl_loglevel = 0xffff;
 	ipfl.fl_flags = flags;
+	ipfl.fl_dir = fin->fin_out;
 	ptrs[0] = (void *)&ipfl;
 	sizes[0] = sizeof(ipfl);
 	types[0] = 0;
-# if SOLARIS
+# if SOLARIS && defined(_KERNEL)
 	/*
 	 * Are we copied from the mblk or an aligned array ?
 	 */
@@ -291,20 +297,20 @@ int *types, cnt;
 	MUTEX_ENTER(&ipl_mutex);
 	if (fin != NULL) {
 		if ((ipll[dev] != NULL) &&
-		    bcmp((char *)fin, (char *)&iplcrc[dev], FI_CSIZE) == 0) {
+		    bcmp((char *)fin, (char *)&iplcrc[dev], FI_LCSIZE) == 0) {
 			ipll[dev]->ipl_count++;
 			MUTEX_EXIT(&ipl_mutex);
 			return 1;
 		}
-		bcopy((char *)fin, (char *)&iplcrc[dev], FI_CSIZE);
+		bcopy((char *)fin, (char *)&iplcrc[dev], FI_LCSIZE);
 	} else
-		bzero((char *)&iplcrc[dev], FI_CSIZE);
+		bzero((char *)&iplcrc[dev], FI_LCSIZE);
 	MUTEX_EXIT(&ipl_mutex);
 
 	/*
 	 * Get the total amount of data to be logged.
 	 */
-	for (i = 0, len = sizeof(iplog_t); i < cnt; i++)
+	for (i = 0, len = IPLOG_SIZE; i < cnt; i++)
 		len += itemsz[i];
 
 	/*
@@ -332,23 +338,28 @@ int *types, cnt;
 	ipl->ipl_count = 1;
 	ipl->ipl_next = NULL;
 	ipl->ipl_dsize = len;
-# if SOLARIS || defined(sun)
-	uniqtime((struct timeval *)&ipl->ipl_sec);
-# else
-#  if BSD >= 199306 || defined(__FreeBSD__) || defined(__sgi)
-	microtime((struct timeval *)&ipl->ipl_sec);
+# ifdef _KERNEL
+#  if SOLARIS || defined(sun)
+	uniqtime(&ipl->ipl_time);
+#  else
+#   if BSD >= 199306 || defined(__FreeBSD__) || defined(__sgi)
+	microtime(&ipl->ipl_time);
+#   endif
 #  endif
+# else
+	ipl->ipl_time.tv_sec = 0;
+	ipl->ipl_time.tv_usec = 0;
 # endif
 
 	/*
 	 * Loop through all the items to be logged, copying each one to the
 	 * buffer.  Use bcopy for normal data or the mb_t copyout routine.
 	 */
-	for (i = 0, s = buf + sizeof(*ipl); i < cnt; i++) {
+	for (i = 0, s = buf + IPLOG_SIZE; i < cnt; i++) {
 		if (types[i] == 0)
 			bcopy(items[i], s, itemsz[i]);
 		else if (types[i] == 1) {
-# if SOLARIS
+# if SOLARIS && defined(_KERNEL)
 			copyout_mblk(items[i], 0, itemsz[i], s);
 # else
 			m_copydata(items[i], 0, itemsz[i], s);
@@ -360,12 +371,12 @@ int *types, cnt;
 	ipll[dev] = ipl;
 	*iplh[dev] = ipl;
 	iplh[dev] = &ipl->ipl_next;
-# if SOLARIS
+# if SOLARIS && defined(_KERNEL)
 	cv_signal(&iplwait);
 	mutex_exit(&ipl_mutex);
 # else
 	MUTEX_EXIT(&ipl_mutex);
-	wakeup(&iplh[dev]);
+	WAKEUP(&iplh[dev]);
 # endif
 	return 1;
 }
@@ -390,7 +401,7 @@ struct uio *uio;
 		return ENXIO;
 	if (!uio->uio_resid)
 		return 0;
-	if (uio->uio_resid < sizeof(iplog_t))
+	if (uio->uio_resid < IPLOG_SIZE)
 		return EINVAL;
  
 	/*
@@ -468,7 +479,7 @@ minor_t unit;
 	ipll[unit] = NULL;
 	used = iplused[unit];
 	iplused[unit] = 0;
-	bzero((char *)&iplcrc[unit], FI_CSIZE);
+	bzero((char *)&iplcrc[unit], FI_LCSIZE);
 	MUTEX_EXIT(&ipl_mutex);
 	return used;
 }

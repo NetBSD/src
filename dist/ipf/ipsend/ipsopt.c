@@ -1,10 +1,14 @@
-/*	$NetBSD: ipsopt.c,v 1.1.1.1.8.1 2002/02/09 16:55:15 he Exp $	*/
+/*	$NetBSD: ipsopt.c,v 1.1.1.1.8.2 2002/10/18 13:16:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  */
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
+#include <sys/param.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -22,8 +26,10 @@
 #include "ipsend.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipsopt.c,v 2.1.4.2 2001/07/15 22:00:14 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipsopt.c,v 2.1.4.3 2002/02/22 15:32:58 darrenr Exp";
 #endif
 
 

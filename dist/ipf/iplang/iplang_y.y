@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.2.4.1 2000/08/31 14:49:48 veego Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.2.4.2 2002/10/18 13:16:57 itojun Exp $	*/
 
 %{
 /*
@@ -8,9 +8,12 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * Id: iplang_y.y,v 2.2.2.1 2000/08/05 14:43:39 darrenr Exp
+ * Id: iplang_y.y,v 2.2.2.2 2002/02/22 15:32:57 darrenr Exp
  */
 
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
