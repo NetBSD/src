@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.153 2004/02/10 00:59:38 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.154 2004/02/10 01:08:05 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.153 2004/02/10 00:59:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.154 2004/02/10 01:08:05 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1640,14 +1640,19 @@ wi_tx_ex_intr(struct wi_softc *sc)
 	fid = CSR_READ_2(sc, WI_TX_CMP_FID);
 	/* Read in the frame header */
 	if (wi_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0) {
-		printf("wi_tx_ex_intr: read fid %x failed\n", fid);
-		goto bad_header;
+		printf("%s: %s read fid %x failed\n", sc->sc_dev.dv_xname,
+		    __func__, fid);
+		wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
+		    &sc->sc_txpending);
+		goto out;
 	}
 
 	if (frmhdr.wi_tx_idx >= WI_NTXRSS) {
-		printf("%s: bad idx %02x\n",
-		    sc->sc_dev.dv_xname, frmhdr.wi_tx_idx);
-		goto bad_header;
+		printf("%s: %s bad idx %02x\n",
+		    sc->sc_dev.dv_xname, __func__, frmhdr.wi_tx_idx);
+		wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
+		    &sc->sc_txpending);
+		goto out;
 	}
 
 	status = le16toh(frmhdr.wi_status);
@@ -1682,16 +1687,22 @@ wi_tx_ex_intr(struct wi_softc *sc)
 	ni = id->id_node;
 	id->id_node = NULL;
 
+	if (ni == NULL) {
+		printf("%s: %s null node, rssdesc %02x\n",
+		    sc->sc_dev.dv_xname, __func__, frmhdr.wi_tx_idx);
+		goto out;
+	}
+
 	if (sc->sc_txpending[id->id_rateidx]-- == 0) {
-	        printf("%s: txpending[%i] wraparound", __func__,
-		    id->id_rateidx);
+	        printf("%s: %s txpending[%i] wraparound", sc->sc_dev.dv_xname,
+		    __func__, id->id_rateidx);
 		sc->sc_txpending[id->id_rateidx] = 0;
 	}
 	if (ni != NULL && ni != ic->ic_bss)
 		ieee80211_free_node(ic, ni);
 	SLIST_INSERT_HEAD(&sc->sc_rssdfree, rssd, rd_next);
+out:
 	ifp->if_flags &= ~IFF_OACTIVE;
-bad_header:
 	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_TX_EXC);
 }
 
@@ -1744,13 +1755,18 @@ wi_tx_intr(struct wi_softc *sc)
 	fid = CSR_READ_2(sc, WI_TX_CMP_FID);
 	/* Read in the frame header */
 	if (wi_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0) {
-		printf("wi_tx_intr: read fid %x failed\n", fid);
+		printf("%s: %s read fid %x failed\n", sc->sc_dev.dv_xname,
+		    __func__, fid);
+		wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
+		    &sc->sc_txpending);
 		goto out;
 	}
 
 	if (frmhdr.wi_tx_idx >= WI_NTXRSS) {
-		printf("%s: bad idx %02x\n",
-		    sc->sc_dev.dv_xname, frmhdr.wi_tx_idx);
+		printf("%s: %s bad idx %02x\n",
+		    sc->sc_dev.dv_xname, __func__, frmhdr.wi_tx_idx);
+		wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
+		    &sc->sc_txpending);
 		goto out;
 	}
 
@@ -1761,15 +1777,22 @@ wi_tx_intr(struct wi_softc *sc)
 	ni = id->id_node;
 	id->id_node = NULL;
 
+	if (ni == NULL) {
+		printf("%s: %s null node, rssdesc %02x\n",
+		    sc->sc_dev.dv_xname, __func__, frmhdr.wi_tx_idx);
+		goto out;
+	}
+
 	if (sc->sc_txpending[id->id_rateidx]-- == 0) {
-	        printf("%s: txpending[%i] wraparound", __func__, id->id_rateidx);
+	        printf("%s: %s txpending[%i] wraparound", sc->sc_dev.dv_xname,
+		    __func__, id->id_rateidx);
 		sc->sc_txpending[id->id_rateidx] = 0;
 	}
 	if (ni != NULL && ni != ic->ic_bss)
 		ieee80211_free_node(ic, ni);
 	SLIST_INSERT_HEAD(&sc->sc_rssdfree, rssd, rd_next);
-	ifp->if_flags &= ~IFF_OACTIVE;
 out:
+	ifp->if_flags &= ~IFF_OACTIVE;
 	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_TX);
 }
 
