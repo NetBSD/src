@@ -1228,7 +1228,7 @@ gld${EMULATION_NAME}_place_orphan (file, s)
   else if ((s->flags & (SEC_CODE | SEC_READONLY)) == SEC_READONLY
 	   && HAVE_SECTION (hold_rodata, ".rodata"))
     place = &hold_rodata;
-  else if ((s->flags & (SEC_CODE | SEC_READONLY)) == (SEC_CODE | SEC_READONLY)
+  else if ((s->flags & SEC_READONLY) != 0
 	   && hold_text.os != NULL)
     place = &hold_text;
 

@@ -48,14 +48,14 @@
 #ifdef OBJ_ELF
 #if TARGET_ARCH_SIZE == 64
 #include "bfd/elf64-hppa.h"
-#ifdef TE_LINUX
+#if defined (TE_LINUX) || defined (TE_NetBSD)
 #define TARGET_FORMAT "elf64-hppa-linux"
 #else
 #define TARGET_FORMAT "elf64-hppa"
 #endif
 #else /* TARGET_ARCH_SIZE == 32 */
 #include "bfd/elf32-hppa.h"
-#ifdef TE_LINUX
+#if defined (TE_LINUX) || defined (TE_NetBSD)
 #define TARGET_FORMAT "elf32-hppa-linux"
 #else
 #define TARGET_FORMAT "elf32-hppa"
@@ -75,13 +75,6 @@
    statements.  A semicolon is a line separator for most assemblers.
    It's hard to find these lurking semicolons.  Thus...  */
 #define WARN_COMMENTS 1
-#endif
-
-#ifdef TE_NetBSD
-/* XXX the original OpenBSD code has labels without colons,
-   so this is required, for now -- fredette@netbsd.org */
-/* Labels are not required to have a colon for a suffix.  */
-#define LABELS_WITHOUT_COLONS 1
 #endif
 
 /* FIXME.  Why oh why aren't these defined somewhere globally?  */

@@ -26,6 +26,8 @@
 #include "symtab.h"
 #include "corefile.h"
 
+#include <stdlib.h>
+
 bfd *core_bfd;
 int core_num_syms;
 asymbol **core_syms;
@@ -152,7 +154,8 @@ core_init (aout_name)
 
   if (!bfd_check_format (core_bfd, bfd_object))
     {
-      fprintf (stderr, _("%s: %s: not in a.out format\n"), whoami, aout_name);
+      fprintf (stderr, _("%s: %s: unrecognized executable format\n"),
+	       whoami, a_out_name);
       done (1);
     }
 

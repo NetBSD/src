@@ -124,10 +124,12 @@ bfd_check_format_matches (abfd, format, matching)
   const bfd_target **matching_vector = NULL;
   const bfd_target *save_targ, *right_targ, *ar_right_targ;
   int match_count;
+  unsigned int tmp;
   int ar_match_index;
 
   if (!bfd_read_p (abfd)
-      || (unsigned int) abfd->format >= (unsigned int) bfd_type_end)
+      || ((tmp = (abfd->format)) < (unsigned int)bfd_unknown)
+      || ((tmp = (abfd->format)) >= (unsigned int)bfd_type_end))
     {
       bfd_set_error (bfd_error_invalid_operation);
       return FALSE;
@@ -387,8 +389,11 @@ bfd_set_format (abfd, format)
      bfd *abfd;
      bfd_format format;
 {
+  unsigned int tmp;
+
   if (bfd_read_p (abfd)
-      || (unsigned int) abfd->format >= (unsigned int) bfd_type_end)
+      || ((tmp = abfd->format) < (unsigned int)bfd_unknown)
+      || ((tmp = abfd->format) >= (unsigned int)bfd_type_end))
     {
       bfd_set_error (bfd_error_invalid_operation);
       return FALSE;
@@ -426,7 +431,9 @@ const char *
 bfd_format_string (format)
      bfd_format format;
 {
-  if (((int)format <(int) bfd_unknown)
+  int tmp;
+
+  if (((tmp = format) <(int) bfd_unknown)
       || ((int)format >=(int) bfd_type_end))
     return "invalid";
 
