@@ -1,4 +1,41 @@
-/* $NetBSD: installboot.c,v 1.3 1997/11/01 06:49:14 lukem Exp $ */
+/* $NetBSD: installboot.c,v 1.4 1998/02/01 06:59:31 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -35,10 +72,11 @@
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/sysctl.h>
+#include <sys/ioctl.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+#include <isofs/cd9660/iso.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <err.h>
@@ -48,10 +86,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
+
+#include "extern.h"
 
 #include "stand/common/bbinfo.h"
 
-int	verbose, nowrite, hflag;
+int	verbose, nowrite, hflag, cd9660;
 char	*boot, *proto, *dev;
 
 struct bbinfoloc *bbinfolocp;
@@ -60,17 +101,19 @@ int	max_block_count;
 
 
 char		*loadprotoblocks __P((char *, long *));
-int		loadblocknums __P((char *, int, unsigned long));
+int		loadblocknums_ffs __P((char *, int, unsigned long));
+int		loadblocknums_cd9660 __P((char *, int, unsigned long));
 static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
 
+extern	char *__progname;
 
 static void
 usage()
 {
 	fprintf(stderr,
-		"usage: installboot [-n] [-v] <boot> <proto> <device>\n");
+	    "usage: %s [-n] [-v] <boot> <proto> <dev>\n", __progname);
 	exit(1);
 }
 
@@ -83,13 +126,13 @@ main(argc, argv)
 	int	devfd;
 	char	*protostore;
 	long	protosize;
-	int	mib[2];
-	size_t	size;
 	struct stat disksb, bootsb;
+	struct statfs fssb;
 	struct disklabel dl;
 	unsigned long partoffset;
+	int (*loadblocknums_func) __P((char *, int, unsigned long));
 
-	while ((c = getopt(argc, argv, "vn")) != -1) {
+	while ((c = getopt(argc, argv, "nv")) != -1) {
 		switch (c) {
 		case 'n':
 			/* Do not actually write the bootblock to disk */
@@ -122,7 +165,7 @@ main(argc, argv)
 	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
 		exit(1);
 
-	/* Open and check raw disk device */
+	/* Open and check the target device. */
 	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
 		err(1, "open: %s", dev);
 	if (fstat(devfd, &disksb) == -1)
@@ -142,23 +185,36 @@ main(argc, argv)
 		errx(1, "%s must be somewhere on %s", boot, dev);
 
 	/*
-	 * Find the offset of the secondary boot block's partition
-	 * into the disk.  If disklabels not supported, assume zero.
+	 * Determine the file system type of the file system on which
+	 * the boot program resides.
 	 */
-	if (ioctl(devfd, DIOCGDINFO, &dl) != -1) {
-		partoffset = dl.d_partitions[minor(bootsb.st_dev) %
-		    getmaxpartitions()].p_offset;
-	} else {
+	if (statfs(boot, &fssb) == -1)
+		err(1, "statfs: %s", boot);
+	if (strcmp(fssb.f_fstypename, MOUNT_CD9660) == 0) {
 		/*
-		 * if disklabel unsupported (e.g. vnd),
-		 * partition must start at zero.
+		 * Installing a boot block on a CD-ROM image.
 		 */
-		if (errno != ENOTTY)
-			err(1, "read disklabel: %s", dev);
-		warnx("couldn't read label from %s, using part offset of 0",
-		    dev);
-		partoffset = 0;
+		cd9660 = 1;
+	} else if (strcmp(fssb.f_fstypename, MOUNT_FFS) != 0) {
+		/*
+		 * Some other file system type, which is not FFS.
+		 * Can't handle these.
+		 */
+		errx(1, "unsupported file system type: %s",
+		    fssb.f_fstypename);
 	}
+
+	if (verbose)
+		printf("file system type: %s\n", fssb.f_fstypename);
+
+	/*
+	 * Find the offset of the secondary boot block's partition
+	 * into the disk.
+	 */
+	if (ioctl(devfd, DIOCGDINFO, &dl) == -1)
+		err(1, "read disklabel: %s", dev);
+	partoffset = dl.d_partitions[minor(bootsb.st_dev) %
+	    getmaxpartitions()].p_offset;
 	if (verbose)
 		printf("%s partition offset = 0x%lx\n", boot, partoffset);
 
@@ -168,7 +224,12 @@ main(argc, argv)
 	sync();
 	sleep(2);
 
-	if (loadblocknums(boot, devfd, partoffset) != 0)
+	if (cd9660)
+		loadblocknums_func = loadblocknums_cd9660;
+	else
+		loadblocknums_func = loadblocknums_ffs;
+
+	if ((*loadblocknums_func)(boot, devfd, partoffset) != 0)
 		exit(1);
 
 	(void)close(devfd);
@@ -190,6 +251,68 @@ main(argc, argv)
 
 	if (write(devfd, protostore, protosize) != protosize)
 		err(1, "write bootstrap");
+
+	/*
+	 * Disks should already have a disklabel, but CD-ROM images
+	 * may not.  Construct one as the SCSI CD driver would and
+	 * write it to the image.
+	 */
+	if (cd9660) {
+		char block[DEV_BSIZE];
+		struct disklabel *lp;
+		size_t imagesize;
+		int rawpart = getrawpartition();
+		off_t labeloff;
+
+		labeloff = (LABELSECTOR * DEV_BSIZE) + LABELOFFSET;
+		if (lseek(devfd, labeloff, SEEK_SET) != labeloff)
+			err(1, "lseek to write fake label");
+
+		if (read(devfd, block, sizeof(block)) != sizeof(block))
+			err(1, "read fake label block");
+
+		lp = (struct disklabel *)block;
+
+		imagesize = howmany(dl.d_partitions[rawpart].p_size *
+		    dl.d_secsize, DEV_BSIZE);
+
+		memset(lp, 0, sizeof(struct disklabel));
+
+		lp->d_secsize = DEV_BSIZE;
+		lp->d_ntracks = 1;
+		lp->d_nsectors = 100;
+		lp->d_ncylinders = (imagesize / 100) + 1;
+		lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+
+		strncpy(lp->d_typename, "SCSI CD-ROM", 16);
+		lp->d_type = DTYPE_SCSI;
+		strncpy(lp->d_packname, "NetBSD/alpha", 16);
+		lp->d_secperunit = imagesize;
+		lp->d_rpm = 300;
+		lp->d_interleave = 1;
+		lp->d_flags = D_REMOVABLE;
+
+		lp->d_partitions[0].p_size = lp->d_secperunit;
+		lp->d_partitions[0].p_offset = 0;
+		lp->d_partitions[0].p_fstype = FS_ISO9660;
+		lp->d_partitions[rawpart].p_size = lp->d_secperunit;
+		lp->d_partitions[rawpart].p_offset = 0;
+		lp->d_partitions[rawpart].p_fstype = FS_ISO9660;
+		lp->d_npartitions = rawpart + 1;
+
+		lp->d_bbsize = 8192;
+		lp->d_sbsize = 8192;
+
+		lp->d_magic = lp->d_magic2 = DISKMAGIC;
+
+		lp->d_checksum = dkcksum(lp);
+
+		if (lseek(devfd, labeloff, SEEK_SET) != labeloff)
+			err(1, "lseek to write fake label");
+
+		if (write(devfd, block, sizeof(block)) != sizeof(block))
+			err(1, "write fake label");
+	}
 
 	{
 
@@ -236,8 +359,6 @@ loadprotoblocks(fname, size)
 	int	fd, sz;
 	char	*bp;
 	struct	stat statbuf;
-	struct	exec *hp;
-	long	off;
 	u_int64_t *matchp;
 
 	/*
@@ -292,10 +413,10 @@ loadprotoblocks(fname, size)
 	    ((char *)bbinfop->blocks - bp) / sizeof (bbinfop->blocks[0]);
 
 	if (verbose) {
-		printf("boot block info locator at offset 0x%x\n",
-			(char *)bbinfolocp - bp);
-		printf("boot block info at offset 0x%x\n",
-			(char *)bbinfop - bp);
+		printf("boot block info locator at offset 0x%lx\n",
+			(u_long)((char *)bbinfolocp - bp));
+		printf("boot block info at offset 0x%lx\n",
+			(u_long)((char *)bbinfop - bp));
 		printf("max number of blocks: %d\n", max_block_count);
 	}
 
@@ -321,7 +442,7 @@ devread(fd, buf, blk, size, msg)
 static char sblock[SBSIZE];
 
 int
-loadblocknums(boot, devfd, partoffset)
+loadblocknums_ffs(boot, devfd, partoffset)
 	char	*boot;
 	int	devfd;
 	unsigned long partoffset;
@@ -430,6 +551,57 @@ checksum:
 	    (sizeof (*bbinfop) / sizeof (bbinfop->blocks[0])) - 1; i++) {
 		cksum += ((int32_t *)bbinfop)[i];
 	}
+	bbinfop->cksum = -cksum;
+
+	return 0;
+}
+
+/* ARGSUSED */
+int
+loadblocknums_cd9660(boot, devfd, partoffset)
+	char *boot;
+	int devfd;
+	unsigned long partoffset;
+{
+	u_long blkno, size;
+	char *fname;
+	int i, ndb;
+	int32_t cksum;
+
+	fname = strrchr(boot, '/');
+	if (fname != NULL)
+		fname++;
+	else
+		fname = boot;
+
+	if (cd9660_lookup(fname, devfd, &blkno, &size))
+		errx(1, "unable to find file `%s' in file system", fname);
+
+	if (verbose)
+		printf("%s: block number %ld, size %ld\n", dev, blkno, size);
+
+	ndb = howmany(size, ISO_DEFAULT_BLOCK_SIZE);
+	if (ndb > max_block_count)
+		errx(1, "%s: Too many blocks", fname);
+
+	if (verbose)
+		printf("%s: block numbers:", dev);
+	for (i = 0; i < ndb; i++) {
+		bbinfop->blocks[i] = (blkno + i) *
+		    (ISO_DEFAULT_BLOCK_SIZE / DEV_BSIZE);
+		if (verbose)
+			printf(" %d", bbinfop->blocks[i]);
+	}
+	if (verbose)
+		printf("\n");
+
+	bbinfop->bsize = ISO_DEFAULT_BLOCK_SIZE;
+	bbinfop->nblocks = ndb;
+
+	cksum = 0;
+	for (i = 0; i < ndb +
+	    (sizeof(*bbinfop) / sizeof(bbinfop->blocks[0])) - 1; i++)
+		cksum += ((int32_t *)bbinfop)[i];
 	bbinfop->cksum = -cksum;
 
 	return 0;
