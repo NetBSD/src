@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.98 2002/03/10 01:48:25 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.99 2002/03/11 15:29:22 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.98 2002/03/10 01:48:25 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.99 2002/03/11 15:29:22 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -427,47 +427,49 @@ main(int argc, char *argv[])
 	 * for it here.
 	 */
 	if ((todo & VMSTAT) == 0) {
-	    for (;;) {
-		if (todo & (HISTLIST|HISTDUMP)) {
-			if ((todo & (HISTLIST|HISTDUMP)) ==
-			(HISTLIST|HISTDUMP))
-				errx(1, "you may list or dump, but not both!");
-			hist_traverse(todo, histname);
-			putchar('\n');
-		}
-		if (todo & FORKSTAT) {
-			doforkst();
-			putchar('\n');
-		}
-		if (todo & MEMSTAT) {
-			domem();
-			dopool(verbose);
-			putchar('\n');
-		}
-		if (todo & SUMSTAT) {
-			dosum();
-			putchar('\n');
-		}
-		if (todo & INTRSTAT) {
-			dointr(verbose);
-			putchar('\n');
-		}
-		if (todo & EVCNTSTAT) {
-			doevcnt(verbose);
-			putchar('\n');
-		}
-		if (todo & (HASHLIST|HASHSTAT)) {
-			if ((todo & (HASHLIST|HASHSTAT)) == (HASHLIST|HASHSTAT))
-				errx(1,
-				    "you may list or display, but not both!");
-			dohashstat(verbose, todo, hashname);
-			putchar('\n');
-		}
+		for (;;) {
+			if (todo & (HISTLIST|HISTDUMP)) {
+				if ((todo & (HISTLIST|HISTDUMP)) ==
+				    (HISTLIST|HISTDUMP))
+					errx(1, "you may list or dump,"
+					    " but not both!");
+				hist_traverse(todo, histname);
+				putchar('\n');
+			}
+			if (todo & FORKSTAT) {
+				doforkst();
+				putchar('\n');
+			}
+			if (todo & MEMSTAT) {
+				domem();
+				dopool(verbose);
+				putchar('\n');
+			}
+			if (todo & SUMSTAT) {
+				dosum();
+				putchar('\n');
+			}
+			if (todo & INTRSTAT) {
+				dointr(verbose);
+				putchar('\n');
+			}
+			if (todo & EVCNTSTAT) {
+				doevcnt(verbose);
+				putchar('\n');
+			}
+			if (todo & (HASHLIST|HASHSTAT)) {
+				if ((todo & (HASHLIST|HASHSTAT)) ==
+				    (HASHLIST|HASHSTAT))
+					errx(1, "you may list or display,"
+					    " but not both!");
+				dohashstat(verbose, todo, hashname);
+				putchar('\n');
+			}
 		
-		if (reps >= 0 && --reps <=0) 
-			break;
-		sleep(interval);
-	}
+			if (reps >= 0 && --reps <=0) 
+				break;
+			sleep(interval);
+		}
 	} else
 		dovmstat(interval, reps);
 	exit(0);
