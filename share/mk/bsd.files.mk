@@ -1,10 +1,9 @@
-#	$NetBSD: bsd.files.mk,v 1.33.2.1 2004/03/31 07:53:03 tron Exp $
+#	$NetBSD: bsd.files.mk,v 1.33.2.2 2004/03/31 08:02:29 tron Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
 
 .include <bsd.init.mk>
-.include <bsd.sys.mk>
 
 .if !target(__fileinstall)
 ##### Basic targets
@@ -107,5 +106,9 @@ clean: cleanuudecodefiles
 cleanuudecodefiles: .PHONY
 	rm -f ${CLEANUUDECODE_FILES}
 .endif								# }
+
+##### Pull in related .mk logic
+.include <bsd.obj.mk>
+.include <bsd.sys.mk>
 
 .endif	# !defined(_BSD_FILES_MK_)
