@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.20 2002/01/29 12:40:34 kleink Exp $	*/
+/*	$NetBSD: private.h,v 1.21 2002/04/26 17:31:54 bjh21 Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -8,6 +8,11 @@
 #define TM_ZONE		tm_zone
 #define STD_INSPIRED	1
 #define HAVE_LONG_DOUBLE 1
+
+/* For when we build zic as a host tool. */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /*
 ** This file is in the public domain, so clarified as of
