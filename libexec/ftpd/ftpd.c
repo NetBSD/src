@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.35 1997/09/23 14:25:31 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.36 1997/10/12 13:18:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.35 1997/09/23 14:25:31 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.36 1997/10/12 13:18:56 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,7 +136,7 @@ static char confdir[MAXPATHLEN];
 
 extern struct ftpclass curclass;
 
-#if defined(KERBEROS)
+#ifdef KERBEROS
 int	notickets = 1;
 char	*krbtkfile_env = NULL;
 #endif 
@@ -456,12 +456,13 @@ user(name)
 	pw = sgetpwnam(name);
 	if (logging)
 		strncpy(curname, name, sizeof(curname)-1);
+
 #ifdef SKEY
-	if (!skey_haskey(name)) {
-		char *myskey, *skey_keyinfo __P((char *name));
+	if (skey_haskey(name) == 0) {
+		char *myskey;
 
 		myskey = skey_keyinfo(name);
-		reply(331, "Password [%s] for %s required.",
+		reply(331, "Password [%s] required for %s.",
 		    myskey ? myskey : "error getting challenge", name);
 	} else
 #endif
@@ -591,14 +592,15 @@ pass(passwd)
 			rval = 1;	/* failure below */
 			goto skip;
 		}
-#if defined(KERBEROS)
-		rval = klogin(pw, "", hostname, passwd);
-		if (rval == 0)
-			goto skip;
-#endif
 #ifdef SKEY
 		if (skey_haskey(pw->pw_name) == 0 &&
-		   (skey_passcheck(pw->pw_name, passwd) != -1)) {
+		    skey_passcheck(pw->pw_name, passwd) != -1) {
+			rval = 0;
+			goto skip;
+		}
+#endif
+#ifdef KERBEROS
+		if (klogin(pw, "", hostname, passwd) == 0) {
 			rval = 0;
 			goto skip;
 		}
@@ -1539,7 +1541,7 @@ dologout(status)
 	if (logged_in) {
 		(void) seteuid((uid_t)0);
 		logwtmp(ttyline, "", "");
-#if defined(KERBEROS)
+#ifdef KERBEROS
 		if (!notickets && krbtkfile_env)
 			unlink(krbtkfile_env);
 #endif
