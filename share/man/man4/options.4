@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.243 2004/07/11 09:54:40 wiz Exp $
+.\"	$NetBSD: options.4,v 1.244 2004/07/22 15:12:23 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd July 11, 2004
+.Dd July 21, 2004
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -451,8 +451,8 @@ formats.
 .It Cd options COMPAT_NETBSD32
 On those architectures that support it, this enables binary
 compatibility with 32-bit applications built for the same architecture.
-This is currently limited to the sparc64 port, and only applicable for
-64-bit kernels.
+This is currently limited to the amd64 and sparc64 ports, and only
+applicable for 64-bit kernels.
 .It Cd options COMPAT_SVR4_32
 On those architectures that support it, this enables binary
 compatibility with 32-bit SVR4 applications built for the same architecture.
