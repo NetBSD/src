@@ -1,4 +1,4 @@
-/*	$NetBSD: dohits.c,v 1.11 2002/06/13 23:41:22 wiz Exp $	*/
+/*	$NetBSD: dohits.c,v 1.12 2002/09/15 01:27:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -33,12 +33,17 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)dohits.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: dohits.c,v 1.11 2002/06/13 23:41:22 wiz Exp $");
+__RCSID("$NetBSD: dohits.c,v 1.12 2002/09/15 01:27:48 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,12 +64,6 @@ __RCSID("$NetBSD: dohits.c,v 1.11 2002/06/13 23:41:22 wiz Exp $");
  *
  * all fields are separated by a single space.
  */
-
-#include <ctype.h>
-#include <err.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "../general/general.h"
 #include "../api/asc_ebc.h"
@@ -130,8 +129,10 @@ const char *file,	/* Name of file to scan for whitespace prefix */
     char line[200];
 
     (void) snprintf(compare, sizeof(compare), " %s%%[^,\t \n]", prefix);
-    if ((ourfile = fopen(file, "r")) == NULL)
-	err(1, "Cannot open `%s'", file);
+    if ((ourfile = fopen(file, "r")) == NULL) {
+	fprintf(stderr, "Cannot open `%s': %s\n", file, strerror(errno));
+	exit(1);
+    }
     while (!feof(ourfile)) {
 	if (fscanf(ourfile, compare,  what) == 1) {
 	    add(prefix, what, 0);
@@ -139,7 +140,7 @@ const char *file,	/* Name of file to scan for whitespace prefix */
 	do {
 	    if (fgets(line, sizeof line, ourfile) == NULL) {
 		if (!feof(ourfile)) {
-		    warn("fgets failed");
+		    fprintf(stderr, "fgets failed: %s\n", strerror(errno));
 		}
 		break;
 	    }
@@ -159,8 +160,10 @@ const char *file,	/* Name of file to scan for #define prefix */
     int whatitis;
 
     snprintf(compare, sizeof(compare), "#define %s%%s %%s", prefix);
-    if ((ourfile = fopen(file, "r")) == NULL)
-	err(1, "Cannot open `%s'", file);
+    if ((ourfile = fopen(file, "r")) == NULL) {
+	fprintf(stderr, "Cannot open `%s': %s\n", file, strerror(errno));
+	exit(1);
+    }
 
     while (!feof(ourfile)) {
 	if (fscanf(ourfile, compare,  what, value) == 2) {
@@ -178,7 +181,8 @@ const char *file,	/* Name of file to scan for #define prefix */
 	do {
 	    if (fgets(line, sizeof line, ourfile) == NULL) {
 		if (!feof(ourfile)) {
-		    warn("End of file with error");
+		    fprintf(stderr, "End of file with error: %s\n",
+			strerror(errno));
 		}
 		break;
 	    }
@@ -190,8 +194,10 @@ static char *savechr(c)
 unsigned int c;
 {
     char *foo = malloc(sizeof(unsigned char));
-    if (foo == NULL)
-	err(1, "No room for ascii characters");
+    if (foo == NULL) {
+	fprintf(stderr, "No room for ascii characters\n");
+	exit(1);
+    }
     *foo = c;
     return foo;
 }
@@ -225,7 +231,7 @@ struct Hits *hits;
 		return this->name;
 	    }
 	}
-	warnx("Unknown type %s.", type);
+	fprintf(stderr, "Unknown type %s.\n", type);
 	return 0;
     }
 }
@@ -276,12 +282,12 @@ const char *aidfile, *fcnfile;
 	    continue;
 	}
 	if (scancode >= 256) {
-	    warnx("Scancode 0x%02x for keynumber %d", scancode,
+	    fprintf(stderr, "Scancode 0x%02x for keynumber %d\n", scancode,
 		keynumber);
 	    break;
 	}
 	if (Hits[scancode].hits.hit[0].ctlrfcn != undefined) {
-	    warnx("Duplicate scancode 0x%02x for keynumber %d",
+	    fprintf(stderr, "Duplicate scancode 0x%02x for keynumber %d\n",
 		scancode, keynumber);
 	    break;
 	}
