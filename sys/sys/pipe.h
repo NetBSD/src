@@ -146,6 +146,26 @@ struct pipe {
 #ifdef __NetBSD__
 void pipe_init __P((void));
 int sysctl_dopipe __P((int *, u_int, void *, size_t *, void *, size_t));
-#endif
+
+/*
+ * KERN_PIPE subtypes
+ */
+#define	KERN_PIPE_MAXKVASZ		1	/* maximum kva size */
+#define	KERN_PIPE_LIMITKVA		2	/* */
+#define	KERN_PIPE_MAXBIGPIPES		3	/* maximum # of "big" pipes */
+#define	KERN_PIPE_NBIGPIPES		4	/* current number of "big" p. */
+#define	KERN_PIPE_KVASIZE		5	/* current pipe kva size */
+#define	KERN_PIPE_MAXID			6
+
+#define	CTL_PIPE_NAMES { \
+	{ 0, 0 }, \
+	{ "maxkvasz", CTLTYPE_INT }, \
+	{ "maxloankvasz", CTLTYPE_INT }, \
+	{ "maxbigpipes", CTLTYPE_INT }, \
+	{ "nbigpipes", CTLTYPE_INT }, \
+	{ "kvasize", CTLTYPE_INT }, \
+}
+
+#endif /* NetBSD */
 
 #endif /* !_SYS_PIPE_H_ */
