@@ -1,4 +1,4 @@
-/*	$NetBSD: otto.c,v 1.7 2004/02/08 22:23:50 jsm Exp $	*/
+/*	$NetBSD: otto.c,v 1.8 2004/11/05 21:30:32 dsl Exp $	*/
 # ifdef OTTO
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.7 2004/02/08 22:23:50 jsm Exp $");
+__RCSID("$NetBSD: otto.c,v 1.8 2004/11/05 21:30:32 dsl Exp $");
 #endif /* not lint */
 
 # include	<sys/time.h>
@@ -438,7 +438,7 @@ face_and_move_direction(rel_dir, distance)
 		int	i;
 		struct	item	items[NUMDIRECTIONS];
 
-		command[comlen++] = toupper(cmd);
+		command[comlen++] = toupper((unsigned char)cmd);
 		if (distance == 0) {
 			/* rotate ottolook's to be in right position */
 			for (i = 0; i < NUMDIRECTIONS; i++)

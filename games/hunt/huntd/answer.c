@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.6 2003/06/11 12:00:22 wiz Exp $	*/
+/*	$NetBSD: answer.c,v 1.7 2004/11/05 21:30:32 dsl Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.6 2003/06/11 12:00:22 wiz Exp $");
+__RCSID("$NetBSD: answer.c,v 1.7 2004/11/05 21:30:32 dsl Exp $");
 #endif /* not lint */
 
 # include	<ctype.h>
@@ -115,7 +115,7 @@ answer()
 	 * between driver and player processes
 	 */
 	for (cp1 = cp2 = name; *cp1 != '\0'; cp1++)
-		if (isprint(*cp1) || *cp1 == ' ')
+		if (isprint((unsigned char)*cp1) || *cp1 == ' ')
 			*cp2++ = *cp1;
 	*cp2 = '\0';
 
