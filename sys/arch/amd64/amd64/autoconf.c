@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2003/08/07 16:26:35 agc Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2003/10/08 04:25:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2003/08/07 16:26:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2003/10/08 04:25:44 lukem Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -243,8 +243,8 @@ matchbiosdisks()
 				if (be->flags & BI_GEOM_INVALID)
 					continue;
 				if (be->cksum == ck &&
-				    !memcmp(&mbr[MBR_PARTOFF], be->dosparts,
-					NMBRPART *
+				    !memcmp(&mbr[MBR_PART_OFFSET], be->dosparts,
+					MBR_PART_COUNT *
 					    sizeof (struct mbr_partition))) {
 #ifdef GEOM_DEBUG
 					printf("matched bios disk %x with %s\n",

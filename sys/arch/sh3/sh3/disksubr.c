@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 2003/08/07 16:29:29 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 2003/10/08 04:25:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 2003/08/07 16:29:29 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16 2003/10/08 04:25:46 lukem Exp $");
 
 #include "opt_mbr.h"
 
@@ -252,16 +252,16 @@ mbr_findslice(struct mbr_partition *dp, struct buf *bp)
 	int i;
 
 	/* Note: Magic number is little-endian. */
-	mbrmagicp = (u_int16_t *)(bp->b_data + MBR_MAGICOFF);
+	mbrmagicp = (u_int16_t *)(bp->b_data + MBR_MAGIC_OFFSET);
 	if (le16toh(*mbrmagicp) != MBR_MAGIC)
 		return (NO_MBR_SIGNATURE);
 
 	/* XXX how do we check veracity/bounds of this? */
-	memcpy(dp, bp->b_data + MBR_PARTOFF, NMBRPART * sizeof(*dp));
+	memcpy(dp, bp->b_data + MBR_PART_OFFSET, MBR_PART_COUNT * sizeof(*dp));
 
 	/* look for NetBSD partition */
-	for (i = 0; i < NMBRPART; i++) {
-		if (dp[i].mbrp_typ == MBR_PTYPE_NETBSD) {
+	for (i = 0; i < MBR_PART_COUNT; i++) {
+		if (dp[i].mbrp_type == MBR_PTYPE_NETBSD) {
 			ourdp = &dp[i];
 			break;
 		}
@@ -350,19 +350,19 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		if (ourdp == NO_MBR_SIGNATURE)
 			goto nombrpart;
 
-		for (i = 0; i < NMBRPART; i++, dp++) {
+		for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
 			/* Install in partition e, f, g, or h. */
 			pp = &lp->d_partitions[RAW_PART + 1 + i];
 			pp->p_offset = le32toh(dp->mbrp_start);
 			pp->p_size = le32toh(dp->mbrp_size);
 			for (ip = fat_types; *ip != -1; ip++) {
-				if (dp->mbrp_typ == *ip)
+				if (dp->mbrp_type == *ip)
 					pp->p_fstype = FS_MSDOS;
 			}
-			if (dp->mbrp_typ == MBR_PTYPE_LNXEXT2)
+			if (dp->mbrp_type == MBR_PTYPE_LNXEXT2)
 				pp->p_fstype = FS_EX2FS;
 
-			if (dp->mbrp_typ == MBR_PTYPE_NTFS)
+			if (dp->mbrp_type == MBR_PTYPE_NTFS)
 				pp->p_fstype = FS_NTFS;
 
 			/* is this ours? */

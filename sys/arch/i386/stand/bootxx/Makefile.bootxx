@@ -1,10 +1,10 @@
-# $NetBSD: Makefile.bootxx,v 1.8 2003/08/30 18:25:07 fvdl Exp $
+# $NetBSD: Makefile.bootxx,v 1.9 2003/10/08 04:25:45 lukem Exp $
 
 S=	${.CURDIR}/../../../../../
 
 NOMAN=
 STRIPFLAG=
-PROG= bootxx_${FS}
+PROG?= bootxx_${FS}
 BINDIR= /usr/mdec
 BINMODE= 0444
 
@@ -47,6 +47,8 @@ CPPFLAGS+= -DFS=${FS}
 
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
+
+CPPFLAGS+= -DTERSE_ERROR
 
 .if ${MACHINE} == "amd64"
 LD+=  -m elf_i386

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.70 2003/09/19 08:41:28 itojun Exp $ */
+/*	$NetBSD: fdisk.c,v 1.71 2003/10/08 04:25:44 lukem Exp $ */
 
 /*
  * Mach Operating System
@@ -35,12 +35,12 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.70 2003/09/19 08:41:28 itojun Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.71 2003/10/08 04:25:44 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/disklabel.h>
-#include <sys/disklabel_mbr.h>
+#include <sys/bootblock.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -51,9 +51,10 @@ __RCSID("$NetBSD: fdisk.c,v 1.70 2003/09/19 08:41:28 itojun Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
@@ -61,6 +62,17 @@ __RCSID("$NetBSD: fdisk.c,v 1.70 2003/09/19 08:41:28 itojun Exp $");
 #if defined(__i386__) || defined(__x86_64__)
 #include <machine/cpu.h>
 #define BOOTSEL
+
+#define	DEFAULT_BOOTDIR		"/usr/mdec"
+#define	DEFAULT_BOOTCODE	"mbr"
+#define	DEFAULT_BOOTSELCODE	"mbr_bootsel"
+#define	DEFAULT_BOOTEXTCODE	"mbr_ext"
+
+/* Scan values for the various keys we use, as returned by the BIOS */
+#define	SCAN_ENTER	0x1c
+#define	SCAN_F1		0x3b
+#define	SCAN_1		0x2
+
 #endif
 
 #define LBUF 100
@@ -82,11 +94,11 @@ uint cylinders, sectors, heads;
 daddr_t disksectors;
 #define cylindersectors (heads * sectors)
 
-mbr_sector_t mboot;
+struct mbr_sector mboot;
 
 
 struct {
-	mbr_sector_t	*ptn;		/* array of pbrs */
+	struct mbr_sector *ptn;		/* array of pbrs */
 	daddr_t		base;		/* first sector of ext. ptn */
 	daddr_t		limit;		/* last sector of ext. ptn */
 	int		num_ptn;	/* number of contained partitions */
@@ -140,7 +152,7 @@ int B_flag;		/* Edit/install bootselect code */
 int E_flag;		/* extended partition number */
 int b_cyl, b_head, b_sec;  /* b_flag values. */
 
-mbr_sector_t bootcode[8192 / sizeof (mbr_sector_t)];
+struct mbr_sector bootcode[8192 / sizeof (struct mbr_sector)];
 int bootsize;		/* actual size of bootcode */
 int boot_installed;	/* 1 if we've copied code into the mbr */
 
@@ -276,8 +288,8 @@ struct part_type {
 
 void	usage(void);
 void	print_s0(int);
-void	print_part(mbr_sector_t *, int, daddr_t);
-void	print_mbr_partition(mbr_sector_t *, int, daddr_t, daddr_t, int);
+void	print_part(struct mbr_sector *, int, daddr_t);
+void	print_mbr_partition(struct mbr_sector *, int, daddr_t, daddr_t, int);
 int	read_boot(const char *, void *, size_t, int);
 void	init_sector0(int);
 void	intuit_translated_geometry(void);
@@ -293,7 +305,7 @@ int	open_disk(int);
 int	read_disk(daddr_t, void *);
 int	write_disk(daddr_t, void *);
 int	get_params(void);
-int	read_s0(daddr_t, mbr_sector_t *);
+int	read_s0(daddr_t, struct mbr_sector *);
 int	write_mbr(void);
 int	yesno(const char *, ...);
 int	decimal(const char *, int, int, int, int);
@@ -581,7 +593,7 @@ print_s0(int which)
 	if (which == -1) {
 		if (!sh_flag)
 			printf("Partition table:\n");
-		for (part = 0; part < NMBRPART; part++) {
+		for (part = 0; part < MBR_PART_COUNT; part++) {
 			if (!sh_flag)
 				printf("%d: ", part);
 			print_part(&mboot, part, 0);
@@ -605,12 +617,12 @@ print_s0(int which)
 		}
 #ifdef BOOTSEL
 		if (!sh_flag &&
-		    le16toh(mboot.mbr_bootsel.mbrb_magic) == MBR_MAGIC){
+		    le16toh(mboot.mbr_bootsel.mbrbs_magic) == MBR_MAGIC){
 			int tmo;
 			printf("Bootselector ");
-			if (mboot.mbr_bootsel.mbrb_flags & BFL_SELACTIVE) {
+			if (mboot.mbr_bootsel.mbrbs_flags & MBR_BS_ACTIVE) {
 				printf("enabled");
-				tmo = le16toh(mboot.mbr_bootsel.mbrb_timeo);
+				tmo = le16toh(mboot.mbr_bootsel.mbrbs_timeo);
 				if (tmo == 0xffff)
 					printf(", infinite timeout");
 				else
@@ -639,9 +651,9 @@ print_s0(int which)
 }
 
 void
-print_part(mbr_sector_t *boot, int part, daddr_t offset)
+print_part(struct mbr_sector *boot, int part, daddr_t offset)
 {
-	mbr_partition_t *partp;
+	struct mbr_partition *partp;
 	char *e;
 
 	if (!sh_flag) {
@@ -656,12 +668,12 @@ print_part(mbr_sector_t *boot, int part, daddr_t offset)
 	} else
 		e = "";
 
-	if (partp->mbrp_typ == 0) {
+	if (partp->mbrp_type == 0) {
 		printf("PART%s%dSIZE=0\n", e, part);
 		return;
 	}
 
-	printf("PART%s%dID=%d\n", e, part, partp->mbrp_typ);
+	printf("PART%s%dID=%d\n", e, part, partp->mbrp_type);
 	printf("PART%s%dSIZE=%u\n", e, part, le32toh(partp->mbrp_size));
 	printf("PART%s%dSTART=%"PRIdaddr"\n", e, part,
 	    offset + le32toh(partp->mbrp_start));
@@ -692,34 +704,34 @@ pr_cyls(daddr_t sector)
 }
 
 void
-print_mbr_partition(mbr_sector_t *boot, int part,
+print_mbr_partition(struct mbr_sector *boot, int part,
     daddr_t offset, daddr_t exoffset, int indent)
 {
 	daddr_t	start;
 	daddr_t	size;
-	mbr_partition_t *partp = &boot->mbr_parts[part];
-	mbr_sector_t eboot;
+	struct mbr_partition *partp = &boot->mbr_parts[part];
+	struct mbr_sector eboot;
 	int p;
 	static int dumped = 0;
 
-	if (partp->mbrp_typ == 0 && v_flag < 2) {
+	if (partp->mbrp_type == 0 && v_flag < 2) {
 		printf("<UNUSED>\n");
 		return;
 	}
 
 	start = le32toh(partp->mbrp_start);
 	size = le32toh(partp->mbrp_size);
-	if (MBR_IS_EXTENDED(partp->mbrp_typ))
+	if (MBR_IS_EXTENDED(partp->mbrp_type))
 		start += exoffset;
 	else
 		start += offset;
 
-	printf("%s (sysid %d)\n", get_type(partp->mbrp_typ), partp->mbrp_typ);
+	printf("%s (sysid %d)\n", get_type(partp->mbrp_type), partp->mbrp_type);
 #ifdef BOOTSEL
-	if (le16toh(boot->mbr_bootsel.mbrb_magic) == MBR_MAGIC &&
-	    boot->mbr_bootsel.mbrb_nametab[part][0])
+	if (le16toh(boot->mbr_bootsel.mbrbs_magic) == MBR_MAGIC &&
+	    boot->mbr_bootsel.mbrbs_nametab[part][0])
 		printf("%*s    bootmenu: %s\n", indent, "",
-		    boot->mbr_bootsel.mbrb_nametab[part]);
+		    boot->mbr_bootsel.mbrbs_nametab[part]);
 #endif
 
 	printf("%*s    start %"PRIdaddr", size %"PRIdaddr,
@@ -738,7 +750,7 @@ print_mbr_partition(mbr_sector_t *boot, int part,
 	switch (partp->mbrp_flag) {
 	case 0:
 		break;
-	case MBR_FLAGS_ACTIVE:
+	case MBR_PFLAG_ACTIVE:
 		printf(", Active");
 		break;
 	default:
@@ -758,7 +770,7 @@ print_mbr_partition(mbr_sector_t *boot, int part,
 		    partp->mbrp_ehd, MBR_PSECT(partp->mbrp_esect));
 	}
 
-	if (!MBR_IS_EXTENDED(partp->mbrp_typ) ||
+	if (!MBR_IS_EXTENDED(partp->mbrp_type) ||
 	    (v_flag <= 2 && !ext.is_corrupt))
 		return;
 
@@ -774,7 +786,7 @@ print_mbr_partition(mbr_sector_t *boot, int part,
 	indent += 4;
 	if (read_s0(start, &eboot) == -1)
 		return;
-	for (p = 0; p < NMBRPART; p++) {
+	for (p = 0; p < MBR_PART_COUNT; p++) {
 		printf("%*s%d: ", indent, "", p);
 		print_mbr_partition(&eboot, p, start,
 				    exoffset ? exoffset : start, indent);
@@ -821,7 +833,7 @@ read_boot(const char *name, void *buf, size_t len, int err_exit)
 	/*
 	 * Do some sanity checking here
 	 */
-	if (le16toh(bootcode[0].mbr_signature) != MBR_MAGIC) {
+	if (le16toh(bootcode[0].mbr_magic) != MBR_MAGIC) {
 		warnx("%s: invalid magic", boot_path);
 		goto fail;
 	}
@@ -841,7 +853,7 @@ void
 init_sector0(int dopart)
 {
 	int i;
-	int copy_size =  MBR_PARTOFF;
+	int copy_size =  MBR_PART_OFFSET;
 
 #ifdef DEFAULT_BOOTCODE
 	if (bootsize == 0)
@@ -849,34 +861,34 @@ init_sector0(int dopart)
 			sizeof bootcode, 1);
 #endif
 #ifdef BOOTSEL
-	if (le16toh(mboot.mbr_bootsel.mbrb_magic) == MBR_MAGIC 
-	    && le16toh(bootcode[0].mbr_bootsel.mbrb_magic) == MBR_MAGIC)
-		copy_size = MBR_BOOTSELOFF;
+	if (le16toh(mboot.mbr_bootsel.mbrbs_magic) == MBR_MAGIC 
+	    && le16toh(bootcode[0].mbr_bootsel.mbrbs_magic) == MBR_MAGIC)
+		copy_size = MBR_BOOTSEL_OFFSET;
 #endif
 
 	if (bootsize != 0) {
 		boot_installed = 1;
-		memcpy(&mboot.mbr_bootinst, bootcode, copy_size);
+		memcpy(&mboot, bootcode, copy_size);
 	}
-	mboot.mbr_signature = htole16(MBR_MAGIC);
+	mboot.mbr_magic = htole16(MBR_MAGIC);
 	
 	if (!dopart)
 		return;
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < MBR_PART_COUNT; i++)
 		memset(&mboot.mbr_parts[i], 0, sizeof(mboot.mbr_parts[i]));
 }
 
 void
 get_extended_ptn(void)
 {
-	mbr_partition_t *mp;
-	mbr_sector_t *boot;
+	struct mbr_partition *mp;
+	struct mbr_sector *boot;
 	daddr_t offset;
-	mbr_sector_t *nptn;
+	struct mbr_sector *nptn;
 
 	/* find first (there should only be one) extended partition */
-	for (mp = mboot.mbr_parts; !MBR_IS_EXTENDED(mp->mbrp_typ); mp++)
-		if (mp >= &mboot.mbr_parts[NMBRPART])
+	for (mp = mboot.mbr_parts; !MBR_IS_EXTENDED(mp->mbrp_type); mp++)
+		if (mp >= &mboot.mbr_parts[MBR_PART_COUNT])
 			return;
 
 	/*
@@ -895,24 +907,24 @@ get_extended_ptn(void)
 		if (read_s0(offset + ext.base, boot) == -1)
 			break;
 		/* expect p0 to be valid and p1 to be another extended ptn */
-		if (MBR_IS_EXTENDED(boot->mbr_parts[0].mbrp_typ))
+		if (MBR_IS_EXTENDED(boot->mbr_parts[0].mbrp_type))
 			break;
-		if (boot->mbr_parts[1].mbrp_typ != 0 &&
-		    !MBR_IS_EXTENDED(boot->mbr_parts[1].mbrp_typ))
+		if (boot->mbr_parts[1].mbrp_type != 0 &&
+		    !MBR_IS_EXTENDED(boot->mbr_parts[1].mbrp_type))
 			break;
 		/* p2 and p3 should be unallocated */
-		if (boot->mbr_parts[2].mbrp_typ != 0 ||
-		    boot->mbr_parts[3].mbrp_typ != 0)
+		if (boot->mbr_parts[2].mbrp_type != 0 ||
+		    boot->mbr_parts[3].mbrp_type != 0)
 			break;
 		/* data ptn inside extended one */
-		if (boot->mbr_parts[0].mbrp_typ != 0 &&
+		if (boot->mbr_parts[0].mbrp_type != 0 &&
 		    offset + le32toh(boot->mbr_parts[0].mbrp_start)
 		    + le32toh(boot->mbr_parts[0].mbrp_size) > ext.limit)
 			break;
 
 		ext.num_ptn++;
 
-		if (boot->mbr_parts[1].mbrp_typ == 0)
+		if (boot->mbr_parts[1].mbrp_type == 0)
 			/* end of extended partition chain */
 			return;
 		/* must be in sector order */
@@ -1021,21 +1033,21 @@ get_default_boot(void)
 	uint id;
 	int p;
 
-	if (le16toh(mboot.mbr_bootsel.mbrb_magic) != MBR_MAGIC)
+	if (le16toh(mboot.mbr_bootsel.mbrbs_magic) != MBR_MAGIC)
 		/* default to first active partition */
 		return DEFAULT_ACTIVE;
 
-	if (mboot.mbr_bootsel.mbrb_defkey == SCAN_ENTER)
+	if (mboot.mbr_bootsel.mbrbs_defkey == SCAN_ENTER)
 		return DEFAULT_ACTIVE;
 		
-	id = mboot.mbr_bootsel.mbrb_defkey;
-	if (!(mboot.mbr_bootsel.mbrb_flags & BFL_NEWMBR)) {
+	id = mboot.mbr_bootsel.mbrbs_defkey;
+	if (!(mboot.mbr_bootsel.mbrbs_flags & MBR_BS_NEWMBR)) {
 		/* F1..F4 => ptn 0..3, F5+ => disk 0+ */
 		id -= SCAN_F1;
-		if (id >= NMBRPART)
+		if (id >= MBR_PART_COUNT)
 			/* Return number of disk */
-			return id - NMBRPART;
-		if (mboot.mbr_parts[id].mbrp_typ != 0)
+			return id - MBR_PART_COUNT;
+		if (mboot.mbr_parts[id].mbrp_type != 0)
 			return le32toh(mboot.mbr_parts[id].mbrp_start);
 		return DEFAULT_ACTIVE;
 	}
@@ -1045,19 +1057,19 @@ get_default_boot(void)
 		return id - SCAN_F1;
 	id -= SCAN_1;
 
-	for (p = 0; p < NMBRPART; p++) {
-		if (mboot.mbr_parts[p].mbrp_typ == 0)
+	for (p = 0; p < MBR_PART_COUNT; p++) {
+		if (mboot.mbr_parts[p].mbrp_type == 0)
 			continue;
-		if (mboot.mbr_bootsel.mbrb_nametab[p][0] == 0)
+		if (mboot.mbr_bootsel.mbrbs_nametab[p][0] == 0)
 			continue;
 		if (id-- == 0)
 			return le32toh(mboot.mbr_parts[p].mbrp_start);
 	}
 
 	for (p = 0; p < ext.num_ptn; p++) {
-		if (ext.ptn[p].mbr_parts[0].mbrp_typ == 0)
+		if (ext.ptn[p].mbr_parts[0].mbrp_type == 0)
 			continue;
-		if (ext.ptn[p].mbr_bootsel.mbrb_nametab[0][0] == 0)
+		if (ext.ptn[p].mbr_bootsel.mbrbs_nametab[0][0] == 0)
 			continue;
 		if (id-- == 0)
 			return ext_offset(p)
@@ -1073,39 +1085,39 @@ set_default_boot(daddr_t default_ptn)
 	int p;
 	int key = SCAN_1;
 
-	if (le16toh(mboot.mbr_bootsel.mbrb_magic) != MBR_MAGIC)
+	if (le16toh(mboot.mbr_bootsel.mbrbs_magic) != MBR_MAGIC)
 		/* sanity */
 		return;
 
 	if (default_ptn == DEFAULT_ACTIVE) {
-		mboot.mbr_bootsel.mbrb_defkey = SCAN_ENTER;
+		mboot.mbr_bootsel.mbrbs_defkey = SCAN_ENTER;
 		return;
 	}
 
-	for (p = 0; p < NMBRPART; p++) {
-		if (mboot.mbr_parts[p].mbrp_typ == 0)
+	for (p = 0; p < MBR_PART_COUNT; p++) {
+		if (mboot.mbr_parts[p].mbrp_type == 0)
 			continue;
-		if (mboot.mbr_bootsel.mbrb_nametab[p][0] == 0)
+		if (mboot.mbr_bootsel.mbrbs_nametab[p][0] == 0)
 			continue;
 		if (le32toh(mboot.mbr_parts[p].mbrp_start) == default_ptn) {
-			if (mboot.mbr_bootsel.mbrb_flags & BFL_NEWMBR)
-				mboot.mbr_bootsel.mbrb_defkey = key;
+			if (mboot.mbr_bootsel.mbrbs_flags & MBR_BS_NEWMBR)
+				mboot.mbr_bootsel.mbrbs_defkey = key;
 			else
-				mboot.mbr_bootsel.mbrb_defkey = SCAN_F1 + p;
+				mboot.mbr_bootsel.mbrbs_defkey = SCAN_F1 + p;
 			return;
 		}
 		key++;
 	}
 
-	if (mboot.mbr_bootsel.mbrb_flags & BFL_EXTLBA) {
+	if (mboot.mbr_bootsel.mbrbs_flags & MBR_BS_EXTLBA) {
 		for (p = 0; p < ext.num_ptn; p++) {
-			if (ext.ptn[p].mbr_parts[0].mbrp_typ == 0)
+			if (ext.ptn[p].mbr_parts[0].mbrp_type == 0)
 				continue;
-			if (ext.ptn[p].mbr_bootsel.mbrb_nametab[0][0] == 0)
+			if (ext.ptn[p].mbr_bootsel.mbrbs_nametab[0][0] == 0)
 				continue;
 			if (le32toh(ext.ptn[p].mbr_parts[0].mbrp_start) +
 			    ext_offset(p) == default_ptn) {
-				mboot.mbr_bootsel.mbrb_defkey = key;
+				mboot.mbr_bootsel.mbrbs_defkey = key;
 				return;
 			}
 			key++;
@@ -1113,16 +1125,16 @@ set_default_boot(daddr_t default_ptn)
 	}
 
 	if (default_ptn < 8) {
-		if (mboot.mbr_bootsel.mbrb_flags & BFL_NEWMBR)
+		if (mboot.mbr_bootsel.mbrbs_flags & MBR_BS_NEWMBR)
 			key = SCAN_F1;
 		else
 			key = SCAN_F1 + 4;
-		mboot.mbr_bootsel.mbrb_defkey = key + default_ptn;
+		mboot.mbr_bootsel.mbrbs_defkey = key + default_ptn;
 		return;
 	}
 
 	/* Default to first active partition */
-	mboot.mbr_bootsel.mbrb_defkey = SCAN_ENTER;
+	mboot.mbr_bootsel.mbrbs_defkey = SCAN_ENTER;
 }
 
 void
@@ -1134,36 +1146,36 @@ install_bootsel(int needed)
 	char *code;
 
 	/* Work out which boot code we need for this configuration */
-	for (p = 0; p < NMBRPART; p++) {
-		if (mboot.mbr_parts[p].mbrp_typ == 0)
+	for (p = 0; p < MBR_PART_COUNT; p++) {
+		if (mboot.mbr_parts[p].mbrp_type == 0)
 			continue;
-		if (le16toh(mbs->mbrb_magic) != MBR_MAGIC)
+		if (le16toh(mbs->mbrbs_magic) != MBR_MAGIC)
 			break;
-		if (mbs->mbrb_nametab[p][0] == 0)
+		if (mbs->mbrbs_nametab[p][0] == 0)
 			continue;
-		needed |= BFL_SELACTIVE;
+		needed |= MBR_BS_ACTIVE;
 		if (le32toh(mboot.mbr_parts[p].mbrp_start) >= dos_totalsectors)
-			ext13 = BFL_EXTINT13;
+			ext13 = MBR_BS_EXTINT13;
 	}
 
 	for (p = 0; p < ext.num_ptn; p++) {
-		if (le16toh(ext.ptn[p].mbr_bootsel.mbrb_magic) != MBR_MAGIC)
+		if (le16toh(ext.ptn[p].mbr_bootsel.mbrbs_magic) != MBR_MAGIC)
 			continue;
-		if (ext.ptn[p].mbr_parts[0].mbrp_typ == 0)
+		if (ext.ptn[p].mbr_parts[0].mbrp_type == 0)
 			continue;
-		if (ext.ptn[p].mbr_bootsel.mbrb_nametab[p][0] == 0)
+		if (ext.ptn[p].mbr_bootsel.mbrbs_nametab[p][0] == 0)
 			continue;
-		needed |= BFL_EXTLBA | BFL_SELACTIVE;
+		needed |= MBR_BS_EXTLBA | MBR_BS_ACTIVE;
 	}
 
 	if (B_flag)
-		needed |= BFL_SELACTIVE;
+		needed |= MBR_BS_ACTIVE;
 
 	/* Is the installed code good enough ? */
-	if (!i_flag && (needed == 0 || (le16toh(mbs->mbrb_magic) == MBR_MAGIC
-	    && (mbs->mbrb_flags & needed) == needed))) {
+	if (!i_flag && (needed == 0 || (le16toh(mbs->mbrbs_magic) == MBR_MAGIC
+	    && (mbs->mbrbs_flags & needed) == needed))) {
 		/* yes - just set flags */
-		mbs->mbrb_flags |= ext13;
+		mbs->mbrbs_flags |= ext13;
 		return;
 	}
 
@@ -1181,8 +1193,8 @@ install_bootsel(int needed)
 	/* Were we told a specific file ? (which we have already read) */
 	/* If so check that it supports what we need. */
 	if (bootsize != 0 && needed != 0
-	    && (le16toh(bootcode[0].mbr_bootsel.mbrb_magic) != MBR_MAGIC
-	    || ((bootcode[0].mbr_bootsel.mbrb_flags & needed) != needed))) {
+	    && (le16toh(bootcode[0].mbr_bootsel.mbrbs_magic) != MBR_MAGIC
+	    || ((bootcode[0].mbr_bootsel.mbrbs_flags & needed) != needed))) {
 		/* No it doesn't... */
 		if (f_flag)
 			warnx("Bootfile %s doesn't support "
@@ -1198,10 +1210,10 @@ install_bootsel(int needed)
 	if (bootsize == 0) {
 		/* Get name of bootfile that supports the required facilities */
 		code = DEFAULT_BOOTCODE;
-		if (needed & BFL_SELACTIVE)
+		if (needed & MBR_BS_ACTIVE)
 			code = DEFAULT_BOOTSELCODE;
 #ifdef DEFAULT_BOOTEXTCODE
-		if (needed & BFL_EXTLBA)
+		if (needed & MBR_BS_EXTLBA)
 			code = DEFAULT_BOOTEXTCODE;
 #endif
 
@@ -1209,10 +1221,10 @@ install_bootsel(int needed)
 		if (bootsize == 0)
 			/* The old bootcode is better than no bootcode at all */
 			return;
-		if ((bootcode[0].mbr_bootsel.mbrb_flags & needed) != needed)
+		if ((bootcode[0].mbr_bootsel.mbrbs_flags & needed) != needed)
 			warnx("Default bootfile %s doesn't support required "
 				"options.  Got flags 0x%x, wanted 0x%x\n",
-				boot_path, bootcode[0].mbr_bootsel.mbrb_flags,
+				boot_path, bootcode[0].mbr_bootsel.mbrbs_flags,
 				needed);
 	}
 
@@ -1221,8 +1233,8 @@ install_bootsel(int needed)
 
 	init_sector0(0);
 
-	if (le16toh(mbs->mbrb_magic) == MBR_MAGIC)
-		mbs->mbrb_flags = bootcode[0].mbr_bootsel.mbrb_flags | ext13;
+	if (le16toh(mbs->mbrbs_magic) == MBR_MAGIC)
+		mbs->mbrbs_flags = bootcode[0].mbr_bootsel.mbrbs_flags | ext13;
 }
 
 daddr_t
@@ -1248,13 +1260,13 @@ configure_bootsel(daddr_t default_ptn)
 	 * Newer bootcode always waits for 1 tick, so treats 0xffff
 	 * as wait forever.
 	 */
-	tmo = le16toh(mbs->mbrb_timeo);
+	tmo = le16toh(mbs->mbrbs_timeo);
 	tmo = tmo == 0xffff ? -1 : (10 * tmo + 9) / 182;
 	tmo = decimal("Timeout value (0 to 3600 seconds, -1 => never)",
 			tmo, 0, -1, 3600);
-	mbs->mbrb_timeo = htole16(tmo == -1 ? 0xffff : (tmo * 182) / 10);
+	mbs->mbrbs_timeo = htole16(tmo == -1 ? 0xffff : (tmo * 182) / 10);
 
-	off = calloc(1 + NMBRPART + ext.num_ptn + num_bios_disks, sizeof *off);
+	off = calloc(1 + MBR_PART_COUNT + ext.num_ptn + num_bios_disks, sizeof *off);
 	if (off == NULL)
 		err(1, "Malloc failed");
 
@@ -1263,24 +1275,24 @@ configure_bootsel(daddr_t default_ptn)
 	opt = 0;
 	off[opt] = DEFAULT_ACTIVE;
 	printf("%d: The first active partition\n", opt);
-	for (i = 0; i < NMBRPART; i++) {
-		if (mboot.mbr_parts[i].mbrp_typ == 0)
+	for (i = 0; i < MBR_PART_COUNT; i++) {
+		if (mboot.mbr_parts[i].mbrp_type == 0)
 			continue;
-		if (mbs->mbrb_nametab[i][0] == 0)
+		if (mbs->mbrbs_nametab[i][0] == 0)
 			continue;
-		printf("%d: %s\n", ++opt, &mbs->mbrb_nametab[i][0]);
+		printf("%d: %s\n", ++opt, &mbs->mbrbs_nametab[i][0]);
 		off[opt] = le32toh(mboot.mbr_parts[i].mbrp_start);
 		if (off[opt] == default_ptn)
 			item = opt;
 	}
-	if (mbs->mbrb_flags & BFL_EXTLBA) {
+	if (mbs->mbrbs_flags & MBR_BS_EXTLBA) {
 		for (i = 0; i < ext.num_ptn; i++) {
-			if (ext.ptn[i].mbr_parts[0].mbrp_typ == 0)
+			if (ext.ptn[i].mbr_parts[0].mbrp_type == 0)
 				continue;
-			if (ext.ptn[i].mbr_bootsel.mbrb_nametab[0][0] == 0)
+			if (ext.ptn[i].mbr_bootsel.mbrbs_nametab[0][0] == 0)
 				continue;
 			printf("%d: %s\n",
-			    ++opt, ext.ptn[i].mbr_bootsel.mbrb_nametab[0]);
+			    ++opt, ext.ptn[i].mbr_bootsel.mbrbs_nametab[0]);
 			off[opt] = ext_offset(i) +
 			    le32toh(ext.ptn[i].mbr_parts[0].mbrp_start);
 			if (off[opt] == default_ptn)
@@ -1354,10 +1366,10 @@ intuit_translated_geometry(void)
 	}
 
 	/* Try to deduce the number of heads from two different mappings. */
-	for (i = 0; i < NMBRPART * 2 - 1; i++) {
+	for (i = 0; i < MBR_PART_COUNT * 2 - 1; i++) {
 		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
 			continue;
-		for (j = i + 1; j < NMBRPART * 2; j++) {
+		for (j = i + 1; j < MBR_PART_COUNT * 2; j++) {
 			if (get_mapping(j, &c2, &h2, &s2, &a2) < 0)
 				continue;
 			a1 -= s1;
@@ -1387,7 +1399,7 @@ intuit_translated_geometry(void)
 	 * Be willing to shove cylinders up a little bit to make things work,
 	 * but translation mismatches are fatal.
 	 */
-	for (i = 0; i < NMBRPART * 2; i++) {
+	for (i = 0; i < MBR_PART_COUNT * 2; i++) {
 		if (get_mapping(i, &c1, &h1, &s1, &a1) < 0)
 			continue;
 		if (c1 >= MAXCYL - 2)
@@ -1420,9 +1432,9 @@ int
 get_mapping(int i, uint *cylinder, uint *head, uint *sector,
     unsigned long *absolute)
 {
-	mbr_partition_t *part = &mboot.mbr_parts[i / 2];
+	struct mbr_partition *part = &mboot.mbr_parts[i / 2];
 
-	if (part->mbrp_typ == 0)
+	if (part->mbrp_type == 0)
 		return -1;
 	if (i % 2 == 0) {
 		*cylinder = MBR_PCYL(part->mbrp_scyl, part->mbrp_ssect);
@@ -1452,7 +1464,7 @@ delete_ptn(int part)
 		memset(&ext, 0, sizeof ext);
 	}
 
-	mboot.mbr_parts[part].mbrp_typ = 0;
+	mboot.mbr_parts[part].mbrp_type = 0;
 }
 
 static void
@@ -1460,7 +1472,7 @@ delete_ext_ptn(int part)
 {
 
 	if (part == 0) {
-		ext.ptn[0].mbr_parts[0].mbrp_typ = 0;
+		ext.ptn[0].mbr_parts[0].mbrp_type = 0;
 		return;
 	}
 	ext.ptn[part - 1].mbr_parts[1] = ext.ptn[part].mbr_parts[1];
@@ -1473,8 +1485,8 @@ static int
 add_ext_ptn(daddr_t start, daddr_t size)
 {
 	int part;
-	mbr_partition_t *partp;
-	mbr_sector_t *nptn;
+	struct mbr_partition *partp;
+	struct mbr_sector *nptn;
 
 	nptn = realloc(ext.ptn, (ext.num_ptn + 1) * sizeof *ext.ptn);
 	if (!nptn)
@@ -1487,7 +1499,7 @@ add_ext_ptn(daddr_t start, daddr_t size)
 	memmove(&ext.ptn[part + 1], &ext.ptn[part],
 		(ext.num_ptn - part) * sizeof ext.ptn[0]);
 	memset(&ext.ptn[part], 0, sizeof ext.ptn[0]);
-	ext.ptn[part].mbr_signature = htole16(MBR_MAGIC);
+	ext.ptn[part].mbr_magic = htole16(MBR_MAGIC);
 	/* we will be 'part' */
 	if (part == 0) {
 		/* link us to 'next' */
@@ -1504,7 +1516,7 @@ add_ext_ptn(daddr_t start, daddr_t size)
 		partp->mbrp_start = htole32(start - dos_sectors - ext.base);
 		partp->mbrp_size = htole32(size + dos_sectors);
 	}
-	partp->mbrp_typ = 5;	/* as used by win98 */
+	partp->mbrp_type = 5;	/* as used by win98 */
 	partp->mbrp_flag = 0;
 	/* wallop in some CHS values - win98 doesn't saturate them */
 	dos(le32toh(partp->mbrp_start),
@@ -1527,8 +1539,8 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 			return "Track zero is reserved for the BIOS";
 		if (start + size > dos_disksectors) 
 			return "Partition exceeds size of disk";
-		for (p = 0; p < NMBRPART; p++) {
-			if (p == part || mboot.mbr_parts[p].mbrp_typ == 0)
+		for (p = 0; p < MBR_PART_COUNT; p++) {
+			if (p == part || mboot.mbr_parts[p].mbrp_type == 0)
 				continue;
 			p_s = le32toh(mboot.mbr_parts[p].mbrp_start);
 			p_e = p_s + le32toh(mboot.mbr_parts[p].mbrp_size);
@@ -1544,7 +1556,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 	}
 
 	/* Are we trying to create an extended partition */
-	if (!MBR_IS_EXTENDED(mboot.mbr_parts[part].mbrp_typ)) {
+	if (!MBR_IS_EXTENDED(mboot.mbr_parts[part].mbrp_type)) {
 		/* this wasn't the extended partition */
 		if (!MBR_IS_EXTENDED(sysid))
 			return 0;
@@ -1560,7 +1572,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 			ext.ptn = calloc(1, sizeof ext.ptn[0]);
 			if (ext.ptn == NULL)
 				err(1, "Malloc failed");
-			ext.ptn[0].mbr_signature = htole16(MBR_MAGIC);
+			ext.ptn[0].mbr_magic = htole16(MBR_MAGIC);
 			ext.ptn_id = part;
 			ext.base = start;
 			ext.limit = start + size;
@@ -1579,7 +1591,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 			return 0;
 		}
 		if (ext.num_ptn == 0 ||
-		    (ext.num_ptn == 1 && ext.ptn[0].mbr_parts[0].mbrp_typ == 0))
+		    (ext.num_ptn == 1 && ext.ptn[0].mbr_parts[0].mbrp_type == 0))
 			/* nothing in extended partition */
 			return 0;
 		if (f_flag)
@@ -1594,7 +1606,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 		return 0;
 
 	for (p = ext.num_ptn; --p >= 0;) {
-		if (ext.ptn[p].mbr_parts[0].mbrp_typ == 0)
+		if (ext.ptn[p].mbr_parts[0].mbrp_type == 0)
 			continue;
 		p_s = ext_offset(p);
 		p_e = p_s + le32toh(ext.ptn[p].mbr_parts[0].mbrp_start)
@@ -1614,7 +1626,7 @@ check_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 			    le32toh(ext.ptn[p].mbr_parts[1].mbrp_start)
 				    + ext.base - start);
 		/* and maybe an empty partition at the start */
-		if (ext.ptn[0].mbr_parts[0].mbrp_typ == 0) {
+		if (ext.ptn[0].mbr_parts[0].mbrp_type == 0) {
 			if (le32toh(ext.ptn[0].mbr_parts[1].mbrp_start) == 0) {
 				/* don't need the empty slot */
 				memmove(&ext.ptn[0], &ext.ptn[1],
@@ -1657,7 +1669,7 @@ check_ext_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 		return 0;
 
 	for (p = ext.num_ptn; --p >= 0;) {
-		if (p == part || ext.ptn[p].mbr_parts[0].mbrp_typ == 0)
+		if (p == part || ext.ptn[p].mbr_parts[0].mbrp_type == 0)
 			continue;
 		p_s = ext_offset(p);
 		p_e = p_s + le32toh(ext.ptn[p].mbr_parts[0].mbrp_start)
@@ -1673,7 +1685,7 @@ check_ext_overlap(int part, int sysid, daddr_t start, daddr_t size, int fix)
 					delete_ext_ptn(p);
 				else
 					/* must not change numbering yet */
-					ext.ptn[p].mbr_parts[0].mbrp_typ = 0;
+					ext.ptn[p].mbr_parts[0].mbrp_type = 0;
 			}
 		}
 	}
@@ -1684,8 +1696,8 @@ int
 change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 	char *bootmenu)
 {
-	mbr_partition_t *partp;
-	mbr_sector_t *boot;
+	struct mbr_partition *partp;
+	struct mbr_sector *boot;
 	daddr_t offset;
 	char *e;
 	int upart = part;
@@ -1694,8 +1706,8 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 	daddr_t n_s, n_e;
 	const char *errtext;
 #ifdef BOOTSEL
-	char tmp_bootmenu[NMBRPART * (PARTNAMESIZE + 1)];
-	int bootmenu_len = (extended ? NMBRPART : 1) * (PARTNAMESIZE + 1);
+	char tmp_bootmenu[MBR_PART_COUNT * (MBR_BS_PARTNAMESIZE + 1)];
+	int bootmenu_len = (extended ? MBR_PART_COUNT : 1) * (MBR_BS_PARTNAMESIZE + 1);
 #endif
 
 	if (extended) {
@@ -1728,9 +1740,9 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		strlcpy(tmp_bootmenu, bootmenu, bootmenu_len);
 	else
 		if (boot != NULL &&
-		    le16toh(boot->mbr_bootsel.mbrb_magic) == MBR_MAGIC)
+		    le16toh(boot->mbr_bootsel.mbrbs_magic) == MBR_MAGIC)
 			strlcpy(tmp_bootmenu,
-				boot->mbr_bootsel.mbrb_nametab[upart],
+				boot->mbr_bootsel.mbrbs_nametab[upart],
 				bootmenu_len);
 		else
 			tmp_bootmenu[0] = 0;
@@ -1738,7 +1750,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 
 	if (!s_flag && partp != NULL) {
 		/* values not specified, default to current ones */
-		sysid = partp->mbrp_typ;
+		sysid = partp->mbrp_type;
 		start = offset + le32toh(partp->mbrp_start);
 		size = le32toh(partp->mbrp_size);
 	}
@@ -1748,7 +1760,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		/* non-extended partition */
 		start = ext.base;
 		for (p = 0; p < ext.num_ptn; p++) {
-			if (ext.ptn[p].mbr_parts[0].mbrp_typ == 0)
+			if (ext.ptn[p].mbr_parts[0].mbrp_type == 0)
 				continue;
 			n_s = ext_offset(p);
 			if (n_s > start + dos_sectors)
@@ -1769,8 +1781,8 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		/* first see if old start is free */
 		if (start < dos_sectors)
 			start = 0;
-		for (p = 0; start != 0 && p < NMBRPART; p++) {
-			if (mboot.mbr_parts[p].mbrp_typ == 0)
+		for (p = 0; start != 0 && p < MBR_PART_COUNT; p++) {
+			if (mboot.mbr_parts[p].mbrp_type == 0)
 				continue;
 			n_s = le32toh(mboot.mbr_parts[p].mbrp_start);
 			if (start >= n_s &&
@@ -1780,8 +1792,8 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		if (start == 0) {
 			/* Look for first gap */
 			start = dos_sectors;
-			for (p = 0; p < NMBRPART; p++) {
-				if (mboot.mbr_parts[p].mbrp_typ == 0)
+			for (p = 0; p < MBR_PART_COUNT; p++) {
+				if (mboot.mbr_parts[p].mbrp_type == 0)
 					continue;
 				n_s = le32toh(mboot.mbr_parts[p].mbrp_start);
 				n_e = n_s + le32toh(mboot.mbr_parts[p].mbrp_size);
@@ -1826,7 +1838,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 				for (p = 0; p < ext.num_ptn; p++) {
 					if (p == part)
 						continue;
-					if (ext.ptn[p].mbr_parts[0].mbrp_typ == 0)
+					if (ext.ptn[p].mbr_parts[0].mbrp_type == 0)
 						continue;
 					n_s = ext_offset(p);
 					if (n_s > start && n_s < lim)
@@ -1839,10 +1851,10 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 					}
 				}
 			} else {
-				for (p = 0; p < NMBRPART; p++) {
+				for (p = 0; p < MBR_PART_COUNT; p++) {
 					if (p == part)
 						continue;
-					if (mboot.mbr_parts[p].mbrp_typ == 0)
+					if (mboot.mbr_parts[p].mbrp_type == 0)
 						continue;
 					n_s = le32toh(mboot.mbr_parts[p].mbrp_start);
 					if (n_s > start && n_s < lim)
@@ -1916,9 +1928,9 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		if (start == 0 && size == 0)
 			memset(partp, 0, sizeof *partp);
 #ifdef BOOTSEL
-		if (le16toh(boot->mbr_bootsel.mbrb_magic) == MBR_MAGIC)
-			memset(boot->mbr_bootsel.mbrb_nametab[upart], 0,
-				sizeof boot->mbr_bootsel.mbrb_nametab[0]);
+		if (le16toh(boot->mbr_bootsel.mbrbs_magic) == MBR_MAGIC)
+			memset(boot->mbr_bootsel.mbrbs_nametab[upart], 0,
+				sizeof boot->mbr_bootsel.mbrbs_nametab[0]);
 #endif
 		if (extended)
 			delete_ext_ptn(part);
@@ -1943,7 +1955,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		offset = ext_offset(part);
 	}
 
-	partp->mbrp_typ = sysid;
+	partp->mbrp_type = sysid;
 	partp->mbrp_start = htole32( start - offset);
 	partp->mbrp_size = htole32( size);
 	dos(start, &partp->mbrp_scyl, &partp->mbrp_shd, &partp->mbrp_ssect);
@@ -1951,20 +1963,20 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 		    &partp->mbrp_ecyl, &partp->mbrp_ehd, &partp->mbrp_esect);
 #ifdef BOOTSEL
 	if (extended) {
-		boot->mbr_bootsel.mbrb_magic = htole16(MBR_MAGIC);
-		strncpy(boot->mbr_bootsel.mbrb_nametab[upart], tmp_bootmenu,
+		boot->mbr_bootsel.mbrbs_magic = htole16(MBR_MAGIC);
+		strncpy(boot->mbr_bootsel.mbrbs_nametab[upart], tmp_bootmenu,
 			bootmenu_len);
 	} else {
 		/* We need to bootselect code installed in order to have
 		 * somewhere to safely write the menu tag.
 		 */
-		if (le16toh(boot->mbr_bootsel.mbrb_magic) != MBR_MAGIC) {
+		if (le16toh(boot->mbr_bootsel.mbrbs_magic) != MBR_MAGIC) {
 			if (yesno("The bootselect code is not installed, "
 					    "do you want to install it now?"))
-				install_bootsel(BFL_SELACTIVE);
+				install_bootsel(MBR_BS_ACTIVE);
 		}
-		if (le16toh(boot->mbr_bootsel.mbrb_magic) == MBR_MAGIC) {
-			strncpy(boot->mbr_bootsel.mbrb_nametab[upart],
+		if (le16toh(boot->mbr_bootsel.mbrbs_magic) == MBR_MAGIC) {
+			strncpy(boot->mbr_bootsel.mbrbs_nametab[upart],
 				tmp_bootmenu, bootmenu_len);
 		}
 	}
@@ -2007,7 +2019,7 @@ change_part(int extended, int part, int sysid, daddr_t start, daddr_t size,
 	 */
 	if (extended && f_flag) {
 		for (p = ext.num_ptn; --p >= 0;)
-			if (ext.ptn[p].mbr_parts[0].mbrp_typ == 0)
+			if (ext.ptn[p].mbr_parts[0].mbrp_type == 0)
 				delete_ext_ptn(p);
 	}
 	return 1;
@@ -2042,36 +2054,37 @@ print_params(void)
 void
 change_active(int which)
 {
-	mbr_partition_t *partp;
+	struct mbr_partition *partp;
 	int part;
-	int active = 4;
+	int active = MBR_PART_COUNT;
 
 	partp = &mboot.mbr_parts[0];
 
 	if (a_flag && which != -1)
 		active = which;
 	else {
-		for (part = 0; part < NMBRPART; part++)
-			if (partp[part].mbrp_flag & MBR_FLAGS_ACTIVE)
+		for (part = 0; part < MBR_PART_COUNT; part++)
+			if (partp[part].mbrp_flag & MBR_PFLAG_ACTIVE)
 				active = part;
 	}
 	if (!f_flag) {
 		if (yesno("Do you want to change the active partition?")) {
-			printf ("Choosing 4 will make no partition active.\n");
+			printf ("Choosing %d will make no partition active.\n",
+			    MBR_PART_COUNT);
 			do {
 				active = decimal("active partition",
-						active, 0, 0, 4);
+						active, 0, 0, MBR_PART_COUNT);
 			} while (!yesno("Are you happy with this choice?"));
 		} else
 			return;
 	} else
-		if (active != 4)
+		if (active != MBR_PART_COUNT)
 			printf ("Making partition %d active.\n", active);
 
-	for (part = 0; part < NMBRPART; part++)
-		partp[part].mbrp_flag &= ~MBR_FLAGS_ACTIVE;
-	if (active < 4)
-		partp[active].mbrp_flag |= MBR_FLAGS_ACTIVE;
+	for (part = 0; part < MBR_PART_COUNT; part++)
+		partp[part].mbrp_flag &= ~MBR_PFLAG_ACTIVE;
+	if (active < MBR_PART_COUNT)
+		partp[active].mbrp_flag |= MBR_PFLAG_ACTIVE;
 }
 
 void
@@ -2234,15 +2247,15 @@ get_params(void)
 }
 
 int
-read_s0(daddr_t offset, mbr_sector_t *boot)
+read_s0(daddr_t offset, struct mbr_sector *boot)
 {
 
-	if (read_disk(offset, &boot->mbr_bootinst) == -1) {
+	if (read_disk(offset, boot) == -1) {
 		warn("Can't read %spartition table",
 		    offset ? "extended " : "");
 		return -1;
 	}
-	if (le16toh(boot->mbr_signature) != MBR_MAGIC) {
+	if (le16toh(boot->mbr_magic) != MBR_MAGIC) {
 		warnx("%spartition table invalid, no magic in sector %"PRIdaddr,
 		    offset ? "extended " : "", offset);
 		return -1;
@@ -2266,7 +2279,7 @@ write_mbr(void)
 	flag = 1;
 	if (wfd == fd && ioctl(wfd, DIOCWLABEL, &flag) < 0)
 		warn("DIOCWLABEL");
-	if (write_disk(0, &mboot.mbr_bootinst) == -1) {
+	if (write_disk(0, &mboot) == -1) {
 		warn("Can't write fdisk partition table");
 		goto protect_label;
 	}
@@ -2406,7 +2419,7 @@ ptn_id(const char *prompt, int *extended)
 		if (*cp != '\0')
 			continue;
 
-		if (*extended || acc < NMBRPART)
+		if (*extended || acc < MBR_PART_COUNT)
 			return acc;
 	}
 }

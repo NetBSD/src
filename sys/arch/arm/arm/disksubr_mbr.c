@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.3 2003/08/07 16:26:52 agc Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.4 2003/10/08 04:25:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.3 2003/08/07 16:26:52 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.4 2003/10/08 04:25:44 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,26 +133,26 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 		}
 
 		/* XXX how do we check veracity/bounds of this? */
-		bcopy(bp->b_data + MBR_PARTOFF, mbrp,
-		      NMBRPART * sizeof(*mbrp));
+		bcopy(bp->b_data + MBR_PART_OFFSET, mbrp,
+		      MBR_PART_COUNT * sizeof(*mbrp));
 
 		/* look for NetBSD partition */
 		ourmbrp = NULL;
-		for (i = 0; !ourmbrp && i < NMBRPART; i++) {
-			if (mbrp[i].mbrp_typ == MBR_PTYPE_NETBSD)
+		for (i = 0; !ourmbrp && i < MBR_PART_COUNT; i++) {
+			if (mbrp[i].mbrp_type == MBR_PTYPE_NETBSD)
 				ourmbrp = &mbrp[i];
 		}
 #ifdef COMPAT_386BSD_MBRPART
 		/* didn't find it -- look for 386BSD partition */
-		for (i = 0; !ourmbrp && i < NMBRPART; i++) {
-			if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
+		for (i = 0; !ourmbrp && i < MBR_PART_COUNT; i++) {
+			if (mbrp[i].mbrp_type == MBR_PTYPE_386BSD) {
 				printf("WARNING: old BSD partition ID!\n");
 				ourmbrp = &mbrp[i];
 				break;
 			}
 		}
 #endif
-		for (i = 0; i < NMBRPART; i++, mbrp++) {
+		for (i = 0; i < MBR_PART_COUNT; i++, mbrp++) {
 
 			strncpy(lp->d_packname, "fictitious-MBR",
 			    sizeof lp->d_packname);
@@ -162,10 +162,10 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 			pp->p_offset = mbrp->mbrp_start;
 			pp->p_size = mbrp->mbrp_size;
 			for (ip = fat_types; *ip != -1; ip++) {
-				if (mbrp->mbrp_typ == *ip)
+				if (mbrp->mbrp_type == *ip)
 					pp->p_fstype = FS_MSDOS;
 			}
-			if (mbrp->mbrp_typ == MBR_PTYPE_LNXEXT2)
+			if (mbrp->mbrp_type == MBR_PTYPE_LNXEXT2)
 				pp->p_fstype = FS_EX2FS;
 
 			/* is this ours? */
@@ -241,18 +241,18 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	}
 
 	/* XXX how do we check veracity/bounds of this? */
-	bcopy(bp->b_data + MBR_PARTOFF, mbrp, NMBRPART * sizeof(*mbrp));
+	bcopy(bp->b_data + MBR_PART_OFFSET, mbrp, MBR_PART_COUNT * sizeof(*mbrp));
 
 	/* look for NetBSD partition */
 	ourmbrp = NULL;
-	for (i = 0; !ourmbrp && i < NMBRPART; i++) {
-		if (mbrp[i].mbrp_typ == MBR_PTYPE_NETBSD)
+	for (i = 0; !ourmbrp && i < MBR_PART_COUNT; i++) {
+		if (mbrp[i].mbrp_type == MBR_PTYPE_NETBSD)
 			ourmbrp = &mbrp[i];
 	}
 #ifdef COMPAT_386BSD_MBRPART
 	/* didn't find it -- look for 386BSD partition */
-	for (i = 0; !ourmbrp && i < NMBRPART; i++) {
-		if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
+	for (i = 0; !ourmbrp && i < MBR_PART_COUNT; i++) {
+		if (mbrp[i].mbrp_type == MBR_PTYPE_386BSD) {
 			printf("WARNING: old BSD partition ID!\n");
 			ourmbrp = &mbrp[i];
 		}
