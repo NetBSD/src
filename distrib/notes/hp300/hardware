@@ -1,4 +1,4 @@
-NetBSD/hp300 1.2 will run on most HP 9000/300- and 400-series machines.
+NetBSD/hp300 _VER will run on most HP 9000/300- and 400-series machines.
 The smallest amount of RAM that has been tested is 4M.  If you wish to
 run X, more RAM is recommended.
 
