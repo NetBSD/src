@@ -1,11 +1,12 @@
-| $NetBSD: fastboot,v 1.5.2.1 2004/06/17 07:51:40 tron Exp $
+| $NetBSD: fastboot,v 1.5.2.2 2004/06/17 08:28:44 tron Exp $
 |
 | Fast boot configuration file, edit by hand, save and run !BtNetBSD
 | Part of !BtNetBSD
 |
 
 | First mount the root partition wd0a in this case for the kernel
-If "%*0" = "" Then Run <BtNetBSD$Dir>.native.mountufs ADFS 4
+| XXX UnixFS is currently broken.
+|If "%*0" = "" Then Run <BtNetBSD$Dir>.native.mountufs ADFS 4
 
 | Run The PreBoot file for various extra settings necessary
 Run <BtNetBSD$Dir>.PreBoot
@@ -19,7 +20,9 @@ Run <BtNetBSD$Dir>.PreBoot
 | Select Kernel, Root and Bootoptions
 | add `oldkernel' to BootOptions for booting old a.out kernels
 |
-If "%*0" = "" Then Set NetBSD$Kernel UnixFS:$.netbsd Else Set NetBSD$Kernel %*0
+| XXX UnixFS is currently broken.
+|If "%*0" = "" Then Set NetBSD$Kernel UnixFS:$.netbsd Else Set NetBSD$Kernel %*0
+If "%*0" = "" Then Error Double click a kernel to start NetBSD
 Set NetBSD$Root /dev/wd0a
 Set NetBSD$BootOptions maxproc=64 noftp symtab
 
