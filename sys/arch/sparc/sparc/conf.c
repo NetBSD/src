@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.27 1995/04/10 19:37:49 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.28 1995/04/21 15:50:06 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,22 +111,15 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 /* open, close, read, write, ioctl, select */
 #define	cdev_gen_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, 0, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, \
 	dev_init(c,n,select), 0, 0 }
-
-/* open, close, ioctl, mmap */
-#define	cdev_fb_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, (dev_type_reset((*))) nullop, 0, \
-	seltrue, dev_init(c,n,mmap), 0 }
 
 /* open, close, ioctl */
 #define	cdev_openprom_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, (dev_type_reset((*))) nullop, 0, \
-	(dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev, 0 }
+	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_mmap((*))) enodev, 0 }
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -142,10 +135,10 @@ cdev_decl(st);
 #include "ch.h"
 cdev_decl(ch);
 #include "pty.h"
-#define	pts_tty		pt_tty
+#define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
 cdev_decl(pts);
-#define	ptc_tty		pt_tty
+#define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(fb);
