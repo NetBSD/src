@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70.2.2 1997/09/18 21:47:16 cjs Exp $
+#	$NetBSD: Makefile,v 1.70.2.3 1997/09/18 22:04:48 cjs Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -8,7 +8,9 @@ LOCALTIME=	US/Pacific
 # an objdir would break the installation stuff below
 NOOBJ=	oobj
 
-.include <bsd.own.mk>	# for BUILDDIR and configs
+.if exists(etc.${MACHINE}/Makefile.inc)
+.include "etc.${MACHINE}/Makefile.inc"
+.endif
 
 # -rw-r--r--
 BINOWN= root
@@ -17,9 +19,9 @@ BIN1=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
 	daily.conf dm.conf floppytab ftpchroot ftpusers ftpwelcome \
 	gettytab group hosts hosts.equiv hosts.lpd inetd.conf lkm.conf \
 	man.conf monthly monthly.conf mrouted.conf netstart networks \
-	newsyslog.conf phones printcap protocols rbootd.conf rc rc.conf \
-	rc.lkm rc.local remote rpc security security.conf services shells \
-	syslog.conf weekly weekly.conf etc.${MACHINE}/ttys \
+	newsyslog.conf phones printcap profile protocols rbootd.conf rc \
+	rc.conf rc.lkm rc.local rc.subr remote rpc security security.conf \
+	services shells syslog.conf weekly weekly.conf etc.${MACHINE}/ttys \
 	etc.${MACHINE}/disktab
 
 # -rw-rw-r--
@@ -45,6 +47,8 @@ distribution: distrib-dirs
 	pwd_mkdb -p -d ${DESTDIR}/ ${DESTDIR}/etc/master.passwd
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
+	${INSTALL} -c -o root -g wheel -m 600 minfree \
+	    ${DESTDIR}/var/crash
 	(cd root; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.cshrc \
 		    ${DESTDIR}/root/.cshrc; \
