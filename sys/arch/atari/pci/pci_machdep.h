@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1.1.1 1996/10/05 21:41:36 leo Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2 1998/02/19 16:17:18 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -31,6 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ATARI_PCI_MACHDEP_H_
+#define _ATARI_PCI_MACHDEP_H_
+
+#include <atari/atari/intr.h>
 /*
  * Types provided to machine-independent PCI code
  */
@@ -38,6 +42,14 @@ typedef void	*pci_chipset_tag_t;
 
 typedef u_long	pcitag_t;
 typedef int	pci_intr_handle_t;
+
+typedef struct	{
+	int		ipl;	/* ipl requested			*/
+	int		imask;	/* bitmask for MFP-register		*/
+	int		(*ifunc) __P((void *));	/* function to call	*/
+	void		*iarg;	/* argument for 'ifunc'			*/
+	struct intrhand	*ihand;	/* save this for disestablishing	*/
+} pci_intr_info_t;
 
 /*
  * Functions provided to machine-independent PCI code.
@@ -55,3 +67,5 @@ const char	*pci_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
 void		*pci_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
 			int, int (*)(void *), void *));
 void		pci_intr_disestablish __P((pci_chipset_tag_t, void *));
+
+#endif /* _ATARI_PCI_MACHDEP_H_ */
