@@ -1,7 +1,7 @@
-/*	$NetBSD: dio.c,v 1.6 1997/04/27 20:58:55 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.7 1997/05/05 21:00:32 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,6 +40,8 @@
  * Autoconfiguration and mapping support for the DIO bus.
  */
 
+#define	_HP300_INTR_H_PRIVATE
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -49,6 +51,8 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
+
+#include <hp300/dev/dmavar.h>
 
 #include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
@@ -100,7 +104,8 @@ dioattach(parent, self, aux)
 	int scode, scmax, didmap, scodesize;
 
 	scmax = DIO_SCMAX(machineid);
-	printf("\n");
+	printf(": ");
+	dmainit();
 
 	for (scode = 0; scode < scmax; ) {
 		if (DIO_INHOLE(scode)) {
@@ -305,4 +310,40 @@ dio_devinfo(da, buf, buflen)
 	sprintf(buf, "device id = 0x%x secid = 0x%x",
 	    da->da_id, da->da_secid);
 	return (buf);
+}
+
+/*
+ * Establish an interrupt handler for a DIO device.
+ */
+void *
+dio_intr_establish(func, arg, ipl, priority)
+	int (*func) __P((void *));
+	void *arg;
+	int ipl;
+	int priority;
+{
+	void *ih;
+
+	ih = intr_establish(func, arg, ipl, priority);
+
+	if (priority == IPL_BIO)
+		dmacomputeipl();
+
+	return (ih);
+}
+
+/*
+ * Remove an interrupt handler for a DIO device.
+ */
+void
+dio_intr_disestablish(arg)
+	void *arg;
+{
+	struct isr *isr = arg;
+	int priority = isr->isr_priority;
+
+	intr_disestablish(arg);
+
+	if (priority == IPL_BIO)
+		dmacomputeipl();
 }
