@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.69 2003/04/28 02:49:54 briggs Exp $	*/
+/*	$NetBSD: db_command.c,v 1.70 2003/05/15 13:18:18 atatat Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.69 2003/04/28 02:49:54 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.70 2003/05/15 13:18:18 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -707,11 +707,19 @@ db_sifting_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 static void
 db_stack_trace_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
+	register char *cp = modif;
+	register char c;
+	void (*pr)(const char *, ...);
+
+	pr = db_printf;
+	while ((c = *cp++) != 0)
+		if (c == 'l')
+			pr = printf;
 
 	if (count == -1)
 		count = 65535;
 
-	db_stack_trace_print(addr, have_addr, count, modif, db_printf);
+	db_stack_trace_print(addr, have_addr, count, modif, pr);
 }
 
 static void
