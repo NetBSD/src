@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.3 2003/10/26 21:34:49 jdolecek Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.4 2003/10/30 08:25:19 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 26, 2003
+.Dd October 30, 2003
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -318,7 +318,8 @@ Built-in serial ports (sparc)
 Z88530 serial controllers (sparc64), see
 .Xr \&tty 4
 . It Ar ttyh#
-SAB82532 serial controllers (sparc64)
+SAB82532 serial controllers (sparc64), see
+.Xr \&sparc64/sab 4
 . It Ar tty[a-j]
 Built-in serial ports (sun2, sun3)
 . It Ar ttyC?
