@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.18 2000/10/15 20:02:31 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.19 2000/10/28 08:36:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -1415,7 +1415,7 @@ sip_init(ifp)
 	}
 	if (sc->sc_tx_drain_thresh == 0) {
 		/*
-		 * Start at a drain threshold of 128 bytes.  We will
+		 * Start at a drain threshold of 512 bytes.  We will
 		 * increase it if a DMA underrun occurs.
 		 *
 		 * XXX The minimum value of this variable should be
@@ -1424,7 +1424,7 @@ sip_init(ifp)
 		 * may trash the first few outgoing packets if the
 		 * PCI bus is saturated.
 		 */
-		sc->sc_tx_drain_thresh = 4;
+		sc->sc_tx_drain_thresh = 512 / 32;
 	}
 
 	/*
