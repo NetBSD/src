@@ -112,7 +112,7 @@ int mmsprobe(struct isa_device *dvp)
 	/* Seems it was there; reset */
 
 	outb(ioport+ADDR, 0x87);
-	return(1);
+	return(4);
 }
 
 int mmsattach(struct isa_device *dvp)
