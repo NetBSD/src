@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: ioasic.4,v 1.4 1997/10/31 02:26:09 jonathan Exp $
+.\"	$NetBSD: ioasic.4,v 1.5 1998/03/20 13:31:57 fair Exp $
 .\"
 .Dd August 6, 1996
 .Dt IOASIC 4 pmax
@@ -41,34 +41,35 @@ baseboard IO control ASIC for DEC TurboChannel systems
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the DEC proprietary IOCTL asic found on
-all DEC Turbochannel machines with MIPS (decstation 5000 series,
-excuding the 5000/200) and Alpha (3000-series) processors.  On these
-machines (including the 5000/200), all baseboard devices should be
+driver provides support for the DEC proprietary IOCTL ASIC found on
+all DEC TurboChannel machines with MIPS (DECstation 5000 series,
+excluding the 5000/200) and Alpha (3000-series) processors.
+On these machines (including the 5000/200), all baseboard devices should be
 configured as children of the
-.Nm "" .
-The
 .Nm
-provides hardware DMA channels and interrupt support for
-several baseboard devices, including one
-.Nm asc
-scsi device with a scatter/gather DMA channel, an mc146818-compatible
-.Nm mcclock,
-one or two
-.Nm scc
-two-port serial devices, and a am9770 LANCE
-.Nm le
-Ethternet interface.
+device.
 .Pp
 The
 .Nm
-is also used for theose 
-floppy-disc drive and audio/ISDN hardware
-on the Personal Decstation and audio-equppied TC Alphas, where the 
+provides hardware DMA channels and interrupt support for several
+baseboard devices, including one
+.Nm asc
+SCSI device with a scatter/gather DMA channel, an mc146818-compatible
+.Nm mcclock,
+one or two
+.Nm scc
+two-port serial devices, and a AMD 9770 LANCE
+.Nm le
+Ethernet interface.
+.Pp
+The
 .Nm
-hardware provides a
-a
-scatter-gather DMA channel betweent he 16-bit deviec and the 32-bit
+is also used for the floppy-disc drive and audio/ISDN hardware on
+the Personal DECstation and audio-equipped TurboChannel Alphas,
+where the
+.Nm
+hardware provides a scatter-gather DMA channel between the 16-bit
+device and the 32-bit
 .Nm tc
 DMA address space.
 .Pp
@@ -96,8 +97,5 @@ first appeared in
 derived from DECstation boot-time configuration code in
 .Bx 4.4  .
 .Sh BUGS
-The Decstation 5000/200 does not actually have an
-.Nm ioasic
-chip, but for consistency it must be configured as if it
-did.
-
+The DECstation 5000/200 does not actually have an IOASIC
+chip, but for consistency it must be configured as if it did.
