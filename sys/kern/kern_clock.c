@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.40 1997/02/28 04:45:35 mycroft Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.41 1997/05/05 19:25:26 tls Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -328,6 +328,9 @@ initclocks()
 		break;
 	case 256:
 		shifthz = SHIFT_SCALE - 8;
+		break;
+	case 512:
+		shifthz = SHIFT_SCALE - 9;
 		break;
 	case 1024:
 		shifthz = SHIFT_SCALE - 10;
