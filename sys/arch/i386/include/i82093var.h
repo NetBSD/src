@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.1.2.4 2000/09/21 13:24:08 sommerfeld Exp $ */
+/* $NetBSD: i82093var.h,v 1.1.2.5 2000/11/19 00:20:29 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,8 @@ struct ioapic_pin
 	struct mp_intr_map 	*ip_map;
 	int			ip_vector; /* IDT vector */
 	int			ip_type;
-	int			ip_level;
+	int			ip_minlevel;
+	int			ip_maxlevel;
 };
 
 struct ioapic_softc {
@@ -68,10 +69,10 @@ struct ioapic_softc {
 
 /*
  * MP: intr_handle_t is bitfielded.
- * ih&0xff -> line number.
+ * ih&0xff -> legacy irq number.
  * ih&0x10000000 -> if 0, old-style isa irq; if 1, routed via ioapic.
  * (ih&0xff0000)>>16 -> ioapic id.
- * (ih&0x00ff00)>>8 -> ioapic line.
+ * (ih&0x00ff00)>>8 -> ioapic pin.
  */
 
 #define APIC_INT_VIA_APIC	0x10000000
