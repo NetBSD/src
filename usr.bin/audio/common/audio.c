@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.16 2002/12/27 23:43:15 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.17 2003/06/23 12:15:00 agc Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -31,6 +31,12 @@
 /*
  * XXX this is slightly icky in places...
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: audio.c,v 1.17 2003/06/23 12:15:00 agc Exp $");
+#endif
+
 
 #include <sys/types.h>
 #include <sys/audioio.h>
