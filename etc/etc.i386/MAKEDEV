@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.135 2001/02/04 17:05:14 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.136 2001/04/05 23:04:11 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -122,6 +122,7 @@
 #	bktr	Brooktree 848/849/878/879 based TV cards
 #	iop*	I2O IOP control interface
 #	mlx*	Mylex DAC960 control interface
+#	altq	ALTQ control interface
 #
 
 dialin=0
@@ -167,6 +168,7 @@ all)
 	sh $0 sysmon
 	sh $0 bktr
 	sh $0 ttyCZ0 ttyCY0
+	sh $0 altq
 	;;
 
 audio)
@@ -782,6 +784,19 @@ mlx*)
 	rm -f mlx$unit
 	mknod mlx$unit c 78 $unit
 	chmod 600 mlx$unit
+	;;
+
+altq)
+	mkdir -p altq
+	chmod 755 altq
+	unit=0
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc \
+	    cdnr blue priq; do
+		rm -f altq/$dev
+		mknod altq/$dev c 77 $unit
+		chmod 644 altq/$dev
+		unit=$(($unit + 1))
+	done
 	;;
 
 i4b)
