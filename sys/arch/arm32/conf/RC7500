@@ -1,4 +1,4 @@
-#	$NetBSD: RC7500,v 1.19 1998/06/26 01:53:49 lukem Exp $
+#	$NetBSD: RC7500,v 1.20 1998/07/06 00:49:21 mark Exp $
 #
 #	RC7500 - Config for the VLSI RC7500 board
 #
@@ -109,7 +109,6 @@ options 	KMEMSTATS	# kernel memory statistics
 
 # Development and Debugging options
 
-options 	MOUSE_IOC_ACK	# acknowledge state change ioctls
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 #options 	DIAGNOSTIC	# internally consistency checks
