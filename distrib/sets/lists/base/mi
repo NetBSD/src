@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.242 2001/03/31 11:43:22 aymeric Exp $
+# $NetBSD: mi,v 1.243 2001/04/04 13:13:59 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1099,7 +1099,6 @@
 ./usr/share/man/cat1/x68k			base-man-share
 ./usr/share/man/cat2			base-man-share
 ./usr/share/man/cat3			base-man-share
-./usr/share/man/cat3/atari			base-man-share
 ./usr/share/man/cat3f			base-man-share
 ./usr/share/man/cat4			base-man-share
 ./usr/share/man/cat4/alpha			base-man-share
@@ -1163,7 +1162,6 @@
 ./usr/share/man/man1/x68k		base-man-share
 ./usr/share/man/man2		base-man-share
 ./usr/share/man/man3		base-man-share
-./usr/share/man/man3/atari		base-man-share
 ./usr/share/man/man3f		base-man-share
 ./usr/share/man/man4		base-man-share
 ./usr/share/man/man4/alpha		base-man-share
