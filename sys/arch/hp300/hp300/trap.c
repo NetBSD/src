@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.29 1995/03/08 06:39:06 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.30 1995/03/08 06:49:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -953,6 +953,10 @@ syscall(code, frame)
 		nsys = hpux_nsysent;
 		callp = hpux_sysent;
 		break;
+#endif
+#ifdef DIAGNOSTIC
+	default:
+		panic("invalid p_emul %d", p->p_emul);
 #endif
 	}
 
