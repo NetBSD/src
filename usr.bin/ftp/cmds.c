@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.44 1998/10/08 14:45:26 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.45 1999/01/24 00:51:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.44 1998/10/08 14:45:26 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.45 1999/01/24 00:51:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -756,10 +756,13 @@ togglevar(argc, argv, var, mesg)
 		*var = 0;
 	} else {
 		fprintf(ttyout, "usage: %s [ on | off ]\n", argv[0]);
+		(void)fflush(ttyout);
 		return (-1);
 	}
-	if (mesg)
+	if (mesg) {
 		fprintf(ttyout, "%s %s.\n", mesg, onoff(*var));
+		(void)fflush(ttyout);
+	}
 	return (*var);
 }
 
