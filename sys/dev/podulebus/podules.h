@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.6 2002/03/29 00:18:24 bjh21 Exp $	*/
+/*	$NetBSD: podules.h,v 1.7 2002/05/19 22:34:07 bjh21 Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.8 2002/03/29 00:16:51 bjh21 Exp 
+ *	NetBSD: podules,v 1.9 2002/05/19 22:29:57 bjh21 Exp 
  */
 
 /*
@@ -54,6 +54,7 @@
 #define	MANUFACTURER_LINGENUITY	0x001a		/* Lingenuity */
 #define	MANUFACTURER_IRLAM	0x001f		/* Irlam Instruments */
 #define	MANUFACTURER_OAK	0x0021		/* Oak Solutions */
+#define	MANUFACTURER_BEEBUG	0x0023		/* BEEBUG (RISC Developments) */
 #define	MANUFACTURER_SJ	0x0029		/* SJ Research */
 #define	MANUFACTURER_MORLEY	0x002b		/* Morley */
 #define	MANUFACTURER_HCCS2	0x002d		/* HCCS */
@@ -90,6 +91,7 @@
 #define	PODULE_ACORN_ETHERI	0x0139		/* EtherI interface */
 
 #define	PODULE_CCONCEPTS_ROMRAM	0x0005		/* ROM/RAM podule */
+#define	PODULE_CCONCEPTS_FAXPACK	0x0007		/* FaxPack modem */
 #define	PODULE_CCONCEPTS_LASERDIRECT	0x0014		/* laser direct (Canon LBP-4) */
 
 #define	PODULE_ARMADILLO_A448	0x0016		/* A448 sound sampler */
@@ -120,7 +122,10 @@
 #define	PODULE_IRLAM_MMETHERV	0x1234		/* Multi-media/EtherV */
 #define	PODULE_IRLAM_ETHERN	0x5678		/* EtherN interface */
 
+/* XXX ID 0x0058 is used by Oak ClassNet (EtherO) Ethernet cards */
 #define	PODULE_OAK_SCSI	0x0058		/* 16 bit SCSI interface */
+
+#define	PODULE_BEEBUG_IDE8	0x0097		/* 8 bit IDE */
 
 #define	PODULE_SJ_NEXUS	0x0064		/* Nexus interface (Podule) */
 #define	PODULE_SJ_NEXUSNS	0x008F		/* Nexus interface (A3020 netslot) */
