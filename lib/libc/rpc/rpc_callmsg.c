@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_callmsg.c,v 1.13 1999/09/16 11:45:24 lukem Exp $	*/
+/*	$NetBSD: rpc_callmsg.c,v 1.14 1999/09/20 04:39:23 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_callmsg.c 1.4 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_callmsg.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_callmsg.c,v 1.13 1999/09/16 11:45:24 lukem Exp $");
+__RCSID("$NetBSD: rpc_callmsg.c,v 1.14 1999/09/20 04:39:23 lukem Exp $");
 #endif
 #endif
 
@@ -73,10 +73,6 @@ xdr_callmsg(xdrs, cmsg)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(cmsg != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || cmsg == NULL)
-		return (FALSE);
-#endif
 
 	if (xdrs->x_op == XDR_ENCODE) {
 		if (cmsg->rm_call.cb_cred.oa_length > MAX_AUTH_BYTES) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.8 1999/09/16 11:45:16 lukem Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.9 1999/09/20 04:39:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,7 +53,7 @@
 #if 0
 static char rcsid[] = "Id: nsap_addr.c,v 8.3 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: nsap_addr.c,v 1.8 1999/09/16 11:45:16 lukem Exp $");
+__RCSID("$NetBSD: nsap_addr.c,v 1.9 1999/09/20 04:39:16 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -99,10 +99,6 @@ inet_nsap_addr(ascii, binary, maxlen)
 
 	_DIAGASSERT(ascii != NULL);
 	_DIAGASSERT(binary != NULL);
-#ifdef _DIAGNOSTIC
-	if (ascii == NULL || binary == NULL)
-		return (0);
-#endif
 
 	while ((c = *ascii++) != '\0' && len < maxlen) {
 		if (c == '.' || c == '+' || c == '/')
@@ -142,10 +138,6 @@ inet_nsap_ntoa(binlen, binary, ascii)
 	char *start;
 
 	_DIAGASSERT(binary != NULL);
-#ifdef _DIAGNOSTIC
-	if (binary == NULL)
-		return (NULL);
-#endif
 
 	if (ascii)
 		start = ascii;

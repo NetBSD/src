@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.10 1999/09/16 11:45:15 lukem Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.11 1999/09/20 04:39:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.10 1999/09/16 11:45:15 lukem Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.11 1999/09/20 04:39:15 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,10 +72,6 @@ link_addr(addr, sdl)
 
 	_DIAGASSERT(addr != NULL);
 	_DIAGASSERT(sdl != NULL);
-#ifdef _DIAGNOSTIC
-	if (addr == NULL || sdl == NULL)
-		return;
-#endif
 
 	(void)memset(&sdl->sdl_family, 0, (size_t)sdl->sdl_len - 1);
 	sdl->sdl_family = AF_LINK;
@@ -151,10 +147,6 @@ link_ntoa(sdl)
 	int firsttime = 1;
 
 	_DIAGASSERT(sdl != NULL);
-#ifdef _DIAGNOSTIC
-	if (sdl == NULL)
-		return (NULL);
-#endif
 
 	if (sdl->sdl_nlen) {
 		(void)memcpy(obuf, sdl->sdl_data, (size_t)sdl->sdl_nlen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: flags.c,v 1.10 1999/09/16 11:45:27 lukem Exp $	*/
+/*	$NetBSD: flags.c,v 1.11 1999/09/20 04:39:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)flags.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: flags.c,v 1.10 1999/09/16 11:45:27 lukem Exp $");
+__RCSID("$NetBSD: flags.c,v 1.11 1999/09/20 04:39:27 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,10 +65,6 @@ __sflags(mode, optr)
 	int ret, m, o;
 
 	_DIAGASSERT(mode != NULL);
-#ifdef _DIAGNOSTIC
-	if (mode == NULL)
-		return (0);
-#endif
 
 	switch (*mode++) {
 

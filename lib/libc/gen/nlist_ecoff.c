@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_ecoff.c,v 1.9 1999/09/16 11:45:01 lukem Exp $	*/
+/*	$NetBSD: nlist_ecoff.c,v 1.10 1999/09/20 04:39:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.9 1999/09/16 11:45:01 lukem Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.10 1999/09/20 04:39:03 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -77,16 +77,6 @@ __fdnlist_ecoff(fd, list)
 
 	_DIAGASSERT(fd != -1);
 	_DIAGASSERT(list != NULL);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (list == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	rv = -1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clrerr.c,v 1.7 1999/09/16 11:45:25 lukem Exp $	*/
+/*	$NetBSD: clrerr.c,v 1.8 1999/09/20 04:39:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)clrerr.c	8.1 (Berkeley) 6/4/93";
 #endif
-__RCSID("$NetBSD: clrerr.c,v 1.7 1999/09/16 11:45:25 lukem Exp $");
+__RCSID("$NetBSD: clrerr.c,v 1.8 1999/09/20 04:39:25 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -55,10 +55,6 @@ clearerr(fp)
 	FILE *fp;
 {
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL)
-		return;
-#endif
 
 	FLOCKFILE(fp);
 	__sclearerr(fp);

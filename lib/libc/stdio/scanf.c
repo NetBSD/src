@@ -1,4 +1,4 @@
-/*	$NetBSD: scanf.c,v 1.7 1999/09/16 11:45:30 lukem Exp $	*/
+/*	$NetBSD: scanf.c,v 1.8 1999/09/20 04:39:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)scanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: scanf.c,v 1.7 1999/09/16 11:45:30 lukem Exp $");
+__RCSID("$NetBSD: scanf.c,v 1.8 1999/09/20 04:39:32 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,12 +67,6 @@ scanf(fmt, va_alist)
 	va_list ap;
 
 	_DIAGASSERT(fmt != NULL);
-#ifdef _DIAGNOSTIC
-	if (fmt == NULL) {
-		errno = EFAULT;
-		return (EOF);
-	}
-#endif
 
 #if __STDC__
 	va_start(ap, fmt);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.13 1999/09/16 23:43:52 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.14 1999/09/20 04:39:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.13 1999/09/16 23:43:52 lukem Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.14 1999/09/20 04:39:16 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -107,10 +107,6 @@ _nsdbtaddsrc(dbt, src)
 
 	_DIAGASSERT(dbt != NULL);
 	_DIAGASSERT(src != NULL);
-#ifdef _DIAGNOSTIC
-	if (dbt == NULL || src == NULL)
-		return;
-#endif
 
 	if ((dbt->srclistsize % NSELEMSPERCHUNK) == 0) {
 		dbt->srclist = (ns_src *)realloc(dbt->srclist,
@@ -129,10 +125,6 @@ _nsdbtdump(dbt)
 	int i;
 
 	_DIAGASSERT(dbt != NULL);
-#ifdef _DIAGNOSTIC
-	if (dbt == NULL)
-		return;
-#endif
 
 	printf("%s (%d source%s):", dbt->name, dbt->srclistsize,
 	    dbt->srclistsize == 1 ? "" : "s");
@@ -170,10 +162,6 @@ _nsdbtget(name)
 	extern	int	 _nsyyparse __P((void));
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		return (NULL);
-#endif
 
 	dbt.name = name;
 
@@ -228,10 +216,6 @@ _nsdbtput(dbt)
 	int	i;
 
 	_DIAGASSERT(dbt != NULL);
-#ifdef _DIAGNOSTIC
-	if (dbt == NULL)
-		return;
-#endif
 
 	for (i = 0; i < _nsmapsize; i++) {
 		if (_nscmp(dbt, &_nsmap[i]) == 0) {

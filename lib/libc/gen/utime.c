@@ -1,4 +1,4 @@
-/*	$NetBSD: utime.c,v 1.9 1999/09/16 11:45:06 lukem Exp $	*/
+/*	$NetBSD: utime.c,v 1.10 1999/09/20 04:39:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utime.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utime.c,v 1.9 1999/09/16 11:45:06 lukem Exp $");
+__RCSID("$NetBSD: utime.c,v 1.10 1999/09/20 04:39:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,12 +62,6 @@ utime(path, times)
 	struct timeval tv[2], *tvp;
 
 	_DIAGASSERT(path != NULL);
-#ifdef _DIAGNOSTIC
-	if (path == NULL || *path == '\0') {
-		errno = ENOENT;
-		return (NULL);
-	}
-#endif
 
 	if (times == (struct utimbuf *) NULL)
 		tvp = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getsubopt.c,v 1.5 1999/09/16 11:45:34 lukem Exp $	*/
+/*	$NetBSD: getsubopt.c,v 1.6 1999/09/20 04:39:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getsubopt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getsubopt.c,v 1.5 1999/09/16 11:45:34 lukem Exp $");
+__RCSID("$NetBSD: getsubopt.c,v 1.6 1999/09/20 04:39:37 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,10 +66,6 @@ getsubopt(optionp, tokens, valuep)
 	_DIAGASSERT(valuep != NULL);
 	_DIAGASSERT(tokens != NULL);
 	/* optionp is tested below */
-#ifdef _DIAGNOSTIC
-	if (valuep == NULL || tokens == NULL)
-		return (-1);
-#endif
 
 	suboptarg = *valuep = NULL;
 

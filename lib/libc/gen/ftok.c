@@ -1,4 +1,4 @@
-/*	$NetBSD: ftok.c,v 1.7 1999/09/16 11:44:57 lukem Exp $	*/
+/*	$NetBSD: ftok.c,v 1.8 1999/09/20 04:38:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ftok.c,v 1.7 1999/09/16 11:44:57 lukem Exp $");
+__RCSID("$NetBSD: ftok.c,v 1.8 1999/09/20 04:38:59 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -52,12 +52,6 @@ ftok(path, id)
 	struct stat st;
 
 	_DIAGASSERT(path != NULL);
-#ifdef _DIAGNOSTIC
-	if (path == NULL || *path == '\0') {
-		errno = ENOENT;
-		return (key_t)-1;
-	}
-#endif
 
 	if (stat(path, &st) < 0)
 		return (key_t)-1;

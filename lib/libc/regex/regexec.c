@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.13 1999/09/16 11:45:21 lukem Exp $	*/
+/*	$NetBSD: regexec.c,v 1.14 1999/09/20 04:39:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regexec.c,v 1.13 1999/09/16 11:45:21 lukem Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.14 1999/09/20 04:39:20 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -182,10 +182,6 @@ int eflags;
 
 	_DIAGASSERT(preg != NULL);
 	_DIAGASSERT(string != NULL);
-#ifdef _DIAGNOSTIC
-	if (preg == NULL || string == NULL)
-		return (REG_INVARG);
-#endif
 
 	if (preg->re_magic != MAGIC1 || g->magic != MAGIC2)
 		return(REG_BADPAT);

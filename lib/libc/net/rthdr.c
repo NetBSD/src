@@ -1,4 +1,4 @@
-/*	$NetBSD: rthdr.c,v 1.3 1999/09/16 11:45:19 lukem Exp $	*/
+/*	$NetBSD: rthdr.c,v 1.4 1999/09/20 04:39:18 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -67,10 +67,6 @@ inet6_rthdr_init(bp, type)
     register struct ip6_rthdr *rthdr;
 
     _DIAGASSERT(bp != NULL);
-#ifdef _DIAGNOSTIC
-    if (bp == NULL)
-	return(NULL);
-#endif
 
     ch = (struct cmsghdr *)bp;
     rthdr = (struct ip6_rthdr *)(ch + 1);
@@ -102,10 +98,6 @@ inet6_rthdr_add(cmsg, addr, flags)
 
     _DIAGASSERT(cmsg != NULL);
     _DIAGASSERT(addr != NULL);
-#ifdef _DIAGNOSTIC
-    if (cmsg == NULL || addr == NULL)
-	return (-1);
-#endif
 
     rthdr = (struct ip6_rthdr *)(cmsg + 1);
 
@@ -157,10 +149,6 @@ inet6_rthdr_lasthop(cmsg, flags)
     register struct ip6_rthdr *rthdr;
 
     _DIAGASSERT(cmsg != NULL);
-#ifdef _DIAGNOSTIC
-    if (cmsg == NULL)
-	return (-1);
-#endif
 
     rthdr = (struct ip6_rthdr *)(cmsg + 1);
 
@@ -219,10 +207,6 @@ inet6_rthdr_segments(cmsg)
     register struct ip6_rthdr *rthdr;
 
     _DIAGASSERT(cmsg != NULL);
-#ifdef _DIAGNOSTIC
-    if (cmsg == NULL)
-	return (-1);
-#endif
 
     rthdr = (struct ip6_rthdr *)(cmsg + 1);
 
@@ -259,10 +243,6 @@ inet6_rthdr_getaddr(cmsg, index)
     register struct ip6_rthdr *rthdr;
 
     _DIAGASSERT(cmsg != NULL);
-#ifdef _DIAGNOSTIC
-    if (cmsg == NULL)
-	return (NULL);
-#endif
 
     rthdr = (struct ip6_rthdr *)(cmsg + 1);
 
@@ -306,10 +286,6 @@ inet6_rthdr_getflags(cmsg, index)
     register struct ip6_rthdr *rthdr;
 
     _DIAGASSERT(cmsg != NULL);
-#ifdef _DIAGNOSTIC
-    if (cmsg == NULL)
-	return (-1);
-#endif
 
     rthdr = (struct ip6_rthdr *)(cmsg + 1);
 

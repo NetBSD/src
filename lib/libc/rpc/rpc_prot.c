@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.13 1999/09/16 11:45:24 lukem Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.14 1999/09/20 04:39:23 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_prot.c,v 1.13 1999/09/16 11:45:24 lukem Exp $");
+__RCSID("$NetBSD: rpc_prot.c,v 1.14 1999/09/20 04:39:23 lukem Exp $");
 #endif
 #endif
 
@@ -88,10 +88,6 @@ xdr_opaque_auth(xdrs, ap)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(ap != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || ap == NULL)
-		return (FALSE);
-#endif
 
 	if (xdr_enum(xdrs, &(ap->oa_flavor)))
 		return (xdr_bytes(xdrs, &ap->oa_base,
@@ -110,10 +106,6 @@ xdr_des_block(xdrs, blkp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(blkp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || blkp == NULL)
-		return (FALSE);
-#endif
 
 	return (xdr_opaque(xdrs, (caddr_t)(void *)blkp, sizeof(des_block)));
 }
@@ -131,10 +123,6 @@ xdr_accepted_reply(xdrs, ar)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(ar != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || ar == NULL)
-		return (FALSE);
-#endif
 
 	/* personalized union, rather than calling xdr_union */
 	if (! xdr_opaque_auth(xdrs, &(ar->ar_verf)))
@@ -171,10 +159,6 @@ xdr_rejected_reply(xdrs, rr)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(rr != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || rr == NULL)
-		return (FALSE);
-#endif
 
 	/* personalized union, rather than calling xdr_union */
 	if (! xdr_enum(xdrs, (enum_t *)&(rr->rj_stat)))
@@ -208,10 +192,6 @@ xdr_replymsg(xdrs, rmsg)
 {
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(rmsg != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || rmsg == NULL)
-		return (FALSE);
-#endif
 
 	if (
 	    xdr_u_int32_t(xdrs, &(rmsg->rm_xid)) && 
@@ -237,10 +217,6 @@ xdr_callhdr(xdrs, cmsg)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(cmsg != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || cmsg == NULL)
-		return (FALSE);
-#endif
 
 	cmsg->rm_direction = CALL;
 	cmsg->rm_call.cb_rpcvers = RPC_MSG_VERSION;
@@ -332,10 +308,6 @@ _seterr_reply(msg, error)
 
 	_DIAGASSERT(msg != NULL);
 	_DIAGASSERT(error != NULL);
-#ifdef _DIAGNOSTIC
-	if (msg == NULL || error == NULL)
-		return;
-#endif
 
 	/* optimized for normal, SUCCESSful case */
 	switch (msg->rm_reply.rp_stat) {

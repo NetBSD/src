@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.21 1999/09/16 11:45:49 lukem Exp $	*/
+/*	$NetBSD: termcap.c,v 1.22 1999/09/20 04:48:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.21 1999/09/16 11:45:49 lukem Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.22 1999/09/20 04:48:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,10 +101,6 @@ t_getent(bp, name)
 
 	_DIAGASSERT(bp != NULL);
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (bp == NULL || name == NULL)
-		return (-2);
-#endif
 
 	if ((*bp = malloc(sizeof(struct tinfo))) == NULL) return 0;
 	
@@ -233,10 +229,6 @@ t_getnum(info, id)
 	long num;
 
 	_DIAGASSERT(id != NULL);
-#ifdef _DIAGNOSTIC
-	if (id == NULL)
-		return (-1);
-#endif
 
 	if (cgetnum(info->info, id, &num) == 0)
 		return (int)(num);
@@ -270,10 +262,6 @@ tgetflag(id)
 {
 
 	_DIAGASSERT(id != NULL);
-#ifdef _DIAGNOSTIC
-	if (id == NULL)
-		return (-1);
-#endif
 
 	return t_getflag(fbuf, id);
 }
@@ -300,10 +288,6 @@ t_getstr(info, id, area, limit)
 
 	_DIAGASSERT(id != NULL);
 	_DIAGASSERT(area != NULL);
-#ifdef _DIAGNOSTIC
-	if (id == NULL || area == NULL)
-		return (NULL);
-#endif
 
 	/*
 	 * XXX

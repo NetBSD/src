@@ -1,4 +1,4 @@
-/*	$NetBSD: rewinddir.c,v 1.7 1999/09/16 11:45:03 lukem Exp $	*/
+/*	$NetBSD: rewinddir.c,v 1.8 1999/09/20 04:39:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rewinddir.c	8.1 (Berkeley) 6/8/93";
 #else
-__RCSID("$NetBSD: rewinddir.c,v 1.7 1999/09/16 11:45:03 lukem Exp $");
+__RCSID("$NetBSD: rewinddir.c,v 1.8 1999/09/20 04:39:04 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,10 +56,6 @@ rewinddir(dirp)
 	DIR *dirp;
 {
 
-#ifdef _DIAGNOSTIC
-	if (dirp == NULL)
-		return;
-#endif
 
 	__seekdir(dirp, dirp->dd_rewind);
 	dirp->dd_rewind = telldir(dirp);

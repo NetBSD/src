@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.c,v 1.10 1999/09/16 11:45:31 lukem Exp $	*/
+/*	$NetBSD: stdio.c,v 1.11 1999/09/20 04:39:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)stdio.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: stdio.c,v 1.10 1999/09/16 11:45:31 lukem Exp $");
+__RCSID("$NetBSD: stdio.c,v 1.11 1999/09/20 04:39:33 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,16 +70,6 @@ __sread(cookie, buf, n)
 	
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(buf != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (buf == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	ret = read(fp->_file, buf, (size_t)n);
 	/* if the read succeeded, update the current offset */
@@ -100,16 +90,6 @@ __swrite(cookie, buf, n)
 
 	_DIAGASSERT(cookie != NULL);
 	_DIAGASSERT(buf != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (buf == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (fp->_flags & __SAPP)
 		(void) lseek(fp->_file, (off_t)0, SEEK_END);
@@ -127,12 +107,6 @@ __sseek(cookie, offset, whence)
 	off_t ret;
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-#endif
 	
 	ret = lseek(fp->_file, (off_t)offset, whence);
 	if (ret == -1L)
@@ -150,12 +124,6 @@ __sclose(cookie)
 {
 
 	_DIAGASSERT(cookie != NULL);
-#ifdef _DIAGNOSTIC
-	if (cookie == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-#endif
 
 	return (close(((FILE *)cookie)->_file));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: _rand48.c,v 1.5 1999/09/16 11:45:32 lukem Exp $	*/
+/*	$NetBSD: _rand48.c,v 1.6 1999/09/20 04:39:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -36,10 +36,6 @@ __dorand48(unsigned short xseed[3])
 	unsigned short temp[2];
 
 	_DIAGASSERT(xseed != NULL);
-#ifdef _DIAGNOSTIC
-	if (xseed == NULL)
-		return;
-#endif
 
 	accu = (unsigned long) __rand48_mult[0] * (unsigned long) xseed[0] +
 	 (unsigned long) __rand48_add;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.7 1999/09/16 11:45:51 lukem Exp $ */
+/*	$NetBSD: pidlock.c,v 1.8 1999/09/20 04:48:08 lukem Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.7 1999/09/16 11:45:51 lukem Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.8 1999/09/20 04:48:08 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -63,12 +63,6 @@ pidlock(lockfile, flags, locker, info)
 	_DIAGASSERT(lockfile != NULL);
 	/* locker may be NULL */
 	/* info may be NULL */
-#ifdef _DIAGNOSTIC
-	if (lockfile == NULL) {
-		errno = EFAULT;
-		return -1;
-	}
-#endif
 
 
 	if (gethostname(hostname, sizeof(hostname)))
@@ -212,12 +206,6 @@ ttylock(tty, flags, locker)
 
 	_DIAGASSERT(tty != NULL);
 	/* locker is not used */
-#ifdef _DIAGNOSTIC
-	if (tty == NULL || *tty == '\0') {
-		errno = ENOENT;
-		return -1;
-	}
-#endif
 
 	/* make sure the tty exists */
 	strcpy(ttyfile, DEVPATH);
@@ -244,12 +232,6 @@ ttyunlock(tty)
 	struct stat sb;
 
 	_DIAGASSERT(tty != NULL);
-#ifdef _DIAGNOSTIC
-	if (tty == NULL || *tty == '\0') {
-		errno = ENOENT;
-		return -1;
-	}
-#endif
 
 	/* make sure the tty exists */
 	strcpy(ttyfile, DEVPATH);

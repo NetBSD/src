@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.15 1999/09/16 11:45:23 lukem Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.16 1999/09/20 04:39:21 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char *sccsid = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: getrpcent.c,v 1.15 1999/09/16 11:45:23 lukem Exp $");
+__RCSID("$NetBSD: getrpcent.c,v 1.16 1999/09/20 04:39:21 lukem Exp $");
 #endif
 #endif
 
@@ -119,10 +119,6 @@ getrpcbyname(name)
 	char **rp;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		return (NULL);
-#endif
 
 	setrpcent(0);
 	while ((rpc = getrpcent()) != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: atol.c,v 1.8 1999/09/16 11:45:33 lukem Exp $	*/
+/*	$NetBSD: atol.c,v 1.9 1999/09/20 04:39:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)atol.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: atol.c,v 1.8 1999/09/16 11:45:33 lukem Exp $");
+__RCSID("$NetBSD: atol.c,v 1.9 1999/09/20 04:39:36 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,10 +50,6 @@ atol(str)
 	const char *str;
 {
 	_DIAGASSERT(str != NULL);
-#ifdef _DIAGNOSTIC
-	if (str == NULL)
-		return (0L);
-#endif
 
 	return(strtol(str, (char **)NULL, 10));
 }

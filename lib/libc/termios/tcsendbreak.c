@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsendbreak.c,v 1.6 1999/09/16 11:45:45 lukem Exp $	*/
+/*	$NetBSD: tcsendbreak.c,v 1.7 1999/09/20 04:39:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcsendbreak.c,v 1.6 1999/09/16 11:45:45 lukem Exp $");
+__RCSID("$NetBSD: tcsendbreak.c,v 1.7 1999/09/20 04:39:52 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,12 +64,6 @@ tcsendbreak(fd, len)
 	static const struct timespec sleepytime = { 0, 400000000 };
 
 	_DIAGASSERT(fd != -1);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-#endif
 
 	if (ioctl(fd, TIOCSBRK, 0) == -1)
 		return (-1);

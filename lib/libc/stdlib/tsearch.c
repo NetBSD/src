@@ -1,4 +1,4 @@
-/*	$NetBSD: tsearch.c,v 1.3 1999/09/16 11:45:37 lukem Exp $	*/
+/*	$NetBSD: tsearch.c,v 1.4 1999/09/20 04:39:43 lukem Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -13,7 +13,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: tsearch.c,v 1.3 1999/09/16 11:45:37 lukem Exp $");
+__RCSID("$NetBSD: tsearch.c,v 1.4 1999/09/20 04:39:43 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -33,10 +33,6 @@ tsearch(vkey, vrootp, compar)
 
 	_DIAGASSERT(vkey != NULL);
 	_DIAGASSERT(compar != NULL);
-#ifdef _DIAGNOSTIC
-	if (vkey == NULL || compar == NULL)
-		return (NULL);
-#endif
 
 	if (rootp == NULL)
 		return NULL;

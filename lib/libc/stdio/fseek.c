@@ -1,4 +1,4 @@
-/*	$NetBSD: fseek.c,v 1.17 1999/09/16 11:45:27 lukem Exp $	*/
+/*	$NetBSD: fseek.c,v 1.18 1999/09/20 04:39:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fseek.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: fseek.c,v 1.17 1999/09/16 11:45:27 lukem Exp $");
+__RCSID("$NetBSD: fseek.c,v 1.18 1999/09/20 04:39:29 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,12 +75,6 @@ fseek(fp, offset, whence)
 	int havepos;
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-#endif
 
 #ifdef __GNUC__
 	/* This outrageous construct just to shut up a GCC warning. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.18 1999/09/16 11:45:02 lukem Exp $	*/
+/*	$NetBSD: opendir.c,v 1.19 1999/09/20 04:39:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.18 1999/09/16 11:45:02 lukem Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.19 1999/09/20 04:39:03 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,12 +68,6 @@ opendir(name)
 {
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || *name == '\0') {
-		errno = ENOENT;
-		return (NULL);
-	}
-#endif
 
 	return (__opendir2(name, DTF_HIDEW|DTF_NODUP));
 }
@@ -92,10 +86,6 @@ __opendir2(name, flags)
 	struct statfs sfb;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || *name == '\0')
-		return (NULL);
-#endif
 
 	if ((fd = open(name, O_RDONLY | O_NONBLOCK)) == -1)
 		return (NULL);

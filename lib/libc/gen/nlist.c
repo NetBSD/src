@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.14 1999/09/16 11:45:01 lukem Exp $	*/
+/*	$NetBSD: nlist.c,v 1.15 1999/09/20 04:39:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.14 1999/09/16 11:45:01 lukem Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.15 1999/09/20 04:39:02 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,12 +88,6 @@ nlist(name, list)
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(list != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || list == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	fd = open(name, O_RDONLY, 0);
 	if (fd < 0)
@@ -112,16 +106,6 @@ __fdnlist(fd, list)
 
 	_DIAGASSERT(fd != -1);
 	_DIAGASSERT(list != NULL);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (list == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	for (i = 0; i < sizeof(fdnlist_fmts) / sizeof(fdnlist_fmts[0]); i++)
 		if ((rv = (*fdnlist_fmts[i].fdnlist)(fd, list)) != -1)

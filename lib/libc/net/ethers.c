@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.15 1999/09/16 11:45:11 lukem Exp $	*/
+/*	$NetBSD: ethers.c,v 1.16 1999/09/20 04:39:11 lukem Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -45,10 +45,6 @@ ether_ntoa(e)
 	static char a[18];
 
 	_DIAGASSERT(e != NULL);
-#ifdef _DIAGNOSTIC
-	if (e == NULL)
-		return NULL;
-#endif
 
 	snprintf(a, sizeof a, "%02x:%02x:%02x:%02x:%02x:%02x",
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
@@ -65,10 +61,6 @@ ether_aton(s)
 	u_int i[6];
 
 	_DIAGASSERT(s != NULL);
-#ifdef _DIAGNOSTIC
-	if (s == NULL)
-		return NULL;
-#endif
 
 	if (sscanf(s, " %x:%x:%x:%x:%x:%x ", &i[0], &i[1],
 	    &i[2], &i[3], &i[4], &i[5]) == 6) {
@@ -99,12 +91,6 @@ ether_ntohost(hostname, e)
 
 	_DIAGASSERT(hostname != NULL);
 	_DIAGASSERT(e != NULL);
-#ifdef _DIAGNOSTIC
-	if (hostname == NULL || e == NULL) {
-		errno = EFAULT;
-		return -1;
-	}
-#endif
 
 #ifdef YP
 	trylen = snprintf(trybuf, sizeof trybuf, "%x:%x:%x:%x:%x:%x", 
@@ -166,12 +152,6 @@ ether_hostton(hostname, e)
 
 	_DIAGASSERT(hostname != NULL);
 	_DIAGASSERT(e != NULL);
-#ifdef _DIAGNOSTIC
-	if (hostname == NULL || e == NULL) {
-		errno = EFAULT;
-		return -1;
-	}
-#endif
 
 	f = fopen(_PATH_ETHERS, "r");
 	if (f==NULL)
@@ -224,12 +204,6 @@ ether_line(l, e, hostname)
 	_DIAGASSERT(l != NULL);
 	_DIAGASSERT(e != NULL);
 	_DIAGASSERT(hostname != NULL);
-#ifdef _DIAGNOSTIC
-	if (l == NULL || e == NULL || hostname == NULL) {
-		errno = EFAULT;
-		return -1;
-	}
-#endif
 
 	if (! buf[0])
 		snprintf(buf, sizeof buf, " %%x:%%x:%%x:%%x:%%x:%%x %%%ds\\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: times.c,v 1.9 1999/09/16 11:45:05 lukem Exp $	*/
+/*	$NetBSD: times.c,v 1.10 1999/09/20 04:39:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)times.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: times.c,v 1.9 1999/09/16 11:45:05 lukem Exp $");
+__RCSID("$NetBSD: times.c,v 1.10 1999/09/20 04:39:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,12 +70,6 @@ times(tp)
 	struct timeval t;
 
 	_DIAGASSERT(tp != NULL);
-#ifdef _DIAGNOSTIC
-	if (tp == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (getrusage(RUSAGE_SELF, &ru) < 0)
 		return ((clock_t)-1);

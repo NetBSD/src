@@ -1,4 +1,4 @@
-/*	$NetBSD: erand48.c,v 1.5 1999/09/16 11:45:33 lukem Exp $	*/
+/*	$NetBSD: erand48.c,v 1.6 1999/09/20 04:39:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -28,10 +28,6 @@ erand48(unsigned short xseed[3])
 {
 
 	_DIAGASSERT(xseed != NULL);
-#ifdef _DIAGNOSTIC
-	if (xseed == NULL)
-		return ((double)0);
-#endif
 
 	__dorand48(xseed);
 	return ldexp((double) xseed[0], -48) +

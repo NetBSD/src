@@ -1,4 +1,4 @@
-/*	$NetBSD: md4c.c,v 1.7 1999/09/17 09:25:34 kleink Exp $	*/
+/*	$NetBSD: md4c.c,v 1.8 1999/09/20 04:39:08 lukem Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -113,10 +113,6 @@ MD4Init(context)
 {
 
 	_DIAGASSERT(context != 0);
-#ifdef _DIAGNOSTIC
-	if (context == 0)
-		return;
-#endif
 
 	context->count[0] = context->count[1] = 0;
 
@@ -142,10 +138,6 @@ MD4Update (context, input, inputLen)
 
 	_DIAGASSERT(context != 0);
 	_DIAGASSERT(input != 0);
-#ifdef _DIAGNOSTIC
-	if (context == 0 || input == 0)
-		return;
-#endif
 
 	/* Compute number of bytes mod 64 */
 	idx = (unsigned int)((context->count[0] >> 3) & 0x3F);
@@ -188,10 +180,6 @@ MD4Final (digest, context)
 
 	_DIAGASSERT(digest != 0);
 	_DIAGASSERT(context != 0);
-#ifdef _DIAGNOSTIC
-	if (digest == 0 || context == 0)
-		return;
-#endif
 
 	/* Save number of bits */
 	Encode(bits, context->count, 8);

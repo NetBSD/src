@@ -1,4 +1,4 @@
-/*	$NetBSD: ifname.c,v 1.4 1999/09/16 11:45:13 lukem Exp $	*/
+/*	$NetBSD: ifname.c,v 1.5 1999/09/20 04:39:13 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -57,12 +57,6 @@ if_nametoindex(ifname)
 	int ret;
 
 	_DIAGASSERT(ifname != NULL);
-#ifdef _DIAGNOSTIC
-	if (ifname == NULL) {
-		errno = EFAULT;
-		return 0;
-	}
-#endif
 
 	if (iff == NULL)
 		return 0;
@@ -89,12 +83,6 @@ if_indextoname(ifindex, ifname)
 	char *cp, *dp;
 
 	_DIAGASSERT(ifname != NULL);
-#ifdef _DIAGNOSTIC
-	if (ifname == NULL) {
-		errno = EFAULT;
-		return 0;
-	}
-#endif
 
 	if (iff == NULL)
 		return NULL;
@@ -230,10 +218,6 @@ if_freenameindex(ptr)
 {
 
 	_DIAGASSERT(ptr != NULL);
-#ifdef _DIAGNOSTIC
-	if (ptr == NULL)
-		return;
-#endif
 
 	free(ptr);
 }

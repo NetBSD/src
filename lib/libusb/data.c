@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.5 1999/09/16 11:45:50 lukem Exp $	*/
+/*	$NetBSD: data.c,v 1.6 1999/09/20 04:48:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -41,10 +41,6 @@ hid_get_data(void *p, hid_item_t *h)
 
 	_DIAGASSERT(p != NULL);
 	_DIAGASSERT(h != NULL);
-#ifdef _DIAGNOSTIC
-	if (p == NULL || h == NULL)
-		return (0);
-#endif
 
 	buf = p;
 	hpos = h->pos;			/* bit position of data */
@@ -77,10 +73,6 @@ hid_set_data(void *p, hid_item_t *h, int data)
 
 	_DIAGASSERT(p != NULL);
 	_DIAGASSERT(h != NULL);
-#ifdef _DIAGNOSTIC
-	if (p == NULL || h == NULL)
-		return;
-#endif
 
 	buf = p;
 	hpos = h->pos;			/* bit position of data */

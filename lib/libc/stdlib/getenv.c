@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.13 1999/09/16 11:45:33 lukem Exp $	*/
+/*	$NetBSD: getenv.c,v 1.14 1999/09/20 04:39:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.13 1999/09/16 11:45:33 lukem Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.14 1999/09/20 04:39:37 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,12 +65,6 @@ getenv(name)
 	char *result;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL) {
-		errno = EFAULT;
-		return (NULL);
-	}
-#endif
 
 	rwlock_rdlock(&__environ_lock);
 	result = __findenv(name, &offset);

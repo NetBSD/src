@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.11 1999/09/16 11:44:55 lukem Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.12 1999/09/20 04:38:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.11 1999/09/16 11:44:55 lukem Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.12 1999/09/20 04:38:57 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -185,16 +185,6 @@ glob(pattern, flags, errfunc, pglob)
 	Char *bufnext, *bufend, patbuf[MAXPATHLEN+1];
 
 	_DIAGASSERT(pattern != NULL);
-#ifdef _DIAGNOSTIC
-	/* errfunc may be NULL */
-	_DIAGASSERT(pglob != NULL);
-	if (pattern == NULL || pglob == NULL) {
-		if (errfunc || (flags & GLOB_ERR))
-			return GLOB_ABORTED;
-		else
-			return GLOB_NOMATCH;
-	}
-#endif
 
 	patnext = (const u_char *) pattern;
 	if (!(flags & GLOB_APPEND)) {
@@ -819,10 +809,6 @@ globfree(pglob)
 	char **pp;
 
 	_DIAGASSERT(pglob != NULL);
-#ifdef _DIAGNOSTIC
-	if (pglob == NULL)
-		return;
-#endif
 
 	if (pglob->gl_pathv != NULL) {
 		pp = pglob->gl_pathv + pglob->gl_offs;

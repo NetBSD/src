@@ -1,4 +1,4 @@
-/*	$NetBSD: remove.c,v 1.11 1999/09/16 11:45:30 lukem Exp $	*/
+/*	$NetBSD: remove.c,v 1.12 1999/09/20 04:39:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)remove.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: remove.c,v 1.11 1999/09/16 11:45:30 lukem Exp $");
+__RCSID("$NetBSD: remove.c,v 1.12 1999/09/20 04:39:32 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,12 +60,6 @@ remove(file)
 	struct stat sb;
 
 	_DIAGASSERT(file != NULL);
-#ifdef _DIAGNOSTIC
-	if (file == NULL || *file == '\0') {
-		errno = ENOENT;
-		return (-1);
-	}
-#endif
 
 	if (lstat(file, &sb) < 0)
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_prot.c,v 1.8 1999/09/16 11:45:23 lukem Exp $	*/
+/*	$NetBSD: pmap_prot.c,v 1.9 1999/09/20 04:39:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_prot.c 1.17 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_prot.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_prot.c,v 1.8 1999/09/16 11:45:23 lukem Exp $");
+__RCSID("$NetBSD: pmap_prot.c,v 1.9 1999/09/20 04:39:22 lukem Exp $");
 #endif
 #endif
 
@@ -67,10 +67,6 @@ xdr_pmap(xdrs, regs)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(regs != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || regs == NULL)
-		return (FALSE);
-#endif
 
 	if (xdr_u_long(xdrs, &regs->pm_prog) && 
 		xdr_u_long(xdrs, &regs->pm_vers) && 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttymsg.c,v 1.13 1999/09/16 11:45:51 lukem Exp $	*/
+/*	$NetBSD: ttymsg.c,v 1.14 1999/09/20 04:48:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: ttymsg.c,v 1.13 1999/09/16 11:45:51 lukem Exp $");
+__RCSID("$NetBSD: ttymsg.c,v 1.14 1999/09/20 04:48:11 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,14 +81,6 @@ ttymsg(iov, iovcnt, line, tmout)
 	_DIAGASSERT(iov != NULL);
 	_DIAGASSERT(iovcnt >= 0);
 	_DIAGASSERT(line != NULL);
-#ifdef _DIAGNOSTIC
-	if (iov == NULL)
-		return ("ttymsg(3) called with iov == NULL");
-	if (iovcnt < 0)
-		return ("ttymsg(3) called with iovcnt < 0");
-	if (line == NULL)
-		return ("ttymsg(3) called with line == NULL");
-#endif
 
 	if (iovcnt > sizeof(localiov) / sizeof(localiov[0]))
 		return ("too many iov's (change code in libutil/ttymsg.c)");

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth_unix.c,v 1.14 1999/09/16 11:45:24 lukem Exp $	*/
+/*	$NetBSD: svc_auth_unix.c,v 1.15 1999/09/20 04:39:24 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_auth_unix.c 1.28 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_auth_unix.c	2.3 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_auth_unix.c,v 1.14 1999/09/16 11:45:24 lukem Exp $");
+__RCSID("$NetBSD: svc_auth_unix.c,v 1.15 1999/09/20 04:39:24 lukem Exp $");
 #endif
 #endif
 
@@ -81,10 +81,6 @@ _svcauth_unix(rqst, msg)
 
 	_DIAGASSERT(rqst != NULL);
 	_DIAGASSERT(msg != NULL);
-#ifdef _DIAGNOSTIC
-	if (rqst == NULL || msg == NULL)
-		return (AUTH_FAILED);
-#endif
 
 	area = (struct area *) rqst->rq_clntcred;
 	aup = &area->area_aup;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.20 1999/09/16 11:44:56 lukem Exp $	*/
+/*	$NetBSD: fstab.c,v 1.21 1999/09/20 04:38:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.20 1999/09/16 11:44:56 lukem Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.21 1999/09/20 04:38:59 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -185,10 +185,6 @@ getfsspec(name)
 {
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		return NULL;
-#endif
 
 	if (setfsent())
 		while (fstabscan())
@@ -203,10 +199,6 @@ getfsfile(name)
 {
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		return NULL;
-#endif
 
 	if (setfsent())
 		while (fstabscan())

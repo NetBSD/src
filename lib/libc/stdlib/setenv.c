@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.16 1999/09/16 11:45:36 lukem Exp $	*/
+/*	$NetBSD: setenv.c,v 1.17 1999/09/20 04:39:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.16 1999/09/16 11:45:36 lukem Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.17 1999/09/20 04:39:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,12 +79,6 @@ setenv(name, value, rewrite)
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(value != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || value == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (*value == '=')			/* no `=' in value */
 		++value;
@@ -153,10 +147,6 @@ unsetenv(name)
 	int offset;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		return;
-#endif
 
 	rwlock_wrlock(&__environ_lock);
 	while (__findenv(name, &offset))	/* if set multiple times */

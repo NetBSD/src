@@ -1,4 +1,4 @@
-/*	$NetBSD: fclose.c,v 1.11 1999/09/16 11:45:25 lukem Exp $	*/
+/*	$NetBSD: fclose.c,v 1.12 1999/09/20 04:39:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fclose.c	8.1 (Berkeley) 6/4/93";
 #endif
-__RCSID("$NetBSD: fclose.c,v 1.11 1999/09/16 11:45:25 lukem Exp $");
+__RCSID("$NetBSD: fclose.c,v 1.12 1999/09/20 04:39:25 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -58,12 +58,6 @@ fclose(fp)
 	int r;
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-#endif
 
 	FLOCKFILE(fp);
 	if (fp->_flags == 0) {	/* not open! */

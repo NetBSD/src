@@ -1,4 +1,4 @@
-/*	$NetBSD: merge.c,v 1.8 1999/09/16 11:45:35 lukem Exp $	*/
+/*	$NetBSD: merge.c,v 1.9 1999/09/20 04:39:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";
 #else
-__RCSID("$NetBSD: merge.c,v 1.8 1999/09/16 11:45:35 lukem Exp $");
+__RCSID("$NetBSD: merge.c,v 1.9 1999/09/20 04:39:40 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -125,12 +125,6 @@ mergesort(base, nmemb, size, cmp)
 
 	_DIAGASSERT(base != NULL);
 	_DIAGASSERT(cmp != NULL);
-#ifdef _DIAGNOSTIC
-	if (base == NULL || cmp == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (size < PSIZE / 2) {		/* Pointers must fit into 2 * size. */
 		errno = EINVAL;

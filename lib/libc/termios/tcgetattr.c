@@ -1,4 +1,4 @@
-/*	$NetBSD: tcgetattr.c,v 1.5 1999/09/16 11:45:44 lukem Exp $	*/
+/*	$NetBSD: tcgetattr.c,v 1.6 1999/09/20 04:39:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcgetattr.c,v 1.5 1999/09/16 11:45:44 lukem Exp $");
+__RCSID("$NetBSD: tcgetattr.c,v 1.6 1999/09/20 04:39:51 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,16 +62,6 @@ tcgetattr(fd, t)
 
 	_DIAGASSERT(fd != -1);
 	_DIAGASSERT(t != NULL);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (t == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	return (ioctl(fd, TIOCGETA, t));
 }

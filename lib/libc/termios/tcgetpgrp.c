@@ -1,4 +1,4 @@
-/*	$NetBSD: tcgetpgrp.c,v 1.5 1999/09/16 11:45:44 lukem Exp $	*/
+/*	$NetBSD: tcgetpgrp.c,v 1.6 1999/09/20 04:39:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcgetpgrp.c,v 1.5 1999/09/16 11:45:44 lukem Exp $");
+__RCSID("$NetBSD: tcgetpgrp.c,v 1.6 1999/09/20 04:39:52 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,12 +62,6 @@ tcgetpgrp(fd)
 	int s;
 
 	_DIAGASSERT(fd != -1);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-#endif
 
 	if (ioctl(fd, TIOCGPGRP, &s) < 0)
 		return ((pid_t)-1);

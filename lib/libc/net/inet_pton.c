@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.11 1999/09/16 11:45:14 lukem Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.12 1999/09/20 04:39:14 lukem Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_pton.c,v 1.11 1999/09/16 11:45:14 lukem Exp $");
+__RCSID("$NetBSD: inet_pton.c,v 1.12 1999/09/20 04:39:14 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,12 +72,6 @@ inet_pton(af, src, dst)
 
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(dst != NULL);
-#ifdef _DIAGNOSTIC
-	if (src == NULL || dst == NULL) {
-		errno = EFAULT;
-		return (NULL);
-	}
-#endif
 
 	switch (af) {
 	case AF_INET:
@@ -315,10 +309,6 @@ inet_addr(cp)
 	struct in_addr val;
 
 	_DIAGASSERT(cp != NULL);
-#ifdef _DIAGNOSTIC
-	if (cp == NULL)
-		return (INADDR_NONE);
-#endif
 
 	if (inet_pton4(cp, (u_char *)(void *)&val.s_addr))
 		return (val.s_addr);
@@ -340,10 +330,6 @@ inet_aton(cp, addr)
 
 	_DIAGASSERT(cp != NULL);
 	_DIAGASSERT(addr != NULL);
-#ifdef _DIAGNOSTIC
-	if (cp == NULL || addr == NULL)
-		return (0);
-#endif
 
 	return inet_pton4(cp, (u_char *)(void *)&addr->s_addr);
 }

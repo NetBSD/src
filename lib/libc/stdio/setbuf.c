@@ -1,4 +1,4 @@
-/*	$NetBSD: setbuf.c,v 1.6 1999/09/16 11:45:30 lukem Exp $	*/
+/*	$NetBSD: setbuf.c,v 1.7 1999/09/20 04:39:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setbuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setbuf.c,v 1.6 1999/09/16 11:45:30 lukem Exp $");
+__RCSID("$NetBSD: setbuf.c,v 1.7 1999/09/20 04:39:32 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,12 +58,6 @@ setbuf(fp, buf)
 
 	_DIAGASSERT(fp != NULL);
 	/* buf may be NULL */
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return;
-	}
-#endif
 
 	(void) setvbuf(fp, buf, buf ? _IOFBF : _IONBF, BUFSIZ);
 }

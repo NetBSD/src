@@ -1,4 +1,4 @@
-/*	$NetBSD: l64a.c,v 1.10 1999/09/16 11:45:34 lukem Exp $	*/
+/*	$NetBSD: l64a.c,v 1.11 1999/09/20 04:39:38 lukem Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: l64a.c,v 1.10 1999/09/16 11:45:34 lukem Exp $");
+__RCSID("$NetBSD: l64a.c,v 1.11 1999/09/20 04:39:38 lukem Exp $");
 #endif
 
 #include "namespace.h"
@@ -42,12 +42,6 @@ l64a_r (value, buffer, buflen)
 	unsigned long v = value;
 
 	_DIAGASSERT(buffer != NULL);
-#ifdef _DIAGNOSTIC
-	if (buffer == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (value == 0UL) 
 		goto out;

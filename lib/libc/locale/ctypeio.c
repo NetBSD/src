@@ -1,4 +1,4 @@
-/*	$NetBSD: ctypeio.c,v 1.3 1999/09/16 11:45:08 lukem Exp $	*/
+/*	$NetBSD: ctypeio.c,v 1.4 1999/09/20 04:39:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -49,10 +49,6 @@ __loadctype(name)
 	short *new_toupper = NULL, *new_tolower = NULL;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || *name == '\0')
-		return 0;
-#endif
 
 	if ((fp = fopen(name, "r")) == NULL)
 		return 0;
@@ -142,11 +138,6 @@ __savectype(name, new_ctype, new_toupper, new_tolower)
 	_DIAGASSERT(new_ctype != NULL);
 	_DIAGASSERT(new_toupper != NULL);
 	_DIAGASSERT(new_tolower != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL || *name == '\0' || new_ctype == NULL ||
-	    new_toupper == NULL || new_tolower == NULL)
-		return 0;
-#endif
 
 	if ((fp = fopen(name, "w")) == NULL)
 		return 0;

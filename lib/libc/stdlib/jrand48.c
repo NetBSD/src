@@ -1,4 +1,4 @@
-/*	$NetBSD: jrand48.c,v 1.5 1999/09/16 11:45:34 lukem Exp $	*/
+/*	$NetBSD: jrand48.c,v 1.6 1999/09/20 04:39:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -28,10 +28,6 @@ jrand48(unsigned short xseed[3])
 {
 
 	_DIAGASSERT(xseed != NULL);
-#ifdef _DIAGNOSTIC
-	if (xseed == NULL)
-		return (0L);
-#endif
 
 	__dorand48(xseed);
 	return ((long) xseed[2] << 16) + (long) xseed[1];

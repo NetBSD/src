@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.31 1999/09/16 11:45:31 lukem Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.32 1999/09/20 04:39:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.31 1999/09/16 11:45:31 lukem Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.32 1999/09/20 04:39:33 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -289,16 +289,6 @@ vfprintf(fp, fmt0, ap)
 
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(fmt0 != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (fmt0 == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	FLOCKFILE(fp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetc.c,v 1.8 1999/09/16 11:45:26 lukem Exp $	*/
+/*	$NetBSD: fgetc.c,v 1.9 1999/09/20 04:39:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fgetc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetc.c,v 1.8 1999/09/16 11:45:26 lukem Exp $");
+__RCSID("$NetBSD: fgetc.c,v 1.9 1999/09/20 04:39:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,12 +57,6 @@ fgetc(fp)
 	int r;
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-#endif
 
 	FLOCKFILE(fp);
 	r = __sgetc(fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_ntop.c,v 1.8 1999/09/16 11:45:13 lukem Exp $	*/
+/*	$NetBSD: inet_net_ntop.c,v 1.9 1999/09/20 04:39:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_ntop.c,v 8.2 1996/08/08 06:54:44 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_net_ntop.c,v 1.8 1999/09/16 11:45:13 lukem Exp $");
+__RCSID("$NetBSD: inet_net_ntop.c,v 1.9 1999/09/20 04:39:13 lukem Exp $");
 #endif
 #endif
 
@@ -72,12 +72,6 @@ inet_net_ntop(af, src, bits, dst, size)
 
 	_DIAGASSERT(src != NULL);
 	_DIAGASSERT(dst != NULL);
-#ifdef _DIAGNOSTIC
-	if (src == NULL || dst == NULL) {
-		errno = EFAULT;
-		return (NULL);
-	}
-#endif
 
 	switch (af) {
 	case AF_INET:

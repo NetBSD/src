@@ -1,4 +1,4 @@
-/*	$NetBSD: telldir.c,v 1.10 1999/09/16 11:45:05 lukem Exp $	*/
+/*	$NetBSD: telldir.c,v 1.11 1999/09/20 04:39:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: telldir.c,v 1.10 1999/09/16 11:45:05 lukem Exp $");
+__RCSID("$NetBSD: telldir.c,v 1.11 1999/09/20 04:39:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -90,10 +90,6 @@ telldir(dirp)
 	long index;
 	struct ddloc *lp;
 
-#ifdef _DIAGNOSTIC
-	if (dirp == NULL)
-		return (-1);
-#endif
 
 	if ((lp = (struct ddloc *)malloc(sizeof(struct ddloc))) == NULL)
 		return (-1);

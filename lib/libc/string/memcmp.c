@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.10 1999/09/16 11:45:40 lukem Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.11 1999/09/20 04:39:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memcmp.c,v 1.10 1999/09/16 11:45:40 lukem Exp $");
+__RCSID("$NetBSD: memcmp.c,v 1.11 1999/09/20 04:39:45 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,10 +63,6 @@ memcmp(s1, s2, n)
 {
 	_DIAGASSERT(s1 != 0);
 	_DIAGASSERT(s2 != 0);
-#ifdef _DIAGNOSTIC
-	if (s1 == 0 || s2 == 0)
-		return (0);
-#endif
 
 	if (n != 0) {
 		const unsigned char *p1 = s1, *p2 = s2;

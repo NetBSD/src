@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyname.c,v 1.16 1999/09/16 11:45:06 lukem Exp $	*/
+/*	$NetBSD: ttyname.c,v 1.17 1999/09/20 04:39:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyname.c	8.2 (Berkeley) 1/27/94";
 #else
-__RCSID("$NetBSD: ttyname.c,v 1.16 1999/09/16 11:45:06 lukem Exp $");
+__RCSID("$NetBSD: ttyname.c,v 1.17 1999/09/20 04:39:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,12 +77,6 @@ ttyname(fd)
 	} bkey;
 
 	_DIAGASSERT(fd != -1);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (NULL);
-	}
-#endif
 
 	/* Must be a terminal. */
 	if (tcgetattr(fd, &ttyb) < 0)

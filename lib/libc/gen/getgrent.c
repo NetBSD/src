@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.37 1999/09/16 11:44:58 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.38 1999/09/20 04:39:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.37 1999/09/16 11:44:58 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.38 1999/09/20 04:39:00 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -131,10 +131,6 @@ getgrnam(name)
 	int rval;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		return (NULL);
-#endif
 
 	if (!start_gr())
 		return NULL;

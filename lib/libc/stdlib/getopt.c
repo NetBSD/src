@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.14 1999/09/16 11:45:34 lukem Exp $	*/
+/*	$NetBSD: getopt.c,v 1.15 1999/09/20 04:39:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.14 1999/09/16 11:45:34 lukem Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.15 1999/09/20 04:39:37 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,13 +81,6 @@ getopt(nargc, nargv, ostr)
 
 	_DIAGASSERT(nargv != NULL);
 	_DIAGASSERT(ostr != NULL);
-#ifdef _DIAGNOSTIC
-	if (nargv == NULL || ostr == NULL) {
-		errno = EFAULT;
-		place = EMSG;
-		return (-1);
-	}
-#endif
 
 	if (optreset || !*place) {		/* update scanning pointer */
 		optreset = 0;

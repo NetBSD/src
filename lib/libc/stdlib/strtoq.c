@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoq.c,v 1.13 1999/09/16 11:45:36 lukem Exp $	*/
+/*	$NetBSD: strtoq.c,v 1.14 1999/09/20 04:39:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoq.c,v 1.13 1999/09/16 11:45:36 lukem Exp $");
+__RCSID("$NetBSD: strtoq.c,v 1.14 1999/09/20 04:39:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,12 +74,6 @@ _strtoq(nptr, endptr, base)
 
 	_DIAGASSERT(nptr != NULL);
 	/* endptr may be NULL */
-#ifdef _DIAGNOSTIC
-	if (nptr == NULL) {
-		errno = EFAULT;
-		return ((quad_t)0);
-	}
-#endif
 
 #ifdef __GNUC__
 	/* This outrageous construct just to shut up a GCC warning. */

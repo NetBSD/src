@@ -1,4 +1,4 @@
-/*	$NetBSD: tcgetsid.c,v 1.3 1999/09/16 11:45:45 lukem Exp $	*/
+/*	$NetBSD: tcgetsid.c,v 1.4 1999/09/20 04:39:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcgetsid.c,v 1.3 1999/09/16 11:45:45 lukem Exp $");
+__RCSID("$NetBSD: tcgetsid.c,v 1.4 1999/09/20 04:39:52 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,12 +62,6 @@ tcgetsid(fd)
 	int s;
 
 	_DIAGASSERT(fd != -1);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-#endif
 
 	if (ioctl(fd, TIOCGSID, &s) < 0)
 		return ((pid_t)-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.24 1999/09/16 11:44:59 lukem Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.25 1999/09/20 04:39:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.24 1999/09/16 11:44:59 lukem Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.25 1999/09/20 04:39:01 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -356,10 +356,6 @@ _ng_parse(p, name, ng)
 	_DIAGASSERT(*p != NULL);
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(ng != NULL);
-#ifdef _DIAGNOSTIC
-	if (p == NULL || *p == NULL || name == NULL || ng == NULL)
-		return _NG_NONE;
-#endif
 
 	while (**p) {
 		if (**p == '#')
@@ -610,10 +606,6 @@ _ng_print(buf, len, ng)
 {
 	_DIAGASSERT(buf != NULL);
 	_DIAGASSERT(ng != NULL);
-#ifdef _DIAGNOSTIC
-	if (buf == NULL || ng == NULL)
-		return;
-#endif
 
 	(void) snprintf(buf, len, "(%s,%s,%s)", _NG_EMPTY(ng->ng_host),
 	    _NG_EMPTY(ng->ng_user), _NG_EMPTY(ng->ng_domain));
@@ -726,10 +718,6 @@ setnetgrent(ng)
 	char		*ng_copy;
 
 	_DIAGASSERT(ng != NULL);
-#ifdef _DIAGNOSTIC
-	if (ng == NULL)
-		return;
-#endif
 
 	/* Cleanup any previous storage */
 	if (_nghead != NULL)
@@ -756,10 +744,6 @@ getnetgrent(host, user, domain)
 	_DIAGASSERT(host != NULL);
 	_DIAGASSERT(user != NULL);
 	_DIAGASSERT(domain != NULL);
-#ifdef _DIAGNOSTIC
-	if (host == NULL || user == NULL || domain == NULL)
-		return 0;
-#endif
 
 	if (_nglist == NULL)
 		return 0;
@@ -785,10 +769,6 @@ innetgr(grp, host, user, domain)
 	/* host may be NULL */
 	/* user may be NULL */
 	/* domain may be NULL */
-#ifdef _DIAGNOSTIC
-	if (grp == NULL)
-		return 0;
-#endif
 
 	if (_ng_db == NULL)
 		_ng_db = dbopen(_PATH_NETGROUP_DB, O_RDONLY, 0, DB_HASH, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.6 1999/09/16 11:45:47 lukem Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.7 1999/09/20 04:48:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.6 1999/09/16 11:45:47 lukem Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.7 1999/09/20 04:48:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,10 +106,6 @@ ruserpass(host, aname, apass)
 	_DIAGASSERT(host != NULL);
 	_DIAGASSERT(aname != NULL);
 	_DIAGASSERT(apass != NULL);
-#ifdef _DIAGNOSTIC
-	if (host == NULL || aname == NULL || apass == NULL)
-		return (-1);
-#endif
 
 	hdir = getenv("HOME");
 	if (hdir == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: getloadavg.c,v 1.8 1999/09/16 11:44:59 lukem Exp $	*/
+/*	$NetBSD: getloadavg.c,v 1.9 1999/09/20 04:39:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getloadavg.c,v 1.8 1999/09/16 11:44:59 lukem Exp $");
+__RCSID("$NetBSD: getloadavg.c,v 1.9 1999/09/20 04:39:01 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,12 +73,6 @@ getloadavg(loadavg, nelem)
 	size_t size;
 
 	_DIAGASSERT(loadavg != NULL);
-#ifdef _DIAGNOSTIC
-	if (loadavg == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	mib[0] = CTL_VM;
 	mib[1] = VM_LOADAVG;

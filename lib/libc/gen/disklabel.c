@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.24 1999/09/16 11:44:56 lukem Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.25 1999/09/20 04:38:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.24 1999/09/16 11:44:56 lukem Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.25 1999/09/20 04:38:58 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -99,10 +99,6 @@ getdiskbyname(name)
 	long f;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL)
-		return NULL;
-#endif
 
 	if (cgetent(&buf, db_array, name) < 0)
 		return NULL;

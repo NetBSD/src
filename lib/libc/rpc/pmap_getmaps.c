@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getmaps.c,v 1.13 1999/09/16 11:45:23 lukem Exp $	*/
+/*	$NetBSD: pmap_getmaps.c,v 1.14 1999/09/20 04:39:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getmaps.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getmaps.c,v 1.13 1999/09/16 11:45:23 lukem Exp $");
+__RCSID("$NetBSD: pmap_getmaps.c,v 1.14 1999/09/20 04:39:22 lukem Exp $");
 #endif
 #endif
 
@@ -86,10 +86,6 @@ pmap_getmaps(address)
 	CLIENT *client;
 
 	_DIAGASSERT(address != NULL);
-#ifdef _DIAGNOSTIC
-	if (address == NULL)
-		return (NULL);
-#endif
 
 	minutetimeout.tv_sec = 60;
 	minutetimeout.tv_usec = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rget.c,v 1.8 1999/09/16 11:45:30 lukem Exp $	*/
+/*	$NetBSD: rget.c,v 1.9 1999/09/20 04:39:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)rget.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rget.c,v 1.8 1999/09/16 11:45:30 lukem Exp $");
+__RCSID("$NetBSD: rget.c,v 1.9 1999/09/20 04:39:32 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,12 +61,6 @@ __srget(fp)
 {
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-#endif
 
 	if (__srefill(fp) == 0) {
 		fp->_r--;

@@ -1,4 +1,4 @@
-/*	$NetBSD: get_myaddress.c,v 1.9 1999/09/16 11:45:23 lukem Exp $	*/
+/*	$NetBSD: get_myaddress.c,v 1.10 1999/09/20 04:39:21 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)get_myaddress.c 1.4 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)get_myaddress.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: get_myaddress.c,v 1.9 1999/09/16 11:45:23 lukem Exp $");
+__RCSID("$NetBSD: get_myaddress.c,v 1.10 1999/09/20 04:39:21 lukem Exp $");
 #endif
 #endif
 
@@ -67,10 +67,6 @@ get_myaddress(addr)
 	struct sockaddr_in *addr;
 {
 	_DIAGASSERT(addr != NULL);
-#ifdef _DIAGNOSTIC
-	if (addr == NULL)
-		return (1);
-#endif
 
 	memset((void *) addr, 0, sizeof(*addr));
 	addr->sin_family = AF_INET;

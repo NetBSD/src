@@ -1,4 +1,4 @@
-/*	$NetBSD: res_comp.c,v 1.15 1999/09/16 11:45:17 lukem Exp $	*/
+/*	$NetBSD: res_comp.c,v 1.16 1999/09/20 04:39:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_comp.c,v 8.12 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_comp.c,v 1.15 1999/09/16 11:45:17 lukem Exp $");
+__RCSID("$NetBSD: res_comp.c,v 1.16 1999/09/20 04:39:17 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,10 +106,6 @@ dn_expand(msg, eomorig, comp_dn, exp_dn, length)
 	_DIAGASSERT(eomorig != NULL);
 	_DIAGASSERT(comp_dn != NULL);
 	_DIAGASSERT(exp_dn != NULL);
-#ifdef _DIAGNOSTIC
-	if (msg == NULL || eomorig == NULL || comp_dn == NULL || exp_dn == NULL)
-		return (-1);
-#endif
 
 	dn = exp_dn;
 	cp = comp_dn;
@@ -200,10 +196,6 @@ dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr)
 	_DIAGASSERT(comp_dn != NULL);
 	/* dnptr may be NULL */
 	/* lastdnptr may be NULL */
-#ifdef _DIAGNOSTIC
-	if (exp_dn == NULL || comp_dn == NULL)
-		return (-1);
-#endif
 
 	dn = (const u_char *)exp_dn;
 	cp = comp_dn;
@@ -285,10 +277,6 @@ __dn_skipname(comp_dn, eom)
 
 	_DIAGASSERT(comp_dn != NULL);
 	_DIAGASSERT(eom != NULL);
-#ifdef _DIAGNOSTIC
-	if (comp_dn == NULL || eom == NULL)
-		return (-1);
-#endif
 
 	cp = comp_dn;
 	while (cp < eom && (n = *cp++)) {
@@ -415,10 +403,6 @@ res_hnok(dn)
 	int pch = PERIOD, ch = *dn++;
 
 	_DIAGASSERT(dn != NULL);
-#ifdef _DIAGNOSTIC
-	if (dn == NULL)
-		return (0);
-#endif
 
 	while (ch != '\0') {
 		int nch = *dn++;
@@ -449,10 +433,6 @@ res_ownok(dn)
 	const char *dn;
 {
 	_DIAGASSERT(dn != NULL);
-#ifdef _DIAGNOSTIC
-	if (dn == NULL)
-		return (0);
-#endif
 
 	if (asterchar(dn[0])) {
 		if (periodchar(dn[1]))
@@ -474,10 +454,6 @@ res_mailok(dn)
 	int ch, escaped = 0;
 
 	_DIAGASSERT(dn != NULL);
-#ifdef _DIAGNOSTIC
-	if (dn == NULL)
-		return (0);
-#endif
 
 	/* "." is a valid missing representation */
 	if (*dn == '\0')
@@ -510,10 +486,6 @@ res_dnok(dn)
 	int ch;
 
 	_DIAGASSERT(dn != NULL);
-#ifdef _DIAGNOSTIC
-	if (dn == NULL)
-		return (0);
-#endif
 
 	while ((ch = *dn++) != '\0')
 		if (!domainchar(ch))
@@ -535,10 +507,6 @@ _getshort(msgp)
 	register u_int16_t u;
 
 	_DIAGASSERT(msgp != NULL);
-#ifdef _DIAGNOSTIC
-	if (msgp == NULL)
-		return (0);
-#endif
 
 	GETSHORT(u, msgp);
 	return (u);
@@ -551,10 +519,6 @@ _getlong(msgp)
 	register u_int32_t u;
 
 	_DIAGASSERT(msgp != NULL);
-#ifdef _DIAGNOSTIC
-	if (msgp == NULL)
-		return (0);
-#endif
 
 	GETLONG(u, msgp);
 	return (u);
@@ -571,10 +535,6 @@ __putshort(s, msgp)
 {
 
 	_DIAGASSERT(msgp != NULL);
-#ifdef _DIAGNOSTIC
-	if (msgp == NULL)
-		return;
-#endif
 
 	PUTSHORT(s, msgp);
 }
@@ -586,10 +546,6 @@ __putlong(l, msgp)
 {
 
 	_DIAGASSERT(msgp != NULL);
-#ifdef _DIAGNOSTIC
-	if (msgp == NULL)
-		return;
-#endif
 
 	PUTLONG(l, msgp);
 }

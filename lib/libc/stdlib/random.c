@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.17 1999/09/16 11:45:35 lukem Exp $	*/
+/*	$NetBSD: random.c,v 1.18 1999/09/20 04:39:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.17 1999/09/16 11:45:35 lukem Exp $");
+__RCSID("$NetBSD: random.c,v 1.18 1999/09/20 04:39:41 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -299,10 +299,6 @@ initstate(seed, arg_state, n)
 	long *long_arg_state;
 
 	_DIAGASSERT(arg_state != NULL);
-#ifdef _DIAGNOSTIC
-	if (arg_state == NULL)
-		return (NULL);
-#endif
 
 	long_arg_state = (long *)(void *)arg_state;
 
@@ -375,10 +371,6 @@ setstate(arg_state)
 	void *ostate = (void *)(&state[-1]);
 
 	_DIAGASSERT(arg_state != NULL);
-#ifdef _DIAGNOSTIC
-	if (arg_state == NULL)
-		return (NULL);
-#endif
 
 	new_state = (long *)(void *)arg_state;
 	type = (int)(new_state[0] % MAX_TYPES);

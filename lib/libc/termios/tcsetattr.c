@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsetattr.c,v 1.5 1999/09/16 11:45:45 lukem Exp $	*/
+/*	$NetBSD: tcsetattr.c,v 1.6 1999/09/20 04:39:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcsetattr.c,v 1.5 1999/09/16 11:45:45 lukem Exp $");
+__RCSID("$NetBSD: tcsetattr.c,v 1.6 1999/09/20 04:39:53 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,16 +63,6 @@ tcsetattr(fd, opt, t)
 
 	_DIAGASSERT(fd != -1);
 	_DIAGASSERT(t != NULL);
-#ifdef _DIAGNOSTIC
-	if (fd == -1) {
-		errno = EBADF;
-		return (-1);
-	}
-	if (t == NULL) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
 	if (opt & TCSASOFT) {
 		localterm = *t;

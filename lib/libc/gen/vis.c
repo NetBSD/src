@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.12 1999/09/16 11:45:07 lukem Exp $	*/
+/*	$NetBSD: vis.c,v 1.13 1999/09/20 04:39:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: vis.c,v 1.12 1999/09/16 11:45:07 lukem Exp $");
+__RCSID("$NetBSD: vis.c,v 1.13 1999/09/20 04:39:07 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,10 +70,6 @@ vis(dst, c, flag, nextc)
 {
 
 	_DIAGASSERT(dst != NULL);
-#ifdef _DIAGNOSTIC
-	if (dst == NULL)
-		return (NULL);
-#endif
 
 	if (((u_int)c <= UCHAR_MAX && isascii(c) && isgraph(c)) ||
 	   ((flag & VIS_SP) == 0 && c == ' ') ||
@@ -184,10 +180,6 @@ strvis(dst, src, flag)
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
-#ifdef _DIAGNOSTIC
-	if (dst == NULL || src == NULL)
-		return (0);
-#endif
 
 	for (start = dst; (c = *src) != '\0';)
 		dst = vis(dst, c, flag, *++src);
@@ -207,10 +199,6 @@ strvisx(dst, src, len, flag)
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
-#ifdef _DIAGNOSTIC
-	if (dst == NULL || src == NULL)
-		return (0);
-#endif
 
 	for (start = dst; len > 1; len--) {
 		c = *src;

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.8 1999/09/16 11:45:14 lukem Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.9 1999/09/20 04:39:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.8 1999/09/16 11:45:14 lukem Exp $");
+__RCSID("$NetBSD: inet_network.c,v 1.9 1999/09/20 04:39:14 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,10 +69,6 @@ inet_network(cp)
 	register int i;
 
 	_DIAGASSERT(cp != NULL);
-#ifdef _DIAGNOSTIC
-	if (cp == NULL)
-		return (INADDR_NONE);
-#endif
 
 again:
 	val = 0; base = 10;

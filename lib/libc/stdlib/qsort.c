@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.11 1999/09/16 11:45:35 lukem Exp $	*/
+/*	$NetBSD: qsort.c,v 1.12 1999/09/20 04:39:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qsort.c,v 1.11 1999/09/16 11:45:35 lukem Exp $");
+__RCSID("$NetBSD: qsort.c,v 1.12 1999/09/20 04:39:40 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -114,12 +114,6 @@ qsort(a, n, es, cmp)
 
 	_DIAGASSERT(a != NULL);
 	_DIAGASSERT(cmp != NULL);
-#ifdef _DIAGNOSTIC
-	if (n == 0)
-		return;
-	if (a == NULL || cmp == NULL)
-		return;
-#endif
 
 loop:	SWAPINIT(a, es);
 	swap_cnt = 0;

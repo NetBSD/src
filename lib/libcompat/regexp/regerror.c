@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: regerror.c,v 1.7 1999/09/16 11:45:48 lukem Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.8 1999/09/20 04:48:04 lukem Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -14,10 +14,6 @@ const char *s;
 {
 
 	_DIAGASSERT(s != NULL);
-#ifdef _DIAGNOSTIC
-	if (s == NULL)
-		s = "ERROR: __compat_regerror() called with s == NULL";
-#endif
 
 #ifdef ERRAVAIL
 	error("regexp: %s", s);
