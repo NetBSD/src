@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.40 1999/06/23 10:37:10 mjl Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.41 1999/06/23 10:41:08 mjl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -64,7 +64,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
-vender LASAT			0x3401	Lasat Communications A/S
+#define	PCMCIA_VENDOR_LASAT	0x3401	/* Lasat Communications A/S */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
