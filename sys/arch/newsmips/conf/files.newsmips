@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.8 2000/03/14 15:56:56 oster Exp $
+#	$NetBSD: files.newsmips,v 1.9 2000/10/12 03:18:41 onoe Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -94,7 +94,11 @@ attach sn at ap with sn_ap
 file arch/newsmips/apbus/if_sn.c		sn
 file arch/newsmips/apbus/if_sn_ap.c		sn_ap
 
+attach tlp at ap with tlp_ap
+file arch/newsmips/apbus/if_tlp_ap.c		tlp_ap
+
 file arch/newsmips/newsmips/autoconf.c
+file arch/newsmips/newsmips/bus.c
 file arch/newsmips/newsmips/conf.c
 file arch/newsmips/newsmips/machdep.c
 file arch/newsmips/newsmips/news3400.c		hb
@@ -115,6 +119,9 @@ device sc: scsi
 attach sc at hb
 file arch/newsmips/dev/scsi_1185.c		sc needs-count
 file arch/newsmips/dev/sc_wrap.c		sc
+
+# network devices MII bus
+include "dev/mii/files.mii"
 
 #
 # Memory Disk for install floppy
