@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.24 2003/02/11 01:21:46 itohy Exp $	*/
+/*	$NetBSD: maple.c,v 1.25 2003/02/15 02:36:52 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -118,9 +118,9 @@ static char *	maple_unit_name(char *, int port, int subunit);
 static void	maple_begin_txbuf(struct maple_softc *);
 static int	maple_end_txbuf(struct maple_softc *);
 static void	maple_queue_command(struct maple_softc *, struct maple_unit *,
-		    int command, int datalen, void *dataaddr);
+		    int command, int datalen, const void *dataaddr);
 static void	maple_write_command(struct maple_softc *, struct maple_unit *,
-		    int, int, void *);
+		    int, int, const void *);
 static void	maple_start(struct maple_softc *sc);
 static void	maple_start_poll(struct maple_softc *);
 static void	maple_check_subunit_change(struct maple_softc *,
@@ -427,7 +427,7 @@ static const int8_t subunit_code[] = { 0x20, 0x01, 0x02, 0x04, 0x08, 0x10 };
 
 static void
 maple_queue_command(struct maple_softc *sc, struct maple_unit *u,
-	int command, int datalen, void *dataaddr)
+	int command, int datalen, const void *dataaddr)
 {
 	int to, from;
 	u_int32_t *p = sc->sc_txpos;
@@ -454,7 +454,7 @@ maple_queue_command(struct maple_softc *sc, struct maple_unit *u,
 
 	/* Copy parameter data, if any */
 	if (datalen > 0) {
-		u_int32_t *param = dataaddr;
+		const u_int32_t *param = dataaddr;
 		int i;
 		for (i = 0; i < datalen; i++)
 			*p++ = *param++;
@@ -467,7 +467,7 @@ maple_queue_command(struct maple_softc *sc, struct maple_unit *u,
 
 static void
 maple_write_command(struct maple_softc *sc, struct maple_unit *u, int command,
-	int datalen, void *dataaddr)
+	int datalen, const void *dataaddr)
 {
 #if defined(MAPLE_DEBUG) && MAPLE_DEBUG > 2
 	char buf[16];
@@ -830,7 +830,7 @@ maple_detach_unit(struct maple_softc *sc, struct maple_unit *u)
  */
 void
 maple_command(struct device *dev, struct maple_unit *u, int func,
-	int command, int datalen, void *dataaddr, int flags)
+	int command, int datalen, const void *dataaddr, int flags)
 {
 	struct maple_softc *sc = (void *) dev;
 	struct maple_func *fn;
@@ -971,7 +971,7 @@ maple_unit_ping(struct maple_softc *sc)
 	struct maple_unit *u;
 	struct maple_func *fn;
 #ifdef MAPLE_MEMCARD_PING_HACK
-	static u_int32_t memcard_ping_arg[2] = {
+	static const u_int32_t memcard_ping_arg[2] = {
 		0x02000000,	/* htonl(MAPLE_FUNC(MAPLE_FN_MEMCARD)) */
 		0		/* pt (1 byte) and unused 3 bytes */
 	};

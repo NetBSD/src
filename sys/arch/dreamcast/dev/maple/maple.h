@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.h,v 1.6 2002/12/06 15:47:22 itohy Exp $	*/
+/*	$NetBSD: maple.h,v 1.7 2003/02/15 02:36:52 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -143,8 +143,8 @@ extern void	maple_enable_unit_ping(struct device *, struct maple_unit *,
 extern void	maple_enable_periodic(struct device *, struct maple_unit *,
 		    int /*func*/, int /*on*/);
 extern void	maple_command(struct device *, struct maple_unit *,
-		    int /*func*/, int /*command*/, int /*datalen*/, void *,
-		    int /*flags*/);
+		    int /*func*/, int /*command*/, int /*datalen*/,
+		    const void *, int /*flags*/);
 extern u_int32_t maple_get_function_data(struct maple_devinfo *, int);
 extern void	maple_run_polling(struct device *);
 extern int	maple_unit_ioctl(struct device *, struct maple_unit *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: maplevar.h,v 1.6 2003/02/11 01:21:46 itohy Exp $	*/
+/*	$NetBSD: maplevar.h,v 1.7 2003/02/15 02:36:53 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ struct maple_func {
 	/* command request */
 	int		f_command;
 	int		f_datalen;
-	void		*f_dataaddr;
+	const void	*f_dataaddr;
 	enum maple_command_stat {
 		MAPLE_CMDSTAT_NONE,		/* not in queue */
 		MAPLE_CMDSTAT_ASYNC,		/* process immediately */
@@ -148,7 +148,7 @@ struct maple_unit {
 	/* for restarting command */
 	int		u_command;
 	int		u_datalen;
-	void		*u_dataaddr;
+	const void	*u_dataaddr;
 	enum maple_dma_stat u_saved_dma_stat;
 	int		u_retrycnt;
 #define MAPLE_RETRY_MAX	100	/* ~2s */
