@@ -33,7 +33,7 @@
 ######################################################################
 #
 # If you need to build a sup for export outside of North America use
-# 	"make MAKE_EXPORT="
+# 	"make EXPORTABLE_SYSTEM=true"
 # this will remove (not use) any vestiges of crypt code that is present
 # on the system.
 #
@@ -71,7 +71,7 @@ MAN8			= supservers.8
 AFS_LIBPATH		= /usr/afs/lib
 AFS_LIBS		= -L${AFS_LIBPATH}/afs -lkauth -lprot -L${AFS_LIBPATH} -lubik -lauth -lrxkad -lsys -ldes -lrx -llwp -lcmd -lcom_err -lc ${AFS_LIBPATH}/afs/util.a
 
-.if exists(/usr/lib/libcrypt.a) && !defined(MAKE_EXPORT)
+.if exists(/usr/lib/libcrypt.a) && !defined(EXPORTABLE_SYSTEM)
 NETBSD_LIBS		= -lcrypt
 .else
 NETBSD_LIBS		=
@@ -86,9 +86,9 @@ supscan_OFILES		= supscan.o stree.o scan.o
 
 
 all: ${PROGRAMS}
-.if exists(/usr/lib/libcrypt.a) && !defined(MAKE_EXPORT)
+.if exists(/usr/lib/libcrypt.a) && !defined(EXPORTABLE_SYSTEM)
 	@echo "WARNING: You have built a NON-exportable version of sup because it uses crypt()!"
-	@echo "	To build a crypt-clean version define MAKE_EXPORT=1 and make."
+	@echo "	To build a crypt-clean version define EXPORTABLE_SYSTEM=true and make."
 .endif
 
 sup: ${sup_OFILES} ${LIBS}
@@ -113,7 +113,7 @@ install: ${PROGRAMS}
 	install -c -m 444 -o bin -g bin ${MAN8} ${NETBSD_MAN8}
 
 netcrypt.c: crypt.diffs
-	if [ -d crypt -a "X$$MAKE_EXPORT" = X ]; then \
+	if [ -d crypt -a "X$$EXPORTABLE_SYSTEM" = X ]; then \
 		ed - crypt/crypt.c < crypt.diffs; \
 	else \
         	echo "[ Using netcryptvoid.c ]"; \
