@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.3 2000/12/09 17:52:45 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.4 2000/12/14 20:40:29 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.3 2000/12/09 17:52:45 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.4 2000/12/14 20:40:29 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -226,11 +226,17 @@ static int
 podulebus_print(void *aux, char const *pnp)
 {
 	struct podulebus_attach_args *pa = aux;
+	char *p, *q;
 
 	if (pnp) {
-		if (pa->pa_descr)
+		if (pa->pa_descr) {
+			/* Restrict description to ASCII graphic characters. */
+			for (p = q = pa->pa_descr; *p != '\0'; p++)
+				if (*p >= 32 && *p < 126)
+					*q++ = *p;
+			*q++ = 0;
 			printf("%s", pa->pa_descr);
-		else
+		} else
 			printf("podule");
 		printf(" <%04x:%04x> at %s",
 		       pa->pa_manufacturer, pa->pa_product, pnp);
