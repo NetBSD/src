@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 1998/09/12 19:14:59 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88 1998/09/17 02:02:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -51,6 +51,7 @@
 #include "opt_natm.h"
 #include "opt_uvm.h"
 #include "opt_pmap_new.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,43 +534,70 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 void
 sendsig(catcher, sig, mask, code)
 	sig_t catcher;
-	int sig, mask;
+	int sig;
+	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
-	register struct reg *regs;
-	register struct sigframe *fp;
+	struct proc *p = curproc;
+	struct reg *regs;
+	struct sigframe *fp, frame;
 	struct sigacts *ps = p->p_sigacts;
-	int oonstack;
-	extern char sigcode[], esigcode[];
+	int onstack;
 
 	regs = p->p_md.md_regs;
-	oonstack = ps->ps_sigstk.ss_flags & SS_ONSTACK;
 
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	if (onstack)
+		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
+						  psp->ps_sigstk.ss_size);
+	else
+		fp = (struct sigframe *)regs->r_sp;
+	fp--;
+
+	/* Build stack frame for signal trampoline. */
+	frame.sf_signum = sig;
+	frame.sf_code = code;
+	frame.sf_scp = &fp->sf_sc;
+	frame.sf_handler = catcher;
+
+	/* Save the register context. */
+	frame.sf_sc.sc_fp = regs->r_fp;
+	frame.sf_sc.sc_sp = regs->r_sp;
+	frame.sf_sc.sc_pc = regs->r_pc;
+	frame.sf_sc.sc_ps = regs->r_psr;
+	frame.sf_sc.sc_sb = regs->r_sb;
+	frame.sf_sc.sc_reg[REG_R7] = regs->r_r7;
+	frame.sf_sc.sc_reg[REG_R6] = regs->r_r6;
+	frame.sf_sc.sc_reg[REG_R5] = regs->r_r5;
+	frame.sf_sc.sc_reg[REG_R4] = regs->r_r4;
+	frame.sf_sc.sc_reg[REG_R3] = regs->r_r3;
+	frame.sf_sc.sc_reg[REG_R2] = regs->r_r2;
+	frame.sf_sc.sc_reg[REG_R1] = regs->r_r1;
+	frame.sf_sc.sc_reg[REG_R0] = regs->r_r0;
+
+	/* Save signal stack. */
+	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Save the signal mask. */
+	frame.sf_sc.sc_mask = *mask;
+
+#ifdef COMPAT_13
 	/*
-	 * Allocate space for the signal handler context.
+	 * XXX We always have to save an old style signal mask because
+	 * XXX we might be delivering a signal to a process which will
+	 * XXX escape from the signal in a non-standard way and invoke
+	 * XXX sigreturn() directly.
 	 */
-	if ((ps->ps_flags & SAS_ALTSTACK) && !oonstack &&
-	    (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)((caddr_t)ps->ps_sigstk.ss_sp +
-		    ps->ps_sigstk.ss_size - sizeof(struct sigframe));
-		ps->ps_sigstk.ss_flags |= SS_ONSTACK;
-	} else {
-		fp = (struct sigframe *)regs->r_sp - 1;
-	}
-
-	if ((unsigned)fp <= (unsigned)p->p_vmspace->vm_maxsaddr + MAXSSIZ - ctob(p->p_vmspace->vm_ssize))
-#if defined(UVM)
-		(void) uvm_grow(p, (unsigned)fp);
-#else
-		(void) grow(p, (unsigned)fp);
+	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
 #endif
 
-#if defined(UVM)
-	if (uvm_useracc((caddr_t)fp, sizeof (struct sigframe), B_WRITE) == 0) {
-#else
-	if (useracc((caddr_t)fp, sizeof (struct sigframe), B_WRITE) == 0) {
-#endif		/*
+	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
@@ -577,38 +605,15 @@ sendsig(catcher, sig, mask, code)
 		/* NOTREACHED */
 	}
 
-	/* 
-	 * Build the argument list for the signal handler.
-	 */
-	fp->sf_signum = sig;
-	fp->sf_code = code;
-	fp->sf_scp = &fp->sf_sc;
-	fp->sf_handler = catcher;
-
-	/*
-	 * Build the signal context to be used by sigreturn.
-	 */
-	fp->sf_sc.sc_onstack = oonstack;
-	fp->sf_sc.sc_mask = mask;
-	fp->sf_sc.sc_fp = regs->r_fp;
-	fp->sf_sc.sc_sp = regs->r_sp;
-	fp->sf_sc.sc_pc = regs->r_pc;
-	fp->sf_sc.sc_ps = regs->r_psr;
-	fp->sf_sc.sc_sb = regs->r_sb;
-	fp->sf_sc.sc_reg[REG_R7] = regs->r_r7;
-	fp->sf_sc.sc_reg[REG_R6] = regs->r_r6;
-	fp->sf_sc.sc_reg[REG_R5] = regs->r_r5;
-	fp->sf_sc.sc_reg[REG_R4] = regs->r_r4;
-	fp->sf_sc.sc_reg[REG_R3] = regs->r_r3;
-	fp->sf_sc.sc_reg[REG_R2] = regs->r_r2;
-	fp->sf_sc.sc_reg[REG_R1] = regs->r_r1;
-	fp->sf_sc.sc_reg[REG_R0] = regs->r_r0;
-
 	/*
 	 * Build context to run handler in.
 	 */
 	regs->r_sp = (int)fp;
-	regs->r_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	regs->r_pc = (int)psp->ps_sigcode;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -622,16 +627,16 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-sys_sigreturn(p, v, retval)
+sys___sigreturn14(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct sys_sigreturn_args /* {
+	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	register struct sigcontext *scp;
-	register struct reg *regs = p->p_md.md_regs;
+	struct sigcontext *scp, context;
+	struct reg *regs;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -639,41 +644,40 @@ sys_sigreturn(p, v, retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = SCARG(uap, sigcntxp);
-#if defined(UVM)
-	if (uvm_useracc((caddr_t)scp, sizeof (*scp), B_READ) == 0)
-#else
-	if (useracc((caddr_t)scp, sizeof (*scp), B_READ) == 0)
-#endif
-		return(EINVAL);
+	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
+		return (EFAULT);
+
+	/* Restore the register context. */
+	regs = p->p_md.md_regs;
 
 	/*
 	 * Check for security violations.
 	 */
-	if (((scp->sc_ps ^ regs->r_psr) & PSL_USERSTATIC) != 0)
+	if (((context.sc_ps ^ regs->r_psr) & PSL_USERSTATIC) != 0)
 		return (EINVAL);
 
-	if (scp->sc_onstack & 01)
+	regs->r_fp  = context.sc_fp;
+	regs->r_sp  = context.sc_sp;
+	regs->r_pc  = context.sc_pc;
+	regs->r_psr = context.sc_ps;
+	regs->r_sb  = context.sc_sb;
+	regs->r_r7  = context.sc_reg[REG_R7];
+	regs->r_r6  = context.sc_reg[REG_R6];
+	regs->r_r5  = context.sc_reg[REG_R5];
+	regs->r_r4  = context.sc_reg[REG_R4];
+	regs->r_r3  = context.sc_reg[REG_R3];
+	regs->r_r2  = context.sc_reg[REG_R2];
+	regs->r_r1  = context.sc_reg[REG_R1];
+	regs->r_r0  = context.sc_reg[REG_R0];
+
+	/* Restore signal stack. */
+	if (context.sc_onstack & SS_ONSTACK)
 		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	p->p_sigmask = scp->sc_mask & ~sigcantmask;
 
-	/*
-	 * Restore signal context.
-	 */
-	regs->r_fp  = scp->sc_fp;
-	regs->r_sp  = scp->sc_sp;
-	regs->r_pc  = scp->sc_pc;
-	regs->r_psr = scp->sc_ps;
-	regs->r_sb  = scp->sc_sb;
-	regs->r_r7  = scp->sc_reg[REG_R7];
-	regs->r_r6  = scp->sc_reg[REG_R6];
-	regs->r_r5  = scp->sc_reg[REG_R5];
-	regs->r_r4  = scp->sc_reg[REG_R4];
-	regs->r_r3  = scp->sc_reg[REG_R3];
-	regs->r_r2  = scp->sc_reg[REG_R2];
-	regs->r_r1  = scp->sc_reg[REG_R1];
-	regs->r_r0  = scp->sc_reg[REG_R0];
+	/* Restore signal mask. */
+	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
 
 	return(EJUSTRETURN);
 }
