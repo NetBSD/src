@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2003/03/07 09:46:52 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2003/03/08 00:22:30 lukem Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -74,6 +74,6 @@ snap_md_post:
 ISOBOOTFILEDIR!=cd ${.CURDIR}/../distrib/${MACHINE}/bootfs && ${PRINTOBJDIR}
 ISOBOOTFILE?=	${ISOBOOTFILEDIR}/boot.fs
 
-iso-image_md_post:
+iso-image-md-post:
 	SUNLABEL=${SUNLABEL:Q} sh ${NETBSDSRCDIR}/distrib/common/sunbootcd.sh \
 	    ${CDROM.image} - - - - ${ISOBOOTFILE}
