@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.22 2003/10/21 02:30:03 fvdl Exp $	*/
+/*	$NetBSD: atactl.c,v 1.23 2003/11/30 14:07:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.22 2003/10/21 02:30:03 fvdl Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.23 2003/11/30 14:07:49 yamt Exp $");
 #endif
 
 
@@ -110,6 +110,8 @@ struct command commands[] = {
  */
 
 struct bitinfo ata_caps[] = {
+	{ WDC_CAP_DMA, "DMA" },
+	{ WDC_CAP_LBA, "LBA" },
 	{ ATA_CAP_STBY, "ATA standby timer values" },
 	{ WDC_CAP_IORDY, "IORDY operation" },
 	{ WDC_CAP_IORDY_DSBL, "IORDY disabling" },
@@ -121,6 +123,9 @@ struct bitinfo ata_vers[] = {
 	{ WDC_VER_ATA2,	"ATA-2" },
 	{ WDC_VER_ATA3,	"ATA-3" },
 	{ WDC_VER_ATA4,	"ATA-4" },
+	{ WDC_VER_ATA5,	"ATA-5" },
+	{ WDC_VER_ATA6,	"ATA-6" },
+	{ WDC_VER_ATA7,	"ATA-7" },
 	{ 0, NULL },
 };
 
@@ -143,11 +148,36 @@ struct bitinfo ata_cmd_set1[] = {
 };
 
 struct bitinfo ata_cmd_set2[] = {
+	{ ATA_CMD2_FCE, "FLUSH CACHE EXT command" },
+	{ WDC_CMD2_FC, "FLUSH CACHE command" },
+	{ WDC_CMD2_DCO, "Device Configuration Overlay feature set" },
+	{ ATA_CMD2_LBA48, "48-bit Address feature set" },
+	{ WDC_CMD2_AAM, "Automatic Acoustic Management feature set" },
+	{ WDC_CMD2_SM, "SET MAX security extention" },
+	{ WDC_CMD2_SFREQ, "SET FEATURES required to spin-up after power-up" },
+	{ WDC_CMD2_PUIS, "Power-Up In Standby feature set" },
 	{ WDC_CMD2_RMSN, "Removable Media Status Notification feature set" },
 	{ ATA_CMD2_APM, "Advanced Power Management feature set" },
 	{ ATA_CMD2_CFA, "CFA feature set" },
 	{ ATA_CMD2_RWQ, "READ/WRITE DMA QUEUED commands" },
 	{ WDC_CMD2_DM, "DOWNLOAD MICROCODE command" },
+	{ 0, NULL },
+};
+
+struct bitinfo ata_cmd_ext[] = {
+	{ ATA_CMDE_TLCONT, "Time-limited R/W feature set R/W Continuous mode" },
+	{ ATA_CMDE_TL, "Time-limited Read/Write" },
+	{ ATA_CMDE_URGW, "URG bit for WRITE STREAM DMA/PIO" },
+	{ ATA_CMDE_URGR, "URG bit for READ STREAM DMA/PIO" },
+	{ ATA_CMDE_WWN, "World Wide name" },
+	{ ATA_CMDE_WQFE, "WRITE DMA QUEUED FUA EXT command" },
+	{ ATA_CMDE_WFE, "WRITE DMA/MULTIPLE FUA EXT commands" },
+	{ ATA_CMDE_GPL, "General Purpose Logging feature set" },
+	{ ATA_CMDE_STREAM, "Streaming feature set" },
+	{ ATA_CMDE_MCPTC, "Media Card Pass Through Command feature set" },
+	{ ATA_CMDE_MS, "Media serial number" },
+	{ ATA_CMDE_SST, "SMART self-test" },
+	{ ATA_CMDE_SEL, "SMART error logging" },
 	{ 0, NULL },
 };
 
@@ -529,6 +559,9 @@ device_identify(int argc, char *argv[])
 		printf("Command set support:\n");
 		print_bitinfo("\t", "\n", inqbuf->atap_cmd_set1, ata_cmd_set1);
 		print_bitinfo("\t", "\n", inqbuf->atap_cmd_set2, ata_cmd_set2);
+		if (inqbuf->atap_cmd_ext != 0 && inqbuf->atap_cmd_ext != 0xffff)
+			print_bitinfo("\t", "\n", inqbuf->atap_cmd_ext,
+			    ata_cmd_ext);
 	}
 
 	if (inqbuf->atap_cmd_def != 0 && inqbuf->atap_cmd_def != 0xffff) {
