@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.3 2001/07/13 02:42:39 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.4 2001/09/25 19:44:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,12 +48,13 @@
 #include "pthread.h"
 #include "pthread_int.h"
 
-struct sigaction pt_sigacts[_NSIG];
-pt_spin_t	pt_sigacts_lock;
+static pt_spin_t	pt_sigacts_lock;
+static struct sigaction pt_sigacts[_NSIG];
 
-sigset_t	pt_process_sigmask;
-sigset_t	pt_process_siglist;
-pt_spin_t	pt_process_siglock;
+static pt_spin_t	pt_process_siglock;
+static sigset_t	pt_process_sigmask;
+static sigset_t	pt_process_siglist;
+
 
 static void	pthread__signal_tramp(int sig, int code, struct 
     sigaction *act, ucontext_t *uc);
@@ -64,8 +65,13 @@ int
 pthread_kill(pthread_t thread, int sig)
 {
 
+	/* We only let the thread handle this signal if the action for
+	 * the signal is an explicit handler. Otherwise we feed it to
+	 * the kernel so that it can affect the whole process.
+	 */
+
 	/* XXX implement me */
-	return 0;
+	return -1;
 }
 
 
@@ -139,6 +145,8 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 			__sigandset(set, &pt_process_sigmask);
 			sigprocmask(SIG_SETMASK, &pt_process_sigmask, NULL);
 			pthread_spinunlock(self, &pt_process_siglock);
+			/* Take any signals that were pending. */
+			/* XXX implement me! */
 		} else 
 			retval = EINVAL;
 		pthread_spinunlock(self,&self->pt_siglock);
@@ -207,10 +215,8 @@ pthread__signal(pthread_t t, int sig, int code)
 	}
 
 	/* We now have a signal and a victim. */
-
-
-	/* Check if the victim will accept the signal. */
 	pthread_spinlock(self, &target->pt_siglock);
+	/* Check if the victim will still accept the signal. */
 	if (sigismember(&target->pt_sigmask, sig)) {
 		/* If this wasn't a targeted kill, then perhaps we need to find
 		 * some other thread that has the signal unblocked. 
@@ -222,7 +228,10 @@ pthread__signal(pthread_t t, int sig, int code)
 		
 	} else {
 	
-		/* Ensure the victim is not running. */
+		/* Ensure the victim is not running.
+		 * In a MP world, it could be on another processor somewhere.
+		 * This is where sa_preempt() comes in handy.
+		 */
 
 		/* XXX
 		 * remove from runqueue? 
@@ -234,13 +243,9 @@ pthread__signal(pthread_t t, int sig, int code)
 		 * on the stack. 
 		 */
 		
-		/* XXX this is a gross hack, but makecontext does what
-		 * we want.
-		 */
-
 		/* Note that we are blatantly ignoring SIGALTSTACK. */
-
-		uc = target->pt_uc - 1;
+		uc = (ucontext_t *)((char *)target->pt_uc - 
+		    STACKSPACE - sizeof(ucontext_t));
 		_getcontext_u(uc);
 		uc->uc_stack.ss_sp = uc;
 		uc->uc_stack.ss_size = 0;
@@ -269,6 +274,9 @@ static void pthread__signal_tramp(int sig, int code, struct sigaction *act,
        	handler(sig, code, NULL);
        	pthread_sigmask(SIG_UNBLOCK, &set, NULL);
 
+	/* Jump back to what we were doing before we were interrupted
+	 * by a signal.
+	 */
 	_setcontext_u(uc);
        	/* NOTREACHED */
 }
