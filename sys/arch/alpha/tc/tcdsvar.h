@@ -1,4 +1,4 @@
-/*	$NetBSD: tcdsvar.h,v 1.5 1996/11/13 21:13:38 cgd Exp $	*/
+/*	$NetBSD: tcdsvar.h,v 1.5.8.1 1997/03/11 20:50:30 is Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@ struct tcds_slotconfig {
 	 */
 	int	sc_slot;
 	struct tcds_softc *sc_tcds;		/* to frob TCDS regs */
-	struct esp_softc *sc_esp;		/* to frob child's regs */
+	struct asc_softc *sc_asc;		/* to frob child's regs */
 	int	(*sc_intrhand) __P((void *));	/* intr. handler */
 	void	*sc_intrarg;			/* intr. handler arg. */
 

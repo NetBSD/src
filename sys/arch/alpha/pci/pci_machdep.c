@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.7 1996/11/19 04:57:32 cgd Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7.8.1 1997/03/11 20:50:19 is Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -73,7 +73,7 @@ pci_display_console(iot, memt, pc, bus, device, function)
 		    bus, device, function);
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 
-	match = 0;
+	nmatch = match = 0; /* XXX really only if we've got FBs configured */
 	fn = NULL;
 
 #if NVGA_PCI
