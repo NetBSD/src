@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.9 1996/05/17 16:17:21 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.10 1996/06/12 21:09:55 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -417,25 +417,6 @@ podulescan(dev)
         
 		podule = &podules[loop];
 
-/* Get information from the podule header */
-
-		podule->flags0 = address[0];
-		podule->flags1 = address[4];
-		podule->reserved = address[8];
-		podule->product = address[12] + (address[16] << 8);
-		podule->manufacturer = address[20] + (address[24] << 8);
-		podule->country = address[28];
-		if (podule->flags1 & PODULE_FLAGS_IS) {
-			podule->irq_addr = address[52] + (address[56] << 8) + (address[60] << 16);
-			podule->irq_mask = address[48];
-			podule->fiq_addr = address[36] + (address[40] << 8) + (address[44] << 16);
-			podule->fiq_mask = address[32];
-		} else {
-			podule->irq_addr = 0;
-			podule->irq_mask = 0;
-			podule->fiq_addr = 0;
-			podule->fiq_mask = 0;
-		}
 		podule->fast_base = FAST_PODULE_BASE + offset;
 		podule->medium_base = MEDIUM_PODULE_BASE + offset;
 		podule->slow_base = SLOW_PODULE_BASE + offset;
@@ -445,6 +426,34 @@ podulescan(dev)
 		podule->attached = 0;
 		podule->slottype = SLOT_NONE;
 		podule->podulenum = loop;
+
+/* Get information from the podule header */
+
+		podule->flags0 = address[0];
+		if ((podule->flags0 & 0x78) == 0) {
+			podule->flags1 = address[4];
+			podule->reserved = address[8];
+			podule->product = address[12] + (address[16] << 8);
+			podule->manufacturer = address[20] + (address[24] << 8);
+			podule->country = address[28];
+			if (podule->flags1 & PODULE_FLAGS_IS) {
+				podule->irq_addr = address[52] + (address[56] << 8) + (address[60] << 16);
+				podule->irq_addr += podule->slow_base;
+				podule->irq_mask = address[48];
+				if (podule->irq_mask == 0)
+					podule->irq_mask = 0x01;
+				podule->fiq_addr = address[36] + (address[40] << 8) + (address[44] << 16);
+				podule->fiq_addr += podule->slow_base;
+				podule->fiq_mask = address[32];
+				if (podule->fiq_mask == 0)
+					podule->fiq_mask = 0x04;
+			} else {
+				podule->irq_addr = podule->slow_base;
+				podule->irq_mask = 0x01;
+				podule->fiq_addr = podule->slow_base;
+				podule->fiq_mask = 0x04;
+			}
+		}
 
 		poduleexamine(podule, dev, SLOT_POD);
 	}
@@ -468,6 +477,16 @@ netslotscan(dev)
 
 	podule = &podules[MAX_PODULES];
 
+	podule->fast_base = NETSLOT_BASE;
+	podule->medium_base = NETSLOT_BASE;
+	podule->slow_base = NETSLOT_BASE;
+	podule->sync_base = NETSLOT_BASE;
+	podule->mod_base = NETSLOT_BASE;
+	podule->easi_base = 0;
+	podule->attached = 0;
+	podule->slottype = SLOT_NONE;
+	podule->podulenum = MAX_PODULES;
+
 /* Get information from the podule header */
 
 	podule->flags0 = *address;
@@ -479,23 +498,20 @@ netslotscan(dev)
 	if (podule->flags1 & PODULE_FLAGS_IS) {
 		podule->irq_mask = *address;
 		podule->irq_addr = *address + (*address << 8) + (*address << 16);
+		podule->irq_addr += podule->slow_base;
+		if (podule->irq_mask == 0)
+			podule->irq_mask = 0x01;
 		podule->fiq_mask = *address;
 		podule->fiq_addr = *address + (*address << 8) + (*address << 16);
+		podule->fiq_addr += podule->slow_base;
+		if (podule->fiq_mask == 0)
+			podule->fiq_mask = 0x04;
 	} else {
-		podule->irq_addr = 0;
-		podule->irq_mask = 0;
-		podule->fiq_addr = 0;
-		podule->fiq_mask = 0;
+		podule->irq_addr = podule->slow_base;
+		podule->irq_mask = 0x01;
+		podule->fiq_addr = podule->slow_base;
+		podule->fiq_mask = 0x04;
 	}
-	podule->fast_base = NETSLOT_BASE;
-	podule->medium_base = NETSLOT_BASE;
-	podule->slow_base = NETSLOT_BASE;
-	podule->sync_base = NETSLOT_BASE;
-	podule->mod_base = NETSLOT_BASE;
-	podule->easi_base = 0;
-	podule->attached = 0;
-	podule->slottype = SLOT_NONE;
-	podule->podulenum = MAX_PODULES;
 
 	poduleexamine(podule, dev, SLOT_NET);
 }
@@ -550,8 +566,8 @@ podulebusattach(parent, self, aux)
 	poduleirq.ih_level = IPL_NONE;
 	poduleirq.ih_name = "podule";
 
-	if (irq_claim(IRQ_PODULE, &poduleirq))
-		panic("Cannot claim IRQ %d for podulebus%d\n", IRQ_PODULE, parent->dv_unit);
+/*	if (irq_claim(IRQ_PODULE, &poduleirq))
+		panic("Cannot claim IRQ %d for podulebus%d\n", IRQ_PODULE, parent->dv_unit);*/
 
 /* Find out what hardware is bolted on */
 
@@ -587,7 +603,7 @@ poduleirqhandler()
 
 	printf("eek ! Unknown podule IRQ received - Blocking all podule interrupts\n");
 	disable_irq(IRQ_PODULE);
-	return(1);
+/*	return(1);*/
 
 /* Loop round the expansion card handlers */
 
@@ -598,8 +614,8 @@ poduleirqhandler()
 		if (actual_mask & (1 << loop)) {
 			handler = irqhandlers[loop];
         
-			if (handler && handler->ih_irqmask) {
-				if ((*handler->ih_irqmask) & handler->ih_irqbit)
+			if (handler && handler->ih_maskaddr) {
+				if (ReadByte(handler->ih_maskaddr) & handler->ih_maskbits)
 					handler->ih_func(handler->ih_arg);
 			}
 		}
