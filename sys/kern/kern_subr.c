@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.16 1996/10/13 02:27:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -47,14 +47,15 @@
 #include <sys/queue.h>
 
 int
-uiomove(cp, n, uio)
-	register caddr_t cp;
+uiomove(buf, n, uio)
+	register void *buf;
 	register int n;
 	register struct uio *uio;
 {
 	register struct iovec *iov;
 	u_int cnt;
 	int error = 0;
+	char *cp = buf;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
@@ -85,9 +86,9 @@ uiomove(cp, n, uio)
 
 		case UIO_SYSSPACE:
 			if (uio->uio_rw == UIO_READ)
-				bcopy((caddr_t)cp, iov->iov_base, cnt);
+				bcopy(cp, iov->iov_base, cnt);
 			else
-				bcopy(iov->iov_base, (caddr_t)cp, cnt);
+				bcopy(iov->iov_base, cp, cnt);
 			break;
 		}
 		iov->iov_base += cnt;
