@@ -1,4 +1,4 @@
-.\"	$NetBSD: siginfo.5,v 1.3 2003/09/13 22:35:13 christos Exp $
+.\"	$NetBSD: siginfo.5,v 1.4 2003/09/14 09:04:12 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,7 +95,7 @@ field contains the user id of the sending process.
 .\" .Bd -literal -offset indent
 .\" pid_t si_pid;
 .\" uid_t si_uid;
-.\" sigval_t si_sigval
+.\" sigval_t si_sigval;
 .\" .Ed
 .\" .Pp
 .\" The
@@ -115,7 +115,7 @@ The
 .Nm
 structure contains the following additional members:
 .Bd -literal -offset indent
-sigval_t si_sigval
+sigval_t si_sigval;
 .Ed
 .Pp
 The
