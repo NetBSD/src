@@ -1,9 +1,9 @@
-/*	$NetBSD: intr.h,v 1.11 2002/01/14 19:08:35 soren Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2002/03/13 13:12:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -118,10 +118,10 @@ struct sgimips_intr {
 extern struct sgimips_intrhand intrtab[];
 
 extern int		_splraise(int);
-extern int		_spllower(int); 
+extern int		_spllower(int);
 extern int		_splset(int);
 extern int		_splget(void);
-extern void		_splnone(void); 
+extern void		_splnone(void);
 extern void		_setsoftintr(int);
 extern void		_clrsoftintr(int);
 
@@ -130,16 +130,16 @@ extern u_int32_t 	netmask;
 extern u_int32_t 	ttymask;
 extern u_int32_t 	clockmask;
 
-#define splhigh()       _splraise(MIPS_INT_MASK)
-#define spl0()          (void)_spllower(0)
-#define splx(s)         (void)_splset(s)
-#define splbio()        _splraise(biomask)
-#define splnet()        _splraise(netmask)
-#define spltty()        _splraise(ttymask)
+#define splhigh()	_splraise(MIPS_INT_MASK)
+#define spl0()		(void)_spllower(0)
+#define splx(s)		(void)_splset(s)
+#define splbio()	_splraise(biomask)
+#define splnet()	_splraise(netmask)
+#define spltty()	_splraise(ttymask)
 #define splserial()	spltty()
-#define splvm()         spltty()
-#define splclock()      _splraise(clockmask)
-#define splstatclock()  splclock()
+#define splvm()		spltty()
+#define splclock()	_splraise(clockmask)
+#define splstatclock()	splclock()
 
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()
