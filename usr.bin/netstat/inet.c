@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)inet.c	5.15 (Berkeley) 6/18/90";*/
-static char rcsid[] = "$Id: inet.c,v 1.5 1993/08/01 18:10:52 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)inet.c	5.15 (Berkeley) 6/18/90"; */
+static char rcsid[] = "inet.c,v 1.4 1993/05/20 12:03:49 cgd Exp";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@ static char rcsid[] = "$Id: inet.c,v 1.5 1993/08/01 18:10:52 mycroft Exp $";
 #include <netinet/in_pcb.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/icmp_var.h>
+#include <netinet/igmp_var.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
@@ -351,6 +352,47 @@ icmp_stats(off, name)
 		}
 	printf("\t%u message response%s generated\n",
 		icmpstat.icps_reflect, plural(icmpstat.icps_reflect));
+}
+  
+char*
+pluraly(n)
+{
+	return (n == 1? "y" : "ies");
+}
+
+/*
+ * Dump IGMP statistics.
+ */
+void
+igmp_stats(off, name)
+	off_t off;
+	char *name;
+{
+	struct igmpstat igmpstat;
+	register int i, first;
+
+	if (off == 0)
+		return;
+	kvm_read(off, (char *)&igmpstat, sizeof (igmpstat));
+	printf("%s:\n", name );
+	printf("\t%u message%s received\n",
+	  igmpstat.igps_rcv_total, plural(igmpstat.igps_rcv_total));
+	printf("\t%u message%s received with too few bytes\n",
+	  igmpstat.igps_rcv_tooshort, plural(igmpstat.igps_rcv_tooshort));
+	printf("\t%u message%s received with bad checksum\n",
+ 	  igmpstat.igps_rcv_badsum, plural(igmpstat.igps_rcv_badsum));
+	printf("\t%u membership quer%s received\n",
+	  igmpstat.igps_rcv_queries, pluraly(igmpstat.igps_rcv_queries));
+	printf("\t%u membership quer%s received with invalid field(s)\n",
+	  igmpstat.igps_rcv_badqueries, pluraly(igmpstat.igps_rcv_badqueries));
+	printf("\t%u membership report%s received\n",
+	  igmpstat.igps_rcv_reports, plural(igmpstat.igps_rcv_reports));
+	printf("\t%u membership report%s received with invalid field(s)\n",
+	  igmpstat.igps_rcv_badreports, plural(igmpstat.igps_rcv_badreports));
+	printf("\t%u membership report%s received for groups to which we belong\n",
+	  igmpstat.igps_rcv_ourreports, plural(igmpstat.igps_rcv_ourreports));
+	printf("\t%u membership report%s sent\n",
+	  igmpstat.igps_snd_reports, plural(igmpstat.igps_snd_reports));
 }
 
 /*
