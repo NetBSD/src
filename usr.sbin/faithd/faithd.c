@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.c,v 1.24 2002/04/24 12:14:42 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.47 2002/04/24 12:06:15 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.25 2002/05/09 14:24:03 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.50 2002/05/09 14:06:52 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -568,18 +568,10 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	else /* AF_INET */
 		hport = ntohs(((struct sockaddr_in *)&dstaddr4)->sin_port);
 
-	switch (hport) {
-	case RLOGIN_PORT:
-	case RSH_PORT:
+	if (pflag)
 		s_dst = rresvport_af(&nresvport, sa4->sa_family);
-		break;
-	default:
-		if (pflag)
-			s_dst = rresvport_af(&nresvport, sa4->sa_family);
-		else
-			s_dst = socket(sa4->sa_family, SOCK_STREAM, 0);
-		break;
-	}
+	else
+		s_dst = socket(sa4->sa_family, SOCK_STREAM, 0);
 	if (s_dst < 0) {
 		exit_failure("socket: %s", strerror(errno));
 		/*NOTREACHED*/
@@ -620,15 +612,6 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	case FTP_PORT:
 		ftp_relay(s_src, s_dst);
 		break;
-	case RSH_PORT:
-		syslog(LOG_WARNING,
-		    "WARINNG: it is insecure to relay rsh port");
-		rsh_relay(s_src, s_dst);
-		break;
-	case RLOGIN_PORT:
-		syslog(LOG_WARNING,
-		    "WARINNG: it is insecure to relay rlogin port");
-		/*FALLTHROUGH*/
 	default:
 		tcp_relay(s_src, s_dst, service);
 		break;
