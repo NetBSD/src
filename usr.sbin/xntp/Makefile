@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/04/18 13:29:03 christos Exp $
-SUBDIR= ntpdate ntpq ntptrace xntpd xntpdc
+#	$NetBSD: Makefile,v 1.2 1997/06/23 17:34:15 christos Exp $
+SUBDIR= ntpdate ntpq ntptime ntptrace xntpd xntpdc
 
 .include <bsd.subdir.mk>

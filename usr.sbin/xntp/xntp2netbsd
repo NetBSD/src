@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: xntp2netbsd,v 1.6 1997/04/21 03:07:30 christos Exp $
+#	$NetBSD: xntp2netbsd,v 1.7 1997/06/23 17:34:20 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for xntp into
 #	a NetBSD source tree.
@@ -24,14 +24,16 @@ $version = "3-5.90";
 
 @subdirs = ("lib/libntp", "domestic/lib/libntp", 
 	    "usr.sbin/xntp/include", "usr.sbin/xntp/ntpdate",
-	    "usr.sbin/xntp/ntpq", "usr.sbin/xntp/ntptrace",
-	    "usr.sbin/xntp/xntpd", "usr.sbin/xntp/xntpdc");
+	    "usr.sbin/xntp/ntptime", "usr.sbin/xntp/ntpq",
+	    "usr.sbin/xntp/ntptrace", "usr.sbin/xntp/xntpd",
+	    "usr.sbin/xntp/xntpdc");
 
 @includef = ("l_stdlib.h", "ntp.h", "ntp_calendar.h", "ntp_control.h",
 	     "ntp_filegen.h", "ntp_fp.h", "ntp_if.h", "ntp_io.h", 
 	     "ntp_machine.h", "ntp_malloc.h", "ntp_refclock.h", "ntp_request.h",
 	     "ntp_select.h", "ntp_stdlib.h", "ntp_string.h", "ntp_syslog.h",
-	     "ntp_types.h", "ntp_unixtime.h", "ntpd.h");
+	     "ntp_types.h", "ntp_unixtime.h", "ntpd.h",
+	     "parse.h", "parse_conf.h");
 
 @libntpf = ("a_md512crypt.c", "a_md5decrypt.c", "a_md5encrypt.c",
 	    "adjtime.c", "atoint.c", "atolfp.c", "atouint.c", "auth12crypt.c",
@@ -62,9 +64,16 @@ $version = "3-5.90";
 	   "refclock_ptbacts.c", "refclock_tpro.c", "refclock_trak.c",
 	   "refclock_true.c", "refclock_usno.c", "refclock_wwvb.c");
 
+@xntpd_pf = ("parse.c", "parse_conf.c", "clk_computime.c",
+	     "clk_dcf7000.c", "clk_hopf6021.c", "clk_meinberg.c",
+	     "clk_rawdcf.c", "clk_rcc8000.c", "clk_schmid.c",
+	     "clk_trimtaip.c", "clk_trimtsip.c");
+
 @xntpdcf = ("ntpdc.c", "ntpdc.h", "ntpdc_ops.c");
 
 @ntpdatef = ("ntpdate.c", "ntpdate.h");
+
+@ntptimef = ("ntptime.c");
 
 @ntpqf = ("ntpq.c", "ntpq.h", "ntpq_ops.c");
 
@@ -109,9 +118,9 @@ sub dumpsrcs {
 
     print ODATA "SRCS=\t";
     $count = 0;
-    foreach $f (@names) {
+    while ($f = pop(@names)) {
         print ODATA "$f ";
-	if ($count == 5) {
+	if ($count == 5 && @names > 0) {
 	    print ODATA "\\\n";
 	    $count = 0;
 	} else {
@@ -158,12 +167,16 @@ print "Populating the usr.sbin/xntp/include directory.\n";
 
 print "Populating the usr.sbin/xntp/xntpd directory.\n";
 &copyfiles ("$srcdir/xntpd", "$targetdir/usr.sbin/xntp/xntpd", @xntpdf);
+&copyfiles ("$srcdir/libparse", "$targetdir/usr.sbin/xntp/xntpd", @xntpd_pf);
 
 print "Populating the usr.sbin/xntp/xntpdc directory.\n";
 &copyfiles ("$srcdir/xntpdc", "$targetdir/usr.sbin/xntp/xntpdc", @xntpdcf);
 
 print "Populating the usr.sbin/xntp/ntpdate directory.\n";
 &copyfiles ("$srcdir/ntpdate", "$targetdir/usr.sbin/xntp/ntpdate", @ntpdatef);
+
+print "Populating the usr.sbin/xntp/ntptime directory.\n";
+&copyfiles ("$srcdir/util", "$targetdir/usr.sbin/xntp/ntptime", @ntptimef);
 
 print "Populating the usr.sbin/xntp/ntpq directory.\n";
 &copyfiles ("$srcdir/ntpq", "$targetdir/usr.sbin/xntp/ntpq", @ntpqf);
@@ -188,20 +201,22 @@ while ($line = <DATA>) {
 		$first = "";
 	    }
 	    open (ODATA, ">$targetdir/$cmd[2]") ||
-		die "Could now create $targetdir/$cmd[2]";
+		die "Could not create $targetdir/$cmd[2]";
 	} elsif ($cmd[1] eq "srcs") {
 	    print "  Defining SRCS for $cmd[2]\n";
 	    if ($first) {
 		die "Data file must start with a %% file!";
 	    }
 	    if ($cmd[2] eq "xntpd") {
-		&dumpsrcs (@xntpdf);
+		&dumpsrcs (@xntpdf, @xntpd_pf);
 	    } elsif ($cmd[2] eq "xntpdc") {
 		&dumpsrcs (@xntpdcf);
 	    } elsif ($cmd[2] eq "ntpq") {
 		&dumpsrcs (@ntpqf);
 	    } elsif ($cmd[2] eq "ntpdate") {
 		&dumpsrcs (@ntpdatef);
+	    } elsif ($cmd[2] eq "ntptime") {
+		&dumpsrcs (@ntptimef);
 	    } elsif ($cmd[2] eq "ntptrace") {
 		&dumpsrcs (@ntptracef);
 	    } elsif ($cmd[2] eq "libntp") {
@@ -243,7 +258,7 @@ foreach $n (keys(%sedlist)) {
 __END__
 %% file usr.sbin/xntp/Makefile
 %% NetBSD #
-SUBDIR= ntpdate ntpq ntptrace xntpd xntpdc
+SUBDIR= ntpdate ntpq ntptime ntptrace xntpd xntpdc
 
 .include <bsd.subdir.mk>
 %% file usr.sbin/xntp/Makefile.inc
@@ -290,6 +305,14 @@ MAN+= ntpdate.8
 PROG= ntptrace
 %% srcs ntptrace
 MAN+= ntptrace.8
+
+.include <bsd.prog.mk>
+%% file usr.sbin/xntp/ntptime/Makefile
+%% NetBSD #
+
+PROG= ntptime
+%% srcs ntptime
+MAN+= ntptime.8
 
 .include <bsd.prog.mk>
 %% file lib/libntp/Makefile
@@ -409,31 +432,31 @@ char * Version = "5.90 3-NetBSD Thu Apr 17 17:15:47 EDT 1997 (1)";
 /* #undef BANC */
 
 /* ELV/DCF7000 clock */
-/* #undef CLOCK_DCF7000 */
+#define CLOCK_DCF7000
 
 /* HOPF 6021 clock */
-/* #undef CLOCK_HOPF6021 */
+#define CLOCK_HOPF6021
 
 /* Meinberg clocks */
-/* #undef CLOCK_MEINBERG */
+#define CLOCK_MEINBERG
 
 /* DCF77 raw time code */
-/* #undef CLOCK_RAWDCF */
+#define CLOCK_RAWDCF
 
 /* RCC 8000 clock */
-/* #undef CLOCK_RCC8000 */
+#define CLOCK_RCC8000
 
 /* Schmid DCF77 clock */
-/* #undef CLOCK_SCHMID */
+#define CLOCK_SCHMID
 
 /* Trimble GPS receiver/TAIP protocol */
-/* #undef CLOCK_TRIMTAIP */
+#define CLOCK_TRIMTAIP
 
 /* Trimble GPS receiver/TSIP protocol */
-/* #undef CLOCK_TRIMTSIP */
+#define CLOCK_TRIMTSIP
 
 /* Diems Computime Radio Clock */
-/* #undef CLOCK_COMPUTIME */
+#define CLOCK_COMPUTIME
 
 /* Datum Programmable Time System */
 #define DATUM 1
@@ -460,13 +483,13 @@ char * Version = "5.90 3-NetBSD Thu Apr 17 17:15:47 EDT 1997 (1)";
 #define MSFEES 1
 
 /* Magnavox MX4200 GPS receiver */
-/* #undef MX4200 */
+#define MX4200
 
 /* NMEA GPS receiver */
 #define NMEA 1
 
 /* PARSE driver interface */
-/* #undef PARSE */
+#define PARSE
 
 /* PARSE kernel PLL PPS support */
 /* #undef PPS_SYNC */
@@ -514,7 +537,7 @@ char * Version = "5.90 3-NetBSD Thu Apr 17 17:15:47 EDT 1997 (1)";
 /* #undef NEED_HPUX_FINDCONFIG */
 
 /* canonical system (cpu-vendor-os) string */
-#define STR_SYSTEM "i386-unknown-netbsd1.2D"
+#define STR_SYSTEM "i386-unknown-netbsd1.3"
 
 /* define if [gs]ettimeofday() only takes 1 argument */
 /* #undef SYSV_TIMEOFDAY */
@@ -559,7 +582,7 @@ char * Version = "5.90 3-NetBSD Thu Apr 17 17:15:47 EDT 1997 (1)";
 /* #undef UDP_BACKWARDS_SETOWN */
 
 /* must we have a CTTY for fsetown? */
-/* #undef USE_FSETOWNCTTY */
+#define USE_FSETOWNCTTY
 
 /* can we use SIGIO for tcp and udp IO? */
 #define HAVE_SIGNALED_IO 1
@@ -961,6 +984,9 @@ char * Version = "5.90 3-NetBSD Thu Apr 17 17:15:47 EDT 1997 (1)";
 /* Define if you have the kvm library (-lkvm).  */
 #define HAVE_LIBKVM 1
 
+/* Define if you have sysctl() to get the clockrate */
+#define HAVE_SYSCTL_CLOCKRATE 1
+
 /* Define if you have the ld library (-lld).  */
 /* #undef HAVE_LIBLD */
 
@@ -1170,6 +1196,61 @@ hunt for some values of the kernel variables
 .Xr tick 9
 and
 .Xr tickadj 9 .
+.Sh AUTHOR
+David L. Mills (mills@udel.edu)
+%% file usr.sbin/xntp/ntptime/ntptime.8
+%% NetBSD .\"
+.\" Converted from HTML to mandoc by Christos Zoulas
+.Dd June 23, 1997
+.Dt NTPTIME 8
+.Os NetBSD
+.Sh NAME
+.Nm ntptime
+.Nd read kernel time variables
+.Sh SYNOPSIS
+.Nm 
+.Op Fl cdhr
+.Op Fl e Ar est_error
+.Op Fl f Ar frequency
+.Op Fl m Ar max_error
+.Op Fl o Ar offset
+.Op Fl s Ar status
+.Op Fl t Ar time_constant
+.Sh DESCRIPTION
+.Nm
+reads and displays time-related kernel variables using the
+.Ar ntp_gettime
+system call. A similar display can be
+obtained using the 
+.Xr xntpdc 8
+program.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl c
+Display the execution time of 
+.Nm
+itself.
+.It Fl d
+Turn on debugging.
+.It Fl e Ar est_error
+Specify estimated error, in microseconds.
+.It Fl f Ar frequency
+Specify frequency offset, in parts per million.
+.It Fl h
+Display help information.
+.It Fl m Ar max_error
+Specify maximum error, in microseconds.
+.It Fl o Ar offset
+Specify clock offset, in microseconds.
+.It Fl r
+Display Unix and NTP times in raw format.
+.It Fl s Ar status
+Specify clock status. Better know what you are doing.
+.It Fl t Ar time_constant
+Specify time constant, an integer in the range 0-4.
+.El
+.Pp
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
 %% file usr.sbin/xntp/ntpq/ntpq.8
@@ -1773,7 +1854,7 @@ page. The
 .Pa Notes on Configuring NTP and Setting up a NTP Subnet
 page contains
 an extended discussion of these options.
-.\" XXX fuck
+.\" XXX
 .\" <p><a href="confopt.html"> Configuration Options </a>
 .\" <br><a href="authopt.html"> Authentication Options </a>
 .\" <br><a href="monopt.html"> Monitoring Options </a>
