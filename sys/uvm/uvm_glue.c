@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.21 1999/05/26 00:33:52 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.22 1999/05/26 01:05:26 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -224,15 +224,15 @@ uvm_chgkprot(addr, len, rw)
  */
 
 void
-uvm_vslock(p, addr, len)
+uvm_vslock(p, addr, len, access_type)
 	struct proc *p;
 	caddr_t	addr;
 	size_t	len;
+	vm_prot_t access_type;
 {
 
-	/* XXX VM_PROT_NONE */
 	uvm_fault_wire(&p->p_vmspace->vm_map, trunc_page(addr), 
-	    round_page(addr+len), VM_PROT_NONE);
+	    round_page(addr+len), access_type);
 }
 
 /*
