@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2002/04/12 14:40:55 lukem Exp $
+#	$NetBSD: list,v 1.3 2002/04/16 20:52:44 kleink Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -63,8 +63,6 @@ SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	more		srcdir	distrib/utils/more
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
-SPECIAL	sysinst		srcdir	distrib/utils/sysinst
-SPECIAL	sysinst		srcdir	distrib/utils/sysinst/arch/prep
 
 LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lcrypt -ll -lm -lz
 
