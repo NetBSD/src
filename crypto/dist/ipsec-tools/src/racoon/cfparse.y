@@ -1,6 +1,6 @@
-/*	$NetBSD: cfparse.y,v 1.1.1.2 2005/02/23 14:54:11 manu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.1.1.3 2005/02/24 20:52:46 manu Exp $	*/
 
-/* Id: cfparse.y,v 1.37 2005/02/11 06:59:01 manubsd Exp */
+/* Id: cfparse.y,v 1.37.2.1 2005/02/24 18:31:55 manubsd Exp */
 
 %{
 /*
@@ -179,7 +179,7 @@ static int fix_lifebyte __P((u_long));
 }
 
 	/* privsep */
-%token PRIVSEP USER GROUP
+%token PRIVSEP USER GROUP CHROOT
 	/* path */
 %token PATH PATHTYPE
 	/* include */
@@ -301,6 +301,7 @@ privsep_stmt
 		}
 		EOS
 	|	GROUP NUMBER { lcconf->gid = $2; } EOS
+	|	CHROOT QUOTEDSTRING { lcconf->chroot = $2->v; } EOS
 	;
 
 	/* path */
