@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.38 1996/03/29 02:01:06 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.39 1996/04/23 03:53:26 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -53,6 +53,7 @@ static void	via2_noint __P((void *));
 void	mrg_adbintr(), mrg_pmintr(), rtclock_intr(), profclock();
 void	via2_nubus_intr();
 void	rbv_nubus_intr();
+void	slot_ignore(void *, int);
 void	slot_noint(void *, int);
 int	VIA2 = 1;		/* default for II, IIx, IIcx, SE/30. */
 
@@ -86,17 +87,26 @@ void		rbv_intr(struct frame *);
 
 void		(*real_via2_intr)(struct frame *);
 
-/* nubus slot interrupt routines */
-void (*slotitab[6])(void *, int) = {
+/*
+ * Nubus slot interrupt routines and parameters for slots 9-15.  Note
+ * that for simplicity of code, "v2IRQ0" for internal video is treated
+ * as a slot 15 interrupt; this slot is quite fictitious in real-world
+ * Macs.  See also GMFH, pp. 165-167, and "Monster, Loch Ness."
+ */
+void (*slotitab[7])(void *, int) = {
 	slot_noint,
 	slot_noint,
 	slot_noint,
 	slot_noint,
 	slot_noint,
-	slot_noint
+	slot_noint,
+	slot_noint	/* int_video_intr */
 };
 
-void	*slotptab[6];
+void *slotptab[7] = {
+	(void *) 0, (void *) 1, (void *) 2, (void *) 3,
+	(void *) 4, (void *) 5, (void *) 6
+};
 
 void
 VIA_initialize()
@@ -152,11 +162,13 @@ VIA_initialize()
 		}
 		real_via2_intr = rbv_intr;
 		via2itab[1] = rbv_nubus_intr;
+		add_nubus_intr(0, slot_ignore, NULL);
 	}
 }
 
 void
-via1_intr(struct frame *fp)
+via1_intr(fp)
+	struct frame *fp;
 {
 	register unsigned char intbits;
 	register unsigned char bitnum;
@@ -171,15 +183,15 @@ via1_intr(struct frame *fp)
 
 	bitnum = 0;
 	do {
-		if (intbits & 0x1) {
+		if (intbits & 0x1)
 			via1itab[bitnum](bitnum); /* run interrupt handler */
-		}
 		intbits >>= 1;
 	} while (++bitnum != 7 && intbits);
 }
 
 void
-via2_intr(struct frame *fp)
+via2_intr(fp)
+	struct frame *fp;
 {
 	register unsigned char	intbits;
 	register char		bitnum;
@@ -203,7 +215,8 @@ via2_intr(struct frame *fp)
 }
 
 void
-rbv_intr(struct frame *fp)
+rbv_intr(fp)
+	struct frame *fp;
 {
 	register unsigned char	intbits;
 	register char		bitnum, bitmsk;
@@ -226,28 +239,37 @@ rbv_intr(struct frame *fp)
 }
 
 static void
-via1_noint(int bitnum)
+via1_noint(bitnum)
+	int bitnum;
 {
-  printf("via1_noint(%d)\n", bitnum);
+	printf("via1_noint(%d)\n", bitnum);
 }
 
 static void
-via2_noint(void *bitnum)
+via2_noint(bitnum)
+	void *bitnum;
 {
-  printf("via2_noint(%d)\n", (int) bitnum);
+	printf("via2_noint(%d)\n", (int) bitnum);
 }
 
 static int	nubus_intr_mask = 0;
 
 int
 add_nubus_intr(slot, func, client_data)
-int	slot;
-void	(*func)();
-void	*client_data;
+	int slot;
+	void (*func)();
+	void *client_data;
 {
 	int	s = splhigh();
 
-	if (slot < 9 || slot > 15) return 0;
+	/*
+	 * Map Nubus slot 0 to "slot" 15; see note on Nubus slot
+	 * interrupt tables.
+	 */
+	if (slot == 0)
+		slot = 15;
+	if (slot < 9 || slot > 15)
+		return 0;
 
 	slotitab[slot-9] = func;
 	slotptab[slot-9] = client_data;
@@ -266,75 +288,87 @@ void	*client_data;
 }
 
 void
-enable_nubus_intr(void)
+enable_nubus_intr()
 {
-	if (VIA2 == VIA2OFF) {
+	if (VIA2 == VIA2OFF)
 		via2_reg(vIER) = V2IF_SLOTINT | 0x80;
-	} else {
+	else
 		via2_reg(rIER) = V2IF_SLOTINT | 0x80;
-	}
 }
 
 void
-via2_nubus_intr(int bit)
+via2_nubus_intr(bit)
+	int bit;
 {
 	register int	i, mask, ints;
 
 try_again:
 	via2_reg(vIFR) = V2IF_SLOTINT;
 	if (ints = ((~via2_reg(vBufA)) & nubus_intr_mask)) {
-		mask = (1 << 5);
-		i = 6;
+		mask = (1 << 6);
+		i = 7;
 		while (i--) {
-			if (ints & mask) {
+			if (ints & mask)
 				(*slotitab[i])(slotptab[i], i+9);
-			}
 			mask >>= 1;
 		}
-	} else {
+	} else
 		return;
-	}
 	goto try_again;
 }
 
 void
-rbv_nubus_intr(int bit)
+rbv_nubus_intr(bit)
+	int bit;
 {
 	register int	i, mask, ints;
 
 try_again:
 	via2_reg(rIFR) = V2IF_SLOTINT;
 	if (ints = ((~via2_reg(rBufA)) & via2_reg(rSlotInt))) {
-		mask = (1 << 5);
-		i = 6;
+		mask = (1 << 6);
+		i = 7;
 		while (i--) {
-			if (ints & mask) {
+			if (ints & mask)
 				(*slotitab[i])(slotptab[i], i+9);
-			}
 			mask >>= 1;
 		}
-	} else {
+	} else
 		return;
-	}
 	goto try_again;
 }
 
 void
-slot_noint(void *client_data, int slot)
+slot_ignore(client_data, slot)
+	void *client_data;
+	int slot;
+{
+	register int mask = (1 << (slot-9));
+
+	if (VIA2 == VIA2OFF) {
+		via2_reg(vDirA) |= mask;
+		via2_reg(vBufA) = mask;
+		via2_reg(vDirA) &= ~mask;
+	} else
+		via2_reg(rBufA) = mask;
+}
+
+void
+slot_noint(client_data, slot)
+	void *client_data;
+	int slot;
 {
 	printf("slot_noint() slot %x\n", slot);
 }
 
-
 void
 via_shutdown()
 {
-	if(VIA2 == VIA2OFF){
+	if (VIA2 == VIA2OFF) {
 		via2_reg(vDirB) |= 0x04;  /* Set write for bit 2 */
 		via2_reg(vBufB) &= ~0x04; /* Shut down */
-	}else if(VIA2 == RBVOFF){
+	} else if (VIA2 == RBVOFF)
 		via2_reg(rBufB) &= ~0x04;
-	}
 }
 
 int
