@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.8 2002/10/29 14:50:53 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.9 2002/12/06 03:05:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.8 2002/10/29 14:50:53 thorpej Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.9 2002/12/06 03:05:04 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -507,14 +507,14 @@ dump_vm_map(kvm_t *kd, struct kbit *vmspace, struct kbit *vm_map,
 		       D(vm_map, vm_map)->flags & VM_MAP_INTRSAFE ? " INTRSAFE" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_WIREFUTURE ? " WIREFUTURE" : "",
 		       D(vm_map, vm_map)->flags & VM_MAP_BUSY ? " BUSY" : "",
-		       D(vm_map, vm_map)->flags & VM_MAP_WANTLOCK ? " WANTLOCK" : "",
+		       D(vm_map, vm_map)->flags & VM_MAP_WANTLOCK ? " WANTLOCK" : ""
 #ifdef VM_MAP_DYING
-		       D(vm_map, vm_map)->flags & VM_MAP_DYING ? " DYING" : "",
+		       , D(vm_map, vm_map)->flags & VM_MAP_DYING ? " DYING" : ""
 #endif
 #ifdef VM_MAP_TOPDOWN
-		       D(vm_map, vm_map)->flags & VM_MAP_TOPDOWN ? " TOPDOWN" :
+		       , D(vm_map, vm_map)->flags & VM_MAP_TOPDOWN ? " TOPDOWN" : ""
 #endif
-		       "");
+		       );
 		printf("%*s    flags_lock = <struct simplelock>,", indent(2), "");
 		printf(" timestamp = %u }\n", D(vm_map, vm_map)->timestamp);
 	}
@@ -905,8 +905,8 @@ findname(kvm_t *kd, struct kbit *vmspace,
                                 *name = '/';
 				/*FALLTHROUGH*/
 			    case 2: /* found nothing */
-				name -= 6;
-				memcpy(name, " -??- ", (size_t)6);
+				name -= 5;
+				memcpy(name, " -?- ", (size_t)5);
 				name -= l;
 				memcpy(name,
 				       D(vfs, mount)->mnt_stat.f_mntonname, l);
