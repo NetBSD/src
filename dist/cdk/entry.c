@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:12 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:30 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -481,7 +481,7 @@ char *injectCDKEntry (CDKENTRY *entry, chtype input)
 		 }
 		 break;
 
-	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER :
+	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER : case KEY_CR :
 		 if ((int)strlen (entry->info) >= entry->min)
 		 {
 		    entry->exitType = vNORMAL;

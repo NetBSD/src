@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:42 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:31 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -452,6 +452,7 @@ int injectCDKSelection (CDKSELECTION *selection, chtype input)
 	    case KEY_RETURN :
 	    case KEY_TAB :
 	    case KEY_ENTER :
+	    case KEY_CR :
 		 selection->exitType = vNORMAL;
 		 return 1;
 	 

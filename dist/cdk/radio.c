@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:00 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:31 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -431,6 +431,7 @@ int injectCDKRadio (CDKRADIO *radio, chtype input)
 	    case KEY_RETURN :
 	    case KEY_TAB :
 	    case KEY_ENTER :
+	    case KEY_CR :
 		 radio->exitType = vNORMAL;
 		 return radio->selectedItem;
 

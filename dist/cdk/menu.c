@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:01 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:30 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -307,7 +307,7 @@ int injectCDKMenu (CDKMENU *menu, chtype input)
 		 menu->lastSelection = -1;
 		 return menu->lastSelection;
 	
-	    case KEY_RETURN : case KEY_ENTER :
+	    case KEY_RETURN : case KEY_ENTER : case KEY_CR :
 		 cleanUpMenu (menu);
 		 menu->exitType = vNORMAL;
 		 menu->lastSelection = ((menu->currentTitle * 100) + menu->currentSubtitle);

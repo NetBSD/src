@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:05 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:30 $
+ * $Revision: 1.2 $
  */
 
 DeclareCDKObjects(my_funcs,Marquee);
@@ -80,7 +80,7 @@ int activateCDKMarquee (CDKMARQUEE *marquee, char *mesg, int delay, int repeat, 
    int lastChar		= 1;
    int repeatCount	= 0;
    int viewSize		= 0;
-   int x, y, junk;
+   int junk;
 
    /* Keep the box info. */
    ObjOf(marquee)->box = Box;

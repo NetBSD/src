@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:26 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:30 $
+ * $Revision: 1.2 $
  */
 
 char *GPasteBuffer = 0;
@@ -736,7 +736,7 @@ void swapIndex (char *list[], int i, int j)
 void quickSort (char *list[], int left, int right)
 {
 #ifdef HAVE_RADIXSORT
-   radixsort (list, right-left+1, NULL, '\0');
+   radixsort ((const u_char **)list, right-left+1, NULL, '\0');
 #else
    int i, last;
 

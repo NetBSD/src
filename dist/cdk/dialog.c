@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:14 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:30 $
+ * $Revision: 1.2 $
  */
 
 DeclareCDKObjects(my_funcs,Dialog);
@@ -249,7 +249,7 @@ int injectCDKDialog (CDKDIALOG *dialog, chtype input)
 		 dialog->exitType = vESCAPE_HIT;
 		 return -1;
 
-	    case KEY_RETURN : case KEY_ENTER :
+	    case KEY_RETURN : case KEY_ENTER : case KEY_CR :
 		 dialog->exitType = vNORMAL;
 		 return dialog->currentButton;
 

@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:00 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:30 $
+ * $Revision: 1.2 $
  */
 
 #undef	ObjOf
@@ -151,7 +151,7 @@ void positionCDKObject (CDKOBJS *obj, WINDOW *win)
 	      moveCDKObject (obj, origX, origY, FALSE, TRUE);
 	      break;
 
-	 case KEY_RETURN : case KEY_ENTER :
+	 case KEY_RETURN : case KEY_ENTER : case KEY_CR :
 	      return;
 
 	 case CDK_REFRESH :

@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:05 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:30 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -27,7 +27,10 @@ DeclareCDKObjects(my_funcs,Matrix);
 /*
  * This function creates the matrix widget.
  */
-CDKMATRIX *newCDKMatrix (CDKSCREEN *cdkscreen, int xplace, int yplace, int rows, int cols, int vrows, int vcols, char *title, char **rowtitles, char **coltitles, int *colwidths, int *colvalues, int rspace, int cspace, chtype filler, int dominant, boolean Box, boolean boxCell, boolean shadow)
+CDKMATRIX *newCDKMatrix (CDKSCREEN *cdkscreen, int xplace, int yplace, int rows, int cols, int vrows, int vcols, char *title, char **rowtitles, char **coltitles, int *colwidths, int *colvalues, int rspace, int cspace, chtype filler, int dominant, boolean 
+
+
+Box, boolean boxCell, boolean shadow)
 {
    /* Declare local variables. */
    CDKMATRIX *matrix	= newCDKObject(CDKMATRIX, &my_funcs);
@@ -46,7 +49,7 @@ CDKMATRIX *newCDKMatrix (CDKSCREEN *cdkscreen, int xplace, int yplace, int rows,
    int begy		= 0;
    int cellWidth	= 0;
    char **temp		= 0;
-   int x, y, z, w, len, junk2;
+   int x, y, z, len, junk2;
 
    /* Make sure that the number of rows/cols/vrows/vcols is not zero. */
    if (rows == 0 || cols == 0 || vrows == 0 || vcols == 0)
@@ -663,6 +666,7 @@ int injectCDKMatrix (CDKMATRIX *matrix, chtype input)
 
 	 case KEY_RETURN :
 	 case KEY_ENTER :
+	 case KEY_CR :
 	      drawCDKMatrixCell (matrix,
 				matrix->oldcrow,
 				matrix->oldccol,
@@ -879,7 +883,6 @@ static void drawCDKMatrixCell (CDKMATRIX *matrix, int row, int col, int vrow, in
    int rows		= matrix->vrows;
    int cols		= matrix->vcols;
    int infolen		= (int)strlen (matrix->info[vrow][vcol]);
-   int x;
 
    /*
     * Given the dominance of the colors/attributes, we need to set the

@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:07 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:30 $
+ * $Revision: 1.2 $
  */
 
 DeclareCDKObjects(my_funcs,Itemlist);
@@ -310,7 +310,7 @@ int injectCDKItemlist (CDKITEMLIST *itemlist, chtype input)
 		 itemlist->exitType = vESCAPE_HIT;
 		 return -1;
 
-	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER :
+	    case KEY_RETURN : case KEY_TAB : case KEY_ENTER : case KEY_CR :
 		 itemlist->exitType = vNORMAL;
 		 return itemlist->currentItem;
 

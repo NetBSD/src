@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:13 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:30 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -74,7 +74,6 @@ void attrbox (WINDOW *win, chtype tlc, chtype trc, chtype blc, chtype brc, chtyp
    int x2	= getmaxx(win) - 1;
    int y2	= getmaxy(win) - 1;
    int count	= 0;
-   int x, y;
 
    if (shadow)
    {

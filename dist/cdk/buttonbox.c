@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:28 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:29 $
+ * $Revision: 1.2 $
  */
 
 DeclareCDKObjects(my_funcs,Buttonbox);
@@ -316,7 +316,7 @@ int injectCDKButtonbox (CDKBUTTONBOX *buttonbox, chtype input)
 		 buttonbox->exitType = vESCAPE_HIT;
 		 return -1;
 
-	    case KEY_RETURN : case KEY_ENTER :
+	    case KEY_RETURN : case KEY_ENTER : case KEY_CR :
 		 buttonbox->exitType = vNORMAL;
 		 return buttonbox->currentButton;
 

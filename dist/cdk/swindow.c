@@ -2,8 +2,8 @@
 
 /*
  * $Author: garbled $
- * $Date: 2001/01/04 19:58:40 $
- * $Revision: 1.1.1.1 $
+ * $Date: 2001/01/04 20:15:31 $
+ * $Revision: 1.2 $
  */
 
 /*
@@ -609,6 +609,7 @@ int injectCDKSwindow (CDKSWINDOW *swindow, chtype input)
 	    case KEY_RETURN :
 	    case KEY_TAB :
 	    case KEY_ENTER :
+	    case KEY_CR :
 		 swindow->exitType = vNORMAL;
 		 return 1;
 
