@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.31 1998/10/02 01:37:51 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.32 1998/10/05 02:46:31 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -412,7 +412,6 @@ chrtoblk(dev)
 #include <dev/cons.h>
 
 cons_decl(rpcconsole);
-cons_decl(fcom);
 cons_decl(com);   
 cons_decl(ofcons_);
 cons_decl(pc);
@@ -421,9 +420,7 @@ struct consdev constab[] = {
 #if (NCOM > 0)
 	cons_init(com),
 #endif
-#if (NFCOM > 0)
-	cons_init(fcom),
-#elif (NVT + NRPC > 0)
+#if (NVT + NRPC > 0)
 	cons_init(rpcconsole),
 #elif (NPC > 0)
 	cons_init(pc),
