@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.39 1999/07/22 18:46:26 wrstuden Exp $
+#	$NetBSD: MAKEDEV,v 1.40 1999/07/25 00:47:40 ender Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering -- at least one of each except ch*
@@ -203,7 +203,7 @@ tty*)
 	unit=${i#tty}
 	rm -f ser$unit tty$unit tty0$unit dty0$unit
 	mknod tty0$unit c 12 $(($unit + $dialin ))
-	mknod tty0$unit c 12 $(($unit + $dialout))
+	mknod dty0$unit c 12 $(($unit + $dialout))
 	chown uucp.wheel tty0$unit dty0$unit
 	;;
 
